@@ -26,9 +26,9 @@
  * category (`EXCLUSIVE_CATEGORIES`) is the exception: one at a time.
  */
 
-import { AREA_IN_THE_AREA } from "../distances.js";
+import { AREA_ADJACENT, AREA_IN_THE_AREA } from "../distances.js";
 import type { ProfessionId } from "../professions.js";
-import type { Combatant, SkillEffect } from "./types.js";
+import type { Combatant, DamageEffect, SkillEffect } from "./types.js";
 
 export type StatusCategory =
   | "condition"
@@ -75,6 +75,9 @@ export type StatusId =
   | "contagion"
   | "shard-storm"
   | "shadow-of-fear"
+  | "spiteful-spirit"
+  | "insidious-parasite"
+  | "mark-of-pain"
   | "ice-spikes"
   | "deep-freeze"
   | "regeneration"
@@ -295,9 +298,17 @@ export interface StatusDefinition {
  * Something that happens to the bearer that a status answers (#469):
  * it casts a spell, attacks, gains a condition it did not have (#887), or
  * the status itself ends, for any reason but a refresh or a reset (#887).
+ * Or (#935) it completes any skill, lands a hit, or loses health to
+ * physical damage.
  */
 export type StatusTriggerEvent =
-  "bearer-casts-spell" | "bearer-attacks" | "bearer-gains-condition" | "ends";
+  | "bearer-casts-spell"
+  | "bearer-attacks"
+  | "bearer-uses-skill"
+  | "bearer-hits"
+  | "bearer-takes-physical-damage"
+  | "bearer-gains-condition"
+  | "ends";
 
 export interface StatusTrigger {
   readonly on: StatusTriggerEvent;
@@ -327,11 +338,15 @@ export type TriggerEffect = SkillEffect | SpreadGainedConditionEffect;
 /**
  * What happened to a `StatusSet` that a trigger may answer (#887), in the
  * order it happened, until the simulation drains it: a condition newly on
- * the bearer, or a status gone from it, with who had applied it.
+ * the bearer, or a status gone from it, with who had applied it. Or
+ * (#935) a hit the bearer landed, or physical damage it took, recorded
+ * only while a status on it answers that.
  */
 export type StatusChange =
   | { readonly kind: "gained-condition"; readonly id: StatusId; readonly durationSeconds: number }
-  | { readonly kind: "ended"; readonly id: StatusId; readonly sourceId: string };
+  | { readonly kind: "ended"; readonly id: StatusId; readonly sourceId: string }
+  | { readonly kind: "hit" }
+  | { readonly kind: "took-physical-damage" };
 
 /** A share of maximum health a status takes, at most `cap` (GW1's deep wound). */
 export interface MaxHealthLoss {
@@ -407,6 +422,14 @@ function define(
  * magnitudes (#492). Every other status carries its skill's rank-12
  * values.
  */
+/** Spiteful Spirit's damage, on its bearer and each ally beside it (#935). */
+const SPITEFUL_SPIRIT_DAMAGE: DamageEffect = {
+  kind: "damage",
+  amount: { flat: 39 },
+  type: "shadow",
+  armorPenetration: 0,
+};
+
 export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = {
   bleeding: define("bleeding", "Bleeding", "condition", { healthPips: -3 }),
   burning: define("burning", "Burning", "condition", { healthPips: -7 }),
@@ -504,6 +527,56 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   "shadow-of-fear": define("shadow-of-fear", "Shadow of Fear", "hex", {
     profession: "necromancer",
     attackDurationMultiplier: 1.5,
+  }),
+  // "Whenever target foe attacks or uses a skill, Spiteful Spirit deals
+  // 15...39...45 shadow damage to that foe and all adjacent allies of that
+  // foe" (#935): 39, its rank-12 value. An attack skill is both, so twice.
+  "spiteful-spirit": define("spiteful-spirit", "Spiteful Spirit", "hex", {
+    profession: "necromancer",
+    triggers: (["bearer-uses-skill", "bearer-attacks"] as const).map((on) => ({
+      on,
+      effects: [
+        SPITEFUL_SPIRIT_DAMAGE,
+        { kind: "splash", radius: AREA_ADJACENT, effects: [SPITEFUL_SPIRIT_DAMAGE] },
+      ],
+      target: "bearer",
+      skillId: "necromancer.spiteful-spirit",
+    })),
+  }),
+  // "Whenever target foe hits with an attack, you steal 15...39...45
+  // health from that foe" (#935): 39, its rank-12 value.
+  "insidious-parasite": define("insidious-parasite", "Insidious Parasite", "hex", {
+    profession: "necromancer",
+    triggers: [
+      {
+        on: "bearer-hits",
+        effects: [{ kind: "life-steal", amount: { flat: 39 } }],
+        target: "bearer",
+        skillId: "necromancer.insidious-parasite",
+      },
+    ],
+  }),
+  // "Whenever target foe takes physical damage, Mark of Pain deals
+  // 10...34...40 shadow damage to adjacent foes" (#935): 34, its rank-12
+  // value, on the bearer's allies beside it, never the bearer.
+  "mark-of-pain": define("mark-of-pain", "Mark of Pain", "hex", {
+    profession: "necromancer",
+    triggers: [
+      {
+        on: "bearer-takes-physical-damage",
+        effects: [
+          {
+            kind: "splash",
+            radius: AREA_ADJACENT,
+            effects: [
+              { kind: "damage", amount: { flat: 34 }, type: "shadow", armorPenetration: 0 },
+            ],
+          },
+        ],
+        target: "bearer",
+        skillId: "necromancer.mark-of-pain",
+      },
+    ],
   }),
   // "...move 66% slower for 2...5...6 seconds" (#938).
   "ice-spikes": define("ice-spikes", "Ice Spikes", "hex", {
@@ -730,6 +803,29 @@ export class StatusSet {
         this.#changes.push({ kind: "ended", id, sourceId: status.sourceId });
       }
     }
+  }
+
+  /** The bearer landed a hit (#935), recorded only if a status on it answers one. */
+  public recordHit(): void {
+    if (this.#answers("bearer-hits")) {
+      this.#changes.push({ kind: "hit" });
+    }
+  }
+
+  /**
+   * The bearer lost health to physical damage (#935), recorded only if a
+   * status on it answers that.
+   */
+  public recordPhysicalDamage(): void {
+    if (this.#answers("bearer-takes-physical-damage")) {
+      this.#changes.push({ kind: "took-physical-damage" });
+    }
+  }
+
+  #answers(event: StatusTriggerEvent): boolean {
+    return this.active.some(({ id }) =>
+      getStatusDefinition(id).triggers.some((trigger) => trigger.on === event),
+    );
   }
 
   /** Record a condition newly on the bearer (#887); any other category is not one. */

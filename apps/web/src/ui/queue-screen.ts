@@ -45,17 +45,48 @@ export function searchingLabel(searching: number, needed: number): string {
   return `${String(searching)} searching · ${String(needed)} needed`;
 }
 
-/** What the screen shows: the queue, the lobby's splash, or why the queue ended. */
+/** How a queued match ended for the streak (#881). */
+export type QueuedResult = "win" | "loss" | "forfeit" | "host-left";
+
+/**
+ * The session streak after `result` (#854 D4): a win adds one, a defeat
+ * or leaving before the end clears it, and a match lost to its host
+ * leaving does not count either way.
+ */
+export function nextStreak(streak: number, result: QueuedResult): number {
+  switch (result) {
+    case "win":
+      return streak + 1;
+    case "loss":
+    case "forfeit":
+      return 0;
+    case "host-left":
+      return streak;
+  }
+}
+
+/** "3 wins in a row this visit (not a rating)"; nothing at 0. */
+export function streakLine(streak: number): string | undefined {
+  if (streak <= 0) {
+    return undefined;
+  }
+  return `${String(streak)} ${streak === 1 ? "win" : "wins"} in a row this visit (not a rating)`;
+}
+
+/** What the screen shows: the queue, the lobby's splash, why the queue ended, or how the match did. */
 export type QueueView =
   | { readonly kind: "queue"; readonly state: QueueState }
   | { readonly kind: "splash"; readonly snapshot: LobbySnapshot }
-  | { readonly kind: "refused"; readonly notice: string };
+  | { readonly kind: "refused"; readonly notice: string }
+  | { readonly kind: "ended"; readonly outcome: string; readonly streak: number };
 
 export interface QueueScreenCallbacks {
   /** *Leave queue*: withdraw and go back to the menu. */
   readonly onLeave: () => void;
   /** *Back to menu*, once the queue is over. */
   readonly onBack: () => void;
+  /** *Queue again*, after a match (#881): same mode, the active character. */
+  readonly onQueueAgain: () => void;
 }
 
 export interface QueueScreen {
@@ -79,8 +110,12 @@ export interface QueueLines {
   readonly waited?: string;
   readonly count?: string;
   readonly problem?: string;
-  /** *Leave queue* while queued, *Back to menu* once it is over, nothing on the splash. */
-  readonly action: "leave" | "back" | "none";
+  readonly streak?: string;
+  /**
+   * *Leave queue* while queued, *Back to menu* once it is over, both
+   * that and *Queue again* after a match, nothing on the splash.
+   */
+  readonly action: "leave" | "back" | "ended" | "none";
 }
 
 /**
@@ -106,6 +141,12 @@ export function queueLines(state: QueueState, fellThroughShown: boolean): QueueL
     case "unreachable":
       return { status: UNREACHABLE, action: "back" };
   }
+}
+
+/** The screen after a queued match (#881): how it ended, the streak, *Queue again* and *Back to menu*. */
+export function endedLines(outcome: string, streak: number): QueueLines {
+  const line = streakLine(streak);
+  return { status: outcome, action: "ended", ...(line === undefined ? {} : { streak: line }) };
 }
 
 /** The splash's two sides and its countdown line, from a queued lobby's snapshot. */
@@ -221,8 +262,9 @@ export function mountQueueScreen(
   const waited = h("div", "queue-waited");
   const count = h("div", "queue-count");
   const problem = h("div", "screen-problem queue-problem");
+  const streak = h("div", "queue-streak");
   const body = h("div", "queue-body");
-  body.append(status, waited, count, problem);
+  body.append(status, waited, count, problem, streak);
   const splashHost = h("div", "queue-splash");
   const notice = h(
     "p",
@@ -230,9 +272,10 @@ export function mountQueueScreen(
     `Unranked play with strangers, peer to peer. ${PEER_IP_NOTICE}`,
   );
   const leave = button("Leave queue", "", callbacks.onLeave);
+  const again = button("Queue again", "primary", callbacks.onQueueAgain);
   const back = button("Back to menu", "primary", callbacks.onBack);
   const actions = h("div", "menu-row queue-actions");
-  actions.append(leave, back);
+  actions.append(leave, again, back);
   panel.append(body, splashHost, notice, actions);
   root.appendChild(panel);
 
@@ -249,13 +292,18 @@ export function mountQueueScreen(
     count.hidden = lines.count === undefined;
     problem.textContent = lines.problem ?? "";
     problem.hidden = lines.problem === undefined;
+    streak.textContent = lines.streak ?? "";
+    streak.hidden = lines.streak === undefined;
     if (splash === undefined) {
       splashHost.replaceChildren();
     } else {
       splashHost.replaceChildren(splash);
     }
     leave.hidden = lines.action !== "leave";
-    back.hidden = lines.action !== "back";
+    again.hidden = lines.action !== "ended";
+    back.hidden = lines.action !== "back" && lines.action !== "ended";
+    // After a match, *Queue again* is the default; *Back to menu* is not.
+    back.classList.toggle("primary", lines.action !== "ended");
   };
 
   /** Flash the title once per match found, not on every repaint of it. */
@@ -294,6 +342,9 @@ export function mountQueueScreen(
           return;
         case "refused":
           set({ status: "Could not join the match", problem: view.notice, action: "back" });
+          return;
+        case "ended":
+          set(endedLines(view.outcome, view.streak));
           return;
       }
     },

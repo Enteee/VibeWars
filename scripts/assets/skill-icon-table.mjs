@@ -109,4 +109,9 @@ export const SKILL_ICONS = {
   "paragon.spear-of-lightning": { glyph: "spear-bolt" },
   "paragon.never-surrender": { glyph: "banner", modifier: "area" },
   "paragon.leaders-comfort": { glyph: "banner-cross", modifier: "self" },
+  // Placeholders from existing glyphs (#935).
+  "necromancer.spiteful-spirit": { glyph: "fireball", modifier: "down" },
+  "necromancer.insidious-parasite": { glyph: "chain", modifier: "self" },
+  "necromancer.mark-of-pain": { glyph: "hammer", modifier: "area" },
+  "necromancer.vampiric-gaze": { glyph: "heal", modifier: "bleed" },
 };
