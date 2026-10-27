@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0.25,
   "rechargeSeconds": 20,
+  "upkeep": false,
   "description": "If target foe is using a skill, that foe and all foes in the area are interrupted and suffer 15...63...75 damage and foes in the area take 75% of that damage.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

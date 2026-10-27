@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 1,
   "rechargeSeconds": 10,
+  "upkeep": false,
   "description": "Target and adjacent foes are struck for 20...68...80 cold damage and move 66% slower for 2...5...6 seconds.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

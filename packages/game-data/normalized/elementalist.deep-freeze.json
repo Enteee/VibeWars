@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 2,
   "rechargeSeconds": 15,
+  "upkeep": false,
   "description": "You cause a Deep Freeze at target foe's location. All foes in this area are struck for 10...70...85 cold damage. For 10 seconds, all foes move 66% slower.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

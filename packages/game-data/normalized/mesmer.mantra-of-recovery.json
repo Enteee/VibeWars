@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0,
   "rechargeSeconds": 15,
+  "upkeep": false,
   "description": "For 5...17...20 seconds, spells you cast recharge 33% faster.",
   "variant": "pvp",
   "ruleset": "gw1-reference",
