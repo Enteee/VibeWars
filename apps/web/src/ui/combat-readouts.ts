@@ -101,6 +101,17 @@ function outOfSequence(skillId: string | undefined): string {
     : ` (must follow ${follows === "off-hand" ? "an off-hand" : `a ${follows}`} attack)`;
 }
 
+/** "not a spell": why a picky interrupt let a cast through, by its filter (#796, #1008). */
+function interruptRefusal(skillId: string | undefined): string {
+  const interrupt =
+    skillId === undefined
+      ? undefined
+      : getSkill(skillId)?.effects.find((effect) => effect.kind === "interrupt");
+  return interrupt?.kind === "interrupt" && interrupt.only === "spell"
+    ? "not a spell"
+    : "not a spell or chant";
+}
+
 export function describeCombatEvent(
   entry: Pick<CombatLogEntry, "cause" | "sourceId" | "skillId" | "weaponId" | "attributeId">,
   event: CombatEvent,
@@ -166,7 +177,7 @@ export function describeCombatEvent(
       // A picky interrupt says why it let a cast through (#796).
       return event.refusedSkillId === null
         ? `${by} finds nothing to interrupt on ${target}`
-        : `${by} can't interrupt ${target}'s ${skillName(event.refusedSkillId) ?? event.refusedSkillId}: not a spell or chant`;
+        : `${by} can't interrupt ${target}'s ${skillName(event.refusedSkillId) ?? event.refusedSkillId}: ${interruptRefusal(entry.skillId)}`;
     case "attack-missed":
       return `${by} misses ${target}${event.reason === "out-of-sequence" ? outOfSequence(entry.skillId) : ""}`;
     case "attack-blocked":

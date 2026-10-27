@@ -631,7 +631,8 @@ function reportEnded(target: Combatant, ending: readonly StatusId[], events: Com
 /**
  * The skill `target` is activating that `effect` may not interrupt (#521,
  * #796), or `null`: with no `only`, any cast is fair game; with `only:
- * "spell-or-chant"`, anything but a spell or a chant is refused.
+ * "spell"`, anything but a spell is refused (#1008), and with
+ * `"spell-or-chant"`, anything but a spell or a chant.
  */
 function refusedSkill(effect: InterruptEffect, target: Combatant): string | null {
   const cast = target.cast.activeCast;
@@ -639,9 +640,10 @@ function refusedSkill(effect: InterruptEffect, target: Combatant): string | null
     return null;
   }
   const skill = getSkill(cast.skillId);
-  return skill !== undefined && (isSpell(skill.type) || skill.type === "chant")
-    ? null
-    : cast.skillId;
+  const allowed =
+    skill !== undefined &&
+    (isSpell(skill.type) || (effect.only === "spell-or-chant" && skill.type === "chant"));
+  return allowed ? null : cast.skillId;
 }
 
 /**
@@ -982,7 +984,7 @@ export function stateHolds(
     case "target-has":
       return target.statuses.countByCategory(condition.category) > 0;
     case "caster-has":
-      return caster.statuses.countByCategory(condition.category) > 0;
+      return caster.statuses.countByCategory(condition.category, condition.profession) > 0;
     case "target-casting": {
       const cast = target.cast.activeCast;
       const skill = cast === undefined ? undefined : getSkill(cast.skillId);
