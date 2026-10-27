@@ -67,7 +67,24 @@ channels, as often as they like.
   forge any message it relays, can kick anyone, and controls the match
   clock. Nothing a peer runs can tell a fair host from a cheating one. P2P
   is for playing with people you would let host; there is no ranked play,
-  and none is planned without a server.
+  and none is planned without a server. Random Arena (ADR-0032) puts
+  strangers together, so it stays unranked and keeps nothing past a visit.
+- **Choosing to host a Random Arena.** The host of a queued match is the
+  ticket whose `sha256(groupId ‖ ticketId)` is lowest, and tickets are
+  public, so a player can grind fresh ticket keys (about 2 × team size
+  tries) to host their own match. Accepted, like any cheating host;
+  commit-reveal is the lever if a mode with stakes ever uses the queue.
+- **A flood of fake queue tickets.** A ticket costs nothing to publish,
+  so a sybil flood can stall the queue, every group falling through. A
+  ticket id is its signing key, so nobody can rewrite an honest ticket.
+  NIP-13 proof-of-work is the lever if it happens.
+- **A Random Arena peer id is self-asserted.** Admission and the host's
+  welcome are Schnorr signatures by ticket keys that name the group, the
+  host's ticket and the joiner's transport peer id, so an outsider in the
+  public room can neither pose as the host nor replay a joiner's proof
+  from its own peer id. The peer id itself is whatever the transport
+  reports, which a peer chooses; a peer that also claims a joiner's id
+  could at most race that joiner for its one seat.
 - **Knowing the code means being invited.** Anyone with the lobby code can
   join and see the lobby. A code is shared like a party invite; it is not a
   credential.
