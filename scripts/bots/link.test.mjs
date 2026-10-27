@@ -555,9 +555,9 @@ describe("the company sidecar", () => {
     co.start();
     const user = { id: 4711, is_bot: false, username: "a_player" };
 
-    telegram.push("developer-1: merge it", undefined, user);
+    telegram.push("developer: merge it", undefined, user);
     telegram.push("manager: reboot", 12, user);
-    telegram.push("developer-1: how do I dodge?", 13, user);
+    telegram.push("developer: how do I dodge?", 13, user);
     telegram.push("lead-dev: marker");
 
     await until(() => co.inbox("lead-dev").length === 1, "the operator's marker");
@@ -565,10 +565,10 @@ describe("the company sidecar", () => {
     expect(co.inbox("support")[0]).toMatchObject({
       from: "user:4711",
       kind: "user",
-      text: "developer-1: how do I dodge?",
+      text: "developer: how do I dodge?",
       topicId: 13,
     });
-    expect(co.inbox("developer-1")).toEqual([]);
+    expect(co.inbox("developer")).toEqual([]);
     expect(co.inbox("manager")).toEqual([]);
   }, 20_000);
 
@@ -643,10 +643,10 @@ describe("the company sidecar", () => {
     const co = company(telegram.url);
     co.start();
 
-    co.reply("developer-1", "we fixed it", 5);
+    co.reply("developer", "we fixed it", 5);
 
-    await until(() => co.inbox("developer-1").length === 1, "the notice");
-    expect(String(co.inbox("developer-1")[0]?.text)).toMatch(/NOT posted: only support/);
+    await until(() => co.inbox("developer").length === 1, "the notice");
+    expect(String(co.inbox("developer")[0]?.text)).toMatch(/NOT posted: only support/);
     await sleep(500);
     expect(telegram.sent).toEqual([]);
   }, 20_000);
@@ -697,11 +697,11 @@ describe("the company sidecar", () => {
   it("creates Manager and Support at start and Bots on first use, remembers them, and no per-role topic", async () => {
     const telegram = await fakeTelegram();
     const co = company(telegram.url, JSON.stringify({ offset: 0 }));
-    co.present("developer-1");
+    co.present("developer");
     co.present("lead-dev");
     co.start();
 
-    co.send("manager", "developer-1", "welcome");
+    co.send("manager", "developer", "welcome");
     co.send("architect", "lead-dev", "review #85");
 
     await until(() => telegram.sent.length === 2, "both mirrors");
@@ -741,10 +741,10 @@ describe("the company sidecar", () => {
     const co = company(telegram.url);
     co.start();
 
-    co.send("developer-1", "operator", "merge my PR please");
+    co.send("developer", "operator", "merge my PR please");
 
-    await until(() => co.inbox("developer-1").length === 1, "the notice");
-    expect(String(co.inbox("developer-1")[0]?.text)).toMatch(/NOT delivered: only the manager/);
+    await until(() => co.inbox("developer").length === 1, "the notice");
+    expect(String(co.inbox("developer")[0]?.text)).toMatch(/NOT delivered: only the manager/);
     await sleep(500);
     expect(telegram.sent).toEqual([]);
   }, 20_000);
@@ -812,18 +812,16 @@ describe("the company sidecar", () => {
   it("stops reading a fired employee's outbox, and refuses messages to it (#62)", async () => {
     const telegram = await fakeTelegram();
     const co = company(telegram.url);
-    co.employ(["developer-1@2"]);
+    co.employ(["developer@3"]);
     co.start();
-    co.send("developer-1@2", "manager", "hello");
+    co.send("developer@3", "manager", "hello");
     await until(() => co.inbox("manager").length === 1, "the employee's message");
 
     co.employ([]);
-    co.send("manager", "developer-1@2", "are you there?");
+    co.send("manager", "developer@3", "are you there?");
     await until(() => co.inbox("manager").length === 2, "the notice");
-    expect(String(co.inbox("manager")[1]?.text)).toMatch(
-      /NOT delivered: "developer-1@2" is not one/,
-    );
-    co.send("developer-1@2", "manager", "still here");
+    expect(String(co.inbox("manager")[1]?.text)).toMatch(/NOT delivered: "developer@3" is not one/);
+    co.send("developer@3", "manager", "still here");
     co.send("architect", "manager", "after");
     await until(() => co.inbox("manager").length === 3, "the next message");
     expect(co.inbox("manager")[2]).toMatchObject({ from: "architect", text: "after" });
@@ -904,11 +902,11 @@ describe("the company sidecar", () => {
     const co = company(telegram.url);
     co.start();
 
-    const name = co.ask("developer-1", "May I?", []);
+    const name = co.ask("developer", "May I?", []);
 
-    await until(() => co.receipt("developer-1", name) !== null, "the receipt");
-    expect(String(co.receipt("developer-1", name)?.error)).toMatch(/Ask the manager/);
-    expect(String(co.inbox("developer-1")[0]?.text)).toMatch(/NOT posted/);
+    await until(() => co.receipt("developer", name) !== null, "the receipt");
+    expect(String(co.receipt("developer", name)?.error)).toMatch(/Ask the manager/);
+    expect(String(co.inbox("developer")[0]?.text)).toMatch(/NOT posted/);
     expect(telegram.sent).toEqual([]);
   }, 20_000);
 
@@ -1013,13 +1011,13 @@ describe("the company sidecar, and what a jail plants in its bus (#329)", () => 
     fs.mkdirSync(path.join(co.bus, "architect"));
     fs.symlinkSync(path.join(target, "victim"), path.join(co.bus, "architect", "inbox.jsonl"));
     co.present("architect");
-    co.present("developer-1");
+    co.present("developer");
     const sidecar = co.start();
 
     co.send("manager", "architect", "spec #28 please");
-    co.send("manager", "developer-1", "take #29");
+    co.send("manager", "developer", "take #29");
 
-    await until(() => co.inbox("developer-1").length === 1, "the other delivery");
+    await until(() => co.inbox("developer").length === 1, "the other delivery");
     sidecar.child.kill("SIGTERM");
     const { stderr } = await sidecar.exited;
     expect(stderr).toContain("[link] architect: refused inbox.jsonl");

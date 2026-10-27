@@ -22,7 +22,7 @@ const telegramUp = { down: false, lastSeen: 0, now: 0 };
 /** @typedef {{ state: "up" | "stale" | "down" | "crash-looping", line: string }} HubLine */
 
 const COLUMNS = ["Backlog", "Ready", "In Progress", "In Review", "QA", "Done"];
-const EVERYONE = new Set(["architect", "manager", "developer-1", "lead-dev", "qa-tester"]);
+const EVERYONE = new Set(["architect", "manager", "developer", "lead-dev", "qa-tester"]);
 
 /**
  * Colour codes are not columns on screen.
@@ -247,7 +247,7 @@ describe("boardLines", () => {
 });
 
 describe("companyLines", () => {
-  const roles = ["manager", "architect", "developer-1", "developer-2", "lead-dev"];
+  const roles = ["manager", "architect", "developer", "lead-dev", "qa-tester"];
   const budget = { remaining: 4210, limit: 5000, resetAt: 0, spend: "GRAPHQL  ~380/h" };
   /** @type {HubLine} */
   const hub = { state: "up", line: "hub ● up 3m · restarts 0/h" };
@@ -362,7 +362,7 @@ describe("companyLines", () => {
       summary: {
         roles: new Map([
           ["manager", usage(61_000)],
-          ["developer-1", usage(240_000)],
+          ["developer", usage(240_000)],
         ]),
         total: usage(301_000),
         todayOutput: 1_400_000,
@@ -463,7 +463,7 @@ describe("companyLines", () => {
   });
 
   describe("the staff (#386)", () => {
-    const everyone = ["manager", "architect", "developer-1", "developer-2", "lead-dev"];
+    const everyone = ["manager", "architect", "developer", "developer@2", "lead-dev"];
     const fireAt = new Date(2026, 9, 25, 12, 0).getTime();
 
     /**
@@ -497,22 +497,20 @@ describe("companyLines", () => {
         "STAFF  5/12",
         "  manager          1",
         "  architect        1",
-        "  developer-1      1",
-        "  developer-2      1",
+        "  developer        2",
         "  lead-dev         1",
+        "  qa-tester        0",
       ]);
     });
 
     it("counts both employees of a role, and says how long a firing one has left", () => {
       const staff = staffFacts(
-        { manager: {}, "developer-1@2": { state: "firing" }, "developer-1": {} },
-        { recent: [{ id: "developer-1@2", change: "fire", at: fireAt }], now: fireAt + 4 * 60_000 },
+        { manager: {}, "developer@2": { state: "firing" }, developer: {} },
+        { recent: [{ id: "developer@2", change: "fire", at: fireAt }], now: fireAt + 4 * 60_000 },
       );
-      const lines = section(staff, { live: ["manager", "developer-1", "developer-1@2"] }).map(
-        plain,
-      );
+      const lines = section(staff, { live: ["manager", "developer", "developer@2"] }).map(plain);
       expect(lines[0]).toBe("STAFF  3/12");
-      expect(lines[3]).toBe("  developer-1      2   developer-1@2 firing (6 min left)");
+      expect(lines[3]).toBe("  developer        2   developer@2 firing (6 min left)");
     });
 
     it("says a firing employee is ready, overdue, or just firing with no record of when", () => {
@@ -540,16 +538,16 @@ describe("companyLines", () => {
 
     it("dims a role nobody is hired for, and names an employee down or not running", () => {
       const lastSeen = new Date(2026, 9, 25, 13, 30).getTime();
-      const raw = section(staffFacts({ manager: {}, "developer-1": {}, "developer-2": {} }), {
+      const raw = section(staffFacts({ manager: {}, developer: {}, "lead-dev": {} }), {
         live: ["manager"],
-        stale: new Map([["developer-1", lastSeen]]),
+        stale: new Map([["developer", lastSeen]]),
       });
       const lines = raw.map(plain);
       expect(lines[2]).toBe("  architect        0");
       expect(raw[2]).toContain("\x1b[2m");
       expect(raw[1]).not.toContain("\x1b");
-      expect(lines[3]).toBe(`  developer-1      1   developer-1 down since ${hhmm(lastSeen)}`);
-      expect(lines[4]).toBe("  developer-2      1   developer-2 not running");
+      expect(lines[3]).toBe(`  developer        1   developer down since ${hhmm(lastSeen)}`);
+      expect(lines[4]).toBe("  lead-dev         1   lead-dev not running");
     });
 
     it("shows ? for a company.json without maxAgents", () => {
@@ -577,9 +575,9 @@ describe("companyLines", () => {
       const staff = staffFacts(
         {
           manager: {},
-          "developer-1": { state: "firing" },
-          "developer-1@2": {},
-          "developer-1@3": {},
+          developer: { state: "firing" },
+          "developer@2": {},
+          "developer@3": {},
         },
         { managerRestarts: 3 },
       );
@@ -637,7 +635,7 @@ describe("companyLines", () => {
       bootSha: "abc",
       ready: ["manager", "lead-dev"],
     };
-    const live = new Set(["manager", "architect", "developer-1", "developer-2", "lead-dev"]);
+    const live = new Set(["manager", "architect", "developer", "developer@2", "lead-dev"]);
 
     /**
      * @param {import("./dashboard-view.mjs").CompanyFacts["reboot"]} reboot
@@ -664,14 +662,14 @@ describe("companyLines", () => {
     it("is first: the deadline, then ready, waiting and idle in org-chart order", () => {
       const lines = pane({
         record,
-        between: ["developer-2"],
+        between: ["developer@2"],
         now: deadline - 6.5 * 60_000,
       });
       expect(lines.slice(0, 5)).toEqual([
         "REBOOT by 12:41 (in 7m) — manager: load #345",
         "  ready:   manager, lead-dev",
-        "  waiting: architect, developer-1",
-        "  idle:    developer-2",
+        "  waiting: architect, developer",
+        "  idle:    developer@2",
         "",
       ]);
       expect(lines[5]).toMatch(/^STAFF unknown/);
@@ -696,7 +694,7 @@ describe("companyLines", () => {
       );
       const lines = raw.map(plain);
       expect(lines[0]).toBe("REBOOT by 12:41 (in <1m) — manager: load #345");
-      expect(lines[1]).toBe("  waiting: manager, architect, developer-1, developer-2, lead-dev");
+      expect(lines[1]).toBe("  waiting: manager, architect, developer, lead-dev, developer@2");
       expect(lines[2]).toBe("");
       expect(raw[0]).toContain("\x1b[1;31m");
     });
@@ -767,12 +765,12 @@ describe("feedLines", () => {
     const feed = Array.from({ length: 10 }, (_, i) => ({
       ts: 0,
       from: "manager",
-      to: "developer-1",
+      to: "developer",
       text: `message ${String(i)} ${"x".repeat(100)}`,
     }));
     const lines = feedLines(feed, { rows: 3, width: 50 }).map(plain);
     expect(lines).toHaveLength(3);
-    expect(lines[0]).toMatch(/^--:-- manager -> developer-1: message 7 x+…$/);
+    expect(lines[0]).toMatch(/^--:-- manager -> developer: message 7 x+…$/);
     for (const line of lines) {
       expect(columnsOf(line)).toBe(50);
     }
@@ -811,7 +809,7 @@ describe("groupFeed (#189)", () => {
     kind,
     text,
   });
-  const ROLES = ["architect", "developer-1", "developer-2", "lead-dev", "qa-tester"];
+  const ROLES = ["architect", "developer", "developer@2", "lead-dev", "qa-tester"];
 
   it("makes one broadcast, copied into every inbox, one row to all", () => {
     expect(groupFeed(ROLES.map((role) => row(10, role)))).toEqual([
