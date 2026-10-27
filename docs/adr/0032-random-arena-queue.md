@@ -53,9 +53,10 @@ with nobody negotiating.**
    group's id is the sha256 of its sorted ticket ids, and from it come the
    room, the teams (a shuffle seeded by the group id) and the map (a
    seeded pick from the pool). The host is the ticket with the lowest
-   `sha256(groupId ‖ ticketId)`, not the lowest ticket id, so nobody can
-   grind secrets to host every match: the group id depends on every
-   ticket in it. When two clients disagree, the rooms do not fill within
+   `sha256(groupId ‖ ticketId)`, not the lowest ticket id, so a fixed
+   secret does not host every match. A late joiner can still grind a
+   few secrets against the group it would join; that is accepted, for
+   the reason a lying host is (Consequences). When two clients disagree, the rooms do not fill within
    `FORMATION_TIMEOUT_MS`, and everyone requeues keeping their original
    `enteredAt`.
 5. **Admission by secret.** A ticket's public id is `sha256(secret)`,
