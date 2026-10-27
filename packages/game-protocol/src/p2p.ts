@@ -15,12 +15,13 @@ import type {
   CastRefusedMessage,
   MapDescriptor,
   AdrenalineMessage,
+  ChainMarksMessage,
   RechargeMessage,
   RechargeSlot,
   SkillBarSlot,
   WallDescriptor,
 } from "./protocol.js";
-import { MAX_LOBBY_PLAYERS, type LobbyPhase } from "./protocol.js";
+import { CHAIN_ROLES, MAX_LOBBY_PLAYERS, type LobbyPhase, type WireChainMark } from "./protocol.js";
 
 /**
  * The channels a lobby and its match use. Trystero caps an action name at
@@ -37,6 +38,7 @@ export const CHANNELS = [
   "skill-bar",
   "recharge",
   "adrenaline",
+  "chain",
   "ended",
   "bye",
   "lobby-join",
@@ -1241,6 +1243,26 @@ export function parseAdrenaline(value: unknown): AdrenalineMessage | undefined {
     return undefined;
   }
   return { slots, lossInSeconds };
+}
+
+function parseChainMark(value: unknown): WireChainMark | undefined {
+  const raw = fields(value);
+  return raw !== undefined &&
+    isString(raw.targetId) &&
+    isOneOf(raw.role, CHAIN_ROLES) &&
+    isNumber(raw.remainingSeconds) &&
+    raw.remainingSeconds >= 0
+    ? { targetId: raw.targetId, role: raw.role, remainingSeconds: raw.remainingSeconds }
+    : undefined;
+}
+
+/**
+ * The `"chain"` channel: a `ChainMarksMessage`, to one player alone
+ * (#916). At most one mark per other player in the lobby.
+ */
+export function parseChainMarks(value: unknown): ChainMarksMessage | undefined {
+  const marks = parseArray(fields(value)?.marks, MAX_LOBBY_PLAYERS, parseChainMark);
+  return marks === undefined ? undefined : { marks };
 }
 
 /** A lobby character; `null` is the house loadout, a missing one is malformed. */

@@ -219,6 +219,22 @@ body {
   color: var(--ink);
 }
 
+/* The target's health, then your dagger chain mark on it (#916), as GW1. */
+.hud-target-health-row {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.hud-target-chain {
+  width: 16px;
+  height: 16px;
+}
+
+.hud-target-chain[hidden] {
+  display: none;
+}
+
 /* Hidden with no target, but its space kept. */
 .hud-target-health[hidden] {
   display: block;

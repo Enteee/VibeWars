@@ -1,4 +1,10 @@
-import type { CombatEvent, OffhandId, ProfessionId, StatusId } from "@vibewars/game-core";
+import type {
+  ChainRole,
+  CombatEvent,
+  OffhandId,
+  ProfessionId,
+  StatusId,
+} from "@vibewars/game-core";
 import type {
   CastRefusedMessage,
   ClientIntent,
@@ -191,6 +197,12 @@ export interface MatchConnection {
    * never below 0; `null` while every slot is empty.
    */
   getAdrenalineLossIn(): number | null;
+  /**
+   * The chain mark this player left on `targetId` and still running
+   * (#916): which dagger attack of theirs last hit it; `undefined` for
+   * none, or one run out.
+   */
+  getChainMark(targetId: string): ChainRole | undefined;
   /** Call a foe for your team, or ping a spot (#443). The host may drop it, and says nothing. */
   sendCall(call: PeerCall): void;
   /** Your team's calls right now; nobody else's ever reach you. */

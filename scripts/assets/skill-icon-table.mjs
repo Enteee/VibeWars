@@ -36,7 +36,7 @@ export const SKILL_ICONS = {
   "monk.guardian": { glyph: "armor" },
   "warrior.sever-artery": { glyph: "sword", modifier: "bleed" },
   "warrior.eviscerate": { glyph: "axe", modifier: "bleed" },
-  "warrior.disrupting-chop": { glyph: "interrupt", modifier: "clock" },
+  "warrior.disrupting-chop": { glyph: "axe", modifier: "stun" },
   "warrior.executioners-strike": { glyph: "axe", modifier: "up" },
   "assassin.jagged-strike": { glyph: "dagger", modifier: "bleed" },
   "assassin.black-lotus-strike": { glyph: "dagger", modifier: "up" },

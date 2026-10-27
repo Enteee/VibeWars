@@ -1,5 +1,6 @@
 import {
   ADRENALINE_PER_STRIKE,
+  CHAIN_MARK_SECONDS,
   DEFAULT_SKILL_BAR,
   MINIMAL_GW_INSPIRED_PVP_V1,
   defaultBuildEquipment,
@@ -9,10 +10,12 @@ import {
 import {
   MAX_WIRE_COMBATS,
   parseAdrenaline,
+  parseChainMarks,
   parsePeerHello,
   parseWireCombatBatch,
   parseWireSnapshotPart,
   type AdrenalineMessage,
+  type ChainMarksMessage,
   type CastRefusedMessage,
 } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
@@ -82,6 +85,16 @@ const BLOCKER: PlayerBuild = {
   attributes: [{ attributeId: "mesmer.domination-magic", rank: 12 }],
   skillBar: ["mesmer.power-block", null, null, null, null, null, null, null],
   equipment: defaultBuildEquipment("mesmer"),
+};
+
+/** An assassin with daggers, a lead attack and the off-hand that follows it (#916). */
+const DAGGERS: PlayerBuild = {
+  name: "Daggers",
+  primaryProfession: "assassin",
+  secondaryProfession: undefined,
+  attributes: [{ attributeId: "assassin.dagger-mastery", rank: 12 }],
+  skillBar: ["assassin.jagged-strike", "assassin.fox-fangs", null, null, null, null, null, null],
+  equipment: defaultBuildEquipment("assassin"),
 };
 
 /** One tick of match time. */
@@ -532,6 +545,65 @@ describe("networked combat (P2P)", () => {
     expect(toB.length).toBeGreaterThan(0);
     expect(toB.at(-1)?.slots).toEqual(b.getAdrenaline());
     expect(b.getAdrenaline()[severArtery]).toBeLessThan(4 * ADRENALINE_PER_STRIKE);
+  });
+
+  it("sends each player only the chain marks it placed: a lead, then an off-hand, gone with its target (#916)", async () => {
+    const match = startMatch();
+    const { connection: a, transport: ta } = await match.join(hello({ build: toJson(DAGGERS) }));
+    const { connection: b, transport: tb } = await match.join();
+    await match.step(TICK);
+    const toA: ChainMarksMessage[] = [];
+    const toB: ChainMarksMessage[] = [];
+    ta.on("chain", (data) => {
+      const message = parseChainMarks(data);
+      if (message !== undefined) {
+        toA.push(message);
+      }
+    });
+    tb.on("chain", (data) => {
+      const message = parseChainMarks(data);
+      if (message !== undefined) {
+        toB.push(message);
+      }
+    });
+    const foe = b.selfSessionId;
+    await closeDistance(match, a, foe, 30);
+    await target(match, a, foe);
+    expect(a.getChainMark(foe)).toBeUndefined();
+
+    // Jagged Strike lands: a lead mark of a's on b, for the full time.
+    a.sendIntent({ kind: "use-skill", slot: 0 });
+    await until(match, () => a.getChainMark(foe) === "lead", "a's lead mark");
+    expect(toA.at(-1)?.marks).toEqual([
+      { targetId: foe, role: "lead", remainingSeconds: expect.closeTo(CHAIN_MARK_SECONDS, 1) },
+    ]);
+    // Fox Fangs follows it: the mark turns off-hand.
+    await until(match, () => self(a)?.castingSkillId === undefined, "Jagged Strike done");
+    a.sendIntent({ kind: "use-skill", slot: 1 });
+    await until(match, () => a.getChainMark(foe) === "off-hand", "a's off-hand mark");
+    expect(toA.at(-1)?.marks.map((mark) => mark.role)).toEqual(["off-hand"]);
+    // b bears it, and is never told: the mark is a's alone.
+    expect(toB).toEqual([]);
+    expect(b.getChainMark(a.selfSessionId)).toBeUndefined();
+
+    // Chained until b dies, so a mark is on it when it does...
+    a.sendIntent({ kind: "attack", targetId: foe });
+    await until(
+      match,
+      () => {
+        if (self(a)?.castingSkillId === undefined) {
+          a.sendIntent({ kind: "use-skill", slot: a.getChainMark(foe) === "lead" ? 1 : 0 });
+        }
+        return self(b)?.dead === true;
+      },
+      "b dead",
+      120,
+    );
+    // ...and it goes with b, and a is told at once, not left to run out.
+    await match.step(TICK);
+    expect(toA.at(-2)?.marks).toHaveLength(1);
+    expect(toA.at(-1)?.marks).toEqual([]);
+    expect(a.getChainMark(foe)).toBeUndefined();
   });
 
   it("syncs applied statuses so the client can show condition markers, and ticks them as degeneration", async () => {

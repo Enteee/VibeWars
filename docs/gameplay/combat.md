@@ -541,6 +541,12 @@ and against a foe below half health recharges all your other attack
 skills at once, so the chain loops: lead, off-hand, dual, Moebius,
 dual, Moebius. The weapon's own double strike never adds to a skill.
 
+Your mark on your target shows right of its health in the target frame
+(#916): one dagger for lead, one in the left hand for off-hand, two
+crossed for dual, with "lead attack landed" and so on on hover. It
+changes as the next chain attack lands and goes when the mark does.
+Only you see your marks, and you never see another player's.
+
 **Skills interrupt and resume.** Starting a skill loses the swing in
 progress. Attacking and casting are otherwise separate, as in GW1
 (#317): a spell never starts an attack or changes whom you attack, so
