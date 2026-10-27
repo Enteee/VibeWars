@@ -14,7 +14,6 @@ function fakeViewport(): { viewport: ArenaViewport; views: { x: number; y: numbe
     onWheelNotch: () => () => undefined,
     onButton: () => () => undefined,
     size: () => SIZE,
-    pointerScreen: () => undefined,
     setCamera: (view: { x: number; y: number }) => {
       views.push({ x: view.x, y: view.y });
     },

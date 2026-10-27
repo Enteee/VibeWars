@@ -1,0 +1,26 @@
+{
+  "id": "ritualist.weapon-of-remedy",
+  "name": "Weapon of Remedy",
+  "profession": "ritualist",
+  "attribute": "Restoration Magic",
+  "type": "Weapon spell.",
+  "elite": true,
+  "campaign": "Nightfall",
+  "cost": {
+    "kind": "energy",
+    "amount": 3
+  },
+  "overcast": 0,
+  "activationSeconds": 0.25,
+  "rechargeSeconds": 3,
+  "upkeep": false,
+  "description": "For 8 seconds, the next time target ally takes damage or life steal from a foe, that ally steals up to 20...68...80 health from that foe and loses 2 conditions.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Ritualist/975-Weapon_of_Remedy",
+    "fetchedAt": "2026-10-27T22:01:08.487Z"
+  },
+  "unmapped": {}
+}

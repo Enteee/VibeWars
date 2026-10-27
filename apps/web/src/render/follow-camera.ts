@@ -113,7 +113,6 @@ export function attachFollowCamera(
           self: { x: self.x, y: self.y },
           viewport: viewport.size(),
           scaleTo: scaleTo(),
-          pointer: viewport.pointerScreen(),
           reducedMotion: prefersReducedMotion(),
         },
         deltaSeconds,

@@ -41,6 +41,7 @@ export const ACTION_NAMES: Readonly<Record<KeyAction, string>> = {
   "target-next": "Next target",
   "target-closest": "Target the closest foe",
   "target-called": "Target the called foe",
+  "target-self": "Target yourself",
   attack: "Attack",
   "call-target": "Call your target",
   ping: "Ping under the pointer",

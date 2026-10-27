@@ -22,7 +22,7 @@ describe("the keymap presets (#302)", () => {
     "%s is a valid keymap that binds every action but the two call keys (#443)",
     (_, map) => {
       expect(parseKeymap(map)).toEqual(map);
-      expect(KEY_ACTIONS).toHaveLength(20);
+      expect(KEY_ACTIONS).toHaveLength(21);
       // The wheel click calls and pings; the keys are for a mouse without one.
       const unbound = new Set(["call-target", "ping"]);
       for (const action of KEY_ACTIONS) {
@@ -66,6 +66,7 @@ describe("the keymap presets (#302)", () => {
     expect(action("Tab")).toBe("target-next");
     expect(action("KeyC")).toBe("target-closest");
     expect(action("KeyT")).toBe("target-called");
+    expect(action("KeyG")).toBe("target-self");
     expect(action("Space")).toBe("attack");
     expect(action("ShiftLeft")).toBe("show-names");
     expect(action("ShiftRight")).toBe("show-names");
@@ -84,6 +85,7 @@ describe("the keymap presets (#302)", () => {
     expect(action("KeyD")).toBe("move-right");
     expect(action("KeyC")).toBe("target-closest");
     expect(action("KeyT")).toBe("target-called");
+    expect(action("KeyG")).toBe("target-self");
     expect(action("ShiftLeft")).toBe("show-names");
     expect(action("KeyQ")).toBeUndefined();
   });

@@ -28,10 +28,6 @@ export const VIEW_ASPECT = 16 / 9;
 /** Where every match and Training Ground session starts. */
 export const DEFAULT_STEP = 2;
 
-/** Share of the pointer's offset from the screen centre the camera leans by. */
-export const LOOK_AHEAD = 0.22;
-/** Per second, toward the look-ahead the pointer asks for. */
-export const LOOK_AHEAD_RATE = 4;
 /** Per second, toward the step's view box. */
 export const ZOOM_RATE = 11;
 /** A body that moves this far in one frame was put there, not walked: the view snaps. */
@@ -65,11 +61,9 @@ export interface CameraRig {
    * a zoom, so a window resized mid-match keeps its view box at once.
    */
   readonly height: number;
-  /** World units, the eased look-ahead. */
-  readonly lead: Vec2;
   /** World units from you, set by the RMB pan (#442); leashed every frame. */
   readonly offset: Vec2;
-  /** RMB is held in a pan: the offset holds and there is no look-ahead. */
+  /** RMB is held in a pan: the offset holds. */
   readonly panning: boolean;
   /** Where `self` was last frame; `undefined` snaps the next one. */
   readonly last: Vec2 | undefined;
@@ -82,8 +76,6 @@ export interface CameraInput {
   readonly viewport: Size;
   /** The canvas whose view box sets the zoom, CSS px: a match's (#709). */
   readonly scaleTo: Size;
-  /** Screen px on the canvas; `undefined` when off it. */
-  readonly pointer: Vec2 | undefined;
   readonly reducedMotion: boolean;
 }
 
@@ -98,7 +90,6 @@ export function createCameraRig(): CameraRig {
   return {
     step: DEFAULT_STEP,
     height: viewHeight(DEFAULT_STEP),
-    lead: { x: 0, y: 0 },
     offset: { x: 0, y: 0 },
     panning: false,
     last: undefined,
@@ -178,35 +169,23 @@ export function stepCamera(
   const height = rig.height + (target - rig.height) * ease(ZOOM_RATE);
   const zoom = zoomForHeight(height, input.scaleTo);
 
-  // Lean toward the pointer; with it off the canvas, or a pan held, back to centre.
-  const want =
-    input.pointer === undefined || rig.panning
-      ? { x: 0, y: 0 }
-      : {
-          x: ((input.pointer.x - input.viewport.width / 2) * LOOK_AHEAD) / zoom,
-          y: ((input.pointer.y - input.viewport.height / 2) * LOOK_AHEAD) / zoom,
-        };
-  const k = ease(LOOK_AHEAD_RATE);
-  const lead = snap
-    ? { x: 0, y: 0 }
-    : { x: rig.lead.x + (want.x - rig.lead.x) * k, y: rig.lead.y + (want.y - rig.lead.y) * k };
-
   // A held pan stays; a released one glides home. Leashed every frame,
-  // as a zoom in shrinks the leash. A snap drops it with the lead.
+  // as a zoom in shrinks the leash. A snap drops it. The pointer never
+  // moves the view (#1019): only you and the pan do.
   const held = rig.panning ? 1 : 1 - ease(RETURN_RATE);
   const offset = snap
     ? { x: 0, y: 0 }
     : clampToLeash({ x: rig.offset.x * held, y: rig.offset.y * held }, input.viewport, zoom);
 
-  // Not clamped to the map (#721): pointing or dragging toward an edge
-  // looks past it, as anywhere else. Only the leash holds you on screen.
+  // Not clamped to the map (#721): dragging toward an edge looks past it,
+  // as anywhere else. Only the leash holds you on screen.
   const view = {
-    x: input.self.x + offset.x + lead.x,
-    y: input.self.y + offset.y + lead.y,
+    x: input.self.x + offset.x,
+    y: input.self.y + offset.y,
     zoom,
   };
   return {
-    rig: { step: rig.step, height, lead, offset, panning: rig.panning, last: input.self },
+    rig: { step: rig.step, height, offset, panning: rig.panning, last: input.self },
     view,
   };
 }
