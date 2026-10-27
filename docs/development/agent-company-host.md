@@ -48,18 +48,24 @@ Add the same line to `~/.bashrc`:
 . "$HOME/.nix-profile/etc/profile.d/nix.sh"
 ```
 
-## The Telegram token file
+## The company's credential home
 
-`vibewars.telegram.managerTokenFile` in `devenv.local.nix` must name a
-file that exists and holds the manager bot's token before you run
-`claude-llc`. Without it every employee refuses to start and retries.
-Create it readable by you only:
+The company keeps what it authenticates with in one directory, mode 0700,
+outside the checkout: `vibewars.claudeBot.credentials`, by default
+`~/.claude-bot/creds`. `claude-llc-init` creates it and refuses one that
+others can read. `claude-llc doctor` prints, per credential, the identity it
+resolves to, its expiry and scopes, where it is stored and whether it is
+yours; it writes nothing.
 
-```sh
-mkdir -p ~/.secrets
-install -m 600 /dev/null ~/.secrets/telegram-manager-token
-$EDITOR ~/.secrets/telegram-manager-token   # paste the token, nothing else
-```
+The Telegram manager bot's token lives there as `telegram-manager-token`.
+`claude-bot-setup <token-file>` copies it in (mode 600) and writes only the
+chat id to `devenv.local.nix`. Without the file every employee refuses to
+start and retries. To keep it elsewhere, set
+`vibewars.telegram.managerTokenFile` in `devenv.local.nix`.
+
+A machine set up before this had the token wherever `managerTokenFile`
+pointed and still has that line in `devenv.local.nix`, which keeps working.
+Without that line, move the file once into the credential home.
 
 ## Unprivileged user namespaces for bubblewrap
 

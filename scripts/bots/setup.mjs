@@ -19,6 +19,7 @@ import path from "node:path";
 import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 
+import { ensureHome, paths } from "./creds.mjs";
 import { obj } from "./protocol.mjs";
 
 const API = "https://api.telegram.org";
@@ -69,6 +70,10 @@ usage:
 The token file holds the manager bot's token and nothing else. Create that
 bot in @BotFather, then enable Bot Management Mode for it in BotFather's
 mini app — that is what lets it create the per-role bots.
+
+The token is kept in the company's credential home, as
+telegram-manager-token (mode 600), which is where the company reads it from
+unless devenv.local.nix says otherwise.
 
 This verifies the token, waits for you to make the swarm group, checks the
 group has everything it needs, and writes devenv.local.nix. Leave it running
@@ -249,17 +254,39 @@ while (ready === null) {
   }
 }
 
-/* 3. Write the config. ----------------------------------------------------- */
+/* 3. Keep the token, then write the config. ---------------------------------- */
+
+// The credential home is where vibewars.telegram.managerTokenFile points by
+// default (#864), so nothing else needs to name the file.
+const credentials = process.env.VIBEWARS_CREDENTIALS ?? "";
+if (credentials === "") {
+  console.error(
+    "claude-bot-setup: VIBEWARS_CREDENTIALS is not set; run it through claude-bot-setup.",
+  );
+  process.exit(2);
+}
+const home = ensureHome(credentials);
+if (!home.ok) {
+  for (const line of home.lines) {
+    console.error(`claude-bot-setup: ${line.outcome}`);
+  }
+  process.exit(1);
+}
+const kept = paths(credentials).telegram;
+if (tokenFile !== kept) {
+  fs.writeFileSync(kept, `${token}\n`, { mode: 0o600 });
+  fs.chmodSync(kept, 0o600);
+}
+console.log(`Token kept in ${kept}`);
 
 const local = path.join(process.env.DEVENV_ROOT ?? process.cwd(), "devenv.local.nix");
 const contents = `# Written by \`claude-bot-setup\`. Gitignored; this machine only.
 #
-# managerTokenFile rather than managerToken: the token is read at runtime and
+# The manager token is read at runtime from the company's credential home and
 # never reaches the world-readable /nix/store. See
 # docs/adr/0014-agent-coordination.md.
 {
   vibewars.telegram = {
-    managerTokenFile = "${tokenFile}";
     chatId = "${ready}";
   };
 }
