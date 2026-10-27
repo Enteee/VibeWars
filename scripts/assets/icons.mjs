@@ -948,7 +948,7 @@ const skillGlyph = {
   "arrow-burst": () =>
     inkLine("M5 21L16 10", 2.2) +
     inkFill("M22 4L12.5 7L19 13.5Z") +
-    `<g transform="translate(-1.5,-1.5) scale(0.55)">${inkFill(burst(5))}</g>`,
+    `<g transform="translate(9,3) scale(0.5)">${inkFill(burst(5))}</g>`,
   // An arrow through a shield: nothing blocks it (#1018).
   "arrow-pierce": () =>
     `<path d="M12 4L19.5 6.8V12C19.5 16 16.5 18.8 12 20.5C7.5 18.8 4.5 16 4.5 12V6.8Z" ${stroke(C.ink, 1.8)}/>` +
