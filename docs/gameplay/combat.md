@@ -30,7 +30,7 @@ the server decides what happens (brief §12, §32).
 
 Regeneration and degeneration count in **pips**, as in GW1. One health
 pip is 2 HP/s and one energy pip ⅓ energy/s. Every status's pips sum
-(Bleeding −3, Burning −7, Poison −4, Life Drain −2, Regeneration +4), and
+(Bleeding −3, Burning −7, Poison −4, Disease −4, Life Drain −2, Regeneration +4), and
 the net is clamped to ±10 before it applies: burning, bleeding and poison
 together (−14) drain 20 HP/s, not 28. Energy is the primary profession's
 base pips plus any status's, clamped the same way: Warrior and Paragon 2
@@ -177,6 +177,7 @@ number:
 | Cracked Armor | −20 armor, never below 60                         |
 | Deep Wound    | −20% maximum health                               |
 | Dazed         | Spells: double cast time, interrupted by attacks  |
+| Disease       | −4 health/second; spreads to adjacent combatants  |
 
 **Dazed doubles a spell's cast time, and attacks interrupt it** (#546,
 GW1). Applying Dazed interrupts a spell being cast, even on someone
@@ -205,6 +206,16 @@ damage. A typed bonus counts as armor it can take: a cracked Ranger has
 80 against fire. Armor penetration applies after. Weaken Armor
 (Necromancer, Curses, 5 energy, ½ s, 5 s recharge) cracks the target
 and every foe adjacent to it for 17 s.
+
+**Disease spreads** (#765, GW1). While you are diseased, every living
+combatant adjacent to you catches it, on both teams: a Necromancer who
+diseases a foe in a melee ball diseases their own Warrior too. A caught
+copy lasts as long as yours has left. Each cast is one outbreak, and it
+infects each combatant once: cured or run out, you do not catch the same
+outbreak again, however long you stand next to a carrier. A new cast
+is a new outbreak. The dead neither carry nor catch it. Rotting Flesh
+(Necromancer, Death Magic) diseases a foe for 22 s at rank 12. The
+log reads "X catches Disease from Y".
 
 **Blind makes attacks miss**: weapon swings, each blow rolled on its own,
 and attack skills (Swift Chop, Backbreaker, Opening Cut, Barrage, Broad
@@ -263,8 +274,8 @@ when it starts, so one interrupted or cancelled afterwards has still used
 it; one refused, or queued behind an aftercast, uses it only once it
 starts. Signets, shouts, chants, stances and attacks leave it alone. The 16 is
 its rank-12 number; Energy Storage scaling comes with #532. While it is
-up, the skill bar shows each spell at its discounted cost and lights
-the ones it makes affordable (#637).
+up, a skill bar slot's tooltip shows each spell at its discounted cost,
+and the bar lights the ones it makes affordable (#637, #719).
 
 **Signets** usually cost nothing, so they work at 0 energy. Healing
 Signet (Warrior, Tactics) heals you after a 2 s cast, and for those 2 s
@@ -285,9 +296,11 @@ A chant is not a spell: dazed does not slow it. Anthem of Flame
 (Paragon, Leadership, 5 energy, 1 s cast, 10 s recharge) lasts 10 s on
 each ally in earshot, the paragon included: the next attack skill each
 uses burns whoever it hits for 3 s. That attack skill uses the chant up
-when its blow lands, misses or is blocked, or, from a bow or a spear,
-when its shot lands or is dodged; only a hit burns, every victim of
-Barrage alike. Plain swings leave it alone, and so does an attack skill
+as it is released: as its blow strikes, or as its shot leaves a bow or
+a spear (#782). The burn travels with the shot, so a second attack skill
+loosed before the first arrow lands carries none, and an Anthem that
+runs out while the arrow flies still burns. Only a hit burns, every
+victim of Barrage alike. Plain swings leave it alone, and so does an attack skill
 interrupted or cancelled before its blow. Several different chants can
 be up at once; the same one again keeps the longer.
 
@@ -480,9 +493,9 @@ The build editor says under a primary's row what it does at its rank
 ("Fast Casting 12: spells cast 43% faster"), and a skill tooltip for a
 known character shows the cost and activation Expertise and Fast
 Casting make of it, the base in brackets: "5 energy (10)",
-"1.1s (2s)" (#531). The HUD skill bar shows the energy a skill costs
-the caster now, Expertise and an active glyph included (#528, #637),
-with no base beside it.
+"1.1s (2s)" (#531). The skill bar shows icons only (#719); a slot's
+tooltip shows the energy the skill costs the caster now, Expertise and
+an active glyph included (#528, #637), the base in brackets.
 
 ## Positioning
 

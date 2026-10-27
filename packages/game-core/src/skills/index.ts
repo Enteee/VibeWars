@@ -34,6 +34,7 @@ export type {
   ActiveStatus,
   ArmorReduction,
   BlockRule,
+  Outbreak,
   StatusCategory,
   StatusDefinition,
   StatusId,

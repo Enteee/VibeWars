@@ -43,7 +43,8 @@ test("(1) Skill 1 bound to Z in Controls casts on Z, not Q, and survives a reloa
   await page.getByRole("button", { name: "new character" }).click();
   await chooseProfession(page, "primary", "elementalist");
   await page.locator(".skill-box", { hasText: "Fireball" }).locator(".skill-box-equip").click();
-  await expect(page.locator(".training-skill").first()).toHaveText("ZFireball");
+  await expect(page.locator(".training-skill").first()).toHaveText("Z");
+  await expect(page.locator(".training-skill").first()).toHaveAccessibleName("Fireball");
   await page.locator(".training-stage").click({ position: { x: 12, y: 12 } });
   await expect(page.locator(".training")).toHaveClass(/is-armed/);
 

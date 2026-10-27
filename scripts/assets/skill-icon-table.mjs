@@ -40,6 +40,7 @@ export const SKILL_ICONS = {
   "warrior.watch-yourself": { glyph: "armor", modifier: "area" },
   "ranger.apply-poison": { glyph: "flask" },
   "elementalist.glyph-of-lesser-energy": { glyph: "energy", modifier: "less" },
+  "necromancer.rotting-flesh": { glyph: "germ" },
   "necromancer.enfeeble": { glyph: "sword", modifier: "down" },
   "paragon.anthem-of-flame": { glyph: "flame", modifier: "area" },
   "ritualist.weapon-of-warding": { glyph: "armor", modifier: "up" },

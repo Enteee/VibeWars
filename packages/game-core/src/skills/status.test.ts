@@ -90,6 +90,7 @@ describe("status definitions", () => {
       bleeding: -3,
       burning: -7,
       poison: -4,
+      disease: -4,
       "life-drain": -2,
       regeneration: 4,
       "weapon-of-warding": 4,

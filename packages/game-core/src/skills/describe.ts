@@ -183,6 +183,9 @@ export function describeStatus(id: string): string {
     const spells = count === 1 ? "spell costs" : `${String(count)} spells cost`;
     parts.push(`your next ${spells} ${String(costReduction)} less energy`);
   }
+  if (definition.spreads) {
+    parts.push("spreads to adjacent combatants");
+  }
   for (const effect of definition.nextAttackSkill ?? []) {
     parts.push(describeNextAttackSkill(effect));
   }

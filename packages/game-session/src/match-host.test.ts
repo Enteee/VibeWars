@@ -48,6 +48,7 @@ describe("a P2P match (#375)", () => {
       attacksLeft: undefined,
       spellsLeft: undefined,
       sourceId: remote.selfSessionId,
+      outbreak: null,
     }));
     vi.spyOn(StatusSet.prototype, "active", "get").mockReturnValue(many);
     const before = remote.getSnapshot().elapsedSeconds;

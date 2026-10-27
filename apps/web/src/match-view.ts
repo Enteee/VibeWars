@@ -239,7 +239,7 @@ export async function startMatchView(
   const useSkill = (slot: number): void => {
     connection.sendIntent({ kind: "use-skill", slot });
   };
-  renderSkillBar(hud, connection.skillBar, connection.ranks, useSkill);
+  renderSkillBar(hud, () => connection.skillBar, connection.ranks, useSkill);
   // Read once per match: a keymap changed elsewhere applies from the next.
   const keymap = loadKeymap();
   renderKeyLabels(hud, keymap);

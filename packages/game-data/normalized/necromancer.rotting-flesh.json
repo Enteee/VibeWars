@@ -1,0 +1,24 @@
+{
+  "id": "necromancer.rotting-flesh",
+  "name": "Rotting Flesh",
+  "profession": "necromancer",
+  "attribute": "Death Magic",
+  "type": "Spell.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 15
+  },
+  "activationSeconds": 3,
+  "rechargeSeconds": 3,
+  "description": "Target fleshy foe becomes Disease for 10...22...25 seconds, slowly losing Health.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Necromancer/291-Rotting_Flesh",
+    "fetchedAt": "2026-10-27T00:40:32.116Z"
+  },
+  "unmapped": {}
+}

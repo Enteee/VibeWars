@@ -63,6 +63,7 @@ describe("logToneOf", () => {
       "status-applied",
       "status-removed",
       "status-expired",
+      "status-spread",
       "interrupted",
       "interrupt-missed",
       "attack-missed",
@@ -75,6 +76,7 @@ describe("logToneOf", () => {
       "resource",
       "damage",
       "death",
+      "status",
       "status",
       "status",
       "status",
@@ -105,6 +107,19 @@ describe("describeCombatEvent", () => {
     );
     expect(describeCombatEvent(tick(heal), heal, nameOf)).toBe(
       "regeneration heals Caster dummy for 4",
+    );
+  });
+
+  it("says who a spreading status was caught from (#765)", () => {
+    const event: CombatEvent = {
+      kind: "status-spread",
+      targetId: "dummy",
+      fromId: "you",
+      statusId: "disease",
+    };
+    const spread = entry([event], { cause: "degeneration", skillId: undefined });
+    expect(describeCombatEvent(spread, event, nameOf)).toBe(
+      "Caster dummy catches Disease from Pyro",
     );
   });
 

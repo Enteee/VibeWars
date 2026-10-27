@@ -63,6 +63,7 @@ export type StatusId =
   | "cracked-armor"
   | "deep-wound"
   | "dazed"
+  | "disease"
   // Hexes / enchantments implemented so far.
   | "life-drain"
   | "malaise"
@@ -186,6 +187,11 @@ export interface StatusDefinition {
    */
   readonly nextSpells: NextSpells | undefined;
   /**
+   * It spreads (#765): every living combatant adjacent to a bearer, on
+   * either team, catches it, once per outbreak. Disease's signature.
+   */
+  readonly spreads: boolean;
+  /**
    * Effects on whoever the bearer's next attack skill hits (#758): a
    * chant's rider, as Anthem of Flame's burning. It ends when that attack
    * skill resolves, hit, miss or block, and applies only on a hit.
@@ -238,6 +244,7 @@ function define(
     endsAfterAttacks: undefined,
     onAttackHit: [],
     nextSpells: undefined,
+    spreads: false,
     nextAttackSkill: undefined,
     endsWhenBearerAttacks: false,
     ...overrides,
@@ -264,6 +271,7 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   }),
   "deep-wound": define("deep-wound", "Deep Wound", "condition", { maxHealthMultiplier: 0.8 }),
   dazed: define("dazed", "Dazed", "condition", { castTimeMultiplier: 2, interruptsSpells: true }),
+  disease: define("disease", "Disease", "condition", { healthPips: -4, spreads: true }),
 
   "life-drain": define("life-drain", "Life Drain", "hex", { healthPips: -2 }),
   malaise: define("malaise", "Malaise", "hex", { energyPips: -1 }),
@@ -316,6 +324,18 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   }),
 };
 
+/**
+ * One application of a spreading status by a skill, and everyone it has
+ * reached (#765): the bearer it was applied to, and each combatant that
+ * caught it since. Shared by every copy it spread to, so a cured
+ * combatant still next to a carrier of the same outbreak is not caught
+ * again. A new cast is a new outbreak. Compared by identity, so it needs
+ * no id, and it is gone once no status holds it.
+ */
+export interface Outbreak {
+  readonly infected: Set<string>;
+}
+
 export interface ActiveStatus {
   readonly id: StatusId;
   /** Seconds of duration still remaining. */
@@ -327,6 +347,8 @@ export interface ActiveStatus {
   /** Who applied it — needed so a future "when this ends, heal the caster"
    *  effect knows whom to credit. */
   readonly sourceId: string;
+  /** The outbreak it belongs to, for a status that spreads; `null` for every other. */
+  outbreak: Outbreak | null;
 }
 
 export function isStatusId(value: unknown): value is StatusId {
@@ -371,25 +393,55 @@ export class StatusSet {
    * one never shortens a longer one already running. In an exclusive
    * category the new one replaces every one of its category, itself
    * included, at the incoming duration (a stance, #523).
+   *
+   * A status that spreads starts a new outbreak, even where the duration
+   * already running is the longer one: a new cast is a new outbreak (#765).
    */
   public apply(id: StatusId, durationSeconds: number, sourceId: string): void {
     if (durationSeconds <= 0) {
       return;
     }
-    const { category } = getStatusDefinition(id);
-    if (EXCLUSIVE_CATEGORIES.has(category)) {
-      this.removeByCategory(category);
+    const definition = getStatusDefinition(id);
+    if (EXCLUSIVE_CATEGORIES.has(definition.category)) {
+      this.removeByCategory(definition.category);
     }
     const existing = this.#statuses.get(id);
+    const outbreak = definition.spreads ? { infected: new Set<string>() } : null;
     if (existing !== undefined && existing.remainingSeconds >= durationSeconds) {
+      existing.outbreak = outbreak;
       return;
     }
     this.#statuses.set(id, {
       id,
       remainingSeconds: durationSeconds,
-      attacksLeft: getStatusDefinition(id).endsAfterAttacks,
-      spellsLeft: getStatusDefinition(id).nextSpells?.count,
+      attacksLeft: definition.endsAfterAttacks,
+      spellsLeft: definition.nextSpells?.count,
       sourceId,
+      outbreak,
+    });
+  }
+
+  /**
+   * Catch a spreading status from a bearer of `outbreak` (#765). The
+   * longer duration wins, as for `apply`, but a combatant already
+   * carrying it keeps the outbreak it has.
+   */
+  public catch(id: StatusId, durationSeconds: number, sourceId: string, outbreak: Outbreak): void {
+    if (durationSeconds <= 0) {
+      return;
+    }
+    const existing = this.#statuses.get(id);
+    if (existing !== undefined) {
+      existing.remainingSeconds = Math.max(existing.remainingSeconds, durationSeconds);
+      return;
+    }
+    this.#statuses.set(id, {
+      id,
+      remainingSeconds: durationSeconds,
+      attacksLeft: undefined,
+      spellsLeft: undefined,
+      sourceId,
+      outbreak,
     });
   }
 
