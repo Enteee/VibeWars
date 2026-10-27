@@ -204,8 +204,8 @@ function hostTypes(page: Page): Promise<string[]> {
   );
 }
 
-/** How many events the host played in the last second it measured (`?musicstats`). */
-function lastSecondEvents(page: Page): Promise<number> {
+/** How many events the host played in each second it measured (`?musicstats`). */
+function eventsPerSecond(page: Page): Promise<number[]> {
   return page.evaluate(() => {
     const stats = (window as unknown as { hostMessages: unknown[] }).hostMessages.filter(
       (message): message is { type: "stats"; events: number } =>
@@ -214,7 +214,7 @@ function lastSecondEvents(page: Page): Promise<number> {
         "type" in message &&
         message.type === "stats",
     );
-    return stats.at(-1)?.events ?? -1;
+    return stats.map((message) => message.events);
   });
 }
 
@@ -263,14 +263,14 @@ test("the beat editor plays a change, keeps it across a reload, and an error lea
   await page.keyboard.press("Control+Enter");
   await expect.poll(() => hostTypes(page), { timeout: 5_000 }).toContain("error");
   await expect(editor.locator(".beat-editor-error")).toBeVisible();
-  // The old pattern plays on: a second measured after the error has events.
-  const seconds = (await hostTypes(page)).filter((type) => type === "stats").length;
+  // The old pattern plays on: the seconds measured after the error have
+  // events. Three of them, as the menu's layer plays a chord every 2.4 s.
+  const seconds = (await eventsPerSecond(page)).length;
   await expect
-    .poll(async () => (await hostTypes(page)).filter((type) => type === "stats").length, {
-      timeout: 5_000,
-    })
-    .toBeGreaterThan(seconds + 1);
-  expect(await lastSecondEvents(page)).toBeGreaterThan(0);
+    .poll(async () => (await eventsPerSecond(page)).length, { timeout: 8_000 })
+    .toBeGreaterThan(seconds + 3);
+  const after = (await eventsPerSecond(page)).slice(seconds + 1);
+  expect(after.reduce((sum, events) => sum + events, 0)).toBeGreaterThan(0);
 
   await editor.getByRole("button", { name: "Reset to shipped" }).click();
   await expect(editor.locator(".beat-editor-edited")).toBeHidden();
