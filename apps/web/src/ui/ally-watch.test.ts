@@ -40,6 +40,7 @@ function match(players: readonly Pick<PlayerSnapshot, keyof typeof ally>[]): Mat
       knockdownRemaining: 0,
       healthPips: 0,
       energyPips: 0,
+      creature: undefined,
       statuses: [],
       ...player,
     })),

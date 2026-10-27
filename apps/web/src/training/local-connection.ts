@@ -77,7 +77,8 @@ function toPlayerSnapshot(
   const swing = swingProgress(combatant);
   return {
     sessionId: participant.id,
-    name,
+    // A creature (#1052) is named for its kind and has no professions.
+    name: participant.creature?.name ?? name,
     x: participant.position.x,
     y: participant.position.y,
     facing: participant.facing,
@@ -93,8 +94,8 @@ function toPlayerSnapshot(
     armor: combatant.equipment.baseArmor,
     weaponId: combatant.equipment.mainHand.weapon.id,
     offhandId: combatant.equipment.offhandId,
-    primaryProfession: professions.primary,
-    secondaryProfession: professions.secondary,
+    primaryProfession: participant.creature === undefined ? professions.primary : undefined,
+    secondaryProfession: participant.creature === undefined ? professions.secondary : undefined,
     team: combatant.team,
     dead: combatant.dead,
     castingSkillId: activeCast?.skillId,
@@ -108,6 +109,10 @@ function toPlayerSnapshot(
     statuses: wireStatuses(combatant.statuses.active).map((status) =>
       statusSnapshot(status, elapsedSeconds, activeCast),
     ),
+    creature:
+      participant.creature === undefined
+        ? undefined
+        : { ownerId: participant.creature.ownerId, kind: participant.creature.kind },
   };
 }
 

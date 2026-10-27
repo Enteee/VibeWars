@@ -1,5 +1,9 @@
 import type { SkillBar } from "../build.js";
-import type { ResolvedEquipment, ResolvedLoadout } from "../equipment/resolve.js";
+import {
+  unarmedResolvedEquipment,
+  type ResolvedEquipment,
+  type ResolvedLoadout,
+} from "../equipment/resolve.js";
 import type { WeaponId } from "../equipment/weapons.js";
 import {
   distanceWithinRange,
@@ -88,6 +92,7 @@ import {
   type StatusTriggerEvent,
 } from "../skills/status.js";
 import { effectiveMaxEnergy, recoverOvercast } from "../skills/overcast.js";
+import { resolveMagnitude } from "../skills/scaling.js";
 import { resolveTargets } from "../skills/targeting.js";
 import {
   advanceStatuses,
@@ -101,7 +106,7 @@ import {
   upkeepPips,
   type NetPips,
 } from "../skills/tick.js";
-import { isSpell, type Combatant, type Skill } from "../skills/types.js";
+import { isSpell, type Combatant, type CreatureTemplate, type Skill } from "../skills/types.js";
 import {
   leadAimPoint,
   PositionHistory,
@@ -170,6 +175,36 @@ import { steerAround } from "./steering.js";
  * `walkTo`, `setTarget`, `requestSkill`, `requestAttack` and `cancelAction`.
  */
 
+/** What kind of non-player body this is (#467). */
+export type CreatureKind = "spirit" | "minion";
+
+/**
+ * A body that is not a player (#1052, ADR-0035): a participant that never
+ * counts for its team, has no seat, and is gone once it dies or expires.
+ */
+export interface Creature {
+  /** Whoever summoned it, and whom it answers to: it leaves with them. */
+  readonly ownerId: string;
+  readonly kind: CreatureKind;
+  /** Shown in the target frame and the name label, e.g. "Bone Minion". */
+  readonly name: string;
+  /** Seconds left before it vanishes; `Infinity`: until it is killed. */
+  expiresInSeconds: number;
+  /** The tick it was summoned, for "oldest first" caps. */
+  readonly summonedAtTick: number;
+}
+
+/** At most this many creatures in a match at once (#1052): a summon past it makes as many as fit. */
+export const MAX_CREATURES = 32;
+
+/**
+ * Whether `participant` counts for its team (ADR-0035): its roster,
+ * score, morale and win condition. A creature never does.
+ */
+export function countsForTeam(participant: Participant): boolean {
+  return participant.creature === undefined;
+}
+
 export interface ParticipantSpec {
   readonly id: string;
   readonly team: number;
@@ -191,6 +226,8 @@ export interface ParticipantSpec {
   readonly behaviour?: Behaviour | undefined;
   /** Omitted: `never`. Death then follows the match rules' respawn. */
   readonly reset?: ResetPolicy | undefined;
+  /** Omitted: a player or a training dummy, not a creature (#1052). */
+  readonly creature?: Creature | undefined;
 }
 
 export interface Participant {
@@ -226,6 +263,8 @@ export interface Participant {
    * the target of a foe's as it began. What natural regeneration waits on.
    */
   readonly outOfCombatSeconds: number;
+  /** `undefined`: a player or a training dummy (#1052). */
+  readonly creature: Creature | undefined;
 }
 
 /** A skill walking in to its target (#499). */
@@ -358,9 +397,9 @@ const MOVEMENT_RELAX_PASSES = 4;
  */
 const UPKEEP_RANGE_GRACE_SECONDS = 5;
 
-/** How deep a body of `radius` at `position` is inside a living body of the same radius at `other`. */
-function penetration(position: Vec2, other: Vec2, radius: number): number {
-  return Math.max(0, 2 * radius - distance(position, other));
+/** How deep a body at `position` is inside a living body at `other`, their radii summing to `reach`. */
+function penetration(position: Vec2, other: Vec2, reach: number): number {
+  return Math.max(0, reach - distance(position, other));
 }
 
 /**
@@ -466,6 +505,13 @@ export class MatchSimulation {
    * here, so being put back is not walking.
    */
   #stepStart = new Map<string, Vec2>();
+  /** The `n` of the next creature's id, `<ownerId>/c<n>` (#1052). */
+  #nextCreature = 1;
+  /**
+   * Creatures that died or expired this step (#1052), in that order:
+   * removed once, at its end, never mid-loop.
+   */
+  readonly #leaving = new Set<string>();
 
   public constructor(options: MatchSimulationOptions) {
     this.#ruleset = options.ruleset ?? MINIMAL_GW_INSPIRED_PVP_V1;
@@ -565,21 +611,94 @@ export class MatchSimulation {
       resolvedMaxHealth: spec.maxHealth ?? this.#ruleset.combat.baseHealth,
       resolvedMaxEnergy: spec.maxEnergy ?? this.#ruleset.combat.baseEnergy,
       resurrectedAtSeconds: Number.NEGATIVE_INFINITY,
+      creature: spec.creature === undefined ? undefined : { ...spec.creature },
     };
     this.#participants.set(spec.id, record);
-    this.#teams.add(spec.team);
+    if (countsForTeam(record)) {
+      this.#teams.add(spec.team);
+    }
     return record;
   }
 
-  /** Remove a participant and every target that pointed at them. */
+  /**
+   * Remove a participant, the creatures it owns (#1052), and every target
+   * that pointed at any of them.
+   */
   public remove(id: string): void {
-    this.#participants.delete(id);
-    this.#stepStart.delete(id);
+    const leaving = new Set([id]);
+    for (const record of this.#participants.values()) {
+      if (record.creature?.ownerId === id) {
+        leaving.add(record.id);
+      }
+    }
+    for (const gone of leaving) {
+      this.#participants.delete(gone);
+      this.#stepStart.delete(gone);
+      this.#leaving.delete(gone);
+    }
     for (const other of this.#participants.values()) {
-      if (other.targetId === id) {
+      if (other.targetId !== undefined && leaving.has(other.targetId)) {
         other.targetId = undefined;
       }
     }
+  }
+
+  /**
+   * `count` creatures of `template` at `owner`, facing as it does, on its
+   * team (#1052): as many as `MAX_CREATURES` leaves room for. Added to the
+   * end of the match, so they act from this very tick, after everyone
+   * already there.
+   */
+  #summon(owner: ParticipantRecord, template: CreatureTemplate, count: number): void {
+    let creatures = 0;
+    for (const record of this.#participants.values()) {
+      if (record.creature !== undefined && !this.#leaving.has(record.id)) {
+        creatures += 1;
+      }
+    }
+    const fits = Math.max(0, Math.min(count, MAX_CREATURES - creatures));
+    for (let i = 0; i < fits; i += 1) {
+      const id = `${owner.id}/c${String(this.#nextCreature)}`;
+      this.#nextCreature += 1;
+      this.add({
+        id,
+        team: owner.combatant.team,
+        skillBar: [],
+        attributeRanks: new Map(),
+        equipment: unarmedResolvedEquipment(template.armor),
+        spawn: owner.position,
+        facing: owner.facing,
+        maxHealth: resolveMagnitude(template.maxHealth, owner.combatant),
+        maxEnergy: 0,
+        baseEnergyPips: 0,
+        behaviour: template.behaviour,
+        creature: {
+          ownerId: owner.id,
+          kind: template.kind,
+          name: template.name,
+          expiresInSeconds:
+            template.durationSeconds === undefined
+              ? Number.POSITIVE_INFINITY
+              : resolveMagnitude(template.durationSeconds, owner.combatant),
+          summonedAtTick: this.#tick,
+        },
+      });
+    }
+  }
+
+  /** A body's radius (#1052): a creature's is smaller than a player's. */
+  #radiusOf(participant: Participant): number {
+    return participant.creature === undefined
+      ? this.#ruleset.collision.playerRadius
+      : this.#ruleset.collision.creatureRadius;
+  }
+
+  /** Every creature that died or expired this step leaves, in that order (#1052). */
+  #removeLeaving(): void {
+    for (const id of [...this.#leaving]) {
+      this.remove(id);
+    }
+    this.#leaving.clear();
   }
 
   /**
@@ -1045,6 +1164,16 @@ export class MatchSimulation {
         continue;
       }
 
+      // A creature that has run its time vanishes (#1052): no death, so
+      // nothing answers it and nobody scores.
+      if (record.creature !== undefined) {
+        record.creature.expiresInSeconds -= dt;
+        if (record.creature.expiresInSeconds < SWING_EPSILON) {
+          this.#leaving.add(record.id);
+          continue;
+        }
+      }
+
       // Adrenaline does not keep between fights (#828): out of combat for
       // the whole window, within a hair, as a swing's interval is.
       const lossIn = adrenalineLossIn(
@@ -1155,6 +1284,7 @@ export class MatchSimulation {
     this.#fireStatusChanges();
     this.#awardKillMorale();
     this.#settleMoving();
+    this.#removeLeaving();
     // After every death this step, so two teams wiped in it both lose.
     this.checkMatchEnd();
 
@@ -1483,8 +1613,13 @@ export class MatchSimulation {
     const speed = record.combatant.equipment.mainHand.weapon.projectileSpeed;
     const flight = skill.projectile;
     // Only a skill that lands at once can shorten its own recharge (#845):
-    // one that flies has started it by the time it lands.
-    const only = (events: CombatEvent[]): SkillOutcome => ({ events, rechargeFraction: 0 });
+    // one that flies has started it by the time it lands. Only one can
+    // summon (#1052): no attack skill or flying spell does.
+    const only = (events: CombatEvent[]): SkillOutcome => ({
+      events,
+      rechargeFraction: 0,
+      summons: [],
+    });
     // What the caster's statuses add to its hits, each logged apart (#939).
     const riders: FiredTrigger[] = [];
     const resolve =
@@ -1509,7 +1644,7 @@ export class MatchSimulation {
         skill.area === undefined || flight !== undefined ? [] : [...this.#participants.values()],
       losBlockers: this.#walls,
     });
-    const { events, rechargeFraction } = resolve({
+    const { events, rechargeFraction, summons } = resolve({
       skill,
       caster: record.combatant,
       targets,
@@ -1575,6 +1710,9 @@ export class MatchSimulation {
     this.#recordKnockdowns(events);
     this.#recordShadowSteps(events);
     this.#recordResurrections(events);
+    for (const summon of summons) {
+      this.#summon(record, summon.creature, summon.count);
+    }
     // An attack skill is a swing, so it turns on its target with the
     // weapon: it starts an attack, or switches one to them. Any other skill
     // leaves the attack alone (#317): one in progress resumes on its own
@@ -1851,7 +1989,7 @@ export class MatchSimulation {
         this.#bodies.push(other.position);
       }
     }
-    const radius = this.#ruleset.collision.playerRadius;
+    const radius = this.#radiusOf(record);
     const before = record.position;
     const left = distance(before, next);
     const full = this.#stepUnits(record, dt);
@@ -2389,7 +2527,7 @@ export class MatchSimulation {
 
   /** Whether a shot landing now finds its target where it was aimed: their body plus the tolerance. */
   #reaches(projectile: Projectile, target: ParticipantRecord): boolean {
-    const reach = this.#ruleset.collision.playerRadius + this.#ruleset.combat.projectileTolerance;
+    const reach = this.#radiusOf(target) + this.#ruleset.combat.projectileTolerance;
     return distance(target.position, projectile.aimPoint) <= reach;
   }
 
@@ -2523,7 +2661,7 @@ export class MatchSimulation {
   /**
    * Every death in `events` drops the victim's cast, so a resurrection
    * (#812) never finishes it, scores for the other side and starts its
-   * respawn. Read from the emitted events so every death routes through
+   * respawn; a creature's does neither, and it leaves (#1052). Read from the emitted events so every death routes through
    * one place, whether a skill, a swing or degeneration caused it.
    */
   #recordDeaths(events: readonly CombatEvent[]): void {
@@ -2542,6 +2680,17 @@ export class MatchSimulation {
         victim.combatant.statuses.endAll();
         this.#clearChainMarks(victim);
         emptyAdrenaline(victim.combatant);
+        // A creature (#1052) scores nothing, costs no morale and never
+        // respawns: it leaves at the end of the step. Only a spirit's death
+        // is no soul to reap (GW1: "a non-Spirit creature").
+        if (victim.creature !== undefined) {
+          victim.respawnInSeconds = Number.POSITIVE_INFINITY;
+          this.#leaving.add(victim.id);
+          if (victim.creature.kind !== "spirit") {
+            this.#reapSoul(victim);
+          }
+          continue;
+        }
         victim.respawnInSeconds = this.#respawnSeconds(victim);
         this.#deathPenalty(victim);
         this.#reapSoul(victim);
@@ -2727,13 +2876,18 @@ export class MatchSimulation {
 
   /**
    * Every death this step gives each living foe in the death penalty 2%
-   * back, up to 0 (#843): a kill never boosts.
+   * back, up to 0 (#843): a kill never boosts. A creature has no morale (#1052).
    */
   #awardKillMorale(): void {
     for (const team of this.#moraleKills) {
       for (const record of this.#participants.values()) {
         const { combatant } = record;
-        if (combatant.team !== team && !combatant.dead && combatant.morale < 0) {
+        if (
+          combatant.team !== team &&
+          !combatant.dead &&
+          combatant.morale < 0 &&
+          countsForTeam(record)
+        ) {
           this.#setMorale(record, Math.min(0, combatant.morale + KILL_MORALE_PERCENT));
         }
       }
@@ -2743,12 +2897,12 @@ export class MatchSimulation {
 
   /**
    * A morale boost (GvG's flag stand, HA's altar): `amount` percent to
-   * every member of `team`, dead or alive, up to +10%. Not capped at 0,
+   * every member of `team`, dead or alive, up to +10%, creatures aside (#1052). Not capped at 0,
    * so it lifts a death penalty too.
    */
   public moraleBoost(team: number, amount: number): void {
     for (const record of this.#participants.values()) {
-      if (record.combatant.team === team) {
+      if (record.combatant.team === team && countsForTeam(record)) {
         this.#setMorale(record, Math.min(MORALE_CEILING, record.combatant.morale + amount));
       }
     }
@@ -2802,12 +2956,16 @@ export class MatchSimulation {
     this.#score = addKill(this.#score, scoringTeam);
   }
 
-  /** Every team that had members: who is alive and its total morale (#846). */
+  /** Every team that had members: who is alive and its total morale (#846); creatures are neither (#1052). */
   #standing(): MatchStanding {
     const byTeam = new Map<number, TeamStanding>(
       [...this.#teams].map((team) => [team, { living: 0, morale: 0 }]),
     );
-    for (const { combatant } of this.#participants.values()) {
+    for (const record of this.#participants.values()) {
+      if (!countsForTeam(record)) {
+        continue;
+      }
+      const { combatant } = record;
       const team = byTeam.get(combatant.team) ?? { living: 0, morale: 0 };
       byTeam.set(combatant.team, {
         living: team.living + (combatant.dead ? 0 : 1),
@@ -2838,7 +2996,7 @@ export class MatchSimulation {
     if (direction.x !== 0 || direction.y !== 0) {
       record.facing = directionAngle(direction.x, direction.y);
     }
-    const radius = this.#ruleset.collision.playerRadius;
+    const radius = this.#radiusOf(record);
     const start = record.position;
     let position = integrateMovement(
       start,
@@ -2867,9 +3025,10 @@ export class MatchSimulation {
       if (otherId === record.id || other.combatant.dead) {
         continue;
       }
+      const reach = radius + this.#radiusOf(other);
       if (
-        penetration(position, other.position, radius) >
-        penetration(start, other.position, radius) + 1e-6
+        penetration(position, other.position, reach) >
+        penetration(start, other.position, reach) + 1e-6
       ) {
         return;
       }
@@ -2888,7 +3047,12 @@ export class MatchSimulation {
       if (otherId === id || other.combatant.dead) {
         continue;
       }
-      position = resolveCircleCircleCollision(position, radius, other.position, radius);
+      position = resolveCircleCircleCollision(
+        position,
+        radius,
+        other.position,
+        this.#radiusOf(other),
+      );
     }
 
     // Walls resolve after bodies so a player squeezed between a blocker
