@@ -124,6 +124,46 @@ export function renderSkillDescription(
  */
 export type SkillTooltipPlacement = "beside" | "above";
 
+/**
+ * Place a tooltip `node` beside or above its anchor, nudged back inside
+ * the viewport, and show it.
+ *
+ * Positioned in viewport coordinates against `position: fixed`, so a
+ * box inside the scrolling library list gets a tooltip that tracks it
+ * without inheriting the list's clipping.
+ */
+export function placeTip(
+  node: HTMLElement,
+  anchor: HTMLElement,
+  placement: SkillTooltipPlacement,
+): void {
+  const box = anchor.getBoundingClientRect();
+  node.style.display = "block";
+  const tip = node.getBoundingClientRect();
+  const margin = 8;
+
+  let left: number;
+  let top: number;
+  if (placement === "above") {
+    left = box.left + box.width / 2 - tip.width / 2;
+    top = box.top - tip.height - margin;
+  } else {
+    left = box.left - tip.width - margin;
+    if (left < margin) {
+      // No room on the left; flip to the right of the anchor.
+      left = box.right + margin;
+    }
+    top = box.top;
+  }
+  left = Math.min(left, window.innerWidth - tip.width - margin);
+  left = Math.max(margin, left);
+  top = Math.min(top, window.innerHeight - tip.height - margin);
+  top = Math.max(margin, top);
+
+  node.style.left = `${String(Math.round(left))}px`;
+  node.style.top = `${String(Math.round(top))}px`;
+}
+
 export function createSkillTooltip(placement: SkillTooltipPlacement = "beside"): SkillTooltip {
   const node = document.createElement("div");
   node.className = "skill-tip";
@@ -136,45 +176,10 @@ export function createSkillTooltip(placement: SkillTooltipPlacement = "beside"):
     renderSkillDescription(node, description);
   };
 
-  /**
-   * Place the tooltip beside its anchor, nudged back inside the viewport.
-   *
-   * Positioned in viewport coordinates against `position: fixed`, so a
-   * box inside the scrolling library list gets a tooltip that tracks it
-   * without inheriting the list's clipping.
-   */
-  const place = (anchor: HTMLElement): void => {
-    const box = anchor.getBoundingClientRect();
-    node.style.display = "block";
-    const tip = node.getBoundingClientRect();
-    const margin = 8;
-
-    let left: number;
-    let top: number;
-    if (placement === "above") {
-      left = box.left + box.width / 2 - tip.width / 2;
-      top = box.top - tip.height - margin;
-    } else {
-      left = box.left - tip.width - margin;
-      if (left < margin) {
-        // No room on the left; flip to the right of the anchor.
-        left = box.right + margin;
-      }
-      top = box.top;
-    }
-    left = Math.min(left, window.innerWidth - tip.width - margin);
-    left = Math.max(margin, left);
-    top = Math.min(top, window.innerHeight - tip.height - margin);
-    top = Math.max(margin, top);
-
-    node.style.left = `${String(Math.round(left))}px`;
-    node.style.top = `${String(Math.round(top))}px`;
-  };
-
   return {
     show(anchor, description) {
       render(description);
-      place(anchor);
+      placeTip(node, anchor, placement);
     },
     hide() {
       node.style.display = "none";
