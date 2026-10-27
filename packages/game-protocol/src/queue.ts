@@ -37,7 +37,10 @@ export const NO_SHOW_IGNORE_MS = 120_000;
 
 /** One queued player, or a whole team queueing together. */
 export interface QueueTicket {
-  /** sha256 of the secret only its owner holds, as 64 lowercase hex digits. */
+  /**
+   * The x-only public key of the throwaway Nostr key only its owner
+   * holds, as 64 lowercase hex digits.
+   */
   readonly ticketId: string;
   /** `PROTOCOL_VERSION`; a ticket of another is never matched. */
   readonly protocol: string;
