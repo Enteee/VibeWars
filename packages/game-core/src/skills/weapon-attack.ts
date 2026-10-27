@@ -377,8 +377,9 @@ export function nextAttackSkillRiders(
 }
 
 /**
- * The attack skill that `next` rode resolved (#758): its blow landed,
- * missed or was blocked. The statuses that held it end, those still up.
+ * The attack skill that `next` rode was released (#782): its blow struck,
+ * or its shots left the bow. The statuses that held it end, those still
+ * up; their riders travel with the blow or the shots.
  */
 export function useNextAttackSkill(
   attacker: Combatant,

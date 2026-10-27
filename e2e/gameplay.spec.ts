@@ -122,10 +122,16 @@ test("hovering a slot shows its tooltip at the host's ranks, above the bar (#485
   page,
 }) => {
   await startSoloMatch(page);
-  const slot = page.locator(".hud-skill", { hasText: "Fireball" });
+  // Found by name: the bar shows the icon alone (#719).
+  const slot = page.locator(".hud-skills").getByRole("button", { name: "Fireball", exact: true });
+  await expect(slot.locator(".skill-icon")).toBeVisible();
+  await expect(slot.locator(".hud-skill-name")).toHaveCount(0);
   await slot.hover();
   const tip = page.locator(".skill-tip:visible");
+  // The tooltip leads with the icon, then the name and the cost.
+  await expect(tip.locator(".tip-header .skill-icon")).toBeVisible();
   await expect(tip).toContainText("Fireball");
+  await expect(tip).toContainText("cost");
   await expect(tip).toContainText("Fire Magic");
   // The house loadout's Fire Magic 12, as the host resolved it; a client
   // describing the skill without its ranks would say 7.

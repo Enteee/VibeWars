@@ -72,8 +72,8 @@ import {
   type LogRow,
   type MeterTotals,
 } from "./combat-readouts.js";
-import { describeRefusal, MESSAGE_SECONDS } from "./hud.js";
-import { isEliteSkill, skillBadgeHtml } from "./icons.js";
+import { describeRefusal, MESSAGE_SECONDS, SKILL_SLOT_ICON_PX } from "./hud.js";
+import { isEliteSkill, skillBadgeHtml, skillIconHtml } from "./icons.js";
 import { createAllyWatch } from "./ally-watch.js";
 import { pipsElement, renderPips } from "./pips.js";
 import { paintRecharge, prefersReducedMotion } from "./recharge-overlay.js";
@@ -393,11 +393,23 @@ export function createTrainingPanel(): TrainingPanel {
       button.addEventListener("click", () => {
         cast(index);
       });
-      // The ranks read at hover, so a rearm shows at once.
-      slotTips.bind(button, index, slot.id, () => session?.connection.ranks ?? new Map());
+      // The slot and ranks read at hover, so a rearm or a glyph's
+      // discount (#637) shows at once.
+      slotTips.bind(
+        button,
+        index,
+        () => session?.connection.skillBar[index] ?? null,
+        () => session?.connection.ranks ?? new Map(),
+      );
+      // The icon alone, as on the match HUD (#719): the name is the label.
+      button.insertAdjacentHTML("afterbegin", skillIconHtml(slot.id, SKILL_SLOT_ICON_PX));
       button.insertAdjacentHTML("beforeend", skillBadgeHtml(slot.id));
+      button.insertAdjacentHTML(
+        "beforeend",
+        `<span class="skill-range-mark" aria-hidden="true"></span>`,
+      );
       button.classList.toggle("is-elite", isEliteSkill(slot.id));
-      button.append(h("span", "training-skill-name", slot.name));
+      button.setAttribute("aria-label", slot.name);
       return button;
     });
     skills.replaceChildren(...skillButtons);
