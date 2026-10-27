@@ -28,6 +28,8 @@ import {
   parsePeerRejoinChallenge,
   parsePeerRejoinProof,
   parsePeerWelcome,
+  parsePeerWatch,
+  parsePeerWatching,
   parseRecharge,
   parseWireCombatBatch,
   parseWireEnded,
@@ -43,6 +45,7 @@ import type {
   PeerHello,
   PeerRefuse,
   PeerWelcome,
+  PeerWatching,
   WireCombat,
   WireCombatBatch,
   WireEnded,
@@ -95,6 +98,14 @@ const welcome: PeerWelcome = {
       },
     ],
   },
+};
+
+const watching: PeerWatching = {
+  protocolVersion: PROTOCOL_VERSION,
+  tickIntervalMs: 50,
+  delaySeconds: 10,
+  elapsedSeconds: 2.5,
+  map: welcome.map,
 };
 
 const refuse: PeerRefuse = { reason: "protocol-mismatch", message: PROTOCOL_MISMATCH_MESSAGE };
@@ -305,6 +316,9 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["rejoin-challenge", parsePeerRejoinChallenge, challenge],
   ["rejoin-proof", parsePeerRejoinProof, proof],
   ["welcome", parsePeerWelcome, welcome],
+  ["watch", parsePeerWatch, { protocolVersion: PROTOCOL_VERSION }],
+  ["watching", parsePeerWatching, watching],
+  ["watching undelayed", parsePeerWatching, { ...watching, delaySeconds: 0 }],
   ["refuse", parsePeerRefuse, refuse],
   ["snapshot", parseWireSnapshotPart, snapshot],
   ["last of three snapshot parts", parseWireSnapshotPart, { ...snapshot, part: 2, parts: 3 }],
@@ -399,6 +413,10 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["welcome with a zero tick", parsePeerWelcome, { ...welcome, tickIntervalMs: 0 }],
   ["welcome with an infinite tick", parsePeerWelcome, { ...welcome, tickIntervalMs: Infinity }],
   ["welcome without a map", parsePeerWelcome, { ...welcome, map: null }],
+  ["watch without a version", parsePeerWatch, {}],
+  ["watching with a negative delay", parsePeerWatching, { ...watching, delaySeconds: -1 }],
+  ["watching with a zero tick", parsePeerWatching, { ...watching, tickIntervalMs: 0 }],
+  ["watching without a map", parsePeerWatching, { ...watching, map: null }],
   [
     "welcome with a NaN wall",
     parsePeerWelcome,

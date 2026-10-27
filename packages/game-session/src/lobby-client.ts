@@ -186,6 +186,22 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       onMatchStarting(handler) {
         startingHandlers.push(handler);
       },
+      watchMatch() {
+        const self = latest?.players.find((player) => player.id === selfId);
+        if (
+          closed ||
+          latest?.phase !== "in-match" ||
+          latest.matchId === null ||
+          self?.team !== null
+        ) {
+          return undefined;
+        }
+        return {
+          mapId: latest.mapId,
+          matchId: latest.matchId,
+          transport: scopeTransport(transport),
+        };
+      },
       onStartRejected(handler) {
         rejectedHandlers.push(handler);
       },

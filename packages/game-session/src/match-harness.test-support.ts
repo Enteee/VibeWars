@@ -146,6 +146,7 @@ export function startMatch(
     maxPlayers?: number;
     random?: () => number;
     seats?: PlannedSeats;
+    observerDelaySeconds?: number;
   } = {},
 ): TestMatch {
   const network = createMemoryNetwork();
@@ -161,6 +162,7 @@ export function startMatch(
     random: options.random ?? (() => ((draws += 1) * 0.6180339887) % 1),
     maxPlayers: options.maxPlayers ?? 8,
     seats: options.seats ?? null,
+    observerDelaySeconds: options.observerDelaySeconds ?? 0,
   });
   return {
     network,

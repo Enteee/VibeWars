@@ -10,6 +10,7 @@ import {
   LobbyNoAnswerError,
   LobbyRefusedError,
   MatchRefusedError,
+  OBSERVER_DELAY_SECONDS,
   connectMatch,
   createLobbyHost,
   createMatchHost,
@@ -84,6 +85,7 @@ function startMatch(plan: MatchPlan) {
     random: secureRandom,
     maxPlayers: MAX_LOBBY_PLAYERS,
     seats: plan.seats,
+    observerDelaySeconds: OBSERVER_DELAY_SECONDS,
   });
 }
 

@@ -22,6 +22,7 @@ import {
   type PeerHello,
   type PeerRejoinChallenge,
   type PeerRejoinProof,
+  type PeerWatching,
   type PeerWelcome,
   type WireCombat,
   type WireCombatBatch,
@@ -309,6 +310,15 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       ranks: Object.fromEntries(NECRO_ELE_ATTRIBUTES.map((attributeId) => [attributeId, 20])),
     };
     expect(messageBytes(welcome)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
+    // An observer's answer carries the same map (#480).
+    const watching: PeerWatching = {
+      protocolVersion: PROTOCOL_VERSION,
+      tickIntervalMs: 50,
+      delaySeconds: FLOAT,
+      elapsedSeconds: FLOAT,
+      map: welcome.map,
+    };
+    expect(messageBytes(watching)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
     expect(messageBytes(bar)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
   });
 

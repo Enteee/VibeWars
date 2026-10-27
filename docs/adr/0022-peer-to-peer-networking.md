@@ -41,6 +41,9 @@ a host-authoritative star, not lockstep and not a mesh.**
 - The host sends full JSON snapshots every tick (`WireSnapshot`), not
   schema deltas. Eight players come to roughly 1–2 KB a tick. Optimise
   only if a measurement says so.
+  Each player is sent its own copy, never a room-wide broadcast, so a
+  lobby spectator sees the match only as an observer (#480): the same
+  messages, `OBSERVER_DELAY_SECONDS` late, from one buffer per match.
 - Each message has its own channel (`CHANNELS` in `game-protocol`), and a
   validator. Clients validate the host's messages too: the host is trusted
   for outcomes, not for well-formed bytes.

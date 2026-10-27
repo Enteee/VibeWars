@@ -3,7 +3,12 @@ import { describe, expect, it } from "vitest";
 
 import { connectMatch, type PeerMatchConnection } from "./match-client.js";
 import { ARENA, TICK_SECONDS, hello, settle } from "./match-harness.test-support.js";
-import { createMatchHost, type MatchHost, type PlannedSeats } from "./match-host.js";
+import {
+  OBSERVER_DELAY_SECONDS,
+  createMatchHost,
+  type MatchHost,
+  type PlannedSeats,
+} from "./match-host.js";
 import { createMemoryNetwork } from "./memory-transport.js";
 import { messageBytes, type Transport } from "./transport.js";
 
@@ -94,6 +99,8 @@ async function runScenario(scenario: Scenario): Promise<Result> {
     random: () => hostRng.nextFloat(),
     maxPlayers: players,
     seats,
+    // The real delay, so its buffer is in what is timed (#480).
+    observerDelaySeconds: OBSERVER_DELAY_SECONDS,
   });
   const connections: PeerMatchConnection[] = [];
   for (const peerId of seats.keys()) {

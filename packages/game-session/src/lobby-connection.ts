@@ -65,6 +65,12 @@ export interface LobbyConnection {
   startMatch(): void;
   onChange(handler: () => void): void;
   onMatchStarting(handler: (start: MatchStarting) => void): void;
+  /**
+   * The match on now, for this player to watch from no team (#480): its
+   * room, to hand to `watchMatch`. `undefined` with no match on, or for a
+   * player seated in it, who plays it instead.
+   */
+  watchMatch(): MatchStarting | undefined;
   /** The host's own player alone: why the start it asked for did not happen. */
   onStartRejected(handler: (reason: string) => void): void;
   /** The lobby is over for this player, and why. */

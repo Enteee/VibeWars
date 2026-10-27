@@ -295,8 +295,9 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         return;
       }
       match.host.advance(seconds);
-      // Over, or everyone walked out of it: either way, back to the lobby.
-      if (match.host.phase === "finished" || match.host.abandoned) {
+      // Over, and its observers shown the end as late as the rest (#480), or
+      // everyone walked out of it: either way, back to the lobby.
+      if (match.host.drained || match.host.abandoned) {
         // Back to the lobby: teams kept, so sides are not re-picked every
         // round, and ready cleared, so nobody is dragged into a match
         // they did not confirm.

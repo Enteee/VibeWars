@@ -20,7 +20,9 @@
     "rejoin-challenge",
     "rejoin-proof",
     "call",
-    "calls"
+    "calls",
+    "watch",
+    "watching"
   ],
   "statusIds": [
     "anthem-of-flame",
@@ -123,6 +125,8 @@
         { "literal": "rejoin-proof" },
         { "literal": "skill-bar" },
         { "literal": "snapshot" },
+        { "literal": "watch" },
+        { "literal": "watching" },
         { "literal": "welcome" }
       ]
     },
@@ -722,6 +726,65 @@
       "properties": [
         { "name": "playerId", "optional": false, "type": "string" },
         { "name": "proof", "optional": false, "type": "string" }
+      ]
+    },
+    "PeerWatch": {
+      "properties": [{ "name": "protocolVersion", "optional": false, "type": "string" }]
+    },
+    "PeerWatching": {
+      "properties": [
+        { "name": "delaySeconds", "optional": false, "type": "number" },
+        { "name": "elapsedSeconds", "optional": false, "type": "number" },
+        {
+          "name": "map",
+          "optional": false,
+          "type": {
+            "properties": [
+              { "name": "height", "optional": false, "type": "number" },
+              { "name": "id", "optional": false, "type": "string" },
+              { "name": "name", "optional": false, "type": "string" },
+              {
+                "name": "walls",
+                "optional": false,
+                "type": {
+                  "array": {
+                    "union": [
+                      {
+                        "properties": [
+                          { "name": "height", "optional": false, "type": "number" },
+                          { "name": "kind", "optional": false, "type": { "literal": "rect" } },
+                          { "name": "width", "optional": false, "type": "number" },
+                          { "name": "x", "optional": false, "type": "number" },
+                          { "name": "y", "optional": false, "type": "number" }
+                        ]
+                      },
+                      {
+                        "properties": [
+                          { "name": "kind", "optional": false, "type": { "literal": "polygon" } },
+                          {
+                            "name": "points",
+                            "optional": false,
+                            "type": {
+                              "array": {
+                                "properties": [
+                                  { "name": "x", "optional": false, "type": "number" },
+                                  { "name": "y", "optional": false, "type": "number" }
+                                ]
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              },
+              { "name": "width", "optional": false, "type": "number" }
+            ]
+          }
+        },
+        { "name": "protocolVersion", "optional": false, "type": "string" },
+        { "name": "tickIntervalMs", "optional": false, "type": "number" }
       ]
     },
     "PeerWelcome": {

@@ -46,6 +46,8 @@ export const CHANNELS = [
   "rejoin-proof",
   "call",
   "calls",
+  "watch",
+  "watching",
 ] as const;
 
 export type Channel = (typeof CHANNELS)[number];
@@ -170,6 +172,29 @@ export interface PeerWelcome {
    * snapshot, so a recharge told along with it counts down from now, not
    * from the start of the match.
    */
+  readonly elapsedSeconds: number;
+  readonly map: MapDescriptor;
+}
+
+/**
+ * Client to host: watch this match, seatless, without influence (#480).
+ * The host answers `watching`, or refuses as it refuses a hello.
+ */
+export interface PeerWatch {
+  /** `PROTOCOL_VERSION`; the host refuses any other, so it is not checked here. */
+  readonly protocolVersion: string;
+}
+
+/**
+ * Host to an observer: it is watching, on `map`. What follows is every
+ * other player's stream, `snapshot`, `combat` and `ended`, each sent
+ * `delaySeconds` after it happened.
+ */
+export interface PeerWatching {
+  readonly protocolVersion: string;
+  readonly tickIntervalMs: number;
+  readonly delaySeconds: number;
+  /** The match time the observer sees now, `delaySeconds` behind the match. */
   readonly elapsedSeconds: number;
   readonly map: MapDescriptor;
 }
@@ -783,6 +808,39 @@ export function parsePeerWelcome(value: unknown): PeerWelcome | undefined {
         playerId: raw.playerId,
         rejoinToken: raw.rejoinToken,
         tickIntervalMs: raw.tickIntervalMs,
+        elapsedSeconds: raw.elapsedSeconds,
+        map,
+      };
+}
+
+export function parsePeerWatch(value: unknown): PeerWatch | undefined {
+  const raw = fields(value);
+  return raw !== undefined && isString(raw.protocolVersion)
+    ? { protocolVersion: raw.protocolVersion }
+    : undefined;
+}
+
+export function parsePeerWatching(value: unknown): PeerWatching | undefined {
+  const raw = fields(value);
+  if (
+    raw === undefined ||
+    !isString(raw.protocolVersion) ||
+    !isNumber(raw.tickIntervalMs) ||
+    raw.tickIntervalMs <= 0 ||
+    !isNumber(raw.delaySeconds) ||
+    raw.delaySeconds < 0 ||
+    !isNumber(raw.elapsedSeconds) ||
+    raw.elapsedSeconds < 0
+  ) {
+    return undefined;
+  }
+  const map = parseMap(raw.map);
+  return map === undefined
+    ? undefined
+    : {
+        protocolVersion: raw.protocolVersion,
+        tickIntervalMs: raw.tickIntervalMs,
+        delaySeconds: raw.delaySeconds,
         elapsedSeconds: raw.elapsedSeconds,
         map,
       };

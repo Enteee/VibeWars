@@ -24,17 +24,22 @@ import {
   parsePeerCall,
   parsePeerHello,
   parsePeerRejoinProof,
+  parsePeerWatch,
+  type Channel,
   type MapDescriptor,
   type PeerHello,
   type PeerRefuse,
   type PeerRejoinChallenge,
+  type PeerWatching,
   type PeerWelcome,
   type RechargeSlot,
   type SkillBarSlot,
   type WireEnded,
   type WirePlayer,
   type WireSkillBar,
+  type WireCombatBatch,
   type WireSnapshot,
+  type WireSnapshotPart,
 } from "@vibewars/game-protocol";
 
 import { createCallBoard, type Team } from "./calls.js";
@@ -79,6 +84,13 @@ export const RECONNECT_WINDOW_SECONDS = 30;
 /** What the players are shown when the host turns them away. */
 export const MATCH_FULL_MESSAGE = "This match is full.";
 export const MATCH_OVER_MESSAGE = "This match is over.";
+export const WATCH_FULL_MESSAGE = "Nobody else can watch this match.";
+
+/**
+ * How far behind the match an observer sees it (#480), so one in voice
+ * with a player cannot call the other team's moves.
+ */
+export const OBSERVER_DELAY_SECONDS = 10;
 
 /** The arena, already built from game-maps by the caller: game-session does not depend on it. */
 export interface HostMap {
@@ -108,6 +120,8 @@ export interface MatchHostOptions {
    * seats whoever says hello, on alternating teams.
    */
   readonly seats: PlannedSeats | null;
+  /** How late observers are sent the match: `OBSERVER_DELAY_SECONDS`, or 0 in a test. */
+  readonly observerDelaySeconds: number;
 }
 
 /** A lobby's seating for its match: each seated peer's team and sanitised name. */
@@ -123,6 +137,11 @@ export interface MatchHost {
    * ends it, as the server did with a room everyone left.
    */
   readonly abandoned: boolean;
+  /**
+   * Over, and every observer has been sent the end too (#480): until
+   * then a finished match still needs `advance`, to play out its delay.
+   */
+  readonly drained: boolean;
   /** Tell every peer the match is over because the host left, then leave. */
   close(reason: "host-left"): Promise<void>;
 }
@@ -152,6 +171,9 @@ interface Challenge {
   readonly nonce: string;
   readonly hello: PeerHello;
 }
+
+/** One tick's stream, as its players were sent it: what observers get, late. */
+type Frame = readonly (readonly [Channel, WireSnapshotPart | WireCombatBatch | WireEnded])[];
 
 function round(value: number, places: number): number {
   const scale = 10 ** places;
@@ -197,9 +219,19 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
    * per tick, whatever it sends.
    */
   const callsDirty = new Set<Team>();
+  /** The peers watching (#480): no seat, no participant, nothing they send applied. */
+  const observers = new Set<string>();
+  const delayTicks = Math.round(options.observerDelaySeconds / TICK_SECONDS);
+  /**
+   * What each tick sent its players, oldest first, until it is
+   * `delayTicks` old and goes to the observers: one buffer for the match,
+   * however many watch.
+   */
+  const delayed: Frame[] = [];
   let seated = 0;
   let accumulator = 0;
   let finished = false;
+  let closed = false;
 
   const nowMs = (): number => sim.elapsedSeconds * 1000;
 
@@ -339,6 +371,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       skillBar: undefined,
     };
     seats.set(playerId, seat);
+    observers.delete(peerId);
     welcome(seat, peerId);
   };
 
@@ -373,6 +406,39 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       return;
     }
     join(hello, from);
+  });
+
+  transport.on("watch", (data, from) => {
+    // Charged like a hello: every watch may send a whole map back.
+    if (!budget.take(from, nowMs()) || departed.has(from)) {
+      return;
+    }
+    if (helloProtocolVersion(data) !== PROTOCOL_VERSION) {
+      refuse(from, "protocol-mismatch", PROTOCOL_MISMATCH_MESSAGE);
+      return;
+    }
+    // A player plays its own match; it does not watch it as well.
+    if (parsePeerWatch(data) === undefined || seatOfPeer.has(from) || planned?.has(from)) {
+      return;
+    }
+    if (finished) {
+      refuse(from, "match-over", MATCH_OVER_MESSAGE);
+      return;
+    }
+    // Room for the seats the lobby planned, and the rest may watch.
+    if (!observers.has(from) && observers.size >= maxPlayers - (planned?.size ?? seats.size)) {
+      refuse(from, "match-full", WATCH_FULL_MESSAGE);
+      return;
+    }
+    observers.add(from);
+    const message: PeerWatching = {
+      protocolVersion: PROTOCOL_VERSION,
+      tickIntervalMs: 1000 / RULESET.tickRateHz,
+      delaySeconds: delayTicks * TICK_SECONDS,
+      elapsedSeconds: Math.max(0, sim.elapsedSeconds - delayTicks * TICK_SECONDS),
+      map: map.descriptor,
+    };
+    transport.send("watching", message, from);
   });
 
   /** Whether `peerId` may take `seat`: it plays no other seat. */
@@ -509,7 +575,10 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
 
   transport.on("bye", (data, from) => {
     const seat = seatOfPeer.get(from);
-    if (!budget.take(from, nowMs()) || seat === undefined || parsePeerBye(data) === undefined) {
+    if (!budget.take(from, nowMs()) || parsePeerBye(data) === undefined) {
+      return;
+    }
+    if (observers.delete(from) || seat === undefined) {
       return;
     }
     // The player meant to go: there is nothing to hold the seat for.
@@ -525,6 +594,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     awaited.delete(peerId);
     challenges.delete(peerId);
     proving.delete(peerId);
+    observers.delete(peerId);
     const seat = seatOfPeer.get(peerId);
     if (seat === undefined) {
       return;
@@ -627,37 +697,74 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       sendCalls(team);
     }
     callsDirty.clear();
-    for (const part of packSnapshot(snapshot(), MAX_MESSAGE_BYTES)) {
-      transport.send("snapshot", part);
-    }
-    for (const batch of packCombat(wireCombat(result.log), MAX_MESSAGE_BYTES, MAX_WIRE_COMBATS)) {
-      transport.send("combat", batch);
-    }
-    for (const seat of seats.values()) {
-      sendSkillBar(seat, false);
-      sendRecharges(seat, false);
-    }
+    const frame: (readonly [Channel, WireSnapshotPart | WireCombatBatch | WireEnded])[] = [
+      ...packSnapshot(snapshot(), MAX_MESSAGE_BYTES).map((part) => ["snapshot", part] as const),
+      ...packCombat(wireCombat(result.log), MAX_MESSAGE_BYTES, MAX_WIRE_COMBATS).map(
+        (batch) => ["combat", batch] as const,
+      ),
+    ];
     if (result.phase === "finished") {
       finished = true;
       const ended: WireEnded = {
         winningTeam: wireTeam(sim.outcome.winningTeam),
         endReason: sim.outcome.reason ?? "time",
       };
-      transport.send("ended", ended);
+      frame.push(["ended", ended]);
+    }
+    // Each player its own copy, never a broadcast: anyone else in the room
+    // would see the match live, and an observer must not (#480).
+    for (const seat of seats.values()) {
+      if (seat.peerId !== undefined) {
+        sendFrame(frame, seat.peerId);
+      }
+    }
+    if (!finished) {
+      for (const seat of seats.values()) {
+        sendSkillBar(seat, false);
+        sendRecharges(seat, false);
+      }
+    }
+    delayed.push(frame);
+    releaseDelayed();
+  };
+
+  /** `frame`'s messages to `peerId`, in the order its tick made them. */
+  const sendFrame = (frame: Frame, peerId: string): void => {
+    for (const [channel, data] of frame) {
+      transport.send(channel, data, peerId);
     }
   };
 
+  /**
+   * Hand the observers the oldest frame once it is `delayTicks` old, one
+   * a tick. Once the match is over every frame left is due, still one a
+   * tick, so the end reaches them as late as the rest did.
+   */
+  const releaseDelayed = (): void => {
+    const frame = delayed.length > (finished ? 0 : delayTicks) ? delayed.shift() : undefined;
+    if (frame === undefined) {
+      return;
+    }
+    for (const observer of observers) {
+      sendFrame(frame, observer);
+    }
+  };
+
+  /** Over, and nobody is still being sent the end of it. */
+  const drained = (): boolean => finished && (delayed.length === 0 || observers.size === 0);
+
   return {
     advance(seconds) {
-      if (finished) {
+      if (closed || drained()) {
         return;
       }
-      const drained = drainAccumulator(accumulator, seconds, TICK_SECONDS);
-      accumulator = drained.remainder;
-      for (let i = 0; i < drained.ticks; i += 1) {
-        tick();
-        if (sim.phase === "finished") {
-          return;
+      const due = drainAccumulator(accumulator, seconds, TICK_SECONDS);
+      accumulator = due.remainder;
+      for (let i = 0; i < due.ticks && !drained(); i += 1) {
+        if (finished) {
+          releaseDelayed();
+        } else {
+          tick();
         }
       }
     },
@@ -667,9 +774,13 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     get abandoned() {
       return planned !== null && awaited.size === 0 && seats.size === 0;
     },
+    get drained() {
+      return drained();
+    },
     async close(reason) {
       // Nothing more is ticked onto a transport that has left.
       finished = true;
+      closed = true;
       const ended: WireEnded = { winningTeam: null, endReason: reason };
       transport.send("ended", ended);
       await transport.leave();
