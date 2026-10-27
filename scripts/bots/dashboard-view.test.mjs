@@ -112,17 +112,17 @@ describe("boardLines", () => {
     expect(lines.find((line) => line.startsWith("Ready"))).toMatch(/Ready\s+10$/);
   });
 
-  it("lists Blocked's cards first, under the header, in red (#639)", () => {
+  it("lists Blocked's cards first, under the header and the No Status count, in red (#639)", () => {
     const lines = boardLines(snapshot({ Blocked: 2, QA: 1 }), [...COLUMNS, "Blocked"], EVERYONE, {
       rows: 40,
       width: 60,
     });
-    expect(lines.map(plain).slice(1, 4)).toEqual([
+    expect(lines.map(plain).slice(2, 5)).toEqual([
       "Blocked         2",
       "  #1    Blocked card 0",
       "  #2    Blocked card 1",
     ]);
-    expect(lines[1]).toContain("\u001B[1;31m");
+    expect(lines[2]).toContain("\u001B[1;31m");
   });
 
   it("shows exactly the three most recently done, by rev then number, and no count", () => {
@@ -154,7 +154,7 @@ describe("boardLines", () => {
   });
 
   it("fills the pane, cuts with … +N more, and keeps every column visible", () => {
-    const rows = 16;
+    const rows = 17;
     const lines = boardLines(
       snapshot({ "In Progress": 9, "In Review": 4, QA: 3, Done: 3 }),
       COLUMNS,
@@ -162,8 +162,9 @@ describe("boardLines", () => {
       { rows, width: 60 },
     ).map(plain);
     expect(lines).toHaveLength(rows);
-    // 16 rows: a header, six column lines, three done; six left. One card
-    // each, then a "more" line each, then the rest to In Progress.
+    // 17 rows: a header, No Status, six column lines, three done; six
+    // left. One card each, then a "more" line each, then the rest to In
+    // Progress.
     for (const column of ["In Progress", "In Review", "QA"]) {
       const at = lines.findIndex((line) => line.startsWith(column));
       expect(lines[at + 1], column).toContain(`${column} card 0`);
@@ -224,13 +225,95 @@ describe("boardLines", () => {
   });
 
   it("shows only counts in a tiny pane", () => {
-    const lines = boardLines(snapshot({ "In Progress": 3, Done: 3 }), COLUMNS, EVERYONE, {
+    // Short: every line a count, as many as fit.
+    const short = boardLines(snapshot({ "In Progress": 3, Done: 3 }), COLUMNS, EVERYONE, {
       rows: 7,
       width: 60,
     }).map(plain);
-    expect(lines).toHaveLength(7);
-    expect(lines.some((line) => / card \d/.test(line))).toBe(false);
-    expect(lines.at(-1)).toBe("Done 3");
+    expect(short).toHaveLength(7);
+    expect(short.some((line) => / card \d/.test(line))).toBe(false);
+    // Narrow: room for every count, Done's last.
+    const narrow = boardLines(snapshot({ "In Progress": 3, Done: 3 }), COLUMNS, EVERYONE, {
+      rows: 20,
+      width: 29,
+    }).map(plain);
+    expect(narrow).toHaveLength(8);
+    expect(narrow.some((line) => / card \d/.test(line))).toBe(false);
+    expect(narrow.at(-1)).toBe("Done 3");
+  });
+
+  describe("No Status (#520)", () => {
+    /**
+     * `board` with cards in no column added: `issues` issues and `others`
+     * pull requests, half with no status field and half with "".
+     *
+     * @param {ReturnType<typeof snapshot>} board
+     * @param {number} issues
+     * @param {number} others
+     */
+    function unplaced(board, issues, others) {
+      const card = (/** @type {string} */ type, /** @type {number} */ index) => ({
+        rev: 1,
+        item: {
+          ...(index % 2 === 0 ? {} : { status: "" }),
+          content: { type, number: 900 + index, title: `${type} ${String(index)}` },
+        },
+      });
+      return {
+        ...board,
+        cards: [
+          ...board.cards,
+          ...Array.from({ length: issues }, (_, i) => card("Issue", i)),
+          ...Array.from({ length: others }, (_, i) => card("PullRequest", issues + i)),
+        ],
+      };
+    }
+
+    it("counts issues in no column, not pull requests, bold yellow before Backlog", () => {
+      const lines = boardLines(unplaced(snapshot({ Backlog: 3 }), 2, 1), COLUMNS, EVERYONE, {
+        rows: 40,
+        width: 60,
+      });
+      const at = lines.map(plain).findIndex((line) => line.startsWith("Backlog"));
+      expect(plain(lines[at - 1] ?? "")).toBe("No Status       2");
+      expect(lines[at - 1]).toContain("\u001B[1;33m");
+      // Only the count: no card lines for them.
+      expect(lines.some((line) => line.includes("Issue 0"))).toBe(false);
+    });
+
+    it("is there, dim, at 0", () => {
+      const lines = boardLines(snapshot({ Backlog: 3 }), COLUMNS, EVERYONE, {
+        rows: 40,
+        width: 60,
+      });
+      expect(plain(lines[1] ?? "")).toBe("No Status       0");
+      expect(lines[1]).toContain("\u001B[2m");
+    });
+
+    it("takes its row from the listed columns, not the header or Done", () => {
+      // Header, No Status, six columns and three done: 11 fixed, so In
+      // Progress has two rows left: one card and how many more.
+      const board = unplaced(snapshot({ "In Progress": 5, Done: 3 }), 1, 0);
+      const lines = boardLines(board, COLUMNS, EVERYONE, { rows: 13, width: 30 }).map(plain);
+      expect(lines).toHaveLength(13);
+      expect(lines[0]).toMatch(/^as of /);
+      expect(lines[1]).toBe("No Status       1");
+      expect(lines.filter((line) => line.includes("In Progress card"))).toHaveLength(1);
+      expect(lines).toContain("  … +4 more");
+      expect(lines.slice(-4)[0]).toBe("Done (last 3)");
+      for (const line of lines) {
+        expect(columnsOf(line), line).toBeLessThanOrEqual(30);
+      }
+    });
+
+    it("is shown in a tiny pane", () => {
+      const lines = boardLines(unplaced(snapshot({ QA: 1 }), 3, 0), COLUMNS, EVERYONE, {
+        rows: 7,
+        width: 30,
+      }).map(plain);
+      expect(lines[1]).toBe("No Status       3");
+      expect(lines.some((line) => / card \d/.test(line))).toBe(false);
+    });
   });
 
   it("says when the board is empty, has no snapshot, or is not set up", () => {

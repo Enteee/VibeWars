@@ -14,6 +14,7 @@ import {
   SLOT_FLASH_MS,
   slotAffordable,
   slotFlashes,
+  wrongWeapon,
 } from "./skill-slot-state.js";
 
 function slot(id: string): SkillSlot {
@@ -311,5 +312,46 @@ describe("slotAffordable (#637)", () => {
     const rush = { ...slot("rush"), energyCost: 0, adrenalineCost: 4 };
     expect(slotAffordable(rush, self({ adrenaline: 3 }))).toBe(false);
     expect(slotAffordable(rush, self({ adrenaline: 4 }))).toBe(true);
+  });
+});
+
+describe("wrongWeapon (#417)", () => {
+  // Swift Chop needs an axe, Barrage a bow, Distracting Blow any melee weapon.
+  const bar = [
+    slot("warrior.swift-chop"),
+    slot("ranger.barrage"),
+    slot("warrior.distracting-blow"),
+    slot("elementalist.fireball"),
+    null,
+  ];
+
+  it("marks an attack skill the weapon in hand cannot use, and nothing else", () => {
+    expect(wrongWeapon(bar, self({ weaponId: "axe" }))).toEqual([false, true, false, false, false]);
+    expect(wrongWeapon(bar, self({ weaponId: "longbow" }))).toEqual([
+      true,
+      false,
+      true,
+      false,
+      false,
+    ]);
+    expect(wrongWeapon(bar, self({ weaponId: "sword" }))).toEqual([
+      true,
+      true,
+      false,
+      false,
+      false,
+    ]);
+  });
+
+  it("marks every attack skill for fists, no weapon or one this client does not know", () => {
+    for (const weaponId of ["unarmed", undefined, "trebuchet"]) {
+      expect(wrongWeapon(bar, self({ weaponId })), String(weaponId)).toEqual([
+        true,
+        true,
+        true,
+        false,
+        false,
+      ]);
+    }
   });
 });

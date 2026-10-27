@@ -23,6 +23,7 @@ function entry(target: number, padding = 0): WireCombat {
         statusId: null,
         durationSeconds: null,
         crit: null,
+        fromId: null,
       },
     ],
   };

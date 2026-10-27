@@ -155,6 +155,7 @@ function hit(
       statusId: null,
       durationSeconds: null,
       crit: true,
+      fromId: null,
     },
     {
       kind: "status-applied",
@@ -164,6 +165,7 @@ function hit(
       statusId: longest(STATUS_IDS),
       durationSeconds: FLOAT,
       crit: null,
+      fromId: null,
     },
   ];
   return events.map((event) => ({ ...event, ...extra }));

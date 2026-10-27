@@ -7,7 +7,7 @@ export { CastState } from "./cast-state.js";
 export { IMPLEMENTED_SKILLS, SKILLS_BY_ID, getSkill } from "./catalog.js";
 
 export type { EffectDescription, MagnitudeDescription, SkillDescription } from "./describe.js";
-export { describeSkill, describeStatus, formatScalingRange } from "./describe.js";
+export { describeSkill, describeStatus, formatScalingRange, neededWeaponText } from "./describe.js";
 
 export type { MissingMechanic, SkillCoverage, UnimplementedSkill } from "./coverage.js";
 export {
@@ -32,7 +32,9 @@ export { resolveMagnitude, resolveMagnitudeAtRanks } from "./scaling.js";
 
 export type {
   ActiveStatus,
+  ArmorReduction,
   BlockRule,
+  Outbreak,
   StatusCategory,
   StatusDefinition,
   StatusId,
@@ -53,6 +55,7 @@ export {
 
 export {
   advanceStatuses,
+  armorReductionOf,
   attackMissChanceOf,
   blockChanceOf,
   effectiveActivationSeconds,

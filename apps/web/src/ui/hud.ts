@@ -3,8 +3,8 @@ import {
   getSkill,
   getWeapon,
   maxHealthLossOfStatusIds,
+  neededWeaponText,
   type ActivationRejection,
-  type AttackWeaponClass,
   type Segment,
 } from "@vibewars/game-core";
 import type { CastRefusedMessage } from "@vibewars/game-protocol";
@@ -24,6 +24,7 @@ import {
   professionIcon,
   skillBadgeHtml,
   skillIcon,
+  skillIconHtml,
   soundIcon,
   weaponIcon,
 } from "./icons.js";
@@ -37,6 +38,7 @@ import {
   paintCastFill,
   paintKnockdown,
   slotAffordable,
+  wrongWeapon,
 } from "./skill-slot-state.js";
 import { createSlotTooltips, type SlotTooltips } from "./slot-tooltip.js";
 
@@ -329,18 +331,6 @@ const ATTACK_REFUSALS: Readonly<Partial<Record<ActivationRejection, string>>> = 
   "invalid-target-ally": "You can only attack an enemy.",
 };
 
-/** An attack skill refused for the weapon in hand names the one it needs (ADR-0029). */
-const NEEDS: Readonly<Record<AttackWeaponClass, string>> = {
-  axe: "Needs an axe.",
-  sword: "Needs a sword.",
-  hammer: "Needs a hammer.",
-  daggers: "Needs daggers.",
-  scythe: "Needs a scythe.",
-  spear: "Needs a spear.",
-  bow: "Needs a bow.",
-  melee: "Needs a melee weapon.",
-};
-
 /**
  * The line for a refusal as the server sent it. A reason this client does
  * not know (wrong data, not old data) still says something.
@@ -352,7 +342,8 @@ export function describeRefusal(refusal: CastRefusedMessage): string {
   }
   if (refusal.kind === "skill" && reason === "wrong-weapon") {
     const needed = getSkill(refusal.skillId)?.attack?.weapon;
-    return needed === undefined ? REFUSALS[reason] : NEEDS[needed];
+    // An attack skill refused for the weapon in hand names the one it needs (ADR-0029).
+    return needed === undefined ? REFUSALS[reason] : `Needs ${neededWeaponText(needed)}.`;
   }
   return (refusal.kind === "attack" ? ATTACK_REFUSALS[reason] : undefined) ?? REFUSALS[reason];
 }
@@ -386,38 +377,39 @@ export function flashMessage(hud: HudElements, text: string): void {
   );
 }
 
-/** Render the skill bar once; slots are stable for the match's lifetime. */
 /**
- * The inside of one skill-bar button: type badge, and empty hotkey, name
- * and cost spans for the caller to fill as text (the hotkey from the
- * keymap, `renderKeyLabels`). The type comes from game-core's catalogue,
- * so the wire needs no field for it; a skill this client does not know
- * gets no badge.
+ * The inside of one skill-bar button (#719): the skill's icon edge to
+ * edge, and over it an empty hotkey span for `renderKeyLabels` to fill,
+ * the type badge and the out-of-range mark. No name and no cost: the
+ * button's `aria-label` names it and the tooltip prices it (Q77). The
+ * type comes from game-core's catalogue, so the wire needs no field for
+ * it; a skill this client does not know gets the bare plate and no badge.
  */
 export function skillSlotHtml(slot: SkillSlot): string {
   return (
+    skillIconHtml(slot.id, SKILL_SLOT_ICON_PX) +
     `<span class="hud-skill-key"></span>` +
     skillBadgeHtml(slot.id) +
-    `<span class="hud-skill-name"></span>` +
-    `<span class="hud-skill-cost"></span>`
+    `<span class="skill-range-mark" aria-hidden="true"></span>`
   );
 }
 
-/** A slot's price as the bar prints it: adrenaline strikes, or energy. */
-export function slotCostText(slot: SkillSlot): string {
-  return slot.adrenalineCost > 0
-    ? `${String(slot.adrenalineCost)}a`
-    : `${String(slot.energyCost)}e`;
-}
+/** A combat bar slot's icon, px (#719). */
+export const SKILL_SLOT_ICON_PX = 48;
 
+/**
+ * Render the skill bar once; slots are stable for the match's lifetime.
+ * `bar` is read again on each hover, so the tooltip prices a slot as the
+ * host last sent it, a glyph's discount included (#637).
+ */
 export function renderSkillBar(
   hud: HudElements,
-  slots: readonly (SkillSlot | null)[],
+  bar: () => readonly (SkillSlot | null)[],
   ranks: ReadonlyMap<string, number>,
   onUse: (slot: number) => void,
 ): void {
   hud.skillBar.replaceChildren();
-  slots.forEach((slot, index) => {
+  bar().forEach((slot, index) => {
     const button = document.createElement("button");
     button.className = "hud-skill";
     button.type = "button";
@@ -432,18 +424,16 @@ export function renderSkillBar(
     }
     button.innerHTML = skillSlotHtml(slot);
     button.classList.toggle("is-elite", isEliteSkill(slot.id));
-    const nameNode = button.querySelector(".hud-skill-name");
-    const costNode = button.querySelector(".hud-skill-cost");
-    if (nameNode !== null) {
-      nameNode.textContent = slot.name;
-    }
-    if (costNode !== null) {
-      costNode.textContent = slotCostText(slot);
-    }
+    button.setAttribute("aria-label", slot.name);
     button.addEventListener("click", () => {
       onUse(index);
     });
-    hud.slotTips.bind(button, index, slot.id, () => ranks);
+    hud.slotTips.bind(
+      button,
+      index,
+      () => bar()[index] ?? null,
+      () => ranks,
+    );
     hud.skillBar.appendChild(button);
   });
 }
@@ -831,12 +821,13 @@ export function updateHud(
 
   renderTarget(hud, self, target);
 
-  // Grey out skills the player cannot currently afford, and mark those
-  // that cannot reach the target. The server is still the authority on
+  // Grey out skills the player cannot currently afford or the weapon in
+  // hand cannot use (#417), and mark those that cannot reach the target. The server is still the authority on
   // whether a cast is legal — these are hints, not gates (brief §32).
   const buttons = hud.skillBar.querySelectorAll("button");
   const fill = castFill(skillBar, self);
   const far = outOfRange(skillBar, self, target, walls);
+  const unwielded = wrongWeapon(skillBar, self);
   hud.slotTips.casting(fill?.slot);
   paintKnockdown(hud.skillBar, self.knockdownRemaining);
   skillBar.forEach((slot, index) => {
@@ -849,13 +840,7 @@ export function updateHud(
     button.classList.toggle("is-casting", index === fill?.slot);
     paintCastFill(button, index === fill?.slot ? fill.fraction : undefined);
     button.classList.toggle("is-out-of-range", far[index] === true);
-    // The host sends the bar again when a cost changes, as a glyph's
-    // discount comes and goes (#637): the number follows it.
-    const costNode = button.querySelector(".hud-skill-cost");
-    const cost = slotCostText(slot);
-    if (costNode !== null && costNode.textContent !== cost) {
-      costNode.textContent = cost;
-    }
     button.classList.toggle("is-unaffordable", !slotAffordable(slot, self));
+    button.classList.toggle("is-wrong-weapon", unwielded[index] === true);
   });
 }

@@ -60,10 +60,12 @@ export type StatusId =
   | "crippled"
   | "blind"
   | "weakness"
+  | "cracked-armor"
   | "deep-wound"
   | "dazed"
+  | "disease"
   // Hexes / enchantments implemented so far.
-  | "life-drain"
+  | "faintheartedness"
   | "malaise"
   | "regeneration"
   | "blood-ritual"
@@ -119,6 +121,11 @@ export interface StatusDefinition {
   readonly energyPips: number;
   /** Flat armor modifier while active. */
   readonly armorModifier: number;
+  /**
+   * Armor taken before `armorModifier`s add, never below a floor (#763):
+   * Cracked Armor's −20, not below 60. `undefined`: none.
+   */
+  readonly armorReduction: ArmorReduction | undefined;
   /** Movement speed multiplier while active (1 = unaffected). */
   readonly moveSpeedMultiplier: number;
   /**
@@ -160,8 +167,8 @@ export interface StatusDefinition {
   readonly interruptsSpells: boolean;
   /**
    * Multiplier on how long the bearer's attacks take, swings and attack
-   * skills alike; <1 is faster (ADR-0029). No status sets it yet: it is the
-   * hook attack-speed skills plug into.
+   * skills alike; <1 is faster (ADR-0029). "50% slower" is 1.5, as GW1
+   * counts it.
    */
   readonly attackDurationMultiplier: number;
   /** While active, a knockdown does nothing to the bearer (#468). No status sets it yet. */
@@ -188,6 +195,11 @@ export interface StatusDefinition {
    */
   readonly nextSpells: NextSpells | undefined;
   /**
+   * It spreads (#765): every living combatant adjacent to a bearer, on
+   * either team, catches it, once per outbreak. Disease's signature.
+   */
+  readonly spreads: boolean;
+  /**
    * Effects on whoever the bearer's next attack skill hits (#758): a
    * chant's rider, as Anthem of Flame's burning. It ends when that attack
    * skill resolves, hit, miss or block, and applies only on a hit.
@@ -205,6 +217,12 @@ export interface StatusDefinition {
 export interface MaxHealthLoss {
   readonly fraction: number;
   readonly cap: number;
+}
+
+/** Armor taken, but never below `floor`, nor any armor already under it (#763). */
+export interface ArmorReduction {
+  readonly amount: number;
+  readonly floor: number;
 }
 
 /** A glyph's hold on the next spells: how many, and how much cheaper (#526). */
@@ -226,6 +244,7 @@ function define(
     healthPips: 0,
     energyPips: 0,
     armorModifier: 0,
+    armorReduction: undefined,
     moveSpeedMultiplier: 1,
     attackMissChance: 0,
     maxHealthLoss: undefined,
@@ -240,6 +259,7 @@ function define(
     endsAfterAttacks: undefined,
     onAttackHit: [],
     nextSpells: undefined,
+    spreads: false,
     nextAttackSkill: undefined,
     endsWhenBearerAttacks: false,
     ...overrides,
@@ -261,13 +281,21 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     weaponDamageMultiplier: 0.34,
     attributeDelta: -1,
   }),
+  "cracked-armor": define("cracked-armor", "Cracked Armor", "condition", {
+    armorReduction: { amount: 20, floor: 60 },
+  }),
   "deep-wound": define("deep-wound", "Deep Wound", "condition", {
     maxHealthLoss: { fraction: 0.2, cap: 100 },
     healingMultiplier: 0.8,
   }),
   dazed: define("dazed", "Dazed", "condition", { castTimeMultiplier: 2, interruptsSpells: true }),
+  disease: define("disease", "Disease", "condition", { healthPips: -4, spreads: true }),
 
-  "life-drain": define("life-drain", "Life Drain", "hex", { healthPips: -2 }),
+  // Faintheartedness at rank 12: attacks 50% slower, −2 pips (GW1 PvP).
+  faintheartedness: define("faintheartedness", "Faintheartedness", "hex", {
+    healthPips: -2,
+    attackDurationMultiplier: 1.5,
+  }),
   malaise: define("malaise", "Malaise", "hex", { energyPips: -1 }),
   regeneration: define("regeneration", "Regeneration", "enchantment", { healthPips: 4 }),
   "blood-ritual": define("blood-ritual", "Blood Ritual", "enchantment", { energyPips: 3 }),
@@ -318,6 +346,18 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   }),
 };
 
+/**
+ * One application of a spreading status by a skill, and everyone it has
+ * reached (#765): the bearer it was applied to, and each combatant that
+ * caught it since. Shared by every copy it spread to, so a cured
+ * combatant still next to a carrier of the same outbreak is not caught
+ * again. A new cast is a new outbreak. Compared by identity, so it needs
+ * no id, and it is gone once no status holds it.
+ */
+export interface Outbreak {
+  readonly infected: Set<string>;
+}
+
 export interface ActiveStatus {
   readonly id: StatusId;
   /** Seconds of duration still remaining. */
@@ -329,6 +369,8 @@ export interface ActiveStatus {
   /** Who applied it — needed so a future "when this ends, heal the caster"
    *  effect knows whom to credit. */
   readonly sourceId: string;
+  /** The outbreak it belongs to, for a status that spreads; `null` for every other. */
+  outbreak: Outbreak | null;
 }
 
 export function isStatusId(value: unknown): value is StatusId {
@@ -374,6 +416,9 @@ export class StatusSet {
    * category the new one replaces every one of its category, itself
    * included, at the incoming duration (a stance, #523).
    *
+   * A status that spreads starts a new outbreak, even where the duration
+   * already running is the longer one: a new cast is a new outbreak (#765).
+   *
    * Returns whether it is newly on the bearer: `false` for a refresh, or
    * for a duration of nothing. What a status does once, as it lands
    * (deep wound's health), hangs on this.
@@ -383,22 +428,49 @@ export class StatusSet {
       return false;
     }
     const wasActive = this.#statuses.has(id);
-    const { category } = getStatusDefinition(id);
-    if (EXCLUSIVE_CATEGORIES.has(category)) {
-      this.removeByCategory(category);
+    const definition = getStatusDefinition(id);
+    if (EXCLUSIVE_CATEGORIES.has(definition.category)) {
+      this.removeByCategory(definition.category);
     }
     const existing = this.#statuses.get(id);
+    const outbreak = definition.spreads ? { infected: new Set<string>() } : null;
     if (existing !== undefined && existing.remainingSeconds >= durationSeconds) {
+      existing.outbreak = outbreak;
       return false;
     }
     this.#statuses.set(id, {
       id,
       remainingSeconds: durationSeconds,
-      attacksLeft: getStatusDefinition(id).endsAfterAttacks,
-      spellsLeft: getStatusDefinition(id).nextSpells?.count,
+      attacksLeft: definition.endsAfterAttacks,
+      spellsLeft: definition.nextSpells?.count,
       sourceId,
+      outbreak,
     });
     return !wasActive;
+  }
+
+  /**
+   * Catch a spreading status from a bearer of `outbreak` (#765). The
+   * longer duration wins, as for `apply`, but a combatant already
+   * carrying it keeps the outbreak it has.
+   */
+  public catch(id: StatusId, durationSeconds: number, sourceId: string, outbreak: Outbreak): void {
+    if (durationSeconds <= 0) {
+      return;
+    }
+    const existing = this.#statuses.get(id);
+    if (existing !== undefined) {
+      existing.remainingSeconds = Math.max(existing.remainingSeconds, durationSeconds);
+      return;
+    }
+    this.#statuses.set(id, {
+      id,
+      remainingSeconds: durationSeconds,
+      attacksLeft: undefined,
+      spellsLeft: undefined,
+      sourceId,
+      outbreak,
+    });
   }
 
   /** Remove every status, of every category: what a respawn leaves. */
@@ -542,6 +614,8 @@ export interface StatusModifiers {
   /** Every status's energy pips, summed and not yet clamped. */
   readonly energyPips: number;
   readonly armorModifier: number;
+  /** The largest armor reduction; `undefined`: none. */
+  readonly armorReduction: ArmorReduction | undefined;
   readonly moveSpeedMultiplier: number;
   readonly attackMissChance: number;
   /** The largest single status's: losses do not add up. */
@@ -565,8 +639,8 @@ export const HEALING_MULTIPLIER_FLOOR = 0.6;
  * multiply; miss chance takes the
  * worst rather than compounding, so two blinding effects cannot push a
  * player past certain failure in a way that feels arbitrary. A maximum
- * health loss is the largest single one, and healing is floored at
- * `HEALING_MULTIPLIER_FLOOR`.
+ * health loss and an armor reduction are each the largest single one,
+ * and healing is floored at `HEALING_MULTIPLIER_FLOOR`.
  * Attack duration is GW1's rule: only the strongest speed-up and the
  * strongest slow-down count, and they multiply.
  */
@@ -574,6 +648,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let healthPips = 0;
   let energyPips = 0;
   let armorModifier = 0;
+  let armorReduction: ArmorReduction | undefined;
   let moveSpeedMultiplier = 1;
   let attackMissChance = 0;
   let maxHealthLoss: MaxHealthLoss | undefined;
@@ -589,6 +664,12 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     healthPips += def.healthPips;
     energyPips += def.energyPips;
     armorModifier += def.armorModifier;
+    if (
+      def.armorReduction !== undefined &&
+      (armorReduction === undefined || def.armorReduction.amount > armorReduction.amount)
+    ) {
+      armorReduction = def.armorReduction;
+    }
     moveSpeedMultiplier *= def.moveSpeedMultiplier;
     attackMissChance = Math.max(attackMissChance, def.attackMissChance);
     if (
@@ -609,6 +690,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     healthPips,
     energyPips,
     armorModifier,
+    armorReduction,
     moveSpeedMultiplier,
     attackMissChance,
     maxHealthLoss,

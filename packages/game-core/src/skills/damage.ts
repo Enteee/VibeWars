@@ -2,6 +2,7 @@ import { isElementalDamage, isPhysicalDamage, type DamageType } from "../equipme
 import type { ArmorCondition } from "../equipment/insignias.js";
 import type { CombatRules } from "../ruleset.js";
 import { aggregateModifiers } from "./status.js";
+import { armorReductionOf } from "./tick.js";
 import type { Combatant } from "./types.js";
 
 /**
@@ -62,7 +63,15 @@ export function effectiveArmor(target: Combatant, packet: DamagePacket): number 
     }
   }
 
-  // Weakness (-20) and Armor of Earth (+24) reach a consumer here for
+  // Cracked Armor (#763) before status modifiers: −20, never below 60,
+  // and never a raise for armor already under it. Armor of Earth then
+  // adds its full +24 even to a cracked caster.
+  const reduction = armorReductionOf(target);
+  if (reduction !== undefined) {
+    armor -= Math.min(reduction.amount, Math.max(0, armor - reduction.floor));
+  }
+
+  // Armor of Earth (+24) and Healing Signet (−40) reach a consumer here for
   // the first time.
   armor += aggregateModifiers(target.statuses.active).armorModifier;
 

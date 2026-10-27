@@ -44,6 +44,7 @@ describe("status definitions", () => {
         def.healthPips !== 0 ||
         def.energyPips !== 0 ||
         def.armorModifier !== 0 ||
+        def.armorReduction !== undefined ||
         def.moveSpeedMultiplier !== 1 ||
         def.attackMissChance !== 0 ||
         def.maxHealthLoss !== undefined ||
@@ -91,7 +92,8 @@ describe("status definitions", () => {
       bleeding: -3,
       burning: -7,
       poison: -4,
-      "life-drain": -2,
+      disease: -4,
+      faintheartedness: -2,
       regeneration: 4,
       "weapon-of-warding": 4,
     });
@@ -111,7 +113,7 @@ describe("status definitions", () => {
   it("makes enchantments beneficial and hexes/conditions detrimental", () => {
     expect(getStatusDefinition("regeneration").healthPips).toBeGreaterThan(0);
     expect(getStatusDefinition("armor-boost").armorModifier).toBeGreaterThan(0);
-    expect(getStatusDefinition("life-drain").healthPips).toBeLessThan(0);
+    expect(getStatusDefinition("faintheartedness").healthPips).toBeLessThan(0);
   });
 });
 
@@ -340,10 +342,11 @@ describe("attack duration (ADR-0029)", () => {
     });
   }
 
-  it("is 1 with nothing on, and no catalog status sets it", () => {
+  it("is 1 with nothing on, and only Faintheartedness sets it: 50% slower (#493)", () => {
     expect(aggregateModifiers([]).attackDurationMultiplier).toBe(1);
     for (const id of ALL_STATUS_IDS) {
-      expect(getStatusDefinition(id).attackDurationMultiplier, id).toBe(1);
+      const expected = id === "faintheartedness" ? 1.5 : 1;
+      expect(getStatusDefinition(id).attackDurationMultiplier, id).toBe(expected);
     }
   });
 

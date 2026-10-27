@@ -72,8 +72,8 @@ import {
   type LogRow,
   type MeterTotals,
 } from "./combat-readouts.js";
-import { describeRefusal, MESSAGE_SECONDS } from "./hud.js";
-import { isEliteSkill, skillBadgeHtml } from "./icons.js";
+import { describeRefusal, MESSAGE_SECONDS, SKILL_SLOT_ICON_PX } from "./hud.js";
+import { isEliteSkill, skillBadgeHtml, skillIconHtml } from "./icons.js";
 import { createAllyWatch } from "./ally-watch.js";
 import { pipsElement, renderPips } from "./pips.js";
 import { paintRecharge, prefersReducedMotion } from "./recharge-overlay.js";
@@ -85,6 +85,7 @@ import {
   paintKnockdown,
   slotAffordable,
   slotFlashes,
+  wrongWeapon,
 } from "./skill-slot-state.js";
 import { createSlotTooltips } from "./slot-tooltip.js";
 import {
@@ -392,11 +393,23 @@ export function createTrainingPanel(): TrainingPanel {
       button.addEventListener("click", () => {
         cast(index);
       });
-      // The ranks read at hover, so a rearm shows at once.
-      slotTips.bind(button, index, slot.id, () => session?.connection.ranks ?? new Map());
+      // The slot and ranks read at hover, so a rearm or a glyph's
+      // discount (#637) shows at once.
+      slotTips.bind(
+        button,
+        index,
+        () => session?.connection.skillBar[index] ?? null,
+        () => session?.connection.ranks ?? new Map(),
+      );
+      // The icon alone, as on the match HUD (#719): the name is the label.
+      button.insertAdjacentHTML("afterbegin", skillIconHtml(slot.id, SKILL_SLOT_ICON_PX));
       button.insertAdjacentHTML("beforeend", skillBadgeHtml(slot.id));
+      button.insertAdjacentHTML(
+        "beforeend",
+        `<span class="skill-range-mark" aria-hidden="true"></span>`,
+      );
       button.classList.toggle("is-elite", isEliteSkill(slot.id));
-      button.append(h("span", "training-skill-name", slot.name));
+      button.setAttribute("aria-label", slot.name);
       return button;
     });
     skills.replaceChildren(...skillButtons);
@@ -430,6 +443,7 @@ export function createTrainingPanel(): TrainingPanel {
     const fill = castFill(slots, self);
     const target = match.players.find((player) => player.sessionId === self.targetSessionId);
     const far = outOfRange(slots, self, target, session?.wallSegments ?? []);
+    const unwielded = wrongWeapon(slots, self);
     slotTips.casting(fill?.slot);
     // Greyed while you lie knocked down, as on the match HUD (#545).
     paintKnockdown(skills, self.knockdownRemaining);
@@ -444,6 +458,7 @@ export function createTrainingPanel(): TrainingPanel {
       button.classList.toggle("is-out-of-range", far[index] === true);
       // A hint, not a gate: the simulation still decides.
       button.classList.toggle("is-unaffordable", !slotAffordable(slot, self));
+      button.classList.toggle("is-wrong-weapon", unwielded[index] === true);
       // The same wipe as the match HUD (#152).
       paintRecharge(button, recharges[index], slot.name, reducedMotion);
     });

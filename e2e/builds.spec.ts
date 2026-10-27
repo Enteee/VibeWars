@@ -716,7 +716,7 @@ test("in a match, an empty slot's key does nothing; the next key casts its own s
   await expect(slots).toHaveCount(8);
   await expect(slots.nth(1)).toHaveClass(/is-empty/);
   await expect(slots.nth(1)).toHaveText(codeLabel(skillKey(1)));
-  await expect(slots.nth(2)).toContainText("Armor of Earth");
+  await expect(slots.nth(2)).toHaveAccessibleName("Armor of Earth");
 
   const full = await energy.textContent();
   await page.keyboard.press(skillKey(1));
@@ -768,12 +768,12 @@ test("a second elite replaces the first on the bar, framed in gold, into the mat
   await page.locator(".selectable-row", { hasText: "Elite" }).click();
   await startSoloMatch(page);
   const hud = page.locator(".hud-skills .hud-skill");
-  await expect(hud.nth(3)).toContainText("Broad Head Arrow");
+  await expect(hud.nth(3)).toHaveAccessibleName("Broad Head Arrow");
   await expect(hud.nth(3)).toHaveClass(/is-elite/);
   await expect(page.locator(".hud-skills .hud-skill.is-elite")).toHaveCount(1);
 });
 
-test("in a match, Glyph of Lesser Energy shows Armor of Earth's discounted cost, then the full one (#637)", async ({
+test("in a match, Glyph of Lesser Energy shows Armor of Earth's discounted cost in its tooltip, then the full one (#637, #719)", async ({
   page,
 }) => {
   // Setup, then up to 45 s for the glyph's 15 s of game time under load.
@@ -790,20 +790,28 @@ test("in a match, Glyph of Lesser Energy shows Armor of Earth's discounted cost,
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await page.locator(".selectable-row", { hasText: "Glyph" }).click();
   await startSoloMatch(page);
-  const armor = page.locator(".hud-skills .hud-skill").nth(1).locator(".hud-skill-cost");
-  await expect(armor).toHaveText("10e");
+  const slot = page.locator(".hud-skills .hud-skill").nth(1);
+  const tip = page.locator(".skill-tip:visible");
+  // The bar shows no cost (#719); the tooltip, read again on each hover, does.
+  const armorCost = async (): Promise<string> => {
+    await page.mouse.move(0, 0);
+    await expect(tip).toHaveCount(0);
+    await slot.hover();
+    return (await tip.locator(".tip-stat", { hasText: "cost" }).textContent()) ?? "";
+  };
+  await expect.poll(armorCost).toBe("cost10 energy");
 
   // The glyph takes 16 off the next two spells: Armor of Earth is free.
   await page.keyboard.press(skillKey(0));
-  await expect(armor).toHaveText("0e");
+  await expect.poll(armorCost).toBe("cost0 energy (10)");
   await page.keyboard.press(skillKey(1));
   await expect(
     page.locator(".hud-skills .hud-skill").nth(1).locator(".recharge-overlay"),
   ).toHaveCount(1);
   // One spell left on it: the cost holds until the glyph's 15 s run out, in
   // game time, which runs slower than wall time under load (#327).
-  await expect(armor).toHaveText("0e");
-  await expect(armor).toHaveText("10e", { timeout: 45_000 });
+  await expect.poll(armorCost).toBe("cost0 energy (10)");
+  await expect.poll(armorCost, { timeout: 45_000 }).toBe("cost10 energy");
 });
 
 /**
@@ -1088,6 +1096,25 @@ test("gear is equipped from a library, like skills are", async ({ page }) => {
   // back to the warrior's own 80.
   await expect(armor).toHaveText("80");
   await expect(page.locator(".gear-slot").nth(1)).toContainText("both hands full");
+});
+
+test("an attack skill for another weapon is flagged on its slot until the weapon fits (#417)", async ({
+  page,
+}) => {
+  // A new character is a warrior with a sword; Swift Chop needs an axe.
+  await newCharacter(page);
+  const slot = page.locator(".skill-slot").first();
+  await page.locator(".skill-box", { hasText: "Swift Chop" }).dragTo(slot);
+  await expect(slot).toContainText("Swift Chop");
+  const warning = slot.locator(".skill-slot-warning");
+  await expect(warning).toHaveText("Needs an axe");
+  await expect(warning).toHaveAttribute("title", "Needs an axe — your weapon is a sword");
+
+  await openGearLibrary(page);
+  await equipFromLibrary(page, "Axe");
+  await expect(page.locator(".gear-slot").first()).toContainText("Axe");
+  await expect(warning).toHaveCount(0);
+  await expect(slot).toContainText("Swift Chop");
 });
 
 test("a weapon can be dragged from the library onto the weapon slot", async ({ page }) => {

@@ -185,6 +185,26 @@ const plates = {
     `<rect x="0.5" y="4" width="23" height="16" rx="8" fill="${C.inkDim}"/>` + glyph(C.plate),
 };
 
+/**
+ * A germ (#765): a body and six knobbed spikes, so it never reads as a sun.
+ * @param {string} c
+ */
+const germ = (c) =>
+  `<circle cx="12" cy="12" r="4.2" fill="${c}"/>` +
+  [-90, -30, 30, 90, 150, 210]
+    .map((deg) => {
+      const a = (deg * Math.PI) / 180;
+      /** @param {number} r */
+      const x = (r) => (12 + r * Math.cos(a)).toFixed(2);
+      /** @param {number} r */
+      const y = (r) => (12 + r * Math.sin(a)).toFixed(2);
+      return (
+        `<path d="M${x(4)} ${y(4)}L${x(7)} ${y(7)}" ${stroke(c, 1.8)}/>` +
+        `<circle cx="${x(8.3)}" cy="${y(8.3)}" r="1.7" fill="${c}"/>`
+      );
+    })
+    .join("");
+
 /** @type {Record<string, [Category, Glyph]>} */
 const status = {
   // Drop.
@@ -218,6 +238,13 @@ const status = {
   ],
   // Arrow down: you hit softer.
   weakness: ["condition", (c) => `<path d="M12 5v13M7 13l5 5 5-5" ${stroke(c, 2.5)}/>`],
+  // A shield split by a crack: your armor gives (#763).
+  "cracked-armor": [
+    "condition",
+    (c) =>
+      `<path d="M6.5 5.5h11v5.5c0 3.5-2.5 5.5-5.5 7.5-3-2-5.5-4-5.5-7.5z" fill="${c}"/>` +
+      `<path d="M12.5 5.5l-2 4 3 2-2.5 4" ${stroke(C.condition, 1.6)}/>`,
+  ],
   // Cross cut.
   "deep-wound": ["condition", (c) => `<path d="M7 7l10 10M17 7L7 17" ${stroke(c, 3)}/>`],
   // Five-point star: seeing stars.
@@ -226,8 +253,10 @@ const status = {
     (c) =>
       `<path d="M12 4.5l2.2 4.6 5 .6-3.7 3.5 1 5L12 15.8l-4.5 2.4 1-5-3.7-3.5 5-.6z" fill="${c}"/>`,
   ],
-  // Hex: a heart, because the hex is on your life.
-  "life-drain": [
+  // A germ: it catches.
+  disease: ["condition", germ],
+  // Hex: a heart, because the hex is on your life and your nerve.
+  faintheartedness: [
     "hex",
     (c) => `<path d="M12 16l-3.6-3.6a2.1 2.1 0 0 1 3.6-3 2.1 2.1 0 0 1 3.6 3z" fill="${c}"/>`,
   ],
@@ -572,6 +601,7 @@ const skillGlyph = {
   flask: () =>
     `<path d="M9.5 3H14.5M10.5 3V9L4.5 19Q3.5 21 6 21H18Q20.5 21 19.5 19L13.5 9V3" ${stroke(C.ink, 2)}/>` +
     inkFill("M7.5 15H16.5L19 19.5H5Z"),
+  germ: () => germ(C.ink),
 };
 
 /** Modifiers, drawn around the bottom right corner on a dark disc. */

@@ -1,0 +1,24 @@
+{
+  "id": "necromancer.weaken-armor",
+  "name": "Weaken Armor",
+  "profession": "necromancer",
+  "attribute": "Curses",
+  "type": "Spell.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "activationSeconds": 0.5,
+  "rechargeSeconds": 5,
+  "description": "Target foe and foes adjacent to your target have Cracked Armor for 5...17...20 seconds.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Necromancer/275-Weaken_Armor",
+    "fetchedAt": "2026-10-27T01:45:58.747Z"
+  },
+  "unmapped": {}
+}

@@ -33,7 +33,8 @@ function row(parent: HTMLElement, label: string, value: string): void {
 const TIP_ICON_PX = 48;
 
 /**
- * A skill's description into `node`: its type, attribute, effect lines
+ * A skill's description into `node`: its type, an attack skill's weapon,
+ * its attribute, effect lines
  * with the span the attribute buys, and its cost, cast, recharge and
  * target. The hover tooltip and a library card's inline details (#567)
  * both show it; the card already names the skill and shows its icon, so
@@ -63,6 +64,14 @@ export function renderSkillDescription(
     node.appendChild(header);
   } else {
     node.appendChild(type);
+  }
+
+  // "Axe attack": the weapon an attack skill needs (#417).
+  if (description.weaponText !== undefined) {
+    const weapon = document.createElement("div");
+    weapon.className = "tip-weapon";
+    weapon.textContent = description.weaponText;
+    node.appendChild(weapon);
   }
 
   // A "No Attribute" skill has no line here, as in GW1 (#445).

@@ -19,11 +19,13 @@ import {
   getSkill,
   getWeapon,
   IMPLEMENTED_SKILLS,
+  neededWeaponText,
   perSlotAmount,
   reconcileEquipment,
   runeDisplayName,
   totalCost,
   weaponReachable,
+  wieldsFor,
   type ArmorSlot,
   type BuildEquipment,
   type InsigniaEffect,
@@ -32,6 +34,7 @@ import {
   type Skill,
   type SkillDescription,
   type SkillType,
+  type WeaponId,
 } from "@vibewars/game-core";
 
 import { loadLayoutLabeller, type KeyLabeller } from "../input/key-labels.js";
@@ -395,6 +398,38 @@ function fitWeapon(
     mainHand: fallback.mainHand,
     offHand: keepOffhand ? equipment.offHand : fallback.offHand,
   };
+}
+
+/**
+ * Why an attack skill on the bar will not work with `weaponId` (#417):
+ * "Needs an axe" on its slot, "Needs an axe — your weapon is a sword"
+ * when hovered. `undefined` when it will, or for a skill that is no
+ * attack. The bar still saves: GW1 lets you carry one for a weapon you
+ * swap to.
+ */
+export function weaponWarning(
+  skill: Skill,
+  weaponId: WeaponId,
+): { readonly badge: string; readonly title: string } | undefined {
+  const needed = skill.attack?.weapon;
+  if (needed === undefined || wieldsFor(weaponId, needed)) {
+    return undefined;
+  }
+  const held = getWeapon(weaponId);
+  const yours =
+    held === undefined || held.id === "unarmed"
+      ? "you have no weapon"
+      : `your weapon is ${withArticle(held.name.toLowerCase())}`;
+  const badge = `Needs ${neededWeaponText(needed)}`;
+  return { badge, title: `${badge} — ${yours}` };
+}
+
+/** "a sword", "an axe", "daggers". */
+function withArticle(name: string): string {
+  if (name.endsWith("s")) {
+    return name;
+  }
+  return /^[aeiou]/.test(name) ? `an ${name}` : `a ${name}`;
 }
 
 /**
@@ -1596,13 +1631,18 @@ function mountSkillBar(panel: HTMLElement, context: EditorContext): Region {
           described.set(slot, description);
         }
         const label = context.slotLabel(slot);
-        const signature = `${label}|${skill === undefined ? "" : `${skill.id}|${description?.cost ?? ""}`}`;
+        const warning =
+          skill === undefined
+            ? undefined
+            : weaponWarning(skill, character.equipment.mainHand.weaponId);
+        const signature = `${label}|${skill === undefined ? "" : `${skill.id}|${description?.cost ?? ""}|${warning?.title ?? ""}`}`;
         if (built.get(slot) === signature) {
           return;
         }
         built.set(slot, signature);
         cell.replaceChildren(h("span", "skill-slot-index", label));
         cell.classList.toggle("is-empty", skill === undefined);
+        cell.classList.toggle("has-weapon-warning", warning !== undefined);
         cell.classList.toggle("is-elite", skill?.elite === true);
         cell.draggable = skill !== undefined;
         if (skill === undefined || description === undefined) {
@@ -1613,6 +1653,12 @@ function mountSkillBar(panel: HTMLElement, context: EditorContext): Region {
         cell.appendChild(h("span", "skill-slot-name", skill.name));
         cell.insertAdjacentHTML("beforeend", skillTypeBadgeHtml(skill.type));
         cell.appendChild(h("span", "skill-slot-cost", description.cost));
+        // An attack skill the weapon cannot use (#417): it still saves.
+        if (warning !== undefined) {
+          const badge = h("span", "skill-slot-warning", warning.badge);
+          badge.title = warning.title;
+          cell.appendChild(badge);
+        }
         const clear = document.createElement("button");
         clear.type = "button";
         clear.className = "skill-slot-clear";

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { IMPLEMENTED_SKILLS, getSkill } from "./catalog.js";
 import { describeSkill, describeStatus, formatScalingRange } from "./describe.js";
-import { makeCombatant } from "./testing.js";
+import { makeCombatant, withAttackDuration } from "./testing.js";
 import { resolveMagnitude } from "./scaling.js";
 import { STATUS_DEFINITIONS } from "./status.js";
 
@@ -121,6 +121,7 @@ describe("describeSkill", () => {
     const ranks = new Map([["warrior.axe-mastery", 12]]);
     const lines = describeSkill(skill("warrior.swift-chop"), ranks).effects.map((e) => e.text);
     expect(lines).toEqual([
+      "+16 damage",
       "If blocked: deals 16 damage",
       expect.stringContaining("If blocked: applies Deep Wound for 20s"),
     ]);
@@ -165,6 +166,7 @@ describe("describeSkill", () => {
       const described = describeSkill(entry);
       expect(described.effects, `${entry.id} lost an effect line`).toHaveLength(
         entry.effects.length +
+          (entry.attack?.bonusDamage === undefined ? 0 : 1) +
           (entry.attack?.onBlocked.length ?? 0) +
           (entry.whileActivating === undefined ? 0 : 1) +
           (entry.projectile === undefined ? 0 : 1),
@@ -173,6 +175,42 @@ describe("describeSkill", () => {
         expect(line.text.length, `${entry.id} has an empty description line`).toBeGreaterThan(0);
       }
     }
+  });
+});
+
+describe("attack skills (#417)", () => {
+  it("names the weapon each attack skill needs", () => {
+    const lines = Object.fromEntries(
+      IMPLEMENTED_SKILLS.filter((entry) => entry.attack !== undefined).map((entry) => [
+        entry.attack?.weapon,
+        describeSkill(entry).weaponText,
+      ]),
+    );
+    expect(lines).toEqual({
+      axe: "Axe attack",
+      bow: "Bow attack",
+      hammer: "Hammer attack",
+      melee: "Melee attack",
+      sword: "Sword attack",
+      spear: "Spear attack",
+    });
+    expect(describeSkill(skill("elementalist.fireball")).weaponText).toBeUndefined();
+  });
+
+  it("words the bonus as +N damage at these ranks, and leads with it", () => {
+    const chop = skill("warrior.swift-chop");
+    const atTwelve = describeSkill(chop, new Map([["warrior.axe-mastery", 12]]));
+    expect(atTwelve.effects[0]).toEqual({
+      text: "+16 damage",
+      magnitude: { current: 16, atZero: 1, atTwelve: 16, attributeId: "warrior.axe-mastery" },
+    });
+    expect(atTwelve.headline).toBe("+16 damage");
+    expect(describeSkill(chop).headline).toBe("+1 damage");
+  });
+
+  it("gives Broad Head Arrow no damage line", () => {
+    const lines = describeSkill(skill("ranger.broad-head-arrow")).effects.map((e) => e.text);
+    expect(lines.some((line) => line.includes("damage"))).toBe(false);
   });
 });
 
@@ -190,6 +228,13 @@ describe("describeStatus", () => {
   it("explains dazed: slower spells, interrupted by attacks (#546)", () => {
     expect(describeStatus("dazed")).toContain("spells take 2× as long to cast");
     expect(describeStatus("dazed")).toContain("spells are interrupted by attacks");
+  });
+
+  it("words attack speed as GW1 does: 50% slower, 33% faster (#493)", () => {
+    expect(describeStatus("faintheartedness")).toContain("attacks 50% slower");
+    withAttackDuration({ bleeding: 0.67 }, () => {
+      expect(describeStatus("bleeding")).toContain("attacks 33% faster");
+    });
   });
 
   it("returns the id for an unknown status rather than throwing", () => {
