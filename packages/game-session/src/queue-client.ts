@@ -15,14 +15,25 @@ import {
   NO_SHOW_IGNORE_MS,
   PROTOCOL_VERSION,
   TICKET_HEARTBEAT_MS,
-  TICKET_TTL_MS,
   teamSizeOf,
   type QueueMode,
   type QueueTicket,
 } from "@vibewars/game-protocol";
 
 import type { QueueBoard, QueueBoardEvent } from "./queue-board.js";
-import { formGroups, groupOf, type FormedGroup } from "./queue-formation.js";
+import { formGroups, groupOf, isLive, type FormedGroup } from "./queue-formation.js";
+
+/**
+ * A ticket's throwaway signing key (ADR-0032 §5, §6), with the private
+ * half shut inside `sign`: nothing here can read it, so nothing here can
+ * hand it out.
+ */
+export interface TicketKey {
+  /** The x-only secp256k1 public key, as 64 lowercase hex digits. */
+  readonly ticketId: string;
+  /** A BIP-340 Schnorr signature of `digest`, as 128 lowercase hex digits. */
+  sign(digest: Uint8Array): string;
+}
 
 export type QueueState =
   /** `searching` players are queued, own included, of the `needed` a match takes. */
@@ -34,8 +45,8 @@ export type QueueState =
     }
   /** A group holds this client; it is waiting out `FORMATION_SETTLE_MS`. */
   | { readonly kind: "forming"; readonly group: FormedGroup }
-  /** The group settled: `secret` is what the caller hosts or joins `group.room` with. */
-  | { readonly kind: "in-lobby"; readonly group: FormedGroup; readonly secret: string }
+  /** The group settled: the caller meets in `group.room` and proves its seat with `key`. */
+  | { readonly kind: "in-lobby"; readonly group: FormedGroup; readonly key: TicketKey }
   /** The lobby never filled: shown for one tick, then `searching` again. */
   | { readonly kind: "fell-through" }
   /** The board has no relay (#707). */
@@ -48,10 +59,11 @@ export interface QueueClientOptions {
   readonly partySize: number;
   /** ms since the epoch. */
   readonly now: () => number;
-  /** In `[0, 1)`, as `Math.random`; the secret is drawn from it. */
-  readonly random: () => number;
-  /** sha256 of `text`, as lowercase hex. */
-  readonly sha256: (text: string) => Promise<string> | string;
+  /**
+   * A fresh throwaway key, one per ticket. The web layer makes it from a
+   * CSPRNG, never `Math.random`: the key is the ticket's credential.
+   */
+  readonly newTicketKey: () => TicketKey;
   /** As `formGroups` takes it, the same on every client. */
   readonly mapPool: readonly string[];
 }
@@ -69,15 +81,14 @@ export interface QueueClient {
   leave(): void;
 }
 
-const SECRET_BYTES = 32;
-
-/** The settled form of a state, to tell a change from the same state again. */
+/** Whether `a` and `b` say the same, to tell a change from the same state again. */
 function same(a: QueueState, b: QueueState): boolean {
+  // A key compares by its id: `sign` does not survive JSON.
   return JSON.stringify(a) === JSON.stringify(b);
 }
 
 export function createQueueClient(options: QueueClientOptions): QueueClient {
-  const { board, mode, partySize, now, random, sha256, mapPool } = options;
+  const { board, mode, partySize, now, newTicketKey, mapPool } = options;
   const needed = 2 * teamSizeOf(mode);
   // A requeue after a fell-through lobby keeps this, and so its place (#854 C7).
   const enteredAt = now();
@@ -88,8 +99,8 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
   const handlers = new Set<(state: QueueState) => void>();
 
   let state: QueueState = { kind: "searching", searching: 0, needed, waitedMs: 0 };
-  /** Own secret and, once hashed, ticket id; replaced on every requeue. */
-  let own: { readonly secret: string; ticketId: string | undefined } = fresh();
+  /** Replaced on every requeue, so every ticket has a key of its own. */
+  let key = newTicketKey();
   let publishedAt = Number.NEGATIVE_INFINITY;
   let publishing = true;
   let settling: { readonly group: FormedGroup; readonly since: number } | undefined;
@@ -107,36 +118,9 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
     }
   }
 
-  function randomHex(bytes: number): string {
-    return Array.from({ length: bytes }, () =>
-      Math.floor(random() * 256)
-        .toString(16)
-        .padStart(2, "0"),
-    ).join("");
-  }
-
-  /** A new secret, published as soon as its ticket id is hashed. */
-  function fresh(): { readonly secret: string; ticketId: string | undefined } {
-    const next: { readonly secret: string; ticketId: string | undefined } = {
-      secret: randomHex(SECRET_BYTES),
-      ticketId: undefined,
-    };
-    void Promise.resolve(sha256(next.secret)).then((ticketId) => {
-      if (left || own !== next) {
-        return;
-      }
-      next.ticketId = ticketId;
-      publish();
-    });
-    return next;
-  }
-
   function publish(): void {
-    if (own.ticketId === undefined) {
-      return;
-    }
     const ticket: QueueTicket = {
-      ticketId: own.ticketId,
+      ticketId: key.ticketId,
       protocol: PROTOCOL_VERSION,
       mode,
       partySize,
@@ -166,7 +150,7 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
     for (const ticket of tickets.values()) {
       if (
         ticket.protocol === PROTOCOL_VERSION &&
-        at - ticket.heartbeatAt <= TICKET_TTL_MS &&
+        isLive(ticket, at) &&
         !skip.has(ticket.ticketId)
       ) {
         players += ticket.partySize;
@@ -177,7 +161,7 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
 
   /** Where `groups`, formed at `at`, leave this client. */
   function settle(groups: readonly FormedGroup[], at: number): void {
-    const group = own.ticketId === undefined ? undefined : groupOf(groups, own.ticketId);
+    const group = groupOf(groups, key.ticketId);
     if (group === undefined) {
       settling = undefined;
       setState(searching(at));
@@ -191,16 +175,16 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
     }
     if (at - settling.since >= FORMATION_SETTLE_MS) {
       publishing = false;
-      setState({ kind: "in-lobby", group, secret: own.secret });
+      setState({ kind: "in-lobby", group, key });
     }
   }
 
   function form(): void {
     const at = now();
     const ours = ++generation;
-    // Dead tickets cost nothing to keep, but a long queue would keep them all.
+    // A dead ticket costs nothing to keep, but a long queue would keep them all.
     for (const [ticketId, ticket] of tickets) {
-      if (at - ticket.heartbeatAt > TICKET_TTL_MS) {
+      if (!isLive(ticket, at)) {
         tickets.delete(ticketId);
       }
     }
@@ -223,7 +207,9 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
     }
     if (event.kind === "withdrawn") {
       tickets.delete(event.ticketId);
-    } else if (event.ticket.mode === mode) {
+    } else if (event.ticket.mode === mode && isLive(event.ticket, now())) {
+      // Not kept if it is not live: a heartbeat from the far future would
+      // be the newest copy for ever.
       const known = tickets.get(event.ticket.ticketId);
       if (known === undefined || known.heartbeatAt <= event.ticket.heartbeatAt) {
         tickets.set(event.ticket.ticketId, event.ticket);
@@ -241,6 +227,7 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
       setState({ kind: "unreachable" });
     }
   });
+  publish();
 
   return {
     get state() {
@@ -279,15 +266,13 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
         ignored.set(ticketId, at + NO_SHOW_IGNORE_MS);
         tickets.delete(ticketId);
       }
-      if (own.ticketId !== undefined) {
-        board.withdraw(own.ticketId);
-        tickets.delete(own.ticketId);
-      }
+      board.withdraw(key.ticketId);
+      tickets.delete(key.ticketId);
       generation += 1;
       settling = undefined;
       publishing = true;
-      publishedAt = Number.NEGATIVE_INFINITY;
-      own = fresh();
+      key = newTicketKey();
+      publish();
       setState({ kind: "fell-through" });
     },
     leave: () => {
@@ -295,9 +280,7 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
         return;
       }
       left = true;
-      if (own.ticketId !== undefined) {
-        board.withdraw(own.ticketId);
-      }
+      board.withdraw(key.ticketId);
       unsubscribe();
       untrouble();
       handlers.clear();

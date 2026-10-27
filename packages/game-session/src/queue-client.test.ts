@@ -10,7 +10,12 @@ import {
 } from "@vibewars/game-protocol";
 
 import { createMemoryBoard, type MemoryBoard, type QueueBoardEvent } from "./queue-board.js";
-import { createQueueClient, type QueueClient, type QueueState } from "./queue-client.js";
+import {
+  createQueueClient,
+  type QueueClient,
+  type QueueState,
+  type TicketKey,
+} from "./queue-client.js";
 
 /** The queue client (#870, #854): searching, forming, in-lobby, fell-through, over a memory board. */
 
@@ -18,18 +23,13 @@ const START = 1_700_000_000_000;
 const MAPS = ["arena-a", "arena-b"];
 const STEP_MS = 1_000;
 
-async function sha256Hex(text: string): Promise<string> {
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
-  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
-}
-
-/** A `Math.random` stand-in that differs per seed and repeats per run. */
-function seeded(seed: number): () => number {
-  let state = seed;
-  return () => {
-    state = (Math.imul(state, 1_664_525) + 1_013_904_223) >>> 0;
-    return state / 2 ** 32;
-  };
+/**
+ * A stand-in for a secp256k1 key: its id is `0xa000 + n` in hex, never a
+ * real public key, and it "signs" by echoing its id and the digest's length.
+ */
+function fakeKey(n: number): TicketKey {
+  const ticketId = (0xa000 + n).toString(16).padStart(64, "0");
+  return { ticketId, sign: (digest) => `${ticketId}${String(digest.length).padStart(64, "0")}` };
 }
 
 /** Let the board deliver and every formation in flight finish. */
@@ -47,6 +47,8 @@ class Queue {
   public readonly clients: QueueClient[] = [];
   /** Everything the board carried, as a client of it would hear it. */
   public readonly heard: QueueBoardEvent[] = [];
+  /** Keys handed out so far, across every client. */
+  public keys = 0;
 
   public readonly mode: QueueMode;
 
@@ -55,14 +57,13 @@ class Queue {
     this.memory.board().subscribe(mode, (event) => this.heard.push(event));
   }
 
-  public join(seed = this.clients.length + 1): QueueClient {
+  public join(): QueueClient {
     const client = createQueueClient({
       board: this.memory.board(),
       mode: this.mode,
       partySize: 1,
       now: () => this.now,
-      random: seeded(seed),
-      sha256: sha256Hex,
+      newTicketKey: () => fakeKey((this.keys += 1)),
       mapPool: MAPS,
     });
     this.clients.push(client);
@@ -118,8 +119,8 @@ function inLobby(state: QueueState): Extract<QueueState, { kind: "in-lobby" }> {
 }
 
 /** `client`'s current ticket id, once it has settled into a lobby. */
-async function ticketIdOf(client: QueueClient): Promise<string> {
-  return sha256Hex(inLobby(client.state).secret);
+function ticketIdOf(client: QueueClient): string {
+  return inLobby(client.state).key.ticketId;
 }
 
 const EARLY = "0".repeat(63) + "1";
@@ -133,7 +134,7 @@ describe("createQueueClient", () => {
 
     const groups = clients.map((client) => inLobby(client.state).group);
     expect(new Set(groups.map((group) => group.groupId)).size).toBe(1);
-    const ids = await Promise.all(clients.map(ticketIdOf));
+    const ids = clients.map(ticketIdOf);
     const members = [...(groups[0]?.teams[0] ?? []), ...(groups[0]?.teams[1] ?? [])];
     expect(members.sort()).toEqual([...ids].sort());
   });
@@ -183,8 +184,8 @@ describe("createQueueClient", () => {
     const a = queue.join();
     const b = queue.join();
     await queue.until(() => a.state.kind === "in-lobby" && b.state.kind === "in-lobby");
-    const oldId = await ticketIdOf(a);
-    const noShow = await ticketIdOf(b);
+    const oldId = ticketIdOf(a);
+    const noShow = ticketIdOf(b);
     const [oldTicket] = queue.published(new Set([oldId]));
 
     a.fellThrough([noShow]);
@@ -265,6 +266,33 @@ describe("createQueueClient", () => {
 
     await queue.advance(TICKET_HEARTBEAT_MS);
     expect(a.state.kind).toBe("searching");
+  });
+
+  it("neither counts nor groups a ticket from the far future", async () => {
+    const queue = new Queue("random-arena-1v1");
+    const a = queue.join();
+    await queue.publish({ ticketId: EARLY, heartbeatAt: Number.MAX_SAFE_INTEGER });
+    for (let i = 0; i < 5; i += 1) {
+      await queue.advance();
+    }
+
+    expect(a.state).toMatchObject({ kind: "searching", searching: 1 });
+  });
+
+  it("hands the lobby its ticket key to sign with, and a requeue a fresh one", async () => {
+    const queue = new Queue("random-arena-1v1");
+    const a = queue.join();
+    const b = queue.join();
+    await queue.until(() => a.state.kind === "in-lobby" && b.state.kind === "in-lobby");
+    const { key, group } = inLobby(a.state);
+
+    expect([...group.teams[0], ...group.teams[1]]).toContain(key.ticketId);
+    expect(key.sign(new Uint8Array(32))).toMatch(/^[0-9a-f]{128}$/);
+
+    a.fellThrough([ticketIdOf(b)]);
+    queue.join();
+    await queue.until(() => a.state.kind === "in-lobby");
+    expect(inLobby(a.state).key.ticketId).not.toBe(key.ticketId);
   });
 
   it("ignores a withdrawal of a ticket it never heard of", async () => {
