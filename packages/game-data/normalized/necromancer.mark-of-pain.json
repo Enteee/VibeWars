@@ -1,0 +1,25 @@
+{
+  "id": "necromancer.mark-of-pain",
+  "name": "Mark of Pain",
+  "profession": "necromancer",
+  "attribute": "Curses",
+  "type": "Hex Spell.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 10
+  },
+  "overcast": 0,
+  "activationSeconds": 1,
+  "rechargeSeconds": 20,
+  "description": "For 30 seconds, whenever target foe takes physical damage, Mark of Pain deals 10...34...40 shadow damage to adjacent foes.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Necromancer/263-Mark_of_Pain",
+    "fetchedAt": "2026-10-27T16:10:41.619Z"
+  },
+  "unmapped": {}
+}

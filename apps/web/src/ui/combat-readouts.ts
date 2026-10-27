@@ -51,6 +51,7 @@ export function logToneOf(kind: CombatEvent["kind"]): Exclude<LogTone, "divider"
     case "damage":
     case "health-lost":
     case "sacrifice":
+    case "life-stolen":
       return "damage";
     case "heal":
     case "resurrected":
@@ -137,6 +138,8 @@ export function describeCombatEvent(
       return `${STATUS_DEFINITIONS[event.statusId].name}${source === undefined ? "" : ` (${source})`} takes ${formatAmount(event.amount)} health from ${target}`;
     case "sacrifice":
       return `${target} sacrifices ${formatAmount(event.amount)} health`;
+    case "life-stolen":
+      return `${by} steals ${formatAmount(event.amount)} health from ${target}`;
     case "death":
       return `${target} dies`;
     case "resurrected":
@@ -443,7 +446,10 @@ export function accumulate(
         }
       } else if (event.kind === "heal" && entry.sourceId === selfId) {
         healing += event.amount;
-      } else if (event.kind === "health-lost" && event.targetId === selfId) {
+      } else if (
+        (event.kind === "health-lost" || event.kind === "life-stolen") &&
+        event.targetId === selfId
+      ) {
         taken += event.amount;
       }
     }
@@ -508,6 +514,7 @@ export function floatingCueFor(
   switch (kind) {
     case "damage":
     case "health-lost":
+    case "life-stolen":
       // The sign says damage or heal; the colour only backs it up, so a
       // player who cannot tell the two colours apart loses nothing.
       // U+2212, a real minus, as wide as the plus.

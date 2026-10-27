@@ -56,11 +56,13 @@ function rank(entry: ActiveStatus): number {
 }
 
 describe("wireStatuses (#636)", () => {
-  it("keeps 32 of 40, every condition and hex, by category, then least time left (#803)", () => {
-    // Every status twice, then two more, in reverse table order with
-    // times that run against it: nothing is in place by accident.
-    const ids = [...WIRE_STATUS_IDS, ...WIRE_STATUS_IDS, ...WIRE_STATUS_IDS].reverse();
-    const active = ids.slice(0, 40).map((id, i) => status(id, (i * 7) % 11));
+  it("keeps 32 of more, every condition and hex, by category, then least time left (#803)", () => {
+    // Every status, then two more, in reverse table order with times
+    // that run against it: nothing is in place by accident.
+    const ids = [...WIRE_STATUS_IDS, ...WIRE_STATUS_IDS].reverse();
+    const active = ids
+      .slice(0, WIRE_STATUS_IDS.length + 2)
+      .map((id, i) => status(id, (i * 7) % 11));
     expect(new Set(active.map(rank)).size).toBe(ORDER.length);
 
     const sent = wireStatuses(active);
