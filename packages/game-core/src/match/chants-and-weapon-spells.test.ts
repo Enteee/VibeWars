@@ -61,6 +61,7 @@ const burned = (events: readonly CombatEvent[]): string[] =>
 function chop(attacker: Combatant, targets: readonly Combatant[], seed = 1): CombatEvent[] {
   return resolveAttackSkill(
     {
+      surroundings: new Map(),
       skill: skill("warrior.swift-chop"),
       caster: attacker,
       targets,
@@ -75,7 +76,7 @@ function swing(attacker: Combatant, target: Combatant, seed = 1): CombatEvent[] 
   return resolveSwing({
     attacker,
     target: { combatant: target, position: vec2(40, 0) },
-    candidates: [],
+    surroundings: new Map(),
     rng: createRng(seed),
     rules: RULES.combat,
     exposed: NOWHERE,
@@ -140,6 +141,7 @@ describe("Anthem of Flame on an attack skill (#758)", () => {
     ranger.statuses.apply("anthem-of-flame", 10, "p");
     const events = resolveAttackSkill(
       {
+        surroundings: new Map(),
         skill: skill("ranger.barrage"),
         caster: ranger,
         targets: [victim("x"), victim("y"), victim("z")],

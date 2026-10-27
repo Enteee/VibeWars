@@ -13,7 +13,7 @@
  *
  * See docs/adr/0015-agent-company.md.
  */
-import { spawn } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
@@ -89,7 +89,13 @@ import {
   VIEW_FIELDS,
 } from "./hub-rest.mjs";
 import { COMMENT_FIELDS, jsonFields, scrubJson, unknownField } from "./hub-strangers.mjs";
-import { BOARD_QUERY, costBetween, parseBoardPage, recordSpend } from "./hub-spend.mjs";
+import {
+  BOARD_QUERY,
+  costBetween,
+  parseBoardPage,
+  recordSpend,
+  summarizeSpend,
+} from "./hub-spend.mjs";
 import { HEARTBEAT_MS } from "./hub-health.mjs";
 import {
   closingPulls,
@@ -113,7 +119,24 @@ import {
   WORKDAY,
 } from "./reboot.mjs";
 import { SKILLS_PREFIX, installSkills, skillFiles } from "./skills-sync.mjs";
-import { readPresence, readStaffFile, readUsage, usageReader } from "./company-facts.mjs";
+import {
+  readLimit,
+  readPresence,
+  readStaffFile,
+  readUsage,
+  usageReader,
+} from "./company-facts.mjs";
+import { historyText, movesBetween, parseHistory } from "./board-history.mjs";
+import { HOLD_BELOW, freeBytes } from "./disk.mjs";
+import {
+  buildKpis,
+  cpuShare,
+  employeeOfUnit,
+  flowKpis,
+  parseUnits,
+  staffKpis,
+  tokensByRole,
+} from "./kpi.mjs";
 import { loadLines } from "./company-load.mjs";
 import { peekRows } from "./peek.mjs";
 import {
@@ -197,6 +220,10 @@ const SCHEDULES = path.join(HUB, "schedules.json");
 
 /** `nudges.json`: when hubd began counting and what it sent, for the dashboard (#547). */
 const NUDGES = path.join(HUB, "nudges.json");
+/** Every column change, one JSON line each (#891); history starts at the file. */
+const BOARD_HISTORY = path.join(HUB, "board-history.jsonl");
+/** The KPI snapshot (kpi.mjs), written every `KPI_EVERY_MS`; every jail reads it. */
+const KPIS = path.join(HUB, "kpis.json");
 /** `blocked.json`: the column each Blocked card came from, by project item id (#639). */
 const BLOCKED = path.join(HUB, "blocked.json");
 /** The CI watches agents asked for (#736), hubd's alone. */
@@ -1185,15 +1212,37 @@ function tellCompany(name, text, { to = "all", nudge = null, direct = false } = 
  *
  * @param {import("./hub-board.mjs").BoardState} next
  * @param {ReturnType<typeof company>} cfg
+ * @param {string} [by] who moved the cards: the employee, or `github` for what a read found
  */
-function keepBoard(next, cfg) {
+function keepBoard(next, cfg, by = "github") {
   if (next === board) {
     return;
+  }
+  if (board !== null) {
+    keepHistory(movesBetween(board, next, { repo: cfg.repo, by, ts: Date.now() }));
   }
   board = next;
   boardSet = boardNumbers(listing(next), cfg.repo);
   writeAtomic(BOARD_SNAPSHOT, JSON.stringify(next));
   keepBlocked(blockedSwept(blockedOrigins, next.cards));
+}
+
+/**
+ * Append the moves to the board history. A KPI is never worth the daemon.
+ *
+ * @param {import("./board-history.mjs").Move[]} moves
+ */
+function keepHistory(moves) {
+  if (moves.length === 0) {
+    return;
+  }
+  try {
+    fs.appendFileSync(BOARD_HISTORY, historyText(moves));
+  } catch (error) {
+    console.error(
+      `hubd: board-history.jsonl: ${error instanceof Error ? error.message : "failed"}`,
+    );
+  }
 }
 
 /**
@@ -1483,7 +1532,11 @@ async function afterProjectCommand(argv, result, cfg) {
   }
   const plan = planMutation(argv, result, cfg.board, board, cfg.repo);
   if (plan.kind === "apply") {
-    keepBoard(applyFacts(board, plan.facts, Date.now(), cfg.repo), cfg);
+    keepBoard(
+      applyFacts(board, plan.facts, Date.now(), cfg.repo),
+      cfg,
+      servingEmployee ?? "github",
+    );
   } else if (plan.kind === "item" || plan.kind === "issue") {
     await reread(plan, cfg);
   } else if (plan.kind === "sweep") {
@@ -3276,6 +3329,170 @@ function loadOwnSchedules() {
   }
 }
 
+/** How often the KPI snapshot is written (#891). */
+const KPI_EVERY_MS = 5 * 60_000;
+
+/** The jails' last CPU sample, per unit, for the share since then. */
+let cpuSamples = /** @type {{ at: number, nsec: Map<string, number> }} */ ({
+  at: 0,
+  nsec: new Map(),
+});
+
+const SLICE = "vibewars-jails.slice";
+
+/** The user manager gets this long, in all, to answer; hubd's loop waits for it. */
+const SYSTEMCTL_MS = 3000;
+
+/**
+ * Memory and CPU of every jail and of their slice, from the user manager, in
+ * one `systemctl show` that is killed after `SYSTEMCTL_MS`: a stalled user
+ * manager must not stall the hub commands behind it.
+ *
+ * @param {number} now
+ * @param {readonly string[]} employees staff ids, to name a unit by
+ * @returns {Promise<NonNullable<import("./kpi.mjs").Kpis["host"]>>}
+ */
+async function sampleHost(now, employees) {
+  /** @type {string} */
+  const shown = await new Promise((resolve, reject) => {
+    execFile(
+      "systemctl",
+      [
+        "--user",
+        "show",
+        "-p",
+        "Id",
+        "-p",
+        "MemoryCurrent",
+        "-p",
+        "CPUUsageNSec",
+        "vibewars-jail-*",
+        SLICE,
+      ],
+      { timeout: SYSTEMCTL_MS, killSignal: "SIGKILL", encoding: "utf8" },
+      (error, stdout) => {
+        if (error === null) {
+          resolve(stdout);
+        } else {
+          reject(new Error(`systemctl show: ${error.message.split("\n")[0] ?? "failed"}`));
+        }
+      },
+    );
+  });
+  const units = parseUnits(shown);
+  const elapsed = now - cpuSamples.at;
+  /** @type {Map<string, number>} */
+  const nsec = new Map();
+  /** @type {Record<string, { memoryBytes: number, cpuShare: number | null }>} */
+  const perEmployee = {};
+  for (const [unit, { memoryBytes, cpuNSec }] of units) {
+    const key = employeeOfUnit(unit);
+    if (key === null || memoryBytes === null) {
+      continue;
+    }
+    const employee = employees.find((id) => id.replace("@", "-") === key) ?? key;
+    nsec.set(employee, cpuNSec ?? 0);
+    perEmployee[employee] = {
+      memoryBytes,
+      cpuShare: cpuShare(cpuSamples.nsec.get(employee) ?? null, cpuNSec, elapsed),
+    };
+  }
+  const total = units.get(SLICE) ?? { memoryBytes: null, cpuNSec: null };
+  if (total.cpuNSec !== null) {
+    nsec.set(SLICE, total.cpuNSec);
+  }
+  const host = {
+    employees: perEmployee,
+    slice: {
+      memoryBytes: total.memoryBytes ?? 0,
+      cpuShare: cpuShare(cpuSamples.nsec.get(SLICE) ?? null, total.cpuNSec, elapsed),
+    },
+    diskFreeBytes: freeBytes(ROOT),
+    diskHoldBelow: HOLD_BELOW,
+  };
+  cpuSamples = { at: now, nsec };
+  return host;
+}
+
+/**
+ * Write `kpis.json` (#891). A section that cannot be read is `null` with its
+ * reason in `errors`; hubd never dies of a KPI.
+ *
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<void>}
+ */
+async function writeKpis(cfg) {
+  try {
+    const now = Date.now();
+    const staff = readStaffFile(ROOT);
+    const { live } = readPresence(ROOT, staff, now);
+    /** @type {unknown} */
+    let host;
+    try {
+      host = await sampleHost(now, Object.keys(staff?.employees ?? {}));
+    } catch (error) {
+      host = error;
+    }
+    const kpis = buildKpis(now, {
+      flow: () => {
+        if (board === null) {
+          throw new Error("no board yet");
+        }
+        const history = fs.existsSync(BOARD_HISTORY)
+          ? parseHistory(fs.readFileSync(BOARD_HISTORY, "utf8"))
+          : [];
+        const cards = board.cards.flatMap(({ item }) => {
+          const issue = itemNumber(item, cfg.repo);
+          return issue === null
+            ? []
+            : [{ issue, status: typeof item.status === "string" ? item.status : "" }];
+        });
+        return flowKpis({ now, moves: history, cards });
+      },
+      claude: () => {
+        const limit = readLimit(ROOT, staff, now);
+        const read = readUsage(usage, now, limit);
+        if (read === null) {
+          throw new Error("no usage logs");
+        }
+        return {
+          fiveHour: limit?.fiveHour ?? null,
+          sevenDay: limit?.sevenDay ?? null,
+          tokens5hByRole: tokensByRole(read.summary.roles),
+        };
+      },
+      github: () => {
+        if (lastBudget === null) {
+          throw new Error("no budget read yet");
+        }
+        return {
+          remaining: lastBudget.remaining,
+          limit: lastBudget.limit,
+          resetAt: lastBudget.resetAt,
+          topSpend: summarizeSpend(spendWindow)
+            .top.slice(0, 3)
+            .map(({ cmd, cost }) => ({ command: cmd, points: cost })),
+        };
+      },
+      host: () => {
+        if (host instanceof Error) {
+          throw host;
+        }
+        return /** @type {NonNullable<import("./kpi.mjs").Kpis["host"]>} */ (host);
+      },
+      staff: () => {
+        if (staff === null || cfg.maxAgents === null) {
+          throw new Error("no staff.json or maxAgents");
+        }
+        return staffKpis(staff, live, cfg.maxAgents);
+      },
+    });
+    writeAtomic(KPIS, JSON.stringify(kpis));
+  } catch (error) {
+    console.error(`hubd: kpis.json: ${error instanceof Error ? error.message : "failed"}`);
+  }
+}
+
 /**
  * Send the nudges that are due (#537). link decides per employee whether one
  * is still unread; hubd only keeps the clock.
@@ -3587,6 +3804,7 @@ async function main() {
   }
 
   writeNudges();
+  let lastKpis = 0;
   for (;;) {
     readStaffed();
     /** @type {[string, string | null][]} */
@@ -3613,6 +3831,10 @@ async function main() {
     if (Date.now() - lastNudgeCheck > NUDGE_CHECK_MS) {
       lastNudgeCheck = Date.now();
       sendNudges();
+    }
+    if (Date.now() - lastKpis >= KPI_EVERY_MS) {
+      lastKpis = Date.now();
+      await writeKpis(cfg);
     }
     if (Date.now() - lastBudgetCheck > BUDGET_CHECK_MS) {
       await budgetExhausted();

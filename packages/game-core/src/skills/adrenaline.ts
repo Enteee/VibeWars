@@ -16,19 +16,21 @@ function unitsFor(skill: Skill | undefined): number {
 }
 
 /**
- * Give `strikes` strikes to every adrenaline skill of `combatant` that is
- * not recharging, each capped at what it costs.
+ * Give `units` to every adrenaline skill of `combatant` that is not
+ * recharging, each capped at what it costs.
  */
-export function gainStrikes(combatant: Combatant, strikes: number): void {
-  for (const [skillId, units] of combatant.adrenaline) {
+export function gainUnits(combatant: Combatant, units: number): void {
+  for (const [skillId, held] of combatant.adrenaline) {
     if ((combatant.cast.rechargeRemaining.get(skillId) ?? 0) > 0) {
       continue;
     }
-    combatant.adrenaline.set(
-      skillId,
-      Math.min(unitsFor(getSkill(skillId)), units + strikes * ADRENALINE_PER_STRIKE),
-    );
+    combatant.adrenaline.set(skillId, Math.min(unitsFor(getSkill(skillId)), held + units));
   }
+}
+
+/** Give `strikes` strikes to every adrenaline skill of `combatant`, as `gainUnits`. */
+export function gainStrikes(combatant: Combatant, strikes: number): void {
+  gainUnits(combatant, strikes * ADRENALINE_PER_STRIKE);
 }
 
 /**

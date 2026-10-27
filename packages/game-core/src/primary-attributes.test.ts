@@ -173,6 +173,7 @@ describe("Divine Favor (#529)", () => {
       attributeRanks: new Map([["monk.divine-favor", 12]]),
     });
     return applySkillEffects({
+      surroundings: new Map(),
       skill: used,
       caster: monk,
       targets,

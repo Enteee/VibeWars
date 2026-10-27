@@ -396,6 +396,7 @@ describe("spell damage through the effect system", () => {
       target,
       rng: createRng(1),
       rules: RULES,
+      surroundings: new Map(),
     };
   }
 
@@ -452,6 +453,7 @@ describe("spell damage through the effect system", () => {
       equipment: unarmedResolvedEquipment(100),
     });
     const events = applyEffects([{ kind: "sacrifice-health", percentOfMax: 10 }], {
+      surroundings: new Map(),
       caster,
       target: undefined,
       rng: createRng(1),

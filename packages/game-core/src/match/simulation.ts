@@ -52,7 +52,7 @@ import {
   type ActivationCheck,
   type ActivationRejection,
 } from "../skills/activation.js";
-import { adrenalinePools, emptyAdrenaline, gainStrikes } from "../skills/adrenaline.js";
+import { adrenalinePools, emptyAdrenaline, gainStrikes, gainUnits } from "../skills/adrenaline.js";
 import { CastState, type ActiveCast } from "../skills/cast-state.js";
 import { getSkill } from "../skills/catalog.js";
 import { clearChainMarksOn, tickChainMarks } from "../skills/chain.js";
@@ -1401,6 +1401,7 @@ export class MatchSimulation {
       }),
       rng: this.#rng,
       rules: this.#ruleset.combat,
+      surroundings: this.#participants,
     });
     // Where an area landed, for whoever draws it: nowhere, when an area
     // centred on a target had no target to centre on, or when it is still
@@ -1414,21 +1415,28 @@ export class MatchSimulation {
     // Only attack skills earn adrenaline, as weapon hits do: a spell is
     // paid for in energy, and earning both would make casters the best
     // adrenaline builders. A blocked blow earns nothing, not even the
-    // damage its `onBlocked` deals, as Swift Chop's (#534). An attack
-    // skill strikes each victim once, so damage on one that blocked is
-    // all `onBlocked`'s.
+    // damage its `onBlocked` deals, as Swift Chop's (#534). Damage on a
+    // victim that blocked every blow is all `onBlocked`'s; a dual attack
+    // (#885) blocked once and landed once still landed.
     if (skill.type === "attack") {
-      const blocked = new Set(
-        events.filter((event) => event.kind === "attack-blocked").map((event) => event.targetId),
-      );
+      const strikes = skill.attack?.strikes ?? 1;
+      const blocked = (targetId: string): boolean => {
+        const blows = events.filter(
+          (event) =>
+            (event.kind === "attack-blocked" || event.kind === "attack-missed") &&
+            event.targetId === targetId,
+        );
+        return blows.some(({ kind }) => kind === "attack-blocked") && blows.length >= strikes;
+      };
       this.#gainAdrenaline(
         record,
-        events.filter((event) => event.kind !== "damage" || !blocked.has(event.targetId)),
+        events.filter((event) => event.kind !== "damage" || !blocked(event.targetId)),
       );
     }
     if (skill.type === "shout" || skill.type === "chant") {
       this.#gainLeadershipEnergy(record, events);
     }
+    this.#chargeFromDamage(record.combatant, events);
     this.#recordDeaths(events);
     this.#recordKnockdowns(events);
     this.#recordResurrections(events);
@@ -1766,12 +1774,13 @@ export class MatchSimulation {
     const { events, doubleStrike, landed } = resolveSwing({
       attacker: record.combatant,
       target,
-      candidates: weapon.cleaveTargets === 0 ? [] : [...this.#participants.values()],
+      surroundings: this.#participants,
       rng: this.#rng,
       rules: this.#ruleset.combat,
       exposed: this.#exposedTo(record),
     });
     this.#gainAdrenaline(record, events, landed);
+    this.#chargeFromDamage(record.combatant, events);
     this.#recordDeaths(events);
     this.#recordKnockdowns(events);
     this.#logWeapon(record.id, record.combatant.equipment.mainHand.weapon.id, events, doubleStrike);
@@ -1971,6 +1980,7 @@ export class MatchSimulation {
               targets: [target.combatant],
               rng: this.#rng,
               rules: this.#ruleset.combat,
+              surroundings: this.#participants,
             },
             events,
           );
@@ -1989,7 +1999,12 @@ export class MatchSimulation {
       const critical = landBlow(
         projectile.weaponSnapshot,
         target.combatant,
-        settleBlow(skillHit?.blow ?? PLAIN_BLOW, attacker?.combatant, target.combatant),
+        settleBlow(
+          skillHit?.blow ?? PLAIN_BLOW,
+          attacker?.combatant,
+          target.combatant,
+          this.#participants,
+        ),
         // A shot crits only on its roll, never for where it came from.
         false,
         this.#rng,
@@ -2007,6 +2022,7 @@ export class MatchSimulation {
             projectile.weaponSnapshot.mainHand,
             this.#rng,
             this.#ruleset.combat,
+            this.#participants,
           ),
         );
       }
@@ -2018,6 +2034,7 @@ export class MatchSimulation {
             target.combatant,
             this.#rng,
             this.#ruleset.combat,
+            this.#participants,
           ),
         );
       }
@@ -2027,6 +2044,7 @@ export class MatchSimulation {
     if (attacker !== undefined && !attacker.combatant.dead && !blocked) {
       this.#gainAdrenaline(attacker, events);
     }
+    this.#chargeFromDamage(attacker?.combatant, events);
     this.#recordDeaths(events);
     this.#recordKnockdowns(events);
     this.#logShot(projectile, events);
@@ -2057,7 +2075,9 @@ export class MatchSimulation {
       }),
       rng: this.#rng,
       rules: this.#ruleset.combat,
+      surroundings: this.#participants,
     });
+    this.#chargeFromDamage(caster, events);
     this.#recordDeaths(events);
     this.#recordKnockdowns(events);
     const area =
@@ -2162,6 +2182,36 @@ export class MatchSimulation {
     });
     if (damagedFoe) {
       gainStrikes(record.combatant, blows);
+    }
+  }
+
+  /**
+   * Taking damage from a foe charges adrenaline too (#827), as in GW1: a
+   * warrior under pressure builds it. Each `damage` in `events` that
+   * `source` dealt a living foe gives that foe `floor(100 × amount /
+   * maxHealth)` units, so a hit for a quarter of its health is a strike.
+   * Called where a skill, a swing, a shot or a spell lands, never for
+   * degeneration; an ally's or your own damage, and a lethal hit, give
+   * nothing. A `source` gone from the match is no one's foe.
+   */
+  #chargeFromDamage(source: Combatant | undefined, events: readonly CombatEvent[]): void {
+    if (source === undefined) {
+      return;
+    }
+    for (const event of events) {
+      const victim = event.kind === "damage" ? this.#participants.get(event.targetId) : undefined;
+      if (
+        event.kind !== "damage" ||
+        victim === undefined ||
+        victim.combatant.dead ||
+        victim.combatant.team === source.team
+      ) {
+        continue;
+      }
+      gainUnits(
+        victim.combatant,
+        Math.floor((100 * event.amount) / effectiveMaxHealth(victim.combatant)),
+      );
     }
   }
 
