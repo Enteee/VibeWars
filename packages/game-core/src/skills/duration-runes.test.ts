@@ -48,6 +48,7 @@ function skill(id: string): Skill {
 
 function land(skillId: string, caster: Combatant, target: Combatant) {
   return applySkillEffects({
+    surroundings: new Map(),
     skill: skill(skillId),
     caster,
     targets: [target],
@@ -77,7 +78,13 @@ describe("condition-duration runes (#464)", () => {
     const target = wearing("target", 1, "recovery");
     applyEffect(
       { kind: "apply-status", statusId: "deep-wound", durationSeconds: 10 },
-      { caster: makeCombatant({ id: "caster" }), target, rng: createRng(1), rules: RULES },
+      {
+        surroundings: new Map(),
+        caster: makeCombatant({ id: "caster" }),
+        target,
+        rng: createRng(1),
+        rules: RULES,
+      },
     );
     expect(target.statuses.get("deep-wound")?.remainingSeconds).toBeCloseTo(8, 9);
   });

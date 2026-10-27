@@ -232,6 +232,12 @@ describe("describeCombatEvent", () => {
     expect(
       describeCombatEvent(entry([missed], { skillId: "assassin.fox-fangs" }), missed, nameOf),
     ).toBe("Fox Fangs (Pyro) misses Caster dummy (must follow a lead attack)");
+    expect(
+      describeCombatEvent(entry([missed], { skillId: "assassin.death-blossom" }), missed, nameOf),
+    ).toBe("Death Blossom (Pyro) misses Caster dummy (must follow an off-hand attack)");
+    expect(
+      describeCombatEvent(entry([missed], { skillId: "assassin.moebius-strike" }), missed, nameOf),
+    ).toBe("Moebius Strike (Pyro) misses Caster dummy (must follow a dual attack)");
   });
 
   it("says why a picky interrupt let a cast through, and nothing when it found none (#796)", () => {

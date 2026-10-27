@@ -89,6 +89,14 @@ function skillName(skillId: string | undefined): string | undefined {
 }
 
 /** One event as a sentence a player can learn from. */
+/** " (must follow an off-hand attack)": what a chain attack out of sequence needed (#831, #885). */
+function outOfSequence(skillId: string | undefined): string {
+  const follows = skillId === undefined ? undefined : getSkill(skillId)?.attack?.chain?.follows;
+  return follows === undefined
+    ? ""
+    : ` (must follow ${follows === "off-hand" ? "an off-hand" : `a ${follows}`} attack)`;
+}
+
 export function describeCombatEvent(
   entry: Pick<CombatLogEntry, "cause" | "sourceId" | "skillId" | "weaponId" | "attributeId">,
   event: CombatEvent,
@@ -154,7 +162,7 @@ export function describeCombatEvent(
         ? `${by} finds nothing to interrupt on ${target}`
         : `${by} can't interrupt ${target}'s ${skillName(event.refusedSkillId) ?? event.refusedSkillId}: not a spell or chant`;
     case "attack-missed":
-      return `${by} misses ${target}${event.reason === "out-of-sequence" ? " (must follow a lead attack)" : ""}`;
+      return `${by} misses ${target}${event.reason === "out-of-sequence" ? outOfSequence(entry.skillId) : ""}`;
     case "attack-blocked":
       return `${target} blocks ${by}`;
     case "attack-dodged":

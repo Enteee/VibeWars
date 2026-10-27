@@ -40,6 +40,7 @@ function use(user: Combatant, skillId: string, target: Combatant): CombatEvent[]
   }
   payCost(skill, user);
   return applySkillEffects({
+    surroundings: new Map(),
     skill,
     caster: user,
     targets: [target],

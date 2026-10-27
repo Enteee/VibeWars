@@ -1,0 +1,25 @@
+{
+  "id": "assassin.twisting-fangs",
+  "name": "Twisting Fangs",
+  "profession": "assassin",
+  "attribute": "Critical Strikes",
+  "type": "Dual attack.",
+  "elite": false,
+  "campaign": "Factions",
+  "cost": {
+    "kind": "energy",
+    "amount": 10
+  },
+  "overcast": 0,
+  "activationSeconds": 0,
+  "rechargeSeconds": 15,
+  "description": "Must follow an off-hand attack. If it hits, Twisting Fangs strikes for +10...18...20 damage and struck foe suffers from Bleeding and Deep Wound for 5...17...20 seconds.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Assassin/644-Twisting_Fangs",
+    "fetchedAt": "2026-10-27T10:44:25.198Z"
+  },
+  "unmapped": {}
+}

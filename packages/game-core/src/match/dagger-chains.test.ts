@@ -21,6 +21,8 @@ const JAGGED_STRIKE = 0;
 const FOX_FANGS = 1;
 const WILD_STRIKE = 2;
 const BLACK_LOTUS_STRIKE = 3;
+const DEATH_BLOSSOM = 4;
+const MOEBIUS_STRIKE = 5;
 
 function daggers(): ResolvedEquipment {
   return {
@@ -34,7 +36,7 @@ function daggers(): ResolvedEquipment {
   };
 }
 
-/** A rank-12 assassin with daggers and the four chain attacks. */
+/** A rank-12 assassin with daggers and the chain attacks. */
 function assassin(id: string, spawn: Vec2): ParticipantSpec {
   return {
     id,
@@ -44,6 +46,8 @@ function assassin(id: string, spawn: Vec2): ParticipantSpec {
       "assassin.fox-fangs",
       "assassin.wild-strike",
       "assassin.black-lotus-strike",
+      "assassin.death-blossom",
+      "assassin.moebius-strike",
     ],
     attributeRanks: new Map([
       ["assassin.dagger-mastery", 12],
@@ -192,5 +196,29 @@ describe("dagger chains (#831)", () => {
     expect(gained(use(hexed, "a", BLACK_LOTUS_STRIKE))).toEqual([
       { kind: "energy-gain", targetId: "a", amount: 5 },
     ]);
+  });
+});
+
+describe("dual attacks and Moebius Strike (#885)", () => {
+  it("lead, off-hand, Death Blossom, Moebius, Death Blossom all hit; Moebius readies the dual", () => {
+    const match = fight();
+    // Below half health, so Moebius recharges Death Blossom's 6 s at once.
+    get(match, "foe").combatant.health = 4e5;
+    const chain = [JAGGED_STRIKE, FOX_FANGS, DEATH_BLOSSOM, MOEBIUS_STRIKE, DEATH_BLOSSOM];
+    // A dual's recovery outlasts the second `use` waits: let each finish
+    // first. Death Blossom comes round again 4 s later, short of its 6 s
+    // recharge.
+    const hits = chain.map((slot) => {
+      const hit = damageTo(use(match, "a", slot), "foe");
+      stepFor(match, 1);
+      return hit;
+    });
+    expect(hits).toEqual([1, 1, 2, 1, 2]);
+  });
+
+  it("Death Blossom is out of sequence after a lead attack", () => {
+    const match = fight();
+    use(match, "a", JAGGED_STRIKE);
+    expect(outOfSequence(use(match, "a", DEATH_BLOSSOM))).toBe(true);
   });
 });

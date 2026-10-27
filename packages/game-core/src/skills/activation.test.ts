@@ -433,6 +433,7 @@ describe("canActivate, an attack skill's weapon (ADR-0029)", () => {
       weaponDamage: 1,
       bonusDamage: undefined,
       conditionalBonus: undefined,
+      strikes: 1,
       unblockable: false,
       chain: undefined,
       onBlocked: [],

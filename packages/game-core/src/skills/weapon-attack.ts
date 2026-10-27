@@ -28,7 +28,7 @@ import { resolveMagnitude } from "./scaling.js";
 import { aggregateModifiers, getStatusDefinition, type StatusId } from "./status.js";
 import { nearestFirst, type TargetCandidate } from "./targeting.js";
 import { attackMissChanceOf, blockChanceOf, rankOf, weaponDamageMultiplierOf } from "./tick.js";
-import type { Combatant, Skill, SkillEffect, StateCondition } from "./types.js";
+import type { Combatant, Skill, SkillEffect, StateCondition, Surroundings } from "./types.js";
 
 /**
  * Weapon auto-attack: what one swing does once it lands (ADR-0026).
@@ -55,8 +55,8 @@ export interface AttackState {
 export interface Swing {
   readonly attacker: Combatant;
   readonly target: TargetCandidate;
-  /** Everyone a scythe could cleave into, in any order. */
-  readonly candidates: readonly TargetCandidate[];
+  /** Everyone, where they stand: whom a scythe could cleave into, and what riders read (#885). */
+  readonly surroundings: Surroundings;
   readonly rng: SimulationRng;
   readonly rules: CombatRules;
   /** Whether `victim` is moving with its back to the attacker: a melee blow then always crits. */
@@ -119,7 +119,7 @@ function victimsOf(swing: Swing, weapon: Weapon): readonly Combatant[] {
     return [swing.target.combatant];
   }
   const { attacker, target } = swing;
-  const adjacent = swing.candidates.filter(
+  const adjacent = [...swing.surroundings.values()].filter(
     ({ combatant, position }) =>
       !combatant.dead &&
       combatant.id !== target.combatant.id &&
@@ -286,12 +286,15 @@ export function settleBlow(
   blow: BlowRule,
   attacker: Combatant | undefined,
   victim: Combatant,
+  surroundings: Surroundings,
 ): BlowRule {
   const { conditionalBonus } = blow;
   if (conditionalBonus === undefined) {
     return blow;
   }
-  const holds = attacker !== undefined && stateHolds(conditionalBonus.condition, attacker, victim);
+  const holds =
+    attacker !== undefined &&
+    stateHolds(conditionalBonus.condition, attacker, victim, surroundings);
   return {
     ...blow,
     bonus: blow.bonus + (holds ? conditionalBonus.amount : 0),
@@ -363,6 +366,7 @@ export function attackHitRiders(
   mainHand: ResolvedWeapon,
   rng: SimulationRng,
   rules: CombatRules,
+  surroundings: Surroundings,
 ): CombatEvent[] {
   if (!isPhysicalDamage(mainHand.damageType)) {
     return [];
@@ -373,6 +377,7 @@ export function attackHitRiders(
       target: victim,
       rng,
       rules,
+      surroundings,
     }),
   );
 }
@@ -416,8 +421,9 @@ export function nextAttackSkillRiders(
   victim: Combatant,
   rng: SimulationRng,
   rules: CombatRules,
+  surroundings: Surroundings,
 ): CombatEvent[] {
-  return applyEffects(next.effects, { caster: attacker, target: victim, rng, rules });
+  return applyEffects(next.effects, { caster: attacker, target: victim, rng, rules, surroundings });
 }
 
 /**
@@ -456,7 +462,9 @@ function strike(swing: Swing, victim: Combatant, events: CombatEvent[]): void {
   if (landBlow(snapshot, victim, PLAIN_BLOW, swing.exposed(victim), rng, rules, events)) {
     gainCriticalEnergy(attacker, snapshot.criticalStrikes, events);
   }
-  events.push(...attackHitRiders(attacker, victim, snapshot.mainHand, rng, rules));
+  events.push(
+    ...attackHitRiders(attacker, victim, snapshot.mainHand, rng, rules, swing.surroundings),
+  );
   attackReached(victim, events);
 }
 
@@ -501,21 +509,28 @@ export function resolveSwing(swing: Swing): {
 }
 
 /**
- * Resolve an attack skill at its hit (ADR-0029): one blow of the weapon on
- * each victim, the primary first, with the skill's bonus added after
- * armor (#760). A victim the blow misses (blind) gets none of the skill's
- * riders; the ones it hits get them all. A rider on the attacker, as
- * Wounding Strike's lost enchantment (#845), needs a hit too. A victim that blocks gets the
- * skill's `onBlocked` effects instead (#534); an `unblockable` one rolls
- * no block at all (Wild Throw, #523). An off-hand attack on a victim
- * without the caster's lead mark misses it outright, before blind; a
- * chain attack that hits leaves its own mark (#831). No double strike and no
- * cleave: an area, as Barrage's, is already the skill's own, and each of
- * its blows rolls its own block and its own crit.
+ * Resolve an attack skill at its hit (ADR-0029): its `strikes` blows of
+ * the weapon on each victim, the primary first, with the skill's bonus
+ * added after armor (#760). A victim a blow misses (blind) gets none of
+ * the skill's riders from it; one it hits gets them all. A rider on the
+ * attacker, as Wounding Strike's lost enchantment (#845), needs a hit
+ * too. A victim that blocks gets the skill's `onBlocked` effects instead
+ * (#534); an `unblockable` one rolls no block at all (Wild Throw, #523).
+ * A chain attack on a victim without the mark it follows misses it
+ * outright, before blind, read once before the first blow; a chain
+ * attack that hits leaves its own mark (#831).
+ *
+ * A dual attack strikes twice (#885): each blow rolls its own blind,
+ * block, crit and damage, and the skill's effects land after each blow
+ * that hits, so a condition applied twice is refreshed. A victim the
+ * first blow killed takes no second. The weapon's own double strike is
+ * never added to a skill, and nor is cleave: an area, as Barrage's, is
+ * already the skill's own, and each of its blows rolls its own block and
+ * its own crit.
  *
  * The attacker's weapon spell ends as it strikes, and its chants' riders
- * (#758) land on each victim it hits after the skill's own blow; the
- * chants end once every blow is done, whatever each did.
+ * (#758) land on each victim a blow hits, after the skill's own blow; the
+ * chants end once the first blows are done, whatever each did.
  *
  * A ranged weapon's attack skill does not come here: it flies, and its
  * blow and riders land with the arrow (#416).
@@ -524,15 +539,14 @@ export function resolveAttackSkill(
   resolution: SkillResolution,
   exposed: (victim: Combatant) => boolean,
 ): CombatEvent[] {
-  const { skill, caster, rng, rules } = resolution;
+  const { skill, caster, rng, rules, surroundings } = resolution;
   const blow = skillBlow(skill, caster);
   const snapshot = weaponSnapshotOf(caster);
   const kind = blowKind(snapshot.mainHand.weapon);
   const events: CombatEvent[] = [];
   bearerAttacked(caster, events);
   const next = nextAttackSkillOf(caster);
-  const hit: Combatant[] = [];
-  const blocked: Combatant[] = [];
+  const victims: Combatant[] = [];
   for (const victim of resolution.targets) {
     if (victim.dead) {
       continue;
@@ -541,48 +555,63 @@ export function resolveAttackSkill(
       events.push({ kind: "attack-missed", targetId: victim.id, reason: "out-of-sequence" });
       continue;
     }
-    if (blindMisses(caster, rng)) {
-      events.push({ kind: "attack-missed", targetId: victim.id });
-      continue;
-    }
-    if (skill.attack?.unblockable !== true && blocks(victim, kind, rng)) {
-      events.push({ kind: "attack-blocked", targetId: victim.id });
-      attackReached(victim, events);
-      blocked.push(victim);
-      continue;
-    }
-    if (
-      landBlow(
-        snapshot,
-        victim,
-        settleBlow(blow, caster, victim),
-        exposed(victim),
-        rng,
-        rules,
-        events,
-      )
-    ) {
-      gainCriticalEnergy(caster, snapshot.criticalStrikes, events);
-    }
-    events.push(...attackHitRiders(caster, victim, snapshot.mainHand, rng, rules));
-    events.push(...nextAttackSkillRiders(next, caster, victim, rng, rules));
-    attackReached(victim, events);
-    markChain(caster, skill, victim.id);
-    hit.push(victim);
+    victims.push(victim);
   }
-  useNextAttackSkill(caster, next, events);
-  return [
-    ...events,
-    ...(hit.length === 0 ? [] : applySkillEffects({ ...resolution, targets: hit }, events)),
-    ...(blocked.length === 0 || skill.attack === undefined
-      ? []
-      : applySkillEffects(
-          {
-            ...resolution,
-            skill: { ...skill, effects: skill.attack.onBlocked },
-            targets: blocked,
-          },
+  const strikes = skill.attack?.strikes ?? 1;
+  for (let strike = 0; strike < strikes; strike += 1) {
+    const hit: Combatant[] = [];
+    const blocked: Combatant[] = [];
+    for (const victim of victims) {
+      if (victim.dead) {
+        continue;
+      }
+      if (blindMisses(caster, rng)) {
+        events.push({ kind: "attack-missed", targetId: victim.id });
+        continue;
+      }
+      if (skill.attack?.unblockable !== true && blocks(victim, kind, rng)) {
+        events.push({ kind: "attack-blocked", targetId: victim.id });
+        attackReached(victim, events);
+        blocked.push(victim);
+        continue;
+      }
+      if (
+        landBlow(
+          snapshot,
+          victim,
+          settleBlow(blow, caster, victim, surroundings),
+          exposed(victim),
+          rng,
+          rules,
           events,
-        )),
-  ];
+        )
+      ) {
+        gainCriticalEnergy(caster, snapshot.criticalStrikes, events);
+      }
+      events.push(
+        ...attackHitRiders(caster, victim, snapshot.mainHand, rng, rules, surroundings),
+        ...nextAttackSkillRiders(next, caster, victim, rng, rules, surroundings),
+      );
+      attackReached(victim, events);
+      markChain(caster, skill, victim.id);
+      hit.push(victim);
+    }
+    if (strike === 0) {
+      useNextAttackSkill(caster, next, events);
+    }
+    events.push(
+      ...(hit.length === 0 ? [] : applySkillEffects({ ...resolution, targets: hit }, events)),
+      ...(blocked.length === 0 || skill.attack === undefined
+        ? []
+        : applySkillEffects(
+            {
+              ...resolution,
+              skill: { ...skill, effects: skill.attack.onBlocked },
+              targets: blocked,
+            },
+            events,
+          )),
+    );
+  }
+  return events;
 }

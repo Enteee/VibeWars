@@ -39,6 +39,7 @@ function resolve(caster: Combatant, target: Combatant | undefined): void {
     return;
   }
   applyEffects(skill.effects, {
+    surroundings: new Map(),
     caster,
     target,
     rng: createRng(1),
@@ -61,6 +62,7 @@ describe("interrupt mechanic", () => {
 
     // Ranger interrupts mid-cast.
     const events = applyEffects(getSkill("warrior.distracting-blow")?.effects ?? [], {
+      surroundings: new Map(),
       caster: ranger,
       target: victim,
       rng: createRng(1),
@@ -86,6 +88,7 @@ describe("interrupt mechanic", () => {
     const victim = makeCombatant({ id: "victim", team: 1 });
 
     const events = applyEffects(getSkill("warrior.distracting-blow")?.effects ?? [], {
+      surroundings: new Map(),
       caster: ranger,
       target: victim,
       rng: createRng(1),
@@ -104,6 +107,7 @@ describe("interrupt mechanic", () => {
     const idle = makeCombatant({ id: "idle", team: 1 });
 
     applyEffects(getSkill("ranger.broad-head-arrow")?.effects ?? [], {
+      surroundings: new Map(),
       caster: ranger,
       target: idle,
       rng: createRng(1),
@@ -125,6 +129,7 @@ describe("interrupt mechanic", () => {
     expect(victim.statuses.has("regeneration")).toBe(true);
 
     const events = applyEffects(getSkill("warrior.distracting-blow")?.effects ?? [], {
+      surroundings: new Map(),
       caster: ranger,
       target: victim,
       rng: createRng(1),
@@ -149,6 +154,7 @@ describe("interrupt mechanic", () => {
     expect(energyAfterPaying).toBe(45);
 
     applyEffects(getSkill("warrior.distracting-blow")?.effects ?? [], {
+      surroundings: new Map(),
       caster: ranger,
       target: victim,
       rng: createRng(1),
@@ -168,6 +174,7 @@ describe("status-driven combat scenarios", () => {
     const victim = makeCombatant({ id: "victim", team: 1, health: 500 });
 
     applyEffects(getSkill("warrior.sever-artery")?.effects ?? [], {
+      surroundings: new Map(),
       caster: warrior,
       target: victim,
       rng: createRng(1),
@@ -190,6 +197,7 @@ describe("status-driven combat scenarios", () => {
     ally.statuses.apply("bleeding", 20, "enemy");
 
     const events = applyEffects(getSkill("monk.mend-condition")?.effects ?? [], {
+      surroundings: new Map(),
       caster: monk,
       target: ally,
       rng: createRng(1),
@@ -212,6 +220,7 @@ describe("status-driven combat scenarios", () => {
 
     // A self-targeted skill resolves against the caster.
     applyEffects(getSkill("elementalist.armor-of-earth")?.effects ?? [], {
+      surroundings: new Map(),
       caster: ele,
       target: ele,
       rng: createRng(1),
@@ -247,6 +256,7 @@ describe("status-driven combat scenarios", () => {
     const victim = makeCombatant({ id: "victim", team: 1, health: 500 });
 
     applyEffects(getSkill("necromancer.faintheartedness")?.effects ?? [], {
+      surroundings: new Map(),
       caster: necro,
       target: victim,
       rng: createRng(1),
@@ -268,6 +278,7 @@ describe("an interrupted skill (ADR-0029)", () => {
     cast(victim, "ranger.troll-unguent", victim);
 
     applyEffects([{ kind: "interrupt" }], {
+      surroundings: new Map(),
       caster: ranger,
       target: victim,
       rng: createRng(1),
@@ -283,6 +294,7 @@ describe("an interrupted skill (ADR-0029)", () => {
 describe("applying Dazed (#546)", () => {
   const daze = (victim: Combatant) =>
     applyEffects(getSkill("ranger.broad-head-arrow")?.effects ?? [], {
+      surroundings: new Map(),
       caster: makeCombatant({ id: "ranger", team: 0 }),
       target: victim,
       rng: createRng(1),

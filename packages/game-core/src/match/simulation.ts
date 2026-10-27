@@ -1391,6 +1391,7 @@ export class MatchSimulation {
       }),
       rng: this.#rng,
       rules: this.#ruleset.combat,
+      surroundings: this.#participants,
     });
     // Where an area landed, for whoever draws it: nowhere, when an area
     // centred on a target had no target to centre on, or when it is still
@@ -1404,16 +1405,22 @@ export class MatchSimulation {
     // Only attack skills earn adrenaline, as weapon hits do: a spell is
     // paid for in energy, and earning both would make casters the best
     // adrenaline builders. A blocked blow earns nothing, not even the
-    // damage its `onBlocked` deals, as Swift Chop's (#534). An attack
-    // skill strikes each victim once, so damage on one that blocked is
-    // all `onBlocked`'s.
+    // damage its `onBlocked` deals, as Swift Chop's (#534). Damage on a
+    // victim that blocked every blow is all `onBlocked`'s; a dual attack
+    // (#885) blocked once and landed once still landed.
     if (skill.type === "attack") {
-      const blocked = new Set(
-        events.filter((event) => event.kind === "attack-blocked").map((event) => event.targetId),
-      );
+      const strikes = skill.attack?.strikes ?? 1;
+      const blocked = (targetId: string): boolean => {
+        const blows = events.filter(
+          (event) =>
+            (event.kind === "attack-blocked" || event.kind === "attack-missed") &&
+            event.targetId === targetId,
+        );
+        return blows.some(({ kind }) => kind === "attack-blocked") && blows.length >= strikes;
+      };
       this.#gainAdrenaline(
         record,
-        events.filter((event) => event.kind !== "damage" || !blocked.has(event.targetId)),
+        events.filter((event) => event.kind !== "damage" || !blocked(event.targetId)),
       );
     }
     if (skill.type === "shout" || skill.type === "chant") {
@@ -1757,7 +1764,7 @@ export class MatchSimulation {
     const { events, doubleStrike, landed } = resolveSwing({
       attacker: record.combatant,
       target,
-      candidates: weapon.cleaveTargets === 0 ? [] : [...this.#participants.values()],
+      surroundings: this.#participants,
       rng: this.#rng,
       rules: this.#ruleset.combat,
       exposed: this.#exposedTo(record),
@@ -1963,6 +1970,7 @@ export class MatchSimulation {
               targets: [target.combatant],
               rng: this.#rng,
               rules: this.#ruleset.combat,
+              surroundings: this.#participants,
             },
             events,
           );
@@ -1981,7 +1989,12 @@ export class MatchSimulation {
       const critical = landBlow(
         projectile.weaponSnapshot,
         target.combatant,
-        settleBlow(skillHit?.blow ?? PLAIN_BLOW, attacker?.combatant, target.combatant),
+        settleBlow(
+          skillHit?.blow ?? PLAIN_BLOW,
+          attacker?.combatant,
+          target.combatant,
+          this.#participants,
+        ),
         // A shot crits only on its roll, never for where it came from.
         false,
         this.#rng,
@@ -1999,6 +2012,7 @@ export class MatchSimulation {
             projectile.weaponSnapshot.mainHand,
             this.#rng,
             this.#ruleset.combat,
+            this.#participants,
           ),
         );
       }
@@ -2010,6 +2024,7 @@ export class MatchSimulation {
             target.combatant,
             this.#rng,
             this.#ruleset.combat,
+            this.#participants,
           ),
         );
       }
@@ -2050,6 +2065,7 @@ export class MatchSimulation {
       }),
       rng: this.#rng,
       rules: this.#ruleset.combat,
+      surroundings: this.#participants,
     });
     this.#chargeFromDamage(caster, events);
     this.#recordDeaths(events);

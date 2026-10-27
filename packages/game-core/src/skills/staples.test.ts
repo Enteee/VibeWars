@@ -84,7 +84,7 @@ function strike(caster: Combatant, id: string, target: Combatant, rng = steady()
   expect(check(caster, id, target)).toEqual({ ok: true });
   payCost(skill(id), caster);
   return resolveAttackSkill(
-    { skill: skill(id), caster, targets: [target], rng, rules: RULES },
+    { surroundings: new Map(), skill: skill(id), caster, targets: [target], rng, rules: RULES },
     NOWHERE,
   );
 }
@@ -105,7 +105,14 @@ function land(
     losBlockers: [],
   });
   payCost(skill(id), caster);
-  return applySkillEffects({ skill: skill(id), caster, targets, rng: createRng(1), rules: RULES });
+  return applySkillEffects({
+    surroundings: new Map(),
+    skill: skill(id),
+    caster,
+    targets,
+    rng: createRng(1),
+    rules: RULES,
+  });
 }
 
 const at = (combatant: Combatant, position: Vec2): TargetCandidate => ({ combatant, position });
@@ -162,6 +169,7 @@ describe("bonus damage (#522)", () => {
     const plain = (caster: Combatant) =>
       resolveAttackSkill(
         {
+          surroundings: new Map(),
           skill: skill("warrior.sever-artery"),
           caster,
           targets: [foe("t")],
