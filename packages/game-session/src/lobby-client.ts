@@ -1,7 +1,9 @@
 import {
   LOBBY_REFUSALS,
+  MAX_WIRE_CHAT_TEXT,
   PROTOCOL_VERSION,
   normalizeLobbyCode,
+  parseWireChatLine,
   parseWireLobbyNote,
   parseWireLobbyState,
   parseWireMatchStart,
@@ -13,6 +15,7 @@ import {
 
 import { lobbyCharacter } from "./lobby-character.js";
 import type {
+  ChatLine,
   LobbyCharacter,
   LobbyClosedReason,
   LobbyConnection,
@@ -95,6 +98,8 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
   const startingHandlers: ((start: MatchStarting) => void)[] = [];
   const rejectedHandlers: ((reason: string) => void)[] = [];
   const closedHandlers: ((reason: LobbyClosedReason) => void)[] = [];
+  const chatHandlers: ((line: ChatLine) => void)[] = [];
+  const throttledHandlers: (() => void)[] = [];
   /** Until the join settles: how a refusal or the timeout ends it. */
   let failJoin: ((error: Error) => void) | undefined;
   /** When the host's peer went mid-match, by `Date.now`, while waiting for it back. */
@@ -110,6 +115,8 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     startingHandlers.length = 0;
     rejectedHandlers.length = 0;
     closedHandlers.length = 0;
+    chatHandlers.length = 0;
+    throttledHandlers.length = 0;
   };
 
   const close = (reason: LobbyClosedReason): void => {
@@ -180,6 +187,12 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       startMatch() {
         send({ kind: "start" });
       },
+      sendChat(channel, text) {
+        if (hostId !== undefined && !closed) {
+          // Past the wire's bound the host would drop it whole; it cuts to a line itself.
+          transport.send("chat", { channel, text: text.slice(0, MAX_WIRE_CHAT_TEXT) }, hostId);
+        }
+      },
       onChange(handler) {
         changeHandlers.push(handler);
       },
@@ -191,6 +204,12 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       },
       onClosed(handler) {
         closedHandlers.push(handler);
+      },
+      onChat(handler) {
+        chatHandlers.push(handler);
+      },
+      onChatThrottled(handler) {
+        throttledHandlers.push(handler);
       },
       async disconnect() {
         closed = true;
@@ -244,12 +263,25 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
           for (const handler of [...rejectedHandlers]) {
             handler(note.reason);
           }
+        } else if (note.kind === "chat-throttled") {
+          for (const handler of [...throttledHandlers]) {
+            handler();
+          }
         } else if (isRefusal(note.reason)) {
           if (failJoin !== undefined) {
             failJoin(new LobbyRefusedError(note.reason));
           } else if (note.reason === "host-left") {
             close("host-left");
           }
+        }
+      }),
+      transport.on("chat-line", (data, from) => {
+        const line = parseWireChatLine(data);
+        if (from !== hostId || line === undefined) {
+          return;
+        }
+        for (const handler of [...chatHandlers]) {
+          handler(line);
         }
       }),
       transport.on("match-start", (data, from) => {
