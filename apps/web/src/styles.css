@@ -3318,6 +3318,41 @@ body.has-expanded-training #screens {
   width: 9rem;
 }
 
+/* The Music block (#425): what plays, and the intensity, under the volumes. */
+.music-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--line);
+}
+
+.music-now-playing-title {
+  color: var(--ink);
+}
+
+.music-intensity-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.music-intensity-choice {
+  padding: 0.15rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-dim);
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.music-intensity-choice[aria-pressed="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 /* The now-playing toast: top left, just under the top bar, where a match has
    nothing (the skill bar is along the bottom, the scoreboard in the middle
    and the buttons on the right). On a menu screen that corner is the title,
