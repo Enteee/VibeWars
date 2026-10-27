@@ -297,10 +297,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     attack: undefined,
     whileActivating: undefined,
     projectile: undefined,
-    // A hex combining attack-slowing with health degeneration. The
-    // degeneration is modelled by the hex's own healthPerSecond; the
-    // attack-speed half awaits weapon attacks (Sprint 15/21).
-    effects: [{ kind: "apply-status", statusId: "life-drain", durationSeconds: 13 }],
+    effects: [{ kind: "apply-status", statusId: "faintheartedness", durationSeconds: 13 }],
   },
   {
     id: "necromancer.weaken-armor",

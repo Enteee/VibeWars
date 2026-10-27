@@ -179,7 +179,10 @@ export function describeStatus(id: string): string {
     parts.push("spells are interrupted by attacks");
   }
   if (definition.attackDurationMultiplier !== 1) {
-    parts.push(`attacks take ${String(definition.attackDurationMultiplier)}× as long`);
+    // GW1's wording: "50% slower" is 1.5× as long, "33% faster" is 0.67×.
+    const change = Math.round(Math.abs(definition.attackDurationMultiplier - 1) * 100);
+    const way = definition.attackDurationMultiplier > 1 ? "slower" : "faster";
+    parts.push(`attacks ${String(change)}% ${way}`);
   }
   if (definition.block !== undefined) {
     const what = BLOCKED_ATTACKS[definition.block.against];

@@ -41,9 +41,9 @@ export function makeCombatant(overrides: Partial<Combatant> & { id: string }): C
 }
 
 /**
- * Run `fn` with these statuses speeding up or slowing down attacks. No
- * catalog status does yet (ADR-0029), so a test of the hook lends the
- * multiplier to an existing one for the length of `fn`.
+ * Run `fn` with these statuses speeding up or slowing down attacks. Only
+ * Faintheartedness does in the catalog, and only slows, so a test of the
+ * hook lends the multiplier to an existing one for the length of `fn`.
  */
 export function withAttackDuration<T>(
   multipliers: Partial<Record<StatusId, number>>,

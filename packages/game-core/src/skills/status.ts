@@ -65,7 +65,7 @@ export type StatusId =
   | "dazed"
   | "disease"
   // Hexes / enchantments implemented so far.
-  | "life-drain"
+  | "faintheartedness"
   | "malaise"
   | "regeneration"
   | "blood-ritual"
@@ -159,8 +159,8 @@ export interface StatusDefinition {
   readonly interruptsSpells: boolean;
   /**
    * Multiplier on how long the bearer's attacks take, swings and attack
-   * skills alike; <1 is faster (ADR-0029). No status sets it yet: it is the
-   * hook attack-speed skills plug into.
+   * skills alike; <1 is faster (ADR-0029). "50% slower" is 1.5, as GW1
+   * counts it.
    */
   readonly attackDurationMultiplier: number;
   /** While active, a knockdown does nothing to the bearer (#468). No status sets it yet. */
@@ -273,7 +273,11 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   dazed: define("dazed", "Dazed", "condition", { castTimeMultiplier: 2, interruptsSpells: true }),
   disease: define("disease", "Disease", "condition", { healthPips: -4, spreads: true }),
 
-  "life-drain": define("life-drain", "Life Drain", "hex", { healthPips: -2 }),
+  // Faintheartedness at rank 12: attacks 50% slower, −2 pips (GW1 PvP).
+  faintheartedness: define("faintheartedness", "Faintheartedness", "hex", {
+    healthPips: -2,
+    attackDurationMultiplier: 1.5,
+  }),
   malaise: define("malaise", "Malaise", "hex", { energyPips: -1 }),
   regeneration: define("regeneration", "Regeneration", "enchantment", { healthPips: 4 }),
   "blood-ritual": define("blood-ritual", "Blood Ritual", "enchantment", { energyPips: 3 }),

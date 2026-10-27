@@ -149,6 +149,17 @@ export function leadershipEnergy(rank: number, alliesAffected: number): number {
   return Math.min(alliesAffected, Math.floor(rank / 2));
 }
 
+/** The Elementalist's primary. */
+export const ENERGY_STORAGE_ATTRIBUTE = "elementalist.energy-storage";
+
+/** Maximum energy each rank of Energy Storage adds (Q69). */
+export const ENERGY_STORAGE_ENERGY_PER_RANK = 3;
+
+/** The maximum energy Energy Storage adds at this rank (#532): +3 a rank, +36 at rank 12. */
+export function energyStorageBonus(rank: number): number {
+  return ENERGY_STORAGE_ENERGY_PER_RANK * rank;
+}
+
 /** A share in [0, 1] as a whole percentage, for a readout. */
 function percent(share: number): string {
   return `${String(Math.round(share * 100))}%`;
@@ -184,6 +195,8 @@ export function describePrimaryAttribute(attributeId: string, rank: number): str
         `+${String(soulReapingEnergy(rank))} energy when someone nearby dies ` +
         `(${String(SOUL_REAPING_MAX_TRIGGERS)} per ${String(SOUL_REAPING_WINDOW_SECONDS)} s)`
       );
+    case ENERGY_STORAGE_ATTRIBUTE:
+      return `+${String(energyStorageBonus(rank))} maximum energy`;
     case LEADERSHIP_ATTRIBUTE:
       return (
         `up to ${String(leadershipEnergy(rank, Number.POSITIVE_INFINITY))} energy per shout, ` +

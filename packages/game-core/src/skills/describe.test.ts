@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { IMPLEMENTED_SKILLS, getSkill } from "./catalog.js";
 import { describeSkill, describeStatus, formatScalingRange } from "./describe.js";
-import { makeCombatant } from "./testing.js";
+import { makeCombatant, withAttackDuration } from "./testing.js";
 import { resolveMagnitude } from "./scaling.js";
 import { STATUS_DEFINITIONS } from "./status.js";
 import type { SkillEffect } from "./types.js";
@@ -250,6 +250,13 @@ describe("describeStatus", () => {
   it("explains dazed: slower spells, interrupted by attacks (#546)", () => {
     expect(describeStatus("dazed")).toContain("spells take 2× as long to cast");
     expect(describeStatus("dazed")).toContain("spells are interrupted by attacks");
+  });
+
+  it("words attack speed as GW1 does: 50% slower, 33% faster (#493)", () => {
+    expect(describeStatus("faintheartedness")).toContain("attacks 50% slower");
+    withAttackDuration({ bleeding: 0.67 }, () => {
+      expect(describeStatus("bleeding")).toContain("attacks 33% faster");
+    });
   });
 
   it("returns the id for an unknown status rather than throwing", () => {
