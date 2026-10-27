@@ -2,6 +2,7 @@ import { MAX_CHAT_GRAPHEMES, type ChatChannel } from "@vibewars/game-protocol";
 import type { ChatLine } from "@vibewars/game-session";
 
 import { button, h } from "./kit.js";
+import { isOptionsOverlayOpen } from "./options-screen.js";
 
 /**
  * Chat (#479): the panel at the lower left, in the lobby and through its
@@ -244,7 +245,8 @@ export function mountChat(deps: ChatDeps): ChatPanel {
     wake();
   });
 
-  // Enter opens the box from anywhere that has no use for Enter itself.
+  // Enter opens the box from anywhere that has no use for Enter itself;
+  // under the Options overlay, keys are its alone (#454).
   const onKeyDown = (event: KeyboardEvent): void => {
     if (
       event.key !== "Enter" ||
@@ -253,6 +255,7 @@ export function mountChat(deps: ChatDeps): ChatPanel {
       event.altKey ||
       event.metaKey ||
       isControl(event.target) ||
+      isOptionsOverlayOpen() ||
       !root.isConnected
     ) {
       return;

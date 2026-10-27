@@ -18,9 +18,11 @@ import {
 import {
   SKILL_TYPE_NAME,
   attackingIcon,
+  fullscreenIcon,
   musicIcon,
   offhandIcon,
   professionIcon,
+  settingsIcon,
   skillBadgeHtml,
   skillIcon,
   skillIconHtml,
@@ -77,6 +79,16 @@ describe("icons", () => {
       expect(fs.existsSync(path.join(PUBLIC, musicIcon(muted))), String(muted)).toBe(true);
     }
     expect(musicIcon(true)).not.toBe(musicIcon(false));
+  });
+
+  it("has a file under public/ for Options and both fullscreen states (#454)", () => {
+    expect(fs.existsSync(path.join(PUBLIC, settingsIcon()))).toBe(true);
+    for (const fullscreen of [false, true]) {
+      expect(fs.existsSync(path.join(PUBLIC, fullscreenIcon(fullscreen))), String(fullscreen)).toBe(
+        true,
+      );
+    }
+    expect(fullscreenIcon(true)).not.toBe(fullscreenIcon(false));
   });
 
   it("has a file under public/ for the attacking state", () => {
