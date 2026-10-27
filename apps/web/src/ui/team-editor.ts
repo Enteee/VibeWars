@@ -1,8 +1,8 @@
 import {
-  StatusSet,
   energyCostOf,
   getAttribute,
   getSkill,
+  outsideMatch,
   type SkillType,
 } from "@vibewars/game-core";
 
@@ -186,7 +186,7 @@ export function memberSkillCells(character: StoredCharacter): (TeamSkillCell | n
         ? ""
         : skill.cost.kind === "adrenaline"
           ? `${String(skill.cost.amount)}a`
-          : `${String(energyCostOf(skill, { attributeRanks: ranks, statuses: new StatusSet() }))}e`;
+          : `${String(energyCostOf(skill, outsideMatch(ranks)))}e`;
     return { skillId, name: skill.name, type: skill.type, cost, elite: skill.elite };
   });
 }

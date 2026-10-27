@@ -55,6 +55,11 @@ export interface ResolvedEquipment {
   readonly flatPhysicalReduction: number;
   /** Multiplier applied to an incoming condition's duration. Absent means 1. */
   readonly statusDurationScale: ReadonlyMap<StatusId, number>;
+  /**
+   * What runes add to each attribute, already in `attributeRanks`: what
+   * tells an allocated rank from a boosted one, as weakness must (#762).
+   */
+  readonly attributeBonuses: ReadonlyMap<string, number>;
   /** The off-hand that counts, for its mark in the arena (#276); `undefined` for none. */
   readonly offhandId: OffhandId | undefined;
 }
@@ -295,6 +300,7 @@ export function resolveLoadout(input: LoadoutInput, rules: CombatRules): Resolve
       conditionalArmor: conditionalArmorOf(input.primaryProfession, input.equipment),
       flatPhysicalReduction: runes.flatPhysicalReduction,
       statusDurationScale: runes.statusDurationScale,
+      attributeBonuses: runes.attributeBonuses,
       offhandId,
     },
   };
@@ -334,6 +340,7 @@ export function unarmedResolvedEquipment(baseArmor: number): ResolvedEquipment {
     conditionalArmor: [],
     flatPhysicalReduction: 0,
     statusDurationScale: new Map(),
+    attributeBonuses: new Map(),
     offhandId: undefined,
   };
 }

@@ -1,0 +1,24 @@
+{
+  "id": "necromancer.enfeeble",
+  "name": "Enfeeble",
+  "profession": "necromancer",
+  "attribute": "Curses",
+  "type": "Spell.",
+  "elite": false,
+  "campaign": "Prophecies",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "activationSeconds": 0.25,
+  "rechargeSeconds": 10,
+  "description": "Target suffers from weakness for 10...26...30 seconds.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Necromancer/256-Enfeeble",
+    "fetchedAt": "2026-10-27T00:03:01.572Z"
+  },
+  "unmapped": {}
+}
