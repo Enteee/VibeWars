@@ -336,10 +336,13 @@ async function main() {
     const result = update(git, target);
     updated = result.updated;
     if (result.tampered !== undefined) {
-      // An intrusion, not a build failure: no lock, and the lock check will refuse the boot.
+      // An intrusion, not a build failure: the checkout holds bytes nobody merged,
+      // so nothing runs in it: no devenv shell, no claude-llc up, no lock.
       await tellOperator(
-        `SECURITY: after the reboot fast-forward the checkout differs from the merged commit ${short(target)} in hubd's mirror: ${result.tampered.join(", ")}. A jail may have altered .git/objects; not locked. Run git fsck and re-clone.`,
+        `SECURITY: after the reboot fast-forward the checkout differs from the merged commit ${short(target)} in hubd's mirror: ${result.tampered.join(", ")}. A jail may have altered .git/objects. The company stays down, nothing was run in the checkout, no lock. Run git fsck and re-clone.`,
       );
+      process.exitCode = 1;
+      return;
     }
     if (!updated) {
       outcome = `Rebooted, but NOT updated: ${result.why}.`;
