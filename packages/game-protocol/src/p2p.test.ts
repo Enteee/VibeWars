@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   CHANNELS,
+  MAX_WIRE_CHAT_TEXT,
   MAX_WIRE_COMBATS,
   MAX_WIRE_EVENTS,
   MAX_SNAPSHOT_PARTS,
@@ -22,7 +23,9 @@ import {
   parseCastRefused,
   parsePeerBye,
   parsePeerCall,
+  parsePeerChat,
   parseWireCalls,
+  parseWireChatLine,
   parsePeerHello,
   parsePeerRefuse,
   parsePeerRejoinChallenge,
@@ -304,6 +307,8 @@ const lobbyState: WireLobbyState = {
 const ping = { id: 3, x: 200, y: 150.5, byId: "peer-1", remaining: 2.6 };
 const calls = { target: { targetId: "peer-2", callerId: "peer-1" }, pings: [ping] };
 
+const chatLine = { channel: "all", fromId: "peer-2", name: "Ann", team: 0, text: "gg" };
+
 const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["hello", parsePeerHello, hello],
   ["rejoining hello", parsePeerHello, { ...hello, rejoin: { playerId: "peer-2" } }],
@@ -329,6 +334,15 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
     parseWireCalls,
     { target: null, pings: Array.from({ length: 32 }, () => ping) },
   ],
+  ["chat (#479)", parsePeerChat, { channel: "team", text: "spike the monk" }],
+  [
+    "chat as long as the wire takes (#479)",
+    parsePeerChat,
+    { channel: "all", text: "x".repeat(MAX_WIRE_CHAT_TEXT) },
+  ],
+  ["chat-line (#479)", parseWireChatLine, chatLine],
+  ["chat-line from a spectator (#479)", parseWireChatLine, { ...chatLine, team: null }],
+  ["chat-throttled (#479)", parseWireLobbyNote, { kind: "chat-throttled", reason: "" }],
   ["lobby-join", parsePeerLobbyJoin, lobbyJoin],
   ["lobby-join on the house loadout", parsePeerLobbyJoin, { ...lobbyJoin, character: null }],
   ["lobby-state", parseWireLobbyState, lobbyState],
@@ -371,6 +385,23 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     "calls with a ping running backwards (#443)",
     parseWireCalls,
     { target: null, pings: [{ ...ping, remaining: -1 }] },
+  ],
+
+  ["chat on a guild channel (#479)", parsePeerChat, { channel: "guild", text: "hi" }],
+  ["chat without text (#479)", parsePeerChat, { channel: "all" }],
+  ["chat with numeric text (#479)", parsePeerChat, { channel: "all", text: 7 }],
+  [
+    "chat past the wire's bound (#479)",
+    parsePeerChat,
+    { channel: "all", text: "x".repeat(MAX_WIRE_CHAT_TEXT + 1) },
+  ],
+  ["chat-line on team 2 (#479)", parseWireChatLine, { ...chatLine, team: 2 }],
+  ["chat-line without a sender (#479)", parseWireChatLine, { ...chatLine, fromId: undefined }],
+  ["chat-line with a long name (#479)", parseWireChatLine, { ...chatLine, name: long }],
+  [
+    "chat-line past the wire's bound (#479)",
+    parseWireChatLine,
+    { ...chatLine, text: "x".repeat(MAX_WIRE_CHAT_TEXT + 1) },
   ],
 
   ["not an object", parsePeerHello, "hello"],

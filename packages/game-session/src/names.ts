@@ -1,3 +1,5 @@
+import { MAX_CHAT_GRAPHEMES, MAX_WIRE_CHAT_TEXT } from "@vibewars/game-protocol";
+
 /**
  * Display names a player asks for, made safe to show everyone (#375):
  * the lobby, the match and a P2P host all run them through here.
@@ -57,6 +59,15 @@ const MAX_CODE_POINTS_PER_GRAPHEME = 12;
  * six families, or sixteen of nearly anything else.
  */
 const MAX_NAME_CODE_POINTS = 48;
+
+/** How much of a chat line is looked at, in UTF-16 units: all the wire carries. */
+const MAX_RAW_CHAT_UNITS = MAX_WIRE_CHAT_TEXT;
+
+/**
+ * Code points in a whole chat line: three a grapheme on average, so a
+ * line of text is never cut, and a line of families stops at about fifty.
+ */
+const MAX_CHAT_CODE_POINTS = MAX_CHAT_GRAPHEMES * 3;
 
 /** One character of `INVISIBLE_CHARACTERS`, for testing a single code point. */
 const INVISIBLE_CHARACTER = new RegExp(INVISIBLE_CHARACTERS.source, "u");
@@ -126,17 +137,17 @@ function wantedFormatCharacters(chars: readonly string[]): Set<number> {
 }
 
 /**
- * The first `MAX_NAME_LENGTH` graphemes, whole ones only, up to
- * `MAX_NAME_CODE_POINTS` in all. One holding more than
+ * The first `maxGraphemes` graphemes, whole ones only, up to
+ * `maxCodePoints` in all. One holding more than
  * `MAX_JOINERS_PER_GRAPHEME` joiners or `MAX_CODE_POINTS_PER_GRAPHEME`
  * code points keeps only its first code point.
  */
-function clampGraphemes(name: string): string {
+function clampGraphemes(text: string, maxGraphemes: number, maxCodePoints: number): string {
   const segmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
   const kept: string[] = [];
   let codePointsKept = 0;
-  for (const { segment } of segmenter.segment(name)) {
-    if (kept.length === MAX_NAME_LENGTH) {
+  for (const { segment } of segmenter.segment(text)) {
+    if (kept.length === maxGraphemes) {
       break;
     }
     const codePoints = Array.from(segment);
@@ -146,7 +157,7 @@ function clampGraphemes(name: string): string {
       joiners > MAX_JOINERS_PER_GRAPHEME || codePoints.length > MAX_CODE_POINTS_PER_GRAPHEME;
     const grapheme = tooWide ? (codePoints[0] ?? "") : segment;
     codePointsKept += tooWide ? 1 : codePoints.length;
-    if (codePointsKept > MAX_NAME_CODE_POINTS) {
+    if (codePointsKept > maxCodePoints) {
       break;
     }
     kept.push(grapheme);
@@ -155,18 +166,21 @@ function clampGraphemes(name: string): string {
 }
 
 /**
- * Sanitise a client-supplied display name (brief §32: never trust the
- * client). Invisible characters are stripped, except the joiners and flag
- * tags real names need, mark stacks and whitespace runs collapsed, the
- * length clamped in graphemes, so an emoji, a family or a flag is never
- * cut apart, and an empty result falls back to a server-generated name.
+ * The first `maxUnits` of `raw`, made safe to draw (brief §32: never
+ * trust the client): invisible characters stripped, except the joiners
+ * and flag tags real text needs, mark stacks and whitespace runs
+ * collapsed, then at most `maxGraphemes` graphemes and `maxCodePoints`
+ * code points kept, so an emoji, a family or a flag is never cut apart.
+ * Names and chat lines both go through here.
  */
-export function sanitizeName(raw: unknown, fallback: string): string {
-  if (typeof raw !== "string") {
-    return fallback;
-  }
+function sanitizeText(
+  raw: string,
+  maxUnits: number,
+  maxGraphemes: number,
+  maxCodePoints: number,
+): string {
   // Slicing can halve a surrogate pair; the stray half is stripped below.
-  const chars = Array.from(raw.slice(0, MAX_RAW_NAME_UNITS).normalize("NFC"));
+  const chars = Array.from(raw.slice(0, maxUnits).normalize("NFC"));
   const wanted = wantedFormatCharacters(chars);
   const cleaned = chars
     .map((char, index) => (wanted.has(index) ? char : char.replace(INVISIBLE_CHARACTERS, "")))
@@ -175,9 +189,26 @@ export function sanitizeName(raw: unknown, fallback: string): string {
     .replace(LEADING_MARKS, "")
     .replace(STACKED_MARKS, "$1")
     .trim();
-  if (cleaned === "") {
+  // The cut can leave a space at the end.
+  return clampGraphemes(cleaned, maxGraphemes, maxCodePoints).trim();
+}
+
+/**
+ * Sanitise a client-supplied display name, as `sanitizeText` does; an
+ * empty result falls back to a server-generated name.
+ */
+export function sanitizeName(raw: unknown, fallback: string): string {
+  if (typeof raw !== "string") {
     return fallback;
   }
-  // The cut can leave a space at the end.
-  return clampGraphemes(cleaned).trim();
+  const name = sanitizeText(raw, MAX_RAW_NAME_UNITS, MAX_NAME_LENGTH, MAX_NAME_CODE_POINTS);
+  return name === "" ? fallback : name;
+}
+
+/**
+ * Sanitise a chat line (#479) as names are, up to `MAX_CHAT_GRAPHEMES`.
+ * Empty when nothing drawable is left: the host drops that line.
+ */
+export function sanitizeChatText(raw: string): string {
+  return sanitizeText(raw, MAX_RAW_CHAT_UNITS, MAX_CHAT_GRAPHEMES, MAX_CHAT_CODE_POINTS);
 }
