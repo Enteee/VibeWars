@@ -801,6 +801,7 @@ function isStateCondition(condition: EffectCondition): condition is StateConditi
     case "caster-has":
     case "target-alone":
     case "target-not-moving":
+    case "target-knocked-down":
     case "caster-more-energy":
     case "caster-wields":
     case "target-less-health":
@@ -847,6 +848,8 @@ export function stateHolds(
     }
     case "target-not-moving":
       return !target.moving;
+    case "target-knocked-down":
+      return target.knockdownRemaining > 0;
     case "caster-more-energy":
       return caster.energy > target.energy;
     case "caster-wields":
@@ -963,6 +966,7 @@ function conditionHolds(
     case "caster-has":
     case "target-alone":
     case "target-not-moving":
+    case "target-knocked-down":
     case "caster-more-energy":
     case "caster-wields":
     case "target-less-health":

@@ -294,6 +294,12 @@ A status can stop it: while **Fleeting Stability** (Dervish) is on you,
 a knockdown does nothing, and the first one it stops ends it. On someone
 already down it is not spent.
 
+**Aftershock** (Elementalist, Earth Magic, 10 energy, ¾ s, 10 s recharge)
+strikes every foe nearby you for 85 earth, and a foe that is knocked down
+for 56 more (#985). "Down" is read as it lands, after that tick's
+countdown: a foe who stands up on that tick gets no bonus. Shock, then
+Aftershock, is the Elementalist's knockdown combo.
+
 A knocked-down character can't block: Guardian does nothing while you
 are down, and an attack skill's if-blocked rider never fires against
 you. Blocking works again the moment you stand.
@@ -862,6 +868,13 @@ target and every foe adjacent to it: 68 cold and 34% speed for 5 s.
 **Deep Freeze** (25 energy, 2 s, 15 s recharge) does the same to every
 foe in the area of its target, for 70 cold and 10 s (#938). Neither
 flies. Slows multiply, down to a floor of 25% speed.
+**Blinding Flash** (Air Magic, 10 energy, ¾ s, 8 s recharge) blinds its
+target for 7 s. **Shock** (5 energy, 10 overcast, ¾ s, 10 s recharge) is
+a touch skill, not a spell: Dazed does not slow it and Fast Casting does
+not speed it. It knocks its foe down and strikes for 50 lightning.
+**Meteor** (Fire Magic, 5 energy, 10 overcast, 2 s, 30 s recharge) strikes
+its target and every foe adjacent to it for 91 fire and knocks each down,
+as the cast ends (#985).
 
 ## Primary attributes
 

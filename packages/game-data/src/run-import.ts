@@ -478,6 +478,26 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Elementalist/434-Deep_Freeze",
   },
   {
+    id: "elementalist.blinding-flash",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/377-Blinding_Flash",
+  },
+  {
+    id: "elementalist.shock",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/389-Shock",
+  },
+  {
+    id: "elementalist.aftershock",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/393-Aftershock",
+  },
+  {
+    id: "elementalist.meteor",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/424-Meteor",
+  },
+  {
     id: "elementalist.lightning-strike",
     profession: "elementalist",
     url: "https://www.gw-memorial.net/skills/Elementalist/385-Lightning_Strike",
