@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 2,
   "rechargeSeconds": 10,
+  "upkeep": false,
   "description": "For 10...22...25 seconds, whenever target foe attacks or uses a skill, Spiteful Spirit deals 15...39...45 shadow damage to that foe and all adjacent allies of that foe.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

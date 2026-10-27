@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 1,
   "rechargeSeconds": 8,
+  "upkeep": false,
   "description": "Steal up to 18...52...60 Health from target foe.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

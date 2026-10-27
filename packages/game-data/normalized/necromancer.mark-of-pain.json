@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 1,
   "rechargeSeconds": 20,
+  "upkeep": false,
   "description": "For 30 seconds, whenever target foe takes physical damage, Mark of Pain deals 10...34...40 shadow damage to adjacent foes.",
   "variant": "pvp",
   "ruleset": "gw1-reference",
