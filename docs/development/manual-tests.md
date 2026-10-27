@@ -110,7 +110,7 @@ devenv coturn (#974).
 2. Two networks that fail check 1 of the section above, such as a
    home network and a phone on mobile data. The host opens the invite
    link and presses _Use_: the address bar keeps no `#turn=`, and Options
-   shows the relay's host. Its lobby screen says "Relay: <host>".
+   shows the relay's host. Its lobby screen says "Relay: _host_".
 3. The joiner, with no relay, joins the code. Pass: it reaches the
    lobby, and the match plays to its end. One side having the relay is
    enough.
