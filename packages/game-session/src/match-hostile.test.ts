@@ -1,4 +1,4 @@
-import { HOUSE_LOADOUT } from "@vibewars/game-core";
+import { HOUSE_LOADOUT, KILL_COUNT_MATCH_RULES } from "@vibewars/game-core";
 import {
   PROTOCOL_VERSION,
   parsePeerRefuse,
@@ -259,8 +259,10 @@ describe("P2P match robustness (#375)", () => {
 });
 
 describe("the P2P seat limit (#375)", () => {
+  // Kill-count: under annihilation a freed seat can empty a team, a wipe
+  // that ends the match, and these are about seats, not about who wins.
   it("refuses a player past maxPlayers, and seats one once a seat is free", async () => {
-    const match = startMatch({ maxPlayers: 2 });
+    const match = startMatch({ maxPlayers: 2, matchRules: KILL_COUNT_MATCH_RULES });
     const { connection: first } = await match.join();
     await match.join();
 
@@ -276,7 +278,7 @@ describe("the P2P seat limit (#375)", () => {
   });
 
   it("never refuses a player coming back, and never counts them twice", async () => {
-    const match = startMatch({ maxPlayers: 2 });
+    const match = startMatch({ maxPlayers: 2, matchRules: KILL_COUNT_MATCH_RULES });
     const { connection: watcher } = await match.join();
     const { connection: dropper, transport: dropperTransport } = await match.join();
     await match.step(TICK);
@@ -548,7 +550,9 @@ describe("a P2P host survives hostile peers (#375)", () => {
     expect(match.host.phase).toBe("active");
   });
   it("never seats again a peer that said bye, however it loops bye and hello", async () => {
-    const match = startMatch();
+    // Kill-count: under annihilation the bye empties the peer's team, a
+    // wipe, and this test is about seating, not about who wins.
+    const match = startMatch({ matchRules: KILL_COUNT_MATCH_RULES });
     const { connection: watcher } = await match.join();
     const raw = match.network.join();
     let welcomes = 0;

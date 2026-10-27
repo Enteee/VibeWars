@@ -761,11 +761,11 @@ scoreboard.
 
 What death costs, and how the dead come back, are properties of the
 match rules, set per mode as GW1 sets them (#843). Today's match is
-GW1's Kill Count: a dead player **respawns** at a spawn point of their
-own team after 8 seconds, at full health and energy, with all statuses
-cleared, and there is **no death penalty**. A `"resurrection-only"`
-match has no respawn: the dead stay corpses until resurrected, or the
-match ends.
+GW1's Annihilation (#846): there is no respawn, the dead stay corpses
+until resurrected or the match ends, and the **death penalty** is on.
+In GW1's Kill Count, which no map picks yet, a dead player **respawns**
+at a spawn point of their own team after 8 seconds, at full health and
+energy, with all statuses cleared, and there is no death penalty.
 
 With the death penalty on, each player has a **morale** between −60%
 and +10%, starting at 0. A death takes 15%, down to −60%, unless it came
@@ -789,11 +789,27 @@ respawn timer running out, it does nothing, and the energy is spent.
 
 ## Match end
 
-A match ends when a team reaches the score target, or when the clock
-runs out. Score is checked **before** time, so landing the winning kill
-as the clock expires reads as a score win — which is what happened from
-the player's point of view. A tie at the time limit is a **draw**, not
-an arbitrarily chosen winner.
+An Annihilation match (#846, today's match) is won by **wiping the other
+team**: the moment every member of it is dead at once, your team wins.
+A team whose members have all left the match counts as wiped too, so
+quitting a 1v1 forfeits it. Kills still show in the score, but no number of them ends the match.
+After **8 minutes** the team with the **highest total morale** wins: the
+sum of every member's morale, dead or alive, so a team at 0, −15 and
+−30 (−45) beats one at −15, −15 and −30 (−60). The end line reads
+"Victory" or "Defeat", with "(morale)" when time decided it.
+
+There is no draw (GW1): equal morale at time, or both teams wiped in
+the same tick, and **both teams lose**. A team that started with nobody
+on it is never "wiped"; that match runs to time. The wipe is checked
+**before** time, so the last foe falling as the clock expires is an
+annihilation win.
+
+A Kill Count match ends when a team reaches 15 kills, or after 10
+minutes, when the team with more kills wins. Score is checked
+**before** time, so landing the winning kill as the clock expires reads
+as a score win, which is what happened from the player's point of
+view. A tie at the time limit is a **draw**, not an arbitrarily chosen
+winner.
 
 ## Trying it without a server
 

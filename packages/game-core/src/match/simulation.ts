@@ -25,6 +25,8 @@ import {
   type MatchPhase,
   type MatchRules,
   type MatchScore,
+  type MatchStanding,
+  type TeamStanding,
 } from "../match-rules.js";
 import { clampInputDirection, integrateMovement } from "../movement.js";
 import {
@@ -413,6 +415,11 @@ export class MatchSimulation {
   readonly #bodies: Vec2[] = [];
   readonly #rng: SimulationRng;
   readonly #participants = new Map<string, ParticipantRecord>();
+  /**
+   * Every team anyone was added to (#846): one whose members all left is
+   * still in the standing, wiped, rather than gone.
+   */
+  readonly #teams = new Set<number>();
   #projectiles: Projectile[] = [];
   #nextProjectileId = 1;
 
@@ -538,6 +545,7 @@ export class MatchSimulation {
       resurrectedAtSeconds: Number.NEGATIVE_INFINITY,
     };
     this.#participants.set(spec.id, record);
+    this.#teams.add(spec.team);
     return record;
   }
 
@@ -1113,6 +1121,8 @@ export class MatchSimulation {
     this.#settleUpkeep(dt);
     this.#spreadStatuses();
     this.#awardKillMorale();
+    // After every death this step, so two teams wiped in it both lose.
+    this.checkMatchEnd();
 
     const log = this.#log.concat(this.#reaped);
     this.#log = [];
@@ -2545,7 +2555,8 @@ export class MatchSimulation {
   }
 
   /**
-   * Credit a kill to the team that scored it and check for a winner.
+   * Credit a kill to the team that scored it; the step checks for a winner
+   * once every death in it is in.
    *
    * The victim's team is what is known at the point of death, so a kill
    * is credited to "the other team" rather than to a specific killer.
@@ -2558,14 +2569,33 @@ export class MatchSimulation {
     }
     const scoringTeam = victimTeam === 0 ? 1 : 0;
     this.#score = addKill(this.#score, scoringTeam);
-    this.checkMatchEnd();
+  }
+
+  /** Every team that had members: who is alive and its total morale (#846). */
+  #standing(): MatchStanding {
+    const byTeam = new Map<number, TeamStanding>(
+      [...this.#teams].map((team) => [team, { living: 0, morale: 0 }]),
+    );
+    for (const { combatant } of this.#participants.values()) {
+      const team = byTeam.get(combatant.team) ?? { living: 0, morale: 0 };
+      byTeam.set(combatant.team, {
+        living: team.living + (combatant.dead ? 0 : 1),
+        morale: team.morale + combatant.morale,
+      });
+    }
+    return { byTeam };
   }
 
   private checkMatchEnd(): void {
     if (this.#matchRules === undefined) {
       return;
     }
-    const outcome = evaluateMatch(this.#score, this.#elapsedSeconds, this.#matchRules);
+    const outcome = evaluateMatch(
+      this.#score,
+      this.#standing(),
+      this.#elapsedSeconds,
+      this.#matchRules,
+    );
     if (outcome.phase !== "finished") {
       return;
     }

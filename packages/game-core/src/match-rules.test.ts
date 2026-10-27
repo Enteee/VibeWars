@@ -1,20 +1,32 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  ANNIHILATION_MATCH_RULES,
   DEFAULT_MATCH_RULES,
+  KILL_COUNT_MATCH_RULES,
   addKill,
   emptyScore,
   evaluateMatch,
   type MatchRules,
+  type MatchStanding,
 } from "./match-rules.js";
 
 const RULES: MatchRules = {
+  victory: "kill-count",
   scoreToWin: 3,
   timeLimitSeconds: 60,
   deathRule: "respawn",
   respawnSeconds: 5,
   deathPenalty: false,
 };
+
+/** `[team, living, total morale]` for each team with members. */
+function standing(...teams: [number, number, number][]): MatchStanding {
+  return { byTeam: new Map(teams.map(([team, living, morale]) => [team, { living, morale }])) };
+}
+
+const BOTH_ALIVE = standing([0, 4, 0], [1, 4, 0]);
+const NO_KILLS = emptyScore([0, 1]);
 
 describe("emptyScore / addKill", () => {
   it("starts every team at zero", () => {
@@ -40,7 +52,7 @@ describe("emptyScore / addKill", () => {
 
 describe("evaluateMatch", () => {
   it("reports an active match before anything decisive happens", () => {
-    expect(evaluateMatch(emptyScore([0, 1]), 0, RULES).phase).toBe("active");
+    expect(evaluateMatch(emptyScore([0, 1]), BOTH_ALIVE, 0, RULES).phase).toBe("active");
   });
 
   it("ends when a team reaches the score target", () => {
@@ -48,7 +60,7 @@ describe("evaluateMatch", () => {
     for (let i = 0; i < 3; i += 1) {
       score = addKill(score, 1);
     }
-    const outcome = evaluateMatch(score, 10, RULES);
+    const outcome = evaluateMatch(score, BOTH_ALIVE, 10, RULES);
     expect(outcome.phase).toBe("finished");
     expect(outcome.winningTeam).toBe(1);
     expect(outcome.reason).toBe("score");
@@ -58,13 +70,13 @@ describe("evaluateMatch", () => {
     let score = emptyScore([0, 1]);
     score = addKill(score, 1);
     score = addKill(score, 1);
-    expect(evaluateMatch(score, 10, RULES).phase).toBe("active");
+    expect(evaluateMatch(score, BOTH_ALIVE, 10, RULES).phase).toBe("active");
   });
 
   it("ends on the time limit with the leader winning", () => {
     let score = emptyScore([0, 1]);
     score = addKill(score, 0);
-    const outcome = evaluateMatch(score, 60, RULES);
+    const outcome = evaluateMatch(score, BOTH_ALIVE, 60, RULES);
     expect(outcome.phase).toBe("finished");
     expect(outcome.winningTeam).toBe(0);
     expect(outcome.reason).toBe("time");
@@ -74,14 +86,14 @@ describe("evaluateMatch", () => {
     let score = emptyScore([0, 1]);
     score = addKill(score, 0);
     score = addKill(score, 1);
-    const outcome = evaluateMatch(score, 60, RULES);
+    const outcome = evaluateMatch(score, BOTH_ALIVE, 60, RULES);
     expect(outcome.phase).toBe("finished");
     expect(outcome.winningTeam).toBeUndefined();
     expect(outcome.reason).toBe("time");
   });
 
   it("treats a scoreless match at the time limit as a draw", () => {
-    const outcome = evaluateMatch(emptyScore([0, 1]), 60, RULES);
+    const outcome = evaluateMatch(emptyScore([0, 1]), BOTH_ALIVE, 60, RULES);
     expect(outcome.winningTeam).toBeUndefined();
   });
 
@@ -92,12 +104,91 @@ describe("evaluateMatch", () => {
     for (let i = 0; i < 3; i += 1) {
       score = addKill(score, 0);
     }
-    expect(evaluateMatch(score, 60, RULES).reason).toBe("score");
+    expect(evaluateMatch(score, BOTH_ALIVE, 60, RULES).reason).toBe("score");
   });
 
-  it("ships defaults that are self-consistent", () => {
-    expect(DEFAULT_MATCH_RULES.scoreToWin).toBeGreaterThan(0);
-    expect(DEFAULT_MATCH_RULES.timeLimitSeconds).toBeGreaterThan(0);
-    expect(DEFAULT_MATCH_RULES.respawnSeconds).toBeGreaterThan(0);
+  it("keeps today's kill-count rules as a preset", () => {
+    expect(KILL_COUNT_MATCH_RULES).toEqual({
+      victory: "kill-count",
+      scoreToWin: 15,
+      timeLimitSeconds: 600,
+      deathRule: "respawn",
+      respawnSeconds: 8,
+      deathPenalty: false,
+    });
+  });
+});
+
+describe("evaluateMatch: annihilation (#846)", () => {
+  const rules = ANNIHILATION_MATCH_RULES;
+
+  it("is the default: resurrection only, the death penalty, 8 minutes", () => {
+    expect(DEFAULT_MATCH_RULES).toBe(ANNIHILATION_MATCH_RULES);
+    expect(rules.victory).toBe("annihilation");
+    expect(rules.deathRule).toBe("resurrection-only");
+    expect(rules.deathPenalty).toBe(true);
+    expect(rules.timeLimitSeconds).toBe(480);
+  });
+
+  it("plays on while every team has someone alive, whatever the kills", () => {
+    let score = NO_KILLS;
+    for (let i = 0; i < 20; i += 1) {
+      score = addKill(score, 0);
+    }
+    expect(evaluateMatch(score, standing([0, 1, 0], [1, 1, -60]), 100, rules).phase).toBe("active");
+  });
+
+  it("is won the moment the other team is wiped", () => {
+    expect(evaluateMatch(NO_KILLS, standing([0, 1, -30], [1, 0, -45]), 100, rules)).toEqual({
+      phase: "finished",
+      winningTeam: 0,
+      reason: "annihilation",
+    });
+  });
+
+  it("is lost by both when both are wiped in the same tick", () => {
+    expect(evaluateMatch(NO_KILLS, standing([0, 0, 0], [1, 0, 0]), 100, rules)).toEqual({
+      phase: "finished",
+      winningTeam: undefined,
+      reason: "annihilation",
+    });
+  });
+
+  it("never wipes a team with no members", () => {
+    expect(evaluateMatch(NO_KILLS, standing([0, 2, 0]), 100, rules).phase).toBe("active");
+  });
+
+  it("plays on with three teams until only one has anyone alive", () => {
+    expect(
+      evaluateMatch(NO_KILLS, standing([0, 1, 0], [1, 0, 0], [2, 1, 0]), 100, rules).phase,
+    ).toBe("active");
+    expect(
+      evaluateMatch(NO_KILLS, standing([0, 0, 0], [1, 0, 0], [2, 1, 0]), 100, rules).winningTeam,
+    ).toBe(2);
+  });
+
+  it("goes at time to the highest total morale, dead or alive", () => {
+    // 0, −15, −30 beats −15, −15, −30.
+    expect(evaluateMatch(NO_KILLS, standing([0, 1, -45], [1, 3, -60]), 480, rules)).toEqual({
+      phase: "finished",
+      winningTeam: 0,
+      reason: "morale",
+    });
+  });
+
+  it("is lost by both at time on equal morale (GW1 has no draw)", () => {
+    expect(evaluateMatch(NO_KILLS, standing([0, 2, -15], [1, 1, -15]), 480, rules)).toEqual({
+      phase: "finished",
+      winningTeam: undefined,
+      reason: "morale",
+    });
+  });
+
+  it("prefers a wipe over time when both land on the same tick", () => {
+    expect(evaluateMatch(NO_KILLS, standing([0, 1, -60], [1, 0, 0]), 480, rules)).toEqual({
+      phase: "finished",
+      winningTeam: 0,
+      reason: "annihilation",
+    });
   });
 });

@@ -393,18 +393,18 @@ describe("the track checker budgets the audio thread (#508)", () => {
     const heavy = await problemsOf(pad(8));
     expect(heavy).toHaveLength(1);
     expect(heavy[0]).toMatch(
-      /^dsp level 0: DSP cost 1\d\d is over 90: it will crackle \(supersaw ×12 /,
+      /^dsp level 0: DSP cost 1\d\d is over 50: it will crackle \(supersaw ×12 /,
     );
     expect(await problemsOf(pad(1))).toEqual([]);
   });
 
   it("adds the reverb of an orbit that has a wet voice", async () => {
-    const dry = await problemsOf(`${pad(5)}.s("supersaw")`);
+    const dry = await problemsOf(`${pad(2)}.s("supersaw")`);
     expect(dry).toEqual([]);
-    const wet = await problemsOf(`${pad(5)}.room(.5).roomsize(6).orbit(2)`);
+    const wet = await problemsOf(`${pad(1)}.room(.5).roomsize(6).orbit(2)`);
     expect(wet).toEqual([]);
     expect(
-      (await problemsOf(`stack(${pad(5)}.room(.5).roomsize(6).orbit(2), ${pad(3)})`))[0],
+      (await problemsOf(`stack(${pad(1)}.room(.5).roomsize(6).orbit(2), ${pad(3)})`))[0],
     ).toMatch(/reverb \(6\)/);
   });
 

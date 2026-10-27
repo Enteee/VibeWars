@@ -1289,7 +1289,13 @@
           "name": "endReason",
           "optional": false,
           "type": {
-            "union": [{ "literal": "host-left" }, { "literal": "score" }, { "literal": "time" }]
+            "union": [
+              { "literal": "annihilation" },
+              { "literal": "host-left" },
+              { "literal": "morale" },
+              { "literal": "score" },
+              { "literal": "time" }
+            ]
           }
         },
         {
@@ -1579,7 +1585,15 @@
         {
           "name": "endReason",
           "optional": false,
-          "type": { "union": ["null", { "literal": "score" }, { "literal": "time" }] }
+          "type": {
+            "union": [
+              "null",
+              { "literal": "annihilation" },
+              { "literal": "morale" },
+              { "literal": "score" },
+              { "literal": "time" }
+            ]
+          }
         },
         {
           "name": "phase",
@@ -1717,7 +1731,15 @@
         {
           "name": "endReason",
           "optional": false,
-          "type": { "union": ["null", { "literal": "score" }, { "literal": "time" }] }
+          "type": {
+            "union": [
+              "null",
+              { "literal": "annihilation" },
+              { "literal": "morale" },
+              { "literal": "score" },
+              { "literal": "time" }
+            ]
+          }
         },
         { "name": "part", "optional": false, "type": "number" },
         { "name": "parts", "optional": false, "type": "number" },
