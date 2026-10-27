@@ -85,6 +85,7 @@ import {
   paintKnockdown,
   slotAffordable,
   slotFlashes,
+  wrongWeapon,
 } from "./skill-slot-state.js";
 import { createSlotTooltips } from "./slot-tooltip.js";
 import {
@@ -430,6 +431,7 @@ export function createTrainingPanel(): TrainingPanel {
     const fill = castFill(slots, self);
     const target = match.players.find((player) => player.sessionId === self.targetSessionId);
     const far = outOfRange(slots, self, target, session?.wallSegments ?? []);
+    const unwielded = wrongWeapon(slots, self);
     slotTips.casting(fill?.slot);
     // Greyed while you lie knocked down, as on the match HUD (#545).
     paintKnockdown(skills, self.knockdownRemaining);
@@ -444,6 +446,7 @@ export function createTrainingPanel(): TrainingPanel {
       button.classList.toggle("is-out-of-range", far[index] === true);
       // A hint, not a gate: the simulation still decides.
       button.classList.toggle("is-unaffordable", !slotAffordable(slot, self));
+      button.classList.toggle("is-wrong-weapon", unwielded[index] === true);
       // The same wipe as the match HUD (#152).
       paintRecharge(button, recharges[index], slot.name, reducedMotion);
     });

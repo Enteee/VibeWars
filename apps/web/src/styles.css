@@ -314,8 +314,10 @@ body {
   border-color: var(--accent);
 }
 
-/* A hint, not a gate: the server still decides whether a cast is legal. */
-.hud-skill.is-unaffordable {
+/* A hint, not a gate: the server still decides whether a cast is legal.
+   The wrong weapon in hand dims an attack skill the same way (#417). */
+.hud-skill.is-unaffordable,
+.hud-skill.is-wrong-weapon {
   opacity: 0.45;
 }
 
@@ -1912,7 +1914,8 @@ body {
 }
 
 /* A hint, not a gate: the simulation still decides whether a cast is legal. */
-.training-skill.is-unaffordable {
+.training-skill.is-unaffordable,
+.training-skill.is-wrong-weapon {
   opacity: 0.45;
 }
 
@@ -2276,6 +2279,12 @@ body {
   font-size: 0.72rem;
 }
 
+/* An attack skill the weapon cannot use (#417): a hint, it still saves. */
+.skill-slot-warning {
+  color: var(--damage);
+  font-size: 0.72rem;
+}
+
 .skill-slot-empty {
   color: var(--ink-dim);
   font-size: 0.78rem;
@@ -2630,6 +2639,11 @@ body {
 }
 
 .tip-type {
+  color: var(--ink-dim);
+  font-size: 0.78rem;
+}
+
+.tip-weapon {
   color: var(--ink-dim);
   font-size: 0.78rem;
 }

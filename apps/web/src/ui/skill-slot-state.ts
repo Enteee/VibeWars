@@ -2,7 +2,9 @@ import {
   distanceWithinRange,
   getSkill,
   hasLineOfSight,
+  isWeaponId,
   targetRuleAllows,
+  wieldsFor,
   type Segment,
 } from "@vibewars/game-core";
 import type { CombatMessage, PlayerSnapshot, SkillSlot } from "@vibewars/game-session";
@@ -122,6 +124,27 @@ export function slotAffordable(slot: SkillSlot, self: PlayerSnapshot): boolean {
   return slot.adrenalineCost > 0
     ? self.adrenaline >= slot.adrenalineCost
     : self.energy >= slot.energyCost;
+}
+
+/**
+ * Which slots hold an attack skill the weapon `self` wields cannot use
+ * (#417): the same check activation makes (`wieldsFor`), so the dimmed
+ * slot and the "Needs an axe." refusal agree. A weapon this client does
+ * not know uses none. A hint, not a gate: the press still goes to the
+ * host (brief §32).
+ */
+export function wrongWeapon(
+  skillBar: readonly (SkillSlot | null)[],
+  self: PlayerSnapshot,
+): boolean[] {
+  const { weaponId } = self;
+  return skillBar.map((slot) => {
+    const needed = slot === null ? undefined : getSkill(slot.id)?.attack?.weapon;
+    if (needed === undefined) {
+      return false;
+    }
+    return !isWeaponId(weaponId) || !wieldsFor(weaponId, needed);
+  });
 }
 
 /**
