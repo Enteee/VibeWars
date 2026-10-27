@@ -339,7 +339,11 @@ adjacent to its target.
 weapon: Swift Chop, Eviscerate and Executioner's Strike an axe, Backbreaker a
 hammer, Sever Artery a sword, Jagged Strike daggers, Barrage, Broad Head
 Arrow and Punishing Shot any bow, Distracting Blow any melee weapon.
-With the wrong one it is refused ("Needs an axe."). It is one blow of
+With the wrong one it is refused ("Needs an axe."), and its slot is
+dimmed on the skill bar as if you could not pay for it; the build
+editor flags it ("Needs an axe — your weapon is a sword") but still
+saves it (#417). Its tooltip names the weapon ("Axe attack") and its
+bonus ("+16 damage"). It is one blow of
 that weapon: it hits halfway through a swing (or through its own
 activation, if it states one), for the weapon's damage plus the skill's
 bonus, mitigated once, and you

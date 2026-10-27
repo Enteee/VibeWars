@@ -4,6 +4,7 @@ import {
   MAX_ATTRIBUTE_RANK,
   MINIMAL_GW_INSPIRED_PVP_V1,
   accessibleAttributeIds,
+  getSkill,
   primaryAttributeOf,
 } from "@vibewars/game-core";
 
@@ -31,6 +32,7 @@ import {
   setSkill,
   swapSkillSlots,
   trySetRank,
+  weaponWarning,
 } from "./build-editor.js";
 import { setWeapon } from "./gear-editor.js";
 
@@ -595,5 +597,35 @@ describe("one elite per bar (#459)", () => {
     expect(validateBuild(stored).map((problem) => problem.message)).toEqual([
       "Only one elite skill per bar",
     ]);
+  });
+});
+
+describe("weaponWarning (#417)", () => {
+  const skill = (id: string) => {
+    const found = getSkill(id);
+    if (found === undefined) {
+      throw new Error(`no skill ${id}`);
+    }
+    return found;
+  };
+
+  it("says what an attack skill needs and what is in hand", () => {
+    expect(weaponWarning(skill("warrior.swift-chop"), "sword")).toEqual({
+      badge: "Needs an axe",
+      title: "Needs an axe — your weapon is a sword",
+    });
+    expect(weaponWarning(skill("ranger.barrage"), "daggers")?.title).toBe(
+      "Needs a bow — your weapon is daggers",
+    );
+    expect(weaponWarning(skill("warrior.distracting-blow"), "unarmed")?.title).toBe(
+      "Needs a melee weapon — you have no weapon",
+    );
+  });
+
+  it("clears when the weapon fits, and never warns for a skill that is no attack", () => {
+    expect(weaponWarning(skill("warrior.swift-chop"), "axe")).toBeUndefined();
+    expect(weaponWarning(skill("ranger.barrage"), "hornbow")).toBeUndefined();
+    expect(weaponWarning(skill("warrior.distracting-blow"), "spear")).toBeUndefined();
+    expect(weaponWarning(skill("elementalist.fireball"), "unarmed")).toBeUndefined();
   });
 });

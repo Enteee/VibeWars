@@ -1098,6 +1098,25 @@ test("gear is equipped from a library, like skills are", async ({ page }) => {
   await expect(page.locator(".gear-slot").nth(1)).toContainText("both hands full");
 });
 
+test("an attack skill for another weapon is flagged on its slot until the weapon fits (#417)", async ({
+  page,
+}) => {
+  // A new character is a warrior with a sword; Swift Chop needs an axe.
+  await newCharacter(page);
+  const slot = page.locator(".skill-slot").first();
+  await page.locator(".skill-box", { hasText: "Swift Chop" }).dragTo(slot);
+  await expect(slot).toContainText("Swift Chop");
+  const warning = slot.locator(".skill-slot-warning");
+  await expect(warning).toHaveText("Needs an axe");
+  await expect(warning).toHaveAttribute("title", "Needs an axe — your weapon is a sword");
+
+  await openGearLibrary(page);
+  await equipFromLibrary(page, "Axe");
+  await expect(page.locator(".gear-slot").first()).toContainText("Axe");
+  await expect(warning).toHaveCount(0);
+  await expect(slot).toContainText("Swift Chop");
+});
+
 test("a weapon can be dragged from the library onto the weapon slot", async ({ page }) => {
   await newCharacter(page);
   await openGearLibrary(page);
