@@ -463,6 +463,26 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Necromancer/270-Shadow_of_Fear",
   },
   {
+    id: "necromancer.spiteful-spirit",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/273-Spiteful_Spirit",
+  },
+  {
+    id: "necromancer.insidious-parasite",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/260-Insidious_Parasite",
+  },
+  {
+    id: "necromancer.mark-of-pain",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/263-Mark_of_Pain",
+  },
+  {
+    id: "necromancer.vampiric-gaze",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/248-Vampiric_Gaze",
+  },
+  {
     id: "warrior.frenzy",
     profession: "warrior",
     url: "https://www.gw-memorial.net/skills/Warrior/73-Frenzy",
