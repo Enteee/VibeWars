@@ -60,6 +60,7 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "mystic-regeneration": icon("mystic-regeneration"),
   "fleeting-stability": icon("fleeting-stability"),
   "heart-of-fury": icon("heart-of-fury"),
+  "never-surrender": icon("never-surrender"),
 };
 
 /** Drawn size of one icon, in world pixels. */

@@ -102,6 +102,7 @@ describe("status definitions", () => {
       mending: 3,
       regeneration: 4,
       "weapon-of-warding": 4,
+      "never-surrender": 4,
     });
   });
 
