@@ -23,10 +23,10 @@ the server decides what happens (brief §12, §32).
 
 ## Resources
 
-| Resource   | How you get it                                                                                       | What it gates     |
-| ---------- | ---------------------------------------------------------------------------------------------------- | ----------------- |
-| Energy     | Regenerates by profession, up to 50: see below                                                       | Most skills       |
-| Adrenaline | Per skill, in strikes: each landed blow on a foe gives every adrenaline skill one (spells earn none) | Adrenaline skills |
+| Resource   | How you get it                                                                                                                                                | What it gates     |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| Energy     | Regenerates by profession, up to 50: see below                                                                                                                | Most skills       |
+| Adrenaline | Per skill, in strikes: each landed blow on a foe gives every adrenaline skill one (spells earn none); a foe's damage to you gives 1 unit per 1% of max health | Adrenaline skills |
 
 Regeneration and degeneration count in **pips**, as in GW1. One health
 pip is 2 HP/s and one energy pip ⅓ energy/s. Every status's pips sum
@@ -81,10 +81,14 @@ a foe, a swing, a landed arrow or an attack skill's blow, gives one strike
 to every adrenaline skill that is not recharging: one per blow, not per
 foe, so a cleave across three foes is one strike and a double strike
 whose two blows land is two. Blocked, missed or obstructed blows give
-nothing, and neither do spells. Using an adrenaline skill empties its own
-pool and takes one strike from every other, at activation, so an
-interrupted one has still paid; an attack skill that lands then earns its
-strike back like any blow. Death, respawn and a reset empty every pool.
+nothing, and neither do spells. Taking damage from a foe charges you too
+(#827): every hit, blow or spell, gives `floor(100 × damage ÷ max health)`
+units, so a hit for a quarter of your health is a strike; degeneration,
+sacrifice and a killing blow give nothing. Using an adrenaline skill
+empties its own pool and takes one strike from every other, at
+activation, so an interrupted one has still paid; an attack skill that
+lands then earns its strike back like any blow. Death, respawn and a
+reset empty every pool.
 Your adrenaline is yours alone: it is sent to you, never in the shared
 snapshot, and a slot greys until its own skill is charged.
 
@@ -327,6 +331,34 @@ lands, so a miss still costs energy or adrenaline and starts the
 recharge, and the missed foe gets none of the skill's riders. Spells are
 unaffected.
 
+**A maintained enchantment lasts until something ends it** (#837, GW1).
+While it lasts, its caster has −1 energy pip for it, on top of the other
+pips and inside the same ±10 clamp; the bearer pays nothing. The upkeep
+is worked out each tick from who bears what, so a strip, a replacement
+or a death ends it with the enchantment. Mending (Monk, Healing Prayers,
+10 energy, 2 s) is the first: +3 Health regeneration on an ally or
+yourself. Recasting it on the same ally is still one, and becomes your
+newest. Another Monk's Mending on that ally replaces yours, and your
+upkeep ends with it. Its icon has no duration bar, and its hover says
+"maintained". It ends by itself in three ways:
+
+- **Can't pay.** At 0 energy, with net energy pips below 0 before the
+  clamp, your newest maintained enchantment ends, then the next, until
+  the net is 0 or more. Each one logs "Mending on X was lost: Y could not
+  pay the upkeep". At 0 energy with a net of exactly 0, nothing ends.
+- **Over the cap.** If your net energy pips before the clamp would fall
+  below −10, your oldest ones end until they are −10 or better. The
+  newest always stays.
+- **Death.** Your death ends everything you maintain. Your bearer's
+  death ends what is on them, and resurrection does not bring it back.
+
+Your effects monitor shows every enchantment you maintain (#838): those
+on yourself among your own effects, those on others after them, ticked
+as yours, with no bar and the hover "Mending on X — maintained, −1
+energy". **Double-click** one to end it: it leaves its bearer at once,
+for free, with no log row, and your upkeep stops with it. The host
+refuses quietly a request to end anything that is not yours to end.
+
 Degeneration applies **continuously** (`pips × 2 × dt`), not in once-per-
 second lumps, so a bleed at 20 Hz drains smoothly instead of
 stair-stepping. Regeneration correctly caps at the deep-wound-_reduced_
@@ -437,7 +469,7 @@ adjacent to its target.
 
 **Attack skills ride the weapon** (ADR-0029). An attack skill needs its
 weapon: Swift Chop, Eviscerate and Executioner's Strike an axe, Backbreaker a
-hammer, Sever Artery a sword, Jagged Strike daggers, Barrage, Broad Head
+hammer, Sever Artery a sword, the Assassin's dagger attacks daggers, Barrage, Broad Head
 Arrow and Punishing Shot any bow, Distracting Blow any melee weapon.
 With the wrong one it is refused ("Needs an axe."), and its slot is
 dimmed on the skill bar as if you could not pay for it; the build
@@ -455,6 +487,33 @@ cleave on an attack skill. Afterwards you swing at its foe, from a fresh
 swing. Distracting Blow deals no damage: a hit only interrupts, and a
 miss does nothing. It has no attribute, as in GW1, so any warrior can
 use it and its numbers never scale.
+
+**Dagger chains** (#831). Jagged Strike and Black Lotus Strike are lead
+attacks; Fox Fangs and Wild Strike are off-hand attacks that must follow
+one. A lead attack that hits leaves your lead mark on that foe; an
+off-hand attack that hits replaces it with your off-hand mark. An
+off-hand attack hits only a foe bearing _your_ lead mark when its blow
+lands: otherwise it is out of sequence, so it costs its energy, always
+misses ("Fox Fangs misses Warrior (must follow a lead attack)") and
+recharges at once. Each foe keeps its own mark from you, and another
+Assassin's lead opens nothing for you. Only a chain attack that lands
+changes a mark: swings, spells and other attack skills in between leave
+it alone, and a lead that misses or is blocked places none. A mark lasts
+15 s from the hit that placed it, and goes when either of you dies. The
+tooltip says it first: "Lead attack.", "Off-hand attack. Must follow a
+lead attack."
+
+**Dual attacks** (#885) must follow your off-hand attack, and strike
+twice: each blow rolls its own miss, block and crit, and the skill's
+bonus and riders land with each blow that hits, so a condition applied
+twice is refreshed. A foe the first blow kills takes no second. A dual
+that lands leaves your dual mark. Death Blossom also deals its damage to
+every foe adjacent to its target, once a blow; Twisting Fangs bleeds and
+deep-wounds; Horns of the Ox knocks down a foe with no ally adjacent.
+Moebius Strike, the elite, is an off-hand attack that follows a dual,
+and against a foe below half health recharges all your other attack
+skills at once, so the chain loops: lead, off-hand, dual, Moebius,
+dual, Moebius. The weapon's own double strike never adds to a skill.
 
 **Skills interrupt and resume.** Starting a skill loses the swing in
 progress. Attacking and casting are otherwise separate, as in GW1
@@ -638,16 +697,21 @@ GW1 PvP (#473). Only a primary can hold its rank, and runes count.
   rank 12, and more above it. It adds to Rune of Attunement and gear,
   and you start the match full at the new maximum. The build editor's
   max energy counts it.
+- **Mysticism** (Dervish). Dervish enchantments cost 4% less energy a
+  rank (−48% at 12: Mystic Regeneration 8 instead of 15), rounded once,
+  never below 0. While any enchantment is on you, yours or an ally's,
+  you have +1 armor a rank against every hit.
 
 The others have no effect yet.
 
 The build editor says under a primary's row what it does at its rank
 ("Fast Casting 12: spells cast 43% faster"), and a skill tooltip for a
-known character shows the cost and activation Expertise and Fast
-Casting make of it, the base in brackets: "5 energy (10)",
+known character shows the cost and activation Expertise, Mysticism and
+Fast Casting make of it, the base in brackets: "5 energy (10)",
 "1.1s (2s)" (#531). The skill bar shows icons only (#719); a slot's
-tooltip shows the energy the skill costs the caster now, Expertise and
-an active glyph included (#528, #637), the base in brackets.
+tooltip shows the energy the skill costs the caster now, Expertise,
+Mysticism and an active glyph included (#528, #637, #874), the base in
+brackets.
 
 ## Positioning
 
@@ -671,8 +735,23 @@ specific killer needs damage-source tracking that does not exist yet,
 and inventing an attribution would be a plausible-looking lie in the
 scoreboard.
 
-A dead player respawns at a spawn point of their own team after 8
-seconds, at full health and energy, with all statuses cleared.
+What death costs, and how the dead come back, are properties of the
+match rules, set per mode as GW1 sets them (#843). Today's match is
+GW1's Kill Count: a dead player **respawns** at a spawn point of their
+own team after 8 seconds, at full health and energy, with all statuses
+cleared, and there is **no death penalty**. A `"resurrection-only"`
+match has no respawn: the dead stay corpses until resurrected, or the
+match ends.
+
+With the death penalty on, each player has a **morale** between −60%
+and +10%, starting at 0. A death takes 15%, down to −60%, unless it came
+less than 5 s after a resurrection. Every death gives each living
+member of the other team with negative morale 2% back, up to 0; a
+morale boost adds to a whole team, dead or alive, up to +10%. Morale
+scales the base maximum health and energy, before equipment: at −15%, a
+base of 500 health is 425, plus what runes add. It lasts through a
+respawn. Your HUD shows it next to the health bar ("−15%"), and nothing
+at 0.
 
 A Monk can bring them back sooner (#812). **Restore Life** is a touch
 spell aimed at an ally's corpse: right click the body to target it (the

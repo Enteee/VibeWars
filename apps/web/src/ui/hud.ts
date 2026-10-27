@@ -6,6 +6,7 @@ import {
   neededWeaponText,
   type ActivationRejection,
   type Segment,
+  type StatusId,
 } from "@vibewars/game-core";
 import type { CastRefusedMessage } from "@vibewars/game-protocol";
 import type {
@@ -30,7 +31,13 @@ import {
   soundIcon,
   weaponIcon,
 } from "./icons.js";
-import { createEffectsMonitor, effectRows, type EffectsMonitor } from "./effects-monitor.js";
+import {
+  createEffectsMonitor,
+  effectRows,
+  maintainedRows,
+  type EffectRow,
+  type EffectsMonitor,
+} from "./effects-monitor.js";
 import { iconButton } from "./kit.js";
 import { energyLabel, overcastBandElement, renderOvercastBand } from "./overcast-band.js";
 import { pipsElement, renderPips } from "./pips.js";
@@ -77,6 +84,8 @@ export interface HudElements {
   readonly healthText: HTMLElement;
   /** Net regeneration or degeneration arrows in the bar (#504). */
   readonly healthPips: HTMLElement;
+  /** Your morale next to the health bar (#843): "−15%", "+10%"; hidden at 0. */
+  readonly morale: HTMLElement;
   readonly energyFill: HTMLElement;
   /** Overcast's grey band at the energy bar's right end (#461). */
   readonly energyOvercast: HTMLElement;
@@ -100,6 +109,8 @@ export interface HudElements {
   /** Set once there has been a target; the hint never comes back that match. */
   hintDismissed: boolean;
   readonly targetPanel: HTMLElement;
+  /** The target's statuses, as your own monitor shows them (#835). */
+  readonly targetEffects: EffectsMonitor;
   /** The target's primary and secondary profession icons, before its name (#281). */
   readonly targetProfessions: HTMLElement;
   /** The target's name, or "no target", in the panel's header. */
@@ -184,7 +195,14 @@ export function targetHintDismissed(
   return wasDismissed || self?.targetSessionId !== undefined;
 }
 
-export function createHud(parent: HTMLElement): HudElements {
+/**
+ * The HUD, in `parent`. `onEndUpkeep` ends an enchantment you maintain,
+ * double-clicked in your effects monitor (#838).
+ */
+export function createHud(
+  parent: HTMLElement,
+  onEndUpkeep: (targetId: string, statusId: StatusId) => void,
+): HudElements {
   const root = element("div", "hud", parent);
 
   // Score and clock sit at the top, away from the skill bar, so a glance
@@ -223,6 +241,11 @@ export function createHud(parent: HTMLElement): HudElements {
   const targetHealthText = element("span", "hud-bar-label", targetHealth);
   const targetHealthPips = targetHealth.appendChild(pipsElement());
   targetHealth.hidden = true;
+  const targetEffects = createEffectsMonitor(
+    targetPanel,
+    TARGET_EFFECT_ICON_PX,
+    "your target's effects",
+  );
   const targetCast = element("div", "hud-target-cast", targetPanel);
   const targetCastIcon = targetCast.appendChild(document.createElement("img"));
   targetCastIcon.className = "skill-icon hud-target-cast-icon";
@@ -241,6 +264,8 @@ export function createHud(parent: HTMLElement): HudElements {
   const healthLost = element("div", "hud-bar-lost", healthRow);
   const healthText = element("span", "hud-bar-label", healthRow);
   const healthPips = healthRow.appendChild(pipsElement());
+  const morale = element("span", "hud-morale", bars);
+  morale.hidden = true;
 
   const energyRow = element("div", "hud-bar hud-bar-energy", bars);
   const energyFill = element("div", "hud-bar-fill", energyRow);
@@ -249,7 +274,7 @@ export function createHud(parent: HTMLElement): HudElements {
   const energyPips = energyRow.appendChild(pipsElement());
 
   const gearText = element("div", "hud-gear", bars);
-  const effects = createEffectsMonitor(bars, EFFECT_ICON_PX);
+  const effects = createEffectsMonitor(bars, EFFECT_ICON_PX, "your effects", onEndUpkeep);
 
   const hint = element("div", "hud-hint", root);
   const message = element("div", "hud-message", root);
@@ -264,6 +289,7 @@ export function createHud(parent: HTMLElement): HudElements {
     healthLost,
     healthText,
     healthPips,
+    morale,
     energyFill,
     energyOvercast,
     energyText,
@@ -277,6 +303,7 @@ export function createHud(parent: HTMLElement): HudElements {
     hint,
     hintDismissed: false,
     targetPanel,
+    targetEffects,
     targetProfessions,
     targetText,
     targetHealth,
@@ -500,6 +527,28 @@ function setBar(
   const fraction = max > 0 ? Math.max(0, Math.min(1, value / max)) : 0;
   fill.style.width = `${String(fraction * 100)}%`;
   label.textContent = text;
+}
+
+/**
+ * Morale as GW1 shows it by the health bar (#843): "−15%" for the death
+ * penalty, "+10%" for a boost, and `undefined` at 0, where nothing shows.
+ */
+export function moraleLabel(morale: number): string | undefined {
+  if (morale === 0) {
+    return undefined;
+  }
+  return morale < 0 ? `−${String(-morale)}%` : `+${String(morale)}%`;
+}
+
+function renderMorale(element: HTMLElement, morale: number): void {
+  const label = moraleLabel(morale) ?? "";
+  // Every frame calls this; the label says it all, so only a new one is written.
+  if (element.textContent === label) {
+    return;
+  }
+  element.hidden = label === "";
+  element.textContent = label;
+  element.classList.toggle("is-penalty", morale < 0);
 }
 
 /**
@@ -821,6 +870,25 @@ function renderTarget(
 /** The effects monitor's icons in the HUD, px (#834). */
 const EFFECT_ICON_PX = 24;
 
+/** The target frame's effect icons, px (#835). */
+const TARGET_EFFECT_ICON_PX = 16;
+
+/**
+ * The target frame's effects (#835): the target's statuses as your own
+ * monitor would show them, the tick on an enchantment you put on it.
+ * None with no target, a dead one, or no match clock.
+ */
+export function targetEffectRows(
+  self: PlayerSnapshot,
+  target: PlayerSnapshot | undefined,
+  names: ReadonlyMap<string, string>,
+  now: number | undefined,
+): EffectRow[] {
+  return target === undefined || target.dead || now === undefined
+    ? []
+    : effectRows(target, self.sessionId, names, now);
+}
+
 /** How far past the latest snapshot the effects count down, s: ten snapshots. */
 const MAX_CLOCK_LEAD_SECONDS = 0.5;
 
@@ -869,6 +937,7 @@ export function updateHud(
   setBar(hud.healthFill, hud.healthText, self.health, self.maxHealth, healthText);
   hud.healthLost.style.width = `${String(lostHealthPercent(self))}%`;
   paintHealthTint(hud.healthRow, self);
+  renderMorale(hud.morale, self.morale);
   // Counted to the ceiling overcast leaves, the rest of the bar greyed (#461).
   const energyText = `${energyLabel(self.energy, self.maxEnergy, self.overcast)} en`;
   setBar(hud.energyFill, hud.energyText, self.energy, self.maxEnergy, energyText);
@@ -882,18 +951,19 @@ export function updateHud(
     `armor ${String(self.armor)}` +
     (self.weaponId === undefined ? "" : ` · ${describeWeaponName(self.weaponId)}`);
 
+  const names = new Map(match?.players.map((player) => [player.sessionId, player.name]));
+  const now = match === undefined ? undefined : matchNow(hud, match.elapsedSeconds);
   hud.effects.update(
-    self.dead || match === undefined
+    self.dead || now === undefined
       ? []
-      : effectRows(
-          self.statuses,
-          self.sessionId,
-          new Map(match.players.map((player) => [player.sessionId, player.name])),
-          matchNow(hud, match.elapsedSeconds),
-        ),
+      : [
+          ...effectRows(self, self.sessionId, names, now),
+          ...maintainedRows(match?.players ?? [], self.sessionId),
+        ],
   );
 
   renderTarget(hud, self, target);
+  hud.targetEffects.update(targetEffectRows(self, target, names, now));
 
   // Grey out skills the player cannot currently afford or the weapon in
   // hand cannot use (#417), and mark those that cannot reach the target. The server is still the authority on

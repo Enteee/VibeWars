@@ -6,7 +6,9 @@ Accepted (2026-10-26), by #404, the last phase of epic #15, which deletes
 `apps/server`. Proposed (2026-10-25) by #82, its first phase. It
 supersedes [ADR-0002](0002-networking.md) and
 [ADR-0009](0009-production-deployment.md), and amends
-[ADR-0001](0001-architecture.md).
+[ADR-0001](0001-architecture.md). Amended by
+[ADR-0032](0032-random-arena-queue.md), which lets strangers meet in
+unranked play.
 
 ## Context
 
@@ -58,7 +60,8 @@ a host-authoritative star, not lockstep and not a mesh.**
 - **The host can cheat.** The brief (§12, §32) asks for a server that never
   trusts a client. The host's browser now is that server. That is fine for
   a game among friends or on a LAN, and wrong for strangers. Matchmaking
-  between strangers is out of scope for that reason.
+  between strangers is out of scope for that reason (amended by
+  [ADR-0032](0032-random-arena-queue.md) for unranked play).
 - **Some networks cannot connect.** The joiner is told how far it got
   (#707): "Couldn't reach the lobby servers" with no relay, "Found the
   lobby, but couldn't connect to its host" when the connection itself

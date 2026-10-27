@@ -1,0 +1,25 @@
+{
+  "id": "assassin.black-lotus-strike",
+  "name": "Black Lotus Strike",
+  "profession": "assassin",
+  "attribute": "Critical Strikes",
+  "type": "Lead attack.",
+  "elite": false,
+  "campaign": "Factions",
+  "cost": {
+    "kind": "energy",
+    "amount": 10
+  },
+  "overcast": 0,
+  "activationSeconds": 0,
+  "rechargeSeconds": 6,
+  "description": "If it hits, Black Lotus Strike strikes for +10...27...31 damage. If target foe is suffering from a Hex, you gain 5...11...13 Energy.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Assassin/635-Black_Lotus_Strike",
+    "fetchedAt": "2026-10-27T08:13:32.272Z"
+  },
+  "unmapped": {}
+}

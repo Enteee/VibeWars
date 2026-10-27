@@ -67,7 +67,24 @@ channels, as often as they like.
   forge any message it relays, can kick anyone, and controls the match
   clock. Nothing a peer runs can tell a fair host from a cheating one. P2P
   is for playing with people you would let host; there is no ranked play,
-  and none is planned without a server.
+  and none is planned without a server. Random Arena (ADR-0032) puts
+  strangers together, so it stays unranked and keeps nothing past a visit.
+- **Choosing to host a Random Arena.** The host of a queued match is the
+  ticket whose `sha256(groupId ‖ ticketId)` is lowest, and tickets are
+  public, so a player can grind fresh ticket keys (about 2 × team size
+  tries) to host their own match. Accepted, like any cheating host;
+  commit-reveal is the lever if a mode with stakes ever uses the queue.
+- **A flood of fake queue tickets.** A ticket costs nothing to publish,
+  so a sybil flood can stall the queue, every group falling through. A
+  ticket id is its signing key, so nobody can rewrite an honest ticket.
+  NIP-13 proof-of-work is the lever if it happens.
+- **A Random Arena peer id is self-asserted.** Admission and the host's
+  welcome are Schnorr signatures by ticket keys that name the group, the
+  host's ticket and the joiner's transport peer id, so an outsider in the
+  public room can neither pose as the host nor replay a joiner's proof
+  from its own peer id. The peer id itself is whatever the transport
+  reports, which a peer chooses; a peer that also claims a joiner's id
+  could at most race that joiner for its one seat.
 - **Knowing the code means being invited.** Anyone with the lobby code can
   join and see the lobby. A code is shared like a party invite; it is not a
   credential.
@@ -240,6 +257,14 @@ talks to the game only by `postMessage`. What holds:
   a pattern cannot fetch from or beacon to another host.
 - **A hung host is torn down.** The game pings every second and removes a
   frame that has not answered for five.
+- **A flooding host is torn down** (#878). The game counts every message
+  from the host's window, parsed or not, and removes it at the 101st in a
+  second (`HOST_MESSAGES_PER_SECOND`; a real host sends about two). A flood
+  can answer pings, so the watchdog alone would not catch it. Only one error
+  per evaluation, and one per track sent, reaches the page.
+- **A saved edit that stops the music is not replayed.** When the host is
+  torn down, for hanging or flooding, while it plays an edited track, the
+  edit is removed and the next menu says so once.
 
 What does not hold, and why it is acceptable:
 
@@ -251,6 +276,13 @@ What does not hold, and why it is acceptable:
 - **Any site can frame the host** in its own sandbox and drive it, because
   static files carry `Access-Control-Allow-Origin: *`. There it is just a
   copy of Strudel with an opaque origin that reaches nothing of ours.
+- **A same-thread hang in Firefox and Android is not caught.** There the
+  sandboxed frame can share the game's thread, so a pattern that spins
+  forever (delayed by a `setTimeout`) hangs the watchdog with it, and a
+  saved edit that does this hangs every load. The way out is clearing the
+  site's data. Unverified, since the jails have no Firefox; if it is
+  confirmed, a crash sentinel follows (an edit playing when the page last
+  died without `pagehide` is not replayed).
 - **The vite dev server answers `Origin: null`**, which any site's
   sandboxed frame sends, so `server.fs.allow` limits it to `apps/web`,
   `packages` and `node_modules`. Never widen it to the repo root: `.bots/`
@@ -462,6 +494,13 @@ host shell can write it. The supervisor also writes `staff.json`, to
 forget a fired employee. So an agent reaches the supervisor only through
 what hubd lets its role ask for. The reboot records and the lock sit in
 the host bot root, which no jail sees.
+
+**Files every jail can read in `hub/` (#891).** Besides the board copy and
+`ratelimit.json`, hubd writes `board-history.jsonl` (one line per column
+change: issue, from, to, who, when) and `kpis.json` (flow, usage, budget,
+host and staff numbers, every five minutes). Nothing secret is in either:
+employee names and numbers. `kpis.json` carries a `schemaVersion`; a reader
+that finds another value treats the file as absent.
 
 **A manager is always running (#384).** The supervisor starts a missing
 manager pane within one sample, backing off to once every five minutes

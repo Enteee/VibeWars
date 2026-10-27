@@ -1,10 +1,11 @@
-import type { StatusSnapshot } from "@vibewars/game-session";
+import type { PlayerSnapshot, StatusSnapshot } from "@vibewars/game-session";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   STATUS_CATEGORY_NAME,
   createEffectsMonitor,
   effectRows,
+  maintainedRows,
   type EffectRow,
 } from "./effects-monitor.js";
 
@@ -22,16 +23,26 @@ const NAMES = new Map([
 
 function status(
   id: StatusSnapshot["id"],
-  endsAt: number,
-  durationSeconds: number,
+  endsAt: number | null,
+  durationSeconds: number | null,
   casterId = "bob",
 ): StatusSnapshot {
   return { id, endsAt, durationSeconds, casterId };
 }
 
+/** `effectRows` for statuses on yourself. */
+function ownRows(
+  statuses: readonly StatusSnapshot[],
+  selfId: string,
+  names: ReadonlyMap<string, string>,
+  now: number,
+): EffectRow[] {
+  return effectRows({ sessionId: ME, statuses }, selfId, names, now);
+}
+
 describe("effectRows (#834)", () => {
   it("keeps the order the host sent, oldest first", () => {
-    const rows = effectRows(
+    const rows = ownRows(
       [status("bleeding", 20, 10), status("armor-boost", 15, 10), status("crippled", 30, 10)],
       ME,
       NAMES,
@@ -41,8 +52,7 @@ describe("effectRows (#834)", () => {
   });
 
   it("drains the bar from full to empty, and never below it", () => {
-    const at = (now: number) =>
-      effectRows([status("bleeding", 20, 10)], ME, NAMES, now)[0]?.fraction;
+    const at = (now: number) => ownRows([status("bleeding", 20, 10)], ME, NAMES, now)[0]?.fraction;
     expect(at(10)).toBe(1);
     expect(at(15)).toBe(0.5);
     expect(at(20)).toBe(0);
@@ -52,12 +62,18 @@ describe("effectRows (#834)", () => {
   });
 
   it("gives a status with no duration no bar", () => {
-    expect(effectRows([status("armor-boost", 0, 0)], ME, NAMES, 10)[0]?.fraction).toBeUndefined();
+    expect(ownRows([status("armor-boost", 0, 0)], ME, NAMES, 10)[0]?.fraction).toBeUndefined();
+  });
+
+  it("gives a maintained enchantment no bar and no seconds left (#837)", () => {
+    const [row] = ownRows([status("mending", null, null)], ME, NAMES, 10);
+    expect(row?.fraction).toBeUndefined();
+    expect(row?.secondsLeft).toBeUndefined();
   });
 
   it("counts whole seconds left, rounded up, never below 0", () => {
     const left = (now: number) =>
-      effectRows([status("bleeding", 20, 10)], ME, NAMES, now)[0]?.secondsLeft;
+      ownRows([status("bleeding", 20, 10)], ME, NAMES, now)[0]?.secondsLeft;
     expect(left(10)).toBe(10);
     expect(left(10.1)).toBe(10);
     expect(left(19.9)).toBe(1);
@@ -65,7 +81,7 @@ describe("effectRows (#834)", () => {
   });
 
   it("marks yours only an enchantment you cast", () => {
-    const rows = effectRows(
+    const rows = ownRows(
       [
         status("armor-boost", 20, 10, ME),
         status("armor-boost", 20, 10, "bob"),
@@ -79,7 +95,7 @@ describe("effectRows (#834)", () => {
   });
 
   it("names the caster: you, their name, or someone who has left", () => {
-    const rows = effectRows(
+    const rows = ownRows(
       [
         status("armor-boost", 20, 10, ME),
         status("bleeding", 20, 10),
@@ -93,10 +109,10 @@ describe("effectRows (#834)", () => {
   });
 
   it("carries each status's name and category, and an empty list is no rows", () => {
-    const [row] = effectRows([status("deep-wound", 20, 10)], ME, NAMES, 10);
+    const [row] = ownRows([status("deep-wound", 20, 10)], ME, NAMES, 10);
     expect(row?.name).toBe("Deep Wound");
     expect(row !== undefined && STATUS_CATEGORY_NAME[row.category]).toBe("Condition");
-    expect(effectRows([], ME, NAMES, 10)).toEqual([]);
+    expect(ownRows([], ME, NAMES, 10)).toEqual([]);
   });
 });
 
@@ -137,7 +153,12 @@ class FakeElement {
 
   readonly setAttribute = (): void => undefined;
 
-  readonly addEventListener = (): void => undefined;
+  /** The listeners added, by event. */
+  readonly listeners = new Map<string, () => void>();
+
+  readonly addEventListener = (type: string, listener: () => void): void => {
+    this.listeners.set(type, listener);
+  };
 
   appendChild(child: FakeElement): FakeElement {
     this.insertBefore(child, null);
@@ -166,15 +187,24 @@ class FakeElement {
   }
 }
 
-function row(id: EffectRow["id"], fraction: number | undefined, yours = false): EffectRow {
+function row(
+  id: EffectRow["id"],
+  fraction: number | undefined,
+  yours = false,
+  more: Partial<EffectRow> = {},
+): EffectRow {
   return {
     id,
+    bearerId: ME,
+    bearerName: undefined,
     name: id,
     category: "condition",
     fraction,
     secondsLeft: 5,
     yours,
     casterName: "Bob",
+    endable: false,
+    ...more,
   };
 }
 
@@ -190,8 +220,13 @@ describe("createEffectsMonitor (#834)", () => {
     vi.unstubAllGlobals();
   });
 
-  const mount = () => {
-    const monitor = createEffectsMonitor(parent as unknown as HTMLElement, 24);
+  const mount = (size = 24, onEnd?: (bearerId: string, statusId: string) => void) => {
+    const monitor = createEffectsMonitor(
+      parent as unknown as HTMLElement,
+      size,
+      "your effects",
+      onEnd,
+    );
     const root = monitor.root as unknown as FakeElement;
     const icons = () => root.children.map((item) => item.children[0]?.alt);
     const fill = (index: number) => root.children[index]?.children[1]?.children[0];
@@ -252,5 +287,90 @@ describe("createEffectsMonitor (#834)", () => {
     expect(root.children.map((item) => item.classes.has("is-yours"))).toEqual([true, false]);
     monitor.update([row("armor-boost", 1, false), row("bleeding", 1)]);
     expect(root.children[0]?.classes.has("is-yours")).toBe(false);
+  });
+
+  it("draws the target frame's icons and bars at its own size (#835)", () => {
+    const { monitor, root, fill } = mount(16);
+    monitor.update([row("bleeding", 0.5), row("crippled", 1)]);
+    const images = root.children.map((item) => item.children[0]);
+    expect(images.map((image) => [image?.alt, image?.width, image?.height])).toEqual([
+      ["bleeding", 16, 16],
+      ["crippled", 16, 16],
+    ]);
+    expect(fill(0)?.widths).toEqual(["8px"]);
+  });
+
+  it("keeps one status on two bearers apart (#838)", () => {
+    const { monitor, root } = mount();
+    monitor.update([
+      row("mending", undefined, true, { endable: true }),
+      row("mending", undefined, true, { bearerId: "bob", bearerName: "Bob", endable: true }),
+    ]);
+    expect(root.children).toHaveLength(2);
+    monitor.update([
+      row("mending", undefined, true, { bearerId: "bob", bearerName: "Bob", endable: true }),
+    ]);
+    expect(root.children).toHaveLength(1);
+  });
+
+  it("ends a maintained row of yours on a double-click, and nothing else (#838)", () => {
+    const ended: [string, string][] = [];
+    const { monitor, root } = mount(24, (bearerId, statusId) => ended.push([bearerId, statusId]));
+    monitor.update([
+      row("bleeding", 0.5),
+      row("mending", undefined, true, { bearerId: "bob", bearerName: "Bob", endable: true }),
+    ]);
+    root.children[0]?.listeners.get("dblclick")?.();
+    expect(ended).toEqual([]);
+    root.children[1]?.listeners.get("dblclick")?.();
+    expect(ended).toEqual([["bob", "mending"]]);
+  });
+});
+
+describe("maintainedRows (#838)", () => {
+  function player(sessionId: string, name: string, statuses: StatusSnapshot[]): PlayerSnapshot {
+    return { sessionId, name, statuses } as Partial<PlayerSnapshot> as PlayerSnapshot;
+  }
+
+  it("lists what you maintain on others, ticked, with no bar, and endable", () => {
+    const rows = maintainedRows(
+      [
+        player(ME, "Ann", [status("mending", null, null, ME)]),
+        player("bob", "Bob", [
+          status("mending", null, null, ME),
+          status("armor-boost", 20, 10, ME),
+        ]),
+        player("cy", "Cy", [status("mending", null, null, "bob")]),
+      ],
+      ME,
+    );
+    expect(rows).toEqual([
+      {
+        id: "mending",
+        bearerId: "bob",
+        bearerName: "Bob",
+        name: "Mending",
+        category: "enchantment",
+        fraction: undefined,
+        secondsLeft: undefined,
+        yours: true,
+        casterName: "you",
+        endable: true,
+      },
+    ]);
+  });
+
+  it("makes your own maintained enchantment endable, and a timed one not", () => {
+    const rows = ownRows(
+      [
+        status("mending", null, null, ME),
+        status("armor-boost", 20, 10, ME),
+        status("mending", null, null),
+      ],
+      ME,
+      NAMES,
+      10,
+    );
+    expect(rows.map((one) => one.endable)).toEqual([true, false, false]);
   });
 });

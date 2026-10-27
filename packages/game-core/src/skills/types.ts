@@ -5,6 +5,7 @@ import type { ResolvedEquipment } from "../equipment/resolve.js";
 import type { DamageType } from "../equipment/types.js";
 import type { ProfessionId } from "../professions.js";
 import type { CastState } from "./cast-state.js";
+import type { TargetCandidate } from "./targeting.js";
 import type { AttackState } from "./weapon-attack.js";
 import type { StatusCategory, StatusId, StatusSet } from "./status.js";
 
@@ -113,6 +114,15 @@ export interface ApplyStatusEffect {
   readonly durationSeconds: number;
 }
 
+/**
+ * Maintain an enchantment on the target (#837): it lasts until something
+ * ends it, and costs its caster an energy pip while it does.
+ */
+export interface MaintainStatusEffect {
+  readonly kind: "maintain-status";
+  readonly statusId: StatusId;
+}
+
 /** Remove up to `count` statuses of a category from the target. */
 export interface RemoveStatusEffect {
   readonly kind: "remove-status";
@@ -176,6 +186,28 @@ export interface ResurrectEffect {
   readonly energyPercent: Magnitude;
 }
 
+/**
+ * Apply `effects` to every foe of the caster within `radius` of the
+ * effect's target, the target itself excluded (#885), as Death Blossom's
+ * "all adjacent foes take 20...40 damage". Not a blow: no block, no crit
+ * and no chain mark on a foe it reaches.
+ */
+export interface SplashEffect {
+  readonly kind: "splash";
+  readonly radius: number;
+  readonly effects: readonly UnconditionalEffect[];
+}
+
+/**
+ * Every other skill of the caster of this type recharges at once (#885),
+ * as Moebius Strike's "all your other attack skills are recharged". Acts
+ * on the caster, once.
+ */
+export interface RechargeOthersEffect {
+  readonly kind: "recharge-others";
+  readonly which: "attack";
+}
+
 /** How long "knocks down" lasts when a skill names no duration (GW1). */
 export const KNOCKDOWN_SECONDS = 2;
 
@@ -203,7 +235,13 @@ export type StateCondition =
   /** The effect's target is activating a spell (`isSpell`); a chant is not one. */
   | { readonly kind: "target-casting"; readonly spell: true }
   /** The caster has at least one status of this category. */
-  | { readonly kind: "caster-has"; readonly category: StatusCategory };
+  | { readonly kind: "caster-has"; readonly category: StatusCategory }
+  /**
+   * No living ally of the effect's target, the target itself excluded,
+   * stands within `radius` of it (#885): Horns of the Ox's "not adjacent
+   * to any allies".
+   */
+  | { readonly kind: "target-alone"; readonly radius: number };
 
 export type EffectCondition = EventCondition | StateCondition;
 
@@ -229,11 +267,14 @@ export type UnconditionalEffect =
   | EnergyLossEffect
   | SacrificeHealthEffect
   | ApplyStatusEffect
+  | MaintainStatusEffect
   | RemoveStatusEffect
   | InterruptEffect
   | KnockdownEffect
   | ResurrectEffect
-  | RechargeFasterEffect;
+  | RechargeFasterEffect
+  | SplashEffect
+  | RechargeOthersEffect;
 
 export type SkillEffect = UnconditionalEffect | ConditionalEffect;
 
@@ -299,6 +340,12 @@ export interface AttackSkillRule {
    * +10 damage". One damage number, not a second hit. `undefined`: none.
    */
   readonly conditionalBonus: ConditionalBonus | undefined;
+  /**
+   * How many blows it strikes each victim (#885): 2 for a dual attack,
+   * each rolling its own blind, block, crit and damage, with the skill's
+   * effects on each that hits. A ranged attack skill flies once: 1.
+   */
+  readonly strikes: 1 | 2;
   /** Whether no block stops it (Wild Throw's "This attack cannot be blocked"). */
   readonly unblockable: boolean;
   /**
@@ -306,6 +353,27 @@ export interface AttackSkillRule {
    * `effects` (#534): Swift Chop's damage and Deep Wound. Usually none.
    */
   readonly onBlocked: readonly SkillEffect[];
+  /** Its place in a dagger chain (#831); `undefined`: not a chain attack. */
+  readonly chain: ChainStep | undefined;
+}
+
+/** GW1's dagger chain: a lead attack, then an off-hand, then a dual (#831). */
+export type ChainRole = "lead" | "off-hand" | "dual";
+
+/** Where a chain attack stands in its chain (#831). */
+export interface ChainStep {
+  readonly role: ChainRole;
+  /**
+   * The mark of yours its target must bear for it to hit, as Fox Fangs'
+   * "Must follow a lead attack"; `undefined`: it may open a chain.
+   */
+  readonly follows: ChainRole | undefined;
+}
+
+/** A chain mark one attacker left on one target (#831). */
+export interface ChainMark {
+  readonly role: ChainRole;
+  remainingSeconds: number;
 }
 
 export interface Skill {
@@ -399,9 +467,16 @@ export interface AreaRule {
 export interface Combatant {
   readonly id: string;
   health: number;
-  readonly maxHealth: number;
+  /** After morale (#843): the simulation sets it when morale moves. */
+  maxHealth: number;
   energy: number;
-  readonly maxEnergy: number;
+  /** After morale (#843), as `maxHealth`. */
+  maxEnergy: number;
+  /**
+   * Morale in percent (#843, GW1), in [`MORALE_FLOOR`, `MORALE_CEILING`]:
+   * the death penalty below 0, a boost above. Kept across a respawn.
+   */
+  morale: number;
   /**
    * Maximum energy lost to overcast (#461), recovering over time; the
    * ceiling energy fills to is `maxEnergy − overcast`, and may be below 0.
@@ -441,6 +516,16 @@ export interface Combatant {
    */
   soulReapingTriggers: readonly number[];
   /**
+   * The `seq` its next maintained enchantment gets (#837): one more than
+   * its last, so its newest and its oldest can be told apart.
+   */
+  nextMaintainSeq: number;
+  /**
+   * Chain marks this combatant placed, by target id (#831): what its next
+   * off-hand attack on each may follow.
+   */
+  readonly chainMarks: Map<string, ChainMark>;
+  /**
    * Weapon, armor and rune effects, already resolved (ADR-0012).
    *
    * Readonly, and resolved once before this combatant was built. Gear is
@@ -463,4 +548,13 @@ export interface SkillContext {
    * experiment is a different object, not a different build.
    */
   readonly rules: CombatRules;
+  /**
+   * Everyone in the match by id, where they stand (#885): what a splash
+   * and "target is alone" read. Not a target list: who an area hits is
+   * `resolveTargets`'.
+   */
+  readonly surroundings: Surroundings;
 }
+
+/** Everyone in the match by id, where they stand (#885). */
+export type Surroundings = ReadonlyMap<string, TargetCandidate>;

@@ -38,7 +38,8 @@ export function advanceStatuses(
     return events;
   }
 
-  const pips = netPips(combatant, naturalPips).health;
+  // Health only: upkeep is energy, so none is owed here.
+  const pips = netPips(combatant, naturalPips, 0).health;
   if (pips !== 0) {
     const delta = pips * HEALTH_PER_PIP * dt;
     const effectiveMax = effectiveMaxHealth(combatant);
@@ -76,18 +77,48 @@ export interface NetPips {
 /**
  * The bearer's net pips as they apply (#502, #504): every status's, plus
  * `naturalPips` of natural regeneration for health and the base pips for
- * energy, each clamped. None when dead. The tick applies these and the
- * wire shows these, so the two cannot disagree.
+ * energy, and `upkeepPips` (`upkeepPips`) for energy, each clamped. None
+ * when dead. The tick applies these and the wire shows these, so the two
+ * cannot disagree.
  */
-export function netPips(combatant: Combatant, naturalPips: number): NetPips {
+export function netPips(combatant: Combatant, naturalPips: number, upkeepPips: number): NetPips {
   if (combatant.dead) {
     return { health: 0, energy: 0 };
   }
-  const modifiers = aggregateModifiers(combatant.statuses.active);
   return {
-    health: clampPips(modifiers.healthPips + naturalPips),
-    energy: clampPips(combatant.baseEnergyPips + modifiers.energyPips),
+    health: clampPips(aggregateModifiers(combatant.statuses.active).healthPips + naturalPips),
+    energy: clampPips(preCapEnergyPips(combatant, upkeepPips)),
   };
+}
+
+/**
+ * The bearer's net energy pips before the ±`MAX_PIPS` clamp (#837): what
+ * decides whether a maintained enchantment can still be paid for.
+ */
+export function preCapEnergyPips(combatant: Combatant, upkeepPips: number): number {
+  return (
+    combatant.baseEnergyPips + aggregateModifiers(combatant.statuses.active).energyPips + upkeepPips
+  );
+}
+
+/**
+ * What `casterId` pays for the enchantments it maintains (#837): −1 pip
+ * for each one on a living bearer. Derived, never stored on the caster,
+ * so a strip, a replacement or a death ends the upkeep with the status.
+ */
+export function upkeepPips(casterId: string, bearers: Iterable<Combatant>): number {
+  let pips = 0;
+  for (const bearer of bearers) {
+    if (bearer.dead) {
+      continue;
+    }
+    for (const status of bearer.statuses.active) {
+      if (status.maintained !== null && status.sourceId === casterId) {
+        pips -= 1;
+      }
+    }
+  }
+  return pips;
 }
 
 /**

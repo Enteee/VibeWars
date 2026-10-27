@@ -74,6 +74,7 @@ export type StatusId =
   | "blood-ritual"
   | "armor-boost"
   | "guardian"
+  | "mending"
   // Stances.
   | "sprint"
   | "dash"
@@ -391,6 +392,8 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     profession: "monk",
     block: { chance: 0.5, against: "all" },
   }),
+  // Mending at rank 12: +3 Health regeneration while maintained (#837).
+  mending: define("mending", "Mending", "enchantment", { healthPips: 3 }),
 
   sprint: define("sprint", "Sprint", "stance", {
     profession: "warrior",
@@ -486,6 +489,12 @@ export interface ActiveStatus {
   readonly sourceId: string;
   /** The outbreak it belongs to, for a status that spreads; `null` for every other. */
   outbreak: Outbreak | null;
+  /**
+   * Set for a maintained enchantment (#837): one with no end of its own,
+   * which costs its caster an energy pip while it lasts. `seq` orders its
+   * caster's, newest highest. `null` for every other status.
+   */
+  readonly maintained: { readonly seq: number } | null;
 }
 
 export function isStatusId(value: unknown): value is StatusId {
@@ -565,6 +574,7 @@ export class StatusSet {
       spellsLeft: definition.nextSpells?.count,
       sourceId,
       outbreak,
+      maintained: null,
     });
     return !wasActive;
   }
@@ -593,7 +603,34 @@ export class StatusSet {
       spellsLeft: undefined,
       sourceId,
       outbreak,
+      maintained: null,
     });
+  }
+
+  /**
+   * Maintain an enchantment from `sourceId` (#837): it lasts until
+   * something ends it, so `advance` never expires it. One of the same id
+   * already on the bearer is replaced, whoever maintains it, and this one
+   * is the newest, as `apply` makes it. Returns whether it is newly on the
+   * bearer. Throws for a status that is not an enchantment: a catalog bug,
+   * not data.
+   */
+  public maintain(id: StatusId, sourceId: string, seq: number): boolean {
+    if (getStatusDefinition(id).category !== "enchantment") {
+      throw new Error(`only an enchantment can be maintained, not ${id}`);
+    }
+    const wasActive = this.#statuses.delete(id);
+    this.#statuses.set(id, {
+      id,
+      remainingSeconds: Number.POSITIVE_INFINITY,
+      durationSeconds: Number.POSITIVE_INFINITY,
+      attacksLeft: undefined,
+      spellsLeft: undefined,
+      sourceId,
+      outbreak: null,
+      maintained: { seq },
+    });
+    return !wasActive;
   }
 
   /** Remove every status, of every category: what a respawn leaves. */

@@ -2,7 +2,7 @@ import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
 import { applyEffects, type CombatEvent } from "./effects.js";
 import type { StatusTriggerEvent } from "./status.js";
-import type { Combatant } from "./types.js";
+import type { Combatant, Surroundings } from "./types.js";
 
 /** What one status's trigger did, credited to whoever applied the status. */
 export interface FiredTrigger {
@@ -26,13 +26,20 @@ export function fireTriggers(
   sourceOf: (id: string) => Combatant | undefined,
   rng: SimulationRng,
   rules: CombatRules,
+  surroundings: Surroundings,
 ): FiredTrigger[] {
   return bearer.statuses.triggersOn(event).flatMap(({ sourceId, trigger }) => {
     const source = sourceOf(sourceId);
     if (source === undefined) {
       return [];
     }
-    const events = applyEffects(trigger.effects, { caster: source, target: bearer, rng, rules });
+    const events = applyEffects(trigger.effects, {
+      caster: source,
+      target: bearer,
+      rng,
+      rules,
+      surroundings,
+    });
     return events.length === 0 ? [] : [{ sourceId, skillId: trigger.skillId, events }];
   });
 }

@@ -4,6 +4,7 @@ import { unarmedResolvedEquipment, type ResolvedEquipment } from "../equipment/r
 import { WEAPONS, type Weapon } from "../equipment/weapons.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { describeStatus } from "../skills/describe.js";
+import { strikesOf } from "../skills/testing.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
@@ -17,6 +18,7 @@ const FIREBALL = "elementalist.fireball";
 const MALAISE = "necromancer.malaise";
 const HEALING_SIGNET = "warrior.healing-signet";
 const POWER_SPIKE = "mesmer.power-spike";
+const SEVER_ARTERY = "warrior.sever-artery";
 
 function wielding(weapon: Weapon, attributeId: string): ResolvedEquipment {
   return {
@@ -181,6 +183,21 @@ describe("Backfire (#469)", () => {
       "death",
     ]);
     expect(bearer.dead).toBe(true);
+  });
+
+  it("its damage charges the bearer's adrenaline as a foe's hit (#827)", () => {
+    const a = fighter("a", vec2(0, 0));
+    const match = new MatchSimulation({
+      seed: "reactive-hexes",
+      participants: [
+        { ...a, skillBar: [...a.skillBar, SEVER_ARTERY], maxHealth: 4 * 119 },
+        mesmer("m", vec2(40, 0)),
+      ],
+    });
+    get(match, "a").statuses.apply("backfire", 10, "m");
+    use(match, 2);
+    expect(damageTo(fired(stepFor(match, 2.5), BACKFIRE), "a")).toEqual([119]);
+    expect(strikesOf(get(match, "a"), SEVER_ARTERY)).toBe(1);
   });
 
   it("does nothing once the Mesmer has left the match", () => {

@@ -53,7 +53,7 @@
  * (MOZ_DISABLE_CONTENT_SANDBOX), as Chromium runs --no-sandbox: the jail and
  * the runner have no user namespaces for it.
  */
-/* global window, addEventListener -- in page.evaluate and addInitScript, which run in the page */
+/* global window, document, MutationObserver, addEventListener -- in page.evaluate and addInitScript, which run in the page */
 import { spawn } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
@@ -264,9 +264,54 @@ async function measure(url, load) {
     await page.goto(`${url}${query}`);
     await page.locator(".roster").waitFor();
     if (load.screen !== "menu") {
-      await page.getByRole("button", { name: "new character" }).click();
+      // Every screen #screens shows and every press the page receives, in
+      // order: a red run says whether the editor ever came, and whether the
+      // input reached the page at all (#862).
+      await page.evaluate(() => {
+        /** @type {string[]} */
+        const seen = [];
+        const at = () => `${String(Math.round(performance.now()))} ms`;
+        const root = document.querySelector("#screens");
+        if (root !== null) {
+          const note = () => {
+            seen.push(`${at()}: ${[...root.children].map((c) => c.className).join(", ")}`);
+          };
+          note();
+          new MutationObserver(note).observe(root, { childList: true });
+        }
+        for (const type of ["keydown", "pointerdown", "click"]) {
+          document.addEventListener(
+            type,
+            (event) => {
+              const target = event.target instanceof Element ? event.target : null;
+              seen.push(`${at()}: ${type} on ${target?.tagName ?? "?"}.${target?.className ?? ""}`);
+            },
+            { capture: true },
+          );
+        }
+        Object.assign(window, { musicStressSeen: seen });
+      });
+      // By keyboard, not a click: Playwright's Firefox without its content
+      // sandbox, as here, drops a mouse press that jumps to some points of
+      // the page before the page sees it, and since the top bar (#814) the
+      // button sits on one (#862). Enter is as much a gesture for the music.
+      await page.getByRole("button", { name: "new character" }).focus();
+      await page.keyboard.press("Enter");
       // The profession is a picker: open it, then click the cell.
-      await page.locator('.editor-profession[data-which="primary"]').click();
+      try {
+        await page.locator('.editor-profession[data-which="primary"]').click({ timeout: 15_000 });
+      } catch (error) {
+        // Say what the page shows instead, so a red run names its cause.
+        const shown = await page.locator("body").innerText();
+        const seen = await page.evaluate(() =>
+          "musicStressSeen" in window ? window.musicStressSeen : [],
+        );
+        console.log(
+          `[${load.browser}] no profession picker; the page shows:\n${shown}\n` +
+            `it saw:\n${JSON.stringify(seen, null, 1)}`,
+        );
+        throw error;
+      }
       await page
         .locator('.profession-grid .profession-cell[data-profession="elementalist"]')
         .click();

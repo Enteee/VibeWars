@@ -62,6 +62,7 @@ export function logToneOf(kind: CombatEvent["kind"]): Exclude<LogTone, "divider"
     case "status-removed":
     case "status-expired":
     case "status-spread":
+    case "upkeep-lost":
       return "status";
     case "interrupted":
     case "cancelled":
@@ -88,6 +89,14 @@ function skillName(skillId: string | undefined): string | undefined {
 }
 
 /** One event as a sentence a player can learn from. */
+/** " (must follow an off-hand attack)": what a chain attack out of sequence needed (#831, #885). */
+function outOfSequence(skillId: string | undefined): string {
+  const follows = skillId === undefined ? undefined : getSkill(skillId)?.attack?.chain?.follows;
+  return follows === undefined
+    ? ""
+    : ` (must follow ${follows === "off-hand" ? "an off-hand" : `a ${follows}`} attack)`;
+}
+
 export function describeCombatEvent(
   entry: Pick<CombatLogEntry, "cause" | "sourceId" | "skillId" | "weaponId" | "attributeId">,
   event: CombatEvent,
@@ -133,11 +142,14 @@ export function describeCombatEvent(
     case "resurrected":
       return `${by} resurrects ${target} (${percent(event.healthFraction)} health, ${percent(event.energyFraction)} energy)`;
     case "status-applied":
-      return `${target} gains ${STATUS_DEFINITIONS[event.statusId].name} (${formatAmount(event.durationSeconds)} s)`;
+      return `${target} gains ${STATUS_DEFINITIONS[event.statusId].name} (${event.durationSeconds === null ? "maintained" : `${formatAmount(event.durationSeconds)} s`})`;
     case "status-removed":
       return `${by} removes ${STATUS_DEFINITIONS[event.statusId].name} from ${target}`;
     case "status-expired":
       return `${STATUS_DEFINITIONS[event.statusId].name} ends on ${target}`;
+    case "upkeep-lost":
+      // GW1 tells the caster alone; the log names them (#837).
+      return `${STATUS_DEFINITIONS[event.statusId].name} on ${target} was lost: ${nameOf(event.casterId)} could not pay the upkeep`;
     case "status-spread":
       return `${target} catches ${STATUS_DEFINITIONS[event.statusId].name} from ${nameOf(event.fromId)}`;
     case "interrupted":
@@ -150,7 +162,7 @@ export function describeCombatEvent(
         ? `${by} finds nothing to interrupt on ${target}`
         : `${by} can't interrupt ${target}'s ${skillName(event.refusedSkillId) ?? event.refusedSkillId}: not a spell or chant`;
     case "attack-missed":
-      return `${by} misses ${target}`;
+      return `${by} misses ${target}${event.reason === "out-of-sequence" ? outOfSequence(entry.skillId) : ""}`;
     case "attack-blocked":
       return `${target} blocks ${by}`;
     case "attack-dodged":

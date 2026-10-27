@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   boardLines,
+  boardScreenLines,
   companyLines,
   cut,
   doneOrder,
@@ -330,6 +331,72 @@ describe("boardLines", () => {
   });
 });
 
+describe("boardScreenLines (#883)", () => {
+  /** @param {string} id */
+  const nudge = (id) => ({ id, to: "manager", everyMinutes: 30, text: `Do ${id}.` });
+  /** @param {readonly string[]} ids */
+  // Two hours on, so every one is overdue in any time zone.
+  const scheduled = (ids) => ({ ...noNudges, schedule: ids.map(nudge), since: 0, now: 7_200_000 });
+  const board = snapshot({ "In Progress": 6, QA: 2, Done: 3 });
+
+  it("is the board, a blank line, then the nudges", () => {
+    const nudges = scheduled(["groom"]);
+    const pane = { rows: 30, width: 80 };
+    expect(boardScreenLines(board, COLUMNS, EVERYONE, nudges, pane)).toEqual([
+      ...boardLines(board, COLUMNS, EVERYONE, { rows: 26, width: 80 }),
+      "",
+      ...nudgeLines(nudges, 80),
+    ]);
+  });
+
+  it("gives the nudges at most half the rows, and the board the rest", () => {
+    const lines = boardScreenLines(board, COLUMNS, EVERYONE, scheduled(["a", "b", "c"]), {
+      rows: 12,
+      width: 80,
+    }).map(plain);
+    expect(lines).toHaveLength(12);
+    expect(lines.slice(5)).toEqual([
+      "",
+      "nudges",
+      "  a → manager · every 30m · last never · next overdue",
+      "    Do a.",
+      "  b → manager · every 30m · last never · next overdue",
+      "    Do b.",
+      "… +2 lines",
+    ]);
+    expect(lines.slice(0, 5)).toEqual(
+      boardLines(board, COLUMNS, EVERYONE, { rows: 5, width: 80 }).map(plain),
+    );
+  });
+
+  it("is the board alone, on every row, with nothing scheduled", () => {
+    const pane = { rows: 20, width: 80 };
+    expect(boardScreenLines(board, COLUMNS, EVERYONE, noNudges, pane)).toEqual(
+      boardLines(board, COLUMNS, EVERYONE, pane),
+    );
+  });
+
+  it("is the board alone in a tiny pane", () => {
+    for (const pane of [
+      { rows: 7, width: 80 },
+      { rows: 30, width: 29 },
+    ]) {
+      expect(boardScreenLines(board, COLUMNS, EVERYONE, scheduled(["groom"]), pane)).toEqual(
+        boardLines(board, COLUMNS, EVERYONE, pane),
+      );
+    }
+  });
+
+  it("shows a broken schedule under a board that is not there yet", () => {
+    const broken = { ...noNudges, schedule: "schedule.nudges is not an array" };
+    expect(boardScreenLines(null, COLUMNS, EVERYONE, broken, { rows: 20, width: 80 })).toEqual([
+      "(no snapshot yet — hubd writes one on the first board read)",
+      "",
+      "nudges: schedule.json: schedule.nudges is not an array",
+    ]);
+  });
+});
+
 describe("companyLines", () => {
   const roles = ["manager", "architect", "developer", "lead-dev", "qa-tester"];
   const budget = { remaining: 4210, limit: 5000, resetAt: 0, spend: "GRAPHQL  ~380/h" };
@@ -348,12 +415,13 @@ describe("companyLines", () => {
         reboot: null,
         build: null,
         claude: null,
-        nudges: noNudges,
         telegram: telegramUp,
       },
       { rows: 30, width: 40 },
     ).map(plain);
     expect(lines[0]).toBe("STAFF  2/12");
+    // On the BOARD pane now (#883).
+    expect(lines.some((line) => line.startsWith("nudges"))).toBe(false);
     expect(lines.some((line) => line.startsWith("GITHUB GraphQL 4210/5000"))).toBe(true);
     expect(lines.indexOf("hub ● up 3m · restarts 0/h")).toBeGreaterThan(0);
     for (const line of lines) {
@@ -375,7 +443,6 @@ describe("companyLines", () => {
           reboot: null,
           build: null,
           claude: null,
-          nudges: noNudges,
           telegram: telegramUp,
         },
         { rows: 30, width: 80 },
@@ -398,7 +465,6 @@ describe("companyLines", () => {
           reboot: null,
           build: null,
           claude: null,
-          nudges: noNudges,
           telegram,
         },
         { rows: 30, width: 80 },
@@ -424,7 +490,6 @@ describe("companyLines", () => {
         reboot: null,
         build: null,
         claude: null,
-        nudges: noNudges,
         telegram: telegramUp,
       },
       { rows: 30, width: 72 },
@@ -465,7 +530,6 @@ describe("companyLines", () => {
         reboot: null,
         build: null,
         claude,
-        nudges: noNudges,
         telegram: telegramUp,
       },
       { rows: 40, width: 72 },
@@ -524,7 +588,6 @@ describe("companyLines", () => {
         reboot: null,
         build: null,
         claude,
-        nudges: noNudges,
         telegram: telegramUp,
       },
       { rows: 40, width: 72 },
@@ -581,7 +644,6 @@ describe("companyLines", () => {
                     ...limit,
                   },
           },
-          nudges: noNudges,
           telegram: telegramUp,
         },
         { rows: 60, width: 120 },
@@ -684,7 +746,6 @@ describe("companyLines", () => {
         reboot: null,
         build: null,
         claude: null,
-        nudges: noNudges,
         telegram: telegramUp,
       },
       { rows: 4, width: 40 },
@@ -713,7 +774,6 @@ describe("companyLines", () => {
           reboot: null,
           build: null,
           claude: null,
-          nudges: noNudges,
           telegram: telegramUp,
         },
         { rows: 40, width },
@@ -832,7 +892,6 @@ describe("companyLines", () => {
           reboot: null,
           build,
           claude: null,
-          nudges: noNudges,
           telegram: telegramUp,
         },
         { rows: 30, width: 80 },
@@ -884,7 +943,6 @@ describe("companyLines", () => {
           reboot,
           build: null,
           claude: null,
-          nudges: noNudges,
           telegram: telegramUp,
         },
         { rows, width },
@@ -918,7 +976,6 @@ describe("companyLines", () => {
           reboot: { record: { ...record, ready: [] }, between: [], now: deadline - 30_000 },
           build: null,
           claude: null,
-          nudges: noNudges,
           telegram: telegramUp,
         },
         { rows: 30, width: 80 },
@@ -960,7 +1017,6 @@ describe("companyLines", () => {
             reboot,
             build: null,
             claude: null,
-            nudges: noNudges,
             telegram: telegramUp,
           },
           { rows: 30, width: 200 },
@@ -1082,7 +1138,7 @@ describe("nudgeLines (#547)", () => {
   };
   /** @param {Partial<import("./dashboard-view.mjs").NudgeFacts>} over */
   const lines = (over, width = 200) =>
-    nudgeLines({ nudges: { ...noNudges, now: at("23:40"), ...over } }, width).map(plain);
+    nudgeLines({ ...noNudges, now: at("23:40"), ...over }, width).map(plain);
 
   it("shows when it last went and when it is next due", () => {
     expect(

@@ -15,6 +15,7 @@ import {
   formatClock,
   isAttackingTarget,
   lostHealthPercent,
+  moraleLabel,
   muteButtonState,
   skillSlotHtml,
   castRowSkill,
@@ -23,6 +24,7 @@ import {
   targetHealthPercent,
   targetHint,
   targetHintDismissed,
+  targetEffectRows,
   targetProfessionIcons,
   targetWeaponIcon,
 } from "./hud.js";
@@ -43,6 +45,7 @@ function player(fields: Partial<PlayerSnapshot>): PlayerSnapshot {
     energy: 20,
     maxEnergy: 50,
     overcast: 0,
+    morale: 0,
     armor: 60,
     weaponId: undefined,
     offhandId: undefined,
@@ -73,6 +76,15 @@ describe("targetHealthPercent (#484)", () => {
 
   it("is of the current maximum, which can shrink", () => {
     expect(targetHealthPercent(player({ health: 200, maxHealth: 400 }))).toBe(50);
+  });
+});
+
+describe("moraleLabel (#843)", () => {
+  it("shows the death penalty and a boost as GW1 does, and nothing at 0", () => {
+    expect(moraleLabel(-15)).toBe("−15%");
+    expect(moraleLabel(-60)).toBe("−60%");
+    expect(moraleLabel(10)).toBe("+10%");
+    expect(moraleLabel(0)).toBeUndefined();
   });
 });
 
@@ -239,6 +251,7 @@ describe("targetHintDismissed", () => {
     energy: 20,
     maxEnergy: 50,
     overcast: 0,
+    morale: 0,
     armor: 60,
     weaponId: undefined,
     offhandId: undefined,
@@ -323,6 +336,7 @@ describe("isAttackingTarget", () => {
     energy: 20,
     maxEnergy: 50,
     overcast: 0,
+    morale: 0,
     armor: 60,
     weaponId: undefined,
     offhandId: undefined,
@@ -426,6 +440,7 @@ describe("targetProfessionIcons (#281)", () => {
     energy: 20,
     maxEnergy: 50,
     overcast: 0,
+    morale: 0,
     armor: 60,
     weaponId: undefined,
     offhandId: undefined,
@@ -474,5 +489,55 @@ describe("targetWeaponIcon (#419)", () => {
     expect(targetWeaponIcon(undefined)).toBeUndefined();
     expect(targetWeaponIcon(armed(undefined))).toBeUndefined();
     expect(targetWeaponIcon(armed("lightsaber"))).toBeUndefined();
+  });
+});
+
+describe("targetEffectRows (#835)", () => {
+  const self = player({ sessionId: "me", team: 0 });
+  const names = new Map([
+    ["me", "Ann"],
+    ["foe", "Mhenlo"],
+    ["ally", "Cynn"],
+  ]);
+  const foe = player({
+    statuses: [
+      { id: "bleeding", endsAt: 20, durationSeconds: 10, casterId: "me" },
+      { id: "crippled", endsAt: 15, durationSeconds: 10, casterId: "ally" },
+    ],
+  });
+  const ally = player({
+    sessionId: "ally",
+    team: 0,
+    statuses: [{ id: "armor-boost", endsAt: 18, durationSeconds: 10, casterId: "me" }],
+  });
+
+  it("shows the target's statuses in the order the host sent them", () => {
+    const rows = targetEffectRows(self, foe, names, 10);
+    expect(rows.map((row) => [row.id, row.casterName, row.fraction])).toEqual([
+      ["bleeding", "you", 1],
+      ["crippled", "Cynn", 0.5],
+    ]);
+  });
+
+  it("replaces them with the new target's when the target changes", () => {
+    expect(targetEffectRows(self, ally, names, 10).map((row) => row.id)).toEqual(["armor-boost"]);
+  });
+
+  it("ticks an enchantment you put on an ally, never a condition you put on a foe", () => {
+    expect(targetEffectRows(self, ally, names, 10)[0]?.yours).toBe(true);
+    expect(targetEffectRows(self, foe, names, 10)[0]?.yours).toBe(false);
+  });
+
+  it("shows nothing with no target, a dead one, or no match clock", () => {
+    expect(targetEffectRows(self, undefined, names, 10)).toEqual([]);
+    expect(targetEffectRows(self, { ...foe, dead: true }, names, 10)).toEqual([]);
+    expect(targetEffectRows(self, foe, names, undefined)).toEqual([]);
+  });
+
+  it("shows what your own monitor does when you target yourself", () => {
+    const me = { ...ally, sessionId: "me" };
+    expect(targetEffectRows(me, me, names, 10)).toEqual([
+      expect.objectContaining({ id: "armor-boost", yours: true, casterName: "you" }),
+    ]);
   });
 });

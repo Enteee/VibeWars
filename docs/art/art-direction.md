@@ -93,13 +93,14 @@ what it does, who it is from and the whole seconds left.
 ### Target frame
 
 The match HUD's target frame (#484) is three rows of fixed size, so the
-HUD never jumps when a row has nothing to show:
+HUD never jumps when a row has nothing to show, and one that grows:
 
-| Row    | Shows                                                                                                 |
-| ------ | ----------------------------------------------------------------------------------------------------- |
-| Header | Profession icons, the name in `ink`, the "attacking" swords                                           |
-| Health | A `hud-health` bar labelled with the percentage, rounded down; `412 / 480` added for you and allies   |
-| Cast   | While the target casts: the type badge, the skill's name, and a 6 px bar filling in `ink`, never blue |
+| Row     | Shows                                                                                                     |
+| ------- | --------------------------------------------------------------------------------------------------------- |
+| Header  | Profession icons, the name in `ink`, the "attacking" swords                                               |
+| Health  | A `hud-health` bar labelled with the percentage, rounded down; `412 / 480` added for you and allies       |
+| Effects | The target's statuses as your effects monitor shows them, at 16 px with a 4 px tick; none, no room (#835) |
+| Cast    | While the target casts: the type badge, the skill's name, and a 6 px bar filling in `ink`, never blue     |
 
 A foe shows the percentage alone, as GW1 shows a foe's bar alone. A dead
 target has an empty track edged in `dead`. An interrupted cast keeps the

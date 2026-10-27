@@ -31,6 +31,7 @@ export type {
   AttackIntent,
   CancelIntent,
   WalkToIntent,
+  EndUpkeepIntent,
   CastRefusedMessage,
   AdrenalineMessage,
   RechargeMessage,
@@ -54,10 +55,12 @@ export {
   MAX_WIRE_EVENTS,
   MAX_WIRE_SLOTS,
   MAX_WIRE_PINGS,
+  MAX_WIRE_MORALE,
   MAX_CHAT_GRAPHEMES,
   MAX_WIRE_CHAT_TEXT,
   CHAT_CHANNELS,
   MAX_WIRE_PIPS,
+  MIN_WIRE_MORALE,
   MAX_WIRE_RANK,
   MAX_WIRE_RANKS,
   MAX_WIRE_WALLS,
@@ -127,3 +130,15 @@ export type {
   LobbyRefusal,
   WireMatchStart,
 } from "./p2p.js";
+
+export {
+  FORMATION_SETTLE_MS,
+  FORMATION_TIMEOUT_MS,
+  NO_SHOW_IGNORE_MS,
+  QUEUE_MODES,
+  TICKET_HEARTBEAT_MS,
+  TICKET_TTL_MS,
+  parseQueueTicket,
+  teamSizeOf,
+} from "./queue.js";
+export type { QueueMode, QueueTicket } from "./queue.js";

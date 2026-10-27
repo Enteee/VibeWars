@@ -6,7 +6,7 @@ import {
   RANGE_SPELL,
 } from "../distances.js";
 import { WEAPONS } from "../equipment/weapons.js";
-import type { Skill } from "./types.js";
+import { KNOCKDOWN_SECONDS, type Skill } from "./types.js";
 
 /**
  * The implemented skill catalog (brief §9's "Implemented" stage).
@@ -155,7 +155,9 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       // "If Swift Chop is blocked, target foe takes 1...16 damage and
       // suffers a Deep Wound for 20 seconds."
       conditionalBonus: undefined,
+      strikes: 1,
       unblockable: false,
+      chain: undefined,
       onBlocked: [
         {
           kind: "damage",
@@ -197,7 +199,9 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       weaponDamage: 1,
       bonusDamage: { scaling: { attributeId: "ranger.marksmanship", atZero: 5, atTwelve: 12 } },
       conditionalBonus: undefined,
+      strikes: 1,
       unblockable: false,
+      chain: undefined,
       onBlocked: [],
     },
     whileActivating: undefined,
@@ -227,7 +231,9 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         scaling: { attributeId: "warrior.hammer-mastery", atZero: 1, atTwelve: 16 },
       },
       conditionalBonus: undefined,
+      strikes: 1,
       unblockable: false,
+      chain: undefined,
       onBlocked: [],
     },
     whileActivating: undefined,
@@ -296,7 +302,9 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       weaponDamage: 0,
       bonusDamage: undefined,
       conditionalBonus: undefined,
+      strikes: 1,
       unblockable: false,
+      chain: undefined,
       onBlocked: [],
     },
     whileActivating: undefined,
@@ -322,7 +330,9 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       weaponDamage: 1,
       bonusDamage: undefined,
       conditionalBonus: undefined,
+      strikes: 1,
       unblockable: false,
+      chain: undefined,
       onBlocked: [],
     },
     whileActivating: undefined,
@@ -601,6 +611,27 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     effects: [{ kind: "apply-status", statusId: "guardian", durationSeconds: 6 }],
   },
   {
+    id: "monk.mending",
+    name: "Mending",
+    type: "enchantment",
+    elite: false,
+    profession: "monk",
+    attributeId: "monk.healing-prayers",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 0,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // The first maintained enchantment (#837): +3 Health regeneration, its
+    // rank-12 value, for −1 energy pip on its caster while it lasts.
+    effects: [{ kind: "maintain-status", statusId: "mending" }],
+  },
+  {
     id: "warrior.sever-artery",
     name: "Sever Artery",
     type: "attack",
@@ -619,7 +650,9 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       weaponDamage: 1,
       bonusDamage: undefined,
       conditionalBonus: undefined,
+      strikes: 1,
       unblockable: false,
+      chain: undefined,
       onBlocked: [],
     },
     whileActivating: undefined,
@@ -647,7 +680,9 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       weaponDamage: 1,
       bonusDamage: { scaling: { attributeId: "warrior.axe-mastery", atZero: 10, atTwelve: 38 } },
       conditionalBonus: undefined,
+      strikes: 1,
       unblockable: false,
+      chain: undefined,
       onBlocked: [],
     },
     whileActivating: undefined,
@@ -675,7 +710,9 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       weaponDamage: 1,
       bonusDamage: { scaling: { attributeId: "warrior.axe-mastery", atZero: 10, atTwelve: 34 } },
       conditionalBonus: undefined,
+      strikes: 1,
       unblockable: false,
+      chain: undefined,
       onBlocked: [],
     },
     whileActivating: undefined,
@@ -696,14 +733,15 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     range: RANGE_MELEE,
     target: "single-enemy",
     area: undefined,
-    // A lead attack: in GW1 it opens a dagger chain for an off-hand
-    // attack. Nothing reads that until attack chains exist (#341).
+    // A lead attack: it opens a dagger chain for an off-hand attack (#831).
     attack: {
       weapon: "daggers",
       weaponDamage: 1,
       bonusDamage: undefined,
       conditionalBonus: undefined,
+      strikes: 1,
       unblockable: false,
+      chain: { role: "lead", follows: undefined },
       onBlocked: [],
     },
     whileActivating: undefined,
@@ -711,6 +749,280 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     // "...your target suffers from Bleeding for 5...17...20 seconds": 17 s,
     // its rank-12 value.
     effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: 17 }],
+  },
+  {
+    id: "assassin.black-lotus-strike",
+    name: "Black Lotus Strike",
+    type: "attack",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.critical-strikes",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 6,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    // "If it hits, Black Lotus Strike strikes for +10...27...31 damage."
+    attack: {
+      weapon: "daggers",
+      weaponDamage: 1,
+      bonusDamage: {
+        scaling: { attributeId: "assassin.critical-strikes", atZero: 10, atTwelve: 27 },
+      },
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: { role: "lead", follows: undefined },
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    // "If target foe is suffering from a Hex, you gain 5...11...13 Energy."
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-has", category: "hex" },
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: {
+              scaling: { attributeId: "assassin.critical-strikes", atZero: 5, atTwelve: 11 },
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "assassin.fox-fangs",
+    name: "Fox Fangs",
+    type: "attack",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.dagger-mastery",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.5,
+    rechargeSeconds: 6,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    // "Must follow a lead attack. Fox Fangs cannot be blocked or evaded and
+    // strikes for +10...22...25 damage if it hits." Nothing evades here, so
+    // unblockable is all of it.
+    attack: {
+      weapon: "daggers",
+      weaponDamage: 1,
+      bonusDamage: {
+        scaling: { attributeId: "assassin.dagger-mastery", atZero: 10, atTwelve: 22 },
+      },
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: true,
+      chain: { role: "off-hand", follows: "lead" },
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    effects: [],
+  },
+  {
+    id: "assassin.wild-strike",
+    name: "Wild Strike",
+    type: "attack",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.dagger-mastery",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 6,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    // "Must follow a lead attack. If it hits, this attack strikes for
+    // +10...30...35 damage ... This attack cannot be blocked."
+    attack: {
+      weapon: "daggers",
+      weaponDamage: 1,
+      bonusDamage: {
+        scaling: { attributeId: "assassin.dagger-mastery", atZero: 10, atTwelve: 30 },
+      },
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: true,
+      chain: { role: "off-hand", follows: "lead" },
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    // "...and any Stance being used by target foe ends."
+    effects: [{ kind: "remove-status", category: "stance", count: 1 }],
+  },
+  {
+    id: "assassin.death-blossom",
+    name: "Death Blossom",
+    type: "attack",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.dagger-mastery",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 6,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    // "Must follow an off-hand attack. If it hits, Death Blossom strikes
+    // target foe for +20...40...45 damage and all adjacent foes take
+    // 20...40...45 damage." A dual attack: both blows splash.
+    attack: {
+      weapon: "daggers",
+      weaponDamage: 1,
+      bonusDamage: {
+        scaling: { attributeId: "assassin.dagger-mastery", atZero: 20, atTwelve: 40 },
+      },
+      conditionalBonus: undefined,
+      strikes: 2,
+      unblockable: false,
+      chain: { role: "dual", follows: "off-hand" },
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    effects: [
+      {
+        kind: "splash",
+        radius: AREA_ADJACENT,
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "assassin.dagger-mastery", atZero: 20, atTwelve: 40 },
+            },
+            type: "piercing",
+            armorPenetration: 0,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "assassin.twisting-fangs",
+    name: "Twisting Fangs",
+    type: "attack",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.critical-strikes",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 15,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    // "Must follow an off-hand attack. If it hits, Twisting Fangs strikes
+    // for +10...18...20 damage and struck foe suffers from Bleeding and
+    // Deep Wound for 5...17...20 seconds": 17 s, its rank-12 value.
+    attack: {
+      weapon: "daggers",
+      weaponDamage: 1,
+      bonusDamage: {
+        scaling: { attributeId: "assassin.critical-strikes", atZero: 10, atTwelve: 18 },
+      },
+      conditionalBonus: undefined,
+      strikes: 2,
+      unblockable: false,
+      chain: { role: "dual", follows: "off-hand" },
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    effects: [
+      { kind: "apply-status", statusId: "bleeding", durationSeconds: 17 },
+      { kind: "apply-status", statusId: "deep-wound", durationSeconds: 17 },
+    ],
+  },
+  {
+    id: "assassin.horns-of-the-ox",
+    name: "Horns of the Ox",
+    type: "attack",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.dagger-mastery",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 12,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    // "Must follow an off-hand attack. If it hits, Horns of the Ox strikes
+    // for +1...9...11 damage. If struck foe is not adjacent to any allies,
+    // that foe is knocked down."
+    attack: {
+      weapon: "daggers",
+      weaponDamage: 1,
+      bonusDamage: {
+        scaling: { attributeId: "assassin.dagger-mastery", atZero: 1, atTwelve: 9 },
+      },
+      conditionalBonus: undefined,
+      strikes: 2,
+      unblockable: false,
+      chain: { role: "dual", follows: "off-hand" },
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-alone", radius: AREA_ADJACENT },
+        effects: [{ kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS }],
+      },
+    ],
+  },
+  {
+    id: "assassin.moebius-strike",
+    name: "Moebius Strike",
+    type: "attack",
+    elite: true,
+    profession: "assassin",
+    attributeId: "assassin.dagger-mastery",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 2,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    // "Must follow a Dual Attack. If it hits, Moebius Strike strikes for
+    // +10...30...35 damage. If you strike a foe whose Health is below 50%,
+    // all your other attack skills are recharged." An off-hand attack that
+    // follows a dual: lead, off-hand, dual, Moebius, dual, and round.
+    attack: {
+      weapon: "daggers",
+      weaponDamage: 1,
+      bonusDamage: {
+        scaling: { attributeId: "assassin.dagger-mastery", atZero: 10, atTwelve: 30 },
+      },
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: { role: "off-hand", follows: "dual" },
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-health-below", fraction: 0.5 },
+        effects: [{ kind: "recharge-others", which: "attack" }],
+      },
+    ],
   },
   {
     id: "ranger.punishing-shot",
@@ -731,7 +1043,9 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       weaponDamage: 1,
       bonusDamage: { scaling: { attributeId: "ranger.marksmanship", atZero: 10, atTwelve: 18 } },
       conditionalBonus: undefined,
+      strikes: 1,
       unblockable: false,
+      chain: undefined,
       onBlocked: [],
     },
     whileActivating: undefined,
@@ -838,7 +1152,9 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         scaling: { attributeId: "paragon.spear-mastery", atZero: 5, atTwelve: 17 },
       },
       conditionalBonus: undefined,
+      strikes: 1,
       unblockable: true,
+      chain: undefined,
       onBlocked: [],
     },
     whileActivating: undefined,
@@ -1378,7 +1694,9 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         condition: { kind: "caster-has", category: "enchantment" },
         amount: { scaling: { attributeId: "dervish.mysticism", atZero: 3, atTwelve: 10 } },
       },
+      strikes: 1,
       unblockable: false,
+      chain: undefined,
       onBlocked: [],
     },
     whileActivating: undefined,
@@ -1467,7 +1785,9 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       weaponDamage: 1,
       bonusDamage: undefined,
       conditionalBonus: undefined,
+      strikes: 1,
       unblockable: false,
+      chain: undefined,
       onBlocked: [],
     },
     whileActivating: undefined,
@@ -1597,7 +1917,9 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         condition: { kind: "target-casting", spell: true },
         amount: { scaling: { attributeId: "ranger.marksmanship", atZero: 13, atTwelve: 25 } },
       },
+      strikes: 1,
       unblockable: false,
+      chain: undefined,
       onBlocked: [],
     },
     whileActivating: undefined,

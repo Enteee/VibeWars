@@ -104,6 +104,7 @@ describe("Healing Signet (#524)", () => {
     match.requestSkill("w", 0);
     stepFor(match, 1);
     applyEffects([{ kind: "interrupt" }], {
+      surroundings: new Map(),
       caster: get(match, "foe").combatant,
       target: w,
       rng: createRng(524),
@@ -126,6 +127,7 @@ describe("Healing Signet (#524)", () => {
     match.requestSkill("w", 0);
     stepFor(match, 0.5);
     applyEffects([{ kind: "knockdown", durationSeconds: 2 }], {
+      surroundings: new Map(),
       caster: get(match, "foe").combatant,
       target: w,
       rng: createRng(524),

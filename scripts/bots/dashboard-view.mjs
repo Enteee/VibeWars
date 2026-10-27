@@ -215,7 +215,7 @@ function cardLine(card, width) {
 }
 
 /**
- * The BOARD pane.
+ * The board, at the top of the BOARD pane (`boardScreenLines`).
  *
  * Backlog and Ready are a count each. In Progress, In Review and QA list
  * as many cards as fit, ending in `… +N more` when they do not. Done is
@@ -305,6 +305,36 @@ export function boardLines(snapshot, boardColumns, live, { rows, width }) {
 }
 
 /**
+ * The BOARD screen (#883): the board, a blank line, then the nudges. The
+ * board comes first: the nudges get at most half the rows, cut with
+ * `… +N lines`, and the board fits itself into the rest. No nudges, or a
+ * tiny pane, is the board alone.
+ *
+ * @param {Parameters<typeof boardLines>[0]} snapshot
+ * @param {readonly string[] | null} boardColumns
+ * @param {ReadonlySet<string>} live
+ * @param {NudgeFacts} nudgeFacts the scheduled nudges and how they are doing (#547)
+ * @param {Pane} pane
+ * @returns {string[]}
+ */
+export function boardScreenLines(snapshot, boardColumns, live, nudgeFacts, { rows, width }) {
+  const all = rows < TINY_ROWS || width < TINY_WIDTH ? [] : nudgeLines(nudgeFacts, width);
+  if (all.length === 0) {
+    return boardLines(snapshot, boardColumns, live, { rows, width });
+  }
+  const most = Math.floor(rows / 2);
+  const nudges =
+    all.length <= most
+      ? all
+      : [...all.slice(0, most - 1), cut(`… +${String(all.length - most + 1)} lines`, width)];
+  return [
+    ...boardLines(snapshot, boardColumns, live, { rows: rows - nudges.length - 1, width }),
+    "",
+    ...nudges,
+  ];
+}
+
+/**
  * @typedef {object} Budget
  * @property {number} remaining
  * @property {number} limit
@@ -321,7 +351,6 @@ export function boardLines(snapshot, boardColumns, live, { rows, width }) {
  * @property {Budget | null} budget null before hubd has checked
  * @property {ReturnType<typeof import("./hub-health.mjs").hubHealth>} hub hubd, as its heartbeat and restarts say (#23)
  * @property {ClaudeUsage | null} claude null before any agent has logged (#50)
- * @property {NudgeFacts} nudges the scheduled nudges and how they are doing (#547)
  * @property {TelegramFacts} telegram whether the Telegram sidecar is up (#583)
  * @property {{ record: import("./reboot.mjs").Reboot, between: readonly string[], now: number } | { rebooting: string } | null} reboot
  *   the pending reboot with the roles between turns, or the reason of the one handed to the restarter (#345)
@@ -708,11 +737,11 @@ function buildSection({ build }, width) {
  * The scheduled nudges (#547): when each last went, when it is next due, and
  * who has not read it. No schedule is no section.
  *
- * @param {CompanyFacts} facts
+ * @param {NudgeFacts} nudges
  * @param {number} width
  * @returns {string[]}
  */
-export function nudgeLines({ nudges: { schedule, since, sent, unread, now } }, width) {
+export function nudgeLines({ schedule, since, sent, unread, now }, width) {
   if (typeof schedule === "string") {
     return [cut(`nudges: schedule.json: ${visible(schedule)}`, width)];
   }
@@ -761,6 +790,7 @@ function telegramSection({ telegram: { down, lastSeen, now } }, width) {
 /**
  * The COMPANY pane's sections, in order. A new one is a
  * function here rather than a pane, as #23's hub line and #50's tokens are.
+ * The nudges are on the BOARD pane, under the board (#883).
  *
  * @type {readonly ((facts: CompanyFacts, width: number) => string[])[]}
  */
@@ -772,7 +802,6 @@ export const COMPANY_SECTIONS = [
   hubSection,
   githubSection,
   claudeSection,
-  nudgeLines,
 ];
 
 /**

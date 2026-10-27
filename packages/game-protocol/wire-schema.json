@@ -48,6 +48,7 @@
     "healing-signet-armor",
     "heart-of-fury",
     "malaise",
+    "mending",
     "mystic-regeneration",
     "poison",
     "regeneration",
@@ -57,6 +58,8 @@
     "weapon-of-warding"
   ],
   "constants": {
+    "FORMATION_SETTLE_MS": { "literal": 3000 },
+    "FORMATION_TIMEOUT_MS": { "literal": 20000 },
     "LOBBY_CODE_ALPHABET": { "literal": "ACDEFGHJKMNPQRTWXY34679" },
     "LOBBY_CODE_LENGTH": { "literal": 6 },
     "MAX_CHAT_GRAPHEMES": { "literal": 200 },
@@ -67,6 +70,7 @@
     "MAX_WIRE_EVENTS": { "literal": 64 },
     "MAX_WIRE_JSON_DEPTH": { "literal": 16 },
     "MAX_WIRE_JSON_VALUES": { "literal": 4096 },
+    "MAX_WIRE_MORALE": { "literal": 10 },
     "MAX_WIRE_PINGS": { "literal": 32 },
     "MAX_WIRE_PIPS": { "literal": 10 },
     "MAX_WIRE_POINTS": { "literal": 256 },
@@ -80,9 +84,13 @@
     "MAX_WIRE_STRING": { "literal": 64 },
     "MAX_WIRE_TEXT": { "literal": 256 },
     "MAX_WIRE_WALLS": { "literal": 1024 },
+    "MIN_WIRE_MORALE": { "literal": -60 },
+    "NO_SHOW_IGNORE_MS": { "literal": 120000 },
     "PROTOCOL_MISMATCH_MESSAGE": {
       "literal": "This tab is running an outdated version of VibeWars. Reload the page."
-    }
+    },
+    "TICKET_HEARTBEAT_MS": { "literal": 5000 },
+    "TICKET_TTL_MS": { "literal": 15000 }
   },
   "types": {
     "AdrenalineMessage": {
@@ -159,6 +167,13 @@
           ]
         },
         { "properties": [{ "name": "kind", "optional": false, "type": { "literal": "cancel" } }] },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "end-upkeep" } },
+            { "name": "status", "optional": false, "type": "string" },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
         { "properties": [{ "name": "kind", "optional": false, "type": { "literal": "stop" } }] },
         {
           "properties": [
@@ -294,6 +309,7 @@
                   { "literal": "healing-signet-armor" },
                   { "literal": "heart-of-fury" },
                   { "literal": "malaise" },
+                  { "literal": "mending" },
                   { "literal": "mystic-regeneration" },
                   { "literal": "poison" },
                   { "literal": "regeneration" },
@@ -316,6 +332,51 @@
         },
         {
           "properties": [
+            { "name": "casterId", "optional": false, "type": "string" },
+            { "name": "kind", "optional": false, "type": { "literal": "upkeep-lost" } },
+            {
+              "name": "statusId",
+              "optional": false,
+              "type": {
+                "union": [
+                  { "literal": "anthem-of-flame" },
+                  { "literal": "apply-poison" },
+                  { "literal": "armor-boost" },
+                  { "literal": "backfire" },
+                  { "literal": "bleeding" },
+                  { "literal": "blind" },
+                  { "literal": "blood-ritual" },
+                  { "literal": "burning" },
+                  { "literal": "cracked-armor" },
+                  { "literal": "crippled" },
+                  { "literal": "dash" },
+                  { "literal": "dazed" },
+                  { "literal": "deep-wound" },
+                  { "literal": "disease" },
+                  { "literal": "empathy" },
+                  { "literal": "faintheartedness" },
+                  { "literal": "fleeting-stability" },
+                  { "literal": "glyph-of-lesser-energy" },
+                  { "literal": "guardian" },
+                  { "literal": "healing-signet-armor" },
+                  { "literal": "heart-of-fury" },
+                  { "literal": "malaise" },
+                  { "literal": "mending" },
+                  { "literal": "mystic-regeneration" },
+                  { "literal": "poison" },
+                  { "literal": "regeneration" },
+                  { "literal": "sprint" },
+                  { "literal": "watch-yourself" },
+                  { "literal": "weakness" },
+                  { "literal": "weapon-of-warding" }
+                ]
+              }
+            },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
             { "name": "durationSeconds", "optional": false, "type": "number" },
             { "name": "kind", "optional": false, "type": { "literal": "knocked-down" } },
             { "name": "targetId", "optional": false, "type": "string" }
@@ -323,7 +384,11 @@
         },
         {
           "properties": [
-            { "name": "durationSeconds", "optional": false, "type": "number" },
+            {
+              "name": "durationSeconds",
+              "optional": false,
+              "type": { "union": ["null", "number"] }
+            },
             { "name": "kind", "optional": false, "type": { "literal": "status-applied" } },
             {
               "name": "statusId",
@@ -352,6 +417,7 @@
                   { "literal": "healing-signet-armor" },
                   { "literal": "heart-of-fury" },
                   { "literal": "malaise" },
+                  { "literal": "mending" },
                   { "literal": "mystic-regeneration" },
                   { "literal": "poison" },
                   { "literal": "regeneration" },
@@ -404,6 +470,7 @@
                   { "literal": "healing-signet-armor" },
                   { "literal": "heart-of-fury" },
                   { "literal": "malaise" },
+                  { "literal": "mending" },
                   { "literal": "mystic-regeneration" },
                   { "literal": "poison" },
                   { "literal": "regeneration" },
@@ -432,6 +499,7 @@
         {
           "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "attack-missed" } },
+            { "name": "reason", "optional": true, "type": { "literal": "out-of-sequence" } },
             { "name": "targetId", "optional": false, "type": "string" }
           ]
         },
@@ -508,6 +576,7 @@
                   { "literal": "healing-signet-armor" },
                   { "literal": "heart-of-fury" },
                   { "literal": "malaise" },
+                  { "literal": "mending" },
                   { "literal": "mystic-regeneration" },
                   { "literal": "poison" },
                   { "literal": "regeneration" },
@@ -551,6 +620,7 @@
                   { "literal": "healing-signet-armor" },
                   { "literal": "heart-of-fury" },
                   { "literal": "malaise" },
+                  { "literal": "mending" },
                   { "literal": "mystic-regeneration" },
                   { "literal": "poison" },
                   { "literal": "regeneration" },
@@ -597,6 +667,13 @@
         { "name": "events", "optional": false, "type": { "array": { "typeParameter": "Event" } } },
         { "name": "skillId", "optional": false, "type": "string" },
         { "name": "weaponId", "optional": false, "type": "string" }
+      ]
+    },
+    "EndUpkeepIntent": {
+      "properties": [
+        { "name": "kind", "optional": false, "type": { "literal": "end-upkeep" } },
+        { "name": "status", "optional": false, "type": "string" },
+        { "name": "targetId", "optional": false, "type": "string" }
       ]
     },
     "JsonValue": {
@@ -856,6 +933,33 @@
             }
           }
         }
+      ]
+    },
+    "QueueMode": {
+      "union": [
+        { "literal": "random-arena-1v1" },
+        { "literal": "random-arena-2v2" },
+        { "literal": "random-arena-4v4" }
+      ]
+    },
+    "QueueTicket": {
+      "properties": [
+        { "name": "enteredAt", "optional": false, "type": "number" },
+        { "name": "heartbeatAt", "optional": false, "type": "number" },
+        {
+          "name": "mode",
+          "optional": false,
+          "type": {
+            "union": [
+              { "literal": "random-arena-1v1" },
+              { "literal": "random-arena-2v2" },
+              { "literal": "random-arena-4v4" }
+            ]
+          }
+        },
+        { "name": "partySize", "optional": false, "type": "number" },
+        { "name": "protocol", "optional": false, "type": "string" },
+        { "name": "ticketId", "optional": false, "type": "string" }
       ]
     },
     "RechargeMessage": {
@@ -1344,6 +1448,7 @@
         { "name": "knockdownRemaining", "optional": false, "type": "number" },
         { "name": "maxEnergy", "optional": false, "type": "number" },
         { "name": "maxHealth", "optional": false, "type": "number" },
+        { "name": "morale", "optional": false, "type": "number" },
         { "name": "name", "optional": false, "type": "string" },
         { "name": "offhandId", "optional": false, "type": { "union": ["null", "string"] } },
         { "name": "overcast", "optional": false, "type": "number" },
@@ -1360,8 +1465,12 @@
             "array": {
               "properties": [
                 { "name": "casterId", "optional": false, "type": "string" },
-                { "name": "durationSeconds", "optional": false, "type": "number" },
-                { "name": "endsAt", "optional": false, "type": "number" },
+                {
+                  "name": "durationSeconds",
+                  "optional": false,
+                  "type": { "union": ["null", "number"] }
+                },
+                { "name": "endsAt", "optional": false, "type": { "union": ["null", "number"] } },
                 { "name": "status", "optional": false, "type": "number" }
               ]
             }
@@ -1482,6 +1591,7 @@
                 { "name": "knockdownRemaining", "optional": false, "type": "number" },
                 { "name": "maxEnergy", "optional": false, "type": "number" },
                 { "name": "maxHealth", "optional": false, "type": "number" },
+                { "name": "morale", "optional": false, "type": "number" },
                 { "name": "name", "optional": false, "type": "string" },
                 { "name": "offhandId", "optional": false, "type": { "union": ["null", "string"] } },
                 { "name": "overcast", "optional": false, "type": "number" },
@@ -1502,8 +1612,16 @@
                     "array": {
                       "properties": [
                         { "name": "casterId", "optional": false, "type": "string" },
-                        { "name": "durationSeconds", "optional": false, "type": "number" },
-                        { "name": "endsAt", "optional": false, "type": "number" },
+                        {
+                          "name": "durationSeconds",
+                          "optional": false,
+                          "type": { "union": ["null", "number"] }
+                        },
+                        {
+                          "name": "endsAt",
+                          "optional": false,
+                          "type": { "union": ["null", "number"] }
+                        },
                         { "name": "status", "optional": false, "type": "number" }
                       ]
                     }
@@ -1613,6 +1731,7 @@
                 { "name": "knockdownRemaining", "optional": false, "type": "number" },
                 { "name": "maxEnergy", "optional": false, "type": "number" },
                 { "name": "maxHealth", "optional": false, "type": "number" },
+                { "name": "morale", "optional": false, "type": "number" },
                 { "name": "name", "optional": false, "type": "string" },
                 { "name": "offhandId", "optional": false, "type": { "union": ["null", "string"] } },
                 { "name": "overcast", "optional": false, "type": "number" },
@@ -1633,8 +1752,16 @@
                     "array": {
                       "properties": [
                         { "name": "casterId", "optional": false, "type": "string" },
-                        { "name": "durationSeconds", "optional": false, "type": "number" },
-                        { "name": "endsAt", "optional": false, "type": "number" },
+                        {
+                          "name": "durationSeconds",
+                          "optional": false,
+                          "type": { "union": ["null", "number"] }
+                        },
+                        {
+                          "name": "endsAt",
+                          "optional": false,
+                          "type": { "union": ["null", "number"] }
+                        },
                         { "name": "status", "optional": false, "type": "number" }
                       ]
                     }

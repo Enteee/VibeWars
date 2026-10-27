@@ -1,0 +1,25 @@
+{
+  "id": "assassin.horns-of-the-ox",
+  "name": "Horns of the Ox",
+  "profession": "assassin",
+  "attribute": "Dagger Mastery",
+  "type": "Dual attack.",
+  "elite": false,
+  "campaign": "Factions",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 0,
+  "rechargeSeconds": 12,
+  "description": "Must follow an off-hand attack. If it hits, Horns of the Ox strikes for +1...9...11 damage. If struck foe is not adjacent to any allies, that foe is knocked down.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Assassin/657-Horns_of_the_Ox",
+    "fetchedAt": "2026-10-27T10:44:25.261Z"
+  },
+  "unmapped": {}
+}

@@ -14,6 +14,8 @@ import { effectiveActivationSeconds, outsideMatch } from "./tick.js";
 import type {
   AreaRule,
   AttackWeaponClass,
+  ChainRole,
+  ChainStep,
   EffectCondition,
   Magnitude,
   Skill,
@@ -296,6 +298,25 @@ function conditionText(condition: EffectCondition): string {
       return `If you have ${aCategory(condition.category)}`;
     case "target-casting":
       return "If target is casting a spell";
+    case "target-alone":
+      return condition.radius === AREA_ADJACENT
+        ? "If target is not adjacent to any allies"
+        : `If target has no allies within ${String(condition.radius)}`;
+  }
+}
+
+/** Who a splash reaches, as GW1 words it (#885): "Adjacent foes". */
+function foesWithin(radius: number): string {
+  const area = AREA_TEXT.get(radius);
+  switch (area) {
+    case "adjacent":
+      return "Adjacent foes";
+    case "nearby":
+      return "Nearby foes";
+    case undefined:
+      return `Foes within ${String(radius)}`;
+    default:
+      return `Foes ${area}`;
   }
 }
 
@@ -380,6 +401,14 @@ function describeEffect(
           `(${describeStatus(effect.statusId)})`,
         magnitude: undefined,
       };
+    case "maintain-status":
+      // GW1 words upkeep as the caster's energy degeneration (#837).
+      return {
+        text:
+          "Maintained: −1 Energy regeneration while it lasts. " +
+          `${describeStatus(effect.statusId)}.`,
+        magnitude: undefined,
+      };
     case "remove-status": {
       if (effect.from === "caster") {
         // "Lose 1 Dervish enchantment" (#845).
@@ -426,6 +455,27 @@ function describeEffect(
         text: `This skill recharges ${String(Math.round(effect.fraction * 100))}% faster`,
         magnitude: undefined,
       };
+    case "recharge-others":
+      return { text: "Recharges all your other attack skills", magnitude: undefined };
+    case "splash": {
+      // "Adjacent foes take 40 damage" (#885).
+      const inner = effect.effects.map((each) => ({
+        each,
+        description: describeEffect(each, ranks),
+      }));
+      const what = inner
+        .map(({ each, description }) =>
+          each.kind === "damage"
+            ? `take ${String(describeMagnitude(each.amount, ranks).current)} damage`
+            : lowerFirst(description.text),
+        )
+        .join(", ");
+      return {
+        text: `${foesWithin(effect.radius)} ${what}`,
+        magnitude: inner.find(({ description }) => description.magnitude !== undefined)?.description
+          .magnitude,
+      };
+    }
   }
 }
 
@@ -483,6 +533,27 @@ const WEAPON_TEXT: Record<AttackWeaponClass, string> = {
   bow: "Bow attack",
   melee: "Melee attack",
 };
+
+/** A chain role as GW1 names the attack (#831): "Lead attack.". */
+const CHAIN_ROLE_TEXT: Record<ChainRole, string> = {
+  lead: "Lead attack.",
+  "off-hand": "Off-hand attack.",
+  dual: "Dual attack.",
+};
+
+/** What a chain attack must follow (#831), as GW1 words it. */
+const FOLLOWS_TEXT: Record<ChainRole, string> = {
+  lead: "Must follow a lead attack.",
+  "off-hand": "Must follow an off-hand attack.",
+  dual: "Must follow a dual attack.",
+};
+
+/** A chain attack's line (#831): "Off-hand attack. Must follow a lead attack." */
+function chainText(chain: ChainStep): string {
+  return chain.follows === undefined
+    ? CHAIN_ROLE_TEXT[chain.role]
+    : `${CHAIN_ROLE_TEXT[chain.role]} ${FOLLOWS_TEXT[chain.follows]}`;
+}
 
 const NEEDED_WEAPON: Record<AttackWeaponClass, string> = {
   axe: "an axe",
@@ -600,6 +671,9 @@ export function describeSkill(
   skill: Skill,
   ranks: ReadonlyMap<string, number> = new Map(),
 ): SkillDescription {
+  // A chain attack's place in its chain (#831), first, as GW1 prints it.
+  const chain = skill.attack?.chain;
+  const chainLine = chain === undefined ? [] : [{ text: chainText(chain), magnitude: undefined }];
   // An attack skill's "+16 damage" (#417): its bonus over the weapon's
   // blow, first, as GW1 writes it. Broad Head Arrow has none.
   const bonusDamage = skill.attack?.bonusDamage;
@@ -645,6 +719,7 @@ export function describeSkill(
       ? []
       : [{ text: "Projectile: can be dodged", magnitude: undefined }];
   const effects = [
+    ...chainLine,
     ...bonusLine,
     ...skill.effects.flatMap((effect) => describeEffects(effect, ranks)),
     ...onBlocked,

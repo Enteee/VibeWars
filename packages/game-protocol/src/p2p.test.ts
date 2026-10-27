@@ -9,7 +9,9 @@ import {
   MAX_WIRE_PINGS,
   MAX_WIRE_PROJECTILES,
   MAX_WIRE_RADIUS,
+  MAX_WIRE_MORALE,
   MAX_WIRE_PIPS,
+  MIN_WIRE_MORALE,
   MAX_WIRE_RANK,
   MAX_WIRE_RANKS,
   MAX_WIRE_SLOTS,
@@ -120,6 +122,7 @@ const player: WirePlayer = {
   energy: 25,
   maxEnergy: 30,
   overcast: 5,
+  morale: -15,
   armor: 60,
   weaponId: "staff",
   offhandId: null,
@@ -317,6 +320,14 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["welcome", parsePeerWelcome, welcome],
   ["refuse", parsePeerRefuse, refuse],
   ["snapshot", parseWireSnapshotPart, snapshot],
+  [
+    "snapshot with a maintained enchantment (#837)",
+    parseWireSnapshotPart,
+    {
+      ...snapshot,
+      players: [{ ...player, statuses: [{ ...status, endsAt: null, durationSeconds: null }] }],
+    },
+  ],
   ["last of three snapshot parts", parseWireSnapshotPart, { ...snapshot, part: 2, parts: 3 }],
   ["combat batch", parseWireCombatBatch, combatBatch],
   ["skill-bar", parseWireSkillBar, skillBar],
@@ -525,6 +536,9 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
       ["durationSeconds", -1],
       ["durationSeconds", Infinity],
       ["durationSeconds", undefined],
+      // Both times or neither (#837): one alone is malformed.
+      ["endsAt", null],
+      ["durationSeconds", null],
       ["casterId", 7],
       ["casterId", null],
       ["casterId", long],
@@ -558,6 +572,13 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
         parseWireSnapshotPart,
         { ...snapshot, players: [{ ...player, [field]: value }] },
       ]),
+  ),
+  ...[undefined, 2.5, MAX_WIRE_MORALE + 1, MIN_WIRE_MORALE - 1, "-15"].map(
+    (value): [string, (value: unknown) => unknown, unknown] => [
+      `snapshot with a player's morale ${String(value)} (#843)`,
+      parseWireSnapshotPart,
+      { ...snapshot, players: [{ ...player, morale: value }] },
+    ],
   ),
   [
     "snapshot with a player missing knockdownRemaining (#545)",

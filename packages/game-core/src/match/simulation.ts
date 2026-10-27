@@ -12,9 +12,15 @@ import type { Segment } from "../geometry.js";
 import { AREA_ADJACENT, RANGE_SPIRIT } from "../distances.js";
 import {
   addKill,
+  DEATH_PENALTY_PERCENT,
+  DP_GRACE_AFTER_RES_SECONDS,
   emptyScore,
   evaluateMatch,
+  KILL_MORALE_PERCENT,
   MATCH_IN_PROGRESS,
+  MORALE_CEILING,
+  MORALE_FLOOR,
+  moraleMaximum,
   type MatchOutcome,
   type MatchPhase,
   type MatchRules,
@@ -44,9 +50,10 @@ import {
   type ActivationCheck,
   type ActivationRejection,
 } from "../skills/activation.js";
-import { adrenalinePools, emptyAdrenaline, gainStrikes } from "../skills/adrenaline.js";
+import { adrenalinePools, emptyAdrenaline, gainStrikes, gainUnits } from "../skills/adrenaline.js";
 import { CastState, type ActiveCast } from "../skills/cast-state.js";
 import { getSkill } from "../skills/catalog.js";
+import { clearChainMarksOn, tickChainMarks } from "../skills/chain.js";
 import {
   applySkillEffects,
   applyStatus,
@@ -60,11 +67,14 @@ import {
   aggregateModifiers,
   clampPips,
   ENERGY_PER_PIP,
+  isStatusId,
+  MAX_PIPS,
   scaledStatusDuration,
   STATUS_DEFINITIONS,
   StatusSet,
   type ActiveStatus,
   type Outbreak,
+  type StatusId,
   type StatusTriggerEvent,
 } from "../skills/status.js";
 import { effectiveMaxEnergy, recoverOvercast } from "../skills/overcast.js";
@@ -72,10 +82,13 @@ import { resolveTargets } from "../skills/targeting.js";
 import {
   advanceStatuses,
   effectiveActivationSeconds,
+  effectiveMaxHealth,
   naturalHealthPips,
   moveSpeedMultiplier,
   netPips,
+  preCapEnergyPips,
   rankOf,
+  upkeepPips,
   type NetPips,
 } from "../skills/tick.js";
 import { isSpell, type Combatant, type Skill } from "../skills/types.js";
@@ -264,6 +277,14 @@ interface ParticipantRecord extends Participant {
   walkLeast: number;
   /** Whether `walkGoal` is settled: pulled onto a spot a body fits on, with a way there. */
   walkSettled: boolean;
+  /**
+   * Maximum health and energy before morale (#843): the participant's,
+   * or its loadout's since the last `rearm`.
+   */
+  resolvedMaxHealth: number;
+  resolvedMaxEnergy: number;
+  /** Match time of the last resurrection (#812); `-Infinity` for none. */
+  resurrectedAtSeconds: number;
 }
 
 /**
@@ -338,6 +359,13 @@ const TARGET_REJECTIONS: ReadonlySet<ActivationRejection> = new Set([
 /** How a step toward a waypoint went; see `#stepToward`. */
 type PathStep = "moved" | "stalled" | "held";
 
+/** Every participant's combatant, without a copy: read each tick (#837). */
+function* combatantsOf(records: Iterable<Participant>): Generator<Combatant> {
+  for (const record of records) {
+    yield record.combatant;
+  }
+}
+
 /** How far a body walks from `from` along `path`'s waypoints. */
 function pathLength(from: Vec2, path: readonly Vec2[]): number {
   let total = 0;
@@ -389,6 +417,12 @@ export class MatchSimulation {
    * logged, and the gain reads after the death.
    */
   #reaped: CombatLogEntry[] = [];
+  /**
+   * The team of every death this step with `deathPenalty` on (#843): its
+   * foes' +2 morale waits for the end of the step, so nobody who died in
+   * it gains.
+   */
+  #moraleKills: number[] = [];
 
   public constructor(options: MatchSimulationOptions) {
     this.#ruleset = options.ruleset ?? MINIMAL_GW_INSPIRED_PVP_V1;
@@ -441,6 +475,7 @@ export class MatchSimulation {
     return netPips(
       combatant,
       naturalHealthPips(combatant, outOfCombatSeconds, this.#ruleset.resources),
+      this.#upkeep(participant.id),
     );
   }
 
@@ -484,6 +519,9 @@ export class MatchSimulation {
       walkStalledSeconds: 0,
       walkLeast: Number.POSITIVE_INFINITY,
       walkSettled: false,
+      resolvedMaxHealth: spec.maxHealth ?? this.#ruleset.combat.baseHealth,
+      resolvedMaxEnergy: spec.maxEnergy ?? this.#ruleset.combat.baseEnergy,
+      resurrectedAtSeconds: Number.NEGATIVE_INFINITY,
     };
     this.#participants.set(spec.id, record);
     return record;
@@ -525,6 +563,9 @@ export class MatchSimulation {
       maxEnergy: loadout.maxEnergy,
       baseEnergyPips: loadout.baseEnergyPips,
     });
+    record.resolvedMaxHealth = loadout.maxHealth;
+    record.resolvedMaxEnergy = loadout.maxEnergy;
+    this.#setMorale(record, before.morale);
     record.combatant.health = record.combatant.maxHealth * fraction;
     record.combatant.dead = before.dead;
     record.combatant.soulReapingTriggers = before.soulReapingTriggers;
@@ -623,6 +664,25 @@ export class MatchSimulation {
       record.combatant.cast.clearQueue();
       record.walkGoal = undefined;
     }
+  }
+
+  /**
+   * End an enchantment `casterId` maintains on `targetId` (#838): a
+   * double-click on its icon in GW1. It leaves the bearer at once, for
+   * free, with no log row, and the upkeep stops with it. Anything but a
+   * maintained `statusId` of the caster's own on that target is refused
+   * quietly, so a click that raced a drop does nothing. Whether it ended.
+   */
+  public endUpkeep(casterId: string, targetId: string, statusId: string): boolean {
+    const bearer = this.#participants.get(targetId)?.combatant;
+    if (bearer === undefined || !isStatusId(statusId)) {
+      return false;
+    }
+    const status = bearer.statuses.get(statusId);
+    if (status === undefined || status.maintained === null || status.sourceId !== casterId) {
+      return false;
+    }
+    return bearer.statuses.remove(statusId);
   }
 
   /**
@@ -895,6 +955,7 @@ export class MatchSimulation {
     // bearer acts in again (#468).
     for (const record of this.#participants.values()) {
       this.#advanceKnockdown(record.combatant, dt);
+      tickChainMarks(record.combatant, dt);
     }
     this.#advanceProjectiles(dt);
 
@@ -940,7 +1001,7 @@ export class MatchSimulation {
       // Energy regenerates continuously, at the net pips (GW1); adrenaline
       // is earned by acting, not by waiting, so it deliberately does not
       // tick up here.
-      const energyPips = netPips(record.combatant, natural).energy;
+      const energyPips = netPips(record.combatant, natural, this.#upkeep(record.id)).energy;
       // Up to the ceiling overcast leaves, which can be below 0 (#461).
       record.combatant.energy = Math.max(
         0,
@@ -1007,13 +1068,97 @@ export class MatchSimulation {
       }
     }
 
+    this.#settleUpkeep();
     this.#spreadStatuses();
+    this.#awardKillMorale();
 
     const log = this.#log.concat(this.#reaped);
     this.#log = [];
     this.#reaped = [];
     this.#healthLost(log);
     return this.#result(log);
+  }
+
+  /**
+   * Maintained enchantments that end by themselves (#837, GW1), once
+   * everyone has acted. A death ends one, the bearer's or its caster's.
+   * Past the cap, a caster whose upkeep takes its pre-cap energy pips below
+   * −`MAX_PIPS` loses its oldest. And a caster at 0 energy whose pre-cap
+   * net is below 0 loses its newest, then the next, until it can pay, each
+   * with a log row of its own. Pre-cap, never the clamped rate the tick
+   * applies.
+   */
+  #settleUpkeep(): void {
+    const maintained = new Map<string, { bearer: Combatant; id: StatusId; seq: number }[]>();
+    for (const record of this.#participants.values()) {
+      const bearer = record.combatant;
+      for (const status of bearer.statuses.active) {
+        if (status.maintained === null) {
+          continue;
+        }
+        // Ended by a death, whichever path killed: the bearer's, or the
+        // caster's, who may have left the match too.
+        const caster = this.#participants.get(status.sourceId)?.combatant;
+        if (bearer.dead || caster === undefined || caster.dead) {
+          bearer.statuses.remove(status.id);
+          continue;
+        }
+        const held = maintained.get(status.sourceId) ?? [];
+        held.push({ bearer, id: status.id, seq: status.maintained.seq });
+        maintained.set(status.sourceId, held);
+      }
+    }
+    for (const [casterId, held] of maintained) {
+      const caster = this.#participants.get(casterId)?.combatant;
+      if (caster === undefined) {
+        continue;
+      }
+      held.sort((a, b) => a.seq - b.seq);
+      let upkeep = -held.length;
+      // Over the cap: the oldest give way to the newest, which stays even
+      // alone. Checked every tick, so in practice it is the cast that
+      // crosses it.
+      while (held.length > 1 && preCapEnergyPips(caster, upkeep) < -MAX_PIPS) {
+        const oldest = held.shift();
+        oldest?.bearer.statuses.remove(oldest.id);
+        upkeep += 1;
+      }
+      // Can't pay: the newest goes first, until the rest can be paid for.
+      const events: CombatEvent[] = [];
+      while (caster.energy <= 0 && preCapEnergyPips(caster, upkeep) < 0) {
+        const newest = held.pop();
+        if (newest === undefined) {
+          break;
+        }
+        newest.bearer.statuses.remove(newest.id);
+        upkeep += 1;
+        events.push({
+          kind: "upkeep-lost",
+          targetId: newest.bearer.id,
+          statusId: newest.id,
+          casterId,
+        });
+      }
+      if (events.length > 0) {
+        this.#log.push({
+          tick: this.#tick,
+          atSeconds: this.#elapsedSeconds,
+          cause: "skill",
+          sourceId: casterId,
+          skillId: undefined,
+          weaponId: undefined,
+          attributeId: undefined,
+          area: undefined,
+          doubleStrike: false,
+          events,
+        });
+      }
+    }
+  }
+
+  /** What `casterId` pays for the enchantments it maintains, in pips (#837). */
+  #upkeep(casterId: string): number {
+    return upkeepPips(casterId, combatantsOf(this.#participants.values()));
   }
 
   /**
@@ -1268,6 +1413,7 @@ export class MatchSimulation {
       }),
       rng: this.#rng,
       rules: this.#ruleset.combat,
+      surroundings: this.#participants,
     });
     // Where an area landed, for whoever draws it: nowhere, when an area
     // centred on a target had no target to centre on, or when it is still
@@ -1281,21 +1427,28 @@ export class MatchSimulation {
     // Only attack skills earn adrenaline, as weapon hits do: a spell is
     // paid for in energy, and earning both would make casters the best
     // adrenaline builders. A blocked blow earns nothing, not even the
-    // damage its `onBlocked` deals, as Swift Chop's (#534). An attack
-    // skill strikes each victim once, so damage on one that blocked is
-    // all `onBlocked`'s.
+    // damage its `onBlocked` deals, as Swift Chop's (#534). Damage on a
+    // victim that blocked every blow is all `onBlocked`'s; a dual attack
+    // (#885) blocked once and landed once still landed.
     if (skill.type === "attack") {
-      const blocked = new Set(
-        events.filter((event) => event.kind === "attack-blocked").map((event) => event.targetId),
-      );
+      const strikes = skill.attack?.strikes ?? 1;
+      const blocked = (targetId: string): boolean => {
+        const blows = events.filter(
+          (event) =>
+            (event.kind === "attack-blocked" || event.kind === "attack-missed") &&
+            event.targetId === targetId,
+        );
+        return blows.some(({ kind }) => kind === "attack-blocked") && blows.length >= strikes;
+      };
       this.#gainAdrenaline(
         record,
-        events.filter((event) => event.kind !== "damage" || !blocked.has(event.targetId)),
+        events.filter((event) => event.kind !== "damage" || !blocked(event.targetId)),
       );
     }
     if (skill.type === "shout" || skill.type === "chant") {
       this.#gainLeadershipEnergy(record, events);
     }
+    this.#chargeFromDamage(record.combatant, events);
     this.#recordDeaths(events);
     this.#recordKnockdowns(events);
     this.#recordResurrections(events);
@@ -1318,7 +1471,12 @@ export class MatchSimulation {
       record.combatant.cast.beginAftercast(cast.totalSeconds);
     }
 
-    record.combatant.cast.startRecharge(skill.id, skill.rechargeSeconds * (1 - rechargeFraction));
+    // An off-hand attack out of sequence recharges at once (#831).
+    if (
+      !events.some((event) => event.kind === "attack-missed" && event.reason === "out-of-sequence")
+    ) {
+      record.combatant.cast.startRecharge(skill.id, skill.rechargeSeconds * (1 - rechargeFraction));
+    }
     this.#log.push({
       tick: this.#tick,
       atSeconds: this.#elapsedSeconds,
@@ -1344,6 +1502,7 @@ export class MatchSimulation {
   /**
    * The bearer did `event` (#469): each status on it that answers fires,
    * logged as its source's skill, and whoever it kills dies as usual.
+   * Its damage charges the bearer's adrenaline as any foe's hit does (#827).
    */
   #fireTriggers(record: ParticipantRecord, event: StatusTriggerEvent): void {
     const fired = fireTriggers(
@@ -1352,6 +1511,7 @@ export class MatchSimulation {
       (id) => this.#participants.get(id)?.combatant,
       this.#rng,
       this.#ruleset.combat,
+      this.#participants,
     );
     for (const { sourceId, skillId, events } of fired) {
       this.#log.push({
@@ -1366,6 +1526,7 @@ export class MatchSimulation {
         doubleStrike: false,
         events,
       });
+      this.#chargeFromDamage(this.#participants.get(sourceId)?.combatant, events);
       this.#recordDeaths(events);
     }
   }
@@ -1666,12 +1827,13 @@ export class MatchSimulation {
     const { events, doubleStrike, landed } = resolveSwing({
       attacker: record.combatant,
       target,
-      candidates: weapon.cleaveTargets === 0 ? [] : [...this.#participants.values()],
+      surroundings: this.#participants,
       rng: this.#rng,
       rules: this.#ruleset.combat,
       exposed: this.#exposedTo(record),
     });
     this.#gainAdrenaline(record, events, landed);
+    this.#chargeFromDamage(record.combatant, events);
     this.#recordDeaths(events);
     this.#recordKnockdowns(events);
     this.#logWeapon(record.id, record.combatant.equipment.mainHand.weapon.id, events, doubleStrike);
@@ -1872,6 +2034,7 @@ export class MatchSimulation {
               targets: [target.combatant],
               rng: this.#rng,
               rules: this.#ruleset.combat,
+              surroundings: this.#participants,
             },
             events,
           );
@@ -1890,7 +2053,12 @@ export class MatchSimulation {
       const critical = landBlow(
         projectile.weaponSnapshot,
         target.combatant,
-        settleBlow(skillHit?.blow ?? PLAIN_BLOW, attacker?.combatant, target.combatant),
+        settleBlow(
+          skillHit?.blow ?? PLAIN_BLOW,
+          attacker?.combatant,
+          target.combatant,
+          this.#participants,
+        ),
         // A shot crits only on its roll, never for where it came from.
         false,
         this.#rng,
@@ -1908,6 +2076,7 @@ export class MatchSimulation {
             projectile.weaponSnapshot.mainHand,
             this.#rng,
             this.#ruleset.combat,
+            this.#participants,
           ),
         );
       }
@@ -1919,6 +2088,7 @@ export class MatchSimulation {
             target.combatant,
             this.#rng,
             this.#ruleset.combat,
+            this.#participants,
           ),
         );
       }
@@ -1928,6 +2098,7 @@ export class MatchSimulation {
     if (attacker !== undefined && !attacker.combatant.dead && !blocked) {
       this.#gainAdrenaline(attacker, events);
     }
+    this.#chargeFromDamage(attacker?.combatant, events);
     this.#recordDeaths(events);
     this.#recordKnockdowns(events);
     this.#logShot(projectile, events);
@@ -1958,7 +2129,9 @@ export class MatchSimulation {
       }),
       rng: this.#rng,
       rules: this.#ruleset.combat,
+      surroundings: this.#participants,
     });
+    this.#chargeFromDamage(caster, events);
     this.#recordDeaths(events);
     this.#recordKnockdowns(events);
     const area =
@@ -2067,6 +2240,36 @@ export class MatchSimulation {
   }
 
   /**
+   * Taking damage from a foe charges adrenaline too (#827), as in GW1: a
+   * warrior under pressure builds it. Each `damage` in `events` that
+   * `source` dealt a living foe gives that foe `floor(100 × amount /
+   * maxHealth)` units, so a hit for a quarter of its health is a strike.
+   * Called where a skill, a swing, a shot or a spell lands, never for
+   * degeneration; an ally's or your own damage, and a lethal hit, give
+   * nothing. A `source` gone from the match is no one's foe.
+   */
+  #chargeFromDamage(source: Combatant | undefined, events: readonly CombatEvent[]): void {
+    if (source === undefined) {
+      return;
+    }
+    for (const event of events) {
+      const victim = event.kind === "damage" ? this.#participants.get(event.targetId) : undefined;
+      if (
+        event.kind !== "damage" ||
+        victim === undefined ||
+        victim.combatant.dead ||
+        victim.combatant.team === source.team
+      ) {
+        continue;
+      }
+      gainUnits(
+        victim.combatant,
+        Math.floor((100 * event.amount) / effectiveMaxHealth(victim.combatant)),
+      );
+    }
+  }
+
+  /**
    * Every death in `events` drops the victim's cast, so a resurrection
    * (#812) never finishes it, scores for the other side and starts its
    * respawn. Read from the emitted events so every death routes through
@@ -2085,8 +2288,10 @@ export class MatchSimulation {
         victim.combatant.cast.endAftercast();
         victim.walkGoal = undefined;
         victim.combatant.knockdownRemaining = 0;
+        this.#clearChainMarks(victim);
         emptyAdrenaline(victim.combatant);
         victim.respawnInSeconds = this.#respawnSeconds(victim);
+        this.#deathPenalty(victim);
         this.#reapSoul(victim);
         this.recordDeath(victim.combatant.team);
       }
@@ -2132,6 +2337,14 @@ export class MatchSimulation {
     }
   }
 
+  /** Every chain mark on `record` goes, and every one it placed (#831). */
+  #clearChainMarks(record: ParticipantRecord): void {
+    clearChainMarksOn(
+      [...this.#participants.values()].map(({ combatant }) => combatant),
+      record.id,
+    );
+  }
+
   /** Count `combatant`'s knockdown down by `dt`, to exactly 0 at the end. */
   #advanceKnockdown(combatant: Combatant, dt: number): void {
     if (combatant.knockdownRemaining > 0) {
@@ -2175,20 +2388,88 @@ export class MatchSimulation {
       if (record !== undefined) {
         record.respawnInSeconds = 0;
         record.outOfCombatSeconds = 0;
+        record.resurrectedAtSeconds = this.#elapsedSeconds;
       }
     }
   }
 
   /**
    * How long `record` stays dead: its own `on-death` reset if it has one,
-   * else the match rules'. Without match rules nobody respawns: infinity
-   * never counts down to 0.
+   * else the match rules'. Without match rules, or under
+   * `"resurrection-only"` (#843), nobody respawns: infinity never counts
+   * down to 0.
    */
   #respawnSeconds(record: ParticipantRecord): number {
     if (record.spec.reset?.kind === "on-death") {
       return record.spec.reset.afterSeconds;
     }
-    return this.#matchRules?.respawnSeconds ?? Number.POSITIVE_INFINITY;
+    if (this.#matchRules?.deathRule !== "respawn") {
+      return Number.POSITIVE_INFINITY;
+    }
+    return this.#matchRules.respawnSeconds;
+  }
+
+  /**
+   * The death penalty (#843, GW1): with `deathPenalty` on, `victim` loses
+   * 15% morale, down to −60%, unless it was resurrected less than 5 s ago;
+   * its foes' +2% waits for the end of the step.
+   */
+  #deathPenalty(victim: ParticipantRecord): void {
+    if (this.#matchRules?.deathPenalty !== true) {
+      return;
+    }
+    this.#moraleKills.push(victim.combatant.team);
+    if (this.#elapsedSeconds - victim.resurrectedAtSeconds < DP_GRACE_AFTER_RES_SECONDS) {
+      return;
+    }
+    this.#setMorale(
+      victim,
+      Math.max(MORALE_FLOOR, victim.combatant.morale - DEATH_PENALTY_PERCENT),
+    );
+  }
+
+  /**
+   * Every death this step gives each living foe in the death penalty 2%
+   * back, up to 0 (#843): a kill never boosts.
+   */
+  #awardKillMorale(): void {
+    for (const team of this.#moraleKills) {
+      for (const record of this.#participants.values()) {
+        const { combatant } = record;
+        if (combatant.team !== team && !combatant.dead && combatant.morale < 0) {
+          this.#setMorale(record, Math.min(0, combatant.morale + KILL_MORALE_PERCENT));
+        }
+      }
+    }
+    this.#moraleKills = [];
+  }
+
+  /**
+   * A morale boost (GvG's flag stand, HA's altar): `amount` percent to
+   * every member of `team`, dead or alive, up to +10%. Not capped at 0,
+   * so it lifts a death penalty too.
+   */
+  public moraleBoost(team: number, amount: number): void {
+    for (const record of this.#participants.values()) {
+      if (record.combatant.team === team) {
+        this.#setMorale(record, Math.min(MORALE_CEILING, record.combatant.morale + amount));
+      }
+    }
+  }
+
+  /**
+   * Set `record`'s morale and the maxima that follow it (GW1: on the base,
+   * before upgrades). A drop clamps health and energy to the new
+   * ceilings; a rise leaves them where they are.
+   */
+  #setMorale(record: ParticipantRecord, morale: number): void {
+    const { combatant } = record;
+    const { baseHealth, baseEnergy } = this.#ruleset.combat;
+    combatant.morale = morale;
+    combatant.maxHealth = moraleMaximum(baseHealth, record.resolvedMaxHealth, morale);
+    combatant.maxEnergy = moraleMaximum(baseEnergy, record.resolvedMaxEnergy, morale);
+    combatant.health = Math.min(combatant.health, effectiveMaxHealth(combatant));
+    combatant.energy = Math.max(0, Math.min(combatant.energy, effectiveMaxEnergy(combatant)));
   }
 
   /** Whether `record`'s reset policy, other than `on-death`, calls for a reset now. */
@@ -2336,11 +2617,13 @@ export class MatchSimulation {
    * the starting health, full energy, no adrenaline, nothing active, any
    * cast dropped, at spawn. Recharges carry on, as they would in a match.
    * A respawn keeps its overcast and fills only to the ceiling it leaves,
-   * as GW1 keeps it through death; a reset clears it (#461).
+   * as GW1 keeps it through death; a reset clears it (#461), and morale
+   * with it, maxima and all (#843).
    */
   #reset(record: ParticipantRecord, why: "respawn" | "reset"): void {
     if (why === "reset") {
       record.combatant.overcast = 0;
+      this.#setMorale(record, 0);
     }
     record.combatant.dead = false;
     record.combatant.health = record.combatant.maxHealth * (record.spec.startHealthFraction ?? 1);
@@ -2356,6 +2639,7 @@ export class MatchSimulation {
     record.combatant.cast.endAftercast();
     record.combatant.attack = undefined;
     record.combatant.knockdownRemaining = 0;
+    this.#clearChainMarks(record);
     record.pendingSkill = undefined;
     record.sinceReset = 0;
     record.outOfCombatSeconds = 0;
@@ -2380,6 +2664,7 @@ export class MatchSimulation {
       energy: spec.maxEnergy ?? this.#ruleset.combat.baseEnergy,
       maxEnergy: spec.maxEnergy ?? this.#ruleset.combat.baseEnergy,
       overcast: 0,
+      morale: 0,
       baseEnergyPips: spec.baseEnergyPips ?? 0,
       adrenaline: adrenalinePools(spec.skillBar),
       attributeRanks: spec.attributeRanks,
@@ -2390,6 +2675,8 @@ export class MatchSimulation {
       attack: undefined,
       knockdownRemaining: 0,
       soulReapingTriggers: [],
+      nextMaintainSeq: 0,
+      chainMarks: new Map(),
       equipment: spec.equipment,
     };
   }

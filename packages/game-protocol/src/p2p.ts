@@ -99,6 +99,10 @@ export const MAX_WIRE_CHAT_TEXT = 2048;
 /** The most net pips either way (game-core's MAX_PIPS, #504). */
 export const MAX_WIRE_PIPS = 10;
 
+/** Morale's range, in percent (game-core's MORALE_FLOOR and MORALE_CEILING, #843). */
+export const MIN_WIRE_MORALE = -60;
+export const MAX_WIRE_MORALE = 10;
+
 /** The most walls a map holds, and points a polygon wall holds. */
 export const MAX_WIRE_WALLS = 1024;
 export const MAX_WIRE_POINTS = 256;
@@ -222,6 +226,8 @@ export interface WirePlayer {
   readonly maxEnergy: number;
   /** Maximum energy lost to overcast (#461); energy fills to `maxEnergy − overcast`. */
   readonly overcast: number;
+  /** Morale in percent (#843): an integer in [`MIN_WIRE_MORALE`, `MAX_WIRE_MORALE`]. */
+  readonly morale: number;
   readonly armor: number;
   readonly weaponId: string | null;
   readonly offhandId: string | null;
@@ -259,10 +265,16 @@ export interface WireStatus {
    * at join.
    */
   readonly status: number;
-  /** Match clock (`elapsedSeconds`) at which it runs out, rounded to 0.1 s. */
-  readonly endsAt: number;
-  /** The length of the application that set it, rounded to 0.1 s; > 0. */
-  readonly durationSeconds: number;
+  /**
+   * Match clock (`elapsedSeconds`) at which it runs out, rounded to 0.1 s;
+   * `null` for a maintained enchantment (#837), which has no end.
+   */
+  readonly endsAt: number | null;
+  /**
+   * The length of the application that set it, rounded to 0.1 s; > 0.
+   * `null` exactly when `endsAt` is.
+   */
+  readonly durationSeconds: number | null;
   /** Who applied it. */
   readonly casterId: string;
 }
@@ -323,7 +335,10 @@ export interface WireCombatEvent {
   readonly skillId: string | null;
   /** The status applied, removed or expired. */
   readonly statusId: string | null;
-  /** How long an applied status or a knockdown lasts. */
+  /**
+   * How long an applied status or a knockdown lasts; `null` too for a
+   * maintained enchantment applied (#837), which lasts until ended.
+   */
   readonly durationSeconds: number | null;
   /**
    * Whether a damage event was a critical hit (#533); `null` for any other
@@ -331,7 +346,10 @@ export interface WireCombatEvent {
    * batch must fit in one message.
    */
   readonly crit: boolean | null;
-  /** Whom a spreading status was caught from (#765); `null` for any other kind. */
+  /**
+   * Whom a spreading status was caught from (#765), or who could not pay
+   * a maintained enchantment's upkeep (#837); `null` for any other kind.
+   */
   readonly fromId: string | null;
   /**
    * The share of maximum energy a resurrection gives back, 0..1 (#812),
@@ -552,6 +570,15 @@ function isPips(value: unknown): value is number {
   return isNumber(value) && Number.isInteger(value) && Math.abs(value) <= MAX_WIRE_PIPS;
 }
 
+function isMorale(value: unknown): value is number {
+  return (
+    isNumber(value) &&
+    Number.isInteger(value) &&
+    value >= MIN_WIRE_MORALE &&
+    value <= MAX_WIRE_MORALE
+  );
+}
+
 /** A skill-bar slot index. */
 function isSlot(value: unknown): value is number {
   return isCount(value) && value < MAX_WIRE_SLOTS;
@@ -598,11 +625,19 @@ function parseStatus(value: unknown): WireStatus | undefined {
     raw === undefined ||
     !isCount(raw.status) ||
     raw.status > MAX_WIRE_STATUS_INDEX ||
+    !isString(raw.casterId)
+  ) {
+    return undefined;
+  }
+  // Both times, or neither: a maintained enchantment's (#837).
+  if (raw.endsAt === null && raw.durationSeconds === null) {
+    return { status: raw.status, endsAt: null, durationSeconds: null, casterId: raw.casterId };
+  }
+  if (
     !isNumber(raw.endsAt) ||
     raw.endsAt < 0 ||
     !isNumber(raw.durationSeconds) ||
-    raw.durationSeconds <= 0 ||
-    !isString(raw.casterId)
+    raw.durationSeconds <= 0
   ) {
     return undefined;
   }
@@ -886,6 +921,7 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
     !isNumber(raw.energy) ||
     !isNumber(raw.maxEnergy) ||
     !isNumber(raw.overcast) ||
+    !isMorale(raw.morale) ||
     !isNumber(raw.armor) ||
     !isNullableString(raw.weaponId) ||
     !isNullableString(raw.offhandId) ||
@@ -921,6 +957,7 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
         energy: raw.energy,
         maxEnergy: raw.maxEnergy,
         overcast: raw.overcast,
+        morale: raw.morale,
         armor: raw.armor,
         weaponId: raw.weaponId,
         offhandId: raw.offhandId,
