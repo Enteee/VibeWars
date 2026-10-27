@@ -309,7 +309,9 @@ export async function startMatchView(
       // Some browsers focus their menu bar on F10.
       event.preventDefault();
       event.stopPropagation();
-      if (!event.repeat) {
+      // Not under Options (#454): its keys are its own, so no question
+      // opens beneath it.
+      if (!event.repeat && !isOptionsOverlayOpen()) {
         if (leave.isOpen()) {
           leave.close();
         } else {

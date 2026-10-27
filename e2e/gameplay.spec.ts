@@ -765,6 +765,9 @@ test("⚙ opens Options over the match: Esc closes it, and the attack and the ma
   await expect(options).toBeVisible();
   // Not paused: the clock runs under it.
   await expect(clock).not.toHaveText(before);
+  // Its keys are its own: F10 asks nothing beneath it.
+  await page.keyboard.press("F10");
+  await expect(page.locator(".hud-leave").getByRole("button", { name: "yes" })).toHaveCount(0);
 
   await page.keyboard.press("Escape");
   await expect(options).toHaveCount(0);
