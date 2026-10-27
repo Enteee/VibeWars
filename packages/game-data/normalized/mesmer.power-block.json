@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0.25,
   "rechargeSeconds": 20,
+  "upkeep": false,
   "description": "If target foe is casting a Spell or Chant, that skill and all skills of the same attribute are disabled for 1...10...12 seconds and that skill is interrupted.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

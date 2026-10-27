@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0.5,
   "rechargeSeconds": 10,
+  "upkeep": false,
   "description": "If Distracting Shot hits, it interrupts target foe's action but deals only 1...13...16 damage. If the interrupted action was a skill, that skill is disabled for an additional 20 seconds.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

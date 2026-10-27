@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0,
   "rechargeSeconds": 1,
+  "upkeep": false,
   "description": "If it hits, this attack interrupts the target's current action. If that action was a skill, that skill is disabled for an additional 20 seconds.",
   "variant": "pvp",
   "ruleset": "gw1-reference",
