@@ -1192,3 +1192,50 @@ test("(37) a name keeps its screen size at every zoom (#456)", async ({ page }) 
   expect(near).toBeLessThanOrEqual(14);
   expect(Math.abs(wide - near)).toBeLessThanOrEqual(1);
 });
+
+test("(38) Expand fills the window at the same zoom; Esc collapses it back, still armed (#495)", async ({
+  page,
+}) => {
+  await openTraining(page);
+  await page.setViewportSize({ width: 1280, height: 720 });
+  const training = page.locator(".training");
+  const stage = page.locator(".training-stage");
+  await page.locator(".training-scenario").selectOption({ index: 1 });
+  const scenario = await page.locator(".training-scenario").inputValue();
+  const step = await stage.getAttribute("data-zoom-step");
+  const collapsed = await stage.boundingBox();
+
+  await page.getByRole("button", { name: "expand training ground" }).click();
+  await expect(training).toHaveClass(/is-expanded/);
+  // Expanding takes control, as a click on the stage does.
+  await expect(training).toHaveClass(/is-armed/);
+  await expect(stage).toBeFocused();
+  await expect
+    .poll(async () => (await stage.boundingBox())?.height ?? 0)
+    .toBeGreaterThanOrEqual(0.7 * 720);
+  // The canvas follows the stage at once, at a match's scale (#709).
+  await expect
+    .poll(async () => (await page.locator(".training canvas").boundingBox())?.height ?? 0)
+    .toBeCloseTo((await stage.boundingBox())?.height ?? -1, -1);
+  await expect(stage).toHaveAttribute("data-zoom-step", step ?? "");
+  await expect(page.locator("#screens")).toHaveCSS("overflow-y", "hidden");
+
+  // Esc elsewhere on the page collapses too.
+  await page.getByRole("button", { name: "collapse training ground" }).focus();
+  await page.keyboard.press("Escape");
+  await expect(training).not.toHaveClass(/is-expanded/);
+  await expect(page.locator("#screens")).toHaveCSS("overflow-y", "auto");
+
+  // On the stage: nothing to cancel, so the first Esc collapses and keeps
+  // control; the next releases it.
+  await page.getByRole("button", { name: "expand training ground" }).click();
+  await expect(training).toHaveClass(/is-expanded/);
+  await page.keyboard.press("Escape");
+  await expect(training).not.toHaveClass(/is-expanded/);
+  await expect(training).toHaveClass(/is-armed/);
+  await expect(page.locator(".editor-layout > .training")).toHaveCount(1);
+  await expect(page.locator(".training-scenario")).toHaveValue(scenario);
+  await expect.poll(async () => (await stage.boundingBox())?.height).toBe(collapsed?.height);
+  await page.keyboard.press("Escape");
+  await expect(training).not.toHaveClass(/is-armed/);
+});

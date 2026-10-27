@@ -1797,6 +1797,75 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* Expanded (#495): over the whole window, the stage taking what the
+   controls and readouts leave, which sit in two short columns under it,
+   as a match's HUD would. The editor's stats, the log and the scenario's
+   blurb are the editor's, and wait for the collapse. Specific enough to
+   beat the editor's sticky and stacked placements above; under tooltips
+   and toasts. */
+.editor-layout.has-training > .training.is-expanded {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr) auto auto auto;
+  grid-template-areas:
+    "controls controls"
+    "stage stage"
+    "hint message"
+    "vitals meter"
+    "skills meter";
+  max-height: none;
+  border-radius: 0;
+  background: var(--bg);
+}
+
+.training.is-expanded .training-controls {
+  grid-area: controls;
+}
+
+.training.is-expanded .training-stage {
+  grid-area: stage;
+  min-height: 0;
+  max-height: none;
+  aspect-ratio: auto;
+  overflow: hidden;
+}
+
+.training.is-expanded .training-hint {
+  grid-area: hint;
+}
+
+.training.is-expanded .training-message {
+  grid-area: message;
+  text-align: right;
+}
+
+.training.is-expanded .training-vitals {
+  grid-area: vitals;
+}
+
+.training.is-expanded .training-skills {
+  grid-area: skills;
+}
+
+.training.is-expanded .training-meter {
+  grid-area: meter;
+  align-self: end;
+}
+
+.training.is-expanded .training-teaches,
+.training.is-expanded .training-stats-slot,
+.training.is-expanded .training-log {
+  display: none;
+}
+
+/* The editor behind does not scroll; #screens is its scroller. */
+body.has-expanded-training #screens {
+  overflow: hidden;
+}
+
 .training-controls {
   display: flex;
   gap: 0.5rem;
@@ -1805,6 +1874,12 @@ body {
 .training-scenario {
   flex: 1 1 auto;
   min-width: 0;
+}
+
+.training-expand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .training-teaches,

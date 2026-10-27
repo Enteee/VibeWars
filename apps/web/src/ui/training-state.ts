@@ -79,6 +79,21 @@ export function resolveScenarioId(
   return scenarios[0]?.id;
 }
 
+/** What Esc does on the stage: one step at a time, in this order (#495). */
+export type EscapeStep = "cancel" | "collapse" | "release";
+
+/**
+ * A cast, an attack or a walk in progress is cancelled first (#160,
+ * #300, #342); then an expanded arena collapses, keeping control; then
+ * control is released. Esc never navigates away from the editor.
+ */
+export function escapeStep(actionToCancel: boolean, expanded: boolean): EscapeStep {
+  if (actionToCancel) {
+    return "cancel";
+  }
+  return expanded ? "collapse" : "release";
+}
+
 /**
  * What the arena overlay says, if anything covers it: only an illegal
  * build is parked behind it (ADR-0020). An empty bar is a legal build
