@@ -149,6 +149,15 @@ export function lockVerdict({ lock, head, dirtyPaths, tampered, onMain, fetchErr
 }
 
 /**
+ * @param {string} stderr
+ * @returns {string} git's `fatal:` line, else its last
+ */
+function failureLine(stderr) {
+  const lines = stderr.trim().split("\n");
+  return lines.find((line) => line.startsWith("fatal:")) ?? lines.at(-1) ?? "git fetch failed";
+}
+
+/**
  * What git says about the checkout and GitHub's main for `sha`. The fetch goes
  * by URL into hubd's mirror, never through a local ref (ADR-0015), as the
  * restarter's does.
@@ -197,7 +206,7 @@ export function gitFacts({ repoDir, root, sha }) {
       dirtyPaths,
       tampered: [],
       onMain: false,
-      fetchError: fetched.stderr.trim().split("\n").at(-1) ?? "git fetch failed",
+      fetchError: failureLine(fetched.stderr),
     };
   }
   const onMain =

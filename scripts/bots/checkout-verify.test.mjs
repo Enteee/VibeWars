@@ -140,6 +140,21 @@ describe("tamperedPaths", () => {
     );
   });
 
+  it("does not count the local files Claude Code writes, which the root .gitignore names", () => {
+    const c = setup();
+    const ignore = fs.readFileSync(new URL("../../.gitignore", import.meta.url), "utf8");
+    fs.writeFileSync(path.join(c.up, ".gitignore"), ignore);
+    git(["add", ".gitignore"], c.up);
+    git(["commit", "-qm", "2"], c.up);
+    git(["push", "-q", c.mirror, "main"], c.up);
+    const sha = git(["rev-parse", "HEAD"], c.up);
+    git(["pull", "-q", "--ff-only", c.mirror, "main"], c.repoDir);
+    fs.mkdirSync(path.join(c.repoDir, ".claude"));
+    fs.writeFileSync(path.join(c.repoDir, ".claude", "settings.local.json"), "{}\n");
+    fs.writeFileSync(path.join(c.repoDir, "CLAUDE.local.md"), "x\n");
+    expect(tamperedPaths({ mirror: c.mirror, repoDir: c.repoDir, sha })).toEqual([]);
+  });
+
   it("finds a deleted file", () => {
     const c = setup();
     fs.rmSync(path.join(c.repoDir, "s", "g"));
