@@ -485,6 +485,27 @@ const status = {
     "weapon-spell",
     (c) => `<path d="M12 4.5v10M8.5 14.5h7M12 14.5v4" ${stroke(c, 2.5)}/>`,
   ],
+  // Weapon spell: Warding's blade with a plus beside it, health every second (#975).
+  "spirit-light-weapon": [
+    "weapon-spell",
+    (c) =>
+      `<path d="M10 4.5v10M6.5 14.5h7M10 14.5v4" ${stroke(c, 2.5)}/>` +
+      `<path d="M17 5v6M14 8h6" ${stroke(c, 2)}/>`,
+  ],
+  // Weapon spell: the blade with a turning arrow, spells back sooner (#975).
+  "weapon-of-quickening": [
+    "weapon-spell",
+    (c) =>
+      `<path d="M10 4.5v10M6.5 14.5h7M10 14.5v4" ${stroke(c, 2.5)}/>` +
+      `<path d="M15 6.5a3.5 3.5 0 1 1 0 5M15 6.5l-1.5-1.5M15 6.5l-1.5 1.5" ${stroke(c, 1.8)}/>`,
+  ],
+  // Weapon spell: the blade with two chevrons, attacks faster (#975).
+  "weapon-of-aggression": [
+    "weapon-spell",
+    (c) =>
+      `<path d="M10 4.5v10M6.5 14.5h7M10 14.5v4" ${stroke(c, 2.5)}/>` +
+      `<path d="M14.5 6l3 3-3 3M17 6l3 3-3 3" ${stroke(c, 1.8)}/>`,
+  ],
   // Shout: a plus with a chevron rising over it, regeneration called for (#923).
   "never-surrender": [
     "shout",

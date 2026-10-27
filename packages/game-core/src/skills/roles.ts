@@ -67,7 +67,8 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
  * What it does on each attack hit counts too: Apply Poison poisons,
  * and so does what it adds to the next attack skill: Anthem of Flame burns.
  * So does what an ally's status does to its bearer when it ends (#944):
- * Patient Spirit heals, Holy Veil removes a hex.
+ * Patient Spirit heals, Holy Veil removes a hex. One that heals every
+ * second (Spirit Light Weapon, #975) is healing.
  */
 function statusRoles(status: StatusDefinition): readonly SkillRole[] {
   const roles: SkillRole[] = [];
@@ -84,6 +85,7 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
     roles.push("defence");
   }
   if (status.interruptsSpells) roles.push("interrupt");
+  if (status.healthPerSecond > 0) roles.push("healing");
   const onEnd =
     status.category === "hex" || status.category === "condition"
       ? []

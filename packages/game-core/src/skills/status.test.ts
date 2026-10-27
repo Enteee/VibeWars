@@ -48,6 +48,7 @@ describe("status definitions", () => {
         def.armorModifier !== 0 ||
         def.armorWhileStill !== 0 ||
         def.healthPerSecondWhileMoving !== 0 ||
+        def.healthPerSecond !== 0 ||
         def.armorReduction !== undefined ||
         def.moveSpeedMultiplier !== 1 ||
         def.attackMissChance !== 0 ||
@@ -650,7 +651,7 @@ describe("attack duration (ADR-0029)", () => {
     });
   }
 
-  it("is 1 with nothing on; Faintheartedness (#493) and Shadow of Fear (#918) are 50% slower, Heart of Fury 25% faster (#845), Frenzy (#919) and Lightning Reflexes (#976) 33%", () => {
+  it("is 1 with nothing on; Faintheartedness (#493) and Shadow of Fear (#918) are 50% slower, Heart of Fury and Weapon of Aggression (#975) 25% faster (#845), Frenzy (#919) and Lightning Reflexes (#976) 33%", () => {
     expect(aggregateModifiers([]).attackDurationMultiplier).toBe(1);
     const multipliers: Partial<Record<StatusId, number>> = {
       faintheartedness: 1.5,
@@ -658,6 +659,7 @@ describe("attack duration (ADR-0029)", () => {
       "shadow-of-fear": 1.5,
       frenzy: 0.67,
       "lightning-reflexes": 0.67,
+      "weapon-of-aggression": 0.75,
     };
     for (const id of ALL_STATUS_IDS) {
       const expected = multipliers[id] ?? 1;

@@ -1816,6 +1816,72 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  {
+    id: "ritualist.spirit-light-weapon",
+    name: "Spirit Light Weapon",
+    type: "weapon-spell",
+    elite: true,
+    profession: "ritualist",
+    attributeId: "ritualist.restoration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 10 seconds, target ally gains 5...21...25 Health per second and an
+    // additional 5...21...25 Health per second if that ally is within
+    // earshot of a Spirit": the 21 is the status's; there are no spirits
+    // yet (#467), so never the additional 21, as in GW1 with none up.
+    effects: [{ kind: "apply-status", statusId: "spirit-light-weapon", durationSeconds: 10 }],
+  },
+  {
+    id: "ritualist.weapon-of-quickening",
+    name: "Weapon of Quickening",
+    type: "weapon-spell",
+    elite: true,
+    profession: "ritualist",
+    attributeId: "ritualist.communing",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 5...21...25 seconds, target ally has a Weapon of Quickening, and
+    // Spells and Binding Rituals recharge 33% faster": 21 s, its rank-12
+    // value. There are no binding rituals yet (#467), so spells alone.
+    effects: [{ kind: "apply-status", statusId: "weapon-of-quickening", durationSeconds: 21 }],
+  },
+  {
+    id: "ritualist.weapon-of-aggression",
+    name: "Weapon of Aggression",
+    type: "weapon-spell",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.channeling-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 5...13...15 seconds, you attack 25% faster": 13 s, its rank-12
+    // value.
+    effects: [{ kind: "apply-status", statusId: "weapon-of-aggression", durationSeconds: 13 }],
+  },
 
   /* ---------------------------------------------------------------------- */
   /* An effect that depends on an earlier one (#521)                         */

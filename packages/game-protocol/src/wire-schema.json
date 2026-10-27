@@ -82,12 +82,15 @@
     "sand-shards",
     "shadow-of-fear",
     "shard-storm",
+    "spirit-light-weapon",
     "spiteful-spirit",
     "sprint",
     "stand-your-ground",
     "vow-of-strength",
     "watch-yourself",
     "weakness",
+    "weapon-of-aggression",
+    "weapon-of-quickening",
     "weapon-of-warding"
   ],
   "constants": {
@@ -406,12 +409,15 @@
                   { "literal": "sand-shards" },
                   { "literal": "shadow-of-fear" },
                   { "literal": "shard-storm" },
+                  { "literal": "spirit-light-weapon" },
                   { "literal": "spiteful-spirit" },
                   { "literal": "sprint" },
                   { "literal": "stand-your-ground" },
                   { "literal": "vow-of-strength" },
                   { "literal": "watch-yourself" },
                   { "literal": "weakness" },
+                  { "literal": "weapon-of-aggression" },
+                  { "literal": "weapon-of-quickening" },
                   { "literal": "weapon-of-warding" }
                 ]
               }
@@ -495,12 +501,15 @@
                   { "literal": "sand-shards" },
                   { "literal": "shadow-of-fear" },
                   { "literal": "shard-storm" },
+                  { "literal": "spirit-light-weapon" },
                   { "literal": "spiteful-spirit" },
                   { "literal": "sprint" },
                   { "literal": "stand-your-ground" },
                   { "literal": "vow-of-strength" },
                   { "literal": "watch-yourself" },
                   { "literal": "weakness" },
+                  { "literal": "weapon-of-aggression" },
+                  { "literal": "weapon-of-quickening" },
                   { "literal": "weapon-of-warding" }
                 ]
               }
@@ -581,12 +590,15 @@
                   { "literal": "sand-shards" },
                   { "literal": "shadow-of-fear" },
                   { "literal": "shard-storm" },
+                  { "literal": "spirit-light-weapon" },
                   { "literal": "spiteful-spirit" },
                   { "literal": "sprint" },
                   { "literal": "stand-your-ground" },
                   { "literal": "vow-of-strength" },
                   { "literal": "watch-yourself" },
                   { "literal": "weakness" },
+                  { "literal": "weapon-of-aggression" },
+                  { "literal": "weapon-of-quickening" },
                   { "literal": "weapon-of-warding" }
                 ]
               }
@@ -664,12 +676,15 @@
                   { "literal": "sand-shards" },
                   { "literal": "shadow-of-fear" },
                   { "literal": "shard-storm" },
+                  { "literal": "spirit-light-weapon" },
                   { "literal": "spiteful-spirit" },
                   { "literal": "sprint" },
                   { "literal": "stand-your-ground" },
                   { "literal": "vow-of-strength" },
                   { "literal": "watch-yourself" },
                   { "literal": "weakness" },
+                  { "literal": "weapon-of-aggression" },
+                  { "literal": "weapon-of-quickening" },
                   { "literal": "weapon-of-warding" }
                 ]
               }
@@ -816,12 +831,15 @@
                   { "literal": "sand-shards" },
                   { "literal": "shadow-of-fear" },
                   { "literal": "shard-storm" },
+                  { "literal": "spirit-light-weapon" },
                   { "literal": "spiteful-spirit" },
                   { "literal": "sprint" },
                   { "literal": "stand-your-ground" },
                   { "literal": "vow-of-strength" },
                   { "literal": "watch-yourself" },
                   { "literal": "weakness" },
+                  { "literal": "weapon-of-aggression" },
+                  { "literal": "weapon-of-quickening" },
                   { "literal": "weapon-of-warding" }
                 ]
               }
@@ -890,12 +908,15 @@
                   { "literal": "sand-shards" },
                   { "literal": "shadow-of-fear" },
                   { "literal": "shard-storm" },
+                  { "literal": "spirit-light-weapon" },
                   { "literal": "spiteful-spirit" },
                   { "literal": "sprint" },
                   { "literal": "stand-your-ground" },
                   { "literal": "vow-of-strength" },
                   { "literal": "watch-yourself" },
                   { "literal": "weakness" },
+                  { "literal": "weapon-of-aggression" },
+                  { "literal": "weapon-of-quickening" },
                   { "literal": "weapon-of-warding" }
                 ]
               }
