@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { PlayerSnapshot } from "@vibewars/game-session";
 
-import { closestTarget, nextTabTarget } from "./tab-target.js";
+import { closestTarget, nextTabTarget, selfTargetIntent } from "./tab-target.js";
 
 function player(sessionId: string, overrides: Partial<PlayerSnapshot> = {}): PlayerSnapshot {
   return {
@@ -109,5 +109,20 @@ describe("closestTarget (#1024)", () => {
   it("finds nobody with no living foe, or no self", () => {
     expect(closestTarget([ME, player("ally", { team: 0 })], "me")).toBeUndefined();
     expect(closestTarget([NEAR], "me")).toBeUndefined();
+  });
+});
+
+describe("selfTargetIntent (#1028)", () => {
+  it("targets yourself when your target is someone else, or nobody", () => {
+    const intent = { kind: "target", targetSessionId: "me" };
+    expect(selfTargetIntent(PLAYERS, "me")).toEqual(intent);
+    expect(selfTargetIntent([player("me", { targetSessionId: "near" }), NEAR], "me")).toEqual(
+      intent,
+    );
+  });
+
+  it("sends nothing when you are already your target, or not in the match", () => {
+    expect(selfTargetIntent([player("me", { targetSessionId: "me" }), NEAR], "me")).toBeUndefined();
+    expect(selfTargetIntent([NEAR], "me")).toBeUndefined();
   });
 });

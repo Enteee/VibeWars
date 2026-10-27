@@ -19,7 +19,7 @@ import {
   secondaryClickIntents,
 } from "./input/mouse-intents.js";
 import { attachNameReveal } from "./input/name-reveal.js";
-import { closestTarget, nextTabTarget } from "./input/tab-target.js";
+import { closestTarget, nextTabTarget, selfTargetIntent } from "./input/tab-target.js";
 import { skillSlotForKeyDown } from "./input/skill-keys.js";
 import { attachMatchMusic } from "./music/match-music.js";
 import { music } from "./music/play-music.js";
@@ -408,6 +408,11 @@ export async function startMatchView(
       }
     } else if (action === "target-called") {
       const intent = calledTargetIntent(connection.getSnapshot(), connection.getCalls());
+      if (intent !== undefined) {
+        connection.sendIntent(intent);
+      }
+    } else if (action === "target-self") {
+      const intent = selfTargetIntent(latestMatch.players, connection.selfSessionId);
       if (intent !== undefined) {
         connection.sendIntent(intent);
       }

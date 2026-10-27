@@ -50,6 +50,14 @@ describe("the keymap preference (#302)", () => {
     expect(loadKeymap()).toBe(DEFAULT_KEYMAP);
   });
 
+  it("is the default when the stored keymap has no target-self (#1028)", () => {
+    const storage = memoryStorage();
+    vi.stubGlobal("localStorage", storage);
+    const { "target-self": _self, ...older } = KEYMAP_PRESETS.classic;
+    storage.setItem(`${STORAGE_NAMESPACE}.keymap`, JSON.stringify(older));
+    expect(loadKeymap()).toBe(DEFAULT_KEYMAP);
+  });
+
   it("is the default when storage cannot be read, and never throws", () => {
     vi.stubGlobal("localStorage", {
       getItem: () => {
