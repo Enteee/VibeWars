@@ -47,6 +47,7 @@ import {
   castFill,
   flashSlot,
   outOfRange,
+  adrenalineFading,
   adrenalineFill,
   adrenalineGaugeHtml,
   paintAdrenalineFill,
@@ -919,6 +920,8 @@ export function updateHud(
   skillBar: readonly (SkillSlot | null)[],
   /** Units each slot's skill holds, by slot (#463). */
   adrenaline: readonly number[],
+  /** Seconds until that is lost out of combat, `null` with none held (#828). */
+  adrenalineLossIn: number | null,
   walls: readonly Segment[],
   match?: MatchSnapshot,
 ): void {
@@ -994,6 +997,11 @@ export function updateHud(
     button.classList.toggle("is-unaffordable", !slotAffordable(slot, self, adrenaline[index] ?? 0));
     // Lit from the bottom as it charges (#826): empty before any message.
     paintAdrenalineFill(button, adrenalineFill(slot, adrenaline[index] ?? 0));
+    // Blinking for the last seconds before it is lost (#828).
+    button.classList.toggle(
+      "is-adrenaline-fading",
+      adrenalineFading(adrenaline[index] ?? 0, adrenalineLossIn),
+    );
     button.classList.toggle("is-wrong-weapon", unwielded[index] === true);
   });
 }
