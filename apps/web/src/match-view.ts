@@ -12,13 +12,14 @@ import { loadLayoutLabeller } from "./input/key-labels.js";
 import { actionForCode, isShortcut } from "./input/keymap.js";
 import { loadKeymap } from "./input/keymap-preference.js";
 import {
+  calledTargetIntent,
   callTargetCall,
   middleClickAction,
   pingCall,
   secondaryClickIntents,
 } from "./input/mouse-intents.js";
 import { attachNameReveal } from "./input/name-reveal.js";
-import { nextTabTarget } from "./input/tab-target.js";
+import { closestTarget, nextTabTarget } from "./input/tab-target.js";
 import { skillSlotForKeyDown } from "./input/skill-keys.js";
 import { attachMatchMusic } from "./music/match-music.js";
 import { music } from "./music/play-music.js";
@@ -396,6 +397,19 @@ export async function startMatchView(
       );
       if (next !== undefined && next !== current) {
         connection.sendIntent({ kind: "target", targetSessionId: next });
+      }
+    } else if (action === "target-closest") {
+      const current = latestMatch.players.find(
+        (player) => player.sessionId === connection.selfSessionId,
+      )?.targetSessionId;
+      const closest = closestTarget(latestMatch.players, connection.selfSessionId);
+      if (closest !== undefined && closest !== current) {
+        connection.sendIntent({ kind: "target", targetSessionId: closest });
+      }
+    } else if (action === "target-called") {
+      const intent = calledTargetIntent(connection.getSnapshot(), connection.getCalls());
+      if (intent !== undefined) {
+        connection.sendIntent(intent);
       }
     } else if (action === "attack") {
       for (const intent of attackKeyIntents(connection.getSnapshot())) {

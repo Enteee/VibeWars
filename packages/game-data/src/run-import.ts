@@ -653,6 +653,26 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Ranger/114-Hunter's_Shot",
   },
   {
+    id: "ranger.concussion-shot",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/110-Concussion_Shot",
+  },
+  {
+    id: "ranger.crippling-shot",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/111-Crippling_Shot",
+  },
+  {
+    id: "ranger.debilitating-shot",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/148-Debilitating_Shot",
+  },
+  {
+    id: "ranger.burning-arrow",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/818-Burning_Arrow",
+  },
+  {
     id: "monk.patient-spirit",
     profession: "monk",
     url: "https://www.gw-memorial.net/skills/Monk/1158-Patient_Spirit",
