@@ -351,11 +351,25 @@ describe("attack skills (#417)", () => {
     ).toContain("If you have more Energy than target: knocks down for 2s");
   });
 
+  it("words Aftershock's bonus on a foe that is down (#985)", () => {
+    const ranks = new Map([["elementalist.earth-magic", 12]]);
+    const texts = describeSkill(skill("elementalist.aftershock"), ranks).effects.map(
+      ({ text }) => text,
+    );
+    expect(texts.at(-1)).toBe("If target is knocked down: deals 56 damage");
+  });
+
   it("words Cry of Frustration's splash and Mantra of Recovery's faster spells (#938)", () => {
     expect(
       describeSkill(skill("mesmer.cry-of-frustration")).effects.map(({ text }) => text),
     ).toContain("If it interrupts: foes in the area are interrupted if casting and take 11 damage");
     expect(describeStatus("mantra-of-recovery")).toBe("spells recharge 33% faster");
+  });
+
+  it("words the Ritualist's weapon spells (#975)", () => {
+    expect(describeStatus("spirit-light-weapon")).toBe("+21 Health per second");
+    expect(describeStatus("weapon-of-quickening")).toBe("spells recharge 33% faster");
+    expect(describeStatus("weapon-of-aggression")).toBe("attacks 25% faster");
   });
 
   it("words Spear of Lightning's type and penetration, and Leader's Comfort's per ally (#923)", () => {
@@ -367,6 +381,35 @@ describe("attack skills (#417)", () => {
     ]);
     expect(at12("paragon.leaders-comfort", "paragon.leadership")).toEqual([
       "Heals for 66, +18 Health for each ally in earshot (max 140)",
+    ]);
+  });
+
+  it("words Patient Spirit's expiry, Holy Veil's hexes, Rend's price and Plague Touch (#944)", () => {
+    const lines = (id: string) =>
+      describeSkill(skill(id), new Map([["necromancer.curses", 12]])).effects.map(
+        ({ text }) => text,
+      );
+    expect(lines("monk.patient-spirit")).toEqual([
+      "Applies Patient Spirit for 2s (when it expires: heals for 30)",
+    ]);
+    expect(
+      describeSkill(skill("monk.patient-spirit"), new Map([["monk.healing-prayers", 12]])).effects,
+    ).toEqual([
+      {
+        text: "Applies Patient Spirit for 2s (when it expires: heals for 102)",
+        magnitude: undefined,
+      },
+    ]);
+    expect(lines("monk.holy-veil")).toEqual([
+      "Maintained: −1 Energy regeneration while it lasts. " +
+        "Hexes cast on the bearer take 2× as long to cast. When it ends: removes 1 hex.",
+    ]);
+    expect(lines("necromancer.rend-enchantments")).toEqual([
+      "Removes 8 enchantments",
+      "You lose 31 health for each Monk enchantment removed",
+    ]);
+    expect(lines("necromancer.plague-touch")).toEqual([
+      "Moves up to 3 of your conditions to the target",
     ]);
   });
 

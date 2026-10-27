@@ -33,6 +33,11 @@ export interface TriggerContext {
   readonly rng: SimulationRng;
   readonly rules: CombatRules;
   readonly surroundings: Surroundings;
+  /**
+   * The skill the bearer just used, on `bearer-uses-skill` (#949): what
+   * Diversion lengthens. `undefined` on every other event.
+   */
+  readonly usedSkillId: string | undefined;
 }
 
 /**
@@ -47,7 +52,7 @@ export interface TriggerContext {
  */
 export function fireTriggers(
   bearer: Combatant,
-  event: Exclude<StatusTriggerEvent, "bearer-gains-condition" | "ends">,
+  event: Exclude<StatusTriggerEvent, "bearer-gains-condition" | "ends" | "expires">,
   context: TriggerContext,
 ): FiredTrigger[] {
   return bearer.statuses
@@ -59,10 +64,11 @@ export function fireTriggers(
  * What `change` to the bearer's statuses sets off (#887): a condition
  * gained fires every status on it that answers one, in `active` order; a
  * status ended fires its own `ends` triggers, though it is no longer on
- * the bearer. A hit the bearer landed, or physical damage it took (#935),
- * fires what answered it when it happened (#953), so a killing blow still
- * sets off the hexes its death ended. The simulation discards
- * whatever the firing itself changes, so this never recurses either.
+ * the bearer, and its `expires` ones too if its duration ran out (#944).
+ * A hit the bearer landed, or physical damage it took (#935), fires what
+ * answered it when it happened (#953), so a killing blow still sets off
+ * the hexes its death ended. The simulation discards whatever the firing
+ * itself changes, so this never recurses either.
  */
 export function fireChangeTriggers(
   bearer: Combatant,
@@ -79,7 +85,9 @@ export function fireChangeTriggers(
         );
     case "ended":
       return getStatusDefinition(change.id)
-        .triggers.filter((trigger) => trigger.on === "ends")
+        .triggers.filter(
+          (trigger) => trigger.on === "ends" || (trigger.on === "expires" && change.expired),
+        )
         .flatMap((trigger) => fire(trigger, change.sourceId, bearer, undefined, context));
     case "hit":
     case "took-physical-damage":
@@ -99,7 +107,7 @@ function fire(
   sourceId: string,
   bearer: Combatant,
   spread: ((effect: SpreadGainedConditionEffect) => CombatEvent[]) | undefined,
-  { sourceOf, rng, rules, surroundings }: TriggerContext,
+  { sourceOf, rng, rules, surroundings, usedSkillId }: TriggerContext,
 ): FiredTrigger[] {
   const source = sourceOf(sourceId);
   if (source === undefined) {
@@ -109,7 +117,9 @@ function fire(
   const events: CombatEvent[] = [];
   let pending: SkillEffect[] = [];
   const flush = (): void => {
-    events.push(...applyEffects(pending, { caster: source, target, rng, rules, surroundings }));
+    events.push(
+      ...applyEffects(pending, { caster: source, target, rng, rules, surroundings, usedSkillId }),
+    );
     pending = [];
   };
   for (const effect of trigger.effects) {

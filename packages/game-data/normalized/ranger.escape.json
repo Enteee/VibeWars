@@ -1,0 +1,26 @@
+{
+  "id": "ranger.escape",
+  "name": "Escape",
+  "profession": "ranger",
+  "attribute": "Expertise",
+  "type": "Stance.",
+  "elite": true,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 0,
+  "rechargeSeconds": 12,
+  "upkeep": false,
+  "description": "For 1...7...8 seconds, you move 33% faster and have a 75% chance to block attacks. Escape ends if you make a melee attack.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Ranger/101-Escape",
+    "fetchedAt": "2026-10-27T19:39:42.542Z"
+  },
+  "unmapped": {}
+}

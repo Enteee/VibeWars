@@ -202,6 +202,15 @@ deals only 13, and disables an interrupted skill for 20 s; the Warrior's
 which skills were disabled, and for how long; a skill already
 recharging for longer is not mentioned.
 
+**Diversion** (#949, Domination Magic hex, 10 energy, 3 s, 12 s
+recharge) is not a disable but recharge: for 6 s, the next skill its
+target uses takes 47 s longer to recharge, and the hex ends. A skill
+recharging already waits 47 s more; one that recharges at once waits 47
+s. Whatever ends a recharge, as Moebius Strike, ends this too. An
+interrupted or cancelled skill is not used, nor is a plain attack, so
+Diversion stays on; an attack skill is lengthened once. The log says
+which skill, and by how much.
+
 **Cry of Frustration** (#938, Domination Magic, 10 energy, ¼ s, 20 s
 recharge) only works on a foe using a skill, any skill. Then that foe is
 interrupted and takes 63 damage, and every foe in the area around it is
@@ -249,6 +258,35 @@ and neither does a caster who has died or left.
 What a trigger does never sets off another trigger: a condition
 Contagion hands to a foe with Contagion goes no further.
 
+**Ending is not expiring** (#944). Parasitic Bond answers any end;
+**Patient Spirit** (Monk, Healing Prayers, 5 energy, ¼ s, 4 s recharge)
+answers only its 2 s running out, GW1's "unless it ends prematurely":
+then its ally is healed for 102. Stripped, or gone with a death, it
+heals nothing. Recasting it before it runs out starts the 2 s again,
+and it heals once, at the end. **Holy Veil** (Monk, no attribute,
+5 energy, 1 s, maintained) makes every hex cast on its ally take twice
+as long, read as the cast begins: a Holy Veil landing mid-cast slows
+nothing already being cast, and a dazed caster takes four times as
+long. Spells that are not hexes, and hexes cast on anyone else, are
+not slowed. However it ends, ended by you, stripped, out of range, out
+of energy or by a death, it takes the newest hex off its ally. A hex it
+removes does not fire its own end: a Parasitic Bond taken this way
+heals nobody.
+
+**Rend Enchantments** (Necromancer, Curses, 5 energy, 2 s, 20 s
+recharge) removes up to 8 enchantments from a foe, the newest first,
+and you lose 31 health for each Monk enchantment among them. That loss
+is a sacrifice, not damage: no armor, and it can
+kill you, after the removal. Each enchantment it strips still fires its
+own end, so a stripped Holy Veil takes a hex with it.
+
+**Plague Touch** (Necromancer, Curses, 5 energy, ¾ s, no recharge) moves
+your newest 3 conditions onto the foe you touch, each with the time it
+had left, as if you had put it on: the longer of yours and one already
+on the foe stays, and the foe's runes shorten it as any condition. It is
+a skill, not a spell, so Dazed does not slow it. With no condition on
+you it does nothing, and the energy is spent.
+
 Three Necromancer curses answer what their target does (#935).
 **Spiteful Spirit** (elite hex, 22 s) deals 39 shadow damage to its
 target and each of its allies adjacent to it whenever the target uses a
@@ -295,6 +333,12 @@ whoever lands it, and you act again on the tick it ends.
 A status can stop it: while **Fleeting Stability** (Dervish) is on you,
 a knockdown does nothing, and the first one it stops ends it. On someone
 already down it is not spent.
+
+**Aftershock** (Elementalist, Earth Magic, 10 energy, ¾ s, 10 s recharge)
+strikes every foe nearby you for 85 earth, and a foe that is knocked down
+for 56 more (#985). "Down" is read as it lands, after that tick's
+countdown: a foe who stands up on that tick gets no bonus. Shock, then
+Aftershock, is the Elementalist's knockdown combo.
 
 A knocked-down character can't block: Guardian does nothing while you
 are down, and an attack skill's if-blocked rider never fires against
@@ -510,11 +554,25 @@ refreshed one does not end it. Damage taken is multiplied after armor
 and before a Rune of Absorption, on every damage packet; health loss,
 sacrifice and degeneration are not damage packets and are left alone.
 
+Two Ranger stances block (#976). Lightning Reflexes (Expertise, 10
+energy, 45 s recharge, 10 s): a 75% chance to block melee and projectile
+attacks, and you attack 33% faster, swings and attack skills alike.
+Escape (Expertise elite, 5 energy, 12 s recharge, 7 s): you move 33%
+faster and block 75% of attacks, until you make a melee attack, hit, miss
+or block. A shot from a bow, an arrow attack skill or a thrown spear
+keeps it. Pin Down and Hunter's Shot are bow attacks: Pin Down cripples
+for 13 s, and Hunter's Shot (1 s to use) bleeds for 21 s, when the arrow
+hits; a block or a blind miss lands neither.
+
 **Mantra of Recovery** (Mesmer elite stance, Fast Casting, 5 energy, 15 s
 recharge, #938) makes every spell you finish in the next 17 s recharge
 33% faster. It is read as the recharge starts: a spell finished after the
 Mantra ends gets nothing, and one already recharging keeps its shorter
-time. A signet, an attack or a stance is not a spell.
+time. A signet, an attack or a stance is not a spell. Recharge
+reductions multiply, as GW1's do, but never take off more than half,
+and never take a recharge below 1 s (#975): Mantra of Recovery with
+Weapon of Quickening is 50%, not 55%, and a spell whose recharge is
+already under 1 s keeps it.
 
 Wild Throw (Paragon spear attack, 7 adrenaline) deals +17 damage, cannot
 be blocked, and ends the stance of the foe it hits. It does not yet
@@ -621,6 +679,21 @@ enchantments, so enchantment removal leaves them. Weapon of Warding
 ally or yourself) gives +4 health regeneration and a 50% chance to block
 attacks for 7 s, and ends the moment its bearer attacks: a swing, an
 arrow or an attack skill, hit or miss.
+
+Three more Ritualist weapon spells (#975), and each replaces Weapon of
+Warding or any other weapon spell, and is replaced by it, alike.
+**Spirit Light Weapon** (elite, Restoration Magic, 5 energy, 1 s, 5 s
+recharge, an ally or yourself) heals 21 Health a second for 10 s. It is
+a heal, not regeneration: Deep Wound cuts it, and it is not held to the
+±10 pips. **Weapon of Quickening** (elite, Communing, 5 energy, 1 s, 5 s
+recharge, an ally or yourself) makes every spell its bearer finishes in
+the next 21 s recharge 33% faster, Weapon of Quickening itself included
+when you cast it on yourself. **Weapon of Aggression** (Channeling
+Magic, 10 energy, ¼ s, 10 s recharge, yourself only) makes you attack
+25% faster for 13 s; attacking does not end it, and as with every
+speed-up only the strongest counts, so under Frenzy it adds nothing.
+Spirit Light Weapon's extra 21 a second near a spirit and Weapon of
+Quickening's binding rituals wait for spirits (#467).
 
 The Ritualist heals with Restoration Magic, each on an ally or yourself
 (#955). **Mend Body and Soul** (5 energy, ¾ s, 3 s recharge) heals 96.
@@ -875,6 +948,13 @@ target and every foe adjacent to it: 68 cold and 34% speed for 5 s.
 **Deep Freeze** (25 energy, 2 s, 15 s recharge) does the same to every
 foe in the area of its target, for 70 cold and 10 s (#938). Neither
 flies. Slows multiply, down to a floor of 25% speed.
+**Blinding Flash** (Air Magic, 10 energy, ¾ s, 8 s recharge) blinds its
+target for 7 s. **Shock** (5 energy, 10 overcast, ¾ s, 10 s recharge) is
+a touch skill, not a spell: Dazed does not slow it and Fast Casting does
+not speed it. It knocks its foe down and strikes for 50 lightning.
+**Meteor** (Fire Magic, 5 energy, 10 overcast, 2 s, 30 s recharge) strikes
+its target and every foe adjacent to it for 91 fire and knocks each down,
+as the cast ends (#985).
 
 ## Primary attributes
 

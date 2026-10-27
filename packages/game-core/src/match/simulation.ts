@@ -78,6 +78,7 @@ import {
   ENERGY_PER_PIP,
   isStatusId,
   MAX_PIPS,
+  reducedRecharge,
   scaledStatusDuration,
   STATUS_DEFINITIONS,
   StatusSet,
@@ -327,7 +328,8 @@ function degenerationSources(combatant: Combatant): {
     } else if (
       definition.healthPips > 0 ||
       definition.healthPipsPerEnchantment !== undefined ||
-      definition.healthPerSecondWhileMoving > 0
+      definition.healthPerSecondWhileMoving > 0 ||
+      definition.healthPerSecond > 0
     ) {
       healing.add(status.sourceId);
     }
@@ -915,7 +917,13 @@ export class MatchSimulation {
     }
     const activationSeconds =
       skill.attack === undefined
-        ? effectiveActivationSeconds(skill, record.combatant)
+        ? effectiveActivationSeconds(
+            skill,
+            record.combatant,
+            castTargetId === undefined
+              ? undefined
+              : this.#participants.get(castTargetId)?.combatant,
+          )
         : this.#attackHitSeconds(record, skill);
     record.combatant.cast.beginCast(
       skill.id,
@@ -1579,14 +1587,16 @@ export class MatchSimulation {
     if (
       !events.some((event) => event.kind === "attack-missed" && event.reason === "out-of-sequence")
     ) {
-      // A spell recharges faster under Mantra of Recovery (#938), read now:
-      // a mantra that ends later leaves this recharge as it started.
-      const spellKept = isSpell(skill.type)
-        ? 1 - aggregateModifiers(record.combatant.statuses.active).spellRechargeFaster
-        : 1;
+      // A spell recharges faster under Mantra of Recovery (#938) or Weapon
+      // of Quickening (#975), read now: one that ends later leaves this
+      // recharge as it started. Read after the spell resolved, so Weapon of
+      // Quickening cast on yourself already shortens its own.
+      const faster = isSpell(skill.type)
+        ? aggregateModifiers(record.combatant.statuses.active).spellRechargeFaster
+        : 0;
       record.combatant.cast.startRecharge(
         skill.id,
-        skill.rechargeSeconds * (1 - rechargeFraction) * spellKept,
+        reducedRecharge(skill.rechargeSeconds * (1 - rechargeFraction), faster),
       );
     }
     this.#log.push({
@@ -1605,7 +1615,8 @@ export class MatchSimulation {
     // After the skill's own effects, as their own entries (#469): a spell
     // finished is Backfire's moment, an attack skill Empathy's. Any skill
     // used is Spiteful Spirit's (#935), and an attack skill twice over.
-    this.#fireTriggers(record, "bearer-uses-skill");
+    this.#fireTriggers(record, "bearer-uses-skill", skill.id);
+    this.#endOnUseSkill(record, skill);
     if (isSpell(skill.type)) {
       this.#fireTriggers(record, "bearer-casts-spell");
     }
@@ -1614,20 +1625,52 @@ export class MatchSimulation {
     }
   }
 
-  /** The bearer did `event` (#469): each status on it that answers fires. */
+  /**
+   * The bearer did `event` (#469): each status on it that answers fires.
+   * `usedSkillId` is the skill it used, on `bearer-uses-skill` (#949).
+   */
   #fireTriggers(
     record: ParticipantRecord,
-    event: Exclude<StatusTriggerEvent, "bearer-gains-condition" | "ends">,
+    event: Exclude<StatusTriggerEvent, "bearer-gains-condition" | "ends" | "expires">,
+    usedSkillId?: string,
   ): void {
-    this.#logFired(fireTriggers(record.combatant, event, this.#triggerContext()));
+    this.#logFired(fireTriggers(record.combatant, event, this.#triggerContext(usedSkillId)));
   }
 
-  #triggerContext(): TriggerContext {
+  /**
+   * After its triggers answered the use (#949): every status on the
+   * bearer that ends when it uses a skill, as Diversion, is gone, and
+   * logged against that skill.
+   */
+  #endOnUseSkill(record: ParticipantRecord, skill: Skill): void {
+    const ended = record.combatant.statuses.endOnBearerUseSkill();
+    if (ended.length > 0) {
+      this.#log.push({
+        tick: this.#tick,
+        atSeconds: this.#elapsedSeconds,
+        cause: "skill",
+        sourceId: record.id,
+        skillId: skill.id,
+        weaponId: undefined,
+        attributeId: undefined,
+        area: undefined,
+        doubleStrike: false,
+        events: ended.map((statusId) => ({
+          kind: "status-expired",
+          targetId: record.id,
+          statusId,
+        })),
+      });
+    }
+  }
+
+  #triggerContext(usedSkillId?: string): TriggerContext {
     return {
       sourceOf: (id) => this.#participants.get(id)?.combatant,
       rng: this.#rng,
       rules: this.#ruleset.combat,
       surroundings: this.#participants,
+      usedSkillId,
     };
   }
 
@@ -2115,7 +2158,8 @@ export class MatchSimulation {
   ): CombatEvent[] {
     const events: CombatEvent[] = [];
     if (skillHit?.kind !== "spell") {
-      bearerAttacked(record.combatant, events);
+      // Only a flying attack is released here.
+      bearerAttacked(record.combatant, events, "projectile");
       if (blindMisses(record.combatant, this.#rng)) {
         return [...events, { kind: "attack-missed", targetId: target.id }];
       }

@@ -15,6 +15,7 @@ import { nearestFirst } from "./targeting.js";
 import { effectiveMaxHealth, healingMultiplierOf, maxHealthLossOf, rankOf } from "./tick.js";
 import { wieldsFor } from "../equipment/weapons.js";
 import { distance } from "../vec2.js";
+import type { ProfessionId } from "../professions.js";
 import type { SimulationRng } from "../rng.js";
 import { ADRENALINE_PER_STRIKE, type CombatRules } from "../ruleset.js";
 import {
@@ -120,6 +121,13 @@ export type CombatEvent =
    */
   | {
       readonly kind: "skill-disabled";
+      readonly targetId: string;
+      readonly skillId: string;
+      readonly seconds: number;
+    }
+  /** A skill `targetId` just used takes `seconds` longer to recharge (#949): Diversion's. */
+  | {
+      readonly kind: "recharge-lengthened";
       readonly targetId: string;
       readonly skillId: string;
       readonly seconds: number;
@@ -485,6 +493,67 @@ export function applyStatus(
 }
 
 /**
+ * `statusId` on `target` for `durationSeconds`, from `sourceId`, as every
+ * skill puts one on: what it ends (#919), the health it takes as it lands
+ * (#800) and Dazed's interrupt, each reported.
+ */
+function landStatus(
+  target: Combatant,
+  statusId: StatusId,
+  durationSeconds: number,
+  sourceId: string,
+  events: CombatEvent[],
+): void {
+  const ending = endedByGaining(target, statusId);
+  const loss = applyStatus(target, statusId, durationSeconds, sourceId);
+  events.push({ kind: "status-applied", targetId: target.id, statusId, durationSeconds });
+  reportEnded(target, ending, events);
+  if (loss > 0) {
+    events.push({ kind: "health-lost", targetId: target.id, amount: loss, statusId });
+  }
+  // Applying Dazed interrupts a spell, even on a target already dazed.
+  if (getStatusDefinition(statusId).interruptsSpells) {
+    interruptIfCastingSpell(target, events);
+  }
+}
+
+/**
+ * Health the caster gives up (a sacrifice, #944's health loss too).
+ * Self-inflicted and, in this genre, famously *can* kill you, so it has
+ * the same death check as damage rather than a special "safe" path.
+ * Nothing that reacts to damage sees it.
+ */
+function sacrifice(caster: Combatant, amount: number, events: CombatEvent[]): void {
+  if (amount <= 0) {
+    return;
+  }
+  const applied = Math.min(amount, caster.health);
+  caster.health -= applied;
+  events.push({ kind: "sacrifice", targetId: caster.id, amount: applied });
+  if (caster.health <= 0 && !caster.dead) {
+    caster.dead = true;
+    events.push({ kind: "death", targetId: caster.id });
+  }
+}
+
+/**
+ * How many statuses of `profession` `earlier`, this resolution's events
+ * so far, took off `targetId` (#944): Rend Enchantments' Monk ones.
+ */
+function removedOfProfession(
+  targetId: string,
+  profession: ProfessionId,
+  earlier: readonly CombatEvent[],
+): number {
+  return earlier.filter(
+    (event) =>
+      event.kind === "status-removed" &&
+      event.targetId === targetId &&
+      getStatusDefinition(event.statusId).profession === profession,
+  ).length;
+}
+
+/**
  * What `statusId` newly on `target` would end (#919): its statuses that
  * end when their bearer gains that category, as Natural Stride on a hex.
  */
@@ -602,20 +671,16 @@ export function applyEffect(
     }
 
     case "sacrifice-health": {
-      // Sacrifice is self-inflicted and, in this genre, famously *can*
-      // kill you — so it goes through the same damage path (and the same
-      // death check) rather than a special "safe" one.
-      const amount = Math.round((caster.maxHealth * effect.percentOfMax) / 100);
-      if (amount <= 0) {
+      sacrifice(caster, Math.round((caster.maxHealth * effect.percentOfMax) / 100), events);
+      return events;
+    }
+
+    case "lose-health": {
+      if (target === undefined) {
         return events;
       }
-      const applied = Math.min(amount, caster.health);
-      caster.health -= applied;
-      events.push({ kind: "sacrifice", targetId: caster.id, amount: applied });
-      if (caster.health <= 0 && !caster.dead) {
-        caster.dead = true;
-        events.push({ kind: "death", targetId: caster.id });
-      }
+      const removed = removedOfProfession(target.id, effect.perRemovedOfProfession, earlier);
+      sacrifice(caster, resolveMagnitude(effect.amount, caster) * removed, events);
       return events;
     }
 
@@ -643,26 +708,26 @@ export function applyEffect(
         return events;
       }
       const durationSeconds = scaledStatusDuration(target, effect.statusId, effect.durationSeconds);
-      const ending = endedByGaining(target, effect.statusId);
-      const loss = applyStatus(target, effect.statusId, durationSeconds, caster.id);
-      events.push({
-        kind: "status-applied",
-        targetId: target.id,
-        statusId: effect.statusId,
-        durationSeconds,
-      });
-      reportEnded(target, ending, events);
-      if (loss > 0) {
-        events.push({
-          kind: "health-lost",
-          targetId: target.id,
-          amount: loss,
-          statusId: effect.statusId,
-        });
+      landStatus(target, effect.statusId, durationSeconds, caster.id, events);
+      return events;
+    }
+
+    case "transfer-conditions": {
+      if (target === undefined || target.dead) {
+        return events;
       }
-      // Applying Dazed interrupts a spell, even on a target already dazed.
-      if (getStatusDefinition(effect.statusId).interruptsSpells) {
-        interruptIfCastingSpell(target, events);
+      for (const { id, remainingSeconds } of caster.statuses.takeNewest(
+        "condition",
+        effect.count,
+      )) {
+        events.push({ kind: "status-removed", targetId: caster.id, statusId: id });
+        landStatus(
+          target,
+          id,
+          scaledStatusDuration(target, id, remainingSeconds),
+          caster.id,
+          events,
+        );
       }
       return events;
     }
@@ -791,6 +856,17 @@ export function applyEffect(
       return events;
     }
 
+    case "lengthen-recharge": {
+      const skillId = context.usedSkillId;
+      if (target === undefined || skillId === undefined) {
+        return events;
+      }
+      const seconds = resolveMagnitude(effect.seconds, caster);
+      target.cast.lengthenRecharge(skillId, seconds);
+      events.push({ kind: "recharge-lengthened", targetId: target.id, skillId, seconds });
+      return events;
+    }
+
     case "recharge-faster":
     case "recharge-others":
       // Nothing lands on anyone: the resolution reads it (`resolveSkillEffects`).
@@ -811,6 +887,7 @@ function isStateCondition(condition: EffectCondition): condition is StateConditi
     case "caster-has":
     case "target-alone":
     case "target-not-moving":
+    case "target-knocked-down":
     case "caster-more-energy":
     case "caster-wields":
     case "target-less-health":
@@ -857,6 +934,8 @@ export function stateHolds(
     }
     case "target-not-moving":
       return !target.moving;
+    case "target-knocked-down":
+      return target.knockdownRemaining > 0;
     case "caster-more-energy":
       return caster.energy > target.energy;
     case "caster-wields":
@@ -973,6 +1052,7 @@ function conditionHolds(
     case "caster-has":
     case "target-alone":
     case "target-not-moving":
+    case "target-knocked-down":
     case "caster-more-energy":
     case "caster-wields":
     case "target-less-health":
@@ -1032,7 +1112,9 @@ export function applyEffects(
  *
  * An `if` is per target, since its condition is: an effect inside it that
  * acts on the caster (Power Drain's energy) fires once for every target
- * the condition holds for. Every such skill today has one target.
+ * the condition holds for. Every such skill today has one target, as
+ * does each that reads or takes from the caster per target: Rend
+ * Enchantments' health loss and Plague Touch's conditions (#944).
  */
 function effectActsOnCaster(effect: SkillEffect): boolean {
   switch (effect.kind) {
@@ -1050,6 +1132,8 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "energy-loss":
     case "life-steal":
     case "damage":
+    case "lose-health":
+    case "transfer-conditions":
     case "give-health":
     case "apply-status":
     case "maintain-status":
@@ -1058,6 +1142,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "resurrect":
     case "splash":
     case "disable-skill":
+    case "lengthen-recharge":
     case "if":
       return false;
   }

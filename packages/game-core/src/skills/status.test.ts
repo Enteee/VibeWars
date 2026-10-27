@@ -48,6 +48,7 @@ describe("status definitions", () => {
         def.armorModifier !== 0 ||
         def.armorWhileStill !== 0 ||
         def.healthPerSecondWhileMoving !== 0 ||
+        def.healthPerSecond !== 0 ||
         def.armorReduction !== undefined ||
         def.moveSpeedMultiplier !== 1 ||
         def.attackMissChance !== 0 ||
@@ -398,7 +399,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
     ]);
   });
 
-  it("records every ending with its source", () => {
+  it("records every ending with its source, and only the duration running out as expired (#944)", () => {
     const set = new StatusSet();
     set.apply("parasitic-bond", 1, "expiry");
     set.apply("backfire", 10, "removed");
@@ -417,17 +418,36 @@ describe("StatusSet changes, for the triggers (#887)", () => {
     }
     set.countSpellStarted();
     set.countSpellStarted();
-    set.endOnBearerAttack();
+    set.endOnBearerAttack("melee");
     set.endOnKnockdownPrevented();
 
     expect(set.drainChanges()).toEqual([
-      { kind: "ended", id: "parasitic-bond", sourceId: "expiry" },
-      { kind: "ended", id: "backfire", sourceId: "removed" },
-      { kind: "ended", id: "malaise", sourceId: "by-category" },
-      { kind: "ended", id: "watch-yourself", sourceId: "attacked" },
-      { kind: "ended", id: "glyph-of-lesser-energy", sourceId: "spells" },
-      { kind: "ended", id: "weapon-of-warding", sourceId: "attacks" },
-      { kind: "ended", id: "fleeting-stability", sourceId: "knockdown" },
+      { kind: "ended", id: "parasitic-bond", sourceId: "expiry", expired: true },
+      { kind: "ended", id: "backfire", sourceId: "removed", expired: false },
+      { kind: "ended", id: "malaise", sourceId: "by-category", expired: false },
+      { kind: "ended", id: "watch-yourself", sourceId: "attacked", expired: false },
+      { kind: "ended", id: "glyph-of-lesser-energy", sourceId: "spells", expired: false },
+      { kind: "ended", id: "weapon-of-warding", sourceId: "attacks", expired: false },
+      { kind: "ended", id: "fleeting-stability", sourceId: "knockdown", expired: false },
+    ]);
+  });
+
+  it("takeNewest takes the newest of a category first, with the time each had left (#944)", () => {
+    const set = new StatusSet();
+    set.apply("bleeding", 10, "a");
+    set.apply("guardian", 10, "a");
+    set.apply("blind", 8, "a");
+    set.apply("poison", 6, "a");
+    set.advance(1);
+    set.drainChanges();
+    expect(set.takeNewest("condition", 2)).toEqual([
+      { id: "poison", remainingSeconds: 5 },
+      { id: "blind", remainingSeconds: 7 },
+    ]);
+    expect(set.active.map(({ id }) => id)).toEqual(["bleeding", "guardian"]);
+    expect(set.drainChanges()).toEqual([
+      { kind: "ended", id: "poison", sourceId: "a", expired: false },
+      { kind: "ended", id: "blind", sourceId: "a", expired: false },
     ]);
   });
 
@@ -443,6 +463,18 @@ describe("StatusSet changes, for the triggers (#887)", () => {
     expect(set.active).toEqual([]);
   });
 
+  it("ends Stand Your Ground! on any attack, Escape only on a melee one (#976)", () => {
+    const set = new StatusSet();
+    set.apply("stand-your-ground", 10, "p");
+    set.apply("escape", 7, "p");
+    expect(set.endOnBearerAttack("projectile")).toEqual(["stand-your-ground"]);
+    expect(set.has("escape")).toBe(true);
+
+    set.apply("stand-your-ground", 10, "p");
+    expect([...set.endOnBearerAttack("melee")].sort()).toEqual(["escape", "stand-your-ground"]);
+    expect(set.active).toEqual([]);
+  });
+
   it("ends every status on a death, each recorded with its source, in order (#940)", () => {
     const set = new StatusSet();
     set.apply("burning", 5, "a");
@@ -455,10 +487,10 @@ describe("StatusSet changes, for the triggers (#887)", () => {
 
     expect(set.active).toEqual([]);
     expect(set.drainChanges()).toEqual([
-      { kind: "ended", id: "burning", sourceId: "a" },
-      { kind: "ended", id: "parasitic-bond", sourceId: "b" },
-      { kind: "ended", id: "regeneration", sourceId: "c" },
-      { kind: "ended", id: "sprint", sourceId: "d" },
+      { kind: "ended", id: "burning", sourceId: "a", expired: false },
+      { kind: "ended", id: "parasitic-bond", sourceId: "b", expired: false },
+      { kind: "ended", id: "regeneration", sourceId: "c", expired: false },
+      { kind: "ended", id: "sprint", sourceId: "d", expired: false },
     ]);
   });
 
@@ -515,7 +547,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         kind: "took-physical-damage",
         fired: [{ sourceId: "b", trigger: getStatusDefinition("mark-of-pain").triggers[0] }],
       },
-      { kind: "ended", id: "mark-of-pain", sourceId: "b" },
+      { kind: "ended", id: "mark-of-pain", sourceId: "b", expired: false },
     ]);
   });
 });
@@ -619,13 +651,15 @@ describe("attack duration (ADR-0029)", () => {
     });
   }
 
-  it("is 1 with nothing on; Faintheartedness (#493) and Shadow of Fear (#918) are 50% slower, Heart of Fury 25% faster (#845), Frenzy 33% (#919)", () => {
+  it("is 1 with nothing on; Faintheartedness (#493) and Shadow of Fear (#918) are 50% slower, Heart of Fury and Weapon of Aggression (#975) 25% faster (#845), Frenzy (#919) and Lightning Reflexes (#976) 33%", () => {
     expect(aggregateModifiers([]).attackDurationMultiplier).toBe(1);
     const multipliers: Partial<Record<StatusId, number>> = {
       faintheartedness: 1.5,
       "heart-of-fury": 0.75,
       "shadow-of-fear": 1.5,
       frenzy: 0.67,
+      "lightning-reflexes": 0.67,
+      "weapon-of-aggression": 0.75,
     };
     for (const id of ALL_STATUS_IDS) {
       const expected = multipliers[id] ?? 1;

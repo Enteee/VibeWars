@@ -28,9 +28,10 @@ import { isSpell, type Combatant, type Skill } from "./types.js";
  * `naturalPips` is natural regeneration (`naturalHealthPips`): not a
  * status, but summed with theirs before the clamp, as GW1 does.
  *
- * A moving bearer's health per second (#921, "Fall Back!") is a heal,
- * not pips: outside the clamp, scaled by `healingMultiplier`, and added
- * to the same change, so one tick emits one damage or heal event.
+ * Health per second (#975, Spirit Light Weapon), and a moving bearer's
+ * (#921, "Fall Back!"), is a heal, not pips: outside the clamp, scaled
+ * by `healingMultiplier`, and added to the same change, so one tick
+ * emits one damage or heal event.
  */
 export function advanceStatuses(
   combatant: Combatant,
@@ -45,11 +46,11 @@ export function advanceStatuses(
   // Health only: upkeep is energy, so none is owed here.
   const pips = netPips(combatant, naturalPips, 0).health;
   const modifiers = aggregateModifiers(combatant.statuses.active);
-  const whileMoving = combatant.moving
-    ? modifiers.healthPerSecondWhileMoving * modifiers.healingMultiplier
-    : 0;
-  if (pips !== 0 || whileMoving !== 0) {
-    const delta = (pips * HEALTH_PER_PIP + whileMoving) * dt;
+  const perSecond =
+    (modifiers.healthPerSecond + (combatant.moving ? modifiers.healthPerSecondWhileMoving : 0)) *
+    modifiers.healingMultiplier;
+  if (pips !== 0 || perSecond !== 0) {
+    const delta = (pips * HEALTH_PER_PIP + perSecond) * dt;
     const effectiveMax = effectiveMaxHealth(combatant);
     const next = Math.min(effectiveMax, Math.max(0, combatant.health + delta));
     const applied = next - combatant.health;
@@ -260,16 +261,27 @@ export function weaponDamageMultiplierOf(combatant: Combatant): number {
  * a signet or any other skill that is not a spell casts at normal speed,
  * as in GW1 (#524). An instant skill stays instant (0 × 2 = 0). Fast
  * Casting multiplies in too (#527), judged on the skill's own activation.
+ * A hex cast on a `target` under Holy Veil takes twice as long (#944);
+ * with no target, as in a tooltip, nothing on one counts.
  */
-export function effectiveActivationSeconds(skill: Skill, caster: RankHolder): number {
+export function effectiveActivationSeconds(
+  skill: Skill,
+  caster: RankHolder,
+  target?: Pick<Combatant, "statuses">,
+): number {
   if (!isSpell(skill.type)) {
     return skill.activationSeconds;
   }
   const fastCasting = fastCastingMultiplier(rankOf(caster, FAST_CASTING_ATTRIBUTE), skill);
+  const onTarget =
+    skill.type === "hex" && target !== undefined
+      ? aggregateModifiers(target.statuses.active).incomingHexCastTimeMultiplier
+      : 1;
   return (
     skill.activationSeconds *
     aggregateModifiers(caster.statuses.active).castTimeMultiplier *
-    fastCasting
+    fastCasting *
+    onTarget
   );
 }
 

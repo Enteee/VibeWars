@@ -242,6 +242,14 @@ function wireEvent(event: CombatEvent): WireCombatEvent {
         skillId: event.skillId,
         durationSeconds: event.seconds,
       };
+    case "recharge-lengthened":
+      return {
+        ...none,
+        kind: event.kind,
+        targetId: event.targetId,
+        skillId: event.skillId,
+        durationSeconds: event.seconds,
+      };
     case "status-removed":
     case "status-expired":
       return { ...none, kind: event.kind, targetId: event.targetId, statusId: event.statusId };
@@ -353,6 +361,7 @@ function combatEvent(event: WireCombatEvent): CombatEvent | undefined {
     case "knocked-down":
       return durationSeconds === null ? undefined : { kind: event.kind, targetId, durationSeconds };
     case "skill-disabled":
+    case "recharge-lengthened":
       return skillId === null || durationSeconds === null
         ? undefined
         : { kind: event.kind, targetId, skillId, seconds: durationSeconds };
