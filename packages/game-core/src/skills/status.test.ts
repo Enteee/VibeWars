@@ -470,6 +470,11 @@ describe("StatusSet changes, for the triggers (#887)", () => {
   });
 
   it("records a hit and physical damage only while a status answers them (#935)", () => {
+    const parasite = {
+      sourceId: "a",
+      trigger: getStatusDefinition("insidious-parasite").triggers[0],
+    };
+    const mark = { sourceId: "b", trigger: getStatusDefinition("mark-of-pain").triggers[0] };
     const set = new StatusSet();
     set.apply("backfire", 10, "a");
     set.drainChanges();
@@ -481,13 +486,35 @@ describe("StatusSet changes, for the triggers (#887)", () => {
     set.recordHit();
     set.recordPhysicalDamage();
     set.recordHit();
-    expect(set.drainChanges()).toEqual([{ kind: "hit" }, { kind: "hit" }]);
+    expect(set.drainChanges()).toEqual([
+      { kind: "hit", fired: [parasite] },
+      { kind: "hit", fired: [parasite] },
+    ]);
 
-    set.apply("mark-of-pain", 30, "a");
+    set.apply("mark-of-pain", 30, "b");
     set.drainChanges();
     set.recordPhysicalDamage();
     set.recordHit();
-    expect(set.drainChanges()).toEqual([{ kind: "took-physical-damage" }, { kind: "hit" }]);
+    expect(set.drainChanges()).toEqual([
+      { kind: "took-physical-damage", fired: [mark] },
+      { kind: "hit", fired: [parasite] },
+    ]);
+  });
+
+  it("a record keeps the triggers it was made with, though they end before the drain (#953)", () => {
+    const set = new StatusSet();
+    set.apply("mark-of-pain", 30, "b");
+    set.drainChanges();
+    set.recordPhysicalDamage();
+    set.endAll();
+    set.apply("mark-of-pain", 30, "c");
+    expect(set.drainChanges()).toEqual([
+      {
+        kind: "took-physical-damage",
+        fired: [{ sourceId: "b", trigger: getStatusDefinition("mark-of-pain").triggers[0] }],
+      },
+      { kind: "ended", id: "mark-of-pain", sourceId: "b" },
+    ]);
   });
 });
 
