@@ -81,6 +81,10 @@ export const SKILL_ICONS = {
   "mesmer.backfire": { glyph: "fireball", modifier: "self" },
   "mesmer.empathy": { glyph: "sword", modifier: "self" },
   "monk.mending": { glyph: "heal", modifier: "upkeep" },
+  "elementalist.lightning-strike": { glyph: "lightning" },
+  "elementalist.mind-shock": { glyph: "lightning", modifier: "down" },
+  "elementalist.shard-storm": { glyph: "shard" },
+  "necromancer.shadow-of-fear": { glyph: "slow", modifier: "area" },
   "mesmer.energy-surge": { glyph: "energy", modifier: "area" },
   "mesmer.leech-signet": { glyph: "interrupt", modifier: "self" },
   // A placeholder: no modifier yet says "per enchantment or hex" (#920).
