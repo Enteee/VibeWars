@@ -18,6 +18,7 @@ import type { CombatRules } from "../ruleset.js";
 import {
   isSpell,
   type Combatant,
+  type DisableSkillEffect,
   type Skill,
   type SkillContext,
   type EffectCondition,
@@ -104,6 +105,16 @@ export type CombatEvent =
       readonly targetId: string;
       /** The skill whose cast was cut short. */
       readonly skillId: string;
+    }
+  /**
+   * A skill on `targetId`'s bar that a disable (#914) made wait longer:
+   * it is usable again in `seconds`.
+   */
+  | {
+      readonly kind: "skill-disabled";
+      readonly targetId: string;
+      readonly skillId: string;
+      readonly seconds: number;
     }
   /**
    * A cast its caster gave up by moving (#279) or Cancel Action, Esc
@@ -705,6 +716,20 @@ export function applyEffect(
       return events;
     }
 
+    case "disable-skill": {
+      const interrupted = target === undefined ? undefined : interruptedSkill(target.id, earlier);
+      if (target === undefined || interrupted === undefined) {
+        return events;
+      }
+      const seconds = resolveMagnitude(effect.seconds, caster);
+      for (const skillId of disabledBy(effect, target, interrupted)) {
+        if (target.cast.disable(skillId, seconds)) {
+          events.push({ kind: "skill-disabled", targetId: target.id, skillId, seconds });
+        }
+      }
+      return events;
+    }
+
     case "recharge-faster":
     case "recharge-others":
       // Nothing lands on anyone: the resolution reads it (`resolveSkillEffects`).
@@ -804,6 +829,37 @@ function statesBefore(
 /** Whether `earlier`, this resolution's events so far, interrupted `targetId`. */
 function wasInterrupted(targetId: string, earlier: readonly CombatEvent[]): boolean {
   return earlier.some((event) => event.kind === "interrupted" && event.targetId === targetId);
+}
+
+/** The skill `earlier`, this resolution's events so far, interrupted on `targetId`, if any. */
+function interruptedSkill(targetId: string, earlier: readonly CombatEvent[]): string | undefined {
+  for (const event of earlier) {
+    if (event.kind === "interrupted" && event.targetId === targetId) {
+      return event.skillId;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * The skills a `disable-skill` reaches on `target` (#914): the one
+ * interrupted, and for Power Block every skill on its bar of the same
+ * attribute. One with no attribute is linked to nothing (GW1).
+ */
+function disabledBy(
+  effect: DisableSkillEffect,
+  target: Combatant,
+  interrupted: string,
+): readonly string[] {
+  const attributeId = getSkill(interrupted)?.attributeId;
+  if (effect.which === "interrupted" || attributeId === undefined) {
+    return [interrupted];
+  }
+  const linked = target.skillBar.filter(
+    (skillId): skillId is string =>
+      skillId !== null && skillId !== interrupted && getSkill(skillId)?.attributeId === attributeId,
+  );
+  return [interrupted, ...linked];
 }
 
 /** Whether the skill `skillId` names is a spell (`isSpell`; a chant is not one). */
@@ -925,6 +981,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "knockdown":
     case "resurrect":
     case "splash":
+    case "disable-skill":
     case "if":
       return false;
   }
