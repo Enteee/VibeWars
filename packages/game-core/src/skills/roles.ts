@@ -42,6 +42,7 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     case "energy-loss":
     case "sacrifice-health":
     case "resurrect":
+    case "recharge-faster":
       return [];
   }
 }

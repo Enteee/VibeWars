@@ -272,6 +272,36 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     profession: "monk",
     url: "https://www.gw-memorial.net/skills/Monk/176-Restore_Life",
   },
+  {
+    id: "dervish.mystic-regeneration",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/991-Mystic_Regeneration",
+  },
+  {
+    id: "dervish.fleeting-stability",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/989-Fleeting_Stability",
+  },
+  {
+    id: "dervish.heart-of-fury",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/1011-Heart_of_Fury",
+  },
+  {
+    id: "dervish.wounding-strike",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/1036-Wounding_Strike",
+  },
+  {
+    id: "dervish.signet-of-pious-light",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/996-Signet_of_Pious_Light",
+  },
+  {
+    id: "dervish.pious-restoration",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/1052-Pious_Restoration",
+  },
 ];
 
 function packageRoot(): string {

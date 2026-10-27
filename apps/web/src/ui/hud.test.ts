@@ -385,6 +385,13 @@ describe("skillSlotHtml", () => {
     expect(html).not.toContain("hud-skill-cost");
   });
 
+  it("lays an adrenaline skill's gauge over its icon, under its hotkey (#826)", () => {
+    const html = skillSlotHtml({ ...slot("warrior.rush"), energyCost: 0, adrenalineCost: 4 });
+    expect(html.indexOf("skill-icon")).toBeLessThan(html.indexOf("adrenaline-gauge"));
+    expect(html.indexOf("adrenaline-gauge")).toBeLessThan(html.indexOf("hud-skill-key"));
+    expect(skillSlotHtml(slot("elementalist.fireball"))).not.toContain("adrenaline-gauge");
+  });
+
   it("has the bare plate and no badge for a skill this client does not know", () => {
     const html = skillSlotHtml(slot("nobody.unknown"));
     expect(html).toContain('src="/icons/skill/unknown.svg"');
