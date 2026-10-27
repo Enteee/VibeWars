@@ -354,6 +354,10 @@ for 56 more (#985). "Down" is read as it lands, after that tick's
 countdown: a foe who stands up on that tick gets no bonus. Shock, then
 Aftershock, is the Elementalist's knockdown combo.
 
+**Water Trident** knocks down each foe it hits that is moving, and
+**Stoning** a foe suffering from Weakness (#997). Both are read as the
+projectile lands.
+
 A knocked-down character can't block: Guardian does nothing while you
 are down, and an attack skill's if-blocked rider never fires against
 you. Blocking works again the moment you stand.
@@ -474,6 +478,9 @@ while weakened. Two sources of weakness are one weakness, so it is
 never −2. Enfeeble (Necromancer, Curses) weakens one foe for 26 s;
 Enfeebling Blood (Necromancer, Curses, 1 energy and 17% of your health)
 weakens the target and every nearby foe for 13 s.
+Ebon Hawk (Elementalist, Earth Magic) weakens its foe for 13 s, and
+Stoning knocks a weakened foe down: either Necromancer skill, or the
+hawk, sets the stone up (#997).
 
 **Cracked Armor takes 20 armor, but never below 60** (#763, GW1). It is
 taken before any status adds armor, so a cracked caster at 60 loses
@@ -610,6 +617,8 @@ clicked point, an approach to attack or cast. Knocked down, in
 aftercast, dead or walking into a wall is not moving. Everyone's is read
 at the end of a tick, so it is one tick late and never depends on who
 acts first.
+Water Trident (#997) reads it the other way round: it knocks down a
+foe that _is_ moving as it lands.
 
 Spear of Lightning (Paragon spear attack, 5 energy, 6 s) deals +18, and
 the whole blow is lightning, the spear's damage too: armor against
@@ -694,7 +703,16 @@ in earshot a 50% chance to block attacks for 9 s (#956). It ends on an
 ally when one of that ally's attack skills hits, melee or thrown. A
 plain swing or arrow does not end it, and neither does an attack skill
 that misses or is blocked. Its block combines with any other as
-1 − ∏(1 − p): with Weapon of Warding it is 75%.
+1 − ∏(1 − p): with Weapon of Warding it is 75%. Song of Restoration
+(elite, Motivation, 10 energy, 1 s cast, 20 s recharge) lasts 10 s on
+each ally in earshot, the paragon included (#999). The next skill each
+uses heals them 97 (45 at Motivation 0), after that skill's own effects,
+and the song ends on them. Any skill completed counts, an attack skill
+once; a plain swing, or a skill interrupted or cancelled, does not. It
+is a heal, so Deep Wound cuts it. If it runs out, is removed or its
+bearer dies, nobody is healed. The paragon's own chant does not use up
+the song it just put on itself: its next skill does. In general, a
+status a skill puts on its own user never answers that same use.
 
 **Weapon spells** go on an ally's weapon, one at a time: a new one
 replaces the old, the same one included (#758). They are spells, so
@@ -990,6 +1008,16 @@ not speed it. It knocks its foe down and strikes for 50 lightning.
 **Meteor** (Fire Magic, 5 energy, 10 overcast, 2 s, 30 s recharge) strikes
 its target and every foe adjacent to it for 91 fire and knocks each down,
 as the cast ends (#985).
+**Water Trident** (elite, Water Magic, 5 energy, 1 s, 3 s recharge) flies
+as fast as Lightning Orb at its target and up to two adjacent foes: 74
+cold to each, and a knockdown to each that is moving. **Searing
+Flames** (elite, Fire Magic, 15 energy, 1 s, 2 s recharge) falls on its
+target and every foe nearby it: a foe already Burning takes 82 fire, one
+that is not starts Burning for 6 s and takes nothing. Cast twice, it
+burns, then strikes. **Ebon Hawk** (Earth Magic, 10 energy, 1 s, 5 s
+recharge) flies as Fireball does: 70 earth and Weakness for 13 s.
+**Stoning** (15 energy, 1 s, 5 s recharge) flies the same: 93 earth, and
+a knockdown if its foe is weakened (#997).
 
 ## Primary attributes
 

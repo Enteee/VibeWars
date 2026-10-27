@@ -1694,6 +1694,37 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     effects: [{ kind: "apply-status", statusId: "defensive-anthem", durationSeconds: 9 }],
   },
   {
+    id: "paragon.song-of-restoration",
+    name: "Song of Restoration",
+    type: "chant",
+    elite: true,
+    profession: "paragon",
+    attributeId: "paragon.motivation",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    // "Each party member within earshot", the chanter among them.
+    area: {
+      radius: AREA_EARSHOT,
+      origin: "caster",
+      affects: "allies",
+      maxTargets: undefined,
+      includesCaster: true,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 10 seconds, the next time each party member within earshot uses
+    // a Skill, that party member gains 45...97...110 Health" (PvP, #999):
+    // 97 at rank 12, in the status. A heal, not a gain, as the fandom's
+    // anomaly note has it, so Deep Wound cuts it. The chanter's own cast
+    // does not use it up: its next skill does.
+    effects: [{ kind: "apply-status", statusId: "song-of-restoration", durationSeconds: 10 }],
+  },
+  {
     id: "ritualist.weapon-of-warding",
     name: "Weapon of Warding",
     type: "weapon-spell",
@@ -3891,6 +3922,174 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         armorPenetration: 0,
       },
       { kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS },
+    ],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Elementalist condition staples (#997)                                  */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "elementalist.water-trident",
+    name: "Water Trident",
+    type: "spell",
+    elite: true,
+    profession: "elementalist",
+    attributeId: "elementalist.water-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 3,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    // The 2012 revision's "target foe and up to 2 adjacent foes": the
+    // target first, then the nearest two (`targeting.ts`).
+    area: {
+      radius: AREA_ADJACENT,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: 3,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    // Our own tuning, as GW1 publishes no speeds: "fast-moving", Lightning
+    // Orb's speed.
+    projectile: { speed: 1.5 * RANGE_SPELL },
+    // "...for 10...74...90 cold damage if it hits. If it hits a moving foe,
+    // that foe is knocked down." Moving is read per foe, before it lands.
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.water-magic", atZero: 10, atTwelve: 74 },
+        },
+        type: "cold",
+        armorPenetration: 0,
+      },
+      {
+        kind: "if",
+        condition: { kind: "target-moving" },
+        effects: [{ kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS }],
+      },
+    ],
+  },
+  {
+    id: "elementalist.searing-flames",
+    name: "Searing Flames",
+    type: "spell",
+    elite: true,
+    profession: "elementalist",
+    attributeId: "elementalist.fire-magic",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 2,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    // "Target foe and all nearby foes": Fireball's area, with no flight.
+    area: {
+      radius: AREA_NEARBY,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Foes already on fire ... are struck for 10...82...100 fire damage.
+    // Foes not already on fire begin Burning for 1...6...7 seconds": 6 s,
+    // its rank-12 value. Both are read before either lands, so exactly
+    // one holds on each foe.
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-has-status", statusId: "burning" },
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "elementalist.fire-magic", atZero: 10, atTwelve: 82 },
+            },
+            type: "fire",
+            armorPenetration: 0,
+          },
+        ],
+      },
+      {
+        kind: "if",
+        condition: { kind: "target-lacks-status", statusId: "burning" },
+        effects: [{ kind: "apply-status", statusId: "burning", durationSeconds: 6 }],
+      },
+    ],
+  },
+  {
+    id: "elementalist.ebon-hawk",
+    name: "Ebon Hawk",
+    type: "spell",
+    elite: false,
+    profession: "elementalist",
+    attributeId: "elementalist.earth-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    // Our own tuning: Fireball's speed.
+    projectile: { speed: RANGE_SPELL },
+    // "...strikes target foe for 10...70...85 earth damage and causes
+    // Weakness for 5...13...15 seconds if it hits": 13 s, its rank-12 value.
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.earth-magic", atZero: 10, atTwelve: 70 },
+        },
+        type: "earth",
+        armorPenetration: 0,
+      },
+      { kind: "apply-status", statusId: "weakness", durationSeconds: 13 },
+    ],
+  },
+  {
+    id: "elementalist.stoning",
+    name: "Stoning",
+    type: "spell",
+    elite: false,
+    profession: "elementalist",
+    attributeId: "elementalist.earth-magic",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    // Our own tuning: "a large stone", Fireball's speed.
+    projectile: { speed: RANGE_SPELL },
+    // "...for 45...93...105 earth damage if it hits. If Stoning hits a foe
+    // suffering from Weakness, that foe is knocked down." Weakness is read
+    // as the stone lands.
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.earth-magic", atZero: 45, atTwelve: 93 },
+        },
+        type: "earth",
+        armorPenetration: 0,
+      },
+      {
+        kind: "if",
+        condition: { kind: "target-has-status", statusId: "weakness" },
+        effects: [{ kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS }],
+      },
     ],
   },
 

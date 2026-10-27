@@ -345,6 +345,9 @@ const SWING_EPSILON = 1e-9;
 /** How close to zero a knockdown may be and count as over: 4 s in 0.05 s ticks leaves a float crumb. */
 const KNOCKDOWN_EPSILON = 1e-9;
 
+/** What a use of a skill spares when that skill put nothing on its own user (#999). */
+const NONE_SPARED: ReadonlySet<StatusId> = new Set();
+
 /** At most this many push-out passes per move; see `advanceMovement`. */
 const MOVEMENT_RELAX_PASSES = 4;
 
@@ -1514,6 +1517,13 @@ export class MatchSimulation {
       rules: this.#ruleset.combat,
       surroundings: this.#participants,
     });
+    // What the skill put on its own user does not answer this use of it
+    // (#999): the chanter's own Song of Restoration waits for its next skill.
+    const spared: ReadonlySet<StatusId> = new Set(
+      events.flatMap((event) =>
+        event.kind === "status-applied" && event.targetId === record.id ? [event.statusId] : [],
+      ),
+    );
     // Where an area landed, for whoever draws it: nowhere, when an area
     // centred on a target had no target to centre on, or when it is still
     // flying. A party area (#1013) has no ring to draw.
@@ -1618,35 +1628,39 @@ export class MatchSimulation {
     // After the skill's own effects, as their own entries (#469): a spell
     // finished is Backfire's moment, an attack skill Empathy's. Any skill
     // used is Spiteful Spirit's (#935), and an attack skill twice over.
-    this.#fireTriggers(record, "bearer-uses-skill", skill.id);
-    this.#endOnUseSkill(record, skill);
+    this.#fireTriggers(record, "bearer-uses-skill", spared, skill.id);
+    this.#endOnUseSkill(record, skill, spared);
     if (isSpell(skill.type)) {
-      this.#fireTriggers(record, "bearer-casts-spell");
+      this.#fireTriggers(record, "bearer-casts-spell", spared);
     }
     if (skill.attack !== undefined) {
-      this.#fireTriggers(record, "bearer-attacks");
+      this.#fireTriggers(record, "bearer-attacks", spared);
     }
   }
 
   /**
    * The bearer did `event` (#469): each status on it that answers fires.
    * `usedSkillId` is the skill it used, on `bearer-uses-skill` (#949).
+   * A status in `spared` does not answer (#999), as `fireTriggers`.
    */
   #fireTriggers(
     record: ParticipantRecord,
     event: Exclude<StatusTriggerEvent, "bearer-gains-condition" | "ends" | "expires">,
+    spared: ReadonlySet<StatusId>,
     usedSkillId?: string,
   ): void {
-    this.#logFired(fireTriggers(record.combatant, event, this.#triggerContext(usedSkillId)));
+    this.#logFired(
+      fireTriggers(record.combatant, event, this.#triggerContext(usedSkillId), spared),
+    );
   }
 
   /**
    * After its triggers answered the use (#949): every status on the
    * bearer that ends when it uses a skill, as Diversion, is gone, and
-   * logged against that skill.
+   * logged against that skill, but those in `spared` (#999).
    */
-  #endOnUseSkill(record: ParticipantRecord, skill: Skill): void {
-    const ended = record.combatant.statuses.endOnBearerUseSkill();
+  #endOnUseSkill(record: ParticipantRecord, skill: Skill, spared: ReadonlySet<StatusId>): void {
+    const ended = record.combatant.statuses.endOnBearerUseSkill(spared);
     if (ended.length > 0) {
       this.#log.push({
         tick: this.#tick,
@@ -2047,7 +2061,7 @@ export class MatchSimulation {
       if (released.length > 0) {
         this.#logWeapon(record.id, weapon.id, released);
       }
-      this.#fireTriggers(record, "bearer-attacks");
+      this.#fireTriggers(record, "bearer-attacks", NONE_SPARED);
       return;
     }
     const { events, doubleStrike, landed, fired } = resolveSwing({
@@ -2064,7 +2078,7 @@ export class MatchSimulation {
     this.#recordKnockdowns(events);
     this.#logWeapon(record.id, record.combatant.equipment.mainHand.weapon.id, events, doubleStrike);
     this.#logFired(fired);
-    this.#fireTriggers(record, "bearer-attacks");
+    this.#fireTriggers(record, "bearer-attacks", NONE_SPARED);
   }
 
   /**
