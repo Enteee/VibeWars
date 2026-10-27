@@ -3,7 +3,12 @@ import { describe, expect, it } from "vitest";
 import { AREA_ADJACENT, AREA_IN_THE_AREA, AREA_NEARBY, RANGE_SPELL } from "../distances.js";
 
 import { IMPLEMENTED_SKILLS, getSkill } from "./catalog.js";
-import { describeSkill, describeStatus, formatScalingRange } from "./describe.js";
+import {
+  chainRequirementText,
+  describeSkill,
+  describeStatus,
+  formatScalingRange,
+} from "./describe.js";
 import { makeCombatant, withAttackDuration } from "./testing.js";
 import { resolveMagnitude } from "./scaling.js";
 import { STATUS_DEFINITIONS } from "./status.js";
@@ -445,6 +450,34 @@ describe("attack skills (#417)", () => {
       "If target is below 50% Health: recharges all your other attack skills",
     );
     expect(texts("assassin.moebius-strike")[0]).toBe("Off-hand attack. Must follow a dual attack.");
+  });
+
+  it("words the crippling knockdown chain, and a state its attack requires (#1041)", () => {
+    const texts = (id: string) => describeSkill(skill(id)).effects.map(({ text }) => text);
+    expect(texts("assassin.falling-spider")[0]).toBe(
+      "Off-hand attack. Only if target is knocked down.",
+    );
+    expect(texts("assassin.leaping-mantis-sting")).toContain(
+      "If target is moving: applies Crippled for 13s (moves at 50% speed)",
+    );
+    expect(texts("assassin.trampling-ox")).toContain("If target has Crippled: knocks down for 2s");
+    expect(texts("assassin.jungle-strike")[0]).toBe("Off-hand attack. Must follow a lead attack.");
+    expect(chainRequirementText(skill("assassin.falling-spider"))).toBe(
+      "only if target is knocked down",
+    );
+    expect(chainRequirementText(skill("assassin.fox-fangs"))).toBe("must follow a lead attack");
+    expect(chainRequirementText(skill("assassin.jagged-strike"))).toBeUndefined();
+    const spider = skill("assassin.falling-spider");
+    const both = {
+      ...spider,
+      attack: spider.attack && {
+        ...spider.attack,
+        chain: { ...spider.attack.chain, role: "off-hand", follows: "lead" } as const,
+      },
+    };
+    expect(chainRequirementText(both)).toBe(
+      "must follow a lead attack; only if target is knocked down",
+    );
   });
 
   it("words Mind Shock's energy comparison as GW1 does (#918)", () => {

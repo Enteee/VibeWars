@@ -627,6 +627,13 @@ export interface ChainStep {
    * "Must follow a lead attack"; `undefined`: it may open a chain.
    */
   readonly follows: ChainRole | undefined;
+  /**
+   * A state that must hold for it to hit, read per victim with
+   * `stateHolds` before its first blow (#1041): Falling Spider's "Must
+   * strike a knocked-down foe". Unmet, it misses out of sequence, as an
+   * unmet `follows` does. Absent: no requirement but `follows`.
+   */
+  readonly requires?: StateCondition;
 }
 
 /** A chain mark one attacker left on one target (#831). */
