@@ -1,0 +1,25 @@
+{
+  "id": "dervish.wounding-strike",
+  "name": "Wounding Strike",
+  "profession": "dervish",
+  "attribute": "Scythe Mastery",
+  "type": "Scythe attack.",
+  "elite": true,
+  "campaign": "Nightfall",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 0,
+  "rechargeSeconds": 3,
+  "description": "If this attack hits, target foe suffers from Bleeding for 5...17...20 seconds, and you lose 1 Dervish enchantment. If an enchantment is removed, target foe also suffers from a Deep Wound for 5...17...20 seconds.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Dervish/1036-Wounding_Strike",
+    "fetchedAt": "2026-10-27T07:50:11.837Z"
+  },
+  "unmapped": {}
+}

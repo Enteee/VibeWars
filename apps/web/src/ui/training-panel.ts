@@ -83,6 +83,9 @@ import {
   castFill,
   flashSlot,
   outOfRange,
+  adrenalineFill,
+  adrenalineGaugeHtml,
+  paintAdrenalineFill,
   paintCastFill,
   paintKnockdown,
   slotAffordable,
@@ -435,7 +438,10 @@ export function createTrainingPanel(): TrainingPanel {
         () => session?.connection.ranks ?? new Map(),
       );
       // The icon alone, as on the match HUD (#719): the name is the label.
-      button.insertAdjacentHTML("afterbegin", skillIconHtml(slot.id, SKILL_SLOT_ICON_PX));
+      button.insertAdjacentHTML(
+        "afterbegin",
+        skillIconHtml(slot.id, SKILL_SLOT_ICON_PX) + adrenalineGaugeHtml(slot),
+      );
       button.insertAdjacentHTML("beforeend", skillBadgeHtml(slot.id));
       button.insertAdjacentHTML(
         "beforeend",
@@ -495,6 +501,8 @@ export function createTrainingPanel(): TrainingPanel {
         "is-unaffordable",
         !slotAffordable(slot, self, adrenaline[index] ?? 0),
       );
+      // The match HUD's gauge (#826).
+      paintAdrenalineFill(button, adrenalineFill(slot, adrenaline[index] ?? 0));
       button.classList.toggle("is-wrong-weapon", unwielded[index] === true);
       // The same wipe as the match HUD (#152).
       paintRecharge(button, recharges[index], slot.name, reducedMotion);

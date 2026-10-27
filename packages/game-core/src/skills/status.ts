@@ -26,6 +26,7 @@
  * category (`EXCLUSIVE_CATEGORIES`) is the exception: one at a time.
  */
 
+import type { ProfessionId } from "../professions.js";
 import type { Combatant, SkillEffect } from "./types.js";
 
 export type StatusCategory =
@@ -85,7 +86,11 @@ export type StatusId =
   | "healing-signet-armor"
   // Chants and weapon spells (#758).
   | "anthem-of-flame"
-  | "weapon-of-warding";
+  | "weapon-of-warding"
+  // Dervish enchantments and stances (#845).
+  | "mystic-regeneration"
+  | "fleeting-stability"
+  | "heart-of-fury";
 
 /** Health one pip of regeneration or degeneration is worth, per second (GW1). */
 export const HEALTH_PER_PIP = 2;
@@ -114,11 +119,23 @@ export interface StatusDefinition {
   readonly name: string;
   readonly category: StatusCategory;
   /**
+   * The profession of the skill that applies it (#845): "Dervish
+   * enchantment" asks this. `undefined`: a condition or anything no
+   * profession owns.
+   */
+  readonly profession: ProfessionId | undefined;
+  /**
    * Health regeneration while active, in GW1 pips (`HEALTH_PER_PIP`):
    * negative degenerates. Every status's pips sum, clamped to
    * `MAX_PIPS` either way, and apply continuously, not in lumps.
    */
   readonly healthPips: number;
+  /**
+   * Health pips for each enchantment on the bearer, itself included,
+   * counting at most `max` (#845): Mystic Regeneration. Summed with
+   * `healthPips`. `undefined`: none.
+   */
+  readonly healthPipsPerEnchantment: PipsPerEnchantment | undefined;
   /** Energy regeneration while active, in pips (`ENERGY_PER_PIP`), summed with the base. */
   readonly energyPips: number;
   /** Flat armor modifier while active. */
@@ -173,8 +190,10 @@ export interface StatusDefinition {
    * counts it.
    */
   readonly attackDurationMultiplier: number;
-  /** While active, a knockdown does nothing to the bearer (#468). No status sets it yet. */
+  /** While active, a knockdown does nothing to the bearer (#468). */
   readonly preventsKnockdown: boolean;
+  /** It ends when it stops a knockdown (#845): Fleeting Stability. */
+  readonly endsOnKnockdownPrevented: boolean;
   /** The bearer's chance to block attacks; `undefined`: none. */
   readonly block: BlockRule | undefined;
   /**
@@ -243,6 +262,12 @@ export interface ArmorReduction {
   readonly floor: number;
 }
 
+/** Pips for each enchantment on the bearer, at most `max` of them counted (#845). */
+export interface PipsPerEnchantment {
+  readonly pips: number;
+  readonly max: number;
+}
+
 /** A glyph's hold on the next spells: how many, and how much cheaper (#526). */
 export interface NextSpells {
   readonly count: number;
@@ -259,7 +284,9 @@ function define(
     id,
     name,
     category,
+    profession: undefined,
     healthPips: 0,
+    healthPipsPerEnchantment: undefined,
     energyPips: 0,
     armorModifier: 0,
     armorReduction: undefined,
@@ -273,6 +300,7 @@ function define(
     interruptsSpells: false,
     attackDurationMultiplier: 1,
     preventsKnockdown: false,
+    endsOnKnockdownPrevented: false,
     block: undefined,
     endsAfterAttacks: undefined,
     onAttackHit: [],
@@ -312,13 +340,18 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
 
   // Faintheartedness at rank 12: attacks 50% slower, −2 pips (GW1 PvP).
   faintheartedness: define("faintheartedness", "Faintheartedness", "hex", {
+    profession: "necromancer",
     healthPips: -2,
     attackDurationMultiplier: 1.5,
   }),
-  malaise: define("malaise", "Malaise", "hex", { energyPips: -1 }),
+  malaise: define("malaise", "Malaise", "hex", {
+    profession: "necromancer",
+    energyPips: -1,
+  }),
   // "Whenever target foe casts a spell, that foe takes 35...119...140
   // damage": 119, its rank-12 value.
   backfire: define("backfire", "Backfire", "hex", {
+    profession: "mesmer",
     triggers: [
       {
         on: "bearer-casts-spell",
@@ -330,6 +363,7 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   // "Whenever target foe attacks, that foe takes 15...39...45 damage"
   // (PvP): 39, its rank-12 value.
   empathy: define("empathy", "Empathy", "hex", {
+    profession: "mesmer",
     triggers: [
       {
         on: "bearer-attacks",
@@ -338,52 +372,90 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
       },
     ],
   }),
-  regeneration: define("regeneration", "Regeneration", "enchantment", { healthPips: 4 }),
-  "blood-ritual": define("blood-ritual", "Blood Ritual", "enchantment", { energyPips: 3 }),
+  // Troll Unguent's (a ranger skill), though it is an enchantment here.
+  regeneration: define("regeneration", "Regeneration", "enchantment", {
+    profession: "ranger",
+    healthPips: 4,
+  }),
+  "blood-ritual": define("blood-ritual", "Blood Ritual", "enchantment", {
+    profession: "necromancer",
+    energyPips: 3,
+  }),
   // The slow is Armor of Earth's price: without it, +24 armor is free.
   "armor-boost": define("armor-boost", "Armor Boost", "enchantment", {
+    profession: "elementalist",
     armorModifier: 24,
     moveSpeedMultiplier: 0.75,
   }),
   guardian: define("guardian", "Guardian", "enchantment", {
+    profession: "monk",
     block: { chance: 0.5, against: "all" },
   }),
 
-  sprint: define("sprint", "Sprint", "stance", { moveSpeedMultiplier: 1.25 }),
-  dash: define("dash", "Dash", "stance", { moveSpeedMultiplier: 1.5 }),
+  sprint: define("sprint", "Sprint", "stance", {
+    profession: "warrior",
+    moveSpeedMultiplier: 1.25,
+  }),
+  dash: define("dash", "Dash", "stance", { profession: "assassin", moveSpeedMultiplier: 1.5 }),
 
   // "Watch Yourself!" at rank 12: +5...21 armor, ending after 1...3 attacks.
   "watch-yourself": define("watch-yourself", "Watch Yourself!", "shout", {
+    profession: "warrior",
     armorModifier: 21,
     endsAfterAttacks: 3,
   }),
   "healing-signet-armor": define("healing-signet-armor", "Healing Signet", "skill-effect", {
+    profession: "warrior",
     armorModifier: -40,
   }),
 
   // "Enemies struck by your physical attacks become poisoned for
   // 3...13...15 seconds": 13 s, its rank-12 value.
   "apply-poison": define("apply-poison", "Apply Poison", "preparation", {
+    profession: "ranger",
     onAttackHit: [{ kind: "apply-status", statusId: "poison", durationSeconds: 13 }],
   }),
 
   // "Your next 2 spells cost 10...16...18 less Energy to cast": 16, its
   // rank-12 value; Energy Storage scaling waits for #532.
   "glyph-of-lesser-energy": define("glyph-of-lesser-energy", "Glyph of Lesser Energy", "glyph", {
+    profession: "elementalist",
     nextSpells: { count: 2, costReduction: 16 },
   }),
 
   // "The next attack skill used by each party member within earshot also
   // causes Burning for 1...3...3 seconds": 3 s, its rank-12 value.
   "anthem-of-flame": define("anthem-of-flame", "Anthem of Flame", "chant", {
+    profession: "paragon",
     nextAttackSkill: [{ kind: "apply-status", statusId: "burning", durationSeconds: 3 }],
   }),
   // "+2...4...4 Health regeneration and a 50% chance to block. Weapon of
   // Warding ends if that ally attacks."
   "weapon-of-warding": define("weapon-of-warding", "Weapon of Warding", "weapon-spell", {
+    profession: "ritualist",
     healthPips: 4,
     block: { chance: 0.5, against: "all" },
     endsWhenBearerAttacks: true,
+  }),
+
+  // "For 5...17...20 seconds, you have 1...3...4 Health regeneration for
+  // each Enchantment (maximum of 3) on you."
+  "mystic-regeneration": define("mystic-regeneration", "Mystic Regeneration", "enchantment", {
+    profession: "dervish",
+    healthPipsPerEnchantment: { pips: 3, max: 3 },
+  }),
+  // "You cannot be knocked down and move 25% faster. This enchantment
+  // ends prematurely if it prevents a knockdown."
+  "fleeting-stability": define("fleeting-stability", "Fleeting Stability", "enchantment", {
+    profession: "dervish",
+    moveSpeedMultiplier: 1.25,
+    preventsKnockdown: true,
+    endsOnKnockdownPrevented: true,
+  }),
+  // "You attack 25% faster": GW1 counts faster as 1 − x (ADR-0029).
+  "heart-of-fury": define("heart-of-fury", "Heart of Fury", "stance", {
+    profession: "dervish",
+    attackDurationMultiplier: 0.75,
   }),
 };
 
@@ -541,14 +613,24 @@ export class StatusSet {
    *
    * The newest applied goes first, as in GW1 (#521), where covering an
    * important enchantment or condition with a cheaper one is a tactic.
+   * With a `profession`, only that profession's statuses go (#845): "lose
+   * 1 Dervish enchantment".
    */
-  public removeByCategory(category: StatusCategory, count = Number.POSITIVE_INFINITY): StatusId[] {
+  public removeByCategory(
+    category: StatusCategory,
+    count = Number.POSITIVE_INFINITY,
+    profession?: ProfessionId,
+  ): StatusId[] {
     const removed: StatusId[] = [];
     for (const status of [...this.#statuses.values()].reverse()) {
       if (removed.length >= count) {
         break;
       }
-      if (getStatusDefinition(status.id).category === category) {
+      const definition = getStatusDefinition(status.id);
+      if (
+        definition.category === category &&
+        (profession === undefined || definition.profession === profession)
+      ) {
         removed.push(status.id);
       }
     }
@@ -605,6 +687,20 @@ export class StatusSet {
   public endOnBearerAttack(): StatusId[] {
     const ended = this.active
       .filter(({ id }) => getStatusDefinition(id).endsWhenBearerAttacks)
+      .map(({ id }) => id);
+    for (const id of ended) {
+      this.#statuses.delete(id);
+    }
+    return ended;
+  }
+
+  /**
+   * A knockdown was stopped (#845): every status that ends when it stops
+   * one is gone. Returns the ids that ended on it.
+   */
+  public endOnKnockdownPrevented(): StatusId[] {
+    const ended = this.active
+      .filter(({ id }) => getStatusDefinition(id).endsOnKnockdownPrevented)
       .map(({ id }) => id);
     for (const id of ended) {
       this.#statuses.delete(id);
@@ -709,7 +805,9 @@ export const HEALING_MULTIPLIER_FLOOR = 0.6;
  * health loss and an armor reduction are each the largest single one,
  * and healing is floored at `HEALING_MULTIPLIER_FLOOR`.
  * Attack duration is GW1's rule: only the strongest speed-up and the
- * strongest slow-down count, and they multiply.
+ * strongest slow-down count, and they multiply. Pips per enchantment
+ * (#845) count every enchantment in `statuses`, the one giving them
+ * included.
  */
 export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]): StatusModifiers {
   let healthPips = 0;
@@ -725,10 +823,17 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let castTimeMultiplier = 1;
   let attackFaster = 1;
   let attackSlower = 1;
+  const enchantments = statuses.filter(
+    (status) => getStatusDefinition(status.id).category === "enchantment",
+  ).length;
 
   for (const status of statuses) {
     const def = getStatusDefinition(status.id);
     healthPips += def.healthPips;
+    if (def.healthPipsPerEnchantment !== undefined) {
+      const { pips, max } = def.healthPipsPerEnchantment;
+      healthPips += pips * Math.min(enchantments, max);
+    }
     energyPips += def.energyPips;
     armorModifier += def.armorModifier;
     if (

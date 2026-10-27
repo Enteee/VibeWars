@@ -563,6 +563,7 @@ export async function startMatchView(
       // the shared viewport, so they go one by one or pile up per match.
       hud.root.remove();
       hud.slotTips.dispose();
+      hud.effects.dispose();
       hud.scoreboard.remove();
       hud.result.remove();
       offMute();

@@ -118,6 +118,25 @@ export interface RemoveStatusEffect {
   readonly kind: "remove-status";
   readonly category: StatusCategory;
   readonly count: number;
+  /**
+   * Only statuses of this profession (`StatusDefinition.profession`), as
+   * "lose 1 Dervish enchantment" (#845). Absent: any.
+   */
+  readonly profession?: ProfessionId;
+  /**
+   * `caster`: from the caster, once per use however many targets, as
+   * `heal`'s `recipient` (#845). Absent: the target.
+   */
+  readonly from?: "caster";
+}
+
+/**
+ * This use's recharge is `fraction` shorter, as Signet of Pious Light's
+ * "recharges 75% faster" (#845). Acts on the caster, once.
+ */
+export interface RechargeFasterEffect {
+  readonly kind: "recharge-faster";
+  readonly fraction: number;
 }
 
 /**
@@ -164,8 +183,12 @@ export const KNOCKDOWN_SECONDS = 2;
 export type EventCondition =
   /** An `interrupt` earlier in the list cancelled an action. */
   | { readonly kind: "interrupted" }
-  /** A `remove-status` earlier in the list removed at least one status of this category. */
-  | { readonly kind: "removed"; readonly category: StatusCategory };
+  /**
+   * A `remove-status` earlier in the list removed at least one status of
+   * this category; with `from: "caster"`, from the caster (#845), which
+   * holds for every target of that use.
+   */
+  | { readonly kind: "removed"; readonly category: StatusCategory; readonly from?: "caster" };
 
 /**
  * How the target or the caster stands (#794), read once, before any
@@ -209,7 +232,8 @@ export type UnconditionalEffect =
   | RemoveStatusEffect
   | InterruptEffect
   | KnockdownEffect
-  | ResurrectEffect;
+  | ResurrectEffect
+  | RechargeFasterEffect;
 
 export type SkillEffect = UnconditionalEffect | ConditionalEffect;
 

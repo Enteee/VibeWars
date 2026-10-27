@@ -1,6 +1,6 @@
 import { MAX_ATTRIBUTE_RANK } from "../attributes.js";
 import { AREA_ADJACENT, AREA_EARSHOT, AREA_IN_THE_AREA, AREA_NEARBY } from "../distances.js";
-import { getAttribute } from "../professions.js";
+import { getAttribute, getProfession } from "../professions.js";
 
 import { energyCostOf } from "./activation.js";
 import { resolveMagnitudeAtRanks } from "./scaling.js";
@@ -145,6 +145,12 @@ export function describeStatus(id: string): string {
   if (definition.healthPips > 0) {
     parts.push(`+${String(definition.healthPips)} Health regeneration`);
   }
+  if (definition.healthPipsPerEnchantment !== undefined) {
+    const { pips, max } = definition.healthPipsPerEnchantment;
+    parts.push(
+      `+${String(pips)} Health regeneration for each enchantment on you (at most ${String(max)})`,
+    );
+  }
   if (definition.energyPips < 0) {
     parts.push(`−${String(-definition.energyPips)} Energy degeneration`);
   }
@@ -191,6 +197,12 @@ export function describeStatus(id: string): string {
     const change = Math.round(Math.abs(definition.attackDurationMultiplier - 1) * 100);
     const way = definition.attackDurationMultiplier > 1 ? "slower" : "faster";
     parts.push(`attacks ${String(change)}% ${way}`);
+  }
+  if (definition.preventsKnockdown) {
+    parts.push("cannot be knocked down");
+  }
+  if (definition.endsOnKnockdownPrevented) {
+    parts.push("ends if it prevents a knockdown");
   }
   if (definition.block !== undefined) {
     const what = BLOCKED_ATTACKS[definition.block.against];
@@ -273,7 +285,9 @@ function conditionText(condition: EffectCondition): string {
     case "interrupted":
       return "If it interrupts";
     case "removed":
-      return `If it removes ${aCategory(condition.category)}`;
+      return condition.from === "caster"
+        ? `If ${aCategory(condition.category)} was removed`
+        : `If it removes ${aCategory(condition.category)}`;
     case "target-health-below":
       return `If target is below ${String(Math.round(condition.fraction * 100))}% Health`;
     case "target-has":
@@ -367,6 +381,16 @@ function describeEffect(
         magnitude: undefined,
       };
     case "remove-status": {
+      if (effect.from === "caster") {
+        // "Lose 1 Dervish enchantment" (#845).
+        const whose =
+          effect.profession === undefined ? "" : `${getProfession(effect.profession).name} `;
+        const plural = effect.count === 1 ? "" : "s";
+        return {
+          text: `Lose ${String(effect.count)} ${whose}${effect.category}${plural}`,
+          magnitude: undefined,
+        };
+      }
       if (effect.category === "stance") {
         return { text: "Ends the target's stance", magnitude: undefined };
       }
@@ -397,6 +421,11 @@ function describeEffect(
         magnitude: health,
       };
     }
+    case "recharge-faster":
+      return {
+        text: `This skill recharges ${String(Math.round(effect.fraction * 100))}% faster`,
+        magnitude: undefined,
+      };
   }
 }
 

@@ -7,6 +7,7 @@ import {
   applyEffects,
   applySkillEffects,
   applyStatus,
+  resolveSkillEffects,
   type CombatEvent,
 } from "./effects.js";
 import { HEALTH_PER_PIP } from "./status.js";
@@ -797,5 +798,166 @@ describe("resurrect effect (#812)", () => {
     const target = makeCombatant({ id: "target", health: 100 });
     expect(applyEffect(RESURRECT, context(monk(12), target))).toEqual([]);
     expect(target.health).toBe(100);
+  });
+});
+
+describe("losing your own enchantment (#845)", () => {
+  const rules = MINIMAL_GW_INSPIRED_PVP_V1.combat;
+  const lose = {
+    kind: "remove-status",
+    category: "enchantment",
+    count: 1,
+    profession: "dervish",
+    from: "caster",
+  } as const;
+  const ifLost: SkillEffect = {
+    kind: "if",
+    condition: { kind: "removed", category: "enchantment", from: "caster" },
+    effects: [{ kind: "damage", amount: { flat: 30 }, type: "typeless", armorPenetration: 0 }],
+  };
+  const skill = (effects: readonly SkillEffect[]): Skill => ({
+    id: "test.pious",
+    name: "Pious",
+    type: "spell",
+    elite: false,
+    profession: "dervish",
+    attributeId: undefined,
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 20,
+    range: 420,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    effects,
+  });
+  const dervish = (): Combatant => {
+    const caster = makeCombatant({ id: "caster" });
+    caster.statuses.apply("mystic-regeneration", 10, "caster");
+    caster.statuses.apply("fleeting-stability", 10, "caster");
+    return caster;
+  };
+  const foes = (): Combatant[] => ["a", "b"].map((id) => makeCombatant({ id, team: 1 }));
+
+  it("loses one from the caster, once however many are hit", () => {
+    const caster = dervish();
+    const targets = foes();
+    const events = applySkillEffects({
+      skill: skill([lose]),
+      caster,
+      targets,
+      rng: createRng(1),
+      rules,
+    });
+    expect(events).toEqual([
+      { kind: "status-removed", targetId: "caster", statusId: "fleeting-stability" },
+    ]);
+    expect(caster.statuses.has("mystic-regeneration")).toBe(true);
+  });
+
+  it("leaves a target's enchantments alone", () => {
+    const targets = foes();
+    targets[0]?.statuses.apply("mystic-regeneration", 10, "a");
+    applySkillEffects({
+      skill: skill([lose]),
+      caster: dervish(),
+      targets,
+      rng: createRng(1),
+      rules,
+    });
+    expect(targets[0]?.statuses.has("mystic-regeneration")).toBe(true);
+  });
+
+  it("then holds 'removed from the caster' for every target", () => {
+    const targets = foes();
+    applySkillEffects({
+      skill: skill([lose, ifLost]),
+      caster: dervish(),
+      targets,
+      rng: createRng(1),
+      rules,
+    });
+    expect(targets.map((target) => target.health)).toEqual([470, 470]);
+  });
+
+  it("holds it for none, with no Dervish enchantment to lose", () => {
+    const caster = makeCombatant({ id: "caster" });
+    caster.statuses.apply("guardian", 10, "monk");
+    const targets = foes();
+    const events = applySkillEffects({
+      skill: skill([lose, ifLost]),
+      caster,
+      targets,
+      rng: createRng(1),
+      rules,
+    });
+    expect(events).toEqual([]);
+    expect(caster.statuses.has("guardian")).toBe(true);
+    expect(targets.map((target) => target.health)).toEqual([500, 500]);
+  });
+
+  it("does not take a target's removal for the caster's", () => {
+    const strip = { kind: "remove-status", category: "enchantment", count: 1 } as const;
+    const target = makeCombatant({ id: "a", team: 1 });
+    target.statuses.apply("guardian", 10, "a");
+    applySkillEffects({
+      skill: skill([strip, ifLost]),
+      caster: makeCombatant({ id: "caster" }),
+      targets: [target],
+      rng: createRng(1),
+      rules,
+    });
+    expect(target.health).toBe(500);
+  });
+
+  it("shortens the recharge only when the condition held", () => {
+    const faster = {
+      kind: "if",
+      condition: { kind: "removed", category: "enchantment", from: "caster" },
+      effects: [{ kind: "recharge-faster", fraction: 0.75 }],
+    } as const;
+    const resolve = (caster: Combatant): number =>
+      resolveSkillEffects({
+        skill: skill([lose, faster]),
+        caster,
+        targets: foes(),
+        rng: createRng(1),
+        rules,
+      }).rechargeFraction;
+    expect(resolve(dervish())).toBe(0.75);
+    expect(resolve(makeCombatant({ id: "caster" }))).toBe(0);
+  });
+});
+
+describe("a knockdown prevented (#845)", () => {
+  it("does nothing to the bearer and ends Fleeting Stability", () => {
+    const target = makeCombatant({ id: "target", team: 1 });
+    target.statuses.apply("fleeting-stability", 9, "target");
+    expect(
+      applyEffect({ kind: "knockdown", durationSeconds: 2 }, context(undefined, target)),
+    ).toEqual([{ kind: "status-removed", targetId: "target", statusId: "fleeting-stability" }]);
+    expect(target.knockdownRemaining).toBe(0);
+
+    applyEffect({ kind: "knockdown", durationSeconds: 2 }, context(undefined, target));
+    expect(target.knockdownRemaining).toBe(2);
+  });
+
+  it("still stops one landing on the tick it would run out", () => {
+    const target = makeCombatant({ id: "target", team: 1 });
+    target.statuses.apply("fleeting-stability", 0.05, "target");
+    applyEffect({ kind: "knockdown", durationSeconds: 2 }, context(undefined, target));
+    expect(target.knockdownRemaining).toBe(0);
+  });
+
+  it("is not spent on someone already down", () => {
+    const target = makeCombatant({ id: "target", team: 1, knockdownRemaining: 1 });
+    target.statuses.apply("fleeting-stability", 9, "target");
+    expect(
+      applyEffect({ kind: "knockdown", durationSeconds: 2 }, context(undefined, target)),
+    ).toEqual([]);
+    expect(target.statuses.has("fleeting-stability")).toBe(true);
   });
 });
