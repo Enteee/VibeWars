@@ -50,6 +50,10 @@ export interface ResourceRules {
    * energy every 3 s, as continuous as the energy tick.
    */
   readonly overcastRecoveryPerSecond: number;
+  /** Adrenaline does not keep between fights (GW1, #828): this long out of combat, it all goes. */
+  readonly adrenalineLossSeconds: number;
+  /** For this long before then, a slot with adrenaline in it blinks. */
+  readonly adrenalineWarningSeconds: number;
 }
 
 /**
@@ -141,6 +145,8 @@ export const MINIMAL_GW_INSPIRED_PVP_V1: Ruleset = Object.freeze({
     naturalRegenStepSeconds: 2,
     naturalRegenMaxPips: 7,
     overcastRecoveryPerSecond: 1 / 3,
+    adrenalineLossSeconds: 25,
+    adrenalineWarningSeconds: 5,
   }),
   combat: Object.freeze({
     // 60 is every caster profession's base armor. Anchoring here is what

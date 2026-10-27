@@ -47,7 +47,7 @@ function maintained(id: StatusId): ActiveStatus {
   return {
     ...status(id, Infinity),
     durationSeconds: Infinity,
-    maintained: { seq: 0 },
+    maintained: { seq: 0, outOfRangeSeconds: 0 },
   };
 }
 

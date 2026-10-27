@@ -449,9 +449,11 @@ export interface ActiveStatus {
   /**
    * Set for a maintained enchantment (#837): one with no end of its own,
    * which costs its caster an energy pip while it lasts. `seq` orders its
-   * caster's, newest highest. `null` for every other status.
+   * caster's, newest highest. `outOfRangeSeconds`: how long its bearer has
+   * been beyond compass range of its caster, without a break (#839).
+   * `null` for every other status.
    */
-  readonly maintained: { readonly seq: number } | null;
+  readonly maintained: { readonly seq: number; outOfRangeSeconds: number } | null;
 }
 
 export function isStatusId(value: unknown): value is StatusId {
@@ -585,7 +587,7 @@ export class StatusSet {
       spellsLeft: undefined,
       sourceId,
       outbreak: null,
-      maintained: { seq },
+      maintained: { seq, outOfRangeSeconds: 0 },
     });
     return !wasActive;
   }
