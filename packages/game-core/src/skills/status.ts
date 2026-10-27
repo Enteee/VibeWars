@@ -26,6 +26,7 @@
  * category (`EXCLUSIVE_CATEGORIES`) is the exception: one at a time.
  */
 
+import { AREA_IN_THE_AREA } from "../distances.js";
 import type { ProfessionId } from "../professions.js";
 import type { Combatant, SkillEffect } from "./types.js";
 
@@ -68,6 +69,12 @@ export type StatusId =
   // Hexes / enchantments implemented so far.
   | "faintheartedness"
   | "malaise"
+  | "backfire"
+  | "empathy"
+  | "parasitic-bond"
+  | "contagion"
+  | "shard-storm"
+  | "shadow-of-fear"
   | "regeneration"
   | "blood-ritual"
   | "armor-boost"
@@ -76,6 +83,9 @@ export type StatusId =
   // Stances.
   | "sprint"
   | "dash"
+  | "frenzy"
+  | "dark-escape"
+  | "natural-stride"
   // Preparations.
   | "apply-poison"
   // Glyphs.
@@ -231,7 +241,72 @@ export interface StatusDefinition {
    * releases a shot, swing or attack skill alike. A weapon spell's price.
    */
   readonly endsWhenBearerAttacks: boolean;
+  /**
+   * It ends the moment one of the bearer's attacks hits (#919): a blow
+   * lands, swing, attack skill or arrow alike. A miss or a block keeps
+   * it. Dark Escape's price.
+   */
+  readonly endsWhenBearerHits: boolean;
+  /**
+   * It ends the moment a new status of one of these categories lands on
+   * the bearer (#919): Natural Stride's hex or enchantment. A refresh of
+   * one already on it does not end it.
+   */
+  readonly endsWhenBearerGains: readonly ("hex" | "enchantment")[];
+  /**
+   * Multiplier on the damage the bearer takes (#919): Frenzy's 2, Dark
+   * Escape's 0.5. Applied to every damage packet after armor; health
+   * loss and degeneration never pass through it.
+   */
+  readonly damageTakenMultiplier: number;
+  /**
+   * What it does when its bearer does something (#469): Backfire's damage
+   * on each spell the bearer finishes. Applied by whoever put it on.
+   */
+  readonly triggers: readonly StatusTrigger[];
 }
+
+/**
+ * Something that happens to the bearer that a status answers (#469):
+ * it casts a spell, attacks, gains a condition it did not have (#887), or
+ * the status itself ends, for any reason but a refresh or a reset (#887).
+ */
+export type StatusTriggerEvent =
+  "bearer-casts-spell" | "bearer-attacks" | "bearer-gains-condition" | "ends";
+
+export interface StatusTrigger {
+  readonly on: StatusTriggerEvent;
+  /**
+   * Applied with the status's source as caster, on `target`: the bearer
+   * (Backfire's damage), or the source itself (Parasitic Bond's heal, #887).
+   */
+  readonly effects: readonly TriggerEffect[];
+  readonly target: "bearer" | "source";
+  /** The skill the log names it after: "mesmer.backfire". */
+  readonly skillId: string;
+}
+
+/**
+ * Contagion's spread (#887): the condition the bearer just gained, for the
+ * duration it was put on the bearer, on every living foe of the bearer
+ * within `radius` of it. It needs positions, so the simulation resolves it.
+ */
+export interface SpreadGainedConditionEffect {
+  readonly kind: "spread-gained-condition";
+  readonly radius: number;
+}
+
+/** What a trigger can do: any skill effect, or Contagion's spread. */
+export type TriggerEffect = SkillEffect | SpreadGainedConditionEffect;
+
+/**
+ * What happened to a `StatusSet` that a trigger may answer (#887), in the
+ * order it happened, until the simulation drains it: a condition newly on
+ * the bearer, or a status gone from it, with who had applied it.
+ */
+export type StatusChange =
+  | { readonly kind: "gained-condition"; readonly id: StatusId; readonly durationSeconds: number }
+  | { readonly kind: "ended"; readonly id: StatusId; readonly sourceId: string };
 
 /** A share of maximum health a status takes, at most `cap` (GW1's deep wound). */
 export interface MaxHealthLoss {
@@ -291,6 +366,10 @@ function define(
     spreads: false,
     nextAttackSkill: undefined,
     endsWhenBearerAttacks: false,
+    endsWhenBearerHits: false,
+    endsWhenBearerGains: [],
+    damageTakenMultiplier: 1,
+    triggers: [],
     ...overrides,
   };
 }
@@ -330,6 +409,74 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     profession: "necromancer",
     energyPips: -1,
   }),
+  // "Whenever target foe casts a spell, that foe takes 35...119...140
+  // damage": 119, its rank-12 value.
+  backfire: define("backfire", "Backfire", "hex", {
+    profession: "mesmer",
+    triggers: [
+      {
+        on: "bearer-casts-spell",
+        effects: [{ kind: "damage", amount: { flat: 119 }, type: "typeless", armorPenetration: 0 }],
+        target: "bearer",
+        skillId: "mesmer.backfire",
+      },
+    ],
+  }),
+  // "Whenever target foe attacks, that foe takes 15...39...45 damage"
+  // (PvP): 39, its rank-12 value.
+  empathy: define("empathy", "Empathy", "hex", {
+    profession: "mesmer",
+    triggers: [
+      {
+        on: "bearer-attacks",
+        effects: [{ kind: "damage", amount: { flat: 39 }, type: "typeless", armorPenetration: 0 }],
+        target: "bearer",
+        skillId: "mesmer.empathy",
+      },
+    ],
+  }),
+  // "For 20 seconds, target foe suffers health degeneration of 1. The
+  // caster is healed for 30...102...120 when Parasitic Bond ends": 102,
+  // its rank-12 value.
+  "parasitic-bond": define("parasitic-bond", "Parasitic Bond", "hex", {
+    profession: "necromancer",
+    healthPips: -1,
+    triggers: [
+      {
+        on: "ends",
+        effects: [{ kind: "heal", amount: { flat: 102 }, perStatusOnTarget: [] }],
+        target: "source",
+        skillId: "necromancer.parasitic-bond",
+      },
+    ],
+  }),
+  // "For 60 seconds, whenever you suffer from a new Condition, all foes in
+  // the area suffer from that same Condition and you sacrifice
+  // 10...6...5% maximum Health": 6%, its rank-12 value.
+  contagion: define("contagion", "Contagion", "enchantment", {
+    profession: "necromancer",
+    triggers: [
+      {
+        on: "bearer-gains-condition",
+        effects: [
+          { kind: "spread-gained-condition", radius: AREA_IN_THE_AREA },
+          { kind: "sacrifice-health", percentOfMax: 6 },
+        ],
+        target: "bearer",
+        skillId: "necromancer.contagion",
+      },
+    ],
+  }),
+  // "...move 66% slower for 2...5...6 seconds" (#918).
+  "shard-storm": define("shard-storm", "Shard Storm", "hex", {
+    profession: "elementalist",
+    moveSpeedMultiplier: 0.34,
+  }),
+  // "...attack 50% slower": Faintheartedness's slow without its degeneration (#918).
+  "shadow-of-fear": define("shadow-of-fear", "Shadow of Fear", "hex", {
+    profession: "necromancer",
+    attackDurationMultiplier: 1.5,
+  }),
   // Troll Unguent's (a ranger skill), though it is an enchantment here.
   regeneration: define("regeneration", "Regeneration", "enchantment", {
     profession: "ranger",
@@ -357,6 +504,30 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     moveSpeedMultiplier: 1.25,
   }),
   dash: define("dash", "Dash", "stance", { profession: "assassin", moveSpeedMultiplier: 1.5 }),
+  // "For 8 seconds, you attack 33% faster but take double damage": faster
+  // is 1 − x (ADR-0029).
+  frenzy: define("frenzy", "Frenzy", "stance", {
+    profession: "warrior",
+    attackDurationMultiplier: 0.67,
+    damageTakenMultiplier: 2,
+  }),
+  // "For 5...13...15 seconds, you move 25% faster and take half damage.
+  // Dark Escape ends if you successfully hit with an attack."
+  "dark-escape": define("dark-escape", "Dark Escape", "stance", {
+    profession: "assassin",
+    moveSpeedMultiplier: 1.25,
+    damageTakenMultiplier: 0.5,
+    endsWhenBearerHits: true,
+  }),
+  // "For 1...7...8 seconds, you run 33% faster and have a 50% chance to
+  // block incoming attacks. Natural Stride ends if you become Hexed or
+  // Enchanted."
+  "natural-stride": define("natural-stride", "Natural Stride", "stance", {
+    profession: "ranger",
+    moveSpeedMultiplier: 1.33,
+    block: { chance: 0.5, against: "all" },
+    endsWhenBearerGains: ["hex", "enchantment"],
+  }),
 
   // "Watch Yourself!" at rank 12: +5...21 armor, ending after 1...3 attacks.
   "watch-yourself": define("watch-yourself", "Watch Yourself!", "shout", {
@@ -449,9 +620,11 @@ export interface ActiveStatus {
   /**
    * Set for a maintained enchantment (#837): one with no end of its own,
    * which costs its caster an energy pip while it lasts. `seq` orders its
-   * caster's, newest highest. `null` for every other status.
+   * caster's, newest highest. `outOfRangeSeconds`: how long its bearer has
+   * been beyond compass range of its caster, without a break (#839).
+   * `null` for every other status.
    */
-  readonly maintained: { readonly seq: number } | null;
+  readonly maintained: { readonly seq: number; outOfRangeSeconds: number } | null;
 }
 
 export function isStatusId(value: unknown): value is StatusId {
@@ -473,6 +646,35 @@ export function getStatusDefinition(id: StatusId): StatusDefinition {
  */
 export class StatusSet {
   readonly #statuses = new Map<StatusId, ActiveStatus>();
+  #changes: StatusChange[] = [];
+
+  /**
+   * What happened to this set since the last drain (#887), oldest first,
+   * and forget it: the simulation reads it once a tick for the triggers.
+   */
+  public drainChanges(): StatusChange[] {
+    const changes = this.#changes;
+    this.#changes = [];
+    return changes;
+  }
+
+  /** Take `ids` off the bearer, each recorded as ended. */
+  #end(ids: readonly StatusId[]): void {
+    for (const id of ids) {
+      const status = this.#statuses.get(id);
+      if (status !== undefined) {
+        this.#statuses.delete(id);
+        this.#changes.push({ kind: "ended", id, sourceId: status.sourceId });
+      }
+    }
+  }
+
+  /** Record a condition newly on the bearer (#887); any other category is not one. */
+  #gained(id: StatusId, durationSeconds: number): void {
+    if (getStatusDefinition(id).category === "condition") {
+      this.#changes.push({ kind: "gained-condition", id, durationSeconds });
+    }
+  }
 
   public get active(): readonly ActiveStatus[] {
     return [...this.#statuses.values()];
@@ -502,7 +704,8 @@ export class StatusSet {
    *
    * Returns whether it is newly on the bearer: `false` for a refresh, or
    * for a duration of nothing. What a status does once, as it lands
-   * (deep wound's health), hangs on this.
+   * (deep wound's health), hangs on this. A status newly on it ends every
+   * one that ends when its bearer gains that category (#919).
    */
   public apply(id: StatusId, durationSeconds: number, sourceId: string): boolean {
     if (durationSeconds <= 0) {
@@ -533,6 +736,10 @@ export class StatusSet {
       outbreak,
       maintained: null,
     });
+    if (!wasActive) {
+      this.#gained(id, durationSeconds);
+      this.#endOnGaining(definition.category);
+    }
     return !wasActive;
   }
 
@@ -562,6 +769,7 @@ export class StatusSet {
       outbreak,
       maintained: null,
     });
+    this.#gained(id, durationSeconds);
   }
 
   /**
@@ -569,7 +777,7 @@ export class StatusSet {
    * something ends it, so `advance` never expires it. One of the same id
    * already on the bearer is replaced, whoever maintains it, and this one
    * is the newest, as `apply` makes it. Returns whether it is newly on the
-   * bearer. Throws for a status that is not an enchantment: a catalog bug,
+   * bearer; one that is ends what `apply` would end. Throws for a status that is not an enchantment: a catalog bug,
    * not data.
    */
   public maintain(id: StatusId, sourceId: string, seq: number): boolean {
@@ -585,19 +793,38 @@ export class StatusSet {
       spellsLeft: undefined,
       sourceId,
       outbreak: null,
-      maintained: { seq },
+      maintained: { seq, outOfRangeSeconds: 0 },
     });
+    if (!wasActive) {
+      this.#endOnGaining("enchantment");
+    }
     return !wasActive;
   }
 
-  /** Remove every status, of every category: what a respawn leaves. */
+  /** A status of `category` is newly on the bearer (#919): Natural Stride ends on a hex. */
+  #endOnGaining(category: StatusCategory): void {
+    this.#end(
+      this.active
+        .filter(({ id }) =>
+          getStatusDefinition(id).endsWhenBearerGains.some((gained) => gained === category),
+        )
+        .map(({ id }) => id),
+    );
+  }
+
+  /**
+   * Remove every status, of every category: what a respawn leaves. A
+   * reset, not an ending: nothing is recorded (#887).
+   */
   public clear(): void {
     this.#statuses.clear();
   }
 
   /** Remove one status by id. Returns whether anything was removed. */
   public remove(id: StatusId): boolean {
-    return this.#statuses.delete(id);
+    const had = this.#statuses.has(id);
+    this.#end([id]);
+    return had;
   }
 
   /**
@@ -628,9 +855,7 @@ export class StatusSet {
         removed.push(status.id);
       }
     }
-    for (const id of removed) {
-      this.#statuses.delete(id);
-    }
+    this.#end(removed);
     return removed;
   }
 
@@ -648,9 +873,7 @@ export class StatusSet {
         }
       }
     }
-    for (const id of ended) {
-      this.#statuses.delete(id);
-    }
+    this.#end(ended);
     return ended;
   }
 
@@ -668,9 +891,7 @@ export class StatusSet {
         }
       }
     }
-    for (const id of ended) {
-      this.#statuses.delete(id);
-    }
+    this.#end(ended);
     return ended;
   }
 
@@ -682,9 +903,19 @@ export class StatusSet {
     const ended = this.active
       .filter(({ id }) => getStatusDefinition(id).endsWhenBearerAttacks)
       .map(({ id }) => id);
-    for (const id of ended) {
-      this.#statuses.delete(id);
-    }
+    this.#end(ended);
+    return ended;
+  }
+
+  /**
+   * One of the bearer's attacks hit (#919): every status that ends when it
+   * does is gone. Returns the ids that ended on it.
+   */
+  public endOnBearerHit(): StatusId[] {
+    const ended = this.active
+      .filter(({ id }) => getStatusDefinition(id).endsWhenBearerHits)
+      .map(({ id }) => id);
+    this.#end(ended);
     return ended;
   }
 
@@ -696,10 +927,22 @@ export class StatusSet {
     const ended = this.active
       .filter(({ id }) => getStatusDefinition(id).endsOnKnockdownPrevented)
       .map(({ id }) => id);
-    for (const id of ended) {
-      this.#statuses.delete(id);
-    }
+    this.#end(ended);
     return ended;
+  }
+
+  /**
+   * Every trigger on the bearer that answers `event` (#469), in `active`
+   * order, with who applied the status that holds it.
+   */
+  public triggersOn(
+    event: StatusTriggerEvent,
+  ): { statusId: StatusId; sourceId: string; trigger: StatusTrigger }[] {
+    return this.active.flatMap(({ id, sourceId }) =>
+      getStatusDefinition(id)
+        .triggers.filter((trigger) => trigger.on === event)
+        .map((trigger) => ({ statusId: id, sourceId, trigger })),
+    );
   }
 
   public countByCategory(category: StatusCategory): number {
@@ -725,9 +968,7 @@ export class StatusSet {
         expired.push(status.id);
       }
     }
-    for (const id of expired) {
-      this.#statuses.delete(id);
-    }
+    this.#end(expired);
     return expired;
   }
 }
@@ -769,6 +1010,8 @@ export interface StatusModifiers {
   readonly attributeDelta: number;
   readonly castTimeMultiplier: number;
   readonly attackDurationMultiplier: number;
+  /** Every status's, multiplied (#919). */
+  readonly damageTakenMultiplier: number;
 }
 
 /** The weakest heals get, whatever reduces them (GW1: at most −40%). */
@@ -778,8 +1021,8 @@ export const HEALING_MULTIPLIER_FLOOR = 0.6;
  * Collapse every active status into one set of modifiers.
  *
  * Additive effects (health and energy pips, armor, attributes) sum;
- * multiplicative ones (move speed, healing, weapon damage, cast time)
- * multiply; miss chance takes the
+ * multiplicative ones (move speed, healing, weapon damage, cast time,
+ * damage taken) multiply; miss chance takes the
  * worst rather than compounding, so two blinding effects cannot push a
  * player past certain failure in a way that feels arbitrary. A maximum
  * health loss and an armor reduction are each the largest single one,
@@ -803,6 +1046,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let castTimeMultiplier = 1;
   let attackFaster = 1;
   let attackSlower = 1;
+  let damageTakenMultiplier = 1;
   const enchantments = statuses.filter(
     (status) => getStatusDefinition(status.id).category === "enchantment",
   ).length;
@@ -836,6 +1080,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     castTimeMultiplier *= def.castTimeMultiplier;
     attackFaster = Math.min(attackFaster, def.attackDurationMultiplier);
     attackSlower = Math.max(attackSlower, def.attackDurationMultiplier);
+    damageTakenMultiplier *= def.damageTakenMultiplier;
   }
 
   return {
@@ -851,6 +1096,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     attributeDelta,
     castTimeMultiplier,
     attackDurationMultiplier: attackFaster * attackSlower,
+    damageTakenMultiplier,
   };
 }
 

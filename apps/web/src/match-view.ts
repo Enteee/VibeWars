@@ -502,6 +502,8 @@ export async function startMatchView(
       target,
       connection.skillBar,
       connection.getAdrenaline(),
+      connection.getAdrenalineLossIn(),
+      (targetId) => connection.getChainMark(targetId),
       wallSegments,
       latestMatch,
     );

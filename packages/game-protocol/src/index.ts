@@ -14,6 +14,7 @@ export { PROTOCOL_VERSION } from "./protocol-version.js";
 
 export {
   PROTOCOL_MISMATCH_MESSAGE,
+  CHAIN_ROLES,
   MAX_LOBBY_PLAYERS,
   isLobbyCode,
   normalizeLobbyCode,
@@ -34,6 +35,9 @@ export type {
   EndUpkeepIntent,
   CastRefusedMessage,
   AdrenalineMessage,
+  ChainMarksMessage,
+  WireChainMark,
+  WireChainRole,
   RechargeMessage,
   RechargeSlot,
   MapDescriptor,
@@ -88,12 +92,15 @@ export {
   parseWireEnded,
   parseCastRefused,
   parseAdrenaline,
+  parseChainMarks,
   parseRecharge,
   LOBBY_REFUSALS,
   parsePeerLobbyJoin,
   parseWireLobbyState,
   parseWireLobbyCommand,
   parseWireLobbyNote,
+  parsePeerLobbyHello,
+  parseWireLobbyWelcome,
   parseWireMatchStart,
 } from "./p2p.js";
 
@@ -127,6 +134,9 @@ export type {
   WireLobbyState,
   WireLobbyCommand,
   WireLobbyNote,
+  PeerLobbyHello,
+  WireLobbyWelcome,
+  WireAdmission,
   LobbyRefusal,
   WireMatchStart,
 } from "./p2p.js";

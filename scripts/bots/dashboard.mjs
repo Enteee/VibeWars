@@ -389,6 +389,7 @@ function linesOf(section, pane) {
           build: build(),
           claude: readUsage(usage, now, readLimit(ROOT, staff, now)),
           telegram: telegram(),
+          kpi: { file: hubFile("kpis.json"), now },
         },
         pane,
       );

@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
+import type { ChainRole } from "@vibewars/game-core";
 import type { CastRefusedMessage } from "@vibewars/game-protocol";
 import type { PlayerSnapshot } from "@vibewars/game-session";
 
@@ -26,6 +27,7 @@ import {
   targetHintDismissed,
   targetEffectRows,
   targetProfessionIcons,
+  targetChainIcon,
   targetWeaponIcon,
 } from "./hud.js";
 
@@ -218,6 +220,22 @@ describe("describeOutcome", () => {
 
   it("falls back to naming the team for a spectator with no team of their own", () => {
     expect(describeOutcome(1, "score", undefined)).toBe("Team 2 wins");
+  });
+
+  it("reads an annihilation win plainly and a win at time as by morale (#846)", () => {
+    expect(describeOutcome(0, "annihilation", 0)).toBe("Victory");
+    expect(describeOutcome(0, "annihilation", 1)).toBe("Defeat");
+    expect(describeOutcome(1, "morale", 1)).toBe("Victory (morale)");
+    expect(describeOutcome(1, "morale", 0)).toBe("Defeat (morale)");
+    expect(describeOutcome(1, "morale", undefined)).toBe("Team 2 wins (morale)");
+  });
+
+  it("calls an annihilation match nobody won a defeat for both teams, never a draw (#846)", () => {
+    expect(describeOutcome(undefined, "annihilation", 0)).toBe("Defeat");
+    expect(describeOutcome(undefined, "annihilation", 1)).toBe("Defeat");
+    expect(describeOutcome(undefined, "morale", 0)).toBe("Defeat (morale)");
+    expect(describeOutcome(undefined, "annihilation", undefined)).toBe("No winner");
+    expect(describeOutcome(undefined, "morale", undefined)).toBe("No winner (morale)");
   });
 });
 
@@ -489,6 +507,36 @@ describe("targetWeaponIcon (#419)", () => {
     expect(targetWeaponIcon(undefined)).toBeUndefined();
     expect(targetWeaponIcon(armed(undefined))).toBeUndefined();
     expect(targetWeaponIcon(armed("lightsaber"))).toBeUndefined();
+  });
+});
+
+describe("targetChainIcon (#916)", () => {
+  const foe = (sessionId: string): PlayerSnapshot => ({ sessionId }) as PlayerSnapshot;
+  const marks = new Map<string, ChainRole>([
+    ["bob", "lead"],
+    ["cy", "off-hand"],
+    ["dee", "dual"],
+  ]);
+  const yours = (targetId: string): ChainRole | undefined => marks.get(targetId);
+
+  it("shows your mark on the target, named for alt and title", () => {
+    const icon = targetChainIcon(foe("bob"), yours);
+    expect(icon?.name).toBe("lead attack landed");
+    expect(icon?.src).toMatch(/icons\/ui\/chain-lead\.svg$/);
+    expect(targetChainIcon(foe("cy"), yours)?.src).toMatch(/icons\/ui\/chain-off-hand\.svg$/);
+    expect(targetChainIcon(foe("dee"), yours)?.name).toBe("dual attack landed");
+  });
+
+  it("follows the target: another target shows its own mark, or none", () => {
+    expect(targetChainIcon(foe("cy"), yours)?.name).toBe("off-hand attack landed");
+    expect(targetChainIcon(foe("eve"), yours)).toBeUndefined();
+    expect(targetChainIcon(foe("bob"), yours)?.name).toBe("lead attack landed");
+  });
+
+  it("is nothing with no target, or once the mark has run out", () => {
+    expect(targetChainIcon(undefined, yours)).toBeUndefined();
+    marks.delete("bob");
+    expect(targetChainIcon(foe("bob"), yours)).toBeUndefined();
   });
 });
 

@@ -6,13 +6,17 @@ import {
   parsePeerRejoinChallenge,
   parsePeerWelcome,
   parseAdrenaline,
+  parseChainMarks,
   parseRecharge,
   parseWireCalls,
   parseWireCombatBatch,
   parseWireEnded,
   parseWireSkillBar,
   parseWireSnapshotPart,
+  type AdrenalineMessage,
   type CastRefusedMessage,
+  type ChainMarksMessage,
+  type WireChainRole,
   type Channel,
   type ClientIntent,
   type PeerBye,
@@ -114,8 +118,19 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
     { readonly wire: WireSnapshot; readonly players: readonly PlayerSnapshot[] } | undefined;
   let ended: WireEnded | undefined;
   let recharges: Recharges = { slots: [], at: 0 };
-  /** Your own adrenaline per slot, as last sent (#463). */
-  let adrenaline: readonly number[] = [];
+  /**
+   * Your own adrenaline per slot as last sent (#463), with when its loss
+   * was due, and the match time it came at (#828).
+   */
+  let adrenaline: { readonly message: AdrenalineMessage; readonly at: number } = {
+    message: { slots: [], lossInSeconds: null },
+    at: 0,
+  };
+  /** The chain marks you placed as last sent, and the match time they came at (#916). */
+  let chain: { readonly message: ChainMarksMessage; readonly at: number } = {
+    message: { marks: [] },
+    at: 0,
+  };
   /** Your team's calls as last sent, and the match time they came at (#443). */
   let calls: { readonly wire: WireCalls; readonly at: number } | undefined;
   let lost = false;
@@ -224,7 +239,10 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
     recharges = { slots: message.slots, at: elapsed() };
   });
   fromHost("adrenaline", parseAdrenaline, (message) => {
-    adrenaline = message.slots;
+    adrenaline = { message, at: elapsed() };
+  });
+  fromHost("chain", parseChainMarks, (message) => {
+    chain = { message, at: elapsed() };
   });
   fromHost("calls", parseWireCalls, (message) => {
     calls = { wire: message, at: elapsed() };
@@ -352,7 +370,21 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
         refusalHandlers.push(handler);
       },
       getAdrenaline(): readonly number[] {
-        return bar.slots.map((_, slot) => adrenaline[slot] ?? 0);
+        return bar.slots.map((_, slot) => adrenaline.message.slots[slot] ?? 0);
+      },
+      getAdrenalineLossIn(): number | null {
+        // Counted down on the match clock, as a recharge is.
+        const { lossInSeconds } = adrenaline.message;
+        return lossInSeconds === null
+          ? null
+          : Math.max(0, lossInSeconds - (elapsed() - adrenaline.at));
+      },
+      getChainMark(targetId: string): WireChainRole | undefined {
+        // Counted down on the match clock, as a recharge is: one run out reads as none.
+        const mark = chain.message.marks.find((candidate) => candidate.targetId === targetId);
+        return mark !== undefined && mark.remainingSeconds - (elapsed() - chain.at) > 0
+          ? mark.role
+          : undefined;
       },
       getRecharges(): readonly SlotRecharge[] {
         // Counted down on the match clock: no wall time crosses the wire.

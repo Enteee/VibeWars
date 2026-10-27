@@ -46,6 +46,7 @@ export type {
   Ruleset,
 } from "./ruleset.js";
 export { ADRENALINE_PER_STRIKE, MINIMAL_GW_INSPIRED_PVP_V1 } from "./ruleset.js";
+export { adrenalineLossIn } from "./skills/adrenaline.js";
 
 export type { AttributeDefinition, ProfessionDefinition, ProfessionId } from "./professions.js";
 export { PROFESSIONS, getAttribute, getProfession, primaryAttributeOf } from "./professions.js";
@@ -89,15 +90,26 @@ export { DEFAULT_SKILL_BAR, HOUSE_LOADOUT, resolveJoinLoadout } from "./join-loa
 
 export * from "./skills/index.js";
 
-export type { MatchOutcome, MatchPhase, MatchRules, MatchScore } from "./match-rules.js";
+export type {
+  MatchEndReason,
+  MatchOutcome,
+  MatchPhase,
+  MatchRules,
+  MatchScore,
+  MatchStanding,
+  TeamStanding,
+} from "./match-rules.js";
 export {
+  ANNIHILATION_MATCH_RULES,
   DEATH_PENALTY_PERCENT,
   DEFAULT_MATCH_RULES,
   DP_GRACE_AFTER_RES_SECONDS,
+  KILL_COUNT_MATCH_RULES,
   KILL_MORALE_PERCENT,
   MATCH_IN_PROGRESS,
   MORALE_CEILING,
   MORALE_FLOOR,
+  RANDOM_ARENA_RULES,
   addKill,
   emptyScore,
   evaluateMatch,

@@ -19,14 +19,12 @@ import {
  * `catalog.test.ts`.
  */
 
-/** The seven corpus skills that have no implementation. Kept literal on purpose. */
+/** The five corpus skills that have no implementation. Kept literal on purpose. */
 const KNOWN_UNIMPLEMENTED = [
   "elementalist.meteor-shower",
   "mesmer.arcane-echo",
   "mesmer.echo",
   "monk.contemplation-of-purity",
-  "necromancer.contagion",
-  "necromancer.parasitic-bond",
   "warrior.whirlwind-attack",
 ] as const;
 

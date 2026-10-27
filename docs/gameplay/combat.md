@@ -89,6 +89,13 @@ empties its own pool and takes one strike from every other, at
 activation, so an interrupted one has still paid; an attack skill that
 lands then earns its strike back like any blow. Death, respawn and a
 reset empty every pool.
+Adrenaline does not keep between fights (#828): **25 s out of combat**
+(`adrenalineLossSeconds`) and every pool empties at once. A blow or an
+attack skill you start, a foe's blow or attack skill at you (even one
+for 0 or blocked), damage from a foe, and any adrenaline gained start
+the 25 s again; healing, a spell and walking do not. For the last 5 s
+(`adrenalineWarningSeconds`) every slot holding some blinks, charged or
+not.
 Your adrenaline is yours alone: it is sent to you, never in the shared
 snapshot, and a slot greys until its own skill is charged.
 
@@ -144,6 +151,8 @@ before any of their effects. Word of Healing heals 98 more (Healing
 Prayers 12) for an ally below half of its maximum health, a maximum a
 deep wound has lowered; its own heal cannot cancel the bonus. Mystic
 Sweep's blow deals 10 more while you are enchanted, in the same number.
+**Dwayna's Kiss** (#920) heals another ally 51, and 30 more for each
+enchantment and hex on it as the heal lands.
 
 ## Interrupts
 
@@ -163,6 +172,10 @@ interrupt a spell or a chant; against an attack skill, a signet or an idle
 foe they are a wasted cast. When they land, Power Spike deals damage and
 Power Drain gives you energy.
 
+**Leech Signet** (#920) interrupts anything being cast, as a plain
+interrupt does, and gives you 13 energy only if what it cancelled was a
+spell. A signet, it costs nothing.
+
 **Savage Shot** (#794) interrupts whatever its arrow finds being cast, and
 hits 25 harder if that was a spell: one bigger number on the hit, read
 as the arrow lands. A block or a miss does neither.
@@ -176,6 +189,36 @@ taken, so a foe at 3 energy loses 3, and one at 0 loses nothing and takes
 no damage. Maximum energy is untouched, and a foe drained mid-cast keeps
 casting: energy is paid when a cast starts. The loss floats over the foe
 in blue, "−8 energy", and the Training log has a row for it.
+
+**Energy Surge** (#920) takes up to 8 energy from its target, which
+takes 7 damage for each point it lost; every foe nearby it takes 75% of
+that, rounded. The foes around it lose no energy themselves, and your
+allies are never hit.
+
+## Reactive hexes
+
+Some Mesmer hexes punish what their target does (#469). **Backfire**
+deals 119 damage to its target each time it finishes a spell, for 10 s;
+**Empathy** deals 39 each time it attacks, for 13 s: a swing, a shot or
+an attack skill, hit, miss or block alike, one attack skill counting
+once. A flying spell backfires as it leaves the hand. An interrupted or
+cancelled spell, a signet or a shout does nothing. The damage ignores
+armor and is the Mesmer's: the log names their Backfire or Empathy, it
+counts toward their damage, and a kill is theirs, even after they died.
+A Mesmer who has left the match hurts nobody.
+
+Two Necromancer skills answer a status changing (#887). **Contagion**
+(elite enchantment on yourself, 60 s): each time you gain a condition
+you did not already have, every living foe within the area of you gets
+the same condition, for as long as it was put on you, and you sacrifice
+6% of your maximum health, foes in reach or not. A condition you
+already had, refreshed or not, does nothing. **Parasitic Bond** (hex,
+20 s) gives its target −1 health degeneration and heals its caster for
+102 when it ends: when it runs out, or when it is removed. Re-casting it
+on a target that still has it heals nothing; the respawn of its target
+heals nothing either, and neither does a caster who has died or left.
+What a trigger does never sets off another trigger: a condition
+Contagion hands to a foe with Contagion goes no further.
 
 ## Knockdown
 
@@ -328,7 +371,7 @@ or a death ends it with the enchantment. Mending (Monk, Healing Prayers,
 yourself. Recasting it on the same ally is still one, and becomes your
 newest. Another Monk's Mending on that ally replaces yours, and your
 upkeep ends with it. Its icon has no duration bar, and its hover says
-"maintained". It ends by itself in three ways:
+"maintained". It ends by itself in four ways:
 
 - **Can't pay.** At 0 energy, with net energy pips below 0 before the
   clamp, your newest maintained enchantment ends, then the next, until
@@ -339,12 +382,19 @@ upkeep ends with it. Its icon has no duration bar, and its hover says
   newest always stays.
 - **Death.** Your death ends everything you maintain. Your bearer's
   death ends what is on them, and resurrection does not bring it back.
+- **Out of range.** A bearer beyond compass range of you (1,700 units,
+  GW1's ~5,000 rescaled by ~0.34) for more than 5 s loses it, with no
+  log row (#839). Coming back inside, exactly 1,700 included, starts the
+  5 s again. One on yourself never ends this way. It can happen only on
+  the large arenas, such as Canyon or Ring.
 
 Your effects monitor shows every enchantment you maintain (#838): those
 on yourself among your own effects, those on others after them, ticked
 as yours, with no bar and the hover "Mending on X — maintained, −1
-energy". **Double-click** one to end it: it leaves its bearer at once,
-for free, with no log row, and your upkeep stops with it. The host
+energy — double-click to end" (#907). **Double-click** one to end it:
+it leaves its bearer at once, for free, with no log row, and your
+upkeep stops with it. The target frame's monitor cannot end one, so
+its hover leaves the hint out. The host
 refuses quietly a request to end anything that is not yours to end.
 
 Degeneration applies **continuously** (`pips × 2 × dt`), not in once-per-
@@ -377,6 +427,16 @@ at its full duration. A stance is not an enchantment: enchantment removal
 leaves it alone, and stance removal leaves your enchantments. Sprint
 (Warrior, 13 s) moves you 25% faster; Dash (Assassin, 3 s) 50% faster.
 A stance and crippled multiply, as every movement change does.
+
+Three stances trade something for speed (#919). Frenzy (Warrior, 8 s,
+4 s recharge): you attack 33% faster but take double damage. Dark Escape
+(Assassin, Shadow Arts, 13 s): you move 25% faster and take half damage,
+until one of your attacks hits; a miss or a block keeps it. Natural
+Stride (Ranger, Wilderness Survival, 7 s): you run 33% faster and block
+half of incoming attacks, until a new hex or enchantment lands on you; a
+refreshed one does not end it. Damage taken is multiplied after armor
+and before a Rune of Absorption, on every damage packet; health loss,
+sacrifice and degeneration are not damage packets and are left alone.
 
 Wild Throw (Paragon spear attack, 7 adrenaline) deals +17 damage, cannot
 be blocked, and ends the stance of the foe it hits. It does not yet
@@ -503,6 +563,12 @@ and against a foe below half health recharges all your other attack
 skills at once, so the chain loops: lead, off-hand, dual, Moebius,
 dual, Moebius. The weapon's own double strike never adds to a skill.
 
+Your mark on your target shows right of its health in the target frame
+(#916): one dagger for lead, one in the left hand for off-hand, two
+crossed for dual, with "lead attack landed" and so on on hover. It
+changes as the next chain attack lands and goes when the mark does.
+Only you see your marks, and you never see another player's.
+
 **Skills interrupt and resume.** Starting a skill loses the swing in
 progress. Attacking and casting are otherwise separate, as in GW1
 (#317): a spell never starts an attack or changes whom you attack, so
@@ -589,6 +655,9 @@ lands and shrinks back when it ends; an attack skill keeps the wind-up it
 started with. Spells are not slowed. Only the strongest slow-down and the
 strongest speed-up count, and they multiply (ADR-0029). The hex also
 degenerates its target by 2 pips.
+**Shadow of Fear** (Curses, 10 energy, 2 s cast, 5 s recharge) is the
+same slow-down without the degeneration, for 25 s, on the target and
+every foe adjacent to it (#918).
 
 ## Damage types and armor
 
@@ -646,6 +715,13 @@ recharge) flies at the target, half as fast again as Fireball, and is
 dodged or blocked by a wall as Fireball is. It strikes for 82 lightning at
 Air Magic 12, and a Ranger's 100 armor counts as 75 against it: it lands
 for 63, where Fireball's 91 lands for 46.
+**Lightning Strike** (5 energy, 1 s, 5 s recharge) hits at once for 33
+lightning at rank 12. **Mind Shock** (elite, 5 energy, 10 overcast, 1 s,
+8 s recharge) hits for 42 lightning, and if you have more energy than
+your target when it lands (its cost already paid), another 42 and a
+knockdown. **Shard Storm** (Water Magic, 10 energy, 1 s, 10 s recharge)
+flies as Fireball does, a little faster, and on a hit deals 70 cold and
+hexes its target to 34% speed for 5 s (#918).
 
 ## Primary attributes
 
@@ -725,11 +801,11 @@ scoreboard.
 
 What death costs, and how the dead come back, are properties of the
 match rules, set per mode as GW1 sets them (#843). Today's match is
-GW1's Kill Count: a dead player **respawns** at a spawn point of their
-own team after 8 seconds, at full health and energy, with all statuses
-cleared, and there is **no death penalty**. A `"resurrection-only"`
-match has no respawn: the dead stay corpses until resurrected, or the
-match ends.
+GW1's Annihilation (#846): there is no respawn, the dead stay corpses
+until resurrected or the match ends, and the **death penalty** is on.
+In GW1's Kill Count, which no map picks yet, a dead player **respawns**
+at a spawn point of their own team after 8 seconds, at full health and
+energy, with all statuses cleared, and there is no death penalty.
 
 With the death penalty on, each player has a **morale** between −60%
 and +10%, starting at 0. A death takes 15%, down to −60%, unless it came
@@ -753,11 +829,27 @@ respawn timer running out, it does nothing, and the energy is spent.
 
 ## Match end
 
-A match ends when a team reaches the score target, or when the clock
-runs out. Score is checked **before** time, so landing the winning kill
-as the clock expires reads as a score win — which is what happened from
-the player's point of view. A tie at the time limit is a **draw**, not
-an arbitrarily chosen winner.
+An Annihilation match (#846, today's match) is won by **wiping the other
+team**: the moment every member of it is dead at once, your team wins.
+A team whose members have all left the match counts as wiped too, so
+quitting a 1v1 forfeits it. Kills still show in the score, but no number of them ends the match.
+After **8 minutes** the team with the **highest total morale** wins: the
+sum of every member's morale, dead or alive, so a team at 0, −15 and
+−30 (−45) beats one at −15, −15 and −30 (−60). The end line reads
+"Victory" or "Defeat", with "(morale)" when time decided it.
+
+There is no draw (GW1): equal morale at time, or both teams wiped in
+the same tick, and **both teams lose**. A team that started with nobody
+on it is never "wiped"; that match runs to time. The wipe is checked
+**before** time, so the last foe falling as the clock expires is an
+annihilation win.
+
+A Kill Count match ends when a team reaches 15 kills, or after 10
+minutes, when the team with more kills wins. Score is checked
+**before** time, so landing the winning kill as the clock expires reads
+as a score win, which is what happened from the player's point of
+view. A tie at the time limit is a **draw**, not an arbitrarily chosen
+winner.
 
 ## Trying it without a server
 

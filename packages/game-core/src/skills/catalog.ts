@@ -54,6 +54,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
+        perStatusOnTarget: [],
         amount: {
           scaling: { attributeId: "monk.healing-prayers", atZero: 20, atTwelve: 60 },
         },
@@ -267,6 +268,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       { kind: "sacrifice-health", percentOfMax: 10 },
       {
         kind: "heal",
+        perStatusOnTarget: [],
         amount: {
           scaling: { attributeId: "necromancer.blood-magic", atZero: 30, atTwelve: 90 },
         },
@@ -582,6 +584,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         effects: [
           {
             kind: "heal",
+            perStatusOnTarget: [],
             amount: {
               scaling: { attributeId: "monk.protection-prayers", atZero: 5, atTwelve: 57 },
             },
@@ -1129,6 +1132,69 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     effects: [{ kind: "apply-status", statusId: "dash", durationSeconds: 3 }],
   },
   {
+    id: "warrior.frenzy",
+    name: "Frenzy",
+    type: "stance",
+    elite: false,
+    profession: "warrior",
+    // GW1's "No Attribute": any warrior can use it.
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 4,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 8 seconds, you attack 33% faster but take double damage."
+    effects: [{ kind: "apply-status", statusId: "frenzy", durationSeconds: 8 }],
+  },
+  {
+    id: "assassin.dark-escape",
+    name: "Dark Escape",
+    type: "stance",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.shadow-arts",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 5...13...15 seconds, you move 25% faster and take half damage":
+    // 13 s, its rank-12 value.
+    effects: [{ kind: "apply-status", statusId: "dark-escape", durationSeconds: 13 }],
+  },
+  {
+    id: "ranger.natural-stride",
+    name: "Natural Stride",
+    type: "stance",
+    elite: false,
+    profession: "ranger",
+    attributeId: "ranger.wilderness-survival",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 1...7...8 seconds, you run 33% faster and have a 50% chance to
+    // block incoming attacks": 7 s, its rank-12 value.
+    effects: [{ kind: "apply-status", statusId: "natural-stride", durationSeconds: 7 }],
+  },
+  {
     id: "paragon.wild-throw",
     name: "Wild Throw",
     type: "attack",
@@ -1189,6 +1255,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
+        perStatusOnTarget: [],
         amount: { scaling: { attributeId: "warrior.tactics", atZero: 82, atTwelve: 154 } },
       },
     ],
@@ -1406,6 +1473,42 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     ],
   },
   {
+    id: "mesmer.leech-signet",
+    name: "Leech Signet",
+    type: "signet",
+    elite: false,
+    profession: "mesmer",
+    attributeId: "mesmer.inspiration-magic",
+    // A signet costs nothing: usable at 0 energy.
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Interrupt target foe's action. If that action was a spell, you gain
+    // 3...13...15 Energy" (#920): any action, and energy for a spell only.
+    effects: [
+      { kind: "interrupt" },
+      {
+        kind: "if",
+        condition: { kind: "interrupted-spell" },
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: {
+              scaling: { attributeId: "mesmer.inspiration-magic", atZero: 3, atTwelve: 13 },
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
     id: "mesmer.shatter-enchantment",
     name: "Shatter Enchantment",
     type: "spell",
@@ -1475,6 +1578,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
           },
           {
             kind: "heal",
+            perStatusOnTarget: [],
             recipient: "caster",
             amount: {
               scaling: { attributeId: "mesmer.inspiration-magic", atZero: 40, atTwelve: 104 },
@@ -1581,6 +1685,145 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       { kind: "energy-gain", amount: { flat: 2 }, perEnergyLost: true },
     ],
   },
+  {
+    id: "mesmer.energy-surge",
+    name: "Energy Surge",
+    type: "spell",
+    elite: true,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Target foe loses 1...8...10 energy. For each point of energy lost,
+    // that foe and all nearby foes take 7 damage and all nearby foes take
+    // 75% of that damage" (PvP, #920): nearby the target, 5.25 a point of
+    // what the target lost, rounded as all damage is.
+    effects: [
+      {
+        kind: "energy-loss",
+        amount: { scaling: { attributeId: "mesmer.domination-magic", atZero: 1, atTwelve: 8 } },
+      },
+      {
+        kind: "damage",
+        amount: { flat: 7 },
+        type: "typeless",
+        armorPenetration: 0,
+        perEnergyLost: true,
+      },
+      {
+        kind: "splash",
+        radius: AREA_NEARBY,
+        effects: [
+          {
+            kind: "damage",
+            amount: { flat: 5.25 },
+            type: "typeless",
+            armorPenetration: 0,
+            perEnergyLost: true,
+          },
+        ],
+      },
+    ],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Hexes that answer what their target does (#469)                        */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "mesmer.backfire",
+    name: "Backfire",
+    type: "hex",
+    elite: false,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 3,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 10 seconds, whenever target foe casts a spell, that foe takes
+    // 35...119...140 damage." The damage is the hex's, at rank 12.
+    effects: [{ kind: "apply-status", statusId: "backfire", durationSeconds: 10 }],
+  },
+  {
+    id: "mesmer.empathy",
+    name: "Empathy",
+    type: "hex",
+    elite: false,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 5...13...15 seconds, whenever target foe attacks, that foe takes
+    // 15...39...45 damage" (PvP). Both at rank 12, as every status is.
+    effects: [{ kind: "apply-status", statusId: "empathy", durationSeconds: 13 }],
+  },
+  {
+    id: "necromancer.parasitic-bond",
+    name: "Parasitic Bond",
+    type: "hex",
+    elite: false,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 2,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 20 seconds, target foe suffers health degeneration of 1. The
+    // caster is healed for 30...102...120 when Parasitic Bond ends." The
+    // heal is the hex's, at rank 12 (#887).
+    effects: [{ kind: "apply-status", statusId: "parasitic-bond", durationSeconds: 20 }],
+  },
+  {
+    id: "necromancer.contagion",
+    name: "Contagion",
+    type: "enchantment",
+    elite: true,
+    profession: "necromancer",
+    attributeId: "necromancer.death-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 60 seconds, whenever you suffer from a new Condition, all foes
+    // in the area suffer from that same Condition and you sacrifice
+    // 10...6...5% maximum Health." The spread and the 6% are the
+    // enchantment's (#887).
+    effects: [{ kind: "apply-status", statusId: "contagion", durationSeconds: 60 }],
+  },
 
   /* ---------------------------------------------------------------------- */
   /* An effect that depends on how things stand (#794)                      */
@@ -1608,6 +1851,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
+        perStatusOnTarget: [],
         amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 5, atTwelve: 81 } },
       },
       {
@@ -1616,11 +1860,44 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         effects: [
           {
             kind: "heal",
+            perStatusOnTarget: [],
             amount: {
               scaling: { attributeId: "monk.healing-prayers", atZero: 30, atTwelve: 98 },
             },
           },
         ],
+      },
+    ],
+  },
+  {
+    id: "monk.dwaynas-kiss",
+    name: "Dwayna's Kiss",
+    type: "spell",
+    elite: false,
+    profession: "monk",
+    attributeId: "monk.healing-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 3,
+    range: RANGE_SPELL,
+    target: "single-other-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Heal target other ally for 15...51...60 Health and an additional
+    // 10...30...35 Health for each enchantment or hex on that ally" (#920).
+    effects: [
+      {
+        kind: "heal",
+        perStatusOnTarget: [],
+        amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 15, atTwelve: 51 } },
+      },
+      {
+        kind: "heal",
+        perStatusOnTarget: ["enchantment", "hex"],
+        amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 10, atTwelve: 30 } },
       },
     ],
   },
@@ -1797,6 +2074,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       },
       {
         kind: "heal",
+        perStatusOnTarget: [],
         amount: { scaling: { attributeId: "dervish.earth-prayers", atZero: 30, atTwelve: 126 } },
       },
       {
@@ -1829,6 +2107,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
+        perStatusOnTarget: [],
         recipient: "caster",
         amount: { scaling: { attributeId: "dervish.wind-prayers", atZero: 80, atTwelve: 136 } },
       },
@@ -1916,6 +2195,151 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         },
       },
     ],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Elementalist and Necromancer staples (#918)                            */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "elementalist.lightning-strike",
+    name: "Lightning Strike",
+    // The corpus's is a hex spell whose hex lands only while you are
+    // overcast; that half is not modelled, so it is the plain strike.
+    type: "spell",
+    elite: false,
+    profession: "elementalist",
+    attributeId: "elementalist.air-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Strike target foe for 5...33...40 lightning damage. This spell has
+    // 25% armor penetration."
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.air-magic", atZero: 5, atTwelve: 33 },
+        },
+        type: "lightning",
+        armorPenetration: 0.25,
+      },
+    ],
+  },
+  {
+    id: "elementalist.mind-shock",
+    name: "Mind Shock",
+    type: "spell",
+    elite: true,
+    profession: "elementalist",
+    attributeId: "elementalist.air-magic",
+    cost: { kind: "energy", amount: 5 },
+    // Exhaustion, as Chain Lightning's (#461), at the corpus's 10.
+    overcast: 10,
+    activationSeconds: 1,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Target foe suffers 10...42...50 lightning damage. If you have more
+    // energy than target foe, that foe suffers 10...42...50 additional
+    // lightning damage and is knocked down."
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.air-magic", atZero: 10, atTwelve: 42 },
+        },
+        type: "lightning",
+        armorPenetration: 0.25,
+      },
+      {
+        kind: "if",
+        condition: { kind: "caster-more-energy" },
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "elementalist.air-magic", atZero: 10, atTwelve: 42 },
+            },
+            type: "lightning",
+            armorPenetration: 0.25,
+          },
+          { kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS },
+        ],
+      },
+    ],
+  },
+  {
+    id: "elementalist.shard-storm",
+    name: "Shard Storm",
+    type: "hex",
+    elite: false,
+    profession: "elementalist",
+    attributeId: "elementalist.water-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    // Our own tuning, as GW1 publishes no speeds: a shard flies a little
+    // faster than Fireball, slower than Lightning Orb.
+    projectile: { speed: 1.25 * RANGE_SPELL },
+    // "...strikes target foe for 10...70...85 cold damage if it hits and
+    // causing target foe to move 66% slower for 2...5...6 seconds."
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.water-magic", atZero: 10, atTwelve: 70 },
+        },
+        type: "cold",
+        armorPenetration: 0,
+      },
+      { kind: "apply-status", statusId: "shard-storm", durationSeconds: 5 },
+    ],
+  },
+  {
+    id: "necromancer.shadow-of-fear",
+    name: "Shadow of Fear",
+    type: "hex",
+    elite: false,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    // "Target foe and all adjacent foes": the target, then every foe
+    // adjacent to it.
+    area: {
+      radius: AREA_ADJACENT,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "...attack 50% slower for the next 5...25...30 seconds."
+    effects: [{ kind: "apply-status", statusId: "shadow-of-fear", durationSeconds: 25 }],
   },
 ];
 

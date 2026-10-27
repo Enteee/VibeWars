@@ -219,6 +219,22 @@ body {
   color: var(--ink);
 }
 
+/* The target's health, then your dagger chain mark on it (#916), as GW1. */
+.hud-target-health-row {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.hud-target-chain {
+  width: 16px;
+  height: 16px;
+}
+
+.hud-target-chain[hidden] {
+  display: none;
+}
+
 /* Hidden with no target, but its space kept. */
 .hud-target-health[hidden] {
   display: block;
@@ -543,6 +559,21 @@ body {
 
 .is-unaffordable > .adrenaline-gauge {
   display: block;
+}
+
+/* Adrenaline about to be lost out of combat (#828): a slot that holds
+   any blinks for the last 5 s, charged or not, and stops the moment a
+   fight starts the window again. A warning, so it blinks under reduced
+   motion too, slowly. */
+.hud-skill.is-adrenaline-fading,
+.training-skill.is-adrenaline-fading {
+  animation: adrenaline-fading 1s step-end infinite;
+}
+
+@keyframes adrenaline-fading {
+  50% {
+    opacity: 0.35;
+  }
 }
 
 /* An empty slot keeps its place and its key, and does nothing (#347). */

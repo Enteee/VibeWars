@@ -11,12 +11,15 @@
     "skill-bar",
     "recharge",
     "adrenaline",
+    "chain",
     "ended",
     "bye",
     "lobby-join",
     "lobby-state",
     "lobby-cmd",
     "lobby-note",
+    "lobby-hello",
+    "lobby-welcome",
     "match-start",
     "rejoin-challenge",
     "rejoin-proof",
@@ -29,18 +32,23 @@
     "anthem-of-flame",
     "apply-poison",
     "armor-boost",
+    "backfire",
     "bleeding",
     "blind",
     "blood-ritual",
     "burning",
+    "contagion",
     "cracked-armor",
     "crippled",
+    "dark-escape",
     "dash",
     "dazed",
     "deep-wound",
     "disease",
+    "empathy",
     "faintheartedness",
     "fleeting-stability",
+    "frenzy",
     "glyph-of-lesser-energy",
     "guardian",
     "healing-signet-armor",
@@ -48,8 +56,12 @@
     "malaise",
     "mending",
     "mystic-regeneration",
+    "natural-stride",
+    "parasitic-bond",
     "poison",
     "regeneration",
+    "shadow-of-fear",
+    "shard-storm",
     "sprint",
     "watch-yourself",
     "weakness",
@@ -92,7 +104,10 @@
   },
   "types": {
     "AdrenalineMessage": {
-      "properties": [{ "name": "slots", "optional": false, "type": { "array": "number" } }]
+      "properties": [
+        { "name": "lossInSeconds", "optional": false, "type": { "union": ["null", "number"] } },
+        { "name": "slots", "optional": false, "type": { "array": "number" } }
+      ]
     },
     "AttackIntent": {
       "properties": [
@@ -121,12 +136,40 @@
         }
       ]
     },
+    "ChainMarksMessage": {
+      "properties": [
+        {
+          "name": "marks",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "remainingSeconds", "optional": false, "type": "number" },
+                {
+                  "name": "role",
+                  "optional": false,
+                  "type": {
+                    "union": [
+                      { "literal": "dual" },
+                      { "literal": "lead" },
+                      { "literal": "off-hand" }
+                    ]
+                  }
+                },
+                { "name": "targetId", "optional": false, "type": "string" }
+              ]
+            }
+          }
+        }
+      ]
+    },
     "Channel": {
       "union": [
         { "literal": "adrenaline" },
         { "literal": "bye" },
         { "literal": "call" },
         { "literal": "calls" },
+        { "literal": "chain" },
         { "literal": "chat" },
         { "literal": "chat-line" },
         { "literal": "combat" },
@@ -134,9 +177,11 @@
         { "literal": "hello" },
         { "literal": "intent" },
         { "literal": "lobby-cmd" },
+        { "literal": "lobby-hello" },
         { "literal": "lobby-join" },
         { "literal": "lobby-note" },
         { "literal": "lobby-state" },
+        { "literal": "lobby-welcome" },
         { "literal": "match-start" },
         { "literal": "recharge" },
         { "literal": "refuse" },
@@ -288,18 +333,23 @@
                   { "literal": "anthem-of-flame" },
                   { "literal": "apply-poison" },
                   { "literal": "armor-boost" },
+                  { "literal": "backfire" },
                   { "literal": "bleeding" },
                   { "literal": "blind" },
                   { "literal": "blood-ritual" },
                   { "literal": "burning" },
+                  { "literal": "contagion" },
                   { "literal": "cracked-armor" },
                   { "literal": "crippled" },
+                  { "literal": "dark-escape" },
                   { "literal": "dash" },
                   { "literal": "dazed" },
                   { "literal": "deep-wound" },
                   { "literal": "disease" },
+                  { "literal": "empathy" },
                   { "literal": "faintheartedness" },
                   { "literal": "fleeting-stability" },
+                  { "literal": "frenzy" },
                   { "literal": "glyph-of-lesser-energy" },
                   { "literal": "guardian" },
                   { "literal": "healing-signet-armor" },
@@ -307,8 +357,12 @@
                   { "literal": "malaise" },
                   { "literal": "mending" },
                   { "literal": "mystic-regeneration" },
+                  { "literal": "natural-stride" },
+                  { "literal": "parasitic-bond" },
                   { "literal": "poison" },
                   { "literal": "regeneration" },
+                  { "literal": "shadow-of-fear" },
+                  { "literal": "shard-storm" },
                   { "literal": "sprint" },
                   { "literal": "watch-yourself" },
                   { "literal": "weakness" },
@@ -338,18 +392,23 @@
                   { "literal": "anthem-of-flame" },
                   { "literal": "apply-poison" },
                   { "literal": "armor-boost" },
+                  { "literal": "backfire" },
                   { "literal": "bleeding" },
                   { "literal": "blind" },
                   { "literal": "blood-ritual" },
                   { "literal": "burning" },
+                  { "literal": "contagion" },
                   { "literal": "cracked-armor" },
                   { "literal": "crippled" },
+                  { "literal": "dark-escape" },
                   { "literal": "dash" },
                   { "literal": "dazed" },
                   { "literal": "deep-wound" },
                   { "literal": "disease" },
+                  { "literal": "empathy" },
                   { "literal": "faintheartedness" },
                   { "literal": "fleeting-stability" },
+                  { "literal": "frenzy" },
                   { "literal": "glyph-of-lesser-energy" },
                   { "literal": "guardian" },
                   { "literal": "healing-signet-armor" },
@@ -357,8 +416,12 @@
                   { "literal": "malaise" },
                   { "literal": "mending" },
                   { "literal": "mystic-regeneration" },
+                  { "literal": "natural-stride" },
+                  { "literal": "parasitic-bond" },
                   { "literal": "poison" },
                   { "literal": "regeneration" },
+                  { "literal": "shadow-of-fear" },
+                  { "literal": "shard-storm" },
                   { "literal": "sprint" },
                   { "literal": "watch-yourself" },
                   { "literal": "weakness" },
@@ -392,18 +455,23 @@
                   { "literal": "anthem-of-flame" },
                   { "literal": "apply-poison" },
                   { "literal": "armor-boost" },
+                  { "literal": "backfire" },
                   { "literal": "bleeding" },
                   { "literal": "blind" },
                   { "literal": "blood-ritual" },
                   { "literal": "burning" },
+                  { "literal": "contagion" },
                   { "literal": "cracked-armor" },
                   { "literal": "crippled" },
+                  { "literal": "dark-escape" },
                   { "literal": "dash" },
                   { "literal": "dazed" },
                   { "literal": "deep-wound" },
                   { "literal": "disease" },
+                  { "literal": "empathy" },
                   { "literal": "faintheartedness" },
                   { "literal": "fleeting-stability" },
+                  { "literal": "frenzy" },
                   { "literal": "glyph-of-lesser-energy" },
                   { "literal": "guardian" },
                   { "literal": "healing-signet-armor" },
@@ -411,8 +479,12 @@
                   { "literal": "malaise" },
                   { "literal": "mending" },
                   { "literal": "mystic-regeneration" },
+                  { "literal": "natural-stride" },
+                  { "literal": "parasitic-bond" },
                   { "literal": "poison" },
                   { "literal": "regeneration" },
+                  { "literal": "shadow-of-fear" },
+                  { "literal": "shard-storm" },
                   { "literal": "sprint" },
                   { "literal": "watch-yourself" },
                   { "literal": "weakness" },
@@ -443,18 +515,23 @@
                   { "literal": "anthem-of-flame" },
                   { "literal": "apply-poison" },
                   { "literal": "armor-boost" },
+                  { "literal": "backfire" },
                   { "literal": "bleeding" },
                   { "literal": "blind" },
                   { "literal": "blood-ritual" },
                   { "literal": "burning" },
+                  { "literal": "contagion" },
                   { "literal": "cracked-armor" },
                   { "literal": "crippled" },
+                  { "literal": "dark-escape" },
                   { "literal": "dash" },
                   { "literal": "dazed" },
                   { "literal": "deep-wound" },
                   { "literal": "disease" },
+                  { "literal": "empathy" },
                   { "literal": "faintheartedness" },
                   { "literal": "fleeting-stability" },
+                  { "literal": "frenzy" },
                   { "literal": "glyph-of-lesser-energy" },
                   { "literal": "guardian" },
                   { "literal": "healing-signet-armor" },
@@ -462,8 +539,12 @@
                   { "literal": "malaise" },
                   { "literal": "mending" },
                   { "literal": "mystic-regeneration" },
+                  { "literal": "natural-stride" },
+                  { "literal": "parasitic-bond" },
                   { "literal": "poison" },
                   { "literal": "regeneration" },
+                  { "literal": "shadow-of-fear" },
+                  { "literal": "shard-storm" },
                   { "literal": "sprint" },
                   { "literal": "watch-yourself" },
                   { "literal": "weakness" },
@@ -547,18 +628,23 @@
                   { "literal": "anthem-of-flame" },
                   { "literal": "apply-poison" },
                   { "literal": "armor-boost" },
+                  { "literal": "backfire" },
                   { "literal": "bleeding" },
                   { "literal": "blind" },
                   { "literal": "blood-ritual" },
                   { "literal": "burning" },
+                  { "literal": "contagion" },
                   { "literal": "cracked-armor" },
                   { "literal": "crippled" },
+                  { "literal": "dark-escape" },
                   { "literal": "dash" },
                   { "literal": "dazed" },
                   { "literal": "deep-wound" },
                   { "literal": "disease" },
+                  { "literal": "empathy" },
                   { "literal": "faintheartedness" },
                   { "literal": "fleeting-stability" },
+                  { "literal": "frenzy" },
                   { "literal": "glyph-of-lesser-energy" },
                   { "literal": "guardian" },
                   { "literal": "healing-signet-armor" },
@@ -566,8 +652,12 @@
                   { "literal": "malaise" },
                   { "literal": "mending" },
                   { "literal": "mystic-regeneration" },
+                  { "literal": "natural-stride" },
+                  { "literal": "parasitic-bond" },
                   { "literal": "poison" },
                   { "literal": "regeneration" },
+                  { "literal": "shadow-of-fear" },
+                  { "literal": "shard-storm" },
                   { "literal": "sprint" },
                   { "literal": "watch-yourself" },
                   { "literal": "weakness" },
@@ -589,18 +679,23 @@
                   { "literal": "anthem-of-flame" },
                   { "literal": "apply-poison" },
                   { "literal": "armor-boost" },
+                  { "literal": "backfire" },
                   { "literal": "bleeding" },
                   { "literal": "blind" },
                   { "literal": "blood-ritual" },
                   { "literal": "burning" },
+                  { "literal": "contagion" },
                   { "literal": "cracked-armor" },
                   { "literal": "crippled" },
+                  { "literal": "dark-escape" },
                   { "literal": "dash" },
                   { "literal": "dazed" },
                   { "literal": "deep-wound" },
                   { "literal": "disease" },
+                  { "literal": "empathy" },
                   { "literal": "faintheartedness" },
                   { "literal": "fleeting-stability" },
+                  { "literal": "frenzy" },
                   { "literal": "glyph-of-lesser-energy" },
                   { "literal": "guardian" },
                   { "literal": "healing-signet-armor" },
@@ -608,8 +703,12 @@
                   { "literal": "malaise" },
                   { "literal": "mending" },
                   { "literal": "mystic-regeneration" },
+                  { "literal": "natural-stride" },
+                  { "literal": "parasitic-bond" },
                   { "literal": "poison" },
                   { "literal": "regeneration" },
+                  { "literal": "shadow-of-fear" },
+                  { "literal": "shard-storm" },
                   { "literal": "sprint" },
                   { "literal": "watch-yourself" },
                   { "literal": "weakness" },
@@ -678,9 +777,12 @@
     },
     "LobbyRefusal": {
       "union": [
+        { "literal": "fell-through" },
         { "literal": "host-left" },
         { "literal": "lobby-full" },
-        { "literal": "protocol-mismatch" }
+        { "literal": "not-admitted" },
+        { "literal": "protocol-mismatch" },
+        { "literal": "ticket-used" }
       ]
     },
     "MapDescriptor": {
@@ -793,8 +895,24 @@
         }
       ]
     },
+    "PeerLobbyHello": { "properties": [], "index": [{ "key": "string", "value": "never" }] },
     "PeerLobbyJoin": {
       "properties": [
+        {
+          "name": "admission",
+          "optional": false,
+          "type": {
+            "union": [
+              "null",
+              {
+                "properties": [
+                  { "name": "admissionSig", "optional": false, "type": "string" },
+                  { "name": "ticketId", "optional": false, "type": "string" }
+                ]
+              }
+            ]
+          }
+        },
         {
           "name": "character",
           "optional": false,
@@ -1043,6 +1161,12 @@
         }
       ]
     },
+    "WireAdmission": {
+      "properties": [
+        { "name": "admissionSig", "optional": false, "type": "string" },
+        { "name": "ticketId", "optional": false, "type": "string" }
+      ]
+    },
     "WireCalls": {
       "properties": [
         {
@@ -1076,6 +1200,22 @@
           }
         }
       ]
+    },
+    "WireChainMark": {
+      "properties": [
+        { "name": "remainingSeconds", "optional": false, "type": "number" },
+        {
+          "name": "role",
+          "optional": false,
+          "type": {
+            "union": [{ "literal": "dual" }, { "literal": "lead" }, { "literal": "off-hand" }]
+          }
+        },
+        { "name": "targetId", "optional": false, "type": "string" }
+      ]
+    },
+    "WireChainRole": {
+      "union": [{ "literal": "dual" }, { "literal": "lead" }, { "literal": "off-hand" }]
     },
     "WireChatLine": {
       "properties": [
@@ -1251,7 +1391,13 @@
           "name": "endReason",
           "optional": false,
           "type": {
-            "union": [{ "literal": "host-left" }, { "literal": "score" }, { "literal": "time" }]
+            "union": [
+              { "literal": "annihilation" },
+              { "literal": "host-left" },
+              { "literal": "morale" },
+              { "literal": "score" },
+              { "literal": "time" }
+            ]
           }
         },
         {
@@ -1347,6 +1493,7 @@
     "WireLobbyState": {
       "properties": [
         { "name": "code", "optional": false, "type": "string" },
+        { "name": "countdownSeconds", "optional": false, "type": { "union": ["null", "number"] } },
         { "name": "hostId", "optional": false, "type": "string" },
         { "name": "mapId", "optional": false, "type": "string" },
         { "name": "matchId", "optional": false, "type": { "union": ["null", "string"] } },
@@ -1401,6 +1548,9 @@
           }
         }
       ]
+    },
+    "WireLobbyWelcome": {
+      "properties": [{ "name": "hostSig", "optional": false, "type": "string" }]
     },
     "WireMatchStart": {
       "properties": [
@@ -1541,7 +1691,15 @@
         {
           "name": "endReason",
           "optional": false,
-          "type": { "union": ["null", { "literal": "score" }, { "literal": "time" }] }
+          "type": {
+            "union": [
+              "null",
+              { "literal": "annihilation" },
+              { "literal": "morale" },
+              { "literal": "score" },
+              { "literal": "time" }
+            ]
+          }
         },
         {
           "name": "phase",
@@ -1679,7 +1837,15 @@
         {
           "name": "endReason",
           "optional": false,
-          "type": { "union": ["null", { "literal": "score" }, { "literal": "time" }] }
+          "type": {
+            "union": [
+              "null",
+              { "literal": "annihilation" },
+              { "literal": "morale" },
+              { "literal": "score" },
+              { "literal": "time" }
+            ]
+          }
         },
         { "name": "part", "optional": false, "type": "number" },
         { "name": "parts", "optional": false, "type": "number" },

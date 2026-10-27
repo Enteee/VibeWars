@@ -34,6 +34,7 @@ import {
   parsePeerRejoinProof,
   parsePeerWelcome,
   parseAdrenaline,
+  parseChainMarks,
   parseRecharge,
   parseWireCombatBatch,
   parseWireEnded,
@@ -42,6 +43,8 @@ import {
   parsePeerLobbyJoin,
   parseWireLobbyCommand,
   parseWireLobbyNote,
+  parsePeerLobbyHello,
+  parseWireLobbyWelcome,
   parseWireLobbyState,
   parseWireMatchStart,
 } from "./p2p.js";
@@ -286,7 +289,11 @@ const lobbyJoin: PeerLobbyJoin = {
   protocolVersion: PROTOCOL_VERSION,
   name: "Mhenlo",
   character: { name: "Mhenlo Healer", primary: "monk", secondary: "elementalist" },
+  admission: null,
 };
+
+/** A queued join's proof (#871): a ticket id and a signature, as hex. */
+const admission = { ticketId: "ab".repeat(32), admissionSig: "cd".repeat(64) };
 
 const lobbyState: WireLobbyState = {
   code: "ACDEFG",
@@ -305,6 +312,7 @@ const lobbyState: WireLobbyState = {
     },
     { id: "peer-3", name: "Watcher", team: null, ready: false, isHost: false, character: null },
   ],
+  countdownSeconds: null,
 };
 
 const ping = { id: 3, x: 200, y: 150.5, byId: "peer-1", remaining: 2.6 };
@@ -332,11 +340,36 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["combat batch", parseWireCombatBatch, combatBatch],
   ["skill-bar", parseWireSkillBar, skillBar],
   ["ended", parseWireEnded, ended],
+  ["ended by a wipe (#846)", parseWireEnded, { winningTeam: 1, endReason: "annihilation" }],
+  ["ended at time by morale (#846)", parseWireEnded, { winningTeam: null, endReason: "morale" }],
+  [
+    "snapshot ended by a wipe (#846)",
+    parseWireSnapshotPart,
+    { ...snapshot, phase: "finished", winningTeam: 0, endReason: "annihilation" },
+  ],
+  [
+    "snapshot ended by morale (#846)",
+    parseWireSnapshotPart,
+    { ...snapshot, phase: "finished", winningTeam: null, endReason: "morale" },
+  ],
   ["refused", parseCastRefused, refused],
   ["refused attack", parseCastRefused, { kind: "attack", reason: "no-weapon" }],
   ["recharge", parseRecharge, recharge],
-  ["adrenaline", parseAdrenaline, { slots: [0, 0, 225, 0, 37.5, 0, 0, 0] }],
-  ["adrenaline for an empty bar", parseAdrenaline, { slots: [] }],
+  ["adrenaline", parseAdrenaline, { slots: [0, 0, 225, 0, 37.5, 0, 0, 0], lossInSeconds: 12.5 }],
+  ["adrenaline, every slot empty", parseAdrenaline, { slots: [0, 0], lossInSeconds: null }],
+  ["adrenaline for an empty bar", parseAdrenaline, { slots: [], lossInSeconds: null }],
+  [
+    "chain",
+    parseChainMarks,
+    {
+      marks: [
+        { targetId: "peer-2", role: "lead", remainingSeconds: 15 },
+        { targetId: "peer-3", role: "off-hand", remainingSeconds: 3.25 },
+        { targetId: "peer-4", role: "dual", remainingSeconds: 0 },
+      ],
+    },
+  ],
+  ["chain with no marks", parseChainMarks, { marks: [] }],
   ["bye", parsePeerBye, {}],
   ["call on a foe", parsePeerCall, { kind: "target", targetId: "peer-2" }],
   ["ping", parsePeerCall, { kind: "ping", x: 120.5, y: 40 }],
@@ -358,6 +391,14 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["chat-throttled (#479)", parseWireLobbyNote, { kind: "chat-throttled", reason: "" }],
   ["lobby-join", parsePeerLobbyJoin, lobbyJoin],
   ["lobby-join on the house loadout", parsePeerLobbyJoin, { ...lobbyJoin, character: null }],
+  ["queued lobby-join (#871)", parsePeerLobbyJoin, { ...lobbyJoin, admission }],
+  ["lobby-hello (#871)", parsePeerLobbyHello, {}],
+  ["lobby-welcome (#871)", parseWireLobbyWelcome, { hostSig: "ef".repeat(64) }],
+  [
+    "counting-down lobby-state (#871)",
+    parseWireLobbyState,
+    { ...lobbyState, phase: "starting", matchId: null, countdownSeconds: 3 },
+  ],
   ["lobby-state", parseWireLobbyState, lobbyState],
   ["waiting lobby-state", parseWireLobbyState, { ...lobbyState, phase: "waiting", matchId: null }],
   ["choose-team", parseWireLobbyCommand, { kind: "choose-team", team: 1 }],
@@ -367,6 +408,7 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["start", parseWireLobbyCommand, { kind: "start" }],
   ["start-rejected", parseWireLobbyNote, { kind: "start-rejected", reason: "nobody is ready" }],
   ["lobby refusal", parseWireLobbyNote, { kind: "refused", reason: "lobby-full" }],
+  ["fell-through (#871)", parseWireLobbyNote, { kind: "refused", reason: "fell-through" }],
   ["match-start", parseWireMatchStart, { mapId: "isle", matchId: "match-2" }],
 ];
 
@@ -737,10 +779,39 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     { slots: [{ slot: MAX_WIRE_SLOTS, remainingSeconds: 1, totalSeconds: 5 }] },
   ],
   ["refused of an unknown kind", parseCastRefused, { kind: "move", reason: "stuck" }],
-  ["adrenaline below 0", parseAdrenaline, { slots: [0, -25] }],
+  ["adrenaline below 0", parseAdrenaline, { slots: [0, -25], lossInSeconds: null }],
+  ["adrenaline lost in less than no time", parseAdrenaline, { slots: [25], lossInSeconds: -1 }],
+  ["adrenaline with no loss time", parseAdrenaline, { slots: [25] }],
   ["adrenaline not a number", parseAdrenaline, { slots: ["25"] }],
   ["adrenaline past the last slot", parseAdrenaline, { slots: Array.from({ length: 9 }, () => 0) }],
   ["adrenaline with no slots", parseAdrenaline, {}],
+  [
+    "chain of an unknown role",
+    parseChainMarks,
+    { marks: [{ targetId: "peer-2", role: "triple", remainingSeconds: 15 }] },
+  ],
+  [
+    "chain lasting less than no time",
+    parseChainMarks,
+    { marks: [{ targetId: "peer-2", role: "lead", remainingSeconds: -1 }] },
+  ],
+  [
+    "chain lasting NaN",
+    parseChainMarks,
+    { marks: [{ targetId: "peer-2", role: "lead", remainingSeconds: NaN }] },
+  ],
+  [
+    "chain past MAX_LOBBY_PLAYERS",
+    parseChainMarks,
+    {
+      marks: Array.from({ length: MAX_LOBBY_PLAYERS + 1 }, (_, i) => ({
+        targetId: `peer-${String(i)}`,
+        role: "lead",
+        remainingSeconds: 15,
+      })),
+    },
+  ],
+  ["chain with no marks list", parseChainMarks, {}],
   [
     "recharge with a NaN",
     parseRecharge,
@@ -761,6 +832,53 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     "lobby-state with a player of no character",
     parseWireLobbyState,
     { ...lobbyState, players: [{ ...lobbyState.players[1], character: undefined }] },
+  ],
+  [
+    "lobby-join without an admission (#871)",
+    parsePeerLobbyJoin,
+    { ...lobbyJoin, admission: undefined },
+  ],
+  [
+    "lobby-join with an upper-case ticket id (#871)",
+    parsePeerLobbyJoin,
+    { ...lobbyJoin, admission: { ...admission, ticketId: "AB".repeat(32) } },
+  ],
+  [
+    "lobby-join with a short ticket id (#871)",
+    parsePeerLobbyJoin,
+    { ...lobbyJoin, admission: { ...admission, ticketId: "ab".repeat(31) } },
+  ],
+  [
+    "lobby-join with a long admission signature (#871)",
+    parsePeerLobbyJoin,
+    { ...lobbyJoin, admission: { ...admission, admissionSig: "cd".repeat(65) } },
+  ],
+  [
+    "lobby-join with an admission of no signature (#871)",
+    parsePeerLobbyJoin,
+    { ...lobbyJoin, admission: { ticketId: admission.ticketId } },
+  ],
+  ["lobby-hello with a field (#871)", parsePeerLobbyHello, { ticketId: "ab".repeat(32) }],
+  ["lobby-welcome of no signature (#871)", parseWireLobbyWelcome, {}],
+  [
+    "lobby-welcome of a non-hex signature (#871)",
+    parseWireLobbyWelcome,
+    { hostSig: "zz".repeat(64) },
+  ],
+  [
+    "lobby-state without a countdown (#871)",
+    parseWireLobbyState,
+    { ...lobbyState, countdownSeconds: undefined },
+  ],
+  [
+    "lobby-state counting down a fraction (#871)",
+    parseWireLobbyState,
+    { ...lobbyState, countdownSeconds: 2.5 },
+  ],
+  [
+    "lobby-state counting below zero (#871)",
+    parseWireLobbyState,
+    { ...lobbyState, countdownSeconds: -1 },
   ],
   ["lobby-state of an unknown phase", parseWireLobbyState, { ...lobbyState, phase: "over" }],
   ["lobby-state without a host", parseWireLobbyState, { ...lobbyState, hostId: undefined }],

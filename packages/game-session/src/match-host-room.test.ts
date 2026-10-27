@@ -413,7 +413,7 @@ describe("a P2P match host, as the match room (#375)", () => {
         timeoutMs: 1000,
       });
       await settle();
-      expect(received).toEqual([{ slots: DEFAULT_SKILL_BAR.map(() => 0) }]);
+      expect(received).toEqual([{ slots: DEFAULT_SKILL_BAR.map(() => 0), lossInSeconds: null }]);
       expect(connection.getAdrenaline()).toEqual(DEFAULT_SKILL_BAR.map(() => 0));
       // Nothing changed: nothing more.
       await match.step(1);

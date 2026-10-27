@@ -129,6 +129,8 @@ describe("formGroups (#869)", () => {
 
   it.each<[string, QueueTicket, boolean]>([
     ["expired", ticket(50, { heartbeatAt: NOW - TICKET_TTL_MS - 1 }), false],
+    ["from the far future", ticket(50, { heartbeatAt: Number.MAX_SAFE_INTEGER }), false],
+    ["from just over a TTL ahead", ticket(50, { heartbeatAt: NOW + TICKET_TTL_MS + 1 }), false],
     ["of another protocol", ticket(50, { protocol: "000000000000" }), false],
     ["of another mode", ticket(50, { mode: "random-arena-2v2" }), false],
     ["ignored", ticket(50), true],
