@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import {
   PROTOCOL_VERSION,
-  MAX_LIVE_TICKETS,
   TICKET_TTL_MS,
   teamSizeOf,
   type QueueMode,
@@ -203,15 +202,23 @@ describe("formGroups (#869)", () => {
     expect(all).not.toContain(ticket(41).ticketId);
   });
 
-  it("forms only from the first MAX_LIVE_TICKETS, so 20,000 cost no more than 1,024", async () => {
+  it("forms 20,000 tickets in one pass, every one of them", async () => {
     const queued = solos(1, 20_000);
     const started = Date.now();
     const groups = await form(reordered(queued, 7));
     const elapsed = Date.now() - started;
-    expect(groups).toHaveLength(MAX_LIVE_TICKETS / 8);
-    expect(groups.flatMap(members).sort()).toEqual(ids(solos(1, MAX_LIVE_TICKETS)));
-    // About 70 ms; the bound is wide so a slow runner does not flake it.
-    expect(elapsed).toBeLessThan(1_000);
+    expect(groups).toHaveLength(20_000 / 8);
+    expect(new Set(groups.flatMap(members)).size).toBe(20_000);
+    // About 500 ms, most of it sha256; the bound is wide so a slow runner does not flake it.
+    expect(elapsed).toBeLessThan(2_500);
+  });
+
+  it("a flood of tickets claiming to have queued first does not keep later players from meeting", async () => {
+    const flood = solos(1_000_000, 1_024).map((t, i) => ({ ...t, enteredAt: i }));
+    const real = solos(1, 8);
+    const groups = await form([...flood, ...real]);
+    expect(groups).toHaveLength(129);
+    expect(groups.some((group) => members(group).join() === ids(real).join())).toBe(true);
   });
 
   it("throws on an empty map pool only when a group forms", async () => {

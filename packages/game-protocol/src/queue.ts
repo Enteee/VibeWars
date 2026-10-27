@@ -34,12 +34,6 @@ export const FORMATION_SETTLE_MS = 3_000;
 export const FORMATION_TIMEOUT_MS = 20_000;
 /** A ticket that never showed up for its group is skipped for this long. */
 export const NO_SHOW_IGNORE_MS = 120_000;
-/**
- * Groups form from at most this many live tickets, the first queued; the
- * rest move up as those groups leave. It bounds what a flood of tickets
- * costs every client, and all must cut at the same place to agree.
- */
-export const MAX_LIVE_TICKETS = 1_024;
 
 /** One queued player, or a whole team queueing together. */
 export interface QueueTicket {

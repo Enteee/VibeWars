@@ -9,7 +9,6 @@
 
 import { createRng, seedFromString } from "@vibewars/game-core";
 import {
-  MAX_LIVE_TICKETS,
   PROTOCOL_VERSION,
   TICKET_TTL_MS,
   teamSizeOf,
@@ -65,8 +64,7 @@ function compare(a: string, b: string): number {
 
 /**
  * The live tickets, first queued first: this protocol and mode, heard
- * from within `TICKET_TTL_MS`, not ignored, each id once, and only
- * the first `MAX_LIVE_TICKETS`.
+ * from within `TICKET_TTL_MS`, not ignored, each id once.
  */
 function liveQueue(input: FormGroupsInput): QueueTicket[] {
   const sorted = input.tickets
@@ -79,14 +77,13 @@ function liveQueue(input: FormGroupsInput): QueueTicket[] {
     )
     .sort(queueOrder);
   const seen = new Set<string>();
-  const live = sorted.filter((ticket) => {
+  return sorted.filter((ticket) => {
     if (seen.has(ticket.ticketId)) {
       return false;
     }
     seen.add(ticket.ticketId);
     return true;
   });
-  return live.slice(0, MAX_LIVE_TICKETS);
 }
 
 /** A ticket and where it stands in the queue. */
