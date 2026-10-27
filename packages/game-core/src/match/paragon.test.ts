@@ -365,7 +365,7 @@ describe("the Paragon shouts read as what they do (#921)", () => {
   it("Fall Back!, Stand Your Ground! and Cruel Spear", () => {
     expect(text(FALL_BACK)).toEqual([
       "Applies Fall Back! for 9s (13 Health per second while moving, moves at 133% speed, " +
-        "ends when the bearer hits)",
+        "ends if the bearer hits with an attack)",
     ]);
     expect(text(STAND)).toEqual([
       "Applies Stand Your Ground! for 17s (+24 armor while not moving, ends if the bearer attacks)",

@@ -359,9 +359,6 @@ export function landBlow(
  * Poison's poison. Read when the blow lands, so a preparation that ran
  * out mid-swing or mid-flight adds nothing. Physical attacks only, as GW1
  * says: a wand's or a staff's bolt carries none.
- *
- * Every hit, a wand's bolt included, first ends the attacker's statuses
- * that end when it hits (#921), as "Fall Back!".
  */
 export function attackHitRiders(
   attacker: Combatant,
@@ -371,24 +368,18 @@ export function attackHitRiders(
   rules: CombatRules,
   surroundings: Surroundings,
 ): CombatEvent[] {
-  const ended: CombatEvent[] = attacker.statuses
-    .endOnBearerHit()
-    .map((statusId) => ({ kind: "status-expired", targetId: attacker.id, statusId }));
   if (!isPhysicalDamage(mainHand.damageType)) {
-    return ended;
+    return [];
   }
-  return [
-    ...ended,
-    ...attacker.statuses.active.flatMap(({ id }) =>
-      applyEffects(getStatusDefinition(id).onAttackHit, {
-        caster: attacker,
-        target: victim,
-        rng,
-        rules,
-        surroundings,
-      }),
-    ),
-  ];
+  return attacker.statuses.active.flatMap(({ id }) =>
+    applyEffects(getStatusDefinition(id).onAttackHit, {
+      caster: attacker,
+      target: victim,
+      rng,
+      rules,
+      surroundings,
+    }),
+  );
 }
 
 /**
@@ -398,6 +389,17 @@ export function attackHitRiders(
  */
 export function bearerAttacked(attacker: Combatant, events: CombatEvent[]): void {
   for (const statusId of attacker.statuses.endOnBearerAttack()) {
+    events.push({ kind: "status-expired", targetId: attacker.id, statusId });
+  }
+}
+
+/**
+ * One of the attacker's blows hit (#919): swing, attack skill or arrow
+ * alike, never a miss or a block. Every status of its own that ends when
+ * its bearer hits ends now, as Dark Escape.
+ */
+export function bearerHit(attacker: Combatant, events: CombatEvent[]): void {
+  for (const statusId of attacker.statuses.endOnBearerHit()) {
     events.push({ kind: "status-expired", targetId: attacker.id, statusId });
   }
 }
@@ -474,6 +476,7 @@ function strike(swing: Swing, victim: Combatant, events: CombatEvent[]): void {
   events.push(
     ...attackHitRiders(attacker, victim, snapshot.mainHand, rng, rules, swing.surroundings),
   );
+  bearerHit(attacker, events);
   attackReached(victim, events);
 }
 
@@ -601,6 +604,7 @@ export function resolveAttackSkill(
         ...attackHitRiders(caster, victim, snapshot.mainHand, rng, rules, surroundings),
         ...nextAttackSkillRiders(next, caster, victim, rng, rules, surroundings),
       );
+      bearerHit(caster, events);
       attackReached(victim, events);
       markChain(caster, skill, victim.id);
       hit.push(victim);

@@ -279,6 +279,23 @@ const status = {
       `<path d="M20 14l-7-5v10z" fill="${c}"/>` +
       `<path d="M5 11h5M5 17h5M3.5 14h7" ${stroke(c, 2)}/>`,
   ],
+  // Stance: three quick slashes: attack faster, take double damage (#919).
+  frenzy: [
+    "stance",
+    (c) => `<path d="M6.5 18l3-8.5M10.5 18l3-8.5M14.5 18l3-8.5" ${stroke(c, 2.2)}/>`,
+  ],
+  // Stance: a crescent moon, into the shadows: faster, half damage (#919).
+  "dark-escape": [
+    "stance",
+    (c) => `<path d="M14.5 8a6 6 0 1 0 0 11a4.8 4.8 0 0 1 0-11z" fill="${c}"/>`,
+  ],
+  // Stance: a leaf, the wild's stride: faster, blocks (#919).
+  "natural-stride": [
+    "stance",
+    (c) =>
+      `<path d="M7 19c0-6 4-10.5 10-10.5 0 6-4 10.5-10 10.5z" ${stroke(c, 1.8)}/>` +
+      `<path d="M7 19l6.5-6.5" ${stroke(c, 1.8)}/>`,
+  ],
   // Preparation: one drop, your attacks poison (#525).
   "apply-poison": [
     "preparation",
