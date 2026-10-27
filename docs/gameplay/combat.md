@@ -265,9 +265,11 @@ A chant is not a spell: dazed does not slow it. Anthem of Flame
 (Paragon, Leadership, 5 energy, 1 s cast, 10 s recharge) lasts 10 s on
 each ally in earshot, the paragon included: the next attack skill each
 uses burns whoever it hits for 3 s. That attack skill uses the chant up
-when its blow lands, misses or is blocked, or, from a bow or a spear,
-when its shot lands or is dodged; only a hit burns, every victim of
-Barrage alike. Plain swings leave it alone, and so does an attack skill
+as it is released: as its blow strikes, or as its shot leaves a bow or
+a spear (#782). The burn travels with the shot, so a second attack skill
+loosed before the first arrow lands carries none, and an Anthem that
+runs out while the arrow flies still burns. Only a hit burns, every
+victim of Barrage alike. Plain swings leave it alone, and so does an attack skill
 interrupted or cancelled before its blow. Several different chants can
 be up at once; the same one again keeps the longer.
 

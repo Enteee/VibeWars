@@ -1545,9 +1545,11 @@ export class MatchSimulation {
    * skill riding it. What happens now is only what stopped a shot from
    * flying; the rest lands with the shot.
    *
-   * Each shot carries the caster's chants as they are now (#758), and the
-   * first to land ends them. If none flies, the skill has resolved
-   * already, and they end at once.
+   * Each shot carries the caster's chants' riders as they are now, and
+   * the chants end at once, flying or not (#782): the release spends
+   * them, so a second attack skill loosed before the first shot lands
+   * carries none, and a chant that would have run out in flight still
+   * lands its rider.
    */
   #releaseSkill(
     record: ParticipantRecord,
@@ -1561,16 +1563,13 @@ export class MatchSimulation {
       blow: skillBlow(resolution.skill, record.combatant),
       next: nextAttackSkillOf(record.combatant),
     };
-    const flying = this.#projectiles.length;
     const events = resolution.targets.flatMap((victim) => {
       const target = this.#participants.get(victim.id);
       return target === undefined || victim.dead
         ? []
         : this.#release(record, target, speed, dt, skillHit);
     });
-    if (this.#projectiles.length === flying) {
-      useNextAttackSkill(record.combatant, skillHit.next, events);
-    }
+    useNextAttackSkill(record.combatant, skillHit.next, events);
     return events;
   }
 
@@ -1684,33 +1683,26 @@ export class MatchSimulation {
    * skill (Wild Throw) rolls no block. With its attacker gone from the
    * match, the blow lands and the riders do not.
    *
-   * However it lands, an attack skill's shot ends the chants it carries
-   * (#758), and a hit lands their riders after the skill's own.
+   * A hit lands the riders of the chants its release spent (#782) after
+   * the skill's own.
    */
   #land(projectile: Projectile): void {
-    const { skillHit } = projectile;
-    const attacker = this.#participants.get(projectile.attackerId);
-    const events: CombatEvent[] = [];
-    if (skillHit?.kind === "attack" && attacker !== undefined) {
-      useNextAttackSkill(attacker.combatant, skillHit.next, events);
-    }
     if (projectile.obstructed) {
       // It hit the wall; where the target is now has nothing to do with it.
-      events.push({ kind: "attack-obstructed", targetId: projectile.targetId });
-      this.#logShot(projectile, events);
+      this.#logShot(projectile, [{ kind: "attack-obstructed", targetId: projectile.targetId }]);
       return;
     }
     const target = this.#participants.get(projectile.targetId);
     if (target === undefined || target.combatant.dead) {
-      if (events.length > 0) {
-        this.#logShot(projectile, events);
-      }
       return;
     }
+    const { skillHit } = projectile;
     if (skillHit?.kind === "spell") {
       this.#landSpell(projectile, skillHit, target);
       return;
     }
+    const events: CombatEvent[] = [];
+    const attacker = this.#participants.get(projectile.attackerId);
     const riders = (effects: Skill["effects"]): CombatEvent[] =>
       skillHit === undefined || attacker === undefined
         ? []
