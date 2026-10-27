@@ -232,12 +232,24 @@ export interface WirePlayer {
    */
   readonly swingElapsed: number;
   readonly swingTotal: number;
+  /** Its statuses, in the order applied, oldest first (#803). */
+  readonly statuses: readonly WireStatus[];
+}
+
+/** One status on a player (#803): what the effects monitor draws. */
+export interface WireStatus {
   /**
-   * Each status as its index in the sorted status-id table (#632), which
+   * Its index in the sorted status-id table (#632), which
    * `wire-schema.json` carries, so a build with another table is refused
    * at join.
    */
-  readonly statuses: readonly number[];
+  readonly status: number;
+  /** Match clock (`elapsedSeconds`) at which it runs out, rounded to 0.1 s. */
+  readonly endsAt: number;
+  /** The length of the application that set it, rounded to 0.1 s; > 0. */
+  readonly durationSeconds: number;
+  /** Who applied it. */
+  readonly casterId: string;
 }
 
 /** A ranged weapon's shot in flight, from `from` to `to` over `flightSeconds` from `launchedAt` (#160). */
@@ -530,8 +542,26 @@ function parseArray<T>(
   return parsed;
 }
 
-function parseStatusIndex(value: unknown): number | undefined {
-  return isCount(value) && value <= MAX_WIRE_STATUS_INDEX ? value : undefined;
+function parseStatus(value: unknown): WireStatus | undefined {
+  const raw = fields(value);
+  if (
+    raw === undefined ||
+    !isCount(raw.status) ||
+    raw.status > MAX_WIRE_STATUS_INDEX ||
+    !isNumber(raw.endsAt) ||
+    raw.endsAt < 0 ||
+    !isNumber(raw.durationSeconds) ||
+    raw.durationSeconds <= 0 ||
+    !isString(raw.casterId)
+  ) {
+    return undefined;
+  }
+  return {
+    status: raw.status,
+    endsAt: raw.endsAt,
+    durationSeconds: raw.durationSeconds,
+    casterId: raw.casterId,
+  };
 }
 
 function parseString(value: unknown): string | undefined {
@@ -803,7 +833,7 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
   ) {
     return undefined;
   }
-  const statuses = parseArray(raw.statuses, MAX_WIRE_STATUSES, parseStatusIndex);
+  const statuses = parseArray(raw.statuses, MAX_WIRE_STATUSES, parseStatus);
   return statuses === undefined
     ? undefined
     : {

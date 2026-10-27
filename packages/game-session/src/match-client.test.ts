@@ -99,7 +99,17 @@ describe("connectMatch", () => {
           endReason: null,
           part: 0,
           parts: 1,
-          players: [{ ...WIRE_PLAYER, statuses }],
+          players: [
+            {
+              ...WIRE_PLAYER,
+              statuses: statuses.map((status) => ({
+                status,
+                endsAt: tick + 3,
+                durationSeconds: 5,
+                casterId: "p2",
+              })),
+            },
+          ],
           projectiles: [],
         },
         transport.selfId,
@@ -112,7 +122,10 @@ describe("connectMatch", () => {
     send(10_001, [statusWireIndex("burning"), statusWireIndex("weakness")]);
     await settle();
     expect(connection.getSnapshot().players.map((player) => player.statuses)).toEqual([
-      ["burning", "weakness"],
+      [
+        { id: "burning", endsAt: 10_004, durationSeconds: 5, casterId: "p2" },
+        { id: "weakness", endsAt: 10_004, durationSeconds: 5, casterId: "p2" },
+      ],
     ]);
   });
 
@@ -282,7 +295,9 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
   it("convert field for field, null to undefined", () => {
     const wire: WirePlayer = {
       ...WIRE_PLAYER,
-      statuses: [statusWireIndex("burning")],
+      statuses: [
+        { status: statusWireIndex("burning"), endsAt: 7.5, durationSeconds: 3, casterId: "p2" },
+      ],
     };
     const snapshot = playerSnapshot(wire);
     for (const [wireKey, snapshotKey] of Object.entries(FIELDS)) {
@@ -294,7 +309,7 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
         wireKey === "secondaryProfession"
           ? undefined
           : wireKey === "statuses"
-            ? ["burning"]
+            ? [{ id: "burning", endsAt: 7.5, durationSeconds: 3, casterId: "p2" }]
             : (sent ?? undefined);
       expect(got, wireKey).toEqual(expected);
     }
@@ -306,7 +321,13 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
       expect(statusFromWire(statusWireIndex(id))).toBe(id);
     }
     expect(statusFromWire(WIRE_STATUS_IDS.length)).toBeUndefined();
-    expect(playerSnapshot({ ...WIRE_PLAYER, statuses: [WIRE_STATUS_IDS.length] })).toBeUndefined();
+    const unknown = {
+      status: WIRE_STATUS_IDS.length,
+      endsAt: 1,
+      durationSeconds: 1,
+      casterId: "p2",
+    };
+    expect(playerSnapshot({ ...WIRE_PLAYER, statuses: [unknown] })).toBeUndefined();
   });
 });
 

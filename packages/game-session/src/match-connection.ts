@@ -1,4 +1,4 @@
-import type { CombatEvent, OffhandId, ProfessionId } from "@vibewars/game-core";
+import type { CombatEvent, OffhandId, ProfessionId, StatusId } from "@vibewars/game-core";
 import type {
   CastRefusedMessage,
   ClientIntent,
@@ -73,7 +73,19 @@ export interface PlayerSnapshot {
   /** Net health and energy pips as the host applies them (#504): ±10, 0 dead. Drawn, never derived. */
   readonly healthPips: number;
   readonly energyPips: number;
-  readonly statuses: readonly string[];
+  /** In the order applied, oldest first (#803). */
+  readonly statuses: readonly StatusSnapshot[];
+}
+
+/** One status on a player (#803): what the effects monitor draws. */
+export interface StatusSnapshot {
+  readonly id: StatusId;
+  /** Match clock (`elapsedSeconds`) at which it runs out. */
+  readonly endsAt: number;
+  /** The length of the application that set it: a duration bar's full width. */
+  readonly durationSeconds: number;
+  /** Who applied it; it keeps the id after they leave the match. */
+  readonly casterId: string;
 }
 
 export interface MatchSnapshot {

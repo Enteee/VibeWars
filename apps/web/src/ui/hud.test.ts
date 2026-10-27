@@ -78,21 +78,21 @@ describe("targetHealthPercent (#484)", () => {
 });
 
 describe("lostHealthPercent (#764)", () => {
+  const deepWound = [
+    { id: "deep-wound", endsAt: 20, durationSeconds: 20, casterId: "foe" },
+  ] as const;
+
   it("greys the share of the bar a deep wound took", () => {
     expect(lostHealthPercent(player({}))).toBe(0);
-    expect(lostHealthPercent(player({ health: 384, statuses: ["deep-wound"] }))).toBe(20);
-    expect(lostHealthPercent(player({ maxHealth: 600, statuses: ["deep-wound"] }))).toBeCloseTo(
+    expect(lostHealthPercent(player({ health: 384, statuses: deepWound }))).toBe(20);
+    expect(lostHealthPercent(player({ maxHealth: 600, statuses: deepWound }))).toBeCloseTo(
       16.667,
       2,
     );
   });
 
-  it("ignores a status id it does not know", () => {
-    expect(lostHealthPercent(player({ statuses: ["no-such-status"] }))).toBe(0);
-  });
-
   it("greys nothing on a corpse", () => {
-    expect(lostHealthPercent(player({ health: 0, dead: true, statuses: ["deep-wound"] }))).toBe(0);
+    expect(lostHealthPercent(player({ health: 0, dead: true, statuses: deepWound }))).toBe(0);
   });
 
   it("draws the band on every bar, not only a corpse's (#805)", () => {
