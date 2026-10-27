@@ -41,6 +41,8 @@ export type CombatEvent =
     }
   | { readonly kind: "heal"; readonly targetId: string; readonly amount: number }
   | { readonly kind: "energy-gain"; readonly targetId: string; readonly amount: number }
+  /** Energy the target actually lost (#793): never more than it had, never 0. */
+  | { readonly kind: "energy-loss"; readonly targetId: string; readonly amount: number }
   | { readonly kind: "sacrifice"; readonly targetId: string; readonly amount: number }
   | { readonly kind: "death"; readonly targetId: string }
   | {
@@ -182,6 +184,51 @@ export function gainEnergy(target: Combatant, amount: number, events: CombatEven
 }
 
 /**
+ * Take up to `amount` energy from `target`, never below 0 (#793). Only
+ * whole points go: the fraction regeneration has filled stays, as the
+ * bar shows it. Current energy alone; maximum energy is untouched. A
+ * loss that takes nothing is no event.
+ */
+function loseEnergy(target: Combatant, amount: number, events: CombatEvent[]): void {
+  const lost = Math.min(amount, Math.floor(target.energy));
+  if (lost <= 0) {
+    return;
+  }
+  target.energy -= lost;
+  events.push({ kind: "energy-loss", targetId: target.id, amount: lost });
+}
+
+/**
+ * The energy `targetId` lost to earlier effects of this skill (#793), read
+ * from `earlier`, the events its resolution has emitted so far.
+ */
+function energyLostBy(targetId: string, earlier: readonly CombatEvent[]): number {
+  let lost = 0;
+  for (const event of earlier) {
+    if (event.kind === "energy-loss" && event.targetId === targetId) {
+      lost += event.amount;
+    }
+  }
+  return lost;
+}
+
+/**
+ * `amount`, or with `perEnergyLost`, `amount` for each point `target` lost
+ * earlier in this resolution: 0 with no target or no loss (#793).
+ */
+function perEnergyLost(
+  effect: { readonly perEnergyLost?: true },
+  amount: number,
+  target: Combatant | undefined,
+  earlier: readonly CombatEvent[],
+): number {
+  if (effect.perEnergyLost === undefined) {
+    return amount;
+  }
+  return target === undefined ? 0 : amount * energyLostBy(target.id, earlier);
+}
+
+/**
  * Whether a knockdown would land on `target`: alive, standing, and with
  * nothing active that prevents it. One on someone already down does
  * nothing, however long it would have lasted (GW1).
@@ -289,7 +336,16 @@ function refusedSkill(effect: InterruptEffect, target: Combatant): string | null
     : cast.skillId;
 }
 
-export function applyEffect(effect: UnconditionalEffect, context: SkillContext): CombatEvent[] {
+/**
+ * Apply one effect to `context.target`. `earlier` is what this skill's
+ * resolution has emitted before it, for a `perEnergyLost` amount (#793);
+ * an effect applied on its own has nothing before it.
+ */
+export function applyEffect(
+  effect: UnconditionalEffect,
+  context: SkillContext,
+  earlier: readonly CombatEvent[] = [],
+): CombatEvent[] {
   const events: CombatEvent[] = [];
   const { caster, target } = context;
 
@@ -300,11 +356,16 @@ export function applyEffect(effect: UnconditionalEffect, context: SkillContext):
       }
       // Physical and elemental skill damage respects armor; holy, shadow and
       // typeless damage ignores it (#760).
-      const packet = skillDamage(
+      const amount = perEnergyLost(
+        effect,
         resolveMagnitude(effect.amount, caster),
-        effect.type,
-        effect.armorPenetration,
+        target,
+        earlier,
       );
+      if (amount <= 0) {
+        return events;
+      }
+      const packet = skillDamage(amount, effect.type, effect.armorPenetration);
       applyDamage(target, mitigate(packet, target, context.rules), false, events);
       return events;
     }
@@ -319,7 +380,19 @@ export function applyEffect(effect: UnconditionalEffect, context: SkillContext):
     }
 
     case "energy-gain": {
-      gainEnergy(caster, resolveMagnitude(effect.amount, caster), events);
+      gainEnergy(
+        caster,
+        perEnergyLost(effect, resolveMagnitude(effect.amount, caster), target, earlier),
+        events,
+      );
+      return events;
+    }
+
+    case "energy-loss": {
+      if (target === undefined || target.dead) {
+        return events;
+      }
+      loseEnergy(target, resolveMagnitude(effect.amount, caster), events);
       return events;
     }
 
@@ -441,11 +514,11 @@ function applyInOrder(
   earlier: readonly CombatEvent[],
 ): CombatEvent[] {
   if (effect.kind !== "if") {
-    return applyEffect(effect, context);
+    return applyEffect(effect, context, earlier);
   }
   const { target } = context;
   return target !== undefined && conditionHolds(effect.condition, target.id, earlier)
-    ? effect.effects.flatMap((inner) => applyEffect(inner, context))
+    ? effect.effects.flatMap((inner) => applyEffect(inner, context, earlier))
     : [];
 }
 
@@ -476,6 +549,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
       return true;
     case "heal":
       return effect.recipient === "caster";
+    case "energy-loss":
     case "damage":
     case "apply-status":
     case "remove-status":

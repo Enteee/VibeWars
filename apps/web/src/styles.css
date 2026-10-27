@@ -157,7 +157,7 @@ body {
   border-color: #4a5464;
 }
 
-.hud-target-health.is-dead /* Maximum health a deep wound took (#764): the bar's far end, greyed, as GW1. */
+/* Maximum health a deep wound took (#764): the bar's far end, greyed, as GW1. */
 .hud-bar-lost {
   position: absolute;
   inset: 0 0 0 auto;

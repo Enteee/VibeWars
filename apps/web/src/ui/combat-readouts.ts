@@ -40,6 +40,7 @@ export function logToneOf(kind: CombatEvent["kind"]): Exclude<LogTone, "divider"
     case "heal":
       return "heal";
     case "energy-gain":
+    case "energy-loss":
       return "resource";
     case "status-applied":
     case "status-removed":
@@ -99,6 +100,8 @@ export function describeCombatEvent(
       return `${by} heals ${target} for ${formatAmount(event.amount)}`;
     case "energy-gain":
       return `${target} gains ${formatAmount(event.amount)} energy${attribute === undefined ? "" : ` from ${attribute}`}`;
+    case "energy-loss":
+      return `${target} loses ${formatAmount(event.amount)} energy to ${by}`;
     case "health-lost":
       // Named for the status, not the skill that brought it: not a second hit.
       return `${STATUS_DEFINITIONS[event.statusId].name}${source === undefined ? "" : ` (${source})`} takes ${formatAmount(event.amount)} health from ${target}`;
@@ -400,7 +403,7 @@ export function meterRows(totals: MeterTotals): readonly MeterRow[] {
 
 export interface FloatingCue {
   readonly text: string;
-  readonly tone: "damage" | "heal" | "neutral";
+  readonly tone: "damage" | "heal" | "energy" | "neutral";
   /** A critical hit (#533): drawn larger, whatever dealt it. */
   readonly critical: boolean;
 }
@@ -432,6 +435,10 @@ export function floatingCueFor(
       };
     case "heal":
       return { text: `+${formatAmount(amount ?? 0)}`, tone: "heal", critical: false };
+    case "energy-loss":
+      // Energy Burn and Energy Tap (#793): blue, as the energy bar, with the
+      // word, so it never reads as health.
+      return { text: `−${formatAmount(amount ?? 0)} energy`, tone: "energy", critical: false };
     case "interrupted":
       return { text: "interrupted!", tone: "neutral", critical: false };
     case "cancelled":

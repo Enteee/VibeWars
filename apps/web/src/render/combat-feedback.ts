@@ -33,6 +33,7 @@ export interface FloatingTextSink {
 const COLOURS: Record<FloatingCue["tone"], number> = {
   damage: 0xff7b72,
   heal: 0x7ee787,
+  energy: 0x79c0ff,
   neutral: 0xffd866,
 };
 

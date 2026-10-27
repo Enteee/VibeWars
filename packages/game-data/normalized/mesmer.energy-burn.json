@@ -1,0 +1,24 @@
+{
+  "id": "mesmer.energy-burn",
+  "name": "Energy Burn",
+  "profession": "mesmer",
+  "attribute": "Domination Magic",
+  "type": "Spell.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 10
+  },
+  "activationSeconds": 2,
+  "rechargeSeconds": 20,
+  "description": "Target foe loses 1...8...10 Energy and takes 9 damage for each point of energy lost.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Mesmer/311-Energy_Burn",
+    "fetchedAt": "2026-10-27T04:06:53.702Z"
+  },
+  "unmapped": {}
+}

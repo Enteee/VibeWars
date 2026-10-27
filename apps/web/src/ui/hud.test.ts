@@ -1,3 +1,6 @@
+import fs from "node:fs";
+import { fileURLToPath } from "node:url";
+
 import { describe, expect, it } from "vitest";
 
 import type { CastRefusedMessage } from "@vibewars/game-protocol";
@@ -90,6 +93,18 @@ describe("lostHealthPercent (#764)", () => {
 
   it("greys nothing on a corpse", () => {
     expect(lostHealthPercent(player({ health: 0, dead: true, statuses: ["deep-wound"] }))).toBe(0);
+  });
+
+  it("draws the band on every bar, not only a corpse's (#805)", () => {
+    // Node has no layout to measure, so read the rule itself: comments
+    // out, every selector that styles the band is the band alone.
+    const css = fs
+      .readFileSync(fileURLToPath(new URL("../styles.css", import.meta.url)), "utf8")
+      .replace(/\/\*[\s\S]*?\*\//g, "");
+    const selectors = [...css.matchAll(/([^{}]*\.hud-bar-lost[^{}]*)\{/g)].map((match) =>
+      (match[1] ?? "").trim(),
+    );
+    expect(selectors).toEqual([".hud-bar-lost"]);
   });
 });
 
