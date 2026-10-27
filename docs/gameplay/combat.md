@@ -589,6 +589,14 @@ ally or yourself) gives +4 health regeneration and a 50% chance to block
 attacks for 7 s, and ends the moment its bearer attacks: a swing, an
 arrow or an attack skill, hit or miss.
 
+The Ritualist heals with Restoration Magic, each on an ally or yourself
+(#955). **Mend Body and Soul** (5 energy, ¾ s, 3 s recharge) heals 96.
+**Spirit Light** (5 energy, 1 s, 4 s recharge) sacrifices 17% of your
+maximum health and heals 156. **Wielder's Boon** (5 energy, ¼ s, 4 s
+recharge) heals 51, and 63 more if the ally is under a weapon spell.
+Their spirit clauses, a condition removed per spirit in earshot and no
+sacrifice with a spirit near, wait for spirits (#467).
+
 ## Weapon attacks
 
 Select a foe and attack it (Space; with nothing selected, the nearest foe): your character walks into weapon reach and sight, round walls if it has to, then

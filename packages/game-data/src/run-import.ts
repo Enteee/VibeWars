@@ -203,6 +203,21 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Ritualist/769-Weapon_of_Warding",
   },
   {
+    id: "ritualist.mend-body-and-soul",
+    profession: "ritualist",
+    url: "https://www.gw-memorial.net/skills/Ritualist/755-Mend_Body_and_Soul",
+  },
+  {
+    id: "ritualist.spirit-light",
+    profession: "ritualist",
+    url: "https://www.gw-memorial.net/skills/Ritualist/762-Spirit_Light",
+  },
+  {
+    id: "ritualist.wielders-boon",
+    profession: "ritualist",
+    url: "https://www.gw-memorial.net/skills/Ritualist/770-Wielder's_Boon",
+  },
+  {
     id: "mesmer.power-spike",
     profession: "mesmer",
     url: "https://www.gw-memorial.net/skills/Mesmer/320-Power_Spike",

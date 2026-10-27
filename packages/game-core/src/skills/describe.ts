@@ -375,7 +375,7 @@ function lowerFirst(text: string): string {
 
 /** "a hex", "an enchantment". */
 function aCategory(category: StatusCategory): string {
-  return `${category === "enchantment" ? "an" : "a"} ${category}`;
+  return `${category === "enchantment" ? "an" : "a"} ${category.replace("-", " ")}`;
 }
 
 /** What an `if` waits for, as the line it leads says it (#521, #794). */
