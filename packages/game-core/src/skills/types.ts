@@ -381,6 +381,21 @@ export type StateCondition =
    */
   | { readonly kind: "target-knocked-down" }
   /**
+   * The effect's target walked in the previous tick (#997,
+   * `Combatant.moving`): Water Trident's "a moving foe".
+   */
+  | { readonly kind: "target-moving" }
+  /**
+   * The effect's target has this status (#997): Stoning's "suffering from
+   * Weakness", Searing Flames' "already on fire".
+   */
+  | { readonly kind: "target-has-status"; readonly statusId: StatusId }
+  /**
+   * The effect's target does not have this status (#997): Searing Flames'
+   * "foes not already on fire".
+   */
+  | { readonly kind: "target-lacks-status"; readonly statusId: StatusId }
+  /**
    * The caster has more energy than the effect's target (#918): Mind
    * Shock's "if you have more energy than target foe". Equal is not more.
    */
