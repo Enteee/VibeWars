@@ -281,6 +281,7 @@ export function createHud(
     targetPanel,
     TARGET_EFFECT_ICON_PX,
     "your target's effects",
+    "below",
   );
 
   // Bottom centre, as GW1 (#1042), bottom up: the skill bar, energy,
@@ -290,7 +291,13 @@ export function createHud(
   message.setAttribute("role", "status");
   // As wide as the skill bar: everything else in it takes its width.
   const column = element("div", "hud-column", root);
-  const effects = createEffectsMonitor(column, EFFECT_ICON_PX, "your effects", onEndUpkeep);
+  const effects = createEffectsMonitor(
+    column,
+    EFFECT_ICON_PX,
+    "your effects",
+    "above",
+    onEndUpkeep,
+  );
   const bars = element("div", "hud-bars", column);
 
   const status = element("div", "hud-status", bars);
