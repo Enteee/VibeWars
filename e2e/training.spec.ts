@@ -1239,3 +1239,15 @@ test("(38) Expand fills the window at the same zoom; Esc collapses it back, stil
   await page.keyboard.press("Escape");
   await expect(training).not.toHaveClass(/is-armed/);
 });
+
+test("(39) a dummy's regeneration after a hit folds into one growing row (#590)", async ({
+  page,
+}) => {
+  await openTraining(page);
+  await castFireballAndLand(page);
+  // Natural regeneration starts 5 s out of combat and writes a row a
+  // second; the run reads as one row that keeps growing.
+  const regeneration = page.locator(".training-log-row", { hasText: "regeneration heals" });
+  await expect(regeneration.first()).toContainText(/ over \d+ s$/, { timeout: 15_000 });
+  await expect(regeneration).toHaveCount(1);
+});
