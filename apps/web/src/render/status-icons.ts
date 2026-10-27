@@ -44,6 +44,9 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "glyph-of-lesser-energy": icon("glyph-of-lesser-energy"),
   "anthem-of-flame": icon("anthem-of-flame"),
   "weapon-of-warding": icon("weapon-of-warding"),
+  "mystic-regeneration": icon("mystic-regeneration"),
+  "fleeting-stability": icon("fleeting-stability"),
+  "heart-of-fury": icon("heart-of-fury"),
 };
 
 /** Drawn size of one icon, in world pixels. */

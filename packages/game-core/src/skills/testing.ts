@@ -42,9 +42,9 @@ export function makeCombatant(overrides: Partial<Combatant> & { id: string }): C
 }
 
 /**
- * Run `fn` with these statuses speeding up or slowing down attacks. Only
- * Faintheartedness does in the catalog, and only slows, so a test of the
- * hook lends the multiplier to an existing one for the length of `fn`.
+ * Run `fn` with these statuses speeding up or slowing down attacks: a
+ * test of the hook lends the multiplier to an existing status for the
+ * length of `fn`.
  */
 export function withAttackDuration<T>(
   multipliers: Partial<Record<StatusId, number>>,
@@ -61,7 +61,7 @@ export function withAttackDuration<T>(
 
 /**
  * Run `fn` with these statuses' definitions changed: how a test reaches
- * a hook no catalog status uses yet, `preventsKnockdown` say, or makes
+ * a hook no catalog status uses yet, or makes
  * a chance certain.
  */
 export function withStatusDefinitions<T>(
