@@ -2,8 +2,8 @@ import {
   getProfession,
   getSkill,
   getWeapon,
+  neededWeaponText,
   type ActivationRejection,
-  type AttackWeaponClass,
   type Segment,
 } from "@vibewars/game-core";
 import type { CastRefusedMessage } from "@vibewars/game-protocol";
@@ -37,6 +37,7 @@ import {
   paintCastFill,
   paintKnockdown,
   slotAffordable,
+  wrongWeapon,
 } from "./skill-slot-state.js";
 import { createSlotTooltips, type SlotTooltips } from "./slot-tooltip.js";
 
@@ -322,18 +323,6 @@ const ATTACK_REFUSALS: Readonly<Partial<Record<ActivationRejection, string>>> = 
   "invalid-target-ally": "You can only attack an enemy.",
 };
 
-/** An attack skill refused for the weapon in hand names the one it needs (ADR-0029). */
-const NEEDS: Readonly<Record<AttackWeaponClass, string>> = {
-  axe: "Needs an axe.",
-  sword: "Needs a sword.",
-  hammer: "Needs a hammer.",
-  daggers: "Needs daggers.",
-  scythe: "Needs a scythe.",
-  spear: "Needs a spear.",
-  bow: "Needs a bow.",
-  melee: "Needs a melee weapon.",
-};
-
 /**
  * The line for a refusal as the server sent it. A reason this client does
  * not know (wrong data, not old data) still says something.
@@ -345,7 +334,8 @@ export function describeRefusal(refusal: CastRefusedMessage): string {
   }
   if (refusal.kind === "skill" && reason === "wrong-weapon") {
     const needed = getSkill(refusal.skillId)?.attack?.weapon;
-    return needed === undefined ? REFUSALS[reason] : NEEDS[needed];
+    // An attack skill refused for the weapon in hand names the one it needs (ADR-0029).
+    return needed === undefined ? REFUSALS[reason] : `Needs ${neededWeaponText(needed)}.`;
   }
   return (refusal.kind === "attack" ? ATTACK_REFUSALS[reason] : undefined) ?? REFUSALS[reason];
 }
@@ -805,12 +795,13 @@ export function updateHud(
 
   renderTarget(hud, self, target);
 
-  // Grey out skills the player cannot currently afford, and mark those
-  // that cannot reach the target. The server is still the authority on
+  // Grey out skills the player cannot currently afford or the weapon in
+  // hand cannot use (#417), and mark those that cannot reach the target. The server is still the authority on
   // whether a cast is legal — these are hints, not gates (brief §32).
   const buttons = hud.skillBar.querySelectorAll("button");
   const fill = castFill(skillBar, self);
   const far = outOfRange(skillBar, self, target, walls);
+  const unwielded = wrongWeapon(skillBar, self);
   hud.slotTips.casting(fill?.slot);
   paintKnockdown(hud.skillBar, self.knockdownRemaining);
   skillBar.forEach((slot, index) => {
@@ -824,5 +815,6 @@ export function updateHud(
     paintCastFill(button, index === fill?.slot ? fill.fraction : undefined);
     button.classList.toggle("is-out-of-range", far[index] === true);
     button.classList.toggle("is-unaffordable", !slotAffordable(slot, self));
+    button.classList.toggle("is-wrong-weapon", unwielded[index] === true);
   });
 }

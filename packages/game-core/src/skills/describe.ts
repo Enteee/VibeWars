@@ -8,6 +8,7 @@ import { findStatusDefinition } from "./status.js";
 import { effectiveActivationSeconds, outsideMatch } from "./tick.js";
 import type {
   AreaRule,
+  AttackWeaponClass,
   EffectCondition,
   Magnitude,
   Skill,
@@ -61,6 +62,11 @@ export interface SkillDescription {
   readonly typeText: string;
   /** Drawn with the gold frame (#459). */
   readonly elite: boolean;
+  /**
+   * The weapon an attack skill needs (#417): "Axe attack", "Bow attack",
+   * "Melee attack"; `undefined` for any other skill.
+   */
+  readonly weaponText: string | undefined;
   /** `undefined` for a "No Attribute" skill (#445). */
   readonly attributeId: string | undefined;
   /** e.g. "Fire Magic", or the raw id if the attribute is unknown; `undefined` with no attribute. */
@@ -357,6 +363,37 @@ function headlineOf(
   }
 }
 
+/** An attack skill's weapon line (#417). */
+const WEAPON_TEXT: Record<AttackWeaponClass, string> = {
+  axe: "Axe attack",
+  sword: "Sword attack",
+  hammer: "Hammer attack",
+  daggers: "Dagger attack",
+  scythe: "Scythe attack",
+  spear: "Spear attack",
+  bow: "Bow attack",
+  melee: "Melee attack",
+};
+
+const NEEDED_WEAPON: Record<AttackWeaponClass, string> = {
+  axe: "an axe",
+  sword: "a sword",
+  hammer: "a hammer",
+  daggers: "daggers",
+  scythe: "a scythe",
+  spear: "a spear",
+  bow: "a bow",
+  melee: "a melee weapon",
+};
+
+/**
+ * What an attack skill needs in hand, for "Needs an axe." (#417): the
+ * HUD's refusal and the build editor's warning say it the same way.
+ */
+export function neededWeaponText(weapon: AttackWeaponClass): string {
+  return NEEDED_WEAPON[weapon];
+}
+
 const TYPE_TEXT: Record<SkillType, string> = {
   attack: "Attack.",
   spell: "Spell.",
@@ -448,6 +485,12 @@ export function describeSkill(
   skill: Skill,
   ranks: ReadonlyMap<string, number> = new Map(),
 ): SkillDescription {
+  // An attack skill's "+16 damage" (#417): its bonus over the weapon's
+  // blow, first, as GW1 writes it. Broad Head Arrow has none.
+  const bonusDamage = skill.attack?.bonusDamage;
+  const bonus = bonusDamage === undefined ? undefined : describeMagnitude(bonusDamage, ranks);
+  const bonusLine =
+    bonus === undefined ? [] : [{ text: `+${String(bonus.current)} damage`, magnitude: bonus }];
   // An attack skill's if-blocked effects (#534), after the ones a hit gets.
   const onBlocked = (skill.attack?.onBlocked ?? []).flatMap((effect) =>
     describeEffects(effect, ranks).map(({ text, magnitude }) => ({
@@ -471,19 +514,27 @@ export function describeSkill(
       ? []
       : [{ text: "Projectile: can be dodged", magnitude: undefined }];
   const effects = [
+    ...bonusLine,
     ...skill.effects.flatMap((effect) => describeEffects(effect, ranks)),
     ...onBlocked,
     ...whileActivating,
     ...projectile,
   ];
   const { target, range } = targetAndRange(skill);
-  const numbers = skill.effects.flatMap((effect) => headlineOf(effect, ranks) ?? []);
+  const numbers = [
+    ...bonusLine.map(({ text, magnitude }) => ({
+      text,
+      scales: magnitude.attributeId !== undefined,
+    })),
+    ...skill.effects.flatMap((effect) => headlineOf(effect, ranks) ?? []),
+  ];
   const headline = (numbers.find((number) => number.scales) ?? numbers[0])?.text;
   return {
     id: skill.id,
     name: skill.name,
     typeText: skill.elite ? `Elite ${TYPE_TEXT[skill.type]}` : TYPE_TEXT[skill.type],
     elite: skill.elite,
+    weaponText: skill.attack === undefined ? undefined : WEAPON_TEXT[skill.attack.weapon],
     attributeId: skill.attributeId,
     attributeName:
       skill.attributeId === undefined
