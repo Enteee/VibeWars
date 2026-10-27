@@ -229,6 +229,7 @@ describe("the knockdown effect", () => {
     target,
     rng: createRng(1),
     rules: RULES.combat,
+    surroundings: new Map(),
   });
 
   it("does nothing to someone already down, and lands again the instant they rise", () => {

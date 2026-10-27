@@ -287,6 +287,18 @@ describe("attack skills (#417)", () => {
     expect(first("warrior.swift-chop")).not.toMatch(/attack\./);
   });
 
+  it("words a splash, a lone target and a recharge of the others as GW1 does (#885)", () => {
+    const texts = (id: string) => describeSkill(skill(id)).effects.map(({ text }) => text);
+    expect(texts("assassin.death-blossom")).toContain("Adjacent foes take 20 damage");
+    expect(texts("assassin.horns-of-the-ox")).toContain(
+      "If target is not adjacent to any allies: knocks down for 2s",
+    );
+    expect(texts("assassin.moebius-strike")).toContain(
+      "If target is below 50% Health: recharges all your other attack skills",
+    );
+    expect(texts("assassin.moebius-strike")[0]).toBe("Off-hand attack. Must follow a dual attack.");
+  });
+
   it("chains only dagger attacks, so a chain blow never flies (#831)", () => {
     const chained = IMPLEMENTED_SKILLS.filter((entry) => entry.attack?.chain !== undefined);
     expect(chained.map((entry) => entry.attack?.weapon)).toEqual(chained.map(() => "daggers"));

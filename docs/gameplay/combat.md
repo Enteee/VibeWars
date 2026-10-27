@@ -478,7 +478,19 @@ changes a mark: swings, spells and other attack skills in between leave
 it alone, and a lead that misses or is blocked places none. A mark lasts
 15 s from the hit that placed it, and goes when either of you dies. The
 tooltip says it first: "Lead attack.", "Off-hand attack. Must follow a
-lead attack." Dual attacks come later.
+lead attack."
+
+**Dual attacks** (#885) must follow your off-hand attack, and strike
+twice: each blow rolls its own miss, block and crit, and the skill's
+bonus and riders land with each blow that hits, so a condition applied
+twice is refreshed. A foe the first blow kills takes no second. A dual
+that lands leaves your dual mark. Death Blossom also deals its damage to
+every foe adjacent to its target, once a blow; Twisting Fangs bleeds and
+deep-wounds; Horns of the Ox knocks down a foe with no ally adjacent.
+Moebius Strike, the elite, is an off-hand attack that follows a dual,
+and against a foe below half health recharges all your other attack
+skills at once, so the chain loops: lead, off-hand, dual, Moebius,
+dual, Moebius. The weapon's own double strike never adds to a skill.
 
 **Skills interrupt and resume.** Starting a skill loses the swing in
 progress. Attacking and casting are otherwise separate, as in GW1

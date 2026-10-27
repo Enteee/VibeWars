@@ -48,6 +48,7 @@ function mend(sim: MatchSimulation, casterId: string, bearerId: string): CombatE
   return applyEffect(
     { kind: "maintain-status", statusId: "mending" },
     {
+      surroundings: new Map(),
       caster: get(sim, casterId).combatant,
       target: get(sim, bearerId).combatant,
       rng: createRng(1),

@@ -199,6 +199,7 @@ describe("headless combat simulation", () => {
       return;
     }
     applyEffects(skill.effects, {
+      surroundings: new Map(),
       caster: caster.combatant,
       target: target?.combatant,
       rng: createRng(1),

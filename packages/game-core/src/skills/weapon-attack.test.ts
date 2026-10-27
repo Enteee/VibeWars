@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { AREA_ADJACENT } from "../distances.js";
 import { bareArmorSet } from "../equipment/armor.js";
 import { defaultEquipmentFor } from "../equipment/loadout.js";
 import {
@@ -28,7 +29,7 @@ import {
   swingProgress,
   weaponSnapshotOf,
 } from "./weapon-attack.js";
-import type { Combatant, Skill } from "./types.js";
+import type { Combatant, Skill, Surroundings } from "./types.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1.combat;
 
@@ -85,7 +86,7 @@ describe("resolveSwing", () => {
       const events = resolveSwing({
         attacker: sword,
         target,
-        candidates: [],
+        surroundings: new Map(),
         rng,
         rules: RULES,
         exposed: NOWHERE,
@@ -112,7 +113,7 @@ describe("resolveSwing", () => {
           resolveSwing({
             attacker: who,
             target: foe("dummy"),
-            candidates: [],
+            surroundings: new Map(),
             rng,
             rules: RULES,
             exposed: NOWHERE,
@@ -133,7 +134,7 @@ describe("resolveSwing", () => {
       const events = resolveSwing({
         attacker: sword,
         target: foe("dummy"),
-        candidates: [],
+        surroundings: new Map(),
         rng,
         rules: RULES,
         exposed: NOWHERE,
@@ -164,7 +165,7 @@ describe("resolveSwing", () => {
         resolveSwing({
           attacker: daggers,
           target: foe("dummy"),
-          candidates: [],
+          surroundings: new Map(),
           rng,
           rules: RULES,
           exposed: NOWHERE,
@@ -188,7 +189,7 @@ describe("resolveSwing", () => {
       const { events, doubleStrike } = resolveSwing({
         attacker: daggers,
         target: foe("dummy"),
-        candidates: [],
+        surroundings: new Map(),
         rng,
         rules: RULES,
         exposed: NOWHERE,
@@ -221,7 +222,7 @@ describe("resolveSwing", () => {
     const events = resolveSwing({
       attacker: scythe,
       target,
-      candidates,
+      surroundings: new Map(candidates.map((each) => [each.combatant.id, each])),
       rng: createRng(5),
       rules: RULES,
       exposed: NOWHERE,
@@ -239,7 +240,7 @@ describe("resolveSwing", () => {
       resolveSwing({
         attacker: sword,
         target,
-        candidates: [],
+        surroundings: new Map(),
         rng: createRng(6),
         rules: RULES,
         exposed: NOWHERE,
@@ -266,7 +267,10 @@ describe("resolveAttackSkill (ADR-0029)", () => {
     if (skill === undefined) {
       throw new Error("missing skill");
     }
-    return resolveAttackSkill({ skill, caster, targets, rng, rules: RULES }, NOWHERE);
+    return resolveAttackSkill(
+      { surroundings: new Map(), skill, caster, targets, rng, rules: RULES },
+      NOWHERE,
+    );
   }
 
   const victim = (id = "t"): Combatant =>
@@ -358,7 +362,7 @@ describe("resolveAttackSkill (ADR-0029)", () => {
         resolveSwing({
           attacker: strong(WEAPONS.axe, "warrior.axe-mastery", strength),
           target: foe("dummy"),
-          candidates: [],
+          surroundings: new Map(),
           rng: fixed(10),
           rules: RULES,
           exposed: NOWHERE,
@@ -470,7 +474,7 @@ describe("block (#534)", () => {
       const events = resolveSwing({
         attacker: sword,
         target,
-        candidates: [],
+        surroundings: new Map(),
         rng,
         rules: RULES,
         exposed: NOWHERE,
@@ -496,7 +500,7 @@ describe("block (#534)", () => {
       resolveSwing({
         attacker: sword,
         target,
-        candidates: [],
+        surroundings: new Map(),
         rng,
         rules: RULES,
         exposed: NOWHERE,
@@ -533,7 +537,7 @@ describe("block (#534)", () => {
     const events = resolveSwing({
       attacker: sword,
       target,
-      candidates: [],
+      surroundings: new Map(),
       rng,
       rules: RULES,
       exposed: NOWHERE,
@@ -560,6 +564,7 @@ describe("block (#534)", () => {
       target.statuses.apply("guardian", 10, "monk");
       return resolveAttackSkill(
         {
+          surroundings: new Map(),
           skill,
           caster: attacker(weapon, attributeId),
           targets: [target],
@@ -653,6 +658,7 @@ describe("block (#534)", () => {
       });
       const events = resolveAttackSkill(
         {
+          surroundings: new Map(),
           skill,
           caster: attacker(WEAPONS.longbow, "ranger.marksmanship"),
           targets,
@@ -679,7 +685,7 @@ describe("critical hits (#533)", () => {
     resolveSwing({
       attacker: who,
       target: foe("dummy"),
-      candidates: [],
+      surroundings: new Map(),
       rng,
       rules: RULES,
       exposed,
@@ -752,7 +758,14 @@ describe("critical hits (#533)", () => {
     }
     const target = makeCombatant({ id: "t", team: 1, health: 1e6, maxHealth: 1e6 });
     const events = resolveAttackSkill(
-      { skill: swiftChop, caster: axe, targets: [target], rng: fixed(0), rules: RULES },
+      {
+        surroundings: new Map(),
+        skill: swiftChop,
+        caster: axe,
+        targets: [target],
+        rng: fixed(0),
+        rules: RULES,
+      },
       NOWHERE,
     );
     expect(events).toEqual([
@@ -778,6 +791,7 @@ describe("critical hits (#533)", () => {
     }
     const events = resolveAttackSkill(
       {
+        surroundings: new Map(),
         skill: barrage,
         caster: bow,
         targets: [foe("t").combatant],
@@ -879,7 +893,14 @@ describe("critical hits (#533)", () => {
       }
       const target = makeCombatant({ id: "t", team: 1, health: 1e6, maxHealth: 1e6 });
       const events = resolveAttackSkill(
-        { skill: swiftChop, caster: who, targets: [target], rng: single, rules: RULES },
+        {
+          surroundings: new Map(),
+          skill: swiftChop,
+          caster: who,
+          targets: [target],
+          rng: single,
+          rules: RULES,
+        },
         always,
       );
       expect(events).toContainEqual({ kind: "energy-gain", targetId: "attacker", amount: 2 });
@@ -890,7 +911,13 @@ describe("critical hits (#533)", () => {
     const target = makeCombatant({ id: "t", team: 1 });
     const events = applyEffect(
       { kind: "damage", amount: { flat: 50 }, type: "typeless", armorPenetration: 0 },
-      { caster: makeCombatant({ id: "c" }), target, rng: fixed(0), rules: RULES },
+      {
+        surroundings: new Map(),
+        caster: makeCombatant({ id: "c" }),
+        target,
+        rng: fixed(0),
+        rules: RULES,
+      },
     );
     expect(events).toEqual([{ kind: "damage", targetId: "t", amount: 50, critical: false }]);
   });
@@ -940,7 +967,7 @@ describe("daze (#546)", () => {
     resolveSwing({
       attacker: sword,
       target,
-      candidates: [],
+      surroundings: new Map(),
       rng: createRng(1),
       rules: RULES,
       exposed: NOWHERE,
@@ -995,7 +1022,7 @@ describe("daze (#546)", () => {
       const events = resolveSwing({
         attacker: sword,
         target,
-        candidates: [],
+        surroundings: new Map(),
         rng: createRng(seed),
         rules: RULES,
         exposed: NOWHERE,
@@ -1018,7 +1045,7 @@ describe("daze (#546)", () => {
       const events = resolveSwing({
         attacker: sword,
         target,
-        candidates: [],
+        surroundings: new Map(),
         rng: createRng(seed),
         rules: RULES,
         exposed: NOWHERE,
@@ -1040,6 +1067,7 @@ describe("daze (#546)", () => {
     }
     const events = resolveAttackSkill(
       {
+        surroundings: new Map(),
         skill: chop,
         caster: attacker(WEAPONS.axe, "warrior.axe-mastery"),
         targets: [target.combatant],
@@ -1060,6 +1088,7 @@ describe("daze (#546)", () => {
     }
     const kinds = resolveAttackSkill(
       {
+        surroundings: new Map(),
         skill: blow,
         caster: attacker(WEAPONS.sword, "warrior.swordsmanship"),
         targets: [target.combatant],
@@ -1083,7 +1112,7 @@ describe("weakness (#762)", () => {
       resolveSwing({
         attacker: who,
         target: foe("dummy"),
-        candidates: [],
+        surroundings: new Map(),
         rng: fixed(15),
         rules: RULES,
         exposed: NOWHERE,
@@ -1128,7 +1157,14 @@ describe("weakness (#762)", () => {
     const axe = weakened(attacker(WEAPONS.axe, "warrior.axe-mastery", 12));
     const target = makeCombatant({ id: "t", team: 1, health: 1e6, maxHealth: 1e6 });
     const events = resolveAttackSkill(
-      { skill: swiftChop, caster: axe, targets: [target], rng: fixed(10), rules: RULES },
+      {
+        surroundings: new Map(),
+        skill: swiftChop,
+        caster: axe,
+        targets: [target],
+        rng: fixed(10),
+        rules: RULES,
+      },
       NOWHERE,
     );
     const atEleven = resolveMagnitudeAtRanks(bonus, new Map([["warrior.axe-mastery", 11]]));
@@ -1204,5 +1240,235 @@ describe("a caster weapon's element (#761)", () => {
 
   it("a holy wand's bolt respects armor: #760's rule is for skill damage", () => {
     expect(boltOnRanger("monk.smiting-prayers")).toEqual([against(70)]);
+  });
+});
+
+describe("dual attacks (#885)", () => {
+  /** A float stream that plays `floats` in turn, then 0.9: no crit, no block. */
+  const sequence = (...floats: number[]): SimulationRng =>
+    Object.assign(createRng(1), {
+      nextInt: () => 10,
+      nextFloat: () => floats.shift() ?? 0.9,
+    });
+
+  function assassin(): Combatant {
+    const caster = attacker(WEAPONS.daggers, "assassin.dagger-mastery", 12);
+    (caster.attributeRanks as Map<string, number>).set("assassin.critical-strikes", 12);
+    return caster;
+  }
+
+  /** `caster`'s mark of `role` on `target`, as its last chain attack there left. */
+  function marked(caster: Combatant, target: Combatant, role: "lead" | "off-hand" | "dual") {
+    caster.chainMarks.set(target.id, { role, remainingSeconds: 15 });
+  }
+
+  function resolve(
+    skillId: string,
+    caster: Combatant,
+    target: Combatant,
+    options: { readonly rng?: SimulationRng; readonly surroundings?: Surroundings } = {},
+  ): CombatEvent[] {
+    const skill = getSkill(skillId);
+    if (skill === undefined) {
+      throw new Error(`missing ${skillId}`);
+    }
+    return resolveAttackSkill(
+      {
+        skill,
+        caster,
+        targets: [target],
+        rng: options.rng ?? sequence(),
+        rules: RULES,
+        surroundings: options.surroundings ?? new Map(),
+      },
+      NOWHERE,
+    );
+  }
+
+  const victim = (id = "t", team = 1): Combatant =>
+    makeCombatant({ id, team, health: 1e6, maxHealth: 1e6 });
+
+  const standing = (...placed: [Combatant, Vec2][]): Surroundings =>
+    new Map(placed.map(([combatant, position]) => [combatant.id, { combatant, position }]));
+
+  const damageTo = (events: readonly CombatEvent[], targetId: string): number[] =>
+    events.flatMap((event) =>
+      event.kind === "damage" && event.targetId === targetId ? [event.amount] : [],
+    );
+
+  /** A rank-12 dagger blow of 10 with `bonus` after armor, on `target`. */
+  const blowOf = (bonus: number, target: Combatant): number =>
+    mitigate(
+      {
+        armored: 10 * weaponAttributeMultiplier(12, RULES),
+        armorIgnoring: bonus,
+        type: WEAPONS.daggers.damageType,
+        source: "weapon",
+        armorPenetration: WEAPONS.daggers.armorPenetration,
+      },
+      target,
+      RULES,
+    );
+
+  it("after an off-hand strikes twice, its bonus on each, and leaves the dual mark", () => {
+    const caster = assassin();
+    const target = victim();
+    marked(caster, target, "off-hand");
+    const events = resolve("assassin.death-blossom", caster, target);
+    expect(damageTo(events, "t")).toEqual([blowOf(40, target), blowOf(40, target)]);
+    expect(caster.chainMarks.get("t")?.role).toBe("dual");
+  });
+
+  it("with no off-hand mark misses out of sequence, once, and leaves no mark", () => {
+    const caster = assassin();
+    const target = victim();
+    marked(caster, target, "lead");
+    const events = resolve("assassin.death-blossom", caster, target);
+    expect(events).toEqual([{ kind: "attack-missed", targetId: "t", reason: "out-of-sequence" }]);
+    expect(caster.chainMarks.get("t")?.role).toBe("lead");
+  });
+
+  it("blocked once and landed once: one hit, its riders once, and the dual mark", () => {
+    const caster = assassin();
+    const target = victim();
+    target.statuses.apply("guardian", 10, "monk");
+    marked(caster, target, "off-hand");
+    // The first block roll blocks; the second does not, nor does the crit roll.
+    const events = resolve("assassin.twisting-fangs", caster, target, { rng: sequence(0.25) });
+    expect(events.filter(({ kind }) => kind === "attack-blocked")).toHaveLength(1);
+    expect(damageTo(events, "t")).toEqual([blowOf(18, target)]);
+    expect(
+      events.filter((event) => event.kind === "status-applied" && event.statusId === "bleeding"),
+    ).toHaveLength(1);
+    expect(caster.chainMarks.get("t")?.role).toBe("dual");
+  });
+
+  it("blocked twice: no damage, and the off-hand mark stays", () => {
+    const caster = assassin();
+    const target = victim();
+    target.statuses.apply("guardian", 10, "monk");
+    marked(caster, target, "off-hand");
+    const events = resolve("assassin.twisting-fangs", caster, target, {
+      rng: sequence(0.25, 0.25),
+    });
+    expect(damageTo(events, "t")).toEqual([]);
+    expect(caster.chainMarks.get("t")?.role).toBe("off-hand");
+  });
+
+  it("a first blow that kills strikes no second", () => {
+    const caster = assassin();
+    const target = makeCombatant({ id: "t", team: 1, health: 1, maxHealth: 1e6 });
+    marked(caster, target, "off-hand");
+    const events = resolve("assassin.death-blossom", caster, target);
+    expect(damageTo(events, "t")).toHaveLength(1);
+    expect(events.filter(({ kind }) => kind === "death")).toHaveLength(1);
+  });
+
+  it("Death Blossom splashes each adjacent foe once a blow, not a farther foe nor an ally", () => {
+    const caster = assassin();
+    const target = victim();
+    const near = victim("near");
+    const far = victim("far");
+    const ally = victim("ally", 0);
+    marked(caster, target, "off-hand");
+    const events = resolve("assassin.death-blossom", caster, target, {
+      surroundings: standing(
+        [caster, vec2(0, 0)],
+        [target, vec2(40, 0)],
+        [near, vec2(40, AREA_ADJACENT)],
+        [far, vec2(40, 2 * AREA_ADJACENT)],
+        [ally, vec2(40, -10)],
+      ),
+    });
+    const splash = mitigate(skillDamage(40, "piercing", 0), near, RULES);
+    expect(damageTo(events, "near")).toEqual([splash, splash]);
+    expect(damageTo(events, "far")).toEqual([]);
+    expect(damageTo(events, "ally")).toEqual([]);
+  });
+
+  it("Horns of the Ox knocks down a foe with no ally adjacent, not one with", () => {
+    const knockedDown = (events: readonly CombatEvent[]) =>
+      events.some((event) => event.kind === "knocked-down" && event.targetId === "t");
+
+    const alone = victim();
+    const caster = assassin();
+    marked(caster, alone, "off-hand");
+    expect(
+      knockedDown(
+        resolve("assassin.horns-of-the-ox", caster, alone, {
+          surroundings: standing([caster, vec2(0, 0)], [alone, vec2(40, 0)]),
+        }),
+      ),
+    ).toBe(true);
+
+    const guarded = victim();
+    const friend = victim("friend");
+    const other = assassin();
+    marked(other, guarded, "off-hand");
+    expect(
+      knockedDown(
+        resolve("assassin.horns-of-the-ox", other, guarded, {
+          surroundings: standing(
+            [other, vec2(0, 0)],
+            [guarded, vec2(40, 0)],
+            [friend, vec2(40, AREA_ADJACENT)],
+          ),
+        }),
+      ),
+    ).toBe(false);
+  });
+
+  it("Twisting Fangs at Critical Strikes 12 bleeds and deep-wounds for 17 s", () => {
+    const caster = assassin();
+    const target = victim();
+    marked(caster, target, "off-hand");
+    const applied = resolve("assassin.twisting-fangs", caster, target).flatMap((event) =>
+      event.kind === "status-applied" ? [[event.statusId, event.durationSeconds]] : [],
+    );
+    expect(applied).toEqual([
+      ["bleeding", 17],
+      ["deep-wound", 17],
+      ["bleeding", 17],
+      ["deep-wound", 17],
+    ]);
+  });
+
+  describe("Moebius Strike", () => {
+    const ATTACKS = ["assassin.death-blossom", "assassin.jagged-strike", "assassin.moebius-strike"];
+
+    function recharging(health: number): { caster: Combatant; target: Combatant } {
+      const caster = assassin();
+      for (const skillId of [...ATTACKS, "assassin.dash"]) {
+        caster.cast.startRecharge(skillId, 10);
+      }
+      const target = makeCombatant({ id: "t", team: 1, health, maxHealth: 1e6 });
+      marked(caster, target, "dual");
+      return { caster, target };
+    }
+
+    const ready = (caster: Combatant): string[] =>
+      [...ATTACKS, "assassin.dash"].filter((id) => !caster.cast.rechargeRemaining.has(id));
+
+    it("after a dual, on a foe below 50%, recharges every other attack skill", () => {
+      const { caster, target } = recharging(4e5);
+      resolve("assassin.moebius-strike", caster, target);
+      expect(ready(caster)).toEqual(["assassin.death-blossom", "assassin.jagged-strike"]);
+      expect(caster.chainMarks.get("t")?.role).toBe("off-hand");
+    });
+
+    it("on a foe above 50% recharges nothing", () => {
+      const { caster, target } = recharging(6e5);
+      resolve("assassin.moebius-strike", caster, target);
+      expect(ready(caster)).toEqual([]);
+    });
+
+    it("after an off-hand misses out of sequence", () => {
+      const { caster, target } = recharging(4e5);
+      marked(caster, target, "off-hand");
+      expect(resolve("assassin.moebius-strike", caster, target)).toEqual([
+        { kind: "attack-missed", targetId: "t", reason: "out-of-sequence" },
+      ]);
+      expect(ready(caster)).toEqual([]);
+    });
   });
 });

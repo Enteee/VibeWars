@@ -1038,6 +1038,7 @@ describe("attack skills ride the weapon (ADR-0029)", () => {
     stepFor(match, 0.3);
     const a = get(match, "a").combatant;
     applyEffects([{ kind: "interrupt" }], {
+      surroundings: new Map(),
       caster: get(match, "d").combatant,
       target: a,
       rng: createRng(1),
