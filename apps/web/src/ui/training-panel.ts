@@ -83,6 +83,7 @@ import {
   castFill,
   flashSlot,
   outOfRange,
+  adrenalineFading,
   adrenalineFill,
   adrenalineGaugeHtml,
   paintAdrenalineFill,
@@ -479,6 +480,7 @@ export function createTrainingPanel(): TrainingPanel {
     const slots = session?.connection.skillBar ?? [];
     const recharges = session?.connection.getRecharges() ?? [];
     const adrenaline = session?.connection.getAdrenaline() ?? [];
+    const adrenalineLossIn = session?.connection.getAdrenalineLossIn() ?? null;
     const reducedMotion = prefersReducedMotion();
     const fill = castFill(slots, self);
     const target = match.players.find((player) => player.sessionId === self.targetSessionId);
@@ -503,6 +505,10 @@ export function createTrainingPanel(): TrainingPanel {
       );
       // The match HUD's gauge (#826).
       paintAdrenalineFill(button, adrenalineFill(slot, adrenaline[index] ?? 0));
+      button.classList.toggle(
+        "is-adrenaline-fading",
+        adrenalineFading(adrenaline[index] ?? 0, adrenalineLossIn),
+      );
       button.classList.toggle("is-wrong-weapon", unwielded[index] === true);
       // The same wipe as the match HUD (#152).
       paintRecharge(button, recharges[index], slot.name, reducedMotion);

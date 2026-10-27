@@ -19,6 +19,7 @@ const FIREBALL = "elementalist.fireball";
 const ARMOR_OF_EARTH = "elementalist.armor-of-earth";
 const SEVER_ARTERY = "warrior.sever-artery";
 const BACKBREAKER = "warrior.backbreaker";
+const ORISON = "monk.orison-of-healing";
 
 function wielding(weapon: Weapon, attributeId: string): ResolvedEquipment {
   return {
@@ -446,6 +447,113 @@ describe("adrenaline from damage taken (#827)", () => {
     expect(taker.health).toBeLessThan(480);
     expect(strikesOf(taker, BACKBREAKER)).toBe(0);
     expect(strikesOf(taker, SEVER_ARTERY)).toBe(0);
+  });
+});
+
+describe("adrenaline is lost out of combat (#828)", () => {
+  const LOSS = RULES.resources.adrenalineLossSeconds;
+
+  /** `a`, charged at 0 s, beside a dummy; `a` takes `fields`. */
+  function charged(
+    fields: Partial<ParticipantSpec> = {},
+    ...extra: ParticipantSpec[]
+  ): MatchSimulation {
+    const match = new MatchSimulation({
+      seed: "swing",
+      matchRules: {
+        scoreToWin: 99,
+        timeLimitSeconds: 600,
+        deathRule: "respawn",
+        respawnSeconds: 8,
+        deathPenalty: false,
+      },
+      participants: [
+        {
+          ...swordsman("a", vec2(0, 0)),
+          skillBar: [FIREBALL, ARMOR_OF_EARTH, SEVER_ARTERY, BACKBREAKER, ORISON],
+          attributeRanks: new Map([
+            ["warrior.swordsmanship", 12],
+            ["elementalist.earth-magic", 12],
+            ["monk.healing-prayers", 12],
+          ]),
+          ...fields,
+        },
+        dummy("d", vec2(40, 0)),
+        ...extra,
+      ],
+    });
+    chargeAdrenaline(get(match, "a").combatant);
+    return match;
+  }
+
+  it("goes at 25 s out of combat, not at 24.9 s", () => {
+    const match = charged();
+    const caster = get(match, "a").combatant;
+    stepFor(match, LOSS - 0.1);
+    expect(strikesOf(caster, BACKBREAKER)).toBe(9);
+    stepFor(match, 0.1);
+    expect(strikesOf(caster, BACKBREAKER)).toBe(0);
+    expect(strikesOf(caster, SEVER_ARTERY)).toBe(0);
+  });
+
+  it("a heal and a spell do not keep it", () => {
+    const match = charged();
+    const caster = get(match, "a").combatant;
+    stepFor(match, 20);
+    caster.health -= 100;
+    expect(match.requestSkill("a", 4)?.check).toEqual({ ok: true });
+    stepFor(match, 2);
+    expect(match.requestSkill("a", 1)?.check).toEqual({ ok: true });
+    stepFor(match, LOSS - 22 - 0.1);
+    expect(caster.lastCombatAt).toBe(0);
+    expect(strikesOf(caster, BACKBREAKER)).toBe(9);
+    stepFor(match, 0.1);
+    expect(strikesOf(caster, BACKBREAKER)).toBe(0);
+  });
+
+  it("a blow started keeps it, even one that is blocked and earns nothing", () => {
+    const match = charged();
+    get(match, "d").combatant.statuses.apply("guardian", 1e6, "monk");
+    stepFor(match, 20);
+    match.requestAttack("a", "d");
+    for (let i = 0; i < 2000; i += 1) {
+      const [swing] = swings(match.step(DT).log);
+      if (swing?.events.every((event) => event.kind === "attack-blocked") === true) {
+        expect(get(match, "a").combatant.lastCombatAt).toBe(match.elapsedSeconds);
+        return;
+      }
+    }
+    throw new Error("no blocked swing in 100 s");
+  });
+
+  it("a foe's blow keeps it, even a hit for 0, which logs no damage", () => {
+    // Armor no blow gets through.
+    const match = charged(
+      { equipment: unarmedResolvedEquipment(1e6) },
+      { ...swordsman("f", vec2(-40, 0)), team: 1 },
+    );
+    const caster = get(match, "a").combatant;
+    stepFor(match, 20);
+    match.requestAttack("f", "a");
+    const [swing] = swings(stepFor(match, 2));
+    expect(swing).toMatchObject({ sourceId: "f", events: [] });
+    stepFor(match, LOSS - 22 + 1);
+    expect(strikesOf(caster, BACKBREAKER)).toBe(9);
+  });
+
+  it("a respawn starts the window again", () => {
+    const match = charged();
+    const caster = get(match, "a").combatant;
+    stepFor(match, 10);
+    caster.statuses.apply("burning", 10, "d");
+    caster.health = 0.2;
+    stepFor(match, DT);
+    expect(caster.dead).toBe(true);
+    stepFor(match, 8 + DT);
+    expect(caster.dead).toBe(false);
+    chargeAdrenaline(caster);
+    stepFor(match, LOSS - 1);
+    expect(strikesOf(caster, BACKBREAKER)).toBe(9);
   });
 });
 
