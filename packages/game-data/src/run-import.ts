@@ -203,6 +203,21 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Monk/189-Mend_Condition",
   },
   {
+    id: "monk.word-of-healing",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/178-Word_of_Healing",
+  },
+  {
+    id: "dervish.mystic-sweep",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/1029-Mystic_Sweep",
+  },
+  {
+    id: "ranger.savage-shot",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/121-Savage_Shot",
+  },
+  {
     id: "mesmer.energy-burn",
     profession: "mesmer",
     url: "https://www.gw-memorial.net/skills/Mesmer/311-Energy_Burn",
