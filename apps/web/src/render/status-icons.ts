@@ -55,6 +55,8 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "watch-yourself": icon("watch-yourself"),
   "healing-signet-armor": icon("healing-signet-armor"),
   "for-great-justice": icon("for-great-justice"),
+  "fall-back": icon("fall-back"),
+  "stand-your-ground": icon("stand-your-ground"),
   "apply-poison": icon("apply-poison"),
   "glyph-of-lesser-energy": icon("glyph-of-lesser-energy"),
   "anthem-of-flame": icon("anthem-of-flame"),

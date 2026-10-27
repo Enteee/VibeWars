@@ -392,6 +392,15 @@ const status = {
       `<path d="M7 7.5h10v4c0 3-2.5 5-5 6.5C9.5 16.5 7 14.5 7 11.5z" ${stroke(c, 2)}/>` +
       `<path d="M6 4.5h12" ${stroke(c, 2)}/>`,
   ],
+  // Shout: an arrow turning back, run and be healed for it (#921).
+  "fall-back": ["shout", (c) => `<path d="M17 12H7.5M11 8l-4 4 4 4" ${stroke(c, 2.5)}/>`],
+  // Shout: a shield planted on the ground, armor while you stand (#921).
+  "stand-your-ground": [
+    "shout",
+    (c) =>
+      `<path d="M8 5h8v4.5c0 2.5-2 4-4 5.2-2-1.2-4-2.7-4-5.2z" ${stroke(c, 2)}/>` +
+      `<path d="M6.5 18.5h11" ${stroke(c, 2.5)}/>`,
+  ],
   // Chant: a flame, your next attack skill burns (#758). Burning's flame,
   // smaller and higher, clear of the banner's notch.
   "anthem-of-flame": [

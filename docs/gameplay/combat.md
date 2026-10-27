@@ -474,7 +474,15 @@ time. A signet, an attack or a stance is not a spell.
 Wild Throw (Paragon spear attack, 7 adrenaline) deals +17 damage, cannot
 be blocked, and ends the stance of the foe it hits. It does not yet
 disable your other attack skills for 3 s: that waits for disabled skills
-(#469).
+(#469). Cruel Spear (Paragon elite spear attack, 6 adrenaline) deals
++42 damage, and a Deep Wound for 17 s if its target is not moving as the
+spear lands (#921).
+
+**Moving** means walking during the previous tick: a held direction, a
+clicked point, an approach to attack or cast. Knocked down, in
+aftercast, dead or walking into a wall is not moving. Everyone's is read
+at the end of a tick, so it is one tick late and never depends on who
+acts first.
 
 Spear of Lightning (Paragon spear attack, 5 energy, 6 s) deals +18, and
 the whole blow is lightning, the spear's damage too: armor against
@@ -529,6 +537,14 @@ you 66, plus 18 for each living ally in earshot, you included, at most
 140 in all: 84 alone, 140 with four others. It is a skill, not a shout,
 so Leadership gives no energy for it. A Deep Wound cuts the capped heal
 by its 20%.
+
+The Paragon's Command shouts (#921): "Fall Back!" (10 energy, 25 s
+recharge) gives 9 s of 33% faster movement and 13 Health per second
+while moving, a heal Deep Wound cuts; it ends on an ally when that ally
+hits with an attack, but not on a miss or a block. "Stand Your Ground!"
+(15 energy, 30 s recharge) gives 17 s of +24 armor while not moving,
+and ends on an ally as soon as that ally attacks. Leadership pays for
+both, as for every shout.
 
 **Chants** reach allies in earshot as shouts do, but have a cast (#758).
 A chant is not a spell: dazed does not slow it. Anthem of Flame

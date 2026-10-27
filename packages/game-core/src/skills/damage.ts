@@ -86,8 +86,12 @@ export function effectiveArmor(target: Combatant, packet: DamagePacket): number 
   }
 
   // Armor of Earth (+24) and Healing Signet (−40) reach a consumer here for
-  // the first time.
-  armor += aggregateModifiers(target.statuses.active).armorModifier;
+  // the first time; "Stand Your Ground!"'s +24 only while standing (#921).
+  const modifiers = aggregateModifiers(target.statuses.active);
+  armor += modifiers.armorModifier;
+  if (!target.moving) {
+    armor += modifiers.armorWhileStill;
+  }
 
   // Penetration is a fraction of what is left, applied last, so a shield
   // and an enchantment both dilute it rather than being bypassed flat.
