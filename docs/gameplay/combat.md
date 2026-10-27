@@ -417,7 +417,14 @@ and a Ranger 70 and 100. Damage halves for every 40 armor above 60:
 Fireball's 91 lands for about 46 on a Ranger. Types that are neither
 physical nor elemental get no typed bonus; base armor still applies.
 Armor penetration cuts the whole total, typed bonus included.
-Degeneration and life steal ignore armor altogether.
+
+Some damage ignores armor altogether (#760): holy, shadow and typeless
+skill damage, an attack skill's "+N damage" bonus, degeneration and
+life steal. Swift Chop's +16 lands as 16 on a Warrior and on a Monk
+alike, on top of its armor-mitigated weapon blow, and its blocked 16
+lands as 16. A weapon's own blow always respects armor, a typeless wand
+included. Against a 60-armor caster nothing changed: the curve is
+exactly 1 there.
 
 ## Primary attributes
 

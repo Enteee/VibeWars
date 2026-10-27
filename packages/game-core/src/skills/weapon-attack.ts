@@ -220,7 +220,7 @@ export function attackReached(victim: Combatant, events: CombatEvent[]): void {
 
 /**
  * What an attack skill makes of a blow (ADR-0029): the weapon's roll times
- * `weaponDamage`, plus `bonus`.
+ * `weaponDamage`, plus `bonus`, which ignores armor (#760).
  */
 export interface BlowRule {
   readonly weaponDamage: number;
@@ -255,7 +255,7 @@ export function skillBlow(skill: Skill, caster: Combatant): BlowRule {
  * victim is exposed, then skips the damage roll, so the stream does
  * depend on who stands where, deterministically. A crit takes the weapon's maximum times its
  * `criticalMultiplier` instead of rolling; an attack skill's bonus is
- * added after, unmultiplied. A melee blow at an `exposed` victim always
+ * added after, unmultiplied, and ignores armor (#760). A melee blow at an `exposed` victim always
  * crits; a projectile never does that way, however it lands. Returns
  * whether the blow crit.
  *
@@ -282,12 +282,12 @@ export function landBlow(
     ? weapon.damageMax * weapon.criticalMultiplier
     : rng.nextInt(weapon.damageMin, weapon.damageMax + 1);
   const packet: DamagePacket = {
-    amount:
+    armored:
       base *
-        blow.weaponDamage *
-        weaponAttributeMultiplier(snapshot.rank, rules) *
-        (requirementMet ? 1 : rules.unmetRequirementMultiplier) +
-      blow.bonus,
+      blow.weaponDamage *
+      weaponAttributeMultiplier(snapshot.rank, rules) *
+      (requirementMet ? 1 : rules.unmetRequirementMultiplier),
+    armorIgnoring: blow.bonus,
     type: weapon.damageType,
     source: "weapon",
     armorPenetration: strengthArmorPenetration(blow.strengthRank, weapon.armorPenetration),
@@ -434,8 +434,8 @@ export function resolveSwing(swing: Swing): {
 
 /**
  * Resolve an attack skill at its hit (ADR-0029): one blow of the weapon on
- * each victim, the primary first, with the skill's bonus added before
- * armor. A victim the blow misses (blind) gets none of the skill's
+ * each victim, the primary first, with the skill's bonus added after
+ * armor (#760). A victim the blow misses (blind) gets none of the skill's
  * riders; the ones it hits get them all. A victim that blocks gets the
  * skill's `onBlocked` effects instead (#534); an `unblockable` one rolls
  * no block at all (Wild Throw, #523). No double strike and no

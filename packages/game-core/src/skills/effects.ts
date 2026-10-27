@@ -1,6 +1,6 @@
 import { DIVINE_FAVOR_ATTRIBUTE, divineFavorBonusHeal } from "../primary-attributes.js";
 import { getSkill } from "./catalog.js";
-import { mitigate, spellDamage } from "./damage.js";
+import { mitigate, skillDamage } from "./damage.js";
 import { resolveMagnitude } from "./scaling.js";
 import { getStatusDefinition, scaledStatusDuration, type StatusId } from "./status.js";
 import type { SimulationRng } from "../rng.js";
@@ -218,9 +218,9 @@ export function applyEffect(effect: SkillEffect, context: SkillContext): CombatE
       if (target === undefined) {
         return events;
       }
-      // Spell damage respects armor. Before this, it did not — which is
-      // why a warrior and a monk took identical Fireballs.
-      const packet = spellDamage(resolveMagnitude(effect.amount, caster), effect.type);
+      // Physical and elemental skill damage respects armor; holy, shadow and
+      // typeless damage ignores it (#760).
+      const packet = skillDamage(resolveMagnitude(effect.amount, caster), effect.type);
       applyDamage(target, mitigate(packet, target, context.rules), false, events);
       return events;
     }

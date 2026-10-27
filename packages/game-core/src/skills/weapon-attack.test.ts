@@ -6,7 +6,7 @@ import { createRng, type SimulationRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { getSkill } from "./catalog.js";
-import { mitigate, spellDamage, weaponAttributeMultiplier } from "./damage.js";
+import { mitigate, skillDamage, weaponAttributeMultiplier } from "./damage.js";
 import { applyEffect, type CombatEvent } from "./effects.js";
 import { makeCombatant } from "./testing.js";
 import { blockChanceOf, combinedBlockChance } from "./tick.js";
@@ -262,14 +262,15 @@ describe("resolveAttackSkill (ADR-0029)", () => {
   const victim = (id = "t"): Combatant =>
     makeCombatant({ id, team: 1, health: 1e6, maxHealth: 1e6 });
 
-  it("is one blow: the weapon's roll times the attribute, plus the bonus, then armor once", () => {
+  it("is one blow: the weapon's roll times the attribute, plus the bonus after armor", () => {
     const axe = attacker(WEAPONS.axe, "warrior.axe-mastery", 12);
     const target = victim();
     const events = resolve(swiftChop, axe, [target]);
 
     const expected = mitigate(
       {
-        amount: 10 * weaponAttributeMultiplier(12, RULES) + 16,
+        armored: 10 * weaponAttributeMultiplier(12, RULES),
+        armorIgnoring: 16,
         type: WEAPONS.axe.damageType,
         source: "weapon",
         armorPenetration: WEAPONS.axe.armorPenetration,
@@ -278,6 +279,33 @@ describe("resolveAttackSkill (ADR-0029)", () => {
       RULES,
     );
     expect(events).toEqual([{ kind: "damage", targetId: "t", amount: expected, critical: false }]);
+  });
+
+  it("adds exactly its bonus at any armor, crit or not (#760)", () => {
+    if (swiftChop?.attack === undefined) {
+      throw new Error("missing skill");
+    }
+    const noBonus: Skill = {
+      ...swiftChop,
+      attack: { ...swiftChop.attack, bonusDamage: undefined },
+    };
+    const axe = attacker(WEAPONS.axe, "warrior.axe-mastery", 12);
+    // A Warrior's 100 against an axe, a Monk's 60.
+    for (const armor of [100, 60]) {
+      for (const rng of [fixed(10), fixed(10, 0)]) {
+        const at = (): Combatant =>
+          makeCombatant({
+            id: "t",
+            team: 1,
+            health: 1e6,
+            maxHealth: 1e6,
+            equipment: unarmedResolvedEquipment(armor),
+          });
+        const [chop] = damages(resolve(swiftChop, axe, [at()], rng));
+        const [blow] = damages(resolve(noBonus, axe, [at()], rng));
+        expect(chop, `armor ${String(armor)}`).toBe((blow ?? 0) + 16);
+      }
+    }
   });
 
   describe("Strength (#528)", () => {
@@ -296,7 +324,8 @@ describe("resolveAttackSkill (ADR-0029)", () => {
     const blowOf = (weapon: Weapon, bonus: number, penetration: number, target: Combatant) =>
       mitigate(
         {
-          amount: 10 * weaponAttributeMultiplier(12, RULES) + bonus,
+          armored: 10 * weaponAttributeMultiplier(12, RULES),
+          armorIgnoring: bonus,
           type: weapon.damageType,
           source: "weapon",
           armorPenetration: penetration,
@@ -573,7 +602,7 @@ describe("block (#534)", () => {
         {
           kind: "damage",
           targetId: "t",
-          amount: mitigate(spellDamage(16, "typeless"), target, RULES),
+          amount: mitigate(skillDamage(16, "typeless"), target, RULES),
           critical: false,
         },
         { kind: "status-applied", targetId: "t", statusId: "deep-wound", durationSeconds: 20 },
@@ -647,7 +676,8 @@ describe("critical hits (#533)", () => {
   const plain = (amount: number, weapon: Weapon) =>
     mitigate(
       {
-        amount,
+        armored: amount,
+        armorIgnoring: 0,
         type: weapon.damageType,
         source: "weapon",
         armorPenetration: weapon.armorPenetration,
