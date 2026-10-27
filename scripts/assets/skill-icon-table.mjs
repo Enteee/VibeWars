@@ -76,7 +76,7 @@ export const SKILL_ICONS = {
   "paragon.anthem-of-flame": { glyph: "flame", modifier: "area" },
   "ritualist.weapon-of-warding": { glyph: "armor", modifier: "up" },
   "ritualist.mend-body-and-soul": { glyph: "plaster", modifier: "area" },
-  "ritualist.spirit-light": { glyph: "heal", modifier: "bleed" },
+  "ritualist.spirit-light": { glyph: "plaster", modifier: "bleed" },
   "ritualist.wielders-boon": { glyph: "sword-heal" },
   "mesmer.power-spike": { glyph: "interrupt", modifier: "down" },
   "mesmer.power-drain": { glyph: "interrupt", modifier: "up" },
