@@ -182,7 +182,8 @@ describe("Disease spreads (#765)", () => {
     dying(second, "w");
     stepFor(second, 1);
     expect(get(second, "w").dead).toBe(true);
-    expect(diseased(second)).toEqual(["w"]);
+    // The death ends w's own disease (#940), so there is nothing left to spread.
+    expect(diseased(second)).toEqual([]);
   });
 
   it("is −4 health pips, like poison", () => {

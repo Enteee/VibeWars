@@ -230,6 +230,39 @@ describe("Parasitic Bond (#887)", () => {
     expect(heals(stepFor(gone, 20))).toEqual([]);
   });
 
+  it("heals its caster 102 the tick its bearer is killed, which keeps no statuses (#940)", () => {
+    const match = bonded();
+    const e = get(match, "e");
+    expect(match.requestAttack("n", "e")?.ok).toBe(true);
+    let log: readonly CombatLogEntry[] = [];
+    for (let tick = 0; tick < 10 / DT && !e.combatant.dead; tick += 1) {
+      // At 1 health, which the bond's degeneration cannot take in a tick: the
+      // swing is what kills.
+      e.combatant.health = 1;
+      log = match.step(DT).log;
+    }
+
+    expect(e.combatant.dead).toBe(true);
+    expect(log.some((entry) => entry.cause === "weapon")).toBe(true);
+    expect(heals(log)).toEqual([{ kind: "heal", targetId: "n", amount: 102 }]);
+    expect(e.combatant.statuses.active).toEqual([]);
+  });
+
+  it("heals nothing when its bearer is killed after its caster (#940)", () => {
+    const match = bonded();
+    const n = get(match, "n");
+    n.combatant.health = 0;
+    n.combatant.dead = true;
+    n.respawnInSeconds = 1000;
+    const e = get(match, "e");
+    e.combatant.health = 0.01;
+    const log = stepFor(match, DT);
+
+    expect(e.combatant.dead).toBe(true);
+    expect(heals(log)).toEqual([]);
+    expect(e.combatant.statuses.active).toEqual([]);
+  });
+
   it("heals nothing on a reset", () => {
     const match = bonded();
     match.resetParticipant("e");
