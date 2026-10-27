@@ -165,6 +165,13 @@
           ]
         },
         { "properties": [{ "name": "kind", "optional": false, "type": { "literal": "cancel" } }] },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "end-upkeep" } },
+            { "name": "status", "optional": false, "type": "string" },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
         { "properties": [{ "name": "kind", "optional": false, "type": { "literal": "stop" } }] },
         {
           "properties": [
@@ -646,6 +653,13 @@
         { "name": "events", "optional": false, "type": { "array": { "typeParameter": "Event" } } },
         { "name": "skillId", "optional": false, "type": "string" },
         { "name": "weaponId", "optional": false, "type": "string" }
+      ]
+    },
+    "EndUpkeepIntent": {
+      "properties": [
+        { "name": "kind", "optional": false, "type": { "literal": "end-upkeep" } },
+        { "name": "status", "optional": false, "type": "string" },
+        { "name": "targetId", "optional": false, "type": "string" }
       ]
     },
     "JsonValue": {

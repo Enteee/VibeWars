@@ -340,6 +340,13 @@ upkeep ends with it. Its icon has no duration bar, and its hover says
 - **Death.** Your death ends everything you maintain. Your bearer's
   death ends what is on them, and resurrection does not bring it back.
 
+Your effects monitor shows every enchantment you maintain (#838): those
+on yourself among your own effects, those on others after them, ticked
+as yours, with no bar and the hover "Mending on X — maintained, −1
+energy". **Double-click** one to end it: it leaves its bearer at once,
+for free, with no log row, and your upkeep stops with it. The host
+refuses quietly a request to end anything that is not yours to end.
+
 Degeneration applies **continuously** (`pips × 2 × dt`), not in once-per-
 second lumps, so a bleed at 20 Hz drains smoothly instead of
 stair-stepping. Regeneration correctly caps at the deep-wound-_reduced_
@@ -678,16 +685,21 @@ GW1 PvP (#473). Only a primary can hold its rank, and runes count.
   rank 12, and more above it. It adds to Rune of Attunement and gear,
   and you start the match full at the new maximum. The build editor's
   max energy counts it.
+- **Mysticism** (Dervish). Dervish enchantments cost 4% less energy a
+  rank (−48% at 12: Mystic Regeneration 8 instead of 15), rounded once,
+  never below 0. While any enchantment is on you, yours or an ally's,
+  you have +1 armor a rank against every hit.
 
 The others have no effect yet.
 
 The build editor says under a primary's row what it does at its rank
 ("Fast Casting 12: spells cast 43% faster"), and a skill tooltip for a
-known character shows the cost and activation Expertise and Fast
-Casting make of it, the base in brackets: "5 energy (10)",
+known character shows the cost and activation Expertise, Mysticism and
+Fast Casting make of it, the base in brackets: "5 energy (10)",
 "1.1s (2s)" (#531). The skill bar shows icons only (#719); a slot's
-tooltip shows the energy the skill costs the caster now, Expertise and
-an active glyph included (#528, #637), the base in brackets.
+tooltip shows the energy the skill costs the caster now, Expertise,
+Mysticism and an active glyph included (#528, #637, #874), the base in
+brackets.
 
 ## Positioning
 

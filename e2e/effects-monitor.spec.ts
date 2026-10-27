@@ -39,7 +39,7 @@ test("your enchantment shows as an icon, marked yours, its bar draining; the hov
   await expect(tip).toContainText(/\d+ s left/);
 });
 
-test("a maintained enchantment has no bar, its hover says maintained, and it costs you an energy pip (#837)", async ({
+test("a maintained enchantment has no bar, its hover says maintained, costs you an energy pip, and a double-click ends it (#837, #838)", async ({
   page,
 }) => {
   await page.goto("./");
@@ -64,8 +64,13 @@ test("a maintained enchantment has no bar, its hover says maintained, and it cos
   await icon.hover();
   const tip = page.getByRole("tooltip");
   await expect(tip).toContainText("Mending");
-  await expect(tip).toContainText("maintained");
+  await expect(tip).toContainText("maintained, −1 energy");
   await expect(tip).not.toContainText(/s left/);
+
+  // A double-click ends it, and the pip comes back (#838).
+  await icon.dblclick();
+  await expect(icon).toHaveCount(0);
+  await expect(energyPips).toHaveAttribute("data-pips", "4");
 });
 
 test("the target frame shows a foe's enchantment, at 16 px and not marked yours (#835)", async ({
