@@ -403,9 +403,64 @@ body {
   color: #e07a6e;
 }
 
-.hud-gear,
-.hud-statuses {
+.hud-gear {
   color: var(--ink-dim);
+}
+
+/* The effects monitor (#834): your statuses in the order applied, each
+   with a bar under it that drains to empty. Wraps; never "+N". */
+.effects-monitor {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.effects-monitor[hidden] {
+  display: none;
+}
+
+/* Hovered for its tooltip, so it takes the pointer as a HUD button does. */
+.effect {
+  position: relative;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: var(--effect-size);
+}
+
+.effect-icon {
+  display: block;
+  width: var(--effect-size);
+  height: var(--effect-size);
+}
+
+.effect-bar {
+  height: 3px;
+  background: var(--bg);
+}
+
+.effect-bar[hidden] {
+  visibility: hidden;
+  display: block;
+}
+
+.effect-bar-fill {
+  height: 100%;
+  background: var(--ink-dim);
+}
+
+/* Your own enchantment: an ink tick in the top-right corner. */
+.effect.is-yours::after {
+  content: "";
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 6px;
+  height: 6px;
+  background: var(--ink);
+  border: 1px solid var(--bg);
+  border-radius: 1px;
 }
 
 /* As wide as its slots, not the HUD: the knockdown drain fills this box

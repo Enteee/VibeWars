@@ -56,9 +56,9 @@ test("all chat reaches both teams, team chat only its own, as text (#479)", asyn
 test("keys typed into chat never cast or move (#479)", async ({ page }) => {
   await page.goto("./");
   await startSoloMatch(page);
-  const statuses = page.locator(".hud-statuses");
+  const effects = page.getByRole("list", { name: "your effects" }).getByRole("listitem");
   const energy = page.locator(".hud-bar-energy .hud-bar-label");
-  await expect(statuses).toContainText("no active effects");
+  await expect(effects).toHaveCount(0);
   await expect(energy).toContainText("50 / 50");
   // Q W E R A S D F are the skill keys; A casts slot 5 of the house bar,
   // a self-cast enchantment (#302) that costs energy as it starts.
@@ -68,7 +68,7 @@ test("keys typed into chat never cast or move (#479)", async ({ page }) => {
   // have spent energy, then put the enchantment on.
   await page.waitForTimeout(1500);
   await expect(energy).toContainText("50 / 50");
-  await expect(statuses).toContainText("no active effects");
+  await expect(effects).toHaveCount(0);
 });
 
 test("in a match a click under the panel walks, and the box shows only while open (#479)", async ({

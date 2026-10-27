@@ -30,6 +30,7 @@ import {
   soundIcon,
   weaponIcon,
 } from "./icons.js";
+import { createEffectsMonitor, effectRows, type EffectsMonitor } from "./effects-monitor.js";
 import { iconButton } from "./kit.js";
 import { energyLabel, overcastBandElement, renderOvercastBand } from "./overcast-band.js";
 import { pipsElement, renderPips } from "./pips.js";
@@ -81,7 +82,13 @@ export interface HudElements {
   readonly energyText: HTMLElement;
   readonly energyPips: HTMLElement;
   readonly gearText: HTMLElement;
-  readonly statusList: HTMLElement;
+  /** Your statuses as icons with draining bars (#834); `dispose` it with the HUD. */
+  readonly effects: EffectsMonitor;
+  /**
+   * The match clock of the latest snapshot, and `performance.now()` when
+   * it arrived: the effects count down between snapshots from it.
+   */
+  clock: { matchSeconds: number; arrivedMs: number };
   readonly skillBar: HTMLElement;
   /** The skill bar's hover tooltips (#485); `dispose` it with the HUD. */
   readonly slotTips: SlotTooltips;
@@ -243,7 +250,7 @@ export function createHud(parent: HTMLElement): HudElements {
   const energyPips = energyRow.appendChild(pipsElement());
 
   const gearText = element("div", "hud-gear", bars);
-  const statusList = element("div", "hud-statuses", bars);
+  const effects = createEffectsMonitor(bars, EFFECT_ICON_PX);
 
   const hint = element("div", "hud-hint", root);
   const message = element("div", "hud-message", root);
@@ -264,7 +271,8 @@ export function createHud(parent: HTMLElement): HudElements {
     energyText,
     energyPips,
     gearText,
-    statusList,
+    effects,
+    clock: { matchSeconds: Number.NaN, arrivedMs: 0 },
     skillBar,
     slotTips: createSlotTooltips(),
     message,
@@ -829,6 +837,25 @@ function renderTarget(
   renderTargetCast(hud, target);
 }
 
+/** The effects monitor's icons in the HUD, px (#834). */
+const EFFECT_ICON_PX = 24;
+
+/** How far past the latest snapshot the effects count down, s: ten snapshots. */
+const MAX_CLOCK_LEAD_SECONDS = 0.5;
+
+/**
+ * The match clock now: the latest snapshot's, plus the time since it
+ * arrived, so a duration bar drains between snapshots. Each new snapshot
+ * starts it again; a host gone quiet, or a match over, stops it soon after.
+ */
+function matchNow(hud: HudElements, matchSeconds: number): number {
+  const nowMs = performance.now();
+  if (matchSeconds !== hud.clock.matchSeconds) {
+    hud.clock = { matchSeconds, arrivedMs: nowMs };
+  }
+  return matchSeconds + Math.min(MAX_CLOCK_LEAD_SECONDS, (nowMs - hud.clock.arrivedMs) / 1000);
+}
+
 export function updateHud(
   hud: HudElements,
   self: PlayerSnapshot | undefined,
@@ -875,10 +902,16 @@ export function updateHud(
     `armor ${String(self.armor)}` +
     (self.weaponId === undefined ? "" : ` · ${describeWeaponName(self.weaponId)}`);
 
-  hud.statusList.textContent =
-    self.statuses.length > 0
-      ? self.statuses.map((status) => status.id).join(" · ")
-      : "no active effects";
+  hud.effects.update(
+    self.dead || match === undefined
+      ? []
+      : effectRows(
+          self.statuses,
+          self.sessionId,
+          new Map(match.players.map((player) => [player.sessionId, player.name])),
+          matchNow(hud, match.elapsedSeconds),
+        ),
+  );
 
   renderTarget(hud, self, target);
 

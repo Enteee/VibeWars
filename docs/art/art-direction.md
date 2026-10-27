@@ -75,6 +75,21 @@ that drains only energy, tint nothing. The deep-wound band is drawn over
 any tint, and a corpse is never tinted. The tint is never the only signal:
 the status icons and the pips say it too.
 
+### Effects monitor
+
+Your statuses in the match HUD (#834), after the bars, in the order they
+were applied: oldest left, a refresh moves to the end. They wrap to a
+second row, never `+N`, and with none the monitor takes no room.
+
+| Part         | Look                                                                                                         |
+| ------------ | ------------------------------------------------------------------------------------------------------------ |
+| Icon         | The status SVG at 24 px, plate and glyph as in the arena                                                     |
+| Duration bar | 3 px under the icon, as wide as it, `ink-dim` on `bg`, draining to empty; none for a status with no duration |
+| Yours tick   | A 6 px `ink` square edged in `bg`, over the icon's top-right corner: an enchantment you cast                 |
+
+No seconds on the icon, as GW1: the hover says the name, the category,
+what it does, who it is from and the whole seconds left.
+
 ### Target frame
 
 The match HUD's target frame (#484) is three rows of fixed size, so the
