@@ -1,0 +1,26 @@
+{
+  "id": "warrior.disrupting-chop",
+  "name": "Disrupting Chop",
+  "profession": "warrior",
+  "attribute": "Axe Mastery",
+  "type": "Axe attack.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "adrenaline",
+    "amount": 6
+  },
+  "overcast": 0,
+  "activationSeconds": 0,
+  "rechargeSeconds": 1,
+  "upkeep": false,
+  "description": "If it hits, this attack interrupts the target's current action. If that action was a skill, that skill is disabled for an additional 20 seconds.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Warrior/6-Disrupting_Chop",
+    "fetchedAt": "2026-10-27T12:50:08.679Z"
+  },
+  "unmapped": {}
+}
