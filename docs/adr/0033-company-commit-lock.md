@@ -28,7 +28,15 @@ code nobody had merged.
   `.git/objects` and git does not hash an object it checks out, so a
   swapped tree object leaves `HEAD` and `git status` agreeing with the
   sha. The restarter makes the same comparison right after its
-  fast-forward and does not lock or restart on a difference.
+  fast-forward, locks nothing on a difference and alarms the operator on
+  Telegram with the paths. Files the commit lacks count too; ignored paths
+  (`node_modules`, `.bots`) do not, as they are not code run from git.
+  nix reads `scripts/bots` and `nix/` as paths (`${../scripts/bots}`) from
+  the working tree, which is what is verified. This was read from the nix
+  files, not run under a tampered checkout.
+  Rejected: read-only `.git/objects` in jails (agents must commit),
+  `git fsck` on every boot (slow, and alternates bypass it), checking out
+  from the mirror directly (goes through the checkout's index and config).
 - The lock advances only in a reboot, after the restarter built `main` in
   the mirror and fast-forwarded the checkout to it, and in
   `claude-llc lock`, which the operator runs on the host after the same

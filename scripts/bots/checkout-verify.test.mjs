@@ -97,6 +97,20 @@ describe("tamperedPaths", () => {
     expect(tamperedPaths({ mirror: c.mirror, repoDir: c.repoDir, sha: c.sha })).toEqual(["s/g"]);
   });
 
+  it("finds a file the commit lacks", () => {
+    const c = setup();
+    fs.writeFileSync(path.join(c.repoDir, "extra.js"), "x\n");
+    expect(tamperedPaths({ mirror: c.mirror, repoDir: c.repoDir, sha: c.sha })).toEqual([
+      "extra.js",
+    ]);
+  });
+
+  it("finds a deleted file", () => {
+    const c = setup();
+    fs.rmSync(path.join(c.repoDir, "s", "g"));
+    expect(tamperedPaths({ mirror: c.mirror, repoDir: c.repoDir, sha: c.sha })).toEqual(["s/g"]);
+  });
+
   it("refuses a sha the mirror does not have", () => {
     const c = setup();
     expect(tamperedPaths({ ...c, sha: "0".repeat(40) })).toHaveLength(1);

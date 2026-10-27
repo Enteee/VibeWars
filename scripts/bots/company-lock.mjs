@@ -142,7 +142,7 @@ export function lockVerdict({ lock, head, dirtyPaths, tampered, onMain, fetchErr
   }
   if (tampered.length > 0) {
     return refuse(
-      `the checkout's files are not the merged commit's (a jail altered the object store?): ${tampered.slice(0, 5).join(", ")}`,
+      `checkout does not match ${short(lock.sha)} in hubd's mirror: ${tampered.slice(0, 10).join(", ")}. The checkout's git objects may have been tampered with; run 'git fsck' and re-clone before 'claude-llc lock'`,
     );
   }
   return { ok: true };

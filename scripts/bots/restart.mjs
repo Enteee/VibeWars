@@ -250,7 +250,7 @@ function short(sha) {
  *
  * @param {(args: string[]) => { code: number, stdout: string }} git
  * @param {string} target the commit the mirror fetched from GitHub and built
- * @returns {{ updated: boolean, why: string }}
+ * @returns {{ updated: boolean, why: string, tampered?: string[] }} `tampered`: the paths the checkout holds differently from the mirror's commit
  */
 function update(git, target) {
   // From the mirror, and then checked: a URL rewrite in the checkout's
@@ -282,7 +282,8 @@ function update(git, target) {
   if (tampered.length > 0) {
     return {
       updated: false,
-      why: `the checkout's files are not ${short(target)}'s: ${tampered.slice(0, 5).join(", ")}`,
+      why: `the checkout's files are not ${short(target)}'s`,
+      tampered: tampered.slice(0, 10),
     };
   }
   return { updated: true, why: "" };
@@ -334,6 +335,12 @@ async function main() {
   } else {
     const result = update(git, target);
     updated = result.updated;
+    if (result.tampered !== undefined) {
+      // An intrusion, not a build failure: no lock, and the lock check will refuse the boot.
+      await tellOperator(
+        `SECURITY: after the reboot fast-forward the checkout differs from the merged commit ${short(target)} in hubd's mirror: ${result.tampered.join(", ")}. A jail may have altered .git/objects; not locked. Run git fsck and re-clone.`,
+      );
+    }
     if (!updated) {
       outcome = `Rebooted, but NOT updated: ${result.why}.`;
     } else {

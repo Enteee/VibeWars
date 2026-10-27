@@ -16,7 +16,7 @@ import { GIT_ENV, GIT_HARDENING } from "./git-hardening.mjs";
 
 /**
  * @param {{ mirror: string, repoDir: string, sha: string }} where
- * @returns {string[]} tracked paths whose content is not the mirror's, empty when the checkout is `sha`
+ * @returns {string[]} paths whose content is not the mirror's or that the commit lacks, empty when the checkout is `sha`
  */
 export function tamperedPaths({ mirror, repoDir, sha }) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "checkout-verify-"));
@@ -40,7 +40,9 @@ export function tamperedPaths({ mirror, repoDir, sha }) {
     if (diff.status !== 0 && diff.stdout === "") {
       return ["(git diff-files failed)"];
     }
-    return diff.stdout.split("\n").filter((line) => line !== "");
+    // Files the commit lacks: ignored paths (node_modules, .bots) are not code run from git.
+    const others = git(["ls-files", "--others", "--exclude-standard"]);
+    return [...diff.stdout.split("\n"), ...others.stdout.split("\n")].filter((line) => line !== "");
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
