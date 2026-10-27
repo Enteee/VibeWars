@@ -15,6 +15,8 @@
  *   hub request-changes <pr> --sha <commit> <note>  reviewers only
  *     <commit> is the head you reviewed; a verdict on a moved head is refused
  *   hub whoami                       who you are, your role, and what it may do
+ *   hub watch ci <pr> [--note <text>]  told in your inbox when CI on the PR's
+ *                                    head ends (#736); hub watch ls, hub watch rm <id>
  *   hub board ls|show|changes ...    hubd's copy of the board, as JSON (what
  *                                    `board` reads; see hub-board.mjs)
  *   company reboot "<reason>"        manager only; also: company reboot --abort,
@@ -113,6 +115,10 @@ if (argv[0] === "whoami") {
   console.log(
     `  ${schedules.allow ? "yes" : "no "}  keep recurring reminders to yourself (hub schedule)`,
   );
+  const watches = authorize(ROLE, { kind: "watch", argv: ["ls"] }, { acting: ACTING });
+  console.log(
+    `  ${watches.allow ? "yes" : "no "}  be told when CI on a PR ends (hub watch ci <pr>)`,
+  );
   const ranks = authorize(ROLE, { kind: "rank", argv: ["1", "top"] }, { acting: ACTING });
   console.log(`  ${ranks.allow ? "yes" : "no "}  order the board (board rank)`);
 
@@ -143,6 +149,9 @@ if (argv[0] === "push") {
   // Code-scanning alerts on main or a pull request (#184): a hub verb,
   // because gh has none and `gh api` is refused.
   request = { kind: "alerts", argv: argv.slice(1) };
+} else if (argv[0] === "watch") {
+  // Told in your inbox when CI on a pull request ends (#736): ci, ls, rm.
+  request = { kind: "watch", argv: argv.slice(1) };
 } else if (argv[0] === "schedule") {
   // Your own recurring reminders (#678): add, ls, rm. hubd checks the words.
   request = { kind: "schedule", argv: argv.slice(1) };

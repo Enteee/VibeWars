@@ -218,7 +218,19 @@ function nudges(staff, now) {
   let schedule;
   try {
     schedule = [
-      ...parseSchedule(fs.readFileSync(path.join(import.meta.dirname, "schedule.json"), "utf8")),
+      // The checkout's copy, as hubd reads it: the staged scripts (nix store)
+      // hold only the .mjs files, so nothing sits beside this one.
+      ...parseSchedule(
+        fs.readFileSync(
+          path.join(
+            process.env.DEVENV_ROOT ?? path.dirname(ROOT),
+            "scripts",
+            "bots",
+            "schedule.json",
+          ),
+          "utf8",
+        ),
+      ),
       ...ownNudges(own()),
     ];
   } catch (error) {

@@ -15,7 +15,8 @@ when the PR's required checks are green, never because a local run was.
 - Still write the tests your change needs. Writing them is your job; executing them is the pipeline's.
 - Do run the thing (`pnpm dev`) and the cheap static checks: `pnpm run typecheck`, `lint`, `format`.
 - Allowed, not required: the one vitest file you are editing (`pnpm vitest run <file>`).
-- Wait on CI with one long call or `tg wait`, not a polling loop.
+- Push, then `hub watch ci <pr>` and carry on: the result arrives in your inbox (#736), failing e2e specs named. Never poll.
+- `board move <n> "In Review"` is refused until CI on the PR that `Closes #<n>` is green.
 
 ## When CI goes red
 

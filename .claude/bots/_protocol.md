@@ -29,13 +29,16 @@ tg ask <question> [--option <text>]...
 
 board ls [column]            what is on the board
 board show <issue> [--fresh] one card; --fresh if someone moved it in GitHub
-board move <issue> <column>  move a card
+board move <issue> <column>  move a card; In Review needs green CI on
+                             the PR that `Closes #<issue>`
 board wait <column> [--timeout 540]
                              block until a card arrives in that column
                              (same: Bash timeout 600000)
 
 hub <gh command...>          GitHub, e.g. `hub issue list`, `hub pr create`
 hub push <branch>            push your branch
+hub watch ci <pr>            returns at once; CI's result arrives in your
+                             inbox when it ends. hub watch ls|rm <id>
 hub approve <pr> --sha <commit> [note]          reviewers only; <commit> is
 hub request-changes <pr> --sha <commit> <note>  the head you reviewed
 hub whoami                   who you are (employee, role), and what you may do
