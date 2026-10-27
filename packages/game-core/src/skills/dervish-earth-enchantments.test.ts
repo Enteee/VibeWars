@@ -221,7 +221,7 @@ describe("earth attacks (#1021)", () => {
     // A Warrior meets an earth blow with 80 armor, not 100.
     const struck = (victim: Combatant, blow = PLAIN_BLOW): number => {
       const events: CombatEvent[] = [];
-      landBlow(weaponSnapshotOf(self), victim, blow, false, steady(), RULES, events);
+      landBlow(weaponSnapshotOf(self), self, victim, blow, false, steady(), RULES, events);
       return damage(events)[0]?.[1] ?? 0;
     };
     const plain80 = struck(foe("plain", unarmedResolvedEquipment(80)));
@@ -235,6 +235,7 @@ describe("earth attacks (#1021)", () => {
     const events: CombatEvent[] = [];
     landBlow(
       weaponSnapshotOf(bare),
+      bare,
       foe("warrior", WARRIOR_ARMOR),
       PLAIN_BLOW,
       false,
