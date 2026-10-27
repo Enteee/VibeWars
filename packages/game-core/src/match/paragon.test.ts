@@ -746,3 +746,154 @@ describe("the #956 Paragon skills read as what they do", () => {
     ]);
   });
 });
+
+describe("Song of Restoration (#999)", () => {
+  const SONG = "paragon.song-of-restoration";
+  const FIREBALL = "elementalist.fireball";
+  const GLYPH = "elementalist.glyph-of-lesser-energy";
+
+  /** Half-health, so a heal shows. */
+  const wounded = (id: string, spawn: Vec2, extra: Partial<ParticipantSpec> = {}) =>
+    spec(id, 0, spawn, { maxHealth: 1000, startHealthFraction: 0.5, maxEnergy: 100, ...extra });
+
+  /**
+   * A Motivation paragon with the song and a glyph, two spear allies in
+   * earshot with Fireball and Spear of Lightning, one ally out of it, and
+   * a foe in range of them all. The song has been chanted.
+   */
+  function sung(motivation = 12, setup?: (match: MatchSimulation) => void) {
+    const ally = { skillBar: [FIREBALL, SPEAR_OF_LIGHTNING], ...speared };
+    const match = new MatchSimulation({
+      seed: "song-of-restoration",
+      participants: [
+        wounded("p", vec2(0, 0), {
+          skillBar: [SONG, GLYPH],
+          attributeRanks: new Map([["paragon.motivation", motivation]]),
+        }),
+        wounded("near", vec2(AREA_EARSHOT - 10, 0), ally),
+        wounded("near2", vec2(0, AREA_EARSHOT - 10), ally),
+        wounded("far", vec2(0, -2 * AREA_EARSHOT)),
+        spec("foe", 1, vec2(200, 200)),
+      ],
+    });
+    setup?.(match);
+    useSkill(match, SONG);
+    return match;
+  }
+
+  const speared = {
+    attributeRanks: new Map([["paragon.spear-mastery", 12]]),
+    equipment: wielding(WEAPONS.spear, "paragon.spear-mastery"),
+  };
+
+  const health = (match: MatchSimulation, id: string): number => get(match, id).combatant.health;
+  const singing = (match: MatchSimulation, id: string): boolean =>
+    get(match, id).combatant.statuses.has("song-of-restoration");
+
+  /** What the song healed `id` for in `log`. */
+  const songHealed = (log: readonly CombatLogEntry[], id: string): number =>
+    log
+      .filter((entry) => entry.skillId === SONG && entry.sourceId === "p")
+      .flatMap((entry) => entry.events)
+      .reduce(
+        (sum, event) => (event.kind === "heal" && event.targetId === id ? sum + event.amount : sum),
+        0,
+      );
+
+  /** `id` uses its skill in `slot` on the foe; returns what the song healed it for. */
+  function uses(match: MatchSimulation, id: string, slot: number): number {
+    match.setTarget(id, "foe");
+    expect(match.requestSkill(id, slot)?.check).toEqual({ ok: true });
+    return songHealed(stepFor(match, 3), id);
+  }
+
+  it("is an elite Motivation chant: 10 energy, 1 s, 20 s, the corpus's", () => {
+    const song = skill(SONG);
+    expect([song.elite, song.type, song.attributeId]).toEqual([
+      true,
+      "chant",
+      "paragon.motivation",
+    ]);
+    expect(song.cost).toEqual({ kind: "energy", amount: 10 });
+    expect([song.activationSeconds, song.rechargeSeconds]).toEqual([1, 20]);
+  });
+
+  it("reaches every ally in earshot, the chanter too, and its own chant uses none of it", () => {
+    const match = sung();
+    for (const id of ["p", "near", "near2"]) {
+      expect(
+        get(match, id).combatant.statuses.get("song-of-restoration")?.remainingSeconds,
+      ).toBeCloseTo(10, 0);
+    }
+    expect(singing(match, "far")).toBe(false);
+    expect(health(match, "p")).toBe(500);
+  });
+
+  it("heals a member 97 on its next skill, then is gone: a second skill heals nothing", () => {
+    const match = sung();
+    expect(uses(match, "near", 0)).toBe(97);
+    expect(singing(match, "near")).toBe(false);
+    expect(singing(match, "near2")).toBe(true);
+    expect(uses(match, "near", 1)).toBe(0);
+  });
+
+  it("heals the chanter on its next skill", () => {
+    const match = sung();
+    expect(uses(match, "p", 1)).toBe(97);
+    expect(singing(match, "p")).toBe(false);
+  });
+
+  it("is a heal, so a Deep Wound cuts it by 20%", () => {
+    const match = sung(12, (m) => {
+      get(m, "near").combatant.statuses.apply("deep-wound", 20, "foe");
+    });
+    expect(uses(match, "near", 0)).toBeCloseTo(97 * 0.8);
+  });
+
+  it("heals once for an attack skill, though it is an attack too", () => {
+    const match = sung();
+    expect(uses(match, "near", 1)).toBe(97);
+  });
+
+  it("stays through a skill cancelled before it is used, and through a plain swing", () => {
+    const match = sung();
+    match.setTarget("near", "foe");
+    expect(match.requestSkill("near", 0)?.check).toEqual({ ok: true });
+    const cancelled = stepFor(match, 0.5);
+    match.cancelAction("near");
+    cancelled.push(...stepFor(match, 3));
+    expect(
+      cancelled.filter((entry) => entry.skillId === FIREBALL).flatMap((entry) => entry.events),
+    ).toEqual([{ kind: "cancelled", targetId: "near", skillId: FIREBALL }]);
+    expect(singing(match, "near")).toBe(true);
+    expect(songHealed(cancelled, "near")).toBe(0);
+
+    expect(match.requestAttack("near2", "foe")?.ok).toBe(true);
+    const log = stepFor(match, 3);
+    expect(log.some((entry) => entry.sourceId === "near2" && entry.weaponId !== undefined)).toBe(
+      true,
+    );
+    expect(singing(match, "near2")).toBe(true);
+    expect(songHealed(log, "near2")).toBe(0);
+  });
+
+  it("runs out after 10 s without a skill and heals nobody", () => {
+    const match = sung();
+    const log = stepFor(match, 10.5);
+    for (const id of ["p", "near", "near2"]) {
+      expect(singing(match, id)).toBe(false);
+    }
+    expect(log.some((entry) => entry.skillId === SONG)).toBe(false);
+  });
+
+  it("heals 45 at Motivation 0", () => {
+    expect(uses(sung(0), "near", 0)).toBe(45);
+  });
+
+  it("reads as what it does", () => {
+    const ranks = new Map([["paragon.motivation", 12]]);
+    expect(describeSkill(skill(SONG), ranks).effects.map((effect) => effect.text)).toEqual([
+      "Applies Song of Restoration for 10s (the next time it uses a skill: heals for 97)",
+    ]);
+  });
+});

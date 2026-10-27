@@ -680,7 +680,16 @@ in earshot a 50% chance to block attacks for 9 s (#956). It ends on an
 ally when one of that ally's attack skills hits, melee or thrown. A
 plain swing or arrow does not end it, and neither does an attack skill
 that misses or is blocked. Its block combines with any other as
-1 − ∏(1 − p): with Weapon of Warding it is 75%.
+1 − ∏(1 − p): with Weapon of Warding it is 75%. Song of Restoration
+(elite, Motivation, 10 energy, 1 s cast, 20 s recharge) lasts 10 s on
+each ally in earshot, the paragon included (#999). The next skill each
+uses heals them 97 (45 at Motivation 0), after that skill's own effects,
+and the song ends on them. Any skill completed counts, an attack skill
+once; a plain swing, or a skill interrupted or cancelled, does not. It
+is a heal, so Deep Wound cuts it. If it runs out, is removed or its
+bearer dies, nobody is healed. The paragon's own chant does not use up
+the song it just put on itself: its next skill does. In general, a
+status a skill puts on its own user never answers that same use.
 
 **Weapon spells** go on an ally's weapon, one at a time: a new one
 replaces the old, the same one included (#758). They are spells, so
