@@ -184,6 +184,18 @@ no damage. Maximum energy is untouched, and a foe drained mid-cast keeps
 casting: energy is paid when a cast starts. The loss floats over the foe
 in blue, "−8 energy", and the Training log has a row for it.
 
+## Reactive hexes
+
+Some Mesmer hexes punish what their target does (#469). **Backfire**
+deals 119 damage to its target each time it finishes a spell, for 10 s;
+**Empathy** deals 39 each time it attacks, for 13 s: a swing, a shot or
+an attack skill, hit, miss or block alike, one attack skill counting
+once. A flying spell backfires as it leaves the hand. An interrupted or
+cancelled spell, a signet or a shout does nothing. The damage ignores
+armor and is the Mesmer's: the log names their Backfire or Empathy, it
+counts toward their damage, and a kill is theirs, even after they died.
+A Mesmer who has left the match hurts nobody.
+
 ## Knockdown
 
 A knockdown puts its target on the ground for its duration (Backbreaker:

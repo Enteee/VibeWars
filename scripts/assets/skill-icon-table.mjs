@@ -75,5 +75,7 @@ export const SKILL_ICONS = {
   "ranger.savage-shot": { glyph: "arrow" },
   "mesmer.energy-burn": { glyph: "flame", modifier: "down" },
   "mesmer.energy-tap": { glyph: "energy", modifier: "self" },
+  "mesmer.backfire": { glyph: "fireball", modifier: "self" },
+  "mesmer.empathy": { glyph: "sword", modifier: "self" },
   "monk.mending": { glyph: "heal", modifier: "upkeep" },
 };

@@ -1583,6 +1583,52 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   },
 
   /* ---------------------------------------------------------------------- */
+  /* Hexes that answer what their target does (#469)                        */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "mesmer.backfire",
+    name: "Backfire",
+    type: "hex",
+    elite: false,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 3,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 10 seconds, whenever target foe casts a spell, that foe takes
+    // 35...119...140 damage." The damage is the hex's, at rank 12.
+    effects: [{ kind: "apply-status", statusId: "backfire", durationSeconds: 10 }],
+  },
+  {
+    id: "mesmer.empathy",
+    name: "Empathy",
+    type: "hex",
+    elite: false,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 5...13...15 seconds, whenever target foe attacks, that foe takes
+    // 15...39...45 damage" (PvP). Both at rank 12, as every status is.
+    effects: [{ kind: "apply-status", statusId: "empathy", durationSeconds: 13 }],
+  },
+
+  /* ---------------------------------------------------------------------- */
   /* An effect that depends on how things stand (#794)                      */
   /* ---------------------------------------------------------------------- */
 
