@@ -302,6 +302,8 @@ export interface WireCombatEvent {
    * batch must fit in one message.
    */
   readonly crit: boolean | null;
+  /** Whom a spreading status was caught from (#765); `null` for any other kind. */
+  readonly fromId: string | null;
 }
 
 /** One cast, swing or status tick, and what it did. */
@@ -918,7 +920,8 @@ function parseCombatEvent(value: unknown): WireCombatEvent | undefined {
     isNullableString(raw.skillId) &&
     isNullableString(raw.statusId) &&
     (raw.durationSeconds === null || isNumber(raw.durationSeconds)) &&
-    (raw.crit === null || typeof raw.crit === "boolean")
+    (raw.crit === null || typeof raw.crit === "boolean") &&
+    isNullableString(raw.fromId)
     ? {
         kind: raw.kind,
         targetId: raw.targetId,
@@ -927,6 +930,7 @@ function parseCombatEvent(value: unknown): WireCombatEvent | undefined {
         statusId: raw.statusId,
         durationSeconds: raw.durationSeconds,
         crit: raw.crit,
+        fromId: raw.fromId,
       }
     : undefined;
 }

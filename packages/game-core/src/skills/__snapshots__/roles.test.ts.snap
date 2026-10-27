@@ -14,6 +14,7 @@ exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
   "necromancer.enfeeble": "condition",
   "necromancer.faintheartedness": "hex",
   "necromancer.malaise": "hex",
+  "necromancer.rotting-flesh": "condition",
   "paragon.anthem-of-flame": "condition",
   "paragon.wild-throw": "",
   "ranger.apply-poison": "condition",
