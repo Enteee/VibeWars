@@ -74,6 +74,24 @@ CLAUDE_CONFIG_DIR=~/.claude-bot/creds/claude claude   # then /login
 `claude-llc-init` then records it, and `claude-llc` refuses to start unless
 it is signed in.
 
+On GitHub the company works as its own machine account too: hubd's every
+`gh` call, and every push and fetch (ADR-0031). `claude-llc-init` itself
+stays yours, for the board and the ruleset, which need an admin. Create the
+machine account, add it to the repository as a collaborator with Write, then
+sign it in, in its own `gh` config directory:
+
+```sh
+GH_CONFIG_DIR=~/.claude-bot/creds/gh gh auth login --insecure-storage --scopes project
+```
+
+Then run `claude-llc-init`. It checks the account and its `project` scope,
+makes the company's push key (`ssh/id_ed25519`) if there is none, prints the
+public key, and waits until GitHub greets it as the machine account: add it
+at <https://github.com/settings/ssh/new> while signed in as that account.
+The board is a user project, which repository access does not reach, so init
+also asks you to add the account to the board with Write, then to run it
+again. `claude-llc` refuses to start without the token or the key.
+
 A machine set up before this had the token wherever `managerTokenFile`
 pointed and still has that line in `devenv.local.nix`, which keeps working.
 Without that line, move the file once into the credential home.

@@ -48,6 +48,43 @@ export const GIT_HARDENING = [
 ];
 
 /**
+ * The pins above, for git that talks to GitHub (#866): ssh offers the
+ * company's push key and nothing else, so a push is the company's, never
+ * the operator's. `-F /dev/null` drops the operator's ~/.ssh/config, whose
+ * IdentityFile lines `IdentitiesOnly` would still offer, as `pushIdentity`
+ * in creds.mjs does when the doctor asks GitHub whose key it is.
+ *
+ * @param {string} key the company's private key
+ * @returns {string[]} `-c` arguments
+ */
+export function remoteHardening(key) {
+  const command = [
+    "ssh",
+    "-F",
+    "/dev/null",
+    "-i",
+    shellQuote(key),
+    "-o",
+    "IdentitiesOnly=yes",
+    "-o",
+    "IdentityAgent=none",
+  ].join(" ");
+  return GIT_HARDENING.map((arg) =>
+    arg === "core.sshCommand=ssh" ? `core.sshCommand=${command}` : arg,
+  );
+}
+
+/**
+ * One word for the shell git runs `core.sshCommand` with.
+ *
+ * @param {string} word
+ * @returns {string}
+ */
+function shellQuote(word) {
+  return `'${word.replaceAll("'", "'\\''")}'`;
+}
+
+/**
  * No system or global config either, so nothing outside the repository
  * changes what runs. And no replace refs: `refs/replace/<sha>` is a file any
  * agent can write in the shared repository, and it makes git read a

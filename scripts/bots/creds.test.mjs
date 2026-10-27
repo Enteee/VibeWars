@@ -5,14 +5,18 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
+  GITHUB_TOKEN_VARS,
   claudeIdentity,
   claudeVerdict,
   resetBoxesOnAccountChange,
   ensureHome,
+  ensurePushKey,
   githubIdentity,
+  githubVerdict,
   isOperators,
   modeOk,
   paths,
+  projectAccess,
   pushIdentity,
   telegramIdentity,
 } from "./creds.mjs";
@@ -328,5 +332,109 @@ describe("the jail's Claude credential", () => {
     expect(nix).toMatch(
       /creds="\$\{config\.vibewars\.claudeBot\.credentials\}\/claude\/\.credentials\.json"/,
     );
+  });
+});
+
+describe("githubVerdict (#866)", () => {
+  /** A credential home with the company's gh signed in and a push key. */
+  function ready() {
+    const root = home();
+    fs.mkdirSync(path.join(root, "gh"));
+    fs.writeFileSync(path.join(root, "gh", "hosts.yml"), "github.com: {}\n");
+    fs.mkdirSync(path.join(root, "ssh"));
+    fs.writeFileSync(path.join(root, "ssh", "id_ed25519"), "");
+    return root;
+  }
+  /** @type {import("./creds.mjs").Run} */
+  const token = () => ({ code: 0, stdout: `${SECRET}\n` });
+
+  it("accepts a readable company token and a push key, and never says the token", () => {
+    const verdict = githubVerdict(ready(), token);
+    expect(verdict).toEqual({ ok: true });
+  });
+
+  it("reads the token from the company's dir, without the operator's token variables", () => {
+    const root = ready();
+    githubVerdict(root, (command, args, env, unset) => {
+      expect([command, ...args]).toEqual(["gh", "auth", "token", "--hostname", "github.com"]);
+      expect(env).toEqual({ GH_CONFIG_DIR: path.join(root, "gh") });
+      expect(unset).toEqual(GITHUB_TOKEN_VARS);
+      return { code: 0, stdout: "t\n" };
+    });
+  });
+
+  it("refuses a missing gh directory, with the sign-in command", () => {
+    const verdict = githubVerdict(home(), token);
+    expect(verdict).toMatchObject({ ok: false });
+    expect(JSON.stringify(verdict)).toContain("not set up");
+    expect(JSON.stringify(verdict)).toContain("gh auth login --insecure-storage");
+  });
+
+  it("refuses a token gh cannot read, without echoing its output", () => {
+    const verdict = githubVerdict(ready(), () => ({ code: 1, stdout: SECRET }));
+    expect(verdict).toMatchObject({ ok: false });
+    expect(JSON.stringify(verdict)).not.toContain(SECRET);
+  });
+
+  it("refuses a missing push key", () => {
+    const root = ready();
+    fs.rmSync(path.join(root, "ssh", "id_ed25519"));
+    expect(JSON.stringify(githubVerdict(root, token))).toContain("push key");
+  });
+});
+
+describe("ensurePushKey (#866)", () => {
+  /** @type {import("./creds.mjs").Run} */
+  const keygen = (_c, args) => {
+    const file = args[args.indexOf("-f") + 1] ?? "";
+    fs.writeFileSync(file, "private");
+    fs.writeFileSync(`${file}.pub`, "ssh-ed25519 AAAA company\n");
+    return { code: 0, stdout: "" };
+  };
+
+  it("makes the pair in a 0700 ssh directory and hands back the public key", () => {
+    const root = home();
+    const key = ensurePushKey(root, keygen);
+    expect(key).toEqual({ ok: true, created: true, pub: "ssh-ed25519 AAAA company" });
+    expect(fs.statSync(path.join(root, "ssh")).mode & 0o777).toBe(0o700);
+  });
+
+  it("never replaces a key that is there (idempotent)", () => {
+    const root = home();
+    ensurePushKey(root, keygen);
+    const again = ensurePushKey(root, () => {
+      throw new Error("ssh-keygen ran again");
+    });
+    expect(again).toMatchObject({ ok: true, created: false });
+  });
+
+  it("says when ssh-keygen fails", () => {
+    expect(ensurePushKey(home(), () => ({ code: 1, stdout: "" }))).toMatchObject({ ok: false });
+  });
+});
+
+describe("projectAccess (#866)", () => {
+  it("asks for the board as the company, without the operator's token variables", () => {
+    const root = home();
+    const granted = projectAccess(root, "Enteee", 2, (command, args, env, unset) => {
+      expect([command, ...args]).toEqual([
+        "gh",
+        "project",
+        "view",
+        "2",
+        "--owner",
+        "Enteee",
+        "--format",
+        "json",
+      ]);
+      expect(env).toEqual({ GH_CONFIG_DIR: path.join(root, "gh") });
+      expect(unset).toEqual(GITHUB_TOKEN_VARS);
+      return { code: 0, stdout: "{}" };
+    });
+    expect(granted).toBe(true);
+  });
+
+  it("is a no when GitHub refuses", () => {
+    expect(projectAccess(home(), "Enteee", 2, () => ({ code: 1, stdout: "" }))).toBe(false);
   });
 });

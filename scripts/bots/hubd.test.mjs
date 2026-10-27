@@ -37,9 +37,11 @@ const path = require("node:path");
 const state = process.env.FAKE_GH_STATE;
 const argv = process.argv.slice(2);
 fs.appendFileSync(path.join(state, "calls.log"), argv.join(" ") + "\\n");
+// Whose credential each call ran with (#866).
+fs.appendFileSync(path.join(state, "env.log"), (process.env.GH_CONFIG_DIR ?? "-") + " " + (process.env.GH_TOKEN ?? "-") + " " + (process.env.GITHUB_TOKEN ?? "-") + "\\n");
 const remaining = Number(fs.readFileSync(path.join(state, "remaining"), "utf8"));
 const [group, sub] = argv;
-if (group === "auth") { console.log("token"); process.exit(0); }
+if (group === "api" && sub === "user") { console.log("vibewars-company"); process.exit(0); }
 if (group === "api" && sub === "rate_limit") {
   const reset = Number(fs.readFileSync(path.join(state, "reset"), "utf8"));
   console.log(JSON.stringify({ resources: { core: {}, graphql: { limit: 5000, remaining, reset } } }));
@@ -300,6 +302,11 @@ async function startHubd(remaining, before) {
     DEVENV_ROOT: repo,
     VIBEWARS_GIT_REMOTE: path.join(dir, "remote.git"),
     FAKE_GH_STATE: state,
+    // The company's credential home (#866), and the operator's tokens,
+    // which hubd must never use.
+    VIBEWARS_CREDENTIALS: path.join(dir, "creds"),
+    GH_TOKEN: "operator-token",
+    GITHUB_TOKEN: "operator-token",
     // Something only hubd's environment holds, to prove a filter cannot
     // reach it.
     HUBD_SECRET: "leaked",
@@ -558,6 +565,20 @@ const MOVE_8_TO_DONE = [
   "--single-select-option-id",
   "o_done",
 ];
+
+describe("hubd works on GitHub as the company (#866)", () => {
+  it("runs every gh call with the company's config dir, and none with the operator's token", async () => {
+    const hubd = await startHubd(5000);
+    await hubd.request("developer", "gh", BOARD_READ);
+    await hubd.request("developer", "gh", ["issue", "view", "7"]);
+
+    const gh = path.join(path.dirname(hubd.root), "creds", "gh");
+    const calls = fs.readFileSync(path.join(hubd.state, "env.log"), "utf8").trim().split("\n");
+    // The startup login, the board's two pages and the issue at least.
+    expect(calls.length).toBeGreaterThanOrEqual(4);
+    expect(new Set(calls)).toEqual(new Set([`${gh} - -`]));
+  }, 20_000);
+});
 
 describe("hubd and the GraphQL budget", () => {
   it("serves every agent's board read from one snapshot", async () => {

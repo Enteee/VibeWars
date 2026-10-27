@@ -92,7 +92,7 @@ const failed = (note) => ({ state: "error", who: null, expiry: null, scopes: nul
  * overridden, whenever a company directory is probed.
  */
 const CLAUDE_TOKEN_VARS = ["CLAUDE_CODE_OAUTH_TOKEN", "ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN"];
-const GITHUB_TOKEN_VARS = [
+export const GITHUB_TOKEN_VARS = [
   "GH_TOKEN",
   "GITHUB_TOKEN",
   "GH_ENTERPRISE_TOKEN",
@@ -373,4 +373,105 @@ export function resetBoxesOnAccountChange(root, boxes, who) {
   }
   fs.writeFileSync(recorded, `${who}\n`, { mode: 0o600 });
   return reset;
+}
+
+/**
+ * The command that signs the company's GitHub account in, in its own `gh`
+ * config directory, with the token in that directory's `hosts.yml` (never
+ * the operator's keyring) and the scope the board needs.
+ *
+ * @param {string} root
+ * @returns {string}
+ */
+export function githubSignIn(root) {
+  return `GH_CONFIG_DIR=${paths(root).gh} gh auth login --insecure-storage --scopes project   (as the company's machine account, not yours)`;
+}
+
+/**
+ * Whether the company may work on GitHub as itself (#866): its `gh` config
+ * directory holds a token, and its push key is there. Local only, so a boot
+ * without the network says the network, not "not set up". Whose account it
+ * is, is the operator's responsibility; the doctor shows it.
+ *
+ * @param {string} root
+ * @param {Run} [run]
+ * @returns {{ ok: true } | { ok: false, message: string }}
+ */
+export function githubVerdict(root, run = runCommand) {
+  const p = paths(root);
+  if (!fs.existsSync(p.ghHosts)) {
+    return {
+      ok: false,
+      message: `the company's GitHub account is not set up. Sign it in: ${githubSignIn(root)}`,
+    };
+  }
+  // The token goes to stdout, which is read for emptiness and dropped.
+  const token = run("gh", ["auth", "token", "--hostname", "github.com"], { GH_CONFIG_DIR: p.gh }, [
+    ...GITHUB_TOKEN_VARS,
+  ]);
+  if (token.code !== 0 || token.stdout.trim() === "") {
+    return {
+      ok: false,
+      message: `the company's GitHub token could not be read. Sign it in again: ${githubSignIn(root)}`,
+    };
+  }
+  if (!fs.existsSync(p.sshKey)) {
+    return {
+      ok: false,
+      message: `the company's push key ${p.sshKey} is missing: run claude-llc-init`,
+    };
+  }
+  return { ok: true };
+}
+
+/**
+ * The company's push key (#866): generated, without a passphrase, if it is
+ * not there yet; an existing one is never replaced.
+ *
+ * @param {string} root
+ * @param {Run} [run]
+ * @returns {{ ok: true, created: boolean, pub: string } | { ok: false, message: string }}
+ */
+export function ensurePushKey(root, run = runCommand) {
+  const p = paths(root);
+  let created = false;
+  if (!fs.existsSync(p.sshKey)) {
+    fs.mkdirSync(p.ssh, { recursive: true, mode: 0o700 });
+    fs.chmodSync(p.ssh, 0o700);
+    const made = run(
+      "ssh-keygen",
+      ["-q", "-t", "ed25519", "-N", "", "-C", "vibewars company push key", "-f", p.sshKey],
+      {},
+      [],
+    );
+    if (made.code !== 0 || !fs.existsSync(p.sshPub)) {
+      return { ok: false, message: "ssh-keygen could not make the push key" };
+    }
+    created = true;
+  }
+  if (!fs.existsSync(p.sshPub)) {
+    return { ok: false, message: `${p.sshPub} is missing: delete ${p.sshKey} to make a new pair` };
+  }
+  return { ok: true, created, pub: fs.readFileSync(p.sshPub, "utf8").trim() };
+}
+
+/**
+ * Whether the company's GitHub account can see the board (#866). The board
+ * is a user project, so being a collaborator on the repository does not
+ * reach it: the owner adds the account to the project itself.
+ *
+ * @param {string} root
+ * @param {string} owner
+ * @param {number} project
+ * @param {Run} [run]
+ * @returns {boolean}
+ */
+export function projectAccess(root, owner, project, run = runCommand) {
+  const result = run(
+    "gh",
+    ["project", "view", String(project), "--owner", owner, "--format", "json"],
+    { GH_CONFIG_DIR: paths(root).gh },
+    [...GITHUB_TOKEN_VARS],
+  );
+  return result.code === 0;
 }

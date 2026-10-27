@@ -39,7 +39,14 @@ import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 
 import { tamperedPaths, updateFilesFromMirror } from "./checkout-verify.mjs";
-import { FILTER_KEYS, GIT_ENV, GIT_HARDENING, filterPins } from "./git-hardening.mjs";
+import { paths } from "./creds.mjs";
+import {
+  FILTER_KEYS,
+  GIT_ENV,
+  GIT_HARDENING,
+  filterPins,
+  remoteHardening,
+} from "./git-hardening.mjs";
 import { builds as buildsCommit, devenvShell } from "./company-build.mjs";
 import { writeLock } from "./company-lock.mjs";
 import { api } from "./link.mjs";
@@ -60,6 +67,8 @@ function required(name) {
 
 const REPO = required("DEVENV_ROOT");
 const ROOT = required("VIBEWARS_BOT_ROOT");
+/** The company's push key (#866): main is fetched from GitHub as the company. */
+const PUSH_KEY = paths(required("VIBEWARS_CREDENTIALS")).sshKey;
 const SESSION = process.env.VIBEWARS_LLC_SESSION ?? "vibewars-llc";
 /** The session, exactly: tmux takes a bare name as a prefix if nothing has it whole. */
 const TARGET = `=${SESSION}`;
@@ -126,13 +135,15 @@ function devenv(args, cwd) {
 }
 
 /**
- * git in hubd's mirror, hardened like hubd's own.
+ * git in hubd's mirror, hardened like hubd's own, with the company's key.
  *
  * @param {string[]} args
  * @returns {{ code: number, stdout: string }}
  */
 function mirror(args) {
-  return run("git", [...GIT_HARDENING, `--git-dir=${MIRROR}`, ...args], { env: GIT_ENV });
+  return run("git", [...remoteHardening(PUSH_KEY), `--git-dir=${MIRROR}`, ...args], {
+    env: GIT_ENV,
+  });
 }
 
 /**
