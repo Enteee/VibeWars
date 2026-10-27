@@ -30,7 +30,9 @@ code nobody had merged.
   sha. The restarter makes the same comparison right after its
   fast-forward, locks nothing on a difference and alarms the operator on
   Telegram with the paths. Files the commit lacks count too; ignored paths
-  (`node_modules`, `.bots`) do not, as they are not code run from git.
+  (`node_modules`, `.bots`) do not, as the commit's own root `.gitignore` from the mirror
+  names them; a nested `.gitignore` in the checkout is not read, since a
+  planted one could hide a planted package.
   nix reads `scripts/bots` and `nix/` as paths (`${../scripts/bots}`) from
   the working tree, which is what is verified. This was read from the nix
   files, not run under a tampered checkout.

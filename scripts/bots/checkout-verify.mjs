@@ -41,7 +41,11 @@ export function tamperedPaths({ mirror, repoDir, sha }) {
       return ["(git diff-files failed)"];
     }
     // Files the commit lacks: ignored paths (node_modules, .bots) are not code run from git.
-    const others = git(["ls-files", "--others", "--exclude-standard"]);
+    // Only the commit's own root .gitignore, from the mirror: a planted nested
+    // .gitignore with "*" would hide a planted package from --exclude-standard.
+    const exclude = path.join(dir, "exclude");
+    fs.writeFileSync(exclude, git(["show", `${sha}:.gitignore`]).stdout);
+    const others = git(["ls-files", "--others", `--exclude-from=${exclude}`]);
     return [...diff.stdout.split("\n"), ...others.stdout.split("\n")].filter((line) => line !== "");
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });

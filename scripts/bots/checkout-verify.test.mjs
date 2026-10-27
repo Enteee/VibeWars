@@ -105,6 +105,16 @@ describe("tamperedPaths", () => {
     ]);
   });
 
+  it("finds a planted package that a nested .gitignore hides", () => {
+    const c = setup();
+    fs.mkdirSync(path.join(c.repoDir, "zz"));
+    fs.writeFileSync(path.join(c.repoDir, "zz", ".gitignore"), "*\n");
+    fs.writeFileSync(path.join(c.repoDir, "zz", "package.json"), "{}\n");
+    expect(tamperedPaths({ mirror: c.mirror, repoDir: c.repoDir, sha: c.sha })).toContain(
+      "zz/package.json",
+    );
+  });
+
   it("finds a deleted file", () => {
     const c = setup();
     fs.rmSync(path.join(c.repoDir, "s", "g"));
