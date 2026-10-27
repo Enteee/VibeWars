@@ -24,6 +24,11 @@ account all landed on the operator's personal account.
   as a separate account).
 - `claude-llc` enforces: it exits before the hub window unless the same
   check passes (`claude-check.mjs`). A doubt is a no.
+- One explicit way round the refusal, for now: the operator creates the empty
+  file `<credentials>/allow-operator-claude`. No jail binds the credential
+  home, so no agent can. Boot, init and doctor then warn that the company runs
+  on the operator's account, and the refusal returns the day the file goes.
+  A missing sign-in is still refused.
 - The per-role `claude.json` records onboarding, trust and the account it
   saw. When the company's account differs from the one recorded in
   `<credentials>/claude-identity`, init deletes every box's `claude.json`

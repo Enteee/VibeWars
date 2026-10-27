@@ -144,6 +144,11 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     process.exit(2);
   }
   console.log(dirLine(root));
+  if (fs.existsSync(paths(root).allowOperatorClaude)) {
+    console.log(
+      `WARNING: ${paths(root).allowOperatorClaude} exists: the company may run on the operator's own Claude account. Delete it once a separate account is signed in.`,
+    );
+  }
   console.log("");
   console.log(renderTable((await collect(root)).rows));
 }

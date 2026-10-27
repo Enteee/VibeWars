@@ -281,6 +281,29 @@ describe("claudeVerdict", () => {
     expect(JSON.stringify(verdict)).toContain("the operator's");
   });
 
+  it("lets the operator's own account through, with a warning, once the operator opts in", () => {
+    const root = signedIn();
+    fs.writeFileSync(paths(root).allowOperatorClaude, "");
+    const verdict = claudeVerdict(root, accounts("me@x.org", "me@x.org"));
+    expect(verdict).toMatchObject({ ok: true, who: "me@x.org" });
+    expect(JSON.stringify(verdict)).toContain("operator's own Claude account");
+  });
+
+  it("does not warn for a separate account, opt-in or not", () => {
+    const root = signedIn();
+    fs.writeFileSync(paths(root).allowOperatorClaude, "");
+    expect(claudeVerdict(root, accounts("co@x.org", "me@x.org"))).toEqual({
+      ok: true,
+      who: "co@x.org",
+    });
+  });
+
+  it("still refuses a missing company sign-in under the opt-in", () => {
+    const root = home();
+    fs.writeFileSync(paths(root).allowOperatorClaude, "");
+    expect(claudeVerdict(root, accounts("me@x.org", "me@x.org")).ok).toBe(false);
+  });
+
   it("refuses a missing company credential, with the sign-in command", () => {
     const verdict = claudeVerdict(home(), accounts("co@x.org", "me@x.org"));
     expect(JSON.stringify(verdict)).toContain("not set up");

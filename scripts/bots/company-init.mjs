@@ -121,7 +121,13 @@ if (!claude.ok) {
   console.error(`claude-llc-init: ${claude.message}`);
   process.exit(1);
 }
-say("claude account", `${claude.who} (the company's own)`);
+say(
+  "claude account",
+  `${claude.who} (${claude.warning === undefined ? "the company's own" : "THE OPERATOR'S, by opt-in"})`,
+);
+if (claude.warning !== undefined) {
+  console.error(`claude-llc-init: WARNING: ${claude.warning}`);
+}
 const reset = resetBoxesOnAccountChange(
   credentials,
   process.env.VIBEWARS_CLAUDE_BOXES ?? "",
