@@ -189,6 +189,16 @@ channels, as often as they like.
   it. That peer had to know the code, so it is someone invited (see
   above), and the lobby it fakes holds nothing but names. In the same
   window it can also fail the join with a `lobby-note` refusal.
+- A queued lobby (#871) closes that window: the room's name is public, so
+  `joinLobby` says only an empty `lobby-hello` to the room, sends its
+  signed `lobby-join` only to a peer whose `lobby-welcome` verifies
+  against the planned host ticket, and takes a `lobby-state` or
+  `lobby-note` before the host is known only from such a peer. The host
+  welcomes each peer once, on its hello or its join, before checking its
+  proof, so even a refusal comes from the planned host, and seats a
+  ticket once. A signature check costs milliseconds, so each side checks
+  at most one from each peer while it is in the room: the host one join,
+  the joiner one welcome; the host checks a seated ticket not at all.
 - `hello.build` is capped in values and depth by `parsePeerHello`, then
   goes through `resolveJoinLoadout` and `validatePlayerBuild`: an illegal
   build gets the house loadout.
