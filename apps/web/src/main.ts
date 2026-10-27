@@ -110,6 +110,12 @@ async function openStore(): Promise<KeyValueStore> {
 
 /** A relay link nothing could be read from (#972), on the first menu. */
 const MALFORMED_RELAY_LINK_NOTICE = "That relay link is not valid. Nothing was saved.";
+/**
+ * A relay link opened inside another site's frame (#972): Use is the only
+ * defence, and a framing page could overlay a decoy over it, so a framed
+ * page never asks. Static hosting sends no `frame-ancestors`.
+ */
+const FRAMED_RELAY_LINK_NOTICE = "Open the relay link in its own tab. Nothing was saved.";
 
 /**
  * The relay invite link this page was opened with, if any (#972), taken
@@ -155,8 +161,11 @@ async function main(): Promise<void> {
   const savedRelay = loadTurnConfig(() => {
     editNotices = [...editNotices, UNREADABLE_RELAY_NOTICE];
   });
+  const framed = window.top !== window.self;
   if (relayLink.kind === "malformed") {
     editNotices = [...editNotices, MALFORMED_RELAY_LINK_NOTICE];
+  } else if (relayLink.kind === "config" && framed) {
+    editNotices = [...editNotices, FRAMED_RELAY_LINK_NOTICE];
   }
   const characters = new CharacterRepository(store);
   const teams = new TeamRepository(store);
@@ -893,7 +902,7 @@ async function main(): Promise<void> {
   };
 
   showMenu();
-  if (relayLink.kind === "config") {
+  if (relayLink.kind === "config" && !framed) {
     openRelayPrompt(app, relayLink.config, savedRelay);
   }
 }

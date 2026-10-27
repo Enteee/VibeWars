@@ -21,6 +21,7 @@ export interface TurnConfig {
 const FRAGMENT_KEY = "turn";
 const MAX_URLS = 4;
 const MAX_FIELD_LENGTH = 256;
+const MAX_PORT = 65535;
 /** The largest decoded fragment value read at all. */
 const MAX_DECODED_BYTES = 4096;
 
@@ -29,7 +30,7 @@ const MAX_DECODED_BYTES = 4096;
  * or an address, IPv6 in brackets; `stun:` is Trystero's already.
  */
 const TURN_URL =
-  /^turns?:(\[[0-9a-fA-F:.]+\]|[A-Za-z0-9](?:[A-Za-z0-9.-]*[A-Za-z0-9])?)(?::\d{1,5})?(?:\?transport=(?:udp|tcp))?$/;
+  /^turns?:(\[[0-9a-fA-F:.]+\]|[A-Za-z0-9](?:[A-Za-z0-9.-]*[A-Za-z0-9])?)(?::(\d{1,5}))?(?:\?transport=(?:udp|tcp))?$/;
 
 /** What a stored relay that fails validation becomes: gone, with this said once. */
 export const UNREADABLE_RELAY_NOTICE = "Saved relay was unreadable and was removed.";
@@ -56,8 +57,14 @@ function isTurnUrls(value: unknown): value is string[] {
   }
   const urls: readonly unknown[] = value;
   return urls.every(
-    (url) => typeof url === "string" && url.length <= MAX_FIELD_LENGTH && TURN_URL.test(url),
+    (url) => typeof url === "string" && url.length <= MAX_FIELD_LENGTH && isTurnUrl(url),
   );
+}
+
+function isTurnUrl(url: string): boolean {
+  const match = TURN_URL.exec(url);
+  const port = match?.[2];
+  return match !== null && (port === undefined || Number(port) <= MAX_PORT);
 }
 
 function isField(value: unknown): value is string {
@@ -94,18 +101,20 @@ export type TurnFragment =
 
 /**
  * Read `turn=` out of `hash` (`location.hash`, with or without its `#`).
- * Only `turn=` is consumed; the other `&`-separated parts are left in
+ * Every `turn=` part is consumed, so no credential stays behind, and more
+ * than one is malformed; the other `&`-separated parts are left in
  * `rest`, in order, without a leading `#`.
  */
 export function parseTurnFragment(hash: string): TurnFragment {
   const parts = (hash.startsWith("#") ? hash.slice(1) : hash).split("&");
-  const index = parts.findIndex((part) => part.startsWith(`${FRAGMENT_KEY}=`));
-  if (index < 0) {
+  const isTurn = (part: string): boolean => part.startsWith(`${FRAGMENT_KEY}=`);
+  const values = parts.filter(isTurn).map((part) => part.slice(FRAGMENT_KEY.length + 1));
+  const [value] = values;
+  if (value === undefined) {
     return { kind: "none" };
   }
-  const value = parts[index]?.slice(FRAGMENT_KEY.length + 1) ?? "";
-  const rest = parts.filter((_, at) => at !== index).join("&");
-  const config = decode(value);
+  const rest = parts.filter((part) => !isTurn(part)).join("&");
+  const config = values.length === 1 ? decode(value) : undefined;
   return config === undefined ? { kind: "malformed", rest } : { kind: "config", config, rest };
 }
 

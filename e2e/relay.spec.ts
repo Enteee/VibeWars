@@ -75,3 +75,17 @@ test("(3) a malformed link says so once, asks nothing and saves nothing", async 
   expect(new URL(page.url()).hash).toBe("");
   expect(await savedRelay(page)).toBeNull();
 });
+
+test("(4) framed by another page, a relay link asks nothing: it says to open it in its own tab", async ({
+  page,
+}) => {
+  await page.goto("./");
+  const src = new URL(link(RELAY), page.url()).href;
+  await page.setContent(`<iframe src="${src}" width="1024" height="768"></iframe>`);
+  const game = page.frameLocator("iframe");
+  await expect(
+    game.locator(".screen-problem", { hasText: "Open the relay link in its own tab" }),
+  ).toBeVisible();
+  await expect(game.getByRole("dialog", { name: "Relay link" })).toHaveCount(0);
+  expect(await savedRelay(page)).toBeNull();
+});

@@ -58,6 +58,15 @@ describe("a TURN relay invite link (#972)", () => {
     expect(parseTurnFragment("")).toEqual({ kind: "none" });
   });
 
+  it("takes out every turn= part, and two of them are malformed", () => {
+    const fragment = encodeTurnFragment(RELAY);
+    const other = encodeTurnFragment({ ...RELAY, credential: "other" });
+    expect(parseTurnFragment(`#${fragment}&a=1&${other}`)).toEqual({
+      kind: "malformed",
+      rest: "a=1",
+    });
+  });
+
   it.each([
     ["bad base64", "turn=%%%"],
     ["not JSON", fragmentOf("{urls:")],
@@ -82,6 +91,7 @@ describe("a TURN relay invite link (#972)", () => {
     ],
     ["over 4 KB", fragmentOf(JSON.stringify({ ...RELAY, pad: "x".repeat(5000) }))],
     ["not UTF-8", `turn=${btoa("\xff\xfe").replace(/=+$/, "")}`],
+    ["a port over 65535", fragmentOf(JSON.stringify({ ...RELAY, urls: ["turn:a.example:65536"] }))],
   ])("is rejected for %s", (_, fragment) => {
     expect(parseTurnFragment(`#x&${fragment}`)).toEqual({ kind: "malformed", rest: "x" });
   });
