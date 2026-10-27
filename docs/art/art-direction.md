@@ -111,7 +111,8 @@ skill slot does (#300). Armor is in the frame's hover title.
 
 Your team's health at a glance (#1055), on the right edge, vertically
 centred: one row per member, you first, then the others in seat order.
-Creatures are not listed; alone, or spectating, there is no window.
+Creatures are not listed; alone, or spectating, there is no window. In
+the small Training stage it anchors top-right instead.
 
 | Part    | Look                                                                                                       |
 | ------- | ---------------------------------------------------------------------------------------------------------- |
