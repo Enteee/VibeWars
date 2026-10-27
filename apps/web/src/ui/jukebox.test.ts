@@ -14,11 +14,12 @@ const tracks = [
 ];
 
 describe("the jukebox", () => {
-  it("lists every track with its moods and tempo, marking the pinned and the previewed", () => {
+  it("lists every track with its moods and tempo, marking the pinned, the previewed and the edited", () => {
     const rows = jukeboxRows(
       tracks,
       pinTrack(DEFAULT_MUSIC_PREFERENCE, "last-stand"),
       "first-light",
+      (trackId) => trackId === "last-stand",
     );
     expect(rows).toEqual([
       {
@@ -28,6 +29,7 @@ describe("the jukebox", () => {
         bpm: "84 bpm",
         pinned: false,
         previewing: true,
+        edited: false,
       },
       {
         id: "last-stand",
@@ -36,6 +38,7 @@ describe("the jukebox", () => {
         bpm: "140 bpm",
         pinned: true,
         previewing: false,
+        edited: true,
       },
     ]);
   });

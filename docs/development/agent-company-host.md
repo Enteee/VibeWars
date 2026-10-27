@@ -91,3 +91,16 @@ also takes `--over-cap` to go past `maxAgents`. The reason is one word unless
 you quote it: `claude-llc hire developer "more devs"`; unquoted extra words
 are a usage error. The company is told in General, and the supervisor starts
 or stops the employee. The company must be up: hubd answers the request.
+
+## Picking the context ceiling
+
+An agent whose context passes `CONTEXT_CEILING` (`scripts/bots/agent-turn.mjs`)
+starts its next turn in a fresh session. Too high, and every call re-reads a
+long conversation; too low, and agents re-orient (briefing, inbox, board) more
+often. `node scripts/bots/context-report.mjs [--since 48h]` works out the
+best ceiling, C\*, from the session logs in `$VIBEWARS_CLAUDE_BOXES` (or
+`--boxes <dir>`). For each role, it takes the sessions that started in the
+window and computes the context after orientation (P), what orientation cost
+(R) and the growth per call (g). It then prints C\* and the modelled cost at
+C\* as a share of today's. It prints counts, never log text. To move the
+ceiling, change the constant in its own PR, citing the report.

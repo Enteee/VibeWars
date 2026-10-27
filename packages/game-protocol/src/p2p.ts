@@ -46,6 +46,8 @@ export const CHANNELS = [
   "rejoin-proof",
   "call",
   "calls",
+  "chat",
+  "chat-line",
 ] as const;
 
 export type Channel = (typeof CHANNELS)[number];
@@ -79,6 +81,18 @@ export const MAX_WIRE_RANK = 15;
 
 /** The most pings a team's calls carry at once, the newest kept (#443). */
 export const MAX_WIRE_PINGS = 32;
+
+/** The most graphemes a chat line keeps (#479); the host cuts the rest. */
+export const MAX_CHAT_GRAPHEMES = 200;
+
+/**
+ * The longest chat text on the wire, in UTF-16 units (#479): room for
+ * `MAX_CHAT_GRAPHEMES` of nearly anything. Longer is malformed and
+ * dropped whole; the host's clamp is what keeps a line short. Small
+ * enough that a line of control characters, six bytes each once
+ * JSON-escaped, still fits one message (#403).
+ */
+export const MAX_WIRE_CHAT_TEXT = 2048;
 
 /** The most net pips either way (game-core's MAX_PIPS, #504). */
 export const MAX_WIRE_PIPS = 10;
@@ -402,6 +416,35 @@ export interface WireCalls {
   readonly pings: readonly WirePing[];
 }
 
+/** Who a chat line reaches (#479): everyone in the lobby, or your team. */
+export const CHAT_CHANNELS = ["all", "team"] as const;
+
+export type ChatChannel = (typeof CHAT_CHANNELS)[number];
+
+/**
+ * Peer to its lobby host (#479), in the lobby and through its match: a
+ * line for `channel`. Peers never send chat to each other; the host
+ * checks, cleans and routes it.
+ */
+export interface PeerChat {
+  readonly channel: ChatChannel;
+  readonly text: string;
+}
+
+/**
+ * Lobby host to each peer a line reaches, one send each, never a
+ * broadcast (#479): team chat goes to that team alone. `name` and
+ * `team` are the sender's as it was sent, so a line keeps them.
+ */
+export interface WireChatLine {
+  readonly channel: ChatChannel;
+  readonly fromId: string;
+  readonly name: string;
+  /** `null`: a spectator, who speaks on all chat only. */
+  readonly team: 0 | 1 | null;
+  readonly text: string;
+}
+
 /** Host to every client, once: the match is over. */
 export interface WireEnded {
   readonly winningTeam: 0 | 1 | null;
@@ -467,10 +510,11 @@ export type WireLobbyCommand =
 
 /** Lobby host to one peer: a start it turned down, or a member it turned away. */
 export interface WireLobbyNote {
-  readonly kind: "start-rejected" | "refused";
+  readonly kind: "start-rejected" | "refused" | "chat-throttled";
   /**
    * For `"start-rejected"`, the words the host is shown. For `"refused"`,
-   * one of `LOBBY_REFUSALS`.
+   * one of `LOBBY_REFUSALS`. For `"chat-throttled"` (#479), empty: this
+   * peer's chat lines are being dropped, too many too fast.
    */
   readonly reason: string;
 }
@@ -733,6 +777,27 @@ export function parseWireCalls(value: unknown): WireCalls | undefined {
   }
   return target !== undefined && isString(target.targetId) && isString(target.callerId)
     ? { target: { targetId: target.targetId, callerId: target.callerId }, pings }
+    : undefined;
+}
+
+export function parsePeerChat(value: unknown): PeerChat | undefined {
+  const raw = fields(value);
+  return raw !== undefined &&
+    isOneOf(raw.channel, CHAT_CHANNELS) &&
+    isString(raw.text, MAX_WIRE_CHAT_TEXT)
+    ? { channel: raw.channel, text: raw.text }
+    : undefined;
+}
+
+export function parseWireChatLine(value: unknown): WireChatLine | undefined {
+  const raw = fields(value);
+  return raw !== undefined &&
+    isOneOf(raw.channel, CHAT_CHANNELS) &&
+    isString(raw.fromId) &&
+    isString(raw.name) &&
+    (raw.team === null || isTeam(raw.team)) &&
+    isString(raw.text, MAX_WIRE_CHAT_TEXT)
+    ? { channel: raw.channel, fromId: raw.fromId, name: raw.name, team: raw.team, text: raw.text }
     : undefined;
 }
 
@@ -1239,7 +1304,7 @@ export function parseWireLobbyCommand(value: unknown): WireLobbyCommand | undefi
 export function parseWireLobbyNote(value: unknown): WireLobbyNote | undefined {
   const raw = fields(value);
   return raw !== undefined &&
-    isOneOf(raw.kind, ["start-rejected", "refused"] as const) &&
+    isOneOf(raw.kind, ["start-rejected", "refused", "chat-throttled"] as const) &&
     isString(raw.reason, MAX_WIRE_TEXT)
     ? { kind: raw.kind, reason: raw.reason }
     : undefined;

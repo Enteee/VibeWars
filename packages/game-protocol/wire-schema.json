@@ -20,7 +20,9 @@
     "rejoin-challenge",
     "rejoin-proof",
     "call",
-    "calls"
+    "calls",
+    "chat",
+    "chat-line"
   ],
   "statusIds": [
     "anthem-of-flame",
@@ -51,8 +53,10 @@
   "constants": {
     "LOBBY_CODE_ALPHABET": { "literal": "ACDEFGHJKMNPQRTWXY34679" },
     "LOBBY_CODE_LENGTH": { "literal": 6 },
+    "MAX_CHAT_GRAPHEMES": { "literal": 200 },
     "MAX_LOBBY_PLAYERS": { "literal": 16 },
     "MAX_SNAPSHOT_PARTS": { "literal": 8 },
+    "MAX_WIRE_CHAT_TEXT": { "literal": 2048 },
     "MAX_WIRE_COMBATS": { "literal": 64 },
     "MAX_WIRE_EVENTS": { "literal": 64 },
     "MAX_WIRE_JSON_DEPTH": { "literal": 16 },
@@ -109,6 +113,8 @@
         { "literal": "bye" },
         { "literal": "call" },
         { "literal": "calls" },
+        { "literal": "chat" },
+        { "literal": "chat-line" },
         { "literal": "combat" },
         { "literal": "ended" },
         { "literal": "hello" },
@@ -128,6 +134,7 @@
         { "literal": "welcome" }
       ]
     },
+    "ChatChannel": { "union": [{ "literal": "all" }, { "literal": "team" }] },
     "ClientIntent": {
       "union": [
         {
@@ -649,6 +656,16 @@
         }
       ]
     },
+    "PeerChat": {
+      "properties": [
+        {
+          "name": "channel",
+          "optional": false,
+          "type": { "union": [{ "literal": "all" }, { "literal": "team" }] }
+        },
+        { "name": "text", "optional": false, "type": "string" }
+      ]
+    },
     "PeerHello": {
       "properties": [
         {
@@ -937,6 +954,23 @@
         }
       ]
     },
+    "WireChatLine": {
+      "properties": [
+        {
+          "name": "channel",
+          "optional": false,
+          "type": { "union": [{ "literal": "all" }, { "literal": "team" }] }
+        },
+        { "name": "fromId", "optional": false, "type": "string" },
+        { "name": "name", "optional": false, "type": "string" },
+        {
+          "name": "team",
+          "optional": false,
+          "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+        },
+        { "name": "text", "optional": false, "type": "string" }
+      ]
+    },
     "WireCombat": {
       "properties": [
         {
@@ -1143,7 +1177,13 @@
         {
           "name": "kind",
           "optional": false,
-          "type": { "union": [{ "literal": "refused" }, { "literal": "start-rejected" }] }
+          "type": {
+            "union": [
+              { "literal": "chat-throttled" },
+              { "literal": "refused" },
+              { "literal": "start-rejected" }
+            ]
+          }
         },
         { "name": "reason", "optional": false, "type": "string" }
       ]

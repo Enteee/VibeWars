@@ -31,6 +31,7 @@ import {
   type ArenaSnapshot,
   type RenderableWall,
 } from "./render/arena-snapshot.js";
+import { attackCastOf } from "./render/attack-clock.js";
 import { NoWebGlError, createArenaViewport, type ArenaViewport } from "./render/arena-viewport.js";
 import { attachFollowCamera } from "./render/follow-camera.js";
 import { showCombatFeedback } from "./render/combat-feedback.js";
@@ -133,6 +134,7 @@ export function toArenaSnapshot(
         weaponId: player.weaponId,
         swingElapsed: player.swingElapsed,
         swingTotal: player.swingTotal,
+        attackCast: attackCastOf(player.castingSkillId, player.castRemaining, player.castTotal),
         offhandId: player.offhandId,
         profession: player.primaryProfession,
         radius: ACTOR_RADIUS,
@@ -233,6 +235,8 @@ export async function startMatchView(
   // The arena's edge stops below the scoreboard and above the bars, not
   // under them (#440). From the bars, as the lines above them come and go.
   const measureCover = (): void => {
+    // The chat panel (#479) sits just above the HUD, wherever its top is.
+    parent.style.setProperty("--hud-height", `${String(hud.root.offsetHeight)}px`);
     camera?.setCover({
       top: hud.scoreboard.offsetTop + hud.scoreboard.offsetHeight,
       bottom: hud.root.offsetHeight - hud.bars.offsetTop,
@@ -539,6 +543,7 @@ export async function startMatchView(
       camera?.dispose();
       allyWatch.dispose();
       delete parent.dataset.called;
+      parent.style.removeProperty("--hud-height");
       nameReveal.detach();
       window.removeEventListener("keydown", handleKeyDown);
       detachMovement();
