@@ -29,11 +29,17 @@ import { importTeam, importedTeamSummary, type TeamImportResult } from "./storag
 import { closeBeatEditor } from "./ui/beat-editor.js";
 import { mountBuildEditor, newCharacter, type BuildEditorView } from "./ui/build-editor.js";
 import { disposeJukeboxScreen, renderJukeboxScreen } from "./ui/jukebox.js";
-import { disposeOptionsScreen, renderOptionsScreen } from "./ui/options-screen.js";
+import {
+  closeOptionsOverlay,
+  disposeOptionsScreen,
+  openOptionsOverlay,
+  renderOptionsScreen,
+} from "./ui/options-screen.js";
 import { displayLobbyCode, renderLobbyScreen } from "./ui/lobby-screen.js";
 import { createNowPlayingToast, nowPlayingText } from "./ui/now-playing.js";
 import { loadActiveCharacterId, renderMenu, renderTeamList } from "./ui/menu.js";
 import { dismissToast, toast } from "./ui/kit.js";
+import { mountTopbar, paintStatus, type StatusState } from "./ui/topbar.js";
 import { duplicateTeam, newTeam } from "./ui/team-builder.js";
 import {
   mountTeamEditor,
@@ -69,10 +75,8 @@ function requireElement(selector: string): HTMLElement {
   return element;
 }
 
-function setStatus(text: string, state: "offline" | "online" | "error"): void {
-  const status = requireElement("#status");
-  status.textContent = text;
-  status.dataset.state = state;
+function setStatus(text: string, state: StatusState): void {
+  paintStatus(requireElement("#status"), text, state);
 }
 
 async function openStore(): Promise<KeyValueStore> {
@@ -95,6 +99,8 @@ async function main(): Promise<void> {
     showNowPlaying(nowPlayingText(trackId, TRACKS, music().intensity));
   });
   const viewport = requireElement("#viewport");
+  const topbar = requireElement("#topbar");
+  const app = requireElement("#app");
 
   const stress = stressMs(window.location.search, STRESS_BUILD);
   if (stress !== null) {
@@ -145,10 +151,24 @@ async function main(): Promise<void> {
     closeBeatEditor();
   };
 
+  // The bar's ⚙ opens Options over the screen, which stays as it was
+  // underneath: an editor keeps its edits, a lobby keeps updating (#454).
+  mountTopbar(topbar, requireElement("#topbar-actions"), {
+    onOptions: () => {
+      openOptionsOverlay(app);
+    },
+  });
+
   const showViewport = (visible: boolean): void => {
     if (visible) {
       leaveScreen();
+      // From the bar, over a lobby whose match just started: it goes with
+      // the screens.
+      closeOptionsOverlay();
     }
+    // In a match the viewport has the whole height; the HUD has the bar's
+    // buttons (#454).
+    topbar.hidden = visible;
     viewport.style.display = visible ? "block" : "none";
     screenRoot.style.display = visible ? "none" : "flex";
   };
@@ -203,8 +223,9 @@ async function main(): Promise<void> {
   const showMenu = (): void => {
     leaveScreen();
     // Every way back to the menu passes through here, so the status bar
-    // never keeps saying where the player was. Error paths set theirs after.
-    setStatus("ready", "offline");
+    // never keeps saying where the player was: idle, it says nothing (#454).
+    // Error paths set theirs after.
+    setStatus("", "offline");
     editor?.dispose();
     editor = undefined;
     disposeOptionsScreen();
@@ -500,7 +521,7 @@ async function main(): Promise<void> {
       hosted = undefined;
       menuNotice = joinFailureNotice(error, location);
       showMenu();
-      // After showMenu, which would put the status back to "ready".
+      // After showMenu, which would clear the status.
       setStatus("could not join", "error");
       return;
     }
@@ -574,12 +595,10 @@ async function main(): Promise<void> {
       match = await startMatchView(
         viewport,
         {
+          // Reconnecting is the HUD's to say (#181); the top bar is hidden
+          // in a match (#454).
           onConnectionChange: (state) => {
-            if (state === "reconnecting") {
-              setStatus("connection lost — reconnecting…", "error");
-            } else if (state === "online") {
-              setStatus("in match", "online");
-            } else {
+            if (state === "lost") {
               // The host is gone: the arena is frozen for good, so there
               // is nothing to stay for.
               setStatus("disconnected", "error");
@@ -592,7 +611,6 @@ async function main(): Promise<void> {
         },
         { connect: () => connectMatchFor(from, start, name, build) },
       );
-      setStatus("in match", "online");
     } catch (error) {
       console.error("[web] could not enter match", error);
       enteringMatch = false;

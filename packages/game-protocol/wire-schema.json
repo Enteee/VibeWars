@@ -340,6 +340,14 @@
         },
         {
           "properties": [
+            { "name": "energyFraction", "optional": false, "type": "number" },
+            { "name": "healthFraction", "optional": false, "type": "number" },
+            { "name": "kind", "optional": false, "type": { "literal": "resurrected" } },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
             { "name": "fromId", "optional": false, "type": "string" },
             { "name": "kind", "optional": false, "type": { "literal": "status-spread" } },
             {
@@ -977,6 +985,7 @@
                   "optional": false,
                   "type": { "union": ["null", "number"] }
                 },
+                { "name": "energy", "optional": false, "type": { "union": ["null", "number"] } },
                 { "name": "fromId", "optional": false, "type": { "union": ["null", "string"] } },
                 { "name": "kind", "optional": false, "type": "string" },
                 { "name": "skillId", "optional": false, "type": { "union": ["null", "string"] } },
@@ -1041,6 +1050,7 @@
                     "optional": false,
                     "type": { "union": ["null", "number"] }
                   },
+                  { "name": "energy", "optional": false, "type": { "union": ["null", "number"] } },
                   { "name": "fromId", "optional": false, "type": { "union": ["null", "string"] } },
                   { "name": "kind", "optional": false, "type": "string" },
                   { "name": "skillId", "optional": false, "type": { "union": ["null", "string"] } },
@@ -1068,6 +1078,7 @@
           "type": { "union": ["null", { "literal": false }, { "literal": true }] }
         },
         { "name": "durationSeconds", "optional": false, "type": { "union": ["null", "number"] } },
+        { "name": "energy", "optional": false, "type": { "union": ["null", "number"] } },
         { "name": "fromId", "optional": false, "type": { "union": ["null", "string"] } },
         { "name": "kind", "optional": false, "type": "string" },
         { "name": "skillId", "optional": false, "type": { "union": ["null", "string"] } },

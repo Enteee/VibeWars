@@ -1,6 +1,6 @@
 /**
  * How much Claude each role uses (#50), read from the session logs each
- * agent's Claude writes under `<boxes>/<role>/config/projects/`. The
+ * agent's Claude writes under `<boxes>/<employee>/config/projects/`. The
  * dashboard runs on the host, outside every jail, so it can read them all;
  * nothing here calls an API.
  *
@@ -19,6 +19,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { openJailDir } from "./jail-fs.mjs";
+import { roleOf } from "./staff.mjs";
 import { LIMIT_STATUSES, LIMIT_TYPES, oneOf } from "./stream-format.mjs";
 
 /** @typedef {import("./jail-fs.mjs").JailDir} JailDir */
@@ -319,11 +320,12 @@ export function burnOf(records, now) {
 export const CHUNK_BYTES = 4 * 1024 * 1024;
 
 /**
- * The most bytes read from one role's logs in one refresh, however many it
- * has. The logs least recently read go first, so a jail planting thousands
- * of logs slows only its own row, and its real log still gets its turn.
+ * The most bytes read from one employee's logs in one refresh, however many
+ * it has. The logs least recently read go first, so a jail planting
+ * thousands of logs slows only itself, and its real log still gets its
+ * turn; a busy employee never starves another of the same role.
  */
-export const ROLE_BYTES = 16 * 1024 * 1024;
+export const BOX_BYTES = 16 * 1024 * 1024;
 
 /** A line longer than this is no reply worth counting; it is skipped. */
 export const MAX_LINE_BYTES = 1024 * 1024;
@@ -331,7 +333,7 @@ export const MAX_LINE_BYTES = 1024 * 1024;
 /** Deep enough for `<project>/<session>/subagents/<agent>.jsonl`. */
 const MAX_DEPTH = 4;
 
-/** Entries looked at per role and refresh, so a million empty dirs cost little. */
+/** Entries looked at per employee and refresh, so a million empty dirs cost little. */
 const MAX_ENTRIES = 20_000;
 
 /**
@@ -359,13 +361,13 @@ const { O_NOFOLLOW, O_NONBLOCK, O_RDONLY } = fs.constants;
  */
 
 /**
- * Every `.jsonl` below `<boxes>/<role>/config/projects`, at most
+ * Every `.jsonl` below `<boxes>/<employee>/config/projects`, at most
  * `MAX_DEPTH` deep, so subagents' logs count too. That tree is the jail's
  * (#329): each directory is opened refusing a symlink and pinned by its
  * descriptor, and one that cannot be opened or listed is skipped, not the
- * role.
+ * employee.
  *
- * @param {string} config the role's `config`, which the jail cannot replace
+ * @param {string} config the employee's `config`, which the jail cannot replace
  * @param {(dir: JailDir, name: string, rel: string) => void} visit called
  *   with each log's directory, name, and path below `projects`
  */
@@ -422,14 +424,45 @@ function walkLogs(config, visit) {
 }
 
 /**
- * Reads each role's logs as they grow: only the bytes appended since the
- * last read, and only replies new enough to matter, so a refresh stays
- * cheap however long the company has run.
+ * The employees with a box: each directory in `boxes` named for an
+ * employee of one of `roles`, sorted. Read from the directory, not from
+ * staff, so an employee fired today still counts what they spent.
  *
- * @param {string} boxes the directory holding each role's `<role>/config`
+ * @param {string} boxes
+ * @param {ReadonlySet<string>} roles
+ * @returns {{ employee: string, role: string }[]}
+ */
+function employeesIn(boxes, roles) {
+  /** @type {fs.Dirent[]} */
+  let entries;
+  try {
+    entries = fs.readdirSync(boxes, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+  /** @type {{ employee: string, role: string }[]} */
+  const employees = [];
+  for (const entry of entries) {
+    // A Dirent of a symlink is no directory: only real ones count.
+    const role = entry.isDirectory() ? roleOf(entry.name) : null;
+    if (role !== null && roles.has(role)) {
+      employees.push({ employee: entry.name, role });
+    }
+  }
+  return employees.sort((a, b) => (a.employee < b.employee ? -1 : 1));
+}
+
+/**
+ * Reads each employee's logs as they grow, counted under their role: only
+ * the bytes appended since the last read, and only replies new enough to
+ * matter, so a refresh stays cheap however long the company has run.
+ *
+ * @param {string} boxes the directory holding each employee's
+ *   `<employee>/config`
  * @param {readonly string[]} roles
  */
 export function createUsageReader(boxes, roles) {
+  const wanted = new Set(roles);
   /** @type {Map<string, Cursor>} */
   const cursors = new Map();
   /** @type {Map<string, UsageRecord & { role: string }>} */
@@ -580,14 +613,14 @@ export function createUsageReader(boxes, roles) {
       refresh += 1;
       /** @type {Set<string>} */
       const seen = new Set();
-      for (const role of roles) {
-        const config = path.join(boxes, role, "config");
+      for (const { employee, role } of employeesIn(boxes, wanted)) {
+        const config = path.join(boxes, employee, "config");
         // Once to see what each log has unread, once to read the logs
         // whose turn it is: the walk keeps no descriptor between them.
         /** @type {{ key: string, bytes: number, served: number }[]} */
         const pending = [];
         walkLogs(config, (dir, name, rel) => {
-          const key = `${role}/${rel}`;
+          const key = `${employee}/${rel}`;
           seen.add(key);
           const bytes = Math.min(unread(dir, name, key, since), CHUNK_BYTES);
           if (bytes > 0) {
@@ -596,7 +629,7 @@ export function createUsageReader(boxes, roles) {
         });
         /** @type {Map<string, number>} */
         const allowed = new Map();
-        let budget = ROLE_BYTES;
+        let budget = BOX_BYTES;
         for (const { key, bytes } of pending.sort((a, b) => a.served - b.served)) {
           if (bytes > budget) {
             break;
@@ -606,7 +639,7 @@ export function createUsageReader(boxes, roles) {
         }
         if (allowed.size > 0) {
           walkLogs(config, (dir, name, rel) => {
-            const key = `${role}/${rel}`;
+            const key = `${employee}/${rel}`;
             const allowance = allowed.get(key);
             if (allowance !== undefined) {
               readFile(dir, name, key, role, since, now, allowance);
