@@ -73,11 +73,6 @@ CLAUDE_CONFIG_DIR=~/.claude-bot/creds/claude claude   # then /login
 `claude-llc-init` then records it, and `claude-llc` refuses to start unless
 it is signed in and is not your account.
 
-Until a separate account exists you can opt in to running on your own: create
-the empty file `<credentials>/allow-operator-claude`. Boot, init and
-`claude-llc doctor` then warn every time, and the usage is yours. Delete the
-file to restore the refusal.
-
 A machine set up before this had the token wherever `managerTokenFile`
 pointed and still has that line in `devenv.local.nix`, which keeps working.
 Without that line, move the file once into the credential home.

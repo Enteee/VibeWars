@@ -11,10 +11,6 @@
  * functions parse the few fields they need (an address, a login, an expiry,
  * scope names) out of what a command or a file says, and an error carries a
  * short fixed phrase, never the command's output or a request's URL.
- *
- *     <root>/allow-operator-claude   operator-set opt-in: an empty file that
- *                                    lets the company run on the operator's
- *                                    own Claude account, loudly
  */
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
@@ -31,7 +27,6 @@ export function paths(root) {
     claude: path.join(root, "claude"),
     claudeCredentials: path.join(root, "claude", ".credentials.json"),
     claudeIdentity: path.join(root, "claude-identity"),
-    allowOperatorClaude: path.join(root, "allow-operator-claude"),
     gh: path.join(root, "gh"),
     ghHosts: path.join(root, "gh", "hosts.yml"),
     ssh: path.join(root, "ssh"),
@@ -327,15 +322,9 @@ export function claudeSignIn(root) {
  * from the operator's. An identity that cannot be read is refused too: the
  * check exists to keep the operator's account out, so a doubt is a no.
  *
- * The one way round it is the operator's own, explicit opt-in: the file
- * `<root>/allow-operator-claude`. Only the operator can create it (no jail
- * binds the credential home), it is off by default, and every boot and doctor
- * run says so in a `warning` while it is on. It lifts only the "is the
- * operator's / cannot be told apart" refusal, not a missing sign-in.
- *
  * @param {string} root
  * @param {Run} [run]
- * @returns {{ ok: true, who: string, warning?: string } | { ok: false, message: string }}
+ * @returns {{ ok: true, who: string } | { ok: false, message: string }}
  */
 export function claudeVerdict(root, run = runCommand) {
   const company = claudeIdentity(paths(root).claude, run);
@@ -357,13 +346,6 @@ export function claudeVerdict(root, run = runCommand) {
     return { ok: true, who: company.who };
   }
   const same = operator.state === "ok" ? isOperators(company.who, operator.who) : null;
-  if (same !== false && fs.existsSync(paths(root).allowOperatorClaude)) {
-    return {
-      ok: true,
-      who: company.who,
-      warning: `the company is running on the operator's own Claude account (${company.who}) because ${paths(root).allowOperatorClaude} exists. Its usage and limits are shared with you. Delete the file once a separate account is signed in.`,
-    };
-  }
   if (same === true) {
     return {
       ok: false,

@@ -18,6 +18,3 @@ if (!verdict.ok) {
   console.error("claude-llc: see 'claude-llc doctor'");
   process.exit(1);
 }
-if (verdict.warning !== undefined) {
-  console.error(`claude-llc: WARNING: ${verdict.warning}`);
-}
