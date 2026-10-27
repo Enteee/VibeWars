@@ -2327,6 +2327,47 @@ describe("hubd hiring and firing", () => {
       : [];
   };
 
+  it("serves the operator's spool: no cooldowns, --over-cap, and nothing but staff", async () => {
+    const hubd = await startHubd(5000);
+    employ(hubd, 2);
+
+    const capped = await hubd.request("_operator", "staff", ["hire", "qa-tester", "load"]);
+    expect(String(capped.reason)).toMatch(/maxAgents is 2/);
+    const over = await hubd.request("_operator", "staff", [
+      "hire",
+      "qa-tester",
+      "load",
+      "--over-cap",
+    ]);
+    expect(over.code, String(over.reason)).toBe(0);
+    expect(staff(hubd).employees["qa-tester@2"]).toMatchObject({ by: "operator" });
+    // The same employee straight away: a manager would be in the cooldown.
+    const fired = await hubd.request("_operator", "staff", ["fire", "qa-tester@2", "done"]);
+    expect(fired.code, String(fired.reason)).toBe(0);
+    expect(told(hubd).filter((text) => text.startsWith("operator "))).toEqual([
+      "operator hired qa-tester@2: load",
+      "operator fired qa-tester@2: done",
+    ]);
+
+    const manager = await hubd.request("_operator", "staff", [
+      "hire",
+      "manager",
+      "x",
+      "--over-cap",
+    ]);
+    expect(String(manager.reason)).toMatch(/exactly one/);
+    const board = await hubd.request("_operator", "board", ["ls"]);
+    expect(board.allow).toBe(false);
+    // The manager gets no --over-cap.
+    const refused = await hubd.request("manager", "staff", [
+      "hire",
+      "qa-tester",
+      "x",
+      "--over-cap",
+    ]);
+    expect(refused.allow).toBe(false);
+  }, 20_000);
+
   it("records a hire and a fire in staff.json, and tells the company", async () => {
     const hubd = await startHubd(5000);
     employ(hubd, 4);
