@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import type { GameToHost, HostToGame } from "./host-protocol.js";
 import {
   CROSSFADE_CYCLES,
+  FLOODED_MESSAGE,
+  HOST_MESSAGES_PER_SECOND,
   HEARTBEAT_MS,
   HEARTBEAT_TIMEOUT_MS,
   HUNG_MESSAGE,
@@ -10,6 +12,7 @@ import {
   measuringMusic,
   type MusicError,
   type MusicPlayerDeps,
+  type TeardownReason,
 } from "./music-player.js";
 
 const track = { id: "first-light", source: 's("bd")', phraseCycles: 8 };
@@ -19,7 +22,7 @@ function setup(overrides: Partial<MusicPlayerDeps> = {}) {
   const frames: {
     sent: GameToHost[];
     destroyed: boolean;
-    receive: (message: HostToGame) => void;
+    receive: (message: HostToGame | null) => void;
   }[] = [];
   const gestures = new EventTarget();
   let now = 0;
@@ -52,6 +55,10 @@ function setup(overrides: Partial<MusicPlayerDeps> = {}) {
     player,
     frames,
     click: () => gestures.dispatchEvent(new Event("pointerdown")),
+    /** Let `ms` pass without a heartbeat. */
+    pass: (ms: number) => {
+      now += ms;
+    },
     /** Let `ms` pass, ticking the heartbeat each second. */
     advance: (ms: number) => {
       for (let passed = 0; passed < ms; passed += HEARTBEAT_MS) {
@@ -227,5 +234,64 @@ describe("measuringMusic", () => {
     expect(measuringMusic("?stress=40&musicstats=1")).toBe(true);
     expect(measuringMusic("")).toBe(false);
     expect(measuringMusic("?music")).toBe(false);
+  });
+});
+
+describe("a host that floods the game (#878)", () => {
+  /** A ready host, whose errors and teardowns are recorded. */
+  function flooded() {
+    const setUp = opened();
+    const errors: MusicError[] = [];
+    const reasons: TeardownReason[] = [];
+    setUp.player.onError((error) => errors.push(error));
+    setUp.player.onTornDown((reason) => reasons.push(reason));
+    setUp.frames[0]?.receive({ type: "ready" });
+    return { ...setUp, errors, reasons };
+  }
+
+  it(`is torn down at its ${String(HOST_MESSAGES_PER_SECOND + 1)}st message in a second, unparseable ones too`, () => {
+    const { frames, pass, errors, reasons } = flooded();
+    // `ready` was the first.
+    for (let i = 1; i < HOST_MESSAGES_PER_SECOND; i += 1) {
+      frames[0]?.receive(null);
+    }
+    pass(999);
+    expect(frames[0]?.destroyed).toBe(false);
+    frames[0]?.receive(null);
+    expect(frames[0]?.destroyed).toBe(true);
+    expect(errors).toEqual([{ message: FLOODED_MESSAGE }]);
+    expect(reasons).toEqual(["flooded"]);
+  });
+
+  it(`keeps a host that sends ${String(HOST_MESSAGES_PER_SECOND + 1)} over two seconds`, () => {
+    const { frames, pass, reasons } = flooded();
+    for (let i = 1; i <= HOST_MESSAGES_PER_SECOND; i += 1) {
+      pass(20);
+      frames[0]?.receive({ type: "pong", seq: 0 });
+    }
+    expect(frames[0]?.destroyed).toBe(false);
+    expect(reasons).toEqual([]);
+  });
+
+  it("says when a host is torn down for hanging", () => {
+    const { frames, advance, reasons } = flooded();
+    advance(HEARTBEAT_MS + HEARTBEAT_TIMEOUT_MS + HEARTBEAT_MS);
+    expect(frames[0]?.destroyed).toBe(true);
+    expect(reasons).toEqual(["hung"]);
+  });
+
+  it("hands on one error per evaluation, and one per track sent", () => {
+    const { player, frames, errors } = flooded();
+    const seq = player.evaluate(")))(");
+    for (let i = 0; i < 3; i += 1) {
+      frames[0]?.receive({ type: "error", message: "bad", seq });
+    }
+    player.load(track);
+    frames[0]?.receive({ type: "error", message: "playing" });
+    frames[0]?.receive({ type: "error", message: "playing" });
+    expect(errors).toEqual([{ message: "bad", evaluation: seq }, { message: "playing" }]);
+    player.crossfadeTo(track);
+    frames[0]?.receive({ type: "error", message: "again" });
+    expect(errors.at(-1)).toEqual({ message: "again" });
   });
 });

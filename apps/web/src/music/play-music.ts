@@ -5,7 +5,7 @@ import {
   type MusicPreference,
 } from "../audio/music-preference.js";
 import { VOLUME_RAMP_SECONDS } from "../audio/volume-ramp.js";
-import { beatEdits, type BeatEditStore } from "./beat-edits.js";
+import { beatEdits, editStoppedNotice, type BeatEditStore } from "./beat-edits.js";
 import { directMusic, type Intensity, type MusicMode, type MusicState } from "./director.js";
 import {
   intensityOverride,
@@ -24,10 +24,11 @@ import { TRACKS } from "./tracks/index.js";
  * track means silence. A jukebox preview plays over all of that until it
  * ends, the track open in the beat editor over that (#373), and a fixed
  * intensity override (#425) over the director's level. A track the player
- * edited plays the edit, wherever it plays.
+ * edited plays the edit, wherever it plays, until the edit stops the music
+ * (#878): then it is removed, and the shipped track plays from then on.
  */
 
-type PlayableTrack = MusicTrack & { readonly moods: readonly Mood[] };
+type PlayableTrack = MusicTrack & { readonly title: string; readonly moods: readonly Mood[] };
 
 export interface MusicFollower {
   /** Play what `state` says, changing only what differs from the last state. */
@@ -54,6 +55,8 @@ export interface MusicFollower {
   readonly nowPlaying: string | null;
   /** Called after anything here may have changed; returns the unsubscribe. */
   onChange(listener: () => void): () => void;
+  /** Called with what to tell the player when an edit stopped the music and was removed (#878). */
+  onNotice(listener: (notice: string) => void): void;
 }
 
 export function createMusicFollower(
@@ -62,7 +65,7 @@ export function createMusicFollower(
   saved: { readonly muted: boolean; readonly preference: MusicPreference },
   now: () => number,
   override: IntensityOverrideStore,
-  edits: Pick<BeatEditStore, "get">,
+  edits: Pick<BeatEditStore, "get" | "remove">,
 ): MusicFollower {
   let preference = saved.preference;
   let muted = saved.muted;
@@ -75,6 +78,7 @@ export function createMusicFollower(
   let intensity: Intensity = 0;
   let played: Intensity = 0;
   const listeners = new Set<() => void>();
+  const noticeListeners: ((notice: string) => void)[] = [];
   const changed = (): void => {
     for (const listener of listeners) {
       listener();
@@ -82,6 +86,21 @@ export function createMusicFollower(
   };
   /** The screen with no fight on it the player is on, to redirect when the mode changes. */
   let onScreen: "menu" | "lobby" | null = null;
+
+  // A hung or flooding edit would do it again on every load: it goes.
+  // A shipped track that did it is the next play's to try again.
+  player.onTornDown(() => {
+    const track = tracks.find((candidate) => candidate.id === playingId);
+    if (track === undefined || edits.get(track.id) === undefined) {
+      return;
+    }
+    edits.remove(track.id);
+    playingId = null;
+    for (const listener of noticeListeners) {
+      listener(editStoppedNotice(track.title));
+    }
+    changed();
+  });
 
   const volume = (): number => (muted || preference.musicMuted ? 0 : preference.musicVolume);
   player.setVolume(volume(), 0);
@@ -207,6 +226,9 @@ export function createMusicFollower(
       return () => {
         listeners.delete(listener);
       };
+    },
+    onNotice(listener) {
+      noticeListeners.push(listener);
     },
   };
 }
