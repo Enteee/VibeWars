@@ -570,14 +570,21 @@ export function formatClock(totalSeconds: number): string {
   return `${String(minutes)}:${String(seconds).padStart(2, "0")}`;
 }
 
-/** The end-of-match line a player reads, from their own team's point of view. */
+/**
+ * The end-of-match line a player reads, from their own team's point of
+ * view. An annihilation match nobody won is lost by every team (GW1,
+ * #846); only kill-count draws.
+ */
 export function describeOutcome(
   winningTeam: number | undefined,
   reason: string | undefined,
   selfTeam: number | undefined,
 ): string {
-  const why = reason === "time" ? " (time)" : "";
+  const why = reason === "time" ? " (time)" : reason === "morale" ? " (morale)" : "";
   if (winningTeam === undefined) {
+    if (reason === "annihilation" || reason === "morale") {
+      return selfTeam === undefined ? `No winner${why}` : `Defeat${why}`;
+    }
     return `Draw${why}`;
   }
   if (selfTeam === undefined) {

@@ -219,6 +219,22 @@ describe("describeOutcome", () => {
   it("falls back to naming the team for a spectator with no team of their own", () => {
     expect(describeOutcome(1, "score", undefined)).toBe("Team 2 wins");
   });
+
+  it("reads an annihilation win plainly and a win at time as by morale (#846)", () => {
+    expect(describeOutcome(0, "annihilation", 0)).toBe("Victory");
+    expect(describeOutcome(0, "annihilation", 1)).toBe("Defeat");
+    expect(describeOutcome(1, "morale", 1)).toBe("Victory (morale)");
+    expect(describeOutcome(1, "morale", 0)).toBe("Defeat (morale)");
+    expect(describeOutcome(1, "morale", undefined)).toBe("Team 2 wins (morale)");
+  });
+
+  it("calls an annihilation match nobody won a defeat for both teams, never a draw (#846)", () => {
+    expect(describeOutcome(undefined, "annihilation", 0)).toBe("Defeat");
+    expect(describeOutcome(undefined, "annihilation", 1)).toBe("Defeat");
+    expect(describeOutcome(undefined, "morale", 0)).toBe("Defeat (morale)");
+    expect(describeOutcome(undefined, "annihilation", undefined)).toBe("No winner");
+    expect(describeOutcome(undefined, "morale", undefined)).toBe("No winner (morale)");
+  });
 });
 
 describe("targetHint (#253, #302)", () => {

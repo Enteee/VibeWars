@@ -331,14 +331,14 @@ describe("a lobby, when the host's peer drops during its match", () => {
 });
 
 describe("a lobby's match played to its end (#403)", () => {
-  it("ends at its kill target, both players see who won, and the lobby opens again", async () => {
-    const { lobby, members } = await lobbyOf([0, 1], { ...DEFAULT_MATCH_RULES, scoreToWin: 1 });
+  it("ends when a team is wiped, both players see who won, and the lobby opens again", async () => {
+    const { lobby, members } = await lobbyOf([0, 1]);
     await start(lobby);
     const [hunter, prey] = [await play(lobby.host, "Hunter"), await play(at(members, 1), "Prey")];
     await lobby.step(0.05);
     hunter.sendIntent({ kind: "attack", targetId: prey.selfSessionId });
 
-    // The house sword walks in and swings until someone has one kill.
+    // The house sword walks in and swings until Prey's team is wiped.
     for (let i = 0; i < 1200 && hunter.getSnapshot().phase === "active"; i += 1) {
       await lobby.step(0.1);
     }
@@ -346,7 +346,7 @@ describe("a lobby's match played to its end (#403)", () => {
     for (const match of [hunter, prey]) {
       const snapshot = match.getSnapshot();
       expect(snapshot.phase).toBe("finished");
-      expect(snapshot.endReason).toBe("score");
+      expect(snapshot.endReason).toBe("annihilation");
       expect(snapshot.winningTeam).toBe(0);
     }
     expect(lobby.host.connection.getSnapshot().phase).toBe("waiting");

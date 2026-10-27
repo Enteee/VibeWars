@@ -211,6 +211,7 @@ describe("Apply Poison in the match (#525)", () => {
       seed: "prep",
       participants: [archer("a", vec2(0, 0)), dummy("d", vec2(600, 0))],
       matchRules: {
+        victory: "kill-count",
         scoreToWin: 10,
         timeLimitSeconds: 600,
         deathRule: "respawn",

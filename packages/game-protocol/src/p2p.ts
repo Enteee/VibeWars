@@ -296,6 +296,11 @@ export interface WireProjectile {
   readonly flightSeconds: number;
 }
 
+/** Why a match ended (#846): kill-count's score and time, annihilation's wipe and morale at time. */
+const END_REASONS = ["score", "time", "annihilation", "morale"] as const;
+
+type EndReason = (typeof END_REASONS)[number];
+
 /**
  * The whole match at one tick, not a delta: what a client assembles from
  * that tick's `WireSnapshotPart`s. Never sent as it is.
@@ -307,7 +312,7 @@ export interface WireSnapshot {
   readonly score: readonly [number, number];
   readonly phase: "active" | "finished";
   readonly winningTeam: 0 | 1 | null;
-  readonly endReason: "score" | "time" | null;
+  readonly endReason: EndReason | null;
   readonly players: readonly WirePlayer[];
   /** Oldest first. */
   readonly projectiles: readonly WireProjectile[];
@@ -461,7 +466,7 @@ export interface WireChatLine {
 /** Host to every client, once: the match is over. */
 export interface WireEnded {
   readonly winningTeam: 0 | 1 | null;
-  readonly endReason: "score" | "time" | "host-left";
+  readonly endReason: EndReason | "host-left";
 }
 
 /**
@@ -1026,7 +1031,7 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
     score?.length !== 2 ||
     !isOneOf(raw.phase, ["active", "finished"] as const) ||
     !(raw.winningTeam === null || isTeam(raw.winningTeam)) ||
-    !(raw.endReason === null || isOneOf(raw.endReason, ["score", "time"] as const))
+    !(raw.endReason === null || isOneOf(raw.endReason, END_REASONS))
   ) {
     return undefined;
   }
@@ -1187,7 +1192,7 @@ export function parseWireEnded(value: unknown): WireEnded | undefined {
   const raw = fields(value);
   return raw !== undefined &&
     (raw.winningTeam === null || isTeam(raw.winningTeam)) &&
-    isOneOf(raw.endReason, ["score", "time", "host-left"] as const)
+    isOneOf(raw.endReason, [...END_REASONS, "host-left"] as const)
     ? { winningTeam: raw.winningTeam, endReason: raw.endReason }
     : undefined;
 }
