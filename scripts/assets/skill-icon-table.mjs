@@ -103,6 +103,8 @@ export const SKILL_ICONS = {
   "dervish.vow-of-strength": { glyph: "axe", modifier: "area" },
   "dervish.sand-shards": { glyph: "shard", modifier: "up" },
   "dervish.pious-haste": { glyph: "dash", modifier: "self" },
+  "dervish.zealous-sweep": { glyph: "energy", modifier: "clock" },
+  "dervish.mystic-twister": { glyph: "snowflake", modifier: "self" },
   "dervish.victorious-sweep": { glyph: "axe", modifier: "self" },
   "ranger.savage-shot": { glyph: "arrow" },
   "ranger.distracting-shot": { glyph: "interrupt", modifier: "less" },

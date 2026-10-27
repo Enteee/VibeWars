@@ -478,6 +478,16 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Dervish/1030-Victorious_Sweep",
   },
   {
+    id: "dervish.zealous-sweep",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/1221-Zealous_Sweep",
+  },
+  {
+    id: "dervish.mystic-twister",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/1049-Mystic_Twister",
+  },
+  {
     id: "mesmer.cry-of-frustration",
     profession: "mesmer",
     url: "https://www.gw-memorial.net/skills/Mesmer/308-Cry_of_Frustration",
