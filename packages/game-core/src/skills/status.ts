@@ -73,6 +73,8 @@ export type StatusId =
   | "empathy"
   | "parasitic-bond"
   | "contagion"
+  | "shard-storm"
+  | "shadow-of-fear"
   | "regeneration"
   | "blood-ritual"
   | "armor-boost"
@@ -464,6 +466,16 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
         skillId: "necromancer.contagion",
       },
     ],
+  }),
+  // "...move 66% slower for 2...5...6 seconds" (#918).
+  "shard-storm": define("shard-storm", "Shard Storm", "hex", {
+    profession: "elementalist",
+    moveSpeedMultiplier: 0.34,
+  }),
+  // "...attack 50% slower": Faintheartedness's slow without its degeneration (#918).
+  "shadow-of-fear": define("shadow-of-fear", "Shadow of Fear", "hex", {
+    profession: "necromancer",
+    attackDurationMultiplier: 1.5,
   }),
   // Troll Unguent's (a ranger skill), though it is an enchantment here.
   regeneration: define("regeneration", "Regeneration", "enchantment", {

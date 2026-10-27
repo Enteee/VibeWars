@@ -321,6 +321,12 @@ describe("attack skills (#417)", () => {
     expect(texts("assassin.moebius-strike")[0]).toBe("Off-hand attack. Must follow a dual attack.");
   });
 
+  it("words Mind Shock's energy comparison as GW1 does (#918)", () => {
+    expect(
+      describeSkill(skill("elementalist.mind-shock")).effects.map(({ text }) => text),
+    ).toContain("If you have more Energy than target: knocks down for 2s");
+  });
+
   it("chains only dagger attacks, so a chain blow never flies (#831)", () => {
     const chained = IMPLEMENTED_SKILLS.filter((entry) => entry.attack?.chain !== undefined);
     expect(chained.map((entry) => entry.attack?.weapon)).toEqual(chained.map(() => "daggers"));

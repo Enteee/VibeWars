@@ -344,6 +344,13 @@ const status = {
       `<rect x="5" y="9.5" width="8" height="5" rx="2.5" ${stroke(c, 2)}/>` +
       `<rect x="11" y="9.5" width="8" height="5" rx="2.5" ${stroke(c, 2)}/>`,
   ],
+  // Hex: an ice shard, the cold slowing you (#918).
+  "shard-storm": ["hex", (c) => `<path d="M12 5.5L15 12L12 18.5L9 12z" fill="${c}"/>`],
+  // Hex: two chevrons pointing back, attacks slowed (#918).
+  "shadow-of-fear": [
+    "hex",
+    (c) => `<path d="M14.5 8L11 12l3.5 4M11 8L7.5 12l3.5 4" ${stroke(c, 2)}/>`,
+  ],
   // Enchantment: a shield in outline with a blow glancing off it, block (#534).
   guardian: [
     "enchantment",
@@ -648,6 +655,11 @@ const skillGlyph = {
   "lightning-orb": () =>
     `<circle cx="12" cy="12" r="8" ${stroke(C.ink, 2)}/>` +
     inkLine("M13.5 5.5L9.5 12H14.5L10.5 18.5", 2),
+  // A bolt in a line, from above (#918): lightning, not the filled
+  // energy bolt.
+  lightning: () => inkLine("M15 2.5L8.5 12.5H15.5L9 21.5", 2.6),
+  // An ice shard in flight, with its trail (#918).
+  shard: () => inkFill("M21 3L18 13L11 6Z") + inkLine("M12.5 11.5L4 20M9 9L5 13M15 15L11 19", 2),
   axe: () =>
     inkLine("M5 20L16 7", 2.4) + inkFill("M11 3.5C17 2.5 21.5 5 21 9C20.5 13 16.5 15 14 12.5Z"),
   sword: () =>

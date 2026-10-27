@@ -343,6 +343,8 @@ function conditionText(condition: EffectCondition): string {
       return condition.radius === AREA_ADJACENT
         ? "If target is not adjacent to any allies"
         : `If target has no allies within ${String(condition.radius)}`;
+    case "caster-more-energy":
+      return "If you have more Energy than target";
   }
 }
 

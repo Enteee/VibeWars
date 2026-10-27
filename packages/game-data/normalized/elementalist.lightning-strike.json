@@ -1,0 +1,25 @@
+{
+  "id": "elementalist.lightning-strike",
+  "name": "Lightning Strike",
+  "profession": "elementalist",
+  "attribute": "Air Magic",
+  "type": "Hex Spell.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 1,
+  "rechargeSeconds": 5,
+  "description": "Strike target foe for 5...33...40 lightning damage. This spell has 25% armor penetration. If you are Overcast, that foe is hexed with Lightning Strike for 3 seconds. When this hex ends, that foe is struck again for 5...33...40 lightning damage.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Elementalist/385-Lightning_Strike",
+    "fetchedAt": "2026-10-27T12:51:28.500Z"
+  },
+  "unmapped": {}
+}
