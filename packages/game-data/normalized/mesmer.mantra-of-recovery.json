@@ -1,0 +1,25 @@
+{
+  "id": "mesmer.mantra-of-recovery",
+  "name": "Mantra of Recovery",
+  "profession": "mesmer",
+  "attribute": "Fast Casting",
+  "type": "Stance.",
+  "elite": true,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 0,
+  "rechargeSeconds": 15,
+  "description": "For 5...17...20 seconds, spells you cast recharge 33% faster.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Mesmer/327-Mantra_of_Recovery",
+    "fetchedAt": "2026-10-27T15:20:18.329Z"
+  },
+  "unmapped": {}
+}

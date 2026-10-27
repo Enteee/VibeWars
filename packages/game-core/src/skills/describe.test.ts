@@ -327,6 +327,13 @@ describe("attack skills (#417)", () => {
     ).toContain("If you have more Energy than target: knocks down for 2s");
   });
 
+  it("words Cry of Frustration's splash and Mantra of Recovery's faster spells (#938)", () => {
+    expect(
+      describeSkill(skill("mesmer.cry-of-frustration")).effects.map(({ text }) => text),
+    ).toContain("If it interrupts: foes in the area are interrupted if casting and take 11 damage");
+    expect(describeStatus("mantra-of-recovery")).toBe("spells recharge 33% faster");
+  });
+
   it("chains only dagger attacks, so a chain blow never flies (#831)", () => {
     const chained = IMPLEMENTED_SKILLS.filter((entry) => entry.attack?.chain !== undefined);
     expect(chained.map((entry) => entry.attack?.weapon)).toEqual(chained.map(() => "daggers"));

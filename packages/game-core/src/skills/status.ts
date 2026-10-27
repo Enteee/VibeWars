@@ -72,6 +72,8 @@ export type StatusId =
   | "empathy"
   | "shard-storm"
   | "shadow-of-fear"
+  | "ice-spikes"
+  | "deep-freeze"
   | "regeneration"
   | "blood-ritual"
   | "armor-boost"
@@ -83,6 +85,7 @@ export type StatusId =
   | "frenzy"
   | "dark-escape"
   | "natural-stride"
+  | "mantra-of-recovery"
   // Preparations.
   | "apply-poison"
   // Glyphs.
@@ -257,6 +260,12 @@ export interface StatusDefinition {
    */
   readonly damageTakenMultiplier: number;
   /**
+   * The share taken off the recharge of each spell the bearer finishes
+   * (#938): Mantra of Recovery's 0.33. Read as the recharge starts, so
+   * a recharge already running keeps its length when the status ends.
+   */
+  readonly spellRechargeFaster: number;
+  /**
    * What it does when its bearer does something (#469): Backfire's damage
    * on each spell the bearer finishes. Applied by whoever put it on.
    */
@@ -335,6 +344,7 @@ function define(
     endsWhenBearerHits: false,
     endsWhenBearerGains: [],
     damageTakenMultiplier: 1,
+    spellRechargeFaster: 0,
     triggers: [],
     ...overrides,
   };
@@ -409,6 +419,16 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     profession: "necromancer",
     attackDurationMultiplier: 1.5,
   }),
+  // "...move 66% slower for 2...5...6 seconds" (#938).
+  "ice-spikes": define("ice-spikes", "Ice Spikes", "hex", {
+    profession: "elementalist",
+    moveSpeedMultiplier: 0.34,
+  }),
+  // "For 10 seconds, all foes move 66% slower" (#938).
+  "deep-freeze": define("deep-freeze", "Deep Freeze", "hex", {
+    profession: "elementalist",
+    moveSpeedMultiplier: 0.34,
+  }),
   // Troll Unguent's (a ranger skill), though it is an enchantment here.
   regeneration: define("regeneration", "Regeneration", "enchantment", {
     profession: "ranger",
@@ -459,6 +479,11 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     moveSpeedMultiplier: 1.33,
     block: { chance: 0.5, against: "all" },
     endsWhenBearerGains: ["hex", "enchantment"],
+  }),
+  // "For 5...17...20 seconds, spells you cast recharge 33% faster" (#938).
+  "mantra-of-recovery": define("mantra-of-recovery", "Mantra of Recovery", "stance", {
+    profession: "mesmer",
+    spellRechargeFaster: 0.33,
   }),
 
   // "Watch Yourself!" at rank 12: +5...21 armor, ending after 1...3 attacks.
@@ -920,6 +945,11 @@ export interface StatusModifiers {
   readonly attackDurationMultiplier: number;
   /** Every status's, multiplied (#919). */
   readonly damageTakenMultiplier: number;
+  /**
+   * The share taken off a spell's recharge (#938): several combine as
+   * 1 − Π(1 − f).
+   */
+  readonly spellRechargeFaster: number;
 }
 
 /** The weakest heals get, whatever reduces them (GW1: at most −40%). */
@@ -955,6 +985,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let attackFaster = 1;
   let attackSlower = 1;
   let damageTakenMultiplier = 1;
+  let spellRechargeKept = 1;
   const enchantments = statuses.filter(
     (status) => getStatusDefinition(status.id).category === "enchantment",
   ).length;
@@ -989,6 +1020,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     attackFaster = Math.min(attackFaster, def.attackDurationMultiplier);
     attackSlower = Math.max(attackSlower, def.attackDurationMultiplier);
     damageTakenMultiplier *= def.damageTakenMultiplier;
+    spellRechargeKept *= 1 - def.spellRechargeFaster;
   }
 
   return {
@@ -1005,6 +1037,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     castTimeMultiplier,
     attackDurationMultiplier: attackFaster * attackSlower,
     damageTakenMultiplier,
+    spellRechargeFaster: 1 - spellRechargeKept,
   };
 }
 

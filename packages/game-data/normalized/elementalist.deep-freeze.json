@@ -1,0 +1,25 @@
+{
+  "id": "elementalist.deep-freeze",
+  "name": "Deep Freeze",
+  "profession": "elementalist",
+  "attribute": "Water Magic",
+  "type": "Hex Spell.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 25
+  },
+  "overcast": 0,
+  "activationSeconds": 2,
+  "rechargeSeconds": 15,
+  "description": "You cause a Deep Freeze at target foe's location. All foes in this area are struck for 10...70...85 cold damage. For 10 seconds, all foes move 66% slower.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Elementalist/434-Deep_Freeze",
+    "fetchedAt": "2026-10-27T15:20:18.506Z"
+  },
+  "unmapped": {}
+}

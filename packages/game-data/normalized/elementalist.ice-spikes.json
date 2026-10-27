@@ -1,0 +1,25 @@
+{
+  "id": "elementalist.ice-spikes",
+  "name": "Ice Spikes",
+  "profession": "elementalist",
+  "attribute": "Water Magic",
+  "type": "Hex Spell.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 15
+  },
+  "overcast": 0,
+  "activationSeconds": 1,
+  "rechargeSeconds": 10,
+  "description": "Target and adjacent foes are struck for 20...68...80 cold damage and move 66% slower for 2...5...6 seconds.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Elementalist/438-Ice_Spikes",
+    "fetchedAt": "2026-10-27T15:20:18.422Z"
+  },
+  "unmapped": {}
+}

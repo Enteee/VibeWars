@@ -180,6 +180,13 @@ spell. A signet, it costs nothing.
 hits 25 harder if that was a spell: one bigger number on the hit, read
 as the arrow lands. A block or a miss does neither.
 
+**Cry of Frustration** (#938, Domination Magic, 10 energy, ¼ s, 20 s
+recharge) only works on a foe using a skill, any skill. Then that foe is
+interrupted and takes 63 damage, and every foe in the area around it is
+interrupted too, if it is casting, and takes 75% of that, 47. On a foe
+using no skill it does nothing, to anyone: the energy is spent and it
+recharges all the same.
+
 ## Energy denial
 
 A Mesmer can take a foe's energy (#793). **Energy Burn** takes up to 8
@@ -424,6 +431,12 @@ half of incoming attacks, until a new hex or enchantment lands on you; a
 refreshed one does not end it. Damage taken is multiplied after armor
 and before a Rune of Absorption, on every damage packet; health loss,
 sacrifice and degeneration are not damage packets and are left alone.
+
+**Mantra of Recovery** (Mesmer elite stance, Fast Casting, 5 energy, 15 s
+recharge, #938) makes every spell you finish in the next 17 s recharge
+33% faster. It is read as the recharge starts: a spell finished after the
+Mantra ends gets nothing, and one already recharging keeps its shorter
+time. A signet, an attack or a stance is not a spell.
 
 Wild Throw (Paragon spear attack, 7 adrenaline) deals +17 damage, cannot
 be blocked, and ends the stance of the foe it hits. It does not yet
@@ -709,6 +722,11 @@ your target when it lands (its cost already paid), another 42 and a
 knockdown. **Shard Storm** (Water Magic, 10 energy, 1 s, 10 s recharge)
 flies as Fireball does, a little faster, and on a hit deals 70 cold and
 hexes its target to 34% speed for 5 s (#918).
+**Ice Spikes** (Water Magic, 15 energy, 1 s, 10 s recharge) falls on its
+target and every foe adjacent to it: 68 cold and 34% speed for 5 s.
+**Deep Freeze** (25 energy, 2 s, 15 s recharge) does the same to every
+foe in the area of its target, for 70 cold and 10 s (#938). Neither
+flies. Slows multiply, down to a floor of 25% speed.
 
 ## Primary attributes
 
