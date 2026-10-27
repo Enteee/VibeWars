@@ -156,8 +156,8 @@ async function sha256Hex(text: string): Promise<string> {
  * lowest. Not simply the lowest id, which one ground secret would make
  * host of every match. This is still grindable: formation is public, so
  * a late joiner can try secrets until they host the group they join, in
- * about `2 * teamSize` tries. Accepted on #869; see SECURITY.md, "A
- * cheating host".
+ * about `2 * teamSize` tries. Accepted on #869; see SECURITY.md,
+ * "Choosing to host a Random Arena".
  */
 async function hostOf(groupId: string, ids: readonly string[]): Promise<string | undefined> {
   const ranked = await Promise.all(
