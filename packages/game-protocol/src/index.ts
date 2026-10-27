@@ -31,6 +31,7 @@ export type {
   AttackIntent,
   CancelIntent,
   WalkToIntent,
+  EndUpkeepIntent,
   CastRefusedMessage,
   AdrenalineMessage,
   RechargeMessage,

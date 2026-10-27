@@ -229,7 +229,9 @@ export async function startMatchView(
       ? undefined
       : attachFollowCamera(viewport, parent, connection.map, () => viewport.size());
 
-  const hud = createHud(parent);
+  const hud = createHud(parent, (targetId, status) => {
+    connection.sendIntent({ kind: "end-upkeep", targetId, status });
+  });
   // The ally you watch (#443), top right: yours alone.
   const allyWatch = createAllyWatch(parent);
   // The arena's edge stops below the scoreboard and above the bars, not
