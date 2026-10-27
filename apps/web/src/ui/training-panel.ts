@@ -313,8 +313,15 @@ export function createTrainingPanel(): TrainingPanel {
       logRowsEl.scrollHeight,
       logRowsEl.clientHeight,
     );
-    logRows = appendRows(logRows, incoming, LOG_CAP).rows;
-    for (const row of incoming) {
+    const appended = appendRows(logRows, incoming, LOG_CAP);
+    logRows = appended.rows;
+    // A regeneration run grew (#590): rewrite its row, don't add one.
+    const folded = appended.replacedLast ? logRows.at(-1 - appended.added.length) : undefined;
+    const foldedText = logRowsEl.lastElementChild?.querySelector(".training-log-text");
+    if (folded !== undefined && foldedText) {
+      foldedText.textContent = folded.text;
+    }
+    for (const row of appended.added) {
       const line = h("div", "training-log-row");
       line.dataset.tone = row.tone;
       line.append(

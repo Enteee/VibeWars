@@ -238,6 +238,13 @@ export function music(): MusicFollower {
               player.crossfadeTo(track);
             }
           },
+          // Re-evaluate a track's own source, as the beat editor would (#509).
+          evaluate: (trackId: string) => {
+            const track = TRACKS.find((candidate) => candidate.id === trackId);
+            if (track !== undefined) {
+              player.evaluate(track.source);
+            }
+          },
         },
       });
     }

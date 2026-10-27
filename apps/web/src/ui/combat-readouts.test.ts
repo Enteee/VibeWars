@@ -318,6 +318,72 @@ describe("appendRows", () => {
   it("drops nothing under the cap", () => {
     expect(appendRows([row("a")], [row("b")], 3).dropped).toBe(0);
   });
+
+  describe("folds consecutive regeneration (#590)", () => {
+    /** A second of regeneration as the batcher writes it, closed at `at`. */
+    const regen = (at: number, amount: number, sourceId?: string): LogRow => {
+      const batcher = new StatusTickBatcher();
+      batcher.push(
+        entry([{ kind: "heal", targetId: "you", amount }], {
+          atSeconds: at - 1,
+          cause: "degeneration",
+          sourceId,
+          skillId: undefined,
+        }),
+        nameOf,
+      );
+      const [closed] = batcher.advance(at, nameOf);
+      if (closed === undefined) {
+        throw new Error("no regeneration row");
+      }
+      return closed;
+    };
+    const run = (from: number, count: number): LogRow[] =>
+      Array.from({ length: count }, (_, i) => regen(from + i, 3));
+
+    it("writes a single row as before", () => {
+      expect(appendRows([], [regen(12, 3)], 100).rows.map((r) => r.text)).toEqual([
+        "regeneration heals Pyro for 3",
+      ]);
+    });
+
+    it("folds twenty rows into one, summed, at the first row's time", () => {
+      const { rows, replacedLast } = appendRows([], run(12, 20), 100);
+      expect(rows.map((r) => [r.time, r.text])).toEqual([
+        ["0:12.0", "regeneration heals Pyro for 60 over 19 s"],
+      ]);
+      expect(replacedLast).toBe(false);
+    });
+
+    it("lets a hit or a divider end the run", () => {
+      const between = [row("hit"), dividerRow("re-armed", 13)];
+      for (const other of between) {
+        expect(appendRows([], [regen(12, 3), other, regen(14, 3)], 100).rows).toHaveLength(3);
+      }
+    });
+
+    it("keeps a different source apart", () => {
+      expect(appendRows([], [regen(12, 3), regen(13, 3, "dummy")], 100).rows).toHaveLength(2);
+    });
+
+    it("folds into the last existing row and says so", () => {
+      const first = appendRows([row("hit")], run(12, 2), 100);
+      const second = appendRows(first.rows, run(14, 2), 100);
+      expect(second.replacedLast).toBe(true);
+      expect(second.added).toEqual([]);
+      expect(second.rows.map((r) => r.text)).toEqual([
+        "hit",
+        "regeneration heals Pyro for 12 over 3 s",
+      ]);
+    });
+
+    it("drops nothing for a fold at the cap", () => {
+      const full = appendRows([row("a")], [regen(12, 3)], 2);
+      const { rows, dropped } = appendRows(full.rows, [regen(13, 3)], 2);
+      expect(dropped).toBe(0);
+      expect(rows.map((r) => r.text)).toEqual(["a", "regeneration heals Pyro for 6 over 1 s"]);
+    });
+  });
 });
 
 describe("shouldStickToBottom", () => {

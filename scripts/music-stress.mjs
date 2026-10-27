@@ -33,6 +33,10 @@
  *                                PulseAudio with a null sink for the run.
  *                                Without a sound device a browser's audio
  *                                clock may be a fake that never underruns.
+ *   --reactivity                 instead of the minute at intensity 3, step
+ *                                the music through changes and print how late
+ *                                each is heard (#509): intensity +1, -1, +2,
+ *                                0-1-0-1 within a second, a switch, an edit
  *   --json <file>                write the totals per browser and load, and
  *                                whether each browser's readings are
  *                                validated (#519), to this file
@@ -72,6 +76,7 @@ const { values: options } = parseArgs({
     only: { type: "string" },
     pulse: { type: "boolean", default: false },
     json: { type: "string" },
+    reactivity: { type: "boolean", default: false },
   },
 });
 const SECONDS = Number(options.seconds);
@@ -228,11 +233,20 @@ async function measure(url, load) {
     await page.addInitScript(() => {
       /** @type {unknown[]} */
       const seen = [];
-      Object.assign(window, { musicStatsSeen: seen });
+      /** @type {unknown[]} */
+      const heard = [];
+      Object.assign(window, { musicStatsSeen: seen, musicHeardSeen: heard });
       addEventListener("message", (event) => {
         const data = /** @type {unknown} */ (event.data);
         if (typeof data === "object" && data !== null && "type" in data && data.type === "stats") {
           seen.push(data);
+        } else if (
+          typeof data === "object" &&
+          data !== null &&
+          "type" in data &&
+          data.type === "heard"
+        ) {
+          heard.push(data);
         } else if (
           typeof data === "object" &&
           data !== null &&
@@ -279,32 +293,90 @@ async function measure(url, load) {
       // The worklet times a spin once when it loads: let that stall pass.
       await sleep(3000);
     }
-    const start = await page.evaluate(() => {
-      const control = /** @type {{ __music: { intensity: (level: number) => void } }} */ (
-        /** @type {unknown} */ (window)
-      ).__music;
-      control.intensity(3);
-      return /** @type {{ musicStatsSeen: unknown[] }} */ (/** @type {unknown} */ (window))
-        .musicStatsSeen.length;
-    });
-    const playing = load.screen === "match" ? play(page) : undefined;
-    await sleep((SECONDS * 1000) / 2);
-    await page.evaluate((trackId) => {
-      const control = /** @type {{ __music: { crossfadeTo: (id: string) => void } }} */ (
-        /** @type {unknown} */ (window)
-      ).__music;
-      control.crossfadeTo(trackId);
-    }, CROSSFADE_TO);
-    await sleep((SECONDS * 1000) / 2);
-    await playing?.stop();
-    const seen = await page.evaluate(
+    const start = await page.evaluate(
       () =>
         /** @type {{ musicStatsSeen: unknown[] }} */ (/** @type {unknown} */ (window))
-          .musicStatsSeen,
+          .musicStatsSeen.length,
     );
+    const playing = load.screen === "match" ? play(page) : undefined;
+    if (options.reactivity) {
+      await steps(page);
+    } else {
+      await music(page, "intensity", 3);
+      await sleep((SECONDS * 1000) / 2);
+      await music(page, "crossfadeTo", CROSSFADE_TO);
+      await sleep((SECONDS * 1000) / 2);
+    }
+    await playing?.stop();
+    const { seen, heard } = await page.evaluate(() => {
+      const w = /** @type {{ musicStatsSeen: unknown[], musicHeardSeen: unknown[] }} */ (
+        /** @type {unknown} */ (window)
+      );
+      return { seen: w.musicStatsSeen, heard: w.musicHeardSeen };
+    });
+    if (heard.length > 0) {
+      reportHeard(/** @type {Heard[]} */ (heard));
+    }
     return /** @type {Stats[]} */ (seen.slice(start));
   } finally {
     await browser.close();
+  }
+}
+
+/**
+ * Call the page's music control (`window.__music`, `?musicstats` only).
+ *
+ * @param {import("@playwright/test").Page} page
+ * @param {"intensity" | "crossfadeTo" | "evaluate"} method
+ * @param {number | string} argument
+ */
+async function music(page, method, argument) {
+  await page.evaluate(([name, value]) => {
+    const control = /** @type {{ __music: Record<string, (value: unknown) => void> }} */ (
+      /** @type {unknown} */ (window)
+    ).__music;
+    control[name]?.(value);
+  }, /** @type {const} */ ([method, argument]));
+}
+
+/**
+ * The changes `--reactivity` times, in order, each given time to be heard
+ * before the next: the `heard` lines print in this order.
+ *
+ * @param {import("@playwright/test").Page} page
+ */
+async function steps(page) {
+  const settle = () => sleep(8000);
+  await music(page, "intensity", 1);
+  await settle();
+  console.log("steps: +1 (1 -> 2), -1 (2 -> 1), +2 (1 -> 3), 0-1-0-1, switch, edit");
+  await music(page, "intensity", 2);
+  await settle();
+  await music(page, "intensity", 1);
+  await settle();
+  await music(page, "intensity", 3);
+  await settle();
+  for (const level of [0, 1, 0, 1]) {
+    await music(page, "intensity", level);
+    await sleep(250);
+  }
+  await settle();
+  await music(page, "crossfadeTo", CROSSFADE_TO);
+  await sleep(20_000);
+  await music(page, "evaluate", CROSSFADE_TO);
+  await settle();
+}
+
+/** @typedef {{ type: "heard", change: string, delayMs: number }} Heard */
+
+/**
+ * How late each change was heard (#509), as the live engine reports it.
+ *
+ * @param {Heard[]} heard
+ */
+function reportHeard(heard) {
+  for (const h of heard) {
+    console.log(`  heard ${h.change} after ${fixed(h.delayMs)} ms`);
   }
 }
 
