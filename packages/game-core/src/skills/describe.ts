@@ -1068,7 +1068,9 @@ export function describeSkill(
   const chain = skill.attack?.chain;
   const chainLine = chain === undefined ? [] : [{ text: chainText(chain), magnitude: undefined }];
   // An attack skill's "+16 damage" (#417): its bonus over the weapon's
-  // blow, first, as GW1 writes it. Broad Head Arrow has none.
+  // blow, first, as GW1 writes it. Broad Head Arrow has none. One whose
+  // weapon's own roll counts for nothing (#1038) "deals only" its bonus,
+  // or, with none, "deals no damage" (Distracting Blow).
   const bonusDamage = skill.attack?.bonusDamage;
   const bonus = bonusDamage === undefined ? undefined : describeMagnitude(bonusDamage, ranks);
   // Then its bonus while a state holds (#794): Mystic Sweep's "If you
@@ -1076,10 +1078,20 @@ export function describeSkill(
   const conditionalBonus = skill.attack?.conditionalBonus;
   const more =
     conditionalBonus === undefined ? undefined : describeMagnitude(conditionalBonus.amount, ranks);
+  const weaponless = skill.attack?.weaponDamage === 0;
   const bonusLine = [
     ...(bonus === undefined
-      ? []
-      : [{ text: `+${String(bonus.current)}${damageTypeText(skill)} damage`, magnitude: bonus }]),
+      ? weaponless
+        ? [{ text: "Deals no damage", magnitude: undefined }]
+        : []
+      : [
+          {
+            text: weaponless
+              ? `Deals only ${String(bonus.current)}${damageTypeText(skill)} damage`
+              : `+${String(bonus.current)}${damageTypeText(skill)} damage`,
+            magnitude: bonus,
+          },
+        ]),
     ...(conditionalBonus === undefined || more === undefined
       ? []
       : [
@@ -1089,6 +1101,9 @@ export function describeSkill(
           },
         ]),
   ];
+  // An attack that rolls no block (#1038): Wild Throw, Crippling Shot.
+  const unblockableLine =
+    skill.attack?.unblockable === true ? [{ text: "Cannot be blocked", magnitude: undefined }] : [];
   // A scythe's attack skill cleaves as its swing does (#977), unless it
   // has an area of its own.
   const cleaves = skill.attack?.weapon === "scythe" && skill.area === undefined;
@@ -1147,6 +1162,7 @@ export function describeSkill(
   const effects = [
     ...chainLine,
     ...bonusLine,
+    ...unblockableLine,
     ...cleaveLine,
     ...cleaveAllLine,
     ...penetrationLine,
@@ -1157,10 +1173,9 @@ export function describeSkill(
   ];
   const { target, range } = targetAndRange(skill);
   const numbers = [
-    ...bonusLine.map(({ text, magnitude }) => ({
-      text,
-      scales: magnitude.attributeId !== undefined,
-    })),
+    ...bonusLine.flatMap(({ text, magnitude }) =>
+      magnitude === undefined ? [] : [{ text, scales: magnitude.attributeId !== undefined }],
+    ),
     ...skill.effects.flatMap((effect) => headlineOf(effect, ranks) ?? []),
   ];
   const headline = (numbers.find((number) => number.scales) ?? numbers[0])?.text;
