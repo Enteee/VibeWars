@@ -373,14 +373,16 @@ bus files, hub results, worktree files and each agent's own Claude logs.
 Host code that prints any string from it goes through `visible()`. #357 printed the model name
 from the logs raw, and was fixed before merge.
 
-**Accepted risk: the dashboard's numbers are jail-written.** The CLAUDE
-pane's token counts come from each agent's own Claude logs, and its
-usage-left bars from `bus/<employee>/limit.json` (#452), the newest of
-which wins. Both are read through `jail-fs.mjs`, size-capped and
-shape-checked, so a jail cannot reach the host through them. It can
-still make the pane show any percentage or token count it likes. These
-numbers inform, they do not gate: before acting on usage left, read
-`/usage`.
+**Accepted risk: the company's usage numbers are jail-written.** The
+dashboard's CLAUDE pane and the manager's `company load` (#747), its
+staffing input, both count tokens from each agent's own Claude logs.
+The pane's usage-left bars also come from `bus/<employee>/limit.json`
+(#452), where the newest file wins. All of it is read through
+`jail-fs.mjs`, size-capped and shape-checked, so a jail cannot reach
+the host through it. A jail can still make its own role look busier or
+idler than it is, which skews staffing, and can make the pane show any
+percentage. These numbers inform, they do not gate. Before acting on
+usage left, read `/usage`.
 
 **Forged CI checks (fixed for hubd merges, #123).** A workflow pushed on a
 side branch runs with `GITHUB_TOKEN` and can post a check run, or a commit
