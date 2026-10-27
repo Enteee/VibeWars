@@ -1,10 +1,10 @@
 import { DIVINE_FAVOR_ATTRIBUTE, divineFavorBonusHeal } from "../primary-attributes.js";
 import { getSkill } from "./catalog.js";
-import { mitigate, spellDamage } from "./damage.js";
+import { mitigate, skillDamage } from "./damage.js";
 import { effectiveMaxEnergy } from "./overcast.js";
 import { resolveMagnitude } from "./scaling.js";
 import { getStatusDefinition, scaledStatusDuration, type StatusId } from "./status.js";
-import { rankOf } from "./tick.js";
+import { effectiveMaxHealth, healingMultiplierOf, maxHealthLossOf, rankOf } from "./tick.js";
 import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
 import {
@@ -76,7 +76,15 @@ export type CombatEvent =
       readonly skillId: string;
     }
   /** An interrupt that found nothing to interrupt — a wasted cast. */
-  | { readonly kind: "interrupt-missed"; readonly targetId: string }
+  | {
+      readonly kind: "interrupt-missed";
+      readonly targetId: string;
+      /**
+       * The skill the target was activating that the interrupt's filter
+       * refused (#796), or `null` when it was activating nothing.
+       */
+      readonly refusedSkillId: string | null;
+    }
   /** A blinded attack skill that swung and missed: paid for, no effect. */
   | { readonly kind: "attack-missed"; readonly targetId: string }
   /**
@@ -126,12 +134,19 @@ export function applyDamage(
   }
 }
 
-/** Heal, clamped so it can never exceed maximum health. The dead stay dead. */
+/**
+ * A heal from a skill: weakened by the target's healing reduction (deep
+ * wound), and clamped so it never exceeds the effective maximum health.
+ * The dead stay dead.
+ */
 function applyHeal(target: Combatant, amount: number, events: CombatEvent[]): void {
   if (amount <= 0 || target.dead) {
     return;
   }
-  const applied = Math.min(amount, target.maxHealth - target.health);
+  const applied = Math.min(
+    amount * healingMultiplierOf(target),
+    effectiveMaxHealth(target) - target.health,
+  );
   if (applied <= 0) {
     return;
   }
@@ -223,16 +238,45 @@ export function interruptIfCastingSpell(target: Combatant, events: CombatEvent[]
 }
 
 /**
- * Whether `effect` may interrupt what `target` is casting (#521): any
- * cast, or with `only: "spell-or-chant"`, a spell or a chant alone.
+ * Apply (or refresh) a status, and take what it takes as it lands: a
+ * newly applied maximum health loss (deep wound) comes off current health
+ * too, never below 1, so it alone never kills (#764: GW1 defers the loss
+ * to the next health change; flooring it is the accepted approximation).
+ * A refresh takes nothing. Returns the health taken, for the caller to
+ * report as damage.
  */
-function interrupts(effect: InterruptEffect, target: Combatant): boolean {
-  if (effect.only === undefined) {
-    return true;
+export function applyStatus(
+  target: Combatant,
+  statusId: StatusId,
+  durationSeconds: number,
+  sourceId: string,
+): number {
+  const lossBefore = maxHealthLossOf(target);
+  if (!target.statuses.apply(statusId, durationSeconds, sourceId)) {
+    return 0;
   }
+  const taken = Math.min(maxHealthLossOf(target) - lossBefore, target.health - 1);
+  if (taken <= 0) {
+    return 0;
+  }
+  target.health -= taken;
+  return taken;
+}
+
+/**
+ * The skill `target` is activating that `effect` may not interrupt (#521,
+ * #796), or `null`: with no `only`, any cast is fair game; with `only:
+ * "spell-or-chant"`, anything but a spell or a chant is refused.
+ */
+function refusedSkill(effect: InterruptEffect, target: Combatant): string | null {
   const cast = target.cast.activeCast;
-  const skill = cast === undefined ? undefined : getSkill(cast.skillId);
-  return skill !== undefined && (isSpell(skill.type) || skill.type === "chant");
+  if (effect.only === undefined || cast === undefined) {
+    return null;
+  }
+  const skill = getSkill(cast.skillId);
+  return skill !== undefined && (isSpell(skill.type) || skill.type === "chant")
+    ? null
+    : cast.skillId;
 }
 
 export function applyEffect(effect: UnconditionalEffect, context: SkillContext): CombatEvent[] {
@@ -244,9 +288,9 @@ export function applyEffect(effect: UnconditionalEffect, context: SkillContext):
       if (target === undefined) {
         return events;
       }
-      // Spell damage respects armor. Before this, it did not — which is
-      // why a warrior and a monk took identical Fireballs.
-      const packet = spellDamage(resolveMagnitude(effect.amount, caster), effect.type);
+      // Physical and elemental skill damage respects armor; holy, shadow and
+      // typeless damage ignores it (#760).
+      const packet = skillDamage(resolveMagnitude(effect.amount, caster), effect.type);
       applyDamage(target, mitigate(packet, target, context.rules), false, events);
       return events;
     }
@@ -288,13 +332,16 @@ export function applyEffect(effect: UnconditionalEffect, context: SkillContext):
         return events;
       }
       const durationSeconds = scaledStatusDuration(target, effect.statusId, effect.durationSeconds);
-      target.statuses.apply(effect.statusId, durationSeconds, caster.id);
+      const loss = applyStatus(target, effect.statusId, durationSeconds, caster.id);
       events.push({
         kind: "status-applied",
         targetId: target.id,
         statusId: effect.statusId,
         durationSeconds,
       });
+      if (loss > 0) {
+        events.push({ kind: "damage", targetId: target.id, amount: loss, critical: false });
+      }
       // Applying Dazed interrupts a spell, even on a target already dazed.
       if (getStatusDefinition(effect.statusId).interruptsSpells) {
         interruptIfCastingSpell(target, events);
@@ -316,12 +363,13 @@ export function applyEffect(effect: UnconditionalEffect, context: SkillContext):
       if (target === undefined || target.dead) {
         return events;
       }
-      if (!interrupts(effect, target) || !interruptCast(target, events)) {
+      const refusedSkillId = refusedSkill(effect, target);
+      if (refusedSkillId !== null || !interruptCast(target, events)) {
         // Nothing it may interrupt was being cast: the interrupt is wasted. Emitted
-        // explicitly so a combat log can show the miss — landing an
+        // explicitly so a combat log can show the miss, and why — landing an
         // interrupt is a timing skill, and silently swallowing failures
         // would hide exactly the feedback that teaches it.
-        events.push({ kind: "interrupt-missed", targetId: target.id });
+        events.push({ kind: "interrupt-missed", targetId: target.id, refusedSkillId });
       }
       return events;
     }

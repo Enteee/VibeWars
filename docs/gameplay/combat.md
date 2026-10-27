@@ -202,9 +202,19 @@ number:
 | Blind         | 90% of your attacks miss                          |
 | Weakness      | −66% weapon damage, −1 to every attribute above 0 |
 | Cracked Armor | −20 armor, never below 60                         |
-| Deep Wound    | −20% maximum health                               |
+| Deep Wound    | −20% maximum health (at most 100), −20% healing   |
 | Dazed         | Spells: double cast time, interrupted by attacks  |
 | Disease       | −4 health/second; spreads to adjacent combatants  |
+
+**Deep Wound takes maximum health, and current health with it** (#764,
+GW1). Its loss, 20% of maximum health but never more than 100, comes off
+current health too as it lands, though never below 1: a deep wound alone
+never kills. Re-applying it while it is up takes nothing more. While it
+lasts, heals from skills are 20% weaker and stop at the reduced maximum;
+regeneration and life steal are untouched. When it ends, the maximum
+comes back and current health stays where it is. Healing reductions
+multiply, but never cut a heal by more than 40%. The health bars grey
+the part of the bar it took.
 
 **Dazed doubles a spell's cast time, and attacks interrupt it** (#546,
 GW1). Applying Dazed interrupts a spell being cast, even on someone
@@ -488,7 +498,14 @@ and a Ranger 70 and 100. Damage halves for every 40 armor above 60:
 Fireball's 91 lands for about 46 on a Ranger. Types that are neither
 physical nor elemental get no typed bonus; base armor still applies.
 Armor penetration cuts the whole total, typed bonus included.
-Degeneration and life steal ignore armor altogether.
+
+Some damage ignores armor altogether (#760): holy, shadow and typeless
+skill damage, an attack skill's "+N damage" bonus, degeneration and
+life steal. Swift Chop's +16 lands as 16 on a Warrior and on a Monk
+alike, on top of its armor-mitigated weapon blow, and its blocked 16
+lands as 16. A weapon's own blow always respects armor, a typeless wand
+included. Against a 60-armor caster nothing changed: the curve is
+exactly 1 there.
 
 ## Primary attributes
 

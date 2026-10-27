@@ -29,7 +29,7 @@ export type { Projectile } from "./projectile.js";
 export { leadAimPoint } from "./projectile.js";
 export type { WeaponSnapshot } from "./weapon-attack.js";
 export { swingProgress } from "./weapon-attack.js";
-export { applyEffect, applyEffects } from "./effects.js";
+export { applyEffect, applyEffects, applyStatus } from "./effects.js";
 
 export type { SkillRole } from "./roles.js";
 export { SKILL_ROLES, skillRoles } from "./roles.js";
@@ -44,12 +44,15 @@ export type {
   StatusCategory,
   StatusDefinition,
   StatusId,
+  MaxHealthLoss,
   StatusModifiers,
 } from "./status.js";
 export {
   STATUS_DEFINITIONS,
+  HEALING_MULTIPLIER_FLOOR,
   StatusSet,
   aggregateModifiers,
+  combinedHealingMultiplier,
   findStatusDefinition,
   getStatusDefinition,
   isStatusId,
@@ -63,6 +66,9 @@ export {
   blockChanceOf,
   effectiveActivationSeconds,
   effectiveMaxHealth,
+  healingMultiplierOf,
+  maxHealthLossOf,
+  maxHealthLossOfStatusIds,
   moveSpeedMultiplier,
   naturalHealthPips,
   netPips,
@@ -105,8 +111,7 @@ export {
   armorMultiplier,
   effectiveArmor,
   mitigate,
-  respectsArmor,
-  spellDamage,
+  skillDamage,
   unmitigatedDamage,
   weaponAttributeMultiplier,
 } from "./damage.js";

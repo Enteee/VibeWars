@@ -3,7 +3,9 @@ import { describe, expect, it } from "vitest";
 import { createRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { applyEffect, applyEffects, applySkillEffects, type CombatEvent } from "./effects.js";
+import { HEALTH_PER_PIP } from "./status.js";
 import { makeCombatant } from "./testing.js";
+import { advanceStatuses, effectiveMaxHealth } from "./tick.js";
 import type { Combatant, Skill, SkillContext, SkillEffect } from "./types.js";
 
 function context(
@@ -123,6 +125,88 @@ describe("heal effect", () => {
     expect(applyEffect({ kind: "heal", amount: { flat: 100 } }, ctx)).toEqual([]);
     expect(target.health).toBe(0);
     expect(target.dead).toBe(true);
+  });
+});
+
+describe("deep wound (#764)", () => {
+  const deepWound: SkillEffect = {
+    kind: "apply-status",
+    statusId: "deep-wound",
+    durationSeconds: 20,
+  };
+
+  function woundedAt(health: number, maxHealth = 480): Combatant {
+    return makeCombatant({ id: "target", team: 1, health, maxHealth });
+  }
+
+  it("takes its loss off current health as it lands, reported as damage", () => {
+    const target = woundedAt(480);
+    const events = applyEffect(deepWound, context(makeCombatant({ id: "caster" }), target));
+    expect(target.health).toBe(384);
+    expect(events).toContainEqual({
+      kind: "damage",
+      targetId: "target",
+      amount: 96,
+      critical: false,
+    });
+  });
+
+  it("takes at most 100", () => {
+    const target = woundedAt(600, 600);
+    applyEffect(deepWound, context(makeCombatant({ id: "caster" }), target));
+    expect(target.health).toBe(500);
+  });
+
+  it("never kills: at 50 health with 96 to lose, it leaves 1", () => {
+    const target = woundedAt(50);
+    const events = applyEffect(deepWound, context(makeCombatant({ id: "caster" }), target));
+    expect(target.health).toBe(1);
+    expect(target.dead).toBe(false);
+    expect(events).toContainEqual({
+      kind: "damage",
+      targetId: "target",
+      amount: 49,
+      critical: false,
+    });
+  });
+
+  it("takes nothing more when re-applied while it is up", () => {
+    const target = woundedAt(480);
+    const ctx = context(makeCombatant({ id: "caster" }), target);
+    applyEffect(deepWound, ctx);
+    const events = applyEffect({ ...deepWound, durationSeconds: 30 }, ctx);
+    expect(target.health).toBe(384);
+    expect(events.some((event) => event.kind === "damage")).toBe(false);
+    expect(target.statuses.get("deep-wound")?.remainingSeconds).toBe(30);
+  });
+
+  it("weakens a heal by 20%, and never heals past the reduced maximum", () => {
+    const target = woundedAt(200);
+    target.statuses.apply("deep-wound", 20, "caster");
+    const ctx = context(makeCombatant({ id: "caster" }), target);
+    const events = applyEffect({ kind: "heal", amount: { flat: 100 } }, ctx);
+    expect(target.health).toBe(280);
+    expect(events).toContainEqual({ kind: "heal", targetId: "target", amount: 80 });
+    target.health = 350;
+    applyEffect({ kind: "heal", amount: { flat: 100 } }, ctx);
+    expect(target.health).toBe(384);
+  });
+
+  it("leaves regeneration pips at full strength", () => {
+    const target = woundedAt(200);
+    target.statuses.apply("deep-wound", 20, "caster");
+    target.statuses.apply("regeneration", 20, "caster");
+    advanceStatuses(target, 1, 0);
+    expect(target.health).toBeCloseTo(200 + 4 * HEALTH_PER_PIP, 9);
+  });
+
+  it("gives maximum health back when it ends, and leaves current health where it is", () => {
+    const target = woundedAt(480);
+    const ctx = context(makeCombatant({ id: "caster" }), target);
+    applyEffect(deepWound, ctx);
+    applyEffect({ kind: "remove-status", category: "condition", count: 1 }, ctx);
+    expect(effectiveMaxHealth(target)).toBe(480);
+    expect(target.health).toBe(384);
   });
 });
 
@@ -299,7 +383,9 @@ describe("if effects (#521)", () => {
 
     const idle = makeCombatant({ id: "target", team: 1 });
     const events = run([{ kind: "interrupt" }, ifInterrupted], idle);
-    expect(events).toEqual([{ kind: "interrupt-missed", targetId: "target" }]);
+    expect(events).toEqual([
+      { kind: "interrupt-missed", targetId: "target", refusedSkillId: null },
+    ]);
     expect(idle.health).toBe(500);
   });
 
@@ -321,9 +407,19 @@ describe("if effects (#521)", () => {
       const foe = casting(skillId);
       const events = run(spellOrChant, foe);
       expect(foe.cast.isCasting, skillId).toBe(true);
-      expect(events, skillId).toEqual([{ kind: "interrupt-missed", targetId: "target" }]);
+      // The miss names what it let through (#796).
+      expect(events, skillId).toEqual([
+        { kind: "interrupt-missed", targetId: "target", refusedSkillId: skillId },
+      ]);
       expect(foe.health, skillId).toBe(500);
     }
+  });
+
+  it("a picky interrupt on an idle target refuses nothing: refusedSkillId is null (#796)", () => {
+    const idle = makeCombatant({ id: "target", team: 1 });
+    expect(run([{ kind: "interrupt", only: "spell-or-chant" }], idle)).toEqual([
+      { kind: "interrupt-missed", targetId: "target", refusedSkillId: null },
+    ]);
   });
 
   it("lands after a removal only when one of that category went", () => {

@@ -48,6 +48,7 @@ import { CastState, type ActiveCast } from "../skills/cast-state.js";
 import { getSkill } from "../skills/catalog.js";
 import {
   applySkillEffects,
+  applyStatus,
   gainEnergy,
   type CombatEvent,
   type SkillResolution,
@@ -1148,15 +1149,31 @@ export class MatchSimulation {
       }
     }
     // As a skill effect applies it: the dummy is the source, so the
-    // degeneration it causes is attributed to the dummy.
+    // degeneration it causes is attributed to the dummy, and so is the
+    // health a deep wound takes as it lands.
     for (const application of intent.applyStatuses) {
       const target = this.#participants.get(application.targetId);
       if (target !== undefined && !target.combatant.dead) {
-        target.combatant.statuses.apply(
+        const loss = applyStatus(
+          target.combatant,
           application.statusId,
           scaledStatusDuration(target.combatant, application.statusId, application.durationSeconds),
           record.id,
         );
+        if (loss > 0) {
+          this.#log.push({
+            tick: this.#tick,
+            atSeconds: this.#elapsedSeconds,
+            cause: "skill",
+            sourceId: record.id,
+            skillId: undefined,
+            weaponId: undefined,
+            attributeId: undefined,
+            area: undefined,
+            doubleStrike: false,
+            events: [{ kind: "damage", targetId: target.id, amount: loss, critical: false }],
+          });
+        }
       }
     }
   }

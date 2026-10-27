@@ -70,8 +70,12 @@ function printStatuses(): void {
     if (status.attackMissChance !== 0) {
       parts.push(`${String(status.attackMissChance * 100)}% miss`);
     }
-    if (status.maxHealthMultiplier !== 1) {
-      parts.push(`max hp x${String(status.maxHealthMultiplier)}`);
+    if (status.maxHealthLoss !== undefined) {
+      const { fraction, cap } = status.maxHealthLoss;
+      parts.push(`max hp -${String(fraction * 100)}% (cap ${String(cap)})`);
+    }
+    if (status.healingMultiplier !== 1) {
+      parts.push(`healing x${String(status.healingMultiplier)}`);
     }
     if (status.castTimeMultiplier !== 1) {
       parts.push(`cast x${String(status.castTimeMultiplier)}`);

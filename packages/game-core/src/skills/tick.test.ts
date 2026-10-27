@@ -4,13 +4,14 @@ import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 
 import { getSkill } from "./catalog.js";
-import { HEALTH_PER_PIP } from "./status.js";
+import { combinedHealingMultiplier, HEALING_MULTIPLIER_FLOOR, HEALTH_PER_PIP } from "./status.js";
 import {
   advanceStatuses,
   attackMissChanceOf,
   clampMoveSpeed,
   effectiveActivationSeconds,
   effectiveMaxHealth,
+  healingMultiplierOf,
   moveSpeedMultiplier,
   rankOf,
 } from "./tick.js";
@@ -129,10 +130,20 @@ describe("effectiveMaxHealth", () => {
     expect(effectiveMaxHealth(makeCombatant({ id: "c", maxHealth: 500 }))).toBe(500);
   });
 
-  it("is reduced by deep wound", () => {
-    const c = makeCombatant({ id: "c", maxHealth: 500 });
+  it("is reduced by deep wound: 20% of the maximum, at most 100", () => {
+    const small = makeCombatant({ id: "c", maxHealth: 480 });
+    small.statuses.apply("deep-wound", 10, "a");
+    expect(effectiveMaxHealth(small)).toBe(384);
+    const large = makeCombatant({ id: "c", maxHealth: 600 });
+    large.statuses.apply("deep-wound", 10, "a");
+    expect(effectiveMaxHealth(large)).toBe(500);
+  });
+
+  it("comes back whole when deep wound ends", () => {
+    const c = makeCombatant({ id: "c", maxHealth: 480 });
     c.statuses.apply("deep-wound", 10, "a");
-    expect(effectiveMaxHealth(c)).toBe(400);
+    c.statuses.remove("deep-wound");
+    expect(effectiveMaxHealth(c)).toBe(480);
   });
 
   it("caps regeneration at the deep-wound-reduced maximum, not the raw one", () => {
@@ -143,6 +154,22 @@ describe("effectiveMaxHealth", () => {
       advanceStatuses(c, 0.05, 0);
     }
     expect(c.health).toBeLessThanOrEqual(400);
+  });
+});
+
+describe("healingMultiplierOf", () => {
+  it("is 1 with no status, and 0.8 while deep-wounded", () => {
+    const c = makeCombatant({ id: "c" });
+    expect(healingMultiplierOf(c)).toBe(1);
+    c.statuses.apply("deep-wound", 10, "a");
+    expect(healingMultiplierOf(c)).toBe(0.8);
+  });
+
+  it("multiplies reductions, never below 60%", () => {
+    // A hypothetical second reduction: only deep wound reduces healing today.
+    expect(combinedHealingMultiplier([0.8, 0.9])).toBeCloseTo(0.72, 10);
+    expect(combinedHealingMultiplier([0.8, 0.5])).toBe(HEALING_MULTIPLIER_FLOOR);
+    expect(HEALING_MULTIPLIER_FLOOR).toBe(0.6);
   });
 });
 

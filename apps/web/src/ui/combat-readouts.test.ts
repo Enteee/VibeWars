@@ -182,6 +182,22 @@ describe("describeCombatEvent", () => {
     expect(logToneOf("attack-unreachable")).toBe("control");
   });
 
+  it("says why a picky interrupt let a cast through, and nothing when it found none (#796)", () => {
+    const spike = { skillId: "mesmer.power-spike" };
+    const refused: CombatEvent = {
+      kind: "interrupt-missed",
+      targetId: "dummy",
+      refusedSkillId: "ranger.barrage",
+    };
+    expect(describeCombatEvent(entry([refused], spike), refused, nameOf)).toBe(
+      "Power Spike (Pyro) can't interrupt Caster dummy's Barrage: not a spell or chant",
+    );
+    const idle: CombatEvent = { kind: "interrupt-missed", targetId: "dummy", refusedSkillId: null };
+    expect(describeCombatEvent(entry([idle], spike), idle, nameOf)).toBe(
+      "Power Spike (Pyro) finds nothing to interrupt on Caster dummy",
+    );
+  });
+
   it("says who knocked whom down, and for how long (#544)", () => {
     const down: CombatEvent = { kind: "knocked-down", targetId: "dummy", durationSeconds: 4 };
     expect(

@@ -377,6 +377,11 @@
         {
           "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "interrupt-missed" } },
+            {
+              "name": "refusedSkillId",
+              "optional": false,
+              "type": { "union": ["null", "string"] }
+            },
             { "name": "targetId", "optional": false, "type": "string" }
           ]
         },

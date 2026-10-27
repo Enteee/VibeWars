@@ -115,7 +115,10 @@ export function describeCombatEvent(
     case "cancelled":
       return `${target} cancels ${skillName(event.skillId) ?? event.skillId}`;
     case "interrupt-missed":
-      return `${by} finds nothing to interrupt on ${target}`;
+      // A picky interrupt says why it let a cast through (#796).
+      return event.refusedSkillId === null
+        ? `${by} finds nothing to interrupt on ${target}`
+        : `${by} can't interrupt ${target}'s ${skillName(event.refusedSkillId) ?? event.refusedSkillId}: not a spell or chant`;
     case "attack-missed":
       return `${by} misses ${target}`;
     case "attack-blocked":

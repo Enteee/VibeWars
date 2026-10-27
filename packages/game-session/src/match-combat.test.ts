@@ -699,6 +699,27 @@ describe("wireCombat and combatMessage (#288, #375)", () => {
     ).toEqual([]);
   });
 
+  it("carries the skill a picky interrupt refused, and null for an idle target (#796)", () => {
+    const refused = {
+      kind: "interrupt-missed",
+      targetId: "b",
+      refusedSkillId: "ranger.barrage",
+    } as const;
+    const idle = { kind: "interrupt-missed", targetId: "c", refusedSkillId: null } as const;
+    const sent = wireCombat([
+      entry({
+        cause: "skill",
+        skillId: "mesmer.power-spike",
+        weaponId: undefined,
+        events: [refused, idle],
+      }),
+    ]);
+    const received = parseWireCombatBatch(JSON.parse(JSON.stringify(sent)));
+    expect(received?.map(combatMessage).map((message) => message.events)).toEqual([
+      [refused, idle],
+    ]);
+  });
+
   it("carries a knockdown and how long it lasts, and drops one with no duration (#544)", () => {
     const wire = wireCombat([
       entry({
