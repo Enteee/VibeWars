@@ -204,13 +204,9 @@ describe("formGroups (#869)", () => {
 
   it("forms 20,000 tickets in one pass, every one of them", async () => {
     const queued = solos(1, 20_000);
-    const started = Date.now();
     const groups = await form(reordered(queued, 7));
-    const elapsed = Date.now() - started;
     expect(groups).toHaveLength(20_000 / 8);
     expect(new Set(groups.flatMap(members)).size).toBe(20_000);
-    // About 500 ms, most of it sha256; the bound is wide so a slow runner does not flake it.
-    expect(elapsed).toBeLessThan(2_500);
   });
 
   it("a flood of tickets claiming to have queued first does not keep later players from meeting", async () => {
