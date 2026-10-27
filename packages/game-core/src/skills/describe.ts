@@ -251,7 +251,8 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.endsAfterHits !== undefined) {
     const { count, weapon } = definition.endsAfterHits;
     const plural = count === 1 ? "" : "s";
-    parts.push(`ends after ${String(count)} hit${plural} with ${NEEDED_WEAPON[weapon]}`);
+    const how = weapon === undefined ? "" : ` with ${NEEDED_WEAPON[weapon]}`;
+    parts.push(`ends after ${String(count)} hit${plural}${how}`);
   }
   if (definition.nextSpells !== undefined) {
     const { count, costReduction } = definition.nextSpells;
@@ -315,6 +316,7 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
     definition.triggers,
     ranks,
     definition.endsWhenBearerUsesSkill,
+    definition.endsWhenTriggered,
     definition.category === "hex" || definition.category === "condition",
   )) {
     (clause ? parts : sentences).push(text);
@@ -356,6 +358,7 @@ const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-uses-skill": "uses a skill",
   "bearer-hits": "hits with an attack",
   "bearer-takes-physical-damage": "takes physical damage",
+  "bearer-takes-damage-from-foe": "takes damage or life steal from a foe",
   "bearer-gains-condition": "gains a new condition",
   ends: "ends",
   expires: "expires",
@@ -370,12 +373,14 @@ interface TriggerLine {
 /**
  * A status's triggers, those that do the same thing said once (#935):
  * Spiteful Spirit's "whenever it uses a skill or attacks". One that ends
- * when its bearer uses a skill answers only the next use (#949).
+ * when its bearer uses a skill answers only the next use (#949), and one
+ * that ends when triggered only the next time (#1022).
  */
 function describeTriggers(
   triggers: readonly StatusTrigger[],
   ranks: ReadonlyMap<string, number>,
   once: boolean,
+  nextOnly: boolean,
   bearerIsFoe: boolean,
 ): TriggerLine[] {
   const groups = new Map<string, { trigger: StatusTrigger; on: StatusTriggerEvent[] }>();
@@ -395,7 +400,9 @@ function describeTriggers(
         ? `when it ${on.map((event) => TRIGGER_WHEN[event]).join(" or ")}`
         : once && on.includes("bearer-uses-skill")
           ? NEXT_SKILL
-          : `whenever it ${on.map((event) => TRIGGER_WHEN[event]).join(" or ")}`,
+          : nextOnly
+            ? `the next time it ${on.map((event) => TRIGGER_WHEN[event]).join(" or ")}`
+            : `whenever it ${on.map((event) => TRIGGER_WHEN[event]).join(" or ")}`,
       ranks,
       bearerIsFoe,
     ),
@@ -422,6 +429,23 @@ function describeTrigger(
     String(describeMagnitude(magnitude, ranks).current);
   const clause = (text: string): TriggerLine => ({ text, clause: true });
   const sentence = (text: string): TriggerLine => ({ text, clause: false });
+  // The bearer on the foe that set it off (#1022), all said at once:
+  // "...: steals 68 Health from that foe, loses 2 conditions".
+  if (trigger.target === "offender") {
+    const answers = trigger.effects.flatMap((effect): string[] => {
+      if (effect.kind === "life-steal") {
+        return [`steals ${amount(effect.amount)} Health from that foe`];
+      }
+      if (effect.kind === "remove-status" && effect.from === "caster") {
+        const plural = effect.count === 1 ? "" : "s";
+        return [`loses ${String(effect.count)} ${effect.category}${plural}`];
+      }
+      return effect.kind === "spread-gained-condition"
+        ? []
+        : describeEffects(effect, ranks).map(({ text }) => lowerFirst(text));
+    });
+    return [sentence(`${when}: ${answers.join(", ")}`)];
+  }
   return trigger.effects.flatMap((effect): TriggerLine[] => {
     if (effect.kind === "spread-gained-condition") {
       return [sentence(`${when}: foes in the area suffer it too`)];

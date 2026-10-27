@@ -325,7 +325,8 @@ Parasite 39) is not damage. The target loses up to that much, never more
 than it has, and the caster gains exactly what was taken, up to its
 maximum health. Armor does not apply, healing modifiers do not touch the
 gain, it charges no adrenaline, and Mark of Pain does not see it. It can
-kill. A dead caster steals nothing.
+kill. A dead caster steals nothing. Vengeful Weapon and Weapon of Remedy
+steal for their bearer, not their Ritualist, and only once.
 
 ## Knockdown
 
@@ -772,11 +773,30 @@ speed-up only the strongest counts, so under Frenzy it adds nothing.
 Spirit Light Weapon's extra 21 a second near a spirit and Weapon of
 Quickening's binding rituals wait for spirits (#467).
 
+Three more (#1022), which still replace any other weapon spell. Each
+lasts on an ally or yourself. **Vengeful Weapon** (Restoration Magic, 5
+energy, ¼ s, 3 s recharge) lasts 8 s: the next time its bearer loses
+health to damage or life steal from a foe, a blow, an arrow or a spell,
+the bearer steals 51 from that foe, and it ends. **Weapon of Remedy**
+(elite, 3 energy, ¼ s, 3 s recharge) is the same with a 68 steal, and
+the bearer also loses its 2 newest conditions. Degeneration, sacrifice,
+a block, a blow armor takes to 0 and a hit Reversal of Fortune reverses
+do not set either off. Neither does damage a trigger deals, so Mark of
+Pain's splash leaves them up, and two Vengeful Weapons never echo. Two
+foes in one tick: it answers the first. The blow that kills the bearer
+steals nothing. **Splinter Weapon** (Channeling Magic, 5 energy, 1 s, 8 s
+recharge) lasts 20 s or 4 hits with any physical weapon: each hit deals
+25 armor-ignoring damage to every other foe adjacent to the foe hit. A
+miss or a block spends nothing, and a wand or a staff carries none.
+
 The Ritualist heals with Restoration Magic, each on an ally or yourself
 (#955). **Mend Body and Soul** (5 energy, ¾ s, 3 s recharge) heals 96.
 **Spirit Light** (5 energy, 1 s, 4 s recharge) sacrifices 17% of your
 maximum health and heals 156. **Wielder's Boon** (5 energy, ¼ s, 4 s
 recharge) heals 51, and 63 more if the ally is under a weapon spell.
+**Mending Grip** (5 energy, 1 s, 4 s recharge) heals 68, and if the ally
+is under a weapon spell it also loses one condition, the newest: the
+Ritualist's first condition removal (#1022).
 Their spirit clauses, a condition removed per spirit in earshot and no
 sacrifice with a spirit near, wait for spirits (#467).
 

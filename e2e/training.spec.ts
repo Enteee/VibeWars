@@ -67,15 +67,10 @@ async function releaseControl(page: Page): Promise<void> {
   await expect(page.locator(".training")).not.toHaveClass(/is-armed/);
 }
 
-/**
- * Take control of the arena by clicking a spot with nobody on it. The
- * pointer stays in the corner, so the camera leans that way (#721): wait
- * for it to settle.
- */
+/** Take control of the arena by clicking a spot with nobody on it. */
 async function takeControl(page: Page): Promise<void> {
   await page.locator(".training-stage").click({ position: { x: 12, y: 12 } });
   await expect(page.locator(".training")).toHaveClass(/is-armed/);
-  await settleCamera(page);
 }
 
 /**
@@ -165,7 +160,7 @@ test("(3) typing in the editor never drives the arena", async ({ page }) => {
   // Clicking a text field takes the keyboard, and with it the arena.
   await name.click();
   const rowsBefore = await logRows(page).count();
-  // The pointer left the arena, so the camera's lean eases home first (#721).
+  // Wait for the arena to hold still before the frames are compared.
   await stillArena(page, canvas);
   const before = await arenaShot(page, canvas);
 
@@ -844,7 +839,7 @@ test("(27) a right click on the ground moves nobody and keeps the target (#438)"
   await page.locator("select.training-scenario").selectOption("armor-ladder");
   await expect(page.locator(".training-log")).toContainText("── Armor ladder ──");
   await takeControl(page);
-  // The cursor leaving the arena eases the camera's lean home (#721).
+  // Off the arena, so no name shows under the cursor.
   await page.mouse.move(1, 1);
   const named = async (): Promise<number> => (await shownNames(page)).length;
 
@@ -1125,7 +1120,7 @@ async function inkHeight(page: Page, blank: Buffer, named: Buffer): Promise<numb
   );
 }
 
-/** Wait out a wheel's zoom ease and the camera's lean: `data-camera` holds still. */
+/** Wait out a wheel's zoom ease: `data-camera` holds still. */
 async function cameraSettled(page: Page): Promise<void> {
   const stage = page.locator(".training-stage");
   await page.waitForTimeout(600);

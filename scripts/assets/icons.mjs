@@ -538,6 +538,27 @@ const status = {
       `<path d="M10 4.5v10M6.5 14.5h7M10 14.5v4" ${stroke(c, 2.5)}/>` +
       `<path d="M14.5 6l3 3-3 3M17 6l3 3-3 3" ${stroke(c, 1.8)}/>`,
   ],
+  // Weapon spell: a blade and a drop drawn back, steals and cleanses (#1022).
+  "weapon-of-remedy": [
+    "weapon-spell",
+    (c) =>
+      `<path d="M10 4.5v10M6.5 14.5h7M10 14.5v4" ${stroke(c, 2.5)}/>` +
+      `<path d="M17 5.5c-1.8 2.4-2.5 3.6-2.5 4.6a2.5 2.5 0 0 0 5 0c0-1-.7-2.2-2.5-4.6z" fill="${c}"/>`,
+  ],
+  // Weapon spell: a blade and a hook turning back, steals from who hurt it (#1022).
+  "vengeful-weapon": [
+    "weapon-spell",
+    (c) =>
+      `<path d="M10 4.5v10M6.5 14.5h7M10 14.5v4" ${stroke(c, 2.5)}/>` +
+      `<path d="M20 6h-3.5a2.5 2.5 0 0 0 0 5H19M15 4.5L13.5 6 15 7.5" ${stroke(c, 1.8)}/>`,
+  ],
+  // Weapon spell: a blade and splinters flying off, splashes the adjacent (#1022).
+  "splinter-weapon": [
+    "weapon-spell",
+    (c) =>
+      `<path d="M10 4.5v10M6.5 14.5h7M10 14.5v4" ${stroke(c, 2.5)}/>` +
+      `<path d="M15 6l4-2M15 9h5M15 12l4 2" ${stroke(c, 1.8)}/>`,
+  ],
   // Shout: a plus with a chevron rising over it, regeneration called for (#923).
   "never-surrender": [
     "shout",
@@ -906,6 +927,11 @@ const skillGlyph = {
     bladeMark(inkLine("M11 6.5A3.5 3.5 0 1 0 8.5 11.5M8.5 11.5L10.5 12M8.5 11.5L9 9.5", 1.8)),
   "blade-fast": () =>
     bladeMark(inkLine("M3.5 5.5L6.5 8.5L3.5 11.5M7.5 5.5L10.5 8.5L7.5 11.5", 1.8)),
+  // A scythe: a long haft, the blade curved over its top (#990).
+  scythe: () =>
+    inkLine("M7 21L16 6", 2.4) + inkFill("M16 6C12 2.5 7 3 3.5 6.5C8 5.5 11.5 6.5 14.5 9Z"),
+  // A tornado: bars narrowing to a point, a whirlwind round the caster (#990).
+  twister: () => inkLine("M3.5 5H20.5M6 9.5H18M8.5 14H15.5M11 18.5H13.5", 2.4),
   axe: () =>
     inkLine("M5 20L16 7", 2.4) + inkFill("M11 3.5C17 2.5 21.5 5 21 9C20.5 13 16.5 15 14 12.5Z"),
   sword: () =>
@@ -998,6 +1024,22 @@ const skillGlyph = {
     `<path d="M9.5 3H14.5M10.5 3V9L4.5 19Q3.5 21 6 21H18Q20.5 21 19.5 19L13.5 9V3" ${stroke(C.ink, 2)}/>` +
     inkFill("M7.5 15H16.5L19 19.5H5Z"),
   germ: () => germ(C.ink),
+  // A shaft whose head is a burst: a shot that breaks a cast (#1018).
+  "arrow-burst": () =>
+    inkLine("M5 21L16 10", 2.2) +
+    inkFill("M22 4L12.5 7L19 13.5Z") +
+    `<g transform="translate(9,3) scale(0.5)">${inkFill(burst(5))}</g>`,
+  // An arrow through a shield: nothing blocks it (#1018).
+  "arrow-pierce": () =>
+    `<path d="M12 4L19.5 6.8V12C19.5 16 16.5 18.8 12 20.5C7.5 18.8 4.5 16 4.5 12V6.8Z" ${stroke(C.ink, 1.8)}/>` +
+    inkLine("M2.5 21.5L16 8", 2.4) +
+    inkFill("M21.5 2.5L12 5.5L18.5 12Z"),
+  // A shaft with a flame for a head: a burning arrow (#1018).
+  "arrow-flame": () =>
+    inkLine("M3.5 20.5L13 11", 2.2) +
+    inkFill(
+      "M18 2.5c.5 3 3.5 4.3 3.5 7.5a4.7 4.7 0 0 1-9.4 0c0-2 .8-3.5 2-4.3 0 1.5.4 2.3 1.2 2.7-.4-2.3.8-4.7 2.7-5.9z",
+    ),
   // Three prongs on a shaft: a trident thrown through water (#1007).
   trident: () => inkLine("M12 21V3M5.5 4V9Q5.5 13 12 13Q18.5 13 18.5 9V4", 2.4),
   // A hawk seen from below, wings swept back (#1007).
@@ -1013,6 +1055,8 @@ const skillGlyph = {
 const skillModifier = {
   up: () => inkLine("M19 21V15M16.5 17.5L19 15L21.5 17.5", 1.7),
   down: () => inkLine("M19 15V21M16.5 18.5L19 21L21.5 18.5", 1.7),
+  // An energy bolt: it takes energy (#1018).
+  bolt: () => inkFill("M20 14.2L16.4 18.4H19L18.2 21.8L22 17.4H19.4Z"),
   less: () => inkLine("M16.5 18H21.5", 2),
   area: () => `<circle cx="19" cy="18" r="3.4" ${stroke(C.ink, 1.6)}/>`,
   clock: () =>
