@@ -258,11 +258,13 @@ export interface RechargeFasterEffect {
 export interface InterruptEffect {
   readonly kind: "interrupt";
   /**
-   * `spell-or-chant`: only a spell (`isSpell`) or a chant is interrupted,
-   * as Power Spike's "If target foe is casting a Spell or Chant" (#521).
-   * Anything else is left alone, as if the target were not casting.
+   * `spell`: only a spell (`isSpell`) is interrupted, as Concussion
+   * Shot's "while target foe is casting a spell" (#1008); a chant is
+   * not one. `spell-or-chant`: a spell or a chant, as Power Spike's
+   * "If target foe is casting a Spell or Chant" (#521). Anything else
+   * is left alone, as if the target were not casting.
    */
-  readonly only?: "spell-or-chant";
+  readonly only?: "spell" | "spell-or-chant";
 }
 
 /**

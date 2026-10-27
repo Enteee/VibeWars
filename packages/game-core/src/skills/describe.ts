@@ -707,9 +707,11 @@ function describeEffect(
     case "interrupt":
       return {
         text:
-          effect.only === "spell-or-chant"
-            ? "Interrupts the target's spell or chant, if they are casting one"
-            : "Interrupts the target's current cast, if they are casting",
+          effect.only === "spell"
+            ? "Interrupts the target's spell, if they are casting one"
+            : effect.only === "spell-or-chant"
+              ? "Interrupts the target's spell or chant, if they are casting one"
+              : "Interrupts the target's current cast, if they are casting",
         magnitude: undefined,
       };
     case "knockdown":
