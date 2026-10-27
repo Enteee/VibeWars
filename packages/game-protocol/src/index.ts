@@ -129,3 +129,15 @@ export type {
   LobbyRefusal,
   WireMatchStart,
 } from "./p2p.js";
+
+export {
+  FORMATION_SETTLE_MS,
+  FORMATION_TIMEOUT_MS,
+  NO_SHOW_IGNORE_MS,
+  QUEUE_MODES,
+  TICKET_HEARTBEAT_MS,
+  TICKET_TTL_MS,
+  parseQueueTicket,
+  teamSizeOf,
+} from "./queue.js";
+export type { QueueMode, QueueTicket } from "./queue.js";

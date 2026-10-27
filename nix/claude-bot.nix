@@ -510,7 +510,9 @@ let
         tokenFile="${if cfg.managerTokenFile == null then "" else toString cfg.managerTokenFile}"
         tokenLiteral="${if cfg.managerToken == null then "" else cfg.managerToken}"
 
-        if [ -n "$tokenFile" ]; then
+        # The file defaults to the credential home's, so a missing one is only an
+        # error when no inline token is there to use instead.
+        if [ -n "$tokenFile" ] && { [ -r "$tokenFile" ] || [ -z "$tokenLiteral" ]; }; then
           if [ ! -r "$tokenFile" ]; then
             echo "claude-bot: vibewars.telegram.managerTokenFile is set to $tokenFile, which is not readable" >&2
             echo "claude-bot: write the manager bot's token into it, mode 600, before running claude-llc; see docs/development/agent-company-host.md" >&2
@@ -946,16 +948,34 @@ in
         The directory under $HOME holding one Claude config dir per role.
       '';
     };
+
+    # The company's credential home (#855, #864): everything it authenticates
+    # with, in one directory of mode 0700, outside the checkout where the
+    # agents write. A shell string: $HOME expands where it is used.
+    # The default is a sibling of the per-employee dirs in `boxes`, safe only
+    # because no employee id can be "creds".
+    credentials = lib.mkOption {
+      type = lib.types.str;
+      default = "$HOME/${config.vibewars.claudeBot.boxes}/creds";
+      example = "/home/you/.secrets/vibewars";
+      description = ''
+        Where the company keeps its credentials: telegram-manager-token today,
+        claude/, gh/ and ssh/ as #855 lands. Created at mode 0700 by
+        claude-llc-init, which refuses a wider one. Not under the checkout.
+      '';
+    };
   };
 
   options.vibewars.telegram = {
     managerTokenFile = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
-      default = null;
+      default = "${config.vibewars.claudeBot.credentials}/telegram-manager-token";
       example = "/home/you/.secrets/telegram-manager-token";
       description = ''
         Path to a file containing the manager bot's token, read at runtime.
         Preferred over `managerToken`: the value never reaches the Nix store.
+        Defaults to telegram-manager-token in the credential home, where
+        claude-bot-setup keeps it.
       '';
     };
 
@@ -1004,6 +1024,7 @@ in
     scripts.claude-bot-setup = {
       description = "One-time Telegram setup: verify the manager bot, find the group, write devenv.local.nix";
       exec = ''
+        export VIBEWARS_CREDENTIALS="${config.vibewars.claudeBot.credentials}"
         exec ${node} ${botScripts}/setup.mjs "$@"
       '';
     };

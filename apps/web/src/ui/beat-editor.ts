@@ -18,7 +18,8 @@ import { button, h, shareLine } from "./kit.js";
  * it plays. Ctrl+Enter sends it to the music host, which plays it from
  * the next cycle; once the host says `evaluated` the edit is kept, and it
  * plays wherever that track would. A source that fails leaves the old
- * pattern playing and shows the error under its line.
+ * pattern playing and shows the error under its line. Music switched
+ * off (#878) says so in the status.
  *
  * While it is open the editor holds its track over the director and any
  * preview, and its intensity slider holds the level; closing gives both
@@ -281,7 +282,13 @@ export function openBeatEditor(trackId: string, deps: BeatEditorDeps = defaultDe
         done.kind === "reset" ? "Back to the shipped track." : "Playing your change. It is kept.";
     },
     failed(error) {
-      if (error.evaluation === undefined || !evaluations.failed(error.evaluation)) {
+      if (error.evaluation === undefined) {
+        // The music was switched off, or the pattern failed as it played
+        // (#878): no line of this text to mark.
+        status.textContent = error.message;
+        return;
+      }
+      if (!evaluations.failed(error.evaluation)) {
         return;
       }
       status.textContent = "That did not play; the last version plays on.";
