@@ -45,3 +45,11 @@ export function audioStressMs(search: string, stressBuild: boolean): number | nu
   const asked = Number(new URLSearchParams(search).get("audiostress"));
   return Number.isFinite(asked) && asked > 0 ? Math.min(asked, MAX_AUDIO_STRESS_MS) : null;
 }
+
+/**
+ * Whether `?musicrender=ahead` asks the host to render the music ahead
+ * offline (#509, spike): in a stress build only, until ADR-0028 decides.
+ */
+export function renderAhead(search: string, stressBuild: boolean): boolean {
+  return stressBuild && new URLSearchParams(search).get("musicrender") === "ahead";
+}

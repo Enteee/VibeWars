@@ -29,6 +29,7 @@ import { busGate, type BusGate } from "./bus-gate.js";
 import { crossfade, isTempoMark } from "./crossfade.js";
 import { catchUpTick, leadClock } from "./lead-clock.js";
 import { makeLayer, type TrackClock } from "./layer.js";
+import { renderAhead, type RenderAheadPlayer, type RenderReport } from "./render-ahead.js";
 import { reverbPins } from "./reverb-pins.js";
 import { startAudioStress } from "./audio-stress.js";
 import { createMeasurement, readAudio } from "./stats.js";
@@ -101,7 +102,7 @@ function describe(error: unknown): Extract<HostToGame, { type: "error" }> {
 }
 
 export async function startEngine(): Promise<void> {
-  const post = (message: HostToGame): void => {
+  const post = (message: HostToGame | RenderReport): void => {
     // The parent's origin cannot be named from an opaque origin; the
     // parent checks `event.source` instead.
     parent.postMessage(message, "*");
@@ -192,6 +193,9 @@ export async function startEngine(): Promise<void> {
   let volume = 1;
   let bus: GainNode | undefined;
   let gate: BusGate | undefined;
+  /** Whether the game asked for render-ahead (#509 spike), and its player once audio runs. */
+  let wantAhead = false;
+  let ahead: RenderAheadPlayer | undefined;
 
   /** The clock of the source being evaluated, which its `layer` calls keep. */
   let compiling: TrackClock = { origin: 0 };
@@ -289,6 +293,34 @@ export async function startEngine(): Promise<void> {
     const out = getSuperdoughAudioController().output.destinationGain;
     out.disconnect();
     out.connect(bus);
+    if (wantAhead) {
+      const music = bus;
+      ahead = renderAhead({
+        context,
+        bus: () => music,
+        withLevel: (level, query) => {
+          const saved = levels;
+          levels = [{ from: 0, level }];
+          try {
+            return query();
+          } finally {
+            levels = saved;
+          }
+        },
+        pin: (value) => pins.pin(value),
+        report: post,
+        // Once, on the worker timers: a frame that makes no sound has its page timers throttled.
+        setTimeout: (callback, ms) => {
+          const id = timers.setInterval(
+            () => {
+              timers.clearInterval(id);
+              callback();
+            },
+            Math.max(0, ms),
+          );
+        },
+      });
+    }
   };
 
   const announce = (track: Playing): void => {
@@ -313,6 +345,14 @@ export async function startEngine(): Promise<void> {
   const load = async (track: HostTrack): Promise<void> => {
     const { pattern, cps, clock } = await compile(track.source, track.phraseCycles);
     await ensureAudio();
+    if (ahead !== undefined) {
+      playing = { trackId: track.trackId, pattern, phraseCycles: track.phraseCycles, cps, clock };
+      pins.reset();
+      gate?.open();
+      ahead.load(playing);
+      announce(playing);
+      return;
+    }
     clock.origin = scheduler.started ? Math.floor(position()) : 0;
     switching = undefined;
     playing = { trackId: track.trackId, pattern, phraseCycles: track.phraseCycles, cps, clock };
@@ -327,6 +367,14 @@ export async function startEngine(): Promise<void> {
    * both playing for `cycles` while one fades out and the other in.
    */
   const crossfadeTo = async (track: HostTrack, cycles: number): Promise<void> => {
+    if (ahead !== undefined && playing !== undefined) {
+      const { pattern, cps, clock } = await compile(track.source, track.phraseCycles);
+      playing = { trackId: track.trackId, pattern, phraseCycles: track.phraseCycles, cps, clock };
+      pins.reset();
+      ahead.crossfadeTo(playing, cycles);
+      announce(playing);
+      return;
+    }
     if (playing === undefined || !scheduler.started) {
       await load(track);
       return;
@@ -376,6 +424,13 @@ export async function startEngine(): Promise<void> {
         await crossfadeTo(message, message.cycles);
         return;
       case "play":
+        if (ahead !== undefined) {
+          if (playing !== undefined) {
+            gate?.open();
+            ahead.load(playing);
+          }
+          return;
+        }
         // From the top: a stopped scheduler counts cycles from 0 again.
         if (playing !== undefined && !scheduler.started) {
           playing.clock.origin = 0;
@@ -391,10 +446,12 @@ export async function startEngine(): Promise<void> {
           switching = undefined;
         }
         scheduler.stop();
+        ahead?.stop();
         gate?.stop();
         return;
       case "setIntensity":
         levels = scheduleLevel(levels, message.level, nextCycle(position()));
+        ahead?.setLevel(message.level);
         return;
       case "setVolume": {
         volume = message.gain;
@@ -412,6 +469,11 @@ export async function startEngine(): Promise<void> {
         switching = undefined;
         playing = { ...track, pattern, cps, clock };
         pins.reset();
+        if (ahead !== undefined) {
+          ahead.evaluate(playing);
+          post({ type: "evaluated" });
+          return;
+        }
         scheduler.setCps(cps);
         await schedule(pattern.late(clock.origin));
         post({ type: "evaluated" });
@@ -424,6 +486,9 @@ export async function startEngine(): Promise<void> {
         return;
       case "audioStress":
         await startAudioStress(context, message.ms);
+        return;
+      case "renderAhead":
+        wantAhead = true;
         return;
     }
   };

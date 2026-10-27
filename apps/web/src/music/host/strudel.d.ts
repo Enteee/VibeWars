@@ -9,8 +9,12 @@ declare module "@strudel/core" {
   export interface Hap {
     readonly whole: { readonly begin: Fraction } | undefined;
     readonly value: unknown;
+    readonly duration: Fraction;
     wholeOrPart(): { readonly begin: Fraction };
     withValue(func: (value: unknown) => unknown): Hap;
+    hasOnset(): boolean;
+    /** Makes `value` an object of controls, as superdough reads it. */
+    ensureObjectValue(): void;
   }
   export interface State {
     readonly span: { readonly begin: Fraction; readonly end: Fraction };
@@ -18,7 +22,7 @@ declare module "@strudel/core" {
   export class Pattern {
     constructor(query: (state: State) => Hap[]);
     query(state: State): Hap[];
-    queryArc(begin: number, end: number): Hap[];
+    queryArc(begin: number, end: number, controls?: { readonly _cps?: number }): Hap[];
     filterHaps(test: (hap: Hap) => boolean): Pattern;
     withHap(func: (hap: Hap) => Hap): Pattern;
     late(cycles: number): Pattern;
@@ -88,7 +92,23 @@ declare module "@strudel/webaudio" {
   export function registerSynthSounds(): void;
   export function samples(map: string, baseUrl: string): Promise<void>;
   export function initAudio(options?: object): Promise<void>;
-  export function getSuperdoughAudioController(): {
+  export interface SuperdoughAudioController {
     readonly output: { readonly destinationGain: GainNode };
-  };
+  }
+  export function getSuperdoughAudioController(): SuperdoughAudioController;
+  /** `null` makes the next `getSuperdoughAudioController()` build one for the current context. */
+  export function setSuperdoughAudioController(
+    controller: SuperdoughAudioController | null,
+  ): SuperdoughAudioController | null;
+  /** The context superdough builds every sound in. */
+  export function getAudioContext(): BaseAudioContext;
+  export function setAudioContext(context: BaseAudioContext): BaseAudioContext;
+  /** Build one event's sound: `t` its onset in the current context's time. */
+  export function superdough(
+    value: unknown,
+    t: number,
+    duration: number,
+    cps: number,
+    cycle: number,
+  ): Promise<void>;
 }

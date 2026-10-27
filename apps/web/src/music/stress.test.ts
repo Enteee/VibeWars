@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { MAX_AUDIO_STRESS_MS, STRESS_PERIOD_MS, audioStressMs, stressMs } from "./stress.js";
+import {
+  MAX_AUDIO_STRESS_MS,
+  STRESS_PERIOD_MS,
+  audioStressMs,
+  renderAhead,
+  stressMs,
+} from "./stress.js";
 
 describe("stressMs", () => {
   it("is the busy wait ?stress= asks for", () => {
@@ -45,5 +51,14 @@ describe("audioStressMs", () => {
 
   it("is capped, so the audio thread cannot be wedged for good", () => {
     expect(audioStressMs("?audiostress=1000", true)).toBe(MAX_AUDIO_STRESS_MS);
+  });
+});
+
+describe("renderAhead", () => {
+  it("is asked for with ?musicrender=ahead, in a stress build only", () => {
+    expect(renderAhead("?musicstats&musicrender=ahead", true)).toBe(true);
+    expect(renderAhead("?musicrender=ahead", false)).toBe(false);
+    expect(renderAhead("?musicrender=live", true)).toBe(false);
+    expect(renderAhead("", true)).toBe(false);
   });
 });
