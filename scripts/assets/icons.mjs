@@ -270,6 +270,21 @@ const status = {
       `<circle cx="12" cy="12" r="7.5" ${stroke(c, 1.6)}/>` +
       `<path d="M12 8.5v7M8.5 12h7" ${stroke(c, 2.5)}/>`,
   ],
+  // Enchantment: an hourglass run out into a plus, the heal waiting at
+  // the end of its time (#944).
+  "patient-spirit": [
+    "enchantment",
+    (c) =>
+      `<path d="M7 5h10L7 15h10z" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 15.5v4M10 17.5h4" ${stroke(c, 2)}/>`,
+  ],
+  // Enchantment: a veil drawn over its bearer, hexes held back (#944).
+  "holy-veil": [
+    "enchantment",
+    (c) =>
+      `<path d="M5 18c0-7 3-12 7-12s7 5 7 12" ${stroke(c, 2)}/>` +
+      `<path d="M9 18c0-4 1.3-7 3-7s3 3 3 7" ${stroke(c, 1.6)}/>`,
+  ],
   // Stance: two chevrons, forward: move 25% faster.
   sprint: ["stance", (c) => `<path d="M7 9l4.5 5L7 19M12.5 9l4.5 5-4.5 5" ${stroke(c, 2.5)}/>`],
   // Stance: an arrowhead trailing speed lines: run 50% faster.
@@ -809,6 +824,25 @@ const skillGlyph = {
     `<path d="M6 4H19.5L15.5 8.75L19.5 13.5H6Z" ${stroke(C.ink, 1.6)}/>` +
     inkFill("M10.5 6.2h2v1.8h1.8v2h-1.8v1.8h-2v-1.8H8.7v-2h1.8z"),
   banner: () => inkLine("M6 3V21", 2.4) + inkFill("M6 4H19.5L15.5 8.75L19.5 13.5H6Z"),
+  // Two chevrons and a plus: allies hurried along and healed as they go (#959).
+  "speed-heal": () =>
+    inkLine("M3 6L8 12L3 18M9 6L14 12L9 18", 2.4) + inkLine("M19 8V16M15 12H23", 2.4),
+  // A hollow shield round a note: a chant that blocks (#959).
+  "anthem-shield": () =>
+    `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2)}/>` +
+    `<ellipse cx="10.5" cy="15.2" rx="2.2" ry="1.7" fill="${C.ink}"/>` +
+    inkLine("M12.5 14.8V7.5L16 9.5", 1.8),
+  // A sticking plaster: bound wounds, body and soul (#962).
+  plaster: () =>
+    `<rect x="2" y="7.5" width="20" height="9" rx="3" transform="rotate(-45 12 12)" fill="${C.ink}"/>` +
+    `<rect x="8.5" y="7.5" width="7" height="9" transform="rotate(-45 12 12)" fill="${C.bg}" fill-opacity="0.45"/>` +
+    `<circle cx="9.5" cy="9.5" r="0.9" fill="${C.bg}"/><circle cx="14.5" cy="14.5" r="0.9" fill="${C.bg}"/>`,
+  // A sword with a small plus in its upper left: a heal that waits on a weapon spell (#962).
+  "sword-heal": () =>
+    inkLine("M7 20.5L20.5 7", 3) +
+    inkLine("M8 12.5L14.5 19", 2.6) +
+    inkLine("M4.5 20l2.5-2.5", 2.6) +
+    inkLine("M6.5 3V9M3.5 6H9.5", 2),
   arrow: () => inkLine("M4 20L15 9", 2.2) + inkFill("M21 3L11.5 6L18 12.5Z"),
   volley: () =>
     [-4.5, 0, 4.5]
@@ -871,6 +905,8 @@ const skillModifier = {
     `<path d="M19 14.6C19 14.6 15.8 18 15.8 19.8A3.2 3.2 0 0 0 22.2 19.8C22.2 18 19 14.6 19 14.6Z" fill="${C.ink}"/>`,
   self: () =>
     `<circle cx="19" cy="18" r="3.4" ${stroke(C.ink, 1.5)}/><circle cx="19" cy="18" r="1.2" fill="${C.ink}"/>`,
+  // An hourglass: it acts when its time runs out (#944).
+  hourglass: () => inkLine("M16.8 15H21.2L16.8 21H21.2Z", 1.4),
   // A loop: maintained, it lasts until ended (#837).
   upkeep: () =>
     `<path d="M19 18c-1-1.5-3.4-1.5-3.4 0s2.4 1.5 3.4 0 3.4-1.5 3.4 0-2.4 1.5-3.4 0z" ${stroke(C.ink, 1.4)}/>`,

@@ -915,7 +915,13 @@ export class MatchSimulation {
     }
     const activationSeconds =
       skill.attack === undefined
-        ? effectiveActivationSeconds(skill, record.combatant)
+        ? effectiveActivationSeconds(
+            skill,
+            record.combatant,
+            castTargetId === undefined
+              ? undefined
+              : this.#participants.get(castTargetId)?.combatant,
+          )
         : this.#attackHitSeconds(record, skill);
     record.combatant.cast.beginCast(
       skill.id,
@@ -1617,7 +1623,7 @@ export class MatchSimulation {
   /** The bearer did `event` (#469): each status on it that answers fires. */
   #fireTriggers(
     record: ParticipantRecord,
-    event: Exclude<StatusTriggerEvent, "bearer-gains-condition" | "ends">,
+    event: Exclude<StatusTriggerEvent, "bearer-gains-condition" | "ends" | "expires">,
   ): void {
     this.#logFired(fireTriggers(record.combatant, event, this.#triggerContext()));
   }

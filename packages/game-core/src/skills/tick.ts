@@ -260,16 +260,27 @@ export function weaponDamageMultiplierOf(combatant: Combatant): number {
  * a signet or any other skill that is not a spell casts at normal speed,
  * as in GW1 (#524). An instant skill stays instant (0 × 2 = 0). Fast
  * Casting multiplies in too (#527), judged on the skill's own activation.
+ * A hex cast on a `target` under Holy Veil takes twice as long (#944);
+ * with no target, as in a tooltip, nothing on one counts.
  */
-export function effectiveActivationSeconds(skill: Skill, caster: RankHolder): number {
+export function effectiveActivationSeconds(
+  skill: Skill,
+  caster: RankHolder,
+  target?: Pick<Combatant, "statuses">,
+): number {
   if (!isSpell(skill.type)) {
     return skill.activationSeconds;
   }
   const fastCasting = fastCastingMultiplier(rankOf(caster, FAST_CASTING_ATTRIBUTE), skill);
+  const onTarget =
+    skill.type === "hex" && target !== undefined
+      ? aggregateModifiers(target.statuses.active).incomingHexCastTimeMultiplier
+      : 1;
   return (
     skill.activationSeconds *
     aggregateModifiers(caster.statuses.active).castTimeMultiplier *
-    fastCasting
+    fastCasting *
+    onTarget
   );
 }
 
