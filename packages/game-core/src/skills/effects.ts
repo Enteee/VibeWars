@@ -30,6 +30,7 @@ import {
   type SkillEffect,
   type StateCondition,
   type Surroundings,
+  type SummonEffect,
   type UnconditionalEffect,
 } from "./types.js";
 
@@ -921,6 +922,7 @@ export function applyEffect(
 
     case "recharge-faster":
     case "recharge-others":
+    case "summon":
       // Nothing lands on anyone: the resolution reads it (`resolveSkillEffects`).
       return events;
   }
@@ -1188,6 +1190,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "sacrifice-health":
     case "recharge-faster":
     case "recharge-others":
+    case "summon":
       return true;
     case "heal":
       return effect.recipient === "caster";
@@ -1250,6 +1253,11 @@ export interface SkillOutcome {
    * `recharge-faster` that landed, if one did; else 0.
    */
   readonly rechargeFraction: number;
+  /**
+   * The `summon`s that landed (#1052), in order: the simulation makes the
+   * creatures, which only it can add to the match.
+   */
+  readonly summons: readonly SummonEffect[];
 }
 
 /**
@@ -1268,6 +1276,7 @@ export function resolveSkillEffects(
   );
   const events: CombatEvent[] = [];
   let rechargeFraction = 0;
+  const summons: SummonEffect[] = [];
   for (const effect of skill.effects) {
     const on = effectActsOnCaster(effect) ? [targets[0]] : targets;
     for (const target of on) {
@@ -1280,6 +1289,9 @@ export function resolveSkillEffects(
         }
         if (inner.kind === "recharge-others") {
           rechargeOthers(caster, skill.id, inner.which);
+        }
+        if (inner.kind === "summon") {
+          summons.push(inner);
         }
         events.push(...applyEffect(inner, context, before));
       }
@@ -1299,7 +1311,7 @@ export function resolveSkillEffects(
       events,
     );
   }
-  return { events, rechargeFraction };
+  return { events, rechargeFraction, summons };
 }
 
 /**

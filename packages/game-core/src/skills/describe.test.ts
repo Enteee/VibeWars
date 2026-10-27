@@ -127,6 +127,30 @@ describe("describeSkill", () => {
     );
   });
 
+  it("says what a summon makes, how tough and for how long (#1052)", () => {
+    const summon = (durationSeconds?: number): SkillEffect => ({
+      kind: "summon",
+      count: 2,
+      creature: {
+        kind: "minion",
+        name: "Bone Minion",
+        maxHealth: {
+          scaling: { attributeId: "necromancer.death-magic", atZero: 50, atTwelve: 290 },
+        },
+        armor: 20,
+        ...(durationSeconds === undefined ? {} : { durationSeconds: { flat: durationSeconds } }),
+        behaviour: { kind: "idle" },
+      },
+    });
+    const lines = (effect: SkillEffect) =>
+      describeSkill(
+        { ...skill("monk.orison-of-healing"), effects: [effect] },
+        new Map([["necromancer.death-magic", 12]]),
+      ).effects.map((e) => e.text);
+    expect(lines(summon(30))).toContain("Summons 2 Bone Minion (290 Health, lasts 30 seconds)");
+    expect(lines(summon())).toContain("Summons 2 Bone Minion (290 Health)");
+  });
+
   it("says Instant rather than 0s", () => {
     const instant = IMPLEMENTED_SKILLS.find((s) => s.activationSeconds === 0);
     expect(instant).toBeDefined();

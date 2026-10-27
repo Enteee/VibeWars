@@ -759,6 +759,18 @@ function describeEffect(
       };
     case "recharge-others":
       return { text: "Recharges all your other attack skills", magnitude: undefined };
+    case "summon": {
+      // "Summons 2 Bone Minion (60 Health, lasts 30 seconds)" (#1052).
+      const health = describeMagnitude(effect.creature.maxHealth, ranks);
+      const lasts =
+        effect.creature.durationSeconds === undefined
+          ? ""
+          : `, lasts ${String(describeMagnitude(effect.creature.durationSeconds, ranks).current)} seconds`;
+      return {
+        text: `Summons ${String(effect.count)} ${effect.creature.name} (${String(health.current)} Health${lasts})`,
+        magnitude: health,
+      };
+    }
     case "disable-skill": {
       const magnitude = describeMagnitude(effect.seconds, ranks);
       const time = `${String(magnitude.current)} seconds`;
