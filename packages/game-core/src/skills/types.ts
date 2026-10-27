@@ -113,6 +113,15 @@ export interface ApplyStatusEffect {
   readonly durationSeconds: number;
 }
 
+/**
+ * Maintain an enchantment on the target (#837): it lasts until something
+ * ends it, and costs its caster an energy pip while it does.
+ */
+export interface MaintainStatusEffect {
+  readonly kind: "maintain-status";
+  readonly statusId: StatusId;
+}
+
 /** Remove up to `count` statuses of a category from the target. */
 export interface RemoveStatusEffect {
   readonly kind: "remove-status";
@@ -229,6 +238,7 @@ export type UnconditionalEffect =
   | EnergyLossEffect
   | SacrificeHealthEffect
   | ApplyStatusEffect
+  | MaintainStatusEffect
   | RemoveStatusEffect
   | InterruptEffect
   | KnockdownEffect
@@ -468,6 +478,11 @@ export interface Combatant {
    * still count against the next. Kept across a respawn.
    */
   soulReapingTriggers: readonly number[];
+  /**
+   * The `seq` its next maintained enchantment gets (#837): one more than
+   * its last, so its newest and its oldest can be told apart.
+   */
+  nextMaintainSeq: number;
   /**
    * Chain marks this combatant placed, by target id (#831): what its next
    * off-hand attack on each may follow.

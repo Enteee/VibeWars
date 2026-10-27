@@ -13,6 +13,7 @@ import { IMPLEMENTED_SKILLS, getSkill } from "./catalog.js";
 import { computeCoverage, formatCoverage } from "./coverage.js";
 import { applyEffects } from "./effects.js";
 import { chargeAdrenaline, makeCombatant } from "./testing.js";
+import { getStatusDefinition } from "./status.js";
 import type { Combatant } from "./types.js";
 
 /** A hammer in hand, for the hammer's attack skills. */
@@ -77,6 +78,18 @@ describe("skill catalog integrity", () => {
     expect(getSkill("elementalist.fireball")?.effects).toContainEqual(
       expect.objectContaining({ kind: "damage", type: "fire" }),
     );
+  });
+
+  it("maintains only enchantments (#837)", () => {
+    const maintained = IMPLEMENTED_SKILLS.flatMap((skill) =>
+      skill.effects.flatMap((effect) =>
+        effect.kind === "maintain-status" ? [effect.statusId] : [],
+      ),
+    );
+    expect(maintained).toContain("mending");
+    for (const statusId of maintained) {
+      expect(getStatusDefinition(statusId).category, statusId).toBe("enchantment");
+    }
   });
 
   it("uses non-negative activation and recharge everywhere", () => {

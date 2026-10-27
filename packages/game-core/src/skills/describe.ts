@@ -359,6 +359,14 @@ function describeEffect(
           `(${describeStatus(effect.statusId)})`,
         magnitude: undefined,
       };
+    case "maintain-status":
+      // GW1 words upkeep as the caster's energy degeneration (#837).
+      return {
+        text:
+          "Maintained: −1 Energy regeneration while it lasts. " +
+          `${describeStatus(effect.statusId)}.`,
+        magnitude: undefined,
+      };
     case "remove-status": {
       if (effect.from === "caster") {
         // "Lose 1 Dervish enchantment" (#845).

@@ -46,6 +46,7 @@
     "healing-signet-armor",
     "heart-of-fury",
     "malaise",
+    "mending",
     "mystic-regeneration",
     "poison",
     "regeneration",
@@ -292,6 +293,7 @@
                   { "literal": "healing-signet-armor" },
                   { "literal": "heart-of-fury" },
                   { "literal": "malaise" },
+                  { "literal": "mending" },
                   { "literal": "mystic-regeneration" },
                   { "literal": "poison" },
                   { "literal": "regeneration" },
@@ -314,6 +316,49 @@
         },
         {
           "properties": [
+            { "name": "casterId", "optional": false, "type": "string" },
+            { "name": "kind", "optional": false, "type": { "literal": "upkeep-lost" } },
+            {
+              "name": "statusId",
+              "optional": false,
+              "type": {
+                "union": [
+                  { "literal": "anthem-of-flame" },
+                  { "literal": "apply-poison" },
+                  { "literal": "armor-boost" },
+                  { "literal": "bleeding" },
+                  { "literal": "blind" },
+                  { "literal": "blood-ritual" },
+                  { "literal": "burning" },
+                  { "literal": "cracked-armor" },
+                  { "literal": "crippled" },
+                  { "literal": "dash" },
+                  { "literal": "dazed" },
+                  { "literal": "deep-wound" },
+                  { "literal": "disease" },
+                  { "literal": "faintheartedness" },
+                  { "literal": "fleeting-stability" },
+                  { "literal": "glyph-of-lesser-energy" },
+                  { "literal": "guardian" },
+                  { "literal": "healing-signet-armor" },
+                  { "literal": "heart-of-fury" },
+                  { "literal": "malaise" },
+                  { "literal": "mending" },
+                  { "literal": "mystic-regeneration" },
+                  { "literal": "poison" },
+                  { "literal": "regeneration" },
+                  { "literal": "sprint" },
+                  { "literal": "watch-yourself" },
+                  { "literal": "weakness" },
+                  { "literal": "weapon-of-warding" }
+                ]
+              }
+            },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
             { "name": "durationSeconds", "optional": false, "type": "number" },
             { "name": "kind", "optional": false, "type": { "literal": "knocked-down" } },
             { "name": "targetId", "optional": false, "type": "string" }
@@ -321,7 +366,11 @@
         },
         {
           "properties": [
-            { "name": "durationSeconds", "optional": false, "type": "number" },
+            {
+              "name": "durationSeconds",
+              "optional": false,
+              "type": { "union": ["null", "number"] }
+            },
             { "name": "kind", "optional": false, "type": { "literal": "status-applied" } },
             {
               "name": "statusId",
@@ -348,6 +397,7 @@
                   { "literal": "healing-signet-armor" },
                   { "literal": "heart-of-fury" },
                   { "literal": "malaise" },
+                  { "literal": "mending" },
                   { "literal": "mystic-regeneration" },
                   { "literal": "poison" },
                   { "literal": "regeneration" },
@@ -398,6 +448,7 @@
                   { "literal": "healing-signet-armor" },
                   { "literal": "heart-of-fury" },
                   { "literal": "malaise" },
+                  { "literal": "mending" },
                   { "literal": "mystic-regeneration" },
                   { "literal": "poison" },
                   { "literal": "regeneration" },
@@ -501,6 +552,7 @@
                   { "literal": "healing-signet-armor" },
                   { "literal": "heart-of-fury" },
                   { "literal": "malaise" },
+                  { "literal": "mending" },
                   { "literal": "mystic-regeneration" },
                   { "literal": "poison" },
                   { "literal": "regeneration" },
@@ -542,6 +594,7 @@
                   { "literal": "healing-signet-armor" },
                   { "literal": "heart-of-fury" },
                   { "literal": "malaise" },
+                  { "literal": "mending" },
                   { "literal": "mystic-regeneration" },
                   { "literal": "poison" },
                   { "literal": "regeneration" },
@@ -1352,8 +1405,12 @@
             "array": {
               "properties": [
                 { "name": "casterId", "optional": false, "type": "string" },
-                { "name": "durationSeconds", "optional": false, "type": "number" },
-                { "name": "endsAt", "optional": false, "type": "number" },
+                {
+                  "name": "durationSeconds",
+                  "optional": false,
+                  "type": { "union": ["null", "number"] }
+                },
+                { "name": "endsAt", "optional": false, "type": { "union": ["null", "number"] } },
                 { "name": "status", "optional": false, "type": "number" }
               ]
             }
@@ -1495,8 +1552,16 @@
                     "array": {
                       "properties": [
                         { "name": "casterId", "optional": false, "type": "string" },
-                        { "name": "durationSeconds", "optional": false, "type": "number" },
-                        { "name": "endsAt", "optional": false, "type": "number" },
+                        {
+                          "name": "durationSeconds",
+                          "optional": false,
+                          "type": { "union": ["null", "number"] }
+                        },
+                        {
+                          "name": "endsAt",
+                          "optional": false,
+                          "type": { "union": ["null", "number"] }
+                        },
                         { "name": "status", "optional": false, "type": "number" }
                       ]
                     }
@@ -1627,8 +1692,16 @@
                     "array": {
                       "properties": [
                         { "name": "casterId", "optional": false, "type": "string" },
-                        { "name": "durationSeconds", "optional": false, "type": "number" },
-                        { "name": "endsAt", "optional": false, "type": "number" },
+                        {
+                          "name": "durationSeconds",
+                          "optional": false,
+                          "type": { "union": ["null", "number"] }
+                        },
+                        {
+                          "name": "endsAt",
+                          "optional": false,
+                          "type": { "union": ["null", "number"] }
+                        },
                         { "name": "status", "optional": false, "type": "number" }
                       ]
                     }

@@ -265,10 +265,16 @@ export interface WireStatus {
    * at join.
    */
   readonly status: number;
-  /** Match clock (`elapsedSeconds`) at which it runs out, rounded to 0.1 s. */
-  readonly endsAt: number;
-  /** The length of the application that set it, rounded to 0.1 s; > 0. */
-  readonly durationSeconds: number;
+  /**
+   * Match clock (`elapsedSeconds`) at which it runs out, rounded to 0.1 s;
+   * `null` for a maintained enchantment (#837), which has no end.
+   */
+  readonly endsAt: number | null;
+  /**
+   * The length of the application that set it, rounded to 0.1 s; > 0.
+   * `null` exactly when `endsAt` is.
+   */
+  readonly durationSeconds: number | null;
   /** Who applied it. */
   readonly casterId: string;
 }
@@ -329,7 +335,10 @@ export interface WireCombatEvent {
   readonly skillId: string | null;
   /** The status applied, removed or expired. */
   readonly statusId: string | null;
-  /** How long an applied status or a knockdown lasts. */
+  /**
+   * How long an applied status or a knockdown lasts; `null` too for a
+   * maintained enchantment applied (#837), which lasts until ended.
+   */
   readonly durationSeconds: number | null;
   /**
    * Whether a damage event was a critical hit (#533); `null` for any other
@@ -337,7 +346,10 @@ export interface WireCombatEvent {
    * batch must fit in one message.
    */
   readonly crit: boolean | null;
-  /** Whom a spreading status was caught from (#765); `null` for any other kind. */
+  /**
+   * Whom a spreading status was caught from (#765), or who could not pay
+   * a maintained enchantment's upkeep (#837); `null` for any other kind.
+   */
   readonly fromId: string | null;
   /**
    * The share of maximum energy a resurrection gives back, 0..1 (#812),
@@ -613,11 +625,19 @@ function parseStatus(value: unknown): WireStatus | undefined {
     raw === undefined ||
     !isCount(raw.status) ||
     raw.status > MAX_WIRE_STATUS_INDEX ||
+    !isString(raw.casterId)
+  ) {
+    return undefined;
+  }
+  // Both times, or neither: a maintained enchantment's (#837).
+  if (raw.endsAt === null && raw.durationSeconds === null) {
+    return { status: raw.status, endsAt: null, durationSeconds: null, casterId: raw.casterId };
+  }
+  if (
     !isNumber(raw.endsAt) ||
     raw.endsAt < 0 ||
     !isNumber(raw.durationSeconds) ||
-    raw.durationSeconds <= 0 ||
-    !isString(raw.casterId)
+    raw.durationSeconds <= 0
   ) {
     return undefined;
   }

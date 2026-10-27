@@ -58,7 +58,8 @@ export type CombatEvent =
       readonly kind: "status-applied";
       readonly targetId: string;
       readonly statusId: StatusId;
-      readonly durationSeconds: number;
+      /** `null` for a maintained enchantment (#837), which lasts until ended. */
+      readonly durationSeconds: number | null;
     }
   /**
    * Health a status took as it landed (#800): deep wound's share of
@@ -72,6 +73,16 @@ export type CombatEvent =
     }
   | { readonly kind: "status-removed"; readonly targetId: string; readonly statusId: StatusId }
   | { readonly kind: "status-expired"; readonly targetId: string; readonly statusId: StatusId }
+  /**
+   * A maintained enchantment on `targetId` its caster `casterId` could no
+   * longer pay the upkeep of (#837): it ended.
+   */
+  | {
+      readonly kind: "upkeep-lost";
+      readonly targetId: string;
+      readonly statusId: StatusId;
+      readonly casterId: string;
+    }
   /** A spreading status caught from `fromId`, adjacent to the target (#765). */
   | {
       readonly kind: "status-spread";
@@ -483,6 +494,22 @@ export function applyEffect(
       return events;
     }
 
+    case "maintain-status": {
+      if (target === undefined || target.dead) {
+        return events;
+      }
+      // The caster's newest; the simulation drops what it cannot pay for.
+      target.statuses.maintain(effect.statusId, caster.id, caster.nextMaintainSeq);
+      caster.nextMaintainSeq += 1;
+      events.push({
+        kind: "status-applied",
+        targetId: target.id,
+        statusId: effect.statusId,
+        durationSeconds: null,
+      });
+      return events;
+    }
+
     case "remove-status": {
       const bearer = effect.from === "caster" ? caster : target;
       if (bearer === undefined) {
@@ -733,6 +760,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "energy-loss":
     case "damage":
     case "apply-status":
+    case "maintain-status":
     case "interrupt":
     case "knockdown":
     case "resurrect":
