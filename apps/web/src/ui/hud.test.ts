@@ -13,11 +13,13 @@ import { isEliteSkill } from "./icons.js";
 import {
   describeOutcome,
   describeRefusal,
+  enemyPips,
   formatClock,
   isAttackingTarget,
   lostHealthPercent,
   moraleLabel,
   muteButtonState,
+  scoreboardText,
   skillSlotHtml,
   castRowSkill,
   targetCast,
@@ -197,6 +199,57 @@ describe("formatClock", () => {
 
   it("never shows a negative clock", () => {
     expect(formatClock(-5)).toBe("0:00");
+  });
+});
+
+describe("enemyPips (#881)", () => {
+  const players = [
+    player({ sessionId: "a", name: "Ally", team: 0 }),
+    player({ sessionId: "f1", name: "Foe", team: 1 }),
+    player({ sessionId: "f2", name: "Fallen", team: 1, dead: true }),
+    player({ sessionId: "b", name: "Buddy", team: 0, dead: true }),
+  ];
+
+  it("holds every foe in snapshot order, the dead hollow", () => {
+    expect(enemyPips(players, 0)).toEqual([
+      { name: "Foe", team: 1, dead: false },
+      { name: "Fallen", team: 1, dead: true },
+    ]);
+    expect(enemyPips(players, 1)).toEqual([
+      { name: "Ally", team: 0, dead: false },
+      { name: "Buddy", team: 0, dead: true },
+    ]);
+  });
+
+  it("gives a spectator every player, grouped by team", () => {
+    expect(enemyPips(players, undefined).map((pip) => pip.name)).toEqual([
+      "Ally",
+      "Buddy",
+      "Foe",
+      "Fallen",
+    ]);
+  });
+
+  it("has no pip for a seat nobody is in", () => {
+    expect(enemyPips([player({ sessionId: "a", team: 0 })], 0)).toEqual([]);
+  });
+});
+
+describe("scoreboardText (#881)", () => {
+  const players = [
+    player({ sessionId: "a", team: 0 }),
+    player({ sessionId: "b", team: 0 }),
+    player({ sessionId: "c", team: 1 }),
+    player({ sessionId: "d", team: 1, dead: true }),
+  ];
+
+  it("counts the living per side, your own first, beside the clock", () => {
+    expect(scoreboardText(players, 0, 42)).toBe("2 v 1 · 0:42");
+    expect(scoreboardText(players, 1, 42)).toBe("1 v 2 · 0:42");
+  });
+
+  it("reads team 1 first for a spectator", () => {
+    expect(scoreboardText(players, undefined, 432)).toBe("2 v 1 · 7:12");
   });
 });
 

@@ -72,6 +72,15 @@ export interface MatchViewCallbacks {
   readonly onLeave: () => void;
   /** Surfaces connection trouble so the shell can tell the player. */
   readonly onConnectionChange?: (state: "online" | "reconnecting" | "lost") => void;
+  /** Once, on the first snapshot of the match finished (#881): how it ended for this player. */
+  readonly onFinished?: (outcome: MatchOutcome) => void;
+}
+
+/** How a match ended, as `describeOutcome` reads it; `selfTeam` is undefined for a spectator. */
+export interface MatchOutcome {
+  readonly winningTeam: number | undefined;
+  readonly endReason: string | undefined;
+  readonly selfTeam: number | undefined;
 }
 
 export interface MatchViewOptions {
@@ -468,12 +477,21 @@ export async function startMatchView(
     flashMessage(hud, describeRefusal(message));
   });
 
+  let finished = false;
   const onFrame = (deltaSeconds: number): void => {
     latestMatch = connection.getSnapshot();
     matchSounds.snapshot(latestMatch);
     matchMusic.snapshot(latestMatch);
     guardUnload(latestMatch.phase !== "finished");
     const self = latestMatch.players.find((p) => p.sessionId === connection.selfSessionId);
+    if (latestMatch.phase === "finished" && !finished) {
+      finished = true;
+      callbacks.onFinished?.({
+        winningTeam: latestMatch.winningTeam,
+        endReason: latestMatch.endReason,
+        selfTeam: self?.team,
+      });
+    }
     camera?.frame(deltaSeconds, self);
     // Hover is hit-tested every frame, through the camera as it is now, so
     // a body that walks under a still cursor, or a camera that moves under

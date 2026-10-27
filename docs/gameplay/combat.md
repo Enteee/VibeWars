@@ -870,6 +870,10 @@ What death costs, and how the dead come back, are properties of the
 match rules, set per mode as GW1 sets them (#843). Today's match is
 GW1's Annihilation (#846): there is no respawn, the dead stay corpses
 until resurrected or the match ends, and the **death penalty** is on.
+So the scoreboard counts who is left, not kills: `4 v 3 · 7:12` reads
+the living on your side, then theirs, beside the clock, and a pip per
+foe beside it is filled while they live and hollow once they fall
+(#881). Hover a pip for the name.
 In GW1's Kill Count, which no map picks yet, a dead player **respawns**
 at a spawn point of their own team after 8 seconds, at full health and
 energy, with all statuses cleared, and there is no death penalty.

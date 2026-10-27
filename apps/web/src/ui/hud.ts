@@ -20,6 +20,8 @@ import type {
 
 import type { KeyLabeller } from "../input/key-labels.js";
 import { SKILL_ACTIONS, actionLabel, codeLabel, type Keymap } from "../input/keymap.js";
+import { teamColour } from "../render/arena-snapshot.js";
+import { cssColour } from "./character-preview.js";
 import { paintHealthTint } from "./health-tint.js";
 import {
   attackingIcon,
@@ -134,7 +136,10 @@ export interface HudElements {
   readonly targetCastFill: HTMLElement;
   /** Crossed swords and "attacking", shown while self attacks the target (#160). */
   readonly attacking: HTMLElement;
+  /** The count and clock, and beside them the foes' pips (#881). */
   readonly scoreboard: HTMLElement;
+  readonly scoreboardText: HTMLElement;
+  readonly enemies: HTMLElement;
   readonly result: HTMLElement;
   /** The match's buttons, top right, as one cluster (#454): the five below. */
   readonly controls: HTMLElement;
@@ -213,6 +218,8 @@ export function createHud(
   // Score and clock sit at the top, away from the skill bar, so a glance
   // for "am I winning" never competes with a glance for "what can I cast".
   const scoreboard = element("div", "hud-scoreboard", parent);
+  const scoreboardText = element("span", "hud-scoreboard-text", scoreboard);
+  const enemies = element("span", "hud-enemies", scoreboard);
   const result = element("div", "hud-result", parent);
   result.style.display = "none";
   // One cluster, top right (#454): leave and mute on top, Options,
@@ -329,6 +336,8 @@ export function createHud(
     targetCastFill,
     attacking,
     scoreboard,
+    scoreboardText,
+    enemies,
     result,
     controls,
     mute,
@@ -588,6 +597,82 @@ export function formatClock(totalSeconds: number): string {
   const minutes = Math.floor(clamped / 60);
   const seconds = clamped % 60;
   return `${String(minutes)}:${String(seconds).padStart(2, "0")}`;
+}
+
+/** One foe on the HUD's pip row (#881): filled while alive, hollow and grey dead. */
+export interface EnemyPip {
+  readonly name: string;
+  readonly team: number;
+  readonly dead: boolean;
+}
+
+/**
+ * The pips for `players` as `selfTeam` sees them: every player not on it,
+ * in snapshot order. A spectator, with no team, gets every player, grouped
+ * by team. Only players in the snapshot get one, so an empty seat has none.
+ */
+export function enemyPips(
+  players: readonly PlayerSnapshot[],
+  selfTeam: number | undefined,
+): EnemyPip[] {
+  const pips = players
+    .filter((player) => player.team !== selfTeam)
+    .map(({ name, team, dead }) => ({ name, team, dead }));
+  // Stable, so each team keeps its snapshot order.
+  return selfTeam === undefined ? pips.sort((a, b) => a.team - b.team) : pips;
+}
+
+/** How many of `team` are alive. */
+export function livingCount(players: readonly PlayerSnapshot[], team: number): number {
+  return players.filter((player) => player.team === team && !player.dead).length;
+}
+
+/**
+ * "4 v 3 · 7:12": the living on each side, your own first, and the clock
+ * (#881). Every match is annihilation (#846), so this is the one
+ * scoreboard there is. A spectator reads team 1 first.
+ */
+export function scoreboardText(
+  players: readonly PlayerSnapshot[],
+  selfTeam: number | undefined,
+  elapsedSeconds: number,
+): string {
+  const ours = selfTeam ?? 0;
+  const theirs = ours === 0 ? 1 : 0;
+  return `${String(livingCount(players, ours))} v ${String(livingCount(players, theirs))} · ${formatClock(elapsedSeconds)}`;
+}
+
+/**
+ * Paint `pips` into `row`, one line a team, rebuilt only when one changes.
+ * A foe is drawn in the enemy colour; a spectator sees team 1 in the
+ * ally's and team 2 in the enemy's, as the splash shows a side.
+ */
+function renderEnemyPips(
+  row: HTMLElement,
+  pips: readonly EnemyPip[],
+  selfTeam: number | undefined,
+): void {
+  const key = JSON.stringify(pips);
+  if (row.dataset.pips === key) {
+    return;
+  }
+  row.dataset.pips = key;
+  const lines = new Map<number, HTMLElement>();
+  row.replaceChildren();
+  for (const pip of pips) {
+    let line = lines.get(pip.team);
+    if (line === undefined) {
+      line = element("span", "hud-enemy-row", row);
+      line.style.setProperty(
+        "--pip-colour",
+        cssColour(teamColour(selfTeam === undefined && pip.team === 0 ? "ally" : "enemy")),
+      );
+      lines.set(pip.team, line);
+    }
+    const node = element("span", pip.dead ? "hud-enemy-pip is-dead" : "hud-enemy-pip", line);
+    node.title = pip.name;
+    node.setAttribute("aria-label", pip.dead ? `${pip.name} (dead)` : pip.name);
+  }
 }
 
 /**
@@ -970,7 +1055,12 @@ export function updateHud(
   match?: MatchSnapshot,
 ): void {
   if (match !== undefined) {
-    hud.scoreboard.textContent = `${String(match.scoreTeam0)} — ${String(match.scoreTeam1)}  ·  ${formatClock(match.elapsedSeconds)}`;
+    hud.scoreboardText.textContent = scoreboardText(
+      match.players,
+      self?.team,
+      match.elapsedSeconds,
+    );
+    renderEnemyPips(hud.enemies, enemyPips(match.players, self?.team), self?.team);
 
     if (match.phase === "finished") {
       hud.result.style.display = "";
