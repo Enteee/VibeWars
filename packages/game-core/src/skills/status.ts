@@ -29,7 +29,13 @@
 import { AREA_ADJACENT, AREA_IN_THE_AREA } from "../distances.js";
 import { wieldsFor, type WeaponId } from "../equipment/weapons.js";
 import type { ProfessionId } from "../professions.js";
-import type { AttackWeaponClass, Combatant, DamageEffect, SkillEffect } from "./types.js";
+import type {
+  AttackWeaponClass,
+  Combatant,
+  DamageEffect,
+  HealEffect,
+  SkillEffect,
+} from "./types.js";
 
 export type StatusCategory =
   | "condition"
@@ -91,6 +97,7 @@ export type StatusId =
   | "holy-veil"
   | "protective-spirit"
   | "reversal-of-fortune"
+  | "vigorous-spirit"
   // Stances.
   | "sprint"
   | "dash"
@@ -546,6 +553,12 @@ const SPITEFUL_SPIRIT_DAMAGE: DamageEffect = {
   type: "shadow",
   armorPenetration: 0,
 };
+/** Vigorous Spirit's heal, each time its bearer attacks or casts a spell. */
+const VIGOROUS_SPIRIT_HEAL: HealEffect = {
+  kind: "heal",
+  amount: { flat: 17 },
+  perStatusOnTarget: [],
+};
 
 export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = {
   bleeding: define("bleeding", "Bleeding", "condition", { healthPips: -3 }),
@@ -790,6 +803,17 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   "reversal-of-fortune": define("reversal-of-fortune", "Reversal of Fortune", "enchantment", {
     profession: "monk",
     reversesNextDamage: 67,
+  }),
+  // "For 30 seconds, each time target ally attacks or casts a spell,
+  // that ally is healed for 5...17...20 health": 17, its rank-12 value.
+  "vigorous-spirit": define("vigorous-spirit", "Vigorous Spirit", "enchantment", {
+    profession: "monk",
+    triggers: (["bearer-attacks", "bearer-casts-spell"] as const).map((on) => ({
+      on,
+      effects: [VIGOROUS_SPIRIT_HEAL],
+      target: "bearer",
+      skillId: "monk.vigorous-spirit",
+    })),
   }),
 
   sprint: define("sprint", "Sprint", "stance", {

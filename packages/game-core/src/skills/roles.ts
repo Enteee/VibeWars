@@ -70,7 +70,8 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
  * and so does what it adds to the next attack skill: Anthem of Flame burns.
  * So does what an ally's status does to its bearer when it ends (#944):
  * Patient Spirit heals, Holy Veil removes a hex, or when it uses a skill
- * (#999): Song of Restoration heals. One that heals every second (Spirit
+ * (#999): Song of Restoration heals, or when it attacks or casts a spell
+ * (#1039): Vigorous Spirit heals. One that heals every second (Spirit
  * Light Weapon, #975) is healing.
  */
 function statusRoles(status: StatusDefinition): readonly SkillRole[] {
@@ -96,7 +97,11 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
       : status.triggers
           .filter(
             ({ on, target }) =>
-              (on === "ends" || on === "expires" || on === "bearer-uses-skill") &&
+              (on === "ends" ||
+                on === "expires" ||
+                on === "bearer-uses-skill" ||
+                on === "bearer-attacks" ||
+                on === "bearer-casts-spell") &&
               target === "bearer",
           )
           .flatMap(({ effects }) =>

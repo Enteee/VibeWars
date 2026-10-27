@@ -164,6 +164,11 @@ export const SKILL_ICONS = {
   "monk.smite-hex": { glyph: "cleanse", modifier: "area" },
   // A placeholder: every condition removed; no modifier says "all" (#987).
   "monk.restore-condition": { glyph: "cleanse", modifier: "stun" },
+  // Placeholders until the asset-designer's (#1039).
+  "monk.cure-hex": { glyph: "cleanse", modifier: "clock" },
+  "monk.smite-condition": { glyph: "cleanse", modifier: "upkeep" },
+  "monk.mending-touch": { glyph: "plaster", modifier: "up" },
+  "monk.vigorous-spirit": { glyph: "sword-heal", modifier: "clock" },
   "paragon.spear-of-lightning": { glyph: "spear-bolt" },
   "paragon.never-surrender": { glyph: "banner", modifier: "area" },
   "paragon.leaders-comfort": { glyph: "banner-cross", modifier: "self" },
