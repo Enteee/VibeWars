@@ -176,7 +176,7 @@ describe("drainStep", () => {
   const base = {
     now: NOW + 60_000,
     reboot,
-    running: ["manager", "developer-1"],
+    running: ["manager", "developer"],
     between: [],
     inflight: 0,
     drainedAt: null,
@@ -187,24 +187,22 @@ describe("drainStep", () => {
   });
 
   it("stops once everyone is ready", () => {
-    expect(
-      drainStep({ ...base, reboot: { ...reboot, ready: ["manager", "developer-1"] } }),
-    ).toEqual({
+    expect(drainStep({ ...base, reboot: { ...reboot, ready: ["manager", "developer"] } })).toEqual({
       stop: true,
       drainedAt: base.now,
     });
   });
 
   it("counts an agent between turns as ready", () => {
-    expect(drainStep({ ...base, between: ["developer-1"] }).stop).toBe(true);
+    expect(drainStep({ ...base, between: ["developer"] }).stop).toBe(true);
     expect(drainStep({ ...base, between: ["architect"] }).stop).toBe(false);
   });
 
   it("waits for each employee of a role, not for the role (#62)", () => {
-    const two = { ...base, running: ["manager", "developer-1", "developer-1@2"] };
-    const one = { ...reboot, ready: ["manager", "developer-1"] };
+    const two = { ...base, running: ["manager", "developer", "developer@2"] };
+    const one = { ...reboot, ready: ["manager", "developer"] };
     expect(drainStep({ ...two, reboot: one }).stop).toBe(false);
-    expect(drainStep({ ...two, reboot: one, between: ["developer-1@2"] }).stop).toBe(true);
+    expect(drainStep({ ...two, reboot: one, between: ["developer@2"] }).stop).toBe(true);
   });
 
   it("stops at the deadline whoever is still busy", () => {
@@ -214,7 +212,7 @@ describe("drainStep", () => {
   it("waits for a request in flight, but only for the grace period", () => {
     const drained = {
       ...base,
-      reboot: { ...reboot, ready: ["manager", "developer-1"] },
+      reboot: { ...reboot, ready: ["manager", "developer"] },
       inflight: 1,
     };
     expect(drainStep(drained)).toEqual({ stop: false, drainedAt: base.now });
@@ -329,7 +327,7 @@ describe("betweenTurns", () => {
     fs.mkdirSync(path.join(root, "agents", "architect@2"), { recursive: true });
     fs.writeFileSync(path.join(root, "agents", "architect@2", "between-turns"), "");
 
-    expect(betweenTurns(root, ["manager", "architect", "architect@2", "developer-1"])).toEqual([
+    expect(betweenTurns(root, ["manager", "architect", "architect@2", "developer"])).toEqual([
       "manager",
       "architect@2",
     ]);

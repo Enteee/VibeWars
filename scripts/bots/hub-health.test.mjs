@@ -33,7 +33,7 @@ describe("parseAlive", () => {
     const busy = {
       ...ALIVE,
       inflight: 1,
-      current: { employee: "developer-2", command: "gh pr checks", startedAt: NOW - 5000 },
+      current: { employee: "developer@2", command: "gh pr checks", startedAt: NOW - 5000 },
     };
     expect(parseAlive(JSON.stringify(busy))).toEqual(busy);
   });

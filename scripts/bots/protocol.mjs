@@ -235,7 +235,7 @@ export function routeInbound(raw, context) {
     nudge: null,
   });
 
-  // "developer-1: do X", "@developer-1 do X", or "qa-tester@2: do X" for
+  // "developer: do X", "@developer do X", or "developer@2: do X" for
   // one employee of a role (#62).
   const named = addressee(message.text);
   if (named !== null && context.roles.includes(roleOf(named) ?? "")) {
@@ -262,8 +262,8 @@ export function routeInbound(raw, context) {
 }
 
 /**
- * Who a message starts by naming, lowercased: `developer-1: …`,
- * `@developer-1 …` or `qa-tester@2: …`. The name must be followed by a
+ * Who a message starts by naming, lowercased: `developer: …`,
+ * `@developer …` or `developer@2: …`. The name must be followed by a
  * colon (spaces before it are fine: the operator types "manager : ..."),
  * or for an at-mention by a space.
  *
@@ -588,8 +588,7 @@ export const MAX_MESSAGE_CHARS = 4096;
 export const ROLE_STYLE = {
   architect: { emoji: "🧭", name: "Architect" },
   manager: { emoji: "📋", name: "Manager" },
-  "developer-1": { emoji: "🛠", name: "Developer 1" },
-  "developer-2": { emoji: "🔧", name: "Developer 2" },
+  developer: { emoji: "🛠", name: "Developer" },
   "asset-designer": { emoji: "🎨", name: "Asset Designer" },
   "cicd-engineer": { emoji: "⚙️", name: "CI/CD Engineer" },
   "lead-dev": { emoji: "🔍", name: "Lead Dev" },
@@ -757,7 +756,7 @@ function cut(text, max) {
 /**
  * One mirrored peer message as Telegram shows it:
  *
- *     🧭 Architect → 🛠 Developer 1
+ *     🧭 Architect → 🛠 Developer
  *     ┃ the body, in an expandable blockquote
  *
  * All styling is entities built from `from` and `to`. The body is never

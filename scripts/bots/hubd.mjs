@@ -113,6 +113,9 @@ import {
   WORKDAY,
 } from "./reboot.mjs";
 import { SKILLS_PREFIX, installSkills, skillFiles } from "./skills-sync.mjs";
+import { readPresence, readStaffFile, readUsage, usageReader } from "./company-facts.mjs";
+import { loadLines } from "./company-load.mjs";
+import { peekRows } from "./peek.mjs";
 import {
   dueNudges,
   ownNudges,
@@ -199,6 +202,10 @@ const BLOCKED = path.join(HUB, "blocked.json");
 /** The CI watches agents asked for (#736), hubd's alone. */
 const WATCHES = path.join(HUB, "watches.json");
 const LOCK = path.join(HUB, "hubd.lock");
+/** Every employee's last turn, as the manager's `peek` reads it (#19), for `company load`. */
+const PEEK = path.join(ROOT, "peek");
+/** The agents' Claude logs, for `company load`'s tokens (#747): the dashboard's reader. */
+const usage = usageReader(process.env.VIBEWARS_CLAUDE_BOXES);
 
 /**
  * Commands that accept `--repo`. The repository is pinned by us rather than
@@ -1635,6 +1642,39 @@ async function flushHints(cfg) {
 }
 
 /**
+ * `company load` (#747): the manager's, policy says. Answered from what
+ * hubd and the host already hold: the board's copy as it is, without a
+ * sweep, and the files the dashboard reads. No GitHub call.
+ *
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {{ code: number, stdout: string, stderr: string }}
+ */
+function serveLoad(cfg) {
+  const now = Date.now();
+  const staff = readStaffFile(ROOT);
+  const { live, stale } = readPresence(ROOT, staff, now);
+  /** @type {import("./peek.mjs").PeekRow[]} */
+  let peek = [];
+  try {
+    peek = peekRows(PEEK);
+  } catch {
+    // No employee has run a turn yet: each says so.
+  }
+  const lines = loadLines({
+    now,
+    roles: ROLES,
+    board,
+    staff,
+    maxAgents: cfg.maxAgents,
+    live,
+    stale,
+    peek,
+    usage: readUsage(usage, now)?.summary ?? null,
+  });
+  return { code: 0, stdout: `${lines.join("\n")}\n`, stderr: "" };
+}
+
+/**
  * Answer `board ls`, `board show` or `board changes` from the copy.
  *
  * @param {string[]} argv
@@ -2294,7 +2334,8 @@ function recordStaff(role, argv, cfg) {
   audit({ role, kind, argv, decision: "allowed" });
   tellCompany(kind, `${verb === "hire" ? "Hired" : "Firing"} ${allowed.employee}: ${reason}`);
   if (verb === "fire") {
-    tellCompany("staff-stop", stopNotice(reason), { to: allowed.employee });
+    // Seat 1's id is its role's name: direct, or every seat of it stops (#756).
+    tellCompany("staff-stop", stopNotice(reason), { to: allowed.employee, direct: true });
   }
   return {
     allow: true,
@@ -2759,6 +2800,12 @@ async function serve(request, verdict, acting) {
 
   if (kind === "rank") {
     return rank(role, argv, cfg);
+  }
+
+  if (kind === "load") {
+    const answered = serveLoad(cfg);
+    audit({ role, kind, argv, decision: "allowed", code: answered.code });
+    return { allow: true, ...answered };
   }
 
   if (kind === "watch") {

@@ -440,7 +440,7 @@ describe("boardMoveAllowed (#349)", () => {
   it("lets only the architect sign a card off into Ready", () => {
     expect(ok("architect", "Backlog", "Ready")).toBe(true);
     expect(ok("architect", "", "Ready")).toBe(true);
-    for (const role of ["manager", "developer-1", "lead-dev", "qa-tester"]) {
+    for (const role of ["manager", "developer", "lead-dev", "qa-tester"]) {
       expect(ok(role, "Backlog", "Ready"), role).toBe(false);
       expect(ok(role, "", "Ready"), role).toBe(false);
     }
@@ -456,17 +456,17 @@ describe("boardMoveAllowed (#349)", () => {
       expect(ok(role, "Ready", "Backlog"), role).toBe(true);
       expect(ok(role, "", "Backlog"), role).toBe(true);
     }
-    expect(ok("developer-1", "Ready", "Backlog")).toBe(false);
-    expect(ok("developer-1", "", "Backlog")).toBe(false);
+    expect(ok("developer", "Ready", "Backlog")).toBe(false);
+    expect(ok("developer", "", "Backlog")).toBe(false);
   });
 
   it("lets only the manager close a card nobody worked on", () => {
     expect(ok("manager", "Backlog", "Done")).toBe(true);
-    expect(ok("developer-1", "Backlog", "Done")).toBe(false);
+    expect(ok("developer", "Backlog", "Done")).toBe(false);
   });
 
   it("lets nobody skip Ready", () => {
-    for (const role of ["manager", "architect", "developer-1", "lead-dev"]) {
+    for (const role of ["manager", "architect", "developer", "lead-dev"]) {
       for (const to of ["In Progress", "In Review", "QA"]) {
         expect(ok(role, "Backlog", to), `${role} ${to}`).toBe(false);
         expect(ok(role, "", to), `${role} ${to}`).toBe(false);
@@ -476,8 +476,8 @@ describe("boardMoveAllowed (#349)", () => {
 
   it("lets only the manager send a started card back to the Backlog", () => {
     expect(ok("manager", "In Progress", "Backlog")).toBe(true);
-    expect(ok("developer-1", "In Progress", "Backlog")).toBe(false);
-    expect(ok("developer-1", "Done", "")).toBe(false);
+    expect(ok("developer", "In Progress", "Backlog")).toBe(false);
+    expect(ok("developer", "Done", "")).toBe(false);
   });
 
   it("holds the architect to the two architect moves", () => {
@@ -493,13 +493,13 @@ describe("boardMoveAllowed (#349)", () => {
   });
 
   it("leaves every other move to the roles that may edit an item", () => {
-    expect(ok("developer-1", "Ready", "In Progress")).toBe(true);
+    expect(ok("developer", "Ready", "In Progress")).toBe(true);
     expect(ok("qa-tester", "QA", "Done")).toBe(true);
-    expect(ok("developer-1", "In Progress", "Ready")).toBe(true);
+    expect(ok("developer", "In Progress", "Ready")).toBe(true);
   });
 
   it("is a no-op for the same column", () => {
-    expect(ok("developer-1", "Backlog", "Backlog")).toBe(true);
+    expect(ok("developer", "Backlog", "Backlog")).toBe(true);
     expect(ok("architect", "Done", "Done")).toBe(true);
   });
 });
@@ -516,7 +516,7 @@ describe("boardMoveAllowed: Blocked (#639)", () => {
   const working = ["Backlog", "Ready", "In Progress", "In Review", "QA"];
 
   it("refuses every role but the manager, in and out", () => {
-    for (const role of ["architect", "developer-1", "lead-dev", "qa-tester", "cicd-engineer"]) {
+    for (const role of ["architect", "developer", "lead-dev", "qa-tester", "cicd-engineer"]) {
       for (const from of working) {
         expect(ok(role, from, "Blocked"), `${role} ${from}`).toBe(false);
       }
@@ -524,7 +524,7 @@ describe("boardMoveAllowed: Blocked (#639)", () => {
         expect(ok(role, "Blocked", to, "QA"), `${role} ${to}`).toBe(false);
       }
     }
-    expect(boardMoveAllowed({ role: "developer-1", from: "QA", to: "Blocked" })).toEqual({
+    expect(boardMoveAllowed({ role: "developer", from: "QA", to: "Blocked" })).toEqual({
       ok: false,
       reason: "only the manager moves a card to or from Blocked. Ask the manager.",
     });
@@ -573,6 +573,6 @@ describe("landingAllowed (#517)", () => {
   it("lets the manager put a pull request anywhere but Ready", () => {
     expect(ok("manager", "In Review", true)).toBe(true);
     expect(ok("manager", "Ready", true)).toBe(false);
-    expect(ok("developer-1", "In Review", true)).toBe(false);
+    expect(ok("developer", "In Review", true)).toBe(false);
   });
 });

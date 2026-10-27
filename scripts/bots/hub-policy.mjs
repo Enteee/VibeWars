@@ -25,12 +25,14 @@
 
 import { shortFlag } from "./hub-filter.mjs";
 
-/** The nine employees. Order is the org chart, roughly. */
+/**
+ * The eight roles. Order is the org chart, roughly. The default staff is
+ * nine: `developer` starts with two (staff.mjs DEFAULT_HEADCOUNT).
+ */
 export const ROLES = [
   "manager",
   "architect",
-  "developer-1",
-  "developer-2",
+  "developer",
   "asset-designer",
   "cicd-engineer",
   "lead-dev",
@@ -42,7 +44,7 @@ export const ROLES = [
 export const SCHEDULERS = Object.freeze(["manager", "architect", "lead-dev"]);
 
 /**
- * Who may read code-scanning alerts (#184): today's nine roles, named
+ * Who may read code-scanning alerts (#184): today's eight roles, named
  * here rather than taken from ROLES. An open alert is an unfixed
  * vulnerability, the one thing hub reads that is not public, so a role
  * added to ROLES later, such as #131's public-facing support agent, gets
@@ -51,8 +53,7 @@ export const SCHEDULERS = Object.freeze(["manager", "architect", "lead-dev"]);
 const ALERT_READERS = Object.freeze([
   "manager",
   "architect",
-  "developer-1",
-  "developer-2",
+  "developer",
   "asset-designer",
   "cicd-engineer",
   "lead-dev",
@@ -69,13 +70,7 @@ export function mayReadAlerts(role) {
 }
 
 /** Roles that implement and therefore push branches and open pull requests. */
-const IMPLEMENTERS = [
-  "developer-1",
-  "developer-2",
-  "asset-designer",
-  "cicd-engineer",
-  "perf-sec-qa",
-];
+const IMPLEMENTERS = ["developer", "asset-designer", "cicd-engineer", "perf-sec-qa"];
 
 /**
  * Roles that push only one kind of file, and where. The manager writes the
@@ -237,8 +232,7 @@ const RULES = [
     roles: [
       "manager",
       "architect",
-      "developer-1",
-      "developer-2",
+      "developer",
       "asset-designer",
       "cicd-engineer",
       "lead-dev",
@@ -611,9 +605,14 @@ export function authorize(role, request, options = {}) {
   const acting = options.acting ?? [];
   const { employee } = options;
   const direct = authorizeAs(role, request, acting, employee);
-  // Hiring and firing is the manager's own; no hat lends it (#380). Nor does
-  // a hat lend a schedule (#678).
-  if (direct.allow || request.kind === "staff" || request.kind === "schedule") {
+  // Hiring and firing is the manager's own; no hat lends it (#380), nor the
+  // load it is decided on (#747). Nor does a hat lend a schedule (#678).
+  if (
+    direct.allow ||
+    request.kind === "staff" ||
+    request.kind === "load" ||
+    request.kind === "schedule"
+  ) {
     return direct;
   }
 
@@ -650,6 +649,9 @@ function authorizeAs(role, request, acting, employee) {
   }
   if (request.kind === "staff") {
     return authorizeStaff(role, argv);
+  }
+  if (request.kind === "load") {
+    return authorizeLoad(role, argv);
   }
   if (request.kind === "schedule") {
     return SCHEDULERS.includes(role)
@@ -970,6 +972,24 @@ function authorizeStaff(role, argv) {
     return { allow: false, reason: "only the manager hires and fires" };
   }
   return { allow: true };
+}
+
+/**
+ * `company load` (#747): what the manager's staffing review is decided
+ * on, the dashboard's numbers as text. The manager's, as hiring is; it
+ * takes no words.
+ *
+ * @param {string} role
+ * @param {string[]} argv
+ * @returns {{ allow: boolean, reason?: string }}
+ */
+function authorizeLoad(role, argv) {
+  if (argv.length > 0) {
+    return { allow: false, reason: "usage: company load" };
+  }
+  return role === "manager"
+    ? { allow: true }
+    : { allow: false, reason: "only the manager reads the company's load" };
 }
 
 /**

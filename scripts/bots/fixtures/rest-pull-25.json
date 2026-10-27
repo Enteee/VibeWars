@@ -13,7 +13,7 @@
   "merged_at": "2026-10-24T14:47:26Z",
   "draft": false,
   "head": {
-    "ref": "bot/developer-1/issue-1",
+    "ref": "bot/developer/issue-1",
     "sha": "b02a5cc7c46c2eef027087626112d130e0e48e20"
   },
   "base": {
