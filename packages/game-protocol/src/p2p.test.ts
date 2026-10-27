@@ -45,6 +45,9 @@ import {
   parseWireLobbyNote,
   parsePeerLobbyHello,
   parseWireLobbyWelcome,
+  parsePeerStayTogether,
+  parseWirePartyFormed,
+  parseWirePartySplit,
   parseWireLobbyState,
   parseWireMatchStart,
 } from "./p2p.js";
@@ -293,7 +296,7 @@ const lobbyJoin: PeerLobbyJoin = {
 };
 
 /** A queued join's proof (#871): a ticket id and a signature, as hex. */
-const admission = { ticketId: "ab".repeat(32), admissionSig: "cd".repeat(64) };
+const admission = { seatKey: "ab".repeat(32), admissionSig: "cd".repeat(64) };
 
 const lobbyState: WireLobbyState = {
   code: "ACDEFG",
@@ -394,6 +397,19 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["queued lobby-join (#871)", parsePeerLobbyJoin, { ...lobbyJoin, admission }],
   ["lobby-hello (#871)", parsePeerLobbyHello, {}],
   ["lobby-welcome (#871)", parseWireLobbyWelcome, { hostSig: "ef".repeat(64) }],
+  ["stay-together yes (#882)", parsePeerStayTogether, { memberKey: "ab".repeat(32) }],
+  ["stay-together no (#882)", parsePeerStayTogether, { memberKey: null }],
+  [
+    "party-formed of two (#882)",
+    parseWirePartyFormed,
+    { members: ["ab".repeat(32), "cd".repeat(32)] },
+  ],
+  [
+    "party-formed of four (#882)",
+    parseWirePartyFormed,
+    { members: ["1", "2", "3", "4"].map((digit) => digit.repeat(64)) },
+  ],
+  ["party-split (#882)", parseWirePartySplit, {}],
   [
     "counting-down lobby-state (#871)",
     parseWireLobbyState,
@@ -841,12 +857,12 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "lobby-join with an upper-case ticket id (#871)",
     parsePeerLobbyJoin,
-    { ...lobbyJoin, admission: { ...admission, ticketId: "AB".repeat(32) } },
+    { ...lobbyJoin, admission: { ...admission, seatKey: "AB".repeat(32) } },
   ],
   [
     "lobby-join with a short ticket id (#871)",
     parsePeerLobbyJoin,
-    { ...lobbyJoin, admission: { ...admission, ticketId: "ab".repeat(31) } },
+    { ...lobbyJoin, admission: { ...admission, seatKey: "ab".repeat(31) } },
   ],
   [
     "lobby-join with a long admission signature (#871)",
@@ -856,10 +872,39 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "lobby-join with an admission of no signature (#871)",
     parsePeerLobbyJoin,
-    { ...lobbyJoin, admission: { ticketId: admission.ticketId } },
+    { ...lobbyJoin, admission: { seatKey: admission.seatKey } },
   ],
   ["lobby-hello with a field (#871)", parsePeerLobbyHello, { ticketId: "ab".repeat(32) }],
   ["lobby-welcome of no signature (#871)", parseWireLobbyWelcome, {}],
+  ["stay-together of no key (#882)", parsePeerStayTogether, {}],
+  ["stay-together of a short key (#882)", parsePeerStayTogether, { memberKey: "ab".repeat(31) }],
+  [
+    "stay-together of an upper-case key (#882)",
+    parsePeerStayTogether,
+    { memberKey: "AB".repeat(32) },
+  ],
+  ["party-formed of one (#882)", parseWirePartyFormed, { members: ["ab".repeat(32)] }],
+  [
+    "party-formed of five (#882)",
+    parseWirePartyFormed,
+    { members: ["1", "2", "3", "4", "5"].map((digit) => digit.repeat(64)) },
+  ],
+  [
+    "party-formed unsorted (#882)",
+    parseWirePartyFormed,
+    { members: ["cd".repeat(32), "ab".repeat(32)] },
+  ],
+  [
+    "party-formed with a key twice (#882)",
+    parseWirePartyFormed,
+    { members: ["ab".repeat(32), "ab".repeat(32)] },
+  ],
+  [
+    "party-formed of a non-hex key (#882)",
+    parseWirePartyFormed,
+    { members: ["ab".repeat(32), "zz".repeat(32)] },
+  ],
+  ["party-split with a field (#882)", parseWirePartySplit, { members: [] }],
   [
     "lobby-welcome of a non-hex signature (#871)",
     parseWireLobbyWelcome,

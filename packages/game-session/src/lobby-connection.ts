@@ -87,5 +87,15 @@ export interface LobbyConnection {
   onChatThrottled(handler: () => void): void;
   /** The lobby is over for this player, and why. */
   onClosed(handler: (reason: LobbyClosedReason) => void): void;
+  /**
+   * After a queued match this player's side won (#882): stay together as
+   * a party with `memberKey`, its fresh public key, or `null` for no.
+   */
+  stayTogether(memberKey: string | null): void;
+  /**
+   * The host's answer to a yes, once: every winner's key, sorted, when
+   * they all stay together, or `null` when the team split up.
+   */
+  onParty(handler: (members: readonly string[] | null) => void): void;
   disconnect(): Promise<void>;
 }

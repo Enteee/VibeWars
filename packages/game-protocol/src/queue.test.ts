@@ -7,15 +7,18 @@ const TICKET: QueueTicket = {
   ticketId: "a".repeat(64),
   protocol: PROTOCOL_VERSION,
   mode: "random-arena-4v4",
-  partySize: 1,
+  members: ["a".repeat(64)],
   enteredAt: 1_700_000_000_000,
   heartbeatAt: 1_700_000_005_000,
 };
 
-describe("parseQueueTicket (#869)", () => {
+/** A whole 4v4 team, sorted, led by `TICKET`'s id. */
+const PARTY = ["a", "b", "c", "d"].map((digit) => digit.repeat(64));
+
+describe("parseQueueTicket (#869, #882)", () => {
   it("keeps a well-formed ticket, a solo or a whole team", () => {
     expect(parseQueueTicket({ ...TICKET })).toEqual(TICKET);
-    expect(parseQueueTicket({ ...TICKET, partySize: 4 })).toEqual({ ...TICKET, partySize: 4 });
+    expect(parseQueueTicket({ ...TICKET, members: PARTY })).toEqual({ ...TICKET, members: PARTY });
   });
 
   it.each<[string, unknown]>([
@@ -30,9 +33,15 @@ describe("parseQueueTicket (#869)", () => {
     ["a numeric protocol", { ...TICKET, protocol: 3 }],
     ["an oversize protocol", { ...TICKET, protocol: "p".repeat(65) }],
     ["an unknown mode", { ...TICKET, mode: "random-arena-3v3" }],
-    ["a party of neither 1 nor the team", { ...TICKET, partySize: 2 }],
-    ["a party bigger than the team", { ...TICKET, mode: "random-arena-2v2", partySize: 4 }],
-    ["a string party", { ...TICKET, partySize: "1" }],
+    ["a party of neither 1 nor the team", { ...TICKET, members: PARTY.slice(0, 2) }],
+    ["a party bigger than the team", { ...TICKET, mode: "random-arena-2v2", members: PARTY }],
+    ["no members", { ...TICKET, members: [] }],
+    ["unsorted members", { ...TICKET, members: [PARTY[0], PARTY[2], PARTY[1], PARTY[3]] }],
+    ["a member twice", { ...TICKET, members: [PARTY[0], PARTY[1], PARTY[1], PARTY[3]] }],
+    ["members not led by the id", { ...TICKET, members: [...PARTY.slice(1), "e".repeat(64)] }],
+    ["a solo of another key", { ...TICKET, members: ["b".repeat(64)] }],
+    ["a non-hex member", { ...TICKET, members: [...PARTY.slice(0, 3), "g".repeat(64)] }],
+    ["members that are not a list", { ...TICKET, members: "a".repeat(64) }],
     ["a NaN enteredAt", { ...TICKET, enteredAt: Number.NaN }],
     ["a fractional enteredAt", { ...TICKET, enteredAt: 1.5 }],
     ["a negative heartbeatAt", { ...TICKET, heartbeatAt: -1 }],

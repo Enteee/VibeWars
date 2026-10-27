@@ -16,7 +16,7 @@ import type { LobbyClosedReason, LobbyConnection } from "./lobby-connection.js";
 import { openLobby } from "./lobby-harness.test-support.js";
 import { createLobbyHost, type LobbyHost, type MatchPlan } from "./lobby-host.js";
 import { ARENA, TICK_SECONDS, settle, until } from "./match-harness.test-support.js";
-import { createMatchHost } from "./match-host.js";
+import { createMatchHost, type MatchHost } from "./match-host.js";
 import { createMemoryNetwork, type MemoryNetwork } from "./memory-transport.js";
 import { admissionDigest, type AdmissionTag, type VerifyTicketSig } from "./queue-admission.js";
 import type { TicketKey } from "./queue-client.js";
@@ -65,11 +65,56 @@ const GROUP: FormedGroup = {
     [HOST, ALLY],
     [FOE, FOE_2],
   ],
+  parties: [],
   mapId: "other-arena",
+};
+
+/** The same seats, as a party of HOST and ALLY against two solos (#882). */
+const PARTY_GROUP: FormedGroup = { ...GROUP, parties: [[HOST, ALLY]] };
+
+/** Two parties (#882): HOST and ALLY against FOE and FOE_2, which leads. */
+const PARTIES_GROUP: FormedGroup = {
+  ...GROUP,
+  parties: [
+    [HOST, ALLY],
+    [FOE, FOE_2],
+  ],
 };
 
 const COUNTDOWN_SECONDS = 5;
 const TIMEOUT_SECONDS = 20;
+const STAY_TOGETHER_SECONDS = 15;
+
+/** A match the test ends by hand, with the winner it is given. */
+interface FakeMatch extends MatchHost {
+  finish(winningTeam: 0 | 1 | null): void;
+}
+
+function fakeMatch(): FakeMatch {
+  let phase: "active" | "finished" = "active";
+  let winner: 0 | 1 | null = null;
+  return {
+    advance: () => undefined,
+    get phase() {
+      return phase;
+    },
+    get winningTeam() {
+      return winner;
+    },
+    abandoned: false,
+    close: () => Promise.resolve(),
+    finish(winningTeam) {
+      phase = "finished";
+      winner = winningTeam;
+    },
+  };
+}
+
+interface OpenQueuedOptions {
+  readonly group?: FormedGroup;
+  /** Play this match instead of a real one. */
+  readonly match?: FakeMatch;
+}
 
 interface QueuedLobby {
   readonly network: MemoryNetwork;
@@ -78,6 +123,8 @@ interface QueuedLobby {
   readonly plans: MatchPlan[];
   /** Each `onFellThrough` call's no-shows. */
   readonly fellThrough: (readonly string[])[];
+  /** How many times `onDone` was called. */
+  readonly done: () => number;
   /** What the host's peer sent, and to whom. */
   readonly sent: { readonly channel: Channel; readonly to: string | undefined }[];
   /** A joiner holding `ticketId`, on a fresh peer unless one is given. */
@@ -101,21 +148,23 @@ function spied(
   };
 }
 
-function joinQueued(transport: Transport, ticketId: string, timeoutMs = 1000) {
+function joinQueued(transport: Transport, ticketId: string, timeoutMs = 1000, group = GROUP) {
   return joinLobby({
     transport,
     code: GROUP_ID,
     name: `ticket-${ticketId.slice(0, 1)}`,
     character: null,
     timeoutMs,
-    queued: { group: GROUP, key: keyOf(ticketId), verifyTicketSig },
+    queued: { group, key: keyOf(ticketId), verifyTicketSig },
   });
 }
 
-async function openQueued(): Promise<QueuedLobby> {
+async function openQueued(options: OpenQueuedOptions = {}): Promise<QueuedLobby> {
+  const { group = GROUP, match } = options;
   const network = createMemoryNetwork();
   const plans: MatchPlan[] = [];
   const fellThrough: (readonly string[])[] = [];
+  let done = 0;
   const sent: { channel: Channel; to: string | undefined }[] = [];
   const lobby = createLobbyHost({
     transport: spied(network.join("host"), sent),
@@ -123,6 +172,9 @@ async function openQueued(): Promise<QueuedLobby> {
     mapIds: ["test-arena", "other-arena"],
     startMatch(plan) {
       plans.push(plan);
+      if (match !== undefined) {
+        return match;
+      }
       return createMatchHost({
         transport: plan.transport,
         map: ARENA,
@@ -134,24 +186,29 @@ async function openQueued(): Promise<QueuedLobby> {
       });
     },
     queued: {
-      group: GROUP,
+      group,
       key: keyOf(HOST),
       verifyTicketSig,
       matchRules: RANDOM_ARENA_RULES,
       countdownSeconds: COUNTDOWN_SECONDS,
       timeoutSeconds: TIMEOUT_SECONDS,
       onFellThrough: (noShows) => fellThrough.push(noShows),
+      stayTogetherSeconds: STAY_TOGETHER_SECONDS,
+      onDone: () => {
+        done += 1;
+      },
     },
   });
-  const host = await joinQueued(lobby.local, HOST);
+  const host = await joinQueued(lobby.local, HOST, 1000, group);
   return {
     network,
     lobby,
     host,
     plans,
     fellThrough,
+    done: () => done,
     sent,
-    join: (ticketId, transport = network.join()) => joinQueued(transport, ticketId),
+    join: (ticketId, transport = network.join()) => joinQueued(transport, ticketId, 1000, group),
     async step(seconds) {
       const ticks = Math.round(seconds / TICK_SECONDS);
       for (let i = 0; i < ticks; i += 1) {
@@ -205,7 +262,7 @@ async function forgedJoin(
     protocolVersion: PROTOCOL_VERSION,
     name: "Forger",
     character: null,
-    admission: { ticketId, admissionSig: keyOf(signer).sign(bytes) },
+    admission: { seatKey: ticketId, admissionSig: keyOf(signer).sign(bytes) },
   };
 }
 
@@ -450,6 +507,163 @@ describe("a queued lobby", () => {
     await queued.step(TIMEOUT_SECONDS - 2);
     expect(queued.plans).toHaveLength(0);
     expect(queued.fellThrough).toEqual([[FOE]]);
+  });
+});
+
+describe("a queued lobby with parties (#882)", () => {
+  it("seats each party member on its own seat key, on its party's side", async () => {
+    const queued = await openQueued({ group: PARTIES_GROUP });
+    const foe = await queued.join(FOE);
+    await queued.join(ALLY);
+    await queued.join(FOE_2);
+    await settle();
+    expect(teamsOf(foe)).toEqual({ "ticket-1": 0, "ticket-2": 0, "ticket-3": 1, "ticket-4": 1 });
+  });
+
+  it("refuses a seat key proven by another member's key, and a seat key seated already", async () => {
+    const queued = await openQueued({ group: PARTIES_GROUP });
+    await queued.join(ALLY);
+    const right = { groupId: GROUP_ID, hostTicketId: HOST };
+    for (const [seatKey, signer, reason] of [
+      [FOE_2, FOE, "not-admitted"],
+      [ALLY, ALLY, "ticket-used"],
+    ] as const) {
+      const peer = rawPeer(queued.network);
+      await settle();
+      peer.transport.send(
+        "lobby-join",
+        await forgedJoin(seatKey, signer, { ...right, peerId: peer.transport.selfId }),
+        "host",
+      );
+      await until(() => peer.notes.length > 0);
+      expect(peer.notes).toEqual([{ kind: "refused", reason }]);
+    }
+  });
+
+  it("falls through naming a party's ticket when one of its members never came", async () => {
+    const queued = await openQueued({ group: PARTIES_GROUP });
+    await queued.join(ALLY);
+    await queued.join(FOE);
+    await queued.step(TIMEOUT_SECONDS);
+    expect(queued.fellThrough).toEqual([[FOE]]);
+  });
+
+  it("names the host's own party when its other member never came", async () => {
+    const queued = await openQueued({ group: PARTY_GROUP });
+    await queued.join(FOE);
+    await queued.join(FOE_2);
+    await queued.step(TIMEOUT_SECONDS);
+    expect(queued.fellThrough).toEqual([[HOST]]);
+  });
+});
+
+describe("Stay together, on a queued lobby's host (#882)", () => {
+  /** A 2v2 lobby whose match is over, team 0 (HOST and ALLY) the winner. */
+  async function afterMatch(winningTeam: 0 | 1 | null = 0) {
+    const match = fakeMatch();
+    const queued = await openQueued({ match });
+    const allyRoom = queued.network.join();
+    const ally = await queued.join(ALLY, allyRoom);
+    const foe = await queued.join(FOE);
+    await queued.join(FOE_2);
+    await queued.step(COUNTDOWN_SECONDS);
+    expect(queued.plans).toHaveLength(1);
+    match.finish(winningTeam);
+    await queued.step(TICK_SECONDS);
+    const answers = new Map<string, (readonly string[] | null)[]>();
+    for (const [name, connection] of [
+      ["host", queued.host],
+      ["ally", ally],
+      ["foe", foe],
+    ] as const) {
+      const heard: (readonly string[] | null)[] = [];
+      answers.set(name, heard);
+      connection.onParty((members) => heard.push(members));
+    }
+    return { queued, ally, allyRoom, foe, answers };
+  }
+
+  const KEY_H = "e".repeat(64);
+  const KEY_A = "d".repeat(64);
+
+  it("forms the party once every winner sends a key, and tells only them, sorted", async () => {
+    const { queued, ally, allyRoom, answers } = await afterMatch();
+    queued.host.stayTogether(KEY_H);
+    await settle();
+    expect(answers.get("host")).toEqual([]);
+    ally.stayTogether(KEY_A);
+    await settle();
+    expect(answers.get("host")).toEqual([[KEY_A, KEY_H]]);
+    expect(answers.get("ally")).toEqual([[KEY_A, KEY_H]]);
+    expect(answers.get("foe")).toEqual([]);
+    // To the ally alone over the room; the host's own player is told in memory.
+    expect(
+      queued.sent.filter((message) => message.channel === "party-formed").map(({ to }) => to),
+    ).toEqual([ally.selfSessionId]);
+    // Done once the remote winner has its answer and has gone.
+    expect(queued.done()).toBe(0);
+    await allyRoom.leave();
+    await settle();
+    expect(queued.done()).toBe(1);
+  });
+
+  it("splits on one no, telling those who said yes", async () => {
+    const { queued, ally, answers } = await afterMatch();
+    queued.host.stayTogether(KEY_H);
+    ally.stayTogether(null);
+    await settle();
+    expect(answers.get("host")).toEqual([null]);
+    expect(answers.get("ally")).toEqual([]);
+  });
+
+  it("splits when a winner leaves before voting", async () => {
+    const { queued, allyRoom, answers } = await afterMatch();
+    queued.host.stayTogether(KEY_H);
+    await allyRoom.leave();
+    await settle();
+    expect(answers.get("host")).toEqual([null]);
+    expect(queued.done()).toBe(1);
+  });
+
+  it("splits when the window runs out, and is done", async () => {
+    const { queued, answers } = await afterMatch();
+    queued.host.stayTogether(KEY_H);
+    await queued.step(STAY_TOGETHER_SECONDS - 1);
+    expect(answers.get("host")).toEqual([]);
+    expect(queued.done()).toBe(0);
+    await queued.step(1);
+    expect(answers.get("host")).toEqual([null]);
+    expect(queued.done()).toBe(1);
+  });
+
+  it("ignores a loser's vote, a second vote and a key that is not one", async () => {
+    const { queued, ally, foe, answers } = await afterMatch();
+    foe.stayTogether(KEY_A);
+    queued.host.stayTogether(KEY_H);
+    queued.host.stayTogether(null);
+    await settle();
+    expect(answers.get("host")).toEqual([]);
+    const raw = rawPeer(queued.network);
+    raw.transport.send("stay-together", { memberKey: "nope" }, "host");
+    ally.stayTogether(KEY_A);
+    await settle();
+    expect(answers.get("host")).toEqual([[KEY_A, KEY_H]]);
+  });
+
+  it("is done at once when no team won, with nothing to vote on", async () => {
+    const { queued } = await afterMatch(null);
+    await queued.step(TICK_SECONDS);
+    expect(queued.done()).toBe(1);
+  });
+
+  it("takes no vote from the host's player when its side lost", async () => {
+    const { queued, foe, answers } = await afterMatch(1);
+    queued.host.stayTogether(KEY_H);
+    foe.stayTogether(KEY_A);
+    await settle();
+    // FOE_2 has not voted: the foes' vote still waits, and the host is not in it.
+    expect(answers.get("foe")).toEqual([]);
+    expect(answers.get("host")).toEqual([]);
   });
 });
 

@@ -9,12 +9,18 @@
  * drives the heartbeat and the settle window, so a web caller can tick it
  * from the host-clock worker and a background tab keeps its place
  * (ADR-0022).
+ *
+ * A party that stayed together (#882) queues as one ticket its leader
+ * publishes; the other members each run a client that publishes nothing,
+ * forms groups as everyone does, and meets the group holding the
+ * leader's ticket with its own key.
  */
 import {
   FORMATION_SETTLE_MS,
   NO_SHOW_IGNORE_MS,
   PROTOCOL_VERSION,
   TICKET_HEARTBEAT_MS,
+  TICKET_TTL_MS,
   teamSizeOf,
   type QueueMode,
   type QueueTicket,
@@ -50,13 +56,26 @@ export type QueueState =
   /** The lobby never filled: shown for one tick, then `searching` again. */
   | { readonly kind: "fell-through" }
   /** The board has no relay (#707). */
-  | { readonly kind: "unreachable" };
+  | { readonly kind: "unreachable" }
+  /**
+   * A party member's leader has had no live ticket for `TICKET_TTL_MS`:
+   * the party is over, and this client has stopped (#882).
+   */
+  | { readonly kind: "party-gone" };
+
+/** A party's place, as each of its members brings it (#882). */
+export interface QueueParty {
+  /** Every member's public key, sorted; `members[0]` leads and is the ticket's id. */
+  readonly members: readonly string[];
+  /** This member's own key, one of `members`, kept for as long as the party queues. */
+  readonly key: TicketKey;
+}
 
 export interface QueueClientOptions {
   readonly board: QueueBoard;
   readonly mode: QueueMode;
-  /** 1, or `teamSizeOf(mode)` for a party that queues together. */
-  readonly partySize: number;
+  /** A party that stayed together, as this member of it; alone without. */
+  readonly party?: QueueParty;
   /** ms since the epoch. */
   readonly now: () => number;
   /**
@@ -92,10 +111,14 @@ function same(a: QueueState, b: QueueState): boolean {
 }
 
 export function createQueueClient(options: QueueClientOptions): QueueClient {
-  const { board, mode, partySize, now, newTicketKey, mapPool } = options;
+  const { board, mode, party, now, newTicketKey, mapPool } = options;
   const needed = 2 * teamSizeOf(mode);
   // A requeue after a fell-through lobby keeps this, and so its place (#854 C7).
   const enteredAt = now();
+  const members = party?.members ?? [];
+  /** A party's leader publishes its ticket; a follower only reads the board. */
+  const leader = members[0];
+  const follower = party !== undefined && leader !== party.key.ticketId;
 
   const tickets = new Map<string, QueueTicket>();
   /** Ticket id to when it stops being ignored. */
@@ -103,10 +126,18 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
   const handlers = new Set<(state: QueueState) => void>();
 
   let state: QueueState = { kind: "searching", searching: 0, needed, waitedMs: 0 };
-  /** Replaced on every requeue, so every ticket has a key of its own. */
-  let key = newTicketKey();
+  /**
+   * Replaced on every requeue, so every ticket has a key of its own; a
+   * party keeps its member key, since its followers find it by its id.
+   */
+  let key = party?.key ?? newTicketKey();
   let publishedAt = Number.NEGATIVE_INFINITY;
-  let publishing = true;
+  let publishing = !follower;
+  /**
+   * When a follower last knew its leader's ticket live: from its start, so
+   * a slow first heartbeat is no split.
+   */
+  let leaderSeenAt = enteredAt;
   let settling: { readonly group: FormedGroup; readonly since: number } | undefined;
   /** Bumped by anything that makes a formation still in flight stale. */
   let generation = 0;
@@ -127,7 +158,7 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
       ticketId: key.ticketId,
       protocol: PROTOCOL_VERSION,
       mode,
-      partySize,
+      members: party === undefined ? [key.ticketId] : members,
       enteredAt,
       heartbeatAt: now(),
     };
@@ -157,7 +188,7 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
         isLive(ticket, at) &&
         !skip.has(ticket.ticketId)
       ) {
-        players += ticket.partySize;
+        players += ticket.members.length;
       }
     }
     return { kind: "searching", searching: players, needed, waitedMs: at - enteredAt };
@@ -192,6 +223,15 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
         tickets.delete(ticketId);
       }
     }
+    if (follower && leader !== undefined) {
+      if (tickets.has(leader)) {
+        leaderSeenAt = at;
+      } else if (at - leaderSeenAt >= TICKET_TTL_MS) {
+        stop();
+        setState({ kind: "party-gone" });
+        return Promise.resolve();
+      }
+    }
     return formGroups({
       tickets: [...tickets.values()],
       now: at,
@@ -203,6 +243,13 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
         settle(groups, at);
       }
     });
+  }
+
+  /** Off the board for good, without a word to it. */
+  function stop(): void {
+    left = true;
+    unsubscribe();
+    untrouble();
   }
 
   function heard(event: QueueBoardEvent): void {
@@ -235,7 +282,9 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
       setState({ kind: "unreachable" });
     }
   });
-  publish();
+  if (publishing) {
+    publish();
+  }
 
   return {
     get state() {
@@ -271,26 +320,37 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
       }
       const at = now();
       for (const ticketId of noShows) {
-        ignored.set(ticketId, at + NO_SHOW_IGNORE_MS);
-        tickets.delete(ticketId);
+        // A party blamed for its own missing member queues on regardless.
+        if (ticketId !== leader) {
+          ignored.set(ticketId, at + NO_SHOW_IGNORE_MS);
+          tickets.delete(ticketId);
+        }
       }
-      board.withdraw(key.ticketId);
-      tickets.delete(key.ticketId);
       generation += 1;
       settling = undefined;
-      publishing = true;
-      key = newTicketKey();
-      publish();
+      if (party === undefined) {
+        board.withdraw(key.ticketId);
+        tickets.delete(key.ticketId);
+        key = newTicketKey();
+      }
+      // A party keeps its ticket, id and place (ADR-0032 §6); its leader
+      // heartbeats it again, and its followers wait for that from now.
+      leaderSeenAt = at;
+      publishing = !follower;
+      if (publishing) {
+        publish();
+      }
       setState({ kind: "fell-through" });
     },
     leave: () => {
       if (left) {
         return;
       }
-      left = true;
-      board.withdraw(key.ticketId);
-      unsubscribe();
-      untrouble();
+      // A follower published nothing to withdraw.
+      if (!follower) {
+        board.withdraw(key.ticketId);
+      }
+      stop();
       handlers.clear();
     },
   };
