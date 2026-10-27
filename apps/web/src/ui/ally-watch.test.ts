@@ -24,6 +24,7 @@ function match(players: readonly Pick<PlayerSnapshot, keyof typeof ally>[]): Mat
       walking: false,
       energy: 0,
       maxEnergy: 0,
+      overcast: 0,
       adrenaline: 0,
       armor: 0,
       weaponId: undefined,

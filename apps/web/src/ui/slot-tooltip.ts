@@ -1,4 +1,10 @@
-import { describeSkill, getSkill, type Skill, type SkillDescription } from "@vibewars/game-core";
+import {
+  describeSkill,
+  getSkill,
+  overcastText,
+  type Skill,
+  type SkillDescription,
+} from "@vibewars/game-core";
 import type { SkillSlot } from "@vibewars/game-session";
 
 import { createSkillTooltip, type SkillTooltip } from "./skill-tooltip.js";
@@ -94,5 +100,5 @@ export function slotDescription(
     return description;
   }
   const base = slot.energyCost === skill.cost.amount ? "" : ` (${String(skill.cost.amount)})`;
-  return { ...description, cost: `${String(slot.energyCost)} energy${base}` };
+  return { ...description, cost: `${String(slot.energyCost)} energy${base}${overcastText(skill)}` };
 }

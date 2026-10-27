@@ -10,6 +10,7 @@
     "kind": "energy",
     "amount": 10
   },
+  "overcast": 0,
   "activationSeconds": 0,
   "rechargeSeconds": 10,
   "description": "You shoot a Broad Head Arrow that moves slower than normal. If it hits, target foe\n                is\n                Dazed\n                for 5...17...20 seconds, and if target foe is casting\n                a spell, that spell is interrupted.",

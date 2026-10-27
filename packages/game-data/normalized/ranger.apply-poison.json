@@ -10,6 +10,7 @@
     "kind": "energy",
     "amount": 15
   },
+  "overcast": 0,
   "activationSeconds": 2,
   "rechargeSeconds": 12,
   "description": "For 24 seconds, enemies struck by your physical attacks become poisoned for 3...13...15 seconds.",

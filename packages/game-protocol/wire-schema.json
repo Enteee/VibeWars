@@ -1261,6 +1261,7 @@
         { "name": "maxHealth", "optional": false, "type": "number" },
         { "name": "name", "optional": false, "type": "string" },
         { "name": "offhandId", "optional": false, "type": { "union": ["null", "string"] } },
+        { "name": "overcast", "optional": false, "type": "number" },
         { "name": "primaryProfession", "optional": false, "type": { "union": ["null", "string"] } },
         {
           "name": "secondaryProfession",
@@ -1399,6 +1400,7 @@
                 { "name": "maxHealth", "optional": false, "type": "number" },
                 { "name": "name", "optional": false, "type": "string" },
                 { "name": "offhandId", "optional": false, "type": { "union": ["null", "string"] } },
+                { "name": "overcast", "optional": false, "type": "number" },
                 {
                   "name": "primaryProfession",
                   "optional": false,
@@ -1530,6 +1532,7 @@
                 { "name": "maxHealth", "optional": false, "type": "number" },
                 { "name": "name", "optional": false, "type": "string" },
                 { "name": "offhandId", "optional": false, "type": { "union": ["null", "string"] } },
+                { "name": "overcast", "optional": false, "type": "number" },
                 {
                   "name": "primaryProfession",
                   "optional": false,

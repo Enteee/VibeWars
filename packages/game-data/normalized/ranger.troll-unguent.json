@@ -10,6 +10,7 @@
     "kind": "energy",
     "amount": 5
   },
+  "overcast": 0,
   "activationSeconds": 3,
   "rechargeSeconds": 10,
   "description": "For 13 seconds, you gain health regeneration +3...9...10.",
