@@ -398,11 +398,11 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
     // (100, 210), and at least 100 apart: wider than Fireball's splash
     // (AREA_NEARBY), so each rung takes its own hit and nobody else's.
     // The armor is set directly: the ladder measures the curve, not the
-    // weakness and wards that reach it.
+    // wards that reach it.
     dummies: [
-      target("armor-40", "Weakened caster (40)", vec2(360, 90), 40),
+      target("armor-40", "40 armor (below any build)", vec2(360, 90), 40),
       target("armor-60", "Caster (60)", vec2(360, 210), 60),
-      target("armor-70", "Ranger (70)", vec2(360, 330), 70),
+      target("armor-70", "70 armor (Ranger vs physical)", vec2(360, 330), 70),
       target("armor-80", "Warrior (80)", vec2(460, 90), 80),
       target("armor-84", "Warded caster (84)", vec2(460, 210), 84),
       target("armor-104", "Warded warrior (104)", vec2(460, 330), 104),
