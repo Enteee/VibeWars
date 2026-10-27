@@ -23,17 +23,16 @@ import { fileURLToPath } from "node:url";
 
 import { buildLine, head, manifest, readManifest } from "./fingerprint.mjs";
 import { readBoardState } from "./hub-board.mjs";
-import { WINDOW_MS, createUsageReader, summarize } from "./claude-usage.mjs";
 import { ROLES } from "./hub-policy.mjs";
 import { formatSpend, readSpend } from "./hub-spend.mjs";
-import { readRoster } from "./presence.mjs";
 import { betweenTurns, parseReboot } from "./reboot.mjs";
 import { ownNudges, parseOwnSchedules, parseSchedule } from "./schedule.mjs";
 import { readSidecar, sidecarDown } from "./sidecar.mjs";
 import { unreadOf } from "./unread.mjs";
+import { readPresence, readStaffFile, readUsage, usageReader } from "./company-facts.mjs";
 import { boardLines, companyLines, feedLines, groupFeed } from "./dashboard-view.mjs";
 import { hubHealth, parseAlive, parseRestarts } from "./hub-health.mjs";
-import { parseStaff, roleOf } from "./staff.mjs";
+import { roleOf } from "./staff.mjs";
 
 const ROOT = process.env.VIBEWARS_BOT_ROOT ?? path.join(process.cwd(), ".bots");
 const BUS = path.join(ROOT, "bus");
@@ -134,20 +133,6 @@ function company() {
 }
 
 /**
- * `staff.json`, or null while it is missing or not the current shape:
- * hubd is its only writer, and the dashboard never repairs it (#386).
- *
- * @returns {import("./staff.mjs").Staff | null}
- */
-function staffFile() {
-  try {
-    return parseStaff(fs.readFileSync(path.join(ROOT, "staff.json"), "utf8"));
-  } catch {
-    return null;
-  }
-}
-
-/**
  * The manager watchdog's restarts since local midnight (#384), from
  * `.bots/manager-restarts.json`: a JSON array of epoch milliseconds, one
  * per restart. No file, or one in another shape, is none.
@@ -169,29 +154,6 @@ function managerRestarts(now) {
   const midnight = new Date(now);
   midnight.setHours(0, 0, 0, 0);
   return raw.filter((at) => typeof at === "number" && at >= midnight.getTime() && at <= now).length;
-}
-
-/**
- * The roster as it stands (#363): which employees are running, and which
- * died without cleaning up, with when they were last seen.
- *
- * @param {import("./staff.mjs").Staff | null} staff
- * @returns {{ live: Set<string>, stale: Map<string, number> }}
- */
-function presence(staff) {
-  /** @type {Set<string>} */
-  const live = new Set();
-  /** @type {Map<string, number>} */
-  const stale = new Map();
-  const employees = Object.keys(staff?.employees ?? {});
-  for (const [id, entry] of readRoster(path.join(BUS, "roster"), employees, Date.now())) {
-    if (entry.fresh) {
-      live.add(id);
-    } else {
-      stale.set(id, entry.lastSeen);
-    }
-  }
-  return { live, stale };
 }
 
 /**
@@ -356,37 +318,6 @@ function telegram() {
   return { down: !running || sidecarDown(now, record), lastSeen: record?.lastSeen ?? null, now };
 }
 
-/**
- * Each agent's Claude config dir is `<boxes>/<role>/config`, and its logs
- * are under that; `claude-llc` says where `<boxes>` is (#50).
- */
-const usage =
-  process.env.VIBEWARS_CLAUDE_BOXES === undefined
-    ? null
-    : createUsageReader(process.env.VIBEWARS_CLAUDE_BOXES, ROLES);
-
-/**
- * Tokens per role over the last 5 hours, and today's output (#50): read
- * from the agents' own logs, never an API.
- *
- * @returns {import("./dashboard-view.mjs").ClaudeUsage | null}
- */
-function claude() {
-  const now = Date.now();
-  const midnight = new Date(now);
-  midnight.setHours(0, 0, 0, 0);
-  const dayStart = midnight.getTime();
-  const read = usage?.read(Math.min(dayStart, now - WINDOW_MS), now) ?? null;
-  if (read === null) {
-    return null;
-  }
-  return {
-    summary: summarize(read.records, { now, windowMs: WINDOW_MS, dayStart }),
-    capped: read.capped,
-    now,
-  };
-}
-
 function budget() {
   const raw = hubFile("ratelimit.json");
   if (
@@ -415,15 +346,17 @@ function linesOf(section, pane) {
   switch (section) {
     case "board": {
       const cfg = company();
-      const roles = new Set([...presence(staffFile()).live].map((id) => roleOf(id) ?? id));
+      const roles = new Set(
+        [...readPresence(ROOT, readStaffFile(ROOT), Date.now()).live].map((id) => roleOf(id) ?? id),
+      );
       // hubd's copy of the board (hub-board.mjs); one in another shape is
       // hubd's to discard, and shows here as no snapshot.
       return boardLines(readBoardState(hubFile("board.json")), cfg?.columns ?? null, roles, pane);
     }
     case "company": {
-      const staff = staffFile();
-      const { live, stale } = presence(staff);
       const now = Date.now();
+      const staff = readStaffFile(ROOT);
+      const { live, stale } = readPresence(ROOT, staff, now);
       return companyLines(
         {
           roles: ROLES,
@@ -442,7 +375,7 @@ function linesOf(section, pane) {
           hub: hub(),
           reboot: reboot(live),
           build: build(),
-          claude: claude(),
+          claude: readUsage(usage, now),
           nudges: nudges(staff, now),
           telegram: telegram(),
         },
@@ -474,6 +407,9 @@ function render(section) {
   }
   process.stdout.write(`\u001B[H\u001B[2J${lines.join("\n")}`);
 }
+
+/** The agents' Claude logs, read as they grow (#50). */
+const usage = usageReader(process.env.VIBEWARS_CLAUDE_BOXES);
 
 const section = sectionOf(process.argv[2]);
 /** @type {() => void} */

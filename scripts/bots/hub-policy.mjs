@@ -605,9 +605,14 @@ export function authorize(role, request, options = {}) {
   const acting = options.acting ?? [];
   const { employee } = options;
   const direct = authorizeAs(role, request, acting, employee);
-  // Hiring and firing is the manager's own; no hat lends it (#380). Nor does
-  // a hat lend a schedule (#678).
-  if (direct.allow || request.kind === "staff" || request.kind === "schedule") {
+  // Hiring and firing is the manager's own; no hat lends it (#380), nor the
+  // load it is decided on (#747). Nor does a hat lend a schedule (#678).
+  if (
+    direct.allow ||
+    request.kind === "staff" ||
+    request.kind === "load" ||
+    request.kind === "schedule"
+  ) {
     return direct;
   }
 
@@ -644,6 +649,9 @@ function authorizeAs(role, request, acting, employee) {
   }
   if (request.kind === "staff") {
     return authorizeStaff(role, argv);
+  }
+  if (request.kind === "load") {
+    return authorizeLoad(role, argv);
   }
   if (request.kind === "schedule") {
     return SCHEDULERS.includes(role)
@@ -964,6 +972,24 @@ function authorizeStaff(role, argv) {
     return { allow: false, reason: "only the manager hires and fires" };
   }
   return { allow: true };
+}
+
+/**
+ * `company load` (#747): what the manager's staffing review is decided
+ * on, the dashboard's numbers as text. The manager's, as hiring is; it
+ * takes no words.
+ *
+ * @param {string} role
+ * @param {string[]} argv
+ * @returns {{ allow: boolean, reason?: string }}
+ */
+function authorizeLoad(role, argv) {
+  if (argv.length > 0) {
+    return { allow: false, reason: "usage: company load" };
+  }
+  return role === "manager"
+    ? { allow: true }
+    : { allow: false, reason: "only the manager reads the company's load" };
 }
 
 /**
