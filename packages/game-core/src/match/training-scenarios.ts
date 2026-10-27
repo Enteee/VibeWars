@@ -275,8 +275,8 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
     ],
   },
   {
-    id: "physical-vs-untyped",
-    label: "Physical vs untyped",
+    id: "physical-vs-elemental",
+    label: "Physical vs elemental",
     teaches:
       "Why Stalwart and Absorption only sometimes bite: they blunt a weapon's physical hits and do nothing against a spell.",
     mapId: "training-hall",

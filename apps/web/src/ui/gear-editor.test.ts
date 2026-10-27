@@ -315,7 +315,17 @@ describe("the gear summary", () => {
     const summary = summariseGear(setInsignia(bare, "chest", "stalwart"));
     // It is not unconditional, so it must not inflate the headline number.
     expect(summary.armor).toBe(80);
-    expect(summary.conditionalArmor).toEqual(["+10 armor vs physical damage"]);
+    // A Warrior's own +20 first, then the insignia's.
+    expect(summary.conditionalArmor).toEqual([
+      "+20 armor vs physical damage",
+      "+10 armor vs physical damage",
+    ]);
+  });
+
+  it("lists a Ranger's inherent armor vs elemental damage (#759)", () => {
+    const ranger = setProfessions(newCharacter("c1"), "ranger", undefined);
+    expect(summariseGear(ranger).conditionalArmor).toEqual(["+30 armor vs elemental damage"]);
+    expect(summariseGear(monk()).conditionalArmor).toEqual([]);
   });
 
   it("reports Absorption's flat reduction", () => {

@@ -289,7 +289,7 @@ describe("time-to-kill, headless (#111)", () => {
   });
 });
 
-describe("physical-vs-untyped, headless (#111)", () => {
+describe("physical-vs-elemental, headless (#111)", () => {
   /** Every damage `targetId` takes in `seconds`, in order. */
   function damageTo(sim: MatchSimulation, targetId: string, seconds: number): number[] {
     const amounts: number[] = [];
@@ -308,7 +308,7 @@ describe("physical-vs-untyped, headless (#111)", () => {
   it("the same sword swings land softer on the guarded warrior", () => {
     // One seed, so both runs roll the same swings.
     const swings = (targetId: string): number[] => {
-      const sim = armedArena(scenario("physical-vs-untyped"), "physical", WEAPONS.sword);
+      const sim = armedArena(scenario("physical-vs-elemental"), "physical", WEAPONS.sword);
       expect(sim.requestAttack("player", targetId)).toEqual({ ok: true });
       return damageTo(sim, targetId, 10);
     };
@@ -327,7 +327,7 @@ describe("physical-vs-untyped, headless (#111)", () => {
 
   it("a Fireball lands the same on both", () => {
     const burn = (targetId: string): number[] => {
-      const sim = arena(scenario("physical-vs-untyped"), "untyped");
+      const sim = arena(scenario("physical-vs-elemental"), "elemental");
       sim.setTarget("player", targetId);
       expect(sim.requestSkill("player", 0)?.check).toEqual({ ok: true });
       return damageTo(sim, targetId, 3);
