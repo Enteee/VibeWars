@@ -408,7 +408,9 @@ that weapon: it hits halfway through a swing (or through its own
 activation, if it states one), for the weapon's damage plus the skill's
 bonus, mitigated once, and you
 recover for as long again before you swing or cast. The wind-up shows on
-the cast bar, and an interrupt or a move stops it. No double strike or
+the cast bar and on the held weapon, which cocks back over the whole
+activation and strikes as it ends (#562); an interrupt or a move stops
+it, and the weapon eases back to rest. No double strike or
 cleave on an attack skill. Afterwards you swing at its foe, from a fresh
 swing. Distracting Blow deals no damage: a hit only interrupts, and a
 miss does nothing. It has no attribute, as in GW1, so any warrior can
