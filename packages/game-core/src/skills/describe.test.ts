@@ -155,6 +155,27 @@ describe("describeSkill", () => {
     expect(describeSkill(skill("mesmer.power-spike"), ranks).headline).toBe("102 damage");
   });
 
+  it("leads what depends on how things stand with its condition (#794)", () => {
+    const ranks = new Map([
+      ["monk.healing-prayers", 12],
+      ["dervish.mysticism", 12],
+      ["ranger.marksmanship", 12],
+    ]);
+    const lines = (id: string) => describeSkill(skill(id), ranks).effects.map((e) => e.text);
+    expect(lines("monk.word-of-healing")).toEqual([
+      "Heals for 81",
+      "If target is below 50% Health: heals for 98",
+    ]);
+    expect(lines("dervish.mystic-sweep")).toEqual([
+      "+10 damage",
+      "If you have an enchantment: +10 damage",
+    ]);
+    expect(lines("ranger.savage-shot")).toEqual([
+      "If target is casting a spell: +25 damage",
+      "Interrupts the target's current cast, if they are casting",
+    ]);
+  });
+
   it("says Guardian blocks half of all attacks (#534)", () => {
     expect(describeStatus("guardian")).toBe("50% chance to block attacks");
   });
@@ -198,6 +219,7 @@ describe("describeSkill", () => {
       expect(described.effects, `${entry.id} lost an effect line`).toHaveLength(
         lines(entry.effects) +
           (entry.attack?.bonusDamage === undefined ? 0 : 1) +
+          (entry.attack?.conditionalBonus === undefined ? 0 : 1) +
           lines(entry.attack?.onBlocked ?? []) +
           (entry.whileActivating === undefined ? 0 : 1) +
           (entry.projectile === undefined ? 0 : 1),

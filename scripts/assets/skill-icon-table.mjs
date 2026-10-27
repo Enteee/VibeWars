@@ -49,4 +49,7 @@ export const SKILL_ICONS = {
   "mesmer.power-drain": { glyph: "interrupt", modifier: "up" },
   "mesmer.shatter-enchantment": { glyph: "cleanse", modifier: "down" },
   "mesmer.drain-enchantment": { glyph: "cleanse", modifier: "up" },
+  "monk.word-of-healing": { glyph: "heal", modifier: "up" },
+  "dervish.mystic-sweep": { glyph: "sword", modifier: "up" },
+  "ranger.savage-shot": { glyph: "arrow" },
 };

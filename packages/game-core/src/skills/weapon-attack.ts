@@ -19,6 +19,7 @@ import {
   applySkillEffects,
   gainEnergy,
   interruptIfCastingSpell,
+  stateHolds,
   type CombatEvent,
   type SkillResolution,
 } from "./effects.js";
@@ -26,7 +27,7 @@ import { resolveMagnitude } from "./scaling.js";
 import { aggregateModifiers, getStatusDefinition, type StatusId } from "./status.js";
 import { nearestFirst, type TargetCandidate } from "./targeting.js";
 import { attackMissChanceOf, blockChanceOf, rankOf, weaponDamageMultiplierOf } from "./tick.js";
-import type { Combatant, Skill, SkillEffect } from "./types.js";
+import type { Combatant, Skill, SkillEffect, StateCondition } from "./types.js";
 
 /**
  * Weapon auto-attack: what one swing does once it lands (ADR-0026).
@@ -241,18 +242,59 @@ export interface BlowRule {
    * does not help.
    */
   readonly strengthRank: number;
+  /**
+   * More `bonus` while a state holds (#794), at the caster's ranks: read
+   * by `settleBlow` as the blow lands on each victim.
+   */
+  readonly conditionalBonus:
+    { readonly condition: StateCondition; readonly amount: number } | undefined;
 }
 
 /** A swing of the weapon and nothing else. */
-export const PLAIN_BLOW: BlowRule = { weaponDamage: 1, bonus: 0, strengthRank: 0 };
+export const PLAIN_BLOW: BlowRule = {
+  weaponDamage: 1,
+  bonus: 0,
+  strengthRank: 0,
+  conditionalBonus: undefined,
+};
 
 /** The blow `skill` makes of `caster`'s weapon, its bonus at the caster's ranks. */
 export function skillBlow(skill: Skill, caster: Combatant): BlowRule {
   const bonusDamage = skill.attack?.bonusDamage;
+  const conditionalBonus = skill.attack?.conditionalBonus;
   return {
     weaponDamage: skill.attack?.weaponDamage ?? PLAIN_BLOW.weaponDamage,
     bonus: bonusDamage === undefined ? 0 : resolveMagnitude(bonusDamage, caster),
     strengthRank: rankIn(caster, STRENGTH_ATTRIBUTE),
+    conditionalBonus:
+      conditionalBonus === undefined
+        ? undefined
+        : {
+            condition: conditionalBonus.condition,
+            amount: resolveMagnitude(conditionalBonus.amount, caster),
+          },
+  };
+}
+
+/**
+ * `blow` as it lands on `victim` (#794): its `conditionalBonus` added to its bonus
+ * if the state holds now, for `attacker` and `victim`. An arrow whose
+ * archer has left the match has nobody to read the state of: no more.
+ */
+export function settleBlow(
+  blow: BlowRule,
+  attacker: Combatant | undefined,
+  victim: Combatant,
+): BlowRule {
+  const { conditionalBonus } = blow;
+  if (conditionalBonus === undefined) {
+    return blow;
+  }
+  const holds = attacker !== undefined && stateHolds(conditionalBonus.condition, attacker, victim);
+  return {
+    ...blow,
+    bonus: blow.bonus + (holds ? conditionalBonus.amount : 0),
+    conditionalBonus: undefined,
   };
 }
 
@@ -489,7 +531,17 @@ export function resolveAttackSkill(
       blocked.push(victim);
       continue;
     }
-    if (landBlow(snapshot, victim, blow, exposed(victim), rng, rules, events)) {
+    if (
+      landBlow(
+        snapshot,
+        victim,
+        settleBlow(blow, caster, victim),
+        exposed(victim),
+        rng,
+        rules,
+        events,
+      )
+    ) {
       gainCriticalEnergy(caster, snapshot.criticalStrikes, events);
     }
     events.push(...attackHitRiders(caster, victim, snapshot.mainHand, rng, rules));

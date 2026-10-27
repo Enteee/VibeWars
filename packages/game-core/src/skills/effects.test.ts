@@ -6,7 +6,14 @@ import { applyEffect, applyEffects, applySkillEffects, type CombatEvent } from "
 import { HEALTH_PER_PIP } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import { advanceStatuses, effectiveMaxHealth } from "./tick.js";
-import type { Combatant, Skill, SkillContext, SkillEffect } from "./types.js";
+import type {
+  Combatant,
+  EffectCondition,
+  Skill,
+  SkillContext,
+  SkillEffect,
+  UnconditionalEffect,
+} from "./types.js";
 
 function context(
   caster = makeCombatant({ id: "caster" }),
@@ -530,5 +537,113 @@ describe("if effects (#521)", () => {
     );
     expect(events).toEqual([{ kind: "heal", targetId: "caster", amount: 40 }]);
     expect(target.health).toBe(100);
+  });
+});
+
+describe("state conditions (#794)", () => {
+  const rules = MINIMAL_GW_INSPIRED_PVP_V1.combat;
+  const heal = (flat: number): UnconditionalEffect => ({ kind: "heal", amount: { flat } });
+  /** Heals 10, and 100 more if `condition` holds. */
+  const healIf = (condition: EffectCondition): SkillEffect[] => [
+    heal(10),
+    { kind: "if", condition, effects: [heal(100)] },
+  ];
+  const healed = (effects: SkillEffect[], caster: Combatant, target: Combatant): number => {
+    const before = target.health;
+    applyEffects(effects, { caster, target, rng: createRng(1), rules });
+    return target.health - before;
+  };
+  const at = (health: number, id = "target"): Combatant =>
+    makeCombatant({ id, health, maxHealth: 500 });
+
+  it("target-health-below: holds below the fraction, not at it", () => {
+    const below = healIf({ kind: "target-health-below", fraction: 0.5 });
+    expect(healed(below, at(100), at(249))).toBe(110);
+    expect(healed(below, at(100), at(250))).toBe(10);
+    expect(healed(below, at(100), at(400))).toBe(10);
+  });
+
+  it("target-health-below: is a share of the maximum a deep wound left", () => {
+    // 500 less deep wound's 100 is 400, so half is 200, not 250.
+    const wounded = at(190);
+    wounded.statuses.apply("deep-wound", 20, "caster");
+    const below = healIf({ kind: "target-health-below", fraction: 0.5 });
+    expect(healed(below, at(100), wounded)).toBe(110 * 0.8);
+    const notBelow = at(210);
+    notBelow.statuses.apply("deep-wound", 20, "caster");
+    expect(healed(below, at(100), notBelow)).toBe(10 * 0.8);
+  });
+
+  it("is read before the first effect, so a heal cannot lift its target out of its bonus", () => {
+    // The first heal takes 240 to 340, over half; the bonus still lands.
+    const effects: SkillEffect[] = [
+      heal(100),
+      {
+        kind: "if",
+        condition: { kind: "target-health-below", fraction: 0.5 },
+        effects: [heal(100)],
+      },
+    ];
+    expect(healed(effects, at(100), at(240))).toBe(200);
+  });
+
+  it("target-has and caster-has: a status of the category, on whom they name", () => {
+    const hexed = at(100);
+    hexed.statuses.apply("malaise", 10, "foe");
+    const enchanted = at(100, "caster");
+    enchanted.statuses.apply("regeneration", 10, "caster");
+    const targetHex = healIf({ kind: "target-has", category: "hex" });
+    expect(healed(targetHex, at(100, "caster"), hexed)).toBe(110);
+    expect(healed(targetHex, hexed, at(100))).toBe(10);
+    const casterEnchanted = healIf({ kind: "caster-has", category: "enchantment" });
+    expect(healed(casterEnchanted, enchanted, at(100))).toBe(110);
+    expect(healed(casterEnchanted, at(100, "caster"), enchanted)).toBe(10);
+  });
+
+  it("target-casting: a spell being cast, not a chant, an attack skill or nothing", () => {
+    const casting = (skillId: string | undefined): Combatant => {
+      const target = at(100);
+      if (skillId !== undefined) {
+        target.cast.beginCast(skillId, target.id, 3, undefined);
+      }
+      return target;
+    };
+    const spell = healIf({ kind: "target-casting", spell: true });
+    expect(healed(spell, at(100, "caster"), casting("elementalist.fireball"))).toBe(110);
+    for (const skillId of ["paragon.anthem-of-flame", "warrior.distracting-blow", undefined]) {
+      expect(healed(spell, at(100, "caster"), casting(skillId)), String(skillId)).toBe(10);
+    }
+  });
+
+  it("is read per target", () => {
+    const skill: Skill = {
+      id: "test.word",
+      name: "Word",
+      type: "spell",
+      elite: false,
+      profession: "monk",
+      attributeId: undefined,
+      cost: undefined,
+      activationSeconds: 0,
+      rechargeSeconds: 0,
+      range: 420,
+      target: "single-ally",
+      area: undefined,
+      attack: undefined,
+      whileActivating: undefined,
+      projectile: undefined,
+      effects: healIf({ kind: "target-health-below", fraction: 0.5 }),
+    };
+    const low = at(100, "low");
+    const high = at(400, "high");
+    applySkillEffects({
+      skill,
+      caster: at(500, "caster"),
+      targets: [low, high],
+      rng: createRng(1),
+      rules,
+    });
+    expect(low.health).toBe(210);
+    expect(high.health).toBe(410);
   });
 });
