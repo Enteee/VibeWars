@@ -70,6 +70,7 @@ function body(id: string, x: number, team: RenderableActor["team"]): RenderableA
     weaponId: undefined,
     swingElapsed: 0,
     swingTotal: 0,
+    attackCast: undefined,
     offhandId: undefined,
     profession: undefined,
     radius: 14,

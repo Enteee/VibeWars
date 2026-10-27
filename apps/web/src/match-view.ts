@@ -31,6 +31,7 @@ import {
   type ArenaSnapshot,
   type RenderableWall,
 } from "./render/arena-snapshot.js";
+import { attackCastOf } from "./render/attack-clock.js";
 import { NoWebGlError, createArenaViewport, type ArenaViewport } from "./render/arena-viewport.js";
 import { attachFollowCamera } from "./render/follow-camera.js";
 import { showCombatFeedback } from "./render/combat-feedback.js";
@@ -127,6 +128,7 @@ export function toArenaSnapshot(
         weaponId: player.weaponId,
         swingElapsed: player.swingElapsed,
         swingTotal: player.swingTotal,
+        attackCast: attackCastOf(player.castingSkillId, player.castRemaining, player.castTotal),
         offhandId: player.offhandId,
         profession: player.primaryProfession,
         radius: ACTOR_RADIUS,
