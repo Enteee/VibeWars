@@ -105,9 +105,10 @@
     "LOBBY_CODE_LENGTH": { "literal": 6 },
     "MAX_CHAT_GRAPHEMES": { "literal": 200 },
     "MAX_LOBBY_PLAYERS": { "literal": 16 },
-    "MAX_SNAPSHOT_PARTS": { "literal": 8 },
+    "MAX_SNAPSHOT_PARTS": { "literal": 12 },
     "MAX_WIRE_CHAT_TEXT": { "literal": 2048 },
     "MAX_WIRE_COMBATS": { "literal": 64 },
+    "MAX_WIRE_CREATURES": { "literal": 32 },
     "MAX_WIRE_EVENTS": { "literal": 64 },
     "MAX_WIRE_JSON_DEPTH": { "literal": 16 },
     "MAX_WIRE_JSON_VALUES": { "literal": 4096 },
@@ -1625,6 +1626,16 @@
         { "name": "targetId", "optional": false, "type": { "union": ["null", "string"] } }
       ]
     },
+    "WireCreature": {
+      "properties": [
+        {
+          "name": "kind",
+          "optional": false,
+          "type": { "union": [{ "literal": "minion" }, { "literal": "spirit" }] }
+        },
+        { "name": "ownerId", "optional": false, "type": "string" }
+      ]
+    },
     "WireEnded": {
       "properties": [
         {
@@ -1814,6 +1825,25 @@
         { "name": "castRemaining", "optional": false, "type": "number" },
         { "name": "castTotal", "optional": false, "type": "number" },
         { "name": "castingSkillId", "optional": false, "type": { "union": ["null", "string"] } },
+        {
+          "name": "creature",
+          "optional": false,
+          "type": {
+            "union": [
+              "null",
+              {
+                "properties": [
+                  {
+                    "name": "kind",
+                    "optional": false,
+                    "type": { "union": [{ "literal": "minion" }, { "literal": "spirit" }] }
+                  },
+                  { "name": "ownerId", "optional": false, "type": "string" }
+                ]
+              }
+            ]
+          }
+        },
         { "name": "dead", "optional": false, "type": "boolean" },
         { "name": "energy", "optional": false, "type": "number" },
         { "name": "energyPips", "optional": false, "type": "number" },
@@ -1965,6 +1995,25 @@
                   "optional": false,
                   "type": { "union": ["null", "string"] }
                 },
+                {
+                  "name": "creature",
+                  "optional": false,
+                  "type": {
+                    "union": [
+                      "null",
+                      {
+                        "properties": [
+                          {
+                            "name": "kind",
+                            "optional": false,
+                            "type": { "union": [{ "literal": "minion" }, { "literal": "spirit" }] }
+                          },
+                          { "name": "ownerId", "optional": false, "type": "string" }
+                        ]
+                      }
+                    ]
+                  }
+                },
                 { "name": "dead", "optional": false, "type": "boolean" },
                 { "name": "energy", "optional": false, "type": "number" },
                 { "name": "energyPips", "optional": false, "type": "number" },
@@ -2112,6 +2161,25 @@
                   "name": "castingSkillId",
                   "optional": false,
                   "type": { "union": ["null", "string"] }
+                },
+                {
+                  "name": "creature",
+                  "optional": false,
+                  "type": {
+                    "union": [
+                      "null",
+                      {
+                        "properties": [
+                          {
+                            "name": "kind",
+                            "optional": false,
+                            "type": { "union": [{ "literal": "minion" }, { "literal": "spirit" }] }
+                          },
+                          { "name": "ownerId", "optional": false, "type": "string" }
+                        ]
+                      }
+                    ]
+                  }
                 },
                 { "name": "dead", "optional": false, "type": "boolean" },
                 { "name": "energy", "optional": false, "type": "number" },

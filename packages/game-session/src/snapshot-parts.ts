@@ -1,5 +1,5 @@
 import {
-  MAX_LOBBY_PLAYERS,
+  MAX_WIRE_ACTORS,
   MAX_WIRE_PROJECTILES,
   type WirePlayer,
   type WireProjectile,
@@ -144,7 +144,7 @@ export function snapshotAssembler(): (part: WireSnapshotPart) => WireSnapshot | 
     assembled = part.tick;
     const players = parts.flatMap((each) => each.players);
     const projectiles = parts.flatMap((each) => each.projectiles);
-    if (players.length > MAX_LOBBY_PLAYERS || projectiles.length > MAX_WIRE_PROJECTILES) {
+    if (players.length > MAX_WIRE_ACTORS || projectiles.length > MAX_WIRE_PROJECTILES) {
       return undefined;
     }
     return {

@@ -59,6 +59,8 @@ import {
   statusWireIndex,
   wireCombat,
   wireStatuses,
+  wireIdentity,
+  type WireIdentity,
 } from "./wire.js";
 
 /**
@@ -609,15 +611,14 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     sim.get(seat.playerId)?.combatant.cast.cancelCast();
   });
 
-  const wirePlayer = (participant: Participant, seat: Seat): WirePlayer => {
+  const wirePlayer = (participant: Participant, who: WireIdentity): WirePlayer => {
     const { combatant } = participant;
     const cast = combatant.cast.activeCast;
     const swing = swingProgress(combatant);
     const pips = sim.pips(participant);
     return {
       id: participant.id,
-      name: seat.name,
-      team: seat.team,
+      ...who,
       x: participant.position.x,
       y: participant.position.y,
       facing: round(participant.facing, 2),
@@ -633,8 +634,6 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       armor: combatant.equipment.baseArmor,
       weaponId: combatant.equipment.mainHand.weapon.id,
       offhandId: combatant.equipment.offhandId ?? null,
-      primaryProfession: seat.primaryProfession,
-      secondaryProfession: seat.secondaryProfession ?? null,
       dead: combatant.dead,
       castingSkillId: cast?.skillId ?? null,
       castRemaining: cast?.remainingSeconds ?? 0,
@@ -659,8 +658,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     winningTeam: wireTeam(sim.outcome.winningTeam),
     endReason: sim.outcome.reason ?? null,
     players: [...sim.participants()].flatMap((participant) => {
-      const seat = seats.get(participant.id);
-      return seat === undefined ? [] : [wirePlayer(participant, seat)];
+      const who = wireIdentity(participant, seats);
+      return who === undefined ? [] : [wirePlayer(participant, who)];
     }),
     // The newest, if ever there were more than a snapshot may carry: a
     // client refuses a whole snapshot past the cap.
