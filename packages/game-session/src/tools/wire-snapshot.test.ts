@@ -1,52 +1,47 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { CHANNELS } from "@vibewars/game-protocol";
+import { CHANNELS, PROTOCOL_VERSION, fingerprint } from "@vibewars/game-protocol";
 import { beforeAll, describe, expect, it } from "vitest";
 
 import {
   SCHEMA_FILE,
-  VERSION_FILE,
   describeConstants,
   describeTypes,
-  generateWireFiles,
+  generateWireSchema,
   moduleOf,
   programFor,
-  versionOf,
-  type WireFiles,
 } from "./wire-snapshot.js";
 
 /** `WIRE_SNAPSHOT=write` is `pnpm run wire:snapshot`: regenerate, then check as CI does. */
 const WRITE = process.env.WIRE_SNAPSHOT === "write";
 
-const STALE = "wire schema is stale: run pnpm run wire:snapshot and commit both files";
+const STALE = "wire schema is stale: run pnpm run wire:snapshot and commit the schema";
 
-let generated: WireFiles;
+let generated: string;
 
 beforeAll(async () => {
-  generated = await generateWireFiles();
+  generated = await generateWireSchema();
   if (WRITE) {
-    fs.writeFileSync(SCHEMA_FILE, generated.schema);
-    fs.writeFileSync(VERSION_FILE, generated.version);
+    fs.writeFileSync(SCHEMA_FILE, generated);
   }
 }, 60_000);
 
 describe("the wire schema snapshot (#303)", () => {
-  it("is committed as generated, both files", () => {
-    expect(fs.readFileSync(SCHEMA_FILE, "utf8") === generated.schema, STALE).toBe(true);
-    expect(fs.readFileSync(VERSION_FILE, "utf8") === generated.version, STALE).toBe(true);
+  it("is committed as generated", () => {
+    expect(fs.readFileSync(SCHEMA_FILE, "utf8") === generated, STALE).toBe(true);
   });
 
-  it("names the version after the snapshot's hash", () => {
-    expect(generated.version).toContain(`PROTOCOL_VERSION = "${versionOf(generated.schema)}"`);
+  it("names the version after the committed schema", () => {
+    expect(PROTOCOL_VERSION).toBe(fingerprint(JSON.stringify(JSON.parse(generated))));
   });
 
   it("is the same on a second run", async () => {
-    expect(await generateWireFiles()).toEqual(generated);
+    expect(await generateWireSchema()).toEqual(generated);
   }, 60_000);
 
   it("names every channel peers send on", () => {
-    const snapshot = JSON.parse(generated.schema) as { channels: readonly string[] };
+    const snapshot = JSON.parse(generated) as { channels: readonly string[] };
     expect(snapshot.channels).toEqual(CHANNELS);
   });
 });
@@ -70,7 +65,7 @@ describe("what changes the hash", () => {
       }
       const checker = program.getTypeChecker();
       const module = moduleOf(program, file, "./payloads.js");
-      return versionOf(
+      return fingerprint(
         JSON.stringify([describeTypes(checker, module), describeConstants(checker, module, [])]),
       );
     } finally {
