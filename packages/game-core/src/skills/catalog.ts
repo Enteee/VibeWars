@@ -2975,6 +2975,156 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  // Dervish earth enchantments and Eremite's Attack (#1021).
+  {
+    id: "dervish.eremites-attack",
+    name: "Eremite's Attack",
+    type: "attack",
+    elite: false,
+    profession: "dervish",
+    attributeId: "dervish.scythe-mastery",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 6,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    // "If it hits, this attack deals +1...8...10 damage and removes a
+    // Dervish enchantment. If an enchantment is removed, you do an
+    // additional +1...8...10 damage and strike all adjacent foes": +8 and
+    // +8, the rank-12 values. The blow reads the enchantment the removal
+    // will take, before it lands (ADR-0029).
+    attack: {
+      weapon: "scythe",
+      weaponDamage: 1,
+      bonusDamage: { scaling: { attributeId: "dervish.scythe-mastery", atZero: 1, atTwelve: 8 } },
+      conditionalBonus: {
+        condition: { kind: "caster-has", category: "enchantment", profession: "dervish" },
+        amount: { scaling: { attributeId: "dervish.scythe-mastery", atZero: 1, atTwelve: 8 } },
+      },
+      cleavesAllWhen: { kind: "caster-has", category: "enchantment", profession: "dervish" },
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    effects: [
+      {
+        kind: "remove-status",
+        category: "enchantment",
+        count: 1,
+        profession: "dervish",
+        from: "caster",
+      },
+    ],
+  },
+  {
+    id: "dervish.staggering-force",
+    name: "Staggering Force",
+    // A flash enchantment: an enchantment spell with no activation.
+    type: "enchantment",
+    elite: false,
+    profession: "dervish",
+    attributeId: "dervish.earth-prayers",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 6,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "All nearby foes are struck for 10...34...40 earth damage. For 30
+    // seconds, your attacks deal earth damage": 34, its rank-12 value. The
+    // status turns the attacks, and cracks armor when it ends.
+    effects: [
+      { kind: "apply-status", statusId: "staggering-force", durationSeconds: 30 },
+      {
+        kind: "splash",
+        radius: AREA_NEARBY,
+        effects: [
+          {
+            kind: "damage",
+            type: "earth",
+            armorPenetration: 0,
+            amount: { scaling: { attributeId: "dervish.earth-prayers", atZero: 10, atTwelve: 34 } },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "dervish.dust-cloak",
+    name: "Dust Cloak",
+    type: "enchantment",
+    elite: false,
+    profession: "dervish",
+    attributeId: "dervish.earth-prayers",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "All nearby foes are struck for 10...34...40 earth damage. For 30
+    // seconds, your attacks deal earth damage": 34. The status blinds
+    // when it ends.
+    effects: [
+      { kind: "apply-status", statusId: "dust-cloak", durationSeconds: 30 },
+      {
+        kind: "splash",
+        radius: AREA_NEARBY,
+        effects: [
+          {
+            kind: "damage",
+            type: "earth",
+            armorPenetration: 0,
+            amount: { scaling: { attributeId: "dervish.earth-prayers", atZero: 10, atTwelve: 34 } },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "dervish.aura-of-thorns",
+    name: "Aura of Thorns",
+    type: "enchantment",
+    elite: false,
+    profession: "dervish",
+    attributeId: "dervish.earth-prayers",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "All nearby foes begin Bleeding for 5...13...15 seconds. For 30
+    // seconds, this enchantment does nothing": 13 s. The status cripples
+    // when it ends.
+    effects: [
+      { kind: "apply-status", statusId: "aura-of-thorns", durationSeconds: 30 },
+      {
+        kind: "splash",
+        radius: AREA_NEARBY,
+        effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: 13 }],
+      },
+    ],
+  },
   {
     id: "ranger.savage-shot",
     name: "Savage Shot",

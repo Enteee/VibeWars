@@ -110,6 +110,10 @@ export const SKILL_ICONS = {
   "dervish.zealous-sweep": { glyph: "energy", modifier: "clock" },
   "dervish.mystic-twister": { glyph: "snowflake", modifier: "self" },
   "dervish.victorious-sweep": { glyph: "axe", modifier: "self" },
+  "dervish.eremites-attack": { glyph: "axe", modifier: "less" },
+  "dervish.staggering-force": { glyph: "mountain", modifier: "self" },
+  "dervish.dust-cloak": { glyph: "shard", modifier: "self" },
+  "dervish.aura-of-thorns": { glyph: "shard", modifier: "bleed" },
   "ranger.savage-shot": { glyph: "arrow" },
   // A placeholder until asset-designer's icon (#1008).
   "ranger.concussion-shot": { glyph: "interrupt", modifier: "stun" },
