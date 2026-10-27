@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0,
   "rechargeSeconds": 4,
+  "upkeep": false,
   "description": "If this attack hits, you deal +5...21...25 damage. If target foe has less Health than you, you gain 30...70...80 Health.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

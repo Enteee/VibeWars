@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0,
   "rechargeSeconds": 10,
+  "upkeep": false,
   "description": "For 30 seconds, the next 1...4...5 times you hit with a scythe, all other adjacent foes take 10...50...60 earth damage.",
   "variant": "pvp",
   "ruleset": "gw1-reference",
