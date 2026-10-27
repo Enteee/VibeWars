@@ -172,7 +172,11 @@ describe("pushIdentity", () => {
   it("reads the login github greets the key with", () => {
     const key = path.join(home(), "id_ed25519");
     fs.writeFileSync(key, SECRET);
-    const id = pushIdentity(key, () => ({ code: 1, stdout: "Hi vibewars-bot! You've done it." }));
+    const id = pushIdentity(key, () => ({
+      code: 1,
+      stdout: "",
+      stderr: "Hi vibewars-bot! You've done it.",
+    }));
     expect(id.who).toBe("vibewars-bot");
     expect(JSON.stringify(id)).not.toContain(SECRET);
   });

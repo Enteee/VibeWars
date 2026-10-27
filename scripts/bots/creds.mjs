@@ -81,7 +81,7 @@ const NOT_SET_UP = { state: "not set up", who: null, expiry: null, scopes: null 
 const failed = (note) => ({ state: "error", who: null, expiry: null, scopes: null, note });
 
 /**
- * @typedef {(command: string, args: string[], env: Record<string, string>, unset: readonly string[]) => { code: number, stdout: string }} Run
+ * @typedef {(command: string, args: string[], env: Record<string, string>, unset: readonly string[]) => { code: number, stdout: string, stderr?: string }} Run
  * A command runs with the shell's environment, plus `env`, minus `unset`.
  */
 
@@ -111,6 +111,7 @@ export function runCommand(command, args, env, unset) {
   return {
     code: result.status ?? 1,
     stdout: typeof result.stdout === "string" ? result.stdout : "",
+    stderr: typeof result.stderr === "string" ? result.stderr : "",
   };
 }
 
@@ -239,7 +240,8 @@ export function pushIdentity(key, run = runCommand) {
     {},
     [],
   );
-  const who = /^Hi ([^!\s]+)!/m.exec(result.stdout)?.[1];
+  // ssh prints the greeting on stderr.
+  const who = /^Hi ([^!\s]+)!/m.exec(result.stderr ?? "")?.[1];
   return who === undefined
     ? failed("github did not greet this key")
     : { state: "ok", who, expiry: null, scopes: null };
