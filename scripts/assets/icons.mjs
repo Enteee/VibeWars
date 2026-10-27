@@ -927,6 +927,23 @@ const skillGlyph = {
     bladeMark(inkLine("M11 6.5A3.5 3.5 0 1 0 8.5 11.5M8.5 11.5L10.5 12M8.5 11.5L9 9.5", 1.8)),
   "blade-fast": () =>
     bladeMark(inkLine("M3.5 5.5L6.5 8.5L3.5 11.5M7.5 5.5L10.5 8.5L7.5 11.5", 1.8)),
+  // A blade with a drop struck through above it: a weapon spell that cleanses (#1048).
+  "blade-cleanse": () =>
+    bladeMark(
+      `<path d="M8 3C8 3 4.5 7 4.5 9.2A3.5 3.5 0 0 0 11.5 9.2C11.5 7 8 3 8 3Z" ${stroke(C.ink, 1.5)}/>` +
+        inkLine("M3.5 3.5L12 12", 1.6),
+    ),
+  // A blade with a drop of blood above it: a weapon spell that bleeds the wielder (#1048).
+  "blade-drop": () =>
+    bladeMark(inkFill("M8 2.5C8 2.5 4.5 6.5 4.5 9A3.5 3.5 0 0 0 11.5 9C11.5 6.5 8 2.5 8 2.5Z")),
+  // A blade with shards flying off above it: a weapon spell that splinters (#1048).
+  "blade-shards": () => bladeMark(inkFill("M3 4L6 3L5.5 6ZM8 6L11 5L10 8.5ZM4 9L7 8.5L6 11.5Z")),
+  // A sword hilt with a plus on its grip: a weapon spell that mends (#1048).
+  hilt: () =>
+    inkLine("M5 9.5H19", 2.8) +
+    inkLine("M12 9.5V20.5", 4) +
+    inkFill("M12 2.5L15 6.5L12 8L9 6.5Z") +
+    `<path d="M12 12.5V17.5M9.5 15H14.5" stroke="${C.bg}" stroke-width="1.6" stroke-linecap="round" fill="none"/>`,
   // A scythe: a long haft, the blade curved over its top (#990).
   scythe: () =>
     inkLine("M7 21L16 6", 2.4) + inkFill("M16 6C12 2.5 7 3 3.5 6.5C8 5.5 11.5 6.5 14.5 9Z"),

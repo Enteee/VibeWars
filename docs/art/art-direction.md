@@ -654,8 +654,9 @@ it, not baked in, so one file serves every screen.
   axe, sword, hammer, spear, arrow, volley, interrupt (burst), speed (chevrons
   right), slow (chevrons left), dash, energy (bolt), mountain (earth), cleanse
   (drop, struck through), armor (shield), flask, flame, trident, hawk, rock,
-  arrow-burst, arrow-pierce, arrow-flame. A new primary effect adds a glyph; a
-  new skill adds a row.
+  arrow-burst, arrow-pierce, arrow-flame, blade-cleanse, blade-drop,
+  blade-shards, hilt. A new primary effect adds a glyph; a new skill adds a
+  row.
 
 ### Skill slot states
 
