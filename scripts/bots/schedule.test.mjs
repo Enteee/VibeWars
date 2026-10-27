@@ -34,6 +34,14 @@ describe("parseSchedule (#537)", () => {
     expect(groom).toMatchObject({ id: "groom-backlog", to: "manager", everyMinutes: 30 });
   });
 
+  it("ships the business-analyst's KPI review, every 6 hours (#893)", () => {
+    const shipped = parseSchedule(fs.readFileSync(SHIPPED, "utf8"));
+    expect(shipped.find((nudge) => nudge.id === "kpi-review")).toMatchObject({
+      to: "business-analyst",
+      everyMinutes: 360,
+    });
+  });
+
   it("rejects each bad field, naming where", () => {
     expect(() => parseSchedule("[]")).toThrow("schedule is not an object");
     expect(() => parseSchedule('{"nudges":[],"x":1}')).toThrow("schedule.x");

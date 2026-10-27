@@ -17,6 +17,12 @@
       "to": "manager",
       "everyMinutes": 120,
       "text": "Staffing review: run `company load`. Hire where a column is backing up (Ready deep → developer; QA deep → qa-tester; In Review deep → a reviewer), fire an employee idle for the whole window, within maxAgents. Then one line to the operator: what you changed and why, or 'no change' and why."
+    },
+    {
+      "id": "kpi-review",
+      "to": "business-analyst",
+      "everyMinutes": 360,
+      "text": "KPI review: read hub/kpis.json and compare with last time. Pick at most three findings that matter (a column backing up, cycle time rising, a role burning the 5 h budget, an employee pinned at 100% CPU or growing memory, GraphQL draining, disk near the hold). Check unclear causes with the role concerned, then send the manager one message: finding, evidence (number and window), suggested action. Nothing worth saying: send nothing."
     }
   ]
 }

@@ -431,6 +431,23 @@ describe("deliverPeer", () => {
     expect(delivered.notice?.text).toMatch(/not running right now/);
   });
 
+  it("delivers the business-analyst's message to the manager (#893)", () => {
+    const roles = [...ROLES, "business-analyst"];
+    const delivered = deliverPeer(
+      { to: "manager", text: "Ready is 9 deep, 7 d median 2h" },
+      {
+        ...base,
+        from: "business-analyst",
+        roles,
+        employees: new Map(roles.map((role) => [role, role])),
+        present: new Set(roles),
+      },
+    );
+    expect(delivered.deliveries.map((d) => d.employee)).toEqual(["manager"]);
+    expect(delivered.notice).toBeNull();
+    expect(ROLE_STYLE["business-analyst"]).toEqual({ emoji: "📈", name: "Business Analyst" });
+  });
+
   it("refuses a name that is not a role, telling only the sender", () => {
     const delivered = deliverPeer({ to: "gameplay", text: "x" }, base);
     expect(delivered.deliveries).toEqual([]);
@@ -833,6 +850,15 @@ describe("questions for the operator", () => {
     const delivered = ask("developer", { text: "can I?", options: [] });
     expect(delivered.question).toBeNull();
     expect(delivered.mirror).toBeNull();
+    expect(delivered.notice?.text).toMatch(/NOT posted.*Ask the manager/);
+  });
+
+  it("refuses the business-analyst's too: it advises the manager (#893)", () => {
+    const delivered = deliverPeer(
+      { kind: "ask", text: "hire?", options: [] },
+      { ...base, roles: [...ROLES, "business-analyst"], from: "business-analyst" },
+    );
+    expect(delivered.question).toBeNull();
     expect(delivered.notice?.text).toMatch(/NOT posted.*Ask the manager/);
   });
 
