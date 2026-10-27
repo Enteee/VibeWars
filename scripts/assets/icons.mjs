@@ -296,6 +296,18 @@ const status = {
       `<path d="M7 19c0-6 4-10.5 10-10.5 0 6-4 10.5-10 10.5z" ${stroke(c, 1.8)}/>` +
       `<path d="M7 19l6.5-6.5" ${stroke(c, 1.8)}/>`,
   ],
+  // Stance: a bolt, blocks and attacks faster (#976).
+  "lightning-reflexes": [
+    "stance",
+    (c) => `<path d="M13.5 5L8 13h4l-1.5 6L16 11h-4z" ${stroke(c, 2)}/>`,
+  ],
+  // Stance: two chevrons and a bar, away and blocking (#976).
+  escape: [
+    "stance",
+    (c) =>
+      `<path d="M6 8.5l4 3.5-4 3.5M11 8.5l4 3.5-4 3.5" ${stroke(c, 2.2)}/>` +
+      `<path d="M18 7.5v9" ${stroke(c, 2.2)}/>`,
+  ],
   // Stance: an arrow come round, spells back sooner (#938).
   "mantra-of-recovery": [
     "stance",

@@ -54,6 +54,8 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   frenzy: icon("frenzy"),
   "dark-escape": icon("dark-escape"),
   "natural-stride": icon("natural-stride"),
+  "lightning-reflexes": icon("lightning-reflexes"),
+  escape: icon("escape"),
   "mantra-of-recovery": icon("mantra-of-recovery"),
   "watch-yourself": icon("watch-yourself"),
   "healing-signet-armor": icon("healing-signet-armor"),

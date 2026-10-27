@@ -501,6 +501,16 @@ refreshed one does not end it. Damage taken is multiplied after armor
 and before a Rune of Absorption, on every damage packet; health loss,
 sacrifice and degeneration are not damage packets and are left alone.
 
+Two Ranger stances block (#976). Lightning Reflexes (Expertise, 10
+energy, 45 s recharge, 10 s): a 75% chance to block melee and projectile
+attacks, and you attack 33% faster, swings and attack skills alike.
+Escape (Expertise elite, 5 energy, 12 s recharge, 7 s): you move 33%
+faster and block 75% of attacks, until you make a melee attack, hit, miss
+or block. A shot from a bow, an arrow attack skill or a thrown spear
+keeps it. Pin Down and Hunter's Shot are bow attacks: Pin Down cripples
+for 13 s, and Hunter's Shot (1 s to use) bleeds for 21 s, when the arrow
+hits; a block or a blind miss lands neither.
+
 **Mantra of Recovery** (Mesmer elite stance, Fast Casting, 5 energy, 15 s
 recharge, #938) makes every spell you finish in the next 17 s recharge
 33% faster. It is read as the recharge starts: a spell finished after the
