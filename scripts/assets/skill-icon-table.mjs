@@ -67,10 +67,10 @@ export const SKILL_ICONS = {
   // A placeholder: the bleed mark stands in for its Deep Wound (#921).
   "paragon.cruel-spear": { glyph: "spear", modifier: "bleed" },
   // Placeholders until asset-designer's icons (#1030).
-  "paragon.barbed-spear": { glyph: "spear", modifier: "bleed" },
+  "paragon.barbed-spear": { glyph: "spear", modifier: "clock" },
   "paragon.maiming-spear": { glyph: "spear", modifier: "down" },
   "paragon.merciless-spear": { glyph: "spear", modifier: "less" },
-  "paragon.stunning-strike": { glyph: "spear", modifier: "stun" },
+  "paragon.stunning-strike": { glyph: "spear", modifier: "hourglass" },
   "paragon.harriers-toss": { glyph: "spear", modifier: "up" },
   "warrior.healing-signet": { glyph: "heal", modifier: "self" },
   "warrior.watch-yourself": { glyph: "armor", modifier: "area" },
