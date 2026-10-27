@@ -241,7 +241,9 @@ export type StateCondition =
    * stands within `radius` of it (#885): Horns of the Ox's "not adjacent
    * to any allies".
    */
-  | { readonly kind: "target-alone"; readonly radius: number };
+  | { readonly kind: "target-alone"; readonly radius: number }
+  /** The effect's target did not walk in the previous tick (#921, `Combatant.moving`). */
+  | { readonly kind: "target-not-moving" };
 
 export type EffectCondition = EventCondition | StateCondition;
 
@@ -532,6 +534,14 @@ export interface Combatant {
    * off-hand attack on each may follow.
    */
   readonly chainMarks: Map<string, ChainMark>;
+  /**
+   * It walked during the previous tick (#921): its position changed from
+   * that tick's start to its end. Written for everyone at the end of each
+   * tick, so it reads the same whoever resolves first, one tick late.
+   * Knocked down, in aftercast, dead or walking into a wall: not moving.
+   * A respawn or a reset clears it.
+   */
+  moving: boolean;
   /**
    * Weapon, armor and rune effects, already resolved (ADR-0012).
    *

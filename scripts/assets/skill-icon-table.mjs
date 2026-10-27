@@ -50,8 +50,13 @@ export const SKILL_ICONS = {
   "warrior.sprint": { glyph: "speed" },
   "assassin.dash": { glyph: "dash" },
   "paragon.wild-throw": { glyph: "spear" },
+  // A placeholder: the bleed mark stands in for its Deep Wound (#921).
+  "paragon.cruel-spear": { glyph: "spear", modifier: "bleed" },
   "warrior.healing-signet": { glyph: "heal", modifier: "self" },
   "warrior.watch-yourself": { glyph: "armor", modifier: "area" },
+  "paragon.fall-back": { glyph: "speed", modifier: "area" },
+  // A placeholder: no modifier yet says "while not moving" (#921).
+  "paragon.stand-your-ground": { glyph: "armor", modifier: "clock" },
   "ranger.apply-poison": { glyph: "flask" },
   "elementalist.glyph-of-lesser-energy": { glyph: "energy", modifier: "less" },
   "elementalist.lightning-orb": { glyph: "lightning-orb" },

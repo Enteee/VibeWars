@@ -61,7 +61,7 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
   const roles: SkillRole[] = [];
   if (status.category === "hex" || status.category === "condition") {
     roles.push(status.category);
-  } else if (status.armorModifier > 0 || status.block !== undefined) {
+  } else if (status.armorModifier > 0 || status.armorWhileStill > 0 || status.block !== undefined) {
     roles.push("defence");
   }
   if (status.interruptsSpells) roles.push("interrupt");

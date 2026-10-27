@@ -623,6 +623,7 @@ function isStateCondition(condition: EffectCondition): condition is StateConditi
     case "target-casting":
     case "caster-has":
     case "target-alone":
+    case "target-not-moving":
       return true;
   }
 }
@@ -664,6 +665,8 @@ export function stateHolds(
         )
       );
     }
+    case "target-not-moving":
+      return !target.moving;
   }
 }
 
@@ -731,6 +734,7 @@ function conditionHolds(
     case "target-casting":
     case "caster-has":
     case "target-alone":
+    case "target-not-moving":
       return held.has(condition);
   }
 }

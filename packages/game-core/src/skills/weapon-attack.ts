@@ -359,6 +359,9 @@ export function landBlow(
  * Poison's poison. Read when the blow lands, so a preparation that ran
  * out mid-swing or mid-flight adds nothing. Physical attacks only, as GW1
  * says: a wand's or a staff's bolt carries none.
+ *
+ * Every hit, a wand's bolt included, first ends the attacker's statuses
+ * that end when it hits (#921), as "Fall Back!".
  */
 export function attackHitRiders(
   attacker: Combatant,
@@ -368,18 +371,24 @@ export function attackHitRiders(
   rules: CombatRules,
   surroundings: Surroundings,
 ): CombatEvent[] {
+  const ended: CombatEvent[] = attacker.statuses
+    .endOnBearerHit()
+    .map((statusId) => ({ kind: "status-expired", targetId: attacker.id, statusId }));
   if (!isPhysicalDamage(mainHand.damageType)) {
-    return [];
+    return ended;
   }
-  return attacker.statuses.active.flatMap(({ id }) =>
-    applyEffects(getStatusDefinition(id).onAttackHit, {
-      caster: attacker,
-      target: victim,
-      rng,
-      rules,
-      surroundings,
-    }),
-  );
+  return [
+    ...ended,
+    ...attacker.statuses.active.flatMap(({ id }) =>
+      applyEffects(getStatusDefinition(id).onAttackHit, {
+        caster: attacker,
+        target: victim,
+        rng,
+        rules,
+        surroundings,
+      }),
+    ),
+  ];
 }
 
 /**

@@ -163,6 +163,12 @@ export function describeStatus(id: string): string {
     const sign = definition.armorModifier > 0 ? "+" : "";
     parts.push(`${sign}${String(definition.armorModifier)} armor`);
   }
+  if (definition.armorWhileStill !== 0) {
+    parts.push(`${signed(definition.armorWhileStill)} armor while not moving`);
+  }
+  if (definition.healthPerSecondWhileMoving !== 0) {
+    parts.push(`${String(definition.healthPerSecondWhileMoving)} Health per second while moving`);
+  }
   if (definition.armorReduction !== undefined) {
     const { amount, floor } = definition.armorReduction;
     parts.push(`−${String(amount)} armor (not below ${String(floor)})`);
@@ -230,6 +236,9 @@ export function describeStatus(id: string): string {
   }
   if (definition.endsWhenBearerAttacks) {
     parts.push("ends if the bearer attacks");
+  }
+  if (definition.endsWhenBearerHits) {
+    parts.push("ends when the bearer hits");
   }
   for (const trigger of definition.triggers) {
     parts.push(...describeTrigger(trigger));
@@ -302,6 +311,8 @@ function conditionText(condition: EffectCondition): string {
       return condition.radius === AREA_ADJACENT
         ? "If target is not adjacent to any allies"
         : `If target has no allies within ${String(condition.radius)}`;
+    case "target-not-moving":
+      return "If target is not moving";
   }
 }
 

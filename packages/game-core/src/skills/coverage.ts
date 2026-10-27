@@ -32,8 +32,7 @@ export type MissingMechanic =
   | "enchantment-sacrifice"
   | "reactive-triggers"
   | "expiry-triggers"
-  | "title-attribute"
-  | "target-movement";
+  | "title-attribute";
 
 /** What each missing mechanic would mean to build, in one line. */
 export const MISSING_MECHANIC_DESCRIPTIONS: Readonly<Record<MissingMechanic, string>> =
@@ -46,7 +45,6 @@ export const MISSING_MECHANIC_DESCRIPTIONS: Readonly<Record<MissingMechanic, str
     "reactive-triggers": "effects that fire in response to something happening to you",
     "expiry-triggers": "effects that fire when a status ends rather than when it is applied",
     "title-attribute": "a PvE title track as the skill's attribute",
-    "target-movement": "an effect that depends on whether its target is moving",
   });
 
 /**
@@ -70,9 +68,6 @@ const UNIMPLEMENTED_REASONS: Readonly<Record<string, readonly MissingMechanic[]>
   "necromancer.contagion": ["reactive-triggers"],
   // "The caster is healed for 30...120 when Parasitic Bond ends."
   "necromancer.parasitic-bond": ["expiry-triggers"],
-  // "If it hits a non-moving target, you inflict a Deep Wound": the
-  // wound, the reason to use it, depends on the target standing still.
-  "paragon.cruel-spear": ["target-movement"],
   // PvE-only: its attribute is "Sunspear rank", a title track (ADR-0029).
   "warrior.whirlwind-attack": ["title-attribute"],
 });
