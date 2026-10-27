@@ -1,4 +1,5 @@
 import {
+  ADRENALINE_PER_STRIKE,
   DEFAULT_SKILL_BAR,
   defaultBuildEquipment,
   type CombatLogEntry,
@@ -6,9 +7,11 @@ import {
 } from "@vibewars/game-core";
 import {
   MAX_WIRE_COMBATS,
+  parseAdrenaline,
   parsePeerHello,
   parseWireCombatBatch,
   parseWireSnapshotPart,
+  type AdrenalineMessage,
   type CastRefusedMessage,
 } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
@@ -337,9 +340,9 @@ describe("networked combat (P2P)", () => {
     await closeDistance(match, a, b.selfSessionId, 60);
     await target(match, a, b.selfSessionId);
 
-    // Backbreaker costs 9 adrenaline: one strike per hammer blow.
+    // Backbreaker costs 9 strikes: one per hammer blow (#463).
     a.sendIntent({ kind: "attack", targetId: b.selfSessionId });
-    await until(match, () => (self(a)?.adrenaline ?? 0) >= 9, "the adrenaline", 30);
+    await until(match, () => (a.getAdrenaline()[0] ?? 0) >= 9 * 25, "the adrenaline", 40);
     a.sendIntent({ kind: "use-skill", slot: 0 });
     await until(
       match,
@@ -442,21 +445,67 @@ describe("networked combat (P2P)", () => {
     expect(self(a)?.attackTargetSessionId).toBeUndefined();
   });
 
+  it("sends the striker alone its adrenaline, once a blow lands, and again only when it changes (#463)", async () => {
+    const match = startMatch();
+    const { connection: a, transport: ta } = await match.join();
+    const { connection: b, transport: tb } = await match.join();
+    await match.step(TICK);
+    const toA: AdrenalineMessage[] = [];
+    const toB: AdrenalineMessage[] = [];
+    ta.on("adrenaline", (data) => {
+      const message = parseAdrenaline(data);
+      if (message !== undefined) {
+        toA.push(message);
+      }
+    });
+    tb.on("adrenaline", (data) => {
+      const message = parseAdrenaline(data);
+      if (message !== undefined) {
+        toB.push(message);
+      }
+    });
+    await closeDistance(match, a, b.selfSessionId, 30);
+    await target(match, a, b.selfSessionId);
+
+    const severArtery = DEFAULT_SKILL_BAR.indexOf("warrior.sever-artery");
+    a.sendIntent({ kind: "attack", targetId: b.selfSessionId });
+    await until(match, () => toA.length > 0, "a's adrenaline");
+    expect(toA[0]?.slots[severArtery]).toBe(ADRENALINE_PER_STRIKE);
+    expect(a.getAdrenaline()[severArtery]).toBe(ADRENALINE_PER_STRIKE);
+
+    // A message a blow until Sever Artery holds its 4 strikes...
+    await until(
+      match,
+      () => a.getAdrenaline()[severArtery] === 4 * ADRENALINE_PER_STRIKE,
+      "Sever Artery charged",
+    );
+    expect(toA).toHaveLength(4);
+    // ...then more blows change nothing, and say nothing.
+    await match.step(4);
+    expect(toA).toHaveLength(4);
+    expect(toB).toEqual([]);
+  });
+
   it("syncs applied statuses so the client can show condition markers, and ticks them as degeneration", async () => {
     const { match, a, b } = await joinPair();
     await closeDistance(match, a, b.selfSessionId, 300);
     await target(match, a, b.selfSessionId);
 
-    // Sever Artery costs 4 adrenaline, earned by landing attacks: so swing
-    // twice first. The adrenaline economy working as designed.
+    // Sever Artery costs 4 strikes of adrenaline, one per landed attack:
+    // so swing four times first. The adrenaline economy working as designed.
     const heard = combatMessages(a);
     a.sendIntent({ kind: "attack", targetId: b.selfSessionId });
-    await until(match, () => (self(a)?.adrenaline ?? 0) >= 4, "adrenaline from landing two hits");
+    const severArtery = DEFAULT_SKILL_BAR.indexOf("warrior.sever-artery");
+    await until(
+      match,
+      () => (a.getAdrenaline()[severArtery] ?? 0) >= 4 * ADRENALINE_PER_STRIKE,
+      "adrenaline from landing four hits",
+    );
 
     await closeDistance(match, a, b.selfSessionId, 30);
     a.sendIntent({
       kind: "use-skill",
-      slot: DEFAULT_SKILL_BAR.indexOf("warrior.sever-artery"),
+      slot: severArtery,
     });
     await until(
       match,

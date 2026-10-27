@@ -321,7 +321,7 @@ describe("the bar with Glyph of Lesser Energy up (#637)", () => {
     if (self === undefined || slot === null || slot === undefined) {
       throw new Error("no player or no Fireball");
     }
-    expect(slotAffordable(slot, { ...self, energy: 3 })).toBe(true);
+    expect(slotAffordable(slot, { ...self, energy: 3 }, 0)).toBe(true);
 
     // The glyph's 15 s run out unused: the bar goes back.
     run(15);

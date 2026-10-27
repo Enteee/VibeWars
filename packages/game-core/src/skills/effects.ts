@@ -1,4 +1,5 @@
 import { DIVINE_FAVOR_ATTRIBUTE, divineFavorBonusHeal } from "../primary-attributes.js";
+import { emptyAdrenaline } from "./adrenaline.js";
 import { getSkill } from "./catalog.js";
 import { mitigate, skillDamage } from "./damage.js";
 import { effectiveMaxEnergy } from "./overcast.js";
@@ -233,7 +234,7 @@ function resurrect(
     0,
     Math.min(Math.floor(target.maxEnergy * energyFraction), effectiveMaxEnergy(target)),
   );
-  target.adrenaline = 0;
+  emptyAdrenaline(target);
   events.push({ kind: "resurrected", targetId: target.id, healthFraction, energyFraction });
 }
 

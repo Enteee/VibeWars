@@ -182,7 +182,9 @@ test("the arrows move; A, once move-left, casts slot 5 and moves nobody (#302)",
   // Slot 5 of the house bar is a self-cast enchantment. Held, A casts it
   // once, and the player stays where they are while it is held.
   await page.keyboard.down("a");
-  await expect(page.locator(".hud-statuses")).not.toContainText("no active effects");
+  await expect(
+    page.getByRole("list", { name: "your effects" }).getByRole("listitem"),
+  ).not.toHaveCount(0);
   const held = await arenaShot(page, canvas);
   await page.waitForTimeout(500);
   expect((await arenaShot(page, canvas)).equals(held), "A should not move the player").toBe(true);
@@ -227,7 +229,9 @@ test("activating a self-cast skill spends energy and applies its effect", async 
 
   // Slot 5 is a self-target enchantment, so it needs no target — which
   // makes it the one skill a solo player can honestly test.
-  await expect(page.locator(".hud-statuses")).toContainText("no active effects");
+  await expect(page.getByRole("list", { name: "your effects" }).getByRole("listitem")).toHaveCount(
+    0,
+  );
   const before = await readEnergy(page);
 
   await page.keyboard.press(key("skill-5"));
@@ -235,7 +239,9 @@ test("activating a self-cast skill spends energy and applies its effect", async 
   // The enchantment appearing is the host's word that the cast
   // resolved; energy alone could just be a client-side guess. Named, so a
   // status decoded from the wrong index (#632) fails here.
-  await expect(page.locator(".hud-statuses")).toHaveText("armor-boost");
+  await expect(
+    page.getByRole("list", { name: "your effects" }).getByRole("img", { name: "Armor Boost" }),
+  ).toBeVisible();
   expect(await readEnergy(page)).toBeLessThan(before);
 });
 
@@ -262,7 +268,9 @@ test("a refused cast says why, briefly, above the skill bar", async ({ page }) =
   // landed, pressing it again is refused whoever else is in the room.
   // Before issue #51 this key press did nothing at all.
   await page.keyboard.press(key("skill-5"));
-  await expect(page.locator(".hud-statuses")).not.toContainText("no active effects");
+  await expect(
+    page.getByRole("list", { name: "your effects" }).getByRole("listitem"),
+  ).not.toHaveCount(0);
   await page.keyboard.press(key("skill-5"));
 
   await expect(message).toHaveText("That skill is recharging.");

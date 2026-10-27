@@ -7,7 +7,7 @@ import { createRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { skillDamage, effectiveArmor } from "../skills/damage.js";
 import { applyEffects } from "../skills/effects.js";
-import { withStatusDefinitions } from "../skills/testing.js";
+import { chargeAdrenaline, withStatusDefinitions } from "../skills/testing.js";
 import type { Combatant } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
@@ -166,7 +166,7 @@ describe('"Watch Yourself!" (#524)', () => {
         warrior("foe", 1, vec2(40, 0)),
       ],
     });
-    get(match, "w").combatant.adrenaline = 4;
+    chargeAdrenaline(get(match, "w").combatant);
     return match;
   }
 

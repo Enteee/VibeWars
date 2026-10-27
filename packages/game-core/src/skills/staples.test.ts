@@ -4,10 +4,10 @@ import { AREA_ADJACENT, AREA_NEARBY, RANGE_MELEE } from "../distances.js";
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { WEAPONS, type Weapon } from "../equipment/weapons.js";
 import { createRng, type SimulationRng } from "../rng.js";
-import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
+import { ADRENALINE_PER_STRIKE, MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { canActivate, payCost } from "./activation.js";
-import { getSkill } from "./catalog.js";
+import { IMPLEMENTED_SKILLS, getSkill } from "./catalog.js";
 import { applySkillEffects, type CombatEvent } from "./effects.js";
 import { resolveTargets, type TargetCandidate } from "./targeting.js";
 import { makeCombatant } from "./testing.js";
@@ -39,6 +39,15 @@ const steady = (roll = 10, float = 0.95): SimulationRng =>
 /** Every float 0.5: a blind attacker misses (90%). */
 const missing = (): SimulationRng => steady(10, 0.5);
 
+/** Every adrenaline skill in the catalog, charged to its cost (#463). */
+function chargedAdrenaline(): Map<string, number> {
+  return new Map(
+    IMPLEMENTED_SKILLS.flatMap((each) =>
+      each.cost?.kind === "adrenaline" ? [[each.id, each.cost.amount * ADRENALINE_PER_STRIKE]] : [],
+    ),
+  );
+}
+
 function holding(id: string, team: number, weapon: Weapon, attributeId: string): Combatant {
   return makeCombatant({
     id,
@@ -48,7 +57,7 @@ function holding(id: string, team: number, weapon: Weapon, attributeId: string):
       mainHand: { weapon, attributeId, damageType: weapon.damageType, requirementMet: true },
     },
     attributeRanks: new Map([[attributeId, 12]]),
-    adrenaline: 25,
+    adrenaline: chargedAdrenaline(),
   });
 }
 

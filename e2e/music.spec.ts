@@ -284,7 +284,8 @@ test("the beat editor plays a change, keeps it across a reload, and an error lea
 test("keys typed in the beat editor reach no skill in a match (#373)", async ({ page }) => {
   await page.goto("./");
   await startSoloMatch(page);
-  await expect(page.locator(".hud-statuses")).toContainText("no active effects");
+  const effects = page.getByRole("list", { name: "your effects" }).getByRole("listitem");
+  await expect(effects).toHaveCount(0);
   await page.locator(".hud-music").click();
   await page.getByRole("button", { name: "Edit what plays" }).click();
   const editor = page.getByRole("dialog", { name: /^Beat editor: / });
@@ -292,7 +293,7 @@ test("keys typed in the beat editor reach no skill in a match (#373)", async ({ 
   // Q is skill 1; skill 5 is a self-cast enchantment, which needs no target.
   await page.keyboard.type(`q${key("skill-5").replace(/^Key/, "").toLowerCase()}`);
   await page.waitForTimeout(1000);
-  await expect(page.locator(".hud-statuses")).toContainText("no active effects");
+  await expect(effects).toHaveCount(0);
   await page.keyboard.press("Escape");
   await expect(editor).toHaveCount(0);
 });

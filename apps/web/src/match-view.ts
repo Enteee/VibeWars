@@ -494,7 +494,15 @@ export async function startMatchView(
     // here left the scoreboard, the match clock and the victory banner
     // permanently blank: the server tracked all three and the HUD could
     // draw all three, and nothing connected them.
-    updateHud(hud, self, target, connection.skillBar, wallSegments, latestMatch);
+    updateHud(
+      hud,
+      self,
+      target,
+      connection.skillBar,
+      connection.getAdrenaline(),
+      wallSegments,
+      latestMatch,
+    );
     updateRecharges(hud, connection.skillBar, connection.getRecharges());
   };
   const offFrame = viewport?.onFrame(onFrame) ?? animationFrames(onFrame);
@@ -555,6 +563,7 @@ export async function startMatchView(
       // the shared viewport, so they go one by one or pile up per match.
       hud.root.remove();
       hud.slotTips.dispose();
+      hud.effects.dispose();
       hud.scoreboard.remove();
       hud.result.remove();
       offMute();

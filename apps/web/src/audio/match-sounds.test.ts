@@ -27,7 +27,6 @@ function snapshot(castingSkillId: string | undefined): MatchSnapshot {
     energy: 20,
     maxEnergy: 20,
     overcast: 0,
-    adrenaline: 0,
     armor: 60,
     weaponId: undefined,
     offhandId: undefined,

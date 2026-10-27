@@ -6,6 +6,7 @@ import { WEAPONS, type Weapon } from "../equipment/weapons.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { describeSkill } from "../skills/describe.js";
 import { getSkill } from "../skills/catalog.js";
+import { chargeAdrenaline } from "../skills/testing.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
@@ -125,7 +126,7 @@ describe("stances (#523)", () => {
     const foe = get(match, "d").combatant;
     foe.statuses.apply("sprint", 100, "d");
     foe.statuses.apply("regeneration", 100, "d");
-    get(match, "a").combatant.adrenaline = 1000;
+    chargeAdrenaline(get(match, "a").combatant);
     match.setTarget("a", "d");
     expect(match.requestSkill("a", 0)?.check).toEqual({ ok: true });
     const thrown = stepFor(match, 2).filter((entry) => entry.skillId === WILD_THROW);
@@ -140,7 +141,7 @@ describe("stances (#523)", () => {
         participants: [thrower("a", vec2(0, 0)), dummy("d", vec2(300, 0))],
       });
       get(match, "d").combatant.statuses.apply("guardian", 100, "d");
-      get(match, "a").combatant.adrenaline = 1000;
+      chargeAdrenaline(get(match, "a").combatant);
       match.setTarget("a", "d");
       match.requestSkill("a", 0);
       const kinds = stepFor(match, 2)
@@ -156,7 +157,7 @@ describe("stances (#523)", () => {
       seed: "stance",
       participants: [thrower("a", vec2(0, 0)), dummy("d", vec2(300, 0))],
     });
-    get(match, "a").combatant.adrenaline = 1000;
+    chargeAdrenaline(get(match, "a").combatant);
     match.setTarget("a", "d");
     match.requestSkill("a", 0);
     const thrown = stepFor(match, 2).filter((entry) => entry.skillId === WILD_THROW);
