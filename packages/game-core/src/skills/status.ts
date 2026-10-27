@@ -26,6 +26,7 @@
  * category (`EXCLUSIVE_CATEGORIES`) is the exception: one at a time.
  */
 
+import { AREA_IN_THE_AREA } from "../distances.js";
 import type { ProfessionId } from "../professions.js";
 import type { Combatant, SkillEffect } from "./types.js";
 
@@ -70,6 +71,8 @@ export type StatusId =
   | "malaise"
   | "backfire"
   | "empathy"
+  | "parasitic-bond"
+  | "contagion"
   | "shard-storm"
   | "shadow-of-fear"
   | "regeneration"
@@ -277,16 +280,47 @@ export interface StatusDefinition {
   readonly triggers: readonly StatusTrigger[];
 }
 
-/** Something the bearer does that a status answers (#469). */
-export type StatusTriggerEvent = "bearer-casts-spell" | "bearer-attacks";
+/**
+ * Something that happens to the bearer that a status answers (#469):
+ * it casts a spell, attacks, gains a condition it did not have (#887), or
+ * the status itself ends, for any reason but a refresh or a reset (#887).
+ */
+export type StatusTriggerEvent =
+  "bearer-casts-spell" | "bearer-attacks" | "bearer-gains-condition" | "ends";
 
 export interface StatusTrigger {
   readonly on: StatusTriggerEvent;
-  /** Applied with the status's source as caster and the bearer as target. */
-  readonly effects: readonly SkillEffect[];
+  /**
+   * Applied with the status's source as caster, on `target`: the bearer
+   * (Backfire's damage), or the source itself (Parasitic Bond's heal, #887).
+   */
+  readonly effects: readonly TriggerEffect[];
+  readonly target: "bearer" | "source";
   /** The skill the log names it after: "mesmer.backfire". */
   readonly skillId: string;
 }
+
+/**
+ * Contagion's spread (#887): the condition the bearer just gained, for the
+ * duration it was put on the bearer, on every living foe of the bearer
+ * within `radius` of it. It needs positions, so the simulation resolves it.
+ */
+export interface SpreadGainedConditionEffect {
+  readonly kind: "spread-gained-condition";
+  readonly radius: number;
+}
+
+/** What a trigger can do: any skill effect, or Contagion's spread. */
+export type TriggerEffect = SkillEffect | SpreadGainedConditionEffect;
+
+/**
+ * What happened to a `StatusSet` that a trigger may answer (#887), in the
+ * order it happened, until the simulation drains it: a condition newly on
+ * the bearer, or a status gone from it, with who had applied it.
+ */
+export type StatusChange =
+  | { readonly kind: "gained-condition"; readonly id: StatusId; readonly durationSeconds: number }
+  | { readonly kind: "ended"; readonly id: StatusId; readonly sourceId: string };
 
 /** A share of maximum health a status takes, at most `cap` (GW1's deep wound). */
 export interface MaxHealthLoss {
@@ -399,6 +433,7 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
       {
         on: "bearer-casts-spell",
         effects: [{ kind: "damage", amount: { flat: 119 }, type: "typeless", armorPenetration: 0 }],
+        target: "bearer",
         skillId: "mesmer.backfire",
       },
     ],
@@ -411,7 +446,40 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
       {
         on: "bearer-attacks",
         effects: [{ kind: "damage", amount: { flat: 39 }, type: "typeless", armorPenetration: 0 }],
+        target: "bearer",
         skillId: "mesmer.empathy",
+      },
+    ],
+  }),
+  // "For 20 seconds, target foe suffers health degeneration of 1. The
+  // caster is healed for 30...102...120 when Parasitic Bond ends": 102,
+  // its rank-12 value.
+  "parasitic-bond": define("parasitic-bond", "Parasitic Bond", "hex", {
+    profession: "necromancer",
+    healthPips: -1,
+    triggers: [
+      {
+        on: "ends",
+        effects: [{ kind: "heal", amount: { flat: 102 }, perStatusOnTarget: [] }],
+        target: "source",
+        skillId: "necromancer.parasitic-bond",
+      },
+    ],
+  }),
+  // "For 60 seconds, whenever you suffer from a new Condition, all foes in
+  // the area suffer from that same Condition and you sacrifice
+  // 10...6...5% maximum Health": 6%, its rank-12 value.
+  contagion: define("contagion", "Contagion", "enchantment", {
+    profession: "necromancer",
+    triggers: [
+      {
+        on: "bearer-gains-condition",
+        effects: [
+          { kind: "spread-gained-condition", radius: AREA_IN_THE_AREA },
+          { kind: "sacrifice-health", percentOfMax: 6 },
+        ],
+        target: "bearer",
+        skillId: "necromancer.contagion",
       },
     ],
   }),
@@ -609,6 +677,35 @@ export function getStatusDefinition(id: StatusId): StatusDefinition {
  */
 export class StatusSet {
   readonly #statuses = new Map<StatusId, ActiveStatus>();
+  #changes: StatusChange[] = [];
+
+  /**
+   * What happened to this set since the last drain (#887), oldest first,
+   * and forget it: the simulation reads it once a tick for the triggers.
+   */
+  public drainChanges(): StatusChange[] {
+    const changes = this.#changes;
+    this.#changes = [];
+    return changes;
+  }
+
+  /** Take `ids` off the bearer, each recorded as ended. */
+  #end(ids: readonly StatusId[]): void {
+    for (const id of ids) {
+      const status = this.#statuses.get(id);
+      if (status !== undefined) {
+        this.#statuses.delete(id);
+        this.#changes.push({ kind: "ended", id, sourceId: status.sourceId });
+      }
+    }
+  }
+
+  /** Record a condition newly on the bearer (#887); any other category is not one. */
+  #gained(id: StatusId, durationSeconds: number): void {
+    if (getStatusDefinition(id).category === "condition") {
+      this.#changes.push({ kind: "gained-condition", id, durationSeconds });
+    }
+  }
 
   public get active(): readonly ActiveStatus[] {
     return [...this.#statuses.values()];
@@ -671,6 +768,7 @@ export class StatusSet {
       maintained: null,
     });
     if (!wasActive) {
+      this.#gained(id, durationSeconds);
       this.#endOnGaining(definition.category);
     }
     return !wasActive;
@@ -702,6 +800,7 @@ export class StatusSet {
       outbreak,
       maintained: null,
     });
+    this.#gained(id, durationSeconds);
   }
 
   /**
@@ -735,21 +834,28 @@ export class StatusSet {
 
   /** A status of `category` is newly on the bearer (#919): Natural Stride ends on a hex. */
   #endOnGaining(category: StatusCategory): void {
-    for (const { id } of this.active) {
-      if (getStatusDefinition(id).endsWhenBearerGains.some((gained) => gained === category)) {
-        this.#statuses.delete(id);
-      }
-    }
+    this.#end(
+      this.active
+        .filter(({ id }) =>
+          getStatusDefinition(id).endsWhenBearerGains.some((gained) => gained === category),
+        )
+        .map(({ id }) => id),
+    );
   }
 
-  /** Remove every status, of every category: what a respawn leaves. */
+  /**
+   * Remove every status, of every category: what a respawn leaves. A
+   * reset, not an ending: nothing is recorded (#887).
+   */
   public clear(): void {
     this.#statuses.clear();
   }
 
   /** Remove one status by id. Returns whether anything was removed. */
   public remove(id: StatusId): boolean {
-    return this.#statuses.delete(id);
+    const had = this.#statuses.has(id);
+    this.#end([id]);
+    return had;
   }
 
   /**
@@ -780,9 +886,7 @@ export class StatusSet {
         removed.push(status.id);
       }
     }
-    for (const id of removed) {
-      this.#statuses.delete(id);
-    }
+    this.#end(removed);
     return removed;
   }
 
@@ -800,9 +904,7 @@ export class StatusSet {
         }
       }
     }
-    for (const id of ended) {
-      this.#statuses.delete(id);
-    }
+    this.#end(ended);
     return ended;
   }
 
@@ -820,9 +922,7 @@ export class StatusSet {
         }
       }
     }
-    for (const id of ended) {
-      this.#statuses.delete(id);
-    }
+    this.#end(ended);
     return ended;
   }
 
@@ -834,9 +934,7 @@ export class StatusSet {
     const ended = this.active
       .filter(({ id }) => getStatusDefinition(id).endsWhenBearerAttacks)
       .map(({ id }) => id);
-    for (const id of ended) {
-      this.#statuses.delete(id);
-    }
+    this.#end(ended);
     return ended;
   }
 
@@ -848,9 +946,7 @@ export class StatusSet {
     const ended = this.active
       .filter(({ id }) => getStatusDefinition(id).endsWhenBearerHits)
       .map(({ id }) => id);
-    for (const id of ended) {
-      this.#statuses.delete(id);
-    }
+    this.#end(ended);
     return ended;
   }
 
@@ -862,9 +958,7 @@ export class StatusSet {
     const ended = this.active
       .filter(({ id }) => getStatusDefinition(id).endsOnKnockdownPrevented)
       .map(({ id }) => id);
-    for (const id of ended) {
-      this.#statuses.delete(id);
-    }
+    this.#end(ended);
     return ended;
   }
 
@@ -905,9 +999,7 @@ export class StatusSet {
         expired.push(status.id);
       }
     }
-    for (const id of expired) {
-      this.#statuses.delete(id);
-    }
+    this.#end(expired);
     return expired;
   }
 }

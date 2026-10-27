@@ -93,6 +93,41 @@ A failure in 2 or 3 is a bug.
 | Date | Check | Host (browser, network) | Joiner (browser, network) | Result |
 | ---- | ----- | ----------------------- | ------------------------- | ------ |
 
+## Random Arena tickets on the relays: `scripts/net/nostr-kind-probe.mjs`
+
+Code: `apps/web/src/net/transport/nostr-queue.ts` (#872, ADR-0032 §3).
+Needs the internet; not in CI.
+
+Queue tickets are ephemeral Nostr events, which a relay forwards and does
+not store, and some relays refuse them. `node
+scripts/net/nostr-kind-probe.mjs` puts two real queue boards on each relay
+in `relays.ts` alone, publishes a ticket from one and prints, per relay,
+whether its socket opened, what it answered the event and whether the
+other board heard it. It exits 0 only if most relays delivered. Run it
+when the relay list or the event kind changes. If most relays stop
+delivering, the queue goes back to the architect (ADR-0032 §3); a single
+relay that refuses can be dropped from `relays.ts`.
+
+2026-10-27: 6 of 8. `relay.kaleidoswap.com` refuses kind 23854;
+`relay.degmods.com` accepts it and delivers nothing.
+
+## Random Arena over real relays, from two networks
+
+Code: `apps/web/src/net/transport/nostr-queue.ts` and the queue under
+`packages/game-session` (#854). Run once the Random Arena button exists
+(#880), on the Pages `/next/` build.
+
+1. Two players, on different networks (a home network and a phone on its
+   mobile hotspot), each open the client and press _Random Arena_ in 1 v 1.
+2. Each queue screen counts 2 of 2 searching within a heartbeat (5 s).
+3. Within a few seconds more, both see the versus splash and land in the
+   same match, one of them hosting. Play it to its end.
+4. Both queue again; one leaves the queue. The other player's count drops
+   back at once, from the withdrawal, and no later than the ticket TTL (15 s).
+
+Pass: every step as written. A pair that queues but never meets, with
+`scripts/net/nostr-kind-probe.mjs` passing, is a bug against #854.
+
 ## Music under load, on a phone
 
 Code: `apps/web/src/music/host/` and `scripts/music-stress.mjs` (#420).

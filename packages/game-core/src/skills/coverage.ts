@@ -30,8 +30,6 @@ export type MissingMechanic =
   | "persistent-ground-area"
   | "skill-bar-mutation"
   | "enchantment-sacrifice"
-  | "reactive-triggers"
-  | "expiry-triggers"
   | "title-attribute";
 
 /** What each missing mechanic would mean to build, in one line. */
@@ -42,8 +40,6 @@ export const MISSING_MECHANIC_DESCRIPTIONS: Readonly<Record<MissingMechanic, str
     "persistent-ground-area": "an area that stays on the ground and acts on whoever is in it",
     "skill-bar-mutation": "a skill that replaces itself with a different skill at runtime",
     "enchantment-sacrifice": "removing your own enchantments as a cost, scaled by how many",
-    "reactive-triggers": "effects that fire in response to something happening to you",
-    "expiry-triggers": "effects that fire when a status ends rather than when it is applied",
     "title-attribute": "a PvE title track as the skill's attribute",
   });
 
@@ -64,10 +60,6 @@ const UNIMPLEMENTED_REASONS: Readonly<Record<string, readonly MissingMechanic[]>
   "mesmer.echo": ["skill-bar-mutation"],
   // "Lose all enchantments. For each one lost, you gain health, lose one hex..."
   "monk.contemplation-of-purity": ["enchantment-sacrifice"],
-  // "...whenever you suffer from a new Condition, all foes in the area suffer..."
-  "necromancer.contagion": ["reactive-triggers"],
-  // "The caster is healed for 30...120 when Parasitic Bond ends."
-  "necromancer.parasitic-bond": ["expiry-triggers"],
   // PvE-only: its attribute is "Sunspear rank", a title track (ADR-0029).
   "warrior.whirlwind-attack": ["title-attribute"],
 });
