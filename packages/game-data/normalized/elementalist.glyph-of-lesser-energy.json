@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 1,
   "rechargeSeconds": 30,
+  "upkeep": false,
   "description": "For 15 seconds, your next 2 spells cost 10...16...18 less Energy to cast.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

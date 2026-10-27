@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 3,
   "rechargeSeconds": 10,
+  "upkeep": false,
   "description": "For 13 seconds, you gain health regeneration +3...9...10.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

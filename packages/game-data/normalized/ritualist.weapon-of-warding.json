@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 1,
   "rechargeSeconds": 8,
+  "upkeep": false,
   "description": "For 3...7...8 seconds, target ally has a Weapon of Warding that grants target ally +2...4...4 Health regeneration and a 50% chance to block. Weapon of Warding ends if that ally attacks.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

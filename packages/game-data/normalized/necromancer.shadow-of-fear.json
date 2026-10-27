@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 2,
   "rechargeSeconds": 5,
+  "upkeep": false,
   "description": "Target foe and all adjacent foes attack 50% slower for the next 5...25...30 seconds.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

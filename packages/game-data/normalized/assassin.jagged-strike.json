@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0.5,
   "rechargeSeconds": 2,
+  "upkeep": false,
   "description": "If Jagged Strike hits, your target suffers from Bleeding for 5...17...20 seconds.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

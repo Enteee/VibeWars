@@ -228,6 +228,11 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Monk/189-Mend_Condition",
   },
   {
+    id: "monk.mending",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/174-Mending",
+  },
+  {
     id: "assassin.jagged-strike",
     profession: "assassin",
     url: "https://www.gw-memorial.net/skills/Assassin/658-Jagged_Strike",
