@@ -818,6 +818,14 @@ const skillGlyph = {
       )
       .join(""),
   interrupt: () => inkFill(burst(6)),
+  // An arrow driven down into a ground bar: pinned in place (#981).
+  pin: () => inkLine("M12 3V14", 2.4) + inkFill("M12 20.5L7 13H17Z") + inkLine("M4 21.5H20", 2.4),
+  // A shield with a bolt in it: fast and hard to hit (#981).
+  "shield-bolt": () =>
+    `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2)}/>` +
+    inkFill("M13 6L8.5 13H12L11 18L15.5 11H12Z"),
+  // Chevrons and a bar, as on the Escape stance (#981).
+  retreat: () => inkLine("M3 6L9 12L3 18M10 6L16 12L10 18", 2.5) + inkLine("M20 5V19", 2.6),
   speed: () => inkLine("M4 4L10 12L4 20M11 4L17 12L11 20", 2.5),
   slow: () => inkLine("M20 4L14 12L20 20M13 4L7 12L13 20", 2.5),
   dash: () => inkLine("M3 7H11M2 12H9M3 17H11", 2) + inkLine("M13 4L21 12L13 20", 2.6),
