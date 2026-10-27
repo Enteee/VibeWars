@@ -256,7 +256,12 @@ export type StateCondition =
    */
   | { readonly kind: "target-alone"; readonly radius: number }
   /** The effect's target did not walk in the previous tick (#921, `Combatant.moving`). */
-  | { readonly kind: "target-not-moving" };
+  | { readonly kind: "target-not-moving" }
+  /**
+   * The caster has more energy than the effect's target (#918): Mind
+   * Shock's "if you have more energy than target foe". Equal is not more.
+   */
+  | { readonly kind: "caster-more-energy" };
 
 export type EffectCondition = EventCondition | StateCondition;
 
