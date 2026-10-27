@@ -192,6 +192,7 @@ function wireEvent(event: CombatEvent): WireCombatEvent {
     durationSeconds: null,
     crit: null,
     fromId: null,
+    energy: null,
   };
   switch (event.kind) {
     case "damage":
@@ -246,6 +247,14 @@ function wireEvent(event: CombatEvent): WireCombatEvent {
       return { ...none, kind: event.kind, targetId: event.targetId, skillId: event.skillId };
     case "interrupt-missed":
       return { ...none, kind: event.kind, targetId: event.targetId, skillId: event.refusedSkillId };
+    case "resurrected":
+      return {
+        ...none,
+        kind: event.kind,
+        targetId: event.targetId,
+        amount: event.healthFraction,
+        energy: event.energyFraction,
+      };
     case "death":
     case "attack-missed":
     case "attack-blocked":
@@ -284,7 +293,7 @@ export function wireCombat(log: readonly CombatLogEntry[]): WireCombat[] {
 
 /** A wire event back as game-core's, or `undefined` for one this client does not know. */
 function combatEvent(event: WireCombatEvent): CombatEvent | undefined {
-  const { targetId, amount, skillId, statusId, durationSeconds, crit, fromId } = event;
+  const { targetId, amount, skillId, statusId, durationSeconds, crit, fromId, energy } = event;
   if (targetId === null) {
     return undefined;
   }
@@ -320,6 +329,10 @@ function combatEvent(event: WireCombatEvent): CombatEvent | undefined {
       return skillId === null ? undefined : { kind: event.kind, targetId, skillId };
     case "interrupt-missed":
       return { kind: event.kind, targetId, refusedSkillId: skillId };
+    case "resurrected":
+      return amount === null || energy === null
+        ? undefined
+        : { kind: event.kind, targetId, healthFraction: amount, energyFraction: energy };
     case "death":
     case "attack-missed":
     case "attack-blocked":

@@ -271,6 +271,74 @@ describe("targetRuleAllows (#599)", () => {
       undefined,
       "invalid-target-enemy",
     ]);
+    expect(verdicts("single-dead-ally")).toEqual([
+      "invalid-target-self",
+      undefined,
+      "invalid-target-enemy",
+    ]);
+  });
+});
+
+describe("canActivate, a resurrection (#812)", () => {
+  const restoreLife = getSkill("monk.restore-life");
+  if (restoreLife === undefined) {
+    throw new Error("Restore Life is not in the catalog");
+  }
+  const caster = makeCombatant({ id: "caster", team: 0, energy: 50 });
+  const res = (target: Parameters<typeof makeCombatant>[0]) =>
+    canActivate(
+      request({
+        skill: restoreLife,
+        caster,
+        target: makeCombatant(target),
+        targetPosition: vec2(20, 0),
+        skillBar: [restoreLife.id],
+      }),
+    );
+
+  it("accepts a dead ally", () => {
+    expect(res({ id: "ally", team: 0, dead: true })).toEqual({ ok: true });
+  });
+
+  it("refuses a living ally, a foe, dead or alive, and the caster", () => {
+    expect(res({ id: "ally", team: 0 })).toEqual({ ok: false, reason: "invalid-target-alive" });
+    expect(res({ id: "foe", team: 1, dead: true })).toEqual({
+      ok: false,
+      reason: "invalid-target-enemy",
+    });
+    expect(res({ id: "foe", team: 1 })).toEqual({ ok: false, reason: "invalid-target-enemy" });
+    expect(
+      canActivate(
+        request({ skill: restoreLife, caster, target: caster, skillBar: [restoreLife.id] }),
+      ),
+    ).toEqual({
+      ok: false,
+      reason: "invalid-target-self",
+    });
+  });
+
+  it("is out of range unless at the body's side: a touch", () => {
+    expect(
+      canActivate(
+        request({
+          skill: restoreLife,
+          caster,
+          target: makeCombatant({ id: "ally", team: 0, dead: true }),
+          targetPosition: vec2(400, 0),
+          skillBar: [restoreLife.id],
+        }),
+      ),
+    ).toEqual({ ok: false, reason: "out-of-range" });
+  });
+
+  it("leaves every other rule refusing the dead", () => {
+    const corpse = makeCombatant({ id: "ally", team: 0, dead: true });
+    for (const target of ["single-ally", "single-other-ally", "single-any"] as const) {
+      expect(canActivate(request({ skill: { ...SPELL, target }, target: corpse }))).toEqual({
+        ok: false,
+        reason: "invalid-target-dead",
+      });
+    }
   });
 });
 

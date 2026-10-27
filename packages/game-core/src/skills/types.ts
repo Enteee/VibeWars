@@ -50,7 +50,9 @@ export type TargetRule =
   /** An ally other than the caster (GW1's "Cannot target self"). */
   | "single-other-ally"
   /** Any single target including self; the caster chooses. */
-  | "single-any";
+  | "single-any"
+  /** A dead ally other than the caster: a resurrection's (#812). */
+  | "single-dead-ally";
 
 /* -------------------------------------------------------------------------- */
 /* Effects                                                                     */
@@ -143,6 +145,18 @@ export interface KnockdownEffect {
   readonly durationSeconds: number;
 }
 
+/**
+ * Bring a dead target back to life where it lies (#812), with these
+ * percentages of its maximum health and energy, as Restore Life's
+ * "returned to life with 20...56...65% health and 42...80...90% energy".
+ * A living target is left alone.
+ */
+export interface ResurrectEffect {
+  readonly kind: "resurrect";
+  readonly healthPercent: Magnitude;
+  readonly energyPercent: Magnitude;
+}
+
 /** How long "knocks down" lasts when a skill names no duration (GW1). */
 export const KNOCKDOWN_SECONDS = 2;
 
@@ -163,9 +177,9 @@ export type StateCondition =
   | { readonly kind: "target-health-below"; readonly fraction: number }
   /** The effect's target has at least one status of this category. */
   | { readonly kind: "target-has"; readonly category: StatusCategory }
-  /** The caster has at least one status of this category. */
   /** The effect's target is activating a spell (`isSpell`); a chant is not one. */
   | { readonly kind: "target-casting"; readonly spell: true }
+  /** The caster has at least one status of this category. */
   | { readonly kind: "caster-has"; readonly category: StatusCategory };
 
 export type EffectCondition = EventCondition | StateCondition;
@@ -194,7 +208,8 @@ export type UnconditionalEffect =
   | ApplyStatusEffect
   | RemoveStatusEffect
   | InterruptEffect
-  | KnockdownEffect;
+  | KnockdownEffect
+  | ResurrectEffect;
 
 export type SkillEffect = UnconditionalEffect | ConditionalEffect;
 

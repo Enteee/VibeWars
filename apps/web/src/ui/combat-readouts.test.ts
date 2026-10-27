@@ -232,6 +232,19 @@ describe("describeCombatEvent", () => {
     });
   });
 
+  it("says who brought whom back, and with how much (#812)", () => {
+    const back: CombatEvent = {
+      kind: "resurrected",
+      targetId: "dummy",
+      healthFraction: 0.25,
+      energyFraction: 0,
+    };
+    expect(describeCombatEvent(entry([back], { skillId: "monk.restore-life" }), back, nameOf)).toBe(
+      "Restore Life (Pyro) resurrects Caster dummy (25% health, 0% energy)",
+    );
+    expect(logToneOf("resurrected")).toBe("heal");
+  });
+
   it("says who lost energy to what, and floats it in blue (#793)", () => {
     const burned: CombatEvent = { kind: "energy-loss", targetId: "dummy", amount: 8 };
     expect(

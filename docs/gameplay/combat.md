@@ -639,6 +639,16 @@ scoreboard.
 A dead player respawns at a spawn point of their own team after 8
 seconds, at full health and energy, with all statuses cleared.
 
+A Monk can bring them back sooner (#812). **Restore Life** is a touch
+spell aimed at an ally's corpse: right click the body to target it (the
+living under the pointer win, and a foe's corpse is never picked; Tab
+skips the dead). After its 4 s cast the ally stands up where they fell,
+with 56% health and 80% energy at Healing Prayers 12, no effects and no
+adrenaline, and their respawn timer is gone. On a living ally it is
+refused ("That ally is alive."). If the corpse is back on its feet by
+the time the cast ends, a second resurrection landing first or the
+respawn timer running out, it does nothing, and the energy is spent.
+
 ## Match end
 
 A match ends when a team reaches the score target, or when the clock

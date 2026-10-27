@@ -4,6 +4,7 @@ import {
   getSkill,
   hasLineOfSight,
   isWeaponId,
+  targetLivenessAllows,
   targetRuleAllows,
   wieldsFor,
   type Segment,
@@ -155,8 +156,10 @@ export function wrongWeapon(
  * makes, so the hint and the refusal cannot disagree. A hint, not a gate:
  * the press still goes to the host (brief §32).
  *
- * Nothing is out of range with no target, a dead one, or for a skill that
- * only targets its caster. An ally skill with a foe selected is not either:
+ * Nothing is out of range with no target, or for a skill that only targets
+ * its caster. A corpse is out of range only for a resurrection, and a
+ * resurrection only against a corpse (#812), by game-core's
+ * `targetLivenessAllows`. An ally skill with a foe selected is not either:
  * the host casts it on the caster then, as the simulation's `#castTarget` does.
  * Nor is a skill the target is wrong for, by game-core's `targetRuleAllows`
  * (#599): Blood Ritual on a foe is refused for who, not where, so walking
@@ -168,7 +171,7 @@ export function outOfRange(
   target: PlayerSnapshot | undefined,
   walls: readonly Segment[],
 ): boolean[] {
-  if (self === undefined || target === undefined || target.dead) {
+  if (self === undefined || target === undefined) {
     return skillBar.map(() => false);
   }
   const from = { x: self.x, y: self.y };
@@ -178,6 +181,9 @@ export function outOfRange(
   return skillBar.map((slot) => {
     const skill = slot === null ? undefined : getSkill(slot.id);
     if (skill === undefined || skill.target === "self") {
+      return false;
+    }
+    if (targetLivenessAllows(skill.target, target) !== undefined) {
       return false;
     }
     if (skill.target === "single-ally" && target.team !== self.team) {

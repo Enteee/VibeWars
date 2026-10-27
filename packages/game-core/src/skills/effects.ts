@@ -1,4 +1,5 @@
 import { DIVINE_FAVOR_ATTRIBUTE, divineFavorBonusHeal } from "../primary-attributes.js";
+import { emptyAdrenaline } from "./adrenaline.js";
 import { getSkill } from "./catalog.js";
 import { mitigate, skillDamage } from "./damage.js";
 import { effectiveMaxEnergy } from "./overcast.js";
@@ -46,6 +47,13 @@ export type CombatEvent =
   | { readonly kind: "energy-loss"; readonly targetId: string; readonly amount: number }
   | { readonly kind: "sacrifice"; readonly targetId: string; readonly amount: number }
   | { readonly kind: "death"; readonly targetId: string }
+  /** Back from the dead (#812), with these shares of maximum health and energy, 0..1. */
+  | {
+      readonly kind: "resurrected";
+      readonly targetId: string;
+      readonly healthFraction: number;
+      readonly energyFraction: number;
+    }
   | {
       readonly kind: "status-applied";
       readonly targetId: string;
@@ -197,6 +205,29 @@ function loseEnergy(target: Combatant, amount: number, events: CombatEvent[]): v
   }
   target.energy -= lost;
   events.push({ kind: "energy-loss", targetId: target.id, amount: lost });
+}
+
+/**
+ * Bring a dead `target` back (#812), as a respawn leaves it but where it
+ * lies: these shares of its maximum health (at least 1) and energy, no
+ * effects, no adrenaline. Its recharges carry on, and so does its
+ * overcast: energy stops at the ceiling that leaves (#461).
+ */
+function resurrect(
+  target: Combatant,
+  healthFraction: number,
+  energyFraction: number,
+  events: CombatEvent[],
+): void {
+  target.statuses.clear();
+  target.dead = false;
+  target.health = Math.max(1, Math.floor(target.maxHealth * healthFraction));
+  target.energy = Math.max(
+    0,
+    Math.min(Math.floor(target.maxEnergy * energyFraction), effectiveMaxEnergy(target)),
+  );
+  emptyAdrenaline(target);
+  events.push({ kind: "resurrected", targetId: target.id, healthFraction, energyFraction });
 }
 
 /**
@@ -486,6 +517,21 @@ export function applyEffect(
       });
       return events;
     }
+
+    case "resurrect": {
+      // Only the dead: one whom another resurrection, or the respawn
+      // timer, brought back first is left as they are.
+      if (!target?.dead) {
+        return events;
+      }
+      resurrect(
+        target,
+        resolveMagnitude(effect.healthPercent, caster) / 100,
+        resolveMagnitude(effect.energyPercent, caster) / 100,
+        events,
+      );
+      return events;
+    }
   }
 }
 
@@ -646,6 +692,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "remove-status":
     case "interrupt":
     case "knockdown":
+    case "resurrect":
     case "if":
       return false;
   }
