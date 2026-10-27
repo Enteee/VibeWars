@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0,
   "rechargeSeconds": 6,
+  "upkeep": false,
   "description": "If it hits, Black Lotus Strike strikes for +10...27...31 damage. If target foe is suffering from a Hex, you gain 5...11...13 Energy.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

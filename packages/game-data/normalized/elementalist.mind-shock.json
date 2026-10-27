@@ -13,6 +13,7 @@
   "overcast": 10,
   "activationSeconds": 1,
   "rechargeSeconds": 8,
+  "upkeep": false,
   "description": "Target foe suffers 10...42...50 lightning damage. If you have more energy than target foe, that foe suffers 10...42...50 additional lightning damage and is knocked down. This spell has 25% armor penetration.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

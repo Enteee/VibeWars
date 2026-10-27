@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0.5,
   "rechargeSeconds": 5,
+  "upkeep": false,
   "description": "If Savage Shot hits, your target's action is interrupted. If that action was a spell, you strike for 13...25...28 damage.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

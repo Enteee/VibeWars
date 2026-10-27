@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 4,
   "rechargeSeconds": 8,
+  "upkeep": false,
   "description": "Touch the body of a fallen party member. Target party member is returned to life with 20...56...65% health and 42...80...90% energy.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

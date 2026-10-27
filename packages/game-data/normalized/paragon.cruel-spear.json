@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0,
   "rechargeSeconds": 0,
+  "upkeep": false,
   "description": "If this attack hits, you deal +10...42...50 damage. If it hits a non-moving target, you inflict a Deep Wound for 5...17...20 seconds.",
   "variant": "pvp",
   "ruleset": "gw1-reference",
