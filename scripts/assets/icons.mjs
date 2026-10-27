@@ -415,6 +415,10 @@ const speaker = `<path d="M3 9h4l5-5v16l-5-5H3z" fill="${C.ink}"/>`;
 /** The beamed eighth notes both music icons share: two heads, two stems, a slab beam, one fill. */
 const notes = `<path d="M8.5 18V6L19.5 4v12h-2V7.5l-7 1.5v9zM3 18a3 2 0 1 1 6 0 3 2 0 1 1-6 0M14 16a3 2 0 1 1 6 0 3 2 0 1 1-6 0" fill="${C.ink}"/>`;
 
+/** One dagger, tilted about the icon's centre: the three chain marks share it. */
+const chainDagger = (/** @type {number} */ tilt) =>
+  `<g transform="rotate(${String(tilt)} 12 12)"><path d="M12 2.5l1.6 3.2V14h-3.2V5.7zM8.5 14h7M12 14v4.5"/><circle cx="12" cy="20" r="1.2"/></g>`;
+
 const ui = {
   // Speaker with two sound waves: sound is on (#112).
   "sound-on": () =>
@@ -439,6 +443,12 @@ const ui = {
   // (#160). Two blades, so it never reads as the one-sword attack skill type.
   attacking: () =>
     `<path d="M4 4l13 13M20 4L7 17M14 20l6-6M10 20l-6-6M17 17l3.5 3.5M7 17l-3.5 3.5" ${stroke(C.ink, 2)}/>`,
+  // A dagger leaning right, one leaning left, both: the next blow of your
+  // dagger chain is the lead, the off-hand, or a dual attack (#916). The shape
+  // carries the state; the Assassin's red only says whose chain it is.
+  "chain-lead": () => `<g ${stroke(C.assassin, 2)}>${chainDagger(35)}</g>`,
+  "chain-off-hand": () => `<g ${stroke(C.assassin, 2)}>${chainDagger(-35)}</g>`,
+  "chain-dual": () => `<g ${stroke(C.assassin, 2)}>${chainDagger(35)}${chainDagger(-35)}</g>`,
 };
 
 // ---------------------------------------------------------------------------
