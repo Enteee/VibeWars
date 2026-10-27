@@ -57,6 +57,8 @@ const PROBES = [
 const MAX_PROBES = 4096;
 /** Tries per event, each after emptying the pools again. */
 const MAX_TRIES = 8;
+/** The worker clock's beat the main-thread stall is measured against. */
+const STALL_BEAT_MS = 20;
 /** How often the player looks for work when there is none. */
 const POLL_MS = 100;
 
@@ -77,6 +79,8 @@ export type RenderReport =
       readonly wallMs: number;
       readonly liveBytes: number;
       readonly peakBytes: number;
+      /** The longest the main thread was held at once since the last chunk. */
+      readonly maxStallMs: number;
       /** Stale pooled nodes the probes and the events took (`PROBES`, `MAX_TRIES`). */
       readonly retries: number;
       /** Events that still failed, and are missing from the chunk. */
@@ -107,6 +111,8 @@ export interface RenderAheadDeps {
   readonly pin: (value: unknown) => unknown;
   readonly report: (report: RenderReport) => void;
   readonly setTimeout: (callback: () => void, ms: number) => void;
+  /** Call `callback` every `ms`, on a clock the main thread does not hold up. */
+  readonly every: (callback: () => void, ms: number) => void;
 }
 
 interface Chunk {
@@ -135,10 +141,11 @@ interface Voice {
 }
 
 export interface RenderAheadPlayer {
-  load(track: RenderTrack): void;
-  crossfadeTo(track: RenderTrack, cycles: number): void;
-  evaluate(track: RenderTrack): void;
-  setLevel(level: MusicLevel): void;
+  // `askedAt`: the context time the message came in, for `heard`.
+  load(track: RenderTrack, askedAt: number): void;
+  crossfadeTo(track: RenderTrack, cycles: number, askedAt: number): void;
+  evaluate(track: RenderTrack, askedAt: number): void;
+  setLevel(level: MusicLevel, askedAt: number): void;
   stop(): void;
   /** The cycle of the voice heard last, as `playing` reports it. */
   position(): number;
@@ -175,6 +182,15 @@ export function renderAhead(deps: RenderAheadDeps): RenderAheadPlayer {
   let pendingLevel: { readonly level: MusicLevel; readonly askedAt: number } | undefined;
   let rendering = false;
   let peakBytes = 0;
+  // How long the main thread was held at a time: the gap between beats of a
+  // worker clock, less its period. Firefox has no long-task observer.
+  let maxStallMs = 0;
+  let lastBeat = performance.now();
+  deps.every(() => {
+    const now = performance.now();
+    maxStallMs = Math.max(maxStallMs, now - lastBeat - STALL_BEAT_MS);
+    lastBeat = now;
+  }, STALL_BEAT_MS);
 
   const playhead = (voice: Voice): number =>
     voice.start === undefined
@@ -384,9 +400,11 @@ export function renderAhead(deps: RenderAheadDeps): RenderAheadPlayer {
           wallMs,
           liveBytes: liveBytes(),
           peakBytes,
+          maxStallMs,
           retries,
           failed,
         });
+        maxStallMs = 0;
         if (first) {
           deps.report({
             type: "heard",
@@ -409,18 +427,16 @@ export function renderAhead(deps: RenderAheadDeps): RenderAheadPlayer {
   loop();
 
   return {
-    load(track) {
+    load(track, askedAt) {
       voices.forEach(drop);
-      const askedAt = context.currentTime;
       voices = [makeVoice(track, { change: "load", askedAt }, () => context.currentTime, 0, 1)];
     },
-    crossfadeTo(track, cycles) {
+    crossfadeTo(track, cycles, askedAt) {
       const current = voices.at(-1);
       if (current?.start === undefined) {
-        this.load(track);
+        this.load(track, askedAt);
         return;
       }
-      const askedAt = context.currentTime;
       const boundary = nextBoundary(playhead(current), 0, current.track.phraseCycles);
       const at = timeOf(current, boundary);
       const fade = cycles / track.cps;
@@ -445,13 +461,12 @@ export function renderAhead(deps: RenderAheadDeps): RenderAheadPlayer {
         (at + fade - context.currentTime) * 1000 + TAIL_SECONDS * 1000,
       );
     },
-    evaluate(track) {
+    evaluate(track, askedAt) {
       const current = voices.at(-1);
       if (current?.start === undefined) {
-        this.load(track);
+        this.load(track, askedAt);
         return;
       }
-      const askedAt = context.currentTime;
       const start = current.start;
       // The same clock: heard from the cycle after the first chunk is ready.
       const next = makeVoice(
@@ -481,9 +496,9 @@ export function renderAhead(deps: RenderAheadDeps): RenderAheadPlayer {
       );
       voices = [current, next];
     },
-    setLevel(next) {
+    setLevel(next, askedAt) {
       level = next;
-      pendingLevel = { level: next, askedAt: context.currentTime };
+      pendingLevel = { level: next, askedAt };
       applyLevel();
     },
     stop() {

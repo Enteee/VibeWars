@@ -37,6 +37,10 @@
  *                                (`?musicrender=ahead`, #509 spike), and print
  *                                render speed, buffer memory and how late
  *                                each change was heard
+ *   --reactivity                 instead of the minute at intensity 3, step
+ *                                the music through changes and print how late
+ *                                each is heard (#509): intensity +1, -1, +2,
+ *                                0-1-0-1 within a second, a switch, an edit
  *   --json <file>                write the totals per browser and load, and
  *                                whether each browser's readings are
  *                                validated (#519), to this file
@@ -77,6 +81,7 @@ const { values: options } = parseArgs({
     pulse: { type: "boolean", default: false },
     json: { type: "string" },
     "render-ahead": { type: "boolean", default: false },
+    reactivity: { type: "boolean", default: false },
   },
 });
 const SECONDS = Number(options.seconds);
@@ -295,23 +300,20 @@ async function measure(url, load) {
       // The worklet times a spin once when it loads: let that stall pass.
       await sleep(3000);
     }
-    const start = await page.evaluate(() => {
-      const control = /** @type {{ __music: { intensity: (level: number) => void } }} */ (
-        /** @type {unknown} */ (window)
-      ).__music;
-      control.intensity(3);
-      return /** @type {{ musicStatsSeen: unknown[] }} */ (/** @type {unknown} */ (window))
-        .musicStatsSeen.length;
-    });
+    const start = await page.evaluate(
+      () =>
+        /** @type {{ musicStatsSeen: unknown[] }} */ (/** @type {unknown} */ (window))
+          .musicStatsSeen.length,
+    );
     const playing = load.screen === "match" ? play(page) : undefined;
-    await sleep((SECONDS * 1000) / 2);
-    await page.evaluate((trackId) => {
-      const control = /** @type {{ __music: { crossfadeTo: (id: string) => void } }} */ (
-        /** @type {unknown} */ (window)
-      ).__music;
-      control.crossfadeTo(trackId);
-    }, CROSSFADE_TO);
-    await sleep((SECONDS * 1000) / 2);
+    if (options.reactivity) {
+      await steps(page);
+    } else {
+      await music(page, "intensity", 3);
+      await sleep((SECONDS * 1000) / 2);
+      await music(page, "crossfadeTo", CROSSFADE_TO);
+      await sleep((SECONDS * 1000) / 2);
+    }
     await playing?.stop();
     const { seen, renders } = await page.evaluate(() => {
       const w = /** @type {{ musicStatsSeen: unknown[], musicRenderSeen: unknown[] }} */ (
@@ -319,7 +321,7 @@ async function measure(url, load) {
       );
       return { seen: w.musicStatsSeen, renders: w.musicRenderSeen };
     });
-    if (options["render-ahead"]) {
+    if (renders.length > 0) {
       reportRenders(/** @type {Render[]} */ (renders));
     }
     return /** @type {Stats[]} */ (seen.slice(start));
@@ -329,9 +331,53 @@ async function measure(url, load) {
 }
 
 /**
+ * Call the page's music control (`window.__music`, `?musicstats` only).
+ *
+ * @param {import("@playwright/test").Page} page
+ * @param {"intensity" | "crossfadeTo" | "evaluate"} method
+ * @param {number | string} argument
+ */
+async function music(page, method, argument) {
+  await page.evaluate(([name, value]) => {
+    const control = /** @type {{ __music: Record<string, (value: unknown) => void> }} */ (
+      /** @type {unknown} */ (window)
+    ).__music;
+    control[name]?.(value);
+  }, /** @type {const} */ ([method, argument]));
+}
+
+/**
+ * The changes `--reactivity` times, in order, each given time to be heard
+ * before the next: the `heard` lines print in this order.
+ *
+ * @param {import("@playwright/test").Page} page
+ */
+async function steps(page) {
+  const settle = () => sleep(8000);
+  await music(page, "intensity", 1);
+  await settle();
+  console.log("steps: +1 (1 -> 2), -1 (2 -> 1), +2 (1 -> 3), 0-1-0-1, switch, edit");
+  await music(page, "intensity", 2);
+  await settle();
+  await music(page, "intensity", 1);
+  await settle();
+  await music(page, "intensity", 3);
+  await settle();
+  for (const level of [0, 1, 0, 1]) {
+    await music(page, "intensity", level);
+    await sleep(250);
+  }
+  await settle();
+  await music(page, "crossfadeTo", CROSSFADE_TO);
+  await sleep(20_000);
+  await music(page, "evaluate", CROSSFADE_TO);
+  await settle();
+}
+
+/**
  * @typedef {{ type: "rendered", trackId: string, chunk: number, level: number,
  *   audioSeconds: number, wallMs: number, liveBytes: number, peakBytes: number,
- *   retries: number, failed: number }
+ *   maxStallMs: number, retries: number, failed: number }
  *   | { type: "heard", change: string, delayMs: number }} Render
  */
 
@@ -348,11 +394,15 @@ function reportRenders(renders) {
   const peak = Math.max(0, ...chunks.map((r) => r.peakBytes));
   const rendered = chunks.reduce((n, r) => n + r.audioSeconds, 0);
   const wall = chunks.reduce((n, r) => n + r.wallMs, 0) / 1000;
-  console.log(
-    `render-ahead: ${String(chunks.length)} chunks, ${fixed(rendered)} s of audio in ${fixed(wall)} s, ` +
-      `speed min ${fixed(speeds[0] ?? 0)}x median ${fixed(median)}x real time, peak buffers ${fixed(peak / 1e6)} MB, ` +
-      `retried ${String(chunks.reduce((n, r) => n + r.retries, 0))} events, failed ${String(chunks.reduce((n, r) => n + r.failed, 0))}`,
-  );
+  const stall = Math.max(0, ...chunks.map((r) => r.maxStallMs));
+  if (chunks.length > 0) {
+    console.log(
+      `render-ahead: ${String(chunks.length)} chunks, ${fixed(rendered)} s of audio in ${fixed(wall)} s, ` +
+        `speed min ${fixed(speeds[0] ?? 0)}x median ${fixed(median)}x real time, peak buffers ${fixed(peak / 1e6)} MB, ` +
+        `retried ${String(chunks.reduce((n, r) => n + r.retries, 0))} events, failed ${String(chunks.reduce((n, r) => n + r.failed, 0))}, ` +
+        `longest main-thread stall ${fixed(stall)} ms`,
+    );
+  }
   for (const r of renders) {
     if (r.type === "heard") {
       console.log(`  heard ${r.change} after ${fixed(r.delayMs)} ms`);

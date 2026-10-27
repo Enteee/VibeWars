@@ -310,6 +310,9 @@ export async function startEngine(): Promise<void> {
         pin: (value) => pins.pin(value),
         report: post,
         // Once, on the worker timers: a frame that makes no sound has its page timers throttled.
+        every: (callback, ms) => {
+          timers.setInterval(callback, ms);
+        },
         setTimeout: (callback, ms) => {
           const id = timers.setInterval(
             () => {
@@ -341,15 +344,35 @@ export async function startEngine(): Promise<void> {
     await repl.setPattern(guarded(pattern), true);
   };
 
+  /**
+   * When the live engine will be heard to make a change asked for at
+   * `askedAt`: `ahead` seconds of music past what it has queried, which is
+   * itself about `LEAD_SECONDS` ahead of the audio clock. Reported only
+   * while measuring, as render-ahead reports its own (#509 spike).
+   */
+  const heard = (
+    change: "load" | "switch" | "evaluate" | "intensity",
+    askedAt: number,
+    ahead: number,
+  ): void => {
+    if (measurement.meter !== undefined) {
+      post({
+        type: "heard",
+        change,
+        delayMs: (context.currentTime - askedAt + LEAD_SECONDS + ahead) * 1000,
+      });
+    }
+  };
+
   /** Play `track` now, in place of anything playing or planned. */
-  const load = async (track: HostTrack): Promise<void> => {
+  const load = async (track: HostTrack, askedAt: number): Promise<void> => {
     const { pattern, cps, clock } = await compile(track.source, track.phraseCycles);
     await ensureAudio();
     if (ahead !== undefined) {
       playing = { trackId: track.trackId, pattern, phraseCycles: track.phraseCycles, cps, clock };
       pins.reset();
       gate?.open();
-      ahead.load(playing);
+      ahead.load(playing, askedAt);
       announce(playing);
       return;
     }
@@ -360,23 +383,24 @@ export async function startEngine(): Promise<void> {
     scheduler.setCps(cps);
     await schedule(pattern.late(clock.origin));
     announce(playing);
+    heard("load", askedAt, 0);
   };
 
   /**
    * Switch to `track` on the playing track's next phrase boundary, with
    * both playing for `cycles` while one fades out and the other in.
    */
-  const crossfadeTo = async (track: HostTrack, cycles: number): Promise<void> => {
+  const crossfadeTo = async (track: HostTrack, cycles: number, askedAt: number): Promise<void> => {
     if (ahead !== undefined && playing !== undefined) {
       const { pattern, cps, clock } = await compile(track.source, track.phraseCycles);
       playing = { trackId: track.trackId, pattern, phraseCycles: track.phraseCycles, cps, clock };
       pins.reset();
-      ahead.crossfadeTo(playing, cycles);
+      ahead.crossfadeTo(playing, cycles, askedAt);
       announce(playing);
       return;
     }
     if (playing === undefined || !scheduler.started) {
-      await load(track);
+      await load(track, askedAt);
       return;
     }
     const { pattern, cps, clock } = await compile(track.source, track.phraseCycles);
@@ -394,6 +418,7 @@ export async function startEngine(): Promise<void> {
     const until = from + cycles;
     switching = { next, until, announced: false };
     // What plays fades out, even if that is a crossfade still under way.
+    heard("switch", askedAt, (from - position()) / scheduler.cps);
     await schedule(crossfade(scheduled, pattern, from, cycles, cps));
   };
 
@@ -415,19 +440,19 @@ export async function startEngine(): Promise<void> {
     }
   }, SWITCH_POLL_MS);
 
-  const handle = async (message: GameToHost): Promise<void> => {
+  const handle = async (message: GameToHost, askedAt: number): Promise<void> => {
     switch (message.type) {
       case "load":
-        await load(message);
+        await load(message, askedAt);
         return;
       case "crossfadeTo":
-        await crossfadeTo(message, message.cycles);
+        await crossfadeTo(message, message.cycles, askedAt);
         return;
       case "play":
         if (ahead !== undefined) {
           if (playing !== undefined) {
             gate?.open();
-            ahead.load(playing);
+            ahead.load(playing, askedAt);
           }
           return;
         }
@@ -450,8 +475,12 @@ export async function startEngine(): Promise<void> {
         gate?.stop();
         return;
       case "setIntensity":
+        if (ahead !== undefined) {
+          ahead.setLevel(message.level, askedAt);
+          return;
+        }
         levels = scheduleLevel(levels, message.level, nextCycle(position()));
-        ahead?.setLevel(message.level);
+        heard("intensity", askedAt, (nextCycle(position()) - position()) / scheduler.cps);
         return;
       case "setVolume": {
         volume = message.gain;
@@ -470,12 +499,13 @@ export async function startEngine(): Promise<void> {
         playing = { ...track, pattern, cps, clock };
         pins.reset();
         if (ahead !== undefined) {
-          ahead.evaluate(playing);
+          ahead.evaluate(playing, askedAt);
           post({ type: "evaluated" });
           return;
         }
         scheduler.setCps(cps);
         await schedule(pattern.late(clock.origin));
+        heard("evaluate", askedAt, 0);
         post({ type: "evaluated" });
         return;
       }
@@ -509,8 +539,10 @@ export async function startEngine(): Promise<void> {
       post({ type: "pong", seq: message.seq });
       return;
     }
+    // When it came in, not when its turn in the queue came: for `heard`.
+    const askedAt = context.currentTime;
     queue = queue
-      .then(() => handle(message))
+      .then(() => handle(message, askedAt))
       .catch((error: unknown) => {
         post(describe(error));
       });
