@@ -41,9 +41,13 @@ export interface MusicPlayer {
   setVolume(gain: number, rampSeconds: number): void;
   /** Replace the playing track's pattern with `source` (the beat editor). */
   evaluate(source: string): void;
+  /** Start again what `stop` stopped. */
+  play(): void;
   stop(): void;
   onNowPlaying(handler: (trackId: string) => void): void;
   onError(handler: (error: MusicError) => void): void;
+  /** The host replaced the pattern with the last `evaluate`'s source. */
+  onEvaluated(handler: () => void): void;
   /** Each second's stats, from a host that measures (`measure` in the deps). */
   onStats(handler: (stats: MusicStats) => void): void;
 }
@@ -94,6 +98,7 @@ function supersedes(later: GameToHost, earlier: GameToHost): boolean {
 export function createMusicPlayer(deps: MusicPlayerDeps): MusicPlayer {
   const nowPlaying: ((trackId: string) => void)[] = [];
   const errors: ((error: MusicError) => void)[] = [];
+  const evaluated: (() => void)[] = [];
   const statsHandlers: ((stats: MusicStats) => void)[] = [];
   let gestured = false;
   let frame: MusicFrame | undefined;
@@ -175,6 +180,9 @@ export function createMusicPlayer(deps: MusicPlayerDeps): MusicPlayer {
         return;
       }
       case "evaluated":
+        for (const handler of evaluated) {
+          handler();
+        }
         return;
     }
   };
@@ -247,6 +255,9 @@ export function createMusicPlayer(deps: MusicPlayerDeps): MusicPlayer {
     evaluate(source) {
       send({ type: "evaluate", source });
     },
+    play() {
+      send({ type: "play" });
+    },
     stop() {
       send({ type: "stop" });
     },
@@ -255,6 +266,9 @@ export function createMusicPlayer(deps: MusicPlayerDeps): MusicPlayer {
     },
     onError(handler) {
       errors.push(handler);
+    },
+    onEvaluated(handler) {
+      evaluated.push(handler);
     },
     onStats(handler) {
       statsHandlers.push(handler);
