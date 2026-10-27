@@ -552,13 +552,16 @@ export function resolveAttackSkill(
   useNextAttackSkill(caster, next, events);
   return [
     ...events,
-    ...applySkillEffects({ ...resolution, targets: hit }),
+    ...applySkillEffects({ ...resolution, targets: hit }, events),
     ...(blocked.length === 0 || skill.attack === undefined
       ? []
-      : applySkillEffects({
-          ...resolution,
-          skill: { ...skill, effects: skill.attack.onBlocked },
-          targets: blocked,
-        })),
+      : applySkillEffects(
+          {
+            ...resolution,
+            skill: { ...skill, effects: skill.attack.onBlocked },
+            targets: blocked,
+          },
+          events,
+        )),
   ];
 }
