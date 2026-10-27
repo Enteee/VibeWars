@@ -23,6 +23,7 @@
     "calls"
   ],
   "statusIds": [
+    "anthem-of-flame",
     "apply-poison",
     "armor-boost",
     "bleeding",
@@ -42,7 +43,8 @@
     "regeneration",
     "sprint",
     "watch-yourself",
-    "weakness"
+    "weakness",
+    "weapon-of-warding"
   ],
   "constants": {
     "LOBBY_CODE_ALPHABET": { "literal": "ACDEFGHJKMNPQRTWXY34679" },
@@ -258,6 +260,7 @@
               "optional": false,
               "type": {
                 "union": [
+                  { "literal": "anthem-of-flame" },
                   { "literal": "apply-poison" },
                   { "literal": "armor-boost" },
                   { "literal": "bleeding" },
@@ -277,7 +280,8 @@
                   { "literal": "regeneration" },
                   { "literal": "sprint" },
                   { "literal": "watch-yourself" },
-                  { "literal": "weakness" }
+                  { "literal": "weakness" },
+                  { "literal": "weapon-of-warding" }
                 ]
               }
             },
@@ -348,6 +352,7 @@
               "optional": false,
               "type": {
                 "union": [
+                  { "literal": "anthem-of-flame" },
                   { "literal": "apply-poison" },
                   { "literal": "armor-boost" },
                   { "literal": "bleeding" },
@@ -367,7 +372,8 @@
                   { "literal": "regeneration" },
                   { "literal": "sprint" },
                   { "literal": "watch-yourself" },
-                  { "literal": "weakness" }
+                  { "literal": "weakness" },
+                  { "literal": "weapon-of-warding" }
                 ]
               }
             },
@@ -382,6 +388,7 @@
               "optional": false,
               "type": {
                 "union": [
+                  { "literal": "anthem-of-flame" },
                   { "literal": "apply-poison" },
                   { "literal": "armor-boost" },
                   { "literal": "bleeding" },
@@ -401,7 +408,8 @@
                   { "literal": "regeneration" },
                   { "literal": "sprint" },
                   { "literal": "watch-yourself" },
-                  { "literal": "weakness" }
+                  { "literal": "weakness" },
+                  { "literal": "weapon-of-warding" }
                 ]
               }
             },

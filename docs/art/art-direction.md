@@ -38,19 +38,20 @@ the code and `scripts/assets/icons.mjs` copy them.
 
 ### Signals (arena)
 
-| Token         | Hex       | Means                                    |
-| ------------- | --------- | ---------------------------------------- |
-| `target`      | `#ffd866` | Your current target (ring, nothing else) |
-| `friend`      | `#59c2ff` | You and your team                        |
-| `foe`         | `#ff7b72` | The other team                           |
-| `heal`        | `#7ee787` | Health gained, arena health bar          |
-| `damage`      | `#ff7b72` | Health lost                              |
-| `condition`   | `#ffa657` | Condition markers                        |
-| `hex`         | `#d2a8ff` | Hex markers                              |
-| `enchantment` | `#56d4dd` | Enchantment markers                      |
-| `stance`      | `#f778ba` | Stance markers                           |
-| `preparation` | `#e3b341` | Preparation markers                      |
-| `glyph`       | `#c3e88d` | Glyph markers                            |
+| Token          | Hex       | Means                                    |
+| -------------- | --------- | ---------------------------------------- |
+| `target`       | `#ffd866` | Your current target (ring, nothing else) |
+| `friend`       | `#59c2ff` | You and your team                        |
+| `foe`          | `#ff7b72` | The other team                           |
+| `heal`         | `#7ee787` | Health gained, arena health bar          |
+| `damage`       | `#ff7b72` | Health lost                              |
+| `condition`    | `#ffa657` | Condition markers                        |
+| `hex`          | `#d2a8ff` | Hex markers                              |
+| `enchantment`  | `#56d4dd` | Enchantment markers                      |
+| `stance`       | `#f778ba` | Stance markers                           |
+| `preparation`  | `#e3b341` | Preparation markers                      |
+| `glyph`        | `#c3e88d` | Glyph markers                            |
+| `weapon-spell` | `#8b9cff` | Weapon spell markers                     |
 
 ### HUD bars
 
@@ -117,6 +118,8 @@ so the silhouette identifies the profession and the colour only supports it.
 | Preparation  | Triangle plate, point up, glyph inside                |
 | Glyph        | Triangle plate, point down, glyph inside              |
 | Shout        | `ink` hexagon plate, glyph inside                     |
+| Chant        | `ink` banner plate, notched at the foot, glyph inside |
+| Weapon spell | Shield plate, glyph inside                            |
 | Skill effect | `ink-dim` wide capsule plate, glyph inside            |
 | Area flash   | Caster's team colour ring at the area's true radius   |
 | Swing flash  | Attacker's team colour arc between it and its target  |
@@ -152,6 +155,16 @@ one readies your attacks, the other your next spells. Its lime sits near
 | Glyph status             | Glyph                                     |
 | ------------------------ | ----------------------------------------- |
 | `glyph-of-lesser-energy` | A bolt: your next spells cost less energy |
+
+The chant banner (`ink`, notched at the foot) is the shout's hexagon's
+kin: both are the Paragon's voice, in `ink`, told apart by outline. The
+weapon-spell shield (periwinkle) is the eighth outline; its periwinkle
+sits near hex purple, but the shield against the diamond settles it.
+
+| Chant or weapon spell status | Glyph                                         |
+| ---------------------------- | --------------------------------------------- |
+| `anthem-of-flame`            | A flame: your next attack skill burns         |
+| `weapon-of-warding`          | A sword held up: warded until its bearer hits |
 
 ### Area flash
 
@@ -496,21 +509,23 @@ closes). Ink, never team colour: an icon in a menu names a thing, not a side.
 
 The corner badge on a skill slot. Ink on the slot, except the two that leave a
 marker on someone, which carry that marker's colour. A stance marks you, so
-it carries the stance colour too, a preparation its amber and a glyph its
-lime.
+it carries the stance colour too, a preparation its amber, a glyph its
+lime and a weapon spell its periwinkle.
 
-| Type        | Badge                     |
-| ----------- | ------------------------- |
-| Attack      | Blade                     |
-| Spell       | Four-point star           |
-| Enchantment | Solid teal ring           |
-| Hex         | Broken purple ring        |
-| Stance      | Pink pentagon ring        |
-| Preparation | Amber triangle ring       |
-| Glyph       | Lime triangle ring, down  |
-| Signet      | Ring with a seal on top   |
-| Shout       | Mouth and two sound waves |
-| Skill       | Square                    |
+| Type         | Badge                     |
+| ------------ | ------------------------- |
+| Attack       | Blade                     |
+| Spell        | Four-point star           |
+| Enchantment  | Solid teal ring           |
+| Hex          | Broken purple ring        |
+| Stance       | Pink pentagon ring        |
+| Preparation  | Amber triangle ring       |
+| Glyph        | Lime triangle ring, down  |
+| Weapon Spell | Periwinkle shield ring    |
+| Signet       | Ring with a seal on top   |
+| Shout        | Mouth and two sound waves |
+| Chant        | A note                    |
+| Skill        | Square                    |
 
 ### Skill icons
 
@@ -544,7 +559,7 @@ it, not baked in, so one file serves every screen.
 - **Glyph vocabulary** (grows by effect, not by skill): heal, fireball (comet),
   axe, sword, hammer, spear, arrow, volley, interrupt (burst), speed (chevrons
   right), slow (chevrons left), dash, energy (bolt), mountain (earth), cleanse
-  (drop, struck through), armor (shield), flask. A new primary effect adds a
+  (drop, struck through), armor (shield), flask, flame. A new primary effect adds a
   glyph; a new skill adds a row.
 
 ### Skill slot states

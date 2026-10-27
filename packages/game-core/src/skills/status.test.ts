@@ -52,7 +52,8 @@ describe("status definitions", () => {
         def.attackDurationMultiplier !== 1 ||
         def.block !== undefined ||
         def.onAttackHit.length > 0 ||
-        def.nextSpells !== undefined;
+        def.nextSpells !== undefined ||
+        def.nextAttackSkill !== undefined;
       expect(hasEffect, `${id} has no mechanical effect`).toBe(true);
     }
   });
@@ -77,7 +78,14 @@ describe("status definitions", () => {
           getStatusDefinition(id).healthPips,
         ]),
       ),
-    ).toEqual({ bleeding: -3, burning: -7, poison: -4, "life-drain": -2, regeneration: 4 });
+    ).toEqual({
+      bleeding: -3,
+      burning: -7,
+      poison: -4,
+      "life-drain": -2,
+      regeneration: 4,
+      "weapon-of-warding": 4,
+    });
   });
 
   it("counts energy in GW1's pips", () => {

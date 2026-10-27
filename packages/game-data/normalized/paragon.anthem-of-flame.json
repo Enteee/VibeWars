@@ -1,0 +1,24 @@
+{
+  "id": "paragon.anthem-of-flame",
+  "name": "Anthem of Flame",
+  "profession": "paragon",
+  "attribute": "Leadership",
+  "type": "Chant.",
+  "elite": false,
+  "campaign": "Nightfall",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "activationSeconds": 1,
+  "rechargeSeconds": 10,
+  "description": "For 10 seconds, the next attack skill used by each party member within earshot also causes Burning for 1...3...3 seconds.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Paragon/1084-Anthem_of_Flame",
+    "fetchedAt": "2026-10-27T00:36:59.355Z"
+  },
+  "unmapped": {}
+}

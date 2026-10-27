@@ -23,10 +23,10 @@ import {
   type SkillResolution,
 } from "./effects.js";
 import { resolveMagnitude } from "./scaling.js";
-import { aggregateModifiers, getStatusDefinition } from "./status.js";
+import { aggregateModifiers, getStatusDefinition, type StatusId } from "./status.js";
 import { nearestFirst, type TargetCandidate } from "./targeting.js";
 import { attackMissChanceOf, blockChanceOf } from "./tick.js";
-import type { Combatant, Skill } from "./types.js";
+import type { Combatant, Skill, SkillEffect } from "./types.js";
 
 /**
  * Weapon auto-attack: what one swing does once it lands (ADR-0026).
@@ -320,6 +320,67 @@ export function attackHitRiders(
   );
 }
 
+/**
+ * The attacker attacked (#758): it struck a blow or released a shot,
+ * swing or attack skill alike, hit or miss. Every status of its own that
+ * ends when its bearer attacks ends now, as Weapon of Warding.
+ */
+export function bearerAttacked(attacker: Combatant, events: CombatEvent[]): void {
+  for (const statusId of attacker.statuses.endOnBearerAttack()) {
+    events.push({ kind: "status-expired", targetId: attacker.id, statusId });
+  }
+}
+
+/**
+ * What the attacker's next attack skill carries (#758): the statuses that
+ * hold it, as Anthem of Flame, and their riders on whoever it hits. Taken
+ * when the skill is used, so a ranged one carries them in flight.
+ */
+export interface NextAttackSkill {
+  readonly statusIds: readonly StatusId[];
+  readonly effects: readonly SkillEffect[];
+}
+
+export function nextAttackSkillOf(attacker: Combatant): NextAttackSkill {
+  const holding = attacker.statuses.active.flatMap(({ id }) => {
+    const effects = getStatusDefinition(id).nextAttackSkill;
+    return effects === undefined ? [] : [{ id, effects }];
+  });
+  return {
+    statusIds: holding.map(({ id }) => id),
+    effects: holding.flatMap(({ effects }) => effects),
+  };
+}
+
+/** The riders `next` lands on a victim an attack skill hit (#758). */
+export function nextAttackSkillRiders(
+  next: NextAttackSkill,
+  attacker: Combatant,
+  victim: Combatant,
+  rng: SimulationRng,
+  rules: CombatRules,
+): CombatEvent[] {
+  return next.effects.flatMap((effect) =>
+    applyEffect(effect, { caster: attacker, target: victim, rng, rules }),
+  );
+}
+
+/**
+ * The attack skill that `next` rode resolved (#758): its blow landed,
+ * missed or was blocked. The statuses that held it end, those still up.
+ */
+export function useNextAttackSkill(
+  attacker: Combatant,
+  next: NextAttackSkill,
+  events: CombatEvent[],
+): void {
+  for (const statusId of next.statusIds) {
+    if (attacker.statuses.remove(statusId)) {
+      events.push({ kind: "status-expired", targetId: attacker.id, statusId });
+    }
+  }
+}
+
 /** One blow on one victim: blind first, then block, then the crit and damage rolls. */
 function strike(swing: Swing, victim: Combatant, events: CombatEvent[]): void {
   const { attacker, rng, rules } = swing;
@@ -362,6 +423,7 @@ export function resolveSwing(swing: Swing): {
   const strikes = chance > 0 && swing.rng.nextFloat() < chance ? 2 : 1;
 
   const events: CombatEvent[] = [];
+  bearerAttacked(swing.attacker, events);
   for (let blow = 0; blow < strikes; blow += 1) {
     for (const victim of victims) {
       strike(swing, victim, events);
@@ -380,6 +442,10 @@ export function resolveSwing(swing: Swing): {
  * cleave: an area, as Barrage's, is already the skill's own, and each of
  * its blows rolls its own block and its own crit.
  *
+ * The attacker's weapon spell ends as it strikes, and its chants' riders
+ * (#758) land on each victim it hits after the skill's own blow; the
+ * chants end once every blow is done, whatever each did.
+ *
  * A ranged weapon's attack skill does not come here: it flies, and its
  * blow and riders land with the arrow (#416).
  */
@@ -392,6 +458,8 @@ export function resolveAttackSkill(
   const snapshot = weaponSnapshotOf(caster);
   const kind = blowKind(snapshot.mainHand.weapon);
   const events: CombatEvent[] = [];
+  bearerAttacked(caster, events);
+  const next = nextAttackSkillOf(caster);
   const hit: Combatant[] = [];
   const blocked: Combatant[] = [];
   for (const victim of resolution.targets) {
@@ -412,9 +480,11 @@ export function resolveAttackSkill(
       gainCriticalEnergy(caster, snapshot.criticalStrikes, events);
     }
     events.push(...attackHitRiders(caster, victim, snapshot.mainHand.weapon, rng, rules));
+    events.push(...nextAttackSkillRiders(next, caster, victim, rng, rules));
     attackReached(victim, events);
     hit.push(victim);
   }
+  useNextAttackSkill(caster, next, events);
   return [
     ...events,
     ...applySkillEffects({ ...resolution, targets: hit }),

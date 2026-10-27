@@ -144,16 +144,18 @@ export type SkillType =
   | "stance"
   | "preparation"
   | "glyph"
+  | "chant"
+  | "weapon-spell"
   | "skill";
 
 /**
  * Whether a skill of this type is a spell, as GW1's rules that "affect
- * spells" mean it: enchantments and hexes are spells, signets, shouts,
- * stances and glyphs are not (#524, #526, #527). Every such rule asks this, never the type
- * directly.
+ * spells" mean it: enchantments, hexes and weapon spells are spells,
+ * signets, shouts, chants, stances and glyphs are not (#524, #526, #527,
+ * #758). Every such rule asks this, never the type directly.
  */
 export function isSpell(type: SkillType): boolean {
-  return type === "spell" || type === "enchantment" || type === "hex";
+  return type === "spell" || type === "enchantment" || type === "hex" || type === "weapon-spell";
 }
 
 /**
