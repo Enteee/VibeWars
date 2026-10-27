@@ -305,36 +305,58 @@ describe("physical-vs-elemental, headless (#111)", () => {
     return amounts;
   }
 
-  it("the same sword swings land softer on the guarded warrior", () => {
-    // One seed, so both runs roll the same swings.
-    const swings = (targetId: string): number[] => {
-      const sim = armedArena(scenario("physical-vs-elemental"), "physical", WEAPONS.sword);
-      expect(sim.requestAttack("player", targetId)).toEqual({ ok: true });
-      return damageTo(sim, targetId, 10);
-    };
+  /** `amounts` are `reference`'s, moved from `fromArmor` to `toArmor` and less `cut`. */
+  function expectScaled(
+    amounts: readonly number[],
+    reference: readonly number[],
+    fromArmor: number,
+    toArmor: number,
+    cut = 0,
+  ): void {
+    const factor =
+      armorMultiplier(toArmor, RULES.combat) / armorMultiplier(fromArmor, RULES.combat);
+    expect(amounts).toHaveLength(reference.length);
+    amounts.forEach((amount, i) => {
+      // Within a point: both sides were rounded.
+      expect(Math.abs(amount - ((reference[i] ?? 0) * factor - cut))).toBeLessThanOrEqual(1);
+    });
+  }
+
+  // One seed, so every run rolls the same swings.
+  const swings = (targetId: string): number[] => {
+    const sim = armedArena(scenario("physical-vs-elemental"), "physical", WEAPONS.sword);
+    expect(sim.requestAttack("player", targetId)).toEqual({ ok: true });
+    return damageTo(sim, targetId, 10);
+  };
+  const burn = (targetId: string): number[] => {
+    const sim = arena(scenario("physical-vs-elemental"), "elemental");
+    sim.setTarget("player", targetId);
+    expect(sim.requestSkill("player", 0)?.check).toEqual({ ok: true });
+    return damageTo(sim, targetId, 3);
+  };
+
+  it("a sword meets a warrior's 100 and the guarded warrior's 110, less 3", () => {
+    const ranger = swings("ranger");
     const bare = swings("bare");
     const guarded = swings("guarded");
     expect(bare.length).toBeGreaterThan(5);
-    expect(guarded).toHaveLength(bare.length);
-    // +10 armor is a factor 2^(-10/40), then 3 off each hit.
-    const factor = armorMultiplier(90, RULES.combat) / armorMultiplier(80, RULES.combat);
+    // The ranger's +30 is elemental: a sword meets its plain 70.
+    expectScaled(bare, ranger, 70, 100);
+    expectScaled(guarded, bare, 100, 110, 3);
     guarded.forEach((amount, i) => {
       expect(amount).toBeLessThan(bare[i] ?? 0);
-      // Within a point: both sides were rounded.
-      expect(Math.abs(amount - ((bare[i] ?? 0) * factor - 3))).toBeLessThanOrEqual(1);
     });
   });
 
-  it("a Fireball lands the same on both", () => {
-    const burn = (targetId: string): number[] => {
-      const sim = arena(scenario("physical-vs-elemental"), "elemental");
-      sim.setTarget("player", targetId);
-      expect(sim.requestSkill("player", 0)?.check).toEqual({ ok: true });
-      return damageTo(sim, targetId, 3);
-    };
+  it("a Fireball lands the same on both warriors, and softer on the ranger", () => {
     const bare = burn("bare");
     expect(bare).toHaveLength(1);
     expect(burn("guarded")).toEqual(bare);
+    // A warrior's +20 is physical: a Fireball meets its plain 80, and the
+    // ranger's 100.
+    const ranger = burn("ranger");
+    expectScaled(ranger, bare, 80, 100);
+    expect(ranger[0] ?? Infinity).toBeLessThan(bare[0] ?? 0);
   });
 });
 
