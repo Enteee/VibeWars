@@ -96,6 +96,7 @@ import {
   PLAIN_BLOW,
   resolveAttackSkill,
   resolveSwing,
+  settleBlow,
   skillBlow,
   useNextAttackSkill,
   swingIntervalSeconds,
@@ -1828,7 +1829,7 @@ export class MatchSimulation {
       const critical = landBlow(
         projectile.weaponSnapshot,
         target.combatant,
-        skillHit?.blow ?? PLAIN_BLOW,
+        settleBlow(skillHit?.blow ?? PLAIN_BLOW, attacker?.combatant, target.combatant),
         // A shot crits only on its roll, never for where it came from.
         false,
         this.#rng,

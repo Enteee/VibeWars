@@ -117,6 +117,20 @@ describe("equippableSkills", () => {
     );
   });
 
+  it("offers each profession its skill that depends on how things stand (#794)", () => {
+    const offered = (profession: "monk" | "dervish" | "ranger") =>
+      equippableSkills(
+        stored({
+          primaryProfession: profession,
+          attributes: [],
+          equipment: defaultBuildEquipment(profession),
+        }),
+      ).map((s) => s.id);
+    expect(offered("monk")).toContain("monk.word-of-healing");
+    expect(offered("dervish")).toContain("dervish.mystic-sweep");
+    expect(offered("ranger")).toContain("ranger.savage-shot");
+  });
+
   it("changes with the character's secondary profession", () => {
     const asRanger = equippableSkills(stored({ secondaryProfession: "ranger" })).map((s) => s.id);
     expect(asRanger).toContain("ranger.troll-unguent");

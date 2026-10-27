@@ -108,6 +108,12 @@ casts, its slot on the bar is lit; when your cast ends without going
 off, the slot flashes, red with a ✕ if you were interrupted and grey if
 you cancelled it.
 
+**Some skills read how things stand** (#794), once, as they land and
+before any of their effects. Word of Healing heals 98 more (Healing
+Prayers 12) for an ally below half of its maximum health, a maximum a
+deep wound has lowered; its own heal cannot cancel the bonus. Mystic
+Sweep's blow deals 10 more while you are enchanted, in the same number.
+
 ## Interrupts
 
 Interrupting cancels a cast **only if one is in progress**. Too early or
@@ -125,6 +131,10 @@ Some interrupts are picky (#521). **Power Spike** and **Power Drain** only
 interrupt a spell or a chant; against an attack skill, a signet or an idle
 foe they are a wasted cast. When they land, Power Spike deals damage and
 Power Drain gives you energy.
+
+**Savage Shot** (#794) interrupts whatever its arrow finds being cast, and
+hits 25 harder if that was a spell: one bigger number on the hit, read
+as the arrow lands. A block or a miss does neither.
 
 ## Energy denial
 

@@ -114,6 +114,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       bonusDamage: { scaling: { attributeId: "warrior.axe-mastery", atZero: 1, atTwelve: 16 } },
       // "If Swift Chop is blocked, target foe takes 1...16 damage and
       // suffers a Deep Wound for 20 seconds."
+      conditionalBonus: undefined,
       unblockable: false,
       onBlocked: [
         {
@@ -154,6 +155,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       weapon: "bow",
       weaponDamage: 1,
       bonusDamage: { scaling: { attributeId: "ranger.marksmanship", atZero: 5, atTwelve: 12 } },
+      conditionalBonus: undefined,
       unblockable: false,
       onBlocked: [],
     },
@@ -182,6 +184,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       bonusDamage: {
         scaling: { attributeId: "warrior.hammer-mastery", atZero: 1, atTwelve: 16 },
       },
+      conditionalBonus: undefined,
       unblockable: false,
       onBlocked: [],
     },
@@ -248,6 +251,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       weapon: "melee",
       weaponDamage: 0,
       bonusDamage: undefined,
+      conditionalBonus: undefined,
       unblockable: false,
       onBlocked: [],
     },
@@ -272,6 +276,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       weapon: "bow",
       weaponDamage: 1,
       bonusDamage: undefined,
+      conditionalBonus: undefined,
       unblockable: false,
       onBlocked: [],
     },
@@ -533,6 +538,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       bonusDamage: {
         scaling: { attributeId: "warrior.swordsmanship", atZero: 5, atTwelve: 20 },
       },
+      conditionalBonus: undefined,
       unblockable: false,
       onBlocked: [],
     },
@@ -606,6 +612,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       bonusDamage: {
         scaling: { attributeId: "paragon.spear-mastery", atZero: 5, atTwelve: 17 },
       },
+      conditionalBonus: undefined,
       unblockable: true,
       onBlocked: [],
     },
@@ -1019,6 +1026,109 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       },
       { kind: "energy-gain", amount: { flat: 2 }, perEnergyLost: true },
     ],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* An effect that depends on how things stand (#794)                      */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "monk.word-of-healing",
+    name: "Word of Healing",
+    type: "spell",
+    elite: true,
+    profession: "monk",
+    attributeId: "monk.healing-prayers",
+    cost: { kind: "energy", amount: 5 },
+    activationSeconds: 0.75,
+    rechargeSeconds: 3,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Heal target ally for 5...81...100 Health. Heal for an additional
+    // 30...98...115 Health if that ally is below 50% health."
+    effects: [
+      {
+        kind: "heal",
+        amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 5, atTwelve: 81 } },
+      },
+      {
+        kind: "if",
+        condition: { kind: "target-health-below", fraction: 0.5 },
+        effects: [
+          {
+            kind: "heal",
+            amount: {
+              scaling: { attributeId: "monk.healing-prayers", atZero: 30, atTwelve: 98 },
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "dervish.mystic-sweep",
+    name: "Mystic Sweep",
+    type: "attack",
+    elite: false,
+    profession: "dervish",
+    attributeId: "dervish.mysticism",
+    cost: { kind: "energy", amount: 5 },
+    activationSeconds: 1,
+    rechargeSeconds: 6,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    // "If this attack hits, you deal +3...10...12 damage. If you are
+    // enchanted, this attack deals an additional +3...10...12 damage."
+    attack: {
+      weapon: "melee",
+      weaponDamage: 1,
+      bonusDamage: { scaling: { attributeId: "dervish.mysticism", atZero: 3, atTwelve: 10 } },
+      conditionalBonus: {
+        condition: { kind: "caster-has", category: "enchantment" },
+        amount: { scaling: { attributeId: "dervish.mysticism", atZero: 3, atTwelve: 10 } },
+      },
+      unblockable: false,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    effects: [],
+  },
+  {
+    id: "ranger.savage-shot",
+    name: "Savage Shot",
+    type: "attack",
+    elite: false,
+    profession: "ranger",
+    attributeId: "ranger.marksmanship",
+    cost: { kind: "energy", amount: 10 },
+    activationSeconds: 0.5,
+    rechargeSeconds: 5,
+    range: RANGE_LONG,
+    target: "single-enemy",
+    area: undefined,
+    // "If Savage Shot hits, your target's action is interrupted. If that
+    // action was a spell, you strike for 13...25...28 damage." The bonus
+    // is read as the arrow lands, before its interrupt cuts the spell.
+    attack: {
+      weapon: "bow",
+      weaponDamage: 1,
+      bonusDamage: undefined,
+      conditionalBonus: {
+        condition: { kind: "target-casting", spell: true },
+        amount: { scaling: { attributeId: "ranger.marksmanship", atZero: 13, atTwelve: 25 } },
+      },
+      unblockable: false,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    effects: [{ kind: "interrupt" }],
   },
 ];
 
