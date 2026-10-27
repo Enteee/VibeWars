@@ -46,7 +46,14 @@ import { rejoinProof } from "./rejoin-proof.js";
 import { packSnapshot } from "./snapshot-parts.js";
 import { spawnPoint, type SpawnPoint } from "./spawn-points.js";
 import { MAX_MESSAGE_BYTES, type Transport } from "./transport.js";
-import { sameSkillBar, skillBarSlots, statusWireIndex, wireCombat, wireStatuses } from "./wire.js";
+import {
+  sameSkillBar,
+  skillBarSlots,
+  statusSnapshot,
+  statusWireIndex,
+  wireCombat,
+  wireStatuses,
+} from "./wire.js";
 
 /**
  * A match hosted in one player's browser (#15, #375): the same
@@ -566,7 +573,10 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       knockdownRemaining: round(combatant.knockdownRemaining, 2),
       healthPips: pips.health,
       energyPips: pips.energy,
-      statuses: wireStatuses(combatant.statuses.active).map((status) => statusWireIndex(status.id)),
+      statuses: wireStatuses(combatant.statuses.active).map((status) => {
+        const { id, ...times } = statusSnapshot(status, sim.elapsedSeconds, cast);
+        return { status: statusWireIndex(id), ...times };
+      }),
     };
   };
 

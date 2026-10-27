@@ -41,7 +41,12 @@ function player(index: number): WirePlayer {
     knockdownRemaining: 0,
     healthPips: 0,
     energyPips: 0,
-    statuses: Array.from({ length: MAX_WIRE_STATUSES }, (_, i) => i),
+    statuses: Array.from({ length: MAX_WIRE_STATUSES }, (_, i) => ({
+      status: i,
+      endsAt: 1000 / 3,
+      durationSeconds: 1000 / 3,
+      casterId: "x".repeat(64),
+    })),
   };
 }
 

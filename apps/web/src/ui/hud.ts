@@ -478,7 +478,10 @@ export function lostHealthPercent(
   if (player.dead || player.maxHealth <= 0) {
     return 0;
   }
-  const lost = maxHealthLossOfStatusIds(player.maxHealth, player.statuses);
+  const lost = maxHealthLossOfStatusIds(
+    player.maxHealth,
+    player.statuses.map((status) => status.id),
+  );
   return Math.max(0, Math.min(100, (lost / player.maxHealth) * 100));
 }
 
@@ -817,7 +820,9 @@ export function updateHud(
     (self.weaponId === undefined ? "" : ` · ${describeWeaponName(self.weaponId)}`);
 
   hud.statusList.textContent =
-    self.statuses.length > 0 ? self.statuses.join(" · ") : "no active effects";
+    self.statuses.length > 0
+      ? self.statuses.map((status) => status.id).join(" · ")
+      : "no active effects";
 
   renderTarget(hud, self, target);
 

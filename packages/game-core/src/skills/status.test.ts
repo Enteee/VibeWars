@@ -220,6 +220,51 @@ describe("StatusSet apply/remove", () => {
   });
 });
 
+describe("StatusSet durationSeconds (#803)", () => {
+  const order = (set: StatusSet) => set.active.map((status) => status.id);
+
+  it("is the applied duration, and stays as the time runs down", () => {
+    const set = new StatusSet();
+    set.apply("bleeding", 10, "a");
+    set.advance(4);
+    expect(set.get("bleeding")).toMatchObject({ remainingSeconds: 6, durationSeconds: 10 });
+  });
+
+  it("restarts at a longer refresh, which moves to the end", () => {
+    const set = new StatusSet();
+    set.apply("bleeding", 10, "a");
+    set.apply("burning", 5, "a");
+    set.advance(4);
+    set.apply("bleeding", 8, "b");
+    expect(set.get("bleeding")).toMatchObject({ remainingSeconds: 8, durationSeconds: 8 });
+    expect(order(set)).toEqual(["burning", "bleeding"]);
+  });
+
+  it("keeps its length through a shorter refresh, which still moves to the end", () => {
+    const set = new StatusSet();
+    set.apply("bleeding", 10, "a");
+    set.apply("burning", 5, "a");
+    set.apply("bleeding", 3, "b");
+    expect(set.get("bleeding")).toMatchObject({ remainingSeconds: 10, durationSeconds: 10 });
+    expect(order(set)).toEqual(["burning", "bleeding"]);
+  });
+
+  it("is the caught duration, and a catch never leaves more time than length (#765)", () => {
+    const outbreak = { infected: new Set<string>() };
+    const fresh = new StatusSet();
+    fresh.catch("disease", 7, "a", outbreak);
+    expect(fresh.get("disease")).toMatchObject({ remainingSeconds: 7, durationSeconds: 7 });
+
+    const set = new StatusSet();
+    set.apply("disease", 10, "a");
+    set.advance(6);
+    set.catch("disease", 8, "b", outbreak);
+    expect(set.get("disease")).toMatchObject({ remainingSeconds: 8, durationSeconds: 10 });
+    set.catch("disease", 12, "b", outbreak);
+    expect(set.get("disease")).toMatchObject({ remainingSeconds: 12, durationSeconds: 12 });
+  });
+});
+
 describe("StatusSet stances, one at a time (#523)", () => {
   it("a new stance ends the one that is up", () => {
     const set = new StatusSet();
