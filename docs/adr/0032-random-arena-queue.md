@@ -54,27 +54,40 @@ with nobody negotiating.**
    room, the teams (a shuffle seeded by the group id) and the map (a
    seeded pick from the pool). The host is the ticket with the lowest
    `sha256(groupId ‖ ticketId)`, not the lowest ticket id, so a fixed
-   secret does not host every match. A late joiner can still grind a
-   few secrets against the group it would join; that is accepted, for
-   the reason a lying host is (Consequences). When two clients disagree, the rooms do not fill within
-   `FORMATION_TIMEOUT_MS`, and everyone requeues keeping their original
-   `enteredAt`.
-5. **Admission by secret.** A ticket's public id is `sha256(secret)`,
-   and the secret stays in memory. The room's name can be worked out by
-   anyone watching the relays, so a joiner shows its secret, and the host
-   admits a peer only if the secret hashes to one of the group's ticket
-   ids, once per ticket. This is the shape `rejoin-proof.ts` already uses.
-6. **Signing with `@noble/secp256k1`**, which Trystero already brings into
+   ticket does not host every match (but see 9). When two clients
+   disagree, the rooms do not fill within `FORMATION_TIMEOUT_MS`, and
+   everyone requeues keeping their original `enteredAt`.
+5. **A ticket id is its signing key.** Each ticket has a throwaway
+   secp256k1 key of its own, kept in memory: the secret is the private
+   key, and the ticket id is its x-only public key (64 hex). The board
+   accepts a ticket or a withdrawal for id X only from an event whose
+   `pubkey` is X with a valid signature, so nobody can republish an
+   honest id with another `enteredAt` or party size. Throwaway keys
+   also mean tickets do not link a player across visits.
+6. **Admission by secret.** The room's name can be worked out by anyone
+   watching the relays, so a joiner shows its secret, and the host admits
+   a peer only if `ticketIdOf(secret)` is one of the group's ticket ids,
+   once per ticket. `ticketIdOf` is passed into game-session as a
+   function, so game-session takes no secp256k1 dependency. Showing the
+   key then is harmless: the ticket is no longer published, and a host
+   could flood fake tickets anyway. This is the shape `rejoin-proof.ts`
+   already uses, and it needs no challenge round trip.
+7. **Signing with `@noble/secp256k1`**, which Trystero already brings into
    the lockfile at 3.2.0. It becomes a direct dependency at that version.
-   Each ticket is signed with a throwaway key of its own, so tickets do
-   not link a player across visits.
-7. **No proof-of-work at first.** A fake ticket costs its sender nothing,
-   but it can cause each client at most one fall-through, after which the
-   client ignores it for `NO_SHOW_IGNORE_MS`. NIP-13 proof-of-work is the
-   lever to pull if spam ever shows up.
-8. **Versions reject** ([ADR-0016](0016-no-backwards-compatibility.md)).
-   The protocol version rides the ticket, and a ticket of another version
-   never matches. Nothing adapts to it.
+8. **No proof-of-work at first.** A fake ticket costs its sender nothing.
+   One fake ticket causes each client at most one fall-through, after
+   which the client ignores it for `NO_SHOW_IGNORE_MS`, but a sybil
+   flood of fresh ones can stall the whole queue, every group falling
+   through. That is accepted; NIP-13 proof-of-work is the lever to pull
+   if it ever happens, and is not built until then.
+9. **A queued player can choose to host.** Tickets are public, so a
+   player can grind fresh keys against the visible tickets until theirs
+   hashes lowest, about 2 × team size tries. That is accepted for
+   unranked play, like any cheating host. Commit-reveal at a host-less
+   meet is the lever if a mode with stakes ever uses the queue.
+10. **Versions reject** ([ADR-0016](0016-no-backwards-compatibility.md)).
+    The protocol version rides the ticket, and a ticket of another version
+    never matches. Nothing adapts to it.
 
 ## Consequences
 
@@ -115,4 +128,4 @@ with nobody negotiating.**
   needs neither.
 - **Proof-of-work on every ticket from the start.** It slows every honest
   player to stop spam nobody has seen yet. The no-show ignore list
-  already bounds what a fake ticket can do.
+  already bounds what one fake ticket can do (8).
