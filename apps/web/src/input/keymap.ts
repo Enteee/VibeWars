@@ -28,6 +28,7 @@ export type KeyAction =
   | "target-next"
   | "target-closest"
   | "target-called"
+  | "target-self"
   | "attack"
   | "call-target"
   | "ping"
@@ -51,6 +52,7 @@ export const KEY_ACTIONS: readonly KeyAction[] = [
   "target-next",
   "target-closest",
   "target-called",
+  "target-self",
   "attack",
   "call-target",
   "ping",
@@ -71,6 +73,7 @@ const SHARED = {
   "target-next": ["Tab"],
   "target-closest": ["KeyC"],
   "target-called": ["KeyT"],
+  "target-self": ["KeyG"],
   attack: ["Space"],
   // The wheel click does both (#443); a key is for a mouse without one,
   // so none is taken from anything else by default.
