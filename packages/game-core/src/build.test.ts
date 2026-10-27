@@ -75,7 +75,13 @@ describe("the staples of #522 are legal for their professions", () => {
   });
 
   it.each([
-    ["assassin", "assassin.jagged-strike"],
+    [
+      "assassin",
+      "assassin.jagged-strike",
+      "assassin.black-lotus-strike",
+      "assassin.fox-fangs",
+      "assassin.wild-strike",
+    ],
     ["warrior", "warrior.sever-artery", "warrior.eviscerate", "warrior.executioners-strike"],
     ["ranger", "ranger.punishing-shot", "ranger.throw-dirt"],
     ["necromancer", "necromancer.enfeebling-blood"],

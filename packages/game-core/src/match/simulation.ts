@@ -47,6 +47,7 @@ import {
 import { adrenalinePools, emptyAdrenaline, gainStrikes } from "../skills/adrenaline.js";
 import { CastState, type ActiveCast } from "../skills/cast-state.js";
 import { getSkill } from "../skills/catalog.js";
+import { clearChainMarksOn, tickChainMarks } from "../skills/chain.js";
 import {
   applySkillEffects,
   applyStatus,
@@ -893,6 +894,7 @@ export class MatchSimulation {
     // bearer acts in again (#468).
     for (const record of this.#participants.values()) {
       this.#advanceKnockdown(record.combatant, dt);
+      tickChainMarks(record.combatant, dt);
     }
     this.#advanceProjectiles(dt);
 
@@ -1316,7 +1318,12 @@ export class MatchSimulation {
       record.combatant.cast.beginAftercast(cast.totalSeconds);
     }
 
-    record.combatant.cast.startRecharge(skill.id, skill.rechargeSeconds * (1 - rechargeFraction));
+    // An off-hand attack out of sequence recharges at once (#831).
+    if (
+      !events.some((event) => event.kind === "attack-missed" && event.reason === "out-of-sequence")
+    ) {
+      record.combatant.cast.startRecharge(skill.id, skill.rechargeSeconds * (1 - rechargeFraction));
+    }
     this.#log.push({
       tick: this.#tick,
       atSeconds: this.#elapsedSeconds,
@@ -2044,6 +2051,7 @@ export class MatchSimulation {
         victim.combatant.cast.endAftercast();
         victim.walkGoal = undefined;
         victim.combatant.knockdownRemaining = 0;
+        this.#clearChainMarks(victim);
         emptyAdrenaline(victim.combatant);
         victim.respawnInSeconds = this.#respawnSeconds(victim);
         this.#reapSoul(victim);
@@ -2089,6 +2097,14 @@ export class MatchSimulation {
         }
       }
     }
+  }
+
+  /** Every chain mark on `record` goes, and every one it placed (#831). */
+  #clearChainMarks(record: ParticipantRecord): void {
+    clearChainMarksOn(
+      [...this.#participants.values()].map(({ combatant }) => combatant),
+      record.id,
+    );
   }
 
   /** Count `combatant`'s knockdown down by `dt`, to exactly 0 at the end. */
@@ -2315,6 +2331,7 @@ export class MatchSimulation {
     record.combatant.cast.endAftercast();
     record.combatant.attack = undefined;
     record.combatant.knockdownRemaining = 0;
+    this.#clearChainMarks(record);
     record.pendingSkill = undefined;
     record.sinceReset = 0;
     record.outOfCombatSeconds = 0;
@@ -2349,6 +2366,7 @@ export class MatchSimulation {
       attack: undefined,
       knockdownRemaining: 0,
       soulReapingTriggers: [],
+      chainMarks: new Map(),
       equipment: spec.equipment,
     };
   }

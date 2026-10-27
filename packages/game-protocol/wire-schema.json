@@ -424,6 +424,7 @@
         {
           "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "attack-missed" } },
+            { "name": "reason", "optional": true, "type": { "literal": "out-of-sequence" } },
             { "name": "targetId", "optional": false, "type": "string" }
           ]
         },
