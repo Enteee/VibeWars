@@ -5,8 +5,14 @@
  * (`parseQueueTicket`), so a test queues through the path players do.
  *
  * Nothing here is signed: every tab on the channel is the same browser.
+ *
+ * A relay keeps what it was sent and replays it to a new subscription; a
+ * channel keeps nothing. So a board that subscribes asks for a replay,
+ * and every board answers with the tickets it published and has not
+ * withdrawn. Without it a tab that queues second never hears a ticket
+ * whose owner settled before its next heartbeat.
  */
-import { parseQueueTicket, type QueueMode } from "@vibewars/game-protocol";
+import { parseQueueTicket, type QueueMode, type QueueTicket } from "@vibewars/game-protocol";
 import type { QueueBoardEvent } from "@vibewars/game-session";
 
 import type { NostrQueue } from "./nostr-queue.js";
@@ -14,6 +20,15 @@ import { APP_ID } from "./relays.js";
 import { newTicketKey } from "./ticket-key.js";
 
 export const QUEUE_CHANNEL = `${APP_ID}:queue`;
+
+/** A new subscriber asking every board to post its tickets again. */
+const REPLAY = { kind: "replay" } as const;
+
+function isReplay(raw: unknown): boolean {
+  return (
+    typeof raw === "object" && raw !== null && (raw as Record<string, unknown>).kind === "replay"
+  );
+}
 
 /** `raw` as a board event, or `undefined` if it is anything else. */
 export function parseBoardMessage(raw: unknown): QueueBoardEvent | undefined {
@@ -44,9 +59,17 @@ interface Subscriber {
 export function joinBroadcastQueue(): NostrQueue {
   const channel = new BroadcastChannel(QUEUE_CHANNEL);
   const subscribers = new Set<Subscriber>();
+  /** This board's tickets, newest copy each, until withdrawn: what a replay posts. */
+  const published = new Map<string, QueueTicket>();
   let closed = false;
 
   channel.onmessage = (message: MessageEvent<unknown>) => {
+    if (isReplay(message.data)) {
+      for (const ticket of published.values()) {
+        post({ kind: "ticket", ticket });
+      }
+      return;
+    }
     const said = parseBoardMessage(message.data);
     if (closed || said === undefined) {
       return;
@@ -60,7 +83,7 @@ export function joinBroadcastQueue(): NostrQueue {
     }
   };
 
-  const post = (event: QueueBoardEvent): void => {
+  const post = (event: QueueBoardEvent | typeof REPLAY): void => {
     if (!closed) {
       channel.postMessage(event);
     }
@@ -69,14 +92,17 @@ export function joinBroadcastQueue(): NostrQueue {
   return {
     board: {
       publish: (ticket) => {
+        published.set(ticket.ticketId, ticket);
         post({ kind: "ticket", ticket });
       },
       withdraw: (ticketId) => {
+        published.delete(ticketId);
         post({ kind: "withdrawn", ticketId });
       },
       subscribe: (mode, on) => {
         const subscriber: Subscriber = { mode, on };
         subscribers.add(subscriber);
+        post(REPLAY);
         return () => {
           subscribers.delete(subscriber);
         };

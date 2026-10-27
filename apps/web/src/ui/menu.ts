@@ -241,11 +241,6 @@ export function renderMenu(
   nameField.appendChild(nameInput);
   play.appendChild(nameField);
 
-  // Why the last try failed, right above the buttons to try again with.
-  if (connectionNotice !== undefined) {
-    play.appendChild(h("div", "screen-problem screen-connection-problem", connectionNotice));
-  }
-
   // Random Arena first (#854 B1): it needs no code and no friends.
   const arenaRow = h("div", "menu-row menu-random-arena");
   const queue = button("Random Arena", "primary", () => {
@@ -272,6 +267,11 @@ export function renderMenu(
     arenaRow.appendChild(h("span", "menu-random-arena-hint", NO_CHARACTER_FOR_QUEUE));
   }
   play.appendChild(arenaRow);
+
+  // Why the last try failed, right above the buttons to try again with.
+  if (connectionNotice !== undefined) {
+    play.appendChild(h("div", "screen-problem screen-connection-problem", connectionNotice));
+  }
 
   const hostRow = h("div", "menu-row");
   hostRow.appendChild(

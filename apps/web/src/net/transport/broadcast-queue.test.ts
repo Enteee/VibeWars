@@ -61,6 +61,20 @@ describe("joinBroadcastQueue", () => {
     ]);
   });
 
+  it("replays the tickets a board published, not those it withdrew, to a board that subscribes later", async () => {
+    const a = open();
+    a.queue.board.publish(ticket(ID_A));
+    a.queue.board.publish(ticket(ID_B));
+    a.queue.board.withdraw(ID_B);
+    await settle();
+    const late = open();
+    await settle();
+
+    expect(late.heard).toEqual([
+      { kind: "ticket", ticket: expect.objectContaining({ ticketId: ID_A }) },
+    ]);
+  });
+
   it("tells a subscriber only the tickets of its mode", async () => {
     const a = open();
     const b = open();
