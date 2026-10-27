@@ -189,6 +189,7 @@ describe("attack skills (#417)", () => {
     expect(lines).toEqual({
       axe: "Axe attack",
       bow: "Bow attack",
+      daggers: "Dagger attack",
       hammer: "Hammer attack",
       melee: "Melee attack",
       sword: "Sword attack",
