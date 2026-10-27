@@ -111,6 +111,11 @@ export const SKILL_ICONS = {
   "elementalist.shard-storm": { glyph: "shard" },
   "elementalist.ice-spikes": { glyph: "shard", modifier: "area" },
   "elementalist.deep-freeze": { glyph: "snowflake", modifier: "area" },
+  // Placeholders until asset-designer's icons (#985).
+  "elementalist.blinding-flash": { glyph: "lightning", modifier: "less" },
+  "elementalist.shock": { glyph: "lightning", modifier: "stun" },
+  "elementalist.aftershock": { glyph: "mountain", modifier: "down" },
+  "elementalist.meteor": { glyph: "fireball", modifier: "stun" },
   "mesmer.cry-of-frustration": { glyph: "interrupt", modifier: "area" },
   "mesmer.mantra-of-recovery": { glyph: "speed", modifier: "clock" },
   "necromancer.shadow-of-fear": { glyph: "slow", modifier: "area" },

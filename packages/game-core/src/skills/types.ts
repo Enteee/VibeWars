@@ -345,6 +345,11 @@ export type StateCondition =
   /** The effect's target did not walk in the previous tick (#921, `Combatant.moving`). */
   | { readonly kind: "target-not-moving" }
   /**
+   * The effect's target is knocked down (#985, `Combatant.knockdownRemaining`):
+   * Aftershock's "knocked down foes are struck for ... additional".
+   */
+  | { readonly kind: "target-knocked-down" }
+  /**
    * The caster has more energy than the effect's target (#918): Mind
    * Shock's "if you have more energy than target foe". Equal is not more.
    */

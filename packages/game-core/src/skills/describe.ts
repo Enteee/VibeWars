@@ -473,6 +473,8 @@ function conditionText(condition: EffectCondition): string {
         : `If target has no allies within ${String(condition.radius)}`;
     case "target-not-moving":
       return "If target is not moving";
+    case "target-knocked-down":
+      return "If target is knocked down";
     case "caster-more-energy":
       return "If you have more Energy than target";
     case "caster-wields":

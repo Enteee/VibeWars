@@ -3558,6 +3558,157 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     // durations from yourself to target touched foe."
     effects: [{ kind: "transfer-conditions", count: 3 }],
   },
+
+  /* ---------------------------------------------------------------------- */
+  /* Elementalist knockdown staples (#985)                                  */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "elementalist.blinding-flash",
+    name: "Blinding Flash",
+    type: "spell",
+    elite: false,
+    profession: "elementalist",
+    attributeId: "elementalist.air-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    // The 2011 revision's 8 s, which the corpus carries.
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Target enemy is blinded for 3...7...8 seconds": 7 s, its rank-12 value.
+    effects: [{ kind: "apply-status", statusId: "blind", durationSeconds: 7 }],
+  },
+  {
+    id: "elementalist.shock",
+    name: "Shock",
+    // A touch skill, not a spell: Dazed does not slow it, Fast Casting does
+    // not speed it, Backfire does not answer it.
+    type: "skill",
+    elite: false,
+    profession: "elementalist",
+    attributeId: "elementalist.air-magic",
+    cost: { kind: "energy", amount: 5 },
+    // Exhaustion, as Mind Shock's (#461), at the corpus's 10.
+    overcast: 10,
+    activationSeconds: 0.75,
+    rechargeSeconds: 10,
+    // "Target touched foe": the foe must be at hand.
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "...is knocked down and struck for 10...50...60 lightning damage. This
+    // skill has 25% armor penetration."
+    effects: [
+      { kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS },
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.air-magic", atZero: 10, atTwelve: 50 },
+        },
+        type: "lightning",
+        armorPenetration: 0.25,
+      },
+    ],
+  },
+  {
+    id: "elementalist.aftershock",
+    name: "Aftershock",
+    type: "spell",
+    elite: false,
+    profession: "elementalist",
+    attributeId: "elementalist.earth-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    // "Nearby foes": the latest revision's radius, around the caster.
+    area: {
+      radius: AREA_NEARBY,
+      origin: "caster",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "...are struck for 26...85...100 earth damage. Knocked down foes are
+    // struck for 10...56...68 additional earth damage." Down is read before
+    // the first strike lands.
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.earth-magic", atZero: 26, atTwelve: 85 },
+        },
+        type: "earth",
+        armorPenetration: 0,
+      },
+      {
+        kind: "if",
+        condition: { kind: "target-knocked-down" },
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "elementalist.earth-magic", atZero: 10, atTwelve: 56 },
+            },
+            type: "earth",
+            armorPenetration: 0,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "elementalist.meteor",
+    name: "Meteor",
+    type: "spell",
+    elite: false,
+    profession: "elementalist",
+    attributeId: "elementalist.fire-magic",
+    cost: { kind: "energy", amount: 5 },
+    // Exhaustion (#461), at the corpus's 10.
+    overcast: 10,
+    activationSeconds: 2,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    // "Target foe and all adjacent foes": it lands as the cast ends, with no
+    // impact delay.
+    area: {
+      radius: AREA_ADJACENT,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "...are struck for 7...91...112 fire damage and knocked down."
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.fire-magic", atZero: 7, atTwelve: 91 },
+        },
+        type: "fire",
+        armorPenetration: 0,
+      },
+      { kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS },
+    ],
+  },
 ];
 
 export const SKILLS_BY_ID: ReadonlyMap<string, Skill> = new Map(
