@@ -167,7 +167,7 @@ describe("status-driven combat scenarios", () => {
     const warrior = makeCombatant({ id: "war", team: 0, adrenaline: 4 });
     const victim = makeCombatant({ id: "victim", team: 1, health: 500 });
 
-    applyEffects(getSkill("warrior.sever-artery-lite")?.effects ?? [], {
+    applyEffects(getSkill("warrior.sever-artery")?.effects ?? [], {
       caster: warrior,
       target: victim,
       rng: createRng(1),

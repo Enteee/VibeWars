@@ -28,7 +28,7 @@ import type { AttributeRules } from "./ruleset.js";
 export const DEFAULT_SKILL_BAR: SkillBar = [
   "elementalist.fireball",
   "monk.orison-of-healing",
-  "warrior.sever-artery-lite",
+  "warrior.sever-artery",
   "warrior.distracting-blow",
   "elementalist.armor-of-earth",
   "monk.mend-condition",

@@ -105,7 +105,7 @@ describe("describeSkill", () => {
   });
 
   it("reports an adrenaline cost as adrenaline", () => {
-    expect(describeSkill(skill("warrior.sever-artery-lite")).cost).toContain("adrenaline");
+    expect(describeSkill(skill("warrior.sever-artery")).cost).toContain("adrenaline");
   });
 
   it("says Self once for a self-cast, with no range of its own", () => {
@@ -120,7 +120,7 @@ describe("describeSkill", () => {
   });
 
   it("explains what an applied status does, not just its name", () => {
-    const described = describeSkill(skill("warrior.sever-artery-lite"));
+    const described = describeSkill(skill("warrior.sever-artery"));
     const line = described.effects.map((effect) => effect.text).join(" ");
 
     expect(line).toContain("Bleeding");
@@ -269,6 +269,7 @@ describe("attack skills (#417)", () => {
     expect(lines).toEqual({
       axe: "Axe attack",
       bow: "Bow attack",
+      daggers: "Dagger attack",
       hammer: "Hammer attack",
       melee: "Melee attack",
       sword: "Sword attack",

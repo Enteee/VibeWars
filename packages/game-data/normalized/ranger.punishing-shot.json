@@ -1,0 +1,25 @@
+{
+  "id": "ranger.punishing-shot",
+  "name": "Punishing Shot",
+  "profession": "ranger",
+  "attribute": "Marksmanship",
+  "type": "Bow attack.",
+  "elite": true,
+  "campaign": "Prophecies",
+  "cost": {
+    "kind": "energy",
+    "amount": 10
+  },
+  "overcast": 0,
+  "activationSeconds": 0.5,
+  "rechargeSeconds": 5,
+  "description": "If Punishing Shot hits, you strike for +10...18...20 damage and your target is interrupted.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Ranger/119-Punishing_Shot",
+    "fetchedAt": "2026-10-27T02:46:45.927Z"
+  },
+  "unmapped": {}
+}
