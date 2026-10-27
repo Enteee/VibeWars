@@ -623,6 +623,7 @@ function isStateCondition(condition: EffectCondition): condition is StateConditi
     case "target-casting":
     case "caster-has":
     case "target-alone":
+    case "caster-more-energy":
       return true;
   }
 }
@@ -664,6 +665,8 @@ export function stateHolds(
         )
       );
     }
+    case "caster-more-energy":
+      return caster.energy > target.energy;
   }
 }
 
@@ -731,6 +734,7 @@ function conditionHolds(
     case "target-casting":
     case "caster-has":
     case "target-alone":
+    case "caster-more-energy":
       return held.has(condition);
   }
 }

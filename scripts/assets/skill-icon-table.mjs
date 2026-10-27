@@ -78,4 +78,8 @@ export const SKILL_ICONS = {
   "mesmer.backfire": { glyph: "fireball", modifier: "self" },
   "mesmer.empathy": { glyph: "sword", modifier: "self" },
   "monk.mending": { glyph: "heal", modifier: "upkeep" },
+  "elementalist.lightning-strike": { glyph: "lightning" },
+  "elementalist.mind-shock": { glyph: "lightning", modifier: "down" },
+  "elementalist.shard-storm": { glyph: "shard" },
+  "necromancer.shadow-of-fear": { glyph: "slow", modifier: "area" },
 };

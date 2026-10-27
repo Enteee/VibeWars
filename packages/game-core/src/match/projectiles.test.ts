@@ -883,3 +883,63 @@ describe("Lightning Orb flies (#761)", () => {
     expect(get(match, "target").combatant.health).toBe(1e6);
   });
 });
+
+describe("Shard Storm flies (#918)", () => {
+  const SHARD = "elementalist.shard-storm";
+
+  function shardSim(): MatchSimulation {
+    return new MatchSimulation({
+      seed: "shard-storm",
+      participants: [
+        {
+          id: "caster",
+          team: 0,
+          skillBar: [SHARD],
+          attributeRanks: new Map([["elementalist.water-magic", 12]]),
+          equipment: unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
+          maxEnergy: 1000,
+          spawn: vec2(0, 0),
+          facing: 0,
+        },
+        target(vec2(300, 0)),
+      ],
+    });
+  }
+
+  /** Cast at the target, walking `walking`, then `then` once it flies; step until it lands. */
+  function castAndLand(match: MatchSimulation, walking: Vec2, then: Vec2): CombatLogEntry {
+    match.setTarget("caster", "target");
+    match.setInputDirection("target", walking);
+    expect(match.requestSkill("caster", 0)?.check).toEqual({ ok: true });
+    let flying = false;
+    for (let i = 0; i < 300; i += 1) {
+      const entry = match.step(DT).log.find((logged) => logged.skillId === SHARD);
+      if (entry === undefined) {
+        continue;
+      }
+      if (flying) {
+        return entry;
+      }
+      flying = true;
+      match.setInputDirection("target", then);
+    }
+    throw new Error("nothing landed");
+  }
+
+  it("lands its damage and its slow when it hits", () => {
+    const match = shardSim();
+    const landed = castAndLand(match, ZERO, ZERO);
+    expect(landed.events.map((event) => event.kind)).toEqual(["damage", "status-applied"]);
+    expect(get(match, "target").combatant.statuses.has("shard-storm")).toBe(true);
+  });
+
+  it("a target that sidesteps takes nothing and is not slowed", () => {
+    const match = shardSim();
+    expect(castAndLand(match, UP, DOWN).events).toEqual([
+      { kind: "attack-dodged", targetId: "target" },
+    ]);
+    const victim = get(match, "target").combatant;
+    expect(victim.health).toBe(1e6);
+    expect(victim.statuses.has("shard-storm")).toBe(false);
+  });
+});

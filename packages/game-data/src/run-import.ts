@@ -347,6 +347,26 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     profession: "dervish",
     url: "https://www.gw-memorial.net/skills/Dervish/1052-Pious_Restoration",
   },
+  {
+    id: "elementalist.lightning-strike",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/385-Lightning_Strike",
+  },
+  {
+    id: "elementalist.mind-shock",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/388-Mind_Shock",
+  },
+  {
+    id: "elementalist.shard-storm",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/443-Shard_Storm",
+  },
+  {
+    id: "necromancer.shadow-of-fear",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/270-Shadow_of_Fear",
+  },
 ];
 
 function packageRoot(): string {

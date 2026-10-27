@@ -615,6 +615,9 @@ lands and shrinks back when it ends; an attack skill keeps the wind-up it
 started with. Spells are not slowed. Only the strongest slow-down and the
 strongest speed-up count, and they multiply (ADR-0029). The hex also
 degenerates its target by 2 pips.
+**Shadow of Fear** (Curses, 10 energy, 2 s cast, 5 s recharge) is the
+same slow-down without the degeneration, for 25 s, on the target and
+every foe adjacent to it (#918).
 
 ## Damage types and armor
 
@@ -672,6 +675,13 @@ recharge) flies at the target, half as fast again as Fireball, and is
 dodged or blocked by a wall as Fireball is. It strikes for 82 lightning at
 Air Magic 12, and a Ranger's 100 armor counts as 75 against it: it lands
 for 63, where Fireball's 91 lands for 46.
+**Lightning Strike** (5 energy, 1 s, 5 s recharge) hits at once for 33
+lightning at rank 12. **Mind Shock** (elite, 5 energy, 10 overcast, 1 s,
+8 s recharge) hits for 42 lightning, and if you have more energy than
+your target when it lands (its cost already paid), another 42 and a
+knockdown. **Shard Storm** (Water Magic, 10 energy, 1 s, 10 s recharge)
+flies as Fireball does, a little faster, and on a hit deals 70 cold and
+hexes its target to 34% speed for 5 s (#918).
 
 ## Primary attributes
 
