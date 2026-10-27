@@ -149,6 +149,25 @@ function byColumn(snapshot) {
 }
 
 /**
+ * How many issues on the board sit in no column, "No Status" on GitHub
+ * (#520). Pull requests and drafts are not counted: the manager places
+ * those. The copy does not know whether an issue is closed, so a closed
+ * one with no column counts too; GitHub's "closed → Done" workflow makes
+ * that rare.
+ *
+ * @param {{ cards: readonly { item: unknown }[] }} snapshot
+ * @returns {number}
+ */
+function noStatusIssues(snapshot) {
+  return snapshot.cards.filter(({ item }) => {
+    const row = obj(item);
+    return (
+      (typeof row.status !== "string" || row.status === "") && obj(row.content).type === "Issue"
+    );
+  }).length;
+}
+
+/**
  * How many card rows each listed column gets out of `spare`.
  *
  * Fair first: every column with cards gets one row, in board order, while
@@ -228,10 +247,10 @@ export function boardLines(snapshot, boardColumns, live, { rows, width }) {
   const done = doneOrder(cards.get(DONE) ?? []).slice(0, DONE_SHOWN);
   const total = columns.reduce((sum, column) => sum + (cards.get(column)?.length ?? 0), 0);
 
-  // The header, a line per column, Done's cards and the empty note are
-  // fixed; the rest is shared between the listed columns.
+  // The header, the No Status count, a line per column, Done's cards and
+  // the empty note are fixed; the rest is shared between the listed columns.
   const fixed =
-    1 + columns.length + (tiny || !columns.includes(DONE) ? 0 : done.length) + (total ? 0 : 1);
+    2 + columns.length + (tiny || !columns.includes(DONE) ? 0 : done.length) + (total ? 0 : 1);
   const share = shareRows(
     listed.map((column) => (tiny ? 0 : (cards.get(column)?.length ?? 0))),
     Math.max(0, rows - fixed),
@@ -240,6 +259,15 @@ export function boardLines(snapshot, boardColumns, live, { rows, width }) {
   // The copy is only swept when someone reads the board, so an old sweep
   // means a quiet company, not a broken dashboard.
   const lines = [cut(`as of ${hhmm(snapshot.at)} (swept ${hhmm(snapshot.sweptAt)})`, width)];
+  // Always there, so the pane does not jump when one arrives; loud only
+  // when there is something to go and look at.
+  const unplaced = noStatusIssues(snapshot);
+  lines.push(
+    paint(
+      cut(`${"No Status".padEnd(13)} ${String(unplaced).padStart(3)}`, width),
+      unplaced > 0 ? "1;33" : "2",
+    ),
+  );
   for (const column of columns) {
     const here = cards.get(column) ?? [];
     const owners = COLUMN_OWNERS[column] ?? [];
