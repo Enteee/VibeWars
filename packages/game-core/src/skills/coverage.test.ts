@@ -6,6 +6,7 @@ import {
   computeCoverage,
   formatCoverage,
   missingMechanics,
+  unmaintainedUpkeepSkills,
 } from "./coverage.js";
 
 /**
@@ -128,5 +129,19 @@ describe("skill coverage regression gate", () => {
     expect(text).toContain("mesmer.echo — needs skill-bar-mutation");
     expect(text).toContain("blocked on:");
     expect(text).toContain(MISSING_MECHANIC_DESCRIPTIONS.knockdown);
+  });
+
+  it("passes an upkeep skill the catalog maintains (Mending, #840)", () => {
+    expect(unmaintainedUpkeepSkills(["monk.mending"])).toEqual([]);
+  });
+
+  it("flags an upkeep skill the catalog does not maintain (#840)", () => {
+    // Guardian is a timed enchantment here; were the corpus to call it
+    // upkeep, the two would disagree and this must say so.
+    expect(unmaintainedUpkeepSkills(["monk.guardian", "monk.mending"])).toEqual(["monk.guardian"]);
+  });
+
+  it("ignores an upkeep skill the catalog does not have (#840)", () => {
+    expect(unmaintainedUpkeepSkills(["monk.not-in-the-catalog"])).toEqual([]);
   });
 });

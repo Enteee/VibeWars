@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0,
   "rechargeSeconds": 15,
+  "upkeep": false,
   "description": "For 4...9...10 seconds, you cannot be knocked down and move 25% faster. This enchantment ends prematurely if it prevents a knockdown.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

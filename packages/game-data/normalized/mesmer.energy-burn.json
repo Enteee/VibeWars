@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 2,
   "rechargeSeconds": 20,
+  "upkeep": false,
   "description": "Target foe loses 1...8...10 Energy and takes 9 damage for each point of energy lost.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

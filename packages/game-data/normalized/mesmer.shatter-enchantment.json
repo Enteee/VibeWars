@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 1,
   "rechargeSeconds": 20,
+  "upkeep": false,
   "description": "Remove an enchantment from target foe. If an enchantment is removed, that foe takes 14...83...100 damage.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

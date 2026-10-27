@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0,
   "rechargeSeconds": 3,
+  "upkeep": false,
   "description": "If this attack hits, target foe suffers from Bleeding for 5...17...20 seconds, and you lose 1 Dervish enchantment. If an enchantment is removed, target foe also suffers from a Deep Wound for 5...17...20 seconds.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

@@ -27,6 +27,7 @@ export {
   computeCoverage,
   formatCoverage,
   missingMechanics,
+  unmaintainedUpkeepSkills,
 } from "./coverage.js";
 
 export type { CombatEvent } from "./effects.js";
