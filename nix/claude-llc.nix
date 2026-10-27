@@ -349,6 +349,10 @@ let
           exit 1
         fi
 
+        # The agents run on the company's own Claude account, never the
+        # operator's (#865).
+        ${node} ${llcScripts}/claude-check.mjs || exit 1
+
         # Starting the company twice would build a second set of sandboxes and
         # a second sidecar per role — and two sidecars on one bot token means
         # 409 Conflict and a deaf agent. So a running session is joined, never
@@ -574,6 +578,7 @@ in
           set -euo pipefail
           export VIBEWARS_BOT_ROOT="$DEVENV_ROOT/.bots"
           export VIBEWARS_CREDENTIALS="${config.vibewars.claudeBot.credentials}"
+          export VIBEWARS_CLAUDE_BOXES="$HOME/${config.vibewars.claudeBot.boxes}"
           exec ${node} ${llcScripts}/company-init.mjs "$@"
         '';
       };

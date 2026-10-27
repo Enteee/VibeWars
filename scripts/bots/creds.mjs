@@ -26,6 +26,7 @@ export function paths(root) {
     root,
     claude: path.join(root, "claude"),
     claudeCredentials: path.join(root, "claude", ".credentials.json"),
+    claudeIdentity: path.join(root, "claude-identity"),
     gh: path.join(root, "gh"),
     ghHosts: path.join(root, "gh", "hosts.yml"),
     ssh: path.join(root, "ssh"),
@@ -302,4 +303,74 @@ export function ensureHome(root) {
     outcome: fs.existsSync(p.telegram) ? "present" : "missing (run claude-bot-setup)",
   });
   return { ok: true, lines };
+}
+
+/**
+ * The command that signs the company's Claude account in, in its own config
+ * directory and nobody else's.
+ *
+ * @param {string} root
+ * @returns {string}
+ */
+export function claudeSignIn(root) {
+  return `CLAUDE_CONFIG_DIR=${paths(root).claude} claude   (then /login, as a separate account from yours)`;
+}
+
+/**
+ * Whether the agents may run on the company's Claude account (#865): it must
+ * be signed in, in the company's config directory. Whose account that is, is
+ * the operator's responsibility (the doctor shows it, informationally); the
+ * point of the directory is that the jails bind that one credential and
+ * nothing of the operator's `~/.claude`.
+ *
+ * @param {string} root
+ * @param {Run} [run]
+ * @returns {{ ok: true, who: string } | { ok: false, message: string }}
+ */
+export function claudeVerdict(root, run = runCommand) {
+  const company = claudeIdentity(paths(root).claude, run);
+  if (company.state === "error") {
+    return {
+      ok: false,
+      message: `the company's Claude account could not be read: ${company.note ?? "?"}`,
+    };
+  }
+  if (company.state !== "ok" || company.who === null) {
+    return {
+      ok: false,
+      message: `the company's Claude account is not set up. Sign it in: ${claudeSignIn(root)}`,
+    };
+  }
+  return { ok: true, who: company.who };
+}
+
+/**
+ * Per-role Claude state (`claude.json`: onboarding, trust, the account it
+ * saw) belongs to one account. When the company's account is not the one
+ * recorded, delete every box's copy; the next start seeds it again. Not
+ * migrated: the old account's state is not wanted (ADR-0016).
+ *
+ * @param {string} root
+ * @param {string} boxes the directory holding one box per employee
+ * @param {string} who the company's Claude account now
+ * @returns {number} how many boxes were reset
+ */
+export function resetBoxesOnAccountChange(root, boxes, who) {
+  const recorded = paths(root).claudeIdentity;
+  const before = fs.existsSync(recorded) ? fs.readFileSync(recorded, "utf8").trim() : null;
+  if (before === who) {
+    return 0;
+  }
+  let reset = 0;
+  if (fs.existsSync(boxes)) {
+    for (const entry of fs.readdirSync(boxes, { withFileTypes: true })) {
+      const file = path.join(boxes, entry.name, "claude.json");
+      if (entry.isDirectory() && fs.existsSync(file)) {
+        fs.rmSync(file);
+        reset += 1;
+      }
+    }
+  }
+  fs.writeFileSync(recorded, `${who}\n`, { mode: 0o600 });
+  return reset;
 }

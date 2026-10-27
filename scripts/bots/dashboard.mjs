@@ -24,7 +24,7 @@ import { fileURLToPath } from "node:url";
 import { buildLine, head, manifest, readManifest } from "./fingerprint.mjs";
 import { readBoardState } from "./hub-board.mjs";
 import { ROLES } from "./hub-policy.mjs";
-import { formatSpend, readSpend } from "./hub-spend.mjs";
+import { readSpend } from "./hub-spend.mjs";
 import { betweenTurns, parseReboot } from "./reboot.mjs";
 import { ownNudges, parseOwnSchedules, parseSchedule } from "./schedule.mjs";
 import { readSidecar, sidecarDown } from "./sidecar.mjs";
@@ -324,13 +324,19 @@ function telegram() {
   return { down: !running || sidecarDown(now, record), lastSeen: record?.lastSeen ?? null, now };
 }
 
+/**
+ * `ratelimit.json` as hubd wrote it, or null; the view formats it (#963).
+ *
+ * @returns {import("./dashboard-view.mjs").GithubBudget | null}
+ */
 function budget() {
   const raw = hubFile("ratelimit.json");
   if (
     raw === null ||
     typeof raw.remaining !== "number" ||
     typeof raw.limit !== "number" ||
-    typeof raw.resetAt !== "number"
+    typeof raw.resetAt !== "number" ||
+    typeof raw.checkedAt !== "number"
   ) {
     return null;
   }
@@ -339,7 +345,9 @@ function budget() {
     remaining: raw.remaining,
     limit: raw.limit,
     resetAt: raw.resetAt,
-    spend: formatSpend(readSpend(raw.spend)),
+    checkedAt: raw.checkedAt,
+    spend: readSpend(raw.spend),
+    now: Date.now(),
   };
 }
 

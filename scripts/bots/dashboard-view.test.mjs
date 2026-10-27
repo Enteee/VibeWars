@@ -403,7 +403,15 @@ describe("boardScreenLines (#883)", () => {
 
 describe("companyLines", () => {
   const roles = ["manager", "architect", "developer", "lead-dev", "qa-tester"];
-  const budget = { remaining: 4210, limit: 5000, resetAt: 0, spend: "GRAPHQL  ~380/h" };
+  /** @type {import("./dashboard-view.mjs").GithubBudget} */
+  const budget = {
+    remaining: 4210,
+    limit: 5000,
+    resetAt: 3_600_000,
+    checkedAt: 0,
+    spend: [],
+    now: 0,
+  };
   /** @type {HubLine} */
   const hub = { state: "up", line: "hub ● up 3m · restarts 0/h" };
 
@@ -427,7 +435,7 @@ describe("companyLines", () => {
     expect(lines[0]).toBe("STAFF  2/12");
     // On the BOARD pane now (#883).
     expect(lines.some((line) => line.startsWith("nudges"))).toBe(false);
-    expect(lines.some((line) => line.startsWith("GITHUB GraphQL 4210/5000"))).toBe(true);
+    expect(lines.some((line) => line.startsWith("GITHUB GraphQL [###"))).toBe(true);
     expect(lines.indexOf("hub ● up 3m · restarts 0/h")).toBeGreaterThan(0);
     for (const line of lines) {
       expect(columnsOf(line)).toBeLessThanOrEqual(40);
@@ -742,6 +750,141 @@ describe("companyLines", () => {
       const burn = { output: 5, replies: 1, top: [{ role: "\u001b]0;x\u0007", output: 5 }] };
       const line = claudeLines(null, burn)[1] ?? "";
       expect(line).not.toContain("\u001b");
+    });
+  });
+
+  describe("how much of the GraphQL budget is left (#963)", () => {
+    const now = new Date(2026, 9, 27, 17, 20).getTime();
+    const resetAt = new Date(2026, 9, 27, 18, 0).getTime();
+
+    /**
+     * @param {string} role
+     * @param {string} cmd
+     * @param {number | null} cost
+     * @returns {import("./hub-spend.mjs").Spend}
+     */
+    const spend = (role, cmd, cost) => ({ at: now - 60_000, role, cmd, ms: 300, cost });
+
+    /**
+     * @param {Partial<import("./dashboard-view.mjs").GithubBudget> | null} budget
+     * @returns {string[]} the GITHUB lines, colours and all
+     */
+    const githubLines = (budget) => {
+      const lines = companyLines(
+        {
+          roles,
+          live: new Set(),
+          stale: new Map(),
+          staff: null,
+          budget:
+            budget === null
+              ? null
+              : {
+                  remaining: 4210,
+                  limit: 5000,
+                  resetAt,
+                  checkedAt: now - 60_000,
+                  spend: [],
+                  now,
+                  ...budget,
+                },
+          hub,
+          reboot: null,
+          build: null,
+          claude: null,
+          telegram: telegramUp,
+          kpi: noKpi,
+        },
+        { rows: 60, width: 160 },
+      );
+      return lines.filter((line) =>
+        /^(GITHUB| {2}RATE-LIMITED| {2}burn| {2}by role)/.test(plain(line)),
+      );
+    };
+    /** @param {number} remaining */
+    const barLine = (remaining) => githubLines({ remaining })[0] ?? "";
+
+    it("draws the bar, used, left and when it resets", () => {
+      expect(plain(barLine(4210))).toBe(
+        `GITHUB GraphQL [${"#".repeat(3)}${"·".repeat(17)}]  16 % used, 4210/5000 left, resets 18:00`,
+      );
+      expect(plain(barLine(250))).toBe(
+        `GITHUB GraphQL [${"#".repeat(19)}·]  95 % used, 250/5000 left, resets 18:00`,
+      );
+    });
+
+    it("is coloured as Claude's bar is: yellow from 75 %, red from 90 %", () => {
+      expect(barLine(4210)).not.toContain("\u001b");
+      expect(barLine(1250).startsWith("\x1b[33m")).toBe(true);
+      expect(barLine(500).startsWith("\x1b[31m")).toBe(true);
+    });
+
+    it("says RATE-LIMITED, in red, at 0 left, and projects nothing", () => {
+      const lines = githubLines({ remaining: 0, spend: [spend("developer", "pr view", 40)] });
+      expect(lines[0]?.startsWith("\x1b[31m")).toBe(true);
+      expect(lines[1]).toBe("\x1b[31m  RATE-LIMITED, agents are waiting\x1b[0m");
+      expect(plain(lines[2] ?? "")).toBe("  burn    ~40/h in 1 calls  top: pr view ×1 (~40)");
+    });
+
+    it("says how old a reading is past 10 minutes", () => {
+      expect(plain(githubLines({})[0] ?? "")).not.toContain("as of");
+      expect(plain(githubLines({ checkedAt: now - 11 * 60_000 })[0] ?? "")).toMatch(
+        /resets 18:00 \(as of 17:09\)$/,
+      );
+    });
+
+    it("draws no bar for a budget that has reset since", () => {
+      expect(plain(githubLines({ resetAt: now - 60_000 })[0] ?? "")).toBe(
+        "GITHUB GraphQL  reset since 17:19, no newer reading",
+      );
+    });
+
+    it("projects when the budget runs dry at the last hour's rate", () => {
+      // 3000 an hour from 17:20 empties 1000 at 17:40, before the reset.
+      const dry = githubLines({
+        remaining: 1000,
+        spend: [spend("developer", "issue view", 3000), spend("hubd", "board snapshot", null)],
+      });
+      expect(plain(dry[1] ?? "")).toBe(
+        "  burn    ~3000/h in 2 calls, 1 uncounted; at this rate empty ~17:40  " +
+          "top: issue view ×1 (~3000), board snapshot ×1 (~0)",
+      );
+      const lasts = githubLines({ spend: [spend("developer", "issue view", 380)] });
+      expect(plain(lasts[1] ?? "")).toBe(
+        "  burn    ~380/h in 1 calls; lasts to reset  top: issue view ×1 (~380)",
+      );
+      const quiet = githubLines({});
+      expect(quiet.map(plain).slice(1)).toEqual(["  burn    nothing in the last hour"]);
+      const uncounted = githubLines({ spend: [spend("hubd", "board snapshot", null)] });
+      expect(plain(uncounted[1] ?? "")).toBe(
+        "  burn    ~0/h in 1 calls, 1 uncounted  top: board snapshot ×1 (~0)",
+      );
+    });
+
+    it("names the five roles that spent the most, escaped", () => {
+      const lines = githubLines({
+        spend: [
+          spend("manager", "pr view", 40),
+          spend("developer", "pr view", 150),
+          spend("hubd", "board snapshot", 90),
+          spend("lead-dev", "pr view", 60),
+          spend("qa-tester", "pr view", 20),
+          spend("architect", "pr view", 10),
+          spend("\u001b]0;x\u0007", "pr view", 30),
+        ],
+      });
+      const byRole = lines.at(-1) ?? "";
+      expect(byRole).not.toContain("\u001b");
+      expect(plain(byRole)).toMatch(
+        /^ {2}by role developer ~150, hubd ~90, lead-dev ~60, manager ~40, .+ ~30$/,
+      );
+    });
+
+    it("says unknown before hubd checked, and for a malformed file", () => {
+      const unknown = "GITHUB budget unknown (hubd has not checked yet)";
+      expect(githubLines(null).map(plain)).toEqual([unknown]);
+      expect(githubLines({ limit: 0 }).map(plain)).toEqual([unknown]);
+      expect(githubLines({ remaining: 5001 }).map(plain)).toEqual([unknown]);
     });
   });
 
