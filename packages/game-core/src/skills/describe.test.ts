@@ -187,6 +187,17 @@ describe("describeSkill", () => {
     expect(describeSkill(skill("mesmer.power-spike"), ranks).headline).toBe("102 damage");
   });
 
+  it("says a spell-only interrupt takes a spell, and what follows it (#1008)", () => {
+    const ranks = new Map([["ranger.marksmanship", 12]]);
+    expect(
+      describeSkill(skill("ranger.concussion-shot"), ranks).effects.map((e) => e.text),
+    ).toEqual([
+      "+13 damage",
+      "Interrupts the target's spell, if they are casting one",
+      "If that action was a spell: applies Dazed for 17s (spells take 2× as long to cast, spells are interrupted by attacks)",
+    ]);
+  });
+
   it("says what a disable locks out, and for how long (#914)", () => {
     const ranks = new Map([
       ["mesmer.domination-magic", 12],

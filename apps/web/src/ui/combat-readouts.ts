@@ -5,6 +5,7 @@ import {
   getWeapon,
   type CombatEvent,
   type CombatLogEntry,
+  type InterruptEffect,
 } from "@vibewars/game-core";
 
 /**
@@ -91,6 +92,14 @@ function skillName(skillId: string | undefined): string | undefined {
   return skillId === undefined ? undefined : (getSkill(skillId)?.name ?? skillId);
 }
 
+/** ": not a spell": why `skillId`'s picky interrupt let a cast through (#796, #1008). */
+function refusalReason(skillId: string | undefined): string {
+  const only = getSkill(skillId ?? "")?.effects.find(
+    (effect): effect is InterruptEffect => effect.kind === "interrupt",
+  )?.only;
+  return only === "spell" ? "not a spell" : "not a spell or chant";
+}
+
 /** One event as a sentence a player can learn from. */
 /** " (must follow an off-hand attack)": what a chain attack out of sequence needed (#831, #885). */
 function outOfSequence(skillId: string | undefined): string {
@@ -165,7 +174,7 @@ export function describeCombatEvent(
       // A picky interrupt says why it let a cast through (#796).
       return event.refusedSkillId === null
         ? `${by} finds nothing to interrupt on ${target}`
-        : `${by} can't interrupt ${target}'s ${skillName(event.refusedSkillId) ?? event.refusedSkillId}: not a spell or chant`;
+        : `${by} can't interrupt ${target}'s ${skillName(event.refusedSkillId) ?? event.refusedSkillId}: ${refusalReason(entry.skillId)}`;
     case "attack-missed":
       return `${by} misses ${target}${event.reason === "out-of-sequence" ? outOfSequence(entry.skillId) : ""}`;
     case "attack-blocked":

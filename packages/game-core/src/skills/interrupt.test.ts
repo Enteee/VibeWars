@@ -345,3 +345,43 @@ describe("applying Dazed (#546)", () => {
     expect(daze(victim).map((event) => event.kind)).toEqual(["status-applied"]);
   });
 });
+
+describe("a picky interrupt (#521, #1008)", () => {
+  function interrupt(only: "spell" | "spell-or-chant", skillId: string) {
+    const victim = makeCombatant({ id: "victim", team: 1 });
+    cast(victim, skillId, victim);
+    return applyEffects([{ kind: "interrupt", only }], {
+      surroundings: new Map(),
+      caster: makeCombatant({ id: "ranger", team: 0 }),
+      target: victim,
+      rng: createRng(1),
+      rules: MINIMAL_GW_INSPIRED_PVP_V1.combat,
+    });
+  }
+
+  it("`spell` interrupts a spell, a hex and an enchantment", () => {
+    for (const skillId of [
+      "elementalist.fireball",
+      "necromancer.faintheartedness",
+      "monk.guardian",
+    ]) {
+      expect(interrupt("spell", skillId)).toEqual([
+        { kind: "interrupted", targetId: "victim", skillId },
+      ]);
+    }
+  });
+
+  it("`spell` refuses a chant and a signet, and names it", () => {
+    for (const skillId of ["paragon.anthem-of-flame", "warrior.healing-signet"]) {
+      expect(interrupt("spell", skillId)).toEqual([
+        { kind: "interrupt-missed", targetId: "victim", refusedSkillId: skillId },
+      ]);
+    }
+  });
+
+  it("`spell-or-chant` still interrupts the chant", () => {
+    expect(interrupt("spell-or-chant", "paragon.anthem-of-flame")).toEqual([
+      { kind: "interrupted", targetId: "victim", skillId: "paragon.anthem-of-flame" },
+    ]);
+  });
+});

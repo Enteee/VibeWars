@@ -1,0 +1,26 @@
+{
+  "id": "ranger.debilitating-shot",
+  "name": "Debilitating Shot",
+  "profession": "ranger",
+  "attribute": "Marksmanship",
+  "type": "Bow attack.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 10
+  },
+  "overcast": 0,
+  "activationSeconds": 0,
+  "rechargeSeconds": 10,
+  "upkeep": false,
+  "description": "If Debilitating Shot hits, your target loses 1...8...10 energy.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Ranger/148-Debilitating_Shot",
+    "fetchedAt": "2026-10-27T21:39:42.462Z"
+  },
+  "unmapped": {}
+}

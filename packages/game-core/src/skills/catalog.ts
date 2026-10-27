@@ -1157,6 +1157,114 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: 21 }],
   },
   {
+    id: "ranger.crippling-shot",
+    name: "Crippling Shot",
+    type: "attack",
+    elite: true,
+    profession: "ranger",
+    attributeId: "ranger.marksmanship",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 2,
+    range: RANGE_LONG,
+    target: "single-enemy",
+    area: undefined,
+    // "This attack cannot be blocked": as Wild Throw, no block
+    // roll at all. It can still miss, be dodged and stop at a wall. The
+    // 2010 "moves twice as fast" is gone from the 2026-04-28 revision,
+    // so the arrow flies at the bow's speed (#1008).
+    attack: {
+      weapon: "bow",
+      weaponDamage: 1,
+      bonusDamage: undefined,
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: true,
+      chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    // "If Crippling Shot hits, your target becomes Crippled for
+    // 1...10...12 seconds": 10 s, its rank-12 value in the 2026-04-28
+    // revision (fandom's 1...8 is the 2010 one), when the arrow lands.
+    effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: 10 }],
+  },
+  {
+    id: "ranger.debilitating-shot",
+    name: "Debilitating Shot",
+    type: "attack",
+    elite: false,
+    profession: "ranger",
+    attributeId: "ranger.marksmanship",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 10,
+    range: RANGE_LONG,
+    target: "single-enemy",
+    area: undefined,
+    attack: {
+      weapon: "bow",
+      weaponDamage: 1,
+      bonusDamage: undefined,
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    // "If Debilitating Shot hits, your target loses 1...8...10 Energy",
+    // when the arrow lands.
+    effects: [
+      {
+        kind: "energy-loss",
+        amount: { scaling: { attributeId: "ranger.marksmanship", atZero: 1, atTwelve: 8 } },
+      },
+    ],
+  },
+  {
+    id: "ranger.burning-arrow",
+    name: "Burning Arrow",
+    type: "attack",
+    elite: true,
+    profession: "ranger",
+    attributeId: "ranger.marksmanship",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 5,
+    range: RANGE_LONG,
+    target: "single-enemy",
+    area: undefined,
+    // "If this attack hits, you strike for +10...26...30 damage": added
+    // after armor, as every attack bonus is (ADR-0029).
+    attack: {
+      weapon: "bow",
+      weaponDamage: 1,
+      bonusDamage: { scaling: { attributeId: "ranger.marksmanship", atZero: 10, atTwelve: 26 } },
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    // "...and cause Burning for 1...6...7 seconds": 6 s, its rank-12 value,
+    // when the arrow lands.
+    effects: [{ kind: "apply-status", statusId: "burning", durationSeconds: 6 }],
+  },
+  {
     id: "ranger.throw-dirt",
     name: "Throw Dirt",
     type: "skill",
@@ -2876,6 +2984,50 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     projectile: undefined,
     effects: [{ kind: "interrupt" }],
+  },
+  {
+    id: "ranger.concussion-shot",
+    name: "Concussion Shot",
+    type: "attack",
+    elite: false,
+    profession: "ranger",
+    attributeId: "ranger.marksmanship",
+    cost: { kind: "energy", amount: 25 },
+    overcast: 0,
+    activationSeconds: 0.5,
+    rechargeSeconds: 5,
+    range: RANGE_LONG,
+    target: "single-enemy",
+    area: undefined,
+    // "This attack deals only 1...13...16 damage": the arrow's own roll
+    // counts for nothing, and the bonus ignores armor (ADR-0029, #760).
+    attack: {
+      weapon: "bow",
+      weaponDamage: 0,
+      bonusDamage: { scaling: { attributeId: "ranger.marksmanship", atZero: 1, atTwelve: 13 } },
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    // "If Concussion Shot hits while target foe is casting a spell, that
+    // spell is interrupted and your target is dazed for 5...17...20
+    // seconds": a chant is no spell. On a foe already Dazed the arrow's
+    // own blow cuts the spell (#817); the interrupt finds that and is no
+    // miss, and the daze is refreshed (#1008).
+    effects: [
+      { kind: "interrupt", only: "spell" },
+      {
+        kind: "if",
+        condition: { kind: "interrupted-spell" },
+        effects: [{ kind: "apply-status", statusId: "dazed", durationSeconds: 17 }],
+      },
+    ],
   },
 
   /* ---------------------------------------------------------------------- */

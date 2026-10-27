@@ -325,3 +325,205 @@ describe("the Ranger's arrows in a match (#976)", () => {
     expect(ranger.statuses.has("escape")).toBe(true);
   });
 });
+
+describe("the four shots (#1008)", () => {
+  const CONCUSSION_SHOT = "ranger.concussion-shot";
+  const CRIPPLING_SHOT = "ranger.crippling-shot";
+  const DEBILITATING_SHOT = "ranger.debilitating-shot";
+  const BURNING_ARROW = "ranger.burning-arrow";
+
+  const archer: ParticipantSpec = {
+    id: "r",
+    team: 0,
+    skillBar: [CONCUSSION_SHOT, CRIPPLING_SHOT, DEBILITATING_SHOT, BURNING_ARROW, PIN_DOWN],
+    attributeRanks: new Map([["ranger.marksmanship", 12]]),
+    equipment: wielding(WEAPONS.longbow, "ranger.marksmanship"),
+    maxEnergy: 1000,
+    spawn: vec2(0, 0),
+    facing: 0,
+  };
+  const foe: ParticipantSpec = {
+    id: "t",
+    team: 1,
+    skillBar: [],
+    attributeRanks: new Map(),
+    equipment: unarmedResolvedEquipment(60),
+    maxHealth: 1e6,
+    maxEnergy: 20,
+    spawn: vec2(300, 0),
+    facing: 0,
+  };
+
+  function sim(seed = "shots"): MatchSimulation {
+    return new MatchSimulation({ seed, participants: [archer, foe] });
+  }
+
+  function combatant(match: MatchSimulation, id: string): Combatant {
+    const found = match.get(id)?.combatant;
+    if (found === undefined) {
+      throw new Error(`no participant ${id}`);
+    }
+    return found;
+  }
+
+  /**
+   * Use the skill in `slot` at the foe, who starts on `busyWith` (or
+   * nothing) while the arrow flies, and return what the arrow did.
+   */
+  function shoot(match: MatchSimulation, slot: number, busyWith?: string): CombatLogEntry {
+    match.setTarget("r", "t");
+    expect(match.requestSkill("r", slot)?.check).toEqual({ ok: true });
+    for (let i = 0; i < 400 && match.projectiles.length === 0; i += 1) {
+      match.step(DT);
+    }
+    if (busyWith !== undefined) {
+      combatant(match, "t").cast.beginCast(busyWith, "t", 30, undefined);
+    }
+    for (let i = 0; i < 400; i += 1) {
+      const entry = match
+        .step(DT)
+        .log.find((logged) => logged.cause === "skill" && logged.sourceId === "r");
+      if (entry !== undefined) {
+        return entry;
+      }
+    }
+    throw new Error("nothing landed");
+  }
+
+  const kinds = (entry: CombatLogEntry) => entry.events.map((event) => event.kind);
+  const damage = (entry: CombatLogEntry): number =>
+    entry.events.reduce((sum, event) => sum + (event.kind === "damage" ? event.amount : 0), 0);
+
+  it("cost, activate and recharge as the PvP corpus says, at rank 12", () => {
+    expect(skill(CONCUSSION_SHOT)).toMatchObject({
+      elite: false,
+      attributeId: "ranger.marksmanship",
+      cost: { kind: "energy", amount: 25 },
+      activationSeconds: 0.5,
+      rechargeSeconds: 5,
+      attack: { weapon: "bow", weaponDamage: 0, unblockable: false },
+    });
+    // The 2026-04-28 revision: 2 s and 10, not fandom's 8.
+    expect(skill(CRIPPLING_SHOT)).toMatchObject({
+      elite: true,
+      cost: { kind: "energy", amount: 10 },
+      activationSeconds: 0,
+      rechargeSeconds: 2,
+      attack: { weapon: "bow", unblockable: true },
+      effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: 10 }],
+    });
+    expect(skill(DEBILITATING_SHOT)).toMatchObject({
+      elite: false,
+      cost: { kind: "energy", amount: 10 },
+      activationSeconds: 0,
+      rechargeSeconds: 10,
+      attack: { weapon: "bow", unblockable: false },
+    });
+    expect(skill(BURNING_ARROW)).toMatchObject({
+      elite: true,
+      cost: { kind: "energy", amount: 10 },
+      activationSeconds: 0,
+      rechargeSeconds: 5,
+      attack: { weapon: "bow", unblockable: false },
+      effects: [{ kind: "apply-status", statusId: "burning", durationSeconds: 6 }],
+    });
+  });
+
+  it("Concussion Shot interrupts a spell, which recharges, dazes for 17 s and deals 13", () => {
+    const match = sim();
+    const landed = shoot(match, 0, "elementalist.fireball");
+    expect(kinds(landed)).toEqual(["damage", "interrupted", "status-applied"]);
+    expect(damage(landed)).toBe(13);
+    const target = combatant(match, "t");
+    expect(target.cast.activeCast).toBeUndefined();
+    expect(target.cast.rechargeRemaining.get("elementalist.fireball") ?? 0).toBeGreaterThan(0);
+    expect(target.statuses.get("dazed")?.durationSeconds).toBe(17);
+  });
+
+  it("Concussion Shot lets a chant go on, dazes nobody, and says why", () => {
+    const match = sim();
+    const landed = shoot(match, 0, "paragon.anthem-of-flame");
+    expect(landed.events).toContainEqual({
+      kind: "interrupt-missed",
+      targetId: "t",
+      refusedSkillId: "paragon.anthem-of-flame",
+    });
+    expect(kinds(landed)).toEqual(["damage", "interrupt-missed"]);
+    const target = combatant(match, "t");
+    expect(target.cast.activeCast?.skillId).toBe("paragon.anthem-of-flame");
+    expect(target.statuses.has("dazed")).toBe(false);
+  });
+
+  it("Concussion Shot on a foe already Dazed: one interrupt, no miss, and Dazed back to 17 s", () => {
+    const match = sim();
+    combatant(match, "t").statuses.apply("dazed", 2, "r");
+    const landed = shoot(match, 0, "elementalist.fireball");
+    expect(kinds(landed).filter((kind) => kind === "interrupted")).toHaveLength(1);
+    expect(kinds(landed)).not.toContain("interrupt-missed");
+    expect(combatant(match, "t").statuses.get("dazed")?.durationSeconds).toBe(17);
+  });
+
+  it("Crippling Shot cripples for 10 s through Lightning Reflexes, never blocked", () => {
+    for (let seed = 0; seed < 20; seed += 1) {
+      const match = sim(`reflexes-${String(seed)}`);
+      combatant(match, "t").statuses.apply("lightning-reflexes", 1000, "t");
+      const landed = shoot(match, 1);
+      expect(kinds(landed)).toEqual(["damage", "status-applied"]);
+      expect(combatant(match, "t").statuses.get("crippled")?.durationSeconds).toBe(10);
+    }
+  });
+
+  it("Crippling Shot still misses when the ranger is Blind", () => {
+    for (let seed = 0; seed < 20; seed += 1) {
+      const match = sim(`blind-${String(seed)}`);
+      combatant(match, "r").statuses.apply("blind", 1000, "t");
+      match.setTarget("r", "t");
+      match.requestSkill("r", 1);
+      const log: CombatEvent[] = [];
+      for (let i = 0; i < 200; i += 1) {
+        log.push(...match.step(DT).log.flatMap((entry) => entry.events));
+      }
+      if (!log.some((event) => event.kind === "attack-missed")) {
+        continue;
+      }
+      expect(combatant(match, "t").statuses.has("crippled")).toBe(false);
+      return;
+    }
+    throw new Error("no seed missed");
+  });
+
+  it("Debilitating Shot takes 8 energy from a full foe, and 3 from a foe with 3", () => {
+    const full = sim();
+    expect(shoot(full, 2).events).toContainEqual({ kind: "energy-loss", targetId: "t", amount: 8 });
+    expect(combatant(full, "t").energy).toBe(12);
+
+    const low = sim();
+    combatant(low, "t").energy = 3;
+    expect(shoot(low, 2).events).toContainEqual({ kind: "energy-loss", targetId: "t", amount: 3 });
+    expect(combatant(low, "t").energy).toBe(0);
+  });
+
+  it("Burning Arrow hits 26 harder than a plain arrow on the same roll, and burns for 6 s", () => {
+    const burning = sim();
+    const plain = sim();
+    const hot = shoot(burning, 3);
+    expect(damage(hot) - damage(shoot(plain, 4))).toBe(26);
+    expect(combatant(burning, "t").statuses.get("burning")?.durationSeconds).toBe(6);
+  });
+
+  it("none of the other three lands its rider on a blocked arrow", () => {
+    for (const slot of [0, 2, 3]) {
+      let blocked = false;
+      for (let seed = 0; seed < 20 && !blocked; seed += 1) {
+        const match = sim(`block-${String(slot)}-${String(seed)}`);
+        combatant(match, "t").statuses.apply("guardian", 1000, "t");
+        const landed = shoot(match, slot, "elementalist.fireball");
+        blocked = kinds(landed).includes("attack-blocked");
+        if (blocked) {
+          expect(kinds(landed)).toEqual(["attack-blocked"]);
+        }
+      }
+      expect(blocked).toBe(true);
+    }
+  });
+});

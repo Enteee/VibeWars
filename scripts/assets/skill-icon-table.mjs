@@ -52,6 +52,10 @@ export const SKILL_ICONS = {
   // Placeholders until asset-designer's icons (#976).
   "ranger.pin-down": { glyph: "arrow", modifier: "down" },
   "ranger.hunters-shot": { glyph: "arrow", modifier: "bleed" },
+  // Placeholders until asset-designer's icons (#1008).
+  "ranger.crippling-shot": { glyph: "slow", modifier: "down" },
+  "ranger.debilitating-shot": { glyph: "energy", modifier: "hourglass" },
+  "ranger.burning-arrow": { glyph: "flame", modifier: "up" },
   "ranger.throw-dirt": { glyph: "mountain", modifier: "area" },
   "warrior.sprint": { glyph: "speed" },
   "assassin.dash": { glyph: "dash" },
@@ -107,6 +111,8 @@ export const SKILL_ICONS = {
   "dervish.mystic-twister": { glyph: "snowflake", modifier: "self" },
   "dervish.victorious-sweep": { glyph: "axe", modifier: "self" },
   "ranger.savage-shot": { glyph: "arrow" },
+  // A placeholder until asset-designer's icon (#1008).
+  "ranger.concussion-shot": { glyph: "arrow", modifier: "hourglass" },
   "ranger.distracting-shot": { glyph: "interrupt", modifier: "less" },
   "mesmer.energy-burn": { glyph: "flame", modifier: "down" },
   "mesmer.energy-tap": { glyph: "energy", modifier: "self" },

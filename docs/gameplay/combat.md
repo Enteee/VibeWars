@@ -196,6 +196,13 @@ spell. A signet, it costs nothing.
 hits 25 harder if that was a spell: one bigger number on the hit, read
 as the arrow lands. A block or a miss does neither.
 
+**Concussion Shot** (#1008, 25 energy, ½ s, 5 s recharge) interrupts
+**only a spell**: a chant, a signet, a shout or an attack skill goes on,
+and the log says "not a spell". When it cuts a spell it Dazes the foe
+for 17 s. Its arrow deals only 13 damage. On a foe
+already Dazed, the arrow's own hit does the interrupting (#817); that
+counts, and the daze is refreshed to 17 s.
+
 Some interrupts also **disable** what they cut short (#914): the skill
 cannot be used for a while, on top of its recharge. The two run
 together, so the skill waits for whichever is longer, and on your bar
@@ -575,6 +582,13 @@ keeps it. Pin Down and Hunter's Shot are bow attacks: Pin Down cripples
 for 13 s, and Hunter's Shot (1 s to use) bleeds for 21 s, when the arrow
 hits; a block or a blind miss lands neither.
 
+Three more Ranger bow attacks (#1008). Crippling Shot (elite, 10 energy,
+2 s recharge) cannot be blocked, and cripples for 10 s when it hits; it
+can still miss, be dodged or stop at a wall. Debilitating Shot (10
+energy, 10 s recharge) takes 8 energy from the target, never more than
+they have. Burning Arrow (elite, 10 energy, 5 s recharge) hits 26 harder
+and burns for 6 s.
+
 **Mantra of Recovery** (Mesmer elite stance, Fast Casting, 5 energy, 15 s
 recharge, #938) makes every spell you finish in the next 17 s recharge
 33% faster. It is read as the recharge starts: a spell finished after the
@@ -868,7 +882,8 @@ its riders, so a blocked Distracting Blow interrupts nothing; an attack
 skill's cost and recharge are still spent. "block" floats over the
 target. Swift Chop is the exception that proves it: blocked, it still
 deals its flat damage and a 20 s Deep Wound. Spells are never blocked,
-and shields do not block, as in GW1. Wild Throw cannot be blocked at all.
+and shields do not block, as in GW1. Wild Throw and Crippling Shot cannot
+be blocked at all.
 
 Not modelled: evade.
 
