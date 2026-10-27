@@ -239,6 +239,35 @@ heals nothing either, and neither does a caster who has died or left.
 What a trigger does never sets off another trigger: a condition
 Contagion hands to a foe with Contagion goes no further.
 
+**Ending is not expiring** (#944). Parasitic Bond answers any end;
+**Patient Spirit** (Monk, Healing Prayers, 5 energy, ¼ s, 4 s recharge)
+answers only its 2 s running out, GW1's "unless it ends prematurely":
+then its ally is healed for 102. Stripped, or gone with a death, it
+heals nothing. Recasting it before it runs out starts the 2 s again,
+and it heals once, at the end. **Holy Veil** (Monk, no attribute,
+5 energy, 1 s, maintained) makes every hex cast on its ally take twice
+as long, read as the cast begins: a Holy Veil landing mid-cast slows
+nothing already being cast, and a dazed caster takes four times as
+long. Spells that are not hexes, and hexes cast on anyone else, are
+not slowed. However it ends, ended by you, stripped, out of range, out
+of energy or by a death, it takes the newest hex off its ally. A hex it
+removes does not fire its own end: a Parasitic Bond taken this way
+heals nobody.
+
+**Rend Enchantments** (Necromancer, Curses, 5 energy, 2 s, 20 s
+recharge) removes up to 8 enchantments from a foe, the newest first,
+and you lose 31 health for each Monk enchantment among them. That loss
+is a sacrifice, not damage: no armor, and it can
+kill you, after the removal. Each enchantment it strips still fires its
+own end, so a stripped Holy Veil takes a hex with it.
+
+**Plague Touch** (Necromancer, Curses, 5 energy, ¾ s, no recharge) moves
+your newest 3 conditions onto the foe you touch, each with the time it
+had left, as if you had put it on: the longer of yours and one already
+on the foe stays, and the foe's runes shorten it as any condition. It is
+a skill, not a spell, so Dazed does not slow it. With no condition on
+you it does nothing, and the energy is spent.
+
 ## Knockdown
 
 A knockdown puts its target on the ground for its duration (Backbreaker:

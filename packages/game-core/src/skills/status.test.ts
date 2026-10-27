@@ -394,7 +394,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
     ]);
   });
 
-  it("records every ending with its source", () => {
+  it("records every ending with its source, and only the duration running out as expired (#944)", () => {
     const set = new StatusSet();
     set.apply("parasitic-bond", 1, "expiry");
     set.apply("backfire", 10, "removed");
@@ -417,13 +417,32 @@ describe("StatusSet changes, for the triggers (#887)", () => {
     set.endOnKnockdownPrevented();
 
     expect(set.drainChanges()).toEqual([
-      { kind: "ended", id: "parasitic-bond", sourceId: "expiry" },
-      { kind: "ended", id: "backfire", sourceId: "removed" },
-      { kind: "ended", id: "malaise", sourceId: "by-category" },
-      { kind: "ended", id: "watch-yourself", sourceId: "attacked" },
-      { kind: "ended", id: "glyph-of-lesser-energy", sourceId: "spells" },
-      { kind: "ended", id: "weapon-of-warding", sourceId: "attacks" },
-      { kind: "ended", id: "fleeting-stability", sourceId: "knockdown" },
+      { kind: "ended", id: "parasitic-bond", sourceId: "expiry", expired: true },
+      { kind: "ended", id: "backfire", sourceId: "removed", expired: false },
+      { kind: "ended", id: "malaise", sourceId: "by-category", expired: false },
+      { kind: "ended", id: "watch-yourself", sourceId: "attacked", expired: false },
+      { kind: "ended", id: "glyph-of-lesser-energy", sourceId: "spells", expired: false },
+      { kind: "ended", id: "weapon-of-warding", sourceId: "attacks", expired: false },
+      { kind: "ended", id: "fleeting-stability", sourceId: "knockdown", expired: false },
+    ]);
+  });
+
+  it("takeNewest takes the newest of a category first, with the time each had left (#944)", () => {
+    const set = new StatusSet();
+    set.apply("bleeding", 10, "a");
+    set.apply("guardian", 10, "a");
+    set.apply("blind", 8, "a");
+    set.apply("poison", 6, "a");
+    set.advance(1);
+    set.drainChanges();
+    expect(set.takeNewest("condition", 2)).toEqual([
+      { id: "poison", remainingSeconds: 5 },
+      { id: "blind", remainingSeconds: 7 },
+    ]);
+    expect(set.active.map(({ id }) => id)).toEqual(["bleeding", "guardian"]);
+    expect(set.drainChanges()).toEqual([
+      { kind: "ended", id: "poison", sourceId: "a", expired: false },
+      { kind: "ended", id: "blind", sourceId: "a", expired: false },
     ]);
   });
 

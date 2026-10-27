@@ -130,6 +130,30 @@ export interface SacrificeHealthEffect {
   readonly percentOfMax: number;
 }
 
+/**
+ * The *caster* loses `amount` health for each status of this profession
+ * an earlier `remove-status` of this use took off the target (#944), as
+ * Rend Enchantments' "for each Monk enchantment removed, you lose
+ * 55...31...25 Health". Not damage: never mitigated, and it can kill, as
+ * a sacrifice.
+ */
+export interface LoseHealthEffect {
+  readonly kind: "lose-health";
+  readonly amount: Magnitude;
+  readonly perRemovedOfProfession: ProfessionId;
+}
+
+/**
+ * Move up to `count` of the caster's conditions, newest first, onto the
+ * target, each with the time it had left on the caster (#944), as Plague
+ * Touch's. Each lands as any condition the caster put on: the longer
+ * duration wins.
+ */
+export interface TransferConditionsEffect {
+  readonly kind: "transfer-conditions";
+  readonly count: number;
+}
+
 /** Apply a condition/hex/enchantment to the effect's target. */
 export interface ApplyStatusEffect {
   readonly kind: "apply-status";
@@ -313,6 +337,8 @@ export type UnconditionalEffect =
   | EnergyGainEffect
   | EnergyLossEffect
   | SacrificeHealthEffect
+  | LoseHealthEffect
+  | TransferConditionsEffect
   | ApplyStatusEffect
   | MaintainStatusEffect
   | RemoveStatusEffect

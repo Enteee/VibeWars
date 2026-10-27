@@ -239,6 +239,10 @@ export function describeStatus(id: string): string {
     const faster = String(Math.round(definition.spellRechargeFaster * 100));
     parts.push(`spells recharge ${faster}% faster`);
   }
+  if (definition.incomingHexCastTimeMultiplier !== 1) {
+    const times = String(definition.incomingHexCastTimeMultiplier);
+    parts.push(`hexes cast on the bearer take ${times}× as long to cast`);
+  }
   if (definition.endsWhenBearerHits) {
     parts.push("ends if the bearer hits with an attack");
   }
@@ -281,6 +285,7 @@ const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-attacks": "whenever it attacks",
   "bearer-gains-condition": "whenever it gains a new condition",
   ends: "when it ends",
+  expires: "when it expires",
 };
 
 /**
@@ -451,6 +456,20 @@ function describeEffect(
         text: `You sacrifice ${String(effect.percentOfMax)}% of your maximum health`,
         magnitude: undefined,
       };
+    case "lose-health": {
+      // "For each Monk enchantment removed, you lose 31 Health" (#944).
+      const magnitude = describeMagnitude(effect.amount, ranks);
+      const whose = getProfession(effect.perRemovedOfProfession).name;
+      return {
+        text: `You lose ${String(magnitude.current)} health for each ${whose} enchantment removed`,
+        magnitude,
+      };
+    }
+    case "transfer-conditions":
+      return {
+        text: `Moves up to ${String(effect.count)} of your conditions to the target`,
+        magnitude: undefined,
+      };
     case "apply-status":
       // A stance, a preparation or a glyph is yours alone and one at a
       // time (#523, #525, #526), so it reads as what it is rather than as
@@ -472,14 +491,16 @@ function describeEffect(
           `(${describeStatus(effect.statusId)})`,
         magnitude: undefined,
       };
-    case "maintain-status":
+    case "maintain-status": {
       // GW1 words upkeep as the caster's energy degeneration (#837).
+      const what = describeStatus(effect.statusId);
       return {
         text:
           "Maintained: −1 Energy regeneration while it lasts. " +
-          `${describeStatus(effect.statusId)}.`,
+          `${what.charAt(0).toUpperCase()}${what.slice(1)}.`,
         magnitude: undefined,
       };
+    }
     case "remove-status": {
       if (effect.from === "caster") {
         // "Lose 1 Dervish enchantment" (#845).

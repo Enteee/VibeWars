@@ -47,7 +47,7 @@ export interface TriggerContext {
  */
 export function fireTriggers(
   bearer: Combatant,
-  event: Exclude<StatusTriggerEvent, "bearer-gains-condition" | "ends">,
+  event: Exclude<StatusTriggerEvent, "bearer-gains-condition" | "ends" | "expires">,
   context: TriggerContext,
 ): FiredTrigger[] {
   return bearer.statuses
@@ -59,7 +59,7 @@ export function fireTriggers(
  * What `change` to the bearer's statuses sets off (#887): a condition
  * gained fires every status on it that answers one, in `active` order; a
  * status ended fires its own `ends` triggers, though it is no longer on
- * the bearer. The simulation discards whatever the firing itself changes,
+ * the bearer, and its `expires` ones too if its duration ran out (#944). The simulation discards whatever the firing itself changes,
  * so this never recurses either.
  */
 export function fireChangeTriggers(
@@ -76,7 +76,9 @@ export function fireChangeTriggers(
       );
   }
   return getStatusDefinition(change.id)
-    .triggers.filter((trigger) => trigger.on === "ends")
+    .triggers.filter(
+      (trigger) => trigger.on === "ends" || (trigger.on === "expires" && change.expired),
+    )
     .flatMap((trigger) => fire(trigger, change.sourceId, bearer, undefined, context));
 }
 

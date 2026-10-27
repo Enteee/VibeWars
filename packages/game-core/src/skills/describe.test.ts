@@ -364,6 +364,27 @@ describe("attack skills (#417)", () => {
     ]);
   });
 
+  it("words Patient Spirit's expiry, Holy Veil's hexes, Rend's price and Plague Touch (#944)", () => {
+    const lines = (id: string) =>
+      describeSkill(skill(id), new Map([["necromancer.curses", 12]])).effects.map(
+        ({ text }) => text,
+      );
+    expect(lines("monk.patient-spirit")).toEqual([
+      "Applies Patient Spirit for 2s (when it expires: heals for 102)",
+    ]);
+    expect(lines("monk.holy-veil")).toEqual([
+      "Maintained: −1 Energy regeneration while it lasts. " +
+        "Hexes cast on the bearer take 2× as long to cast, when it ends: removes 1 hex.",
+    ]);
+    expect(lines("necromancer.rend-enchantments")).toEqual([
+      "Removes 8 enchantments",
+      "You lose 31 health for each Monk enchantment removed",
+    ]);
+    expect(lines("necromancer.plague-touch")).toEqual([
+      "Moves up to 3 of your conditions to the target",
+    ]);
+  });
+
   it("chains only dagger attacks, so a chain blow never flies (#831)", () => {
     const chained = IMPLEMENTED_SKILLS.filter((entry) => entry.attack?.chain !== undefined);
     expect(chained.map((entry) => entry.attack?.weapon)).toEqual(chained.map(() => "daggers"));
