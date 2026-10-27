@@ -75,6 +75,16 @@ export function remoteHardening(key) {
 }
 
 /**
+ * Environment variables that change the ssh git runs. GIT_SSH_COMMAND beats
+ * `core.sshCommand`: in the operator's shell it would run its own ssh, with
+ * the operator's keys, whatever `remoteHardening` pins. GIT_SSH only counts
+ * when nothing is pinned, and GIT_SSH_VARIANT changes the arguments ours is
+ * given; they go too, so no ssh setting of the operator's is left to rank. A host process that pushes or fetches
+ * as the company deletes them from its environment at startup (#866).
+ */
+export const GIT_SSH_VARS = ["GIT_SSH_COMMAND", "GIT_SSH", "GIT_SSH_VARIANT"];
+
+/**
  * One word for the shell git runs `core.sshCommand` with.
  *
  * @param {string} word

@@ -259,8 +259,10 @@ function employ(root, more) {
  * @param {number} remaining the GraphQL budget GitHub claims to have left
  * @param {(at: { root: string, repo: string, remote: string }) => void} [before]
  *   runs before hubd starts, for state it reads at startup
+ * @param {(at: { root: string, remote: string }) => Record<string, string>} [extra]
+ *   more of hubd's environment
  */
-async function startHubd(remaining, before) {
+async function startHubd(remaining, before, extra) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "hubd-test-"));
   const root = path.join(dir, "root");
   const bin = path.join(dir, "bin");
@@ -317,6 +319,7 @@ async function startHubd(remaining, before) {
     HUBD_NEW_ISSUES_WINDOW_MS: "4000",
     // Short, so a watch answers within the test (#736).
     HUBD_WATCH_POLL_MS: "300",
+    ...extra?.({ root, remote: path.join(dir, "remote.git") }),
   };
   const child = spawn(process.execPath, [HUBD], { env, stdio: ["ignore", "ignore", "pipe"] });
   running.push({ child, dir });
@@ -1746,6 +1749,46 @@ describe("hubd pushing through its own mirror", () => {
     expect(answer.code, String(answer.stderr)).toBe(0);
     const audit = fs.readFileSync(path.join(hubd.hub, "audit.jsonl"), "utf8");
     expect(audit).toContain('"tag":"gate-change","paths":"unknown"');
+  }, 20_000);
+
+  it("pushes with the company's key even with the operator's GIT_SSH_COMMAND set (#866)", async () => {
+    // The pinned `ssh` is found on hubd's PATH, in the fake gh's bin: it
+    // logs its arguments and runs the remote command here, not on a host.
+    // The operator's leaves a marker and refuses.
+    const before = (/** @type {{ root: string }} */ at) => {
+      const dir = path.dirname(at.root);
+      fs.writeFileSync(
+        path.join(dir, "bin", "ssh"),
+        `#!/bin/sh\necho "$@" >> ${dir}/ssh.log\nfor last; do :; done\nexec sh -c "$last"\n`,
+        { mode: 0o755 },
+      );
+      fs.writeFileSync(
+        path.join(dir, "operator-ssh"),
+        `#!/bin/sh\ntouch ${dir}/operator-ssh-ran\nexit 1\n`,
+        { mode: 0o755 },
+      );
+    };
+    const hubd = await startHubd(5000, before, (at) => ({
+      VIBEWARS_GIT_REMOTE: `github.invalid:${at.remote}`,
+      GIT_SSH_COMMAND: path.join(path.dirname(at.root), "operator-ssh"),
+    }));
+    const { repo, remote } = hubd;
+    const dir = path.dirname(hubd.root);
+    sh(["init", "--bare", "-q", remote], dir);
+    sh(["init", "-q", "-b", "bot/cicd-engineer/ssh", repo], dir);
+    fs.writeFileSync(path.join(repo, "README.md"), "x\n");
+    sh(["add", "README.md"], repo);
+    commit("only", repo);
+
+    const answer = await hubd.request("cicd-engineer", "push", ["bot/cicd-engineer/ssh"]);
+
+    expect(answer.code, String(answer.stderr)).toBe(0);
+    expect(fs.existsSync(path.join(dir, "operator-ssh-ran"))).toBe(false);
+    expect(sh(["branch", "--list", "bot/cicd-engineer/ssh"], remote)).toContain("ssh");
+    const key = path.join(dir, "creds", "ssh", "id_ed25519");
+    expect(fs.readFileSync(path.join(dir, "ssh.log"), "utf8")).toContain(
+      `-i ${key} -o IdentitiesOnly=yes`,
+    );
   }, 20_000);
 });
 

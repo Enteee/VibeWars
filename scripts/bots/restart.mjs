@@ -44,6 +44,7 @@ import {
   FILTER_KEYS,
   GIT_ENV,
   GIT_HARDENING,
+  GIT_SSH_VARS,
   filterPins,
   remoteHardening,
 } from "./git-hardening.mjs";
@@ -69,6 +70,10 @@ const REPO = required("DEVENV_ROOT");
 const ROOT = required("VIBEWARS_BOT_ROOT");
 /** The company's push key (#866): main is fetched from GitHub as the company. */
 const PUSH_KEY = paths(required("VIBEWARS_CREDENTIALS")).sshKey;
+// An ssh command in the operator's environment beats the pinned key.
+for (const name of GIT_SSH_VARS) {
+  Reflect.deleteProperty(process.env, name);
+}
 const SESSION = process.env.VIBEWARS_LLC_SESSION ?? "vibewars-llc";
 /** The session, exactly: tmux takes a bare name as a prefix if nothing has it whole. */
 const TARGET = `=${SESSION}`;

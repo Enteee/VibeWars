@@ -21,7 +21,7 @@ import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 
 import { GITHUB_TOKEN_VARS, paths } from "./creds.mjs";
-import { GIT_ENV, remoteHardening } from "./git-hardening.mjs";
+import { GIT_ENV, GIT_SSH_VARS, remoteHardening } from "./git-hardening.mjs";
 import {
   HINT_DELAY_MS,
   flagValue,
@@ -213,9 +213,10 @@ const GH_CWD = path.join(HUB, ".gh-cwd");
  * (#866): gh with its config directory, git with its push key.
  */
 const CREDENTIALS = paths(process.env.VIBEWARS_CREDENTIALS ?? "");
-// A token in the operator's environment beats GH_CONFIG_DIR, and would make
-// every call the operator's. hubd never uses one.
-for (const name of GITHUB_TOKEN_VARS) {
+// A token in the operator's environment beats GH_CONFIG_DIR, and an ssh
+// command beats the pinned key: either would make calls the operator's.
+// hubd never uses one.
+for (const name of [...GITHUB_TOKEN_VARS, ...GIT_SSH_VARS]) {
   Reflect.deleteProperty(process.env, name);
 }
 /** git's pins, with the company's push key for whatever reaches GitHub. */

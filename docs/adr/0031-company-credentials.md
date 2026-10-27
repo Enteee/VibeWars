@@ -42,7 +42,9 @@ account all landed on the operator's personal account.
   git with `core.sshCommand` set to
   `ssh -F /dev/null -i <credentials>/ssh/id_ed25519 -o IdentitiesOnly=yes -o IdentityAgent=none`
   (`remoteHardening` in `git-hardening.mjs`), so nothing of the
-  operator's ssh config or agent is offered.
+  operator's ssh config or agent is offered. Both drop `GIT_SSH_COMMAND`,
+  which beats `core.sshCommand`, and its kin from their environment at
+  start.
 - `claude-llc-init` step 0 checks the account (`github`), its `project`
   scope, and the push key, generating it if absent and waiting until GitHub
   greets it as that same login. After the board step it checks the
