@@ -10,7 +10,7 @@
  * positions, no cooldown state. See `docs/adr/0002-networking.md` §Security.
  */
 
-export { PROTOCOL_VERSION } from "./protocol-version.js";
+export { PROTOCOL_VERSION, fingerprint } from "./protocol-version.js";
 
 export {
   PROTOCOL_MISMATCH_MESSAGE,

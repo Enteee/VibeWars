@@ -40,7 +40,7 @@ import type {
 
 /**
  * The status table (#632): every status id, sorted. A snapshot names a
- * status by its index here, and `wire-schema.json` carries the table, so
+ * status by its index here, and `src/wire-schema.json` carries the table, so
  * builds whose tables differ never meet.
  */
 export const WIRE_STATUS_IDS: readonly StatusId[] = Object.keys(STATUS_DEFINITIONS)

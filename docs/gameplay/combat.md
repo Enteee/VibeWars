@@ -233,9 +233,9 @@ the same condition, for as long as it was put on you, and you sacrifice
 6% of your maximum health, foes in reach or not. A condition you
 already had, refreshed or not, does nothing. **Parasitic Bond** (hex,
 20 s) gives its target −1 health degeneration and heals its caster for
-102 when it ends: when it runs out, or when it is removed. Re-casting it
-on a target that still has it heals nothing; the respawn of its target
-heals nothing either, and neither does a caster who has died or left.
+102 when it ends: when it runs out, when it is removed, or when its
+target dies. Re-casting it on a target that still has it heals nothing,
+and neither does a caster who has died or left.
 What a trigger does never sets off another trigger: a condition
 Contagion hands to a foe with Contagion goes no further.
 
@@ -876,6 +876,11 @@ Health reaching zero kills exactly once (no double death events). A kill
 scores for the opposing team; both death paths — a killing blow and
 bleeding out — route through the same place, so neither is worth more
 than the other.
+
+A death ends every effect on the dead: conditions, hexes, enchantments,
+stances, shouts. Each ends as if removed, so what answers its ending
+fires, and a corpse wears nothing. A kill made by such an answer, as a
+Backfire's damage, ends them too but sets off nothing further.
 
 Kill credit is **team-level, not per-player**. Attributing a kill to a
 specific killer needs damage-source tracking that does not exist yet,

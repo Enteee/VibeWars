@@ -431,7 +431,11 @@ describe("condition-removal, headless (#111)", () => {
     run(sim, 1.5);
     expect(conditions()).toBe(4);
 
+    // Deep wound takes 100 again as it lands at 10 s: a heal keeps the ally
+    // alive through it, or it dies and comes back clean (#940).
+    expect(sim.requestSkill("player", 0)?.check).toEqual({ ok: true });
     run(sim, 9);
+    expect(sim.get("ally")?.combatant.dead).toBe(false);
     expect(conditions()).toBe(5);
   });
 
