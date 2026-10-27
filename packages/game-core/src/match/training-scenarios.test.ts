@@ -383,7 +383,7 @@ describe("condition-pressure, headless (#111)", () => {
 });
 
 describe("condition-removal, headless (#111)", () => {
-  /** A monk at the spawn with Orison of Healing and Mend Affliction, both at 12. */
+  /** A monk at the spawn with Orison of Healing and Mend Condition, both at 12. */
   function monkArena(): MatchSimulation {
     const played = scenario("condition-removal");
     const map = MAPS[played.mapId];
@@ -396,7 +396,7 @@ describe("condition-removal, headless (#111)", () => {
         {
           id: "player",
           team: PLAYER_TEAM,
-          skillBar: ["monk.orison-of-healing", "monk.mend-affliction"],
+          skillBar: ["monk.orison-of-healing", "monk.mend-condition"],
           attributeRanks: new Map([
             ["monk.healing-prayers", 12],
             ["monk.protection-prayers", 12],
@@ -417,7 +417,7 @@ describe("condition-removal, headless (#111)", () => {
     }
   }
 
-  it("Mend Affliction takes two of the five off, and they are back within 10 s", () => {
+  it("Mend Condition takes one of the five off, and it is back within 10 s", () => {
     const sim = monkArena();
     const conditions = (): number =>
       sim.get("ally")?.combatant.statuses.countByCategory("condition") ?? NaN;
@@ -428,7 +428,7 @@ describe("condition-removal, headless (#111)", () => {
     sim.setTarget("player", "ally");
     expect(sim.requestSkill("player", 1)?.check).toEqual({ ok: true });
     run(sim, 1.5);
-    expect(conditions()).toBe(3);
+    expect(conditions()).toBe(4);
 
     run(sim, 9);
     expect(conditions()).toBe(5);

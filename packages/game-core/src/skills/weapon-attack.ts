@@ -15,7 +15,7 @@ import { distance } from "../vec2.js";
 import { mitigate, weaponAttributeMultiplier, type DamagePacket } from "./damage.js";
 import {
   applyDamage,
-  applyEffect,
+  applyEffects,
   applySkillEffects,
   gainEnergy,
   interruptIfCastingSpell,
@@ -325,9 +325,12 @@ export function attackHitRiders(
     return [];
   }
   return attacker.statuses.active.flatMap(({ id }) =>
-    getStatusDefinition(id).onAttackHit.flatMap((effect) =>
-      applyEffect(effect, { caster: attacker, target: victim, rng, rules }),
-    ),
+    applyEffects(getStatusDefinition(id).onAttackHit, {
+      caster: attacker,
+      target: victim,
+      rng,
+      rules,
+    }),
   );
 }
 
@@ -371,9 +374,7 @@ export function nextAttackSkillRiders(
   rng: SimulationRng,
   rules: CombatRules,
 ): CombatEvent[] {
-  return next.effects.flatMap((effect) =>
-    applyEffect(effect, { caster: attacker, target: victim, rng, rules }),
-  );
+  return applyEffects(next.effects, { caster: attacker, target: victim, rng, rules });
 }
 
 /**
