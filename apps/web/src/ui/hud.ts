@@ -39,6 +39,9 @@ import {
   castFill,
   flashSlot,
   outOfRange,
+  adrenalineFill,
+  adrenalineGaugeHtml,
+  paintAdrenalineFill,
   paintCastFill,
   paintKnockdown,
   slotAffordable,
@@ -412,6 +415,7 @@ export function flashMessage(hud: HudElements, text: string): void {
 export function skillSlotHtml(slot: SkillSlot): string {
   return (
     skillIconHtml(slot.id, SKILL_SLOT_ICON_PX) +
+    adrenalineGaugeHtml(slot) +
     `<span class="hud-skill-key"></span>` +
     skillBadgeHtml(slot.id) +
     `<span class="skill-range-mark" aria-hidden="true"></span>`
@@ -878,6 +882,8 @@ export function updateHud(
     paintCastFill(button, index === fill?.slot ? fill.fraction : undefined);
     button.classList.toggle("is-out-of-range", far[index] === true);
     button.classList.toggle("is-unaffordable", !slotAffordable(slot, self, adrenaline[index] ?? 0));
+    // Lit from the bottom as it charges (#826): empty before any message.
+    paintAdrenalineFill(button, adrenalineFill(slot, adrenaline[index] ?? 0));
     button.classList.toggle("is-wrong-weapon", unwielded[index] === true);
   });
 }

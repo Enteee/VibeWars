@@ -13,6 +13,8 @@
   --recharge-shade: rgb(0 0 0 / 55%);
   /* A cast's progress on its slot: --ink at low alpha (#485). */
   --cast-fill-shade: rgb(215 222 232 / 18%);
+  /* The unfilled part of an adrenaline skill's icon (#826). */
+  --adrenaline-shade: rgb(0 0 0 / 65%);
   /* An elite skill's frame (#459). */
   --elite: #d4a72c;
   font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
@@ -438,12 +440,38 @@ body {
 }
 
 /* A hint, not a gate: the server still decides whether a cast is legal.
-   The wrong weapon in hand dims an attack skill the same way (#417). */
-.hud-skill.is-unaffordable,
+   The wrong weapon in hand dims an attack skill the same way (#417). An
+   adrenaline skill short of its charge shows its gauge instead (#826). */
+.hud-skill.is-unaffordable:not(:has(> .adrenaline-gauge)),
 .hud-skill.is-wrong-weapon,
-.training-skill.is-unaffordable,
+.training-skill.is-unaffordable:not(:has(> .adrenaline-gauge)),
 .training-skill.is-wrong-weapon {
   opacity: 0.45;
+}
+
+/* An adrenaline skill's charge (#826), as in GW1: the icon is dark where
+   it has not filled yet and lit where it has, rising from the bottom, with
+   a thin ink line at the edge. Charged, it is gone, and the slot looks as
+   a usable energy skill does. Under the recharge wipe, which a skill just
+   used shows over an empty gauge. Information, so it moves under reduced
+   motion too. */
+.adrenaline-gauge {
+  --adrenaline-level: calc(var(--adrenaline-fill, 0) * 100%);
+
+  position: absolute;
+  inset: 0;
+  display: none;
+  background: linear-gradient(
+    to top,
+    transparent calc(var(--adrenaline-level) - 2px),
+    var(--ink) 0 var(--adrenaline-level),
+    var(--adrenaline-shade) 0
+  );
+  pointer-events: none;
+}
+
+.is-unaffordable > .adrenaline-gauge {
+  display: block;
 }
 
 /* An empty slot keeps its place and its key, and does nothing (#347). */
