@@ -85,7 +85,7 @@ export const SKILL_ICONS = {
   "dervish.signet-of-pious-light": { glyph: "heal", modifier: "less" },
   "dervish.pious-restoration": { glyph: "cleanse", modifier: "self" },
   "dervish.vow-of-strength": { glyph: "axe", modifier: "area" },
-  "dervish.sand-shards": { glyph: "shard", modifier: "area" },
+  "dervish.sand-shards": { glyph: "shard", modifier: "up" },
   "dervish.pious-haste": { glyph: "dash", modifier: "self" },
   "dervish.victorious-sweep": { glyph: "axe", modifier: "self" },
   "ranger.savage-shot": { glyph: "arrow" },
