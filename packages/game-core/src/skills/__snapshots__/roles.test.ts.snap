@@ -87,6 +87,7 @@ exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
   "paragon.leaders-comfort": "healing",
   "paragon.make-haste": "",
   "paragon.never-surrender": "",
+  "paragon.song-of-restoration": "healing",
   "paragon.spear-of-lightning": "",
   "paragon.stand-your-ground": "defence",
   "paragon.wild-throw": "",

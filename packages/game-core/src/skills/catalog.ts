@@ -1694,6 +1694,37 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     effects: [{ kind: "apply-status", statusId: "defensive-anthem", durationSeconds: 9 }],
   },
   {
+    id: "paragon.song-of-restoration",
+    name: "Song of Restoration",
+    type: "chant",
+    elite: true,
+    profession: "paragon",
+    attributeId: "paragon.motivation",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    // "Each party member within earshot", the chanter among them.
+    area: {
+      radius: AREA_EARSHOT,
+      origin: "caster",
+      affects: "allies",
+      maxTargets: undefined,
+      includesCaster: true,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 10 seconds, the next time each party member within earshot uses
+    // a Skill, that party member gains 45...97...110 Health" (PvP, #999):
+    // 97 at rank 12, in the status. A heal, not a gain, as the fandom's
+    // anomaly note has it, so Deep Wound cuts it. The chanter's own cast
+    // does not use it up: its next skill does.
+    effects: [{ kind: "apply-status", statusId: "song-of-restoration", durationSeconds: 10 }],
+  },
+  {
     id: "ritualist.weapon-of-warding",
     name: "Weapon of Warding",
     type: "weapon-spell",
