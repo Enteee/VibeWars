@@ -90,6 +90,7 @@ export type StatusId =
   | "patient-spirit"
   | "holy-veil"
   | "protective-spirit"
+  | "reversal-of-fortune"
   // Stances.
   | "sprint"
   | "dash"
@@ -114,6 +115,7 @@ export type StatusId =
   | "incoming"
   | "make-haste"
   | "defensive-anthem"
+  | "song-of-restoration"
   // Chants and weapon spells (#758).
   | "anthem-of-flame"
   | "weapon-of-warding"
@@ -340,6 +342,13 @@ export interface StatusDefinition {
    */
   readonly maxDamageFractionPerHit: number | undefined;
   /**
+   * The next damage or life steal the bearer would take heals it instead,
+   * up to this much, and the status ends (#987): Reversal of Fortune's 67.
+   * The whole packet is negated, after `mitigate`; degeneration and
+   * sacrifice are neither. `undefined`: no reversal.
+   */
+  readonly reversesNextDamage: number | undefined;
+  /**
    * Strikes of adrenaline the bearer gains on top of each hit it lands
    * (#936): "For Great Justice!"'s 1. Taking damage is not a hit.
    */
@@ -516,6 +525,7 @@ function define(
     endsWhenBearerGains: [],
     damageTakenMultiplier: 1,
     maxDamageFractionPerHit: undefined,
+    reversesNextDamage: undefined,
     extraStrikesPerHit: 0,
     spellRechargeFaster: 0,
     incomingHexCastTimeMultiplier: 1,
@@ -774,6 +784,13 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     profession: "monk",
     maxDamageFractionPerHit: 0.1,
   }),
+  // "For 8 seconds, the next time target ally would take damage or life
+  // steal, that ally gains that amount of health instead, maximum
+  // 15...67...80": 67, its rank-12 cap; the 8 s are the skill's.
+  "reversal-of-fortune": define("reversal-of-fortune", "Reversal of Fortune", "enchantment", {
+    profession: "monk",
+    reversesNextDamage: 67,
+  }),
 
   sprint: define("sprint", "Sprint", "stance", {
     profession: "warrior",
@@ -874,6 +891,27 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     profession: "paragon",
     block: { chance: 0.5, against: "all" },
     endsWhenBearerHitsWithAttackSkill: true,
+  }),
+  // "For 10 seconds, the next time each party member within earshot uses a
+  // Skill, that party member gains 45...97...110 Health" (#999, PvP): a
+  // heal, by the chanter's Motivation.
+  "song-of-restoration": define("song-of-restoration", "Song of Restoration", "chant", {
+    profession: "paragon",
+    triggers: [
+      {
+        on: "bearer-uses-skill",
+        effects: [
+          {
+            kind: "heal",
+            amount: { scaling: { attributeId: "paragon.motivation", atZero: 45, atTwelve: 97 } },
+            perStatusOnTarget: [],
+          },
+        ],
+        target: "bearer",
+        skillId: "paragon.song-of-restoration",
+      },
+    ],
+    endsWhenBearerUsesSkill: true,
   }),
 
   // "Enemies struck by your physical attacks become poisoned for
@@ -1331,6 +1369,21 @@ export class StatusSet {
   }
 
   /**
+   * Spend the newest status that reverses the next damage (#987),
+   * recorded as ended, and return its cap; `undefined` if none is up.
+   */
+  public takeReversal(): { readonly id: StatusId; readonly cap: number } | undefined {
+    for (const status of [...this.#statuses.values()].reverse()) {
+      const cap = getStatusDefinition(status.id).reversesNextDamage;
+      if (cap !== undefined) {
+        this.#end([status.id]);
+        return { id: status.id, cap };
+      }
+    }
+    return undefined;
+  }
+
+  /**
    * Take up to `count` statuses of a category off the bearer, newest first,
    * as `removeByCategory`, with the time each had left (#944): Plague
    * Touch's "transfer ... with their remaining durations".
@@ -1429,11 +1482,12 @@ export class StatusSet {
 
   /**
    * The bearer used a skill (#949): every status that ends when it does
-   * is gone. Returns the ids that ended on it.
+   * is gone, but those in `spared`, which that skill put on its own user
+   * (#999). Returns the ids that ended on it.
    */
-  public endOnBearerUseSkill(): StatusId[] {
+  public endOnBearerUseSkill(spared: ReadonlySet<StatusId>): StatusId[] {
     const ended = this.active
-      .filter(({ id }) => getStatusDefinition(id).endsWhenBearerUsesSkill)
+      .filter(({ id }) => getStatusDefinition(id).endsWhenBearerUsesSkill && !spared.has(id))
       .map(({ id }) => id);
     this.#end(ended);
     return ended;

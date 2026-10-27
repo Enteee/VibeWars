@@ -1157,6 +1157,109 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: 21 }],
   },
   {
+    id: "ranger.crippling-shot",
+    name: "Crippling Shot",
+    type: "attack",
+    elite: true,
+    profession: "ranger",
+    attributeId: "ranger.marksmanship",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    // The 2026-04-28 revision's 2 s and 1...10...12; its 2010 "twice as
+    // fast" arrow is gone, so it flies at the bow's speed.
+    rechargeSeconds: 2,
+    range: RANGE_LONG,
+    target: "single-enemy",
+    area: undefined,
+    // "This attack cannot be blocked", as Wild Throw.
+    attack: {
+      weapon: "bow",
+      weaponDamage: 1,
+      bonusDamage: undefined,
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: true,
+      chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    // "If Crippling Shot hits, your target becomes Crippled for 1...10...12
+    // seconds": 10 s, its rank-12 value, when the arrow lands.
+    effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: 10 }],
+  },
+  {
+    id: "ranger.debilitating-shot",
+    name: "Debilitating Shot",
+    type: "attack",
+    elite: false,
+    profession: "ranger",
+    attributeId: "ranger.marksmanship",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 10,
+    range: RANGE_LONG,
+    target: "single-enemy",
+    area: undefined,
+    attack: {
+      weapon: "bow",
+      weaponDamage: 1,
+      bonusDamage: undefined,
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    // "If Debilitating Shot hits, your target loses 1...8...10 energy."
+    effects: [
+      {
+        kind: "energy-loss",
+        amount: { scaling: { attributeId: "ranger.marksmanship", atZero: 1, atTwelve: 8 } },
+      },
+    ],
+  },
+  {
+    id: "ranger.burning-arrow",
+    name: "Burning Arrow",
+    type: "attack",
+    elite: true,
+    profession: "ranger",
+    attributeId: "ranger.marksmanship",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 5,
+    range: RANGE_LONG,
+    target: "single-enemy",
+    area: undefined,
+    // "If this attack hits, you strike for +10...26...30 damage..."
+    attack: {
+      weapon: "bow",
+      weaponDamage: 1,
+      bonusDamage: { scaling: { attributeId: "ranger.marksmanship", atZero: 10, atTwelve: 26 } },
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    // "...and cause Burning for 1...6...7 seconds": 6 s, its rank-12 value.
+    effects: [{ kind: "apply-status", statusId: "burning", durationSeconds: 6 }],
+  },
+  {
     id: "ranger.throw-dirt",
     name: "Throw Dirt",
     type: "skill",
@@ -1692,6 +1795,37 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     // A 50% block for 9 seconds, ending on a member's attack-skill hit:
     // its rank-12 numbers, in the status (#956).
     effects: [{ kind: "apply-status", statusId: "defensive-anthem", durationSeconds: 9 }],
+  },
+  {
+    id: "paragon.song-of-restoration",
+    name: "Song of Restoration",
+    type: "chant",
+    elite: true,
+    profession: "paragon",
+    attributeId: "paragon.motivation",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    // "Each party member within earshot", the chanter among them.
+    area: {
+      radius: AREA_EARSHOT,
+      origin: "caster",
+      affects: "allies",
+      maxTargets: undefined,
+      includesCaster: true,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 10 seconds, the next time each party member within earshot uses
+    // a Skill, that party member gains 45...97...110 Health" (PvP, #999):
+    // 97 at rank 12, in the status. A heal, not a gain, as the fandom's
+    // anomaly note has it, so Deep Wound cuts it. The chanter's own cast
+    // does not use it up: its next skill does.
+    effects: [{ kind: "apply-status", statusId: "song-of-restoration", durationSeconds: 10 }],
   },
   {
     id: "ritualist.weapon-of-warding",
@@ -2767,6 +2901,81 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     ],
   },
   {
+    id: "dervish.zealous-sweep",
+    name: "Zealous Sweep",
+    type: "attack",
+    elite: false,
+    profession: "dervish",
+    attributeId: "dervish.scythe-mastery",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 10,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    // "If this attack hits, you deal +5...17...20 damage. You gain 3 Energy
+    // and 1 strike of adrenaline for each foe you hit." A scythe cleaves,
+    // so that is up to 3 (#977).
+    attack: {
+      weapon: "scythe",
+      weaponDamage: 1,
+      bonusDamage: { scaling: { attributeId: "dervish.scythe-mastery", atZero: 5, atTwelve: 17 } },
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    effects: [
+      { kind: "energy-gain", amount: { flat: 3 }, perTarget: true },
+      { kind: "adrenaline-gain", strikes: 1, perTarget: true },
+    ],
+  },
+  {
+    id: "dervish.mystic-twister",
+    name: "Mystic Twister",
+    type: "spell",
+    elite: false,
+    profession: "dervish",
+    attributeId: "dervish.wind-prayers",
+    cost: { kind: "adrenaline", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.5,
+    rechargeSeconds: 4,
+    range: RANGE_SPELL,
+    target: "self",
+    // "Deals 10...50...60 cold damage to all nearby foes. If you are
+    // enchanted, this spell deals an additional +10...50...60 cold
+    // damage": one packet, the bonus read as it lands (#977).
+    area: {
+      radius: AREA_NEARBY,
+      origin: "caster",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    effects: [
+      {
+        kind: "damage",
+        type: "cold",
+        armorPenetration: 0,
+        amount: { scaling: { attributeId: "dervish.wind-prayers", atZero: 10, atTwelve: 50 } },
+        conditionalBonus: {
+          condition: { kind: "caster-has", category: "enchantment" },
+          amount: { scaling: { attributeId: "dervish.wind-prayers", atZero: 10, atTwelve: 50 } },
+        },
+      },
+    ],
+  },
+  {
     id: "ranger.savage-shot",
     name: "Savage Shot",
     type: "attack",
@@ -2801,6 +3010,49 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     projectile: undefined,
     effects: [{ kind: "interrupt" }],
+  },
+  {
+    id: "ranger.concussion-shot",
+    name: "Concussion Shot",
+    type: "attack",
+    elite: false,
+    profession: "ranger",
+    attributeId: "ranger.marksmanship",
+    cost: { kind: "energy", amount: 25 },
+    overcast: 0,
+    activationSeconds: 0.5,
+    rechargeSeconds: 5,
+    range: RANGE_LONG,
+    target: "single-enemy",
+    area: undefined,
+    // "This attack deals only 1...13...16 damage": Distracting Shot's
+    // shape, the arrow's own roll counts for nothing (ADR-0029, #760).
+    attack: {
+      weapon: "bow",
+      weaponDamage: 0,
+      bonusDamage: { scaling: { attributeId: "ranger.marksmanship", atZero: 1, atTwelve: 13 } },
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    // "If Concussion Shot hits while target foe is casting a spell, the
+    // spell is interrupted and your target is dazed for 5...17...20
+    // seconds": 17 s. A chant is not a spell. On a foe already Dazed the
+    // arrow's own hit cuts the spell (#817); the daze still refreshes.
+    effects: [
+      { kind: "interrupt", only: "spell" },
+      {
+        kind: "if",
+        condition: { kind: "interrupted-spell" },
+        effects: [{ kind: "apply-status", statusId: "dazed", durationSeconds: 17 }],
+      },
+    ],
   },
 
   /* ---------------------------------------------------------------------- */
@@ -3816,6 +4068,303 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         armorPenetration: 0,
       },
       { kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS },
+    ],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Elementalist condition staples (#997)                                  */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "elementalist.water-trident",
+    name: "Water Trident",
+    type: "spell",
+    elite: true,
+    profession: "elementalist",
+    attributeId: "elementalist.water-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 3,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    // The 2012 revision's "target foe and up to 2 adjacent foes": the
+    // target first, then the nearest two (`targeting.ts`).
+    area: {
+      radius: AREA_ADJACENT,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: 3,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    // Our own tuning, as GW1 publishes no speeds: "fast-moving", Lightning
+    // Orb's speed.
+    projectile: { speed: 1.5 * RANGE_SPELL },
+    // "...for 10...74...90 cold damage if it hits. If it hits a moving foe,
+    // that foe is knocked down." Moving is read per foe, before it lands.
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.water-magic", atZero: 10, atTwelve: 74 },
+        },
+        type: "cold",
+        armorPenetration: 0,
+      },
+      {
+        kind: "if",
+        condition: { kind: "target-moving" },
+        effects: [{ kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS }],
+      },
+    ],
+  },
+  {
+    id: "elementalist.searing-flames",
+    name: "Searing Flames",
+    type: "spell",
+    elite: true,
+    profession: "elementalist",
+    attributeId: "elementalist.fire-magic",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 2,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    // "Target foe and all nearby foes": Fireball's area, with no flight.
+    area: {
+      radius: AREA_NEARBY,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Foes already on fire ... are struck for 10...82...100 fire damage.
+    // Foes not already on fire begin Burning for 1...6...7 seconds": 6 s,
+    // its rank-12 value. Both are read before either lands, so exactly
+    // one holds on each foe.
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-has-status", statusId: "burning" },
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "elementalist.fire-magic", atZero: 10, atTwelve: 82 },
+            },
+            type: "fire",
+            armorPenetration: 0,
+          },
+        ],
+      },
+      {
+        kind: "if",
+        condition: { kind: "target-lacks-status", statusId: "burning" },
+        effects: [{ kind: "apply-status", statusId: "burning", durationSeconds: 6 }],
+      },
+    ],
+  },
+  {
+    id: "elementalist.ebon-hawk",
+    name: "Ebon Hawk",
+    type: "spell",
+    elite: false,
+    profession: "elementalist",
+    attributeId: "elementalist.earth-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    // Our own tuning: Fireball's speed.
+    projectile: { speed: RANGE_SPELL },
+    // "...strikes target foe for 10...70...85 earth damage and causes
+    // Weakness for 5...13...15 seconds if it hits": 13 s, its rank-12 value.
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.earth-magic", atZero: 10, atTwelve: 70 },
+        },
+        type: "earth",
+        armorPenetration: 0,
+      },
+      { kind: "apply-status", statusId: "weakness", durationSeconds: 13 },
+    ],
+  },
+  {
+    id: "elementalist.stoning",
+    name: "Stoning",
+    type: "spell",
+    elite: false,
+    profession: "elementalist",
+    attributeId: "elementalist.earth-magic",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    // Our own tuning: "a large stone", Fireball's speed.
+    projectile: { speed: RANGE_SPELL },
+    // "...for 45...93...105 earth damage if it hits. If Stoning hits a foe
+    // suffering from Weakness, that foe is knocked down." Weakness is read
+    // as the stone lands.
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.earth-magic", atZero: 45, atTwelve: 93 },
+        },
+        type: "earth",
+        armorPenetration: 0,
+      },
+      {
+        kind: "if",
+        condition: { kind: "target-has-status", statusId: "weakness" },
+        effects: [{ kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS }],
+      },
+    ],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Monk staples (#987)                                                    */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "monk.heal-other",
+    name: "Heal Other",
+    type: "spell",
+    elite: false,
+    profession: "monk",
+    attributeId: "monk.healing-prayers",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 3,
+    range: RANGE_SPELL,
+    target: "single-other-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Heal target other ally for 35...151...180 health."
+    effects: [
+      {
+        kind: "heal",
+        perStatusOnTarget: [],
+        amount: {
+          scaling: { attributeId: "monk.healing-prayers", atZero: 35, atTwelve: 151 },
+        },
+      },
+    ],
+  },
+  {
+    id: "monk.reversal-of-fortune",
+    name: "Reversal of Fortune",
+    type: "enchantment",
+    elite: false,
+    profession: "monk",
+    attributeId: "monk.protection-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 2,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 8 seconds, the next time target ally would take damage or life
+    // steal, that ally gains that amount of health instead, maximum
+    // 15...67...80": the 67 cap is the status's.
+    effects: [{ kind: "apply-status", statusId: "reversal-of-fortune", durationSeconds: 8 }],
+  },
+  {
+    id: "monk.smite-hex",
+    name: "Smite Hex",
+    type: "spell",
+    elite: false,
+    profession: "monk",
+    attributeId: "monk.smiting-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Remove a hex from target ally. If a hex is removed, foes in the area
+    // suffer 10...70...85 holy damage": the area is the ally's.
+    effects: [
+      { kind: "remove-status", category: "hex", count: 1 },
+      {
+        kind: "if",
+        condition: { kind: "removed", category: "hex" },
+        effects: [
+          {
+            kind: "splash",
+            radius: AREA_IN_THE_AREA,
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "monk.smiting-prayers", atZero: 10, atTwelve: 70 },
+                },
+                type: "holy",
+                armorPenetration: 0,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "monk.restore-condition",
+    name: "Restore Condition",
+    type: "spell",
+    elite: true,
+    profession: "monk",
+    attributeId: "monk.protection-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 2,
+    range: RANGE_SPELL,
+    target: "single-other-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Remove all conditions from target other ally. That ally is healed
+    // 10...58...70 health for each condition removed."
+    effects: [
+      { kind: "remove-status", category: "condition", count: Number.POSITIVE_INFINITY },
+      {
+        kind: "heal",
+        perStatusOnTarget: [],
+        perRemoved: "condition",
+        amount: {
+          scaling: { attributeId: "monk.protection-prayers", atZero: 10, atTwelve: 58 },
+        },
+      },
     ],
   },
 ];

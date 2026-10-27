@@ -5,6 +5,7 @@ import {
   getStatusDefinition,
   type SpreadGainedConditionEffect,
   type StatusChange,
+  type StatusId,
   type StatusTrigger,
   type StatusTriggerEvent,
 } from "./status.js";
@@ -45,7 +46,9 @@ export interface TriggerContext {
  * once each, in `StatusSet.active` order (ADR-0003). Its effects are its
  * source's, on the trigger's target. A source no longer in the match fires
  * nothing; a dead one still does, as a dead Mesmer's hex keeps working in
- * GW1.
+ * GW1. A status in `spared`, one the skill being used put on its own user,
+ * does not answer that use (#999): Song of Restoration waits for the
+ * chanter's next skill.
  *
  * Nothing here fires a trigger: damage from one is never an event that
  * answers another, so triggers cannot recurse.
@@ -54,9 +57,11 @@ export function fireTriggers(
   bearer: Combatant,
   event: Exclude<StatusTriggerEvent, "bearer-gains-condition" | "ends" | "expires">,
   context: TriggerContext,
+  spared: ReadonlySet<StatusId>,
 ): FiredTrigger[] {
   return bearer.statuses
     .triggersOn(event)
+    .filter(({ statusId }) => !spared.has(statusId))
     .flatMap(({ sourceId, trigger }) => fire(trigger, sourceId, bearer, undefined, context));
 }
 

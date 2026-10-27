@@ -448,6 +448,11 @@ const status = {
       `<path d="M7 7.5h10v4c0 3-2.5 5-5 6.5C9.5 16.5 7 14.5 7 11.5z" ${stroke(c, 2)}/>` +
       `<path d="M6 4.5h12" ${stroke(c, 2)}/>`,
   ],
+  // Enchantment: an arrow turning back up, the next hit heals (#987).
+  "reversal-of-fortune": [
+    "enchantment",
+    (c) => `<path d="M8 6v7a4 4 0 0 0 8 0V8M13 11l3-3 3 3" ${stroke(c, 2.2)}/>`,
+  ],
   // Shout: an arrow turning back, run and be healed for it (#921).
   "fall-back": ["shout", (c) => `<path d="M17 12H7.5M11 8l-4 4 4 4" ${stroke(c, 2.5)}/>`],
   // Shout: a shield planted on the ground, armor while you stand (#921).
@@ -472,6 +477,12 @@ const status = {
     (c) =>
       `<path d="M8 6h8v4.5c0 2.5-2 4-4 5.2-2-1.2-4-2.7-4-5.2z" ${stroke(c, 2)}/>` +
       `<path d="M9.5 10h5" ${stroke(c, 2)}/>`,
+  ],
+  // Chant: a plus over a bar, healed on your next skill (#999).
+  "song-of-restoration": [
+    "chant",
+    (c) =>
+      `<path d="M12 5.5v7M8.5 9h7" ${stroke(c, 2.5)}/>` + `<path d="M8 15.5h8" ${stroke(c, 2)}/>`,
   ],
   // Chant: a flame, your next attack skill burns (#758). Burning's flame,
   // smaller and higher, clear of the banner's notch.

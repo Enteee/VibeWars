@@ -74,6 +74,13 @@ export interface DamageEffect {
    * `splash`, the energy its centre lost, as Energy Surge's (#920).
    */
   readonly perEnergyLost?: true;
+  /**
+   * More damage, in the same packet, to each target for which
+   * `condition` holds as it lands, as Mystic Twister's "if you are
+   * enchanted, deals 10...50...60 more damage" (#977): one packet, so
+   * mitigated, and capped, once.
+   */
+  readonly conditionalBonus?: ConditionalBonus;
 }
 
 export interface HealEffect {
@@ -97,6 +104,13 @@ export interface HealEffect {
    * per ally, is capped at `max` before healing modifiers.
    */
   readonly perAlly?: PerAllyHeal;
+  /**
+   * The amount is per status of this category an earlier `remove-status`
+   * of this skill took off the heal's target, as Restore Condition's
+   * "healed 10...58...70 Health for each condition removed" (#987). None
+   * removed: no heal.
+   */
+  readonly perRemoved?: StatusCategory;
 }
 
 /** Leader's Comfort's heal per ally in earshot (#923). */
@@ -116,6 +130,23 @@ export interface EnergyGainEffect {
    * lost (#920).
    */
   readonly perEnergyLost?: true;
+  /**
+   * Once for each target the skill hit, rather than once a use, as
+   * Zealous Sweep's "for each foe you hit, you gain 3 Energy" (#977).
+   */
+  readonly perTarget?: true;
+}
+
+/**
+ * The caster gains `strikes` strikes of adrenaline in every adrenaline
+ * skill that is not recharging, each capped at its cost, as a hit's
+ * strike (#977). `perTarget`: once for each target the skill hit, as
+ * Zealous Sweep's "1 strike of adrenaline for each foe you hit".
+ */
+export interface AdrenalineGainEffect {
+  readonly kind: "adrenaline-gain";
+  readonly strikes: number;
+  readonly perTarget?: true;
 }
 
 /** The effect's target loses up to `amount` energy (never below 0). */
@@ -227,11 +258,13 @@ export interface RechargeFasterEffect {
 export interface InterruptEffect {
   readonly kind: "interrupt";
   /**
-   * `spell-or-chant`: only a spell (`isSpell`) or a chant is interrupted,
-   * as Power Spike's "If target foe is casting a Spell or Chant" (#521).
-   * Anything else is left alone, as if the target were not casting.
+   * `spell`: only a spell (`isSpell`) is interrupted, as Concussion
+   * Shot's "while target foe is casting a spell" (#1008); a chant is
+   * not one. `spell-or-chant`: a spell or a chant, as Power Spike's
+   * "If target foe is casting a Spell or Chant" (#521). Anything else
+   * is left alone, as if the target were not casting.
    */
-  readonly only?: "spell-or-chant";
+  readonly only?: "spell" | "spell-or-chant";
 }
 
 /**
@@ -350,6 +383,21 @@ export type StateCondition =
    */
   | { readonly kind: "target-knocked-down" }
   /**
+   * The effect's target walked in the previous tick (#997,
+   * `Combatant.moving`): Water Trident's "a moving foe".
+   */
+  | { readonly kind: "target-moving" }
+  /**
+   * The effect's target has this status (#997): Stoning's "suffering from
+   * Weakness", Searing Flames' "already on fire".
+   */
+  | { readonly kind: "target-has-status"; readonly statusId: StatusId }
+  /**
+   * The effect's target does not have this status (#997): Searing Flames'
+   * "foes not already on fire".
+   */
+  | { readonly kind: "target-lacks-status"; readonly statusId: StatusId }
+  /**
    * The caster has more energy than the effect's target (#918): Mind
    * Shock's "if you have more energy than target foe". Equal is not more.
    */
@@ -387,6 +435,7 @@ export type UnconditionalEffect =
   | DamageEffect
   | HealEffect
   | EnergyGainEffect
+  | AdrenalineGainEffect
   | EnergyLossEffect
   | LifeStealEffect
   | SacrificeHealthEffect

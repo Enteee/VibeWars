@@ -1,5 +1,6 @@
 import { MAX_ATTRIBUTE_RANK } from "../attributes.js";
 import { AREA_ADJACENT, AREA_EARSHOT, AREA_IN_THE_AREA, AREA_NEARBY } from "../distances.js";
+import { WEAPONS } from "../equipment/weapons.js";
 import { getAttribute, getProfession } from "../professions.js";
 
 import { energyCostOf } from "./activation.js";
@@ -261,6 +262,11 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
       `damage from a single hit is capped at ${String(Math.round(definition.maxDamageFractionPerHit * 100))}% of max health`,
     );
   }
+  if (definition.reversesNextDamage !== undefined) {
+    parts.push(
+      `the next damage or life steal heals for that much instead, up to ${String(definition.reversesNextDamage)}`,
+    );
+  }
   if (definition.extraStrikesPerHit > 0) {
     parts.push(
       `gain ${String(definition.extraStrikesPerHit)} more ${definition.extraStrikesPerHit === 1 ? "strike" : "strikes"} of adrenaline per hit`,
@@ -478,6 +484,12 @@ function conditionText(condition: EffectCondition): string {
       return "If target is not moving";
     case "target-knocked-down":
       return "If target is knocked down";
+    case "target-moving":
+      return "If target is moving";
+    case "target-has-status":
+      return `If target has ${statusName(condition.statusId)}`;
+    case "target-lacks-status":
+      return `If target does not have ${statusName(condition.statusId)}`;
     case "caster-more-energy":
       return "If you have more Energy than target";
     case "caster-wields":
@@ -545,6 +557,11 @@ function share(fraction: number): string {
   return fraction === 0.5 ? "half" : `${String(Math.round(fraction * 100))}% of`;
 }
 
+/** " per foe hit", for an amount the caster gains once for each target hit (#977). */
+function perFoeHit(effect: { readonly perTarget?: true }): string {
+  return effect.perTarget === undefined ? "" : " per foe hit";
+}
+
 /** " per point lost", for an amount multiplied by the energy taken before it (#793). */
 function perPointLost(effect: { readonly perEnergyLost?: true }): string {
   return effect.perEnergyLost === undefined ? "" : " per point lost";
@@ -561,8 +578,14 @@ function describeEffect(
         effect.armorPenetration > 0
           ? ` (${String(Math.round(effect.armorPenetration * 100))}% armor penetration)`
           : "";
+      const text = `Deals ${String(magnitude.current)} damage${perPointLost(effect)}${penetration}`;
+      // Mystic Twister's "if you are enchanted, 50 more" (#977).
+      const bonus = effect.conditionalBonus;
       return {
-        text: `Deals ${String(magnitude.current)} damage${perPointLost(effect)}${penetration}`,
+        text:
+          bonus === undefined
+            ? text
+            : `${text}; ${lowerFirst(conditionText(bonus.condition))}: +${String(describeMagnitude(bonus.amount, ranks).current)}`,
         magnitude,
       };
     }
@@ -572,14 +595,26 @@ function describeEffect(
       const text =
         effect.perStatusOnTarget.length > 0
           ? `+${amount} Health for each ${effect.perStatusOnTarget.join(" or ")} on target ally`
-          : effect.recipient === "caster"
-            ? `You gain ${amount} health`
-            : `Heals for ${amount}`;
+          : effect.perRemoved !== undefined
+            ? `Heals ${amount} for each ${effect.perRemoved} removed`
+            : effect.recipient === "caster"
+              ? `You gain ${amount} health`
+              : `Heals for ${amount}`;
       return { text: `${text}${perAllyText(effect, ranks)}`, magnitude };
     }
     case "energy-gain": {
       const magnitude = describeMagnitude(effect.amount, ranks);
-      return { text: `Gain ${String(magnitude.current)} energy${perPointLost(effect)}`, magnitude };
+      return {
+        text: `Gain ${String(magnitude.current)} energy${perPointLost(effect)}${perFoeHit(effect)}`,
+        magnitude,
+      };
+    }
+    case "adrenaline-gain": {
+      const strikes = effect.strikes === 1 ? "1 strike" : `${String(effect.strikes)} strikes`;
+      return {
+        text: `Gain ${strikes} of adrenaline${perFoeHit(effect)}`,
+        magnitude: undefined,
+      };
     }
     case "energy-loss": {
       const magnitude = describeMagnitude(effect.amount, ranks);
@@ -662,17 +697,21 @@ function describeEffect(
         return { text: "Ends the target's stance", magnitude: undefined };
       }
       const plural = effect.count === 1 ? "" : "s";
+      // Restore Condition's "remove all conditions" (#987).
+      const count = Number.isFinite(effect.count) ? String(effect.count) : "all";
       return {
-        text: `Removes ${String(effect.count)} ${effect.category}${plural}`,
+        text: `Removes ${count} ${effect.category}${plural}`,
         magnitude: undefined,
       };
     }
     case "interrupt":
       return {
         text:
-          effect.only === "spell-or-chant"
-            ? "Interrupts the target's spell or chant, if they are casting one"
-            : "Interrupts the target's current cast, if they are casting",
+          effect.only === "spell"
+            ? "Interrupts the target's spell, if they are casting one"
+            : effect.only === "spell-or-chant"
+              ? "Interrupts the target's spell or chant, if they are casting one"
+              : "Interrupts the target's current cast, if they are casting",
         magnitude: undefined,
       };
     case "knockdown":
@@ -870,6 +909,14 @@ const AREA_TEXT: ReadonlyMap<number, string> = new Map([
   [AREA_EARSHOT, "in earshot"],
 ]);
 
+/** Where round its target a target-centred area reaches: "nearby it" (#998). */
+const AREA_AROUND_TARGET: ReadonlyMap<number, string> = new Map([
+  [AREA_ADJACENT, "adjacent to it"],
+  [AREA_NEARBY, "nearby it"],
+  [AREA_IN_THE_AREA, "in the area around it"],
+  [AREA_EARSHOT, "in earshot of it"],
+]);
+
 const TARGET_TEXT: Record<Skill["target"], string> = {
   self: "Self",
   "single-enemy": "One foe",
@@ -904,6 +951,18 @@ function targetAndRange(skill: Skill): {
     return {
       target: `${TARGET_TEXT[skill.target]}, and ${AREA_WHO[area.affects].toLowerCase()} ${where} around you`,
       range: `${String(skill.range)} range`,
+    };
+  }
+  if (area?.origin === "target") {
+    // Fireball, Meteor (#998): its target, and those round it. maxTargets
+    // counts the primary.
+    const who = AREA_WHO[area.affects].toLowerCase();
+    const count =
+      area.maxTargets === undefined ? who : `up to ${String(area.maxTargets - 1)} ${who}`;
+    const where = AREA_AROUND_TARGET.get(area.radius) ?? `within ${String(area.radius)} of it`;
+    return {
+      target: `${TARGET_TEXT[skill.target]}, and ${count} ${where}`,
+      range: `${String(skill.range)} range, ${String(area.radius)} radius`,
     };
   }
   return {
@@ -977,6 +1036,17 @@ export function describeSkill(
           },
         ]),
   ];
+  // A scythe's attack skill cleaves as its swing does (#977), unless it
+  // has an area of its own.
+  const cleaves = skill.attack?.weapon === "scythe" && skill.area === undefined;
+  const cleaveLine = cleaves
+    ? [
+        {
+          text: `Hits up to ${String(WEAPONS.scythe.cleaveTargets)} adjacent foes too`,
+          magnitude: undefined,
+        },
+      ]
+    : [];
   // Its own armor penetration (#923): Spear of Lightning's 25%.
   const armorPenetration = skill.attack?.armorPenetration ?? 0;
   const penetrationLine =
@@ -1013,6 +1083,7 @@ export function describeSkill(
   const effects = [
     ...chainLine,
     ...bonusLine,
+    ...cleaveLine,
     ...penetrationLine,
     ...skill.effects.flatMap((effect) => describeEffects(effect, ranks)),
     ...onBlocked,

@@ -81,7 +81,9 @@ a foe, a swing, a landed arrow or an attack skill's blow, gives one strike
 to every adrenaline skill that is not recharging. A swing is one per
 blow, not per foe, so a cleave across three foes is one strike and a
 double strike whose two blows land is two; an attack skill is one per
-foe it lands on, so a Cyclone Axe into three foes is three (#936). Blocked, missed or obstructed blows give
+foe it lands on, so a Cyclone Axe into three foes is three (#936), but a
+scythe's attack skill that cleaves three foes is one, as its swing is
+(#977). Blocked, missed or obstructed blows give
 nothing, and neither do spells. Taking damage from a foe charges you too
 (#827): every hit, blow or spell, gives `floor(100 × damage ÷ max health)`
 units, so a hit for a quarter of your health is a strike; degeneration,
@@ -161,6 +163,12 @@ sacrifice, not damage: nothing caps it, charges adrenaline from it or
 answers it, and half of what you have can never kill you. The heal is a
 heal like Orison's: Divine Favor adds to it and a deep wound on the ally
 cuts it. On an ally at full health you still lose the health.
+**Heal Other** (#987, Healing Prayers, 10 energy, ¾ s, 3 s) heals
+another ally 151 at rank 12. **Restore Condition** (#987, elite,
+Protection Prayers, 5 energy, ¾ s, 2 s) removes every condition from
+another ally and then heals it 58 for each one removed: three are 174.
+A deep wound among them is gone before the heal, so it does not cut it.
+With no condition it heals nothing and still costs its energy.
 
 ## Interrupts
 
@@ -187,6 +195,12 @@ spell. A signet, it costs nothing.
 **Savage Shot** (#794) interrupts whatever its arrow finds being cast, and
 hits 25 harder if that was a spell: one bigger number on the hit, read
 as the arrow lands. A block or a miss does neither.
+
+**Concussion Shot** (#1008, Marksmanship, 25 energy, ½ s, 5 s recharge)
+interrupts only a spell: a chant, a signet or an attack goes on, and the
+log says "not a spell". When it cuts a spell, its foe is Dazed for 17 s.
+The arrow deals only 13. On a foe already Dazed the arrow's own hit
+cuts the spell first, and the daze is still refreshed.
 
 Some interrupts also **disable** what they cut short (#914): the skill
 cannot be used for a while, on top of its recharge. The two run
@@ -338,6 +352,10 @@ for 56 more (#985). "Down" is read as it lands, after that tick's
 countdown: a foe who stands up on that tick gets no bonus. Shock, then
 Aftershock, is the Elementalist's knockdown combo.
 
+**Water Trident** knocks down each foe it hits that is moving, and
+**Stoning** a foe suffering from Weakness (#997). Both are read as the
+projectile lands.
+
 A knocked-down character can't block: Guardian does nothing while you
 are down, and an attack skill's if-blocked rider never fires against
 you. Blocking works again the moment you stand.
@@ -365,6 +383,11 @@ from Shatter Enchantment, and a cheap condition covers a deep wound from
 Mend Condition. Some removals do more when they find something to
 remove: Shatter Enchantment then deals damage, Drain Enchantment gives
 its caster energy and health, and Mend Condition heals the ally.
+**Smite Hex** (#987, Smiting Prayers, 5 energy, 1 s, 12 s) removes one
+hex from any ally, yourself included; if it removed one, every foe in
+the area of that ally takes 70 holy damage, through armor. Allies are
+never hit. With no hex nothing happens, and the energy and recharge are
+spent.
 
 **A Dervish spends its own enchantments** (#845). Wounding Strike,
 Signet of Pious Light and Pious Restoration each make you lose 1 Dervish
@@ -390,7 +413,14 @@ adrenaline. **Pious Haste** is a stance: lose 1 Dervish enchantment and
 move 25% faster for 6 s, or 50% faster if one was lost, which is capped
 at +33% as every speed-up is (ADR-0019). **Victorious Sweep** (+21, any
 melee weapon) gains you 70 health if, after the blow, its target has
-less health than you, counted in points, not as a share.
+less health than you, counted in points, not as a share; with a scythe
+it cleaves, so that is 70 for each foe struck that has less.
+**Zealous Sweep** (+17, scythe, 5 energy, 10 s) gains you 3 energy and
+1 strike of adrenaline for each foe it hits, so a cleave into 3 foes
+gives 9 energy and, with the blow's own, 4 strikes. **Mystic Twister**
+(Wind Prayers) is an adrenaline **spell**, 5 strikes, ½ s, 4 s: 50 cold
+to every foe nearby, or 100 if you are enchanted as it lands, in one
+packet. Like any spell it earns its caster no strike.
 
 Each condition has a distinct mechanical identity, not just a different
 number:
@@ -441,6 +471,9 @@ while weakened. Two sources of weakness are one weakness, so it is
 never −2. Enfeeble (Necromancer, Curses) weakens one foe for 26 s;
 Enfeebling Blood (Necromancer, Curses, 1 energy and 17% of your health)
 weakens the target and every nearby foe for 13 s.
+Ebon Hawk (Elementalist, Earth Magic) weakens its foe for 13 s, and
+Stoning knocks a weakened foe down: either Necromancer skill, or the
+hawk, sets the stone up (#997).
 
 **Cracked Armor takes 20 armor, but never below 60** (#763, GW1). It is
 taken before any status adds armor, so a cracked caster at 60 loses
@@ -554,6 +587,10 @@ or block. A shot from a bow, an arrow attack skill or a thrown spear
 keeps it. Pin Down and Hunter's Shot are bow attacks: Pin Down cripples
 for 13 s, and Hunter's Shot (1 s to use) bleeds for 21 s, when the arrow
 hits; a block or a blind miss lands neither.
+Crippling Shot (Marksmanship elite, 10 energy, 2 s recharge, #1008)
+cannot be blocked and cripples for 10 s. Debilitating Shot (10 energy,
+10 s) drains 8 energy. Burning Arrow (elite, 10 energy, 5 s) hits 26
+harder and burns for 6 s. Each lands its rider only when the arrow hits.
 
 **Mantra of Recovery** (Mesmer elite stance, Fast Casting, 5 energy, 15 s
 recharge, #938) makes every spell you finish in the next 17 s recharge
@@ -577,6 +614,8 @@ clicked point, an approach to attack or cast. Knocked down, in
 aftercast, dead or walking into a wall is not moving. Everyone's is read
 at the end of a tick, so it is one tick late and never depends on who
 acts first.
+Water Trident (#997) reads it the other way round: it knocks down a
+foe that _is_ moving as it lands.
 
 Spear of Lightning (Paragon spear attack, 5 energy, 6 s) deals +18, and
 the whole blow is lightning, the spear's damage too: armor against
@@ -660,7 +699,16 @@ in earshot a 50% chance to block attacks for 9 s (#956). It ends on an
 ally when one of that ally's attack skills hits, melee or thrown. A
 plain swing or arrow does not end it, and neither does an attack skill
 that misses or is blocked. Its block combines with any other as
-1 − ∏(1 − p): with Weapon of Warding it is 75%.
+1 − ∏(1 − p): with Weapon of Warding it is 75%. Song of Restoration
+(elite, Motivation, 10 energy, 1 s cast, 20 s recharge) lasts 10 s on
+each ally in earshot, the paragon included (#999). The next skill each
+uses heals them 97 (45 at Motivation 0), after that skill's own effects,
+and the song ends on them. Any skill completed counts, an attack skill
+once; a plain swing, or a skill interrupted or cancelled, does not. It
+is a heal, so Deep Wound cuts it. If it runs out, is removed or its
+bearer dies, nobody is healed. The paragon's own chant does not use up
+the song it just put on itself: its next skill does. In general, a
+status a skill puts on its own user never answers that same use.
 
 **Weapon spells** go on an ally's weapon, one at a time: a new one
 replaces the old, the same one included (#758). They are spells, so
@@ -727,8 +775,12 @@ bonus, mitigated once, and you
 recover for as long again before you swing or cast. The wind-up shows on
 the cast bar and on the held weapon, which cocks back over the whole
 activation and strikes as it ends (#562); an interrupt or a move stops
-it, and the weapon eases back to rest. No double strike or
-cleave on an attack skill. Afterwards you swing at its foe, from a fresh
+it, and the weapon eases back to rest. No double strike on an attack
+skill, but **a scythe's attack skill cleaves** as the swing does (#977):
+it also strikes up to 2 foes adjacent to its target, nearest first, picked
+at the hit, and each foe struck rolls its own blind, block and crit and
+gets the skill's effects. A skill with its own area, or another weapon,
+does not cleave. Afterwards you swing at its foe, from a fresh
 swing. Distracting Blow deals no damage: a hit only interrupts, and a
 miss does nothing. It has no attribute, as in GW1, so any warrior can
 use it and its numbers never scale.
@@ -844,7 +896,7 @@ its riders, so a blocked Distracting Blow interrupts nothing; an attack
 skill's cost and recharge are still spent. "block" floats over the
 target. Swift Chop is the exception that proves it: blocked, it still
 deals its flat damage and a 20 s Deep Wound. Spells are never blocked,
-and shields do not block, as in GW1. Wild Throw cannot be blocked at all.
+and shields do not block, as in GW1. Wild Throw and Crippling Shot cannot be blocked at all.
 
 Not modelled: evade.
 
@@ -892,6 +944,16 @@ of its max health, the max a deep wound has lowered. The cap comes last,
 after armor, Frenzy's double and a Rune of Absorption, on every hit,
 blow or spell. Degeneration, sacrifice and life steal are not hits and
 are not capped. Two caps: the lower wins.
+
+**Reversal of Fortune** (#987, Monk, Protection Prayers, 5 energy, ¼ s,
+2 s recharge) lasts 8 s on any ally: the next damage or life steal it
+would take heals it that much instead, up to 67, and the enchantment
+ends. It comes after armor and every cap, so under Protective Spirit a
+200 hit on a 480-health ally heals it 48. The whole hit is negated: no
+damage, no death, nothing that answers physical damage, and a life
+stealer gains nothing. A deep wound cuts the heal. The hit still counts
+as a hit for the attacker's adrenaline. Degeneration and sacrifice pass
+under it and do not spend it.
 
 Some damage ignores armor altogether (#760): holy, shadow and typeless
 skill damage, an attack skill's "+N damage" bonus, degeneration and
@@ -942,6 +1004,16 @@ not speed it. It knocks its foe down and strikes for 50 lightning.
 **Meteor** (Fire Magic, 5 energy, 10 overcast, 2 s, 30 s recharge) strikes
 its target and every foe adjacent to it for 91 fire and knocks each down,
 as the cast ends (#985).
+**Water Trident** (elite, Water Magic, 5 energy, 1 s, 3 s recharge) flies
+as fast as Lightning Orb at its target and up to two adjacent foes: 74
+cold to each, and a knockdown to each that is moving. **Searing
+Flames** (elite, Fire Magic, 15 energy, 1 s, 2 s recharge) falls on its
+target and every foe nearby it: a foe already Burning takes 82 fire, one
+that is not starts Burning for 6 s and takes nothing. Cast twice, it
+burns, then strikes. **Ebon Hawk** (Earth Magic, 10 energy, 1 s, 5 s
+recharge) flies as Fireball does: 70 earth and Weakness for 13 s.
+**Stoning** (15 energy, 1 s, 5 s recharge) flies the same: 93 earth, and
+a knockdown if its foe is weakened (#997).
 
 ## Primary attributes
 

@@ -198,6 +198,11 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Paragon/1089-Defensive_Anthem",
   },
   {
+    id: "paragon.song-of-restoration",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1115-Song_of_Restoration",
+  },
+  {
     id: "paragon.spear-of-lightning",
     profession: "paragon",
     url: "https://www.gw-memorial.net/skills/Paragon/1126-Spear_of_Lightning",
@@ -478,6 +483,16 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Dervish/1030-Victorious_Sweep",
   },
   {
+    id: "dervish.zealous-sweep",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/1221-Zealous_Sweep",
+  },
+  {
+    id: "dervish.mystic-twister",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/1049-Mystic_Twister",
+  },
+  {
     id: "mesmer.cry-of-frustration",
     profession: "mesmer",
     url: "https://www.gw-memorial.net/skills/Mesmer/308-Cry_of_Frustration",
@@ -516,6 +531,26 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     id: "elementalist.meteor",
     profession: "elementalist",
     url: "https://www.gw-memorial.net/skills/Elementalist/424-Meteor",
+  },
+  {
+    id: "elementalist.water-trident",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/447-Water_Trident",
+  },
+  {
+    id: "elementalist.searing-flames",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/930-Searing_Flames",
+  },
+  {
+    id: "elementalist.ebon-hawk",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/915-Ebon_Hawk",
+  },
+  {
+    id: "elementalist.stoning",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/406-Stoning",
   },
   {
     id: "elementalist.lightning-strike",
@@ -593,6 +628,26 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Ranger/114-Hunter's_Shot",
   },
   {
+    id: "ranger.concussion-shot",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/110-Concussion_Shot",
+  },
+  {
+    id: "ranger.crippling-shot",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/111-Crippling_Shot",
+  },
+  {
+    id: "ranger.debilitating-shot",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/148-Debilitating_Shot",
+  },
+  {
+    id: "ranger.burning-arrow",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/818-Burning_Arrow",
+  },
+  {
     id: "monk.patient-spirit",
     profession: "monk",
     url: "https://www.gw-memorial.net/skills/Monk/1158-Patient_Spirit",
@@ -631,6 +686,26 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     id: "monk.infuse-health",
     profession: "monk",
     url: "https://www.gw-memorial.net/skills/Monk/172-Infuse_Health",
+  },
+  {
+    id: "monk.heal-other",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/166-Heal_Other",
+  },
+  {
+    id: "monk.reversal-of-fortune",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/195-Reversal_of_Fortune",
+  },
+  {
+    id: "monk.smite-hex",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/213-Smite_Hex",
+  },
+  {
+    id: "monk.restore-condition",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/194-Restore_Condition",
   },
 ];
 

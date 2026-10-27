@@ -6,6 +6,7 @@ import { createProfessionDot, cssColour } from "./character-preview.js";
 import { characterLine } from "./lobby-screen.js";
 import { PEER_IP_NOTICE, RANDOM_ARENA_MODES } from "./menu.js";
 import { button, h, screenBar } from "./kit.js";
+import { relayLine } from "./relay-section.js";
 
 /**
  * The Random Arena queue screen (#880, #854 B3–B4): searching, match
@@ -265,6 +266,10 @@ export function mountQueueScreen(
   const streak = h("div", "queue-streak");
   const body = h("div", "queue-body");
   body.append(status, waited, count, problem, streak);
+  const relay = relayLine();
+  if (relay !== undefined) {
+    body.append(relay);
+  }
   const splashHost = h("div", "queue-splash");
   const notice = h(
     "p",
