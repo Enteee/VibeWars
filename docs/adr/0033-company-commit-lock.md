@@ -22,6 +22,13 @@ code nobody had merged.
   `HEAD` is the lock's `sha`, the checkout is clean, and the `sha` is an
   ancestor of GitHub's `main`, fetched by URL into hubd's mirror. A failed
   fetch refuses too. There is no override flag.
+- The tracked files must also equal the commit's content in hubd's mirror
+  (`checkout-verify.mjs`: the mirror's tree read into a scratch index,
+  compared to the working files). Jails share the checkout's
+  `.git/objects` and git does not hash an object it checks out, so a
+  swapped tree object leaves `HEAD` and `git status` agreeing with the
+  sha. The restarter makes the same comparison right after its
+  fast-forward and does not lock or restart on a difference.
 - The lock advances only in a reboot, after the restarter built `main` in
   the mirror and fast-forwarded the checkout to it, and in
   `claude-llc lock`, which the operator runs on the host after the same

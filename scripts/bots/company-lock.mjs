@@ -17,6 +17,7 @@ import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 
+import { tamperedPaths } from "./checkout-verify.mjs";
 import { builds } from "./company-build.mjs";
 import { FILTER_KEYS, GIT_ENV, GIT_HARDENING, filterPins } from "./git-hardening.mjs";
 import { obj } from "./protocol.mjs";
@@ -111,11 +112,12 @@ function short(sha) {
  * @param {Lock | "missing" | "unreadable"} facts.lock
  * @param {string} facts.head the checkout's HEAD
  * @param {readonly string[]} facts.dirtyPaths `git status --porcelain`, one entry each
+ * @param {readonly string[]} facts.tampered tracked files that are not the mirror's content for the lock
  * @param {boolean} facts.onMain whether the lock's sha is an ancestor of GitHub's main
  * @param {string | null} facts.fetchError why GitHub's main could not be fetched
  * @returns {{ ok: true } | { ok: false, message: string }}
  */
-export function lockVerdict({ lock, head, dirtyPaths, onMain, fetchError }) {
+export function lockVerdict({ lock, head, dirtyPaths, tampered, onMain, fetchError }) {
   /** @param {string} message */
   const refuse = (message) => ({ ok: false, message });
   if (lock === "missing") {
@@ -138,6 +140,11 @@ export function lockVerdict({ lock, head, dirtyPaths, onMain, fetchError }) {
   if (!onMain) {
     return refuse(`locked ${short(lock.sha)} is not on GitHub main`);
   }
+  if (tampered.length > 0) {
+    return refuse(
+      `the checkout's files are not the merged commit's (a jail altered the object store?): ${tampered.slice(0, 5).join(", ")}`,
+    );
+  }
   return { ok: true };
 }
 
@@ -147,7 +154,7 @@ export function lockVerdict({ lock, head, dirtyPaths, onMain, fetchError }) {
  * restarter's does.
  *
  * @param {{ repoDir: string, root: string, sha: string | null }} where `sha` null: the checkout's HEAD
- * @returns {{ head: string, dirtyPaths: string[], onMain: boolean, fetchError: string | null }}
+ * @returns {{ head: string, dirtyPaths: string[], tampered: string[], onMain: boolean, fetchError: string | null }}
  */
 export function gitFacts({ repoDir, root, sha }) {
   /**
@@ -188,6 +195,7 @@ export function gitFacts({ repoDir, root, sha }) {
     return {
       head,
       dirtyPaths,
+      tampered: [],
       onMain: false,
       fetchError: fetched.stderr.trim().split("\n").at(-1) ?? "git fetch failed",
     };
@@ -195,7 +203,8 @@ export function gitFacts({ repoDir, root, sha }) {
   const onMain =
     git([`--git-dir=${mirror}`, "merge-base", "--is-ancestor", sha ?? head, "refs/heads/main"])
       .code === 0;
-  return { head, dirtyPaths, onMain, fetchError: null };
+  const tampered = onMain ? tamperedPaths({ mirror, repoDir, sha: sha ?? head }) : [];
+  return { head, dirtyPaths, tampered, onMain, fetchError: null };
 }
 
 /**
@@ -206,7 +215,14 @@ export function gitFacts({ repoDir, root, sha }) {
 function check(root, repoDir) {
   const lock = readLock(root);
   if (typeof lock === "string") {
-    return lockVerdict({ lock, head: "", dirtyPaths: [], onMain: false, fetchError: null });
+    return lockVerdict({
+      lock,
+      head: "",
+      dirtyPaths: [],
+      tampered: [],
+      onMain: false,
+      fetchError: null,
+    });
   }
   return lockVerdict({ lock, ...gitFacts({ repoDir, root, sha: lock.sha }) });
 }

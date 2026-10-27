@@ -55,7 +55,20 @@ describe("parseLock", () => {
 });
 
 describe("lockVerdict", () => {
-  const ok = { lock: LOCK, head: SHA, dirtyPaths: [], onMain: true, fetchError: null };
+  const ok = {
+    lock: LOCK,
+    head: SHA,
+    dirtyPaths: [],
+    tampered: [],
+    onMain: true,
+    fetchError: null,
+  };
+
+  it("refuses a checkout whose files are not the merged commit's", () => {
+    const verdict = lockVerdict({ ...ok, tampered: ["s/f"] });
+    expect(verdict).toMatchObject({ ok: false });
+    expect(JSON.stringify(verdict)).toContain("s/f");
+  });
 
   it("lets a pinned, clean checkout on main start", () => {
     expect(lockVerdict(ok)).toEqual({ ok: true });
@@ -163,7 +176,13 @@ describe("gitFacts, over throwaway repositories", () => {
   it("finds a pushed commit on main, and a clean tree", () => {
     const c = company();
     const facts = gitFacts({ repoDir: c.repo, root: c.root, sha: c.head });
-    expect(facts).toEqual({ head: c.head, dirtyPaths: [], onMain: true, fetchError: null });
+    expect(facts).toEqual({
+      head: c.head,
+      dirtyPaths: [],
+      tampered: [],
+      onMain: true,
+      fetchError: null,
+    });
   });
 
   it("finds the checkout's own HEAD when asked for none", () => {
