@@ -36,6 +36,7 @@ function status(id: StatusId, remainingSeconds: number): ActiveStatus {
     durationSeconds: 12,
     attacksLeft: undefined,
     spellsLeft: undefined,
+    hitsLeft: undefined,
     sourceId: "caster",
     outbreak: null,
     maintained: null,
