@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 2,
   "rechargeSeconds": 8,
+  "upkeep": false,
   "description": "You gain 30...66...75 Health. For each ally within earshot, you also gain +10...18...20 Health (maximum 140 Health).",
   "variant": "pvp",
   "ruleset": "gw1-reference",

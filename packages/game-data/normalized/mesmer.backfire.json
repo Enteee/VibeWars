@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 3,
   "rechargeSeconds": 20,
+  "upkeep": false,
   "description": "For 10 seconds, whenever target foe casts a spell, that foe takes 35...119...140 damage.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0,
   "rechargeSeconds": 0,
+  "upkeep": false,
   "description": "If this attack hits, the opponent begins bleeding for 5...21...25 seconds, losing health over time.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

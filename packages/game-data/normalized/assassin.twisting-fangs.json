@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0,
   "rechargeSeconds": 15,
+  "upkeep": false,
   "description": "Must follow an off-hand attack. If it hits, Twisting Fangs strikes for +10...18...20 damage and struck foe suffers from Bleeding and Deep Wound for 5...17...20 seconds.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

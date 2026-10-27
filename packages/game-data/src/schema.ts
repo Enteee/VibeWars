@@ -33,6 +33,8 @@ export const normalizedSkillSchema = z.object({
   activationSeconds: z.number().nonnegative(),
   /** Recharge in seconds. `0` if the source shows none. */
   rechargeSeconds: z.number().nonnegative(),
+  /** A maintained enchantment: GW1's -1 energy regeneration dot, paid while it lasts (#840). */
+  upkeep: z.boolean(),
   description: z.string().min(1),
 
   /**

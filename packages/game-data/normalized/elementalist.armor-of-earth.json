@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0.75,
   "rechargeSeconds": 15,
+  "upkeep": false,
   "description": "For 30 seconds, you gain 24...53...60 armor, but move\n                50...21...14% slower.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

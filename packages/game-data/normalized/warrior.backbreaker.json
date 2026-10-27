@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0,
   "rechargeSeconds": 0,
+  "upkeep": false,
   "description": "If Backbreaker hits, you strike for +1...16...20\n                damage and your target is knocked down. If you have 8 Strength or higher, this\n                knockdown lasts 4 seconds.",
   "variant": "pvp",
   "ruleset": "gw1-reference",
