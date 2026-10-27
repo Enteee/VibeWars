@@ -19,7 +19,13 @@ import { ARENA, TICK_SECONDS, settle, until } from "./match-harness.test-support
 import { createMatchHost, type MatchHost } from "./match-host.js";
 import { createMemoryNetwork, type MemoryNetwork } from "./memory-transport.js";
 import { admissionDigest, type AdmissionTag, type VerifyTicketSig } from "./queue-admission.js";
-import type { TicketKey } from "./queue-client.js";
+import { createMemoryBoard } from "./queue-board.js";
+import {
+  createQueueClient,
+  type QueueClient,
+  type QueueParty,
+  type TicketKey,
+} from "./queue-client.js";
 import type { FormedGroup } from "./queue-formation.js";
 import type { Transport } from "./transport.js";
 
@@ -112,6 +118,8 @@ function fakeMatch(): FakeMatch {
 
 interface OpenQueuedOptions {
   readonly group?: FormedGroup;
+  /** The host's own ticket: `group`'s host ticket. */
+  readonly host?: string;
   /** Play this match instead of a real one. */
   readonly match?: FakeMatch;
 }
@@ -160,7 +168,7 @@ function joinQueued(transport: Transport, ticketId: string, timeoutMs = 1000, gr
 }
 
 async function openQueued(options: OpenQueuedOptions = {}): Promise<QueuedLobby> {
-  const { group = GROUP, match } = options;
+  const { group = GROUP, match, host: hostTicket = HOST } = options;
   const network = createMemoryNetwork();
   const plans: MatchPlan[] = [];
   const fellThrough: (readonly string[])[] = [];
@@ -187,7 +195,7 @@ async function openQueued(options: OpenQueuedOptions = {}): Promise<QueuedLobby>
     },
     queued: {
       group,
-      key: keyOf(HOST),
+      key: keyOf(hostTicket),
       verifyTicketSig,
       matchRules: RANDOM_ARENA_RULES,
       countdownSeconds: COUNTDOWN_SECONDS,
@@ -199,7 +207,7 @@ async function openQueued(options: OpenQueuedOptions = {}): Promise<QueuedLobby>
       },
     },
   });
-  const host = await joinQueued(lobby.local, HOST, 1000, group);
+  const host = await joinQueued(lobby.local, hostTicket, 1000, group);
   return {
     network,
     lobby,
@@ -605,6 +613,73 @@ describe("Stay together, on a queued lobby's host (#882)", () => {
     await allyRoom.leave();
     await settle();
     expect(queued.done()).toBe(1);
+  });
+
+  it("end to end: both stay, the party meets two fresh solos, and each member seats on its own key", async () => {
+    const { queued, ally } = await afterMatch();
+    queued.host.stayTogether(KEY_H);
+    ally.stayTogether(KEY_A);
+    const answered: (readonly string[] | null)[] = [];
+    ally.onParty((members) => answered.push(members));
+    await settle();
+    const [members] = answered;
+    if (members === undefined || members === null) {
+      throw new Error("no party formed");
+    }
+
+    // The next queue: the two members as one party, two strangers alone.
+    const board = createMemoryBoard();
+    let now = 1_700_000_000_000;
+    let fresh = 0;
+    const client = (party?: QueueParty): QueueClient =>
+      createQueueClient({
+        board: board.board(),
+        mode: "random-arena-2v2",
+        ...(party === undefined ? {} : { party }),
+        now: () => now,
+        newTicketKey: () => keyOf(String((fresh += 1)).padStart(64, "5")),
+        mapPool: ["other-arena"],
+      });
+    const clients = [
+      client({ members, key: keyOf(KEY_H) }),
+      client({ members, key: keyOf(KEY_A) }),
+      client(),
+      client(),
+    ];
+    for (let waited = 0; !clients.every((each) => each.state.kind === "in-lobby"); waited += 1) {
+      expect(waited).toBeLessThan(30);
+      now += 1_000;
+      await Promise.all(clients.map((each) => each.tick()));
+      await settle();
+    }
+    const groups = clients.map((each) =>
+      each.state.kind === "in-lobby" ? each.state.group : undefined,
+    );
+    const [group] = groups;
+    if (group === undefined) {
+      throw new Error("no group");
+    }
+    expect(new Set(groups.map((each) => each?.groupId))).toEqual(new Set([group.groupId]));
+    expect(group.teams).toContainEqual(members);
+    expect(group.parties).toEqual([members]);
+
+    // Its lobby, hosted by whichever ticket the group chose: every seat its own key.
+    const next = await openQueued({ group, host: group.hostTicketId });
+    for (const seatKey of group.teams.flat()) {
+      if (seatKey !== group.hostTicketId) {
+        await next.join(seatKey);
+      }
+    }
+    await settle();
+    const seated = next.host.getSnapshot().players;
+    expect(seated).toHaveLength(4);
+    const partySide = group.teams.findIndex((team) => team.includes(KEY_H));
+    expect(
+      seated
+        .filter((player) => player.team === partySide)
+        .map((player) => player.name)
+        .sort(),
+    ).toEqual(["ticket-d", "ticket-e"]);
   });
 
   it("splits on one no, telling those who said yes", async () => {
