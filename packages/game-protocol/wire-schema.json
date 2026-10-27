@@ -60,6 +60,7 @@
     "LOBBY_CODE_ALPHABET": { "literal": "ACDEFGHJKMNPQRTWXY34679" },
     "LOBBY_CODE_LENGTH": { "literal": 6 },
     "MAX_CHAT_GRAPHEMES": { "literal": 200 },
+    "MAX_LIVE_TICKETS": { "literal": 1024 },
     "MAX_LOBBY_PLAYERS": { "literal": 16 },
     "MAX_SNAPSHOT_PARTS": { "literal": 8 },
     "MAX_WIRE_CHAT_TEXT": { "literal": 2048 },

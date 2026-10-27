@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   PROTOCOL_VERSION,
+  MAX_LIVE_TICKETS,
   TICKET_TTL_MS,
   teamSizeOf,
   type QueueMode,
@@ -48,6 +49,11 @@ function ids(tickets: readonly QueueTicket[]): string[] {
   return tickets.map((t) => t.ticketId).sort();
 }
 
+async function sha256Hex(text: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
 /** `tickets` in a different order, the same on every run. */
 function reordered(tickets: readonly QueueTicket[], step: number): QueueTicket[] {
   return tickets.map((_, i) => tickets[(i * step) % tickets.length] ?? ticket(-1));
@@ -77,18 +83,30 @@ describe("formGroups (#869)", () => {
   it("names the group by its tickets: room, host and map from its id", async () => {
     const queued = solos(1, 8);
     const [group] = await form(queued);
-    const digest = await crypto.subtle.digest(
-      "SHA-256",
-      new TextEncoder().encode(ids(queued).join("\n")),
-    );
-    const groupId = Array.from(new Uint8Array(digest), (byte) =>
-      byte.toString(16).padStart(2, "0"),
-    ).join("");
+    const groupId = await sha256Hex(ids(queued).join("\n"));
     expect(group?.groupId).toBe(groupId);
     expect(group?.room).toBe(`${ROOM_PREFIX}${groupId}`);
     expect(group?.room).not.toMatch(/^[A-Z0-9]{6}$/);
-    expect(group?.hostTicketId).toBe(ticket(1).ticketId);
     expect(MAPS).toContain(group?.mapId);
+  });
+
+  it("hosts the ticket with the lowest sha256(groupId ‖ ticketId), not the lowest id", async () => {
+    let lowestIdHosted = 0;
+    for (let from = 1; from <= 8; from += 1) {
+      const queued = solos(from, 8);
+      const [group] = await form(queued);
+      const groupId = await sha256Hex(ids(queued).join("\n"));
+      const ranked = await Promise.all(
+        ids(queued).map(async (id) => [await sha256Hex(`${groupId}${id}`), id] as const),
+      );
+      const [, host] = ranked.sort(([a], [b]) => (a < b ? -1 : 1))[0] ?? [];
+      expect(group?.hostTicketId).toBe(host);
+      if (host === ticket(from).ticketId) {
+        lowestIdHosted += 1;
+      }
+    }
+    // One in eight by chance; never all of them.
+    expect(lowestIdHosted).toBeLessThan(8);
   });
 
   it("every member, whatever order its tickets came in, forms the same group", async () => {
@@ -152,16 +170,27 @@ describe("formGroups (#869)", () => {
     );
   });
 
-  it("a party that does not fit keeps its place for the next group", async () => {
-    // Five solos ahead of it leave three seats: the party waits, three
-    // later solos fill them, and the party leads the next group.
+  it("a party forms with the first side of solos, and the solo left over waits", async () => {
+    // Five solos ahead of it: the party and the first four make a match,
+    // the fifth leads the next with the solos after it.
     const party = ticket(6, { partySize: 4 });
     const queued = [...solos(1, 5), party, ...solos(7, 7)];
     const [first, second, ...rest] = await form(queued);
     expect(rest).toEqual([]);
-    expect(first && members(first)).toEqual(ids([...solos(1, 5), ...solos(7, 3)]));
-    expect(second && members(second)).toEqual(ids([party, ...solos(10, 4)]));
-    expect(second?.teams.map((side) => [...side].sort())).toContainEqual([party.ticketId]);
+    expect(first && members(first)).toEqual(ids([party, ...solos(1, 4)]));
+    expect(first?.teams.map((side) => [...side].sort())).toContainEqual([party.ticketId]);
+    expect(second && members(second)).toEqual(ids([ticket(5), ...solos(7, 7)]));
+  });
+
+  it("two parties behind too few solos still face each other", async () => {
+    const parties = [ticket(4, { partySize: 4 }), ticket(5, { partySize: 4 })];
+    const [group, ...rest] = await form([...solos(1, 3), ...parties]);
+    expect(rest).toEqual([]);
+    expect(group && members(group)).toEqual(ids(parties));
+  });
+
+  it("a party waits while there are not four solos to face it", async () => {
+    expect(await form([ticket(1, { partySize: 4 }), ...solos(2, 3)])).toEqual([]);
   });
 
   it("a large queue forms groups that never share a ticket, earliest first", async () => {
@@ -172,6 +201,17 @@ describe("formGroups (#869)", () => {
     expect(new Set(all).size).toBe(40);
     expect(groups[0] && members(groups[0])).toEqual(ids(solos(1, 8)));
     expect(all).not.toContain(ticket(41).ticketId);
+  });
+
+  it("forms only from the first MAX_LIVE_TICKETS, so 20,000 cost no more than 1,024", async () => {
+    const queued = solos(1, 20_000);
+    const started = Date.now();
+    const groups = await form(reordered(queued, 7));
+    const elapsed = Date.now() - started;
+    expect(groups).toHaveLength(MAX_LIVE_TICKETS / 8);
+    expect(groups.flatMap(members).sort()).toEqual(ids(solos(1, MAX_LIVE_TICKETS)));
+    // About 70 ms; the bound is wide so a slow runner does not flake it.
+    expect(elapsed).toBeLessThan(1_000);
   });
 
   it("throws on an empty map pool only when a group forms", async () => {

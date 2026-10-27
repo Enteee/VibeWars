@@ -9,6 +9,7 @@
 
 import { createRng, seedFromString } from "@vibewars/game-core";
 import {
+  MAX_LIVE_TICKETS,
   PROTOCOL_VERSION,
   TICKET_TTL_MS,
   teamSizeOf,
@@ -22,7 +23,7 @@ export interface FormedGroup {
   readonly groupId: string;
   /** Where it meets: `ROOM_PREFIX` and `groupId`, which no lobby code can be. */
   readonly room: string;
-  /** The lowest ticket id: that player hosts. */
+  /** Who hosts: see `hostOf`. */
   readonly hostTicketId: string;
   /** Ticket ids per side, shuffled by `groupId`; a party is its whole side. */
   readonly teams: readonly [readonly string[], readonly string[]];
@@ -64,7 +65,8 @@ function compare(a: string, b: string): number {
 
 /**
  * The live tickets, first queued first: this protocol and mode, heard
- * from within `TICKET_TTL_MS`, not ignored, and each id once.
+ * from within `TICKET_TTL_MS`, not ignored, each id once, and only
+ * the first `MAX_LIVE_TICKETS`.
  */
 function liveQueue(input: FormGroupsInput): QueueTicket[] {
   const sorted = input.tickets
@@ -77,38 +79,95 @@ function liveQueue(input: FormGroupsInput): QueueTicket[] {
     )
     .sort(queueOrder);
   const seen = new Set<string>();
-  return sorted.filter((ticket) => {
+  const live = sorted.filter((ticket) => {
     if (seen.has(ticket.ticketId)) {
       return false;
     }
     seen.add(ticket.ticketId);
     return true;
   });
+  return live.slice(0, MAX_LIVE_TICKETS);
+}
+
+/** A ticket and where it stands in the queue. */
+interface Queued {
+  readonly ticket: QueueTicket;
+  readonly place: number;
+}
+
+/** Which of two candidate groups takes the earlier queued: places compared in order. */
+function earlier(a: readonly Queued[], b: readonly Queued[]): boolean {
+  for (let i = 0; i < Math.min(a.length, b.length); i += 1) {
+    const difference = (a[i]?.place ?? 0) - (b[i]?.place ?? 0);
+    if (difference !== 0) {
+      return difference < 0;
+    }
+  }
+  return a.length <= b.length;
 }
 
 /**
- * The first group `queue` fills, front first: a ticket that fits the
- * seats left is taken whole, one that does not keeps its place for the
- * next group. `undefined` if the queue cannot fill one.
+ * The groups `queue` fills, in one pass, front first. Each ticket joins
+ * the waiting solos or parties; as soon as they can fill a match, two
+ * parties, a party and a side of solos, or two sides of solos, the one
+ * of those that takes the earliest queued forms, and the rest wait for
+ * the next. A party is never split, and one that cannot be matched yet
+ * keeps its place.
  */
-function takeGroup(queue: readonly QueueTicket[], seats: number): QueueTicket[] | undefined {
-  const group: QueueTicket[] = [];
-  let taken = 0;
-  for (const ticket of queue) {
-    if (taken + ticket.partySize <= seats) {
-      group.push(ticket);
-      taken += ticket.partySize;
+function takeGroups(queue: readonly QueueTicket[], teamSize: number): QueueTicket[][] {
+  const groups: QueueTicket[][] = [];
+  let solos: Queued[] = [];
+  let parties: Queued[] = [];
+  queue.forEach((ticket, place) => {
+    // At a team size of 1, every ticket is a solo.
+    (ticket.partySize > 1 ? parties : solos).push({ ticket, place });
+    const candidates: Queued[][] = [];
+    if (parties.length >= 2) {
+      candidates.push(parties.slice(0, 2));
     }
-    if (taken === seats) {
-      return group;
+    if (parties.length >= 1 && solos.length >= teamSize) {
+      candidates.push([...parties.slice(0, 1), ...solos.slice(0, teamSize)]);
     }
-  }
-  return undefined;
+    if (solos.length >= 2 * teamSize) {
+      candidates.push(solos.slice(0, 2 * teamSize));
+    }
+    const best = candidates
+      .map((candidate) => [...candidate].sort((a, b) => a.place - b.place))
+      .reduce<Queued[] | undefined>(
+        (chosen, candidate) =>
+          chosen === undefined || earlier(candidate, chosen) ? candidate : chosen,
+        undefined,
+      );
+    if (best === undefined) {
+      return;
+    }
+    const taken = new Set(best);
+    solos = solos.filter((queued) => !taken.has(queued));
+    parties = parties.filter((queued) => !taken.has(queued));
+    groups.push(best.map((queued) => queued.ticket));
+  });
+  return groups;
 }
 
 async function sha256Hex(text: string): Promise<string> {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+/**
+ * The host of `groupId`: the ticket whose `sha256(groupId ‖ ticketId)` is
+ * lowest. Not simply the lowest id, which a player could grind secrets
+ * for and host every match; the group id hangs on every ticket in it, so
+ * nobody knows who hosts until the group exists.
+ */
+async function hostOf(groupId: string, ids: readonly string[]): Promise<string | undefined> {
+  const ranked = await Promise.all(
+    ids.map(async (ticketId) => ({ ticketId, rank: await sha256Hex(`${groupId}${ticketId}`) })),
+  );
+  return ranked.reduce<(typeof ranked)[number] | undefined>(
+    (lowest, entry) => (lowest === undefined || entry.rank < lowest.rank ? entry : lowest),
+    undefined,
+  )?.ticketId;
 }
 
 /**
@@ -149,16 +208,11 @@ function sides(
  */
 export async function formGroups(input: FormGroupsInput): Promise<FormedGroup[]> {
   const teamSize = teamSizeOf(input.mode);
-  let queue = liveQueue(input);
   const groups: FormedGroup[] = [];
-  for (;;) {
-    const group = takeGroup(queue, 2 * teamSize);
-    if (group === undefined) {
-      return groups;
-    }
+  for (const group of takeGroups(liveQueue(input), teamSize)) {
     const ids = group.map((ticket) => ticket.ticketId).sort(compare);
-    const [hostTicketId] = ids;
     const groupId = await sha256Hex(ids.join("\n"));
+    const hostTicketId = await hostOf(groupId, ids);
     const mapId =
       input.mapPool[createRng(seedFromString(`${groupId}:map`)).nextInt(0, input.mapPool.length)];
     if (hostTicketId === undefined || mapId === undefined) {
@@ -171,9 +225,8 @@ export async function formGroups(input: FormGroupsInput): Promise<FormedGroup[]>
       teams: sides(group, teamSize, groupId),
       mapId,
     });
-    const taken = new Set(ids);
-    queue = queue.filter((ticket) => !taken.has(ticket.ticketId));
   }
+  return groups;
 }
 
 /** The group `ticketId` is in, if any. */
