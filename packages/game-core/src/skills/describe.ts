@@ -170,6 +170,12 @@ export function describeStatus(id: string): string {
   if (definition.spreads) {
     parts.push("spreads to adjacent combatants");
   }
+  for (const effect of definition.nextAttackSkill ?? []) {
+    parts.push(describeNextAttackSkill(effect));
+  }
+  if (definition.endsWhenBearerAttacks) {
+    parts.push("ends if the bearer attacks");
+  }
   return parts.length === 0 ? definition.name : parts.join(", ");
 }
 
@@ -182,6 +188,14 @@ function describeAttackHit(effect: SkillEffect): string {
     );
   }
   return `your physical attacks: ${describeEffect(effect, new Map()).text}`;
+}
+
+/** A chant's rider (#758), as its tooltip says it: "next attack skill: …". */
+function describeNextAttackSkill(effect: SkillEffect): string {
+  if (effect.kind === "apply-status") {
+    return `next attack skill: ${statusName(effect.statusId)} ${seconds(effect.durationSeconds)}`;
+  }
+  return `next attack skill: ${describeEffect(effect, new Map()).text}`;
 }
 
 function describeEffect(
@@ -284,6 +298,8 @@ const TYPE_TEXT: Record<SkillType, string> = {
   stance: "Stance.",
   preparation: "Preparation.",
   glyph: "Glyph.",
+  chant: "Chant.",
+  "weapon-spell": "Weapon Spell.",
   skill: "Skill.",
 };
 

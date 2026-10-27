@@ -438,7 +438,11 @@ employees as panes in the company's own tmux session, to match
 `staff.json`. It touches only panes of that session in a role's window,
 and stops one by killing the pane and its pid's descendants, never pid 1
 or itself. Only host processes write `staff.json`: hubd, for the
-manager's `company hire` and `company fire`, and the supervisor, to
+manager's `company hire` and `company fire`, and for the operator's
+`claude-llc hire` and `fire` (#385), which arrive through the spool
+`hub/_operator`: no cooldowns, and `--over-cap` may pass `maxAgents`. That
+spool is safe because `hub/` is mounted read-only in every jail, so only a
+host shell can write it. The supervisor also writes `staff.json`, to
 forget a fired employee. So an agent reaches the supervisor only through
 what hubd lets its role ask for. The reboot records and the lock sit in
 the host bot root, which no jail sees.

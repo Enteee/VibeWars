@@ -227,7 +227,7 @@ export function applyEffect(effect: SkillEffect, context: SkillContext): CombatE
       }
       // Spell damage respects armor. Before this, it did not — which is
       // why a warrior and a monk took identical Fireballs.
-      const packet = spellDamage(resolveMagnitude(effect.amount, caster));
+      const packet = spellDamage(resolveMagnitude(effect.amount, caster), effect.type);
       applyDamage(target, mitigate(packet, target, context.rules), false, events);
       return events;
     }

@@ -1,8 +1,9 @@
-import { baseEnergyPipsFor } from "../equipment/armor.js";
+import { INHERENT_ARMOR_BY_PROFESSION, baseEnergyPipsFor } from "../equipment/armor.js";
 import { unarmedResolvedEquipment, type ResolvedEquipment } from "../equipment/resolve.js";
 import { WEAPONS, type WeaponId } from "../equipment/weapons.js";
 import type { MissingMechanic } from "../skills/coverage.js";
 import { vec2, type Vec2 } from "../vec2.js";
+import type { ProfessionId } from "../professions.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import type { Behaviour, ResetPolicy } from "./behaviour.js";
 import { facingToward } from "./facing.js";
@@ -79,6 +80,12 @@ export interface TrainingDummy {
    * after mitigation, as a Rune of Absorption's.
    */
   readonly physicalGuard?: { readonly armor: number; readonly reduction: number };
+  /**
+   * Its primary profession, for the armor that comes with it (#759): a
+   * Warrior's +20 vs physical, a Ranger's +30 vs elemental. Without one,
+   * none.
+   */
+  readonly profession?: ProfessionId;
   /** When it is put back as it started; without one, never. */
   readonly reset?: ResetPolicy;
 }
@@ -149,15 +156,17 @@ const PACK: readonly TrainingDummy[] = [
   ),
 ];
 
-/** A dummy's gear: its armor, and its weapon if it has one. */
+/** A dummy's gear: its armor, its profession's and its guard's, and its weapon if it has one. */
 function dummyEquipment(dummy: TrainingDummy): ResolvedEquipment {
   const guard = dummy.physicalGuard;
+  const inherent =
+    dummy.profession === undefined ? [] : INHERENT_ARMOR_BY_PROFESSION[dummy.profession];
   const unarmed: ResolvedEquipment =
     guard === undefined
-      ? unarmedResolvedEquipment(dummy.armor)
+      ? { ...unarmedResolvedEquipment(dummy.armor), conditionalArmor: inherent }
       : {
           ...unarmedResolvedEquipment(dummy.armor),
-          conditionalArmor: [{ amount: guard.armor, condition: "vs-physical" }],
+          conditionalArmor: [...inherent, { amount: guard.armor, condition: "vs-physical" }],
           flatPhysicalReduction: guard.reduction,
         };
   if (dummy.weapon === undefined) {
@@ -275,26 +284,37 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
     ],
   },
   {
-    id: "physical-vs-untyped",
-    label: "Physical vs untyped",
+    id: "physical-vs-elemental",
+    label: "Physical vs elemental",
     teaches:
-      "Why Stalwart and Absorption only sometimes bite: they blunt a weapon's physical hits and do nothing against a spell.",
+      "That armor answers to a damage type: a Warrior and Stalwart blunt a sword and not a Fireball, a Ranger blunts a Fireball and not a sword.",
     mapId: "training-hall",
     exercises: ["armor", "auto-attacks", "spell-damage"],
     knobs: [],
-    // Two warriors at 80 armor. The guarded one wears a Stalwart insignia
-    // (+10 against physical) and a superior Rune of Absorption (3 off
-    // each physical hit): a sword lands softer on it, a Fireball the same.
+    // Two warriors at 80 armor, +20 against physical as every Warrior. The
+    // guarded one also wears a Stalwart insignia (+10 against physical) and
+    // a superior Rune of Absorption (3 off each physical hit): a sword
+    // lands softer on it, a Fireball the same. The ranger is 70, +30
+    // against elemental: a Fireball lands softer on it than on either
+    // warrior, a sword harder. 120 apart, wider than Fireball's splash.
     dummies: [
-      target("bare", "Warrior (80 armor)", vec2(380, 150), 80),
+      {
+        ...target("bare", "Warrior (80, +20 vs physical)", vec2(380, 90), 80),
+        profession: "warrior",
+      },
       {
         ...target(
           "guarded",
-          "Warrior, Stalwart + Absorption (80, +10 and -3 vs physical)",
-          vec2(380, 270),
+          "Warrior, Stalwart + Absorption (80, +30 and -3 vs physical)",
+          vec2(380, 210),
           80,
         ),
+        profession: "warrior",
         physicalGuard: { armor: 10, reduction: 3 },
+      },
+      {
+        ...target("ranger", "Ranger (70, +30 vs elemental)", vec2(380, 330), 70),
+        profession: "ranger",
       },
     ],
   },

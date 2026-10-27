@@ -52,7 +52,8 @@ describe("status definitions", () => {
         def.attackDurationMultiplier !== 1 ||
         def.block !== undefined ||
         def.onAttackHit.length > 0 ||
-        def.nextSpells !== undefined;
+        def.nextSpells !== undefined ||
+        def.nextAttackSkill !== undefined;
       expect(hasEffect, `${id} has no mechanical effect`).toBe(true);
     }
   });
@@ -84,6 +85,7 @@ describe("status definitions", () => {
       disease: -4,
       "life-drain": -2,
       regeneration: 4,
+      "weapon-of-warding": 4,
     });
   });
 

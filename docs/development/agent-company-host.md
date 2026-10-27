@@ -82,3 +82,12 @@ sysctl kernel.unprivileged_userns_clone
 its session on that server and switches your client to it, rather than
 nesting an attach. Run without a terminal, from a Claude Code prompt say,
 it brings the company up and tells you to attach with `claude-llc`.
+
+## Scaling the company by hand
+
+`claude-llc hire <role> [reason]` and `claude-llc fire <employee> [reason]`
+change who is employed, with the manager's checks but no cooldowns. `hire`
+also takes `--over-cap` to go past `maxAgents`. The reason is one word unless
+you quote it: `claude-llc hire developer "more devs"`; unquoted extra words
+are a usage error. The company is told in General, and the supervisor starts
+or stops the employee. The company must be up: hubd answers the request.

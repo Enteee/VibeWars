@@ -8,20 +8,35 @@
  */
 
 /**
- * How a hit is classified.
+ * How a hit is classified: GW1's damage types (#759).
  *
- * Deliberately only the physical split plus `untyped` — not the full
- * elemental spread. Slashing, piercing and blunt behave *identically* in
- * the simulation; they earn their place solely because the Stalwart
- * insignia ("armor vs physical") and the Absorption rune ("reduce
- * physical damage") need `isPhysicalDamage` to mean something. Adding
- * fire/cold/lightning/holy when nothing in the game reacts to them would
- * be exactly the decorative data `skills/coverage.ts` exists to prevent.
+ * Every type has a consumer, through the armor that answers to it.
+ * Slashing, piercing and blunt are physical: a Warrior's inherent +20,
+ * the Stalwart insignia and the Absorption rune key off them. Fire, cold,
+ * lightning and earth are elemental: a Ranger's inherent +30 keys off
+ * them. Chaos, dark, holy, shadow and typeless are neither, which is what
+ * they do here: no typed armor applies to them, base armor still does.
  */
-export type DamageType = "slashing" | "piercing" | "blunt" | "untyped";
+export type DamageType =
+  | "slashing"
+  | "piercing"
+  | "blunt"
+  | "fire"
+  | "cold"
+  | "lightning"
+  | "earth"
+  | "chaos"
+  | "dark"
+  | "holy"
+  | "shadow"
+  | "typeless";
 
 export function isPhysicalDamage(type: DamageType): boolean {
-  return type !== "untyped";
+  return type === "slashing" || type === "piercing" || type === "blunt";
+}
+
+export function isElementalDamage(type: DamageType): boolean {
+  return type === "fire" || type === "cold" || type === "lightning" || type === "earth";
 }
 
 /**

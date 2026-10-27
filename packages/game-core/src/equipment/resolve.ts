@@ -2,8 +2,14 @@ import { MAX_EFFECTIVE_RANK } from "../attributes.js";
 import type { ProfessionId } from "../professions.js";
 import type { CombatRules } from "../ruleset.js";
 import type { StatusId } from "../skills/status.js";
-import { armorPieces, baseArmorFor, baseEnergyPipsFor } from "./armor.js";
-import { getInsignia, perSlotAmount, type ArmorCondition } from "./insignias.js";
+import {
+  INHERENT_ARMOR_BY_PROFESSION,
+  armorPieces,
+  baseArmorFor,
+  baseEnergyPipsFor,
+  type ConditionalArmor,
+} from "./armor.js";
+import { getInsignia, perSlotAmount } from "./insignias.js";
 import type { BuildEquipment } from "./loadout.js";
 import { getOffhand, type OffhandId } from "./offhands.js";
 import {
@@ -31,11 +37,6 @@ import { getWeapon, type Weapon } from "./weapons.js";
  * applied twice, cannot be applied in the wrong order, and cannot
  * disagree between the build editor and the server — both call this.
  */
-
-export interface ConditionalArmor {
-  readonly amount: number;
-  readonly condition: ArmorCondition;
-}
 
 export interface ResolvedWeapon {
   readonly weapon: Weapon;
@@ -217,8 +218,12 @@ function applyInsignia(
   }
 }
 
-function conditionalArmorOf(equipment: BuildEquipment): readonly ConditionalArmor[] {
-  const bonuses: ConditionalArmor[] = [];
+/** The primary profession's inherent armor first, then the insignias'. */
+function conditionalArmorOf(
+  primaryProfession: ProfessionId,
+  equipment: BuildEquipment,
+): readonly ConditionalArmor[] {
+  const bonuses: ConditionalArmor[] = [...INHERENT_ARMOR_BY_PROFESSION[primaryProfession]];
   for (const [, piece] of armorPieces(equipment.armor)) {
     if (piece.insigniaId === null) {
       continue;
@@ -287,7 +292,7 @@ export function resolveLoadout(input: LoadoutInput, rules: CombatRules): Resolve
     equipment: {
       mainHand: resolvedWeapon,
       baseArmor,
-      conditionalArmor: conditionalArmorOf(input.equipment),
+      conditionalArmor: conditionalArmorOf(input.primaryProfession, input.equipment),
       flatPhysicalReduction: runes.flatPhysicalReduction,
       statusDurationScale: runes.statusDurationScale,
       offhandId,

@@ -54,6 +54,7 @@ function hubWindow(command, windows, options = {}) {
       DEVENV_ROOT: dir,
       VIBEWARS_BOT_ROOT: path.join(dir, ".bots"),
       VIBEWARS_LLC_RESTART: "/restarter",
+      VIBEWARS_CLAUDE_BOXES: "/boxes",
     },
     encoding: "utf8",
   });
@@ -103,11 +104,12 @@ describe("hub-window open", () => {
     expect(result.calls).toContain("set-option -w -t %7 allow-rename off");
   });
 
-  it("hands the daemons the tmux it ran on and the restarter", () => {
+  it("hands the daemons the tmux it ran on, the restarter and the Claude logs", () => {
     const open = hubWindow("open", "").calls.find((c) => c.startsWith("new-window"));
 
     expect(open).toMatch(/-e VIBEWARS_TMUX=\S+\/tmux /);
     expect(open).toMatch(/-e VIBEWARS_LLC_RESTART=\/restarter /);
+    expect(open).toMatch(/-e VIBEWARS_CLAUDE_BOXES=\/boxes /);
   });
 
   it("hands them each PATH entry once, so nested nix shells cannot make tmux refuse it", () => {

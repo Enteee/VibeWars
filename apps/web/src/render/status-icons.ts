@@ -5,8 +5,8 @@ import type { StatusId, Vec2 } from "@vibewars/game-core";
  *
  * An icon's plate shape says its category (condition: circle, hex: diamond,
  * enchantment: rounded square, stance: pentagon, preparation: triangle
- * point up, glyph: triangle point down, shout: hexagon, skill effect: wide
- * capsule)
+ * point up, glyph: triangle point down, shout: hexagon, chant: banner,
+ * weapon spell: shield, skill effect: wide capsule)
  * and is baked into the SVG, so the scene
  * draws no plates of its own. Shape and glyph carry the meaning; colour
  * only backs them up, which is the point for a colour-blind player.
@@ -41,6 +41,8 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "healing-signet-armor": icon("healing-signet-armor"),
   "apply-poison": icon("apply-poison"),
   "glyph-of-lesser-energy": icon("glyph-of-lesser-energy"),
+  "anthem-of-flame": icon("anthem-of-flame"),
+  "weapon-of-warding": icon("weapon-of-warding"),
 };
 
 /** Drawn size of one icon, in world pixels. */

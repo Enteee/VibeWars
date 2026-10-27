@@ -43,7 +43,7 @@ export const HIRES_PER_WINDOW = 3;
  *
  * `recent` is every change of the last `COOLDOWN_MS`, for the cooldowns.
  *
- * @typedef {{ verb: "hire", role: string, reason: string, by: "manager" | "operator" }
+ * @typedef {{ verb: "hire", role: string, reason: string, by: "manager" | "operator", overCap?: boolean }
  *   | { verb: "fire", employee: string, reason: string, by: "manager" | "operator" }} StaffRequest
  */
 
@@ -238,11 +238,13 @@ export function staffAllowed(staff, request, { roster, maxAgents, rebootPending,
     return { ok: false, reason: "a company reboot is pending; hire or fire after it" };
   }
 
-  const recent = history.filter((change) => now - change.at < COOLDOWN_MS);
+  // The operator scales by hand (#385): no cooldowns, and a hire may pass the cap.
+  const operator = request.by === "operator";
+  const recent = operator ? [] : history.filter((change) => now - change.at < COOLDOWN_MS);
   let employee;
   if (hiring) {
     const headcount = Object.keys(staff.employees).length;
-    if (headcount >= maxAgents) {
+    if (headcount >= maxAgents && !(operator && request.overCap === true)) {
       return {
         ok: false,
         reason: `the company has ${String(headcount)} employees, maxAgents is ${String(maxAgents)}`,

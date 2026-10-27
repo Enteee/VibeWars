@@ -113,6 +113,9 @@ import {
   WORKDAY,
 } from "./reboot.mjs";
 import { SKILLS_PREFIX, installSkills, skillFiles } from "./skills-sync.mjs";
+import { readPresence, readStaffFile, readUsage, usageReader } from "./company-facts.mjs";
+import { loadLines } from "./company-load.mjs";
+import { peekRows } from "./peek.mjs";
 import {
   dueNudges,
   ownNudges,
@@ -199,6 +202,10 @@ const BLOCKED = path.join(HUB, "blocked.json");
 /** The CI watches agents asked for (#736), hubd's alone. */
 const WATCHES = path.join(HUB, "watches.json");
 const LOCK = path.join(HUB, "hubd.lock");
+/** Every employee's last turn, as the manager's `peek` reads it (#19), for `company load`. */
+const PEEK = path.join(ROOT, "peek");
+/** The agents' Claude logs, for `company load`'s tokens (#747): the dashboard's reader. */
+const usage = usageReader(process.env.VIBEWARS_CLAUDE_BOXES);
 
 /**
  * Commands that accept `--repo`. The repository is pinned by us rather than
@@ -1635,6 +1642,39 @@ async function flushHints(cfg) {
 }
 
 /**
+ * `company load` (#747): the manager's, policy says. Answered from what
+ * hubd and the host already hold: the board's copy as it is, without a
+ * sweep, and the files the dashboard reads. No GitHub call.
+ *
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {{ code: number, stdout: string, stderr: string }}
+ */
+function serveLoad(cfg) {
+  const now = Date.now();
+  const staff = readStaffFile(ROOT);
+  const { live, stale } = readPresence(ROOT, staff, now);
+  /** @type {import("./peek.mjs").PeekRow[]} */
+  let peek = [];
+  try {
+    peek = peekRows(PEEK);
+  } catch {
+    // No employee has run a turn yet: each says so.
+  }
+  const lines = loadLines({
+    now,
+    roles: ROLES,
+    board,
+    staff,
+    maxAgents: cfg.maxAgents,
+    live,
+    stale,
+    peek,
+    usage: readUsage(usage, now)?.summary ?? null,
+  });
+  return { code: 0, stdout: `${lines.join("\n")}\n`, stderr: "" };
+}
+
+/**
  * Answer `board ls`, `board show` or `board changes` from the copy.
  *
  * @param {string[]} argv
@@ -2228,8 +2268,9 @@ function stopNotice(reason) {
  * supervisor reconciles that file (#383). An accepted change is told to
  * everyone through the system outbox, as a reboot is.
  *
- * @param {string} role
- * @param {string[]} argv `["hire", role, reason]` or `["fire", employee, reason]`
+ * @param {string} role the manager's, or `operator` for the host's spool (#385)
+ * @param {string[]} argv `["hire", role, reason]` or `["fire", employee, reason]`;
+ *   the operator's may end in `--over-cap`
  * @param {ReturnType<typeof company>} cfg
  * @returns {Record<string, unknown>}
  */
@@ -2267,15 +2308,18 @@ function recordStaff(role, argv, cfg) {
   } catch (error) {
     return refuse(`staff.json: ${error instanceof Error ? error.message : String(error)}`);
   }
-  const [verb, who, reason] = argv;
+  const by = role === OPERATOR_ROLE ? "operator" : "manager";
+  // Only the operator may pass the cap, and only on a hire.
+  const overCap = by === "operator" && argv.at(-1) === "--over-cap";
+  const [verb, who, reason] = overCap ? argv.slice(0, -1) : argv;
   if ((verb !== "hire" && verb !== "fire") || who === undefined || reason === undefined) {
     return refuse('usage: company hire <role> "<reason>" | company fire <employee> "<reason>"');
   }
   /** @type {import("./staff.mjs").StaffRequest} */
   const request =
     verb === "hire"
-      ? { verb, role: who, reason, by: "manager" }
-      : { verb, employee: who, reason, by: "manager" };
+      ? { verb, role: who, reason, by, ...(overCap ? { overCap } : {}) }
+      : { verb, employee: who, reason, by };
   const now = Date.now();
   const allowed = staffAllowed(current, request, {
     roster: ROLES,
@@ -2292,7 +2336,12 @@ function recordStaff(role, argv, cfg) {
     `${JSON.stringify(applyStaff(current, request, allowed.employee, now), null, 2)}\n`,
   );
   audit({ role, kind, argv, decision: "allowed" });
-  tellCompany(kind, `${verb === "hire" ? "Hired" : "Firing"} ${allowed.employee}: ${reason}`);
+  tellCompany(
+    kind,
+    by === "operator"
+      ? `operator ${verb === "hire" ? "hired" : "fired"} ${allowed.employee}: ${reason}`
+      : `${verb === "hire" ? "Hired" : "Firing"} ${allowed.employee}: ${reason}`,
+  );
   if (verb === "fire") {
     // Seat 1's id is its role's name: direct, or every seat of it stops (#756).
     tellCompany("staff-stop", stopNotice(reason), { to: allowed.employee, direct: true });
@@ -2760,6 +2809,12 @@ async function serve(request, verdict, acting) {
 
   if (kind === "rank") {
     return rank(role, argv, cfg);
+  }
+
+  if (kind === "load") {
+    const answered = serveLoad(cfg);
+    audit({ role, kind, argv, decision: "allowed", code: answered.code });
+    return { allow: true, ...answered };
   }
 
   if (kind === "watch") {
@@ -3271,6 +3326,27 @@ function unstaffedSpools() {
   }
 }
 
+/**
+ * The host's own spool (#385): `claude-llc hire` and `fire` write here. The
+ * jails mount `hub/` read-only, so only the operator's shell can.
+ */
+const OPERATOR_SPOOL = "_operator";
+const OPERATOR_ROLE = "operator";
+
+/**
+ * @param {string} kind
+ * @param {string[]} argv
+ * @returns {Record<string, unknown>}
+ */
+function operatorRequest(kind, argv) {
+  if (kind !== "staff") {
+    const reason = `the operator's spool serves only hire and fire, not "${kind}"`;
+    audit({ role: OPERATOR_ROLE, kind, argv, decision: "refused", reason });
+    return { allow: false, reason, code: 77 };
+  }
+  return staff(OPERATOR_ROLE, argv, company());
+}
+
 /** A request's id, as hub.mjs makes them: it names the response file. */
 const REQUEST_ID = /^[A-Za-z0-9-]{1,64}$/;
 
@@ -3396,7 +3472,9 @@ async function serveSpool(employee, role, req, res) {
     /** @type {Record<string, unknown>} */
     let response;
     try {
-      if (role === null) {
+      if (employee === OPERATOR_SPOOL) {
+        response = operatorRequest(kind, argv);
+      } else if (role === null) {
         const reason = `unknown employee "${employee}"`;
         audit({ employee, kind, argv, decision: "refused", reason });
         response = { allow: false, reason, code: 77 };
@@ -3452,6 +3530,8 @@ async function main() {
   );
 
   fs.mkdirSync(HUB, { recursive: true });
+  fs.mkdirSync(path.join(HUB, OPERATOR_SPOOL, "req"), { recursive: true });
+  fs.mkdirSync(path.join(HUB, OPERATOR_SPOOL, "res"), { recursive: true });
   // One hubd per spool: two would run every request twice (#23).
   if (!takeLock(LOCK)) {
     console.error(`hubd: another hubd holds ${LOCK}; not starting a second`);
@@ -3514,7 +3594,7 @@ async function main() {
       ...staffed,
       ...unstaffedSpools().map((name) => /** @type {[string, null]} */ ([name, null])),
     ];
-    for (const [employee, role] of spools) {
+    for (const [employee, role] of [[OPERATOR_SPOOL, OPERATOR_ROLE], ...spools]) {
       try {
         await drain(employee, role);
       } catch (error) {

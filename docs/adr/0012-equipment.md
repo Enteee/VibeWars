@@ -9,6 +9,11 @@ in later phases of the same work.
 The "a missing `equipment` key is not an error" clause is superseded by
 [ADR-0016](0016-no-backwards-compatibility.md). The rest stands.
 
+Amended (#759): the physical/untyped split is replaced by GW1's damage
+types (physical, elemental, and chaos, dark, holy, shadow, typeless),
+now that a Warrior's +20 vs physical and a Ranger's +30 vs elemental
+consume them.
+
 ## Context
 
 The game shipped without any weapon system at all. Not a partial one —
