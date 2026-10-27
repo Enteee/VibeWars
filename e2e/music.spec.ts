@@ -405,7 +405,7 @@ test("Options → Sound names the menu's track, and a fixed intensity reaches th
   await expect.poll(() => playedTracks(page), { timeout: 5_000 }).toHaveLength(1);
   const [menuTrack] = await playedTracks(page);
 
-  await page.getByRole("button", { name: "options" }).click();
+  await page.locator("#screens").getByRole("button", { name: "options" }).click();
   await expect(page.locator('.options-entry[data-section="sound"]')).toHaveClass(/is-selected/);
   await expect(page.locator(".music-now-playing-title")).toContainText(
     titles.get(menuTrack ?? "") ?? "no such track",
