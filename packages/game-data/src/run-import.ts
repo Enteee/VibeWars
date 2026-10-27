@@ -167,6 +167,31 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     profession: "ritualist",
     url: "https://www.gw-memorial.net/skills/Ritualist/769-Weapon_of_Warding",
   },
+  {
+    id: "mesmer.power-spike",
+    profession: "mesmer",
+    url: "https://www.gw-memorial.net/skills/Mesmer/320-Power_Spike",
+  },
+  {
+    id: "mesmer.power-drain",
+    profession: "mesmer",
+    url: "https://www.gw-memorial.net/skills/Mesmer/367-Power_Drain",
+  },
+  {
+    id: "mesmer.shatter-enchantment",
+    profession: "mesmer",
+    url: "https://www.gw-memorial.net/skills/Mesmer/323-Shatter_Enchantment",
+  },
+  {
+    id: "mesmer.drain-enchantment",
+    profession: "mesmer",
+    url: "https://www.gw-memorial.net/skills/Mesmer/346-Drain_Enchantment",
+  },
+  {
+    id: "monk.mend-condition",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/189-Mend_Condition",
+  },
 ];
 
 function packageRoot(): string {

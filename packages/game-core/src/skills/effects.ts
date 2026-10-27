@@ -11,7 +11,9 @@ import {
   type Combatant,
   type Skill,
   type SkillContext,
+  type EffectCondition,
   type SkillEffect,
+  type UnconditionalEffect,
 } from "./types.js";
 
 /**
@@ -217,7 +219,7 @@ export function interruptIfCastingSpell(target: Combatant, events: CombatEvent[]
   }
 }
 
-export function applyEffect(effect: SkillEffect, context: SkillContext): CombatEvent[] {
+export function applyEffect(effect: UnconditionalEffect, context: SkillContext): CombatEvent[] {
   const events: CombatEvent[] = [];
   const { caster, target } = context;
 
@@ -322,16 +324,72 @@ export function applyEffect(effect: SkillEffect, context: SkillContext): CombatE
   }
 }
 
+/**
+ * Whether an earlier effect of the same skill did what `condition` asks
+ * to `targetId` (#521), read from the events it emitted.
+ */
+function conditionHolds(
+  condition: EffectCondition,
+  targetId: string,
+  earlier: readonly CombatEvent[],
+): boolean {
+  switch (condition.kind) {
+    case "interrupted":
+      return earlier.some((event) => {
+        if (event.kind !== "interrupted" || event.targetId !== targetId) {
+          return false;
+        }
+        const skill = getSkill(event.skillId);
+        return !condition.spell || (skill !== undefined && isSpell(skill.type));
+      });
+    case "removed":
+      return earlier.some(
+        (event) =>
+          event.kind === "status-removed" &&
+          event.targetId === targetId &&
+          getStatusDefinition(event.statusId).category === condition.category,
+      );
+  }
+}
+
+/**
+ * Apply one effect to `context.target`, an `if` included: its effects
+ * land only if its condition holds for that target, given `earlier`, the
+ * events this resolution has emitted so far.
+ */
+function applyInOrder(
+  effect: SkillEffect,
+  context: SkillContext,
+  earlier: readonly CombatEvent[],
+): CombatEvent[] {
+  if (effect.kind !== "if") {
+    return applyEffect(effect, context);
+  }
+  const { target } = context;
+  return target !== undefined && conditionHolds(effect.condition, target.id, earlier)
+    ? effect.effects.flatMap((inner) => applyEffect(inner, context))
+    : [];
+}
+
+/** Apply `effects` in order to one target; an `if` reads what came before it. */
 export function applyEffects(
   effects: readonly SkillEffect[],
   context: SkillContext,
 ): CombatEvent[] {
-  return effects.flatMap((effect) => applyEffect(effect, context));
+  const events: CombatEvent[] = [];
+  for (const effect of effects) {
+    events.push(...applyInOrder(effect, context, events));
+  }
+  return events;
 }
 
 /**
  * Whether an effect acts on its caster rather than on a target. Exhaustive,
  * so a new effect kind is a compile error here until someone decides.
+ *
+ * An `if` is per target, since its condition is: an effect inside it that
+ * acts on the caster (Power Drain's energy) fires once for every target
+ * the condition holds for. Every such skill today has one target.
  */
 function effectActsOnCaster(effect: SkillEffect): boolean {
   switch (effect.kind) {
@@ -344,6 +402,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "remove-status":
     case "interrupt":
     case "knockdown":
+    case "if":
       return false;
   }
 }
@@ -371,11 +430,13 @@ export interface SkillResolution {
  */
 export function applySkillEffects(resolution: SkillResolution): CombatEvent[] {
   const { skill, caster, targets, rng, rules } = resolution;
-  const events = skill.effects.flatMap((effect) =>
-    effectActsOnCaster(effect)
-      ? applyEffect(effect, { caster, target: targets[0], rng, rules })
-      : targets.flatMap((target) => applyEffect(effect, { caster, target, rng, rules })),
-  );
+  const events: CombatEvent[] = [];
+  for (const effect of skill.effects) {
+    const on = effectActsOnCaster(effect) ? [targets[0]] : targets;
+    for (const target of on) {
+      events.push(...applyInOrder(effect, { caster, target, rng, rules }, events));
+    }
+  }
   // Divine Favor (#529): once a cast, on the primary target only, after
   // the spell's own effects, through the same heal path.
   const primary = targets[0];

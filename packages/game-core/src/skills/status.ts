@@ -407,8 +407,12 @@ export class StatusSet {
     }
     const existing = this.#statuses.get(id);
     const outbreak = definition.spreads ? { infected: new Set<string>() } : null;
+    // A re-application is the newest, whichever duration wins: removal
+    // takes the newest first (`removeByCategory`).
+    this.#statuses.delete(id);
     if (existing !== undefined && existing.remainingSeconds >= durationSeconds) {
       existing.outbreak = outbreak;
+      this.#statuses.set(id, existing);
       return;
     }
     this.#statuses.set(id, {
@@ -458,12 +462,14 @@ export class StatusSet {
   /**
    * Remove up to `count` statuses of a category — the shape every
    * "remove a condition"/"strip an enchantment" skill needs. Returns the
-   * ids actually removed, oldest-applied first, so a caller can report
-   * exactly what it stripped.
+   * ids actually removed, so a caller can report exactly what it stripped.
+   *
+   * The newest applied goes first, as in GW1 (#521), where covering an
+   * important enchantment or condition with a cheaper one is a tactic.
    */
   public removeByCategory(category: StatusCategory, count = Number.POSITIVE_INFINITY): StatusId[] {
     const removed: StatusId[] = [];
-    for (const status of this.#statuses.values()) {
+    for (const status of [...this.#statuses.values()].reverse()) {
       if (removed.length >= count) {
         break;
       }

@@ -1,0 +1,24 @@
+{
+  "id": "monk.mend-condition",
+  "name": "Mend Condition",
+  "profession": "monk",
+  "attribute": "Protection Prayers",
+  "type": "Spell.",
+  "elite": false,
+  "campaign": "Prophecies",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "activationSeconds": 0.75,
+  "rechargeSeconds": 2,
+  "description": "Remove one condition from target other ally. If a condition is removed, that ally is healed for 5...57...70 health.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Monk/189-Mend_Condition",
+    "fetchedAt": "2026-10-27T02:48:05.729Z"
+  },
+  "unmapped": {}
+}

@@ -1,0 +1,24 @@
+{
+  "id": "mesmer.power-drain",
+  "name": "Power Drain",
+  "profession": "mesmer",
+  "attribute": "Inspiration Magic",
+  "type": "Spell.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "activationSeconds": 0.25,
+  "rechargeSeconds": 20,
+  "description": "If target foe is casting a Spell or Chant, the Skill is interrupted and you gain 1...25...31 Energy.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Mesmer/367-Power_Drain",
+    "fetchedAt": "2026-10-27T02:48:05.530Z"
+  },
+  "unmapped": {}
+}

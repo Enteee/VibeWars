@@ -35,6 +35,8 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
       return ["knockdown"];
     case "apply-status":
       return statusRoles(getStatusDefinition(effect.statusId));
+    case "if":
+      return effect.effects.flatMap(effectRoles);
     case "damage":
     case "energy-gain":
     case "sacrifice-health":

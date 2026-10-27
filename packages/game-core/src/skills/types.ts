@@ -115,7 +115,30 @@ export interface KnockdownEffect {
 /** How long "knocks down" lasts when a skill names no duration (GW1). */
 export const KNOCKDOWN_SECONDS = 2;
 
-export type SkillEffect =
+/** What an earlier effect of the same skill did to the same target (#521). */
+export type EffectCondition =
+  /**
+   * An `interrupt` earlier in the list cancelled an action; `spell`: only
+   * if that skill is a spell (`isSpell`).
+   */
+  | { readonly kind: "interrupted"; readonly spell: boolean }
+  /** A `remove-status` earlier in the list removed at least one status of this category. */
+  | { readonly kind: "removed"; readonly category: StatusCategory };
+
+/**
+ * Effects that land only if an earlier effect of the same skill did
+ * something to the same target (#521): Power Spike's damage, if it
+ * interrupted a spell. Evaluated per target.
+ */
+export interface ConditionalEffect {
+  readonly kind: "if";
+  readonly condition: EffectCondition;
+  /** Applied only when the condition holds. No nesting. */
+  readonly effects: readonly UnconditionalEffect[];
+}
+
+/** Every effect but `if`: what an `if` may hold. */
+export type UnconditionalEffect =
   | DamageEffect
   | HealEffect
   | EnergyGainEffect
@@ -124,6 +147,8 @@ export type SkillEffect =
   | RemoveStatusEffect
   | InterruptEffect
   | KnockdownEffect;
+
+export type SkillEffect = UnconditionalEffect | ConditionalEffect;
 
 /* -------------------------------------------------------------------------- */
 /* Skills                                                                      */
