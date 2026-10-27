@@ -1,3 +1,4 @@
+import { DEFAULT_MATCH_RULES, type MatchRules } from "@vibewars/game-core";
 import {
   MAX_LOBBY_PLAYERS,
   PROTOCOL_VERSION,
@@ -6,11 +7,13 @@ import {
   parsePeerLobbyJoin,
   parseWireLobbyCommand,
   type LobbyPhase,
+  type PeerLobbyJoin,
   type LobbyRefusal,
   type WireChatLine,
   type WireLobbyCommand,
   type WireLobbyNote,
   type WireLobbyState,
+  type WireLobbyWelcome,
   type WireMatchStart,
 } from "@vibewars/game-protocol";
 
@@ -20,6 +23,7 @@ import type { LobbyCharacter } from "./lobby-connection.js";
 import { createLocalPeer } from "./local-peer.js";
 import { RECONNECT_WINDOW_SECONDS, type MatchHost, type PlannedSeats } from "./match-host.js";
 import { sanitizeChatText, sanitizeName } from "./names.js";
+import { admissionDigest, type QueuedSeat } from "./queue-admission.js";
 import { scopeTransport } from "./scoped-transport.js";
 import { sizeChecked, type Transport } from "./transport.js";
 
@@ -47,8 +51,26 @@ export interface MatchPlan {
   readonly mapId: string;
   /** Every member on a team, by peer id; spectators are not in it. */
   readonly seats: PlannedSeats;
+  /** `DEFAULT_MATCH_RULES` in a coded lobby, the plan's in a queued one. */
+  readonly matchRules: MatchRules;
   /** The room, for this match alone: build the `MatchHost` on it. */
   readonly transport: Transport;
+}
+
+/**
+ * A lobby the Random Arena queue started (#871, #854 C5-C7): the group's
+ * teams and map are fixed, only its tickets get in, each on its planned
+ * team, and nobody picks or readies. Once all are seated a countdown
+ * runs, then the match; not all seated by the timeout, and everyone is
+ * sent off. `key` is the host's own ticket key, the group's host ticket.
+ */
+export interface QueuedPlan extends QueuedSeat {
+  readonly matchRules: MatchRules;
+  readonly countdownSeconds: number;
+  /** From the lobby's start, on its clock. */
+  readonly timeoutSeconds: number;
+  /** The lobby timed out without the `noShows` ticket ids; it has closed. */
+  readonly onFellThrough: (noShows: readonly string[]) => void;
 }
 
 export interface LobbyHostOptions {
@@ -59,6 +81,8 @@ export interface LobbyHostOptions {
   readonly mapIds: readonly string[];
   /** Build the match for `plan`. Injected, so a test can play a fake one. */
   readonly startMatch: (plan: MatchPlan) => MatchHost;
+  /** The queue's lobby, not a coded one; its map must be one of `mapIds`. */
+  readonly queued?: QueuedPlan;
 }
 
 export interface LobbyHost {
@@ -76,6 +100,8 @@ interface Member {
   team: 0 | 1 | null;
   ready: boolean;
   character: LobbyCharacter | null;
+  /** The ticket it was admitted on, in a queued lobby. */
+  readonly ticketId: string | null;
 }
 
 /** Whether the lobby satisfies the rules for starting, and if not, why. */
@@ -93,10 +119,16 @@ export function canStart(
 }
 
 export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
-  const { code, mapIds, startMatch } = options;
+  const { code, mapIds, startMatch, queued } = options;
   const [defaultMap] = mapIds;
   if (defaultMap === undefined) {
     throw new Error("a lobby needs at least one map");
+  }
+  if (queued !== undefined && !mapIds.includes(queued.group.mapId)) {
+    throw new Error(`a queued lobby's map ${queued.group.mapId} is not one of its maps`);
+  }
+  if (queued !== undefined && queued.key.ticketId !== queued.group.hostTicketId) {
+    throw new Error("a queued lobby is hosted by its group's host ticket");
   }
   // Its match is on a scope of this room, so this checks every message the
   // host sends, the match's too.
@@ -114,7 +146,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   /** Peers already told their lines are dropped, until one gets through: once a burst. */
   const throttled = new Set<string>();
   let phase: LobbyPhase = "waiting";
-  let mapId = defaultMap;
+  let mapId = queued?.group.mapId ?? defaultMap;
   let joined = 0;
   let matches = 0;
   /** The lobby's clock: the seconds `advance` was given, for the budget. */
@@ -122,8 +154,14 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   let match:
     { readonly id: string; readonly host: MatchHost; readonly room: Transport } | undefined;
   let closed = false;
+  /** A queued lobby's countdown: when it ends, in whole ms on the lobby's clock, while it runs. */
+  let countdownEndsAt: number | undefined;
+  /** A queued lobby starts its match once; after it, the lobby only waits. */
+  let queuedStarted = false;
 
   const nowMs = (): number => elapsed * 1000;
+  /** The clock in whole ms, so a countdown of ticks that do not add up exactly still ends. */
+  const clockMs = (): number => Math.round(nowMs());
 
   const state = (): WireLobbyState => ({
     code,
@@ -139,6 +177,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       isHost: member.id === local.selfId,
       character: member.character,
     })),
+    countdownSeconds: countdownEndsAt === undefined ? null : countdownLeft(countdownEndsAt),
   });
 
   const broadcast = (): void => {
@@ -154,7 +193,12 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     note("refused", reason, peerId);
   };
 
+  /** Whole seconds left until `endsAt`. */
+  const countdownLeft = (endsAt: number): number =>
+    Math.max(0, Math.ceil((endsAt - clockMs()) / 1000));
+
   const start = (): void => {
+    countdownEndsAt = undefined;
     phase = "starting";
     matches += 1;
     const id = `match-${String(matches)}`;
@@ -165,7 +209,12 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     );
     const room = scopeTransport(transport);
     try {
-      match = { id, host: startMatch({ matchId: id, mapId, seats, transport: room }), room };
+      const matchRules = queued?.matchRules ?? DEFAULT_MATCH_RULES;
+      match = {
+        id,
+        host: startMatch({ matchId: id, mapId, seats, matchRules, transport: room }),
+        room,
+      };
     } catch {
       // The caller's to report; the lobby only has to stay usable.
       void room.leave();
@@ -174,6 +223,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       return;
     }
     phase = "in-match";
+    queuedStarted = queued !== undefined;
     // The state first: a peer takes a match-start only for the match the
     // lobby says is on, and each peer's messages arrive in order.
     broadcast();
@@ -227,6 +277,89 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     }
   };
 
+  /** Seat `from`, which `join` brought, on `team`. */
+  const admit = (
+    from: string,
+    join: PeerLobbyJoin,
+    team: 0 | 1 | null,
+    ticketId: string | null,
+  ): void => {
+    if (members.size >= MAX_LOBBY_PLAYERS) {
+      refuse(from, "lobby-full");
+      return;
+    }
+    joined += 1;
+    members.set(from, {
+      id: from,
+      name: sanitizeName(join.name, `player-${String(joined)}`),
+      team,
+      ready: false,
+      character: lobbyCharacter(join.character),
+      ticketId,
+    });
+    beginCountdown();
+    broadcast();
+  };
+
+  /** The group's ticket ids no member holds. */
+  const unseated = (plan: QueuedPlan): string[] => {
+    const seated = new Set([...members.values()].map((member) => member.ticketId));
+    return plan.group.teams.flat().filter((ticketId) => !seated.has(ticketId));
+  };
+
+  /** A queued lobby with every ticket seated counts down to its match. */
+  const beginCountdown = (): void => {
+    if (
+      queued === undefined ||
+      queuedStarted ||
+      countdownEndsAt !== undefined ||
+      unseated(queued).length > 0
+    ) {
+      return;
+    }
+    countdownEndsAt = clockMs() + queued.countdownSeconds * 1000;
+    phase = "starting";
+  };
+
+  /**
+   * Welcome `from` with the host's proof, whoever it is, so even a
+   * refusal comes from the planned host; then seat it on its planned team
+   * if its own proof is for this host, this peer and a ticket of the
+   * group nobody holds yet (ADR-0032 §6).
+   */
+  const admitQueued = async (plan: QueuedPlan, join: PeerLobbyJoin, from: string) => {
+    const { group, key, verifyTicketSig } = plan;
+    const hostDigest = await admissionDigest("vibewars-host", group.groupId, key.ticketId, from);
+    const { admission } = join;
+    const team =
+      admission === null
+        ? undefined
+        : ([0, 1] as const).find((side) => group.teams[side].includes(admission.ticketId));
+    const proven =
+      admission !== null &&
+      team !== undefined &&
+      verifyTicketSig(
+        admission.ticketId,
+        await admissionDigest("vibewars-admit", group.groupId, key.ticketId, from),
+        admission.admissionSig,
+      );
+    // Settled while the digests were made: closed, or this peer seated by a twin join.
+    if (closed || members.has(from)) {
+      return;
+    }
+    const welcome: WireLobbyWelcome = { hostSig: key.sign(hostDigest) };
+    transport.send("lobby-welcome", welcome, from);
+    if (!proven) {
+      refuse(from, "not-admitted");
+      return;
+    }
+    if ([...members.values()].some((member) => member.ticketId === admission.ticketId)) {
+      refuse(from, "ticket-used");
+      return;
+    }
+    admit(from, join, team, admission.ticketId);
+  };
+
   transport.on("lobby-join", (data, from) => {
     if (closed || !budget.take(from, nowMs()) || (members.has(from) && !away.has(from))) {
       return;
@@ -242,6 +375,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       return;
     }
     const returning = members.get(from);
+    // Back from a drop, it was admitted already: as this peer, on its ticket.
     if (returning !== undefined) {
       // Back from a drop during the match (#596): the seat it held, on its
       // team, to confirm again like everyone else when the match is over.
@@ -252,25 +386,29 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       broadcast();
       return;
     }
-    if (members.size >= MAX_LOBBY_PLAYERS) {
-      refuse(from, "lobby-full");
+    if (queued !== undefined) {
+      void admitQueued(queued, join, from);
       return;
     }
-    joined += 1;
-    members.set(from, {
-      id: from,
-      name: sanitizeName(join.name, `player-${String(joined)}`),
-      team: null,
-      ready: false,
-      character: lobbyCharacter(join.character),
-    });
-    broadcast();
+    // A proof means a queued lobby, which this is not.
+    if (join.admission !== null) {
+      refuse(from, "not-admitted");
+      return;
+    }
+    admit(from, join, null, null);
   });
 
   transport.on("lobby-cmd", (data, from) => {
     const member = members.get(from);
-    // Nothing a peer says before its lobby-join counts.
-    if (closed || member === undefined || !budget.take(from, nowMs()) || phase !== "waiting") {
+    // Nothing a peer says before its lobby-join counts, and in a queued
+    // lobby nothing is chosen.
+    if (
+      closed ||
+      member === undefined ||
+      !budget.take(from, nowMs()) ||
+      phase !== "waiting" ||
+      queued !== undefined
+    ) {
       return;
     }
     const command = parseWireLobbyCommand(data);
@@ -330,13 +468,49 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     return dropped;
   };
 
+  /** Not all seated in time: everyone is sent off, and the queue told who never came. */
+  const fallThrough = (plan: QueuedPlan): void => {
+    closed = true;
+    note("refused", "fell-through" satisfies LobbyRefusal);
+    plan.onFellThrough(unseated(plan));
+    void transport.leave();
+  };
+
+  /**
+   * A queued lobby's countdown and timeout, at the lobby's clock now;
+   * `shown` is the countdown everyone was last told. Whether the lobby
+   * is still open.
+   */
+  const runQueue = (plan: QueuedPlan, shown: number | null): boolean => {
+    if (queuedStarted) {
+      return true;
+    }
+    if (countdownEndsAt === undefined) {
+      if (clockMs() < plan.timeoutSeconds * 1000) {
+        return true;
+      }
+      fallThrough(plan);
+      return false;
+    }
+    if (clockMs() >= countdownEndsAt) {
+      start();
+    } else if (countdownLeft(countdownEndsAt) !== shown) {
+      broadcast();
+    }
+    return true;
+  };
+
   const host: LobbyHost = {
     local,
     advance(seconds) {
       if (closed) {
         return;
       }
+      const shown = countdownEndsAt === undefined ? null : countdownLeft(countdownEndsAt);
       elapsed += seconds;
+      if (queued !== undefined && !runQueue(queued, shown)) {
+        return;
+      }
       // Not back within the match's own window: its seat there is gone too.
       if (dropAway((leftAt) => nowMs() - leftAt >= RECONNECT_WINDOW_SECONDS * 1000)) {
         broadcast();
@@ -396,6 +570,11 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       return;
     }
     members.delete(peerId);
+    // A queued lobby one short waits for it again, on the clock it started with.
+    if (countdownEndsAt !== undefined) {
+      countdownEndsAt = undefined;
+      phase = "waiting";
+    }
     broadcast();
   });
 

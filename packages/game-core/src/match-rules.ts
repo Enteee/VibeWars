@@ -57,6 +57,13 @@ export const ANNIHILATION_MATCH_RULES: MatchRules = Object.freeze({
 
 export const DEFAULT_MATCH_RULES: MatchRules = ANNIHILATION_MATCH_RULES;
 
+/**
+ * A Random Arena's (#854, #871): GW1's Random Arenas are annihilation,
+ * 8 minutes, highest total morale at time (#846). The same rules, not a
+ * copy of them.
+ */
+export const RANDOM_ARENA_RULES: MatchRules = ANNIHILATION_MATCH_RULES;
+
 /** Morale a death costs, in percent, with `deathPenalty` (GW1). */
 export const DEATH_PENALTY_PERCENT = 15;
 /** The lowest morale goes, in percent. */

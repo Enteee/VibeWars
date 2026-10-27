@@ -43,6 +43,7 @@ export const CHANNELS = [
   "lobby-state",
   "lobby-cmd",
   "lobby-note",
+  "lobby-welcome",
   "match-start",
   "rejoin-challenge",
   "rejoin-proof",
@@ -479,6 +480,34 @@ export interface PeerLobbyJoin {
   /** As the player typed it, cut to `MAX_WIRE_TEXT`; the host sanitises it. */
   readonly name: string;
   readonly character: WireLobbyCharacter | null;
+  /**
+   * The seat's proof in a queued lobby (#871, ADR-0032 §6); `null` in a
+   * coded lobby, which refuses one.
+   */
+  readonly admission: WireAdmission | null;
+}
+
+/**
+ * A queued joiner's proof of its ticket (#871): `admissionSig` is its
+ * ticket key's BIP-340 signature of the `vibewars-admit` digest, which
+ * names the group, the planned host and the joiner's own peer id, so it
+ * is good for that host and that peer alone. The key never leaves it.
+ */
+export interface WireAdmission {
+  /** 64 lowercase hex digits: the ticket's x-only public key. */
+  readonly ticketId: string;
+  /** 128 lowercase hex digits. */
+  readonly admissionSig: string;
+}
+
+/**
+ * Queued lobby host to one joiner, and only to it (#871): `hostSig` is
+ * the host ticket's signature of the `vibewars-host` digest for that
+ * joiner. A queued joiner takes lobby messages only from a peer whose
+ * welcome verifies against the planned host.
+ */
+export interface WireLobbyWelcome {
+  readonly hostSig: string;
 }
 
 /**
@@ -517,6 +546,11 @@ export interface WireLobbyState {
   /** The match being played, while `phase` is not `"waiting"`. */
   readonly matchId: string | null;
   readonly players: readonly WireLobbyPlayer[];
+  /**
+   * Whole seconds until a queued lobby's match starts (#871), while
+   * `phase` is `"starting"`; `null` otherwise.
+   */
+  readonly countdownSeconds: number | null;
 }
 
 /** Peer to lobby host: what the member asks for. The host decides. */
@@ -538,7 +572,16 @@ export interface WireLobbyNote {
 }
 
 /** Why a lobby host turns a peer away, or sends everyone off. */
-export const LOBBY_REFUSALS = ["protocol-mismatch", "lobby-full", "host-left"] as const;
+export const LOBBY_REFUSALS = [
+  "protocol-mismatch",
+  "lobby-full",
+  "host-left",
+  // A queued lobby's (#871): no proof, one that does not verify, or one
+  // brought to a coded lobby; a ticket already seated; the group never filled.
+  "not-admitted",
+  "ticket-used",
+  "fell-through",
+] as const;
 
 export type LobbyRefusal = (typeof LOBBY_REFUSALS)[number];
 
@@ -1257,15 +1300,38 @@ function parseLobbyCharacter(value: unknown): WireLobbyCharacter | null | undefi
     : undefined;
 }
 
+const TICKET_ID = /^[0-9a-f]{64}$/;
+const TICKET_SIG = /^[0-9a-f]{128}$/;
+
+function isTicketSig(value: unknown): value is string {
+  return typeof value === "string" && TICKET_SIG.test(value);
+}
+
+/** An admission; `null` is none, a malformed one is `undefined`. */
+function parseAdmission(value: unknown): WireAdmission | null | undefined {
+  if (value === null) {
+    return null;
+  }
+  const raw = fields(value);
+  return raw !== undefined &&
+    typeof raw.ticketId === "string" &&
+    TICKET_ID.test(raw.ticketId) &&
+    isTicketSig(raw.admissionSig)
+    ? { ticketId: raw.ticketId, admissionSig: raw.admissionSig }
+    : undefined;
+}
+
 /** The `"lobby-join"` channel. */
 export function parsePeerLobbyJoin(value: unknown): PeerLobbyJoin | undefined {
   const raw = fields(value);
   const character = parseLobbyCharacter(raw?.character);
+  const admission = parseAdmission(raw?.admission);
   if (
     raw === undefined ||
     !isString(raw.protocolVersion) ||
     typeof raw.name !== "string" ||
-    character === undefined
+    character === undefined ||
+    admission === undefined
   ) {
     return undefined;
   }
@@ -1273,7 +1339,14 @@ export function parsePeerLobbyJoin(value: unknown): PeerLobbyJoin | undefined {
     protocolVersion: raw.protocolVersion,
     name: raw.name.slice(0, MAX_WIRE_TEXT),
     character,
+    admission,
   };
+}
+
+/** The `"lobby-welcome"` channel. */
+export function parseWireLobbyWelcome(value: unknown): WireLobbyWelcome | undefined {
+  const raw = fields(value);
+  return raw !== undefined && isTicketSig(raw.hostSig) ? { hostSig: raw.hostSig } : undefined;
 }
 
 function parseLobbyTeam(value: unknown): 0 | 1 | null | undefined {
@@ -1304,7 +1377,8 @@ export function parseWireLobbyState(value: unknown): WireLobbyState | undefined 
     !isOneOf(raw.phase, ["waiting", "starting", "in-match"] as const) ||
     !isString(raw.mapId) ||
     !isString(raw.hostId) ||
-    !isNullableString(raw.matchId)
+    !isNullableString(raw.matchId) ||
+    !(raw.countdownSeconds === null || isCount(raw.countdownSeconds))
   ) {
     return undefined;
   }
@@ -1318,6 +1392,7 @@ export function parseWireLobbyState(value: unknown): WireLobbyState | undefined 
         hostId: raw.hostId,
         matchId: raw.matchId,
         players,
+        countdownSeconds: raw.countdownSeconds,
       };
 }
 
