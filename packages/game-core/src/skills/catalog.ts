@@ -1157,6 +1157,109 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: 21 }],
   },
   {
+    id: "ranger.crippling-shot",
+    name: "Crippling Shot",
+    type: "attack",
+    elite: true,
+    profession: "ranger",
+    attributeId: "ranger.marksmanship",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    // The 2026-04-28 revision's 2 s and 1...10...12; its 2010 "twice as
+    // fast" arrow is gone, so it flies at the bow's speed.
+    rechargeSeconds: 2,
+    range: RANGE_LONG,
+    target: "single-enemy",
+    area: undefined,
+    // "This attack cannot be blocked", as Wild Throw.
+    attack: {
+      weapon: "bow",
+      weaponDamage: 1,
+      bonusDamage: undefined,
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: true,
+      chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    // "If Crippling Shot hits, your target becomes Crippled for 1...10...12
+    // seconds": 10 s, its rank-12 value, when the arrow lands.
+    effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: 10 }],
+  },
+  {
+    id: "ranger.debilitating-shot",
+    name: "Debilitating Shot",
+    type: "attack",
+    elite: false,
+    profession: "ranger",
+    attributeId: "ranger.marksmanship",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 10,
+    range: RANGE_LONG,
+    target: "single-enemy",
+    area: undefined,
+    attack: {
+      weapon: "bow",
+      weaponDamage: 1,
+      bonusDamage: undefined,
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    // "If Debilitating Shot hits, your target loses 1...8...10 energy."
+    effects: [
+      {
+        kind: "energy-loss",
+        amount: { scaling: { attributeId: "ranger.marksmanship", atZero: 1, atTwelve: 8 } },
+      },
+    ],
+  },
+  {
+    id: "ranger.burning-arrow",
+    name: "Burning Arrow",
+    type: "attack",
+    elite: true,
+    profession: "ranger",
+    attributeId: "ranger.marksmanship",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 5,
+    range: RANGE_LONG,
+    target: "single-enemy",
+    area: undefined,
+    // "If this attack hits, you strike for +10...26...30 damage..."
+    attack: {
+      weapon: "bow",
+      weaponDamage: 1,
+      bonusDamage: { scaling: { attributeId: "ranger.marksmanship", atZero: 10, atTwelve: 26 } },
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    // "...and cause Burning for 1...6...7 seconds": 6 s, its rank-12 value.
+    effects: [{ kind: "apply-status", statusId: "burning", durationSeconds: 6 }],
+  },
+  {
     id: "ranger.throw-dirt",
     name: "Throw Dirt",
     type: "skill",
@@ -2980,6 +3083,156 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  // Dervish earth enchantments and Eremite's Attack (#1021).
+  {
+    id: "dervish.eremites-attack",
+    name: "Eremite's Attack",
+    type: "attack",
+    elite: false,
+    profession: "dervish",
+    attributeId: "dervish.scythe-mastery",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 6,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    // "If it hits, this attack deals +1...8...10 damage and removes a
+    // Dervish enchantment. If an enchantment is removed, you do an
+    // additional +1...8...10 damage and strike all adjacent foes": +8 and
+    // +8, the rank-12 values. The blow reads the enchantment the removal
+    // will take, before it lands (ADR-0029).
+    attack: {
+      weapon: "scythe",
+      weaponDamage: 1,
+      bonusDamage: { scaling: { attributeId: "dervish.scythe-mastery", atZero: 1, atTwelve: 8 } },
+      conditionalBonus: {
+        condition: { kind: "caster-has", category: "enchantment", profession: "dervish" },
+        amount: { scaling: { attributeId: "dervish.scythe-mastery", atZero: 1, atTwelve: 8 } },
+      },
+      cleavesAllWhen: { kind: "caster-has", category: "enchantment", profession: "dervish" },
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    effects: [
+      {
+        kind: "remove-status",
+        category: "enchantment",
+        count: 1,
+        profession: "dervish",
+        from: "caster",
+      },
+    ],
+  },
+  {
+    id: "dervish.staggering-force",
+    name: "Staggering Force",
+    // A flash enchantment: an enchantment spell with no activation.
+    type: "enchantment",
+    elite: false,
+    profession: "dervish",
+    attributeId: "dervish.earth-prayers",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 6,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "All nearby foes are struck for 10...34...40 earth damage. For 30
+    // seconds, your attacks deal earth damage": 34, its rank-12 value. The
+    // status turns the attacks, and cracks armor when it ends.
+    effects: [
+      { kind: "apply-status", statusId: "staggering-force", durationSeconds: 30 },
+      {
+        kind: "splash",
+        radius: AREA_NEARBY,
+        effects: [
+          {
+            kind: "damage",
+            type: "earth",
+            armorPenetration: 0,
+            amount: { scaling: { attributeId: "dervish.earth-prayers", atZero: 10, atTwelve: 34 } },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "dervish.dust-cloak",
+    name: "Dust Cloak",
+    type: "enchantment",
+    elite: false,
+    profession: "dervish",
+    attributeId: "dervish.earth-prayers",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "All nearby foes are struck for 10...34...40 earth damage. For 30
+    // seconds, your attacks deal earth damage": 34. The status blinds
+    // when it ends.
+    effects: [
+      { kind: "apply-status", statusId: "dust-cloak", durationSeconds: 30 },
+      {
+        kind: "splash",
+        radius: AREA_NEARBY,
+        effects: [
+          {
+            kind: "damage",
+            type: "earth",
+            armorPenetration: 0,
+            amount: { scaling: { attributeId: "dervish.earth-prayers", atZero: 10, atTwelve: 34 } },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "dervish.aura-of-thorns",
+    name: "Aura of Thorns",
+    type: "enchantment",
+    elite: false,
+    profession: "dervish",
+    attributeId: "dervish.earth-prayers",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "All nearby foes begin Bleeding for 5...13...15 seconds. For 30
+    // seconds, this enchantment does nothing": 13 s. The status cripples
+    // when it ends.
+    effects: [
+      { kind: "apply-status", statusId: "aura-of-thorns", durationSeconds: 30 },
+      {
+        kind: "splash",
+        radius: AREA_NEARBY,
+        effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: 13 }],
+      },
+    ],
+  },
   {
     id: "ranger.savage-shot",
     name: "Savage Shot",
@@ -3015,6 +3268,49 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     projectile: undefined,
     effects: [{ kind: "interrupt" }],
+  },
+  {
+    id: "ranger.concussion-shot",
+    name: "Concussion Shot",
+    type: "attack",
+    elite: false,
+    profession: "ranger",
+    attributeId: "ranger.marksmanship",
+    cost: { kind: "energy", amount: 25 },
+    overcast: 0,
+    activationSeconds: 0.5,
+    rechargeSeconds: 5,
+    range: RANGE_LONG,
+    target: "single-enemy",
+    area: undefined,
+    // "This attack deals only 1...13...16 damage": Distracting Shot's
+    // shape, the arrow's own roll counts for nothing (ADR-0029, #760).
+    attack: {
+      weapon: "bow",
+      weaponDamage: 0,
+      bonusDamage: { scaling: { attributeId: "ranger.marksmanship", atZero: 1, atTwelve: 13 } },
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    // "If Concussion Shot hits while target foe is casting a spell, the
+    // spell is interrupted and your target is dazed for 5...17...20
+    // seconds": 17 s. A chant is not a spell. On a foe already Dazed the
+    // arrow's own hit cuts the spell (#817); the daze still refreshes.
+    effects: [
+      { kind: "interrupt", only: "spell" },
+      {
+        kind: "if",
+        condition: { kind: "interrupted-spell" },
+        effects: [{ kind: "apply-status", statusId: "dazed", durationSeconds: 17 }],
+      },
+    ],
   },
 
   /* ---------------------------------------------------------------------- */

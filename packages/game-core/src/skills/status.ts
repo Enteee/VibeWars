@@ -26,7 +26,8 @@
  * category (`EXCLUSIVE_CATEGORIES`) is the exception: one at a time.
  */
 
-import { AREA_ADJACENT, AREA_IN_THE_AREA } from "../distances.js";
+import { AREA_ADJACENT, AREA_IN_THE_AREA, AREA_NEARBY } from "../distances.js";
+import type { DamageType } from "../equipment/types.js";
 import { wieldsFor, type WeaponId } from "../equipment/weapons.js";
 import type { ProfessionId } from "../professions.js";
 import type { AttackWeaponClass, Combatant, DamageEffect, SkillEffect } from "./types.js";
@@ -136,7 +137,11 @@ export type StatusId =
   | "vow-of-strength"
   | "sand-shards"
   | "pious-haste"
-  | "pious-haste-run";
+  | "pious-haste-run"
+  // Dervish earth enchantments (#1021).
+  | "staggering-force"
+  | "dust-cloak"
+  | "aura-of-thorns";
 
 /** Health one pip of regeneration or degeneration is worth, per second (GW1). */
 export const HEALTH_PER_PIP = 2;
@@ -230,6 +235,13 @@ export interface StatusDefinition {
    * attack skill's bonus damage is not scaled.
    */
   readonly weaponDamageMultiplier: number;
+  /**
+   * The type the bearer's attacks deal, the weapon's roll included
+   * (#1021): Staggering Force's and Dust Cloak's "your attacks deal
+   * earth damage". An attack skill's own `damageType` (Spear of
+   * Lightning) still wins. `undefined`: the weapon's.
+   */
+  readonly attackDamageType: DamageType | undefined;
   /**
    * Added to every attribute of the bearer above rank 0 (#762): weakness's
    * −1. Read through `rankOf` alone (ADR-0019).
@@ -534,6 +546,7 @@ function define(
     maxHealthLoss: undefined,
     healingMultiplier: 1,
     weaponDamageMultiplier: 1,
+    attackDamageType: undefined,
     attributeDelta: 0,
     castTimeMultiplier: 1,
     interruptsSpells: false,
@@ -1135,6 +1148,67 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     profession: "dervish",
     moveSpeedMultiplier: 1.5,
   }),
+  // "For 30 seconds, your attacks deal earth damage. When this enchantment
+  // ends, all nearby foes have Cracked Armor for 1...8...10 seconds" (#1021):
+  // 8 s, its rank-12 value. Any end counts: expiry, a strip, a death.
+  "staggering-force": define("staggering-force", "Staggering Force", "enchantment", {
+    profession: "dervish",
+    attackDamageType: "earth",
+    triggers: [
+      {
+        on: "ends",
+        target: "bearer",
+        effects: [
+          {
+            kind: "splash",
+            radius: AREA_NEARBY,
+            effects: [{ kind: "apply-status", statusId: "cracked-armor", durationSeconds: 8 }],
+          },
+        ],
+        skillId: "dervish.staggering-force",
+      },
+    ],
+  }),
+  // "For 30 seconds, your attacks deal earth damage. When this Enchantment
+  // ends, all nearby foes are Blinded for 1...3...4 seconds" (#1021): 3 s.
+  "dust-cloak": define("dust-cloak", "Dust Cloak", "enchantment", {
+    profession: "dervish",
+    attackDamageType: "earth",
+    triggers: [
+      {
+        on: "ends",
+        target: "bearer",
+        effects: [
+          {
+            kind: "splash",
+            radius: AREA_NEARBY,
+            effects: [{ kind: "apply-status", statusId: "blind", durationSeconds: 3 }],
+          },
+        ],
+        skillId: "dervish.dust-cloak",
+      },
+    ],
+  }),
+  // "For 30 seconds, this enchantment does nothing. When this enchantment
+  // ends, all nearby foes are Crippled for 3...7...8 seconds" (#1021): 7 s.
+  // Until then it counts as a Dervish enchantment, nothing more.
+  "aura-of-thorns": define("aura-of-thorns", "Aura of Thorns", "enchantment", {
+    profession: "dervish",
+    triggers: [
+      {
+        on: "ends",
+        target: "bearer",
+        effects: [
+          {
+            kind: "splash",
+            radius: AREA_NEARBY,
+            effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: 7 }],
+          },
+        ],
+        skillId: "dervish.aura-of-thorns",
+      },
+    ],
+  }),
   // PvP "Never Surrender!" at rank 12: +4 Health regeneration (#923).
   "never-surrender": define("never-surrender", "Never Surrender!", "shout", {
     profession: "paragon",
@@ -1649,10 +1723,15 @@ export class StatusSet {
     );
   }
 
-  public countByCategory(category: StatusCategory): number {
+  /** How many are up of a category; with a `profession`, only that profession's (#1021). */
+  public countByCategory(category: StatusCategory, profession?: ProfessionId): number {
     let count = 0;
     for (const status of this.#statuses.values()) {
-      if (getStatusDefinition(status.id).category === category) {
+      const definition = getStatusDefinition(status.id);
+      if (
+        definition.category === category &&
+        (profession === undefined || definition.profession === profession)
+      ) {
         count += 1;
       }
     }
