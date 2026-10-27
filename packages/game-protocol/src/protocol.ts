@@ -115,6 +115,18 @@ export interface WalkToIntent {
 }
 
 /**
+ * End an enchantment the sender maintains (#838): a double-click on its
+ * icon in the effects monitor. The caster is the sender, never a field;
+ * the host refuses quietly anything that is not theirs to end.
+ */
+export interface EndUpkeepIntent {
+  readonly kind: "end-upkeep";
+  readonly targetId: string;
+  /** The status id, e.g. `"mending"`. */
+  readonly status: string;
+}
+
+/**
  * Sent as `"cast-refused"` to the caster alone when the server turns down a
  * `UseSkillIntent` or an `AttackIntent`, so a key that did nothing can say
  * why (issue #51). Advisory only: the refusal has already happened, and
@@ -188,7 +200,8 @@ export type ClientIntent =
   | UseSkillIntent
   | AttackIntent
   | CancelIntent
-  | WalkToIntent;
+  | WalkToIntent
+  | EndUpkeepIntent;
 
 /**
  * Validate an arbitrary network payload as a `ClientIntent`, or reject it.
@@ -264,7 +277,23 @@ export function parseClientIntent(value: unknown): ClientIntent | undefined {
     return { kind: "walk-to", x: record.x, y: record.y };
   }
 
+  if (
+    record.kind === "end-upkeep" &&
+    hasOnlyKeys(record, ["kind", "targetId", "status"]) &&
+    isIntentId(record.targetId) &&
+    isIntentId(record.status)
+  ) {
+    return { kind: "end-upkeep", targetId: record.targetId, status: record.status };
+  }
+
   return undefined;
+}
+
+/** The longest id an intent may name: as long as any string on the wire (`MAX_WIRE_STRING`). */
+const MAX_INTENT_ID = 64;
+
+function isIntentId(value: unknown): value is string {
+  return typeof value === "string" && value !== "" && value.length <= MAX_INTENT_ID;
 }
 
 function hasOnlyKeys(record: Record<string, unknown>, keys: readonly string[]): boolean {

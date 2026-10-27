@@ -211,3 +211,33 @@ describe("parseClientIntent — walk-to (#310)", () => {
     expect(parseClientIntent({ kind: "walk-to", x: 1, y: 2, z: 3 })).toBeUndefined();
   });
 });
+
+describe("parseClientIntent — end-upkeep (#838)", () => {
+  it("accepts a target and a status id", () => {
+    expect(parseClientIntent({ kind: "end-upkeep", targetId: "p2", status: "mending" })).toEqual({
+      kind: "end-upkeep",
+      targetId: "p2",
+      status: "mending",
+    });
+  });
+
+  it("rejects non-string, empty, overlong and missing ids", () => {
+    expect(
+      parseClientIntent({ kind: "end-upkeep", targetId: 2, status: "mending" }),
+    ).toBeUndefined();
+    expect(parseClientIntent({ kind: "end-upkeep", targetId: "p2", status: null })).toBeUndefined();
+    expect(
+      parseClientIntent({ kind: "end-upkeep", targetId: "", status: "mending" }),
+    ).toBeUndefined();
+    expect(
+      parseClientIntent({ kind: "end-upkeep", targetId: "x".repeat(65), status: "mending" }),
+    ).toBeUndefined();
+    expect(parseClientIntent({ kind: "end-upkeep", targetId: "p2" })).toBeUndefined();
+  });
+
+  it("rejects a field it does not name, a caster above all", () => {
+    expect(
+      parseClientIntent({ kind: "end-upkeep", targetId: "p2", status: "mending", casterId: "p3" }),
+    ).toBeUndefined();
+  });
+});

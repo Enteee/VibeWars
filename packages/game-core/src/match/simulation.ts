@@ -73,6 +73,7 @@ import {
   aggregateModifiers,
   clampPips,
   ENERGY_PER_PIP,
+  isStatusId,
   MAX_PIPS,
   scaledStatusDuration,
   STATUS_DEFINITIONS,
@@ -667,6 +668,25 @@ export class MatchSimulation {
       record.combatant.cast.clearQueue();
       record.walkGoal = undefined;
     }
+  }
+
+  /**
+   * End an enchantment `casterId` maintains on `targetId` (#838): a
+   * double-click on its icon in GW1. It leaves the bearer at once, for
+   * free, with no log row, and the upkeep stops with it. Anything but a
+   * maintained `statusId` of the caster's own on that target is refused
+   * quietly, so a click that raced a drop does nothing. Whether it ended.
+   */
+  public endUpkeep(casterId: string, targetId: string, statusId: string): boolean {
+    const bearer = this.#participants.get(targetId)?.combatant;
+    if (bearer === undefined || !isStatusId(statusId)) {
+      return false;
+    }
+    const status = bearer.statuses.get(statusId);
+    if (status === undefined || status.maintained === null || status.sourceId !== casterId) {
+      return false;
+    }
+    return bearer.statuses.remove(statusId);
   }
 
   /**
