@@ -17,6 +17,7 @@ const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
 const CHAIN_LIGHTNING = "elementalist.chain-lightning";
 const MATCH: MatchRules = {
+  victory: "kill-count",
   scoreToWin: 99,
   timeLimitSeconds: 600,
   deathRule: "respawn",

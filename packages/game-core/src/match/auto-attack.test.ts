@@ -461,6 +461,7 @@ describe("adrenaline is lost out of combat (#828)", () => {
     const match = new MatchSimulation({
       seed: "swing",
       matchRules: {
+        victory: "kill-count",
         scoreToWin: 99,
         timeLimitSeconds: 600,
         deathRule: "respawn",
