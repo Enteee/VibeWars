@@ -215,6 +215,41 @@ describe("resolving universal runes", () => {
   });
 });
 
+describe("inherent armor by profession (#759)", () => {
+  function conditionalArmor(primaryProfession: ProfessionId, insignia: "stalwart" | null) {
+    return resolveLoadout(
+      {
+        primaryProfession,
+        allocatedRanks: new Map(),
+        equipment: {
+          mainHand: { weaponId: "sword", requirementAttributeId: null },
+          offHand: null,
+          armor: { ...bareArmorSet(), chest: { insigniaId: insignia, rune: null } },
+        },
+      },
+      MINIMAL_GW_INSPIRED_PVP_V1.combat,
+    ).equipment.conditionalArmor;
+  }
+
+  it("lists a Warrior's +20 vs physical before the insignias'", () => {
+    expect(conditionalArmor("warrior", "stalwart")).toEqual([
+      { amount: 20, condition: "vs-physical" },
+      { amount: 10, condition: "vs-physical" },
+    ]);
+  });
+
+  it("lists a Ranger's +30 vs elemental before the insignias'", () => {
+    expect(conditionalArmor("ranger", "stalwart")).toEqual([
+      { amount: 30, condition: "vs-elemental" },
+      { amount: 10, condition: "vs-physical" },
+    ]);
+  });
+
+  it("gives a Monk none without insignias", () => {
+    expect(conditionalArmor("monk", null)).toEqual([]);
+  });
+});
+
 describe("default loadouts", () => {
   it.each(PROFESSION_IDS)("gives %s a legal build straight out of the box", (profession) => {
     // The build editor hands exactly this to every new character and on
@@ -651,6 +686,12 @@ describe("the gear coverage record", () => {
         expect(insignia.effect.condition).not.toBe("while-in-a-stance");
       }
     }
+  });
+
+  it("no longer records typed armor as a gap: professions carry it (#759)", () => {
+    expect(GEAR_OMISSIONS.map((omission) => omission.mechanic)).not.toContain(
+      "armor-damage-type-resistance",
+    );
   });
 
   it("separates deliberate simplifications from real gaps", () => {

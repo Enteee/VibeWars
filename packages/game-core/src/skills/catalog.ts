@@ -90,6 +90,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         amount: {
           scaling: { attributeId: "elementalist.fire-magic", atZero: 7, atTwelve: 91 },
         },
+        type: "fire",
       },
     ],
   },
@@ -117,6 +118,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         {
           kind: "damage",
           amount: { scaling: { attributeId: "warrior.axe-mastery", atZero: 1, atTwelve: 16 } },
+          type: "typeless",
         },
         { kind: "apply-status", statusId: "deep-wound", durationSeconds: 20 },
       ],
@@ -640,6 +642,58 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     // "For 15 seconds, your next 2 spells cost 10...16...18 less Energy to
     // cast": the two spells and the 16 are the status's `nextSpells`.
     effects: [{ kind: "apply-status", statusId: "glyph-of-lesser-energy", durationSeconds: 15 }],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Chants and weapon spells (#758)                                         */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "paragon.anthem-of-flame",
+    name: "Anthem of Flame",
+    type: "chant",
+    elite: false,
+    profession: "paragon",
+    attributeId: "paragon.leadership",
+    cost: { kind: "energy", amount: 5 },
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    // "Each party member within earshot", the chanter among them.
+    area: {
+      radius: AREA_EARSHOT,
+      origin: "caster",
+      affects: "allies",
+      maxTargets: undefined,
+      includesCaster: true,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 10 seconds, the next attack skill used ... also causes Burning
+    // for 1...3...3 seconds": the burning is the status's `nextAttackSkill`.
+    effects: [{ kind: "apply-status", statusId: "anthem-of-flame", durationSeconds: 10 }],
+  },
+  {
+    id: "ritualist.weapon-of-warding",
+    name: "Weapon of Warding",
+    type: "weapon-spell",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.restoration-magic",
+    cost: { kind: "energy", amount: 10 },
+    activationSeconds: 1,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 3...7...8 seconds": 7 s, its rank-12 value; the regeneration,
+    // the block and the end on attacking are the status's.
+    effects: [{ kind: "apply-status", statusId: "weapon-of-warding", durationSeconds: 7 }],
   },
 ];
 

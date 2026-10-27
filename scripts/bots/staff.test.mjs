@@ -134,6 +134,42 @@ describe("staffAllowed", () => {
     });
   });
 
+  it("lets the operator skip the cooldowns, and pass the cap only with overCap", () => {
+    const busy = company(
+      ["manager", "qa-tester"],
+      [
+        { at: NOW - MINUTE, change: "hire", id: "a" },
+        { at: NOW - MINUTE, change: "hire", id: "b" },
+        { at: NOW - MINUTE, change: "hire", id: "c" },
+        { at: NOW - MINUTE, change: "fire", id: "qa-tester" },
+      ],
+    );
+    const hireAs = /** @type {const} */ ({
+      verb: "hire",
+      role: "qa-tester",
+      reason: "r",
+      by: "operator",
+    });
+    expect(refusal(decide(busy, hire("qa-tester")))).toMatch(/3 hires in the last 10 min/);
+    expect(decide(busy, hireAs)).toEqual({ ok: true, employee: "qa-tester@2" });
+    expect(
+      decide(busy, { verb: "fire", employee: "qa-tester", reason: "r", by: "operator" }),
+    ).toEqual({
+      ok: true,
+      employee: "qa-tester",
+    });
+
+    expect(refusal(decide(busy, hireAs, { maxAgents: 2 }))).toMatch(/maxAgents is 2/);
+    expect(decide(busy, { ...hireAs, overCap: true }, { maxAgents: 2 })).toEqual({
+      ok: true,
+      employee: "qa-tester@2",
+    });
+    expect(
+      refusal(decide(busy, { ...hire("qa-tester"), overCap: true }, { maxAgents: 2 })),
+    ).toMatch(/maxAgents is 2/);
+    expect(refusal(decide(busy, { ...hireAs, role: "manager" }))).toMatch(/exactly one/);
+  });
+
   it("refuses a role that is not in the roster", () => {
     const answer = decide(everyone, hire("developer-3"));
     expect(refusal(answer)).toMatch(/not a role/);

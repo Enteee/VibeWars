@@ -59,7 +59,7 @@ function stepFor(match: MatchSimulation, seconds: number): CombatLogEntry[] {
 
 const events = (log: readonly CombatLogEntry[]) => log.flatMap((entry) => entry.events);
 
-const armorOf = (combatant: Combatant) => effectiveArmor(combatant, spellDamage(1));
+const armorOf = (combatant: Combatant) => effectiveArmor(combatant, spellDamage(1, "typeless"));
 
 describe("Healing Signet (#524)", () => {
   function signetter(): MatchSimulation {

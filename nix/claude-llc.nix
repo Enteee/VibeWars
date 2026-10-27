@@ -83,6 +83,8 @@ let
       claude-llc stop         stop everything
       claude-llc up           bring the company up without attaching (a reboot uses this)
       claude-llc reboot --abort  cancel a reboot the manager scheduled
+      claude-llc hire <role> [reason] [--over-cap]  hire by hand: no cooldowns, --over-cap passes maxAgents
+      claude-llc fire <employee> [reason]           fire by hand: no cooldowns
       claude-llc --help
 
     One tmux window per role (a pane per employee) plus a dashboard. The session opens on the
@@ -275,6 +277,11 @@ let
             fi
             start_employee "$2"
             exit 0
+            ;;
+          hire | fire)
+            # The operator's hand on the staff (#385): hubd answers through
+            # the host-only spool hub/_operator, which no jail can write.
+            exec ${node} ${llcScripts}/operator-staff.mjs "$@"
             ;;
           reboot)
             if [ "''${2-}" != "--abort" ]; then

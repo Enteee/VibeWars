@@ -2,6 +2,7 @@ import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
 
 import type { ResolvedEquipment } from "../equipment/resolve.js";
+import type { DamageType } from "../equipment/types.js";
 import type { ProfessionId } from "../professions.js";
 import type { CastState } from "./cast-state.js";
 import type { AttackState } from "./weapon-attack.js";
@@ -58,6 +59,8 @@ export type TargetRule =
 export interface DamageEffect {
   readonly kind: "damage";
   readonly amount: Magnitude;
+  /** GW1's type, which decides the typed armor that applies (#759). */
+  readonly type: DamageType;
 }
 
 export interface HealEffect {
@@ -141,16 +144,18 @@ export type SkillType =
   | "stance"
   | "preparation"
   | "glyph"
+  | "chant"
+  | "weapon-spell"
   | "skill";
 
 /**
  * Whether a skill of this type is a spell, as GW1's rules that "affect
- * spells" mean it: enchantments and hexes are spells, signets, shouts,
- * stances and glyphs are not (#524, #526, #527). Every such rule asks this, never the type
- * directly.
+ * spells" mean it: enchantments, hexes and weapon spells are spells,
+ * signets, shouts, chants, stances and glyphs are not (#524, #526, #527,
+ * #758). Every such rule asks this, never the type directly.
  */
 export function isSpell(type: SkillType): boolean {
-  return type === "spell" || type === "enchantment" || type === "hex";
+  return type === "spell" || type === "enchantment" || type === "hex" || type === "weapon-spell";
 }
 
 /**
