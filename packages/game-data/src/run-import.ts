@@ -198,6 +198,11 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Mesmer/320-Power_Spike",
   },
   {
+    id: "mesmer.power-block",
+    profession: "mesmer",
+    url: "https://www.gw-memorial.net/skills/Mesmer/318-Power_Block",
+  },
+  {
     id: "mesmer.power-drain",
     profession: "mesmer",
     url: "https://www.gw-memorial.net/skills/Mesmer/367-Power_Drain",
@@ -278,6 +283,11 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Warrior/7-Eviscerate",
   },
   {
+    id: "warrior.disrupting-chop",
+    profession: "warrior",
+    url: "https://www.gw-memorial.net/skills/Warrior/6-Disrupting_Chop",
+  },
+  {
     id: "warrior.executioners-strike",
     profession: "warrior",
     url: "https://www.gw-memorial.net/skills/Warrior/8-Executioner's_Strike",
@@ -311,6 +321,11 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     id: "ranger.savage-shot",
     profession: "ranger",
     url: "https://www.gw-memorial.net/skills/Ranger/121-Savage_Shot",
+  },
+  {
+    id: "ranger.distracting-shot",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/99-Distracting_Shot",
   },
   {
     id: "mesmer.energy-burn",

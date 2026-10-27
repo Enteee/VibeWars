@@ -256,6 +256,19 @@ describe("describeCombatEvent", () => {
     );
   });
 
+  it("says whose skill a disable held back, and for how long (#914)", () => {
+    const disabled: CombatEvent = {
+      kind: "skill-disabled",
+      targetId: "dummy",
+      skillId: "elementalist.fireball",
+      seconds: 10,
+    };
+    expect(
+      describeCombatEvent(entry([disabled], { skillId: "mesmer.power-block" }), disabled, nameOf),
+    ).toBe("Power Block (Pyro) disables Caster dummy's Fireball for 10 s");
+    expect(logToneOf("skill-disabled")).toBe("control");
+  });
+
   it("says who knocked whom down, and for how long (#544)", () => {
     const down: CombatEvent = { kind: "knocked-down", targetId: "dummy", durationSeconds: 4 };
     expect(

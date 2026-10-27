@@ -2825,6 +2825,7 @@ export class MatchSimulation {
       morale: 0,
       baseEnergyPips: spec.baseEnergyPips ?? 0,
       adrenaline: adrenalinePools(spec.skillBar),
+      skillBar: spec.skillBar,
       lastCombatAt: this.#elapsedSeconds,
       attributeRanks: spec.attributeRanks,
       team: spec.team,
