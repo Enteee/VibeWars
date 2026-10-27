@@ -130,6 +130,45 @@ export function slotAffordable(slot: SkillSlot, self: PlayerSnapshot, adrenaline
 }
 
 /**
+ * How full `slot`'s adrenaline is (#826), from 0 empty to 1 charged, given
+ * `adrenaline`, the units its skill holds by the host's last message; or
+ * undefined for a skill that costs energy. The wire sends an adrenaline
+ * cost of 0 for every energy skill (`wire.ts`), so that is what 0 means
+ * here, and nothing is ever divided by it.
+ */
+export function adrenalineFill(slot: SkillSlot, adrenaline: number): number | undefined {
+  if (slot.adrenalineCost <= 0) {
+    return undefined;
+  }
+  return Math.max(0, Math.min(1, adrenaline / (slot.adrenalineCost * ADRENALINE_PER_STRIKE)));
+}
+
+/**
+ * The gauge an adrenaline skill's slot draws over its icon (#826), or
+ * nothing for an energy skill. It reads `--adrenaline-fill` off the slot,
+ * so a new message changes one property, never the DOM.
+ */
+export function adrenalineGaugeHtml(slot: SkillSlot): string {
+  return slot.adrenalineCost > 0 ? `<span class="adrenaline-gauge" aria-hidden="true"></span>` : "";
+}
+
+/**
+ * Paint `fill` of a slot's adrenaline (#826), or clear it with `undefined`.
+ * Writes only on change: this runs every frame.
+ */
+export function paintAdrenalineFill(button: HTMLElement, fill: number | undefined): void {
+  const value = fill === undefined ? "" : String(fill);
+  if (button.style.getPropertyValue("--adrenaline-fill") === value) {
+    return;
+  }
+  if (fill === undefined) {
+    button.style.removeProperty("--adrenaline-fill");
+  } else {
+    button.style.setProperty("--adrenaline-fill", value);
+  }
+}
+
+/**
  * Which slots hold an attack skill the weapon `self` wields cannot use
  * (#417): the same check activation makes (`wieldsFor`), so the dimmed
  * slot and the "Needs an axe." refusal agree. A weapon this client does

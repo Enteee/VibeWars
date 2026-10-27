@@ -504,7 +504,8 @@ export function resolveSwing(swing: Swing): {
  * Resolve an attack skill at its hit (ADR-0029): one blow of the weapon on
  * each victim, the primary first, with the skill's bonus added after
  * armor (#760). A victim the blow misses (blind) gets none of the skill's
- * riders; the ones it hits get them all. A victim that blocks gets the
+ * riders; the ones it hits get them all. A rider on the attacker, as
+ * Wounding Strike's lost enchantment (#845), needs a hit too. A victim that blocks gets the
  * skill's `onBlocked` effects instead (#534); an `unblockable` one rolls
  * no block at all (Wild Throw, #523). An off-hand attack on a victim
  * without the caster's lead mark misses it outright, before blind; a
@@ -572,7 +573,7 @@ export function resolveAttackSkill(
   useNextAttackSkill(caster, next, events);
   return [
     ...events,
-    ...applySkillEffects({ ...resolution, targets: hit }, events),
+    ...(hit.length === 0 ? [] : applySkillEffects({ ...resolution, targets: hit }, events)),
     ...(blocked.length === 0 || skill.attack === undefined
       ? []
       : applySkillEffects(

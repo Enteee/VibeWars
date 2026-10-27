@@ -275,6 +275,7 @@ describe("attack skills (#417)", () => {
       melee: "Melee attack",
       sword: "Sword attack",
       spear: "Spear attack",
+      scythe: "Scythe attack",
     });
     expect(describeSkill(skill("elementalist.fireball")).weaponText).toBeUndefined();
   });
