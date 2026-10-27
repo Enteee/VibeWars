@@ -302,6 +302,15 @@ const status = {
   ],
   // Hex: a bolt in outline, the energy draining out (#503).
   malaise: ["hex", (c) => `<path d="M13 4.5L7.5 13h4l-1 6.5L16.5 11h-4z" ${stroke(c, 2)}/>`],
+  // Hex: an arrow turning back on itself, a spell that hurts its caster (#469).
+  backfire: [
+    "hex",
+    (c) =>
+      `<path d="M15.5 8.5A4.5 4.5 0 1 0 16.5 13" ${stroke(c, 2.2)}/>` +
+      `<path d="M13 6.5l3.5 2-2 3.5z" fill="${c}"/>`,
+  ],
+  // Hex: a sword point down, an attack that hurts its attacker (#469).
+  empathy: ["hex", (c) => `<path d="M12 18.5v-10M8.5 8.5h7M12 8.5v-4" ${stroke(c, 2.5)}/>`],
   // Enchantment: a shield in outline with a blow glancing off it, block (#534).
   guardian: [
     "enchantment",
