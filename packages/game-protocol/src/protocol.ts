@@ -183,6 +183,30 @@ export interface AdrenalineMessage {
   readonly lossInSeconds: number | null;
 }
 
+/** A dagger chain mark's place in its chain (#831), as game-core's `ChainRole`. */
+export const CHAIN_ROLES = ["lead", "off-hand", "dual"] as const;
+
+export type WireChainRole = (typeof CHAIN_ROLES)[number];
+
+/** One chain mark a player left on one target (#916). */
+export interface WireChainMark {
+  readonly targetId: string;
+  readonly role: WireChainRole;
+  /** Seconds from this message's arrival until it runs out, counted down like a recharge. */
+  readonly remainingSeconds: number;
+}
+
+/**
+ * Sent as `"chain"` to one player alone (#916): the chain marks they
+ * placed, a full replacement list; a target absent from it bears none of
+ * theirs. Sent on join and rejoin, and whenever the marks change in a way
+ * the client cannot predict by counting down: a new mark, a new role, a
+ * refresh, or one gone early with a death.
+ */
+export interface ChainMarksMessage {
+  readonly marks: readonly WireChainMark[];
+}
+
 /** The maximum players a single lobby accepts (brief §4: not hardcoded to 8). */
 export const MAX_LOBBY_PLAYERS = 16;
 

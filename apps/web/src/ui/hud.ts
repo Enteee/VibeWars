@@ -5,6 +5,7 @@ import {
   maxHealthLossOfStatusIds,
   neededWeaponText,
   type ActivationRejection,
+  type ChainRole,
   type Segment,
   type StatusId,
 } from "@vibewars/game-core";
@@ -22,6 +23,7 @@ import { SKILL_ACTIONS, actionLabel, codeLabel, type Keymap } from "../input/key
 import { paintHealthTint } from "./health-tint.js";
 import {
   attackingIcon,
+  chainMarkIcon,
   isEliteSkill,
   professionIcon,
   settingsIcon,
@@ -122,6 +124,8 @@ export interface HudElements {
   readonly targetHealthLost: HTMLElement;
   readonly targetHealthText: HTMLElement;
   readonly targetHealthPips: HTMLElement;
+  /** Your dagger chain mark on the target, right of its health (#916). */
+  readonly targetChain: HTMLImageElement;
   /** What the target is casting (#484): icon (#727), badge, name and a filling bar. */
   readonly targetCast: HTMLElement;
   readonly targetCastIcon: HTMLImageElement;
@@ -236,11 +240,16 @@ export function createHud(
   swords.alt = "";
   attacking.append("attacking");
   attacking.hidden = true;
-  const targetHealth = element("div", "hud-bar hud-target-health", targetPanel);
+  const targetHealthRow = element("div", "hud-target-health-row", targetPanel);
+  const targetHealth = element("div", "hud-bar hud-target-health", targetHealthRow);
   const targetHealthFill = element("div", "hud-bar-fill", targetHealth);
   const targetHealthLost = element("div", "hud-bar-lost", targetHealth);
   const targetHealthText = element("span", "hud-bar-label", targetHealth);
   const targetHealthPips = targetHealth.appendChild(pipsElement());
+  const targetChain = targetHealthRow.appendChild(document.createElement("img"));
+  targetChain.className = "hud-target-chain";
+  targetChain.alt = "";
+  targetChain.hidden = true;
   targetHealth.hidden = true;
   const targetEffects = createEffectsMonitor(
     targetPanel,
@@ -312,6 +321,7 @@ export function createHud(
     targetHealthLost,
     targetHealthText,
     targetHealthPips,
+    targetChain,
     targetCast,
     targetCastIcon,
     targetCastBadge,
@@ -753,6 +763,38 @@ export function targetWeaponIcon(target: PlayerSnapshot | undefined): Profession
   return target?.weaponId === undefined ? undefined : weaponIcon(target.weaponId);
 }
 
+/** What each chain mark's icon says on hover (#916), as GW1 means it. */
+const CHAIN_MARK_TITLE: Readonly<Record<ChainRole, string>> = {
+  lead: "lead attack landed",
+  "off-hand": "off-hand attack landed",
+  dual: "dual attack landed",
+};
+
+/**
+ * The icon for your dagger chain mark on `target` (#916): which of your
+ * chain attacks last hit it, while that mark runs. Nothing with no target
+ * or no mark of yours on it; nobody else's mark ever shows.
+ */
+export function targetChainIcon(
+  target: PlayerSnapshot | undefined,
+  chainMark: (targetId: string) => ChainRole | undefined,
+): ProfessionIcon | undefined {
+  const role = target === undefined ? undefined : chainMark(target.sessionId);
+  return role === undefined
+    ? undefined
+    : { src: chainMarkIcon(role), name: CHAIN_MARK_TITLE[role] };
+}
+
+/** Touch the chain icon only when its mark changes, never every frame. */
+function renderTargetChain(img: HTMLImageElement, icon: ProfessionIcon | undefined): void {
+  img.hidden = icon === undefined;
+  if (icon !== undefined && img.title !== icon.name) {
+    img.src = icon.src;
+    img.alt = icon.name;
+    img.title = icon.name;
+  }
+}
+
 /** Replace the icons only when the target or its professions changed, never every frame. */
 function renderTargetProfessions(container: HTMLElement, target: PlayerSnapshot | undefined): void {
   const weapon = targetWeaponIcon(target);
@@ -922,6 +964,8 @@ export function updateHud(
   adrenaline: readonly number[],
   /** Seconds until that is lost out of combat, `null` with none held (#828). */
   adrenalineLossIn: number | null,
+  /** Your chain mark on a target, still running (#916). */
+  chainMark: (targetId: string) => ChainRole | undefined,
   walls: readonly Segment[],
   match?: MatchSnapshot,
 ): void {
@@ -973,6 +1017,7 @@ export function updateHud(
   );
 
   renderTarget(hud, self, target);
+  renderTargetChain(hud.targetChain, targetChainIcon(target, chainMark));
   hud.targetEffects.update(targetEffectRows(self, target, names, now));
 
   // Grey out skills the player cannot currently afford or the weapon in
