@@ -202,6 +202,8 @@ export function openBeatEditor(trackId: string, deps: BeatEditorDeps = defaultDe
     editor?.clearError();
     stopped = false;
     evaluations.sent(player.evaluate(track.source), { kind: "reset" });
+    // The button just disabled itself; without this, focus falls to the body.
+    editor?.focus();
   }
 
   const paste = (text: string): void => {

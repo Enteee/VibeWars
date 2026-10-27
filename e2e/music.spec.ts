@@ -224,7 +224,7 @@ test("the beat editor plays a change, keeps it across a reload, and an error lea
   await recordMessages(page);
   await recordHostInbox(page);
   await page.goto("./?musicstats");
-  await page.getByRole("button", { name: "Music", exact: true }).click();
+  await page.locator("#screens").getByRole("button", { name: "Music", exact: true }).click();
   const row = page.locator(".jukebox-row", { hasText: "Ember Deep" });
   await row.getByRole("button", { name: "Open Ember Deep in the beat editor" }).click();
   const editor = page.getByRole("dialog", { name: "Beat editor: Ember Deep" });
@@ -249,7 +249,7 @@ test("the beat editor plays a change, keeps it across a reload, and an error lea
   await expect(row).toHaveClass(/is-edited/);
 
   await page.reload();
-  await page.getByRole("button", { name: "Music", exact: true }).click();
+  await page.locator("#screens").getByRole("button", { name: "Music", exact: true }).click();
   await expect(row).toHaveClass(/is-edited/);
   await row.getByRole("button", { name: "Open Ember Deep in the beat editor" }).click();
   // CodeMirror draws only the lines in view; the change is on the last.
@@ -275,6 +275,10 @@ test("the beat editor plays a change, keeps it across a reload, and an error lea
   await editor.getByRole("button", { name: "Reset to shipped" }).click();
   await expect(editor.locator(".beat-editor-edited")).toBeHidden();
   await expect(row).not.toHaveClass(/is-edited/);
+  // The button disables itself; focus goes back to the code, so Esc still closes.
+  await expect(code).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(editor).toHaveCount(0);
 });
 
 test("keys typed in the beat editor reach no skill in a match (#373)", async ({ page }) => {
