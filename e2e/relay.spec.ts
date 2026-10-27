@@ -110,3 +110,21 @@ test("(5) on a shared origin a reload forgets the relay, and one another site pl
   await openRelayOptions(page);
   await expect(page.locator(".relay-current")).toHaveText("Relay: None");
 });
+
+test("(6) a relay link pasted into an open tab is taken out of the address bar and asked about", async ({
+  page,
+}) => {
+  await page.goto("./#keep=1");
+  await page.locator(".screen-menu").waitFor();
+  // The same document: only the fragment changes, nothing reloads.
+  await page.goto(`${link(RELAY)}&keep=1`);
+  const prompt = page.getByRole("dialog", { name: "Relay link" });
+  await expect(prompt).toContainText("Use relay turn.example for connections?");
+  expect(new URL(page.url()).hash).toBe("#keep=1");
+  await prompt.getByRole("button", { name: "Ignore" }).click();
+
+  await page.goto(link({ ...RELAY, urls: ["stun:turn.example"] }));
+  await expect(page.locator(".toast", { hasText: "relay link is not valid" })).toBeVisible();
+  expect(new URL(page.url()).hash).toBe("");
+  await expect(prompt).toHaveCount(0);
+});

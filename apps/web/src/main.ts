@@ -905,6 +905,18 @@ async function main(): Promise<void> {
   if (relayLink.kind === "config" && !framed) {
     openRelayPrompt(app, relayLink.config, savedRelay);
   }
+  // An invite link pasted into this open tab only changes the fragment:
+  // nothing reloads, so it is taken out and asked about here.
+  window.addEventListener("hashchange", () => {
+    const pasted = takeRelayLink();
+    if (pasted.kind === "malformed") {
+      toast(MALFORMED_RELAY_LINK_NOTICE);
+    } else if (pasted.kind === "config" && framed) {
+      toast(FRAMED_RELAY_LINK_NOTICE);
+    } else if (pasted.kind === "config") {
+      openRelayPrompt(app, pasted.config, loadTurnConfig());
+    }
+  });
 }
 
 main().catch((error: unknown) => {
