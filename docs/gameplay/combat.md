@@ -252,6 +252,7 @@ its target loses health to physical damage, every ally of the target
 adjacent to it takes 34 shadow damage; the target itself does not. A
 block, a blow armor takes to 0, fire or lightning, and degeneration do
 nothing, and two marked targets side by side never set each other off.
+The blow that kills the target still splashes, from where it fell.
 
 **Life steal** (Vampiric Gaze steals 52 at Blood Magic 12, Insidious
 Parasite 39) is not damage. The target loses up to that much, never more
@@ -880,7 +881,9 @@ than the other.
 A death ends every effect on the dead: conditions, hexes, enchantments,
 stances, shouts. Each ends as if removed, so what answers its ending
 fires, and a corpse wears nothing. A kill made by such an answer, as a
-Backfire's damage, ends them too but sets off nothing further.
+Backfire's damage, ends them too but sets off nothing further. The
+blow that kills still sets off what it answers on the dead, as a Mark of
+Pain splashing from the corpse.
 
 Kill credit is **team-level, not per-player**. Attributing a kill to a
 specific killer needs damage-source tracking that does not exist yet,

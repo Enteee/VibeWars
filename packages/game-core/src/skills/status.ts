@@ -339,14 +339,21 @@ export type TriggerEffect = SkillEffect | SpreadGainedConditionEffect;
  * What happened to a `StatusSet` that a trigger may answer (#887), in the
  * order it happened, until the simulation drains it: a condition newly on
  * the bearer, or a status gone from it, with who had applied it. Or
- * (#935) a hit the bearer landed, or physical damage it took, recorded
- * only while a status on it answers that.
+ * (#935) a hit the bearer landed, or physical damage it took, with the
+ * triggers on it that answered at that moment (#953): a killing blow ends
+ * them before the drain, and they still fire for it.
  */
 export type StatusChange =
   | { readonly kind: "gained-condition"; readonly id: StatusId; readonly durationSeconds: number }
   | { readonly kind: "ended"; readonly id: StatusId; readonly sourceId: string }
-  | { readonly kind: "hit" }
-  | { readonly kind: "took-physical-damage" };
+  | { readonly kind: "hit"; readonly fired: readonly AnsweringTrigger[] }
+  | { readonly kind: "took-physical-damage"; readonly fired: readonly AnsweringTrigger[] };
+
+/** A trigger on the bearer that answered an event, and who applied its status. */
+export interface AnsweringTrigger {
+  readonly sourceId: string;
+  readonly trigger: StatusTrigger;
+}
 
 /** A share of maximum health a status takes, at most `cap` (GW1's deep wound). */
 export interface MaxHealthLoss {
@@ -805,27 +812,30 @@ export class StatusSet {
     }
   }
 
-  /** The bearer landed a hit (#935), recorded only if a status on it answers one. */
+  /**
+   * The bearer landed a hit (#935), recorded only if a status on it
+   * answers one, with the triggers that do (#953).
+   */
   public recordHit(): void {
-    if (this.#answers("bearer-hits")) {
-      this.#changes.push({ kind: "hit" });
+    const fired = this.#answering("bearer-hits");
+    if (fired.length > 0) {
+      this.#changes.push({ kind: "hit", fired });
     }
   }
 
   /**
    * The bearer lost health to physical damage (#935), recorded only if a
-   * status on it answers that.
+   * status on it answers that, with the triggers that do (#953).
    */
   public recordPhysicalDamage(): void {
-    if (this.#answers("bearer-takes-physical-damage")) {
-      this.#changes.push({ kind: "took-physical-damage" });
+    const fired = this.#answering("bearer-takes-physical-damage");
+    if (fired.length > 0) {
+      this.#changes.push({ kind: "took-physical-damage", fired });
     }
   }
 
-  #answers(event: StatusTriggerEvent): boolean {
-    return this.active.some(({ id }) =>
-      getStatusDefinition(id).triggers.some((trigger) => trigger.on === event),
-    );
+  #answering(event: StatusTriggerEvent): AnsweringTrigger[] {
+    return this.triggersOn(event).map(({ sourceId, trigger }) => ({ sourceId, trigger }));
   }
 
   /** Record a condition newly on the bearer (#887); any other category is not one. */
