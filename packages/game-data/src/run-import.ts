@@ -88,6 +88,11 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Necromancer/258-Faintheartedness",
   },
   {
+    id: "necromancer.weaken-armor",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/275-Weaken_Armor",
+  },
+  {
     id: "necromancer.parasitic-bond",
     profession: "necromancer",
     url: "https://www.gw-memorial.net/skills/Necromancer/264-Parasitic_Bond",

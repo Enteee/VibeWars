@@ -32,6 +32,7 @@ export { resolveMagnitude, resolveMagnitudeAtRanks } from "./scaling.js";
 
 export type {
   ActiveStatus,
+  ArmorReduction,
   BlockRule,
   Outbreak,
   StatusCategory,
@@ -51,6 +52,7 @@ export {
 
 export {
   advanceStatuses,
+  armorReductionOf,
   attackMissChanceOf,
   blockChanceOf,
   effectiveActivationSeconds,

@@ -238,6 +238,13 @@ const status = {
   ],
   // Arrow down: you hit softer.
   weakness: ["condition", (c) => `<path d="M12 5v13M7 13l5 5 5-5" ${stroke(c, 2.5)}/>`],
+  // A shield split by a crack: your armor gives (#763).
+  "cracked-armor": [
+    "condition",
+    (c) =>
+      `<path d="M6.5 5.5h11v5.5c0 3.5-2.5 5.5-5.5 7.5-3-2-5.5-4-5.5-7.5z" fill="${c}"/>` +
+      `<path d="M12.5 5.5l-2 4 3 2-2.5 4" ${stroke(C.condition, 1.6)}/>`,
+  ],
   // Cross cut.
   "deep-wound": ["condition", (c) => `<path d="M7 7l10 10M17 7L7 17" ${stroke(c, 3)}/>`],
   // Five-point star: seeing stars.

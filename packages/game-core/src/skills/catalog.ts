@@ -303,6 +303,33 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     effects: [{ kind: "apply-status", statusId: "life-drain", durationSeconds: 13 }],
   },
   {
+    id: "necromancer.weaken-armor",
+    name: "Weaken Armor",
+    type: "spell",
+    elite: false,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 5 },
+    activationSeconds: 0.5,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    // "Target foe and foes adjacent to your target": the target, then
+    // every foe adjacent to it.
+    area: {
+      radius: AREA_ADJACENT,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "...have Cracked Armor for 5...17...20 seconds": 17 s, its rank-12 value.
+    effects: [{ kind: "apply-status", statusId: "cracked-armor", durationSeconds: 17 }],
+  },
+  {
     id: "necromancer.malaise",
     name: "Malaise",
     type: "hex",

@@ -44,6 +44,7 @@ describe("status definitions", () => {
         def.healthPips !== 0 ||
         def.energyPips !== 0 ||
         def.armorModifier !== 0 ||
+        def.armorReduction !== undefined ||
         def.moveSpeedMultiplier !== 1 ||
         def.attackMissChance !== 0 ||
         def.maxHealthMultiplier !== 1 ||

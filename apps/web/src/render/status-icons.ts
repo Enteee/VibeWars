@@ -26,6 +26,7 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   crippled: icon("crippled"),
   blind: icon("blind"),
   weakness: icon("weakness"),
+  "cracked-armor": icon("cracked-armor"),
   "deep-wound": icon("deep-wound"),
   dazed: icon("dazed"),
   disease: icon("disease"),
