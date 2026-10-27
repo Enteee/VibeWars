@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { unarmedResolvedEquipment, type ResolvedEquipment } from "../equipment/resolve.js";
-import { WEAPONS, type Weapon } from "../equipment/weapons.js";
+import { bareArmorSet } from "../equipment/armor.js";
+import { defaultEquipmentFor } from "../equipment/loadout.js";
+import {
+  resolveLoadout,
+  unarmedResolvedEquipment,
+  type ResolvedEquipment,
+} from "../equipment/resolve.js";
+import { WEAPONS, weaponDamageType, type Weapon } from "../equipment/weapons.js";
 import { createRng, type SimulationRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { vec2, type Vec2 } from "../vec2.js";
@@ -15,6 +21,8 @@ import {
   attackDurationSeconds,
   criticalChance,
   doubleStrikeChance,
+  landBlow,
+  PLAIN_BLOW,
   resolveAttackSkill,
   resolveSwing,
   swingProgress,
@@ -28,7 +36,12 @@ const RULES = MINIMAL_GW_INSPIRED_PVP_V1.combat;
 function wielding(weapon: Weapon, attributeId: string | undefined): ResolvedEquipment {
   return {
     ...unarmedResolvedEquipment(RULES.armorReferenceLevel),
-    mainHand: { weapon, attributeId, requirementMet: true },
+    mainHand: {
+      weapon,
+      attributeId,
+      damageType: weaponDamageType(weapon, attributeId),
+      requirementMet: true,
+    },
   };
 }
 
@@ -599,7 +612,7 @@ describe("block (#534)", () => {
         {
           kind: "damage",
           targetId: "t",
-          amount: mitigate(skillDamage(16, "typeless"), target, RULES),
+          amount: mitigate(skillDamage(16, "typeless", 0), target, RULES),
           critical: false,
         },
         { kind: "status-applied", targetId: "t", statusId: "deep-wound", durationSeconds: 20 },
@@ -876,7 +889,7 @@ describe("critical hits (#533)", () => {
   it("never crits a spell", () => {
     const target = makeCombatant({ id: "t", team: 1 });
     const events = applyEffect(
-      { kind: "damage", amount: { flat: 50 }, type: "typeless" },
+      { kind: "damage", amount: { flat: 50 }, type: "typeless", armorPenetration: 0 },
       { caster: makeCombatant({ id: "c" }), target, rng: fixed(0), rules: RULES },
     );
     expect(events).toEqual([{ kind: "damage", targetId: "t", amount: 50, critical: false }]);
@@ -1120,5 +1133,56 @@ describe("weakness (#762)", () => {
     // Over, and the next blow meets it again.
     nine.statuses.remove("weakness");
     expect(swingAt(nine)).toEqual([dealt(15 * weaponAttributeMultiplier(9, RULES), WEAPONS.sword)]);
+  });
+});
+
+describe("a caster weapon's element (#761)", () => {
+  const ROLL = 15;
+  const noCrit = (): SimulationRng =>
+    Object.assign(createRng(1), { nextInt: () => ROLL, nextFloat: () => 0.99 });
+
+  /** A Ranger in bare armor: 70, and +30 against elemental damage. */
+  function ranger(): Combatant {
+    const resolved = resolveLoadout(
+      {
+        primaryProfession: "ranger",
+        allocatedRanks: new Map(),
+        equipment: { ...defaultEquipmentFor("ranger"), offHand: null, armor: bareArmorSet() },
+      },
+      RULES,
+    );
+    return makeCombatant({ id: "ranger", team: 1, equipment: resolved.equipment });
+  }
+
+  /** What one wand bolt linked to `attributeId` does to a Ranger. */
+  function boltOnRanger(attributeId: string): number[] {
+    const events: CombatEvent[] = [];
+    const caster = attacker(WEAPONS.wand, attributeId);
+    landBlow(weaponSnapshotOf(caster), ranger(), PLAIN_BLOW, false, noCrit(), RULES, events);
+    return damages(events);
+  }
+
+  /** The same bolt against plain `armor`. */
+  const against = (armor: number): number =>
+    mitigate(
+      {
+        armored: ROLL * weaponAttributeMultiplier(12, RULES),
+        armorIgnoring: 0,
+        type: "typeless",
+        source: "weapon",
+        armorPenetration: 0,
+      },
+      makeCombatant({ id: "plain", equipment: unarmedResolvedEquipment(armor) }),
+      RULES,
+    );
+
+  it("a Fire Magic wand meets a Ranger's 100 armor, a Domination wand its 70", () => {
+    expect(boltOnRanger("elementalist.fire-magic")).toEqual([against(100)]);
+    expect(boltOnRanger("mesmer.domination-magic")).toEqual([against(70)]);
+    expect(against(100)).toBeLessThan(against(70));
+  });
+
+  it("a holy wand's bolt respects armor: #760's rule is for skill damage", () => {
+    expect(boltOnRanger("monk.smiting-prayers")).toEqual([against(70)]);
   });
 });

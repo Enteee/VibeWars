@@ -23,7 +23,7 @@ const APPLY_POISON = "ranger.apply-poison";
 function wielding(weapon: Weapon, attributeId: string): ResolvedEquipment {
   return {
     ...unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
-    mainHand: { weapon, attributeId, requirementMet: true },
+    mainHand: { weapon, attributeId, damageType: weapon.damageType, requirementMet: true },
   };
 }
 

@@ -61,6 +61,8 @@ export interface DamageEffect {
   readonly amount: Magnitude;
   /** GW1's type, which decides the typed armor that applies (#759). */
   readonly type: DamageType;
+  /** The share of the target's armor it ignores, 0..1: Lightning Orb's 0.25 (#761). */
+  readonly armorPenetration: number;
 }
 
 export interface HealEffect {

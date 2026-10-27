@@ -6,6 +6,7 @@ exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
   "elementalist.armor-of-earth": "defence",
   "elementalist.fireball": "",
   "elementalist.glyph-of-lesser-energy": "",
+  "elementalist.lightning-orb": "",
   "mesmer.drain-enchantment": "healing",
   "mesmer.power-drain": "interrupt",
   "mesmer.power-spike": "interrupt",

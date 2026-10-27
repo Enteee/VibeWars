@@ -67,7 +67,12 @@ describe("Expertise (#528)", () => {
       attributeRanks: new Map([["ranger.expertise", 12]]),
       equipment: {
         ...unarmedResolvedEquipment(MINIMAL_GW_INSPIRED_PVP_V1.combat.armorReferenceLevel),
-        mainHand: { weapon, attributeId: undefined, requirementMet: true },
+        mainHand: {
+          weapon,
+          attributeId: undefined,
+          damageType: weapon.damageType,
+          requirementMet: true,
+        },
       },
     });
     const foe = makeCombatant({ id: "f", team: 1 });

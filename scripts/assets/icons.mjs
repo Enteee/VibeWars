@@ -568,6 +568,10 @@ const skillGlyph = {
   fireball: () =>
     `<circle cx="15" cy="9" r="5" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
     inkLine("M10.5 12.5L4 19M9 8.5L3.5 11M14 14L11 20"),
+  // An orb with a bolt through it: the shot is the orb, the element the bolt.
+  "lightning-orb": () =>
+    `<circle cx="12" cy="12" r="8" ${stroke(C.ink, 2)}/>` +
+    inkLine("M13.5 5.5L9.5 12H14.5L10.5 18.5", 2),
   axe: () =>
     inkLine("M5 20L16 7", 2.4) + inkFill("M11 3.5C17 2.5 21.5 5 21 9C20.5 13 16.5 15 14 12.5Z"),
   sword: () =>

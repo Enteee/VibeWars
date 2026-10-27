@@ -258,7 +258,7 @@ function armedArena(played: TrainingScenario, seed: string, weapon: Weapon): Mat
         attributeRanks: new Map([[attributeId, 12]]),
         equipment: {
           ...unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
-          mainHand: { weapon, attributeId, requirementMet: true },
+          mainHand: { weapon, attributeId, damageType: weapon.damageType, requirementMet: true },
         },
         maxHealth: 1e6,
         spawn: map.playerSpawn,
@@ -888,6 +888,7 @@ describe("the area scenarios, headless (#111)", () => {
             mainHand: {
               weapon: WEAPONS.longbow,
               attributeId: "ranger.marksmanship",
+              damageType: WEAPONS.longbow.damageType,
               requirementMet: true,
             },
           },
