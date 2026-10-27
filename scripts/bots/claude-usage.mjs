@@ -1,6 +1,6 @@
 /**
  * How much Claude each role uses (#50), read from the session logs each
- * agent's Claude writes under `<boxes>/<role>/config/projects/`. The
+ * agent's Claude writes under `<boxes>/<employee>/config/projects/`. The
  * dashboard runs on the host, outside every jail, so it can read them all;
  * nothing here calls an API.
  *
@@ -19,6 +19,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { openJailDir } from "./jail-fs.mjs";
+import { roleOf } from "./staff.mjs";
 import { LIMIT_STATUSES, LIMIT_TYPES, oneOf } from "./stream-format.mjs";
 
 /** @typedef {import("./jail-fs.mjs").JailDir} JailDir */
@@ -41,8 +42,8 @@ export const WINDOW_MS = 5 * 60 * 60 * 1000;
  */
 
 /**
- * A reply as the reader keeps it: whose box it came from, and which
- * session (#833), `<project>/<session>`, the log file a session writes
+ * A reply as the reader keeps it: its employee's role, and which session
+ * (#833), `<employee>/<project>/<session>`, the log file a session writes
  * with its subagents' logs below `<project>/<session>/subagents/`.
  *
  * @typedef {UsageRecord & { role: string, session: string }} LoggedReply
@@ -106,20 +107,20 @@ export function parseUsageLine(line) {
 }
 
 /**
- * The session a log below `projects` belongs to, and whether it is a
- * subagent's (#833).
+ * The session a log belongs to, and whether it is a subagent's (#833).
  *
- * @param {string} rel the log's path below `projects`
+ * @param {string} key the log's cursor: `<employee>/` and its path below
+ *   `projects`
  * @returns {{ session: string, sidechain: boolean }}
  */
-export function sessionOf(rel) {
-  const parts = rel.split("/");
+export function sessionOf(key) {
+  const parts = key.split("/");
   return {
     session: parts
-      .slice(0, 2)
+      .slice(0, 3)
       .join("/")
       .replace(/\.jsonl$/, ""),
-    sidechain: parts.length > 2,
+    sidechain: parts.length > 3,
   };
 }
 
@@ -347,11 +348,12 @@ export function burnOf(records, now) {
 export const CHUNK_BYTES = 4 * 1024 * 1024;
 
 /**
- * The most bytes read from one role's logs in one refresh, however many it
- * has. The logs least recently read go first, so a jail planting thousands
- * of logs slows only its own row, and its real log still gets its turn.
+ * The most bytes read from one employee's logs in one refresh, however many
+ * it has. The logs least recently read go first, so a jail planting
+ * thousands of logs slows only itself, and its real log still gets its
+ * turn; a busy employee never starves another of the same role.
  */
-export const ROLE_BYTES = 16 * 1024 * 1024;
+export const BOX_BYTES = 16 * 1024 * 1024;
 
 /** A line longer than this is no reply worth counting; it is skipped. */
 export const MAX_LINE_BYTES = 1024 * 1024;
@@ -359,7 +361,7 @@ export const MAX_LINE_BYTES = 1024 * 1024;
 /** Deep enough for `<project>/<session>/subagents/<agent>.jsonl`. */
 const MAX_DEPTH = 4;
 
-/** Entries looked at per role and refresh, so a million empty dirs cost little. */
+/** Entries looked at per employee and refresh, so a million empty dirs cost little. */
 const MAX_ENTRIES = 20_000;
 
 /**
@@ -387,13 +389,13 @@ const { O_NOFOLLOW, O_NONBLOCK, O_RDONLY } = fs.constants;
  */
 
 /**
- * Every `.jsonl` below `<boxes>/<role>/config/projects`, at most
+ * Every `.jsonl` below `<boxes>/<employee>/config/projects`, at most
  * `MAX_DEPTH` deep, so subagents' logs count too. That tree is the jail's
  * (#329): each directory is opened refusing a symlink and pinned by its
  * descriptor, and one that cannot be opened or listed is skipped, not the
- * role.
+ * employee.
  *
- * @param {string} config the role's `config`, which the jail cannot replace
+ * @param {string} config the employee's `config`, which the jail cannot replace
  * @param {(dir: JailDir, name: string, rel: string) => void} visit called
  *   with each log's directory, name, and path below `projects`
  */
@@ -450,14 +452,45 @@ function walkLogs(config, visit) {
 }
 
 /**
- * Reads each role's logs as they grow: only the bytes appended since the
- * last read, and only replies new enough to matter, so a refresh stays
- * cheap however long the company has run.
+ * The employees with a box: each directory in `boxes` named for an
+ * employee of one of `roles`, sorted. Read from the directory, not from
+ * staff, so an employee fired today still counts what they spent.
  *
- * @param {string} boxes the directory holding each role's `<role>/config`
+ * @param {string} boxes
+ * @param {ReadonlySet<string>} roles
+ * @returns {{ employee: string, role: string }[]}
+ */
+function employeesIn(boxes, roles) {
+  /** @type {fs.Dirent[]} */
+  let entries;
+  try {
+    entries = fs.readdirSync(boxes, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+  /** @type {{ employee: string, role: string }[]} */
+  const employees = [];
+  for (const entry of entries) {
+    // A Dirent of a symlink is no directory: only real ones count.
+    const role = entry.isDirectory() ? roleOf(entry.name) : null;
+    if (role !== null && roles.has(role)) {
+      employees.push({ employee: entry.name, role });
+    }
+  }
+  return employees.sort((a, b) => (a.employee < b.employee ? -1 : 1));
+}
+
+/**
+ * Reads each employee's logs as they grow, counted under their role: only
+ * the bytes appended since the last read, and only replies new enough to
+ * matter, so a refresh stays cheap however long the company has run.
+ *
+ * @param {string} boxes the directory holding each employee's
+ *   `<employee>/config`
  * @param {readonly string[]} roles
  */
 export function createUsageReader(boxes, roles) {
+  const wanted = new Set(roles);
   /** @type {Map<string, Cursor>} */
   const cursors = new Map();
   /** @type {Map<string, LoggedReply>} */
@@ -471,9 +504,9 @@ export function createUsageReader(boxes, roles) {
   /**
    * @param {UsageRecord} record
    * @param {string} role
-   * @param {string} rel the log's path below `projects`
+   * @param {string} key the log's cursor
    */
-  function keep(record, role, rel) {
+  function keep(record, role, key) {
     const old = kept.get(record.id);
     if (old?.role !== role) {
       if ((keptBy.get(role) ?? 0) >= MAX_KEPT) {
@@ -485,7 +518,7 @@ export function createUsageReader(boxes, roles) {
       }
       keptBy.set(role, (keptBy.get(role) ?? 0) + 1);
     }
-    const { session, sidechain } = sessionOf(rel);
+    const { session, sidechain } = sessionOf(key);
     kept.set(record.id, { ...record, sidechain: record.sidechain || sidechain, role, session });
   }
 
@@ -524,12 +557,11 @@ export function createUsageReader(boxes, roles) {
    * @param {string} name
    * @param {string} key the file's cursor
    * @param {string} role
-   * @param {string} rel the log's path below `projects`
    * @param {number} since replies before this are not kept
    * @param {number} now replies dated past this, give or take, are not kept
    * @param {number} allowance
    */
-  function readFile(dir, name, key, role, rel, since, now, allowance) {
+  function readFile(dir, name, key, role, since, now, allowance) {
     /** @type {number} */
     let fd;
     try {
@@ -576,7 +608,7 @@ export function createUsageReader(boxes, roles) {
           .split("\n")) {
           const record = line === "" ? null : parseUsageLine(line);
           if (record !== null && record.ts >= since && record.ts <= now + MAX_SKEW_MS) {
-            keep(record, role, rel);
+            keep(record, role, key);
           }
         }
         used = end + 1;
@@ -613,14 +645,14 @@ export function createUsageReader(boxes, roles) {
       /** @type {Set<string>} */
       const seen = new Set();
       let more = false;
-      for (const role of roles) {
-        const config = path.join(boxes, role, "config");
+      for (const { employee, role } of employeesIn(boxes, wanted)) {
+        const config = path.join(boxes, employee, "config");
         // Once to see what each log has unread, once to read the logs
         // whose turn it is: the walk keeps no descriptor between them.
         /** @type {{ key: string, bytes: number, served: number }[]} */
         const pending = [];
         walkLogs(config, (dir, name, rel) => {
-          const key = `${role}/${rel}`;
+          const key = `${employee}/${rel}`;
           seen.add(key);
           const left = unread(dir, name, key, since);
           const bytes = Math.min(left, CHUNK_BYTES);
@@ -631,7 +663,7 @@ export function createUsageReader(boxes, roles) {
         });
         /** @type {Map<string, number>} */
         const allowed = new Map();
-        let budget = ROLE_BYTES;
+        let budget = BOX_BYTES;
         for (const { key, bytes } of pending.sort((a, b) => a.served - b.served)) {
           if (bytes > budget) {
             more = true;
@@ -642,10 +674,10 @@ export function createUsageReader(boxes, roles) {
         }
         if (allowed.size > 0) {
           walkLogs(config, (dir, name, rel) => {
-            const key = `${role}/${rel}`;
+            const key = `${employee}/${rel}`;
             const allowance = allowed.get(key);
             if (allowance !== undefined) {
-              readFile(dir, name, key, role, rel, since, now, allowance);
+              readFile(dir, name, key, role, since, now, allowance);
             }
           });
         }

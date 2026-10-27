@@ -177,7 +177,8 @@ export function modelCost({ P, R, g, w }, ceiling) {
 
 /**
  * Each role's sessions that started at or after `since`, each reply once.
- * A role's employees (`developer`, `developer@2`) are one role.
+ * A role's employees (`developer`, `developer@2`) are one role, as the
+ * reader counts them.
  *
  * @param {readonly LoggedReply[]} records
  * @param {number} since epoch milliseconds
@@ -192,10 +193,9 @@ export function sessionsByRole(records, since) {
   /** @type {Map<string, { role: string, replies: LoggedReply[] }>} */
   const sessions = new Map();
   for (const reply of replies.values()) {
-    const key = `${reply.role}/${reply.session}`;
-    const session = sessions.get(key) ?? { role: reply.role.split("@")[0] ?? "", replies: [] };
+    const session = sessions.get(reply.session) ?? { role: reply.role, replies: [] };
     session.replies.push(reply);
-    sessions.set(key, session);
+    sessions.set(reply.session, session);
   }
   /** @type {Map<string, LoggedReply[][]>} */
   const roles = new Map();
@@ -357,23 +357,6 @@ export function parseSince(text) {
 }
 
 /**
- * The boxes of the roster's roles and their employees, `<role>@<n>`.
- *
- * @param {string} boxes
- * @returns {string[]}
- */
-function employeesIn(boxes) {
-  try {
-    return fs
-      .readdirSync(boxes)
-      .filter((name) => ROLES.includes(name.replace(/@\d+$/, "")))
-      .sort();
-  } catch {
-    return [];
-  }
-}
-
-/**
  * @param {readonly string[]} argv
  * @returns {number} the exit code
  */
@@ -400,7 +383,7 @@ function main(argv) {
   }
   const now = Date.now();
   const since = now - sinceMs;
-  const reader = createUsageReader(boxes, employeesIn(boxes));
+  const reader = createUsageReader(boxes, ROLES);
   let read = reader.read(since - LOOKBACK_MS, now);
   for (let i = 1; read?.pending === true && i < MAX_REFRESHES; i++) {
     read = reader.read(since - LOOKBACK_MS, now);

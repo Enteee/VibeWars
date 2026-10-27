@@ -40,7 +40,7 @@ const T0 = Date.parse("2026-10-27T00:00:00Z");
 function reply(
   i,
   context,
-  { sidechain = false, output = 100, role = "developer", session = "p/s" } = {},
+  { sidechain = false, output = 100, role = "developer", session = "developer/p/s" } = {},
 ) {
   return {
     id: `${role}/${session}/${sidechain ? "sub" : "main"}${String(i)}`,
@@ -122,19 +122,21 @@ describe("bestCeiling and modelCost", () => {
 describe("sessionsByRole and roleReport", () => {
   it("groups by session, a role's employees together, and leaves out sessions begun before since", () => {
     const records = [
-      ...session(20, { session: "p/a" }),
-      ...session(20, { role: "developer@2", session: "p/a" }),
-      ...session(20, { role: "qa-tester", session: "p/b" }),
+      ...session(20, { session: "developer/p/a" }),
+      ...session(20, { session: "developer@2/p/a" }),
+      ...session(20, { role: "qa-tester", session: "qa-tester/p/b" }),
     ];
-    const early = session(20, { session: "p/old" }).map((r) => ({ ...r, ts: r.ts - 60_000 }));
+    const early = session(20, { session: "developer/p/old" }).map((r) => ({
+      ...r,
+      ts: r.ts - 10_000,
+    }));
     const roles = sessionsByRole([...records, ...early, ...records], T0);
     expect(roles.get("developer")).toHaveLength(2);
     expect(roles.get("qa-tester")).toHaveLength(1);
-    expect(roles.get("developer@2")).toBeUndefined();
   });
 
   it("counts short sessions but leaves them out of the model", () => {
-    const report = roleReport([session(20), session(5, { session: "p/short" })]);
+    const report = roleReport([session(20), session(5, { session: "developer/p/short" })]);
     expect(report).toMatchObject({ sessions: 2, short: 1, callsPerSession: 12.5 });
     expect(report.model).toMatchObject({ P: 40_000, g: 1000, w: CACHE_READ_WEIGHT });
   });
@@ -147,7 +149,7 @@ describe("sessionsByRole and roleReport", () => {
 describe("formatReport", () => {
   it("prints a row per role, says no sessions, and how many were left out", () => {
     const lines = formatReport(
-      new Map([["developer", [session(20), session(5, { session: "p/short" })]]]),
+      new Map([["developer", [session(20), session(5, { session: "developer/p/short" })]]]),
       ["developer", "qa-tester"],
     );
     expect(lines[1]).toMatch(/^developer\s+2\s+1\s+13\s+40\.0k\s+1\.0k\s+\S+\s+\S+\s+100% → \d+%$/);

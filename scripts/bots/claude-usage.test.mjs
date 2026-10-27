@@ -15,7 +15,7 @@ import {
   CHUNK_BYTES,
   MAX_KEPT,
   MAX_LINE_BYTES,
-  ROLE_BYTES,
+  BOX_BYTES,
   burnOf,
   createUsageReader,
   formatCount,
@@ -341,6 +341,72 @@ describe("createUsageReader", () => {
     expect([...(read?.capped ?? [])]).toEqual(["manager"]);
   });
 
+  /**
+   * A log in `<boxes>/<employee>`, holding `lines`.
+   *
+   * @param {string} employee
+   * @param {string} lines
+   * @param {string} [name]
+   */
+  const logOf = (employee, lines, name = "s.jsonl") => {
+    const file = path.join(boxes, employee, "config", "projects", "-p", name);
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, lines);
+    return file;
+  };
+
+  it("counts every employee of a role under the role (#842)", () => {
+    logOf("developer", `${reply("d1", now)}\n`);
+    logOf("developer@2", `${reply("d2", now)}\n`);
+    const reader = createUsageReader(boxes, ["manager", "developer"]);
+    expect(ids(reader)).toEqual(["developer:d1", "developer:d2"]);
+    // Hired while it runs: read on the next refresh.
+    logOf("developer@3", `${reply("d3", now)}\n`);
+    expect(ids(reader)).toEqual(["developer:d1", "developer:d2", "developer:d3"]);
+  });
+
+  it("reads no box that is a symlink, names no employee, or is a file (#842)", () => {
+    const outside = fs.mkdtempSync(path.join(os.tmpdir(), "claude-usage-host-"));
+    try {
+      const real = path.join(outside, "config", "projects", "-p");
+      fs.mkdirSync(real, { recursive: true });
+      fs.writeFileSync(path.join(real, "s.jsonl"), `${reply("linked", now)}\n`);
+      fs.symlinkSync(outside, path.join(boxes, "developer@3"));
+      logOf("developer@1", `${reply("one", now)}\n`);
+      logOf("Developer", `${reply("capital", now)}\n`);
+      logOf("notarole", `${reply("stranger", now)}\n`);
+      fs.writeFileSync(path.join(boxes, "developer@4"), `${reply("file", now)}\n`);
+      logOf("developer", `${reply("d1", now)}\n`);
+      expect(ids(createUsageReader(boxes, ["developer"]))).toEqual(["developer:d1"]);
+    } finally {
+      fs.rmSync(outside, { recursive: true, force: true });
+    }
+  });
+
+  it("gives each employee its own read budget, so a busy one starves no other (#842)", () => {
+    for (let i = 0; i < 12; i++) {
+      fs.truncateSync(logOf("developer", "", `sparse-${String(i)}.jsonl`), 4 * MAX_LINE_BYTES);
+    }
+    logOf("developer@2", `${reply("d2", now)}\n`);
+    expect(ids(createUsageReader(boxes, ["developer"]))).toEqual(["developer:d2"]);
+  });
+
+  it("caps a role's replies across its employees, not each employee's (#842)", () => {
+    logOf(
+      "developer",
+      Array.from({ length: MAX_KEPT }, (_, i) => `${reply(`d${String(i)}`, now)}\n`).join(""),
+    );
+    logOf("developer@2", `${reply("over", now)}\n`);
+    const reader = createUsageReader(boxes, ["developer"]);
+    /** @type {ReturnType<ReturnType<typeof createUsageReader>["read"]>} */
+    let read = null;
+    for (let i = 0; i < 4; i++) {
+      read = reader.read(now - WINDOW, now);
+    }
+    expect(read?.records).toHaveLength(MAX_KEPT);
+    expect([...(read?.capped ?? [])]).toEqual(["developer"]);
+  });
+
   it("forgets replies older than it was asked for", () => {
     const reader = createUsageReader(boxes, ["manager"]);
     fs.writeFileSync(log, `${reply("old", now - WINDOW - HOUR)}\n${reply("new", now)}\n`);
@@ -358,8 +424,22 @@ describe("createUsageReader", () => {
         .map(({ id, session, sidechain }) => ({ id, session, sidechain }))
         .sort((a, b) => a.id.localeCompare(b.id)),
     ).toEqual([
-      { id: "a1", session: "-some-project/session", sidechain: true },
-      { id: "m1", session: "-some-project/session", sidechain: false },
+      { id: "a1", session: "manager/-some-project/session", sidechain: true },
+      { id: "m1", session: "manager/-some-project/session", sidechain: false },
+    ]);
+  });
+
+  it("keeps two employees' sessions of the same name apart (#833)", () => {
+    logOf("developer", `${reply("d1", now)}\n`);
+    logOf("developer@2", `${reply("d2", now)}\n`);
+    const records = createUsageReader(boxes, ["developer"]).read(now - WINDOW, now)?.records ?? [];
+    expect(
+      records
+        .map(({ role, session }) => ({ role, session }))
+        .sort((a, b) => (a.session < b.session ? -1 : 1)),
+    ).toEqual([
+      { role: "developer", session: "developer/-p/s" },
+      { role: "developer", session: "developer@2/-p/s" },
     ]);
   });
 
@@ -449,7 +529,7 @@ describe("createUsageReader, on a tree the jail controls (#329)", () => {
     expect(ids(reader)).toEqual(["manager:after"]);
   });
 
-  it("reads at most ROLE_BYTES of a role per refresh, and its real log still gets a turn", () => {
+  it("reads at most BOX_BYTES of an employee per refresh, and its real log still gets a turn", () => {
     for (let i = 0; i < 12; i++) {
       const sparse = path.join(projects, "-some-project", `sparse-${String(i)}.jsonl`);
       fs.writeFileSync(sparse, "");
@@ -469,11 +549,11 @@ describe("createUsageReader, on a tree the jail controls (#329)", () => {
           (sum, result) => sum + (typeof result.value === "number" ? result.value : 0),
           0,
         );
-        expect(bytes).toBeLessThanOrEqual(ROLE_BYTES);
+        expect(bytes).toBeLessThanOrEqual(BOX_BYTES);
         total += bytes;
       }
       // The spy saw the sparse logs being read, over several refreshes.
-      expect(total).toBeGreaterThan(ROLE_BYTES);
+      expect(total).toBeGreaterThan(BOX_BYTES);
       expect(seen.at(-1)).toEqual(["manager:m1"]);
     } finally {
       readSync.mockRestore();

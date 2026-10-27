@@ -10,7 +10,7 @@ import { startSoloMatch } from "./helpers/peers.js";
 
 test("a sound effects volume of 0 set in Options is kept after a reload", async ({ page }) => {
   await page.goto("./");
-  await page.getByRole("button", { name: "options" }).click();
+  await page.locator("#screens").getByRole("button", { name: "options" }).click();
   // Sound is the first section, so Options opens on it.
   await expect(page.locator('.options-entry[data-section="sound"]')).toHaveClass(/is-selected/);
   const sfx = page.locator(".sound-sfx-volume input");
@@ -19,7 +19,7 @@ test("a sound effects volume of 0 set in Options is kept after a reload", async 
   await expect(page.locator(".sound-sfx-volume .sound-volume-readout")).toHaveText("0 %");
 
   await page.reload();
-  await page.getByRole("button", { name: "options" }).click();
+  await page.locator("#screens").getByRole("button", { name: "options" }).click();
   await expect(page.locator(".sound-sfx-volume input")).toHaveValue("0");
 });
 
@@ -27,7 +27,7 @@ test("music muted in Options shows muted in the HUD popover, and mute all follow
   page,
 }) => {
   await page.goto("./");
-  await page.getByRole("button", { name: "options" }).click();
+  await page.locator("#screens").getByRole("button", { name: "options" }).click();
   await page.getByLabel("Mute music").check();
   await page.getByRole("button", { name: "Back", exact: true }).click();
 
@@ -47,4 +47,20 @@ test("music muted in Options shows muted in the HUD popover, and mute all follow
   await expect(popover.getByLabel("Mute all")).toBeChecked();
   await popover.getByLabel("Mute all").uncheck();
   await expect(page.locator(".hud-mute")).toHaveAttribute("aria-pressed", "false");
+});
+
+test("the top bar's mute and the HUD's are one setting (#454)", async ({ page }) => {
+  await page.goto("./");
+  const barMute = page.locator(".topbar-mute");
+  await expect(barMute).toHaveAttribute("aria-pressed", "false");
+  await barMute.click();
+  await expect(barMute).toHaveAttribute("aria-pressed", "true");
+
+  await startSoloMatch(page);
+  await expect(page.locator("#topbar")).toBeHidden();
+  const hudMute = page.locator(".hud-mute");
+  await expect(hudMute).toHaveAttribute("aria-pressed", "true");
+  await hudMute.click();
+  await expect(hudMute).toHaveAttribute("aria-pressed", "false");
+  await expect(barMute).toHaveAttribute("aria-pressed", "false");
 });

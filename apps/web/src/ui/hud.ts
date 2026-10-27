@@ -23,12 +23,14 @@ import {
   attackingIcon,
   isEliteSkill,
   professionIcon,
+  settingsIcon,
   skillBadgeHtml,
   skillIcon,
   skillIconHtml,
   soundIcon,
   weaponIcon,
 } from "./icons.js";
+import { iconButton } from "./kit.js";
 import { energyLabel, overcastBandElement, renderOvercastBand } from "./overcast-band.js";
 import { pipsElement, renderPips } from "./pips.js";
 import { paintRecharge, prefersReducedMotion } from "./recharge-overlay.js";
@@ -108,12 +110,18 @@ export interface HudElements {
   readonly attacking: HTMLElement;
   readonly scoreboard: HTMLElement;
   readonly result: HTMLElement;
+  /** The match's buttons, top right, as one cluster (#454): the five below. */
+  readonly controls: HTMLElement;
   /** Sound on or off (#112); `renderMute` keeps it showing which. */
   readonly mute: HTMLButtonElement;
   /** Opens the jukebox (#372), showing whether the music is muted. */
   readonly music: HTMLButtonElement;
   /** Leave the match, after a yes (#160): Esc cancels an attack now. */
   readonly leave: HTMLElement;
+  /** Opens Options over the running match (#454). */
+  readonly options: HTMLButtonElement;
+  /** Fullscreen on and off (#454). */
+  readonly fullscreen: HTMLButtonElement;
 }
 
 function element(tag: string, className: string, parent: HTMLElement): HTMLElement {
@@ -174,20 +182,18 @@ export function createHud(parent: HTMLElement): HudElements {
   const scoreboard = element("div", "hud-scoreboard", parent);
   const result = element("div", "hud-result", parent);
   result.style.display = "none";
-  const mute = document.createElement("button");
-  mute.type = "button";
-  mute.className = "hud-mute";
-  mute.appendChild(document.createElement("img")).alt = "";
-  parent.appendChild(mute);
-  const music = document.createElement("button");
-  music.type = "button";
-  music.className = "hud-music";
-  music.setAttribute("aria-label", "Music");
+  // One cluster, top right (#454): leave and mute on top, Options,
+  // fullscreen and music under them.
+  const controls = element("div", "hud-controls", parent);
+  const controlsTop = element("div", "hud-controls-row", controls);
+  const leave = element("div", "hud-leave", controlsTop);
+  const mute = controlsTop.appendChild(iconButton("hud-mute", "Mute sounds"));
+  const controlsUnder = element("div", "hud-controls-row", controls);
+  const options = controlsUnder.appendChild(iconButton("hud-options", "Options", settingsIcon()));
+  options.setAttribute("aria-haspopup", "dialog");
+  const fullscreen = controlsUnder.appendChild(iconButton("hud-fullscreen", "Fullscreen"));
+  const music = controlsUnder.appendChild(iconButton("hud-music", "Music"));
   music.setAttribute("aria-haspopup", "dialog");
-  music.title = "Music";
-  music.appendChild(document.createElement("img")).alt = "";
-  parent.appendChild(music);
-  const leave = element("div", "hud-leave", parent);
 
   // Three rows (#484): who, how hurt, and what they are casting. The cast
   // row keeps its space when empty, so the HUD never jumps.
@@ -275,9 +281,12 @@ export function createHud(parent: HTMLElement): HudElements {
     attacking,
     scoreboard,
     result,
+    controls,
     mute,
     music,
     leave,
+    options,
+    fullscreen,
   };
 }
 
@@ -301,14 +310,19 @@ export function muteButtonState(muted: boolean): {
 }
 
 export function renderMute(hud: HudElements, muted: boolean): void {
+  paintMuteButton(hud.mute, muted);
+}
+
+/** Any mute-all button, the HUD's or the top bar's (#454), as `muteButtonState` says. */
+export function paintMuteButton(button: HTMLButtonElement, muted: boolean): void {
   const state = muteButtonState(muted);
-  const icon = hud.mute.querySelector("img");
+  const icon = button.querySelector("img");
   if (icon !== null) {
     icon.src = state.icon;
   }
-  hud.mute.setAttribute("aria-label", state.label);
-  hud.mute.setAttribute("aria-pressed", state.pressed);
-  hud.mute.title = state.title;
+  button.setAttribute("aria-label", state.label);
+  button.setAttribute("aria-pressed", state.pressed);
+  button.title = state.title;
 }
 
 /**
@@ -327,6 +341,7 @@ const REFUSALS: Readonly<Record<ActivationRejection, string>> = {
   "insufficient-adrenaline": "Not enough adrenaline.",
   "no-target": "Select a target first.",
   "invalid-target-dead": "Your target is dead.",
+  "invalid-target-alive": "That ally is alive.",
   "invalid-target-self": "You cannot target yourself with that.",
   "invalid-target-ally": "That skill needs an enemy target.",
   "invalid-target-enemy": "That skill needs an ally target.",

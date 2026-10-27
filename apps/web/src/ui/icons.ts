@@ -154,3 +154,13 @@ export function attackingIcon(): string {
 export function musicIcon(muted: boolean): string {
   return iconUrl("ui", muted ? "music-off" : "music-on");
 }
+
+/** The ⚙ that opens Options (#454), in the top bar and the HUD. */
+export function settingsIcon(): string {
+  return iconUrl("ui", "settings");
+}
+
+/** The fullscreen toggle (#454): what the window is now, not what a click does. */
+export function fullscreenIcon(fullscreen: boolean): string {
+  return iconUrl("ui", fullscreen ? "fullscreen-exit" : "fullscreen");
+}
