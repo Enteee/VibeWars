@@ -13,6 +13,7 @@ import {
 } from "./status.js";
 import { nearestFirst } from "./targeting.js";
 import { effectiveMaxHealth, healingMultiplierOf, maxHealthLossOf, rankOf } from "./tick.js";
+import { wieldsFor } from "../equipment/weapons.js";
 import { distance } from "../vec2.js";
 import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
@@ -782,6 +783,8 @@ function isStateCondition(condition: EffectCondition): condition is StateConditi
     case "target-alone":
     case "target-not-moving":
     case "caster-more-energy":
+    case "caster-wields":
+    case "target-less-health":
       return true;
   }
 }
@@ -827,6 +830,10 @@ export function stateHolds(
       return !target.moving;
     case "caster-more-energy":
       return caster.energy > target.energy;
+    case "caster-wields":
+      return wieldsFor(caster.equipment.mainHand.weapon.id, condition.weapon);
+    case "target-less-health":
+      return target.health < caster.health;
   }
 }
 
@@ -938,6 +945,8 @@ function conditionHolds(
     case "target-alone":
     case "target-not-moving":
     case "caster-more-energy":
+    case "caster-wields":
+    case "target-less-health":
       return held.has(condition);
   }
 }

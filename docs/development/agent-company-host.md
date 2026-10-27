@@ -100,6 +100,14 @@ its session on that server and switches your client to it, rather than
 nesting an attach. Run without a terminal, from a Claude Code prompt say,
 it brings the company up and tells you to attach with `claude-llc`.
 
+## Pinning the commit the company runs
+
+`claude-llc up` starts only the commit in `.bots/company.lock` (ADR-0033):
+the checkout's HEAD must equal it, be clean, and be on GitHub's `main`. Run
+`claude-llc lock` once to pin the current HEAD, and again after you move the
+checkout yourself. A reboot moves the lock on its own, onto a `main` that
+built. Until the first lock exists, `up` refuses and says so.
+
 ## Scaling the company by hand
 
 `claude-llc hire <role> [reason]` and `claude-llc fire <employee> [reason]`

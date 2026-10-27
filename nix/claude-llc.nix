@@ -86,6 +86,7 @@ let
       claude-llc reboot --abort  cancel a reboot the manager scheduled
       claude-llc hire <role> [reason] [--over-cap]  hire by hand: no cooldowns, --over-cap passes maxAgents
       claude-llc fire <employee> [reason]           fire by hand: no cooldowns
+      claude-llc lock         pin the checkout's HEAD as the commit the company runs (company.lock, #897)
       claude-llc --help
 
     One tmux window per role (a pane per employee) plus a dashboard. The session opens on the
@@ -313,6 +314,10 @@ let
             fi
             exit 0
             ;;
+          lock)
+            # The operator's pin (#897): the same checks as `up`, and a build.
+            exec ${node} ${llcScripts}/company-lock.mjs lock
+            ;;
           stop)
             # Before the session goes: the supervisor must not restart the
             # manager into a company being stopped (#384).
@@ -400,6 +405,11 @@ let
         # from then on the company starts who staff.json employs, and the
         # manager hires and fires.
         # ------------------------------------------------------------------------
+        # The company runs one pinned commit (#897, ADR-0033): refuse to start
+        # on anything else. A running session was joined above; nothing is
+        # started past this point without the lock holding.
+        ${node} ${llcScripts}/company-lock.mjs check || exit 1
+
         seed="''${CLAUDE_LLC_ROLES:-${lib.concatStringsSep " " roles}}"
         for role in $seed; do
           case " ${lib.concatStringsSep " " roles} " in

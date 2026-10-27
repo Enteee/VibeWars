@@ -221,8 +221,13 @@ export function describeStatus(id: string): string {
     const plural = definition.endsAfterAttacks === 1 ? "" : "s";
     parts.push(`ends after ${String(definition.endsAfterAttacks)} incoming attack${plural}`);
   }
-  for (const effect of definition.onAttackHit) {
+  for (const effect of definition.onAttackHit?.effects ?? []) {
     parts.push(...describeAttackHit(effect));
+  }
+  if (definition.endsAfterHits !== undefined) {
+    const { count, weapon } = definition.endsAfterHits;
+    const plural = count === 1 ? "" : "s";
+    parts.push(`ends after ${String(count)} hit${plural} with ${NEEDED_WEAPON[weapon]}`);
   }
   if (definition.nextSpells !== undefined) {
     const { count, costReduction } = definition.nextSpells;
@@ -370,7 +375,7 @@ function lowerFirst(text: string): string {
 
 /** "a hex", "an enchantment". */
 function aCategory(category: StatusCategory): string {
-  return `${category === "enchantment" ? "an" : "a"} ${category}`;
+  return `${category === "enchantment" ? "an" : "a"} ${category.replace("-", " ")}`;
 }
 
 /** What an `if` waits for, as the line it leads says it (#521, #794). */
@@ -400,6 +405,10 @@ function conditionText(condition: EffectCondition): string {
       return "If target is not moving";
     case "caster-more-energy":
       return "If you have more Energy than target";
+    case "caster-wields":
+      return `If you wield ${NEEDED_WEAPON[condition.weapon]}`;
+    case "target-less-health":
+      return "If target has less Health than you";
   }
 }
 

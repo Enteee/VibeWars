@@ -37,3 +37,4 @@ rewriting history.
 | [0030](0030-screens-mount-once.md)            | Screens mount once and update in place                          |
 | [0031](0031-company-credentials.md)           | The company authenticates as itself                             |
 | [0032](0032-random-arena-queue.md)            | Strangers meet in unranked play through a ticket queue on Nostr |
+| [0033](0033-company-commit-lock.md)           | A host-only lock pins the commit the company runs               |
