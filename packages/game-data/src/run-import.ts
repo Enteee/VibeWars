@@ -347,6 +347,21 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     profession: "dervish",
     url: "https://www.gw-memorial.net/skills/Dervish/1052-Pious_Restoration",
   },
+  {
+    id: "warrior.frenzy",
+    profession: "warrior",
+    url: "https://www.gw-memorial.net/skills/Warrior/73-Frenzy",
+  },
+  {
+    id: "assassin.dark-escape",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/688-Dark_Escape",
+  },
+  {
+    id: "ranger.natural-stride",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/826-Natural_Stride",
+  },
 ];
 
 function packageRoot(): string {

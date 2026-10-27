@@ -231,10 +231,33 @@ export function describeStatus(id: string): string {
   if (definition.endsWhenBearerAttacks) {
     parts.push("ends if the bearer attacks");
   }
+  if (definition.damageTakenMultiplier !== 1) {
+    parts.push(`takes ${damageTaken(definition.damageTakenMultiplier)} damage`);
+  }
+  if (definition.endsWhenBearerHits) {
+    parts.push("ends if the bearer hits with an attack");
+  }
+  if (definition.endsWhenBearerGains.length > 0) {
+    const gained = definition.endsWhenBearerGains.map((category) =>
+      category === "hex" ? "hexed" : "enchanted",
+    );
+    parts.push(`ends if the bearer becomes ${gained.join(" or ")}`);
+  }
   for (const trigger of definition.triggers) {
     parts.push(...describeTrigger(trigger));
   }
   return parts.length === 0 ? definition.name : parts.join(", ");
+}
+
+/** GW1's words for a damage-taken multiplier (#919): "double", "half", or "1.5×". */
+function damageTaken(multiplier: number): string {
+  if (multiplier === 2) {
+    return "double";
+  }
+  if (multiplier === 0.5) {
+    return "half";
+  }
+  return `${String(multiplier)}×`;
 }
 
 /** A preparation's rider (#525), as its tooltip says it: "your attacks …". */
