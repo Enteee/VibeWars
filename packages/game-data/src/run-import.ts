@@ -518,6 +518,26 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Elementalist/424-Meteor",
   },
   {
+    id: "elementalist.water-trident",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/447-Water_Trident",
+  },
+  {
+    id: "elementalist.searing-flames",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/930-Searing_Flames",
+  },
+  {
+    id: "elementalist.ebon-hawk",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/915-Ebon_Hawk",
+  },
+  {
+    id: "elementalist.stoning",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/406-Stoning",
+  },
+  {
     id: "elementalist.lightning-strike",
     profession: "elementalist",
     url: "https://www.gw-memorial.net/skills/Elementalist/385-Lightning_Strike",

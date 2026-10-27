@@ -122,6 +122,11 @@ export const SKILL_ICONS = {
   "elementalist.shock": { glyph: "lightning", modifier: "stun" },
   "elementalist.aftershock": { glyph: "mountain", modifier: "down" },
   "elementalist.meteor": { glyph: "fireball", modifier: "stun" },
+  // Placeholders until asset-designer's icons (#997).
+  "elementalist.water-trident": { glyph: "spear", modifier: "stun" },
+  "elementalist.searing-flames": { glyph: "flame" },
+  "elementalist.ebon-hawk": { glyph: "mountain", modifier: "less" },
+  "elementalist.stoning": { glyph: "mountain", modifier: "stun" },
   "mesmer.cry-of-frustration": { glyph: "interrupt", modifier: "area" },
   "mesmer.mantra-of-recovery": { glyph: "speed", modifier: "clock" },
   "necromancer.shadow-of-fear": { glyph: "slow", modifier: "area" },
