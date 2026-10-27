@@ -78,4 +78,7 @@ export const SKILL_ICONS = {
   "mesmer.backfire": { glyph: "fireball", modifier: "self" },
   "mesmer.empathy": { glyph: "sword", modifier: "self" },
   "monk.mending": { glyph: "heal", modifier: "upkeep" },
+  "paragon.spear-of-lightning": { glyph: "spear", modifier: "up" },
+  "paragon.never-surrender": { glyph: "resurrect", modifier: "area" },
+  "paragon.leaders-comfort": { glyph: "resurrect", modifier: "self" },
 };

@@ -16,6 +16,7 @@ import {
   type Skill,
   type SkillContext,
   type EffectCondition,
+  type HealEffect,
   type InterruptEffect,
   type SkillEffect,
   type StateCondition,
@@ -182,6 +183,30 @@ export function applyDamage(
  * wound), and clamped so it never exceeds the effective maximum health.
  * The dead stay dead.
  */
+/**
+ * What `effect` heals, at the caster's ranks, before healing modifiers:
+ * with `perAlly`, its amount for each living ally of the caster within
+ * the radius, the caster included, and the whole capped at `max` (#923).
+ */
+function healAmount(effect: HealEffect, caster: Combatant, surroundings: Surroundings): number {
+  const base = resolveMagnitude(effect.amount, caster);
+  const { perAlly } = effect;
+  if (perAlly === undefined) {
+    return base;
+  }
+  const at = surroundings.get(caster.id)?.position;
+  const allies =
+    at === undefined
+      ? 1
+      : [...surroundings.values()].filter(
+          ({ combatant, position }) =>
+            !combatant.dead &&
+            combatant.team === caster.team &&
+            distance(position, at) <= perAlly.radius,
+        ).length;
+  return Math.min(perAlly.max, base + allies * resolveMagnitude(perAlly.amount, caster));
+}
+
 function applyHeal(target: Combatant, amount: number, events: CombatEvent[]): void {
   if (amount <= 0 || target.dead) {
     return;
@@ -431,7 +456,7 @@ export function applyEffect(
       if (healed === undefined) {
         return events;
       }
-      applyHeal(healed, resolveMagnitude(effect.amount, caster), events);
+      applyHeal(healed, healAmount(effect, caster, context.surroundings), events);
       return events;
     }
 
