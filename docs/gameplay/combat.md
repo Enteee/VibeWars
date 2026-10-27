@@ -163,6 +163,12 @@ sacrifice, not damage: nothing caps it, charges adrenaline from it or
 answers it, and half of what you have can never kill you. The heal is a
 heal like Orison's: Divine Favor adds to it and a deep wound on the ally
 cuts it. On an ally at full health you still lose the health.
+**Heal Other** (#987, Healing Prayers, 10 energy, ¾ s, 3 s) heals
+another ally 151 at rank 12. **Restore Condition** (#987, elite,
+Protection Prayers, 5 energy, ¾ s, 2 s) removes every condition from
+another ally and then heals it 58 for each one removed: three are 174.
+A deep wound among them is gone before the heal, so it does not cut it.
+With no condition it heals nothing and still costs its energy.
 
 ## Interrupts
 
@@ -367,6 +373,11 @@ from Shatter Enchantment, and a cheap condition covers a deep wound from
 Mend Condition. Some removals do more when they find something to
 remove: Shatter Enchantment then deals damage, Drain Enchantment gives
 its caster energy and health, and Mend Condition heals the ally.
+**Smite Hex** (#987, Smiting Prayers, 5 energy, 1 s, 12 s) removes one
+hex from any ally, yourself included; if it removed one, every foe in
+the area of that ally takes 70 holy damage, through armor. Allies are
+never hit. With no hex nothing happens, and the energy and recharge are
+spent.
 
 **A Dervish spends its own enchantments** (#845). Wounding Strike,
 Signet of Pious Light and Pious Restoration each make you lose 1 Dervish
@@ -905,6 +916,16 @@ of its max health, the max a deep wound has lowered. The cap comes last,
 after armor, Frenzy's double and a Rune of Absorption, on every hit,
 blow or spell. Degeneration, sacrifice and life steal are not hits and
 are not capped. Two caps: the lower wins.
+
+**Reversal of Fortune** (#987, Monk, Protection Prayers, 5 energy, ¼ s,
+2 s recharge) lasts 8 s on any ally: the next damage or life steal it
+would take heals it that much instead, up to 67, and the enchantment
+ends. It comes after armor and every cap, so under Protective Spirit a
+200 hit on a 480-health ally heals it 48. The whole hit is negated: no
+damage, no death, nothing that answers physical damage, and a life
+stealer gains nothing. A deep wound cuts the heal. The hit still counts
+as a hit for the attacker's adrenaline. Degeneration and sacrifice pass
+under it and do not spend it.
 
 Some damage ignores armor altogether (#760): holy, shadow and typeless
 skill damage, an attack skill's "+N damage" bonus, degeneration and

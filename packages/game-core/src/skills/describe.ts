@@ -262,6 +262,11 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
       `damage from a single hit is capped at ${String(Math.round(definition.maxDamageFractionPerHit * 100))}% of max health`,
     );
   }
+  if (definition.reversesNextDamage !== undefined) {
+    parts.push(
+      `the next damage or life steal heals for that much instead, up to ${String(definition.reversesNextDamage)}`,
+    );
+  }
   if (definition.extraStrikesPerHit > 0) {
     parts.push(
       `gain ${String(definition.extraStrikesPerHit)} more ${definition.extraStrikesPerHit === 1 ? "strike" : "strikes"} of adrenaline per hit`,
@@ -584,9 +589,11 @@ function describeEffect(
       const text =
         effect.perStatusOnTarget.length > 0
           ? `+${amount} Health for each ${effect.perStatusOnTarget.join(" or ")} on target ally`
-          : effect.recipient === "caster"
-            ? `You gain ${amount} health`
-            : `Heals for ${amount}`;
+          : effect.perRemoved !== undefined
+            ? `Heals ${amount} for each ${effect.perRemoved} removed`
+            : effect.recipient === "caster"
+              ? `You gain ${amount} health`
+              : `Heals for ${amount}`;
       return { text: `${text}${perAllyText(effect, ranks)}`, magnitude };
     }
     case "energy-gain": {
@@ -684,8 +691,10 @@ function describeEffect(
         return { text: "Ends the target's stance", magnitude: undefined };
       }
       const plural = effect.count === 1 ? "" : "s";
+      // Restore Condition's "remove all conditions" (#987).
+      const count = Number.isFinite(effect.count) ? String(effect.count) : "all";
       return {
-        text: `Removes ${String(effect.count)} ${effect.category}${plural}`,
+        text: `Removes ${count} ${effect.category}${plural}`,
         magnitude: undefined,
       };
     }

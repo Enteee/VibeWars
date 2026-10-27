@@ -143,6 +143,14 @@ export const SKILL_ICONS = {
   "monk.protective-spirit": { glyph: "armor", modifier: "less" },
   // Your own life, given: the resurrect glyph with the bleed drop (#936).
   "monk.infuse-health": { glyph: "resurrect", modifier: "bleed" },
+  // A placeholder: a plain heal on someone else, the plaster (#987).
+  "monk.heal-other": { glyph: "plaster" },
+  // A placeholder: armor that turns the blood drop into health (#987).
+  "monk.reversal-of-fortune": { glyph: "armor", modifier: "bleed" },
+  // A placeholder: a hex removed, a burst around the ally (#987).
+  "monk.smite-hex": { glyph: "cleanse", modifier: "area" },
+  // A placeholder: every condition removed; no modifier says "all" (#987).
+  "monk.restore-condition": { glyph: "cleanse", modifier: "stun" },
   "paragon.spear-of-lightning": { glyph: "spear-bolt" },
   "paragon.never-surrender": { glyph: "banner", modifier: "area" },
   "paragon.leaders-comfort": { glyph: "banner-cross", modifier: "self" },

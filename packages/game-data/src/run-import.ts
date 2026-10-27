@@ -642,6 +642,26 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     profession: "monk",
     url: "https://www.gw-memorial.net/skills/Monk/172-Infuse_Health",
   },
+  {
+    id: "monk.heal-other",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/166-Heal_Other",
+  },
+  {
+    id: "monk.reversal-of-fortune",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/195-Reversal_of_Fortune",
+  },
+  {
+    id: "monk.smite-hex",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/213-Smite_Hex",
+  },
+  {
+    id: "monk.restore-condition",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/194-Restore_Condition",
+  },
 ];
 
 function packageRoot(): string {

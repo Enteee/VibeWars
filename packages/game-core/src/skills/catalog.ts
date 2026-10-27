@@ -3893,6 +3893,135 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       { kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS },
     ],
   },
+
+  /* ---------------------------------------------------------------------- */
+  /* Monk staples (#987)                                                    */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "monk.heal-other",
+    name: "Heal Other",
+    type: "spell",
+    elite: false,
+    profession: "monk",
+    attributeId: "monk.healing-prayers",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 3,
+    range: RANGE_SPELL,
+    target: "single-other-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Heal target other ally for 35...151...180 health."
+    effects: [
+      {
+        kind: "heal",
+        perStatusOnTarget: [],
+        amount: {
+          scaling: { attributeId: "monk.healing-prayers", atZero: 35, atTwelve: 151 },
+        },
+      },
+    ],
+  },
+  {
+    id: "monk.reversal-of-fortune",
+    name: "Reversal of Fortune",
+    type: "enchantment",
+    elite: false,
+    profession: "monk",
+    attributeId: "monk.protection-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 2,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 8 seconds, the next time target ally would take damage or life
+    // steal, that ally gains that amount of health instead, maximum
+    // 15...67...80": the 67 cap is the status's.
+    effects: [{ kind: "apply-status", statusId: "reversal-of-fortune", durationSeconds: 8 }],
+  },
+  {
+    id: "monk.smite-hex",
+    name: "Smite Hex",
+    type: "spell",
+    elite: false,
+    profession: "monk",
+    attributeId: "monk.smiting-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Remove a hex from target ally. If a hex is removed, foes in the area
+    // suffer 10...70...85 holy damage": the area is the ally's.
+    effects: [
+      { kind: "remove-status", category: "hex", count: 1 },
+      {
+        kind: "if",
+        condition: { kind: "removed", category: "hex" },
+        effects: [
+          {
+            kind: "splash",
+            radius: AREA_IN_THE_AREA,
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "monk.smiting-prayers", atZero: 10, atTwelve: 70 },
+                },
+                type: "holy",
+                armorPenetration: 0,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "monk.restore-condition",
+    name: "Restore Condition",
+    type: "spell",
+    elite: true,
+    profession: "monk",
+    attributeId: "monk.protection-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 2,
+    range: RANGE_SPELL,
+    target: "single-other-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Remove all conditions from target other ally. That ally is healed
+    // 10...58...70 health for each condition removed."
+    effects: [
+      { kind: "remove-status", category: "condition", count: Number.POSITIVE_INFINITY },
+      {
+        kind: "heal",
+        perStatusOnTarget: [],
+        perRemoved: "condition",
+        amount: {
+          scaling: { attributeId: "monk.protection-prayers", atZero: 10, atTwelve: 58 },
+        },
+      },
+    ],
+  },
 ];
 
 export const SKILLS_BY_ID: ReadonlyMap<string, Skill> = new Map(
