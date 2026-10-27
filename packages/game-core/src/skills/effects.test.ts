@@ -4,7 +4,7 @@ import { createRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { applyEffect, applyEffects, applySkillEffects, type CombatEvent } from "./effects.js";
 import { makeCombatant } from "./testing.js";
-import type { Combatant, Skill, SkillContext } from "./types.js";
+import type { Combatant, Skill, SkillContext, SkillEffect } from "./types.js";
 
 function context(
   caster = makeCombatant({ id: "caster" }),
@@ -258,5 +258,140 @@ describe("applySkillEffects", () => {
         applyEffects(skill.effects, { caster, target, rng: createRng(1), rules }),
       ),
     );
+  });
+});
+
+describe("if effects (#521)", () => {
+  const rules = MINIMAL_GW_INSPIRED_PVP_V1.combat;
+  const damage = { kind: "damage", amount: { flat: 30 }, type: "typeless" } as const;
+  const ifInterrupted = {
+    kind: "if",
+    condition: { kind: "interrupted" },
+    effects: [damage],
+  } as const;
+  const ifRemoved = {
+    kind: "if",
+    condition: { kind: "removed", category: "enchantment" },
+    effects: [damage, { kind: "energy-gain", amount: { flat: 5 } }],
+  } as const;
+
+  /** A foe 1 s into casting `skillId`, which takes 3 s. */
+  function casting(skillId: string): Combatant {
+    const foe = makeCombatant({ id: "target", team: 1 });
+    foe.cast.beginCast(skillId, foe.id, 3, undefined);
+    return foe;
+  }
+
+  function run(effects: readonly SkillEffect[], target: Combatant): CombatEvent[] {
+    return applyEffects(effects, {
+      caster: makeCombatant({ id: "caster" }),
+      target,
+      rng: createRng(1),
+      rules,
+    });
+  }
+
+  it("lands after an interrupt that cancelled a cast, not after a missed one", () => {
+    const interrupted = casting("ranger.troll-unguent");
+    run([{ kind: "interrupt" }, ifInterrupted], interrupted);
+    expect(interrupted.health).toBe(470);
+
+    const idle = makeCombatant({ id: "target", team: 1 });
+    const events = run([{ kind: "interrupt" }, ifInterrupted], idle);
+    expect(events).toEqual([{ kind: "interrupt-missed", targetId: "target" }]);
+    expect(idle.health).toBe(500);
+  });
+
+  it("reads only what came before it", () => {
+    const foe = casting("ranger.troll-unguent");
+    run([ifInterrupted, { kind: "interrupt" }], foe);
+    expect(foe.health).toBe(500);
+  });
+
+  it("interrupts only a spell or a chant with only: spell-or-chant", () => {
+    const spellOrChant = [{ kind: "interrupt", only: "spell-or-chant" }, ifInterrupted] as const;
+    for (const skillId of ["elementalist.fireball", "paragon.anthem-of-flame"]) {
+      const foe = casting(skillId);
+      run(spellOrChant, foe);
+      expect(foe.cast.isCasting, skillId).toBe(false);
+      expect(foe.health, skillId).toBe(470);
+    }
+    for (const skillId of ["warrior.distracting-blow", "ranger.troll-unguent"]) {
+      const foe = casting(skillId);
+      const events = run(spellOrChant, foe);
+      expect(foe.cast.isCasting, skillId).toBe(true);
+      expect(events, skillId).toEqual([{ kind: "interrupt-missed", targetId: "target" }]);
+      expect(foe.health, skillId).toBe(500);
+    }
+  });
+
+  it("lands after a removal only when one of that category went", () => {
+    const strip = { kind: "remove-status", category: "enchantment", count: 1 } as const;
+    const enchanted = makeCombatant({ id: "target", team: 1 });
+    enchanted.statuses.apply("guardian", 10, "ally");
+    run([strip, ifRemoved], enchanted);
+    expect(enchanted.health).toBe(470);
+
+    const conditioned = makeCombatant({ id: "target", team: 1 });
+    conditioned.statuses.apply("bleeding", 10, "foe");
+    run(
+      [{ kind: "remove-status", category: "condition", count: 1 }, strip, ifRemoved],
+      conditioned,
+    );
+    expect(conditioned.health).toBe(500);
+  });
+
+  it("fires a caster effect inside it once for one target, and per target for several", () => {
+    const skill: Skill = {
+      id: "test.strip",
+      name: "Strip",
+      type: "spell",
+      elite: false,
+      profession: "mesmer",
+      attributeId: undefined,
+      cost: undefined,
+      activationSeconds: 0,
+      rechargeSeconds: 0,
+      range: 420,
+      target: "single-enemy",
+      area: undefined,
+      attack: undefined,
+      whileActivating: undefined,
+      projectile: undefined,
+      effects: [{ kind: "remove-status", category: "enchantment", count: 1 }, ifRemoved],
+    };
+    const caster = makeCombatant({ id: "caster", energy: 10 });
+    const [a, b, c] = ["a", "b", "c"].map((id) => makeCombatant({ id, team: 1 }));
+    if (a === undefined || b === undefined || c === undefined) throw new Error("no targets");
+    a.statuses.apply("guardian", 10, "ally");
+    c.statuses.apply("regeneration", 10, "ally");
+
+    const events = applySkillEffects({
+      skill,
+      caster,
+      targets: [a, b, c],
+      rng: createRng(1),
+      rules,
+    });
+
+    expect(events.filter((event) => event.kind !== "status-removed")).toEqual([
+      { kind: "damage", targetId: "a", amount: 30, critical: false },
+      { kind: "energy-gain", targetId: "caster", amount: 5 },
+      { kind: "damage", targetId: "c", amount: 30, critical: false },
+      { kind: "energy-gain", targetId: "caster", amount: 5 },
+    ]);
+    expect(b.health).toBe(500);
+    expect(caster.energy).toBe(20);
+  });
+
+  it("heals the caster, not the target, with recipient: caster", () => {
+    const caster = makeCombatant({ id: "caster", health: 100 });
+    const target = makeCombatant({ id: "target", team: 1, health: 100 });
+    const events = applyEffect(
+      { kind: "heal", recipient: "caster", amount: { flat: 40 } },
+      { caster, target, rng: createRng(1), rules },
+    );
+    expect(events).toEqual([{ kind: "heal", targetId: "caster", amount: 40 }]);
+    expect(target.health).toBe(100);
   });
 });

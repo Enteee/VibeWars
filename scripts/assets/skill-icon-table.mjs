@@ -30,7 +30,7 @@ export const SKILL_ICONS = {
   "necromancer.blood-ritual": { glyph: "energy", modifier: "up" },
   "elementalist.armor-of-earth": { glyph: "mountain" },
   "ranger.troll-unguent": { glyph: "heal", modifier: "clock" },
-  "monk.mend-affliction": { glyph: "cleanse" },
+  "monk.mend-condition": { glyph: "cleanse" },
   "monk.guardian": { glyph: "armor" },
   "warrior.sever-artery-lite": { glyph: "sword", modifier: "bleed" },
   "warrior.sprint": { glyph: "speed" },
@@ -44,4 +44,8 @@ export const SKILL_ICONS = {
   "necromancer.enfeeble": { glyph: "sword", modifier: "down" },
   "paragon.anthem-of-flame": { glyph: "flame", modifier: "area" },
   "ritualist.weapon-of-warding": { glyph: "armor", modifier: "up" },
+  "mesmer.power-spike": { glyph: "interrupt", modifier: "down" },
+  "mesmer.power-drain": { glyph: "interrupt", modifier: "up" },
+  "mesmer.shatter-enchantment": { glyph: "cleanse", modifier: "down" },
+  "mesmer.drain-enchantment": { glyph: "cleanse", modifier: "up" },
 };

@@ -152,7 +152,7 @@ describe("teamCounters (#575)", () => {
   });
   const roster = [
     withBar("a", ["warrior.distracting-blow", "warrior.backbreaker", "ranger.broad-head-arrow"]),
-    withBar("b", ["warrior.distracting-blow", "monk.mend-affliction"]),
+    withBar("b", ["warrior.distracting-blow", "monk.mend-condition"]),
   ];
   const members = [{ characterId: "a" }, { characterId: "b" }, { characterId: "gone" }];
   const counter = (id: string) => {
@@ -178,7 +178,10 @@ describe("teamCounters (#575)", () => {
   });
 
   it("wants every skill role, but no cost type or empty slot", () => {
-    expect(counter("healing")).toMatchObject({ cells: [], wanted: true });
+    expect(counter("healing")).toMatchObject({
+      cells: [{ characterId: "b", slot: 1 }],
+      wanted: true,
+    });
     expect(counter("empty").wanted).toBe(false);
     expect(teamCounters([], roster).map((c) => c.id)).toEqual([
       "interrupt",

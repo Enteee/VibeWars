@@ -457,26 +457,38 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     effects: [{ kind: "apply-status", statusId: "regeneration", durationSeconds: 13 }],
   },
   {
-    id: "monk.mend-affliction",
-    name: "Mend Affliction",
+    id: "monk.mend-condition",
+    name: "Mend Condition",
     type: "spell",
     elite: false,
     profession: "monk",
     attributeId: "monk.protection-prayers",
     cost: { kind: "energy", amount: 5 },
-    activationSeconds: 1,
-    rechargeSeconds: 4,
+    activationSeconds: 0.75,
+    rechargeSeconds: 2,
     range: RANGE_SPELL,
-    target: "single-ally",
+    target: "single-other-ally",
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
     projectile: undefined,
-    // Original design, not an import: the corpus's condition-removal
-    // skills all also need enchantment-stripping or per-removal scaling
-    // the engine does not express yet. This exercises the remove-status
-    // effect honestly under its own name.
-    effects: [{ kind: "remove-status", category: "condition", count: 2 }],
+    // "Remove one condition from target other ally. If a condition is
+    // removed, that ally is healed for 5...57...70 health."
+    effects: [
+      { kind: "remove-status", category: "condition", count: 1 },
+      {
+        kind: "if",
+        condition: { kind: "removed", category: "condition" },
+        effects: [
+          {
+            kind: "heal",
+            amount: {
+              scaling: { attributeId: "monk.protection-prayers", atZero: 5, atTwelve: 57 },
+            },
+          },
+        ],
+      },
+    ],
   },
   {
     id: "monk.guardian",
@@ -762,6 +774,156 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     // "For 3...7...8 seconds": 7 s, its rank-12 value; the regeneration,
     // the block and the end on attacking are the status's.
     effects: [{ kind: "apply-status", statusId: "weapon-of-warding", durationSeconds: 7 }],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* An effect that depends on an earlier one (#521)                         */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "mesmer.power-spike",
+    name: "Power Spike",
+    type: "spell",
+    elite: false,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 5 },
+    activationSeconds: 0.25,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "If target foe is casting a Spell or Chant, the Skill is interrupted
+    // and target foe takes 30...102...120 damage."
+    effects: [
+      { kind: "interrupt", only: "spell-or-chant" },
+      {
+        kind: "if",
+        condition: { kind: "interrupted" },
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "mesmer.domination-magic", atZero: 30, atTwelve: 102 },
+            },
+            type: "typeless",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "mesmer.power-drain",
+    name: "Power Drain",
+    type: "spell",
+    elite: false,
+    profession: "mesmer",
+    attributeId: "mesmer.inspiration-magic",
+    cost: { kind: "energy", amount: 5 },
+    activationSeconds: 0.25,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "If target foe is casting a Spell or Chant, the Skill is interrupted
+    // and you gain 1...25...31 Energy."
+    effects: [
+      { kind: "interrupt", only: "spell-or-chant" },
+      {
+        kind: "if",
+        condition: { kind: "interrupted" },
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: {
+              scaling: { attributeId: "mesmer.inspiration-magic", atZero: 1, atTwelve: 25 },
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "mesmer.shatter-enchantment",
+    name: "Shatter Enchantment",
+    type: "spell",
+    elite: false,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 10 },
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Remove an enchantment from target foe. If an enchantment is
+    // removed, that foe takes 14...83...100 damage."
+    effects: [
+      { kind: "remove-status", category: "enchantment", count: 1 },
+      {
+        kind: "if",
+        condition: { kind: "removed", category: "enchantment" },
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "mesmer.domination-magic", atZero: 14, atTwelve: 83 },
+            },
+            type: "typeless",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "mesmer.drain-enchantment",
+    name: "Drain Enchantment",
+    type: "spell",
+    elite: false,
+    profession: "mesmer",
+    attributeId: "mesmer.inspiration-magic",
+    cost: { kind: "energy", amount: 5 },
+    activationSeconds: 2,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Remove an Enchantment from target foe. If an Enchantment is
+    // removed, you gain 8...15...17 Energy and 40...104...120 Health."
+    effects: [
+      { kind: "remove-status", category: "enchantment", count: 1 },
+      {
+        kind: "if",
+        condition: { kind: "removed", category: "enchantment" },
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: {
+              scaling: { attributeId: "mesmer.inspiration-magic", atZero: 8, atTwelve: 15 },
+            },
+          },
+          {
+            kind: "heal",
+            recipient: "caster",
+            amount: {
+              scaling: { attributeId: "mesmer.inspiration-magic", atZero: 40, atTwelve: 104 },
+            },
+          },
+        ],
+      },
+    ],
   },
 ];
 

@@ -12,6 +12,7 @@ import {
   type Skill,
   type SkillContext,
   type EffectCondition,
+  type InterruptEffect,
   type SkillEffect,
   type UnconditionalEffect,
 } from "./types.js";
@@ -219,6 +220,19 @@ export function interruptIfCastingSpell(target: Combatant, events: CombatEvent[]
   }
 }
 
+/**
+ * Whether `effect` may interrupt what `target` is casting (#521): any
+ * cast, or with `only: "spell-or-chant"`, a spell or a chant alone.
+ */
+function interrupts(effect: InterruptEffect, target: Combatant): boolean {
+  if (effect.only === undefined) {
+    return true;
+  }
+  const cast = target.cast.activeCast;
+  const skill = cast === undefined ? undefined : getSkill(cast.skillId);
+  return skill !== undefined && (isSpell(skill.type) || skill.type === "chant");
+}
+
 export function applyEffect(effect: UnconditionalEffect, context: SkillContext): CombatEvent[] {
   const events: CombatEvent[] = [];
   const { caster, target } = context;
@@ -236,10 +250,11 @@ export function applyEffect(effect: UnconditionalEffect, context: SkillContext):
     }
 
     case "heal": {
-      if (target === undefined) {
+      const healed = effect.recipient === "caster" ? caster : target;
+      if (healed === undefined) {
         return events;
       }
-      applyHeal(target, resolveMagnitude(effect.amount, caster), events);
+      applyHeal(healed, resolveMagnitude(effect.amount, caster), events);
       return events;
     }
 
@@ -299,8 +314,8 @@ export function applyEffect(effect: UnconditionalEffect, context: SkillContext):
       if (target === undefined || target.dead) {
         return events;
       }
-      if (!interruptCast(target, events)) {
-        // Nothing was being cast: the interrupt is simply wasted. Emitted
+      if (!interrupts(effect, target) || !interruptCast(target, events)) {
+        // Nothing it may interrupt was being cast: the interrupt is wasted. Emitted
         // explicitly so a combat log can show the miss — landing an
         // interrupt is a timing skill, and silently swallowing failures
         // would hide exactly the feedback that teaches it.
@@ -335,13 +350,7 @@ function conditionHolds(
 ): boolean {
   switch (condition.kind) {
     case "interrupted":
-      return earlier.some((event) => {
-        if (event.kind !== "interrupted" || event.targetId !== targetId) {
-          return false;
-        }
-        const skill = getSkill(event.skillId);
-        return !condition.spell || (skill !== undefined && isSpell(skill.type));
-      });
+      return earlier.some((event) => event.kind === "interrupted" && event.targetId === targetId);
     case "removed":
       return earlier.some(
         (event) =>
@@ -396,8 +405,9 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "energy-gain":
     case "sacrifice-health":
       return true;
-    case "damage":
     case "heal":
+      return effect.recipient === "caster";
+    case "damage":
     case "apply-status":
     case "remove-status":
     case "interrupt":

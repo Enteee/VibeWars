@@ -231,7 +231,7 @@ function lowerFirst(text: string): string {
 function conditionText(condition: EffectCondition): string {
   switch (condition.kind) {
     case "interrupted":
-      return condition.spell ? "If it interrupts a spell" : "If it interrupts an action";
+      return "If it interrupts";
     case "removed":
       return `If it removes ${condition.category === "enchantment" ? "an" : "a"} ${condition.category}`;
   }
@@ -239,7 +239,7 @@ function conditionText(condition: EffectCondition): string {
 
 /**
  * An effect's lines: one, or for an `if`, one per effect inside it, each
- * led by its condition: "If it interrupts a spell: deals 63 damage".
+ * led by its condition: "If it interrupts: deals 102 damage".
  */
 function describeEffects(
   effect: SkillEffect,
@@ -266,7 +266,11 @@ function describeEffect(
     }
     case "heal": {
       const magnitude = describeMagnitude(effect.amount, ranks);
-      return { text: `Heals for ${String(magnitude.current)}`, magnitude };
+      const amount = String(magnitude.current);
+      return {
+        text: effect.recipient === "caster" ? `You gain ${amount} health` : `Heals for ${amount}`,
+        magnitude,
+      };
     }
     case "energy-gain": {
       const magnitude = describeMagnitude(effect.amount, ranks);
@@ -310,7 +314,10 @@ function describeEffect(
     }
     case "interrupt":
       return {
-        text: "Interrupts the target's current cast, if they are casting",
+        text:
+          effect.only === "spell-or-chant"
+            ? "Interrupts the target's spell or chant, if they are casting one"
+            : "Interrupts the target's current cast, if they are casting",
         magnitude: undefined,
       };
     case "knockdown":
