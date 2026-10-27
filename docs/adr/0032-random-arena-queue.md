@@ -100,6 +100,7 @@ with nobody negotiating.**
    channel left to tell them a new one. The cost is that a party blamed
    as a no-show is ignored by those clients for `NO_SHOW_IGNORE_MS`.
    A party is a no-show when any of its members is.
+
 7. **Signing with `@noble/secp256k1`**, which Trystero already brings into
    the lockfile at 3.2.0. It becomes a direct dependency at that version.
 8. **No proof-of-work at first.** A fake ticket costs its sender nothing.
