@@ -498,6 +498,26 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Elementalist/434-Deep_Freeze",
   },
   {
+    id: "elementalist.blinding-flash",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/377-Blinding_Flash",
+  },
+  {
+    id: "elementalist.shock",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/389-Shock",
+  },
+  {
+    id: "elementalist.aftershock",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/393-Aftershock",
+  },
+  {
+    id: "elementalist.meteor",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/424-Meteor",
+  },
+  {
     id: "elementalist.lightning-strike",
     profession: "elementalist",
     url: "https://www.gw-memorial.net/skills/Elementalist/385-Lightning_Strike",
@@ -571,6 +591,26 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     id: "ranger.natural-stride",
     profession: "ranger",
     url: "https://www.gw-memorial.net/skills/Ranger/826-Natural_Stride",
+  },
+  {
+    id: "ranger.lightning-reflexes",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/102-Lightning_Reflexes",
+  },
+  {
+    id: "ranger.escape",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/101-Escape",
+  },
+  {
+    id: "ranger.pin-down",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/116-Pin_Down",
+  },
+  {
+    id: "ranger.hunters-shot",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/114-Hunter's_Shot",
   },
   {
     id: "monk.patient-spirit",

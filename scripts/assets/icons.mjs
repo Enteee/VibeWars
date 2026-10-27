@@ -311,6 +311,18 @@ const status = {
       `<path d="M7 19c0-6 4-10.5 10-10.5 0 6-4 10.5-10 10.5z" ${stroke(c, 1.8)}/>` +
       `<path d="M7 19l6.5-6.5" ${stroke(c, 1.8)}/>`,
   ],
+  // Stance: a bolt, blocks and attacks faster (#976).
+  "lightning-reflexes": [
+    "stance",
+    (c) => `<path d="M13.5 5L8 13h4l-1.5 6L16 11h-4z" ${stroke(c, 2)}/>`,
+  ],
+  // Stance: two chevrons and a bar, away and blocking (#976).
+  escape: [
+    "stance",
+    (c) =>
+      `<path d="M6 8.5l4 3.5-4 3.5M11 8.5l4 3.5-4 3.5" ${stroke(c, 2.2)}/>` +
+      `<path d="M18 7.5v9" ${stroke(c, 2.2)}/>`,
+  ],
   // Stance: an arrow come round, spells back sooner (#938).
   "mantra-of-recovery": [
     "stance",
@@ -823,6 +835,14 @@ const burst = (n) =>
     return `${i === 0 ? "M" : "L"}${(12 + r * Math.cos(a)).toFixed(2)} ${(12 + r * Math.sin(a)).toFixed(2)}`;
   }).join("") + "Z";
 
+/**
+ * The sword shifted down and right, with a mark in the freed corner.
+ * @param {string} mark
+ */
+const bladeMark = (mark) =>
+  `<g transform="translate(2.5,2.5)">${inkLine("M5.5 18.5L19 5", 2.6)}${inkLine("M7 11.5L12.5 17", 2.4)}${inkLine("M4 20l2-2", 2.6)}</g>` +
+  mark;
+
 /** Glyphs, drawn in the box 3..21; the plate scales them to leave the corner free. */
 const skillGlyph = {
   heal: () => inkFill("M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"),
@@ -840,6 +860,16 @@ const skillGlyph = {
   shard: () => inkFill("M21 3L18 13L11 6Z") + inkLine("M12.5 11.5L4 20M9 9L5 13M15 15L11 19", 2),
   // A snowflake (#938): the area frozen, not a shard flying.
   snowflake: () => inkLine("M12 3V21M4.2 7.5L19.8 16.5M4.2 16.5L19.8 7.5", 2.4),
+  // A blade with a mark in the empty corner above it: a weapon spell, and what it does (#984).
+  "blade-plus": () =>
+    bladeMark(
+      `<circle cx="8" cy="8" r="5" ${stroke(C.ink, 1.8)}/>` +
+        inkLine("M8 5.5V10.5M5.5 8H10.5", 1.8),
+    ),
+  "blade-turn": () =>
+    bladeMark(inkLine("M11 6.5A3.5 3.5 0 1 0 8.5 11.5M8.5 11.5L10.5 12M8.5 11.5L9 9.5", 1.8)),
+  "blade-fast": () =>
+    bladeMark(inkLine("M3.5 5.5L6.5 8.5L3.5 11.5M7.5 5.5L10.5 8.5L7.5 11.5", 1.8)),
   axe: () =>
     inkLine("M5 20L16 7", 2.4) + inkFill("M11 3.5C17 2.5 21.5 5 21 9C20.5 13 16.5 15 14 12.5Z"),
   sword: () =>

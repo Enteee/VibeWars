@@ -155,7 +155,7 @@ describe("Weapon of Aggression (#975)", () => {
   it("does not end when its bearer attacks", () => {
     const bearer = ally();
     bearer.statuses.apply("weapon-of-aggression", 13, "bearer");
-    bearer.statuses.endOnBearerAttack();
+    bearer.statuses.endOnBearerAttack("melee");
     expect(bearer.statuses.has("weapon-of-aggression")).toBe(true);
   });
 });

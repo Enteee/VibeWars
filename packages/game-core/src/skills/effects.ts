@@ -891,6 +891,7 @@ function isStateCondition(condition: EffectCondition): condition is StateConditi
     case "caster-has":
     case "target-alone":
     case "target-not-moving":
+    case "target-knocked-down":
     case "caster-more-energy":
     case "caster-wields":
     case "target-less-health":
@@ -939,6 +940,8 @@ export function stateHolds(
     }
     case "target-not-moving":
       return !target.moving;
+    case "target-knocked-down":
+      return target.knockdownRemaining > 0;
     case "caster-more-energy":
       return caster.energy > target.energy;
     case "caster-wields":
@@ -951,9 +954,11 @@ export function stateHolds(
       if (target.dead) {
         return false;
       }
+      // An auto-attack still walking to its foe is the run-up, not an
+      // attack: GW1 counts only the swings, which are made standing.
       const cast = target.cast.activeCast;
       return (
-        target.attack !== undefined ||
+        (target.attack !== undefined && !target.moving) ||
         (cast !== undefined && getSkill(cast.skillId)?.type === "attack")
       );
     }
@@ -1067,6 +1072,7 @@ function conditionHolds(
     case "caster-has":
     case "target-alone":
     case "target-not-moving":
+    case "target-knocked-down":
     case "caster-more-energy":
     case "caster-wields":
     case "target-less-health":

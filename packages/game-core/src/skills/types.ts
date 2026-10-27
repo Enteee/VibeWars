@@ -354,6 +354,11 @@ export type StateCondition =
   /** The effect's target did not walk in the previous tick (#921, `Combatant.moving`). */
   | { readonly kind: "target-not-moving" }
   /**
+   * The effect's target is knocked down (#985, `Combatant.knockdownRemaining`):
+   * Aftershock's "knocked down foes are struck for ... additional".
+   */
+  | { readonly kind: "target-knocked-down" }
+  /**
    * The caster has more energy than the effect's target (#918): Mind
    * Shock's "if you have more energy than target foe". Equal is not more.
    */
@@ -376,9 +381,9 @@ export type StateCondition =
    */
   | { readonly kind: "target-more-health" }
   /**
-   * The effect's target is alive and attacking (#988): an auto-attack in
-   * progress or an attack skill being activated, as Shadow Refuge's "if
-   * you are attacking".
+   * The effect's target is alive and attacking (#988): an auto-attack
+   * swinging, not walking to its foe, or an attack skill being activated,
+   * as Shadow Refuge's "if you are attacking".
    */
   | { readonly kind: "target-attacking" };
 

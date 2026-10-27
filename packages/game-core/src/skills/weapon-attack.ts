@@ -420,10 +420,16 @@ export function attackHitRiders(
 /**
  * The attacker attacked (#758): it struck a blow or released a shot,
  * swing or attack skill alike, hit or miss. Every status of its own that
- * ends when its bearer attacks ends now, as Weapon of Warding.
+ * ends when its bearer attacks ends now, as Weapon of Warding, and, if
+ * the attack was `melee`, every one that ends on a melee attack, as
+ * Escape (#976).
  */
-export function bearerAttacked(attacker: Combatant, events: CombatEvent[]): void {
-  for (const statusId of attacker.statuses.endOnBearerAttack()) {
+export function bearerAttacked(
+  attacker: Combatant,
+  events: CombatEvent[],
+  kind: "melee" | "projectile",
+): void {
+  for (const statusId of attacker.statuses.endOnBearerAttack(kind)) {
     events.push({ kind: "status-expired", targetId: attacker.id, statusId });
   }
 }
@@ -553,7 +559,7 @@ export function resolveSwing(swing: Swing): {
 
   const events: CombatEvent[] = [];
   const fired: FiredTrigger[] = [];
-  bearerAttacked(swing.attacker, events);
+  bearerAttacked(swing.attacker, events, blowKind(weapon));
   let landed = 0;
   for (let blow = 0; blow < strikes; blow += 1) {
     const from = events.length;
@@ -611,7 +617,7 @@ export function resolveAttackSkill(
   const snapshot = weaponSnapshotOf(caster);
   const kind = blowKind(snapshot.mainHand.weapon);
   const events: CombatEvent[] = [];
-  bearerAttacked(caster, events);
+  bearerAttacked(caster, events, kind);
   const next = nextAttackSkillOf(caster);
   const victims: Combatant[] = [];
   for (const victim of resolution.targets) {

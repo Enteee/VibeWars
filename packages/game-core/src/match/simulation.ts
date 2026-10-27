@@ -2159,7 +2159,8 @@ export class MatchSimulation {
   ): CombatEvent[] {
     const events: CombatEvent[] = [];
     if (skillHit?.kind !== "spell") {
-      bearerAttacked(record.combatant, events);
+      // Only a flying attack is released here.
+      bearerAttacked(record.combatant, events, "projectile");
       if (blindMisses(record.combatant, this.#rng)) {
         return [...events, { kind: "attack-missed", targetId: target.id }];
       }

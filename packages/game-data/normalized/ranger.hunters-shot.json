@@ -1,0 +1,26 @@
+{
+  "id": "ranger.hunters-shot",
+  "name": "Hunter's Shot",
+  "profession": "ranger",
+  "attribute": "Marksmanship",
+  "type": "Bow attack.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 1,
+  "rechargeSeconds": 10,
+  "upkeep": false,
+  "description": "If Hunter's Shot hits, your target begins Bleeding for 3...21...25 seconds.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Ranger/114-Hunter's_Shot",
+    "fetchedAt": "2026-10-27T19:39:42.703Z"
+  },
+  "unmapped": {}
+}

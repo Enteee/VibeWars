@@ -263,6 +263,11 @@ describe("the new state conditions (#988)", () => {
     striking.cast.beginCast("assassin.jagged-strike", "x", 0.5, undefined);
     expect(holds(striking)).toBe(true);
 
+    const approaching = makeCombatant({ id: "t" });
+    approaching.attack = { targetId: "x", swingElapsed: 0, unreachableSeconds: 0 };
+    approaching.moving = true;
+    expect(holds(approaching)).toBe(false);
+
     const casting = makeCombatant({ id: "t" });
     casting.cast.beginCast("elementalist.fireball", "x", 2, undefined);
     expect(holds(casting)).toBe(false);
@@ -312,6 +317,21 @@ describe("Shadow Refuge (#988)", () => {
 
   it("heals nothing as it runs out while its bearer stands idle", () => {
     expect(refuged(stepFor(refuge(false), 7))).toEqual([]);
+  });
+
+  it("heals nothing as it runs out while its bearer still walks to a far foe", () => {
+    // 6 s at 180 units/s is 1080: the foe is well beyond it.
+    const match = new MatchSimulation({
+      seed: "refuge",
+      participants: [assassin(vec2(0, 0)), foe("foe", vec2(2000, 0), { maxHealth: 1e6 })],
+    });
+    get(match, "sin").combatant.health = 200;
+    use(match, SHADOW_REFUGE, "sin");
+    match.requestAttack("sin", "foe");
+    const log = stepFor(match, 7);
+    expect(get(match, "sin").combatant.attack).toBeDefined();
+    expect(get(match, "sin").combatant.moving).toBe(true);
+    expect(refuged(log)).toEqual([]);
   });
 
   it("stripped mid-attack, it heals 88: any end counts", () => {

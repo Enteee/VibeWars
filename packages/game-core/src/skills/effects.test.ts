@@ -839,6 +839,21 @@ describe("state conditions (#794)", () => {
     expect(healed(less, at(400, "caster"), big)).toBe(10);
   });
 
+  it("target-knocked-down: holds while knockdown remains, not at 0 (#985)", () => {
+    const down = healIf({ kind: "target-knocked-down" });
+    const knocked = (remaining: number): Combatant => {
+      const target = at(100);
+      target.knockdownRemaining = remaining;
+      return target;
+    };
+    expect(healed(down, at(100, "caster"), knocked(0.1))).toBe(110);
+    expect(healed(down, at(100, "caster"), knocked(0))).toBe(10);
+    // The caster being down is not read.
+    const downCaster = at(100, "caster");
+    downCaster.knockdownRemaining = 2;
+    expect(healed(down, downCaster, knocked(0))).toBe(10);
+  });
+
   it("caster-wields: the caster's main hand is of the class, the target's is not read (#939)", () => {
     const holding = (weapon: Weapon, id: string): Combatant =>
       makeCombatant({
