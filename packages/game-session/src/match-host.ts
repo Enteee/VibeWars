@@ -559,6 +559,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       energy: Math.round(combatant.energy),
       maxEnergy: combatant.maxEnergy,
       overcast: Math.round(combatant.overcast),
+      morale: combatant.morale,
       adrenaline: combatant.adrenaline,
       armor: combatant.equipment.baseArmor,
       weaponId: combatant.equipment.mainHand.weapon.id,

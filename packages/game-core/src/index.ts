@@ -91,11 +91,17 @@ export * from "./skills/index.js";
 
 export type { MatchOutcome, MatchPhase, MatchRules, MatchScore } from "./match-rules.js";
 export {
+  DEATH_PENALTY_PERCENT,
   DEFAULT_MATCH_RULES,
+  DP_GRACE_AFTER_RES_SECONDS,
+  KILL_MORALE_PERCENT,
   MATCH_IN_PROGRESS,
+  MORALE_CEILING,
+  MORALE_FLOOR,
   addKill,
   emptyScore,
   evaluateMatch,
+  moraleMaximum,
 } from "./match-rules.js";
 
 export type {

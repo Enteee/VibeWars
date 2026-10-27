@@ -19,7 +19,13 @@ const ORISON = "monk.orison-of-healing";
 const BARRAGE = "ranger.barrage";
 /** An elementalist's energy regeneration, per second. */
 const CASTER_REGEN = BASE_ENERGY_PIPS_BY_PROFESSION.elementalist * ENERGY_PER_PIP;
-const MATCH: MatchRules = { scoreToWin: 2, timeLimitSeconds: 600, respawnSeconds: 8 };
+const MATCH: MatchRules = {
+  scoreToWin: 2,
+  timeLimitSeconds: 600,
+  deathRule: "respawn",
+  respawnSeconds: 8,
+  deathPenalty: false,
+};
 
 function spec(id: string, team: number, spawn: Vec2, extra: Partial<ParticipantSpec> = {}) {
   return {
