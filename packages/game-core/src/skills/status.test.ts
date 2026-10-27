@@ -60,7 +60,8 @@ describe("status definitions", () => {
         def.onAttackHit.length > 0 ||
         def.triggers.length > 0 ||
         def.nextSpells !== undefined ||
-        def.nextAttackSkill !== undefined;
+        def.nextAttackSkill !== undefined ||
+        def.spellRechargeFaster !== 0;
       expect(hasEffect, `${id} has no mechanical effect`).toBe(true);
     }
   });

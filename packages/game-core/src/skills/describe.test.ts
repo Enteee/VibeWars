@@ -345,6 +345,13 @@ describe("attack skills (#417)", () => {
     ).toContain("If you have more Energy than target: knocks down for 2s");
   });
 
+  it("words Cry of Frustration's splash and Mantra of Recovery's faster spells (#938)", () => {
+    expect(
+      describeSkill(skill("mesmer.cry-of-frustration")).effects.map(({ text }) => text),
+    ).toContain("If it interrupts: foes in the area are interrupted if casting and take 11 damage");
+    expect(describeStatus("mantra-of-recovery")).toBe("spells recharge 33% faster");
+  });
+
   it("words Spear of Lightning's type and penetration, and Leader's Comfort's per ally (#923)", () => {
     const at12 = (id: string, attributeId: string) =>
       describeSkill(skill(id), new Map([[attributeId, 12]])).effects.map(({ text }) => text);
