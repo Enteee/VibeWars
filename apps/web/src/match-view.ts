@@ -227,6 +227,8 @@ export async function startMatchView(
   // The arena's edge stops below the scoreboard and above the bars, not
   // under them (#440). From the bars, as the lines above them come and go.
   const measureCover = (): void => {
+    // The chat panel (#479) sits just above the HUD, wherever its top is.
+    parent.style.setProperty("--hud-height", `${String(hud.root.offsetHeight)}px`);
     camera?.setCover({
       top: hud.scoreboard.offsetTop + hud.scoreboard.offsetHeight,
       bottom: hud.root.offsetHeight - hud.bars.offsetTop,
@@ -513,6 +515,7 @@ export async function startMatchView(
       camera?.dispose();
       allyWatch.dispose();
       delete parent.dataset.called;
+      parent.style.removeProperty("--hud-height");
       nameReveal.detach();
       window.removeEventListener("keydown", handleKeyDown);
       detachMovement();

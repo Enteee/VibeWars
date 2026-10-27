@@ -28,6 +28,7 @@ import { importTeam, importedTeamSummary, type TeamImportResult } from "./storag
 import { mountBuildEditor, newCharacter, type BuildEditorView } from "./ui/build-editor.js";
 import { disposeJukeboxScreen, renderJukeboxScreen } from "./ui/jukebox.js";
 import { disposeOptionsScreen, renderOptionsScreen } from "./ui/options-screen.js";
+import { mountChat, type ChatPanel } from "./ui/chat.js";
 import { displayLobbyCode, renderLobbyScreen } from "./ui/lobby-screen.js";
 import { createNowPlayingToast, nowPlayingText } from "./ui/now-playing.js";
 import { loadActiveCharacterId, renderMenu, renderTeamList } from "./ui/menu.js";
@@ -93,6 +94,7 @@ async function main(): Promise<void> {
     showNowPlaying(nowPlayingText(trackId, TRACKS, music().intensity));
   });
   const viewport = requireElement("#viewport");
+  const app = requireElement("#app");
 
   const stress = stressMs(window.location.search, STRESS_BUILD);
   if (stress !== null) {
@@ -114,6 +116,8 @@ async function main(): Promise<void> {
   /** The lobby this tab hosts, while it hosts one: leaving it ends it for everyone. */
   let hosted: HostedLobby | undefined;
   let match: MatchView | undefined;
+  /** The lobby's chat (#479), for as long as the lobby: on its screen, then over its match. */
+  let chat: ChatPanel | undefined;
   /**
    * Set synchronously the moment a match is requested.
    *
@@ -145,6 +149,16 @@ async function main(): Promise<void> {
     }
     viewport.style.display = visible ? "block" : "none";
     screenRoot.style.display = visible ? "none" : "flex";
+    if (chat !== undefined) {
+      // Moved, not rebuilt: the lines and a half-typed one come along.
+      (visible ? viewport : app).append(chat.root);
+      chat.setInMatch(visible);
+    }
+  };
+
+  const closeChat = (): void => {
+    chat?.dispose();
+    chat = undefined;
   };
 
   /**
@@ -474,6 +488,7 @@ async function main(): Promise<void> {
     const ending = hosted;
     lobby = undefined;
     hosted = undefined;
+    closeChat();
     await leaving?.disconnect();
     await ending?.close();
     menuNotice = notice;
@@ -502,6 +517,23 @@ async function main(): Promise<void> {
     // Here and not in renderLobby, which every lobby change repaints:
     // a "Copied" toast outlives a player joining.
     leaveScreen();
+    const joined = lobby;
+    chat = mountChat({
+      selfId: joined.selfSessionId,
+      selfTeam: () =>
+        joined.getSnapshot().players.find((p) => p.sessionId === joined.selfSessionId)?.team ??
+        null,
+      send: (channel, text) => {
+        joined.sendChat(channel, text);
+      },
+    });
+    app.append(chat.root);
+    lobby.onChat((line) => {
+      chat?.add(line);
+    });
+    lobby.onChatThrottled(() => {
+      chat?.notice("Slow down: your last lines were not sent.");
+    });
     lobby.onChange(renderLobby);
     lobby.onStartRejected((reason) => {
       lobbyNotice = reason;
@@ -515,6 +547,7 @@ async function main(): Promise<void> {
       // From the lobby or from its match: either way, it is over.
       lobby = undefined;
       hosted = undefined;
+      closeChat();
       const notice = lobbyClosedNotice(reason);
       if (match !== undefined) {
         void exitMatch(notice);
