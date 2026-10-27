@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 
+import { unarmedResolvedEquipment } from "../equipment/resolve.js";
+import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
+
 import { getSkill } from "./catalog.js";
 import { combinedHealingMultiplier, HEALING_MULTIPLIER_FLOOR, HEALTH_PER_PIP } from "./status.js";
 import {
@@ -10,6 +13,7 @@ import {
   effectiveMaxHealth,
   healingMultiplierOf,
   moveSpeedMultiplier,
+  rankOf,
 } from "./tick.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill } from "./types.js";
@@ -285,5 +289,45 @@ describe("effectiveActivationSeconds with Fast Casting (#527)", () => {
     const slowAttack: Skill = { ...swiftChop, profession: "mesmer", activationSeconds: 2 };
     expect(effectiveActivationSeconds(slowAttack, mesmer())).toBe(2);
     expect(effectiveActivationSeconds(mesmerHex, makeCombatant({ id: "c" }))).toBe(1);
+  });
+});
+
+describe("rankOf (#762)", () => {
+  /** Swordsmanship 12, Tactics 0, and Strength 0 bought plus 1 from a rune. */
+  const warrior = (): Combatant =>
+    makeCombatant({
+      id: "w",
+      attributeRanks: new Map([
+        ["warrior.swordsmanship", 12],
+        ["warrior.tactics", 0],
+        ["warrior.strength", 1],
+        ["warrior.axe-mastery", 4],
+      ]),
+      equipment: {
+        ...unarmedResolvedEquipment(MINIMAL_GW_INSPIRED_PVP_V1.combat.armorReferenceLevel),
+        attributeBonuses: new Map([
+          ["warrior.strength", 1],
+          ["warrior.axe-mastery", 3],
+        ]),
+      },
+    });
+
+  it("is the sheet's rank, runes included, with nothing on", () => {
+    const w = warrior();
+    expect(rankOf(w, "warrior.swordsmanship")).toBe(12);
+    expect(rankOf(w, "warrior.strength")).toBe(1);
+    expect(rankOf(w, "warrior.axe-mastery")).toBe(4);
+    expect(rankOf(w, "warrior.hammer-mastery")).toBe(0);
+  });
+
+  it("is one lower under weakness, but a rank bought at 0 stays, rune or not", () => {
+    const w = warrior();
+    w.statuses.apply("weakness", 10, "necro");
+    expect(rankOf(w, "warrior.swordsmanship")).toBe(11);
+    expect(rankOf(w, "warrior.tactics")).toBe(0);
+    expect(rankOf(w, "warrior.hammer-mastery")).toBe(0);
+    expect(rankOf(w, "warrior.strength")).toBe(1);
+    // 1 bought and 3 from a rune: the bought rank is above 0, so it drops.
+    expect(rankOf(w, "warrior.axe-mastery")).toBe(3);
   });
 });

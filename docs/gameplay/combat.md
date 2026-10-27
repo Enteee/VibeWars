@@ -166,16 +166,16 @@ condition cannot out-last one well-timed long one.
 Each condition has a distinct mechanical identity, not just a different
 number:
 
-| Condition  | Effect                                           |
-| ---------- | ------------------------------------------------ |
-| Bleeding   | −3 health/second                                 |
-| Burning    | −7 health/second                                 |
-| Poison     | −4 health/second                                 |
-| Crippled   | Half movement speed                              |
-| Blind      | 90% of your attacks miss                         |
-| Weakness   | −20 armor                                        |
-| Deep Wound | −20% maximum health (at most 100), −20% healing  |
-| Dazed      | Spells: double cast time, interrupted by attacks |
+| Condition  | Effect                                            |
+| ---------- | ------------------------------------------------- |
+| Bleeding   | −3 health/second                                  |
+| Burning    | −7 health/second                                  |
+| Poison     | −4 health/second                                  |
+| Crippled   | Half movement speed                               |
+| Blind      | 90% of your attacks miss                          |
+| Weakness   | −66% weapon damage, −1 to every attribute above 0 |
+| Deep Wound | −20% maximum health (at most 100), −20% healing   |
+| Dazed      | Spells: double cast time, interrupted by attacks  |
 
 **Deep Wound takes maximum health, and current health with it** (#764,
 GW1). Its loss, 20% of maximum health but never more than 100, comes off
@@ -195,6 +195,16 @@ damage. A miss, a block or a dodge does not. Only spells: a dazed
 Warrior's Healing Signet is neither slowed nor interrupted, and an
 instant skill stays instant. See
 [ADR-0019](../adr/0019-status-modifiers.md).
+
+**Weakness cuts your weapon and your attributes** (#762, GW1). Your
+weapon's roll deals 34%; an attack skill's bonus damage is whole.
+Every attribute you put points in counts one rank lower, so your
+skills scale one rank lower and Expertise, Fast Casting and the other
+primary attributes give less. One you left at 0 stays 0, even when a
+rune raised it. A weapon's requirement is checked at each blow: a
+Warrior at exactly 9 Swordsmanship swings at a third of the damage
+while weakened. Two sources of weakness are one weakness, so it is
+never −2. Enfeeble (Necromancer, Curses) is its first source.
 
 **Blind makes attacks miss**: weapon swings, each blow rolled on its own,
 and attack skills (Swift Chop, Backbreaker, Opening Cut, Barrage, Broad

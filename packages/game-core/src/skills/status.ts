@@ -137,6 +137,16 @@ export interface StatusDefinition {
    */
   readonly healingMultiplier: number;
   /**
+   * Multiplier on the bearer's weapon roll (#762): weakness's 0.34. An
+   * attack skill's bonus damage is not scaled.
+   */
+  readonly weaponDamageMultiplier: number;
+  /**
+   * Added to every attribute of the bearer above rank 0 (#762): weakness's
+   * −1. Read through `rankOf` alone (ADR-0019).
+   */
+  readonly attributeDelta: number;
+  /**
    * Multiplier on the bearer's spell cast time; >1 is a penalty. Dazed
    * doubles it. A signet or any other skill that is not a spell ignores
    * it (#524).
@@ -220,6 +230,8 @@ function define(
     attackMissChance: 0,
     maxHealthLoss: undefined,
     healingMultiplier: 1,
+    weaponDamageMultiplier: 1,
+    attributeDelta: 0,
     castTimeMultiplier: 1,
     interruptsSpells: false,
     attackDurationMultiplier: 1,
@@ -235,11 +247,9 @@ function define(
 }
 
 /**
- * Status definitions. Pip counts are GW1's; the other numbers are this
- * project's own tuning, chosen to
- * preserve each effect's *mechanical identity* (bleeding is a slow drain,
- * burning a fast one, deep wound a healing-reduction, blind an attack
- * denial) rather than to replicate any specific proprietary value table.
+ * Status definitions. Conditions follow GW1: its mechanics and its
+ * magnitudes (#492). Every other status carries its skill's rank-12
+ * values.
  */
 export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = {
   bleeding: define("bleeding", "Bleeding", "condition", { healthPips: -3 }),
@@ -247,7 +257,10 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   poison: define("poison", "Poison", "condition", { healthPips: -4 }),
   crippled: define("crippled", "Crippled", "condition", { moveSpeedMultiplier: 0.5 }),
   blind: define("blind", "Blind", "condition", { attackMissChance: 0.9 }),
-  weakness: define("weakness", "Weakness", "condition", { armorModifier: -20 }),
+  weakness: define("weakness", "Weakness", "condition", {
+    weaponDamageMultiplier: 0.34,
+    attributeDelta: -1,
+  }),
   "deep-wound": define("deep-wound", "Deep Wound", "condition", {
     maxHealthLoss: { fraction: 0.2, cap: 100 },
     healingMultiplier: 0.8,
@@ -535,6 +548,8 @@ export interface StatusModifiers {
   readonly maxHealthLoss: MaxHealthLoss | undefined;
   /** Every status's, multiplied, and floored at `HEALING_MULTIPLIER_FLOOR`. */
   readonly healingMultiplier: number;
+  readonly weaponDamageMultiplier: number;
+  readonly attributeDelta: number;
   readonly castTimeMultiplier: number;
   readonly attackDurationMultiplier: number;
 }
@@ -545,8 +560,9 @@ export const HEALING_MULTIPLIER_FLOOR = 0.6;
 /**
  * Collapse every active status into one set of modifiers.
  *
- * Additive effects (health and energy pips, armor) sum; multiplicative ones
- * (move speed, healing, cast time) multiply; miss chance takes the
+ * Additive effects (health and energy pips, armor, attributes) sum;
+ * multiplicative ones (move speed, healing, weapon damage, cast time)
+ * multiply; miss chance takes the
  * worst rather than compounding, so two blinding effects cannot push a
  * player past certain failure in a way that feels arbitrary. A maximum
  * health loss is the largest single one, and healing is floored at
@@ -562,6 +578,8 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let attackMissChance = 0;
   let maxHealthLoss: MaxHealthLoss | undefined;
   const healingMultipliers: number[] = [];
+  let weaponDamageMultiplier = 1;
+  let attributeDelta = 0;
   let castTimeMultiplier = 1;
   let attackFaster = 1;
   let attackSlower = 1;
@@ -580,6 +598,8 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
       maxHealthLoss = def.maxHealthLoss;
     }
     healingMultipliers.push(def.healingMultiplier);
+    weaponDamageMultiplier *= def.weaponDamageMultiplier;
+    attributeDelta += def.attributeDelta;
     castTimeMultiplier *= def.castTimeMultiplier;
     attackFaster = Math.min(attackFaster, def.attackDurationMultiplier);
     attackSlower = Math.max(attackSlower, def.attackDurationMultiplier);
@@ -593,6 +613,8 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     attackMissChance,
     maxHealthLoss,
     healingMultiplier: combinedHealingMultiplier(healingMultipliers),
+    weaponDamageMultiplier,
+    attributeDelta,
     castTimeMultiplier,
     attackDurationMultiplier: attackFaster * attackSlower,
   };

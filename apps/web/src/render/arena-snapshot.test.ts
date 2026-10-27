@@ -235,13 +235,22 @@ describe("nameLabelBottom", () => {
   it("keeps a living actor's name clear of its health and cast bars", () => {
     const living = actor("a", 100, 100);
     // The cast bar's top is 19 above the circle; the name sits above that.
-    expect(nameLabelBottom(living)).toBeLessThan(100 - 14 - 19);
+    expect(nameLabelBottom(living, 1)).toBeLessThan(100 - 14 - 19);
   });
 
   it("lowers a corpse's name, which has no bars to clear", () => {
-    expect(nameLabelBottom(actor("a", 100, 100, 14, { dead: true }))).toBeGreaterThan(
-      nameLabelBottom(actor("a", 100, 100)),
+    expect(nameLabelBottom(actor("a", 100, 100, 14, { dead: true }), 1)).toBeGreaterThan(
+      nameLabelBottom(actor("a", 100, 100), 1),
     );
+  });
+
+  it("keeps the gap over the cast bar the same on screen at every zoom (#456)", () => {
+    const living = actor("a", 100, 100);
+    for (const zoom of [0.26, 0.65, 1]) {
+      // The cast bar's top scales with the world; the gap above it does not.
+      const gap = (100 - 14 - 19 - nameLabelBottom(living, zoom)) * zoom;
+      expect(gap).toBeCloseTo(3, 9);
+    }
   });
 });
 
@@ -254,21 +263,22 @@ describe("placeFloatingText", () => {
       anchorId,
       text: "−10",
       position: vec2(100, 100),
+      lift: 0,
       colour: 0xff7b72,
       weight: "normal",
       remainingSeconds,
     };
   };
   /** Add texts one by one, as the scene does, and say where each one is now. */
-  const burst = (texts: FloatingText[]): number[] => {
+  const burst = (texts: FloatingText[], zoom = 1): number[] => {
     const placed: FloatingText[] = [];
     for (const incoming of texts) {
-      const next = placeFloatingText(placed, incoming);
+      const next = placeFloatingText(placed, incoming, zoom);
       if (next !== undefined) {
         placed.push(next);
       }
     }
-    return placed.map(floatingTextY);
+    return placed.map((floating) => floatingTextY(floating, zoom));
   };
 
   it("stacks hits landing together a line apart, newest on top (#54)", () => {
@@ -290,6 +300,16 @@ describe("placeFloatingText", () => {
     expect(ys[1]).toBeCloseTo(88 - FLOATING_TEXT_LINE, 6);
   });
 
+  it("stacks and rises in screen px, so a zoomed-out line is more world (#456)", () => {
+    for (const zoom of [0.26, 0.65, 1]) {
+      const [first = 0, second = 0] = burst([text("b"), text("b")], zoom);
+      expect((first - second) * zoom).toBeCloseTo(FLOATING_TEXT_LINE, 9);
+    }
+    const older = text("b", FLOATING_TEXT_SECONDS - 1);
+    // A second's 24 px rise, on screen.
+    expect((100 - floatingTextY(older, 0.5)) * 0.5).toBeCloseTo(24, 9);
+  });
+
   it("makes no room for numbers over somebody else", () => {
     expect(burst([text("a"), text("b")])).toEqual([100, 100]);
   });
@@ -303,12 +323,12 @@ describe("placeFloatingText", () => {
         floating.remainingSeconds -= 0.05;
       }
       live = live.filter((floating) => floating.remainingSeconds > 0);
-      const placed = placeFloatingText(live, text("b"));
+      const placed = placeFloatingText(live, text("b"), 1);
       if (placed !== undefined) {
         live.push(placed);
       }
       expect(live.length).toBeLessThanOrEqual(FLOATING_TEXT_STACK);
-      tallest = Math.max(tallest, ...live.map((floating) => 100 - floatingTextY(floating)));
+      tallest = Math.max(tallest, ...live.map((floating) => 100 - floatingTextY(floating, 1)));
     }
     // A column of FLOATING_TEXT_STACK lines, plus how far one rises in its life.
     expect(tallest).toBeLessThanOrEqual((FLOATING_TEXT_STACK - 1) * FLOATING_TEXT_LINE + 24 * 1.2);
@@ -464,7 +484,7 @@ describe("offhandMarkLayout (#276)", () => {
 describe("nameplateLayout (#281)", () => {
   it("centres glyph, gap and name together on the body, on the name's bottom", () => {
     const monk = actor("m", 200, 100, 14, { profession: "monk" });
-    const layout = nameplateLayout(monk, 40);
+    const layout = nameplateLayout(monk, 40, 1);
     const glyphLeft = (layout.glyphX ?? 0) - PROFESSION_GLYPH_SIZE / 2;
     const textRight = layout.textX + 40 / 2;
     expect((glyphLeft + textRight) / 2).toBeCloseTo(200, 9);
@@ -473,25 +493,33 @@ describe("nameplateLayout (#281)", () => {
       2,
       9,
     );
-    expect(layout.bottom).toBe(nameLabelBottom(monk));
+    expect(layout.bottom).toBe(nameLabelBottom(monk, 1));
+  });
+
+  it("lays glyph, gap and name out in screen px, so they span more world zoomed out (#456)", () => {
+    const monk = actor("m", 200, 100, 14, { profession: "monk" });
+    const near = nameplateLayout(monk, 40, 1);
+    const wide = nameplateLayout(monk, 40, 0.5);
+    expect(wide.textX - 200).toBeCloseTo(2 * (near.textX - 200), 9);
+    expect(wide.glyphX ?? 0).toBeCloseTo(200 + 2 * ((near.glyphX ?? 0) - 200), 9);
   });
 
   it("moves the glyph left with a longer name", () => {
     const monk = actor("m", 200, 100, 14, { profession: "monk" });
-    expect(nameplateLayout(monk, 120).glyphX ?? 0).toBeLessThan(
-      nameplateLayout(monk, 40).glyphX ?? 0,
+    expect(nameplateLayout(monk, 120, 1).glyphX ?? 0).toBeLessThan(
+      nameplateLayout(monk, 40, 1).glyphX ?? 0,
     );
   });
 
   it("centres the glyph alone on a zero-width name", () => {
-    const layout = nameplateLayout(actor("m", 200, 100, 14, { profession: "monk" }), 0);
+    const layout = nameplateLayout(actor("m", 200, 100, 14, { profession: "monk" }), 0, 1);
     expect(
       (layout.glyphX ?? 0) + (PROFESSION_GLYPH_SIZE + 2) / 2 - PROFESSION_GLYPH_SIZE / 2,
     ).toBeCloseTo(200, 9);
   });
 
   it("centres the name alone, with no glyph, for no profession", () => {
-    const layout = nameplateLayout(actor("d", 200, 100), 40);
+    const layout = nameplateLayout(actor("d", 200, 100), 40, 1);
     expect(layout.glyphX).toBeUndefined();
     expect(layout.textX).toBe(200);
   });
