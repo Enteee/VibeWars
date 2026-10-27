@@ -317,7 +317,7 @@ describe("professionChoices (#568)", () => {
   /** A Warrior/Monk with a warrior skill and two monk skills on the bar. */
   function warriorMonk(): StoredCharacter {
     let character = setProfessions(newCharacter("c1"), "warrior", "monk");
-    character = setSkill(character, 0, "warrior.sever-artery");
+    character = setSkill(character, 0, "warrior.sever-artery-lite");
     character = setSkill(character, 1, "monk.orison-of-healing");
     return setSkill(character, 2, "monk.guardian");
   }

@@ -1,12 +1,13 @@
-import { DEFAULT_SKILL_BAR } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
 import {
   answerChallenges,
   hello,
+  helloAs,
   playerIn,
   self,
   startMatch,
+  starterBuild,
 } from "./match-harness.test-support.js";
 
 /**
@@ -66,11 +67,13 @@ describe("reconnection over P2P (#375)", () => {
     // or every skill shows ready once the first snapshot lands.
     const match = startMatch();
     await match.joinLocal();
-    const { connection: caster, transport } = await match.join();
+    const { connection: caster, transport } = await match.join(helloAs("Elementalist/Mesmer"));
     await match.step(5);
 
     // Armor of Earth: self-targeted, 15 s to recharge.
-    const slot = DEFAULT_SKILL_BAR.indexOf("elementalist.armor-of-earth");
+    const slot = starterBuild("Elementalist/Mesmer").skillBar.indexOf(
+      "elementalist.armor-of-earth",
+    );
     caster.sendIntent({ kind: "use-skill", slot });
     await match.step(1);
     const before = caster.getRecharges()[slot]?.remaining ?? 0;

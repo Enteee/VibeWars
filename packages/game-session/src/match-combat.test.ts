@@ -1,9 +1,4 @@
-import {
-  DEFAULT_SKILL_BAR,
-  defaultBuildEquipment,
-  type CombatLogEntry,
-  type PlayerBuild,
-} from "@vibewars/game-core";
+import { defaultBuildEquipment, type CombatLogEntry, type PlayerBuild } from "@vibewars/game-core";
 import {
   MAX_WIRE_COMBATS,
   parsePeerHello,
@@ -15,9 +10,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   hello,
+  helloAs,
+  isStarterBar,
   playerIn,
   self,
   startMatch,
+  starterBuild,
   toJson,
   type TestMatch,
 } from "./match-harness.test-support.js";
@@ -34,9 +32,21 @@ import { combatMessage, wireCombat } from "./wire.js";
  * clock or flakes on a busy runner.
  */
 
-const FIREBALL = DEFAULT_SKILL_BAR.indexOf("elementalist.fireball");
+/** The starter build most tests here play (#852): Fireball, and Armor of Earth on yourself. */
+const NUKER = "Elementalist/Mesmer";
 
-/** A ranger with a bow and Broad Head Arrow, which the house loadout lacks. */
+/** Slot of `skillId` on the starter build named `name`. */
+function slotOf(name: string, skillId: string): number {
+  const slot = starterBuild(name).skillBar.indexOf(skillId);
+  if (slot === -1) {
+    throw new Error(`${name} has no ${skillId}`);
+  }
+  return slot;
+}
+
+const FIREBALL = slotOf(NUKER, "elementalist.fireball");
+
+/** A ranger with a bow and nothing but Broad Head Arrow, to daze. */
 const ARCHER: PlayerBuild = {
   name: "Archer",
   primaryProfession: "ranger",
@@ -139,9 +149,10 @@ async function closeDistance(
 }
 
 /** A remote pair, on opposite teams, in their first snapshot. */
-async function joinPair(match: TestMatch = startMatch()) {
-  const { connection: a } = await match.join();
-  const { connection: b } = await match.join();
+/** Two players on opposing teams, both `NUKER` unless named otherwise. */
+async function joinPair(match: TestMatch = startMatch(), as: { a?: string; b?: string } = {}) {
+  const { connection: a } = await match.join(helloAs(as.a ?? NUKER));
+  const { connection: b } = await match.join(helloAs(as.b ?? NUKER));
   await match.step(TICK);
   return { match, a, b };
 }
@@ -191,8 +202,8 @@ describe("networked combat (P2P)", () => {
     const match = startMatch();
     const { connection } = await match.join();
 
-    expect(connection.skillBar).toHaveLength(DEFAULT_SKILL_BAR.length);
-    expect(connection.skillBar[0]?.id).toBe(DEFAULT_SKILL_BAR[0]);
+    // No build: one of the starter builds, whole (#852).
+    expect(isStarterBar(connection.skillBar.map((skill) => skill?.id ?? null))).toBe(true);
     expect(connection.skillBar[0]?.name.length).toBeGreaterThan(0);
   });
 
@@ -242,16 +253,19 @@ describe("networked combat (P2P)", () => {
     a.sendIntent({ kind: "use-skill", slot: FIREBALL });
     await until(
       match,
-      () => (playerIn(a.getSnapshot(), b.selfSessionId)?.health ?? 500) < 500,
+      () => (playerIn(a.getSnapshot(), b.selfSessionId)?.health ?? 590) < 590,
       "the target to take damage",
     );
 
-    // Fire Magic 12 -> 91 before mitigation. The house loadout is a
-    // warrior (80 base armor) carrying a shield whose Strength
-    // requirement it does not meet (+8, not +16), so armor is 88 and the
-    // curve gives 91 * 2^((60 - 88) / 40) = 56. Spelled out, not derived,
-    // so a change to either the curve or the house loadout fails loudly.
-    expect(playerIn(a.getSnapshot(), b.selfSessionId)?.health).toBe(500 - 56);
+    // Both are the Elementalist/Mesmer starter build. Fire Magic 12 and
+    // the head's minor rune make 13: 7 + 7 * 13 = 98 before mitigation.
+    // The target's armor is an elementalist's 60 (a focus adds none), so
+    // the curve leaves it at 98. Its health is 500 + 50 (superior Vigor)
+    // + 15 + 10 + 3 * 5 (Survivor on chest, legs and the other three) =
+    // 590. Spelled out, not derived, so a change to either the curve or
+    // the build fails loudly.
+    expect(playerIn(a.getSnapshot(), b.selfSessionId)?.maxHealth).toBe(590);
+    expect(playerIn(a.getSnapshot(), b.selfSessionId)?.health).toBe(590 - 98);
   });
 
   it("deducts energy when a skill is cast", async () => {
@@ -266,12 +280,12 @@ describe("networked combat (P2P)", () => {
   });
 
   it("exposes cast progress so a client can draw a cast bar", async () => {
-    const { match, a, b } = await joinPair();
+    const { match, a, b } = await joinPair(undefined, { a: "Ranger/Mesmer" });
     await closeDistance(match, a, b.selfSessionId, 300);
     await target(match, a, b.selfSessionId);
 
     // Troll Unguent has a 3s cast: long enough to observe mid-cast.
-    a.sendIntent({ kind: "use-skill", slot: DEFAULT_SKILL_BAR.indexOf("ranger.troll-unguent") });
+    a.sendIntent({ kind: "use-skill", slot: slotOf("Ranger/Mesmer", "ranger.troll-unguent") });
     await until(match, () => self(a)?.castingSkillId !== undefined, "the cast to start");
 
     const me = self(a);
@@ -284,7 +298,7 @@ describe("networked combat (P2P)", () => {
     // Broad Head Arrow needs a bow (ADR-0029): A is a ranger.
     const match = startMatch();
     const { connection: a } = await match.join(hello({ build: toJson(ARCHER) }));
-    const { connection: b } = await match.join();
+    const { connection: b } = await match.join(helloAs("Monk/Elementalist"));
     await match.step(TICK);
     await closeDistance(match, a, b.selfSessionId, 300);
     await target(match, a, b.selfSessionId);
@@ -298,7 +312,10 @@ describe("networked combat (P2P)", () => {
     );
 
     // A spell: dazed slows spells only (#524).
-    b.sendIntent({ kind: "use-skill", slot: DEFAULT_SKILL_BAR.indexOf("monk.orison-of-healing") });
+    b.sendIntent({
+      kind: "use-skill",
+      slot: slotOf("Monk/Elementalist", "monk.orison-of-healing"),
+    });
     await until(match, () => self(b)?.castingSkillId !== undefined, "b's cast to start");
 
     const me = self(b);
@@ -443,20 +460,20 @@ describe("networked combat (P2P)", () => {
   });
 
   it("syncs applied statuses so the client can show condition markers, and ticks them as degeneration", async () => {
-    const { match, a, b } = await joinPair();
+    const { match, a, b } = await joinPair(undefined, { a: "Warrior/Monk" });
     await closeDistance(match, a, b.selfSessionId, 300);
     await target(match, a, b.selfSessionId);
 
-    // Sever Artery costs 4 adrenaline, earned by landing attacks: so swing
-    // twice first. The adrenaline economy working as designed.
+    // Sever Artery costs adrenaline, earned by landing attacks: so swing
+    // first. The adrenaline economy working as designed.
     const heard = combatMessages(a);
     a.sendIntent({ kind: "attack", targetId: b.selfSessionId });
-    await until(match, () => (self(a)?.adrenaline ?? 0) >= 4, "adrenaline from landing two hits");
+    await until(match, () => (self(a)?.adrenaline ?? 0) > 0, "adrenaline from landing a hit");
 
     await closeDistance(match, a, b.selfSessionId, 30);
     a.sendIntent({
       kind: "use-skill",
-      slot: DEFAULT_SKILL_BAR.indexOf("warrior.sever-artery"),
+      slot: slotOf("Warrior/Monk", "warrior.sever-artery-lite"),
     });
     await until(
       match,
@@ -597,7 +614,7 @@ describe("networked combat (P2P)", () => {
 
   it("refuses to cast a damage skill with no target selected", async () => {
     const match = startMatch();
-    const { connection } = await match.join();
+    const { connection } = await match.join(helloAs(NUKER));
     await match.step(TICK);
 
     const before = self(connection)?.energy ?? 0;
@@ -613,13 +630,13 @@ describe("networked combat (P2P)", () => {
     // A self-targeted skill, so the energy economy is tested without
     // walking across the arena.
     const match = startMatch();
-    const { connection } = await match.join();
+    const { connection } = await match.join(helloAs(NUKER));
     await match.step(TICK);
     const full = self(connection)?.energy ?? 0;
 
     connection.sendIntent({
       kind: "use-skill",
-      slot: DEFAULT_SKILL_BAR.indexOf("elementalist.armor-of-earth"),
+      slot: slotOf(NUKER, "elementalist.armor-of-earth"),
     });
     await until(match, () => (self(connection)?.energy ?? full) < full, "energy spent");
 

@@ -5,6 +5,7 @@ import { expect, test, type Page, type Locator } from "@playwright/test";
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
 import { projection } from "./camera.js";
 import { key, skillKey } from "./keys.js";
+import { bringStarter, starterKey } from "./helpers/starter.js";
 
 /**
  * Browser tests for playing (brief §31): start a match, basic movement,
@@ -63,7 +64,14 @@ async function startSoloMatch(page: Page): Promise<Locator> {
  * A lobby match: `host` on team 1, every guest on team 2. The host's
  * arena canvas, once everyone is in.
  */
-async function startLobbyMatch(host: Page, guests: readonly Page[]): Promise<Locator> {
+async function startLobbyMatch(
+  host: Page,
+  guests: readonly Page[],
+  build = "Elementalist/Mesmer",
+): Promise<Locator> {
+  // A known bar (#852). The pages of a test share one storage, so the
+  // guests play it too.
+  await bringStarter(host, build);
   await host.goto("./");
   await host.getByRole("button", { name: "host a lobby" }).click();
   await expect(host.locator(".lobby-code")).toHaveText(/^[A-Z0-9]{3}-[A-Z0-9]{3}$/);
@@ -131,9 +139,10 @@ test("hovering a slot shows its tooltip at the host's ranks, above the bar (#485
   await expect(tip).toContainText("Fireball");
   await expect(tip).toContainText("cost");
   await expect(tip).toContainText("Fire Magic");
-  // The house loadout's Fire Magic 12, as the host resolved it; a client
-  // describing the skill without its ranks would say 7.
-  await expect(tip).toContainText("Deals 91 damage");
+  // The Elementalist/Mesmer's Fire Magic 12 and its minor rune, 13, as the
+  // host resolved it; a client describing the skill without its ranks
+  // would say 7.
+  await expect(tip).toContainText("Deals 98 damage");
   const tipBox = await tip.boundingBox();
   const slotBox = await slot.boundingBox();
   expect((tipBox?.y ?? Infinity) + (tipBox?.height ?? 0)).toBeLessThanOrEqual(slotBox?.y ?? 0);
@@ -179,7 +188,7 @@ test("the arrows move; A, once move-left, casts slot 5 and moves nobody (#302)",
   await expect(page.locator(".hud-skill-key").first()).toHaveText("Q");
   expect(key("skill-5")).toBe("KeyA");
 
-  // Slot 5 of the house bar is a self-cast enchantment. Held, A casts it
+  // Slot 5 is Armor of Earth, a self-cast enchantment. Held, A casts it
   // once, and the player stays where they are while it is held.
   await page.keyboard.down("a");
   await expect(page.locator(".hud-statuses")).not.toContainText("no active effects");
@@ -487,7 +496,7 @@ test("a recharging skill shows the clock-wipe and the seconds left, then clears 
 }) => {
   await startSoloMatch(page);
 
-  // Slot 5 of the house bar is Armor of Earth: self-cast, so it needs no
+  // Slot 5 is Armor of Earth: self-cast, so it needs no
   // target, and it recharges in 15 s.
   await page.keyboard.press(key("skill-5"));
   const slot = page.locator(".hud-skill").nth(4);
@@ -522,8 +531,7 @@ test("a match whose host goes returns to the menu and says why (#195)", async ({
 });
 
 test("the target panel shows the target's professions before its name (#281)", async ({ page }) => {
-  // A fresh tab has no character, so the opponent plays the house
-  // loadout: a warrior with no secondary.
+  // The opponent plays the Elementalist/Mesmer starter build.
   const opponent = await page.context().newPage();
   await startLobbyMatch(page, [opponent]);
   const icons = page.locator(".hud-target-professions img");
@@ -531,11 +539,12 @@ test("the target panel shows the target's professions before its name (#281)", a
 
   await page.keyboard.press("Tab");
   await expect(page.locator(".hud-target-text")).not.toHaveText("no target");
-  // The profession, then the weapon it carries (#419).
-  await expect(icons).toHaveCount(2);
-  await expect(icons.first()).toHaveAttribute("alt", "Warrior");
-  await expect(icons.first()).toHaveAttribute("src", /icons\/profession\/warrior\.svg$/);
-  await expect(icons.nth(1)).toHaveAttribute("src", /icons\/weapon\/[a-z-]+\.svg$/);
+  // The professions, then the weapon it carries (#419).
+  await expect(icons).toHaveCount(3);
+  await expect(icons.first()).toHaveAttribute("alt", "Elementalist");
+  await expect(icons.first()).toHaveAttribute("src", /icons\/profession\/elementalist\.svg$/);
+  await expect(icons.nth(1)).toHaveAttribute("alt", "Mesmer");
+  await expect(icons.nth(2)).toHaveAttribute("src", /icons\/weapon\/[a-z-]+\.svg$/);
 
   // Gone with the target, when it leaves.
   await leaveMatch(opponent);
@@ -616,7 +625,7 @@ test("the target frame shows the target's health and the skill it casts, filling
   page,
 }) => {
   const opponent = await page.context().newPage();
-  await startLobbyMatch(page, [opponent]);
+  await startLobbyMatch(page, [opponent], "Ranger/Mesmer");
   const health = page.locator(".hud-target-health");
   const cast = page.locator(".hud-target-cast");
   await expect(health).toBeHidden();
@@ -627,8 +636,8 @@ test("the target frame shows the target's health and the skill it casts, filling
   await expect(health).toHaveText("100%");
   await expect(cast).toBeHidden();
 
-  // Slot 8 is Troll Unguent: a 3 s self cast, so it needs no target.
-  await opponent.keyboard.press(key("skill-8"));
+  // Troll Unguent: a 3 s self cast, so it needs no target.
+  await opponent.keyboard.press(starterKey("Ranger/Mesmer", "ranger.troll-unguent"));
   await expect(cast).toBeVisible();
   await expect(cast.locator(".hud-target-cast-name")).toHaveText("Troll Unguent");
   await expect(cast.locator(".skill-type-badge")).toHaveCount(1);
@@ -644,7 +653,7 @@ test("the target frame shows the target's health and the skill it casts, filling
 
 test("the HUD's energy bar shows its regeneration as arrows (#504)", async ({ page }) => {
   await startSoloMatch(page);
-  // The house build is an Elementalist's 4 pips (join-loadout.ts).
+  // The Elementalist/Mesmer starter build: an Elementalist's 4 pips.
   await expect(page.locator(".hud-bar-energy .vital-pips")).toHaveText("››››");
   await expect(page.locator(".hud-bar-health .vital-pips")).toBeHidden();
 });

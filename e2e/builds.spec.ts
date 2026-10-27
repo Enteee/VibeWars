@@ -690,7 +690,7 @@ test("a saved character can be chosen and is taken into a match", async ({ page 
   await expect(page.locator("#viewport canvas")).toBeVisible();
 
   // The server grants the build's bar, so the HUD shows exactly the one
-  // skill that was equipped, not the house loadout, and seven empty slots.
+  // skill that was equipped, not a starter build, and seven empty slots.
   await expect(page.locator(".hud-skills .hud-skill:not(.is-empty)")).toHaveCount(1);
   await expect(page.locator(".hud-skills .hud-skill.is-empty")).toHaveCount(7);
 });
@@ -970,7 +970,7 @@ const STALE_CHARACTER = {
   name: "Veteran",
   primaryProfession: "warrior",
   attributes: [{ attributeId: "warrior.swordsmanship", rank: 12 }],
-  skillBar: ["warrior.sever-artery", null, null, null, null, null, null, null],
+  skillBar: ["warrior.sever-artery-lite", null, null, null, null, null, null, null],
   updatedAt: 1_700_000_000_000,
 };
 
@@ -1468,19 +1468,12 @@ test("the arena survives the editor collapsing to one column", async ({ page }) 
 /** Slot `slot`'s key, as the editor's bar and its Equip label it (#564). */
 const slotLabel = (slot: number): string => codeLabel(skillKey(slot));
 
-/**
- * A Warrior/Elementalist with all eight slots filled, by clicking the first eight
- * non-elite skills: a second elite would replace the first (#459).
- */
+/** A Warrior/Elementalist with all eight slots filled, by clicking the first eight skills. */
 async function fullBar(page: Page): Promise<void> {
   await newCharacter(page);
   await chooseProfession(page, "secondary", "elementalist");
   for (let slot = 0; slot < 8; slot++) {
-    await page
-      .locator(".skill-box:not(.is-equipped):not(.is-elite)")
-      .first()
-      .locator(".skill-box-equip")
-      .click();
+    await page.locator(".skill-box:not(.is-equipped)").first().locator(".skill-box-equip").click();
   }
   await expect(page.locator(".skill-slot.is-empty")).toHaveCount(0);
 }

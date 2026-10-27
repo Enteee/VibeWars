@@ -164,7 +164,7 @@ export interface MatchConnection {
   readonly skillBar: readonly (SkillSlot | null)[];
   /**
    * Attribute id to effective rank, as the host resolved this player's
-   * build, house loadout included: what the bar's tooltips describe (#485).
+   * build, a starter build included: what the bar's tooltips describe (#485).
    */
   readonly ranks: ReadonlyMap<string, number>;
   sendIntent(intent: ClientIntent): void;

@@ -585,10 +585,6 @@ const skillGlyph = {
     inkLine("M5 20L16 7", 2.4) + inkFill("M11 3.5C17 2.5 21.5 5 21 9C20.5 13 16.5 15 14 12.5Z"),
   sword: () =>
     inkLine("M5.5 18.5L19 5", 2.6) + inkLine("M7 11.5L12.5 17", 2.4) + inkLine("M4 20l2-2", 2.6),
-  dagger: () =>
-    inkLine("M8 16L18.5 5.5", 2.8) +
-    inkLine("M5.5 13.5L10.5 18.5", 2.2) +
-    inkLine("M4 20l2.5-2.5", 2.4),
   hammer: () =>
     inkLine("M5 20L14 11", 2.4) +
     `<rect x="11" y="3.5" width="10" height="7" rx="1" transform="rotate(45 16 7)" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>`,

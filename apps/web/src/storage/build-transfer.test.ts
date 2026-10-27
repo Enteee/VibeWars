@@ -272,7 +272,7 @@ describe("build format version", () => {
     primaryProfession: "warrior",
     secondaryProfession: null,
     attributes: [{ attributeId: "warrior.swordsmanship", rank: 12 }],
-    skillBar: ["warrior.sever-artery", null, null, null, null, null, null, null],
+    skillBar: ["warrior.sever-artery-lite", null, null, null, null, null, null, null],
     equipment: defaultBuildEquipment("warrior"),
   };
 

@@ -294,7 +294,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     // Without a plan, teams alternate as players arrive, so a 1v1 is
     // adversarial by default.
     const team: 0 | 1 = plan?.team ?? (seats.size % 2 === 0 ? 0 : 1);
-    const { loadout } = resolveJoinLoadout(hello.build, RULESET.attributes);
+    const { loadout } = resolveJoinLoadout(hello.build, RULESET.attributes, random);
     // Gear becomes numbers exactly once, before the combatant exists (ADR-0012).
     const resolved = resolveLoadout(
       {

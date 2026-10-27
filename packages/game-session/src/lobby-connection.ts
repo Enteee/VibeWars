@@ -1,5 +1,5 @@
 import type { ProfessionId } from "@vibewars/game-core";
-import type { ChatChannel, LobbyPhase } from "@vibewars/game-protocol";
+import type { LobbyPhase } from "@vibewars/game-protocol";
 
 import type { Transport } from "./transport.js";
 
@@ -22,7 +22,7 @@ export interface LobbyPlayerSnapshot {
   readonly team: 0 | 1 | null;
   readonly ready: boolean;
   readonly isHost: boolean;
-  /** `null` brings the house loadout. */
+  /** `null` brings a starter build. */
   readonly character: LobbyCharacter | null;
 }
 
@@ -45,16 +45,6 @@ export interface LobbySnapshot {
  */
 export type LobbyClosedReason = "host-left" | "connection-lost";
 
-/** A chat line (#479), with its sender's name and team as it was sent. */
-export interface ChatLine {
-  readonly channel: ChatChannel;
-  readonly fromId: string;
-  readonly name: string;
-  /** `null`: a spectator. */
-  readonly team: 0 | 1 | null;
-  readonly text: string;
-}
-
 /** The lobby's match is on, and this player is seated in it. */
 export interface MatchStarting {
   readonly mapId: string;
@@ -73,16 +63,10 @@ export interface LobbyConnection {
   setReady(ready: boolean): void;
   selectMap(mapId: string): void;
   startMatch(): void;
-  /** Say `text` on `channel` (#479), in the lobby or its match; the host cleans and routes it. */
-  sendChat(channel: ChatChannel, text: string): void;
   onChange(handler: () => void): void;
   onMatchStarting(handler: (start: MatchStarting) => void): void;
   /** The host's own player alone: why the start it asked for did not happen. */
   onStartRejected(handler: (reason: string) => void): void;
-  /** A chat line reached this player. */
-  onChat(handler: (line: ChatLine) => void): void;
-  /** The host is dropping this player's lines, too many too fast: once a burst. */
-  onChatThrottled(handler: () => void): void;
   /** The lobby is over for this player, and why. */
   onClosed(handler: (reason: LobbyClosedReason) => void): void;
   disconnect(): Promise<void>;

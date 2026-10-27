@@ -1,7 +1,6 @@
-import { MAX_CHAT_GRAPHEMES } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
-import { sanitizeChatText, sanitizeName } from "./names.js";
+import { sanitizeName } from "./names.js";
 
 describe("sanitizeName", () => {
   it("keeps a reasonable name as-is", () => {
@@ -169,27 +168,5 @@ describe("sanitizeName", () => {
       const swatches = `a${String.fromCodePoint(0x1f3fb).repeat(10)}`;
       expect(sanitizeName(swatches.repeat(11), "fallback")).toBe(swatches.repeat(4));
     });
-  });
-});
-
-describe("sanitizeChatText (#479)", () => {
-  it("keeps a line of text as it is, spaces and punctuation too", () => {
-    expect(sanitizeChatText("spike the monk, then rez!")).toBe("spike the monk, then rez!");
-  });
-
-  it("strips what names lose: controls, bidi overrides and zero-width characters", () => {
-    expect(sanitizeChatText("gg‮ wp​\u0000")).toBe("gg wp");
-  });
-
-  it("is empty when nothing drawable is left", () => {
-    expect(sanitizeChatText(" ​⁦ ")).toBe("");
-  });
-
-  it("keeps MAX_CHAT_GRAPHEMES graphemes, never cutting a family apart", () => {
-    expect(sanitizeChatText("x".repeat(500))).toHaveLength(MAX_CHAT_GRAPHEMES);
-    const family = "\u{1f468}‍\u{1f469}‍\u{1f467}";
-    const line = sanitizeChatText(family.repeat(500));
-    expect(line.length % family.length).toBe(0);
-    expect(line.length).toBeGreaterThan(0);
   });
 });
