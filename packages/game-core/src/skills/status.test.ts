@@ -42,6 +42,8 @@ describe("status definitions", () => {
       const def = getStatusDefinition(id);
       const hasEffect =
         def.healthPips !== 0 ||
+        def.healthPipsPerEnchantment !== undefined ||
+        def.preventsKnockdown ||
         def.energyPips !== 0 ||
         def.armorModifier !== 0 ||
         def.armorReduction !== undefined ||
@@ -220,6 +222,35 @@ describe("StatusSet apply/remove", () => {
   });
 });
 
+describe("StatusSet removal by profession (#845)", () => {
+  it("takes the newest of that profession's, past a newer one of another", () => {
+    const set = new StatusSet();
+    set.apply("mystic-regeneration", 10, "a");
+    set.apply("fleeting-stability", 10, "a");
+    set.apply("guardian", 10, "b");
+    expect(set.removeByCategory("enchantment", 1, "dervish")).toEqual(["fleeting-stability"]);
+    expect(set.has("mystic-regeneration")).toBe(true);
+    expect(set.has("guardian")).toBe(true);
+  });
+
+  it("takes nothing when only another profession's are up", () => {
+    const set = new StatusSet();
+    set.apply("guardian", 10, "b");
+    set.apply("regeneration", 10, "b");
+    expect(set.removeByCategory("enchantment", 1, "dervish")).toEqual([]);
+    expect(set.countByCategory("enchantment")).toBe(2);
+  });
+
+  it("ends what ends on a prevented knockdown, and nothing else", () => {
+    const set = new StatusSet();
+    set.apply("fleeting-stability", 10, "a");
+    set.apply("mystic-regeneration", 10, "a");
+    expect(set.endOnKnockdownPrevented()).toEqual(["fleeting-stability"]);
+    expect(set.has("mystic-regeneration")).toBe(true);
+    expect(set.endOnKnockdownPrevented()).toEqual([]);
+  });
+});
+
 describe("StatusSet durationSeconds (#803)", () => {
   const order = (set: StatusSet) => set.active.map((status) => status.id);
 
@@ -339,6 +370,28 @@ describe("clampPips", () => {
   });
 });
 
+describe("aggregateModifiers, health per enchantment (#845)", () => {
+  const pips = (ids: StatusId[]): number =>
+    aggregateModifiers(ids.map((id) => ({ id }))).healthPips;
+
+  it("counts every enchantment, itself included, at most 3", () => {
+    expect(pips([])).toBe(0);
+    expect(pips(["mystic-regeneration"])).toBe(3);
+    expect(pips(["mystic-regeneration", "guardian", "fleeting-stability"])).toBe(9);
+    expect(pips(["mystic-regeneration", "guardian", "fleeting-stability", "armor-boost"])).toBe(9);
+  });
+
+  it("counts no condition, hex or stance, and adds to their pips", () => {
+    expect(pips(["mystic-regeneration", "bleeding", "malaise", "heart-of-fury"])).toBe(3 - 3);
+  });
+
+  it("is clamped with the rest at MAX_PIPS", () => {
+    expect(
+      clampPips(pips(["mystic-regeneration", "regeneration", "guardian", "weapon-of-warding"])),
+    ).toBe(MAX_PIPS);
+  });
+});
+
 describe("aggregateModifiers", () => {
   it("returns neutral modifiers for no statuses", () => {
     const mods = aggregateModifiers([]);
@@ -405,12 +458,23 @@ describe("attack duration (ADR-0029)", () => {
     });
   }
 
-  it("is 1 with nothing on, and only Faintheartedness sets it: 50% slower (#493)", () => {
+  it("is 1 with nothing on; Faintheartedness is 50% slower (#493), Heart of Fury 25% faster (#845)", () => {
     expect(aggregateModifiers([]).attackDurationMultiplier).toBe(1);
+    const multipliers: Partial<Record<StatusId, number>> = {
+      faintheartedness: 1.5,
+      "heart-of-fury": 0.75,
+    };
     for (const id of ALL_STATUS_IDS) {
-      const expected = id === "faintheartedness" ? 1.5 : 1;
+      const expected = multipliers[id] ?? 1;
       expect(getStatusDefinition(id).attackDurationMultiplier, id).toBe(expected);
     }
+  });
+
+  it("Heart of Fury and Faintheartedness multiply (#845)", () => {
+    expect(
+      aggregateModifiers([{ id: "heart-of-fury" }, { id: "faintheartedness" }])
+        .attackDurationMultiplier,
+    ).toBeCloseTo(0.75 * 1.5);
   });
 
   it("takes only the strongest speed-up", () => {
