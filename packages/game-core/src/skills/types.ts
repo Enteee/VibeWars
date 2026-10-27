@@ -5,6 +5,7 @@ import type { ResolvedEquipment } from "../equipment/resolve.js";
 import type { DamageType } from "../equipment/types.js";
 import type { ProfessionId } from "../professions.js";
 import type { CastState } from "./cast-state.js";
+import type { TargetCandidate } from "./targeting.js";
 import type { AttackState } from "./weapon-attack.js";
 import type { StatusCategory, StatusId, StatusSet } from "./status.js";
 
@@ -185,6 +186,28 @@ export interface ResurrectEffect {
   readonly energyPercent: Magnitude;
 }
 
+/**
+ * Apply `effects` to every foe of the caster within `radius` of the
+ * effect's target, the target itself excluded (#885), as Death Blossom's
+ * "all adjacent foes take 20...40 damage". Not a blow: no block, no crit
+ * and no chain mark on a foe it reaches.
+ */
+export interface SplashEffect {
+  readonly kind: "splash";
+  readonly radius: number;
+  readonly effects: readonly UnconditionalEffect[];
+}
+
+/**
+ * Every other skill of the caster of this type recharges at once (#885),
+ * as Moebius Strike's "all your other attack skills are recharged". Acts
+ * on the caster, once.
+ */
+export interface RechargeOthersEffect {
+  readonly kind: "recharge-others";
+  readonly which: "attack";
+}
+
 /** How long "knocks down" lasts when a skill names no duration (GW1). */
 export const KNOCKDOWN_SECONDS = 2;
 
@@ -212,7 +235,13 @@ export type StateCondition =
   /** The effect's target is activating a spell (`isSpell`); a chant is not one. */
   | { readonly kind: "target-casting"; readonly spell: true }
   /** The caster has at least one status of this category. */
-  | { readonly kind: "caster-has"; readonly category: StatusCategory };
+  | { readonly kind: "caster-has"; readonly category: StatusCategory }
+  /**
+   * No living ally of the effect's target, the target itself excluded,
+   * stands within `radius` of it (#885): Horns of the Ox's "not adjacent
+   * to any allies".
+   */
+  | { readonly kind: "target-alone"; readonly radius: number };
 
 export type EffectCondition = EventCondition | StateCondition;
 
@@ -243,7 +272,9 @@ export type UnconditionalEffect =
   | InterruptEffect
   | KnockdownEffect
   | ResurrectEffect
-  | RechargeFasterEffect;
+  | RechargeFasterEffect
+  | SplashEffect
+  | RechargeOthersEffect;
 
 export type SkillEffect = UnconditionalEffect | ConditionalEffect;
 
@@ -309,6 +340,12 @@ export interface AttackSkillRule {
    * +10 damage". One damage number, not a second hit. `undefined`: none.
    */
   readonly conditionalBonus: ConditionalBonus | undefined;
+  /**
+   * How many blows it strikes each victim (#885): 2 for a dual attack,
+   * each rolling its own blind, block, crit and damage, with the skill's
+   * effects on each that hits. A ranged attack skill flies once: 1.
+   */
+  readonly strikes: 1 | 2;
   /** Whether no block stops it (Wild Throw's "This attack cannot be blocked"). */
   readonly unblockable: boolean;
   /**
@@ -518,4 +555,13 @@ export interface SkillContext {
    * experiment is a different object, not a different build.
    */
   readonly rules: CombatRules;
+  /**
+   * Everyone in the match by id, where they stand (#885): what a splash
+   * and "target is alone" read. Not a target list: who an area hits is
+   * `resolveTargets`'.
+   */
+  readonly surroundings: Surroundings;
 }
+
+/** Everyone in the match by id, where they stand (#885). */
+export type Surroundings = ReadonlyMap<string, TargetCandidate>;

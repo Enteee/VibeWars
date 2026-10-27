@@ -5,7 +5,9 @@ import { mitigate, skillDamage } from "./damage.js";
 import { effectiveMaxEnergy } from "./overcast.js";
 import { resolveMagnitude } from "./scaling.js";
 import { getStatusDefinition, scaledStatusDuration, type StatusId } from "./status.js";
+import { nearestFirst } from "./targeting.js";
 import { effectiveMaxHealth, healingMultiplierOf, maxHealthLossOf, rankOf } from "./tick.js";
+import { distance } from "../vec2.js";
 import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
 import {
@@ -17,6 +19,7 @@ import {
   type InterruptEffect,
   type SkillEffect,
   type StateCondition,
+  type Surroundings,
   type UnconditionalEffect,
 } from "./types.js";
 
@@ -582,7 +585,28 @@ export function applyEffect(
       return events;
     }
 
+    case "splash": {
+      const at = target === undefined ? undefined : context.surroundings.get(target.id)?.position;
+      if (target === undefined || at === undefined) {
+        return events;
+      }
+      const reached = [...context.surroundings.values()].filter(
+        ({ combatant, position }) =>
+          !combatant.dead &&
+          combatant.id !== target.id &&
+          combatant.team !== caster.team &&
+          distance(position, at) <= effect.radius,
+      );
+      for (const combatant of nearestFirst(reached, at)) {
+        for (const inner of effect.effects) {
+          events.push(...applyEffect(inner, { ...context, target: combatant }, earlier));
+        }
+      }
+      return events;
+    }
+
     case "recharge-faster":
+    case "recharge-others":
       // Nothing lands on anyone: the resolution reads it (`resolveSkillEffects`).
       return events;
   }
@@ -598,6 +622,7 @@ function isStateCondition(condition: EffectCondition): condition is StateConditi
     case "target-has":
     case "target-casting":
     case "caster-has":
+    case "target-alone":
       return true;
   }
 }
@@ -605,12 +630,14 @@ function isStateCondition(condition: EffectCondition): condition is StateConditi
 /**
  * Whether `condition` holds for `target` and `caster` as they stand now
  * (#794). Health is a share of the maximum a deep wound left; exactly
- * the fraction is not below it.
+ * the fraction is not below it. A target nowhere in `surroundings` is
+ * not alone: there is nowhere to be alone.
  */
 export function stateHolds(
   condition: StateCondition,
   caster: Combatant,
   target: Combatant,
+  surroundings: Surroundings,
 ): boolean {
   switch (condition.kind) {
     case "target-health-below":
@@ -623,6 +650,19 @@ export function stateHolds(
       const cast = target.cast.activeCast;
       const skill = cast === undefined ? undefined : getSkill(cast.skillId);
       return skill !== undefined && isSpell(skill.type);
+    }
+    case "target-alone": {
+      const at = surroundings.get(target.id)?.position;
+      return (
+        at !== undefined &&
+        ![...surroundings.values()].some(
+          ({ combatant, position }) =>
+            !combatant.dead &&
+            combatant.id !== target.id &&
+            combatant.team === target.team &&
+            distance(position, at) <= condition.radius,
+        )
+      );
     }
   }
 }
@@ -639,6 +679,7 @@ function statesBefore(
   effects: readonly SkillEffect[],
   caster: Combatant,
   target: Combatant | undefined,
+  surroundings: Surroundings,
 ): ReadonlySet<EffectCondition> {
   if (target === undefined) {
     return NONE_HELD;
@@ -648,7 +689,7 @@ function statesBefore(
     if (
       effect.kind === "if" &&
       isStateCondition(effect.condition) &&
-      stateHolds(effect.condition, caster, target)
+      stateHolds(effect.condition, caster, target, surroundings)
     ) {
       held.add(effect.condition);
     }
@@ -689,6 +730,7 @@ function conditionHolds(
     case "target-has":
     case "target-casting":
     case "caster-has":
+    case "target-alone":
       return held.has(condition);
   }
 }
@@ -731,7 +773,7 @@ export function applyEffects(
   effects: readonly SkillEffect[],
   context: SkillContext,
 ): CombatEvent[] {
-  const held = statesBefore(effects, context.caster, context.target);
+  const held = statesBefore(effects, context.caster, context.target, context.surroundings);
   const events: CombatEvent[] = [];
   for (const effect of effects) {
     events.push(...applyInOrder(effect, context, events, held));
@@ -752,6 +794,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "energy-gain":
     case "sacrifice-health":
     case "recharge-faster":
+    case "recharge-others":
       return true;
     case "heal":
       return effect.recipient === "caster";
@@ -764,6 +807,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "interrupt":
     case "knockdown":
     case "resurrect":
+    case "splash":
     case "if":
       return false;
   }
@@ -776,6 +820,7 @@ export interface SkillResolution {
   readonly targets: readonly Combatant[];
   readonly rng: SimulationRng;
   readonly rules: CombatRules;
+  readonly surroundings: Surroundings;
 }
 
 /**
@@ -816,9 +861,11 @@ export function resolveSkillEffects(
   resolution: SkillResolution,
   earlier: readonly CombatEvent[] = [],
 ): SkillOutcome {
-  const { skill, caster, targets, rng, rules } = resolution;
+  const { skill, caster, targets, rng, rules, surroundings } = resolution;
   const held = new Map(
-    targets.map((target) => [target, statesBefore(skill.effects, caster, target)] as const),
+    targets.map(
+      (target) => [target, statesBefore(skill.effects, caster, target, surroundings)] as const,
+    ),
   );
   const events: CombatEvent[] = [];
   let rechargeFraction = 0;
@@ -826,11 +873,14 @@ export function resolveSkillEffects(
     const on = effectActsOnCaster(effect) ? [targets[0]] : targets;
     for (const target of on) {
       const states = (target === undefined ? undefined : held.get(target)) ?? NONE_HELD;
-      const context = { caster, target, rng, rules };
+      const context = { caster, target, rng, rules, surroundings };
       const before = [...earlier, ...events];
       for (const inner of landing(effect, context, before, states)) {
         if (inner.kind === "recharge-faster") {
           rechargeFraction = Math.max(rechargeFraction, inner.fraction);
+        }
+        if (inner.kind === "recharge-others") {
+          rechargeOthers(caster, skill.id, inner.which);
         }
         events.push(...applyEffect(inner, context, before));
       }
@@ -851,4 +901,17 @@ export function resolveSkillEffects(
     );
   }
   return { events, rechargeFraction };
+}
+
+/**
+ * Every skill of `caster`'s of type `which` but `skillId` recharges at
+ * once (#885): Moebius Strike's. The recharge `skillId` starts as it
+ * resolves is its own, so it is left alone.
+ */
+function rechargeOthers(caster: Combatant, skillId: string, which: "attack"): void {
+  for (const id of [...caster.cast.rechargeRemaining.keys()]) {
+    if (id !== skillId && getSkill(id)?.type === which) {
+      caster.cast.endRecharge(id);
+    }
+  }
 }
