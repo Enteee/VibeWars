@@ -56,10 +56,17 @@ test("all chat reaches both teams, team chat only its own, as text (#479)", asyn
 test("keys typed into chat never cast or move (#479)", async ({ page }) => {
   await page.goto("./");
   await startSoloMatch(page);
-  await expect(page.locator(".hud-statuses")).toContainText("no active effects");
-  // A casts slot 5 of the house bar, a self-cast enchantment (#302).
-  await say(page, "aaaa wasd");
-  await expect(page.getByRole("log")).toContainText("aaaa wasd");
-  await page.waitForTimeout(300);
-  await expect(page.locator(".hud-statuses")).toContainText("no active effects");
+  const statuses = page.locator(".hud-statuses");
+  const energy = page.locator(".hud-bar-energy .hud-bar-label");
+  await expect(statuses).toContainText("no active effects");
+  await expect(energy).toContainText("50 / 50");
+  // Q W E R A S D F are the skill keys; A casts slot 5 of the house bar,
+  // a self-cast enchantment (#302) that costs energy as it starts.
+  await say(page, "aaaa wasd qwer f");
+  await expect(page.getByRole("log")).toContainText("aaaa wasd qwer f");
+  // Past its 0.75 s activation and the round trip: a leaked key would
+  // have spent energy, then put the enchantment on.
+  await page.waitForTimeout(1500);
+  await expect(energy).toContainText("50 / 50");
+  await expect(statuses).toContainText("no active effects");
 });

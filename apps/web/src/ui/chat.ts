@@ -127,7 +127,9 @@ export function mountChat(deps: ChatDeps): ChatPanel {
   const input = document.createElement("input");
   input.className = "chat-input";
   input.type = "text";
-  // One more for a channel prefix; the host cuts to whole graphemes itself.
+  // One more for a channel prefix. maxLength counts UTF-16 units, not
+  // graphemes, so a line of emoji stops near half that: a bound on size,
+  // and the host cuts to whole graphemes itself.
   input.maxLength = MAX_CHAT_GRAPHEMES + 1;
   input.placeholder = "Enter to chat · ! all · # team";
   input.setAttribute("aria-label", "chat message");
