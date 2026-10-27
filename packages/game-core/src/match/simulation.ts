@@ -78,6 +78,7 @@ import {
   ENERGY_PER_PIP,
   isStatusId,
   MAX_PIPS,
+  reducedRecharge,
   scaledStatusDuration,
   STATUS_DEFINITIONS,
   StatusSet,
@@ -327,7 +328,8 @@ function degenerationSources(combatant: Combatant): {
     } else if (
       definition.healthPips > 0 ||
       definition.healthPipsPerEnchantment !== undefined ||
-      definition.healthPerSecondWhileMoving > 0
+      definition.healthPerSecondWhileMoving > 0 ||
+      definition.healthPerSecond > 0
     ) {
       healing.add(status.sourceId);
     }
@@ -1585,14 +1587,16 @@ export class MatchSimulation {
     if (
       !events.some((event) => event.kind === "attack-missed" && event.reason === "out-of-sequence")
     ) {
-      // A spell recharges faster under Mantra of Recovery (#938), read now:
-      // a mantra that ends later leaves this recharge as it started.
-      const spellKept = isSpell(skill.type)
-        ? 1 - aggregateModifiers(record.combatant.statuses.active).spellRechargeFaster
-        : 1;
+      // A spell recharges faster under Mantra of Recovery (#938) or Weapon
+      // of Quickening (#975), read now: one that ends later leaves this
+      // recharge as it started. Read after the spell resolved, so Weapon of
+      // Quickening cast on yourself already shortens its own.
+      const faster = isSpell(skill.type)
+        ? aggregateModifiers(record.combatant.statuses.active).spellRechargeFaster
+        : 0;
       record.combatant.cast.startRecharge(
         skill.id,
-        skill.rechargeSeconds * (1 - rechargeFraction) * spellKept,
+        reducedRecharge(skill.rechargeSeconds * (1 - rechargeFraction), faster),
       );
     }
     this.#log.push({

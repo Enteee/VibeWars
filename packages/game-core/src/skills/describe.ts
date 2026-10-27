@@ -174,6 +174,9 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.healthPerSecondWhileMoving !== 0) {
     parts.push(`${String(definition.healthPerSecondWhileMoving)} Health per second while moving`);
   }
+  if (definition.healthPerSecond !== 0) {
+    parts.push(`+${String(definition.healthPerSecond)} Health per second`);
+  }
   if (definition.armorReduction !== undefined) {
     const { amount, floor } = definition.armorReduction;
     parts.push(`−${String(amount)} armor (not below ${String(floor)})`);

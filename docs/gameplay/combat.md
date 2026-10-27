@@ -543,7 +543,11 @@ sacrifice and degeneration are not damage packets and are left alone.
 recharge, #938) makes every spell you finish in the next 17 s recharge
 33% faster. It is read as the recharge starts: a spell finished after the
 Mantra ends gets nothing, and one already recharging keeps its shorter
-time. A signet, an attack or a stance is not a spell.
+time. A signet, an attack or a stance is not a spell. Recharge
+reductions multiply, as GW1's do, but never take off more than half,
+and never take a recharge below 1 s (#975): Mantra of Recovery with
+Weapon of Quickening is 50%, not 55%, and a spell whose recharge is
+already under 1 s keeps it.
 
 Wild Throw (Paragon spear attack, 7 adrenaline) deals +17 damage, cannot
 be blocked, and ends the stance of the foe it hits. It does not yet
@@ -650,6 +654,21 @@ enchantments, so enchantment removal leaves them. Weapon of Warding
 ally or yourself) gives +4 health regeneration and a 50% chance to block
 attacks for 7 s, and ends the moment its bearer attacks: a swing, an
 arrow or an attack skill, hit or miss.
+
+Three more Ritualist weapon spells (#975), and each replaces Weapon of
+Warding or any other weapon spell, and is replaced by it, alike.
+**Spirit Light Weapon** (elite, Restoration Magic, 5 energy, 1 s, 5 s
+recharge, an ally or yourself) heals 21 Health a second for 10 s. It is
+a heal, not regeneration: Deep Wound cuts it, and it is not held to the
+±10 pips. **Weapon of Quickening** (elite, Communing, 5 energy, 1 s, 5 s
+recharge, an ally or yourself) makes every spell its bearer finishes in
+the next 21 s recharge 33% faster, Weapon of Quickening itself included
+when you cast it on yourself. **Weapon of Aggression** (Channeling
+Magic, 10 energy, ¼ s, 10 s recharge, yourself only) makes you attack
+25% faster for 13 s; attacking does not end it, and as with every
+speed-up only the strongest counts, so under Frenzy it adds nothing.
+Spirit Light Weapon's extra 21 a second near a spirit and Weapon of
+Quickening's binding rituals wait for spirits (#467).
 
 The Ritualist heals with Restoration Magic, each on an ally or yourself
 (#955). **Mend Body and Soul** (5 energy, ¾ s, 3 s recharge) heals 96.
