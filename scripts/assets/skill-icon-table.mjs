@@ -162,6 +162,6 @@ export const SKILL_ICONS = {
   // Placeholders until asset-designer's icons (#988).
   "assassin.deaths-charge": { glyph: "dash", modifier: "stun" },
   "assassin.shadow-refuge": { glyph: "plaster", modifier: "clock" },
-  "assassin.shroud-of-distress": { glyph: "armor", modifier: "bleed" },
+  "assassin.shroud-of-distress": { glyph: "armor", modifier: "stun" },
   "assassin.critical-eye": { glyph: "dagger", modifier: "hourglass" },
 };
