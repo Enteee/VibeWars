@@ -272,16 +272,17 @@ function perEnergyLost(
 }
 
 /**
- * Whether a knockdown would land on `target`: alive, standing, and with
- * nothing active that prevents it. One on someone already down does
- * nothing, however long it would have lasted (GW1).
+ * Whether a knockdown could land on `target`: alive and standing. One on
+ * someone already down does nothing, however long it would have lasted
+ * (GW1).
  */
 function canBeKnockedDown(target: Combatant): boolean {
-  return (
-    !target.dead &&
-    target.knockdownRemaining <= 0 &&
-    !target.statuses.active.some((status) => getStatusDefinition(status.id).preventsKnockdown)
-  );
+  return !target.dead && target.knockdownRemaining <= 0;
+}
+
+/** Whether a status on `target` stops a knockdown (#468). */
+function preventsKnockdown(target: Combatant): boolean {
+  return target.statuses.active.some((status) => getStatusDefinition(status.id).preventsKnockdown);
 }
 
 /**
@@ -502,11 +503,17 @@ export function applyEffect(
     }
 
     case "remove-status": {
-      if (target === undefined) {
+      const bearer = effect.from === "caster" ? caster : target;
+      if (bearer === undefined) {
         return events;
       }
-      for (const statusId of target.statuses.removeByCategory(effect.category, effect.count)) {
-        events.push({ kind: "status-removed", targetId: target.id, statusId });
+      const removed = bearer.statuses.removeByCategory(
+        effect.category,
+        effect.count,
+        effect.profession,
+      );
+      for (const statusId of removed) {
+        events.push({ kind: "status-removed", targetId: bearer.id, statusId });
       }
       return events;
     }
@@ -536,6 +543,13 @@ export function applyEffect(
       if (target === undefined || !canBeKnockedDown(target)) {
         return events;
       }
+      if (preventsKnockdown(target)) {
+        // Stopped, and what stops only one is spent (#845).
+        for (const statusId of target.statuses.endOnKnockdownPrevented()) {
+          events.push({ kind: "status-removed", targetId: target.id, statusId });
+        }
+        return events;
+      }
       knockDown(target, effect.durationSeconds);
       events.push({
         kind: "knocked-down",
@@ -559,6 +573,10 @@ export function applyEffect(
       );
       return events;
     }
+
+    case "recharge-faster":
+      // Nothing lands on anyone: the resolution reads it (`resolveSkillEffects`).
+      return events;
   }
 }
 
@@ -642,20 +660,23 @@ function wasInterrupted(targetId: string, earlier: readonly CombatEvent[]): bool
  */
 function conditionHolds(
   condition: EffectCondition,
-  targetId: string,
+  caster: Combatant,
+  target: Combatant,
   earlier: readonly CombatEvent[],
   held: ReadonlySet<EffectCondition>,
 ): boolean {
   switch (condition.kind) {
     case "interrupted":
-      return wasInterrupted(targetId, earlier);
-    case "removed":
+      return wasInterrupted(target.id, earlier);
+    case "removed": {
+      const bearerId = condition.from === "caster" ? caster.id : target.id;
       return earlier.some(
         (event) =>
           event.kind === "status-removed" &&
-          event.targetId === targetId &&
+          event.targetId === bearerId &&
           getStatusDefinition(event.statusId).category === condition.category,
       );
+    }
     case "target-health-below":
     case "target-has":
     case "target-casting":
@@ -665,24 +686,36 @@ function conditionHolds(
 }
 
 /**
- * Apply one effect to `context.target`, an `if` included: its effects
- * land only if its condition holds for that target, given `earlier`, the
+ * What of `effect` lands on `context.target`: itself, or an `if`'s
+ * effects when its condition holds for that target, given `earlier`, the
  * events this resolution has emitted so far, and `held`, the states that
  * held before it began.
  */
+function landing(
+  effect: SkillEffect,
+  context: SkillContext,
+  earlier: readonly CombatEvent[],
+  held: ReadonlySet<EffectCondition>,
+): readonly UnconditionalEffect[] {
+  if (effect.kind !== "if") {
+    return [effect];
+  }
+  const { caster, target } = context;
+  return target !== undefined && conditionHolds(effect.condition, caster, target, earlier, held)
+    ? effect.effects
+    : [];
+}
+
+/** Apply one effect to `context.target`, an `if` included (`landing`). */
 function applyInOrder(
   effect: SkillEffect,
   context: SkillContext,
   earlier: readonly CombatEvent[],
   held: ReadonlySet<EffectCondition>,
 ): CombatEvent[] {
-  if (effect.kind !== "if") {
-    return applyEffect(effect, context, earlier);
-  }
-  const { target } = context;
-  return target !== undefined && conditionHolds(effect.condition, target.id, earlier, held)
-    ? effect.effects.flatMap((inner) => applyEffect(inner, context, earlier))
-    : [];
+  return landing(effect, context, earlier, held).flatMap((inner) =>
+    applyEffect(inner, context, earlier),
+  );
 }
 
 /** Apply `effects` in order to one target; an `if` reads what came before it. */
@@ -710,14 +743,16 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
   switch (effect.kind) {
     case "energy-gain":
     case "sacrifice-health":
+    case "recharge-faster":
       return true;
     case "heal":
       return effect.recipient === "caster";
+    case "remove-status":
+      return effect.from === "caster";
     case "energy-loss":
     case "damage":
     case "apply-status":
     case "maintain-status":
-    case "remove-status":
     case "interrupt":
     case "knockdown":
     case "resurrect":
@@ -752,18 +787,45 @@ export function applySkillEffects(
   resolution: SkillResolution,
   earlier: readonly CombatEvent[] = [],
 ): CombatEvent[] {
+  return resolveSkillEffects(resolution, earlier).events;
+}
+
+/** What a landed skill did (`resolveSkillEffects`). */
+export interface SkillOutcome {
+  readonly events: CombatEvent[];
+  /**
+   * How much shorter this use's recharge is, 0..1 (#845): the
+   * `recharge-faster` that landed, if one did; else 0.
+   */
+  readonly rechargeFraction: number;
+}
+
+/**
+ * `applySkillEffects`, with what it did to the skill's own recharge
+ * (#845), which only whoever starts that recharge can act on.
+ */
+export function resolveSkillEffects(
+  resolution: SkillResolution,
+  earlier: readonly CombatEvent[] = [],
+): SkillOutcome {
   const { skill, caster, targets, rng, rules } = resolution;
   const held = new Map(
     targets.map((target) => [target, statesBefore(skill.effects, caster, target)] as const),
   );
   const events: CombatEvent[] = [];
+  let rechargeFraction = 0;
   for (const effect of skill.effects) {
     const on = effectActsOnCaster(effect) ? [targets[0]] : targets;
     for (const target of on) {
       const states = (target === undefined ? undefined : held.get(target)) ?? NONE_HELD;
-      events.push(
-        ...applyInOrder(effect, { caster, target, rng, rules }, [...earlier, ...events], states),
-      );
+      const context = { caster, target, rng, rules };
+      const before = [...earlier, ...events];
+      for (const inner of landing(effect, context, before, states)) {
+        if (inner.kind === "recharge-faster") {
+          rechargeFraction = Math.max(rechargeFraction, inner.fraction);
+        }
+        events.push(...applyEffect(inner, context, before));
+      }
     }
   }
   // Divine Favor (#529): once a cast, on the primary target only, after
@@ -780,5 +842,5 @@ export function applySkillEffects(
       events,
     );
   }
-  return events;
+  return { events, rechargeFraction };
 }

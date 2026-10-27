@@ -1,0 +1,21 @@
+{
+  "id": "dervish.signet-of-pious-light",
+  "name": "Signet of Pious Light",
+  "profession": "dervish",
+  "attribute": "Earth Prayers",
+  "type": "Signet.",
+  "elite": false,
+  "campaign": "Nightfall",
+  "overcast": 0,
+  "activationSeconds": 1,
+  "rechargeSeconds": 20,
+  "description": "Remove 1 Dervish Enchantment. Target ally is healed for 30...126...150 Health. If an Enchantment was removed in this way, this Signet recharges 75% faster.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Dervish/996-Signet_of_Pious_Light",
+    "fetchedAt": "2026-10-27T07:50:11.910Z"
+  },
+  "unmapped": {}
+}

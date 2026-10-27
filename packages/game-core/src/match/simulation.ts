@@ -51,7 +51,9 @@ import {
   applySkillEffects,
   applyStatus,
   gainEnergy,
+  resolveSkillEffects,
   type CombatEvent,
+  type SkillOutcome,
   type SkillResolution,
 } from "../skills/effects.js";
 import {
@@ -284,10 +286,10 @@ function degenerationSources(combatant: Combatant): {
   const draining = new Set<string>();
   const healing = new Set<string>();
   for (const status of combatant.statuses.active) {
-    const pips = STATUS_DEFINITIONS[status.id].healthPips;
-    if (pips < 0) {
+    const definition = STATUS_DEFINITIONS[status.id];
+    if (definition.healthPips < 0) {
       draining.add(status.sourceId);
-    } else if (pips > 0) {
+    } else if (definition.healthPips > 0 || definition.healthPipsPerEnchantment !== undefined) {
       healing.add(status.sourceId);
     }
   }
@@ -1329,15 +1331,20 @@ export class MatchSimulation {
     const exposed = this.#exposedTo(record);
     const speed = record.combatant.equipment.mainHand.weapon.projectileSpeed;
     const flight = skill.projectile;
+    // Only a skill that lands at once can shorten its own recharge (#845):
+    // one that flies has started it by the time it lands.
+    const only = (events: CombatEvent[]): SkillOutcome => ({ events, rechargeFraction: 0 });
     const resolve =
       flight !== undefined
-        ? (resolution: SkillResolution) => this.#releaseSpell(record, resolution, flight.speed, dt)
+        ? (resolution: SkillResolution) =>
+            only(this.#releaseSpell(record, resolution, flight.speed, dt))
         : skill.attack === undefined
-          ? applySkillEffects
+          ? (resolution: SkillResolution) => resolveSkillEffects(resolution)
           : speed === undefined
-            ? (resolution: SkillResolution) => resolveAttackSkill(resolution, exposed)
-            : (resolution: SkillResolution) => this.#releaseSkill(record, resolution, speed, dt);
-    const events = resolve({
+            ? (resolution: SkillResolution) => only(resolveAttackSkill(resolution, exposed))
+            : (resolution: SkillResolution) =>
+                only(this.#releaseSkill(record, resolution, speed, dt));
+    const { events, rechargeFraction } = resolve({
       skill,
       caster: record.combatant,
       targets: resolveTargets({
@@ -1404,7 +1411,7 @@ export class MatchSimulation {
       record.combatant.cast.beginAftercast(cast.totalSeconds);
     }
 
-    record.combatant.cast.startRecharge(skill.id, skill.rechargeSeconds);
+    record.combatant.cast.startRecharge(skill.id, skill.rechargeSeconds * (1 - rechargeFraction));
     this.#log.push({
       tick: this.#tick,
       atSeconds: this.#elapsedSeconds,

@@ -328,6 +328,23 @@ const status = {
     "weapon-spell",
     (c) => `<path d="M12 4.5v10M8.5 14.5h7M12 14.5v4" ${stroke(c, 2.5)}/>`,
   ],
+  // Enchantment: a plus in a ring, health for every enchantment around it (#845).
+  "mystic-regeneration": [
+    "enchantment",
+    (c) =>
+      `<circle cx="12" cy="12" r="7.5" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 8.5v7M8.5 12h7" ${stroke(c, 2.5)}/>`,
+  ],
+  // Enchantment: a post on firm ground, you cannot be knocked down (#845).
+  "fleeting-stability": [
+    "enchantment",
+    (c) => `<path d="M12 5v11M6.5 18.5h11" ${stroke(c, 2.8)}/>`,
+  ],
+  // Stance: a heart, filled, you attack faster (#845).
+  "heart-of-fury": [
+    "stance",
+    (c) => `<path d="M12 18l-4.8-4.8a2.8 2.8 0 0 1 4.8-4 2.8 2.8 0 0 1 4.8 4z" fill="${c}"/>`,
+  ],
   // Skill effect: a shield struck through, armor lost while the signet is
   // activated (#524).
   "healing-signet-armor": [
