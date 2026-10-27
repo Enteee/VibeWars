@@ -179,7 +179,7 @@ describe("overcast (#461)", () => {
 });
 
 describe("Chain Lightning (#461)", () => {
-  it("strikes the target and the two foes nearest it for 70 lightning at Air Magic 12", () => {
+  it("strikes the target and the two foes nearest it for 70 lightning at Air Magic 12, past 25% of their armor", () => {
     const match = new MatchSimulation({
       seed: "chain",
       participants: [
@@ -194,9 +194,10 @@ describe("Chain Lightning (#461)", () => {
     expect(match.requestSkill("e", 0)?.check).toEqual({ ok: true });
     const lost = (id: string) => 1e6 - (match.get(id)?.combatant.health ?? 0);
     stepFor(match, 2.5);
-    expect(lost("d")).toBe(70);
-    expect(lost("nearer")).toBe(70);
-    expect(lost("near")).toBe(70);
+    // 70 against 60 armor less 25%: 70 × 2^(15 / 40) ≈ 91 (#761).
+    expect(lost("d")).toBe(91);
+    expect(lost("nearer")).toBe(91);
+    expect(lost("near")).toBe(91);
     expect(lost("far")).toBe(0);
   });
 });
