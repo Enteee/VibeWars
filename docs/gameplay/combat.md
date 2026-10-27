@@ -382,6 +382,33 @@ Not modelled: evade. Attack-speed changes have
 a hook (only the strongest speed-up and slow-down count), but no skill
 uses it yet.
 
+## Damage types and armor
+
+Every hit has one of GW1's damage types (#759). Slashing, piercing and
+blunt are **physical**: swords, axes and scythes slash, daggers, bows and spears
+pierce, hammers and fists are blunt. Fire, cold, lightning and earth are
+**elemental**: Fireball is fire. Chaos, dark, holy, shadow and
+**typeless** are neither. Wands and staves are typeless for now, and so
+is the flat damage of a blocked Swift Chop.
+
+Armor comes from the primary profession: 80 for a Warrior or Paragon, 70
+for a Ranger, Assassin or Dervish, 60 for the casters. On top of that,
+some armor applies only against some types:
+
+| Bonus                | Against   | From                   |
+| -------------------- | --------- | ---------------------- |
+| +20                  | physical  | being a Warrior        |
+| +30                  | elemental | being a Ranger         |
+| +10                  | physical  | each Stalwart insignia |
+| −1 to −3 a hit, flat | physical  | Rune of Absorption     |
+
+So a Warrior has 100 armor against a sword and 80 against a Fireball,
+and a Ranger 70 and 100. Damage halves for every 40 armor above 60:
+Fireball's 91 lands for about 46 on a Ranger. Types that are neither
+physical nor elemental get no typed bonus; base armor still applies.
+Armor penetration cuts the whole total, typed bonus included.
+Degeneration and life steal ignore armor altogether.
+
 ## Primary attributes
 
 Each profession's primary attribute does something of its own, as in

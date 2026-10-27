@@ -2,6 +2,7 @@ import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { describe, expect, it } from "vitest";
 
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
+import { isElementalDamage, isPhysicalDamage } from "../equipment/types.js";
 import { WEAPONS } from "../equipment/weapons.js";
 import { getAttribute } from "../professions.js";
 import { createRng } from "../rng.js";
@@ -52,6 +53,25 @@ describe("skill catalog integrity", () => {
         ).not.toContain("damage");
       }
     }
+  });
+
+  it("gives every damage effect one of GW1's damage types (#759)", () => {
+    const otherTypes: readonly string[] = ["chaos", "dark", "holy", "shadow", "typeless"];
+    for (const skill of IMPLEMENTED_SKILLS) {
+      for (const effect of [...skill.effects, ...(skill.attack?.onBlocked ?? [])]) {
+        if (effect.kind === "damage") {
+          expect(
+            isPhysicalDamage(effect.type) ||
+              isElementalDamage(effect.type) ||
+              otherTypes.includes(effect.type),
+            skill.id,
+          ).toBe(true);
+        }
+      }
+    }
+    expect(getSkill("elementalist.fireball")?.effects).toContainEqual(
+      expect.objectContaining({ kind: "damage", type: "fire" }),
+    );
   });
 
   it("uses non-negative activation and recharge everywhere", () => {

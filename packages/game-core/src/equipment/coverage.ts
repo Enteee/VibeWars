@@ -24,8 +24,7 @@ export type MissingGearMechanic =
   | "attribute-headgear"
   | "profession-insignias"
   | "weapon-upgrades"
-  | "per-piece-armor-ratings"
-  | "armor-damage-type-resistance";
+  | "per-piece-armor-ratings";
 
 export interface GearOmission {
   readonly mechanic: MissingGearMechanic;
@@ -102,16 +101,6 @@ export const GEAR_OMISSIONS: readonly GearOmission[] = Object.freeze([
       "between sets became insignias. Modelling per-piece ratings would add arithmetic " +
       "without adding a decision.",
     affects: [],
-  },
-  {
-    mechanic: "armor-damage-type-resistance",
-    description: "armor that resists one damage type specifically, such as a ranger's vs elemental",
-    kind: "gap",
-    reason:
-      "The damage pipeline knows a packet's type and the Stalwart insignia already keys off " +
-      "it, so the seam exists — but no profession carries an inherent resistance, and this " +
-      "project models only the physical/untyped split rather than the full elemental spread.",
-    affects: ["stalwart"],
   },
 ]);
 

@@ -85,8 +85,8 @@ export function openHubWindow(tmux, session) {
   const node = process.execPath;
   const scripts = path.dirname(fileURLToPath(import.meta.url));
   // A pane gets the tmux server's environment, not this script's, so what
-  // the daemons read is passed on explicitly: hubd needs DEVENV_ROOT, and gh
-  // and git on PATH. Each PATH entry once: tmux refuses a command over 16 KB,
+  // the daemons read is passed on explicitly: hubd needs DEVENV_ROOT, the
+  // agents' Claude logs for `company load` (#747), and gh and git on PATH. Each PATH entry once: tmux refuses a command over 16 KB,
   // and a PATH from nested nix shells repeats most of itself (host-path.mjs).
   const env = [
     `DEVENV_ROOT=${root}`,
@@ -94,6 +94,7 @@ export function openHubWindow(tmux, session) {
     `VIBEWARS_BOT_BUS=${path.join(botRoot, "bus")}`,
     `VIBEWARS_LLC_SESSION=${session}`,
     `VIBEWARS_LLC_RESTART=${required("VIBEWARS_LLC_RESTART")}`,
+    `VIBEWARS_CLAUDE_BOXES=${required("VIBEWARS_CLAUDE_BOXES")}`,
     `VIBEWARS_TMUX=${tmux}`,
     `PATH=${uniquePath(process.env.PATH ?? "")}`,
   ].flatMap((pair) => ["-e", pair]);

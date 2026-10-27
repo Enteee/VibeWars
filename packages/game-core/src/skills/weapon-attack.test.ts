@@ -570,7 +570,7 @@ describe("block (#534)", () => {
         {
           kind: "damage",
           targetId: "t",
-          amount: mitigate(spellDamage(16), target, RULES),
+          amount: mitigate(spellDamage(16, "typeless"), target, RULES),
           critical: false,
         },
         { kind: "status-applied", targetId: "t", statusId: "deep-wound", durationSeconds: 20 },
@@ -844,7 +844,7 @@ describe("critical hits (#533)", () => {
   it("never crits a spell", () => {
     const target = makeCombatant({ id: "t", team: 1 });
     const events = applyEffect(
-      { kind: "damage", amount: { flat: 50 } },
+      { kind: "damage", amount: { flat: 50 }, type: "typeless" },
       { caster: makeCombatant({ id: "c" }), target, rng: fixed(0), rules: RULES },
     );
     expect(events).toEqual([{ kind: "damage", targetId: "t", amount: 50, critical: false }]);

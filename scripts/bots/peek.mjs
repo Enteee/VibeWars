@@ -259,10 +259,14 @@ function ago(ms) {
 const STATE_TEXT = { turn: "in turn", between: "between turns", limited: "usage limit" };
 
 /**
+ * Every employee's peek record: what `peek` lists, and what `company load`
+ * (#747) says each is doing. A record that is half-written, foreign or in
+ * another state is no row.
+ *
  * @param {string} dir
  * @returns {PeekRow[]} one per employee that has run a turn, by id
  */
-function rows(dir) {
+export function peekRows(dir) {
   /** @type {PeekRow[]} */
   const found = [];
   for (const name of fs.readdirSync(dir)) {
@@ -273,7 +277,12 @@ function rows(dir) {
       /** @type {unknown} */
       const parsed = JSON.parse(fs.readFileSync(path.join(dir, name), "utf8"));
       const row = /** @type {PeekRow} */ (parsed);
-      if (typeof row.employee === "string") {
+      if (
+        typeof row.employee === "string" &&
+        Object.hasOwn(STATE_TEXT, row.state) &&
+        typeof row.lastLineAt === "number" &&
+        typeof row.lastLine === "string"
+      ) {
         found.push(row);
       }
     } catch {
@@ -292,7 +301,7 @@ function rows(dir) {
  * @returns {{ code: number, out: string }}
  */
 export function peek(argv, dir, at) {
-  const known = rows(dir);
+  const known = peekRows(dir);
   const [who, flag, count] = argv;
   if (who === undefined) {
     if (known.length === 0) {

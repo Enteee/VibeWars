@@ -90,6 +90,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         amount: {
           scaling: { attributeId: "elementalist.fire-magic", atZero: 7, atTwelve: 91 },
         },
+        type: "fire",
       },
     ],
   },
@@ -117,6 +118,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         {
           kind: "damage",
           amount: { scaling: { attributeId: "warrior.axe-mastery", atZero: 1, atTwelve: 16 } },
+          type: "typeless",
         },
         { kind: "apply-status", statusId: "deep-wound", durationSeconds: 20 },
       ],

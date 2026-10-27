@@ -1,6 +1,6 @@
 import type { ProfessionId } from "../professions.js";
 import type { EquippedRune } from "./runes.js";
-import type { InsigniaId } from "./insignias.js";
+import type { ArmorCondition, InsigniaId } from "./insignias.js";
 import { ARMOR_SLOTS, type ArmorSlot } from "./types.js";
 
 /**
@@ -47,6 +47,33 @@ export const BASE_ARMOR_BY_PROFESSION: Readonly<Record<ProfessionId, number>> = 
 export function baseArmorFor(profession: ProfessionId): number {
   return BASE_ARMOR_BY_PROFESSION[profession];
 }
+
+/** Armor that applies only when its condition holds, from a profession or an insignia. */
+export interface ConditionalArmor {
+  readonly amount: number;
+  readonly condition: ArmorCondition;
+}
+
+/**
+ * Armor a **primary** profession carries against one kind of damage
+ * (GW1, #759): a Warrior's armor is 80 and +20 vs physical, a Ranger's 70
+ * and +30 vs elemental. Every other profession has none; a Paragon sits
+ * at a plain 80, with no inherent bonus that applies in PvP.
+ */
+export const INHERENT_ARMOR_BY_PROFESSION: Readonly<
+  Record<ProfessionId, readonly ConditionalArmor[]>
+> = Object.freeze({
+  warrior: Object.freeze([Object.freeze({ amount: 20, condition: "vs-physical" })]),
+  ranger: Object.freeze([Object.freeze({ amount: 30, condition: "vs-elemental" })]),
+  paragon: [],
+  assassin: [],
+  dervish: [],
+  monk: [],
+  necromancer: [],
+  mesmer: [],
+  elementalist: [],
+  ritualist: [],
+});
 
 /**
  * Energy regeneration by primary profession, in pips (GW1, Q63): every

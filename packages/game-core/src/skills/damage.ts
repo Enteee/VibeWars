@@ -1,4 +1,5 @@
-import { isPhysicalDamage, type DamageType } from "../equipment/types.js";
+import { isElementalDamage, isPhysicalDamage, type DamageType } from "../equipment/types.js";
+import type { ArmorCondition } from "../equipment/insignias.js";
 import type { CombatRules } from "../ruleset.js";
 import { aggregateModifiers } from "./status.js";
 import type { Combatant } from "./types.js";
@@ -38,14 +39,14 @@ export function respectsArmor(source: DamageSource): boolean {
   return source === "weapon" || source === "spell";
 }
 
-/** A spell's damage packet: armor-respecting, untyped, no penetration. */
-export function spellDamage(amount: number): DamagePacket {
-  return { amount, type: "untyped", source: "spell", armorPenetration: 0 };
+/** A spell's damage packet: armor-respecting, of the effect's type, no penetration. */
+export function spellDamage(amount: number, type: DamageType): DamagePacket {
+  return { amount, type, source: "spell", armorPenetration: 0 };
 }
 
 /** Degeneration and life steal: armor never helps. */
 export function unmitigatedDamage(amount: number, source: DamageSource): DamagePacket {
-  return { amount, type: "untyped", source, armorPenetration: 0 };
+  return { amount, type: "typeless", source, armorPenetration: 0 };
 }
 
 /**
@@ -56,11 +57,7 @@ export function effectiveArmor(target: Combatant, packet: DamagePacket): number 
   let armor = target.equipment.baseArmor;
 
   for (const bonus of target.equipment.conditionalArmor) {
-    const applies =
-      bonus.condition === "vs-physical"
-        ? isPhysicalDamage(packet.type)
-        : target.statuses.countByCategory("enchantment") > 0;
-    if (applies) {
+    if (conditionHolds(bonus.condition, target, packet)) {
       armor += bonus.amount;
     }
   }
@@ -77,6 +74,21 @@ export function effectiveArmor(target: Combatant, packet: DamagePacket): number 
   // that fine (it simply amplifies damage), but a floor keeps the
   // exponent from running away.
   return Math.max(-rulesFloor, armor);
+}
+
+function conditionHolds(
+  condition: ArmorCondition,
+  target: Combatant,
+  packet: DamagePacket,
+): boolean {
+  switch (condition) {
+    case "vs-physical":
+      return isPhysicalDamage(packet.type);
+    case "vs-elemental":
+      return isElementalDamage(packet.type);
+    case "while-enchanted":
+      return target.statuses.countByCategory("enchantment") > 0;
+  }
 }
 
 /** How far below zero effective armor may go before it stops mattering. */
