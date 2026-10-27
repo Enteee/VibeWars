@@ -3,6 +3,7 @@ import { getSkill, segment, vec2 } from "@vibewars/game-core";
 import type { PlayerSnapshot, SkillSlot } from "@vibewars/game-session";
 
 import {
+  adrenalineFading,
   adrenalineFill,
   adrenalineGaugeHtml,
   castFailures,
@@ -434,5 +435,19 @@ describe("paintAdrenalineFill (#826)", () => {
     paintAdrenalineFill(slotButton, undefined);
     expect(slotButton.style.getPropertyValue("--adrenaline-fill")).toBe("");
     expect(slotButton.writes).toBe(3);
+  });
+});
+
+describe("adrenalineFading (#828)", () => {
+  it("blinks a slot holding any from 5 s before the loss, charged or not, and not before", () => {
+    expect(adrenalineFading(25, 5)).toBe(true);
+    expect(adrenalineFading(4 * 25, 0.5)).toBe(true);
+    expect(adrenalineFading(25, 5.05)).toBe(false);
+  });
+
+  it("does not blink an empty slot, or once the window starts again", () => {
+    expect(adrenalineFading(0, 2)).toBe(false);
+    expect(adrenalineFading(0, null)).toBe(false);
+    expect(adrenalineFading(25, 25)).toBe(false);
   });
 });

@@ -1,6 +1,7 @@
 import {
   ADRENALINE_PER_STRIKE,
   DEFAULT_SKILL_BAR,
+  MINIMAL_GW_INSPIRED_PVP_V1,
   defaultBuildEquipment,
   type CombatLogEntry,
   type PlayerBuild,
@@ -445,7 +446,7 @@ describe("networked combat (P2P)", () => {
     expect(self(a)?.attackTargetSessionId).toBeUndefined();
   });
 
-  it("sends each player only its own adrenaline, once a blow lands, and again only when it changes (#463, #827)", async () => {
+  it("sends each player only its own adrenaline, once a blow lands, and again when it changes or a blow restarts its loss (#463, #827, #828)", async () => {
     const match = startMatch();
     const { connection: a, transport: ta } = await match.join();
     const { connection: b, transport: tb } = await match.join();
@@ -471,6 +472,9 @@ describe("networked combat (P2P)", () => {
     a.sendIntent({ kind: "attack", targetId: b.selfSessionId });
     await until(match, () => toA.length > 0, "a's adrenaline");
     expect(toA[0]?.slots[severArtery]).toBe(ADRENALINE_PER_STRIKE);
+    expect(toA[0]?.lossInSeconds).toBeCloseTo(
+      MINIMAL_GW_INSPIRED_PVP_V1.resources.adrenalineLossSeconds,
+    );
     expect(a.getAdrenaline()[severArtery]).toBe(ADRENALINE_PER_STRIKE);
 
     // A message a blow until Sever Artery holds its 4 strikes...
@@ -480,9 +484,15 @@ describe("networked combat (P2P)", () => {
       "Sever Artery charged",
     );
     expect(toA).toHaveLength(4);
-    // ...then more blows change nothing, and say nothing.
+    // ...then more blows change no slot, and only start the loss again.
     await match.step(4);
-    expect(toA).toHaveLength(4);
+    expect(toA.length).toBeGreaterThan(4);
+    expect(toA.at(-1)?.slots).toEqual(toA[3]?.slots);
+    expect(toA.at(-1)?.lossInSeconds).toBeCloseTo(
+      MINIMAL_GW_INSPIRED_PVP_V1.resources.adrenalineLossSeconds,
+    );
+    // The client counts it down from the message, as a recharge.
+    expect(a.getAdrenalineLossIn()).toBeGreaterThan(20);
     // b is sent its own: what the blows it took charged (#827), never a's.
     expect(toB.length).toBeGreaterThan(0);
     expect(toB.at(-1)?.slots).toEqual(b.getAdrenaline());

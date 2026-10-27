@@ -158,10 +158,17 @@ export interface RechargeMessage {
  * Sent as `"adrenaline"` to one player alone (#463): their own adrenaline
  * is nobody else's business, as GW1 shows no foe's. Units per bar slot,
  * 0 for an empty or non-adrenaline slot. Sent on join, rejoin and reset,
- * and whenever it changes.
+ * whenever it changes, and whenever the out-of-combat window starts again
+ * while any slot holds some (#828).
  */
 export interface AdrenalineMessage {
   readonly slots: readonly number[];
+  /**
+   * Seconds from this message's arrival until every slot empties out of
+   * combat (#828), counted down like a recharge; `null` when every slot is
+   * already empty.
+   */
+  readonly lossInSeconds: number | null;
 }
 
 /** The maximum players a single lobby accepts (brief §4: not hardcoded to 8). */

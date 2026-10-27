@@ -186,6 +186,11 @@ export interface MatchConnection {
    * (#463): the units its skill holds, 0 for one that costs none.
    */
   getAdrenaline(): readonly number[];
+  /**
+   * Seconds until this player's adrenaline is lost out of combat (#828),
+   * never below 0; `null` while every slot is empty.
+   */
+  getAdrenalineLossIn(): number | null;
   /** Call a foe for your team, or ping a spot (#443). The host may drop it, and says nothing. */
   sendCall(call: PeerCall): void;
   /** Your team's calls right now; nobody else's ever reach you. */

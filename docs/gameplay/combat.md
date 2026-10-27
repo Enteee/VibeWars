@@ -89,6 +89,13 @@ empties its own pool and takes one strike from every other, at
 activation, so an interrupted one has still paid; an attack skill that
 lands then earns its strike back like any blow. Death, respawn and a
 reset empty every pool.
+Adrenaline does not keep between fights (#828): **25 s out of combat**
+(`adrenalineLossSeconds`) and every pool empties at once. A blow or an
+attack skill you start, a foe's blow or attack skill at you (even one
+for 0 or blocked), damage from a foe, and any adrenaline gained start
+the 25 s again; healing, a spell and walking do not. For the last 5 s
+(`adrenalineWarningSeconds`) every slot holding some blinks, charged or
+not.
 Your adrenaline is yours alone: it is sent to you, never in the shared
 snapshot, and a slot greys until its own skill is charged.
 

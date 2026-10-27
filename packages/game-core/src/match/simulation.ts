@@ -50,7 +50,13 @@ import {
   type ActivationCheck,
   type ActivationRejection,
 } from "../skills/activation.js";
-import { adrenalinePools, emptyAdrenaline, gainStrikes, gainUnits } from "../skills/adrenaline.js";
+import {
+  adrenalineLossIn,
+  adrenalinePools,
+  emptyAdrenaline,
+  gainStrikes,
+  gainUnits,
+} from "../skills/adrenaline.js";
 import { CastState, type ActiveCast } from "../skills/cast-state.js";
 import { getSkill } from "../skills/catalog.js";
 import { clearChainMarksOn, tickChainMarks } from "../skills/chain.js";
@@ -908,11 +914,28 @@ export class MatchSimulation {
    * or at a foe, and that foe too: cancelled or interrupted later, it
    * still counted (GW1). A self-heal or a skill on an ally does not.
    */
+  /**
+   * A blow or attack skill started keeps adrenaline (#828) for its
+   * attacker and its foe: a hit for 0, which logs no damage, or one that
+   * is blocked is still a fight.
+   */
+  #blowStarted(record: ParticipantRecord, target: ParticipantRecord | undefined): void {
+    record.combatant.lastCombatAt = this.#elapsedSeconds;
+    if (target !== undefined && target.combatant.team !== record.combatant.team) {
+      target.combatant.lastCombatAt = this.#elapsedSeconds;
+    }
+  }
+
   #castBegun(record: ParticipantRecord, skill: Skill, castTargetId: string | undefined): void {
     const target = castTargetId === undefined ? undefined : this.#participants.get(castTargetId);
     const atFoe = target !== undefined && target.combatant.team !== record.combatant.team;
     if (skill.attack !== undefined || atFoe) {
       record.outOfCombatSeconds = 0;
+    }
+    // Only an attack skill keeps adrenaline (#828), its own and its foe's,
+    // as a blow does; a spell at a foe does not.
+    if (skill.type === "attack") {
+      this.#blowStarted(record, target);
     }
     if (atFoe) {
       target.outOfCombatSeconds = 0;
@@ -950,6 +973,17 @@ export class MatchSimulation {
           this.#reset(record, "respawn");
         }
         continue;
+      }
+
+      // Adrenaline does not keep between fights (#828): out of combat for
+      // the whole window, within a hair, as a swing's interval is.
+      const lossIn = adrenalineLossIn(
+        record.combatant,
+        this.#elapsedSeconds,
+        this.#ruleset.resources.adrenalineLossSeconds,
+      );
+      if (lossIn !== null && lossIn < SWING_EPSILON) {
+        emptyAdrenaline(record.combatant);
       }
 
       // Knocked down, it does nothing at all; its statuses and recharges
@@ -1746,6 +1780,7 @@ export class MatchSimulation {
     }
     attack.swingElapsed = Math.max(0, attack.swingElapsed - interval);
     record.outOfCombatSeconds = 0;
+    this.#blowStarted(record, target);
 
     if (weapon.projectileSpeed !== undefined) {
       const released = this.#release(record, target, weapon.projectileSpeed, dt, undefined);
@@ -2155,7 +2190,7 @@ export class MatchSimulation {
       return victim !== undefined && victim.combatant.team !== record.combatant.team;
     });
     if (damagedFoe) {
-      gainStrikes(record.combatant, blows);
+      gainStrikes(record.combatant, blows, this.#elapsedSeconds);
     }
   }
 
@@ -2166,7 +2201,8 @@ export class MatchSimulation {
    * maxHealth)` units, so a hit for a quarter of its health is a strike.
    * Called where a skill, a swing, a shot or a spell lands, never for
    * degeneration; an ally's or your own damage, and a lethal hit, give
-   * nothing. A `source` gone from the match is no one's foe.
+   * nothing. A `source` gone from the match is no one's foe. A hit for
+   * 0 gives nothing but still keeps the victim's adrenaline (#828).
    */
   #chargeFromDamage(source: Combatant | undefined, events: readonly CombatEvent[]): void {
     if (source === undefined) {
@@ -2185,6 +2221,7 @@ export class MatchSimulation {
       gainUnits(
         victim.combatant,
         Math.floor((100 * event.amount) / effectiveMaxHealth(victim.combatant)),
+        this.#elapsedSeconds,
       );
     }
   }
@@ -2549,6 +2586,7 @@ export class MatchSimulation {
     record.combatant.health = record.combatant.maxHealth * (record.spec.startHealthFraction ?? 1);
     record.combatant.energy = Math.max(0, effectiveMaxEnergy(record.combatant));
     emptyAdrenaline(record.combatant);
+    record.combatant.lastCombatAt = this.#elapsedSeconds;
     record.combatant.statuses.clear();
     record.position = record.spawn;
     record.facing = record.spec.facing;
@@ -2587,6 +2625,7 @@ export class MatchSimulation {
       morale: 0,
       baseEnergyPips: spec.baseEnergyPips ?? 0,
       adrenaline: adrenalinePools(spec.skillBar),
+      lastCombatAt: this.#elapsedSeconds,
       attributeRanks: spec.attributeRanks,
       team: spec.team,
       dead: false,
