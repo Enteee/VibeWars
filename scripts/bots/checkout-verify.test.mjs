@@ -115,6 +115,31 @@ describe("tamperedPaths", () => {
     );
   });
 
+  it("finds a planted subtree in an ignored directory, written by the merge", () => {
+    const c = setup();
+    fs.writeFileSync(path.join(c.up, ".gitignore"), "node_modules/\n");
+    fs.writeFileSync(path.join(c.up, "s", "f"), "merged content\n");
+    git(["add", "-A"], c.up);
+    git(["commit", "-qm", "2"], c.up);
+    git(["push", "-q", c.mirror, "main"], c.up);
+    const sha = git(["rev-parse", "HEAD"], c.up);
+    git(["fetch", "-q", c.mirror, "main"], c.repoDir);
+    const sTree = git(["rev-parse", "FETCH_HEAD:s"], c.repoDir);
+    const planted = git(["hash-object", "-w", "--stdin"], c.repoDir, "evil\n");
+    const nm = git(["mktree"], c.repoDir, `100644 blob ${planted}\tindex.js\n`);
+    const entries = git(["ls-tree", sTree], c.repoDir);
+    const evilS = git(["mktree"], c.repoDir, `${entries}\n040000 tree ${nm}\tnode_modules\n`);
+    const objects = path.join(c.repoDir, ".git", "objects");
+    const loose = path.join(objects, sTree.slice(0, 2), sTree.slice(2));
+    fs.chmodSync(loose, 0o644);
+    fs.copyFileSync(path.join(objects, evilS.slice(0, 2), evilS.slice(2)), loose);
+    git(["merge", "--ff-only", "-q", sha], c.repoDir);
+    expect(fs.existsSync(path.join(c.repoDir, "s", "node_modules", "index.js"))).toBe(true);
+    expect(tamperedPaths({ mirror: c.mirror, repoDir: c.repoDir, sha })).toContain(
+      "s/node_modules/index.js",
+    );
+  });
+
   it("finds a deleted file", () => {
     const c = setup();
     fs.rmSync(path.join(c.repoDir, "s", "g"));

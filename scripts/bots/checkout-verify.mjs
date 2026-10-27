@@ -46,7 +46,19 @@ export function tamperedPaths({ mirror, repoDir, sha }) {
     const exclude = path.join(dir, "exclude");
     fs.writeFileSync(exclude, git(["show", `${sha}:.gitignore`]).stdout);
     const others = git(["ls-files", "--others", `--exclude-from=${exclude}`]);
-    return [...diff.stdout.split("\n"), ...others.stdout.split("\n")].filter((line) => line !== "");
+    // What the merge wrote follows the trees in the shared store. Ignored paths
+    // hide from the checks above, so list the commit through both stores.
+    const lines = (/** @type {string} */ text) => text.split("\n").filter((line) => line !== "");
+    const theirs = new Set(lines(git(["ls-tree", "-r", sha]).stdout));
+    const viaCheckout = spawnSync("git", [...GIT_HARDENING, "-C", repoDir, "ls-tree", "-r", sha], {
+      env: { ...process.env, ...GIT_ENV },
+      encoding: "utf8",
+    });
+    const ours = new Set(lines(viaCheckout.stdout));
+    const forged = [...ours, ...theirs]
+      .filter((line) => ours.has(line) !== theirs.has(line))
+      .map((line) => line.split("\t").slice(1).join("\t"));
+    return [...new Set([...lines(diff.stdout), ...lines(others.stdout), ...forged])];
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

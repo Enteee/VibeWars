@@ -32,7 +32,9 @@ code nobody had merged.
   Telegram with the paths. Files the commit lacks count too; ignored paths
   (`node_modules`, `.bots`) do not, as the commit's own root `.gitignore` from the mirror
   names them; a nested `.gitignore` in the checkout is not read, since a
-  planted one could hide a planted package.
+  planted one could hide a planted package. A listing of the commit through the
+  checkout's store (`ls-tree -r`) is also diffed against the mirror's, which
+  catches a planted subtree inside an ignored directory.
   nix reads `scripts/bots` and `nix/` as paths (`${../scripts/bots}`) from
   the working tree, which is what is verified. This was read from the nix
   files, not run under a tampered checkout.
