@@ -362,7 +362,8 @@ describe("every message fits in one Trystero chunk (#403)", () => {
   it("a lobby state: every seat taken, longest names, each bringing a character (#580)", () => {
     const professions = Object.keys(PROFESSIONS);
     const state: WireLobbyState = {
-      code: "ACDEFG",
+      // A queued lobby's code is its group id, 64 hex digits (#871).
+      code: "f".repeat(64),
       phase: "in-match",
       mapId: longest(ARENA_MAPS.map((map) => map.id)),
       hostId: PEER_ID,
@@ -375,6 +376,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
         isHost: i === 0,
         character: { name: NAME, primary: longest(professions), secondary: longest(professions) },
       })),
+      countdownSeconds: 5,
     };
     expect(messageBytes(state)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
   });

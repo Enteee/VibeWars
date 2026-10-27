@@ -18,6 +18,8 @@
     "lobby-state",
     "lobby-cmd",
     "lobby-note",
+    "lobby-hello",
+    "lobby-welcome",
     "match-start",
     "rejoin-challenge",
     "rejoin-proof",
@@ -173,9 +175,11 @@
         { "literal": "hello" },
         { "literal": "intent" },
         { "literal": "lobby-cmd" },
+        { "literal": "lobby-hello" },
         { "literal": "lobby-join" },
         { "literal": "lobby-note" },
         { "literal": "lobby-state" },
+        { "literal": "lobby-welcome" },
         { "literal": "match-start" },
         { "literal": "recharge" },
         { "literal": "refuse" },
@@ -759,9 +763,12 @@
     },
     "LobbyRefusal": {
       "union": [
+        { "literal": "fell-through" },
         { "literal": "host-left" },
         { "literal": "lobby-full" },
-        { "literal": "protocol-mismatch" }
+        { "literal": "not-admitted" },
+        { "literal": "protocol-mismatch" },
+        { "literal": "ticket-used" }
       ]
     },
     "MapDescriptor": {
@@ -874,8 +881,24 @@
         }
       ]
     },
+    "PeerLobbyHello": { "properties": [], "index": [{ "key": "string", "value": "never" }] },
     "PeerLobbyJoin": {
       "properties": [
+        {
+          "name": "admission",
+          "optional": false,
+          "type": {
+            "union": [
+              "null",
+              {
+                "properties": [
+                  { "name": "admissionSig", "optional": false, "type": "string" },
+                  { "name": "ticketId", "optional": false, "type": "string" }
+                ]
+              }
+            ]
+          }
+        },
         {
           "name": "character",
           "optional": false,
@@ -1122,6 +1145,12 @@
             }
           ]
         }
+      ]
+    },
+    "WireAdmission": {
+      "properties": [
+        { "name": "admissionSig", "optional": false, "type": "string" },
+        { "name": "ticketId", "optional": false, "type": "string" }
       ]
     },
     "WireCalls": {
@@ -1450,6 +1479,7 @@
     "WireLobbyState": {
       "properties": [
         { "name": "code", "optional": false, "type": "string" },
+        { "name": "countdownSeconds", "optional": false, "type": { "union": ["null", "number"] } },
         { "name": "hostId", "optional": false, "type": "string" },
         { "name": "mapId", "optional": false, "type": "string" },
         { "name": "matchId", "optional": false, "type": { "union": ["null", "string"] } },
@@ -1504,6 +1534,9 @@
           }
         }
       ]
+    },
+    "WireLobbyWelcome": {
+      "properties": [{ "name": "hostSig", "optional": false, "type": "string" }]
     },
     "WireMatchStart": {
       "properties": [
