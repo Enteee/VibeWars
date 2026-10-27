@@ -59,6 +59,8 @@ describe("status definitions", () => {
         def.interruptsSpells ||
         def.attackDurationMultiplier !== 1 ||
         def.block !== undefined ||
+        def.maxDamageFractionPerHit !== undefined ||
+        def.extraStrikesPerHit !== 0 ||
         def.onAttackHit !== undefined ||
         def.triggers.length > 0 ||
         def.nextSpells !== undefined ||
@@ -396,7 +398,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
     ]);
   });
 
-  it("records every ending with its source", () => {
+  it("records every ending with its source, and only the duration running out as expired (#944)", () => {
     const set = new StatusSet();
     set.apply("parasitic-bond", 1, "expiry");
     set.apply("backfire", 10, "removed");
@@ -419,13 +421,32 @@ describe("StatusSet changes, for the triggers (#887)", () => {
     set.endOnKnockdownPrevented();
 
     expect(set.drainChanges()).toEqual([
-      { kind: "ended", id: "parasitic-bond", sourceId: "expiry" },
-      { kind: "ended", id: "backfire", sourceId: "removed" },
-      { kind: "ended", id: "malaise", sourceId: "by-category" },
-      { kind: "ended", id: "watch-yourself", sourceId: "attacked" },
-      { kind: "ended", id: "glyph-of-lesser-energy", sourceId: "spells" },
-      { kind: "ended", id: "weapon-of-warding", sourceId: "attacks" },
-      { kind: "ended", id: "fleeting-stability", sourceId: "knockdown" },
+      { kind: "ended", id: "parasitic-bond", sourceId: "expiry", expired: true },
+      { kind: "ended", id: "backfire", sourceId: "removed", expired: false },
+      { kind: "ended", id: "malaise", sourceId: "by-category", expired: false },
+      { kind: "ended", id: "watch-yourself", sourceId: "attacked", expired: false },
+      { kind: "ended", id: "glyph-of-lesser-energy", sourceId: "spells", expired: false },
+      { kind: "ended", id: "weapon-of-warding", sourceId: "attacks", expired: false },
+      { kind: "ended", id: "fleeting-stability", sourceId: "knockdown", expired: false },
+    ]);
+  });
+
+  it("takeNewest takes the newest of a category first, with the time each had left (#944)", () => {
+    const set = new StatusSet();
+    set.apply("bleeding", 10, "a");
+    set.apply("guardian", 10, "a");
+    set.apply("blind", 8, "a");
+    set.apply("poison", 6, "a");
+    set.advance(1);
+    set.drainChanges();
+    expect(set.takeNewest("condition", 2)).toEqual([
+      { id: "poison", remainingSeconds: 5 },
+      { id: "blind", remainingSeconds: 7 },
+    ]);
+    expect(set.active.map(({ id }) => id)).toEqual(["bleeding", "guardian"]);
+    expect(set.drainChanges()).toEqual([
+      { kind: "ended", id: "poison", sourceId: "a", expired: false },
+      { kind: "ended", id: "blind", sourceId: "a", expired: false },
     ]);
   });
 
@@ -453,10 +474,10 @@ describe("StatusSet changes, for the triggers (#887)", () => {
 
     expect(set.active).toEqual([]);
     expect(set.drainChanges()).toEqual([
-      { kind: "ended", id: "burning", sourceId: "a" },
-      { kind: "ended", id: "parasitic-bond", sourceId: "b" },
-      { kind: "ended", id: "regeneration", sourceId: "c" },
-      { kind: "ended", id: "sprint", sourceId: "d" },
+      { kind: "ended", id: "burning", sourceId: "a", expired: false },
+      { kind: "ended", id: "parasitic-bond", sourceId: "b", expired: false },
+      { kind: "ended", id: "regeneration", sourceId: "c", expired: false },
+      { kind: "ended", id: "sprint", sourceId: "d", expired: false },
     ]);
   });
 
@@ -470,6 +491,11 @@ describe("StatusSet changes, for the triggers (#887)", () => {
   });
 
   it("records a hit and physical damage only while a status answers them (#935)", () => {
+    const parasite = {
+      sourceId: "a",
+      trigger: getStatusDefinition("insidious-parasite").triggers[0],
+    };
+    const mark = { sourceId: "b", trigger: getStatusDefinition("mark-of-pain").triggers[0] };
     const set = new StatusSet();
     set.apply("backfire", 10, "a");
     set.drainChanges();
@@ -481,13 +507,35 @@ describe("StatusSet changes, for the triggers (#887)", () => {
     set.recordHit();
     set.recordPhysicalDamage();
     set.recordHit();
-    expect(set.drainChanges()).toEqual([{ kind: "hit" }, { kind: "hit" }]);
+    expect(set.drainChanges()).toEqual([
+      { kind: "hit", fired: [parasite] },
+      { kind: "hit", fired: [parasite] },
+    ]);
 
-    set.apply("mark-of-pain", 30, "a");
+    set.apply("mark-of-pain", 30, "b");
     set.drainChanges();
     set.recordPhysicalDamage();
     set.recordHit();
-    expect(set.drainChanges()).toEqual([{ kind: "took-physical-damage" }, { kind: "hit" }]);
+    expect(set.drainChanges()).toEqual([
+      { kind: "took-physical-damage", fired: [mark] },
+      { kind: "hit", fired: [parasite] },
+    ]);
+  });
+
+  it("a record keeps the triggers it was made with, though they end before the drain (#953)", () => {
+    const set = new StatusSet();
+    set.apply("mark-of-pain", 30, "b");
+    set.drainChanges();
+    set.recordPhysicalDamage();
+    set.endAll();
+    set.apply("mark-of-pain", 30, "c");
+    expect(set.drainChanges()).toEqual([
+      {
+        kind: "took-physical-damage",
+        fired: [{ sourceId: "b", trigger: getStatusDefinition("mark-of-pain").triggers[0] }],
+      },
+      { kind: "ended", id: "mark-of-pain", sourceId: "b", expired: false },
+    ]);
   });
 });
 

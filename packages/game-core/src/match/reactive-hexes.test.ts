@@ -580,6 +580,19 @@ describe("Mark of Pain (#935)", () => {
     );
   });
 
+  it("the blow that kills the bearer still splashes, from where it fell (#953)", () => {
+    const match = marked();
+    get(match, "m").health = 1;
+    expect(match.requestAttack("a", "m")).toEqual({ ok: true });
+    const log = stepFor(match, 3);
+    expect(get(match, "m").dead).toBe(true);
+    expect(get(match, "m").statuses.active).toEqual([]);
+    const entries = triggered(log, MARK_OF_PAIN);
+    expect(damageTo(entries, "m2")).toEqual([34]);
+    expect(damageTo(entries, "m")).toEqual([]);
+    expect(damageTo(entries, "m3")).toEqual([]);
+  });
+
   it("two bearers side by side never chain: its damage is shadow", () => {
     const match = marked();
     get(match, "m2").statuses.apply("mark-of-pain", 30, "a");

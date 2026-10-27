@@ -75,9 +75,9 @@ export const SKILL_ICONS = {
   "necromancer.enfeebling-blood": { glyph: "sword", modifier: "area" },
   "paragon.anthem-of-flame": { glyph: "flame", modifier: "area" },
   "ritualist.weapon-of-warding": { glyph: "armor", modifier: "up" },
-  "ritualist.mend-body-and-soul": { glyph: "cleanse", modifier: "area" },
-  "ritualist.spirit-light": { glyph: "flask", modifier: "bleed" },
-  "ritualist.wielders-boon": { glyph: "sword", modifier: "less" },
+  "ritualist.mend-body-and-soul": { glyph: "plaster", modifier: "area" },
+  "ritualist.spirit-light": { glyph: "plaster", modifier: "bleed" },
+  "ritualist.wielders-boon": { glyph: "sword-heal" },
   "mesmer.power-spike": { glyph: "interrupt", modifier: "down" },
   "mesmer.power-drain": { glyph: "interrupt", modifier: "up" },
   "mesmer.power-block": { glyph: "interrupt", modifier: "clock" },
@@ -111,10 +111,22 @@ export const SKILL_ICONS = {
   "mesmer.cry-of-frustration": { glyph: "interrupt", modifier: "area" },
   "mesmer.mantra-of-recovery": { glyph: "speed", modifier: "clock" },
   "necromancer.shadow-of-fear": { glyph: "slow", modifier: "area" },
+  "monk.patient-spirit": { glyph: "heal", modifier: "hourglass" },
+  "monk.holy-veil": { glyph: "armor", modifier: "upkeep" },
+  "necromancer.rend-enchantments": { glyph: "cleanse", modifier: "bleed" },
+  "necromancer.plague-touch": { glyph: "germ", modifier: "self" },
   "mesmer.energy-surge": { glyph: "energy", modifier: "area" },
   "mesmer.leech-signet": { glyph: "interrupt", modifier: "self" },
   // A placeholder: no modifier yet says "per enchantment or hex" (#920).
   "monk.dwaynas-kiss": { glyph: "heal", modifier: "stun" },
+  // A placeholder: the loop reads as the spin; axe/area is Vow of Strength's (#936).
+  "warrior.cyclone-axe": { glyph: "axe", modifier: "upkeep" },
+  // A shout for yourself: the banner with the self mark (#936).
+  "warrior.for-great-justice": { glyph: "banner", modifier: "clock" },
+  // A hit taken is capped: armor with the "less" mark (#936).
+  "monk.protective-spirit": { glyph: "armor", modifier: "less" },
+  // Your own life, given: the resurrect glyph with the bleed drop (#936).
+  "monk.infuse-health": { glyph: "resurrect", modifier: "bleed" },
   "paragon.spear-of-lightning": { glyph: "spear-bolt" },
   "paragon.never-surrender": { glyph: "banner", modifier: "area" },
   "paragon.leaders-comfort": { glyph: "banner-cross", modifier: "self" },

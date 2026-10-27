@@ -52,7 +52,7 @@ export interface TriggerContext {
  */
 export function fireTriggers(
   bearer: Combatant,
-  event: Exclude<StatusTriggerEvent, "bearer-gains-condition" | "ends">,
+  event: Exclude<StatusTriggerEvent, "bearer-gains-condition" | "ends" | "expires">,
   context: TriggerContext,
 ): FiredTrigger[] {
   return bearer.statuses
@@ -64,9 +64,11 @@ export function fireTriggers(
  * What `change` to the bearer's statuses sets off (#887): a condition
  * gained fires every status on it that answers one, in `active` order; a
  * status ended fires its own `ends` triggers, though it is no longer on
- * the bearer. A hit the bearer landed, or physical damage it took, fires
- * every status on it that answers that (#935). The simulation discards
- * whatever the firing itself changes, so this never recurses either.
+ * the bearer, and its `expires` ones too if its duration ran out (#944).
+ * A hit the bearer landed, or physical damage it took (#935), fires what
+ * answered it when it happened (#953), so a killing blow still sets off
+ * the hexes its death ended. The simulation discards whatever the firing
+ * itself changes, so this never recurses either.
  */
 export function fireChangeTriggers(
   bearer: Combatant,
@@ -83,12 +85,15 @@ export function fireChangeTriggers(
         );
     case "ended":
       return getStatusDefinition(change.id)
-        .triggers.filter((trigger) => trigger.on === "ends")
+        .triggers.filter(
+          (trigger) => trigger.on === "ends" || (trigger.on === "expires" && change.expired),
+        )
         .flatMap((trigger) => fire(trigger, change.sourceId, bearer, undefined, context));
     case "hit":
-      return fireTriggers(bearer, "bearer-hits", context);
     case "took-physical-damage":
-      return fireTriggers(bearer, "bearer-takes-physical-damage", context);
+      return change.fired.flatMap(({ sourceId, trigger }) =>
+        fire(trigger, sourceId, bearer, undefined, context),
+      );
   }
 }
 

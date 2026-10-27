@@ -87,6 +87,9 @@ export type StatusId =
   | "armor-boost"
   | "guardian"
   | "mending"
+  | "patient-spirit"
+  | "holy-veil"
+  | "protective-spirit"
   // Stances.
   | "sprint"
   | "dash"
@@ -101,6 +104,7 @@ export type StatusId =
   // Shouts and skill effects (#524).
   | "watch-yourself"
   | "healing-signet-armor"
+  | "for-great-justice"
   // Paragon shouts (#921).
   | "fall-back"
   | "stand-your-ground"
@@ -311,11 +315,28 @@ export interface StatusDefinition {
    */
   readonly damageTakenMultiplier: number;
   /**
+   * The most of its max health the bearer can lose to one hit (#936):
+   * Protective Spirit's 0.1. Applied last in `mitigate`, so it caps
+   * every typed damage packet; degeneration and sacrifice are not hits.
+   * `undefined`: no cap.
+   */
+  readonly maxDamageFractionPerHit: number | undefined;
+  /**
+   * Strikes of adrenaline the bearer gains on top of each hit it lands
+   * (#936): "For Great Justice!"'s 1. Taking damage is not a hit.
+   */
+  readonly extraStrikesPerHit: number;
+  /**
    * The share taken off the recharge of each spell the bearer finishes
    * (#938): Mantra of Recovery's 0.33. Read as the recharge starts, so
    * a recharge already running keeps its length when the status ends.
    */
   readonly spellRechargeFaster: number;
+  /**
+   * Multiplier on how long a hex takes to cast on the bearer (#944): Holy
+   * Veil's 2. Read once, as the cast begins; an instant hex stays instant.
+   */
+  readonly incomingHexCastTimeMultiplier: number;
   /**
    * What it does when its bearer does something (#469): Backfire's damage
    * on each spell the bearer finishes. Applied by whoever put it on.
@@ -328,7 +349,8 @@ export interface StatusDefinition {
  * it casts a spell, attacks, gains a condition it did not have (#887), or
  * the status itself ends, for any reason but a refresh or a reset (#887).
  * Or (#935) it completes any skill, lands a hit, or loses health to
- * physical damage.
+ * physical damage. `expires` is only the end of its duration (#944):
+ * Patient Spirit's "unless it ends prematurely".
  */
 export type StatusTriggerEvent =
   | "bearer-casts-spell"
@@ -337,7 +359,8 @@ export type StatusTriggerEvent =
   | "bearer-hits"
   | "bearer-takes-physical-damage"
   | "bearer-gains-condition"
-  | "ends";
+  | "ends"
+  | "expires";
 
 export interface StatusTrigger {
   readonly on: StatusTriggerEvent;
@@ -383,15 +406,28 @@ export type TriggerEffect = SkillEffect | SpreadGainedConditionEffect;
 /**
  * What happened to a `StatusSet` that a trigger may answer (#887), in the
  * order it happened, until the simulation drains it: a condition newly on
- * the bearer, or a status gone from it, with who had applied it. Or
- * (#935) a hit the bearer landed, or physical damage it took, recorded
- * only while a status on it answers that.
+ * the bearer, or a status gone from it, with who had applied it and
+ * whether its duration ran out (`expired`, #944) rather than something
+ * ending it. Or (#935) a hit the bearer landed, or physical damage it
+ * took, with the triggers on it that answered at that moment (#953): a
+ * killing blow ends them before the drain, and they still fire for it.
  */
 export type StatusChange =
   | { readonly kind: "gained-condition"; readonly id: StatusId; readonly durationSeconds: number }
-  | { readonly kind: "ended"; readonly id: StatusId; readonly sourceId: string }
-  | { readonly kind: "hit" }
-  | { readonly kind: "took-physical-damage" };
+  | {
+      readonly kind: "ended";
+      readonly id: StatusId;
+      readonly sourceId: string;
+      readonly expired: boolean;
+    }
+  | { readonly kind: "hit"; readonly fired: readonly AnsweringTrigger[] }
+  | { readonly kind: "took-physical-damage"; readonly fired: readonly AnsweringTrigger[] };
+
+/** A trigger on the bearer that answered an event, and who applied its status. */
+export interface AnsweringTrigger {
+  readonly sourceId: string;
+  readonly trigger: StatusTrigger;
+}
 
 /** A share of maximum health a status takes, at most `cap` (GW1's deep wound). */
 export interface MaxHealthLoss {
@@ -459,7 +495,10 @@ function define(
     endsWhenBearerHitsWithAttackSkill: false,
     endsWhenBearerGains: [],
     damageTakenMultiplier: 1,
+    maxDamageFractionPerHit: undefined,
+    extraStrikesPerHit: 0,
     spellRechargeFaster: 0,
+    incomingHexCastTimeMultiplier: 1,
     triggers: [],
     ...overrides,
   };
@@ -671,7 +710,50 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     block: { chance: 0.5, against: "all" },
   }),
   // Mending at rank 12: +3 Health regeneration while maintained (#837).
-  mending: define("mending", "Mending", "enchantment", { healthPips: 3 }),
+  mending: define("mending", "Mending", "enchantment", { profession: "monk", healthPips: 3 }),
+  // "...Unless Patient Spirit ends prematurely, that ally is healed for
+  // 30...102...120 Health when Patient Spirit ends", by its caster's
+  // Healing Prayers.
+  "patient-spirit": define("patient-spirit", "Patient Spirit", "enchantment", {
+    profession: "monk",
+    triggers: [
+      {
+        on: "expires",
+        effects: [
+          {
+            kind: "heal",
+            amount: {
+              scaling: { attributeId: "monk.healing-prayers", atZero: 30, atTwelve: 102 },
+            },
+            perStatusOnTarget: [],
+          },
+        ],
+        target: "bearer",
+        skillId: "monk.patient-spirit",
+      },
+    ],
+  }),
+  // "While you maintain this enchantment, any hexes cast on target other
+  // ally take twice as long to cast. When Holy Veil ends, 1 hex is removed
+  // from that ally."
+  "holy-veil": define("holy-veil", "Holy Veil", "enchantment", {
+    profession: "monk",
+    incomingHexCastTimeMultiplier: 2,
+    triggers: [
+      {
+        on: "ends",
+        effects: [{ kind: "remove-status", category: "hex", count: 1 }],
+        target: "bearer",
+        skillId: "monk.holy-veil",
+      },
+    ],
+  }),
+  // "For 5...19...23 seconds, target ally cannot lose more than 10% max
+  // Health from a single hit": 19 s, its rank-12 value, on the skill.
+  "protective-spirit": define("protective-spirit", "Protective Spirit", "enchantment", {
+    profession: "monk",
+    maxDamageFractionPerHit: 0.1,
+  }),
 
   sprint: define("sprint", "Sprint", "stance", {
     profession: "warrior",
@@ -713,6 +795,12 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     profession: "warrior",
     armorModifier: 21,
     endsAfterAttacks: 3,
+  }),
+  // "For Great Justice!" (PvP): "For 8 seconds, whenever you hit with an
+  // attack, you gain 1 additional strike of adrenaline."
+  "for-great-justice": define("for-great-justice", "For Great Justice!", "shout", {
+    profession: "warrior",
+    extraStrikesPerHit: 1,
   }),
   "healing-signet-armor": define("healing-signet-armor", "Healing Signet", "skill-effect", {
     profession: "warrior",
@@ -947,38 +1035,44 @@ export class StatusSet {
     return changes;
   }
 
-  /** Take `ids` off the bearer, each recorded as ended. */
-  #end(ids: readonly StatusId[]): void {
+  /**
+   * Take `ids` off the bearer, each recorded as ended: `expired` when its
+   * duration ran out (`advance`), and for every other end not (#944).
+   */
+  #end(ids: readonly StatusId[], expired = false): void {
     for (const id of ids) {
       const status = this.#statuses.get(id);
       if (status !== undefined) {
         this.#statuses.delete(id);
-        this.#changes.push({ kind: "ended", id, sourceId: status.sourceId });
+        this.#changes.push({ kind: "ended", id, sourceId: status.sourceId, expired });
       }
     }
   }
 
-  /** The bearer landed a hit (#935), recorded only if a status on it answers one. */
+  /**
+   * The bearer landed a hit (#935), recorded only if a status on it
+   * answers one, with the triggers that do (#953).
+   */
   public recordHit(): void {
-    if (this.#answers("bearer-hits")) {
-      this.#changes.push({ kind: "hit" });
+    const fired = this.#answering("bearer-hits");
+    if (fired.length > 0) {
+      this.#changes.push({ kind: "hit", fired });
     }
   }
 
   /**
    * The bearer lost health to physical damage (#935), recorded only if a
-   * status on it answers that.
+   * status on it answers that, with the triggers that do (#953).
    */
   public recordPhysicalDamage(): void {
-    if (this.#answers("bearer-takes-physical-damage")) {
-      this.#changes.push({ kind: "took-physical-damage" });
+    const fired = this.#answering("bearer-takes-physical-damage");
+    if (fired.length > 0) {
+      this.#changes.push({ kind: "took-physical-damage", fired });
     }
   }
 
-  #answers(event: StatusTriggerEvent): boolean {
-    return this.active.some(({ id }) =>
-      getStatusDefinition(id).triggers.some((trigger) => trigger.on === event),
-    );
+  #answering(event: StatusTriggerEvent): AnsweringTrigger[] {
+    return this.triggersOn(event).map(({ sourceId, trigger }) => ({ sourceId, trigger }));
   }
 
   /** Record a condition newly on the bearer (#887); any other category is not one. */
@@ -1183,6 +1277,24 @@ export class StatusSet {
   }
 
   /**
+   * Take up to `count` statuses of a category off the bearer, newest first,
+   * as `removeByCategory`, with the time each had left (#944): Plague
+   * Touch's "transfer ... with their remaining durations".
+   */
+  public takeNewest(
+    category: StatusCategory,
+    count: number,
+  ): { id: StatusId; remainingSeconds: number }[] {
+    const taken = [...this.#statuses.values()]
+      .reverse()
+      .filter(({ id }) => getStatusDefinition(id).category === category)
+      .slice(0, count)
+      .map(({ id, remainingSeconds }) => ({ id, remainingSeconds }));
+    this.#end(taken.map(({ id }) => id));
+    return taken;
+  }
+
+  /**
    * An attack hit the bearer or was blocked (#524): one fewer for every
    * status that ends after so many. Returns the ids that ended on it.
    */
@@ -1334,7 +1446,7 @@ export class StatusSet {
         expired.push(status.id);
       }
     }
-    this.#end(expired);
+    this.#end(expired, true);
     return expired;
   }
 }
@@ -1382,11 +1494,17 @@ export interface StatusModifiers {
   readonly attackDurationMultiplier: number;
   /** Every status's, multiplied (#919). */
   readonly damageTakenMultiplier: number;
+  /** The lowest single status's (#936); `undefined`: no cap. */
+  readonly maxDamageFractionPerHit: number | undefined;
+  /** Every status's, summed (#936). */
+  readonly extraStrikesPerHit: number;
   /**
    * The share taken off a spell's recharge (#938): several combine as
    * 1 − Π(1 − f).
    */
   readonly spellRechargeFaster: number;
+  /** Every status's, multiplied (#944). */
+  readonly incomingHexCastTimeMultiplier: number;
 }
 
 /** The weakest heals get, whatever reduces them (GW1: at most −40%). */
@@ -1397,11 +1515,11 @@ export const HEALING_MULTIPLIER_FLOOR = 0.6;
  *
  * Additive effects (health and energy pips, armor, attributes) sum;
  * multiplicative ones (move speed, healing, weapon damage, cast time,
- * damage taken) multiply; miss chance takes the
+ * damage taken, a hex's cast time on the bearer) multiply; miss chance takes the
  * worst rather than compounding, so two blinding effects cannot push a
  * player past certain failure in a way that feels arbitrary. A maximum
  * health loss and an armor reduction are each the largest single one,
- * and healing is floored at `HEALING_MULTIPLIER_FLOOR`.
+ * a cap on damage per hit the lowest (#936), and healing is floored at `HEALING_MULTIPLIER_FLOOR`.
  * Attack duration is GW1's rule: only the strongest speed-up and the
  * strongest slow-down count, and they multiply. Pips per enchantment
  * (#845) count every enchantment in `statuses`, the one giving them
@@ -1424,7 +1542,10 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let attackFaster = 1;
   let attackSlower = 1;
   let damageTakenMultiplier = 1;
+  let maxDamageFractionPerHit: number | undefined;
+  let extraStrikesPerHit = 0;
   let spellRechargeKept = 1;
+  let incomingHexCastTimeMultiplier = 1;
   const enchantments = statuses.filter(
     (status) => getStatusDefinition(status.id).category === "enchantment",
   ).length;
@@ -1461,7 +1582,16 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     attackFaster = Math.min(attackFaster, def.attackDurationMultiplier);
     attackSlower = Math.max(attackSlower, def.attackDurationMultiplier);
     damageTakenMultiplier *= def.damageTakenMultiplier;
+    if (
+      def.maxDamageFractionPerHit !== undefined &&
+      (maxDamageFractionPerHit === undefined ||
+        def.maxDamageFractionPerHit < maxDamageFractionPerHit)
+    ) {
+      maxDamageFractionPerHit = def.maxDamageFractionPerHit;
+    }
+    extraStrikesPerHit += def.extraStrikesPerHit;
     spellRechargeKept *= 1 - def.spellRechargeFaster;
+    incomingHexCastTimeMultiplier *= def.incomingHexCastTimeMultiplier;
   }
 
   return {
@@ -1480,7 +1610,10 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     castTimeMultiplier,
     attackDurationMultiplier: attackFaster * attackSlower,
     damageTakenMultiplier,
+    maxDamageFractionPerHit,
+    extraStrikesPerHit,
     spellRechargeFaster: 1 - spellRechargeKept,
+    incomingHexCastTimeMultiplier,
   };
 }
 
