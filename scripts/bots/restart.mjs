@@ -14,7 +14,8 @@
  *      that is safe (reboot.mjs, `fastForwardDecision`) and it built;
  *   4. records what it loaded, or plainly why it did not, in
  *      `.bots/boot.json`, whose note claude-llc puts in the manager's first
- *      prompt so the manager can tell everyone;
+ *      prompt so the manager can tell everyone, and, if it moved the checkout,
+ *      pins that commit in `.bots/company.lock` (#897);
  *   5. starts the company again with
  *      `devenv shell --refresh-eval-cache -- claude-llc up`, so nix rebuilds
  *      every script and briefing from the code now checked out.
@@ -38,7 +39,8 @@ import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 
 import { FILTER_KEYS, GIT_ENV, GIT_HARDENING, filterPins } from "./git-hardening.mjs";
-import { hostPath } from "./host-path.mjs";
+import { builds as buildsCommit, devenvShell } from "./company-build.mjs";
+import { writeLock } from "./company-lock.mjs";
 import { api } from "./link.mjs";
 import { obj, parseRegistry } from "./protocol.mjs";
 import { COMPANY_PATHSPECS, fastForwardDecision } from "./reboot.mjs";
@@ -114,53 +116,12 @@ function run(file, args, options = {}) {
 }
 
 /**
- * `devenv shell`, as the operator would start it from a fresh terminal:
- * without the variables of the devenv shell this process inherited, so the
- * new shell is built from the checkout it runs in and nothing else. That
- * includes PATH: devenv prepends to the PATH it finds, so starting it with
- * this one would nest every reboot's shell inside the last, until PATH is
- * too long for tmux and the company cannot come up (host-path.mjs).
- *
- * Always with `--refresh-eval-cache`. devenv's evaluation cache only tracks
- * the .nix and devenv files, not `scripts/bots`, which enters the store as a
- * path literal (ADR-0014): a merge that changed only .mjs files would
- * otherwise come back up on the cached evaluation, running the old scripts.
- * Refreshing also leaves the cache right for the operator's next shell.
- *
- * Its output goes straight to the log, not through a pipe: `claude-llc up`
- * leaves daemons running, and a pipe they inherited would never close.
- *
  * @param {string[]} args
  * @param {string} cwd
  * @returns {number} its exit code
  */
 function devenv(args, cwd) {
-  log(`devenv shell --refresh-eval-cache -- ${args.join(" ")}`);
-  const out = fs.openSync(LOG, "a");
-  try {
-    const result = spawnSync("devenv", ["shell", "--refresh-eval-cache", "--", ...args], {
-      cwd,
-      env: {
-        ...Object.fromEntries(
-          // Nor the bot token, which is the restarter's alone: the tmux
-          // server claude-llc starts would hand it to every pane.
-          Object.entries(process.env).filter(
-            ([name]) =>
-              !name.startsWith("DEVENV_") &&
-              !name.startsWith("TELEGRAM_") &&
-              name !== "IN_NIX_SHELL",
-          ),
-        ),
-        PATH: hostPath(process.env.PATH ?? ""),
-        // The boot record is already written; claude-llc must not replace it.
-        VIBEWARS_REBOOTED: "1",
-      },
-      stdio: ["ignore", out, out],
-    });
-    return result.status ?? 1;
-  } finally {
-    fs.closeSync(out);
-  }
+  return devenvShell(args, cwd, LOG, log);
 }
 
 /**
@@ -268,34 +229,11 @@ async function stopCompany() {
 }
 
 /**
- * Does this commit build? Checked in a scratch directory unpacked from the
- * mirror with `git archive`: no checkout, so no filter or hook of any
- * repository runs, and the operator's checkout only ever moves to a commit
- * already known to work.
- *
  * @param {string} sha
  * @returns {boolean}
  */
 function builds(sha) {
-  fs.rmSync(CHECK, { recursive: true, force: true });
-  fs.mkdirSync(CHECK, { recursive: true });
-  try {
-    const archive = spawnSync("git", [...GIT_HARDENING, `--git-dir=${MIRROR}`, "archive", sha], {
-      env: { ...process.env, ...GIT_ENV },
-      maxBuffer: 1024 * 1024 * 1024,
-    });
-    if (archive.status !== 0) {
-      log(`git archive ${sha}: exit ${String(archive.status)}`);
-      return false;
-    }
-    if (spawnSync("tar", ["-x", "-C", CHECK], { input: archive.stdout }).status !== 0) {
-      log(`could not unpack ${sha}`);
-      return false;
-    }
-    return devenv(["claude-llc", "--help"], CHECK) === 0;
-  } finally {
-    fs.rmSync(CHECK, { recursive: true, force: true });
-  }
+  return buildsCommit({ mirror: MIRROR, scratch: CHECK, logFile: LOG, log }, sha);
 }
 
 /**
@@ -417,6 +355,11 @@ async function main() {
     );
   };
   record(outcome);
+  if (updated) {
+    // The lock moves only here, onto a commit that built and that the
+    // checkout now holds; claude-llc up refuses any other (#897).
+    writeLock(ROOT, sha, "reboot", Date.now());
+  }
 
   // Once more if it fails, from a stopped company again: whatever made it
   // fail may have left half a company running (#315).

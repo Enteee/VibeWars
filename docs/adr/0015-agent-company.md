@@ -144,6 +144,8 @@ if it is bad.
   replace refs) and every filter driver the config names. The residual is
   a setting git adds in future that runs a command and is not pinned; the
   read-only masks above close that class instead of chasing it key by key.
+  The commit it loads is then pinned in the host-only `.bots/company.lock`,
+  which `claude-llc up` checks against the checkout's HEAD (ADR-0033).
 - hubd no longer sets an upstream in the agent's repository on push, and the
   agent's `origin/<branch>` does not move. Agents compare against the branch
   on GitHub when they need to.
