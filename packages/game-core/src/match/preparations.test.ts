@@ -210,7 +210,13 @@ describe("Apply Poison in the match (#525)", () => {
     const match = new MatchSimulation({
       seed: "prep",
       participants: [archer("a", vec2(0, 0)), dummy("d", vec2(600, 0))],
-      matchRules: { scoreToWin: 10, timeLimitSeconds: 600, respawnSeconds: 1 },
+      matchRules: {
+        scoreToWin: 10,
+        timeLimitSeconds: 600,
+        deathRule: "respawn",
+        respawnSeconds: 1,
+        deathPenalty: false,
+      },
     });
     const ranger = get(match, "a").combatant;
     ranger.statuses.apply("apply-poison", 24, "a");

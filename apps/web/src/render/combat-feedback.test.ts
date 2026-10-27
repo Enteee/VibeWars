@@ -25,6 +25,7 @@ function player(sessionId: string): PlayerSnapshot {
     energy: 20,
     maxEnergy: 50,
     overcast: 0,
+    morale: 0,
     armor: 60,
     weaponId: undefined,
     offhandId: undefined,

@@ -430,9 +430,16 @@ export interface AreaRule {
 export interface Combatant {
   readonly id: string;
   health: number;
-  readonly maxHealth: number;
+  /** After morale (#843): the simulation sets it when morale moves. */
+  maxHealth: number;
   energy: number;
-  readonly maxEnergy: number;
+  /** After morale (#843), as `maxHealth`. */
+  maxEnergy: number;
+  /**
+   * Morale in percent (#843, GW1), in [`MORALE_FLOOR`, `MORALE_CEILING`]:
+   * the death penalty below 0, a boost above. Kept across a respawn.
+   */
+  morale: number;
   /**
    * Maximum energy lost to overcast (#461), recovering over time; the
    * ceiling energy fills to is `maxEnergy − overcast`, and may be below 0.

@@ -99,6 +99,10 @@ export const MAX_WIRE_CHAT_TEXT = 2048;
 /** The most net pips either way (game-core's MAX_PIPS, #504). */
 export const MAX_WIRE_PIPS = 10;
 
+/** Morale's range, in percent (game-core's MORALE_FLOOR and MORALE_CEILING, #843). */
+export const MIN_WIRE_MORALE = -60;
+export const MAX_WIRE_MORALE = 10;
+
 /** The most walls a map holds, and points a polygon wall holds. */
 export const MAX_WIRE_WALLS = 1024;
 export const MAX_WIRE_POINTS = 256;
@@ -222,6 +226,8 @@ export interface WirePlayer {
   readonly maxEnergy: number;
   /** Maximum energy lost to overcast (#461); energy fills to `maxEnergy − overcast`. */
   readonly overcast: number;
+  /** Morale in percent (#843): an integer in [`MIN_WIRE_MORALE`, `MAX_WIRE_MORALE`]. */
+  readonly morale: number;
   readonly armor: number;
   readonly weaponId: string | null;
   readonly offhandId: string | null;
@@ -562,6 +568,15 @@ function isCount(value: unknown): value is number {
 
 function isPips(value: unknown): value is number {
   return isNumber(value) && Number.isInteger(value) && Math.abs(value) <= MAX_WIRE_PIPS;
+}
+
+function isMorale(value: unknown): value is number {
+  return (
+    isNumber(value) &&
+    Number.isInteger(value) &&
+    value >= MIN_WIRE_MORALE &&
+    value <= MAX_WIRE_MORALE
+  );
 }
 
 /** A skill-bar slot index. */
@@ -906,6 +921,7 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
     !isNumber(raw.energy) ||
     !isNumber(raw.maxEnergy) ||
     !isNumber(raw.overcast) ||
+    !isMorale(raw.morale) ||
     !isNumber(raw.armor) ||
     !isNullableString(raw.weaponId) ||
     !isNullableString(raw.offhandId) ||
@@ -941,6 +957,7 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
         energy: raw.energy,
         maxEnergy: raw.maxEnergy,
         overcast: raw.overcast,
+        morale: raw.morale,
         armor: raw.armor,
         weaponId: raw.weaponId,
         offhandId: raw.offhandId,

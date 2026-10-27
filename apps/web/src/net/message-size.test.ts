@@ -118,6 +118,7 @@ function player(index: number): WirePlayer {
     energy: 100,
     maxEnergy: 100,
     overcast: 0,
+    morale: 0,
     armor: 100,
     weaponId: WEAPON_ID,
     offhandId: OFFHAND_ID,

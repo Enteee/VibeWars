@@ -199,6 +199,7 @@ function player(sessionId: string, extra: Partial<PlayerSnapshot> = {}): PlayerS
     energy: 20,
     maxEnergy: 20,
     overcast: 0,
+    morale: 0,
     armor: 60,
     weaponId: undefined,
     offhandId: undefined,

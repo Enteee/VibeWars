@@ -88,6 +88,7 @@ function toPlayerSnapshot(
     energy: Math.round(combatant.energy),
     maxEnergy: combatant.maxEnergy,
     overcast: Math.round(combatant.overcast),
+    morale: combatant.morale,
     armor: combatant.equipment.baseArmor,
     weaponId: combatant.equipment.mainHand.weapon.id,
     offhandId: combatant.equipment.offhandId,
