@@ -1,4 +1,4 @@
-import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
+import { ADRENALINE_PER_STRIKE, MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { describe, expect, it } from "vitest";
 
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
@@ -12,7 +12,7 @@ import { CastState } from "./cast-state.js";
 import { IMPLEMENTED_SKILLS, getSkill } from "./catalog.js";
 import { computeCoverage, formatCoverage } from "./coverage.js";
 import { applyEffects } from "./effects.js";
-import { makeCombatant } from "./testing.js";
+import { chargeAdrenaline, makeCombatant } from "./testing.js";
 import type { Combatant } from "./types.js";
 
 /** A hammer in hand, for the hammer's attack skills. */
@@ -368,14 +368,14 @@ describe("headless combat simulation", () => {
     expect(tryCast(ele, "elementalist.fireball", victim)).toBe("caster-dead");
   });
 
-  it("an adrenaline skill is gated on adrenaline, not energy", () => {
+  it("an adrenaline skill is gated on its own strikes, not energy: Backbreaker needs 9 (#463)", () => {
     const warrior = actor(
       makeCombatant({
         id: "war",
         team: 0,
         energy: 100,
         maxEnergy: 100,
-        adrenaline: 0,
+        adrenaline: new Map([["warrior.backbreaker", 8 * ADRENALINE_PER_STRIKE]]),
         equipment: HAMMER,
       }),
       ["warrior.backbreaker"],
@@ -384,15 +384,16 @@ describe("headless combat simulation", () => {
 
     expect(tryCast(warrior, "warrior.backbreaker", victim)).toBe("insufficient-adrenaline");
 
-    warrior.combatant.adrenaline = 9;
+    warrior.combatant.adrenaline.set("warrior.backbreaker", 9 * ADRENALINE_PER_STRIKE);
     expect(tryCast(warrior, "warrior.backbreaker", victim)).toBeUndefined();
-    expect(warrior.combatant.adrenaline).toBe(0);
+    expect(warrior.combatant.adrenaline.get("warrior.backbreaker")).toBe(0);
   });
 
   it("melee range is genuinely short: a melee skill fails at spell range", () => {
-    const warrior = actor(makeCombatant({ id: "war", team: 0, adrenaline: 9, equipment: HAMMER }), [
+    const warrior = actor(makeCombatant({ id: "war", team: 0, equipment: HAMMER }), [
       "warrior.backbreaker",
     ]);
+    chargeAdrenaline(warrior.combatant, "warrior.backbreaker");
     const far = actor(makeCombatant({ id: "far", team: 1 }), [], 300);
     expect(tryCast(warrior, "warrior.backbreaker", far)).toBe("out-of-range");
   });

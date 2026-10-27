@@ -7,6 +7,7 @@ import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { getSkill } from "../skills/catalog.js";
 import { mitigate, skillDamage } from "../skills/damage.js";
 import type { Projectile } from "../skills/projectile.js";
+import { strikesOf } from "../skills/testing.js";
 import { vec2, ZERO, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
@@ -17,13 +18,17 @@ const LONGBOW = WEAPONS.longbow;
 const SPEED = LONGBOW.projectileSpeed ?? 0;
 const UP = vec2(0, 1);
 const DOWN = vec2(0, -1);
+const BACKBREAKER = "warrior.backbreaker";
 
-/** A longbow at rank 12 Marksmanship. */
+/**
+ * A longbow at rank 12 Marksmanship. Backbreaker is on the bar only so a
+ * test can watch adrenaline fill (#463): a bow cannot use it.
+ */
 function archer(spawn: Vec2, weapon: Weapon = LONGBOW): ParticipantSpec {
   return {
     id: "archer",
     team: 0,
-    skillBar: [],
+    skillBar: [BACKBREAKER],
     attributeRanks: new Map([["ranger.marksmanship", 12]]),
     equipment: {
       ...unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
@@ -174,14 +179,20 @@ describe("ranged weapons fire projectiles", () => {
     expect(land(match).events[0]?.kind).toBe("damage");
   });
 
+  it("a landed arrow gives every adrenaline skill one strike (#463)", () => {
+    const match = sim();
+    fire(match);
+    expect(land(match).events[0]?.kind).toBe("damage");
+    expect(strikesOf(get(match, "archer").combatant, BACKBREAKER)).toBe(1);
+  });
+
   it("still hits after the archer dies in flight, and earns the corpse nothing", () => {
     const match = sim();
     fire(match);
     const shooter = get(match, "archer").combatant;
-    shooter.adrenaline = 0;
     kill(match, "archer");
     expect(land(match).events[0]?.kind).toBe("damage");
-    expect(shooter.adrenaline).toBe(0);
+    expect(strikesOf(shooter, BACKBREAKER)).toBe(0);
   });
 
   describe("Critical Strikes (#606)", () => {
@@ -445,7 +456,7 @@ describe("walls along the flight (#215)", () => {
 
     const landed = land(match);
     expect(landed.events).toEqual([{ kind: "attack-obstructed", targetId: "target" }]);
-    expect(get(match, "archer").combatant.adrenaline).toBe(0);
+    expect(strikesOf(get(match, "archer").combatant, BACKBREAKER)).toBe(0);
   });
 
   it("hits, as before, with no wall in the way", () => {
@@ -489,7 +500,7 @@ describe("ranged attack skills fly (#416)", () => {
 
   /** The archer with Broad Head Arrow and Barrage, and the energy for them. */
   function skilled(spawn: Vec2): ParticipantSpec {
-    return { ...archer(spawn), skillBar: [BROAD_HEAD, BARRAGE], maxEnergy: 1000 };
+    return { ...archer(spawn), skillBar: [BROAD_HEAD, BARRAGE, BACKBREAKER], maxEnergy: 1000 };
   }
 
   function foe(id: string, spawn: Vec2): ParticipantSpec {
@@ -640,7 +651,7 @@ describe("ranged attack skills fly (#416)", () => {
       }
       expect(kinds(landed)).toEqual(["attack-blocked"]);
       expect(get(match, "target").combatant.statuses.has("dazed")).toBe(false);
-      expect(get(match, "archer").combatant.adrenaline).toBe(0);
+      expect(strikesOf(get(match, "archer").combatant, BACKBREAKER)).toBe(0);
       return;
     }
     throw new Error("no seed blocked the arrow");

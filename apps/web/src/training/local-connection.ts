@@ -88,7 +88,6 @@ function toPlayerSnapshot(
     energy: Math.round(combatant.energy),
     maxEnergy: combatant.maxEnergy,
     overcast: Math.round(combatant.overcast),
-    adrenaline: combatant.adrenaline,
     armor: combatant.equipment.baseArmor,
     weaponId: combatant.equipment.mainHand.weapon.id,
     offhandId: combatant.equipment.offhandId,
@@ -244,6 +243,13 @@ export function createLocalConnection(options: {
     },
     onCastRefused(handler) {
       refusalHandlers.push(handler);
+    },
+    getAdrenaline() {
+      // Straight from the simulation, as the recharges are (#463).
+      const combatant = simulation.get(selfId)?.combatant;
+      return skillBar.map((slot) =>
+        slot === null ? 0 : (combatant?.adrenaline.get(slot.id) ?? 0),
+      );
     },
     getRecharges() {
       // Straight from the simulation: there is no wire to extrapolate over.
