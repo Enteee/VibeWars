@@ -24,7 +24,7 @@ import path from "node:path";
 import process from "node:process";
 import { createInterface } from "node:readline/promises";
 
-import { ensureHome } from "./creds.mjs";
+import { claudeVerdict, resetBoxesOnAccountChange, ensureHome } from "./creds.mjs";
 import { COLUMNS, columnsPlan } from "./hub-board.mjs";
 import { ROLES } from "./hub-policy.mjs";
 
@@ -114,6 +114,24 @@ for (const line of home.lines) {
 }
 if (!home.ok) {
   process.exit(1);
+}
+const claude = claudeVerdict(credentials);
+if (!claude.ok) {
+  say("claude account", "NOT READY");
+  console.error(`claude-llc-init: ${claude.message}`);
+  process.exit(1);
+}
+say("claude account", `${claude.who} (the company's own)`);
+const reset = resetBoxesOnAccountChange(
+  credentials,
+  process.env.VIBEWARS_CLAUDE_BOXES ?? "",
+  claude.who,
+);
+if (reset > 0) {
+  say(
+    "claude state",
+    `${String(reset)} box(es) reset: the account changed, their Claude state starts over`,
+  );
 }
 console.log("");
 
