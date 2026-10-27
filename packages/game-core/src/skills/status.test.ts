@@ -48,6 +48,7 @@ describe("status definitions", () => {
         def.armorModifier !== 0 ||
         def.armorWhileStill !== 0 ||
         def.healthPerSecondWhileMoving !== 0 ||
+        def.healthPerSecond !== 0 ||
         def.armorReduction !== undefined ||
         def.moveSpeedMultiplier !== 1 ||
         def.attackMissChance !== 0 ||

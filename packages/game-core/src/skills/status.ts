@@ -112,6 +112,10 @@ export type StatusId =
   // Chants and weapon spells (#758).
   | "anthem-of-flame"
   | "weapon-of-warding"
+  // Ritualist weapon spells (#975).
+  | "spirit-light-weapon"
+  | "weapon-of-quickening"
+  | "weapon-of-aggression"
   // Paragon command (#923).
   | "never-surrender"
   // Dervish enchantments and stances (#845).
@@ -182,6 +186,12 @@ export interface StatusDefinition {
    * outside `MAX_PIPS` and not regeneration.
    */
   readonly healthPerSecondWhileMoving: number;
+  /**
+   * Health per second healed, moving or not (#975): Spirit Light
+   * Weapon's. A heal, like `healthPerSecondWhileMoving`: scaled by
+   * `healingMultiplier`, outside `MAX_PIPS` and not regeneration.
+   */
+  readonly healthPerSecond: number;
   /**
    * Armor taken before `armorModifier`s add, never below a floor (#763):
    * Cracked Armor's −20, not below 60. `undefined`: none.
@@ -448,6 +458,7 @@ function define(
     armorModifier: 0,
     armorWhileStill: 0,
     healthPerSecondWhileMoving: 0,
+    healthPerSecond: 0,
     armorReduction: undefined,
     moveSpeedMultiplier: 1,
     attackMissChance: 0,
@@ -795,6 +806,25 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     healthPips: 4,
     block: { chance: 0.5, against: "all" },
     endsWhenBearerAttacks: true,
+  }),
+  // "Target ally gains 5...21...25 Health per second and an additional
+  // 5...21...25 Health per second if that ally is within earshot of a
+  // Spirit": there are no spirits yet (#467), so it is the 21 alone, as
+  // in GW1 with none up.
+  "spirit-light-weapon": define("spirit-light-weapon", "Spirit Light Weapon", "weapon-spell", {
+    profession: "ritualist",
+    healthPerSecond: 21,
+  }),
+  // "Spells and Binding Rituals recharge 33% faster": there are no
+  // binding rituals yet (#467), so it is spells alone.
+  "weapon-of-quickening": define("weapon-of-quickening", "Weapon of Quickening", "weapon-spell", {
+    profession: "ritualist",
+    spellRechargeFaster: 0.33,
+  }),
+  // "You attack 25% faster": Heart of Fury's speed-up, as a weapon spell.
+  "weapon-of-aggression": define("weapon-of-aggression", "Weapon of Aggression", "weapon-spell", {
+    profession: "ritualist",
+    attackDurationMultiplier: 0.75,
   }),
 
   // "For 5...17...20 seconds, you have 1...3...4 Health regeneration for
@@ -1371,6 +1401,8 @@ export interface StatusModifiers {
   readonly armorWhileStill: number;
   /** Every status's, summed: health per second while the bearer is moving (#921). */
   readonly healthPerSecondWhileMoving: number;
+  /** Every status's, summed: health per second, moving or not (#975). */
+  readonly healthPerSecond: number;
   /** The largest armor reduction; `undefined`: none. */
   readonly armorReduction: ArmorReduction | undefined;
   readonly moveSpeedMultiplier: number;
@@ -1391,9 +1423,24 @@ export interface StatusModifiers {
   readonly extraStrikesPerHit: number;
   /**
    * The share taken off a spell's recharge (#938): several combine as
-   * 1 − Π(1 − f).
+   * 1 − Π(1 − f), never more than `MAX_RECHARGE_REDUCTION` (#975).
    */
   readonly spellRechargeFaster: number;
+}
+
+/**
+ * The most recharge reductions together take off (GW1, "Recharge"): they
+ * multiply, and never shorten a recharge by more than half.
+ */
+export const MAX_RECHARGE_REDUCTION = 0.5;
+
+/**
+ * A spell's recharge of `seconds`, `faster` shorter (`StatusModifiers.
+ * spellRechargeFaster`, #975): never below 1 s, and one already under
+ * 1 s is not raised to it.
+ */
+export function reducedRecharge(seconds: number, faster: number): number {
+  return faster > 0 ? Math.max(Math.min(seconds, 1), seconds * (1 - faster)) : seconds;
 }
 
 /** The weakest heals get, whatever reduces them (GW1: at most −40%). */
@@ -1420,6 +1467,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let armorModifier = 0;
   let armorWhileStill = 0;
   let healthPerSecondWhileMoving = 0;
+  let healthPerSecond = 0;
   let armorReduction: ArmorReduction | undefined;
   let moveSpeedMultiplier = 1;
   let attackMissChance = 0;
@@ -1449,6 +1497,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     armorModifier += def.armorModifier;
     armorWhileStill += def.armorWhileStill;
     healthPerSecondWhileMoving += def.healthPerSecondWhileMoving;
+    healthPerSecond += def.healthPerSecond;
     if (
       def.armorReduction !== undefined &&
       (armorReduction === undefined || def.armorReduction.amount > armorReduction.amount)
@@ -1487,6 +1536,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     armorModifier,
     armorWhileStill,
     healthPerSecondWhileMoving,
+    healthPerSecond,
     armorReduction,
     moveSpeedMultiplier,
     attackMissChance,
@@ -1499,7 +1549,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     damageTakenMultiplier,
     maxDamageFractionPerHit,
     extraStrikesPerHit,
-    spellRechargeFaster: 1 - spellRechargeKept,
+    spellRechargeFaster: Math.min(MAX_RECHARGE_REDUCTION, 1 - spellRechargeKept),
   };
 }
 

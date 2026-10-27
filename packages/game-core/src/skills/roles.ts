@@ -60,6 +60,7 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
  * Spirit, #936) is defence, and one that interrupts a spell (Dazed) is an interrupt.
  * What it does on each attack hit counts too: Apply Poison poisons,
  * and so does what it adds to the next attack skill: Anthem of Flame burns.
+ * One that heals every second (Spirit Light Weapon, #975) is healing.
  */
 function statusRoles(status: StatusDefinition): readonly SkillRole[] {
   const roles: SkillRole[] = [];
@@ -75,6 +76,7 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
     roles.push("defence");
   }
   if (status.interruptsSpells) roles.push("interrupt");
+  if (status.healthPerSecond > 0) roles.push("healing");
   const riders = [...(status.onAttackHit?.effects ?? []), ...(status.nextAttackSkill ?? [])];
   return [...roles, ...riders.flatMap(effectRoles)];
 }
