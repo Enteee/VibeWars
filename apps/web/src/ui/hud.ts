@@ -30,7 +30,12 @@ import {
   soundIcon,
   weaponIcon,
 } from "./icons.js";
-import { createEffectsMonitor, effectRows, type EffectsMonitor } from "./effects-monitor.js";
+import {
+  createEffectsMonitor,
+  effectRows,
+  type EffectRow,
+  type EffectsMonitor,
+} from "./effects-monitor.js";
 import { iconButton } from "./kit.js";
 import { energyLabel, overcastBandElement, renderOvercastBand } from "./overcast-band.js";
 import { pipsElement, renderPips } from "./pips.js";
@@ -100,6 +105,8 @@ export interface HudElements {
   /** Set once there has been a target; the hint never comes back that match. */
   hintDismissed: boolean;
   readonly targetPanel: HTMLElement;
+  /** The target's statuses, as your own monitor shows them (#835). */
+  readonly targetEffects: EffectsMonitor;
   /** The target's primary and secondary profession icons, before its name (#281). */
   readonly targetProfessions: HTMLElement;
   /** The target's name, or "no target", in the panel's header. */
@@ -223,6 +230,11 @@ export function createHud(parent: HTMLElement): HudElements {
   const targetHealthText = element("span", "hud-bar-label", targetHealth);
   const targetHealthPips = targetHealth.appendChild(pipsElement());
   targetHealth.hidden = true;
+  const targetEffects = createEffectsMonitor(
+    targetPanel,
+    TARGET_EFFECT_ICON_PX,
+    "your target's effects",
+  );
   const targetCast = element("div", "hud-target-cast", targetPanel);
   const targetCastIcon = targetCast.appendChild(document.createElement("img"));
   targetCastIcon.className = "skill-icon hud-target-cast-icon";
@@ -249,7 +261,7 @@ export function createHud(parent: HTMLElement): HudElements {
   const energyPips = energyRow.appendChild(pipsElement());
 
   const gearText = element("div", "hud-gear", bars);
-  const effects = createEffectsMonitor(bars, EFFECT_ICON_PX);
+  const effects = createEffectsMonitor(bars, EFFECT_ICON_PX, "your effects");
 
   const hint = element("div", "hud-hint", root);
   const message = element("div", "hud-message", root);
@@ -277,6 +289,7 @@ export function createHud(parent: HTMLElement): HudElements {
     hint,
     hintDismissed: false,
     targetPanel,
+    targetEffects,
     targetProfessions,
     targetText,
     targetHealth,
@@ -821,6 +834,25 @@ function renderTarget(
 /** The effects monitor's icons in the HUD, px (#834). */
 const EFFECT_ICON_PX = 24;
 
+/** The target frame's effect icons, px (#835). */
+const TARGET_EFFECT_ICON_PX = 16;
+
+/**
+ * The target frame's effects (#835): the target's statuses as your own
+ * monitor would show them, the tick on an enchantment you put on it.
+ * None with no target, a dead one, or no match clock.
+ */
+export function targetEffectRows(
+  self: PlayerSnapshot,
+  target: PlayerSnapshot | undefined,
+  names: ReadonlyMap<string, string>,
+  now: number | undefined,
+): EffectRow[] {
+  return target === undefined || target.dead || now === undefined
+    ? []
+    : effectRows(target.statuses, self.sessionId, names, now);
+}
+
 /** How far past the latest snapshot the effects count down, s: ten snapshots. */
 const MAX_CLOCK_LEAD_SECONDS = 0.5;
 
@@ -882,18 +914,14 @@ export function updateHud(
     `armor ${String(self.armor)}` +
     (self.weaponId === undefined ? "" : ` · ${describeWeaponName(self.weaponId)}`);
 
+  const names = new Map(match?.players.map((player) => [player.sessionId, player.name]));
+  const now = match === undefined ? undefined : matchNow(hud, match.elapsedSeconds);
   hud.effects.update(
-    self.dead || match === undefined
-      ? []
-      : effectRows(
-          self.statuses,
-          self.sessionId,
-          new Map(match.players.map((player) => [player.sessionId, player.name])),
-          matchNow(hud, match.elapsedSeconds),
-        ),
+    self.dead || now === undefined ? [] : effectRows(self.statuses, self.sessionId, names, now),
   );
 
   renderTarget(hud, self, target);
+  hud.targetEffects.update(targetEffectRows(self, target, names, now));
 
   // Grey out skills the player cannot currently afford or the weapon in
   // hand cannot use (#417), and mark those that cannot reach the target. The server is still the authority on

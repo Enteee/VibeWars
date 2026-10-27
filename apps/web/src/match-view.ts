@@ -564,6 +564,7 @@ export async function startMatchView(
       hud.root.remove();
       hud.slotTips.dispose();
       hud.effects.dispose();
+      hud.targetEffects.dispose();
       hud.scoreboard.remove();
       hud.result.remove();
       offMute();

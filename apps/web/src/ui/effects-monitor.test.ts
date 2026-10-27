@@ -190,8 +190,8 @@ describe("createEffectsMonitor (#834)", () => {
     vi.unstubAllGlobals();
   });
 
-  const mount = () => {
-    const monitor = createEffectsMonitor(parent as unknown as HTMLElement, 24);
+  const mount = (size = 24) => {
+    const monitor = createEffectsMonitor(parent as unknown as HTMLElement, size, "your effects");
     const root = monitor.root as unknown as FakeElement;
     const icons = () => root.children.map((item) => item.children[0]?.alt);
     const fill = (index: number) => root.children[index]?.children[1]?.children[0];
@@ -252,5 +252,16 @@ describe("createEffectsMonitor (#834)", () => {
     expect(root.children.map((item) => item.classes.has("is-yours"))).toEqual([true, false]);
     monitor.update([row("armor-boost", 1, false), row("bleeding", 1)]);
     expect(root.children[0]?.classes.has("is-yours")).toBe(false);
+  });
+
+  it("draws the target frame's icons and bars at its own size (#835)", () => {
+    const { monitor, root, fill } = mount(16);
+    monitor.update([row("bleeding", 0.5), row("crippled", 1)]);
+    const images = root.children.map((item) => item.children[0]);
+    expect(images.map((image) => [image?.alt, image?.width, image?.height])).toEqual([
+      ["bleeding", 16, 16],
+      ["crippled", 16, 16],
+    ]);
+    expect(fill(0)?.widths).toEqual(["8px"]);
   });
 });
