@@ -207,6 +207,19 @@ armor and is the Mesmer's: the log names their Backfire or Empathy, it
 counts toward their damage, and a kill is theirs, even after they died.
 A Mesmer who has left the match hurts nobody.
 
+Two Necromancer skills answer a status changing (#887). **Contagion**
+(elite enchantment on yourself, 60 s): each time you gain a condition
+you did not already have, every living foe within the area of you gets
+the same condition, for as long as it was put on you, and you sacrifice
+6% of your maximum health, foes in reach or not. A condition you
+already had, refreshed or not, does nothing. **Parasitic Bond** (hex,
+20 s) gives its target −1 health degeneration and heals its caster for
+102 when it ends: when it runs out, or when it is removed. Re-casting it
+on a target that still has it heals nothing; the respawn of its target
+heals nothing either, and neither does a caster who has died or left.
+What a trigger does never sets off another trigger: a condition
+Contagion hands to a foe with Contagion goes no further.
+
 ## Knockdown
 
 A knockdown puts its target on the ground for its duration (Backbreaker:
