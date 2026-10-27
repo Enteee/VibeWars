@@ -60,7 +60,6 @@ describe("watching an ally (#443)", () => {
       healthPercent: 25,
       health: 120,
       maxHealth: 480,
-      effectiveMaxHealth: 480,
       dead: false,
     });
   });
