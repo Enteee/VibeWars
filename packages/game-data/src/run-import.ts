@@ -253,6 +253,26 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Ritualist/1206-Weapon_of_Aggression",
   },
   {
+    id: "ritualist.weapon-of-remedy",
+    profession: "ritualist",
+    url: "https://www.gw-memorial.net/skills/Ritualist/975-Weapon_of_Remedy",
+  },
+  {
+    id: "ritualist.vengeful-weapon",
+    profession: "ritualist",
+    url: "https://www.gw-memorial.net/skills/Ritualist/767-Vengeful_Weapon",
+  },
+  {
+    id: "ritualist.splinter-weapon",
+    profession: "ritualist",
+    url: "https://www.gw-memorial.net/skills/Ritualist/726-Splinter_Weapon",
+  },
+  {
+    id: "ritualist.mending-grip",
+    profession: "ritualist",
+    url: "https://www.gw-memorial.net/skills/Ritualist/1209-Mending_Grip",
+  },
+  {
     id: "mesmer.power-spike",
     profession: "mesmer",
     url: "https://www.gw-memorial.net/skills/Mesmer/320-Power_Spike",

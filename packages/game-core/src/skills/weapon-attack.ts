@@ -343,6 +343,7 @@ export function settleBlow(
  */
 export function landBlow(
   snapshot: WeaponSnapshot,
+  attacker: Combatant | undefined,
   victim: Combatant,
   blow: BlowRule,
   exposed: boolean,
@@ -374,7 +375,7 @@ export function landBlow(
       strengthArmorPenetration(blow.strengthRank, weapon.armorPenetration),
     ),
   };
-  applyDamage(victim, mitigate(packet, victim, rules), packet.type, critical, events);
+  applyDamage(victim, mitigate(packet, victim, rules), packet.type, critical, events, attacker);
   return critical;
 }
 
@@ -529,7 +530,7 @@ function strike(
     return;
   }
   const snapshot = weaponSnapshotOf(attacker);
-  if (landBlow(snapshot, victim, PLAIN_BLOW, swing.exposed(victim), rng, rules, events)) {
+  if (landBlow(snapshot, attacker, victim, PLAIN_BLOW, swing.exposed(victim), rng, rules, events)) {
     gainCriticalEnergy(attacker, snapshot.criticalStrikes, events);
   }
   events.push(
@@ -674,6 +675,7 @@ export function resolveAttackSkill(
       if (
         landBlow(
           snapshot,
+          caster,
           victim,
           settleBlow(blow, caster, victim, surroundings),
           exposed(victim),

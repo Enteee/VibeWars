@@ -123,6 +123,10 @@ export type StatusId =
   | "spirit-light-weapon"
   | "weapon-of-quickening"
   | "weapon-of-aggression"
+  // Ritualist weapon spells 2 (#1022).
+  | "weapon-of-remedy"
+  | "vengeful-weapon"
+  | "splinter-weapon"
   // Paragon command (#923).
   | "never-surrender"
   // Dervish enchantments and stances (#845).
@@ -317,6 +321,12 @@ export interface StatusDefinition {
    */
   readonly endsWhenBearerUsesSkill: boolean;
   /**
+   * It ends once one of its triggers has fired (#1022): Vengeful Weapon's
+   * and Weapon of Remedy's "the next time". Ended where the trigger fires,
+   * after its effects, logged as its expiry.
+   */
+  readonly endsWhenTriggered: boolean;
+  /**
    * It ends the moment one of the bearer's attack skills hits (#956): a
    * plain swing or arrow keeps it, as does a miss or a block. Defensive
    * Anthem's price.
@@ -377,7 +387,8 @@ export interface StatusDefinition {
  * the status itself ends, for any reason but a refresh or a reset (#887).
  * Or (#935) it completes any skill, lands a hit, or loses health to
  * physical damage. `expires` is only the end of its duration (#944):
- * Patient Spirit's "unless it ends prematurely".
+ * Patient Spirit's "unless it ends prematurely". Or (#1022) it loses
+ * health to damage or life steal from a foe.
  */
 export type StatusTriggerEvent =
   | "bearer-casts-spell"
@@ -385,6 +396,13 @@ export type StatusTriggerEvent =
   | "bearer-uses-skill"
   | "bearer-hits"
   | "bearer-takes-physical-damage"
+  /**
+   * The bearer lost health to damage or life steal from a foe (#1022):
+   * any typed packet through `applyDamage`, or a `stealLife`, whose dealer
+   * is on the other team. Degeneration, sacrifice and a reversed packet are
+   * neither. Recorded with the dealer, and fired at the drain, as hits are.
+   */
+  | "bearer-takes-damage-from-foe"
   | "bearer-gains-condition"
   | "ends"
   | "expires";
@@ -394,9 +412,13 @@ export interface StatusTrigger {
   /**
    * Applied with the status's source as caster, on `target`: the bearer
    * (Backfire's damage), or the source itself (Parasitic Bond's heal, #887).
+   * Or `offender` (#1022): the bearer turns on the foe whose damage or
+   * steal set it off. The bearer is the effects' caster and that foe their
+   * target, so "that ally steals ... from that foe" heals the bearer, and a
+   * `remove-status` with `from: "caster"` strips the bearer.
    */
   readonly effects: readonly TriggerEffect[];
-  readonly target: "bearer" | "source";
+  readonly target: "bearer" | "source" | "offender";
   /** The skill the log names it after: "mesmer.backfire". */
   readonly skillId: string;
 }
@@ -414,7 +436,8 @@ export interface AttackHitRider {
 /** How many of the bearer's hits, with which weapon, a status lasts (#939). */
 export interface EndsAfterHits {
   readonly count: number;
-  readonly weapon: AttackWeaponClass;
+  /** `undefined`: a hit with any weapon whose blow carries riders (#1022): Splinter Weapon's. */
+  readonly weapon: AttackWeaponClass | undefined;
 }
 
 /**
@@ -438,6 +461,7 @@ export type TriggerEffect = SkillEffect | SpreadGainedConditionEffect;
  * ending it. Or (#935) a hit the bearer landed, or physical damage it
  * took, with the triggers on it that answered at that moment (#953): a
  * killing blow ends them before the drain, and they still fire for it.
+ * Or (#1022) damage or life steal it took from a foe, with that foe.
  */
 export type StatusChange =
   | { readonly kind: "gained-condition"; readonly id: StatusId; readonly durationSeconds: number }
@@ -448,10 +472,16 @@ export type StatusChange =
       readonly expired: boolean;
     }
   | { readonly kind: "hit"; readonly fired: readonly AnsweringTrigger[] }
-  | { readonly kind: "took-physical-damage"; readonly fired: readonly AnsweringTrigger[] };
+  | { readonly kind: "took-physical-damage"; readonly fired: readonly AnsweringTrigger[] }
+  | {
+      readonly kind: "took-damage-from-foe";
+      readonly offenderId: string;
+      readonly fired: readonly AnsweringTrigger[];
+    };
 
-/** A trigger on the bearer that answered an event, and who applied its status. */
+/** A trigger on the bearer that answered an event, the status that holds it, and who applied it. */
 export interface AnsweringTrigger {
+  readonly statusId: StatusId;
   readonly sourceId: string;
   readonly trigger: StatusTrigger;
 }
@@ -521,6 +551,7 @@ function define(
     endsWhenBearerAttacksInMelee: false,
     endsWhenBearerHits: false,
     endsWhenBearerUsesSkill: false,
+    endsWhenTriggered: false,
     endsWhenBearerHitsWithAttackSkill: false,
     endsWhenBearerGains: [],
     damageTakenMultiplier: 1,
@@ -964,6 +995,60 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     profession: "ritualist",
     attackDurationMultiplier: 0.75,
   }),
+  // "For 8 seconds, the next time target ally takes damage or life steal
+  // from a foe, that ally steals up to 20...68...80 health from that foe
+  // and loses 2 conditions" (#1022): 68, its rank-12 value, as for every
+  // trigger (#935).
+  "weapon-of-remedy": define("weapon-of-remedy", "Weapon of Remedy", "weapon-spell", {
+    profession: "ritualist",
+    triggers: [
+      {
+        on: "bearer-takes-damage-from-foe",
+        target: "offender",
+        effects: [
+          { kind: "life-steal", amount: { flat: 68 } },
+          { kind: "remove-status", category: "condition", count: 2, from: "caster" },
+        ],
+        skillId: "ritualist.weapon-of-remedy",
+      },
+    ],
+    endsWhenTriggered: true,
+  }),
+  // "For 8 seconds, the next time target ally takes damage or life steal
+  // from a foe, that ally steals up to 15...51...60 Health from that foe"
+  // (#1022): 51.
+  "vengeful-weapon": define("vengeful-weapon", "Vengeful Weapon", "weapon-spell", {
+    profession: "ritualist",
+    triggers: [
+      {
+        on: "bearer-takes-damage-from-foe",
+        target: "offender",
+        effects: [{ kind: "life-steal", amount: { flat: 51 } }],
+        skillId: "ritualist.vengeful-weapon",
+      },
+    ],
+    endsWhenTriggered: true,
+  }),
+  // "For 20 seconds, target ally's next 1...4...5 attacks deal 5...25...30
+  // damage to up to 4 adjacent foes" (#1022): 4 and 25, its rank-12
+  // values. Adjacent to the foe hit, that foe excluded, as Sand Shards
+  // (#939). GW1's is armor-ignoring physical; typeless ignores armor here.
+  "splinter-weapon": define("splinter-weapon", "Splinter Weapon", "weapon-spell", {
+    profession: "ritualist",
+    onAttackHit: {
+      effects: [
+        {
+          kind: "splash",
+          radius: AREA_ADJACENT,
+          effects: [
+            { kind: "damage", amount: { flat: 25 }, type: "typeless", armorPenetration: 0 },
+          ],
+        },
+      ],
+      skillId: "ritualist.splinter-weapon",
+    },
+    endsAfterHits: { count: 4, weapon: undefined },
+  }),
 
   // "For 5...17...20 seconds, you have 1...3...4 Health regeneration for
   // each Enchantment (maximum of 3) on you."
@@ -1163,8 +1248,28 @@ export class StatusSet {
     }
   }
 
+  /**
+   * The bearer lost health to damage or life steal from `offenderId`, a
+   * foe (#1022), recorded only if a status on it answers that, with the
+   * triggers that do. A status already waiting to answer one, undrained,
+   * does not answer another: it fires once, at the first foe.
+   */
+  public recordDamageFromFoe(offenderId: string): void {
+    const pending = new Set(
+      this.#changes.flatMap((change) =>
+        change.kind === "took-damage-from-foe" ? change.fired.map(({ statusId }) => statusId) : [],
+      ),
+    );
+    const fired = this.#answering("bearer-takes-damage-from-foe").filter(
+      ({ statusId }) => !pending.has(statusId),
+    );
+    if (fired.length > 0) {
+      this.#changes.push({ kind: "took-damage-from-foe", offenderId, fired });
+    }
+  }
+
   #answering(event: StatusTriggerEvent): AnsweringTrigger[] {
-    return this.triggersOn(event).map(({ sourceId, trigger }) => ({ sourceId, trigger }));
+    return this.triggersOn(event);
   }
 
   /** Record a condition newly on the bearer (#887); any other category is not one. */
@@ -1329,6 +1434,11 @@ export class StatusSet {
     this.#end([...this.#statuses.keys()]);
   }
 
+  /** End one status by id, recorded as ended (#1022): a trigger that spends it. */
+  public end(id: StatusId): void {
+    this.#end([id]);
+  }
+
   /** Remove one status by id. Returns whether anything was removed. */
   public remove(id: StatusId): boolean {
     const had = this.#statuses.has(id);
@@ -1421,7 +1531,8 @@ export class StatusSet {
 
   /**
    * One of the bearer's blows of `weaponId` hit (#939): one fewer for
-   * every status that ends after so many hits with a weapon it is. Returns
+   * every status that ends after so many hits with a weapon it is, or
+   * with any weapon (#1022). Returns
    * the ids that ended on it.
    */
   public countHit(weaponId: WeaponId): StatusId[] {
@@ -1431,7 +1542,7 @@ export class StatusSet {
       if (
         status.hitsLeft !== undefined &&
         limit !== undefined &&
-        wieldsFor(weaponId, limit.weapon)
+        (limit.weapon === undefined || wieldsFor(weaponId, limit.weapon))
       ) {
         status.hitsLeft -= 1;
         if (status.hitsLeft <= 0) {

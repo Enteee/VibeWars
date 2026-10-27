@@ -189,7 +189,9 @@ export type CombatEvent =
  * callers mitigate the packet and pass its `type`. Physical damage that
  * takes health is recorded on the target's statuses, for Mark of Pain
  * (#935). Degeneration has its own path in `tick.ts` and never comes
- * here, so it can never count as physical.
+ * here, so it can never count as physical. Damage a foe `dealer` dealt is
+ * recorded too, for Vengeful Weapon (#1022); with no dealer, as a
+ * sacrifice, it is not.
  */
 export function applyDamage(
   target: Combatant,
@@ -197,6 +199,7 @@ export function applyDamage(
   type: DamageType,
   critical: boolean,
   events: CombatEvent[],
+  dealer: Combatant | undefined,
 ): void {
   if (amount <= 0 || target.dead) {
     return;
@@ -210,11 +213,19 @@ export function applyDamage(
   if (isPhysicalDamage(type)) {
     target.statuses.recordPhysicalDamage();
   }
+  recordFromFoe(target, dealer);
   // The guard above already returned for an already-dead target, so
   // reaching 0 here is always a *new* death — exactly one death event.
   if (target.health <= 0) {
     target.dead = true;
     events.push({ kind: "death", targetId: target.id });
+  }
+}
+
+/** `target` lost health to `dealer`; recorded if that was a foe (#1022). */
+function recordFromFoe(target: Combatant, dealer: Combatant | undefined): void {
+  if (dealer !== undefined && dealer.team !== target.team) {
+    target.statuses.recordDamageFromFoe(dealer.id);
   }
 }
 
@@ -312,6 +323,7 @@ function stealLife(
   }
   target.health -= stolen;
   events.push({ kind: "life-stolen", targetId: target.id, amount: stolen });
+  recordFromFoe(target, caster);
   const gained = Math.min(stolen, effectiveMaxHealth(caster) - caster.health);
   if (gained > 0) {
     caster.health += gained;
@@ -677,7 +689,14 @@ export function applyEffect(
         return events;
       }
       const packet = skillDamage(amount, effect.type, effect.armorPenetration);
-      applyDamage(target, mitigate(packet, target, context.rules), packet.type, false, events);
+      applyDamage(
+        target,
+        mitigate(packet, target, context.rules),
+        packet.type,
+        false,
+        events,
+        caster,
+      );
       return events;
     }
 

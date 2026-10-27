@@ -86,13 +86,16 @@
     "song-of-restoration",
     "spirit-light-weapon",
     "spiteful-spirit",
+    "splinter-weapon",
     "sprint",
     "stand-your-ground",
+    "vengeful-weapon",
     "vow-of-strength",
     "watch-yourself",
     "weakness",
     "weapon-of-aggression",
     "weapon-of-quickening",
+    "weapon-of-remedy",
     "weapon-of-warding"
   ],
   "constants": {
@@ -415,13 +418,16 @@
                   { "literal": "song-of-restoration" },
                   { "literal": "spirit-light-weapon" },
                   { "literal": "spiteful-spirit" },
+                  { "literal": "splinter-weapon" },
                   { "literal": "sprint" },
                   { "literal": "stand-your-ground" },
+                  { "literal": "vengeful-weapon" },
                   { "literal": "vow-of-strength" },
                   { "literal": "watch-yourself" },
                   { "literal": "weakness" },
                   { "literal": "weapon-of-aggression" },
                   { "literal": "weapon-of-quickening" },
+                  { "literal": "weapon-of-remedy" },
                   { "literal": "weapon-of-warding" }
                 ]
               }
@@ -509,13 +515,16 @@
                   { "literal": "song-of-restoration" },
                   { "literal": "spirit-light-weapon" },
                   { "literal": "spiteful-spirit" },
+                  { "literal": "splinter-weapon" },
                   { "literal": "sprint" },
                   { "literal": "stand-your-ground" },
+                  { "literal": "vengeful-weapon" },
                   { "literal": "vow-of-strength" },
                   { "literal": "watch-yourself" },
                   { "literal": "weakness" },
                   { "literal": "weapon-of-aggression" },
                   { "literal": "weapon-of-quickening" },
+                  { "literal": "weapon-of-remedy" },
                   { "literal": "weapon-of-warding" }
                 ]
               }
@@ -600,13 +609,16 @@
                   { "literal": "song-of-restoration" },
                   { "literal": "spirit-light-weapon" },
                   { "literal": "spiteful-spirit" },
+                  { "literal": "splinter-weapon" },
                   { "literal": "sprint" },
                   { "literal": "stand-your-ground" },
+                  { "literal": "vengeful-weapon" },
                   { "literal": "vow-of-strength" },
                   { "literal": "watch-yourself" },
                   { "literal": "weakness" },
                   { "literal": "weapon-of-aggression" },
                   { "literal": "weapon-of-quickening" },
+                  { "literal": "weapon-of-remedy" },
                   { "literal": "weapon-of-warding" }
                 ]
               }
@@ -688,13 +700,16 @@
                   { "literal": "song-of-restoration" },
                   { "literal": "spirit-light-weapon" },
                   { "literal": "spiteful-spirit" },
+                  { "literal": "splinter-weapon" },
                   { "literal": "sprint" },
                   { "literal": "stand-your-ground" },
+                  { "literal": "vengeful-weapon" },
                   { "literal": "vow-of-strength" },
                   { "literal": "watch-yourself" },
                   { "literal": "weakness" },
                   { "literal": "weapon-of-aggression" },
                   { "literal": "weapon-of-quickening" },
+                  { "literal": "weapon-of-remedy" },
                   { "literal": "weapon-of-warding" }
                 ]
               }
@@ -845,13 +860,16 @@
                   { "literal": "song-of-restoration" },
                   { "literal": "spirit-light-weapon" },
                   { "literal": "spiteful-spirit" },
+                  { "literal": "splinter-weapon" },
                   { "literal": "sprint" },
                   { "literal": "stand-your-ground" },
+                  { "literal": "vengeful-weapon" },
                   { "literal": "vow-of-strength" },
                   { "literal": "watch-yourself" },
                   { "literal": "weakness" },
                   { "literal": "weapon-of-aggression" },
                   { "literal": "weapon-of-quickening" },
+                  { "literal": "weapon-of-remedy" },
                   { "literal": "weapon-of-warding" }
                 ]
               }
@@ -924,13 +942,16 @@
                   { "literal": "song-of-restoration" },
                   { "literal": "spirit-light-weapon" },
                   { "literal": "spiteful-spirit" },
+                  { "literal": "splinter-weapon" },
                   { "literal": "sprint" },
                   { "literal": "stand-your-ground" },
+                  { "literal": "vengeful-weapon" },
                   { "literal": "vow-of-strength" },
                   { "literal": "watch-yourself" },
                   { "literal": "weakness" },
                   { "literal": "weapon-of-aggression" },
                   { "literal": "weapon-of-quickening" },
+                  { "literal": "weapon-of-remedy" },
                   { "literal": "weapon-of-warding" }
                 ]
               }

@@ -2293,6 +2293,7 @@ export class MatchSimulation {
     } else {
       const critical = landBlow(
         projectile.weaponSnapshot,
+        attacker?.combatant,
         target.combatant,
         settleBlow(
           skillHit?.blow ?? PLAIN_BLOW,
