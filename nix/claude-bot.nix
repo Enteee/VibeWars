@@ -277,6 +277,17 @@ let
     check "nice is 10" "$(${pkgs.coreutils}/bin/nice)" "10"
     refused "lowering nice back to 0" '${pkgs.util-linux}/bin/renice -n 0 $$'
     check "core dumps are off" "$(ulimit -c)" "0"
+
+    # #737: claude runs the suite guard from the store before every Bash
+    # call, and it refuses a suite for every role but cicd-engineer.
+    check "settings.json runs the suite guard" \
+      "$(${pkgs.jq}/bin/jq -r '.hooks.PreToolUse[0].hooks[0].command' "$HOME/.claude/settings.json")" \
+      "${node} ${botScripts}/suite-guard.mjs"
+    if [ "$VIBEWARS_BOT_ROLE" != cicd-engineer ]; then
+      check "the suite guard refuses pnpm run ci" \
+        "$(printf '%s' '{"tool_input":{"command":"pnpm run ci"}}' | ${node} ${botScripts}/suite-guard.mjs | ${pkgs.jq}/bin/jq -r .hookSpecificOutput.permissionDecision)" \
+        "deny"
+    fi
     exit "$failed"
   '';
 
@@ -641,11 +652,17 @@ let
         # operator picked, and a create-if-absent guard silently skips it —
         # which is exactly how the bypass-permissions prompt survived the
         # first attempt at this.
+        #
+        # The suite guard (#737) is SET, not appended, so a restart never
+        # stacks a second copy. It runs from the store, never the worktree
+        # copy, which the agent can edit.
         [ -e "$boxDir/config/settings.json" ] || printf '{}' > "$boxDir/config/settings.json"
         if merged="$(${pkgs.jq}/bin/jq \
+             --arg guard "${node} ${botScripts}/suite-guard.mjs" \
              '.theme //= "dark"
               | .skipDangerousModePermissionPrompt = true
-              | .skipWorkflowUsageWarning = true' \
+              | .skipWorkflowUsageWarning = true
+              | .hooks.PreToolUse = [{ matcher: "Bash", hooks: [{ type: "command", command: $guard }] }]' \
              "$boxDir/config/settings.json" 2>/dev/null)"; then
           printf '%s\n' "$merged" > "$boxDir/config/settings.json"
         fi

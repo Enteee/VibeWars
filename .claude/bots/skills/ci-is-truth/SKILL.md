@@ -12,6 +12,7 @@ when the PR's required checks are green, never because a local run was.
 ## Developers and asset-designer
 
 - Do not run `pnpm run ci`, `ci:full` or `test:e2e`. Push, open the PR, let CI run.
+- The jail enforces it (#737): a PreToolUse hook refuses these, an unfiltered vitest and any Playwright run, for every role but qa-tester (selected specs only) and cicd-engineer.
 - Still write the tests your change needs. Writing them is your job; executing them is the pipeline's.
 - Do run the thing (`pnpm dev`) and the cheap static checks: `pnpm run typecheck`, `lint`, `format`.
 - Allowed, not required: the one vitest file you are editing (`pnpm vitest run <file>`).
