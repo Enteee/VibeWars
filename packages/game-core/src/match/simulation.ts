@@ -2236,7 +2236,7 @@ export class MatchSimulation {
             this.#participants,
           ),
         );
-        bearerHit(attacker.combatant, events);
+        bearerHit(attacker.combatant, events, skillHit !== undefined);
       }
       if (skillHit !== undefined && attacker !== undefined) {
         events.push(

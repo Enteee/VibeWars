@@ -407,10 +407,15 @@ export function bearerAttacked(attacker: Combatant, events: CombatEvent[]): void
 /**
  * One of the attacker's blows hit (#919): swing, attack skill or arrow
  * alike, never a miss or a block. Every status of its own that ends when
- * its bearer hits ends now, as Dark Escape.
+ * its bearer hits ends now, as Dark Escape, and, `withAttackSkill`, every
+ * one that ends when an attack skill hits, as Defensive Anthem (#956).
  */
-export function bearerHit(attacker: Combatant, events: CombatEvent[]): void {
-  for (const statusId of attacker.statuses.endOnBearerHit()) {
+export function bearerHit(
+  attacker: Combatant,
+  events: CombatEvent[],
+  withAttackSkill: boolean,
+): void {
+  for (const statusId of attacker.statuses.endOnBearerHit(withAttackSkill)) {
     events.push({ kind: "status-expired", targetId: attacker.id, statusId });
   }
 }
@@ -487,7 +492,7 @@ function strike(swing: Swing, victim: Combatant, events: CombatEvent[]): void {
   events.push(
     ...attackHitRiders(attacker, victim, snapshot.mainHand, rng, rules, swing.surroundings),
   );
-  bearerHit(attacker, events);
+  bearerHit(attacker, events, false);
   attackReached(victim, events);
 }
 
@@ -615,7 +620,7 @@ export function resolveAttackSkill(
         ...attackHitRiders(caster, victim, snapshot.mainHand, rng, rules, surroundings),
         ...nextAttackSkillRiders(next, caster, victim, rng, rules, surroundings),
       );
-      bearerHit(caster, events);
+      bearerHit(caster, events, true);
       attackReached(victim, events);
       markChain(caster, skill, victim.id);
       hit.push(victim);

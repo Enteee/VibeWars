@@ -99,6 +99,10 @@ export type StatusId =
   // Paragon shouts (#921).
   | "fall-back"
   | "stand-your-ground"
+  // Paragon shouts and a chant (#956).
+  | "incoming"
+  | "make-haste"
+  | "defensive-anthem"
   // Chants and weapon spells (#758).
   | "anthem-of-flame"
   | "weapon-of-warding"
@@ -267,6 +271,12 @@ export interface StatusDefinition {
    */
   readonly endsWhenBearerHits: boolean;
   /**
+   * It ends the moment one of the bearer's attack skills hits (#956): a
+   * plain swing or arrow keeps it, as does a miss or a block. Defensive
+   * Anthem's price.
+   */
+  readonly endsWhenBearerHitsWithAttackSkill: boolean;
+  /**
    * It ends the moment a new status of one of these categories lands on
    * the bearer (#919): Natural Stride's hex or enchantment. A refresh of
    * one already on it does not end it.
@@ -394,6 +404,7 @@ function define(
     nextAttackSkill: undefined,
     endsWhenBearerAttacks: false,
     endsWhenBearerHits: false,
+    endsWhenBearerHitsWithAttackSkill: false,
     endsWhenBearerGains: [],
     damageTakenMultiplier: 1,
     spellRechargeFaster: 0,
@@ -596,6 +607,25 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     profession: "paragon",
     armorWhileStill: 24,
     endsWhenBearerAttacks: true,
+  }),
+  // "Incoming!" at rank 12: "Fall Back!" with no end on a hit (#956).
+  incoming: define("incoming", "Incoming!", "shout", {
+    profession: "paragon",
+    moveSpeedMultiplier: 1.33,
+    healthPerSecondWhileMoving: 13,
+  }),
+  // "Make Haste!": 33% faster, until that ally successfully hits (#956).
+  "make-haste": define("make-haste", "Make Haste!", "shout", {
+    profession: "paragon",
+    moveSpeedMultiplier: 1.33,
+    endsWhenBearerHits: true,
+  }),
+  // "...has a 50% chance to block incoming attacks. This chant ends if
+  // that party member hits with an attack skill." (#956)
+  "defensive-anthem": define("defensive-anthem", "Defensive Anthem", "chant", {
+    profession: "paragon",
+    block: { chance: 0.5, against: "all" },
+    endsWhenBearerHitsWithAttackSkill: true,
   }),
 
   // "Enemies struck by your physical attacks become poisoned for
@@ -980,11 +1010,18 @@ export class StatusSet {
 
   /**
    * One of the bearer's attacks hit (#919): every status that ends when it
-   * does is gone. Returns the ids that ended on it.
+   * does is gone, and, if it was an attack skill, every one that ends when
+   * an attack skill hits (#956). Returns the ids that ended on it.
    */
-  public endOnBearerHit(): StatusId[] {
+  public endOnBearerHit(withAttackSkill: boolean): StatusId[] {
     const ended = this.active
-      .filter(({ id }) => getStatusDefinition(id).endsWhenBearerHits)
+      .filter(({ id }) => {
+        const definition = getStatusDefinition(id);
+        return (
+          definition.endsWhenBearerHits ||
+          (withAttackSkill && definition.endsWhenBearerHitsWithAttackSkill)
+        );
+      })
       .map(({ id }) => id);
     this.#end(ended);
     return ended;

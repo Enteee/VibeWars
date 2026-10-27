@@ -63,6 +63,10 @@ export const SKILL_ICONS = {
   "paragon.fall-back": { glyph: "speed", modifier: "area" },
   // A placeholder: no modifier yet says "while not moving" (#921).
   "paragon.stand-your-ground": { glyph: "armor", modifier: "clock" },
+  // Placeholders until asset-designer's icons (#956).
+  "paragon.incoming": { glyph: "banner", modifier: "up" },
+  "paragon.make-haste": { glyph: "speed", modifier: "down" },
+  "paragon.defensive-anthem": { glyph: "banner", modifier: "self" },
   "ranger.apply-poison": { glyph: "flask" },
   "elementalist.glyph-of-lesser-energy": { glyph: "energy", modifier: "less" },
   "elementalist.lightning-orb": { glyph: "lightning-orb" },
