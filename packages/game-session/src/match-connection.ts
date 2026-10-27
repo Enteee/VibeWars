@@ -39,6 +39,8 @@ export interface PlayerSnapshot {
   readonly maxHealth: number;
   readonly energy: number;
   readonly maxEnergy: number;
+  /** Maximum energy lost to overcast (#461); energy fills to `maxEnergy − overcast`. */
+  readonly overcast: number;
   readonly adrenaline: number;
   /** Base armor including the off-hand, before statuses. */
   readonly armor: number;

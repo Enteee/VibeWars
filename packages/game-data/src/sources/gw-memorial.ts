@@ -57,6 +57,7 @@ export function parseGwMemorialSkill(input: ParseGwMemorialSkillInput): GwMemori
   const dotsRow = $(".skill_info.skill_infoCurrent").eq(0);
   const unmapped: Record<string, unknown> = {};
   let cost: NormalizedSkill["cost"];
+  let overcast = 0;
   let activationSeconds = 0;
   let rechargeSeconds = 0;
 
@@ -79,6 +80,10 @@ export function parseGwMemorialSkill(input: ParseGwMemorialSkillInput): GwMemori
       case "energy":
       case "adrenaline":
         cost = { kind, amount: value };
+        break;
+      case "exhaustion":
+        // GW1 renamed exhaustion to overcast in 2012 (#461).
+        overcast = value;
         break;
       case "cast":
         activationSeconds = value;
@@ -134,6 +139,7 @@ export function parseGwMemorialSkill(input: ParseGwMemorialSkillInput): GwMemori
       elite,
       campaign,
       cost,
+      overcast,
       activationSeconds,
       rechargeSeconds,
       description,

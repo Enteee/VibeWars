@@ -104,6 +104,7 @@ function player(index: number): WirePlayer {
     maxHealth: 1000,
     energy: 100,
     maxEnergy: 100,
+    overcast: 0,
     adrenaline: 1000,
     armor: 100,
     weaponId: WEAPON_ID,

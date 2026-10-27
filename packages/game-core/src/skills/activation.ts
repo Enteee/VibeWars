@@ -4,6 +4,7 @@ import { distanceWithinRange, hasLineOfSight, type Segment } from "../geometry.j
 import { EXPERTISE_ATTRIBUTE, expertiseEnergyCost } from "../primary-attributes.js";
 import type { Vec2 } from "../vec2.js";
 
+import { addOvercast } from "./overcast.js";
 import { getStatusDefinition } from "./status.js";
 import { rankOf, type RankHolder } from "./tick.js";
 import { isSpell, type Combatant, type Skill, type TargetRule } from "./types.js";
@@ -193,14 +194,15 @@ export function energyCostOf(skill: Skill, caster: RankHolder): number {
  * resource rather than a silently-free cast.
  */
 export function payCost(skill: Skill, caster: Combatant): void {
-  if (skill.cost === undefined) {
-    return;
-  }
-  if (skill.cost.kind === "energy") {
+  if (skill.cost?.kind === "energy") {
     caster.energy -= energyCostOf(skill, caster);
-    return;
+  } else if (skill.cost?.kind === "adrenaline") {
+    caster.adrenaline -= skill.cost.amount;
   }
-  caster.adrenaline -= skill.cost.amount;
+  // After the energy, so a spell that lowers the ceiling below its own
+  // cost still goes off; at activation start, so an interrupted or
+  // cancelled cast stays overcast (#461).
+  addOvercast(caster, skill.overcast);
 }
 
 /**

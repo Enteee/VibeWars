@@ -18,6 +18,7 @@
 export const SKILL_ICONS = {
   "monk.orison-of-healing": { glyph: "heal" },
   "elementalist.fireball": { glyph: "fireball", modifier: "area" },
+  "elementalist.chain-lightning": { glyph: "chain" },
   "warrior.swift-chop": { glyph: "axe" },
   "ranger.barrage": { glyph: "volley", modifier: "area" },
   "warrior.backbreaker": { glyph: "hammer", modifier: "down" },

@@ -153,6 +153,11 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Elementalist/452-Glyph_of_Lesser_Energy",
   },
   {
+    id: "elementalist.chain-lightning",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/378-Chain_Lightning",
+  },
+  {
     id: "necromancer.enfeeble",
     profession: "necromancer",
     url: "https://www.gw-memorial.net/skills/Necromancer/256-Enfeeble",

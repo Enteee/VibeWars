@@ -6,6 +6,7 @@
   "type": "Signet.",
   "elite": false,
   "campaign": "Core",
+  "overcast": 0,
   "activationSeconds": 2,
   "rechargeSeconds": 4,
   "description": "You gain 82...154...172 health. You have -40 armor while using this skill.",

@@ -10,6 +10,7 @@
     "kind": "adrenaline",
     "amount": 6
   },
+  "overcast": 0,
   "activationSeconds": 0,
   "rechargeSeconds": 1,
   "description": "Attack target and adjacent foes. Each attack that hits deals +13...20...20\n                damage. (PvE-only skill)",

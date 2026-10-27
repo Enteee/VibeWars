@@ -58,6 +58,30 @@ describe("parseGwMemorialSkill", () => {
     expect(result.skill.campaign).toBe("Nightfall");
   });
 
+  it("maps GW1's exhaustion dot to overcast, not to unmapped (Chain Lightning, #461)", () => {
+    const result = parseGwMemorialSkill({
+      ...BASE_INPUT,
+      html: fixture("elementalist-chain-lightning.html"),
+    });
+    expect(result.kind).toBe("ok");
+    if (result.kind !== "ok") return;
+
+    expect(result.skill.name).toBe("Chain Lightning");
+    expect(result.skill.cost).toEqual({ kind: "energy", amount: 10 });
+    expect(result.skill.overcast).toBe(5);
+    expect(result.skill.activationSeconds).toBe(2);
+    expect(result.skill.rechargeSeconds).toBe(6);
+    expect(result.skill.unmapped).toEqual({});
+  });
+
+  it("gives a skill without the exhaustion dot 0 overcast (Swift Chop, #461)", () => {
+    const result = parseGwMemorialSkill({
+      ...BASE_INPUT,
+      html: fixture("warrior-swift-chop.html"),
+    });
+    expect(result.kind === "ok" ? result.skill.overcast : undefined).toBe(0);
+  });
+
   it("parses a fractional cast time (quarter-second) (Contemplation of Purity)", () => {
     const result = parseGwMemorialSkill({
       ...BASE_INPUT,

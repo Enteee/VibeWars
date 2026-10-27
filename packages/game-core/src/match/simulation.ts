@@ -62,6 +62,7 @@ import {
   type ActiveStatus,
   type Outbreak,
 } from "../skills/status.js";
+import { effectiveMaxEnergy, recoverOvercast } from "../skills/overcast.js";
 import { resolveTargets } from "../skills/targeting.js";
 import {
   advanceStatuses,
@@ -526,7 +527,7 @@ export class MatchSimulation {
   public resetParticipant(id: string): void {
     const record = this.#participants.get(id);
     if (record !== undefined) {
-      this.#reset(record);
+      this.#reset(record, "reset");
     }
   }
 
@@ -890,13 +891,15 @@ export class MatchSimulation {
 
     for (const record of this.#participants.values()) {
       if (this.#resetDue(record, dt)) {
-        this.#reset(record);
+        this.#reset(record, "reset");
       }
+      // Overcast recovers alive or dead (#461, GW1).
+      recoverOvercast(record.combatant, this.#ruleset.resources.overcastRecoveryPerSecond, dt);
 
       if (record.combatant.dead) {
         record.respawnInSeconds -= dt;
         if (record.respawnInSeconds <= 0) {
-          this.#reset(record);
+          this.#reset(record, "respawn");
         }
         continue;
       }
@@ -929,9 +932,13 @@ export class MatchSimulation {
       // is earned by acting, not by waiting, so it deliberately does not
       // tick up here.
       const energyPips = netPips(record.combatant, natural).energy;
-      record.combatant.energy = Math.min(
-        record.combatant.maxEnergy,
-        Math.max(0, record.combatant.energy + energyPips * ENERGY_PER_PIP * dt),
+      // Up to the ceiling overcast leaves, which can be below 0 (#461).
+      record.combatant.energy = Math.max(
+        0,
+        Math.min(
+          effectiveMaxEnergy(record.combatant),
+          record.combatant.energy + energyPips * ENERGY_PER_PIP * dt,
+        ),
       );
 
       const sources = degenerationSources(record.combatant);
@@ -2227,11 +2234,16 @@ export class MatchSimulation {
    * Respawn, and every reset policy: the one way back to the start. At
    * the starting health, full energy, no adrenaline, nothing active, any
    * cast dropped, at spawn. Recharges carry on, as they would in a match.
+   * A respawn keeps its overcast and fills only to the ceiling it leaves,
+   * as GW1 keeps it through death; a reset clears it (#461).
    */
-  #reset(record: ParticipantRecord): void {
+  #reset(record: ParticipantRecord, why: "respawn" | "reset"): void {
+    if (why === "reset") {
+      record.combatant.overcast = 0;
+    }
     record.combatant.dead = false;
     record.combatant.health = record.combatant.maxHealth * (record.spec.startHealthFraction ?? 1);
-    record.combatant.energy = record.combatant.maxEnergy;
+    record.combatant.energy = Math.max(0, effectiveMaxEnergy(record.combatant));
     record.combatant.adrenaline = 0;
     record.combatant.statuses.clear();
     record.position = record.spawn;
@@ -2266,6 +2278,7 @@ export class MatchSimulation {
       maxHealth,
       energy: spec.maxEnergy ?? this.#ruleset.combat.baseEnergy,
       maxEnergy: spec.maxEnergy ?? this.#ruleset.combat.baseEnergy,
+      overcast: 0,
       baseEnergyPips: spec.baseEnergyPips ?? 0,
       adrenaline: 0,
       attributeRanks: spec.attributeRanks,

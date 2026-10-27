@@ -10,6 +10,7 @@
     "kind": "energy",
     "amount": 5
   },
+  "overcast": 0,
   "activationSeconds": 0.5,
   "rechargeSeconds": 10,
   "description": "Swipe your weapon at the target, dealing no damage but disrupting the target's current action (and the actions of foes adjacent to your target).",

@@ -1,6 +1,7 @@
 import { DIVINE_FAVOR_ATTRIBUTE, divineFavorBonusHeal } from "../primary-attributes.js";
 import { getSkill } from "./catalog.js";
 import { mitigate, spellDamage } from "./damage.js";
+import { effectiveMaxEnergy } from "./overcast.js";
 import { resolveMagnitude } from "./scaling.js";
 import { getStatusDefinition, scaledStatusDuration, type StatusId } from "./status.js";
 import { rankOf } from "./tick.js";
@@ -139,14 +140,15 @@ function applyHeal(target: Combatant, amount: number, events: CombatEvent[]): vo
 }
 
 /**
- * Give energy, clamped so it can never exceed maximum energy. The dead
+ * Give energy, clamped so it can never exceed the maximum overcast
+ * leaves (#461). The dead
  * gain none, and a gain that fills nothing is no event.
  */
 export function gainEnergy(target: Combatant, amount: number, events: CombatEvent[]): void {
   if (amount <= 0 || target.dead) {
     return;
   }
-  const applied = Math.min(amount, target.maxEnergy - target.energy);
+  const applied = Math.min(amount, effectiveMaxEnergy(target) - target.energy);
   if (applied <= 0) {
     return;
   }

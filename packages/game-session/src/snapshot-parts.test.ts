@@ -26,6 +26,7 @@ function player(index: number): WirePlayer {
     maxHealth: 480,
     energy: 25,
     maxEnergy: 25,
+    overcast: 0,
     adrenaline: 0,
     armor: 60,
     weaponId: "sword",

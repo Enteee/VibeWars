@@ -329,6 +329,7 @@ export function playerSnapshot(player: WirePlayer): PlayerSnapshot | undefined {
     maxHealth: player.maxHealth,
     energy: player.energy,
     maxEnergy: player.maxEnergy,
+    overcast: player.overcast,
     adrenaline: player.adrenaline,
     armor: player.armor,
     weaponId: absent(player.weaponId),
