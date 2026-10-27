@@ -480,6 +480,13 @@ forget a fired employee. So an agent reaches the supervisor only through
 what hubd lets its role ask for. The reboot records and the lock sit in
 the host bot root, which no jail sees.
 
+**Files every jail can read in `hub/` (#891).** Besides the board copy and
+`ratelimit.json`, hubd writes `board-history.jsonl` (one line per column
+change: issue, from, to, who, when) and `kpis.json` (flow, usage, budget,
+host and staff numbers, every five minutes). Nothing secret is in either:
+employee names and numbers. `kpis.json` carries a `schemaVersion`; a reader
+that finds another value treats the file as absent.
+
 **A manager is always running (#384).** The supervisor starts a missing
 manager pane within one sample, backing off to once every five minutes
 after three restarts in ten, and says so in General. A manager that
