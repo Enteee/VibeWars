@@ -81,4 +81,8 @@ export const SKILL_ICONS = {
   "mesmer.backfire": { glyph: "fireball", modifier: "self" },
   "mesmer.empathy": { glyph: "sword", modifier: "self" },
   "monk.mending": { glyph: "heal", modifier: "upkeep" },
+  "mesmer.energy-surge": { glyph: "energy", modifier: "area" },
+  "mesmer.leech-signet": { glyph: "interrupt", modifier: "self" },
+  // A placeholder: no modifier yet says "per enchantment or hex" (#920).
+  "monk.dwaynas-kiss": { glyph: "heal", modifier: "stun" },
 };

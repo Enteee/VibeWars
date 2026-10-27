@@ -4,7 +4,12 @@ import { getSkill } from "./catalog.js";
 import { mitigate, skillDamage } from "./damage.js";
 import { effectiveMaxEnergy } from "./overcast.js";
 import { resolveMagnitude } from "./scaling.js";
-import { getStatusDefinition, scaledStatusDuration, type StatusId } from "./status.js";
+import {
+  getStatusDefinition,
+  scaledStatusDuration,
+  type StatusCategory,
+  type StatusId,
+} from "./status.js";
 import { nearestFirst } from "./targeting.js";
 import { effectiveMaxHealth, healingMultiplierOf, maxHealthLossOf, rankOf } from "./tick.js";
 import { distance } from "../vec2.js";
@@ -267,19 +272,37 @@ function energyLostBy(targetId: string, earlier: readonly CombatEvent[]): number
 }
 
 /**
- * `amount`, or with `perEnergyLost`, `amount` for each point `target` lost
- * earlier in this resolution: 0 with no target or no loss (#793).
+ * `amount`, or with `perEnergyLost`, `amount` for each point `lostBy` lost
+ * earlier in this resolution: 0 with no one or no loss (#793).
  */
 function perEnergyLost(
   effect: { readonly perEnergyLost?: true },
   amount: number,
-  target: Combatant | undefined,
+  lostBy: Combatant | undefined,
   earlier: readonly CombatEvent[],
 ): number {
   if (effect.perEnergyLost === undefined) {
     return amount;
   }
-  return target === undefined ? 0 : amount * energyLostBy(target.id, earlier);
+  return lostBy === undefined ? 0 : amount * energyLostBy(lostBy.id, earlier);
+}
+
+/**
+ * How many times a heal with `perStatusOnTarget` lands (#920): once with
+ * no categories, else once per status of those categories on `target`,
+ * as it stands now; 0 with no target.
+ */
+function perStatus(categories: readonly StatusCategory[], target: Combatant | undefined): number {
+  if (categories.length === 0) {
+    return 1;
+  }
+  if (target === undefined) {
+    return 0;
+  }
+  return categories.reduce(
+    (count, category) => count + target.statuses.countByCategory(category),
+    0,
+  );
 }
 
 /**
@@ -415,12 +438,14 @@ function refusedSkill(effect: InterruptEffect, target: Combatant): string | null
  * Apply one effect to `context.target`. `earlier` is what this skill's
  * resolution has emitted before it, for a `perEnergyLost` amount (#793)
  * and an interrupt that finds its target already interrupted (#817); an
- * effect applied on its own has nothing before it.
+ * effect applied on its own has nothing before it. `lostBy` is whose loss
+ * a `perEnergyLost` amount counts: the target, or a splash's centre (#920).
  */
 export function applyEffect(
   effect: UnconditionalEffect,
   context: SkillContext,
   earlier: readonly CombatEvent[] = [],
+  lostBy: Combatant | undefined = context.target,
 ): CombatEvent[] {
   const events: CombatEvent[] = [];
   const { caster, target } = context;
@@ -435,7 +460,7 @@ export function applyEffect(
       const amount = perEnergyLost(
         effect,
         resolveMagnitude(effect.amount, caster),
-        target,
+        lostBy,
         earlier,
       );
       if (amount <= 0) {
@@ -451,14 +476,18 @@ export function applyEffect(
       if (healed === undefined) {
         return events;
       }
-      applyHeal(healed, resolveMagnitude(effect.amount, caster), events);
+      applyHeal(
+        healed,
+        resolveMagnitude(effect.amount, caster) * perStatus(effect.perStatusOnTarget, target),
+        events,
+      );
       return events;
     }
 
     case "energy-gain": {
       gainEnergy(
         caster,
-        perEnergyLost(effect, resolveMagnitude(effect.amount, caster), target, earlier),
+        perEnergyLost(effect, resolveMagnitude(effect.amount, caster), lostBy, earlier),
         events,
       );
       return events;
@@ -623,7 +652,7 @@ export function applyEffect(
       );
       for (const combatant of nearestFirst(reached, at)) {
         for (const inner of effect.effects) {
-          events.push(...applyEffect(inner, { ...context, target: combatant }, earlier));
+          events.push(...applyEffect(inner, { ...context, target: combatant }, earlier, target));
         }
       }
       return events;
@@ -640,6 +669,7 @@ export function applyEffect(
 function isStateCondition(condition: EffectCondition): condition is StateCondition {
   switch (condition.kind) {
     case "interrupted":
+    case "interrupted-spell":
     case "removed":
       return false;
     case "target-health-below":
@@ -726,6 +756,12 @@ function wasInterrupted(targetId: string, earlier: readonly CombatEvent[]): bool
   return earlier.some((event) => event.kind === "interrupted" && event.targetId === targetId);
 }
 
+/** Whether the skill `skillId` names is a spell (`isSpell`; a chant is not one). */
+function isSpellId(skillId: string): boolean {
+  const skill = getSkill(skillId);
+  return skill !== undefined && isSpell(skill.type);
+}
+
 /**
  * Whether `condition` holds for `targetId`: for an earlier effect's
  * (#521), read from the events this resolution has emitted so far; for a
@@ -741,6 +777,11 @@ function conditionHolds(
   switch (condition.kind) {
     case "interrupted":
       return wasInterrupted(target.id, earlier);
+    case "interrupted-spell":
+      return earlier.some(
+        (event) =>
+          event.kind === "interrupted" && event.targetId === target.id && isSpellId(event.skillId),
+      );
     case "removed": {
       const bearerId = condition.from === "caster" ? caster.id : target.id;
       return earlier.some(

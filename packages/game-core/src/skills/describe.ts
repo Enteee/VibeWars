@@ -309,6 +309,8 @@ function conditionText(condition: EffectCondition): string {
   switch (condition.kind) {
     case "interrupted":
       return "If it interrupts";
+    case "interrupted-spell":
+      return "If that action was a spell";
     case "removed":
       return condition.from === "caster"
         ? `If ${aCategory(condition.category)} was removed`
@@ -386,7 +388,12 @@ function describeEffect(
       const magnitude = describeMagnitude(effect.amount, ranks);
       const amount = String(magnitude.current);
       return {
-        text: effect.recipient === "caster" ? `You gain ${amount} health` : `Heals for ${amount}`,
+        text:
+          effect.perStatusOnTarget.length > 0
+            ? `+${amount} Health for each ${effect.perStatusOnTarget.join(" or ")} on target ally`
+            : effect.recipient === "caster"
+              ? `You gain ${amount} health`
+              : `Heals for ${amount}`,
         magnitude,
       };
     }
@@ -489,7 +496,8 @@ function describeEffect(
       const what = inner
         .map(({ each, description }) =>
           each.kind === "damage"
-            ? `take ${String(describeMagnitude(each.amount, ranks).current)} damage`
+            ? `take ${String(describeMagnitude(each.amount, ranks).current)} damage` +
+              (each.perEnergyLost === undefined ? "" : " for each point of energy lost")
             : lowerFirst(description.text),
         )
         .join(", ");
