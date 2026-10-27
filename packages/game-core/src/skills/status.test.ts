@@ -77,7 +77,14 @@ describe("status definitions", () => {
           getStatusDefinition(id).healthPips,
         ]),
       ),
-    ).toEqual({ bleeding: -3, burning: -7, poison: -4, "life-drain": -2, regeneration: 4 });
+    ).toEqual({
+      bleeding: -3,
+      burning: -7,
+      poison: -4,
+      disease: -4,
+      "life-drain": -2,
+      regeneration: 4,
+    });
   });
 
   it("counts energy in GW1's pips", () => {
