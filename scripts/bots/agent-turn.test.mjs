@@ -28,6 +28,18 @@ const SESSION_ID = "11111111-2222-3333-4444-555555555555";
 /** @type {Record<string, string>} */
 const EVENTS = {
   init: JSON.stringify({ type: "system", subtype: "init", session_id: SESSION_ID }),
+  initWithMcp: JSON.stringify({
+    type: "system",
+    subtype: "init",
+    session_id: SESSION_ID,
+    mcp_servers: [{ name: "claude.ai Claude Docs", status: "connected" }],
+  }),
+  initNoMcp: JSON.stringify({
+    type: "system",
+    subtype: "init",
+    session_id: SESSION_ID,
+    mcp_servers: [],
+  }),
   wait: JSON.stringify({
     type: "assistant",
     message: {
@@ -80,13 +92,13 @@ const EVENTS = {
  *
  * @param {string[]} events keys of EVENTS
  * @param {string} [peekDir] where `peek` is recorded, if anywhere
- * @returns {{ code: number | null, stdout: string, cursor: string, log: string }}
+ * @returns {{ code: number | null, stdout: string, stderr: string, cursor: string, log: string }}
  */
 function turn(events, peekDir = "") {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "agent-turn-test-"));
   dirs.push(dir);
   const bus = path.join(dir, "bus");
-  const state = path.join(dir, "developer-1");
+  const state = path.join(dir, "developer");
   fs.mkdirSync(bus);
   fs.writeFileSync(path.join(bus, "cursor"), "100\n");
   const script = path.join(dir, "claude.mjs");
@@ -105,7 +117,7 @@ function turn(events, peekDir = "") {
     encoding: "utf8",
     env: {
       ...process.env,
-      VIBEWARS_BOT_ROLE: "developer-1",
+      VIBEWARS_BOT_ROLE: "developer",
       VIBEWARS_CONTEXT_FILE: path.join(bus, "context.json"),
       ...(peekDir === "" ? {} : { VIBEWARS_PEEK_DIR: peekDir }),
     },
@@ -114,6 +126,7 @@ function turn(events, peekDir = "") {
   return {
     code: result.status,
     stdout: result.stdout,
+    stderr: result.stderr,
     cursor: fs.readFileSync(path.join(bus, "cursor"), "utf8"),
     log: fs.existsSync(logFile) ? fs.readFileSync(logFile, "utf8") : "",
   };
@@ -128,7 +141,7 @@ describe("a tg wait that went to the background", () => {
     expect(result.stdout).toContain("⚠ tg wait went to the background; inbox rewound");
     const [entry] = result.log.trim().split("\n");
     expect(JSON.parse(entry ?? "")).toMatchObject({
-      role: "developer-1",
+      role: "developer",
       command: "tg wait --timeout 540",
     });
     expect(result.cursor).toBe("100\n");
@@ -159,7 +172,7 @@ describe("what the manager can peek at (#19)", () => {
   /** @param {string} dir */
   const row = (dir) => {
     /** @type {unknown} */
-    const parsed = JSON.parse(fs.readFileSync(path.join(dir, "developer-1.json"), "utf8"));
+    const parsed = JSON.parse(fs.readFileSync(path.join(dir, "developer.json"), "utf8"));
     return /** @type {{ state: string }} */ (parsed);
   };
 
@@ -167,7 +180,7 @@ describe("what the manager can peek at (#19)", () => {
     const dir = peekDir();
     const result = turn(["init", "wait", "background", "swallow", "result"], dir);
 
-    const recorded = fs.readFileSync(path.join(dir, "developer-1.txt"), "utf8");
+    const recorded = fs.readFileSync(path.join(dir, "developer.txt"), "utf8");
     expect(result.stdout).toContain("⚠ tg wait went to the background; inbox rewound");
     expect(recorded).toContain("⚠ tg wait went to the background; inbox rewound");
     for (const line of result.stdout.trimEnd().split("\n")) {
@@ -193,5 +206,22 @@ describe("what the manager can peek at (#19)", () => {
 
     expect(result.code).toBe(3);
     expect(row(dir).state).toBe("limited");
+  });
+});
+
+describe("an MCP server in the jail (#753)", () => {
+  it("stops the turn at once, naming it", () => {
+    const result = turn(["initWithMcp", "result"]);
+
+    expect(result.code).toBe(1);
+    expect(result.stderr).toContain(
+      "agent-turn: the jail has MCP servers (claude.ai Claude Docs); refusing to run: see #753",
+    );
+  });
+
+  it("runs a turn whose init lists none", () => {
+    const result = turn(["initNoMcp", "result"]);
+
+    expect(result.code).toBe(0);
   });
 });

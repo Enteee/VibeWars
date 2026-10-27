@@ -272,7 +272,7 @@ describe("the restarter", () => {
 
   it("starts every agent on a fresh conversation", () => {
     const company = setup();
-    const agent = path.join(company.root, "agents", "developer-1");
+    const agent = path.join(company.root, "agents", "developer");
     fs.mkdirSync(agent, { recursive: true });
     fs.writeFileSync(path.join(agent, "session-id"), "0f3c9a1e\n");
     fs.writeFileSync(path.join(agent, "between-turns"), "");

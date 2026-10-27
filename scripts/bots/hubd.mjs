@@ -2334,7 +2334,8 @@ function recordStaff(role, argv, cfg) {
   audit({ role, kind, argv, decision: "allowed" });
   tellCompany(kind, `${verb === "hire" ? "Hired" : "Firing"} ${allowed.employee}: ${reason}`);
   if (verb === "fire") {
-    tellCompany("staff-stop", stopNotice(reason), { to: allowed.employee });
+    // Seat 1's id is its role's name: direct, or every seat of it stops (#756).
+    tellCompany("staff-stop", stopNotice(reason), { to: allowed.employee, direct: true });
   }
   return {
     allow: true,

@@ -246,7 +246,7 @@ function turn({ lines, code = 0, session, stale, plant, plantAs = "context.json"
     fs.mkdirSync(state);
     fs.writeFileSync(path.join(state, "session-id"), `${session}\n`);
   }
-  const result = spawnSync(process.execPath, [AGENT_TURN, state, "--", bot, "developer-1"], {
+  const result = spawnSync(process.execPath, [AGENT_TURN, state, "--", bot, "developer"], {
     encoding: "utf8",
     env: { ...process.env, VIBEWARS_CONTEXT_FILE: contextFile },
   });
@@ -484,7 +484,7 @@ describe("agent-turn.mjs", () => {
     const run = turn({ lines: [JSON.stringify(INIT), JSON.stringify(RESULT)] });
 
     expect(run.code).toBe(0);
-    expect(run.args).toBe("developer-1");
+    expect(run.args).toBe("developer");
     expect(run.session).toBe(SESSION_ID);
     expect(run.stdout).toContain(`● session ${SESSION_ID}`);
     expect(run.stdout).toContain("■ turn success");
@@ -497,7 +497,7 @@ describe("agent-turn.mjs", () => {
     });
 
     expect(run.code).toBe(0);
-    expect(run.args).toBe(`--resume ${SESSION_ID} developer-1`);
+    expect(run.args).toBe(`--resume ${SESSION_ID} developer`);
     expect(run.session).toBe(SESSION_ID);
   });
 

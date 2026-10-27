@@ -142,9 +142,8 @@ let
 
   # Every role that builds or tests the game. They get the Chromium devenv.nix
   # pins, from the same `pkgs`, on PATH and as VIBEWARS_CHROMIUM, which
-  # playwright.config.ts prefers. A case pattern, because the developers are
-  # numbered.
-  testRoles = "developer-* | asset-designer | cicd-engineer | lead-dev | perf-sec-qa | qa-tester";
+  # playwright.config.ts prefers, as a case pattern.
+  testRoles = "developer | asset-designer | cicd-engineer | lead-dev | perf-sec-qa | qa-tester";
   chromium = lib.getExe pkgs.chromium;
 
   # The jails' shared resource budget (#358, ADR-0015): one systemd user slice
@@ -277,6 +276,17 @@ let
     check "nice is 10" "$(${pkgs.coreutils}/bin/nice)" "10"
     refused "lowering nice back to 0" '${pkgs.util-linux}/bin/renice -n 0 $$'
     check "core dumps are off" "$(ulimit -c)" "0"
+
+    # #737: claude runs the suite guard from the store before every Bash
+    # call, and it refuses a suite for every role but cicd-engineer.
+    check "settings.json runs the suite guard" \
+      "$(${pkgs.jq}/bin/jq -r '.hooks.PreToolUse[0].hooks[0].command' "$HOME/.claude/settings.json")" \
+      "${node} ${botScripts}/suite-guard.mjs"
+    if [ "$VIBEWARS_BOT_ROLE" != cicd-engineer ]; then
+      check "the suite guard refuses pnpm run ci" \
+        "$(printf '%s' '{"tool_input":{"command":"pnpm run ci"}}' | ${node} ${botScripts}/suite-guard.mjs | ${pkgs.jq}/bin/jq -r .hookSpecificOutput.permissionDecision)" \
+        "deny"
+    fi
     exit "$failed"
   '';
 
@@ -641,11 +651,17 @@ let
         # operator picked, and a create-if-absent guard silently skips it —
         # which is exactly how the bypass-permissions prompt survived the
         # first attempt at this.
+        #
+        # The suite guard (#737) is SET, not appended, so a restart never
+        # stacks a second copy. It runs from the store, never the worktree
+        # copy, which the agent can edit.
         [ -e "$boxDir/config/settings.json" ] || printf '{}' > "$boxDir/config/settings.json"
         if merged="$(${pkgs.jq}/bin/jq \
+             --arg guard "${node} ${botScripts}/suite-guard.mjs" \
              '.theme //= "dark"
               | .skipDangerousModePermissionPrompt = true
-              | .skipWorkflowUsageWarning = true' \
+              | .skipWorkflowUsageWarning = true
+              | .hooks.PreToolUse = [{ matcher: "Bash", hooks: [{ type: "command", command: $guard }] }]' \
              "$boxDir/config/settings.json" 2>/dev/null)"; then
           printf '%s\n' "$merged" > "$boxDir/config/settings.json"
         fi
@@ -796,12 +812,22 @@ let
         else
           # Print mode cannot show a permission prompt, so the skip is
           # required, and nobody can answer AskUserQuestion: questions go
-          # through `tg ask`. --disallowedTools takes several values, so an
-          # option has to follow it, or it would swallow the prompt.
+          # through `tg ask`. --tools takes several values, so an option has to
+          # follow it, or it would swallow the prompt (#753).
+          #
+          # The tools are the ones the roles use: Bash and the file tools for the
+          # work; Agent, SendMessage and TaskStop for subagents; Monitor to wait on
+          # a command; Skill for the company's skills; ToolSearch, which reaches
+          # WebFetch and WebSearch. The rest (Workflow, cron and wakeup tools,
+          # worktrees, notebooks, remote triggers) each cost a long description on
+          # every call and have no use here: hub schedule replaces cron, and
+          # worktrees are the host's job. --strict-mcp-config with no --mcp-config
+          # leaves no MCP server, so no claude.ai connector can load.
           jailCommand=(${jailInit} claude
             -p --output-format stream-json --verbose
             --dangerously-skip-permissions
-            --disallowedTools AskUserQuestion
+            --strict-mcp-config
+            --tools Bash Read Edit Write Agent SendMessage TaskStop Monitor Skill ToolSearch WebFetch WebSearch
             --model "$model"
             --append-system-prompt "$briefing"
             "''${resumeFlag[@]}"
@@ -882,6 +908,8 @@ let
           --setenv VIBEWARS_BOARD "$boardIds" \
           --setenv VIBEWARS_ACTING "$acting" \
           --setenv VIBEWARS_ENV "development" \
+          --setenv ENABLE_CLAUDEAI_MCP_SERVERS false \
+          --setenv CLAUDE_CODE_DISABLE_BUNDLED_SKILLS 1 \
           --setenv GIT_CONFIG_COUNT 3 \
           --setenv GIT_CONFIG_KEY_0 branch.autoSetupMerge \
           --setenv GIT_CONFIG_VALUE_0 false \
