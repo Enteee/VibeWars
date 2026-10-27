@@ -12,6 +12,7 @@ import {
   type HostedLobby,
 } from "./net/session.js";
 import { startMatchView, type MatchView } from "./match-view.js";
+import { beatEdits } from "./music/beat-edits.js";
 import { musicPlayer } from "./music/music-player.js";
 import { music } from "./music/play-music.js";
 import { TRACKS } from "./music/tracks/index.js";
@@ -25,6 +26,7 @@ import {
 } from "./storage/repository.js";
 import type { StoredCharacter } from "./storage/schema.js";
 import { importTeam, importedTeamSummary, type TeamImportResult } from "./storage/team-transfer.js";
+import { closeBeatEditor } from "./ui/beat-editor.js";
 import { mountBuildEditor, newCharacter, type BuildEditorView } from "./ui/build-editor.js";
 import { disposeJukeboxScreen, renderJukeboxScreen } from "./ui/jukebox.js";
 import { disposeOptionsScreen, renderOptionsScreen } from "./ui/options-screen.js";
@@ -100,6 +102,9 @@ async function main(): Promise<void> {
   }
 
   const store = await openStore();
+  // Before any music: a stale edit is gone before it could play (#373).
+  // Its notice goes on the first menu, once.
+  let editNotices = await beatEdits.load(TRACKS);
   const characters = new CharacterRepository(store);
   const teams = new TeamRepository(store);
 
@@ -137,6 +142,7 @@ async function main(): Promise<void> {
    */
   const leaveScreen = (): void => {
     dismissToast();
+    closeBeatEditor();
   };
 
   const showViewport = (visible: boolean): void => {
@@ -207,7 +213,8 @@ async function main(): Promise<void> {
     music().screen("menu");
     void (async () => {
       const { characters: list, problems } = await characters.list();
-      renderMenuWith(list, problems);
+      renderMenuWith(list, [...problems, ...editNotices]);
+      editNotices = [];
     })();
   };
 

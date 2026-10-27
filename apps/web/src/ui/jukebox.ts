@@ -4,8 +4,10 @@ import {
   type MusicModeKind,
   type MusicPreference,
 } from "../audio/music-preference.js";
+import { beatEdits, type BeatEditStore } from "../music/beat-edits.js";
 import { music, type MusicFollower } from "../music/play-music.js";
 import { TRACKS, type Track } from "../music/tracks/index.js";
+import { openBeatEditor } from "./beat-editor.js";
 import { musicIcon } from "./icons.js";
 import { mountSoundControls, soundControlsDeps } from "./sound-controls.js";
 import { button, h, screenBar, selectableRow, syncList } from "./kit.js";
@@ -17,7 +19,8 @@ import { button, h, screenBar, selectableRow, syncList } from "./kit.js";
  * and the popover, the one place for them in a match, shows them itself.
  *
  * Click a row to hear it; the preview lasts until another row is picked
- * or the jukebox closes. Rows are the shared selectable rows (#581),
+ * or the jukebox closes. Edit opens a track in the beat editor (#373), and
+ * a track the player edited says so. Rows are the shared selectable rows (#581),
  * updated in place, so the pressed one keeps focus. Every change is saved at once. The rules are
  * plain functions, tested without a DOM; `jukeboxPanel` only draws them.
  */
@@ -36,12 +39,14 @@ export interface JukeboxRow {
   readonly bpm: string;
   readonly pinned: boolean;
   readonly previewing: boolean;
+  readonly edited: boolean;
 }
 
 export function jukeboxRows(
   tracks: readonly Pick<Track, "id" | "title" | "moods" | "bpm">[],
   preference: MusicPreference,
   previewId: string | null,
+  edited: (trackId: string) => boolean,
 ): JukeboxRow[] {
   return tracks.map((track) => ({
     id: track.id,
@@ -50,6 +55,7 @@ export function jukeboxRows(
     bpm: `${String(track.bpm)} bpm`,
     pinned: track.id === preference.pinnedTrackId,
     previewing: track.id === previewId,
+    edited: edited(track.id),
   }));
 }
 
@@ -76,7 +82,11 @@ export interface JukeboxPanel {
  * key typed while it has focus does nothing in the match; Esc calls
  * `onClose`.
  */
-export function jukeboxPanel(onClose: () => void, player: MusicFollower = music()): JukeboxPanel {
+export function jukeboxPanel(
+  onClose: () => void,
+  player: MusicFollower = music(),
+  edits: BeatEditStore = beatEdits,
+): JukeboxPanel {
   let previewId: string | null = null;
   const panel = h("div", "jukebox");
 
@@ -92,8 +102,13 @@ export function jukeboxPanel(onClose: () => void, player: MusicFollower = music(
   }
   modeField.appendChild(modePicker);
 
+  const editPlaying = button("Edit what plays", "jukebox-edit-playing", () => {
+    if (player.nowPlaying !== null) {
+      openBeatEditor(player.nowPlaying);
+    }
+  });
   const controls = h("div", "menu-row jukebox-controls");
-  controls.append(modeField);
+  controls.append(modeField, editPlaying);
   panel.appendChild(controls);
 
   const list = h("div", "entity-list jukebox-list");
@@ -115,6 +130,7 @@ export function jukeboxPanel(onClose: () => void, player: MusicFollower = music(
   function paint(): void {
     const preference = player.preference;
     modePicker.value = preference.mode;
+    editPlaying.disabled = player.nowPlaying === null;
     const pinnedOption = [...modePicker.options].find((option) => option.value === "pinned");
     if (pinnedOption !== undefined) {
       pinnedOption.disabled = preference.pinnedTrackId === null;
@@ -122,7 +138,7 @@ export function jukeboxPanel(onClose: () => void, player: MusicFollower = music(
 
     syncList(
       list,
-      jukeboxRows(TRACKS, preference, previewId),
+      jukeboxRows(TRACKS, preference, previewId, (trackId) => edits.get(trackId) !== undefined),
       (row) => row.id,
       (row) => {
         const node = selectableRow({
@@ -131,6 +147,9 @@ export function jukeboxPanel(onClose: () => void, player: MusicFollower = music(
           actions: [
             button("Pin", "jukebox-pin", () => {
               change(pinTrack(player.preference, row.id));
+            }),
+            button("Edit", "jukebox-edit", () => {
+              openBeatEditor(row.id);
             }),
           ],
           onSelect: () => {
@@ -146,10 +165,16 @@ export function jukeboxPanel(onClose: () => void, player: MusicFollower = music(
       },
       (node, row) => {
         node.classList.toggle("is-selected", row.previewing);
+        node.classList.toggle("is-edited", row.edited);
         const play = node.querySelector(".jukebox-play");
         if (play instanceof HTMLElement) {
           play.setAttribute("aria-pressed", String(row.previewing));
           play.title = row.previewing ? "Stop the preview" : "Preview";
+        }
+        const edit = node.querySelector(".jukebox-edit");
+        if (edit instanceof HTMLElement) {
+          edit.setAttribute("aria-label", `Open ${row.title} in the beat editor`);
+          edit.title = row.edited ? "Open your edit in the beat editor" : "Open in the beat editor";
         }
         const pin = node.querySelector(".jukebox-pin");
         if (pin instanceof HTMLButtonElement) {
@@ -160,6 +185,11 @@ export function jukeboxPanel(onClose: () => void, player: MusicFollower = music(
     );
   }
   paint();
+  const unsubscribeEdits = edits.subscribe(paint);
+  // A fight's music changes with every snapshot: only this follows it.
+  const unsubscribeMusic = player.onChange(() => {
+    editPlaying.disabled = player.nowPlaying === null;
+  });
 
   const onKeydown = (event: KeyboardEvent): void => {
     event.stopPropagation();
@@ -174,6 +204,8 @@ export function jukeboxPanel(onClose: () => void, player: MusicFollower = music(
     element: panel,
     dispose() {
       panel.removeEventListener("keydown", onKeydown);
+      unsubscribeEdits();
+      unsubscribeMusic();
       if (previewId !== null) {
         previewId = null;
         player.preview(null);

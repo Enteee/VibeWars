@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 
 import { startSoloMatch } from "./helpers/peers.js";
+import { key } from "./keys.js";
 
 /**
  * Music (#371, ADR-0028): the Strudel engine in a sandboxed iframe, made
@@ -174,9 +175,7 @@ test("a pinned track is what plays after a reload (#372)", async ({ page }) => {
   await expect.poll(() => playedTracks(page), { timeout: 5_000 }).toEqual(["ember-deep"]);
 });
 
-test("tracks are selectable rows: Enter previews and keeps focus; no dead editor button (#581)", async ({
-  page,
-}) => {
+test("tracks are selectable rows: Enter previews and keeps focus (#581)", async ({ page }) => {
   await page.goto("./");
   await page.getByRole("button", { name: "Music", exact: true }).click();
   const row = page.locator(".jukebox-row", { hasText: "Ember Deep" });
@@ -192,8 +191,101 @@ test("tracks are selectable rows: Enter previews and keeps focus; no dead editor
   await play.focus();
   await page.keyboard.press("Enter");
   await expect(play).toHaveAttribute("aria-pressed", "false");
-  // The beat editor (#373) has not landed: no button that does nothing.
-  await expect(page.getByRole("button", { name: "open in editor" })).toHaveCount(0);
+});
+
+/** The types of what this page's host said, in order. */
+function hostTypes(page: Page): Promise<string[]> {
+  return page.evaluate(() =>
+    (window as unknown as { hostMessages: unknown[] }).hostMessages.map((message) =>
+      typeof message === "object" && message !== null && "type" in message
+        ? String(message.type)
+        : "?",
+    ),
+  );
+}
+
+/** How many events the host played in the last second it measured (`?musicstats`). */
+function lastSecondEvents(page: Page): Promise<number> {
+  return page.evaluate(() => {
+    const stats = (window as unknown as { hostMessages: unknown[] }).hostMessages.filter(
+      (message): message is { type: "stats"; events: number } =>
+        typeof message === "object" &&
+        message !== null &&
+        "type" in message &&
+        message.type === "stats",
+    );
+    return stats.at(-1)?.events ?? -1;
+  });
+}
+
+test("the beat editor plays a change, keeps it across a reload, and an error leaves it playing (#373)", async ({
+  page,
+}) => {
+  await recordMessages(page);
+  await recordHostInbox(page);
+  await page.goto("./?musicstats");
+  await page.getByRole("button", { name: "Music", exact: true }).click();
+  const row = page.locator(".jukebox-row", { hasText: "Ember Deep" });
+  await row.getByRole("button", { name: "Open Ember Deep in the beat editor" }).click();
+  const editor = page.getByRole("dialog", { name: "Beat editor: Ember Deep" });
+  const code = editor.locator(".cm-content");
+  await expect(code).toContainText("ember-deep");
+  // The click on Music started the menu's track; the editor holds its own.
+  await expect.poll(() => playedTracks(page), { timeout: 5_000 }).toContain("ember-deep");
+
+  await code.click();
+  await page.keyboard.press("Control+End");
+  await page.keyboard.type("\n.gain(.9)");
+  await page.keyboard.press("Control+Enter");
+  await expect.poll(() => hostTypes(page), { timeout: 5_000 }).toContain("evaluated");
+  await expect(editor.locator(".beat-editor-edited")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(editor).toHaveCount(0);
+  await expect(row).toHaveClass(/is-edited/);
+
+  await page.reload();
+  await page.getByRole("button", { name: "Music", exact: true }).click();
+  await expect(row).toHaveClass(/is-edited/);
+  await row.getByRole("button", { name: "Open Ember Deep in the beat editor" }).click();
+  // CodeMirror draws only the lines in view; the change is on the last.
+  await code.click();
+  await page.keyboard.press("Control+End");
+  await expect(code).toContainText(".gain(.9)");
+  // The edit is what plays: the host was sent it, not the shipped source.
+  await expect.poll(() => sourcesSent(page, "ember-deep"), { timeout: 5_000 }).toEqual([true]);
+
+  await page.keyboard.type("\n)))(");
+  await page.keyboard.press("Control+Enter");
+  await expect.poll(() => hostTypes(page), { timeout: 5_000 }).toContain("error");
+  await expect(editor.locator(".beat-editor-error")).toBeVisible();
+  // The old pattern plays on: a second measured after the error has events.
+  const seconds = (await hostTypes(page)).filter((type) => type === "stats").length;
+  await expect
+    .poll(async () => (await hostTypes(page)).filter((type) => type === "stats").length, {
+      timeout: 5_000,
+    })
+    .toBeGreaterThan(seconds + 1);
+  expect(await lastSecondEvents(page)).toBeGreaterThan(0);
+
+  await editor.getByRole("button", { name: "Reset to shipped" }).click();
+  await expect(editor.locator(".beat-editor-edited")).toBeHidden();
+  await expect(row).not.toHaveClass(/is-edited/);
+});
+
+test("keys typed in the beat editor reach no skill in a match (#373)", async ({ page }) => {
+  await page.goto("./");
+  await startSoloMatch(page);
+  await expect(page.locator(".hud-statuses")).toContainText("no active effects");
+  await page.locator(".hud-music").click();
+  await page.getByRole("button", { name: "Edit what plays" }).click();
+  const editor = page.getByRole("dialog", { name: /^Beat editor: / });
+  await editor.locator(".cm-content").click();
+  // Q is skill 1; skill 5 is a self-cast enchantment, which needs no target.
+  await page.keyboard.type(`q${key("skill-5").replace(/^Key/, "").toLowerCase()}`);
+  await page.waitForTimeout(1000);
+  await expect(page.locator(".hud-statuses")).toContainText("no active effects");
+  await page.keyboard.press("Escape");
+  await expect(editor).toHaveCount(0);
 });
 
 test("in the HUD ♪ popover, pinning a track narrows neither its row nor its button (#710)", async ({
@@ -362,6 +454,28 @@ async function recordHostInbox(page: Page): Promise<void> {
       }
     });
   });
+}
+
+/** For each track message the game sent its host for `trackId`: whether it carried `.gain(.9)`. */
+async function sourcesSent(page: Page, trackId: string): Promise<boolean[]> {
+  const host = page.frames().find((frame) => frame.url().includes("music-host"));
+  if (host === undefined) {
+    return [];
+  }
+  return host.evaluate(
+    (id) =>
+      (window as unknown as { fromGame?: unknown[] }).fromGame?.flatMap((message) =>
+        typeof message === "object" &&
+        message !== null &&
+        "trackId" in message &&
+        message.trackId === id &&
+        "source" in message &&
+        typeof message.source === "string"
+          ? [message.source.includes(".gain(.9)")]
+          : [],
+      ) ?? [],
+    trackId,
+  );
 }
 
 /** The levels the game told its host to play, in order. */
