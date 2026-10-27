@@ -397,7 +397,7 @@ adjacent to its target.
 
 **Attack skills ride the weapon** (ADR-0029). An attack skill needs its
 weapon: Swift Chop, Eviscerate and Executioner's Strike an axe, Backbreaker a
-hammer, Sever Artery a sword, Jagged Strike daggers, Barrage, Broad Head
+hammer, Sever Artery a sword, the Assassin's dagger attacks daggers, Barrage, Broad Head
 Arrow and Punishing Shot any bow, Distracting Blow any melee weapon.
 With the wrong one it is refused ("Needs an axe."), and its slot is
 dimmed on the skill bar as if you could not pay for it; the build
@@ -413,6 +413,21 @@ cleave on an attack skill. Afterwards you swing at its foe, from a fresh
 swing. Distracting Blow deals no damage: a hit only interrupts, and a
 miss does nothing. It has no attribute, as in GW1, so any warrior can
 use it and its numbers never scale.
+
+**Dagger chains** (#831). Jagged Strike and Black Lotus Strike are lead
+attacks; Fox Fangs and Wild Strike are off-hand attacks that must follow
+one. A lead attack that hits leaves your lead mark on that foe; an
+off-hand attack that hits replaces it with your off-hand mark. An
+off-hand attack hits only a foe bearing _your_ lead mark when its blow
+lands: otherwise it is out of sequence, so it costs its energy, always
+misses ("Fox Fangs misses Warrior (must follow a lead attack)") and
+recharges at once. Each foe keeps its own mark from you, and another
+Assassin's lead opens nothing for you. Only a chain attack that lands
+changes a mark: swings, spells and other attack skills in between leave
+it alone, and a lead that misses or is blocked places none. A mark lasts
+15 s from the hit that placed it, and goes when either of you dies. The
+tooltip says it first: "Lead attack.", "Off-hand attack. Must follow a
+lead attack." Dual attacks come later.
 
 **Skills interrupt and resume.** Starting a skill loses the swing in
 progress. Attacking and casting are otherwise separate, as in GW1

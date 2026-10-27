@@ -150,7 +150,7 @@ export function describeCombatEvent(
         ? `${by} finds nothing to interrupt on ${target}`
         : `${by} can't interrupt ${target}'s ${skillName(event.refusedSkillId) ?? event.refusedSkillId}: not a spell or chant`;
     case "attack-missed":
-      return `${by} misses ${target}`;
+      return `${by} misses ${target}${event.reason === "out-of-sequence" ? " (must follow a lead attack)" : ""}`;
     case "attack-blocked":
       return `${target} blocks ${by}`;
     case "attack-dodged":

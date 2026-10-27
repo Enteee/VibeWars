@@ -255,8 +255,15 @@ function wireEvent(event: CombatEvent): WireCombatEvent {
         amount: event.healthFraction,
         energy: event.energyFraction,
       };
-    case "death":
     case "attack-missed":
+      // Out of sequence (#831) rides as a kind of its own, so no field
+      // every event carries grows for it.
+      return {
+        ...none,
+        kind: event.reason === "out-of-sequence" ? "attack-out-of-sequence" : event.kind,
+        targetId: event.targetId,
+      };
+    case "death":
     case "attack-blocked":
     case "attack-dodged":
     case "attack-obstructed":
@@ -333,8 +340,10 @@ function combatEvent(event: WireCombatEvent): CombatEvent | undefined {
       return amount === null || energy === null
         ? undefined
         : { kind: event.kind, targetId, healthFraction: amount, energyFraction: energy };
-    case "death":
+    case "attack-out-of-sequence":
+      return { kind: "attack-missed", targetId, reason: "out-of-sequence" };
     case "attack-missed":
+    case "death":
     case "attack-blocked":
     case "attack-dodged":
     case "attack-obstructed":
