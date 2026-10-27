@@ -148,6 +148,8 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   const throttled = new Set<string>();
   /** Peers a queued lobby has welcomed: each once, while it is here. */
   const welcomed = new Set<string>();
+  /** Peers whose queued join was checked, admitted or not: each once, while it is here. */
+  const judged = new Set<string>();
   let phase: LobbyPhase = "waiting";
   let mapId = queued?.group.mapId ?? defaultMap;
   let joined = 0;
@@ -338,35 +340,35 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
    * Welcome `from` with the host's proof, whoever it is, so even a
    * refusal comes from the planned host; then seat it on its planned team
    * if its own proof is for this host, this peer and a ticket of the
-   * group nobody holds yet (ADR-0032 §6).
+   * group nobody holds yet (ADR-0032 §6). A signature check costs
+   * milliseconds, so it is the last check, and made once per peer.
    */
   const admitQueued = async (plan: QueuedPlan, join: PeerLobbyJoin, from: string) => {
     const { group, key, verifyTicketSig } = plan;
-    const hostDigest = await admissionDigest("vibewars-host", group.groupId, key.ticketId, from);
+    const [hostDigest, admitDigest] = await Promise.all([
+      admissionDigest("vibewars-host", group.groupId, key.ticketId, from),
+      admissionDigest("vibewars-admit", group.groupId, key.ticketId, from),
+    ]);
+    // Settled while the digests were made: closed, or this peer gone.
+    if (closed || !judged.has(from)) {
+      return;
+    }
+    sendWelcome(plan, hostDigest, from);
     const { admission } = join;
     const team =
       admission === null
         ? undefined
         : ([0, 1] as const).find((side) => group.teams[side].includes(admission.ticketId));
-    const proven =
-      admission !== null &&
-      team !== undefined &&
-      verifyTicketSig(
-        admission.ticketId,
-        await admissionDigest("vibewars-admit", group.groupId, key.ticketId, from),
-        admission.admissionSig,
-      );
-    // Settled while the digests were made: closed, or this peer seated by a twin join.
-    if (closed || members.has(from)) {
-      return;
-    }
-    sendWelcome(plan, hostDigest, from);
-    if (!proven) {
+    if (admission === null || team === undefined) {
       refuse(from, "not-admitted");
       return;
     }
     if ([...members.values()].some((member) => member.ticketId === admission.ticketId)) {
       refuse(from, "ticket-used");
+      return;
+    }
+    if (!verifyTicketSig(admission.ticketId, admitDigest, admission.admissionSig)) {
+      refuse(from, "not-admitted");
       return;
     }
     admit(from, join, team, admission.ticketId);
@@ -419,7 +421,11 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       return;
     }
     if (queued !== undefined) {
-      void admitQueued(queued, join, from);
+      // One proof per peer while it is here: a refused one stays refused.
+      if (!judged.has(from)) {
+        judged.add(from);
+        void admitQueued(queued, join, from);
+      }
       return;
     }
     // A proof means a queued lobby, which this is not.
@@ -587,6 +593,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     chatBudget.forget(peerId);
     throttled.delete(peerId);
     welcomed.delete(peerId);
+    judged.delete(peerId);
     if (peerId === local.selfId) {
       // The host's own player went: there is no lobby without its host.
       void host.close();

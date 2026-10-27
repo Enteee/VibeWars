@@ -125,6 +125,8 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
         }));
   /** Peers whose welcome proved them the planned host; each got the join once. */
   const provenHosts = new Set<string>();
+  /** Peers whose welcome was checked, proven or not. */
+  const checkedWelcomes = new Set<string>();
   const unsubscribe: (() => void)[] = [];
   let hostId: string | undefined;
   let latest: WireLobbyState | undefined;
@@ -295,14 +297,22 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       }),
       transport.on("lobby-welcome", (data, from) => {
         const welcome = parseWireLobbyWelcome(data);
-        if (queued === undefined || proof === undefined || welcome === undefined) {
+        // A signature check costs milliseconds and an honest host welcomes
+        // once, so one welcome per peer is checked; the rest are ignored.
+        if (
+          queued === undefined ||
+          proof === undefined ||
+          welcome === undefined ||
+          hostId !== undefined ||
+          checkedWelcomes.has(from)
+        ) {
           return;
         }
+        checkedWelcomes.add(from);
         void proof.then(({ hostDigest }) => {
           if (
             stopped ||
             hostId !== undefined ||
-            provenHosts.has(from) ||
             !queued.verifyTicketSig(queued.group.hostTicketId, hostDigest, welcome.hostSig)
           ) {
             return;

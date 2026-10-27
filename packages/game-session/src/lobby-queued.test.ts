@@ -39,8 +39,13 @@ function keyOf(ticketId: string): TicketKey {
   return { ticketId, sign: (digest) => `${hex(digest)}${ticketId}` };
 }
 
-const verifyTicketSig: VerifyTicketSig = (ticketId, digest, sig) =>
-  sig === `${hex(digest)}${ticketId}`;
+/** Signature checks made so far, by every side: a real one costs milliseconds. */
+let verifications = 0;
+
+const verifyTicketSig: VerifyTicketSig = (ticketId, digest, sig) => {
+  verifications += 1;
+  return sig === `${hex(digest)}${ticketId}`;
+};
 
 const [HOST, ALLY, FOE, FOE_2] = ["1", "2", "3", "4"].map((digit) => digit.repeat(64)) as [
   string,
@@ -257,6 +262,53 @@ describe("a queued lobby", () => {
 
     await queued.join(ALLY);
     await expect(queued.join(ALLY)).rejects.toEqual(new LobbyRefusedError("ticket-used"));
+  });
+
+  it("checks a peer's proof once while it is here, and a seated ticket's not at all", async () => {
+    const queued = await openQueued();
+    await queued.join(ALLY);
+    const peer = rawPeer(queued.network);
+    await settle();
+    const bad = await forgedJoin(FOE, ALLY, {
+      groupId: GROUP_ID,
+      hostTicketId: HOST,
+      peerId: peer.transport.selfId,
+    });
+    const before = verifications;
+    for (let i = 0; i < 20; i += 1) {
+      peer.transport.send("lobby-join", bad, "host");
+    }
+    await until(() => peer.notes.length > 0);
+    await settle();
+    expect(verifications - before).toBe(1);
+    expect(peer.notes).toEqual([{ kind: "refused", reason: "not-admitted" }]);
+
+    const twin = rawPeer(queued.network);
+    await settle();
+    const used = await forgedJoin(ALLY, FOE, {
+      groupId: GROUP_ID,
+      hostTicketId: HOST,
+      peerId: twin.transport.selfId,
+    });
+    const beforeTwin = verifications;
+    twin.transport.send("lobby-join", used, "host");
+    await until(() => twin.notes.length > 0);
+    expect(twin.notes).toEqual([{ kind: "refused", reason: "ticket-used" }]);
+    expect(verifications - beforeTwin).toBe(0);
+  });
+
+  it("checks one welcome per peer, however many it sends", async () => {
+    const network = createMemoryNetwork();
+    const flooder = network.join("flooder");
+    flooder.on("lobby-hello", (_data, from) => {
+      const welcome: WireLobbyWelcome = { hostSig: "ab".repeat(64) };
+      for (let i = 0; i < 20; i += 1) {
+        flooder.send("lobby-welcome", welcome, from);
+      }
+    });
+    const before = verifications;
+    await expect(joinQueued(network.join(), FOE, 200)).rejects.toBeInstanceOf(LobbyNoAnswerError);
+    expect(verifications - before).toBe(1);
   });
 
   it("is refused by a coded lobby, which takes no proof", async () => {
