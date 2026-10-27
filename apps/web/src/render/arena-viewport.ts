@@ -42,8 +42,6 @@ export interface ArenaViewport {
    * over a new point every frame, so a name under it follows (#253).
    */
   pointerWorld(): Vec2 | undefined;
-  /** The cursor on the canvas, CSS px, or `undefined` off it. */
-  pointerScreen(): Vec2 | undefined;
   /** The canvas, CSS px. */
   size(): Size;
   /** Point the camera, with what the HUD covers; the scene draws through it from this frame. */
@@ -228,9 +226,6 @@ export async function createArenaViewport(parent: HTMLElement): Promise<ArenaVie
       }
       const world = scene.cameras.main.getWorldPoint(pointer.x, pointer.y);
       return vec2(world.x, world.y);
-    },
-    pointerScreen() {
-      return pointer;
     },
     size() {
       return { width: game.scale.width, height: game.scale.height };

@@ -177,10 +177,12 @@ body {
 }
 
 /* --------------------------------------------------------------------------
-   HUD — plain DOM over the canvas (brief §21). Pinned to the bottom so the
-   arena stays unobstructed; everything is geometry and text, no imagery.
+   HUD — plain DOM over the canvas (brief §21), laid out as GW1's (#1042):
+   your block bottom centre, the scoreboard and target frame top centre, so
+   the arena between stays unobstructed. Geometry and text, no imagery.
    -------------------------------------------------------------------------- */
 
+/* A full-width band, for the gradient; its column is centred. */
 .hud {
   position: absolute;
   left: 0;
@@ -188,6 +190,7 @@ body {
   bottom: 0;
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 0.4rem;
   padding: 0.6rem 0.9rem 0.9rem;
   background: linear-gradient(to top, rgb(14 17 22 / 95%), rgb(14 17 22 / 0%));
@@ -201,12 +204,30 @@ body {
   pointer-events: auto;
 }
 
-/* The target frame (#484): header, health bar, effects, cast row. Only
-   the effects row grows it, upwards, so the bars under it never jump. */
+/* Top centre (#1042): the scoreboard, and the target frame under it. */
+.hud-top {
+  position: absolute;
+  top: 0.6rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  pointer-events: none;
+  font-size: 0.78rem;
+}
+
+/* The target frame (#484): header, health bar, cast row, effects. Only
+   the effects row grows it, downwards, so the rows above it never jump. */
 .hud-target {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 0.2rem;
+  padding: 0.3rem 0.6rem;
+  background: rgb(14 17 22 / 85%);
+  border: 1px solid var(--line);
   color: var(--ink-dim);
   letter-spacing: 0.04em;
 }
@@ -235,6 +256,11 @@ body {
   display: none;
 }
 
+/* A fixed width: no skill bar up here to match. */
+.hud-target-health {
+  width: 260px;
+}
+
 /* Hidden with no target, but its space kept. */
 .hud-target-health[hidden] {
   display: block;
@@ -250,9 +276,10 @@ body {
   border-color: #4a5464;
 }
 
-/* The target's effects (#835) wrap inside the health bar's width. */
+/* The target's effects (#835) wrap inside the health bar's width, down. */
 .hud-target .effects-monitor {
-  max-width: 220px;
+  justify-content: center;
+  max-width: 260px;
 }
 
 /* Maximum health a deep wound took (#764): the bar's far end, greyed, as GW1. */
@@ -347,16 +374,33 @@ body {
   vertical-align: -0.2em;
 }
 
+/* Your block's column (#1042), as wide as the skill bar: nothing else in it
+   counts towards its width, so the bars stretch to the slots'. */
+.hud-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.hud-column > :not(.hud-skills) {
+  contain: inline-size;
+}
+
+/* Morale and gear, then health over energy, as GW1. */
 .hud-bars {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.hud-status {
+  display: flex;
+  justify-content: center;
   gap: 0.5rem;
 }
 
 .hud-bar {
   position: relative;
-  width: 220px;
   height: 16px;
   background: #11161d;
   border: 1px solid var(--line);
@@ -439,6 +483,12 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
+}
+
+/* Yours (#1042) wrap upward, away from the bars, centred over them. */
+.hud-column > .effects-monitor {
+  flex-wrap: wrap-reverse;
+  justify-content: center;
 }
 
 .effects-monitor[hidden] {
@@ -1755,10 +1805,6 @@ body {
    score never competes with checking what you can cast. The foes' pips
    sit beside them (#881). */
 .hud-scoreboard {
-  position: absolute;
-  top: 0.6rem;
-  left: 50%;
-  transform: translateX(-50%);
   display: flex;
   align-items: center;
   gap: 0.7rem;
@@ -3344,6 +3390,7 @@ body.has-expanded-training #screens {
    always reserved, so showing it never shifts the skill bar. */
 .hud-message {
   min-height: 1.2em;
+  text-align: center;
   color: #f2cc60;
   font-size: 0.9rem;
   letter-spacing: 0.04em;
@@ -3364,7 +3411,6 @@ body.has-expanded-training #screens {
   letter-spacing: 0.04em;
   text-shadow: 0 1px 2px rgb(0 0 0 / 80%);
   /* A plate, so the dim ink holds 4.5:1 over walls and bodies too. */
-  align-self: flex-start;
   padding: 0.15rem 0.5rem;
   background: rgb(14 17 22 / 92%);
 }

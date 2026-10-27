@@ -19,7 +19,7 @@ import {
   secondaryClickIntents,
 } from "./input/mouse-intents.js";
 import { attachNameReveal } from "./input/name-reveal.js";
-import { closestTarget, nextTabTarget } from "./input/tab-target.js";
+import { closestTarget, nextTabTarget, selfTargetIntent } from "./input/tab-target.js";
 import { skillSlotForKeyDown } from "./input/skill-keys.js";
 import { attachMatchMusic } from "./music/match-music.js";
 import { music } from "./music/play-music.js";
@@ -245,20 +245,21 @@ export async function startMatchView(
   const partyWindow = createPartyWindow(parent, (targetSessionId) => {
     connection.sendIntent({ kind: "target", targetSessionId });
   });
-  // The arena's edge stops below the scoreboard and above the bars, not
-  // under them (#440). From the bars, as the lines above them come and go.
+  // The arena's edge stops below the target frame and above the bars, not
+  // under them (#440, #1042). From the bars, as the lines above them come
+  // and go; to the frame's bottom, as its effects row grows.
   const measureCover = (): void => {
     // The chat panel (#479) sits just above the HUD, wherever its top is.
     parent.style.setProperty("--hud-height", `${String(hud.root.offsetHeight)}px`);
     camera?.setCover({
-      top: hud.scoreboard.offsetTop + hud.scoreboard.offsetHeight,
+      top: hud.top.offsetTop + hud.top.offsetHeight,
       bottom: hud.root.offsetHeight - hud.bars.offsetTop,
     });
   };
   const coverObserver = new ResizeObserver(measureCover);
   coverObserver.observe(hud.root);
   coverObserver.observe(hud.bars);
-  coverObserver.observe(hud.scoreboard);
+  coverObserver.observe(hud.top);
   const useSkill = (slot: number): void => {
     connection.sendIntent({ kind: "use-skill", slot });
   };
@@ -409,6 +410,11 @@ export async function startMatchView(
       }
     } else if (action === "target-called") {
       const intent = calledTargetIntent(connection.getSnapshot(), connection.getCalls());
+      if (intent !== undefined) {
+        connection.sendIntent(intent);
+      }
+    } else if (action === "target-self") {
+      const intent = selfTargetIntent(latestMatch.players, connection.selfSessionId);
       if (intent !== undefined) {
         connection.sendIntent(intent);
       }
@@ -593,13 +599,14 @@ export async function startMatchView(
       matchMusic.dispose();
       reconnectCountdown.dispose();
       reconnectOverlay.destroy();
-      // The scoreboard, result and mute button sit beside the HUD root, in
-      // the shared viewport, so they go one by one or pile up per match.
+      // The scoreboard and target frame, result and mute button sit beside
+      // the HUD root, in the shared viewport, so they go one by one or pile
+      // up per match.
       hud.root.remove();
       hud.slotTips.dispose();
       hud.effects.dispose();
       hud.targetEffects.dispose();
-      hud.scoreboard.remove();
+      hud.top.remove();
       hud.result.remove();
       offMute();
       jukebox.dispose();

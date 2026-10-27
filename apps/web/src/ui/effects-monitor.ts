@@ -7,7 +7,7 @@ import {
 import type { PlayerSnapshot } from "@vibewars/game-session";
 
 import { STATUS_ICON } from "../render/status-icons.js";
-import { placeTip } from "./skill-tooltip.js";
+import { placeTip, type SkillTooltipPlacement } from "./skill-tooltip.js";
 import { SLOT_TOOLTIP_DELAY_MS } from "./slot-tooltip.js";
 
 /**
@@ -179,6 +179,7 @@ function renderTip(node: HTMLElement, row: EffectRow, canEnd: boolean): void {
 /**
  * The monitor, in `parent`, with icons `size` px square. `update` reuses
  * each row's icon by bearer and id, so a frame touches only what changed.
+ * Its tooltips open on the `placement` side of the icon (#1042).
  * A double-click on an endable row calls `onEnd` (#838); on any other,
  * or with no `onEnd`, it does nothing.
  */
@@ -186,6 +187,7 @@ export function createEffectsMonitor(
   parent: HTMLElement,
   size: number,
   label: string,
+  placement: SkillTooltipPlacement,
   onEnd?: (bearerId: string, statusId: StatusId) => void,
 ): EffectsMonitor {
   const root = document.createElement("div");
@@ -230,7 +232,7 @@ export function createEffectsMonitor(
     tipFor = key;
     tipRow = row;
     renderTip(tip, row, onEnd !== undefined);
-    placeTip(tip, icon.item, "above");
+    placeTip(tip, icon.item, placement);
   };
 
   const iconFor = (key: string, id: StatusId, name: string): Icon => {

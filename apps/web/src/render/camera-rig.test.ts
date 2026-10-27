@@ -5,7 +5,6 @@ import { LONG_BOW_RANGE } from "@vibewars/game-core";
 import {
   DEFAULT_STEP,
   LEASH_MARGIN_PX,
-  LOOK_AHEAD,
   VIEW_ASPECT,
   VIEW_STEPS,
   WHEEL_IDLE,
@@ -29,7 +28,6 @@ const input = (overrides: Partial<CameraInput> = {}): CameraInput => ({
   self: { x: 5_000, y: 5_000 },
   viewport: overrides.viewport ?? { width: 1280, height: 720 },
   scaleTo: overrides.viewport ?? { width: 1280, height: 720 },
-  pointer: undefined,
   reducedMotion: false,
   ...overrides,
 });
@@ -78,34 +76,27 @@ describe("the view steps", () => {
 });
 
 describe("stepCamera", () => {
-  it("follows you, centred, with the pointer off the canvas", () => {
+  it("follows you, centred", () => {
     const { view } = run(createCameraRig(), input(), 1);
     expect(view).toMatchObject({ x: 5_000, y: 5_000 });
     expect(view.zoom).toBeCloseTo(720 / 1100);
   });
 
-  it("leans toward the pointer, and back once it leaves the canvas", () => {
-    const leaning = run(createCameraRig(), input({ pointer: { x: 1280, y: 360 } }), 120);
-    expect(leaning.view.x).toBeGreaterThan(5_000);
-    expect(leaning.view.y).toBeCloseTo(5_000);
-    const back = run(leaning.rig, input(), 120);
-    expect(back.view.x).toBeCloseTo(5_000, 0);
+  it("the pointer never moves the view: it stays on you as you walk (#1019)", () => {
+    let state = run(createCameraRig(), input(), 120);
+    for (let i = 0; i < 120; i += 1) {
+      const self = { x: 5_000 + i * 3, y: 5_000 - i * 2 };
+      state = stepCamera(state.rig, input({ self }), FRAME);
+      expect(state.view.x).toBe(self.x);
+      expect(state.view.y).toBe(self.y);
+    }
   });
 
-  it("lands the look-ahead and the zoom in one step with reduced motion", () => {
-    const pointer = { x: 1280, y: 360 };
-    const settled = run(createCameraRig(), input({ pointer }), 600).view;
-    const first = run(createCameraRig(), input({ pointer }), 1).rig;
-    const snapped = stepCamera(
-      wheelNotch(first, 1),
-      input({ pointer, reducedMotion: true }),
-      FRAME,
-    );
+  it("lands the zoom in one step with reduced motion", () => {
+    const first = run(createCameraRig(), input(), 1).rig;
+    const snapped = stepCamera(wheelNotch(first, 1), input({ reducedMotion: true }), FRAME);
     expect(snapped.view.zoom).toBeCloseTo(zoomFor(3, input().viewport));
-    // The lean scales with the new zoom: the same share of the screen.
-    expect((snapped.view.x - 5_000) * snapped.view.zoom).toBeCloseTo(
-      (settled.x - 5_000) * settled.zoom,
-    );
+    expect(snapped.view).toMatchObject({ x: 5_000, y: 5_000 });
   });
 
   it("eases the zoom to its step", () => {
@@ -117,22 +108,20 @@ describe("stepCamera", () => {
   });
 
   it("looks past the map's edge as anywhere else: no clamp (#721)", () => {
-    const self = { x: 0, y: 0 };
-    const pointer = { x: 0, y: 0 };
-    const { view } = run(createCameraRig(), input({ self, pointer, reducedMotion: true }), 2);
-    expect(view.x).toBeCloseTo((-640 * LOOK_AHEAD) / view.zoom, 9);
-    expect(view.y).toBeCloseTo((-360 * LOOK_AHEAD) / view.zoom, 9);
-    expect(view.x).toBeLessThan(0);
-    expect(view.y).toBeLessThan(0);
+    const at = input({ self: { x: 0, y: 0 } });
+    const settled = run(createCameraRig(), at, 1).rig;
+    const panned = panBy(settled, { x: -200, y: -100 }, at.viewport, at.scaleTo);
+    const { view } = stepCamera(panned, at, FRAME);
+    expect(view.x).toBeCloseTo(-200 / view.zoom, 9);
+    expect(view.y).toBeCloseTo(-100 / view.zoom, 9);
   });
 
-  it("snaps when you jump: no glide from the old place", () => {
-    const pointer = { x: 1280, y: 360 };
-    const settled = run(createCameraRig(), input({ pointer }), 120).rig;
-    expect(settled.lead.x).toBeGreaterThan(0);
-    const jumped = stepCamera(settled, input({ pointer, self: { x: 5_300, y: 5_000 } }), FRAME);
+  it("snaps when you jump: no glide from the old place, and the pan is dropped", () => {
+    const settled = run(createCameraRig(), input(), 1).rig;
+    const panned = panBy(settled, { x: 300, y: 0 }, input().viewport, input().scaleTo);
+    const jumped = stepCamera(panned, input({ self: { x: 5_300, y: 5_000 } }), FRAME);
     expect(jumped.view.x).toBe(5_300);
-    expect(jumped.rig.lead).toEqual({ x: 0, y: 0 });
+    expect(jumped.rig.offset).toEqual({ x: 0, y: 0 });
   });
 });
 
@@ -172,16 +161,14 @@ describe("the RMB pan (#442)", () => {
     }
   });
 
-  it("holds its offset while you walk, with no look-ahead", () => {
+  it("holds its offset while you walk", () => {
     const settled = run(createCameraRig(), input(), 1).rig;
     const panned = panBy(settled, { x: 120, y: -40 }, VIEWPORT, VIEWPORT);
-    const pointer = { x: 1200, y: 100 };
-    const here = run(panned, input({ pointer }), 30);
+    const here = run(panned, input(), 30);
     expect(here.view.x - 5_000).toBeCloseTo(120 / here.view.zoom, 6);
-    const there = run(here.rig, input({ pointer, self: { x: 5_100, y: 4_950 } }), 30);
+    const there = run(here.rig, input({ self: { x: 5_100, y: 4_950 } }), 30);
     expect(there.view.x - here.view.x).toBeCloseTo(100, 6);
     expect(there.view.y - here.view.y).toBeCloseTo(-50, 6);
-    expect(there.rig.lead).toEqual({ x: 0, y: 0 });
   });
 
   it("glides back once let go: under 1 u within 1 s at 60 Hz", () => {

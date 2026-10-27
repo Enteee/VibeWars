@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { ChainRole } from "@vibewars/game-core";
 import type { CastRefusedMessage } from "@vibewars/game-protocol";
@@ -11,6 +11,7 @@ import { DEFAULT_KEYMAP } from "../input/keymap.js";
 import { isEliteSkill } from "./icons.js";
 
 import {
+  createHud,
   describeOutcome,
   describeRefusal,
   enemyPips,
@@ -639,6 +640,84 @@ describe("targetEffectRows (#835)", () => {
     const me = { ...ally, sessionId: "me" };
     expect(targetEffectRows(me, me, names, 10)).toEqual([
       expect.objectContaining({ id: "armor-boost", yours: true, casterName: "you" }),
+    ]);
+  });
+});
+
+/** Just enough of an element for `createHud` to build into, without jsdom. */
+class FakeNode {
+  className = "";
+  hidden = false;
+  readonly children: FakeNode[] = [];
+  readonly style = { setProperty: (): void => undefined };
+  readonly setAttribute = (): void => undefined;
+
+  appendChild(child: FakeNode): FakeNode {
+    this.children.push(child);
+    return child;
+  }
+
+  append(...children: (FakeNode | string)[]): void {
+    for (const child of children) {
+      if (typeof child !== "string") {
+        this.appendChild(child);
+      }
+    }
+  }
+}
+
+/** `node` and everything under it, in document order. */
+function descendants(node: FakeNode): FakeNode[] {
+  return node.children.flatMap((child) => [child, ...descendants(child)]);
+}
+
+describe("createHud's layout (#1042)", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const build = (): { parent: FakeNode; hud: ReturnType<typeof createHud> } => {
+    vi.stubGlobal("document", { createElement: () => new FakeNode() });
+    const parent = new FakeNode();
+    const hud = createHud(parent as unknown as HTMLElement, () => undefined);
+    return { parent, hud };
+  };
+  const named = (nodes: FakeNode[], names: readonly string[]): string[] =>
+    nodes
+      .map((node) => node.className.split(" "))
+      .flatMap((classes) => names.filter((name) => classes.includes(name)));
+
+  it("stacks your block, top down: hint, message, effects, morale and gear, health, energy, skills", () => {
+    const { hud } = build();
+    const order = [
+      "hud-hint",
+      "hud-message",
+      "effects-monitor",
+      "hud-morale",
+      "hud-gear",
+      "hud-bar-health",
+      "hud-bar-energy",
+      "hud-skills",
+    ];
+    expect(named(descendants(hud.root as unknown as FakeNode), order)).toEqual(order);
+  });
+
+  it("puts the target frame under the scoreboard, outside your block", () => {
+    const { parent, hud } = build();
+    const top = hud.top as unknown as FakeNode;
+    expect(parent.children).toContain(top);
+    expect(top.children.map((node) => node.className)).toEqual(["hud-scoreboard", "hud-target"]);
+    expect(descendants(hud.root as unknown as FakeNode)).not.toContain(hud.targetPanel);
+  });
+
+  it("grows the target frame's effects below its cast row", () => {
+    const { hud } = build();
+    const rows = (hud.targetPanel as unknown as FakeNode).children.map((node) => node.className);
+    expect(rows).toEqual([
+      "hud-target-header",
+      "hud-target-health-row",
+      "hud-target-cast",
+      "effects-monitor",
     ]);
   });
 });

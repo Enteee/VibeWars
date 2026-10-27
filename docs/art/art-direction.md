@@ -90,17 +90,40 @@ second row, never `+N`, and with none the monitor takes no room.
 No seconds on the icon, as GW1: the hover says the name, the category,
 what it does, who it is from and the whole seconds left.
 
+### HUD layout
+
+The match HUD sits as GW1's does (#1042): what you look at in the fight
+is at the screen's two centres, and the arena between them is clear.
+
+```text
+ now-playing        [ scoreboard: score · clock · enemies ]        controls
+                    [ target frame, effects growing down   ]        ally-watch
+
+                               (arena)
+
+ chat               [ hint / message                       ]
+                    [ your effects, growing up             ]
+                    [ morale · gear                        ]
+                    [ health                               ]
+                    [ energy                               ]
+                    [ skill bar                            ]
+```
+
+Your bars are as wide as the skill bar. The left edge under now-playing
+stays free for a party window (#486).
+
 ### Target frame
 
 The match HUD's target frame (#484) is three rows of fixed size, so the
-HUD never jumps when a row has nothing to show, and one that grows:
+HUD never jumps when a row has nothing to show, and one under them that
+grows downward:
 
 | Row     | Shows                                                                                                     |
 | ------- | --------------------------------------------------------------------------------------------------------- |
 | Header  | Profession icons, the name in `ink`, the "attacking" swords                                               |
 | Health  | A `hud-health` bar labelled with the percentage, rounded down; `412 / 480` added for you and allies       |
-| Effects | The target's statuses as your effects monitor shows them, at 16 px with a 4 px tick; none, no room (#835) |
 | Cast    | While the target casts: the type badge, the skill's name, and a 6 px bar filling in `ink`, never blue     |
+| Effects | The target's statuses as your effects monitor shows them, at 16 px with a 4 px tick; none, no room (#835) |
 
 A foe shows the percentage alone, as GW1 shows a foe's bar alone. A dead
 target has an empty track edged in `dead`. An interrupted cast keeps the
@@ -627,7 +650,7 @@ it, not baked in, so one file serves every screen.
 |          |                 | in full, its silhouette as a 20% watermark                                 |
 | Glyph    | Primary effect  | One shape from the table below, `ink` with a `bg` casing, in the box 3..21 |
 | Modifier | How it bends it | Bottom right, on a dark disc, `ink`: up, down, less, area, clock, stun,    |
-|          |                 | bleed, self                                                                |
+|          |                 | bleed, self, bolt                                                          |
 
 - **Shape first.** Glyph and modifier are `ink` only; the plate's hue is
   decoration, so every icon reads with the colour taken out.
@@ -643,8 +666,9 @@ it, not baked in, so one file serves every screen.
 - **Glyph vocabulary** (grows by effect, not by skill): heal, fireball (comet),
   axe, sword, hammer, spear, arrow, volley, interrupt (burst), speed (chevrons
   right), slow (chevrons left), dash, energy (bolt), mountain (earth), cleanse
-  (drop, struck through), armor (shield), flask, flame, trident, hawk, rock. A
-  new primary effect adds a glyph; a new skill adds a row.
+  (drop, struck through), armor (shield), flask, flame, trident, hawk, rock,
+  arrow-burst, arrow-pierce, arrow-flame. A new primary effect adds a glyph; a
+  new skill adds a row.
 
 ### Skill slot states
 
