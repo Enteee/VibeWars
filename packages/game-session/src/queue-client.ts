@@ -71,8 +71,12 @@ export interface QueueClientOptions {
 export interface QueueClient {
   readonly state: QueueState;
   onChange(handler: (state: QueueState) => void): () => void;
-  /** Heartbeat when one is due, and form groups from what the board said. */
-  tick(): void;
+  /**
+   * Heartbeat when one is due, and form groups from what the board said.
+   * Resolves once this tick's formation has landed; a caller on a timer
+   * need not wait for it.
+   */
+  tick(): Promise<void>;
   /** The caller is in `group.room`. */
   enteredLobby(): void;
   /** The lobby timed out without `noShows`: they are skipped, and this client queues again. */
@@ -179,7 +183,7 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
     }
   }
 
-  function form(): void {
+  function form(): Promise<void> {
     const at = now();
     const ours = ++generation;
     // A dead ticket costs nothing to keep, but a long queue would keep them all.
@@ -188,7 +192,7 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
         tickets.delete(ticketId);
       }
     }
-    void formGroups({
+    return formGroups({
       tickets: [...tickets.values()],
       now: at,
       mode,
@@ -224,6 +228,10 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
   const unsubscribe = board.subscribe(mode, heard);
   const untrouble = board.onTrouble((trouble) => {
     if (!left && trouble === "no-relay" && state.kind !== "in-lobby") {
+      // A formation in flight is stale, and a window from before the
+      // outage must not count toward the group met after it.
+      generation += 1;
+      settling = undefined;
       setState({ kind: "unreachable" });
     }
   });
@@ -239,7 +247,7 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
         handlers.delete(handler);
       };
     },
-    tick: () => {
+    tick: async () => {
       if (left) {
         return;
       }
@@ -250,7 +258,7 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
         publish();
       }
       if (state.kind !== "in-lobby" && state.kind !== "unreachable") {
-        form();
+        await form();
       }
     },
     enteredLobby: () => {

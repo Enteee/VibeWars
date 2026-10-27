@@ -32,13 +32,11 @@ function fakeKey(n: number): TicketKey {
   return { ticketId, sign: (digest) => `${ticketId}${String(digest.length).padStart(64, "0")}` };
 }
 
-/** Let the board deliver and every formation in flight finish. */
-async function settle(): Promise<void> {
-  for (let i = 0; i < 3; i += 1) {
-    await new Promise<void>((resolve) => {
-      setTimeout(resolve, 0);
-    });
-  }
+/** Let the board deliver: it does so in microtasks, all run before a timer. */
+async function deliver(): Promise<void> {
+  await new Promise<void>((resolve) => {
+    setTimeout(resolve, 0);
+  });
 }
 
 class Queue {
@@ -80,21 +78,19 @@ class Queue {
       heartbeatAt: this.now,
       ...ticket,
     });
-    await settle();
+    await deliver();
   }
 
-  /** `ms` pass; every client ticks once, then the board and formations catch up. */
+  /** `ms` pass; every client ticks once, its formation lands, and the board catches up. */
   public async advance(ms = STEP_MS): Promise<void> {
     this.now += ms;
-    for (const client of this.clients) {
-      client.tick();
-    }
-    await settle();
+    await Promise.all(this.clients.map((client) => client.tick()));
+    await deliver();
   }
 
   /** Advance a step at a time until `done`, failing after `maxMs`. */
   public async until(done: () => boolean, maxMs = 30_000): Promise<void> {
-    await settle();
+    await deliver();
     for (let waited = 0; !done(); waited += STEP_MS) {
       if (waited > maxMs) {
         throw new Error("the queue never got there");
@@ -190,7 +186,7 @@ describe("createQueueClient", () => {
 
     a.fellThrough([noShow]);
     expect(a.state.kind).toBe("fell-through");
-    await settle();
+    await deliver();
     expect(queue.heard).toContainEqual({ kind: "withdrawn", ticketId: oldId });
 
     // The no-show keeps publishing, as a client that never showed might.
@@ -232,7 +228,7 @@ describe("createQueueClient", () => {
   it("publishes a heartbeat every TICKET_HEARTBEAT_MS", async () => {
     const queue = new Queue("random-arena-4v4");
     queue.join();
-    await settle();
+    await deliver();
     for (let i = 0; i < 12; i += 1) {
       await queue.advance();
     }
@@ -261,11 +257,29 @@ describe("createQueueClient", () => {
     await queue.advance();
 
     queue.memory.trouble("no-relay");
-    await settle();
+    await deliver();
     expect(a.state.kind).toBe("unreachable");
 
     await queue.advance(TICKET_HEARTBEAT_MS);
     expect(a.state.kind).toBe("searching");
+  });
+
+  it("starts the settle window again after an outage, rather than counting the time away", async () => {
+    const queue = new Queue("random-arena-1v1");
+    const a = queue.join();
+    const b = queue.join();
+    await queue.until(() => a.state.kind === "forming");
+
+    queue.memory.trouble("no-relay");
+    await deliver();
+    expect(a.state.kind).toBe("unreachable");
+
+    // Back after longer than the window: the group is forming again, not met.
+    await queue.advance(FORMATION_SETTLE_MS + TICKET_HEARTBEAT_MS);
+    expect(a.state.kind).toBe("searching");
+    await queue.advance();
+    expect(a.state.kind).toBe("forming");
+    await queue.until(() => a.state.kind === "in-lobby" && b.state.kind === "in-lobby");
   });
 
   it("neither counts nor groups a ticket from the far future", async () => {
