@@ -9,6 +9,9 @@ import { button, h, toast } from "./kit.js";
 /** How long Use stays disabled after the prompt opens, as a browser's permission prompt does. */
 const ARM_USE_MS = 500;
 
+/** The open prompt's close, so a second link replaces it rather than stacking on it. */
+let closeOpen: (() => void) | undefined;
+
 /** What a build on a shared origin (GitHub Pages) says of the relay. */
 export const RELAY_VISIT_ONLY =
   "Kept for this visit only: this site shares its storage with others, so it is not saved. Open the link again next time.";
@@ -17,13 +20,15 @@ export const RELAY_VISIT_ONLY =
  * Asked over the menu when the page was opened from a relay invite link
  * (#972): a link from someone else never routes the player's traffic until
  * they say Use. Ignore, or Esc, saves nothing. With a relay already saved
- * it names both, and replaces only on Use.
+ * it names both, and replaces only on Use. A second link replaces an open
+ * prompt, Use disabled again, so closing it never uncovers an armed one.
  */
 export function openRelayPrompt(
   parent: HTMLElement,
   offered: TurnConfig,
   saved: TurnConfig | undefined,
 ): void {
+  closeOpen?.();
   const backdrop = h("div", "relay-prompt-overlay");
   const panel = h("div", "screen relay-prompt");
   panel.setAttribute("role", "dialog");
@@ -49,6 +54,9 @@ export function openRelayPrompt(
   const close = (): void => {
     document.removeEventListener("keydown", onKey, true);
     backdrop.remove();
+    if (closeOpen === close) {
+      closeOpen = undefined;
+    }
   };
   const onKey = (event: KeyboardEvent): void => {
     if (event.key === "Escape") {
@@ -73,6 +81,7 @@ export function openRelayPrompt(
 
   backdrop.appendChild(panel);
   parent.appendChild(backdrop);
+  closeOpen = close;
   document.addEventListener("keydown", onKey, true);
   // Enter on a link nobody read should not route traffic: focus starts on Ignore.
   ignore.focus();

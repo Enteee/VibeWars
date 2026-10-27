@@ -128,3 +128,14 @@ test("(6) a relay link pasted into an open tab is taken out of the address bar a
   expect(new URL(page.url()).hash).toBe("");
   await expect(prompt).toHaveCount(0);
 });
+
+test("(7) a second link replaces the open prompt rather than stacking on it", async ({ page }) => {
+  await page.goto(link(RELAY));
+  const prompt = page.getByRole("dialog", { name: "Relay link" });
+  await expect(prompt).toContainText("turn.example");
+  await page.goto(link({ ...RELAY, urls: ["turn:second.example"] }));
+  await expect(prompt).toContainText("Use relay second.example for connections?");
+  await expect(prompt).toHaveCount(1);
+  await prompt.getByRole("button", { name: "Ignore" }).click();
+  await expect(prompt).toHaveCount(0);
+});
