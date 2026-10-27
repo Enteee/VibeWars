@@ -957,6 +957,69 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       },
     ],
   },
+
+  /* ---------------------------------------------------------------------- */
+  /* Energy loss, and amounts per point lost (#793)                         */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "mesmer.energy-burn",
+    name: "Energy Burn",
+    type: "spell",
+    elite: false,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 10 },
+    activationSeconds: 2,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Target foe loses 1...8...10 Energy and takes 9 damage for each
+    // point of energy lost."
+    effects: [
+      {
+        kind: "energy-loss",
+        amount: { scaling: { attributeId: "mesmer.domination-magic", atZero: 1, atTwelve: 8 } },
+      },
+      {
+        kind: "damage",
+        amount: { flat: 9 },
+        type: "typeless",
+        armorPenetration: 0,
+        perEnergyLost: true,
+      },
+    ],
+  },
+  {
+    id: "mesmer.energy-tap",
+    name: "Energy Tap",
+    type: "spell",
+    elite: false,
+    profession: "mesmer",
+    attributeId: "mesmer.inspiration-magic",
+    cost: { kind: "energy", amount: 5 },
+    activationSeconds: 2,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Target foe loses 4...6...7 Energy. You then gain 2 Energy for each
+    // point of Energy target foe lost."
+    effects: [
+      {
+        kind: "energy-loss",
+        amount: { scaling: { attributeId: "mesmer.inspiration-magic", atZero: 4, atTwelve: 6 } },
+      },
+      { kind: "energy-gain", amount: { flat: 2 }, perEnergyLost: true },
+    ],
+  },
 ];
 
 export const SKILLS_BY_ID: ReadonlyMap<string, Skill> = new Map(
