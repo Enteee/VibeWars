@@ -362,6 +362,8 @@ export interface ActiveStatus {
   readonly id: StatusId;
   /** Seconds of duration still remaining. */
   remainingSeconds: number;
+  /** The length of the application that set this entry: a duration bar's full width. */
+  durationSeconds: number;
   /** Incoming attacks before it ends (`endsAfterAttacks`); `undefined`: no such limit. */
   attacksLeft: number | undefined;
   /** Spells still to start before it ends (`nextSpells`); `undefined`: no such limit. */
@@ -445,6 +447,7 @@ export class StatusSet {
     this.#statuses.set(id, {
       id,
       remainingSeconds: durationSeconds,
+      durationSeconds,
       attacksLeft: definition.endsAfterAttacks,
       spellsLeft: definition.nextSpells?.count,
       sourceId,
@@ -465,11 +468,14 @@ export class StatusSet {
     const existing = this.#statuses.get(id);
     if (existing !== undefined) {
       existing.remainingSeconds = Math.max(existing.remainingSeconds, durationSeconds);
+      // A bar is never over full.
+      existing.durationSeconds = Math.max(existing.durationSeconds, existing.remainingSeconds);
       return;
     }
     this.#statuses.set(id, {
       id,
       remainingSeconds: durationSeconds,
+      durationSeconds,
       attacksLeft: undefined,
       spellsLeft: undefined,
       sourceId,

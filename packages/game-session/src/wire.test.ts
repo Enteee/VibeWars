@@ -8,7 +8,13 @@ import {
 import { MAX_WIRE_STATUSES } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
-import { WIRE_STATUS_IDS, sameSkillBar, skillBarSlots, wireStatuses } from "./wire.js";
+import {
+  WIRE_STATUS_IDS,
+  sameSkillBar,
+  skillBarSlots,
+  statusSnapshot,
+  wireStatuses,
+} from "./wire.js";
 
 const ORDER: readonly StatusCategory[] = [
   "condition",
@@ -27,6 +33,7 @@ function status(id: StatusId, remainingSeconds: number): ActiveStatus {
   return {
     id,
     remainingSeconds,
+    durationSeconds: 12,
     attacksLeft: undefined,
     spellsLeft: undefined,
     sourceId: "caster",
@@ -39,7 +46,7 @@ function rank(entry: ActiveStatus): number {
 }
 
 describe("wireStatuses (#636)", () => {
-  it("keeps 32 of 40, every condition and hex, by category, then least time left", () => {
+  it("keeps 32 of 40, every condition and hex, by category, then least time left (#803)", () => {
     // Every status twice, then two more, in reverse table order with
     // times that run against it: nothing is in place by accident.
     const ids = [...WIRE_STATUS_IDS, ...WIRE_STATUS_IDS, ...WIRE_STATUS_IDS].reverse();
@@ -53,25 +60,23 @@ describe("wireStatuses (#636)", () => {
     for (const entry of urgent) {
       expect(sent).toContain(entry);
     }
-    for (const [a, b] of sent.slice(1).map((entry, i) => [sent[i], entry] as const)) {
-      if (a === undefined) {
-        continue;
-      }
-      expect(rank(a) <= rank(b), `${a.id} before ${b.id}`).toBe(true);
-      if (rank(a) === rank(b)) {
-        expect(a.remainingSeconds <= b.remainingSeconds, `${a.id} before ${b.id}`).toBe(true);
-        if (a.remainingSeconds === b.remainingSeconds) {
-          expect(a.id <= b.id, `${a.id} before ${b.id}`).toBe(true);
-        }
-      }
-    }
     const lowestSent = Math.max(...sent.map(rank));
     for (const dropped of active.filter((entry) => !sent.includes(entry))) {
       expect(rank(dropped)).toBeGreaterThanOrEqual(lowestSent);
+      // At the cut, the one with less time left is the one kept.
+      for (const kept of sent.filter((entry) => rank(entry) === rank(dropped))) {
+        expect(
+          kept.remainingSeconds < dropped.remainingSeconds ||
+            (kept.remainingSeconds === dropped.remainingSeconds && kept.id <= dropped.id),
+          `${kept.id} kept over ${dropped.id}`,
+        ).toBe(true);
+      }
     }
+    // The ones kept go in the order applied.
+    expect(sent).toEqual(active.filter((entry) => sent.includes(entry)));
   });
 
-  it("keeps all of a few, in category order", () => {
+  it("keeps all of a few, in the order applied (#803)", () => {
     const active = [
       status("sprint", 4),
       status("regeneration", 9),
@@ -79,18 +84,31 @@ describe("wireStatuses (#636)", () => {
       status("burning", 2),
       status("bleeding", 2),
     ];
-    expect(wireStatuses(active).map((entry) => entry.id)).toEqual([
-      "bleeding",
-      "burning",
-      "malaise",
-      "regeneration",
-      "sprint",
-    ]);
+    expect(wireStatuses(active)).toEqual(active);
+    expect(wireStatuses([...active].reverse())).toEqual([...active].reverse());
+  });
+});
+
+describe("statusSnapshot (#803)", () => {
+  it("ends on the match clock, at its full length, by its caster, to 0.1 s", () => {
+    const burning = { ...status("burning", 2.345), durationSeconds: 6.04 };
+    expect(statusSnapshot(burning, 10.01, undefined)).toEqual({
+      id: "burning",
+      endsAt: 12.4,
+      durationSeconds: 6,
+      casterId: "caster",
+    });
   });
 
-  it("is the same for the same statuses in any order", () => {
-    const active = WIRE_STATUS_IDS.map((id, i) => status(id, i % 3));
-    expect(wireStatuses([...active].reverse())).toEqual(wireStatuses(active));
+  it("never sends a duration of nothing", () => {
+    const blink = { ...status("burning", 0.01), durationSeconds: 0.01 };
+    expect(statusSnapshot(blink, 0, undefined).durationSeconds).toBe(0.1);
+  });
+
+  it("ends one borne while activating with its cast", () => {
+    const cast = { remainingSeconds: 1.5, totalSeconds: 2 };
+    const borne = { ...status("healing-signet-armor", Infinity), durationSeconds: Infinity };
+    expect(statusSnapshot(borne, 4, cast)).toMatchObject({ endsAt: 5.5, durationSeconds: 2 });
   });
 });
 

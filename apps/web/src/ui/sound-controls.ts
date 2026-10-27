@@ -3,6 +3,7 @@ import { saveMusicPreference, type MusicPreference } from "../audio/music-prefer
 import { saveSfxVolume } from "../audio/sfx-volume-preference.js";
 import { soundPlayer, type SoundPlayer } from "../audio/sound-player.js";
 import { music, type MusicFollower } from "../music/play-music.js";
+import { mountMusicControls, musicControlsDeps, type MusicControlsDeps } from "./music-controls.js";
 
 /**
  * The sound controls (#424): mute all, the sound effects volume, and the
@@ -10,6 +11,7 @@ import { music, type MusicFollower } from "../music/play-music.js";
  * Options → Sound and the HUD's ♪ popover, so there is never a second
  * volume control to disagree with this one. Every change applies at once
  * and is saved; the volumes ramp to it rather than jump.
+ * The Music block (#425) sits under them, in both places too.
  *
  * `SoundSettings` holds the rules and needs no DOM, so they are tested in
  * Node; `mountSoundControls` only draws it.
@@ -24,6 +26,7 @@ export interface SoundControlsDeps {
   readonly setGlobalMute: (muted: boolean) => void;
   /** Hear a mute made elsewhere, such as the HUD's button; returns the unsubscribe. */
   readonly onGlobalMute: (listener: (muted: boolean) => void) => () => void;
+  readonly musicBlock: MusicControlsDeps;
 }
 
 /** The page's own sound player, music and preferences. */
@@ -36,6 +39,7 @@ export function soundControlsDeps(): SoundControlsDeps {
     isMuted: isGloballyMuted,
     setGlobalMute,
     onGlobalMute,
+    musicBlock: musicControlsDeps(),
   };
 }
 
@@ -152,7 +156,7 @@ function slider(
   return { input, readout };
 }
 
-/** Draw the four controls into `container`; returns the cleanup. */
+/** Draw the four controls, and the Music block under them, into `container`; returns the cleanup. */
 export function mountSoundControls(container: HTMLElement, deps: SoundControlsDeps): () => void {
   const settings = new SoundSettings(deps);
   const panel = document.createElement("div");
@@ -163,6 +167,7 @@ export function mountSoundControls(container: HTMLElement, deps: SoundControlsDe
   const sfx = slider(panel, "sound-sfx-volume", "sound effects volume");
   const musicVolume = slider(panel, "sound-music-volume", "music volume");
   const musicMute = checkbox(panel, "sound-music-mute", "Mute music");
+  const unmountMusic = mountMusicControls(panel, deps.musicBlock);
 
   muteAll.addEventListener("change", () => {
     settings.setMutedAll(muteAll.checked);
@@ -191,6 +196,7 @@ export function mountSoundControls(container: HTMLElement, deps: SoundControlsDe
 
   return () => {
     settings.dispose();
+    unmountMusic();
     panel.remove();
   };
 }

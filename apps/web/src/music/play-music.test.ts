@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { DEFAULT_MUSIC_PREFERENCE, type MusicPreference } from "../audio/music-preference.js";
 import { VOLUME_RAMP_SECONDS } from "../audio/volume-ramp.js";
 import type { MusicState } from "./director.js";
+import { createIntensityOverride } from "./intensity-override.js";
 import type { MusicPlayer } from "./music-player.js";
 import { createMusicFollower } from "./play-music.js";
 
@@ -50,7 +51,13 @@ const state = (trackId: string | null, intensity: MusicState["intensity"]): Musi
 describe("createMusicFollower", () => {
   it("starts at the saved mute, and mutes with the global mute", () => {
     const { player, calls } = recording();
-    const music = createMusicFollower(player, tracks, saved(true), () => 0);
+    const music = createMusicFollower(
+      player,
+      tracks,
+      saved(true),
+      () => 0,
+      createIntensityOverride(),
+    );
     music.setMuted(false);
     expect(calls).toEqual([
       ["setVolume", [0, 0]],
@@ -60,7 +67,13 @@ describe("createMusicFollower", () => {
 
   it("crossfades on a new track, sets a new intensity, and repeats nothing", () => {
     const { player, calls } = recording();
-    const music = createMusicFollower(player, tracks, saved(false), () => 0);
+    const music = createMusicFollower(
+      player,
+      tracks,
+      saved(false),
+      () => 0,
+      createIntensityOverride(),
+    );
     calls.length = 0;
     music.follow(state("clash-of-banners", 0));
     music.follow(state("clash-of-banners", 2));
@@ -76,14 +89,26 @@ describe("createMusicFollower", () => {
 
   it("plays the menu's track on the menu", () => {
     const { player, calls } = recording();
-    const music = createMusicFollower(player, tracks, saved(false), () => 0);
+    const music = createMusicFollower(
+      player,
+      tracks,
+      saved(false),
+      () => 0,
+      createIntensityOverride(),
+    );
     music.screen("menu");
     expect(calls.at(-1)).toEqual(["crossfadeTo", tracks[0]]);
   });
   it("plays at the music volume, silent under either mute, ramping to each change", () => {
     const { player, calls } = recording();
     const preference = { ...DEFAULT_MUSIC_PREFERENCE, musicVolume: 0.4 };
-    const music = createMusicFollower(player, tracks, saved(false, preference), () => 0);
+    const music = createMusicFollower(
+      player,
+      tracks,
+      saved(false, preference),
+      () => 0,
+      createIntensityOverride(),
+    );
     music.setPreference({ ...preference, musicMuted: true });
     music.setMuted(true);
     music.setPreference(preference);
@@ -100,7 +125,13 @@ describe("createMusicFollower", () => {
 
   it("changes the menu's track at once when the mode changes, and stops for Off", () => {
     const { player, calls } = recording();
-    const music = createMusicFollower(player, tracks, saved(false), () => 0);
+    const music = createMusicFollower(
+      player,
+      tracks,
+      saved(false),
+      () => 0,
+      createIntensityOverride(),
+    );
     music.screen("menu");
     calls.length = 0;
     const pinned = {
@@ -119,7 +150,13 @@ describe("createMusicFollower", () => {
 
   it("leaves a fight's track to its next snapshot when the mode changes", () => {
     const { player, calls } = recording();
-    const music = createMusicFollower(player, tracks, saved(false), () => 0);
+    const music = createMusicFollower(
+      player,
+      tracks,
+      saved(false),
+      () => 0,
+      createIntensityOverride(),
+    );
     music.screen("menu");
     music.follow(state("clash-of-banners", 1));
     calls.length = 0;
@@ -129,7 +166,13 @@ describe("createMusicFollower", () => {
 
   it("previews a track at once over the director, and crossfades back when it ends", () => {
     const { player, calls } = recording();
-    const music = createMusicFollower(player, tracks, saved(false), () => 0);
+    const music = createMusicFollower(
+      player,
+      tracks,
+      saved(false),
+      () => 0,
+      createIntensityOverride(),
+    );
     music.screen("menu");
     calls.length = 0;
     music.preview("clash-of-banners");
@@ -143,5 +186,53 @@ describe("createMusicFollower", () => {
       ["crossfadeTo", tracks[0]],
     ]);
     expect(music.intensity).toBe(2);
+  });
+
+  it("plays a fixed override whatever the director says, and the director's level back on Auto (#425)", () => {
+    const { player, calls } = recording();
+    const override = createIntensityOverride();
+    const music = createMusicFollower(player, tracks, saved(false), () => 0, override);
+    music.follow(state("clash-of-banners", 1));
+    calls.length = 0;
+    override.set(3);
+    music.follow(state("clash-of-banners", 2));
+    music.follow(state("first-light", 0));
+    // A new track starts at the fixed level: nothing to send.
+    expect(music.intensity).toBe(0);
+    override.set("auto");
+    expect(calls).toEqual([
+      ["setIntensity", 3],
+      ["crossfadeTo", tracks[0]],
+      ["setIntensity", 0],
+    ]);
+  });
+
+  it("says what you hear: nothing under either mute, nothing for Off (#425)", () => {
+    const { player } = recording();
+    const music = createMusicFollower(
+      player,
+      tracks,
+      saved(false),
+      () => 0,
+      createIntensityOverride(),
+    );
+    let changes = 0;
+    const off = music.onChange(() => {
+      changes += 1;
+    });
+    music.follow(state("first-light", 0));
+    expect(music.nowPlaying).toBe("first-light");
+    music.setMuted(true);
+    expect(music.nowPlaying).toBeNull();
+    music.setMuted(false);
+    music.setPreference({ ...DEFAULT_MUSIC_PREFERENCE, musicMuted: true });
+    expect(music.nowPlaying).toBeNull();
+    music.setPreference(DEFAULT_MUSIC_PREFERENCE);
+    music.follow(state(null, 0));
+    expect(music.nowPlaying).toBeNull();
+    expect(changes).toBe(6);
+    off();
+    music.follow(state("first-light", 0));
+    expect(changes).toBe(6);
   });
 });

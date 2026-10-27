@@ -18,6 +18,7 @@ import type {
 
 import type { KeyLabeller } from "../input/key-labels.js";
 import { SKILL_ACTIONS, actionLabel, codeLabel, type Keymap } from "../input/keymap.js";
+import { paintHealthTint } from "./health-tint.js";
 import {
   attackingIcon,
   isEliteSkill,
@@ -61,6 +62,8 @@ export interface HudElements {
   readonly root: HTMLElement;
   /** Health, energy and statuses, then the skill bar: from its top down, the HUD hides the arena. */
   readonly bars: HTMLElement;
+  /** Your health bar, tinted by your worst degeneration (#807). */
+  readonly healthRow: HTMLElement;
   readonly healthFill: HTMLElement;
   /** The greyed end of the bar: maximum health a deep wound took (#764). */
   readonly healthLost: HTMLElement;
@@ -236,6 +239,7 @@ export function createHud(parent: HTMLElement): HudElements {
   return {
     root,
     bars,
+    healthRow,
     healthFill,
     healthLost,
     healthText,
@@ -478,7 +482,10 @@ export function lostHealthPercent(
   if (player.dead || player.maxHealth <= 0) {
     return 0;
   }
-  const lost = maxHealthLossOfStatusIds(player.maxHealth, player.statuses);
+  const lost = maxHealthLossOfStatusIds(
+    player.maxHealth,
+    player.statuses.map((status) => status.id),
+  );
   return Math.max(0, Math.min(100, (lost / player.maxHealth) * 100));
 }
 
@@ -770,6 +777,7 @@ function renderTarget(
   hud.targetHealth.hidden = target === undefined;
   if (target !== undefined) {
     hud.targetHealth.classList.toggle("is-dead", target.dead);
+    paintHealthTint(hud.targetHealth, target);
     hud.targetHealthFill.style.width = `${String(targetHealthPercent(target))}%`;
     hud.targetHealthLost.style.width = `${String(lostHealthPercent(target))}%`;
     hud.targetHealthText.textContent = targetHealthLabel(target, self.team);
@@ -806,6 +814,7 @@ export function updateHud(
 
   setBar(hud.healthFill, hud.healthText, self.health, self.maxHealth, "hp");
   hud.healthLost.style.width = `${String(lostHealthPercent(self))}%`;
+  paintHealthTint(hud.healthRow, self);
   setBar(hud.energyFill, hud.energyText, self.energy, self.maxEnergy, "en");
   renderPips(hud.healthPips, self.healthPips);
   renderPips(hud.energyPips, self.energyPips);
@@ -817,7 +826,9 @@ export function updateHud(
     (self.weaponId === undefined ? "" : ` · ${describeWeaponName(self.weaponId)}`);
 
   hud.statusList.textContent =
-    self.statuses.length > 0 ? self.statuses.join(" · ") : "no active effects";
+    self.statuses.length > 0
+      ? self.statuses.map((status) => status.id).join(" · ")
+      : "no active effects";
 
   renderTarget(hud, self, target);
 

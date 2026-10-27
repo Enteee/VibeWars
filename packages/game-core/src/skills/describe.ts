@@ -4,7 +4,7 @@ import { getAttribute } from "../professions.js";
 
 import { energyCostOf } from "./activation.js";
 import { resolveMagnitudeAtRanks } from "./scaling.js";
-import { findStatusDefinition } from "./status.js";
+import { findStatusDefinition, type StatusCategory } from "./status.js";
 import { effectiveActivationSeconds, outsideMatch } from "./tick.js";
 import type {
   AreaRule,
@@ -239,13 +239,26 @@ function lowerFirst(text: string): string {
   return `${text.charAt(0).toLowerCase()}${text.slice(1)}`;
 }
 
-/** What an `if` waits for, as the line it leads says it (#521). */
+/** "a hex", "an enchantment". */
+function aCategory(category: StatusCategory): string {
+  return `${category === "enchantment" ? "an" : "a"} ${category}`;
+}
+
+/** What an `if` waits for, as the line it leads says it (#521, #794). */
 function conditionText(condition: EffectCondition): string {
   switch (condition.kind) {
     case "interrupted":
       return "If it interrupts";
     case "removed":
-      return `If it removes ${condition.category === "enchantment" ? "an" : "a"} ${condition.category}`;
+      return `If it removes ${aCategory(condition.category)}`;
+    case "target-health-below":
+      return `If target is below ${String(Math.round(condition.fraction * 100))}% Health`;
+    case "target-has":
+      return `If target has ${aCategory(condition.category)}`;
+    case "caster-has":
+      return `If you have ${aCategory(condition.category)}`;
+    case "target-casting":
+      return "If target is casting a spell";
   }
 }
 
@@ -267,6 +280,11 @@ function describeEffects(
   });
 }
 
+/** " per point lost", for an amount multiplied by the energy taken before it (#793). */
+function perPointLost(effect: { readonly perEnergyLost?: true }): string {
+  return effect.perEnergyLost === undefined ? "" : " per point lost";
+}
+
 function describeEffect(
   effect: UnconditionalEffect,
   ranks: ReadonlyMap<string, number>,
@@ -278,7 +296,10 @@ function describeEffect(
         effect.armorPenetration > 0
           ? ` (${String(Math.round(effect.armorPenetration * 100))}% armor penetration)`
           : "";
-      return { text: `Deals ${String(magnitude.current)} damage${penetration}`, magnitude };
+      return {
+        text: `Deals ${String(magnitude.current)} damage${perPointLost(effect)}${penetration}`,
+        magnitude,
+      };
     }
     case "heal": {
       const magnitude = describeMagnitude(effect.amount, ranks);
@@ -290,7 +311,11 @@ function describeEffect(
     }
     case "energy-gain": {
       const magnitude = describeMagnitude(effect.amount, ranks);
-      return { text: `Gain ${String(magnitude.current)} energy`, magnitude };
+      return { text: `Gain ${String(magnitude.current)} energy${perPointLost(effect)}`, magnitude };
+    }
+    case "energy-loss": {
+      const magnitude = describeMagnitude(effect.amount, ranks);
+      return { text: `Target loses ${String(magnitude.current)} energy`, magnitude };
     }
     case "sacrifice-health":
       return {
@@ -357,11 +382,18 @@ function headlineOf(
       const amount = String(magnitude.current);
       const text =
         effect.kind === "damage"
-          ? `${amount} damage`
+          ? `${amount} damage${perPointLost(effect)}`
           : effect.kind === "heal"
             ? `heals ${amount}`
-            : `+${amount} energy`;
+            : `+${amount} energy${perPointLost(effect)}`;
       return { text, scales: magnitude.attributeId !== undefined };
+    }
+    case "energy-loss": {
+      const magnitude = describeMagnitude(effect.amount, ranks);
+      return {
+        text: `drains ${String(magnitude.current)} energy`,
+        scales: magnitude.attributeId !== undefined,
+      };
     }
     case "if": {
       // Power Spike's card leads with its damage, though it needs a spell.
@@ -499,8 +531,24 @@ export function describeSkill(
   // blow, first, as GW1 writes it. Broad Head Arrow has none.
   const bonusDamage = skill.attack?.bonusDamage;
   const bonus = bonusDamage === undefined ? undefined : describeMagnitude(bonusDamage, ranks);
-  const bonusLine =
-    bonus === undefined ? [] : [{ text: `+${String(bonus.current)} damage`, magnitude: bonus }];
+  // Then its bonus while a state holds (#794): Mystic Sweep's "If you
+  // have an enchantment: +10 damage".
+  const conditionalBonus = skill.attack?.conditionalBonus;
+  const more =
+    conditionalBonus === undefined ? undefined : describeMagnitude(conditionalBonus.amount, ranks);
+  const bonusLine = [
+    ...(bonus === undefined
+      ? []
+      : [{ text: `+${String(bonus.current)} damage`, magnitude: bonus }]),
+    ...(conditionalBonus === undefined || more === undefined
+      ? []
+      : [
+          {
+            text: `${conditionText(conditionalBonus.condition)}: +${String(more.current)} damage`,
+            magnitude: more,
+          },
+        ]),
+  ];
   // An attack skill's if-blocked effects (#534), after the ones a hit gets.
   const onBlocked = (skill.attack?.onBlocked ?? []).flatMap((effect) =>
     describeEffects(effect, ranks).map(({ text, magnitude }) => ({

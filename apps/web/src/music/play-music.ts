@@ -6,6 +6,11 @@ import {
 } from "../audio/music-preference.js";
 import { VOLUME_RAMP_SECONDS } from "../audio/volume-ramp.js";
 import { directMusic, type Intensity, type MusicMode, type MusicState } from "./director.js";
+import {
+  intensityOverride,
+  playedIntensity,
+  type IntensityOverrideStore,
+} from "./intensity-override.js";
 import { measuringMusic, musicPlayer, type MusicPlayer, type MusicTrack } from "./music-player.js";
 import type { MusicLevel } from "./host-protocol.js";
 import type { Mood } from "./mood.js";
@@ -16,7 +21,7 @@ import { TRACKS } from "./tracks/index.js";
  * the player chose (#372): a new track crossfades in on the playing one's
  * next phrase boundary, a new intensity starts on the next cycle, and no
  * track means silence. A jukebox preview plays over all of that until it
- * ends.
+ * ends, and a fixed intensity override (#425) over the director's level.
  */
 
 type PlayableTrack = MusicTrack & { readonly moods: readonly Mood[] };
@@ -35,8 +40,12 @@ export interface MusicFollower {
   setPreference(preference: MusicPreference): void;
   /** Play `trackId` now, over what the director says; `null` goes back to it. */
   preview(trackId: string | null): void;
-  /** The director's intensity, last it said. */
+  /** The director's intensity, last it said, whatever the override plays. */
   readonly intensity: Intensity;
+  /** The track you hear: `null` when nothing plays, or the music is muted. */
+  readonly nowPlaying: string | null;
+  /** Called after anything here may have changed; returns the unsubscribe. */
+  onChange(listener: () => void): () => void;
 }
 
 export function createMusicFollower(
@@ -44,6 +53,7 @@ export function createMusicFollower(
   tracks: readonly PlayableTrack[],
   saved: { readonly muted: boolean; readonly preference: MusicPreference },
   now: () => number,
+  override: IntensityOverrideStore,
 ): MusicFollower {
   let preference = saved.preference;
   let muted = saved.muted;
@@ -51,7 +61,15 @@ export function createMusicFollower(
   let playingId: string | null = null;
   let previewId: string | null = null;
   let directed: string | null = null;
+  /** The director's level, and the one the player was last told to play. */
   let intensity: Intensity = 0;
+  let played: Intensity = 0;
+  const listeners = new Set<() => void>();
+  const changed = (): void => {
+    for (const listener of listeners) {
+      listener();
+    }
+  };
   /** The screen with no fight on it the player is on, to redirect when the mode changes. */
   let onScreen: "menu" | "lobby" | null = null;
 
@@ -75,13 +93,26 @@ export function createMusicFollower(
     }
   };
 
+  /** The override's level, or the director's; sent only when it differs. */
+  const playIntensity = (): void => {
+    const next = playedIntensity(override.get(), intensity);
+    if (next !== played) {
+      played = next;
+      player.setIntensity(played);
+    }
+  };
+  // A new level starts on the next cycle, as the director's does.
+  override.subscribe(() => {
+    playIntensity();
+    changed();
+  });
+
   const follow = (state: MusicState): void => {
     directed = state.trackId;
     play("on-phrase");
-    if (state.intensity !== intensity) {
-      intensity = state.intensity;
-      player.setIntensity(intensity);
-    }
+    intensity = state.intensity;
+    playIntensity();
+    changed();
   };
 
   const mode = (): MusicMode => musicModeOf(preference);
@@ -122,6 +153,7 @@ export function createMusicFollower(
     setMuted(next) {
       muted = next;
       player.setVolume(volume(), VOLUME_RAMP_SECONDS);
+      changed();
     },
     mode,
     get preference() {
@@ -138,13 +170,24 @@ export function createMusicFollower(
       if (onScreen !== null) {
         screen(onScreen);
       }
+      changed();
     },
     preview(trackId) {
       previewId = tracks.some((track) => track.id === trackId) ? trackId : null;
       play(previewId === null ? "on-phrase" : "now");
+      changed();
     },
     get intensity() {
       return intensity;
+    },
+    get nowPlaying() {
+      return muted || preference.musicMuted ? null : playingId;
+    },
+    onChange(listener) {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
     },
   };
 }
@@ -160,6 +203,7 @@ export function music(): MusicFollower {
       TRACKS,
       { muted: loadMuted(), preference: loadMusicPreference() },
       () => Date.now(),
+      intensityOverride,
     );
     if (measuringMusic(location.search)) {
       // For scripts/music-stress.mjs: force the load it measures (#420).

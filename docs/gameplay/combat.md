@@ -108,6 +108,12 @@ casts, its slot on the bar is lit; when your cast ends without going
 off, the slot flashes, red with a ✕ if you were interrupted and grey if
 you cancelled it.
 
+**Some skills read how things stand** (#794), once, as they land and
+before any of their effects. Word of Healing heals 98 more (Healing
+Prayers 12) for an ally below half of its maximum health, a maximum a
+deep wound has lowered; its own heal cannot cancel the bonus. Mystic
+Sweep's blow deals 10 more while you are enchanted, in the same number.
+
 ## Interrupts
 
 Interrupting cancels a cast **only if one is in progress**. Too early or
@@ -125,6 +131,20 @@ Some interrupts are picky (#521). **Power Spike** and **Power Drain** only
 interrupt a spell or a chant; against an attack skill, a signet or an idle
 foe they are a wasted cast. When they land, Power Spike deals damage and
 Power Drain gives you energy.
+
+**Savage Shot** (#794) interrupts whatever its arrow finds being cast, and
+hits 25 harder if that was a spell: one bigger number on the hit, read
+as the arrow lands. A block or a miss does neither.
+
+## Energy denial
+
+A Mesmer can take a foe's energy (#793). **Energy Burn** takes up to 8
+energy and deals 9 damage for each point it took; **Energy Tap** takes up
+to 6 and gives you 2 energy for each. Only whole points the foe has are
+taken, so a foe at 3 energy loses 3, and one at 0 loses nothing and takes
+no damage. Maximum energy is untouched, and a foe drained mid-cast keeps
+casting: energy is paid when a cast starts. The loss floats over the foe
+in blue, "−8 energy", and the Training log has a row for it.
 
 ## Knockdown
 

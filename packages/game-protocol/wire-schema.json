@@ -235,6 +235,13 @@
         {
           "properties": [
             { "name": "amount", "optional": false, "type": "number" },
+            { "name": "kind", "optional": false, "type": { "literal": "energy-loss" } },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "amount", "optional": false, "type": "number" },
             { "name": "kind", "optional": false, "type": { "literal": "heal" } },
             { "name": "targetId", "optional": false, "type": "string" }
           ]
@@ -1260,7 +1267,20 @@
           "optional": false,
           "type": { "union": ["null", "string"] }
         },
-        { "name": "statuses", "optional": false, "type": { "array": "number" } },
+        {
+          "name": "statuses",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "casterId", "optional": false, "type": "string" },
+                { "name": "durationSeconds", "optional": false, "type": "number" },
+                { "name": "endsAt", "optional": false, "type": "number" },
+                { "name": "status", "optional": false, "type": "number" }
+              ]
+            }
+          }
+        },
         { "name": "swingElapsed", "optional": false, "type": "number" },
         { "name": "swingTotal", "optional": false, "type": "number" },
         { "name": "targetId", "optional": false, "type": { "union": ["null", "string"] } },
@@ -1389,7 +1409,20 @@
                   "optional": false,
                   "type": { "union": ["null", "string"] }
                 },
-                { "name": "statuses", "optional": false, "type": { "array": "number" } },
+                {
+                  "name": "statuses",
+                  "optional": false,
+                  "type": {
+                    "array": {
+                      "properties": [
+                        { "name": "casterId", "optional": false, "type": "string" },
+                        { "name": "durationSeconds", "optional": false, "type": "number" },
+                        { "name": "endsAt", "optional": false, "type": "number" },
+                        { "name": "status", "optional": false, "type": "number" }
+                      ]
+                    }
+                  }
+                },
                 { "name": "swingElapsed", "optional": false, "type": "number" },
                 { "name": "swingTotal", "optional": false, "type": "number" },
                 { "name": "targetId", "optional": false, "type": { "union": ["null", "string"] } },
@@ -1507,7 +1540,20 @@
                   "optional": false,
                   "type": { "union": ["null", "string"] }
                 },
-                { "name": "statuses", "optional": false, "type": { "array": "number" } },
+                {
+                  "name": "statuses",
+                  "optional": false,
+                  "type": {
+                    "array": {
+                      "properties": [
+                        { "name": "casterId", "optional": false, "type": "string" },
+                        { "name": "durationSeconds", "optional": false, "type": "number" },
+                        { "name": "endsAt", "optional": false, "type": "number" },
+                        { "name": "status", "optional": false, "type": "number" }
+                      ]
+                    }
+                  }
+                },
                 { "name": "swingElapsed", "optional": false, "type": "number" },
                 { "name": "swingTotal", "optional": false, "type": "number" },
                 { "name": "targetId", "optional": false, "type": { "union": ["null", "string"] } },
