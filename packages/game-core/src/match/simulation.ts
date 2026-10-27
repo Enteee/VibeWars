@@ -1491,7 +1491,8 @@ export class MatchSimulation {
     // adrenaline builders. A blocked blow earns nothing, not even the
     // damage its `onBlocked` deals, as Swift Chop's (#534). Damage on a
     // victim that blocked every blow is all `onBlocked`'s; a dual attack
-    // (#885) blocked once and landed once still landed.
+    // (#885) blocked once and landed once still landed. Each foe it landed
+    // on is a strike (#936): Cyclone Axe on three foes earns three.
     if (skill.type === "attack") {
       const strikes = skill.attack?.strikes ?? 1;
       const blocked = (targetId: string): boolean => {
@@ -1502,10 +1503,17 @@ export class MatchSimulation {
         );
         return blows.some(({ kind }) => kind === "attack-blocked") && blows.length >= strikes;
       };
-      this.#gainAdrenaline(
-        record,
-        events.filter((event) => event.kind !== "damage" || !blocked(event.targetId)),
+      const landed = events.filter((event) => event.kind !== "damage" || !blocked(event.targetId));
+      const foesHit = new Set(
+        landed.flatMap((event) => {
+          const victim =
+            event.kind === "damage" ? this.#participants.get(event.targetId) : undefined;
+          return victim !== undefined && victim.combatant.team !== record.combatant.team
+            ? [victim.id]
+            : [];
+        }),
       );
+      this.#gainAdrenaline(record, landed, foesHit.size);
     }
     if (skill.type === "shout" || skill.type === "chant") {
       this.#gainLeadershipEnergy(record, events);
@@ -2288,10 +2296,12 @@ export class MatchSimulation {
    * Adrenaline is earned by landing damage on a foe, never by waiting,
    * which makes adrenaline skills a reward for staying in the fight rather
    * than a second energy pool. `blows` strikes to every adrenaline skill
-   * (#463), if anything in `events` damaged a foe: one for an attack skill
-   * or a shot, however many it hit, and one per landed blow of a swing, so
+   * (#463), if anything in `events` damaged a foe: one for each foe an
+   * attack skill landed on (#936), one for a shot, and one per landed blow
+   * of a swing, so
    * a double strike earns two. A blocked blow deals no damage, so it earns
-   * nothing (#534).
+   * nothing (#534). "For Great Justice!" (#936) adds its extra strikes
+   * to each.
    */
   #gainAdrenaline(record: ParticipantRecord, events: readonly CombatEvent[], blows = 1): void {
     const damagedFoe = events.some((event) => {
@@ -2299,7 +2309,8 @@ export class MatchSimulation {
       return victim !== undefined && victim.combatant.team !== record.combatant.team;
     });
     if (damagedFoe) {
-      gainStrikes(record.combatant, blows, this.#elapsedSeconds);
+      const { extraStrikesPerHit } = aggregateModifiers(record.combatant.statuses.active);
+      gainStrikes(record.combatant, blows * (1 + extraStrikesPerHit), this.#elapsedSeconds);
     }
   }
 

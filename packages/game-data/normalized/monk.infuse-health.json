@@ -1,0 +1,25 @@
+{
+  "id": "monk.infuse-health",
+  "name": "Infuse Health",
+  "profession": "monk",
+  "attribute": "Healing Prayers",
+  "type": "Spell.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 10
+  },
+  "overcast": 0,
+  "activationSeconds": 0.25,
+  "rechargeSeconds": 0,
+  "description": "Lose half your current health. Target other ally is healed for 100...129...136% of the amount you lost.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Monk/172-Infuse_Health",
+    "fetchedAt": "2026-10-27T15:21:39.281Z"
+  },
+  "unmapped": {}
+}

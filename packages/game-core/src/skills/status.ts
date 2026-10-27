@@ -77,6 +77,7 @@ export type StatusId =
   | "armor-boost"
   | "guardian"
   | "mending"
+  | "protective-spirit"
   // Stances.
   | "sprint"
   | "dash"
@@ -90,6 +91,7 @@ export type StatusId =
   // Shouts and skill effects (#524).
   | "watch-yourself"
   | "healing-signet-armor"
+  | "for-great-justice"
   // Chants and weapon spells (#758).
   | "anthem-of-flame"
   | "weapon-of-warding"
@@ -257,6 +259,18 @@ export interface StatusDefinition {
    */
   readonly damageTakenMultiplier: number;
   /**
+   * The most of its max health the bearer can lose to one hit (#936):
+   * Protective Spirit's 0.1. Applied last in `mitigate`, so it caps
+   * every typed damage packet; degeneration and sacrifice are not hits.
+   * `undefined`: no cap.
+   */
+  readonly maxDamageFractionPerHit: number | undefined;
+  /**
+   * Strikes of adrenaline the bearer gains on top of each hit it lands
+   * (#936): "For Great Justice!"'s 1. Taking damage is not a hit.
+   */
+  readonly extraStrikesPerHit: number;
+  /**
    * What it does when its bearer does something (#469): Backfire's damage
    * on each spell the bearer finishes. Applied by whoever put it on.
    */
@@ -335,6 +349,8 @@ function define(
     endsWhenBearerHits: false,
     endsWhenBearerGains: [],
     damageTakenMultiplier: 1,
+    maxDamageFractionPerHit: undefined,
+    extraStrikesPerHit: 0,
     triggers: [],
     ...overrides,
   };
@@ -430,6 +446,12 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   }),
   // Mending at rank 12: +3 Health regeneration while maintained (#837).
   mending: define("mending", "Mending", "enchantment", { healthPips: 3 }),
+  // "For 5...19...23 seconds, target ally cannot lose more than 10% max
+  // Health from a single hit": 19 s, its rank-12 value, on the skill.
+  "protective-spirit": define("protective-spirit", "Protective Spirit", "enchantment", {
+    profession: "monk",
+    maxDamageFractionPerHit: 0.1,
+  }),
 
   sprint: define("sprint", "Sprint", "stance", {
     profession: "warrior",
@@ -466,6 +488,12 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     profession: "warrior",
     armorModifier: 21,
     endsAfterAttacks: 3,
+  }),
+  // "For Great Justice!" (PvP): "For 8 seconds, whenever you hit with an
+  // attack, you gain 1 additional strike of adrenaline."
+  "for-great-justice": define("for-great-justice", "For Great Justice!", "shout", {
+    profession: "warrior",
+    extraStrikesPerHit: 1,
   }),
   "healing-signet-armor": define("healing-signet-armor", "Healing Signet", "skill-effect", {
     profession: "warrior",
@@ -920,6 +948,10 @@ export interface StatusModifiers {
   readonly attackDurationMultiplier: number;
   /** Every status's, multiplied (#919). */
   readonly damageTakenMultiplier: number;
+  /** The lowest single status's (#936); `undefined`: no cap. */
+  readonly maxDamageFractionPerHit: number | undefined;
+  /** Every status's, summed (#936). */
+  readonly extraStrikesPerHit: number;
 }
 
 /** The weakest heals get, whatever reduces them (GW1: at most −40%). */
@@ -934,7 +966,7 @@ export const HEALING_MULTIPLIER_FLOOR = 0.6;
  * worst rather than compounding, so two blinding effects cannot push a
  * player past certain failure in a way that feels arbitrary. A maximum
  * health loss and an armor reduction are each the largest single one,
- * and healing is floored at `HEALING_MULTIPLIER_FLOOR`.
+ * a cap on damage per hit the lowest (#936), and healing is floored at `HEALING_MULTIPLIER_FLOOR`.
  * Attack duration is GW1's rule: only the strongest speed-up and the
  * strongest slow-down count, and they multiply. Pips per enchantment
  * (#845) count every enchantment in `statuses`, the one giving them
@@ -955,6 +987,8 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let attackFaster = 1;
   let attackSlower = 1;
   let damageTakenMultiplier = 1;
+  let maxDamageFractionPerHit: number | undefined;
+  let extraStrikesPerHit = 0;
   const enchantments = statuses.filter(
     (status) => getStatusDefinition(status.id).category === "enchantment",
   ).length;
@@ -989,6 +1023,14 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     attackFaster = Math.min(attackFaster, def.attackDurationMultiplier);
     attackSlower = Math.max(attackSlower, def.attackDurationMultiplier);
     damageTakenMultiplier *= def.damageTakenMultiplier;
+    if (
+      def.maxDamageFractionPerHit !== undefined &&
+      (maxDamageFractionPerHit === undefined ||
+        def.maxDamageFractionPerHit < maxDamageFractionPerHit)
+    ) {
+      maxDamageFractionPerHit = def.maxDamageFractionPerHit;
+    }
+    extraStrikesPerHit += def.extraStrikesPerHit;
   }
 
   return {
@@ -1005,6 +1047,8 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     castTimeMultiplier,
     attackDurationMultiplier: attackFaster * attackSlower,
     damageTakenMultiplier,
+    maxDamageFractionPerHit,
+    extraStrikesPerHit,
   };
 }
 

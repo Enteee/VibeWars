@@ -1,0 +1,25 @@
+{
+  "id": "warrior.cyclone-axe",
+  "name": "Cyclone Axe",
+  "profession": "warrior",
+  "attribute": "Axe Mastery",
+  "type": "Axe attack.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 0,
+  "rechargeSeconds": 4,
+  "description": "Perform a spinning axe attack striking for +4...10...12 damage to all adjacent opponents.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Warrior/4-Cyclone_Axe",
+    "fetchedAt": "2026-10-27T15:21:39.097Z"
+  },
+  "unmapped": {}
+}

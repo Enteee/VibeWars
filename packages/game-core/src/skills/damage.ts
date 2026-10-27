@@ -3,7 +3,7 @@ import type { ArmorCondition } from "../equipment/insignias.js";
 import { MYSTICISM_ATTRIBUTE, mysticismArmor } from "../primary-attributes.js";
 import type { CombatRules } from "../ruleset.js";
 import { aggregateModifiers } from "./status.js";
-import { armorReductionOf, rankOf } from "./tick.js";
+import { armorReductionOf, effectiveMaxHealth, rankOf } from "./tick.js";
 import type { Combatant } from "./types.js";
 
 /**
@@ -148,7 +148,8 @@ export function mitigate(packet: DamagePacket, target: Combatant, rules: CombatR
 
   // Frenzy's double and Dark Escape's half (#919): every packet, armored
   // or not, after armor and before the flat shield below.
-  dealt *= aggregateModifiers(target.statuses.active).damageTakenMultiplier;
+  const modifiers = aggregateModifiers(target.statuses.active);
+  dealt *= modifiers.damageTakenMultiplier;
 
   // Rune of Absorption, last and only against physical hits. After
   // mitigation on purpose: it is a flat shield against each blow, so it
@@ -156,6 +157,16 @@ export function mitigate(packet: DamagePacket, target: Combatant, rules: CombatR
   // auto-attack chain produces, which is the niche it exists to fill.
   if (isPhysicalDamage(packet.type)) {
     dealt -= target.equipment.flatPhysicalReduction;
+  }
+
+  // Protective Spirit (#936), after everything else: no single hit takes
+  // more than its share of the target's max health, deep wound's lower
+  // max included, however much armor, Frenzy or a crit gave it.
+  if (modifiers.maxDamageFractionPerHit !== undefined) {
+    dealt = Math.min(
+      dealt,
+      Math.floor(modifiers.maxDamageFractionPerHit * effectiveMaxHealth(target)),
+    );
   }
 
   return Math.max(0, Math.round(dealt));

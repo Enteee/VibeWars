@@ -1,0 +1,25 @@
+{
+  "id": "warrior.for-great-justice",
+  "name": "\"For Great Justice!\"",
+  "profession": "warrior",
+  "attribute": "No Attribute",
+  "type": "Shout.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 0,
+  "rechargeSeconds": 45,
+  "description": "For 8 seconds, whenever you hit with an attack, you gain 1 additional strike of adrenaline.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Warrior/70-For_Great_Justice!",
+    "fetchedAt": "2026-10-27T15:21:39.164Z"
+  },
+  "unmapped": {}
+}

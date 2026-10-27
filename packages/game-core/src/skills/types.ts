@@ -115,6 +115,19 @@ export interface SacrificeHealthEffect {
   readonly percentOfMax: number;
 }
 
+/**
+ * The caster gives the target some of its own health (#936), as Infuse
+ * Health's "lose half your current health; target other ally is healed
+ * for 100...129% of the amount you lost". The loss is
+ * `floor(fractionOfCurrent × health)`, a sacrifice, not damage, so it can
+ * never kill; the heal is `healPercent` of it, through the heal path.
+ */
+export interface GiveHealthEffect {
+  readonly kind: "give-health";
+  readonly fractionOfCurrent: number;
+  readonly healPercent: Magnitude;
+}
+
 /** Apply a condition/hex/enchantment to the effect's target. */
 export interface ApplyStatusEffect {
   readonly kind: "apply-status";
@@ -284,6 +297,7 @@ export type UnconditionalEffect =
   | EnergyGainEffect
   | EnergyLossEffect
   | SacrificeHealthEffect
+  | GiveHealthEffect
   | ApplyStatusEffect
   | MaintainStatusEffect
   | RemoveStatusEffect
