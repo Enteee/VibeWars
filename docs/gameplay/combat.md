@@ -30,7 +30,7 @@ the server decides what happens (brief §12, §32).
 
 Regeneration and degeneration count in **pips**, as in GW1. One health
 pip is 2 HP/s and one energy pip ⅓ energy/s. Every status's pips sum
-(Bleeding −3, Burning −7, Poison −4, Disease −4, Life Drain −2, Regeneration +4), and
+(Bleeding −3, Burning −7, Poison −4, Disease −4, Faintheartedness −2, Regeneration +4), and
 the net is clamped to ±10 before it applies: burning, bleeding and poison
 together (−14) drain 20 HP/s, not 28. Energy is the primary profession's
 base pips plus any status's, clamped the same way: Warrior and Paragon 2
@@ -421,9 +421,16 @@ target. Swift Chop is the exception that proves it: blocked, it still
 deals its flat damage and a 20 s Deep Wound. Spells are never blocked,
 and shields do not block, as in GW1. Wild Throw cannot be blocked at all.
 
-Not modelled: evade. Attack-speed changes have
-a hook (only the strongest speed-up and slow-down count), but no skill
-uses it yet.
+Not modelled: evade.
+
+**Faintheartedness slows attacks** (#493, GW1). Its hex makes the
+target attack 50% slower, swings and attack skills alike: a sword swings
+every 1.995 s instead of 1.33 s, and Swift Chop winds up for half of
+1.5 × the axe's swing. A swing in progress stretches the moment the hex
+lands and shrinks back when it ends; an attack skill keeps the wind-up it
+started with. Spells are not slowed. Only the strongest slow-down and the
+strongest speed-up count, and they multiply (ADR-0029). The hex also
+degenerates its target by 2 pips.
 
 ## Damage types and armor
 
