@@ -24,6 +24,7 @@ export function makeCombatant(overrides: Partial<Combatant> & { id: string }): C
     energy: 50,
     maxEnergy: 50,
     overcast: 0,
+    morale: 0,
     baseEnergyPips: 0,
     adrenaline: new Map(),
     attributeRanks: new Map(),

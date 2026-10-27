@@ -11,8 +11,16 @@ export interface MatchRules {
   readonly scoreToWin: number;
   /** Match length in seconds; at zero time the lead wins. */
   readonly timeLimitSeconds: number;
-  /** Seconds a dead player waits before respawning. */
+  /**
+   * How the dead come back (#843): `"respawn"` after `respawnSeconds`, or
+   * `"resurrection-only"`, a corpse until a resurrection or the end of
+   * the match.
+   */
+  readonly deathRule: "respawn" | "resurrection-only";
+  /** Seconds a dead player waits before respawning; only for `"respawn"`. */
   readonly respawnSeconds: number;
+  /** Whether a death costs morale, and a foe's death wins some back (#843, GW1). */
+  readonly deathPenalty: boolean;
 }
 
 export const DEFAULT_MATCH_RULES: MatchRules = Object.freeze({
@@ -20,8 +28,31 @@ export const DEFAULT_MATCH_RULES: MatchRules = Object.freeze({
   // nobody waits ages for the next match.
   scoreToWin: 15,
   timeLimitSeconds: 600,
+  // GW1's Kill Count (The Crag): respawn, and no death penalty.
+  deathRule: "respawn",
   respawnSeconds: 8,
+  deathPenalty: false,
 });
+
+/** Morale a death costs, in percent, with `deathPenalty` (GW1). */
+export const DEATH_PENALTY_PERCENT = 15;
+/** The lowest morale goes, in percent. */
+export const MORALE_FLOOR = -60;
+/** The highest morale goes, in percent: a boost stops here. */
+export const MORALE_CEILING = 10;
+/** Morale a foe's death gives back to the living, up to 0, in percent. */
+export const KILL_MORALE_PERCENT = 2;
+/** A death this soon after a resurrection costs no morale, in seconds. */
+export const DP_GRACE_AFTER_RES_SECONDS = 5;
+
+/**
+ * A maximum at `morale` percent (GW1): the share applies to the base,
+ * before upgrades, so what equipment adds (`resolved − base`) is
+ * untouched. Floored: −15% of 480 is 408.
+ */
+export function moraleMaximum(base: number, resolved: number, morale: number): number {
+  return Math.floor((base * (100 + morale)) / 100) + (resolved - base);
+}
 
 export type MatchPhase = "active" | "finished";
 

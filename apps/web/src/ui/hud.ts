@@ -82,6 +82,8 @@ export interface HudElements {
   readonly healthText: HTMLElement;
   /** Net regeneration or degeneration arrows in the bar (#504). */
   readonly healthPips: HTMLElement;
+  /** Your morale next to the health bar (#843): "−15%", "+10%"; hidden at 0. */
+  readonly morale: HTMLElement;
   readonly energyFill: HTMLElement;
   /** Overcast's grey band at the energy bar's right end (#461). */
   readonly energyOvercast: HTMLElement;
@@ -253,6 +255,8 @@ export function createHud(parent: HTMLElement): HudElements {
   const healthLost = element("div", "hud-bar-lost", healthRow);
   const healthText = element("span", "hud-bar-label", healthRow);
   const healthPips = healthRow.appendChild(pipsElement());
+  const morale = element("span", "hud-morale", bars);
+  morale.hidden = true;
 
   const energyRow = element("div", "hud-bar hud-bar-energy", bars);
   const energyFill = element("div", "hud-bar-fill", energyRow);
@@ -276,6 +280,7 @@ export function createHud(parent: HTMLElement): HudElements {
     healthLost,
     healthText,
     healthPips,
+    morale,
     energyFill,
     energyOvercast,
     energyText,
@@ -513,6 +518,28 @@ function setBar(
   const fraction = max > 0 ? Math.max(0, Math.min(1, value / max)) : 0;
   fill.style.width = `${String(fraction * 100)}%`;
   label.textContent = text;
+}
+
+/**
+ * Morale as GW1 shows it by the health bar (#843): "−15%" for the death
+ * penalty, "+10%" for a boost, and `undefined` at 0, where nothing shows.
+ */
+export function moraleLabel(morale: number): string | undefined {
+  if (morale === 0) {
+    return undefined;
+  }
+  return morale < 0 ? `−${String(-morale)}%` : `+${String(morale)}%`;
+}
+
+function renderMorale(element: HTMLElement, morale: number): void {
+  const label = moraleLabel(morale) ?? "";
+  // Every frame calls this; the label says it all, so only a new one is written.
+  if (element.textContent === label) {
+    return;
+  }
+  element.hidden = label === "";
+  element.textContent = label;
+  element.classList.toggle("is-penalty", morale < 0);
 }
 
 /**
@@ -901,6 +928,7 @@ export function updateHud(
   setBar(hud.healthFill, hud.healthText, self.health, self.maxHealth, healthText);
   hud.healthLost.style.width = `${String(lostHealthPercent(self))}%`;
   paintHealthTint(hud.healthRow, self);
+  renderMorale(hud.morale, self.morale);
   // Counted to the ceiling overcast leaves, the rest of the bar greyed (#461).
   const energyText = `${energyLabel(self.energy, self.maxEnergy, self.overcast)} en`;
   setBar(hud.energyFill, hud.energyText, self.energy, self.maxEnergy, energyText);
