@@ -88,6 +88,7 @@ export type StatusId =
   | "mending"
   | "patient-spirit"
   | "holy-veil"
+  | "protective-spirit"
   // Stances.
   | "sprint"
   | "dash"
@@ -102,6 +103,7 @@ export type StatusId =
   // Shouts and skill effects (#524).
   | "watch-yourself"
   | "healing-signet-armor"
+  | "for-great-justice"
   // Paragon shouts (#921).
   | "fall-back"
   | "stand-your-ground"
@@ -306,6 +308,18 @@ export interface StatusDefinition {
    */
   readonly damageTakenMultiplier: number;
   /**
+   * The most of its max health the bearer can lose to one hit (#936):
+   * Protective Spirit's 0.1. Applied last in `mitigate`, so it caps
+   * every typed damage packet; degeneration and sacrifice are not hits.
+   * `undefined`: no cap.
+   */
+  readonly maxDamageFractionPerHit: number | undefined;
+  /**
+   * Strikes of adrenaline the bearer gains on top of each hit it lands
+   * (#936): "For Great Justice!"'s 1. Taking damage is not a hit.
+   */
+  readonly extraStrikesPerHit: number;
+  /**
    * The share taken off the recharge of each spell the bearer finishes
    * (#938): Mantra of Recovery's 0.33. Read as the recharge starts, so
    * a recharge already running keeps its length when the status ends.
@@ -388,7 +402,8 @@ export type TriggerEffect = SkillEffect | SpreadGainedConditionEffect;
  * the bearer, or a status gone from it, with who had applied it and
  * whether its duration ran out (`expired`, #944) rather than something
  * ending it. Or (#935) a hit the bearer landed, or physical damage it
- * took, recorded only while a status on it answers that.
+ * took, with the triggers on it that answered at that moment (#953): a
+ * killing blow ends them before the drain, and they still fire for it.
  */
 export type StatusChange =
   | { readonly kind: "gained-condition"; readonly id: StatusId; readonly durationSeconds: number }
@@ -398,8 +413,14 @@ export type StatusChange =
       readonly sourceId: string;
       readonly expired: boolean;
     }
-  | { readonly kind: "hit" }
-  | { readonly kind: "took-physical-damage" };
+  | { readonly kind: "hit"; readonly fired: readonly AnsweringTrigger[] }
+  | { readonly kind: "took-physical-damage"; readonly fired: readonly AnsweringTrigger[] };
+
+/** A trigger on the bearer that answered an event, and who applied its status. */
+export interface AnsweringTrigger {
+  readonly sourceId: string;
+  readonly trigger: StatusTrigger;
+}
 
 /** A share of maximum health a status takes, at most `cap` (GW1's deep wound). */
 export interface MaxHealthLoss {
@@ -466,6 +487,8 @@ function define(
     endsWhenBearerHitsWithAttackSkill: false,
     endsWhenBearerGains: [],
     damageTakenMultiplier: 1,
+    maxDamageFractionPerHit: undefined,
+    extraStrikesPerHit: 0,
     spellRechargeFaster: 0,
     incomingHexCastTimeMultiplier: 1,
     triggers: [],
@@ -702,6 +725,12 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
       },
     ],
   }),
+  // "For 5...19...23 seconds, target ally cannot lose more than 10% max
+  // Health from a single hit": 19 s, its rank-12 value, on the skill.
+  "protective-spirit": define("protective-spirit", "Protective Spirit", "enchantment", {
+    profession: "monk",
+    maxDamageFractionPerHit: 0.1,
+  }),
 
   sprint: define("sprint", "Sprint", "stance", {
     profession: "warrior",
@@ -743,6 +772,12 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     profession: "warrior",
     armorModifier: 21,
     endsAfterAttacks: 3,
+  }),
+  // "For Great Justice!" (PvP): "For 8 seconds, whenever you hit with an
+  // attack, you gain 1 additional strike of adrenaline."
+  "for-great-justice": define("for-great-justice", "For Great Justice!", "shout", {
+    profession: "warrior",
+    extraStrikesPerHit: 1,
   }),
   "healing-signet-armor": define("healing-signet-armor", "Healing Signet", "skill-effect", {
     profession: "warrior",
@@ -991,27 +1026,30 @@ export class StatusSet {
     }
   }
 
-  /** The bearer landed a hit (#935), recorded only if a status on it answers one. */
+  /**
+   * The bearer landed a hit (#935), recorded only if a status on it
+   * answers one, with the triggers that do (#953).
+   */
   public recordHit(): void {
-    if (this.#answers("bearer-hits")) {
-      this.#changes.push({ kind: "hit" });
+    const fired = this.#answering("bearer-hits");
+    if (fired.length > 0) {
+      this.#changes.push({ kind: "hit", fired });
     }
   }
 
   /**
    * The bearer lost health to physical damage (#935), recorded only if a
-   * status on it answers that.
+   * status on it answers that, with the triggers that do (#953).
    */
   public recordPhysicalDamage(): void {
-    if (this.#answers("bearer-takes-physical-damage")) {
-      this.#changes.push({ kind: "took-physical-damage" });
+    const fired = this.#answering("bearer-takes-physical-damage");
+    if (fired.length > 0) {
+      this.#changes.push({ kind: "took-physical-damage", fired });
     }
   }
 
-  #answers(event: StatusTriggerEvent): boolean {
-    return this.active.some(({ id }) =>
-      getStatusDefinition(id).triggers.some((trigger) => trigger.on === event),
-    );
+  #answering(event: StatusTriggerEvent): AnsweringTrigger[] {
+    return this.triggersOn(event).map(({ sourceId, trigger }) => ({ sourceId, trigger }));
   }
 
   /** Record a condition newly on the bearer (#887); any other category is not one. */
@@ -1421,6 +1459,10 @@ export interface StatusModifiers {
   readonly attackDurationMultiplier: number;
   /** Every status's, multiplied (#919). */
   readonly damageTakenMultiplier: number;
+  /** The lowest single status's (#936); `undefined`: no cap. */
+  readonly maxDamageFractionPerHit: number | undefined;
+  /** Every status's, summed (#936). */
+  readonly extraStrikesPerHit: number;
   /**
    * The share taken off a spell's recharge (#938): several combine as
    * 1 − Π(1 − f).
@@ -1442,7 +1484,7 @@ export const HEALING_MULTIPLIER_FLOOR = 0.6;
  * worst rather than compounding, so two blinding effects cannot push a
  * player past certain failure in a way that feels arbitrary. A maximum
  * health loss and an armor reduction are each the largest single one,
- * and healing is floored at `HEALING_MULTIPLIER_FLOOR`.
+ * a cap on damage per hit the lowest (#936), and healing is floored at `HEALING_MULTIPLIER_FLOOR`.
  * Attack duration is GW1's rule: only the strongest speed-up and the
  * strongest slow-down count, and they multiply. Pips per enchantment
  * (#845) count every enchantment in `statuses`, the one giving them
@@ -1465,6 +1507,8 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let attackFaster = 1;
   let attackSlower = 1;
   let damageTakenMultiplier = 1;
+  let maxDamageFractionPerHit: number | undefined;
+  let extraStrikesPerHit = 0;
   let spellRechargeKept = 1;
   let incomingHexCastTimeMultiplier = 1;
   const enchantments = statuses.filter(
@@ -1503,6 +1547,14 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     attackFaster = Math.min(attackFaster, def.attackDurationMultiplier);
     attackSlower = Math.max(attackSlower, def.attackDurationMultiplier);
     damageTakenMultiplier *= def.damageTakenMultiplier;
+    if (
+      def.maxDamageFractionPerHit !== undefined &&
+      (maxDamageFractionPerHit === undefined ||
+        def.maxDamageFractionPerHit < maxDamageFractionPerHit)
+    ) {
+      maxDamageFractionPerHit = def.maxDamageFractionPerHit;
+    }
+    extraStrikesPerHit += def.extraStrikesPerHit;
     spellRechargeKept *= 1 - def.spellRechargeFaster;
     incomingHexCastTimeMultiplier *= def.incomingHexCastTimeMultiplier;
   }
@@ -1523,6 +1575,8 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     castTimeMultiplier,
     attackDurationMultiplier: attackFaster * attackSlower,
     damageTakenMultiplier,
+    maxDamageFractionPerHit,
+    extraStrikesPerHit,
     spellRechargeFaster: 1 - spellRechargeKept,
     incomingHexCastTimeMultiplier,
   };

@@ -2994,6 +2994,123 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   },
 
   /* ---------------------------------------------------------------------- */
+  /* Warrior and Monk staples (#936)                                        */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "warrior.cyclone-axe",
+    name: "Cyclone Axe",
+    type: "attack",
+    elite: false,
+    profession: "warrior",
+    attributeId: "warrior.axe-mastery",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 4,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    // "Perform a spinning axe attack striking for +4...10...12 damage to
+    // all adjacent opponents": the target, then every foe adjacent to
+    // you, each its own blow.
+    area: {
+      radius: AREA_ADJACENT,
+      origin: "caster",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: {
+      weapon: "axe",
+      weaponDamage: 1,
+      bonusDamage: { scaling: { attributeId: "warrior.axe-mastery", atZero: 4, atTwelve: 10 } },
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    effects: [],
+  },
+  {
+    id: "warrior.for-great-justice",
+    name: '"For Great Justice!"',
+    type: "shout",
+    elite: false,
+    profession: "warrior",
+    // GW1's "No Attribute": any warrior can use it.
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 45,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // The PvP split: "For 8 seconds, whenever you hit with an attack, you
+    // gain 1 additional strike of adrenaline."
+    effects: [{ kind: "apply-status", statusId: "for-great-justice", durationSeconds: 8 }],
+  },
+  {
+    id: "monk.protective-spirit",
+    name: "Protective Spirit",
+    type: "enchantment",
+    elite: false,
+    profession: "monk",
+    attributeId: "monk.protection-prayers",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 5...19...23 seconds, target ally cannot lose more than 10%
+    // health due to damage from a single attack or spell": 19 s, its
+    // rank-12 value; the cap is the status's.
+    effects: [{ kind: "apply-status", statusId: "protective-spirit", durationSeconds: 19 }],
+  },
+  {
+    id: "monk.infuse-health",
+    name: "Infuse Health",
+    type: "spell",
+    elite: false,
+    profession: "monk",
+    attributeId: "monk.healing-prayers",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 0,
+    range: RANGE_SPELL,
+    target: "single-other-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Lose half your current health. Target other ally is healed for
+    // 100...129...136% of the amount you lost."
+    effects: [
+      {
+        kind: "give-health",
+        fractionOfCurrent: 0.5,
+        healPercent: {
+          scaling: { attributeId: "monk.healing-prayers", atZero: 100, atTwelve: 129 },
+        },
+      },
+    ],
+  },
+
+  /* ---------------------------------------------------------------------- */
   /* Paragon command (#923)                                                 */
   /* ---------------------------------------------------------------------- */
 

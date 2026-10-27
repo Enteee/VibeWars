@@ -552,6 +552,26 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     profession: "necromancer",
     url: "https://www.gw-memorial.net/skills/Necromancer/303-Plague_Touch",
   },
+  {
+    id: "warrior.cyclone-axe",
+    profession: "warrior",
+    url: "https://www.gw-memorial.net/skills/Warrior/4-Cyclone_Axe",
+  },
+  {
+    id: "warrior.for-great-justice",
+    profession: "warrior",
+    url: "https://www.gw-memorial.net/skills/Warrior/70-For_Great_Justice!",
+  },
+  {
+    id: "monk.protective-spirit",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/192-Protective_Spirit",
+  },
+  {
+    id: "monk.infuse-health",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/172-Infuse_Health",
+  },
 ];
 
 function packageRoot(): string {
