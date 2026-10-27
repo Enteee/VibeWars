@@ -3818,6 +3818,120 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       { kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Monk staples 2 (#1013)                                                 */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "monk.remove-hex",
+    name: "Remove Hex",
+    type: "spell",
+    elite: false,
+    profession: "monk",
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Remove a hex from target ally": the newest.
+    effects: [{ kind: "remove-status", category: "hex", count: 1 }],
+  },
+  {
+    id: "monk.dismiss-condition",
+    name: "Dismiss Condition",
+    type: "spell",
+    elite: false,
+    profession: "monk",
+    attributeId: "monk.protection-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 3,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Remove one condition from target ally. If that ally is under the
+    // effects of an Enchantment, that ally is healed for 15...63...75
+    // Health": the enchantment is read before anything lands, and the heal
+    // does not ask for a condition removed.
+    effects: [
+      { kind: "remove-status", category: "condition", count: 1 },
+      {
+        kind: "if",
+        condition: { kind: "target-has", category: "enchantment" },
+        effects: [
+          {
+            kind: "heal",
+            perStatusOnTarget: [],
+            amount: {
+              scaling: { attributeId: "monk.protection-prayers", atZero: 15, atTwelve: 63 },
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "monk.healing-breeze",
+    name: "Healing Breeze",
+    type: "enchantment",
+    elite: false,
+    profession: "monk",
+    attributeId: "monk.healing-prayers",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    // gw-memorial's current 5 s; guildwars.fandom's 2 s is stale.
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 15 seconds, target ally gains health regeneration of 4...8...9":
+    // the status's +8.
+    effects: [{ kind: "apply-status", statusId: "healing-breeze", durationSeconds: 15 }],
+  },
+  {
+    id: "monk.heal-party",
+    name: "Heal Party",
+    type: "spell",
+    elite: false,
+    profession: "monk",
+    attributeId: "monk.healing-prayers",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    // The PvP page (167): 1 s, 20 s. The PvE split (1330) is not imported.
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    // "Heal entire party": the caster and every living team-mate, however
+    // far, through walls. The party is the team.
+    area: { origin: "party" },
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "...for 30...66...75 health."
+    effects: [
+      {
+        kind: "heal",
+        perStatusOnTarget: [],
+        amount: {
+          scaling: { attributeId: "monk.healing-prayers", atZero: 30, atTwelve: 66 },
+        },
+      },
+    ],
+  },
 ];
 
 export const SKILLS_BY_ID: ReadonlyMap<string, Skill> = new Map(

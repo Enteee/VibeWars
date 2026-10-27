@@ -285,6 +285,13 @@ const status = {
       `<path d="M5 18c0-7 3-12 7-12s7 5 7 12" ${stroke(c, 2)}/>` +
       `<path d="M9 18c0-4 1.3-7 3-7s3 3 3 7" ${stroke(c, 1.6)}/>`,
   ],
+  // Enchantment: a plus carried on two gusts, health on the wind (#1013).
+  "healing-breeze": [
+    "enchantment",
+    (c) =>
+      `<path d="M15 4v7M11.5 7.5h7" ${stroke(c, 2.5)}/>` +
+      `<path d="M4 15.5h9a2 2 0 1 0-2-2M4 18.5h7a2 2 0 1 1-2 2" ${stroke(c, 1.6)}/>`,
+  ],
   // Stance: two chevrons, forward: move 25% faster.
   sprint: ["stance", (c) => `<path d="M7 9l4.5 5L7 19M12.5 9l4.5 5-4.5 5" ${stroke(c, 2.5)}/>`],
   // Stance: an arrowhead trailing speed lines: run 50% faster.

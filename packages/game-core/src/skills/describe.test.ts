@@ -88,6 +88,24 @@ describe("describeSkill", () => {
     expect(described.rangeText).toBe(`${String(RANGE_SPELL)} range, ${String(AREA_NEARBY)} radius`);
   });
 
+  it("words Monk staples 2 (#1013)", () => {
+    const ranks = new Map([
+      ["monk.healing-prayers", 12],
+      ["monk.protection-prayers", 12],
+    ]);
+    const party = describeSkill(skill("monk.heal-party"), ranks);
+    expect(party.targetText).toBe("Your whole party");
+    expect(party.rangeText).toBeUndefined();
+    expect(party.effects.map((line) => line.text)).toEqual(["Heals for 66"]);
+    expect(
+      describeSkill(skill("monk.dismiss-condition"), ranks).effects.map((line) => line.text),
+    ).toEqual(["Removes 1 condition", "If target has an enchantment: heals for 63"]);
+    expect(describeSkill(skill("monk.healing-breeze"), ranks).effects[0]?.text).toBe(
+      "Applies Healing Breeze for 15s (+8 Health regeneration)",
+    );
+    expect(describeSkill(skill("monk.remove-hex")).effects[0]?.text).toBe("Removes 1 hex");
+  });
+
   it("names the foes round its target a target-centred area also hits (#998)", () => {
     const lines = (id: string): readonly [string, string | undefined] => {
       const described = describeSkill(skill(id));

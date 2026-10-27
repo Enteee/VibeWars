@@ -12,7 +12,7 @@ import {
 } from "./status.js";
 import { effectiveActivationSeconds, outsideMatch } from "./tick.js";
 import type {
-  AreaRule,
+  RadiusArea,
   AttackWeaponClass,
   ChainRole,
   ChainStep,
@@ -887,7 +887,7 @@ const TARGET_TEXT: Record<Skill["target"], string> = {
   "single-dead-ally": "A dead ally",
 };
 
-const AREA_WHO: Record<AreaRule["affects"], string> = {
+const AREA_WHO: Record<RadiusArea["affects"], string> = {
   enemies: "Foes",
   allies: "Allies",
   all: "Everyone",
@@ -902,6 +902,10 @@ function targetAndRange(skill: Skill): {
   readonly range: string | undefined;
 } {
   const area = skill.area;
+  if (area?.origin === "party") {
+    // Heal Party (#1013): every team-mate, however far.
+    return { target: "Your whole party", range: undefined };
+  }
   if (skill.target === "self" && area?.origin === "caster") {
     const where = AREA_TEXT.get(area.radius) ?? `within ${String(area.radius)}`;
     return { target: `${AREA_WHO[area.affects]} ${where}`, range: `${String(area.radius)} radius` };

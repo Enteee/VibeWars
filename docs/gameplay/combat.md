@@ -30,7 +30,8 @@ the server decides what happens (brief §12, §32).
 
 Regeneration and degeneration count in **pips**, as in GW1. One health
 pip is 2 HP/s and one energy pip ⅓ energy/s. Every status's pips sum
-(Bleeding −3, Burning −7, Poison −4, Disease −4, Faintheartedness −2, Regeneration +4), and
+(Bleeding −3, Burning −7, Poison −4, Disease −4, Faintheartedness −2, Regeneration +4,
+Healing Breeze +8), and
 the net is clamped to ±10 before it applies: burning, bleeding and poison
 together (−14) drain 20 HP/s, not 28. Energy is the primary profession's
 base pips plus any status's, clamped the same way: Warrior and Paragon 2
@@ -161,6 +162,13 @@ sacrifice, not damage: nothing caps it, charges adrenaline from it or
 answers it, and half of what you have can never kill you. The heal is a
 heal like Orison's: Divine Favor adds to it and a deep wound on the ally
 cuts it. On an ally at full health you still lose the health.
+**Heal Party** (#1013, Healing Prayers, 15 energy, 1 s, 20 s) heals you
+and every living team-mate 66, wherever they stand and through walls:
+your party is your team. Divine Favor adds to your own heal only, as for
+every untargeted Monk spell, and a deep wound cuts the heal of whoever
+has one. **Healing Breeze** (Healing Prayers, 10 energy, 1 s, 5 s) gives
+an ally +8 Health regeneration for 15 s; it is an enchantment, so
+enchantment removal takes it.
 
 ## Interrupts
 
@@ -365,6 +373,11 @@ from Shatter Enchantment, and a cheap condition covers a deep wound from
 Mend Condition. Some removals do more when they find something to
 remove: Shatter Enchantment then deals damage, Drain Enchantment gives
 its caster energy and health, and Mend Condition heals the ally.
+**Remove Hex** (Monk, no attribute, 5 energy, 1 s, 8 s) removes an
+ally's newest hex. **Dismiss Condition** (#1013, Protection Prayers, 5
+energy, ¾ s, 3 s) removes an ally's newest condition, and heals 63 if
+the ally is enchanted as it lands, whether or not a condition was
+there to remove.
 
 **A Dervish spends its own enchantments** (#845). Wounding Strike,
 Signet of Pious Light and Pious Restoration each make you lose 1 Dervish
@@ -620,7 +633,8 @@ not. "Watch Yourself!" (Warrior, Tactics, 4 adrenaline) gives +21 armor
 for 10 s, and it ends early on each ally after 3 incoming attacks that
 hit or are blocked; a miss, a dodge or an obstructed arrow does not
 count. Earshot is GW1's ratio of earshot to cast range (about 1,010 to
-1,250) applied to the 420-unit spell range.
+1,250) applied to the 420-unit spell range. A party skill such as Heal
+Party is not a shout: it reaches the whole team, however far.
 "Never Surrender!" (Paragon, Command, 5 energy, 20 s) gives +4 Health
 regeneration for 10 s to each ally in earshot below 75% Health as it
 lands; one at exactly 75% or above gets nothing, and one healed above it

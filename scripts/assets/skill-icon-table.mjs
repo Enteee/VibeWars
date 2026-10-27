@@ -141,6 +141,11 @@ export const SKILL_ICONS = {
   "monk.protective-spirit": { glyph: "armor", modifier: "less" },
   // Your own life, given: the resurrect glyph with the bleed drop (#936).
   "monk.infuse-health": { glyph: "resurrect", modifier: "bleed" },
+  // Placeholders until the asset-designer's (#1013).
+  "monk.remove-hex": { glyph: "cleanse" },
+  "monk.dismiss-condition": { glyph: "cleanse", modifier: "up" },
+  "monk.healing-breeze": { glyph: "heal", modifier: "clock" },
+  "monk.heal-party": { glyph: "heal", modifier: "area" },
   "paragon.spear-of-lightning": { glyph: "spear-bolt" },
   "paragon.never-surrender": { glyph: "banner", modifier: "area" },
   "paragon.leaders-comfort": { glyph: "banner-cross", modifier: "self" },

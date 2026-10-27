@@ -31,4 +31,23 @@ describe("skillRoles", () => {
     expect(rolesOf("warrior.watch-yourself")).toEqual(["defence"]);
     expect(rolesOf("monk.guardian")).toEqual(["defence"]);
   });
+
+  it("counts a status that regenerates as healing (#1013)", () => {
+    for (const id of [
+      "monk.healing-breeze",
+      "monk.mending",
+      "ranger.troll-unguent",
+      "dervish.mystic-regeneration",
+      "paragon.never-surrender",
+    ]) {
+      expect(rolesOf(id), id).toContain("healing");
+    }
+    expect(rolesOf("ritualist.weapon-of-warding")).toEqual(
+      expect.arrayContaining(["defence", "healing"]),
+    );
+    expect(rolesOf("monk.remove-hex")).toEqual(["removal"]);
+    expect(rolesOf("monk.dismiss-condition")).toEqual(
+      expect.arrayContaining(["removal", "healing"]),
+    );
+  });
 });

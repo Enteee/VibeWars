@@ -111,6 +111,25 @@ describe("resolveTargets", () => {
     expect(select(SPLASH, [at("x", 1, vec2(300, 0))], { primary: undefined })).toEqual([]);
   });
 
+  it("with a party area: the caster, then every living team-mate by distance, however far or walled off (#1013)", () => {
+    const wall = segment(vec2(500, -100), vec2(500, 100));
+    const party = select(
+      { origin: "party" },
+      [
+        at("far", 0, vec2(5000, 0)),
+        at("walled", 0, vec2(600, 0)),
+        at("b", 0, vec2(0, 100)),
+        at("a", 0, vec2(100, 0)),
+        at("dead", 0, vec2(10, 0), true),
+        at("foe", 1, vec2(20, 0)),
+      ],
+      { losBlockers: [wall] },
+    );
+    expect(party).toEqual(["caster", "a", "b", "walled", "far"]);
+    // Alone on its team: only the caster.
+    expect(select({ origin: "party" }, [at("foe", 1, vec2(20, 0))])).toEqual(["caster"]);
+  });
+
   it("gives the same answer however the candidates are ordered", () => {
     const crowd = [
       at("c", 1, vec2(300, 30)),
