@@ -8,7 +8,7 @@
  * Not a test file itself (vitest runs `*.test.ts` only), and left out of
  * the build.
  */
-import { DEFAULT_MATCH_RULES, type MatchRules } from "@vibewars/game-core";
+import type { MatchRules } from "@vibewars/game-core";
 
 import { joinLobby } from "./lobby-client.js";
 import type { LobbyCharacter, LobbyConnection, MatchStarting } from "./lobby-connection.js";
@@ -70,7 +70,7 @@ export async function openLobby(
           transport: plan.transport,
           map: ARENA,
           seed: plan.matchId,
-          matchRules: options.matchRules ?? DEFAULT_MATCH_RULES,
+          matchRules: options.matchRules ?? plan.matchRules,
           random: () => ((draws += 1) * 0.6180339887) % 1,
           maxPlayers: 8,
           seats: plan.seats,

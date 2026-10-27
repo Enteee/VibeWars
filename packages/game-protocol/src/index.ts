@@ -99,6 +99,8 @@ export {
   parseWireLobbyState,
   parseWireLobbyCommand,
   parseWireLobbyNote,
+  parsePeerLobbyHello,
+  parseWireLobbyWelcome,
   parseWireMatchStart,
 } from "./p2p.js";
 
@@ -132,6 +134,9 @@ export type {
   WireLobbyState,
   WireLobbyCommand,
   WireLobbyNote,
+  PeerLobbyHello,
+  WireLobbyWelcome,
+  WireAdmission,
   LobbyRefusal,
   WireMatchStart,
 } from "./p2p.js";

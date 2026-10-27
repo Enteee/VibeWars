@@ -135,6 +135,7 @@ describe("lobby host", () => {
         protocolVersion: PROTOCOL_VERSION,
         name: primary,
         character: { name: "  \u202eCynn\u0000  ", primary, secondary },
+        admission: null,
       });
     }
     await settle();
