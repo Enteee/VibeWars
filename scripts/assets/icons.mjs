@@ -352,6 +352,15 @@ const ui = {
   // The same notes under a slash cased in the background: music is muted (#372).
   "music-off": () =>
     notes + `<path d="M4 4l16 16" ${stroke(C.bg, 4)}/><path d="M4 4l16 16" ${stroke(C.ink, 2)}/>`,
+  // A gear: a ring with eight teeth, the options (#454).
+  settings: () =>
+    `<circle cx="12" cy="12" r="6.2" ${stroke(C.ink, 2.2)}/><circle cx="12" cy="12" r="2.4" ${stroke(C.ink, 2)}/>` +
+    `<path d="M18.5 12.0L21.8 12.0M16.6 16.6L18.9 18.9M12.0 18.5L12.0 21.8M7.4 16.6L5.1 18.9M5.5 12.0L2.2 12.0M7.4 7.4L5.1 5.1M12.0 5.5L12.0 2.2M16.6 7.4L18.9 5.1" ${stroke(C.ink, 3)}/>`,
+  // Four corner brackets pointing out: enter fullscreen (#454).
+  fullscreen: () => `<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" ${stroke(C.ink, 2.2)}/>`,
+  // The same corners pointing in: leave fullscreen (#454).
+  "fullscreen-exit": () =>
+    `<path d="M4 9h5V4M15 4v5h5M20 15h-5v5M9 20v-5H4" ${stroke(C.ink, 2.2)}/>`,
   // Two crossed swords, tips up, guards and grips low: you are auto-attacking
   // (#160). Two blades, so it never reads as the one-sword attack skill type.
   attacking: () =>
