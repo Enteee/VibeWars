@@ -76,6 +76,8 @@ export type StatusId =
   | "contagion"
   | "shard-storm"
   | "shadow-of-fear"
+  | "ice-spikes"
+  | "deep-freeze"
   | "regeneration"
   | "blood-ritual"
   | "armor-boost"
@@ -87,6 +89,7 @@ export type StatusId =
   | "frenzy"
   | "dark-escape"
   | "natural-stride"
+  | "mantra-of-recovery"
   // Preparations.
   | "apply-poison"
   // Glyphs.
@@ -94,6 +97,9 @@ export type StatusId =
   // Shouts and skill effects (#524).
   | "watch-yourself"
   | "healing-signet-armor"
+  // Paragon shouts (#921).
+  | "fall-back"
+  | "stand-your-ground"
   // Chants and weapon spells (#758).
   | "anthem-of-flame"
   | "weapon-of-warding"
@@ -156,6 +162,17 @@ export interface StatusDefinition {
   readonly energyPips: number;
   /** Flat armor modifier while active. */
   readonly armorModifier: number;
+  /**
+   * Armor added while the bearer is not moving (#921, `Combatant.moving`):
+   * "Stand Your Ground!"'s +24.
+   */
+  readonly armorWhileStill: number;
+  /**
+   * Health per second healed while the bearer is moving (#921): "Fall
+   * Back!"'s. A heal, so `healingMultiplier` scales it; not pips, so
+   * outside `MAX_PIPS` and not regeneration.
+   */
+  readonly healthPerSecondWhileMoving: number;
   /**
    * Armor taken before `armorModifier`s add, never below a floor (#763):
    * Cracked Armor's −20, not below 60. `undefined`: none.
@@ -274,6 +291,12 @@ export interface StatusDefinition {
    */
   readonly damageTakenMultiplier: number;
   /**
+   * The share taken off the recharge of each spell the bearer finishes
+   * (#938): Mantra of Recovery's 0.33. Read as the recharge starts, so
+   * a recharge already running keeps its length when the status ends.
+   */
+  readonly spellRechargeFaster: number;
+  /**
    * What it does when its bearer does something (#469): Backfire's damage
    * on each spell the bearer finishes. Applied by whoever put it on.
    */
@@ -377,6 +400,8 @@ function define(
     healthPipsPerEnchantment: undefined,
     energyPips: 0,
     armorModifier: 0,
+    armorWhileStill: 0,
+    healthPerSecondWhileMoving: 0,
     armorReduction: undefined,
     moveSpeedMultiplier: 1,
     attackMissChance: 0,
@@ -400,6 +425,7 @@ function define(
     endsWhenBearerHits: false,
     endsWhenBearerGains: [],
     damageTakenMultiplier: 1,
+    spellRechargeFaster: 0,
     triggers: [],
     ...overrides,
   };
@@ -508,6 +534,16 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     profession: "necromancer",
     attackDurationMultiplier: 1.5,
   }),
+  // "...move 66% slower for 2...5...6 seconds" (#938).
+  "ice-spikes": define("ice-spikes", "Ice Spikes", "hex", {
+    profession: "elementalist",
+    moveSpeedMultiplier: 0.34,
+  }),
+  // "For 10 seconds, all foes move 66% slower" (#938).
+  "deep-freeze": define("deep-freeze", "Deep Freeze", "hex", {
+    profession: "elementalist",
+    moveSpeedMultiplier: 0.34,
+  }),
   // Troll Unguent's (a ranger skill), though it is an enchantment here.
   regeneration: define("regeneration", "Regeneration", "enchantment", {
     profession: "ranger",
@@ -559,6 +595,11 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     block: { chance: 0.5, against: "all" },
     endsWhenBearerGains: ["hex", "enchantment"],
   }),
+  // "For 5...17...20 seconds, spells you cast recharge 33% faster" (#938).
+  "mantra-of-recovery": define("mantra-of-recovery", "Mantra of Recovery", "stance", {
+    profession: "mesmer",
+    spellRechargeFaster: 0.33,
+  }),
 
   // "Watch Yourself!" at rank 12: +5...21 armor, ending after 1...3 attacks.
   "watch-yourself": define("watch-yourself", "Watch Yourself!", "shout", {
@@ -569,6 +610,21 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   "healing-signet-armor": define("healing-signet-armor", "Healing Signet", "skill-effect", {
     profession: "warrior",
     armorModifier: -40,
+  }),
+  // "Fall Back!" at rank 12: 13 Health per second while moving, 33%
+  // faster, ending on its bearer's hit.
+  "fall-back": define("fall-back", "Fall Back!", "shout", {
+    profession: "paragon",
+    moveSpeedMultiplier: 1.33,
+    healthPerSecondWhileMoving: 13,
+    endsWhenBearerHits: true,
+  }),
+  // "Stand Your Ground!" at rank 12: +24 armor when not moving, ending if
+  // its bearer attacks.
+  "stand-your-ground": define("stand-your-ground", "Stand Your Ground!", "shout", {
+    profession: "paragon",
+    armorWhileStill: 24,
+    endsWhenBearerAttacks: true,
   }),
 
   // "Enemies struck by your physical attacks become poisoned for
@@ -930,6 +986,14 @@ export class StatusSet {
     this.#statuses.clear();
   }
 
+  /**
+   * End every status, of every category, each recorded as ended, in
+   * `active` order: what a death does (#940), so every `ends` trigger fires.
+   */
+  public endAll(): void {
+    this.#end([...this.#statuses.keys()]);
+  }
+
   /** Remove one status by id. Returns whether anything was removed. */
   public remove(id: StatusId): boolean {
     const had = this.#statuses.has(id);
@@ -1132,6 +1196,10 @@ export interface StatusModifiers {
   /** Every status's energy pips, summed and not yet clamped. */
   readonly energyPips: number;
   readonly armorModifier: number;
+  /** Every status's, summed: armor while the bearer is not moving (#921). */
+  readonly armorWhileStill: number;
+  /** Every status's, summed: health per second while the bearer is moving (#921). */
+  readonly healthPerSecondWhileMoving: number;
   /** The largest armor reduction; `undefined`: none. */
   readonly armorReduction: ArmorReduction | undefined;
   readonly moveSpeedMultiplier: number;
@@ -1146,6 +1214,11 @@ export interface StatusModifiers {
   readonly attackDurationMultiplier: number;
   /** Every status's, multiplied (#919). */
   readonly damageTakenMultiplier: number;
+  /**
+   * The share taken off a spell's recharge (#938): several combine as
+   * 1 − Π(1 − f).
+   */
+  readonly spellRechargeFaster: number;
 }
 
 /** The weakest heals get, whatever reduces them (GW1: at most −40%). */
@@ -1170,6 +1243,8 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let healthPips = 0;
   let energyPips = 0;
   let armorModifier = 0;
+  let armorWhileStill = 0;
+  let healthPerSecondWhileMoving = 0;
   let armorReduction: ArmorReduction | undefined;
   let moveSpeedMultiplier = 1;
   let attackMissChance = 0;
@@ -1181,6 +1256,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let attackFaster = 1;
   let attackSlower = 1;
   let damageTakenMultiplier = 1;
+  let spellRechargeKept = 1;
   const enchantments = statuses.filter(
     (status) => getStatusDefinition(status.id).category === "enchantment",
   ).length;
@@ -1194,6 +1270,8 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     }
     energyPips += def.energyPips;
     armorModifier += def.armorModifier;
+    armorWhileStill += def.armorWhileStill;
+    healthPerSecondWhileMoving += def.healthPerSecondWhileMoving;
     if (
       def.armorReduction !== undefined &&
       (armorReduction === undefined || def.armorReduction.amount > armorReduction.amount)
@@ -1215,12 +1293,15 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     attackFaster = Math.min(attackFaster, def.attackDurationMultiplier);
     attackSlower = Math.max(attackSlower, def.attackDurationMultiplier);
     damageTakenMultiplier *= def.damageTakenMultiplier;
+    spellRechargeKept *= 1 - def.spellRechargeFaster;
   }
 
   return {
     healthPips,
     energyPips,
     armorModifier,
+    armorWhileStill,
+    healthPerSecondWhileMoving,
     armorReduction,
     moveSpeedMultiplier,
     attackMissChance,
@@ -1231,6 +1312,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     castTimeMultiplier,
     attackDurationMultiplier: attackFaster * attackSlower,
     damageTakenMultiplier,
+    spellRechargeFaster: 1 - spellRechargeKept,
   };
 }
 

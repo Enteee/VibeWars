@@ -173,6 +173,16 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Paragon/1084-Anthem_of_Flame",
   },
   {
+    id: "paragon.fall-back",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1062-Fall_Back!",
+  },
+  {
+    id: "paragon.stand-your-ground",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1070-Stand_Your_Ground!",
+  },
+  {
     id: "paragon.spear-of-lightning",
     profession: "paragon",
     url: "https://www.gw-memorial.net/skills/Paragon/1126-Spear_of_Lightning",
@@ -416,6 +426,26 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     id: "dervish.victorious-sweep",
     profession: "dervish",
     url: "https://www.gw-memorial.net/skills/Dervish/1030-Victorious_Sweep",
+  },
+  {
+    id: "mesmer.cry-of-frustration",
+    profession: "mesmer",
+    url: "https://www.gw-memorial.net/skills/Mesmer/308-Cry_of_Frustration",
+  },
+  {
+    id: "mesmer.mantra-of-recovery",
+    profession: "mesmer",
+    url: "https://www.gw-memorial.net/skills/Mesmer/327-Mantra_of_Recovery",
+  },
+  {
+    id: "elementalist.ice-spikes",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/438-Ice_Spikes",
+  },
+  {
+    id: "elementalist.deep-freeze",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/434-Deep_Freeze",
   },
   {
     id: "elementalist.lightning-strike",

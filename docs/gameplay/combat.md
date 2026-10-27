@@ -192,6 +192,13 @@ deals only 13, and disables an interrupted skill for 20 s; the Warrior's
 which skills were disabled, and for how long; a skill already
 recharging for longer is not mentioned.
 
+**Cry of Frustration** (#938, Domination Magic, 10 energy, ¼ s, 20 s
+recharge) only works on a foe using a skill, any skill. Then that foe is
+interrupted and takes 63 damage, and every foe in the area around it is
+interrupted too, if it is casting, and takes 75% of that, 47. On a foe
+using no skill it does nothing, to anyone: the energy is spent and it
+recharges all the same.
+
 ## Energy denial
 
 A Mesmer can take a foe's energy (#793). **Energy Burn** takes up to 8
@@ -226,9 +233,9 @@ the same condition, for as long as it was put on you, and you sacrifice
 6% of your maximum health, foes in reach or not. A condition you
 already had, refreshed or not, does nothing. **Parasitic Bond** (hex,
 20 s) gives its target −1 health degeneration and heals its caster for
-102 when it ends: when it runs out, or when it is removed. Re-casting it
-on a target that still has it heals nothing; the respawn of its target
-heals nothing either, and neither does a caster who has died or left.
+102 when it ends: when it runs out, when it is removed, or when its
+target dies. Re-casting it on a target that still has it heals nothing,
+and neither does a caster who has died or left.
 What a trigger does never sets off another trigger: a condition
 Contagion hands to a foe with Contagion goes no further.
 
@@ -464,10 +471,24 @@ refreshed one does not end it. Damage taken is multiplied after armor
 and before a Rune of Absorption, on every damage packet; health loss,
 sacrifice and degeneration are not damage packets and are left alone.
 
+**Mantra of Recovery** (Mesmer elite stance, Fast Casting, 5 energy, 15 s
+recharge, #938) makes every spell you finish in the next 17 s recharge
+33% faster. It is read as the recharge starts: a spell finished after the
+Mantra ends gets nothing, and one already recharging keeps its shorter
+time. A signet, an attack or a stance is not a spell.
+
 Wild Throw (Paragon spear attack, 7 adrenaline) deals +17 damage, cannot
 be blocked, and ends the stance of the foe it hits. It does not yet
 disable your other attack skills for 3 s: that waits for disabled skills
-(#469).
+(#469). Cruel Spear (Paragon elite spear attack, 6 adrenaline) deals
++42 damage, and a Deep Wound for 17 s if its target is not moving as the
+spear lands (#921).
+
+**Moving** means walking during the previous tick: a held direction, a
+clicked point, an approach to attack or cast. Knocked down, in
+aftercast, dead or walking into a wall is not moving. Everyone's is read
+at the end of a tick, so it is one tick late and never depends on who
+acts first.
 
 Spear of Lightning (Paragon spear attack, 5 energy, 6 s) deals +18, and
 the whole blow is lightning, the spear's damage too: armor against
@@ -516,6 +537,14 @@ you 66, plus 18 for each living ally in earshot, you included, at most
 140 in all: 84 alone, 140 with four others. It is a skill, not a shout,
 so Leadership gives no energy for it. A Deep Wound cuts the capped heal
 by its 20%.
+
+The Paragon's Command shouts (#921): "Fall Back!" (10 energy, 25 s
+recharge) gives 9 s of 33% faster movement and 13 Health per second
+while moving, a heal Deep Wound cuts; it ends on an ally when that ally
+hits with an attack, but not on a miss or a block. "Stand Your Ground!"
+(15 energy, 30 s recharge) gives 17 s of +24 armor while not moving,
+and ends on an ally as soon as that ally attacks. Leadership pays for
+both, as for every shout.
 
 **Chants** reach allies in earshot as shouts do, but have a cast (#758).
 A chant is not a spell: dazed does not slow it. Anthem of Flame
@@ -764,6 +793,11 @@ your target when it lands (its cost already paid), another 42 and a
 knockdown. **Shard Storm** (Water Magic, 10 energy, 1 s, 10 s recharge)
 flies as Fireball does, a little faster, and on a hit deals 70 cold and
 hexes its target to 34% speed for 5 s (#918).
+**Ice Spikes** (Water Magic, 15 energy, 1 s, 10 s recharge) falls on its
+target and every foe adjacent to it: 68 cold and 34% speed for 5 s.
+**Deep Freeze** (25 energy, 2 s, 15 s recharge) does the same to every
+foe in the area of its target, for 70 cold and 10 s (#938). Neither
+flies. Slows multiply, down to a floor of 25% speed.
 
 ## Primary attributes
 
@@ -835,6 +869,11 @@ Health reaching zero kills exactly once (no double death events). A kill
 scores for the opposing team; both death paths — a killing blow and
 bleeding out — route through the same place, so neither is worth more
 than the other.
+
+A death ends every effect on the dead: conditions, hexes, enchantments,
+stances, shouts. Each ends as if removed, so what answers its ending
+fires, and a corpse wears nothing. A kill made by such an answer, as a
+Backfire's damage, ends them too but sets off nothing further.
 
 Kill credit is **team-level, not per-player**. Attributing a kill to a
 specific killer needs damage-source tracking that does not exist yet,

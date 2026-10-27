@@ -46,6 +46,8 @@ describe("status definitions", () => {
         def.preventsKnockdown ||
         def.energyPips !== 0 ||
         def.armorModifier !== 0 ||
+        def.armorWhileStill !== 0 ||
+        def.healthPerSecondWhileMoving !== 0 ||
         def.armorReduction !== undefined ||
         def.moveSpeedMultiplier !== 1 ||
         def.attackMissChance !== 0 ||
@@ -60,7 +62,8 @@ describe("status definitions", () => {
         def.onAttackHit !== undefined ||
         def.triggers.length > 0 ||
         def.nextSpells !== undefined ||
-        def.nextAttackSkill !== undefined;
+        def.nextAttackSkill !== undefined ||
+        def.spellRechargeFaster !== 0;
       expect(hasEffect, `${id} has no mechanical effect`).toBe(true);
     }
   });
@@ -423,6 +426,25 @@ describe("StatusSet changes, for the triggers (#887)", () => {
       { kind: "ended", id: "glyph-of-lesser-energy", sourceId: "spells" },
       { kind: "ended", id: "weapon-of-warding", sourceId: "attacks" },
       { kind: "ended", id: "fleeting-stability", sourceId: "knockdown" },
+    ]);
+  });
+
+  it("ends every status on a death, each recorded with its source, in order (#940)", () => {
+    const set = new StatusSet();
+    set.apply("burning", 5, "a");
+    set.apply("parasitic-bond", 10, "b");
+    set.apply("regeneration", 10, "c");
+    set.apply("sprint", 8, "d");
+    set.drainChanges();
+
+    set.endAll();
+
+    expect(set.active).toEqual([]);
+    expect(set.drainChanges()).toEqual([
+      { kind: "ended", id: "burning", sourceId: "a" },
+      { kind: "ended", id: "parasitic-bond", sourceId: "b" },
+      { kind: "ended", id: "regeneration", sourceId: "c" },
+      { kind: "ended", id: "sprint", sourceId: "d" },
     ]);
   });
 

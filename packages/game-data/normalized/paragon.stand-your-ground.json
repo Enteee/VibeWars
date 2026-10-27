@@ -1,0 +1,26 @@
+{
+  "id": "paragon.stand-your-ground",
+  "name": "\"Stand Your Ground!\"",
+  "profession": "paragon",
+  "attribute": "Command",
+  "type": "Shout.",
+  "elite": false,
+  "campaign": "Nightfall",
+  "cost": {
+    "kind": "energy",
+    "amount": 15
+  },
+  "overcast": 0,
+  "activationSeconds": 0,
+  "rechargeSeconds": 30,
+  "upkeep": false,
+  "description": "For 5...17...20 seconds, all party members within earshot receive +24 armor when not moving. This effect ends on an ally affected by this shout when that ally attacks.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Paragon/1070-Stand_Your_Ground!",
+    "fetchedAt": "2026-10-27T14:14:37.934Z"
+  },
+  "unmapped": {}
+}

@@ -164,6 +164,12 @@ export function describeStatus(id: string): string {
     const sign = definition.armorModifier > 0 ? "+" : "";
     parts.push(`${sign}${String(definition.armorModifier)} armor`);
   }
+  if (definition.armorWhileStill !== 0) {
+    parts.push(`${signed(definition.armorWhileStill)} armor while not moving`);
+  }
+  if (definition.healthPerSecondWhileMoving !== 0) {
+    parts.push(`${String(definition.healthPerSecondWhileMoving)} Health per second while moving`);
+  }
   if (definition.armorReduction !== undefined) {
     const { amount, floor } = definition.armorReduction;
     parts.push(`−${String(amount)} armor (not below ${String(floor)})`);
@@ -239,6 +245,10 @@ export function describeStatus(id: string): string {
   }
   if (definition.damageTakenMultiplier !== 1) {
     parts.push(`takes ${damageTaken(definition.damageTakenMultiplier)} damage`);
+  }
+  if (definition.spellRechargeFaster !== 0) {
+    const faster = String(Math.round(definition.spellRechargeFaster * 100));
+    parts.push(`spells recharge ${faster}% faster`);
   }
   if (definition.endsWhenBearerHits) {
     parts.push("ends if the bearer hits with an attack");
@@ -349,6 +359,8 @@ function conditionText(condition: EffectCondition): string {
       return condition.radius === AREA_ADJACENT
         ? "If target is not adjacent to any allies"
         : `If target has no allies within ${String(condition.radius)}`;
+    case "target-not-moving":
+      return "If target is not moving";
     case "caster-more-energy":
       return "If you have more Energy than target";
     case "caster-wields":
@@ -550,14 +562,16 @@ function describeEffect(
         each,
         description: describeEffect(each, ranks),
       }));
-      const what = inner
-        .map(({ each, description }) =>
-          each.kind === "damage"
-            ? `take ${String(describeMagnitude(each.amount, ranks).current)} damage` +
-              (each.perEnergyLost === undefined ? "" : " for each point of energy lost")
+      const parts = inner.map(({ each, description }) =>
+        each.kind === "damage"
+          ? `take ${String(describeMagnitude(each.amount, ranks).current)} damage` +
+            (each.perEnergyLost === undefined ? "" : " for each point of energy lost")
+          : each.kind === "interrupt"
+            ? "are interrupted if casting"
             : lowerFirst(description.text),
-        )
-        .join(", ");
+      );
+      const last = parts.pop();
+      const what = parts.length === 0 ? (last ?? "") : `${parts.join(", ")} and ${String(last)}`;
       return {
         text: `${foesWithin(effect.radius)} ${what}`,
         magnitude: inner.find(({ description }) => description.magnitude !== undefined)?.description
