@@ -77,10 +77,11 @@ export function paintRecharge(
   if (view === undefined) {
     if (overlay !== null) {
       // Overlay, number and label go in the same frame as the flash, so
-      // the cue is never colour alone.
+      // the cue is never colour alone. The slot is named by its skill
+      // again: the bar shows no name (#719).
       overlay.remove();
       slot.classList.remove("is-recharging");
-      slot.removeAttribute("aria-label");
+      slot.setAttribute("aria-label", skillName);
       if (!reducedMotion) {
         flashReady(slot);
       }

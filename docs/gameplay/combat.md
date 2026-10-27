@@ -253,8 +253,8 @@ when it starts, so one interrupted or cancelled afterwards has still used
 it; one refused, or queued behind an aftercast, uses it only once it
 starts. Signets, shouts, chants, stances and attacks leave it alone. The 16 is
 its rank-12 number; Energy Storage scaling comes with #532. While it is
-up, the skill bar shows each spell at its discounted cost and lights
-the ones it makes affordable (#637).
+up, a skill bar slot's tooltip shows each spell at its discounted cost,
+and the bar lights the ones it makes affordable (#637, #719).
 
 **Signets** usually cost nothing, so they work at 0 energy. Healing
 Signet (Warrior, Tactics) heals you after a 2 s cast, and for those 2 s
@@ -470,9 +470,9 @@ The build editor says under a primary's row what it does at its rank
 ("Fast Casting 12: spells cast 43% faster"), and a skill tooltip for a
 known character shows the cost and activation Expertise and Fast
 Casting make of it, the base in brackets: "5 energy (10)",
-"1.1s (2s)" (#531). The HUD skill bar shows the energy a skill costs
-the caster now, Expertise and an active glyph included (#528, #637),
-with no base beside it.
+"1.1s (2s)" (#531). The skill bar shows icons only (#719); a slot's
+tooltip shows the energy the skill costs the caster now, Expertise and
+an active glyph included (#528, #637), the base in brackets.
 
 ## Positioning
 
