@@ -75,9 +75,9 @@ import {
 } from "./combat-readouts.js";
 import { describeRefusal, MESSAGE_SECONDS, SKILL_SLOT_ICON_PX } from "./hud.js";
 import { isEliteSkill, skillBadgeHtml, skillIconHtml } from "./icons.js";
-import { createAllyWatch } from "./ally-watch.js";
 import { energyLabel, overcastBandElement, renderOvercastBand } from "./overcast-band.js";
 import { paintHealthTint } from "./health-tint.js";
+import { createPartyWindow } from "./party-window.js";
 import { pipsElement, renderPips } from "./pips.js";
 import { paintRecharge, prefersReducedMotion } from "./recharge-overlay.js";
 import {
@@ -227,8 +227,13 @@ export function createTrainingPanel(): TrainingPanel {
   const teaches = h("p", "training-teaches");
 
   const stage = h("div", "training-stage");
-  // The ally you watch (#443), in the stage's corner, as on the match HUD.
-  const allyWatch = createAllyWatch(stage);
+  // Your team's health (#1055), as on the match HUD: shown when the
+  // scenario gives you allies. A row's click targets its member.
+  const partyWindow = createPartyWindow(stage, (targetSessionId) => {
+    if (session !== undefined && !session.parked) {
+      session.connection.sendIntent({ kind: "target", targetSessionId });
+    }
+  });
   stage.tabIndex = 0;
   stage.setAttribute("role", "application");
   stage.setAttribute("aria-label", "training arena");
@@ -912,7 +917,7 @@ export function createTrainingPanel(): TrainingPanel {
       session.music.snapshot(latestMatch);
       const self = latestMatch.players.find((player) => player.sessionId === SELF_ID);
       follow.frame(deltaSeconds, self);
-      allyWatch.update(latestMatch);
+      partyWindow.update(latestMatch);
       latestArena = withCalls(
         withNames(
           toArenaSnapshot(latestMatch, session.walls),
@@ -920,7 +925,6 @@ export function createTrainingPanel(): TrainingPanel {
           nameReveal.held(),
         ),
         connection.getCalls(),
-        allyWatch.watchedId,
       );
       created.scene.setSnapshot(latestArena);
       // For the e2e specs: who your team has called.
@@ -965,13 +969,11 @@ export function createTrainingPanel(): TrainingPanel {
       if (session === undefined) {
         return;
       }
-      // A wheel click calls a foe, watches an ally, or pings the ground (#443).
+      // A wheel click calls a foe, or pings the point (#443, #1055).
       if (button === "middle" && phase === "down") {
         const action = middleClickAction(session.connection.getSnapshot(), latestArena, world);
         if (action.kind === "call") {
           session.connection.sendCall(action.call);
-        } else if (action.kind === "watch") {
-          allyWatch.toggle(action.allyId);
         }
         return;
       }
@@ -1027,7 +1029,7 @@ export function createTrainingPanel(): TrainingPanel {
       offPointer?.();
       camera?.dispose();
       camera = undefined;
-      allyWatch.dispose();
+      partyWindow.dispose();
       delete stage.dataset.called;
       delete stage.dataset.names;
       nameReveal.detach();

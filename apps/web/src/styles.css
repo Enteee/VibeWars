@@ -379,18 +379,21 @@ body {
    the status icons and the pips say it too. */
 .hud-bar-health.is-tint-hex .hud-bar-fill,
 .training-bar-health.is-tint-hex .training-bar-fill,
+.party-health.is-tint-hex .hud-bar-fill,
 .hud-target-health.is-tint-hex .hud-bar-fill {
   background: #7a3a7a;
 }
 
 .hud-bar-health.is-tint-poison .hud-bar-fill,
 .training-bar-health.is-tint-poison .training-bar-fill,
+.party-health.is-tint-poison .hud-bar-fill,
 .hud-target-health.is-tint-poison .hud-bar-fill {
   background: #66601e;
 }
 
 .hud-bar-health.is-tint-bleeding .hud-bar-fill,
 .training-bar-health.is-tint-bleeding .training-bar-fill,
+.party-health.is-tint-bleeding .hud-bar-fill,
 .hud-target-health.is-tint-bleeding .hud-bar-fill {
   background: #8c4a42;
 }
@@ -3778,38 +3781,128 @@ body:has(#app > .chat) .now-playing {
 }
 
 /*
- * The ally you watch (#443): name and health, top right, under the match
- * buttons and the music button (.hud-music, 3.2rem + 2.2rem), live.
- * Yours alone.
+ * The party window (#1055): your team's health, right middle, you first.
+ * Never scrolls: past 8 members the rows go compact, so 16 fit.
  */
-.ally-watch {
+.party-window {
   position: absolute;
-  top: 6rem;
+  top: 50%;
   right: 0.9rem;
+  transform: translateY(-50%);
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
-  padding: 0.35rem 0.5rem;
-  background: rgb(14 17 22 / 85%);
+  width: 200px;
+  max-height: 60%;
+  box-sizing: border-box;
+  padding: 0.3rem;
+  background: rgb(22 27 34 / 85%);
   border: 1px solid var(--line);
-  color: var(--ink);
-  pointer-events: none;
+  overflow: hidden;
 }
 
-.ally-watch[hidden] {
+/* The Training Ground's stage is small: its corner, clear of the dummies. */
+.training-stage .party-window {
+  top: 0.5rem;
+  right: 0.5rem;
+  transform: none;
+}
+
+.party-window[hidden] {
   display: none;
 }
 
-.ally-watch .ally-watch-health {
-  width: 9rem;
+.party-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.15rem 0.25rem;
+  background: none;
+  border: 1px solid transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.8rem;
+  text-align: left;
+  cursor: pointer;
 }
 
-.ally-watch-health .hud-bar-fill {
+.party-row:hover {
+  border-color: var(--line);
+}
+
+/* Your target, in the target ring's colour. */
+.party-row.is-targeted {
+  border-color: #ffd866;
+}
+
+.party-row-header {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.party-row-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.party-row.is-dead .party-row-name,
+.party-row-dead {
+  color: #4a5464;
+}
+
+.party-row-dead[hidden] {
+  display: none;
+}
+
+.party-row-professions img {
+  width: 1em;
+  height: 1em;
+  margin-right: 0.2em;
+  vertical-align: -0.15em;
+}
+
+.party-window .party-health {
+  width: 100%;
+  height: 12px;
+  box-sizing: border-box;
+}
+
+.party-health[hidden] {
+  display: none;
+}
+
+.party-health .hud-bar-fill {
   background: #3a6a3e;
 }
 
-.ally-watch.is-dead .hud-bar-label {
-  color: var(--ink-dim);
+.party-health .hud-bar-label,
+.party-health .vital-pips {
+  font-size: 0.7rem;
+  line-height: 10px;
+}
+
+/* More than 8 members: name and a 10 px bar on one line. */
+.party-window.is-compact .party-row {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.3rem;
+  padding-block: 0.05rem;
+}
+
+.party-window.is-compact .party-row-header {
+  flex: 0 0 45%;
+}
+
+.party-window.is-compact .party-health {
+  flex: 1;
+  height: 10px;
+}
+
+.party-window.is-compact .party-health .hud-bar-label,
+.party-window.is-compact .party-health .vital-pips {
+  line-height: 8px;
 }
 
 /*

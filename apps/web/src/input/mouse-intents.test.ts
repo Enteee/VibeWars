@@ -131,14 +131,14 @@ describe("middleClickAction (#443)", () => {
     players: MATCH.players.map((p) => (p.sessionId === id ? { ...p, dead: true } : p)),
   });
 
-  it("calls a living foe, watches a living ally, and pings the ground", () => {
+  it("calls a living foe, and pings a living ally's point and the ground (#1055)", () => {
     expect(middleClickAction(MATCH, ARENA, vec2(201, 2))).toEqual({
       kind: "call",
       call: { kind: "target", targetId: "foe" },
     });
-    expect(middleClickAction(MATCH, ARENA, vec2(100, 0))).toEqual({
-      kind: "watch",
-      allyId: "ally",
+    expect(middleClickAction(MATCH, ARENA, vec2(101, 2))).toEqual({
+      kind: "call",
+      call: { kind: "ping", x: 101, y: 2 },
     });
     expect(middleClickAction(MATCH, ARENA, vec2(150, 60))).toEqual({
       kind: "call",

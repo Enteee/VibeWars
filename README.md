@@ -46,7 +46,7 @@ saved characters.
 | Left click      | Walk there                                |
 | Right click     | Target (double: attack)                   |
 | Right drag      | Look around; let go to come back          |
-| Wheel click     | Call a foe, watch an ally, or ping        |
+| Wheel click     | Call a foe, or ping                       |
 | `1`–`9`, `0`    | Use the matching skill-bar slot           |
 | `Tab`           | Target the next nearest enemy             |
 | `Shift` `Tab`   | Target the previous one                   |
