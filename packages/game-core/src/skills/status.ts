@@ -538,13 +538,22 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   // Mending at rank 12: +3 Health regeneration while maintained (#837).
   mending: define("mending", "Mending", "enchantment", { profession: "monk", healthPips: 3 }),
   // "...Unless Patient Spirit ends prematurely, that ally is healed for
-  // 30...102...120 Health when Patient Spirit ends": 102, its rank-12 value.
+  // 30...102...120 Health when Patient Spirit ends", by its caster's
+  // Healing Prayers.
   "patient-spirit": define("patient-spirit", "Patient Spirit", "enchantment", {
     profession: "monk",
     triggers: [
       {
         on: "expires",
-        effects: [{ kind: "heal", amount: { flat: 102 }, perStatusOnTarget: [] }],
+        effects: [
+          {
+            kind: "heal",
+            amount: {
+              scaling: { attributeId: "monk.healing-prayers", atZero: 30, atTwelve: 102 },
+            },
+            perStatusOnTarget: [],
+          },
+        ],
         target: "bearer",
         skillId: "monk.patient-spirit",
       },

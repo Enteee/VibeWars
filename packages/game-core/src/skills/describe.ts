@@ -134,8 +134,12 @@ function signed(n: number): string {
   return n > 0 ? `+${String(n)}` : `−${String(-n)}`;
 }
 
-/** What a status actually does, so a tooltip does not just name it. */
-export function describeStatus(id: string): string {
+/**
+ * What a status actually does, so a tooltip does not just name it.
+ * `ranks` are its caster's, for a trigger an attribute scales (#944):
+ * Patient Spirit's heal. Empty, it reads at rank 0.
+ */
+export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = new Map()): string {
   const definition = findStatusDefinition(id);
   if (definition === undefined) {
     return id;
@@ -252,10 +256,20 @@ export function describeStatus(id: string): string {
     );
     parts.push(`ends if the bearer becomes ${gained.join(" or ")}`);
   }
+  // A trigger that reads "when it ends: removes 1 hex" is a sentence of
+  // its own (#944), not one more clause after a comma.
+  const sentences: string[] = [];
   for (const trigger of definition.triggers) {
-    parts.push(...describeTrigger(trigger));
+    for (const { text, clause } of describeTrigger(trigger, ranks)) {
+      (clause ? parts : sentences).push(text);
+    }
   }
-  return parts.length === 0 ? definition.name : parts.join(", ");
+  if (parts.length === 0 && sentences.length === 0) {
+    return definition.name;
+  }
+  return [...(parts.length === 0 ? [] : [parts.join(", ")]), ...sentences]
+    .map((text, index) => (index === 0 ? text : `${text.charAt(0).toUpperCase()}${text.slice(1)}`))
+    .join(". ");
 }
 
 /** GW1's words for a damage-taken multiplier (#919): "double", "half", or "1.5×". */
@@ -288,27 +302,38 @@ const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   expires: "when it expires",
 };
 
+/** A trigger's line, and whether it follows a comma or stands alone. */
+interface TriggerLine {
+  readonly text: string;
+  readonly clause: boolean;
+}
+
 /**
  * A status's answer to its bearer (#469): "takes 119 damage whenever it
- * casts a spell", "heals its caster for 102 when it ends" (#887).
+ * casts a spell", "heals its caster for 102 when it ends" (#887). A
+ * `clause` follows a comma; the rest, "when it ends: …", stand alone.
  */
-function describeTrigger(trigger: StatusTrigger): string[] {
+function describeTrigger(
+  trigger: StatusTrigger,
+  ranks: ReadonlyMap<string, number>,
+): TriggerLine[] {
   const when = TRIGGER_WHEN[trigger.on];
-  return trigger.effects.flatMap((effect) => {
+  return trigger.effects.flatMap((effect): TriggerLine[] => {
     if (effect.kind === "spread-gained-condition") {
-      return [`${when}: foes in the area suffer it too`];
+      return [{ text: `${when}: foes in the area suffer it too`, clause: false }];
     }
     if (effect.kind === "damage" && trigger.target === "bearer") {
-      return [
-        `takes ${String(describeMagnitude(effect.amount, new Map()).current)} damage ${when}`,
-      ];
+      const amount = String(describeMagnitude(effect.amount, ranks).current);
+      return [{ text: `takes ${amount} damage ${when}`, clause: true }];
     }
     if (effect.kind === "heal" && trigger.target === "source") {
-      return [
-        `heals its caster for ${String(describeMagnitude(effect.amount, new Map()).current)} ${when}`,
-      ];
+      const amount = String(describeMagnitude(effect.amount, ranks).current);
+      return [{ text: `heals its caster for ${amount} ${when}`, clause: true }];
     }
-    return describeEffects(effect, new Map()).map(({ text }) => `${when}: ${lowerFirst(text)}`);
+    return describeEffects(effect, ranks).map(({ text }) => ({
+      text: `${when}: ${lowerFirst(text)}`,
+      clause: false,
+    }));
   });
 }
 
@@ -479,7 +504,8 @@ function describeEffect(
         case "preparation":
         case "glyph":
           return {
-            text: `For ${seconds(effect.durationSeconds)}, ` + describeStatus(effect.statusId),
+            text:
+              `For ${seconds(effect.durationSeconds)}, ` + describeStatus(effect.statusId, ranks),
             magnitude: undefined,
           };
         default:
@@ -488,12 +514,12 @@ function describeEffect(
       return {
         text:
           `Applies ${statusName(effect.statusId)} for ${seconds(effect.durationSeconds)} ` +
-          `(${describeStatus(effect.statusId)})`,
+          `(${describeStatus(effect.statusId, ranks)})`,
         magnitude: undefined,
       };
     case "maintain-status": {
       // GW1 words upkeep as the caster's energy degeneration (#837).
-      const what = describeStatus(effect.statusId);
+      const what = describeStatus(effect.statusId, ranks);
       return {
         text:
           "Maintained: −1 Energy regeneration while it lasts. " +
@@ -826,7 +852,7 @@ export function describeSkill(
       ? []
       : [
           {
-            text: `While activating: ${describeStatus(skill.whileActivating)}`,
+            text: `While activating: ${describeStatus(skill.whileActivating, ranks)}`,
             magnitude: undefined,
           },
         ];

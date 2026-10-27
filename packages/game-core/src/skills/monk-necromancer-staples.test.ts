@@ -74,14 +74,24 @@ function fireChanges(bearer: Combatant, source: Combatant): CombatEvent[] {
 describe("ends and expires (#944)", () => {
   it("Patient Spirit's heal fires when it expires, not when it is removed", () => {
     const ally = makeCombatant({ id: "ally", health: 300 });
-    ally.statuses.apply("patient-spirit", 2, "ally");
+    const monk = makeCombatant({ id: "monk", attributeRanks: RANKS });
+    ally.statuses.apply("patient-spirit", 2, "monk");
     ally.statuses.drainChanges();
     ally.statuses.advance(2);
-    expect(fireChanges(ally, ally)).toEqual([{ kind: "heal", targetId: "ally", amount: 102 }]);
+    expect(fireChanges(ally, monk)).toEqual([{ kind: "heal", targetId: "ally", amount: 102 }]);
 
-    ally.statuses.apply("patient-spirit", 2, "ally");
+    ally.statuses.apply("patient-spirit", 2, "monk");
     ally.statuses.remove("patient-spirit");
-    expect(fireChanges(ally, ally)).toEqual([]);
+    expect(fireChanges(ally, monk)).toEqual([]);
+  });
+
+  it("Patient Spirit heals by its caster's Healing Prayers: 30 at rank 0", () => {
+    const ally = makeCombatant({ id: "ally", health: 300 });
+    const unskilled = makeCombatant({ id: "monk" });
+    ally.statuses.apply("patient-spirit", 2, "monk");
+    ally.statuses.drainChanges();
+    ally.statuses.advance(2);
+    expect(fireChanges(ally, unskilled)).toEqual([{ kind: "heal", targetId: "ally", amount: 30 }]);
   });
 
   it("Holy Veil's hex removal fires on any end, an expiry too", () => {

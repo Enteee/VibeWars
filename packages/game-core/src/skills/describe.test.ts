@@ -370,11 +370,19 @@ describe("attack skills (#417)", () => {
         ({ text }) => text,
       );
     expect(lines("monk.patient-spirit")).toEqual([
-      "Applies Patient Spirit for 2s (when it expires: heals for 102)",
+      "Applies Patient Spirit for 2s (when it expires: heals for 30)",
+    ]);
+    expect(
+      describeSkill(skill("monk.patient-spirit"), new Map([["monk.healing-prayers", 12]])).effects,
+    ).toEqual([
+      {
+        text: "Applies Patient Spirit for 2s (when it expires: heals for 102)",
+        magnitude: undefined,
+      },
     ]);
     expect(lines("monk.holy-veil")).toEqual([
       "Maintained: −1 Energy regeneration while it lasts. " +
-        "Hexes cast on the bearer take 2× as long to cast, when it ends: removes 1 hex.",
+        "Hexes cast on the bearer take 2× as long to cast. When it ends: removes 1 hex.",
     ]);
     expect(lines("necromancer.rend-enchantments")).toEqual([
       "Removes 8 enchantments",
