@@ -117,7 +117,7 @@ export const SKILL_ICONS = {
   // A placeholder: the loop reads as the spin; axe/area is Vow of Strength's (#936).
   "warrior.cyclone-axe": { glyph: "axe", modifier: "upkeep" },
   // A shout for yourself: the banner with the self mark (#936).
-  "warrior.for-great-justice": { glyph: "banner", modifier: "self" },
+  "warrior.for-great-justice": { glyph: "banner", modifier: "clock" },
   // A hit taken is capped: armor with the "less" mark (#936).
   "monk.protective-spirit": { glyph: "armor", modifier: "less" },
   // Your own life, given: the resurrect glyph with the bleed drop (#936).
