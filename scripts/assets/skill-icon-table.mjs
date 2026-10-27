@@ -124,7 +124,7 @@ export const SKILL_ICONS = {
   "elementalist.meteor": { glyph: "fireball", modifier: "stun" },
   // Placeholders until asset-designer's icons (#997).
   "elementalist.water-trident": { glyph: "trident", modifier: "stun" },
-  "elementalist.searing-flames": { glyph: "flame", modifier: "area" },
+  "elementalist.searing-flames": { glyph: "flame", modifier: "stun" },
   "elementalist.ebon-hawk": { glyph: "hawk", modifier: "less" },
   "elementalist.stoning": { glyph: "rock", modifier: "stun" },
   "mesmer.cry-of-frustration": { glyph: "interrupt", modifier: "area" },
