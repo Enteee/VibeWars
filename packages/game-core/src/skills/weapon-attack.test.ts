@@ -8,6 +8,7 @@ import { vec2, type Vec2 } from "../vec2.js";
 import { getSkill } from "./catalog.js";
 import { mitigate, skillDamage, weaponAttributeMultiplier } from "./damage.js";
 import { applyEffect, type CombatEvent } from "./effects.js";
+import { resolveMagnitudeAtRanks } from "./scaling.js";
 import { makeCombatant } from "./testing.js";
 import { blockChanceOf, combinedBlockChance } from "./tick.js";
 import {
@@ -23,10 +24,11 @@ import type { Combatant, Skill } from "./types.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1.combat;
 
-function wielding(weapon: Weapon, attributeId: string | undefined, met = true): ResolvedEquipment {
+/** `requirementMet` is the gear editor's; a blow checks the rank it is struck at (#762). */
+function wielding(weapon: Weapon, attributeId: string | undefined): ResolvedEquipment {
   return {
     ...unarmedResolvedEquipment(RULES.armorReferenceLevel),
-    mainHand: { weapon, attributeId, requirementMet: met },
+    mainHand: { weapon, attributeId, requirementMet: true },
   };
 }
 
@@ -84,19 +86,14 @@ describe("resolveSwing", () => {
   });
 
   it("scales by the attribute and by an unmet requirement", () => {
-    const rank = 8;
-    const weak = attacker(WEAPONS.hammer, "warrior.hammer-mastery", rank);
-    const unmet = makeCombatant({
-      id: "attacker",
-      equipment: wielding(WEAPONS.hammer, "warrior.hammer-mastery", false),
-      attributeRanks: new Map([["warrior.hammer-mastery", rank]]),
-    });
-    const scale = weaponAttributeMultiplier(rank, RULES);
+    // The hammer asks for 9 Hammer Mastery: 9 meets it, 8 does not.
+    const met = attacker(WEAPONS.hammer, "warrior.hammer-mastery", 9);
+    const unmet = attacker(WEAPONS.hammer, "warrior.hammer-mastery", 8);
     const rng = createRng(2);
     for (let i = 0; i < 200; i += 1) {
       for (const [who, factor] of [
-        [weak, scale],
-        [unmet, scale * RULES.unmetRequirementMultiplier],
+        [met, weaponAttributeMultiplier(9, RULES)],
+        [unmet, weaponAttributeMultiplier(8, RULES) * RULES.unmetRequirementMultiplier],
       ] as const) {
         const [dealt = Math.round(19 * factor)] = rolled(
           resolveSwing({
@@ -686,7 +683,7 @@ describe("critical hits (#533)", () => {
       RULES,
     );
 
-  it.each([0, 9, 12, 16])("crits at 1%% plus 1.37%% a rank of mastery, at rank %i", (rank) => {
+  it.each([0, 9, 12, 15])("crits at 1%% plus 1.37%% a rank of mastery, at rank %i", (rank) => {
     const sword = attacker(WEAPONS.sword, "warrior.swordsmanship", rank);
     const chance = 0.01 + 0.0137 * rank;
     expect(criticalChance(weaponSnapshotOf(sword), RULES)).toBeCloseTo(chance, 9);
@@ -712,23 +709,22 @@ describe("critical hits (#533)", () => {
   });
 
   it("hits for the maximum times √2 times the attribute, instead of rolling", () => {
-    const sword = attacker(WEAPONS.sword, "warrior.swordsmanship", 8);
+    const sword = attacker(WEAPONS.sword, "warrior.swordsmanship", 9);
     const events = swingAt(sword, fixed(0));
-    const expected = plain(22 * Math.SQRT2 * weaponAttributeMultiplier(8, RULES), WEAPONS.sword);
+    const expected = plain(22 * Math.SQRT2 * weaponAttributeMultiplier(9, RULES), WEAPONS.sword);
     expect(events).toEqual([
       { kind: "damage", targetId: "dummy", amount: expected, critical: true },
     ]);
   });
 
   it("multiplies a scythe's maximum by 1.1, and still applies an unmet requirement", () => {
-    const unmet = makeCombatant({
-      id: "attacker",
-      equipment: wielding(WEAPONS.scythe, "dervish.scythe-mastery", false),
-      attributeRanks: new Map([["dervish.scythe-mastery", 12]]),
-    });
+    const unmet = attacker(WEAPONS.scythe, "dervish.scythe-mastery", 8);
     const [dealt] = damages(swingAt(unmet, fixed(0)));
     expect(dealt).toBeCloseTo(
-      plain(41 * 1.1 * RULES.unmetRequirementMultiplier, WEAPONS.scythe),
+      plain(
+        41 * 1.1 * weaponAttributeMultiplier(8, RULES) * RULES.unmetRequirementMultiplier,
+        WEAPONS.scythe,
+      ),
       9,
     );
   });
@@ -1039,5 +1035,88 @@ describe("daze (#546)", () => {
     );
     expect(events[0]?.kind).toBe("interrupted");
     expect(target.combatant.cast.isCasting).toBe(false);
+  });
+});
+
+describe("weakness (#762)", () => {
+  /** Every damage roll is `roll`, and no crit is rolled. */
+  const fixed = (roll: number): SimulationRng =>
+    Object.assign(createRng(1), { nextInt: () => roll, nextFloat: () => 0.99 });
+
+  const swingAt = (who: Combatant) =>
+    damages(
+      resolveSwing({
+        attacker: who,
+        target: foe("dummy"),
+        candidates: [],
+        rng: fixed(15),
+        rules: RULES,
+        exposed: NOWHERE,
+      }).events,
+    );
+
+  /** `amount` of the weapon's damage on the reference dummy: rounded once, by armor. */
+  const dealt = (amount: number, weapon: Weapon) =>
+    mitigate(
+      {
+        armored: amount,
+        armorIgnoring: 0,
+        type: weapon.damageType,
+        source: "weapon",
+        armorPenetration: weapon.armorPenetration,
+      },
+      foe("dummy").combatant,
+      RULES,
+    );
+
+  const weakened = (who: Combatant): Combatant => {
+    who.statuses.apply("weakness", 10, "necro");
+    return who;
+  };
+
+  it("deals 34% of the roll, at one rank lower, rounded once", () => {
+    const sword = attacker(WEAPONS.sword, "warrior.swordsmanship", 12);
+    expect(swingAt(sword)).toEqual([
+      dealt(15 * weaponAttributeMultiplier(12, RULES), WEAPONS.sword),
+    ]);
+    expect(swingAt(weakened(sword))).toEqual([
+      dealt(15 * 0.34 * weaponAttributeMultiplier(11, RULES), WEAPONS.sword),
+    ]);
+  });
+
+  it("leaves an attack skill's bonus whole, at the lower rank", () => {
+    const swiftChop = getSkill("warrior.swift-chop");
+    const bonus = swiftChop?.attack?.bonusDamage;
+    if (swiftChop === undefined || bonus === undefined) {
+      throw new Error("Swift Chop has no bonus");
+    }
+    const axe = weakened(attacker(WEAPONS.axe, "warrior.axe-mastery", 12));
+    const target = makeCombatant({ id: "t", team: 1, health: 1e6, maxHealth: 1e6 });
+    const events = resolveAttackSkill(
+      { skill: swiftChop, caster: axe, targets: [target], rng: fixed(10), rules: RULES },
+      NOWHERE,
+    );
+    const atEleven = resolveMagnitudeAtRanks(bonus, new Map([["warrior.axe-mastery", 11]]));
+    expect(damages(events)).toEqual([
+      dealt(10 * 0.34 * weaponAttributeMultiplier(11, RULES) + atEleven, WEAPONS.axe),
+    ]);
+  });
+
+  it("drops 9 Swordsmanship below the sword's 9 for as long as it lasts; 10 stays above", () => {
+    const nine = weakened(attacker(WEAPONS.sword, "warrior.swordsmanship", 9));
+    expect(swingAt(nine)).toEqual([
+      dealt(
+        15 * 0.34 * weaponAttributeMultiplier(8, RULES) * RULES.unmetRequirementMultiplier,
+        WEAPONS.sword,
+      ),
+    ]);
+    const ten = weakened(attacker(WEAPONS.sword, "warrior.swordsmanship", 10));
+    expect(swingAt(ten)).toEqual([
+      dealt(15 * 0.34 * weaponAttributeMultiplier(9, RULES), WEAPONS.sword),
+    ]);
+
+    // Over, and the next blow meets it again.
+    nine.statuses.remove("weakness");
+    expect(swingAt(nine)).toEqual([dealt(15 * weaponAttributeMultiplier(9, RULES), WEAPONS.sword)]);
   });
 });

@@ -678,6 +678,27 @@ describe("wireCombat and combatMessage (#288, #375)", () => {
     ]);
   });
 
+  it("carries a spread and whom it was caught from, and drops one with no carrier (#765)", () => {
+    const spread = {
+      kind: "status-spread",
+      targetId: "b",
+      fromId: "c",
+      statusId: "disease",
+    } as const;
+    const [combat] = wireCombat([
+      entry({ cause: "degeneration", sourceId: "a", weaponId: undefined, events: [spread] }),
+    ]);
+    const received = parseWireCombatBatch(JSON.parse(JSON.stringify([combat])));
+    expect(received?.map(combatMessage).map((message) => message.events)).toEqual([[spread]]);
+    expect(
+      combat &&
+        combatMessage({
+          ...combat,
+          events: combat.events.map((event) => ({ ...event, fromId: null })),
+        }).events,
+    ).toEqual([]);
+  });
+
   it("carries a knockdown and how long it lasts, and drops one with no duration (#544)", () => {
     const wire = wireCombat([
       entry({

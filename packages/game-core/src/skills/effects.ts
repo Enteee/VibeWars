@@ -3,6 +3,7 @@ import { getSkill } from "./catalog.js";
 import { mitigate, skillDamage } from "./damage.js";
 import { resolveMagnitude } from "./scaling.js";
 import { getStatusDefinition, scaledStatusDuration, type StatusId } from "./status.js";
+import { rankOf } from "./tick.js";
 import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
 import {
@@ -46,6 +47,13 @@ export type CombatEvent =
     }
   | { readonly kind: "status-removed"; readonly targetId: string; readonly statusId: StatusId }
   | { readonly kind: "status-expired"; readonly targetId: string; readonly statusId: StatusId }
+  /** A spreading status caught from `fromId`, adjacent to the target (#765). */
+  | {
+      readonly kind: "status-spread";
+      readonly targetId: string;
+      readonly fromId: string;
+      readonly statusId: StatusId;
+    }
   | {
       readonly kind: "interrupted";
       readonly targetId: string;
@@ -375,7 +383,7 @@ export function applySkillEffects(resolution: SkillResolution): CombatEvent[] {
     applyHeal(
       primary,
       divineFavorBonusHeal(
-        caster.attributeRanks.get(DIVINE_FAVOR_ATTRIBUTE) ?? 0,
+        rankOf(caster, DIVINE_FAVOR_ATTRIBUTE),
         skill,
         primary.team === caster.team,
       ),

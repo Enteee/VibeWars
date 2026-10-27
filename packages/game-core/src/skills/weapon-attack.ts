@@ -25,7 +25,7 @@ import {
 import { resolveMagnitude } from "./scaling.js";
 import { aggregateModifiers, getStatusDefinition, type StatusId } from "./status.js";
 import { nearestFirst, type TargetCandidate } from "./targeting.js";
-import { attackMissChanceOf, blockChanceOf } from "./tick.js";
+import { attackMissChanceOf, blockChanceOf, rankOf, weaponDamageMultiplierOf } from "./tick.js";
 import type { Combatant, Skill, SkillEffect } from "./types.js";
 
 /**
@@ -93,9 +93,9 @@ export function swingProgress(combatant: Combatant): {
     : { elapsed: attack.swingElapsed, total: swingIntervalSeconds(combatant) };
 }
 
-/** The attacker's rank in `attributeId`: 0 for fists, which have none. */
+/** The attacker's rank in `attributeId` right now: 0 for fists, which have none. */
 function rankIn(attacker: Combatant, attributeId: string | undefined): number {
-  return attributeId === undefined ? 0 : (attacker.attributeRanks.get(attributeId) ?? 0);
+  return attributeId === undefined ? 0 : rankOf(attacker, attributeId);
 }
 
 /** The chance this attacker's swing strikes twice: daggers only. */
@@ -132,21 +132,31 @@ function victimsOf(swing: Swing, weapon: Weapon): readonly Combatant[] {
 
 /**
  * What a blow is struck with: the weapon, the attacker's rank in its
- * attribute and in Critical Strikes. A projectile carries the one it was
- * released with, so gear swapped in flight changes nothing.
+ * attribute and in Critical Strikes, whether that rank meets the weapon's
+ * requirement, and what the attacker's statuses do to its roll. Taken as
+ * the blow lands, so weakness that ran out or set in mid-swing counts as
+ * it stands then (#762). A projectile carries the one it was released
+ * with, so gear swapped in flight changes nothing.
  */
 export interface WeaponSnapshot {
   readonly mainHand: ResolvedWeapon;
   readonly rank: number;
   readonly criticalStrikes: number;
+  /** `rank` meets the weapon's requirement; fists and caster weapons nobody nominated always do. */
+  readonly requirementMet: boolean;
+  /** The multiplier on the weapon's roll: weakness's 0.34 (#762). */
+  readonly damageMultiplier: number;
 }
 
 export function weaponSnapshotOf(attacker: Combatant): WeaponSnapshot {
   const { mainHand } = attacker.equipment;
+  const rank = rankIn(attacker, mainHand.attributeId);
   return {
     mainHand,
-    rank: rankIn(attacker, mainHand.attributeId),
+    rank,
     criticalStrikes: rankIn(attacker, CRITICAL_STRIKES_ATTRIBUTE),
+    requirementMet: mainHand.attributeId === undefined || rank >= mainHand.weapon.requirement.rank,
+    damageMultiplier: weaponDamageMultiplierOf(attacker),
   };
 }
 
@@ -275,7 +285,7 @@ export function landBlow(
   if (victim.statuses.active.some(({ id }) => getStatusDefinition(id).interruptsSpells)) {
     interruptIfCastingSpell(victim, events);
   }
-  const { weapon, requirementMet } = snapshot.mainHand;
+  const { weapon } = snapshot.mainHand;
   const rolledCritical = rng.nextFloat() < criticalChance(snapshot, rules);
   const critical = rolledCritical || (exposed && weapon.projectileSpeed === undefined);
   const base = critical
@@ -284,9 +294,10 @@ export function landBlow(
   const packet: DamagePacket = {
     armored:
       base *
+      snapshot.damageMultiplier *
       blow.weaponDamage *
       weaponAttributeMultiplier(snapshot.rank, rules) *
-      (requirementMet ? 1 : rules.unmetRequirementMultiplier),
+      (snapshot.requirementMet ? 1 : rules.unmetRequirementMultiplier),
     armorIgnoring: blow.bonus,
     type: weapon.damageType,
     source: "weapon",
@@ -366,8 +377,9 @@ export function nextAttackSkillRiders(
 }
 
 /**
- * The attack skill that `next` rode resolved (#758): its blow landed,
- * missed or was blocked. The statuses that held it end, those still up.
+ * The attack skill that `next` rode was released (#782): its blow struck,
+ * or its shots left the bow. The statuses that held it end, those still
+ * up; their riders travel with the blow or the shots.
  */
 export function useNextAttackSkill(
   attacker: Combatant,

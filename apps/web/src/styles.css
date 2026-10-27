@@ -290,61 +290,76 @@ body {
    and must end at the last slot (#545). */
 .hud-skills {
   display: flex;
-  gap: 0.35rem;
+  gap: 6px;
   flex-wrap: wrap;
   width: fit-content;
 }
 
-.hud-skill {
+/* A combat bar slot (#719), on the HUD and the Training Ground alike: a
+   48 px square, the skill's icon edge to edge inside its border, and no
+   name or cost (Q77). Everything else is drawn over the icon. */
+.hud-skill,
+.training-skill {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  min-width: 92px;
-  padding: 0.35rem 0.45rem;
+  box-sizing: border-box;
+  width: 48px;
+  height: 48px;
+  padding: 0;
   background: var(--panel);
   border: 1px solid var(--line);
   color: var(--ink);
   font: inherit;
-  text-align: left;
+  font-size: 0.75rem;
   cursor: pointer;
 }
 
-.hud-skill:hover {
+.hud-skill > .skill-icon,
+.training-skill > .skill-icon {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.hud-skill:hover,
+.training-skill:hover {
   border-color: var(--accent);
 }
 
-/* A hint, not a gate: the server still decides whether a cast is legal. */
-.hud-skill.is-unaffordable {
+/* A hint, not a gate: the server still decides whether a cast is legal.
+   The wrong weapon in hand dims an attack skill the same way (#417). */
+.hud-skill.is-unaffordable,
+.hud-skill.is-wrong-weapon,
+.training-skill.is-unaffordable,
+.training-skill.is-wrong-weapon {
   opacity: 0.45;
 }
 
 /* An empty slot keeps its place and its key, and does nothing (#347). */
-.hud-skill.is-empty {
+.hud-skill.is-empty,
+.training-skill.is-empty {
   border-style: dashed;
   opacity: 0.45;
   cursor: default;
 }
 
-.hud-skill.is-empty:hover {
+.hud-skill.is-empty:hover,
+.training-skill.is-empty:hover {
   border-color: var(--line);
 }
 
-.hud-skill-key {
-  position: relative;
+/* The hotkey, top-left over the icon, cased in bg so it reads on any
+   plate (#719). Lifted above the recharge wipe. */
+.hud-skill-key,
+.training-skill-key {
+  position: absolute;
+  top: 1px;
+  left: 1px;
   z-index: 1;
+  padding: 0 2px;
+  background: var(--bg);
   color: var(--accent);
   font-weight: 700;
-}
-
-.hud-skill-name {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.hud-skill-cost {
-  color: var(--ink-dim);
+  line-height: 1.2;
 }
 
 #app {
@@ -1890,48 +1905,7 @@ body {
 .training-skills {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.3rem;
-}
-
-.training-skill {
-  position: relative;
-  display: flex;
-  gap: 0.3rem;
-  /* Room for the recharge seconds; see .training-skill .recharge-seconds. */
-  padding: 0.25rem 2.4em 0.25rem 0.4rem;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  color: var(--ink);
-  font: inherit;
-  font-size: 0.75rem;
-  cursor: pointer;
-}
-
-.training-skill:hover {
-  border-color: var(--accent);
-}
-
-/* A hint, not a gate: the simulation still decides whether a cast is legal. */
-.training-skill.is-unaffordable {
-  opacity: 0.45;
-}
-
-/* An empty slot keeps its place and its key, and does nothing (#347). */
-.training-skill.is-empty {
-  border-style: dashed;
-  opacity: 0.45;
-  cursor: default;
-}
-
-.training-skill.is-empty:hover {
-  border-color: var(--line);
-}
-
-.training-skill-key {
-  position: relative;
-  z-index: 1;
-  color: var(--accent);
-  font-weight: 700;
+  gap: 6px;
 }
 
 /* The recharge clock-wipe (#152), on the HUD and the Training Ground
@@ -1949,31 +1923,17 @@ body {
   pointer-events: none;
 }
 
-/* The seconds left, placed per surface so they never sit on the name (#185). */
+/* The seconds left, centred on the slot's icon (#185, #719). */
 .recharge-seconds {
   position: absolute;
   color: var(--ink);
   font-weight: 700;
   line-height: 1;
   text-shadow: 0 0 3px var(--bg);
-}
-
-/* HUD: in the top row, between the hotkey and the corner badge. */
-.hud-skill .recharge-seconds {
-  top: 0.35rem;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 0.85rem;
-}
-
-/* Training Ground: one row, so the number takes the right end, in room
-   every button keeps for two digits whether or not it is recharging. The
-   buttons are sized by their content, so room made only while recharging
-   would shove every button after it sideways on each cast (#185). */
-.training-skill .recharge-seconds {
   top: 50%;
-  right: 0.4rem;
-  transform: translateY(-50%);
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.95rem;
 }
 
 /* Ready again: the border flashes, in the same frame the wipe and the
@@ -2051,17 +2011,25 @@ body {
   pointer-events: none;
 }
 
-/* Out of reach of the target (#485): a shape, not only a colour. The cost
-   is left as it is and a `↔` follows it (a struck cost would read as
-   unaffordable); the Training Ground row has no cost, so the glyph follows
-   the name. A hint, not a gate. */
-.hud-skill.is-out-of-range .hud-skill-cost::after,
-.training-skill.is-out-of-range .training-skill-name::after {
+/* Out of reach of the target (#485): a shape, not only a colour, a `↔`
+   in the bottom-right corner, cased like the hotkey (#719). A hint, not a
+   gate. */
+.skill-range-mark {
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.is-out-of-range > .skill-range-mark::after {
   content: "↔";
-  display: inline-block;
-  margin-left: 0.3em;
+  display: block;
+  padding: 0 2px;
+  background: var(--bg);
   color: var(--ink);
   font-weight: 700;
+  line-height: 1.2;
 }
 
 @keyframes slot-casting {
@@ -2074,36 +2042,24 @@ body {
   }
 }
 
-/* Interrupted: the cross says it without colour (#75). Centred on the HUD
-   slot, clear of the top-left hotkey. */
+/* Interrupted: the cross says it without colour (#75). Centred on the
+   slot, clear of the top-left hotkey, big enough to win at a glance over
+   the icon, cased like the arena marks, on a slot dimmed as a cancelled
+   one is. */
 .hud-skill.is-interrupted::after,
 .training-skill.is-interrupted::after {
   content: "✕";
   box-shadow: inset 0 0 0 2px var(--damage);
   color: var(--damage);
-  font-size: 1.1rem;
-  font-weight: 700;
-  text-shadow: 0 0 3px var(--bg);
-  animation: none;
-  opacity: 1;
-}
-
-/* HUD: big enough to win at a glance over the name, cased like the arena
-   marks, on a slot dimmed as a cancelled one is. */
-.hud-skill.is-interrupted::after {
   font-size: 1.9rem;
+  font-weight: 700;
   line-height: 1;
   text-shadow:
     0 0 2px var(--bg),
     0 0 2px var(--bg),
     0 0 4px var(--bg);
-}
-
-/* Training Ground: one short row, so the cross takes the right end, where
-   the recharge seconds go, not the name. */
-.training-skill.is-interrupted::after {
-  justify-content: flex-end;
-  padding-right: 0.4rem;
+  animation: none;
+  opacity: 1;
 }
 
 /* Cancelled: grey and dimmed, never the recharge shade, because a
@@ -2128,13 +2084,6 @@ body {
   .training-skill.is-casting::after {
     animation: none;
   }
-}
-
-/* Same 14 px badge as the HUD, but in line: this button is one short row,
-   so a corner badge would sit on the name. */
-.training-skill .skill-type-badge {
-  position: static;
-  align-self: center;
 }
 
 .training-meter {
@@ -2273,6 +2222,12 @@ body {
 .skill-slot-cost,
 .skill-box-cost {
   color: var(--ink-dim);
+  font-size: 0.72rem;
+}
+
+/* An attack skill the weapon cannot use (#417): a hint, it still saves. */
+.skill-slot-warning {
+  color: var(--damage);
   font-size: 0.72rem;
 }
 
@@ -2613,6 +2568,13 @@ body {
   border: 3px double var(--elite);
 }
 
+/* A combat bar slot is sized border-box (#719): the wider border eats into
+   the icon, not the bar, so there is nothing to pay back. */
+.hud-skill.is-elite,
+.training-skill.is-elite {
+  margin: 0;
+}
+
 /* The skill's icon, its name and type beside it (#727). */
 .tip-header {
   display: flex;
@@ -2630,6 +2592,11 @@ body {
 }
 
 .tip-type {
+  color: var(--ink-dim);
+  font-size: 0.78rem;
+}
+
+.tip-weapon {
   color: var(--ink-dim);
   font-size: 0.78rem;
 }

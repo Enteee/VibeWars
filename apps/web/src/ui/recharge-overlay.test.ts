@@ -149,7 +149,8 @@ describe("paintRecharge", () => {
     paint(slot, 0);
     expect(slot.querySelector(":scope > .recharge-overlay")).toBeNull();
     expect(slot.classList.contains("is-recharging")).toBe(false);
-    expect(slot.getAttribute("aria-label")).toBeNull();
+    // Named by its skill again, as the bar shows no name (#719).
+    expect(slot.getAttribute("aria-label")).toBe("Fireball");
     // The ready flash still fires, and ends.
     expect(slot.classList.contains("is-ready-flash")).toBe(true);
     vi.advanceTimersByTime(READY_FLASH_MS);

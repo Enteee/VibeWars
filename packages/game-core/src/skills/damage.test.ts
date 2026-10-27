@@ -121,19 +121,18 @@ describe("what armor does and does not stop", () => {
 });
 
 describe("status modifiers reaching the armor calculation", () => {
-  it("lets Weakness make its bearer take more damage", () => {
-    // `armorModifier` has existed on StatusDefinition since conditions
-    // shipped and nothing read it. Weakness's tooltip promised -20 armor
-    // and delivered nothing; this is the test that it now does.
-    const weakened = defender(80);
-    weakened.statuses.apply("weakness", 10, "attacker");
+  it("lets an armor loss make its bearer take more damage", () => {
+    // Healing Signet's -40 while it is activated, the one status left
+    // that lowers armor (weakness no longer does, #762).
+    const exposed = defender(100);
+    exposed.statuses.apply("healing-signet-armor", 2, "self");
 
-    const healthy = defender(80);
+    const healthy = defender(100);
     const packet = skillDamage(100, "chaos");
 
-    expect(mitigate(packet, weakened, RULES)).toBeGreaterThan(mitigate(packet, healthy, RULES));
-    // 80 - 20 = 60, the reference level: exactly unmitigated.
-    expect(mitigate(packet, weakened, RULES)).toBe(100);
+    expect(mitigate(packet, exposed, RULES)).toBeGreaterThan(mitigate(packet, healthy, RULES));
+    // 100 - 40 = 60, the reference level: exactly unmitigated.
+    expect(mitigate(packet, exposed, RULES)).toBe(100);
   });
 
   it("lets Armor of Earth's enchantment actually protect its bearer", () => {
@@ -145,10 +144,10 @@ describe("status modifiers reaching the armor calculation", () => {
 
   it("stacks a buff and a debuff additively, as aggregateModifiers does", () => {
     const both = defender(80);
-    both.statuses.apply("weakness", 10, "attacker");
+    both.statuses.apply("healing-signet-armor", 2, "self");
     both.statuses.apply("armor-boost", 30, "self");
-    // 80 - 20 + 24 = 84.
-    expect(effectiveArmor(both, skillDamage(1, "typeless"))).toBe(84);
+    // 80 - 40 + 24 = 64.
+    expect(effectiveArmor(both, skillDamage(1, "typeless"))).toBe(64);
   });
 });
 
@@ -206,20 +205,21 @@ describe("conditional insignia armor", () => {
   });
 });
 
-describe("a profession's typed armor (#759)", () => {
-  function primary(profession: "warrior" | "ranger" | "monk"): Combatant {
-    const resolved = resolveLoadout(
-      {
-        primaryProfession: profession,
-        allocatedRanks: new Map(),
-        // No off-hand and no insignias: only the profession's armor.
-        equipment: { ...defaultEquipmentFor(profession), offHand: null, armor: bareArmorSet() },
-      },
-      RULES,
-    );
-    return makeCombatant({ id: "d", team: 1, equipment: resolved.equipment });
-  }
+/** A bare-armored combatant of `profession`: only its own typed armor. */
+function primary(profession: "warrior" | "ranger" | "monk"): Combatant {
+  const resolved = resolveLoadout(
+    {
+      primaryProfession: profession,
+      allocatedRanks: new Map(),
+      // No off-hand and no insignias: only the profession's armor.
+      equipment: { ...defaultEquipmentFor(profession), offHand: null, armor: bareArmorSet() },
+    },
+    RULES,
+  );
+  return makeCombatant({ id: "d", team: 1, equipment: resolved.equipment });
+}
 
+describe("a profession's typed armor (#759)", () => {
   it("gives a Warrior +20 against physical damage only", () => {
     const warrior = primary("warrior");
     expect(effectiveArmor(warrior, physical(10))).toBe(100);
@@ -248,6 +248,55 @@ describe("a profession's typed armor (#759)", () => {
 
   it("halves a Fireball on a Ranger: 91 lands for 46", () => {
     expect(mitigate(skillDamage(91, "fire"), primary("ranger"), RULES)).toBe(46);
+  });
+});
+
+describe("Cracked Armor (#763)", () => {
+  function cracked(armor: number): Combatant {
+    const target = defender(armor);
+    target.statuses.apply("cracked-armor", 17, "attacker");
+    return target;
+  }
+
+  it("takes 20 armor, but never below 60", () => {
+    const at = (armor: number): number =>
+      effectiveArmor(cracked(armor), skillDamage(1, "typeless"));
+    expect(at(100)).toBe(80);
+    expect(at(80)).toBe(60);
+    expect(at(70)).toBe(60);
+    expect(at(60)).toBe(60);
+    expect(at(50)).toBe(50);
+  });
+
+  it("is taken before Armor of Earth adds: a cracked 60 caster still reaches 84", () => {
+    const warded = cracked(60);
+    warded.statuses.apply("armor-boost", 30, "self");
+    expect(effectiveArmor(warded, skillDamage(1, "typeless"))).toBe(84);
+  });
+
+  it("counts a typed bonus as armor it can take", () => {
+    const ranger = primary("ranger");
+    ranger.statuses.apply("cracked-armor", 17, "attacker");
+    expect(effectiveArmor(ranger, skillDamage(10, "fire"))).toBe(80);
+    expect(effectiveArmor(ranger, physical(10))).toBe(60);
+    const warrior = primary("warrior");
+    warrior.statuses.apply("cracked-armor", 17, "attacker");
+    expect(effectiveArmor(warrior, physical(10))).toBe(80);
+  });
+
+  it("is taken before armor penetration: 25% of a cracked Warrior's 60 leaves 45", () => {
+    const warrior = primary("warrior");
+    warrior.statuses.apply("cracked-armor", 17, "attacker");
+    expect(
+      effectiveArmor(warrior, { ...skillDamage(10, "lightning"), armorPenetration: 0.25 }),
+    ).toBe(45);
+  });
+
+  it("makes a sword hit a cracked Warrior about 41% harder", () => {
+    const warrior = primary("warrior");
+    const healthy = mitigate(physical(100), warrior, RULES);
+    warrior.statuses.apply("cracked-armor", 17, "attacker");
+    expect(mitigate(physical(100), warrior, RULES) / healthy).toBeCloseTo(1.41, 1);
   });
 });
 

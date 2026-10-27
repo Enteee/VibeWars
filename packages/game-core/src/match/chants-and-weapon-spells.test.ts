@@ -291,6 +291,20 @@ const archer = (id: string, spawn: Vec2): ParticipantSpec =>
     equipment: wielding(WEAPONS.longbow, "ranger.marksmanship"),
   });
 
+/** An arrow that takes this long to cross 600: two releases fit in one flight. */
+const SLOW_FLIGHT_SECONDS = 12;
+
+/** A Barrage and Broad Head Arrow ranger whose longbow shoots slowly. */
+const slowArcher = (id: string, spawn: Vec2): ParticipantSpec =>
+  spec(id, 0, spawn, {
+    skillBar: ["ranger.barrage", "ranger.broad-head-arrow"],
+    attributeRanks: new Map([["ranger.marksmanship", 12]]),
+    equipment: wielding(
+      { ...WEAPONS.longbow, projectileSpeed: 600 / SLOW_FLIGHT_SECONDS },
+      "ranger.marksmanship",
+    ),
+  });
+
 function get(match: MatchSimulation, id: string) {
   const found = match.get(id);
   if (found === undefined) {
@@ -304,6 +318,18 @@ function stepFor(match: MatchSimulation, seconds: number): CombatLogEntry[] {
   for (let i = 0; i < Math.round(seconds / DT); i += 1) {
     log.push(...match.step(DT).log);
   }
+  return log;
+}
+
+/** Steps until `count` attack-skill shots fly; the log of those steps. */
+function untilFlying(match: MatchSimulation, count: number): CombatLogEntry[] {
+  const log: CombatLogEntry[] = [];
+  const flying = (): number =>
+    match.projectiles.filter((shot) => shot.skillHit?.kind === "attack").length;
+  for (let i = 0; i < 10 * RULES.tickRateHz && flying() < count; i += 1) {
+    log.push(...match.step(DT).log);
+  }
+  expect(flying()).toBe(count);
   return log;
 }
 
@@ -353,7 +379,7 @@ describe("Anthem of Flame in the match (#758)", () => {
     expect(get(match, "foe").combatant.statuses.has("burning")).toBe(false);
   });
 
-  it("a ranged attack skill carries it in flight and ends it when its arrows land", () => {
+  it("a ranged attack skill ends it at release and carries its burn in flight (#782)", () => {
     const match = new MatchSimulation({
       seed: "anthem",
       participants: [archer("r", vec2(0, 0)), spec("foe", 1, vec2(600, 0))],
@@ -362,21 +388,62 @@ describe("Anthem of Flame in the match (#758)", () => {
     ranger.statuses.apply("anthem-of-flame", 10, "p");
     match.requestAttack("r", "foe");
     expect(match.requestSkill("r", 0)?.check).toEqual({ ok: true });
-    let flying = false;
-    for (let i = 0; i < 100 && !flying; i += 1) {
-      match.step(DT);
-      flying = match.projectiles.some((shot) => shot.skillHit?.kind === "attack");
-    }
-    expect(flying).toBe(true);
-    expect(ranger.statuses.has("anthem-of-flame")).toBe(true);
-    const landed = stepFor(match, 2).filter((row) => row.skillId === "ranger.barrage");
-    expect(landed.flatMap((row) => row.events)).toContainEqual({
+    const released = untilFlying(match, 1);
+    expect(released.flatMap((row) => row.events)).toContainEqual({
       kind: "status-expired",
       targetId: "r",
       statusId: "anthem-of-flame",
     });
     expect(ranger.statuses.has("anthem-of-flame")).toBe(false);
+    expect(get(match, "foe").combatant.statuses.has("burning")).toBe(false);
+    stepFor(match, 2);
     expect(get(match, "foe").combatant.statuses.has("burning")).toBe(true);
+  });
+
+  it("only the first of two attack skills loosed inside one flight carries it (#782)", () => {
+    const match = new MatchSimulation({
+      seed: "anthem",
+      participants: [slowArcher("r", vec2(0, 0)), spec("foe", 1, vec2(600, 0))],
+    });
+    const ranger = get(match, "r").combatant;
+    ranger.energy = 50;
+    ranger.statuses.apply("anthem-of-flame", 10, "p");
+    match.requestAttack("r", "foe");
+    expect(match.requestSkill("r", 0)?.check).toEqual({ ok: true });
+    untilFlying(match, 1);
+    expect(match.requestSkill("r", 1)?.check).toEqual({ ok: true });
+    untilFlying(match, 2);
+    const [first, second] = match.projectiles.flatMap((shot) =>
+      shot.skillHit?.kind === "attack" ? [shot.skillHit] : [],
+    );
+    expect(first?.skill.id).toBe("ranger.barrage");
+    expect(first?.next.effects).toEqual([
+      { kind: "apply-status", statusId: "burning", durationSeconds: 3 },
+    ]);
+    expect(second?.skill.id).toBe("ranger.broad-head-arrow");
+    expect(second?.next).toEqual({ statusIds: [], effects: [] });
+  });
+
+  it("an Anthem that runs out while the arrow flies still burns on the hit (#782)", () => {
+    const match = new MatchSimulation({
+      seed: "anthem",
+      participants: [slowArcher("r", vec2(0, 0)), spec("foe", 1, vec2(600, 0))],
+    });
+    const ranger = get(match, "r").combatant;
+    match.requestAttack("r", "foe");
+    expect(match.requestSkill("r", 0)?.check).toEqual({ ok: true });
+    // Up just long enough for the release, then gone with the arrow in the air.
+    ranger.statuses.apply("anthem-of-flame", 3, "p");
+    untilFlying(match, 1);
+    stepFor(match, 3);
+    expect(get(match, "foe").combatant.statuses.has("burning")).toBe(false);
+    let ticks = 0;
+    while (match.projectiles.some((shot) => shot.skillHit?.kind === "attack")) {
+      match.step(DT);
+      ticks += 1;
+      expect(ticks).toBeLessThan(SLOW_FLIGHT_SECONDS * RULES.tickRateHz);
+    }
+    expect(get(match, "foe").combatant.statuses.get("burning")?.remainingSeconds).toBeCloseTo(3, 0);
   });
 
   it("a paragon with Anthem of Flame is a legal build", () => {

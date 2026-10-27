@@ -297,10 +297,34 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     attack: undefined,
     whileActivating: undefined,
     projectile: undefined,
-    // A hex combining attack-slowing with health degeneration. The
-    // degeneration is modelled by the hex's own healthPerSecond; the
-    // attack-speed half awaits weapon attacks (Sprint 15/21).
-    effects: [{ kind: "apply-status", statusId: "life-drain", durationSeconds: 13 }],
+    effects: [{ kind: "apply-status", statusId: "faintheartedness", durationSeconds: 13 }],
+  },
+  {
+    id: "necromancer.weaken-armor",
+    name: "Weaken Armor",
+    type: "spell",
+    elite: false,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 5 },
+    activationSeconds: 0.5,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    // "Target foe and foes adjacent to your target": the target, then
+    // every foe adjacent to it.
+    area: {
+      radius: AREA_ADJACENT,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "...have Cracked Armor for 5...17...20 seconds": 17 s, its rank-12 value.
+    effects: [{ kind: "apply-status", statusId: "cracked-armor", durationSeconds: 17 }],
   },
   {
     id: "necromancer.malaise",
@@ -322,6 +346,47 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     // Left out: the caster's own -1 health degeneration while it lasts,
     // and the damage that ends it when the foe's energy reaches 0.
     effects: [{ kind: "apply-status", statusId: "malaise", durationSeconds: 24 }],
+  },
+  {
+    id: "necromancer.enfeeble",
+    name: "Enfeeble",
+    type: "spell",
+    elite: false,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 5 },
+    activationSeconds: 0.25,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Target suffers from weakness for 10...26...30 seconds": 26 s, its
+    // rank-12 value. Weakness's first source (#762).
+    effects: [{ kind: "apply-status", statusId: "weakness", durationSeconds: 26 }],
+  },
+  {
+    id: "necromancer.rotting-flesh",
+    name: "Rotting Flesh",
+    type: "spell",
+    elite: false,
+    profession: "necromancer",
+    attributeId: "necromancer.death-magic",
+    cost: { kind: "energy", amount: 15 },
+    activationSeconds: 3,
+    rechargeSeconds: 3,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Target fleshy foe becomes Diseased for 10...22...25 seconds": 22 s,
+    // its rank-12 value. Disease spreads on its own (#765); everyone
+    // here is fleshy.
+    effects: [{ kind: "apply-status", statusId: "disease", durationSeconds: 22 }],
   },
   {
     id: "necromancer.blood-ritual",

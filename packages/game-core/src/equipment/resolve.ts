@@ -1,4 +1,5 @@
 import { MAX_EFFECTIVE_RANK } from "../attributes.js";
+import { ENERGY_STORAGE_ATTRIBUTE, energyStorageBonus } from "../primary-attributes.js";
 import type { ProfessionId } from "../professions.js";
 import type { CombatRules } from "../ruleset.js";
 import type { StatusId } from "../skills/status.js";
@@ -55,6 +56,11 @@ export interface ResolvedEquipment {
   readonly flatPhysicalReduction: number;
   /** Multiplier applied to an incoming condition's duration. Absent means 1. */
   readonly statusDurationScale: ReadonlyMap<StatusId, number>;
+  /**
+   * What runes add to each attribute, already in `attributeRanks`: what
+   * tells an allocated rank from a boosted one, as weakness must (#762).
+   */
+  readonly attributeBonuses: ReadonlyMap<string, number>;
   /** The off-hand that counts, for its mark in the arena (#276); `undefined` for none. */
   readonly offhandId: OffhandId | undefined;
 }
@@ -262,7 +268,9 @@ export function resolveLoadout(input: LoadoutInput, rules: CombatRules): Resolve
   );
 
   let baseArmor = baseArmorFor(input.primaryProfession);
-  let energyDelta = runes.energyDelta;
+  // Energy Storage (#532) adds to the maximum like Attunement does, once
+  // at join; only an Elementalist primary holds its rank.
+  let energyDelta = runes.energyDelta + energyStorageBonus(rankOf(ENERGY_STORAGE_ATTRIBUTE));
   let offhandId: OffhandId | undefined;
 
   const offHand = input.equipment.offHand;
@@ -295,6 +303,7 @@ export function resolveLoadout(input: LoadoutInput, rules: CombatRules): Resolve
       conditionalArmor: conditionalArmorOf(input.primaryProfession, input.equipment),
       flatPhysicalReduction: runes.flatPhysicalReduction,
       statusDurationScale: runes.statusDurationScale,
+      attributeBonuses: runes.attributeBonuses,
       offhandId,
     },
   };
@@ -334,6 +343,7 @@ export function unarmedResolvedEquipment(baseArmor: number): ResolvedEquipment {
     conditionalArmor: [],
     flatPhysicalReduction: 0,
     statusDurationScale: new Map(),
+    attributeBonuses: new Map(),
     offhandId: undefined,
   };
 }

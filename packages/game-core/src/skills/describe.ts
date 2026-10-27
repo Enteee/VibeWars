@@ -4,9 +4,16 @@ import { getAttribute } from "../professions.js";
 
 import { energyCostOf } from "./activation.js";
 import { resolveMagnitudeAtRanks } from "./scaling.js";
-import { findStatusDefinition, StatusSet } from "./status.js";
-import { effectiveActivationSeconds } from "./tick.js";
-import type { AreaRule, Magnitude, Skill, SkillEffect, SkillType } from "./types.js";
+import { findStatusDefinition } from "./status.js";
+import { effectiveActivationSeconds, outsideMatch } from "./tick.js";
+import type {
+  AreaRule,
+  AttackWeaponClass,
+  Magnitude,
+  Skill,
+  SkillEffect,
+  SkillType,
+} from "./types.js";
 
 /**
  * Human-readable skill descriptions, generated from the effect data
@@ -53,6 +60,11 @@ export interface SkillDescription {
   readonly typeText: string;
   /** Drawn with the gold frame (#459). */
   readonly elite: boolean;
+  /**
+   * The weapon an attack skill needs (#417): "Axe attack", "Bow attack",
+   * "Melee attack"; `undefined` for any other skill.
+   */
+  readonly weaponText: string | undefined;
   /** `undefined` for a "No Attribute" skill (#445). */
   readonly attributeId: string | undefined;
   /** e.g. "Fire Magic", or the raw id if the attribute is unknown; `undefined` with no attribute. */
@@ -107,6 +119,11 @@ const BLOCKED_ATTACKS: Record<"all" | "melee" | "projectile", string> = {
   projectile: "projectiles",
 };
 
+/** `n` with its sign, a minus as GW1 prints it: "+3", "−66". */
+function signed(n: number): string {
+  return n > 0 ? `+${String(n)}` : `−${String(-n)}`;
+}
+
 /** What a status actually does, so a tooltip does not just name it. */
 export function describeStatus(id: string): string {
   const definition = findStatusDefinition(id);
@@ -131,6 +148,10 @@ export function describeStatus(id: string): string {
     const sign = definition.armorModifier > 0 ? "+" : "";
     parts.push(`${sign}${String(definition.armorModifier)} armor`);
   }
+  if (definition.armorReduction !== undefined) {
+    const { amount, floor } = definition.armorReduction;
+    parts.push(`−${String(amount)} armor (not below ${String(floor)})`);
+  }
   if (definition.moveSpeedMultiplier !== 1) {
     parts.push(`moves at ${String(Math.round(definition.moveSpeedMultiplier * 100))}% speed`);
   }
@@ -142,6 +163,13 @@ export function describeStatus(id: string): string {
       `maximum health reduced to ${String(Math.round(definition.maxHealthMultiplier * 100))}%`,
     );
   }
+  if (definition.weaponDamageMultiplier !== 1) {
+    const change = Math.round((definition.weaponDamageMultiplier - 1) * 100);
+    parts.push(`${signed(change)}% weapon damage`);
+  }
+  if (definition.attributeDelta !== 0) {
+    parts.push(`${signed(definition.attributeDelta)} to all attributes`);
+  }
   if (definition.castTimeMultiplier !== 1) {
     parts.push(`spells take ${String(definition.castTimeMultiplier)}× as long to cast`);
   }
@@ -149,7 +177,10 @@ export function describeStatus(id: string): string {
     parts.push("spells are interrupted by attacks");
   }
   if (definition.attackDurationMultiplier !== 1) {
-    parts.push(`attacks take ${String(definition.attackDurationMultiplier)}× as long`);
+    // GW1's wording: "50% slower" is 1.5× as long, "33% faster" is 0.67×.
+    const change = Math.round(Math.abs(definition.attackDurationMultiplier - 1) * 100);
+    const way = definition.attackDurationMultiplier > 1 ? "slower" : "faster";
+    parts.push(`attacks ${String(change)}% ${way}`);
   }
   if (definition.block !== undefined) {
     const what = BLOCKED_ATTACKS[definition.block.against];
@@ -166,6 +197,9 @@ export function describeStatus(id: string): string {
     const { count, costReduction } = definition.nextSpells;
     const spells = count === 1 ? "spell costs" : `${String(count)} spells cost`;
     parts.push(`your next ${spells} ${String(costReduction)} less energy`);
+  }
+  if (definition.spreads) {
+    parts.push("spreads to adjacent combatants");
   }
   for (const effect of definition.nextAttackSkill ?? []) {
     parts.push(describeNextAttackSkill(effect));
@@ -285,6 +319,37 @@ function headlineOf(
   }
 }
 
+/** An attack skill's weapon line (#417). */
+const WEAPON_TEXT: Record<AttackWeaponClass, string> = {
+  axe: "Axe attack",
+  sword: "Sword attack",
+  hammer: "Hammer attack",
+  daggers: "Dagger attack",
+  scythe: "Scythe attack",
+  spear: "Spear attack",
+  bow: "Bow attack",
+  melee: "Melee attack",
+};
+
+const NEEDED_WEAPON: Record<AttackWeaponClass, string> = {
+  axe: "an axe",
+  sword: "a sword",
+  hammer: "a hammer",
+  daggers: "daggers",
+  scythe: "a scythe",
+  spear: "a spear",
+  bow: "a bow",
+  melee: "a melee weapon",
+};
+
+/**
+ * What an attack skill needs in hand, for "Needs an axe." (#417): the
+ * HUD's refusal and the build editor's warning say it the same way.
+ */
+export function neededWeaponText(weapon: AttackWeaponClass): string {
+  return NEEDED_WEAPON[weapon];
+}
+
 const TYPE_TEXT: Record<SkillType, string> = {
   attack: "Attack.",
   spell: "Spell.",
@@ -349,8 +414,7 @@ function costText(skill: Skill, ranks: ReadonlyMap<string, number>): string {
   if (skill.cost.kind === "adrenaline") {
     return `${String(skill.cost.amount)} adrenaline`;
   }
-  // At these ranks with no status on: a build, not a moment of a fight (#637).
-  const cost = energyCostOf(skill, { attributeRanks: ranks, statuses: new StatusSet() });
+  const cost = energyCostOf(skill, outsideMatch(ranks));
   const base = cost === skill.cost.amount ? "" : ` (${String(skill.cost.amount)})`;
   return `${String(cost)} energy${base}`;
 }
@@ -360,9 +424,7 @@ function castTimeText(skill: Skill, ranks: ReadonlyMap<string, number>): string 
   if (skill.activationSeconds === 0) {
     return "Instant";
   }
-  const activation = seconds(
-    effectiveActivationSeconds(skill, { attributeRanks: ranks, statuses: new StatusSet() }),
-  );
+  const activation = seconds(effectiveActivationSeconds(skill, outsideMatch(ranks)));
   const base = seconds(skill.activationSeconds);
   return activation === base ? base : `${activation} (${base})`;
 }
@@ -379,6 +441,12 @@ export function describeSkill(
   skill: Skill,
   ranks: ReadonlyMap<string, number> = new Map(),
 ): SkillDescription {
+  // An attack skill's "+16 damage" (#417): its bonus over the weapon's
+  // blow, first, as GW1 writes it. Broad Head Arrow has none.
+  const bonusDamage = skill.attack?.bonusDamage;
+  const bonus = bonusDamage === undefined ? undefined : describeMagnitude(bonusDamage, ranks);
+  const bonusLine =
+    bonus === undefined ? [] : [{ text: `+${String(bonus.current)} damage`, magnitude: bonus }];
   // An attack skill's if-blocked effects (#534), after the ones a hit gets.
   const onBlocked = (skill.attack?.onBlocked ?? []).map((effect) => {
     const { text, magnitude } = describeEffect(effect, ranks);
@@ -400,19 +468,27 @@ export function describeSkill(
       ? []
       : [{ text: "Projectile: can be dodged", magnitude: undefined }];
   const effects = [
+    ...bonusLine,
     ...skill.effects.map((effect) => describeEffect(effect, ranks)),
     ...onBlocked,
     ...whileActivating,
     ...projectile,
   ];
   const { target, range } = targetAndRange(skill);
-  const numbers = skill.effects.flatMap((effect) => headlineOf(effect, ranks) ?? []);
+  const numbers = [
+    ...bonusLine.map(({ text, magnitude }) => ({
+      text,
+      scales: magnitude.attributeId !== undefined,
+    })),
+    ...skill.effects.flatMap((effect) => headlineOf(effect, ranks) ?? []),
+  ];
   const headline = (numbers.find((number) => number.scales) ?? numbers[0])?.text;
   return {
     id: skill.id,
     name: skill.name,
     typeText: skill.elite ? `Elite ${TYPE_TEXT[skill.type]}` : TYPE_TEXT[skill.type],
     elite: skill.elite,
+    weaponText: skill.attack === undefined ? undefined : WEAPON_TEXT[skill.attack.weapon],
     attributeId: skill.attributeId,
     attributeName:
       skill.attributeId === undefined

@@ -30,7 +30,7 @@ the server decides what happens (brief §12, §32).
 
 Regeneration and degeneration count in **pips**, as in GW1. One health
 pip is 2 HP/s and one energy pip ⅓ energy/s. Every status's pips sum
-(Bleeding −3, Burning −7, Poison −4, Life Drain −2, Regeneration +4), and
+(Bleeding −3, Burning −7, Poison −4, Disease −4, Faintheartedness −2, Regeneration +4), and
 the net is clamped to ±10 before it applies: burning, bleeding and poison
 together (−14) drain 20 HP/s, not 28. Energy is the primary profession's
 base pips plus any status's, clamped the same way: Warrior and Paragon 2
@@ -166,16 +166,18 @@ condition cannot out-last one well-timed long one.
 Each condition has a distinct mechanical identity, not just a different
 number:
 
-| Condition  | Effect                                           |
-| ---------- | ------------------------------------------------ |
-| Bleeding   | −3 health/second                                 |
-| Burning    | −7 health/second                                 |
-| Poison     | −4 health/second                                 |
-| Crippled   | Half movement speed                              |
-| Blind      | 90% of your attacks miss                         |
-| Weakness   | −20 armor                                        |
-| Deep Wound | −20% maximum health                              |
-| Dazed      | Spells: double cast time, interrupted by attacks |
+| Condition     | Effect                                            |
+| ------------- | ------------------------------------------------- |
+| Bleeding      | −3 health/second                                  |
+| Burning       | −7 health/second                                  |
+| Poison        | −4 health/second                                  |
+| Crippled      | Half movement speed                               |
+| Blind         | 90% of your attacks miss                          |
+| Weakness      | −66% weapon damage, −1 to every attribute above 0 |
+| Cracked Armor | −20 armor, never below 60                         |
+| Deep Wound    | −20% maximum health                               |
+| Dazed         | Spells: double cast time, interrupted by attacks  |
+| Disease       | −4 health/second; spreads to adjacent combatants  |
 
 **Dazed doubles a spell's cast time, and attacks interrupt it** (#546,
 GW1). Applying Dazed interrupts a spell being cast, even on someone
@@ -185,6 +187,35 @@ damage. A miss, a block or a dodge does not. Only spells: a dazed
 Warrior's Healing Signet is neither slowed nor interrupted, and an
 instant skill stays instant. See
 [ADR-0019](../adr/0019-status-modifiers.md).
+
+**Weakness cuts your weapon and your attributes** (#762, GW1). Your
+weapon's roll deals 34%; an attack skill's bonus damage is whole.
+Every attribute you put points in counts one rank lower, so your
+skills scale one rank lower and Expertise, Fast Casting and the other
+primary attributes give less. One you left at 0 stays 0, even when a
+rune raised it. A weapon's requirement is checked at each blow: a
+Warrior at exactly 9 Swordsmanship swings at a third of the damage
+while weakened. Two sources of weakness are one weakness, so it is
+never −2. Enfeeble (Necromancer, Curses) is its first source.
+
+**Cracked Armor takes 20 armor, but never below 60** (#763, GW1). It is
+taken before any status adds armor, so a cracked caster at 60 loses
+nothing and Armor of Earth still lifts them to 84; a Ranger drops from
+70 to 60, and a Warrior hit by a sword from 100 to 80, about 41% more
+damage. A typed bonus counts as armor it can take: a cracked Ranger has
+80 against fire. Armor penetration applies after. Weaken Armor
+(Necromancer, Curses, 5 energy, ½ s, 5 s recharge) cracks the target
+and every foe adjacent to it for 17 s.
+
+**Disease spreads** (#765, GW1). While you are diseased, every living
+combatant adjacent to you catches it, on both teams: a Necromancer who
+diseases a foe in a melee ball diseases their own Warrior too. A caught
+copy lasts as long as yours has left. Each cast is one outbreak, and it
+infects each combatant once: cured or run out, you do not catch the same
+outbreak again, however long you stand next to a carrier. A new cast
+is a new outbreak. The dead neither carry nor catch it. Rotting Flesh
+(Necromancer, Death Magic) diseases a foe for 22 s at rank 12. The
+log reads "X catches Disease from Y".
 
 **Blind makes attacks miss**: weapon swings, each blow rolled on its own,
 and attack skills (Swift Chop, Backbreaker, Opening Cut, Barrage, Broad
@@ -243,8 +274,8 @@ when it starts, so one interrupted or cancelled afterwards has still used
 it; one refused, or queued behind an aftercast, uses it only once it
 starts. Signets, shouts, chants, stances and attacks leave it alone. The 16 is
 its rank-12 number; Energy Storage scaling comes with #532. While it is
-up, the skill bar shows each spell at its discounted cost and lights
-the ones it makes affordable (#637).
+up, a skill bar slot's tooltip shows each spell at its discounted cost,
+and the bar lights the ones it makes affordable (#637, #719).
 
 **Signets** usually cost nothing, so they work at 0 energy. Healing
 Signet (Warrior, Tactics) heals you after a 2 s cast, and for those 2 s
@@ -265,9 +296,11 @@ A chant is not a spell: dazed does not slow it. Anthem of Flame
 (Paragon, Leadership, 5 energy, 1 s cast, 10 s recharge) lasts 10 s on
 each ally in earshot, the paragon included: the next attack skill each
 uses burns whoever it hits for 3 s. That attack skill uses the chant up
-when its blow lands, misses or is blocked, or, from a bow or a spear,
-when its shot lands or is dodged; only a hit burns, every victim of
-Barrage alike. Plain swings leave it alone, and so does an attack skill
+as it is released: as its blow strikes, or as its shot leaves a bow or
+a spear (#782). The burn travels with the shot, so a second attack skill
+loosed before the first arrow lands carries none, and an Anthem that
+runs out while the arrow flies still burns. Only a hit burns, every
+victim of Barrage alike. Plain swings leave it alone, and so does an attack skill
 interrupted or cancelled before its blow. Several different chants can
 be up at once; the same one again keeps the longer.
 
@@ -301,7 +334,11 @@ adjacent to its target.
 **Attack skills ride the weapon** (ADR-0029). An attack skill needs its
 weapon: Swift Chop an axe, Backbreaker a hammer, Opening Cut a sword,
 Barrage and Broad Head Arrow any bow, Distracting Blow any melee weapon.
-With the wrong one it is refused ("Needs an axe."). It is one blow of
+With the wrong one it is refused ("Needs an axe."), and its slot is
+dimmed on the skill bar as if you could not pay for it; the build
+editor flags it ("Needs an axe — your weapon is a sword") but still
+saves it (#417). Its tooltip names the weapon ("Axe attack") and its
+bonus ("+16 damage"). It is one blow of
 that weapon: it hits halfway through a swing (or through its own
 activation, if it states one), for the weapon's damage plus the skill's
 bonus, mitigated once, and you
@@ -388,9 +425,16 @@ target. Swift Chop is the exception that proves it: blocked, it still
 deals its flat damage and a 20 s Deep Wound. Spells are never blocked,
 and shields do not block, as in GW1. Wild Throw cannot be blocked at all.
 
-Not modelled: evade. Attack-speed changes have
-a hook (only the strongest speed-up and slow-down count), but no skill
-uses it yet.
+Not modelled: evade.
+
+**Faintheartedness slows attacks** (#493, GW1). Its hex makes the
+target attack 50% slower, swings and attack skills alike: a sword swings
+every 1.995 s instead of 1.33 s, and Swift Chop winds up for half of
+1.5 × the axe's swing. A swing in progress stretches the moment the hex
+lands and shrinks back when it ends; an attack skill keeps the wind-up it
+started with. Spells are not slowed. Only the strongest slow-down and the
+strongest speed-up count, and they multiply (ADR-0029). The hex also
+degenerates its target by 2 pips.
 
 ## Damage types and armor
 
@@ -460,6 +504,10 @@ GW1 PvP (#473). Only a primary can hold its rank, and runes count.
 - **Leadership** (Paragon). Each shout or chant gives its user 1 energy
   for every ally it affected, the user included, up to 1 for every 2
   ranks: up to 6 at rank 12.
+- **Energy Storage** (Elementalist). +3 maximum energy a rank, +36 at
+  rank 12, and more above it. It adds to Rune of Attunement and gear,
+  and you start the match full at the new maximum. The build editor's
+  max energy counts it.
 
 The others have no effect yet.
 
@@ -467,9 +515,9 @@ The build editor says under a primary's row what it does at its rank
 ("Fast Casting 12: spells cast 43% faster"), and a skill tooltip for a
 known character shows the cost and activation Expertise and Fast
 Casting make of it, the base in brackets: "5 energy (10)",
-"1.1s (2s)" (#531). The HUD skill bar shows the energy a skill costs
-the caster now, Expertise and an active glyph included (#528, #637),
-with no base beside it.
+"1.1s (2s)" (#531). The skill bar shows icons only (#719); a slot's
+tooltip shows the energy the skill costs the caster now, Expertise and
+an active glyph included (#528, #637), the base in brackets.
 
 ## Positioning
 

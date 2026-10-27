@@ -1,5 +1,5 @@
 import {
-  StatusSet,
+  outsideMatch,
   getStatusDefinition,
   type ActiveStatus,
   type StatusCategory,
@@ -30,6 +30,7 @@ function status(id: StatusId, remainingSeconds: number): ActiveStatus {
     attacksLeft: undefined,
     spellsLeft: undefined,
     sourceId: "caster",
+    outbreak: null,
   };
 }
 
@@ -95,7 +96,7 @@ describe("wireStatuses (#636)", () => {
 
 describe("skillBarSlots", () => {
   it("describes each skill as the host's skill-bar message does", () => {
-    const bearer = { attributeRanks: new Map<string, number>(), statuses: new StatusSet() };
+    const bearer = outsideMatch(new Map());
     expect(skillBarSlots(["elementalist.fireball", null], bearer)).toEqual([
       {
         id: "elementalist.fireball",
@@ -110,7 +111,7 @@ describe("skillBarSlots", () => {
   });
 
   it("costs a spell what the glyph leaves of it (#637)", () => {
-    const bearer = { attributeRanks: new Map<string, number>(), statuses: new StatusSet() };
+    const bearer = outsideMatch(new Map());
     bearer.statuses.apply("glyph-of-lesser-energy", 15, "e");
     expect(skillBarSlots(["elementalist.fireball"], bearer)[0]?.energyCost).toBe(0);
   });
@@ -118,17 +119,16 @@ describe("skillBarSlots", () => {
 
 describe("sameSkillBar (#637)", () => {
   const bar = ["elementalist.fireball", null, "warrior.healing-signet"] as const;
-  const plain = () =>
-    skillBarSlots([...bar], { attributeRanks: new Map(), statuses: new StatusSet() });
+  const plain = () => skillBarSlots([...bar], outsideMatch(new Map()));
 
   it("holds for two bars built alike, gaps included", () => {
     expect(sameSkillBar(plain(), plain())).toBe(true);
   });
 
   it("tells a changed cost, a moved gap and a different length apart", () => {
-    const glyphed = new StatusSet();
-    glyphed.apply("glyph-of-lesser-energy", 15, "e");
-    const cheaper = skillBarSlots([...bar], { attributeRanks: new Map(), statuses: glyphed });
+    const glyphed = outsideMatch(new Map());
+    glyphed.statuses.apply("glyph-of-lesser-energy", 15, "e");
+    const cheaper = skillBarSlots([...bar], glyphed);
     expect(sameSkillBar(plain(), cheaper)).toBe(false);
     expect(sameSkillBar(plain(), [...plain()].reverse())).toBe(false);
     expect(sameSkillBar(plain(), plain().slice(0, 2))).toBe(false);

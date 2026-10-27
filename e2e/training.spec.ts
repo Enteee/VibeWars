@@ -22,6 +22,18 @@ const WIDE = { width: 1500, height: 950 };
 /** The bar's filled slots; an empty one keeps its place and its key (#347). */
 const FILLED_SLOTS = ".training-skill:not(.is-empty)";
 
+/**
+ * The filled slots, each by its hotkey and its name. The bar shows icons,
+ * not names (#719), so the name is the slot's accessible one.
+ */
+async function expectFilledSlots(page: Page, names: readonly string[]): Promise<void> {
+  const filled = page.locator(FILLED_SLOTS);
+  await expect(filled).toHaveText(names.map((_, index) => codeLabel(skillKey(index))));
+  for (const [index, name] of names.entries()) {
+    await expect(filled.nth(index)).toHaveAccessibleName(name);
+  }
+}
+
 /** A new elementalist, holding its Wand (#614), with Fireball on the bar, in a wide editor. */
 async function openTraining(
   page: Page,
@@ -32,9 +44,8 @@ async function openTraining(
   await page.getByRole("button", { name: "new character" }).click();
   await chooseProfession(page, "primary", "elementalist");
   await page.locator(".skill-box", { hasText: "Fireball" }).locator(".skill-box-equip").click();
-  await expect(page.locator(FILLED_SLOTS)).toHaveText([
-    `${codeLabel(skillKey(0, keymap))}Fireball`,
-  ]);
+  await expect(page.locator(FILLED_SLOTS)).toHaveText([codeLabel(skillKey(0, keymap))]);
+  await expect(page.locator(FILLED_SLOTS).first()).toHaveAccessibleName("Fireball");
   const canvas = page.locator(".training canvas");
   await expect(canvas).toBeVisible();
   return canvas;
@@ -227,10 +238,7 @@ test("(7) editing the build re-arms the arena in place", async ({ page }) => {
     "Fireball",
   );
   await expect(meter(page, "damage")).toHaveText("0");
-  await expect(page.locator(FILLED_SLOTS)).toHaveText([
-    `${codeLabel(skillKey(0))}Fireball`,
-    `${codeLabel(skillKey(1))}Armor of Earth`,
-  ]);
+  await expectFilledSlots(page, ["Fireball", "Armor of Earth"]);
   expect(await canvasHandle.evaluate((node) => node.isConnected)).toBe(true);
 });
 
@@ -289,11 +297,8 @@ test("(11) every skill button shows its skill-type badge, as the HUD does", asyn
     .locator(".skill-box", { hasText: "Armor of Earth" })
     .locator(".skill-box-equip")
     .click();
+  await expectFilledSlots(page, ["Fireball", "Armor of Earth"]);
   const buttons = page.locator(FILLED_SLOTS);
-  await expect(buttons).toHaveText([
-    `${codeLabel(skillKey(0))}Fireball`,
-    `${codeLabel(skillKey(1))}Armor of Earth`,
-  ]);
   for (const [index, type] of ["Spell", "Enchantment"].entries()) {
     const badges = buttons.nth(index).locator(".skill-type-badge");
     await expect(badges).toHaveCount(1);
@@ -357,7 +362,8 @@ test("(13) a recharging skill shows the clock-wipe and the seconds left, then cl
   // Fireball recharges in 7 s of game time, which runs slower than wall
   // time when the CPU is loaded (#327).
   await expect(overlay).toHaveCount(0, { timeout: 20_000 });
-  await expect(slot).not.toHaveAttribute("aria-label");
+  // Named by its skill again: the bar shows no name (#719).
+  await expect(slot).toHaveAttribute("aria-label", "Fireball");
   await expect(slot).not.toHaveClass(/\bis-recharging\b/);
 });
 
@@ -457,6 +463,9 @@ test("(17) after Esc releases the arena, Tab is the browser's again (#268)", asy
   await expect(page.locator(".training-stage")).not.toBeFocused();
 });
 
+/** The armor ladder's dummies' ids, in `LADDER`'s order (training-scenarios.ts). */
+const LADDER_IDS = ["armor-40", "armor-60", "armor-70", "armor-80", "armor-84", "armor-104"];
+
 /** The armor ladder's six still dummies, in world units (training-scenarios.ts). */
 const LADDER = [
   { x: 360, y: 90 },
@@ -473,21 +482,29 @@ function trainingView(page: Page, canvas: Locator): Promise<Projection> {
 }
 
 /**
- * The band a dummy's name is drawn in, as screenshots: 11 px text whose
- * bottom sits 36 above the body's centre (`nameLabelBottom`), and narrower
- * than the 100 between columns, so a neighbour's name never reaches it.
- * Labels are Phaser text, not DOM, so a pixel diff is the only way to see one.
+ * Whose names the arena draws (#253), from the stage's `data-names` hook:
+ * names keep their screen size at every zoom (#456), so on the crowded
+ * ladder one overlaps its neighbour's column and a pixel band per dummy
+ * cannot say whose a name is.
  */
-async function nameBands(page: Page, canvas: Locator): Promise<Buffer[]> {
-  const view = await trainingView(page, canvas);
-  return Promise.all(
-    LADDER.map((dummy) => {
-      const corner = view.onPage({ x: dummy.x - 30, y: dummy.y - 52 });
-      return page.screenshot({
-        clip: { ...corner, width: 60 * view.zoom, height: 16 * view.zoom },
-      });
-    }),
-  );
+async function shownNames(page: Page): Promise<string[]> {
+  const value = (await page.locator(".training-stage").getAttribute("data-names")) ?? "";
+  return value === "" ? [] : value.split(",");
+}
+
+/**
+ * The band a dummy's name is drawn in, as a screenshot: 11 px text at
+ * every zoom (#456), whose bottom sits 3 px over the cast bar's top, 19
+ * world units over the body's 14 radius (`nameLabelBottom`). Labels are
+ * Phaser text, not DOM, so a pixel diff is the only way to see one.
+ */
+async function nameBand(
+  page: Page,
+  canvas: Locator,
+  dummy: { readonly x: number; readonly y: number },
+): Promise<Buffer> {
+  const bar = (await trainingView(page, canvas)).onPage({ x: dummy.x, y: dummy.y - 14 - 19 });
+  return page.screenshot({ clip: { x: bar.x - 40, y: bar.y - 3 - 20, width: 80, height: 22 } });
 }
 
 test("(18) names show only on the target, under the cursor, and under Shift (#253, #302)", async ({
@@ -503,13 +520,11 @@ test("(18) names show only on the target, under the cursor, and under Shift (#25
   await wholeMap(page);
   await walkTo(page, canvas, { x: 250, y: 210 });
 
-  // No target, and the cursor off the arena, where it ends: these bands
-  // hold no name.
+  // No target, and the cursor off the arena: no name.
   await page.mouse.move(1, 1);
-  await stillArena(page, canvas);
-  const blank = await nameBands(page, canvas);
-  const named = async (): Promise<number> =>
-    (await nameBands(page, canvas)).filter((band, i) => !band.equals(blank[i] ?? band)).length;
+  const named = async (): Promise<number> => (await shownNames(page)).length;
+  await expect.poll(named).toBe(0);
+  const [first] = LADDER;
 
   // Tab picks one dummy: its name, and only its, appears.
   await page.keyboard.press("Tab");
@@ -524,24 +539,17 @@ test("(18) names show only on the target, under the cursor, and under Shift (#25
   // The cursor over a dummy shows that one too. Two lie on the target
   // or the cursor, whichever dummy Tab picked, unless they are the same.
   // The cursor leans the camera (#721), sliding the dummy from under it:
-  // aim again until it holds. The bands are compared with Shift's, which
-  // shows every name, under the same camera.
-  const [first] = LADDER;
-  for (const _ of [1, 2, 3]) {
-    const over = (await trainingView(page, canvas)).onPage(first);
-    await page.mouse.move(over.x, over.y);
-    await settleCamera(page);
-  }
-  // Past the last sub-unit of the lean, which data-camera rounds away.
-  await page.waitForTimeout(1_500);
-  const hovering = await nameBands(page, canvas);
-  await page.keyboard.down(key("show-names"));
-  await page.waitForTimeout(300);
-  const everyName = await nameBands(page, canvas);
-  await page.keyboard.up(key("show-names"));
-  const shown = hovering.filter((band, i) => band.equals(everyName[i] ?? Buffer.alloc(0)));
-  expect(shown.length === 1 || shown.length === 2).toBe(true);
-  expect(hovering[0]?.equals(everyName[0] ?? Buffer.alloc(0))).toBe(true);
+  // aim again until it holds.
+  await expect
+    .poll(async () => {
+      const over = (await trainingView(page, canvas)).onPage(first);
+      await page.mouse.move(over.x, over.y);
+      await settleCamera(page);
+      return shownNames(page);
+    })
+    .toContain(LADDER_IDS[0]);
+  const withHover = await named();
+  expect(withHover === 1 || withHover === 2).toBe(true);
 
   // The cursor leaving the arena takes its name with it.
   await page.mouse.move(1, 1);
@@ -607,7 +615,7 @@ test("(21) the casting slot is lit, and Esc cancels the cast and flashes it (#30
     .locator(".skill-box", { hasText: "Troll Unguent" })
     .locator(".skill-box-equip")
     .click();
-  await expect(page.locator(FILLED_SLOTS)).toHaveText([`${codeLabel(skillKey(0))}Troll Unguent`]);
+  await expectFilledSlots(page, ["Troll Unguent"]);
   await takeControl(page);
   const slot = page.locator(FILLED_SLOTS).first();
   await page.keyboard.press(skillKey(0));
@@ -735,7 +743,8 @@ test("(24) an empty slot's key does nothing; the next key casts its own skill (#
   await expect(slots).toHaveCount(8);
   await expect(slots.nth(1)).toHaveClass(/is-empty/);
   await expect(slots.nth(1)).toHaveText(codeLabel(skillKey(1)));
-  await expect(slots.nth(2)).toHaveText(`${codeLabel(skillKey(2))}Armor of Earth`);
+  await expect(slots.nth(2)).toHaveText(codeLabel(skillKey(2)));
+  await expect(slots.nth(2)).toHaveAccessibleName("Armor of Earth");
   await takeControl(page);
   const energy = page.locator(".training-bar-energy .training-bar-label");
   const full = await energy.textContent();
@@ -812,26 +821,19 @@ test("(26) left click walks, even onto a dummy, and never targets; right click t
   expect((await shot()).equals(start), "the hero should be walking").toBe(false);
 
   // The view follows the walk (#721), so the walk is stopped and the
-  // camera left to settle before the names are read. No band shows the
-  // name Shift shows there: nobody is targeted.
+  // camera left to settle before the names are read. No name is shown:
+  // nobody is targeted.
   await page.keyboard.press("Escape");
   await expect(page.locator(".training")).toHaveClass(/is-armed/);
   await stillArena(page, canvas);
-  const blank = await nameBands(page, canvas);
-  await page.keyboard.down(key("show-names"));
-  await page.waitForTimeout(300);
-  const everyName = await nameBands(page, canvas);
-  await page.keyboard.up(key("show-names"));
-  expect(blank.filter((band, i) => band.equals(everyName[i] ?? Buffer.alloc(0)))).toHaveLength(0);
-  const named = async (): Promise<number> =>
-    (await nameBands(page, canvas)).filter((band, i) => !band.equals(blank[i] ?? band)).length;
+  expect(await shownNames(page)).toEqual([]);
 
   // A right click on it targets it: its name shows with the cursor gone.
   // Through the camera as it is now: it has followed the walk.
   const moved = (await trainingView(page, canvas)).onPage(first);
   await page.mouse.click(moved.x, moved.y, { button: "right" });
   await page.mouse.move(1, 1);
-  await expect.poll(named).toBe(1);
+  await expect.poll(() => shownNames(page)).toEqual([LADDER_IDS[0]]);
   await expect(page.locator(".training-adrenaline")).not.toContainText("attacking");
 });
 
@@ -844,10 +846,7 @@ test("(27) a right click on the ground moves nobody and keeps the target (#438)"
   await takeControl(page);
   // The cursor leaving the arena eases the camera's lean home (#721).
   await page.mouse.move(1, 1);
-  await stillArena(page, canvas);
-  const blank = await nameBands(page, canvas);
-  const named = async (): Promise<number> =>
-    (await nameBands(page, canvas)).filter((band, i) => !band.equals(blank[i] ?? band)).length;
+  const named = async (): Promise<number> => (await shownNames(page)).length;
 
   await page.keyboard.press("Tab");
   await expect.poll(named).toBe(1);
@@ -893,7 +892,7 @@ test("(29) an attack skill pressed out of reach walks in, then lands (#415)", as
   await expect(page.locator(".gear-slot").first()).toContainText("Axe");
   await page.getByRole("button", { name: "skills", exact: true }).click();
   await page.locator(".skill-box", { hasText: "Swift Chop" }).locator(".skill-box-equip").click();
-  await expect(page.locator(FILLED_SLOTS)).toHaveText([`${codeLabel(skillKey(0))}Swift Chop`]);
+  await expectFilledSlots(page, ["Swift Chop"]);
   const canvas = page.locator(".training canvas");
   await page.locator("select.training-scenario").selectOption("weapon-dps");
   await expect(page.locator(".training-log")).toContainText("── Weapon DPS ──");
@@ -969,9 +968,9 @@ test("(31) a slot out of reach of the target is marked, and the mark goes once i
   const dummy = (await trainingView(page, canvas)).onPage({ x: 480, y: 210 });
   await page.mouse.click(dummy.x, dummy.y, { button: "right" });
   await expect(slot).toHaveClass(/is-out-of-range/);
-  // A shape, not only a colour: the `↔` after the name.
+  // A shape, not only a colour: the `↔` in the corner (#719).
   const glyph = await slot
-    .locator(".training-skill-name")
+    .locator(".skill-range-mark")
     .evaluate((node) => getComputedStyle(node, "::after").content);
   expect(glyph).toBe('"↔"');
 
@@ -992,7 +991,7 @@ test("(32) the casting slot fills as the cast goes, hovering it shows its toolti
     .locator(".skill-box", { hasText: "Troll Unguent" })
     .locator(".skill-box-equip")
     .click();
-  await expect(page.locator(FILLED_SLOTS)).toHaveText([`${codeLabel(skillKey(0))}Troll Unguent`]);
+  await expectFilledSlots(page, ["Troll Unguent"]);
   await takeControl(page);
   const slot = page.locator(FILLED_SLOTS).first();
 
@@ -1089,4 +1088,107 @@ test("(36) the arena draws at a match's scale: the stage shows less of the world
   await page.mouse.wheel(0, 100);
   await expect(stage).toHaveAttribute("data-zoom-step", "Wide");
   await expect(stage).toHaveAttribute("data-zoom", zoomFor(DEFAULT_STEP + 1, match).toFixed(4));
+});
+
+/**
+ * The rows of `named` where name ink appeared over `blank`, two shots of
+ * one band: how tall the name is, in screen px. Only a pixel that was
+ * not there and is brighter than the grid (#1a212c) counts, so a camera
+ * that moved a pixel between the shots shifts the grid without counting
+ * as ink, while the name's anti-aliased top and bottom rows still do.
+ */
+async function inkHeight(page: Page, blank: Buffer, named: Buffer): Promise<number> {
+  return page.evaluate(
+    async ([before, after]) => {
+      const pixels = async (base64: string): Promise<ImageData> => {
+        const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+        const bitmap = await createImageBitmap(new Blob([bytes], { type: "image/png" }));
+        const context = new OffscreenCanvas(bitmap.width, bitmap.height).getContext("2d");
+        if (context === null) {
+          throw new Error("no 2d context");
+        }
+        context.drawImage(bitmap, 0, 0);
+        return context.getImageData(0, 0, bitmap.width, bitmap.height);
+      };
+      const [{ data: a }, { data: b, width }] = await Promise.all([pixels(before), pixels(after)]);
+      const rows: number[] = [];
+      for (let i = 0; i < a.length; i += 4) {
+        const bright = Math.max(b[i] ?? 0, b[i + 1] ?? 0, b[i + 2] ?? 0) > 60;
+        const changed = a[i] !== b[i] || a[i + 1] !== b[i + 1] || a[i + 2] !== b[i + 2];
+        if (bright && changed) {
+          rows.push(Math.floor(i / 4 / width));
+        }
+      }
+      return rows.length === 0 ? 0 : Math.max(...rows) - Math.min(...rows) + 1;
+    },
+    [blank.toString("base64"), named.toString("base64")] as const,
+  );
+}
+
+/** Wait out a wheel's zoom ease and the camera's lean: `data-camera` holds still. */
+async function cameraSettled(page: Page): Promise<void> {
+  const stage = page.locator(".training-stage");
+  await page.waitForTimeout(600);
+  await expect
+    .poll(async () => {
+      const before = await stage.getAttribute("data-camera");
+      await page.waitForTimeout(200);
+      return before === (await stage.getAttribute("data-camera"));
+    })
+    .toBe(true);
+}
+
+test("(37) a name keeps its screen size at every zoom (#456)", async ({ page }) => {
+  // A walk and four waits for a still camera, each a second or more.
+  test.setTimeout(90_000);
+  const canvas = await openTraining(page);
+  await page.locator("select.training-scenario").selectOption("armor-ladder");
+  await expect(page.locator(".training-log")).toContainText("── Armor ladder ──");
+  await takeControl(page);
+  const stage = page.locator(".training-stage");
+  const [first] = LADDER;
+  const box = await canvas.boundingBox();
+  if (box === null) {
+    throw new Error("the arena canvas has no box");
+  }
+  /** One wheel notch over the arena's corner, then the cursor off it. */
+  const wheel = async (deltaY: number): Promise<void> => {
+    await page.mouse.move(box.x + 8, box.y + box.height - 8);
+    await page.mouse.wheel(0, deltaY);
+    await page.mouse.move(1, 1);
+  };
+
+  // Nearer the ladder first: from the spawn, Default shows the stage up
+  // to x 333, and the first dummy's name, at 360, would be cut by its edge.
+  await wholeMap(page);
+  await walkTo(page, canvas, { x: 250, y: 210 });
+  await wheel(-100);
+
+  // Nobody named, at Default and at Wide.
+  await page.mouse.move(1, 1);
+  await expect(stage).toHaveAttribute("data-zoom-step", "Default");
+  await cameraSettled(page);
+  const blankDefault = await nameBand(page, canvas, first);
+  await wheel(100);
+  await expect(stage).toHaveAttribute("data-zoom-step", "Wide");
+  await cameraSettled(page);
+  const blankWide = await nameBand(page, canvas, first);
+
+  // Target the first dummy: its name, alone, at Wide, then at Default.
+  const dummy = (await trainingView(page, canvas)).onPage(first);
+  await page.mouse.click(dummy.x, dummy.y, { button: "right" });
+  await page.mouse.move(1, 1);
+  await expect.poll(() => shownNames(page)).toEqual([LADDER_IDS[0]]);
+  await cameraSettled(page);
+  const wide = await inkHeight(page, blankWide, await nameBand(page, canvas, first));
+  await page.waitForTimeout(200);
+  await wheel(-100);
+  await expect(stage).toHaveAttribute("data-zoom-step", "Default");
+  await cameraSettled(page);
+  const near = await inkHeight(page, blankDefault, await nameBand(page, canvas, first));
+
+  // An 11 px name, not one the zoom shrank to a few pixels.
+  expect(near).toBeGreaterThanOrEqual(7);
+  expect(near).toBeLessThanOrEqual(14);
+  expect(Math.abs(wide - near)).toBeLessThanOrEqual(1);
 });

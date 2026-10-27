@@ -60,10 +60,12 @@ export type StatusId =
   | "crippled"
   | "blind"
   | "weakness"
+  | "cracked-armor"
   | "deep-wound"
   | "dazed"
+  | "disease"
   // Hexes / enchantments implemented so far.
-  | "life-drain"
+  | "faintheartedness"
   | "malaise"
   | "regeneration"
   | "blood-ritual"
@@ -119,6 +121,11 @@ export interface StatusDefinition {
   readonly energyPips: number;
   /** Flat armor modifier while active. */
   readonly armorModifier: number;
+  /**
+   * Armor taken before `armorModifier`s add, never below a floor (#763):
+   * Cracked Armor's −20, not below 60. `undefined`: none.
+   */
+  readonly armorReduction: ArmorReduction | undefined;
   /** Movement speed multiplier while active (1 = unaffected). */
   readonly moveSpeedMultiplier: number;
   /**
@@ -128,6 +135,16 @@ export interface StatusDefinition {
   readonly attackMissChance: number;
   /** Multiplier on the bearer's maximum health (deep wound's signature). */
   readonly maxHealthMultiplier: number;
+  /**
+   * Multiplier on the bearer's weapon roll (#762): weakness's 0.34. An
+   * attack skill's bonus damage is not scaled.
+   */
+  readonly weaponDamageMultiplier: number;
+  /**
+   * Added to every attribute of the bearer above rank 0 (#762): weakness's
+   * −1. Read through `rankOf` alone (ADR-0019).
+   */
+  readonly attributeDelta: number;
   /**
    * Multiplier on the bearer's spell cast time; >1 is a penalty. Dazed
    * doubles it. A signet or any other skill that is not a spell ignores
@@ -142,8 +159,8 @@ export interface StatusDefinition {
   readonly interruptsSpells: boolean;
   /**
    * Multiplier on how long the bearer's attacks take, swings and attack
-   * skills alike; <1 is faster (ADR-0029). No status sets it yet: it is the
-   * hook attack-speed skills plug into.
+   * skills alike; <1 is faster (ADR-0029). "50% slower" is 1.5, as GW1
+   * counts it.
    */
   readonly attackDurationMultiplier: number;
   /** While active, a knockdown does nothing to the bearer (#468). No status sets it yet. */
@@ -170,6 +187,11 @@ export interface StatusDefinition {
    */
   readonly nextSpells: NextSpells | undefined;
   /**
+   * It spreads (#765): every living combatant adjacent to a bearer, on
+   * either team, catches it, once per outbreak. Disease's signature.
+   */
+  readonly spreads: boolean;
+  /**
    * Effects on whoever the bearer's next attack skill hits (#758): a
    * chant's rider, as Anthem of Flame's burning. It ends when that attack
    * skill resolves, hit, miss or block, and applies only on a hit.
@@ -181,6 +203,12 @@ export interface StatusDefinition {
    * releases a shot, swing or attack skill alike. A weapon spell's price.
    */
   readonly endsWhenBearerAttacks: boolean;
+}
+
+/** Armor taken, but never below `floor`, nor any armor already under it (#763). */
+export interface ArmorReduction {
+  readonly amount: number;
+  readonly floor: number;
 }
 
 /** A glyph's hold on the next spells: how many, and how much cheaper (#526). */
@@ -202,9 +230,12 @@ function define(
     healthPips: 0,
     energyPips: 0,
     armorModifier: 0,
+    armorReduction: undefined,
     moveSpeedMultiplier: 1,
     attackMissChance: 0,
     maxHealthMultiplier: 1,
+    weaponDamageMultiplier: 1,
+    attributeDelta: 0,
     castTimeMultiplier: 1,
     interruptsSpells: false,
     attackDurationMultiplier: 1,
@@ -213,6 +244,7 @@ function define(
     endsAfterAttacks: undefined,
     onAttackHit: [],
     nextSpells: undefined,
+    spreads: false,
     nextAttackSkill: undefined,
     endsWhenBearerAttacks: false,
     ...overrides,
@@ -220,11 +252,9 @@ function define(
 }
 
 /**
- * Status definitions. Pip counts are GW1's; the other numbers are this
- * project's own tuning, chosen to
- * preserve each effect's *mechanical identity* (bleeding is a slow drain,
- * burning a fast one, deep wound a healing-reduction, blind an attack
- * denial) rather than to replicate any specific proprietary value table.
+ * Status definitions. Conditions follow GW1: its mechanics and its
+ * magnitudes (#492). Every other status carries its skill's rank-12
+ * values.
  */
 export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = {
   bleeding: define("bleeding", "Bleeding", "condition", { healthPips: -3 }),
@@ -232,11 +262,22 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   poison: define("poison", "Poison", "condition", { healthPips: -4 }),
   crippled: define("crippled", "Crippled", "condition", { moveSpeedMultiplier: 0.5 }),
   blind: define("blind", "Blind", "condition", { attackMissChance: 0.9 }),
-  weakness: define("weakness", "Weakness", "condition", { armorModifier: -20 }),
+  weakness: define("weakness", "Weakness", "condition", {
+    weaponDamageMultiplier: 0.34,
+    attributeDelta: -1,
+  }),
+  "cracked-armor": define("cracked-armor", "Cracked Armor", "condition", {
+    armorReduction: { amount: 20, floor: 60 },
+  }),
   "deep-wound": define("deep-wound", "Deep Wound", "condition", { maxHealthMultiplier: 0.8 }),
   dazed: define("dazed", "Dazed", "condition", { castTimeMultiplier: 2, interruptsSpells: true }),
+  disease: define("disease", "Disease", "condition", { healthPips: -4, spreads: true }),
 
-  "life-drain": define("life-drain", "Life Drain", "hex", { healthPips: -2 }),
+  // Faintheartedness at rank 12: attacks 50% slower, −2 pips (GW1 PvP).
+  faintheartedness: define("faintheartedness", "Faintheartedness", "hex", {
+    healthPips: -2,
+    attackDurationMultiplier: 1.5,
+  }),
   malaise: define("malaise", "Malaise", "hex", { energyPips: -1 }),
   regeneration: define("regeneration", "Regeneration", "enchantment", { healthPips: 4 }),
   "blood-ritual": define("blood-ritual", "Blood Ritual", "enchantment", { energyPips: 3 }),
@@ -287,6 +328,18 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   }),
 };
 
+/**
+ * One application of a spreading status by a skill, and everyone it has
+ * reached (#765): the bearer it was applied to, and each combatant that
+ * caught it since. Shared by every copy it spread to, so a cured
+ * combatant still next to a carrier of the same outbreak is not caught
+ * again. A new cast is a new outbreak. Compared by identity, so it needs
+ * no id, and it is gone once no status holds it.
+ */
+export interface Outbreak {
+  readonly infected: Set<string>;
+}
+
 export interface ActiveStatus {
   readonly id: StatusId;
   /** Seconds of duration still remaining. */
@@ -298,6 +351,8 @@ export interface ActiveStatus {
   /** Who applied it — needed so a future "when this ends, heal the caster"
    *  effect knows whom to credit. */
   readonly sourceId: string;
+  /** The outbreak it belongs to, for a status that spreads; `null` for every other. */
+  outbreak: Outbreak | null;
 }
 
 export function isStatusId(value: unknown): value is StatusId {
@@ -342,25 +397,55 @@ export class StatusSet {
    * one never shortens a longer one already running. In an exclusive
    * category the new one replaces every one of its category, itself
    * included, at the incoming duration (a stance, #523).
+   *
+   * A status that spreads starts a new outbreak, even where the duration
+   * already running is the longer one: a new cast is a new outbreak (#765).
    */
   public apply(id: StatusId, durationSeconds: number, sourceId: string): void {
     if (durationSeconds <= 0) {
       return;
     }
-    const { category } = getStatusDefinition(id);
-    if (EXCLUSIVE_CATEGORIES.has(category)) {
-      this.removeByCategory(category);
+    const definition = getStatusDefinition(id);
+    if (EXCLUSIVE_CATEGORIES.has(definition.category)) {
+      this.removeByCategory(definition.category);
     }
     const existing = this.#statuses.get(id);
+    const outbreak = definition.spreads ? { infected: new Set<string>() } : null;
     if (existing !== undefined && existing.remainingSeconds >= durationSeconds) {
+      existing.outbreak = outbreak;
       return;
     }
     this.#statuses.set(id, {
       id,
       remainingSeconds: durationSeconds,
-      attacksLeft: getStatusDefinition(id).endsAfterAttacks,
-      spellsLeft: getStatusDefinition(id).nextSpells?.count,
+      attacksLeft: definition.endsAfterAttacks,
+      spellsLeft: definition.nextSpells?.count,
       sourceId,
+      outbreak,
+    });
+  }
+
+  /**
+   * Catch a spreading status from a bearer of `outbreak` (#765). The
+   * longer duration wins, as for `apply`, but a combatant already
+   * carrying it keeps the outbreak it has.
+   */
+  public catch(id: StatusId, durationSeconds: number, sourceId: string, outbreak: Outbreak): void {
+    if (durationSeconds <= 0) {
+      return;
+    }
+    const existing = this.#statuses.get(id);
+    if (existing !== undefined) {
+      existing.remainingSeconds = Math.max(existing.remainingSeconds, durationSeconds);
+      return;
+    }
+    this.#statuses.set(id, {
+      id,
+      remainingSeconds: durationSeconds,
+      attacksLeft: undefined,
+      spellsLeft: undefined,
+      sourceId,
+      outbreak,
     });
   }
 
@@ -505,9 +590,13 @@ export interface StatusModifiers {
   /** Every status's energy pips, summed and not yet clamped. */
   readonly energyPips: number;
   readonly armorModifier: number;
+  /** The largest armor reduction; `undefined`: none. */
+  readonly armorReduction: ArmorReduction | undefined;
   readonly moveSpeedMultiplier: number;
   readonly attackMissChance: number;
   readonly maxHealthMultiplier: number;
+  readonly weaponDamageMultiplier: number;
+  readonly attributeDelta: number;
   readonly castTimeMultiplier: number;
   readonly attackDurationMultiplier: number;
 }
@@ -515,10 +604,12 @@ export interface StatusModifiers {
 /**
  * Collapse every active status into one set of modifiers.
  *
- * Additive effects (health and energy pips, armor) sum; multiplicative ones
- * (move speed, max health, cast time) multiply; miss chance takes the
+ * Additive effects (health and energy pips, armor, attributes) sum;
+ * multiplicative ones (move speed, max health, weapon damage, cast time)
+ * multiply; miss chance takes the
  * worst rather than compounding, so two blinding effects cannot push a
- * player past certain failure in a way that feels arbitrary.
+ * player past certain failure in a way that feels arbitrary. An armor
+ * reduction is the largest single one.
  * Attack duration is GW1's rule: only the strongest speed-up and the
  * strongest slow-down count, and they multiply.
  */
@@ -526,9 +617,12 @@ export function aggregateModifiers(statuses: readonly ActiveStatus[]): StatusMod
   let healthPips = 0;
   let energyPips = 0;
   let armorModifier = 0;
+  let armorReduction: ArmorReduction | undefined;
   let moveSpeedMultiplier = 1;
   let attackMissChance = 0;
   let maxHealthMultiplier = 1;
+  let weaponDamageMultiplier = 1;
+  let attributeDelta = 0;
   let castTimeMultiplier = 1;
   let attackFaster = 1;
   let attackSlower = 1;
@@ -538,9 +632,17 @@ export function aggregateModifiers(statuses: readonly ActiveStatus[]): StatusMod
     healthPips += def.healthPips;
     energyPips += def.energyPips;
     armorModifier += def.armorModifier;
+    if (
+      def.armorReduction !== undefined &&
+      (armorReduction === undefined || def.armorReduction.amount > armorReduction.amount)
+    ) {
+      armorReduction = def.armorReduction;
+    }
     moveSpeedMultiplier *= def.moveSpeedMultiplier;
     attackMissChance = Math.max(attackMissChance, def.attackMissChance);
     maxHealthMultiplier *= def.maxHealthMultiplier;
+    weaponDamageMultiplier *= def.weaponDamageMultiplier;
+    attributeDelta += def.attributeDelta;
     castTimeMultiplier *= def.castTimeMultiplier;
     attackFaster = Math.min(attackFaster, def.attackDurationMultiplier);
     attackSlower = Math.max(attackSlower, def.attackDurationMultiplier);
@@ -550,9 +652,12 @@ export function aggregateModifiers(statuses: readonly ActiveStatus[]): StatusMod
     healthPips,
     energyPips,
     armorModifier,
+    armorReduction,
     moveSpeedMultiplier,
     attackMissChance,
     maxHealthMultiplier,
+    weaponDamageMultiplier,
+    attributeDelta,
     castTimeMultiplier,
     attackDurationMultiplier: attackFaster * attackSlower,
   };

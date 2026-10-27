@@ -147,12 +147,7 @@ export const UNIVERSAL_RUNES: Readonly<Record<UniversalRuneId, UniversalRune>> =
   ),
 
   clarity: durationRune("clarity", "Rune of Clarity", ["blind", "weakness"]),
-  // The reference pairs Purity with Poison and Disease. This game has no
-  // Disease condition, so the rune covers Burning instead rather than
-  // shipping with half its text pointing at nothing. Changed deliberately,
-  // not approximated — the pairing is "the two conditions that burn you
-  // down over time", which is what the rune is for.
-  purity: durationRune("purity", "Rune of Purity", ["poison", "burning"]),
+  purity: durationRune("purity", "Rune of Purity", ["poison", "disease"]),
   recovery: durationRune("recovery", "Rune of Recovery", ["dazed", "deep-wound"]),
   restoration: durationRune("restoration", "Rune of Restoration", ["bleeding", "crippled"]),
 

@@ -5,6 +5,7 @@ import { EXPERTISE_ATTRIBUTE, expertiseEnergyCost } from "../primary-attributes.
 import type { Vec2 } from "../vec2.js";
 
 import { getStatusDefinition } from "./status.js";
+import { rankOf, type RankHolder } from "./tick.js";
 import { isSpell, type Combatant, type Skill, type TargetRule } from "./types.js";
 
 /**
@@ -169,14 +170,11 @@ export function canActivate(request: ActivationRequest): ActivationCheck {
  * 0. The one number the check, the spend and the skill bar use, so they
  * cannot disagree. 0 for a skill with no energy cost.
  */
-export function energyCostOf(
-  skill: Skill,
-  caster: Pick<Combatant, "attributeRanks" | "statuses">,
-): number {
+export function energyCostOf(skill: Skill, caster: RankHolder): number {
   if (skill.cost?.kind !== "energy") {
     return 0;
   }
-  const expertise = caster.attributeRanks.get(EXPERTISE_ATTRIBUTE) ?? 0;
+  const expertise = rankOf(caster, EXPERTISE_ATTRIBUTE);
   const cost = expertiseEnergyCost(expertise, skill, skill.cost.amount);
   if (!isSpell(skill.type)) {
     return cost;
