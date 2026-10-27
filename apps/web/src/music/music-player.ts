@@ -29,6 +29,8 @@ export interface MusicTrack {
 export interface MusicError {
   readonly message: string;
   readonly line?: number;
+  /** The `evaluate` this answers; none for a load or a pattern failing as it plays. */
+  readonly evaluation?: number;
 }
 
 export interface MusicPlayer {
@@ -39,11 +41,18 @@ export interface MusicPlayer {
   setIntensity(level: MusicLevel): void;
   /** Ramp the music's volume to `gain`, 0 to 1. */
   setVolume(gain: number, rampSeconds: number): void;
-  /** Replace the playing track's pattern with `source` (the beat editor). */
-  evaluate(source: string): void;
+  /**
+   * Replace the playing track's pattern with `source` (the beat editor).
+   * Returns the evaluation's number, which its answer carries.
+   */
+  evaluate(source: string): number;
+  /** Start again what `stop` stopped. */
+  play(): void;
   stop(): void;
   onNowPlaying(handler: (trackId: string) => void): void;
   onError(handler: (error: MusicError) => void): void;
+  /** The host replaced the pattern with this evaluation's source. */
+  onEvaluated(handler: (evaluation: number) => void): void;
   /** Each second's stats, from a host that measures (`measure` in the deps). */
   onStats(handler: (stats: MusicStats) => void): void;
 }
@@ -94,6 +103,7 @@ function supersedes(later: GameToHost, earlier: GameToHost): boolean {
 export function createMusicPlayer(deps: MusicPlayerDeps): MusicPlayer {
   const nowPlaying: ((trackId: string) => void)[] = [];
   const errors: ((error: MusicError) => void)[] = [];
+  const evaluated: ((evaluation: number) => void)[] = [];
   const statsHandlers: ((stats: MusicStats) => void)[] = [];
   let gestured = false;
   let frame: MusicFrame | undefined;
@@ -102,6 +112,7 @@ export function createMusicPlayer(deps: MusicPlayerDeps): MusicPlayer {
   let stopHeartbeat: (() => void) | undefined;
   let outstanding: { seq: number; sentAt: number } | undefined;
   let seq = 0;
+  let evaluations = 0;
   // Replayed to a new host, after a hung one was torn down.
   let volume = 1;
   let intensity: MusicLevel = 0;
@@ -161,11 +172,11 @@ export function createMusicPlayer(deps: MusicPlayerDeps): MusicPlayer {
         }
         return;
       case "error":
-        report(
-          message.line === undefined
-            ? { message: message.message }
-            : { message: message.message, line: message.line },
-        );
+        report({
+          message: message.message,
+          ...(message.line === undefined ? {} : { line: message.line }),
+          ...(message.seq === undefined ? {} : { evaluation: message.seq }),
+        });
         return;
       case "stats": {
         const { type: _type, ...stats } = message;
@@ -175,6 +186,9 @@ export function createMusicPlayer(deps: MusicPlayerDeps): MusicPlayer {
         return;
       }
       case "evaluated":
+        for (const handler of evaluated) {
+          handler(message.seq);
+        }
         return;
     }
   };
@@ -245,7 +259,12 @@ export function createMusicPlayer(deps: MusicPlayerDeps): MusicPlayer {
       send({ type: "setVolume", gain: volume, rampSeconds });
     },
     evaluate(source) {
-      send({ type: "evaluate", source });
+      evaluations += 1;
+      send({ type: "evaluate", seq: evaluations, source });
+      return evaluations;
+    },
+    play() {
+      send({ type: "play" });
     },
     stop() {
       send({ type: "stop" });
@@ -255,6 +274,9 @@ export function createMusicPlayer(deps: MusicPlayerDeps): MusicPlayer {
     },
     onError(handler) {
       errors.push(handler);
+    },
+    onEvaluated(handler) {
+      evaluated.push(handler);
     },
     onStats(handler) {
       statsHandlers.push(handler);

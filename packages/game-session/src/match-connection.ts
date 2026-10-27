@@ -41,7 +41,6 @@ export interface PlayerSnapshot {
   readonly maxEnergy: number;
   /** Maximum energy lost to overcast (#461); energy fills to `maxEnergy − overcast`. */
   readonly overcast: number;
-  readonly adrenaline: number;
   /** Base armor including the off-hand, before statuses. */
   readonly armor: number;
   /** Equipped weapon class id, or `undefined` if the server sent none. */
@@ -174,6 +173,11 @@ export interface MatchConnection {
   onCastRefused(handler: (message: CastRefusedMessage) => void): void;
   /** This player's recharges right now, one entry per skill-bar slot (#152). */
   getRecharges(): readonly SlotRecharge[];
+  /**
+   * This player's adrenaline right now, one entry per skill-bar slot
+   * (#463): the units its skill holds, 0 for one that costs none.
+   */
+  getAdrenaline(): readonly number[];
   /** Call a foe for your team, or ping a spot (#443). The host may drop it, and says nothing. */
   sendCall(call: PeerCall): void;
   /** Your team's calls right now; nobody else's ever reach you. */

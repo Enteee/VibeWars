@@ -8,7 +8,8 @@ import { describeSkill } from "../skills/describe.js";
 import { applyEffects } from "../skills/effects.js";
 import { blockChanceOf } from "../skills/tick.js";
 import { getSkill } from "../skills/catalog.js";
-import { makeCombatant, withStatusDefinitions } from "../skills/testing.js";
+import { emptyAdrenaline } from "../skills/adrenaline.js";
+import { chargeAdrenaline, makeCombatant, withStatusDefinitions } from "../skills/testing.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
@@ -82,7 +83,7 @@ function backbreakerMidCast(): MatchSimulation {
     seed: "knockdown",
     participants: [hammerer("a", vec2(0, 0)), caster("v", vec2(40, 0))],
   });
-  get(match, "a").combatant.adrenaline = 9;
+  chargeAdrenaline(get(match, "a").combatant);
   match.setTarget("a", "v");
   match.setTarget("v", "a");
   expect(match.requestAttack("v", "a")).toEqual({ ok: true });
@@ -207,7 +208,7 @@ describe("Backbreaker knocks down (#544)", () => {
     untilKnockedDown(match, "v");
     const victim = get(match, "v").combatant;
     victim.health = 1;
-    get(match, "a").combatant.adrenaline = 0;
+    emptyAdrenaline(get(match, "a").combatant);
     expect(match.requestAttack("a", "v")).toEqual({ ok: true });
     stepFor(match, 3.5);
     expect(victim.dead).toBe(true);

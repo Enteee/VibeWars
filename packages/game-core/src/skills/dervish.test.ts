@@ -12,7 +12,7 @@ import { IMPLEMENTED_SKILLS, getSkill } from "./catalog.js";
 import { describeSkill } from "./describe.js";
 import { applySkillEffects, type CombatEvent } from "./effects.js";
 import { STATUS_DEFINITIONS, aggregateModifiers, type StatusId } from "./status.js";
-import { makeCombatant } from "./testing.js";
+import { chargeAdrenaline, makeCombatant, strikesOf } from "./testing.js";
 import { attackDurationSeconds, resolveAttackSkill } from "./weapon-attack.js";
 import type { Combatant, Skill, SkillEffect } from "./types.js";
 
@@ -50,7 +50,6 @@ function holding(id: string, team: number, weapon: Weapon, attributeId: string):
       ["dervish.wind-prayers", 12],
       ["dervish.mysticism", 12],
     ]),
-    adrenaline: 25,
   });
 }
 
@@ -226,13 +225,14 @@ describe("Fleeting Stability (#845)", () => {
         NOWHERE,
       );
     };
+    chargeAdrenaline(warrior, "warrior.backbreaker");
     expect(backbreak()).toContainEqual({
       kind: "status-removed",
       targetId: "d",
       statusId: "fleeting-stability",
     });
     expect(caster.knockdownRemaining).toBe(0);
-    warrior.adrenaline = 25;
+    chargeAdrenaline(warrior, "warrior.backbreaker");
     backbreak();
     expect(caster.knockdownRemaining).toBeGreaterThan(0);
   });
@@ -244,7 +244,10 @@ describe("Heart of Fury (#845)", () => {
     caster.statuses.apply("sprint", 10, "d");
     const swing = WEAPONS.scythe.attackIntervalSeconds;
     expect(attackDurationSeconds(caster, swing)).toBe(swing);
+    chargeAdrenaline(caster, "dervish.heart-of-fury");
     cast(caster, "dervish.heart-of-fury");
+    // Paid from its own strikes (#463).
+    expect(strikesOf(caster, "dervish.heart-of-fury")).toBe(0);
     expect(statusesOf(caster)).toEqual(["heart-of-fury"]);
     expect(caster.statuses.get("heart-of-fury")?.remainingSeconds).toBe(8);
     expect(attackDurationSeconds(caster, swing)).toBeCloseTo(swing * 0.75);

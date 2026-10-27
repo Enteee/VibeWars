@@ -12,6 +12,9 @@ const tracks = [
   { id: "clash-of-banners", source: "b", phraseCycles: 4, moods: ["action" as const] },
 ];
 
+/** No track is edited. */
+const NO_EDITS = { get: () => undefined };
+
 /** A player that records every call as `[method, argument]`. */
 function recording(): { player: MusicPlayer; calls: [string, unknown][] } {
   const calls: [string, unknown][] = [];
@@ -27,11 +30,16 @@ function recording(): { player: MusicPlayer; calls: [string, unknown][] } {
       crossfadeTo: record("crossfadeTo"),
       setIntensity: record("setIntensity"),
       setVolume: record("setVolume"),
-      evaluate: record("evaluate"),
+      evaluate: (source: string) => {
+        record("evaluate")(source);
+        return calls.length;
+      },
+      play: record("play"),
       stop: record("stop"),
       onNowPlaying: record("onNowPlaying"),
       onError: record("onError"),
       onStats: record("onStats"),
+      onEvaluated: record("onEvaluated"),
     },
   };
 }
@@ -57,6 +65,7 @@ describe("createMusicFollower", () => {
       saved(true),
       () => 0,
       createIntensityOverride(),
+      NO_EDITS,
     );
     music.setMuted(false);
     expect(calls).toEqual([
@@ -73,6 +82,7 @@ describe("createMusicFollower", () => {
       saved(false),
       () => 0,
       createIntensityOverride(),
+      NO_EDITS,
     );
     calls.length = 0;
     music.follow(state("clash-of-banners", 0));
@@ -95,6 +105,7 @@ describe("createMusicFollower", () => {
       saved(false),
       () => 0,
       createIntensityOverride(),
+      NO_EDITS,
     );
     music.screen("menu");
     expect(calls.at(-1)).toEqual(["crossfadeTo", tracks[0]]);
@@ -108,6 +119,7 @@ describe("createMusicFollower", () => {
       saved(false, preference),
       () => 0,
       createIntensityOverride(),
+      NO_EDITS,
     );
     music.setPreference({ ...preference, musicMuted: true });
     music.setMuted(true);
@@ -131,6 +143,7 @@ describe("createMusicFollower", () => {
       saved(false),
       () => 0,
       createIntensityOverride(),
+      NO_EDITS,
     );
     music.screen("menu");
     calls.length = 0;
@@ -156,6 +169,7 @@ describe("createMusicFollower", () => {
       saved(false),
       () => 0,
       createIntensityOverride(),
+      NO_EDITS,
     );
     music.screen("menu");
     music.follow(state("clash-of-banners", 1));
@@ -172,6 +186,7 @@ describe("createMusicFollower", () => {
       saved(false),
       () => 0,
       createIntensityOverride(),
+      NO_EDITS,
     );
     music.screen("menu");
     calls.length = 0;
@@ -191,7 +206,7 @@ describe("createMusicFollower", () => {
   it("plays a fixed override whatever the director says, and the director's level back on Auto (#425)", () => {
     const { player, calls } = recording();
     const override = createIntensityOverride();
-    const music = createMusicFollower(player, tracks, saved(false), () => 0, override);
+    const music = createMusicFollower(player, tracks, saved(false), () => 0, override, NO_EDITS);
     music.follow(state("clash-of-banners", 1));
     calls.length = 0;
     override.set(3);
@@ -207,6 +222,49 @@ describe("createMusicFollower", () => {
     ]);
   });
 
+  it("plays a track's edit wherever the track plays (#373)", () => {
+    const { player, calls } = recording();
+    const edited = { shippedHash: "a".repeat(64), source: "edited" };
+    const music = createMusicFollower(
+      player,
+      tracks,
+      saved(false),
+      () => 0,
+      createIntensityOverride(),
+      { get: (trackId) => (trackId === "first-light" ? edited : undefined) },
+    );
+    calls.length = 0;
+    music.follow(state("first-light", 0));
+    music.preview("clash-of-banners");
+    music.preview(null);
+    expect(calls).toEqual([
+      ["crossfadeTo", { ...tracks[0], source: "edited" }],
+      ["load", tracks[1]],
+      ["crossfadeTo", { ...tracks[0], source: "edited" }],
+    ]);
+  });
+
+  it("holds the track open in the beat editor over the director and a preview (#373)", () => {
+    const { player, calls } = recording();
+    const music = createMusicFollower(
+      player,
+      tracks,
+      saved(false),
+      () => 0,
+      createIntensityOverride(),
+      NO_EDITS,
+    );
+    music.follow(state("first-light", 0));
+    calls.length = 0;
+    music.edit("first-light");
+    music.follow(state("clash-of-banners", 0));
+    music.preview("clash-of-banners");
+    expect(calls).toEqual([]);
+    expect(music.nowPlaying).toBe("first-light");
+    music.edit(null);
+    expect(calls).toEqual([["crossfadeTo", tracks[1]]]);
+  });
+
   it("says what you hear: nothing under either mute, nothing for Off (#425)", () => {
     const { player } = recording();
     const music = createMusicFollower(
@@ -215,6 +273,7 @@ describe("createMusicFollower", () => {
       saved(false),
       () => 0,
       createIntensityOverride(),
+      NO_EDITS,
     );
     let changes = 0;
     const off = music.onChange(() => {

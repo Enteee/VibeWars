@@ -1,4 +1,5 @@
 import {
+  ADRENALINE_PER_STRIKE,
   distanceWithinRange,
   getSkill,
   hasLineOfSight,
@@ -118,12 +119,13 @@ export function paintKnockdown(bar: HTMLElement, remaining: number): void {
 
 /**
  * Whether `self` can pay for `slot` now: the bar's cost, which the host
- * sends again as a glyph's discount comes and goes (#637). A hint, not a
- * gate: the press still goes to the host (brief §32).
+ * sends again as a glyph's discount comes and goes (#637), from `self`'s
+ * energy, or from `adrenaline`, the units this slot's own skill holds
+ * (#463). A hint, not a gate: the press still goes to the host (brief §32).
  */
-export function slotAffordable(slot: SkillSlot, self: PlayerSnapshot): boolean {
+export function slotAffordable(slot: SkillSlot, self: PlayerSnapshot, adrenaline: number): boolean {
   return slot.adrenalineCost > 0
-    ? self.adrenaline >= slot.adrenalineCost
+    ? adrenaline >= slot.adrenalineCost * ADRENALINE_PER_STRIKE
     : self.energy >= slot.energyCost;
 }
 

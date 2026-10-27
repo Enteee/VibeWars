@@ -83,6 +83,7 @@ describe("parseUsageLine", () => {
       output: 60,
       cacheWrite: 10694,
       cacheRead: 10374,
+      sidechain: false,
     });
   });
 
@@ -410,6 +411,43 @@ describe("createUsageReader", () => {
     const reader = createUsageReader(boxes, ["manager"]);
     fs.writeFileSync(log, `${reply("old", now - WINDOW - HOUR)}\n${reply("new", now)}\n`);
     expect(ids(reader)).toEqual(["manager:new"]);
+  });
+
+  it("names each reply's session, and a subagent's log as its session's (#833)", () => {
+    const sub = path.join(path.dirname(log), "session", "subagents", "agent-1.jsonl");
+    fs.mkdirSync(path.dirname(sub), { recursive: true });
+    fs.writeFileSync(log, `${reply("m1", now)}\n`);
+    fs.writeFileSync(sub, `${reply("a1", now)}\n`);
+    const records = createUsageReader(boxes, ["manager"]).read(now - WINDOW, now)?.records ?? [];
+    expect(
+      records
+        .map(({ id, session, sidechain }) => ({ id, session, sidechain }))
+        .sort((a, b) => a.id.localeCompare(b.id)),
+    ).toEqual([
+      { id: "a1", session: "manager/-some-project/session", sidechain: true },
+      { id: "m1", session: "manager/-some-project/session", sidechain: false },
+    ]);
+  });
+
+  it("keeps two employees' sessions of the same name apart (#833)", () => {
+    logOf("developer", `${reply("d1", now)}\n`);
+    logOf("developer@2", `${reply("d2", now)}\n`);
+    const records = createUsageReader(boxes, ["developer"]).read(now - WINDOW, now)?.records ?? [];
+    expect(
+      records
+        .map(({ role, session }) => ({ role, session }))
+        .sort((a, b) => (a.session < b.session ? -1 : 1)),
+    ).toEqual([
+      { role: "developer", session: "developer/-p/s" },
+      { role: "developer", session: "developer@2/-p/s" },
+    ]);
+  });
+
+  it("says a log is still pending while it has more than a refresh reads (#833)", () => {
+    const reader = createUsageReader(boxes, ["manager"]);
+    fs.writeFileSync(log, Buffer.alloc(CHUNK_BYTES + 10, 0x0a));
+    expect(reader.read(now - WINDOW, now)?.pending).toBe(true);
+    expect(reader.read(now - WINDOW, now)?.pending).toBe(false);
   });
 });
 

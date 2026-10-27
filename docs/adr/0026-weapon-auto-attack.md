@@ -100,7 +100,8 @@ to 0: the swing in progress is lost. When the skill resolves, or is
 interrupted, the attack resumes on the target it had.
 
 **Adrenaline** is +3 per landed swing that damaged someone else, however
-many it cleaved, as a damaging skill already gives.
+many it cleaved, as a damaging skill already gives. Superseded by #463:
+adrenaline is per skill, a strike per landed blow (`docs/gameplay/combat.md`).
 
 **Deferred to #160**, which ships the attack key, cancel and HUD: a
 skill used on an enemy starting or switching the attack to it (Q17), and

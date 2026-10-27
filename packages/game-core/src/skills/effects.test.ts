@@ -763,7 +763,7 @@ describe("resurrect effect (#812)", () => {
       maxHealth: 480,
       energy: 7,
       maxEnergy: 30,
-      adrenaline: 4,
+      adrenaline: new Map([["warrior.backbreaker", 100]]),
       dead: true,
     });
     applyStatus(target, "bleeding", 10, "foe");
@@ -791,7 +791,7 @@ describe("resurrect effect (#812)", () => {
     const target = corpse();
     applyEffect(RESURRECT, context(monk(12), target));
     expect(target.statuses.active).toEqual([]);
-    expect(target.adrenaline).toBe(0);
+    expect([...target.adrenaline.values()]).toEqual([0]);
   });
 
   it("leaves the living as they are, with no event", () => {
