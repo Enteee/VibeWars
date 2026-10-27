@@ -785,6 +785,17 @@ const skillGlyph = {
     `<path d="M6 4H19.5L15.5 8.75L19.5 13.5H6Z" ${stroke(C.ink, 1.6)}/>` +
     inkFill("M10.5 6.2h2v1.8h1.8v2h-1.8v1.8h-2v-1.8H8.7v-2h1.8z"),
   banner: () => inkLine("M6 3V21", 2.4) + inkFill("M6 4H19.5L15.5 8.75L19.5 13.5H6Z"),
+  // A sticking plaster: bound wounds, body and soul (#962).
+  plaster: () =>
+    `<rect x="2" y="7.5" width="20" height="9" rx="3" transform="rotate(-45 12 12)" fill="${C.ink}"/>` +
+    `<rect x="8.5" y="7.5" width="7" height="9" transform="rotate(-45 12 12)" fill="${C.bg}" fill-opacity="0.45"/>` +
+    `<circle cx="9.5" cy="9.5" r="0.9" fill="${C.bg}"/><circle cx="14.5" cy="14.5" r="0.9" fill="${C.bg}"/>`,
+  // A sword with a small plus in its upper left: a heal that waits on a weapon spell (#962).
+  "sword-heal": () =>
+    inkLine("M7 20.5L20.5 7", 3) +
+    inkLine("M8 12.5L14.5 19", 2.6) +
+    inkLine("M4.5 20l2.5-2.5", 2.6) +
+    inkLine("M6.5 3V9M3.5 6H9.5", 2),
   arrow: () => inkLine("M4 20L15 9", 2.2) + inkFill("M21 3L11.5 6L18 12.5Z"),
   volley: () =>
     [-4.5, 0, 4.5]
