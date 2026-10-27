@@ -935,8 +935,8 @@ in
       '';
     };
 
-    # Where each role's Claude keeps its config and session logs, as
-    # `$HOME/<boxes>/<role>/config`: claude-bot makes them, and claude-llc's
+    # Where each employee's Claude keeps its config and session logs, as
+    # `$HOME/<boxes>/<employee>/config`: claude-bot makes them, and claude-llc's
     # dashboard reads the logs for tokens per role (#50).
     boxes = lib.mkOption {
       type = lib.types.str;

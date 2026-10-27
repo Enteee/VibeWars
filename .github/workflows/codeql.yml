@@ -36,6 +36,13 @@ on:
 permissions:
   contents: read
 
+# A newer push to a pull request cancels the scan it supersedes, so stale
+# scans stop holding runners. Every other trigger is keyed on its own run, as
+# a ref-keyed group would drop an intermediate merge's scan on main.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   analyze:
     name: analyze

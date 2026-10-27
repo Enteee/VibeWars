@@ -16,6 +16,11 @@ on:
 permissions:
   contents: read
 
+# A newer push cancels the run it supersedes.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   dependency-review:
     name: dependency review

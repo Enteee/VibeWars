@@ -105,7 +105,7 @@ describe("describeSkill", () => {
   });
 
   it("reports an adrenaline cost as adrenaline", () => {
-    expect(describeSkill(skill("warrior.sever-artery-lite")).cost).toContain("adrenaline");
+    expect(describeSkill(skill("warrior.sever-artery")).cost).toContain("adrenaline");
   });
 
   it("says Self once for a self-cast, with no range of its own", () => {
@@ -120,7 +120,7 @@ describe("describeSkill", () => {
   });
 
   it("explains what an applied status does, not just its name", () => {
-    const described = describeSkill(skill("warrior.sever-artery-lite"));
+    const described = describeSkill(skill("warrior.sever-artery"));
     const line = described.effects.map((effect) => effect.text).join(" ");
 
     expect(line).toContain("Bleeding");
@@ -174,6 +174,16 @@ describe("describeSkill", () => {
       "If target is casting a spell: +25 damage",
       "Interrupts the target's current cast, if they are casting",
     ]);
+  });
+
+  it("says how much a resurrection brings back, and whom it is for (#812)", () => {
+    const ranks = new Map([["monk.healing-prayers", 12]]);
+    const card = describeSkill(skill("monk.restore-life"), ranks);
+    expect(card.effects.map((e) => e.text)).toEqual([
+      "Returns the target to life with 56% health and 80% energy",
+    ]);
+    expect(card.headline).toBe("resurrects, 56% health");
+    expect(card.targetText).toBe("A dead ally");
   });
 
   it("says what is taken, and what comes per point of it (#793)", () => {
@@ -259,6 +269,7 @@ describe("attack skills (#417)", () => {
     expect(lines).toEqual({
       axe: "Axe attack",
       bow: "Bow attack",
+      daggers: "Dagger attack",
       hammer: "Hammer attack",
       melee: "Melee attack",
       sword: "Sword attack",

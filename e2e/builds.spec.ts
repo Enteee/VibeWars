@@ -970,7 +970,7 @@ const STALE_CHARACTER = {
   name: "Veteran",
   primaryProfession: "warrior",
   attributes: [{ attributeId: "warrior.swordsmanship", rank: 12 }],
-  skillBar: ["warrior.sever-artery-lite", null, null, null, null, null, null, null],
+  skillBar: ["warrior.sever-artery", null, null, null, null, null, null, null],
   updatedAt: 1_700_000_000_000,
 };
 
@@ -1286,9 +1286,21 @@ test("the skill library keeps its scroll through an equip, a rank, a profession 
   // Short, so even a two-profession library scrolls.
   await page.setViewportSize({ width: 1500, height: 500 });
   await openElementalist(page);
-  // Further down than the group the reshuffle below removes is tall, so
-  // the library has room to hold Fireball in place.
-  const top = await scrollLibrary(page, 200);
+  // Further down than the Monk groups above Fireball, which the reshuffle
+  // below removes, are tall, so the library has room to hold Fireball in
+  // place. Measured, so a Monk skill added to them does not break it.
+  const removed = await page.locator(".skill-library").evaluate((library) => {
+    const fireball = library.querySelector('.skill-box[data-skill-id="elementalist.fireball"]');
+    const below = fireball?.getBoundingClientRect().top ?? 0;
+    return Array.from(library.querySelectorAll(".skill-group"))
+      .filter(
+        (group) =>
+          group.querySelector('.skill-box[data-skill-id^="monk."]') !== null &&
+          group.getBoundingClientRect().top < below,
+      )
+      .reduce((sum, group) => sum + group.getBoundingClientRect().height, 0);
+  });
+  const top = await scrollLibrary(page, Math.ceil(removed) + 40);
   expect(top).toBeGreaterThan(0);
 
   // A box already in view, so the click itself scrolls nothing.
@@ -1456,12 +1468,19 @@ test("the arena survives the editor collapsing to one column", async ({ page }) 
 /** Slot `slot`'s key, as the editor's bar and its Equip label it (#564). */
 const slotLabel = (slot: number): string => codeLabel(skillKey(slot));
 
-/** A Warrior/Elementalist with all eight slots filled, by clicking the first eight skills. */
+/**
+ * A Warrior/Elementalist with all eight slots filled, by clicking the first eight
+ * non-elite skills: a second elite would replace the first (#459).
+ */
 async function fullBar(page: Page): Promise<void> {
   await newCharacter(page);
   await chooseProfession(page, "secondary", "elementalist");
   for (let slot = 0; slot < 8; slot++) {
-    await page.locator(".skill-box:not(.is-equipped)").first().locator(".skill-box-equip").click();
+    await page
+      .locator(".skill-box:not(.is-equipped):not(.is-elite)")
+      .first()
+      .locator(".skill-box-equip")
+      .click();
   }
   await expect(page.locator(".skill-slot.is-empty")).toHaveCount(0);
 }

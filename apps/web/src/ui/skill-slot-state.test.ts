@@ -199,6 +199,17 @@ describe("outOfRange", () => {
     expect(outOfRange([slot(FIREBALL)], self({}), ally(1000), [])).toEqual([false]);
   });
 
+  it("marks a resurrection against a corpse only, and nothing else against it (#812)", () => {
+    const RESTORE_LIFE = "monk.restore-life";
+    const range = getSkill(RESTORE_LIFE)?.range ?? 0;
+    const bar = [slot(RESTORE_LIFE), slot(FIREBALL)];
+    const ally = (x: number, dead: boolean) => self({ sessionId: "ally", x, team: 0, dead });
+    expect(range).toBeGreaterThan(0);
+    expect(outOfRange(bar, self({}), ally(range + 1, true), [])).toEqual([true, false]);
+    expect(outOfRange(bar, self({}), ally(range - 1, true), [])).toEqual([false, false]);
+    expect(outOfRange(bar, self({}), ally(range + 1, false), [])).toEqual([false, false]);
+  });
+
   it("marks nothing with no target, or a dead one", () => {
     expect(outOfRange(RANGED_BAR, self({}), undefined, [])).toEqual([false, false, false]);
     expect(outOfRange(RANGED_BAR, self({}), foe(RANGE + 1, { dead: true }), [])).toEqual([

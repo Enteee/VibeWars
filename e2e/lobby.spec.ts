@@ -143,14 +143,14 @@ test("a wrong code says Connecting…, finds no lobby after the 20 s wait, and s
   }
 });
 
-test("leaving a lobby puts the status bar back to ready", async ({ page }) => {
+test("leaving a lobby puts the status bar back to idle: nothing (#454)", async ({ page }) => {
   // The status used to keep saying "lobby CODE" on the menu (#206).
   const code = await hostLobby(page, "Host");
   await expect(page.locator("#status")).toHaveText(`lobby ${code}`);
 
   await page.getByRole("button", { name: "leave" }).click();
   await expect(page.getByRole("heading", { name: "VibeWars" })).toBeVisible();
-  await expect(page.locator("#status")).toHaveText("ready");
+  await expect(page.locator("#status")).toBeHidden();
 });
 
 test("the host closing its page takes the guest to the menu, and says why", async ({ browser }) => {
@@ -251,9 +251,10 @@ test("a player who quits early is told the match still runs, until it ends", asy
     await expect(guest.locator("#viewport canvas")).toBeVisible();
 
     // The canvas shows before the join resolves, and the leave button only
-    // exists once the match view is up; "in match" is set right after that.
-    await expect(host.locator("#status")).toHaveText("in match");
-    await expect(guest.locator("#status")).toHaveText("in match");
+    // exists once the match view is up. The top bar hides in a match (#454).
+    await expect(host.locator(".hud-leave")).toBeVisible();
+    await expect(host.locator("#topbar")).toBeHidden();
+    await expect(guest.locator(".hud-leave")).toBeVisible();
 
     // The host quits; the guest is still fighting.
     await leaveMatch(host);
