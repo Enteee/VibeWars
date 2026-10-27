@@ -1,6 +1,6 @@
 import { isPhysicalDamage, type DamageType } from "../equipment/types.js";
 import { DIVINE_FAVOR_ATTRIBUTE, divineFavorBonusHeal } from "../primary-attributes.js";
-import { emptyAdrenaline } from "./adrenaline.js";
+import { emptyAdrenaline, fillPools } from "./adrenaline.js";
 import { getSkill } from "./catalog.js";
 import { mitigate, skillDamage } from "./damage.js";
 import { effectiveMaxEnergy } from "./overcast.js";
@@ -16,7 +16,7 @@ import { effectiveMaxHealth, healingMultiplierOf, maxHealthLossOf, rankOf } from
 import { wieldsFor } from "../equipment/weapons.js";
 import { distance } from "../vec2.js";
 import type { SimulationRng } from "../rng.js";
-import type { CombatRules } from "../ruleset.js";
+import { ADRENALINE_PER_STRIKE, type CombatRules } from "../ruleset.js";
 import {
   isSpell,
   type Combatant,
@@ -542,10 +542,15 @@ export function applyEffect(
         return events;
       }
       // Physical and elemental skill damage respects armor; holy, shadow and
-      // typeless damage ignores it (#760).
+      // typeless damage ignores it (#760). A conditional bonus joins the
+      // same packet, read as it lands (#977).
+      const bonus = effect.conditionalBonus;
       const amount = perEnergyLost(
         effect,
-        resolveMagnitude(effect.amount, caster),
+        resolveMagnitude(effect.amount, caster) +
+          (bonus !== undefined && stateHolds(bonus.condition, caster, target, context.surroundings)
+            ? resolveMagnitude(bonus.amount, caster)
+            : 0),
         lostBy,
         earlier,
       );
@@ -572,6 +577,11 @@ export function applyEffect(
         perEnergyLost(effect, resolveMagnitude(effect.amount, caster), lostBy, earlier),
         events,
       );
+      return events;
+    }
+
+    case "adrenaline-gain": {
+      fillPools(caster, effect.strikes * ADRENALINE_PER_STRIKE);
       return events;
     }
 
@@ -1027,6 +1037,8 @@ export function applyEffects(
 function effectActsOnCaster(effect: SkillEffect): boolean {
   switch (effect.kind) {
     case "energy-gain":
+    case "adrenaline-gain":
+      return effect.perTarget !== true;
     case "sacrifice-health":
     case "recharge-faster":
     case "recharge-others":

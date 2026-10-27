@@ -42,6 +42,7 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
       return effect.effects.flatMap(effectRoles);
     case "damage":
     case "energy-gain":
+    case "adrenaline-gain":
     case "energy-loss":
     case "life-steal":
     case "sacrifice-health":
