@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0,
   "rechargeSeconds": 12,
+  "upkeep": false,
   "description": "For 1...7...8 seconds, you run 33% faster and have a 50% chance to block incoming attacks. Natural Stride ends if you become Hexed or Enchanted.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

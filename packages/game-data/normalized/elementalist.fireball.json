@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 1,
   "rechargeSeconds": 7,
+  "upkeep": false,
   "description": "Send out a ball of fire that strikes target foe and all nearby foes for\n                7...91...112 fire damage.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

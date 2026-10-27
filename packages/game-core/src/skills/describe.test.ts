@@ -270,6 +270,7 @@ describe("describeSkill", () => {
           (entry.attack?.chain === undefined ? 0 : 1) +
           (entry.attack?.bonusDamage === undefined ? 0 : 1) +
           (entry.attack?.conditionalBonus === undefined ? 0 : 1) +
+          ((entry.attack?.armorPenetration ?? 0) > 0 ? 1 : 0) +
           lines(entry.attack?.onBlocked ?? []) +
           (entry.whileActivating === undefined ? 0 : 1) +
           (entry.projectile === undefined ? 0 : 1),
@@ -325,6 +326,18 @@ describe("attack skills (#417)", () => {
     expect(
       describeSkill(skill("elementalist.mind-shock")).effects.map(({ text }) => text),
     ).toContain("If you have more Energy than target: knocks down for 2s");
+  });
+
+  it("words Spear of Lightning's type and penetration, and Leader's Comfort's per ally (#923)", () => {
+    const at12 = (id: string, attributeId: string) =>
+      describeSkill(skill(id), new Map([[attributeId, 12]])).effects.map(({ text }) => text);
+    expect(at12("paragon.spear-of-lightning", "paragon.spear-mastery")).toEqual([
+      "+18 lightning damage",
+      "25% armor penetration",
+    ]);
+    expect(at12("paragon.leaders-comfort", "paragon.leadership")).toEqual([
+      "Heals for 66, +18 Health for each ally in earshot (max 140)",
+    ]);
   });
 
   it("chains only dagger attacks, so a chain blow never flies (#831)", () => {

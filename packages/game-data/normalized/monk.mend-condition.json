@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0.75,
   "rechargeSeconds": 2,
+  "upkeep": false,
   "description": "Remove one condition from target other ally. If a condition is removed, that ally is healed for 5...57...70 health.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

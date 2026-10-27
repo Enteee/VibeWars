@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0,
   "rechargeSeconds": 1,
+  "upkeep": false,
   "description": "Attack target and adjacent foes. Each attack that hits deals +13...20...20\n                damage. (PvE-only skill)",
   "variant": "pvp",
   "ruleset": "gw1-reference",

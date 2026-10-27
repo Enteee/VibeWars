@@ -1,0 +1,26 @@
+{
+  "id": "paragon.leaders-comfort",
+  "name": "Leader's Comfort",
+  "profession": "paragon",
+  "attribute": "Leadership",
+  "type": "Skill.",
+  "elite": false,
+  "campaign": "Nightfall",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 2,
+  "rechargeSeconds": 8,
+  "upkeep": false,
+  "description": "You gain 30...66...75 Health. For each ally within earshot, you also gain +10...18...20 Health (maximum 140 Health).",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Paragon/1094-Leader's_Comfort",
+    "fetchedAt": "2026-10-27T14:12:23.146Z"
+  },
+  "unmapped": {}
+}

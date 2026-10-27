@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 1,
   "rechargeSeconds": 5,
+  "upkeep": false,
   "description": "Strike target foe for 5...33...40 lightning damage. This spell has 25% armor penetration. If you are Overcast, that foe is hexed with Lightning Strike for 3 seconds. When this hex ends, that foe is struck again for 5...33...40 lightning damage.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0,
   "rechargeSeconds": 4,
+  "upkeep": false,
   "description": "If this attack hits you strike for +1...16...20\n                damage. If Swift Chop is blocked, target foe takes\n                1...16...20 damage and suffers a\n                Deep Wound\n                for 20 seconds.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

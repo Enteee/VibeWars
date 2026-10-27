@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { IMPLEMENTED_SKILLS, computeCoverage, missingMechanics } from "@vibewars/game-core";
+import {
+  IMPLEMENTED_SKILLS,
+  computeCoverage,
+  missingMechanics,
+  unmaintainedUpkeepSkills,
+} from "@vibewars/game-core";
 
 import { generateSkillBundle } from "./generate.js";
 
@@ -36,6 +41,15 @@ describe("coverage gate against the committed corpus", () => {
     for (const mechanic of grouped.keys()) {
       expect(implementedMechanics).not.toContain(mechanic);
     }
+  });
+
+  it("maintains every catalog skill the corpus marks as upkeep (#840)", () => {
+    const upkeep = generateSkillBundle()
+      .skills.filter((skill) => skill.upkeep)
+      .map((skill) => skill.id);
+    // Not vacuous: Mending is in the corpus and is an upkeep skill.
+    expect(upkeep).toContain("monk.mending");
+    expect(unmaintainedUpkeepSkills(upkeep)).toEqual([]);
   });
 
   it("marks a catalog skill elite exactly when the corpus does (#459)", () => {
