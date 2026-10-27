@@ -97,6 +97,8 @@ export type StatusId =
   // Chants and weapon spells (#758).
   | "anthem-of-flame"
   | "weapon-of-warding"
+  // Paragon command (#923).
+  | "never-surrender"
   // Dervish enchantments and stances (#845).
   | "mystic-regeneration"
   | "fleeting-stability"
@@ -667,6 +669,11 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   "pious-haste-run": define("pious-haste-run", "Pious Haste", "stance", {
     profession: "dervish",
     moveSpeedMultiplier: 1.5,
+  }),
+  // PvP "Never Surrender!" at rank 12: +4 Health regeneration (#923).
+  "never-surrender": define("never-surrender", "Never Surrender!", "shout", {
+    profession: "paragon",
+    healthPips: 4,
   }),
 };
 

@@ -1,6 +1,6 @@
 import { AREA_ADJACENT } from "../distances.js";
 import type { ResolvedWeapon } from "../equipment/resolve.js";
-import { isPhysicalDamage } from "../equipment/types.js";
+import { isPhysicalDamage, type DamageType } from "../equipment/types.js";
 import type { Weapon } from "../equipment/weapons.js";
 import {
   CRITICAL_STRIKES_ATTRIBUTE,
@@ -243,6 +243,10 @@ export interface BlowRule {
    * does not help.
    */
   readonly strengthRank: number;
+  /** The skill's damage type (#923); `undefined`: the weapon's. */
+  readonly damageType: DamageType | undefined;
+  /** The skill's own base armor penetration (#923); it and Strength's do not add. */
+  readonly armorPenetration: number;
   /**
    * More `bonus` while a state holds (#794), at the caster's ranks: read
    * by `settleBlow` as the blow lands on each victim.
@@ -256,6 +260,8 @@ export const PLAIN_BLOW: BlowRule = {
   weaponDamage: 1,
   bonus: 0,
   strengthRank: 0,
+  damageType: undefined,
+  armorPenetration: 0,
   conditionalBonus: undefined,
 };
 
@@ -267,6 +273,8 @@ export function skillBlow(skill: Skill, caster: Combatant): BlowRule {
     weaponDamage: skill.attack?.weaponDamage ?? PLAIN_BLOW.weaponDamage,
     bonus: bonusDamage === undefined ? 0 : resolveMagnitude(bonusDamage, caster),
     strengthRank: rankIn(caster, STRENGTH_ATTRIBUTE),
+    damageType: skill.attack?.damageType,
+    armorPenetration: skill.attack?.armorPenetration ?? PLAIN_BLOW.armorPenetration,
     conditionalBonus:
       conditionalBonus === undefined
         ? undefined
@@ -345,9 +353,12 @@ export function landBlow(
       weaponAttributeMultiplier(snapshot.rank, rules) *
       (snapshot.requirementMet ? 1 : rules.unmetRequirementMultiplier),
     armorIgnoring: blow.bonus,
-    type: snapshot.mainHand.damageType,
+    type: blow.damageType ?? snapshot.mainHand.damageType,
     source: "weapon",
-    armorPenetration: strengthArmorPenetration(blow.strengthRank, weapon.armorPenetration),
+    armorPenetration: Math.max(
+      blow.armorPenetration,
+      strengthArmorPenetration(blow.strengthRank, weapon.armorPenetration),
+    ),
   };
   applyDamage(victim, mitigate(packet, victim, rules), critical, events);
   return critical;
