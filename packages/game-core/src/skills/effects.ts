@@ -1,6 +1,6 @@
 import { isPhysicalDamage, type DamageType } from "../equipment/types.js";
 import { DIVINE_FAVOR_ATTRIBUTE, divineFavorBonusHeal } from "../primary-attributes.js";
-import { emptyAdrenaline } from "./adrenaline.js";
+import { emptyAdrenaline, fillPools } from "./adrenaline.js";
 import { getSkill } from "./catalog.js";
 import { mitigate, skillDamage } from "./damage.js";
 import { effectiveMaxEnergy } from "./overcast.js";
@@ -17,7 +17,7 @@ import { wieldsFor } from "../equipment/weapons.js";
 import { distance } from "../vec2.js";
 import type { ProfessionId } from "../professions.js";
 import type { SimulationRng } from "../rng.js";
-import type { CombatRules } from "../ruleset.js";
+import { ADRENALINE_PER_STRIKE, type CombatRules } from "../ruleset.js";
 import {
   isSpell,
   type Combatant,
@@ -206,6 +206,9 @@ export function applyDamage(
   if (amount <= 0 || target.dead) {
     return;
   }
+  if (reverse(target, amount, events)) {
+    return;
+  }
   const applied = Math.min(amount, target.health);
   target.health -= applied;
   events.push({ kind: "damage", targetId: target.id, amount: applied, critical });
@@ -221,19 +224,40 @@ export function applyDamage(
 }
 
 /**
+ * Reversal of Fortune (#987): if `target` bears a status that reverses
+ * the next damage, spend it and heal `target` up to its cap instead.
+ * Returns whether it did, and then the caller drops the whole packet: no
+ * damage, no death, nothing that answers damage, nothing stolen.
+ */
+function reverse(target: Combatant, amount: number, events: CombatEvent[]): boolean {
+  const reversal = target.statuses.takeReversal();
+  if (reversal === undefined) {
+    return false;
+  }
+  events.push({ kind: "status-expired", targetId: target.id, statusId: reversal.id });
+  applyHeal(target, Math.min(amount, reversal.cap), events);
+  return true;
+}
+
+/**
  * What `effect` heals, at the caster's ranks, before healing modifiers:
  * per status on the target with `perStatusOnTarget` (#920); with
  * `perAlly`, more for each living ally of the caster within the radius,
- * the caster included, and the whole capped at `max` (#923).
+ * the caster included, and the whole capped at `max` (#923); with
+ * `perRemoved`, per status of that category `earlier` took off the
+ * target (#987).
  */
 function healAmount(
   effect: HealEffect,
   caster: Combatant,
   target: Combatant | undefined,
   surroundings: Surroundings,
+  earlier: readonly CombatEvent[],
 ): number {
   const base =
-    resolveMagnitude(effect.amount, caster) * perStatus(effect.perStatusOnTarget, target);
+    resolveMagnitude(effect.amount, caster) *
+    perStatus(effect.perStatusOnTarget, target) *
+    perRemoved(effect.perRemoved, target, earlier);
   const { perAlly } = effect;
   if (perAlly === undefined) {
     return base;
@@ -286,6 +310,9 @@ function stealLife(
 ): void {
   const stolen = Math.min(amount, target.health);
   if (stolen <= 0) {
+    return;
+  }
+  if (reverse(target, stolen, events)) {
     return;
   }
   target.health -= stolen;
@@ -402,6 +429,29 @@ function perStatus(categories: readonly StatusCategory[], target: Combatant | un
     (count, category) => count + target.statuses.countByCategory(category),
     0,
   );
+}
+
+/**
+ * How many statuses of `category` an earlier `remove-status` took off
+ * `target` (#987); with no category, 1.
+ */
+function perRemoved(
+  category: StatusCategory | undefined,
+  target: Combatant | undefined,
+  earlier: readonly CombatEvent[],
+): number {
+  if (category === undefined) {
+    return 1;
+  }
+  if (target === undefined) {
+    return 0;
+  }
+  return earlier.filter(
+    (event) =>
+      event.kind === "status-removed" &&
+      event.targetId === target.id &&
+      getStatusDefinition(event.statusId).category === category,
+  ).length;
 }
 
 /**
@@ -616,10 +666,15 @@ export function applyEffect(
         return events;
       }
       // Physical and elemental skill damage respects armor; holy, shadow and
-      // typeless damage ignores it (#760).
+      // typeless damage ignores it (#760). A conditional bonus joins the
+      // same packet, read as it lands (#977).
+      const bonus = effect.conditionalBonus;
       const amount = perEnergyLost(
         effect,
-        resolveMagnitude(effect.amount, caster),
+        resolveMagnitude(effect.amount, caster) +
+          (bonus !== undefined && stateHolds(bonus.condition, caster, target, context.surroundings)
+            ? resolveMagnitude(bonus.amount, caster)
+            : 0),
         lostBy,
         earlier,
       );
@@ -636,7 +691,7 @@ export function applyEffect(
       if (healed === undefined) {
         return events;
       }
-      applyHeal(healed, healAmount(effect, caster, target, context.surroundings), events);
+      applyHeal(healed, healAmount(effect, caster, target, context.surroundings, earlier), events);
       return events;
     }
 
@@ -646,6 +701,11 @@ export function applyEffect(
         perEnergyLost(effect, resolveMagnitude(effect.amount, caster), lostBy, earlier),
         events,
       );
+      return events;
+    }
+
+    case "adrenaline-gain": {
+      fillPools(caster, effect.strikes * ADRENALINE_PER_STRIKE);
       return events;
     }
 
@@ -1141,6 +1201,8 @@ export function applyEffects(
 function effectActsOnCaster(effect: SkillEffect): boolean {
   switch (effect.kind) {
     case "energy-gain":
+    case "adrenaline-gain":
+      return effect.perTarget !== true;
     case "sacrifice-health":
     case "recharge-faster":
     case "recharge-others":

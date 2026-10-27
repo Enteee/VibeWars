@@ -22,6 +22,15 @@ function unitsFor(skill: Skill | undefined): number {
  */
 export function gainUnits(combatant: Combatant, units: number, atSeconds: number): void {
   combatant.lastCombatAt = atSeconds;
+  fillPools(combatant, units);
+}
+
+/**
+ * `gainUnits` without the stamp (#977): what a skill's `adrenaline-gain`
+ * does, since an effect does not know the time. The attack skill that
+ * carries one has stamped it already, with its blow.
+ */
+export function fillPools(combatant: Combatant, units: number): void {
   for (const [skillId, held] of combatant.adrenaline) {
     if ((combatant.cast.rechargeRemaining.get(skillId) ?? 0) > 0) {
       continue;

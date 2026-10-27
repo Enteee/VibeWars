@@ -35,6 +35,7 @@ import { arenaIds, hostMap, randomArenaMapPool } from "./maps.js";
 import { startHostClock } from "./transport/host-clock.js";
 import { joinQueueBoard, joinRoom } from "./transport/index.js";
 import { verifyTicketSig } from "./transport/ticket-key.js";
+import { loadTurnConfig } from "./transport/turn-config.js";
 
 /**
  * The glue between the app shell and a peer-to-peer lobby (#15, #403):
@@ -60,6 +61,9 @@ export const NO_RELAY_MESSAGE = "Couldn't reach the lobby servers. Check your in
 /** A host was found and offered a connection that never came up (#707). */
 export const PEER_UNREACHABLE_MESSAGE =
   "Found the lobby, but couldn't connect to its host. One of your networks blocks direct connections.";
+/** Its second line when no TURN relay is saved (#972). */
+export const TURN_RELAY_HINT =
+  "A TURN relay link from a friend can fix this: open it, or enter the relay in Options.";
 export const LOBBY_FULL_MESSAGE = "That lobby is full.";
 export const HOST_CLOSED_MESSAGE = "The host closed the lobby.";
 /** True whichever side dropped: a guest cannot tell its own drop from the host's. */
@@ -304,7 +308,7 @@ export function enterQueue(
         (error.reason === "not-admitted" || error.reason === "ticket-used")
       ) {
         finish();
-        events.onRefused(joinFailureNotice(error, location));
+        events.onRefused(joinFailureNotice(error, location, loadTurnConfig() !== undefined));
         return;
       }
       // A host that never answered is skipped next time, as a no-show is.
@@ -367,11 +371,14 @@ const IPV6_LOOPBACK_NAMES: readonly string[] = ["localhost", "[::1]"];
 
 /**
  * What the menu says when hosting or joining failed with `error`, on the
- * page at `where` (the app passes `location`).
+ * page at `where` (the app passes `location`). `relayed` is whether the
+ * player has a TURN relay saved (#972): without one, an unreachable host
+ * is the thing a relay fixes, so the notice says so.
  */
 export function joinFailureNotice(
   error: unknown,
   where: { readonly hostname: string; readonly port: string },
+  relayed: boolean,
 ): string {
   if (error instanceof LobbyNoAnswerError) {
     // As far as the join got: past that, a wrong code and an unreachable
@@ -380,9 +387,11 @@ export function joinFailureNotice(
       case "no-relay":
         return NO_RELAY_MESSAGE;
       case "peer-unreachable":
-        return IPV6_LOOPBACK_NAMES.includes(where.hostname)
-          ? `${PEER_UNREACHABLE_MESSAGE}\n${loopbackHint(where.port)}`
-          : PEER_UNREACHABLE_MESSAGE;
+        return [
+          PEER_UNREACHABLE_MESSAGE,
+          ...(relayed ? [] : [TURN_RELAY_HINT]),
+          ...(IPV6_LOOPBACK_NAMES.includes(where.hostname) ? [loopbackHint(where.port)] : []),
+        ].join("\n");
       case null:
         return NO_ANSWER_MESSAGE;
     }
