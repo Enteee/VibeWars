@@ -75,6 +75,7 @@ function cast(caster: Combatant, id: string, target = caster): CombatEvent[] {
   expect(check(caster, id, target)).toEqual({ ok: true });
   payCost(skill(id), caster);
   return applySkillEffects({
+    surroundings: new Map(),
     skill: skill(id),
     caster,
     targets: [target],
@@ -89,7 +90,7 @@ function strike(caster: Combatant, target: Combatant, rng = steady()): CombatEve
   expect(check(caster, id, target)).toEqual({ ok: true });
   payCost(skill(id), caster);
   return resolveAttackSkill(
-    { skill: skill(id), caster, targets: [target], rng, rules: RULES },
+    { surroundings: new Map(), skill: skill(id), caster, targets: [target], rng, rules: RULES },
     NOWHERE,
   );
 }
@@ -216,6 +217,7 @@ describe("Fleeting Stability (#845)", () => {
       payCost(skill("warrior.backbreaker"), warrior);
       return resolveAttackSkill(
         {
+          surroundings: new Map(),
           skill: skill("warrior.backbreaker"),
           caster: warrior,
           targets: [caster],

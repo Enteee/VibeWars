@@ -8,6 +8,7 @@ import { applyEffect, type CombatEvent } from "../skills/effects.js";
 import { StatusSet } from "../skills/status.js";
 import type { Combatant } from "../skills/types.js";
 import { vec2 } from "../vec2.js";
+import { applyIntent } from "./apply-intent.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
@@ -49,6 +50,7 @@ function mend(sim: MatchSimulation, casterId: string, bearerId: string): CombatE
   return applyEffect(
     { kind: "maintain-status", statusId: "mending" },
     {
+      surroundings: new Map(),
       caster: get(sim, casterId).combatant,
       target: get(sim, bearerId).combatant,
       rng: createRng(1),
@@ -244,6 +246,47 @@ describe("beyond compass range (#839)", () => {
     mend(sim, "a", "a");
     run(sim, 10);
     expect(mending(sim, "a").has("mending")).toBe(true);
+  });
+});
+
+describe("ending a maintained enchantment (#838)", () => {
+  it("its caster ends it at once, for free, unlogged, and the pip returns", () => {
+    const sim = monks(["a", "b"]);
+    mend(sim, "a", "b");
+    const energy = get(sim, "a").combatant.energy;
+    expect(applyIntent(sim, "a", { kind: "end-upkeep", targetId: "b", status: "mending" })).toBe(
+      null,
+    );
+    expect(mending(sim, "b").has("mending")).toBe(false);
+    expect(get(sim, "a").combatant.energy).toBe(energy);
+    expect(energyPips(sim, "a")).toBe(4);
+    expect(sim.step(DT).log).toEqual([]);
+  });
+
+  it("on itself too", () => {
+    const sim = monks(["a"]);
+    mend(sim, "a", "a");
+    expect(sim.endUpkeep("a", "a", "mending")).toBe(true);
+    expect(mending(sim, "a").has("mending")).toBe(false);
+  });
+
+  it("refuses another caster's, a timed one, a missing one and an unknown id, quietly", () => {
+    const sim = monks(["a", "b", "c"]);
+    mend(sim, "b", "c");
+    get(sim, "c").combatant.statuses.apply("burning", 5, "a");
+    expect(sim.endUpkeep("a", "c", "mending")).toBe(false);
+    expect(sim.endUpkeep("a", "c", "burning")).toBe(false);
+    expect(sim.endUpkeep("a", "b", "mending")).toBe(false);
+    expect(sim.endUpkeep("a", "nobody", "mending")).toBe(false);
+    expect(sim.endUpkeep("a", "c", "no-such-status")).toBe(false);
+    expect(mending(sim, "c").has("mending")).toBe(true);
+    expect(mending(sim, "c").has("burning")).toBe(true);
+    expect(
+      sim
+        .step(DT)
+        .log.flatMap((entry) => entry.events)
+        .map((e) => e.kind),
+    ).not.toContain("upkeep-lost");
   });
 });
 

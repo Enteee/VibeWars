@@ -14,7 +14,8 @@ export type MatchIntent =
   | { readonly kind: "use-skill"; readonly slot: number }
   | { readonly kind: "attack"; readonly targetId: string }
   | { readonly kind: "cancel" }
-  | { readonly kind: "walk-to"; readonly x: number; readonly y: number };
+  | { readonly kind: "walk-to"; readonly x: number; readonly y: number }
+  | { readonly kind: "end-upkeep"; readonly targetId: string; readonly status: string };
 
 /**
  * Why a cast or an attack was turned down, for its caster alone: the
@@ -74,6 +75,9 @@ export function applyIntent(
       return null;
     case "walk-to":
       sim.walkTo(playerId, vec2(intent.x, intent.y));
+      return null;
+    case "end-upkeep":
+      sim.endUpkeep(playerId, intent.targetId, intent.status);
       return null;
   }
 }

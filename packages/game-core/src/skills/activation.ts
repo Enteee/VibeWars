@@ -1,7 +1,12 @@
 import type { SkillBar } from "../build.js";
 import { wieldsFor } from "../equipment/weapons.js";
 import { distanceWithinRange, hasLineOfSight, type Segment } from "../geometry.js";
-import { EXPERTISE_ATTRIBUTE, expertiseEnergyCost } from "../primary-attributes.js";
+import {
+  EXPERTISE_ATTRIBUTE,
+  MYSTICISM_ATTRIBUTE,
+  expertiseEnergyCost,
+  mysticismEnergyCost,
+} from "../primary-attributes.js";
 import type { Vec2 } from "../vec2.js";
 
 import { canAffordAdrenaline, spendAdrenaline } from "./adrenaline.js";
@@ -185,17 +190,22 @@ export function canActivate(request: ActivationRequest): ActivationCheck {
 }
 
 /**
- * The energy `skill` costs `caster` right now (#637): Expertise so far
- * (#528), less what an active glyph takes off a spell (#526), never below
- * 0. The one number the check, the spend and the skill bar use, so they
- * cannot disagree. 0 for a skill with no energy cost.
+ * The energy `skill` costs `caster` right now (#637): Expertise (#528)
+ * or Mysticism (#874), less what an active glyph takes off a spell
+ * (#526), never below 0. The one number the check, the spend and the
+ * skill bar use, so they cannot disagree. 0 for a skill with no energy cost.
  */
 export function energyCostOf(skill: Skill, caster: RankHolder): number {
   if (skill.cost?.kind !== "energy") {
     return 0;
   }
   const expertise = rankOf(caster, EXPERTISE_ATTRIBUTE);
-  const cost = expertiseEnergyCost(expertise, skill, skill.cost.amount);
+  // Only one primary holds a rank, so at most one of these cuts.
+  const cost = mysticismEnergyCost(
+    rankOf(caster, MYSTICISM_ATTRIBUTE),
+    skill,
+    expertiseEnergyCost(expertise, skill, skill.cost.amount),
+  );
   if (!isSpell(skill.type)) {
     return cost;
   }

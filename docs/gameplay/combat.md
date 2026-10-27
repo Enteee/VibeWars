@@ -23,10 +23,10 @@ the server decides what happens (brief §12, §32).
 
 ## Resources
 
-| Resource   | How you get it                                                                                       | What it gates     |
-| ---------- | ---------------------------------------------------------------------------------------------------- | ----------------- |
-| Energy     | Regenerates by profession, up to 50: see below                                                       | Most skills       |
-| Adrenaline | Per skill, in strikes: each landed blow on a foe gives every adrenaline skill one (spells earn none) | Adrenaline skills |
+| Resource   | How you get it                                                                                                                                                | What it gates     |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| Energy     | Regenerates by profession, up to 50: see below                                                                                                                | Most skills       |
+| Adrenaline | Per skill, in strikes: each landed blow on a foe gives every adrenaline skill one (spells earn none); a foe's damage to you gives 1 unit per 1% of max health | Adrenaline skills |
 
 Regeneration and degeneration count in **pips**, as in GW1. One health
 pip is 2 HP/s and one energy pip ⅓ energy/s. Every status's pips sum
@@ -81,10 +81,14 @@ a foe, a swing, a landed arrow or an attack skill's blow, gives one strike
 to every adrenaline skill that is not recharging: one per blow, not per
 foe, so a cleave across three foes is one strike and a double strike
 whose two blows land is two. Blocked, missed or obstructed blows give
-nothing, and neither do spells. Using an adrenaline skill empties its own
-pool and takes one strike from every other, at activation, so an
-interrupted one has still paid; an attack skill that lands then earns its
-strike back like any blow. Death, respawn and a reset empty every pool.
+nothing, and neither do spells. Taking damage from a foe charges you too
+(#827): every hit, blow or spell, gives `floor(100 × damage ÷ max health)`
+units, so a hit for a quarter of your health is a strike; degeneration,
+sacrifice and a killing blow give nothing. Using an adrenaline skill
+empties its own pool and takes one strike from every other, at
+activation, so an interrupted one has still paid; an attack skill that
+lands then earns its strike back like any blow. Death, respawn and a
+reset empty every pool.
 Your adrenaline is yours alone: it is sent to you, never in the shared
 snapshot, and a slot greys until its own skill is charged.
 
@@ -341,6 +345,13 @@ upkeep ends with it. Its icon has no duration bar, and its hover says
   5 s again. One on yourself never ends this way. It can happen only on
   the large arenas, such as Canyon or Ring.
 
+Your effects monitor shows every enchantment you maintain (#838): those
+on yourself among your own effects, those on others after them, ticked
+as yours, with no bar and the hover "Mending on X — maintained, −1
+energy". **Double-click** one to end it: it leaves its bearer at once,
+for free, with no log row, and your upkeep stops with it. The host
+refuses quietly a request to end anything that is not yours to end.
+
 Degeneration applies **continuously** (`pips × 2 × dt`), not in once-per-
 second lumps, so a bleed at 20 Hz drains smoothly instead of
 stair-stepping. Regeneration correctly caps at the deep-wound-_reduced_
@@ -483,7 +494,19 @@ changes a mark: swings, spells and other attack skills in between leave
 it alone, and a lead that misses or is blocked places none. A mark lasts
 15 s from the hit that placed it, and goes when either of you dies. The
 tooltip says it first: "Lead attack.", "Off-hand attack. Must follow a
-lead attack." Dual attacks come later.
+lead attack."
+
+**Dual attacks** (#885) must follow your off-hand attack, and strike
+twice: each blow rolls its own miss, block and crit, and the skill's
+bonus and riders land with each blow that hits, so a condition applied
+twice is refreshed. A foe the first blow kills takes no second. A dual
+that lands leaves your dual mark. Death Blossom also deals its damage to
+every foe adjacent to its target, once a blow; Twisting Fangs bleeds and
+deep-wounds; Horns of the Ox knocks down a foe with no ally adjacent.
+Moebius Strike, the elite, is an off-hand attack that follows a dual,
+and against a foe below half health recharges all your other attack
+skills at once, so the chain loops: lead, off-hand, dual, Moebius,
+dual, Moebius. The weapon's own double strike never adds to a skill.
 
 **Skills interrupt and resume.** Starting a skill loses the swing in
 progress. Attacking and casting are otherwise separate, as in GW1
@@ -667,16 +690,21 @@ GW1 PvP (#473). Only a primary can hold its rank, and runes count.
   rank 12, and more above it. It adds to Rune of Attunement and gear,
   and you start the match full at the new maximum. The build editor's
   max energy counts it.
+- **Mysticism** (Dervish). Dervish enchantments cost 4% less energy a
+  rank (−48% at 12: Mystic Regeneration 8 instead of 15), rounded once,
+  never below 0. While any enchantment is on you, yours or an ally's,
+  you have +1 armor a rank against every hit.
 
 The others have no effect yet.
 
 The build editor says under a primary's row what it does at its rank
 ("Fast Casting 12: spells cast 43% faster"), and a skill tooltip for a
-known character shows the cost and activation Expertise and Fast
-Casting make of it, the base in brackets: "5 energy (10)",
+known character shows the cost and activation Expertise, Mysticism and
+Fast Casting make of it, the base in brackets: "5 energy (10)",
 "1.1s (2s)" (#531). The skill bar shows icons only (#719); a slot's
-tooltip shows the energy the skill costs the caster now, Expertise and
-an active glyph included (#528, #637), the base in brackets.
+tooltip shows the energy the skill costs the caster now, Expertise,
+Mysticism and an active glyph included (#528, #637, #874), the base in
+brackets.
 
 ## Positioning
 

@@ -1,0 +1,25 @@
+{
+  "id": "assassin.death-blossom",
+  "name": "Death Blossom",
+  "profession": "assassin",
+  "attribute": "Dagger Mastery",
+  "type": "Dual attack.",
+  "elite": false,
+  "campaign": "Factions",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 0,
+  "rechargeSeconds": 6,
+  "description": "Must follow an off-hand attack. If it hits, Death Blossom strikes target foe for +20...40...45 damage and all adjacent foes take 20...40...45 damage.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Assassin/648-Death_Blossom",
+    "fetchedAt": "2026-10-27T10:44:25.120Z"
+  },
+  "unmapped": {}
+}
