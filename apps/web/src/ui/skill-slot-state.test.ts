@@ -3,12 +3,15 @@ import { getSkill, segment, vec2 } from "@vibewars/game-core";
 import type { PlayerSnapshot, SkillSlot } from "@vibewars/game-session";
 
 import {
+  adrenalineFill,
+  adrenalineGaugeHtml,
   castFailures,
   castFill,
   castingSlot,
   flashSlot,
   knockdownDrain,
   outOfRange,
+  paintAdrenalineFill,
   paintCastFill,
   paintKnockdown,
   SLOT_FLASH_MS,
@@ -364,5 +367,71 @@ describe("wrongWeapon (#417)", () => {
         false,
       ]);
     }
+  });
+});
+
+describe("adrenalineFill (#826)", () => {
+  const rush = { ...slot("rush"), energyCost: 0, adrenalineCost: 4 };
+
+  it("is the slot's own units over its cost in strikes of 25", () => {
+    expect(adrenalineFill(rush, 0)).toBe(0);
+    expect(adrenalineFill(rush, 50)).toBe(0.5);
+    expect(adrenalineFill(rush, 4 * 25)).toBe(1);
+  });
+
+  it("clamps an over-full slot to 1", () => {
+    expect(adrenalineFill(rush, 4 * 25 + 30)).toBe(1);
+  });
+
+  it("is undefined for an energy skill", () => {
+    expect(adrenalineFill(slot("fireball"), 100)).toBeUndefined();
+  });
+
+  it("is charged exactly when the slot is affordable, so a full slot is never dimmed", () => {
+    const poor = self({ energy: 0 });
+    expect(adrenalineFill(rush, 99)).toBeLessThan(1);
+    expect(slotAffordable(rush, poor, 99)).toBe(false);
+    expect(adrenalineFill(rush, 100)).toBe(1);
+    expect(slotAffordable(rush, poor, 100)).toBe(true);
+  });
+
+  it("draws a gauge in an adrenaline skill's slot and none in an energy skill's", () => {
+    expect(adrenalineGaugeHtml(rush)).toContain('class="adrenaline-gauge"');
+    expect(adrenalineGaugeHtml(slot("fireball"))).toBe("");
+  });
+});
+
+describe("paintAdrenalineFill (#826)", () => {
+  /** Just enough of an element for `paintAdrenalineFill`, without jsdom. */
+  function button(): HTMLElement & { writes: number } {
+    const properties = new Map<string, string>();
+    const element = {
+      writes: 0,
+      style: {
+        getPropertyValue: (name: string) => properties.get(name) ?? "",
+        setProperty: (name: string, value: string) => {
+          element.writes += 1;
+          properties.set(name, value);
+        },
+        removeProperty: (name: string) => {
+          element.writes += 1;
+          properties.delete(name);
+        },
+      },
+    };
+    return element as unknown as HTMLElement & { writes: number };
+  }
+
+  it("follows each new message, and writes only when the fill changes", () => {
+    const slotButton = button();
+    paintAdrenalineFill(slotButton, 0.25);
+    expect(slotButton.style.getPropertyValue("--adrenaline-fill")).toBe("0.25");
+    paintAdrenalineFill(slotButton, 0.25);
+    expect(slotButton.writes).toBe(1);
+    paintAdrenalineFill(slotButton, 1);
+    expect(slotButton.style.getPropertyValue("--adrenaline-fill")).toBe("1");
+    paintAdrenalineFill(slotButton, undefined);
+    expect(slotButton.style.getPropertyValue("--adrenaline-fill")).toBe("");
+    expect(slotButton.writes).toBe(3);
   });
 });

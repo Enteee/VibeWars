@@ -198,6 +198,10 @@ effect, so nothing that removes conditions or enchantments stands you
 up. It counts down before anyone acts, so it lasts its full duration
 whoever lands it, and you act again on the tick it ends.
 
+A status can stop it: while **Fleeting Stability** (Dervish) is on you,
+a knockdown does nothing, and the first one it stops ends it. On someone
+already down it is not spent.
+
 A knocked-down character can't block: Guardian does nothing while you
 are down, and an attack skill's if-blocked rider never fires against
 you. Blocking works again the moment you stand.
@@ -225,6 +229,18 @@ from Shatter Enchantment, and a cheap condition covers a deep wound from
 Mend Condition. Some removals do more when they find something to
 remove: Shatter Enchantment then deals damage, Drain Enchantment gives
 its caster energy and health, and Mend Condition heals the ally.
+
+**A Dervish spends its own enchantments** (#845). Wounding Strike,
+Signet of Pious Light and Pious Restoration each make you lose 1 Dervish
+enchantment, an enchantment a Dervish skill put on you: your newest one,
+never another profession's. With none to lose, the skill still goes off
+and costs what it costs; only its "if one was removed" part does not
+happen. Wounding Strike loses one only on a hit, and then also Deep
+Wounds its target; Signet of Pious Light then recharges 75% faster (5 s,
+not 20); Pious Restoration then also removes up to 3 of your hexes.
+Mystic Regeneration gives +3 health pips for each enchantment on you,
+any profession's and itself included, at most 3, recounted the moment
+one goes. Heart of Fury is a stance: you attack 25% faster.
 
 Each condition has a distinct mechanical identity, not just a different
 number:

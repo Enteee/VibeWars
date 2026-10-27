@@ -1251,3 +1251,47 @@ test("(39) a dummy's regeneration after a hit folds into one growing row (#590)"
   await expect(regeneration.first()).toContainText(/ over \d+ s$/, { timeout: 15_000 });
   await expect(regeneration).toHaveCount(1);
 });
+
+test("(40) an adrenaline skill's slot fills from dark to lit as it charges (#826)", async ({
+  page,
+}) => {
+  await page.setViewportSize(WIDE);
+  await page.goto("./");
+  await page.getByRole("button", { name: "new character" }).click();
+  // A new character is a warrior; Sever Artery needs a sword, and 4 strikes.
+  await page.getByRole("button", { name: "gear", exact: true }).click();
+  await page.locator(".gear-box").filter({ hasText: "Sword" }).first().click();
+  await expect(page.locator(".gear-slot").first()).toContainText("Sword");
+  await page.getByRole("button", { name: "skills", exact: true }).click();
+  await page.locator(".skill-box", { hasText: "Sever Artery" }).locator(".skill-box-equip").click();
+  await expectFilledSlots(page, ["Sever Artery"]);
+  const canvas = page.locator(".training canvas");
+  await page.locator("select.training-scenario").selectOption("weapon-dps");
+  await expect(page.locator(".training-log")).toContainText("── Weapon DPS ──");
+  await takeControl(page);
+
+  const slot = page.locator(FILLED_SLOTS).first();
+  const gauge = slot.locator(".adrenaline-gauge");
+  const fill = (): Promise<number> =>
+    slot.evaluate((node) =>
+      Number((node as HTMLElement).style.getPropertyValue("--adrenaline-fill")),
+    );
+  // Empty: the whole icon dark, not the slot dimmed as an unaffordable spell is.
+  await expect(gauge).toBeVisible();
+  expect(await fill()).toBe(0);
+  await expect(slot).toHaveCSS("opacity", "1");
+
+  // The melee dummy, at (136, 210), in reach from spawn. Each landed blow
+  // is a strike (#463), in game time, which runs slower than wall time
+  // under load (#327).
+  const dummy = (await trainingView(page, canvas)).onPage({ x: 136, y: 210 });
+  await page.mouse.dblclick(dummy.x, dummy.y, { button: "right" });
+  await expect.poll(fill, { timeout: 20_000 }).toBeGreaterThan(0);
+  expect(await fill()).toBeLessThan(1);
+  await expect(gauge).toBeVisible();
+
+  // Charged, it looks as a usable energy skill does: no gauge, not dimmed.
+  await expect.poll(fill, { timeout: 30_000 }).toBe(1);
+  await expect(slot).not.toHaveClass(/is-unaffordable/);
+  await expect(gauge).toBeHidden();
+});
