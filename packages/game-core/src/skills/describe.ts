@@ -245,6 +245,10 @@ export function describeStatus(id: string): string {
       `gain ${String(definition.extraStrikesPerHit)} more ${definition.extraStrikesPerHit === 1 ? "strike" : "strikes"} of adrenaline per hit`,
     );
   }
+  if (definition.spellRechargeFaster !== 0) {
+    const faster = String(Math.round(definition.spellRechargeFaster * 100));
+    parts.push(`spells recharge ${faster}% faster`);
+  }
   if (definition.endsWhenBearerHits) {
     parts.push("ends if the bearer hits with an attack");
   }
@@ -563,14 +567,16 @@ function describeEffect(
         each,
         description: describeEffect(each, ranks),
       }));
-      const what = inner
-        .map(({ each, description }) =>
-          each.kind === "damage"
-            ? `take ${String(describeMagnitude(each.amount, ranks).current)} damage` +
-              (each.perEnergyLost === undefined ? "" : " for each point of energy lost")
+      const parts = inner.map(({ each, description }) =>
+        each.kind === "damage"
+          ? `take ${String(describeMagnitude(each.amount, ranks).current)} damage` +
+            (each.perEnergyLost === undefined ? "" : " for each point of energy lost")
+          : each.kind === "interrupt"
+            ? "are interrupted if casting"
             : lowerFirst(description.text),
-        )
-        .join(", ");
+      );
+      const last = parts.pop();
+      const what = parts.length === 0 ? (last ?? "") : `${parts.join(", ")} and ${String(last)}`;
       return {
         text: `${foesWithin(effect.radius)} ${what}`,
         magnitude: inner.find(({ description }) => description.magnitude !== undefined)?.description

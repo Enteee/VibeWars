@@ -89,6 +89,10 @@ export const SKILL_ICONS = {
   "elementalist.lightning-strike": { glyph: "lightning" },
   "elementalist.mind-shock": { glyph: "lightning", modifier: "down" },
   "elementalist.shard-storm": { glyph: "shard" },
+  "elementalist.ice-spikes": { glyph: "shard", modifier: "area" },
+  "elementalist.deep-freeze": { glyph: "snowflake", modifier: "area" },
+  "mesmer.cry-of-frustration": { glyph: "interrupt", modifier: "area" },
+  "mesmer.mantra-of-recovery": { glyph: "speed", modifier: "clock" },
   "necromancer.shadow-of-fear": { glyph: "slow", modifier: "area" },
   "mesmer.energy-surge": { glyph: "energy", modifier: "area" },
   "mesmer.leech-signet": { glyph: "interrupt", modifier: "self" },
@@ -100,8 +104,7 @@ export const SKILL_ICONS = {
   "monk.protective-spirit": { glyph: "armor", modifier: "clock" },
   // Your own blood, given: heal with the bleed drop (#936).
   "monk.infuse-health": { glyph: "heal", modifier: "bleed" },
-  // Placeholders from existing glyphs (#923).
-  "paragon.spear-of-lightning": { glyph: "spear", modifier: "up" },
-  "paragon.never-surrender": { glyph: "resurrect", modifier: "area" },
-  "paragon.leaders-comfort": { glyph: "resurrect", modifier: "self" },
+  "paragon.spear-of-lightning": { glyph: "spear-bolt" },
+  "paragon.never-surrender": { glyph: "banner", modifier: "area" },
+  "paragon.leaders-comfort": { glyph: "banner-cross", modifier: "self" },
 };

@@ -1,6 +1,7 @@
 import {
   AREA_ADJACENT,
   AREA_EARSHOT,
+  AREA_IN_THE_AREA,
   AREA_NEARBY,
   RANGE_MELEE,
   RANGE_SPELL,
@@ -2713,6 +2714,163 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
           max: 140,
         },
       },
+    ],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Mesmer and Elementalist staples (#938)                                 */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "mesmer.cry-of-frustration",
+    name: "Cry of Frustration",
+    type: "spell",
+    elite: false,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "If target foe is using a skill, that foe and all foes in the area
+    // are interrupted and suffer 15...63...75 damage and foes in the area
+    // take 75% of that damage." Not using one: nothing, to anyone.
+    effects: [
+      { kind: "interrupt" },
+      {
+        kind: "if",
+        condition: { kind: "interrupted" },
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "mesmer.domination-magic", atZero: 15, atTwelve: 63 },
+            },
+            type: "typeless",
+            armorPenetration: 0,
+          },
+          {
+            kind: "splash",
+            radius: AREA_IN_THE_AREA,
+            effects: [
+              { kind: "interrupt" },
+              {
+                kind: "damage",
+                amount: {
+                  scaling: {
+                    attributeId: "mesmer.domination-magic",
+                    atZero: 11.25,
+                    atTwelve: 47.25,
+                  },
+                },
+                type: "typeless",
+                armorPenetration: 0,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "mesmer.mantra-of-recovery",
+    name: "Mantra of Recovery",
+    type: "stance",
+    elite: true,
+    profession: "mesmer",
+    attributeId: "mesmer.fast-casting",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 5...17...20 seconds, spells you cast recharge 33% faster."
+    effects: [{ kind: "apply-status", statusId: "mantra-of-recovery", durationSeconds: 17 }],
+  },
+  {
+    id: "elementalist.ice-spikes",
+    name: "Ice Spikes",
+    type: "hex",
+    elite: false,
+    profession: "elementalist",
+    attributeId: "elementalist.water-magic",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    // "Target and adjacent foes": dropped from the sky, so no projectile.
+    area: {
+      radius: AREA_ADJACENT,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "...are struck for 20...68...80 cold damage and move 66% slower for
+    // 2...5...6 seconds."
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.water-magic", atZero: 20, atTwelve: 68 },
+        },
+        type: "cold",
+        armorPenetration: 0,
+      },
+      { kind: "apply-status", statusId: "ice-spikes", durationSeconds: 5 },
+    ],
+  },
+  {
+    id: "elementalist.deep-freeze",
+    name: "Deep Freeze",
+    type: "hex",
+    elite: false,
+    profession: "elementalist",
+    attributeId: "elementalist.water-magic",
+    cost: { kind: "energy", amount: 25 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    // "...at target foe's location. All foes in this area".
+    area: {
+      radius: AREA_IN_THE_AREA,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "...are struck for 10...70...85 cold damage. For 10 seconds, all foes
+    // move 66% slower."
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.water-magic", atZero: 10, atTwelve: 70 },
+        },
+        type: "cold",
+        armorPenetration: 0,
+      },
+      { kind: "apply-status", statusId: "deep-freeze", durationSeconds: 10 },
     ],
   },
 ];
