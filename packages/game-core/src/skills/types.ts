@@ -268,7 +268,12 @@ export type StateCondition =
    * stands within `radius` of it (#885): Horns of the Ox's "not adjacent
    * to any allies".
    */
-  | { readonly kind: "target-alone"; readonly radius: number };
+  | { readonly kind: "target-alone"; readonly radius: number }
+  /**
+   * The caster has more energy than the effect's target (#918): Mind
+   * Shock's "if you have more energy than target foe". Equal is not more.
+   */
+  | { readonly kind: "caster-more-energy" };
 
 export type EffectCondition = EventCondition | StateCondition;
 

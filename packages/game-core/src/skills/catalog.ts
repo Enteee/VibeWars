@@ -2195,6 +2195,151 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   },
 
   /* ---------------------------------------------------------------------- */
+  /* Elementalist and Necromancer staples (#918)                            */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "elementalist.lightning-strike",
+    name: "Lightning Strike",
+    // The corpus's is a hex spell whose hex lands only while you are
+    // overcast; that half is not modelled, so it is the plain strike.
+    type: "spell",
+    elite: false,
+    profession: "elementalist",
+    attributeId: "elementalist.air-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Strike target foe for 5...33...40 lightning damage. This spell has
+    // 25% armor penetration."
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.air-magic", atZero: 5, atTwelve: 33 },
+        },
+        type: "lightning",
+        armorPenetration: 0.25,
+      },
+    ],
+  },
+  {
+    id: "elementalist.mind-shock",
+    name: "Mind Shock",
+    type: "spell",
+    elite: true,
+    profession: "elementalist",
+    attributeId: "elementalist.air-magic",
+    cost: { kind: "energy", amount: 5 },
+    // Exhaustion, as Chain Lightning's (#461), at the corpus's 10.
+    overcast: 10,
+    activationSeconds: 1,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Target foe suffers 10...42...50 lightning damage. If you have more
+    // energy than target foe, that foe suffers 10...42...50 additional
+    // lightning damage and is knocked down."
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.air-magic", atZero: 10, atTwelve: 42 },
+        },
+        type: "lightning",
+        armorPenetration: 0.25,
+      },
+      {
+        kind: "if",
+        condition: { kind: "caster-more-energy" },
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "elementalist.air-magic", atZero: 10, atTwelve: 42 },
+            },
+            type: "lightning",
+            armorPenetration: 0.25,
+          },
+          { kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS },
+        ],
+      },
+    ],
+  },
+  {
+    id: "elementalist.shard-storm",
+    name: "Shard Storm",
+    type: "hex",
+    elite: false,
+    profession: "elementalist",
+    attributeId: "elementalist.water-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    // Our own tuning, as GW1 publishes no speeds: a shard flies a little
+    // faster than Fireball, slower than Lightning Orb.
+    projectile: { speed: 1.25 * RANGE_SPELL },
+    // "...strikes target foe for 10...70...85 cold damage if it hits and
+    // causing target foe to move 66% slower for 2...5...6 seconds."
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.water-magic", atZero: 10, atTwelve: 70 },
+        },
+        type: "cold",
+        armorPenetration: 0,
+      },
+      { kind: "apply-status", statusId: "shard-storm", durationSeconds: 5 },
+    ],
+  },
+  {
+    id: "necromancer.shadow-of-fear",
+    name: "Shadow of Fear",
+    type: "hex",
+    elite: false,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    // "Target foe and all adjacent foes": the target, then every foe
+    // adjacent to it.
+    area: {
+      radius: AREA_ADJACENT,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "...attack 50% slower for the next 5...25...30 seconds."
+    effects: [{ kind: "apply-status", statusId: "shadow-of-fear", durationSeconds: 25 }],
+  },
+
+  /* ---------------------------------------------------------------------- */
   /* Paragon command (#923)                                                 */
   /* ---------------------------------------------------------------------- */
 

@@ -322,6 +322,12 @@ describe("attack skills (#417)", () => {
     expect(texts("assassin.moebius-strike")[0]).toBe("Off-hand attack. Must follow a dual attack.");
   });
 
+  it("words Mind Shock's energy comparison as GW1 does (#918)", () => {
+    expect(
+      describeSkill(skill("elementalist.mind-shock")).effects.map(({ text }) => text),
+    ).toContain("If you have more Energy than target: knocks down for 2s");
+  });
+
   it("words Spear of Lightning's type and penetration, and Leader's Comfort's per ally (#923)", () => {
     const at12 = (id: string, attributeId: string) =>
       describeSkill(skill(id), new Map([[attributeId, 12]])).effects.map(({ text }) => text);
