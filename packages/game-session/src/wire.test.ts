@@ -58,9 +58,16 @@ function rank(entry: ActiveStatus): number {
 
 describe("wireStatuses (#636)", () => {
   it("keeps 32 of 40, every condition and hex, by category, then least time left (#803)", () => {
-    // Every status twice, then two more, in reverse table order with
-    // times that run against it: nothing is in place by accident.
-    const ids = [...WIRE_STATUS_IDS, ...WIRE_STATUS_IDS, ...WIRE_STATUS_IDS].reverse();
+    // One of every category, last first, then every status again, in
+    // reverse table order with times that run against it: nothing is in
+    // place by accident, and no new status can push a category out.
+    const reversed = [...WIRE_STATUS_IDS].reverse();
+    const onePerCategory = [...ORDER]
+      .reverse()
+      .flatMap((category) =>
+        reversed.filter((id) => getStatusDefinition(id).category === category).slice(0, 1),
+      );
+    const ids = [...onePerCategory, ...reversed, ...reversed];
     const active = ids.slice(0, 40).map((id, i) => status(id, (i * 7) % 11));
     expect(new Set(active.map(rank)).size).toBe(ORDER.length);
 
