@@ -64,9 +64,9 @@ export const SKILL_ICONS = {
   // A placeholder: no modifier yet says "while not moving" (#921).
   "paragon.stand-your-ground": { glyph: "armor", modifier: "clock" },
   // Placeholders until asset-designer's icons (#956).
-  "paragon.incoming": { glyph: "banner", modifier: "up" },
-  "paragon.make-haste": { glyph: "speed", modifier: "down" },
-  "paragon.defensive-anthem": { glyph: "banner", modifier: "self" },
+  "paragon.incoming": { glyph: "speed-heal" },
+  "paragon.make-haste": { glyph: "dash", modifier: "up" },
+  "paragon.defensive-anthem": { glyph: "anthem-shield" },
   "ranger.apply-poison": { glyph: "flask" },
   "elementalist.glyph-of-lesser-energy": { glyph: "energy", modifier: "less" },
   "elementalist.lightning-orb": { glyph: "lightning-orb" },
@@ -104,6 +104,7 @@ export const SKILL_ICONS = {
   "mesmer.energy-tap": { glyph: "energy", modifier: "self" },
   "mesmer.backfire": { glyph: "fireball", modifier: "self" },
   "mesmer.empathy": { glyph: "sword", modifier: "self" },
+  "mesmer.diversion": { glyph: "slow", modifier: "clock" },
   "monk.mending": { glyph: "heal", modifier: "upkeep" },
   "elementalist.lightning-strike": { glyph: "lightning" },
   "elementalist.mind-shock": { glyph: "lightning", modifier: "down" },
