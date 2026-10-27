@@ -630,6 +630,17 @@ disable your other attack skills for 3 s: that waits for disabled skills
 +42 damage, and a Deep Wound for 17 s if its target is not moving as the
 spear lands (#921).
 
+Five more Paragon spear attacks (#1030) build the bleed → cripple →
+Deep Wound line. Barbed Spear (2 adrenaline) bleeds its foe for 17 s.
+Maiming Spear (5 energy, 5 s) cripples a foe already Bleeding for 17 s,
+so Barbed Spear then Maiming Spear cripples, and one Barbed Spear alone
+does not. Merciless Spear (6 adrenaline) gives a Deep Wound for 17 s to
+a foe below 50% Health, counting the spear's own damage: a foe at 55%
+it drops to 45% is wounded. Stunning Strike (elite, 8 adrenaline) deals
++42, and Dazes for 9 s a foe suffering from any condition after it
+lands; a hex alone is not enough. Harrier's Toss (10 energy, 1 s, 10 s)
+deals +17, and 33 more on a foe that is moving, in one packet.
+
 **Moving** means walking during the previous tick: a held direction, a
 clicked point, an approach to attack or cast. Knocked down, in
 aftercast, dead or walking into a wall is not moving. Everyone's is read

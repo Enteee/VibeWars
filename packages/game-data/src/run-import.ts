@@ -333,6 +333,31 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Paragon/1119-Cruel_Spear",
   },
   {
+    id: "paragon.barbed-spear",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1117-Barbed_Spear",
+  },
+  {
+    id: "paragon.maiming-spear",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1233-Maiming_Spear",
+  },
+  {
+    id: "paragon.merciless-spear",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1123-Merciless_Spear",
+  },
+  {
+    id: "paragon.stunning-strike",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1127-Stunning_Strike",
+  },
+  {
+    id: "paragon.harriers-toss",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1122-Harrier's_Toss",
+  },
+  {
     id: "warrior.sever-artery",
     profession: "warrior",
     url: "https://www.gw-memorial.net/skills/Warrior/50-Sever_Artery",
