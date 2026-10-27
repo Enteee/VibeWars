@@ -37,7 +37,7 @@ describe("usesGraphql", () => {
   it("leaves out what keeps working while GraphQL is exhausted", () => {
     // These go to REST or to git, which have their own budgets. Blocking
     // them would stop the only commands that still work.
-    expect(usesGraphql("push", ["bot/developer-1/issue-17"])).toBe(false);
+    expect(usesGraphql("push", ["bot/developer/issue-17"])).toBe(false);
     expect(usesGraphql("gh", ["run", "list", "--limit", "5"])).toBe(false);
     expect(usesGraphql("gh", ["workflow", "view", "ci.yml"])).toBe(false);
     expect(usesGraphql("gh", ["api", "repos/o/r/collaborators"])).toBe(false);

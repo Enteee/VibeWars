@@ -197,7 +197,7 @@ describe("own schedules (#678)", () => {
     expect(refusal(plan("architect", ["add", "f", "1h", "x"], five))).toContain("a, b, c, d, e");
     expect(plan("architect", ["add", "a", "1h", "x"], five)).toHaveProperty("next");
     expect(refusal(plan("manager", ["rm", "groom-backlog"]))).toContain("fixed by schedule.json");
-    expect(plan("developer-1", ["ls"])).toHaveProperty("refuse");
+    expect(plan("developer", ["ls"])).toHaveProperty("refuse");
     expect(plan("architect", ["add", "Bad Name", "1h", "x"])).toHaveProperty("refuse");
     expect(plan("architect", ["add", "x".repeat(33), "1h", "x"])).toHaveProperty("refuse");
     expect(plan("architect", ["add", "x", "5m", "x"])).toHaveProperty("refuse");
@@ -219,7 +219,7 @@ describe("own schedules (#678)", () => {
     const bad = (/** @type {Record<string, unknown>} */ change) =>
       JSON.stringify({ schedules: [{ ...mine, ...change }] });
     expect(() => parseOwnSchedules("{}")).toThrow("schedules.schedules");
-    expect(() => parseOwnSchedules(bad({ role: "developer-1" }))).toThrow("role");
+    expect(() => parseOwnSchedules(bad({ role: "developer" }))).toThrow("role");
     expect(() => parseOwnSchedules(bad({ everyMinutes: 5 }))).toThrow("everyMinutes");
     expect(() => parseOwnSchedules(bad({ name: "Bad" }))).toThrow("name");
     expect(() => parseOwnSchedules(bad({ extra: 1 }))).toThrow("extra");

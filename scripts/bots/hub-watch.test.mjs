@@ -15,7 +15,7 @@ import {
 /** @type {import("./hub-watch.mjs").Watch} */
 const WATCH = {
   id: "wabc123",
-  employee: "developer-2",
+  employee: "developer@2",
   kind: "ci",
   pr: 739,
   sha: "abc1234def",
@@ -63,7 +63,7 @@ describe("parseWatches (#736)", () => {
     expect(parseWatches("{")).toEqual({ malformed: true, owners: [] });
     expect(
       parseWatches(JSON.stringify([WATCH, { ...WATCH, pr: "739" }, { employee: "qa-tester" }])),
-    ).toEqual({ malformed: true, owners: ["developer-2", "qa-tester"] });
+    ).toEqual({ malformed: true, owners: ["developer@2", "qa-tester"] });
     expect(parseWatches(JSON.stringify({ watches: [] }))).toEqual({ malformed: true, owners: [] });
   });
 });

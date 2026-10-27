@@ -20,8 +20,8 @@ import { DRAIN_MS, clock } from "./reboot.mjs";
 export const COLUMN_OWNERS = {
   Blocked: ["manager"],
   Backlog: ["architect", "manager"],
-  Ready: ["developer-1", "developer-2"],
-  "In Progress": ["developer-1", "developer-2"],
+  Ready: ["developer"],
+  "In Progress": ["developer"],
   "In Review": ["lead-dev"],
   QA: ["perf-sec-qa", "qa-tester"],
 };
