@@ -2,12 +2,14 @@ import { describe, expect, it } from "vitest";
 
 import { AREA_ADJACENT } from "../distances.js";
 import { bareArmorSet } from "../equipment/armor.js";
+import type { ArmorCondition } from "../equipment/insignias.js";
 import { defaultEquipmentFor } from "../equipment/loadout.js";
 import {
   resolveLoadout,
   unarmedResolvedEquipment,
   type ResolvedEquipment,
 } from "../equipment/resolve.js";
+import type { DamageType } from "../equipment/types.js";
 import { WEAPONS, weaponDamageType, type Weapon } from "../equipment/weapons.js";
 import { createRng, type SimulationRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
@@ -374,6 +376,83 @@ describe("resolveAttackSkill (ADR-0029)", () => {
       const target = victim();
       const events = resolve(barrage, strong(WEAPONS.hornbow, "ranger.marksmanship", 12), [target]);
       expect(damages(events)).toEqual([blowOf(WEAPONS.hornbow, 12, 0.1, target)]);
+    });
+  });
+
+  describe("Spear of Lightning: a typed, penetrating attack skill (#923)", () => {
+    const spearOfLightning = getSkill("paragon.spear-of-lightning");
+    const thrower = (strength = 0): Combatant =>
+      makeCombatant({
+        id: "attacker",
+        team: 0,
+        equipment: wielding(WEAPONS.spear, "paragon.spear-mastery"),
+        attributeRanks: new Map([
+          ["paragon.spear-mastery", 12],
+          ["warrior.strength", strength],
+        ]),
+      });
+    /** `spearOfLightning` with its own penetration replaced. */
+    const penetrating = (armorPenetration: number): Skill => {
+      if (spearOfLightning?.attack === undefined) {
+        throw new Error("missing skill");
+      }
+      return { ...spearOfLightning, attack: { ...spearOfLightning.attack, armorPenetration } };
+    };
+    const blowOf = (type: DamageType, penetration: number, target: Combatant) =>
+      mitigate(
+        {
+          armored: 10 * weaponAttributeMultiplier(12, RULES),
+          armorIgnoring: 18,
+          type,
+          source: "weapon",
+          armorPenetration: penetration,
+        },
+        target,
+        RULES,
+      );
+    /** A target with +40 armor against `condition`. */
+    const armoredVs = (condition: ArmorCondition): Combatant =>
+      makeCombatant({
+        id: "t",
+        team: 1,
+        health: 1e6,
+        maxHealth: 1e6,
+        equipment: {
+          ...unarmedResolvedEquipment(RULES.armorReferenceLevel),
+          conditionalArmor: [{ condition, amount: 40 }],
+        },
+      });
+
+    it("is one lightning blow, +18, at 25% armor penetration", () => {
+      const target = victim();
+      const events = resolve(spearOfLightning, thrower(), [target]);
+      expect(damages(events)).toEqual([blowOf("lightning", 0.25, target)]);
+      expect(damages(resolve(penetrating(0), thrower(), [victim()]))).toEqual([
+        blowOf("lightning", 0, target),
+      ]);
+      expect(blowOf("lightning", 0.25, target)).toBeGreaterThan(blowOf("lightning", 0, target));
+    });
+
+    it("meets armor against elemental damage, not against physical (#759)", () => {
+      const elemental = armoredVs("vs-elemental");
+      const physical = armoredVs("vs-physical");
+      const [vsElemental] = damages(resolve(spearOfLightning, thrower(), [elemental]));
+      const [vsPhysical] = damages(resolve(spearOfLightning, thrower(), [physical]));
+      expect(vsElemental).toBe(blowOf("lightning", 0.25, elemental));
+      expect(vsPhysical).toBe(blowOf("lightning", 0.25, victim()));
+      expect(vsElemental).toBeLessThan(vsPhysical ?? 0);
+    });
+
+    it("takes the larger of its own and Strength's penetration; they do not add", () => {
+      const target = victim();
+      // 25% beats Strength's 12%.
+      expect(damages(resolve(spearOfLightning, thrower(12), [target]))).toEqual([
+        blowOf("lightning", 0.25, target),
+      ]);
+      // Strength's 12% beats a 5% of the skill's own.
+      expect(damages(resolve(penetrating(0.05), thrower(12), [target]))).toEqual([
+        blowOf("lightning", 0.12, target),
+      ]);
     });
   });
 

@@ -90,6 +90,20 @@ export interface HealEffect {
    * for each enchantment or hex on that ally" (#920). Empty: once.
    */
   readonly perStatusOnTarget: readonly StatusCategory[];
+  /**
+   * More for each living ally of the caster within `radius` of it, the
+   * caster included, as Leader's Comfort's "+18 Health for each ally
+   * within earshot (maximum 140 Health)" (#923): the whole heal, base and
+   * per ally, is capped at `max` before healing modifiers.
+   */
+  readonly perAlly?: PerAllyHeal;
+}
+
+/** Leader's Comfort's heal per ally in earshot (#923). */
+export interface PerAllyHeal {
+  readonly amount: Magnitude;
+  readonly radius: number;
+  readonly max: number;
 }
 
 export interface EnergyGainEffect {
@@ -368,6 +382,18 @@ export interface AttackSkillRule {
   readonly weaponDamage: number;
   /** Added to the weapon's roll before armor; `undefined`: no bonus. */
   readonly bonusDamage: Magnitude | undefined;
+  /**
+   * The blow's damage type instead of the weapon's (#923): Spear of
+   * Lightning's whole blow is lightning, weapon and bonus alike.
+   * `undefined`: the weapon's.
+   */
+  readonly damageType: DamageType | undefined;
+  /**
+   * GW1 base armor penetration (#923), as Spear of Lightning's "25% armor
+   * penetration". Base penetration does not stack: the blow takes the
+   * larger of this and Strength's. 0: none of its own.
+   */
+  readonly armorPenetration: number;
   /**
    * More bonus while a state holds (#794), read as each blow lands on its
    * victim, and added to that blow: Mystic Sweep's "If you are enchanted,
