@@ -102,6 +102,18 @@ describe("morale and the death penalty (#843)", () => {
     expect(a.health).toBe(a.maxHealth);
   });
 
+  it("a reset clears it: morale 0, the full maxima, at full health", () => {
+    const sim = match();
+    killAndRespawn(sim, "a");
+    killAndRespawn(sim, "a");
+    sim.resetParticipant("a");
+    const a = get(sim, "a").combatant;
+    expect(a.morale).toBe(0);
+    expect(a.maxHealth).toBe(BASE_HEALTH);
+    expect(a.health).toBe(BASE_HEALTH);
+    expect(a.maxEnergy).toBe(BASE_ENERGY);
+  });
+
   it("takes nothing with the death penalty off: today's default match", () => {
     expect(DEFAULT_MATCH_RULES.deathPenalty).toBe(false);
     const sim = match(DEFAULT_MATCH_RULES);

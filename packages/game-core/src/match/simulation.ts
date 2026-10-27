@@ -2392,11 +2392,13 @@ export class MatchSimulation {
    * the starting health, full energy, no adrenaline, nothing active, any
    * cast dropped, at spawn. Recharges carry on, as they would in a match.
    * A respawn keeps its overcast and fills only to the ceiling it leaves,
-   * as GW1 keeps it through death; a reset clears it (#461).
+   * as GW1 keeps it through death; a reset clears it (#461), and morale
+   * with it, maxima and all (#843).
    */
   #reset(record: ParticipantRecord, why: "respawn" | "reset"): void {
     if (why === "reset") {
       record.combatant.overcast = 0;
+      this.#setMorale(record, 0);
     }
     record.combatant.dead = false;
     record.combatant.health = record.combatant.maxHealth * (record.spec.startHealthFraction ?? 1);

@@ -519,9 +519,13 @@ export function moraleLabel(morale: number): string | undefined {
 }
 
 function renderMorale(element: HTMLElement, morale: number): void {
-  const label = moraleLabel(morale);
-  element.hidden = label === undefined;
-  element.textContent = label ?? "";
+  const label = moraleLabel(morale) ?? "";
+  // Every frame calls this; the label says it all, so only a new one is written.
+  if (element.textContent === label) {
+    return;
+  }
+  element.hidden = label === "";
+  element.textContent = label;
   element.classList.toggle("is-penalty", morale < 0);
 }
 
