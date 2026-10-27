@@ -166,16 +166,17 @@ condition cannot out-last one well-timed long one.
 Each condition has a distinct mechanical identity, not just a different
 number:
 
-| Condition  | Effect                                           |
-| ---------- | ------------------------------------------------ |
-| Bleeding   | −3 health/second                                 |
-| Burning    | −7 health/second                                 |
-| Poison     | −4 health/second                                 |
-| Crippled   | Half movement speed                              |
-| Blind      | 90% of your attacks miss                         |
-| Weakness   | −20 armor                                        |
-| Deep Wound | −20% maximum health                              |
-| Dazed      | Spells: double cast time, interrupted by attacks |
+| Condition     | Effect                                           |
+| ------------- | ------------------------------------------------ |
+| Bleeding      | −3 health/second                                 |
+| Burning       | −7 health/second                                 |
+| Poison        | −4 health/second                                 |
+| Crippled      | Half movement speed                              |
+| Blind         | 90% of your attacks miss                         |
+| Weakness      | −20 armor                                        |
+| Cracked Armor | −20 armor, never below 60                        |
+| Deep Wound    | −20% maximum health                              |
+| Dazed         | Spells: double cast time, interrupted by attacks |
 
 **Dazed doubles a spell's cast time, and attacks interrupt it** (#546,
 GW1). Applying Dazed interrupts a spell being cast, even on someone
@@ -185,6 +186,15 @@ damage. A miss, a block or a dodge does not. Only spells: a dazed
 Warrior's Healing Signet is neither slowed nor interrupted, and an
 instant skill stays instant. See
 [ADR-0019](../adr/0019-status-modifiers.md).
+
+**Cracked Armor takes 20 armor, but never below 60** (#763, GW1). It is
+taken before any status adds armor, so a cracked caster at 60 loses
+nothing and Armor of Earth still lifts them to 84; a Ranger drops from
+70 to 60, and a Warrior hit by a sword from 100 to 80, about 41% more
+damage. A typed bonus counts as armor it can take: a cracked Ranger has
+80 against fire. Armor penetration applies after. Weaken Armor
+(Necromancer, Curses, 5 energy, ½ s, 5 s recharge) cracks the target
+and every foe adjacent to it for 17 s.
 
 **Blind makes attacks miss**: weapon swings, each blow rolled on its own,
 and attack skills (Swift Chop, Backbreaker, Opening Cut, Barrage, Broad

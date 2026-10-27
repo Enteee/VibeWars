@@ -25,6 +25,7 @@ export const SKILL_ICONS = {
   "warrior.distracting-blow": { glyph: "interrupt" },
   "ranger.broad-head-arrow": { glyph: "arrow", modifier: "stun" },
   "necromancer.faintheartedness": { glyph: "slow" },
+  "necromancer.weaken-armor": { glyph: "armor", modifier: "down" },
   "necromancer.malaise": { glyph: "energy", modifier: "down" },
   "necromancer.blood-ritual": { glyph: "energy", modifier: "up" },
   "elementalist.armor-of-earth": { glyph: "mountain" },

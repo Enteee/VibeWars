@@ -131,6 +131,10 @@ export function describeStatus(id: string): string {
     const sign = definition.armorModifier > 0 ? "+" : "";
     parts.push(`${sign}${String(definition.armorModifier)} armor`);
   }
+  if (definition.armorReduction !== undefined) {
+    const { amount, floor } = definition.armorReduction;
+    parts.push(`−${String(amount)} armor (not below ${String(floor)})`);
+  }
   if (definition.moveSpeedMultiplier !== 1) {
     parts.push(`moves at ${String(Math.round(definition.moveSpeedMultiplier * 100))}% speed`);
   }

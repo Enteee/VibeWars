@@ -60,6 +60,7 @@ export type StatusId =
   | "crippled"
   | "blind"
   | "weakness"
+  | "cracked-armor"
   | "deep-wound"
   | "dazed"
   // Hexes / enchantments implemented so far.
@@ -119,6 +120,11 @@ export interface StatusDefinition {
   readonly energyPips: number;
   /** Flat armor modifier while active. */
   readonly armorModifier: number;
+  /**
+   * Armor taken before `armorModifier`s add, never below a floor (#763):
+   * Cracked Armor's −20, not below 60. `undefined`: none.
+   */
+  readonly armorReduction: ArmorReduction | undefined;
   /** Movement speed multiplier while active (1 = unaffected). */
   readonly moveSpeedMultiplier: number;
   /**
@@ -183,6 +189,12 @@ export interface StatusDefinition {
   readonly endsWhenBearerAttacks: boolean;
 }
 
+/** Armor taken, but never below `floor`, nor any armor already under it (#763). */
+export interface ArmorReduction {
+  readonly amount: number;
+  readonly floor: number;
+}
+
 /** A glyph's hold on the next spells: how many, and how much cheaper (#526). */
 export interface NextSpells {
   readonly count: number;
@@ -202,6 +214,7 @@ function define(
     healthPips: 0,
     energyPips: 0,
     armorModifier: 0,
+    armorReduction: undefined,
     moveSpeedMultiplier: 1,
     attackMissChance: 0,
     maxHealthMultiplier: 1,
@@ -233,6 +246,9 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   crippled: define("crippled", "Crippled", "condition", { moveSpeedMultiplier: 0.5 }),
   blind: define("blind", "Blind", "condition", { attackMissChance: 0.9 }),
   weakness: define("weakness", "Weakness", "condition", { armorModifier: -20 }),
+  "cracked-armor": define("cracked-armor", "Cracked Armor", "condition", {
+    armorReduction: { amount: 20, floor: 60 },
+  }),
   "deep-wound": define("deep-wound", "Deep Wound", "condition", { maxHealthMultiplier: 0.8 }),
   dazed: define("dazed", "Dazed", "condition", { castTimeMultiplier: 2, interruptsSpells: true }),
 
@@ -505,6 +521,8 @@ export interface StatusModifiers {
   /** Every status's energy pips, summed and not yet clamped. */
   readonly energyPips: number;
   readonly armorModifier: number;
+  /** The largest armor reduction; `undefined`: none. */
+  readonly armorReduction: ArmorReduction | undefined;
   readonly moveSpeedMultiplier: number;
   readonly attackMissChance: number;
   readonly maxHealthMultiplier: number;
@@ -518,7 +536,8 @@ export interface StatusModifiers {
  * Additive effects (health and energy pips, armor) sum; multiplicative ones
  * (move speed, max health, cast time) multiply; miss chance takes the
  * worst rather than compounding, so two blinding effects cannot push a
- * player past certain failure in a way that feels arbitrary.
+ * player past certain failure in a way that feels arbitrary. An armor
+ * reduction is the largest single one.
  * Attack duration is GW1's rule: only the strongest speed-up and the
  * strongest slow-down count, and they multiply.
  */
@@ -526,6 +545,7 @@ export function aggregateModifiers(statuses: readonly ActiveStatus[]): StatusMod
   let healthPips = 0;
   let energyPips = 0;
   let armorModifier = 0;
+  let armorReduction: ArmorReduction | undefined;
   let moveSpeedMultiplier = 1;
   let attackMissChance = 0;
   let maxHealthMultiplier = 1;
@@ -538,6 +558,12 @@ export function aggregateModifiers(statuses: readonly ActiveStatus[]): StatusMod
     healthPips += def.healthPips;
     energyPips += def.energyPips;
     armorModifier += def.armorModifier;
+    if (
+      def.armorReduction !== undefined &&
+      (armorReduction === undefined || def.armorReduction.amount > armorReduction.amount)
+    ) {
+      armorReduction = def.armorReduction;
+    }
     moveSpeedMultiplier *= def.moveSpeedMultiplier;
     attackMissChance = Math.max(attackMissChance, def.attackMissChance);
     maxHealthMultiplier *= def.maxHealthMultiplier;
@@ -550,6 +576,7 @@ export function aggregateModifiers(statuses: readonly ActiveStatus[]): StatusMod
     healthPips,
     energyPips,
     armorModifier,
+    armorReduction,
     moveSpeedMultiplier,
     attackMissChance,
     maxHealthMultiplier,

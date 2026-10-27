@@ -6,6 +6,7 @@ import {
   clampPips,
   getStatusDefinition,
   HEALTH_PER_PIP,
+  type ArmorReduction,
   type BlockRule,
 } from "./status.js";
 import { isSpell, type Combatant, type Skill } from "./types.js";
@@ -167,6 +168,11 @@ export function effectiveActivationSeconds(
     aggregateModifiers(caster.statuses.active).castTimeMultiplier *
     fastCasting
   );
+}
+
+/** The bearer's armor reduction (Cracked Armor, #763); `undefined`: none. */
+export function armorReductionOf(combatant: Combatant): ArmorReduction | undefined {
+  return aggregateModifiers(combatant.statuses.active).armorReduction;
 }
 
 /** The chance in [0, 1] that the bearer's attacks miss (blind). */
