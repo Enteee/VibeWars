@@ -4,12 +4,14 @@ import type { LobbyCharacter, LobbyConnection, MatchStarting } from "@vibewars/g
 import { ARENA_MAPS } from "./net/maps.js";
 import {
   connectMatchFor,
+  enterQueue,
   hostLobby,
   joinFailureNotice,
   joinLobbyByCode,
   lobbyClosedNotice,
   matchFailureNotice,
   type HostedLobby,
+  type RandomArenaQueue,
 } from "./net/session.js";
 import { startMatchView, type MatchView } from "./match-view.js";
 import { beatEdits } from "./music/beat-edits.js";
@@ -36,6 +38,7 @@ import {
   renderOptionsScreen,
 } from "./ui/options-screen.js";
 import { mountChat, type ChatPanel } from "./ui/chat.js";
+import { mountQueueScreen, type QueueScreen } from "./ui/queue-screen.js";
 import { displayLobbyCode, renderLobbyScreen } from "./ui/lobby-screen.js";
 import { createNowPlayingToast, nowPlayingText } from "./ui/now-playing.js";
 import { loadActiveCharacterId, renderMenu, renderTeamList } from "./ui/menu.js";
@@ -50,6 +53,7 @@ import {
   type TeamEditorView,
 } from "./ui/team-editor.js";
 import { toPlayerBuild } from "./storage/build-validation.js";
+import type { QueueMode } from "@vibewars/game-protocol";
 import {
   MINIMAL_GW_INSPIRED_PVP_V1,
   resolveJoinLoadout,
@@ -146,6 +150,21 @@ async function main(): Promise<void> {
    * the player lands back on. Cleared when they try again.
    */
   let menuNotice: string | undefined;
+  /**
+   * The Random Arena queue and its screen (#880), from *Random Arena* to
+   * the menu again: through its lobby and its match, which show the
+   * splash and end on the menu rather than a lobby screen.
+   */
+  let queue: { readonly place: RandomArenaQueue; readonly screen: QueueScreen } | undefined;
+  /** Set while *Random Arena* is reading the character, so a second press makes no second ticket. */
+  let joiningQueue = false;
+
+  /** Out of the queue, if in it; the lobby and match, if any, are the caller's to leave. */
+  const dropQueue = (): void => {
+    queue?.place.leave();
+    queue?.screen.dispose();
+    queue = undefined;
+  };
 
   /**
    * The first thing every screen change does (#710): a toast belongs to
@@ -243,6 +262,8 @@ async function main(): Promise<void> {
     // never keeps saying where the player was: idle, it says nothing (#454).
     // Error paths set theirs after.
     setStatus("", "offline");
+    // Any way off the queue screen leaves the queue (#880).
+    dropQueue();
     editor?.dispose();
     editor = undefined;
     disposeOptionsScreen();
@@ -284,6 +305,9 @@ async function main(): Promise<void> {
         },
         onJoinLobby: (code, name) => {
           void enterLobby(name, async () => joinLobbyByCode(code, name, await lobbyCharacter()));
+        },
+        onRandomArena: (mode, name) => {
+          void enterRandomArena(mode, name);
         },
         onManageTeams: () => {
           void showTeams();
@@ -465,6 +489,67 @@ async function main(): Promise<void> {
     });
   };
 
+  /**
+   * Queue for a Random Arena with the active character (#880): the queue
+   * screen until a group's lobby seats this player, its splash while it
+   * counts down, then the match.
+   */
+  const enterRandomArena = async (mode: QueueMode, name: string): Promise<void> => {
+    if (queue !== undefined || joiningQueue) {
+      return;
+    }
+    const id = loadActiveCharacterId();
+    if (id === undefined) {
+      return;
+    }
+    joiningQueue = true;
+    let stored: StoredCharacter | undefined;
+    let character: LobbyCharacter | null;
+    try {
+      stored = await characters.load(id);
+      character = await lobbyCharacter();
+    } finally {
+      joiningQueue = false;
+    }
+    if (stored === undefined) {
+      return;
+    }
+    leaveScreen();
+    menuNotice = undefined;
+    setStatus("in queue", "online");
+    const screen = mountQueueScreen(
+      screenRoot,
+      {
+        mode,
+        characterName: stored.name,
+        mapName: (mapId) => ARENA_MAPS.find((map) => map.id === mapId)?.name ?? mapId,
+      },
+      {
+        onLeave: () => {
+          void leaveLobby();
+        },
+        onBack: () => {
+          void leaveLobby();
+        },
+      },
+    );
+    const place = enterQueue(mode, name, character, {
+      // Never past `in-lobby` while a lobby is up, unless it fell through.
+      onState: (state) => {
+        screen.show({ kind: "queue", state });
+      },
+      onLobby: (joined, host) => {
+        hosted = host;
+        seatLobby(name, joined);
+      },
+      onRefused: (notice) => {
+        setStatus("could not join", "error");
+        screen.show({ kind: "refused", notice });
+      },
+    });
+    queue = { place, screen };
+  };
+
   const renderLobby = (): void => {
     if (lobby === undefined) {
       return;
@@ -482,6 +567,12 @@ async function main(): Promise<void> {
     // Every way back here (leaving, a finished match, a lost connection)
     // passes through this, so the status bar stops saying "in match".
     const snapshot = lobby.getSnapshot();
+    if (queue !== undefined) {
+      // A queued lobby has nothing to choose: it is the versus splash.
+      setStatus("match found", "online");
+      queue.screen.show({ kind: "splash", snapshot });
+      return;
+    }
     setStatus(`lobby ${displayLobbyCode(snapshot.code)}`, "online");
     showViewport(false);
     music().screen("lobby");
@@ -543,12 +634,18 @@ async function main(): Promise<void> {
       setStatus("could not join", "error");
       return;
     }
+    seatLobby(name, lobby);
+  };
 
+  /** Show `joined`, coded or queued, and play its matches as `name`. */
+  const seatLobby = (name: string, joined: LobbyConnection): void => {
+    lobby = joined;
     lobbyNotice = undefined;
     // Here and not in renderLobby, which every lobby change repaints:
-    // a "Copied" toast outlives a player joining.
-    leaveScreen();
-    const joined = lobby;
+    // a "Copied" toast outlives a player joining. The queue screen raises none.
+    if (queue === undefined) {
+      leaveScreen();
+    }
     chat = mountChat({
       selfId: joined.selfSessionId,
       selfTeam: () =>
@@ -559,26 +656,31 @@ async function main(): Promise<void> {
       },
     });
     app.append(chat.root);
-    lobby.onChat((line) => {
+    joined.onChat((line) => {
       chat?.add(line);
     });
-    lobby.onChatThrottled(() => {
+    joined.onChatThrottled(() => {
       chat?.notice("Slow down: your last lines were not sent.");
     });
-    lobby.onChange(renderLobby);
-    lobby.onStartRejected((reason) => {
+    joined.onChange(renderLobby);
+    joined.onStartRejected((reason) => {
       lobbyNotice = reason;
       renderLobby();
     });
-    lobby.onMatchStarting((start) => {
+    joined.onMatchStarting((start) => {
       // Only players on a team are sent this; a spectator stays here.
       void enterMatch(name, start);
     });
-    lobby.onClosed((reason) => {
+    joined.onClosed((reason) => {
       // From the lobby or from its match: either way, it is over.
       lobby = undefined;
       hosted = undefined;
       closeChat();
+      if (queue !== undefined && match === undefined && !enteringMatch) {
+        // Before its match, a queued lobby closing puts the player back
+        // in the queue, which says so on its screen.
+        return;
+      }
       const notice = lobbyClosedNotice(reason);
       if (match !== undefined) {
         void exitMatch(notice);
@@ -605,6 +707,11 @@ async function main(): Promise<void> {
     await leaving.dispose();
     leaveScreen();
     enteringMatch = false;
+    if (queue !== undefined) {
+      // A Random Arena ends on the menu, for now (#880).
+      await leaveLobby(notice);
+      return;
+    }
     // The lobby goes back to waiting by itself once the match is over
     // (#44), so another can start straight away (brief §46).
     if (lobby !== undefined) {
@@ -652,8 +759,11 @@ async function main(): Promise<void> {
       enteringMatch = false;
       const notice = matchFailureNotice(error) ?? LOST_MATCH_NOTICE;
       // Back to the lobby. If it closed while this was joining, closing it
-      // already took the player to the menu, and said why.
-      if (lobby !== undefined) {
+      // already took the player to the menu, and said why. A queued
+      // lobby has no screen of its own to go back to.
+      if (queue !== undefined) {
+        await leaveLobby(notice);
+      } else if (lobby !== undefined) {
         lobbyNotice = notice;
         renderLobby();
       }
