@@ -7,7 +7,6 @@ import { describe, expect, it } from "vitest";
 import {
   SPEND_WINDOW_MS,
   costBetween,
-  formatSpend,
   parseBoardPage,
   readSpend,
   recordSpend,
@@ -56,7 +55,7 @@ describe("costBetween", () => {
   });
 });
 
-describe("summarizeSpend and formatSpend", () => {
+describe("summarizeSpend", () => {
   const window = [
     spend("board snapshot", 1),
     spend("board snapshot", 1),
@@ -77,11 +76,25 @@ describe("summarizeSpend and formatSpend", () => {
     ]);
   });
 
-  it("prints the dashboard line with the three largest", () => {
-    expect(formatSpend(window)).toBe(
-      "GRAPHQL  ~9/h in 6 calls, 1 uncounted  top: pr checks ×1 (~5), board snapshot ×2 (~2), pr view ×2 (~1)",
-    );
-    expect(formatSpend([])).toBe("GRAPHQL  nothing spent in the last hour");
+  it("sums the counted points per role, largest first (#963)", () => {
+    /**
+     * @param {string} role
+     * @param {number | null} cost
+     */
+    const by = (role, cost) => ({ ...spend("pr view", cost), role });
+    const { spent, byRole } = summarizeSpend([
+      by("hubd", 2),
+      by("developer", 3),
+      by("hubd", 2),
+      by("manager", null),
+      by("qa-tester", 0),
+    ]);
+    expect(spent).toBe(7);
+    expect(byRole).toEqual([
+      { role: "hubd", points: 4 },
+      { role: "developer", points: 3 },
+    ]);
+    expect(summarizeSpend([]).byRole).toEqual([]);
   });
 
   it("reads back what hubd wrote, skipping anything malformed", () => {
