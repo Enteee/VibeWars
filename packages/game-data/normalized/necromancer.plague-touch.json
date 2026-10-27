@@ -1,0 +1,26 @@
+{
+  "id": "necromancer.plague-touch",
+  "name": "Plague Touch",
+  "profession": "necromancer",
+  "attribute": "Curses",
+  "type": "Skill.",
+  "elite": false,
+  "campaign": "Prophecies",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 0.75,
+  "rechargeSeconds": 0,
+  "upkeep": false,
+  "description": "Transfer 1...3...3 negative conditions and their remaining durations from yourself to target touched foe.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Necromancer/303-Plague_Touch",
+    "fetchedAt": "2026-10-27T16:59:48.335Z"
+  },
+  "unmapped": {}
+}

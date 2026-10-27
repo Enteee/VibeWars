@@ -548,6 +548,26 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Ranger/826-Natural_Stride",
   },
   {
+    id: "monk.patient-spirit",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/1158-Patient_Spirit",
+  },
+  {
+    id: "monk.holy-veil",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/218-Holy_Veil",
+  },
+  {
+    id: "necromancer.rend-enchantments",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/268-Rend_Enchantments",
+  },
+  {
+    id: "necromancer.plague-touch",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/303-Plague_Touch",
+  },
+  {
     id: "warrior.cyclone-axe",
     profession: "warrior",
     url: "https://www.gw-memorial.net/skills/Warrior/4-Cyclone_Axe",
