@@ -597,6 +597,20 @@ const skillGlyph = {
     `<ellipse cx="12" cy="7.5" rx="4" ry="4.5" ${stroke(C.ink, 2.2)}/>` +
     inkLine("M12 12V21M6 14.5H18", 2.6),
   energy: () => inkFill("M13 2L5 13.5H11L10 22L19 10H13Z"),
+  // Chain Lightning (#461): a jagged bolt through three foes, not the
+  // energy bolt, which means energy.
+  chain: () =>
+    inkLine("M4.5 5L10 10.5L7.5 12.5L12 19L15 12L12.5 10.5L19.5 5.5", 1.8) +
+    [
+      [4.5, 5],
+      [12, 19],
+      [19.5, 5.5],
+    ]
+      .map(
+        ([cx, cy]) =>
+          `<circle cx="${String(cx)}" cy="${String(cy)}" r="2.6" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>`,
+      )
+      .join(""),
   mountain: () => inkFill("M2 20L9.5 6L13.5 13L16.5 9L22 20Z"),
   cleanse: () =>
     `<path d="M12 3C12 3 5.5 11 5.5 15A6.5 6.5 0 0 0 18.5 15C18.5 11 12 3 12 3Z" ${stroke(C.ink, 2)}/>` +

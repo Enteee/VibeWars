@@ -518,7 +518,12 @@ function costText(skill: Skill, ranks: ReadonlyMap<string, number>): string {
   }
   const cost = energyCostOf(skill, outsideMatch(ranks));
   const base = cost === skill.cost.amount ? "" : ` (${String(skill.cost.amount)})`;
-  return `${String(cost)} energy${base}`;
+  return `${String(cost)} energy${base}${overcastText(skill)}`;
+}
+
+/** ", 5 overcast" after an energy cost (#461), or nothing for a skill without. */
+export function overcastText(skill: Skill): string {
+  return skill.overcast > 0 ? `, ${String(skill.overcast)} overcast` : "";
 }
 
 /** "1.1s (2s)": how long it activates at these ranks, with no status on, the base in brackets when they differ. */

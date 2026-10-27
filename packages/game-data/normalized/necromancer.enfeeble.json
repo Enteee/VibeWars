@@ -10,6 +10,7 @@
     "kind": "energy",
     "amount": 5
   },
+  "overcast": 0,
   "activationSeconds": 0.25,
   "rechargeSeconds": 10,
   "description": "Target suffers from weakness for 10...26...30 seconds.",

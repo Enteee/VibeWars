@@ -309,6 +309,11 @@ export interface Skill {
    */
   readonly attributeId: string | undefined;
   readonly cost: SkillCost | undefined;
+  /**
+   * Maximum energy it takes away when activation starts, on top of its
+   * cost (#461): GW1's overcast, once called exhaustion. `0` for none.
+   */
+  readonly overcast: number;
   /** Cast time in seconds. `0` is instant. */
   readonly activationSeconds: number;
   readonly rechargeSeconds: number;
@@ -373,6 +378,11 @@ export interface Combatant {
   readonly maxHealth: number;
   energy: number;
   readonly maxEnergy: number;
+  /**
+   * Maximum energy lost to overcast (#461), recovering over time; the
+   * ceiling energy fills to is `maxEnergy − overcast`, and may be below 0.
+   */
+  overcast: number;
   /** Energy regeneration before statuses, in pips (`ENERGY_PER_PIP`). */
   readonly baseEnergyPips: number;
   adrenaline: number;

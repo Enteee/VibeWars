@@ -204,6 +204,8 @@ export interface WirePlayer {
   readonly maxHealth: number;
   readonly energy: number;
   readonly maxEnergy: number;
+  /** Maximum energy lost to overcast (#461); energy fills to `maxEnergy − overcast`. */
+  readonly overcast: number;
   readonly adrenaline: number;
   readonly armor: number;
   readonly weaponId: string | null;
@@ -817,6 +819,7 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
     !isNumber(raw.maxHealth) ||
     !isNumber(raw.energy) ||
     !isNumber(raw.maxEnergy) ||
+    !isNumber(raw.overcast) ||
     !isNumber(raw.adrenaline) ||
     !isNumber(raw.armor) ||
     !isNullableString(raw.weaponId) ||
@@ -852,6 +855,7 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
         maxHealth: raw.maxHealth,
         energy: raw.energy,
         maxEnergy: raw.maxEnergy,
+        overcast: raw.overcast,
         adrenaline: raw.adrenaline,
         armor: raw.armor,
         weaponId: raw.weaponId,

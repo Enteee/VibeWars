@@ -10,6 +10,7 @@
     "kind": "energy",
     "amount": 25
   },
+  "overcast": 10,
   "activationSeconds": 5,
   "rechargeSeconds": 60,
   "description": "Create a Meteor Shower at target foe's location. For 9 seconds, foes adjacent to\n                that location are struck for 7...91...112 fire damage\n                and knocked down every 3 seconds.",
@@ -20,7 +21,5 @@
     "url": "https://www.gw-memorial.net/skills/Elementalist/425-Meteor_Shower",
     "fetchedAt": "2026-10-23T20:26:58.835Z"
   },
-  "unmapped": {
-    "cost.exhaustion": 10
-  }
+  "unmapped": {}
 }

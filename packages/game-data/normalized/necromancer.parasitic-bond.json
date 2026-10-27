@@ -10,6 +10,7 @@
     "kind": "energy",
     "amount": 5
   },
+  "overcast": 0,
   "activationSeconds": 1,
   "rechargeSeconds": 2,
   "description": "For 20 seconds, target foe suffers health degeneration of 1. The caster is healed\n                for 30...102...120 when Parasitic Bond ends.",

@@ -13,7 +13,13 @@ export { CastState } from "./cast-state.js";
 export { IMPLEMENTED_SKILLS, SKILLS_BY_ID, getSkill } from "./catalog.js";
 
 export type { EffectDescription, MagnitudeDescription, SkillDescription } from "./describe.js";
-export { describeSkill, describeStatus, formatScalingRange, neededWeaponText } from "./describe.js";
+export {
+  describeSkill,
+  describeStatus,
+  formatScalingRange,
+  neededWeaponText,
+  overcastText,
+} from "./describe.js";
 
 export type { MissingMechanic, SkillCoverage, UnimplementedSkill } from "./coverage.js";
 export {
