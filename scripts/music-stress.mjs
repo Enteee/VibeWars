@@ -251,7 +251,11 @@ async function measure(url, load) {
     await page.locator(".roster").waitFor();
     if (load.screen !== "menu") {
       await page.getByRole("button", { name: "new character" }).click();
-      await page.locator(".editor-row select").first().selectOption("elementalist");
+      // The profession is a picker: open it, then click the cell.
+      await page.locator('.editor-profession[data-which="primary"]').click();
+      await page
+        .locator('.profession-grid .profession-cell[data-profession="elementalist"]')
+        .click();
       // The arena needs WebGL, which a headless Firefox may not have. The
       // music plays on regardless, so it is measured on the editor screen.
       try {
