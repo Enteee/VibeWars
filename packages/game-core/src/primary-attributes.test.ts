@@ -243,6 +243,8 @@ describe("describePrimaryAttribute (#531)", () => {
     ["necromancer.soul-reaping", 15, "+15 energy when someone nearby dies (3 per 15 s)"],
     ["paragon.leadership", 12, "up to 6 energy per shout, 1 per ally affected"],
     ["paragon.leadership", 15, "up to 7 energy per shout, 1 per ally affected"],
+    ["elementalist.energy-storage", 12, "+36 maximum energy"],
+    ["elementalist.energy-storage", 15, "+45 maximum energy"],
   ])("says what %s does at rank %i", (attributeId, rank, text) => {
     expect(describePrimaryAttribute(attributeId, rank)).toBe(text);
   });
@@ -255,6 +257,7 @@ describe("describePrimaryAttribute (#531)", () => {
     "assassin.critical-strikes",
     "necromancer.soul-reaping",
     "paragon.leadership",
+    "elementalist.energy-storage",
   ])("says nothing for %s at rank 0", (attributeId) => {
     expect(describePrimaryAttribute(attributeId, 0)).toBeUndefined();
   });

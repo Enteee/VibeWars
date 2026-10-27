@@ -255,8 +255,8 @@ const status = {
   ],
   // A germ: it catches.
   disease: ["condition", germ],
-  // Hex: a heart, because the hex is on your life.
-  "life-drain": [
+  // Hex: a heart, because the hex is on your life and your nerve.
+  faintheartedness: [
     "hex",
     (c) => `<path d="M12 16l-3.6-3.6a2.1 2.1 0 0 1 3.6-3 2.1 2.1 0 0 1 3.6 3z" fill="${c}"/>`,
   ],

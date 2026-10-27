@@ -91,7 +91,7 @@ describe("status definitions", () => {
       burning: -7,
       poison: -4,
       disease: -4,
-      "life-drain": -2,
+      faintheartedness: -2,
       regeneration: 4,
       "weapon-of-warding": 4,
     });
@@ -111,7 +111,7 @@ describe("status definitions", () => {
   it("makes enchantments beneficial and hexes/conditions detrimental", () => {
     expect(getStatusDefinition("regeneration").healthPips).toBeGreaterThan(0);
     expect(getStatusDefinition("armor-boost").armorModifier).toBeGreaterThan(0);
-    expect(getStatusDefinition("life-drain").healthPips).toBeLessThan(0);
+    expect(getStatusDefinition("faintheartedness").healthPips).toBeLessThan(0);
   });
 });
 
@@ -197,6 +197,24 @@ describe("StatusSet apply/remove", () => {
   it("removing from an empty category is harmless", () => {
     const set = new StatusSet();
     expect(set.removeByCategory("hex", 3)).toEqual([]);
+  });
+
+  it("removes the newest first, so a cheap one covers an older one (#521)", () => {
+    const set = new StatusSet();
+    set.apply("guardian", 10, "a");
+    set.apply("regeneration", 10, "a");
+    expect(set.removeByCategory("enchantment", 1)).toEqual(["regeneration"]);
+    expect(set.has("guardian")).toBe(true);
+  });
+
+  it("counts a re-application as the newest, whichever duration wins (#521)", () => {
+    for (const duration of [5, 20]) {
+      const set = new StatusSet();
+      set.apply("guardian", 10, "a");
+      set.apply("regeneration", 10, "a");
+      set.apply("guardian", duration, "a");
+      expect(set.removeByCategory("enchantment", 1), String(duration)).toEqual(["guardian"]);
+    }
   });
 });
 
@@ -339,10 +357,11 @@ describe("attack duration (ADR-0029)", () => {
     });
   }
 
-  it("is 1 with nothing on, and no catalog status sets it", () => {
+  it("is 1 with nothing on, and only Faintheartedness sets it: 50% slower (#493)", () => {
     expect(aggregateModifiers([]).attackDurationMultiplier).toBe(1);
     for (const id of ALL_STATUS_IDS) {
-      expect(getStatusDefinition(id).attackDurationMultiplier, id).toBe(1);
+      const expected = id === "faintheartedness" ? 1.5 : 1;
+      expect(getStatusDefinition(id).attackDurationMultiplier, id).toBe(expected);
     }
   });
 

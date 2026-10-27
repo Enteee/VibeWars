@@ -14,7 +14,12 @@ import { ALL_WEAPONS, WEAPONS, allowsOffhand, getWeapon } from "./weapons.js";
 import { ALL_INSIGNIAS } from "./insignias.js";
 import { ALL_OFFHANDS, SHIELD_REQUIREMENT_ATTRIBUTES } from "./offhands.js";
 import { resolveLoadout } from "./resolve.js";
-import { ATTRIBUTE_RUNE_TIERS, UNIVERSAL_RUNES, type RuneTier } from "./runes.js";
+import {
+  ATTRIBUTE_RUNE_TIERS,
+  UNIVERSAL_RUNES,
+  type EquippedRune,
+  type RuneTier,
+} from "./runes.js";
 import { ARMOR_SLOTS } from "./types.js";
 
 const PROFESSION_IDS = Object.keys(PROFESSIONS) as readonly ProfessionId[];
@@ -704,5 +709,44 @@ describe("the gear coverage record", () => {
     // choice in the reference, and it is missing.
     expect(gearOmission("attribute-headgear")?.kind).toBe("gap");
     expect(openGearGaps().length).toBeGreaterThan(0);
+  });
+});
+
+describe("Energy Storage (#532)", () => {
+  /** An Elementalist's maximum energy at this Energy Storage, bare-handed but for a staff. */
+  function maxEnergyAt(rank: number, chestRune: EquippedRune | null = null): number {
+    return resolveLoadout(
+      {
+        primaryProfession: "elementalist",
+        allocatedRanks: new Map([["elementalist.energy-storage", rank]]),
+        equipment: {
+          mainHand: { weaponId: "staff", requirementAttributeId: null },
+          offHand: null,
+          armor: { ...bareArmorSet(), chest: { insigniaId: null, rune: chestRune } },
+        },
+      },
+      MINIMAL_GW_INSPIRED_PVP_V1.combat,
+    ).maxEnergy;
+  }
+
+  const base = MINIMAL_GW_INSPIRED_PVP_V1.combat.baseEnergy;
+
+  it("adds 3 maximum energy a rank: +36 at 12, nothing at 0", () => {
+    expect(maxEnergyAt(0)).toBe(base);
+    expect(maxEnergyAt(12)).toBe(base + 36);
+  });
+
+  it("keeps scaling past 12 with a rune", () => {
+    const rune = {
+      kind: "attribute",
+      attributeId: "elementalist.energy-storage",
+      tier: "superior",
+    } as const;
+    expect(maxEnergyAt(12, rune)).toBe(base + 3 * (12 + ATTRIBUTE_RUNE_TIERS.superior.bonus));
+  });
+
+  it("adds to Rune of Attunement, neither replacing the other", () => {
+    const attunement = { kind: "universal", runeId: "attunement", tier: "superior" } as const;
+    expect(maxEnergyAt(12, attunement)).toBe(base + 36 + 9);
   });
 });

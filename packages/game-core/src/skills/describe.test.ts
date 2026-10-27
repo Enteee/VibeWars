@@ -2,9 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import { IMPLEMENTED_SKILLS, getSkill } from "./catalog.js";
 import { describeSkill, describeStatus, formatScalingRange } from "./describe.js";
-import { makeCombatant } from "./testing.js";
+import { makeCombatant, withAttackDuration } from "./testing.js";
 import { resolveMagnitude } from "./scaling.js";
 import { STATUS_DEFINITIONS } from "./status.js";
+import type { SkillEffect } from "./types.js";
 
 /**
  * Descriptions are generated from the effect data, never authored, so
@@ -127,6 +128,24 @@ describe("describeSkill", () => {
     ]);
   });
 
+  it("leads what depends on an earlier effect with its condition (#521)", () => {
+    const ranks = new Map([
+      ["mesmer.domination-magic", 12],
+      ["mesmer.inspiration-magic", 12],
+    ]);
+    const lines = (id: string) => describeSkill(skill(id), ranks).effects.map((e) => e.text);
+    expect(lines("mesmer.power-spike")).toEqual([
+      "Interrupts the target's spell or chant, if they are casting one",
+      "If it interrupts: deals 102 damage",
+    ]);
+    expect(lines("mesmer.drain-enchantment")).toEqual([
+      "Removes 1 enchantment",
+      "If it removes an enchantment: gain 15 energy",
+      "If it removes an enchantment: you gain 104 health",
+    ]);
+    expect(describeSkill(skill("mesmer.power-spike"), ranks).headline).toBe("102 damage");
+  });
+
   it("says Guardian blocks half of all attacks (#534)", () => {
     expect(describeStatus("guardian")).toBe("50% chance to block attacks");
   });
@@ -161,13 +180,16 @@ describe("describeSkill", () => {
 
   it("produces a line for every effect of every catalog skill", () => {
     // Guards the switch in `describeEffect`: a new effect kind that
-    // nobody described would silently vanish from tooltips.
+    // nobody described would silently vanish from tooltips. An `if` is
+    // a line per effect inside it (#521).
+    const lines = (effects: readonly SkillEffect[]): number =>
+      effects.reduce((sum, effect) => sum + (effect.kind === "if" ? effect.effects.length : 1), 0);
     for (const entry of IMPLEMENTED_SKILLS) {
       const described = describeSkill(entry);
       expect(described.effects, `${entry.id} lost an effect line`).toHaveLength(
-        entry.effects.length +
+        lines(entry.effects) +
           (entry.attack?.bonusDamage === undefined ? 0 : 1) +
-          (entry.attack?.onBlocked.length ?? 0) +
+          lines(entry.attack?.onBlocked ?? []) +
           (entry.whileActivating === undefined ? 0 : 1) +
           (entry.projectile === undefined ? 0 : 1),
       );
@@ -229,6 +251,13 @@ describe("describeStatus", () => {
   it("explains dazed: slower spells, interrupted by attacks (#546)", () => {
     expect(describeStatus("dazed")).toContain("spells take 2× as long to cast");
     expect(describeStatus("dazed")).toContain("spells are interrupted by attacks");
+  });
+
+  it("words attack speed as GW1 does: 50% slower, 33% faster (#493)", () => {
+    expect(describeStatus("faintheartedness")).toContain("attacks 50% slower");
+    withAttackDuration({ bleeding: 0.67 }, () => {
+      expect(describeStatus("bleeding")).toContain("attacks 33% faster");
+    });
   });
 
   it("returns the id for an unknown status rather than throwing", () => {

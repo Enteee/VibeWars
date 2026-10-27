@@ -9,10 +9,12 @@ import { effectiveActivationSeconds, outsideMatch } from "./tick.js";
 import type {
   AreaRule,
   AttackWeaponClass,
+  EffectCondition,
   Magnitude,
   Skill,
   SkillEffect,
   SkillType,
+  UnconditionalEffect,
 } from "./types.js";
 
 /**
@@ -177,7 +179,10 @@ export function describeStatus(id: string): string {
     parts.push("spells are interrupted by attacks");
   }
   if (definition.attackDurationMultiplier !== 1) {
-    parts.push(`attacks take ${String(definition.attackDurationMultiplier)}× as long`);
+    // GW1's wording: "50% slower" is 1.5× as long, "33% faster" is 0.67×.
+    const change = Math.round(Math.abs(definition.attackDurationMultiplier - 1) * 100);
+    const way = definition.attackDurationMultiplier > 1 ? "slower" : "faster";
+    parts.push(`attacks ${String(change)}% ${way}`);
   }
   if (definition.block !== undefined) {
     const what = BLOCKED_ATTACKS[definition.block.against];
@@ -188,7 +193,7 @@ export function describeStatus(id: string): string {
     parts.push(`ends after ${String(definition.endsAfterAttacks)} incoming attack${plural}`);
   }
   for (const effect of definition.onAttackHit) {
-    parts.push(describeAttackHit(effect));
+    parts.push(...describeAttackHit(effect));
   }
   if (definition.nextSpells !== undefined) {
     const { count, costReduction } = definition.nextSpells;
@@ -199,7 +204,7 @@ export function describeStatus(id: string): string {
     parts.push("spreads to adjacent combatants");
   }
   for (const effect of definition.nextAttackSkill ?? []) {
-    parts.push(describeNextAttackSkill(effect));
+    parts.push(...describeNextAttackSkill(effect));
   }
   if (definition.endsWhenBearerAttacks) {
     parts.push("ends if the bearer attacks");
@@ -208,26 +213,59 @@ export function describeStatus(id: string): string {
 }
 
 /** A preparation's rider (#525), as its tooltip says it: "your attacks …". */
-function describeAttackHit(effect: SkillEffect): string {
+function describeAttackHit(effect: SkillEffect): string[] {
   if (effect.kind === "apply-status") {
-    return (
+    return [
       `foes your physical attacks hit get ${statusName(effect.statusId)} ` +
-      `for ${seconds(effect.durationSeconds)}`
-    );
+        `for ${seconds(effect.durationSeconds)}`,
+    ];
   }
-  return `your physical attacks: ${describeEffect(effect, new Map()).text}`;
+  return describeEffects(effect, new Map()).map(({ text }) => `your physical attacks: ${text}`);
 }
 
 /** A chant's rider (#758), as its tooltip says it: "next attack skill: …". */
-function describeNextAttackSkill(effect: SkillEffect): string {
+function describeNextAttackSkill(effect: SkillEffect): string[] {
   if (effect.kind === "apply-status") {
-    return `next attack skill: ${statusName(effect.statusId)} ${seconds(effect.durationSeconds)}`;
+    return [`next attack skill: ${statusName(effect.statusId)} ${seconds(effect.durationSeconds)}`];
   }
-  return `next attack skill: ${describeEffect(effect, new Map()).text}`;
+  return describeEffects(effect, new Map()).map(({ text }) => `next attack skill: ${text}`);
+}
+
+/** "Deals 63 damage" as the second half of a line: "deals 63 damage". */
+function lowerFirst(text: string): string {
+  return `${text.charAt(0).toLowerCase()}${text.slice(1)}`;
+}
+
+/** What an `if` waits for, as the line it leads says it (#521). */
+function conditionText(condition: EffectCondition): string {
+  switch (condition.kind) {
+    case "interrupted":
+      return "If it interrupts";
+    case "removed":
+      return `If it removes ${condition.category === "enchantment" ? "an" : "a"} ${condition.category}`;
+  }
+}
+
+/**
+ * An effect's lines: one, or for an `if`, one per effect inside it, each
+ * led by its condition: "If it interrupts: deals 102 damage".
+ */
+function describeEffects(
+  effect: SkillEffect,
+  ranks: ReadonlyMap<string, number>,
+): EffectDescription[] {
+  if (effect.kind !== "if") {
+    return [describeEffect(effect, ranks)];
+  }
+  const condition = conditionText(effect.condition);
+  return effect.effects.map((inner) => {
+    const { text, magnitude } = describeEffect(inner, ranks);
+    return { text: `${condition}: ${lowerFirst(text)}`, magnitude };
+  });
 }
 
 function describeEffect(
-  effect: SkillEffect,
+  effect: UnconditionalEffect,
   ranks: ReadonlyMap<string, number>,
 ): EffectDescription {
   switch (effect.kind) {
@@ -237,7 +275,11 @@ function describeEffect(
     }
     case "heal": {
       const magnitude = describeMagnitude(effect.amount, ranks);
-      return { text: `Heals for ${String(magnitude.current)}`, magnitude };
+      const amount = String(magnitude.current);
+      return {
+        text: effect.recipient === "caster" ? `You gain ${amount} health` : `Heals for ${amount}`,
+        magnitude,
+      };
     }
     case "energy-gain": {
       const magnitude = describeMagnitude(effect.amount, ranks);
@@ -281,7 +323,10 @@ function describeEffect(
     }
     case "interrupt":
       return {
-        text: "Interrupts the target's current cast, if they are casting",
+        text:
+          effect.only === "spell-or-chant"
+            ? "Interrupts the target's spell or chant, if they are casting one"
+            : "Interrupts the target's current cast, if they are casting",
         magnitude: undefined,
       };
     case "knockdown":
@@ -310,6 +355,11 @@ function headlineOf(
             ? `heals ${amount}`
             : `+${amount} energy`;
       return { text, scales: magnitude.attributeId !== undefined };
+    }
+    case "if": {
+      // Power Spike's card leads with its damage, though it needs a spell.
+      const inner = effect.effects.flatMap((each) => headlineOf(each, ranks) ?? []);
+      return inner.find((number) => number.scales) ?? inner[0];
     }
     default:
       return undefined;
@@ -445,10 +495,12 @@ export function describeSkill(
   const bonusLine =
     bonus === undefined ? [] : [{ text: `+${String(bonus.current)} damage`, magnitude: bonus }];
   // An attack skill's if-blocked effects (#534), after the ones a hit gets.
-  const onBlocked = (skill.attack?.onBlocked ?? []).map((effect) => {
-    const { text, magnitude } = describeEffect(effect, ranks);
-    return { text: `If blocked: ${text.charAt(0).toLowerCase()}${text.slice(1)}`, magnitude };
-  });
+  const onBlocked = (skill.attack?.onBlocked ?? []).flatMap((effect) =>
+    describeEffects(effect, ranks).map(({ text, magnitude }) => ({
+      text: `If blocked: ${lowerFirst(text)}`,
+      magnitude,
+    })),
+  );
   // A status borne while activating (#524): Healing Signet's armor loss.
   const whileActivating =
     skill.whileActivating === undefined
@@ -466,7 +518,7 @@ export function describeSkill(
       : [{ text: "Projectile: can be dodged", magnitude: undefined }];
   const effects = [
     ...bonusLine,
-    ...skill.effects.map((effect) => describeEffect(effect, ranks)),
+    ...skill.effects.flatMap((effect) => describeEffects(effect, ranks)),
     ...onBlocked,
     ...whileActivating,
     ...projectile,

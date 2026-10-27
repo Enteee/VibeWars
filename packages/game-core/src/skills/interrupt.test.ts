@@ -180,16 +180,15 @@ describe("status-driven combat scenarios", () => {
     const monk = makeCombatant({ id: "monk", team: 0 });
     const ally = makeCombatant({ id: "ally", team: 0, health: 400 });
     ally.statuses.apply("bleeding", 20, "enemy");
-    ally.statuses.apply("poison", 20, "enemy");
 
-    const events = applyEffects(getSkill("monk.mend-affliction")?.effects ?? [], {
+    const events = applyEffects(getSkill("monk.mend-condition")?.effects ?? [], {
       caster: monk,
       target: ally,
       rng: createRng(1),
       rules: MINIMAL_GW_INSPIRED_PVP_V1.combat,
     });
 
-    expect(events.filter((e) => e.kind === "status-removed")).toHaveLength(2);
+    expect(events.filter((e) => e.kind === "status-removed")).toHaveLength(1);
     expect(ally.statuses.countByCategory("condition")).toBe(0);
 
     const healthAfterCure = ally.health;

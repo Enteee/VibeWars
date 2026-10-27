@@ -158,6 +158,21 @@ describe("joining a P2P match with a build (#375)", () => {
     expect(self(connection)?.energy ?? full).toBeLessThan(full);
   });
 
+  it("starts an Elementalist full, at the maximum Energy Storage raised (#532)", async () => {
+    // No focus: its Energy Storage requirement would add energy of its own.
+    const storing = { ...LEGAL_BUILD, equipment: { ...LEGAL_BUILD.equipment, offHand: null } };
+    const withoutStorage = {
+      ...storing,
+      attributes: LEGAL_BUILD.attributes.filter(
+        ({ attributeId }) => attributeId !== "elementalist.energy-storage",
+      ),
+    };
+    const plain = self((await joinWith(withoutStorage)).connection)?.maxEnergy ?? 0;
+    const { connection } = await joinWith(storing);
+    expect(self(connection)?.maxEnergy).toBe(plain + 30);
+    expect(self(connection)?.energy).toBe(plain + 30);
+  });
+
   it("shows the professions the host resolved, and the house loadout's for a broken build (#281)", async () => {
     const legal = await joinWith(LEGAL_BUILD);
     expect(self(legal.connection)?.primaryProfession).toBe("elementalist");

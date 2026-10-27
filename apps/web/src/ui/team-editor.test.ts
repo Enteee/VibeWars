@@ -200,7 +200,7 @@ describe("markedCells (#575)", () => {
   });
   const roster = [
     withBar("a", ["warrior.distracting-blow", "warrior.backbreaker"]),
-    withBar("b", [null, "monk.mend-affliction", "warrior.distracting-blow"]),
+    withBar("b", [null, "monk.mend-condition", "warrior.distracting-blow"]),
   ];
   const team = addMember(addMember(newTeam("t1"), "a"), "b");
   const counters = teamCounters(team.members, roster);
@@ -219,7 +219,7 @@ describe("markedCells (#575)", () => {
       markedCells({ kind: "skill", skillId: "warrior.distracting-blow" }, counters, team, roster),
     ).toEqual(new Set(["a:0", "b:2"]));
     expect(
-      markedCells({ kind: "skill", skillId: "monk.mend-affliction" }, counters, team, roster),
+      markedCells({ kind: "skill", skillId: "monk.mend-condition" }, counters, team, roster),
     ).toEqual(new Set(["b:1"]));
   });
 });
