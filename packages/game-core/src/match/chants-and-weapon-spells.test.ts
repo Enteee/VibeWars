@@ -163,9 +163,10 @@ describe("Anthem of Flame on an attack skill (#758)", () => {
     ally.statuses.apply("anthem-of-flame", 10, "p");
     ally.statuses.apply("watch-yourself", 10, "w");
     ally.statuses.apply("anthem-of-flame", 4, "p");
+    // The re-application is the newest (#521), but the longer duration stays.
     expect(ally.statuses.active.map((status) => [status.id, status.remainingSeconds])).toEqual([
-      ["anthem-of-flame", 10],
       ["watch-yourself", 10],
+      ["anthem-of-flame", 10],
     ]);
   });
 
