@@ -604,19 +604,23 @@ test("at the arena's bottom edge, an RMB drag down looks past it, and springs ba
   const atWall = await cameraY();
 
   // Not clamped to the map: the view centre goes below the arena, 200 px on.
+  // The drag ends at the centre, so once it is let go the look-ahead has
+  // nothing to lean toward: only the spring-back moves the view (#876).
   const centre = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  await page.mouse.move(centre.x, centre.y - 200);
   await page.mouse.down({ button: "right" });
-  await page.mouse.move(centre.x, centre.y + 100, { steps: 5 });
-  await page.mouse.move(centre.x, centre.y + 200, { steps: 5 });
+  await page.mouse.move(centre.x, centre.y - 100, { steps: 5 });
+  await page.mouse.move(centre.x, centre.y, { steps: 5 });
   const panned = atWall + 200 / zoom;
   await expect.poll(cameraY).toBeGreaterThan(panned - 3);
   expect(await cameraY()).toBeLessThan(panned + 3);
   expect(panned).toBeGreaterThan(arena.height);
 
-  // Let go, the pointer back at the centre: the view is on you again.
+  // Let go at the centre: the view is on you again. RETURN_RATE (7/s)
+  // brings it within 3 px in about 0.65 s; a loaded runner needs more than
+  // 1 s to see it, and a pan that never returns still fails at 2 s (#876).
   await page.mouse.up({ button: "right" });
-  await page.mouse.move(centre.x, centre.y);
-  await expect.poll(cameraY, { timeout: 1_000 }).toBeLessThan(atWall + 3);
+  await expect.poll(cameraY, { timeout: 2_000 }).toBeLessThan(atWall + 3);
   expect(await cameraY()).toBeGreaterThan(atWall - 3);
 });
 
