@@ -105,8 +105,7 @@ export {
   armorMultiplier,
   effectiveArmor,
   mitigate,
-  respectsArmor,
-  spellDamage,
+  skillDamage,
   unmitigatedDamage,
   weaponAttributeMultiplier,
 } from "./damage.js";

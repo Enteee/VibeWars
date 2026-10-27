@@ -209,8 +209,9 @@ function wireEvent(event: CombatEvent): WireCombatEvent {
     case "interrupted":
     case "cancelled":
       return { ...none, kind: event.kind, targetId: event.targetId, skillId: event.skillId };
-    case "death":
     case "interrupt-missed":
+      return { ...none, kind: event.kind, targetId: event.targetId, skillId: event.refusedSkillId };
+    case "death":
     case "attack-missed":
     case "attack-blocked":
     case "attack-dodged":
@@ -281,8 +282,9 @@ function combatEvent(event: WireCombatEvent): CombatEvent | undefined {
     case "interrupted":
     case "cancelled":
       return skillId === null ? undefined : { kind: event.kind, targetId, skillId };
-    case "death":
     case "interrupt-missed":
+      return { kind: event.kind, targetId, refusedSkillId: skillId };
+    case "death":
     case "attack-missed":
     case "attack-blocked":
     case "attack-dodged":
