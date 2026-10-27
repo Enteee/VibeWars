@@ -215,7 +215,7 @@ export function describeStatus(id: string): string {
     const plural = definition.endsAfterAttacks === 1 ? "" : "s";
     parts.push(`ends after ${String(definition.endsAfterAttacks)} incoming attack${plural}`);
   }
-  for (const effect of definition.onAttackHit) {
+  for (const effect of definition.onAttackHit?.effects ?? []) {
     parts.push(...describeAttackHit(effect));
   }
   if (definition.endsAfterHits !== undefined) {

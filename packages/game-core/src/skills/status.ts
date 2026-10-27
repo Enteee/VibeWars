@@ -224,7 +224,7 @@ export interface StatusDefinition {
    * where a blow lands, swing, attack skill or arrow alike, never on a
    * miss or a block.
    */
-  readonly onAttackHit: readonly SkillEffect[];
+  readonly onAttackHit: AttackHitRider | undefined;
   /**
    * It ends after this many of the bearer's hits with a weapon of
    * `weapon` (#939): Sand Shards' "the next 4 times you hit with a
@@ -297,6 +297,16 @@ export interface StatusTrigger {
   readonly effects: readonly TriggerEffect[];
   readonly target: "bearer" | "source";
   /** The skill the log names it after: "mesmer.backfire". */
+  readonly skillId: string;
+}
+
+/**
+ * What a status adds to each of the bearer's physical hits (#525), and
+ * the skill the log names it after, apart from the blow (#939): "Sand
+ * Shards hits", not "Scythe hits".
+ */
+export interface AttackHitRider {
+  readonly effects: readonly SkillEffect[];
   readonly skillId: string;
 }
 
@@ -381,7 +391,7 @@ function define(
     endsOnKnockdownPrevented: false,
     block: undefined,
     endsAfterAttacks: undefined,
-    onAttackHit: [],
+    onAttackHit: undefined,
     endsAfterHits: undefined,
     nextSpells: undefined,
     spreads: false,
@@ -565,7 +575,10 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   // 3...13...15 seconds": 13 s, its rank-12 value.
   "apply-poison": define("apply-poison", "Apply Poison", "preparation", {
     profession: "ranger",
-    onAttackHit: [{ kind: "apply-status", statusId: "poison", durationSeconds: 13 }],
+    onAttackHit: {
+      effects: [{ kind: "apply-status", statusId: "poison", durationSeconds: 13 }],
+      skillId: "ranger.apply-poison",
+    },
   }),
 
   // "Your next 2 spells cost 10...16...18 less Energy to cast": 16, its
@@ -644,19 +657,24 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   // reach the two barely differ (#939).
   "sand-shards": define("sand-shards", "Sand Shards", "enchantment", {
     profession: "dervish",
-    onAttackHit: [
-      {
-        kind: "if",
-        condition: { kind: "caster-wields", weapon: "scythe" },
-        effects: [
-          {
-            kind: "splash",
-            radius: AREA_ADJACENT,
-            effects: [{ kind: "damage", amount: { flat: 50 }, type: "earth", armorPenetration: 0 }],
-          },
-        ],
-      },
-    ],
+    onAttackHit: {
+      effects: [
+        {
+          kind: "if",
+          condition: { kind: "caster-wields", weapon: "scythe" },
+          effects: [
+            {
+              kind: "splash",
+              radius: AREA_ADJACENT,
+              effects: [
+                { kind: "damage", amount: { flat: 50 }, type: "earth", armorPenetration: 0 },
+              ],
+            },
+          ],
+        },
+      ],
+      skillId: "dervish.sand-shards",
+    },
     endsAfterHits: { count: 4, weapon: "scythe" },
   }),
   // "...for 1...6...7 [seconds] you move 25% faster. If an enchantment was
@@ -666,7 +684,7 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     profession: "dervish",
     moveSpeedMultiplier: 1.25,
   }),
-  "pious-haste-run": define("pious-haste-run", "Pious Haste", "stance", {
+  "pious-haste-run": define("pious-haste-run", "Pious Haste (run)", "stance", {
     profession: "dervish",
     moveSpeedMultiplier: 1.5,
   }),

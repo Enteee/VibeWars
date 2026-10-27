@@ -12,7 +12,7 @@ import { applySkillEffects, type CombatEvent } from "./effects.js";
 import { aggregateModifiers } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import { moveSpeedMultiplier } from "./tick.js";
-import { fireTriggers } from "./triggers.js";
+import { fireTriggers, type FiredTrigger } from "./triggers.js";
 import type { Combatant, Skill, Surroundings } from "./types.js";
 import { attackHitRiders, resolveSwing } from "./weapon-attack.js";
 
@@ -157,21 +157,41 @@ describe("Sand Shards (#939)", () => {
     const target = foe("target");
     const beside = foe("beside");
     const surroundings = around([self, vec2(0, 0)], [target, vec2(40, 0)], [beside, vec2(40, 30)]);
-    const hit = (): CombatEvent[] =>
-      attackHitRiders(self, target, self.equipment.mainHand, createRng(1), RULES, surroundings);
+    /** One hit: the splash, under Sand Shards' own name, and what ended. */
+    const hit = (): { fired: FiredTrigger[]; ended: CombatEvent[] } => {
+      const fired: FiredTrigger[] = [];
+      const ended = attackHitRiders(
+        self,
+        target,
+        self.equipment.mainHand,
+        createRng(1),
+        RULES,
+        surroundings,
+        fired,
+      );
+      return { fired, ended };
+    };
+    const splash = (fired: readonly FiredTrigger[]) =>
+      fired.map(({ sourceId, skillId, events }) => ({
+        sourceId,
+        skillId,
+        dealt: damageTo(events),
+      }));
     for (let count = 1; count <= 3; count += 1) {
-      expect(damageTo(hit())).toEqual({ beside: [50] });
+      expect(splash(hit().fired)).toEqual([
+        { sourceId: "dervish", skillId: "dervish.sand-shards", dealt: { beside: [50] } },
+      ]);
       expect(self.statuses.get("sand-shards")?.hitsLeft).toBe(4 - count);
     }
     const fourth = hit();
-    expect(damageTo(fourth)).toEqual({ beside: [50] });
-    expect(fourth).toContainEqual({
-      kind: "status-expired",
-      targetId: "dervish",
-      statusId: "sand-shards",
-    });
+    expect(splash(fourth.fired)).toEqual([
+      { sourceId: "dervish", skillId: "dervish.sand-shards", dealt: { beside: [50] } },
+    ]);
+    expect(fourth.ended).toEqual([
+      { kind: "status-expired", targetId: "dervish", statusId: "sand-shards" },
+    ]);
     expect(self.statuses.has("sand-shards")).toBe(false);
-    expect(hit()).toEqual([]);
+    expect(hit()).toEqual({ fired: [], ended: [] });
     expect(beside.health).toBe(1000 - 4 * 50);
     expect(target.health).toBe(1000);
   });
@@ -185,9 +205,19 @@ describe("Sand Shards (#939)", () => {
       [target, vec2(40, 0)],
       [foe("beside"), vec2(40, 30)],
     );
+    const fired: FiredTrigger[] = [];
     expect(
-      attackHitRiders(self, target, self.equipment.mainHand, createRng(1), RULES, surroundings),
+      attackHitRiders(
+        self,
+        target,
+        self.equipment.mainHand,
+        createRng(1),
+        RULES,
+        surroundings,
+        fired,
+      ),
     ).toEqual([]);
+    expect(fired).toEqual([]);
     expect(self.statuses.get("sand-shards")?.hitsLeft).toBe(4);
   });
 
@@ -218,7 +248,7 @@ describe("Sand Shards (#939)", () => {
     self.statuses.apply("sand-shards", 29, "dervish");
     const target = foe("target");
     const surroundings = around([self, vec2(0, 0)], [target, vec2(40, 0)]);
-    attackHitRiders(self, target, self.equipment.mainHand, createRng(1), RULES, surroundings);
+    attackHitRiders(self, target, self.equipment.mainHand, createRng(1), RULES, surroundings, []);
     expect(self.statuses.get("sand-shards")?.hitsLeft).toBe(3);
     use(self, "dervish.sand-shards", self);
     expect(self.statuses.get("sand-shards")?.hitsLeft).toBe(4);

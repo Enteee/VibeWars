@@ -28,6 +28,7 @@ import { resolveMagnitude } from "./scaling.js";
 import { aggregateModifiers, getStatusDefinition, type StatusId } from "./status.js";
 import { nearestFirst, type TargetCandidate } from "./targeting.js";
 import { attackMissChanceOf, blockChanceOf, rankOf, weaponDamageMultiplierOf } from "./tick.js";
+import type { FiredTrigger } from "./triggers.js";
 import type { Combatant, Skill, SkillEffect, StateCondition, Surroundings } from "./types.js";
 
 /**
@@ -367,11 +368,12 @@ export function landBlow(
 /**
  * What the attacker's statuses add to a blow of `mainHand` that hit
  * `victim` (#525): every active status's `onAttackHit`, as Apply
- * Poison's poison. Read when the blow lands, so a preparation that ran
- * out mid-swing or mid-flight adds nothing. Physical attacks only, as GW1
+ * Poison's poison, each onto `fired` under its own skill, apart from the
+ * blow (#939). Read when the blow lands, so a preparation that ran out
+ * mid-swing or mid-flight adds nothing. Physical attacks only, as GW1
  * says: a wand's or a staff's bolt carries none. Then every status that
  * ends after so many hits with this weapon spends one (#939): Sand
- * Shards' fourth hit splashes, then ends it.
+ * Shards' fourth hit splashes, then ends it. Returns those endings.
  */
 export function attackHitRiders(
   attacker: Combatant,
@@ -380,19 +382,28 @@ export function attackHitRiders(
   rng: SimulationRng,
   rules: CombatRules,
   surroundings: Surroundings,
+  fired: FiredTrigger[],
 ): CombatEvent[] {
   if (!isPhysicalDamage(mainHand.damageType)) {
     return [];
   }
-  const events = attacker.statuses.active.flatMap(({ id }) =>
-    applyEffects(getStatusDefinition(id).onAttackHit, {
+  for (const { id } of attacker.statuses.active) {
+    const rider = getStatusDefinition(id).onAttackHit;
+    if (rider === undefined) {
+      continue;
+    }
+    const events = applyEffects(rider.effects, {
       caster: attacker,
       target: victim,
       rng,
       rules,
       surroundings,
-    }),
-  );
+    });
+    if (events.length > 0) {
+      fired.push({ sourceId: attacker.id, skillId: rider.skillId, events });
+    }
+  }
+  const events: CombatEvent[] = [];
   for (const statusId of attacker.statuses.countHit(mainHand.weapon.id)) {
     events.push({ kind: "status-expired", targetId: attacker.id, statusId });
   }
@@ -472,7 +483,12 @@ export function useNextAttackSkill(
 }
 
 /** One blow on one victim: blind first, then block, then the crit and damage rolls. */
-function strike(swing: Swing, victim: Combatant, events: CombatEvent[]): void {
+function strike(
+  swing: Swing,
+  victim: Combatant,
+  events: CombatEvent[],
+  fired: FiredTrigger[],
+): void {
   const { attacker, rng, rules } = swing;
   if (victim.dead) {
     return;
@@ -491,7 +507,7 @@ function strike(swing: Swing, victim: Combatant, events: CombatEvent[]): void {
     gainCriticalEnergy(attacker, snapshot.criticalStrikes, events);
   }
   events.push(
-    ...attackHitRiders(attacker, victim, snapshot.mainHand, rng, rules, swing.surroundings),
+    ...attackHitRiders(attacker, victim, snapshot.mainHand, rng, rules, swing.surroundings, fired),
   );
   bearerHit(attacker, events);
   attackReached(victim, events);
@@ -507,11 +523,14 @@ function strike(swing: Swing, victim: Combatant, events: CombatEvent[]): void {
  * blows included, so the off hand can stab after the main one (#561).
  * `landed` counts the blows that damaged a victim, however many each
  * cleaved: each earns a strike of adrenaline (#463).
+ * `fired` is what the attacker's statuses added to its hits, each under
+ * its own skill (#939).
  */
 export function resolveSwing(swing: Swing): {
   readonly events: CombatEvent[];
   readonly doubleStrike: boolean;
   readonly landed: number;
+  readonly fired: FiredTrigger[];
 } {
   const { weapon } = swing.attacker.equipment.mainHand;
   const victims = victimsOf(swing, weapon);
@@ -519,12 +538,13 @@ export function resolveSwing(swing: Swing): {
   const strikes = chance > 0 && swing.rng.nextFloat() < chance ? 2 : 1;
 
   const events: CombatEvent[] = [];
+  const fired: FiredTrigger[] = [];
   bearerAttacked(swing.attacker, events);
   let landed = 0;
   for (let blow = 0; blow < strikes; blow += 1) {
     const from = events.length;
     for (const victim of victims) {
-      strike(swing, victim, events);
+      strike(swing, victim, events, fired);
     }
     if (
       events
@@ -534,7 +554,7 @@ export function resolveSwing(swing: Swing): {
       landed += 1;
     }
   }
-  return { events, doubleStrike: strikes === 2, landed };
+  return { events, doubleStrike: strikes === 2, landed, fired };
 }
 
 /**
@@ -563,10 +583,14 @@ export function resolveSwing(swing: Swing): {
  *
  * A ranged weapon's attack skill does not come here: it flies, and its
  * blow and riders land with the arrow (#416).
+ *
+ * What the attacker's statuses add to its hits goes onto `fired`, each
+ * under its own skill (#939).
  */
 export function resolveAttackSkill(
   resolution: SkillResolution,
   exposed: (victim: Combatant) => boolean,
+  fired: FiredTrigger[],
 ): CombatEvent[] {
   const { skill, caster, rng, rules, surroundings } = resolution;
   const blow = skillBlow(skill, caster);
@@ -618,7 +642,7 @@ export function resolveAttackSkill(
         gainCriticalEnergy(caster, snapshot.criticalStrikes, events);
       }
       events.push(
-        ...attackHitRiders(caster, victim, snapshot.mainHand, rng, rules, surroundings),
+        ...attackHitRiders(caster, victim, snapshot.mainHand, rng, rules, surroundings, fired),
         ...nextAttackSkillRiders(next, caster, victim, rng, rules, surroundings),
       );
       bearerHit(caster, events);
