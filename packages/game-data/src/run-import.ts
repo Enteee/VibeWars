@@ -493,6 +493,26 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Dervish/1049-Mystic_Twister",
   },
   {
+    id: "dervish.eremites-attack",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/1025-Eremite's_Attack",
+  },
+  {
+    id: "dervish.staggering-force",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/997-Staggering_Force",
+  },
+  {
+    id: "dervish.dust-cloak",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/988-Dust_Cloak",
+  },
+  {
+    id: "dervish.aura-of-thorns",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/986-Aura_of_Thorns",
+  },
+  {
     id: "mesmer.cry-of-frustration",
     profession: "mesmer",
     url: "https://www.gw-memorial.net/skills/Mesmer/308-Cry_of_Frustration",

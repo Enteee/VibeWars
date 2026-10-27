@@ -49,8 +49,7 @@ export const SKILL_ICONS = {
   "assassin.horns-of-the-ox": { glyph: "dagger", modifier: "stun" },
   "assassin.moebius-strike": { glyph: "dagger", modifier: "self" },
   "ranger.punishing-shot": { glyph: "arrow", modifier: "up" },
-  // Placeholders until asset-designer's icons (#976).
-  "ranger.pin-down": { glyph: "arrow", modifier: "down" },
+  "ranger.pin-down": { glyph: "pin", modifier: "less" },
   "ranger.hunters-shot": { glyph: "arrow", modifier: "bleed" },
   // Placeholders until asset-designer's icons (#1008).
   "ranger.crippling-shot": { glyph: "arrow", modifier: "clock" },
@@ -62,9 +61,8 @@ export const SKILL_ICONS = {
   "warrior.frenzy": { glyph: "sword", modifier: "clock" },
   "assassin.dark-escape": { glyph: "dash", modifier: "down" },
   "ranger.natural-stride": { glyph: "armor", modifier: "self" },
-  // Placeholders until asset-designer's icons (#976).
-  "ranger.lightning-reflexes": { glyph: "lightning", modifier: "self" },
-  "ranger.escape": { glyph: "dash", modifier: "clock" },
+  "ranger.lightning-reflexes": { glyph: "shield-bolt" },
+  "ranger.escape": { glyph: "retreat" },
   "paragon.wild-throw": { glyph: "spear" },
   // A placeholder: the bleed mark stands in for its Deep Wound (#921).
   "paragon.cruel-spear": { glyph: "spear", modifier: "bleed" },
@@ -112,6 +110,10 @@ export const SKILL_ICONS = {
   "dervish.zealous-sweep": { glyph: "energy", modifier: "clock" },
   "dervish.mystic-twister": { glyph: "snowflake", modifier: "self" },
   "dervish.victorious-sweep": { glyph: "axe", modifier: "self" },
+  "dervish.eremites-attack": { glyph: "axe", modifier: "less" },
+  "dervish.staggering-force": { glyph: "mountain", modifier: "self" },
+  "dervish.dust-cloak": { glyph: "shard", modifier: "self" },
+  "dervish.aura-of-thorns": { glyph: "shard", modifier: "bleed" },
   "ranger.savage-shot": { glyph: "arrow" },
   // A placeholder until asset-designer's icon (#1008).
   "ranger.concussion-shot": { glyph: "interrupt", modifier: "stun" },
@@ -131,11 +133,10 @@ export const SKILL_ICONS = {
   "elementalist.shock": { glyph: "lightning", modifier: "stun" },
   "elementalist.aftershock": { glyph: "quake" },
   "elementalist.meteor": { glyph: "meteor", modifier: "stun" },
-  // Placeholders until asset-designer's icons (#997).
-  "elementalist.water-trident": { glyph: "spear", modifier: "stun" },
-  "elementalist.searing-flames": { glyph: "flame" },
-  "elementalist.ebon-hawk": { glyph: "mountain", modifier: "less" },
-  "elementalist.stoning": { glyph: "mountain", modifier: "stun" },
+  "elementalist.water-trident": { glyph: "trident", modifier: "stun" },
+  "elementalist.searing-flames": { glyph: "flame", modifier: "bleed" },
+  "elementalist.ebon-hawk": { glyph: "hawk", modifier: "less" },
+  "elementalist.stoning": { glyph: "rock", modifier: "stun" },
   "mesmer.cry-of-frustration": { glyph: "interrupt", modifier: "area" },
   "mesmer.mantra-of-recovery": { glyph: "speed", modifier: "clock" },
   "necromancer.shadow-of-fear": { glyph: "slow", modifier: "area" },

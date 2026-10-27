@@ -564,6 +564,31 @@ const status = {
     "stance",
     (c) => `<path d="M5 9l4 5-4 5M9.5 9l4 5-4 5M14 9l4 5-4 5" ${stroke(c, 2.2)}/>`,
   ],
+  // Enchantment: a peak split down the middle, your attacks are earth and
+  // crack the armor round you when it ends (#1021).
+  "staggering-force": [
+    "enchantment",
+    (c) =>
+      `<path d="M5 18l7-11 7 11z" fill="${c}"/>` +
+      `<path d="M12 9l-1.5 4 2 2-1 3" ${stroke(C.enchantment, 1.6)}/>`,
+  ],
+  // Enchantment: a cloud of grains, your attacks are earth and blind the
+  // foes round you when it ends (#1021).
+  "dust-cloak": [
+    "enchantment",
+    (c) =>
+      `<circle cx="9" cy="10" r="1.6" fill="${c}"/><circle cx="14" cy="8.5" r="1.6" fill="${c}"/>` +
+      `<circle cx="12" cy="13" r="1.6" fill="${c}"/><circle cx="7.5" cy="15" r="1.6" fill="${c}"/>` +
+      `<circle cx="16.5" cy="14" r="1.6" fill="${c}"/><circle cx="12" cy="17.5" r="1.6" fill="${c}"/>`,
+  ],
+  // Enchantment: a ring of thorns, bleeding as it lands and crippling when
+  // it ends (#1021).
+  "aura-of-thorns": [
+    "enchantment",
+    (c) =>
+      `<circle cx="12" cy="12" r="5" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 4.5v2.5M12 17v2.5M4.5 12h2.5M17 12h2.5M6.7 6.7l1.8 1.8M15.5 15.5l1.8 1.8M17.3 6.7l-1.8 1.8M8.5 15.5l-1.8 1.8" ${stroke(c, 1.8)}/>`,
+  ],
   // Skill effect: a shield struck through, armor lost while the signet is
   // activated (#524).
   "healing-signet-armor": [
@@ -925,6 +950,14 @@ const skillGlyph = {
       )
       .join(""),
   interrupt: () => inkFill(burst(6)),
+  // An arrow driven down into a ground bar: pinned in place (#981).
+  pin: () => inkLine("M12 3V14", 2.4) + inkFill("M12 20.5L7 13H17Z") + inkLine("M4 21.5H20", 2.4),
+  // A shield with a bolt in it: fast and hard to hit (#981).
+  "shield-bolt": () =>
+    `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2)}/>` +
+    inkFill("M13 6L8.5 13H12L11 18L15.5 11H12Z"),
+  // Chevrons and a bar, as on the Escape stance (#981).
+  retreat: () => inkLine("M3 6L9 12L3 18M10 6L16 12L10 18", 2.5) + inkLine("M20 5V19", 2.6),
   speed: () => inkLine("M4 4L10 12L4 20M11 4L17 12L11 20", 2.5),
   slow: () => inkLine("M20 4L14 12L20 20M13 4L7 12L13 20", 2.5),
   dash: () => inkLine("M3 7H11M2 12H9M3 17H11", 2) + inkLine("M13 4L21 12L13 20", 2.6),
@@ -960,6 +993,15 @@ const skillGlyph = {
     `<path d="M9.5 3H14.5M10.5 3V9L4.5 19Q3.5 21 6 21H18Q20.5 21 19.5 19L13.5 9V3" ${stroke(C.ink, 2)}/>` +
     inkFill("M7.5 15H16.5L19 19.5H5Z"),
   germ: () => germ(C.ink),
+  // Three prongs on a shaft: a trident thrown through water (#1007).
+  trident: () => inkLine("M12 21V3M5.5 4V9Q5.5 13 12 13Q18.5 13 18.5 9V4", 2.4),
+  // A hawk seen from below, wings swept back (#1007).
+  hawk: () =>
+    inkFill(
+      "M12 2.5L14 6L12.8 9L22 7.5Q20 16 14.5 17.5L15 21.5L12 19.5L9 21.5L9.5 17.5Q4 16 2 7.5L11.2 9L10 6Z",
+    ),
+  // A rough boulder: a stone thrown (#1007).
+  rock: () => inkFill("M5 8L10 3.5L17 4.5L21 10L19 17L12 20.5L5.5 17.5L3.5 12Z"),
 };
 
 /** Modifiers, drawn around the bottom right corner on a dark disc. */
