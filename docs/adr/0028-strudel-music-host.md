@@ -309,6 +309,99 @@ runner's null sink underruns by itself, so these readings stay marked
 unvalidated and the `music:check` budgets (#514) stay provisional. The tables are in
 that run's job summaries and `music-measure-*` artifacts.
 
+### 9. Render-ahead (#509)
+
+A spike asked whether rendering the music ahead of the audio clock, in an
+`OfflineAudioContext` with no deadline, removes the underruns that come
+with a heavy live graph. The prototype is `host/render-ahead.ts` and the
+pure planner `host/render-plan.ts`, behind `?musicrender=ahead` in a stress
+build only. A track is cut into chunks of 4 cycles. A chunk is one whole
+mix at one level, plus a 7 s tail for the room and the release. The current
+level is kept 3 chunks ahead and the levels either side 2 chunks ahead. Live,
+the graph is a few `AudioBufferSourceNode`s, their gains and the bus limiter.
+`scripts/music-stress.mjs --render-ahead` measures it, and `--reactivity`
+steps the music through changes and prints how late each is heard.
+
+All numbers are from this sandbox, 2026-10-27: Playwright Firefox 155 and
+Chromium 155, headless, a PulseAudio null sink at 44.1 kHz, 30 s per load.
+The sink underruns about 2 ms/s by itself, so every reading is marked
+unvalidated (measurement 8), and the gate compares against a control: one
+looping buffer source into a gain, nothing else.
+
+**The gate: underrunMs under audio-thread load** (Firefox, `audiostress`,
+menu, music only):
+
+| `audiostress` | live engine (3 runs) | control (2 runs) | render-ahead (2 runs) |
+| ------------- | -------------------- | ---------------- | --------------------- |
+| 0 ms          | 82 / 78 / 124        | 87 / 105         | 22 / 47               |
+| 1.5 ms        | 289 / 263 / 650      | 57 / 131         | 105 / 204             |
+| 2.5 ms        | 760 / 2134 / 8184    | 2694 / 254       | 362 / 357             |
+
+- **At 1.5 ms, the load-dependent part of the underruns is the live graph's
+  size.** The control stays at its floor, the live engine climbs 2 to 5
+  times, and render-ahead stays near the control. The gate passes.
+- At 2.5 ms the worklet alone nearly fills the 2.90 ms quantum, and the
+  control fails as well. No graph survives an audio thread with no
+  headroom.
+- A busy main thread (`stress=40`) barely moves the live engine (53 ms),
+  so #448's worker clock holds.
+
+**Render speed, memory, main thread** (all levels together; the main-thread
+stall is the longest gap in a 100 ms worker beat while rendering):
+
+| Browser, load            | speed, median (min) | peak buffers | longest stall |
+| ------------------------ | ------------------- | ------------ | ------------- |
+| Firefox, menu            | 6.6 to 9.0× (3.4×)  | 58 to 65 MB  | 88 to 194 ms  |
+| Firefox, during a switch | –                   | **79 MB**    | –             |
+| Chromium, editor         | 3.1× (2.7×)         | 27 MB        | 143 ms        |
+| Chromium, match          | 4.6× (3.8×)         | 44 MB        | 108 ms        |
+| Chromium, menu, CPU 4×   | 2.9× (2.0×)         | 26 MB        | 372 ms        |
+
+With its tail, a chunk is about 13.7 s of audio for a 6.7 s slot, so
+keeping three levels ahead takes at least 6× real time. **Chromium is below
+that on a desktop**, so its planner never catches up and its buffer peaks are
+low because little is rendered. Firefox keeps up, but at 58 to 79 MB it is
+over the 48 MB budget.
+
+**How late a change is heard** (Firefox, `--reactivity`; live → render-ahead):
+
+| Change                 |   live | render-ahead |
+| ---------------------- | -----: | -----------: |
+| first sound after load |  0.8 s |        2.8 s |
+| intensity +1           |  1.6 s |        4.2 s |
+| intensity −1           |  3.0 s |        2.5 s |
+| intensity +2           |  1.3 s |       10.3 s |
+| 0-1-0-1 within 1 s     |   ~2 s |         ~2 s |
+| track switch           |  9.5 s |       12.2 s |
+| an edit in the editor  | 0.75 s |        5.0 s |
+
+With changes 8 s apart, the renderer is still filling the last level when
+the next change comes. In Chromium an intensity change is heard 11 to 14 s
+late.
+
+**superdough's node pools.** superdough 1.3.0 pools filters and supersaws
+per module, not per context, so the next `OfflineAudioContext` gets nodes
+from the last one, and `connect` throws `InvalidAccessError`. The pool is
+not exported, and aliasing to superdough's sources fails because they need
+Strudel's `?audioworklet` Vite plugin. The prototype empties the pools with
+silent probes before each render (`cutoff`, not `lpf`, which superdough does
+not pool), and retries an event that meets a stale node. No event fails,
+at about 40 extra superdough calls per chunk. That is a workaround for
+superdough's internals, and it breaks the day they change.
+
+**Verdict: the default path stays live.** Render-ahead removes the
+load-dependent underruns, but as built it is too slow in Chromium, over
+the memory budget in Firefox, and seconds late to every change the fight
+makes. Levers that might close the gap, none tried:
+
+- 8-cycle chunks, which cut the tail overhead by about a quarter;
+- rendering the neighbours of the playing chunk before the wanted level's
+  later chunks;
+- the reverb live on the bus, one node, instead of baked into every tail.
+
+A real-device run (desktop Firefox, a phone) is wanted before the default
+path ever flips. The architect asks the operator for it.
+
 ## The scheduler works ahead
 
 Strudel's cyclist queries slots up to 0.2 s past its clock and skips every
