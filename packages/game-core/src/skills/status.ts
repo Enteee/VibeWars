@@ -96,6 +96,8 @@ export type StatusId =
   | "frenzy"
   | "dark-escape"
   | "natural-stride"
+  | "lightning-reflexes"
+  | "escape"
   | "mantra-of-recovery"
   // Preparations.
   | "apply-poison"
@@ -294,6 +296,12 @@ export interface StatusDefinition {
    * releases a shot, swing or attack skill alike. A weapon spell's price.
    */
   readonly endsWhenBearerAttacks: boolean;
+  /**
+   * It ends the moment the bearer makes a melee attack (#976): a swing or
+   * a melee attack skill, hit, miss or block. A shot or a thrown spear
+   * keeps it. Escape's price.
+   */
+  readonly endsWhenBearerAttacksInMelee: boolean;
   /**
    * It ends the moment one of the bearer's attacks hits (#919): a blow
    * lands, swing, attack skill or arrow alike. A miss or a block keeps
@@ -501,6 +509,7 @@ function define(
     spreads: false,
     nextAttackSkill: undefined,
     endsWhenBearerAttacks: false,
+    endsWhenBearerAttacksInMelee: false,
     endsWhenBearerHits: false,
     endsWhenBearerUsesSkill: false,
     endsWhenBearerHitsWithAttackSkill: false,
@@ -794,6 +803,21 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     moveSpeedMultiplier: 1.33,
     block: { chance: 0.5, against: "all" },
     endsWhenBearerGains: ["hex", "enchantment"],
+  }),
+  // "For 5...10...11 seconds, you have a 75% chance to block melee and
+  // projectile attacks, and you attack 33% faster" (#976).
+  "lightning-reflexes": define("lightning-reflexes", "Lightning Reflexes", "stance", {
+    profession: "ranger",
+    block: { chance: 0.75, against: "all" },
+    attackDurationMultiplier: 0.67,
+  }),
+  // "For 1...7...8 seconds, you move 33% faster and have a 75% chance to
+  // block attacks. Escape ends if you make a melee attack." (#976, PvP)
+  escape: define("escape", "Escape", "stance", {
+    profession: "ranger",
+    moveSpeedMultiplier: 1.33,
+    block: { chance: 0.75, against: "all" },
+    endsWhenBearerAttacksInMelee: true,
   }),
   // "For 5...17...20 seconds, spells you cast recharge 33% faster" (#938).
   "mantra-of-recovery": define("mantra-of-recovery", "Mantra of Recovery", "stance", {
@@ -1386,11 +1410,18 @@ export class StatusSet {
 
   /**
    * The bearer attacked (#758): every status that ends when it does is
-   * gone. Returns the ids that ended on it.
+   * gone, and, if it was a melee attack, every one that ends on one
+   * (#976). Returns the ids that ended on it.
    */
-  public endOnBearerAttack(): StatusId[] {
+  public endOnBearerAttack(kind: "melee" | "projectile"): StatusId[] {
     const ended = this.active
-      .filter(({ id }) => getStatusDefinition(id).endsWhenBearerAttacks)
+      .filter(({ id }) => {
+        const definition = getStatusDefinition(id);
+        return (
+          definition.endsWhenBearerAttacks ||
+          (kind === "melee" && definition.endsWhenBearerAttacksInMelee)
+        );
+      })
       .map(({ id }) => id);
     this.#end(ended);
     return ended;

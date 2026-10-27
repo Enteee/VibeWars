@@ -250,6 +250,9 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.endsWhenBearerAttacks) {
     parts.push("ends if the bearer attacks");
   }
+  if (definition.endsWhenBearerAttacksInMelee) {
+    parts.push("ends if the bearer makes a melee attack");
+  }
   if (definition.damageTakenMultiplier !== 1) {
     parts.push(`takes ${damageTaken(definition.damageTakenMultiplier)} damage`);
   }

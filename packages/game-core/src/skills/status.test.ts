@@ -418,7 +418,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
     }
     set.countSpellStarted();
     set.countSpellStarted();
-    set.endOnBearerAttack();
+    set.endOnBearerAttack("melee");
     set.endOnKnockdownPrevented();
 
     expect(set.drainChanges()).toEqual([
@@ -460,6 +460,18 @@ describe("StatusSet changes, for the triggers (#887)", () => {
 
     set.apply("make-haste", 17, "p");
     expect(set.endOnBearerHit(true)).toEqual(["defensive-anthem", "make-haste"]);
+    expect(set.active).toEqual([]);
+  });
+
+  it("ends Stand Your Ground! on any attack, Escape only on a melee one (#976)", () => {
+    const set = new StatusSet();
+    set.apply("stand-your-ground", 10, "p");
+    set.apply("escape", 7, "p");
+    expect(set.endOnBearerAttack("projectile")).toEqual(["stand-your-ground"]);
+    expect(set.has("escape")).toBe(true);
+
+    set.apply("stand-your-ground", 10, "p");
+    expect([...set.endOnBearerAttack("melee")].sort()).toEqual(["escape", "stand-your-ground"]);
     expect(set.active).toEqual([]);
   });
 
@@ -639,13 +651,14 @@ describe("attack duration (ADR-0029)", () => {
     });
   }
 
-  it("is 1 with nothing on; Faintheartedness (#493) and Shadow of Fear (#918) are 50% slower, Heart of Fury and Weapon of Aggression (#975) 25% faster (#845), Frenzy 33% (#919)", () => {
+  it("is 1 with nothing on; Faintheartedness (#493) and Shadow of Fear (#918) are 50% slower, Heart of Fury and Weapon of Aggression (#975) 25% faster (#845), Frenzy (#919) and Lightning Reflexes (#976) 33%", () => {
     expect(aggregateModifiers([]).attackDurationMultiplier).toBe(1);
     const multipliers: Partial<Record<StatusId, number>> = {
       faintheartedness: 1.5,
       "heart-of-fury": 0.75,
       "shadow-of-fear": 1.5,
       frenzy: 0.67,
+      "lightning-reflexes": 0.67,
       "weapon-of-aggression": 0.75,
     };
     for (const id of ALL_STATUS_IDS) {

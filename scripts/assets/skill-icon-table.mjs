@@ -49,12 +49,18 @@ export const SKILL_ICONS = {
   "assassin.horns-of-the-ox": { glyph: "dagger", modifier: "stun" },
   "assassin.moebius-strike": { glyph: "dagger", modifier: "self" },
   "ranger.punishing-shot": { glyph: "arrow", modifier: "up" },
+  // Placeholders until asset-designer's icons (#976).
+  "ranger.pin-down": { glyph: "arrow", modifier: "down" },
+  "ranger.hunters-shot": { glyph: "arrow", modifier: "bleed" },
   "ranger.throw-dirt": { glyph: "mountain", modifier: "area" },
   "warrior.sprint": { glyph: "speed" },
   "assassin.dash": { glyph: "dash" },
   "warrior.frenzy": { glyph: "sword", modifier: "clock" },
   "assassin.dark-escape": { glyph: "dash", modifier: "down" },
   "ranger.natural-stride": { glyph: "armor", modifier: "self" },
+  // Placeholders until asset-designer's icons (#976).
+  "ranger.lightning-reflexes": { glyph: "lightning", modifier: "self" },
+  "ranger.escape": { glyph: "dash", modifier: "clock" },
   "paragon.wild-throw": { glyph: "spear" },
   // A placeholder: the bleed mark stands in for its Deep Wound (#921).
   "paragon.cruel-spear": { glyph: "spear", modifier: "bleed" },

@@ -573,6 +573,26 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Ranger/826-Natural_Stride",
   },
   {
+    id: "ranger.lightning-reflexes",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/102-Lightning_Reflexes",
+  },
+  {
+    id: "ranger.escape",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/101-Escape",
+  },
+  {
+    id: "ranger.pin-down",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/116-Pin_Down",
+  },
+  {
+    id: "ranger.hunters-shot",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/114-Hunter's_Shot",
+  },
+  {
     id: "monk.patient-spirit",
     profession: "monk",
     url: "https://www.gw-memorial.net/skills/Monk/1158-Patient_Spirit",
