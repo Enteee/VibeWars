@@ -48,6 +48,16 @@ export type CombatEvent =
       readonly statusId: StatusId;
       readonly durationSeconds: number;
     }
+  /**
+   * Health a status took as it landed (#800): deep wound's share of
+   * maximum health. Not damage: nothing that reacts to damage sees it.
+   */
+  | {
+      readonly kind: "health-lost";
+      readonly targetId: string;
+      readonly amount: number;
+      readonly statusId: StatusId;
+    }
   | { readonly kind: "status-removed"; readonly targetId: string; readonly statusId: StatusId }
   | { readonly kind: "status-expired"; readonly targetId: string; readonly statusId: StatusId }
   /** A spreading status caught from `fromId`, adjacent to the target (#765). */
@@ -342,7 +352,12 @@ export function applyEffect(effect: UnconditionalEffect, context: SkillContext):
         durationSeconds,
       });
       if (loss > 0) {
-        events.push({ kind: "damage", targetId: target.id, amount: loss, critical: false });
+        events.push({
+          kind: "health-lost",
+          targetId: target.id,
+          amount: loss,
+          statusId: effect.statusId,
+        });
       }
       // Applying Dazed interrupts a spell, even on a target already dazed.
       if (getStatusDefinition(effect.statusId).interruptsSpells) {

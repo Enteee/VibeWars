@@ -224,6 +224,14 @@ function wireEvent(event: CombatEvent): WireCombatEvent {
     case "status-removed":
     case "status-expired":
       return { ...none, kind: event.kind, targetId: event.targetId, statusId: event.statusId };
+    case "health-lost":
+      return {
+        ...none,
+        kind: event.kind,
+        targetId: event.targetId,
+        amount: event.amount,
+        statusId: event.statusId,
+      };
     case "status-spread":
       return {
         ...none,
@@ -297,6 +305,10 @@ function combatEvent(event: WireCombatEvent): CombatEvent | undefined {
     case "status-removed":
     case "status-expired":
       return isStatusId(statusId) ? { kind: event.kind, targetId, statusId } : undefined;
+    case "health-lost":
+      return isStatusId(statusId) && amount !== null
+        ? { kind: event.kind, targetId, amount, statusId }
+        : undefined;
     case "status-spread":
       return isStatusId(statusId) && fromId !== null
         ? { kind: event.kind, targetId, fromId, statusId }
