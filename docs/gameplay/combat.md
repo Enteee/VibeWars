@@ -662,16 +662,21 @@ GW1 PvP (#473). Only a primary can hold its rank, and runes count.
   rank 12, and more above it. It adds to Rune of Attunement and gear,
   and you start the match full at the new maximum. The build editor's
   max energy counts it.
+- **Mysticism** (Dervish). Dervish enchantments cost 4% less energy a
+  rank (−48% at 12: Mystic Regeneration 8 instead of 15), rounded once,
+  never below 0. While any enchantment is on you, yours or an ally's,
+  you have +1 armor a rank against every hit.
 
 The others have no effect yet.
 
 The build editor says under a primary's row what it does at its rank
 ("Fast Casting 12: spells cast 43% faster"), and a skill tooltip for a
-known character shows the cost and activation Expertise and Fast
-Casting make of it, the base in brackets: "5 energy (10)",
+known character shows the cost and activation Expertise, Mysticism and
+Fast Casting make of it, the base in brackets: "5 energy (10)",
 "1.1s (2s)" (#531). The skill bar shows icons only (#719); a slot's
-tooltip shows the energy the skill costs the caster now, Expertise and
-an active glyph included (#528, #637), the base in brackets.
+tooltip shows the energy the skill costs the caster now, Expertise,
+Mysticism and an active glyph included (#528, #637, #874), the base in
+brackets.
 
 ## Positioning
 

@@ -7,6 +7,8 @@ import {
   expertiseEnergyCost,
   fastCastingMultiplier,
   leadershipEnergy,
+  mysticismArmor,
+  mysticismEnergyCost,
   soulReapingTrigger,
   strengthArmorPenetration,
 } from "./primary-attributes.js";
@@ -110,6 +112,56 @@ describe("Expertise (#528)", () => {
       ok: false,
       reason: "insufficient-adrenaline",
     });
+  });
+});
+
+describe("Mysticism (#874)", () => {
+  const mysticRegeneration = skill("dervish.mystic-regeneration");
+
+  it("cuts a Dervish enchantment 4% a rank, rounded once, never below 0", () => {
+    expect(mysticismEnergyCost(12, mysticRegeneration, 15)).toBe(8);
+    expect(mysticismEnergyCost(12, skill("dervish.fleeting-stability"), 5)).toBe(3);
+    expect(mysticismEnergyCost(0, mysticRegeneration, 15)).toBe(15);
+    expect(mysticismEnergyCost(25, mysticRegeneration, 15)).toBe(0);
+  });
+
+  it("leaves another profession's enchantment and a Dervish non-enchantment alone", () => {
+    expect(mysticismEnergyCost(12, skill("elementalist.armor-of-earth"), 10)).toBe(10);
+    expect(mysticismEnergyCost(12, skill("dervish.heart-of-fury"), 5)).toBe(5);
+  });
+
+  it("gives +1 armor a rank", () => {
+    expect(mysticismArmor(0)).toBe(0);
+    expect(mysticismArmor(12)).toBe(12);
+  });
+
+  /** A Dervish with Mysticism 12 and `energy`, casting on itself. */
+  function check(energy: number) {
+    const caster = makeCombatant({
+      id: "d",
+      energy,
+      attributeRanks: new Map([["dervish.mysticism", 12]]),
+    });
+    const result = canActivate({
+      skill: mysticRegeneration,
+      caster,
+      casterPosition: vec2(0, 0),
+      target: caster,
+      targetPosition: vec2(0, 0),
+      rechargeRemaining: new Map(),
+      isCasting: false,
+      skillBar: [mysticRegeneration.id],
+      losBlockers: [],
+    });
+    return { caster, result };
+  }
+
+  it("the check and the spend agree: Mystic Regeneration costs 8, and 8 is spent", () => {
+    const { caster, result } = check(8);
+    expect(result).toEqual({ ok: true });
+    payCost(mysticRegeneration, caster);
+    expect(caster.energy).toBe(0);
+    expect(check(7).result).toEqual({ ok: false, reason: "insufficient-energy" });
   });
 });
 
@@ -250,6 +302,11 @@ describe("describePrimaryAttribute (#531)", () => {
     ["paragon.leadership", 15, "up to 7 energy per shout, 1 per ally affected"],
     ["elementalist.energy-storage", 12, "+36 maximum energy"],
     ["elementalist.energy-storage", 15, "+45 maximum energy"],
+    [
+      "dervish.mysticism",
+      12,
+      "Dervish enchantments cost 48% less energy, +12 armor while enchanted",
+    ],
   ])("says what %s does at rank %i", (attributeId, rank, text) => {
     expect(describePrimaryAttribute(attributeId, rank)).toBe(text);
   });
@@ -263,6 +320,7 @@ describe("describePrimaryAttribute (#531)", () => {
     "necromancer.soul-reaping",
     "paragon.leadership",
     "elementalist.energy-storage",
+    "dervish.mysticism",
   ])("says nothing for %s at rank 0", (attributeId) => {
     expect(describePrimaryAttribute(attributeId, 0)).toBeUndefined();
   });
