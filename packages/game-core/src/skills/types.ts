@@ -97,6 +97,13 @@ export interface HealEffect {
    * per ally, is capped at `max` before healing modifiers.
    */
   readonly perAlly?: PerAllyHeal;
+  /**
+   * The amount is per status of this category an earlier `remove-status`
+   * of this skill took off the heal's target, as Restore Condition's
+   * "healed 10...58...70 Health for each condition removed" (#987). None
+   * removed: no heal.
+   */
+  readonly perRemoved?: StatusCategory;
 }
 
 /** Leader's Comfort's heal per ally in earshot (#923). */

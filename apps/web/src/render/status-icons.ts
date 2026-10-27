@@ -49,6 +49,7 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   guardian: icon("guardian"),
   mending: icon("mending"),
   "protective-spirit": icon("protective-spirit"),
+  "reversal-of-fortune": icon("reversal-of-fortune"),
   sprint: icon("sprint"),
   dash: icon("dash"),
   frenzy: icon("frenzy"),

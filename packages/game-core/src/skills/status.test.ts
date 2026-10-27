@@ -60,6 +60,7 @@ describe("status definitions", () => {
         def.attackDurationMultiplier !== 1 ||
         def.block !== undefined ||
         def.maxDamageFractionPerHit !== undefined ||
+        def.reversesNextDamage !== undefined ||
         def.extraStrikesPerHit !== 0 ||
         def.onAttackHit !== undefined ||
         def.triggers.length > 0 ||
