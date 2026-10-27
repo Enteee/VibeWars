@@ -448,6 +448,27 @@ const status = {
       `<path d="M7 7.5h10v4c0 3-2.5 5-5 6.5C9.5 16.5 7 14.5 7 11.5z" ${stroke(c, 2)}/>` +
       `<path d="M6 4.5h12" ${stroke(c, 2)}/>`,
   ],
+  // Enchantment: a crescent over a plus, healed in the shadows (#988).
+  "shadow-refuge": [
+    "enchantment",
+    (c) =>
+      `<path d="M11 5a5 5 0 1 0 0 9a4 4 0 0 1 0-9z" fill="${c}"/>` +
+      `<path d="M16.5 13v6M13.5 16h6" ${stroke(c, 2)}/>`,
+  ],
+  // Enchantment: a shield, half filled, blocks below half Health (#988).
+  "shroud-of-distress": [
+    "enchantment",
+    (c) =>
+      `<path d="M7 6h10v5c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7z" ${stroke(c, 2)}/>` +
+      `<path d="M7 12h10c-.5 3-2.6 4.8-5 6-2.4-1.2-4.5-3-5-6z" fill="${c}"/>`,
+  ],
+  // Skill: an eye, more critical hits (#988).
+  "critical-eye": [
+    "skill-effect",
+    (c) =>
+      `<path d="M4 12.5c2-3.5 5-5.5 8-5.5s6 2 8 5.5c-2 3.5-5 5.5-8 5.5s-6-2-8-5.5z" ${stroke(c, 2)}/>` +
+      `<circle cx="12" cy="12.5" r="2.5" fill="${c}"/>`,
+  ],
   // Enchantment: an arrow turning back up, the next hit heals (#987).
   "reversal-of-fortune": [
     "enchantment",

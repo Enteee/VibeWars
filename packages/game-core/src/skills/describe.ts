@@ -227,7 +227,19 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   }
   if (definition.block !== undefined) {
     const what = BLOCKED_ATTACKS[definition.block.against];
-    parts.push(`${String(Math.round(definition.block.chance * 100))}% chance to block ${what}`);
+    const below =
+      definition.blockBelowHealth === undefined
+        ? ""
+        : ` while below ${String(Math.round(definition.blockBelowHealth * 100))}% Health`;
+    parts.push(
+      `${String(Math.round(definition.block.chance * 100))}% chance to block ${what}${below}`,
+    );
+  }
+  if (definition.criticalChanceBonus !== 0) {
+    parts.push(`${signed(Math.round(definition.criticalChanceBonus * 100))}% critical chance`);
+  }
+  if (definition.energyPerCritical !== 0) {
+    parts.push(`gain ${String(definition.energyPerCritical)} Energy per critical hit`);
   }
   if (definition.endsAfterAttacks !== undefined) {
     const plural = definition.endsAfterAttacks === 1 ? "" : "s";
@@ -445,6 +457,14 @@ function describeTrigger(
             : sentence(`${when}: ${allies}: ${lowerFirst(describeEffect(inner, ranks).text)}`),
       );
     }
+    // The bearer is "it" in its own tooltip (#988): "when it ends, if it
+    // is attacking: heals for 88".
+    if (effect.kind === "if" && trigger.target === "bearer") {
+      const condition = lowerFirst(conditionText(effect.condition).replace(/^If target/, "If it"));
+      return effect.effects.map((inner) =>
+        sentence(`${when}, ${condition}: ${lowerFirst(describeEffect(inner, ranks).text)}`),
+      );
+    }
     return describeEffects(effect, ranks).map(({ text }) =>
       sentence(`${when}: ${lowerFirst(text)}`),
     );
@@ -521,6 +541,10 @@ function conditionText(condition: EffectCondition): string {
       return `If you wield ${NEEDED_WEAPON[condition.weapon]}`;
     case "target-less-health":
       return "If target has less Health than you";
+    case "target-more-health":
+      return "If target has more Health than you";
+    case "target-attacking":
+      return "If target is attacking";
   }
 }
 
@@ -744,6 +768,8 @@ function describeEffect(
         text: `Knocks down for ${seconds(effect.durationSeconds)}`,
         magnitude: undefined,
       };
+    case "shadow-step":
+      return { text: "Shadow steps to the target", magnitude: undefined };
     case "resurrect": {
       const health = describeMagnitude(effect.healthPercent, ranks);
       const energy = describeMagnitude(effect.energyPercent, ranks);

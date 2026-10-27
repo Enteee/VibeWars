@@ -3,13 +3,17 @@
 exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
 {
   "assassin.black-lotus-strike": "",
+  "assassin.critical-eye": "",
   "assassin.dark-escape": "defence",
   "assassin.dash": "",
   "assassin.death-blossom": "",
+  "assassin.deaths-charge": "healing",
   "assassin.fox-fangs": "",
   "assassin.horns-of-the-ox": "knockdown",
   "assassin.jagged-strike": "condition",
   "assassin.moebius-strike": "",
+  "assassin.shadow-refuge": "healing",
+  "assassin.shroud-of-distress": "defence",
   "assassin.twisting-fangs": "condition",
   "assassin.wild-strike": "",
   "dervish.aura-of-thorns": "condition",
