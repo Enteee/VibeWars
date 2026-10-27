@@ -352,7 +352,7 @@ body {
 
 .effect-bar {
   height: 3px;
-  background: #11161d;
+  background: var(--bg);
 }
 
 .effect-bar[hidden] {

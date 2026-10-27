@@ -81,11 +81,11 @@ Your statuses in the match HUD (#834), after the bars, in the order they
 were applied: oldest left, a refresh moves to the end. They wrap to a
 second row, never `+N`, and with none the monitor takes no room.
 
-| Part         | Look                                                                                                              |
-| ------------ | ----------------------------------------------------------------------------------------------------------------- |
-| Icon         | The status SVG at 24 px, plate and glyph as in the arena                                                          |
-| Duration bar | 3 px under the icon, as wide as it, `ink-dim` on `#11161d`, draining to empty; none for a status with no duration |
-| Yours tick   | A 6 px `ink` square edged in `bg`, over the icon's top-right corner: an enchantment you cast                      |
+| Part         | Look                                                                                                         |
+| ------------ | ------------------------------------------------------------------------------------------------------------ |
+| Icon         | The status SVG at 24 px, plate and glyph as in the arena                                                     |
+| Duration bar | 3 px under the icon, as wide as it, `ink-dim` on `bg`, draining to empty; none for a status with no duration |
+| Yours tick   | A 6 px `ink` square edged in `bg`, over the icon's top-right corner: an enchantment you cast                 |
 
 No seconds on the icon, as GW1: the hover says the name, the category,
 what it does, who it is from and the whole seconds left.
