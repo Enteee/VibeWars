@@ -12,7 +12,7 @@ import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
 const WEAKEN_ARMOR = "necromancer.weaken-armor";
-const MEND = "monk.mend-affliction";
+const MEND = "monk.mend-condition";
 
 function spec(id: string, team: number, spawn: Vec2, skillBar: readonly string[] = []) {
   return {
@@ -51,8 +51,8 @@ function field(): MatchSimulation {
     seed: "weaken-armor",
     participants: [
       spec("necro", 0, vec2(0, 0), [WEAKEN_ARMOR]),
-      spec("target", 1, target, [MEND]),
-      spec("beside", 1, vec2(target.x, AREA_ADJACENT - 5)),
+      spec("target", 1, target),
+      spec("beside", 1, vec2(target.x, AREA_ADJACENT - 5), [MEND]),
       spec("off", 1, vec2(target.x, AREA_ADJACENT + 20)),
       // ...and the necromancer's own ally, adjacent to the target.
       spec("ally", 0, vec2(target.x, -(AREA_ADJACENT - 5))),
@@ -81,8 +81,8 @@ describe("Weaken Armor (#763)", () => {
     sim.requestSkill("necro", 0);
     stepFor(sim, 0.6);
     expect(cracked(sim, "target")).toBe(true);
-    sim.setTarget("target", "target");
-    expect(sim.requestSkill("target", 0)?.check).toEqual({ ok: true });
+    sim.setTarget("beside", "target");
+    expect(sim.requestSkill("beside", 0)?.check).toEqual({ ok: true });
     stepFor(sim, 1.1);
     expect(cracked(sim, "target")).toBe(false);
   });

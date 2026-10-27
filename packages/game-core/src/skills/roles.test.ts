@@ -19,7 +19,7 @@ describe("skillRoles", () => {
 
   it("reads each role from the skill's effects", () => {
     expect(rolesOf("warrior.distracting-blow")).toEqual(["interrupt"]);
-    expect(rolesOf("monk.mend-affliction")).toContain("removal");
+    expect(rolesOf("monk.mend-condition")).toEqual(["healing", "removal"]);
     expect(rolesOf("ranger.broad-head-arrow")).toEqual(["interrupt", "condition"]);
     expect(rolesOf("warrior.backbreaker")).toEqual(["knockdown"]);
     // A preparation's roles are what it does to the foes it hits.

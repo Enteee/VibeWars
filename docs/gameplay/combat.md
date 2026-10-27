@@ -121,6 +121,11 @@ starts its recharge, as if it had been used, as in GW1. That is what makes
 interrupts so valuable: they do not just delay a skill, they burn the
 opponent's resources.
 
+Some interrupts are picky (#521). **Power Spike** and **Power Drain** only
+interrupt a spell or a chant; against an attack skill, a signet or an idle
+foe they are a wasted cast. When they land, Power Spike deals damage and
+Power Drain gives you energy.
+
 ## Knockdown
 
 A knockdown puts its target on the ground for its duration (Backbreaker:
@@ -162,6 +167,13 @@ by category, alongside two kinds no removal touches:
 **Durations do not stack.** Re-applying a status keeps the longer of the
 existing and incoming duration. That single rule is why spamming a short
 condition cannot out-last one well-timed long one.
+
+**Removal takes the newest first** (#521), as in GW1. A re-application
+counts as new. So a cheap enchantment cast last covers an important one
+from Shatter Enchantment, and a cheap condition covers a deep wound from
+Mend Condition. Some removals do more when they find something to
+remove: Shatter Enchantment then deals damage, Drain Enchantment gives
+its caster energy and health, and Mend Condition heals the ally.
 
 Each condition has a distinct mechanical identity, not just a different
 number:

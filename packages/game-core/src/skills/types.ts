@@ -66,6 +66,11 @@ export interface DamageEffect {
 export interface HealEffect {
   readonly kind: "heal";
   readonly amount: Magnitude;
+  /**
+   * `caster`: the caster is healed, as Drain Enchantment's "you gain N
+   * Health" (#521). Absent: the target.
+   */
+  readonly recipient?: "caster";
 }
 
 export interface EnergyGainEffect {
@@ -100,6 +105,12 @@ export interface RemoveStatusEffect {
  */
 export interface InterruptEffect {
   readonly kind: "interrupt";
+  /**
+   * `spell-or-chant`: only a spell (`isSpell`) or a chant is interrupted,
+   * as Power Spike's "If target foe is casting a Spell or Chant" (#521).
+   * Anything else is left alone, as if the target were not casting.
+   */
+  readonly only?: "spell-or-chant";
 }
 
 /**
@@ -115,7 +126,27 @@ export interface KnockdownEffect {
 /** How long "knocks down" lasts when a skill names no duration (GW1). */
 export const KNOCKDOWN_SECONDS = 2;
 
-export type SkillEffect =
+/** What an earlier effect of the same skill did to the same target (#521). */
+export type EffectCondition =
+  /** An `interrupt` earlier in the list cancelled an action. */
+  | { readonly kind: "interrupted" }
+  /** A `remove-status` earlier in the list removed at least one status of this category. */
+  | { readonly kind: "removed"; readonly category: StatusCategory };
+
+/**
+ * Effects that land only if an earlier effect of the same skill did
+ * something to the same target (#521): Power Spike's damage, if it
+ * interrupted a spell. Evaluated per target.
+ */
+export interface ConditionalEffect {
+  readonly kind: "if";
+  readonly condition: EffectCondition;
+  /** Applied only when the condition holds. No nesting. */
+  readonly effects: readonly UnconditionalEffect[];
+}
+
+/** Every effect but `if`: what an `if` may hold. */
+export type UnconditionalEffect =
   | DamageEffect
   | HealEffect
   | EnergyGainEffect
@@ -124,6 +155,8 @@ export type SkillEffect =
   | RemoveStatusEffect
   | InterruptEffect
   | KnockdownEffect;
+
+export type SkillEffect = UnconditionalEffect | ConditionalEffect;
 
 /* -------------------------------------------------------------------------- */
 /* Skills                                                                      */
