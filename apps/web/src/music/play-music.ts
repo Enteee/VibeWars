@@ -5,6 +5,7 @@ import {
   type MusicPreference,
 } from "../audio/music-preference.js";
 import { VOLUME_RAMP_SECONDS } from "../audio/volume-ramp.js";
+import { beatEdits, type BeatEditStore } from "./beat-edits.js";
 import { directMusic, type Intensity, type MusicMode, type MusicState } from "./director.js";
 import {
   intensityOverride,
@@ -21,7 +22,9 @@ import { TRACKS } from "./tracks/index.js";
  * the player chose (#372): a new track crossfades in on the playing one's
  * next phrase boundary, a new intensity starts on the next cycle, and no
  * track means silence. A jukebox preview plays over all of that until it
- * ends, and a fixed intensity override (#425) over the director's level.
+ * ends, the track open in the beat editor over that (#373), and a fixed
+ * intensity override (#425) over the director's level. A track the player
+ * edited plays the edit, wherever it plays.
  */
 
 type PlayableTrack = MusicTrack & { readonly moods: readonly Mood[] };
@@ -40,6 +43,11 @@ export interface MusicFollower {
   setPreference(preference: MusicPreference): void;
   /** Play `trackId` now, over what the director says; `null` goes back to it. */
   preview(trackId: string | null): void;
+  /**
+   * Hold `trackId` while the beat editor has it open, over a preview too,
+   * so what it evaluates replaces that track; `null` lets go.
+   */
+  edit(trackId: string | null): void;
   /** The director's intensity, last it said, whatever the override plays. */
   readonly intensity: Intensity;
   /** The track you hear: `null` when nothing plays, or the music is muted. */
@@ -54,12 +62,14 @@ export function createMusicFollower(
   saved: { readonly muted: boolean; readonly preference: MusicPreference },
   now: () => number,
   override: IntensityOverrideStore,
+  edits: Pick<BeatEditStore, "get">,
 ): MusicFollower {
   let preference = saved.preference;
   let muted = saved.muted;
   /** What the player is playing, or was last told to. */
   let playingId: string | null = null;
   let previewId: string | null = null;
+  let editId: string | null = null;
   let directed: string | null = null;
   /** The director's level, and the one the player was last told to play. */
   let intensity: Intensity = 0;
@@ -76,9 +86,9 @@ export function createMusicFollower(
   const volume = (): number => (muted || preference.musicMuted ? 0 : preference.musicVolume);
   player.setVolume(volume(), 0);
 
-  /** Play the preview, or else the director's track: at once, or on the next phrase. */
+  /** Play the edited track, the preview, or else the director's: at once, or on the next phrase. */
   const play = (when: "now" | "on-phrase"): void => {
-    const wanted = previewId ?? directed;
+    const wanted = editId ?? previewId ?? directed;
     if (wanted === playingId) {
       return;
     }
@@ -86,10 +96,14 @@ export function createMusicFollower(
     const track = tracks.find((candidate) => candidate.id === wanted);
     if (track === undefined) {
       player.stop();
-    } else if (when === "now") {
-      player.load(track);
+      return;
+    }
+    const edited = edits.get(track.id);
+    const heard = edited === undefined ? track : { ...track, source: edited.source };
+    if (when === "now") {
+      player.load(heard);
     } else {
-      player.crossfadeTo(track);
+      player.crossfadeTo(heard);
     }
   };
 
@@ -177,6 +191,11 @@ export function createMusicFollower(
       play(previewId === null ? "on-phrase" : "now");
       changed();
     },
+    edit(trackId) {
+      editId = tracks.some((track) => track.id === trackId) ? trackId : null;
+      play(editId === null ? "on-phrase" : "now");
+      changed();
+    },
     get intensity() {
       return intensity;
     },
@@ -204,6 +223,7 @@ export function music(): MusicFollower {
       { muted: loadMuted(), preference: loadMusicPreference() },
       () => Date.now(),
       intensityOverride,
+      beatEdits,
     );
     if (measuringMusic(location.search)) {
       // For scripts/music-stress.mjs: force the load it measures (#420).

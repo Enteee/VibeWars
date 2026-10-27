@@ -28,8 +28,11 @@ export type GameToHost =
   | { readonly type: "stop" }
   | { readonly type: "setIntensity"; readonly level: MusicLevel }
   | { readonly type: "setVolume"; readonly gain: number; readonly rampSeconds: number }
-  /** Replace the playing track's pattern with this source, at once (the beat editor). */
-  | { readonly type: "evaluate"; readonly source: string }
+  /**
+   * Replace the playing track's pattern with this source, at once (the beat
+   * editor). The host answers `evaluated` or `error` with the same `seq`.
+   */
+  | { readonly type: "evaluate"; readonly seq: number; readonly source: string }
   /** The watchdog's heartbeat; the host answers `pong` with the same `seq`. */
   | { readonly type: "ping"; readonly seq: number }
   /** Count what the music costs and report it every second (`?musicstats`, #420). */
@@ -85,8 +88,17 @@ export type HostToGame =
       readonly cycle: number;
       readonly cps: number;
     }
-  | { readonly type: "evaluated" }
-  | { readonly type: "error"; readonly message: string; readonly line?: number }
+  | { readonly type: "evaluated"; readonly seq: number }
+  /**
+   * `seq` is the `evaluate` it answers; a load, or a pattern failing as it
+   * plays, has none.
+   */
+  | {
+      readonly type: "error";
+      readonly message: string;
+      readonly line?: number;
+      readonly seq?: number;
+    }
   | { readonly type: "pong"; readonly seq: number }
   | ({ readonly type: "stats" } & MusicStats);
 
@@ -153,8 +165,8 @@ export function parseGameToHost(data: unknown): GameToHost | null {
         ? { type: "setVolume", gain: message.gain, rampSeconds: message.rampSeconds }
         : null;
     case "evaluate":
-      return text(message.source, MAX_SOURCE_LENGTH)
-        ? { type: "evaluate", source: message.source }
+      return Number.isSafeInteger(message.seq) && text(message.source, MAX_SOURCE_LENGTH)
+        ? { type: "evaluate", seq: message.seq as number, source: message.source }
         : null;
     case "ping":
       return Number.isSafeInteger(message.seq)
@@ -174,8 +186,11 @@ export function parseHostToGame(data: unknown): HostToGame | null {
   const message = fields(data);
   switch (message?.type) {
     case "ready":
-    case "evaluated":
       return { type: message.type };
+    case "evaluated":
+      return Number.isSafeInteger(message.seq)
+        ? { type: "evaluated", seq: message.seq as number }
+        : null;
     case "playing": {
       const { trackId, cycle, cps } = message;
       return text(trackId, MAX_TEXT_LENGTH) &&
@@ -185,16 +200,20 @@ export function parseHostToGame(data: unknown): HostToGame | null {
         : null;
     }
     case "error": {
-      const { message: said, line } = message;
-      if (!text(said, MAX_TEXT_LENGTH)) {
+      const { message: said, line, seq } = message;
+      if (
+        !text(said, MAX_TEXT_LENGTH) ||
+        (line !== undefined && !(Number.isInteger(line) && finite(line, 1, 100_000))) ||
+        (seq !== undefined && !Number.isSafeInteger(seq))
+      ) {
         return null;
       }
-      if (line === undefined) {
-        return { type: "error", message: said };
-      }
-      return Number.isInteger(line) && finite(line, 1, 100_000)
-        ? { type: "error", message: said, line }
-        : null;
+      return {
+        type: "error",
+        message: said,
+        ...(line === undefined ? {} : { line }),
+        ...(seq === undefined ? {} : { seq: seq as number }),
+      };
     }
     case "pong":
       return Number.isSafeInteger(message.seq)
