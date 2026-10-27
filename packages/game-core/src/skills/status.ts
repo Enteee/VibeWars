@@ -67,6 +67,8 @@ export type StatusId =
   // Hexes / enchantments implemented so far.
   | "faintheartedness"
   | "malaise"
+  | "backfire"
+  | "empathy"
   | "regeneration"
   | "blood-ritual"
   | "armor-boost"
@@ -211,6 +213,22 @@ export interface StatusDefinition {
    * releases a shot, swing or attack skill alike. A weapon spell's price.
    */
   readonly endsWhenBearerAttacks: boolean;
+  /**
+   * What it does when its bearer does something (#469): Backfire's damage
+   * on each spell the bearer finishes. Applied by whoever put it on.
+   */
+  readonly triggers: readonly StatusTrigger[];
+}
+
+/** Something the bearer does that a status answers (#469). */
+export type StatusTriggerEvent = "bearer-casts-spell" | "bearer-attacks";
+
+export interface StatusTrigger {
+  readonly on: StatusTriggerEvent;
+  /** Applied with the status's source as caster and the bearer as target. */
+  readonly effects: readonly SkillEffect[];
+  /** The skill the log names it after: "mesmer.backfire". */
+  readonly skillId: string;
 }
 
 /** A share of maximum health a status takes, at most `cap` (GW1's deep wound). */
@@ -262,6 +280,7 @@ function define(
     spreads: false,
     nextAttackSkill: undefined,
     endsWhenBearerAttacks: false,
+    triggers: [],
     ...overrides,
   };
 }
@@ -297,6 +316,28 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     attackDurationMultiplier: 1.5,
   }),
   malaise: define("malaise", "Malaise", "hex", { energyPips: -1 }),
+  // "Whenever target foe casts a spell, that foe takes 35...119...140
+  // damage": 119, its rank-12 value.
+  backfire: define("backfire", "Backfire", "hex", {
+    triggers: [
+      {
+        on: "bearer-casts-spell",
+        effects: [{ kind: "damage", amount: { flat: 119 }, type: "typeless", armorPenetration: 0 }],
+        skillId: "mesmer.backfire",
+      },
+    ],
+  }),
+  // "Whenever target foe attacks, that foe takes 15...39...45 damage"
+  // (PvP): 39, its rank-12 value.
+  empathy: define("empathy", "Empathy", "hex", {
+    triggers: [
+      {
+        on: "bearer-attacks",
+        effects: [{ kind: "damage", amount: { flat: 39 }, type: "typeless", armorPenetration: 0 }],
+        skillId: "mesmer.empathy",
+      },
+    ],
+  }),
   regeneration: define("regeneration", "Regeneration", "enchantment", { healthPips: 4 }),
   "blood-ritual": define("blood-ritual", "Blood Ritual", "enchantment", { energyPips: 3 }),
   // The slow is Armor of Earth's price: without it, +24 armor is free.
@@ -569,6 +610,20 @@ export class StatusSet {
       this.#statuses.delete(id);
     }
     return ended;
+  }
+
+  /**
+   * Every trigger on the bearer that answers `event` (#469), in `active`
+   * order, with who applied the status that holds it.
+   */
+  public triggersOn(
+    event: StatusTriggerEvent,
+  ): { statusId: StatusId; sourceId: string; trigger: StatusTrigger }[] {
+    return this.active.flatMap(({ id, sourceId }) =>
+      getStatusDefinition(id)
+        .triggers.filter((trigger) => trigger.on === event)
+        .map((trigger) => ({ statusId: id, sourceId, trigger })),
+    );
   }
 
   public countByCategory(category: StatusCategory): number {

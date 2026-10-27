@@ -4,7 +4,12 @@ import { getAttribute } from "../professions.js";
 
 import { energyCostOf } from "./activation.js";
 import { resolveMagnitudeAtRanks } from "./scaling.js";
-import { findStatusDefinition, type StatusCategory } from "./status.js";
+import {
+  findStatusDefinition,
+  type StatusCategory,
+  type StatusTrigger,
+  type StatusTriggerEvent,
+} from "./status.js";
 import { effectiveActivationSeconds, outsideMatch } from "./tick.js";
 import type {
   AreaRule,
@@ -212,6 +217,9 @@ export function describeStatus(id: string): string {
   if (definition.endsWhenBearerAttacks) {
     parts.push("ends if the bearer attacks");
   }
+  for (const trigger of definition.triggers) {
+    parts.push(...describeTrigger(trigger));
+  }
   return parts.length === 0 ? definition.name : parts.join(", ");
 }
 
@@ -224,6 +232,21 @@ function describeAttackHit(effect: SkillEffect): string[] {
     ];
   }
   return describeEffects(effect, new Map()).map(({ text }) => `your physical attacks: ${text}`);
+}
+
+const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
+  "bearer-casts-spell": "whenever it casts a spell",
+  "bearer-attacks": "whenever it attacks",
+};
+
+/** A status's answer to its bearer (#469): "takes 119 damage whenever it casts a spell". */
+function describeTrigger(trigger: StatusTrigger): string[] {
+  const when = TRIGGER_WHEN[trigger.on];
+  return trigger.effects.flatMap((effect) =>
+    effect.kind === "damage"
+      ? [`takes ${String(describeMagnitude(effect.amount, new Map()).current)} damage ${when}`]
+      : describeEffects(effect, new Map()).map(({ text }) => `${when}: ${lowerFirst(text)}`),
+  );
 }
 
 /** A chant's rider (#758), as its tooltip says it: "next attack skill: …". */
