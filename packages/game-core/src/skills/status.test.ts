@@ -59,6 +59,8 @@ describe("status definitions", () => {
         def.interruptsSpells ||
         def.attackDurationMultiplier !== 1 ||
         def.block !== undefined ||
+        def.maxDamageFractionPerHit !== undefined ||
+        def.extraStrikesPerHit !== 0 ||
         def.onAttackHit !== undefined ||
         def.triggers.length > 0 ||
         def.nextSpells !== undefined ||

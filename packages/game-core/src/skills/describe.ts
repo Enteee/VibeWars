@@ -246,6 +246,16 @@ export function describeStatus(id: string): string {
   if (definition.damageTakenMultiplier !== 1) {
     parts.push(`takes ${damageTaken(definition.damageTakenMultiplier)} damage`);
   }
+  if (definition.maxDamageFractionPerHit !== undefined) {
+    parts.push(
+      `damage from a single hit is capped at ${String(Math.round(definition.maxDamageFractionPerHit * 100))}% of max health`,
+    );
+  }
+  if (definition.extraStrikesPerHit > 0) {
+    parts.push(
+      `gain ${String(definition.extraStrikesPerHit)} more ${definition.extraStrikesPerHit === 1 ? "strike" : "strikes"} of adrenaline per hit`,
+    );
+  }
   if (definition.spellRechargeFaster !== 0) {
     const faster = String(Math.round(definition.spellRechargeFaster * 100));
     parts.push(`spells recharge ${faster}% faster`);
@@ -468,6 +478,11 @@ function describeEffects(
   });
 }
 
+/** A share of health as GW1 words it (#936): "half", or "25%". */
+function share(fraction: number): string {
+  return fraction === 0.5 ? "half" : `${String(Math.round(fraction * 100))}% of`;
+}
+
 /** " per point lost", for an amount multiplied by the energy taken before it (#793). */
 function perPointLost(effect: { readonly perEnergyLost?: true }): string {
   return effect.perEnergyLost === undefined ? "" : " per point lost";
@@ -517,6 +532,13 @@ function describeEffect(
         text: `You sacrifice ${String(effect.percentOfMax)}% of your maximum health`,
         magnitude: undefined,
       };
+    case "give-health": {
+      const magnitude = describeMagnitude(effect.healPercent, ranks);
+      return {
+        text: `Lose ${share(effect.fractionOfCurrent)} your health; heal for ${String(magnitude.current)}% of it`,
+        magnitude,
+      };
+    }
     case "apply-status":
       // A stance, a preparation or a glyph is yours alone and one at a
       // time (#523, #525, #526), so it reads as what it is rather than as
@@ -670,6 +692,13 @@ function headlineOf(
         scales: health.attributeId !== undefined,
       };
     }
+    case "give-health": {
+      const percent = describeMagnitude(effect.healPercent, ranks);
+      return {
+        text: `heals ${String(percent.current)}% of ${share(effect.fractionOfCurrent)} your health`,
+        scales: percent.attributeId !== undefined,
+      };
+    }
     case "if": {
       // Power Spike's card leads with its damage, though it needs a spell.
       const inner = effect.effects.flatMap((each) => headlineOf(each, ranks) ?? []);
@@ -782,6 +811,14 @@ function targetAndRange(skill: Skill): {
   if (skill.target === "self" && area?.origin === "caster") {
     const where = AREA_TEXT.get(area.radius) ?? `within ${String(area.radius)}`;
     return { target: `${AREA_WHO[area.affects]} ${where}`, range: `${String(area.radius)} radius` };
+  }
+  if (area?.origin === "caster") {
+    // Cyclone Axe (#936): its target, and everyone round its user.
+    const where = AREA_TEXT.get(area.radius) ?? `within ${String(area.radius)}`;
+    return {
+      target: `${TARGET_TEXT[skill.target]}, and ${AREA_WHO[area.affects].toLowerCase()} ${where} around you`,
+      range: `${String(skill.range)} range`,
+    };
   }
   return {
     target: TARGET_TEXT[skill.target],

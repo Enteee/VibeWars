@@ -78,9 +78,10 @@ as GW1 prints it: Backbreaker 9, Wild Throw 7, "Watch Yourself!" 4. One
 strike is 25 units (`ADRENALINE_PER_STRIKE`), and each adrenaline skill on
 the bar fills its own pool up to its cost. Every weapon blow that damages
 a foe, a swing, a landed arrow or an attack skill's blow, gives one strike
-to every adrenaline skill that is not recharging: one per blow, not per
-foe, so a cleave across three foes is one strike and a double strike
-whose two blows land is two. Blocked, missed or obstructed blows give
+to every adrenaline skill that is not recharging. A swing is one per
+blow, not per foe, so a cleave across three foes is one strike and a
+double strike whose two blows land is two; an attack skill is one per
+foe it lands on, so a Cyclone Axe into three foes is three (#936). Blocked, missed or obstructed blows give
 nothing, and neither do spells. Taking damage from a foe charges you too
 (#827): every hit, blow or spell, gives `floor(100 × damage ÷ max health)`
 units, so a hit for a quarter of your health is a strike; degeneration,
@@ -153,6 +154,13 @@ deep wound has lowered; its own heal cannot cancel the bonus. Mystic
 Sweep's blow deals 10 more while you are enchanted, in the same number.
 **Dwayna's Kiss** (#920) heals another ally 51, and 30 more for each
 enchantment and hex on it as the heal lands.
+**Infuse Health** (#936, Healing Prayers, 10 energy, ¼ s, no recharge)
+costs you half your current health, rounded down, and heals another
+ally 129% of what you lost at rank 12, 100% at 0. The loss is a
+sacrifice, not damage: nothing caps it, charges adrenaline from it or
+answers it, and half of what you have can never kill you. The heal is a
+heal like Orison's: Divine Favor adds to it and a deep wound on the ally
+cuts it. On an ally at full health you still lose the health.
 
 ## Interrupts
 
@@ -541,6 +549,12 @@ Signet (Warrior, Tactics) heals you after a 2 s cast, and for those 2 s
 you have −40 armor: the penalty ends with the cast, whether it goes off,
 is cancelled, interrupted or knocked out of your hands.
 
+"For Great Justice!" (Warrior, no attribute, 5 energy, 45 s recharge;
+the PvP version) is a shout on yourself alone: for 8 s each hit you land
+earns one more strike of adrenaline, so a Cyclone Axe into three foes
+earns six (#936). A blocked or missed blow still earns nothing, and the
+adrenaline you gain from being hit is unchanged.
+
 **Shouts** are instant: no cast bar, no target, and nothing to
 interrupt. Each ally **in earshot**, 350 units round the shouter and the
 shouter included, gets its effect; a dead ally or one just outside does
@@ -645,6 +659,10 @@ cleave on an attack skill. Afterwards you swing at its foe, from a fresh
 swing. Distracting Blow deals no damage: a hit only interrupts, and a
 miss does nothing. It has no attribute, as in GW1, so any warrior can
 use it and its numbers never scale.
+**Cyclone Axe** (Axe Mastery, 5 energy, 4 s recharge) spins: its target
+and every other foe adjacent to _you_ take an axe blow +10 at rank 12,
+each with its own block, blind and crit roll, and each foe it lands on is
+a strike of adrenaline (#936). An adjacent ally is not hit.
 
 **Dagger chains** (#831). Jagged Strike and Black Lotus Strike are lead
 attacks; Fox Fangs and Wild Strike are off-hand attacks that must follow
@@ -794,6 +812,13 @@ and a Ranger 70 and 100. Damage halves for every 40 armor above 60:
 Fireball's 91 lands for about 46 on a Ranger. Types that are neither
 physical nor elemental get no typed bonus; base armor still applies.
 Armor penetration cuts the whole total, typed bonus included.
+
+**Protective Spirit** (#936, Monk, Protection Prayers, 10 energy, ¼ s,
+5 s recharge) lasts 19 s on any ally: no single hit takes more than 10%
+of its max health, the max a deep wound has lowered. The cap comes last,
+after armor, Frenzy's double and a Rune of Absorption, on every hit,
+blow or spell. Degeneration, sacrifice and life steal are not hits and
+are not capped. Two caps: the lower wins.
 
 Some damage ignores armor altogether (#760): holy, shadow and typeless
 skill damage, an attack skill's "+N damage" bonus, degeneration and
