@@ -69,6 +69,7 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   incoming: icon("incoming"),
   "make-haste": icon("make-haste"),
   "defensive-anthem": icon("defensive-anthem"),
+  "song-of-restoration": icon("song-of-restoration"),
   "apply-poison": icon("apply-poison"),
   "glyph-of-lesser-energy": icon("glyph-of-lesser-energy"),
   "anthem-of-flame": icon("anthem-of-flame"),
@@ -83,6 +84,9 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "sand-shards": icon("sand-shards"),
   "pious-haste": icon("pious-haste"),
   "pious-haste-run": icon("pious-haste-run"),
+  "staggering-force": icon("staggering-force"),
+  "dust-cloak": icon("dust-cloak"),
+  "aura-of-thorns": icon("aura-of-thorns"),
   "never-surrender": icon("never-surrender"),
 };
 

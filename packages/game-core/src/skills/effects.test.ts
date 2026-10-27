@@ -12,7 +12,7 @@ import {
   resolveSkillEffects,
   type CombatEvent,
 } from "./effects.js";
-import { HEALTH_PER_PIP } from "./status.js";
+import { HEALTH_PER_PIP, type StatusId } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import { advanceStatuses, effectiveMaxHealth } from "./tick.js";
 import type {
@@ -656,6 +656,29 @@ describe("if effects (#521)", () => {
     }
   });
 
+  it("interrupts only a spell with only: spell, not a chant (#1008)", () => {
+    const spellOnly = [{ kind: "interrupt", only: "spell" }, ifInterrupted] as const;
+    for (const skillId of [
+      "elementalist.fireball",
+      "mesmer.backfire",
+      "monk.guardian",
+      "ritualist.weapon-of-warding",
+    ]) {
+      const foe = casting(skillId);
+      run(spellOnly, foe);
+      expect(foe.cast.isCasting, skillId).toBe(false);
+      expect(foe.health, skillId).toBe(470);
+    }
+    for (const skillId of ["paragon.anthem-of-flame", "warrior.healing-signet"]) {
+      const foe = casting(skillId);
+      const events = run(spellOnly, foe);
+      expect(foe.cast.isCasting, skillId).toBe(true);
+      expect(events, skillId).toEqual([
+        { kind: "interrupt-missed", targetId: "target", refusedSkillId: skillId },
+      ]);
+    }
+  });
+
   it("a picky interrupt on an idle target refuses nothing: refusedSkillId is null (#796)", () => {
     const idle = makeCombatant({ id: "target", team: 1 });
     expect(run([{ kind: "interrupt", only: "spell-or-chant" }], idle)).toEqual([
@@ -852,6 +875,40 @@ describe("state conditions (#794)", () => {
     const downCaster = at(100, "caster");
     downCaster.knockdownRemaining = 2;
     expect(healed(down, downCaster, knocked(0))).toBe(10);
+  });
+
+  it("target-moving: holds for a target that walked last tick, not the caster (#997)", () => {
+    const moving = healIf({ kind: "target-moving" });
+    const walking = (id: string): Combatant => {
+      const combatant = at(100, id);
+      combatant.moving = true;
+      return combatant;
+    };
+    expect(healed(moving, at(100, "caster"), walking("target"))).toBe(110);
+    expect(healed(moving, at(100, "caster"), at(100))).toBe(10);
+    expect(healed(moving, walking("caster"), at(100))).toBe(10);
+  });
+
+  it("target-has-status / target-lacks-status: read that one status on the target (#997)", () => {
+    const has = (statusId: StatusId) => healIf({ kind: "target-has-status", statusId });
+    const lacks = (statusId: StatusId) => healIf({ kind: "target-lacks-status", statusId });
+    const bearing = (statusId: StatusId): Combatant => {
+      const target = at(100);
+      target.statuses.apply(statusId, 10, "caster");
+      return target;
+    };
+    for (const statusId of ["burning", "weakness"] as const) {
+      expect(healed(has(statusId), at(100, "caster"), bearing(statusId))).toBe(110);
+      expect(healed(has(statusId), at(100, "caster"), at(100))).toBe(10);
+      expect(healed(lacks(statusId), at(100, "caster"), bearing(statusId))).toBe(10);
+      expect(healed(lacks(statusId), at(100, "caster"), at(100))).toBe(110);
+    }
+    // Another condition is not this one.
+    expect(healed(has("burning"), at(100, "caster"), bearing("bleeding"))).toBe(10);
+    expect(healed(lacks("burning"), at(100, "caster"), bearing("bleeding"))).toBe(110);
+    // The caster's own status is not read.
+    const burningCaster = bearing("burning");
+    expect(healed(has("burning"), burningCaster, at(100, "other"))).toBe(10);
   });
 
   it("caster-wields: the caster's main hand is of the class, the target's is not read (#939)", () => {

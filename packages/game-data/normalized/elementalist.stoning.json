@@ -1,0 +1,26 @@
+{
+  "id": "elementalist.stoning",
+  "name": "Stoning",
+  "profession": "elementalist",
+  "attribute": "Earth Magic",
+  "type": "Spell.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 15
+  },
+  "overcast": 0,
+  "activationSeconds": 1,
+  "rechargeSeconds": 5,
+  "upkeep": false,
+  "description": "Send out a large stone, striking target foe for 45...93...105 earth damage if it hits. If Stoning hits a foe suffering from Weakness, that foe is knocked down.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Elementalist/406-Stoning",
+    "fetchedAt": "2026-10-27T21:01:19.132Z"
+  },
+  "unmapped": {}
+}

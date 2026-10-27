@@ -196,6 +196,12 @@ spell. A signet, it costs nothing.
 hits 25 harder if that was a spell: one bigger number on the hit, read
 as the arrow lands. A block or a miss does neither.
 
+**Concussion Shot** (#1008, Marksmanship, 25 energy, ½ s, 5 s recharge)
+interrupts only a spell: a chant, a signet or an attack goes on, and the
+log says "not a spell". When it cuts a spell, its foe is Dazed for 17 s.
+The arrow deals only 13. On a foe already Dazed the arrow's own hit
+cuts the spell first, and the daze is still refreshed.
+
 Some interrupts also **disable** what they cut short (#914): the skill
 cannot be used for a while, on top of its recharge. The two run
 together, so the skill waits for whichever is longer, and on your bar
@@ -346,6 +352,10 @@ for 56 more (#985). "Down" is read as it lands, after that tick's
 countdown: a foe who stands up on that tick gets no bonus. Shock, then
 Aftershock, is the Elementalist's knockdown combo.
 
+**Water Trident** knocks down each foe it hits that is moving, and
+**Stoning** a foe suffering from Weakness (#997). Both are read as the
+projectile lands.
+
 A knocked-down character can't block: Guardian does nothing while you
 are down, and an attack skill's if-blocked rider never fires against
 you. Blocking works again the moment you stand.
@@ -412,6 +422,27 @@ gives 9 energy and, with the blow's own, 4 strikes. **Mystic Twister**
 to every foe nearby, or 100 if you are enchanted as it lands, in one
 packet. Like any spell it earns its caster no strike.
 
+**The earth enchantments and Eremite's Attack** (#1021). Staggering
+Force, Dust Cloak and Aura of Thorns are flash enchantments (no
+activation, so no interrupt), 10 energy, 30 s. As each lands, every foe
+nearby you takes 34 earth (Staggering Force, 6 s recharge; Dust Cloak,
+10 s) or starts Bleeding for 13 s (Aura of Thorns, 10 s). While
+Staggering Force or Dust Cloak is up, **your attacks deal earth
+damage**, the weapon's roll included. When one **ends**, every foe
+nearby you where they stand then has Cracked Armor for 8 s (Staggering
+Force), is Blinded for 3 s (Dust Cloak) or Crippled for 7 s (Aura of
+Thorns). Any end counts: running out, a strip by your own skill or a
+foe's, your death. A recast while it is up is no end: it strikes or
+bleeds again and keeps one 30 s enchantment. **Eremite's Attack**
+(scythe, 5 energy, 6 s) hits for +8, and, if you have a Dervish
+enchantment as it hits, +8 more and it strikes **every** foe adjacent to
+its target, not just 2. Then you lose your newest Dervish enchantment,
+once, however many it struck, and only if it hit. So Staggering Force,
+then Eremite's Attack, hits a clump for earth and cracks all their
+armor as the enchantment goes. If Sand Shards is your only Dervish
+enchantment and its 4th hit ends it mid-cleave, the foes after it get
+no second +8.
+
 Each condition has a distinct mechanical identity, not just a different
 number:
 
@@ -461,6 +492,9 @@ while weakened. Two sources of weakness are one weakness, so it is
 never −2. Enfeeble (Necromancer, Curses) weakens one foe for 26 s;
 Enfeebling Blood (Necromancer, Curses, 1 energy and 17% of your health)
 weakens the target and every nearby foe for 13 s.
+Ebon Hawk (Elementalist, Earth Magic) weakens its foe for 13 s, and
+Stoning knocks a weakened foe down: either Necromancer skill, or the
+hawk, sets the stone up (#997).
 
 **Cracked Armor takes 20 armor, but never below 60** (#763, GW1). It is
 taken before any status adds armor, so a cracked caster at 60 loses
@@ -574,6 +608,10 @@ or block. A shot from a bow, an arrow attack skill or a thrown spear
 keeps it. Pin Down and Hunter's Shot are bow attacks: Pin Down cripples
 for 13 s, and Hunter's Shot (1 s to use) bleeds for 21 s, when the arrow
 hits; a block or a blind miss lands neither.
+Crippling Shot (Marksmanship elite, 10 energy, 2 s recharge, #1008)
+cannot be blocked and cripples for 10 s. Debilitating Shot (10 energy,
+10 s) drains 8 energy. Burning Arrow (elite, 10 energy, 5 s) hits 26
+harder and burns for 6 s. Each lands its rider only when the arrow hits.
 
 **Mantra of Recovery** (Mesmer elite stance, Fast Casting, 5 energy, 15 s
 recharge, #938) makes every spell you finish in the next 17 s recharge
@@ -592,11 +630,24 @@ disable your other attack skills for 3 s: that waits for disabled skills
 +42 damage, and a Deep Wound for 17 s if its target is not moving as the
 spear lands (#921).
 
+Five more Paragon spear attacks (#1030) build the bleed → cripple →
+Deep Wound line. Barbed Spear (2 adrenaline) bleeds its foe for 17 s.
+Maiming Spear (5 energy, 5 s) cripples a foe already Bleeding for 17 s,
+so Barbed Spear then Maiming Spear cripples, and one Barbed Spear alone
+does not. Merciless Spear (6 adrenaline) gives a Deep Wound for 17 s to
+a foe below 50% Health, counting the spear's own damage: a foe at 55%
+it drops to 45% is wounded. Stunning Strike (elite, 8 adrenaline) deals
++42, and Dazes for 9 s a foe suffering from any condition after it
+lands; a hex alone is not enough. Harrier's Toss (10 energy, 1 s, 10 s)
+deals +17, and 33 more on a foe that is moving, in one packet.
+
 **Moving** means walking during the previous tick: a held direction, a
 clicked point, an approach to attack or cast. Knocked down, in
 aftercast, dead or walking into a wall is not moving. Everyone's is read
 at the end of a tick, so it is one tick late and never depends on who
 acts first.
+Water Trident (#997) reads it the other way round: it knocks down a
+foe that _is_ moving as it lands.
 
 Spear of Lightning (Paragon spear attack, 5 energy, 6 s) deals +18, and
 the whole blow is lightning, the spear's damage too: armor against
@@ -680,7 +731,16 @@ in earshot a 50% chance to block attacks for 9 s (#956). It ends on an
 ally when one of that ally's attack skills hits, melee or thrown. A
 plain swing or arrow does not end it, and neither does an attack skill
 that misses or is blocked. Its block combines with any other as
-1 − ∏(1 − p): with Weapon of Warding it is 75%.
+1 − ∏(1 − p): with Weapon of Warding it is 75%. Song of Restoration
+(elite, Motivation, 10 energy, 1 s cast, 20 s recharge) lasts 10 s on
+each ally in earshot, the paragon included (#999). The next skill each
+uses heals them 97 (45 at Motivation 0), after that skill's own effects,
+and the song ends on them. Any skill completed counts, an attack skill
+once; a plain swing, or a skill interrupted or cancelled, does not. It
+is a heal, so Deep Wound cuts it. If it runs out, is removed or its
+bearer dies, nobody is healed. The paragon's own chant does not use up
+the song it just put on itself: its next skill does. In general, a
+status a skill puts on its own user never answers that same use.
 
 **Weapon spells** go on an ally's weapon, one at a time: a new one
 replaces the old, the same one included (#758). They are spells, so
@@ -751,8 +811,9 @@ it, and the weapon eases back to rest. No double strike on an attack
 skill, but **a scythe's attack skill cleaves** as the swing does (#977):
 it also strikes up to 2 foes adjacent to its target, nearest first, picked
 at the hit, and each foe struck rolls its own blind, block and crit and
-gets the skill's effects. A skill with its own area, or another weapon,
-does not cleave. Afterwards you swing at its foe, from a fresh
+gets the skill's effects. Eremite's Attack strikes every foe adjacent
+to its target while you have a Dervish enchantment (#1021). A skill
+with its own area, or another weapon, does not cleave. Afterwards you swing at its foe, from a fresh
 swing. Distracting Blow deals no damage: a hit only interrupts, and a
 miss does nothing. It has no attribute, as in GW1, so any warrior can
 use it and its numbers never scale.
@@ -868,7 +929,7 @@ its riders, so a blocked Distracting Blow interrupts nothing; an attack
 skill's cost and recharge are still spent. "block" floats over the
 target. Swift Chop is the exception that proves it: blocked, it still
 deals its flat damage and a 20 s Deep Wound. Spells are never blocked,
-and shields do not block, as in GW1. Wild Throw cannot be blocked at all.
+and shields do not block, as in GW1. Wild Throw and Crippling Shot cannot be blocked at all.
 
 Not modelled: evade.
 
@@ -909,6 +970,13 @@ and a Ranger 70 and 100. Damage halves for every 40 armor above 60:
 Fireball's 91 lands for about 46 on a Ranger. Types that are neither
 physical nor elemental get no typed bonus; base armor still applies.
 Armor penetration cuts the whole total, typed bonus included.
+
+A status can change the type of your attacks (#1021): under Staggering
+Force or Dust Cloak a scythe deals earth, so a Warrior meets it with 80
+armor, not 100, and a Ranger with 100, not 70. It is still an attack:
+blind, block, crits, adrenaline and attack riders are as before, but a
+Rune of Absorption and Mark of Pain, which answer physical damage, do
+not. A skill's own type, as Spear of Lightning's, wins over it.
 
 **Protective Spirit** (#936, Monk, Protection Prayers, 10 energy, ¼ s,
 5 s recharge) lasts 19 s on any ally: no single hit takes more than 10%
@@ -976,6 +1044,16 @@ not speed it. It knocks its foe down and strikes for 50 lightning.
 **Meteor** (Fire Magic, 5 energy, 10 overcast, 2 s, 30 s recharge) strikes
 its target and every foe adjacent to it for 91 fire and knocks each down,
 as the cast ends (#985).
+**Water Trident** (elite, Water Magic, 5 energy, 1 s, 3 s recharge) flies
+as fast as Lightning Orb at its target and up to two adjacent foes: 74
+cold to each, and a knockdown to each that is moving. **Searing
+Flames** (elite, Fire Magic, 15 energy, 1 s, 2 s recharge) falls on its
+target and every foe nearby it: a foe already Burning takes 82 fire, one
+that is not starts Burning for 6 s and takes nothing. Cast twice, it
+burns, then strikes. **Ebon Hawk** (Earth Magic, 10 energy, 1 s, 5 s
+recharge) flies as Fireball does: 70 earth and Weakness for 13 s.
+**Stoning** (15 energy, 1 s, 5 s recharge) flies the same: 93 earth, and
+a knockdown if its foe is weakened (#997).
 
 ## Primary attributes
 

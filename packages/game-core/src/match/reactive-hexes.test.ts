@@ -609,6 +609,15 @@ describe("Mark of Pain (#935)", () => {
     expect(damageTo(triggered(stepFor(match, 1), MARK_OF_PAIN), "m2")).toEqual([34]);
   });
 
+  it("an earth blow fires nothing: Staggering Force makes the axe's swing earth (#1021)", () => {
+    const match = marked();
+    get(match, "a").statuses.apply("staggering-force", 30, "a");
+    expect(match.requestAttack("a", "m")).toEqual({ ok: true });
+    const log = stepFor(match, 3);
+    expect(weaponHits(log)).toBeGreaterThanOrEqual(2);
+    expect(triggered(log, MARK_OF_PAIN)).toEqual([]);
+  });
+
   it("a blocked blow, a Fireball and bleeding fire nothing", () => {
     const blocked = marked();
     get(blocked, "m").statuses.apply("guardian", 30, "m");
