@@ -97,6 +97,24 @@ describe("equippableSkills", () => {
     expect(ids).not.toContain("ranger.broad-head-arrow");
   });
 
+  it("offers a Mesmer primary its four skills (#521)", () => {
+    const ids = equippableSkills(
+      stored({
+        primaryProfession: "mesmer",
+        attributes: [],
+        equipment: defaultBuildEquipment("mesmer"),
+      }),
+    ).map((s) => s.id);
+    expect(ids).toEqual(
+      expect.arrayContaining([
+        "mesmer.power-spike",
+        "mesmer.power-drain",
+        "mesmer.shatter-enchantment",
+        "mesmer.drain-enchantment",
+      ]),
+    );
+  });
+
   it("changes with the character's secondary profession", () => {
     const asRanger = equippableSkills(stored({ secondaryProfession: "ranger" })).map((s) => s.id);
     expect(asRanger).toContain("ranger.troll-unguent");

@@ -200,6 +200,24 @@ describe("StatusSet apply/remove", () => {
     const set = new StatusSet();
     expect(set.removeByCategory("hex", 3)).toEqual([]);
   });
+
+  it("removes the newest first, so a cheap one covers an older one (#521)", () => {
+    const set = new StatusSet();
+    set.apply("guardian", 10, "a");
+    set.apply("regeneration", 10, "a");
+    expect(set.removeByCategory("enchantment", 1)).toEqual(["regeneration"]);
+    expect(set.has("guardian")).toBe(true);
+  });
+
+  it("counts a re-application as the newest, whichever duration wins (#521)", () => {
+    for (const duration of [5, 20]) {
+      const set = new StatusSet();
+      set.apply("guardian", 10, "a");
+      set.apply("regeneration", 10, "a");
+      set.apply("guardian", duration, "a");
+      expect(set.removeByCategory("enchantment", 1), String(duration)).toEqual(["guardian"]);
+    }
+  });
 });
 
 describe("StatusSet stances, one at a time (#523)", () => {

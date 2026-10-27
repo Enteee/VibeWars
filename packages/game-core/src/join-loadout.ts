@@ -31,7 +31,7 @@ export const DEFAULT_SKILL_BAR: SkillBar = [
   "warrior.sever-artery-lite",
   "warrior.distracting-blow",
   "elementalist.armor-of-earth",
-  "monk.mend-affliction",
+  "monk.mend-condition",
   "necromancer.faintheartedness",
   "ranger.troll-unguent",
 ];
