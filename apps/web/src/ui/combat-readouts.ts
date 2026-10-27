@@ -75,6 +75,7 @@ export function logToneOf(kind: CombatEvent["kind"]): Exclude<LogTone, "divider"
     case "attack-unreachable":
     case "knocked-down":
     case "skill-disabled":
+    case "recharge-lengthened":
       return "control";
     case "death":
       return "death";
@@ -179,6 +180,8 @@ export function describeCombatEvent(
       return `${by} knocks down ${target} (${formatAmount(event.durationSeconds)} s)`;
     case "skill-disabled":
       return `${by} disables ${target}'s ${skillName(event.skillId) ?? event.skillId} for ${formatAmount(event.seconds)} s`;
+    case "recharge-lengthened":
+      return `${target}'s ${skillName(event.skillId) ?? event.skillId} takes ${formatAmount(event.seconds)} s longer to recharge`;
   }
 }
 

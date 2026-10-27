@@ -141,6 +141,30 @@ export interface SacrificeHealthEffect {
 }
 
 /**
+ * The *caster* loses `amount` health for each status of this profession
+ * an earlier `remove-status` of this use took off the target (#944), as
+ * Rend Enchantments' "for each Monk enchantment removed, you lose
+ * 55...31...25 Health". Not damage: never mitigated, and it can kill, as
+ * a sacrifice.
+ */
+export interface LoseHealthEffect {
+  readonly kind: "lose-health";
+  readonly amount: Magnitude;
+  readonly perRemovedOfProfession: ProfessionId;
+}
+
+/**
+ * Move up to `count` of the caster's conditions, newest first, onto the
+ * target, each with the time it had left on the caster (#944), as Plague
+ * Touch's. Each lands as any condition the caster put on: the longer
+ * duration wins.
+ */
+export interface TransferConditionsEffect {
+  readonly kind: "transfer-conditions";
+  readonly count: number;
+}
+
+/**
  * The caster gives the target some of its own health (#936), as Infuse
  * Health's "lose half your current health; target other ally is healed
  * for 100...129% of the amount you lost". The loss is
@@ -268,6 +292,17 @@ export interface DisableSkillEffect {
   readonly seconds: Magnitude;
 }
 
+/**
+ * The skill its target just used takes `seconds` longer to recharge
+ * (#949), as Diversion's "the next time target foe uses a skill, that
+ * skill takes an additional 47 seconds to recharge". Recharge, not a
+ * disable: what ends a recharge ends it. No skill just used: nothing.
+ */
+export interface LengthenRechargeEffect {
+  readonly kind: "lengthen-recharge";
+  readonly seconds: Magnitude;
+}
+
 /** How long "knocks down" lasts when a skill names no duration (GW1). */
 export const KNOCKDOWN_SECONDS = 2;
 
@@ -355,6 +390,8 @@ export type UnconditionalEffect =
   | EnergyLossEffect
   | LifeStealEffect
   | SacrificeHealthEffect
+  | LoseHealthEffect
+  | TransferConditionsEffect
   | GiveHealthEffect
   | ApplyStatusEffect
   | MaintainStatusEffect
@@ -365,7 +402,8 @@ export type UnconditionalEffect =
   | RechargeFasterEffect
   | SplashEffect
   | RechargeOthersEffect
-  | DisableSkillEffect;
+  | DisableSkillEffect
+  | LengthenRechargeEffect;
 
 export type SkillEffect = UnconditionalEffect | ConditionalEffect;
 
@@ -674,6 +712,11 @@ export interface SkillContext {
    * `resolveTargets`'.
    */
   readonly surroundings: Surroundings;
+  /**
+   * The skill the target just used, when a status's trigger answers that
+   * use (#949): what `lengthen-recharge` lengthens. Absent elsewhere.
+   */
+  readonly usedSkillId?: string | undefined;
 }
 
 /** Everyone in the match by id, where they stand (#885). */

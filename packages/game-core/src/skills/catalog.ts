@@ -1707,6 +1707,72 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  {
+    id: "ritualist.spirit-light-weapon",
+    name: "Spirit Light Weapon",
+    type: "weapon-spell",
+    elite: true,
+    profession: "ritualist",
+    attributeId: "ritualist.restoration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 10 seconds, target ally gains 5...21...25 Health per second and an
+    // additional 5...21...25 Health per second if that ally is within
+    // earshot of a Spirit": the 21 is the status's; there are no spirits
+    // yet (#467), so never the additional 21, as in GW1 with none up.
+    effects: [{ kind: "apply-status", statusId: "spirit-light-weapon", durationSeconds: 10 }],
+  },
+  {
+    id: "ritualist.weapon-of-quickening",
+    name: "Weapon of Quickening",
+    type: "weapon-spell",
+    elite: true,
+    profession: "ritualist",
+    attributeId: "ritualist.communing",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 5...21...25 seconds, target ally has a Weapon of Quickening, and
+    // Spells and Binding Rituals recharge 33% faster": 21 s, its rank-12
+    // value. There are no binding rituals yet (#467), so spells alone.
+    effects: [{ kind: "apply-status", statusId: "weapon-of-quickening", durationSeconds: 21 }],
+  },
+  {
+    id: "ritualist.weapon-of-aggression",
+    name: "Weapon of Aggression",
+    type: "weapon-spell",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.channeling-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 5...13...15 seconds, you attack 25% faster": 13 s, its rank-12
+    // value.
+    effects: [{ kind: "apply-status", statusId: "weapon-of-aggression", durationSeconds: 13 }],
+  },
 
   /* ---------------------------------------------------------------------- */
   /* An effect that depends on an earlier one (#521)                         */
@@ -2069,6 +2135,28 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     // "For 10 seconds, whenever target foe casts a spell, that foe takes
     // 35...119...140 damage." The damage is the hex's, at rank 12.
     effects: [{ kind: "apply-status", statusId: "backfire", durationSeconds: 10 }],
+  },
+  {
+    id: "mesmer.diversion",
+    name: "Diversion",
+    type: "hex",
+    elite: false,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 3,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 6 seconds, the next time target foe uses a skill, that skill
+    // takes an additional 10...47...56 seconds to recharge." The extra
+    // recharge is the hex's, at rank 12 (#949).
+    effects: [{ kind: "apply-status", statusId: "diversion", durationSeconds: 6 }],
   },
   {
     id: "mesmer.empathy",
@@ -3372,6 +3460,103 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       },
       { kind: "apply-status", statusId: "deep-freeze", durationSeconds: 10 },
     ],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Monk and Necromancer staples (#944)                                    */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "monk.patient-spirit",
+    name: "Patient Spirit",
+    type: "enchantment",
+    elite: false,
+    profession: "monk",
+    attributeId: "monk.healing-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 4,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 2 seconds ... Unless this enchantment ends prematurely, that
+    // ally is healed for 30...102...120 Health": the status's `expires`.
+    effects: [{ kind: "apply-status", statusId: "patient-spirit", durationSeconds: 2 }],
+  },
+  {
+    id: "monk.holy-veil",
+    name: "Holy Veil",
+    type: "enchantment",
+    elite: false,
+    profession: "monk",
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "While you maintain this enchantment, any hex cast on target ally
+    // take twice as long to cast. When Holy Veil ends, one hex is removed."
+    effects: [{ kind: "maintain-status", statusId: "holy-veil" }],
+  },
+  {
+    id: "necromancer.rend-enchantments",
+    name: "Rend Enchantments",
+    type: "spell",
+    elite: false,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Remove 5...8...9 enchantments from target foe. For each Monk
+    // Enchantment removed, you lose 55...31...25" Health: fewer, the
+    // better you are at Curses.
+    effects: [
+      { kind: "remove-status", category: "enchantment", count: 8 },
+      {
+        kind: "lose-health",
+        amount: { scaling: { attributeId: "necromancer.curses", atZero: 55, atTwelve: 31 } },
+        perRemovedOfProfession: "monk",
+      },
+    ],
+  },
+  {
+    id: "necromancer.plague-touch",
+    name: "Plague Touch",
+    type: "skill",
+    elite: false,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 0,
+    // "Target touched foe", as Throw Dirt's.
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Transfer 1...3...3 negative conditions and their remaining
+    // durations from yourself to target touched foe."
+    effects: [{ kind: "transfer-conditions", count: 3 }],
   },
 
   /* ---------------------------------------------------------------------- */

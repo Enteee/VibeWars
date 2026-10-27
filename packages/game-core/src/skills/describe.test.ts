@@ -365,6 +365,12 @@ describe("attack skills (#417)", () => {
     expect(describeStatus("mantra-of-recovery")).toBe("spells recharge 33% faster");
   });
 
+  it("words the Ritualist's weapon spells (#975)", () => {
+    expect(describeStatus("spirit-light-weapon")).toBe("+21 Health per second");
+    expect(describeStatus("weapon-of-quickening")).toBe("spells recharge 33% faster");
+    expect(describeStatus("weapon-of-aggression")).toBe("attacks 25% faster");
+  });
+
   it("words Spear of Lightning's type and penetration, and Leader's Comfort's per ally (#923)", () => {
     const at12 = (id: string, attributeId: string) =>
       describeSkill(skill(id), new Map([[attributeId, 12]])).effects.map(({ text }) => text);
@@ -374,6 +380,35 @@ describe("attack skills (#417)", () => {
     ]);
     expect(at12("paragon.leaders-comfort", "paragon.leadership")).toEqual([
       "Heals for 66, +18 Health for each ally in earshot (max 140)",
+    ]);
+  });
+
+  it("words Patient Spirit's expiry, Holy Veil's hexes, Rend's price and Plague Touch (#944)", () => {
+    const lines = (id: string) =>
+      describeSkill(skill(id), new Map([["necromancer.curses", 12]])).effects.map(
+        ({ text }) => text,
+      );
+    expect(lines("monk.patient-spirit")).toEqual([
+      "Applies Patient Spirit for 2s (when it expires: heals for 30)",
+    ]);
+    expect(
+      describeSkill(skill("monk.patient-spirit"), new Map([["monk.healing-prayers", 12]])).effects,
+    ).toEqual([
+      {
+        text: "Applies Patient Spirit for 2s (when it expires: heals for 102)",
+        magnitude: undefined,
+      },
+    ]);
+    expect(lines("monk.holy-veil")).toEqual([
+      "Maintained: −1 Energy regeneration while it lasts. " +
+        "Hexes cast on the bearer take 2× as long to cast. When it ends: removes 1 hex.",
+    ]);
+    expect(lines("necromancer.rend-enchantments")).toEqual([
+      "Removes 8 enchantments",
+      "You lose 31 health for each Monk enchantment removed",
+    ]);
+    expect(lines("necromancer.plague-touch")).toEqual([
+      "Moves up to 3 of your conditions to the target",
     ]);
   });
 
