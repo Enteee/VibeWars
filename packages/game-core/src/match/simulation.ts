@@ -1588,7 +1588,8 @@ export class MatchSimulation {
     // After the skill's own effects, as their own entries (#469): a spell
     // finished is Backfire's moment, an attack skill Empathy's. Any skill
     // used is Spiteful Spirit's (#935), and an attack skill twice over.
-    this.#fireTriggers(record, "bearer-uses-skill");
+    this.#fireTriggers(record, "bearer-uses-skill", skill.id);
+    this.#endOnUseSkill(record, skill);
     if (isSpell(skill.type)) {
       this.#fireTriggers(record, "bearer-casts-spell");
     }
@@ -1597,20 +1598,52 @@ export class MatchSimulation {
     }
   }
 
-  /** The bearer did `event` (#469): each status on it that answers fires. */
+  /**
+   * The bearer did `event` (#469): each status on it that answers fires.
+   * `usedSkillId` is the skill it used, on `bearer-uses-skill` (#949).
+   */
   #fireTriggers(
     record: ParticipantRecord,
     event: Exclude<StatusTriggerEvent, "bearer-gains-condition" | "ends">,
+    usedSkillId?: string,
   ): void {
-    this.#logFired(fireTriggers(record.combatant, event, this.#triggerContext()));
+    this.#logFired(fireTriggers(record.combatant, event, this.#triggerContext(usedSkillId)));
   }
 
-  #triggerContext(): TriggerContext {
+  /**
+   * After its triggers answered the use (#949): every status on the
+   * bearer that ends when it uses a skill, as Diversion, is gone, and
+   * logged against that skill.
+   */
+  #endOnUseSkill(record: ParticipantRecord, skill: Skill): void {
+    const ended = record.combatant.statuses.endOnBearerUseSkill();
+    if (ended.length > 0) {
+      this.#log.push({
+        tick: this.#tick,
+        atSeconds: this.#elapsedSeconds,
+        cause: "skill",
+        sourceId: record.id,
+        skillId: skill.id,
+        weaponId: undefined,
+        attributeId: undefined,
+        area: undefined,
+        doubleStrike: false,
+        events: ended.map((statusId) => ({
+          kind: "status-expired",
+          targetId: record.id,
+          statusId,
+        })),
+      });
+    }
+  }
+
+  #triggerContext(usedSkillId?: string): TriggerContext {
     return {
       sourceOf: (id) => this.#participants.get(id)?.combatant,
       rng: this.#rng,
       rules: this.#ruleset.combat,
       surroundings: this.#participants,
+      usedSkillId,
     };
   }
 

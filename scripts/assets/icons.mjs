@@ -344,6 +344,13 @@ const status = {
   ],
   // Hex: a sword point down, an attack that hurts its attacker (#469).
   empathy: ["hex", (c) => `<path d="M12 18.5v-10M8.5 8.5h7M12 8.5v-4" ${stroke(c, 2.5)}/>`],
+  // Hex: an hourglass, the next skill's recharge drawn out (#949).
+  diversion: [
+    "hex",
+    (c) =>
+      `<path d="M8 6h8M8 18h8" ${stroke(c, 2)}/>` +
+      `<path d="M9 6.5c0 3 6 3.5 6 5.5s-6 2.5-6 5.5M15 6.5c0 3-6 3.5-6 5.5s6 2.5 6 5.5" ${stroke(c, 1.6)}/>`,
+  ],
   // Hex: two links of a chain, the bond that heals its caster when it ends (#887).
   "parasitic-bond": [
     "hex",

@@ -123,6 +123,13 @@ export type CombatEvent =
       readonly skillId: string;
       readonly seconds: number;
     }
+  /** A skill `targetId` just used takes `seconds` longer to recharge (#949): Diversion's. */
+  | {
+      readonly kind: "recharge-lengthened";
+      readonly targetId: string;
+      readonly skillId: string;
+      readonly seconds: number;
+    }
   /**
    * A cast its caster gave up by moving (#279) or Cancel Action, Esc
    * (#300): paid for, never resolved, and not recharging. The caster's
@@ -761,6 +768,17 @@ export function applyEffect(
       return events;
     }
 
+    case "lengthen-recharge": {
+      const skillId = context.usedSkillId;
+      if (target === undefined || skillId === undefined) {
+        return events;
+      }
+      const seconds = resolveMagnitude(effect.seconds, caster);
+      target.cast.lengthenRecharge(skillId, seconds);
+      events.push({ kind: "recharge-lengthened", targetId: target.id, skillId, seconds });
+      return events;
+    }
+
     case "recharge-faster":
     case "recharge-others":
       // Nothing lands on anyone: the resolution reads it (`resolveSkillEffects`).
@@ -1017,6 +1035,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "resurrect":
     case "splash":
     case "disable-skill":
+    case "lengthen-recharge":
     case "if":
       return false;
   }

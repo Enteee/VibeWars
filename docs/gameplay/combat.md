@@ -192,6 +192,15 @@ deals only 13, and disables an interrupted skill for 20 s; the Warrior's
 which skills were disabled, and for how long; a skill already
 recharging for longer is not mentioned.
 
+**Diversion** (#949, Domination Magic hex, 10 energy, 3 s, 12 s
+recharge) is not a disable but recharge: for 6 s, the next skill its
+target uses takes 47 s longer to recharge, and the hex ends. A skill
+recharging already waits 47 s more; one that recharges at once waits 47
+s. Whatever ends a recharge, as Moebius Strike, ends this too. An
+interrupted or cancelled skill is not used, nor is a plain attack, so
+Diversion stays on; an attack skill is lengthened once. The log says
+which skill, and by how much.
+
 **Cry of Frustration** (#938, Domination Magic, 10 energy, ¼ s, 20 s
 recharge) only works on a foe using a skill, any skill. Then that foe is
 interrupted and takes 63 damage, and every foe in the area around it is

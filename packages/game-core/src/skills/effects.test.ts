@@ -1082,3 +1082,21 @@ describe("a knockdown prevented (#845)", () => {
     expect(target.statuses.has("fleeting-stability")).toBe(true);
   });
 });
+
+describe("lengthen-recharge (#949)", () => {
+  const effect = { kind: "lengthen-recharge", seconds: { flat: 47 } } as const;
+
+  it("lengthens the skill its target just used", () => {
+    const target = makeCombatant({ id: "target", team: 1 });
+    expect(applyEffect(effect, { ...context(undefined, target), usedSkillId: "skill.a" })).toEqual([
+      { kind: "recharge-lengthened", targetId: "target", skillId: "skill.a", seconds: 47 },
+    ]);
+    expect(target.cast.rechargeRemaining.get("skill.a")).toBe(47);
+  });
+
+  it("does nothing without a skill just used", () => {
+    const target = makeCombatant({ id: "target", team: 1 });
+    expect(applyEffect(effect, context(undefined, target))).toEqual([]);
+    expect(target.cast.rechargeRemaining.size).toBe(0);
+  });
+});

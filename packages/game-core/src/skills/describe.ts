@@ -254,7 +254,7 @@ export function describeStatus(id: string): string {
     );
     parts.push(`ends if the bearer becomes ${gained.join(" or ")}`);
   }
-  parts.push(...describeTriggers(definition.triggers));
+  parts.push(...describeTriggers(definition.triggers, definition.endsWhenBearerUsesSkill));
   return parts.length === 0 ? definition.name : parts.join(", ");
 }
 
@@ -293,9 +293,10 @@ const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
 
 /**
  * A status's triggers, those that do the same thing said once (#935):
- * Spiteful Spirit's "whenever it uses a skill or attacks".
+ * Spiteful Spirit's "whenever it uses a skill or attacks". One that ends
+ * when its bearer uses a skill answers only the next use (#949).
  */
-function describeTriggers(triggers: readonly StatusTrigger[]): string[] {
+function describeTriggers(triggers: readonly StatusTrigger[], once: boolean): string[] {
   const groups = new Map<string, { trigger: StatusTrigger; on: StatusTriggerEvent[] }>();
   for (const trigger of triggers) {
     const key = JSON.stringify([trigger.effects, trigger.target]);
@@ -311,10 +312,15 @@ function describeTriggers(triggers: readonly StatusTrigger[]): string[] {
       trigger,
       on.includes("ends")
         ? "when it ends"
-        : `whenever it ${on.map((event) => TRIGGER_WHEN[event]).join(" or ")}`,
+        : once && on.includes("bearer-uses-skill")
+          ? NEXT_SKILL
+          : `whenever it ${on.map((event) => TRIGGER_WHEN[event]).join(" or ")}`,
     ),
   );
 }
+
+/** The one use a status that ends on it answers (#949), as its tooltip says it. */
+const NEXT_SKILL = "the next time it uses a skill";
 
 /**
  * A status's answer to its bearer (#469): "takes 119 damage whenever it
@@ -334,6 +340,9 @@ function describeTrigger(trigger: StatusTrigger, when: string): string[] {
     }
     if (effect.kind === "heal" && trigger.target === "source") {
       return [`heals its caster for ${amount(effect.amount)} ${when}`];
+    }
+    if (effect.kind === "lengthen-recharge" && when === NEXT_SKILL) {
+      return [`the next skill it uses takes ${amount(effect.seconds)} seconds longer to recharge`];
     }
     if (effect.kind === "life-steal" && trigger.target === "bearer") {
       return [`its caster steals ${amount(effect.amount)} Health ${when}`];
@@ -590,6 +599,13 @@ function describeEffect(
           effect.which === "interrupted"
             ? `The interrupted skill is disabled for ${time}`
             : `That skill and all skills of the same attribute are disabled for ${time}`,
+        magnitude,
+      };
+    }
+    case "lengthen-recharge": {
+      const magnitude = describeMagnitude(effect.seconds, ranks);
+      return {
+        text: `That skill takes ${String(magnitude.current)} seconds longer to recharge`,
         magnitude,
       };
     }

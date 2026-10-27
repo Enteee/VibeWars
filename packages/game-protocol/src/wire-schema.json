@@ -46,6 +46,7 @@
     "deep-freeze",
     "deep-wound",
     "disease",
+    "diversion",
     "empathy",
     "faintheartedness",
     "fall-back",
@@ -356,6 +357,7 @@
                   { "literal": "deep-freeze" },
                   { "literal": "deep-wound" },
                   { "literal": "disease" },
+                  { "literal": "diversion" },
                   { "literal": "empathy" },
                   { "literal": "faintheartedness" },
                   { "literal": "fall-back" },
@@ -431,6 +433,7 @@
                   { "literal": "deep-freeze" },
                   { "literal": "deep-wound" },
                   { "literal": "disease" },
+                  { "literal": "diversion" },
                   { "literal": "empathy" },
                   { "literal": "faintheartedness" },
                   { "literal": "fall-back" },
@@ -503,6 +506,7 @@
                   { "literal": "deep-freeze" },
                   { "literal": "deep-wound" },
                   { "literal": "disease" },
+                  { "literal": "diversion" },
                   { "literal": "empathy" },
                   { "literal": "faintheartedness" },
                   { "literal": "fall-back" },
@@ -572,6 +576,7 @@
                   { "literal": "deep-freeze" },
                   { "literal": "deep-wound" },
                   { "literal": "disease" },
+                  { "literal": "diversion" },
                   { "literal": "empathy" },
                   { "literal": "faintheartedness" },
                   { "literal": "fall-back" },
@@ -671,6 +676,14 @@
         },
         {
           "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "recharge-lengthened" } },
+            { "name": "seconds", "optional": false, "type": "number" },
+            { "name": "skillId", "optional": false, "type": "string" },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "skill-disabled" } },
             { "name": "seconds", "optional": false, "type": "number" },
             { "name": "skillId", "optional": false, "type": "string" },
@@ -702,6 +715,7 @@
                   { "literal": "deep-freeze" },
                   { "literal": "deep-wound" },
                   { "literal": "disease" },
+                  { "literal": "diversion" },
                   { "literal": "empathy" },
                   { "literal": "faintheartedness" },
                   { "literal": "fall-back" },
@@ -762,6 +776,7 @@
                   { "literal": "deep-freeze" },
                   { "literal": "deep-wound" },
                   { "literal": "disease" },
+                  { "literal": "diversion" },
                   { "literal": "empathy" },
                   { "literal": "faintheartedness" },
                   { "literal": "fall-back" },
