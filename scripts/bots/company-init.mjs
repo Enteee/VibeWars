@@ -6,7 +6,8 @@
  * if it is already right, because this will be re-run whenever something
  * looks off and it must be safe to do that.
  *
- * Runs on the host, with the real credential. Four things:
+ * Runs on the host, with the real credential. Step 0 is the credential home
+ * (#864); then four things:
  *
  *  1. adopt (or create) the Projects v2 board and give its Status field the
  *     seven columns this company's workflow uses
@@ -23,6 +24,7 @@ import path from "node:path";
 import process from "node:process";
 import { createInterface } from "node:readline/promises";
 
+import { ensureHome } from "./creds.mjs";
 import { COLUMNS, columnsPlan } from "./hub-board.mjs";
 import { ROLES } from "./hub-policy.mjs";
 
@@ -98,6 +100,21 @@ function say(step, outcome) {
 
 console.log("");
 console.log(`Setting up the company on ${REPO}`);
+
+// Step 0 (#864): the credential directory, and the Telegram token in it. The
+// Claude and GitHub lines come with their own children of #855.
+const credentials = process.env.VIBEWARS_CREDENTIALS ?? "";
+if (credentials === "") {
+  console.error("VIBEWARS_CREDENTIALS is not set: run this through claude-llc-init.");
+  process.exit(2);
+}
+const home = ensureHome(credentials);
+for (const line of home.lines) {
+  say(line.step, line.outcome);
+}
+if (!home.ok) {
+  process.exit(1);
+}
 console.log("");
 
 /* 1. authentication -------------------------------------------------------- */
