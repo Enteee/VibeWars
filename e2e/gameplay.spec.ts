@@ -616,9 +616,11 @@ test("at the arena's bottom edge, an RMB drag down looks past it, and springs ba
   expect(await cameraY()).toBeLessThan(panned + 3);
   expect(panned).toBeGreaterThan(arena.height);
 
-  // Let go at the centre: the view is on you again.
+  // Let go at the centre: the view is on you again. RETURN_RATE (7/s)
+  // brings it within 3 px in about 0.65 s; a loaded runner needs more than
+  // 1 s to see it, and a pan that never returns still fails at 2 s (#876).
   await page.mouse.up({ button: "right" });
-  await expect.poll(cameraY, { timeout: 1_000 }).toBeLessThan(atWall + 3);
+  await expect.poll(cameraY, { timeout: 2_000 }).toBeLessThan(atWall + 3);
   expect(await cameraY()).toBeGreaterThan(atWall - 3);
 });
 
