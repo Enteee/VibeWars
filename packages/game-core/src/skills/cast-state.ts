@@ -26,10 +26,17 @@ export interface ActiveCast {
  */
 const AFTERCAST_EPSILON = 1e-9;
 
+/** A wait still running: seconds remaining, and the seconds it started with. */
+type Wait = readonly [remaining: number, total: number];
+
 export class CastState {
   readonly #ownerId: string;
   readonly #statuses: StatusSet;
   #activeCast: ActiveCast | undefined;
+  /** Each skill's recharge, and apart from it its disable (#914): `[remaining, total]`. */
+  readonly #recharge = new Map<string, Wait>();
+  readonly #disabled = new Map<string, Wait>();
+  /** The longer of the two, per skill: what the bar shows and readiness reads. */
   readonly #rechargeRemaining = new Map<string, number>();
   readonly #rechargeTotal = new Map<string, number>();
   #aftercastRemaining = 0;
@@ -67,12 +74,16 @@ export class CastState {
     return this.#queuedSlot;
   }
 
+  /**
+   * How long each skill still waits: its recharge or its disable (#914),
+   * whichever is longer, so a disabled skill looks like a recharging one.
+   */
   public get rechargeRemaining(): ReadonlyMap<string, number> {
     return this.#rechargeRemaining;
   }
 
   /**
-   * The duration each running recharge started with, keyed like
+   * The duration each running wait started with, keyed like
    * `rechargeRemaining`: what a recharge display measures progress
    * against, so a modified recharge still draws a true wipe (#152).
    */
@@ -148,32 +159,55 @@ export class CastState {
     this.#queuedSlot = undefined;
   }
 
+  /** Start `skillId`'s recharge; a disable it has runs on regardless (#914). */
   public startRecharge(skillId: string, rechargeSeconds: number): void {
     if (rechargeSeconds > 0) {
-      this.#rechargeRemaining.set(skillId, rechargeSeconds);
-      this.#rechargeTotal.set(skillId, rechargeSeconds);
+      this.#recharge.set(skillId, [rechargeSeconds, rechargeSeconds]);
+      this.#show(skillId);
     }
   }
 
-  /** `skillId` is ready again at once, as Moebius Strike makes it (#885). */
+  /**
+   * `skillId`'s recharge is over at once, as Moebius Strike makes it
+   * (#885). A disable is not a recharge: it keeps the skill waiting (#914).
+   */
   public endRecharge(skillId: string): void {
-    this.#rechargeRemaining.delete(skillId);
-    this.#rechargeTotal.delete(skillId);
+    this.#recharge.delete(skillId);
+    this.#show(skillId);
   }
 
   /**
    * Disable `skillId` for `seconds` (#914, GW1): the disable and the
-   * recharge run together, so the skill waits for the longer. A longer
-   * wait replaces remaining and total both, so the wipe draws a true
-   * fraction (#152). Returns whether the wait got longer.
+   * recharge run together, apart, so the skill waits for the longer, and
+   * nothing that ends a recharge ends a disable. A longer disable already
+   * running stays. Returns whether the wait got longer: under a longer
+   * recharge it did not, though the disable is kept, for when something
+   * ends that recharge early.
    */
   public disable(skillId: string, seconds: number): boolean {
-    if (seconds <= (this.#rechargeRemaining.get(skillId) ?? 0)) {
-      return false;
+    const waiting = this.#rechargeRemaining.get(skillId) ?? 0;
+    if (seconds > (this.#disabled.get(skillId)?.[0] ?? 0)) {
+      this.#disabled.set(skillId, [seconds, seconds]);
+      this.#show(skillId);
     }
-    this.#rechargeRemaining.set(skillId, seconds);
-    this.#rechargeTotal.set(skillId, seconds);
-    return true;
+    return seconds > waiting;
+  }
+
+  /** Put the longer of `skillId`'s recharge and disable where readers look. */
+  #show(skillId: string): void {
+    const recharge = this.#recharge.get(skillId);
+    const disabled = this.#disabled.get(skillId);
+    const longer =
+      recharge === undefined || (disabled !== undefined && disabled[0] > recharge[0])
+        ? disabled
+        : recharge;
+    if (longer === undefined) {
+      this.#rechargeRemaining.delete(skillId);
+      this.#rechargeTotal.delete(skillId);
+    } else {
+      this.#rechargeRemaining.set(skillId, longer[0]);
+      this.#rechargeTotal.set(skillId, longer[1]);
+    }
   }
 
   /**
@@ -184,14 +218,18 @@ export class CastState {
    * resolving it counts down from the next call.
    */
   public advance(dt: number): ActiveCast | undefined {
-    for (const [skillId, remaining] of this.#rechargeRemaining) {
-      const next = remaining - dt;
-      if (next <= 0) {
-        this.#rechargeRemaining.delete(skillId);
-        this.#rechargeTotal.delete(skillId);
-      } else {
-        this.#rechargeRemaining.set(skillId, next);
+    for (const waits of [this.#recharge, this.#disabled]) {
+      for (const [skillId, [remaining, total]] of waits) {
+        const next = remaining - dt;
+        if (next <= 0) {
+          waits.delete(skillId);
+        } else {
+          waits.set(skillId, [next, total]);
+        }
       }
+    }
+    for (const skillId of [...this.#rechargeRemaining.keys()]) {
+      this.#show(skillId);
     }
 
     if (this.#aftercastRemaining > 0) {

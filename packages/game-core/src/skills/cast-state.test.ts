@@ -162,6 +162,26 @@ describe("CastState disable (#914)", () => {
     state.advance(6);
     expect(state.rechargeRemaining.has("skill.a")).toBe(false);
   });
+
+  it("keeps the disable when the recharge ends early, or restarts shorter", () => {
+    const state = new CastState("caster", new StatusSet());
+    state.startRecharge("skill.a", 5);
+    state.disable("skill.a", 20);
+    state.endRecharge("skill.a");
+    expect(state.rechargeRemaining.get("skill.a")).toBe(20);
+    state.startRecharge("skill.a", 3);
+    state.advance(1);
+    expect(state.rechargeRemaining.get("skill.a")).toBe(19);
+    expect(state.rechargeTotal.get("skill.a")).toBe(20);
+  });
+
+  it("keeps a disable a longer recharge hides, for when that recharge ends early", () => {
+    const state = new CastState("caster", new StatusSet());
+    state.startRecharge("skill.a", 30);
+    expect(state.disable("skill.a", 10)).toBe(false);
+    state.endRecharge("skill.a");
+    expect(state.rechargeRemaining.get("skill.a")).toBe(10);
+  });
 });
 
 describe("aftercast and the queue (#317)", () => {
