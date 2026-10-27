@@ -31,7 +31,7 @@ async function openRelayOptions(page: Page): Promise<void> {
   await expect(page.locator(".relay-section")).toBeVisible();
 }
 
-test("(1) a relay link asks first; Use saves it, Options shows its host, Forget leaves None", async ({
+test("(1) a relay link asks first; Use sets it for the visit only, Options shows its host, Forget leaves None", async ({
   page,
 }) => {
   await page.goto(link(RELAY));
@@ -41,9 +41,11 @@ test("(1) a relay link asks first; Use saves it, Options shows its host, Forget 
   expect(new URL(page.url()).hash).toBe("");
   expect(await savedRelay(page)).toBeNull();
 
+  // The e2e build is the Pages build: on a shared origin nothing is stored.
+  await expect(prompt).toContainText("Kept for this visit only");
   await prompt.getByRole("button", { name: "Use" }).click();
   await expect(prompt).toHaveCount(0);
-  expect(JSON.parse((await savedRelay(page)) ?? "null")).toEqual(RELAY);
+  expect(await savedRelay(page)).toBeNull();
 
   await openRelayOptions(page);
   await expect(page.locator(".relay-current")).toHaveText("Relay: turn.example");
@@ -88,4 +90,23 @@ test("(4) framed by another page, a relay link asks nothing: it says to open it 
   ).toBeVisible();
   await expect(game.getByRole("dialog", { name: "Relay link" })).toHaveCount(0);
   expect(await savedRelay(page)).toBeNull();
+});
+
+test("(5) on a shared origin a reload forgets the relay, and one another site planted is never read", async ({
+  page,
+}) => {
+  await page.goto(link(RELAY));
+  await page
+    .getByRole("dialog", { name: "Relay link" })
+    .getByRole("button", { name: "Use" })
+    .click();
+  await page.evaluate(
+    ({ key, value }) => {
+      localStorage.setItem(key, value);
+    },
+    { key: RELAY_KEY, value: JSON.stringify({ ...RELAY, urls: ["turn:planted.example"] }) },
+  );
+  await page.reload();
+  await openRelayOptions(page);
+  await expect(page.locator(".relay-current")).toHaveText("Relay: None");
 });

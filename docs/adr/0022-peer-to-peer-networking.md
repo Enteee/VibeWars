@@ -74,7 +74,11 @@ a host-authoritative star, not lockstep and not a mesh.**
   page asks before it uses it. It goes to Trystero as `turnConfig`, next
   to its STUN, so ICE still prefers a direct path and only pairs that
   cannot connect directly go through it. One side of a pair having it is
-  enough. While one is saved, the lobby and queue screens say so.
+  enough. While one is set, the lobby and queue screens say so. Only a
+  build at its origin's root saves it; on GitHub Pages, whose origin
+  every other `*.github.io` site of the owner shares (SECURITY.md), it
+  lasts for the visit, so no other site can read the credential or plant
+  a relay that skips Use.
 - **A relay sees who plays.** Whoever runs it sees the IP address and the
   traffic timing of every player who connects through it, not the content
   (DTLS). The credential never reaches peers: they see only the relay's

@@ -66,8 +66,8 @@ and the notice the joiner was shown. It exits 0 only if every pair joined.
 at the address it prints; `--pairs` picks pairs. Browsers come from
 `VIBEWARS_CHROMIUM` and `VIBEWARS_FIREFOX`, as for the music stress run.
 
-`--turn <invite-link-or-json>` gives both sides a TURN relay (#972), saved
-in each page's storage before it loads, as _Use_ saves it.
+`--turn <invite-link-or-json>` gives both sides a TURN relay (#972): each
+page opens it as an invite link and presses _Use_.
 `--relay-only` also forces `iceTransportPolicy: "relay"` on every peer
 connection, a seam in the script only: a join then succeeds only through
 the relay, and `peers` shows `relay` candidates alone.

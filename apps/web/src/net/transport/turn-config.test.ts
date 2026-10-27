@@ -7,6 +7,7 @@ import {
   parseTurnFragment,
   relayHosts,
   saveTurnConfig,
+  savesRelay,
   validateTurnConfig,
   type TurnConfig,
 } from "./turn-config.js";
@@ -141,5 +142,38 @@ describe("the saved relay (#972)", () => {
     expect(loadTurnConfig()).toEqual(RELAY);
     forgetTurnConfig();
     expect(loadTurnConfig()).toBeUndefined();
+  });
+});
+
+describe("the relay on a sub-path, as on GitHub Pages (#972)", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+    vi.resetModules();
+  });
+
+  it("is saved only by a build at the origin's root", () => {
+    expect(savesRelay("/")).toBe(true);
+    expect(savesRelay("/VibeWars/")).toBe(false);
+    expect(savesRelay("/VibeWars/next/")).toBe(false);
+  });
+
+  it("lasts for the visit, never touches storage, and ignores a relay another site planted", async () => {
+    vi.stubEnv("BASE_URL", "/VibeWars/next/");
+    vi.resetModules();
+    const pages = await import("./turn-config.js");
+    const storage = memoryStorage();
+    storage.setItem("vibewars/VibeWars/next.turn-relay", JSON.stringify(RELAY));
+    vi.stubGlobal("localStorage", storage);
+
+    expect(pages.RELAY_IS_SAVED).toBe(false);
+    expect(pages.loadTurnConfig()).toBeUndefined();
+    const own = { ...RELAY, credential: "own" };
+    pages.saveTurnConfig(own);
+    expect(pages.loadTurnConfig()).toEqual(own);
+    expect(storage.getItem("vibewars/VibeWars/next.turn-relay")).toBe(JSON.stringify(RELAY));
+    pages.forgetTurnConfig();
+    expect(pages.loadTurnConfig()).toBeUndefined();
+    expect(storage.items.size).toBe(1);
   });
 });

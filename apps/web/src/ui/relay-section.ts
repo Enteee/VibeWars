@@ -2,6 +2,7 @@ import {
   encodeTurnFragment,
   forgetTurnConfig,
   loadTurnConfig,
+  RELAY_IS_SAVED,
   relayHosts,
   saveTurnConfig,
   validateTurnConfig,
@@ -9,6 +10,7 @@ import {
 } from "../net/transport/turn-config.js";
 import { button, h, shareLine, toast } from "./kit.js";
 import type { OptionsSection } from "./options-sections.js";
+import { RELAY_VISIT_ONLY } from "./relay-prompt.js";
 
 /**
  * The Relay (TURN) section of Options (#972): the relay the player brought,
@@ -47,6 +49,10 @@ function mountRelay(container: HTMLElement): () => void {
     ),
   );
 
+  if (!RELAY_IS_SAVED) {
+    panel.append(h("p", "screen-subtitle relay-visit-only", RELAY_VISIT_ONLY));
+  }
+
   const current = h("div", "relay-current");
   const field = (label: string, input: HTMLInputElement): HTMLElement => {
     const wrap = h("label", "field");
@@ -82,7 +88,7 @@ function mountRelay(container: HTMLElement): () => void {
       return;
     }
     saveTurnConfig(config);
-    toast("Saved");
+    toast(RELAY_IS_SAVED ? "Saved" : "Set for this visit");
     paint();
   });
   const copy = button("Copy invite link", "relay-copy", () => {

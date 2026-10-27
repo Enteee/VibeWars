@@ -29,8 +29,8 @@
  *   --timeout <s>    how long a join may take before it counts as failed
  *                    (default 45, past the client's own timeout)
  *   --turn <link>    a TURN relay (#972) for both sides, as an invite link
- *                    (`…#turn=…`) or its JSON: written into each page's
- *                    localStorage before load, as Use or Options saves it
+ *                    (`…#turn=…`) or its JSON: each page opens it as an
+ *                    invite link and presses Use
  *   --relay-only     force `iceTransportPolicy: "relay"` on every peer
  *                    connection, so a join succeeds only through the relay
  *                    and `peers` shows `relay` candidates alone. A seam in
@@ -260,22 +260,10 @@ async function openSide(kind, url) {
   page.on("pageerror", (error) => {
     watch.logs.push(`pageerror: ${error.message}`);
   });
-  // The relay as Use saves it, under the namespace the page's path gives
-  // its storage (`storageNamespace` in the client).
-  const relay =
-    TURN === undefined
-      ? null
-      : {
-          key: `vibewars${new URL(url).pathname.replace(/\/$/, "")}.turn-relay`,
-          value: JSON.stringify(TURN),
-        };
   // Every peer connection the page makes, its states and the types of
   // the candidates it gathered.
   await page.addInitScript(
-    ({ relay, relayOnly }) => {
-      if (relay !== null) {
-        window.localStorage.setItem(relay.key, relay.value);
-      }
+    ({ relayOnly }) => {
       /** @type {{ ice: string, connection: string, candidates: string[] }[]} */
       const seen = [];
       Object.assign(window, { p2pSmokePeers: seen });
@@ -308,9 +296,20 @@ async function openSide(kind, url) {
       }
       Object.assign(window, { RTCPeerConnection: Watched });
     },
-    { relay, relayOnly: RELAY_ONLY },
+    { relayOnly: RELAY_ONLY },
   );
-  await page.goto(url);
+  if (TURN === undefined) {
+    await page.goto(url);
+  } else {
+    // As a player takes a relay: its invite link, then Use. A build on a
+    // sub-path keeps it for the visit only, so nothing could be seeded.
+    const fragment = Buffer.from(JSON.stringify(TURN)).toString("base64url");
+    await page.goto(`${url}#turn=${fragment}`);
+    await page
+      .getByRole("dialog", { name: "Relay link" })
+      .getByRole("button", { name: "Use" })
+      .click();
+  }
   await page.locator(".screen-menu").waitFor();
   return { page, watch, close: () => context.close() };
 }
