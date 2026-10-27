@@ -1807,13 +1807,16 @@ export class MatchSimulation {
     const riders = (effects: Skill["effects"]): CombatEvent[] =>
       skillHit === undefined || attacker === undefined
         ? []
-        : applySkillEffects({
-            skill: { ...skillHit.skill, effects },
-            caster: attacker.combatant,
-            targets: [target.combatant],
-            rng: this.#rng,
-            rules: this.#ruleset.combat,
-          });
+        : applySkillEffects(
+            {
+              skill: { ...skillHit.skill, effects },
+              caster: attacker.combatant,
+              targets: [target.combatant],
+              rng: this.#rng,
+              rules: this.#ruleset.combat,
+            },
+            events,
+          );
     let blocked = false;
     if (!this.#reaches(projectile, target)) {
       events.push({ kind: "attack-dodged", targetId: target.id });
