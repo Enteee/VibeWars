@@ -674,8 +674,23 @@ specific killer needs damage-source tracking that does not exist yet,
 and inventing an attribution would be a plausible-looking lie in the
 scoreboard.
 
-A dead player respawns at a spawn point of their own team after 8
-seconds, at full health and energy, with all statuses cleared.
+What death costs, and how the dead come back, are properties of the
+match rules, set per mode as GW1 sets them (#843). Today's match is
+GW1's Kill Count: a dead player **respawns** at a spawn point of their
+own team after 8 seconds, at full health and energy, with all statuses
+cleared, and there is **no death penalty**. A `"resurrection-only"`
+match has no respawn: the dead stay corpses until resurrected, or the
+match ends.
+
+With the death penalty on, each player has a **morale** between −60%
+and +10%, starting at 0. A death takes 15%, down to −60%, unless it came
+less than 5 s after a resurrection. Every death gives each living
+member of the other team with negative morale 2% back, up to 0; a
+morale boost adds to a whole team, dead or alive, up to +10%. Morale
+scales the base maximum health and energy, before equipment: at −15%, a
+base of 500 health is 425, plus what runes add. It lasts through a
+respawn. Your HUD shows it next to the health bar ("−15%"), and nothing
+at 0.
 
 A Monk can bring them back sooner (#812). **Restore Life** is a touch
 spell aimed at an ally's corpse: right click the body to target it (the

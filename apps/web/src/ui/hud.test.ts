@@ -15,6 +15,7 @@ import {
   formatClock,
   isAttackingTarget,
   lostHealthPercent,
+  moraleLabel,
   muteButtonState,
   skillSlotHtml,
   castRowSkill,
@@ -44,6 +45,7 @@ function player(fields: Partial<PlayerSnapshot>): PlayerSnapshot {
     energy: 20,
     maxEnergy: 50,
     overcast: 0,
+    morale: 0,
     armor: 60,
     weaponId: undefined,
     offhandId: undefined,
@@ -74,6 +76,15 @@ describe("targetHealthPercent (#484)", () => {
 
   it("is of the current maximum, which can shrink", () => {
     expect(targetHealthPercent(player({ health: 200, maxHealth: 400 }))).toBe(50);
+  });
+});
+
+describe("moraleLabel (#843)", () => {
+  it("shows the death penalty and a boost as GW1 does, and nothing at 0", () => {
+    expect(moraleLabel(-15)).toBe("−15%");
+    expect(moraleLabel(-60)).toBe("−60%");
+    expect(moraleLabel(10)).toBe("+10%");
+    expect(moraleLabel(0)).toBeUndefined();
   });
 });
 
@@ -240,6 +251,7 @@ describe("targetHintDismissed", () => {
     energy: 20,
     maxEnergy: 50,
     overcast: 0,
+    morale: 0,
     armor: 60,
     weaponId: undefined,
     offhandId: undefined,
@@ -324,6 +336,7 @@ describe("isAttackingTarget", () => {
     energy: 20,
     maxEnergy: 50,
     overcast: 0,
+    morale: 0,
     armor: 60,
     weaponId: undefined,
     offhandId: undefined,
@@ -427,6 +440,7 @@ describe("targetProfessionIcons (#281)", () => {
     energy: 20,
     maxEnergy: 50,
     overcast: 0,
+    morale: 0,
     armor: 60,
     weaponId: undefined,
     offhandId: undefined,

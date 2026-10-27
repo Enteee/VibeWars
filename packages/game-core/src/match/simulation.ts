@@ -12,9 +12,15 @@ import type { Segment } from "../geometry.js";
 import { AREA_ADJACENT, RANGE_SPIRIT } from "../distances.js";
 import {
   addKill,
+  DEATH_PENALTY_PERCENT,
+  DP_GRACE_AFTER_RES_SECONDS,
   emptyScore,
   evaluateMatch,
+  KILL_MORALE_PERCENT,
   MATCH_IN_PROGRESS,
+  MORALE_CEILING,
+  MORALE_FLOOR,
+  moraleMaximum,
   type MatchOutcome,
   type MatchPhase,
   type MatchRules,
@@ -72,6 +78,7 @@ import { resolveTargets } from "../skills/targeting.js";
 import {
   advanceStatuses,
   effectiveActivationSeconds,
+  effectiveMaxHealth,
   naturalHealthPips,
   moveSpeedMultiplier,
   netPips,
@@ -263,6 +270,14 @@ interface ParticipantRecord extends Participant {
   walkLeast: number;
   /** Whether `walkGoal` is settled: pulled onto a spot a body fits on, with a way there. */
   walkSettled: boolean;
+  /**
+   * Maximum health and energy before morale (#843): the participant's,
+   * or its loadout's since the last `rearm`.
+   */
+  resolvedMaxHealth: number;
+  resolvedMaxEnergy: number;
+  /** Match time of the last resurrection (#812); `-Infinity` for none. */
+  resurrectedAtSeconds: number;
 }
 
 /**
@@ -388,6 +403,12 @@ export class MatchSimulation {
    * logged, and the gain reads after the death.
    */
   #reaped: CombatLogEntry[] = [];
+  /**
+   * The team of every death this step with `deathPenalty` on (#843): its
+   * foes' +2 morale waits for the end of the step, so nobody who died in
+   * it gains.
+   */
+  #moraleKills: number[] = [];
 
   public constructor(options: MatchSimulationOptions) {
     this.#ruleset = options.ruleset ?? MINIMAL_GW_INSPIRED_PVP_V1;
@@ -483,6 +504,9 @@ export class MatchSimulation {
       walkStalledSeconds: 0,
       walkLeast: Number.POSITIVE_INFINITY,
       walkSettled: false,
+      resolvedMaxHealth: spec.maxHealth ?? this.#ruleset.combat.baseHealth,
+      resolvedMaxEnergy: spec.maxEnergy ?? this.#ruleset.combat.baseEnergy,
+      resurrectedAtSeconds: Number.NEGATIVE_INFINITY,
     };
     this.#participants.set(spec.id, record);
     return record;
@@ -524,6 +548,9 @@ export class MatchSimulation {
       maxEnergy: loadout.maxEnergy,
       baseEnergyPips: loadout.baseEnergyPips,
     });
+    record.resolvedMaxHealth = loadout.maxHealth;
+    record.resolvedMaxEnergy = loadout.maxEnergy;
+    this.#setMorale(record, before.morale);
     record.combatant.health = record.combatant.maxHealth * fraction;
     record.combatant.dead = before.dead;
     record.combatant.soulReapingTriggers = before.soulReapingTriggers;
@@ -1008,6 +1035,7 @@ export class MatchSimulation {
     }
 
     this.#spreadStatuses();
+    this.#awardKillMorale();
 
     const log = this.#log.concat(this.#reaped);
     this.#log = [];
@@ -2054,6 +2082,7 @@ export class MatchSimulation {
         this.#clearChainMarks(victim);
         emptyAdrenaline(victim.combatant);
         victim.respawnInSeconds = this.#respawnSeconds(victim);
+        this.#deathPenalty(victim);
         this.#reapSoul(victim);
         this.recordDeath(victim.combatant.team);
       }
@@ -2150,20 +2179,88 @@ export class MatchSimulation {
       if (record !== undefined) {
         record.respawnInSeconds = 0;
         record.outOfCombatSeconds = 0;
+        record.resurrectedAtSeconds = this.#elapsedSeconds;
       }
     }
   }
 
   /**
    * How long `record` stays dead: its own `on-death` reset if it has one,
-   * else the match rules'. Without match rules nobody respawns: infinity
-   * never counts down to 0.
+   * else the match rules'. Without match rules, or under
+   * `"resurrection-only"` (#843), nobody respawns: infinity never counts
+   * down to 0.
    */
   #respawnSeconds(record: ParticipantRecord): number {
     if (record.spec.reset?.kind === "on-death") {
       return record.spec.reset.afterSeconds;
     }
-    return this.#matchRules?.respawnSeconds ?? Number.POSITIVE_INFINITY;
+    if (this.#matchRules?.deathRule !== "respawn") {
+      return Number.POSITIVE_INFINITY;
+    }
+    return this.#matchRules.respawnSeconds;
+  }
+
+  /**
+   * The death penalty (#843, GW1): with `deathPenalty` on, `victim` loses
+   * 15% morale, down to −60%, unless it was resurrected less than 5 s ago;
+   * its foes' +2% waits for the end of the step.
+   */
+  #deathPenalty(victim: ParticipantRecord): void {
+    if (this.#matchRules?.deathPenalty !== true) {
+      return;
+    }
+    this.#moraleKills.push(victim.combatant.team);
+    if (this.#elapsedSeconds - victim.resurrectedAtSeconds < DP_GRACE_AFTER_RES_SECONDS) {
+      return;
+    }
+    this.#setMorale(
+      victim,
+      Math.max(MORALE_FLOOR, victim.combatant.morale - DEATH_PENALTY_PERCENT),
+    );
+  }
+
+  /**
+   * Every death this step gives each living foe in the death penalty 2%
+   * back, up to 0 (#843): a kill never boosts.
+   */
+  #awardKillMorale(): void {
+    for (const team of this.#moraleKills) {
+      for (const record of this.#participants.values()) {
+        const { combatant } = record;
+        if (combatant.team !== team && !combatant.dead && combatant.morale < 0) {
+          this.#setMorale(record, Math.min(0, combatant.morale + KILL_MORALE_PERCENT));
+        }
+      }
+    }
+    this.#moraleKills = [];
+  }
+
+  /**
+   * A morale boost (GvG's flag stand, HA's altar): `amount` percent to
+   * every member of `team`, dead or alive, up to +10%. Not capped at 0,
+   * so it lifts a death penalty too.
+   */
+  public moraleBoost(team: number, amount: number): void {
+    for (const record of this.#participants.values()) {
+      if (record.combatant.team === team) {
+        this.#setMorale(record, Math.min(MORALE_CEILING, record.combatant.morale + amount));
+      }
+    }
+  }
+
+  /**
+   * Set `record`'s morale and the maxima that follow it (GW1: on the base,
+   * before upgrades). A drop clamps health and energy to the new
+   * ceilings; a rise leaves them where they are.
+   */
+  #setMorale(record: ParticipantRecord, morale: number): void {
+    const { combatant } = record;
+    const { baseHealth, baseEnergy } = this.#ruleset.combat;
+    combatant.morale = morale;
+    combatant.maxHealth = moraleMaximum(baseHealth, record.resolvedMaxHealth, morale);
+    combatant.maxEnergy = moraleMaximum(baseEnergy, record.resolvedMaxEnergy, morale);
+    combatant.health = Math.min(combatant.health, effectiveMaxHealth(combatant));
+    combatant.energy = Math.max(0, Math.min(combatant.energy, effectiveMaxEnergy(combatant)));
   }
 
   /** Whether `record`'s reset policy, other than `on-death`, calls for a reset now. */
@@ -2311,11 +2408,13 @@ export class MatchSimulation {
    * the starting health, full energy, no adrenaline, nothing active, any
    * cast dropped, at spawn. Recharges carry on, as they would in a match.
    * A respawn keeps its overcast and fills only to the ceiling it leaves,
-   * as GW1 keeps it through death; a reset clears it (#461).
+   * as GW1 keeps it through death; a reset clears it (#461), and morale
+   * with it, maxima and all (#843).
    */
   #reset(record: ParticipantRecord, why: "respawn" | "reset"): void {
     if (why === "reset") {
       record.combatant.overcast = 0;
+      this.#setMorale(record, 0);
     }
     record.combatant.dead = false;
     record.combatant.health = record.combatant.maxHealth * (record.spec.startHealthFraction ?? 1);
@@ -2356,6 +2455,7 @@ export class MatchSimulation {
       energy: spec.maxEnergy ?? this.#ruleset.combat.baseEnergy,
       maxEnergy: spec.maxEnergy ?? this.#ruleset.combat.baseEnergy,
       overcast: 0,
+      morale: 0,
       baseEnergyPips: spec.baseEnergyPips ?? 0,
       adrenaline: adrenalinePools(spec.skillBar),
       attributeRanks: spec.attributeRanks,

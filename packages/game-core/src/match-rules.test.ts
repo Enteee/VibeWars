@@ -8,7 +8,13 @@ import {
   type MatchRules,
 } from "./match-rules.js";
 
-const RULES: MatchRules = { scoreToWin: 3, timeLimitSeconds: 60, respawnSeconds: 5 };
+const RULES: MatchRules = {
+  scoreToWin: 3,
+  timeLimitSeconds: 60,
+  deathRule: "respawn",
+  respawnSeconds: 5,
+  deathPenalty: false,
+};
 
 describe("emptyScore / addKill", () => {
   it("starts every team at zero", () => {

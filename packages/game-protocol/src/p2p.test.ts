@@ -9,7 +9,9 @@ import {
   MAX_WIRE_PINGS,
   MAX_WIRE_PROJECTILES,
   MAX_WIRE_RADIUS,
+  MAX_WIRE_MORALE,
   MAX_WIRE_PIPS,
+  MIN_WIRE_MORALE,
   MAX_WIRE_RANK,
   MAX_WIRE_RANKS,
   MAX_WIRE_SLOTS,
@@ -120,6 +122,7 @@ const player: WirePlayer = {
   energy: 25,
   maxEnergy: 30,
   overcast: 5,
+  morale: -15,
   armor: 60,
   weaponId: "staff",
   offhandId: null,
@@ -558,6 +561,13 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
         parseWireSnapshotPart,
         { ...snapshot, players: [{ ...player, [field]: value }] },
       ]),
+  ),
+  ...[undefined, 2.5, MAX_WIRE_MORALE + 1, MIN_WIRE_MORALE - 1, "-15"].map(
+    (value): [string, (value: unknown) => unknown, unknown] => [
+      `snapshot with a player's morale ${String(value)} (#843)`,
+      parseWireSnapshotPart,
+      { ...snapshot, players: [{ ...player, morale: value }] },
+    ],
   ),
   [
     "snapshot with a player missing knockdownRemaining (#545)",
