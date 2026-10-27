@@ -40,8 +40,8 @@ const push = (role, argv, employee = role) => authorize(role, { kind: "push", ar
 const review = (role, argv) => authorize(role, { kind: "review", argv });
 
 describe("the roster", () => {
-  it("is the eight roles, and nothing else is a role", () => {
-    expect(ROLES).toHaveLength(8);
+  it("is the nine roles, and nothing else is a role", () => {
+    expect(ROLES).toHaveLength(9);
     expect(gh("developer-1", ["issue", "list"])).toMatchObject({ allow: false });
     expect(gh("intern", ["issue", "list"])).toMatchObject({ allow: false });
     expect(gh("", ["issue", "list"])).toMatchObject({ allow: false });
@@ -736,10 +736,11 @@ describe("company hire and fire", () => {
 });
 
 describe("company load (#747)", () => {
-  it("is the manager's only, takes no words, and no hat lends it", () => {
+  it("is the manager's and the business-analyst's only, takes no words, and no hat lends it", () => {
     expect(authorize("manager", { kind: "load", argv: [] })).toEqual({ allow: true });
+    expect(authorize("business-analyst", { kind: "load", argv: [] })).toEqual({ allow: true });
     expect(authorize("manager", { kind: "load", argv: ["x"] })).toMatchObject({ allow: false });
-    for (const role of ROLES.filter((r) => r !== "manager")) {
+    for (const role of ROLES.filter((r) => r !== "manager" && r !== "business-analyst")) {
       expect(authorize(role, { kind: "load", argv: [] }), role).toMatchObject({ allow: false });
     }
     expect(
@@ -843,9 +844,11 @@ describe("board reads", () => {
     }
   });
 
-  it("lets every role read code-scanning alerts (#184)", () => {
+  it("lets every role but the business-analyst read code-scanning alerts (#184, #893)", () => {
     for (const role of ROLES) {
-      expect(authorize(role, { kind: "alerts", argv: ["--pr", "183"] }).allow, role).toBe(true);
+      expect(authorize(role, { kind: "alerts", argv: ["--pr", "183"] }).allow, role).toBe(
+        role !== "business-analyst",
+      );
     }
   });
 
@@ -857,7 +860,9 @@ describe("board reads", () => {
 
   it("names its alert readers: a role added to ROLES later reads none (#184)", () => {
     expect(mayReadAlerts("support")).toBe(false);
-    expect(ROLES.every((role) => mayReadAlerts(role))).toBe(true);
+    // The first role added since: it advises on flow and needs no open vulnerabilities.
+    expect(mayReadAlerts("business-analyst")).toBe(false);
+    expect(ROLES.filter((role) => !mayReadAlerts(role))).toEqual(["business-analyst"]);
   });
 });
 
@@ -883,5 +888,46 @@ describe("hub schedule (#678)", () => {
       });
     }
     expect(schedule("qa-tester", ["manager"])).toMatchObject({ allow: false });
+  });
+});
+
+describe("the business-analyst (#893)", () => {
+  const ba = "business-analyst";
+
+  it("reads GitHub and the board", () => {
+    for (const argv of [
+      ["issue", "view", "1"],
+      ["pr", "view", "2"],
+      ["pr", "checks", "2"],
+      ["project", "item-list"],
+      ["run", "list"],
+    ]) {
+      expect(gh(ba, argv), argv.join(" ")).toMatchObject({ allow: true });
+    }
+    expect(authorize(ba, { kind: "board", argv: ["ls"] })).toMatchObject({ allow: true });
+  });
+
+  it("writes nothing: no push, card move, issue, comment, review, merge or schedule", () => {
+    expect(push(ba, ["bot/business-analyst/x"])).toMatchObject({ allow: false });
+    for (const argv of [
+      ["project", "item-edit"],
+      ["issue", "create", "--title", "x", "--body", "y"],
+      ["issue", "comment", "1", "--body", "x"],
+      ["pr", "comment", "2", "--body", "x"],
+      ["pr", "create", "--title", "x"],
+      ["pr", "merge", "2"],
+    ]) {
+      expect(gh(ba, argv), argv.join(" ")).toMatchObject({ allow: false });
+    }
+    expect(review(ba, ["approve", "2", "--sha", SHA])).toMatchObject({ allow: false });
+    expect(authorize(ba, { kind: "schedule", argv: ["ls"] })).toMatchObject({ allow: false });
+  });
+
+  it("leaves commenting to every other role", () => {
+    for (const role of ROLES.filter((r) => r !== ba)) {
+      expect(gh(role, ["issue", "comment", "1", "--body", "x"]), role).toMatchObject({
+        allow: true,
+      });
+    }
   });
 });

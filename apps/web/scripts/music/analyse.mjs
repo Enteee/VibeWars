@@ -66,11 +66,13 @@ export const MAX_PEAK_GAIN = 2;
 /**
  * The most the audio thread is asked to carry at one instant at any level
  * (#508): the peak, over the form, of the summed `DSP_COST` of what sounds,
- * reverbs included. PROVISIONAL until #507 has a number for the highest cost
- * that plays without underruns in Firefox. The crossfade, where two tracks
- * sound at once, is part of that calibration, not a second term here.
+ * reverbs included. 50, down from 90 (#446): a match plays the costliest
+ * levels, and a phone's audio thread has far less headroom than the sandbox
+ * that measured the old number. PROVISIONAL until a validated device
+ * measurement. The crossfade, where two tracks sound at once, is part of
+ * that calibration, not a second term here.
  */
-export const MAX_DSP_COST = 90;
+export const MAX_DSP_COST = 50;
 
 /**
  * Register and brightness (#449): the operator found the flutes strident.

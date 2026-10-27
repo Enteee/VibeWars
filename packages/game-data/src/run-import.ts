@@ -318,6 +318,16 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Mesmer/349-Energy_Tap",
   },
   {
+    id: "mesmer.backfire",
+    profession: "mesmer",
+    url: "https://www.gw-memorial.net/skills/Mesmer/305-Backfire",
+  },
+  {
+    id: "mesmer.empathy",
+    profession: "mesmer",
+    url: "https://www.gw-memorial.net/skills/Mesmer/310-Empathy",
+  },
+  {
     id: "monk.restore-life",
     profession: "monk",
     url: "https://www.gw-memorial.net/skills/Monk/176-Restore_Life",

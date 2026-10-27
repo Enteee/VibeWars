@@ -196,6 +196,18 @@ no damage. Maximum energy is untouched, and a foe drained mid-cast keeps
 casting: energy is paid when a cast starts. The loss floats over the foe
 in blue, "−8 energy", and the Training log has a row for it.
 
+## Reactive hexes
+
+Some Mesmer hexes punish what their target does (#469). **Backfire**
+deals 119 damage to its target each time it finishes a spell, for 10 s;
+**Empathy** deals 39 each time it attacks, for 13 s: a swing, a shot or
+an attack skill, hit, miss or block alike, one attack skill counting
+once. A flying spell backfires as it leaves the hand. An interrupted or
+cancelled spell, a signet or a shout does nothing. The damage ignores
+armor and is the Mesmer's: the log names their Backfire or Empathy, it
+counts toward their damage, and a kill is theirs, even after they died.
+A Mesmer who has left the match hurts nobody.
+
 ## Knockdown
 
 A knockdown puts its target on the ground for its duration (Backbreaker:
@@ -367,8 +379,10 @@ upkeep ends with it. Its icon has no duration bar, and its hover says
 Your effects monitor shows every enchantment you maintain (#838): those
 on yourself among your own effects, those on others after them, ticked
 as yours, with no bar and the hover "Mending on X — maintained, −1
-energy". **Double-click** one to end it: it leaves its bearer at once,
-for free, with no log row, and your upkeep stops with it. The host
+energy — double-click to end" (#907). **Double-click** one to end it:
+it leaves its bearer at once, for free, with no log row, and your
+upkeep stops with it. The target frame's monitor cannot end one, so
+its hover leaves the hint out. The host
 refuses quietly a request to end anything that is not yours to end.
 
 Degeneration applies **continuously** (`pips × 2 × dt`), not in once-per-
