@@ -1,0 +1,26 @@
+{
+  "id": "monk.patient-spirit",
+  "name": "Patient Spirit",
+  "profession": "monk",
+  "attribute": "Healing Prayers",
+  "type": "Enchantment Spell.",
+  "elite": false,
+  "campaign": "Eye Of The North",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 0.25,
+  "rechargeSeconds": 4,
+  "upkeep": false,
+  "description": "For 2 seconds, target ally is enchanted with Patient Spirit. Unless this enchantment ends prematurely, that ally is healed for 30...102...120 Health when the enchantment ends.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Monk/1158-Patient_Spirit",
+    "fetchedAt": "2026-10-27T16:59:48.098Z"
+  },
+  "unmapped": {}
+}
