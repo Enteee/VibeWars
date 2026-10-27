@@ -507,7 +507,7 @@ export function applyEffect(
     case "resurrect": {
       // Only the dead: one whom another resurrection, or the respawn
       // timer, brought back first is left as they are.
-      if (target === undefined || !target.dead) {
+      if (!target?.dead) {
         return events;
       }
       resurrect(

@@ -239,9 +239,9 @@ describe("describeCombatEvent", () => {
       healthFraction: 0.25,
       energyFraction: 0,
     };
-    expect(
-      describeCombatEvent(entry([back], { skillId: "monk.restore-life" }), back, nameOf),
-    ).toBe("Restore Life (Pyro) resurrects Caster dummy (25% health, 0% energy)");
+    expect(describeCombatEvent(entry([back], { skillId: "monk.restore-life" }), back, nameOf)).toBe(
+      "Restore Life (Pyro) resurrects Caster dummy (25% health, 0% energy)",
+    );
     expect(logToneOf("resurrected")).toBe("heal");
   });
 
