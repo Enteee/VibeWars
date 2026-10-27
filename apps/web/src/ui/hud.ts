@@ -2,6 +2,7 @@ import {
   getProfession,
   getSkill,
   getWeapon,
+  maxHealthLossOfStatusIds,
   type ActivationRejection,
   type AttackWeaponClass,
   type Segment,
@@ -477,14 +478,17 @@ function setBar(
 
 /**
  * How much of a health bar is greyed (#764): the share of maximum health
- * a loss such as deep wound's took, as a percentage of the whole bar.
- * None for the dead, whose bar is an empty track.
+ * a loss such as deep wound's took, as a percentage of the whole bar,
+ * read from the snapshot's statuses as the host reads its own. None for
+ * the dead, whose bar is an empty track.
  */
-export function lostHealthPercent(player: PlayerSnapshot): number {
+export function lostHealthPercent(
+  player: Pick<PlayerSnapshot, "dead" | "maxHealth" | "statuses">,
+): number {
   if (player.dead || player.maxHealth <= 0) {
     return 0;
   }
-  const lost = player.maxHealth - player.effectiveMaxHealth;
+  const lost = maxHealthLossOfStatusIds(player.maxHealth, player.statuses);
   return Math.max(0, Math.min(100, (lost / player.maxHealth) * 100));
 }
 

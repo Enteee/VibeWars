@@ -6,6 +6,8 @@ import {
   clampPips,
   getStatusDefinition,
   HEALTH_PER_PIP,
+  isStatusId,
+  type ActiveStatus,
   type BlockRule,
 } from "./status.js";
 import { isSpell, type Combatant, type Skill } from "./types.js";
@@ -115,7 +117,7 @@ const PIP_EPSILON = 1e-6;
 /**
  * The bearer's effective maximum health, after a loss such as deep
  * wound's: `fraction` of the maximum, at most `cap`. The simulation
- * clamps heals to it, and the wire carries it for the health bar.
+ * clamps heals to it.
  */
 export function effectiveMaxHealth(combatant: Pick<Combatant, "maxHealth" | "statuses">): number {
   return combatant.maxHealth - maxHealthLossOf(combatant);
@@ -123,8 +125,23 @@ export function effectiveMaxHealth(combatant: Pick<Combatant, "maxHealth" | "sta
 
 /** How much maximum health the bearer's statuses take: 0 for none. */
 export function maxHealthLossOf(combatant: Pick<Combatant, "maxHealth" | "statuses">): number {
-  const loss = aggregateModifiers(combatant.statuses.active).maxHealthLoss;
-  return loss === undefined ? 0 : Math.min(loss.cap, loss.fraction * combatant.maxHealth);
+  return maxHealthLoss(combatant.maxHealth, combatant.statuses.active);
+}
+
+/**
+ * The same loss from a snapshot's status ids: the client greys the health
+ * bar by it, so the wire need not carry it and both use one definition.
+ */
+export function maxHealthLossOfStatusIds(maxHealth: number, statusIds: readonly string[]): number {
+  return maxHealthLoss(
+    maxHealth,
+    statusIds.filter(isStatusId).map((id) => ({ id })),
+  );
+}
+
+function maxHealthLoss(maxHealth: number, statuses: readonly Pick<ActiveStatus, "id">[]): number {
+  const loss = aggregateModifiers(statuses).maxHealthLoss;
+  return loss === undefined ? 0 : Math.min(loss.cap, loss.fraction * maxHealth);
 }
 
 /**

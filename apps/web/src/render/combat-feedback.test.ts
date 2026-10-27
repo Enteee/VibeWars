@@ -22,7 +22,6 @@ function player(sessionId: string): PlayerSnapshot {
     walking: false,
     health: 400,
     maxHealth: 500,
-    effectiveMaxHealth: 500,
     energy: 20,
     maxEnergy: 50,
     adrenaline: 0,

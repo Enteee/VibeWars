@@ -1141,7 +1141,6 @@
         { "name": "castTotal", "optional": false, "type": "number" },
         { "name": "castingSkillId", "optional": false, "type": { "union": ["null", "string"] } },
         { "name": "dead", "optional": false, "type": "boolean" },
-        { "name": "effectiveMaxHealth", "optional": false, "type": "number" },
         { "name": "energy", "optional": false, "type": "number" },
         { "name": "energyPips", "optional": false, "type": "number" },
         { "name": "facing", "optional": false, "type": "number" },
@@ -1267,7 +1266,6 @@
                   "type": { "union": ["null", "string"] }
                 },
                 { "name": "dead", "optional": false, "type": "boolean" },
-                { "name": "effectiveMaxHealth", "optional": false, "type": "number" },
                 { "name": "energy", "optional": false, "type": "number" },
                 { "name": "energyPips", "optional": false, "type": "number" },
                 { "name": "facing", "optional": false, "type": "number" },
@@ -1386,7 +1384,6 @@
                   "type": { "union": ["null", "string"] }
                 },
                 { "name": "dead", "optional": false, "type": "boolean" },
-                { "name": "effectiveMaxHealth", "optional": false, "type": "number" },
                 { "name": "energy", "optional": false, "type": "number" },
                 { "name": "energyPips", "optional": false, "type": "number" },
                 { "name": "facing", "optional": false, "type": "number" },

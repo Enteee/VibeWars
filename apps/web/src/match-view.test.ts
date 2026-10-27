@@ -15,7 +15,6 @@ function player(sessionId: string, knockdownRemaining: number): PlayerSnapshot {
     walking: false,
     health: 400,
     maxHealth: 500,
-    effectiveMaxHealth: 500,
     energy: 20,
     maxEnergy: 50,
     adrenaline: 0,

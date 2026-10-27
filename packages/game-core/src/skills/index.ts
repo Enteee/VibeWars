@@ -59,6 +59,7 @@ export {
   effectiveMaxHealth,
   healingMultiplierOf,
   maxHealthLossOf,
+  maxHealthLossOfStatusIds,
   moveSpeedMultiplier,
   naturalHealthPips,
   netPips,

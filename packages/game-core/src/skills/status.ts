@@ -504,7 +504,7 @@ export const HEALING_MULTIPLIER_FLOOR = 0.6;
  * Attack duration is GW1's rule: only the strongest speed-up and the
  * strongest slow-down count, and they multiply.
  */
-export function aggregateModifiers(statuses: readonly ActiveStatus[]): StatusModifiers {
+export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]): StatusModifiers {
   let healthPips = 0;
   let energyPips = 0;
   let armorModifier = 0;

@@ -23,7 +23,6 @@ function player(sessionId: string, extra: Partial<PlayerSnapshot> = {}): PlayerS
     walking: false,
     health: 100,
     maxHealth: 100,
-    effectiveMaxHealth: 100,
     energy: 20,
     maxEnergy: 20,
     adrenaline: 0,

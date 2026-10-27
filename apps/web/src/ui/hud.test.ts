@@ -37,7 +37,6 @@ function player(fields: Partial<PlayerSnapshot>): PlayerSnapshot {
     walking: false,
     health: 480,
     maxHealth: 480,
-    effectiveMaxHealth: 480,
     energy: 20,
     maxEnergy: 50,
     adrenaline: 0,
@@ -77,15 +76,19 @@ describe("targetHealthPercent (#484)", () => {
 describe("lostHealthPercent (#764)", () => {
   it("greys the share of the bar a deep wound took", () => {
     expect(lostHealthPercent(player({}))).toBe(0);
-    expect(lostHealthPercent(player({ health: 384, effectiveMaxHealth: 384 }))).toBe(20);
-    expect(lostHealthPercent(player({ maxHealth: 600, effectiveMaxHealth: 500 }))).toBeCloseTo(
+    expect(lostHealthPercent(player({ health: 384, statuses: ["deep-wound"] }))).toBe(20);
+    expect(lostHealthPercent(player({ maxHealth: 600, statuses: ["deep-wound"] }))).toBeCloseTo(
       16.667,
       2,
     );
   });
 
+  it("ignores a status id it does not know", () => {
+    expect(lostHealthPercent(player({ statuses: ["no-such-status"] }))).toBe(0);
+  });
+
   it("greys nothing on a corpse", () => {
-    expect(lostHealthPercent(player({ health: 0, dead: true, effectiveMaxHealth: 384 }))).toBe(0);
+    expect(lostHealthPercent(player({ health: 0, dead: true, statuses: ["deep-wound"] }))).toBe(0);
   });
 });
 
@@ -218,7 +221,6 @@ describe("targetHintDismissed", () => {
     walking: false,
     health: 500,
     maxHealth: 500,
-    effectiveMaxHealth: 500,
     energy: 20,
     maxEnergy: 50,
     adrenaline: 0,
@@ -303,7 +305,6 @@ describe("isAttackingTarget", () => {
     walking: false,
     health: 500,
     maxHealth: 500,
-    effectiveMaxHealth: 500,
     energy: 20,
     maxEnergy: 50,
     adrenaline: 0,
@@ -390,7 +391,6 @@ describe("targetProfessionIcons (#281)", () => {
     walking: false,
     health: 500,
     maxHealth: 500,
-    effectiveMaxHealth: 500,
     energy: 20,
     maxEnergy: 50,
     adrenaline: 0,

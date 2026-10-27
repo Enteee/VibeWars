@@ -9,7 +9,6 @@ const ally = {
   name: "Kaja",
   health: 120,
   maxHealth: 480,
-  effectiveMaxHealth: 480,
   dead: false,
 } as const satisfies Partial<PlayerSnapshot>;
 

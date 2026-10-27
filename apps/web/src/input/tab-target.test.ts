@@ -15,7 +15,6 @@ function player(sessionId: string, overrides: Partial<PlayerSnapshot> = {}): Pla
     walking: false,
     health: 500,
     maxHealth: 500,
-    effectiveMaxHealth: 500,
     energy: 20,
     maxEnergy: 50,
     adrenaline: 0,
