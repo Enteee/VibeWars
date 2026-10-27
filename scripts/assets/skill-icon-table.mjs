@@ -93,5 +93,5 @@ export const SKILL_ICONS = {
   "monk.dwaynas-kiss": { glyph: "heal", modifier: "stun" },
   "paragon.spear-of-lightning": { glyph: "spear-bolt" },
   "paragon.never-surrender": { glyph: "banner", modifier: "area" },
-  "paragon.leaders-comfort": { glyph: "banner", modifier: "self" },
+  "paragon.leaders-comfort": { glyph: "banner-cross", modifier: "self" },
 };

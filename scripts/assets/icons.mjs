@@ -692,6 +692,11 @@ const skillGlyph = {
   // A spearhead on a shaft that is a bolt: a spear thrown as lightning (#934).
   "spear-bolt": () => inkFill("M12 2.5L16.5 10H7.5Z") + inkLine("M12 10L9 14.5L15 16L12 21.5", 2.4),
   // A pennant on a pole: a shout that rallies (#934).
+  // The pennant hollow, a cross in it: a rally that heals (#934).
+  "banner-cross": () =>
+    inkLine("M6 3V21", 2.4) +
+    `<path d="M6 4H19.5L15.5 8.75L19.5 13.5H6Z" ${stroke(C.ink, 1.6)}/>` +
+    inkFill("M10.5 6.2h2v1.8h1.8v2h-1.8v1.8h-2v-1.8H8.7v-2h1.8z"),
   banner: () => inkLine("M6 3V21", 2.4) + inkFill("M6 4H19.5L15.5 8.75L19.5 13.5H6Z"),
   arrow: () => inkLine("M4 20L15 9", 2.2) + inkFill("M21 3L11.5 6L18 12.5Z"),
   volley: () =>
