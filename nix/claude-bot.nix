@@ -952,6 +952,8 @@ in
     # The company's credential home (#855, #864): everything it authenticates
     # with, in one directory of mode 0700, outside the checkout where the
     # agents write. A shell string: $HOME expands where it is used.
+    # The default is a sibling of the per-employee dirs in `boxes`, safe only
+    # because no employee id can be "creds".
     credentials = lib.mkOption {
       type = lib.types.str;
       default = "$HOME/${config.vibewars.claudeBot.boxes}/creds";

@@ -78,6 +78,24 @@ describe("claudeIdentity", () => {
     expect(JSON.stringify(id)).not.toContain(SECRET);
   });
 
+  it("strips tokens that would beat the company's config dir, but not for the operator's", () => {
+    const dir = home();
+    fs.writeFileSync(path.join(dir, ".credentials.json"), "{}");
+    /** @type {string[][]} */
+    const unsets = [];
+    /** @type {import("./creds.mjs").Run} */
+    const run = (_c, _a, _e, unset) => {
+      unsets.push([...unset]);
+      return { code: 0, stdout: JSON.stringify({ loggedIn: true }) };
+    };
+    claudeIdentity(dir, run);
+    claudeIdentity(null, run);
+    expect(unsets[0]).toEqual(
+      expect.arrayContaining(["CLAUDE_CODE_OAUTH_TOKEN", "ANTHROPIC_API_KEY"]),
+    );
+    expect(unsets[1]).toEqual([]);
+  });
+
   it("says unreadable output is an error, without echoing it", () => {
     const dir = home();
     fs.writeFileSync(path.join(dir, ".credentials.json"), "{}");
@@ -112,6 +130,20 @@ describe("githubIdentity", () => {
     });
   });
 
+  it("strips GH_TOKEN and its kin when probing the company's dir", () => {
+    const dir = home();
+    fs.writeFileSync(path.join(dir, "hosts.yml"), "");
+    /** @type {string[]} */
+    let seen = [];
+    githubIdentity(dir, (_c, _a, _e, unset) => {
+      seen = [...unset];
+      return { code: 0, stdout: reply };
+    });
+    expect(seen).toEqual(
+      expect.arrayContaining(["GH_TOKEN", "GITHUB_TOKEN", "GH_ENTERPRISE_TOKEN"]),
+    );
+  });
+
   it("reads the operator's own when no directory is given", () => {
     expect(githubIdentity(null, () => ({ code: 0, stdout: reply })).who).toBe("vibewars-bot");
   });
@@ -122,6 +154,19 @@ describe("pushIdentity", () => {
     expect(pushIdentity("/nonexistent/key", () => ({ code: 1, stdout: "" })).state).toBe(
       "not set up",
     );
+  });
+
+  it("ignores the operator's ssh config and agent", () => {
+    const key = path.join(home(), "id_ed25519");
+    fs.writeFileSync(key, "k");
+    /** @type {string[]} */
+    let args = [];
+    pushIdentity(key, (_c, a) => {
+      args = a;
+      return { code: 1, stdout: "" };
+    });
+    expect(args.slice(0, 3)).toEqual(["-F", "/dev/null", "-i"]);
+    expect(args).toEqual(expect.arrayContaining(["IdentityAgent=none", "IdentitiesOnly=yes"]));
   });
 
   it("reads the login github greets the key with", () => {

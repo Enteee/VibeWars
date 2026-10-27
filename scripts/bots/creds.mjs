@@ -81,14 +81,31 @@ const NOT_SET_UP = { state: "not set up", who: null, expiry: null, scopes: null 
 const failed = (note) => ({ state: "error", who: null, expiry: null, scopes: null, note });
 
 /**
- * @typedef {(command: string, args: string[], env: Record<string, string>) => { code: number, stdout: string }} Run
+ * @typedef {(command: string, args: string[], env: Record<string, string>, unset: readonly string[]) => { code: number, stdout: string }} Run
+ * A command runs with the shell's environment, plus `env`, minus `unset`.
  */
 
+/**
+ * Variables that beat a config directory: a token in the operator's shell
+ * would make the company's row show the operator's login. Removed, not
+ * overridden, whenever a company directory is probed.
+ */
+const CLAUDE_TOKEN_VARS = ["CLAUDE_CODE_OAUTH_TOKEN", "ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN"];
+const GITHUB_TOKEN_VARS = [
+  "GH_TOKEN",
+  "GITHUB_TOKEN",
+  "GH_ENTERPRISE_TOKEN",
+  "GITHUB_ENTERPRISE_TOKEN",
+];
+
 /** @type {Run} */
-export function runCommand(command, args, env) {
+export function runCommand(command, args, env, unset) {
+  const base = Object.fromEntries(
+    Object.entries({ ...process.env, ...env }).filter(([name]) => !unset.includes(name)),
+  );
   const result = spawnSync(command, args, {
     encoding: "utf8",
-    env: { ...process.env, ...env },
+    env: base,
     timeout: 20_000,
   });
   return {
@@ -133,7 +150,7 @@ export function claudeIdentity(dir, run = runCommand) {
     return NOT_SET_UP;
   }
   const env = dir === null ? {} : { CLAUDE_CONFIG_DIR: dir };
-  const result = run("claude", ["auth", "status"], env);
+  const result = run("claude", ["auth", "status"], env, dir === null ? [] : CLAUDE_TOKEN_VARS);
   const status = parseObject(result.stdout);
   if (status === null) {
     return failed("claude auth status said nothing readable");
@@ -168,7 +185,7 @@ export function githubIdentity(dir, run = runCommand) {
     return NOT_SET_UP;
   }
   const env = dir === null ? {} : { GH_CONFIG_DIR: dir };
-  const result = run("gh", ["api", "-i", "user"], env);
+  const result = run("gh", ["api", "-i", "user"], env, dir === null ? [] : GITHUB_TOKEN_VARS);
   const split = result.stdout.search(/\r?\n\r?\n/);
   if (split < 0) {
     return result.code === 0 ? failed("gh api user said nothing readable") : NOT_SET_UP;
@@ -202,8 +219,25 @@ export function pushIdentity(key, run = runCommand) {
   }
   const result = run(
     "ssh",
-    ["-i", key, "-o", "IdentitiesOnly=yes", "-o", "BatchMode=yes", "-T", "git@github.com"],
+    [
+      // Nothing from the operator's ~/.ssh/config or agent: with it, a key
+      // github does not know would fall through to the operator's and be
+      // greeted as them.
+      "-F",
+      "/dev/null",
+      "-i",
+      key,
+      "-o",
+      "IdentitiesOnly=yes",
+      "-o",
+      "IdentityAgent=none",
+      "-o",
+      "BatchMode=yes",
+      "-T",
+      "git@github.com",
+    ],
     {},
+    [],
   );
   const who = /^Hi ([^!\s]+)!/m.exec(result.stdout)?.[1];
   return who === undefined
