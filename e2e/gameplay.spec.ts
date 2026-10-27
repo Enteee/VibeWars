@@ -5,6 +5,7 @@ import { expect, test, type Page, type Locator } from "@playwright/test";
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
 import { projection } from "./camera.js";
 import { key, skillKey } from "./keys.js";
+import { startSoloMatch as startMatchFromMenu } from "./helpers/peers.js";
 import { bringStarter, starterKey } from "./helpers/starter.js";
 
 /**
@@ -533,8 +534,10 @@ test("a match whose host goes returns to the menu and says why (#195)", async ({
   await expect(page.getByRole("button", { name: "host a lobby" })).toBeVisible();
   await expect(canvas).toBeHidden();
 
-  // A new match works, and the notice is gone with the menu.
-  await startSoloMatch(page);
+  // A new match works, and the notice is gone with the menu. From the
+  // menu on show: the starter is already picked, and bringing it again
+  // would save a second one.
+  await startMatchFromMenu(page);
   await expect(notice).toHaveCount(0);
 });
 
