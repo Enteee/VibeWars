@@ -1,0 +1,25 @@
+{
+  "id": "monk.dwaynas-kiss",
+  "name": "Dwayna's Kiss",
+  "profession": "monk",
+  "attribute": "Healing Prayers",
+  "type": "Spell.",
+  "elite": false,
+  "campaign": "Prophecies",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 1,
+  "rechargeSeconds": 3,
+  "description": "Heal target other ally for 15...51...60 health and an additional 10...30...35 health for each enchantment or hex on that ally.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Monk/164-Dwayna's_Kiss",
+    "fetchedAt": "2026-10-27T13:39:59.987Z"
+  },
+  "unmapped": {}
+}
