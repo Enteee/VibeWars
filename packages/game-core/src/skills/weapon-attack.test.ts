@@ -237,7 +237,7 @@ describe("resolveSwing", () => {
 
 describe("resolveAttackSkill (ADR-0029)", () => {
   const swiftChop = getSkill("warrior.swift-chop");
-  const openingCut = getSkill("warrior.sever-artery-lite");
+  const severArtery = getSkill("warrior.sever-artery");
   const barrage = getSkill("ranger.barrage");
 
   /** A stream whose damage rolls are all `roll`, and whose floats are all `float`. */
@@ -334,7 +334,7 @@ describe("resolveAttackSkill (ADR-0029)", () => {
   it("lands its riders on whoever the blow hit", () => {
     const sword = attacker(WEAPONS.sword, "warrior.swordsmanship");
     const target = victim();
-    const events = resolve(openingCut, sword, [target]);
+    const events = resolve(severArtery, sword, [target]);
     expect(events.map((event) => event.kind)).toEqual(["damage", "status-applied"]);
     expect(target.statuses.has("bleeding")).toBe(true);
   });
@@ -343,7 +343,7 @@ describe("resolveAttackSkill (ADR-0029)", () => {
     const sword = attacker(WEAPONS.sword, "warrior.swordsmanship");
     sword.statuses.apply("blind", 10, "foe");
     const target = victim();
-    const events = resolve(openingCut, sword, [target], fixed(10, 0.5));
+    const events = resolve(severArtery, sword, [target], fixed(10, 0.5));
     expect(events).toEqual([{ kind: "attack-missed", targetId: "t" }]);
     expect(target.statuses.has("bleeding")).toBe(false);
     expect(target.health).toBe(target.maxHealth);
@@ -353,7 +353,7 @@ describe("resolveAttackSkill (ADR-0029)", () => {
     const sword = attacker(WEAPONS.sword, "warrior.swordsmanship");
     const rng = createRng(1);
     const replay = createRng(1);
-    resolve(openingCut, sword, [victim()], rng);
+    resolve(severArtery, sword, [victim()], rng);
     if (replay.nextFloat() >= criticalChance(weaponSnapshotOf(sword), RULES)) {
       replay.nextInt(WEAPONS.sword.damageMin, WEAPONS.sword.damageMax + 1);
     }
@@ -534,7 +534,7 @@ describe("block (#534)", () => {
     it("blocked, deals no damage and lands none of its riders", () => {
       const target = victim();
       const events = resolveBlocked(
-        "warrior.sever-artery-lite",
+        "warrior.sever-artery",
         WEAPONS.sword,
         "warrior.swordsmanship",
         target,

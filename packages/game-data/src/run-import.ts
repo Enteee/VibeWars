@@ -167,6 +167,46 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     profession: "ritualist",
     url: "https://www.gw-memorial.net/skills/Ritualist/769-Weapon_of_Warding",
   },
+  {
+    id: "assassin.jagged-strike",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/658-Jagged_Strike",
+  },
+  {
+    id: "paragon.cruel-spear",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1119-Cruel_Spear",
+  },
+  {
+    id: "warrior.sever-artery",
+    profession: "warrior",
+    url: "https://www.gw-memorial.net/skills/Warrior/50-Sever_Artery",
+  },
+  {
+    id: "warrior.eviscerate",
+    profession: "warrior",
+    url: "https://www.gw-memorial.net/skills/Warrior/7-Eviscerate",
+  },
+  {
+    id: "warrior.executioners-strike",
+    profession: "warrior",
+    url: "https://www.gw-memorial.net/skills/Warrior/8-Executioner's_Strike",
+  },
+  {
+    id: "ranger.punishing-shot",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/119-Punishing_Shot",
+  },
+  {
+    id: "ranger.throw-dirt",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/107-Throw_Dirt",
+  },
+  {
+    id: "necromancer.enfeebling-blood",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/257-Enfeebling_Blood",
+  },
 ];
 
 function packageRoot(): string {

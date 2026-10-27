@@ -411,16 +411,16 @@ describe("networked combat (P2P)", () => {
     await closeDistance(match, a, b.selfSessionId, 300);
     await target(match, a, b.selfSessionId);
 
-    // Sever Artery costs adrenaline, earned by landing attacks: so swing
-    // first. The adrenaline economy working as designed.
+    // Sever Artery costs 4 adrenaline, earned by landing attacks: so swing
+    // twice first. The adrenaline economy working as designed.
     const heard = combatMessages(a);
     a.sendIntent({ kind: "attack", targetId: b.selfSessionId });
-    await until(match, () => (self(a)?.adrenaline ?? 0) > 0, "adrenaline from landing a hit");
+    await until(match, () => (self(a)?.adrenaline ?? 0) >= 4, "adrenaline from landing two hits");
 
     await closeDistance(match, a, b.selfSessionId, 30);
     a.sendIntent({
       kind: "use-skill",
-      slot: DEFAULT_SKILL_BAR.indexOf("warrior.sever-artery-lite"),
+      slot: DEFAULT_SKILL_BAR.indexOf("warrior.sever-artery"),
     });
     await until(
       match,

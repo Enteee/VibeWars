@@ -970,7 +970,7 @@ const STALE_CHARACTER = {
   name: "Veteran",
   primaryProfession: "warrior",
   attributes: [{ attributeId: "warrior.swordsmanship", rank: 12 }],
-  skillBar: ["warrior.sever-artery-lite", null, null, null, null, null, null, null],
+  skillBar: ["warrior.sever-artery", null, null, null, null, null, null, null],
   updatedAt: 1_700_000_000_000,
 };
 

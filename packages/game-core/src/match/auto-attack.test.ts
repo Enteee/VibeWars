@@ -16,7 +16,7 @@ const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
 const FIREBALL = "elementalist.fireball";
 const ARMOR_OF_EARTH = "elementalist.armor-of-earth";
-const OPENING_CUT = "warrior.sever-artery-lite";
+const SEVER_ARTERY = "warrior.sever-artery";
 
 function wielding(weapon: Weapon, attributeId: string): ResolvedEquipment {
   return {
@@ -25,12 +25,12 @@ function wielding(weapon: Weapon, attributeId: string): ResolvedEquipment {
   };
 }
 
-/** A swordsman at rank 12 who also knows a little fire, and Opening Cut. */
+/** A swordsman at rank 12 who also knows a little fire, and Sever Artery. */
 function swordsman(id: string, spawn: Vec2): ParticipantSpec {
   return {
     id,
     team: 0,
-    skillBar: [FIREBALL, ARMOR_OF_EARTH, OPENING_CUT],
+    skillBar: [FIREBALL, ARMOR_OF_EARTH, SEVER_ARTERY],
     attributeRanks: new Map([
       ["warrior.swordsmanship", 12],
       ["elementalist.fire-magic", 12],
@@ -272,7 +272,7 @@ describe("skills and the swing", () => {
   it("an attack skill at an enemy starts an attack on them, and swings follow", () => {
     const match = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(40, 0)));
     match.setTarget("a", "d");
-    get(match, "a").combatant.adrenaline = 3;
+    get(match, "a").combatant.adrenaline = 4;
     expect(match.requestSkill("a", 2)?.check).toEqual({ ok: true });
     const log = stepFor(match, 3);
     expect(get(match, "a").combatant.attack?.targetId).toBe("d");
@@ -325,7 +325,7 @@ describe("adrenaline", () => {
 
     const chop = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(40, 0)));
     chop.setTarget("a", "d");
-    get(chop, "a").combatant.adrenaline = 3;
+    get(chop, "a").combatant.adrenaline = 4;
     expect(chop.requestSkill("a", 2)?.check).toEqual({ ok: true });
     stepFor(chop, 0.7);
     expect(get(chop, "a").combatant.adrenaline).toBe(RULES.resources.adrenalinePerHit);
@@ -479,7 +479,7 @@ describe("the log", () => {
   });
 
   it("says which swings struck twice; an attack skill never does (#561, ADR-0029)", () => {
-    // A sword that always strikes twice, so Opening Cut can ride it.
+    // A sword that always strikes twice, so Sever Artery can ride it.
     const always: Weapon = {
       ...WEAPONS.sword,
       doubleStrike: { attributeId: "warrior.swordsmanship", baseChance: 1, perRank: 0 },
@@ -489,10 +489,10 @@ describe("the log", () => {
       dummy("d", vec2(40, 0)),
     );
     match.setTarget("a", "d");
-    get(match, "a").combatant.adrenaline = 3;
+    get(match, "a").combatant.adrenaline = 4;
     expect(match.requestSkill("a", 2)?.check).toEqual({ ok: true });
     const log = stepFor(match, 3);
-    const cut = log.filter((entry) => entry.skillId === OPENING_CUT);
+    const cut = log.filter((entry) => entry.skillId === SEVER_ARTERY);
     expect(cut.length).toBeGreaterThan(0);
     expect(cut.every((entry) => !entry.doubleStrike)).toBe(true);
     expect(swings(log).length).toBeGreaterThan(0);
@@ -744,7 +744,7 @@ describe("aftercast (#317)", () => {
   it("an attack skill has its own instead: the recovery from its blow, as long as the wind-up", () => {
     const match = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(40, 0)));
     match.setTarget("a", "d");
-    get(match, "a").combatant.adrenaline = 3;
+    get(match, "a").combatant.adrenaline = 4;
     match.requestSkill("a", 2);
     const hitTicks = Math.ceil(WEAPONS.sword.attackIntervalSeconds / 2 / DT);
     stepFor(match, hitTicks * DT);
@@ -840,12 +840,12 @@ describe("aftercast (#317)", () => {
     stepFor(match, 0.75);
     get(match, "a").combatant.adrenaline = 25;
     expect(match.requestSkill("a", 2)).toEqual({
-      skillId: OPENING_CUT,
+      skillId: SEVER_ARTERY,
       check: { ok: true },
       queued: true,
     });
     stepFor(match, AFTERCAST);
-    expect(get(match, "a").combatant.cast.activeCast?.skillId).toBe(OPENING_CUT);
+    expect(get(match, "a").combatant.cast.activeCast?.skillId).toBe(SEVER_ARTERY);
   });
 
   it("a skill that could not go off is refused at the press, not queued", () => {

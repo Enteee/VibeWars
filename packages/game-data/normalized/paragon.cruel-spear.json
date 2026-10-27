@@ -1,0 +1,24 @@
+{
+  "id": "paragon.cruel-spear",
+  "name": "Cruel Spear",
+  "profession": "paragon",
+  "attribute": "Spear Mastery",
+  "type": "Spear attack.",
+  "elite": true,
+  "campaign": "Nightfall",
+  "cost": {
+    "kind": "adrenaline",
+    "amount": 6
+  },
+  "activationSeconds": 0,
+  "rechargeSeconds": 0,
+  "description": "If this attack hits, you deal +10...42...50 damage. If it hits a non-moving target, you inflict a Deep Wound for 5...17...20 seconds.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Paragon/1119-Cruel_Spear",
+    "fetchedAt": "2026-10-27T02:46:45.633Z"
+  },
+  "unmapped": {}
+}
