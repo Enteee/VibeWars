@@ -15,7 +15,7 @@ import {
   telegramIdentity,
 } from "./creds.mjs";
 
-const SECRET = "sk-ant-oat01-SECRETSECRETSECRET";
+const SECRET = "value-that-must-never-be-printed";
 
 function home() {
   return fs.mkdtempSync(path.join(os.tmpdir(), "creds-"));

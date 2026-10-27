@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { renderTable } from "./doctor.mjs";
 
-const SECRET = "sk-ant-oat01-SECRET";
+const SECRET = "value-that-must-never-be-printed";
 
 describe("renderTable", () => {
   it("shows what is not set up and whose each credential is", () => {
