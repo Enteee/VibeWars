@@ -37,6 +37,15 @@ export const WINDOW_MS = 5 * 60 * 60 * 1000;
  * @property {number} output `output_tokens`
  * @property {number} cacheWrite `cache_creation_input_tokens`
  * @property {number} cacheRead `cache_read_input_tokens`
+ * @property {boolean} sidechain `isSidechain`: a subagent's reply, not the session's
+ */
+
+/**
+ * A reply as the reader keeps it: whose box it came from, and which
+ * session (#833), `<project>/<session>`, the log file a session writes
+ * with its subagents' logs below `<project>/<session>/subagents/`.
+ *
+ * @typedef {UsageRecord & { role: string, session: string }} LoggedReply
  */
 
 /**
@@ -92,6 +101,25 @@ export function parseUsageLine(line) {
     output: count(usage.output_tokens),
     cacheWrite: count(usage.cache_creation_input_tokens),
     cacheRead: count(usage.cache_read_input_tokens),
+    sidechain: entry.isSidechain === true,
+  };
+}
+
+/**
+ * The session a log below `projects` belongs to, and whether it is a
+ * subagent's (#833).
+ *
+ * @param {string} rel the log's path below `projects`
+ * @returns {{ session: string, sidechain: boolean }}
+ */
+export function sessionOf(rel) {
+  const parts = rel.split("/");
+  return {
+    session: parts
+      .slice(0, 2)
+      .join("/")
+      .replace(/\.jsonl$/, ""),
+    sidechain: parts.length > 2,
   };
 }
 
@@ -432,7 +460,7 @@ function walkLogs(config, visit) {
 export function createUsageReader(boxes, roles) {
   /** @type {Map<string, Cursor>} */
   const cursors = new Map();
-  /** @type {Map<string, UsageRecord & { role: string }>} */
+  /** @type {Map<string, LoggedReply>} */
   const kept = new Map();
   /** @type {Map<string, number>} replies kept per role */
   const keptBy = new Map();
@@ -443,8 +471,9 @@ export function createUsageReader(boxes, roles) {
   /**
    * @param {UsageRecord} record
    * @param {string} role
+   * @param {string} rel the log's path below `projects`
    */
-  function keep(record, role) {
+  function keep(record, role, rel) {
     const old = kept.get(record.id);
     if (old?.role !== role) {
       if ((keptBy.get(role) ?? 0) >= MAX_KEPT) {
@@ -456,7 +485,8 @@ export function createUsageReader(boxes, roles) {
       }
       keptBy.set(role, (keptBy.get(role) ?? 0) + 1);
     }
-    kept.set(record.id, { ...record, role });
+    const { session, sidechain } = sessionOf(rel);
+    kept.set(record.id, { ...record, sidechain: record.sidechain || sidechain, role, session });
   }
 
   /**
@@ -494,11 +524,12 @@ export function createUsageReader(boxes, roles) {
    * @param {string} name
    * @param {string} key the file's cursor
    * @param {string} role
+   * @param {string} rel the log's path below `projects`
    * @param {number} since replies before this are not kept
    * @param {number} now replies dated past this, give or take, are not kept
    * @param {number} allowance
    */
-  function readFile(dir, name, key, role, since, now, allowance) {
+  function readFile(dir, name, key, role, rel, since, now, allowance) {
     /** @type {number} */
     let fd;
     try {
@@ -545,7 +576,7 @@ export function createUsageReader(boxes, roles) {
           .split("\n")) {
           const record = line === "" ? null : parseUsageLine(line);
           if (record !== null && record.ts >= since && record.ts <= now + MAX_SKEW_MS) {
-            keep(record, role);
+            keep(record, role, rel);
           }
         }
         used = end + 1;
@@ -566,11 +597,12 @@ export function createUsageReader(boxes, roles) {
     /**
      * Every reply since `since`, after reading what is new, and the roles
      * that had one refused at `MAX_KEPT` since then, so their counts are
-     * short.
+     * short. `pending`: a log had more unread than this refresh could
+     * read, so another read finds more.
      *
      * @param {number} since epoch milliseconds
      * @param {number} now epoch milliseconds
-     * @returns {{ records: (UsageRecord & { role: string })[], capped: Set<string> } | null}
+     * @returns {{ records: LoggedReply[], capped: Set<string>, pending: boolean } | null}
      *   null when `boxes` does not exist, so no agent has run yet
      */
     read(since, now) {
@@ -580,6 +612,7 @@ export function createUsageReader(boxes, roles) {
       refresh += 1;
       /** @type {Set<string>} */
       const seen = new Set();
+      let more = false;
       for (const role of roles) {
         const config = path.join(boxes, role, "config");
         // Once to see what each log has unread, once to read the logs
@@ -589,7 +622,9 @@ export function createUsageReader(boxes, roles) {
         walkLogs(config, (dir, name, rel) => {
           const key = `${role}/${rel}`;
           seen.add(key);
-          const bytes = Math.min(unread(dir, name, key, since), CHUNK_BYTES);
+          const left = unread(dir, name, key, since);
+          const bytes = Math.min(left, CHUNK_BYTES);
+          more ||= left > CHUNK_BYTES;
           if (bytes > 0) {
             pending.push({ key, bytes, served: cursors.get(key)?.served ?? 0 });
           }
@@ -599,6 +634,7 @@ export function createUsageReader(boxes, roles) {
         let budget = ROLE_BYTES;
         for (const { key, bytes } of pending.sort((a, b) => a.served - b.served)) {
           if (bytes > budget) {
+            more = true;
             break;
           }
           allowed.set(key, bytes);
@@ -609,7 +645,7 @@ export function createUsageReader(boxes, roles) {
             const key = `${role}/${rel}`;
             const allowance = allowed.get(key);
             if (allowance !== undefined) {
-              readFile(dir, name, key, role, since, now, allowance);
+              readFile(dir, name, key, role, rel, since, now, allowance);
             }
           });
         }
@@ -634,7 +670,7 @@ export function createUsageReader(boxes, roles) {
           capped.add(role);
         }
       }
-      return { records: [...kept.values()], capped };
+      return { records: [...kept.values()], capped, pending: more };
     },
   };
 }
