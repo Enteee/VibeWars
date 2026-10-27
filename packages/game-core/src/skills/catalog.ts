@@ -2180,6 +2180,28 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     effects: [{ kind: "apply-status", statusId: "backfire", durationSeconds: 10 }],
   },
   {
+    id: "mesmer.diversion",
+    name: "Diversion",
+    type: "hex",
+    elite: false,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 3,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 6 seconds, the next time target foe uses a skill, that skill
+    // takes an additional 10...47...56 seconds to recharge." The extra
+    // recharge is the hex's, at rank 12 (#949).
+    effects: [{ kind: "apply-status", statusId: "diversion", durationSeconds: 6 }],
+  },
+  {
     id: "mesmer.empathy",
     name: "Empathy",
     type: "hex",

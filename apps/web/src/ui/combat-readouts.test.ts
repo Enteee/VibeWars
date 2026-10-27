@@ -269,6 +269,19 @@ describe("describeCombatEvent", () => {
     expect(logToneOf("skill-disabled")).toBe("control");
   });
 
+  it("says whose skill takes longer to recharge, and by how much (#949)", () => {
+    const lengthened: CombatEvent = {
+      kind: "recharge-lengthened",
+      targetId: "dummy",
+      skillId: "elementalist.fireball",
+      seconds: 47,
+    };
+    expect(
+      describeCombatEvent(entry([lengthened], { skillId: "mesmer.diversion" }), lengthened, nameOf),
+    ).toBe("Caster dummy's Fireball takes 47 s longer to recharge");
+    expect(logToneOf("recharge-lengthened")).toBe("control");
+  });
+
   it("says who knocked whom down, and for how long (#544)", () => {
     const down: CombatEvent = { kind: "knocked-down", targetId: "dummy", durationSeconds: 4 };
     expect(

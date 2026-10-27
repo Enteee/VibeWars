@@ -47,6 +47,7 @@
     "deep-wound",
     "defensive-anthem",
     "disease",
+    "diversion",
     "empathy",
     "escape",
     "faintheartedness",
@@ -370,6 +371,7 @@
                   { "literal": "deep-wound" },
                   { "literal": "defensive-anthem" },
                   { "literal": "disease" },
+                  { "literal": "diversion" },
                   { "literal": "empathy" },
                   { "literal": "escape" },
                   { "literal": "faintheartedness" },
@@ -458,6 +460,7 @@
                   { "literal": "deep-wound" },
                   { "literal": "defensive-anthem" },
                   { "literal": "disease" },
+                  { "literal": "diversion" },
                   { "literal": "empathy" },
                   { "literal": "escape" },
                   { "literal": "faintheartedness" },
@@ -543,6 +546,7 @@
                   { "literal": "deep-wound" },
                   { "literal": "defensive-anthem" },
                   { "literal": "disease" },
+                  { "literal": "diversion" },
                   { "literal": "empathy" },
                   { "literal": "escape" },
                   { "literal": "faintheartedness" },
@@ -625,6 +629,7 @@
                   { "literal": "deep-wound" },
                   { "literal": "defensive-anthem" },
                   { "literal": "disease" },
+                  { "literal": "diversion" },
                   { "literal": "empathy" },
                   { "literal": "escape" },
                   { "literal": "faintheartedness" },
@@ -736,6 +741,14 @@
         },
         {
           "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "recharge-lengthened" } },
+            { "name": "seconds", "optional": false, "type": "number" },
+            { "name": "skillId", "optional": false, "type": "string" },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "skill-disabled" } },
             { "name": "seconds", "optional": false, "type": "number" },
             { "name": "skillId", "optional": false, "type": "string" },
@@ -768,6 +781,7 @@
                   { "literal": "deep-wound" },
                   { "literal": "defensive-anthem" },
                   { "literal": "disease" },
+                  { "literal": "diversion" },
                   { "literal": "empathy" },
                   { "literal": "escape" },
                   { "literal": "faintheartedness" },
@@ -841,6 +855,7 @@
                   { "literal": "deep-wound" },
                   { "literal": "defensive-anthem" },
                   { "literal": "disease" },
+                  { "literal": "diversion" },
                   { "literal": "empathy" },
                   { "literal": "escape" },
                   { "literal": "faintheartedness" },
