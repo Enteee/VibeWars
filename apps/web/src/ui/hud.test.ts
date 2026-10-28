@@ -12,6 +12,7 @@ import { isEliteSkill } from "./icons.js";
 
 import {
   carriesFlag,
+  objectTargetName,
   changedSlots,
   createHud,
   type HudElements,
@@ -147,6 +148,16 @@ describe("invulnerableLabel (#1233)", () => {
     expect(invulnerableLabel(4.2)).toBe("Invulnerable 0:05");
     expect(invulnerableLabel(4)).toBe("Invulnerable 0:04");
     expect(invulnerableLabel(0.01)).toBe("Invulnerable 0:01");
+  });
+});
+
+describe("objectTargetName (#1225)", () => {
+  it("names the stand and a flag by whose it is, and nothing else", () => {
+    expect(objectTargetName("flag-stand", 0)).toBe("Flag Stand");
+    expect(objectTargetName("flag/0", 0)).toBe("Your flag");
+    expect(objectTargetName("flag/1", 0)).toBe("Enemy flag");
+    expect(objectTargetName("peer-1", 0)).toBeUndefined();
+    expect(objectTargetName(undefined, 0)).toBeUndefined();
   });
 });
 

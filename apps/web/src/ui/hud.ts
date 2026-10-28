@@ -1,4 +1,6 @@
 import {
+  FLAG_STAND_ID,
+  flagTeamOf,
   getProfession,
   getSkill,
   getWeapon,
@@ -677,6 +679,24 @@ function setBar(
  * Morale as GW1 shows it by the health bar (#843): "−15%" for the death
  * penalty, "+10%" for a boost, and `undefined` at 0, where nothing shows.
  */
+/**
+ * The target frame's name for a flag or the stand selected (#1225),
+ * which are no body; `undefined` for any other id.
+ */
+export function objectTargetName(
+  targetId: string | undefined,
+  selfTeam: number,
+): string | undefined {
+  if (targetId === FLAG_STAND_ID) {
+    return "Flag Stand";
+  }
+  const team = targetId === undefined ? undefined : flagTeamOf(targetId);
+  if (team === undefined) {
+    return undefined;
+  }
+  return team === selfTeam ? "Your flag" : "Enemy flag";
+}
+
 /** Whether `playerId` carries a flag (#1225): the Drop button shows. */
 export function carriesFlag(match: MatchSnapshot, playerId: string): boolean {
   return match.flags.some(({ place }) => place.kind === "carried" && place.carrierId === playerId);
@@ -1264,7 +1284,8 @@ function renderTarget(
   target: PlayerSnapshot | undefined,
 ): void {
   renderTargetProfessions(hud.targetProfessions, target);
-  hud.targetText.textContent = target === undefined ? "no target" : target.name;
+  hud.targetText.textContent =
+    target?.name ?? objectTargetName(self.targetSessionId, self.team) ?? "no target";
   hud.targetBot.hidden = target?.bot !== true;
   hud.attacking.hidden = !isAttackingTarget(self, target);
   const invulnerable = target === undefined || target.dead ? 0 : target.invulnerableSeconds;
