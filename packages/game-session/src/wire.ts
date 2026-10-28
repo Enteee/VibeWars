@@ -5,8 +5,10 @@ import {
   isOffhandId,
   isProfessionId,
   isStatusId,
+  resolvedBar,
   STATUS_DEFINITIONS,
   type ActiveStatus,
+  type CastState,
   type CombatEvent,
   type CombatLogEntry,
   type GroundAct,
@@ -190,15 +192,23 @@ function groundRadius(act: GroundAct): number {
 /**
  * The bar a client draws, every slot in its place, `null` where it is
  * empty (#347): `skillBar` as `resolvedBar` has it, a copy standing in a
- * slot (#469) drawn there. Energy costs are what `bearer` pays right now, Expertise
- * (#528) at its weakened rank (#762) and an active glyph (#637) and all.
+ * slot (#469) drawn there, with the match clock it ends at (#1154). Energy
+ * costs are what `bearer` pays right now, Expertise (#528) at its weakened
+ * rank (#762) and an active glyph (#637) and all.
  */
-export function skillBarSlots(skillBar: SkillBar, bearer: RankHolder): (SkillBarSlot | null)[] {
-  return skillBar.map((skillId) => {
-    if (skillId === null) {
+export function skillBarSlots(
+  skillBar: SkillBar,
+  cast: Pick<CastState, "overrides">,
+  bearer: RankHolder,
+  elapsedSeconds: number,
+): (SkillBarSlot | null)[] {
+  return resolvedBar(skillBar, cast).map((held, slot) => {
+    if (held === null) {
       return null;
     }
+    const { skillId } = held;
     const skill = getSkill(skillId);
+    const copy = cast.overrides.get(slot);
     return {
       id: skillId,
       name: skill?.name ?? skillId,
@@ -206,6 +216,7 @@ export function skillBarSlots(skillBar: SkillBar, bearer: RankHolder): (SkillBar
       adrenalineCost: skill?.cost?.kind === "adrenaline" ? skill.cost.amount : 0,
       activationSeconds: skill?.activationSeconds ?? 0,
       rechargeSeconds: skill?.rechargeSeconds ?? 0,
+      copyEndsAt: copy === undefined ? null : tenths(elapsedSeconds + copy.remainingSeconds),
     };
   });
 }
@@ -251,7 +262,8 @@ export function sameSkillBar(
         slot.energyCost === other.energyCost &&
         slot.adrenalineCost === other.adrenalineCost &&
         slot.activationSeconds === other.activationSeconds &&
-        slot.rechargeSeconds === other.rechargeSeconds
+        slot.rechargeSeconds === other.rechargeSeconds &&
+        slot.copyEndsAt === other.copyEndsAt
       );
     })
   );

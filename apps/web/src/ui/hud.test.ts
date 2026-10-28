@@ -13,6 +13,7 @@ import { isEliteSkill } from "./icons.js";
 import {
   changedSlots,
   createHud,
+  type HudElements,
   describeOutcome,
   describeRefusal,
   enemyPips,
@@ -21,6 +22,7 @@ import {
   lostHealthPercent,
   moraleLabel,
   muteButtonState,
+  refreshSkillBar,
   scoreboardText,
   skillSlotHtml,
   castRowSkill,
@@ -82,6 +84,7 @@ describe("changedSlots (#469)", () => {
     adrenalineCost: 0,
     activationSeconds: 0,
     rechargeSeconds: 0,
+    copyEndsAt: null,
   });
 
   it("names a slot whose skill changed: an echo's copy, and the echo back", () => {
@@ -96,6 +99,28 @@ describe("changedSlots (#469)", () => {
   it("names none when every slot holds what it was painted with", () => {
     const painted = ["mesmer.arcane-echo", null];
     expect(changedSlots(painted, [slot("mesmer.arcane-echo"), null])).toEqual([]);
+  });
+
+  it("repaints a slot clean of the recharge mark its old skill left (#1154)", () => {
+    const classes = new Set(["hud-skill", "is-recharging"]);
+    const button = {
+      dataset: { skillId: "mesmer.arcane-echo" } as Record<string, string>,
+      innerHTML: "",
+      classList: {
+        remove: (name: string) => classes.delete(name),
+        toggle: (name: string, on: boolean) => (on ? classes.add(name) : classes.delete(name)),
+      },
+      querySelector: () => null,
+      setAttribute: (): void => undefined,
+    };
+    const hud = {
+      skillBar: { querySelectorAll: () => [button] },
+      slotTips: { repainted: (): void => undefined },
+    } as unknown as HudElements;
+    refreshSkillBar(hud, [{ ...slot("elementalist.fireball"), copyEndsAt: 30 }]);
+    expect(button.dataset.skillId).toBe("elementalist.fireball");
+    expect(classes.has("is-recharging")).toBe(false);
+    expect(button.innerHTML).toContain("echo-strip");
   });
 });
 
@@ -499,6 +524,7 @@ describe("skillSlotHtml", () => {
     adrenalineCost: 0,
     activationSeconds: 1,
     rechargeSeconds: 7,
+    copyEndsAt: null,
   });
 
   it("carries the skill's type badge, named for a screen reader", () => {

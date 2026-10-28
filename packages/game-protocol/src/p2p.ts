@@ -1416,7 +1416,8 @@ function parseSlot(value: unknown): SkillBarSlot | null | undefined {
     isNumber(raw.energyCost) &&
     isNumber(raw.adrenalineCost) &&
     isNumber(raw.activationSeconds) &&
-    isNumber(raw.rechargeSeconds)
+    isNumber(raw.rechargeSeconds) &&
+    (raw.copyEndsAt === null || isNumber(raw.copyEndsAt))
     ? {
         id: raw.id,
         name: raw.name,
@@ -1424,6 +1425,7 @@ function parseSlot(value: unknown): SkillBarSlot | null | undefined {
         adrenalineCost: raw.adrenalineCost,
         activationSeconds: raw.activationSeconds,
         rechargeSeconds: raw.rechargeSeconds,
+        copyEndsAt: raw.copyEndsAt,
       }
     : undefined;
 }

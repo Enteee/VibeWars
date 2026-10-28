@@ -832,6 +832,11 @@ hotkey.
 - **The `✕` must win at a glance.** On the HUD it is about half the slot's
   height (1.9rem), centred over the name and cased in `bg`. In the Training
   Ground row it sits at the right end, at row height.
+- **An echo's copy** (#1154): a slot an echo filled carries a 3 px
+  `enchantment` strip along its bottom edge, over the recharge wipe and
+  clear of its number, under the hotkey and the `↔`, draining from full
+  to empty over the copy's 20 s; the tooltip adds "Echoed: 12 s left".
+  Under reduced motion it steps once a second.
 
 ### Elite frame
 
