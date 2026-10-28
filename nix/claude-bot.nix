@@ -674,7 +674,7 @@ let
         creds="${config.vibewars.claudeBot.credentials}/claude/.credentials.json"
         if [ ! -e "$creds" ]; then
           echo "claude-bot: $creds not found. Sign the company's Claude account in:" >&2
-          echo "claude-bot:   CLAUDE_CONFIG_DIR=$(dirname "$creds") claude   (then /login)" >&2
+          echo "claude-bot:   claude-llc auth claude" >&2
           exit 1
         fi
 

@@ -655,9 +655,11 @@ it, not baked in, so one file serves every screen.
   right), slow (chevrons left), dash, energy (bolt), mountain (earth), cleanse
   (drop, struck through), armor (shield), flask, flame, trident, hawk, rock,
   arrow-burst, arrow-pierce, arrow-flame, crescent (shadow), armor-half (a
+  arrow-burst, arrow-pierce, arrow-flame, crescent (shadow), armor-half (a
   half-filled shield), eye, heal-other (a head and a plus), heal-turn (a plus
-  in an arrow ring), hex-bolt (dashed ring, bolt). A new primary effect adds a
-  glyph; a new skill adds a row.
+  in an arrow ring), hex-bolt (dashed ring, bolt), blade-cleanse, blade-hook,
+  blade-shards, hilt. A new primary effect adds a glyph; a new skill adds a
+  row.
 
 ### Skill slot states
 
