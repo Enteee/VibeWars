@@ -3,7 +3,12 @@ import { describe, expect, it } from "vitest";
 import { AREA_ADJACENT, AREA_IN_THE_AREA, AREA_NEARBY, RANGE_SPELL } from "../distances.js";
 
 import { IMPLEMENTED_SKILLS, getSkill } from "./catalog.js";
-import { describeSkill, describeStatus, formatScalingRange } from "./describe.js";
+import {
+  chainRequirementText,
+  describeSkill,
+  describeStatus,
+  formatScalingRange,
+} from "./describe.js";
 import { makeCombatant, withAttackDuration } from "./testing.js";
 import { resolveMagnitude } from "./scaling.js";
 import { STATUS_DEFINITIONS } from "./status.js";
@@ -127,6 +132,30 @@ describe("describeSkill", () => {
     );
   });
 
+  it("says what a summon makes, how tough and for how long (#1052)", () => {
+    const summon = (durationSeconds?: number): SkillEffect => ({
+      kind: "summon",
+      count: 2,
+      creature: {
+        kind: "minion",
+        name: "Bone Minion",
+        maxHealth: {
+          scaling: { attributeId: "necromancer.death-magic", atZero: 50, atTwelve: 290 },
+        },
+        armor: 20,
+        ...(durationSeconds === undefined ? {} : { durationSeconds: { flat: durationSeconds } }),
+        behaviour: { kind: "idle" },
+      },
+    });
+    const lines = (effect: SkillEffect) =>
+      describeSkill(
+        { ...skill("monk.orison-of-healing"), effects: [effect] },
+        new Map([["necromancer.death-magic", 12]]),
+      ).effects.map((e) => e.text);
+    expect(lines(summon(30))).toContain("Summons 2 Bone Minion (290 Health, lasts 30 seconds)");
+    expect(lines(summon())).toContain("Summons 2 Bone Minion (290 Health)");
+  });
+
   it("says Instant rather than 0s", () => {
     const instant = IMPLEMENTED_SKILLS.find((s) => s.activationSeconds === 0);
     expect(instant).toBeDefined();
@@ -192,7 +221,7 @@ describe("describeSkill", () => {
     expect(
       describeSkill(skill("ranger.concussion-shot"), ranks).effects.map((e) => e.text),
     ).toEqual([
-      "+13 damage",
+      "Deals only 13 damage",
       "Interrupts the target's spell, if they are casting one",
       "If that action was a spell: applies Dazed for 17s (spells take 2× as long to cast, spells are interrupted by attacks)",
     ]);
@@ -209,7 +238,7 @@ describe("describeSkill", () => {
       "That skill and all skills of the same attribute are disabled for 10 seconds",
     ]);
     expect(lines("ranger.distracting-shot")).toEqual([
-      "+13 damage",
+      "Deals only 13 damage",
       "Interrupts the target's current cast, if they are casting",
       "The interrupted skill is disabled for 20 seconds",
     ]);
@@ -333,7 +362,8 @@ describe("describeSkill", () => {
       expect(described.effects, `${entry.id} lost an effect line`).toHaveLength(
         lines(entry.effects) +
           (entry.attack?.chain === undefined ? 0 : 1) +
-          (entry.attack?.bonusDamage === undefined ? 0 : 1) +
+          (entry.attack?.bonusDamage === undefined && entry.attack?.weaponDamage !== 0 ? 0 : 1) +
+          (entry.attack?.unblockable === true ? 1 : 0) +
           (entry.attack?.weapon === "scythe" && entry.area === undefined ? 1 : 0) +
           (entry.attack?.cleavesAllWhen === undefined ? 0 : 1) +
           (entry.attack?.conditionalBonus === undefined ? 0 : 1) +
@@ -377,6 +407,39 @@ describe("attack skills (#417)", () => {
     expect(first("warrior.swift-chop")).not.toMatch(/attack\./);
   });
 
+  it("says an unblockable attack cannot be blocked, right after its damage (#1038)", () => {
+    const texts = (id: string) => describeSkill(skill(id)).effects.map(({ text }) => text);
+    for (const id of ["assassin.fox-fangs", "assassin.wild-strike", "paragon.wild-throw"]) {
+      const lines = texts(id);
+      const damage = lines.findIndex((text) => /^\+\d+ damage$/.test(text));
+      expect(damage, id).toBeGreaterThanOrEqual(0);
+      expect(lines[damage + 1], id).toBe("Cannot be blocked");
+    }
+    // Crippling Shot has no bonus damage: the line leads.
+    expect(texts("ranger.crippling-shot")[0]).toBe("Cannot be blocked");
+    expect(texts("assassin.jagged-strike")).not.toContain("Cannot be blocked");
+  });
+
+  it("words an attack whose weapon deals nothing as 'deals only' or 'no damage' (#1038)", () => {
+    const ranks = new Map([
+      ["ranger.expertise", 12],
+      ["ranger.marksmanship", 12],
+      ["warrior.tactics", 12],
+      ["warrior.axe-mastery", 12],
+    ]);
+    const shot = describeSkill(skill("ranger.distracting-shot"), ranks);
+    expect(shot.effects[0]?.text).toBe("Deals only 13 damage");
+    expect(shot.headline).toBe("Deals only 13 damage");
+    expect(shot.effects.map(({ text }) => text)).not.toContain("+13 damage");
+    expect(describeSkill(skill("ranger.concussion-shot"), ranks).headline).toBe(
+      "Deals only 13 damage",
+    );
+    const blow = describeSkill(skill("warrior.distracting-blow"), ranks);
+    expect(blow.effects[0]?.text).toBe("Deals no damage");
+    expect(blow.headline).not.toBe("Deals no damage");
+    expect(describeSkill(skill("warrior.swift-chop"), ranks).effects[0]?.text).toBe("+16 damage");
+  });
+
   it("words a splash, a lone target and a recharge of the others as GW1 does (#885)", () => {
     const texts = (id: string) => describeSkill(skill(id)).effects.map(({ text }) => text);
     expect(texts("assassin.death-blossom")).toContain("Adjacent foes take 20 damage");
@@ -387,6 +450,34 @@ describe("attack skills (#417)", () => {
       "If target is below 50% Health: recharges all your other attack skills",
     );
     expect(texts("assassin.moebius-strike")[0]).toBe("Off-hand attack. Must follow a dual attack.");
+  });
+
+  it("words the crippling knockdown chain, and a state its attack requires (#1041)", () => {
+    const texts = (id: string) => describeSkill(skill(id)).effects.map(({ text }) => text);
+    expect(texts("assassin.falling-spider")[0]).toBe(
+      "Off-hand attack. Only if target is knocked down.",
+    );
+    expect(texts("assassin.leaping-mantis-sting")).toContain(
+      "If target is moving: applies Crippled for 13s (moves at 50% speed)",
+    );
+    expect(texts("assassin.trampling-ox")).toContain("If target has Crippled: knocks down for 2s");
+    expect(texts("assassin.jungle-strike")[0]).toBe("Off-hand attack. Must follow a lead attack.");
+    expect(chainRequirementText(skill("assassin.falling-spider"))).toBe(
+      "only if target is knocked down",
+    );
+    expect(chainRequirementText(skill("assassin.fox-fangs"))).toBe("must follow a lead attack");
+    expect(chainRequirementText(skill("assassin.jagged-strike"))).toBeUndefined();
+    const spider = skill("assassin.falling-spider");
+    const both = {
+      ...spider,
+      attack: spider.attack && {
+        ...spider.attack,
+        chain: { ...spider.attack.chain, role: "off-hand", follows: "lead" } as const,
+      },
+    };
+    expect(chainRequirementText(both)).toBe(
+      "must follow a lead attack; only if target is knocked down",
+    );
   });
 
   it("words Mind Shock's energy comparison as GW1 does (#918)", () => {
@@ -432,6 +523,26 @@ describe("attack skills (#417)", () => {
     expect(describeStatus("spirit-light-weapon")).toBe("+21 Health per second");
     expect(describeStatus("weapon-of-quickening")).toBe("spells recharge 33% faster");
     expect(describeStatus("weapon-of-aggression")).toBe("attacks 25% faster");
+  });
+
+  it("words the Assassin's staples (#988)", () => {
+    const lines = (id: string) =>
+      describeSkill(skill(id), new Map([["assassin.shadow-arts", 12]])).effects.map(
+        ({ text }) => text,
+      );
+    expect(lines("assassin.deaths-charge")).toEqual([
+      "Shadow steps to the target",
+      "If target has more Health than you: you gain 173 health",
+    ]);
+    expect(lines("assassin.shadow-refuge")).toEqual([
+      "Applies Shadow Refuge for 6s (+9 Health regeneration. When it ends, if it is attacking: heals for 88)",
+    ]);
+    expect(describeStatus("shroud-of-distress")).toBe(
+      "75% chance to block attacks while below 50% Health",
+    );
+    expect(describeStatus("critical-eye")).toBe(
+      "+13% critical chance, gain 1 Energy per critical hit",
+    );
   });
 
   it("words Spear of Lightning's type and penetration, and Leader's Comfort's per ally (#923)", () => {

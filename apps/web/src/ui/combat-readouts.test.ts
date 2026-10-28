@@ -238,6 +238,9 @@ describe("describeCombatEvent", () => {
     expect(
       describeCombatEvent(entry([missed], { skillId: "assassin.moebius-strike" }), missed, nameOf),
     ).toBe("Moebius Strike (Pyro) misses Caster dummy (must follow a dual attack)");
+    expect(
+      describeCombatEvent(entry([missed], { skillId: "assassin.falling-spider" }), missed, nameOf),
+    ).toBe("Falling Spider (Pyro) misses Caster dummy (only if target is knocked down)");
   });
 
   it("says why a picky interrupt let a cast through, and nothing when it found none (#796)", () => {
@@ -291,6 +294,15 @@ describe("describeCombatEvent", () => {
       describeCombatEvent(entry([lengthened], { skillId: "mesmer.diversion" }), lengthened, nameOf),
     ).toBe("Caster dummy's Fireball takes 47 s longer to recharge");
     expect(logToneOf("recharge-lengthened")).toBe("control");
+  });
+
+  it("says who shadow stepped to whom, with no floating text (#988)", () => {
+    const step: CombatEvent = { kind: "shadow-stepped", targetId: "dummy", toId: "you" };
+    expect(
+      describeCombatEvent(entry([step], { skillId: "assassin.deaths-charge" }), step, nameOf),
+    ).toBe("Caster dummy shadow steps to Pyro");
+    expect(logToneOf("shadow-stepped")).toBe("control");
+    expect(floatingCueFor("shadow-stepped", undefined, false)).toBeUndefined();
   });
 
   it("says who knocked whom down, and for how long (#544)", () => {

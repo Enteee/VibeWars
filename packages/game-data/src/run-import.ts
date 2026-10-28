@@ -253,6 +253,26 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Ritualist/1206-Weapon_of_Aggression",
   },
   {
+    id: "ritualist.weapon-of-remedy",
+    profession: "ritualist",
+    url: "https://www.gw-memorial.net/skills/Ritualist/975-Weapon_of_Remedy",
+  },
+  {
+    id: "ritualist.vengeful-weapon",
+    profession: "ritualist",
+    url: "https://www.gw-memorial.net/skills/Ritualist/767-Vengeful_Weapon",
+  },
+  {
+    id: "ritualist.splinter-weapon",
+    profession: "ritualist",
+    url: "https://www.gw-memorial.net/skills/Ritualist/726-Splinter_Weapon",
+  },
+  {
+    id: "ritualist.mending-grip",
+    profession: "ritualist",
+    url: "https://www.gw-memorial.net/skills/Ritualist/1209-Mending_Grip",
+  },
+  {
     id: "mesmer.power-spike",
     profession: "mesmer",
     url: "https://www.gw-memorial.net/skills/Mesmer/320-Power_Spike",
@@ -326,6 +346,26 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     id: "assassin.moebius-strike",
     profession: "assassin",
     url: "https://www.gw-memorial.net/skills/Assassin/661-Moebius_Strike",
+  },
+  {
+    id: "assassin.leaping-mantis-sting",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/660-Leaping_Mantis_Sting",
+  },
+  {
+    id: "assassin.jungle-strike",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/659-Jungle_Strike",
+  },
+  {
+    id: "assassin.trampling-ox",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/1199-Trampling_Ox",
+  },
+  {
+    id: "assassin.falling-spider",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/652-Falling_Spider",
   },
   {
     id: "paragon.cruel-spear",
@@ -648,6 +688,26 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Assassin/688-Dark_Escape",
   },
   {
+    id: "assassin.deaths-charge",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/689-Death's_Charge",
+  },
+  {
+    id: "assassin.shadow-refuge",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/694-Shadow_Refuge",
+  },
+  {
+    id: "assassin.shroud-of-distress",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/698-Shroud_of_Distress",
+  },
+  {
+    id: "assassin.critical-eye",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/637-Critical_Eye",
+  },
+  {
     id: "ranger.natural-stride",
     profession: "ranger",
     url: "https://www.gw-memorial.net/skills/Ranger/826-Natural_Stride",
@@ -751,6 +811,26 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     id: "monk.restore-condition",
     profession: "monk",
     url: "https://www.gw-memorial.net/skills/Monk/194-Restore_Condition",
+  },
+  {
+    id: "monk.cure-hex",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/1156-Cure_Hex",
+  },
+  {
+    id: "monk.smite-condition",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/1164-Smite_Condition",
+  },
+  {
+    id: "monk.mending-touch",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/849-Mending_Touch",
+  },
+  {
+    id: "monk.vigorous-spirit",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/177-Vigorous_Spirit",
   },
 ];
 

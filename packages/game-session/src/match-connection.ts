@@ -1,6 +1,7 @@
 import type {
   ChainRole,
   CombatEvent,
+  CreatureKind,
   OffhandId,
   ProfessionId,
   StatusId,
@@ -82,6 +83,12 @@ export interface PlayerSnapshot {
   readonly energyPips: number;
   /** In the order applied, oldest first (#803). */
   readonly statuses: readonly StatusSnapshot[];
+  /**
+   * A creature's owner and kind (#1052), `undefined` for a player or a
+   * dummy. A creature never counts for its team: not in the scoreboard,
+   * the enemy pips or the music.
+   */
+  readonly creature: { readonly ownerId: string; readonly kind: CreatureKind } | undefined;
 }
 
 /** One status on a player (#803): what the effects monitor draws. */

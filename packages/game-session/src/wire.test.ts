@@ -14,6 +14,8 @@ import {
   skillBarSlots,
   statusSnapshot,
   wireStatuses,
+  wireIdentity,
+  type SeatIdentity,
 } from "./wire.js";
 
 const ORDER: readonly StatusCategory[] = [
@@ -190,5 +192,49 @@ describe("sameSkillBar (#637)", () => {
     expect(sameSkillBar(plain(), cheaper)).toBe(false);
     expect(sameSkillBar(plain(), [...plain()].reverse())).toBe(false);
     expect(sameSkillBar(plain(), plain().slice(0, 2))).toBe(false);
+  });
+});
+
+describe("wireIdentity (#1052)", () => {
+  const seats = new Map<string, SeatIdentity>([
+    [
+      "p1",
+      { name: "Ann", team: 1, primaryProfession: "necromancer", secondaryProfession: undefined },
+    ],
+  ]);
+  const minion = (ownerId: string) => ({
+    id: `${ownerId}/c1`,
+    creature: {
+      ownerId,
+      kind: "minion" as const,
+      name: "Bone Minion",
+      expiresInSeconds: Number.POSITIVE_INFINITY,
+      summonedAtTick: 1,
+    },
+  });
+
+  it("sends a seated player as its seat says", () => {
+    expect(wireIdentity({ id: "p1", creature: undefined }, seats)).toEqual({
+      name: "Ann",
+      team: 1,
+      primaryProfession: "necromancer",
+      secondaryProfession: null,
+      creature: null,
+    });
+  });
+
+  it("sends a creature with no seat, on its owner's team, named for its kind", () => {
+    expect(wireIdentity(minion("p1"), seats)).toEqual({
+      name: "Bone Minion",
+      team: 1,
+      primaryProfession: null,
+      secondaryProfession: null,
+      creature: { ownerId: "p1", kind: "minion" },
+    });
+  });
+
+  it("sends neither a body with no seat nor a creature whose owner has none", () => {
+    expect(wireIdentity({ id: "dummy", creature: undefined }, seats)).toBeUndefined();
+    expect(wireIdentity(minion("gone"), seats)).toBeUndefined();
   });
 });

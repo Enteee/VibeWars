@@ -169,6 +169,10 @@ Protection Prayers, 5 energy, ¾ s, 2 s) removes every condition from
 another ally and then heals it 58 for each one removed: three are 174.
 A deep wound among them is gone before the heal, so it does not cut it.
 With no condition it heals nothing and still costs its energy.
+**Mending Touch** (#1039, Protection Prayers, 5 energy, ¾ s, 6 s) is a
+touch: the ally, or you, must be at hand. It removes the newest two
+conditions and heals 51 for each one removed. A deep wound among the
+two is gone before the heal; one left as a third cuts it.
 
 ## Interrupts
 
@@ -285,6 +289,20 @@ of energy or by a death, it takes the newest hex off its ally. A hex it
 removes does not fire its own end: a Parasitic Bond taken this way
 heals nobody.
 
+**Vigorous Spirit** (#1039, Monk, Healing Prayers, 5 energy, ¼ s, 4 s)
+heals its ally 17 (5 at Healing Prayers 0) for 30 s each time it attacks or casts a spell: each
+swing, each shot, each attack skill and each completed spell. A signet,
+a shout, a stance, a chant, or a spell interrupted or cancelled heals
+nothing, and cast on yourself its own cast does not count. The Monk who
+cast it is the healer: a deep wound cuts it, and Divine Favor, which
+adds once as a spell lands, does not add to each heal.
+
+**Shadow Refuge** (#988; Assassin, Shadow Arts, 5 energy, 1 s, 8 s
+recharge) gives you +9 health regeneration for 6 s. When it ends, for any
+reason, a strip included, you gain 88 Health if you are attacking right
+then: a swing in progress or an attack skill being used. Standing idle,
+casting a spell or dead, it gives nothing.
+
 **Rend Enchantments** (Necromancer, Curses, 5 energy, 2 s, 20 s
 recharge) removes up to 8 enchantments from a foe, the newest first,
 and you lose 31 health for each Monk enchantment among them. That loss
@@ -319,7 +337,8 @@ Parasite 39) is not damage. The target loses up to that much, never more
 than it has, and the caster gains exactly what was taken, up to its
 maximum health. Armor does not apply, healing modifiers do not touch the
 gain, it charges no adrenaline, and Mark of Pain does not see it. It can
-kill. A dead caster steals nothing.
+kill. A dead caster steals nothing. Vengeful Weapon and Weapon of Remedy
+steal for their bearer, not their Ritualist, and only once.
 
 ## Knockdown
 
@@ -387,7 +406,11 @@ its caster energy and health, and Mend Condition heals the ally.
 hex from any ally, yourself included; if it removed one, every foe in
 the area of that ally takes 70 holy damage, through armor. Allies are
 never hit. With no hex nothing happens, and the energy and recharge are
-spent.
+spent. **Cure Hex** (#1039, Healing Prayers, 5 energy, 1 s, 12 s)
+removes one hex from any ally and, if it removed one, heals that ally 86.
+**Smite Condition** (#1039, Smiting Prayers, 5 energy, 1 s, 7 s) is
+Smite Hex for a condition: if it removed one, every foe in the area of
+the ally takes 50 holy damage.
 
 **A Dervish spends its own enchantments** (#845). Wounding Strike,
 Signet of Pious Light and Pious Restoration each make you lose 1 Dervish
@@ -766,11 +789,30 @@ speed-up only the strongest counts, so under Frenzy it adds nothing.
 Spirit Light Weapon's extra 21 a second near a spirit and Weapon of
 Quickening's binding rituals wait for spirits (#467).
 
+Three more (#1022), which still replace any other weapon spell. Each
+lasts on an ally or yourself. **Vengeful Weapon** (Restoration Magic, 5
+energy, ¼ s, 3 s recharge) lasts 8 s: the next time its bearer loses
+health to damage or life steal from a foe, a blow, an arrow or a spell,
+the bearer steals 51 from that foe, and it ends. **Weapon of Remedy**
+(elite, 3 energy, ¼ s, 3 s recharge) is the same with a 68 steal, and
+the bearer also loses its 2 newest conditions. Degeneration, sacrifice,
+a block, a blow armor takes to 0 and a hit Reversal of Fortune reverses
+do not set either off. Neither does damage a trigger deals, so Mark of
+Pain's splash leaves them up, and two Vengeful Weapons never echo. Two
+foes in one tick: it answers the first. The blow that kills the bearer
+steals nothing. **Splinter Weapon** (Channeling Magic, 5 energy, 1 s, 8 s
+recharge) lasts 20 s or 4 hits with any physical weapon: each hit deals
+25 armor-ignoring damage to every other foe adjacent to the foe hit. A
+miss or a block spends nothing, and a wand or a staff carries none.
+
 The Ritualist heals with Restoration Magic, each on an ally or yourself
 (#955). **Mend Body and Soul** (5 energy, ¾ s, 3 s recharge) heals 96.
 **Spirit Light** (5 energy, 1 s, 4 s recharge) sacrifices 17% of your
 maximum health and heals 156. **Wielder's Boon** (5 energy, ¼ s, 4 s
 recharge) heals 51, and 63 more if the ally is under a weapon spell.
+**Mending Grip** (5 energy, 1 s, 4 s recharge) heals 68, and if the ally
+is under a weapon spell it also loses one condition, the newest: the
+Ritualist's first condition removal (#1022).
 Their spirit clauses, a condition removed per spirit in earshot and no
 sacrifice with a spirit near, wait for spirits (#467).
 
@@ -849,6 +891,19 @@ and against a foe below half health recharges all your other attack
 skills at once, so the chain loops: lead, off-hand, dual, Moebius,
 dual, Moebius. The weapon's own double strike never adds to a skill.
 
+**Off-hand attacks that ask for a state** (#1041). Falling Spider needs
+no lead: it hits only a knocked-down foe, whoever knocked it down, read
+as its blow lands. On a foe standing, it is out of sequence like an
+off-hand without its lead: it costs its energy, misses ("Falling Spider
+misses Warrior (only if target is knocked down)") and recharges at
+once. A hit poisons and leaves your off-hand mark, so a dual follows.
+The tooltip reads "Off-hand attack. Only if target is knocked down."
+The crippling knockdown chain sets each step up: Leaping Mantis Sting,
+a lead, cripples a foe that is moving; Jungle Strike, an off-hand,
+deals a crippled foe and every foe adjacent to it 25 more; Trampling
+Ox, a dual, knocks a crippled foe down; then Falling Spider, and Death
+Blossom or Twisting Fangs after it.
+
 Your mark on your target shows right of its health in the target frame
 (#916): one dagger for lead, one in the left hand for off-hand, two
 crossed for dual, with "lead attack landed" and so on on hover. It
@@ -918,6 +973,11 @@ the attribute and an unmet requirement; an attack skill's bonus is
 added unmultiplied. A melee blow at a target that is moving with its
 back to you (facing more than 90° away) always crits. A crit floats
 larger, with a "!", and the log says "a critical hit".
+**Critical Eye** (Assassin, Critical Strikes, 5 energy, instant, 30 s
+recharge, #988) adds 13% to the chance for 30 s, all of it capped at
+100%, and gives 1 more energy on each crit, beside Critical Strikes'.
+It is a skill effect, so no strip removes it. An arrow keeps the crit
+chance it was loosed with, but the extra energy is read as it lands.
 
 **Block** (#534). Guardian gives its ally a 50% chance to block attacks;
 several block sources combine as 1 − ∏(1 − p), so two 50% sources make
@@ -930,6 +990,11 @@ skill's cost and recharge are still spent. "block" floats over the
 target. Swift Chop is the exception that proves it: blocked, it still
 deals its flat damage and a 20 s Deep Wound. Spells are never blocked,
 and shields do not block, as in GW1. Wild Throw and Crippling Shot cannot be blocked at all.
+**Shroud of Distress** (Assassin, Shadow Arts, 10 energy, 1 s, 45 s
+recharge, #988) gives a 75% chance to block attacks for 54 s, but only
+while you are below half your maximum Health (after a deep wound), read
+at each block roll: a heal back over half turns it off. It combines
+with other blocks as above.
 
 Not modelled: evade.
 
@@ -1118,6 +1183,31 @@ brackets.
   and a wall ends up outside the wall rather than inside it.
 - **Line of sight** is a geometric query against wall segments, shared
   by the server, the tests and any future client preview.
+- **Shadow step** (#988): **Death's Charge** (Assassin, Shadow Arts,
+  5 energy, ¼ s, 30 s recharge) moves you to the foe it targets, where
+  that foe stands as the spell resolves, touching it on the side you
+  came from, facing it. With a wall between, you land on it, and bodies,
+  walls and the map's edge push you clear as for a walk. It is not a
+  walk: snares do not slow it, nothing reads it as running, and an
+  arrow already flying at you misses. A long step snaps the camera, as
+  a respawn does. If that foe has more Health than you, read before the
+  step, you are healed for 173.
+
+## Creatures
+
+A creature (#1052) is a body that is not a player: a spirit or a minion,
+summoned by a skill. It has health, armor, statuses and its owner's team,
+so every attack, spell, area and condition hits it, and it can be
+targeted with Tab, C, a click or a call. It is drawn smaller (radius 10
+to a player's 14) and blocks bodies at that radius.
+
+It never counts for its team: killing one scores nothing and gives no
+morale, it has no morale of its own, and a team with only creatures left
+standing has lost. A creature that dies or runs out its time disappears
+at the end of the tick, with no corpse and no respawn; running out is not
+a death. Its owner's death does not end it; its owner leaving the match
+does. Soul Reaping answers a minion's death but not a spirit's. At most
+32 creatures are on the field at once (ADR-0035).
 
 ## Death and scoring
 

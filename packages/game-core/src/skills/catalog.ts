@@ -2205,6 +2205,114 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   },
 
   /* ---------------------------------------------------------------------- */
+  /* Ritualist weapon spells 2 (#1022)                                       */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "ritualist.weapon-of-remedy",
+    name: "Weapon of Remedy",
+    type: "weapon-spell",
+    elite: true,
+    profession: "ritualist",
+    attributeId: "ritualist.restoration-magic",
+    cost: { kind: "energy", amount: 3 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 3,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 8 seconds, the next time target ally takes damage or life steal
+    // from a foe, that ally steals up to 20...68...80 health from that foe
+    // and loses 2 conditions": the 2026-04-28 revision (3 energy, 68, 2
+    // conditions); the steal and the removal are the status's.
+    effects: [{ kind: "apply-status", statusId: "weapon-of-remedy", durationSeconds: 8 }],
+  },
+  {
+    id: "ritualist.vengeful-weapon",
+    name: "Vengeful Weapon",
+    type: "weapon-spell",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.restoration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 3,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 8 seconds, the next time target ally takes damage or life steal
+    // from a foe, that ally steals up to 15...51...60 Health from that
+    // foe": the 51 is the status's.
+    effects: [{ kind: "apply-status", statusId: "vengeful-weapon", durationSeconds: 8 }],
+  },
+  {
+    id: "ritualist.splinter-weapon",
+    name: "Splinter Weapon",
+    type: "weapon-spell",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.channeling-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 20 seconds, target ally has a Splinter Weapon. Target ally's next
+    // 1...4...5 attacks deal 5...25...30 damage to up to 4 adjacent foes":
+    // the PvP page, 726; the 4 hits and the 25 are the status's.
+    effects: [{ kind: "apply-status", statusId: "splinter-weapon", durationSeconds: 20 }],
+  },
+  {
+    id: "ritualist.mending-grip",
+    name: "Mending Grip",
+    type: "spell",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.restoration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 4,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Target ally is healed for 15...68...80 Health. If that ally is under
+    // the effects of a weapon Spell, that ally loses one Condition": the
+    // 2026-04-28 revision (4 s, 68). The weapon spell is read before the
+    // heal, as Wielder's Boon's.
+    effects: [
+      {
+        kind: "heal",
+        perStatusOnTarget: [],
+        amount: {
+          scaling: { attributeId: "ritualist.restoration-magic", atZero: 15, atTwelve: 68 },
+        },
+      },
+      {
+        kind: "if",
+        condition: { kind: "target-has", category: "weapon-spell" },
+        effects: [{ kind: "remove-status", category: "condition", count: 1 }],
+      },
+    ],
+  },
+
+  /* ---------------------------------------------------------------------- */
   /* An effect that depends on an earlier one (#521)                         */
   /* ---------------------------------------------------------------------- */
 
@@ -4703,6 +4811,439 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         },
       },
     ],
+  },
+  /* ---------------------------------------------------------------------- */
+  /* Monk staples 3 (#1039)                                                 */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "monk.cure-hex",
+    name: "Cure Hex",
+    type: "spell",
+    elite: false,
+    profession: "monk",
+    attributeId: "monk.healing-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Remove one Hex from target ally. If a Hex was removed, that ally is
+    // healed for 30...86...100 Health": the current page's 86, not the 102
+    // guildwars.fandom still quotes from before the cut.
+    effects: [
+      { kind: "remove-status", category: "hex", count: 1 },
+      {
+        kind: "if",
+        condition: { kind: "removed", category: "hex" },
+        effects: [
+          {
+            kind: "heal",
+            perStatusOnTarget: [],
+            amount: {
+              scaling: { attributeId: "monk.healing-prayers", atZero: 30, atTwelve: 86 },
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "monk.smite-condition",
+    name: "Smite Condition",
+    type: "spell",
+    elite: false,
+    profession: "monk",
+    attributeId: "monk.smiting-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 7,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Remove one Condition from target ally. If a Condition was removed,
+    // foes in the area take 10...50...60 damage": holy, and the area is the
+    // ally's, as Smite Hex's.
+    effects: [
+      { kind: "remove-status", category: "condition", count: 1 },
+      {
+        kind: "if",
+        condition: { kind: "removed", category: "condition" },
+        effects: [
+          {
+            kind: "splash",
+            radius: AREA_IN_THE_AREA,
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "monk.smiting-prayers", atZero: 10, atTwelve: 50 },
+                },
+                type: "holy",
+                armorPenetration: 0,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "monk.mending-touch",
+    name: "Mending Touch",
+    type: "spell",
+    elite: false,
+    profession: "monk",
+    attributeId: "monk.protection-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 6,
+    // "Touched ally": at hand, as Blood Ritual's.
+    range: RANGE_MELEE,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Touched ally loses two conditions and is healed for 15...51...60
+    // Health for each condition removed in this way."
+    effects: [
+      { kind: "remove-status", category: "condition", count: 2 },
+      {
+        kind: "heal",
+        perStatusOnTarget: [],
+        perRemoved: "condition",
+        amount: {
+          scaling: { attributeId: "monk.protection-prayers", atZero: 15, atTwelve: 51 },
+        },
+      },
+    ],
+  },
+  {
+    id: "monk.vigorous-spirit",
+    name: "Vigorous Spirit",
+    type: "enchantment",
+    elite: false,
+    profession: "monk",
+    attributeId: "monk.healing-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 4,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 30 seconds, each time target ally attacks or casts a spell, that
+    // ally is healed for 5...17...20 health": the 17 is the status's.
+    effects: [{ kind: "apply-status", statusId: "vigorous-spirit", durationSeconds: 30 }],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Assassin staples (#988)                                                */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "assassin.deaths-charge",
+    name: "Death's Charge",
+    type: "spell",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.shadow-arts",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Shadow Step to target foe. If that foe has more Health than you, you
+    // are healed for 65...173...200": who has more is read before the step.
+    effects: [
+      { kind: "shadow-step" },
+      {
+        kind: "if",
+        condition: { kind: "target-more-health" },
+        effects: [
+          {
+            kind: "heal",
+            recipient: "caster",
+            amount: { scaling: { attributeId: "assassin.shadow-arts", atZero: 65, atTwelve: 173 } },
+            perStatusOnTarget: [],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "assassin.shadow-refuge",
+    name: "Shadow Refuge",
+    type: "enchantment",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.shadow-arts",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 6 seconds, you gain 5...9...10 Health regeneration. When Shadow
+    // Refuge ends, you gain 40...88...100 Health if you are attacking."
+    effects: [{ kind: "apply-status", statusId: "shadow-refuge", durationSeconds: 6 }],
+  },
+  {
+    id: "assassin.shroud-of-distress",
+    name: "Shroud of Distress",
+    type: "enchantment",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.shadow-arts",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 45,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 30...54...60 seconds, if you are below 50% Health, you have a 75%
+    // chance to block attacks": 54 s, its rank-12 value.
+    effects: [{ kind: "apply-status", statusId: "shroud-of-distress", durationSeconds: 54 }],
+  },
+  {
+    id: "assassin.critical-eye",
+    name: "Critical Eye",
+    type: "skill",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.critical-strikes",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 10...30...35 seconds, you have an additional 3...13...15% chance
+    // to land a critical hit when attacking. You gain 1 Energy whenever you
+    // score a critical hit": 30 s and 13%, the rank-12 values.
+    effects: [{ kind: "apply-status", statusId: "critical-eye", durationSeconds: 30 }],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Assassin staples 2 (#1041)                                             */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "assassin.leaping-mantis-sting",
+    name: "Leaping Mantis Sting",
+    type: "attack",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.dagger-mastery",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.5,
+    rechargeSeconds: 8,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    // "If Mantis Sting hits, target foe takes +5...13...15 damage. If this
+    // attack strikes a moving foe that foe is Crippled for 3...13...15
+    // seconds": 13 s, its rank-12 value. The +13 is the 2012 update;
+    // fandom's template still has the older +14...19.
+    attack: {
+      weapon: "daggers",
+      weaponDamage: 1,
+      bonusDamage: {
+        scaling: { attributeId: "assassin.dagger-mastery", atZero: 5, atTwelve: 13 },
+      },
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: { role: "lead", follows: undefined },
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-moving" },
+        effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: 13 }],
+      },
+    ],
+  },
+  {
+    id: "assassin.jungle-strike",
+    name: "Jungle Strike",
+    type: "attack",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.dagger-mastery",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.5,
+    rechargeSeconds: 6,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    // "Must follow a lead attack. If it hits, this attack strikes for
+    // +10...22...25 damage. If it hits a foe that was Crippled, that foe
+    // and all adjacent foes take 1...25...31 damage." The 2026 update's 6 s
+    // recharge; fandom still says 10. The same update dropped the "+" from
+    // the 25, so it is its own damage on the foe, through armor as Death
+    // Blossom's splash, not a bonus on the blow.
+    attack: {
+      weapon: "daggers",
+      weaponDamage: 1,
+      bonusDamage: {
+        scaling: { attributeId: "assassin.dagger-mastery", atZero: 10, atTwelve: 22 },
+      },
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: { role: "off-hand", follows: "lead" },
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-has-status", statusId: "crippled" },
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "assassin.dagger-mastery", atZero: 1, atTwelve: 25 },
+            },
+            type: "piercing",
+            armorPenetration: 0,
+          },
+          {
+            kind: "splash",
+            radius: AREA_ADJACENT,
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "assassin.dagger-mastery", atZero: 1, atTwelve: 25 },
+                },
+                type: "piercing",
+                armorPenetration: 0,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "assassin.trampling-ox",
+    name: "Trampling Ox",
+    type: "attack",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.dagger-mastery",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 8,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    // "Must follow an off-hand attack. If it hits, you deal +5...17...20
+    // damage. If you hit a Crippled foe, that foe is knocked down." Both
+    // blows may knock down; the second finds the foe down already.
+    attack: {
+      weapon: "daggers",
+      weaponDamage: 1,
+      bonusDamage: {
+        scaling: { attributeId: "assassin.dagger-mastery", atZero: 5, atTwelve: 17 },
+      },
+      conditionalBonus: undefined,
+      strikes: 2,
+      unblockable: false,
+      chain: { role: "dual", follows: "off-hand" },
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-has-status", statusId: "crippled" },
+        effects: [{ kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS }],
+      },
+    ],
+  },
+  {
+    id: "assassin.falling-spider",
+    name: "Falling Spider",
+    type: "attack",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.dagger-mastery",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 8,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    // "Must strike a knocked-down foe. If it hits, Falling Spider strikes
+    // for +15...31...35 damage and target foe is Poisoned for 5...17...20":
+    // 17 s. It needs no lead. On a standing foe it misses as GW1's
+    // off-hand attacks do when their condition is unmet: energy spent,
+    // recharged at once.
+    attack: {
+      weapon: "daggers",
+      weaponDamage: 1,
+      bonusDamage: {
+        scaling: { attributeId: "assassin.dagger-mastery", atZero: 15, atTwelve: 31 },
+      },
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: { role: "off-hand", follows: undefined, requires: { kind: "target-knocked-down" } },
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    effects: [{ kind: "apply-status", statusId: "poison", durationSeconds: 17 }],
   },
 ];
 

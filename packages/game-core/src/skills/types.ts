@@ -4,6 +4,8 @@ import type { CombatRules } from "../ruleset.js";
 import type { ResolvedEquipment } from "../equipment/resolve.js";
 import type { SkillBar } from "../build.js";
 import type { DamageType } from "../equipment/types.js";
+import type { Behaviour } from "../match/behaviour.js";
+import type { CreatureKind } from "../match/simulation.js";
 import type { ProfessionId } from "../professions.js";
 import type { CastState } from "./cast-state.js";
 import type { TargetCandidate } from "./targeting.js";
@@ -278,6 +280,15 @@ export interface KnockdownEffect {
 }
 
 /**
+ * Shadow Step (#988): the caster moves to the effect's target, as Death's
+ * Charge's "Shadow Step to target foe". The effect layer only reports it
+ * (`shadow-stepped`); the simulation places the body.
+ */
+export interface ShadowStepEffect {
+  readonly kind: "shadow-step";
+}
+
+/**
  * Bring a dead target back to life where it lies (#812), with these
  * percentages of its maximum health and energy, as Restore Life's
  * "returned to life with 20...56...65% health and 42...80...90% energy".
@@ -334,6 +345,34 @@ export interface DisableSkillEffect {
 export interface LengthenRechargeEffect {
   readonly kind: "lengthen-recharge";
   readonly seconds: Magnitude;
+}
+
+/**
+ * What a `summon` makes (#1052, ADR-0035): a body that is not a player,
+ * with health, armor and a team, and no skill bar, attributes or energy.
+ */
+export interface CreatureTemplate {
+  readonly kind: CreatureKind;
+  /** Shown in the target frame and the name label, as "Bone Minion". */
+  readonly name: string;
+  /** Scaled by the summoning skill's caster, as any other magnitude. */
+  readonly maxHealth: Magnitude;
+  readonly armor: number;
+  /** Seconds it lasts; omitted: until it is killed. */
+  readonly durationSeconds?: Magnitude;
+  /** What it does each tick. */
+  readonly behaviour: Behaviour;
+}
+
+/**
+ * Summon `count` creatures at the caster, on the caster's team, owned by
+ * it (#1052). Acts on the caster, once. A match holds at most
+ * `MAX_CREATURES`: past it, as many as fit, possibly none.
+ */
+export interface SummonEffect {
+  readonly kind: "summon";
+  readonly creature: CreatureTemplate;
+  readonly count: number;
 }
 
 /** How long "knocks down" lasts when a skill names no duration (GW1). */
@@ -420,7 +459,19 @@ export type StateCondition =
    * share (#939): Victorious Sweep's "if target foe has less Health than
    * you". Equal is not less.
    */
-  | { readonly kind: "target-less-health" };
+  | { readonly kind: "target-less-health" }
+  /**
+   * The effect's target has more health than the caster, absolute (#988):
+   * Death's Charge's "if that foe has more Health than you". Equal is not
+   * more.
+   */
+  | { readonly kind: "target-more-health" }
+  /**
+   * The effect's target is alive and attacking (#988): an auto-attack
+   * swinging, not walking to its foe, or an attack skill being activated,
+   * as Shadow Refuge's "if you are attacking".
+   */
+  | { readonly kind: "target-attacking" };
 
 export type EffectCondition = EventCondition | StateCondition;
 
@@ -455,12 +506,14 @@ export type UnconditionalEffect =
   | RemoveStatusEffect
   | InterruptEffect
   | KnockdownEffect
+  | ShadowStepEffect
   | ResurrectEffect
   | RechargeFasterEffect
   | SplashEffect
   | RechargeOthersEffect
   | DisableSkillEffect
-  | LengthenRechargeEffect;
+  | LengthenRechargeEffect
+  | SummonEffect;
 
 export type SkillEffect = UnconditionalEffect | ConditionalEffect;
 
@@ -574,6 +627,13 @@ export interface ChainStep {
    * "Must follow a lead attack"; `undefined`: it may open a chain.
    */
   readonly follows: ChainRole | undefined;
+  /**
+   * A state that must hold for it to hit, read per victim with
+   * `stateHolds` before its first blow (#1041): Falling Spider's "Must
+   * strike a knocked-down foe". Unmet, it misses out of sequence, as an
+   * unmet `follows` does. Absent: no requirement but `follows`.
+   */
+  readonly requires?: StateCondition;
 }
 
 /** A chain mark one attacker left on one target (#831). */
