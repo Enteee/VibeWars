@@ -1,6 +1,7 @@
 import { primaryAttributeIds } from "../character.js";
 import type { ProfessionId } from "../professions.js";
 import { armorPieces, type ArmorPiece, type ArmorSet } from "./armor.js";
+import { getInsignia, insigniaAllowed, type InsigniaId } from "./insignias.js";
 import type { BuildEquipment, EquippedOffhand, EquippedWeapon, WeaponSet } from "./loadout.js";
 import { getOffhand } from "./offhands.js";
 import { getUniversalRune, type EquippedRune } from "./runes.js";
@@ -113,10 +114,24 @@ function reconcileRune(rune: EquippedRune | null, context: ReconcileContext): Eq
   return rune;
 }
 
+/** A profession insignia goes with its primary (#1142); a common one stays. */
+function reconcileInsignia(
+  insigniaId: InsigniaId | null,
+  context: ReconcileContext,
+): InsigniaId | null {
+  const insignia = insigniaId === null ? undefined : getInsignia(insigniaId);
+  return insignia === undefined || insigniaAllowed(insignia, context.primaryProfession)
+    ? insigniaId
+    : null;
+}
+
 function reconcileArmor(armor: ArmorSet, context: ReconcileContext): ArmorSet {
   const next: Record<string, ArmorPiece> = {};
   for (const [slot, piece] of armorPieces(armor)) {
-    next[slot] = { insigniaId: piece.insigniaId, rune: reconcileRune(piece.rune, context) };
+    next[slot] = {
+      insigniaId: reconcileInsignia(piece.insigniaId, context),
+      rune: reconcileRune(piece.rune, context),
+    };
   }
   return next as ArmorSet;
 }
