@@ -162,7 +162,13 @@ const minion: WirePlayer = {
   id: "peer-1/c1",
   name: "Bone Minion",
   primaryProfession: null,
-  creature: { ownerId: "peer-1", kind: "minion", look: "bone-minion", mode: null },
+  creature: {
+    ownerId: "peer-1",
+    kind: "minion",
+    look: "bone-minion",
+    mode: null,
+    armedAttack: null,
+  },
 };
 
 const snapshot: WireSnapshotPart = {
@@ -432,7 +438,34 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
         {
           ...minion,
           name: "Wolf",
-          creature: { ownerId: "peer-1", kind: "pet", look: "beast", mode: "heel" },
+          creature: {
+            ownerId: "peer-1",
+            kind: "pet",
+            look: "beast",
+            mode: "heel",
+            armedAttack: null,
+          },
+        },
+      ],
+    },
+  ],
+  [
+    "snapshot with a pet whose next blow is armed (#1167)",
+    parseWireSnapshotPart,
+    {
+      ...snapshot,
+      players: [
+        player,
+        {
+          ...minion,
+          name: "Wolf",
+          creature: {
+            ownerId: "peer-1",
+            kind: "pet",
+            look: "beast",
+            mode: "fight",
+            armedAttack: { skillId: "ranger.brutal-strike", endsAt: 12.1 },
+          },
         },
       ],
     },
@@ -468,7 +501,13 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
         {
           ...minion,
           name: "Winnowing",
-          creature: { ownerId: "peer-1", kind: "spirit", look: "spirit", mode: null },
+          creature: {
+            ownerId: "peer-1",
+            kind: "spirit",
+            look: "spirit",
+            mode: null,
+            armedAttack: null,
+          },
         },
       ],
     },
@@ -759,6 +798,38 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     "snapshot with a creature that does not say how it looks (#1162)",
     parseWireSnapshotPart,
     { ...snapshot, players: [{ ...minion, creature: { ownerId: "peer-1", kind: "minion" } }] },
+  ],
+  [
+    "snapshot with a creature that does not say whether its next blow is armed (#1167)",
+    parseWireSnapshotPart,
+    {
+      ...snapshot,
+      players: [{ ...minion, creature: { ...minion.creature, armedAttack: undefined } }],
+    },
+  ],
+  [
+    "snapshot with an armed attack that never lapses (#1167)",
+    parseWireSnapshotPart,
+    {
+      ...snapshot,
+      players: [
+        {
+          ...minion,
+          creature: {
+            ...minion.creature,
+            armedAttack: { skillId: "ranger.brutal-strike", endsAt: Number.POSITIVE_INFINITY },
+          },
+        },
+      ],
+    },
+  ],
+  [
+    "snapshot with an armed attack of no skill (#1167)",
+    parseWireSnapshotPart,
+    {
+      ...snapshot,
+      players: [{ ...minion, creature: { ...minion.creature, armedAttack: { endsAt: 12.1 } } }],
+    },
   ],
   [
     "snapshot with a creature with no owner",

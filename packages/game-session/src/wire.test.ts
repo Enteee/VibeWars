@@ -314,6 +314,7 @@ describe("wireIdentity (#1052)", () => {
   ]);
   const minion = (ownerId: string) => ({
     id: `${ownerId}/c1`,
+    armedAttack: undefined,
     creature: {
       ownerId,
       kind: "minion" as const,
@@ -332,7 +333,9 @@ describe("wireIdentity (#1052)", () => {
   });
 
   it("sends a seated player as its seat says", () => {
-    expect(wireIdentity({ id: "p1", creature: undefined }, seats)).toEqual({
+    expect(
+      wireIdentity({ id: "p1", creature: undefined, armedAttack: undefined }, seats, 0),
+    ).toEqual({
       name: "Ann",
       team: 1,
       primaryProfession: "necromancer",
@@ -342,18 +345,25 @@ describe("wireIdentity (#1052)", () => {
   });
 
   it("sends a creature with no seat, on its owner's team, named for its kind", () => {
-    expect(wireIdentity(minion("p1"), seats)).toEqual({
+    expect(wireIdentity(minion("p1"), seats, 0)).toEqual({
       name: "Bone Minion",
       team: 1,
       primaryProfession: null,
       secondaryProfession: null,
-      creature: { ownerId: "p1", kind: "minion", look: "bone-minion", mode: null },
+      creature: {
+        ownerId: "p1",
+        kind: "minion",
+        look: "bone-minion",
+        mode: null,
+        armedAttack: null,
+      },
     });
   });
 
   it("sends a companion's mode, and a minion's as null (#1110)", () => {
     const wolf = {
       id: "p1/c2",
+      armedAttack: undefined,
       creature: {
         ...minion("p1").creature,
         kind: "pet" as const,
@@ -363,16 +373,30 @@ describe("wireIdentity (#1052)", () => {
         mode: "heel" as const,
       },
     };
-    expect(wireIdentity(wolf, seats)?.creature).toEqual({
+    expect(wireIdentity(wolf, seats, 0)?.creature).toEqual({
       ownerId: "p1",
       kind: "pet",
       look: "beast",
       mode: "heel",
+      armedAttack: null,
+    });
+  });
+
+  it("sends a pet's armed attack with when it lapses, to the 0.1 s (#1167)", () => {
+    const wolf = {
+      ...minion("p1"),
+      armedAttack: { skillId: "ranger.brutal-strike", remainingSeconds: 9.66 },
+    };
+    expect(wireIdentity(wolf, seats, 2.1)?.creature?.armedAttack).toEqual({
+      skillId: "ranger.brutal-strike",
+      endsAt: 11.8,
     });
   });
 
   it("sends neither a body with no seat nor a creature whose owner has none", () => {
-    expect(wireIdentity({ id: "dummy", creature: undefined }, seats)).toBeUndefined();
-    expect(wireIdentity(minion("gone"), seats)).toBeUndefined();
+    expect(
+      wireIdentity({ id: "dummy", creature: undefined, armedAttack: undefined }, seats, 0),
+    ).toBeUndefined();
+    expect(wireIdentity(minion("gone"), seats, 0)).toBeUndefined();
   });
 });

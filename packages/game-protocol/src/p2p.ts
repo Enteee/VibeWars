@@ -316,6 +316,19 @@ export interface WireCreature {
   readonly look: (typeof CREATURE_LOOKS)[number];
   /** How a companion fights (#1110); `null` for a creature that is not one. */
   readonly mode: CompanionMode | null;
+  /**
+   * The pet attack its next blow is armed with (#1167), and the match
+   * clock (`elapsedSeconds`) at which it lapses, rounded to 0.1 s; `null`
+   * when nothing is armed. The skill id is checked against the catalog
+   * where the catalog is known, as `castingSkillId` is.
+   */
+  readonly armedAttack: WireArmedAttack | null;
+}
+
+/** A companion's armed pet attack (#1167). */
+export interface WireArmedAttack {
+  readonly skillId: string;
+  readonly endsAt: number;
 }
 
 /** One status on a player (#803): what the effects monitor draws. */
@@ -1230,12 +1243,25 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
 
 function parseCreature(value: unknown): WireCreature | undefined {
   const raw = fields(value);
-  return raw !== undefined &&
-    isString(raw.ownerId) &&
-    isOneOf(raw.kind, CREATURE_KINDS) &&
-    isOneOf(raw.look, CREATURE_LOOKS) &&
-    (raw.mode === null || isOneOf(raw.mode, COMPANION_MODES))
-    ? { ownerId: raw.ownerId, kind: raw.kind, look: raw.look, mode: raw.mode }
+  if (
+    raw === undefined ||
+    !isString(raw.ownerId) ||
+    !isOneOf(raw.kind, CREATURE_KINDS) ||
+    !isOneOf(raw.look, CREATURE_LOOKS) ||
+    !(raw.mode === null || isOneOf(raw.mode, COMPANION_MODES))
+  ) {
+    return undefined;
+  }
+  const armedAttack = raw.armedAttack === null ? null : parseArmedAttack(raw.armedAttack);
+  return armedAttack === undefined
+    ? undefined
+    : { ownerId: raw.ownerId, kind: raw.kind, look: raw.look, mode: raw.mode, armedAttack };
+}
+
+function parseArmedAttack(value: unknown): WireArmedAttack | undefined {
+  const raw = fields(value);
+  return raw !== undefined && isString(raw.skillId) && isNumber(raw.endsAt)
+    ? { skillId: raw.skillId, endsAt: raw.endsAt }
     : undefined;
 }
 

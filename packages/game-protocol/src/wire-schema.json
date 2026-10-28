@@ -1678,6 +1678,12 @@
         { "name": "seatKey", "optional": false, "type": "string" }
       ]
     },
+    "WireArmedAttack": {
+      "properties": [
+        { "name": "endsAt", "optional": false, "type": "number" },
+        { "name": "skillId", "optional": false, "type": "string" }
+      ]
+    },
     "WireCalls": {
       "properties": [
         {
@@ -1898,6 +1904,21 @@
     },
     "WireCreature": {
       "properties": [
+        {
+          "name": "armedAttack",
+          "optional": false,
+          "type": {
+            "union": [
+              "null",
+              {
+                "properties": [
+                  { "name": "endsAt", "optional": false, "type": "number" },
+                  { "name": "skillId", "optional": false, "type": "string" }
+                ]
+              }
+            ]
+          }
+        },
         {
           "name": "kind",
           "optional": false,
@@ -2179,6 +2200,21 @@
               {
                 "properties": [
                   {
+                    "name": "armedAttack",
+                    "optional": false,
+                    "type": {
+                      "union": [
+                        "null",
+                        {
+                          "properties": [
+                            { "name": "endsAt", "optional": false, "type": "number" },
+                            { "name": "skillId", "optional": false, "type": "string" }
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  {
                     "name": "kind",
                     "optional": false,
                     "type": {
@@ -2407,6 +2443,21 @@
                       {
                         "properties": [
                           {
+                            "name": "armedAttack",
+                            "optional": false,
+                            "type": {
+                              "union": [
+                                "null",
+                                {
+                                  "properties": [
+                                    { "name": "endsAt", "optional": false, "type": "number" },
+                                    { "name": "skillId", "optional": false, "type": "string" }
+                                  ]
+                                }
+                              ]
+                            }
+                          },
+                          {
                             "name": "kind",
                             "optional": false,
                             "type": {
@@ -2626,6 +2677,21 @@
                       "null",
                       {
                         "properties": [
+                          {
+                            "name": "armedAttack",
+                            "optional": false,
+                            "type": {
+                              "union": [
+                                "null",
+                                {
+                                  "properties": [
+                                    { "name": "endsAt", "optional": false, "type": "number" },
+                                    { "name": "skillId", "optional": false, "type": "string" }
+                                  ]
+                                }
+                              ]
+                            }
+                          },
                           {
                             "name": "kind",
                             "optional": false,

@@ -71,7 +71,13 @@ describe("toArenaSnapshot", () => {
   it("draws a creature smaller than a player, at the ruleset's radii (#1052)", () => {
     const minion: PlayerSnapshot = {
       ...player("me/c1", 0),
-      creature: { ownerId: "me", kind: "minion", look: "bone-minion", mode: null },
+      creature: {
+        ownerId: "me",
+        kind: "minion",
+        look: "bone-minion",
+        mode: null,
+        armedAttack: null,
+      },
     };
     const arena = toArenaSnapshot(match([player("me", 0), minion]), []);
     expect(arena.actors.map((actor) => actor.radius)).toEqual([
@@ -92,6 +98,7 @@ describe("toArenaSnapshot", () => {
         kind: look === "beast" ? "pet" : look === "spirit" ? "spirit" : "minion",
         look,
         mode: null,
+        armedAttack: null,
       },
     }));
     const arena = toArenaSnapshot(match([player("me", 0), ...creatures]), []);
