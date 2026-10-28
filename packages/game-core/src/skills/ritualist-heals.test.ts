@@ -68,6 +68,7 @@ function around(
           kind: "spirit",
           name: "Winnowing",
           expiresInSeconds: Infinity,
+          ageSeconds: 0,
           summonedAtTick: 0,
           skillId: "ranger.winnowing",
           aura: { statusId: "winnowing", affects: "all", radius: RANGE_NATURE_RITUAL },

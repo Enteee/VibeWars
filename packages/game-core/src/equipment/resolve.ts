@@ -3,6 +3,7 @@ import { ENERGY_STORAGE_ATTRIBUTE, energyStorageBonus } from "../primary-attribu
 import type { ProfessionId } from "../professions.js";
 import type { CombatRules } from "../ruleset.js";
 import type { StatusId } from "../skills/status.js";
+import type { CreatureAttack } from "../skills/types.js";
 import {
   INHERENT_ARMOR_BY_PROFESSION,
   armorPieces,
@@ -406,5 +407,36 @@ export function unarmedResolvedEquipment(baseArmor: number): ResolvedEquipment {
     statusDurationScale: new Map(),
     attributeBonuses: new Map(),
     offhandId: undefined,
+  };
+}
+
+/**
+ * A creature's (#467 child 3): unarmed with `armor`, or, with an attack,
+ * a weapon of its numbers keyed to `attack.attributeId`. The weapon keeps
+ * the id "unarmed", which is all the client draws and the log names.
+ */
+export function creatureResolvedEquipment(
+  armor: number,
+  attack: CreatureAttack | undefined,
+): ResolvedEquipment {
+  const unarmed = unarmedResolvedEquipment(armor);
+  if (attack === undefined) {
+    return unarmed;
+  }
+  return {
+    ...unarmed,
+    mainHand: {
+      weapon: {
+        ...unarmed.mainHand.weapon,
+        damageMin: attack.damageMin,
+        damageMax: attack.damageMax,
+        damageType: attack.damageType,
+        attackIntervalSeconds: attack.attackIntervalSeconds,
+        range: attack.range,
+      },
+      attributeId: attack.attributeId,
+      damageType: attack.damageType,
+      requirementMet: true,
+    },
   };
 }

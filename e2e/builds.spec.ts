@@ -4,6 +4,7 @@ import { codeLabel } from "../apps/web/src/input/keymap.js";
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
 import { chooseProfession, professionField } from "./helpers/professions.js";
 import { startSoloMatch } from "./helpers/peers.js";
+import { bringStarter } from "./helpers/starter.js";
 import { skillKey } from "./keys.js";
 
 /**
@@ -235,6 +236,37 @@ test("12/12/3 spends all 200 points, GW1's split (#470)", async ({ page }) => {
   await expect(pip(row(3), 1)).toHaveClass(/is-dim/);
   // The budget bar is the 200 points, split three ways.
   await expect(page.locator(".attribute-budget-segment")).toHaveCount(3);
+});
+
+test("a rune's bonus stays clear of max, and the pips stay in line (#1102)", async ({ page }) => {
+  // The Warrior/Monk starter wears a rune: its rank reads "12 +1".
+  await bringStarter(page, "Warrior/Monk");
+  await page
+    .locator(".selectable-row", { hasText: "Warrior/Monk" })
+    .first()
+    .getByRole("button", { name: "Edit", exact: true })
+    .click();
+  const boosted = page.locator(".editor-attribute", {
+    has: page.locator(".editor-attribute-bonus"),
+  });
+  await expect(boosted.first()).toBeVisible();
+
+  const box = async (locator: Locator) => {
+    const found = await locator.boundingBox();
+    if (found === null) {
+      throw new Error("not laid out");
+    }
+    return found;
+  };
+  // The bonus's own box, not its cell's: the cell is the column, text spills past it.
+  const bonus = await box(boosted.first().locator(".editor-attribute-bonus"));
+  const next = await box(boosted.first().locator(".editor-attribute-next"));
+  expect(bonus.x + bonus.width).toBeLessThanOrEqual(next.x);
+
+  const pipLefts = await page
+    .locator(".editor-attribute .attribute-pips")
+    .evaluateAll((all) => all.map((pips) => pips.getBoundingClientRect().left));
+  expect(new Set(pipLefts).size).toBe(1);
 });
 
 /** Save characters named `names` from the main menu, one after another. */

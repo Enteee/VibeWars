@@ -21,6 +21,8 @@
     "lobby-hello",
     "lobby-welcome",
     "stay-together",
+    "party-proposal",
+    "party-consent",
     "party-formed",
     "party-split",
     "match-start",
@@ -229,7 +231,9 @@
         { "literal": "lobby-state" },
         { "literal": "lobby-welcome" },
         { "literal": "match-start" },
+        { "literal": "party-consent" },
         { "literal": "party-formed" },
+        { "literal": "party-proposal" },
         { "literal": "party-split" },
         { "literal": "recharge" },
         { "literal": "refuse" },
@@ -1269,6 +1273,12 @@
         { "name": "protocolVersion", "optional": false, "type": "string" }
       ]
     },
+    "PeerPartyConsent": {
+      "properties": [
+        { "name": "consent", "optional": false, "type": "string" },
+        { "name": "memberKey", "optional": false, "type": "string" }
+      ]
+    },
     "PeerRefuse": {
       "properties": [
         { "name": "message", "optional": false, "type": "string" },
@@ -1399,6 +1409,21 @@
             ]
           }
         },
+        {
+          "name": "party",
+          "optional": false,
+          "type": {
+            "union": [
+              "null",
+              {
+                "properties": [
+                  { "name": "consents", "optional": false, "type": { "array": "string" } },
+                  { "name": "groupId", "optional": false, "type": "string" }
+                ]
+              }
+            ]
+          }
+        },
         { "name": "protocol", "optional": false, "type": "string" },
         { "name": "ticketId", "optional": false, "type": "string" }
       ]
@@ -1454,6 +1479,12 @@
       "properties": [
         { "name": "kind", "optional": false, "type": { "literal": "target" } },
         { "name": "targetSessionId", "optional": false, "type": { "union": ["null", "string"] } }
+      ]
+    },
+    "TicketParty": {
+      "properties": [
+        { "name": "consents", "optional": false, "type": { "array": "string" } },
+        { "name": "groupId", "optional": false, "type": "string" }
       ]
     },
     "UseSkillIntent": {
@@ -1946,7 +1977,17 @@
       ]
     },
     "WirePartyFormed": {
-      "properties": [{ "name": "members", "optional": false, "type": { "array": "string" } }]
+      "properties": [
+        { "name": "consents", "optional": false, "type": { "array": "string" } },
+        { "name": "groupId", "optional": false, "type": "string" },
+        { "name": "members", "optional": false, "type": { "array": "string" } }
+      ]
+    },
+    "WirePartyProposal": {
+      "properties": [
+        { "name": "groupId", "optional": false, "type": "string" },
+        { "name": "members", "optional": false, "type": { "array": "string" } }
+      ]
     },
     "WirePartySplit": { "properties": [], "index": [{ "key": "string", "value": "never" }] },
     "WirePing": {

@@ -6,6 +6,7 @@ import {
   adrenalinePools,
   canAffordAdrenaline,
   emptyAdrenaline,
+  emptyPool,
   gainStrikes,
   gainUnits,
   spendAdrenaline,
@@ -19,6 +20,7 @@ import type { Skill } from "./types.js";
 const BACKBREAKER = "warrior.backbreaker";
 const SEVER_ARTERY = "warrior.sever-artery";
 const WATCH_YOURSELF = "warrior.watch-yourself";
+const HAMMER_BASH = "warrior.hammer-bash";
 
 function skill(id: string): Skill {
   const found = getSkill(id);
@@ -106,6 +108,37 @@ describe("spendAdrenaline", () => {
     spendAdrenaline(w, skill(SEVER_ARTERY));
     expect(canAffordAdrenaline(w, skill(BACKBREAKER))).toBe(false);
     expect(w.adrenaline.get(BACKBREAKER)).toBe(8 * ADRENALINE_PER_STRIKE);
+  });
+
+  it("one that loses all adrenaline (#1097) empties every pool, not only its own", () => {
+    const w = makeCombatant({
+      id: "w",
+      adrenaline: new Map([
+        [HAMMER_BASH, 6 * ADRENALINE_PER_STRIKE],
+        [BACKBREAKER, 9 * ADRENALINE_PER_STRIKE],
+        [WATCH_YOURSELF, 4 * ADRENALINE_PER_STRIKE],
+      ]),
+    });
+    spendAdrenaline(w, skill(HAMMER_BASH));
+    expect([...w.adrenaline.values()]).toEqual([0, 0, 0]);
+  });
+});
+
+describe("emptyPool (#1097)", () => {
+  it("empties only that skill's pool", () => {
+    const w = warrior(9 * ADRENALINE_PER_STRIKE, 4 * ADRENALINE_PER_STRIKE, 10);
+    emptyPool(w, SEVER_ARTERY);
+    expect([...w.adrenaline.values()]).toEqual([9 * ADRENALINE_PER_STRIKE, 0, 10]);
+  });
+
+  it("does nothing for a skill without a pool", () => {
+    const w = warrior(9 * ADRENALINE_PER_STRIKE, 10, 0);
+    emptyPool(w, "elementalist.fireball");
+    expect([...w.adrenaline]).toEqual([
+      [BACKBREAKER, 9 * ADRENALINE_PER_STRIKE],
+      [SEVER_ARTERY, 10],
+      [WATCH_YOURSELF, 0],
+    ]);
   });
 });
 

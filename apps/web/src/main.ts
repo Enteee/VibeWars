@@ -13,7 +13,9 @@ import {
   lobbyClosedNotice,
   matchFailureNotice,
   openPartyBoard,
+  PARTY_ANSWER_MS,
   QUEUED_RESULT_SECONDS,
+  STAY_TOGETHER_GRACE_SECONDS,
   STAY_TOGETHER_SECONDS,
   TEAM_SPLIT_MESSAGE,
   type HostedLobby,
@@ -273,6 +275,12 @@ async function main(): Promise<void> {
         readonly hosted: HostedLobby | undefined;
         /** By `Date.now`. */
         readonly endsAt: number;
+        /**
+         * Pressed, when to give up on the host's answer, by `Date.now`:
+         * the host's vote window, or later once this player signed a
+         * proposal (#1078).
+         */
+        answerBy: number;
         readonly timer: number;
         pressed: ReturnType<typeof openPartyBoard> | undefined;
         hostLeft: boolean;
@@ -818,7 +826,7 @@ async function main(): Promise<void> {
       return;
     }
     stay.pressed = openPartyBoard();
-    stay.lobby.stayTogether(stay.pressed.key.ticketId);
+    stay.lobby.stayTogether(stay.pressed.key);
     showEnded();
   };
 
@@ -828,12 +836,16 @@ async function main(): Promise<void> {
    */
   const offerStay = (through: LobbyConnection, hosted: HostedLobby | undefined): void => {
     const timer = window.setInterval(() => {
-      if (stay === undefined || Date.now() < stay.endsAt) {
+      if (
+        stay === undefined ||
+        Date.now() < (stay.pressed === undefined ? stay.endsAt : stay.answerBy)
+      ) {
         showEnded();
         return;
       }
       if (stay.pressed !== undefined) {
-        // No answer in time: the host's window is longer, so it is gone.
+        // No answer in time: the host's vote window, and its consent window
+        // after a proposal, both end before this, so it is gone.
         splitUp();
         return;
       }
@@ -844,23 +856,30 @@ async function main(): Promise<void> {
       lobby: through,
       hosted,
       endsAt: Date.now() + STAY_TOGETHER_SECONDS * 1000,
+      answerBy: Date.now() + (STAY_TOGETHER_SECONDS + STAY_TOGETHER_GRACE_SECONDS) * 1000,
       timer,
       pressed: undefined,
       hostLeft: false,
     };
     const offered = stay;
-    through.onParty((members) => {
+    through.onPartyProposal(() => {
+      if (stay === offered) {
+        offered.answerBy = Math.max(offered.answerBy, Date.now() + PARTY_ANSWER_MS);
+      }
+    });
+    through.onParty((formed) => {
       if (stay !== offered || offered.pressed === undefined || queue === undefined) {
         return;
       }
-      if (members === null) {
+      if (formed === null) {
         splitUp();
         return;
       }
       const { board, key } = offered.pressed;
       const { mode, name } = queue;
       closeStay(board);
-      requeue(mode, name, { party: { party: { members, key }, board } });
+      const { groupId, members, consents } = formed;
+      requeue(mode, name, { party: { party: { members, key, groupId, consents }, board } });
     });
     through.onClosed(() => {
       if (stay !== offered) {

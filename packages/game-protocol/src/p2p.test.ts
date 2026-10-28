@@ -48,6 +48,8 @@ import {
   parsePeerLobbyHello,
   parseWireLobbyWelcome,
   parsePeerStayTogether,
+  parseWirePartyProposal,
+  parsePeerPartyConsent,
   parseWirePartyFormed,
   parseWirePartySplit,
   parseWireLobbyState,
@@ -336,6 +338,19 @@ const lobbyJoin: PeerLobbyJoin = {
 /** A queued join's proof (#871): a ticket id and a signature, as hex. */
 const admission = { seatKey: "ab".repeat(32), admissionSig: "cd".repeat(64) };
 
+/** A party's consent to its proposal (#1078). */
+const partyConsent = { memberKey: "ab".repeat(32), consent: "ef".repeat(64) };
+
+/** A party-proposal of `members`, as given (#1078). */
+function proposalOf(members: readonly string[]) {
+  return { groupId: "12".repeat(32), members };
+}
+
+/** A party-formed of `members`, as given, each with a consent. */
+function partyOf(members: readonly string[]) {
+  return { groupId: "12".repeat(32), members, consents: members.map(() => "ef".repeat(64)) };
+}
+
 const lobbyState: WireLobbyState = {
   code: "ACDEFG",
   phase: "in-match",
@@ -483,15 +498,21 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["stay-together yes (#882)", parsePeerStayTogether, { memberKey: "ab".repeat(32) }],
   ["stay-together no (#882)", parsePeerStayTogether, { memberKey: null }],
   [
-    "party-formed of two (#882)",
+    "party-formed of two (#882, #1078)",
     parseWirePartyFormed,
-    { members: ["ab".repeat(32), "cd".repeat(32)] },
+    partyOf(["ab".repeat(32), "cd".repeat(32)]),
   ],
   [
     "party-formed of four (#882)",
     parseWirePartyFormed,
-    { members: ["1", "2", "3", "4"].map((digit) => digit.repeat(64)) },
+    partyOf(["1", "2", "3", "4"].map((digit) => digit.repeat(64))),
   ],
+  [
+    "party-proposal of two (#1078)",
+    parseWirePartyProposal,
+    proposalOf(["ab".repeat(32), "cd".repeat(32)]),
+  ],
+  ["party-consent (#1078)", parsePeerPartyConsent, partyConsent],
   ["party-split (#882)", parseWirePartySplit, {}],
   [
     "counting-down lobby-state (#871)",
@@ -1051,26 +1072,66 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     parsePeerStayTogether,
     { memberKey: "AB".repeat(32) },
   ],
-  ["party-formed of one (#882)", parseWirePartyFormed, { members: ["ab".repeat(32)] }],
+  ["party-proposal of one (#1078)", parseWirePartyProposal, proposalOf(["ab".repeat(32)])],
+  [
+    "party-proposal unsorted (#1078)",
+    parseWirePartyProposal,
+    proposalOf(["cd".repeat(32), "ab".repeat(32)]),
+  ],
+  [
+    "party-proposal with no group (#1078)",
+    parseWirePartyProposal,
+    { members: ["ab".repeat(32), "cd".repeat(32)] },
+  ],
+  ["party-consent with no consent (#1078)", parsePeerPartyConsent, { memberKey: "ab".repeat(32) }],
+  [
+    "party-consent with a short consent (#1078)",
+    parsePeerPartyConsent,
+    { ...partyConsent, consent: "ef".repeat(63) },
+  ],
+  [
+    "party-consent of a non-hex key (#1078)",
+    parsePeerPartyConsent,
+    { ...partyConsent, memberKey: "zz".repeat(32) },
+  ],
+  ["party-formed of one (#882)", parseWirePartyFormed, partyOf(["ab".repeat(32)])],
   [
     "party-formed of five (#882)",
     parseWirePartyFormed,
-    { members: ["1", "2", "3", "4", "5"].map((digit) => digit.repeat(64)) },
+    partyOf(["1", "2", "3", "4", "5"].map((digit) => digit.repeat(64))),
   ],
   [
     "party-formed unsorted (#882)",
     parseWirePartyFormed,
-    { members: ["cd".repeat(32), "ab".repeat(32)] },
+    partyOf(["cd".repeat(32), "ab".repeat(32)]),
   ],
   [
     "party-formed with a key twice (#882)",
     parseWirePartyFormed,
-    { members: ["ab".repeat(32), "ab".repeat(32)] },
+    partyOf(["ab".repeat(32), "ab".repeat(32)]),
   ],
   [
     "party-formed of a non-hex key (#882)",
     parseWirePartyFormed,
-    { members: ["ab".repeat(32), "zz".repeat(32)] },
+    partyOf(["ab".repeat(32), "zz".repeat(32)]),
+  ],
+  [
+    "party-formed with a consent too few (#1078)",
+    parseWirePartyFormed,
+    { ...partyOf(["ab".repeat(32), "cd".repeat(32)]), consents: ["ef".repeat(64)] },
+  ],
+  [
+    "party-formed with a non-hex consent (#1078)",
+    parseWirePartyFormed,
+    {
+      ...partyOf(["ab".repeat(32), "cd".repeat(32)]),
+      consents: ["ef".repeat(64), "zz".repeat(64)],
+    },
+  ],
+  [
+    "party-formed with no group (#1078)",
+    parseWirePartyFormed,
+    { members: ["ab".repeat(32), "cd".repeat(32)], consents: ["ef".repeat(64), "ef".repeat(64)] },
   ],
   ["party-split with a field (#882)", parseWirePartySplit, { members: [] }],
   [

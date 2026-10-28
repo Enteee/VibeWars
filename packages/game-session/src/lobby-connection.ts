@@ -1,6 +1,7 @@
 import type { ProfessionId } from "@vibewars/game-core";
-import type { ChatChannel, LobbyPhase } from "@vibewars/game-protocol";
+import type { ChatChannel, LobbyPhase, WirePartyFormed } from "@vibewars/game-protocol";
 
+import type { TicketKey } from "./queue-client.js";
 import type { Transport } from "./transport.js";
 
 /**
@@ -89,13 +90,20 @@ export interface LobbyConnection {
   onClosed(handler: (reason: LobbyClosedReason) => void): void;
   /**
    * After a queued match this player's side won (#882): stay together as
-   * a party with `memberKey`, its fresh public key, or `null` for no.
+   * a party with `key`, fresh, which signs its consent to the party
+   * (#1078), or `null` for no.
    */
-  stayTogether(memberKey: string | null): void;
+  stayTogether(key: TicketKey | null): void;
   /**
-   * The host's answer to a yes, once: every winner's key, sorted, when
-   * they all stay together, or `null` when the team split up.
+   * The host's answer to a yes, once: every winner's key, sorted, with
+   * each one's consent, when they all stay together, or `null` when the
+   * team split up.
    */
-  onParty(handler: (members: readonly string[] | null) => void): void;
+  onParty(handler: (party: WirePartyFormed | null) => void): void;
+  /**
+   * This player signed the host's party proposal (#1078): its answer
+   * comes up to the host's `PARTY_CONSENT_MS` after this, once.
+   */
+  onPartyProposal(handler: () => void): void;
   disconnect(): Promise<void>;
 }
