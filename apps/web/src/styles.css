@@ -4238,9 +4238,12 @@ body:has(#app > .chat) .now-playing {
   border-color: var(--ink);
 }
 
-/* The mode it is in, in the target ring's colour. */
-.party-command.is-lit {
-  border-color: #ffd866;
+/* The mode it is in, inverted: shape and value, not the target colour. */
+.party-command.is-lit,
+.party-command.is-lit:hover {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--bg);
 }
 
 .party-row-header {
