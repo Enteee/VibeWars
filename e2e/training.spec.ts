@@ -1367,12 +1367,12 @@ test("(44) a burning dummy wears flames on its top edge until the burning ends (
   await page.keyboard.press("Tab");
   await expect.poll(() => shownNames(page)).toHaveLength(1);
 
-  // The right-hand flame of the target dummy at (380, 210): from r + 1 to
-  // r + 7 above the centre, clear of the health bar and the name.
+  // All three flames of the target dummy at (380, 210): from its top edge,
+  // r above the centre, to under its health bar, r + 8.
   const flame = async (): Promise<Buffer> => {
     const view = await trainingView(page, canvas);
-    const from = view.onPage({ x: 380 + 6, y: 210 - 21 });
-    const to = view.onPage({ x: 380 + 12, y: 210 - 15 });
+    const from = view.onPage({ x: 380 - 10, y: 210 - 22 });
+    const to = view.onPage({ x: 380 + 10, y: 210 - 14 });
     return page.screenshot({
       clip: { x: from.x, y: from.y, width: to.x - from.x, height: to.y - from.y },
     });
