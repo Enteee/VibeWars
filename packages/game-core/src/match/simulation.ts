@@ -39,6 +39,7 @@ import { clampInputDirection, integrateMovement } from "../movement.js";
 import {
   buildNavGraph,
   createPathFinder,
+  isStandable,
   nearestStandable,
   type NavGraph,
   type PathFinder,
@@ -470,6 +471,12 @@ interface ParticipantRecord extends Participant {
   /** Whether `walkGoal` is settled: pulled onto a spot a body fits on, with a way there. */
   walkSettled: boolean;
   /**
+   * Where its behaviour walks it by path (#1153), a creature to its owner,
+   * passing `passing`'s body; `undefined` when it does not. Asked anew
+   * every tick.
+   */
+  followGoal: { readonly point: Vec2; readonly passing: string | undefined } | undefined;
+  /**
    * Maximum health and energy before morale (#843): the participant's,
    * or its loadout's since the last `rearm`.
    */
@@ -775,6 +782,7 @@ export class MatchSimulation {
       walkStalledSeconds: 0,
       walkLeast: Number.POSITIVE_INFINITY,
       walkSettled: false,
+      followGoal: undefined,
       resolvedMaxHealth: spec.maxHealth ?? this.#ruleset.combat.baseHealth,
       resolvedMaxEnergy: spec.maxEnergy ?? this.#ruleset.combat.baseEnergy,
       resurrectedAtSeconds: Number.NEGATIVE_INFINITY,
@@ -1726,6 +1734,7 @@ export class MatchSimulation {
       if (!down && !record.combatant.cast.inAftercast) {
         this.advanceMovement(record, record.inputDirection, dt);
         this.#advanceWalk(record, dt);
+        this.#advanceFollow(record, dt);
       }
 
       // Degeneration its statuses' own regeneration does not cancel is
@@ -2100,6 +2109,14 @@ export class MatchSimulation {
       },
     });
     this.setInputDirection(record.id, intent.moveDirection);
+    record.followGoal =
+      intent.moveTo === undefined
+        ? undefined
+        : { point: intent.moveTo, passing: record.creature?.ownerId };
+    // A move, as a held direction is: it ends the attack and the cast.
+    if (record.followGoal !== undefined) {
+      this.#moveInterrupts(record);
+    }
     this.setTarget(record.id, intent.targetId);
     // Asked only when the attack wanted is not the one going, as a player
     // presses Space once: a pet switches with its owner (#1046).
@@ -2679,6 +2696,28 @@ export class MatchSimulation {
     }
     if (distance(record.position, goal) <= ARRIVE_UNITS) {
       record.walkGoal = undefined;
+    }
+  }
+
+  /**
+   * A behaviour's walk to a point (#1153): a path's next step, as
+   * click-to-walk takes it, bent round bodies but `passing`'s. With no
+   * way there it stands still, and asks again next tick; but a body
+   * squeezed where it cannot stand steers straight at the point, which
+   * is what shoves it back out (#211). No stall rule: the behaviour
+   * re-decides every tick.
+   */
+  #advanceFollow(record: ParticipantRecord, dt: number): void {
+    const goal = record.followGoal;
+    if (goal === undefined || record.combatant.attack !== undefined) {
+      return;
+    }
+    const path = this.#paths.find(record.position, nearestStandable(this.#graph, goal.point));
+    const next = path?.[0];
+    if (next !== undefined) {
+      this.#stepToward(record, next, goal.passing, path?.length === 1, dt);
+    } else if (!isStandable(this.#graph, record.position)) {
+      this.advanceMovement(record, sub(goal.point, record.position), dt);
     }
   }
 

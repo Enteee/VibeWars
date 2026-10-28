@@ -315,7 +315,7 @@ export function buildNavGraph(
  * point's row of cells, from its column to the grid's edge, since the
  * crossing lies in that side's box. The ray walks that row.
  */
-function isStandable(graph: NavGraph, point: Vec2): boolean {
+export function isStandable(graph: NavGraph, point: Vec2): boolean {
   const { bounds, clearance } = graph;
   if (
     bounds !== undefined &&
