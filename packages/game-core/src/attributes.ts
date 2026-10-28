@@ -13,15 +13,16 @@
 export const MAX_ATTRIBUTE_RANK = 12;
 
 /**
- * The highest rank anything can reach once runes and temporary bonuses
- * are counted.
+ * The highest rank anything can reach once runes, headgear and temporary
+ * bonuses are counted: 12 bought, 3 from a superior rune and 1 from the
+ * headgear (#1140), as GW1 PvP caps it.
  *
  * Separate from the allocation cap on purpose. Clamping effective rank at
  * 12 would make every attribute rune in the game worthless — a superior
  * rune's +3 would evaporate against the ceiling, and the player would
  * have paid 75 health for nothing.
  */
-export const MAX_EFFECTIVE_RANK = 15;
+export const MAX_EFFECTIVE_RANK = 16;
 
 /**
  * Point cost to go from rank `n-1` to rank `n`, at index `n - 1`: GW1's

@@ -9,8 +9,10 @@ import arenaOpen from "@vibewars/game-maps/maps/arena-open/map.json" with { type
 import arenaPillars from "@vibewars/game-maps/maps/arena-pillars/map.json" with { type: "json" };
 import arenaRing from "@vibewars/game-maps/maps/arena-ring/map.json" with { type: "json" };
 import arenaSplit from "@vibewars/game-maps/maps/arena-split/map.json" with { type: "json" };
+import type { MatchMode } from "@vibewars/game-core";
 import { teamSizeOf, type QueueMode } from "@vibewars/game-protocol";
 import type { HostMap } from "@vibewars/game-session";
+import { TRAINING_MAPS } from "../training/maps.js";
 
 /**
  * The arenas a lobby can be played on (#403), as the host's browser
@@ -66,6 +68,18 @@ export function randomArenaMapPool(mode: QueueMode): string[] {
     const { min, max } = PLAYERS_BY_SIZE[sizeClass(map)];
     return players >= min && players <= max;
   }).map((map) => map.id);
+}
+
+/**
+ * The mode a match on `mapId` plays (#476), from the same map file the
+ * host plays it by: what a joining peer's scoreboard counts (#1200). An
+ * arena or a training ground; a map this build does not have gets
+ * Annihilation's.
+ */
+export function mapMode(mapId: string): MatchMode {
+  return (
+    (ARENA_MAPS.find((map) => map.id === mapId) ?? TRAINING_MAPS.get(mapId))?.mode ?? "annihilation"
+  );
 }
 
 /** The map `mapId` names, built for a `MatchHost`; `undefined` for no such map. */

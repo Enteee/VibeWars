@@ -6,6 +6,7 @@ import {
   neededWeaponText,
   type ActivationRejection,
   type ChainRole,
+  type MatchMode,
   type Segment,
   type StatusId,
 } from "@vibewars/game-core";
@@ -720,15 +721,21 @@ export function livingCount(players: readonly PlayerSnapshot[], team: number): n
 }
 
 /**
- * "4 v 3 · 7:12": the living on each side, your own first, and the clock
- * (#881): the time left, counting down from the match's limit (#476), or
- * the time played where there is none. A spectator reads team 1 first.
+ * Your side against theirs, your own first, and the clock (#881): the time
+ * left, counting down from the match's limit (#476), or the time played
+ * where there is none. A spectator reads team 1 first.
+ *
+ * What a side is depends on the map's `mode`: Annihilation counts the
+ * living, "4 v 3 · 7:12"; Kill Count the team's kills, "4 – 0 · 2:25"
+ * (#1200), as the snapshot's `score` carries them, team 1's first.
  */
 export function scoreboardText(
   players: readonly PlayerSnapshot[],
   selfTeam: number | undefined,
   elapsedSeconds: number,
   timeLimitSeconds: number | null,
+  mode: MatchMode,
+  score: readonly [number, number],
 ): string {
   const ours = selfTeam ?? 0;
   const theirs = ours === 0 ? 1 : 0;
@@ -737,7 +744,12 @@ export function scoreboardText(
     timeLimitSeconds === null
       ? formatClock(elapsedSeconds)
       : formatClock(Math.ceil(timeLimitSeconds - elapsedSeconds));
-  return `${String(livingCount(players, ours))} v ${String(livingCount(players, theirs))} · ${clock}`;
+  switch (mode) {
+    case "annihilation":
+      return `${String(livingCount(players, ours))} v ${String(livingCount(players, theirs))} · ${clock}`;
+    case "kill-count":
+      return `${String(score[ours])} – ${String(score[theirs])} · ${clock}`;
+  }
 }
 
 /**
@@ -1152,6 +1164,8 @@ export function updateHud(
   walls: readonly Segment[],
   /** The match's length, from the host (#476); `null` for none. */
   timeLimitSeconds: number | null,
+  /** The map's mode (#476), which decides what the scoreboard counts (#1200). */
+  mode: MatchMode,
   match?: MatchSnapshot,
 ): void {
   if (match !== undefined) {
@@ -1160,6 +1174,8 @@ export function updateHud(
       self?.team,
       match.elapsedSeconds,
       timeLimitSeconds,
+      mode,
+      [match.scoreTeam0, match.scoreTeam1],
     );
     renderEnemyPips(hud.enemies, enemyPips(match.players, self?.team), self?.team);
 

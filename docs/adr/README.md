@@ -30,6 +30,7 @@ rewriting history.
 | [0022](0022-peer-to-peer-networking.md)       | Peer-to-peer networking, host as authority; amended by 0032     |
 | [0023](0023-one-telegram-bot.md)              | One Telegram bot for the whole company                          |
 | [0024](0024-telegram-topics.md)               | Four Telegram topics: General, Bots, Manager, Operator          |
+| [0025](0025-support-jail.md)                  | Support's jail holds no secret and can write nothing shared     |
 | [0026](0026-weapon-auto-attack.md)            | Weapon auto-attack                                              |
 | [0027](0027-one-turn-per-process.md)          | Agents run one turn per process                                 |
 | [0028](0028-strudel-music-host.md)            | Strudel music engine in a sandboxed host                        |

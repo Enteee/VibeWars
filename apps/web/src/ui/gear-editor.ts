@@ -3,6 +3,7 @@ import {
   ALL_UNIVERSAL_RUNES,
   ARMOR_SLOTS,
   ATTRIBUTE_RUNE_TIERS,
+  HEADGEAR_BONUS,
   HIT_LOCATION_WEIGHTS,
   RUNE_TIERS,
   MINIMAL_GW_INSPIRED_PVP_V1,
@@ -13,6 +14,7 @@ import {
   getAttribute,
   getOffhand,
   getWeapon,
+  headgearAttributeOf,
   insigniaAllowed,
   isArmorSlot,
   isInsigniaId,
@@ -20,10 +22,12 @@ import {
   isWeaponSetIndex,
   isUniversalRuneId,
   isWeaponId,
+  primaryAttributeOf,
   reconcileEquipment,
   resolveLoadout,
   runeDisplayName,
   type ArmorCondition,
+  type ArmorPiece,
   type ArmorSlot,
   type BuildEquipment,
   type ConditionalArmor,
@@ -293,12 +297,46 @@ export function setRune(
   });
 }
 
-/** Clear every rune and insignia. One click to undo a bad experiment. */
+/**
+ * The attributes the headgear can raise (#1140): the primary attribute,
+ * the primary's others, then the secondary's, as points can buy them.
+ */
+export function headgearChoices(character: StoredCharacter): readonly string[] {
+  const primary = primaryAttributeOf(character.primaryProfession).id;
+  return [primary, ...accessibleAttributes(character).filter((id) => id !== primary)];
+}
+
+/** Point the headgear's +1 at `attributeId` (#1140). */
+export function setHeadgearAttribute(
+  character: StoredCharacter,
+  attributeId: string,
+): StoredCharacter {
+  const { armor } = character.equipment;
+  return touched(character, {
+    ...character.equipment,
+    armor: { ...armor, head: { ...armor.head, headgearAttributeId: attributeId } },
+  });
+}
+
+/**
+ * Clear every rune and insignia. One click to undo a bad experiment. The
+ * headgear keeps its attribute (#1140): it is the piece, not an upgrade.
+ */
 export function clearArmorUpgrades(character: StoredCharacter): StoredCharacter {
   const armor = Object.fromEntries(
     ARMOR_SLOTS.map((slot) => [slot, { insigniaId: null, rune: null }]),
-  ) as StoredCharacter["equipment"]["armor"];
-  return touched(character, { ...character.equipment, armor });
+  ) as Record<ArmorSlot, ArmorPiece>;
+  return touched(character, {
+    ...character.equipment,
+    armor: {
+      ...armor,
+      head: {
+        insigniaId: null,
+        rune: null,
+        headgearAttributeId: character.equipment.armor.head.headgearAttributeId,
+      },
+    },
+  });
 }
 
 /* -------------------------------------------------------------------------- */
@@ -317,6 +355,7 @@ export function resolveForDisplay(character: StoredCharacter): ResolvedLoadout {
   return resolveLoadout(
     {
       primaryProfession: character.primaryProfession,
+      secondaryProfession: character.secondaryProfession,
       allocatedRanks: new Map(character.attributes.map((a) => [a.attributeId, a.rank])),
       equipment: character.equipment,
     },
@@ -336,8 +375,15 @@ export interface GearSummary {
   readonly attackInterval: string;
   /** The rank the weapon needs and the character lacks (#571); `undefined` when met. */
   readonly unmetRequirement: { readonly attributeId: string; readonly rank: number } | undefined;
-  /** Attribute ranks raised above what points bought, from runes. */
-  readonly runeBonuses: readonly { readonly attributeId: string; readonly bonus: number }[];
+  /**
+   * Attribute ranks raised above what points bought, from runes and the
+   * headgear (#1140); `sources` splits it: `rune +3, headgear +1`.
+   */
+  readonly attributeBonuses: readonly {
+    readonly attributeId: string;
+    readonly bonus: number;
+    readonly sources: string;
+  }[];
   /** The profession's armor on every hit, then the insignias' per piece (#1135), Knight's last (#1142). */
   readonly conditionalArmor: readonly string[];
   readonly flatPhysicalReduction: number;
@@ -472,14 +518,25 @@ export function summariseGear(
   const { mainHand } = held.equipment;
   const allocated = new Map(character.attributes.map((a) => [a.attributeId, a.rank]));
 
-  const runeBonuses: { attributeId: string; bonus: number }[] = [];
+  const headgear = headgearAttributeOf(
+    character.equipment.armor.head,
+    character.primaryProfession,
+    character.secondaryProfession,
+  );
+  const attributeBonuses: { attributeId: string; bonus: number; sources: string }[] = [];
   for (const [attributeId, rank] of resolved.attributeRanks) {
     const base = allocated.get(attributeId) ?? 0;
     if (rank > base) {
-      runeBonuses.push({ attributeId, bonus: rank - base });
+      const bonus = rank - base;
+      const fromHeadgear = attributeId === headgear ? HEADGEAR_BONUS : 0;
+      const sources = [
+        ...(bonus > fromHeadgear ? [`rune +${String(bonus - fromHeadgear)}`] : []),
+        ...(fromHeadgear > 0 ? [`headgear +${String(fromHeadgear)}`] : []),
+      ].join(", ");
+      attributeBonuses.push({ attributeId, bonus, sources });
     }
   }
-  runeBonuses.sort((a, b) => a.attributeId.localeCompare(b.attributeId));
+  attributeBonuses.sort((a, b) => a.attributeId.localeCompare(b.attributeId));
 
   const { weapon, attributeId, requirementMet } = mainHand;
   // Unmet, every hit is scaled down (#571): the same multiplier the
@@ -499,7 +556,7 @@ export function summariseGear(
       requirementMet || attributeId === undefined
         ? undefined
         : { attributeId, rank: weapon.requirement.rank },
-    runeBonuses,
+    attributeBonuses,
     conditionalArmor: [
       ...held.equipment.conditionalArmor.map(armorLine),
       ...pieceArmorLines(held.equipment.pieceArmor),
@@ -515,6 +572,7 @@ export function reconcileForCharacter(character: StoredCharacter): StoredCharact
     character,
     reconcileEquipment(character.equipment, {
       primaryProfession: character.primaryProfession,
+      secondaryProfession: character.secondaryProfession,
       accessibleAttributeIds: new Set(accessibleAttributes(character)),
     }),
   );

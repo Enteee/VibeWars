@@ -22,10 +22,12 @@ import {
   encodeRune,
   armorTarget,
   firstFreeArmorSlot,
+  headgearChoices,
   insigniaChoices,
   insigniaEffectNote,
   offhandAttributeChoices,
   runeChoices,
+  setHeadgearAttribute,
   setInsignia,
   setOffhand,
   setRequirementAttribute,
@@ -216,6 +218,13 @@ describe("runes and insignias", () => {
     }
   });
 
+  it("keeps the headgear's attribute when clearing upgrades: it is the piece (#1140)", () => {
+    const character = setHeadgearAttribute(warrior(), "warrior.tactics");
+    expect(clearArmorUpgrades(character).equipment.armor.head.headgearAttributeId).toBe(
+      "warrior.tactics",
+    );
+  });
+
   it("offers only runes this character could legally wear", () => {
     const monkChoices = runeChoices(monk()).map((c) => c.key);
     // Absorption is warrior-primary only.
@@ -250,6 +259,32 @@ describe("runes and insignias", () => {
     for (const choice of runeChoices(warrior())) {
       expect(validateBuild(setRune(warrior(), "head", choice.rune)), choice.key).toEqual([]);
     }
+  });
+});
+
+describe("headgear (#1140)", () => {
+  it("offers the primary attribute first, the primary's others, then the secondary's", () => {
+    const character = setProfessions(newCharacter("c1"), "warrior", "monk");
+    expect(headgearChoices(character)).toEqual([
+      "warrior.strength",
+      ...primaryAttributeIds("warrior").filter((id) => id !== "warrior.strength"),
+      "monk.healing-prayers",
+      "monk.protection-prayers",
+      "monk.smiting-prayers",
+    ]);
+  });
+
+  it("points the +1 at the attribute picked, and nothing else on the head moves", () => {
+    const character = setHeadgearAttribute(
+      setInsignia(warrior(), "head", "stalwart"),
+      "warrior.tactics",
+    );
+    expect(character.equipment.armor.head).toEqual({
+      insigniaId: "stalwart",
+      rune: null,
+      headgearAttributeId: "warrior.tactics",
+    });
+    expect(validateBuild(character)).toEqual([]);
   });
 });
 
@@ -390,7 +425,25 @@ describe("the gear summary", () => {
     });
     const summary = firstSummary(runed);
     expect(summary.maxHealth).toBe(BASE_HEALTH - 75);
-    expect(summary.runeBonuses).toEqual([{ attributeId: "warrior.swordsmanship", bonus: 3 }]);
+    // A new Warrior's headgear raises Strength (#1140).
+    expect(summary.attributeBonuses).toEqual([
+      { attributeId: "warrior.strength", bonus: 1, sources: "headgear +1" },
+      { attributeId: "warrior.swordsmanship", bonus: 3, sources: "rune +3" },
+    ]);
+  });
+
+  it("splits a rune and the headgear on one attribute: rune +3, headgear +1 (#1140)", () => {
+    const character = setHeadgearAttribute(
+      setRune(warrior(), "head", {
+        kind: "attribute",
+        attributeId: "warrior.swordsmanship",
+        tier: "superior",
+      }),
+      "warrior.swordsmanship",
+    );
+    expect(firstSummary(character).attributeBonuses).toEqual([
+      { attributeId: "warrior.swordsmanship", bonus: 4, sources: "rune +3, headgear +1" },
+    ]);
   });
 
   it("charges both penalties for two runes of the same attribute, and grants one bonus", () => {
@@ -406,7 +459,11 @@ describe("the gear summary", () => {
     });
     const summary = firstSummary(character);
     expect(summary.maxHealth).toBe(BASE_HEALTH - 150);
-    expect(summary.runeBonuses).toEqual([{ attributeId: "warrior.swordsmanship", bonus: 3 }]);
+    // A new Warrior's headgear raises Strength (#1140).
+    expect(summary.attributeBonuses).toEqual([
+      { attributeId: "warrior.strength", bonus: 1, sources: "headgear +1" },
+      { attributeId: "warrior.swordsmanship", bonus: 3, sources: "rune +3" },
+    ]);
   });
 
   it("gives Survivor more health on the chest than on the gloves", () => {

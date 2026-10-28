@@ -1,4 +1,4 @@
-import type { ArmorPiece, ArmorSet } from "./armor.js";
+import type { ArmorPiece, ArmorSet, HeadPiece } from "./armor.js";
 import {
   WEAPON_SETS,
   type BuildEquipment,
@@ -78,6 +78,22 @@ function parseArmorPiece(value: unknown): ArmorPiece | undefined {
   return { insigniaId, rune };
 }
 
+/** A head piece: a piece, and a `headgearAttributeId` that is a string or `null`, never absent (#1140). */
+function parseHeadPiece(value: unknown): HeadPiece | undefined {
+  if (typeof value !== "object" || value === null || !("headgearAttributeId" in value)) {
+    return undefined;
+  }
+  const { headgearAttributeId } = value;
+  const piece = parseArmorPiece(value);
+  if (
+    piece === undefined ||
+    (headgearAttributeId !== null && typeof headgearAttributeId !== "string")
+  ) {
+    return undefined;
+  }
+  return { ...piece, headgearAttributeId };
+}
+
 function parseArmorSet(value: unknown): ArmorSet | undefined {
   if (value === null || value === undefined) {
     return undefined;
@@ -86,15 +102,19 @@ function parseArmorSet(value: unknown): ArmorSet | undefined {
     return undefined;
   }
   const record = value as Record<string, unknown>;
+  const head = parseHeadPiece(record.head);
+  if (head === undefined) {
+    return undefined;
+  }
   const pieces: Partial<Record<(typeof ARMOR_SLOTS)[number], ArmorPiece>> = {};
   for (const slot of ARMOR_SLOTS) {
-    const piece = parseArmorPiece(record[slot]);
+    const piece = slot === "head" ? head : parseArmorPiece(record[slot]);
     if (piece === undefined) {
       return undefined;
     }
     pieces[slot] = piece;
   }
-  // Every slot was just assigned, so the cast is total rather than hopeful.
+  // Every slot was just assigned, the head as a head, so the cast is total rather than hopeful.
   return pieces as ArmorSet;
 }
 

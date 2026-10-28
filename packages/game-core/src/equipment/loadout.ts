@@ -112,7 +112,8 @@ export function defaultOffhandFor(profession: ProfessionId): OffhandId | null {
  *
  * No insignias and no runes: those are deliberate trades with a cost,
  * and choosing one on a player's behalf would be putting words in their
- * mouth. A bare armor set is the honest default.
+ * mouth. A bare armor set is the honest default, its headgear on the
+ * primary attribute (#1140), which a build must name.
  *
  * **Legal is the operative word.** Everything this returns must pass
  * `validatePlayerBuild` untouched, because it is what the build editor
@@ -141,6 +142,9 @@ export function defaultEquipmentFor(profession: ProfessionId): BuildEquipment {
       null,
       null,
     ],
-    armor: bareArmorSet(),
+    armor: {
+      ...bareArmorSet(),
+      head: { insigniaId: null, rune: null, headgearAttributeId: primaryAttributeId },
+    },
   };
 }

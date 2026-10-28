@@ -1424,13 +1424,14 @@ test("a pip sets its rank, the top pip lowers by one, and the next rank is price
   const strength = page.locator(".editor-attribute", { hasText: "Strength" });
   const rank = strength.locator(".editor-attribute-rank");
   await expect(strength.locator(".editor-attribute-next")).toHaveText("next: 1 pts");
+  // The starter's headgear is of Strength: +1 on every rank (#1140).
   await pip(strength, 5).click();
-  await expect(rank).toHaveText("5");
+  await expect(rank).toHaveText("5 +1");
   await expect(strength.locator(".editor-attribute-next")).toHaveText("next: 6 pts");
   await pip(strength, 5).click();
-  await expect(rank).toHaveText("4");
+  await expect(rank).toHaveText("4 +1");
   await pip(strength, 2).click();
-  await expect(rank).toHaveText("2");
+  await expect(rank).toHaveText("2 +1");
 });
 
 test("hovering a pip previews its cost; one the points cannot pay for is refused (#565)", async ({

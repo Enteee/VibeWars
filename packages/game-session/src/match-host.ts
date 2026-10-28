@@ -494,6 +494,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     const resolved = resolveLoadout(
       {
         primaryProfession: loadout.primaryProfession,
+        secondaryProfession: loadout.secondaryProfession,
         allocatedRanks: loadout.attributeRanks,
         equipment: loadout.equipment,
       },

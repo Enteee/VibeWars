@@ -194,6 +194,7 @@ describe("damage taken multipliers (#919)", () => {
     const resolved = resolveLoadout(
       {
         primaryProfession: "warrior",
+        secondaryProfession: undefined,
         allocatedRanks: new Map(),
         equipment: {
           weaponSets: [
@@ -291,7 +292,7 @@ describe("conditional insignia armor, per piece (#1135)", () => {
       rune: null,
     });
     const armor: ArmorSet = {
-      head: piece("head"),
+      head: { ...piece("head"), headgearAttributeId: null },
       chest: piece("chest"),
       hands: piece("hands"),
       legs: piece("legs"),
@@ -300,6 +301,7 @@ describe("conditional insignia armor, per piece (#1135)", () => {
     const resolved = resolveLoadout(
       {
         primaryProfession: "warrior",
+        secondaryProfession: undefined,
         allocatedRanks: new Map(),
         equipment: {
           weaponSets: [
@@ -378,6 +380,7 @@ describe("profession and attacking insignias, per piece (#1142)", () => {
     const resolved = resolveLoadout(
       {
         primaryProfession: profession,
+        secondaryProfession: undefined,
         allocatedRanks: options.ranks ?? new Map(),
         equipment: {
           weaponSets: [
@@ -387,7 +390,7 @@ describe("profession and attacking insignias, per piece (#1142)", () => {
             null,
           ],
           armor: {
-            head: piece("head"),
+            head: { ...piece("head"), headgearAttributeId: null },
             chest: piece("chest"),
             hands: piece("hands"),
             legs: piece("legs"),
@@ -637,6 +640,7 @@ function primary(profession: "warrior" | "ranger" | "monk"): Combatant {
   const resolved = resolveLoadout(
     {
       primaryProfession: profession,
+      secondaryProfession: undefined,
       allocatedRanks: new Map(),
       // No off-hand and no insignias: only the profession's armor.
       equipment: {
@@ -738,6 +742,7 @@ describe("Rune of Absorption", () => {
     const resolved = resolveLoadout(
       {
         primaryProfession: "warrior",
+        secondaryProfession: undefined,
         allocatedRanks: new Map(),
         equipment: {
           weaponSets: [
@@ -918,6 +923,7 @@ describe("resolved loadouts feeding the pipeline", () => {
       resolveLoadout(
         {
           primaryProfession: profession,
+          secondaryProfession: undefined,
           allocatedRanks: new Map(),
           equipment: {
             ...defaultEquipmentFor(profession),
@@ -942,6 +948,7 @@ describe("resolved loadouts feeding the pipeline", () => {
       resolveLoadout(
         {
           primaryProfession: "warrior",
+          secondaryProfession: undefined,
           allocatedRanks: new Map([["warrior.strength", rank]]),
           equipment: {
             weaponSets: [
@@ -969,6 +976,7 @@ describe("resolved loadouts feeding the pipeline", () => {
     const resolved = resolveLoadout(
       {
         primaryProfession: "warrior",
+        secondaryProfession: undefined,
         allocatedRanks: new Map([["warrior.strength", 12]]),
         equipment: {
           weaponSets: [
@@ -995,6 +1003,7 @@ describe("the off-hand a resolved loadout holds (#276)", () => {
     return resolveLoadout(
       {
         primaryProfession: profession,
+        secondaryProfession: undefined,
         allocatedRanks: new Map(),
         equipment:
           weaponId === undefined

@@ -1615,7 +1615,9 @@ foe beside it is filled while they live and hollow once they fall
 the match.
 In GW1's Kill Count, which Pillar Hall plays, a dead player **respawns**
 at a spawn point of their own team after 8 seconds, at full health and
-energy, with all statuses cleared, and there is no death penalty.
+energy, with all statuses cleared, and there is no death penalty. There
+the scoreboard counts kills instead: `4 – 0 · 2:25` reads your team's
+kills, then theirs, beside the clock (#1200).
 
 With the death penalty on, each player has a **morale** between −60%
 and +10%, starting at 0. A death takes 15%, down to −60%, unless it came
