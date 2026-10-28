@@ -90,9 +90,13 @@ function dealsDamage(effect: SkillEffect): boolean {
     case "damage":
     case "life-steal":
       return true;
-    // A spirit that shoots (#1239): Pain's. A minion needs a corpse first.
+    // A spirit that shoots (#1239): Pain's, or one that works on foes
+    // (#1265): Earthbind's. A minion needs a corpse first.
     case "summon":
-      return effect.creature.kind === "spirit" && effect.creature.attack !== undefined;
+      return (
+        effect.creature.kind === "spirit" &&
+        (effect.creature.attack !== undefined || effect.creature.aura?.affects === "foes")
+      );
     case "if":
     case "splash":
       return effect.effects.some(dealsDamage);
