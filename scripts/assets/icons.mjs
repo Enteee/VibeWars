@@ -1489,6 +1489,23 @@ const skillGlyph = {
   // A post with a bright head: a spirit planted where it was called (#1217).
   totem: () =>
     inkFill("M9 11H14L14.2 20H8.8Z") + `<circle cx="12" cy="6.5" r="3.8" fill="${C.ink}"/>`,
+  // The spirit post, low on the left, shooting a mark up and right: what the
+  // mark is says what the spirit does (#1271). Pain only hurts.
+  "spirit-pain": () => spiritPost() + inkLine("M19.5 2.5L14 9.5H19L14.5 15.5", 2.4),
+  // Shadowsong blinds: an eye.
+  "spirit-blind": () =>
+    spiritPost() +
+    `<path d="M10.5 8.5C12 5.5 14.5 4.5 17 4.5S22 5.5 23.5 8.5C22 11.5 19.5 12.5 17 12.5S12 11.5 10.5 8.5Z" ${stroke(C.ink, 1.8)}/>` +
+    `<circle cx="17" cy="8.5" r="2" fill="${C.ink}"/>`,
+  // Dissonance interrupts: a burst.
+  "spirit-quiet": () =>
+    spiritPost() +
+    `<g transform="translate(17,8.5) scale(0.55) translate(-12,-12)">${inkFill(burst(6))}</g>`,
+  // Disenchantment strips an enchantment: a ring struck through.
+  "spirit-strip": () =>
+    spiritPost() +
+    `<circle cx="17" cy="8.5" r="4.6" ${stroke(C.ink, 2)}/>` +
+    inkLine("M12 14L22 3", 2.2),
   // The ward's ring and pole, with a blade struck from it: it turns melee (#1217).
   "ward-blade": () =>
     `<ellipse cx="12" cy="17" rx="8.5" ry="4" ${stroke(C.ink, 2.5)}/>` +
@@ -1636,6 +1653,10 @@ const skillGlyph = {
     `<path d="M2.5 12C5 7.5 8.5 5.5 12 5.5S19 7.5 21.5 12C19 16.5 15.5 18.5 12 18.5S5 16.5 2.5 12Z" ${stroke(C.ink, 2.2)}/>` +
     `<circle cx="12" cy="12" r="3.4" fill="${C.ink}"/>`,
 };
+
+/** The shared spirit post of the attacking spirits, left of the mark it shoots (#1271). */
+const spiritPost = () =>
+  inkFill("M4.8 11H9.2L9.4 20H4.6Z") + `<circle cx="7" cy="6.8" r="3.4" fill="${C.ink}"/>`;
 
 /** Modifiers, drawn around the bottom right corner on a dark disc. */
 const skillModifier = {
