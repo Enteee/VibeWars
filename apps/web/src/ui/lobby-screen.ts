@@ -135,6 +135,7 @@ export interface LobbyMap {
 const MODE_LINES: Readonly<Record<MatchMode, string>> = {
   annihilation: "Annihilation: defeat every foe",
   "kill-count": "Kill Count: most kills in 3 minutes",
+  "priest-annihilation": "Priest Annihilation: defeat every foe and their priest",
 };
 
 /** The mode `map` plays, in a line: "Kill Count: most kills in 3 minutes". */

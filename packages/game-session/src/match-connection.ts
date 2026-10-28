@@ -94,10 +94,11 @@ export interface PlayerSnapshot {
    * scoreboard, the enemy pips or the music. `mode` is a companion's
    * (#1110), `null` for any other creature. `armedAttack` is the pet
    * attack its next blow carries (#1167), `null` when none is armed.
+   * `ownerId` is `null` for a map's NPC, as a priest (#1186).
    */
   readonly creature:
     | {
-        readonly ownerId: string;
+        readonly ownerId: string | null;
         readonly kind: CreatureKind;
         readonly look: CreatureLook;
         readonly mode: CompanionMode | null;

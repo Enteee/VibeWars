@@ -188,6 +188,8 @@ export const SKILL_ICONS = {
   "monk.dismiss-condition": { glyph: "cleanse", modifier: "hourglass" },
   "monk.healing-breeze": { glyph: "plaster", modifier: "clock" },
   "monk.heal-party": { glyph: "speed-heal", modifier: "area" },
+  // Placeholder until the asset-designer's (#1186).
+  "monk.heal-area": { glyph: "heal", modifier: "half" },
   "paragon.spear-of-lightning": { glyph: "spear-bolt" },
   "paragon.never-surrender": { glyph: "banner", modifier: "area" },
   "paragon.leaders-comfort": { glyph: "banner-cross", modifier: "self" },
