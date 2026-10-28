@@ -334,8 +334,33 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
   });
 
   it("keep a creature's owner and kind (#1052)", () => {
-    const creature = { ownerId: "p2", kind: "minion", look: "bone-minion", mode: null } as const;
+    const creature = {
+      ownerId: "p2",
+      kind: "minion",
+      look: "bone-minion",
+      mode: null,
+      armedAttack: null,
+    } as const;
     expect(playerSnapshot({ ...WIRE_PLAYER, creature })?.creature).toEqual(creature);
+  });
+
+  it("keep a pet's armed attack, and refuse one that is not a known pet attack (#1167)", () => {
+    const pet = (skillId: string): WirePlayer => ({
+      ...WIRE_PLAYER,
+      creature: {
+        ownerId: "p2",
+        kind: "pet",
+        look: "beast",
+        mode: "fight",
+        armedAttack: { skillId, endsAt: 12.1 },
+      },
+    });
+    expect(playerSnapshot(pet("ranger.brutal-strike"))?.creature?.armedAttack).toEqual({
+      skillId: "ranger.brutal-strike",
+      endsAt: 12.1,
+    });
+    expect(playerSnapshot(pet("ranger.no-such-skill"))).toBeUndefined();
+    expect(playerSnapshot(pet("warrior.swift-chop"))).toBeUndefined();
   });
 
   it("hold the wire's creature cap to game-core's (#1052)", () => {

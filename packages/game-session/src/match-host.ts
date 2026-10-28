@@ -793,7 +793,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     winningTeam: wireTeam(sim.outcome.winningTeam),
     endReason: sim.outcome.reason ?? null,
     players: [...sim.participants()].flatMap((participant) => {
-      const who = wireIdentity(participant, seats);
+      const who = wireIdentity(participant, seats, sim.elapsedSeconds);
       return who === undefined ? [] : [wirePlayer(participant, who)];
     }),
     // The newest, if ever there were more than a snapshot may carry: a
