@@ -249,7 +249,11 @@ export interface MaintainStatusEffect {
 export interface RemoveStatusEffect {
   readonly kind: "remove-status";
   readonly category: StatusCategory;
-  readonly count: number;
+  /**
+   * How many, newest first; `"all"` as Restore Condition's "remove all
+   * conditions". Ignored when `perRemoved` is set.
+   */
+  readonly count: number | "all";
   /**
    * Only statuses of this profession (`StatusDefinition.profession`), as
    * "lose 1 Dervish enchantment" (#845). Absent: any.
@@ -266,6 +270,13 @@ export interface RemoveStatusEffect {
    * Spirit within earshot". Absent: `count` as it is.
    */
   readonly perSpiritNear?: number;
+  /**
+   * The count is the number of statuses of `category` an earlier
+   * `remove-status` of this use took off the same bearer, capped at
+   * `max`, as Contemplation of Purity's "for each one lost, ... lose one
+   * hex (maximum 1...7...8)" (#1205). Absent: `count` as it is.
+   */
+  readonly perRemoved?: { readonly category: StatusCategory; readonly max: Magnitude };
 }
 
 /**

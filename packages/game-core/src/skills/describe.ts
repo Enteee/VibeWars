@@ -880,8 +880,18 @@ function describeEffect(
       };
     }
     case "remove-status": {
+      // Contemplation of Purity's "lose one hex for each one lost" (#1205).
+      const { perRemoved } = effect;
+      if (perRemoved !== undefined) {
+        const max = describeMagnitude(perRemoved.max, ranks).current;
+        const verb = effect.from === "caster" ? "Lose" : "Removes";
+        return {
+          text: `${verb} one ${effect.category} for each ${perRemoved.category} removed (max ${String(max)})`,
+          magnitude: undefined,
+        };
+      }
       if (effect.from === "caster") {
-        // "Lose 1 Dervish enchantment" (#845).
+        // "Lose 1 Dervish enchantment" (#845), or all of them (#1205).
         const whose =
           effect.profession === undefined ? "" : `${getProfession(effect.profession).name} `;
         const plural = effect.count === 1 ? "" : "s";
@@ -894,8 +904,6 @@ function describeEffect(
         return { text: "Ends the target's stance", magnitude: undefined };
       }
       const plural = effect.count === 1 ? "" : "s";
-      // Restore Condition's "remove all conditions" (#987).
-      const count = Number.isFinite(effect.count) ? String(effect.count) : "all";
       // Mend Body and Soul's "for each spirit within earshot" (#1064).
       const near = effect.perSpiritNear;
       const perSpirit =
@@ -903,7 +911,7 @@ function describeEffect(
           ? ""
           : ` for each spirit ${AREA_AROUND_TARGET.get(near) ?? `within ${String(near)} of it`}`;
       return {
-        text: `Removes ${count} ${effect.category}${plural}${perSpirit}`,
+        text: `Removes ${String(effect.count)} ${effect.category}${plural}${perSpirit}`,
         magnitude: undefined,
       };
     }

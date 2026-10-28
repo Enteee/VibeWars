@@ -5730,7 +5730,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     // "Remove all conditions from target other ally. That ally is healed
     // 10...58...70 health for each condition removed."
     effects: [
-      { kind: "remove-status", category: "condition", count: Number.POSITIVE_INFINITY },
+      { kind: "remove-status", category: "condition", count: "all" },
       {
         kind: "heal",
         perStatusOnTarget: [],
@@ -6948,6 +6948,123 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         perStatusOnTarget: [],
         amount: {
           scaling: { attributeId: "monk.healing-prayers", atZero: 30, atTwelve: 66 },
+        },
+      },
+    ],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* The corpus's last two PvP skills (#1205)                               */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "elementalist.meteor-shower",
+    name: "Meteor Shower",
+    type: "spell",
+    elite: false,
+    profession: "elementalist",
+    attributeId: "elementalist.fire-magic",
+    cost: { kind: "energy", amount: 25 },
+    // Exhaustion (#461), at the corpus's 10.
+    overcast: 10,
+    activationSeconds: 5,
+    rechargeSeconds: 60,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    petAttack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    companion: undefined,
+    // "Create a Meteor Shower at target foe's location. For 9 seconds, foes
+    // adjacent to that location are struck for 7...91...112 fire damage
+    // and knocked down every 3 seconds": it stays where they stood as the
+    // cast ended, as Symbol of Wrath's, so stepping out dodges the next.
+    effects: [
+      {
+        kind: "create-ground-effect",
+        anchor: "target",
+        durationSeconds: { flat: 9 },
+        act: {
+          kind: "pulse",
+          pulse: {
+            count: 3,
+            everySeconds: 3,
+            area: {
+              radius: AREA_ADJACENT,
+              origin: "caster",
+              affects: "enemies",
+              maxTargets: undefined,
+              includesCaster: false,
+            },
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "elementalist.fire-magic", atZero: 7, atTwelve: 91 },
+                },
+                type: "fire",
+                armorPenetration: 0,
+              },
+              { kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS },
+            ],
+          },
+        },
+      },
+    ],
+  },
+  {
+    id: "monk.contemplation-of-purity",
+    name: "Contemplation of Purity",
+    type: "skill",
+    elite: false,
+    profession: "monk",
+    attributeId: "monk.divine-favor",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    petAttack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    companion: undefined,
+    // "Lose all enchantments. For each one lost, you gain 0...64...80
+    // health, lose one hex, and lose one condition (maximum 1...7...8
+    // hexes and conditions)." With none to lose it only costs: one heal
+    // of the whole, then the hexes and conditions, one each per
+    // enchantment lost.
+    effects: [
+      { kind: "remove-status", category: "enchantment", count: "all", from: "caster" },
+      {
+        kind: "heal",
+        perStatusOnTarget: [],
+        perRemoved: "enchantment",
+        amount: { scaling: { attributeId: "monk.divine-favor", atZero: 0, atTwelve: 64 } },
+      },
+      {
+        kind: "remove-status",
+        category: "hex",
+        count: 0,
+        from: "caster",
+        perRemoved: {
+          category: "enchantment",
+          max: { scaling: { attributeId: "monk.divine-favor", atZero: 1, atTwelve: 7 } },
+        },
+      },
+      {
+        kind: "remove-status",
+        category: "condition",
+        count: 0,
+        from: "caster",
+        perRemoved: {
+          category: "enchantment",
+          max: { scaling: { attributeId: "monk.divine-favor", atZero: 1, atTwelve: 7 } },
         },
       },
     ],

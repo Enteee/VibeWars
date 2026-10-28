@@ -205,13 +205,13 @@ describe("skill coverage reporting", () => {
     const imported = [
       "elementalist.fireball",
       "monk.orison-of-healing",
-      "monk.contemplation-of-purity",
+      "warrior.whirlwind-attack",
     ];
     const coverage = computeCoverage(imported);
     expect(coverage.imported).toBe(3);
     expect(coverage.implemented).toBe(IMPLEMENTED_SKILLS.length);
     const ids = coverage.unimplemented.map((skill) => skill.id);
-    expect(ids).toContain("monk.contemplation-of-purity");
+    expect(ids).toContain("warrior.whirlwind-attack");
     expect(ids).not.toContain("elementalist.fireball");
   });
 
@@ -222,9 +222,9 @@ describe("skill coverage reporting", () => {
 
   it("formats a human-readable report naming every unimplemented skill", () => {
     const text = formatCoverage(
-      computeCoverage(["monk.contemplation-of-purity", "elementalist.fireball"]),
+      computeCoverage(["warrior.whirlwind-attack", "elementalist.fireball"]),
     );
-    expect(text).toContain("monk.contemplation-of-purity");
+    expect(text).toContain("warrior.whirlwind-attack");
     expect(text).toContain("imported:");
     expect(text).toContain("implemented:");
   });
