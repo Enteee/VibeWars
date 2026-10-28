@@ -1,0 +1,113 @@
+import { describe, expect, it } from "vitest";
+
+import {
+  MINIMAL_GW_INSPIRED_PVP_V1,
+  MatchSimulation,
+  STARTER_BUILDS,
+  loadoutSpec,
+  resolveJoinLoadout,
+  resolveLoadout,
+  type PlayerBuild,
+} from "@vibewars/game-core";
+
+import { REST_FRAME } from "../render/attack-clock.js";
+import { fromPlayerBuild, toPlayerBuild } from "../storage/build-validation.js";
+import type { StoredCharacter } from "../storage/schema.js";
+import { characterAppearance, figureBody } from "./character-figure.js";
+
+const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
+
+function starter(profession: PlayerBuild["primaryProfession"]): PlayerBuild {
+  const build = STARTER_BUILDS.find((b) => b.primaryProfession === profession);
+  if (build === undefined) {
+    throw new Error(`no ${profession} starter`);
+  }
+  return build;
+}
+
+const stored = (build: PlayerBuild): StoredCharacter => fromPlayerBuild(build, "c1", 0);
+
+/**
+ * What a match sends for `character`, seated as `match-host.ts` seats a
+ * player: its build as the wire carries it, through the join checks,
+ * resolved, made a body in a simulation, and that body's weapon and
+ * off-hand read as the host reads them for the snapshot.
+ */
+function hostHeld(character: StoredCharacter): {
+  readonly weaponId: string;
+  readonly offhandId: string | undefined;
+} {
+  const wire: unknown = JSON.parse(JSON.stringify(toPlayerBuild(character)));
+  const { loadout } = resolveJoinLoadout(wire, RULES.attributes, () => 0);
+  const resolved = resolveLoadout(
+    {
+      primaryProfession: loadout.primaryProfession,
+      secondaryProfession: loadout.secondaryProfession,
+      allocatedRanks: loadout.attributeRanks,
+      equipment: loadout.equipment,
+    },
+    RULES.combat,
+  );
+  const sim = new MatchSimulation({ seed: 1 });
+  const body = sim.add({
+    id: "p1",
+    team: 0,
+    skillBar: loadout.skillBar,
+    ...loadoutSpec(resolved),
+    baseEnergyPips: loadout.baseEnergyPips,
+    spawn: { x: 100, y: 100 },
+    facing: 0,
+  });
+  return {
+    weaponId: body.combatant.equipment.mainHand.weapon.id,
+    offhandId: body.combatant.equipment.offhandId,
+  };
+}
+
+describe("characterAppearance (#1250)", () => {
+  it("gives the default Warrior the sword and shield a match gives it", () => {
+    const warrior = stored(starter("warrior"));
+    expect(characterAppearance(warrior)).toEqual({ weaponId: "sword", offhandId: "shield" });
+    expect(characterAppearance(warrior)).toEqual(hostHeld(warrior));
+  });
+
+  it("gives a Ranger with a longbow its longbow and no off-hand", () => {
+    const build = starter("ranger");
+    const [set1, ...spare] = build.equipment.weaponSets;
+    const longbow = stored({
+      ...build,
+      equipment: {
+        ...build.equipment,
+        weaponSets: [
+          { ...set1, mainHand: { weaponId: "longbow", requirementAttributeId: null } },
+          ...spare,
+        ],
+      },
+    });
+    expect(characterAppearance(longbow)).toEqual({ weaponId: "longbow", offhandId: undefined });
+    expect(characterAppearance(longbow)).toEqual(hostHeld(longbow));
+  });
+
+  it("gives a build the host would refuse no weapon and no off-hand: its starter is random", () => {
+    const illegal = stored({
+      ...starter("ranger"),
+      attributes: [{ attributeId: "ranger.marksmanship", rank: 99 }],
+    });
+    expect(characterAppearance(illegal)).toEqual({ weaponId: undefined, offhandId: undefined });
+  });
+});
+
+describe("figureBody (#1250)", () => {
+  it("is your own body at rest, facing right, centred with room for its marks", () => {
+    expect(figureBody({ weaponId: "sword", offhandId: "shield" })).toEqual({
+      x: 24,
+      y: 24,
+      r: RULES.collision.playerRadius,
+      facing: 0,
+      team: "self",
+      weaponId: "sword",
+      offhandId: "shield",
+      frame: REST_FRAME,
+    });
+  });
+});
