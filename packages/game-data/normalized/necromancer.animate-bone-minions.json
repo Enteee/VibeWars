@@ -1,0 +1,26 @@
+{
+  "id": "necromancer.animate-bone-minions",
+  "name": "Animate Bone Minions",
+  "profession": "necromancer",
+  "attribute": "Death Magic",
+  "type": "Spell.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 10
+  },
+  "overcast": 0,
+  "activationSeconds": 1,
+  "rechargeSeconds": 5,
+  "upkeep": false,
+  "description": "Exploit nearest corpse to animate two level 0...10...12 Bone Minions.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Necromancer/279-Animate_Bone_Minions",
+    "fetchedAt": "2026-10-28T03:34:24.220Z"
+  },
+  "unmapped": {}
+}

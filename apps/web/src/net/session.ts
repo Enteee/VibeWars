@@ -12,6 +12,7 @@ import {
   LobbyNoAnswerError,
   LobbyRefusedError,
   MatchRefusedError,
+  PARTY_CONSENT_MS,
   connectMatch,
   createLobbyHost,
   createMatchHost,
@@ -227,9 +228,14 @@ export const STAY_TOGETHER_SECONDS = 15;
  * The host's window for Stay together runs from the result: the HUD's
  * seconds, the offer's, and this much for the last vote to arrive.
  */
-const STAY_TOGETHER_GRACE_SECONDS = 2;
+export const STAY_TOGETHER_GRACE_SECONDS = 2;
 export const STAY_TOGETHER_WINDOW_SECONDS =
   QUEUED_RESULT_SECONDS + STAY_TOGETHER_SECONDS + STAY_TOGETHER_GRACE_SECONDS;
+/**
+ * From signing the host's party proposal (#1078), how long a member waits
+ * for its answer: the host's consent window, and the same grace.
+ */
+export const PARTY_ANSWER_MS = PARTY_CONSENT_MS + STAY_TOGETHER_GRACE_SECONDS * 1000;
 /** #882's wording, for a party that did not form or did not last. */
 export const TEAM_SPLIT_MESSAGE = "The team split up";
 /**

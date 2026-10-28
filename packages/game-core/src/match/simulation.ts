@@ -1,7 +1,7 @@
 import type { SkillBar } from "../build.js";
 import { isWeaponSetIndex, type WeaponSetIndex } from "../equipment/loadout.js";
 import {
-  unarmedResolvedEquipment,
+  creatureResolvedEquipment,
   type ResolvedEquipment,
   type ResolvedLoadout,
   type ResolvedWeaponSet,
@@ -67,6 +67,7 @@ import {
   emptyAdrenaline,
   gainStrikes,
   gainUnits,
+  losesAllAdrenaline,
 } from "../skills/adrenaline.js";
 import { CastState, beginRecharge, type ActiveCast } from "../skills/cast-state.js";
 import { getSkill } from "../skills/catalog.js";
@@ -167,6 +168,7 @@ import {
 } from "./behaviour.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { nearestFreshCorpse } from "./corpses.js";
+import { MINION_CAP_ATTRIBUTE, minionCap, minionDegenerationPips } from "./minions.js";
 import { directionAngle, showsBackTo } from "./facing.js";
 import { steerAround } from "./steering.js";
 
@@ -204,12 +206,21 @@ export interface Creature {
   readonly name: string;
   /** Seconds left before it vanishes; `Infinity`: until it is killed. */
   expiresInSeconds: number;
+  /** Seconds alive, summed from `dt`: what a minion's rot grows with (#467). */
+  ageSeconds: number;
   /** The tick it was summoned, for "oldest first" caps. */
   readonly summonedAtTick: number;
   /** The skill that summoned it (#1064): one spirit of a skill in range. */
   readonly skillId: string;
   /** What a spirit projects on whoever is in range (#1064); `undefined`: nothing. */
   readonly aura: Aura | undefined;
+}
+
+/** A minion's own rot in pips (#467): 0 for anyone else. */
+function minionPips(participant: Participant): number {
+  return participant.creature?.kind === "minion"
+    ? minionDegenerationPips(participant.creature.ageSeconds)
+    : 0;
 }
 
 /** At most this many creatures in a match at once (#1052): a summon past it makes as many as fit. */
@@ -681,12 +692,22 @@ export class MatchSimulation {
 
   /** A participant's net pips as they stand (#504): what the next tick applies, natural regeneration included. */
   public pips(participant: Participant): NetPips {
-    const { combatant, outOfCombatSeconds } = participant;
     return netPips(
-      combatant,
-      naturalHealthPips(combatant, outOfCombatSeconds, this.#ruleset.resources),
+      participant.combatant,
+      this.#naturalPips(participant) + minionPips(participant),
       this.#upkeep(participant.id),
     );
+  }
+
+  /** Natural regeneration as it stands: none for a minion (#467), which only rots. */
+  #naturalPips(participant: Participant): number {
+    return participant.creature?.kind === "minion"
+      ? 0
+      : naturalHealthPips(
+          participant.combatant,
+          participant.outOfCombatSeconds,
+          this.#ruleset.resources,
+        );
   }
 
   public participants(): IterableIterator<Participant> {
@@ -769,10 +790,14 @@ export class MatchSimulation {
   }
 
   /**
-   * `count` creatures of `template` at `owner`, facing as it does, on its
+   * `count` creatures of `template` at `at`, facing as `owner` does, on its
    * team (#1052): as many as `MAX_CREATURES` leaves room for. Added to the
    * end of the match, so they act from this very tick, after everyone
    * already there.
+   *
+   * Minions past their master's cap (#467) die first, oldest first, so the
+   * slots they free are free for the new ones. Each is a death: Soul
+   * Reaping answers it, and the log names the summoning skill.
    *
    * A spirit made ends every allied spirit of the same `skillId` within
    * the new one's aura radius (#1064): it leaves at the end of the step, as an
@@ -783,7 +808,11 @@ export class MatchSimulation {
     skillId: string,
     template: CreatureTemplate,
     count: number,
+    at: Vec2,
   ): void {
+    if (template.kind === "minion") {
+      this.#cullMinions(owner, skillId, count);
+    }
     let creatures = 0;
     for (const record of this.#participants.values()) {
       if (record.creature !== undefined && !this.#leaving.has(record.id)) {
@@ -812,9 +841,18 @@ export class MatchSimulation {
         id,
         team: owner.combatant.team,
         skillBar: [],
-        attributeRanks: new Map(),
-        equipment: unarmedResolvedEquipment(template.armor),
-        spawn: owner.position,
+        // The summoner's rank, read once (#467): the creature's weapon mastery.
+        attributeRanks:
+          template.attack === undefined
+            ? new Map()
+            : new Map([
+                [template.attack.attributeId, rankOf(owner.combatant, template.attack.attributeId)],
+              ]),
+        equipment: creatureResolvedEquipment(
+          resolveMagnitude(template.armor, owner.combatant),
+          template.attack,
+        ),
+        spawn: at,
         facing: owner.facing,
         // Spawning Power is the summoner's (#1098).
         maxHealth: spawningPowerHealth(
@@ -832,12 +870,51 @@ export class MatchSimulation {
             template.durationSeconds === undefined
               ? Number.POSITIVE_INFINITY
               : resolveMagnitude(template.durationSeconds, owner.combatant),
+          ageSeconds: 0,
           summonedAtTick: this.#tick,
           skillId,
           aura: template.aura,
         },
       });
     }
+  }
+
+  /**
+   * Kills `owner`'s oldest minions until `count` more fit under its cap
+   * (#467, GW1): the cap is `minionCap` of its Death Magic as it raises.
+   * Summon order is match order, so the first found are the oldest.
+   */
+  #cullMinions(owner: ParticipantRecord, skillId: string, count: number): void {
+    const cap = minionCap(rankOf(owner.combatant, MINION_CAP_ATTRIBUTE));
+    const mine = [...this.#participants.values()].filter(
+      (record) =>
+        record.creature?.kind === "minion" &&
+        record.creature.ownerId === owner.id &&
+        !record.combatant.dead &&
+        !this.#leaving.has(record.id),
+    );
+    const excess = mine.length + count - cap;
+    if (excess <= 0) {
+      return;
+    }
+    const events: CombatEvent[] = mine.slice(0, excess).map((record) => {
+      record.combatant.health = 0;
+      record.combatant.dead = true;
+      return { kind: "death", targetId: record.id };
+    });
+    this.#log.push({
+      tick: this.#tick,
+      atSeconds: this.#elapsedSeconds,
+      cause: "skill",
+      sourceId: owner.id,
+      skillId,
+      weaponId: undefined,
+      attributeId: undefined,
+      area: undefined,
+      doubleStrike: false,
+      events,
+    });
+    this.#recordDeaths(events);
   }
 
   /**
@@ -1453,6 +1530,7 @@ export class MatchSimulation {
       // A creature that has run its time vanishes (#1052): no death, so
       // nothing answers it and nobody scores.
       if (record.creature !== undefined) {
+        record.creature.ageSeconds += dt;
         record.creature.expiresInSeconds -= dt;
         if (record.creature.expiresInSeconds < SWING_EPSILON) {
           this.#leaving.add(record.id);
@@ -1484,16 +1562,14 @@ export class MatchSimulation {
 
       // Degeneration its statuses' own regeneration does not cancel is
       // health lost, so natural regeneration stops before it would.
+      // A minion's rot (#467) counts as one, and it never regenerates.
       const modifiers = aggregateModifiers(record.combatant.statuses.active);
+      const rot = minionPips(record);
       record.outOfCombatSeconds += dt;
-      if (clampPips(modifiers.healthPips) < 0) {
+      if (clampPips(modifiers.healthPips + rot) < 0) {
         record.outOfCombatSeconds = 0;
       }
-      const natural = naturalHealthPips(
-        record.combatant,
-        record.outOfCombatSeconds,
-        this.#ruleset.resources,
-      );
+      const natural = this.#naturalPips(record);
 
       // Energy regenerates continuously, at the net pips (GW1); adrenaline
       // is earned by acting, not by waiting, so it deliberately does not
@@ -1514,7 +1590,7 @@ export class MatchSimulation {
       const nearSpirit =
         modifiers.healthPerSecondNearSpirit !== 0 &&
         spiritsWithin(this.#participants.values(), record.position, AREA_EARSHOT) > 0;
-      const statusEvents = advanceStatuses(record.combatant, dt, natural, nearSpirit);
+      const statusEvents = advanceStatuses(record.combatant, dt, natural + rot, nearSpirit);
       if (statusEvents.length > 0) {
         const drained = statusEvents.some((event) => event.kind === "damage");
         this.#log.push({
@@ -1992,8 +2068,9 @@ export class MatchSimulation {
     // (#885) blocked once and landed once still landed. Each foe it landed
     // on is a strike (#936): Cyclone Axe on three foes earns three. Only
     // a foe the skill swung at counts, not one an effect of it hit: Death
-    // Blossom's splash on adjacent foes earns nothing more.
-    if (skill.type === "attack") {
+    // Blossom's splash on adjacent foes earns nothing more. One that loses
+    // all adrenaline (#1097) earns none back: GW1 takes it after the strike.
+    if (skill.type === "attack" && !losesAllAdrenaline(skill)) {
       const strikes = skill.attack?.strikes ?? 1;
       const swungAt = new Set(targets.map((target) => target.id));
       const blocked = (targetId: string): boolean => {
@@ -2026,8 +2103,15 @@ export class MatchSimulation {
     this.#recordKnockdowns(events);
     this.#recordSteps(events);
     this.#recordResurrections(events);
+    // A raised minion rises where its corpse lay (#467).
     for (const summon of summons) {
-      this.#summon(record, skill.id, summon.creature, summon.count);
+      this.#summon(
+        record,
+        skill.id,
+        summon.creature,
+        summon.count,
+        corpse?.position ?? record.position,
+      );
     }
     for (const ground of grounds) {
       this.#placeGroundEffect(record, skill.id, ground);
@@ -2808,7 +2892,12 @@ export class MatchSimulation {
       attackReached(target.combatant, events);
       events.push(...riders(skillHit?.skill.effects ?? []));
     }
-    if (attacker !== undefined && !attacker.combatant.dead && !blocked) {
+    if (
+      attacker !== undefined &&
+      !attacker.combatant.dead &&
+      !blocked &&
+      (skillHit === undefined || !losesAllAdrenaline(skillHit.skill))
+    ) {
       this.#gainAdrenaline(attacker, events);
     }
     this.#chargeFromDamage(attacker?.combatant, events);

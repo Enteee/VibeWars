@@ -5,7 +5,7 @@ import {
   SPAWNING_POWER_ATTRIBUTE,
   spawningPowerMultiplier,
 } from "../primary-attributes.js";
-import { emptyAdrenaline, fillPools } from "./adrenaline.js";
+import { emptyAdrenaline, emptyPool, fillPools } from "./adrenaline.js";
 import { beginRecharge } from "./cast-state.js";
 import { getSkill } from "./catalog.js";
 import { mitigate, skillDamage } from "./damage.js";
@@ -1027,6 +1027,9 @@ export function applyEffect(
       }
       const seconds = resolveMagnitude(effect.seconds, caster);
       for (const skillId of disabledBy(effect, target, interrupted)) {
+        // A disabled skill loses all its adrenaline (GW1, #1097), though
+        // a longer recharge kept the disable from lengthening its wait.
+        emptyPool(target, skillId);
         if (target.cast.disable(skillId, seconds)) {
           events.push({ kind: "skill-disabled", targetId: target.id, skillId, seconds });
         }

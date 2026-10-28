@@ -4,6 +4,7 @@ import { codeLabel } from "../apps/web/src/input/keymap.js";
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
 import { chooseProfession, professionField } from "./helpers/professions.js";
 import { startSoloMatch } from "./helpers/peers.js";
+import { bringStarter } from "./helpers/starter.js";
 import { skillKey } from "./keys.js";
 
 /**
@@ -235,6 +236,37 @@ test("12/12/3 spends all 200 points, GW1's split (#470)", async ({ page }) => {
   await expect(pip(row(3), 1)).toHaveClass(/is-dim/);
   // The budget bar is the 200 points, split three ways.
   await expect(page.locator(".attribute-budget-segment")).toHaveCount(3);
+});
+
+test("a rune's bonus stays clear of max, and the pips stay in line (#1102)", async ({ page }) => {
+  // The Warrior/Monk starter wears a rune: its rank reads "12 +1".
+  await bringStarter(page, "Warrior/Monk");
+  await page
+    .locator(".selectable-row", { hasText: "Warrior/Monk" })
+    .first()
+    .getByRole("button", { name: "Edit", exact: true })
+    .click();
+  const boosted = page.locator(".editor-attribute", {
+    has: page.locator(".editor-attribute-bonus"),
+  });
+  await expect(boosted.first()).toBeVisible();
+
+  const box = async (locator: Locator) => {
+    const found = await locator.boundingBox();
+    if (found === null) {
+      throw new Error("not laid out");
+    }
+    return found;
+  };
+  // The bonus's own box, not its cell's: the cell is the column, text spills past it.
+  const bonus = await box(boosted.first().locator(".editor-attribute-bonus"));
+  const next = await box(boosted.first().locator(".editor-attribute-next"));
+  expect(bonus.x + bonus.width).toBeLessThanOrEqual(next.x);
+
+  const pipLefts = await page
+    .locator(".editor-attribute .attribute-pips")
+    .evaluateAll((all) => all.map((pips) => pips.getBoundingClientRect().left));
+  expect(new Set(pipLefts).size).toBe(1);
 });
 
 /** Save characters named `names` from the main menu, one after another. */
@@ -1125,6 +1157,9 @@ test("an attack skill for another weapon is flagged on its slot until the weapon
 test("a weapon can be dragged from the library onto the weapon slot", async ({ page }) => {
   await newCharacter(page);
   await openGearLibrary(page);
+  // The set tabs (#489) put the hands below the fold: a mouse drag that has
+  // to scroll the editor mid-gesture drops nowhere, so bring them up first.
+  await page.locator(".gear-slot").first().scrollIntoViewIfNeeded();
 
   await page
     .locator(".gear-box")
@@ -1255,6 +1290,13 @@ test("a chosen weapon and insignia survive a reload", async ({ page }) => {
   await openGearLibrary(page);
   await equipFromLibrary(page, "Axe");
   await equipFromLibrary(page, "Survivor Insignia");
+  // Set 2 (#489): its tab, then a weapon from the library goes into it.
+  const setTab = (n: number): Locator =>
+    page.getByRole("tab", { name: new RegExp(`^${String(n)}`) });
+  await setTab(2).click();
+  await expect(page.locator(".gear-slot").first()).toContainText("Add a weapon");
+  await equipFromLibrary(page, "Hammer");
+  await expect(page.locator(".gear-slot").first()).toContainText("Hammer");
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.locator(".roster")).toContainText("Gear Keeper");
 
@@ -1270,6 +1312,8 @@ test("a chosen weapon and insignia survive a reload", async ({ page }) => {
   await expect(page.locator(".armor-row").first().locator(".gear-slot").first()).toContainText(
     "Survivor",
   );
+  await setTab(2).click();
+  await expect(page.locator(".gear-slot").first()).toContainText("Hammer");
 });
 
 /* --- the editor updates in place (#563, ADR-0030) ------------------------- */

@@ -159,6 +159,12 @@ export {
 } from "./match/simulation.js";
 export type { CorpseCandidate } from "./match/corpses.js";
 export { isFreshCorpse, nearestFreshCorpse } from "./match/corpses.js";
+export {
+  MINION_CAP_ATTRIBUTE,
+  MINION_DEGENERATION_STEP_SECONDS,
+  minionCap,
+  minionDegenerationPips,
+} from "./match/minions.js";
 export { facingToward, spawnFacing } from "./match/facing.js";
 export type { IntentRefusal, MatchIntent } from "./match/apply-intent.js";
 export { applyIntent } from "./match/apply-intent.js";

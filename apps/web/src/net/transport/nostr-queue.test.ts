@@ -7,7 +7,13 @@ import {
   type QueueMode,
   type QueueTicket,
 } from "@vibewars/game-protocol";
-import type { QueueBoardEvent, TicketKey, TransportTrouble } from "@vibewars/game-session";
+import {
+  admissionBytes,
+  formGroups,
+  type QueueBoardEvent,
+  type TicketKey,
+  type TransportTrouble,
+} from "@vibewars/game-session";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -66,6 +72,7 @@ function ticketOf(key: TicketKey, extra: Partial<QueueTicket> = {}): QueueTicket
     members: [key.ticketId],
     enteredAt: NOW - 1_000,
     heartbeatAt: NOW,
+    party: null,
     ...extra,
   };
 }
@@ -348,5 +355,184 @@ describe("the Nostr queue board (#872)", () => {
     vi.advanceTimersByTime(RELAY_RETRY_MS);
     expect(sockets).toHaveLength(2);
     expect(sockets[1]?.closed).toBe(true);
+  });
+});
+
+describe("party consents on the Nostr queue board (#1078)", () => {
+  const GROUP_WON = "f".repeat(64);
+
+  /** `key`'s consent to the party of `members` that won `groupId`. */
+  const consentOf = (
+    key: TicketKey,
+    members: readonly TicketKey[],
+    groupId = GROUP_WON,
+  ): string => {
+    const ids = members.map((member) => member.ticketId).join("");
+    return key.sign(sha256(admissionBytes("vibewars-party", groupId, ids, "")));
+  };
+
+  /** Two fresh keys, sorted: a 2v2 party's members, the lower its leader. */
+  const membersOf = (): [TicketKey, TicketKey] =>
+    [newTicketKey(), newTicketKey()].sort((a, b) => (a.ticketId < b.ticketId ? -1 : 1)) as [
+      TicketKey,
+      TicketKey,
+    ];
+
+  /** `members`' ticket, led by the first, with `consents` in their order. */
+  const partyTicket = (
+    members: readonly TicketKey[],
+    consents: readonly string[],
+    extra: Partial<QueueTicket> = {},
+  ): QueueTicket => {
+    const [leader] = members;
+    if (leader === undefined) {
+      throw new Error("a party has members");
+    }
+    return ticketOf(leader, {
+      members: members.map((key) => key.ticketId),
+      party: { groupId: GROUP_WON, consents },
+      ...extra,
+    });
+  };
+
+  it("hears a party ticket whose every consent verifies: one check for the event, one a member", () => {
+    const { queue, sockets, verified } = fakeRelays();
+    const heard = listen(queue);
+    const members = membersOf();
+    const ticket = partyTicket(
+      members,
+      members.map((key) => consentOf(key, members)),
+    );
+    deliver(sockets[0], remoteEvent(members[0], ticket));
+    expect(heard).toEqual([{ kind: "ticket", ticket }]);
+    expect(verified).toEqual([members[0].ticketId, ...members.map((key) => key.ticketId)]);
+  });
+
+  it("drops a forger's party naming a real follower, signed by the forger or with the follower's consent to its real party (PR 1092), and the real party still forms", async () => {
+    const { queue, sockets } = fakeRelays();
+    const heard = listen(queue);
+    const real = membersOf();
+    const realTicket = partyTicket(
+      real,
+      real.map((key) => consentOf(key, real)),
+    );
+    const follower = real[1];
+    // The forger leads with a key below the follower's and signs for both.
+    let forger = newTicketKey();
+    while (forger.ticketId >= follower.ticketId) {
+      forger = newTicketKey();
+    }
+    const set = [forger, follower];
+    const forged = partyTicket(set, [consentOf(forger, set), consentOf(forger, set)], {
+      enteredAt: 0,
+    });
+    // The winning match's host saw the follower's real consent: to the
+    // same group, but to the real party's members, not to these.
+    const replayed = partyTicket(set, [consentOf(forger, set), consentOf(follower, real)], {
+      enteredAt: 0,
+    });
+    deliver(sockets[0], remoteEvent(forger, forged));
+    deliver(sockets[0], remoteEvent(forger, { ...replayed, heartbeatAt: NOW + 1 }));
+    deliver(sockets[0], remoteEvent(real[0], realTicket));
+    const solos = [newTicketKey(), newTicketKey()];
+    for (const solo of solos) {
+      deliver(sockets[0], remoteEvent(solo, ticketOf(solo)));
+    }
+
+    expect(heard.map((event) => event.kind === "ticket" && event.ticket.ticketId)).toEqual([
+      real[0].ticketId,
+      ...solos.map((solo) => solo.ticketId),
+    ]);
+    const groups = await formGroups({
+      tickets: heard.flatMap((event) => (event.kind === "ticket" ? [event.ticket] : [])),
+      now: NOW,
+      mode: "random-arena-2v2",
+      ignored: new Set(),
+      mapPool: ["arena"],
+    });
+    expect(groups.map((group) => group.parties)).toEqual([[realTicket.members]]);
+  });
+
+  it("checks a heartbeat with the same consents once, and a changed party again", () => {
+    const { queue, sockets, verified } = fakeRelays();
+    const heard = listen(queue);
+    const members = membersOf();
+    const ticket = partyTicket(
+      members,
+      members.map((key) => consentOf(key, members)),
+    );
+    deliver(sockets[0], remoteEvent(members[0], ticket));
+    expect(verified).toHaveLength(3);
+
+    deliver(sockets[0], remoteEvent(members[0], { ...ticket, heartbeatAt: NOW + 5_000 }));
+    expect(verified).toHaveLength(4);
+
+    const elsewhere = "e".repeat(64);
+    const moved = {
+      ...ticket,
+      heartbeatAt: NOW + 10_000,
+      party: {
+        groupId: elsewhere,
+        consents: members.map((key) => consentOf(key, members, elsewhere)),
+      },
+    };
+    deliver(sockets[0], remoteEvent(members[0], moved));
+    expect(verified).toHaveLength(7);
+    expect(heard).toHaveLength(3);
+  });
+
+  it("checks a heartbeat that swaps a member again, and drops it (PR 1092)", () => {
+    const { queue, sockets } = fakeRelays();
+    const heard = listen(queue);
+    const follower = membersOf()[1];
+    // The forger's own party of two keys it holds, under the follower.
+    let forger = newTicketKey();
+    while (forger.ticketId >= follower.ticketId) {
+      forger = newTicketKey();
+    }
+    let sybil = newTicketKey();
+    while (sybil.ticketId <= forger.ticketId) {
+      sybil = newTicketKey();
+    }
+    const own = [forger, sybil];
+    const ticket = partyTicket(
+      own,
+      own.map((key) => consentOf(key, own)),
+    );
+    deliver(sockets[0], remoteEvent(forger, ticket));
+    // The same consents, now naming the follower instead.
+    const swapped = {
+      ...ticket,
+      members: [forger.ticketId, follower.ticketId],
+      heartbeatAt: NOW + 5_000,
+    };
+    deliver(sockets[0], remoteEvent(forger, swapped));
+    expect(heard).toEqual([{ kind: "ticket", ticket }]);
+  });
+
+  it("drops a party it cannot pay every check for, and hears another relay's copy later", () => {
+    let now = NOW;
+    const { queue, sockets, verified } = fakeRelays(() => now);
+    const heard = listen(queue);
+    // Leave two checks: the event's own and one consent, of three.
+    for (let n = 0; n < VERIFY_BURST - 2; n += 1) {
+      const key = newTicketKey();
+      deliver(sockets[0], { ...remoteEvent(key, ticketOf(key)), sig: "0".repeat(128) });
+    }
+    const members = membersOf();
+    const event = remoteEvent(
+      members[0],
+      partyTicket(
+        members,
+        members.map((key) => consentOf(key, members)),
+      ),
+    );
+    deliver(sockets[0], event);
+    expect(verified).toHaveLength(VERIFY_BURST - 1);
+    expect(heard).toEqual([]);
+
+    now += 1000;
+    deliver(sockets[1], event);
+    expect(heard).toHaveLength(1);
   });
 });
