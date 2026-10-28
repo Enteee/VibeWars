@@ -1,8 +1,8 @@
-import { RANGE_MELEE, RANGE_SPELL } from "../../distances.js";
+import { RANGE_SPELL } from "../../distances.js";
 import { wieldsFor } from "../../equipment/weapons.js";
 import { getSkill } from "../../skills/catalog.js";
 import type { Skill } from "../../skills/types.js";
-import { distance, normalize, sub, ZERO } from "../../vec2.js";
+import { distance, ZERO } from "../../vec2.js";
 import type {
   Behaviour,
   BehaviourContext,
@@ -18,8 +18,8 @@ import { botUses, onlyInterrupts, removedCategories, removesFromCaster } from ".
  * foe's cast, heal or protect the most hurt ally, take a hex or condition
  * off an ally, raise a dead one, use an offensive skill on the team
  * target, attack it with the weapon, and otherwise close in (melee) or
- * hold (anything else). A ranged bot with a foe at its elbow backs off
- * instead of attacking, until a wall stops it.
+ * hold (anything else). A ranged bot stands and fights a foe at its
+ * elbow: at equal speed, backing off would never end.
  *
  * It reads only what a player reads off the screen: positions, teams,
  * health fractions, the statuses on a body and a foe's cast bar. Never a
@@ -43,9 +43,6 @@ const HURT_FRACTION = 0.6;
 /** How much longer than the interrupt itself a cast must have left. */
 const INTERRUPT_MARGIN_SECONDS = 0.25;
 
-/** A ranged bot backs off from a living foe this close. */
-const KITE_UNITS = RANGE_MELEE * 3;
-
 export function playBuild(
   behaviour: PlayBuild,
   cursor: BehaviourCursor,
@@ -64,37 +61,12 @@ export function playBuild(
     return { ...holding, ...cursor.heldMove };
   }
   cursor.waitSeconds = behaviour.thinkSeconds;
-  // Backing off got it nowhere: a wall or a corner. It turns and fights,
-  // and keeps fighting while a foe is that close: backing off again would
-  // cancel each swing it began.
-  if (nearestFoeWithin(self, context.participants, KITE_UNITS) === undefined) {
-    cursor.cornered = false;
-  } else if (cursor.backingOff && !self.combatant.moving) {
-    cursor.cornered = true;
-  }
-  const intent = think(context, cursor.cornered);
-  cursor.heldMove = { moveDirection: intent.moveDirection, moveTo: intent.moveTo };
-  // The only push `think` makes is a back-off.
-  cursor.backingOff = intent.moveDirection.x !== 0 || intent.moveDirection.y !== 0;
+  const intent = think(context);
+  cursor.heldMove = { moveTo: intent.moveTo };
   return intent;
 }
 
-/** The nearest living foe of `self` within `units`, if any. */
-function nearestFoeWithin(
-  self: Participant,
-  participants: readonly Participant[],
-  units: number,
-): Participant | undefined {
-  const near = nearestLiving(
-    self,
-    participants.filter(
-      (other) => !other.combatant.dead && other.combatant.team !== self.combatant.team,
-    ),
-  );
-  return near !== undefined && distance(near.position, self.position) <= units ? near : undefined;
-}
-
-function think(context: BehaviourContext, cornered: boolean): BehaviourIntent {
+function think(context: BehaviourContext): BehaviourIntent {
   const self = context.self;
   const team = self.combatant.team;
   const living = context.participants.filter((other) => !other.combatant.dead);
@@ -205,19 +177,7 @@ function think(context: BehaviourContext, cornered: boolean): BehaviourIntent {
     }
   }
 
-  // 7, first half: a ranged bot with a foe at its elbow backs off,
-  // unless backing off has got it nowhere.
   const melee = wieldsFor(self.combatant.equipment.mainHand.weapon.id, "melee");
-  if (!melee && !cornered) {
-    const near = nearestFoeWithin(self, foes, KITE_UNITS);
-    if (near !== undefined) {
-      const d = distance(near.position, self.position);
-      // On top of it there is no "away": +x, so the choice is deterministic.
-      const away = d < 1e-9 ? { x: 1, y: 0 } : normalize(sub(self.position, near.position));
-      return { ...NOTHING, targetId, moveDirection: away };
-    }
-  }
-
   if (targetId !== undefined) {
     // 5. Offence, in bar order.
     const skill = bar.find(

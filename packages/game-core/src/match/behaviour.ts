@@ -153,14 +153,7 @@ export interface BehaviourCursor {
   /** `follow-and-attack`: walking back to the owner, past the leash. */
   returning: boolean;
   /** `play-build`: the movement its last think asked for, held until the next. */
-  heldMove: Pick<BehaviourIntent, "moveDirection" | "moveTo">;
-  /** `play-build`: its last think backed off from a foe. */
-  backingOff: boolean;
-  /**
-   * `play-build`: backing off got it nowhere, so it stands and fights
-   * until no foe is close enough to back off from.
-   */
-  cornered: boolean;
+  heldMove: Pick<BehaviourIntent, "moveTo">;
 }
 
 export interface BehaviourContext {
@@ -189,9 +182,7 @@ export function createCursor(): BehaviourCursor {
     waypoint: 0,
     children: [],
     returning: false,
-    heldMove: { moveDirection: ZERO, moveTo: undefined },
-    backingOff: false,
-    cornered: false,
+    heldMove: { moveTo: undefined },
   };
 }
 

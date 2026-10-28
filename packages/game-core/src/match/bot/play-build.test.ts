@@ -15,7 +15,7 @@ import { botUses, onlyInterrupts } from "./skill-intent.js";
 
 const RULESET = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULESET.tickRateHz;
-/** A field with edges, so a backing-off bot meets a wall. */
+/** A field with edges, as every map has. */
 const BOUNDS = { width: 1600, height: 800 };
 const BOT: Behaviour = { kind: "play-build", thinkSeconds: 0.25 };
 
@@ -115,7 +115,7 @@ describe("play-build (#1189)", () => {
     expect(sim.get("monk")?.combatant.attack).toBeUndefined();
   });
 
-  it("lands bow hits pinned against a wall by a melee foe, however fast it thinks", () => {
+  it("stands and fights a melee foe at its elbow with the bow, however fast it thinks", () => {
     for (const thinkSeconds of [0, 0.25]) {
       const sim = match([
         // No skills: only the bow can do the damage.
@@ -296,8 +296,9 @@ describe("play-build in a whole match (#1189)", () => {
   it("keeps a warrior alive longer with a bot monk beside it", () => {
     function survival(withMonk: boolean): number {
       const participants = [
-        // A warrior worn down, against a ranger that will not fall.
-        fighter("warrior", 0, WARRIOR, vec2(400, 400), { maxHealth: 150 }),
+        // A warrior that does not fight back or heal itself, against a ranger
+        // that will not fall: only the monk can keep it up.
+        fighter("warrior", 0, WARRIOR, vec2(400, 400), { behaviour: undefined, maxHealth: 150 }),
         fighter("foe", 1, RANGER, vec2(800, 400), { maxHealth: 1e5 }),
       ];
       if (withMonk) participants.push(fighter("monk", 0, MONK, vec2(250, 400)));
