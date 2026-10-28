@@ -1,4 +1,4 @@
-import { pickStarterBuild } from "@vibewars/game-core";
+import { pickStarterBuild, randomCharacterName } from "@vibewars/game-core";
 
 import { fromPlayerBuild, toPlayerBuild } from "./build-validation.js";
 import type { CharacterRepository } from "./repository.js";
@@ -24,6 +24,21 @@ export interface RollStarterOptions {
   readonly id: string;
   /** ms since the epoch. */
   readonly now: number;
+  /** The roster's names: the rolled one is none of them (#1149). */
+  readonly taken: readonly string[];
+}
+
+/** A starter build by `random`, never like `not`, under a random name not in `taken`. */
+function rollCharacter(
+  random: () => number,
+  taken: readonly string[],
+  id: string,
+  now: number,
+  not?: StoredCharacter,
+): StoredCharacter {
+  const build = pickStarterBuild(random, not === undefined ? undefined : toPlayerBuild(not));
+  const name = randomCharacterName(random, new Set(taken.map((n) => n.toLowerCase())));
+  return { ...fromPlayerBuild(build, id, now), name };
 }
 
 /**
@@ -36,11 +51,11 @@ export interface RollStarterOptions {
 export async function rollStarterCharacter(
   options: RollStarterOptions,
 ): Promise<StoredCharacter | undefined> {
-  const { characters, key, random, id, now } = options;
+  const { characters, key, random, id, now, taken } = options;
   if (key.load() !== undefined) {
     return undefined;
   }
-  const character = fromPlayerBuild(pickStarterBuild(random), id, now);
+  const character = rollCharacter(random, taken, id, now);
   try {
     await characters.save(character);
   } catch (error) {
@@ -52,20 +67,18 @@ export async function rollStarterCharacter(
 }
 
 /**
- * `current` as another starter build, never the one it is named like:
- * the same id, and the build's name. Edits made to it are lost.
+ * `current` as another starter build, never one with its professions:
+ * the same id, and a new random name, none of `taken` (the roster's
+ * names, its own among them). Edits made to it are lost.
  */
 export async function rerollStarterCharacter(
   characters: Pick<CharacterRepository, "save">,
   current: StoredCharacter,
   random: () => number,
   now: number,
+  taken: readonly string[],
 ): Promise<StoredCharacter> {
-  const character = fromPlayerBuild(
-    pickStarterBuild(random, toPlayerBuild(current)),
-    current.id,
-    now,
-  );
+  const character = rollCharacter(random, taken, current.id, now, current);
   await characters.save(character);
   return character;
 }

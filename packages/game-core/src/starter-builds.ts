@@ -219,11 +219,19 @@ export const STARTER_BUILDS: readonly PlayerBuild[] = [
 ];
 
 /**
- * A starter build by `random` ([0, 1), the host's own), never the one
- * named like `not`, so a reroll always changes it.
+ * A starter build by `random` ([0, 1), the host's own), never one with
+ * `not`'s professions, so a reroll always changes it. By professions,
+ * not name: a rolled character carries a name of its own (#1149), and
+ * every starter build has a pair no other has.
  */
 export function pickStarterBuild(random: () => number, not?: PlayerBuild): PlayerBuild {
   return pickBuildFrom(STARTER_BUILDS, random, not);
+}
+
+function sameProfessions(a: PlayerBuild, b: PlayerBuild): boolean {
+  return (
+    a.primaryProfession === b.primaryProfession && a.secondaryProfession === b.secondaryProfession
+  );
 }
 
 /** `pickStarterBuild` over `builds`. With only `not` to pick, that is what it picks. */
@@ -232,7 +240,7 @@ export function pickBuildFrom(
   random: () => number,
   not?: PlayerBuild,
 ): PlayerBuild {
-  const others = builds.filter((build) => build.name !== not?.name);
+  const others = builds.filter((build) => not === undefined || !sameProfessions(build, not));
   const pool = others.length > 0 ? others : builds;
   // Clamped: a `random` just under 1 must not index past the end.
   const picked = pool[Math.min(pool.length - 1, Math.floor(random() * pool.length))];
