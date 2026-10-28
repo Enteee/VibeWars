@@ -1,7 +1,7 @@
 import { sizeClass } from "@vibewars/game-maps/size-class";
 import { describe, expect, it } from "vitest";
 
-import { ARENA_MAPS, hostMap, randomArenaMapPool } from "./maps.js";
+import { ARENA_MAPS, hostMap, mapMode, randomArenaMapPool } from "./maps.js";
 
 function sizesOf(ids: readonly string[]): string[] {
   return ids.map((id) => {
@@ -50,5 +50,17 @@ describe("hostMap (#476)", () => {
     for (const map of ARENA_MAPS.filter((candidate) => candidate.id !== "arena-pillars")) {
       expect(hostMap(map.id)?.mode).toBe("annihilation");
     }
+  });
+});
+
+describe("mapMode (#1200)", () => {
+  it("reads an arena's mode and a training ground's", () => {
+    expect(mapMode("arena-pillars")).toBe("kill-count");
+    expect(mapMode("arena-alpha")).toBe("annihilation");
+    expect(mapMode("training-hall")).toBe("annihilation");
+  });
+
+  it("gives a map this build does not have Annihilation's", () => {
+    expect(mapMode("arena-nowhere")).toBe("annihilation");
   });
 });
