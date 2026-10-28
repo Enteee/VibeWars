@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator } from "@playwright/test";
 
 import { NEW_VERSION_NOTICE, NEW_VERSION_WAITING } from "../apps/web/src/build-check.js";
 import { startSoloMatch } from "./helpers/peers.js";
@@ -50,10 +50,10 @@ test("on a phone the banner makes room: nothing at the top hides under it, its b
 
   const banner = page.locator(".build-banner");
   await expect(banner).toBeVisible();
-  /** `locator` starts at or below the banner's bottom edge. */
-  const below = async (selector: string): Promise<void> => {
+  /** `selector` starts at or below the bottom edge of `over`, the banner unless said. */
+  const below = async (selector: string, over: Locator = banner): Promise<void> => {
     await expect(async () => {
-      const top = await banner.boundingBox();
+      const top = await over.boundingBox();
       const under = await page.locator(selector).boundingBox();
       expect(top).not.toBeNull();
       expect(under).not.toBeNull();
@@ -73,6 +73,8 @@ test("on a phone the banner makes room: nothing at the top hides under it, its b
   await startSoloMatch(page);
   await below(".hud-top");
   await below(".hud-controls");
+  // The compass sits under the match buttons, so it moves down with them.
+  await below(".compass", page.locator(".hud-controls"));
 
   await banner.getByRole("button", { name: "Not now" }).click();
   await expect(banner).toBeHidden();

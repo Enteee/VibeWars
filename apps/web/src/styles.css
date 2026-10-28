@@ -4366,7 +4366,8 @@ body:has(#app > .chat) .now-playing {
  * of the scoreboard.
  */
 :root {
-  --compass-top: 5.8rem;
+  /* Under the match buttons, so down with them under the banner (#1283). */
+  --compass-top: calc(5.8rem + var(--build-banner-space, 0px));
   --compass-size: 160px;
 }
 
