@@ -65,6 +65,9 @@ describe("status definitions", () => {
         def.attackDurationMultiplier !== 1 ||
         def.block !== undefined ||
         def.maxDamageFractionPerHit !== undefined ||
+        def.attackDamageCapFraction !== undefined ||
+        def.lifeStealReduction !== 0 ||
+        def.knockdownMinSeconds !== undefined ||
         def.reversesNextDamage !== undefined ||
         def.extraStrikesPerHit !== 0 ||
         def.onAttackHit !== undefined ||

@@ -3050,6 +3050,9 @@ export class MatchSimulation {
         if (change.kind === "redirected-damage") {
           this.#landRedirected(record, change.toId, change.amount);
         }
+        if (change.kind === "charged-source") {
+          this.#landCharge(change.toId, change.statusId, change.amount);
+        }
       }
     }
     const context = this.#triggerContext();
@@ -3058,9 +3061,48 @@ export class MatchSimulation {
         this.#logFired(fireChangeTriggers(record.combatant, change, this.#spread, context));
       }
     }
+    // A protective spirit still pays for what it did against a triggered
+    // effect (#1265): a payment is not a trigger, so it cannot echo.
     for (const record of this.#participants.values()) {
-      record.combatant.statuses.drainChanges();
+      for (const change of record.combatant.statuses.drainChanges()) {
+        if (change.kind === "charged-source") {
+          this.#landCharge(change.toId, change.statusId, change.amount);
+        }
+      }
     }
+  }
+
+  /**
+   * A protective spirit's payment for what its status did (#1265): `toId`
+   * loses `amount` health, no armor and from nobody, and may die of it.
+   * Dead or gone, it pays nothing; its aura goes the next step.
+   */
+  #landCharge(toId: string, statusId: StatusId, amount: number): void {
+    const source = this.#participants.get(toId);
+    if (source === undefined || source.combatant.dead) {
+      return;
+    }
+    const { combatant } = source;
+    const lost = Math.min(amount, combatant.health);
+    combatant.health -= lost;
+    const events: CombatEvent[] = [{ kind: "health-lost", targetId: toId, amount: lost, statusId }];
+    if (combatant.health <= 0) {
+      combatant.dead = true;
+      events.push({ kind: "death", targetId: toId });
+    }
+    this.#log.push({
+      tick: this.#tick,
+      atSeconds: this.#elapsedSeconds,
+      cause: "skill",
+      sourceId: undefined,
+      skillId: undefined,
+      weaponId: undefined,
+      attributeId: undefined,
+      area: undefined,
+      doubleStrike: false,
+      events,
+    });
+    this.#recordDeaths(events);
   }
 
   /**
