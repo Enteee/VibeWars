@@ -1,6 +1,13 @@
-import { isElementalDamage, isPhysicalDamage, type DamageType } from "../equipment/types.js";
+import { rollHitLocation } from "../equipment/armor.js";
+import {
+  isElementalDamage,
+  isPhysicalDamage,
+  type ArmorSlot,
+  type DamageType,
+} from "../equipment/types.js";
 import type { ArmorCondition } from "../equipment/insignias.js";
 import { MYSTICISM_ATTRIBUTE, mysticismArmor } from "../primary-attributes.js";
+import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
 import { aggregateModifiers } from "./status.js";
 import { armorReductionOf, effectiveMaxHealth, rankOf } from "./tick.js";
@@ -61,13 +68,31 @@ export function unmitigatedDamage(amount: number, source: DamageSource): DamageP
 }
 
 /**
- * The defender's armor against this packet. Every conditional bonus is
- * answerable from the packet and the defender alone.
+ * The piece a packet strikes (#1135), or `null` for one armor never
+ * meets: holy, shadow and typeless damage, degeneration, life steal.
+ * Those draw nothing; every armored packet draws one float, whatever the
+ * target wears, so the stream never depends on gear.
  */
-export function effectiveArmor(target: Combatant, packet: DamagePacket): number {
+export type HitLocation = ArmorSlot | null;
+
+export function hitLocationOf(packet: DamagePacket, rng: SimulationRng): HitLocation {
+  return packet.armored > 0 ? rollHitLocation(rng) : null;
+}
+
+/**
+ * The defender's armor against this packet, struck at `location`. Every
+ * conditional bonus is answerable from the packet and the defender alone;
+ * an insignia's only on a hit to its own piece (#1135).
+ */
+export function effectiveArmor(
+  target: Combatant,
+  packet: DamagePacket,
+  location: HitLocation,
+): number {
   let armor = target.equipment.baseArmor;
 
-  for (const bonus of target.equipment.conditionalArmor) {
+  const pieceArmor = location === null ? [] : target.equipment.pieceArmor[location];
+  for (const bonus of [...target.equipment.conditionalArmor, ...pieceArmor]) {
     if (conditionHolds(bonus.condition, target, packet)) {
       armor += bonus.amount;
     }
@@ -142,7 +167,12 @@ export function armorMultiplier(armor: number, rules: CombatRules): number {
  * Rounded once, at the end. Rounding earlier would make a long fight
  * drift away from the arithmetic by a few points per hit.
  */
-export function mitigate(packet: DamagePacket, target: Combatant, rules: CombatRules): number {
+export function mitigate(
+  packet: DamagePacket,
+  target: Combatant,
+  rules: CombatRules,
+  location: HitLocation,
+): number {
   if (packet.armored + packet.armorIgnoring <= 0) {
     return 0;
   }
@@ -152,7 +182,7 @@ export function mitigate(packet: DamagePacket, target: Combatant, rules: CombatR
   const modifiers = aggregateModifiers(target.statuses.active);
   const armored =
     packet.armored + (isPhysicalDamage(packet.type) ? modifiers.physicalDamageTakenBonus : 0);
-  const armor = effectiveArmor(target, packet);
+  const armor = effectiveArmor(target, packet, location);
   let dealt = armored * armorMultiplier(armor, rules) + packet.armorIgnoring;
 
   // Frenzy's double and Dark Escape's half (#919): every packet, armored

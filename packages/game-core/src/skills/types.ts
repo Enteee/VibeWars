@@ -7,7 +7,7 @@ import type { DamageType } from "../equipment/types.js";
 import type { Behaviour } from "../match/behaviour.js";
 import type { CreatureKind } from "../match/simulation.js";
 import type { ProfessionId, SkillProfession } from "../professions.js";
-import type { CastState } from "./cast-state.js";
+import type { CastState, SlotSkill } from "./cast-state.js";
 import type { TargetCandidate } from "./targeting.js";
 import type { AttackState } from "./weapon-attack.js";
 import type { StatusCategory, StatusId, StatusSet } from "./status.js";
@@ -966,9 +966,9 @@ export interface Combatant {
   /** Energy regeneration before statuses, in pips (`ENERGY_PER_PIP`). */
   readonly baseEnergyPips: number;
   /**
-   * Units per adrenaline skill on the bar (#463), keyed by skill id like
+   * Units per adrenaline skill on the bar (#463), keyed like
    * `cast.rechargeRemaining`. Exactly the bar's adrenaline skills are keys,
-   * set at 0 when the combatant is made.
+   * set at 0 when the combatant is made, and a copy's while it stands (#469).
    */
   readonly adrenaline: Map<string, number>;
   /**
@@ -1054,10 +1054,11 @@ export interface SkillContext {
    */
   readonly surroundings: Surroundings;
   /**
-   * The skill the target just used, when a status's trigger answers that
-   * use (#949): what `lengthen-recharge` lengthens. Absent elsewhere.
+   * The skill the target just used, and the key it waits under (#469),
+   * when a status's trigger answers that use (#949): what
+   * `lengthen-recharge` lengthens. Absent elsewhere.
    */
-  readonly usedSkillId?: string | undefined;
+  readonly usedSkill?: SlotSkill | undefined;
 }
 
 /** Everyone in the match by id, where they stand (#885). */

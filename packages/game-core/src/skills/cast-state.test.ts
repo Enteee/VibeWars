@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { getSkill } from "./catalog.js";
-import { CastState, beginRecharge } from "./cast-state.js";
+import { CastState, beginRecharge, copyKey, resolvedBar, slotSkill } from "./cast-state.js";
 import { StatusSet } from "./status.js";
 
 describe("CastState casting", () => {
@@ -310,5 +310,49 @@ describe("spent until a morale boost (#474)", () => {
     state.spend("common.resurrection-signet");
     expect(state.refreshSpent()).toBe(true);
     expect(state.spent.size).toBe(0);
+  });
+});
+
+describe("CastState slot overrides (#469)", () => {
+  const ECHO = "mesmer.arcane-echo";
+  const FIREBALL = "elementalist.fireball";
+  const bar = [ECHO, null, FIREBALL];
+  const copy = () => ({
+    skillId: FIREBALL,
+    key: copyKey(FIREBALL, 0),
+    remainingSeconds: 20,
+    restores: { skillId: ECHO, rechargeSeconds: 20 },
+  });
+
+  it("resolves a slot to the copy standing there, and the rest to the build", () => {
+    const state = new CastState("p", new StatusSet());
+    state.override(0, copy());
+    expect(slotSkill(bar, state, 0)).toEqual({ skillId: FIREBALL, key: "elementalist.fireball@0" });
+    expect(resolvedBar(bar, state)).toEqual([
+      { skillId: FIREBALL, key: "elementalist.fireball@0" },
+      null,
+      { skillId: FIREBALL, key: FIREBALL },
+    ]);
+  });
+
+  it("ends a copy after its time, with its waits, and starts the echo's recharge", () => {
+    const state = new CastState("p", new StatusSet());
+    state.override(0, copy());
+    state.startRecharge(copyKey(FIREBALL, 0), 30);
+    state.advance(19.5);
+    expect(slotSkill(bar, state, 0)?.skillId).toBe(FIREBALL);
+    state.advance(0.5);
+    expect(slotSkill(bar, state, 0)).toEqual({ skillId: ECHO, key: ECHO });
+    expect(state.rechargeRemaining.has(copyKey(FIREBALL, 0))).toBe(false);
+    expect(state.rechargeTotal.get(ECHO)).toBe(20);
+  });
+
+  it("a copy gone mid-cast has nothing to recharge", () => {
+    const state = new CastState("p", new StatusSet());
+    state.override(0, copy());
+    state.clearOverrides();
+    state.startRecharge(copyKey(FIREBALL, 0), 7);
+    expect(state.rechargeRemaining.size).toBe(0);
+    expect(state.rechargeRemaining.has(ECHO)).toBe(false);
   });
 });

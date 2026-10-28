@@ -1,4 +1,5 @@
 import type { ProfessionId } from "../professions.js";
+import type { SimulationRng } from "../rng.js";
 import type { EquippedRune } from "./runes.js";
 import type { ArmorCondition, InsigniaId } from "./insignias.js";
 import { ARMOR_SLOTS, type ArmorSlot } from "./types.js";
@@ -30,6 +31,7 @@ import { ARMOR_SLOTS, type ArmorSlot } from "./types.js";
  * armor is profession-locked in the reference, so a light profession
  * wearing heavy armor is not a trade-off, it is a rule that does not
  * exist. Recorded in `coverage.ts` as `"per-piece-armor-ratings"`.
+ * Insignias are per piece, though (#1135): see `rollHitLocation`.
  */
 export const BASE_ARMOR_BY_PROFESSION: Readonly<Record<ProfessionId, number>> = Object.freeze({
   warrior: 80,
@@ -53,6 +55,18 @@ export interface ConditionalArmor {
   readonly amount: number;
   readonly condition: ArmorCondition;
 }
+
+/** Each piece's own conditional armor: its insignia's (#1135). */
+export type PieceArmor = Readonly<Record<ArmorSlot, readonly ConditionalArmor[]>>;
+
+/** No piece armor at all: a bare body, a creature, a dummy. */
+export const NO_PIECE_ARMOR: PieceArmor = Object.freeze({
+  head: [],
+  chest: [],
+  hands: [],
+  legs: [],
+  feet: [],
+});
 
 /**
  * Armor a **primary** profession carries against one kind of damage
@@ -123,4 +137,33 @@ export function bareArmorSet(): ArmorSet {
 /** Pieces in a stable order, so iteration never depends on key order. */
 export function armorPieces(set: ArmorSet): readonly (readonly [ArmorSlot, ArmorPiece])[] {
   return ARMOR_SLOTS.map((slot) => [slot, set[slot]] as const);
+}
+
+/**
+ * How often a hit lands on each piece (GW1, Q127): the chest 3/8, the
+ * legs 2/8, the head, hands and feet 1/8 each. An insignia's armor
+ * counts only on hits to its own piece (#1135).
+ */
+export const HIT_LOCATION_WEIGHTS: Readonly<Record<ArmorSlot, number>> = Object.freeze({
+  head: 1 / 8,
+  chest: 3 / 8,
+  hands: 1 / 8,
+  legs: 2 / 8,
+  feet: 1 / 8,
+});
+
+/** The order `rollHitLocation` lays the weights out in, heaviest first. */
+const HIT_LOCATION_ORDER: readonly ArmorSlot[] = ["chest", "legs", "head", "hands", "feet"];
+
+/** The piece a hit lands on: one `nextFloat`, cumulative in `HIT_LOCATION_ORDER`. */
+export function rollHitLocation(rng: SimulationRng): ArmorSlot {
+  const roll = rng.nextFloat();
+  let cumulative = 0;
+  for (const slot of HIT_LOCATION_ORDER) {
+    cumulative += HIT_LOCATION_WEIGHTS[slot];
+    if (roll < cumulative) {
+      return slot;
+    }
+  }
+  return "feet";
 }

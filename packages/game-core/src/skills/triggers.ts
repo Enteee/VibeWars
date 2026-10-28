@@ -1,15 +1,19 @@
 import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
+import { addCopyPool } from "./adrenaline.js";
+import { copyKey, type SlotSkill } from "./cast-state.js";
+import { getSkill } from "./catalog.js";
 import { applyEffects, type CombatEvent } from "./effects.js";
 import {
   getStatusDefinition,
+  type EchoEffect,
   type SpreadGainedConditionEffect,
   type StatusChange,
   type StatusId,
   type StatusTrigger,
   type StatusTriggerEvent,
 } from "./status.js";
-import type { Combatant, SkillEffect, Surroundings } from "./types.js";
+import { isSpell, type Combatant, type SkillEffect, type Surroundings } from "./types.js";
 
 /** What one status's trigger did, credited to whoever applied the status. */
 export interface FiredTrigger {
@@ -35,10 +39,11 @@ export interface TriggerContext {
   readonly rules: CombatRules;
   readonly surroundings: Surroundings;
   /**
-   * The skill the bearer just used, on `bearer-uses-skill` (#949): what
-   * Diversion lengthens. `undefined` on every other event.
+   * The skill the bearer just used, and its key (#469), on
+   * `bearer-uses-skill` (#949): what Diversion lengthens and an echo
+   * copies. `undefined` on every other event.
    */
-  readonly usedSkillId: string | undefined;
+  readonly usedSkill: SlotSkill | undefined;
 }
 
 /**
@@ -159,7 +164,7 @@ function fire(
   bearer: Combatant,
   offenderId: string | undefined,
   spread: ((effect: SpreadGainedConditionEffect) => CombatEvent[]) | undefined,
-  { sourceOf, rng, rules, surroundings, usedSkillId }: TriggerContext,
+  { sourceOf, rng, rules, surroundings, usedSkill }: TriggerContext,
 ): FiredTrigger[] {
   const source = sourceOf(sourceId);
   if (source === undefined) {
@@ -173,15 +178,16 @@ function fire(
   const events: CombatEvent[] = [];
   let pending: SkillEffect[] = [];
   const flush = (): void => {
-    events.push(
-      ...applyEffects(pending, { caster, target, rng, rules, surroundings, usedSkillId }),
-    );
+    events.push(...applyEffects(pending, { caster, target, rng, rules, surroundings, usedSkill }));
     pending = [];
   };
   for (const effect of trigger.effects) {
     if (effect.kind === "spread-gained-condition") {
       flush();
       events.push(...(spread?.(effect) ?? []));
+    } else if (effect.kind === "echo") {
+      flush();
+      echo(effect, bearer, trigger.skillId, usedSkill);
     } else {
       pending.push(effect);
     }
@@ -192,4 +198,55 @@ function fire(
     events.push({ kind: "status-expired", targetId: bearer.id, statusId });
   }
   return events.length === 0 ? [] : [{ sourceId, skillId: trigger.skillId, events }];
+}
+
+/** Whether status `statusId` copies its bearer's next skill (#469). */
+export function isEchoStatus(statusId: StatusId): boolean {
+  return getStatusDefinition(statusId).triggers.some(({ effects }) =>
+    effects.some(({ kind }) => kind === "echo"),
+  );
+}
+
+/**
+ * Whether `skillId` puts an echo on its user (#469): Arcane Echo and Echo.
+ * One is never copied, and does not use up another echo already up.
+ */
+export function isEchoSkill(skillId: string): boolean {
+  return (getSkill(skillId)?.effects ?? []).some(
+    (effect) => effect.kind === "apply-status" && isEchoStatus(effect.statusId),
+  );
+}
+
+/**
+ * An echo answers `used` (#469): the slot of `echoSkillId` on the bearer's
+ * bar holds a copy of it, under its own key, for `effect.seconds`; then the
+ * echo skill is back, and starts its own recharge. Not for another echo
+ * skill, and with `spellsOnly`, only for a spell.
+ */
+function echo(
+  effect: EchoEffect,
+  bearer: Combatant,
+  echoSkillId: string,
+  used: SlotSkill | undefined,
+): void {
+  const skill = used === undefined ? undefined : getSkill(used.skillId);
+  const echoSkill = getSkill(echoSkillId);
+  const slot = bearer.skillBar.indexOf(echoSkillId);
+  if (
+    skill === undefined ||
+    echoSkill === undefined ||
+    slot === -1 ||
+    isEchoSkill(skill.id) ||
+    (effect.spellsOnly && !isSpell(skill.type))
+  ) {
+    return;
+  }
+  const key = copyKey(skill.id, slot);
+  bearer.cast.override(slot, {
+    skillId: skill.id,
+    key,
+    remainingSeconds: effect.seconds,
+    restores: { skillId: echoSkillId, rechargeSeconds: echoSkill.rechargeSeconds },
+  });
+  addCopyPool(bearer, key);
 }

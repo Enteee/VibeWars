@@ -230,6 +230,19 @@ interrupted or cancelled skill is not used, nor is a plain attack, so
 Diversion stays on; an attack skill is lengthened once. The log says
 which skill, and by how much.
 
+**Arcane Echo** (#1126, no attribute, 15 energy, 2 s, 20 s recharge)
+and **Echo** (elite, 5 energy, 1 s, 10 s recharge) are
+self-enchantments that change your bar. While Arcane Echo is up (20 s),
+the next spell you finish takes its slot for 20 s; any other skill ends
+it with no copy. While Echo is up (30 s), the next skill you finish,
+of any kind, does the same. The copy is a skill of its own: it recharges
+apart from the original, so both can be used, and a disable or Diversion
+on one leaves the other alone. When its 20 s are over, the echo is back
+in its slot and starts its own recharge. An interrupted skill was never
+finished, so it is not copied and the echo stays. An echo is never
+copied, and does not use up the other. Death or a reset ends every copy
+at once.
+
 **Cry of Frustration** (#938, Domination Magic, 10 energy, ¼ s, 20 s
 recharge) only works on a foe using a skill, any skill. Then that foe is
 interrupted and takes 63 damage, and every foe in the area around it is
@@ -1078,18 +1091,28 @@ Armor comes from the primary profession: 80 for a Warrior or Paragon, 70
 for a Ranger, Assassin or Dervish, 60 for the casters. On top of that,
 some armor applies only against some types:
 
-| Bonus                | Against   | From                   |
-| -------------------- | --------- | ---------------------- |
-| +20                  | physical  | being a Warrior        |
-| +30                  | elemental | being a Ranger         |
-| +10                  | physical  | each Stalwart insignia |
-| −1 to −3 a hit, flat | physical  | Rune of Absorption     |
+| Bonus                | Against   | From                              |
+| -------------------- | --------- | --------------------------------- |
+| +20                  | physical  | being a Warrior                   |
+| +30                  | elemental | being a Ranger                    |
+| +10                  | physical  | a Stalwart insignia, on its piece |
+| −1 to −3 a hit, flat | physical  | Rune of Absorption                |
 
 So a Warrior has 100 armor against a sword and 80 against a Fireball,
 and a Ranger 70 and 100. Damage halves for every 40 armor above 60:
 Fireball's 91 lands for about 46 on a Ranger. Types that are neither
 physical nor elemental get no typed bonus; base armor still applies.
 Armor penetration cuts the whole total, typed bonus included.
+
+An insignia guards only its own piece (#1135). Every hit that armor
+meets lands on one piece, as in GW1: the chest 3 times in 8, the legs 2
+in 8, the head, hands and feet once in 8 each. A Stalwart on the chest
+adds its +10 only to hits on the chest; five Stalwart give +10 on every
+hit, not +50. Base armor, the profession's typed armor, a shield,
+enchantments and the rest count wherever the hit lands. Holy, shadow
+and typeless damage, degeneration and life steal hit no piece. The gear
+editor lists an insignia under the armor with its pieces and what it
+adds on average: `+10 armor vs physical damage on chest (avg +3.8)`.
 
 A status can change the type of your attacks (#1021): under Staggering
 Force or Dust Cloak a scythe deals earth, so a Warrior meets it with 80
