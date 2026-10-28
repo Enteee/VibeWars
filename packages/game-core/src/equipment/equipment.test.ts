@@ -512,7 +512,36 @@ describe("validateEquipment", () => {
       },
       contextFor("warrior"),
     );
-    expect(problems.some((p) => p.message.includes("cannot access"))).toBe(true);
+    expect(problems.some((p) => p.message.includes("not a Warrior attribute"))).toBe(true);
+  });
+
+  it("fits an attribute rune only to the primary's attributes (#1141)", () => {
+    const withHeadRune = (attributeId: string): BuildEquipment => ({
+      weaponSets: [
+        { mainHand: { weaponId: "sword", requirementAttributeId: null }, offHand: null },
+        null,
+        null,
+        null,
+      ],
+      armor: {
+        ...bareArmorSet(),
+        head: { insigniaId: null, rune: { kind: "attribute", attributeId, tier: "minor" } },
+      },
+    });
+    expect(
+      validateEquipment(withHeadRune("monk.healing-prayers"), contextFor("warrior", "monk")),
+    ).toEqual([
+      {
+        field: "equipment.armor.head",
+        message: "a rune of Healing Prayers, which is not a Warrior attribute",
+      },
+    ]);
+    expect(
+      validateEquipment(withHeadRune("warrior.strength"), contextFor("warrior", "monk")),
+    ).toEqual([]);
+    expect(
+      validateEquipment(withHeadRune("warrior.strength"), contextFor("monk", "warrior")),
+    ).toHaveLength(1);
   });
 
   it("refuses Absorption on anyone who is not a primary warrior", () => {
@@ -694,6 +723,35 @@ describe("parseBuildEquipment", () => {
 });
 
 describe("reconcileEquipment", () => {
+  it("keeps the primary's attribute runes across professions, clears the rest (#1141)", () => {
+    const equipment: BuildEquipment = {
+      weaponSets: [
+        { mainHand: { weaponId: "sword", requirementAttributeId: null }, offHand: null },
+        null,
+        null,
+        null,
+      ],
+      armor: {
+        ...bareArmorSet(),
+        head: {
+          insigniaId: null,
+          rune: { kind: "attribute", attributeId: "warrior.tactics", tier: "minor" },
+        },
+        chest: {
+          insigniaId: null,
+          rune: { kind: "attribute", attributeId: "monk.healing-prayers", tier: "minor" },
+        },
+      },
+    };
+    // A new secondary leaves the Warrior's rune alone.
+    const meWarrior = reconcileEquipment(equipment, contextFor("warrior", "mesmer"));
+    expect(meWarrior.armor.head.rune).toEqual(equipment.armor.head.rune);
+    // Swapped to Mo/W: the Warrior rune goes, the Monk one stays.
+    const monkWarrior = reconcileEquipment(equipment, contextFor("monk", "warrior"));
+    expect(monkWarrior.armor.head.rune).toBeNull();
+    expect(monkWarrior.armor.chest.rune).toEqual(equipment.armor.chest.rune);
+  });
+
   it("keeps the weapon class when the character changes profession", () => {
     // A hammer on a mesmer is a bad build, not an illegal one, and
     // deleting the player's choice would be the editor overruling them.

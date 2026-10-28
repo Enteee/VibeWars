@@ -1088,7 +1088,9 @@ pierce, hammers and fists are blunt. Fire, cold, lightning and earth are
 typeless.
 
 Armor comes from the primary profession: 80 for a Warrior or Paragon, 70
-for a Ranger, Assassin or Dervish, 60 for the casters. On top of that,
+for a Ranger, Assassin or Dervish, 60 for the casters. So an attribute
+rune fits only your primary's attributes (#1141): a W/Mo can wear a Rune
+of Strength, not one of Healing Prayers. On top of that,
 some armor applies only against some types:
 
 | Bonus                | Against   | From                              |
