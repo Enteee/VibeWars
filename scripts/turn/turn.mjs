@@ -175,9 +175,11 @@ function dash(args) {
       "-e",
       `PATH=${process.env.PATH ?? ""}`,
     ];
-    tmux(["new-session", "-d", "-s", SESSION, "-x", "160", "-y", "45", ...env, cmd("stats")]);
+    // Stats takes the tall pane on the right: it prints about 16 lines, and
+    // health only 6.
+    tmux(["new-session", "-d", "-s", SESSION, "-x", "160", "-y", "45", ...env, cmd("health")]);
     tmux(["set-option", "-t", SESSION, "status-left", "[turn-dash] "]);
-    tmux(["split-window", "-h", "-t", `${SESSION}:0.0`, ...env, cmd("health")]);
+    tmux(["split-window", "-h", "-t", `${SESSION}:0.0`, ...env, cmd("stats")]);
     tmux(["split-window", "-v", "-t", `${SESSION}:0.0`, ...env, cmd("users")]);
     tmux(["split-window", "-v", "-f", "-l", "40%", "-t", `${SESSION}:0`, ...env, cmd("log")]);
   }
