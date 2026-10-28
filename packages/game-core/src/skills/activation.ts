@@ -46,7 +46,15 @@ export type ActivationRejection =
   | "no-line-of-sight"
   // A corpse skill with no fresh corpse in reach (#466): checked by the
   // simulation, which knows where the bodies are.
-  | "no-corpse";
+  | "no-corpse"
+  // Comfort Animal with no pet to act on (#1046).
+  | "no-companion"
+  // A skill that brings a companion, as Charm Animal (#1046): no match has
+  // an animal to charm, so it is never cast.
+  | "no-animal-to-charm"
+  // An ordinary resurrection on a creature, as a dead pet (#1046): checked
+  // by the simulation, which knows who is one.
+  | "invalid-target-creature";
 
 export type ActivationCheck =
   { readonly ok: true } | { readonly ok: false; readonly reason: ActivationRejection };
@@ -108,6 +116,7 @@ export function targetRuleAllows(
       return isAlly || isSelf ? undefined : "invalid-target-enemy";
     case "single-other-ally":
     case "single-dead-ally":
+    case "companion":
       return isAlly ? undefined : isSelf ? "invalid-target-self" : "invalid-target-enemy";
   }
 }
@@ -125,6 +134,11 @@ export function targetLivenessAllows(
   if (rule === "single-dead-ally") {
     return target.dead ? undefined : "invalid-target-alive";
   }
+  // The pet, alive or dead (#1046): its heal skips the dead, its
+  // resurrection the living.
+  if (rule === "companion") {
+    return undefined;
+  }
   return target.dead ? "invalid-target-dead" : undefined;
 }
 
@@ -138,7 +152,7 @@ function checkTarget(request: ActivationRequest): ActivationCheck {
   }
 
   if (target === undefined) {
-    return reject("no-target");
+    return reject(skill.target === "companion" ? "no-companion" : "no-target");
   }
   const byWho = targetRuleAllows(skill.target, caster, target);
   const byLife = targetLivenessAllows(skill.target, target);
@@ -160,6 +174,9 @@ export function canActivate(request: ActivationRequest): ActivationCheck {
   }
   if (!request.skillBar.includes(key)) {
     return reject("skill-not-on-bar");
+  }
+  if (skill.companion !== undefined) {
+    return reject("no-animal-to-charm");
   }
   if (request.isCasting) {
     return reject("already-casting");

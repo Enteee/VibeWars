@@ -25,6 +25,7 @@ import {
   type WirePlayer,
   type WireProjectile,
   type WireSnapshot,
+  type WireWeaponSets,
 } from "@vibewars/game-protocol";
 
 import type {
@@ -193,6 +194,26 @@ export function skillBarSlots(skillBar: SkillBar, bearer: RankHolder): (SkillBar
       rechargeSeconds: skill?.rechargeSeconds ?? 0,
     };
   });
+}
+
+/**
+ * The weapon sets `participant` carries, as its own client sees them
+ * (#489): set 1 first, `null` where one is empty, and which is in hand or
+ * queued.
+ */
+export function wireWeaponSets(participant: Participant): WireWeaponSets {
+  return {
+    sets: participant.weaponSets.map((set) =>
+      set === null
+        ? null
+        : {
+            weaponId: set.equipment.mainHand.weapon.id,
+            offhandId: set.equipment.offhandId ?? null,
+          },
+    ),
+    active: participant.activeWeaponSet,
+    pending: participant.pendingWeaponSet ?? null,
+  };
 }
 
 /**

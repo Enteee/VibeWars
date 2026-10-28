@@ -10,6 +10,8 @@ import {
   mysticismArmor,
   mysticismEnergyCost,
   soulReapingTrigger,
+  spawningPowerHealth,
+  spawningPowerMultiplier,
   strengthArmorPenetration,
 } from "./primary-attributes.js";
 import { unarmedResolvedEquipment } from "./equipment/resolve.js";
@@ -31,10 +33,12 @@ function skill(id: string): Skill {
   return found;
 }
 
-describe("criticalStrikesEnergy (#606)", () => {
+describe("criticalStrikesEnergy (#606, #1100)", () => {
   it.each([
     [0, 0],
-    [1, 1],
+    [1, 0],
+    [2, 0],
+    [3, 1],
     [7, 1],
     [8, 2],
     [12, 2],
@@ -55,6 +59,15 @@ describe("Expertise (#528)", () => {
     expect(expertiseEnergyCost(12, skill("warrior.swift-chop"), 5)).toBe(3);
     expect(expertiseEnergyCost(25, broadHead, 10)).toBe(0);
     expect(expertiseEnergyCost(30, broadHead, 10)).toBe(0);
+  });
+
+  it("cuts a ritual of any profession (#1100)", () => {
+    const recuperation = skill("ritualist.recuperation");
+    expect(recuperation.type).toBe("binding-ritual");
+    expect(expertiseEnergyCost(12, recuperation, 25)).toBe(13);
+    expect(expertiseEnergyCost(12, { ...recuperation, type: "nature-ritual" }, 25)).toBe(13);
+    // A Ritualist spell that is no ritual stands.
+    expect(expertiseEnergyCost(12, { ...recuperation, type: "spell" }, 25)).toBe(25);
   });
 
   it("leaves a non-Ranger skill that is no attack alone", () => {
@@ -196,6 +209,15 @@ describe("fastCastingMultiplier (#527)", () => {
     expect(fastCastingMultiplier(12, { ...malaise, activationSeconds: 3 })).toBeCloseTo(0.574, 3);
   });
 
+  it("speeds a signet 3% a rank, linear, under the same rule (#1100)", () => {
+    const signet: Skill = { ...malaise, type: "signet", profession: "mesmer" };
+    expect(fastCastingMultiplier(12, signet)).toBeCloseTo(0.64, 9);
+    expect(fastCastingMultiplier(16, signet)).toBeCloseTo(0.52, 9);
+    const foreign: Skill = { ...signet, profession: "monk" };
+    expect(fastCastingMultiplier(12, { ...foreign, activationSeconds: 3 })).toBeCloseTo(0.64, 9);
+    expect(fastCastingMultiplier(12, { ...foreign, activationSeconds: 1 })).toBe(1);
+  });
+
   it("counts enchantments and plain spells, not skills", () => {
     expect(fastCastingMultiplier(12, { ...malaise, type: "enchantment" })).toBeLessThan(1);
     expect(fastCastingMultiplier(12, { ...malaise, type: "spell" })).toBeLessThan(1);
@@ -287,16 +309,30 @@ describe("leadershipEnergy (#625)", () => {
   });
 });
 
+describe("Spawning Power (#1098)", () => {
+  it("multiplies by 1 + 4% a rank, unrounded: ×1.48 at 12, ×1.6 at 15", () => {
+    expect(spawningPowerMultiplier(0)).toBe(1);
+    expect(spawningPowerMultiplier(12)).toBeCloseTo(1.48, 9);
+    expect(spawningPowerMultiplier(15)).toBeCloseTo(1.6, 9);
+  });
+
+  it("rounds a creature's health once: 210 is 311 at 12, and exactly 210 at 0", () => {
+    expect(spawningPowerHealth(12, 210)).toBe(311);
+    expect(spawningPowerHealth(0, 210)).toBe(210);
+  });
+});
+
 describe("describePrimaryAttribute (#531)", () => {
   it.each([
-    ["mesmer.fast-casting", 12, "spells cast 43% faster"],
-    ["mesmer.fast-casting", 15, "spells cast 50% faster"],
-    ["ranger.expertise", 12, "attack and Ranger skills cost 48% less energy"],
-    ["ranger.expertise", 15, "attack and Ranger skills cost 60% less energy"],
+    ["mesmer.fast-casting", 12, "spells cast 43% faster, signets 36% faster"],
+    ["mesmer.fast-casting", 15, "spells cast 50% faster, signets 45% faster"],
+    ["ranger.expertise", 12, "attack skills, rituals and Ranger skills cost 48% less energy"],
+    ["ranger.expertise", 15, "attack skills, rituals and Ranger skills cost 60% less energy"],
     ["warrior.strength", 12, "attack skills 12% armor penetration"],
     ["warrior.strength", 15, "attack skills 15% armor penetration"],
     ["monk.divine-favor", 12, "Monk spells on allies heal +38"],
     ["monk.divine-favor", 15, "Monk spells on allies heal +48"],
+    ["assassin.critical-strikes", 2, "+2% critical chance, +0 energy per critical"],
     ["assassin.critical-strikes", 12, "+12% critical chance, +2 energy per critical"],
     ["assassin.critical-strikes", 15, "+15% critical chance, +3 energy per critical"],
     ["necromancer.soul-reaping", 12, "+12 energy when someone nearby dies (3 per 15 s)"],
@@ -305,6 +341,8 @@ describe("describePrimaryAttribute (#531)", () => {
     ["paragon.leadership", 15, "up to 7 energy per shout, 1 per ally affected"],
     ["elementalist.energy-storage", 12, "+36 maximum energy"],
     ["elementalist.energy-storage", 15, "+45 maximum energy"],
+    ["ritualist.spawning-power", 12, "creatures +48% Health, weapon spells last 48% longer"],
+    ["ritualist.spawning-power", 15, "creatures +60% Health, weapon spells last 60% longer"],
     [
       "dervish.mysticism",
       12,
@@ -324,12 +362,12 @@ describe("describePrimaryAttribute (#531)", () => {
     "paragon.leadership",
     "elementalist.energy-storage",
     "dervish.mysticism",
+    "ritualist.spawning-power",
   ])("says nothing for %s at rank 0", (attributeId) => {
     expect(describePrimaryAttribute(attributeId, 0)).toBeUndefined();
   });
 
-  it("says nothing for a secondary, nor a primary with no effect yet", () => {
+  it("says nothing for a secondary", () => {
     expect(describePrimaryAttribute("mesmer.domination-magic", 12)).toBeUndefined();
-    expect(describePrimaryAttribute("ritualist.spawning-power", 12)).toBeUndefined();
   });
 });

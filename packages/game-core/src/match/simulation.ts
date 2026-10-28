@@ -49,6 +49,8 @@ import {
   SOUL_REAPING_ATTRIBUTE,
   soulReapingEnergy,
   soulReapingTrigger,
+  SPAWNING_POWER_ATTRIBUTE,
+  spawningPowerHealth,
 } from "../primary-attributes.js";
 import { createRng, seedFromString, type SimulationRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1, type Ruleset } from "../ruleset.js";
@@ -177,6 +179,7 @@ import {
 } from "./behaviour.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { nearestFreshCorpse } from "./corpses.js";
+import { companionSkills, PET_DEATH_GRACE_SECONDS } from "./companions.js";
 import { MINION_CAP_ATTRIBUTE, minionCap, minionDegenerationPips } from "./minions.js";
 import { directionAngle, showsBackTo } from "./facing.js";
 import { steerAround } from "./steering.js";
@@ -201,11 +204,12 @@ import { steerAround } from "./steering.js";
  */
 
 /** What kind of non-player body this is (#467). */
-export type CreatureKind = "spirit" | "minion";
+export type CreatureKind = "spirit" | "minion" | "pet";
 
 /**
  * A body that is not a player (#1052, ADR-0035): a participant that never
- * counts for its team, has no seat, and is gone once it dies or expires.
+ * counts for its team and has no seat. A spirit or minion is gone once it
+ * dies or expires; a companion lies where it fell (#1046).
  */
 export interface Creature {
   /** Whoever summoned it, and whom it answers to: it leaves with them. */
@@ -217,12 +221,21 @@ export interface Creature {
   expiresInSeconds: number;
   /** Seconds alive, summed from `dt`: what a minion's rot grows with (#467). */
   ageSeconds: number;
-  /** The tick it was summoned, for "oldest first" caps. */
+  /** The tick it was summoned: the tie-break of a minion cap (#1130). */
   readonly summonedAtTick: number;
   /** The skill that summoned it (#1064): one spirit of a skill in range. */
   readonly skillId: string;
   /** What a spirit projects on whoever is in range (#1064); `undefined`: nothing. */
   readonly aura: Aura | undefined;
+  /** From the template (#1046): lies as a body when dead, or vanishes. */
+  readonly onDeath: "vanish" | "lie";
+  /** Its owner's bar is disabled this long on its death, read at arrival; 0: never. */
+  readonly ownerDisableSeconds: number;
+  /**
+   * The skill on its owner's bar it travels with (#1046): a companion.
+   * `undefined`: summoned by a cast.
+   */
+  readonly companionSkillId: string | undefined;
 }
 
 /** A minion's own rot in pips (#467): 0 for anyone else. */
@@ -547,6 +560,8 @@ const ARRIVE_UNITS = 1;
  */
 const TARGET_REJECTIONS: ReadonlySet<ActivationRejection> = new Set([
   "no-target",
+  "no-companion",
+  "invalid-target-creature",
   "invalid-target-dead",
   "invalid-target-alive",
   "invalid-target-self",
@@ -773,6 +788,13 @@ export class MatchSimulation {
     if (countsForTeam(record)) {
       this.#teams.add(spec.team);
     }
+    // A companion arrives with its owner, right after it (#1046), so the
+    // order and the ids are the same every run.
+    if (spec.creature === undefined) {
+      for (const skill of companionSkills(spec.skillBar)) {
+        this.#summon(record, skill.id, skill.companion, 1, record.position, true);
+      }
+    }
     return record;
   }
 
@@ -805,13 +827,16 @@ export class MatchSimulation {
    * end of the match, so they act from this very tick, after everyone
    * already there.
    *
-   * Minions past their master's cap (#467) die first, oldest first, so the
+   * Minions past their master's cap (#467) die first, weakest first, so the
    * slots they free are free for the new ones. Each is a death: Soul
    * Reaping answers it, and the log names the summoning skill.
    *
    * A spirit made ends every allied spirit of the same `skillId` within
    * the new one's aura radius (#1064): it leaves at the end of the step, as an
    * expiry, so nobody scores. A foe's lives on.
+   *
+   * `companion`: it travels with `skillId` on the owner's bar (#1046),
+   * rather than coming from a cast.
    */
   #summon(
     owner: ParticipantRecord,
@@ -819,6 +844,7 @@ export class MatchSimulation {
     template: CreatureTemplate,
     count: number,
     at: Vec2,
+    companion: boolean,
   ): void {
     if (template.kind === "minion") {
       this.#cullMinions(owner, skillId, count);
@@ -864,7 +890,11 @@ export class MatchSimulation {
         ),
         spawn: at,
         facing: owner.facing,
-        maxHealth: resolveMagnitude(template.maxHealth, owner.combatant),
+        // Spawning Power is the summoner's (#1098).
+        maxHealth: spawningPowerHealth(
+          rankOf(owner.combatant, SPAWNING_POWER_ATTRIBUTE),
+          resolveMagnitude(template.maxHealth, owner.combatant),
+        ),
         maxEnergy: 0,
         baseEnergyPips: 0,
         behaviour: template.behaviour,
@@ -880,30 +910,45 @@ export class MatchSimulation {
           summonedAtTick: this.#tick,
           skillId,
           aura: template.aura,
+          onDeath: template.onDeath,
+          ownerDisableSeconds:
+            template.ownerDisableOnDeath === undefined
+              ? 0
+              : resolveMagnitude(template.ownerDisableOnDeath, owner.combatant),
+          companionSkillId: companion ? skillId : undefined,
         },
       });
     }
   }
 
   /**
-   * Kills `owner`'s oldest minions until `count` more fit under its cap
-   * (#467, GW1): the cap is `minionCap` of its Death Magic as it raises.
-   * Summon order is match order, so the first found are the oldest.
+   * Kills `owner`'s weakest minions until `count` more fit under its cap
+   * (#467, #1130, GW1): the cap is `minionCap` of its Death Magic as it
+   * raises. Weakest is the least Health left, absolute, not a share of
+   * its max; ties go to the oldest, then to match order, which is summon
+   * order.
    */
   #cullMinions(owner: ParticipantRecord, skillId: string, count: number): void {
     const cap = minionCap(rankOf(owner.combatant, MINION_CAP_ATTRIBUTE));
-    const mine = [...this.#participants.values()].filter(
-      (record) =>
-        record.creature?.kind === "minion" &&
-        record.creature.ownerId === owner.id &&
-        !record.combatant.dead &&
-        !this.#leaving.has(record.id),
+    const mine = [...this.#participants.values()].flatMap((record) =>
+      record.creature?.kind === "minion" &&
+      record.creature.ownerId === owner.id &&
+      !record.combatant.dead &&
+      !this.#leaving.has(record.id)
+        ? [{ record, summonedAtTick: record.creature.summonedAtTick }]
+        : [],
     );
     const excess = mine.length + count - cap;
     if (excess <= 0) {
       return;
     }
-    const events: CombatEvent[] = mine.slice(0, excess).map((record) => {
+    // A stable sort: equal Health and tick keep match order.
+    mine.sort(
+      (a, b) =>
+        a.record.combatant.health - b.record.combatant.health ||
+        a.summonedAtTick - b.summonedAtTick,
+    );
+    const events: CombatEvent[] = mine.slice(0, excess).map(({ record }) => {
       record.combatant.health = 0;
       record.combatant.dead = true;
       return { kind: "death", targetId: record.id };
@@ -1144,6 +1189,49 @@ export class MatchSimulation {
     record.combatant.soulReapingTriggers = before.soulReapingTriggers;
     record.skillBar = skillBar;
     record.pendingSkill = undefined;
+    this.#rearmCompanions(record);
+  }
+
+  /**
+   * A bar that keeps a companion's skill keeps the companion as it is,
+   * alive or dead; one that drops it sends it away; one that gains it
+   * brings a fresh one beside its owner (#1046).
+   */
+  #rearmCompanions(record: ParticipantRecord): void {
+    if (record.creature !== undefined) {
+      return;
+    }
+    const wanted = companionSkills(record.skillBar);
+    for (const other of [...this.#participants.values()]) {
+      const skillId = other.creature?.companionSkillId;
+      if (
+        other.creature?.ownerId === record.id &&
+        skillId !== undefined &&
+        !wanted.some((skill) => skill.id === skillId)
+      ) {
+        this.remove(other.id);
+      }
+    }
+    for (const skill of wanted) {
+      if (this.#companionOf(record, skill.id) === undefined) {
+        this.#summon(record, skill.id, skill.companion, 1, record.position, true);
+      }
+    }
+  }
+
+  /** `owner`'s companion, alive or dead (#1046): of `skillId`, or the first. */
+  #companionOf(owner: ParticipantRecord, skillId?: string): ParticipantRecord | undefined {
+    for (const record of this.#participants.values()) {
+      const creature = record.creature;
+      if (
+        creature?.ownerId === owner.id &&
+        creature.companionSkillId !== undefined &&
+        (skillId === undefined || creature.companionSkillId === skillId)
+      ) {
+        return record;
+      }
+    }
+    return undefined;
   }
 
   /**
@@ -1935,6 +2023,9 @@ export class MatchSimulation {
 
   /** Who a targeted skill lands on: the selection, or the caster for an ally skill with no ally selected. */
   #castTarget(record: ParticipantRecord, skill: Skill): string | undefined {
+    if (skill.target === "companion") {
+      return this.#companionOf(record)?.id;
+    }
     if (skill.target !== "single-ally") {
       return record.targetId;
     }
@@ -1954,7 +2045,9 @@ export class MatchSimulation {
     targetId: string | undefined,
     key: string = skill.id,
   ): ActivationCheck {
-    const target = targetId === undefined ? undefined : this.#participants.get(targetId);
+    // A pet skill acts on the pet, whatever was asked (#1046).
+    const targetedId = skill.target === "companion" ? this.#companionOf(record)?.id : targetId;
+    const target = targetedId === undefined ? undefined : this.#participants.get(targetedId);
     const check = canActivate({
       skill,
       caster: record.combatant,
@@ -1980,6 +2073,15 @@ export class MatchSimulation {
     ) {
       return { ok: false, reason: "no-corpse" };
     }
+    // Resurrection skills targeted on players cannot target pets (#1046,
+    // fandom): told before a walk toward one starts.
+    if (
+      skill.target === "single-dead-ally" &&
+      target?.creature !== undefined &&
+      (check.ok || check.reason === "out-of-range" || check.reason === "no-line-of-sight")
+    ) {
+      return { ok: false, reason: "invalid-target-creature" };
+    }
     return check;
   }
 
@@ -1999,8 +2101,12 @@ export class MatchSimulation {
     });
     this.setInputDirection(record.id, intent.moveDirection);
     this.setTarget(record.id, intent.targetId);
-    // Asked only while no attack is going, as a player presses Space once.
-    if (intent.attackTargetId !== undefined && record.combatant.attack === undefined) {
+    // Asked only when the attack wanted is not the one going, as a player
+    // presses Space once: a pet switches with its owner (#1046).
+    if (
+      intent.attackTargetId !== undefined &&
+      record.combatant.attack?.targetId !== intent.attackTargetId
+    ) {
       this.requestAttack(record.id, intent.attackTargetId);
     }
     if (intent.useSkillId !== undefined) {
@@ -2210,6 +2316,7 @@ export class MatchSimulation {
         summon.creature,
         summon.count,
         corpse?.position ?? record.position,
+        false,
       );
     }
     for (const ground of grounds) {
@@ -3205,14 +3312,18 @@ export class MatchSimulation {
         dropEndedCopyPools(victim.combatant);
         emptyAdrenaline(victim.combatant);
         // A creature (#1052) scores nothing, costs no morale and never
-        // respawns: it leaves at the end of the step. Only a spirit's death
-        // is no soul to reap (GW1: "a non-Spirit creature").
+        // respawns on its own: a spirit or minion leaves at the end of the
+        // step, a pet lies where it fell (#1046). Only a spirit's death is
+        // no soul to reap (GW1: "a non-Spirit creature").
         if (victim.creature !== undefined) {
           victim.respawnInSeconds = Number.POSITIVE_INFINITY;
-          this.#leaving.add(victim.id);
+          if (victim.creature.onDeath === "vanish") {
+            this.#leaving.add(victim.id);
+          }
           if (victim.creature.kind !== "spirit") {
             this.#reapSoul(victim);
           }
+          this.#companionDied(victim, victim.creature);
           continue;
         }
         victim.respawnInSeconds = this.#respawnSeconds(victim);
@@ -3220,6 +3331,40 @@ export class MatchSimulation {
         this.#reapSoul(victim);
         this.recordDeath(victim.combatant.team);
       }
+    }
+  }
+
+  /**
+   * A pet's death disables its owner's whole bar (#1046, fandom "Beast
+   * Mastery"), alive or dead, unless it was resurrected less than
+   * `PET_DEATH_GRACE_SECONDS` ago. Alongside any recharge, the longer wins.
+   */
+  #companionDied(victim: ParticipantRecord, creature: Creature): void {
+    if (
+      creature.ownerDisableSeconds <= 0 ||
+      this.#elapsedSeconds - victim.resurrectedAtSeconds < PET_DEATH_GRACE_SECONDS
+    ) {
+      return;
+    }
+    const owner = this.#participants.get(creature.ownerId);
+    if (owner === undefined) {
+      return;
+    }
+    // A copy standing in a slot (#469) waits under its own key; the skill
+    // it hides is disabled too, for when the copy ends.
+    const keys = new Set<string>();
+    for (const skillId of owner.skillBar) {
+      if (skillId !== null) {
+        keys.add(skillId);
+      }
+    }
+    for (const slot of resolvedBar(owner.skillBar, owner.combatant.cast)) {
+      if (slot !== null) {
+        keys.add(slot.key);
+      }
+    }
+    for (const key of keys) {
+      owner.combatant.cast.disable(key, creature.ownerDisableSeconds);
     }
   }
 
@@ -3737,6 +3882,14 @@ export class MatchSimulation {
     record.history.clear();
     record.combatant.moving = false;
     this.#stepStart.set(record.id, record.spawn);
+    // A companion comes back with its owner, alive, beside them (#1046),
+    // wherever it was summoned.
+    const companion = record.creature === undefined ? this.#companionOf(record) : undefined;
+    if (companion !== undefined) {
+      this.#reset(companion, why);
+      companion.position = record.position;
+      this.#stepStart.set(companion.id, record.position);
+    }
   }
 
   /**

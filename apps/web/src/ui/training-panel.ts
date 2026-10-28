@@ -24,6 +24,7 @@ import { attachKeyboardMoveInput } from "../input/keyboard-move.js";
 import { loadLayoutLabeller, type KeyLabeller } from "../input/key-labels.js";
 import {
   SKILL_ACTIONS,
+  WEAPON_SET_ACTIONS,
   actionForCode,
   actionLabel,
   codeLabel,
@@ -31,6 +32,7 @@ import {
 } from "../input/keymap.js";
 import { loadKeymap } from "../input/keymap-preference.js";
 import { skillSlotForKeyDown } from "../input/skill-keys.js";
+import { weaponSetIntent } from "../input/weapon-set-keys.js";
 import { attachNameReveal } from "../input/name-reveal.js";
 import { closestTarget, nextTabTarget, selfTargetIntent } from "../input/tab-target.js";
 import { toArenaSnapshot, toRenderableWall } from "../match-view.js";
@@ -107,6 +109,7 @@ import {
   shouldRestoreFocus,
 } from "./training-state.js";
 import { h } from "./kit.js";
+import { labelWeaponSets, renderWeaponSets, weaponSetSlots } from "./weapon-set-slots.js";
 
 /**
  * The Training Ground: a live arena beside the build editor (#2 §6).
@@ -255,6 +258,10 @@ export function createTrainingPanel(): TrainingPanel {
   vitals.append(health.root, energy.root, attacking);
 
   const skills = h("div", "training-skills");
+  // The weapon sets, at the bar's left end as on the match HUD (#489).
+  const weaponSets = weaponSetSlots((set) => {
+    swapTo(set);
+  });
 
   const meter = h("dl", "training-meter");
 
@@ -391,6 +398,18 @@ export function createTrainingPanel(): TrainingPanel {
     session.connection.sendIntent({ kind: "use-skill", slot });
   };
 
+  /** Swap to weapon set `set` (0-3), by its key or its slot (#489). */
+  const swapTo = (set: number): void => {
+    const action = WEAPON_SET_ACTIONS[set];
+    if (session === undefined || session.parked || action === undefined) {
+      return;
+    }
+    const intent = weaponSetIntent(action, session.connection.weaponSets);
+    if (intent !== undefined) {
+      session.connection.sendIntent(intent);
+    }
+  };
+
   const attack = (): void => {
     if (session === undefined || session.parked) {
       return;
@@ -489,7 +508,8 @@ export function createTrainingPanel(): TrainingPanel {
       button.setAttribute("aria-label", slot.name);
       return button;
     });
-    skills.replaceChildren(...skillButtons);
+    labelWeaponSets(weaponSets, keymap, keyLabel);
+    skills.replaceChildren(weaponSets, ...skillButtons);
   };
 
   const paintOverlay = (problem: string | undefined): void => {
@@ -514,6 +534,7 @@ export function createTrainingPanel(): TrainingPanel {
     renderPips(health.pips, self.healthPips);
     renderPips(energy.pips, self.energyPips);
     attacking.textContent = self.attackTargetSessionId === undefined ? "" : "attacking";
+    renderWeaponSets(weaponSets, session?.connection.weaponSets);
     const slots = session?.connection.skillBar ?? [];
     if (changedSlots(paintedSkills, slots).length > 0) {
       // Every button is made anew, so a tooltip on any of them would hang
@@ -720,6 +741,12 @@ export function createTrainingPanel(): TrainingPanel {
             : pingCall(snapshot, viewport?.pointerWorld());
       if (call !== undefined) {
         session?.connection.sendCall(call);
+      }
+      return;
+    }
+    if (WEAPON_SET_ACTIONS.includes(action)) {
+      if (!event.repeat) {
+        swapTo(WEAPON_SET_ACTIONS.indexOf(action));
       }
       return;
     }

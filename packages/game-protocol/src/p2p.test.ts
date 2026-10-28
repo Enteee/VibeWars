@@ -43,6 +43,7 @@ import {
   parseWireEnded,
   parseWireSkillBar,
   parseWireSnapshotPart,
+  parseWireWeaponSets,
   parsePeerLobbyJoin,
   parseWireLobbyCommand,
   parseWireLobbyNote,
@@ -66,6 +67,7 @@ import type {
   WirePlayer,
   WireStatus,
   WireSkillBar,
+  WireWeaponSets,
   WireSnapshotPart,
   PeerLobbyJoin,
   WireLobbyState,
@@ -287,6 +289,18 @@ const combatBatch: WireCombatBatch = [
   },
 ];
 
+/** A sword and shield in set 1, a bow in set 2, sets 3 and 4 empty. */
+const weaponSets: WireWeaponSets = {
+  sets: [
+    { weaponId: "sword", offhandId: "shield" },
+    { weaponId: "recurve-bow", offhandId: null },
+    null,
+    null,
+  ],
+  active: 0,
+  pending: null,
+};
+
 const skillBar: WireSkillBar = {
   slots: [
     {
@@ -432,6 +446,8 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["last of three snapshot parts", parseWireSnapshotPart, { ...snapshot, part: 2, parts: 3 }],
   ["combat batch", parseWireCombatBatch, combatBatch],
   ["skill-bar", parseWireSkillBar, skillBar],
+  ["weapon-sets (#489)", parseWireWeaponSets, weaponSets],
+  ["weapon-sets with a swap queued", parseWireWeaponSets, { ...weaponSets, active: 1, pending: 0 }],
   ["ended", parseWireEnded, ended],
   [
     "ended by a wipe (#846)",
@@ -681,7 +697,7 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "snapshot with a creature of an unknown kind",
     parseWireSnapshotPart,
-    { ...snapshot, players: [{ ...minion, creature: { ownerId: "peer-1", kind: "pet" } }] },
+    { ...snapshot, players: [{ ...minion, creature: { ownerId: "peer-1", kind: "golem" } }] },
   ],
   [
     "snapshot with a creature with no owner",
@@ -922,6 +938,30 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     parseWireCombatBatch,
     [{ ...combat, events: [{ ...combat.events[0], crit: "yes" }] }],
   ],
+  [
+    "weapon-sets with three sets",
+    parseWireWeaponSets,
+    { ...weaponSets, sets: weaponSets.sets.slice(0, 3) },
+  ],
+  [
+    "weapon-sets with five sets",
+    parseWireWeaponSets,
+    { ...weaponSets, sets: [...weaponSets.sets, null] },
+  ],
+  [
+    "weapon-sets with set 1 empty",
+    parseWireWeaponSets,
+    { ...weaponSets, sets: [null, ...weaponSets.sets.slice(1)] },
+  ],
+  ["weapon-sets active on an empty set", parseWireWeaponSets, { ...weaponSets, active: 2 }],
+  ["weapon-sets queued on an empty set", parseWireWeaponSets, { ...weaponSets, pending: 3 }],
+  ["weapon-sets active past set 4", parseWireWeaponSets, { ...weaponSets, active: 4 }],
+  [
+    "weapon-sets with a numeric weapon",
+    parseWireWeaponSets,
+    { ...weaponSets, sets: [{ weaponId: 1, offhandId: null }, null, null, null] },
+  ],
+  ["weapon-sets without a pending", parseWireWeaponSets, { sets: weaponSets.sets, active: 0 }],
   [
     "skill bar with too many slots",
     parseWireSkillBar,

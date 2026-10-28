@@ -165,6 +165,8 @@ export {
   minionCap,
   minionDegenerationPips,
 } from "./match/minions.js";
+export type { CompanionSkill } from "./match/companions.js";
+export { companionSkills, PET_DEATH_GRACE_SECONDS } from "./match/companions.js";
 export { facingToward, spawnFacing } from "./match/facing.js";
 export type { IntentRefusal, MatchIntent } from "./match/apply-intent.js";
 export { applyIntent } from "./match/apply-intent.js";

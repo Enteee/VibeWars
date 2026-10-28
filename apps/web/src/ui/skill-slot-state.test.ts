@@ -216,6 +216,24 @@ describe("outOfRange", () => {
     expect(outOfRange(bar, self({}), ally(range + 1, false), [])).toEqual([false, false]);
   });
 
+  it("marks no pet skill, and no resurrection against a dead creature (#1046)", () => {
+    const COMFORT = "ranger.comfort-animal";
+    const RESTORE_LIFE = "monk.restore-life";
+    // Past both skills' range.
+    const pet = self({
+      sessionId: "r/c1",
+      x: 1000,
+      team: 0,
+      dead: true,
+      creature: { ownerId: "r", kind: "pet" },
+    });
+    expect(outOfRange([slot(COMFORT), slot(RESTORE_LIFE)], self({}), pet, [])).toEqual([
+      false,
+      false,
+    ]);
+    expect(outOfRange([slot(COMFORT)], self({}), foe(5000), [])).toEqual([false]);
+  });
+
   it("marks nothing with no target, or a dead one", () => {
     expect(outOfRange(RANGED_BAR, self({}), undefined, [])).toEqual([false, false, false]);
     expect(outOfRange(RANGED_BAR, self({}), foe(RANGE + 1, { dead: true }), [])).toEqual([

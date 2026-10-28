@@ -9,7 +9,7 @@ import { attackKeyIntents, hasActionToCancel } from "./input/attack-key.js";
 import { createDoubleClick } from "./input/double-click.js";
 import { attachKeyboardMoveInput } from "./input/keyboard-move.js";
 import { loadLayoutLabeller } from "./input/key-labels.js";
-import { actionForCode, isShortcut } from "./input/keymap.js";
+import { WEAPON_SET_ACTIONS, actionForCode, isShortcut } from "./input/keymap.js";
 import { loadKeymap } from "./input/keymap-preference.js";
 import {
   calledTargetIntent,
@@ -21,6 +21,7 @@ import {
 import { attachNameReveal } from "./input/name-reveal.js";
 import { closestTarget, nextTabTarget, selfTargetIntent } from "./input/tab-target.js";
 import { skillSlotForKeyDown } from "./input/skill-keys.js";
+import { weaponSetIntent } from "./input/weapon-set-keys.js";
 import { attachMatchMusic } from "./music/match-music.js";
 import { music } from "./music/play-music.js";
 import { TRACKS } from "./music/tracks/index.js";
@@ -35,6 +36,7 @@ import {
   type RenderableWall,
 } from "./render/arena-snapshot.js";
 import { attackCastOf } from "./render/attack-clock.js";
+import { bodyFlags } from "./render/body-rings.js";
 import { NoWebGlError, createArenaViewport, type ArenaViewport } from "./render/arena-viewport.js";
 import { attachFollowCamera } from "./render/follow-camera.js";
 import { showCombatFeedback } from "./render/combat-feedback.js";
@@ -52,6 +54,7 @@ import {
   updateHud,
   updateRecharges,
 } from "./ui/hud.js";
+import { labelWeaponSets, renderWeaponSets, weaponSetSlots } from "./ui/weapon-set-slots.js";
 import { compassReach, createCompass } from "./ui/compass.js";
 import { noWebGlNotice } from "./ui/arena-notice.js";
 import { attachFullscreenButton, fullscreenTarget } from "./ui/fullscreen.js";
@@ -146,6 +149,9 @@ export function toArenaSnapshot(
     calledId: undefined,
     pings: [],
     actors: match.players.map((player) => {
+      const statuses = player.statuses.map((status) => status.id);
+      // Rings for what the statuses already say (#1117); a corpse wears none.
+      const rings = bodyFlags(player.dead ? [] : statuses);
       return {
         id: player.sessionId,
         name: player.name,
@@ -177,7 +183,9 @@ export function toArenaSnapshot(
           player.castingSkillId !== undefined && player.castTotal > 0
             ? Math.max(0, Math.min(1, 1 - player.castRemaining / player.castTotal))
             : undefined,
-        statuses: player.statuses.map((status) => status.id),
+        statuses,
+        enchanted: rings.enchanted,
+        hexed: rings.hexed,
       };
     }),
   };
@@ -278,13 +286,24 @@ export async function startMatchView(
     connection.sendIntent({ kind: "use-skill", slot });
   };
   renderSkillBar(hud, () => connection.skillBar, connection.ranks, useSkill);
+  const weaponSets = weaponSetSlots((set) => {
+    const action = WEAPON_SET_ACTIONS[set];
+    const intent =
+      action === undefined ? undefined : weaponSetIntent(action, connection.weaponSets);
+    if (intent !== undefined) {
+      connection.sendIntent(intent);
+    }
+  });
+  hud.skillRow.prepend(weaponSets);
   // Read once per match: a keymap changed elsewhere applies from the next.
   const keymap = loadKeymap();
   renderKeyLabels(hud, keymap);
+  labelWeaponSets(weaponSets, keymap);
   let disposed = false;
   void loadLayoutLabeller().then((label) => {
     if (label !== undefined && !disposed) {
       renderKeyLabels(hud, keymap, label);
+      labelWeaponSets(weaponSets, keymap, label);
     }
   });
 
@@ -438,6 +457,11 @@ export async function startMatchView(
       }
     } else if (action === "mute") {
       toggleMute();
+    } else if (WEAPON_SET_ACTIONS.includes(action)) {
+      const intent = weaponSetIntent(action, connection.weaponSets);
+      if (intent !== undefined) {
+        connection.sendIntent(intent);
+      }
     } else if (action === "call-target" || action === "ping") {
       // For a mouse without a wheel click (#443).
       const snapshot = connection.getSnapshot();
@@ -576,6 +600,7 @@ export async function startMatchView(
       latestMatch,
     );
     updateRecharges(hud, connection.skillBar, connection.getRecharges());
+    renderWeaponSets(weaponSets, connection.weaponSets);
   };
   const offFrame = viewport?.onFrame(onFrame) ?? animationFrames(onFrame);
 
