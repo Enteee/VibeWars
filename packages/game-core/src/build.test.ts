@@ -3,10 +3,12 @@ import { describe, expect, it } from "vitest";
 import {
   ONE_ELITE_PER_BAR,
   defaultBuildEquipment,
+  equippableSkills,
   validatePlayerBuild,
   type PlayerBuild,
   type SkillBar,
 } from "./build.js";
+import { PROFESSIONS, type ProfessionId } from "./professions.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "./ruleset.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1.attributes;
@@ -91,5 +93,26 @@ describe("the staples of #522 are legal for their professions", () => {
 
   it("a monk may not take Jagged Strike", () => {
     expect(validatePlayerBuild(build("monk", "assassin.jagged-strike"), RULES)).not.toEqual([]);
+  });
+});
+
+describe("a Common skill (#474)", () => {
+  const professions = Object.keys(PROFESSIONS) as ProfessionId[];
+
+  it("is legal on every profession pair, and equippable by every build", () => {
+    for (const primary of professions) {
+      for (const secondary of [undefined, ...professions.filter((id) => id !== primary)]) {
+        const build: PlayerBuild = {
+          ...withBar("common.resurrection-signet"),
+          primaryProfession: primary,
+          secondaryProfession: secondary,
+          equipment: defaultBuildEquipment(primary),
+        };
+        expect(validatePlayerBuild(build, RULES), `${primary}/${String(secondary)}`).toEqual([]);
+        expect(
+          equippableSkills(build).some((skill) => skill.id === "common.resurrection-signet"),
+        ).toBe(true);
+      }
+    }
   });
 });

@@ -305,6 +305,15 @@ describe("describeCombatEvent", () => {
     expect(floatingCueFor("shadow-stepped", undefined, false)).toBeUndefined();
   });
 
+  it("says who was teleported to whom, with no floating text (#474)", () => {
+    const moved: CombatEvent = { kind: "teleported", targetId: "dummy", toId: "you" };
+    expect(describeCombatEvent(entry([moved], { skillId: "monk.rebirth" }), moved, nameOf)).toBe(
+      "Caster dummy is teleported to Pyro",
+    );
+    expect(logToneOf("teleported")).toBe("control");
+    expect(floatingCueFor("teleported", undefined, false)).toBeUndefined();
+  });
+
   it("says who knocked whom down, and for how long (#544)", () => {
     const down: CombatEvent = { kind: "knocked-down", targetId: "dummy", durationSeconds: 4 };
     expect(

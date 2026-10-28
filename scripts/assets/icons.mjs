@@ -1163,8 +1163,10 @@ function plateTint(hex) {
  * @param {{ glyph: string, modifier?: string }} row
  */
 function skillIcon(id, row) {
-  const name = /** @type {keyof typeof profession} */ (id.slice(0, id.indexOf(".")));
-  const hue = C[name];
+  const owner = id.slice(0, id.indexOf("."));
+  // A Common skill (#474) belongs to no profession: the dim ink, no watermark.
+  const name = owner === "common" ? undefined : /** @type {keyof typeof profession} */ (owner);
+  const hue = name === undefined ? C.inkDim : C[name];
   /** @type {Record<string, (() => string) | undefined>} */
   const glyphs = skillGlyph;
   /** @type {Record<string, (() => string) | undefined>} */
@@ -1175,7 +1177,9 @@ function skillIcon(id, row) {
   if (modifier === undefined) throw new Error(`${id}: no modifier "${String(row.modifier)}"`);
   return svg(
     `<rect x="1" y="1" width="22" height="22" rx="3.5" fill="${plateTint(hue)}" stroke="${hue}" stroke-width="1"/>` +
-      `<g opacity="0.2" transform="translate(3,3) scale(0.75)">${profession[name]()}</g>` +
+      (name === undefined
+        ? ""
+        : `<g opacity="0.2" transform="translate(3,3) scale(0.75)">${profession[name]()}</g>`) +
       `<g transform="translate(1.2,1.2) scale(0.88)">${glyph()}</g>` +
       (modifier === ""
         ? ""
