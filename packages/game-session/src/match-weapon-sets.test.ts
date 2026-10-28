@@ -19,7 +19,10 @@ import { WEAPON_SWAP_BURST, WEAPON_SWAPS_PER_SECOND } from "./match-host.js";
 
 const DEFAULT_GEAR = defaultBuildEquipment("elementalist");
 const [SET_1] = DEFAULT_GEAR.weaponSets;
-const SWORD = { mainHand: { weaponId: "sword", requirementAttributeId: null }, offHand: null };
+const SWORD = {
+  mainHand: { weaponId: "sword", requirementAttributeId: null },
+  offHand: null,
+} as const;
 
 /** An elementalist carrying its default set 1 and a sword in set 2. */
 const TWO_SETS: PlayerBuild = {
