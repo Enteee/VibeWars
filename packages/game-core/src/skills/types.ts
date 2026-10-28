@@ -24,10 +24,14 @@ import type { StatusCategory, StatusId, StatusSet } from "./status.js";
 
 export type ResourceKind = "energy" | "adrenaline";
 
-export interface SkillCost {
-  readonly kind: ResourceKind;
-  readonly amount: number;
-}
+export type SkillCost =
+  | { readonly kind: "energy"; readonly amount: number }
+  | {
+      readonly kind: "adrenaline";
+      readonly amount: number;
+      /** GW1 "Lose all adrenaline" (#1097): using the skill empties every pool, and its blow earns none back. */
+      readonly losesAll?: true;
+    };
 
 /**
  * How a skill's magnitude scales with an attribute rank.
@@ -410,13 +414,32 @@ export interface CreatureTemplate {
   readonly name: string;
   /** Scaled by the summoning skill's caster, as any other magnitude. */
   readonly maxHealth: Magnitude;
-  readonly armor: number;
+  /** Scaled by the summoner, as `maxHealth` (#467 child 3). */
+  readonly armor: Magnitude;
+  /** Its blows; `undefined`: it never swings (a spirit). */
+  readonly attack: CreatureAttack | undefined;
   /** Seconds it lasts; omitted: until it is killed. */
   readonly durationSeconds?: Magnitude;
   /** What it does each tick. */
   readonly behaviour: Behaviour;
   /** `undefined`: it projects nothing (every minion). Only a spirit has one. */
   readonly aura: Aura | undefined;
+}
+
+/**
+ * A creature's melee or ranged blow (#467 child 3), as a weapon's numbers.
+ * `damageMin`–`damageMax` is what it deals with its summoner at rank 12 in
+ * `attributeId`, against armor 60. The summoner's rank, read once at
+ * summoning, scales every blow as weapon mastery scales a player's
+ * (`weaponAttributeMultiplier`): ×1 at 12, ×0.35 at 0.
+ */
+export interface CreatureAttack {
+  readonly attributeId: string;
+  readonly damageMin: number;
+  readonly damageMax: number;
+  readonly damageType: DamageType;
+  readonly attackIntervalSeconds: number;
+  readonly range: number;
 }
 
 /** What a spirit projects while it lives (#1064), or a ground effect while it lasts (#1087). */
@@ -444,8 +467,29 @@ export interface SummonEffect {
 }
 
 /**
+ * A trap's rule (#1105): the first step a living foe's centre is within
+ * `triggerRadius` of it, `effects` land on whoever `area` takes around
+ * the trap, from its owner, and the trap is gone.
+ */
+export interface TrapRule {
+  /** A foe's centre this close springs it. */
+  readonly triggerRadius: number;
+  /** Who the spring hits; `origin: "caster"` means the trap's position. */
+  readonly area: AreaRule;
+  readonly effects: readonly SkillEffect[];
+}
+
+/**
+ * What a ground effect does while it lasts: a ward projects an aura
+ * (#1087), a trap waits for a foe to spring it (#1105).
+ */
+export type GroundAct =
+  | { readonly kind: "aura"; readonly aura: Aura }
+  | { readonly kind: "trap"; readonly trap: TrapRule };
+
+/**
  * Leave a ground effect where the caster stands as the skill lands
- * (#1087): a circle that is not a body, projecting `aura` for
+ * (#1087): a circle that is not a body, doing `act` for
  * `durationSeconds`. Acts on the caster, once. A match holds at most
  * `MAX_GROUND_EFFECTS`: past it, the oldest ends early.
  */
@@ -453,7 +497,7 @@ export interface CreateGroundEffect {
   readonly kind: "create-ground-effect";
   readonly anchor: "caster";
   readonly durationSeconds: Magnitude;
-  readonly aura: Aura;
+  readonly act: GroundAct;
 }
 
 /** How long "knocks down" lasts when a skill names no duration (GW1). */
@@ -635,6 +679,7 @@ export type SkillType =
   | "nature-ritual"
   | "binding-ritual"
   | "ward"
+  | "trap"
   | "skill";
 
 /**
@@ -651,6 +696,15 @@ export function isSpell(type: SkillType): boolean {
     type === "weapon-spell" ||
     type === "ward"
   );
+}
+
+/**
+ * Whether a skill of this type is interrupted by any attack that lands
+ * on its user while it is being used (#1105, GW1's "easily
+ * interrupted"): a trap is.
+ */
+export function isEasilyInterrupted(type: SkillType): boolean {
+  return type === "trap";
 }
 
 /**

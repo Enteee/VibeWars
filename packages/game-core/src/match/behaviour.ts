@@ -74,7 +74,19 @@ export type Behaviour =
    * whenever no attack is going: after the target's respawn, or the
    * dummy's own reset.
    */
-  | { readonly kind: "auto-attack"; readonly targeting: Targeting };
+  | { readonly kind: "auto-attack"; readonly targeting: Targeting }
+  /**
+   * A minion's (#467 child 3): stay by the owner, attack the nearest foe
+   * within `aggroUnits` of itself, and break off to walk back once the
+   * owner is farther than `leashUnits`, until within `heelUnits` again.
+   * The owner is `self.creature.ownerId`; anyone else holding it stands still.
+   */
+  | {
+      readonly kind: "follow-and-attack";
+      readonly aggroUnits: number;
+      readonly leashUnits: number;
+      readonly heelUnits: number;
+    };
 
 /**
  * When a participant is put back as it started: the respawn path, at its
@@ -113,6 +125,8 @@ export interface BehaviourCursor {
   waypoint: number;
   /** `parallel`: one cursor per child, in the same order. */
   readonly children: BehaviourCursor[];
+  /** `follow-and-attack`: walking back to the owner, past the leash. */
+  returning: boolean;
 }
 
 export interface BehaviourContext {
@@ -133,7 +147,7 @@ export interface BehaviourContext {
 }
 
 export function createCursor(): BehaviourCursor {
-  return { nextSkill: 0, waitSeconds: 0, waypoint: 0, children: [] };
+  return { nextSkill: 0, waitSeconds: 0, waypoint: 0, children: [], returning: false };
 }
 
 /**
@@ -220,6 +234,8 @@ export function decide(
       const targetId = resolveTargeting(behaviour.targeting, context);
       return { ...STAND_STILL, targetId, attackTargetId: targetId };
     }
+    case "follow-and-attack":
+      return followAndAttack(behaviour, cursor, context);
   }
 }
 
@@ -310,6 +326,55 @@ function keepRange(
     targetId,
     moveDirection: { x: sign * toward.x, y: sign * toward.y },
   };
+}
+
+/**
+ * The owner's body, alive or dead, is what a minion keeps to. Past the
+ * leash it walks back and fights nobody until at heel again, so it does
+ * not flip each tick at the boundary. A fight it is in goes on; a foe in
+ * aggro of the minion itself starts one, through `requestAttack` as Space
+ * does. Otherwise it walks to heel, stopping a step early.
+ */
+function followAndAttack(
+  behaviour: Extract<Behaviour, { kind: "follow-and-attack" }>,
+  cursor: BehaviourCursor,
+  context: BehaviourContext,
+): BehaviourIntent {
+  const self = context.self;
+  const ownerId = self.creature?.ownerId;
+  const owner = context.participants.find((other) => other.id === ownerId);
+  if (owner === undefined) {
+    return STAND_STILL;
+  }
+  const d = distance(owner.position, self.position);
+  if (cursor.returning && d <= behaviour.heelUnits) {
+    cursor.returning = false;
+  } else if (!cursor.returning && d > behaviour.leashUnits) {
+    cursor.returning = true;
+  }
+  const toOwner = { ...STAND_STILL, moveDirection: normalize(sub(owner.position, self.position)) };
+  if (cursor.returning) {
+    return toOwner;
+  }
+  const attack = self.combatant.attack;
+  if (attack !== undefined) {
+    return { ...STAND_STILL, targetId: attack.targetId, attackTargetId: attack.targetId };
+  }
+  const team = self.combatant.team;
+  const foe = nearestLiving(
+    self,
+    context.participants,
+    (other) =>
+      other.combatant.team !== team &&
+      distance(other.position, self.position) <= behaviour.aggroUnits,
+  );
+  if (foe !== undefined) {
+    return { ...STAND_STILL, targetId: foe, attackTargetId: foe };
+  }
+  if (d > behaviour.heelUnits && d - context.stepUnits > behaviour.heelUnits) {
+    return toOwner;
+  }
+  return STAND_STILL;
 }
 
 function statusCadence(

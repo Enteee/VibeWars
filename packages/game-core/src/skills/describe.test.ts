@@ -12,7 +12,7 @@ import {
 import { makeCombatant, withAttackDuration } from "./testing.js";
 import { resolveMagnitude } from "./scaling.js";
 import { STATUS_DEFINITIONS } from "./status.js";
-import type { SkillEffect } from "./types.js";
+import { isEasilyInterrupted, type SkillEffect } from "./types.js";
 
 /**
  * Descriptions are generated from the effect data, never authored, so
@@ -142,7 +142,8 @@ describe("describeSkill", () => {
         maxHealth: {
           scaling: { attributeId: "necromancer.death-magic", atZero: 50, atTwelve: 290 },
         },
-        armor: 20,
+        armor: { flat: 20 },
+        attack: undefined,
         ...(durationSeconds === undefined ? {} : { durationSeconds: { flat: durationSeconds } }),
         behaviour: { kind: "idle" },
         aura: undefined,
@@ -400,13 +401,14 @@ describe("describeSkill", () => {
     // Guards the switch in `describeEffect`: a new effect kind that
     // nobody described would silently vanish from tooltips. An `if` is
     // a line per effect inside it (#521), a spirit's summon one more for
-    // what it projects (#1064), and so does a ward (#1087).
+    // what it projects (#1064), and so does a ward (#1087); a trap is one
+    // line, then one per effect of its spring (#1105).
     const linesOf = (effect: SkillEffect): number => {
       if (effect.kind === "if") {
         return effect.effects.length;
       }
       if (effect.kind === "create-ground-effect") {
-        return 2;
+        return effect.act.kind === "aura" ? 2 : 1 + effect.act.trap.effects.length;
       }
       return effect.kind === "summon" && effect.creature.aura !== undefined ? 2 : 1;
     };
@@ -416,6 +418,7 @@ describe("describeSkill", () => {
       const described = describeSkill(entry);
       expect(described.effects, `${entry.id} lost an effect line`).toHaveLength(
         lines(entry.effects) +
+          (entry.cost?.kind === "adrenaline" && entry.cost.losesAll === true ? 1 : 0) +
           (entry.attack?.chain === undefined ? 0 : 1) +
           (entry.attack?.bonusDamage === undefined && entry.attack?.weaponDamage !== 0 ? 0 : 1) +
           (entry.attack?.unblockable === true ? 1 : 0) +
@@ -426,6 +429,7 @@ describe("describeSkill", () => {
           lines(entry.attack?.onBlocked ?? []) +
           (entry.whileActivating === undefined ? 0 : 1) +
           (entry.projectile === undefined ? 0 : 1) +
+          (isEasilyInterrupted(entry.type) ? 1 : 0) +
           (entry.corpse === undefined ? 0 : 1),
       );
       for (const line of described.effects) {
@@ -494,6 +498,18 @@ describe("attack skills (#417)", () => {
     expect(blow.effects[0]?.text).toBe("Deals no damage");
     expect(blow.headline).not.toBe("Deals no damage");
     expect(describeSkill(skill("warrior.swift-chop"), ranks).effects[0]?.text).toBe("+16 damage");
+  });
+
+  it("starts a skill that loses all adrenaline with it; its cost stays its strikes (#1097)", () => {
+    const bash = describeSkill(skill("warrior.hammer-bash"));
+    expect(bash.effects.map(({ text }) => text)).toEqual([
+      "Lose all adrenaline",
+      "Knocks down for 2s",
+    ]);
+    expect(bash.cost).toBe("6 adrenaline");
+    expect(describeSkill(skill("warrior.backbreaker")).effects[0]?.text).not.toBe(
+      "Lose all adrenaline",
+    );
   });
 
   it("words a splash, a lone target and a recharge of the others as GW1 does (#885)", () => {
@@ -720,6 +736,19 @@ describe("describeStatus", () => {
       "You steal 234 Health",
     ]);
     expect(feast.headline).toBe("steals 234 health");
+  });
+
+  it("says the animate skills exploit a corpse, then what rises (#467)", () => {
+    const ranks = new Map([["necromancer.death-magic", 12]]);
+    const texts = (id: string) => describeSkill(skill(id), ranks).effects.map(({ text }) => text);
+    expect(texts("necromancer.animate-bone-minions")).toEqual([
+      "Exploits the nearest corpse",
+      "Summons 2 Bone Minion (280 Health)",
+    ]);
+    expect(texts("necromancer.animate-bone-horror")).toEqual([
+      "Exploits the nearest corpse",
+      "Summons 1 Bone Horror (360 Health)",
+    ]);
   });
 
   it("returns the id for an unknown status rather than throwing", () => {

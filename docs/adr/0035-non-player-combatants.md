@@ -89,3 +89,6 @@ built for players and is the larger, safe value.
   the same aura pass as a spirit, so a spirit's aura and a ward's never
   strip each other. It cannot be targeted or killed, so it has no body.
 - A creature leaves no corpse (#466) unless the card that adds it says so.
+- A creature that fights swings a weapon built from its template, its
+  summoner's rank snapshotted as its mastery (#467), so every attack
+  path reaches it unchanged.

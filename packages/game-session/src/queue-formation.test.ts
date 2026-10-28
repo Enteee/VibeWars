@@ -12,7 +12,6 @@ import {
   ROOM_PREFIX,
   formGroups,
   groupOf,
-  isContested,
   ticketsOf,
   type FormedGroup,
 } from "./queue-formation.js";
@@ -32,13 +31,16 @@ function ticket(n: number, fields: Partial<QueueTicket> = {}): QueueTicket {
     members: [ticketId],
     enteredAt: 1_700_000_000_000 + n * 1_000,
     heartbeatAt: NOW,
+    party: null,
     ...fields,
   };
 }
 
 /**
  * Ticket `n` as a party of `mode`'s whole team (#882): its id leads, and
- * each other member's key is the id with a higher first digit.
+ * each other member's key is the id with a higher first digit. Its
+ * consents are only shaped like some: formation never sees them, since
+ * the board drops a ticket whose consents do not verify (#1078).
  */
 function party(n: number, mode: QueueMode = "random-arena-4v4"): QueueTicket {
   const leader = ticket(n, { mode });
@@ -46,7 +48,9 @@ function party(n: number, mode: QueueMode = "random-arena-4v4"): QueueTicket {
     { length: teamSizeOf(mode) - 1 },
     (_, i) => `${String(i + 1)}${leader.ticketId.slice(1)}`,
   );
-  return { ...leader, members: [leader.ticketId, ...others] };
+  const members = [leader.ticketId, ...others];
+  const consents = members.map(() => "e".repeat(128));
+  return { ...leader, members, party: { groupId: "f".repeat(64), consents } };
 }
 
 function solos(from: number, count: number, fields: Partial<QueueTicket> = {}): QueueTicket[] {
@@ -213,6 +217,7 @@ describe("formGroups (#869)", () => {
     expect(groupOf(groups, victim.ticketId, victim.members)).toBe(groups[0]);
   });
 
+  // Both verified (#1078): the follower consented to both, its own doing.
   it("drops both parties that name one member, so neither seats the follower (#882)", async () => {
     const real = party(2, "random-arena-2v2");
     const follower = real.members[1] ?? "";
@@ -222,20 +227,6 @@ describe("formGroups (#869)", () => {
     };
     const queued = [forged, real, ...solos(10, 2, { mode: "random-arena-2v2" })];
     expect(await form(queued, "random-arena-2v2")).toEqual([]);
-  });
-
-  it("calls a party contested while another live ticket names its member (#882)", () => {
-    const real = party(2, "random-arena-2v2");
-    const forged = {
-      ...ticket(1, { mode: "random-arena-2v2" }),
-      members: [ticket(1).ticketId, real.members[1] ?? ""],
-    };
-    const input = { now: NOW, mode: "random-arena-2v2" } as const;
-    expect(isContested({ ...input, tickets: [real] }, real.ticketId)).toBe(false);
-    expect(isContested({ ...input, tickets: [forged, real] }, real.ticketId)).toBe(true);
-    expect(isContested({ ...input, tickets: [forged, real] }, ticket(9).ticketId)).toBe(false);
-    const stale = { ...forged, heartbeatAt: NOW - TICKET_TTL_MS - 1 };
-    expect(isContested({ ...input, tickets: [stale, real] }, real.ticketId)).toBe(false);
   });
 
   it("settles a seat only where it sits as its own ticket (#882)", async () => {

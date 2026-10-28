@@ -90,8 +90,11 @@ units, so a hit for a quarter of your health is a strike; degeneration,
 sacrifice and a killing blow give nothing. Using an adrenaline skill
 empties its own pool and takes one strike from every other, at
 activation, so an interrupted one has still paid; an attack skill that
-lands then earns its strike back like any blow. Death, respawn and a
-reset empty every pool.
+lands then earns its strike back like any blow. A skill that says **"Lose
+all adrenaline"** (Hammer Bash, #1097) empties every pool instead, and its
+blow earns nothing back, hit or miss. A **disabled** adrenaline skill
+loses all its adrenaline and gains none until the disable ends. Death,
+respawn and a reset empty every pool.
 Adrenaline does not keep between fights (#828): **25 s out of combat**
 (`adrenalineLossSeconds`) and every pool empties at once. A blow or an
 attack skill you start, a foe's blow or attack skill at you (even one
@@ -1285,6 +1288,28 @@ takes the 4 too: it is on the one hit, not on the attack.
 energy, 3 s, 45 s recharge) plants one of 210 Health and armor 51 for
 39 s: your side in its range gains +3 Health regeneration.
 
+**Minions** (#467) are raised from a fresh corpse, of either team, the
+nearest within cast range, and rise where it lay. Their Health, armor
+and blows are set by their Necromancer's Death Magic as they rise and
+never change after. A minion rots: it loses 1 pip of Health at once and
+1 more every 20 s it lives, summed with its statuses before the −10
+cap, and it never regenerates naturally; healing fights it as usual. A
+rank-12 Bone Minion nobody touches lives 65 s. It stays by its master,
+attacks the nearest foe within earshot of itself, not its master's
+target nor a called one, and breaks off to walk back once its master is
+past cast range, picking no fight until at heel again. A master holds 2
+plus half its Death Magic, rounded down (8 at 12): raising past it kills
+the oldest first, and that is a death, so Soul Reaping answers it. A
+minion leaves no corpse, outlives its master's death and follows the
+body, and leaves with its master.
+
+**Animate Bone Minions** (Necromancer, Death Magic, spell, 10 energy,
+1 s, 5 s recharge) raises two Bone Minions of 280 Health and armor 30,
+each a 5–12 blunt blow every 3.17 s. **Animate Bone Horror** (5
+energy, 1 s, 5 s recharge) raises one Bone Horror of 360 Health and
+armor 56, 13–27 blunt every 3.17 s. Numbers at Death Magic 12; their
+damage is a house estimate, as no source publishes it.
+
 ## Wards
 
 A **ward** (#1087) is a circle left on the ground where its caster
@@ -1306,6 +1331,27 @@ more ends the oldest.
 energy, 1 s, 30 s recharge) leaves a ward of radius 109 for 5...17
 seconds: your side inside it has a 50% chance to block melee attacks,
 75% on top of a 50% stance. Arrows and spells are not blocked.
+
+## Traps
+
+A **trap** (#1105) is a ground effect, as a ward is, set where its setter
+stands as the trap skill ends. A trap is not a spell, so Dazed does not
+slow it, but setting one is easily interrupted: any attack that lands on
+the setter during it interrupts it, a swing, an arrow or an attack skill;
+a miss, a block or a spell's damage does not. Interrupted or moved, there
+is no trap, the energy is spent and the skill recharges. Set, it waits for
+up to its duration, then ends with no effect. The first step a living foe
+that is not a spirit has its centre within 40 of it (adjacent, walls do
+not matter), it springs: its effects land on every foe its area takes
+around the trap, as an area skill's would, from its owner, alive or dead,
+and it is gone. Two traps under one foe both spring, oldest first. A trap
+whose owner left the match is gone. Only the setter's team sees it: an
+outline in the ally colour with its skill's icon at the centre. A foe
+sees nothing until it springs, and the host never sends it a foe's trap.
+
+**Barbed Trap** (Ranger, Wilderness Survival, trap, 10 energy, 2 s, 20 s
+recharge) lasts 90 seconds. Sprung, every foe nearby (81) takes 7...20
+piercing damage, becomes Crippled and begins Bleeding, both for 21 s.
 
 ## Death and scoring
 

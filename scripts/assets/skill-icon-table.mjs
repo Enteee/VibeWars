@@ -23,6 +23,8 @@ export const SKILL_ICONS = {
   "warrior.swift-chop": { glyph: "axe" },
   "ranger.barrage": { glyph: "volley", modifier: "area" },
   "warrior.backbreaker": { glyph: "hammer", modifier: "down" },
+  // Placeholder until asset-designer's icon (#1097).
+  "warrior.hammer-bash": { glyph: "hammer", modifier: "stun" },
   "necromancer.blood-renewal-lite": { glyph: "heal", modifier: "down" },
   "warrior.distracting-blow": { glyph: "interrupt" },
   "ranger.broad-head-arrow": { glyph: "arrow", modifier: "stun" },
@@ -48,11 +50,11 @@ export const SKILL_ICONS = {
   "assassin.twisting-fangs": { glyph: "dagger", modifier: "clock" },
   "assassin.horns-of-the-ox": { glyph: "dagger", modifier: "stun" },
   "assassin.moebius-strike": { glyph: "dagger", modifier: "self" },
-  // Placeholders until asset-designer's icons (#1041).
-  "assassin.leaping-mantis-sting": { glyph: "slow", modifier: "up" },
-  "assassin.jungle-strike": { glyph: "slow", modifier: "down" },
-  "assassin.trampling-ox": { glyph: "slow", modifier: "stun" },
-  "assassin.falling-spider": { glyph: "flask", modifier: "stun" },
+  // The dagger chain: a cripple, its spread, a knockdown and a poison, each its own picture (#1049).
+  "assassin.leaping-mantis-sting": { glyph: "limp" },
+  "assassin.jungle-strike": { glyph: "dagger-burst" },
+  "assassin.trampling-ox": { glyph: "ox-horns" },
+  "assassin.falling-spider": { glyph: "spider" },
   "ranger.punishing-shot": { glyph: "arrow", modifier: "up" },
   "ranger.pin-down": { glyph: "pin", modifier: "less" },
   "ranger.hunters-shot": { glyph: "arrow", modifier: "bleed" },
@@ -198,6 +200,8 @@ export const SKILL_ICONS = {
   "ritualist.recuperation": { glyph: "plaster", modifier: "hourglass" },
   // A placeholder until the asset-designer's (#1087).
   "elementalist.ward-against-melee": { glyph: "mountain", modifier: "clock" },
+  // A placeholder until the asset-designer's (#1105).
+  "ranger.barbed-trap": { glyph: "pin", modifier: "bleed" },
   // Placeholders until the asset-designer's (#1068): resurrections.
   "common.resurrection-signet": { glyph: "resurrect", modifier: "plus" },
   "monk.rebirth": { glyph: "resurrect", modifier: "self" },
@@ -205,4 +209,7 @@ export const SKILL_ICONS = {
   "ritualist.flesh-of-my-flesh": { glyph: "resurrect", modifier: "half" },
   // Health taken from a corpse: the heal glyph with the corpse mark (#1075).
   "necromancer.soul-feast": { glyph: "heal", modifier: "corpse" },
+  // Placeholders until the asset-designer's (#467): bodies raised from a corpse.
+  "necromancer.animate-bone-minions": { glyph: "resurrect", modifier: "down" },
+  "necromancer.animate-bone-horror": { glyph: "resurrect", modifier: "up" },
 };

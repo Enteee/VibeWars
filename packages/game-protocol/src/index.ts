@@ -85,6 +85,7 @@ export {
   parsePeerBye,
   parsePeerCall,
   parseWireCalls,
+  parseWireTraps,
   parsePeerChat,
   parseWireChatLine,
   parsePeerRejoinChallenge,
@@ -108,6 +109,8 @@ export {
   parsePeerLobbyHello,
   parseWireLobbyWelcome,
   parsePeerStayTogether,
+  parseWirePartyProposal,
+  parsePeerPartyConsent,
   parseWirePartyFormed,
   parseWirePartySplit,
   parseWireMatchStart,
@@ -119,6 +122,7 @@ export type {
   PeerBye,
   PeerCall,
   WireCalls,
+  WireTraps,
   WirePing,
   ChatChannel,
   PeerChat,
@@ -151,6 +155,8 @@ export type {
   PeerLobbyHello,
   WireLobbyWelcome,
   PeerStayTogether,
+  WirePartyProposal,
+  PeerPartyConsent,
   WirePartyFormed,
   WirePartySplit,
   WireAdmission,
@@ -168,4 +174,4 @@ export {
   parseQueueTicket,
   teamSizeOf,
 } from "./queue.js";
-export type { QueueMode, QueueTicket } from "./queue.js";
+export type { QueueMode, QueueTicket, TicketParty } from "./queue.js";

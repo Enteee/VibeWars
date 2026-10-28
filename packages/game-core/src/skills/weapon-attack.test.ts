@@ -1149,6 +1149,38 @@ describe("daze (#546)", () => {
     throw new Error("no seed blocked");
   });
 
+  it("a landed swing interrupts a trap being set, dazed or not (#1105)", () => {
+    const target = dazedCasting("ranger.barbed-trap", false);
+    const events = swingAt(target, attacker(WEAPONS.sword, "warrior.swordsmanship"));
+    expect(events[0]).toEqual({
+      kind: "interrupted",
+      targetId: "caster",
+      skillId: "ranger.barbed-trap",
+    });
+    expect(target.combatant.cast.rechargeRemaining.has("ranger.barbed-trap")).toBe(true);
+  });
+
+  it("a block does not interrupt a trap being set (#1105)", () => {
+    const sword = attacker(WEAPONS.sword, "warrior.swordsmanship");
+    for (let seed = 1; seed < 20; seed += 1) {
+      const target = dazedCasting("ranger.barbed-trap", false);
+      target.combatant.statuses.apply("guardian", 10, "caster");
+      const events = resolveSwing({
+        attacker: sword,
+        target,
+        surroundings: new Map(),
+        rng: createRng(seed),
+        rules: RULES,
+        exposed: NOWHERE,
+      }).events;
+      if (events[0]?.kind === "attack-blocked") {
+        expect(target.combatant.cast.isCasting).toBe(true);
+        return;
+      }
+    }
+    throw new Error("no seed blocked");
+  });
+
   it("an attack skill's blow interrupts too", () => {
     const target = dazedCasting("elementalist.fireball");
     const chop = getSkill("warrior.swift-chop");

@@ -44,16 +44,36 @@ export function gainStrikes(combatant: Combatant, strikes: number, atSeconds: nu
   gainUnits(combatant, strikes * ADRENALINE_PER_STRIKE, atSeconds);
 }
 
+/** Whether using `skill` loses all adrenaline (#1097), GW1's Hammer Bash. */
+export function losesAllAdrenaline(skill: Skill): boolean {
+  return skill.cost?.kind === "adrenaline" && skill.cost.losesAll === true;
+}
+
 /**
  * Pay for `skill`: its own pool empties, and every other adrenaline skill
- * loses one strike, never below 0.
+ * loses one strike, never below 0. One that loses all adrenaline (#1097)
+ * empties every pool.
  */
 export function spendAdrenaline(combatant: Combatant, skill: Skill): void {
+  if (losesAllAdrenaline(skill)) {
+    emptyAdrenaline(combatant);
+    return;
+  }
   for (const [skillId, units] of combatant.adrenaline) {
     combatant.adrenaline.set(
       skillId,
       skillId === skill.id ? 0 : Math.max(0, units - ADRENALINE_PER_STRIKE),
     );
+  }
+}
+
+/**
+ * Empty `skillId`'s pool, as a disable does (#1097): GW1's disabled skills
+ * lose all their adrenaline. Nothing for a skill without one.
+ */
+export function emptyPool(combatant: Combatant, skillId: string): void {
+  if (combatant.adrenaline.has(skillId)) {
+    combatant.adrenaline.set(skillId, 0);
   }
 }
 

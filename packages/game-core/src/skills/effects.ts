@@ -1,6 +1,6 @@
 import { isPhysicalDamage, type DamageType } from "../equipment/types.js";
 import { DIVINE_FAVOR_ATTRIBUTE, divineFavorBonusHeal } from "../primary-attributes.js";
-import { emptyAdrenaline, fillPools } from "./adrenaline.js";
+import { emptyAdrenaline, emptyPool, fillPools } from "./adrenaline.js";
 import { beginRecharge } from "./cast-state.js";
 import { getSkill } from "./catalog.js";
 import { mitigate, skillDamage } from "./damage.js";
@@ -20,6 +20,7 @@ import type { ProfessionId } from "../professions.js";
 import type { SimulationRng } from "../rng.js";
 import { ADRENALINE_PER_STRIKE, type CombatRules } from "../ruleset.js";
 import {
+  isEasilyInterrupted,
   isSpell,
   type Combatant,
   type DisableSkillEffect,
@@ -585,6 +586,24 @@ export function interruptIfCastingSpell(target: Combatant, events: CombatEvent[]
 }
 
 /**
+ * What a landed attack interrupts (#1105): a spell its dazed victim is
+ * casting (#546), or a cast its victim is easily interrupted in, such as
+ * setting a trap. Anything else is left alone, and nothing is said.
+ * Every landed attack calls it; a miss or a block never does.
+ */
+export function interruptOnHit(victim: Combatant, events: CombatEvent[]): void {
+  const cast = victim.cast.activeCast;
+  const skill = cast === undefined ? undefined : getSkill(cast.skillId);
+  if (skill === undefined) {
+    return;
+  }
+  const dazed = victim.statuses.active.some(({ id }) => getStatusDefinition(id).interruptsSpells);
+  if (isEasilyInterrupted(skill.type) || (dazed && isSpell(skill.type))) {
+    interruptCast(victim, events);
+  }
+}
+
+/**
  * Apply (or refresh) a status, and take what it takes as it lands: a
  * newly applied maximum health loss (deep wound) comes off current health
  * too, never below 1, so it alone never kills (#764: GW1 defers the loss
@@ -1015,6 +1034,9 @@ export function applyEffect(
       }
       const seconds = resolveMagnitude(effect.seconds, caster);
       for (const skillId of disabledBy(effect, target, interrupted)) {
+        // A disabled skill loses all its adrenaline (GW1, #1097), though
+        // a longer recharge kept the disable from lengthening its wait.
+        emptyPool(target, skillId);
         if (target.cast.disable(skillId, seconds)) {
           events.push({ kind: "skill-disabled", targetId: target.id, skillId, seconds });
         }

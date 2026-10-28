@@ -10,15 +10,19 @@ const TICKET: QueueTicket = {
   members: ["a".repeat(64)],
   enteredAt: 1_700_000_000_000,
   heartbeatAt: 1_700_000_005_000,
+  party: null,
 };
 
 /** A whole 4v4 team, sorted, led by `TICKET`'s id. */
 const PARTY = ["a", "b", "c", "d"].map((digit) => digit.repeat(64));
+/** Its proof, in shape: parsing checks no signature. */
+const PROOF = { groupId: "f".repeat(64), consents: PARTY.map(() => "e".repeat(128)) };
+const TEAM: QueueTicket = { ...TICKET, members: PARTY, party: PROOF };
 
-describe("parseQueueTicket (#869, #882)", () => {
+describe("parseQueueTicket (#869, #882, #1078)", () => {
   it("keeps a well-formed ticket, a solo or a whole team", () => {
     expect(parseQueueTicket({ ...TICKET })).toEqual(TICKET);
-    expect(parseQueueTicket({ ...TICKET, members: PARTY })).toEqual({ ...TICKET, members: PARTY });
+    expect(parseQueueTicket({ ...TEAM })).toEqual(TEAM);
   });
 
   it.each<[string, unknown]>([
@@ -48,6 +52,30 @@ describe("parseQueueTicket (#869, #882)", () => {
     ["an infinite heartbeatAt", { ...TICKET, heartbeatAt: Number.POSITIVE_INFINITY }],
     ["a missing field", { ...TICKET, heartbeatAt: undefined }],
     ["an oversize ticket, padded with a field", { ...TICKET, padding: "x".repeat(10_000) }],
+    ["an undefined party", { ...TICKET, party: undefined }],
+    ["six fields: no party at all", (({ party: _, ...six }) => six)(TICKET)],
+    ["a solo with a party", { ...TICKET, party: PROOF }],
+    ["a party with none", { ...TEAM, party: null }],
+    [
+      "a party with a consent too few",
+      { ...TEAM, party: { ...PROOF, consents: PROOF.consents.slice(1) } },
+    ],
+    [
+      "a party with a consent too many",
+      { ...TEAM, party: { ...PROOF, consents: [...PROOF.consents, "e".repeat(128)] } },
+    ],
+    [
+      "a non-hex consent",
+      { ...TEAM, party: { ...PROOF, consents: [...PROOF.consents.slice(1), "g".repeat(128)] } },
+    ],
+    [
+      "a short consent",
+      { ...TEAM, party: { ...PROOF, consents: [...PROOF.consents.slice(1), "e".repeat(127)] } },
+    ],
+    ["a bad group id", { ...TEAM, party: { ...PROOF, groupId: "F".repeat(64) } }],
+    ["consents that are not a list", { ...TEAM, party: { ...PROOF, consents: "e".repeat(128) } }],
+    ["a party padded with a field", { ...TEAM, party: { ...PROOF, padding: 1 } }],
+    ["a party that is a list", { ...TEAM, party: [PROOF.groupId, PROOF.consents] }],
   ])("refuses %s", (_, raw) => {
     expect(parseQueueTicket(raw)).toBeUndefined();
   });

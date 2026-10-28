@@ -33,6 +33,11 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Warrior/11-Backbreaker",
   },
   {
+    id: "warrior.hammer-bash",
+    profession: "warrior",
+    url: "https://www.gw-memorial.net/skills/Warrior/18-Hammer_Bash",
+  },
+  {
     id: "warrior.distracting-blow",
     profession: "warrior",
     url: "https://www.gw-memorial.net/skills/Warrior/71-Distracting_Blow",
@@ -698,6 +703,16 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Necromancer/263-Mark_of_Pain",
   },
   {
+    id: "necromancer.animate-bone-horror",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/278-Animate_Bone_Horror",
+  },
+  {
+    id: "necromancer.animate-bone-minions",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/279-Animate_Bone_Minions",
+  },
+  {
     id: "necromancer.soul-feast",
     profession: "necromancer",
     url: "https://www.gw-memorial.net/skills/Necromancer/292-Soul_Feast",
@@ -781,6 +796,11 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     id: "ranger.burning-arrow",
     profession: "ranger",
     url: "https://www.gw-memorial.net/skills/Ranger/818-Burning_Arrow",
+  },
+  {
+    id: "ranger.barbed-trap",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/123-Barbed_Trap",
   },
   {
     id: "monk.patient-spirit",

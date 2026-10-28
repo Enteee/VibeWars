@@ -928,7 +928,8 @@ export class ArenaScene extends Phaser.Scene {
   /**
    * Every ward on the ground (#1087): a translucent disc with a thin rim
    * in its side's colour, and its skill's icon at the centre, under
-   * whoever stands in it. A ward that ended takes its icon with it.
+   * whoever stands in it; a trap (#1105) the same, with no disc. One that
+   * ended takes its icon with it.
    */
   private updateGroundEffects(): void {
     const g = this.groundGraphics;
@@ -940,8 +941,10 @@ export class ArenaScene extends Phaser.Scene {
     for (const effect of this.snapshot.groundEffects) {
       seen.add(effect.id);
       const { x, y } = effect.position;
-      g.fillStyle(effect.colour, 0.15);
-      g.fillCircle(x, y, effect.radius);
+      if (effect.filled) {
+        g.fillStyle(effect.colour, 0.15);
+        g.fillCircle(x, y, effect.radius);
+      }
       g.lineStyle(1.5, effect.colour, 0.6);
       g.strokeCircle(x, y, effect.radius);
       const texture = groundIconTexture(effect.skillId);
