@@ -107,12 +107,18 @@ describe("partyRows (#1055)", () => {
   });
 });
 
+/** Just enough of an event for the listeners. */
+interface FakeEvent {
+  preventDefault(): void;
+}
+
 /** Just enough of an element for the window, without jsdom. */
 class FakeElement {
   className = "";
   textContent = "";
   title = "";
   type = "";
+  tabIndex = 0;
   hidden = false;
   src = "";
   alt = "";
@@ -130,11 +136,11 @@ class FakeElement {
       }
     },
   };
-  readonly listeners = new Map<string, () => void>();
+  readonly listeners = new Map<string, (event: FakeEvent) => void>();
 
   readonly setAttribute = (): void => undefined;
 
-  readonly addEventListener = (type: string, listener: () => void): void => {
+  readonly addEventListener = (type: string, listener: (event: FakeEvent) => void): void => {
     this.listeners.set(type, listener);
   };
 
@@ -198,9 +204,19 @@ describe("createPartyWindow (#1055)", () => {
   it("targets a member when their row is clicked, yourself too", () => {
     party.update(match([ME, KAJA]));
     for (const row of panel().children) {
-      row.listeners.get("click")?.();
+      row.listeners.get("click")?.({ preventDefault: () => undefined });
     }
     expect(targeted).toEqual(["me", "kaja"]);
+  });
+
+  it("never takes the keyboard from the arena: not tabbable, and a press keeps focus", () => {
+    party.update(match([ME, KAJA]));
+    for (const row of panel().children) {
+      const preventDefault = vi.fn();
+      row.listeners.get("mousedown")?.({ preventDefault });
+      expect(preventDefault).toHaveBeenCalledOnce();
+      expect(row.tabIndex).toBe(-1);
+    }
   });
 
   it("reuses each row across updates, and drops the row of one who left", () => {

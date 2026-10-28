@@ -97,9 +97,9 @@ is at the screen's two centres, and the arena between them is clear.
 
 ```text
  now-playing        [ scoreboard: score · clock · enemies ]        controls
-                    [ target frame, effects growing down   ]        ally-watch
+                    [ target frame, effects growing down   ]
 
-                               (arena)
+                               (arena)                             party
 
  chat               [ hint / message                       ]
                     [ your effects, growing up             ]
@@ -109,8 +109,8 @@ is at the screen's two centres, and the arena between them is clear.
                     [ skill bar                            ]
 ```
 
-Your bars are as wide as the skill bar. The left edge under now-playing
-stays free for a party window (#486).
+Your bars are as wide as the skill bar. The party window (#1055) holds
+the right edge, vertically centred.
 
 ### Target frame
 

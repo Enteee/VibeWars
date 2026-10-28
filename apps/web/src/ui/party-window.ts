@@ -100,6 +100,12 @@ function createRow(id: string, onTarget: (sessionId: string) => void): RowElemen
   row.type = "button";
   row.className = "party-row";
   row.dataset.member = id;
+  // Not focusable, and pressing it does not move focus: targeting from the
+  // window must not take the keyboard away from the arena.
+  row.tabIndex = -1;
+  row.addEventListener("mousedown", (event) => {
+    event.preventDefault();
+  });
   row.addEventListener("click", () => {
     onTarget(id);
   });
