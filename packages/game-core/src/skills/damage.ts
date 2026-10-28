@@ -11,7 +11,7 @@ import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
 import { aggregateModifiers } from "./status.js";
 import { armorReductionOf, effectiveMaxHealth, rankOf } from "./tick.js";
-import type { Combatant } from "./types.js";
+import type { Combatant, CreatureLevel } from "./types.js";
 
 /**
  * The damage pipeline (ADR-0012).
@@ -208,6 +208,18 @@ export function mitigate(
   }
 
   return Math.max(0, Math.round(dealt));
+}
+
+/**
+ * What a creature's summoner's `rank` does to its blows (#1131): its GW1
+ * level, linear in the rank, against its level at 12, to the power 1.5.
+ * No source gives a formula; this one fits GWW's damage tables for Bone
+ * Minion and Bone Horror within about a point at every rank 0-12.
+ */
+export function creatureDamageMultiplier(rank: number, levels: CreatureLevel): number {
+  const level = (at: number): number =>
+    levels.atZero + ((levels.atTwelve - levels.atZero) * at) / 12;
+  return Math.pow(level(Math.max(0, rank)) / level(12), 1.5);
 }
 
 /**

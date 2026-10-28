@@ -32,6 +32,7 @@ function wounded(
         attributeId: "ranger.marksmanship",
         damageType: weapon.damageType,
         requirementMet: true,
+        creatureDamageScale: undefined,
       },
     },
     spawn,

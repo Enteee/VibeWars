@@ -58,6 +58,7 @@ function swordsman(id: string, team: number, spawn: Vec2): ParticipantSpec {
       attributeId: "warrior.swordsmanship",
       damageType: WEAPONS.sword.damageType,
       requirementMet: true,
+      creatureDamageScale: undefined,
     },
   };
   return {

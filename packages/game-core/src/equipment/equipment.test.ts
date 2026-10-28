@@ -1088,31 +1088,40 @@ describe("weapon sets (#489, ADR-0036)", () => {
 
 describe("creatureResolvedEquipment (#467)", () => {
   it("is unarmed with its armor when the creature never swings", () => {
-    expect(creatureResolvedEquipment(51, undefined)).toEqual(unarmedResolvedEquipment(51));
+    expect(creatureResolvedEquipment(51, undefined, 12)).toEqual(unarmedResolvedEquipment(51));
   });
 
-  it("swings the attack's numbers, as fists keyed to the summoner's attribute", () => {
-    const equipment = creatureResolvedEquipment(30, {
+  it("swings the attack's numbers, as fists keyed to the summoner's attribute, scaled by its rank", () => {
+    const attack = {
       attributeId: "necromancer.death-magic",
-      damageMin: 5,
-      damageMax: 12,
-      damageType: "blunt",
-      attackIntervalSeconds: 3.17,
+      damageMin: 6,
+      damageMax: 11,
+      level: { atZero: 0, atTwelve: 10 },
+      damageType: "blunt" as const,
+      attackIntervalSeconds: 3.1,
       range: 40,
-    });
+    };
+    const equipment = creatureResolvedEquipment(30, attack, 6);
     expect(equipment.baseArmor).toBe(30);
     expect(equipment.mainHand).toMatchObject({
       weapon: {
         id: "unarmed",
-        damageMin: 5,
-        damageMax: 12,
+        damageMin: 6,
+        damageMax: 11,
         damageType: "blunt",
-        attackIntervalSeconds: 3.17,
+        attackIntervalSeconds: 3.1,
         range: 40,
       },
       attributeId: "necromancer.death-magic",
       damageType: "blunt",
       requirementMet: true,
+      creatureDamageScale: Math.pow(5 / 10, 1.5),
     });
+    expect(creatureResolvedEquipment(30, attack, 12).mainHand.creatureDamageScale).toBe(1);
+    // A pet scales as weapon mastery does (#1046).
+    expect(
+      creatureResolvedEquipment(30, { ...attack, level: undefined }, 6).mainHand
+        .creatureDamageScale,
+    ).toBeUndefined();
   });
 });

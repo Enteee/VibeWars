@@ -515,6 +515,7 @@ describe("canActivate, an attack skill's weapon (ADR-0029)", () => {
           attributeId: undefined,
           damageType: WEAPONS[weaponId].damageType,
           requirementMet: true,
+          creatureDamageScale: undefined,
         },
       },
     });

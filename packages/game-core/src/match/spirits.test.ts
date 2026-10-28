@@ -34,6 +34,7 @@ const AXE: ResolvedEquipment = {
     attributeId: "warrior.axe-mastery",
     damageType: WEAPONS.axe.damageType,
     requirementMet: true,
+    creatureDamageScale: undefined,
   },
 };
 
@@ -342,6 +343,14 @@ describe("Spawning Power (#1098)", () => {
     expect(spirits(rRt)[0]?.combatant.maxHealth).toBe(210);
   });
 
+  it("leaves a charmed pet alone (#1144): the same summoner's wolf has 480, its spirit 311", () => {
+    const sim = summoner(12, { skillBar: [RECUPERATION, "ranger.charm-animal"] });
+    const pet = [...sim.participants()].find((p) => p.creature?.kind === "pet");
+    expect(pet?.combatant.maxHealth).toBe(480);
+    ritual(sim, RECUPERATION);
+    expect(spirits(sim)[0]?.combatant.maxHealth).toBe(311);
+  });
+
   it("leaves the spirit's lifetime alone", () => {
     const sim = summoner(12);
     ritual(sim, RECUPERATION);
@@ -449,6 +458,7 @@ describe("Winnowing's +4 (#1064)", () => {
           attributeId: "ranger.marksmanship",
           damageType: WEAPONS.flatbow.damageType,
           requirementMet: true,
+          creatureDamageScale: undefined,
         },
       },
     });

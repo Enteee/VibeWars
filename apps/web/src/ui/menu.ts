@@ -11,15 +11,7 @@ import {
   miniSkillBar,
   professionLabel,
 } from "./character-preview.js";
-import {
-  button,
-  emptyState,
-  h,
-  inlineConfirm,
-  listenForPaste,
-  screenBar,
-  selectableRow,
-} from "./kit.js";
+import { button, emptyState, h, listenForPaste, screenBar, selectableRow } from "./kit.js";
 
 /** What every peer in a lobby learns about you (#541): WebRTC connects you directly. */
 export const PEER_IP_NOTICE =
@@ -131,11 +123,6 @@ export function saveStarterCharacterId(id: string): void {
   }
 }
 
-/** Reroll's question for the rolled character `name` (#853). */
-export function rerollQuestion(name: string): string {
-  return `Replace ${name} with another random build?`;
-}
-
 export function savePlayerName(name: string): void {
   try {
     localStorage.setItem(NAME_STORAGE_KEY, name);
@@ -224,13 +211,12 @@ export function renderMenu(
       }),
     ];
     if (character.id === starter) {
-      // Asked first: rerolling throws away whatever was edited on it.
-      const reroll = button("Reroll", "roster-reroll", () => {
-        inlineConfirm(reroll, rerollQuestion(character.name), "Reroll", () => {
+      // At once, unasked (#1146): whatever was edited on it is lost.
+      actions.push(
+        button("Reroll", "roster-reroll", () => {
           callbacks.onRerollCharacter(character.id);
-        });
-      });
-      actions.push(reroll);
+        }),
+      );
     }
     list.appendChild(
       selectableRow({

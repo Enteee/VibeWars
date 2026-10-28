@@ -23,6 +23,7 @@ const AXE: ResolvedEquipment = {
     attributeId: "warrior.axe-mastery",
     damageType: WEAPONS.axe.damageType,
     requirementMet: true,
+    creatureDamageScale: undefined,
   },
 };
 

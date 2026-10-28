@@ -87,6 +87,7 @@ describe("Expertise (#528)", () => {
           attributeId: undefined,
           damageType: weapon.damageType,
           requirementMet: true,
+          creatureDamageScale: undefined,
         },
       },
     });

@@ -187,6 +187,7 @@ describe("groundEffectSnapshot (#1087)", () => {
     },
     durationSeconds: 17.04,
     remainingSeconds: 6.345,
+    pulsed: 0,
   };
 
   it("sits where it was placed, at its aura's radius, ending on the match clock to 0.1 s", () => {
@@ -214,14 +215,19 @@ describe("groundEffectSnapshot (#1087)", () => {
         kind: "trap",
         trap: {
           triggerRadius: 40,
-          area: {
-            radius: 81,
-            origin: "caster",
-            affects: "enemies",
-            maxTargets: undefined,
-            includesCaster: false,
+          springsAtEnd: false,
+          spring: {
+            count: 1,
+            everySeconds: 1,
+            area: {
+              radius: 81,
+              origin: "caster",
+              affects: "enemies",
+              maxTargets: undefined,
+              includesCaster: false,
+            },
+            effects: [],
           },
-          effects: [],
         },
       },
     };

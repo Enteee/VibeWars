@@ -400,7 +400,7 @@ export function landBlow(
       base *
       snapshot.damageMultiplier *
       blow.weaponDamage *
-      weaponAttributeMultiplier(snapshot.rank, rules) *
+      (snapshot.mainHand.creatureDamageScale ?? weaponAttributeMultiplier(snapshot.rank, rules)) *
       (snapshot.requirementMet ? 1 : rules.unmetRequirementMultiplier),
     armorIgnoring: blow.bonus,
     type: blow.damageType ?? snapshot.damageType,
