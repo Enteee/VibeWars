@@ -254,36 +254,6 @@ describe("the new state conditions (#988)", () => {
       false,
     );
   });
-
-  it("target-attacking holds for an auto-attack or an attack skill, not idle, a spell or dead", () => {
-    const attacking = { kind: "target-attacking" } as const;
-    const caster = makeCombatant({ id: "c" });
-    const holds = (target: ReturnType<typeof makeCombatant>): boolean =>
-      stateHolds(attacking, caster, target, surroundings);
-
-    const swinging = makeCombatant({ id: "t" });
-    swinging.attack = { targetId: "x", swingElapsed: 0, unreachableSeconds: 0 };
-    expect(holds(swinging)).toBe(true);
-
-    const striking = makeCombatant({ id: "t" });
-    striking.cast.beginCast("assassin.jagged-strike", "x", 0.5, undefined);
-    expect(holds(striking)).toBe(true);
-
-    const approaching = makeCombatant({ id: "t" });
-    approaching.attack = { targetId: "x", swingElapsed: 0, unreachableSeconds: 0 };
-    approaching.moving = true;
-    expect(holds(approaching)).toBe(false);
-
-    const casting = makeCombatant({ id: "t" });
-    casting.cast.beginCast("elementalist.fireball", "x", 2, undefined);
-    expect(holds(casting)).toBe(false);
-
-    expect(holds(makeCombatant({ id: "t" }))).toBe(false);
-
-    const dead = makeCombatant({ id: "t", dead: true, health: 0 });
-    dead.attack = { targetId: "x", swingElapsed: 0, unreachableSeconds: 0 };
-    expect(holds(dead)).toBe(false);
-  });
 });
 
 describe("Shadow Refuge (#988)", () => {

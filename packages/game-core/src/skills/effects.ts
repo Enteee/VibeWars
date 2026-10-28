@@ -6,6 +6,7 @@ import {
   spawningPowerMultiplier,
 } from "../primary-attributes.js";
 import { emptyAdrenaline, emptyPool, fillPools } from "./adrenaline.js";
+import { isAttacking } from "./attacking.js";
 import { beginRecharge, resolvedBar, skillIdOfKey } from "./cast-state.js";
 import { getSkill } from "./catalog.js";
 import { hitLocationOf, mitigate, skillDamage } from "./damage.js";
@@ -1189,18 +1190,8 @@ export function stateHolds(
       return target.health < caster.health;
     case "target-more-health":
       return target.health > caster.health;
-    case "target-attacking": {
-      if (target.dead) {
-        return false;
-      }
-      // An auto-attack still walking to its foe is the run-up, not an
-      // attack: GW1 counts only the swings, which are made standing.
-      const cast = target.cast.activeCast;
-      return (
-        (target.attack !== undefined && !target.moving) ||
-        (cast !== undefined && getSkill(cast.skillId)?.type === "attack")
-      );
-    }
+    case "target-attacking":
+      return isAttacking(target);
     case "caster-no-spirit-within": {
       const at = surroundings.get(caster.id)?.position;
       return at === undefined || spiritsWithin(surroundings.values(), at, condition.radius) === 0;
