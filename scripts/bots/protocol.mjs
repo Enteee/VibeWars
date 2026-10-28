@@ -292,6 +292,13 @@ export const OPERATOR_LINE = "manager";
  */
 export const SUPPORT = "support";
 
+/**
+ * The one role support may `tg send` to (#148): no other inbox, no
+ * broadcast. Whatever a stranger talked support into saying reaches one
+ * reader, who decides what the company does about it.
+ */
+export const SUPPORT_PEER = "manager";
+
 /** The longest user message support reads; the rest is cut off. */
 export const MAX_USER_CHARS = 2000;
 
@@ -345,6 +352,9 @@ export function inboxesOf(address, employees) {
  * delivered to nobody, it comes back as `reply` for the Support topic. It is
  * the only way an agent posts outside Bots, General and the Manager topic,
  * so any other sender is refused here, the way TO_OPERATOR is.
+ *
+ * SUPPORT itself may write only to SUPPORT_PEER (#148): a message to anyone
+ * else, or to all, is refused with a notice.
  *
  * @param {unknown} raw the outbox file's contents
  * @param {{
@@ -420,6 +430,17 @@ export function deliverPeer(raw, context) {
       };
     }
     return { ...none, mirror: { from: context.from, to, text } };
+  }
+
+  // Support reads strangers' text, so it is assumed prompt-injected (#148):
+  // it reaches SUPPORT_PEER, and no other inbox and no broadcast.
+  if (role === SUPPORT && roleOf(to) !== SUPPORT_PEER) {
+    return {
+      ...none,
+      notice: fromLink(
+        `your last message was NOT delivered: ${SUPPORT} writes only to the ${SUPPORT_PEER}.`,
+      ),
+    };
   }
 
   if (to !== "all" && !context.roles.includes(to) && !context.employees.has(to)) {

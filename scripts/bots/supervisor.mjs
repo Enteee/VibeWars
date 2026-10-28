@@ -30,7 +30,7 @@ import path from "node:path";
 import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 
-import { parseAlive } from "./hub-health.mjs";
+import { HUBD_ALIVE, parseAlive } from "./hub-health.mjs";
 import { releaseLock, takeLock } from "./instance-lock.mjs";
 import { tellCompany } from "./agent-loop.mjs";
 import { startEmployee } from "./start-employee.mjs";
@@ -364,7 +364,7 @@ function readJson(file) {
 function inFlight(cfg) {
   try {
     return (
-      parseAlive(fs.readFileSync(path.join(paths(cfg).hub, "hubd.alive"), "utf8"))?.inflight ?? 0
+      parseAlive(fs.readFileSync(path.join(paths(cfg).hub, HUBD_ALIVE), "utf8"))?.inflight ?? 0
     );
   } catch {
     return 0;

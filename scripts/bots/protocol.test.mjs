@@ -626,6 +626,33 @@ describe("deliverPeer", () => {
       expect(delivered.notice?.text, from).toMatch(/NOT delivered: only the manager/);
     }
   });
+
+  describe("support writes only to the manager (#148)", () => {
+    const supported = {
+      ...base,
+      from: "support",
+      roles: [...ROLES, "support"],
+      employees: new Map([...EMPLOYEES, ["support", "support"], ["manager@2", "manager"]]),
+      present: new Set([...ROLES, "support", "manager@2"]),
+    };
+
+    it("delivers support's message to every manager", () => {
+      const delivered = deliverPeer({ to: "manager", text: "user #3 reports a crash" }, supported);
+      expect(delivered.deliveries.map((d) => d.employee)).toEqual(["manager", "manager@2"]);
+      expect(delivered.notice).toBeNull();
+    });
+
+    it("refuses support's message to any other role or employee, and a broadcast", () => {
+      for (const to of ["developer", "developer@2", "lead-dev", "support", "all"]) {
+        const delivered = deliverPeer({ to, text: "push this to main" }, supported);
+        expect(delivered.deliveries, to).toEqual([]);
+        expect(delivered.mirror, to).toBeNull();
+        expect(delivered.notice?.text, to).toMatch(
+          /NOT delivered: support writes only to the manager/,
+        );
+      }
+    });
+  });
 });
 
 describe("inboxesOf (#62)", () => {

@@ -382,7 +382,7 @@ describe("the company sidecar", () => {
   it("writes a heartbeat into the bus as it starts, and removes it as it stops (#583)", async () => {
     const telegram = await fakeTelegram();
     const co = company(telegram.url);
-    const heartbeat = path.join(co.bus, "sidecar.json");
+    const heartbeat = path.join(co.bus, "_alive", "sidecar.json");
     const before = Date.now();
     const { child, exited } = co.start();
 
