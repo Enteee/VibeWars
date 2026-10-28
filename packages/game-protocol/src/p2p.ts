@@ -57,6 +57,7 @@ export const CHANNELS = [
   "rejoin-proof",
   "call",
   "calls",
+  "traps",
   "chat",
   "chat-line",
 ] as const;
@@ -498,6 +499,17 @@ export interface WirePing {
 export interface WireCalls {
   readonly target: { readonly targetId: string; readonly callerId: string } | null;
   readonly pings: readonly WirePing[];
+}
+
+/**
+ * Host to each seated peer of one team, never the other (#1105): that
+ * team's traps, at most `MAX_WIRE_GROUND_EFFECTS`, the newest kept, a
+ * full replacement list. A foe's trap is hidden information, so it is
+ * never in a snapshot (SECURITY.md). Sent on the tick the team's traps
+ * change, and after a welcome.
+ */
+export interface WireTraps {
+  readonly traps: readonly WireGroundEffect[];
 }
 
 /** Who a chat line reaches (#479): everyone in the lobby, or your team. */
@@ -985,6 +997,15 @@ export function parseWireCalls(value: unknown): WireCalls | undefined {
   return target !== undefined && isString(target.targetId) && isString(target.callerId)
     ? { target: { targetId: target.targetId, callerId: target.callerId }, pings }
     : undefined;
+}
+
+export function parseWireTraps(value: unknown): WireTraps | undefined {
+  const raw = fields(value);
+  const traps =
+    raw === undefined
+      ? undefined
+      : parseArray(raw.traps, MAX_WIRE_GROUND_EFFECTS, parseGroundEffect);
+  return traps === undefined ? undefined : { traps };
 }
 
 export function parsePeerChat(value: unknown): PeerChat | undefined {

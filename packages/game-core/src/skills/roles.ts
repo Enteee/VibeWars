@@ -64,9 +64,12 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
       return effect.creature.aura === undefined
         ? []
         : statusRoles(getStatusDefinition(effect.creature.aura.statusId));
-    // So does a ward (#1087): Ward Against Melee defends.
+    // So does a ward (#1087): Ward Against Melee defends. A trap does
+    // what its spring does (#1105): Barbed Trap cripples and bleeds.
     case "create-ground-effect":
-      return statusRoles(getStatusDefinition(effect.aura.statusId));
+      return effect.act.kind === "aura"
+        ? statusRoles(getStatusDefinition(effect.act.aura.statusId))
+        : effect.act.trap.effects.flatMap(effectRoles);
   }
 }
 

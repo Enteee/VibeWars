@@ -44,6 +44,7 @@ import {
   type WirePlayer,
   type WireSkillBar,
   type WireSnapshot,
+  type WireTraps,
   type WireSummaryRow,
 } from "@vibewars/game-protocol";
 
@@ -221,6 +222,11 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
    * per tick, whatever it sends.
    */
   const callsDirty = new Set<Team>();
+  /** The trap ids each team was last sent (#1105), to send again only on a change. */
+  const trapsSent = new Map<Team, string>([
+    [0, ""],
+    [1, ""],
+  ]);
   let seated = 0;
   /**
    * The seats the match had, in seat order: whoever left still has a line
@@ -372,6 +378,35 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     }
   };
 
+  /**
+   * `team`'s traps, the newest `MAX_WIRE_GROUND_EFFECTS` (#1105): a
+   * foe's are hidden information, so this is all a peer ever hears of them.
+   */
+  const trapsOf = (team: Team): WireTraps => ({
+    traps: sim.groundEffects
+      .filter((effect) => effect.act.kind === "trap" && effect.team === team)
+      .slice(-MAX_WIRE_GROUND_EFFECTS)
+      .map((effect) => ({ ...groundEffectSnapshot(effect, sim.elapsedSeconds), team })),
+  });
+
+  /**
+   * `team`'s traps to every seated peer of it, each its own, never a
+   * broadcast, when they changed since it was last sent them (#1105).
+   */
+  const sendTraps = (team: Team): void => {
+    const view = trapsOf(team);
+    const ids = view.traps.map(({ id }) => id).join();
+    if (ids === trapsSent.get(team)) {
+      return;
+    }
+    trapsSent.set(team, ids);
+    for (const seat of seats.values()) {
+      if (seat.team === team && seat.peerId !== undefined) {
+        transport.send("traps", view, seat.peerId);
+      }
+    }
+  };
+
   /** Alive and in the match. */
   const isAlive = (id: string): boolean => sim.get(id)?.combatant.dead === false;
 
@@ -394,8 +429,9 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     sendRecharges(seat, true);
     sendAdrenaline(seat, true);
     sendChainMarks(seat, true);
-    // A rejoin sees the call its team has up.
+    // A rejoin sees the call its team has up, and its traps.
     transport.send("calls", calls.view(seat.team, sim.elapsedSeconds), peerId);
+    transport.send("traps", trapsOf(seat.team), peerId);
   };
 
   const seatNew = (
@@ -726,11 +762,15 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       launchedAt: sim.elapsedSeconds - shot.elapsed,
       flightSeconds: shot.flightSeconds,
     })),
-    // The newest, as for projectiles; a team the wire has no colour for is not drawn.
-    groundEffects: sim.groundEffects.slice(-MAX_WIRE_GROUND_EFFECTS).flatMap((effect) => {
-      const team = wireTeam(effect.team);
-      return team === null ? [] : [{ ...groundEffectSnapshot(effect, sim.elapsedSeconds), team }];
-    }),
+    // The newest, as for projectiles; a team the wire has no colour for is
+    // not drawn. A trap goes to its own team alone (`sendTraps`).
+    groundEffects: sim.groundEffects
+      .filter((effect) => effect.act.kind !== "trap")
+      .slice(-MAX_WIRE_GROUND_EFFECTS)
+      .flatMap((effect) => {
+        const team = wireTeam(effect.team);
+        return team === null ? [] : [{ ...groundEffectSnapshot(effect, sim.elapsedSeconds), team }];
+      }),
   });
 
   /** Drop the seats whose players did not come back in time. */
@@ -758,6 +798,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       sendCalls(team);
     }
     callsDirty.clear();
+    sendTraps(0);
+    sendTraps(1);
     for (const part of packSnapshot(snapshot(), MAX_MESSAGE_BYTES)) {
       transport.send("snapshot", part);
     }

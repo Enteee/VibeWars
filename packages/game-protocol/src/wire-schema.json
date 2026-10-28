@@ -30,6 +30,7 @@
     "rejoin-proof",
     "call",
     "calls",
+    "traps",
     "chat",
     "chat-line"
   ],
@@ -245,6 +246,7 @@
         { "literal": "skill-bar" },
         { "literal": "snapshot" },
         { "literal": "stay-together" },
+        { "literal": "traps" },
         { "literal": "welcome" }
       ]
     },
@@ -2543,6 +2545,32 @@
           "name": "team",
           "optional": false,
           "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+        }
+      ]
+    },
+    "WireTraps": {
+      "properties": [
+        {
+          "name": "traps",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "durationSeconds", "optional": false, "type": "number" },
+                { "name": "endsAt", "optional": false, "type": "number" },
+                { "name": "id", "optional": false, "type": "number" },
+                { "name": "radius", "optional": false, "type": "number" },
+                { "name": "skillId", "optional": false, "type": "string" },
+                {
+                  "name": "team",
+                  "optional": false,
+                  "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+                },
+                { "name": "x", "optional": false, "type": "number" },
+                { "name": "y", "optional": false, "type": "number" }
+              ]
+            }
+          }
         }
       ]
     }

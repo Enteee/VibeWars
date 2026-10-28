@@ -1,0 +1,26 @@
+{
+  "id": "ranger.barbed-trap",
+  "name": "Barbed Trap",
+  "profession": "ranger",
+  "attribute": "Wilderness Survival",
+  "type": "Trap.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 10
+  },
+  "overcast": 0,
+  "activationSeconds": 2,
+  "rechargeSeconds": 20,
+  "upkeep": false,
+  "description": "When Barbed Trap is triggered, all nearby foes are struck for 7...20...23 piercing damage, become Crippled, and begin Bleeding for 3...21...25 seconds. Barbed Trap ends after 90 seconds. While activating this skill, you are easily interrupted.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Ranger/123-Barbed_Trap",
+    "fetchedAt": "2026-10-28T05:04:51.312Z"
+  },
+  "unmapped": {}
+}

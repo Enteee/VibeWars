@@ -99,6 +99,7 @@ export type {
   ChainRole,
   Combatant,
   CreateGroundEffect,
+  GroundAct,
   CreatureTemplate,
   DamageEffect,
   EnergyGainEffect,
@@ -117,6 +118,7 @@ export type {
   SkillType,
   SummonEffect,
   TargetRule,
+  TrapRule,
 } from "./types.js";
 
 export { KNOCKDOWN_SECONDS } from "./types.js";
