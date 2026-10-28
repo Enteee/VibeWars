@@ -94,6 +94,8 @@ export interface TeamEditorCallbacks {
 }
 
 export interface TeamEditorView {
+  /** Leave for `then`, as Back does: unsaved edits ask first (#1268). */
+  leave(then: () => void): void;
   dispose(): void;
 }
 
@@ -292,12 +294,15 @@ export function mountTeamEditor(
     asking = inlineConfirm(anchor, question, confirmLabel, onConfirm, cancelLabel);
   };
 
-  const close = (): void => {
+  const leave = (then: () => void): void => {
     if (!isTeamUnsaved(opened, team)) {
-      callbacks.onClose();
+      then();
       return;
     }
-    ask(back, "Discard changes?", "Discard", callbacks.onClose, "Keep editing");
+    ask(back, "Discard changes?", "Discard", then, "Keep editing");
+  };
+  const close = (): void => {
+    leave(callbacks.onClose);
   };
 
   root.replaceChildren();
@@ -793,6 +798,7 @@ export function mountTeamEditor(
   });
 
   return {
+    leave,
     dispose() {
       disposed = true;
       document.removeEventListener("pointerdown", onPointerDown);

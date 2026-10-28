@@ -12,3 +12,6 @@ export const E2E_BASE = "/VibeWars/next/";
  * reads what it seeded.
  */
 export const STORAGE_NAMESPACE = "vibewars" + E2E_BASE.replace(/\/$/, "");
+
+/** The build id `playwright.config.ts` stamps into the e2e build (#1268). */
+export const E2E_BUILD = "e2e";
