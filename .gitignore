@@ -51,4 +51,5 @@ packages/game-data/generated/
 # Claude Code's per-checkout local files. Named here, not left to a user-level
 # ignore, because the reboot's checkout check reads only this file (#897).
 /.claude/settings.local.json
+/.claude/worktrees/
 /CLAUDE.local.md
