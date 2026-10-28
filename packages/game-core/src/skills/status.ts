@@ -173,7 +173,12 @@ export type StatusId =
   | "shrinking-armor"
   | "illusion-of-haste"
   | "ineptitude"
-  | "crippling-anguish";
+  | "crippling-anguish"
+  // Assassin Deadly Arts (#1234).
+  | "shroud-of-silence"
+  | "expose-defenses"
+  | "enduring-toxin"
+  | "mark-of-death";
 
 /** Health one pip of regeneration or degeneration is worth, per second (GW1). */
 export const HEALTH_PER_PIP = 2;
@@ -310,6 +315,24 @@ export interface StatusDefinition {
    * counts it.
    */
   readonly attackDurationMultiplier: number;
+  /**
+   * The bearer cannot start a spell (#1234): Shroud of Silence's "cannot
+   * cast spells". A spell already being cast goes off; anything that is
+   * not a spell is left alone.
+   */
+  readonly preventsSpells: boolean;
+  /**
+   * The bearer cannot block an attack of the status's source (#1234):
+   * Expose Defenses' "cannot block your attacks". Anyone else's still
+   * rolls block.
+   */
+  readonly unblockableBySource: boolean;
+  /**
+   * Seconds it starts again for when it runs out while the bearer is
+   * moving (#1234): Enduring Toxin's "if that foe is moving when it would
+   * end, it is renewed". Any other end is final. `undefined`: it ends.
+   */
+  readonly renewsWhileMoving: number | undefined;
   /** While active, a knockdown does nothing to the bearer (#468). */
   readonly preventsKnockdown: boolean;
   /** It ends when it stops a knockdown (#845): Fleeting Stability. */
@@ -638,6 +661,9 @@ function define(
     castTimeMultiplier: 1,
     interruptsSpells: false,
     attackDurationMultiplier: 1,
+    preventsSpells: false,
+    unblockableBySource: false,
+    renewsWhileMoving: undefined,
     preventsKnockdown: false,
     endsOnKnockdownPrevented: false,
     block: undefined,
@@ -1535,6 +1561,31 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     moveSpeedMultiplier: 0.5,
     healthPips: -5,
   }),
+
+  // Assassin Deadly Arts (#1234), each at its rank-12 values.
+  // "For 1...6 seconds, target touched foe cannot cast spells."
+  "shroud-of-silence": define("shroud-of-silence", "Shroud of Silence", "hex", {
+    profession: "assassin",
+    preventsSpells: true,
+  }),
+  // "For 1...11 seconds, target foe cannot block your attacks."
+  "expose-defenses": define("expose-defenses", "Expose Defenses", "hex", {
+    profession: "assassin",
+    unblockableBySource: true,
+  }),
+  // "For 5 seconds, target foe suffers -1...5 Health degeneration. If that
+  // foe is moving when Enduring Toxin would end, Enduring Toxin is renewed
+  // for another 5 seconds."
+  "enduring-toxin": define("enduring-toxin", "Enduring Toxin", "hex", {
+    profession: "assassin",
+    healthPips: -4,
+    renewsWhileMoving: 5,
+  }),
+  // "For 4...10 seconds, target foe gains 50% less benefit from healing."
+  "mark-of-death": define("mark-of-death", "Mark of Death", "hex", {
+    profession: "assassin",
+    healingMultiplier: 0.5,
+  }),
 };
 
 /**
@@ -2121,17 +2172,33 @@ export class StatusSet {
    * Returns the ids that expired on this tick so the caller can emit
    * end-of-status effects.
    */
-  public advance(dt: number): StatusId[] {
+  public advance(dt: number, moving: boolean): StatusId[] {
     const expired: StatusId[] = [];
     for (const status of this.#statuses.values()) {
       status.remainingSeconds -= dt;
-      if (status.remainingSeconds <= 0) {
+      if (status.remainingSeconds > 0) {
+        continue;
+      }
+      const renews = getStatusDefinition(status.id).renewsWhileMoving;
+      if (moving && renews !== undefined) {
+        status.remainingSeconds = renews;
+        status.durationSeconds = renews;
+      } else {
         expired.push(status.id);
       }
     }
     this.#end(expired, true);
     return expired;
   }
+}
+
+/**
+ * Whether a bearer of `statuses` cannot start a spell (#1234,
+ * `preventsSpells`). The server's refusal and the skill bar's dimming
+ * both ask this, so the two cannot disagree.
+ */
+export function preventsSpells(statuses: readonly Pick<ActiveStatus, "id">[]): boolean {
+  return statuses.some(({ id }) => getStatusDefinition(id).preventsSpells);
 }
 
 /**

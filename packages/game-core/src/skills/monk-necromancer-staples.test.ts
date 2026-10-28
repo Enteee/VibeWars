@@ -78,7 +78,7 @@ describe("ends and expires (#944)", () => {
     const monk = makeCombatant({ id: "monk", attributeRanks: RANKS });
     ally.statuses.apply("patient-spirit", 2, "monk");
     ally.statuses.drainChanges();
-    ally.statuses.advance(2);
+    ally.statuses.advance(2, false);
     expect(fireChanges(ally, monk)).toEqual([{ kind: "heal", targetId: "ally", amount: 102 }]);
 
     ally.statuses.apply("patient-spirit", 2, "monk");
@@ -91,7 +91,7 @@ describe("ends and expires (#944)", () => {
     const unskilled = makeCombatant({ id: "monk" });
     ally.statuses.apply("patient-spirit", 2, "monk");
     ally.statuses.drainChanges();
-    ally.statuses.advance(2);
+    ally.statuses.advance(2, false);
     expect(fireChanges(ally, unskilled)).toEqual([{ kind: "heal", targetId: "ally", amount: 30 }]);
   });
 
@@ -100,7 +100,7 @@ describe("ends and expires (#944)", () => {
     ally.statuses.apply("malaise", 10, "foe");
     ally.statuses.apply("holy-veil", 1, "ally");
     ally.statuses.drainChanges();
-    ally.statuses.advance(1);
+    ally.statuses.advance(1, false);
     expect(fireChanges(ally, ally)).toEqual([
       { kind: "status-removed", targetId: "ally", statusId: "malaise" },
     ]);
@@ -321,7 +321,7 @@ describe("Plague Touch (#944)", () => {
     user.statuses.apply("blind", 8, "x");
     user.statuses.apply("weakness", 7, "x");
     user.statuses.apply("crippled", 6, "x");
-    user.statuses.advance(1);
+    user.statuses.advance(1, false);
     const target = foe();
     const events = use(user, PLAGUE, target);
     expect(user.statuses.active.map(({ id }) => id)).toEqual(["bleeding", "poison"]);

@@ -3593,7 +3593,7 @@ export class MatchSimulation {
       events.push({ kind: "attack-dodged", targetId: target.id });
     } else if (
       skillHit?.skill.attack?.unblockable !== true &&
-      blocks(target.combatant, "projectile", this.#rng)
+      blocks(target.combatant, projectile.attackerId, "projectile", this.#rng)
     ) {
       blocked = true;
       events.push({ kind: "attack-blocked", targetId: target.id });

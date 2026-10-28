@@ -786,6 +786,33 @@ const status = {
       `<path d="M6 17.5h5l2-4" ${stroke(c, 2.2)}/>` +
       `<path d="M14 7l2.5 3L19 7" ${stroke(c, 2)}/>`,
   ],
+  // Hex: a spark struck through, the foe cannot cast spells (#1234).
+  "shroud-of-silence": [
+    "hex",
+    (c) =>
+      `<path d="M12 6l1.5 4.5L18 12l-4.5 1.5L12 18l-1.5-4.5L6 12l4.5-1.5z" fill="${c}"/>` +
+      `<path d="M5.5 18.5l13-13" ${stroke(c, 2)}/>`,
+  ],
+  // Hex: a shield split open, blows of its caster cannot be blocked (#1234).
+  "expose-defenses": [
+    "hex",
+    (c) =>
+      `<path d="M11 6H7v5.5c0 2.6 1.8 4.4 4 5.5z" fill="${c}"/>` +
+      `<path d="M13.5 6H17v5.5c0 2.6-1.8 4.4-3.5 5.5z" ${stroke(c, 1.6)}/>`,
+  ],
+  // Hex: a drop in a loop, a poison that renews while its foe moves (#1234).
+  "enduring-toxin": [
+    "hex",
+    (c) =>
+      `<path d="M12 8c-1.8 2.4-2.5 3.6-2.5 4.6a2.5 2.5 0 0 0 5 0c0-1-.7-2.2-2.5-4.6z" fill="${c}"/>` +
+      `<path d="M18 12a6 6 0 1 1-2-4.5M16 5v3h3" ${stroke(c, 1.6)}/>`,
+  ],
+  // Hex: a cross over a halved plus, heals worth half (#1234).
+  "mark-of-death": [
+    "hex",
+    (c) =>
+      `<path d="M12 6v12M8 10h8" ${stroke(c, 2.2)}/>` + `<path d="M6 18l12-12" ${stroke(c, 1.6)}/>`,
+  ],
 };
 
 // ---------------------------------------------------------------------------

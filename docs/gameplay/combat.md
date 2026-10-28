@@ -931,6 +931,26 @@ it alone, and a lead that misses or is blocked places none. A mark lasts
 tooltip says it first: "Lead attack.", "Off-hand attack. Must follow a
 lead attack."
 
+Deadly Arts (#1234) has seven staples, each at its rank-12 duration and
+pips, its damage by the Assassin's Deadly Arts. **Shroud of Silence**
+(elite hex, touch): the touched foe cannot start a spell for 5 s, and
+all of _your_ spells are disabled for 15 s. A spell already being cast
+goes off; skills that are not spells and attacks still work, and the
+foe's bar dims its spells while it lasts. A Remove Hex from an ally ends
+it. **Expose Defenses**: for 9 s the foe cannot block your attacks; its
+stance still blocks everyone else's. **Enduring Toxin**: −4 Health
+degeneration for 5 s, renewed for another 5 s each time it would run out
+while the foe is moving; a strip ends it for good. **Mark of Death**:
+half the benefit from healing for 8.8 s, which the 40% floor on heal
+cuts holds to 40% less. **Disrupting Dagger** and **Crippling Dagger**
+are projectile spells with half the normal range: 10…30…35 earth damage
+and an interrupt of whatever the foe is activating, or 15…51…60 earth
+damage and Crippled for 12.6 s if the foe is moving when it hits. A
+dagger that misses does nothing. **Iron Palm** (touch, not an attack, so
+never blocked) deals 5…41…50 damage, ignoring armor, knocks down a foe
+with a hex or a condition, and counts as a lead attack: it leaves your
+lead mark, so an off-hand attack follows it.
+
 **Dual attacks** (#885) must follow your off-hand attack, and strike
 twice: each blow rolls its own miss, block and crit, and the skill's
 bonus and riders land with each blow that hits, so a condition applied

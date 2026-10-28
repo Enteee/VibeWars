@@ -62,6 +62,7 @@ import {
   paintCastFill,
   paintKnockdown,
   slotAffordable,
+  silenced,
   wrongWeapon,
 } from "./skill-slot-state.js";
 import { createSlotTooltips, type SlotTooltips } from "./slot-tooltip.js";
@@ -452,6 +453,7 @@ const REFUSALS: Readonly<Record<ActivationRejection, string>> = {
   "companion-too-far": "Your pet is too far away.",
   "no-animal-to-charm": "There is no animal to charm here.",
   "invalid-target-creature": "That cannot be revived that way.",
+  "cannot-cast-spells": "You cannot cast spells.",
 };
 
 /** Where an attack's refusal differs from a cast's: it is about the weapon, not a skill. */
@@ -1364,6 +1366,7 @@ export function updateHud(
   const companion = match === undefined ? undefined : ownCompanion(match.players, self);
   const far = outOfRange(skillBar, self, target, companion, walls);
   const unwielded = wrongWeapon(skillBar, self);
+  const barred = silenced(skillBar, self);
   hud.slotTips.casting(fill?.slot);
   paintKnockdown(hud.skillBar, self.knockdownRemaining);
   skillBar.forEach((slot, index) => {
@@ -1385,6 +1388,7 @@ export function updateHud(
       adrenalineFading(adrenaline[index] ?? 0, adrenalineLossIn),
     );
     button.classList.toggle("is-wrong-weapon", unwielded[index] === true);
+    button.classList.toggle("is-silenced", barred[index] === true);
     // An echo's copy drains its strip as its time runs out (#1154).
     if (now !== undefined) {
       paintEchoStrip(button, slot, now, reducedMotion);

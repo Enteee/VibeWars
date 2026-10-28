@@ -77,7 +77,7 @@ export function advanceStatuses(
     }
   }
 
-  for (const statusId of combatant.statuses.advance(dt)) {
+  for (const statusId of combatant.statuses.advance(dt, combatant.moving)) {
     events.push({ kind: "status-expired", targetId: combatant.id, statusId });
   }
 
