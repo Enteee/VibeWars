@@ -69,7 +69,7 @@ function use(
 }
 
 function at(combatant: Combatant, position: Vec2): TargetCandidate {
-  return { combatant, position };
+  return { combatant, position, creature: undefined };
 }
 
 describe("Cry of Frustration (#938)", () => {

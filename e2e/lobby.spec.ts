@@ -194,8 +194,8 @@ test("the host starts a match and both players enter the arena", async ({ browse
     await start.click();
 
     // The arena canvas only exists once Phaser has booted into a match.
-    await expect(host.locator("#viewport canvas")).toBeVisible();
-    await expect(guest.locator("#viewport canvas")).toBeVisible();
+    await expect(host.locator("#viewport canvas:not(.compass)")).toBeVisible();
+    await expect(guest.locator("#viewport canvas:not(.compass)")).toBeVisible();
   } finally {
     await context.close();
   }
@@ -209,7 +209,7 @@ test("a lobby match shows the score, the clock and both fighters", async ({ brow
 
   try {
     await startTwoPlayerMatch(host, guest);
-    await expect(host.locator("#viewport canvas")).toBeVisible();
+    await expect(host.locator("#viewport canvas:not(.compass)")).toBeVisible();
 
     const scoreboard = host.locator(".hud-scoreboard");
     // The living on each side (#881).
@@ -249,8 +249,8 @@ test("a player who quits early is told the match still runs, until it ends", asy
 
   try {
     const code = await startTwoPlayerMatch(host, guest, 1);
-    await expect(host.locator("#viewport canvas")).toBeVisible();
-    await expect(guest.locator("#viewport canvas")).toBeVisible();
+    await expect(host.locator("#viewport canvas:not(.compass)")).toBeVisible();
+    await expect(guest.locator("#viewport canvas:not(.compass)")).toBeVisible();
 
     // The canvas shows before the join resolves, and the leave button only
     // exists once the match view is up. The top bar hides in a match (#454).
@@ -370,6 +370,45 @@ test("each row shows the character a player brings, a refused build as Default l
     await expect(guestRow.locator(".lobby-ready")).toHaveText("Ready");
     await expect(host.locator(".lobby-waiting")).toHaveCount(0);
     await expect(host.getByRole("button", { name: "start match" })).toBeEnabled();
+  } finally {
+    await context.close();
+  }
+});
+
+test("a match plays the character the lobby lists, not one selected after joining (#1070)", async ({
+  browser,
+}) => {
+  const { context, pages } = await openPeers(browser, 2);
+  const [host, guest] = pages as [Page, Page];
+
+  try {
+    // Both pages share one storage, so the guest selecting Blank changes
+    // the host's selection too. The host entered with Cynn and plays Cynn.
+    await host.goto("./");
+    await host.getByRole("button", { name: "new character" }).click();
+    await host.locator("input.editor-name").fill("Cynn");
+    await host.locator(".skill-box").first().locator(".skill-box-equip").click();
+    await host.getByRole("button", { name: "Save", exact: true }).click();
+    await host.getByRole("button", { name: "new character" }).click();
+    await host.locator("input.editor-name").fill("Blank");
+    await host.getByRole("button", { name: "Save", exact: true }).click();
+    await host.locator(".roster").getByText("Cynn", { exact: true }).click();
+    const code = await hostLobby(host, "Host");
+    await guest.goto("./");
+    await guest.locator(".roster").getByText("Blank", { exact: true }).click();
+    await joinLobby(guest, "Guest", code);
+
+    await host.getByRole("button", { name: "join team 1" }).click();
+    await guest.getByRole("button", { name: "join team 2" }).click();
+    const hostRow = host.locator(".lobby-team").nth(0).locator(".lobby-slot");
+    await expect(hostRow.locator(".lobby-character")).toHaveText("Cynn · Warrior");
+    await host.getByRole("button", { name: "Ready", exact: true }).click();
+    await guest.getByRole("button", { name: "Ready", exact: true }).click();
+    await host.getByRole("button", { name: "start match" }).click();
+
+    // Cynn's one skill, not the house bar Blank's refused build would play.
+    await expect(host.locator("#viewport canvas:not(.compass)")).toBeVisible();
+    await expect(host.locator(".hud-skills .hud-skill:not(.is-empty)")).toHaveCount(1);
   } finally {
     await context.close();
   }

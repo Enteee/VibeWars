@@ -415,6 +415,7 @@ const REFUSALS: Readonly<Record<ActivationRejection, string>> = {
   "caster-knocked-down": "You are knocked down.",
   "skill-not-on-bar": "That skill is not on your bar.",
   "still-recharging": "That skill is recharging.",
+  "spent-until-morale-boost": "That skill recharges only on a morale boost.",
   "already-casting": "You are already using a skill.",
   "wrong-weapon": "You need another weapon for that.",
   "insufficient-energy": "Not enough energy.",

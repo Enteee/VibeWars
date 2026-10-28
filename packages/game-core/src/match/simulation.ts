@@ -63,7 +63,7 @@ import {
   gainStrikes,
   gainUnits,
 } from "../skills/adrenaline.js";
-import { CastState, type ActiveCast } from "../skills/cast-state.js";
+import { CastState, beginRecharge, type ActiveCast } from "../skills/cast-state.js";
 import { getSkill } from "../skills/catalog.js";
 import { clearChainMarksOn, tickChainMarks } from "../skills/chain.js";
 import {
@@ -1514,6 +1514,7 @@ export class MatchSimulation {
       target: skill.target === "self" ? record.combatant : target?.combatant,
       targetPosition: skill.target === "self" ? record.position : target?.position,
       rechargeRemaining: record.combatant.cast.rechargeRemaining,
+      spent: record.combatant.cast.spent,
       isCasting: record.combatant.cast.isCasting,
       skillBar: record.skillBar,
       losBlockers: this.#walls,
@@ -1740,7 +1741,7 @@ export class MatchSimulation {
     this.#chargeFromDamage(record.combatant, events);
     this.#recordDeaths(events);
     this.#recordKnockdowns(events);
-    this.#recordShadowSteps(events);
+    this.#recordSteps(events);
     this.#recordResurrections(events);
     for (const summon of summons) {
       this.#summon(record, summon.creature, summon.count);
@@ -1776,8 +1777,9 @@ export class MatchSimulation {
       const faster = isSpell(skill.type)
         ? aggregateModifiers(record.combatant.statuses.active).spellRechargeFaster
         : 0;
-      record.combatant.cast.startRecharge(
-        skill.id,
+      beginRecharge(
+        record.combatant.cast,
+        skill,
         reducedRecharge(skill.rechargeSeconds * (1 - rechargeFraction), faster),
       );
     }
@@ -2811,7 +2813,8 @@ export class MatchSimulation {
 
   /**
    * Every shadow step in `events` (#988) puts its caster beside its
-   * target, where it stands now: touching it, on the side the caster came
+   * target, and every teleport (#474) its target beside whom it names,
+   * where that one stands now: touching it, on the side the caster came
    * from, or behind it when the two stood on one spot. With a wall between
    * the target and that spot, on the target, and the push-outs move it
    * clear as they do a walk; the doorway rule does not hold, since a step
@@ -2819,9 +2822,9 @@ export class MatchSimulation {
    * run: its track starts over, and it did not walk this step. An attack
    * and a skill walking in stay.
    */
-  #recordShadowSteps(events: readonly CombatEvent[]): void {
+  #recordSteps(events: readonly CombatEvent[]): void {
     for (const event of events) {
-      if (event.kind !== "shadow-stepped") {
+      if (event.kind !== "shadow-stepped" && event.kind !== "teleported") {
         continue;
       }
       const record = this.#participants.get(event.targetId);
@@ -2945,12 +2948,14 @@ export class MatchSimulation {
   /**
    * A morale boost (GvG's flag stand, HA's altar): `amount` percent to
    * every member of `team`, dead or alive, up to +10%, creatures aside (#1052). Not capped at 0,
-   * so it lifts a death penalty too.
+   * so it lifts a death penalty too. It readies every skill spent until a
+   * morale boost (#474), at +10% too.
    */
   public moraleBoost(team: number, amount: number): void {
     for (const record of this.#participants.values()) {
       if (record.combatant.team === team && countsForTeam(record)) {
         this.#setMorale(record, Math.min(MORALE_CEILING, record.combatant.morale + amount));
+        record.combatant.cast.refreshSpent();
       }
     }
   }
@@ -3146,12 +3151,14 @@ export class MatchSimulation {
    * cast dropped, at spawn. Recharges carry on, as they would in a match.
    * A respawn keeps its overcast and fills only to the ceiling it leaves,
    * as GW1 keeps it through death; a reset clears it (#461), and morale
-   * with it, maxima and all (#843).
+   * with it, maxima and all (#843), and readies a skill spent until a
+   * morale boost (#474).
    */
   #reset(record: ParticipantRecord, why: "respawn" | "reset"): void {
     if (why === "reset") {
       record.combatant.overcast = 0;
       this.#setMorale(record, 0);
+      record.combatant.cast.refreshSpent();
     }
     record.combatant.dead = false;
     record.combatant.health = record.combatant.maxHealth * (record.spec.startHealthFraction ?? 1);

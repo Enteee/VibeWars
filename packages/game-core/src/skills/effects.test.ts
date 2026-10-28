@@ -1034,8 +1034,13 @@ describe("state conditions (#794)", () => {
 describe("resurrect effect (#812)", () => {
   const RESURRECT: UnconditionalEffect = {
     kind: "resurrect",
-    healthPercent: { scaling: { attributeId: "monk.healing-prayers", atZero: 20, atTwelve: 56 } },
+    health: {
+      kind: "percent",
+      percent: { scaling: { attributeId: "monk.healing-prayers", atZero: 20, atTwelve: 56 } },
+    },
     energyPercent: { scaling: { attributeId: "monk.healing-prayers", atZero: 42, atTwelve: 80 } },
+    perPartyMemberWithin: undefined,
+    at: "corpse",
   };
   const monk = (rank: number) =>
     makeCombatant({ id: "caster", attributeRanks: new Map([["monk.healing-prayers", rank]]) });
