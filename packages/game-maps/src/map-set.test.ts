@@ -99,7 +99,7 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
     // Swords, so every hit is a walk into reach: on the longest arena, ~18 s.
     // The first starter build is the Warrior/Monk's (#852).
     const fighter = loadoutOf(pickStarterBuild(() => 0));
-    expect(fighter.equipment.mainHand.weaponId).toBe("sword");
+    expect(fighter.equipment.weaponSets[0].mainHand.weaponId).toBe("sword");
     const ruleset = MINIMAL_GW_INSPIRED_PVP_V1;
     const resolved = resolveLoadout(
       {
@@ -125,7 +125,7 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
           team,
           skillBar: [],
           attributeRanks: resolved.attributeRanks,
-          equipment: resolved.equipment,
+          equipment: resolved.weaponSets[0].equipment,
           baseEnergyPips: fighter.baseEnergyPips,
           maxHealth: 1e7,
           spawn: at,

@@ -32,11 +32,21 @@ async function queue1v1(page: Page, name: string): Promise<void> {
   );
 }
 
-test("Random Arena is greyed out until there is a character to queue with, and 4v4 is the default", async ({
+test("Random Arena is greyed out without a character to queue with, and 4v4 is the default", async ({
   page,
 }) => {
   await page.goto("./");
   const row = page.locator(".menu-random-arena");
+  // The first start's rolled character (#853) queues; deleted, it does
+  // not come back, and nothing is left to queue with.
+  await expect(row.getByRole("button", { name: "Random Arena", exact: true })).toBeEnabled();
+  await page.locator(".roster").getByRole("button", { name: "Edit", exact: true }).click();
+  await page.getByRole("button", { name: "more actions" }).click();
+  await page.getByRole("button", { name: "Delete", exact: true }).click();
+  await page.locator(".inline-confirm").getByRole("button", { name: "delete" }).click();
+  await expect(page.locator(".roster .empty-state")).toContainText("No characters yet.");
+  await page.reload();
+  await expect(page.locator(".roster .empty-state")).toContainText("No characters yet.");
   await expect(row.getByRole("button", { name: "Random Arena", exact: true })).toBeDisabled();
   await expect(row).toContainText("Make a character first.");
   await expect(row.getByRole("button", { name: "4v4", exact: true })).toHaveAttribute(

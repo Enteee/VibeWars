@@ -27,7 +27,7 @@ import { WIRE_STATUS_IDS } from "../wire.js";
  * a unit changed, an enum value reused, a field read differently. The
  * snapshot cannot see those, and old and new tabs must still not meet.
  */
-const SEMANTICS_REVISION = 1;
+const SEMANTICS_REVISION = 2;
 
 /** A JSON value, as the snapshot holds it. */
 export type Json =

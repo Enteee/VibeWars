@@ -135,6 +135,7 @@ export type {
   JsonValue,
   WireSkillBar,
   WireEnded,
+  WireSummaryRow,
   PeerLobbyJoin,
   WireLobbyCharacter,
   WireLobbyPlayer,

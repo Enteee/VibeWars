@@ -15,16 +15,28 @@ export function effectiveMaxEnergy(combatant: Pick<Combatant, "maxEnergy" | "ove
 }
 
 /**
+ * The lowest a floor may push energy to: 0, or where it already is when a
+ * weapon swap left it below 0 (ADR-0036, GW1's hidden energy). Nothing
+ * that clamps energy takes hidden energy deeper.
+ */
+export function energyFloor(combatant: Pick<Combatant, "energy">): number {
+  return Math.min(0, combatant.energy);
+}
+
+/**
  * Overcast `combatant` by `amount`, stacking with what it has. It takes no
  * energy, unless current energy is now above the lowered ceiling, which
- * cuts it to that ceiling, never below 0.
+ * cuts it to that ceiling, never below 0 (or the hidden energy a swap left).
  */
 export function addOvercast(combatant: Combatant, amount: number): void {
   if (amount <= 0) {
     return;
   }
   combatant.overcast += amount;
-  combatant.energy = Math.max(0, Math.min(combatant.energy, effectiveMaxEnergy(combatant)));
+  combatant.energy = Math.max(
+    energyFloor(combatant),
+    Math.min(combatant.energy, effectiveMaxEnergy(combatant)),
+  );
 }
 
 /**

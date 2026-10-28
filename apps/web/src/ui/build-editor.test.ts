@@ -253,22 +253,22 @@ describe("setProfessions", () => {
 
   it("swaps a weapon nothing can govern for the new primary's default (#614)", () => {
     const warrior = setProfessions(newCharacter("c1"), "warrior", undefined);
-    expect(warrior.equipment.mainHand.weaponId).toBe("sword");
+    expect(warrior.equipment.weaponSets[0].mainHand.weaponId).toBe("sword");
 
     const mesmer = setProfessions(warrior, "mesmer", undefined);
-    expect(mesmer.equipment.mainHand).toEqual({
+    expect(mesmer.equipment.weaponSets[0].mainHand).toEqual({
       weaponId: "wand",
       requirementAttributeId: primaryAttributeOf("mesmer").id,
     });
-    expect(mesmer.equipment.offHand?.offhandId).toBe("focus");
+    expect(mesmer.equipment.weaponSets[0].offHand?.offhandId).toBe("focus");
     expect(validateBuild(mesmer)).toEqual([]);
   });
 
   it("gives a Warrior turned Assassin daggers and no off-hand (#614)", () => {
     const warrior = setProfessions(newCharacter("c1"), "warrior", undefined);
     const assassin = setProfessions(warrior, "assassin", undefined);
-    expect(assassin.equipment.mainHand.weaponId).toBe("daggers");
-    expect(assassin.equipment.offHand).toBeNull();
+    expect(assassin.equipment.weaponSets[0].mainHand.weaponId).toBe("daggers");
+    expect(assassin.equipment.weaponSets[0].offHand).toBeNull();
   });
 
   it("keeps a weapon the new pair can still govern, because it is a choice (#614)", () => {
@@ -276,28 +276,28 @@ describe("setProfessions", () => {
     // is a choice, and only one no attribute can govern is swapped.
     const warrior = setProfessions(newCharacter("c1"), "warrior", "assassin");
     const swapped = setProfessions(warrior, "assassin", "warrior");
-    expect(swapped.equipment.mainHand.weaponId).toBe("sword");
+    expect(swapped.equipment.weaponSets[0].mainHand.weaponId).toBe("sword");
   });
 
   it("keeps a wand and re-points its nomination (#614)", () => {
     const elementalist = setProfessions(newCharacter("c1"), "elementalist", undefined);
-    expect(elementalist.equipment.mainHand.weaponId).toBe("wand");
+    expect(elementalist.equipment.weaponSets[0].mainHand.weaponId).toBe("wand");
 
     const monk = setProfessions(elementalist, "monk", undefined);
-    expect(monk.equipment.mainHand.weaponId).toBe("wand");
+    expect(monk.equipment.weaponSets[0].mainHand.weaponId).toBe("wand");
     expect(accessibleAttributeIds("monk", undefined)).toContain(
-      monk.equipment.mainHand.requirementAttributeId,
+      monk.equipment.weaponSets[0].mainHand.requirementAttributeId,
     );
   });
 
   it("drops an off-hand the new professions cannot link", () => {
     // Fists are never swapped, so the shield is reconciled on its own.
     const warrior = setWeapon(setProfessions(newCharacter("c1"), "warrior", undefined), "unarmed");
-    expect(warrior.equipment.offHand).not.toBeNull();
+    expect(warrior.equipment.weaponSets[0].offHand).not.toBeNull();
 
     const switched = setProfessions(warrior, "mesmer", undefined);
-    expect(switched.equipment.mainHand.weaponId).toBe("unarmed");
-    expect(switched.equipment.offHand).toBeNull();
+    expect(switched.equipment.weaponSets[0].mainHand.weaponId).toBe("unarmed");
+    expect(switched.equipment.weaponSets[0].offHand).toBeNull();
   });
 
   it("leaves a build that still validates after any profession change", () => {

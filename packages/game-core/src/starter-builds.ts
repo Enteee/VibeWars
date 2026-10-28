@@ -63,8 +63,15 @@ export const STARTER_BUILDS: readonly PlayerBuild[] = [
       "monk.guardian",
     ],
     equipment: {
-      mainHand: { weaponId: "sword", requirementAttributeId: null },
-      offHand: { offhandId: "shield", requirementAttributeId: "warrior.tactics" },
+      weaponSets: [
+        {
+          mainHand: { weaponId: "sword", requirementAttributeId: null },
+          offHand: { offhandId: "shield", requirementAttributeId: "warrior.tactics" },
+        },
+        null,
+        null,
+        null,
+      ],
       armor: armor("stalwart", minorRune("warrior.swordsmanship"), {
         kind: "universal",
         runeId: "absorption",
@@ -95,8 +102,12 @@ export const STARTER_BUILDS: readonly PlayerBuild[] = [
       "mesmer.energy-tap",
     ],
     equipment: {
-      mainHand: { weaponId: "recurve-bow", requirementAttributeId: null },
-      offHand: null,
+      weaponSets: [
+        { mainHand: { weaponId: "recurve-bow", requirementAttributeId: null }, offHand: null },
+        null,
+        null,
+        null,
+      ],
       armor: armor("survivor", minorRune("ranger.marksmanship")),
     },
   },
@@ -123,8 +134,15 @@ export const STARTER_BUILDS: readonly PlayerBuild[] = [
       "elementalist.fireball",
     ],
     equipment: {
-      mainHand: { weaponId: "wand", requirementAttributeId: "monk.healing-prayers" },
-      offHand: { offhandId: "focus", requirementAttributeId: "monk.protection-prayers" },
+      weaponSets: [
+        {
+          mainHand: { weaponId: "wand", requirementAttributeId: "monk.healing-prayers" },
+          offHand: { offhandId: "focus", requirementAttributeId: "monk.protection-prayers" },
+        },
+        null,
+        null,
+        null,
+      ],
       armor: armor("radiant", minorRune("monk.healing-prayers")),
     },
   },
@@ -151,8 +169,15 @@ export const STARTER_BUILDS: readonly PlayerBuild[] = [
       "elementalist.armor-of-earth",
     ],
     equipment: {
-      mainHand: { weaponId: "wand", requirementAttributeId: "necromancer.curses" },
-      offHand: { offhandId: "focus", requirementAttributeId: "elementalist.fire-magic" },
+      weaponSets: [
+        {
+          mainHand: { weaponId: "wand", requirementAttributeId: "necromancer.curses" },
+          offHand: { offhandId: "focus", requirementAttributeId: "elementalist.fire-magic" },
+        },
+        null,
+        null,
+        null,
+      ],
       armor: armor("survivor", minorRune("necromancer.curses")),
     },
   },
@@ -179,8 +204,15 @@ export const STARTER_BUILDS: readonly PlayerBuild[] = [
       "mesmer.shatter-enchantment",
     ],
     equipment: {
-      mainHand: { weaponId: "wand", requirementAttributeId: "elementalist.fire-magic" },
-      offHand: { offhandId: "focus", requirementAttributeId: "elementalist.energy-storage" },
+      weaponSets: [
+        {
+          mainHand: { weaponId: "wand", requirementAttributeId: "elementalist.fire-magic" },
+          offHand: { offhandId: "focus", requirementAttributeId: "elementalist.energy-storage" },
+        },
+        null,
+        null,
+        null,
+      ],
       armor: armor("survivor", minorRune("elementalist.fire-magic")),
     },
   },

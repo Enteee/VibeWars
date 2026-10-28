@@ -53,7 +53,7 @@ describe("STARTER_BUILDS (#852)", () => {
       });
 
       it("can use every attack skill on its bar with its weapon", () => {
-        const weapon = build.equipment.mainHand.weaponId;
+        const weapon = build.equipment.weaponSets[0].mainHand.weaponId;
         for (const id of build.skillBar) {
           const rule = id === null ? undefined : getSkill(id)?.attack;
           if (rule !== undefined) {

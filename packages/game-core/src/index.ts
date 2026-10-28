@@ -147,8 +147,9 @@ export type {
   ParticipantSpec,
   SkillRequest,
   StepResult,
+  WeaponSetRequest,
 } from "./match/simulation.js";
-export { countsForTeam, MAX_CREATURES, MatchSimulation } from "./match/simulation.js";
+export { countsForTeam, loadoutSpec, MAX_CREATURES, MatchSimulation } from "./match/simulation.js";
 export type { CorpseCandidate } from "./match/corpses.js";
 export { isFreshCorpse, nearestFreshCorpse } from "./match/corpses.js";
 export { facingToward, spawnFacing } from "./match/facing.js";
@@ -156,8 +157,13 @@ export type { IntentRefusal, MatchIntent } from "./match/apply-intent.js";
 export { applyIntent } from "./match/apply-intent.js";
 export { MAX_CATCHUP_SECONDS, drainAccumulator } from "./match/accumulator.js";
 
-export type { CombatCause, CombatLogEntry, CombatTally } from "./match/combat-log.js";
-export { CombatMeter, tallyCombat } from "./match/combat-log.js";
+export type {
+  CombatCause,
+  CombatLogEntry,
+  CombatTally,
+  MatchTallyRow,
+} from "./match/combat-log.js";
+export { CombatMeter, MatchTally, tallyCombat } from "./match/combat-log.js";
 
 export type {
   Behaviour,

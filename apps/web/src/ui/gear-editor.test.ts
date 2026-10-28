@@ -48,37 +48,39 @@ function monk(): StoredCharacter {
 describe("setWeapon", () => {
   it("swaps the weapon class", () => {
     const character = setWeapon(warrior(), "hammer");
-    expect(character.equipment.mainHand.weaponId).toBe("hammer");
+    expect(character.equipment.weaponSets[0].mainHand.weaponId).toBe("hammer");
   });
 
   it("puts the off-hand down when the new weapon needs both hands", () => {
     // The coupling the whole gear trade-off rests on: a shield or a
     // two-hander, never both.
     const withShield = setOffhand(setWeapon(warrior(), "sword"), "shield");
-    expect(withShield.equipment.offHand).not.toBeNull();
+    expect(withShield.equipment.weaponSets[0].offHand).not.toBeNull();
 
     const twoHanded = setWeapon(withShield, "scythe");
-    expect(twoHanded.equipment.offHand).toBeNull();
+    expect(twoHanded.equipment.weaponSets[0].offHand).toBeNull();
   });
 
   it("keeps the off-hand when swapping between one-handers", () => {
     const withShield = setOffhand(setWeapon(warrior(), "sword"), "shield");
-    expect(setWeapon(withShield, "axe").equipment.offHand).not.toBeNull();
+    expect(setWeapon(withShield, "axe").equipment.weaponSets[0].offHand).not.toBeNull();
   });
 
   it("nominates an attribute for a weapon that needs one", () => {
     const character = setWeapon(monk(), "staff");
-    expect(character.equipment.mainHand.requirementAttributeId).not.toBeNull();
+    expect(character.equipment.weaponSets[0].mainHand.requirementAttributeId).not.toBeNull();
     expect(validateBuild(character)).toEqual([]);
   });
 
   it("nominates nothing for a weapon whose attribute is fixed", () => {
-    expect(setWeapon(warrior(), "sword").equipment.mainHand.requirementAttributeId).toBeNull();
+    expect(
+      setWeapon(warrior(), "sword").equipment.weaponSets[0].mainHand.requirementAttributeId,
+    ).toBeNull();
   });
 
   it("prefers the primary attribute when nominating", () => {
     // The one the player is most likely to have invested in.
-    expect(setWeapon(monk(), "wand").equipment.mainHand.requirementAttributeId).toBe(
+    expect(setWeapon(monk(), "wand").equipment.weaponSets[0].mainHand.requirementAttributeId).toBe(
       "monk.divine-favor",
     );
   });
@@ -115,8 +117,8 @@ describe("setWeapon", () => {
 describe("setOffhand", () => {
   it("equips and clears an off-hand", () => {
     const withFocus = setOffhand(setWeapon(monk(), "wand"), "focus");
-    expect(withFocus.equipment.offHand?.offhandId).toBe("focus");
-    expect(setOffhand(withFocus, null).equipment.offHand).toBeNull();
+    expect(withFocus.equipment.weaponSets[0].offHand?.offhandId).toBe("focus");
+    expect(setOffhand(withFocus, null).equipment.weaponSets[0].offHand).toBeNull();
   });
 
   it("refuses silently when both hands are full", () => {
@@ -154,8 +156,10 @@ describe("attribute nominations", () => {
   it("re-links gear without disturbing anything else", () => {
     const before = setWeapon(monk(), "wand");
     const after = setRequirementAttribute(before, "mainHand", "monk.healing-prayers");
-    expect(after.equipment.mainHand.requirementAttributeId).toBe("monk.healing-prayers");
-    expect(after.equipment.mainHand.weaponId).toBe("wand");
+    expect(after.equipment.weaponSets[0].mainHand.requirementAttributeId).toBe(
+      "monk.healing-prayers",
+    );
+    expect(after.equipment.weaponSets[0].mainHand.weaponId).toBe("wand");
   });
 
   it("ignores a re-link on an absent off-hand", () => {
@@ -422,9 +426,9 @@ describe("gear drag and drop", () => {
       { from: "weapon-library", weaponId: "scythe" },
       { kind: "main-hand" },
     );
-    expect(after.equipment.mainHand.weaponId).toBe("scythe");
+    expect(after.equipment.weaponSets[0].mainHand.weaponId).toBe("scythe");
     // A scythe needs both hands, so the shield comes off with it.
-    expect(after.equipment.offHand).toBeNull();
+    expect(after.equipment.weaponSets[0].offHand).toBeNull();
   });
 
   it("ignores gear dropped where it does not belong", () => {
@@ -492,7 +496,7 @@ describe("gear drag and drop", () => {
     const withShield = setOffhand(setWeapon(warrior(), "sword"), "shield");
     expect(
       applyGearDrop(withShield, { from: "hand", hand: "offHand" }, { kind: "library" }).equipment
-        .offHand,
+        .weaponSets[0].offHand,
     ).toBeNull();
 
     // There is no "no weapon" — bare hands are a weapon, so dragging the

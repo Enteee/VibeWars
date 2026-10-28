@@ -1,12 +1,15 @@
 import {
   ADRENALINE_PER_STRIKE,
   CHAIN_MARK_SECONDS,
+  DEFAULT_MATCH_RULES,
+  KILL_COUNT_MATCH_RULES,
   MINIMAL_GW_INSPIRED_PVP_V1,
   defaultBuildEquipment,
   type CombatLogEntry,
   type PlayerBuild,
 } from "@vibewars/game-core";
 import {
+  MAX_LOBBY_PLAYERS,
   MAX_WIRE_COMBATS,
   parseAdrenaline,
   parseChainMarks,
@@ -16,6 +19,7 @@ import {
   type AdrenalineMessage,
   type ChainMarksMessage,
   type CastRefusedMessage,
+  type PeerHello,
 } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
@@ -25,6 +29,7 @@ import {
   isStarterBar,
   playerIn,
   self,
+  settle,
   startMatch,
   starterBuild,
   toJson,
@@ -76,8 +81,12 @@ const HAMMERER: PlayerBuild = {
   skillBar: ["warrior.backbreaker", null, null, null, null, null, null, null],
   equipment: {
     ...defaultBuildEquipment("warrior"),
-    mainHand: { weaponId: "hammer", requirementAttributeId: null },
-    offHand: null,
+    weaponSets: [
+      { mainHand: { weaponId: "hammer", requirementAttributeId: null }, offHand: null },
+      null,
+      null,
+      null,
+    ],
   },
 };
 
@@ -1120,5 +1129,91 @@ describe("wireCombat and combatMessage (#288, #375)", () => {
     const [wired] = wireCombat([entry({ events: [crit, heal] })]);
     expect(wired?.events.map((event) => event.crit)).toEqual([true, null]);
     expect(wired === undefined ? undefined : combatMessage(wired).events).toEqual([crit, heal]);
+  });
+});
+
+describe("the match summary (#1057)", () => {
+  /** `connection`'s summary line for `id`. */
+  const line = (connection: MatchConnection, id: string) =>
+    connection.getSnapshot().summary?.find((row) => row.id === id);
+
+  /** A hello named `name` that brings the nuker's build. */
+  function nuker(name: string): PeerHello {
+    return hello({ name, build: toJson(starterBuild(NUKER)) });
+  }
+
+  /** `a` closes on `b` and lands one Fireball: 98 after armor (see above). */
+  async function fireball(match: TestMatch, a: MatchConnection, b: MatchConnection) {
+    await closeDistance(match, a, b.selfSessionId, 300);
+    await target(match, a, b.selfSessionId);
+    a.sendIntent({ kind: "use-skill", slot: FIREBALL });
+    await until(
+      match,
+      () => (playerIn(a.getSnapshot(), b.selfSessionId)?.health ?? 590) < 590,
+      "the target to take damage",
+    );
+  }
+
+  it("ends with every seat's line, one who left included, in seat order", async () => {
+    const match = startMatch({ matchRules: { ...DEFAULT_MATCH_RULES, timeLimitSeconds: 30 } });
+    const { connection: a } = await match.join(nuker("Ann"));
+    const { connection: b } = await match.join(nuker("Bob"));
+    const { connection: c } = await match.join(nuker("Cat"));
+    await match.step(TICK);
+    await c.disconnect();
+    expect(a.getSnapshot().summary).toBeUndefined();
+
+    await fireball(match, a, b);
+    await until(match, () => a.getSnapshot().phase === "finished", "the end", 40);
+
+    expect(a.getSnapshot().summary?.map(({ name, team }) => [name, team])).toEqual([
+      ["Ann", 0],
+      ["Bob", 1],
+      ["Cat", 0],
+    ]);
+    expect(line(a, a.selfSessionId)).toMatchObject({ damage: 98, taken: 0, kills: 0, deaths: 0 });
+    expect(line(a, b.selfSessionId)).toMatchObject({ damage: 0, taken: 98, deaths: 0 });
+    expect(line(a, c.selfSessionId)).toMatchObject({ damage: 0, taken: 0, interrupts: 0 });
+    // Everyone is told the same.
+    expect(b.getSnapshot().summary).toEqual(a.getSnapshot().summary);
+  });
+
+  it("keeps at most a lobby's worth of lines, the seats still held among them", async () => {
+    // Kill-count: a bye that empties a team is no wipe, so the match runs on.
+    const match = startMatch({ matchRules: KILL_COUNT_MATCH_RULES, maxPlayers: 2 });
+    const { connection: a } = await match.join(hello({ name: "Ann" }));
+    // More distinct seats than `ended` carries: each comes, and says bye.
+    for (let i = 0; i < MAX_LOBBY_PLAYERS + 4; i += 1) {
+      const guest = match.network.join();
+      await settle();
+      guest.send("hello", hello({ name: `Guest${String(i)}` }), "host");
+      await settle();
+      guest.send("bye", {}, "host");
+      await guest.leave();
+      await match.step(TICK);
+    }
+    await match.join(hello({ name: "Bob" }));
+
+    await match.host.close("host-left");
+    await settle();
+
+    const names = a.getSnapshot().summary?.map(({ name }) => name);
+    expect(names).toHaveLength(MAX_LOBBY_PLAYERS);
+    expect(names?.[0]).toBe("Ann");
+    expect(names?.at(-1)).toBe("Bob");
+    // The earliest who left went first.
+    expect(names).not.toContain("Guest0");
+    expect(names).toContain(`Guest${String(MAX_LOBBY_PLAYERS + 3)}`);
+  });
+
+  it("carries the summary so far when the host leaves", async () => {
+    const { match, a, b } = await joinPair();
+    await fireball(match, a, b);
+
+    await match.host.close("host-left");
+    await settle();
+
+    expect(line(b, a.selfSessionId)?.damage).toBe(98);
+    expect(line(b, b.selfSessionId)?.taken).toBe(98);
   });
 });

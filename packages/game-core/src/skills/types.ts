@@ -903,14 +903,15 @@ export interface Combatant {
    */
   moving: boolean;
   /**
-   * Weapon, armor and rune effects, already resolved (ADR-0012).
+   * Weapon, armor and rune effects of the weapon set in hand, already
+   * resolved (ADR-0012, ADR-0036).
    *
-   * Readonly, and resolved once before this combatant was built. Gear is
-   * fixed at join, so nothing in the simulation ever needs to change it —
-   * and making it immutable is what guarantees a rune cannot be applied
-   * twice.
+   * Every set was resolved once before this combatant was built, and a
+   * weapon swap only points this at another of them: the simulation's
+   * swap is its one writer, and nothing is ever resolved again, which is
+   * what guarantees a rune cannot be applied twice.
    */
-  readonly equipment: ResolvedEquipment;
+  equipment: ResolvedEquipment;
 }
 
 export interface SkillContext {

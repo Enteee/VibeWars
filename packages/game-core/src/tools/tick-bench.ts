@@ -1,7 +1,7 @@
 import { resolveLoadout } from "../equipment/resolve.js";
 import { segment, type Segment } from "../geometry.js";
 import { loadoutOf } from "../join-loadout.js";
-import { MatchSimulation, type ParticipantSpec } from "../match/simulation.js";
+import { MatchSimulation, loadoutSpec, type ParticipantSpec } from "../match/simulation.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { pickStarterBuild } from "../starter-builds.js";
 import { vec2, type Vec2 } from "../vec2.js";
@@ -65,8 +65,7 @@ function benchMatch(field: BenchField, seed: string): MatchSimulation {
     id: spawn.id,
     team: spawn.team,
     skillBar: BENCH_LOADOUT.skillBar,
-    attributeRanks: resolved.attributeRanks,
-    equipment: resolved.equipment,
+    ...loadoutSpec(resolved),
     baseEnergyPips: BENCH_LOADOUT.baseEnergyPips,
     // Nobody dies, so everyone keeps walking and swinging the whole run.
     maxHealth: 1e7,
