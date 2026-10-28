@@ -41,6 +41,7 @@ function actor(
     statuses: [],
     enchanted: false,
     hexed: false,
+    conditionCues: [],
     ...overrides,
   };
 }
