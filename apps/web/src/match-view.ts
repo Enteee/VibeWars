@@ -158,6 +158,7 @@ export function toArenaSnapshot(
         health: player.health,
         maxHealth: player.maxHealth,
         dead: player.dead,
+        exploited: player.corpseExploited,
         // From the snapshot, not the event, so a dropped event or a late
         // joiner still draws it right, and it stands up the moment it is 0.
         knockedDown: player.knockdownRemaining > 0,

@@ -167,6 +167,17 @@ export interface LifeStealEffect {
   readonly amount: Magnitude;
 }
 
+/**
+ * The caster gains up to `amount` Health from the corpse its skill
+ * exploited (#466), as Soul Feast's "steal 50...234...280 Health": life
+ * stealing's gain without a living target. Not a heal: no healing
+ * modifier, capped at effective maximum health.
+ */
+export interface StealFromCorpseEffect {
+  readonly kind: "steal-from-corpse";
+  readonly amount: Magnitude;
+}
+
 /** Health sacrificed by the *caster*, as a percentage of their maximum. */
 export interface SacrificeHealthEffect {
   readonly kind: "sacrifice-health";
@@ -538,6 +549,7 @@ export type UnconditionalEffect =
   | AdrenalineGainEffect
   | EnergyLossEffect
   | LifeStealEffect
+  | StealFromCorpseEffect
   | SacrificeHealthEffect
   | LoseHealthEffect
   | TransferConditionsEffect
@@ -743,7 +755,15 @@ export interface Skill {
    * it is dodged. `undefined`: it lands at once.
    */
   readonly projectile: SkillProjectile | undefined;
+  /** `undefined`: it needs no corpse. */
+  readonly corpse: CorpseRule | undefined;
   readonly effects: readonly SkillEffect[];
+}
+
+/** A skill that exploits a corpse (#466): Soul Feast, later wells and minions. */
+export interface CorpseRule {
+  /** The nearest fresh corpse within this of the caster, world units. */
+  readonly radius: number;
 }
 
 /** How a flying spell flies (#535). */

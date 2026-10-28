@@ -43,7 +43,10 @@ export type ActivationRejection =
   | "invalid-target-ally"
   | "invalid-target-enemy"
   | "out-of-range"
-  | "no-line-of-sight";
+  | "no-line-of-sight"
+  // A corpse skill with no fresh corpse in reach (#466): checked by the
+  // simulation, which knows where the bodies are.
+  | "no-corpse";
 
 export type ActivationCheck =
   { readonly ok: true } | { readonly ok: false; readonly reason: ActivationRejection };

@@ -700,6 +700,10 @@ function describeEffect(
       const magnitude = describeMagnitude(effect.amount, ranks);
       return { text: `Steals up to ${String(magnitude.current)} Health`, magnitude };
     }
+    case "steal-from-corpse": {
+      const magnitude = describeMagnitude(effect.amount, ranks);
+      return { text: `You steal ${String(magnitude.current)} Health`, magnitude };
+    }
     case "sacrifice-health":
       return {
         text: `You sacrifice ${String(effect.percentOfMax)}% of your maximum health`,
@@ -915,6 +919,13 @@ function headlineOf(
       };
     }
     case "life-steal": {
+      const magnitude = describeMagnitude(effect.amount, ranks);
+      return {
+        text: `steals ${String(magnitude.current)} health`,
+        scales: magnitude.attributeId !== undefined,
+      };
+    }
+    case "steal-from-corpse": {
       const magnitude = describeMagnitude(effect.amount, ranks);
       return {
         text: `steals ${String(magnitude.current)} health`,
@@ -1252,6 +1263,11 @@ export function describeSkill(
     skill.projectile === undefined
       ? []
       : [{ text: "Projectile: can be dodged", magnitude: undefined }];
+  // A skill that exploits a corpse (#466) says so before what it does.
+  const corpseLine =
+    skill.corpse === undefined
+      ? []
+      : [{ text: "Exploits the nearest corpse", magnitude: undefined }];
   const effects = [
     ...chainLine,
     ...bonusLine,
@@ -1259,6 +1275,7 @@ export function describeSkill(
     ...cleaveLine,
     ...cleaveAllLine,
     ...penetrationLine,
+    ...corpseLine,
     ...skill.effects.flatMap((effect) => describeEffects(effect, ranks)),
     ...onBlocked,
     ...whileActivating,

@@ -1889,6 +1889,7 @@
         { "name": "castRemaining", "optional": false, "type": "number" },
         { "name": "castTotal", "optional": false, "type": "number" },
         { "name": "castingSkillId", "optional": false, "type": { "union": ["null", "string"] } },
+        { "name": "corpseExploited", "optional": false, "type": "boolean" },
         {
           "name": "creature",
           "optional": false,
@@ -2059,6 +2060,7 @@
                   "optional": false,
                   "type": { "union": ["null", "string"] }
                 },
+                { "name": "corpseExploited", "optional": false, "type": "boolean" },
                 {
                   "name": "creature",
                   "optional": false,
@@ -2226,6 +2228,7 @@
                   "optional": false,
                   "type": { "union": ["null", "string"] }
                 },
+                { "name": "corpseExploited", "optional": false, "type": "boolean" },
                 {
                   "name": "creature",
                   "optional": false,
