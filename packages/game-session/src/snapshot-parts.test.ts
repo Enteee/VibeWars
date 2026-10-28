@@ -46,6 +46,7 @@ function player(index: number): WirePlayer {
     swingElapsed: 0,
     swingTotal: 1.33,
     knockdownRemaining: 0,
+    invulnerableSeconds: 0,
     healthPips: 0,
     energyPips: 0,
     creature: null,

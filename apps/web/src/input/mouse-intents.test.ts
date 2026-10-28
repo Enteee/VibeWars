@@ -46,6 +46,7 @@ function player(sessionId: string, team: number, x: number): PlayerSnapshot {
     swingElapsed: 0,
     swingTotal: 0,
     knockdownRemaining: 0,
+    invulnerableSeconds: 0,
     healthPips: 0,
     energyPips: 0,
     creature: undefined,
@@ -73,6 +74,7 @@ function body(id: string, x: number, team: RenderableActor["team"]): RenderableA
   return {
     id,
     name: id,
+    bot: false,
     position: vec2(x, 0),
     facing: 0,
     weaponId: undefined,
@@ -94,6 +96,7 @@ function body(id: string, x: number, team: RenderableActor["team"]): RenderableA
     statuses: [],
     enchanted: false,
     hexed: false,
+    invulnerable: false,
     conditionCues: [],
   };
 }

@@ -53,6 +53,7 @@ the code and `scripts/assets/icons.mjs` copy them.
 | `preparation`  | `#e3b341` | Preparation markers                      |
 | `glyph`        | `#c3e88d` | Glyph markers                            |
 | `weapon-spell` | `#8b9cff` | Weapon spell markers                     |
+| `invulnerable` | `#f5e6b8` | A shrine-raised body's shimmer (#1233)   |
 
 ### HUD bars
 
@@ -532,6 +533,12 @@ They are drawn on the body, under every mark, so the weapon and the off-hand
 cross them. They are static, reduced motion or not; a knocked-down body keeps
 them round its centre, and a corpse wears none.
 
+**The invulnerable shimmer** (#1233) says a body a shrine raised takes
+nothing for now (#1208): a solid `invulnerable` ring where the hex ring
+goes, which it never meets, since a raise starts with no hex and refuses
+every new one. Its alpha pulses between 0.35 and 1 every 0.8 s; under
+reduced motion it holds at 1. It is gone the frame the window ends.
+
 **The condition cues** (#1138) say a living body is burning, bleeding or
 poisoned: three `condition` flames on its top edge, 3 wide, flickering
 between r + 3 and r + 6 every 0.3 s; a `damage` drop falling from its
@@ -833,9 +840,10 @@ it, not baked in, so one file serves every screen.
   in an arrow ring), hex-bolt (dashed ring, bolt), blade-cleanse, blade-hook,
   blade-shards, hilt, banner-note, mountain-crack, dust, thorns, limp,
   dagger-burst, ox-horns, spider, resurrect-seal, resurrect-arrive,
-  resurrect-return, resurrect-blood, bone-minions, bone-horror, jaws,
-  meteor-trio, ring-heal, echo-spell, echo-skill. A new primary effect adds a
-  glyph; a new skill adds a row.
+  resurrect-return, resurrect-blood, bone-minions, bone-horror, jaws, hex-cut,
+  drop-bolt, drop-ward, drop-pair, plus-sparks, plus-gusts, party-heal,
+  plus-ripple, meteor-trio, ring-heal, echo-spell, echo-skill. A new primary
+  effect adds a glyph; a new skill adds a row.
 
 ### Skill slot states
 

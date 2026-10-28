@@ -2,14 +2,18 @@ import { LobbyNoAnswerError } from "@vibewars/game-session";
 import { describe, expect, it } from "vitest";
 
 import {
+  BOT_REFUSED_MESSAGE,
   CONNECTION_LOST_MESSAGE,
   HOST_CLOSED_MESSAGE,
   NO_ANSWER_MESSAGE,
   NO_RELAY_MESSAGE,
+  NOT_HOST_MESSAGE,
+  NO_SEAT_FOR_BOT_MESSAGE,
   PEER_UNREACHABLE_MESSAGE,
   TURN_RELAY_HINT,
   joinFailureNotice,
   lobbyClosedNotice,
+  lobbyRefusalNotice,
   loopbackHint,
 } from "./session.js";
 
@@ -21,6 +25,14 @@ describe("the notice for a closed lobby (#515)", () => {
   it("blames no one when the host's peer was gone for the whole window", () => {
     expect(lobbyClosedNotice("connection-lost")).toBe(CONNECTION_LOST_MESSAGE);
     expect(CONNECTION_LOST_MESSAGE).not.toBe(HOST_CLOSED_MESSAGE);
+  });
+});
+
+describe("the notice for a refused bot (#1194)", () => {
+  it("says there is no seat in a full lobby, who may ask, or that the bot could not be had", () => {
+    expect(lobbyRefusalNotice("lobby-full")).toBe(NO_SEAT_FOR_BOT_MESSAGE);
+    expect(lobbyRefusalNotice("not-host")).toBe(NOT_HOST_MESSAGE);
+    expect(lobbyRefusalNotice("invalid-bot")).toBe(BOT_REFUSED_MESSAGE);
   });
 });
 

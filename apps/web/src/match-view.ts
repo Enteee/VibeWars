@@ -167,6 +167,7 @@ export function toArenaSnapshot(
       return {
         id: player.sessionId,
         name: player.name,
+        bot: player.bot,
         position: { x: player.x, y: player.y },
         facing: player.facing,
         weaponId: player.weaponId,
@@ -200,6 +201,7 @@ export function toArenaSnapshot(
         statuses,
         enchanted: rings.enchanted,
         hexed: rings.hexed,
+        invulnerable: !player.dead && player.invulnerableSeconds > 0,
         conditionCues: conditionCues(living),
       };
     }),

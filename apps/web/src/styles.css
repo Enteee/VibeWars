@@ -19,6 +19,8 @@
   --elite: #d4a72c;
   /* Enchantment markers (art direction palette). */
   --enchantment: #56d4dd;
+  /* A shrine raise's invulnerability (art direction palette, #1233). */
+  --invulnerable: #f5e6b8;
   font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
 }
 
@@ -240,6 +242,11 @@ body {
 
 .hud-target-text {
   color: var(--ink);
+}
+
+.hud-target-bot,
+.party-row-bot {
+  margin-left: 0.35rem;
 }
 
 /* The target's health, then your dagger chain mark on it (#916), as GW1. */
@@ -1917,6 +1924,40 @@ body {
   color: #7ee787;
 }
 
+/* The host's Add bot (#1194): a profession and the button, under the team's name. */
+.lobby-add-bot {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.lobby-add-bot select {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.lobby-add-bot button,
+.lobby-remove-bot {
+  padding: 0.15rem 0.6rem;
+  font-size: 0.8rem;
+}
+
+/* A bot's tag (#1194), wherever its name shows: small, so it labels the
+   name rather than competing with it. */
+.bot-tag {
+  flex: 0 0 auto;
+  padding: 0 0.35rem;
+  border: 1px solid #d2a8ff;
+  border-radius: 999px;
+  color: #d2a8ff;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+}
+
+.lobby-ready.bot-tag {
+  padding: 0.1rem 0.55rem;
+  font-size: 0.78rem;
+}
+
 /* Count and clock: top-centre, away from the skill bar, so checking the
    score never competes with checking what you can cast. The foes' pips
    sit beside them (#881). */
@@ -2111,6 +2152,16 @@ body {
 .hud-attacking img {
   width: 16px;
   height: 16px;
+}
+
+/* After the name, as "attacking", so the frame never grows for it (#1233). */
+.hud-target-invulnerable {
+  margin-left: 0.6rem;
+  color: var(--invulnerable);
+}
+
+.hud-target-invulnerable[hidden] {
+  display: none;
 }
 
 .hud-result {

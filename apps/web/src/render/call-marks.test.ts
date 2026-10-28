@@ -10,6 +10,7 @@ const R = 14;
 const CALLED: RenderableActor = {
   id: "foe",
   name: "foe",
+  bot: false,
   position: CENTRE,
   facing: 0,
   weaponId: undefined,
@@ -31,6 +32,7 @@ const CALLED: RenderableActor = {
   statuses: [],
   enchanted: false,
   hexed: false,
+  invulnerable: false,
   conditionCues: [],
 };
 

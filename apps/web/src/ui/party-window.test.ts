@@ -37,6 +37,7 @@ function player(sessionId: string, overrides: Partial<PlayerSnapshot> = {}): Pla
     swingElapsed: 0,
     swingTotal: 0,
     knockdownRemaining: 0,
+    invulnerableSeconds: 0,
     corpseExploited: false,
     healthPips: 0,
     energyPips: 0,
@@ -116,6 +117,12 @@ describe("partyRows (#1055)", () => {
     const [me, kaja] = partyRows(match([ME, KAJA]));
     expect(me?.professions.map((icon) => icon.name)).toEqual(["Monk"]);
     expect(kaja?.professions).toEqual([]);
+  });
+
+  it("marks a lobby's bot, so its row wears the BOT tag (#1194)", () => {
+    const [me, bot] = partyRows(match([ME, player("bot-1", { name: "Monk Bot", bot: true })]));
+    expect(me?.bot).toBe(false);
+    expect(bot?.bot).toBe(true);
   });
 
   it("is empty when you are alone on your team, or spectating", () => {
@@ -314,6 +321,18 @@ describe("createPartyWindow (#1055)", () => {
     const [, bar, dead] = odo?.children ?? [];
     expect(bar?.hidden).toBe(true);
     expect(dead?.hidden).toBe(false);
+  });
+
+  it("shows the BOT tag after a bot's name, and on no one else's (#1194)", () => {
+    party.update(match([ME, player("bot-1", { name: "Monk Bot", bot: true })]));
+    const tags = panel().children.map((row) => {
+      const [, , tag] = row.children[0]?.children ?? [];
+      return tag === undefined ? undefined : { text: tag.textContent, hidden: tag.hidden };
+    });
+    expect(tags).toEqual([
+      { text: "BOT", hidden: true },
+      { text: "BOT", hidden: false },
+    ]);
   });
 
   it("goes compact past 8 members", () => {

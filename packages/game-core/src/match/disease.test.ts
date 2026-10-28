@@ -186,6 +186,26 @@ describe("Disease spreads (#765)", () => {
     expect(diseased(second)).toEqual([]);
   });
 
+  it("an invulnerable body says so once an outbreak, not every step, and catches it after (#1233)", () => {
+    const match = melee();
+    get(match, "a").invulnerableRemaining = 0.5;
+    get(match, "w").statuses.apply("disease", 10, "necro");
+    const log = stepFor(match, 0.25);
+    const refused = log.filter((entry) =>
+      entry.events.some((event) => event.kind === "invulnerable"),
+    );
+    expect(refused).toMatchObject([
+      {
+        cause: "degeneration",
+        sourceId: "necro",
+        events: [{ kind: "invulnerable", targetId: "a" }],
+      },
+    ]);
+    expect(get(match, "a").statuses.has("disease")).toBe(false);
+    stepFor(match, 0.5);
+    expect(get(match, "a").statuses.has("disease")).toBe(true);
+  });
+
   it("is −4 health pips, like poison", () => {
     const match = melee();
     const x = get(match, "x");

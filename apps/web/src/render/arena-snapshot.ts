@@ -31,6 +31,8 @@ export interface RenderableActor {
   readonly id: string;
   /** Drawn above the actor, so a player can tell who is who. */
   readonly name: string;
+  /** A lobby's bot (#1194): its name plate wears the BOT tag. */
+  readonly bot: boolean;
   readonly position: Vec2;
   /** Radians, `atan2` convention, 0 = +x (#187). Not drawn yet. */
   readonly facing: number;
@@ -65,6 +67,8 @@ export interface RenderableActor {
   readonly enchanted: boolean;
   /** Wears the broken hex ring (#1117); never a corpse. */
   readonly hexed: boolean;
+  /** Shimmers, a shrine raise's invulnerability (#1233); never a corpse. */
+  readonly invulnerable: boolean;
   /** Flames, drops or bubbles on the body (#1138), two at most; never a corpse. */
   readonly conditionCues: readonly ConditionCue[];
 }

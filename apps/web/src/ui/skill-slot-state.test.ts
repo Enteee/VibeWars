@@ -65,6 +65,7 @@ function self(cast: Partial<PlayerSnapshot>): PlayerSnapshot {
     swingElapsed: 0,
     swingTotal: 0,
     knockdownRemaining: 0,
+    invulnerableSeconds: 0,
     healthPips: 0,
     energyPips: 0,
     creature: undefined,

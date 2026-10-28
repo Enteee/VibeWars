@@ -23,6 +23,7 @@ import type {
 import type { KeyLabeller } from "../input/key-labels.js";
 import { SKILL_ACTIONS, actionLabel, codeLabel, type Keymap } from "../input/keymap.js";
 import { teamColour } from "../render/arena-snapshot.js";
+import { botTagElement } from "./bot-tag.js";
 import { cssColour } from "./character-preview.js";
 import { paintHealthTint } from "./health-tint.js";
 import {
@@ -132,6 +133,8 @@ export interface HudElements {
   readonly targetProfessions: HTMLElement;
   /** The target's name, or "no target", in the panel's header. */
   readonly targetText: HTMLElement;
+  /** The BOT tag after a lobby bot's name (#1194); hidden for anyone else. */
+  readonly targetBot: HTMLElement;
   /** The target's health bar (#484), labelled with its percentage. */
   readonly targetHealth: HTMLElement;
   readonly targetHealthFill: HTMLElement;
@@ -148,6 +151,8 @@ export interface HudElements {
   readonly targetCastFill: HTMLElement;
   /** Crossed swords and "attacking", shown while self attacks the target (#160). */
   readonly attacking: HTMLElement;
+  /** "Invulnerable 0:04" while a shrine raise protects the target (#1233). */
+  readonly targetInvulnerable: HTMLElement;
   /** The count and clock, and beside them the foes' pips (#881). */
   readonly scoreboard: HTMLElement;
   readonly scoreboardText: HTMLElement;
@@ -256,12 +261,15 @@ export function createHud(
   const targetHeader = element("div", "hud-target-header", targetPanel);
   const targetProfessions = element("span", "hud-target-professions", targetHeader);
   const targetText = element("span", "hud-target-text", targetHeader);
+  const targetBot = targetHeader.appendChild(botTagElement("hud-target-bot"));
   const attacking = element("span", "hud-attacking", targetHeader);
   const swords = attacking.appendChild(document.createElement("img"));
   swords.src = attackingIcon();
   swords.alt = "";
   attacking.append("attacking");
   attacking.hidden = true;
+  const targetInvulnerable = element("span", "hud-target-invulnerable", targetHeader);
+  targetInvulnerable.hidden = true;
   const targetHealthRow = element("div", "hud-target-health-row", targetPanel);
   const targetHealth = element("div", "hud-bar hud-target-health", targetHealthRow);
   const targetHealthFill = element("div", "hud-bar-fill", targetHealth);
@@ -353,6 +361,7 @@ export function createHud(
     targetEffects,
     targetProfessions,
     targetText,
+    targetBot,
     targetHealth,
     targetHealthFill,
     targetHealthLost,
@@ -365,6 +374,7 @@ export function createHud(
     targetCastName,
     targetCastFill,
     attacking,
+    targetInvulnerable,
     scoreboard,
     scoreboardText,
     enemies,
@@ -1196,6 +1206,13 @@ export function flashTargetCast(
   }
 }
 
+/** "Invulnerable 0:04": the seconds left, rounded up, as a clock (#1233). */
+export function invulnerableLabel(seconds: number): string {
+  const whole = Math.ceil(seconds);
+  const minutes = Math.floor(whole / 60);
+  return `Invulnerable ${String(minutes)}:${String(whole % 60).padStart(2, "0")}`;
+}
+
 /** The target frame (#484): header, health bar and cast row. */
 function renderTarget(
   hud: HudElements,
@@ -1204,7 +1221,11 @@ function renderTarget(
 ): void {
   renderTargetProfessions(hud.targetProfessions, target);
   hud.targetText.textContent = target === undefined ? "no target" : target.name;
+  hud.targetBot.hidden = target?.bot !== true;
   hud.attacking.hidden = !isAttackingTarget(self, target);
+  const invulnerable = target === undefined || target.dead ? 0 : target.invulnerableSeconds;
+  hud.targetInvulnerable.hidden = invulnerable <= 0;
+  hud.targetInvulnerable.textContent = invulnerable > 0 ? invulnerableLabel(invulnerable) : "";
   // Armor on hover: a number to look up, not to read at a glance.
   hud.targetPanel.title = target === undefined ? "" : `armor ${String(target.armor)}`;
   hud.targetHealth.hidden = target === undefined;
