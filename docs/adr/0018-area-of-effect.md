@@ -92,3 +92,21 @@ blames `area-of-effect`.
   world coordinates, server-side validation of that new kind of input, a
   reticle and a `PROTOCOL_VERSION` bump, and it unlocks only Meteor Shower,
   which is blocked on two other mechanics anyway.
+
+## Amendment (2026-10-27, #1013): the party area
+
+Areas were centred on the caster or the target, with line of sight from
+that origin. Heal Party's "heal entire party" is neither: it reaches the
+caster and every living team-mate, at any distance and through walls.
+`AreaRule` is now `RadiusArea | PartyArea`, and `PartyArea` is only
+`{ origin: "party" }`. `resolveTargets` returns the caster first, so it
+is the primary Divine Favor adds to, then the team-mates nearest first,
+ties by id, the order every other cut uses. A party area sends no
+`area` on the `combat` broadcast: there is no ring to draw.
+
+An infinite radius was rejected. Line of sight would still be checked,
+so a team-mate behind a wall would be missed. `Infinity` on the
+broadcast's `area` would be written as `null` in JSON and drawn as a
+ring, and the tooltip would print "within Infinity". `AREA_EARSHOT` would
+turn the skill into a slow shout. A new `TargetRule` is what this ADR
+already turned down for areas.

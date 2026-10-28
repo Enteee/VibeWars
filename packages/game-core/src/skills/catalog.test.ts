@@ -178,6 +178,14 @@ describe("skill catalog integrity", () => {
     }
   });
 
+  it("flies no skill whose area is the whole party (#1013)", () => {
+    const party = IMPLEMENTED_SKILLS.filter((skill) => skill.area?.origin === "party");
+    expect(party.map((skill) => skill.id)).toContain("monk.heal-party");
+    for (const skill of party) {
+      expect(skill.projectile, skill.id).toBeUndefined();
+    }
+  });
+
   it("uses non-negative activation and recharge everywhere", () => {
     for (const skill of IMPLEMENTED_SKILLS) {
       expect(skill.activationSeconds).toBeGreaterThanOrEqual(0);

@@ -30,7 +30,8 @@ the server decides what happens (brief §12, §32).
 
 Regeneration and degeneration count in **pips**, as in GW1. One health
 pip is 2 HP/s and one energy pip ⅓ energy/s. Every status's pips sum
-(Bleeding −3, Burning −7, Poison −4, Disease −4, Faintheartedness −2, Regeneration +4), and
+(Bleeding −3, Burning −7, Poison −4, Disease −4, Faintheartedness −2, Regeneration +4,
+Healing Breeze +8), and
 the net is clamped to ±10 before it applies: burning, bleeding and poison
 together (−14) drain 20 HP/s, not 28. Energy is the primary profession's
 base pips plus any status's, clamped the same way: Warrior and Paragon 2
@@ -172,6 +173,14 @@ Protection Prayers, 5 energy, ¾ s, 2 s) removes every condition from
 another ally and then heals it 58 for each one removed: three are 174.
 A deep wound among them is gone before the heal, so it does not cut it.
 With no condition it heals nothing and still costs its energy.
+**Heal Party** (#1013, Healing Prayers, 15 energy, 1 s, 20 s) heals you
+and every living team-mate 66, wherever they stand and through walls:
+your party is your team, without its creatures: no spirit, minion or
+pet. Divine Favor adds to your own heal only, as for every untargeted
+Monk spell, and a deep wound cuts the heal of whoever has one.
+**Healing Breeze** (Healing Prayers, 10 energy, 1 s, 5 s) gives
+an ally +8 Health regeneration for 15 s; it is an enchantment, so
+enchantment removal takes it.
 **Mending Touch** (#1039, Protection Prayers, 5 energy, ¾ s, 6 s) is a
 touch: the ally, or you, must be at hand. It removes the newest two
 conditions and heals 51 for each one removed. A deep wound among the
@@ -422,6 +431,12 @@ its caster energy and health, and Mend Condition heals the ally.
 hex from any ally, yourself included; if it removed one, every foe in
 the area of that ally takes 70 holy damage, through armor. Allies are
 never hit. With no hex nothing happens, and the energy and recharge are
+spent.
+**Remove Hex** (Monk, no attribute, 5 energy, 1 s, 8 s) removes an
+ally's newest hex. **Dismiss Condition** (#1013, Protection Prayers, 5
+energy, ¾ s, 3 s) removes an ally's newest condition, and heals 63 if
+the ally is enchanted as it lands, whether or not a condition was
+there to remove.
 spent. **Cure Hex** (#1039, Healing Prayers, 5 energy, 1 s, 12 s)
 removes one hex from any ally and, if it removed one, heals that ally 86.
 **Smite Condition** (#1039, Smiting Prayers, 5 energy, 1 s, 7 s) is
@@ -733,7 +748,8 @@ not. "Watch Yourself!" (Warrior, Tactics, 4 adrenaline) gives +21 armor
 for 10 s, and it ends early on each ally after 3 incoming attacks that
 hit or are blocked; a miss, a dodge or an obstructed arrow does not
 count. Earshot is GW1's ratio of earshot to cast range (about 1,010 to
-1,250) applied to the 420-unit spell range.
+1,250) applied to the 420-unit spell range. A party skill such as Heal
+Party is not a shout: it reaches the whole team, however far.
 "Never Surrender!" (Paragon, Command, 5 energy, 20 s) gives +4 Health
 regeneration for 10 s to each ally in earshot below 75% Health as it
 lands; one at exactly 75% or above gets nothing, and one healed above it

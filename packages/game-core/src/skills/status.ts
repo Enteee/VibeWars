@@ -98,6 +98,7 @@ export type StatusId =
   | "mending"
   | "patient-spirit"
   | "holy-veil"
+  | "healing-breeze"
   | "protective-spirit"
   | "shadow-refuge"
   | "shroud-of-distress"
@@ -926,6 +927,12 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
         skillId: "monk.holy-veil",
       },
     ],
+  }),
+  // "For 15 seconds, target ally gains health regeneration of 4...8...9":
+  // +8, its rank-12 value.
+  "healing-breeze": define("healing-breeze", "Healing Breeze", "enchantment", {
+    profession: "monk",
+    healthPips: 8,
   }),
   // "For 5...19...23 seconds, target ally cannot lose more than 10% max
   // Health from a single hit": 19 s, its rank-12 value, on the skill.
