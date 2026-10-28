@@ -55,6 +55,9 @@ function standing(id: string, ownerId: string, spawn: Vec2): ParticipantSpec {
       summonedAtTick: 0,
       skillId: MINIONS,
       aura: undefined,
+      onDeath: "vanish",
+      ownerDisableSeconds: 0,
+      companionSkillId: undefined,
     },
   };
 }
@@ -144,6 +147,24 @@ describe("Animate Bone Minions (#467)", () => {
     }
   });
 
+  it("raises them with 4% more Health a rank of their master's Spawning Power (#1098): 414", () => {
+    const sim = new MatchSimulation({
+      seed: "minions",
+      participants: [
+        spec("n", 0, vec2(0, 0), {
+          attributeRanks: new Map([
+            [DEATH_MAGIC, 12],
+            ["ritualist.spawning-power", 12],
+          ]),
+        }),
+        spec("x", 1, vec2(300, 0)),
+      ],
+    });
+    kill(sim, "x");
+    raise(sim);
+    expect(minionsOf(sim).map((minion) => minion.combatant.maxHealth)).toEqual([414, 414]);
+  });
+
   it("refuses with no corpse in range, and takes nothing", () => {
     const sim = match();
     const n = get(sim, "n");
@@ -231,7 +252,7 @@ describe("Animate Bone Minions (#467)", () => {
     expect(weak / full).toBeCloseTo(weaponAttributeMultiplier(0, RULES.combat), 1);
   });
 
-  it("holds 2 + half its master's Death Magic: the oldest die first, and that is a death", () => {
+  it("holds 2 + half its master's Death Magic: past it one dies, and that is a death", () => {
     const corpses = [0, 1, 2, 3, 4].map((i) => spec(`d${String(i)}`, 1, vec2(-100, 20 * i)));
     // A second Necromancer, to reap the culled.
     const reaper = spec("o", 0, vec2(0, 40), {
@@ -261,6 +282,50 @@ describe("Animate Bone Minions (#467)", () => {
     expect(cull?.sourceId).toBe("n");
     expect(cull?.events).toEqual(first.map((targetId) => ({ kind: "death", targetId })));
     expect(get(sim, "o").combatant.energy).toBeGreaterThan(0);
+  });
+
+  /**
+   * At Death Magic 0 (a cap of 2), a Bone Horror on each of `x` and `y`, a
+   * second apart, then `health` sets theirs as a third is cast on `z`.
+   * The two it had are returned oldest first, with who died.
+   */
+  function cullOneOfTwo(health: (oldest: Participant, newest: Participant) => void) {
+    const sim = match([spec("y", 1, vec2(300, 40)), spec("z", 1, vec2(300, -40))], 0);
+    for (const id of ["x", "y", "z"]) {
+      kill(sim, id);
+    }
+    raise(sim, 1);
+    stepFor(sim, 5);
+    raise(sim, 1);
+    stepFor(sim, 5);
+    const [oldest, newest] = minionsOf(sim);
+    if (oldest === undefined || newest === undefined) {
+      throw new Error("two did not rise");
+    }
+    get(sim, "n").combatant.energy = 100;
+    expect(sim.requestSkill("n", 1)?.check).toEqual({ ok: true });
+    health(oldest, newest);
+    stepFor(sim, CAST_SECONDS);
+    expect(minionsOf(sim)).toHaveLength(2);
+    return { oldest, newest };
+  }
+
+  it("past the cap kills the weakest, not the oldest (#1130)", () => {
+    const { oldest, newest } = cullOneOfTwo((oldest, newest) => {
+      oldest.combatant.health = 200;
+      newest.combatant.health = 100;
+    });
+    expect(newest.combatant.dead).toBe(true);
+    expect(oldest.combatant.dead).toBe(false);
+  });
+
+  it("past the cap kills the oldest of two as weak (#1130)", () => {
+    const { oldest, newest } = cullOneOfTwo((oldest, newest) => {
+      oldest.combatant.health = 100;
+      newest.combatant.health = 100;
+    });
+    expect(oldest.combatant.dead).toBe(true);
+    expect(newest.combatant.dead).toBe(false);
   });
 
   it("leaves no corpse when it dies", () => {

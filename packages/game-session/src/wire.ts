@@ -25,6 +25,7 @@ import {
   type WirePlayer,
   type WireProjectile,
   type WireSnapshot,
+  type WireWeaponSets,
 } from "@vibewars/game-protocol";
 
 import type {
@@ -151,9 +152,10 @@ export function statusSnapshot(
 }
 
 /**
- * A ground effect as a snapshot carries it (#1087): when it ends on the
+ * A ground effect as the wire carries it (#1087): when it ends on the
  * match clock and how long it was placed for, both to 0.1 s, the latter
- * never under it, as the wire refuses one of nothing.
+ * never under it, as the wire refuses one of nothing. A ward's circle is
+ * its aura's reach; a trap's (#1105), the area its spring hits.
  */
 export function groundEffectSnapshot(
   effect: Readonly<GroundEffect>,
@@ -165,7 +167,7 @@ export function groundEffectSnapshot(
     team: effect.team,
     x: effect.position.x,
     y: effect.position.y,
-    radius: effect.aura.radius,
+    radius: effect.act.kind === "aura" ? effect.act.aura.radius : effect.act.trap.area.radius,
     endsAt: tenths(elapsedSeconds + effect.remainingSeconds),
     durationSeconds: Math.max(0.1, tenths(effect.durationSeconds)),
   };
@@ -191,6 +193,26 @@ export function skillBarSlots(skillBar: SkillBar, bearer: RankHolder): (SkillBar
       rechargeSeconds: skill?.rechargeSeconds ?? 0,
     };
   });
+}
+
+/**
+ * The weapon sets `participant` carries, as its own client sees them
+ * (#489): set 1 first, `null` where one is empty, and which is in hand or
+ * queued.
+ */
+export function wireWeaponSets(participant: Participant): WireWeaponSets {
+  return {
+    sets: participant.weaponSets.map((set) =>
+      set === null
+        ? null
+        : {
+            weaponId: set.equipment.mainHand.weapon.id,
+            offhandId: set.equipment.offhandId ?? null,
+          },
+    ),
+    active: participant.activeWeaponSet,
+    pending: participant.pendingWeaponSet ?? null,
+  };
 }
 
 /**
@@ -590,6 +612,8 @@ export function matchSnapshot(
     endReason: absent(snapshot.endReason),
     projectiles: snapshot.projectiles.map(projectileSnapshot),
     groundEffects: snapshot.groundEffects,
+    // Only the host's `"traps"` carries them (#1105).
+    traps: [],
     // Only the host's `ended` carries it.
     summary: undefined,
   };

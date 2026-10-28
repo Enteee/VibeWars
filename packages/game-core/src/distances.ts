@@ -45,3 +45,10 @@ export const RANGE_NATURE_RITUAL = 1190;
  * ~0.34 as `RANGE_SPIRIT`.
  */
 export const RANGE_COMPASS = 1700;
+/**
+ * How far a pet reaches for its owner's target, and its leash (#1046):
+ * twice earshot. Fandom "Pet aggro model" puts the lock-target range at
+ * "roughly twice the range of the aggro bubble"; it also covers a
+ * longbow's reach, so a Ranger's target is the wolf's. House number.
+ */
+export const PET_REACH = 2 * AREA_EARSHOT;

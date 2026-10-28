@@ -103,6 +103,8 @@ export interface HudElements {
   readonly energyText: HTMLElement;
   readonly energyPips: HTMLElement;
   readonly gearText: HTMLElement;
+  /** The skill bar's row: the weapon-set slots go first in it (#489). */
+  readonly skillRow: HTMLElement;
   /** Your statuses as icons with draining bars (#834); `dispose` it with the HUD. */
   readonly effects: EffectsMonitor;
   /**
@@ -317,7 +319,8 @@ export function createHud(
   const energyText = element("span", "hud-bar-label", energyRow);
   const energyPips = energyRow.appendChild(pipsElement());
 
-  const skillBar = element("div", "hud-skills", column);
+  const skillRow = element("div", "hud-skill-row", column);
+  const skillBar = element("div", "hud-skills", skillRow);
 
   return {
     root,
@@ -334,6 +337,7 @@ export function createHud(
     energyText,
     energyPips,
     gearText,
+    skillRow,
     effects,
     clock: { matchSeconds: Number.NaN, arrivedMs: 0 },
     skillBar,
@@ -429,6 +433,9 @@ const REFUSALS: Readonly<Record<ActivationRejection, string>> = {
   "out-of-range": "Target is out of range.",
   "no-line-of-sight": "Target is not in line of sight.",
   "no-corpse": "No corpse in range.",
+  "no-companion": "You have no pet.",
+  "no-animal-to-charm": "There is no animal to charm here.",
+  "invalid-target-creature": "That cannot be revived that way.",
 };
 
 /** Where an attack's refusal differs from a cast's: it is about the weapon, not a skill. */

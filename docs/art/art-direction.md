@@ -199,6 +199,8 @@ so the silhouette identifies the profession and the colour only supports it.
 | Actor        | Filled circle in team colour                            |
 | You          | Your team's circle plus an `ink` rim, 2 px inside       |
 | Target       | `target` ring, 9 px outside the actor                   |
+| Enchanted    | Solid `enchantment` ring, 2.5 px outside the actor      |
+| Hexed        | Broken `hex` ring, 8 dashes, 5 px outside the actor     |
 | Dead         | Hollow `dead` circle, no bars                           |
 | Cast         | Bar above the health bar, fills as the cast completes   |
 | Condition    | Circle plate, glyph inside                              |
@@ -213,6 +215,7 @@ so the silhouette identifies the profession and the colour only supports it.
 | Skill effect | `ink-dim` wide capsule plate, glyph inside              |
 | Area flash   | Caster's team colour ring at the area's true radius     |
 | Ward         | Owner's team colour disc, faint, its skill's icon in it |
+| Trap         | `friend` rim alone, its skill's icon in it; yours only  |
 | Swing flash  | Attacker's team colour arc between it and its target    |
 | Projectile   | Weapon silhouette, tinted the shooter's team colour     |
 | Weapon mark  | `ink` weapon held in the hands, one shape per weapon    |
@@ -289,6 +292,13 @@ A ward (#1087) lies on the ground for as long as it lasts:
 
 It cannot be confused with the area flash, which is gone in 0.4 s, or a
 ping, which is a pin and a growing ring.
+
+### Trap
+
+A trap (#1105) is drawn as a ward is, with no fill: the rim alone, at
+the radius its spring hits, with its skill's icon at the centre. Only
+its own team ever sees one, so it is always `friend`. An open ring
+reads as "waiting", a filled disc as "acting now".
 
 ### Swing flash
 
@@ -445,14 +455,16 @@ off-hands included.
 
 Outward from the centre:
 
-| Ring     | Radius           | Style                                |
-| -------- | ---------------- | ------------------------------------ |
-| Body     | 0 … r            | Team colour fill                     |
-| Edge     | r − 1.5 … r      | 1.5 px `edge` `#0b0f14`, living only |
-| Self rim | r − 3 … r − 1    | 2 px `ink`, your own body only       |
-| Off-hand | r … r + 7        | See below, living only, left side    |
-| Weapon   | centre … r + 7.5 | See below, living only               |
-| Target   | r + 8 … r + 10   | 2 px `target`, your target only      |
+| Ring     | Radius              | Style                                 |
+| -------- | ------------------- | ------------------------------------- |
+| Body     | 0 … r               | Team colour fill                      |
+| Edge     | r − 1.5 … r         | 1.5 px `edge` `#0b0f14`, living only  |
+| Self rim | r − 3 … r − 1       | 2 px `ink`, your own body only        |
+| Off-hand | r … r + 7           | See below, living only, left side     |
+| Weapon   | centre … r + 7.5    | See below, living only                |
+| Enchant  | r + 1.75 … r + 3.25 | 1.5 px `enchantment`, while enchanted |
+| Hex      | r + 4.25 … r + 5.75 | 1.5 px `hex`, 8 dashes, while hexed   |
+| Target   | r + 8 … r + 10      | 2 px `target`, your target only       |
 
 **The target ring sits at r + 9** (operator, Q26), its 2 px stroke from
 r + 8 to r + 10, so nothing on the body reaches it: the weapon mark stops at
@@ -460,6 +472,15 @@ r + 7.5 and the off-hand mark inside r + 7. It is still drawn last. Its top
 passes under the health bar (r + 8 … r + 12 above the centre) and its bottom
 under the first status plate (from r + 6 below), both drawn over it; the
 sides, where you look for it, stay clear.
+
+**The enchantment and hex rings** (#1117) say a living body is enchanted or
+hexed, one ring per category however many: the status row says which. The
+hex ring is broken into 8 dashes at 50% duty, one centred on 12 o'clock, as
+the broken-ring hex badge; solid against broken still reads without the
+colour. Both stay inside r + 6, clear of the target ring and the status row.
+They are drawn on the body, under every mark, so the weapon and the off-hand
+cross them. They are static, reduced motion or not; a knocked-down body keeps
+them round its centre, and a corpse wears none.
 
 **The weapon mark** (#188, #418) is the weapon held in the hands: one
 silhouette for each of the 14 weapons. The shapes are data in
@@ -737,8 +758,9 @@ it, not baked in, so one file serves every screen.
   arrow-burst, arrow-pierce, arrow-flame, crescent (shadow), armor-half (a
   half-filled shield), eye, heal-other (a head and a plus), heal-turn (a plus
   in an arrow ring), hex-bolt (dashed ring, bolt), blade-cleanse, blade-hook,
-  blade-shards, hilt, banner-note, mountain-crack, dust, thorns,
-  bone-minions, bone-horror. A new primary
+  blade-shards, hilt, banner-note, mountain-crack, dust, thorns, limp,
+  dagger-burst, ox-horns, spider, resurrect-seal, resurrect-arrive,
+  resurrect-return, resurrect-blood, bone-minions, bone-horror. A new primary
   effect adds a glyph; a new skill adds a row.
 
 ### Skill slot states

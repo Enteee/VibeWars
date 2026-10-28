@@ -69,6 +69,8 @@ function actor(
     knockedDown: false,
     castProgress: undefined,
     statuses: [],
+    enchanted: false,
+    hexed: false,
     ...overrides,
   };
 }
@@ -86,18 +88,23 @@ describe("toRenderableGroundEffect (#1087)", () => {
   };
 
   it("draws a ward where it was placed, at its radius, with its skill", () => {
-    expect(toRenderableGroundEffect(ward, 1)).toEqual({
+    expect(toRenderableGroundEffect(ward, 1, "ward")).toEqual({
       id: 4,
       skillId: "elementalist.ward-against-melee",
       position: { x: 120, y: 80 },
       radius: 109,
       colour: teamColour("ally"),
+      filled: true,
     });
   });
 
   it("colours a ward by side: yours as an ally's, any other team's as a foe's", () => {
-    expect(toRenderableGroundEffect(ward, 0).colour).toBe(teamColour("enemy"));
-    expect(toRenderableGroundEffect(ward, undefined).colour).toBe(teamColour("enemy"));
+    expect(toRenderableGroundEffect(ward, 0, "ward").colour).toBe(teamColour("enemy"));
+    expect(toRenderableGroundEffect(ward, undefined, "ward").colour).toBe(teamColour("enemy"));
+  });
+
+  it("draws a trap as its outline alone (#1105)", () => {
+    expect(toRenderableGroundEffect(ward, 1, "trap").filled).toBe(false);
   });
 });
 

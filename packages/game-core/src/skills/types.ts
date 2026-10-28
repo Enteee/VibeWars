@@ -60,7 +60,9 @@ export type TargetRule =
   /** Any single target including self; the caster chooses. */
   | "single-any"
   /** A dead ally other than the caster: a resurrection's (#812). */
-  | "single-dead-ally";
+  | "single-dead-ally"
+  /** The caster's own companion, alive or dead, whatever is selected (#1046). */
+  | "companion";
 
 /* -------------------------------------------------------------------------- */
 /* Effects                                                                     */
@@ -424,6 +426,17 @@ export interface CreatureTemplate {
   readonly behaviour: Behaviour;
   /** `undefined`: it projects nothing (every minion). Only a spirit has one. */
   readonly aura: Aura | undefined;
+  /**
+   * What its death leaves (#1046). `"vanish"`: it is gone at the end of
+   * the step, as a spirit or minion is. `"lie"`: it stays a dead
+   * participant where it fell, until something brings it back.
+   */
+  readonly onDeath: "vanish" | "lie";
+  /**
+   * Seconds its owner's whole bar is disabled when it dies, scaled by
+   * the owner (GW1's pet, #1046); `undefined`: nothing happens to the owner.
+   */
+  readonly ownerDisableOnDeath: Magnitude | undefined;
 }
 
 /**
@@ -467,8 +480,29 @@ export interface SummonEffect {
 }
 
 /**
+ * A trap's rule (#1105): the first step a living foe's centre is within
+ * `triggerRadius` of it, `effects` land on whoever `area` takes around
+ * the trap, from its owner, and the trap is gone.
+ */
+export interface TrapRule {
+  /** A foe's centre this close springs it. */
+  readonly triggerRadius: number;
+  /** Who the spring hits; `origin: "caster"` means the trap's position. */
+  readonly area: AreaRule;
+  readonly effects: readonly SkillEffect[];
+}
+
+/**
+ * What a ground effect does while it lasts: a ward projects an aura
+ * (#1087), a trap waits for a foe to spring it (#1105).
+ */
+export type GroundAct =
+  | { readonly kind: "aura"; readonly aura: Aura }
+  | { readonly kind: "trap"; readonly trap: TrapRule };
+
+/**
  * Leave a ground effect where the caster stands as the skill lands
- * (#1087): a circle that is not a body, projecting `aura` for
+ * (#1087): a circle that is not a body, doing `act` for
  * `durationSeconds`. Acts on the caster, once. A match holds at most
  * `MAX_GROUND_EFFECTS`: past it, the oldest ends early.
  */
@@ -476,7 +510,7 @@ export interface CreateGroundEffect {
   readonly kind: "create-ground-effect";
   readonly anchor: "caster";
   readonly durationSeconds: Magnitude;
-  readonly aura: Aura;
+  readonly act: GroundAct;
 }
 
 /** How long "knocks down" lasts when a skill names no duration (GW1). */
@@ -658,6 +692,7 @@ export type SkillType =
   | "nature-ritual"
   | "binding-ritual"
   | "ward"
+  | "trap"
   | "skill";
 
 /**
@@ -674,6 +709,15 @@ export function isSpell(type: SkillType): boolean {
     type === "weapon-spell" ||
     type === "ward"
   );
+}
+
+/**
+ * Whether a skill of this type is interrupted by any attack that lands
+ * on its user while it is being used (#1105, GW1's "easily
+ * interrupted"): a trap is.
+ */
+export function isEasilyInterrupted(type: SkillType): boolean {
+  return type === "trap";
 }
 
 /**
@@ -829,6 +873,12 @@ export interface Skill {
   readonly projectile: SkillProjectile | undefined;
   /** `undefined`: it needs no corpse. */
   readonly corpse: CorpseRule | undefined;
+  /**
+   * The creature this skill brings while it is on its owner's bar (#1046),
+   * as Charm Animal's "travels with you whenever you have Charm Animal
+   * equipped"; `undefined`: none. Such a skill is never cast in a match.
+   */
+  readonly companion: CreatureTemplate | undefined;
   readonly effects: readonly SkillEffect[];
 }
 

@@ -25,6 +25,7 @@ import {
   skillBarSlots,
   statusSnapshot,
   wireStatuses,
+  wireWeaponSets,
   type CallsSnapshot,
   type CombatMessage,
   type MatchConnection,
@@ -88,7 +89,8 @@ function toPlayerSnapshot(
     walking: participant.walkGoal !== undefined || participant.pendingSkill !== undefined,
     health: Math.round(combatant.health),
     maxHealth: combatant.maxHealth,
-    energy: Math.round(combatant.energy),
+    // Clamped as the host clamps it: energy below 0 is hidden (#489).
+    energy: Math.max(0, Math.round(combatant.energy)),
     maxEnergy: combatant.maxEnergy,
     overcast: Math.round(combatant.overcast),
     morale: combatant.morale,
@@ -214,6 +216,11 @@ export function createLocalConnection(options: {
       // Straight from the simulation, so a rearm shows at once.
       return simulation.get(selfId)?.combatant.attributeRanks ?? new Map<string, number>();
     },
+    get weaponSets() {
+      // Straight from the simulation too: a swap or a rearm shows at once (#489).
+      const self = simulation.get(selfId);
+      return self === undefined ? undefined : wireWeaponSets(self);
+    },
     onConnectionChange() {
       // Nothing to lose: the simulation is in this tab.
     },
@@ -245,9 +252,13 @@ export function createLocalConnection(options: {
           launchedAt: simulation.elapsedSeconds - shot.elapsed,
           flightSeconds: shot.flightSeconds,
         })),
-        groundEffects: simulation.groundEffects.map((effect) =>
-          groundEffectSnapshot(effect, simulation.elapsedSeconds),
-        ),
+        groundEffects: simulation.groundEffects
+          .filter((effect) => effect.act.kind !== "trap")
+          .map((effect) => groundEffectSnapshot(effect, simulation.elapsedSeconds)),
+        // As the host sends them (#1105): your own team's alone.
+        traps: simulation.groundEffects
+          .filter((effect) => effect.act.kind === "trap" && effect.team === selfTeam())
+          .map((effect) => groundEffectSnapshot(effect, simulation.elapsedSeconds)),
         // No match with rules ends here, so there is never a summary (#1057).
         summary: undefined,
       };

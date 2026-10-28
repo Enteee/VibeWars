@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
+import { WEAPONS } from "../equipment/weapons.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { applyIntent } from "./apply-intent.js";
@@ -58,6 +59,33 @@ describe("applyIntent", () => {
       kind: "attack",
       reason: "invalid-target-self",
     });
+  });
+
+  it("swaps weapon sets, and says nothing for an empty one (#489)", () => {
+    const base = unarmedResolvedEquipment(MINIMAL_GW_INSPIRED_PVP_V1.combat.armorReferenceLevel);
+    const bow = {
+      ...base,
+      mainHand: {
+        weapon: WEAPONS["recurve-bow"],
+        attributeId: "ranger.marksmanship",
+        damageType: WEAPONS["recurve-bow"].damageType,
+        requirementMet: true,
+      },
+    };
+    const sim = new MatchSimulation({
+      seed: "intents",
+      participants: [
+        {
+          ...spec("a", 0, vec2(0, 0)),
+          spareWeaponSets: [{ equipment: bow, maxEnergy: 20 }, null, null],
+        },
+      ],
+    });
+    expect(applyIntent(sim, "a", { kind: "weapon-set", set: 1 })).toBeNull();
+    expect(sim.get("a")?.activeWeaponSet).toBe(1);
+    expect(sim.get("a")?.combatant.equipment.mainHand.weapon.id).toBe("recurve-bow");
+    expect(applyIntent(sim, "a", { kind: "weapon-set", set: 2 })).toBeNull();
+    expect(sim.get("a")?.activeWeaponSet).toBe(1);
   });
 
   it("does nothing for a player the simulation does not know", () => {

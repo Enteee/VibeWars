@@ -29,6 +29,7 @@ import {
   parsePeerCall,
   parsePeerChat,
   parseWireCalls,
+  parseWireTraps,
   parseWireChatLine,
   parsePeerHello,
   parsePeerRefuse,
@@ -42,6 +43,7 @@ import {
   parseWireEnded,
   parseWireSkillBar,
   parseWireSnapshotPart,
+  parseWireWeaponSets,
   parsePeerLobbyJoin,
   parseWireLobbyCommand,
   parseWireLobbyNote,
@@ -65,6 +67,7 @@ import type {
   WirePlayer,
   WireStatus,
   WireSkillBar,
+  WireWeaponSets,
   WireSnapshotPart,
   PeerLobbyJoin,
   WireLobbyState,
@@ -286,6 +289,18 @@ const combatBatch: WireCombatBatch = [
   },
 ];
 
+/** A sword and shield in set 1, a bow in set 2, sets 3 and 4 empty. */
+const weaponSets: WireWeaponSets = {
+  sets: [
+    { weaponId: "sword", offhandId: "shield" },
+    { weaponId: "recurve-bow", offhandId: null },
+    null,
+    null,
+  ],
+  active: 0,
+  pending: null,
+};
+
 const skillBar: WireSkillBar = {
   slots: [
     {
@@ -372,6 +387,17 @@ const lobbyState: WireLobbyState = {
 };
 
 const ping = { id: 3, x: 200, y: 150.5, byId: "peer-1", remaining: 2.6 };
+const trap = {
+  id: 2,
+  skillId: "ranger.barbed-trap",
+  team: 1,
+  x: 40,
+  y: -20,
+  radius: 81,
+  endsAt: 92.5,
+  durationSeconds: 90,
+};
+
 const calls = { target: { targetId: "peer-2", callerId: "peer-1" }, pings: [ping] };
 
 const chatLine = { channel: "all", fromId: "peer-2", name: "Ann", team: 0, text: "gg" };
@@ -420,6 +446,8 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["last of three snapshot parts", parseWireSnapshotPart, { ...snapshot, part: 2, parts: 3 }],
   ["combat batch", parseWireCombatBatch, combatBatch],
   ["skill-bar", parseWireSkillBar, skillBar],
+  ["weapon-sets (#489)", parseWireWeaponSets, weaponSets],
+  ["weapon-sets with a swap queued", parseWireWeaponSets, { ...weaponSets, active: 1, pending: 0 }],
   ["ended", parseWireEnded, ended],
   [
     "ended by a wipe (#846)",
@@ -480,6 +508,13 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
     "calls with every ping a team shows (#730)",
     parseWireCalls,
     { target: null, pings: Array.from({ length: 32 }, () => ping) },
+  ],
+  ["traps (#1105)", parseWireTraps, { traps: [{ ...trap }] }],
+  ["no traps (#1105)", parseWireTraps, { traps: [] }],
+  [
+    "every trap the wire carries (#1105)",
+    parseWireTraps,
+    { traps: Array.from({ length: MAX_WIRE_GROUND_EFFECTS }, () => trap) },
   ],
   ["chat (#479)", parsePeerChat, { channel: "team", text: "spike the monk" }],
   [
@@ -551,6 +586,14 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     { target: null, pings: Array.from({ length: MAX_WIRE_PINGS + 1 }, () => ping) },
   ],
   ["calls with no pings (#443)", parseWireCalls, { target: null }],
+  ["traps without a list (#1105)", parseWireTraps, {}],
+  [
+    "one trap too many (#1105)",
+    parseWireTraps,
+    { traps: Array.from({ length: MAX_WIRE_GROUND_EFFECTS + 1 }, () => trap) },
+  ],
+  ["a trap of no radius (#1105)", parseWireTraps, { traps: [{ ...trap, radius: 0 }] }],
+  ["a trap with no skill (#1105)", parseWireTraps, { traps: [{ ...trap, skillId: 3 }] }],
   [
     "calls with a target and no caller (#443)",
     parseWireCalls,
@@ -654,7 +697,7 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "snapshot with a creature of an unknown kind",
     parseWireSnapshotPart,
-    { ...snapshot, players: [{ ...minion, creature: { ownerId: "peer-1", kind: "pet" } }] },
+    { ...snapshot, players: [{ ...minion, creature: { ownerId: "peer-1", kind: "golem" } }] },
   ],
   [
     "snapshot with a creature with no owner",
@@ -895,6 +938,30 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     parseWireCombatBatch,
     [{ ...combat, events: [{ ...combat.events[0], crit: "yes" }] }],
   ],
+  [
+    "weapon-sets with three sets",
+    parseWireWeaponSets,
+    { ...weaponSets, sets: weaponSets.sets.slice(0, 3) },
+  ],
+  [
+    "weapon-sets with five sets",
+    parseWireWeaponSets,
+    { ...weaponSets, sets: [...weaponSets.sets, null] },
+  ],
+  [
+    "weapon-sets with set 1 empty",
+    parseWireWeaponSets,
+    { ...weaponSets, sets: [null, ...weaponSets.sets.slice(1)] },
+  ],
+  ["weapon-sets active on an empty set", parseWireWeaponSets, { ...weaponSets, active: 2 }],
+  ["weapon-sets queued on an empty set", parseWireWeaponSets, { ...weaponSets, pending: 3 }],
+  ["weapon-sets active past set 4", parseWireWeaponSets, { ...weaponSets, active: 4 }],
+  [
+    "weapon-sets with a numeric weapon",
+    parseWireWeaponSets,
+    { ...weaponSets, sets: [{ weaponId: 1, offhandId: null }, null, null, null] },
+  ],
+  ["weapon-sets without a pending", parseWireWeaponSets, { sets: weaponSets.sets, active: 0 }],
   [
     "skill bar with too many slots",
     parseWireSkillBar,

@@ -58,6 +58,7 @@ const SNAPSHOT: MatchSnapshot = {
   endReason: undefined,
   projectiles: [],
   groundEffects: [],
+  traps: [],
   summary: undefined,
 };
 

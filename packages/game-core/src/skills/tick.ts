@@ -280,7 +280,8 @@ export function attackDamageTypeOf(combatant: Combatant): DamageType | undefined
  * How long this caster takes to cast this skill. Dazed doubles a spell's;
  * a signet or any other skill that is not a spell casts at normal speed,
  * as in GW1 (#524). An instant skill stays instant (0 × 2 = 0). Fast
- * Casting multiplies in too (#527), judged on the skill's own activation.
+ * Casting multiplies in too (#527), judged on the skill's own activation,
+ * and speeds up a signet as well (#1100), which dazed does not.
  * A hex cast on a `target` under Holy Veil takes twice as long (#944);
  * with no target, as in a tooltip, nothing on one counts.
  */
@@ -289,10 +290,10 @@ export function effectiveActivationSeconds(
   caster: RankHolder,
   target?: Pick<Combatant, "statuses">,
 ): number {
-  if (!isSpell(skill.type)) {
-    return skill.activationSeconds;
-  }
   const fastCasting = fastCastingMultiplier(rankOf(caster, FAST_CASTING_ATTRIBUTE), skill);
+  if (!isSpell(skill.type)) {
+    return skill.activationSeconds * fastCasting;
+  }
   const onTarget =
     skill.type === "hex" && target !== undefined
       ? aggregateModifiers(target.statuses.active).incomingHexCastTimeMultiplier

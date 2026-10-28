@@ -16,6 +16,7 @@ import type {
   SkillBarSlot,
   WireCalls,
   WirePing,
+  WireWeaponSets,
 } from "@vibewars/game-protocol";
 
 /**
@@ -127,11 +128,13 @@ export interface MatchSnapshot {
   readonly projectiles: readonly ProjectileSnapshot[];
   /** Wards on the ground, oldest first (#1087). */
   readonly groundEffects: readonly GroundEffectSnapshot[];
+  /** Your team's traps, oldest first (#1105); a foe's never reach you. */
+  readonly traps: readonly GroundEffectSnapshot[];
   /** What each player did, from the host's `ended` (#1057); `undefined` until then. */
   readonly summary: readonly MatchSummaryRow[] | undefined;
 }
 
-/** A ward on the ground (#1087): a circle at `x`, `y` in `team`'s colour, until `endsAt`. */
+/** A ward or a trap on the ground (#1087, #1105): a circle at `x`, `y` in `team`'s colour, until `endsAt`. */
 export interface GroundEffectSnapshot {
   readonly id: number;
   /** The skill that placed it, for its icon. */
@@ -224,6 +227,12 @@ export interface MatchConnection {
    * build, a starter build included: what the bar's tooltips describe (#485).
    */
   readonly ranks: ReadonlyMap<string, number>;
+  /**
+   * The weapon sets this player carries, and which is in hand or queued
+   * (#489): sent on join and when either changes; `undefined` until the
+   * first arrives.
+   */
+  readonly weaponSets: WireWeaponSets | undefined;
   sendIntent(intent: ClientIntent): void;
   getSnapshot(): MatchSnapshot;
   onCombat(handler: (message: CombatMessage) => void): void;

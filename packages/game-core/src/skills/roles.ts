@@ -64,9 +64,12 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
       return effect.creature.aura === undefined
         ? []
         : statusRoles(getStatusDefinition(effect.creature.aura.statusId));
-    // So does a ward (#1087): Ward Against Melee defends.
+    // So does a ward (#1087): Ward Against Melee defends. A trap does
+    // what its spring does (#1105): Barbed Trap cripples and bleeds.
     case "create-ground-effect":
-      return statusRoles(getStatusDefinition(effect.aura.statusId));
+      return effect.act.kind === "aura"
+        ? statusRoles(getStatusDefinition(effect.act.aura.statusId))
+        : effect.act.trap.effects.flatMap(effectRoles);
   }
 }
 
@@ -134,8 +137,12 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
  * A skill's roles, derived from its effects only, never a hand-kept
  * list: adding a skill tags it. A blocked blow's effects count too,
  * since they are still what the skill does (Swift Chop's Deep Wound).
+ * One on your own pet (#1046) does nothing for the team: no role.
  */
 export function skillRoles(skill: Skill): readonly SkillRole[] {
+  if (skill.target === "companion") {
+    return [];
+  }
   const effects = [...skill.effects, ...(skill.attack?.onBlocked ?? [])];
   const roles = new Set(effects.flatMap(effectRoles));
   return SKILL_ROLES.filter((role) => roles.has(role));

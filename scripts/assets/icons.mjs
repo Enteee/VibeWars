@@ -158,6 +158,10 @@ const skillType = {
   ward: () =>
     `<ellipse cx="12" cy="16" rx="8.5" ry="4" ${stroke(C.ink, 2.5)}/>` +
     `<path d="M12 16V4" ${stroke(C.ink, 2.5)}/>`,
+  // Jaws on the ground, teeth up: a trap waits where it was set (#1105).
+  trap: () =>
+    `<path d="M3 19h18" ${stroke(C.ink, 2.5)}/>` +
+    `<path d="M4.5 17L7 8l2.5 9M9.5 17L12 5l2.5 12M14.5 17L17 8l2.5 9" ${stroke(C.ink, 2.2)}/>`,
   // Plain square: a skill with no other type.
   skill: () => `<rect x="6" y="6" width="12" height="12" rx="1" fill="${C.ink}"/>`,
 };
@@ -942,6 +946,18 @@ const bladeMark = (mark) =>
   mark;
 
 /**
+ * The resurrect figure, scaled and centred on a point.
+ * @param {number} cx
+ * @param {number} cy
+ * @param {number} k
+ */
+const smallFigure = (cx, cy, k) =>
+  `<g transform="translate(${String(cx)},${String(cy)}) scale(${String(k)}) translate(-12,-12.5)">` +
+  `<ellipse cx="12" cy="7.5" rx="4" ry="4.5" ${stroke(C.ink, 2.2)}/>` +
+  inkLine("M12 12V21M6 14.5H18", 2.6) +
+  "</g>";
+
+/**
  * A skull with dark sockets, scaled and centred on a point.
  * @param {number} cx
  * @param {number} cy
@@ -1027,6 +1043,24 @@ const skillGlyph = {
     inkLine("M8 16L18.5 5.5", 2.8) +
     inkLine("M5.5 13.5L10.5 18.5", 2.2) +
     inkLine("M4 20l2.5-2.5", 2.4),
+  // A broken leg with a blade at the knee: it cripples (#1049).
+  limp: () => inkLine("M16 3L11.5 9.5L15 13L10 19", 2.4) + inkFill("M2.5 7.5L9.5 10L4.5 14Z"),
+  // A blade with rays bursting from its point: the cripple spreads to those beside it (#1049).
+  "dagger-burst": () =>
+    inkLine("M4.5 19.5L13 11", 2.6) +
+    inkLine("M17 3V6.5M21 7H17.5M19.5 10.5L17 8.5M10.5 5L12.5 7.5M20 3.5L18 5.5", 2) +
+    inkFill("M13 11L17 7L15 12.5Z"),
+  // Two horns over a falling chevron: a charge that flattens (#1049).
+  "ox-horns": () =>
+    inkLine("M4 4C4 11 8 13 12 13C16 13 20 11 20 4", 2.6) +
+    inkLine("M8.5 16.5L11.5 20L14.5 16.5", 2.4),
+  // A spider from above, eight legs: poison from the fall (#1049).
+  spider: () =>
+    `<circle cx="12" cy="9" r="2.6" fill="${C.ink}"/><ellipse cx="12" cy="14.5" rx="3.6" ry="4.4" fill="${C.ink}"/>` +
+    inkLine(
+      "M9.5 8L4 4.5M9 10.5L3 10M9 13.5L3.5 16.5M10 17L6 21M14.5 8L20 4.5M15 10.5L21 10M15 13.5L20.5 16.5M14 17L18 21",
+      1.8,
+    ),
   hammer: () =>
     inkLine("M5 20L14 11", 2.4) +
     `<rect x="11" y="3.5" width="10" height="7" rx="1" transform="rotate(45 16 7)" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>`,
@@ -1090,6 +1124,21 @@ const skillGlyph = {
   // One big horned skull: the horror (#1112).
   "bone-horror": () =>
     smallSkull(12, 13, 0.85) + inkLine("M6.5 8.5C4 7.5 3.5 5 4 3M17.5 8.5C20 7.5 20.5 5 20 3", 2.2),
+  // The resurrect figure in a ring: a signet's seal, one use (#1081).
+  "resurrect-seal": () =>
+    `<circle cx="10.5" cy="10.5" r="8" ${stroke(C.ink, 2)}/>` + smallFigure(10.5, 10.5, 0.55),
+  // The resurrect figure with two chevrons rushing at it: brought to the caster (#1081).
+  "resurrect-arrive": () =>
+    smallFigure(9, 13, 0.8) + inkLine("M21 3.5L16.5 7L21 10.5M21 8.5L17.5 11L21 13.5", 1.8),
+  // The resurrect figure in a half ring with an arrow: called back (#1081).
+  "resurrect-return": () =>
+    `<path d="M19.5 6.5A9 9 0 1 0 8 19.5" ${stroke(C.ink, 2)}/>` +
+    inkFill("M21.5 3V10H14.5Z") +
+    smallFigure(12, 12.5, 0.6),
+  // The resurrect figure with a drop of the caster's blood beside it (#1081).
+  "resurrect-blood": () =>
+    smallFigure(9, 12.5, 0.85) +
+    inkFill("M18 2.5C18 2.5 14.5 6.5 14.5 9A3.5 3.5 0 0 0 21.5 9C21.5 6.5 18 2.5 18 2.5Z"),
   // An ankh: life returned, a resurrection (#812).
   resurrect: () =>
     `<ellipse cx="12" cy="7.5" rx="4" ry="4.5" ${stroke(C.ink, 2.2)}/>` +

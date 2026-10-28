@@ -306,6 +306,66 @@ describe("Recuperation (#1064)", () => {
   });
 });
 
+describe("Spawning Power (#1098)", () => {
+  /** `r`, with `spawningPower` and the rest of `spec`'s ranks, alone on team 0. */
+  function summoner(spawningPower: number, extra?: Partial<ParticipantSpec>): MatchSimulation {
+    return new MatchSimulation({
+      seed: "spawning",
+      participants: [
+        spec("r", 0, vec2(0, 0), {
+          attributeRanks: new Map([
+            ["ranger.wilderness-survival", 12],
+            ["ritualist.restoration-magic", 12],
+            ["ritualist.spawning-power", spawningPower],
+          ]),
+          ...extra,
+        }),
+      ],
+    });
+  }
+
+  it("gives a Ritualist's spirit 4% more Health a rank: 311 at 12, 210 at 0", () => {
+    const strong = summoner(12);
+    ritual(strong, RECUPERATION);
+    expect(spirits(strong)[0]?.combatant.maxHealth).toBe(311);
+    const plain = summoner(0);
+    ritual(plain, RECUPERATION);
+    expect(spirits(plain)[0]?.combatant.maxHealth).toBe(210);
+  });
+
+  it("is the summoner's: a Ranger's Winnowing gets it, an R/Rt with none gets 210", () => {
+    const rtR = summoner(12);
+    ritual(rtR, WINNOWING);
+    expect(spirits(rtR)[0]?.combatant.maxHealth).toBe(311);
+    const rRt = match();
+    ritual(rRt, RECUPERATION);
+    expect(spirits(rRt)[0]?.combatant.maxHealth).toBe(210);
+  });
+
+  it("leaves the spirit's lifetime alone", () => {
+    const sim = summoner(12);
+    ritual(sim, RECUPERATION);
+    const plain = summoner(0);
+    ritual(plain, RECUPERATION);
+    expect(spirits(sim)[0]?.creature?.expiresInSeconds).toBe(
+      spirits(plain)[0]?.creature?.expiresInSeconds,
+    );
+  });
+
+  it("says the health in the tooltip, the base in brackets", () => {
+    const line = (spawningPower: number) =>
+      describeSkill(
+        skillOf(RECUPERATION),
+        new Map([
+          ["ritualist.restoration-magic", 12],
+          ["ritualist.spawning-power", spawningPower],
+        ]),
+      ).effects[0]?.text;
+    expect(line(12)).toBe("Summons 1 Recuperation (311 Health (210), lasts 39 seconds)");
+    expect(line(0)).toBe("Summons 1 Recuperation (210 Health, lasts 39 seconds)");
+  });
+});
+
 describe("what a spirit lets the Ritualist do (#1064)", () => {
   it("Weapon of Quickening shortens a binding ritual's recharge by 33%, Mantra of Recovery does not", () => {
     const recharge = (statusId: StatusId): number | undefined => {

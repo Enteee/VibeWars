@@ -9,6 +9,7 @@
     "combat",
     "refused",
     "skill-bar",
+    "weapon-sets",
     "recharge",
     "adrenaline",
     "chain",
@@ -30,6 +31,7 @@
     "rejoin-proof",
     "call",
     "calls",
+    "traps",
     "chat",
     "chat-line"
   ],
@@ -243,6 +245,8 @@
         { "literal": "skill-bar" },
         { "literal": "snapshot" },
         { "literal": "stay-together" },
+        { "literal": "traps" },
+        { "literal": "weapon-sets" },
         { "literal": "welcome" }
       ]
     },
@@ -292,6 +296,18 @@
             { "name": "kind", "optional": false, "type": { "literal": "walk-to" } },
             { "name": "x", "optional": false, "type": "number" },
             { "name": "y", "optional": false, "type": "number" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "weapon-set" } },
+            {
+              "name": "set",
+              "optional": false,
+              "type": {
+                "union": [{ "literal": 0 }, { "literal": 1 }, { "literal": 2 }, { "literal": 3 }]
+              }
+            }
           ]
         }
       ]
@@ -1530,6 +1546,18 @@
         }
       ]
     },
+    "WeaponSetIntent": {
+      "properties": [
+        { "name": "kind", "optional": false, "type": { "literal": "weapon-set" } },
+        {
+          "name": "set",
+          "optional": false,
+          "type": {
+            "union": [{ "literal": 0 }, { "literal": 1 }, { "literal": 2 }, { "literal": 3 }]
+          }
+        }
+      ]
+    },
     "WireAdmission": {
       "properties": [
         { "name": "admissionSig", "optional": false, "type": "string" },
@@ -1759,7 +1787,9 @@
         {
           "name": "kind",
           "optional": false,
-          "type": { "union": [{ "literal": "minion" }, { "literal": "spirit" }] }
+          "type": {
+            "union": [{ "literal": "minion" }, { "literal": "pet" }, { "literal": "spirit" }]
+          }
         },
         { "name": "ownerId", "optional": false, "type": "string" }
       ]
@@ -2018,7 +2048,13 @@
                   {
                     "name": "kind",
                     "optional": false,
-                    "type": { "union": [{ "literal": "minion" }, { "literal": "spirit" }] }
+                    "type": {
+                      "union": [
+                        { "literal": "minion" },
+                        { "literal": "pet" },
+                        { "literal": "spirit" }
+                      ]
+                    }
                   },
                   { "name": "ownerId", "optional": false, "type": "string" }
                 ]
@@ -2211,7 +2247,13 @@
                           {
                             "name": "kind",
                             "optional": false,
-                            "type": { "union": [{ "literal": "minion" }, { "literal": "spirit" }] }
+                            "type": {
+                              "union": [
+                                { "literal": "minion" },
+                                { "literal": "pet" },
+                                { "literal": "spirit" }
+                              ]
+                            }
                           },
                           { "name": "ownerId", "optional": false, "type": "string" }
                         ]
@@ -2401,7 +2443,13 @@
                           {
                             "name": "kind",
                             "optional": false,
-                            "type": { "union": [{ "literal": "minion" }, { "literal": "spirit" }] }
+                            "type": {
+                              "union": [
+                                { "literal": "minion" },
+                                { "literal": "pet" },
+                                { "literal": "spirit" }
+                              ]
+                            }
                           },
                           { "name": "ownerId", "optional": false, "type": "string" }
                         ]
@@ -2529,6 +2577,83 @@
           "name": "team",
           "optional": false,
           "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+        }
+      ]
+    },
+    "WireTraps": {
+      "properties": [
+        {
+          "name": "traps",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "durationSeconds", "optional": false, "type": "number" },
+                { "name": "endsAt", "optional": false, "type": "number" },
+                { "name": "id", "optional": false, "type": "number" },
+                { "name": "radius", "optional": false, "type": "number" },
+                { "name": "skillId", "optional": false, "type": "string" },
+                {
+                  "name": "team",
+                  "optional": false,
+                  "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+                },
+                { "name": "x", "optional": false, "type": "number" },
+                { "name": "y", "optional": false, "type": "number" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "WireWeaponSet": {
+      "properties": [
+        { "name": "offhandId", "optional": false, "type": { "union": ["null", "string"] } },
+        { "name": "weaponId", "optional": false, "type": "string" }
+      ]
+    },
+    "WireWeaponSets": {
+      "properties": [
+        {
+          "name": "active",
+          "optional": false,
+          "type": {
+            "union": [{ "literal": 0 }, { "literal": 1 }, { "literal": 2 }, { "literal": 3 }]
+          }
+        },
+        {
+          "name": "pending",
+          "optional": false,
+          "type": {
+            "union": [
+              "null",
+              { "literal": 0 },
+              { "literal": 1 },
+              { "literal": 2 },
+              { "literal": 3 }
+            ]
+          }
+        },
+        {
+          "name": "sets",
+          "optional": false,
+          "type": {
+            "array": {
+              "union": [
+                "null",
+                {
+                  "properties": [
+                    {
+                      "name": "offhandId",
+                      "optional": false,
+                      "type": { "union": ["null", "string"] }
+                    },
+                    { "name": "weaponId", "optional": false, "type": "string" }
+                  ]
+                }
+              ]
+            }
+          }
         }
       ]
     }

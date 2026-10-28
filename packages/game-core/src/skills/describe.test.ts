@@ -12,7 +12,7 @@ import {
 import { makeCombatant, withAttackDuration } from "./testing.js";
 import { resolveMagnitude } from "./scaling.js";
 import { STATUS_DEFINITIONS } from "./status.js";
-import type { SkillEffect } from "./types.js";
+import { isEasilyInterrupted, type SkillEffect } from "./types.js";
 
 /**
  * Descriptions are generated from the effect data, never authored, so
@@ -132,6 +132,21 @@ describe("describeSkill", () => {
     );
   });
 
+  it("says Comfort Animal acts on your pet, and Charm Animal brings one (#1046)", () => {
+    const comfort = describeSkill(
+      skill("ranger.comfort-animal"),
+      new Map([["ranger.beast-mastery", 12]]),
+    );
+    expect(comfort.targetText).toBe("Your pet");
+    expect(comfort.effects.map((e) => e.text)).toEqual([
+      "Heals for 87",
+      "Returns the target to life with 48% health and 0% energy",
+    ]);
+    expect(describeSkill(skill("ranger.charm-animal")).effects.map((e) => e.text)).toEqual([
+      "While on your bar, a Wolf (480 Health) fights beside you",
+    ]);
+  });
+
   it("says what a summon makes, how tough and for how long (#1052)", () => {
     const summon = (durationSeconds?: number): SkillEffect => ({
       kind: "summon",
@@ -147,6 +162,8 @@ describe("describeSkill", () => {
         ...(durationSeconds === undefined ? {} : { durationSeconds: { flat: durationSeconds } }),
         behaviour: { kind: "idle" },
         aura: undefined,
+        onDeath: "vanish",
+        ownerDisableOnDeath: undefined,
       },
     });
     const lines = (effect: SkillEffect) =>
@@ -401,13 +418,14 @@ describe("describeSkill", () => {
     // Guards the switch in `describeEffect`: a new effect kind that
     // nobody described would silently vanish from tooltips. An `if` is
     // a line per effect inside it (#521), a spirit's summon one more for
-    // what it projects (#1064), and so does a ward (#1087).
+    // what it projects (#1064), and so does a ward (#1087); a trap is one
+    // line, then one per effect of its spring (#1105).
     const linesOf = (effect: SkillEffect): number => {
       if (effect.kind === "if") {
         return effect.effects.length;
       }
       if (effect.kind === "create-ground-effect") {
-        return 2;
+        return effect.act.kind === "aura" ? 2 : 1 + effect.act.trap.effects.length;
       }
       return effect.kind === "summon" && effect.creature.aura !== undefined ? 2 : 1;
     };
@@ -428,7 +446,9 @@ describe("describeSkill", () => {
           lines(entry.attack?.onBlocked ?? []) +
           (entry.whileActivating === undefined ? 0 : 1) +
           (entry.projectile === undefined ? 0 : 1) +
-          (entry.corpse === undefined ? 0 : 1),
+          (isEasilyInterrupted(entry.type) ? 1 : 0) +
+          (entry.corpse === undefined ? 0 : 1) +
+          (entry.companion === undefined ? 0 : 1),
       );
       for (const line of described.effects) {
         expect(line.text.length, `${entry.id} has an empty description line`).toBeGreaterThan(0);
@@ -830,11 +850,35 @@ describe("describeSkill at a primary attribute's rank (#531)", () => {
     );
   });
 
+  it("shows Fast Casting's signet activation too (#1100)", () => {
+    const signet = skill("common.resurrection-signet");
+    expect(describeSkill(signet, new Map([["mesmer.fast-casting", 12]])).castTime).toBe(
+      "1.9s (3s)",
+    );
+  });
+
   it("shows the base alone when the rank changes nothing", () => {
     const broadHead = skill("ranger.broad-head-arrow");
     const fireball = skill("elementalist.fireball");
     expect(describeSkill(broadHead, new Map()).cost).toBe("10 energy");
     expect(describeSkill(fireball, new Map([["ranger.expertise", 12]])).cost).toBe("10 energy");
     expect(describeSkill(fireball, new Map([["mesmer.fast-casting", 12]])).castTime).toBe("1s");
+  });
+});
+
+describe("Spawning Power in the tooltip (#1098)", () => {
+  it("lengthens a weapon spell's duration, the base in brackets", () => {
+    const quickening = skill("ritualist.weapon-of-quickening");
+    const line = (rank: number) =>
+      describeSkill(quickening, new Map([["ritualist.spawning-power", rank]])).effects[0]?.text;
+    expect(line(12)).toMatch(/^Applies Weapon of Quickening for 31\.1s \(21s\) \(/);
+    expect(line(0)).toMatch(/^Applies Weapon of Quickening for 21s \(/);
+  });
+
+  it("leaves a status that is no weapon spell alone", () => {
+    const unguent = skill("ranger.troll-unguent");
+    expect(
+      describeSkill(unguent, new Map([["ritualist.spawning-power", 12]])).effects[0]?.text,
+    ).toMatch(/^Applies Regeneration for 13s \(/);
   });
 });
