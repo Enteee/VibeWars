@@ -139,10 +139,11 @@ test("#853: the first start rolls a starter character, chosen; Reroll replaces i
   await expect(row).toHaveCount(1);
   await expect(row).toHaveClass(/is-selected/);
 
-  // It has Clone, not Edit (#1147): Clone opens the editor on a copy.
+  // It has Clone, not Edit (#1147): Clone opens the editor on a copy,
+  // one copy even for a double-click.
   const rolled = await name.innerText();
   await expect(actions.getByRole("button", { name: "Edit", exact: true })).toHaveCount(0);
-  await actions.getByRole("button", { name: "Clone", exact: true }).click();
+  await actions.getByRole("button", { name: "Clone", exact: true }).dblclick();
   await expect(page.locator("input.editor-name")).toHaveValue(`${rolled} (copy)`);
   await page.locator("input.editor-name").fill("Pyro");
   await page.getByRole("button", { name: "Save", exact: true }).click();

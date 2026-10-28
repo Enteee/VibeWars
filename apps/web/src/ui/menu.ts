@@ -209,12 +209,15 @@ export function renderMenu(
   for (const character of characters) {
     // The rolled character is never edited (#1147): Clone gives an
     // ordinary copy to edit, and Reroll replaces it at once, unasked (#1146).
+    const clone = button("Clone", "roster-clone", () => {
+      // One copy per press: a double-click must not save two.
+      clone.disabled = true;
+      callbacks.onCloneCharacter(character.id);
+    });
     const actions =
       character.id === starter
         ? [
-            button("Clone", "roster-clone", () => {
-              callbacks.onCloneCharacter(character.id);
-            }),
+            clone,
             button("Reroll", "roster-reroll", () => {
               callbacks.onRerollCharacter(character.id);
             }),
