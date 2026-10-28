@@ -22,6 +22,7 @@ import type {
   PeerCall,
 } from "@vibewars/game-protocol";
 import {
+  armedAttackSnapshot,
   createCallBoard,
   groundEffectSnapshot,
   sameSkillBar,
@@ -124,6 +125,7 @@ function toPlayerSnapshot(
             kind: participant.creature.kind,
             look: participant.creature.look,
             mode: companionMode(participant.creature),
+            armedAttack: armedAttackSnapshot(participant.armedAttack, elapsedSeconds),
           },
   };
 }

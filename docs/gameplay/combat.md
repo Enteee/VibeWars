@@ -1450,7 +1450,11 @@ attacker, at the ranks the wolf arrived with; a blind miss or a block
 uses it up too, and it earns no adrenaline. With no wolf ("You have no
 pet."), a dead one ("Your pet is dead.") or one farther than 350 from
 its owner ("Your pet is too far away.") it is refused and costs
-nothing. At Beast Mastery 12:
+nothing. While a blow is armed, its skill's icon sits right of the
+wolf's bar in your party window (#1167), darkening clockwise as the
+10 s run out; it goes when the blow lands it, when it lapses, when a
+newer one replaces it and when the wolf dies. Neither arming nor a
+lapse writes a log line. At Beast Mastery 12:
 
 | Skill            | Energy | Recharge | Blow                                                            |
 | ---------------- | ------ | -------- | --------------------------------------------------------------- |

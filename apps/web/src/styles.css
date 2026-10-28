@@ -4291,6 +4291,47 @@ body:has(#app > .chat) .now-playing {
   vertical-align: -0.15em;
 }
 
+/* Your pet's armed attack (#1167), right of its bar: the row keeps the
+   room for it, so the bar does not jump when one is armed. */
+.party-companion .party-row {
+  position: relative;
+  min-height: calc(24px + 0.3rem);
+  padding-right: calc(24px + 0.5rem);
+}
+
+.party-armed {
+  position: absolute;
+  top: 50%;
+  right: 0.25rem;
+  width: 24px;
+  height: 24px;
+  transform: translateY(-50%);
+}
+
+.party-armed[hidden] {
+  display: none;
+}
+
+.party-armed img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* The recharge wipe's shade, run the other way: dark from 12 clockwise
+   as the wait runs out (#152). */
+.party-armed::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: conic-gradient(
+    from 0deg,
+    var(--recharge-shade) calc(var(--armed, 0) * 1turn),
+    transparent 0
+  );
+  pointer-events: none;
+}
+
 .party-window .party-health {
   width: 100%;
   height: 12px;

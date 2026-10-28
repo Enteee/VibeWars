@@ -137,6 +137,7 @@ export type {
   PeerWelcome,
   PeerRefuse,
   WirePlayer,
+  WireArmedAttack,
   WireCreature,
   WireSnapshot,
   WireSnapshotPart,
