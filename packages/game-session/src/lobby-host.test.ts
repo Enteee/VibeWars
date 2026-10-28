@@ -1,4 +1,4 @@
-import { DEFAULT_MATCH_RULES } from "@vibewars/game-core";
+import { ANNIHILATION_MATCH_RULES } from "@vibewars/game-core";
 import {
   PROTOCOL_VERSION,
   parseWireLobbyNote,
@@ -337,7 +337,10 @@ describe("playing more than one match in a lobby", () => {
     options: { timeLimitSeconds?: number; teams?: readonly [0 | 1, 0 | 1] } = {},
   ) {
     const lobby = await openLobby({
-      matchRules: { ...DEFAULT_MATCH_RULES, timeLimitSeconds: options.timeLimitSeconds ?? 600 },
+      matchRules: {
+        ...ANNIHILATION_MATCH_RULES,
+        timeLimitSeconds: options.timeLimitSeconds ?? 600,
+      },
     });
     const guest = await lobby.join();
     await seat([lobby.host, guest], options.teams ?? [0, 1]);

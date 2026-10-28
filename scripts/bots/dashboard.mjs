@@ -37,7 +37,7 @@ import {
   usageReader,
 } from "./company-facts.mjs";
 import { boardScreenLines, companyLines, feedLines, groupFeed } from "./dashboard-view.mjs";
-import { hubHealth, parseAlive, parseRestarts } from "./hub-health.mjs";
+import { HUBD_ALIVE, hubHealth, parseAlive, parseRestarts } from "./hub-health.mjs";
 import { roleOf } from "./staff.mjs";
 
 const ROOT = process.env.VIBEWARS_BOT_ROOT ?? path.join(process.cwd(), ".bots");
@@ -304,11 +304,7 @@ function hub() {
       return "";
     }
   };
-  return hubHealth(
-    parseAlive(read("hubd.alive")),
-    parseRestarts(read("hubd.restarts")),
-    Date.now(),
-  );
+  return hubHealth(parseAlive(read(HUBD_ALIVE)), parseRestarts(read("hubd.restarts")), Date.now());
 }
 
 /**

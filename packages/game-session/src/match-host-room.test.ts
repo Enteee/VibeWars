@@ -1,4 +1,4 @@
-import { DEFAULT_MATCH_RULES, SKILL_BAR_SLOTS } from "@vibewars/game-core";
+import { ANNIHILATION_MATCH_RULES, SKILL_BAR_SLOTS } from "@vibewars/game-core";
 import {
   PROTOCOL_MISMATCH_MESSAGE,
   PROTOCOL_VERSION,
@@ -166,7 +166,7 @@ describe("a P2P match host, as the match room (#375)", () => {
 
   it("never places a Quick Match player in a match that has ended (#249)", async () => {
     // The host has no `endMatch`: a short time limit ends it the way a real match ends.
-    const match = startMatch({ matchRules: { ...DEFAULT_MATCH_RULES, timeLimitSeconds: 1 } });
+    const match = startMatch({ matchRules: { ...ANNIHILATION_MATCH_RULES, timeLimitSeconds: 1 } });
     const { connection: first, transport } = await match.join();
     const ended = collect(transport, "ended", (value) => value);
 

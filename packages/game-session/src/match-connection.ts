@@ -1,6 +1,7 @@
 import type {
   ChainRole,
   CombatEvent,
+  CompanionMode,
   CreatureKind,
   CreatureLook,
   OffhandId,
@@ -89,12 +90,27 @@ export interface PlayerSnapshot {
   readonly statuses: readonly StatusSnapshot[];
   /**
    * A creature's owner, kind and look (#1052, #1162), `undefined` for a
-   * player or a dummy. A creature never counts for its team: not in the scoreboard,
-   * the enemy pips or the music.
+   * player or a dummy. A creature never counts for its team: not in the
+   * scoreboard, the enemy pips or the music. `mode` is a companion's
+   * (#1110), `null` for any other creature. `armedAttack` is the pet
+   * attack its next blow carries (#1167), `null` when none is armed.
    */
   readonly creature:
-    | { readonly ownerId: string; readonly kind: CreatureKind; readonly look: CreatureLook }
+    | {
+        readonly ownerId: string;
+        readonly kind: CreatureKind;
+        readonly look: CreatureLook;
+        readonly mode: CompanionMode | null;
+        readonly armedAttack: ArmedAttackSnapshot | null;
+      }
     | undefined;
+}
+
+/** A companion's armed pet attack (#1167): a pet-attack skill, and when it lapses. */
+export interface ArmedAttackSnapshot {
+  readonly skillId: string;
+  /** Match clock (`elapsedSeconds`) at which it lapses unused. */
+  readonly endsAt: number;
 }
 
 /** One status on a player (#803): what the effects monitor draws. */
@@ -219,6 +235,11 @@ export interface MatchConnection {
   onConnectionChange(handler: (state: "online" | "reconnecting" | "lost") => void): void;
   /** The match's static geometry, received once on join (brief §19). */
   readonly map: MapDescriptor;
+  /**
+   * How long the match runs, from the host (#476): the clock counts down
+   * from it. `null` for one with no limit, as training is.
+   */
+  readonly timeLimitSeconds: number | null;
   /**
    * The server-assigned skill bar, received on join and again whenever a
    * slot changes, such as a cost a glyph lowers (#637): every slot in its

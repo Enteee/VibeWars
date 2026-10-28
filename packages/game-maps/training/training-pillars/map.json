@@ -1,6 +1,7 @@
 {
   "id": "training-pillars",
   "name": "Training Pillars",
+  "mode": "annihilation",
   "width": 560,
   "height": 420,
   "walls": [

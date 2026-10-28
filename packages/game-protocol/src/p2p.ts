@@ -21,7 +21,14 @@ import type {
   SkillBarSlot,
   WallDescriptor,
 } from "./protocol.js";
-import { CHAIN_ROLES, MAX_LOBBY_PLAYERS, type LobbyPhase, type WireChainMark } from "./protocol.js";
+import {
+  CHAIN_ROLES,
+  COMPANION_MODES,
+  MAX_LOBBY_PLAYERS,
+  type CompanionMode,
+  type LobbyPhase,
+  type WireChainMark,
+} from "./protocol.js";
 
 /**
  * The channels a lobby and its match use. Trystero caps an action name at
@@ -227,6 +234,8 @@ export interface PeerWelcome {
    * from the start of the match.
    */
   readonly elapsedSeconds: number;
+  /** How long the match runs, by its map's mode (#476): the clock counts down from it. */
+  readonly timeLimitSeconds: number;
   readonly map: MapDescriptor;
 }
 
@@ -294,7 +303,7 @@ export interface WirePlayer {
   /** Its statuses, in the order applied, oldest first (#803). */
   readonly statuses: readonly WireStatus[];
   /**
-   * A creature's owner, kind and look (#1052, #1162); `null` for a player
+   * A creature's owner, kind, look and mode (#1052, #1162, #1110); `null` for a player
    * or a dummy. A creature's `name` is its kind's, and its professions are `null`.
    */
   readonly creature: WireCreature | null;
@@ -305,6 +314,21 @@ export interface WireCreature {
   readonly ownerId: string;
   readonly kind: (typeof CREATURE_KINDS)[number];
   readonly look: (typeof CREATURE_LOOKS)[number];
+  /** How a companion fights (#1110); `null` for a creature that is not one. */
+  readonly mode: CompanionMode | null;
+  /**
+   * The pet attack its next blow is armed with (#1167), and the match
+   * clock (`elapsedSeconds`) at which it lapses, rounded to 0.1 s; `null`
+   * when nothing is armed. The skill id is checked against the catalog
+   * where the catalog is known, as `castingSkillId` is.
+   */
+  readonly armedAttack: WireArmedAttack | null;
+}
+
+/** A companion's armed pet attack (#1167). */
+export interface WireArmedAttack {
+  readonly skillId: string;
+  readonly endsAt: number;
 }
 
 /** One status on a player (#803): what the effects monitor draws. */
@@ -1109,7 +1133,9 @@ export function parsePeerWelcome(value: unknown): PeerWelcome | undefined {
     !isNumber(raw.tickIntervalMs) ||
     raw.tickIntervalMs <= 0 ||
     !isNumber(raw.elapsedSeconds) ||
-    raw.elapsedSeconds < 0
+    raw.elapsedSeconds < 0 ||
+    !isNumber(raw.timeLimitSeconds) ||
+    raw.timeLimitSeconds <= 0
   ) {
     return undefined;
   }
@@ -1122,6 +1148,7 @@ export function parsePeerWelcome(value: unknown): PeerWelcome | undefined {
         rejoinToken: raw.rejoinToken,
         tickIntervalMs: raw.tickIntervalMs,
         elapsedSeconds: raw.elapsedSeconds,
+        timeLimitSeconds: raw.timeLimitSeconds,
         map,
       };
 }
@@ -1216,11 +1243,25 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
 
 function parseCreature(value: unknown): WireCreature | undefined {
   const raw = fields(value);
-  return raw !== undefined &&
-    isString(raw.ownerId) &&
-    isOneOf(raw.kind, CREATURE_KINDS) &&
-    isOneOf(raw.look, CREATURE_LOOKS)
-    ? { ownerId: raw.ownerId, kind: raw.kind, look: raw.look }
+  if (
+    raw === undefined ||
+    !isString(raw.ownerId) ||
+    !isOneOf(raw.kind, CREATURE_KINDS) ||
+    !isOneOf(raw.look, CREATURE_LOOKS) ||
+    !(raw.mode === null || isOneOf(raw.mode, COMPANION_MODES))
+  ) {
+    return undefined;
+  }
+  const armedAttack = raw.armedAttack === null ? null : parseArmedAttack(raw.armedAttack);
+  return armedAttack === undefined
+    ? undefined
+    : { ownerId: raw.ownerId, kind: raw.kind, look: raw.look, mode: raw.mode, armedAttack };
+}
+
+function parseArmedAttack(value: unknown): WireArmedAttack | undefined {
+  const raw = fields(value);
+  return raw !== undefined && isString(raw.skillId) && isNumber(raw.endsAt)
+    ? { skillId: raw.skillId, endsAt: raw.endsAt }
     : undefined;
 }
 

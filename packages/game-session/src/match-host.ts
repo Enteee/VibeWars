@@ -11,6 +11,7 @@ import {
   resolveLoadout,
   spawnFacing,
   swingProgress,
+  type MatchMode,
   type MatchRules,
   type Participant,
   type ProfessionId,
@@ -99,6 +100,8 @@ export const MATCH_OVER_MESSAGE = "This match is over.";
 /** The arena, already built from game-maps by the caller: game-session does not depend on it. */
 export interface HostMap {
   readonly descriptor: MapDescriptor;
+  /** The mode its matches play (#476): the caller builds `matchRules` from it. */
+  readonly mode: MatchMode;
   readonly walls: readonly Segment[];
   readonly bounds: { readonly width: number; readonly height: number };
   readonly spawns: readonly SpawnPoint[];
@@ -458,6 +461,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       rejoinToken: seat.token,
       tickIntervalMs: 1000 / RULESET.tickRateHz,
       elapsedSeconds: sim.elapsedSeconds,
+      timeLimitSeconds: options.matchRules.timeLimitSeconds,
       map: map.descriptor,
     };
     transport.send("welcome", message, peerId);
@@ -793,7 +797,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     winningTeam: wireTeam(sim.outcome.winningTeam),
     endReason: sim.outcome.reason ?? null,
     players: [...sim.participants()].flatMap((participant) => {
-      const who = wireIdentity(participant, seats);
+      const who = wireIdentity(participant, seats, sim.elapsedSeconds);
       return who === undefined ? [] : [wirePlayer(participant, who)];
     }),
     // The newest, if ever there were more than a snapshot may carry: a

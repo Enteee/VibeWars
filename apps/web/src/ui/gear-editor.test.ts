@@ -286,6 +286,40 @@ describe("profession insignias (#1142)", () => {
     );
   });
 
+  it("describes #1188's conditions, Undertaker's in full and Minion Master's short", () => {
+    const conditionOf = (id: "disciples" | "blighters" | "forsaken" | "prismatic"): string => {
+      const effect = INSIGNIAS[id].effect;
+      if (effect.kind !== "conditional-armor") {
+        throw new Error(`${id} is armor`);
+      }
+      return describeConditions(effect.bonuses[0]?.conditions ?? []);
+    };
+    expect(conditionOf("disciples")).toBe("while you have a condition");
+    expect(conditionOf("blighters")).toBe("while hexed");
+    expect(conditionOf("forsaken")).toBe("while not enchanted");
+    expect(conditionOf("prismatic")).toBe("with 9+ Air Magic");
+    const undertakers = INSIGNIAS.undertakers.effect;
+    const minionMasters = INSIGNIAS["minion-masters"].effect;
+    const shamans = INSIGNIAS.shamans.effect;
+    if (
+      undertakers.kind !== "conditional-armor" ||
+      minionMasters.kind !== "conditional-armor" ||
+      shamans.kind !== "conditional-armor"
+    ) {
+      throw new Error("they are armor");
+    }
+    expect(insigniaEffectNote(undertakers)).toBe(
+      "+5 armor below 80% Health, +5 armor below 60% Health, +5 armor below 40% Health, " +
+        "+5 armor below 20% Health",
+    );
+    expect(insigniaEffectNote(minionMasters)).toBe(
+      "+5 armor while you control 1+ minions, +5 at 3+, +5 at 5+",
+    );
+    expect(insigniaEffectNote(shamans)).toBe(
+      "+5 armor while you control 1+ spirits, +5 at 2+, +5 at 3+",
+    );
+  });
+
   it("takes Knight's off a Warrior turned Monk, and keeps Brawler's", () => {
     const worn = setInsignia(setInsignia(warrior(), "chest", "knights"), "legs", "brawlers");
     const turned = setProfessions(worn, "monk", undefined);

@@ -359,6 +359,16 @@ function conditionLabel(condition: ArmorCondition): string {
       return `while ${String(condition.count)}+ skills recharge`;
     case "attribute-at-least":
       return `with ${String(condition.rank)}+ ${getAttribute(condition.attributeId)?.name ?? condition.attributeId}`;
+    case "has-condition":
+      return "while you have a condition";
+    case "has-hex":
+      return "while hexed";
+    case "no-enchantment":
+      return "while not enchanted";
+    case "health-below":
+      return `below ${String(Math.round(condition.fraction * 100))}% Health`;
+    case "controls-at-least":
+      return `while you control ${String(condition.count)}+ ${condition.creature === "minion" ? "minions" : "spirits"}`;
   }
 }
 
@@ -377,7 +387,9 @@ function armorLine(bonus: ConditionalArmor): string {
 function tierCount(bonus: ConditionalArmor): number | undefined {
   const [only, ...rest] = bonus.conditions;
   return rest.length === 0 &&
-    (only?.kind === "enchantments-at-least" || only?.kind === "recharging-at-least")
+    (only?.kind === "enchantments-at-least" ||
+      only?.kind === "recharging-at-least" ||
+      only?.kind === "controls-at-least")
     ? only.count
     : undefined;
 }

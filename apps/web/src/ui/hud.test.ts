@@ -288,7 +288,13 @@ describe("enemyPips (#881)", () => {
     const minion = player({
       sessionId: "f1/c1",
       team: 1,
-      creature: { ownerId: "f1", kind: "minion", look: "bone-minion" },
+      creature: {
+        ownerId: "f1",
+        kind: "minion",
+        look: "bone-minion",
+        mode: null,
+        armedAttack: null,
+      },
     });
     expect(enemyPips([...players, minion], 0)).toEqual(enemyPips(players, 0));
   });
@@ -307,20 +313,37 @@ describe("scoreboardText (#881)", () => {
   ];
 
   it("counts the living per side, your own first, beside the clock", () => {
-    expect(scoreboardText(players, 0, 42)).toBe("2 v 1 · 0:42");
-    expect(scoreboardText(players, 1, 42)).toBe("1 v 2 · 0:42");
+    expect(scoreboardText(players, 0, 42, null)).toBe("2 v 1 · 0:42");
+    expect(scoreboardText(players, 1, 42, null)).toBe("1 v 2 · 0:42");
   });
 
   it("counts no creature, alive or not (#1052)", () => {
     const minion = (sessionId: string, team: number) =>
-      player({ sessionId, team, creature: { ownerId: "a", kind: "minion", look: "bone-minion" } });
-    expect(scoreboardText([...players, minion("a/c1", 0), minion("c/c1", 1)], 0, 42)).toBe(
+      player({
+        sessionId,
+        team,
+        creature: {
+          ownerId: "a",
+          kind: "minion",
+          look: "bone-minion",
+          mode: null,
+          armedAttack: null,
+        },
+      });
+    expect(scoreboardText([...players, minion("a/c1", 0), minion("c/c1", 1)], 0, 42, null)).toBe(
       "2 v 1 · 0:42",
     );
   });
 
   it("reads team 1 first for a spectator", () => {
-    expect(scoreboardText(players, undefined, 432)).toBe("2 v 1 · 7:12");
+    expect(scoreboardText(players, undefined, 432, null)).toBe("2 v 1 · 7:12");
+  });
+
+  it("counts down from the match's limit, reading 0:00 only once time is out (#476)", () => {
+    expect(scoreboardText(players, 0, 0, 180)).toBe("2 v 1 · 3:00");
+    expect(scoreboardText(players, 0, 42.5, 180)).toBe("2 v 1 · 2:18");
+    expect(scoreboardText(players, 0, 179.5, 180)).toBe("2 v 1 · 0:01");
+    expect(scoreboardText(players, 0, 181, 180)).toBe("2 v 1 · 0:00");
   });
 });
 

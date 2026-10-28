@@ -1,4 +1,5 @@
-import type { MatchSnapshot, PlayerSnapshot } from "@vibewars/game-session";
+import { PET_ATTACK_SECONDS, getSkill, type CompanionMode } from "@vibewars/game-core";
+import type { ArmedAttackSnapshot, MatchSnapshot, PlayerSnapshot } from "@vibewars/game-session";
 
 import { healthTint, paintHealthTint, type HealthTint } from "./health-tint.js";
 import {
@@ -7,12 +8,15 @@ import {
   targetProfessionIcons,
   type ProfessionIcon,
 } from "./hud.js";
+import { skillIcon } from "./icons.js";
 import { pipsElement, renderPips } from "./pips.js";
 
 /**
  * The party window (#1055, docs/art/art-direction.md "Party window"): your
  * team's health at a glance, right middle, you first. A click on a row
- * targets that member. No energy, as GW1. Creatures (#1052) are not listed.
+ * targets that member. No energy, as GW1. Of the creatures (#1052), only
+ * your own companion is listed, under you, with its Guard, Fight and Heel
+ * buttons (#1110), and the pet attack its next blow is armed with (#1167).
  */
 
 /** Past this many rows, they go compact: name and bar on one line. */
@@ -32,6 +36,10 @@ export interface PartyRow {
   readonly healthPoints: string | undefined;
   readonly tint: HealthTint | null;
   readonly pips: number;
+  /** Your companion's mode, lit on its row (#1110); undefined on a person's row. */
+  readonly companionMode: CompanionMode | undefined;
+  /** The pet attack your companion's next blow carries (#1167); undefined when none. */
+  readonly armedAttack: ArmedAttackSnapshot | undefined;
 }
 
 function partyRow(player: PlayerSnapshot, self: PlayerSnapshot): PartyRow {
@@ -48,10 +56,23 @@ function partyRow(player: PlayerSnapshot, self: PlayerSnapshot): PartyRow {
       : `${String(Math.round(player.health))} / ${String(Math.round(player.maxHealth))}`,
     tint: player.dead ? null : healthTint(player.statuses.map((status) => status.id)),
     pips: player.healthPips,
+    companionMode: player.creature?.mode ?? undefined,
+    armedAttack: player.creature?.armedAttack ?? undefined,
   };
 }
 
-/** Your team, you first, then the others in seat order; empty when you are alone or spectating. */
+/**
+ * How much of an armed pet attack's wait has run (#1167), 0 just armed
+ * to 1 lapsing, at match clock `now`: the share its sweep darkens.
+ */
+export function armedSweep(armedAttack: ArmedAttackSnapshot, now: number): number {
+  return Math.min(1, Math.max(0, 1 - (armedAttack.endsAt - now) / PET_ATTACK_SECONDS));
+}
+
+/**
+ * Your team, you first, then your companion (#1110), then the others in
+ * seat order; empty when you are alone with no pet, or spectating.
+ */
 export function partyRows(snapshot: MatchSnapshot): readonly PartyRow[] {
   const self = snapshot.players.find((player) => player.sessionId === snapshot.selfSessionId);
   if (self === undefined) {
@@ -63,10 +84,14 @@ export function partyRows(snapshot: MatchSnapshot): readonly PartyRow[] {
       player.sessionId !== self.sessionId &&
       player.creature === undefined,
   );
-  if (others.length === 0) {
+  const companions = snapshot.players.filter(
+    (player) => player.creature?.ownerId === self.sessionId && player.creature.mode !== null,
+  );
+  const members = [self, ...companions, ...others];
+  if (members.length === 1) {
     return [];
   }
-  return [self, ...others].map((player) => partyRow(player, self));
+  return members.map((player) => partyRow(player, self));
 }
 
 export interface PartyWindow {
@@ -77,6 +102,8 @@ export interface PartyWindow {
 
 /** A member's row elements, made once and reused while they stay (ADR-0030). */
 interface RowElements {
+  /** What sits in the panel: the row, or a companion's row and its buttons. */
+  readonly element: HTMLElement;
   readonly row: HTMLButtonElement;
   readonly professions: HTMLElement;
   readonly name: HTMLElement;
@@ -87,6 +114,10 @@ interface RowElements {
   readonly points: HTMLElement;
   readonly pips: HTMLElement;
   readonly deadText: HTMLElement;
+  /** A companion's Guard, Fight and Heel buttons (#1110), by mode; empty on a person's row. */
+  readonly commands: ReadonlyMap<CompanionMode, HTMLButtonElement>;
+  /** A companion's armed pet attack (#1167): the icon and its sweep; `undefined` on a person's row. */
+  readonly armed: { readonly root: HTMLElement; readonly icon: HTMLImageElement } | undefined;
   /** What was last painted, so an unchanged row costs nothing. */
   key: string;
 }
@@ -98,17 +129,33 @@ function span(className: string, parent: HTMLElement): HTMLElement {
   return element;
 }
 
-function createRow(id: string, onTarget: (sessionId: string) => void): RowElements {
+/** The modes a companion's row offers, in its buttons' order (#1110). */
+const COMMANDS: readonly { readonly mode: CompanionMode; readonly label: string }[] = [
+  { mode: "guard", label: "Guard" },
+  { mode: "fight", label: "Fight" },
+  { mode: "heel", label: "Heel" },
+];
+
+/** Neither focusable nor taking focus on a press: the keyboard stays with the arena. */
+function keepFocus(button: HTMLButtonElement): void {
+  button.tabIndex = -1;
+  button.addEventListener("mousedown", (event) => {
+    event.preventDefault();
+  });
+}
+
+function createRow(
+  id: string,
+  companion: boolean,
+  onTarget: (sessionId: string) => void,
+  onCommand: (creatureId: string, mode: CompanionMode) => void,
+): RowElements {
   const row = document.createElement("button");
   row.type = "button";
   row.className = "party-row";
   row.dataset.member = id;
-  // Not focusable, and pressing it does not move focus: targeting from the
-  // window must not take the keyboard away from the arena.
-  row.tabIndex = -1;
-  row.addEventListener("mousedown", (event) => {
-    event.preventDefault();
-  });
+  // Targeting from the window must not take the keyboard away from the arena.
+  keepFocus(row);
   row.addEventListener("click", () => {
     onTarget(id);
   });
@@ -125,11 +172,65 @@ function createRow(id: string, onTarget: (sessionId: string) => void): RowElemen
   const pips = bar.appendChild(pipsElement());
   const deadText = span("party-row-dead", row);
   deadText.textContent = "dead";
-  return { row, professions, name, bar, fill, lost, percent, points, pips, deadText, key: "" };
+  const commands = new Map<CompanionMode, HTMLButtonElement>();
+  let element: HTMLElement = row;
+  let armed: RowElements["armed"];
+  if (companion) {
+    // Right of the bar; the sweep is its ::after, from `--armed` (styles.css).
+    const root = span("party-armed", row);
+    root.hidden = true;
+    const icon = document.createElement("img");
+    icon.alt = "";
+    root.appendChild(icon);
+    armed = { root, icon };
+    // Buttons cannot nest in the row's button: they sit beside it, in one block.
+    element = document.createElement("div");
+    element.className = "party-companion";
+    element.appendChild(row);
+    const orders = span("party-commands", element);
+    orders.setAttribute("role", "group");
+    orders.setAttribute("aria-label", "Pet orders");
+    for (const { mode, label } of COMMANDS) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "party-command";
+      button.dataset.mode = mode;
+      button.textContent = label;
+      keepFocus(button);
+      button.addEventListener("click", () => {
+        onCommand(id, mode);
+      });
+      orders.appendChild(button);
+      commands.set(mode, button);
+    }
+  }
+  return {
+    element,
+    row,
+    professions,
+    name,
+    bar,
+    fill,
+    lost,
+    percent,
+    points,
+    pips,
+    deadText,
+    commands,
+    armed,
+    key: "",
+  };
 }
 
-function paintRow(elements: RowElements, row: PartyRow, player: PlayerSnapshot): void {
+function paintRow(elements: RowElements, row: PartyRow, player: PlayerSnapshot, now: number): void {
   renderPips(elements.pips, row.pips);
+  if (elements.armed !== undefined && row.armedAttack !== undefined) {
+    // Every frame, but only a hundredth's change touches the DOM.
+    const sweep = (Math.round(armedSweep(row.armedAttack, now) * 100) / 100).toFixed(2);
+    if (elements.armed.root.style.getPropertyValue("--armed") !== sweep) {
+      elements.armed.root.style.setProperty("--armed", sweep);
+    }
+  }
   const lost = lostHealthPercent(player);
   const key = JSON.stringify([row, lost]);
   if (elements.key === key) {
@@ -161,12 +262,29 @@ function paintRow(elements: RowElements, row: PartyRow, player: PlayerSnapshot):
   elements.lost.style.width = `${String(lost)}%`;
   elements.percent.textContent = `${String(row.healthPercent ?? 0)}%`;
   elements.points.textContent = row.healthPoints === undefined ? "" : ` · ${row.healthPoints}`;
+  for (const [mode, button] of elements.commands) {
+    const lit = mode === row.companionMode;
+    button.classList.toggle("is-lit", lit);
+    button.setAttribute("aria-pressed", String(lit));
+  }
+  if (elements.armed !== undefined) {
+    const { root, icon } = elements.armed;
+    root.hidden = row.armedAttack === undefined;
+    if (row.armedAttack !== undefined) {
+      icon.src = skillIcon(row.armedAttack.skillId);
+      root.title = getSkill(row.armedAttack.skillId)?.name ?? row.armedAttack.skillId;
+    }
+  }
 }
 
-/** The window, in `parent`: hidden while there is no party to show. */
+/**
+ * The window, in `parent`: hidden while there is no party to show. A
+ * companion's buttons call `onCommand` (#1110).
+ */
 export function createPartyWindow(
   parent: HTMLElement,
   onTarget: (sessionId: string) => void,
+  onCommand: (creatureId: string, mode: CompanionMode) => void,
 ): PartyWindow {
   // The dock spans the right edge and centres the panel in it, clamped
   // under the compass (styles.css).
@@ -189,7 +307,7 @@ export function createPartyWindow(
       const ids = new Set(party.map((row) => row.id));
       for (const [id, elements] of rows) {
         if (!ids.has(id)) {
-          elements.row.remove();
+          elements.element.remove();
           rows.delete(id);
         }
       }
@@ -200,10 +318,10 @@ export function createPartyWindow(
         }
         let elements = rows.get(row.id);
         if (elements === undefined) {
-          elements = createRow(row.id, onTarget);
+          elements = createRow(row.id, row.companionMode !== undefined, onTarget, onCommand);
           rows.set(row.id, elements);
         }
-        paintRow(elements, row, player);
+        paintRow(elements, row, player, snapshot.elapsedSeconds);
       }
       const nextOrder = party.map((row) => row.id).join(" ");
       if (nextOrder !== order) {
@@ -211,7 +329,7 @@ export function createPartyWindow(
         panel.replaceChildren(
           ...party.flatMap((row) => {
             const elements = rows.get(row.id);
-            return elements === undefined ? [] : [elements.row];
+            return elements === undefined ? [] : [elements.element];
           }),
         );
       }

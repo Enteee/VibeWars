@@ -123,7 +123,7 @@ export type {
   TrapRule,
 } from "./types.js";
 
-export { KNOCKDOWN_SECONDS } from "./types.js";
+export { KNOCKDOWN_SECONDS, PET_ATTACK_SECONDS } from "./types.js";
 
 export { CHAIN_MARK_SECONDS } from "./chain.js";
 

@@ -7,7 +7,7 @@ import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { distance, vec2, ZERO, type Vec2 } from "../vec2.js";
 import { createCursor, decide, type Behaviour } from "./behaviour.js";
 import type { CombatLogEntry } from "./combat-log.js";
-import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { MatchSimulation, type CompanionMode, type ParticipantSpec } from "./simulation.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
@@ -353,6 +353,7 @@ describe("follow-and-attack (#467)", () => {
         onDeath: "vanish",
         ownerDisableSeconds: 0,
         companionSkillId: undefined,
+        mode: "guard",
       },
     };
   }
@@ -670,6 +671,55 @@ describe("follow-and-attack (#467)", () => {
       }
       dead.combatant.dead = true;
       expect(askPet(idle).attackTargetId).toBeUndefined();
+    });
+
+    /** `sim`'s pet, told `mode` (#1110). */
+    function order(sim: MatchSimulation, mode: CompanionMode): void {
+      const creature = sim.get("minion")?.creature;
+      if (creature === undefined) {
+        throw new Error("no pet");
+      }
+      creature.mode = mode;
+    }
+
+    it("on Fight, goes for its owner's selection, not its owner's attack (#1110)", () => {
+      const sim = world(
+        spec("owner", 0, vec2(0, 0)),
+        minion(vec2(0, 0)),
+        spec("x", 1, vec2(50, 0)),
+        spec("y", 1, vec2(-50, 0)),
+      );
+      order(sim, "fight");
+      sim.setTarget("owner", "x");
+      expect(askPet(sim)).toMatchObject({ targetId: "x", attackTargetId: "x" });
+      sim.requestAttack("owner", "y");
+      sim.setTarget("owner", "x");
+      expect(askPet(sim)).toMatchObject({ targetId: "x", attackTargetId: "x" });
+    });
+
+    it("on Fight, keeps its own foe with an ally selected (#1110)", () => {
+      const sim = world(
+        spec("owner", 0, vec2(0, 0)),
+        minion(vec2(0, 0)),
+        spec("x", 1, vec2(50, 0)),
+        spec("ally", 0, vec2(-50, 0)),
+      );
+      order(sim, "fight");
+      sim.requestAttack("minion", "x");
+      sim.setTarget("owner", "ally");
+      expect(askPet(sim)).toMatchObject({ attackTargetId: "x" });
+    });
+
+    it("on Heel, attacks nobody, its owner's foe nor its own, and keeps to heel (#1110)", () => {
+      const sim = world(
+        spec("owner", 0, vec2(0, 0)),
+        minion(vec2(200, 0)),
+        spec("x", 1, vec2(220, 0)),
+      );
+      order(sim, "heel");
+      sim.requestAttack("minion", "x");
+      sim.requestAttack("owner", "x");
+      expect(askPet(sim)).toMatchObject({ moveTo: vec2(0, 0), attackTargetId: undefined });
     });
 
     it("walks back past 700 from its owner until within 109, ignoring the owner's foe", () => {

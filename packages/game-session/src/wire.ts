@@ -1,4 +1,5 @@
 import {
+  companionMode,
   energyCostOf,
   getSkill,
   getStatusDefinition,
@@ -35,6 +36,7 @@ import type {
   CombatMessage,
   GroundEffectSnapshot,
   MatchSnapshot,
+  ArmedAttackSnapshot,
   PlayerSnapshot,
   ProjectileSnapshot,
   StatusSnapshot,
@@ -152,6 +154,22 @@ export function statusSnapshot(
     durationSeconds: Math.max(0.1, tenths(duration)),
     casterId: status.sourceId,
   };
+}
+
+/**
+ * A companion's armed pet attack as a snapshot carries it (#1167): when
+ * it lapses on the match clock, to the 0.1 s; `null` when none is armed.
+ */
+export function armedAttackSnapshot(
+  armedAttack: Participant["armedAttack"],
+  elapsedSeconds: number,
+): ArmedAttackSnapshot | null {
+  return armedAttack === undefined
+    ? null
+    : {
+        skillId: armedAttack.skillId,
+        endsAt: tenths(elapsedSeconds + armedAttack.remainingSeconds),
+      };
 }
 
 /**
@@ -518,11 +536,13 @@ export interface SeatIdentity {
  * Who a body on the wire is: a seat's player, or a creature (#1052),
  * named for its kind, on its owner's team, with no professions.
  * `undefined` for a body with no seat that is not a seated player's
- * creature: it is not sent.
+ * creature: it is not sent. A companion's armed pet attack lapses at
+ * `elapsedSeconds` on.
  */
 export function wireIdentity(
-  participant: Pick<Participant, "id" | "creature">,
+  participant: Pick<Participant, "id" | "creature" | "armedAttack">,
   seats: ReadonlyMap<string, SeatIdentity>,
+  elapsedSeconds: number,
 ): WireIdentity | undefined {
   const seat = seats.get(participant.id);
   if (seat !== undefined) {
@@ -543,16 +563,27 @@ export function wireIdentity(
         team: owner.team,
         primaryProfession: null,
         secondaryProfession: null,
-        creature: { ownerId: creature.ownerId, kind: creature.kind, look: creature.look },
+        creature: {
+          ownerId: creature.ownerId,
+          kind: creature.kind,
+          look: creature.look,
+          mode: companionMode(creature),
+          armedAttack: armedAttackSnapshot(participant.armedAttack, elapsedSeconds),
+        },
       };
 }
 
 /**
  * Each `PlayerSnapshot` field from its `WirePlayer` field. Typed both ways,
  * so a field added to either type without the other does not compile.
- * `undefined` for a status index past the table's end: malformed.
+ * `undefined` for a status index past the table's end, or an armed
+ * attack that is not a pet attack this build knows (#1167): malformed.
  */
 export function playerSnapshot(player: WirePlayer): PlayerSnapshot | undefined {
+  const armed = player.creature?.armedAttack ?? null;
+  if (armed !== null && getSkill(armed.skillId)?.type !== "pet-attack") {
+    return undefined;
+  }
   const statuses: StatusSnapshot[] = [];
   for (const { status: index, ...times } of player.statuses) {
     const id = statusFromWire(index);

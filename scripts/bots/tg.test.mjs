@@ -33,7 +33,11 @@ function bus({ context, messages = [], employee = "developer", sidecar = Date.no
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "tg-test-"));
   dirs.push(root);
   if (sidecar !== null) {
-    fs.writeFileSync(path.join(root, "sidecar.json"), JSON.stringify({ lastSeen: sidecar }));
+    fs.mkdirSync(path.join(root, "_alive"));
+    fs.writeFileSync(
+      path.join(root, "_alive", "sidecar.json"),
+      JSON.stringify({ lastSeen: sidecar }),
+    );
   }
   const dir = path.join(root, employee);
   fs.mkdirSync(dir);

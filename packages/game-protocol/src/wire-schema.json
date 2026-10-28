@@ -262,6 +262,32 @@
       "union": [
         {
           "properties": [
+            { "name": "creatureId", "optional": false, "type": "string" },
+            { "name": "kind", "optional": false, "type": { "literal": "command" } },
+            {
+              "name": "order",
+              "optional": false,
+              "type": {
+                "properties": [
+                  { "name": "kind", "optional": false, "type": { "literal": "mode" } },
+                  {
+                    "name": "mode",
+                    "optional": false,
+                    "type": {
+                      "union": [
+                        { "literal": "fight" },
+                        { "literal": "guard" },
+                        { "literal": "heel" }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "properties": [
             { "name": "dirX", "optional": false, "type": "number" },
             { "name": "dirY", "optional": false, "type": "number" },
             { "name": "kind", "optional": false, "type": { "literal": "move" } }
@@ -1155,6 +1181,43 @@
         { "name": "weaponId", "optional": false, "type": "string" }
       ]
     },
+    "CommandIntent": {
+      "properties": [
+        { "name": "creatureId", "optional": false, "type": "string" },
+        { "name": "kind", "optional": false, "type": { "literal": "command" } },
+        {
+          "name": "order",
+          "optional": false,
+          "type": {
+            "properties": [
+              { "name": "kind", "optional": false, "type": { "literal": "mode" } },
+              {
+                "name": "mode",
+                "optional": false,
+                "type": {
+                  "union": [{ "literal": "fight" }, { "literal": "guard" }, { "literal": "heel" }]
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "CompanionMode": {
+      "union": [{ "literal": "fight" }, { "literal": "guard" }, { "literal": "heel" }]
+    },
+    "CreatureOrder": {
+      "properties": [
+        { "name": "kind", "optional": false, "type": { "literal": "mode" } },
+        {
+          "name": "mode",
+          "optional": false,
+          "type": {
+            "union": [{ "literal": "fight" }, { "literal": "guard" }, { "literal": "heel" }]
+          }
+        }
+      ]
+    },
     "EndUpkeepIntent": {
       "properties": [
         { "name": "kind", "optional": false, "type": { "literal": "end-upkeep" } },
@@ -1431,7 +1494,8 @@
         { "name": "playerId", "optional": false, "type": "string" },
         { "name": "protocolVersion", "optional": false, "type": "string" },
         { "name": "rejoinToken", "optional": false, "type": "string" },
-        { "name": "tickIntervalMs", "optional": false, "type": "number" }
+        { "name": "tickIntervalMs", "optional": false, "type": "number" },
+        { "name": "timeLimitSeconds", "optional": false, "type": "number" }
       ]
     },
     "PolygonWallDescriptor": {
@@ -1612,6 +1676,12 @@
       "properties": [
         { "name": "admissionSig", "optional": false, "type": "string" },
         { "name": "seatKey", "optional": false, "type": "string" }
+      ]
+    },
+    "WireArmedAttack": {
+      "properties": [
+        { "name": "endsAt", "optional": false, "type": "number" },
+        { "name": "skillId", "optional": false, "type": "string" }
       ]
     },
     "WireCalls": {
@@ -1835,6 +1905,21 @@
     "WireCreature": {
       "properties": [
         {
+          "name": "armedAttack",
+          "optional": false,
+          "type": {
+            "union": [
+              "null",
+              {
+                "properties": [
+                  { "name": "endsAt", "optional": false, "type": "number" },
+                  { "name": "skillId", "optional": false, "type": "string" }
+                ]
+              }
+            ]
+          }
+        },
+        {
           "name": "kind",
           "optional": false,
           "type": {
@@ -1851,6 +1936,13 @@
               { "literal": "bone-minion" },
               { "literal": "spirit" }
             ]
+          }
+        },
+        {
+          "name": "mode",
+          "optional": false,
+          "type": {
+            "union": ["null", { "literal": "fight" }, { "literal": "guard" }, { "literal": "heel" }]
           }
         },
         { "name": "ownerId", "optional": false, "type": "string" }
@@ -2108,6 +2200,21 @@
               {
                 "properties": [
                   {
+                    "name": "armedAttack",
+                    "optional": false,
+                    "type": {
+                      "union": [
+                        "null",
+                        {
+                          "properties": [
+                            { "name": "endsAt", "optional": false, "type": "number" },
+                            { "name": "skillId", "optional": false, "type": "string" }
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  {
                     "name": "kind",
                     "optional": false,
                     "type": {
@@ -2127,6 +2234,18 @@
                         { "literal": "bone-horror" },
                         { "literal": "bone-minion" },
                         { "literal": "spirit" }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "mode",
+                    "optional": false,
+                    "type": {
+                      "union": [
+                        "null",
+                        { "literal": "fight" },
+                        { "literal": "guard" },
+                        { "literal": "heel" }
                       ]
                     }
                   },
@@ -2324,6 +2443,21 @@
                       {
                         "properties": [
                           {
+                            "name": "armedAttack",
+                            "optional": false,
+                            "type": {
+                              "union": [
+                                "null",
+                                {
+                                  "properties": [
+                                    { "name": "endsAt", "optional": false, "type": "number" },
+                                    { "name": "skillId", "optional": false, "type": "string" }
+                                  ]
+                                }
+                              ]
+                            }
+                          },
+                          {
                             "name": "kind",
                             "optional": false,
                             "type": {
@@ -2343,6 +2477,18 @@
                                 { "literal": "bone-horror" },
                                 { "literal": "bone-minion" },
                                 { "literal": "spirit" }
+                              ]
+                            }
+                          },
+                          {
+                            "name": "mode",
+                            "optional": false,
+                            "type": {
+                              "union": [
+                                "null",
+                                { "literal": "fight" },
+                                { "literal": "guard" },
+                                { "literal": "heel" }
                               ]
                             }
                           },
@@ -2532,6 +2678,21 @@
                       {
                         "properties": [
                           {
+                            "name": "armedAttack",
+                            "optional": false,
+                            "type": {
+                              "union": [
+                                "null",
+                                {
+                                  "properties": [
+                                    { "name": "endsAt", "optional": false, "type": "number" },
+                                    { "name": "skillId", "optional": false, "type": "string" }
+                                  ]
+                                }
+                              ]
+                            }
+                          },
+                          {
                             "name": "kind",
                             "optional": false,
                             "type": {
@@ -2551,6 +2712,18 @@
                                 { "literal": "bone-horror" },
                                 { "literal": "bone-minion" },
                                 { "literal": "spirit" }
+                              ]
+                            }
+                          },
+                          {
+                            "name": "mode",
+                            "optional": false,
+                            "type": {
+                              "union": [
+                                "null",
+                                { "literal": "fight" },
+                                { "literal": "guard" },
+                                { "literal": "heel" }
                               ]
                             }
                           },

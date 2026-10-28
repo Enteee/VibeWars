@@ -1087,6 +1087,12 @@ export interface Combatant {
    */
   moving: boolean;
   /**
+   * Its living minions and spirits (#1188), counted by the simulation at
+   * the start of each tick: what Minion Master's and Shaman's
+   * insignias read. A pet is neither.
+   */
+  readonly controlled: Record<"minion" | "spirit", number>;
+  /**
    * Weapon, armor and rune effects of the weapon set in hand, already
    * resolved (ADR-0012, ADR-0036).
    *

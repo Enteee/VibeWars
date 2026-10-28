@@ -1,6 +1,7 @@
 {
   "id": "arena-long-hall",
   "name": "Long Hall",
+  "mode": "annihilation",
   "width": 3200,
   "height": 1100,
   "walls": [

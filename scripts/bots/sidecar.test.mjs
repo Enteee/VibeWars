@@ -8,6 +8,7 @@ import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
+  SIDECAR_DIR,
   SIDECAR_FILE,
   SIDECAR_STALE_MS,
   parseSidecar,
@@ -51,13 +52,14 @@ describe("the heartbeat file", () => {
   it("is none when missing, malformed, or a link", () => {
     const dir = bus();
     expect(readSidecar(dir)).toBeNull();
-    fs.writeFileSync(path.join(dir, SIDECAR_FILE), "not json");
+    fs.mkdirSync(path.join(dir, SIDECAR_DIR));
+    fs.writeFileSync(path.join(dir, SIDECAR_DIR, SIDECAR_FILE), "not json");
     expect(readSidecar(dir)).toBeNull();
     expect(parseSidecar(JSON.stringify({ lastSeen: "soon" }))).toBeNull();
-    fs.rmSync(path.join(dir, SIDECAR_FILE));
+    fs.rmSync(path.join(dir, SIDECAR_DIR, SIDECAR_FILE));
     const elsewhere = path.join(bus(), "fresh.json");
     fs.writeFileSync(elsewhere, JSON.stringify({ lastSeen: Date.now() }));
-    fs.symlinkSync(elsewhere, path.join(dir, SIDECAR_FILE));
+    fs.symlinkSync(elsewhere, path.join(dir, SIDECAR_DIR, SIDECAR_FILE));
     expect(readSidecar(dir)).toBeNull();
   });
 });

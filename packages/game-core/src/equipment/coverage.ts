@@ -66,12 +66,12 @@ export const GEAR_OMISSIONS: readonly GearOmission[] = Object.freeze([
     description: "insignias available to one profession only, each with its own bonus",
     kind: "gap",
     reason:
-      "Partial (#1142): Knight's, Sentinel's, Nightstalker's, Prodigy's and Windwalker are " +
-      "in. Anchorite's, Wanderer's, Dreadnought, Disciple's, Blighter's, Undertaker's, " +
-      "Forsaken, Shaman's, Minion Master's, Prismatic and the elemental ones need no new " +
-      "mechanic and are next; Infiltrator's, Saboteur's, Vanguard's, Herald's, Scout's, " +
-      "Centurion's, Virtuoso's, Mystic's, Artificer's, Beastmaster's, Tormentor's, " +
-      "Lieutenant's, Ghost Forge, Stonefist and Bloodstained each need one.",
+      "Partial (#1142, #1188): Knight's, Sentinel's, Nightstalker's, Prodigy's, Windwalker, " +
+      "Anchorite's, Disciple's, Wanderer's, Dreadnought, Blighter's, Undertaker's, Minion " +
+      "Master's, Forsaken, Shaman's and Prismatic are in. Infiltrator's, Saboteur's, " +
+      "Vanguard's, Sentry's, Herald's and the non-armor ones (Scout's, Centurion's, " +
+      "Virtuoso's, Mystic's, Artificer's, Beastmaster's, Tormentor's, Lieutenant's, Ghost " +
+      "Forge, Stonefist, Bloodstained and the elemental ones) each need one.",
     affects: [],
   },
   {

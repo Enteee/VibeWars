@@ -2,6 +2,7 @@ import {
   MINIMAL_GW_INSPIRED_PVP_V1,
   adrenalineLossIn,
   applyIntent,
+  companionMode,
   drainAccumulator,
   resolvedBar,
   swingProgress,
@@ -21,6 +22,7 @@ import type {
   PeerCall,
 } from "@vibewars/game-protocol";
 import {
+  armedAttackSnapshot,
   createCallBoard,
   groundEffectSnapshot,
   sameSkillBar,
@@ -122,6 +124,8 @@ function toPlayerSnapshot(
             ownerId: participant.creature.ownerId,
             kind: participant.creature.kind,
             look: participant.creature.look,
+            mode: companionMode(participant.creature),
+            armedAttack: armedAttackSnapshot(participant.armedAttack, elapsedSeconds),
           },
   };
 }
@@ -227,6 +231,7 @@ export function createLocalConnection(options: {
     sendCall,
     getCalls,
     map,
+    timeLimitSeconds: null,
     get skillBar() {
       return skillBar;
     },

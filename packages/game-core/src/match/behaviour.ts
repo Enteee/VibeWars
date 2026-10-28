@@ -88,7 +88,8 @@ export type Behaviour =
       readonly kind: "follow-and-attack";
       /**
        * Whom it goes for (#1046). `"owner-target"`: a companion's, the foe
-       * its owner is attacking, if within `aggroUnits` of itself.
+       * its owner is attacking or, on Fight, has selected (#1110), if within
+       * `aggroUnits` of itself; on Heel, none.
        * `"owner-target-then-nearest"`: a minion's (#1118), with no fight
        * going, the foe its owner is attacking, if within `leashUnits` of
        * the owner, else the nearest foe within `aggroUnits` of itself.
@@ -374,13 +375,14 @@ function keepRange(
 /**
  * The owner's body, alive or dead, is what a minion keeps to. Past the
  * leash it walks back and fights nobody until at heel again, so it does
- * not flip each tick at the boundary. A pet goes for whatever its living
- * owner is attacking, within its aggro, switching when the owner does
- * (#1046). Otherwise a fight it is in goes on, to the foe's death. A
- * minion with none assists (#1118): its living owner's attack target
- * within the leash of the owner, else a foe in aggro of the minion
- * itself, through `requestAttack` as Space does. Otherwise it walks to
- * heel, stopping a step early.
+ * not flip each tick at the boundary. A pet on Guard goes for whatever its
+ * living owner is attacking, within its aggro, switching when the owner
+ * does (#1046); on Fight, for whatever foe its owner has selected; on Heel
+ * it fights nobody and keeps to heel (#1110). Otherwise a fight it is in
+ * goes on, to the foe's death. A minion with none assists (#1118): its
+ * living owner's attack target within the leash of the owner, else a foe
+ * in aggro of the minion itself, through `requestAttack` as Space does.
+ * Otherwise it walks to heel, stopping a step early.
  */
 function followAndAttack(
   behaviour: Extract<Behaviour, { kind: "follow-and-attack" }>,
@@ -408,14 +410,28 @@ function followAndAttack(
   const inAggro = (other: Participant): boolean =>
     other.combatant.team !== team &&
     distance(other.position, self.position) <= behaviour.aggroUnits;
+  const livingFoe = (id: string | undefined): Participant | undefined =>
+    owner.combatant.dead
+      ? undefined
+      : context.participants.find(
+          (other) => other.id === id && other.combatant.team !== team && !other.combatant.dead,
+        );
   // A spell at a foe is not attacking it: only a weapon attack or an
   // attack skill sets `attack` (#1079).
-  const wanted = owner.combatant.dead ? undefined : owner.combatant.attack?.targetId;
-  const ownerFoe = context.participants.find(
-    (other) => other.id === wanted && other.combatant.team !== team && !other.combatant.dead,
-  );
-  if (behaviour.engage === "owner-target" && ownerFoe !== undefined && inAggro(ownerFoe)) {
-    return { ...STAND_STILL, targetId: ownerFoe.id, attackTargetId: ownerFoe.id };
+  const ownerFoe = livingFoe(owner.combatant.attack?.targetId);
+  const mode = self.creature?.mode;
+  if (behaviour.engage === "owner-target" && mode === "heel") {
+    return d > behaviour.heelUnits && d - context.stepUnits > behaviour.heelUnits
+      ? toOwner
+      : STAND_STILL;
+  }
+  if (behaviour.engage === "owner-target") {
+    // Guard goes for what its owner attacks, Fight for what its owner
+    // has selected, attacking or not (#1110).
+    const foe = mode === "fight" ? livingFoe(owner.targetId) : ownerFoe;
+    if (foe !== undefined && inAggro(foe)) {
+      return { ...STAND_STILL, targetId: foe.id, attackTargetId: foe.id };
+    }
   }
   const attack = self.combatant.attack;
   if (attack !== undefined) {

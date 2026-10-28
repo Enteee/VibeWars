@@ -1132,24 +1132,36 @@ and typeless damage, degeneration and life steal hit no piece. The gear
 editor lists an insignia under the armor with its pieces and what it
 adds on average: `+10 armor vs physical damage on chest (avg +3.8)`.
 
-Insignias (#1142), each only on hits to its own piece; five of one kind
+Insignias (#1142, #1188), each only on hits to its own piece; five of one kind
 give its bonus on every hit, never five times over:
 
-| Insignia       | Who              | On its piece                               |
-| -------------- | ---------------- | ------------------------------------------ |
-| Stalwart       | anyone           | +10 vs physical                            |
-| Blessed        | anyone           | +10 while enchanted                        |
-| Brawler's      | anyone           | +10 while attacking                        |
-| Knight's       | Warrior primary  | −3 physical damage taken, after armor      |
-| Sentinel's     | Warrior primary  | +20 vs elemental, with 13+ Strength        |
-| Nightstalker's | Assassin primary | +15 while attacking                        |
-| Prodigy's      | Mesmer primary   | +5 each with 1, 3 and 5+ skills recharging |
-| Windwalker     | Dervish primary  | +5 each with 1, 2, 3 and 4+ enchantments   |
+| Insignia        | Who                  | On its piece                                       |
+| --------------- | -------------------- | -------------------------------------------------- |
+| Stalwart        | anyone               | +10 vs physical                                    |
+| Blessed         | anyone               | +10 while enchanted                                |
+| Brawler's       | anyone               | +10 while attacking                                |
+| Knight's        | Warrior primary      | −3 physical damage taken, after armor              |
+| Sentinel's      | Warrior primary      | +20 vs elemental, with 13+ Strength                |
+| Nightstalker's  | Assassin primary     | +15 while attacking                                |
+| Prodigy's       | Mesmer primary       | +5 each with 1, 3 and 5+ skills recharging         |
+| Windwalker      | Dervish primary      | +5 each with 1, 2, 3 and 4+ enchantments           |
+| Anchorite's     | Monk primary         | +5 each with 1, 3 and 5+ skills recharging         |
+| Disciple's      | Monk primary         | +15 while you have a condition                     |
+| Wanderer's      | Monk primary         | +10 vs elemental                                   |
+| Dreadnought     | Warrior primary      | +10 vs elemental                                   |
+| Blighter's      | Necromancer primary  | +20 while hexed                                    |
+| Undertaker's    | Necromancer primary  | +5 each below 80, 60, 40 and 20% Health            |
+| Minion Master's | Necromancer primary  | +5 each with 1, 3 and 5+ living minions            |
+| Forsaken        | Dervish primary      | +10 while not enchanted                            |
+| Shaman's        | Ritualist primary    | +5 each with 1, 2 and 3+ living spirits            |
+| Prismatic       | Elementalist primary | +5 each for 9+ in Air, Earth, Fire and Water Magic |
 
 Attacking is swinging while standing or casting an attack skill: an
 auto-attack still walking to its foe is not. Strength counts runes, and
 weakness lowers it. Knight's sits beside a Rune of
-Absorption and adds to it, and never takes a hit below 0. A profession
+Absorption and adds to it, and never takes a hit below 0. Undertaker's
+reads your maximum now, so morale moves it; a pet is neither a minion
+nor a spirit. A profession
 insignia needs that primary: the gear library shows only the common
 ones and your primary's, and changing primary takes the others off.
 
@@ -1425,6 +1437,20 @@ brings it back. It outlives its owner's death and leaves with its
 owner. A build change that keeps Charm Animal keeps the wolf as it is;
 one that drops it sends it away; one that gains it brings a fresh one.
 
+**Guard, Fight and Heel** (#1110). Your wolf has a row under yours in
+the party window, with three buttons; the lit one is its mode. Clicking
+its name or bar targets it. **Guard**, where every wolf starts, is the
+behaviour above: it bites what you attack. On **Fight** it goes for the
+foe you have selected, attacking or not, within 700 of it, and switches
+with your selection; with yourself, an ally, a corpse or nobody selected
+it keeps its foe. On **Heel** it drops its attack at once, mid-bite or
+not, keeps within 109 of you and fights nobody, not even what hits it,
+nor a foe a pet attack would send it at. The leash is the same in all
+three. A dead wolf's buttons still work, and so do a dead owner's. The
+mode outlasts the wolf's death, Comfort Animal and your respawn; a
+build change that keeps the wolf keeps it, and a fresh wolf starts on
+Guard. Only you can order your wolf: the host drops anyone else's order.
+
 **Pet attacks** (#1107) are Beast Mastery skills the owner uses and the
 wolf lands. The owner pays and the skill starts recharging, but there
 is no cast: it can be used mid-cast or mid-swing and stops neither. It
@@ -1436,7 +1462,11 @@ attacker, at the ranks the wolf arrived with; a blind miss or a block
 uses it up too, and it earns no adrenaline. With no wolf ("You have no
 pet."), a dead one ("Your pet is dead.") or one farther than 350 from
 its owner ("Your pet is too far away.") it is refused and costs
-nothing. At Beast Mastery 12:
+nothing. While a blow is armed, its skill's icon sits right of the
+wolf's bar in your party window (#1167), darkening clockwise as the
+10 s run out; it goes when the blow lands it, when it lapses, when a
+newer one replaces it and when the wolf dies. Neither arming nor a
+lapse writes a log line. At Beast Mastery 12:
 
 | Skill            | Energy | Recharge | Blow                                                            |
 | ---------------- | ------ | -------- | --------------------------------------------------------------- |
@@ -1574,14 +1604,16 @@ and inventing an attribution would be a plausible-looking lie in the
 scoreboard.
 
 What death costs, and how the dead come back, are properties of the
-match rules, set per mode as GW1 sets them (#843). Today's match is
-GW1's Annihilation (#846): there is no respawn, the dead stay corpses
+match rules, set per mode as GW1 sets them (#843), and each map plays
+one mode ([modes](modes.md), #476). Most maps play GW1's Annihilation
+(#846): there is no respawn, the dead stay corpses
 until resurrected or the match ends, and the **death penalty** is on.
 So the scoreboard counts who is left, not kills: `4 v 3 · 7:12` reads
 the living on your side, then theirs, beside the clock, and a pip per
 foe beside it is filled while they live and hollow once they fall
-(#881). Hover a pip for the name.
-In GW1's Kill Count, which no map picks yet, a dead player **respawns**
+(#881). Hover a pip for the name. The clock counts down to the end of
+the match.
+In GW1's Kill Count, which Pillar Hall plays, a dead player **respawns**
 at a spawn point of their own team after 8 seconds, at full health and
 energy, with all statuses cleared, and there is no death penalty.
 
@@ -1641,7 +1673,7 @@ Deep Wound does not cut it, and it stops at your maximum.
 
 ## Match end
 
-An Annihilation match (#846, today's match) is won by **wiping the other
+An Annihilation match (#846) is won by **wiping the other
 team**: the moment every member of it is dead at once, your team wins.
 A team whose members have all left the match counts as wiped too, so
 quitting a 1v1 forfeits it. Kills still show in the score, but no number of them ends the match.
@@ -1656,7 +1688,7 @@ on it is never "wiped"; that match runs to time. The wipe is checked
 **before** time, so the last foe falling as the clock expires is an
 annihilation win.
 
-A Kill Count match ends when a team reaches 15 kills, or after 10
+A Kill Count match ends when a team reaches 15 kills, or after 3
 minutes, when the team with more kills wins. Score is checked
 **before** time, so landing the winning kill as the clock expires reads
 as a score win, which is what happened from the player's point of

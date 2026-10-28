@@ -1,6 +1,7 @@
 {
   "id": "arena-ring",
   "name": "The Ring",
+  "mode": "annihilation",
   "width": 2000,
   "height": 2000,
   "walls": [

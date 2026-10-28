@@ -147,6 +147,7 @@ describe("resolveTargets", () => {
         onDeath: "vanish",
         ownerDisableSeconds: 0,
         companionSkillId: undefined,
+        mode: "guard",
       },
     });
     const wall = segment(vec2(500, -100), vec2(500, 100));
