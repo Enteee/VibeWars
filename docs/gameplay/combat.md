@@ -652,7 +652,10 @@ editor, placing a second elite takes the first one's place on the bar
 and says so ("Broad Head Arrow replaced Barrage: only one elite skill per
 bar."); the library's Elite toggle lists only elites. A bar with two
 elites, from an import or storage, cannot be saved, and a match plays a
-starter build instead (#852).
+starter build instead (#852). On the main menu such a character is
+striped red and tagged Invalid, and cannot be chosen until it is fixed
+(#1290). An empty bar is a legal build: it plays as itself, auto-attack
+only.
 
 **Stances** are yours alone, and only one is up at a time. Using a
 stance ends the one you are in, the same one included, which restarts

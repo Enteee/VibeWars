@@ -165,6 +165,20 @@ test("#853: the first start rolls a starter character, chosen; Reroll replaces i
   await expect(original).toHaveClass(/is-selected/);
 });
 
+test("#1290: a fresh character, empty bar and all, holds its weapon on the menu", async ({
+  page,
+}) => {
+  await openMenu(page);
+  const roster = page.locator(".roster");
+  await roster.getByRole("button", { name: "New character" }).click();
+  await page.locator("input.editor-name").fill("Blank");
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+
+  const blank = roster.locator(".selectable-row", { hasText: "Blank" });
+  await expect(blank).not.toHaveClass(/is-invalid/);
+  await expect(blank.locator("canvas.character-figure")).toHaveAttribute("data-weapon-id", "sword");
+});
+
 test("#579: the roster's rows are buttons: Enter or Space chooses, Edit sits beside", async ({
   page,
 }) => {
