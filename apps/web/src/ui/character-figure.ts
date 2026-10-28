@@ -159,6 +159,9 @@ export function createCharacterFigure(character: StoredCharacter): HTMLCanvasEle
   const context = canvas.getContext("2d");
   if (context !== null) {
     context.scale(ratio, ratio);
+    // Phaser joins its strokes round; a canvas's default miter would
+    // spike the weapon casing's points past the mark.
+    context.lineJoin = "round";
     paintStandingBody(canvasPainter(context), figureBody(characterAppearance(character)));
   }
   return canvas;
