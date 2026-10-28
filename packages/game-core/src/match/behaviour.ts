@@ -72,17 +72,24 @@ export type Behaviour =
   /**
    * Attack the target with the weapon, as Space does (#162), and ask again
    * whenever no attack is going: after the target's respawn, or the
-   * dummy's own reset.
+   * dummy's own reset. An attack going on stays on its target, even with
+   * another nearer.
    */
   | { readonly kind: "auto-attack"; readonly targeting: Targeting }
   /**
-   * A minion's (#467 child 3): stay by the owner, attack the nearest foe
-   * within `aggroUnits` of itself, and break off to walk back once the
+   * A minion's (#467 child 3) or a pet's (#1046): stay by the owner, attack
+   * a foe as `engage` picks it, and break off to walk back once the
    * owner is farther than `leashUnits`, until within `heelUnits` again.
    * The owner is `self.creature.ownerId`; anyone else holding it stands still.
    */
   | {
       readonly kind: "follow-and-attack";
+      /**
+       * Whom it goes for (#1046). `"nearest-foe"`: a minion's, the nearest foe
+       * within `aggroUnits` of itself. `"owner-target"`: a companion's, the foe
+       * its owner is attacking, if within `aggroUnits` of itself.
+       */
+      readonly engage: "nearest-foe" | "owner-target";
       readonly aggroUnits: number;
       readonly leashUnits: number;
       readonly heelUnits: number;
@@ -232,7 +239,11 @@ export function decide(
       return parallel(behaviour, cursor, context);
     case "auto-attack": {
       const targetId = resolveTargeting(behaviour.targeting, context);
-      return { ...STAND_STILL, targetId, attackTargetId: targetId };
+      return {
+        ...STAND_STILL,
+        targetId,
+        attackTargetId: context.self.combatant.attack?.targetId ?? targetId,
+      };
     }
     case "follow-and-attack":
       return followAndAttack(behaviour, cursor, context);
@@ -331,7 +342,9 @@ function keepRange(
 /**
  * The owner's body, alive or dead, is what a minion keeps to. Past the
  * leash it walks back and fights nobody until at heel again, so it does
- * not flip each tick at the boundary. A fight it is in goes on; a foe in
+ * not flip each tick at the boundary. A pet goes for whatever its living
+ * owner is attacking, within its aggro, switching when the owner does
+ * (#1046). Otherwise a fight it is in goes on; for a minion, a foe in
  * aggro of the minion itself starts one, through `requestAttack` as Space
  * does. Otherwise it walks to heel, stopping a step early.
  */
@@ -356,18 +369,25 @@ function followAndAttack(
   if (cursor.returning) {
     return toOwner;
   }
+  const team = self.combatant.team;
+  const inAggro = (other: Participant): boolean =>
+    other.combatant.team !== team &&
+    distance(other.position, self.position) <= behaviour.aggroUnits;
+  if (behaviour.engage === "owner-target") {
+    const wanted = owner.combatant.dead ? undefined : owner.combatant.attack?.targetId;
+    const foe = context.participants.find((other) => other.id === wanted);
+    if (foe !== undefined && !foe.combatant.dead && inAggro(foe)) {
+      return { ...STAND_STILL, targetId: foe.id, attackTargetId: foe.id };
+    }
+  }
   const attack = self.combatant.attack;
   if (attack !== undefined) {
     return { ...STAND_STILL, targetId: attack.targetId, attackTargetId: attack.targetId };
   }
-  const team = self.combatant.team;
-  const foe = nearestLiving(
-    self,
-    context.participants,
-    (other) =>
-      other.combatant.team !== team &&
-      distance(other.position, self.position) <= behaviour.aggroUnits,
-  );
+  const foe =
+    behaviour.engage === "nearest-foe"
+      ? nearestLiving(self, context.participants, inAggro)
+      : undefined;
   if (foe !== undefined) {
     return { ...STAND_STILL, targetId: foe, attackTargetId: foe };
   }

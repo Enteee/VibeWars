@@ -1,6 +1,11 @@
 import { MAX_ATTRIBUTE_RANK } from "../attributes.js";
 import { AREA_ADJACENT, AREA_EARSHOT, AREA_IN_THE_AREA, AREA_NEARBY } from "../distances.js";
 import { WEAPONS } from "../equipment/weapons.js";
+import {
+  SPAWNING_POWER_ATTRIBUTE,
+  spawningPowerHealth,
+  spawningPowerMultiplier,
+} from "../primary-attributes.js";
 import { getAttribute, getProfession } from "../professions.js";
 
 import { energyCostOf } from "./activation.js";
@@ -11,7 +16,7 @@ import {
   type StatusTrigger,
   type StatusTriggerEvent,
 } from "./status.js";
-import { effectiveActivationSeconds, outsideMatch } from "./tick.js";
+import { effectiveActivationSeconds, outsideMatch, rankOf } from "./tick.js";
 import { isEasilyInterrupted } from "./types.js";
 import type {
   ApplyStatusEffect,
@@ -123,6 +128,25 @@ function describeMagnitude(
 function seconds(value: number): string {
   // Whole seconds read better than "2.0s"; fractions keep one decimal.
   return Number.isInteger(value) ? `${String(value)}s` : `${value.toFixed(1)}s`;
+}
+
+/** The Spawning Power rank these ranks hold (#1098). */
+function spawningPowerOf(ranks: ReadonlyMap<string, number>): number {
+  return rankOf(outsideMatch(ranks), SPAWNING_POWER_ATTRIBUTE);
+}
+
+/**
+ * "31.1s (21s)": how long a status lasts at these ranks, the base in
+ * brackets when Spawning Power lengthens a weapon spell (#1098).
+ */
+function statusDuration(effect: ApplyStatusEffect, ranks: ReadonlyMap<string, number>): string {
+  if (findStatusDefinition(effect.statusId)?.category !== "weapon-spell") {
+    return seconds(effect.durationSeconds);
+  }
+  const lasts = effect.durationSeconds * spawningPowerMultiplier(spawningPowerOf(ranks));
+  return lasts === effect.durationSeconds
+    ? seconds(effect.durationSeconds)
+    : `${seconds(lasts)} (${seconds(effect.durationSeconds)})`;
 }
 
 function statusName(id: string): string {
@@ -813,7 +837,7 @@ function describeEffect(
       }
       return {
         text:
-          `Applies ${statusName(effect.statusId)} for ${seconds(effect.durationSeconds)} ` +
+          `Applies ${statusName(effect.statusId)} for ${statusDuration(effect, ranks)} ` +
           `(${describeStatus(effect.statusId, ranks)})`,
         magnitude: undefined,
       };
@@ -905,14 +929,20 @@ function describeEffect(
     case "recharge-others":
       return { text: "Recharges all your other attack skills", magnitude: undefined };
     case "summon": {
-      // "Summons 2 Bone Minion (60 Health, lasts 30 seconds)" (#1052).
+      // "Summons 2 Bone Minion (60 Health, lasts 30 seconds)" (#1052), with
+      // Spawning Power's health and the base in brackets (#1098).
       const health = describeMagnitude(effect.creature.maxHealth, ranks);
+      const spawned = spawningPowerHealth(spawningPowerOf(ranks), health.current);
+      const healthText =
+        spawned === health.current
+          ? `${String(health.current)} Health`
+          : `${String(spawned)} Health (${String(health.current)})`;
       const lasts =
         effect.creature.durationSeconds === undefined
           ? ""
           : `, lasts ${String(describeMagnitude(effect.creature.durationSeconds, ranks).current)} seconds`;
       return {
-        text: `Summons ${String(effect.count)} ${effect.creature.name} (${String(health.current)} Health${lasts})`,
+        text: `Summons ${String(effect.count)} ${effect.creature.name} (${healthText}${lasts})`,
         magnitude: health,
       };
     }
@@ -1182,6 +1212,7 @@ const TARGET_TEXT: Record<Skill["target"], string> = {
   "single-other-ally": "Another ally",
   "single-any": "Any one target",
   "single-dead-ally": "A dead ally",
+  companion: "Your pet",
 };
 
 const AREA_WHO: Record<AreaRule["affects"], string> = {
@@ -1378,6 +1409,18 @@ export function describeSkill(
     skill.corpse === undefined
       ? []
       : [{ text: "Exploits the nearest corpse", magnitude: undefined }];
+  // A pet that comes with the skill on the bar (#1046): Charm Animal's.
+  const companionHealth =
+    skill.companion === undefined ? undefined : describeMagnitude(skill.companion.maxHealth, ranks);
+  const companionLine =
+    skill.companion === undefined || companionHealth === undefined
+      ? []
+      : [
+          {
+            text: `While on your bar, a ${skill.companion.name} (${String(companionHealth.current)} Health) fights beside you`,
+            magnitude: companionHealth,
+          },
+        ];
   const effects = [
     ...lossLine,
     ...chainLine,
@@ -1392,6 +1435,7 @@ export function describeSkill(
     ...whileActivating,
     ...easilyInterrupted,
     ...projectile,
+    ...companionLine,
   ];
   const { target, range } = targetAndRange(skill);
   const numbers = [

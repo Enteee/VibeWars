@@ -60,7 +60,9 @@ export type TargetRule =
   /** Any single target including self; the caster chooses. */
   | "single-any"
   /** A dead ally other than the caster: a resurrection's (#812). */
-  | "single-dead-ally";
+  | "single-dead-ally"
+  /** The caster's own companion, alive or dead, whatever is selected (#1046). */
+  | "companion";
 
 /* -------------------------------------------------------------------------- */
 /* Effects                                                                     */
@@ -424,6 +426,17 @@ export interface CreatureTemplate {
   readonly behaviour: Behaviour;
   /** `undefined`: it projects nothing (every minion). Only a spirit has one. */
   readonly aura: Aura | undefined;
+  /**
+   * What its death leaves (#1046). `"vanish"`: it is gone at the end of
+   * the step, as a spirit or minion is. `"lie"`: it stays a dead
+   * participant where it fell, until something brings it back.
+   */
+  readonly onDeath: "vanish" | "lie";
+  /**
+   * Seconds its owner's whole bar is disabled when it dies, scaled by
+   * the owner (GW1's pet, #1046); `undefined`: nothing happens to the owner.
+   */
+  readonly ownerDisableOnDeath: Magnitude | undefined;
 }
 
 /**
@@ -865,6 +878,12 @@ export interface Skill {
   readonly projectile: SkillProjectile | undefined;
   /** `undefined`: it needs no corpse. */
   readonly corpse: CorpseRule | undefined;
+  /**
+   * The creature this skill brings while it is on its owner's bar (#1046),
+   * as Charm Animal's "travels with you whenever you have Charm Animal
+   * equipped"; `undefined`: none. Such a skill is never cast in a match.
+   */
+  readonly companion: CreatureTemplate | undefined;
   readonly effects: readonly SkillEffect[];
 }
 

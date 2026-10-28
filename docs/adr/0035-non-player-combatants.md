@@ -88,6 +88,10 @@ built for players and is the larger, safe value.
   with an owner, a team and an end time, projecting its effect through
   the same aura pass as a spirit, so a spirit's aura and a ward's never
   strip each other. It cannot be targeted or killed, so it has no body.
+- A creature may be a **companion** (#1046): it arrives with its owner's
+  build, lies when dead, is reset with its owner, and engages its owner's
+  target. That is the shape an NPC hero takes, differing only in where it
+  comes from and who may revive it.
 - A creature leaves no corpse (#466) unless the card that adds it says so.
 - A creature that fights swings a weapon built from its template, its
   summoner's rank snapshotted as its mastery (#467), so every attack

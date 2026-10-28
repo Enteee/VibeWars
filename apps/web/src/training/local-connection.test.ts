@@ -6,6 +6,7 @@ import type { CombatMessage } from "@vibewars/game-session";
 
 import { AttackClock } from "../render/attack-clock.js";
 import { setProfessions, setRank, setSkill, newCharacter } from "../ui/build-editor.js";
+import { setWeapon } from "../ui/gear-editor.js";
 import { slotAffordable } from "../ui/skill-slot-state.js";
 import { TICK_SECONDS, NO_PROFESSIONS, createLocalConnection } from "./local-connection.js";
 import { SELF_ID, playerArming, setupScenario } from "./scenario-setup.js";
@@ -253,6 +254,32 @@ describe("createLocalConnection", () => {
       "Armor of Earth",
       null,
     ]);
+  });
+
+  it("swaps weapon sets on the intent, and weaponSets follows, a rearm included (#489)", () => {
+    const { connection } = targetDummy(setWeapon(pyro(), 1, "recurve-bow"));
+    const weapon = (): string | undefined =>
+      connection.getSnapshot().players.find((player) => player.sessionId === SELF_ID)?.weaponId;
+    expect(connection.weaponSets).toMatchObject({ active: 0, pending: null });
+    expect(connection.weaponSets?.sets[1]).toEqual({ weaponId: "recurve-bow", offhandId: null });
+
+    connection.sendIntent({ kind: "weapon-set", set: 1 });
+    expect(connection.weaponSets?.active).toBe(1);
+    expect(weapon()).toBe("recurve-bow");
+
+    // An empty set: nothing happens, and nothing is said.
+    let refused = 0;
+    connection.onCastRefused(() => {
+      refused += 1;
+    });
+    connection.sendIntent({ kind: "weapon-set", set: 2 });
+    expect(connection.weaponSets?.active).toBe(1);
+    expect(refused).toBe(0);
+
+    const arming = playerArming(pyro());
+    connection.rearm(arming.loadout, arming.skillBar);
+    expect(connection.weaponSets).toMatchObject({ active: 0, pending: null });
+    expect(connection.weaponSets?.sets[1]).toBeNull();
   });
 
   it("describes the bar at the ranks it plays, rearmed or not (#485)", () => {

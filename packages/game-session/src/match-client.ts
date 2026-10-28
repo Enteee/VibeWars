@@ -13,6 +13,7 @@ import {
   parseWireCombatBatch,
   parseWireEnded,
   parseWireSkillBar,
+  parseWireWeaponSets,
   parseWireSnapshotPart,
   type AdrenalineMessage,
   type CastRefusedMessage,
@@ -31,6 +32,7 @@ import {
   type WireTraps,
   type WireEnded,
   type WireSkillBar,
+  type WireWeaponSets,
   type WireSnapshot,
 } from "@vibewars/game-protocol";
 
@@ -116,6 +118,7 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
   const unsubscribe: (() => void)[] = [];
   let welcomed: PeerWelcome | undefined;
   let skillBar: WireSkillBar | undefined;
+  let weaponSets: WireWeaponSets | undefined;
   let latest:
     { readonly wire: WireSnapshot; readonly players: readonly PlayerSnapshot[] } | undefined;
   let ended: WireEnded | undefined;
@@ -340,6 +343,9 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
         return (skillBar ?? bar).slots;
       },
       ranks: new Map(Object.entries(bar.ranks)),
+      get weaponSets() {
+        return weaponSets;
+      },
       onConnectionChange(handler) {
         connectionHandlers.push(handler);
       },
@@ -478,6 +484,9 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
     fromHost("skill-bar", parseWireSkillBar, (message) => {
       skillBar = message;
       ready();
+    });
+    fromHost("weapon-sets", parseWireWeaponSets, (message) => {
+      weaponSets = message;
     });
     fromHost("refuse", parsePeerRefuse, (refusal) => {
       // A rejoin turned away: the match is over, or the seat is gone.

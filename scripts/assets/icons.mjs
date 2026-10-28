@@ -958,6 +958,18 @@ const bladeMark = (mark) =>
   `<g transform="translate(2.5,2.5)">${inkLine("M5.5 18.5L19 5", 2.6)}${inkLine("M7 11.5L12.5 17", 2.4)}${inkLine("M4 20l2-2", 2.6)}</g>` +
   mark;
 
+/**
+ * The resurrect figure, scaled and centred on a point.
+ * @param {number} cx
+ * @param {number} cy
+ * @param {number} k
+ */
+const smallFigure = (cx, cy, k) =>
+  `<g transform="translate(${String(cx)},${String(cy)}) scale(${String(k)}) translate(-12,-12.5)">` +
+  `<ellipse cx="12" cy="7.5" rx="4" ry="4.5" ${stroke(C.ink, 2.2)}/>` +
+  inkLine("M12 12V21M6 14.5H18", 2.6) +
+  "</g>";
+
 /** Glyphs, drawn in the box 3..21; the plate scales them to leave the corner free. */
 const skillGlyph = {
   heal: () => inkFill("M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"),
@@ -1107,6 +1119,21 @@ const skillGlyph = {
   speed: () => inkLine("M4 4L10 12L4 20M11 4L17 12L11 20", 2.5),
   slow: () => inkLine("M20 4L14 12L20 20M13 4L7 12L13 20", 2.5),
   dash: () => inkLine("M3 7H11M2 12H9M3 17H11", 2) + inkLine("M13 4L21 12L13 20", 2.6),
+  // The resurrect figure in a ring: a signet's seal, one use (#1081).
+  "resurrect-seal": () =>
+    `<circle cx="10.5" cy="10.5" r="8" ${stroke(C.ink, 2)}/>` + smallFigure(10.5, 10.5, 0.55),
+  // The resurrect figure with two chevrons rushing at it: brought to the caster (#1081).
+  "resurrect-arrive": () =>
+    smallFigure(9, 13, 0.8) + inkLine("M21 3.5L16.5 7L21 10.5M21 8.5L17.5 11L21 13.5", 1.8),
+  // The resurrect figure in a half ring with an arrow: called back (#1081).
+  "resurrect-return": () =>
+    `<path d="M19.5 6.5A9 9 0 1 0 8 19.5" ${stroke(C.ink, 2)}/>` +
+    inkFill("M21.5 3V10H14.5Z") +
+    smallFigure(12, 12.5, 0.6),
+  // The resurrect figure with a drop of the caster's blood beside it (#1081).
+  "resurrect-blood": () =>
+    smallFigure(9, 12.5, 0.85) +
+    inkFill("M18 2.5C18 2.5 14.5 6.5 14.5 9A3.5 3.5 0 0 0 21.5 9C21.5 6.5 18 2.5 18 2.5Z"),
   // An ankh: life returned, a resurrection (#812).
   resurrect: () =>
     `<ellipse cx="12" cy="7.5" rx="4" ry="4.5" ${stroke(C.ink, 2.2)}/>` +

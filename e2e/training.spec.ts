@@ -1324,3 +1324,35 @@ test("(41) a well needs a corpse, then lands on one (#1104)", async ({ page }) =
     .toBe(true);
   await expect(slot).toHaveAttribute("aria-label", /^Well of Suffering, recharging/);
 });
+
+test("2 swaps to weapon set 2, the empty 3 does nothing, and a slot's click swaps back (#489)", async ({
+  page,
+}) => {
+  await page.setViewportSize(WIDE);
+  await page.goto("./");
+  // A new character is a warrior with a sword and shield in set 1.
+  await page.getByRole("button", { name: "new character" }).click();
+  await page.getByRole("button", { name: "gear", exact: true }).click();
+  await page.getByRole("tab", { name: /^2/ }).click();
+  await page.locator(".gear-box").filter({ hasText: "Recurve Bow" }).first().click();
+  await expect(page.locator(".training canvas")).toBeVisible();
+  const slots = page.locator(".training .weapon-set");
+  await expect(slots).toHaveText(["1", "2", "3", "4"]);
+  await expect(slots.nth(0)).toHaveClass(/is-active/);
+  await expect(slots.nth(1)).toHaveAccessibleName("Weapon set 2: Recurve Bow");
+  await expect(slots.nth(2)).toHaveClass(/is-empty/);
+  await takeControl(page);
+
+  await page.keyboard.press(key("weapon-set-2"));
+  await expect(slots.nth(1)).toHaveClass(/is-active/);
+  await expect(slots.nth(0)).not.toHaveClass(/is-active/);
+
+  await page.keyboard.press(key("weapon-set-3"));
+  await expect(page.locator(".training-message")).toHaveText("");
+  await expect(slots.nth(1)).toHaveClass(/is-active/);
+
+  await slots.nth(0).click();
+  await expect(slots.nth(0)).toHaveClass(/is-active/);
+  // The click left the keyboard with the arena.
+  await expect(page.locator(".training")).toHaveClass(/is-armed/);
+});

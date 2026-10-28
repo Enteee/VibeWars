@@ -1038,9 +1038,20 @@ set's, and current energy moves by the same amount. Swapping from a
 wand and focus (+12) to a staff takes 12 off both, and swapping back
 gives both back. Current energy may go below 0, hidden as in GW1:
 regeneration climbs back through 0 before a skill can be paid for, and
-nothing else takes it deeper. Arrows already in flight keep the bow
-that loosed them. The keys (F1-F4) arrive with #489's second child. See
-[ADR-0036](../adr/0036-weapon-sets.md).
+nothing else takes it deeper. The energy bar, and what others see, show
+0 until then. Arrows already in flight keep the bow that loosed them.
+See [ADR-0036](../adr/0036-weapon-sets.md).
+
+1-4 swap to sets 1-4 in the `vibewars` key preset, F1-F4 in `classic`,
+and they can be rebound under "Weapon sets" on the Keys screen. A
+held key swaps once. Four small slots at the left end of the skill bar,
+two by two, show each set's weapon, its off-hand smaller, and its key,
+in a match and in the Training Ground alike. The set in hand is lit, a
+set waiting for its swap pulses, and an empty set is dimmed and blank.
+Clicking a slot is its key. An empty set's key does nothing, and nothing
+is said. The host handles at most four swaps a second from one player,
+in a burst of four; it drops the rest silently. Which sets you carry
+stays yours: others see only the weapon in your hands.
 
 The Gear tab edits every set (#489): a row of four tabs, `1` to `4`,
 sits above the hands, each showing its set's weapon and off-hand, or a
@@ -1209,8 +1220,12 @@ GW1 PvP (#473). Only a primary can hold its rank, and runes count.
   rank (−48% at 12: Mystic Regeneration 8 instead of 15), rounded once,
   never below 0. While any enchantment is on you, yours or an ally's,
   you have +1 armor a rank against every hit.
-
-The others have no effect yet.
+- **Spawning Power** (Ritualist). A creature you summon, of any
+  profession, has 4% more Health a rank, rounded once: a spirit of 210
+  has 311 at rank 12. A weapon spell you put on anyone, yourself
+  included, lasts 4% longer a rank: Weapon of Quickening 31.08 s instead
+  of 21 s. A spirit's lifetime is unchanged. The tooltip shows both, the
+  base in brackets: "311 Health (210)", "31.1s (21s)" (#1098).
 
 The build editor says under a primary's row what it does at its rank
 ("Fast Casting 12: spells cast 43% faster, signets 36% faster"), and a skill tooltip for a
@@ -1243,14 +1258,14 @@ brackets.
 ## Creatures
 
 A creature (#1052) is a body that is not a player: a spirit or a minion,
-summoned by a skill. It has health, armor, statuses and its owner's team,
+summoned by a skill, or a pet, which comes with one on the bar. It has health, armor, statuses and its owner's team,
 so every attack, spell, area and condition hits it, and it can be
 targeted with Tab, C, a click or a call. It is drawn smaller (radius 10
 to a player's 14) and blocks bodies at that radius.
 
 It never counts for its team: killing one scores nothing and gives no
 morale, it has no morale of its own, and a team with only creatures left
-standing has lost. A creature that dies or runs out its time disappears
+standing has lost. A spirit or minion that dies or runs out its time disappears
 at the end of the tick, with no corpse and no respawn; running out is not
 a death. Its owner's death does not end it; its owner leaving the match
 does. Soul Reaping answers a minion's death but not a spirit's. At most
@@ -1274,13 +1289,14 @@ spirit of the same skill on your side within the new one's range, as an
 expiry, not a death. A foe's spirit of that skill lives on.
 
 **Winnowing** (Ranger, Wilderness Survival, nature ritual, 5 energy,
-2 s, 60 s recharge) plants a spirit of 210 Health and armor 51 for 198 s:
+2 s, 60 s recharge) plants a spirit of 210 Health (more with Spawning
+Power) and armor 51 for 198 s:
 every body in its range takes 4 more from each physical hit it takes,
 before armor. A hit that "deals only" its number, as Concussion Shot's,
 takes the 4 too: it is on the one hit, not on the attack.
 **Recuperation** (Ritualist, Restoration Magic, binding ritual, 25
-energy, 3 s, 45 s recharge) plants one of 210 Health and armor 51 for
-39 s: your side in its range gains +3 Health regeneration.
+energy, 3 s, 45 s recharge) plants one of 210 Health (more with Spawning
+Power) and armor 51 for 39 s: your side in its range gains +3 Health regeneration.
 
 **Minions** (#467) are raised from a fresh corpse, of either team, the
 nearest within cast range, and rise where it lay. Their Health, armor
@@ -1293,9 +1309,9 @@ attacks the nearest foe within earshot of itself, not its master's
 target nor a called one, and breaks off to walk back once its master is
 past cast range, picking no fight until at heel again. A master holds 2
 plus half its Death Magic, rounded down (8 at 12): raising past it kills
-the oldest first, and that is a death, so Soul Reaping answers it. A
-minion leaves no corpse, outlives its master's death and follows the
-body, and leaves with its master.
+the weakest first, by Health left and the oldest of equals, and that is
+a death, so Soul Reaping answers it. A minion leaves no corpse, outlives
+its master's death and follows the body, and leaves with its master.
 
 **Animate Bone Minions** (Necromancer, Death Magic, spell, 10 energy,
 1 s, 5 s recharge) raises two Bone Minions of 280 Health and armor 30,
@@ -1303,6 +1319,31 @@ each a 5–12 blunt blow every 3.17 s. **Animate Bone Horror** (5
 energy, 1 s, 5 s recharge) raises one Bone Horror of 360 Health and
 armor 56, 13–27 blunt every 3.17 s. Numbers at Death Magic 12; their
 damage is a house estimate, as no source publishes it.
+
+**Pets** (#1046). A Ranger with **Charm Animal** (Beast Mastery, 10
+energy, 10 s) on the bar brings a level-20 wolf from the moment it
+joins: 480 Health and armor 80 whatever its owner's attributes, a
+17–29 slashing bite every 2.15 s at Beast Mastery 12, weaker below on
+the minions' curve, read as it arrives. Charm Animal does nothing else:
+no match has an animal to charm, so pressing it is refused and costs
+nothing. The wolf goes for whatever its owner is attacking, with the
+weapon or an attack skill, not a spell, if that foe is within 700 of
+it, and switches when its owner does; it keeps biting after its owner
+stops, and otherwise heels within 109. Past 700 from its owner it walks
+back and picks no fight until at heel. A dead wolf lies where it fell
+and stays in the match: its corpse cannot be exploited, and an ordinary
+resurrection is refused ("That cannot be revived that way."). Its
+death disables its owner's whole bar for 10…4 s by Beast Mastery 0…12
+(unverified), unless it was resurrected less than 15 s before.
+**Comfort Animal** (Beast Mastery, 10 energy, 1 s, 1 s recharge, cast
+range) acts on your own wolf whatever you have selected: it heals a
+living one for 20…87 and raises a dead one with 10…48% Health; with no
+wolf it is refused ("You have no pet.") and costs nothing. The wolf
+also comes back beside its owner, at full Health, whenever its owner
+respawns or is reset; under resurrection-only only Comfort Animal
+brings it back. It outlives its owner's death and leaves with its
+owner. A build change that keeps Charm Animal keeps the wolf as it is;
+one that drops it sends it away; one that gains it brings a fresh one.
 
 ## Wards and wells
 

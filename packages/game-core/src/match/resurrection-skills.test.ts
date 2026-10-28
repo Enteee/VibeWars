@@ -272,6 +272,9 @@ describe("Signet of Return (#474)", () => {
           summonedAtTick: 0,
           skillId: "test.bone-minion",
           aura: undefined,
+          onDeath: "vanish",
+          ownerDisableSeconds: 0,
+          companionSkillId: undefined,
         },
       }),
     );
