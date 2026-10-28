@@ -395,6 +395,12 @@ export const BOT_PROFESSIONS: readonly ProfessionId[] = STARTER_BUILDS.map(
   (build) => build.primaryProfession,
 );
 
+/**
+ * Each team's Add bot pick, kept across renders: the lobby redraws on
+ * every change, and someone readying up must not reset the host's choice.
+ */
+const botPicks: Record<0 | 1, ProfessionId> = { 0: "warrior", 1: "warrior" };
+
 /** The host's Add bot for `team` (#1194): which profession, and the button. */
 function addBotControl(
   team: 0 | 1,
@@ -410,6 +416,13 @@ function addBotControl(
     option.textContent = getProfession(profession).name;
     select.appendChild(option);
   }
+  select.value = botPicks[team];
+  select.addEventListener("change", () => {
+    const profession = BOT_PROFESSIONS.find((id) => id === select.value);
+    if (profession !== undefined) {
+      botPicks[team] = profession;
+    }
+  });
   select.disabled = disabled;
   const add = button("Add bot", "lobby-add-bot-button", () => {
     const profession = BOT_PROFESSIONS.find((id) => id === select.value);

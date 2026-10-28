@@ -347,6 +347,19 @@ describe("teamColumn: bots (#1194)", () => {
     expect(added).toEqual([[0, "monk"]]);
   });
 
+  it("keeps each team's pick when the lobby redraws", () => {
+    const pick = (team: 0 | 1): FakeElement | undefined =>
+      column(team, lobby(true)).all("lobby-add-bot")[0]?.children[0];
+    const select = pick(1);
+    if (select === undefined) {
+      throw new Error("no Add bot control");
+    }
+    select.value = "necromancer";
+    select.listeners.get("change")?.();
+    expect(pick(1)?.value).toBe("necromancer");
+    expect(pick(0)?.value).toBe("warrior");
+  });
+
   it("tags a bot's row BOT in place of its ready pill, with the host's × to remove it", () => {
     const team = column(1, lobby(true));
     expect(team.all("bot-tag").map((tag) => tag.textContent)).toEqual(["BOT"]);
