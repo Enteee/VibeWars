@@ -37,9 +37,11 @@ const path = require("node:path");
 const state = process.env.FAKE_GH_STATE;
 const argv = process.argv.slice(2);
 fs.appendFileSync(path.join(state, "calls.log"), argv.join(" ") + "\\n");
+// Whose credential each call ran with (#866).
+fs.appendFileSync(path.join(state, "env.log"), (process.env.GH_CONFIG_DIR ?? "-") + " " + (process.env.GH_TOKEN ?? "-") + " " + (process.env.GITHUB_TOKEN ?? "-") + "\\n");
 const remaining = Number(fs.readFileSync(path.join(state, "remaining"), "utf8"));
 const [group, sub] = argv;
-if (group === "auth") { console.log("token"); process.exit(0); }
+if (group === "api" && sub === "user") { console.log("vibewars-company"); process.exit(0); }
 if (group === "api" && sub === "rate_limit") {
   const reset = Number(fs.readFileSync(path.join(state, "reset"), "utf8"));
   console.log(JSON.stringify({ resources: { core: {}, graphql: { limit: 5000, remaining, reset } } }));
@@ -258,8 +260,10 @@ function employ(root, more) {
  * @param {number} remaining the GraphQL budget GitHub claims to have left
  * @param {(at: { root: string, repo: string, remote: string }) => void} [before]
  *   runs before hubd starts, for state it reads at startup
+ * @param {(at: { root: string, remote: string }) => Record<string, string>} [extra]
+ *   more of hubd's environment
  */
-async function startHubd(remaining, before) {
+async function startHubd(remaining, before, extra) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "hubd-test-"));
   const root = path.join(dir, "root");
   const bin = path.join(dir, "bin");
@@ -301,6 +305,11 @@ async function startHubd(remaining, before) {
     DEVENV_ROOT: repo,
     VIBEWARS_GIT_REMOTE: path.join(dir, "remote.git"),
     FAKE_GH_STATE: state,
+    // The company's credential home (#866), and the operator's tokens,
+    // which hubd must never use.
+    VIBEWARS_CREDENTIALS: path.join(dir, "creds"),
+    GH_TOKEN: "operator-token",
+    GITHUB_TOKEN: "operator-token",
     // Something only hubd's environment holds, to prove a filter cannot
     // reach it.
     HUBD_SECRET: "leaked",
@@ -311,6 +320,7 @@ async function startHubd(remaining, before) {
     HUBD_NEW_ISSUES_WINDOW_MS: "4000",
     // Short, so a watch answers within the test (#736).
     HUBD_WATCH_POLL_MS: "300",
+    ...extra?.({ root, remote: path.join(dir, "remote.git") }),
   };
   const child = spawn(process.execPath, [HUBD], { env, stdio: ["ignore", "ignore", "pipe"] });
   running.push({ child, dir });
@@ -596,6 +606,20 @@ const MOVE_8_TO_DONE = [
   "--single-select-option-id",
   "o_done",
 ];
+
+describe("hubd works on GitHub as the company (#866)", () => {
+  it("runs every gh call with the company's config dir, and none with the operator's token", async () => {
+    const hubd = await startHubd(5000);
+    await hubd.request("developer", "gh", BOARD_READ);
+    await hubd.request("developer", "gh", ["issue", "view", "7"]);
+
+    const gh = path.join(path.dirname(hubd.root), "creds", "gh");
+    const calls = fs.readFileSync(path.join(hubd.state, "env.log"), "utf8").trim().split("\n");
+    // The startup login, the board's two pages and the issue at least.
+    expect(calls.length).toBeGreaterThanOrEqual(4);
+    expect(new Set(calls)).toEqual(new Set([`${gh} - -`]));
+  }, 20_000);
+});
 
 describe("hubd and the GraphQL budget", () => {
   it("serves every agent's board read from one snapshot", async () => {
@@ -1762,6 +1786,46 @@ describe("hubd pushing through its own mirror", () => {
     expect(answer.code, String(answer.stderr)).toBe(0);
     const audit = fs.readFileSync(path.join(hubd.hub, "audit.jsonl"), "utf8");
     expect(audit).toContain('"tag":"gate-change","paths":"unknown"');
+  }, 20_000);
+
+  it("pushes with the company's key even with the operator's GIT_SSH_COMMAND set (#866)", async () => {
+    // The pinned `ssh` is found on hubd's PATH, in the fake gh's bin: it
+    // logs its arguments and runs the remote command here, not on a host.
+    // The operator's leaves a marker and refuses.
+    const before = (/** @type {{ root: string }} */ at) => {
+      const dir = path.dirname(at.root);
+      fs.writeFileSync(
+        path.join(dir, "bin", "ssh"),
+        `#!/bin/sh\necho "$@" >> ${dir}/ssh.log\nfor last; do :; done\nexec sh -c "$last"\n`,
+        { mode: 0o755 },
+      );
+      fs.writeFileSync(
+        path.join(dir, "operator-ssh"),
+        `#!/bin/sh\ntouch ${dir}/operator-ssh-ran\nexit 1\n`,
+        { mode: 0o755 },
+      );
+    };
+    const hubd = await startHubd(5000, before, (at) => ({
+      VIBEWARS_GIT_REMOTE: `github.invalid:${at.remote}`,
+      GIT_SSH_COMMAND: path.join(path.dirname(at.root), "operator-ssh"),
+    }));
+    const { repo, remote } = hubd;
+    const dir = path.dirname(hubd.root);
+    sh(["init", "--bare", "-q", remote], dir);
+    sh(["init", "-q", "-b", "bot/cicd-engineer/ssh", repo], dir);
+    fs.writeFileSync(path.join(repo, "README.md"), "x\n");
+    sh(["add", "README.md"], repo);
+    commit("only", repo);
+
+    const answer = await hubd.request("cicd-engineer", "push", ["bot/cicd-engineer/ssh"]);
+
+    expect(answer.code, String(answer.stderr)).toBe(0);
+    expect(fs.existsSync(path.join(dir, "operator-ssh-ran"))).toBe(false);
+    expect(sh(["branch", "--list", "bot/cicd-engineer/ssh"], remote)).toContain("ssh");
+    const key = path.join(dir, "creds", "ssh", "id_ed25519");
+    expect(fs.readFileSync(path.join(dir, "ssh.log"), "utf8")).toContain(
+      `-i ${key} -o IdentitiesOnly=yes`,
+    );
   }, 20_000);
 });
 

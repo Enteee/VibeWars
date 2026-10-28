@@ -144,6 +144,8 @@ let
   # It holds the bot token, as the Telegram sidecar does, for one message:
   # if the company does not come back up, no sidecar is left to carry one.
   restarter = pkgs.writeShellScript "claude-llc-restart" ''
+    # The company's credential home (#864): main is fetched with its key (#866).
+    export VIBEWARS_CREDENTIALS="${config.vibewars.claudeBot.credentials}"
     tokenFile="${lib.optionalString (tg.managerTokenFile != null) (toString tg.managerTokenFile)}"
     if [ -n "$tokenFile" ] && [ -r "$tokenFile" ]; then
       TELEGRAM_MANAGER_TOKEN="$(tr -d '[:space:]' < "$tokenFile")"
@@ -359,6 +361,8 @@ let
         # The agents run on the company's own Claude account, never the
         # operator's (#865).
         ${node} ${llcScripts}/claude-check.mjs || exit 1
+        # ...and on GitHub as itself: its gh credential and push key (#866).
+        ${node} ${llcScripts}/github-check.mjs || exit 1
 
         # Starting the company twice would build a second set of sandboxes and
         # a second sidecar per role — and two sidecars on one bot token means

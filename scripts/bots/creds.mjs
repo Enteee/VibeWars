@@ -382,3 +382,61 @@ export function resetBoxesOnAccountChange(root, boxes, who) {
   fs.writeFileSync(recorded, `${who}\n`, { mode: 0o600 });
   return reset;
 }
+
+/**
+ * Whether the company may work on GitHub as itself (#866): its `gh` config
+ * directory holds a token, and its push key is there. Local only, so a boot
+ * without the network says the network, not "not set up". Whose account it
+ * is, is the operator's responsibility; the doctor shows it.
+ *
+ * @param {string} root
+ * @param {Run} [run]
+ * @returns {{ ok: true } | { ok: false, message: string }}
+ */
+export function githubVerdict(root, run = runCommand) {
+  const p = paths(root);
+  if (!fs.existsSync(p.ghHosts)) {
+    return {
+      ok: false,
+      message: `the company's GitHub account is not set up. Sign it in: claude-llc auth github`,
+    };
+  }
+  // The token goes to stdout, which is read for emptiness and dropped.
+  const token = run("gh", ["auth", "token", "--hostname", "github.com"], { GH_CONFIG_DIR: p.gh }, [
+    ...GITHUB_TOKEN_VARS,
+  ]);
+  if (token.code !== 0 || token.stdout.trim() === "") {
+    return {
+      ok: false,
+      message: `the company's GitHub token could not be read. Sign it in again: claude-llc auth github`,
+    };
+  }
+  if (!fs.existsSync(p.sshKey)) {
+    return {
+      ok: false,
+      message: `the company's push key ${p.sshKey} is missing. Add it: claude-llc auth push`,
+    };
+  }
+  return { ok: true };
+}
+
+/**
+ * Whether the company's GitHub account can see the board (#866). The board
+ * is a user project, so being a collaborator on the repository does not
+ * reach it: the owner adds the account to the project itself.
+ *
+ * @param {string} root
+ * @param {string} owner
+ * @param {number} project
+ * @param {Run} [run]
+ * @returns {boolean}
+ */
+export function projectAccess(root, owner, project, run = runCommand) {
+  const result = run(
+    "gh",
+    ["project", "view", String(project), "--owner", owner, "--format", "json"],
+    { GH_CONFIG_DIR: paths(root).gh },
+    [...GITHUB_TOKEN_VARS],
+  );
+  return result.code === 0;
+}
