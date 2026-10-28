@@ -2241,6 +2241,10 @@ body {
   border-left-color: var(--accent);
 }
 
+.match-summary-bot {
+  margin-left: 0.35rem;
+}
+
 .match-summary-table td.is-top {
   font-weight: bold;
 }
