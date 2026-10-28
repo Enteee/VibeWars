@@ -200,13 +200,13 @@ export const SKILL_ICONS = {
   "ritualist.recuperation": { glyph: "plaster", modifier: "hourglass" },
   // A placeholder until the asset-designer's (#1087).
   "elementalist.ward-against-melee": { glyph: "mountain", modifier: "clock" },
+  // Resurrections: the resurrect figure and what each does differently (#1081).
+  "common.resurrection-signet": { glyph: "resurrect-seal" },
+  "monk.rebirth": { glyph: "resurrect-arrive" },
+  "paragon.signet-of-return": { glyph: "resurrect-return" },
+  "ritualist.flesh-of-my-flesh": { glyph: "resurrect-blood" },
   // A placeholder until the asset-designer's (#1105).
   "ranger.barbed-trap": { glyph: "pin", modifier: "bleed" },
-  // Placeholders until the asset-designer's (#1068): resurrections.
-  "common.resurrection-signet": { glyph: "resurrect", modifier: "plus" },
-  "monk.rebirth": { glyph: "resurrect", modifier: "self" },
-  "paragon.signet-of-return": { glyph: "resurrect", modifier: "area" },
-  "ritualist.flesh-of-my-flesh": { glyph: "resurrect", modifier: "half" },
   // Health taken from a corpse: the heal glyph with the corpse mark (#1075).
   "necromancer.soul-feast": { glyph: "heal", modifier: "corpse" },
   // Placeholders until the asset-designer's (#467): bodies raised from a corpse.
