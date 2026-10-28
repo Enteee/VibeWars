@@ -207,7 +207,7 @@ export interface Creature {
   expiresInSeconds: number;
   /** Seconds alive, summed from `dt`: what a minion's rot grows with (#467). */
   ageSeconds: number;
-  /** The tick it was summoned, for "oldest first" caps. */
+  /** The tick it was summoned: the tie-break of a minion cap (#1130). */
   readonly summonedAtTick: number;
   /** The skill that summoned it (#1064): one spirit of a skill in range. */
   readonly skillId: string;
@@ -795,7 +795,7 @@ export class MatchSimulation {
    * end of the match, so they act from this very tick, after everyone
    * already there.
    *
-   * Minions past their master's cap (#467) die first, oldest first, so the
+   * Minions past their master's cap (#467) die first, weakest first, so the
    * slots they free are free for the new ones. Each is a death: Soul
    * Reaping answers it, and the log names the summoning skill.
    *
@@ -876,24 +876,33 @@ export class MatchSimulation {
   }
 
   /**
-   * Kills `owner`'s oldest minions until `count` more fit under its cap
-   * (#467, GW1): the cap is `minionCap` of its Death Magic as it raises.
-   * Summon order is match order, so the first found are the oldest.
+   * Kills `owner`'s weakest minions until `count` more fit under its cap
+   * (#467, #1130, GW1): the cap is `minionCap` of its Death Magic as it
+   * raises. Weakest is the least Health left, absolute, not a share of
+   * its max; ties go to the oldest, then to match order, which is summon
+   * order.
    */
   #cullMinions(owner: ParticipantRecord, skillId: string, count: number): void {
     const cap = minionCap(rankOf(owner.combatant, MINION_CAP_ATTRIBUTE));
-    const mine = [...this.#participants.values()].filter(
-      (record) =>
-        record.creature?.kind === "minion" &&
-        record.creature.ownerId === owner.id &&
-        !record.combatant.dead &&
-        !this.#leaving.has(record.id),
+    const mine = [...this.#participants.values()].flatMap((record) =>
+      record.creature?.kind === "minion" &&
+      record.creature.ownerId === owner.id &&
+      !record.combatant.dead &&
+      !this.#leaving.has(record.id)
+        ? [{ record, summonedAtTick: record.creature.summonedAtTick }]
+        : [],
     );
     const excess = mine.length + count - cap;
     if (excess <= 0) {
       return;
     }
-    const events: CombatEvent[] = mine.slice(0, excess).map((record) => {
+    // A stable sort: equal Health and tick keep match order.
+    mine.sort(
+      (a, b) =>
+        a.record.combatant.health - b.record.combatant.health ||
+        a.summonedAtTick - b.summonedAtTick,
+    );
+    const events: CombatEvent[] = mine.slice(0, excess).map(({ record }) => {
       record.combatant.health = 0;
       record.combatant.dead = true;
       return { kind: "death", targetId: record.id };
