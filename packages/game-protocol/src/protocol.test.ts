@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  COMPANION_MODES,
   LOBBY_CODE_ALPHABET,
   LOBBY_CODE_LENGTH,
   isLobbyCode,
@@ -255,6 +256,48 @@ describe("parseClientIntent — end-upkeep (#838)", () => {
     expect(
       parseClientIntent({ kind: "end-upkeep", targetId: "p2", status: "mending", casterId: "p3" }),
     ).toBeUndefined();
+  });
+});
+
+describe("parseClientIntent — command (#1110)", () => {
+  const command = (fields: Record<string, unknown>) =>
+    parseClientIntent({
+      kind: "command",
+      creatureId: "p1/c1",
+      order: { kind: "mode", mode: "heel" },
+      ...fields,
+    });
+
+  it("parses each mode", () => {
+    for (const mode of COMPANION_MODES) {
+      expect(command({ order: { kind: "mode", mode } })).toEqual({
+        kind: "command",
+        creatureId: "p1/c1",
+        order: { kind: "mode", mode },
+      });
+    }
+  });
+
+  it("rejects an extra key, on the intent or its order", () => {
+    expect(command({ ownerId: "p1" })).toBeUndefined();
+    expect(command({ order: { kind: "mode", mode: "heel", x: 1 } })).toBeUndefined();
+  });
+
+  it("rejects a mode or an order it does not know", () => {
+    expect(command({ order: { kind: "mode", mode: "sit" } })).toBeUndefined();
+    expect(command({ order: { kind: "flag", mode: "heel" } })).toBeUndefined();
+    expect(command({ order: { kind: "mode" } })).toBeUndefined();
+  });
+
+  it("rejects an empty or overlong creature id", () => {
+    expect(command({ creatureId: "" })).toBeUndefined();
+    expect(command({ creatureId: "x".repeat(65) })).toBeUndefined();
+    expect(command({ creatureId: undefined })).toBeUndefined();
+  });
+
+  it("rejects a missing or null order", () => {
+    expect(command({ order: undefined })).toBeUndefined();
+    expect(command({ order: null })).toBeUndefined();
   });
 });
 

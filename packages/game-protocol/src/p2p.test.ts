@@ -160,7 +160,7 @@ const minion: WirePlayer = {
   id: "peer-1/c1",
   name: "Bone Minion",
   primaryProfession: null,
-  creature: { ownerId: "peer-1", kind: "minion", look: "bone-minion" },
+  creature: { ownerId: "peer-1", kind: "minion", look: "bone-minion", mode: null },
 };
 
 const snapshot: WireSnapshotPart = {
@@ -421,6 +421,21 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["snapshot", parseWireSnapshotPart, snapshot],
   ["snapshot with a creature", parseWireSnapshotPart, { ...snapshot, players: [player, minion] }],
   [
+    "snapshot with a pet on Heel (#1110)",
+    parseWireSnapshotPart,
+    {
+      ...snapshot,
+      players: [
+        player,
+        {
+          ...minion,
+          name: "Wolf",
+          creature: { ownerId: "peer-1", kind: "pet", look: "beast", mode: "heel" },
+        },
+      ],
+    },
+  ],
+  [
     "snapshot with an exploited corpse (#466)",
     parseWireSnapshotPart,
     { ...snapshot, players: [{ ...player, dead: true, corpseExploited: true }] },
@@ -451,7 +466,7 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
         {
           ...minion,
           name: "Winnowing",
-          creature: { ownerId: "peer-1", kind: "spirit", look: "spirit" },
+          creature: { ownerId: "peer-1", kind: "spirit", look: "spirit", mode: null },
         },
       ],
     },
@@ -715,7 +730,23 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "snapshot with a creature of an unknown kind",
     parseWireSnapshotPart,
-    { ...snapshot, players: [{ ...minion, creature: { ownerId: "peer-1", kind: "golem" } }] },
+    {
+      ...snapshot,
+      players: [{ ...minion, creature: { ownerId: "peer-1", kind: "golem", mode: null } }],
+    },
+  ],
+  [
+    "snapshot with a pet in an unknown mode (#1110)",
+    parseWireSnapshotPart,
+    {
+      ...snapshot,
+      players: [{ ...minion, creature: { ownerId: "peer-1", kind: "pet", mode: "sit" } }],
+    },
+  ],
+  [
+    "snapshot with a creature that does not say its mode (#1110)",
+    parseWireSnapshotPart,
+    { ...snapshot, players: [{ ...minion, creature: { ownerId: "peer-1", kind: "pet" } }] },
   ],
   [
     "snapshot with a creature of an unknown look (#1162)",
@@ -733,7 +764,7 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "snapshot with a creature with no owner",
     parseWireSnapshotPart,
-    { ...snapshot, players: [{ ...minion, creature: { kind: "minion" } }] },
+    { ...snapshot, players: [{ ...minion, creature: { kind: "minion", mode: null } }] },
   ],
   [
     "snapshot with a player that does not say whether it is a creature",

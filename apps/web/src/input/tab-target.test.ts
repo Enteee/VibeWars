@@ -74,11 +74,11 @@ describe("nextTabTarget", () => {
       player("me/c1", {
         team: 0,
         x: 5,
-        creature: { ownerId: "me", kind: "minion", look: "bone-minion" },
+        creature: { ownerId: "me", kind: "minion", look: "bone-minion", mode: null },
       }),
       player("foe/c1", {
         x: 15,
-        creature: { ownerId: "foe", kind: "minion", look: "bone-minion" },
+        creature: { ownerId: "foe", kind: "minion", look: "bone-minion", mode: null },
       }),
       NEAR,
     ];

@@ -94,3 +94,71 @@ describe("applyIntent", () => {
     expect(applyIntent(sim, "ghost", { kind: "use-skill", slot: 0 })).toBeNull();
   });
 });
+
+describe("applyIntent — command (#1110)", () => {
+  const heel = { kind: "mode", mode: "heel" } as const;
+
+  /** Ranger `r` with a wolf, foe `b` with one too, and `r`'s Bone Minion `r/m`. */
+  function kennel(): MatchSimulation {
+    const ranger = (id: string, team: number, spawn: Vec2) => ({
+      ...spec(id, team, spawn),
+      skillBar: ["ranger.charm-animal"],
+      attributeRanks: new Map([["ranger.beast-mastery", 12]]),
+    });
+    return new MatchSimulation({
+      seed: "intents",
+      participants: [
+        ranger("r", 0, vec2(0, 0)),
+        ranger("b", 1, vec2(5000, 0)),
+        {
+          ...spec("r/m", 0, vec2(50, 0)),
+          creature: {
+            ownerId: "r",
+            kind: "minion",
+            look: "bone-minion",
+            name: "Bone Minion",
+            expiresInSeconds: Number.POSITIVE_INFINITY,
+            ageSeconds: 0,
+            summonedAtTick: 0,
+            skillId: "necromancer.animate-bone-minions",
+            aura: undefined,
+            onDeath: "vanish",
+            ownerDisableSeconds: 0,
+            companionSkillId: undefined,
+            mode: "guard",
+          },
+        },
+      ],
+    });
+  }
+
+  function wolfOf(sim: MatchSimulation, ownerId: string): string {
+    const wolf = [...sim.participants()].find(
+      (other) => other.creature?.ownerId === ownerId && other.creature.kind === "pet",
+    );
+    if (wolf === undefined) {
+      throw new Error(`${ownerId} has no wolf`);
+    }
+    return wolf.id;
+  }
+
+  it("sets the owner's own companion's mode", () => {
+    const sim = kennel();
+    const id = wolfOf(sim, "r");
+    expect(sim.get(id)?.creature?.mode).toBe("guard");
+    expect(applyIntent(sim, "r", { kind: "command", creatureId: id, order: heel })).toBeNull();
+    expect(sim.get(id)?.creature?.mode).toBe("heel");
+  });
+
+  it("leaves anyone else's companion, a minion, a player and an unknown id as they were", () => {
+    const sim = kennel();
+    const id = wolfOf(sim, "r");
+    expect(applyIntent(sim, "b", { kind: "command", creatureId: id, order: heel })).toBeNull();
+    expect(sim.get(id)?.creature?.mode).toBe("guard");
+    applyIntent(sim, "r", { kind: "command", creatureId: "r/m", order: heel });
+    expect(sim.get("r/m")?.creature?.mode).toBe("guard");
+    expect(sim.commandCreature("r", "r/m", heel)).toBe(false);
+    expect(sim.commandCreature("r", "b", heel)).toBe(false);
+    expect(sim.commandCreature("r", "nobody", heel)).toBe(false);
+  });
+});

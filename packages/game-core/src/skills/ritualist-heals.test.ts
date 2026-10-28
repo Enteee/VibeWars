@@ -76,6 +76,7 @@ function around(
           onDeath: "vanish",
           ownerDisableSeconds: 0,
           companionSkillId: undefined,
+          mode: "guard",
         },
       };
       return [id, candidate] as const;

@@ -138,12 +138,14 @@ export type {
   HeadlessMatchResult,
 } from "./tools/headless-match.js";
 export { fighter, runHeadlessMatch } from "./tools/headless-match.js";
-export type { BenchField, TickBench } from "./tools/tick-bench.js";
+export type { BenchCrowd, BenchField, TickBench } from "./tools/tick-bench.js";
 export { DENSE_FIELD, runTickBench, tickStats } from "./tools/tick-bench.js";
 
 export type {
   Creature,
   CreatureKind,
+  CompanionMode,
+  CreatureOrder,
   CreatureLook,
   GroundEffect,
   MatchSimulationOptions,
@@ -158,6 +160,7 @@ export {
   CREATURE_LOOKS,
   loadoutSpec,
   MAX_CREATURES,
+  companionMode,
   MAX_GROUND_EFFECTS,
   MatchSimulation,
 } from "./match/simulation.js";

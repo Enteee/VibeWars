@@ -215,6 +215,7 @@ describe("Soul Feast (#466)", () => {
             onDeath: "vanish",
             ownerDisableSeconds: 0,
             companionSkillId: undefined,
+            mode: "guard",
           },
         }),
       ],
