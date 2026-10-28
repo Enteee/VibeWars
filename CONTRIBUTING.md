@@ -33,7 +33,8 @@ pnpm run bench:ticks   # time MatchSimulation.step on a dense field: p50/p95/max
 
 ### How `pnpm run dev` is wired
 
-`scripts/dev.mjs` runs two watchers: `tsc --build --watch` for the
+`scripts/dev.mjs` first builds the packages once, so a fresh pull needs no
+manual build, then runs two watchers: `tsc --build --watch` for the
 packages, and Vite for the client. There is no server: the client plays
 peer to peer (#15, ADR-0022). Two tabs of the dev client on one machine find each other over the public
 Nostr relays, as two browsers anywhere do.
