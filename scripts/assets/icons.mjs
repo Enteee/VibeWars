@@ -799,10 +799,23 @@ const ui = {
 // One path each, outline painted under the fill, so overlapping parts merge.
 // ---------------------------------------------------------------------------
 
-/** @param {string} d */
-const projectileSprite = (d) =>
+/**
+ * One path in white, or several as [path, grey] pairs: the scene's tint
+ * multiplies, so a grey part stays a darker tone of the team colour.
+ * @param {string | [string, string][]} parts
+ */
+const projectileSprite = (parts) =>
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 12" width="32" height="12">` +
-  `<path d="${d}" fill="#fff" stroke="${C.bg}" stroke-width="1.5" stroke-linejoin="round" paint-order="stroke"/></svg>\n`;
+  (typeof parts === "string"
+    ? [{ d: parts, fill: "#fff" }]
+    : parts.map(([d, fill]) => ({ d, fill }))
+  )
+    .map(
+      ({ d, fill }) =>
+        `<path d="${d}" fill="${fill}" stroke="${C.bg}" stroke-width="1.5" stroke-linejoin="round" paint-order="stroke"/>`,
+    )
+    .join("") +
+  "</svg>\n";
 
 const projectile = {
   // Arrow (bows): thin shaft, triangular head, chevron fletching.
@@ -811,6 +824,38 @@ const projectile = {
   spear: "M2 4.75h18v2.5H2zM17 6l5-4L31 6l-9 4z",
   // Bolt (wand and staff): a bright orb with a tapering comet tail.
   bolt: "M2 6l20-3.5v7zM24.5 6m-4.5 0a4.5 4.5 0 1 0 9 0a4.5 4.5 0 1 0-9 0",
+  // The flying spells (#1176): white and grey like the rest, so the tint still
+  // gives the team; the silhouette gives the spell.
+  // Fireball: a round head and a ragged flame tail.
+  fireball: [
+    ["M2 6L9 3L11 4.5L15 1.5L17 4L21 2.5V9.5L17 8L15 10.5L11 7.5L9 9Z", "#c8c8c8"],
+    ["M24.5 6m-4.5 0a4.5 4.5 0 1 0 9 0a4.5 4.5 0 1 0-9 0", "#fff"],
+  ],
+  // Lightning orb: a head with jagged sparks forking back from it.
+  "lightning-orb": [
+    ["M20 5.5L15 2.5L16 5L10 1.5L13.5 5.8L7 5L14 7.5L9 10.5L16.5 8L19 8.5Z", "#c8c8c8"],
+    ["M25 6m-4 0a4 4 0 1 0 8 0a4 4 0 1 0-8 0", "#fff"],
+  ],
+  // Ice shard: a long faceted diamond, a pale facet along its top.
+  "ice-shard": [
+    ["M2 6L10 2.2L30 6L10 9.8Z", "#c8c8c8"],
+    ["M2 6L10 2.2L30 6Z", "#fff"],
+  ],
+  // Water trident: a shaft and three parallel prongs on a crossbar.
+  "water-trident": [
+    ["M2 5.2H21V6.8H2Z", "#c8c8c8"],
+    ["M20.5 1.2H23V10.8H20.5ZM22 1.2H30V2.8H22ZM22 5.2H31V6.8H22ZM22 9.2H30V10.8H22Z", "#fff"],
+  ],
+  // Ebon hawk: wings swept back from a small body, a hooked beak.
+  "ebon-hawk": [
+    ["M21 6L9 0.8L3 1.8L13 6L3 10.2L9 11.2Z", "#c8c8c8"],
+    ["M12 6C12 4.4 16 4.2 24 5L30 6L24 7C16 7.8 12 7.6 12 6Z", "#fff"],
+  ],
+  // Stone: a rough boulder with chips flying off behind it.
+  stone: [
+    ["M3 4.5L7 4L6 6.5ZM6 8.5L11 8L10 10.5Z", "#c8c8c8"],
+    ["M14 7L16 2.5L21 1L27 2L30 6L28 10L22 11L16 10Z", "#fff"],
+  ],
 };
 
 // ---------------------------------------------------------------------------
@@ -1470,7 +1515,7 @@ const families = {
   },
   ui: Object.fromEntries(Object.entries(ui).map(([k, f]) => [k, svg(f())])),
   projectile: Object.fromEntries(
-    Object.entries(projectile).map(([k, d]) => [k, projectileSprite(d)]),
+    Object.entries(projectile).map(([k, parts]) => [k, projectileSprite(parts)]),
   ),
   status: Object.fromEntries(
     Object.entries(status).map(([k, [category, glyph]]) => [k, svg(plates[category](glyph))]),
