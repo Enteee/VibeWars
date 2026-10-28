@@ -64,7 +64,10 @@ describe("skill catalog integrity", () => {
       const { kind, aura } = effect.creature;
       if (aura !== undefined) {
         expect(kind, skill.id).toBe("spirit");
-        expect(aura.affects, skill.id).toBe(skill.type === "nature-ritual" ? "all" : "allies");
+        // A nature ritual touches everyone; a binding ritual takes a side,
+        // its party's (Shelter) or the foes' (Earthbind).
+        if (skill.type === "nature-ritual") expect(aura.affects, skill.id).toBe("all");
+        else expect(aura.affects, skill.id).not.toBe("all");
       }
       expect(kind === "spirit", skill.id).toBe(
         skill.type === "nature-ritual" || skill.type === "binding-ritual",

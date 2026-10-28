@@ -1450,6 +1450,23 @@ for 17 and interrupts whatever its target is activating, any skill.
 strips the target's most recent enchantment. A missed or blocked shot
 does none of it.
 
+**Protective spirits** (#1265, Ritualist, Communing, binding rituals,
+45 s recharge) attack nothing. Each projects one status over spirit
+range and pays for every outcome it changes with its own Health: plain
+health loss, no armor, which can kill it; dead, it pays nothing and its
+aura is gone the next step. At Communing 12, armor 51:
+**Shelter** (25 energy, 5 s) 182 Health, 54 s: no single attack, a
+weapon blow or an attack skill's with its bonus, takes more than 10% of
+an ally's max Health, after everything else; spells, life steal and
+degeneration are not capped. 51 each time it takes something off.
+**Union** (15 energy, 3 s) 182 Health, 54 s: −15 from every hit and
+every life steal on an ally, and 15 each time, a hit it zeroes too.
+**Displacement** (15 energy, 3 s) 214 Health, 54 s: a 75% chance to
+block, combined with the ally's other blocks as any are; 60 for each
+block that was its own. **Earthbind** (15 energy, 3 s) 214 Health,
+39 s: a foe in range knocked down stays down at least 3 s; 30 per
+knockdown, one already as long included, none for one prevented.
+
 **Minions** (#467) are raised from a fresh corpse, of either team, the
 nearest within cast range, and rise where it lay. Their Health, armor
 and blows are set by their Necromancer's Death Magic as they rise and

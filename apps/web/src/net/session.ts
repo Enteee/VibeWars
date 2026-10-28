@@ -34,6 +34,7 @@ import {
   type TicketKey,
 } from "@vibewars/game-session";
 
+import { NEW_VERSION_NOTICE, isStaleChunkError } from "../build-check.js";
 import { arenaIds, hostMap, randomArenaMapPool } from "./maps.js";
 import { startHostClock } from "./transport/host-clock.js";
 import { joinQueueBoard, joinRoom } from "./transport/index.js";
@@ -510,10 +511,17 @@ export function lobbyClosedNotice(reason: LobbyClosedReason): string {
   }
 }
 
-/** What the player is told when the match would not let them in. */
+/**
+ * What the player is told when the match would not let them in. A
+ * lazy import that failed is a newer deploy that removed this build's
+ * chunks (#1268), not a lost connection.
+ */
 export function matchFailureNotice(error: unknown): string | undefined {
   if (error instanceof MatchRefusedError) {
     return error.message;
+  }
+  if (isStaleChunkError(error)) {
+    return NEW_VERSION_NOTICE;
   }
   return undefined;
 }
