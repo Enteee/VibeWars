@@ -71,6 +71,7 @@ export function logToneOf(kind: CombatEvent["kind"]): Exclude<LogTone, "divider"
     case "interrupt-missed":
     case "attack-missed":
     case "attack-blocked":
+    case "invulnerable":
     case "attack-dodged":
     case "attack-obstructed":
     case "attack-unreachable":
@@ -201,6 +202,9 @@ export function describeCombatEvent(
       return `${by} misses ${target}${event.reason === "out-of-sequence" ? outOfSequence(entry.skillId) : ""}`;
     case "attack-blocked":
       return `${target} blocks ${by}`;
+    case "invulnerable":
+      // A shrine raise's window (#1208) turned it away (#1233).
+      return `${by}: ${target} is invulnerable`;
     case "attack-dodged":
       return `${target} dodges ${by}`;
     case "attack-obstructed":
@@ -601,6 +605,9 @@ export function floatingCueFor(
     case "attack-blocked":
       // Guardian and the like turned the blow aside (#534).
       return { text: "block", tone: "neutral", critical: false };
+    case "invulnerable":
+      // A body a shrine just raised took none of it (#1233).
+      return { text: "Invulnerable", tone: "neutral", critical: false };
     case "attack-dodged":
       // A shot that landed where the target would have been (#159).
       return { text: "dodge", tone: "neutral", critical: false };

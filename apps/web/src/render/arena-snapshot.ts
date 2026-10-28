@@ -65,6 +65,8 @@ export interface RenderableActor {
   readonly enchanted: boolean;
   /** Wears the broken hex ring (#1117); never a corpse. */
   readonly hexed: boolean;
+  /** Shimmers, a shrine raise's invulnerability (#1233); never a corpse. */
+  readonly invulnerable: boolean;
   /** Flames, drops or bubbles on the body (#1138), two at most; never a corpse. */
   readonly conditionCues: readonly ConditionCue[];
 }

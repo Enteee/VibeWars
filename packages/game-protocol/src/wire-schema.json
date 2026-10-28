@@ -920,6 +920,12 @@
         },
         {
           "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "invulnerable" } },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "recharge-lengthened" } },
             { "name": "seconds", "optional": false, "type": "number" },
             { "name": "skillId", "optional": false, "type": "string" },
@@ -2298,6 +2304,7 @@
         { "name": "health", "optional": false, "type": "number" },
         { "name": "healthPips", "optional": false, "type": "number" },
         { "name": "id", "optional": false, "type": "string" },
+        { "name": "invulnerableSeconds", "optional": false, "type": "number" },
         { "name": "knockdownRemaining", "optional": false, "type": "number" },
         { "name": "maxEnergy", "optional": false, "type": "number" },
         { "name": "maxHealth", "optional": false, "type": "number" },
@@ -2552,6 +2559,7 @@
                 { "name": "health", "optional": false, "type": "number" },
                 { "name": "healthPips", "optional": false, "type": "number" },
                 { "name": "id", "optional": false, "type": "string" },
+                { "name": "invulnerableSeconds", "optional": false, "type": "number" },
                 { "name": "knockdownRemaining", "optional": false, "type": "number" },
                 { "name": "maxEnergy", "optional": false, "type": "number" },
                 { "name": "maxHealth", "optional": false, "type": "number" },
@@ -2798,6 +2806,7 @@
                 { "name": "health", "optional": false, "type": "number" },
                 { "name": "healthPips", "optional": false, "type": "number" },
                 { "name": "id", "optional": false, "type": "string" },
+                { "name": "invulnerableSeconds", "optional": false, "type": "number" },
                 { "name": "knockdownRemaining", "optional": false, "type": "number" },
                 { "name": "maxEnergy", "optional": false, "type": "number" },
                 { "name": "maxHealth", "optional": false, "type": "number" },

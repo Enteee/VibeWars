@@ -76,6 +76,7 @@ describe("logToneOf", () => {
       "attack-missed",
       "attack-blocked",
       "attack-dodged",
+      "invulnerable",
     ];
     expect(kinds.map(logToneOf)).toEqual([
       "damage",
@@ -95,6 +96,7 @@ describe("logToneOf", () => {
       "control",
       "control",
       "control",
+      "control",
     ]);
   });
 });
@@ -105,6 +107,19 @@ describe("describeCombatEvent", () => {
     expect(describeCombatEvent(entry([event]), event, nameOf, isCreature)).toBe(
       "Fireball (Pyro) hits Caster dummy for 64",
     );
+  });
+
+  it("says a Fireball found its target invulnerable, and floats it (#1233)", () => {
+    const event: CombatEvent = { kind: "invulnerable", targetId: "dummy" };
+    expect(describeCombatEvent(entry([event]), event, nameOf, isCreature)).toBe(
+      "Fireball (Pyro): Caster dummy is invulnerable",
+    );
+    expect(logToneOf("invulnerable")).toBe("control");
+    expect(floatingCueFor("invulnerable", undefined, false)).toEqual({
+      text: "Invulnerable",
+      tone: "neutral",
+      critical: false,
+    });
   });
 
   it("says degeneration for a status tick that hurts, regeneration for one that heals", () => {

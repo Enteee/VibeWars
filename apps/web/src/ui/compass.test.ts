@@ -42,6 +42,7 @@ function actor(
     statuses: [],
     enchanted: false,
     hexed: false,
+    invulnerable: false,
     conditionCues: [],
     ...overrides,
   };

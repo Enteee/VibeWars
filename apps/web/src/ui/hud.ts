@@ -148,6 +148,8 @@ export interface HudElements {
   readonly targetCastFill: HTMLElement;
   /** Crossed swords and "attacking", shown while self attacks the target (#160). */
   readonly attacking: HTMLElement;
+  /** "Invulnerable 0:04" while a shrine raise protects the target (#1233). */
+  readonly targetInvulnerable: HTMLElement;
   /** The count and clock, and beside them the foes' pips (#881). */
   readonly scoreboard: HTMLElement;
   readonly scoreboardText: HTMLElement;
@@ -262,6 +264,8 @@ export function createHud(
   swords.alt = "";
   attacking.append("attacking");
   attacking.hidden = true;
+  const targetInvulnerable = element("span", "hud-target-invulnerable", targetHeader);
+  targetInvulnerable.hidden = true;
   const targetHealthRow = element("div", "hud-target-health-row", targetPanel);
   const targetHealth = element("div", "hud-bar hud-target-health", targetHealthRow);
   const targetHealthFill = element("div", "hud-bar-fill", targetHealth);
@@ -365,6 +369,7 @@ export function createHud(
     targetCastName,
     targetCastFill,
     attacking,
+    targetInvulnerable,
     scoreboard,
     scoreboardText,
     enemies,
@@ -1212,6 +1217,13 @@ export function flashTargetCast(
   }
 }
 
+/** "Invulnerable 0:04": the seconds left, rounded up, as a clock (#1233). */
+export function invulnerableLabel(seconds: number): string {
+  const whole = Math.ceil(seconds);
+  const minutes = Math.floor(whole / 60);
+  return `Invulnerable ${String(minutes)}:${String(whole % 60).padStart(2, "0")}`;
+}
+
 /** The target frame (#484): header, health bar and cast row. */
 function renderTarget(
   hud: HudElements,
@@ -1221,6 +1233,9 @@ function renderTarget(
   renderTargetProfessions(hud.targetProfessions, target);
   hud.targetText.textContent = target === undefined ? "no target" : target.name;
   hud.attacking.hidden = !isAttackingTarget(self, target);
+  const invulnerable = target === undefined || target.dead ? 0 : target.invulnerableSeconds;
+  hud.targetInvulnerable.hidden = invulnerable <= 0;
+  hud.targetInvulnerable.textContent = invulnerable > 0 ? invulnerableLabel(invulnerable) : "";
   // Armor on hover: a number to look up, not to read at a glance.
   hud.targetPanel.title = target === undefined ? "" : `armor ${String(target.armor)}`;
   hud.targetHealth.hidden = target === undefined;

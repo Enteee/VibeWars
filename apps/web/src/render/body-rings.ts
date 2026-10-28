@@ -34,7 +34,7 @@ export interface RingArc {
 }
 
 export interface BodyRing {
-  readonly kind: "enchantment" | "hex";
+  readonly kind: "enchantment" | "hex" | "invulnerable";
   /** World units from the body's centre to the stroke's middle. */
   readonly radius: number;
   readonly width: number;
@@ -103,4 +103,48 @@ export function bodyRings(radius: number, flags: BodyFlags): readonly BodyRing[]
   }
   const rings = ringsFor(radius);
   return flags.enchanted ? (flags.hexed ? rings.both : rings.enchanted) : rings.hexed;
+}
+
+/** The `invulnerable` palette colour: pale gold, never the `target` ring's yellow. */
+const INVULNERABLE_COLOUR = 0xf5e6b8;
+/** One shimmer, dim to bright and back, in seconds. */
+export const INVULNERABLE_PULSE_SECONDS = 0.8;
+/** The shimmer's dimmest alpha; its brightest is 1. */
+export const INVULNERABLE_MIN_ALPHA = 0.35;
+
+/**
+ * The shimmer of a body a shrine raised, while it is invulnerable (#1208,
+ * #1233): a solid `invulnerable` ring where the hex ring goes. It never
+ * meets one: a raise starts with no hex and invulnerability refuses
+ * every new one. Built once per radius, as the other rings.
+ */
+const SHIMMER_BY_RADIUS = new Map<number, BodyRing>();
+
+export function invulnerableRing(radius: number): BodyRing {
+  const known = SHIMMER_BY_RADIUS.get(radius);
+  if (known !== undefined) {
+    return known;
+  }
+  const ring: BodyRing = {
+    kind: "invulnerable",
+    radius: radius + HEX_RING_OFFSET,
+    width: BODY_RING_WIDTH,
+    colour: INVULNERABLE_COLOUR,
+    arcs: SOLID,
+  };
+  SHIMMER_BY_RADIUS.set(radius, ring);
+  return ring;
+}
+
+/**
+ * The shimmer's alpha at `nowSeconds`: a cosine between
+ * `INVULNERABLE_MIN_ALPHA` and 1. Under reduced motion it holds at 1:
+ * the ring still says it, without the pulse.
+ */
+export function invulnerableAlpha(nowSeconds: number, reducedMotion: boolean): number {
+  if (reducedMotion) {
+    return 1;
+  }
+  const phase = (nowSeconds / INVULNERABLE_PULSE_SECONDS) * 2 * Math.PI;
+  return INVULNERABLE_MIN_ALPHA + ((1 - INVULNERABLE_MIN_ALPHA) * (1 + Math.cos(phase))) / 2;
 }

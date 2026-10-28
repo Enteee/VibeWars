@@ -133,6 +133,7 @@ function player(index: number): WirePlayer {
     swingElapsed: rounded(3),
     swingTotal: rounded(3),
     knockdownRemaining: rounded(2),
+    invulnerableSeconds: 0,
     // The longest a pip count is on the wire.
     healthPips: -MAX_WIRE_PIPS,
     energyPips: -MAX_WIRE_PIPS,

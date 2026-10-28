@@ -1336,11 +1336,11 @@ describe("an invulnerable target (#1208)", () => {
   const invulnerable = (): Combatant =>
     makeCombatant({ id: "target", team: 1, invulnerableRemaining: 3 });
 
-  it("takes no damage and reports none", () => {
+  it("takes no damage, and says it is invulnerable once (#1233)", () => {
     const target = invulnerable();
     const events: CombatEvent[] = [];
     applyDamage(target, 120, "fire", false, events, undefined);
-    expect(events).toEqual([]);
+    expect(events).toEqual([{ kind: "invulnerable", targetId: "target" }]);
     expect(target.health).toBe(target.maxHealth);
   });
 
@@ -1349,7 +1349,7 @@ describe("an invulnerable target (#1208)", () => {
     const target = invulnerable();
     expect(
       applyEffect({ kind: "life-steal", amount: { flat: 40 } }, context(caster, target)),
-    ).toEqual([]);
+    ).toEqual([{ kind: "invulnerable", targetId: "target" }]);
     expect(target.health).toBe(target.maxHealth);
     expect(caster.health).toBe(300);
   });
@@ -1361,6 +1361,26 @@ describe("an invulnerable target (#1208)", () => {
     expect(target.statuses.has("malaise") || target.statuses.has("deep-wound")).toBe(false);
     expect(applyStatus(target, "armor-boost", 10, "caster")).toBe(0);
     expect(target.statuses.has("armor-boost")).toBe(true);
+  });
+
+  it("says it is invulnerable once for a hex a skill puts on it, and gains none (#1233)", () => {
+    const target = invulnerable();
+    const events = applyEffect(
+      { kind: "apply-status", statusId: "malaise", durationSeconds: 10 },
+      context(makeCombatant({ id: "caster" }), target),
+    );
+    expect(events).toEqual([{ kind: "invulnerable", targetId: "target" }]);
+    expect(target.statuses.has("malaise")).toBe(false);
+  });
+
+  it("is healed by an ally as ever, and says nothing of invulnerability (#1233)", () => {
+    const ally = makeCombatant({ id: "target", team: 0, health: 100, invulnerableRemaining: 3 });
+    const events = applyEffect(
+      { kind: "heal", amount: { flat: 50 }, perStatusOnTarget: [] },
+      context(makeCombatant({ id: "caster" }), ally),
+    );
+    expect(events.some(({ kind }) => kind === "invulnerable")).toBe(false);
+    expect(ally.health).toBe(150);
   });
 });
 

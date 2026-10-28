@@ -294,6 +294,8 @@ export interface WirePlayer {
   readonly castTotal: number;
   /** Seconds left lying down from a knockdown (#468); 0 standing. */
   readonly knockdownRemaining: number;
+  /** Seconds left of a shrine raise's invulnerability (#1208, #1233); 0 when not. */
+  readonly invulnerableSeconds: number;
   /**
    * Net health and energy regeneration (+) or degeneration (−), in pips,
    * as the host applies them (#504): integers in ±`MAX_WIRE_PIPS`, 0 dead.
@@ -1225,6 +1227,7 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
     !isNumber(raw.swingElapsed) ||
     !isNumber(raw.swingTotal) ||
     !isNumber(raw.knockdownRemaining) ||
+    !isNumber(raw.invulnerableSeconds) ||
     !isPips(raw.healthPips) ||
     !isPips(raw.energyPips) ||
     typeof raw.bot !== "boolean"
@@ -1264,6 +1267,7 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
         swingElapsed: raw.swingElapsed,
         swingTotal: raw.swingTotal,
         knockdownRemaining: raw.knockdownRemaining,
+        invulnerableSeconds: raw.invulnerableSeconds,
         healthPips: raw.healthPips,
         energyPips: raw.energyPips,
         statuses,
