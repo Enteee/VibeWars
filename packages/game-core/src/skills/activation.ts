@@ -11,7 +11,7 @@ import type { Vec2 } from "../vec2.js";
 
 import { canAffordAdrenaline, spendAdrenaline } from "./adrenaline.js";
 import { addOvercast } from "./overcast.js";
-import { getStatusDefinition } from "./status.js";
+import { getStatusDefinition, preventsSpells } from "./status.js";
 import { rankOf, type RankHolder } from "./tick.js";
 import { isSpell, type Combatant, type Skill, type TargetRule } from "./types.js";
 
@@ -57,7 +57,9 @@ export type ActivationRejection =
   | "no-animal-to-charm"
   // An ordinary resurrection on a creature, as a dead pet (#1046): checked
   // by the simulation, which knows who is one.
-  | "invalid-target-creature";
+  | "invalid-target-creature"
+  // A spell while a hex bars them, as Shroud of Silence's (#1234).
+  | "cannot-cast-spells";
 
 export type ActivationCheck =
   { readonly ok: true } | { readonly ok: false; readonly reason: ActivationRejection };
@@ -198,6 +200,9 @@ export function canActivate(request: ActivationRequest): ActivationCheck {
   // After the recharge, so a disabled spent skill still says "recharging".
   if (request.spent.has(key)) {
     return reject("spent-until-morale-boost");
+  }
+  if (isSpell(skill.type) && preventsSpells(caster.statuses.active)) {
+    return reject("cannot-cast-spells");
   }
   // An attack skill is a blow of its weapon (ADR-0029): checked before the
   // cost, so the player is told what is wrong rather than what it costs.

@@ -44,6 +44,8 @@ describe("status definitions", () => {
         def.healthPips !== 0 ||
         def.healthPipsPerEnchantment !== undefined ||
         def.preventsKnockdown ||
+        def.preventsSpells ||
+        def.unblockableBySource ||
         def.energyPips !== 0 ||
         def.armorModifier !== 0 ||
         def.armorWhileStill !== 0 ||
@@ -125,6 +127,7 @@ describe("status definitions", () => {
       "phantom-pain": -3,
       "shrinking-armor": -3,
       "crippling-anguish": -5,
+      "enduring-toxin": -4,
     });
   });
 
@@ -284,7 +287,7 @@ describe("StatusSet durationSeconds (#803)", () => {
   it("is the applied duration, and stays as the time runs down", () => {
     const set = new StatusSet();
     set.apply("bleeding", 10, "a");
-    set.advance(4);
+    set.advance(4, false);
     expect(set.get("bleeding")).toMatchObject({ remainingSeconds: 6, durationSeconds: 10 });
   });
 
@@ -292,7 +295,7 @@ describe("StatusSet durationSeconds (#803)", () => {
     const set = new StatusSet();
     set.apply("bleeding", 10, "a");
     set.apply("burning", 5, "a");
-    set.advance(4);
+    set.advance(4, false);
     set.apply("bleeding", 8, "b");
     expect(set.get("bleeding")).toMatchObject({ remainingSeconds: 8, durationSeconds: 8 });
     expect(order(set)).toEqual(["burning", "bleeding"]);
@@ -315,7 +318,7 @@ describe("StatusSet durationSeconds (#803)", () => {
 
     const set = new StatusSet();
     set.apply("disease", 10, "a");
-    set.advance(6);
+    set.advance(6, false);
     set.catch("disease", 8, "b", outbreak);
     expect(set.get("disease")).toMatchObject({ remainingSeconds: 8, durationSeconds: 10 });
     set.catch("disease", 12, "b", outbreak);
@@ -334,7 +337,7 @@ describe("StatusSet stances, one at a time (#523)", () => {
   it("the same stance again restarts at its full duration, shorter or not", () => {
     const set = new StatusSet();
     set.apply("sprint", 13, "a");
-    set.advance(10);
+    set.advance(10, false);
     set.apply("sprint", 13, "a");
     expect(set.get("sprint")?.remainingSeconds).toBe(13);
     set.apply("sprint", 5, "a");
@@ -358,14 +361,14 @@ describe("StatusSet duration advance", () => {
   it("counts durations down", () => {
     const set = new StatusSet();
     set.apply("bleeding", 10, "a");
-    set.advance(3);
+    set.advance(3, false);
     expect(set.get("bleeding")?.remainingSeconds).toBeCloseTo(7, 10);
   });
 
   it("expires a status once its duration elapses and reports it", () => {
     const set = new StatusSet();
     set.apply("bleeding", 1, "a");
-    expect(set.advance(1.5)).toEqual(["bleeding"]);
+    expect(set.advance(1.5, false)).toEqual(["bleeding"]);
     expect(set.has("bleeding")).toBe(false);
   });
 
@@ -374,7 +377,7 @@ describe("StatusSet duration advance", () => {
     set.apply("bleeding", 1, "a");
     set.apply("burning", 1, "a");
     set.apply("poison", 10, "a");
-    const expired = set.advance(2);
+    const expired = set.advance(2, false);
     expect(expired.sort()).toEqual(["bleeding", "burning"]);
     expect(set.has("poison")).toBe(true);
   });
@@ -382,7 +385,7 @@ describe("StatusSet duration advance", () => {
   it("reports nothing when nothing expires", () => {
     const set = new StatusSet();
     set.apply("bleeding", 10, "a");
-    expect(set.advance(1)).toEqual([]);
+    expect(set.advance(1, false)).toEqual([]);
   });
 });
 
@@ -427,7 +430,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
     set.apply("fleeting-stability", 10, "knockdown");
     set.drainChanges();
 
-    set.advance(1);
+    set.advance(1, false);
     set.remove("backfire");
     set.removeByCategory("hex");
     for (let attack = 0; attack < 3; attack += 1) {
@@ -455,7 +458,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
     set.apply("guardian", 10, "a");
     set.apply("blind", 8, "a");
     set.apply("poison", 6, "a");
-    set.advance(1);
+    set.advance(1, false);
     set.drainChanges();
     expect(set.takeNewest("condition", 2)).toEqual([
       { id: "poison", remainingSeconds: 5 },

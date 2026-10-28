@@ -433,6 +433,28 @@ export interface LengthenRechargeEffect {
 }
 
 /**
+ * Disable the caster's own bar skills of one kind for `seconds` (#1234),
+ * running alongside their recharges as `disable-skill`'s do, as Shroud of
+ * Silence's "all of your spells are disabled for 15 seconds". `spells`:
+ * every spell (`isSpell`) on the bar. None on it: nothing.
+ */
+export interface DisableOwnSkillsEffect {
+  readonly kind: "disable-own-skills";
+  readonly which: "spells";
+  readonly seconds: number;
+}
+
+/**
+ * Leave the caster's chain mark of `role` on the target (#1234), as a
+ * chain attack's hit does (`chain.ts`), from a skill that is no attack:
+ * Iron Palm's "counts as a lead attack".
+ */
+export interface ChainMarkEffect {
+  readonly kind: "chain-mark";
+  readonly role: "lead";
+}
+
+/**
  * What a `summon` makes (#1052, ADR-0035): a body that is not a player,
  * with health, armor and a team, and no skill bar, attributes or energy.
  */
@@ -625,6 +647,11 @@ export type StateCondition =
   | { readonly kind: "target-health-below"; readonly fraction: number }
   /** The effect's target has at least one status of this category. */
   | { readonly kind: "target-has"; readonly category: StatusCategory }
+  /**
+   * The effect's target has at least one status of any of these categories
+   * (#1234): Iron Palm's "suffering from a hex or condition".
+   */
+  | { readonly kind: "target-has-any"; readonly categories: readonly StatusCategory[] }
   /** The effect's target is activating a spell (`isSpell`); a chant is not one. */
   | { readonly kind: "target-casting"; readonly spell: true }
   /**
@@ -742,6 +769,8 @@ export type UnconditionalEffect =
   | RechargeOthersEffect
   | DisableSkillEffect
   | LengthenRechargeEffect
+  | DisableOwnSkillsEffect
+  | ChainMarkEffect
   | SummonEffect
   | CreateGroundEffect;
 
