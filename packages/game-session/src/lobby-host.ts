@@ -6,6 +6,7 @@ import {
   parsePeerChat,
   parsePeerLobbyHello,
   parsePeerLobbyJoin,
+  parsePeerPartyConsent,
   parsePeerStayTogether,
   parseWireLobbyCommand,
   type LobbyPhase,
@@ -18,6 +19,7 @@ import {
   type WireLobbyWelcome,
   type WireMatchStart,
   type WirePartyFormed,
+  type WirePartyProposal,
   type WirePartySplit,
 } from "@vibewars/game-protocol";
 
@@ -50,6 +52,30 @@ import { sizeChecked, type Transport } from "./transport.js";
  */
 export const CHAT_LINES_PER_SECOND = 1;
 export const CHAT_BURST = 5;
+
+/**
+ * From a party's proposal, on the lobby's clock, until each member must
+ * have sent a consent that verifies, or the team splits (#1078).
+ */
+export const PARTY_CONSENT_MS = 5000;
+
+/** A party every winner said yes to, waiting for each one's consent (#1078). */
+interface PartyProposal {
+  /** Their keys, sorted. */
+  readonly members: readonly string[];
+  /** Each yes-voter's peer to its key. */
+  readonly keys: ReadonlyMap<string, string>;
+  /** What each consent signs: the group won and exactly these members. */
+  readonly digest: Promise<Uint8Array>;
+  /** Each verified consent, by member key. */
+  readonly consents: Map<string, string>;
+  /** Peers whose consent is being checked: one each, still. */
+  readonly checking: Set<string>;
+  /** On the lobby's clock. */
+  readonly endsAt: number;
+  /** Formed or split, and those it concerns told. */
+  settled: boolean;
+}
 
 /** A lobby's match, as the lobby hands it to whoever builds the `MatchHost`. */
 export interface MatchPlan {
@@ -187,13 +213,11 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         /** The winning side's peers as the match ended. */
         readonly winners: readonly string[];
         readonly votes: Map<string, string | null>;
-        /** Each yes's verified consent, by member key (#1078). */
-        readonly consents: Map<string, string>;
-        /** Winners whose consent is being checked: one vote each, still. */
-        readonly checking: Set<string>;
         /** On the lobby's clock. */
         readonly endsAt: number;
         decided: boolean;
+        /** Once every winner said yes: the party each must consent to (#1078). */
+        proposal: PartyProposal | undefined;
       }
     | undefined;
   /** `onDone` was called. */
@@ -588,11 +612,10 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
               .map((member) => member.id)
           : [],
       votes: new Map(),
-      consents: new Map(),
-      checking: new Set(),
       endsAt: clockMs() + plan.stayTogetherSeconds * 1000,
       // No team won, or a team of one: nothing to vote on.
       decided: teamSize <= 1,
+      proposal: undefined,
     };
   };
 
@@ -613,36 +636,64 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       });
       if (decision.kind !== "waiting") {
         vote.decided = true;
-        const { consents } = vote;
-        // Every key is a yes, and a yes counts only with its consent.
-        const consentOf = (memberKey: string): string => {
-          const consent = consents.get(memberKey);
-          if (consent === undefined) {
-            throw new Error("stay together: a member key without its consent");
+        // To each yes alone: the losers share these channels.
+        if (decision.kind === "formed") {
+          const { votes } = vote;
+          const { groupId } = plan.group;
+          const party = decision.members;
+          vote.proposal = {
+            members: party,
+            keys: new Map(
+              decision.to.flatMap((peerId) => {
+                const memberKey = votes.get(peerId);
+                return typeof memberKey === "string" ? [[peerId, memberKey] as const] : [];
+              }),
+            ),
+            digest: admissionDigest("vibewars-party", groupId, party.join(""), ""),
+            consents: new Map(),
+            checking: new Set(),
+            endsAt: clockMs() + PARTY_CONSENT_MS,
+            settled: false,
+          };
+          const proposed: WirePartyProposal = { groupId, members: party };
+          for (const to of decision.to) {
+            transport.send("party-proposal", proposed, to);
           }
-          return consent;
-        };
-        // To each yes alone: the losers share this channel. A split goes
-        // to every winner here who did not say no, since a yes may still
-        // be signing or being checked (#1078), and would come too late.
-        const { votes } = vote;
-        const told =
-          decision.kind === "split"
-            ? vote.winners.filter((peerId) => !gone.has(peerId) && votes.get(peerId) !== null)
-            : decision.to;
-        for (const to of told) {
-          if (decision.kind === "formed") {
-            const formed: WirePartyFormed = {
-              groupId: plan.group.groupId,
-              members: decision.members,
-              consents: decision.members.map(consentOf),
-            };
-            transport.send("party-formed", formed, to);
-          } else {
+        } else {
+          for (const to of decision.to) {
             transport.send("party-split", {} satisfies WirePartySplit, to);
           }
         }
       }
+    }
+    const { proposal } = vote;
+    if (proposal !== undefined && !proposal.settled) {
+      const told = [...proposal.keys.keys()];
+      const consents = proposal.members.flatMap((memberKey) => {
+        const consent = proposal.consents.get(memberKey);
+        return consent === undefined ? [] : [consent];
+      });
+      if (consents.length === proposal.members.length) {
+        proposal.settled = true;
+        const formed: WirePartyFormed = {
+          groupId: plan.group.groupId,
+          members: proposal.members,
+          consents,
+        };
+        for (const to of told) {
+          transport.send("party-formed", formed, to);
+        }
+      } else if (clockMs() >= proposal.endsAt || told.some((peerId) => !members.has(peerId))) {
+        // A consent missing, or bad, or a member gone: no party, and no
+        // second proposal of fewer.
+        proposal.settled = true;
+        for (const to of told.filter((peerId) => members.has(peerId))) {
+          transport.send("party-split", {} satisfies WirePartySplit, to);
+        }
+      }
+    }
+    if (proposal !== undefined && !proposal.settled) {
+      return;
     }
     const waited = vote.winners.some((peerId) => peerId !== local.selfId && !gone.has(peerId));
     if (timedOut || (vote.decided && !waited)) {
@@ -660,7 +711,6 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       vote.decided ||
       !vote.winners.includes(from) ||
       vote.votes.has(from) ||
-      vote.checking.has(from) ||
       !budget.take(from, nowMs())
     ) {
       return;
@@ -669,31 +719,41 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     if (said === undefined) {
       return;
     }
-    if (said.memberKey === null) {
-      vote.votes.set(from, null);
-      runVote(queued);
+    vote.votes.set(from, said.memberKey);
+    runVote(queued);
+  });
+
+  // A yes-voter's consent to the proposed party, once, while it is open (#1078).
+  transport.on("party-consent", (data, from) => {
+    const proposal = vote?.proposal;
+    if (
+      queued === undefined ||
+      closed ||
+      proposal === undefined ||
+      proposal.settled ||
+      !budget.take(from, nowMs())
+    ) {
       return;
     }
-    // A yes counts only with its key's consent to this group (#1078); one
-    // that does not verify is no vote, as a malformed one is.
-    if (said.groupId !== queued.group.groupId) {
+    const memberKey = proposal.keys.get(from);
+    const said = parsePeerPartyConsent(data);
+    if (
+      memberKey === undefined ||
+      said?.memberKey !== memberKey ||
+      proposal.consents.has(memberKey) ||
+      proposal.checking.has(from)
+    ) {
       return;
     }
-    const open = vote;
-    const { memberKey, consent } = said;
-    open.checking.add(from);
-    void admissionDigest("vibewars-party", said.groupId, memberKey, "").then((digest) => {
-      open.checking.delete(from);
-      if (
-        closed ||
-        vote !== open ||
-        open.decided ||
-        !queued.verifyTicketSig(memberKey, digest, consent)
-      ) {
+    proposal.checking.add(from);
+    void proposal.digest.then((digest) => {
+      proposal.checking.delete(from);
+      // One that does not verify is no consent: the party waits for a
+      // good one until `PARTY_CONSENT_MS`, then splits.
+      if (closed || proposal.settled || !queued.verifyTicketSig(memberKey, digest, said.consent)) {
         return;
       }
-      open.consents.set(memberKey, consent);
-      open.votes.set(from, memberKey);
+      proposal.consents.set(memberKey, said.consent);
       runVote(queued);
     });
   });

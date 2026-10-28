@@ -361,9 +361,15 @@ describe("the Nostr queue board (#872)", () => {
 describe("party consents on the Nostr queue board (#1078)", () => {
   const GROUP_WON = "f".repeat(64);
 
-  /** `key`'s consent to the party that won `groupId`. */
-  const consentOf = (key: TicketKey, groupId = GROUP_WON): string =>
-    key.sign(sha256(admissionBytes("vibewars-party", groupId, key.ticketId, "")));
+  /** `key`'s consent to the party of `members` that won `groupId`. */
+  const consentOf = (
+    key: TicketKey,
+    members: readonly TicketKey[],
+    groupId = GROUP_WON,
+  ): string => {
+    const ids = members.map((member) => member.ticketId).join("");
+    return key.sign(sha256(admissionBytes("vibewars-party", groupId, ids, "")));
+  };
 
   /** Two fresh keys, sorted: a 2v2 party's members, the lower its leader. */
   const membersOf = (): [TicketKey, TicketKey] =>
@@ -395,20 +401,20 @@ describe("party consents on the Nostr queue board (#1078)", () => {
     const members = membersOf();
     const ticket = partyTicket(
       members,
-      members.map((key) => consentOf(key)),
+      members.map((key) => consentOf(key, members)),
     );
     deliver(sockets[0], remoteEvent(members[0], ticket));
     expect(heard).toEqual([{ kind: "ticket", ticket }]);
     expect(verified).toEqual([members[0].ticketId, ...members.map((key) => key.ticketId)]);
   });
 
-  it("drops a forger's party naming a real follower, and the real party still forms", async () => {
+  it("drops a forger's party naming a real follower, signed by the forger or with the follower's consent to its real party (PR 1092), and the real party still forms", async () => {
     const { queue, sockets } = fakeRelays();
     const heard = listen(queue);
     const real = membersOf();
     const realTicket = partyTicket(
       real,
-      real.map((key) => consentOf(key)),
+      real.map((key) => consentOf(key, real)),
     );
     const follower = real[1];
     // The forger leads with a key below the follower's and signs for both.
@@ -416,13 +422,14 @@ describe("party consents on the Nostr queue board (#1078)", () => {
     while (forger.ticketId >= follower.ticketId) {
       forger = newTicketKey();
     }
-    const forged = partyTicket([forger, follower], [consentOf(forger), consentOf(forger)], {
+    const set = [forger, follower];
+    const forged = partyTicket(set, [consentOf(forger, set), consentOf(forger, set)], {
       enteredAt: 0,
     });
-    // And one with the follower's real consent, which signs the group won, not this ticket.
-    const replayed = partyTicket([forger, follower], [consentOf(forger), consentOf(follower)], {
+    // The winning match's host saw the follower's real consent: to the
+    // same group, but to the real party's members, not to these.
+    const replayed = partyTicket(set, [consentOf(forger, set), consentOf(follower, real)], {
       enteredAt: 0,
-      party: { groupId: "e".repeat(64), consents: [consentOf(forger), consentOf(follower)] },
     });
     deliver(sockets[0], remoteEvent(forger, forged));
     deliver(sockets[0], remoteEvent(forger, { ...replayed, heartbeatAt: NOW + 1 }));
@@ -452,7 +459,7 @@ describe("party consents on the Nostr queue board (#1078)", () => {
     const members = membersOf();
     const ticket = partyTicket(
       members,
-      members.map((key) => consentOf(key)),
+      members.map((key) => consentOf(key, members)),
     );
     deliver(sockets[0], remoteEvent(members[0], ticket));
     expect(verified).toHaveLength(3);
@@ -464,7 +471,10 @@ describe("party consents on the Nostr queue board (#1078)", () => {
     const moved = {
       ...ticket,
       heartbeatAt: NOW + 10_000,
-      party: { groupId: elsewhere, consents: members.map((key) => consentOf(key, elsewhere)) },
+      party: {
+        groupId: elsewhere,
+        consents: members.map((key) => consentOf(key, members, elsewhere)),
+      },
     };
     deliver(sockets[0], remoteEvent(members[0], moved));
     expect(verified).toHaveLength(7);
@@ -485,7 +495,7 @@ describe("party consents on the Nostr queue board (#1078)", () => {
       members[0],
       partyTicket(
         members,
-        members.map((key) => consentOf(key)),
+        members.map((key) => consentOf(key, members)),
       ),
     );
     deliver(sockets[0], event);

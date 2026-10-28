@@ -21,6 +21,8 @@
     "lobby-hello",
     "lobby-welcome",
     "stay-together",
+    "party-proposal",
+    "party-consent",
     "party-formed",
     "party-split",
     "match-start",
@@ -227,7 +229,9 @@
         { "literal": "lobby-state" },
         { "literal": "lobby-welcome" },
         { "literal": "match-start" },
+        { "literal": "party-consent" },
         { "literal": "party-formed" },
+        { "literal": "party-proposal" },
         { "literal": "party-split" },
         { "literal": "recharge" },
         { "literal": "refuse" },
@@ -1261,6 +1265,12 @@
         { "name": "protocolVersion", "optional": false, "type": "string" }
       ]
     },
+    "PeerPartyConsent": {
+      "properties": [
+        { "name": "consent", "optional": false, "type": "string" },
+        { "name": "memberKey", "optional": false, "type": "string" }
+      ]
+    },
     "PeerRefuse": {
       "properties": [
         { "name": "message", "optional": false, "type": "string" },
@@ -1290,15 +1300,8 @@
       ]
     },
     "PeerStayTogether": {
-      "union": [
-        {
-          "properties": [
-            { "name": "consent", "optional": false, "type": "string" },
-            { "name": "groupId", "optional": false, "type": "string" },
-            { "name": "memberKey", "optional": false, "type": "string" }
-          ]
-        },
-        { "properties": [{ "name": "memberKey", "optional": false, "type": "null" }] }
+      "properties": [
+        { "name": "memberKey", "optional": false, "type": { "union": ["null", "string"] } }
       ]
     },
     "PeerWelcome": {
@@ -1929,6 +1932,12 @@
     "WirePartyFormed": {
       "properties": [
         { "name": "consents", "optional": false, "type": { "array": "string" } },
+        { "name": "groupId", "optional": false, "type": "string" },
+        { "name": "members", "optional": false, "type": { "array": "string" } }
+      ]
+    },
+    "WirePartyProposal": {
+      "properties": [
         { "name": "groupId", "optional": false, "type": "string" },
         { "name": "members", "optional": false, "type": { "array": "string" } }
       ]

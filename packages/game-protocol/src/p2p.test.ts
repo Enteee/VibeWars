@@ -47,6 +47,8 @@ import {
   parsePeerLobbyHello,
   parseWireLobbyWelcome,
   parsePeerStayTogether,
+  parseWirePartyProposal,
+  parsePeerPartyConsent,
   parseWirePartyFormed,
   parseWirePartySplit,
   parseWireLobbyState,
@@ -311,8 +313,13 @@ const lobbyJoin: PeerLobbyJoin = {
 /** A queued join's proof (#871): a ticket id and a signature, as hex. */
 const admission = { seatKey: "ab".repeat(32), admissionSig: "cd".repeat(64) };
 
-/** A yes to Stay together, with its consent to the group won (#1078). */
-const stayYes = { memberKey: "ab".repeat(32), consent: "ef".repeat(64), groupId: "12".repeat(32) };
+/** A party's consent to its proposal (#1078). */
+const partyConsent = { memberKey: "ab".repeat(32), consent: "ef".repeat(64) };
+
+/** A party-proposal of `members`, as given (#1078). */
+function proposalOf(members: readonly string[]) {
+  return { groupId: "12".repeat(32), members };
+}
 
 /** A party-formed of `members`, as given, each with a consent. */
 function partyOf(members: readonly string[]) {
@@ -443,7 +450,7 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["queued lobby-join (#871)", parsePeerLobbyJoin, { ...lobbyJoin, admission }],
   ["lobby-hello (#871)", parsePeerLobbyHello, {}],
   ["lobby-welcome (#871)", parseWireLobbyWelcome, { hostSig: "ef".repeat(64) }],
-  ["stay-together yes (#882, #1078)", parsePeerStayTogether, stayYes],
+  ["stay-together yes (#882)", parsePeerStayTogether, { memberKey: "ab".repeat(32) }],
   ["stay-together no (#882)", parsePeerStayTogether, { memberKey: null }],
   [
     "party-formed of two (#882, #1078)",
@@ -455,6 +462,12 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
     parseWirePartyFormed,
     partyOf(["1", "2", "3", "4"].map((digit) => digit.repeat(64))),
   ],
+  [
+    "party-proposal of two (#1078)",
+    parseWirePartyProposal,
+    proposalOf(["ab".repeat(32), "cd".repeat(32)]),
+  ],
+  ["party-consent (#1078)", parsePeerPartyConsent, partyConsent],
   ["party-split (#882)", parseWirePartySplit, {}],
   [
     "counting-down lobby-state (#871)",
@@ -951,35 +964,33 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["lobby-hello with a field (#871)", parsePeerLobbyHello, { ticketId: "ab".repeat(32) }],
   ["lobby-welcome of no signature (#871)", parseWireLobbyWelcome, {}],
   ["stay-together of no key (#882)", parsePeerStayTogether, {}],
-  [
-    "stay-together of a short key (#882)",
-    parsePeerStayTogether,
-    { ...stayYes, memberKey: "ab".repeat(31) },
-  ],
+  ["stay-together of a short key (#882)", parsePeerStayTogether, { memberKey: "ab".repeat(31) }],
   [
     "stay-together of an upper-case key (#882)",
     parsePeerStayTogether,
-    { ...stayYes, memberKey: "AB".repeat(32) },
+    { memberKey: "AB".repeat(32) },
+  ],
+  ["party-proposal of one (#1078)", parseWirePartyProposal, proposalOf(["ab".repeat(32)])],
+  [
+    "party-proposal unsorted (#1078)",
+    parseWirePartyProposal,
+    proposalOf(["cd".repeat(32), "ab".repeat(32)]),
   ],
   [
-    "stay-together yes with no consent (#1078)",
-    parsePeerStayTogether,
-    { memberKey: stayYes.memberKey, groupId: stayYes.groupId },
+    "party-proposal with no group (#1078)",
+    parseWirePartyProposal,
+    { members: ["ab".repeat(32), "cd".repeat(32)] },
+  ],
+  ["party-consent with no consent (#1078)", parsePeerPartyConsent, { memberKey: "ab".repeat(32) }],
+  [
+    "party-consent with a short consent (#1078)",
+    parsePeerPartyConsent,
+    { ...partyConsent, consent: "ef".repeat(63) },
   ],
   [
-    "stay-together yes with a short consent (#1078)",
-    parsePeerStayTogether,
-    { ...stayYes, consent: "ef".repeat(63) },
-  ],
-  [
-    "stay-together yes with no group (#1078)",
-    parsePeerStayTogether,
-    { memberKey: stayYes.memberKey, consent: stayYes.consent },
-  ],
-  [
-    "stay-together yes to a non-hex group (#1078)",
-    parsePeerStayTogether,
-    { ...stayYes, groupId: "zz".repeat(32) },
+    "party-consent of a non-hex key (#1078)",
+    parsePeerPartyConsent,
+    { ...partyConsent, memberKey: "zz".repeat(32) },
   ],
   ["party-formed of one (#882)", parseWirePartyFormed, partyOf(["ab".repeat(32)])],
   [

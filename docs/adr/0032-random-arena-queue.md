@@ -102,12 +102,18 @@ with nobody negotiating.**
    A party is a no-show when any of its members is.
 
    **Party membership is proven by each member's signature over the
-   group it won** (#1078). A winner who votes to stay together signs
-   `sha256("vibewars-party" ‖ groupId ‖ memberKey ‖ "")` with its fresh
-   member key, `groupId` the queued lobby's, and the host checks it
-   before it counts the vote. The host hands every consent to every
-   member, and the leader's ticket carries them as `party`, beside
-   `members`. The board verifies each one, paid for from the same verify
+   group it won and the exact member set** (#1078). Once every winner
+   has voted yes with a fresh member key, the host proposes the party,
+   the queued lobby's `groupId` and the keys sorted, to each of them.
+   Each signs, with its member key,
+   `sha256("vibewars-party" ‖ groupId ‖ members.join("") ‖ "")`, but
+   only for a proposal that holds its own key and its own lobby's group,
+   and the host checks every consent. One missing or bad after
+   `PARTY_CONSENT_MS`, and the team splits, with no second proposal of
+   fewer. A consent over the group alone would not do: the winning
+   match's host could mint a key and publish it in a party with any one
+   winner's consent. The host hands every consent to every member, and
+   the leader's ticket carries them as `party`, beside `members`. The board verifies each one, paid for from the same verify
    budget, before formation sees the ticket, and remembers a ticket's
    verified `party` so a heartbeat costs no second check. A ticket that
    names a key without that key's consent never reaches formation. A

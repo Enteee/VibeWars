@@ -317,7 +317,7 @@ export function createNostrQueue(deps: NostrQueueDeps = BROWSER): NostrQueue {
   /**
    * Whether `ticket` names only members who consented to it (#1078): a
    * solo always does, a party when every `consents[i]` is `members[i]`'s
-   * signature over its group. The checks are paid for from the verify
+   * signature over its group and exactly these members. The checks are paid for from the verify
    * budget, all or none, and `unpaid` when it cannot; a party heard with
    * the same consents before costs nothing.
    */
@@ -333,9 +333,10 @@ export function createNostrQueue(deps: NostrQueueDeps = BROWSER): NostrQueue {
     if (!mayVerify(ticket.members.length)) {
       return "unpaid";
     }
-    const holds = ticket.members.every((member, i) => {
+    const { members } = ticket;
+    const digest = sha256(admissionBytes("vibewars-party", party.groupId, members.join(""), ""));
+    const holds = members.every((member, i) => {
       const consent = party.consents[i];
-      const digest = sha256(admissionBytes("vibewars-party", party.groupId, member, ""));
       return consent !== undefined && deps.verifyTicketSig(member, digest, consent);
     });
     if (!holds) {
