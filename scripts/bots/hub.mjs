@@ -39,7 +39,7 @@ import path from "node:path";
 import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 
-import { parseAlive } from "./hub-health.mjs";
+import { HUBD_ALIVE, parseAlive } from "./hub-health.mjs";
 import { inlineBodyFile } from "./hub-body.mjs";
 import { splitFilter } from "./hub-filter.mjs";
 import { ROLES, authorize } from "./hub-policy.mjs";
@@ -249,7 +249,7 @@ if (!local.allow) {
 // --unshare-all, so it has its own PID namespace and cannot see the host
 // process at all: checking a pid here reported every running daemon as dead.
 const HEARTBEAT_MAX_AGE_MS = 60_000;
-const beatFile = path.join(SPOOL, "..", "hubd.alive");
+const beatFile = path.join(SPOOL, "..", HUBD_ALIVE);
 let daemonAlive = false;
 /** @type {import("./hub-health.mjs").HubdAlive | null} */
 let beat = null;
