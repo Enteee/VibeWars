@@ -57,10 +57,12 @@ others can read. `claude-llc doctor` prints, per credential, the identity it
 resolves to, its expiry and scopes, where it is stored and whether it is
 yours; it writes nothing.
 
-The Telegram manager bot's token lives there as `telegram-manager-token`.
-`claude-bot-setup <token-file>` copies it in (mode 600) and writes only the
-chat id to `devenv.local.nix`. Without the file every employee refuses to
-start and retries. To keep it elsewhere, set
+The Telegram manager bot's token lives there as `telegram-manager-token`,
+and the company's group as `telegram-chat-id`; `claude-llc auth telegram`
+writes both (mode 600). The group must be a supergroup with Topics on, where
+the bot is an admin who can manage topics. They are read when an employee
+starts, so a fix takes effect on the next turn. Without either file every
+employee refuses to start and retries. To keep it elsewhere, set
 `vibewars.telegram.managerTokenFile` in `devenv.local.nix`.
 
 The agents run on the company's own Claude account (ADR-0031), never yours
@@ -69,8 +71,7 @@ The agents run on the company's own Claude account (ADR-0031), never yours
 The first run, in a terminal:
 
 ```sh
-claude-llc auth        # Claude, GitHub, the push key, the Telegram token
-claude-bot-setup ~/.claude-bot/creds/telegram-manager-token   # the group, once
+claude-llc auth        # Claude, GitHub, the push key, the Telegram bot and group
 claude-llc-init
 ```
 

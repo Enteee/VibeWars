@@ -255,7 +255,8 @@ test("(8) leaving the editor leaves no arena behind", async ({ page }) => {
     await page.getByRole("button", { name: "close" }).click();
     await expect(page.locator(".roster")).toBeVisible();
   }
-  await expect(page.locator("canvas")).toHaveCount(0);
+  // The roster's character figures are canvases too (#1250); no arena is.
+  await expect(page.locator("canvas:not(.character-figure)")).toHaveCount(0);
 
   const canvas = await openTraining(page);
   await expect(page.locator("canvas")).toHaveCount(1);
