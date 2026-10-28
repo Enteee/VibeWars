@@ -297,6 +297,30 @@ taken for the target ring, the off-hand focus or the area flash.
   Only you see it, so it is `ink`, the colour of "you". A corner panel
   shows the ally's name and health.
 
+### Compass
+
+GW1's radar (#486), top right under the match buttons: a disc 160 px
+across (120 px on a window under 1280 px wide), centred on you, north up,
+showing everything within 1700 units (`RANGE_COMPASS`). It never rotates,
+as the arena does not. A body beyond it is not on it: the edge markers
+(#440) give direction, the compass gives distance.
+
+- **Disc**: `panel` at 85 %, a 1 px `line` rim.
+- **Rings**: two 1 px `ink-dim` circles round you, the earshot (350,
+  solid) and cast range (420, dashed). Thin, dim and centred on you, so
+  neither reads as the target ring or an area flash.
+- **Walls**: 1 px `wall-stroke` outlines, clipped to the disc.
+- **Bodies**: 3 px dots, `friend` or `foe`, on a 1 px `edge` rim; you at
+  the centre with an `ink` rim, as in the arena, dead or not. A creature
+  (#1052) is a 2 px dot, so it never reads as a player. Corpses are not
+  shown.
+- **Your target**: a 1 px `target` ring 2 px outside its dot.
+- **The called foe**: a small `condition` chevron over its dot.
+- **Pings**: a 1 px `friend` ring growing from 3 to 10 px and fading over
+  the ping's life. Reduced motion: it holds at 3 px, whole.
+
+Clicking it does nothing. Spectators have none.
+
 ### Damage and heal numbers
 
 Above a body, the column is already full: the health bar at r + 8 … r + 12,
