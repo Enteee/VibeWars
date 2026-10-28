@@ -24,10 +24,14 @@ import type { StatusCategory, StatusId, StatusSet } from "./status.js";
 
 export type ResourceKind = "energy" | "adrenaline";
 
-export interface SkillCost {
-  readonly kind: ResourceKind;
-  readonly amount: number;
-}
+export type SkillCost =
+  | { readonly kind: "energy"; readonly amount: number }
+  | {
+      readonly kind: "adrenaline";
+      readonly amount: number;
+      /** GW1 "Lose all adrenaline" (#1097): using the skill empties every pool, and its blow earns none back. */
+      readonly losesAll?: true;
+    };
 
 /**
  * How a skill's magnitude scales with an attribute rank.
