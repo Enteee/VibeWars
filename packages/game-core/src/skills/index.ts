@@ -107,6 +107,7 @@ export type {
   InterruptEffect,
   KnockdownEffect,
   Magnitude,
+  PulseRule,
   RemoveStatusEffect,
   ResourceKind,
   SacrificeHealthEffect,

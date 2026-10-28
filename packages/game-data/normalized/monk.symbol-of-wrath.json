@@ -1,0 +1,26 @@
+{
+  "id": "monk.symbol-of-wrath",
+  "name": "Symbol of Wrath",
+  "profession": "monk",
+  "attribute": "Smiting Prayers",
+  "type": "Spell.",
+  "elite": false,
+  "campaign": "Prophecies",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 1,
+  "rechargeSeconds": 20,
+  "upkeep": false,
+  "description": "Create a Symbol of Wrath at target foe's location. For 5 seconds, adjacent foes are struck for 10...34...40 holy damage each second.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Monk/215-Symbol_of_Wrath",
+    "fetchedAt": "2026-10-28T06:16:02.338Z"
+  },
+  "unmapped": {}
+}

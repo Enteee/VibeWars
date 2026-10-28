@@ -70,7 +70,7 @@ describe("skill catalog integrity", () => {
     }
   });
 
-  it("leaves a ground effect from a ward, a well or a trap, and only from those (#1087, #1104, #1105)", () => {
+  it("leaves a ground effect from a ward, a well, a trap or a symbol, and only from those (#1087, #1104, #1105, #1113)", () => {
     for (const type of ["ward", "well", "trap"]) {
       expect(
         IMPLEMENTED_SKILLS.some((skill) => skill.type === type),
@@ -81,23 +81,54 @@ describe("skill catalog integrity", () => {
       const grounds = skill.effects.flatMap((effect) =>
         effect.kind === "create-ground-effect" ? [effect.act.kind] : [],
       );
+      // A spell may leave a pulse where its target stands: a symbol.
+      const pulse = skill.type === "spell" && grounds.length > 0 ? ["pulse"] : [];
       expect(grounds, skill.id).toEqual(
         skill.type === "ward" || skill.type === "well"
           ? ["aura"]
           : skill.type === "trap"
             ? ["trap"]
-            : [],
+            : pulse,
       );
     }
   });
 
-  it("anchors a ground effect on a corpse exactly when its skill exploits one (#1104)", () => {
+  it("anchors a ground effect where its act says (#1104, #1113)", () => {
     for (const skill of IMPLEMENTED_SKILLS) {
       for (const effect of skill.effects) {
         if (effect.kind === "create-ground-effect") {
           expect(effect.anchor === "corpse", skill.id).toBe(skill.corpse !== undefined);
           expect(effect.anchor === "corpse", skill.id).toBe(skill.type === "well");
+          expect(effect.anchor === "target", skill.id).toBe(effect.act.kind === "pulse");
+          if (effect.anchor === "target") {
+            expect(skill.target, skill.id).toBe("single-enemy");
+          }
         }
+      }
+    }
+  });
+
+  it("lasts a pulse its pulses, and nests no ground effect in one (#1113)", () => {
+    const pulses = IMPLEMENTED_SKILLS.flatMap((skill) =>
+      skill.effects.flatMap((effect) => {
+        if (effect.kind !== "create-ground-effect" || effect.act.kind === "aura") {
+          return [];
+        }
+        const pulse = effect.act.kind === "trap" ? effect.act.trap.spring : effect.act.pulse;
+        return [{ id: skill.id, effect, pulse }];
+      }),
+    );
+    expect(pulses.some(({ effect }) => effect.act.kind === "pulse")).toBe(true);
+    for (const { id, effect, pulse } of pulses) {
+      expect(pulse.count, id).toBeGreaterThanOrEqual(1);
+      expect(pulse.everySeconds, id).toBeGreaterThan(0);
+      expect(pulse.area.origin, id).toBe("caster");
+      expect(
+        pulse.effects.some((inner) => inner.kind === "create-ground-effect"),
+        id,
+      ).toBe(false);
+      if (effect.act.kind === "pulse") {
+        expect(effect.durationSeconds, id).toEqual({ flat: pulse.count * pulse.everySeconds });
       }
     }
   });
