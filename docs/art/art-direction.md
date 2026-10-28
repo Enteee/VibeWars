@@ -217,6 +217,7 @@ so the silhouette identifies the profession and the colour only supports it.
 | Ward         | Owner's team colour disc, faint, its skill's icon in it |
 | Trap         | `friend` rim alone, its skill's icon in it; yours only  |
 | Swing flash  | Attacker's team colour arc between it and its target    |
+| Skill impact | Burst of 8 spikes (hurt) or a glow (helped), 0.3 s      |
 | Projectile   | Weapon silhouette, tinted the shooter's team colour     |
 | Weapon mark  | `ink` weapon held in the hands, one shape per weapon    |
 | Walk marker  | `ink` cross of four ticks where you clicked the floor   |
@@ -318,6 +319,31 @@ When a weapon attack lands or misses (#161), the scene flashes the swing:
 - **It hugs the attacker, never the target.** The target ring hugs the
   target, is yellow, and does not fade, so the two cannot be confused.
 - **Off under reduced motion.** The damage number still says what happened.
+
+### Skill impact
+
+When a skill lands (#1139), every body it touched flashes for 0.3 s, the
+caster too when it gains (life steal's heal, a stance on yourself). Plain
+attacks, misses, blocks and dodges flash nothing: the swing flash and the
+number say those.
+
+- **Two shapes, so it reads without colour.** A **burst** when the skill
+  hurt or hindered that body: 8 spikes of 1.5 px at π/8 + kπ/4, from
+  r + 1 + 2p out to r + 3 + 3p. A **glow** when it helped: a tint over
+  the body at 35 % alpha, and a 1.5 px ring closing in from r + 6 to r + 2.
+  p runs 0 to 1 over the 0.3 s; both fade from full alpha to zero. Harm
+  beats help on one body.
+- **Colour is the skill type's** where the palette has one (`hex`,
+  `enchantment`, `stance`, `preparation`, `glyph`, `weapon-spell`).
+  Otherwise what it did: a burst is `damage`, or `condition` if it only
+  applied conditions; a glow is `heal`.
+- **It stays inside r + 6**, clear of the target ring at r + 8 and the
+  health bar, over the rings, weapon and bars, under the icons, names and
+  numbers. A newer impact on a body replaces the older one.
+- **Reduced motion: the frozen form**, held 0.3 s at full alpha, then
+  removed. The burst's spikes at p = 0.5, the glow's ring at r + 4.
+
+Geometry: `apps/web/src/render/body-impacts.ts`.
 
 ### Walk marker
 
