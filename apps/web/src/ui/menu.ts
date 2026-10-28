@@ -11,7 +11,15 @@ import {
   miniSkillBar,
   professionLabel,
 } from "./character-preview.js";
-import { button, emptyState, h, listenForPaste, screenBar, selectableRow } from "./kit.js";
+import {
+  button,
+  emptyState,
+  h,
+  inlineConfirm,
+  listenForPaste,
+  screenBar,
+  selectableRow,
+} from "./kit.js";
 
 /** What every peer in a lobby learns about you (#541): WebRTC connects you directly. */
 export const PEER_IP_NOTICE =
@@ -38,8 +46,10 @@ export interface MenuCallbacks {
   /** Open the build editor on a new character. */
   readonly onNewCharacter: () => void;
   readonly onEditCharacter: (id: string) => void;
+  /** Replace the rolled starter character `id` with another starter build (#853). */
+  readonly onRerollCharacter: (id: string) => void;
   /** Called when the player picks who to play; re-renders the list. */
-  readonly onSelectCharacter: (id: string | undefined) => void;
+  readonly onSelectCharacter: (id: string) => void;
 }
 
 /**
@@ -91,16 +101,39 @@ export function loadActiveCharacterId(): string | undefined {
   }
 }
 
-export function saveActiveCharacterId(id: string | undefined): void {
+export function saveActiveCharacterId(id: string): void {
   try {
-    if (id === undefined) {
-      localStorage.removeItem(CHARACTER_STORAGE_KEY);
-    } else {
-      localStorage.setItem(CHARACTER_STORAGE_KEY, id);
-    }
+    localStorage.setItem(CHARACTER_STORAGE_KEY, id);
   } catch {
     // A convenience, not a requirement — same reasoning as the name.
   }
+}
+
+const STARTER_STORAGE_KEY = `${STORAGE_NAMESPACE}.starterCharacterId`;
+
+/**
+ * The character this browser's first start rolled (#853), set once it is
+ * saved: set means "rolled already", and its row alone has Reroll.
+ */
+export function loadStarterCharacterId(): string | undefined {
+  try {
+    return localStorage.getItem(STARTER_STORAGE_KEY) ?? undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export function saveStarterCharacterId(id: string): void {
+  try {
+    localStorage.setItem(STARTER_STORAGE_KEY, id);
+  } catch {
+    // Unset, the next start rolls again: a second character, not a failure.
+  }
+}
+
+/** Reroll's question for the rolled character `name` (#853). */
+export function rerollQuestion(name: string): string {
+  return `Replace ${name} with another random build?`;
 }
 
 export function savePlayerName(name: string): void {
@@ -174,30 +207,31 @@ export function renderMenu(
 
   const active = loadActiveCharacterId();
   const activeExists = characters.some((c) => c.id === active);
+  const starter = loadStarterCharacterId();
 
   const list = h("div", "roster-list");
   /** Choose who to play, and keep the focus on the row a key chose. */
-  const choose = (id: string | undefined): void => {
+  const choose = (id: string): void => {
     saveActiveCharacterId(id);
     callbacks.onSelectCharacter(id);
     root.querySelector<HTMLElement>(".roster .selectable-row.is-selected button")?.focus();
   };
 
-  // The house loadout is a roster entry too, so "what am I playing?" has
-  // exactly one answer visible in one place.
-  list.appendChild(
-    selectableRow({
-      dot: h("span", "character-dot is-house", "?"),
-      name: "Default loadout",
-      subtitle: "Eight ready-made skills, no build needed",
-      selected: !activeExists,
-      onSelect: () => {
-        choose(undefined);
-      },
-    }),
-  );
-
   for (const character of characters) {
+    const actions = [
+      button("Edit", "roster-edit", () => {
+        callbacks.onEditCharacter(character.id);
+      }),
+    ];
+    if (character.id === starter) {
+      // Asked first: rerolling throws away whatever was edited on it.
+      const reroll = button("Reroll", "roster-reroll", () => {
+        inlineConfirm(reroll, rerollQuestion(character.name), "Reroll", () => {
+          callbacks.onRerollCharacter(character.id);
+        });
+      });
+      actions.push(reroll);
+    }
     list.appendChild(
       selectableRow({
         dot: createCharacterDot(character),
@@ -206,11 +240,7 @@ export function renderMenu(
         miniBar: miniSkillBar(character),
         selected: character.id === active,
         // Beside the row, not in it: editing never also chooses.
-        actions: [
-          button("Edit", "roster-edit", () => {
-            callbacks.onEditCharacter(character.id);
-          }),
-        ],
+        actions,
         onSelect: () => {
           choose(character.id);
         },

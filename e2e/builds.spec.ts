@@ -250,6 +250,9 @@ async function saveCharacters(page: Page, names: readonly string[]): Promise<voi
   }
 }
 
+/** The character the first start rolls (#853) is named after its build: "Ranger/Mesmer". */
+const ROLLED_STARTER = /^\w+\/\w+$/;
+
 /** The team editor's member rows, and their names. */
 const memberRows = (page: Page) => page.locator(".team-grid .team-row");
 const memberNames = (page: Page) => page.locator(".team-grid .team-row-name");
@@ -352,14 +355,15 @@ test("team edits stay on screen until Save; Back and Delete ask first (#573)", a
   await page.getByRole("button", { name: "new team" }).click();
   await page.getByLabel("team name").fill("GvG Practice");
 
-  // Add both; an added character leaves the picker.
+  // Add both; an added character leaves the picker, which keeps the
+  // first start's rolled starter, oldest and last (#853).
   const picks = page.locator(".team-picker .team-pick-name");
-  await expect(picks).toHaveText(["Bravo", "Alpha"]);
+  await expect(picks).toHaveText(["Bravo", "Alpha", ROLLED_STARTER]);
   await page.getByRole("button", { name: "add Alpha" }).click();
-  await expect(picks).toHaveText(["Bravo"]);
+  await expect(picks).toHaveText(["Bravo", ROLLED_STARTER]);
   await page.getByRole("button", { name: "add Bravo" }).click();
   await expect(memberNames(page)).toHaveText(["Alpha", "Bravo"]);
-  await expect(page.locator(".team-picker-empty")).toBeVisible();
+  await expect(picks).toHaveText([ROLLED_STARTER]);
 
   // Reorder, still on the editor.
   const up = memberRows(page).nth(1).getByRole("button", { name: "move up" });
@@ -412,7 +416,8 @@ test("the team grid: eight cells a member, drag or ↑ ↓ to reorder, places le
     await page.getByRole("button", { name: `add ${name}` }).click();
   }
   await expect(header).toHaveText("13 places left");
-  await expect(page.locator(".team-pick")).toHaveCount(0);
+  // Only the first start's rolled starter is left to add (#853).
+  await expect(page.locator(".team-pick")).toHaveCount(1);
 
   await expect(memberRows(page)).toHaveCount(3);
   for (const row of await memberRows(page).all()) {
