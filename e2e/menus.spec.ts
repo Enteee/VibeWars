@@ -109,6 +109,9 @@ test("#578: a host with others in the lobby is asked before Leave or Esc closes 
   }
 });
 
+/** A rolled character's random name (#1149): "Kaelen Ashvale". */
+const ROLLED_NAME = /^[A-Z][a-z]+ [A-Z][a-z]+$/;
+
 test("#853: the first start rolls a starter character, chosen; Reroll replaces it in place, Clone copies it", async ({
   page,
 }) => {
@@ -119,7 +122,7 @@ test("#853: the first start rolls a starter character, chosen; Reroll replaces i
   await expect(row).toHaveClass(/is-selected/);
   await expect(page.getByRole("button", { name: "Random Arena", exact: true })).toBeEnabled();
   const name = row.locator(".selectable-row-name");
-  await expect(name).toHaveText(/^\w+\/\w+$/);
+  await expect(name).toHaveText(ROLLED_NAME);
   const first = await name.innerText();
 
   // Rolled once: a reload keeps it, and rolls nothing new.
@@ -127,12 +130,12 @@ test("#853: the first start rolls a starter character, chosen; Reroll replaces i
   await expect(row).toHaveCount(1);
   await expect(name).toHaveText(first);
 
-  // Rerolled at once, unasked (#1146): another starter build, the same
-  // row, still chosen.
+  // Rerolled at once, unasked (#1146): another starter build under
+  // another random name (#1149), the same row, still chosen.
   const actions = roster.locator(".selectable-row-actions");
   await actions.getByRole("button", { name: "Reroll", exact: true }).click();
   await expect(name).not.toHaveText(first);
-  await expect(name).toHaveText(/^\w+\/\w+$/);
+  await expect(name).toHaveText(ROLLED_NAME);
   await expect(row).toHaveCount(1);
   await expect(row).toHaveClass(/is-selected/);
 

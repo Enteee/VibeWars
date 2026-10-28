@@ -71,10 +71,22 @@ describe("pickStarterBuild (#852)", () => {
     expect(pickStarterBuild(() => 0.9999999)).toBe(STARTER_BUILDS[STARTER_BUILDS.length - 1]);
   });
 
-  it("never picks the build it is told not to", () => {
-    for (const not of STARTER_BUILDS) {
+  it("gives every starter build a profession pair no other has", () => {
+    const pairs = STARTER_BUILDS.map(
+      (build) => `${build.primaryProfession}/${String(build.secondaryProfession)}`,
+    );
+    expect(new Set(pairs).size).toBe(STARTER_BUILDS.length);
+  });
+
+  it("never picks the professions it is told not to, whatever the name (#1149)", () => {
+    for (const build of STARTER_BUILDS) {
+      const not = { ...build, name: "Kaelen Ashvale" };
       for (const r of [0, 0.2, 0.4, 0.6, 0.8, 0.9999999]) {
-        expect(pickStarterBuild(() => r, not).name).not.toBe(not.name);
+        const picked = pickStarterBuild(() => r, not);
+        expect([picked.primaryProfession, picked.secondaryProfession]).not.toEqual([
+          not.primaryProfession,
+          not.secondaryProfession,
+        ]);
       }
     }
   });

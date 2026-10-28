@@ -202,12 +202,17 @@ async function main(): Promise<void> {
   // The first start plays a rolled starter character (#853). Not into
   // memory: it would be gone next start, with the key saying it was rolled.
   if (persistent) {
+    // Its name is none of the roster's (#1149). The list's notices go on
+    // the first menu: the stale records they report are gone after this.
+    const { characters: roster, problems } = await characters.list();
+    editNotices = [...problems, ...editNotices];
     const rolled = await rollStarterCharacter({
       characters,
       key: { load: loadStarterCharacterId, save: saveStarterCharacterId },
       random: Math.random,
       id: crypto.randomUUID(),
       now: Date.now(),
+      taken: roster.map((c) => c.name),
     });
     if (rolled !== undefined) {
       saveActiveCharacterId(rolled.id);
@@ -532,7 +537,13 @@ async function main(): Promise<void> {
           void (async () => {
             const character = await characters.load(id);
             if (character !== undefined) {
-              await rerollStarterCharacter(characters, character, Math.random, Date.now());
+              await rerollStarterCharacter(
+                characters,
+                character,
+                Math.random,
+                Date.now(),
+                list.map((c) => c.name),
+              );
             }
             showMenu();
           })();
