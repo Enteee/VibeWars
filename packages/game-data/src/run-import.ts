@@ -673,6 +673,11 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Elementalist/443-Shard_Storm",
   },
   {
+    id: "elementalist.ward-against-melee",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/409-Ward_Against_Melee",
+  },
+  {
     id: "necromancer.shadow-of-fear",
     profession: "necromancer",
     url: "https://www.gw-memorial.net/skills/Necromancer/270-Shadow_of_Fear",

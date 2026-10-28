@@ -63,6 +63,7 @@ const MATCH: MatchSnapshot = {
   winningTeam: undefined,
   endReason: undefined,
   projectiles: [],
+  groundEffects: [],
   summary: undefined,
 };
 

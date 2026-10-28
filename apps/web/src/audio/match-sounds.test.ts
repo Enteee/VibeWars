@@ -57,6 +57,7 @@ function snapshot(castingSkillId: string | undefined): MatchSnapshot {
     winningTeam: undefined,
     endReason: undefined,
     projectiles: [],
+    groundEffects: [],
     summary: undefined,
   };
 }

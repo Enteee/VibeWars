@@ -21,6 +21,8 @@
     "lobby-hello",
     "lobby-welcome",
     "stay-together",
+    "party-proposal",
+    "party-consent",
     "party-formed",
     "party-split",
     "match-start",
@@ -102,6 +104,7 @@
     "vengeful-weapon",
     "vigorous-spirit",
     "vow-of-strength",
+    "ward-against-melee",
     "watch-yourself",
     "weakness",
     "weapon-of-aggression",
@@ -122,6 +125,7 @@
     "MAX_WIRE_COMBATS": { "literal": 64 },
     "MAX_WIRE_CREATURES": { "literal": 32 },
     "MAX_WIRE_EVENTS": { "literal": 64 },
+    "MAX_WIRE_GROUND_EFFECTS": { "literal": 32 },
     "MAX_WIRE_JSON_DEPTH": { "literal": 16 },
     "MAX_WIRE_JSON_VALUES": { "literal": 4096 },
     "MAX_WIRE_MORALE": { "literal": 10 },
@@ -227,7 +231,9 @@
         { "literal": "lobby-state" },
         { "literal": "lobby-welcome" },
         { "literal": "match-start" },
+        { "literal": "party-consent" },
         { "literal": "party-formed" },
+        { "literal": "party-proposal" },
         { "literal": "party-split" },
         { "literal": "recharge" },
         { "literal": "refuse" },
@@ -447,6 +453,7 @@
                   { "literal": "vengeful-weapon" },
                   { "literal": "vigorous-spirit" },
                   { "literal": "vow-of-strength" },
+                  { "literal": "ward-against-melee" },
                   { "literal": "watch-yourself" },
                   { "literal": "weakness" },
                   { "literal": "weapon-of-aggression" },
@@ -553,6 +560,7 @@
                   { "literal": "vengeful-weapon" },
                   { "literal": "vigorous-spirit" },
                   { "literal": "vow-of-strength" },
+                  { "literal": "ward-against-melee" },
                   { "literal": "watch-yourself" },
                   { "literal": "weakness" },
                   { "literal": "weapon-of-aggression" },
@@ -656,6 +664,7 @@
                   { "literal": "vengeful-weapon" },
                   { "literal": "vigorous-spirit" },
                   { "literal": "vow-of-strength" },
+                  { "literal": "ward-against-melee" },
                   { "literal": "watch-yourself" },
                   { "literal": "weakness" },
                   { "literal": "weapon-of-aggression" },
@@ -756,6 +765,7 @@
                   { "literal": "vengeful-weapon" },
                   { "literal": "vigorous-spirit" },
                   { "literal": "vow-of-strength" },
+                  { "literal": "ward-against-melee" },
                   { "literal": "watch-yourself" },
                   { "literal": "weakness" },
                   { "literal": "weapon-of-aggression" },
@@ -932,6 +942,7 @@
                   { "literal": "vengeful-weapon" },
                   { "literal": "vigorous-spirit" },
                   { "literal": "vow-of-strength" },
+                  { "literal": "ward-against-melee" },
                   { "literal": "watch-yourself" },
                   { "literal": "weakness" },
                   { "literal": "weapon-of-aggression" },
@@ -1023,6 +1034,7 @@
                   { "literal": "vengeful-weapon" },
                   { "literal": "vigorous-spirit" },
                   { "literal": "vow-of-strength" },
+                  { "literal": "ward-against-melee" },
                   { "literal": "watch-yourself" },
                   { "literal": "weakness" },
                   { "literal": "weapon-of-aggression" },
@@ -1261,6 +1273,12 @@
         { "name": "protocolVersion", "optional": false, "type": "string" }
       ]
     },
+    "PeerPartyConsent": {
+      "properties": [
+        { "name": "consent", "optional": false, "type": "string" },
+        { "name": "memberKey", "optional": false, "type": "string" }
+      ]
+    },
     "PeerRefuse": {
       "properties": [
         { "name": "message", "optional": false, "type": "string" },
@@ -1391,6 +1409,21 @@
             ]
           }
         },
+        {
+          "name": "party",
+          "optional": false,
+          "type": {
+            "union": [
+              "null",
+              {
+                "properties": [
+                  { "name": "consents", "optional": false, "type": { "array": "string" } },
+                  { "name": "groupId", "optional": false, "type": "string" }
+                ]
+              }
+            ]
+          }
+        },
         { "name": "protocol", "optional": false, "type": "string" },
         { "name": "ticketId", "optional": false, "type": "string" }
       ]
@@ -1446,6 +1479,12 @@
       "properties": [
         { "name": "kind", "optional": false, "type": { "literal": "target" } },
         { "name": "targetSessionId", "optional": false, "type": { "union": ["null", "string"] } }
+      ]
+    },
+    "TicketParty": {
+      "properties": [
+        { "name": "consents", "optional": false, "type": { "array": "string" } },
+        { "name": "groupId", "optional": false, "type": "string" }
       ]
     },
     "UseSkillIntent": {
@@ -1770,6 +1809,22 @@
         }
       ]
     },
+    "WireGroundEffect": {
+      "properties": [
+        { "name": "durationSeconds", "optional": false, "type": "number" },
+        { "name": "endsAt", "optional": false, "type": "number" },
+        { "name": "id", "optional": false, "type": "number" },
+        { "name": "radius", "optional": false, "type": "number" },
+        { "name": "skillId", "optional": false, "type": "string" },
+        {
+          "name": "team",
+          "optional": false,
+          "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+        },
+        { "name": "x", "optional": false, "type": "number" },
+        { "name": "y", "optional": false, "type": "number" }
+      ]
+    },
     "WireLobbyCharacter": {
       "properties": [
         { "name": "name", "optional": false, "type": "string" },
@@ -1922,7 +1977,17 @@
       ]
     },
     "WirePartyFormed": {
-      "properties": [{ "name": "members", "optional": false, "type": { "array": "string" } }]
+      "properties": [
+        { "name": "consents", "optional": false, "type": { "array": "string" } },
+        { "name": "groupId", "optional": false, "type": "string" },
+        { "name": "members", "optional": false, "type": { "array": "string" } }
+      ]
+    },
+    "WirePartyProposal": {
+      "properties": [
+        { "name": "groupId", "optional": false, "type": "string" },
+        { "name": "members", "optional": false, "type": { "array": "string" } }
+      ]
     },
     "WirePartySplit": { "properties": [], "index": [{ "key": "string", "value": "never" }] },
     "WirePing": {
@@ -2089,6 +2154,28 @@
           }
         },
         {
+          "name": "groundEffects",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "durationSeconds", "optional": false, "type": "number" },
+                { "name": "endsAt", "optional": false, "type": "number" },
+                { "name": "id", "optional": false, "type": "number" },
+                { "name": "radius", "optional": false, "type": "number" },
+                { "name": "skillId", "optional": false, "type": "string" },
+                {
+                  "name": "team",
+                  "optional": false,
+                  "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+                },
+                { "name": "x", "optional": false, "type": "number" },
+                { "name": "y", "optional": false, "type": "number" }
+              ]
+            }
+          }
+        },
+        {
           "name": "phase",
           "optional": false,
           "type": { "union": [{ "literal": "active" }, { "literal": "finished" }] }
@@ -2252,6 +2339,28 @@
               { "literal": "score" },
               { "literal": "time" }
             ]
+          }
+        },
+        {
+          "name": "groundEffects",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "durationSeconds", "optional": false, "type": "number" },
+                { "name": "endsAt", "optional": false, "type": "number" },
+                { "name": "id", "optional": false, "type": "number" },
+                { "name": "radius", "optional": false, "type": "number" },
+                { "name": "skillId", "optional": false, "type": "string" },
+                {
+                  "name": "team",
+                  "optional": false,
+                  "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+                },
+                { "name": "x", "optional": false, "type": "number" },
+                { "name": "y", "optional": false, "type": "number" }
+              ]
+            }
           }
         },
         { "name": "part", "optional": false, "type": "number" },

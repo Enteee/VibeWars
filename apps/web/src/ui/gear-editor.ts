@@ -13,6 +13,7 @@ import {
   isArmorSlot,
   isInsigniaId,
   isOffhandId,
+  isWeaponSetIndex,
   isUniversalRuneId,
   isWeaponId,
   reconcileEquipment,
@@ -27,6 +28,7 @@ import {
   type RuneTier,
   type WeaponId,
   type WeaponSet,
+  type WeaponSetIndex,
 } from "@vibewars/game-core";
 
 import type { StoredCharacter } from "../storage/schema.js";
@@ -79,18 +81,38 @@ function defaultNomination(
 /* Weapons and off-hands                                                       */
 /* -------------------------------------------------------------------------- */
 
-/** Set 1 (#489): the one weapon set this editor edits. */
-function firstSet(character: StoredCharacter): WeaponSet {
-  return character.equipment.weaponSets[0];
+/** Weapon set `set` (#489); `null` for an empty set 2-4. */
+export function setAt(character: StoredCharacter, set: WeaponSetIndex): WeaponSet | null {
+  return character.equipment.weaponSets[set];
 }
 
-/** `character`'s gear with set 1 replaced; sets 2-4 as they were. */
-function withFirstSet(character: StoredCharacter, set: WeaponSet): BuildEquipment {
-  const [, set2, set3, set4] = character.equipment.weaponSets;
-  return { ...character.equipment, weaponSets: [set, set2, set3, set4] };
+/** `character`'s gear with set `set` replaced by `value`; the others as they were. */
+function withSet(
+  character: StoredCharacter,
+  set: WeaponSetIndex,
+  value: WeaponSet,
+): BuildEquipment {
+  const [one, two, three, four] = character.equipment.weaponSets;
+  return {
+    ...character.equipment,
+    weaponSets: [
+      set === 0 ? value : one,
+      set === 1 ? value : two,
+      set === 2 ? value : three,
+      set === 3 ? value : four,
+    ],
+  };
 }
 
-export function setWeapon(character: StoredCharacter, weaponId: WeaponId): StoredCharacter {
+/**
+ * `weaponId` into set `set`'s main hand. On an empty set it creates the
+ * set, with the off hand empty.
+ */
+export function setWeapon(
+  character: StoredCharacter,
+  set: WeaponSetIndex,
+  weaponId: WeaponId,
+): StoredCharacter {
   const weapon = getWeapon(weaponId);
   if (weapon === undefined) {
     return character;
@@ -104,30 +126,45 @@ export function setWeapon(character: StoredCharacter, weaponId: WeaponId): Store
   // Picking a two-hander puts the off-hand down. That coupling lives
   // here, in a tested function, rather than in a click handler — it is
   // the rule the whole gear trade-off rests on.
-  const offHand = allowsOffhand(weapon) ? firstSet(character).offHand : null;
+  const offHand = allowsOffhand(weapon) ? (setAt(character, set)?.offHand ?? null) : null;
 
   return touched(
     character,
-    withFirstSet(character, { mainHand: { weaponId, requirementAttributeId }, offHand }),
+    withSet(character, set, { mainHand: { weaponId, requirementAttributeId }, offHand }),
   );
 }
 
-/** Whether this character's current weapon leaves a hand free. */
-export function canEquipOffhand(character: StoredCharacter): boolean {
-  const weapon = getWeapon(firstSet(character).mainHand.weaponId);
+/** Empty set 2-4 (#489). Set 1 always holds a weapon, so the type keeps it out. */
+export function clearWeaponSet(character: StoredCharacter, set: 1 | 2 | 3): StoredCharacter {
+  const [one, two, three, four] = character.equipment.weaponSets;
+  return touched(character, {
+    ...character.equipment,
+    weaponSets: [one, set === 1 ? null : two, set === 2 ? null : three, set === 3 ? null : four],
+  });
+}
+
+/** Whether set `set`'s weapon leaves a hand free; `false` for an empty set. */
+export function canEquipOffhand(character: StoredCharacter, set: WeaponSetIndex): boolean {
+  const held = setAt(character, set);
+  const weapon = held === null ? undefined : getWeapon(held.mainHand.weaponId);
   return weapon !== undefined && allowsOffhand(weapon);
 }
 
 export function setOffhand(
   character: StoredCharacter,
+  set: WeaponSetIndex,
   offhandId: OffhandId | null,
 ): StoredCharacter {
+  const held = setAt(character, set);
+  if (held === null) {
+    return character;
+  }
   if (offhandId === null) {
-    return touched(character, withFirstSet(character, { ...firstSet(character), offHand: null }));
+    return touched(character, withSet(character, set, { ...held, offHand: null }));
   }
   // A no-op rather than an error when both hands are full, in the spirit
   // of `swapSkillSlots(a, a)` returning the character unchanged.
-  if (!canEquipOffhand(character)) {
+  if (!canEquipOffhand(character, set)) {
     return character;
   }
   const offhand = getOffhand(offhandId);
@@ -136,8 +173,8 @@ export function setOffhand(
   }
   return touched(
     character,
-    withFirstSet(character, {
-      ...firstSet(character),
+    withSet(character, set, {
+      ...held,
       offHand: {
         offhandId,
         requirementAttributeId:
@@ -149,42 +186,51 @@ export function setOffhand(
   );
 }
 
-/** Re-link a piece of gear to a different attribute. */
+/** Re-link a piece of set `set`'s gear to a different attribute. */
 export function setRequirementAttribute(
   character: StoredCharacter,
+  set: WeaponSetIndex,
   hand: "mainHand" | "offHand",
   attributeId: string | null,
 ): StoredCharacter {
-  const set = firstSet(character);
+  const held = setAt(character, set);
+  if (held === null) {
+    return character;
+  }
   if (hand === "mainHand") {
     return touched(
       character,
-      withFirstSet(character, {
-        ...set,
-        mainHand: { ...set.mainHand, requirementAttributeId: attributeId },
+      withSet(character, set, {
+        ...held,
+        mainHand: { ...held.mainHand, requirementAttributeId: attributeId },
       }),
     );
   }
-  if (set.offHand === null) {
+  if (held.offHand === null) {
     return character;
   }
   return touched(
     character,
-    withFirstSet(character, {
-      ...set,
-      offHand: { ...set.offHand, requirementAttributeId: attributeId },
+    withSet(character, set, {
+      ...held,
+      offHand: { ...held.offHand, requirementAttributeId: attributeId },
     }),
   );
 }
 
 /**
- * Attributes the equipped weapon may be linked to.
+ * Attributes set `set`'s weapon may be linked to.
  *
  * Empty for a fixed-requirement weapon: a sword has no choice to offer,
- * and showing a one-option dropdown would imply it did.
+ * and showing a one-option dropdown would imply it did. Empty for an
+ * empty set too.
  */
-export function weaponAttributeChoices(character: StoredCharacter): readonly string[] {
-  const weapon = getWeapon(firstSet(character).mainHand.weaponId);
+export function weaponAttributeChoices(
+  character: StoredCharacter,
+  set: WeaponSetIndex,
+): readonly string[] {
+  const held = setAt(character, set);
+  const weapon = held === null ? undefined : getWeapon(held.mainHand.weaponId);
   if (weapon === undefined || weapon.requirement.kind === "fixed") {
     return [];
   }
@@ -292,10 +338,16 @@ const CONDITION_LABELS: Readonly<Record<string, string>> = {
   "while-enchanted": "while enchanted",
 };
 
-export function summariseGear(character: StoredCharacter): GearSummary {
+/** What set `set` comes to; `undefined` for an empty set 2-4 (#489). */
+export function summariseGear(
+  character: StoredCharacter,
+  set: WeaponSetIndex,
+): GearSummary | undefined {
   const resolved = resolveForDisplay(character);
-  // Set 1's, until the editor has a tab per set (#489).
-  const held = resolved.weaponSets[0];
+  const held = resolved.weaponSets[set];
+  if (held === null) {
+    return undefined;
+  }
   const { mainHand } = held.equipment;
   const allocated = new Map(character.attributes.map((a) => [a.attributeId, a.rank]));
 
@@ -461,12 +513,16 @@ export type GearDragSource =
   | { readonly from: "insignia-library"; readonly insigniaId: InsigniaId }
   | { readonly from: "rune-library"; readonly rune: EquippedRune }
   | { readonly from: "armor-slot"; readonly slot: ArmorSlot; readonly part: "insignia" | "rune" }
-  | { readonly from: "hand"; readonly hand: "mainHand" | "offHand" };
+  | {
+      readonly from: "hand";
+      readonly set: WeaponSetIndex;
+      readonly hand: "mainHand" | "offHand";
+    };
 
 /** Where a drop landed. */
 export type GearDropTarget =
-  | { readonly kind: "main-hand" }
-  | { readonly kind: "off-hand" }
+  | { readonly kind: "main-hand"; readonly set: WeaponSetIndex }
+  | { readonly kind: "off-hand"; readonly set: WeaponSetIndex }
   | { readonly kind: "armor"; readonly slot: ArmorSlot; readonly part: "insignia" | "rune" }
   | { readonly kind: "library" };
 
@@ -483,7 +539,7 @@ export function encodeGearDrag(source: GearDragSource): string {
     case "armor-slot":
       return `gear-worn:${source.slot}:${source.part}`;
     case "hand":
-      return `gear-hand:${source.hand}`;
+      return `gear-hand:${String(source.set)}:${source.hand}`;
   }
 }
 
@@ -516,8 +572,13 @@ export function decodeGearDrag(raw: string): GearDragSource | undefined {
       }
       return { from: "armor-slot", slot, part };
     }
-    case "gear-hand":
-      return rest === "mainHand" || rest === "offHand" ? { from: "hand", hand: rest } : undefined;
+    case "gear-hand": {
+      const [set, hand] = rest.split(":");
+      const index = Number(set);
+      return isWeaponSetIndex(index) && (hand === "mainHand" || hand === "offHand")
+        ? { from: "hand", set: index, hand }
+        : undefined;
+    }
     default:
       return undefined;
   }
@@ -545,20 +606,25 @@ export function applyGearDrop(
         : setRune(character, source.slot, null);
     }
     if (source.from === "hand") {
-      // There is no "no weapon" — bare hands are a weapon. Removing an
-      // off-hand is meaningful; removing a main hand is not.
-      return source.hand === "offHand" ? setOffhand(character, null) : character;
+      if (source.hand === "offHand") {
+        return setOffhand(character, source.set, null);
+      }
+      // There is no "no weapon" in set 1: bare hands are a weapon. Sets
+      // 2-4 may be empty, so taking their main hand off empties them.
+      return source.set === 0 ? character : clearWeaponSet(character, source.set);
     }
     return character;
   }
 
   if (target.kind === "main-hand") {
-    return source.from === "weapon-library" ? setWeapon(character, source.weaponId) : character;
+    return source.from === "weapon-library"
+      ? setWeapon(character, target.set, source.weaponId)
+      : character;
   }
 
   if (target.kind === "off-hand") {
     if (source.from === "offhand-library") {
-      return setOffhand(character, source.offhandId);
+      return setOffhand(character, target.set, source.offhandId);
     }
     // A one-handed weapon dropped on the off-hand slot is a reasonable
     // thing to try; it just is not a thing the game supports.

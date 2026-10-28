@@ -30,6 +30,7 @@ import {
   withCalls,
   withNames,
   teamColour,
+  toRenderableGroundEffect,
   type ArenaSnapshot,
   type RenderableWall,
 } from "./render/arena-snapshot.js";
@@ -130,6 +131,9 @@ export function toArenaSnapshot(
         colour: teamColour(shooter !== undefined && shooter.team === self?.team ? "ally" : "enemy"),
       };
     }),
+    groundEffects: match.groundEffects.map((effect) =>
+      toRenderableGroundEffect(effect, self?.team),
+    ),
     // Render the target the *server* confirmed, not whatever was last
     // clicked — a click is only a request (brief §32).
     targetId: self?.targetSessionId,

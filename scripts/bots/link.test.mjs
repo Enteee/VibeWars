@@ -19,7 +19,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { ROLES } from "./hub-policy.mjs";
 import { readSidecar } from "./sidecar.mjs";
-import { seedStaff } from "./staff.mjs";
+import { seedStaff, writeAtomic } from "./staff.mjs";
 
 const LINK = path.join(path.dirname(fileURLToPath(import.meta.url)), "link.mjs");
 const CHAT = "-1001";
@@ -189,7 +189,8 @@ function employ(root, more) {
       readyAt: null,
     };
   }
-  fs.writeFileSync(path.join(root, "staff.json"), JSON.stringify(staff));
+  // Whole or not at all, as staff.mjs writes it: the sidecar polls it (#1091).
+  writeAtomic(root, "staff.json", JSON.stringify(staff));
 }
 
 /**

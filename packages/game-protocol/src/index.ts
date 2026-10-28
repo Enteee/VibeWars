@@ -75,6 +75,7 @@ export {
   MAX_WIRE_RADIUS,
   MAX_WIRE_COMBATS,
   MAX_WIRE_PROJECTILES,
+  MAX_WIRE_GROUND_EFFECTS,
   MAX_SNAPSHOT_PARTS,
   MAX_WIRE_JSON_DEPTH,
   MAX_WIRE_JSON_VALUES,
@@ -105,6 +106,8 @@ export {
   parsePeerLobbyHello,
   parseWireLobbyWelcome,
   parsePeerStayTogether,
+  parseWirePartyProposal,
+  parsePeerPartyConsent,
   parseWirePartyFormed,
   parseWirePartySplit,
   parseWireMatchStart,
@@ -132,6 +135,7 @@ export type {
   WireCombat,
   WireCombatBatch,
   WireProjectile,
+  WireGroundEffect,
   JsonValue,
   WireSkillBar,
   WireEnded,
@@ -145,6 +149,8 @@ export type {
   PeerLobbyHello,
   WireLobbyWelcome,
   PeerStayTogether,
+  WirePartyProposal,
+  PeerPartyConsent,
   WirePartyFormed,
   WirePartySplit,
   WireAdmission,
@@ -162,4 +168,4 @@ export {
   parseQueueTicket,
   teamSizeOf,
 } from "./queue.js";
-export type { QueueMode, QueueTicket } from "./queue.js";
+export type { QueueMode, QueueTicket, TicketParty } from "./queue.js";
