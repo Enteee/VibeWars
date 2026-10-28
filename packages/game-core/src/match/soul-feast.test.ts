@@ -207,6 +207,7 @@ describe("Soul Feast (#466)", () => {
             kind: "minion",
             name: "Bone Minion",
             expiresInSeconds: Number.POSITIVE_INFINITY,
+            ageSeconds: 0,
             summonedAtTick: 0,
             skillId: "necromancer.animate-bone-minions",
             aura: undefined,

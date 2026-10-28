@@ -56,7 +56,8 @@ function summonSkill(
     kind,
     name: kind === "minion" ? "Bone Minion" : "Test Spirit",
     maxHealth: { scaling: { attributeId: DEATH_MAGIC, atZero: 50, atTwelve: 290 } },
-    armor: 20,
+    armor: { flat: 20 },
+    attack: undefined,
     ...(durationSeconds === undefined ? {} : { durationSeconds: { flat: durationSeconds } }),
     behaviour: { kind: "idle" },
     aura: undefined,
@@ -87,7 +88,8 @@ function summonSkill(
 const TWO = summonSkill("test.summon-two", 2);
 const LASTING = summonSkill("test.summon-lasting", 1, "minion", 5);
 const SPIRIT = summonSkill("test.summon-spirit", 1, "spirit");
-const MANY = summonSkill("test.summon-many", MAX_CREATURES - 1);
+/** Spirits, so no master's minion cap (#467) culls them before the match's limit. */
+const MANY = summonSkill("test.summon-many", MAX_CREATURES - 1, "spirit");
 
 function spec(id: string, team: number, spawn: Vec2, extra?: Partial<ParticipantSpec>) {
   const result: ParticipantSpec = {

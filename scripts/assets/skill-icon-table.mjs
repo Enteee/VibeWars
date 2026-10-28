@@ -203,4 +203,7 @@ export const SKILL_ICONS = {
   "ritualist.flesh-of-my-flesh": { glyph: "resurrect", modifier: "half" },
   // A placeholder: health taken from a corpse (#466).
   "necromancer.soul-feast": { glyph: "heal", modifier: "plus" },
+  // Placeholders until the asset-designer's (#467): bodies raised from a corpse.
+  "necromancer.animate-bone-minions": { glyph: "resurrect", modifier: "down" },
+  "necromancer.animate-bone-horror": { glyph: "resurrect", modifier: "up" },
 };

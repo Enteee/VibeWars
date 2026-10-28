@@ -693,6 +693,16 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Necromancer/263-Mark_of_Pain",
   },
   {
+    id: "necromancer.animate-bone-horror",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/278-Animate_Bone_Horror",
+  },
+  {
+    id: "necromancer.animate-bone-minions",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/279-Animate_Bone_Minions",
+  },
+  {
     id: "necromancer.soul-feast",
     profession: "necromancer",
     url: "https://www.gw-memorial.net/skills/Necromancer/292-Soul_Feast",

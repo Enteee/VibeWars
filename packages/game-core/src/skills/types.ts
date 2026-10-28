@@ -410,13 +410,32 @@ export interface CreatureTemplate {
   readonly name: string;
   /** Scaled by the summoning skill's caster, as any other magnitude. */
   readonly maxHealth: Magnitude;
-  readonly armor: number;
+  /** Scaled by the summoner, as `maxHealth` (#467 child 3). */
+  readonly armor: Magnitude;
+  /** Its blows; `undefined`: it never swings (a spirit). */
+  readonly attack: CreatureAttack | undefined;
   /** Seconds it lasts; omitted: until it is killed. */
   readonly durationSeconds?: Magnitude;
   /** What it does each tick. */
   readonly behaviour: Behaviour;
   /** `undefined`: it projects nothing (every minion). Only a spirit has one. */
   readonly aura: SpiritAura | undefined;
+}
+
+/**
+ * A creature's melee or ranged blow (#467 child 3), as a weapon's numbers.
+ * `damageMin`–`damageMax` is what it deals with its summoner at rank 12 in
+ * `attributeId`, against armor 60. The summoner's rank, read once at
+ * summoning, scales every blow as weapon mastery scales a player's
+ * (`weaponAttributeMultiplier`): ×1 at 12, ×0.35 at 0.
+ */
+export interface CreatureAttack {
+  readonly attributeId: string;
+  readonly damageMin: number;
+  readonly damageMax: number;
+  readonly damageType: DamageType;
+  readonly attackIntervalSeconds: number;
+  readonly range: number;
 }
 
 /** What a spirit projects while it lives (#1064). */
