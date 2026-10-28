@@ -6270,8 +6270,129 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
           kind: "trap",
           trap: {
             triggerRadius: AREA_ADJACENT,
+            springsAtEnd: false,
+            spring: {
+              count: 1,
+              everySeconds: 1,
+              area: {
+                radius: AREA_NEARBY,
+                origin: "caster",
+                affects: "enemies",
+                maxTargets: undefined,
+                includesCaster: false,
+              },
+              effects: [
+                {
+                  kind: "damage",
+                  amount: {
+                    scaling: { attributeId: "ranger.wilderness-survival", atZero: 7, atTwelve: 20 },
+                  },
+                  type: "piercing",
+                  armorPenetration: 0,
+                },
+                { kind: "apply-status", statusId: "crippled", durationSeconds: 21 },
+                { kind: "apply-status", statusId: "bleeding", durationSeconds: 21 },
+              ],
+            },
+          },
+        },
+      },
+    ],
+  },
+  {
+    id: "ranger.flame-trap",
+    name: "Flame Trap",
+    type: "trap",
+    elite: false,
+    profession: "ranger",
+    attributeId: "ranger.wilderness-survival",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    companion: undefined,
+    // "When Flame Trap is triggered, every second (for 3 seconds total),
+    // all nearby foes are struck for 5...17...20 fire damage and set on
+    // fire for 1...3...3 seconds. Flame Trap automatically triggers after
+    // 90 seconds" (#1113): Burning lasts 3 s, its rank-12 value.
+    effects: [
+      {
+        kind: "create-ground-effect",
+        anchor: "caster",
+        durationSeconds: { flat: 90 },
+        act: {
+          kind: "trap",
+          trap: {
+            triggerRadius: AREA_ADJACENT,
+            springsAtEnd: true,
+            spring: {
+              count: 3,
+              everySeconds: 1,
+              area: {
+                radius: AREA_NEARBY,
+                origin: "caster",
+                affects: "enemies",
+                maxTargets: undefined,
+                includesCaster: false,
+              },
+              effects: [
+                {
+                  kind: "damage",
+                  amount: {
+                    scaling: { attributeId: "ranger.wilderness-survival", atZero: 5, atTwelve: 17 },
+                  },
+                  type: "fire",
+                  armorPenetration: 0,
+                },
+                { kind: "apply-status", statusId: "burning", durationSeconds: 3 },
+              ],
+            },
+          },
+        },
+      },
+    ],
+  },
+  {
+    id: "monk.symbol-of-wrath",
+    name: "Symbol of Wrath",
+    type: "spell",
+    elite: false,
+    profession: "monk",
+    attributeId: "monk.smiting-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    companion: undefined,
+    // "Create a Symbol of Wrath at target foe's location. For 5 seconds,
+    // adjacent foes are struck for 10...34...40 holy damage each second"
+    // (#1113): it stays where they stood.
+    effects: [
+      {
+        kind: "create-ground-effect",
+        anchor: "target",
+        durationSeconds: { flat: 5 },
+        act: {
+          kind: "pulse",
+          pulse: {
+            count: 5,
+            everySeconds: 1,
             area: {
-              radius: AREA_NEARBY,
+              radius: AREA_ADJACENT,
               origin: "caster",
               affects: "enemies",
               maxTargets: undefined,
@@ -6281,13 +6402,11 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
               {
                 kind: "damage",
                 amount: {
-                  scaling: { attributeId: "ranger.wilderness-survival", atZero: 7, atTwelve: 20 },
+                  scaling: { attributeId: "monk.smiting-prayers", atZero: 10, atTwelve: 34 },
                 },
-                type: "piercing",
+                type: "holy",
                 armorPenetration: 0,
               },
-              { kind: "apply-status", statusId: "crippled", durationSeconds: 21 },
-              { kind: "apply-status", statusId: "bleeding", durationSeconds: 21 },
             ],
           },
         },

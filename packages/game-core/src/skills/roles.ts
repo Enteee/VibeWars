@@ -65,11 +65,17 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
         ? []
         : statusRoles(getStatusDefinition(effect.creature.aura.statusId));
     // So does a ward (#1087): Ward Against Melee defends. A trap does
-    // what its spring does (#1105): Barbed Trap cripples and bleeds.
+    // what its spring does (#1105): Barbed Trap cripples and bleeds. A
+    // pulse does what each pulse does (#1113): Symbol of Wrath damages.
     case "create-ground-effect":
-      return effect.act.kind === "aura"
-        ? statusRoles(getStatusDefinition(effect.act.aura.statusId))
-        : effect.act.trap.effects.flatMap(effectRoles);
+      switch (effect.act.kind) {
+        case "aura":
+          return statusRoles(getStatusDefinition(effect.act.aura.statusId));
+        case "trap":
+          return effect.act.trap.spring.effects.flatMap(effectRoles);
+        case "pulse":
+          return effect.act.pulse.effects.flatMap(effectRoles);
+      }
   }
 }
 

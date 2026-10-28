@@ -493,37 +493,56 @@ export interface SummonEffect {
 }
 
 /**
- * A trap's rule (#1105): the first step a living foe's centre is within
- * `triggerRadius` of it, `effects` land on whoever `area` takes around
- * the trap, from its owner, and the trap is gone.
+ * Effects that land again and again from a ground effect (#1113): `count`
+ * times, `everySeconds` apart, the first the step it is placed, each on
+ * whoever `area` takes around it, from its owner.
  */
-export interface TrapRule {
-  /** A foe's centre this close springs it. */
-  readonly triggerRadius: number;
-  /** Who the spring hits; `origin: "caster"` means the trap's position. */
+export interface PulseRule {
+  /** At least 1. */
+  readonly count: number;
+  /** More than 0. */
+  readonly everySeconds: number;
+  /** Who a pulse hits; `origin: "caster"` means the effect's position. */
   readonly area: AreaRule;
   readonly effects: readonly SkillEffect[];
 }
 
 /**
+ * A trap's rule (#1105): the first step a living foe's centre is within
+ * `triggerRadius` of it, it springs into `spring`'s pulses from its owner
+ * and is gone. One pulse is a single hit; more leave a pulse effect where
+ * the trap lay (#1113).
+ */
+export interface TrapRule {
+  /** A foe's centre this close springs it. */
+  readonly triggerRadius: number;
+  /** Whether it springs by itself as its time runs out, as Flame Trap's "automatically triggers". */
+  readonly springsAtEnd: boolean;
+  readonly spring: PulseRule;
+}
+
+/**
  * What a ground effect does while it lasts: a ward projects an aura
- * (#1087), a trap waits for a foe to spring it (#1105).
+ * (#1087), a trap waits for a foe to spring it (#1105), a pulse lands its
+ * effects every interval (#1113).
  */
 export type GroundAct =
   | { readonly kind: "aura"; readonly aura: Aura }
-  | { readonly kind: "trap"; readonly trap: TrapRule };
+  | { readonly kind: "trap"; readonly trap: TrapRule }
+  | { readonly kind: "pulse"; readonly pulse: PulseRule };
 
 /**
  * Leave a ground effect as the skill lands (#1087): a circle that is not
  * a body, doing `act` for `durationSeconds`. `caster`: where the caster
  * stands (a ward, a trap). `corpse`: where the corpse the skill exploited
  * lies (a well, #1104), so only a skill with a `corpse` rule has one.
- * Acts on the caster, once. A match holds at most
- * `MAX_GROUND_EFFECTS`: past it, the oldest ends early.
+ * `target`: where the cast's target stands (a symbol, #1113). A pulse
+ * lasts its `count × everySeconds`. Acts on the caster, once. A match
+ * holds at most `MAX_GROUND_EFFECTS`: past it, the oldest ends early.
  */
 export interface CreateGroundEffect {
   readonly kind: "create-ground-effect";
-  readonly anchor: "caster" | "corpse";
+  readonly anchor: "caster" | "corpse" | "target";
   readonly durationSeconds: Magnitude;
   readonly act: GroundAct;
 }

@@ -207,6 +207,9 @@ export const SKILL_ICONS = {
   "ritualist.flesh-of-my-flesh": { glyph: "resurrect-blood" },
   // A placeholder until the asset-designer's (#1105).
   "ranger.barbed-trap": { glyph: "pin", modifier: "bleed" },
+  // Placeholders until the asset-designer's (#1113): pulses.
+  "ranger.flame-trap": { glyph: "flame", modifier: "clock" },
+  "monk.symbol-of-wrath": { glyph: "flash", modifier: "area" },
   // Health taken from a corpse: the heal glyph with the corpse mark (#1075).
   "necromancer.soul-feast": { glyph: "heal", modifier: "corpse" },
   // A placeholder until the asset-designer's (#1104).

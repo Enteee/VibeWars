@@ -129,6 +129,7 @@ import {
   type CreateGroundEffect,
   type CreatureTemplate,
   type GroundAct,
+  type PulseRule,
   type Skill,
 } from "../skills/types.js";
 import {
@@ -252,7 +253,8 @@ export const MAX_CREATURES = 32;
 /**
  * A circle on the ground (#1087, ADR-0035): not a body, so nothing can
  * target, kill or move it. It does `act` from where it was placed until
- * it ends: a ward projects an aura, a trap waits to be sprung (#1105).
+ * it ends: a ward projects an aura, a trap waits to be sprung (#1105), a
+ * pulse lands its effects every interval (#1113).
  * Its owner dying does not end it.
  */
 export interface GroundEffect {
@@ -267,6 +269,8 @@ export interface GroundEffect {
   /** How long it was placed for. */
   readonly durationSeconds: number;
   remainingSeconds: number;
+  /** Pulses it has landed (#1113); 0 for any act but a pulse. */
+  pulsed: number;
 }
 
 /** At most this many ground effects at once (#1087): past it, the oldest ends early. */
@@ -992,16 +996,23 @@ export class MatchSimulation {
     effect: CreateGroundEffect,
     position: Vec2,
   ): void {
-    const durationSeconds = resolveMagnitude(effect.durationSeconds, owner.combatant);
-    this.#groundEffects.push({
-      id: this.#nextGroundEffect,
+    this.#addGroundEffect({
       skillId,
       ownerId: owner.id,
       team: owner.combatant.team,
       position,
       act: effect.act,
-      durationSeconds,
-      remainingSeconds: durationSeconds,
+      durationSeconds: resolveMagnitude(effect.durationSeconds, owner.combatant),
+      pulsed: 0,
+    });
+  }
+
+  /** `effect`, numbered and with its whole time left; past the cap, the oldest ends now. */
+  #addGroundEffect(effect: Omit<GroundEffect, "id" | "remainingSeconds">): void {
+    this.#groundEffects.push({
+      ...effect,
+      id: this.#nextGroundEffect,
+      remainingSeconds: effect.durationSeconds,
     });
     this.#nextGroundEffect += 1;
     if (this.#groundEffects.length > MAX_GROUND_EFFECTS) {
@@ -1010,15 +1021,18 @@ export class MatchSimulation {
   }
 
   /**
-   * Where a ground effect `owner` leaves lands (#1104): where it stands, or
-   * where the corpse its skill exploited lies, as they are now. A well
-   * does not follow a body that later stands up or respawns.
+   * Where a ground effect `owner` leaves lands (#1104): where it stands,
+   * where the corpse its skill exploited lies, or where its target stands
+   * (#1113), as they are now. A well or a symbol does not follow a body
+   * that later moves, stands up or respawns. Nowhere, when a target
+   * anchor has no target.
    */
   #groundAnchor(
     owner: ParticipantRecord,
     effect: CreateGroundEffect,
     corpse: ParticipantRecord | undefined,
-  ): Vec2 {
+    primary: ParticipantRecord | undefined,
+  ): Vec2 | undefined {
     switch (effect.anchor) {
       case "caster":
         return owner.position;
@@ -1028,10 +1042,16 @@ export class MatchSimulation {
           throw new Error(`${owner.id}: a corpse-anchored ground effect with no corpse`);
         }
         return corpse.position;
+      case "target":
+        return primary?.position;
     }
   }
 
-  /** Every ground effect counts down `dt` (#1087); one at zero is gone. */
+  /**
+   * Every ground effect counts down `dt` (#1087); one at zero is gone,
+   * except a trap that springs as its time runs out (#1113): this step's
+   * `#springTraps` springs it.
+   */
   #advanceGroundEffects(dt: number): void {
     if (this.#groundEffects.length === 0) {
       return;
@@ -1039,22 +1059,28 @@ export class MatchSimulation {
     for (const effect of this.#groundEffects) {
       effect.remainingSeconds -= dt;
     }
-    this.#groundEffects = this.#groundEffects.filter((effect) => effect.remainingSeconds > 0);
+    this.#groundEffects = this.#groundEffects.filter(
+      (effect) =>
+        effect.remainingSeconds > 0 || (effect.act.kind === "trap" && effect.act.trap.springsAtEnd),
+    );
   }
 
   /**
    * Every trap a living foe stands on springs (#1105), once everyone has
-   * moved this step, in id order: its effects land from its owner, alive
-   * or dead, on whoever its area takes around the trap, and it is gone.
-   * A foe is a body of another team that is not a spirit, its centre
-   * within the trigger radius; walls do not matter. A trap whose owner
-   * has left the match is gone with no effect.
+   * moved this step, in id order, as does one whose time ran out if it
+   * springs at its end (#1113). Its first pulse lands at once from its
+   * owner, alive or dead, and it is gone; with more pulses to come, a
+   * pulse effect takes its place, which everyone sees. A foe is a body of
+   * another team that is not a spirit, its centre within the trigger
+   * radius; walls do not matter. A trap whose owner has left the match is
+   * gone with no effect.
    */
   #springTraps(): void {
     if (!this.#groundEffects.some((effect) => effect.act.kind === "trap")) {
       return;
     }
     const sprung = new Set<number>();
+    const pulsing: GroundEffect[] = [];
     for (const effect of this.#groundEffects) {
       if (effect.act.kind !== "trap") {
         continue;
@@ -1065,53 +1091,121 @@ export class MatchSimulation {
         continue;
       }
       const { trap } = effect.act;
-      const triggered = [...this.#participants.values()].some(
-        (body) =>
-          !body.combatant.dead &&
-          body.creature?.kind !== "spirit" &&
-          body.combatant.team !== effect.team &&
-          distance(body.position, effect.position) <= trap.triggerRadius,
-      );
-      const skill = triggered ? getSkill(effect.skillId) : undefined;
-      if (skill === undefined) {
+      const triggered =
+        (trap.springsAtEnd && effect.remainingSeconds <= 0) ||
+        [...this.#participants.values()].some(
+          (body) =>
+            !body.combatant.dead &&
+            body.creature?.kind !== "spirit" &&
+            body.combatant.team !== effect.team &&
+            distance(body.position, effect.position) <= trap.triggerRadius,
+        );
+      if (!triggered) {
         continue;
       }
       sprung.add(effect.id);
-      const springing = { ...skill, area: trap.area, effects: trap.effects };
-      const { events } = resolveSkillEffects({
-        skill: springing,
-        caster: owner.combatant,
-        targets: resolveTargets({
-          skill: springing,
-          caster: owner.combatant,
-          casterPosition: effect.position,
-          primary: undefined,
-          candidates: [...this.#participants.values()],
-          losBlockers: this.#walls,
-        }),
-        rng: this.#rng,
-        rules: this.#ruleset.combat,
-        surroundings: this.#participants,
-      });
-      this.#log.push({
-        tick: this.#tick,
-        atSeconds: this.#elapsedSeconds,
-        cause: "skill",
-        sourceId: owner.id,
-        skillId: skill.id,
-        weaponId: undefined,
-        attributeId: undefined,
-        area: { x: effect.position.x, y: effect.position.y, radius: trap.area.radius },
-        doubleStrike: false,
-        events,
-      });
-      this.#chargeFromDamage(owner.combatant, events);
-      this.#recordDeaths(events);
-      this.#recordKnockdowns(events);
+      this.#landPulse(owner, effect.skillId, effect.position, trap.spring);
+      if (trap.spring.count > 1) {
+        pulsing.push(effect);
+      }
     }
     if (sprung.size > 0) {
       this.#groundEffects = this.#groundEffects.filter((effect) => !sprung.has(effect.id));
     }
+    for (const trap of pulsing) {
+      if (trap.act.kind !== "trap") {
+        continue;
+      }
+      const { spring } = trap.act.trap;
+      this.#addGroundEffect({
+        skillId: trap.skillId,
+        ownerId: trap.ownerId,
+        team: trap.team,
+        position: trap.position,
+        act: { kind: "pulse", pulse: spring },
+        durationSeconds: spring.count * spring.everySeconds,
+        pulsed: 1,
+      });
+    }
+  }
+
+  /**
+   * Every pulse effect whose next pulse is due lands it (#1113), after
+   * traps spring, in id order: at most one each a step, the first the step
+   * it was placed, then one every interval of its age. One whose owner
+   * has left the match is gone with no effect.
+   */
+  #pulseGroundEffects(): void {
+    if (!this.#groundEffects.some((effect) => effect.act.kind === "pulse")) {
+      return;
+    }
+    const gone = new Set<number>();
+    for (const effect of this.#groundEffects) {
+      if (effect.act.kind !== "pulse") {
+        continue;
+      }
+      const owner = this.#participants.get(effect.ownerId);
+      if (owner === undefined) {
+        gone.add(effect.id);
+        continue;
+      }
+      const { pulse } = effect.act;
+      const age = effect.durationSeconds - effect.remainingSeconds;
+      if (
+        effect.pulsed >= pulse.count ||
+        age < effect.pulsed * pulse.everySeconds - SWING_EPSILON
+      ) {
+        continue;
+      }
+      effect.pulsed += 1;
+      this.#landPulse(owner, effect.skillId, effect.position, pulse);
+    }
+    if (gone.size > 0) {
+      this.#groundEffects = this.#groundEffects.filter((effect) => !gone.has(effect.id));
+    }
+  }
+
+  /**
+   * One pulse of `rule` at `position` (#1113): its effects land from
+   * `owner` on whoever its area takes there, in line of sight of it, and
+   * it is logged as a cast is, even when it hits nobody.
+   */
+  #landPulse(owner: ParticipantRecord, skillId: string, position: Vec2, rule: PulseRule): void {
+    const skill = getSkill(skillId);
+    if (skill === undefined) {
+      return;
+    }
+    const pulsing = { ...skill, area: rule.area, effects: rule.effects };
+    const { events } = resolveSkillEffects({
+      skill: pulsing,
+      caster: owner.combatant,
+      targets: resolveTargets({
+        skill: pulsing,
+        caster: owner.combatant,
+        casterPosition: position,
+        primary: undefined,
+        candidates: [...this.#participants.values()],
+        losBlockers: this.#walls,
+      }),
+      rng: this.#rng,
+      rules: this.#ruleset.combat,
+      surroundings: this.#participants,
+    });
+    this.#log.push({
+      tick: this.#tick,
+      atSeconds: this.#elapsedSeconds,
+      cause: "skill",
+      sourceId: owner.id,
+      skillId,
+      weaponId: undefined,
+      attributeId: undefined,
+      area: { x: position.x, y: position.y, radius: rule.area.radius },
+      doubleStrike: false,
+      events,
+    });
+    this.#chargeFromDamage(owner.combatant, events);
+    this.#recordDeaths(events);
+    this.#recordKnockdowns(events);
   }
 
   /**
@@ -1863,6 +1957,7 @@ export class MatchSimulation {
     }
 
     this.#springTraps();
+    this.#pulseGroundEffects();
     this.#settleUpkeep(dt);
     this.#spreadStatuses();
     this.#fireStatusChanges();
@@ -2370,7 +2465,10 @@ export class MatchSimulation {
       );
     }
     for (const ground of grounds) {
-      this.#placeGroundEffect(record, skill.id, ground, this.#groundAnchor(record, ground, corpse));
+      const position = this.#groundAnchor(record, ground, corpse, primary);
+      if (position !== undefined) {
+        this.#placeGroundEffect(record, skill.id, ground, position);
+      }
     }
     // An attack skill is a swing, so it turns on its target with the
     // weapon: it starts an attack, or switches one to them. Any other skill
