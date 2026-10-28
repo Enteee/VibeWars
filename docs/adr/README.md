@@ -9,7 +9,7 @@ rewriting history.
 | [0001](0001-architecture.md)                  | Overall architecture; amended by 0022                           |
 | [0002](0002-networking.md)                    | Networking (Colyseus); superseded by 0022                       |
 | [0003](0003-simulation.md)                    | Simulation (fixed tick, determinism)                            |
-| [0004](0004-skill-data.md)                    | Skill data representation and acquisition                       |
+| [0004](0004-skill-data.md)                    | Skill data representation and acquisition; amended by 0038      |
 | [0005](0005-persistence.md)                   | Browser persistence                                             |
 | [0006](0006-map-format.md)                    | Map representation                                              |
 | [0007](0007-development-environment.md)       | Development environment (devenv)                                |
@@ -42,3 +42,4 @@ rewriting history.
 | [0035](0035-non-player-combatants.md)         | A creature is a participant with a creature record              |
 | [0036](0036-weapon-sets.md)                   | Weapon sets are resolved at join and swapped by index           |
 | [0037](0037-per-piece-armor.md)               | Insignia armor is per piece, and each hit rolls its piece       |
+| [0038](0038-skill-corpus.md)                  | gw-skilldata is the skill corpus, vendored at a pinned commit   |

@@ -153,6 +153,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "monk.orison-of-healing",
     name: "Orison of Healing",
+    gwId: 281,
     type: "spell",
     elite: false,
     profession: "monk",
@@ -183,6 +184,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "elementalist.fireball",
     name: "Fireball",
+    gwId: 186,
     type: "spell",
     elite: false,
     profession: "elementalist",
@@ -223,6 +225,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "elementalist.chain-lightning",
     name: "Chain Lightning",
+    gwId: 223,
     type: "spell",
     elite: false,
     profession: "elementalist",
@@ -263,6 +266,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "warrior.swift-chop",
     name: "Swift Chop",
+    gwId: 341,
     type: "attack",
     elite: false,
     profession: "warrior",
@@ -306,6 +310,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ranger.barrage",
     name: "Barrage",
+    gwId: 395,
     type: "attack",
     elite: true,
     profession: "ranger",
@@ -347,6 +352,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "warrior.backbreaker",
     name: "Backbreaker",
+    gwId: 358,
     type: "attack",
     elite: true,
     profession: "warrior",
@@ -384,6 +390,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "warrior.hammer-bash",
     name: "Hammer Bash",
+    gwId: 331,
     type: "attack",
     elite: false,
     profession: "warrior",
@@ -419,6 +426,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "necromancer.blood-renewal-lite",
     name: "Vital Transfer",
+    gwId: undefined,
     type: "spell",
     elite: false,
     profession: "necromancer",
@@ -461,6 +469,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "warrior.distracting-blow",
     name: "Distracting Blow",
+    gwId: 325,
     type: "attack",
     elite: false,
     profession: "warrior",
@@ -499,6 +508,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ranger.broad-head-arrow",
     name: "Broad Head Arrow",
+    gwId: 1198,
     type: "attack",
     elite: true,
     profession: "ranger",
@@ -536,6 +546,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "necromancer.faintheartedness",
     name: "Faintheartedness",
+    gwId: 135,
     type: "hex",
     elite: false,
     profession: "necromancer",
@@ -558,6 +569,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "necromancer.weaken-armor",
     name: "Weaken Armor",
+    gwId: 159,
     type: "spell",
     elite: false,
     profession: "necromancer",
@@ -589,6 +601,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "necromancer.malaise",
     name: "Malaise",
+    gwId: 140,
     type: "hex",
     elite: false,
     profession: "necromancer",
@@ -614,6 +627,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "necromancer.enfeeble",
     name: "Enfeeble",
+    gwId: 117,
     type: "spell",
     elite: false,
     profession: "necromancer",
@@ -638,6 +652,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "necromancer.enfeebling-blood",
     name: "Enfeebling Blood",
+    gwId: 118,
     type: "spell",
     elite: false,
     profession: "necromancer",
@@ -673,6 +688,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "necromancer.rotting-flesh",
     name: "Rotting Flesh",
+    gwId: 106,
     type: "spell",
     elite: false,
     profession: "necromancer",
@@ -698,6 +714,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "necromancer.blood-ritual",
     name: "Blood Ritual",
+    gwId: 157,
     type: "enchantment",
     elite: false,
     profession: "necromancer",
@@ -726,6 +743,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "elementalist.armor-of-earth",
     name: "Armor of Earth",
+    gwId: 165,
     type: "enchantment",
     elite: false,
     profession: "elementalist",
@@ -750,6 +768,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ranger.troll-unguent",
     name: "Troll Unguent",
+    gwId: 446,
     type: "skill",
     elite: false,
     profession: "ranger",
@@ -775,6 +794,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "monk.mend-condition",
     name: "Mend Condition",
+    gwId: 275,
     type: "spell",
     elite: false,
     profession: "monk",
@@ -814,6 +834,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "monk.guardian",
     name: "Guardian",
+    gwId: 258,
     type: "enchantment",
     elite: false,
     profession: "monk",
@@ -837,6 +858,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "monk.mending",
     name: "Mending",
+    gwId: 290,
     type: "enchantment",
     elite: false,
     profession: "monk",
@@ -861,6 +883,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "warrior.sever-artery",
     name: "Sever Artery",
+    gwId: 382,
     type: "attack",
     elite: false,
     profession: "warrior",
@@ -896,6 +919,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "warrior.eviscerate",
     name: "Eviscerate",
+    gwId: 338,
     type: "attack",
     elite: true,
     profession: "warrior",
@@ -931,6 +955,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "warrior.executioners-strike",
     name: "Executioner's Strike",
+    gwId: 336,
     type: "attack",
     elite: false,
     profession: "warrior",
@@ -964,6 +989,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "assassin.jagged-strike",
     name: "Jagged Strike",
+    gwId: 782,
     type: "attack",
     elite: false,
     profession: "assassin",
@@ -1000,6 +1026,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "assassin.black-lotus-strike",
     name: "Black Lotus Strike",
+    gwId: 779,
     type: "attack",
     elite: false,
     profession: "assassin",
@@ -1050,6 +1077,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "assassin.fox-fangs",
     name: "Fox Fangs",
+    gwId: 780,
     type: "attack",
     elite: false,
     profession: "assassin",
@@ -1088,6 +1116,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "assassin.wild-strike",
     name: "Wild Strike",
+    gwId: 1022,
     type: "attack",
     elite: false,
     profession: "assassin",
@@ -1126,6 +1155,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "assassin.death-blossom",
     name: "Death Blossom",
+    gwId: 775,
     type: "attack",
     elite: false,
     profession: "assassin",
@@ -1179,6 +1209,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "assassin.twisting-fangs",
     name: "Twisting Fangs",
+    gwId: 776,
     type: "attack",
     elite: false,
     profession: "assassin",
@@ -1220,6 +1251,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "assassin.horns-of-the-ox",
     name: "Horns of the Ox",
+    gwId: 777,
     type: "attack",
     elite: false,
     profession: "assassin",
@@ -1264,6 +1296,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "assassin.moebius-strike",
     name: "Moebius Strike",
+    gwId: 781,
     type: "attack",
     elite: true,
     profession: "assassin",
@@ -1309,6 +1342,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ranger.punishing-shot",
     name: "Punishing Shot",
+    gwId: 409,
     type: "attack",
     elite: true,
     profession: "ranger",
@@ -1344,6 +1378,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ranger.pin-down",
     name: "Pin Down",
+    gwId: 392,
     type: "attack",
     elite: false,
     profession: "ranger",
@@ -1379,6 +1414,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ranger.hunters-shot",
     name: "Hunter's Shot",
+    gwId: 391,
     type: "attack",
     elite: false,
     profession: "ranger",
@@ -1414,6 +1450,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ranger.crippling-shot",
     name: "Crippling Shot",
+    gwId: 393,
     type: "attack",
     elite: true,
     profession: "ranger",
@@ -1452,6 +1489,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ranger.debilitating-shot",
     name: "Debilitating Shot",
+    gwId: 406,
     type: "attack",
     elite: false,
     profession: "ranger",
@@ -1491,6 +1529,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ranger.burning-arrow",
     name: "Burning Arrow",
+    gwId: 1466,
     type: "attack",
     elite: true,
     profession: "ranger",
@@ -1526,6 +1565,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ranger.throw-dirt",
     name: "Throw Dirt",
+    gwId: 424,
     type: "skill",
     elite: false,
     profession: "ranger",
@@ -1562,6 +1602,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "warrior.sprint",
     name: "Sprint",
+    gwId: 349,
     type: "stance",
     elite: false,
     profession: "warrior",
@@ -1586,6 +1627,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "assassin.dash",
     name: "Dash",
+    gwId: 1043,
     type: "stance",
     elite: false,
     profession: "assassin",
@@ -1609,6 +1651,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "warrior.frenzy",
     name: "Frenzy",
+    gwId: 346,
     type: "stance",
     elite: false,
     profession: "warrior",
@@ -1633,6 +1676,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "assassin.dark-escape",
     name: "Dark Escape",
+    gwId: 1037,
     type: "stance",
     elite: false,
     profession: "assassin",
@@ -1657,6 +1701,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ranger.natural-stride",
     name: "Natural Stride",
+    gwId: 1727,
     type: "stance",
     elite: false,
     profession: "ranger",
@@ -1681,6 +1726,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ranger.lightning-reflexes",
     name: "Lightning Reflexes",
+    gwId: 453,
     type: "stance",
     elite: false,
     profession: "ranger",
@@ -1707,6 +1753,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ranger.escape",
     name: "Escape",
+    gwId: 448,
     type: "stance",
     elite: true,
     profession: "ranger",
@@ -1732,6 +1779,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "paragon.wild-throw",
     name: "Wild Throw",
+    gwId: 1605,
     type: "attack",
     elite: false,
     profession: "paragon",
@@ -1771,6 +1819,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "paragon.cruel-spear",
     name: "Cruel Spear",
+    gwId: 1548,
     type: "attack",
     elite: true,
     profession: "paragon",
@@ -1814,6 +1863,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "paragon.barbed-spear",
     name: "Barbed Spear",
+    gwId: 1600,
     type: "attack",
     elite: false,
     profession: "paragon",
@@ -1849,6 +1899,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "paragon.maiming-spear",
     name: "Maiming Spear",
+    gwId: 2150,
     type: "attack",
     elite: false,
     profession: "paragon",
@@ -1890,6 +1941,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "paragon.merciless-spear",
     name: "Merciless Spear",
+    gwId: 1603,
     type: "attack",
     elite: false,
     profession: "paragon",
@@ -1932,6 +1984,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "paragon.stunning-strike",
     name: "Stunning Strike",
+    gwId: 1602,
     type: "attack",
     elite: true,
     profession: "paragon",
@@ -1975,6 +2028,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "paragon.harriers-toss",
     name: "Harrier's Toss",
+    gwId: 1549,
     type: "attack",
     elite: false,
     profession: "paragon",
@@ -2021,6 +2075,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "warrior.healing-signet",
     name: "Healing Signet",
+    gwId: 1,
     type: "signet",
     elite: false,
     profession: "warrior",
@@ -2051,6 +2106,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "warrior.watch-yourself",
     name: '"Watch Yourself!"',
+    gwId: 348,
     type: "shout",
     elite: false,
     profession: "warrior",
@@ -2082,6 +2138,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "paragon.fall-back",
     name: '"Fall Back!"',
+    gwId: 1595,
     type: "shout",
     elite: false,
     profession: "paragon",
@@ -2113,6 +2170,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "paragon.stand-your-ground",
     name: '"Stand Your Ground!"',
+    gwId: 1589,
     type: "shout",
     elite: false,
     profession: "paragon",
@@ -2144,6 +2202,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "paragon.incoming",
     name: '"Incoming!"',
+    gwId: 1596,
     type: "shout",
     elite: true,
     profession: "paragon",
@@ -2175,6 +2234,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "paragon.make-haste",
     name: '"Make Haste!"',
+    gwId: 1591,
     type: "shout",
     elite: false,
     profession: "paragon",
@@ -2204,6 +2264,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ranger.apply-poison",
     name: "Apply Poison",
+    gwId: 435,
     type: "preparation",
     elite: false,
     profession: "ranger",
@@ -2234,6 +2295,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "elementalist.glyph-of-lesser-energy",
     name: "Glyph of Lesser Energy",
+    gwId: 200,
     type: "glyph",
     elite: false,
     profession: "elementalist",
@@ -2263,6 +2325,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "paragon.anthem-of-flame",
     name: "Anthem of Flame",
+    gwId: 1557,
     type: "chant",
     elite: false,
     profession: "paragon",
@@ -2294,6 +2357,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "paragon.defensive-anthem",
     name: "Defensive Anthem",
+    gwId: 1555,
     type: "chant",
     elite: true,
     profession: "paragon",
@@ -2325,6 +2389,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "paragon.song-of-restoration",
     name: "Song of Restoration",
+    gwId: 1771,
     type: "chant",
     elite: true,
     profession: "paragon",
@@ -2359,6 +2424,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ritualist.weapon-of-warding",
     name: "Weapon of Warding",
+    gwId: 793,
     type: "weapon-spell",
     elite: false,
     profession: "ritualist",
@@ -2383,6 +2449,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ritualist.mend-body-and-soul",
     name: "Mend Body and Soul",
+    gwId: 1234,
     type: "spell",
     elite: false,
     profession: "ritualist",
@@ -2416,6 +2483,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ritualist.spirit-light",
     name: "Spirit Light",
+    gwId: 915,
     type: "spell",
     elite: false,
     profession: "ritualist",
@@ -2453,6 +2521,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ritualist.wielders-boon",
     name: "Wielder's Boon",
+    gwId: 1265,
     type: "spell",
     elite: false,
     profession: "ritualist",
@@ -2498,6 +2567,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ritualist.spirit-light-weapon",
     name: "Spirit Light Weapon",
+    gwId: 1257,
     type: "weapon-spell",
     elite: true,
     profession: "ritualist",
@@ -2524,6 +2594,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ritualist.weapon-of-quickening",
     name: "Weapon of Quickening",
+    gwId: 1268,
     type: "weapon-spell",
     elite: true,
     profession: "ritualist",
@@ -2549,6 +2620,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ritualist.weapon-of-aggression",
     name: "Weapon of Aggression",
+    gwId: 2073,
     type: "weapon-spell",
     elite: false,
     profession: "ritualist",
@@ -2578,6 +2650,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ritualist.weapon-of-remedy",
     name: "Weapon of Remedy",
+    gwId: 1752,
     type: "weapon-spell",
     elite: true,
     profession: "ritualist",
@@ -2604,6 +2677,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ritualist.vengeful-weapon",
     name: "Vengeful Weapon",
+    gwId: 964,
     type: "weapon-spell",
     elite: false,
     profession: "ritualist",
@@ -2629,6 +2703,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ritualist.splinter-weapon",
     name: "Splinter Weapon",
+    gwId: 792,
     type: "weapon-spell",
     elite: false,
     profession: "ritualist",
@@ -2654,6 +2729,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ritualist.mending-grip",
     name: "Mending Grip",
+    gwId: 2202,
     type: "spell",
     elite: false,
     profession: "ritualist",
@@ -2698,6 +2774,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "mesmer.power-spike",
     name: "Power Spike",
+    gwId: 23,
     type: "spell",
     elite: false,
     profession: "mesmer",
@@ -2738,6 +2815,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "mesmer.power-drain",
     name: "Power Drain",
+    gwId: 25,
     type: "spell",
     elite: false,
     profession: "mesmer",
@@ -2776,6 +2854,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "mesmer.leech-signet",
     name: "Leech Signet",
+    gwId: 61,
     type: "signet",
     elite: false,
     profession: "mesmer",
@@ -2815,6 +2894,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "mesmer.shatter-enchantment",
     name: "Shatter Enchantment",
+    gwId: 69,
     type: "spell",
     elite: false,
     profession: "mesmer",
@@ -2855,6 +2935,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "mesmer.drain-enchantment",
     name: "Drain Enchantment",
+    gwId: 68,
     type: "spell",
     elite: false,
     profession: "mesmer",
@@ -2901,6 +2982,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "elementalist.lightning-orb",
     name: "Lightning Orb",
+    gwId: 229,
     type: "spell",
     elite: false,
     profession: "elementalist",
@@ -2941,6 +3023,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "mesmer.energy-burn",
     name: "Energy Burn",
+    gwId: 42,
     type: "spell",
     elite: false,
     profession: "mesmer",
@@ -2977,6 +3060,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "mesmer.energy-tap",
     name: "Energy Tap",
+    gwId: 80,
     type: "spell",
     elite: false,
     profession: "mesmer",
@@ -3007,6 +3091,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "mesmer.energy-surge",
     name: "Energy Surge",
+    gwId: 39,
     type: "spell",
     elite: true,
     profession: "mesmer",
@@ -3062,6 +3147,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "mesmer.backfire",
     name: "Backfire",
+    gwId: 28,
     type: "hex",
     elite: false,
     profession: "mesmer",
@@ -3086,6 +3172,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "mesmer.diversion",
     name: "Diversion",
+    gwId: 30,
     type: "hex",
     elite: false,
     profession: "mesmer",
@@ -3111,6 +3198,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "mesmer.arcane-echo",
     name: "Arcane Echo",
+    gwId: 75,
     type: "enchantment",
     elite: false,
     profession: "mesmer",
@@ -3135,6 +3223,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "mesmer.echo",
     name: "Echo",
+    gwId: 74,
     type: "enchantment",
     elite: true,
     profession: "mesmer",
@@ -3159,6 +3248,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "mesmer.empathy",
     name: "Empathy",
+    gwId: 26,
     type: "hex",
     elite: false,
     profession: "mesmer",
@@ -3183,6 +3273,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "necromancer.parasitic-bond",
     name: "Parasitic Bond",
+    gwId: 99,
     type: "hex",
     elite: false,
     profession: "necromancer",
@@ -3208,6 +3299,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "necromancer.contagion",
     name: "Contagion",
+    gwId: 1356,
     type: "enchantment",
     elite: true,
     profession: "necromancer",
@@ -3239,6 +3331,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "monk.word-of-healing",
     name: "Word of Healing",
+    gwId: 282,
     type: "spell",
     elite: true,
     profession: "monk",
@@ -3282,6 +3375,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "monk.dwaynas-kiss",
     name: "Dwayna's Kiss",
+    gwId: 283,
     type: "spell",
     elite: false,
     profession: "monk",
@@ -3317,6 +3411,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "monk.heal-area",
     name: "Heal Area",
+    gwId: 280,
     type: "spell",
     elite: false,
     profession: "monk",
@@ -3353,6 +3448,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "dervish.mystic-sweep",
     name: "Mystic Sweep",
+    gwId: 1484,
     type: "attack",
     elite: false,
     profession: "dervish",
@@ -3391,6 +3487,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "dervish.mystic-regeneration",
     name: "Mystic Regeneration",
+    gwId: 1516,
     type: "enchantment",
     elite: false,
     profession: "dervish",
@@ -3415,6 +3512,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "dervish.fleeting-stability",
     name: "Fleeting Stability",
+    gwId: 1514,
     // A flash enchantment: an enchantment spell with no activation.
     type: "enchantment",
     elite: false,
@@ -3440,6 +3538,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "dervish.heart-of-fury",
     name: "Heart of Fury",
+    gwId: 1762,
     type: "stance",
     elite: false,
     profession: "dervish",
@@ -3463,6 +3562,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "dervish.wounding-strike",
     name: "Wounding Strike",
+    gwId: 1536,
     type: "attack",
     elite: true,
     profession: "dervish",
@@ -3514,6 +3614,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "dervish.signet-of-pious-light",
     name: "Signet of Pious Light",
+    gwId: 1530,
     type: "signet",
     elite: false,
     profession: "dervish",
@@ -3558,6 +3659,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "dervish.pious-restoration",
     name: "Pious Restoration",
+    gwId: 1529,
     type: "spell",
     elite: false,
     profession: "dervish",
@@ -3602,6 +3704,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "dervish.vow-of-strength",
     name: "Vow of Strength",
+    gwId: 1759,
     type: "enchantment",
     elite: true,
     profession: "dervish",
@@ -3626,6 +3729,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "dervish.sand-shards",
     name: "Sand Shards",
+    gwId: 1510,
     // A flash enchantment: an enchantment spell with no activation.
     type: "enchantment",
     elite: false,
@@ -3651,6 +3755,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "dervish.pious-haste",
     name: "Pious Haste",
+    gwId: 1543,
     type: "stance",
     elite: false,
     profession: "dervish",
@@ -3691,6 +3796,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "dervish.victorious-sweep",
     name: "Victorious Sweep",
+    gwId: 1488,
     type: "attack",
     elite: false,
     profession: "dervish",
@@ -3742,6 +3848,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "dervish.zealous-sweep",
     name: "Zealous Sweep",
+    gwId: 2071,
     type: "attack",
     elite: false,
     profession: "dervish",
@@ -3781,6 +3888,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "dervish.mystic-twister",
     name: "Mystic Twister",
+    gwId: 1491,
     type: "spell",
     elite: false,
     profession: "dervish",
@@ -3824,6 +3932,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "dervish.eremites-attack",
     name: "Eremite's Attack",
+    gwId: 1485,
     type: "attack",
     elite: false,
     profession: "dervish",
@@ -3874,6 +3983,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "dervish.staggering-force",
     name: "Staggering Force",
+    gwId: 1498,
     // A flash enchantment: an enchantment spell with no activation.
     type: "enchantment",
     elite: false,
@@ -3914,6 +4024,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "dervish.dust-cloak",
     name: "Dust Cloak",
+    gwId: 1497,
     type: "enchantment",
     elite: false,
     profession: "dervish",
@@ -3953,6 +4064,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "dervish.aura-of-thorns",
     name: "Aura of Thorns",
+    gwId: 1495,
     type: "enchantment",
     elite: false,
     profession: "dervish",
@@ -3985,6 +4097,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ranger.savage-shot",
     name: "Savage Shot",
+    gwId: 426,
     type: "attack",
     elite: false,
     profession: "ranger",
@@ -4024,6 +4137,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ranger.concussion-shot",
     name: "Concussion Shot",
+    gwId: 408,
     type: "attack",
     elite: false,
     profession: "ranger",
@@ -4075,6 +4189,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "mesmer.power-block",
     name: "Power Block",
+    gwId: 5,
     type: "spell",
     elite: true,
     profession: "mesmer",
@@ -4107,6 +4222,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ranger.distracting-shot",
     name: "Distracting Shot",
+    gwId: 399,
     type: "attack",
     elite: false,
     profession: "ranger",
@@ -4148,6 +4264,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "warrior.disrupting-chop",
     name: "Disrupting Chop",
+    gwId: 340,
     type: "attack",
     elite: false,
     profession: "warrior",
@@ -4192,6 +4309,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "monk.restore-life",
     name: "Restore Life",
+    gwId: 314,
     type: "spell",
     elite: false,
     profession: "monk",
@@ -4237,6 +4355,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "common.resurrection-signet",
     name: "Resurrection Signet",
+    gwId: 2,
     type: "signet",
     elite: false,
     profession: "common",
@@ -4271,6 +4390,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "monk.rebirth",
     name: "Rebirth",
+    gwId: 306,
     type: "spell",
     elite: false,
     profession: "monk",
@@ -4319,6 +4439,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "paragon.signet-of-return",
     name: "Signet of Return",
+    gwId: 1778,
     type: "signet",
     elite: false,
     profession: "paragon",
@@ -4355,6 +4476,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ritualist.flesh-of-my-flesh",
     name: "Flesh of My Flesh",
+    gwId: 791,
     type: "spell",
     elite: false,
     profession: "ritualist",
@@ -4394,6 +4516,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "elementalist.lightning-strike",
     name: "Lightning Strike",
+    gwId: 222,
     // The corpus's is a hex spell whose hex lands only while you are
     // overcast; that half is not modelled, so it is the plain strike.
     type: "spell",
@@ -4429,6 +4552,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "elementalist.mind-shock",
     name: "Mind Shock",
+    gwId: 226,
     type: "spell",
     elite: true,
     profession: "elementalist",
@@ -4479,6 +4603,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "elementalist.shard-storm",
     name: "Shard Storm",
+    gwId: 213,
     type: "hex",
     elite: false,
     profession: "elementalist",
@@ -4515,6 +4640,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "necromancer.animate-bone-horror",
     name: "Animate Bone Horror",
+    gwId: 83,
     type: "spell",
     elite: false,
     profession: "necromancer",
@@ -4539,6 +4665,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "necromancer.animate-bone-minions",
     name: "Animate Bone Minions",
+    gwId: 85,
     type: "spell",
     elite: false,
     profession: "necromancer",
@@ -4563,6 +4690,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "necromancer.soul-feast",
     name: "Soul Feast",
+    gwId: 96,
     type: "spell",
     elite: false,
     profession: "necromancer",
@@ -4595,6 +4723,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "necromancer.well-of-suffering",
     name: "Well of Suffering",
+    gwId: 93,
     type: "well",
     elite: false,
     profession: "necromancer",
@@ -4633,6 +4762,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "necromancer.shadow-of-fear",
     name: "Shadow of Fear",
+    gwId: 136,
     type: "hex",
     elite: false,
     profession: "necromancer",
@@ -4669,6 +4799,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "necromancer.spiteful-spirit",
     name: "Spiteful Spirit",
+    gwId: 121,
     type: "hex",
     elite: true,
     profession: "necromancer",
@@ -4694,6 +4825,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "necromancer.insidious-parasite",
     name: "Insidious Parasite",
+    gwId: 123,
     type: "hex",
     elite: false,
     profession: "necromancer",
@@ -4718,6 +4850,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "necromancer.mark-of-pain",
     name: "Mark of Pain",
+    gwId: 150,
     type: "hex",
     elite: false,
     profession: "necromancer",
@@ -4743,6 +4876,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "necromancer.vampiric-gaze",
     name: "Vampiric Gaze",
+    gwId: 153,
     type: "spell",
     elite: false,
     profession: "necromancer",
@@ -4778,6 +4912,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "warrior.cyclone-axe",
     name: "Cyclone Axe",
+    gwId: 330,
     type: "attack",
     elite: false,
     profession: "warrior",
@@ -4820,6 +4955,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "warrior.for-great-justice",
     name: '"For Great Justice!"',
+    gwId: 343,
     type: "shout",
     elite: false,
     profession: "warrior",
@@ -4845,6 +4981,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "monk.protective-spirit",
     name: "Protective Spirit",
+    gwId: 245,
     type: "enchantment",
     elite: false,
     profession: "monk",
@@ -4870,6 +5007,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "monk.infuse-health",
     name: "Infuse Health",
+    gwId: 292,
     type: "spell",
     elite: false,
     profession: "monk",
@@ -4907,6 +5045,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "paragon.spear-of-lightning",
     name: "Spear of Lightning",
+    gwId: 1551,
     type: "attack",
     elite: false,
     profession: "paragon",
@@ -4945,6 +5084,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "paragon.never-surrender",
     name: '"Never Surrender!"',
+    gwId: 1598,
     type: "shout",
     elite: false,
     profession: "paragon",
@@ -4982,6 +5122,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "paragon.leaders-comfort",
     name: "Leader's Comfort",
+    gwId: 1584,
     type: "skill",
     elite: false,
     profession: "paragon",
@@ -5022,6 +5163,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "mesmer.cry-of-frustration",
     name: "Cry of Frustration",
+    gwId: 57,
     type: "spell",
     elite: false,
     profession: "mesmer",
@@ -5082,6 +5224,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "mesmer.mantra-of-recovery",
     name: "Mantra of Recovery",
+    gwId: 13,
     type: "stance",
     elite: true,
     profession: "mesmer",
@@ -5105,6 +5248,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "elementalist.ice-spikes",
     name: "Ice Spikes",
+    gwId: 211,
     type: "hex",
     elite: false,
     profession: "elementalist",
@@ -5146,6 +5290,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "elementalist.deep-freeze",
     name: "Deep Freeze",
+    gwId: 234,
     type: "hex",
     elite: false,
     profession: "elementalist",
@@ -5191,6 +5336,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "monk.patient-spirit",
     name: "Patient Spirit",
+    gwId: 2061,
     type: "enchantment",
     elite: false,
     profession: "monk",
@@ -5215,6 +5361,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "monk.holy-veil",
     name: "Holy Veil",
+    gwId: 309,
     type: "enchantment",
     elite: false,
     profession: "monk",
@@ -5239,6 +5386,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "necromancer.rend-enchantments",
     name: "Rend Enchantments",
+    gwId: 141,
     type: "spell",
     elite: false,
     profession: "necromancer",
@@ -5271,6 +5419,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "necromancer.plague-touch",
     name: "Plague Touch",
+    gwId: 154,
     type: "skill",
     elite: false,
     profession: "necromancer",
@@ -5300,6 +5449,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "elementalist.blinding-flash",
     name: "Blinding Flash",
+    gwId: 220,
     type: "spell",
     elite: false,
     profession: "elementalist",
@@ -5324,6 +5474,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "elementalist.shock",
     name: "Shock",
+    gwId: 231,
     // A touch skill, not a spell: Dazed does not slow it, Fast Casting does
     // not speed it, Backfire does not answer it.
     type: "skill",
@@ -5362,6 +5513,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "elementalist.aftershock",
     name: "Aftershock",
+    gwId: 174,
     type: "spell",
     elite: false,
     profession: "elementalist",
@@ -5417,6 +5569,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "elementalist.meteor",
     name: "Meteor",
+    gwId: 187,
     type: "spell",
     elite: false,
     profession: "elementalist",
@@ -5463,6 +5616,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "elementalist.water-trident",
     name: "Water Trident",
+    gwId: 237,
     type: "spell",
     elite: true,
     profession: "elementalist",
@@ -5511,6 +5665,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "elementalist.searing-flames",
     name: "Searing Flames",
+    gwId: 884,
     type: "spell",
     elite: true,
     profession: "elementalist",
@@ -5564,6 +5719,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "elementalist.ebon-hawk",
     name: "Ebon Hawk",
+    gwId: 1374,
     type: "spell",
     elite: false,
     profession: "elementalist",
@@ -5599,6 +5755,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "elementalist.stoning",
     name: "Stoning",
+    gwId: 171,
     type: "spell",
     elite: false,
     profession: "elementalist",
@@ -5644,6 +5801,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "monk.heal-other",
     name: "Heal Other",
+    gwId: 286,
     type: "spell",
     elite: false,
     profession: "monk",
@@ -5675,6 +5833,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "monk.reversal-of-fortune",
     name: "Reversal of Fortune",
+    gwId: 307,
     type: "enchantment",
     elite: false,
     profession: "monk",
@@ -5700,6 +5859,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "monk.smite-hex",
     name: "Smite Hex",
+    gwId: 302,
     type: "spell",
     elite: false,
     profession: "monk",
@@ -5746,6 +5906,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "monk.restore-condition",
     name: "Restore Condition",
+    gwId: 276,
     type: "spell",
     elite: true,
     profession: "monk",
@@ -5784,6 +5945,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "monk.cure-hex",
     name: "Cure Hex",
+    gwId: 2003,
     type: "spell",
     elite: false,
     profession: "monk",
@@ -5824,6 +5986,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "monk.smite-condition",
     name: "Smite Condition",
+    gwId: 2004,
     type: "spell",
     elite: false,
     profession: "monk",
@@ -5871,6 +6034,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "monk.mending-touch",
     name: "Mending Touch",
+    gwId: 1401,
     type: "spell",
     elite: false,
     profession: "monk",
@@ -5906,6 +6070,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "monk.vigorous-spirit",
     name: "Vigorous Spirit",
+    gwId: 254,
     type: "enchantment",
     elite: false,
     profession: "monk",
@@ -5934,6 +6099,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "assassin.deaths-charge",
     name: "Death's Charge",
+    gwId: 952,
     type: "spell",
     elite: false,
     profession: "assassin",
@@ -5972,6 +6138,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "assassin.shadow-refuge",
     name: "Shadow Refuge",
+    gwId: 814,
     type: "enchantment",
     elite: false,
     profession: "assassin",
@@ -5996,6 +6163,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "assassin.shroud-of-distress",
     name: "Shroud of Distress",
+    gwId: 1031,
     type: "enchantment",
     elite: false,
     profession: "assassin",
@@ -6020,6 +6188,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "assassin.critical-eye",
     name: "Critical Eye",
+    gwId: 1018,
     type: "skill",
     elite: false,
     profession: "assassin",
@@ -6050,6 +6219,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "assassin.leaping-mantis-sting",
     name: "Leaping Mantis Sting",
+    gwId: 1023,
     type: "attack",
     elite: false,
     profession: "assassin",
@@ -6095,6 +6265,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "assassin.jungle-strike",
     name: "Jungle Strike",
+    gwId: 1021,
     type: "attack",
     elite: false,
     profession: "assassin",
@@ -6165,6 +6336,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "assassin.trampling-ox",
     name: "Trampling Ox",
+    gwId: 2135,
     type: "attack",
     elite: false,
     profession: "assassin",
@@ -6209,6 +6381,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "assassin.falling-spider",
     name: "Falling Spider",
+    gwId: 778,
     type: "attack",
     elite: false,
     profession: "assassin",
@@ -6253,6 +6426,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ranger.charm-animal",
     name: "Charm Animal",
+    gwId: 411,
     type: "skill",
     elite: false,
     profession: "ranger",
@@ -6278,6 +6452,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ranger.comfort-animal",
     name: "Comfort Animal",
+    gwId: 436,
     type: "skill",
     elite: false,
     profession: "ranger",
@@ -6328,6 +6503,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ranger.brutal-strike",
     name: "Brutal Strike",
+    gwId: 444,
     type: "pet-attack",
     elite: false,
     profession: "ranger",
@@ -6366,6 +6542,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ranger.maiming-strike",
     name: "Maiming Strike",
+    gwId: 438,
     type: "pet-attack",
     elite: false,
     profession: "ranger",
@@ -6402,6 +6579,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ranger.disrupting-lunge",
     name: "Disrupting Lunge",
+    gwId: 445,
     type: "pet-attack",
     elite: false,
     profession: "ranger",
@@ -6446,6 +6624,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ranger.call-of-haste",
     name: "Call of Haste",
+    gwId: 415,
     type: "shout",
     elite: false,
     profession: "ranger",
@@ -6470,6 +6649,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ranger.call-of-protection",
     name: "Call of Protection",
+    gwId: 412,
     type: "shout",
     elite: false,
     profession: "ranger",
@@ -6494,6 +6674,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ranger.symbiotic-bond",
     name: "Symbiotic Bond",
+    gwId: 423,
     type: "shout",
     elite: false,
     profession: "ranger",
@@ -6519,6 +6700,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ranger.revive-animal",
     name: "Revive Animal",
+    gwId: 422,
     type: "skill",
     elite: false,
     profession: "ranger",
@@ -6555,6 +6737,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ranger.winnowing",
     name: "Winnowing",
+    gwId: 463,
     type: "nature-ritual",
     elite: false,
     profession: "ranger",
@@ -6603,6 +6786,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ritualist.recuperation",
     name: "Recuperation",
+    gwId: 981,
     type: "binding-ritual",
     elite: false,
     profession: "ritualist",
@@ -6650,6 +6834,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "elementalist.ward-against-melee",
     name: "Ward Against Melee",
+    gwId: 176,
     type: "ward",
     elite: false,
     profession: "elementalist",
@@ -6687,6 +6872,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ranger.barbed-trap",
     name: "Barbed Trap",
+    gwId: 458,
     type: "trap",
     elite: false,
     profession: "ranger",
@@ -6749,6 +6935,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ranger.flame-trap",
     name: "Flame Trap",
+    gwId: 459,
     type: "trap",
     elite: false,
     profession: "ranger",
@@ -6810,6 +6997,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "monk.symbol-of-wrath",
     name: "Symbol of Wrath",
+    gwId: 247,
     type: "spell",
     elite: false,
     profession: "monk",
@@ -6868,6 +7056,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "monk.remove-hex",
     name: "Remove Hex",
+    gwId: 301,
     type: "spell",
     elite: false,
     profession: "monk",
@@ -6891,6 +7080,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "monk.dismiss-condition",
     name: "Dismiss Condition",
+    gwId: 1691,
     type: "spell",
     elite: false,
     profession: "monk",
@@ -6932,6 +7122,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "monk.healing-breeze",
     name: "Healing Breeze",
+    gwId: 288,
     type: "enchantment",
     elite: false,
     profession: "monk",
@@ -6957,6 +7148,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "monk.heal-party",
     name: "Heal Party",
+    gwId: 287,
     type: "spell",
     elite: false,
     profession: "monk",
