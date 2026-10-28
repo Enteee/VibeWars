@@ -7187,6 +7187,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "elementalist.meteor-shower",
     name: "Meteor Shower",
+    gwId: 192,
     type: "spell",
     elite: false,
     profession: "elementalist",
@@ -7245,6 +7246,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "monk.contemplation-of-purity",
     name: "Contemplation of Purity",
+    gwId: 300,
     type: "skill",
     elite: false,
     profession: "monk",
