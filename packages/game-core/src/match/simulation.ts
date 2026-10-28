@@ -194,9 +194,11 @@ import { directionAngle, showsBackTo, spawnFacing } from "./facing.js";
 import {
   GUILD_LORD_HEALTH_PIPS,
   guildLordId,
+  guildLordLossCap,
   guildLordSpec,
   type GuildLord,
 } from "./guild-lord.js";
+import { guardSpec, type BaseGuard } from "./guards.js";
 import { priestId, priestSpec, type Shrine } from "./priest.js";
 import { steerAround } from "./steering.js";
 
@@ -219,8 +221,11 @@ import { steerAround } from "./steering.js";
  * `walkTo`, `setTarget`, `requestSkill`, `requestAttack` and `cancelAction`.
  */
 
-/** What kind of non-player body this is (#467); a priest (#1186) and a Guild Lord (#1222) are a map's. */
-export type CreatureKind = "spirit" | "minion" | "pet" | "priest" | "guild-lord";
+/**
+ * What kind of non-player body this is (#467); a priest (#1186), a Guild
+ * Lord (#1222) and a base guard (#1223) are a map's.
+ */
+export type CreatureKind = "spirit" | "minion" | "pet" | "priest" | "guild-lord" | "guard";
 
 /**
  * How a companion fights (#1110, GW1 pet control): game-protocol's
@@ -245,6 +250,7 @@ export const CREATURE_LOOKS = [
   "spirit",
   "priest",
   "guild-lord",
+  "guard",
 ] as const;
 export type CreatureLook = (typeof CREATURE_LOOKS)[number];
 
@@ -309,6 +315,9 @@ function creaturePips(participant: Participant): number {
       return 0;
   }
 }
+
+/** Below this past a whole second, the clock is read as on it: dt sums drift (#1223). */
+const WHOLE_SECOND_EPSILON = 1e-6;
 
 /** At most this many creatures in a match at once (#1052): a summon past it makes as many as fit. */
 export const MAX_CREATURES = 32;
@@ -525,6 +534,12 @@ export interface MatchSimulationOptions {
    * Omitted or `[]`: none.
    */
   readonly guildLords?: readonly GuildLord[];
+  /**
+   * The Guild Battle's base guards (#1223), each at its post from the
+   * start; a team's Bodyguard cuts the damage to its Guild Lord while it
+   * lives. Omitted or `[]`: none.
+   */
+  readonly guards?: readonly BaseGuard[];
 }
 
 export interface StepResult {
@@ -779,6 +794,8 @@ export class MatchSimulation {
   readonly #guildLordTeams: ReadonlySet<number>;
   /** Damage each team dealt to a foe's Guild Lord (#1222), after armor. */
   readonly #aggression = new Map<number, number>();
+  /** The whole second of match clock the Guild Lords' loss caps are for (#1223). */
+  #lossSecond = 0;
   /** Every ground effect in the match (#1087), in id order. */
   #groundEffects: GroundEffect[] = [];
   /** The id of the next ground effect placed (#1087). */
@@ -822,18 +839,33 @@ export class MatchSimulation {
     const lords = options.guildLords ?? [];
     this.#guildLordTeams = new Set(lords.map((lord) => lord.team));
     const lordPositions = lords.map((lord) => lord.position);
-    for (const lord of lords) {
-      const foes = lords.filter((other) => other.team !== lord.team);
-      this.add(
-        guildLordSpec(
-          lord,
-          spawnFacing(
-            lord.position,
-            foes.map((other) => other.position),
-            lordPositions,
-          ),
-        ),
+    const facingFoes = (team: number, position: Vec2): number =>
+      spawnFacing(
+        position,
+        lords.filter((other) => other.team !== team).map((other) => other.position),
+        lordPositions,
       );
+    for (const lord of lords) {
+      this.add(guildLordSpec(lord, facingFoes(lord.team, lord.position)));
+    }
+    const placed = new Map<number, number>();
+    const bodyguards = new Map<number, Combatant>();
+    for (const guard of options.guards ?? []) {
+      const index = placed.get(guard.team) ?? 0;
+      placed.set(guard.team, index + 1);
+      const added = this.add(guardSpec(guard, index, facingFoes(guard.team, guard.position)));
+      if (guard.role === "bodyguard") {
+        bodyguards.set(guard.team, added.combatant);
+      }
+    }
+    for (const lord of lords) {
+      const record = this.#participants.get(guildLordId(lord.team));
+      if (record !== undefined) {
+        record.combatant.lossGuard = {
+          bodyguard: bodyguards.get(lord.team),
+          remaining: guildLordLossCap(0),
+        };
+      }
     }
   }
 
@@ -1522,6 +1554,7 @@ export class MatchSimulation {
         creature === undefined ||
         creature.kind === "priest" ||
         creature.kind === "guild-lord" ||
+        creature.kind === "guard" ||
         record.combatant.dead
       ) {
         continue;
@@ -2065,6 +2098,7 @@ export class MatchSimulation {
 
     this.#tick += 1;
     this.#elapsedSeconds += dt;
+    this.#refillLossCaps();
     this.checkMatchEnd();
     for (const record of this.#participants.values()) {
       this.#stepStart.set(record.id, record.position);
@@ -4424,6 +4458,25 @@ export class MatchSimulation {
     return { byTeam };
   }
 
+  /**
+   * As each whole second of match clock starts, every Guild Lord's cap
+   * on its Health loss refills to that second's (#1223).
+   */
+  #refillLossCaps(): void {
+    const second = Math.floor(this.#elapsedSeconds + WHOLE_SECOND_EPSILON);
+    if (second === this.#lossSecond) {
+      return;
+    }
+    this.#lossSecond = second;
+    for (const record of this.#participants.values()) {
+      const guard = record.combatant.lossGuard;
+      if (guard === undefined) {
+        continue;
+      }
+      guard.remaining = guildLordLossCap(second);
+    }
+  }
+
   /** Whether `team`'s Guild Lord is in the match and alive (#1222). */
   #guildLordLives(team: number): boolean {
     const lord = this.#participants.get(guildLordId(team));
@@ -4837,6 +4890,7 @@ export class MatchSimulation {
       moving: false,
       controlled: { minion: 0, spirit: 0, pet: 0 },
       equipment: spec.equipment,
+      lossGuard: undefined,
     };
   }
 }

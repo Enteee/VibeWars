@@ -20,6 +20,7 @@ import {
   type ProfessionId,
   type Segment,
   type GuildLord,
+  type BaseGuard,
   type Shrine,
 } from "@vibewars/game-core";
 import {
@@ -114,6 +115,8 @@ export interface HostMap {
   readonly shrines: readonly Shrine[];
   /** Its Guild Lords (#1222), `[]` but on a Guild Battle map. */
   readonly guildLords: readonly GuildLord[];
+  /** Its base guards (#1223), in the map's order, `[]` but on a Guild Battle map. */
+  readonly guards: readonly BaseGuard[];
 }
 
 export interface MatchHostOptions {
@@ -225,6 +228,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     bounds: map.bounds,
     shrines: map.shrines,
     guildLords: map.guildLords,
+    guards: map.guards,
   });
   const seats = new Map<string, Seat>();
   const seatOfPeer = new Map<string, Seat>();

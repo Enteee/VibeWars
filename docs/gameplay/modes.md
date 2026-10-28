@@ -51,4 +51,22 @@ armor, degeneration and life stealing not counted. Equal aggression,
 or both lords dying together, and both lose. Guild Hall Isle plays it,
 and no Random Arena does.
 
+Each base is **guarded** (#1223), by `"guard"` objectives naming a
+role: a Bodyguard and two Knights by the Guild Lord, an Archer at the
+back of the lord room, and a Footman and an Archer outside each gate.
+All have 480 Health. Each holds its post: it fights foes near it, and
+walks home past its leash, Knights far (900), Archers hardly (300). A
+Knight (armor 80, +20 vs physical) and a Footman fight with a sword and
+Sever Artery, a Knight with Healing Signet and "Watch Yourself!" too, a
+Footman with Distracting Blow; an Archer (armor 70, +30 vs elemental)
+with a longbow, Pin Down and Troll Unguent. The Bodyguard (armor 60)
+heals with Heal Other, its Guild Lord first, and while it lives its
+lord takes **20% less damage**. Guards are never raised and count for
+nobody. A Guild Lord's **Amulet of Protection** caps the Health it
+loses in each second of the match: 25 at the start, rising evenly to
+300 at 12 minutes. A blow past the cap deals only what is left of it,
+so aggression grows no faster; a Deep Wound's cut and degeneration
+take no more than what is left either, so degeneration never kills a
+lord whose cap is spent.
+
 How each one ends, in full, is in [combat](combat.md#match-end).

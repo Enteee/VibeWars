@@ -56,7 +56,7 @@ export function playBuild(
 ): BehaviourIntent {
   return paced(behaviour.thinkSeconds, cursor, context, () => {
     const foes = livingFoes(context);
-    return think(context, foes, teamTarget(context, foes));
+    return think(context, foes, livingMembers(context), teamTarget(context, foes));
   });
 }
 
@@ -64,8 +64,10 @@ export function playBuild(
  * `guard` (#1222): `play-build` against only the foes within `aggroUnits`
  * of its post, the weakest of them its target, never the team's. Past the
  * leash it walks back, dropping its target, until home again; with no foe
- * near, it walks back too. Rooted, it never moves, and fights only the
- * foes it sees: it cannot walk round a wall to one.
+ * near and no ally to heal, it walks back too. Rooted, it never moves, and
+ * fights only the foes it sees: it cannot walk round a wall to one. Its
+ * allies are its team's bodies near its post, the map's NPCs among them
+ * (#1223), its Guild Lord first, so a tie heals the lord.
  */
 export function guard(
   behaviour: Guard,
@@ -84,14 +86,25 @@ export function guard(
       distance(foe.position, behaviour.post) <= behaviour.aggroUnits &&
       (!behaviour.rooted || context.sees(foe.position)),
   );
-  if (cursor.returning || foes.length === 0) {
+  const team = self.combatant.team;
+  const allies = context.participants
+    .filter(
+      (other) =>
+        !other.combatant.dead &&
+        other.combatant.team === team &&
+        other.creature?.ownerId === undefined &&
+        (other.id === self.id || distance(other.position, behaviour.post) <= behaviour.aggroUnits),
+    )
+    .sort((a, b) => lordFirst(a) - lordFirst(b));
+  const healing = allies.some((ally) => healthFraction(ally) < HURT_FRACTION);
+  if (cursor.returning || (foes.length === 0 && !healing)) {
     cursor.heldMove = { moveTo: undefined };
     return behaviour.rooted || home <= context.stepUnits
       ? NOTHING
       : { ...NOTHING, moveTo: behaviour.post };
   }
   const intent = paced(behaviour.thinkSeconds, cursor, context, () =>
-    think(context, foes, weakest(self, foes)?.id),
+    think(context, foes, allies, weakest(self, foes)?.id),
   );
   return behaviour.rooted ? { ...intent, moveDirection: ZERO, moveTo: undefined } : intent;
 }
@@ -124,6 +137,20 @@ function paced(
   return intent;
 }
 
+/** 0 for a Guild Lord, 1 for anyone else: a stable sort puts the lord first. */
+function lordFirst(participant: Participant): number {
+  return participant.creature?.kind === "guild-lord" ? 0 : 1;
+}
+
+/** The living players of `context.self`'s team, itself included, in simulation order. */
+function livingMembers(context: BehaviourContext): Participant[] {
+  const team = context.self.combatant.team;
+  return context.participants.filter(
+    (other) =>
+      !other.combatant.dead && other.combatant.team === team && other.creature === undefined,
+  );
+}
+
 /** The living foes of `context.self`, in simulation order. */
 function livingFoes(context: BehaviourContext): Participant[] {
   const team = context.self.combatant.team;
@@ -132,18 +159,18 @@ function livingFoes(context: BehaviourContext): Participant[] {
   );
 }
 
-/** One decision against `foes`, with `targetId` the one to fight. */
+/**
+ * One decision against `foes`, for `allies` (its own included), with
+ * `targetId` the one to fight.
+ */
 function think(
   context: BehaviourContext,
   foes: readonly Participant[],
+  allies: readonly Participant[],
   targetId: string | undefined,
 ): BehaviourIntent {
   const self = context.self;
   const team = self.combatant.team;
-  const allies = context.participants.filter(
-    (other) =>
-      !other.combatant.dead && other.combatant.team === team && other.creature === undefined,
-  );
   const bar = self.skillBar.flatMap((id) => {
     const skill = id === null ? undefined : getSkill(id);
     return skill === undefined ? [] : [skill];
