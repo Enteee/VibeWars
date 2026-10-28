@@ -21,8 +21,8 @@ import { cssColour, professionLabel } from "./character-preview.js";
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 /** The arena's body radius: the figure is drawn at its 1:1 scale. */
 const BODY_RADIUS = RULES.collision.playerRadius;
-/** Room round the body for its marks: the weapon reaches r + 7.5, the off-hand r + 7. */
-const MARK_ROOM = 8;
+/** Room round the body for its marks: the weapon reaches r + 7.5, its 4 px casing 2 px more. */
+const MARK_ROOM = 10;
 /** Facing right, as the player-mark reference sheet draws a body. */
 const FIGURE_FACING = 0;
 

@@ -100,8 +100,8 @@ describe("characterAppearance (#1250)", () => {
 describe("figureBody (#1250)", () => {
   it("is your own body at rest, facing right, centred with room for its marks", () => {
     expect(figureBody({ weaponId: "sword", offhandId: "shield" })).toEqual({
-      x: 22,
-      y: 22,
+      x: 24,
+      y: 24,
       r: RULES.collision.playerRadius,
       facing: 0,
       team: "self",
