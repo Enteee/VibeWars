@@ -7,8 +7,12 @@ import {
   ENCHANT_RING_OFFSET,
   HEX_RING_DASHES,
   HEX_RING_OFFSET,
+  INVULNERABLE_MIN_ALPHA,
+  INVULNERABLE_PULSE_SECONDS,
   bodyFlags,
   bodyRings,
+  invulnerableAlpha,
+  invulnerableRing,
 } from "./body-rings.js";
 
 /** Some status of `category`, so the test does not pin which. */
@@ -80,5 +84,26 @@ describe("bodyRings (#1117)", () => {
       expect(ring.width).toBe(BODY_RING_WIDTH);
       expect(ring.radius + ring.width / 2).toBeLessThanOrEqual(r + 6);
     }
+  });
+});
+
+describe("the invulnerable shimmer (#1233)", () => {
+  it("is a solid ring where the hex ring goes", () => {
+    const ring = invulnerableRing(14);
+    expect(ring).toMatchObject({
+      kind: "invulnerable",
+      radius: 14 + HEX_RING_OFFSET,
+      width: BODY_RING_WIDTH,
+      arcs: [{ from: 0, to: 2 * Math.PI }],
+    });
+    expect(invulnerableRing(14)).toBe(ring);
+  });
+
+  it("pulses between its floor and 1, and holds at 1 under reduced motion", () => {
+    expect(invulnerableAlpha(0, false)).toBe(1);
+    expect(invulnerableAlpha(INVULNERABLE_PULSE_SECONDS / 2, false)).toBeCloseTo(
+      INVULNERABLE_MIN_ALPHA,
+    );
+    expect(invulnerableAlpha(INVULNERABLE_PULSE_SECONDS / 2, true)).toBe(1);
   });
 });

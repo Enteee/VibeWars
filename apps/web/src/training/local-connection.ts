@@ -112,6 +112,7 @@ function toPlayerSnapshot(
     swingElapsed: swing.elapsed,
     swingTotal: swing.total,
     knockdownRemaining: combatant.knockdownRemaining,
+    invulnerableSeconds: combatant.invulnerableRemaining,
     healthPips: pips.health,
     energyPips: pips.energy,
     statuses: wireStatuses(combatant.statuses.active).map((status) =>

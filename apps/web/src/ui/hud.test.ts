@@ -18,6 +18,7 @@ import {
   describeRefusal,
   enemyPips,
   formatClock,
+  invulnerableLabel,
   isAttackingTarget,
   lostHealthPercent,
   moraleLabel,
@@ -69,6 +70,7 @@ function player(fields: Partial<PlayerSnapshot>): PlayerSnapshot {
     swingElapsed: 0,
     swingTotal: 0,
     knockdownRemaining: 0,
+    invulnerableSeconds: 0,
     healthPips: 0,
     energyPips: 0,
     creature: undefined,
@@ -136,6 +138,14 @@ describe("targetHealthPercent (#484)", () => {
 
   it("is of the current maximum, which can shrink", () => {
     expect(targetHealthPercent(player({ health: 200, maxHealth: 400 }))).toBe(50);
+  });
+});
+
+describe("invulnerableLabel (#1233)", () => {
+  it("counts the seconds left, rounded up, as a clock", () => {
+    expect(invulnerableLabel(4.2)).toBe("Invulnerable 0:05");
+    expect(invulnerableLabel(4)).toBe("Invulnerable 0:04");
+    expect(invulnerableLabel(0.01)).toBe("Invulnerable 0:01");
   });
 });
 
@@ -522,6 +532,7 @@ describe("targetHintDismissed", () => {
     swingElapsed: 0,
     swingTotal: 0,
     knockdownRemaining: 0,
+    invulnerableSeconds: 0,
     healthPips: 0,
     energyPips: 0,
     creature: undefined,
@@ -617,6 +628,7 @@ describe("isAttackingTarget", () => {
     swingElapsed: 0,
     swingTotal: 0,
     knockdownRemaining: 0,
+    invulnerableSeconds: 0,
     healthPips: 0,
     energyPips: 0,
     creature: undefined,
@@ -725,6 +737,7 @@ describe("targetProfessionIcons (#281)", () => {
     swingElapsed: 0,
     swingTotal: 0,
     knockdownRemaining: 0,
+    invulnerableSeconds: 0,
     healthPips: 0,
     energyPips: 0,
     creature: undefined,

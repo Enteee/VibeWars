@@ -67,7 +67,7 @@ import {
 import { AttackClock, REST_FRAME, shownFrame } from "./attack-clock.js";
 import { impactMarks, mergeImpacts, type Impact } from "./body-impacts.js";
 import { conditionMarks, cuePhase } from "./body-conditions.js";
-import { bodyRings } from "./body-rings.js";
+import { bodyRings, invulnerableAlpha, invulnerableRing } from "./body-rings.js";
 import { DEAD_DASH, DEAD_GAP, creatureOutline, dashes } from "./creature-shape.js";
 import { CAST_BADGE_SIZE, CAST_BAR_RISE, castBadgeLayout } from "./cast-badge.js";
 import {
@@ -874,11 +874,18 @@ export class ArenaScene extends Phaser.Scene {
     }
   }
 
-  /** The enchantment and hex rings round a living body (#1117), circular even lying down. */
+  /**
+   * The enchantment and hex rings round a living body (#1117), and the
+   * shimmer of an invulnerable one (#1233), circular even lying down.
+   */
   private drawBodyRings(g: Phaser.GameObjects.Graphics, actor: RenderableActor): void {
     const { x, y } = actor.position;
-    for (const ring of bodyRings(actor.radius, actor)) {
-      g.lineStyle(ring.width, ring.colour, 1);
+    const rings = bodyRings(actor.radius, actor);
+    const shimmer = actor.invulnerable ? [invulnerableRing(actor.radius)] : [];
+    for (const ring of [...rings, ...shimmer]) {
+      const alpha =
+        ring.kind === "invulnerable" ? invulnerableAlpha(this.now, this.reducedMotion) : 1;
+      g.lineStyle(ring.width, ring.colour, alpha);
       for (const arc of ring.arcs) {
         g.beginPath();
         g.arc(x, y, ring.radius, arc.from, arc.to);
