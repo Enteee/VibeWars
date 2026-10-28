@@ -58,8 +58,12 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     case "recharge-others":
     case "disable-skill":
     case "lengthen-recharge":
-    case "summon":
       return [];
+    // A spirit does what it projects (#1064): Recuperation heals.
+    case "summon":
+      return effect.creature.aura === undefined
+        ? []
+        : statusRoles(getStatusDefinition(effect.creature.aura.statusId));
   }
 }
 

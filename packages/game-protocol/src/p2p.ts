@@ -47,6 +47,9 @@ export const CHANNELS = [
   "lobby-note",
   "lobby-hello",
   "lobby-welcome",
+  "stay-together",
+  "party-formed",
+  "party-split",
   "match-start",
   "rejoin-challenge",
   "rejoin-proof",
@@ -538,14 +541,17 @@ export interface PeerLobbyJoin {
 }
 
 /**
- * A queued joiner's proof of its ticket (#871): `admissionSig` is its
- * ticket key's BIP-340 signature of the `vibewars-admit` digest, which
+ * A queued joiner's proof of its seat (#871, #882): `admissionSig` is its
+ * seat key's BIP-340 signature of the `vibewars-admit` digest, which
  * names the group, the planned host and the joiner's own peer id, so it
  * is good for that host and that peer alone. The key never leaves it.
  */
 export interface WireAdmission {
-  /** 64 lowercase hex digits: the ticket's x-only public key. */
-  readonly ticketId: string;
+  /**
+   * 64 lowercase hex digits: a solo's ticket id, or a party member's own
+   * x-only public key.
+   */
+  readonly seatKey: string;
   /** 128 lowercase hex digits. */
   readonly admissionSig: string;
 }
@@ -567,6 +573,26 @@ export type PeerLobbyHello = Readonly<Record<string, never>>;
 export interface WireLobbyWelcome {
   readonly hostSig: string;
 }
+
+/**
+ * A winner of a queued match to its host, while the host holds the lobby
+ * open after it (#882): a fresh member key, 64 lowercase hex digits, to
+ * stay together as a party, or `null` not to.
+ */
+export interface PeerStayTogether {
+  readonly memberKey: string | null;
+}
+
+/**
+ * The host to each winner who said yes, and only to it (#882): every
+ * winner did, and these are their keys, sorted. They queue as one party.
+ */
+export interface WirePartyFormed {
+  readonly members: readonly string[];
+}
+
+/** The host to each winner who said yes (#882): someone did not; queue alone. */
+export type WirePartySplit = Readonly<Record<string, never>>;
 
 /**
  * The character a lobby member brings (#580), for the others to see:
@@ -1424,6 +1450,10 @@ function parseLobbyCharacter(value: unknown): WireLobbyCharacter | null | undefi
 const TICKET_ID = /^[0-9a-f]{64}$/;
 const TICKET_SIG = /^[0-9a-f]{128}$/;
 
+function isTicketId(value: unknown): value is string {
+  return typeof value === "string" && TICKET_ID.test(value);
+}
+
 function isTicketSig(value: unknown): value is string {
   return typeof value === "string" && TICKET_SIG.test(value);
 }
@@ -1434,11 +1464,8 @@ function parseAdmission(value: unknown): WireAdmission | null | undefined {
     return null;
   }
   const raw = fields(value);
-  return raw !== undefined &&
-    typeof raw.ticketId === "string" &&
-    TICKET_ID.test(raw.ticketId) &&
-    isTicketSig(raw.admissionSig)
-    ? { ticketId: raw.ticketId, admissionSig: raw.admissionSig }
+  return raw !== undefined && isTicketId(raw.seatKey) && isTicketSig(raw.admissionSig)
+    ? { seatKey: raw.seatKey, admissionSig: raw.admissionSig }
     : undefined;
 }
 
@@ -1474,6 +1501,41 @@ export function parsePeerLobbyHello(value: unknown): PeerLobbyHello | undefined 
 export function parseWireLobbyWelcome(value: unknown): WireLobbyWelcome | undefined {
   const raw = fields(value);
   return raw !== undefined && isTicketSig(raw.hostSig) ? { hostSig: raw.hostSig } : undefined;
+}
+
+/** The `"stay-together"` channel. */
+export function parsePeerStayTogether(value: unknown): PeerStayTogether | undefined {
+  const raw = fields(value);
+  return raw !== undefined && (raw.memberKey === null || isTicketId(raw.memberKey))
+    ? { memberKey: raw.memberKey }
+    : undefined;
+}
+
+/** The longest party there is: a 4v4 side (`teamSizeOf`). */
+const MAX_PARTY_MEMBERS = 4;
+
+/** The `"party-formed"` channel: two or more keys, sorted, each once. */
+export function parseWirePartyFormed(value: unknown): WirePartyFormed | undefined {
+  const raw = fields(value);
+  const members: unknown = raw?.members;
+  if (!Array.isArray(members) || members.length < 2 || members.length > MAX_PARTY_MEMBERS) {
+    return undefined;
+  }
+  const keys: string[] = [];
+  for (const member of members as readonly unknown[]) {
+    const previous = keys.at(-1);
+    if (!isTicketId(member) || (previous !== undefined && previous >= member)) {
+      return undefined;
+    }
+    keys.push(member);
+  }
+  return { members: keys };
+}
+
+/** The `"party-split"` channel. */
+export function parseWirePartySplit(value: unknown): WirePartySplit | undefined {
+  const raw = fields(value);
+  return raw !== undefined && Object.keys(raw).length === 0 ? {} : undefined;
 }
 
 function parseLobbyTeam(value: unknown): 0 | 1 | null | undefined {

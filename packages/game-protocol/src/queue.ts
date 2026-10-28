@@ -45,8 +45,13 @@ export interface QueueTicket {
   /** `PROTOCOL_VERSION`; a ticket of another is never matched. */
   readonly protocol: string;
   readonly mode: QueueMode;
-  /** 1, or `teamSizeOf(mode)` for a team that stays together. */
-  readonly partySize: number;
+  /**
+   * The public key of every player it queues, sorted, `ticketId` first:
+   * `[ticketId]` alone, or `teamSizeOf(mode)` of them for a team that
+   * stayed together (#882). Each member holds its own key; the party's
+   * leader, the lowest, publishes with it.
+   */
+  readonly members: readonly string[];
   /** When it entered the queue, ms since the epoch, as its owner claims. */
   readonly enteredAt: number;
   /** When this copy of it was published, ms since the epoch. */
@@ -67,10 +72,38 @@ function isTime(value: unknown): value is number {
 }
 
 /**
+ * `value` as the members of a ticket `ticketId` of `mode`: one key or a
+ * whole team of them, sorted, each once, `ticketId` first.
+ */
+function parseMembers(
+  value: unknown,
+  ticketId: string,
+  mode: QueueMode,
+): readonly string[] | undefined {
+  if (!Array.isArray(value) || (value.length !== 1 && value.length !== teamSizeOf(mode))) {
+    return undefined;
+  }
+  const members: string[] = [];
+  for (const member of value as readonly unknown[]) {
+    const previous = members.at(-1);
+    if (
+      typeof member !== "string" ||
+      !TICKET_ID.test(member) ||
+      (previous !== undefined && previous >= member)
+    ) {
+      return undefined;
+    }
+    members.push(member);
+  }
+  return members[0] === ticketId ? members : undefined;
+}
+
+/**
  * A ticket as a peer published it, or `undefined` if it is not one: a bad
- * id, an unknown mode, a party that is neither alone nor a whole team, a
- * time that is not a whole number of ms, or any field more than a ticket
- * has, so a flood of padded events costs a client nothing to refuse.
+ * id, an unknown mode, members that are neither alone nor a whole team,
+ * unsorted, repeated or not led by its id, a time that is not a whole
+ * number of ms, or any field more than a ticket has, so a flood of
+ * padded events costs a client nothing to refuse.
  */
 export function parseQueueTicket(raw: unknown): QueueTicket | undefined {
   if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
@@ -79,7 +112,7 @@ export function parseQueueTicket(raw: unknown): QueueTicket | undefined {
   if (Object.keys(raw).length !== TICKET_FIELDS) {
     return undefined;
   }
-  const { ticketId, protocol, mode, partySize, enteredAt, heartbeatAt } = raw as Record<
+  const { ticketId, protocol, mode, members, enteredAt, heartbeatAt } = raw as Record<
     string,
     unknown
   >;
@@ -90,14 +123,13 @@ export function parseQueueTicket(raw: unknown): QueueTicket | undefined {
     protocol.length === 0 ||
     protocol.length > MAX_PROTOCOL_LENGTH ||
     !isQueueMode(mode) ||
-    typeof partySize !== "number" ||
     !isTime(enteredAt) ||
     !isTime(heartbeatAt)
   ) {
     return undefined;
   }
-  if (partySize !== 1 && partySize !== teamSizeOf(mode)) {
-    return undefined;
-  }
-  return { ticketId, protocol, mode, partySize, enteredAt, heartbeatAt };
+  const parsed = parseMembers(members, ticketId, mode);
+  return parsed === undefined
+    ? undefined
+    : { ticketId, protocol, mode, members: parsed, enteredAt, heartbeatAt };
 }

@@ -63,7 +63,7 @@ function ticketOf(key: TicketKey, extra: Partial<QueueTicket> = {}): QueueTicket
     ticketId: key.ticketId,
     protocol: PROTOCOL_VERSION,
     mode: "random-arena-2v2",
-    partySize: 1,
+    members: [key.ticketId],
     enteredAt: NOW - 1_000,
     heartbeatAt: NOW,
     ...extra,
@@ -238,7 +238,7 @@ describe("the Nostr queue board (#872)", () => {
 
     const forged = remoteEvent(key, ticketOf(key));
     deliver(socket, { ...forged, sig: newTicketKey().sign(hexToBytes(forged.id)) });
-    deliver(socket, { ...forged, content: JSON.stringify(ticketOf(key, { partySize: 1 })) + " " });
+    deliver(socket, { ...forged, content: JSON.stringify(ticketOf(key)) + " " });
     deliver(socket, remoteEvent(key, ticketOf(key, { protocol: "someone-else" })));
     deliver(socket, remoteEvent(key, ticketOf(key), QUEUE_EVENT_KIND + 1));
     deliver(socket, remoteEvent(key, { ...ticketOf(key), padding: "x" }));

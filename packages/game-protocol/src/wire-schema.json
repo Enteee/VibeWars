@@ -20,6 +20,9 @@
     "lobby-note",
     "lobby-hello",
     "lobby-welcome",
+    "stay-together",
+    "party-formed",
+    "party-split",
     "match-start",
     "rejoin-challenge",
     "rejoin-proof",
@@ -81,6 +84,7 @@
     "pious-haste-run",
     "poison",
     "protective-spirit",
+    "recuperation",
     "regeneration",
     "reversal-of-fortune",
     "sand-shards",
@@ -103,7 +107,8 @@
     "weapon-of-aggression",
     "weapon-of-quickening",
     "weapon-of-remedy",
-    "weapon-of-warding"
+    "weapon-of-warding",
+    "winnowing"
   ],
   "constants": {
     "FORMATION_SETTLE_MS": { "literal": 3000 },
@@ -222,6 +227,8 @@
         { "literal": "lobby-state" },
         { "literal": "lobby-welcome" },
         { "literal": "match-start" },
+        { "literal": "party-formed" },
+        { "literal": "party-split" },
         { "literal": "recharge" },
         { "literal": "refuse" },
         { "literal": "refused" },
@@ -229,6 +236,7 @@
         { "literal": "rejoin-proof" },
         { "literal": "skill-bar" },
         { "literal": "snapshot" },
+        { "literal": "stay-together" },
         { "literal": "welcome" }
       ]
     },
@@ -421,6 +429,7 @@
                   { "literal": "pious-haste-run" },
                   { "literal": "poison" },
                   { "literal": "protective-spirit" },
+                  { "literal": "recuperation" },
                   { "literal": "regeneration" },
                   { "literal": "reversal-of-fortune" },
                   { "literal": "sand-shards" },
@@ -443,7 +452,8 @@
                   { "literal": "weapon-of-aggression" },
                   { "literal": "weapon-of-quickening" },
                   { "literal": "weapon-of-remedy" },
-                  { "literal": "weapon-of-warding" }
+                  { "literal": "weapon-of-warding" },
+                  { "literal": "winnowing" }
                 ]
               }
             },
@@ -525,6 +535,7 @@
                   { "literal": "pious-haste-run" },
                   { "literal": "poison" },
                   { "literal": "protective-spirit" },
+                  { "literal": "recuperation" },
                   { "literal": "regeneration" },
                   { "literal": "reversal-of-fortune" },
                   { "literal": "sand-shards" },
@@ -547,7 +558,8 @@
                   { "literal": "weapon-of-aggression" },
                   { "literal": "weapon-of-quickening" },
                   { "literal": "weapon-of-remedy" },
-                  { "literal": "weapon-of-warding" }
+                  { "literal": "weapon-of-warding" },
+                  { "literal": "winnowing" }
                 ]
               }
             },
@@ -626,6 +638,7 @@
                   { "literal": "pious-haste-run" },
                   { "literal": "poison" },
                   { "literal": "protective-spirit" },
+                  { "literal": "recuperation" },
                   { "literal": "regeneration" },
                   { "literal": "reversal-of-fortune" },
                   { "literal": "sand-shards" },
@@ -648,7 +661,8 @@
                   { "literal": "weapon-of-aggression" },
                   { "literal": "weapon-of-quickening" },
                   { "literal": "weapon-of-remedy" },
-                  { "literal": "weapon-of-warding" }
+                  { "literal": "weapon-of-warding" },
+                  { "literal": "winnowing" }
                 ]
               }
             },
@@ -724,6 +738,7 @@
                   { "literal": "pious-haste-run" },
                   { "literal": "poison" },
                   { "literal": "protective-spirit" },
+                  { "literal": "recuperation" },
                   { "literal": "regeneration" },
                   { "literal": "reversal-of-fortune" },
                   { "literal": "sand-shards" },
@@ -746,7 +761,8 @@
                   { "literal": "weapon-of-aggression" },
                   { "literal": "weapon-of-quickening" },
                   { "literal": "weapon-of-remedy" },
-                  { "literal": "weapon-of-warding" }
+                  { "literal": "weapon-of-warding" },
+                  { "literal": "winnowing" }
                 ]
               }
             },
@@ -898,6 +914,7 @@
                   { "literal": "pious-haste-run" },
                   { "literal": "poison" },
                   { "literal": "protective-spirit" },
+                  { "literal": "recuperation" },
                   { "literal": "regeneration" },
                   { "literal": "reversal-of-fortune" },
                   { "literal": "sand-shards" },
@@ -920,7 +937,8 @@
                   { "literal": "weapon-of-aggression" },
                   { "literal": "weapon-of-quickening" },
                   { "literal": "weapon-of-remedy" },
-                  { "literal": "weapon-of-warding" }
+                  { "literal": "weapon-of-warding" },
+                  { "literal": "winnowing" }
                 ]
               }
             },
@@ -987,6 +1005,7 @@
                   { "literal": "pious-haste-run" },
                   { "literal": "poison" },
                   { "literal": "protective-spirit" },
+                  { "literal": "recuperation" },
                   { "literal": "regeneration" },
                   { "literal": "reversal-of-fortune" },
                   { "literal": "sand-shards" },
@@ -1009,7 +1028,8 @@
                   { "literal": "weapon-of-aggression" },
                   { "literal": "weapon-of-quickening" },
                   { "literal": "weapon-of-remedy" },
-                  { "literal": "weapon-of-warding" }
+                  { "literal": "weapon-of-warding" },
+                  { "literal": "winnowing" }
                 ]
               }
             },
@@ -1211,7 +1231,7 @@
               {
                 "properties": [
                   { "name": "admissionSig", "optional": false, "type": "string" },
-                  { "name": "ticketId", "optional": false, "type": "string" }
+                  { "name": "seatKey", "optional": false, "type": "string" }
                 ]
               }
             ]
@@ -1267,6 +1287,11 @@
       "properties": [
         { "name": "playerId", "optional": false, "type": "string" },
         { "name": "proof", "optional": false, "type": "string" }
+      ]
+    },
+    "PeerStayTogether": {
+      "properties": [
+        { "name": "memberKey", "optional": false, "type": { "union": ["null", "string"] } }
       ]
     },
     "PeerWelcome": {
@@ -1354,6 +1379,7 @@
       "properties": [
         { "name": "enteredAt", "optional": false, "type": "number" },
         { "name": "heartbeatAt", "optional": false, "type": "number" },
+        { "name": "members", "optional": false, "type": { "array": "string" } },
         {
           "name": "mode",
           "optional": false,
@@ -1365,7 +1391,6 @@
             ]
           }
         },
-        { "name": "partySize", "optional": false, "type": "number" },
         { "name": "protocol", "optional": false, "type": "string" },
         { "name": "ticketId", "optional": false, "type": "string" }
       ]
@@ -1469,7 +1494,7 @@
     "WireAdmission": {
       "properties": [
         { "name": "admissionSig", "optional": false, "type": "string" },
-        { "name": "ticketId", "optional": false, "type": "string" }
+        { "name": "seatKey", "optional": false, "type": "string" }
       ]
     },
     "WireCalls": {
@@ -1896,6 +1921,10 @@
         { "name": "matchId", "optional": false, "type": "string" }
       ]
     },
+    "WirePartyFormed": {
+      "properties": [{ "name": "members", "optional": false, "type": { "array": "string" } }]
+    },
+    "WirePartySplit": { "properties": [], "index": [{ "key": "string", "value": "never" }] },
     "WirePing": {
       "properties": [
         { "name": "byId", "optional": false, "type": "string" },

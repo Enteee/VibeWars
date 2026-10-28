@@ -151,7 +151,10 @@ export type StatusId =
   // Dervish earth enchantments (#1021).
   | "staggering-force"
   | "dust-cloak"
-  | "aura-of-thorns";
+  | "aura-of-thorns"
+  // Spirits' auras (#1064), worn while in a spirit's range.
+  | "winnowing"
+  | "recuperation";
 
 /** Health one pip of regeneration or degeneration is worth, per second (GW1). */
 export const HEALTH_PER_PIP = 2;
@@ -219,6 +222,12 @@ export interface StatusDefinition {
    */
   readonly healthPerSecond: number;
   /**
+   * Health per second healed on top of `healthPerSecond` while the bearer
+   * is within earshot of a living spirit, any team's (#1064): Spirit Light
+   * Weapon's "an additional 21 Health per second". A heal, as its sibling.
+   */
+  readonly healthPerSecondNearSpirit: number;
+  /**
    * Armor taken before `armorModifier`s add, never below a floor (#763):
    * Cracked Armor's −20, not below 60. `undefined`: none.
    */
@@ -245,6 +254,13 @@ export interface StatusDefinition {
    * attack skill's bonus damage is not scaled.
    */
   readonly weaponDamageMultiplier: number;
+  /**
+   * Damage added to each physical hit the bearer takes (#1064):
+   * Winnowing's 4. After the attacker's side and before armor, fixed
+   * "deals only N damage" hits included: it is on the victim, not on the
+   * attack.
+   */
+  readonly physicalDamageTakenBonus: number;
   /**
    * The type the bearer's attacks deal, the weapon's roll included
    * (#1021): Staggering Force's and Dust Cloak's "your attacks deal
@@ -401,6 +417,12 @@ export interface StatusDefinition {
    * a recharge already running keeps its length when the status ends.
    */
   readonly spellRechargeFaster: number;
+  /**
+   * The share taken off the recharge of each binding ritual the bearer
+   * finishes (#1064): Weapon of Quickening's 0.33, read as
+   * `spellRechargeFaster` is.
+   */
+  readonly bindingRitualRechargeFaster: number;
   /**
    * Multiplier on how long a hex takes to cast on the bearer (#944): Holy
    * Veil's 2. Read once, as the cast begins; an instant hex stays instant.
@@ -560,12 +582,14 @@ function define(
     armorWhileStill: 0,
     healthPerSecondWhileMoving: 0,
     healthPerSecond: 0,
+    healthPerSecondNearSpirit: 0,
     armorReduction: undefined,
     moveSpeedMultiplier: 1,
     attackMissChance: 0,
     maxHealthLoss: undefined,
     healingMultiplier: 1,
     weaponDamageMultiplier: 1,
+    physicalDamageTakenBonus: 0,
     attackDamageType: undefined,
     attributeDelta: 0,
     castTimeMultiplier: 1,
@@ -595,6 +619,7 @@ function define(
     reversesNextDamage: undefined,
     extraStrikesPerHit: 0,
     spellRechargeFaster: 0,
+    bindingRitualRechargeFaster: 0,
     incomingHexCastTimeMultiplier: 1,
     triggers: [],
     ...overrides,
@@ -982,6 +1007,19 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     profession: "warrior",
     armorModifier: -40,
   }),
+  // What a spirit projects on whoever is in its range (#1064): worn while
+  // there, never stripped, only escaped. "Non-spirit creatures within
+  // range take 4 additional damage whenever they take physical damage."
+  winnowing: define("winnowing", "Winnowing", "skill-effect", {
+    profession: "ranger",
+    physicalDamageTakenBonus: 4,
+  }),
+  // "Non-Spirit allies within its range gain +1...3...3 Health
+  // regeneration": the rank-12 3, as statuses carry fixed numbers.
+  recuperation: define("recuperation", "Recuperation", "skill-effect", {
+    profession: "ritualist",
+    healthPips: 3,
+  }),
   // "Fall Back!" at rank 12: 13 Health per second while moving, 33%
   // faster, ending on its bearer's hit.
   "fall-back": define("fall-back", "Fall Back!", "shout", {
@@ -1071,17 +1109,17 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   }),
   // "Target ally gains 5...21...25 Health per second and an additional
   // 5...21...25 Health per second if that ally is within earshot of a
-  // Spirit": there are no spirits yet (#467), so it is the 21 alone, as
-  // in GW1 with none up.
+  // Spirit" (#1064): any team's spirit.
   "spirit-light-weapon": define("spirit-light-weapon", "Spirit Light Weapon", "weapon-spell", {
     profession: "ritualist",
     healthPerSecond: 21,
+    healthPerSecondNearSpirit: 21,
   }),
-  // "Spells and Binding Rituals recharge 33% faster": there are no
-  // binding rituals yet (#467), so it is spells alone.
+  // "Spells and Binding Rituals recharge 33% faster" (#1064).
   "weapon-of-quickening": define("weapon-of-quickening", "Weapon of Quickening", "weapon-spell", {
     profession: "ritualist",
     spellRechargeFaster: 0.33,
+    bindingRitualRechargeFaster: 0.33,
   }),
   // "You attack 25% faster": Heart of Fury's speed-up, as a weapon spell.
   "weapon-of-aggression": define("weapon-of-aggression", "Weapon of Aggression", "weapon-spell", {
@@ -1333,6 +1371,11 @@ export interface ActiveStatus {
    * `null` for every other status.
    */
   readonly maintained: { readonly seq: number; outOfRangeSeconds: number } | null;
+  /**
+   * Worn from a spirit while in its range (#1064, `project`): no end of its
+   * own, and it leaves when its bearer does. `false` for every other.
+   */
+  readonly projected: boolean;
 }
 
 export function isStatusId(value: unknown): value is StatusId {
@@ -1493,6 +1536,7 @@ export class StatusSet {
       sourceId,
       outbreak,
       maintained: null,
+      projected: false,
     });
     if (!wasActive) {
       this.#gained(id, durationSeconds);
@@ -1527,6 +1571,7 @@ export class StatusSet {
       sourceId,
       outbreak,
       maintained: null,
+      projected: false,
     });
     this.#gained(id, durationSeconds);
   }
@@ -1554,11 +1599,38 @@ export class StatusSet {
       sourceId,
       outbreak: null,
       maintained: { seq, outOfRangeSeconds: 0 },
+      projected: false,
     });
     if (!wasActive) {
       this.#endOnGaining("enchantment");
     }
     return !wasActive;
+  }
+
+  /**
+   * Wear `id` from a spirit, `sourceId` (#1064), for as long as the
+   * simulation keeps projecting it: `advance` never expires it, and it is
+   * removed when its bearer leaves every such spirit's range. Already
+   * worn: nothing. Returns whether it is newly on the bearer.
+   */
+  public project(id: StatusId, sourceId: string): boolean {
+    if (this.#statuses.has(id)) {
+      return false;
+    }
+    this.#statuses.set(id, {
+      id,
+      remainingSeconds: Number.POSITIVE_INFINITY,
+      durationSeconds: Number.POSITIVE_INFINITY,
+      attacksLeft: undefined,
+      hitsLeft: undefined,
+      spellsLeft: undefined,
+      sourceId,
+      outbreak: null,
+      maintained: null,
+      projected: true,
+    });
+    this.#endOnGaining(getStatusDefinition(id).category);
+    return true;
   }
 
   /** A status of `category` is newly on the bearer (#919): Natural Stride ends on a hex. */
@@ -1867,6 +1939,8 @@ export interface StatusModifiers {
   readonly healthPerSecondWhileMoving: number;
   /** Every status's, summed: health per second, moving or not (#975). */
   readonly healthPerSecond: number;
+  /** Every status's, summed: health per second near a spirit (#1064). */
+  readonly healthPerSecondNearSpirit: number;
   /** The largest armor reduction; `undefined`: none. */
   readonly armorReduction: ArmorReduction | undefined;
   readonly moveSpeedMultiplier: number;
@@ -1876,6 +1950,8 @@ export interface StatusModifiers {
   /** Every status's, multiplied, and floored at `HEALING_MULTIPLIER_FLOOR`. */
   readonly healingMultiplier: number;
   readonly weaponDamageMultiplier: number;
+  /** Every status's, summed (#1064). */
+  readonly physicalDamageTakenBonus: number;
   readonly attributeDelta: number;
   readonly castTimeMultiplier: number;
   readonly attackDurationMultiplier: number;
@@ -1890,6 +1966,8 @@ export interface StatusModifiers {
    * 1 − Π(1 − f), never more than `MAX_RECHARGE_REDUCTION` (#975).
    */
   readonly spellRechargeFaster: number;
+  /** As `spellRechargeFaster`, for a binding ritual (#1064). */
+  readonly bindingRitualRechargeFaster: number;
   /** Every status's, multiplied (#944). */
   readonly incomingHexCastTimeMultiplier: number;
   /** Every status's, summed (#988). */
@@ -1938,12 +2016,14 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let armorWhileStill = 0;
   let healthPerSecondWhileMoving = 0;
   let healthPerSecond = 0;
+  let healthPerSecondNearSpirit = 0;
   let armorReduction: ArmorReduction | undefined;
   let moveSpeedMultiplier = 1;
   let attackMissChance = 0;
   let maxHealthLoss: MaxHealthLoss | undefined;
   const healingMultipliers: number[] = [];
   let weaponDamageMultiplier = 1;
+  let physicalDamageTakenBonus = 0;
   let attributeDelta = 0;
   let castTimeMultiplier = 1;
   let attackFaster = 1;
@@ -1952,6 +2032,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let maxDamageFractionPerHit: number | undefined;
   let extraStrikesPerHit = 0;
   let spellRechargeKept = 1;
+  let bindingRitualRechargeKept = 1;
   let incomingHexCastTimeMultiplier = 1;
   let criticalChanceBonus = 0;
   let energyPerCritical = 0;
@@ -1971,6 +2052,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     armorWhileStill += def.armorWhileStill;
     healthPerSecondWhileMoving += def.healthPerSecondWhileMoving;
     healthPerSecond += def.healthPerSecond;
+    healthPerSecondNearSpirit += def.healthPerSecondNearSpirit;
     if (
       def.armorReduction !== undefined &&
       (armorReduction === undefined || def.armorReduction.amount > armorReduction.amount)
@@ -1987,6 +2069,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     }
     healingMultipliers.push(def.healingMultiplier);
     weaponDamageMultiplier *= def.weaponDamageMultiplier;
+    physicalDamageTakenBonus += def.physicalDamageTakenBonus;
     attributeDelta += def.attributeDelta;
     castTimeMultiplier *= def.castTimeMultiplier;
     attackFaster = Math.min(attackFaster, def.attackDurationMultiplier);
@@ -2001,6 +2084,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     }
     extraStrikesPerHit += def.extraStrikesPerHit;
     spellRechargeKept *= 1 - def.spellRechargeFaster;
+    bindingRitualRechargeKept *= 1 - def.bindingRitualRechargeFaster;
     incomingHexCastTimeMultiplier *= def.incomingHexCastTimeMultiplier;
     criticalChanceBonus += def.criticalChanceBonus;
     energyPerCritical += def.energyPerCritical;
@@ -2013,12 +2097,14 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     armorWhileStill,
     healthPerSecondWhileMoving,
     healthPerSecond,
+    healthPerSecondNearSpirit,
     armorReduction,
     moveSpeedMultiplier,
     attackMissChance,
     maxHealthLoss,
     healingMultiplier: combinedHealingMultiplier(healingMultipliers),
     weaponDamageMultiplier,
+    physicalDamageTakenBonus,
     attributeDelta,
     castTimeMultiplier,
     attackDurationMultiplier: attackFaster * attackSlower,
@@ -2026,6 +2112,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     maxDamageFractionPerHit,
     extraStrikesPerHit,
     spellRechargeFaster: Math.min(MAX_RECHARGE_REDUCTION, 1 - spellRechargeKept),
+    bindingRitualRechargeFaster: Math.min(MAX_RECHARGE_REDUCTION, 1 - bindingRitualRechargeKept),
     incomingHexCastTimeMultiplier,
     criticalChanceBonus,
     energyPerCritical,

@@ -128,6 +128,8 @@ export interface MatchHost {
   /** Run as many whole ticks as `seconds` holds, carrying the rest. */
   advance(seconds: number): void;
   readonly phase: "active" | "finished";
+  /** The team that won, once it is `finished` with a winner; `null` until then, or for none. */
+  readonly winningTeam: 0 | 1 | null;
   /**
    * A lobby's match nobody is playing any more: every seat is gone, and
    * every seated peer that never came has left the room. The lobby then
@@ -782,6 +784,9 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     },
     get phase() {
       return finished ? "finished" : "active";
+    },
+    get winningTeam() {
+      return sim.phase === "finished" ? wireTeam(sim.outcome.winningTeam) : null;
     },
     get abandoned() {
       return planned !== null && awaited.size === 0 && seats.size === 0;
