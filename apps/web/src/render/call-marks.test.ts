@@ -10,6 +10,7 @@ const R = 14;
 const CALLED: RenderableActor = {
   id: "foe",
   name: "foe",
+  bot: false,
   position: CENTRE,
   facing: 0,
   weaponId: undefined,

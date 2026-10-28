@@ -1,6 +1,7 @@
 import { PET_ATTACK_SECONDS, getSkill, type CompanionMode } from "@vibewars/game-core";
 import type { ArmedAttackSnapshot, MatchSnapshot, PlayerSnapshot } from "@vibewars/game-session";
 
+import { botTagElement } from "./bot-tag.js";
 import { healthTint, paintHealthTint, type HealthTint } from "./health-tint.js";
 import {
   lostHealthPercent,
@@ -27,6 +28,8 @@ export interface PartyRow {
   readonly id: string;
   readonly name: string;
   readonly professions: readonly ProfessionIcon[];
+  /** A lobby's bot (#1194): its name wears the BOT tag. */
+  readonly bot: boolean;
   readonly self: boolean;
   readonly dead: boolean;
   readonly targeted: boolean;
@@ -47,6 +50,7 @@ function partyRow(player: PlayerSnapshot, self: PlayerSnapshot): PartyRow {
     id: player.sessionId,
     name: player.name,
     professions: targetProfessionIcons(player),
+    bot: player.bot,
     self: player.sessionId === self.sessionId,
     dead: player.dead,
     targeted: player.sessionId === self.targetSessionId,
@@ -107,6 +111,7 @@ interface RowElements {
   readonly row: HTMLButtonElement;
   readonly professions: HTMLElement;
   readonly name: HTMLElement;
+  readonly botTag: HTMLElement;
   readonly bar: HTMLElement;
   readonly fill: HTMLElement;
   readonly lost: HTMLElement;
@@ -162,6 +167,7 @@ function createRow(
   const header = span("party-row-header", row);
   const professions = span("party-row-professions", header);
   const name = span("party-row-name", header);
+  const botTag = header.appendChild(botTagElement("party-row-bot"));
   const bar = span("hud-bar party-health", row);
   const fill = span("hud-bar-fill", bar);
   const lost = span("hud-bar-lost", bar);
@@ -209,6 +215,7 @@ function createRow(
     row,
     professions,
     name,
+    botTag,
     bar,
     fill,
     lost,
@@ -251,6 +258,7 @@ function paintRow(elements: RowElements, row: PartyRow, player: PlayerSnapshot, 
     );
   }
   elements.name.textContent = row.name;
+  elements.botTag.hidden = !row.bot;
   elements.row.title = `Target ${row.self ? "yourself" : row.name}`;
   elements.row.classList.toggle("is-self", row.self);
   elements.row.classList.toggle("is-dead", row.dead);
