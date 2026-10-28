@@ -1308,9 +1308,9 @@ attacks the nearest foe within earshot of itself, not its master's
 target nor a called one, and breaks off to walk back once its master is
 past cast range, picking no fight until at heel again. A master holds 2
 plus half its Death Magic, rounded down (8 at 12): raising past it kills
-the oldest first, and that is a death, so Soul Reaping answers it. A
-minion leaves no corpse, outlives its master's death and follows the
-body, and leaves with its master.
+the weakest first, by Health left and the oldest of equals, and that is
+a death, so Soul Reaping answers it. A minion leaves no corpse, outlives
+its master's death and follows the body, and leaves with its master.
 
 **Animate Bone Minions** (Necromancer, Death Magic, spell, 10 energy,
 1 s, 5 s recharge) raises two Bone Minions of 280 Health and armor 30,
