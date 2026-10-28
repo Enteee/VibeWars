@@ -262,9 +262,16 @@ export async function startMatchView(
     connection.sendIntent({ kind: "end-upkeep", targetId, status });
   });
   // Your team's health, right middle (#1055); a row's click targets its member.
-  const partyWindow = createPartyWindow(parent, (targetSessionId) => {
-    connection.sendIntent({ kind: "target", targetSessionId });
-  });
+  const partyWindow = createPartyWindow(
+    parent,
+    (targetSessionId) => {
+      connection.sendIntent({ kind: "target", targetSessionId });
+    },
+    // Your pet's Guard, Fight and Heel (#1110).
+    (creatureId, mode) => {
+      connection.sendIntent({ kind: "command", creatureId, order: { kind: "mode", mode } });
+    },
+  );
   // The compass (#486), top right under the match controls.
   const compass = createCompass(parent, compassReach(connection.map));
   // The arena's edge stops below the target frame and above the bars, not

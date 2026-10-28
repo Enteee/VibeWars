@@ -1738,7 +1738,7 @@ export class MatchSimulation {
    * `PET_ATTACK_SECONDS` is it, replacing one still waiting, whose energy
    * is lost. No cast: the owner's cast, aftercast and swing go on. With a
    * living foe selected, the pet goes for it, as when its owner attacks
-   * one.
+   * one, unless it is on Heel, which never engages (#1110).
    */
   #armPetAttack(record: ParticipantRecord, skill: Skill, key: string): void {
     const pet = this.#companionOf(record);
@@ -1753,6 +1753,7 @@ export class MatchSimulation {
       foe !== undefined &&
       !foe.combatant.dead &&
       foe.combatant.team !== record.combatant.team &&
+      pet.creature?.mode !== "heel" &&
       pet.behaviour?.kind === "follow-and-attack" &&
       distance(foe.position, pet.position) <= pet.behaviour.aggroUnits
     ) {

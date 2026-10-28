@@ -154,11 +154,11 @@ on to the queue screen, under the outcome line.
 ### Party window
 
 Your team's health at a glance (#1055), on the right edge, vertically
-centred: one row per member, you first, then the others in seat order.
-Creatures are not listed; alone, or spectating, there is no window. A
-long party starts under the compass instead of centring (#1056). In
-the small Training stage it sits top-left and compact, the side the
-dummies leave clear.
+centred: one row per member, you first, then your pet (#1110), then the
+others in seat order. No other creature is listed; alone with no pet,
+or spectating, there is no window. A long party starts under the
+compass instead of centring (#1056). In the small Training stage it sits
+top-left and compact, the side the dummies leave clear.
 
 | Part    | Look                                                                                                                 |
 | ------- | -------------------------------------------------------------------------------------------------------------------- |
@@ -168,6 +168,7 @@ dummies leave clear.
 | Target  | Your target's row outlined 1 px `target` (`#ffd866`)                                                                 |
 | Dead    | The name in `dead`, and the word "dead" where the bar was                                                            |
 | Compact | Past 8 members, name and a 10 px bar on one line, labelled with the percentage alone, so 16 still fit                |
+| Pet     | Its row, then Guard, Fight and Heel buttons on one line, `ink` on `panel`; the lit mode outlined 1 px `target`       |
 
 No energy, as GW1. A click on a row targets that member, yourself too.
 

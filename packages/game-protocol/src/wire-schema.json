@@ -259,6 +259,32 @@
       "union": [
         {
           "properties": [
+            { "name": "creatureId", "optional": false, "type": "string" },
+            { "name": "kind", "optional": false, "type": { "literal": "command" } },
+            {
+              "name": "order",
+              "optional": false,
+              "type": {
+                "properties": [
+                  { "name": "kind", "optional": false, "type": { "literal": "mode" } },
+                  {
+                    "name": "mode",
+                    "optional": false,
+                    "type": {
+                      "union": [
+                        { "literal": "fight" },
+                        { "literal": "guard" },
+                        { "literal": "heel" }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "properties": [
             { "name": "dirX", "optional": false, "type": "number" },
             { "name": "dirY", "optional": false, "type": "number" },
             { "name": "kind", "optional": false, "type": { "literal": "move" } }
@@ -1134,6 +1160,43 @@
         { "name": "weaponId", "optional": false, "type": "string" }
       ]
     },
+    "CommandIntent": {
+      "properties": [
+        { "name": "creatureId", "optional": false, "type": "string" },
+        { "name": "kind", "optional": false, "type": { "literal": "command" } },
+        {
+          "name": "order",
+          "optional": false,
+          "type": {
+            "properties": [
+              { "name": "kind", "optional": false, "type": { "literal": "mode" } },
+              {
+                "name": "mode",
+                "optional": false,
+                "type": {
+                  "union": [{ "literal": "fight" }, { "literal": "guard" }, { "literal": "heel" }]
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "CompanionMode": {
+      "union": [{ "literal": "fight" }, { "literal": "guard" }, { "literal": "heel" }]
+    },
+    "CreatureOrder": {
+      "properties": [
+        { "name": "kind", "optional": false, "type": { "literal": "mode" } },
+        {
+          "name": "mode",
+          "optional": false,
+          "type": {
+            "union": [{ "literal": "fight" }, { "literal": "guard" }, { "literal": "heel" }]
+          }
+        }
+      ]
+    },
     "EndUpkeepIntent": {
       "properties": [
         { "name": "kind", "optional": false, "type": { "literal": "end-upkeep" } },
@@ -1819,6 +1882,13 @@
             "union": [{ "literal": "minion" }, { "literal": "pet" }, { "literal": "spirit" }]
           }
         },
+        {
+          "name": "mode",
+          "optional": false,
+          "type": {
+            "union": ["null", { "literal": "fight" }, { "literal": "guard" }, { "literal": "heel" }]
+          }
+        },
         { "name": "ownerId", "optional": false, "type": "string" }
       ]
     },
@@ -2084,6 +2154,18 @@
                       ]
                     }
                   },
+                  {
+                    "name": "mode",
+                    "optional": false,
+                    "type": {
+                      "union": [
+                        "null",
+                        { "literal": "fight" },
+                        { "literal": "guard" },
+                        { "literal": "heel" }
+                      ]
+                    }
+                  },
                   { "name": "ownerId", "optional": false, "type": "string" }
                 ]
               }
@@ -2283,6 +2365,18 @@
                               ]
                             }
                           },
+                          {
+                            "name": "mode",
+                            "optional": false,
+                            "type": {
+                              "union": [
+                                "null",
+                                { "literal": "fight" },
+                                { "literal": "guard" },
+                                { "literal": "heel" }
+                              ]
+                            }
+                          },
                           { "name": "ownerId", "optional": false, "type": "string" }
                         ]
                       }
@@ -2476,6 +2570,18 @@
                                 { "literal": "minion" },
                                 { "literal": "pet" },
                                 { "literal": "spirit" }
+                              ]
+                            }
+                          },
+                          {
+                            "name": "mode",
+                            "optional": false,
+                            "type": {
+                              "union": [
+                                "null",
+                                { "literal": "fight" },
+                                { "literal": "guard" },
+                                { "literal": "heel" }
                               ]
                             }
                           },
