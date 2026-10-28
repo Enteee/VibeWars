@@ -646,10 +646,10 @@ const MOVEMENT_RELAX_PASSES = 4;
  */
 const UPKEEP_RANGE_GRACE_SECONDS = 5;
 
-/** How deep a body at `position` is inside a living body at `other`, their radii summing to `reach`. */
 /** No body to pass through: a push-out that every body blocks. */
 const NOBODY: ReadonlySet<string> = new Set();
 
+/** How deep a body at `position` is inside a living body at `other`, their radii summing to `reach`. */
 function penetration(position: Vec2, other: Vec2, reach: number): number {
   return Math.max(0, reach - distance(position, other));
 }
