@@ -42,6 +42,7 @@ function fighter(
   const resolved = resolveLoadout(
     {
       primaryProfession: loadout.primaryProfession,
+      secondaryProfession: loadout.secondaryProfession,
       allocatedRanks: loadout.attributeRanks,
       equipment: loadout.equipment,
     },

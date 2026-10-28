@@ -37,6 +37,7 @@ describe.each(loadAllMaps().map((map) => [map.id, map] as const))("%s bots", (_,
           const resolved = resolveLoadout(
             {
               primaryProfession: loadout.primaryProfession,
+              secondaryProfession: loadout.secondaryProfession,
               allocatedRanks: loadout.attributeRanks,
               equipment: loadout.equipment,
             },
