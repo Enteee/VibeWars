@@ -18,7 +18,7 @@ const CHAT = "-1001234567890";
 /** What telegram answers, for a world whose group is fit (or not). */
 function telegramAnswer(
   /** @type {string} */ url,
-  /** @type {{ forum: boolean, topics: boolean, chats: string[] }} */ group,
+  /** @type {{ forum: boolean, topics: boolean, chats: string[], title?: string }} */ group,
 ) {
   const method = /\/([A-Za-z]+)\?/.exec(url)?.[1] ?? /\/([A-Za-z]+)$/.exec(url)?.[1];
   const result = {
@@ -27,7 +27,7 @@ function telegramAnswer(
       update_id: n + 1,
       my_chat_member: { chat: { id: Number(id), type: "supergroup" } },
     })),
-    getChat: { type: "supergroup", title: "VW", is_forum: group.forum },
+    getChat: { type: "supergroup", title: group.title ?? "VW", is_forum: group.forum },
     getChatMember: { status: "administrator", can_manage_topics: group.topics },
   }[method ?? ""];
   return { ok: true, json: () => Promise.resolve({ ok: true, result }) };
@@ -84,7 +84,7 @@ afterEach(() => {
  * @param {string | null} [options.answer]
  * @param {boolean} [options.getMeOk]
  * @param {boolean} [options.tty]
- * @param {{ forum: boolean, topics: boolean, chats: string[] }} [options.group] what telegram says of the chats the bot sees
+ * @param {{ forum: boolean, topics: boolean, chats: string[], title?: string }} [options.group] what telegram says of the chats the bot sees
  * @param {string[]} [options.answers] prompt answers after the token
  */
 function world({
@@ -95,7 +95,7 @@ function world({
   getMeOk = true,
   tty = true,
   group = { forum: true, topics: true, chats: [CHAT] },
-  answers = [""],
+  answers = ["", "y"],
 }) {
   const root = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "auth-")), "creds");
   homes.push(path.dirname(root));
@@ -365,10 +365,27 @@ describe("auth", () => {
     const w = world({
       tables: [rows({}), TG_OK],
       group: { forum: true, topics: true, chats: [] },
-      answers: ["-1009"],
+      answers: ["-1009", "y"],
     });
     expect(await auth(["telegram"], w.deps)).toBe(0);
     expect(fs.readFileSync(paths(w.root).telegramChat, "utf8").trim()).toBe("-1009");
+  });
+
+  it("writes nothing when the operator declines the only candidate", async () => {
+    const w = world({ tables: [rows({})], answers: ["", "n"] });
+    expect(await auth(["telegram"], w.deps)).toBe(1);
+    expect(fs.existsSync(paths(w.root).telegramChat)).toBe(false);
+  });
+
+  it("prints a group title with its control characters made visible", async () => {
+    const w = world({
+      tables: [rows({}), TG_OK],
+      group: { forum: true, topics: true, chats: [CHAT], title: "x\u001b]0;pwned\u0007y" },
+    });
+    expect(await auth(["telegram"], w.deps)).toBe(0);
+    const screen = w.printed.join("\n");
+    expect(screen).not.toContain("\u001b");
+    expect(screen).toContain("␛");
   });
 
   it("lists several groups and takes the one picked", async () => {
@@ -378,7 +395,7 @@ describe("auth", () => {
       answers: ["", "2"],
     });
     expect(await auth(["telegram"], w.deps)).toBe(0);
-    expect(w.printed).toContain("  1. -1001");
+    expect(w.printed).toContain('  1. "VW" (-1001)');
     expect(fs.readFileSync(paths(w.root).telegramChat, "utf8").trim()).toBe("-1002");
   });
 

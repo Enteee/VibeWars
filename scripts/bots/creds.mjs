@@ -17,6 +17,8 @@ import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
+import { visible } from "./protocol.mjs";
+
 /**
  * Where each credential lives under a credential home.
  *
@@ -391,7 +393,8 @@ export async function checkChat(token, chatId, get = (url) => fetch(url)) {
           { chat_id: chatId, user_id: String(me.id) },
           get,
         );
-  const title = text(chat?.title) ?? chatId;
+  // Whoever owns a group sets its title, and anyone can add a bot to one.
+  const title = visible(text(chat?.title) ?? chatId);
   const checks = [
     { good: chat !== null && chat.type === "supergroup", text: "a supergroup the bot can see" },
     { good: chat?.is_forum === true, text: "Topics enabled" },

@@ -366,8 +366,8 @@ function writePrivate(file, value) {
  * @param {Deps} deps
  * @param {string} token
  * @param {string} chatId
- * @returns {Promise<boolean>} whether the chat is fit for the company; the
- *   checklist is printed either way
+ * @returns {Promise<string | null>} the chat's title (safe to print) if it is
+ *   fit for the company; the checklist is printed either way
  */
 async function showChat(deps, token, chatId) {
   const checked = await checkChat(token, chatId, deps.get);
@@ -375,7 +375,7 @@ async function showChat(deps, token, chatId) {
   for (const c of checked.checks) {
     deps.out(`  ${c.good ? "✓" : "✗"} ${c.text}`);
   }
-  return checked.ok;
+  return checked.ok ? checked.title : null;
 }
 
 /**
@@ -391,7 +391,7 @@ async function showChat(deps, token, chatId) {
 async function telegramGroup(deps, token) {
   const p = paths(deps.root);
   const kept = readChatId(p.telegramChat);
-  if (kept !== null && (await showChat(deps, token, kept))) {
+  if (kept !== null && (await showChat(deps, token, kept)) !== null) {
     deps.out("The company's Telegram group is already set up.");
     return true;
   }
@@ -405,38 +405,58 @@ async function telegramGroup(deps, token) {
   if (pasted === null) {
     return INTERRUPTED;
   }
-  const seen = new Set(/^-?\d+$/.test(pasted.trim()) ? [pasted.trim()] : []);
-  let offset = 0;
-  /** @type {Set<string>} */
-  const fit = new Set();
-  for (let waited = 0; waited <= POLL_FOR_MS; waited += POLL_MS) {
-    const updates = await telegramUpdates(token, offset, deps.get);
-    offset = updates.offset;
-    for (const chat of updates.chats) {
-      seen.add(chat);
+  /** @type {Map<string, string>} chat id -> title, of the fit ones */
+  const fit = new Map();
+  if (/^-?\d+$/.test(pasted.trim())) {
+    // The operator named it: it is the only candidate, not one of a backlog.
+    const title = await showChat(deps, token, pasted.trim());
+    if (title !== null) {
+      fit.set(pasted.trim(), title);
     }
-    for (const chat of seen) {
-      if (!fit.has(chat) && (await showChat(deps, token, chat))) {
-        fit.add(chat);
+  } else {
+    // getUpdates hands back a day of backlog, and anyone can add a bot to a
+    // group, so what turns up here is a candidate, never a decision.
+    /** @type {Set<string>} */
+    const seen = new Set();
+    let offset = 0;
+    for (let waited = 0; waited <= POLL_FOR_MS; waited += POLL_MS) {
+      const updates = await telegramUpdates(token, offset, deps.get);
+      offset = updates.offset;
+      for (const chat of updates.chats) {
+        seen.add(chat);
       }
+      for (const chat of seen) {
+        const title = fit.has(chat) ? null : await showChat(deps, token, chat);
+        if (title !== null) {
+          fit.set(chat, title);
+        }
+      }
+      if (fit.size > 0) {
+        break;
+      }
+      await deps.sleep(POLL_MS);
     }
-    if (fit.size > 0) {
-      break;
-    }
-    await deps.sleep(POLL_MS);
   }
   const options = [...fit];
-  let chosen = options[0];
-  if (options.length > 1) {
+  /** @type {string | undefined} */
+  let chosen;
+  if (options.length === 1) {
+    const [id, title] = options[0] ?? ["", ""];
+    const answer = await deps.prompt(`Use "${title}" (${id}) as the company's group? [y/N]: `);
+    if (answer === null) {
+      return INTERRUPTED;
+    }
+    chosen = /^y(es)?$/i.test(answer.trim()) ? id : undefined;
+  } else if (options.length > 1) {
     deps.out("Several groups fit:");
-    for (const [i, chat] of options.entries()) {
-      deps.out(`  ${String(i + 1)}. ${chat}`);
+    for (const [i, [id, title]] of options.entries()) {
+      deps.out(`  ${String(i + 1)}. "${title}" (${id})`);
     }
     const answer = await deps.prompt("Which one (number): ");
     if (answer === null) {
       return INTERRUPTED;
     }
-    chosen = options[Number(answer.trim()) - 1];
+    chosen = options[Number(answer.trim()) - 1]?.[0];
   }
   if (chosen === undefined) {
     deps.err("  ✗ telegram: no group chosen; nothing written");
