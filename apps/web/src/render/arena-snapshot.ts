@@ -220,19 +220,29 @@ export function swingFlashAlpha(flash: SwingFlash): number {
   return Math.max(0, Math.min(1, flash.remainingSeconds / SWING_FLASH_SECONDS));
 }
 
-/** A ward on the ground (#1087): a translucent disc in its side's colour, its skill's icon at the centre. */
+/**
+ * A ward or a trap on the ground (#1087, #1105): a circle in its side's
+ * colour, its skill's icon at the centre. A ward's is a translucent
+ * disc; a trap's, its outline alone.
+ */
 export interface RenderableGroundEffect {
   readonly id: number;
   readonly skillId: string;
   readonly position: Vec2;
   readonly radius: number;
   readonly colour: number;
+  readonly filled: boolean;
 }
 
-/** `effect` as the arena draws it, for a viewer on `selfTeam`: an ally's in the ally colour, any other's in the enemy's. */
+/**
+ * `effect` as the arena draws it, for a viewer on `selfTeam`: an ally's in
+ * the ally colour, any other's in the enemy's; `kind` says which list it
+ * came in.
+ */
 export function toRenderableGroundEffect(
   effect: GroundEffectSnapshot,
   selfTeam: number | undefined,
+  kind: "ward" | "trap",
 ): RenderableGroundEffect {
   return {
     id: effect.id,
@@ -240,6 +250,7 @@ export function toRenderableGroundEffect(
     position: { x: effect.x, y: effect.y },
     radius: effect.radius,
     colour: teamColour(effect.team === selfTeam ? "ally" : "enemy"),
+    filled: kind === "ward",
   };
 }
 
@@ -249,7 +260,7 @@ export interface ArenaSnapshot {
   readonly targetId: string | undefined;
   /** Weapon shots in flight (#161). */
   readonly projectiles: readonly RenderableProjectile[];
-  /** Wards on the ground, oldest first (#1087). */
+  /** Wards on the ground, oldest first (#1087), then your team's traps (#1105). */
   readonly groundEffects: readonly RenderableGroundEffect[];
   /** The match clock (`elapsedSeconds`), which projectiles fly against. */
   readonly clock: number;
