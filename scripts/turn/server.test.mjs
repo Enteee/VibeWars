@@ -2,7 +2,9 @@
  * A real turnserver (#974), started from the module's generated config on
  * loopback ports picked free now, with its state in a temp dir. No network:
  * it runs in CI's devenv, which has coturn. DENIED_PEERS refuses 127/8, so
- * the allocation check allocates and releases; it relays to no peer.
+ * the allocation check allocates and releases; it relays to no peer. The
+ * external IP is a documentation address mapped onto a private one, so the
+ * permission checks ask for the host's own public address (#1266).
  */
 import { spawn, spawnSync } from "node:child_process";
 import dgram from "node:dgram";
@@ -16,7 +18,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { healthy, runChecks } from "./check.mjs";
 import { files, parseSettings, turnserverConf } from "./settings.mjs";
-import { allocate, binding } from "./stun.mjs";
+import { allocate, binding, permissions } from "./stun.mjs";
 
 const TURN = path.join(import.meta.dirname, "turn.mjs");
 
@@ -71,7 +73,7 @@ beforeAll(async () => {
   settings = parseSettings({
     realm: "turn.test",
     host: "127.0.0.1",
-    externalIp: null,
+    externalIp: "203.0.113.7/10.0.0.7",
     externalIp6: null,
     listeningIps: ["127.0.0.1"],
     listeningPort: await freeUdp(),
@@ -140,6 +142,30 @@ describe("a real turnserver", () => {
     expect(fs.statSync(files(settings).healthSecret).mode & 0o777).toBe(0o600);
     expect(turn(["user", "list"]).stdout).toBe("alice\n");
     expect(turn(["check"]).status).toBe(0);
+  });
+
+  // #1266: `denied-peer-ip=::` refused every peer, and the host's own
+  // address was refused, so two players on one relay never connected.
+  it("grants a public peer and the host's own address, and refuses private ones", async () => {
+    const res = await permissions({
+      host: "127.0.0.1",
+      port: settings.listeningPort,
+      username: "alice",
+      password,
+      peers: ["198.51.100.20", "203.0.113.7", "10.0.0.1", "192.168.1.1", "127.0.0.1"],
+    });
+    expect(res).toEqual({
+      ok: true,
+      answers: [
+        { peer: "198.51.100.20", code: null },
+        { peer: "203.0.113.7", code: null },
+        { peer: "10.0.0.1", code: 403 },
+        { peer: "192.168.1.1", code: 403 },
+        { peer: "127.0.0.1", code: 403 },
+      ],
+    });
+    const checks = await runChecks(settings);
+    expect(checks.find((c) => c.name === "permissions")).toMatchObject({ status: "ok" });
   });
 
   it("lets the user allocate until they are removed, then answers 401", async () => {
