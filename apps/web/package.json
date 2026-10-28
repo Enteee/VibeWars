@@ -27,6 +27,7 @@
     "@strudel/transpiler": "1.2.6",
     "@strudel/webaudio": "1.3.0",
     "@vibewars/game-core": "workspace:*",
+    "@vibewars/game-data": "workspace:*",
     "@vibewars/game-maps": "workspace:*",
     "@vibewars/game-protocol": "workspace:*",
     "@vibewars/game-session": "workspace:*",
