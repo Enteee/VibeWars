@@ -11,8 +11,8 @@ import { prefersReducedMotion } from "./recharge-overlay.js";
 /**
  * The compass (#486, GW1's radar): a disc top right, centred on you, north
  * up, with every living body within its reach (`compassReach`), your
- * target, the called foe, your team's pings, the earshot and cast-range
- * rings and the walls (docs/art/art-direction.md "Compass"). Bodies
+ * target, the called foe, your team's pings, the resurrection shrines
+ * (#1199), the earshot and cast-range rings and the walls (docs/art/art-direction.md "Compass"). Bodies
  * beyond it are not shown: the edge markers (#440) give direction, the
  * compass distance.
  */
@@ -34,6 +34,12 @@ export interface CompassView {
   }[];
   /** `age`: 0 when pinged, 1 when it goes. */
   readonly pings: readonly { readonly x: number; readonly y: number; readonly age: number }[];
+  /** Each team's resurrection shrine in reach (#1199), whether its priest stands or not. */
+  readonly shrines: readonly {
+    readonly x: number;
+    readonly y: number;
+    readonly side: "ally" | "enemy";
+  }[];
   /** Wall outlines, already clipped to the disc. */
   readonly walls: readonly (readonly Vec2[])[];
 }
@@ -162,6 +168,9 @@ export function compassView(
         ...local(ping.position),
         age: Math.max(0, Math.min(1, 1 - ping.remaining / PING_SECONDS)),
       })),
+    shrines: arena.shrines
+      .filter((shrine) => within(shrine.position))
+      .map((shrine) => ({ ...local(shrine.position), side: shrine.side })),
     walls: arena.walls.flatMap((wall) => clipOutline(outline(wall).map(local), sizePx / 2)),
   };
 }
@@ -177,6 +186,8 @@ const WALL_STROKE = "#3b4759";
 const EDGE = "#0b0f14";
 const DOT_RADIUS = 3;
 const SMALL_DOT_RADIUS = 2;
+/** Half a shrine's `✚`, px. */
+const SHRINE_ARM = 4;
 
 export interface Compass {
   /** Draw this frame's compass for `selfId`; hides it without a self actor. */
@@ -223,6 +234,19 @@ export function createCompass(parent: HTMLElement, reach: number): Compass {
       context.stroke();
     }
     context.setLineDash([]);
+    // Under the pings and bodies, as the shrine's ring is under them in
+    // the arena.
+    context.lineWidth = 2;
+    for (const shrine of view.shrines) {
+      context.strokeStyle = shrine.side === "ally" ? FRIEND : FOE;
+      context.beginPath();
+      context.moveTo(shrine.x - SHRINE_ARM, shrine.y);
+      context.lineTo(shrine.x + SHRINE_ARM, shrine.y);
+      context.moveTo(shrine.x, shrine.y - SHRINE_ARM);
+      context.lineTo(shrine.x, shrine.y + SHRINE_ARM);
+      context.stroke();
+    }
+    context.lineWidth = 1;
     const still = prefersReducedMotion();
     context.strokeStyle = FRIEND;
     for (const ping of view.pings) {

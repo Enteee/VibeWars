@@ -1,7 +1,7 @@
 import { sizeClass } from "@vibewars/game-maps/size-class";
 import { describe, expect, it } from "vitest";
 
-import { ARENA_MAPS, hostMap, mapMode, randomArenaMapPool } from "./maps.js";
+import { ARENA_MAPS, hostMap, mapMode, mapShrines, randomArenaMapPool } from "./maps.js";
 
 function sizesOf(ids: readonly string[]): string[] {
   return ids.map((id) => {
@@ -65,5 +65,19 @@ describe("mapMode (#1200)", () => {
 
   it("gives a map this build does not have Annihilation's", () => {
     expect(mapMode("arena-nowhere")).toBe("annihilation");
+  });
+});
+
+describe("mapShrines (#1199)", () => {
+  it("reads each team's shrine from a priest map's file", () => {
+    expect(mapShrines("arena-split")).toEqual([
+      { team: 0, position: { x: 50, y: 350 } },
+      { team: 1, position: { x: 950, y: 350 } },
+    ]);
+  });
+
+  it("gives none on a map without them or one this build does not have", () => {
+    expect(mapShrines("arena-alpha")).toEqual([]);
+    expect(mapShrines("arena-nowhere")).toEqual([]);
   });
 });

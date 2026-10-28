@@ -9,7 +9,7 @@ import arenaOpen from "@vibewars/game-maps/maps/arena-open/map.json" with { type
 import arenaPillars from "@vibewars/game-maps/maps/arena-pillars/map.json" with { type: "json" };
 import arenaRing from "@vibewars/game-maps/maps/arena-ring/map.json" with { type: "json" };
 import arenaSplit from "@vibewars/game-maps/maps/arena-split/map.json" with { type: "json" };
-import type { MatchMode } from "@vibewars/game-core";
+import type { MatchMode, Vec2 } from "@vibewars/game-core";
 import { teamSizeOf, type QueueMode } from "@vibewars/game-protocol";
 import type { HostMap } from "@vibewars/game-session";
 import { TRAINING_MAPS } from "../training/maps.js";
@@ -80,6 +80,22 @@ export function mapMode(mapId: string): MatchMode {
   return (
     (ARENA_MAPS.find((map) => map.id === mapId) ?? TRAINING_MAPS.get(mapId))?.mode ?? "annihilation"
   );
+}
+
+/**
+ * The resurrection shrines on `mapId` (#1199), from the same map file the
+ * host plays it by, as `mapMode` reads the mode: none on a map without
+ * them, or one this build does not have.
+ */
+export function mapShrines(mapId: string): readonly MapShrine[] {
+  const map = ARENA_MAPS.find((candidate) => candidate.id === mapId) ?? TRAINING_MAPS.get(mapId);
+  return (map?.objectives ?? []).map(({ team, position }) => ({ team, position }));
+}
+
+/** A team's resurrection shrine (#1186), where its priest stands. */
+export interface MapShrine {
+  readonly team: number;
+  readonly position: Vec2;
 }
 
 /** The map `mapId` names, built for a `MatchHost`; `undefined` for no such map. */
