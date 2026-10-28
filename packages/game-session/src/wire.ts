@@ -9,6 +9,7 @@ import {
   type ActiveStatus,
   type CombatEvent,
   type CombatLogEntry,
+  type GroundAct,
   type GroundEffect,
   type Participant,
   type ProfessionId,
@@ -154,7 +155,8 @@ export function statusSnapshot(
  * A ground effect as the wire carries it (#1087): when it ends on the
  * match clock and how long it was placed for, both to 0.1 s, the latter
  * never under it, as the wire refuses one of nothing. A ward's circle is
- * its aura's reach; a trap's (#1105), the area its spring hits.
+ * its aura's reach; a trap's (#1105), the area its spring hits; a
+ * pulse's (#1113), the area each pulse hits.
  */
 export function groundEffectSnapshot(
   effect: Readonly<GroundEffect>,
@@ -166,10 +168,22 @@ export function groundEffectSnapshot(
     team: effect.team,
     x: effect.position.x,
     y: effect.position.y,
-    radius: effect.act.kind === "aura" ? effect.act.aura.radius : effect.act.trap.area.radius,
+    radius: groundRadius(effect.act),
     endsAt: tenths(elapsedSeconds + effect.remainingSeconds),
     durationSeconds: Math.max(0.1, tenths(effect.durationSeconds)),
   };
+}
+
+/** The circle a ground effect draws: what its act reaches. */
+function groundRadius(act: GroundAct): number {
+  switch (act.kind) {
+    case "aura":
+      return act.aura.radius;
+    case "trap":
+      return act.trap.spring.area.radius;
+    case "pulse":
+      return act.pulse.area.radius;
+  }
 }
 
 /**

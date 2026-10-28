@@ -19,6 +19,7 @@ import { MatchSimulation, type Participant, type ParticipantSpec } from "./simul
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
 const BARBED = "ranger.barbed-trap";
+const FLAME = "ranger.flame-trap";
 const WILDERNESS = "ranger.wilderness-survival";
 
 const SWORD: ResolvedEquipment = {
@@ -35,7 +36,7 @@ function spec(id: string, team: number, spawn: Vec2, sword = false): Participant
   return {
     id,
     team,
-    skillBar: [BARBED, "elementalist.fireball"],
+    skillBar: [BARBED, "elementalist.fireball", FLAME],
     attributeRanks: new Map([
       [WILDERNESS, 12],
       ["warrior.swordsmanship", 12],
@@ -77,9 +78,9 @@ function stepFor(sim: MatchSimulation, seconds: number): CombatLogEntry[] {
   return log;
 }
 
-/** `r` sets Barbed Trap, and the steps until it has gone off. */
-function setTrap(sim: MatchSimulation): CombatLogEntry[] {
-  expect(sim.requestSkill("r", 0)?.check.ok).toBe(true);
+/** `r` sets Barbed Trap, or the trap in `slot`, and the steps until it has gone off. */
+function setTrap(sim: MatchSimulation, slot = 0): CombatLogEntry[] {
+  expect(sim.requestSkill("r", slot)?.check.ok).toBe(true);
   return stepFor(sim, 2 + 2 * DT);
 }
 
@@ -287,5 +288,105 @@ describe("springing a trap (#1105)", () => {
       return springs(stepFor(sim, 5));
     };
     expect(run()).toEqual(run());
+  });
+});
+
+describe("Flame Trap (#1113)", () => {
+  /** The log rows of Flame Trap's pulses. */
+  const burns = (log: readonly CombatLogEntry[]): CombatLogEntry[] =>
+    log.filter((entry) => entry.skillId === FLAME && entry.area !== undefined);
+
+  it("is the corpus's: 10 energy, 2 s, 20 s recharge, a Wilderness Survival trap", () => {
+    expect(getSkill(FLAME)).toMatchObject({
+      type: "trap",
+      elite: false,
+      attributeId: WILDERNESS,
+      cost: { kind: "energy", amount: 10 },
+      activationSeconds: 2,
+      rechargeSeconds: 20,
+      target: "self",
+    });
+  });
+
+  it("reads as a trap that burns three times when sprung, and springs by itself", () => {
+    const skill = getSkill(FLAME);
+    if (skill === undefined) {
+      throw new Error("no Flame Trap");
+    }
+    const lines = describeSkill(skill, new Map([[WILDERNESS, 12]])).effects.map(({ text }) => text);
+    expect(lines).toEqual([
+      "Sets a trap at your location for 90 seconds",
+      "Springs by itself as its time runs out",
+      "When sprung, every 1s for 3s, foes nearby: deals 17 damage",
+      "When sprung, every 1s for 3s, foes nearby: applies Burning for 3s (−7 Health degeneration)",
+      "Easily interrupted",
+    ]);
+  });
+
+  it("sprung, strikes every foe nearby three times, a second apart, and leaves a pulse in its place", () => {
+    const sim = match(spec("f", 1, vec2(300, 0)));
+    setTrap(sim, 2);
+    sim.walkTo("f", vec2(0, 0));
+    const log: CombatLogEntry[] = [];
+    while (burns(log).length === 0) {
+      log.push(...stepFor(sim, DT));
+    }
+    const [trap, ...others] = sim.groundEffects;
+    expect(others).toEqual([]);
+    expect(trap).toMatchObject({
+      skillId: FLAME,
+      ownerId: "r",
+      team: 0,
+      position: vec2(0, 0),
+      durationSeconds: 3,
+      act: { kind: "pulse" },
+    });
+    log.push(...stepFor(sim, 3 + DT));
+    expect(sim.groundEffects).toEqual([]);
+    const struck = burns(log);
+    expect(struck.map((entry) => entry.atSeconds - (struck[0]?.atSeconds ?? 0))).toEqual([
+      0,
+      expect.closeTo(1, 6),
+      expect.closeTo(2, 6),
+    ]);
+    for (const entry of struck) {
+      expect(entry).toMatchObject({
+        sourceId: "r",
+        area: { x: 0, y: 0, radius: AREA_NEARBY },
+      });
+      expect(entry.events).toContainEqual({
+        kind: "status-applied",
+        targetId: "f",
+        statusId: "burning",
+        durationSeconds: 3,
+      });
+    }
+    expect(
+      struck.flatMap((entry) =>
+        entry.events.flatMap((event) => (event.kind === "damage" ? [event.amount] : [])),
+      ),
+    ).toHaveLength(3);
+  });
+
+  it("springs by itself at 90 s where it lies, with no foe on it", () => {
+    const sim = match(spec("f", 1, vec2(300, 0)));
+    setTrap(sim, 2);
+    expect(burns(stepFor(sim, 89))).toEqual([]);
+    const log = stepFor(sim, 1.5);
+    expect(burns(log)).toEqual([
+      expect.objectContaining({ sourceId: "r", area: { x: 0, y: 0, radius: AREA_NEARBY } }),
+    ]);
+    expect(sim.groundEffects).toEqual([
+      expect.objectContaining({ skillId: FLAME, act: expect.objectContaining({ kind: "pulse" }) }),
+    ]);
+    expect(burns(stepFor(sim, 3))).toHaveLength(2);
+    expect(sim.groundEffects).toEqual([]);
+  });
+
+  it("leaves Barbed Trap a single spring, with no pulse in its place", () => {
+    const sim = match(spec("f", 1, vec2(AREA_ADJACENT, 0)));
+    const log = setTrap(sim).concat(stepFor(sim, 3));
+    expect(springs(log)).toHaveLength(1);
+    expect(sim.groundEffects).toEqual([]);
   });
 });

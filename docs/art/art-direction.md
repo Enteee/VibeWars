@@ -276,10 +276,11 @@ It cannot be confused with the target ring. The target ring is yellow and
 hugs one actor (9 px outside a radius of 14). The flash is team-coloured,
 at least 40 units in radius, and gone in under half a second.
 
-### Ward and well
+### Ward, well and pulse
 
-A ward (#1087) or a well (#1104, on the corpse it exploited) lies on the
-ground for as long as it lasts, both drawn the same:
+A ward (#1087), a well (#1104, on the corpse it exploited) or a pulse
+(#1113, as Symbol of Wrath or a sprung Flame Trap) lies on the ground for
+as long as it lasts, all drawn the same:
 
 - **Colour is its owner's team**, `friend` or `foe`, as the area flash's.
 - **A fill at 15 % alpha and a 1.5 px rim at 60 %**, at its true radius:
@@ -288,6 +289,9 @@ ground for as long as it lasts, both drawn the same:
 - **Its skill's icon at the centre**, 22 units across at 55 % alpha.
 - **It is drawn under the grid, the walls and every body**, so a ward
   never hides who stands in it.
+
+A pulse flashes each time it lands: the area flash, at its radius, from
+the pulse's log entry, so a symbol reads as striking once a second.
 
 It cannot be confused with the area flash, which is gone in 0.4 s, or a
 ping, which is a pin and a growing ring.

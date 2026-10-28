@@ -27,14 +27,20 @@ const TRAPPER: PlayerBuild = {
   equipment: defaultBuildEquipment("ranger"),
 };
 
+/** The same Ranger with Flame Trap (#1113). */
+const FLAMER: PlayerBuild = {
+  ...TRAPPER,
+  skillBar: ["ranger.flame-trap", null, null, null, null, null, null, null],
+};
+
 interface Player {
   readonly connection: PeerMatchConnection;
   /** Every `traps` message this peer was sent. */
   readonly heard: WireTraps[];
 }
 
-async function joinListening(match: TestMatch): Promise<Player> {
-  const { connection, transport } = await match.join(hello({ build: toJson(TRAPPER) }));
+async function joinListening(match: TestMatch, build = TRAPPER): Promise<Player> {
+  const { connection, transport } = await match.join(hello({ build: toJson(build) }));
   const heard: WireTraps[] = [];
   transport.on("traps", (data) => {
     const traps = parseWireTraps(data);
@@ -45,9 +51,9 @@ async function joinListening(match: TestMatch): Promise<Player> {
   return { connection, heard };
 }
 
-/** Three players, seated in turn: a and c on team 0, b on team 1; a sets a trap. */
-async function trapSet(match: TestMatch) {
-  const a = await joinListening(match);
+/** Three players, seated in turn: a and c on team 0, b on team 1; a sets a trap, `build`'s first. */
+async function trapSet(match: TestMatch, build = TRAPPER) {
+  const a = await joinListening(match, build);
   const b = await joinListening(match);
   const c = await joinListening(match);
   await match.step(TICK_SECONDS);
@@ -92,6 +98,27 @@ describe("traps through the P2P host (#1105)", () => {
     expect(c.heard.length).toBe(heardBefore + 1);
     expect(struck).toContain(a.connection.selfSessionId);
     expect(b.heard.every(({ traps }) => traps.length === 0)).toBe(true);
+  });
+
+  it("shows a sprung Flame Trap's pulse to everyone, the foe included (#1113)", async () => {
+    const match = startMatch();
+    const { a, b, c } = await trapSet(match, FLAMER);
+    const [trap] = a.connection.getSnapshot().traps;
+    if (trap === undefined) {
+      throw new Error("no trap set");
+    }
+    b.connection.sendIntent({ kind: "walk-to", x: trap.x, y: trap.y });
+    let seen: readonly unknown[] = [];
+    for (let i = 0; i < 40 && seen.length === 0; i += 1) {
+      await match.step(TICK_SECONDS * 3);
+      seen = b.connection.getSnapshot().groundEffects;
+    }
+    for (const peer of [a, b, c]) {
+      expect(peer.connection.getSnapshot().traps).toEqual([]);
+      expect(peer.connection.getSnapshot().groundEffects).toEqual([
+        expect.objectContaining({ skillId: "ranger.flame-trap", team: 0, radius: 81 }),
+      ]);
+    }
   });
 
   it("gives a rejoining peer its team's traps", async () => {

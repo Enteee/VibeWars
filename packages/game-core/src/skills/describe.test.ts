@@ -402,13 +402,22 @@ describe("describeSkill", () => {
     // nobody described would silently vanish from tooltips. An `if` is
     // a line per effect inside it (#521), a spirit's summon one more for
     // what it projects (#1064), and so does a ward (#1087); a trap is one
-    // line, then one per effect of its spring (#1105).
+    // line, then one per effect of its spring (#1105), and one more if it
+    // springs by itself; a pulse one, then one per effect (#1113).
     const linesOf = (effect: SkillEffect): number => {
       if (effect.kind === "if") {
         return effect.effects.length;
       }
       if (effect.kind === "create-ground-effect") {
-        return effect.act.kind === "aura" ? 2 : 1 + effect.act.trap.effects.length;
+        const { act } = effect;
+        switch (act.kind) {
+          case "aura":
+            return 2;
+          case "trap":
+            return 1 + (act.trap.springsAtEnd ? 1 : 0) + act.trap.spring.effects.length;
+          case "pulse":
+            return 1 + act.pulse.effects.length;
+        }
       }
       return effect.kind === "summon" && effect.creature.aura !== undefined ? 2 : 1;
     };

@@ -808,6 +808,16 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Ranger/123-Barbed_Trap",
   },
   {
+    id: "ranger.flame-trap",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/127-Flame_Trap",
+  },
+  {
+    id: "monk.symbol-of-wrath",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/215-Symbol_of_Wrath",
+  },
+  {
     id: "monk.patient-spirit",
     profession: "monk",
     url: "https://www.gw-memorial.net/skills/Monk/1158-Patient_Spirit",

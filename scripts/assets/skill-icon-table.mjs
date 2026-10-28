@@ -202,6 +202,9 @@ export const SKILL_ICONS = {
   "elementalist.ward-against-melee": { glyph: "mountain", modifier: "clock" },
   // A placeholder until the asset-designer's (#1105).
   "ranger.barbed-trap": { glyph: "pin", modifier: "bleed" },
+  // Placeholders until the asset-designer's (#1113): pulses.
+  "ranger.flame-trap": { glyph: "flame", modifier: "clock" },
+  "monk.symbol-of-wrath": { glyph: "flash", modifier: "area" },
   // Placeholders until the asset-designer's (#1068): resurrections.
   "common.resurrection-signet": { glyph: "resurrect", modifier: "plus" },
   "monk.rebirth": { glyph: "resurrect", modifier: "self" },
