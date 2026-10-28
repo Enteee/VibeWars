@@ -81,6 +81,23 @@ from your shell, and shows the table again. `claude-llc auth claude` (or
 public push key is the only key it shows. `claude-llc-init` then records the
 Claude account, and `claude-llc` refuses to start unless it is signed in.
 
+On GitHub the company works as its own machine account too: hubd's every
+`gh` call, and every push and fetch (ADR-0031). `claude-llc-init` itself
+stays yours, for the board and the ruleset, which need an admin. Create the
+machine account and add it to the repository as a collaborator with Write.
+`claude-llc auth github` signs it in, in its own `gh` config directory;
+`claude-llc auth push` makes the company's push key (`ssh/id_ed25519`),
+prints the public key, and waits until GitHub greets it as the machine
+account: add it at <https://github.com/settings/ssh/new> while signed in as
+that account.
+
+Then run `claude-llc-init`. It checks the account, its `project` scope and
+the push key, and points you back at `claude-llc auth` for whichever is
+missing.
+The board is a user project, which repository access does not reach, so init
+also asks you to add the account to the board with Write, then to run it
+again. `claude-llc` refuses to start without the token or the key.
+
 A machine set up before this had the token wherever `managerTokenFile`
 pointed and still has that line in `devenv.local.nix`, which keeps working.
 Without that line, move the file once into the credential home.

@@ -6,8 +6,10 @@
  * if it is already right, because this will be re-run whenever something
  * looks off and it must be safe to do that.
  *
- * Runs on the host, with the real credential. Step 0 is the credential home
- * (#864); then four things:
+ * Runs on the host. Step 0 is the company's credentials (#864): its home,
+ * its Claude account, and the GitHub account and push key everything the
+ * company does on GitHub at runtime runs as (#866). Then, as the operator,
+ * who has the admin rights, four things:
  *
  *  1. adopt (or create) the Projects v2 board and give its Status field the
  *     seven columns this company's workflow uses
@@ -24,7 +26,15 @@ import path from "node:path";
 import process from "node:process";
 import { createInterface } from "node:readline/promises";
 
-import { claudeVerdict, resetBoxesOnAccountChange, ensureHome } from "./creds.mjs";
+import {
+  claudeVerdict,
+  ensureHome,
+  githubIdentity,
+  paths,
+  projectAccess,
+  pushIdentity,
+  resetBoxesOnAccountChange,
+} from "./creds.mjs";
 import { COLUMNS, columnsPlan } from "./hub-board.mjs";
 import { ROLES } from "./hub-policy.mjs";
 
@@ -101,8 +111,8 @@ function say(step, outcome) {
 console.log("");
 console.log(`Setting up the company on ${REPO}`);
 
-// Step 0 (#864): the credential directory, and the Telegram token in it. The
-// Claude and GitHub lines come with their own children of #855.
+// Step 0 (#864): the credential directory, the Telegram token in it, the
+// company's Claude account (#865) and its GitHub account and push key (#866).
 const credentials = process.env.VIBEWARS_CREDENTIALS ?? "";
 if (credentials === "") {
   console.error("VIBEWARS_CREDENTIALS is not set: run this through claude-llc-init.");
@@ -133,25 +143,64 @@ if (reset > 0) {
     `${String(reset)} box(es) reset: the account changed, their Claude state starts over`,
   );
 }
+
+// Everything the company does on GitHub at runtime is done as its own
+// account: hubd's gh with this directory, pushes with this key. Init itself
+// stays the operator's, below, for what needs an admin: the board, the
+// ruleset. Whose account it is, is not compared with the operator's (the
+// operator's decision); the doctor shows it.
+const githubHome = paths(credentials);
+const github = githubIdentity(githubHome.gh);
+if (github.state !== "ok" || github.who === null) {
+  say("github", "NOT READY");
+  console.error(
+    github.state === "error"
+      ? `claude-llc-init: the company's GitHub account could not be read: ${github.note ?? "?"}`
+      : "claude-llc-init: the company's GitHub account is not set up. Sign it in: claude-llc auth github",
+  );
+  process.exit(1);
+}
+const companyLogin = github.who;
+say("github", `${companyLogin} (the company's own)`);
+if (!/\bproject\b/.test(github.scopes ?? "")) {
+  say("github project scope", "MISSING");
+  console.error("  The board cannot be worked without it. Sign in again: claude-llc auth github");
+  process.exit(1);
+}
+say("github project scope", "present");
+
+// The key is made, and added to GitHub, by `claude-llc auth push`, which
+// waits until GitHub greets it as the company's login.
+const greeted = pushIdentity(githubHome.sshKey);
+if (greeted.who?.toLowerCase() !== companyLogin.toLowerCase()) {
+  say("github push key", "NOT READY");
+  console.error(
+    greeted.who === null
+      ? "claude-llc-init: the company's push key is not set up. Add it: claude-llc auth push"
+      : `claude-llc-init: GitHub greets the push key as ${greeted.who}, not ${companyLogin}. Fix it: claude-llc auth push`,
+  );
+  process.exit(1);
+}
+say("github push key", `accepted as ${companyLogin}`);
 console.log("");
 
-/* 1. authentication -------------------------------------------------------- */
+/* 1. the operator, for the admin steps ------------------------------------ */
 
 const who = gh(["api", "user", "--jq", ".login"]);
 if (who.code !== 0) {
-  console.error("claude-llc-init: gh is not authenticated. Run: gh auth login");
+  console.error("claude-llc-init: your gh is not authenticated. Run: gh auth login");
   process.exit(1);
 }
-say("authenticated as", who.stdout.trim());
+say("admin steps as", who.stdout.trim());
 
 const scopes = gh(["api", "--include", "user"]);
 if (!/x-oauth-scopes:.*\bproject\b/i.test(scopes.stdout)) {
   console.error("");
-  console.error("  The token is missing the 'project' scope, so the board cannot be");
-  console.error("  managed. Run:  gh auth refresh -s project,read:project");
+  console.error("  Your token is missing the 'project' scope, so the board cannot be");
+  console.error("  set up. Run:  gh auth refresh -s project,read:project");
   process.exit(1);
 }
-say("project scope", "present");
+say("admin project scope", "present");
 
 /* 2. the board ------------------------------------------------------------- */
 
@@ -192,6 +241,20 @@ if (projectNumber === 0) {
   say("board", `created as #${String(projectNumber)}`);
 } else {
   say("board", `adopted existing #${String(projectNumber)}`);
+}
+
+// The board is a user project, so the company's account reaches it only
+// when the owner adds it there: being a collaborator on the repository does
+// not (#866). Checked here, the first point the board is known.
+if (projectAccess(credentials, OWNER, projectNumber)) {
+  say("github project access", `${companyLogin} can work the board`);
+} else {
+  say("github project access", "MISSING");
+  console.error(`  Add ${companyLogin} to the board with Write access, then run this again:`);
+  console.error(
+    `  https://github.com/users/${OWNER}/projects/${String(projectNumber)}/settings/access`,
+  );
+  process.exit(1);
 }
 
 /* 3. the Status column set ------------------------------------------------- */

@@ -84,6 +84,7 @@ export default defineConfig([
       // import form.
       "scripts/**/*.mjs",
       "apps/web/scripts/**/*.mjs",
+      "apps/web/plugins/**/*.ts",
     ],
     languageOptions: { globals: globals.node },
   },

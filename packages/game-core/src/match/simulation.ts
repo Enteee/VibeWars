@@ -3384,6 +3384,19 @@ export class MatchSimulation {
     }
 
     const { weapon } = record.combatant.equipment.mainHand;
+    // A spirit never walks (#1239): a foe out of its reach or sight ends
+    // the attack, and its behaviour picks the next.
+    if (
+      record.behaviour?.kind === "auto-attack" &&
+      record.behaviour.reach !== undefined &&
+      !(
+        distanceWithinRange(record.position, target.position, weapon.range) &&
+        hasLineOfSight(record.position, target.position, this.#walls)
+      )
+    ) {
+      record.combatant.attack = undefined;
+      return;
+    }
     const approach = this.#approach(record, target, weapon.range, attack, dt);
     if (approach === "unreachable") {
       record.combatant.attack = undefined;

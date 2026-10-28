@@ -312,7 +312,7 @@ describe("auto-attack", () => {
       throw new Error("no dummy");
     }
     const intent = decide(
-      { kind: "auto-attack", targeting: { kind: "nearest-enemy" } },
+      { kind: "auto-attack", targeting: { kind: "nearest-enemy" }, reach: undefined },
       createCursor(),
       {
         self,

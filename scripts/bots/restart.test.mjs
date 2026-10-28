@@ -161,6 +161,7 @@ function setup(options = {}) {
     DEVENV_ROOT: repo,
     VIBEWARS_BOT_ROOT: root,
     VIBEWARS_LLC_SESSION: "restart-test",
+    VIBEWARS_CREDENTIALS: path.join(root, "creds"),
     VIBEWARS_TMUX: path.join(bin, "tmux"),
     VIBEWARS_GIT_REMOTE: remote,
     GIT_CONFIG_GLOBAL: "/dev/null",

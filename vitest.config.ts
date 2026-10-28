@@ -29,7 +29,12 @@ export default defineConfig({
     // so it needs its own entry: the claude-bot Telegram bridge keeps its
     // wire contract there (scripts/bots/protocol.mjs) precisely so it can be
     // tested without a live bot token.
-    include: ["{apps,packages}/*/src/**/*.test.ts", "scripts/**/*.test.mjs"],
+    include: [
+      "{apps,packages}/*/src/**/*.test.ts",
+      // The client's build plugins (#1242).
+      "apps/web/plugins/**/*.test.ts",
+      "scripts/**/*.test.mjs",
+    ],
     reporters: ["default"],
     // Networked combat tests drive a whole session through multi-second
     // cast and recharge timers, so the 5s default is too tight for them.

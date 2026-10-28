@@ -1433,6 +1433,21 @@ takes the 4 too: it is on the one hit, not on the attack.
 energy, 3 s, 45 s recharge) plants one of 210 Health (more with Spawning
 Power) and armor 51 for 39 s: your side in its range gains +3 Health regeneration.
 
+**Attacking spirits** (#1239, Ritualist, Communing, binding rituals,
+30 s recharge) project nothing; each shoots the nearest living foe
+within spirit range (850) and in sight, a piercing shot every 2 s that
+can miss to blindness, be blocked or be dodged like an arrow. It never
+walks: a foe that leaves its range or sight is let go for the next
+nearest. Its damage is its stated number, linear in Communing (rank 0
+to 15 is GW1's range), against armor 60. At Communing 12, armor 51:
+**Pain** (5 energy, 1½ s) 182 Health, 126 s, hits for 25.
+**Shadowsong** (15 energy, 2 s) 150 Health, 30 s, hits for 17 and
+blinds for 5 s. **Dissonance** (25 energy, 2 s) 182 Health, 22 s, hits
+for 17 and interrupts whatever its target is activating, any skill.
+**Disenchantment** (25 energy, 3 s) 182 Health, 35 s, hits for 17 and
+strips the target's most recent enchantment. A missed or blocked shot
+does none of it.
+
 **Minions** (#467) are raised from a fresh corpse, of either team, the
 nearest within cast range, and rise where it lay. Their Health, armor
 and blows are set by their Necromancer's Death Magic as they rise and

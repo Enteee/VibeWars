@@ -1,6 +1,8 @@
 import { fileURLToPath } from "node:url";
 
-import { defineConfig } from "vite";
+import { defineConfig, type Plugin } from "vite";
+
+import { licencesPlugin } from "./plugins/licences.js";
 
 // The transport the client plays over (#403): see `src/net/transport/index.ts`.
 // A typo would otherwise build a client that quietly uses Trystero.
@@ -9,6 +11,30 @@ if (TRANSPORT !== undefined && TRANSPORT !== "trystero" && TRANSPORT !== "broadc
   throw new Error(
     `VITE_VIBEWARS_TRANSPORT must be "trystero" or "broadcast", got ${JSON.stringify(TRANSPORT)}`,
   );
+}
+
+// This build's id (#1268): `pages.yml` passes the commit it builds, e2e its
+// own. Without one it is `dev`, which never checks for a newer build.
+const BUILD = process.env.VIBEWARS_BUILD ?? "dev";
+if (!/^[\w.-]+$/.test(BUILD)) {
+  throw new Error(
+    `VIBEWARS_BUILD must be letters, digits, ".", "_" or "-", got ${JSON.stringify(BUILD)}`,
+  );
+}
+
+/** `build.json` beside `index.html`: the id a running tab compares its own to. */
+function buildFile(): Plugin {
+  return {
+    name: "vibewars-build-file",
+    apply: "build",
+    generateBundle() {
+      this.emitFile({
+        type: "asset",
+        fileName: "build.json",
+        source: `${JSON.stringify({ build: BUILD })}\n`,
+      });
+    },
+  };
 }
 
 /**
@@ -20,6 +46,9 @@ export default defineConfig({
   // (`/VibeWars/`, `/VibeWars/next/`). Read at config time, so it is not a
   // `VITE_` variable. Dev and the server-served build stay at the root.
   base: process.env.VIBEWARS_BASE ?? "/",
+  define: { __VIBEWARS_BUILD__: JSON.stringify(BUILD) },
+  // Every bundled npm package's licence, for Options (#1242, ADR-0039).
+  plugins: [licencesPlugin(), buildFile()],
   build: {
     outDir: "dist",
     emptyOutDir: true,
@@ -62,6 +91,9 @@ export default defineConfig({
         fileURLToPath(new URL(".", import.meta.url)),
         fileURLToPath(new URL("../../packages", import.meta.url)),
         fileURLToPath(new URL("../../node_modules", import.meta.url)),
+        // The player docs the Help screen renders (#1257), and nothing
+        // else of docs/.
+        fileURLToPath(new URL("../../docs/player", import.meta.url)),
       ],
     },
     port: 5173,

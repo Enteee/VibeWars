@@ -197,6 +197,11 @@ export function settingsIcon(): string {
   return iconUrl("ui", "settings");
 }
 
+/** The [?] of the top bar and the HUD: the player docs (#1257). */
+export function helpIcon(): string {
+  return iconUrl("ui", "help");
+}
+
 /** The fullscreen toggle (#454): what the window is now, not what a click does. */
 export function fullscreenIcon(fullscreen: boolean): string {
   return iconUrl("ui", fullscreen ? "fullscreen-exit" : "fullscreen");

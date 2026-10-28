@@ -135,21 +135,7 @@ function decode(value: string): TurnConfig | undefined {
 
 const RELAY_KEY = `${STORAGE_NAMESPACE}.turn-relay`;
 
-/**
- * Whether a build served from `base` (Vite's `BASE_URL`) may save the
- * relay. Only one at the origin's root has the origin to itself. Under a
- * sub-path, as on GitHub Pages, every other site there shares this
- * localStorage (SECURITY.md): it could take a saved credential, or plant
- * its own relay and skip Use. There the relay lasts for the visit only.
- */
-export function savesRelay(base: string): boolean {
-  return base === "/";
-}
-
-/** Whether this build saves the relay, or keeps it for the visit only. */
-export const RELAY_IS_SAVED = savesRelay(import.meta.env.BASE_URL);
-
-/** The relay for this visit: all there is on a sub-path, or when storage refuses it. */
+/** The relay for this visit when storage refuses it. */
 let unstored: TurnConfig | undefined;
 
 /**
@@ -158,9 +144,6 @@ let unstored: TurnConfig | undefined;
  * of it: the app says so once, at boot.
  */
 export function loadTurnConfig(onRemoved?: () => void): TurnConfig | undefined {
-  if (!RELAY_IS_SAVED) {
-    return unstored;
-  }
   let raw: string | null;
   try {
     raw = localStorage.getItem(RELAY_KEY);
@@ -185,9 +168,6 @@ export function loadTurnConfig(onRemoved?: () => void): TurnConfig | undefined {
 
 export function saveTurnConfig(config: TurnConfig): void {
   unstored = config;
-  if (!RELAY_IS_SAVED) {
-    return;
-  }
   try {
     localStorage.setItem(RELAY_KEY, JSON.stringify(config));
   } catch {
@@ -197,9 +177,6 @@ export function saveTurnConfig(config: TurnConfig): void {
 
 export function forgetTurnConfig(): void {
   unstored = undefined;
-  if (!RELAY_IS_SAVED) {
-    return;
-  }
   try {
     localStorage.removeItem(RELAY_KEY);
   } catch {
