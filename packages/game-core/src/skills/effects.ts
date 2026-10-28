@@ -661,8 +661,10 @@ export function applyStatus(
   if (!target.statuses.apply(statusId, durationSeconds, sourceId)) {
     return 0;
   }
-  const taken = Math.min(maxHealthLossOf(target) - lossBefore, target.health - 1);
-  if (taken <= 0 || isInvulnerable(target)) {
+  // A Guild Lord's cut spends its per-second cap (#1223), as damage does.
+  const cut = Math.min(maxHealthLossOf(target) - lossBefore, target.health - 1);
+  const taken = cut <= 0 || isInvulnerable(target) ? 0 : guardedLoss(target, cut);
+  if (taken <= 0) {
     return 0;
   }
   target.health -= taken;

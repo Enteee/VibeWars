@@ -4,7 +4,7 @@ import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { WEAPONS } from "../equipment/weapons.js";
 import { GUILD_BATTLE_MATCH_RULES } from "../match-rules.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
-import { applyDamage, type CombatEvent } from "../skills/effects.js";
+import { applyDamage, applyStatus, type CombatEvent } from "../skills/effects.js";
 import { makeCombatant } from "../skills/testing.js";
 import { distance, vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
@@ -114,7 +114,7 @@ describe("the Guild Lord's guard on its Health (#1223)", () => {
       id: "lord",
       health: 1000,
       maxHealth: 1000,
-      lossGuard: { bodyguard, remaining: 25, overflow: 0 },
+      lossGuard: { bodyguard, remaining: 25 },
     });
   }
 
@@ -258,22 +258,37 @@ describe("the Guild Lord's Health-loss cap in a match (#1223)", () => {
     expect(sim.aggression(1)).toBe(landed.reduce((sum, amount) => sum + amount, 0));
   });
 
-  it("gives back degeneration past the cap as the next second starts", () => {
+  it("takes no degeneration past the cap, so a lord it spent cannot die to it", () => {
     const sim = match([]);
     const lord = get(sim, guildLordId(0)).combatant;
-    for (const condition of ["bleeding", "burning", "poison"] as const) {
+    // −10 pips of conditions against its +5 and natural regeneration.
+    for (const condition of ["bleeding", "burning"] as const) {
       lord.statuses.apply(condition, 10, "x");
     }
     sim.step(DT);
     // The whole second's cap, spent by one blow.
     applyDamage(lord, 1000, "slashing", false, [], undefined);
-    const afterBlow = lord.health;
-    expect(afterBlow).toBeCloseTo(GUILD_LORD_HEALTH - 25, -1);
-    stepTo(sim, 1 - DT);
-    expect(lord.health).toBeLessThan(afterBlow - 5);
-    stepTo(sim, 1 + DT);
-    // Back where the blow left it, less two ticks of the new second's degeneration.
-    expect(lord.health).toBeGreaterThan(afterBlow - 3);
-    expect(lord.health).toBeLessThanOrEqual(afterBlow);
+    lord.health = 5;
+    // What the blow's whole points left of the cap, under one: then nothing.
+    stepTo(sim, 0.5);
+    const spent = lord.health;
+    expect(spent).toBeGreaterThan(4);
+    const log = stepTo(sim, 1 - DT);
+    expect(lord.dead).toBe(false);
+    expect(lord.health).toBe(spent);
+    expect(damageTo(log, lord.id)).toEqual([]);
+  });
+
+  it("lets a Deep Wound cut no more than the second's cap", () => {
+    const sim = match([]);
+    sim.step(DT);
+    const lord = get(sim, guildLordId(0)).combatant;
+    // 20% of its maximum, up to 100, uncapped.
+    expect(applyStatus(lord, "deep-wound", 20, "x")).toBe(25);
+    expect(lord.health).toBe(GUILD_LORD_HEALTH - 25);
+    // The cap is spent: a second wound landing takes nothing more.
+    lord.statuses.remove("deep-wound");
+    expect(applyStatus(lord, "deep-wound", 20, "x")).toBe(0);
+    expect(lord.health).toBe(GUILD_LORD_HEALTH - 25);
   });
 });

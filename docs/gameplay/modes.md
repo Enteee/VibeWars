@@ -65,7 +65,8 @@ lord takes **20% less damage**. Guards are never raised and count for
 nobody. A Guild Lord's **Amulet of Protection** caps the Health it
 loses in each second of the match: 25 at the start, rising evenly to
 300 at 12 minutes. A blow past the cap deals only what is left of it,
-so aggression grows no faster; degeneration past it is given back as
-the next second starts.
+so aggression grows no faster; a Deep Wound's cut and degeneration
+take no more than what is left either, so degeneration never kills a
+lord whose cap is spent.
 
 How each one ends, in full, is in [combat](combat.md#match-end).

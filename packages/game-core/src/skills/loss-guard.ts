@@ -4,16 +4,15 @@ import type { Combatant } from "./types.js";
  * A Guild Lord's guard on the Health it loses (#1223, GW1): while its
  * Bodyguard lives, damage to it is cut by `BODYGUARD_DAMAGE_SCALE`, and
  * in each whole second of match clock it loses at most what its Amulet
- * of Protection lets through. The simulation refills `remaining` as each
- * second starts and gives back `overflow` then.
+ * of Protection lets through, whatever takes it: damage, life stealing,
+ * a Deep Wound, degeneration. The simulation refills `remaining` as each
+ * second starts.
  */
 export interface HealthLossGuard {
   /** The Bodyguard whose life cuts the damage; `undefined` for none. */
   readonly bodyguard: Combatant | undefined;
   /** Health it may still lose this second. */
   remaining: number;
-  /** Degeneration past `remaining` this second: given back as the next starts. */
-  overflow: number;
 }
 
 /** What damage to a Guild Lord is worth while its Bodyguard lives (GW1: 20% less). */
@@ -34,8 +33,9 @@ export function guardedDamage(target: Combatant, amount: number): number {
 }
 
 /**
- * Of `amount` Health lost that is not damage, as life stealing, what
- * `target` loses: what is left of this second's cap, which it spends.
+ * Of `amount` Health lost that is not damage, as life stealing or a Deep
+ * Wound's cut, what `target` loses: what is left of this second's cap,
+ * in whole points, which it spends.
  */
 export function guardedLoss(target: Combatant, amount: number): number {
   const guard = target.lossGuard;
@@ -48,15 +48,16 @@ export function guardedLoss(target: Combatant, amount: number): number {
 }
 
 /**
- * `amount` Health `target` lost to degeneration: it spends this second's
- * cap, and what passes it is owed back when the second ends.
+ * Of `amount` Health a tick's degeneration would take, what `target`
+ * loses: what is left of this second's cap, to the fraction, which it
+ * spends. Never more, so degeneration cannot kill past the cap.
  */
-export function recordDegeneration(target: Combatant, amount: number): void {
+export function guardedDegeneration(target: Combatant, amount: number): number {
   const guard = target.lossGuard;
   if (guard === undefined) {
-    return;
+    return amount;
   }
-  const allowed = Math.min(amount, guard.remaining);
+  const allowed = Math.max(0, Math.min(amount, guard.remaining));
   guard.remaining -= allowed;
-  guard.overflow += amount - allowed;
+  return allowed;
 }

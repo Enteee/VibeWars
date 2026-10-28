@@ -861,7 +861,6 @@ export class MatchSimulation {
         record.combatant.lossGuard = {
           bodyguard: bodyguards.get(lord.team),
           remaining: guildLordLossCap(0),
-          overflow: 0,
         };
       }
     }
@@ -4403,8 +4402,7 @@ export class MatchSimulation {
 
   /**
    * As each whole second of match clock starts, every Guild Lord's cap
-   * on its Health loss refills to that second's (#1223), and the
-   * degeneration that passed the last one is given back.
+   * on its Health loss refills to that second's (#1223).
    */
   #refillLossCaps(): void {
     const second = Math.floor(this.#elapsedSeconds + WHOLE_SECOND_EPSILON);
@@ -4417,13 +4415,6 @@ export class MatchSimulation {
       if (guard === undefined) {
         continue;
       }
-      if (!record.combatant.dead) {
-        record.combatant.health = Math.min(
-          effectiveMaxHealth(record.combatant),
-          record.combatant.health + guard.overflow,
-        );
-      }
-      guard.overflow = 0;
       guard.remaining = guildLordLossCap(second);
     }
   }
