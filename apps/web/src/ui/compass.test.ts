@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { AREA_EARSHOT, RANGE_SPELL, vec2 } from "@vibewars/game-core";
+import { AREA_EARSHOT, RANGE_COMPASS, RANGE_SPELL, vec2 } from "@vibewars/game-core";
 import { PING_SECONDS } from "@vibewars/game-session";
 
 import {
@@ -10,7 +10,7 @@ import {
   type ArenaSnapshot,
   type RenderableActor,
 } from "../render/arena-snapshot.js";
-import { compassView } from "./compass.js";
+import { compassReach, compassView } from "./compass.js";
 
 function actor(
   id: string,
@@ -58,6 +58,7 @@ describe("compassView (#1056)", () => {
       }),
       "me",
       SIZE,
+      RANGE_COMPASS,
     );
     expect(view?.dots).toEqual([
       { id: "me", x: 0, y: 0, kind: "self", targeted: false, called: false, small: false },
@@ -68,9 +69,12 @@ describe("compassView (#1056)", () => {
 
   it("leaves out bodies beyond its range and corpses, but keeps you dead", () => {
     const dots = (actors: RenderableActor[], self = me) =>
-      compassView({ ...EMPTY_SNAPSHOT, actors: [self, ...actors] }, "me", SIZE)?.dots.map(
-        (dot) => dot.id,
-      );
+      compassView(
+        { ...EMPTY_SNAPSHOT, actors: [self, ...actors] },
+        "me",
+        SIZE,
+        RANGE_COMPASS,
+      )?.dots.map((dot) => dot.id);
     expect(dots([actor("edge", 2700, 1000), actor("beyond", 2701, 1000)])).toEqual(["me", "edge"]);
     expect(dots([actor("corpse", 1100, 1000, { dead: true })])).toEqual(["me"]);
     expect(dots([], { ...me, dead: true })).toEqual(["me"]);
@@ -85,6 +89,7 @@ describe("compassView (#1056)", () => {
       }),
       "me",
       SIZE,
+      RANGE_COMPASS,
     );
     expect(view?.dots.find((dot) => dot.id === "a")).toMatchObject({
       called: true,
@@ -106,6 +111,7 @@ describe("compassView (#1056)", () => {
       }),
       "me",
       SIZE,
+      RANGE_COMPASS,
     );
     expect(view?.dots.map((dot) => [dot.id, dot.small])).toEqual([
       ["me", false],
@@ -115,7 +121,7 @@ describe("compassView (#1056)", () => {
   });
 
   it("rings earshot and cast range at their own distances", () => {
-    const view = compassView(arena({}), "me", SIZE);
+    const view = compassView(arena({}), "me", SIZE, RANGE_COMPASS);
     const scale = SIZE / 2 / 1700;
     expect(view?.scale).toBe(scale);
     expect(view?.rings).toEqual([
@@ -134,6 +140,7 @@ describe("compassView (#1056)", () => {
       }),
       "me",
       SIZE,
+      RANGE_COMPASS,
     );
     expect(view?.pings).toEqual([{ x: 0, y: 40, age: 0.5 }]);
   });
@@ -151,6 +158,7 @@ describe("compassView (#1056)", () => {
       }),
       "me",
       SIZE,
+      RANGE_COMPASS,
     );
     const walls = view?.walls ?? [];
     expect(walls).toHaveLength(2);
@@ -169,6 +177,31 @@ describe("compassView (#1056)", () => {
   });
 
   it("is nothing without a self actor: a spectator has no compass", () => {
-    expect(compassView(arena({}), "spectator", SIZE)).toBeUndefined();
+    expect(compassView(arena({}), "spectator", SIZE, RANGE_COMPASS)).toBeUndefined();
+  });
+});
+
+describe("compassReach (#1080)", () => {
+  it("is the arena's longer side, never past RANGE_COMPASS", () => {
+    expect(compassReach({ width: 960, height: 640 })).toBe(960);
+    expect(compassReach({ width: 2000, height: 2000 })).toBe(RANGE_COMPASS);
+    expect(compassReach({ width: 3200, height: 1100 })).toBe(RANGE_COMPASS);
+  });
+
+  it("fills the disc on a small arena: 900 away at 900/960 of the radius, 1000 away off it", () => {
+    const reach = compassReach({ width: 960, height: 640 });
+    const view = compassView(
+      arena({ actors: [actor("near", 1900, 1000), actor("off", 2000, 1000)] }),
+      "me",
+      SIZE,
+      reach,
+    );
+    const scale = SIZE / 2 / reach;
+    expect(view?.scale).toBe(scale);
+    expect(view?.dots.map((dot) => [dot.id, dot.x])).toEqual([
+      ["me", 0],
+      ["near", 900 * scale],
+    ]);
+    expect(view?.rings[0]).toEqual({ radius: AREA_EARSHOT * scale, kind: "earshot" });
   });
 });

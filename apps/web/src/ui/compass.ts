@@ -10,15 +10,25 @@ import { prefersReducedMotion } from "./recharge-overlay.js";
 
 /**
  * The compass (#486, GW1's radar): a disc top right, centred on you, north
- * up, with every living body within `RANGE_COMPASS`, your target, the
- * called foe, your team's pings, the earshot and cast-range rings and the
- * walls (docs/art/art-direction.md "Compass"). Bodies beyond it are not
- * shown: the edge markers (#440) give direction, the compass distance.
+ * up, with every living body within its reach, your target, the called
+ * foe, your team's pings, the earshot and cast-range rings and the walls
+ * (docs/art/art-direction.md "Compass"). Its reach is the arena's longer
+ * side, at most `RANGE_COMPASS` (#1080), fixed for the match. Bodies
+ * beyond it are not shown: the edge markers (#440) give direction, the
+ * compass distance.
  */
+
+/**
+ * How far the compass reaches on a `width` × `height` arena: its longer
+ * side, never past `RANGE_COMPASS`, so a small arena fills the disc.
+ */
+export function compassReach(map: { readonly width: number; readonly height: number }): number {
+  return Math.min(RANGE_COMPASS, Math.max(map.width, map.height));
+}
 
 /** The compass's content in its own px, centre (0,0), y down, north up (#486). */
 export interface CompassView {
-  /** px per world unit: `(sizePx / 2) / RANGE_COMPASS`. */
+  /** px per world unit: `(sizePx / 2) / reach`. */
   readonly scale: number;
   readonly rings: readonly { readonly radius: number; readonly kind: "earshot" | "cast" }[];
   readonly dots: readonly {
@@ -111,23 +121,27 @@ function clipOutline(points: readonly Vec2[], radius: number): Vec2[][] {
   return runs;
 }
 
-/** `undefined`: no self actor (a spectator), so no compass. */
+/**
+ * Everything within `reach` of you, on a disc `sizePx` across.
+ * `undefined`: no self actor (a spectator), so no compass.
+ */
 export function compassView(
   arena: ArenaSnapshot,
   selfId: string,
   sizePx: number,
+  reach: number,
 ): CompassView | undefined {
   const self = arena.actors.find((actor) => actor.id === selfId);
   if (self === undefined) {
     return undefined;
   }
-  const scale = sizePx / 2 / RANGE_COMPASS;
+  const scale = sizePx / 2 / reach;
   const local = (point: Vec2): Vec2 => ({
     x: (point.x - self.position.x) * scale,
     y: (point.y - self.position.y) * scale,
   });
   const within = (point: Vec2): boolean =>
-    Math.hypot(point.x - self.position.x, point.y - self.position.y) <= RANGE_COMPASS;
+    Math.hypot(point.x - self.position.x, point.y - self.position.y) <= reach;
   return {
     scale,
     rings: [
@@ -175,7 +189,7 @@ export interface Compass {
 }
 
 /** One `<canvas class="compass">` in `parent`, its size set by CSS. */
-export function createCompass(parent: HTMLElement): Compass {
+export function createCompass(parent: HTMLElement, reach: number): Compass {
   const canvas = document.createElement("canvas");
   canvas.className = "compass";
   parent.appendChild(canvas);
@@ -249,7 +263,7 @@ export function createCompass(parent: HTMLElement): Compass {
     update(arena, selfId) {
       // Hidden keeps its box (styles.css), so its size is there to read.
       const sizePx = canvas.clientWidth;
-      const view = compassView(arena, selfId, sizePx);
+      const view = compassView(arena, selfId, sizePx, reach);
       // A spectator has no compass.
       canvas.hidden = view === undefined;
       if (view === undefined || sizePx === 0) {
