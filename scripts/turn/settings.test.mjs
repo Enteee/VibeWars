@@ -31,7 +31,7 @@ describe("turnserverConf", () => {
 
   // A regression guard on the hardening: each of these is a network a relay
   // must never reach, written out here rather than read from DENIED_PEERS.
-  it("denies every private, loopback, link-local and CGNAT peer", () => {
+  it("denies every private, loopback, link-local, CGNAT, reserved, mapped and NAT64 peer", () => {
     for (const range of [
       "0.0.0.0-0.255.255.255",
       "10.0.0.0-10.255.255.255",
@@ -39,8 +39,14 @@ describe("turnserverConf", () => {
       "127.0.0.0-127.255.255.255",
       "169.254.0.0-169.254.255.255",
       "172.16.0.0-172.31.255.255",
+      "192.0.0.0-192.0.0.255",
       "192.168.0.0-192.168.255.255",
+      "198.18.0.0-198.19.255.255",
+      "240.0.0.0-255.255.255.255",
+      "::",
       "::1",
+      "::ffff:0.0.0.0-::ffff:255.255.255.255",
+      "64:ff9b::-64:ff9b::ffff:ffff",
       "fc00::-fdff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
       "fe80::-febf:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
     ]) {

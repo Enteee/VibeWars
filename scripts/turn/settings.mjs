@@ -42,8 +42,15 @@ export const DENIED_PEERS = [
   { cidr: "127.0.0.0/8", range: "127.0.0.0-127.255.255.255" },
   { cidr: "169.254.0.0/16", range: "169.254.0.0-169.254.255.255" },
   { cidr: "172.16.0.0/12", range: "172.16.0.0-172.31.255.255" },
+  { cidr: "192.0.0.0/24", range: "192.0.0.0-192.0.0.255" },
   { cidr: "192.168.0.0/16", range: "192.168.0.0-192.168.255.255" },
+  { cidr: "198.18.0.0/15", range: "198.18.0.0-198.19.255.255" },
+  { cidr: "240.0.0.0/4", range: "240.0.0.0-255.255.255.255" },
+  { cidr: "::/128", range: "::" },
   { cidr: "::1/128", range: "::1" },
+  // IPv4 in IPv6: a mapped or NAT64 peer reaches what the ranges above deny.
+  { cidr: "::ffff:0:0/96", range: "::ffff:0.0.0.0-::ffff:255.255.255.255" },
+  { cidr: "64:ff9b::/96", range: "64:ff9b::-64:ff9b::ffff:ffff" },
   { cidr: "fc00::/7", range: "fc00::-fdff:ffff:ffff:ffff:ffff:ffff:ffff:ffff" },
   { cidr: "fe80::/10", range: "fe80::-febf:ffff:ffff:ffff:ffff:ffff:ffff:ffff" },
 ];

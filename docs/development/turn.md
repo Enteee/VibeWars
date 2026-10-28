@@ -91,6 +91,10 @@ alone. Links point at the game's latest `main` by default. Use
 `--base <url>` for another page, such as a release:
 `--base https://enteee.github.io/VibeWars/`.
 
+turnadmin takes the password only on its command line, so while it runs,
+for a moment, any other user on the host can read it in `/proc`. Run the
+relay on a host you do not share.
+
 ## Checking it
 
 `turn-check` runs these checks once. It exits 0 when none of them fails, so

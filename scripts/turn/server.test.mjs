@@ -16,7 +16,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { healthy, runChecks } from "./check.mjs";
 import { files, parseSettings, turnserverConf } from "./settings.mjs";
-import { allocate } from "./stun.mjs";
+import { allocate, binding } from "./stun.mjs";
 
 const TURN = path.join(import.meta.dirname, "turn.mjs");
 
@@ -91,15 +91,31 @@ beforeAll(async () => {
   fs.mkdirSync(settings.stateDir, { mode: 0o700 });
   fs.writeFileSync(files(settings).conf, turnserverConf(settings));
   server = spawn("turnserver", ["-c", files(settings).conf], { stdio: "ignore" });
+  // Ready is answering a Binding: the pid file does not mean the UDP
+  // listener is up, and a check's single request would be lost to it.
   const give = Date.now() + 10_000;
+  for (;;) {
+    try {
+      await binding("127.0.0.1", settings.listeningPort, 250);
+      break;
+    } catch (e) {
+      if (Date.now() > give)
+        throw new Error("turnserver answered no Binding in 10 s", { cause: e });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+  }
   while (!fs.existsSync(files(settings).pid)) {
     if (Date.now() > give) throw new Error("turnserver wrote no pid file in 10 s");
     await new Promise((resolve) => setTimeout(resolve, 50));
   }
-});
+}, 20_000);
 
-afterAll(() => {
-  server?.kill();
+afterAll(async () => {
+  if (server !== null) {
+    const exited = new Promise((resolve) => server?.once("exit", resolve));
+    server.kill();
+    await exited;
+  }
   fs.rmSync(dir, { recursive: true, force: true });
 });
 

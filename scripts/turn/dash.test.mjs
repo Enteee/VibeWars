@@ -4,11 +4,14 @@
  * log lines are coturn 4.17.2's, verbatim.
  */
 import crypto from "node:crypto";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
 import { unreachableV4 } from "./check.mjs";
-import { filterLog, lastAllocations } from "./log.mjs";
+import { filterLog, lastAllocations, printable, tailLines } from "./log.mjs";
 import { formatBytes, parseProcIo, parsePrometheus, rate } from "./metrics.mjs";
 import { decode, encode, errorCode } from "./stun.mjs";
 import { parseUserList } from "./users.mjs";
@@ -38,6 +41,35 @@ describe("lastAllocations", () => {
       alice: "2026-10-27T20:37:00.000+0100",
       bob: "2026-10-27T20:36:10.000+0100",
     });
+  });
+});
+
+describe("tailLines", () => {
+  it("strips the escapes a STUN client can put in a username, so they never reach the terminal", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "turn-log-"));
+    try {
+      const file = path.join(dir, "turn.log");
+      const osc = "\u001b]52;c;cHduZWQ=\u0007";
+      fs.writeFileSync(
+        file,
+        [
+          `2026-10-27T20:35:53.247+0100 ERROR session 006000000000000001: check_stun_auth: user ev${osc}il\u009b2J credentials are incorrect`,
+          `2026-10-27T20:36:10.000+0100 INFO session 005000000000000001: realm <t.local> user <m${osc}al>: incoming packet ALLOCATE processed, success`,
+          "",
+        ].join("\n"),
+      );
+      const lines = tailLines(file);
+      expect(filterLog(lines)).toEqual([
+        "2026-10-27T20:35:53.247+0100 ERROR session 006000000000000001: check_stun_auth: user ev]52;c;cHduZWQ=il2J credentials are incorrect",
+      ]);
+      expect([...lastAllocations(lines).keys()]).toEqual(["m]52;c;cHduZWQ=al"]);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("keeps tabs and printable text, drops C0, DEL and C1", () => {
+    expect(printable("a\tb\u0000c\u001bd\u007fe\u0085f g")).toBe("a\tbcdef g");
   });
 });
 
