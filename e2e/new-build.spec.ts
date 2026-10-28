@@ -75,6 +75,11 @@ test("on a phone the banner makes room: nothing at the top hides under it, its b
   await below(".hud-controls");
   // The compass sits under the match buttons, so it moves down with them.
   await below(".compass", page.locator(".hud-controls"));
+  // So does the ♪ jukebox, which opens under them.
+  await page.locator(".hud-music").click();
+  await below(".hud-jukebox", page.locator(".hud-controls"));
+  await page.locator(".hud-music").click();
+  await expect(page.locator(".hud-jukebox")).toHaveCount(0);
 
   await banner.getByRole("button", { name: "Not now" }).click();
   await expect(banner).toBeHidden();

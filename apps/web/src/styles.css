@@ -2210,7 +2210,7 @@ body {
 
 .hud-jukebox {
   position: absolute;
-  top: 5.8rem;
+  top: calc(5.8rem + var(--build-banner-space, 0px));
   right: 0.9rem;
   z-index: 20;
   width: min(420px, calc(100% - 1.8rem));
@@ -4330,7 +4330,7 @@ body.has-expanded-training #screens {
 .now-playing {
   position: fixed;
   left: 1rem;
-  top: 2.9rem;
+  top: calc(2.9rem + var(--build-banner-space, 0px));
   z-index: 10;
   padding: 0.4rem 0.8rem;
   background: rgb(14 17 22 / 90%);
