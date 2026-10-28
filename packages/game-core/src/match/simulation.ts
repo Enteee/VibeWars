@@ -4188,6 +4188,8 @@ export class MatchSimulation {
         victim.combatant.cast.endAftercast();
         victim.walkGoal = undefined;
         victim.route = undefined;
+        // A walk to a flag dies with its walker (#1225).
+        victim.interact = undefined;
         victim.combatant.knockdownRemaining = 0;
         victim.combatant.invulnerableRemaining = 0;
         victim.pendingWeaponSet = undefined;
@@ -4925,6 +4927,7 @@ export class MatchSimulation {
     record.inputDirection = ZERO;
     record.walkGoal = undefined;
     record.route = undefined;
+    record.interact = undefined;
     record.respawnInSeconds = 0;
     record.combatant.cast.cancelCast();
     record.combatant.cast.endAftercast();

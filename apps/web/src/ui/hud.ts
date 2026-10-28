@@ -676,10 +676,6 @@ function setBar(
 }
 
 /**
- * Morale as GW1 shows it by the health bar (#843): "−15%" for the death
- * penalty, "+10%" for a boost, and `undefined` at 0, where nothing shows.
- */
-/**
  * The target frame's name for a flag or the stand selected (#1225),
  * which are no body; `undefined` for any other id.
  */
@@ -702,6 +698,10 @@ export function carriesFlag(match: MatchSnapshot, playerId: string): boolean {
   return match.flags.some(({ place }) => place.kind === "carried" && place.carrierId === playerId);
 }
 
+/**
+ * Morale as GW1 shows it by the health bar (#843): "−15%" for the death
+ * penalty, "+10%" for a boost, and `undefined` at 0, where nothing shows.
+ */
 export function moraleLabel(morale: number): string | undefined {
   if (morale === 0) {
     return undefined;

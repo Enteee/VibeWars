@@ -151,6 +151,43 @@ describe("Space on a flag", () => {
     expect(sim.carriesFlag("a")).toBe(false);
   });
 
+  it("dies with its walker: back on its feet, it walks nowhere", () => {
+    const sim = new MatchSimulation({
+      seed: "flags",
+      bounds: { width: 2000, height: 600 },
+      flagField: FIELD,
+      participants: [
+        { ...fighter("a", 0, vec2(200, 300)), reset: { kind: "on-death", afterSeconds: 1 } },
+      ],
+    });
+    const a = get(sim, "a");
+    applyIntent(sim, "a", { kind: "attack", targetId: flagId(0) });
+    sim.step(DT);
+    a.combatant.statuses.apply("burning", 10, "x");
+    a.combatant.health = 0.2;
+    sim.step(DT);
+    expect(a.combatant.dead).toBe(true);
+    expect(a.interact).toBeUndefined();
+    for (let tick = 0; tick < 200 && a.combatant.dead; tick += 1) {
+      sim.step(DT);
+    }
+    expect(a.combatant.dead).toBe(false);
+    const risen = a.position;
+    stepFor(sim, 2);
+    expect(a.position).toEqual(risen);
+    expect(sim.carriesFlag("a")).toBe(false);
+  });
+
+  it("is ended by a reset", () => {
+    const sim = match();
+    applyIntent(sim, "a", { kind: "attack", targetId: flagId(0) });
+    sim.step(DT);
+    sim.resetParticipant("a");
+    expect(get(sim, "a").interact).toBeUndefined();
+    stepFor(sim, 2);
+    expect(get(sim, "a").position).toEqual(vec2(200, 300));
+  });
+
   it("waits out a knockdown at the stand, then plants", () => {
     const sim = match();
     atStand(sim);
