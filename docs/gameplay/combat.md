@@ -1618,6 +1618,10 @@ at a spawn point of their own team after 8 seconds, at full health and
 energy, with all statuses cleared, and there is no death penalty. There
 the scoreboard counts kills instead: `4 – 0 · 2:25` reads your team's
 kills, then theirs, beside the clock (#1200).
+In Priest Annihilation it counts the living, then each team's priest,
+yours first, and the next wave: `4 v 3 · ✚ ✚ · raise 0:47 · 7:12`
+(#1199). A priest's ✚ dims once it is dead, and the countdown reads
+`raise —` once both are.
 
 With the death penalty on, each player has a **morale** between −60%
 and +10%, starting at 0. A death takes 15%, down to −60%, unless it came
