@@ -108,6 +108,7 @@ export * from "./skills/index.js";
 
 export type {
   MatchEndReason,
+  MatchMode,
   MatchOutcome,
   MatchPhase,
   MatchRules,
@@ -118,14 +119,13 @@ export type {
 export {
   ANNIHILATION_MATCH_RULES,
   DEATH_PENALTY_PERCENT,
-  DEFAULT_MATCH_RULES,
   DP_GRACE_AFTER_RES_SECONDS,
   KILL_COUNT_MATCH_RULES,
   KILL_MORALE_PERCENT,
   MATCH_IN_PROGRESS,
+  MATCH_MODES,
   MORALE_CEILING,
   MORALE_FLOOR,
-  RANDOM_ARENA_RULES,
   addKill,
   emptyScore,
   evaluateMatch,
@@ -138,12 +138,14 @@ export type {
   HeadlessMatchResult,
 } from "./tools/headless-match.js";
 export { fighter, runHeadlessMatch } from "./tools/headless-match.js";
-export type { BenchField, TickBench } from "./tools/tick-bench.js";
+export type { BenchCrowd, BenchField, TickBench } from "./tools/tick-bench.js";
 export { DENSE_FIELD, runTickBench, tickStats } from "./tools/tick-bench.js";
 
 export type {
   Creature,
   CreatureKind,
+  CompanionMode,
+  CreatureOrder,
   CreatureLook,
   GroundEffect,
   MatchSimulationOptions,
@@ -158,6 +160,7 @@ export {
   CREATURE_LOOKS,
   loadoutSpec,
   MAX_CREATURES,
+  companionMode,
   MAX_GROUND_EFFECTS,
   MatchSimulation,
 } from "./match/simulation.js";

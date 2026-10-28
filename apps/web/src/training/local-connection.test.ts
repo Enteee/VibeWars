@@ -385,3 +385,45 @@ describe("calls in the Training Ground (#443)", () => {
     expect(connection.getCalls()).toEqual({ target: null, pings: [] });
   });
 });
+
+describe("a pet's armed attack (#1167)", () => {
+  it("rides the wolf's creature from Brutal Strike with no foe until it lapses, 10 s on", () => {
+    let character = setProfessions(newCharacter("c1"), "ranger", undefined);
+    character = setRank(character, "ranger.beast-mastery", 12);
+    character = setSkill(character, 0, "ranger.charm-animal");
+    character = setSkill(character, 1, "ranger.brutal-strike");
+    const scenario = getTrainingScenario("target-dummy");
+    if (scenario === undefined) {
+      throw new Error("the target-dummy scenario is gone");
+    }
+    const setup = setupScenario(scenario, character);
+    const connection = createLocalConnection({
+      simulation: setup.simulation,
+      selfId: SELF_ID,
+      map: setup.map,
+      nameOf: (id) => id,
+      professionsOf: () => NO_PROFESSIONS,
+    });
+    const armed = () =>
+      connection.getSnapshot().players.find((p) => p.creature?.ownerId === SELF_ID)?.creature
+        ?.armedAttack;
+    expect(armed()).toBeNull();
+
+    connection.sendIntent({ kind: "use-skill", slot: 1 });
+    connection.advance(TICK_SECONDS);
+    const shown = armed();
+    expect(shown?.skillId).toBe("ranger.brutal-strike");
+    expect(
+      Math.abs((shown?.endsAt ?? 0) - connection.getSnapshot().elapsedSeconds - 10),
+    ).toBeLessThan(0.11);
+
+    for (let i = 0; i < Math.round(9 / TICK_SECONDS); i += 1) {
+      connection.advance(TICK_SECONDS);
+    }
+    expect(armed()?.skillId).toBe("ranger.brutal-strike");
+    for (let i = 0; i < Math.round(1.1 / TICK_SECONDS); i += 1) {
+      connection.advance(TICK_SECONDS);
+    }
+    expect(armed()).toBeNull();
+  });
+});

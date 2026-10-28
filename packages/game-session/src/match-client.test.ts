@@ -1,6 +1,6 @@
 import {
   CREATURE_LOOKS,
-  DEFAULT_MATCH_RULES,
+  ANNIHILATION_MATCH_RULES,
   MAX_CREATURES,
   MAX_GROUND_EFFECTS,
 } from "@vibewars/game-core";
@@ -157,7 +157,7 @@ describe("connectMatch", () => {
     await expect(full.join()).rejects.toThrow(MATCH_FULL_MESSAGE);
 
     const over = startMatch({
-      matchRules: { ...DEFAULT_MATCH_RULES, timeLimitSeconds: 0.1 },
+      matchRules: { ...ANNIHILATION_MATCH_RULES, timeLimitSeconds: 0.1 },
     });
     await over.join();
     await over.step(0.2);
@@ -199,7 +199,9 @@ describe("connectMatch", () => {
   });
 
   it("shows the result once the match ends", async () => {
-    const match = startMatch({ matchRules: { ...DEFAULT_MATCH_RULES, timeLimitSeconds: 0.1 } });
+    const match = startMatch({
+      matchRules: { ...ANNIHILATION_MATCH_RULES, timeLimitSeconds: 0.1 },
+    });
     const { connection } = await match.join();
     await match.step(0.2);
     const snapshot = connection.getSnapshot();
@@ -334,8 +336,33 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
   });
 
   it("keep a creature's owner and kind (#1052)", () => {
-    const creature = { ownerId: "p2", kind: "minion", look: "bone-minion" } as const;
+    const creature = {
+      ownerId: "p2",
+      kind: "minion",
+      look: "bone-minion",
+      mode: null,
+      armedAttack: null,
+    } as const;
     expect(playerSnapshot({ ...WIRE_PLAYER, creature })?.creature).toEqual(creature);
+  });
+
+  it("keep a pet's armed attack, and refuse one that is not a known pet attack (#1167)", () => {
+    const pet = (skillId: string): WirePlayer => ({
+      ...WIRE_PLAYER,
+      creature: {
+        ownerId: "p2",
+        kind: "pet",
+        look: "beast",
+        mode: "fight",
+        armedAttack: { skillId, endsAt: 12.1 },
+      },
+    });
+    expect(playerSnapshot(pet("ranger.brutal-strike"))?.creature?.armedAttack).toEqual({
+      skillId: "ranger.brutal-strike",
+      endsAt: 12.1,
+    });
+    expect(playerSnapshot(pet("ranger.no-such-skill"))).toBeUndefined();
+    expect(playerSnapshot(pet("warrior.swift-chop"))).toBeUndefined();
   });
 
   it("hold the wire's creature cap to game-core's (#1052)", () => {
@@ -508,7 +535,9 @@ describe("connectMatch, when the host's peer drops", () => {
   });
 
   it("is lost when the host turns the rejoin away because the match is over", async () => {
-    const match = startMatch({ matchRules: { ...DEFAULT_MATCH_RULES, timeLimitSeconds: 0.5 } });
+    const match = startMatch({
+      matchRules: { ...ANNIHILATION_MATCH_RULES, timeLimitSeconds: 0.5 },
+    });
     const { states } = await dropped(match);
 
     await match.step(1);

@@ -166,4 +166,11 @@ describe("the arena set (#444)", () => {
       ["arena-alpha", "arena-open", "arena-pillars", "arena-split", ...NEW_ARENAS].sort(),
     );
   });
+
+  it("plays Kill Count on Pillar Hall and Annihilation everywhere else (#476)", () => {
+    expect(MAPS.filter((map) => map.mode === "kill-count").map((map) => map.id)).toEqual([
+      "arena-pillars",
+    ]);
+    expect(MAPS.filter((map) => map.mode === "annihilation")).toHaveLength(MAPS.length - 1);
+  });
 });

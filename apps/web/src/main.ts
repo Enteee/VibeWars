@@ -224,6 +224,7 @@ async function main(): Promise<void> {
     id: map.id,
     name: map.name,
     size: sizeClass(map),
+    mode: map.mode,
   }));
 
   let lobby: LobbyConnection | undefined;

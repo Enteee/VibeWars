@@ -42,14 +42,19 @@ function spec(id: string, team: number, spawn: Vec2, extra?: Partial<Participant
   return result;
 }
 
-/** A creature already standing, as `#summon` would make it. */
-function standing(id: string, ownerId: string, spawn: Vec2): ParticipantSpec {
+/** A creature already standing, as `#summon` would make it: a minion, or a pet for #1188. */
+function standing(
+  id: string,
+  ownerId: string,
+  spawn: Vec2,
+  kind: "minion" | "pet" = "minion",
+): ParticipantSpec {
   return {
     ...spec(id, 0, spawn, { skillBar: [], attributeRanks: new Map() }),
     creature: {
       ownerId,
-      kind: "minion",
-      look: "bone-minion",
+      kind,
+      look: kind === "pet" ? "beast" : "bone-minion",
       name: "Bone Minion",
       expiresInSeconds: Number.POSITIVE_INFINITY,
       ageSeconds: 0,
@@ -59,6 +64,7 @@ function standing(id: string, ownerId: string, spawn: Vec2): ParticipantSpec {
       onDeath: "vanish",
       ownerDisableSeconds: 0,
       companionSkillId: undefined,
+      mode: "guard",
     },
   };
 }
@@ -338,6 +344,19 @@ describe("Animate Bone Minions (#467)", () => {
     });
     expect(oldest.combatant.dead).toBe(true);
     expect(newest.combatant.dead).toBe(false);
+  });
+
+  it("counts its living minions for its master's armor, not a dead one or a pet (#1188)", () => {
+    const sim = match([
+      standing("m1", "n", vec2(40, 0)),
+      standing("m2", "n", vec2(-40, 0)),
+      standing("p", "n", vec2(0, 40), "pet"),
+    ]);
+    stepFor(sim, DT);
+    expect(get(sim, "n").combatant.controlled).toEqual({ minion: 2, spirit: 0 });
+    kill(sim, "m1");
+    stepFor(sim, DT);
+    expect(get(sim, "n").combatant.controlled).toEqual({ minion: 1, spirit: 0 });
   });
 
   it("leaves no corpse when it dies", () => {

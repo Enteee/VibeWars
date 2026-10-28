@@ -25,6 +25,7 @@ export type {
   SkillSlot,
   SlotRecharge,
   StatusSnapshot,
+  ArmedAttackSnapshot,
 } from "./match-connection.js";
 export { MESSAGE_BURST, MESSAGES_PER_SECOND, MessageBudget } from "./intent-budget.js";
 export type { DropReport } from "./intent-budget.js";
@@ -67,6 +68,7 @@ export type { JoinLobbyOptions } from "./lobby-client.js";
 export { scopeTransport } from "./scoped-transport.js";
 export {
   WIRE_STATUS_IDS,
+  armedAttackSnapshot,
   sameSkillBar,
   skillBarSlots,
   statusSnapshot,

@@ -1,6 +1,7 @@
 {
   "id": "arena-pillars",
   "name": "Pillar Hall",
+  "mode": "kill-count",
   "width": 960,
   "height": 640,
   "walls": [

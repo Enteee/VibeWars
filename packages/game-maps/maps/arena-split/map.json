@@ -1,6 +1,7 @@
 {
   "id": "arena-split",
   "name": "Split Paths",
+  "mode": "annihilation",
   "width": 1000,
   "height": 700,
   "walls": [

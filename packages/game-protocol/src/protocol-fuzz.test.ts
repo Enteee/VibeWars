@@ -60,6 +60,12 @@ function hostileValues(): unknown[] {
     { kind: "__proto__" },
     { kind: "constructor" },
     { kind: "move", dirX: 1, dirY: 0, extra: { deeply: { nested: "junk" } } },
+    { kind: "command" },
+    { kind: "command", creatureId: "p1/c1", order: null },
+    { kind: "command", creatureId: "p1/c1", order: "heel" },
+    { kind: "command", creatureId: "p1/c1", order: { kind: "mode", mode: "__proto__" } },
+    { kind: "command", creatureId: 7, order: { kind: "mode", mode: "heel" } },
+    { kind: "command", creatureId: "p1/c1", order: { kind: "mode", mode: "heel", x: 1 } },
   ];
 }
 
@@ -71,7 +77,16 @@ describe("parseClientIntent fuzzing", () => {
   });
 
   it("only ever returns a recognised intent kind or undefined", () => {
-    const allowed = new Set(["move", "stop", "target", "use-skill", "attack", "cancel", "walk-to"]);
+    const allowed = new Set([
+      "move",
+      "stop",
+      "target",
+      "use-skill",
+      "attack",
+      "cancel",
+      "walk-to",
+      "command",
+    ]);
     for (const value of hostileValues()) {
       const parsed = parseClientIntent(value);
       if (parsed !== undefined) {

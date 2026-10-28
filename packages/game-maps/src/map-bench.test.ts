@@ -51,7 +51,13 @@ describe("the tick bench on an arena (#444)", () => {
   it.each(loadAllMaps().map((map) => [map.id, map] as const))(
     "runs an 8v8 on %s, and every fighter moves",
     (_, map) => {
-      const { moved } = runTickBench({ ticks: 40, seed: "bench", now, field: mapBenchField(map) });
+      const { moved } = runTickBench({
+        ticks: 40,
+        seed: "bench",
+        now,
+        field: mapBenchField(map),
+        crowd: "fighters",
+      });
       for (const [id, { from, to }] of moved) {
         expect(Math.hypot(to.x - from.x, to.y - from.y), id).toBeGreaterThan(0);
       }
@@ -66,6 +72,7 @@ describe("the tick bench on an arena (#444)", () => {
       seed: "bench",
       now,
       field: mapBenchField(loadMap(mapId)),
+      crowd: "fighters",
     });
     const { p50, p95, max } = tickStats(tickMs.slice(WARM_UP));
     console.log(

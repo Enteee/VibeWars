@@ -1830,6 +1830,18 @@ body {
   color: var(--ink-dim);
 }
 
+/* The map, and under it the mode it plays (#476). */
+.lobby-map-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.lobby-mode {
+  color: var(--ink-dim);
+  font-size: 0.85rem;
+}
+
 .lobby-teams {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -4227,6 +4239,42 @@ body:has(#app > .chat) .now-playing {
   border-color: #ffd866;
 }
 
+/* Your pet's row and its orders (#1110), one block in the panel. */
+.party-companion {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.party-commands {
+  display: flex;
+  gap: 0.2rem;
+  padding: 0 0.25rem 0.15rem;
+}
+
+.party-command {
+  flex: 1;
+  padding: 0.05rem 0;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+
+.party-command:hover {
+  border-color: var(--ink);
+}
+
+/* The mode it is in, inverted: shape and value, not the target colour. */
+.party-command.is-lit,
+.party-command.is-lit:hover {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--bg);
+}
+
 .party-row-header {
   display: flex;
   align-items: center;
@@ -4253,6 +4301,47 @@ body:has(#app > .chat) .now-playing {
   height: 1em;
   margin-right: 0.2em;
   vertical-align: -0.15em;
+}
+
+/* Your pet's armed attack (#1167), right of its bar: the row keeps the
+   room for it, so the bar does not jump when one is armed. */
+.party-companion .party-row {
+  position: relative;
+  min-height: calc(24px + 0.3rem);
+  padding-right: calc(24px + 0.5rem);
+}
+
+.party-armed {
+  position: absolute;
+  top: 50%;
+  right: 0.25rem;
+  width: 24px;
+  height: 24px;
+  transform: translateY(-50%);
+}
+
+.party-armed[hidden] {
+  display: none;
+}
+
+.party-armed img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* The recharge wipe's shade, run the other way: dark from 12 clockwise
+   as the wait runs out (#152). */
+.party-armed::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: conic-gradient(
+    from 0deg,
+    var(--recharge-shade) calc(var(--armed, 0) * 1turn),
+    transparent 0
+  );
+  pointer-events: none;
 }
 
 .party-window .party-health {

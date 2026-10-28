@@ -276,6 +276,7 @@ describe("Signet of Return (#474)", () => {
           onDeath: "vanish",
           ownerDisableSeconds: 0,
           companionSkillId: undefined,
+          mode: "guard",
         },
       }),
     );

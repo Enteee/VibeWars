@@ -1490,3 +1490,25 @@ test("a pet attack arms the wolf's next bite, and the log says so (#1107)", asyn
     });
   }).toPass();
 });
+
+test("(45) your wolf's row in the party window takes Heel, and lights it (#1110)", async ({
+  page,
+}) => {
+  await page.setViewportSize(WIDE);
+  await page.goto("./");
+  await page.getByRole("button", { name: "new character" }).click();
+  await chooseProfession(page, "primary", "ranger");
+  await page.locator(".skill-box", { hasText: "Charm Animal" }).locator(".skill-box-equip").click();
+  await expectFilledSlots(page, ["Charm Animal"]);
+  const orders = page.getByRole("group", { name: "Pet orders" });
+  const guard = orders.getByRole("button", { name: "Guard" });
+  const heel = orders.getByRole("button", { name: "Heel" });
+  await expect(guard).toHaveAttribute("aria-pressed", "true");
+  // An equip re-arms the arena a moment later, which can drop an order
+  // sent before it: press again until the wolf's mode comes back lit.
+  await expect(async () => {
+    await heel.click();
+    await expect(heel).toHaveAttribute("aria-pressed", "true", { timeout: 2000 });
+  }).toPass();
+  await expect(guard).toHaveAttribute("aria-pressed", "false");
+});

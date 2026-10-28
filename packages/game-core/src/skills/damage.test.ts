@@ -511,6 +511,102 @@ describe("profession and attacking insignias, per piece (#1142)", () => {
     expect(monk.equipment.pieceReduction.chest).toBe(0);
     expect(wearing("monk", "nightstalkers").equipment.pieceArmor.chest).toEqual([]);
   });
+
+  it("gives Anchorite's +5 at 1, 3 and 5 skills recharging (#1188)", () => {
+    const monk = wearing("monk", "anchorites");
+    const armorAt = (recharging: number): number => {
+      for (let i = 0; i < recharging; i += 1) {
+        monk.cast.startRecharge(`skill-${String(i)}`, 10);
+      }
+      return effectiveArmor(monk, physical(10), "chest");
+    };
+    expect([0, 1, 2, 3, 5].map(armorAt)).toEqual([60, 65, 65, 70, 75]);
+  });
+
+  it("gives Disciple's +15 while you have a condition, Blighter's +20 while hexed (#1188)", () => {
+    const monk = wearing("monk", "disciples");
+    expect(effectiveArmor(monk, physical(10), "chest")).toBe(60);
+    monk.statuses.apply("malaise", 10, "x");
+    expect(effectiveArmor(monk, physical(10), "chest")).toBe(60);
+    monk.statuses.apply("bleeding", 10, "x");
+    expect(effectiveArmor(monk, physical(10), "chest")).toBe(75);
+    expect(effectiveArmor(monk, physical(10), "legs")).toBe(60);
+
+    const necromancer = wearing("necromancer", "blighters");
+    necromancer.statuses.apply("bleeding", 10, "x");
+    expect(effectiveArmor(necromancer, physical(10), "chest")).toBe(60);
+    necromancer.statuses.apply("malaise", 10, "x");
+    expect(effectiveArmor(necromancer, physical(10), "chest")).toBe(80);
+  });
+
+  it("gives Wanderer's and Dreadnought +10 vs elemental only (#1188)", () => {
+    const monk = wearing("monk", "wanderers");
+    expect(effectiveArmor(monk, fire, "chest")).toBe(70);
+    expect(effectiveArmor(monk, physical(10), "chest")).toBe(60);
+    const warrior = wearing("warrior", "dreadnought");
+    expect(effectiveArmor(warrior, fire, "chest")).toBe(90);
+    expect(effectiveArmor(warrior, fire, "legs")).toBe(80);
+  });
+
+  it("gives Undertaker's +5 below each of 80, 60, 40 and 20% of the maximum now (#1188)", () => {
+    const necromancer = wearing("necromancer", "undertakers");
+    const armorAt = (percent: number): number => {
+      necromancer.health = (percent / 100) * necromancer.maxHealth;
+      return effectiveArmor(necromancer, physical(10), "chest");
+    };
+    expect([100, 80, 79, 59, 39, 19].map(armorAt)).toEqual([60, 60, 65, 70, 75, 80]);
+    // Morale lowers the maximum: 70% of a 500 maximum is below 80%.
+    necromancer.maxHealth = 500;
+    necromancer.health = 350;
+    expect(effectiveArmor(necromancer, physical(10), "chest")).toBe(65);
+  });
+
+  it("gives Minion Master's and Shaman's +5 a tier of what you control (#1188)", () => {
+    const necromancer = wearing("necromancer", "minion-masters");
+    const minions = (count: number): number => {
+      necromancer.controlled.minion = count;
+      return effectiveArmor(necromancer, physical(10), "chest");
+    };
+    expect([0, 1, 2, 3, 5].map(minions)).toEqual([60, 65, 65, 70, 75]);
+    necromancer.controlled.minion = 0;
+    necromancer.controlled.spirit = 5;
+    expect(effectiveArmor(necromancer, physical(10), "chest")).toBe(60);
+
+    const ritualist = wearing("ritualist", "shamans");
+    const spirits = (count: number): number => {
+      ritualist.controlled.spirit = count;
+      return effectiveArmor(ritualist, physical(10), "chest");
+    };
+    expect([0, 1, 2, 3, 4].map(spirits)).toEqual([60, 65, 70, 75, 75]);
+  });
+
+  it("gives Forsaken +10 until the first enchantment (#1188)", () => {
+    const dervish = wearing("dervish", "forsaken");
+    expect(effectiveArmor(dervish, physical(10), "chest")).toBe(80);
+    dervish.statuses.apply("malaise", 10, "x");
+    expect(effectiveArmor(dervish, physical(10), "chest")).toBe(80);
+    dervish.statuses.apply("regeneration", 10, "x");
+    expect(effectiveArmor(dervish, physical(10), "chest")).toBe(70);
+  });
+
+  it("gives Prismatic +5 for each element at 9 or more (#1188)", () => {
+    const ranks = (fire: number, water: number, air: number, earth: number) =>
+      new Map([
+        ["elementalist.fire-magic", fire],
+        ["elementalist.water-magic", water],
+        ["elementalist.air-magic", air],
+        ["elementalist.earth-magic", earth],
+      ]);
+    const armorWith = (ranked: ReadonlyMap<string, number>): number =>
+      effectiveArmor(
+        wearing("elementalist", "prismatic", { ranks: ranked }),
+        physical(10),
+        "chest",
+      );
+    expect(armorWith(ranks(8, 8, 8, 8))).toBe(60);
+    expect(armorWith(ranks(9, 9, 0, 0))).toBe(70);
+    expect(armorWith(ranks(9, 9, 9, 9))).toBe(80);
+  });
 });
 
 describe("Mysticism's armor while enchanted (#874)", () => {

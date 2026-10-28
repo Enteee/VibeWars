@@ -181,29 +181,41 @@ describe("outOfRange", () => {
 
   it("marks a targeted skill one unit past its range, not one unit inside it", () => {
     expect(RANGE).toBeGreaterThan(0);
-    expect(outOfRange(RANGED_BAR, self({}), foe(RANGE - 1), [])).toEqual([false, false, false]);
-    expect(outOfRange(RANGED_BAR, self({}), foe(RANGE + 1), [])).toEqual([true, false, false]);
+    expect(outOfRange(RANGED_BAR, self({}), foe(RANGE - 1), undefined, [])).toEqual([
+      false,
+      false,
+      false,
+    ]);
+    expect(outOfRange(RANGED_BAR, self({}), foe(RANGE + 1), undefined, [])).toEqual([
+      true,
+      false,
+      false,
+    ]);
   });
 
   it("marks a targeted skill with a wall between caster and target", () => {
     const wall = segment(vec2(50, -100), vec2(50, 100));
-    expect(outOfRange(RANGED_BAR, self({}), foe(100), [wall])).toEqual([true, false, false]);
+    expect(outOfRange(RANGED_BAR, self({}), foe(100), undefined, [wall])).toEqual([
+      true,
+      false,
+      false,
+    ]);
   });
 
   it("marks no ally skill with a foe targeted, which the host casts on its caster", () => {
     const ORISON = "monk.orison-of-healing";
     const range = getSkill(ORISON)?.range ?? 0;
     const bar = [slot(ORISON)];
-    expect(outOfRange(bar, self({}), foe(range + 1), [])).toEqual([false]);
-    expect(outOfRange(bar, self({}), foe(range + 1, { team: 0 }), [])).toEqual([true]);
+    expect(outOfRange(bar, self({}), foe(range + 1), undefined, [])).toEqual([false]);
+    expect(outOfRange(bar, self({}), foe(range + 1, { team: 0 }), undefined, [])).toEqual([true]);
   });
 
   it("marks no skill the target is wrong for: walking closer would not help (#599)", () => {
     const BLOOD_RITUAL = "necromancer.blood-ritual";
     const ally = (x: number) => self({ sessionId: "ally", x, team: 0 });
-    expect(outOfRange([slot(BLOOD_RITUAL)], self({}), foe(1000), [])).toEqual([false]);
-    expect(outOfRange([slot(BLOOD_RITUAL)], self({}), ally(1000), [])).toEqual([true]);
-    expect(outOfRange([slot(FIREBALL)], self({}), ally(1000), [])).toEqual([false]);
+    expect(outOfRange([slot(BLOOD_RITUAL)], self({}), foe(1000), undefined, [])).toEqual([false]);
+    expect(outOfRange([slot(BLOOD_RITUAL)], self({}), ally(1000), undefined, [])).toEqual([true]);
+    expect(outOfRange([slot(FIREBALL)], self({}), ally(1000), undefined, [])).toEqual([false]);
   });
 
   it("marks a resurrection against a corpse only, and nothing else against it (#812)", () => {
@@ -212,12 +224,34 @@ describe("outOfRange", () => {
     const bar = [slot(RESTORE_LIFE), slot(FIREBALL)];
     const ally = (x: number, dead: boolean) => self({ sessionId: "ally", x, team: 0, dead });
     expect(range).toBeGreaterThan(0);
-    expect(outOfRange(bar, self({}), ally(range + 1, true), [])).toEqual([true, false]);
-    expect(outOfRange(bar, self({}), ally(range - 1, true), [])).toEqual([false, false]);
-    expect(outOfRange(bar, self({}), ally(range + 1, false), [])).toEqual([false, false]);
+    expect(outOfRange(bar, self({}), ally(range + 1, true), undefined, [])).toEqual([true, false]);
+    expect(outOfRange(bar, self({}), ally(range - 1, true), undefined, [])).toEqual([false, false]);
+    expect(outOfRange(bar, self({}), ally(range + 1, false), undefined, [])).toEqual([
+      false,
+      false,
+    ]);
   });
 
-  it("marks no pet skill, and no resurrection against a dead creature (#1046)", () => {
+  it("measures a pet skill to your pet, whatever is selected (#1110)", () => {
+    const COMFORT = "ranger.comfort-animal";
+    const pet = (x: number) =>
+      self({
+        sessionId: "me/c1",
+        x,
+        creature: { ownerId: "me", kind: "pet", look: "beast", mode: "guard", armedAttack: null },
+      });
+    expect(outOfRange([slot(COMFORT)], self({}), foe(5000), pet(500), [])).toEqual([true]);
+    expect(outOfRange([slot(COMFORT)], self({}), foe(5000), pet(300), [])).toEqual([false]);
+    expect(outOfRange([slot(COMFORT)], self({}), undefined, pet(500), [])).toEqual([true]);
+    const wall = segment(vec2(150, -50), vec2(150, 50));
+    expect(outOfRange([slot(COMFORT)], self({}), undefined, pet(300), [wall])).toEqual([true]);
+    // A call on your living pet is measured the same way.
+    const HASTE = "ranger.call-of-haste";
+    expect(outOfRange([slot(HASTE)], self({}), foe(5000), pet(800), [])).toEqual([true]);
+    expect(outOfRange([slot(HASTE)], self({}), foe(5000), pet(300), [])).toEqual([false]);
+  });
+
+  it("marks no pet skill with no pet, and no resurrection against a dead creature (#1046)", () => {
     const COMFORT = "ranger.comfort-animal";
     const RESTORE_LIFE = "monk.restore-life";
     // Past both skills' range.
@@ -226,22 +260,24 @@ describe("outOfRange", () => {
       x: 1000,
       team: 0,
       dead: true,
-      creature: { ownerId: "r", kind: "pet", look: "beast" },
+      creature: { ownerId: "r", kind: "pet", look: "beast", mode: "guard", armedAttack: null },
     });
-    expect(outOfRange([slot(COMFORT), slot(RESTORE_LIFE)], self({}), pet, [])).toEqual([
+    expect(outOfRange([slot(COMFORT), slot(RESTORE_LIFE)], self({}), pet, undefined, [])).toEqual([
       false,
       false,
     ]);
-    expect(outOfRange([slot(COMFORT)], self({}), foe(5000), [])).toEqual([false]);
+    expect(outOfRange([slot(COMFORT)], self({}), foe(5000), undefined, [])).toEqual([false]);
   });
 
   it("marks nothing with no target, or a dead one", () => {
-    expect(outOfRange(RANGED_BAR, self({}), undefined, [])).toEqual([false, false, false]);
-    expect(outOfRange(RANGED_BAR, self({}), foe(RANGE + 1, { dead: true }), [])).toEqual([
+    expect(outOfRange(RANGED_BAR, self({}), undefined, undefined, [])).toEqual([
       false,
       false,
       false,
     ]);
+    expect(outOfRange(RANGED_BAR, self({}), foe(RANGE + 1, { dead: true }), undefined, [])).toEqual(
+      [false, false, false],
+    );
   });
 });
 
