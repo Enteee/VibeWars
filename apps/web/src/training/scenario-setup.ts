@@ -1,6 +1,7 @@
 import {
   facingToward,
   MatchSimulation,
+  loadoutSpec,
   PLAYER_TEAM,
   scenarioParticipants,
   type ResolvedLoadout,
@@ -107,13 +108,9 @@ export function setupScenario(
         id: SELF_ID,
         team: PLAYER_TEAM,
         skillBar: arming.skillBar,
-        attributeRanks: arming.loadout.attributeRanks,
-        equipment: arming.loadout.equipment,
+        ...loadoutSpec(arming.loadout),
         spawn,
         facing: firstDummy === undefined ? 0 : facingToward(spawn, firstDummy.position),
-        maxHealth: arming.loadout.maxHealth,
-        maxEnergy: arming.loadout.maxEnergy,
-        baseEnergyPips: arming.loadout.baseEnergyPips,
         // A player who dies in training is back at once: the scenario is
         // the lesson, not the walk back.
         reset: { kind: "on-death", afterSeconds: 3 },

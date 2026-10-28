@@ -94,7 +94,7 @@ describe("HOUSE_LOADOUT", () => {
   });
 
   it("has no dead slot: every attack skill on it can be used with the house weapon (#445)", () => {
-    const weapon = HOUSE_LOADOUT.equipment.mainHand.weaponId;
+    const weapon = HOUSE_LOADOUT.equipment.weaponSets[0].mainHand.weaponId;
     for (const id of HOUSE_LOADOUT.skillBar) {
       const rule = id === null ? undefined : getSkill(id)?.attack;
       if (rule !== undefined) {

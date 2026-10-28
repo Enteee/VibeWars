@@ -113,6 +113,14 @@ describe("overcast (#461)", () => {
     expect(combatant.energy).toBe(0);
   });
 
+  it("keeps the hidden energy a weapon swap left below 0, and takes it no deeper (#489)", () => {
+    const combatant = makeCombatant({ id: "e", energy: -7, maxEnergy: 30 });
+    addOvercast(combatant, 10);
+    expect(combatant.energy).toBe(-7);
+    addOvercast(combatant, 40);
+    expect(combatant.energy).toBe(-7);
+  });
+
   it("caps an energy gain at the ceiling, not at maximum energy", () => {
     const combatant = makeCombatant({ id: "e", energy: 10, maxEnergy: 50 });
     addOvercast(combatant, 30);

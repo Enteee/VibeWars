@@ -100,7 +100,10 @@ describe("joining a P2P match with a build (#375)", () => {
 
     const empty = await joinWith({
       ...LEGAL_BUILD,
-      equipment: { ...LEGAL_BUILD.equipment, offHand: null },
+      equipment: {
+        ...LEGAL_BUILD.equipment,
+        weaponSets: [{ ...LEGAL_BUILD.equipment.weaponSets[0], offHand: null }, null, null, null],
+      },
     });
     expect(self(empty.connection)).toBeDefined();
     expect(self(empty.connection)?.offhandId).toBeUndefined();
@@ -160,7 +163,13 @@ describe("joining a P2P match with a build (#375)", () => {
 
   it("starts an Elementalist full, at the maximum Energy Storage raised (#532)", async () => {
     // No focus: its Energy Storage requirement would add energy of its own.
-    const storing = { ...LEGAL_BUILD, equipment: { ...LEGAL_BUILD.equipment, offHand: null } };
+    const storing = {
+      ...LEGAL_BUILD,
+      equipment: {
+        ...LEGAL_BUILD.equipment,
+        weaponSets: [{ ...LEGAL_BUILD.equipment.weaponSets[0], offHand: null }, null, null, null],
+      },
+    };
     const withoutStorage = {
       ...storing,
       attributes: LEGAL_BUILD.attributes.filter(
@@ -216,6 +225,45 @@ describe("joining a P2P match with a build (#375)", () => {
     // path as any other broken build, rather than being given a default.
     const { equipment: _dropped, ...withoutGear } = LEGAL_BUILD;
     const { slots } = await joinWith(withoutGear);
+
+    expect(slots).toEqual(DEFAULT_SKILL_BAR);
+  });
+
+  it("seats a legal four-set build holding set 1, and refuses one with an illegal set 3 (#489)", async () => {
+    const [set1] = LEGAL_BUILD.equipment.weaponSets;
+    const staff = {
+      mainHand: { weaponId: "staff", requirementAttributeId: "elementalist.fire-magic" },
+      offHand: null,
+    } as const;
+    const fourSets: PlayerBuild = {
+      ...LEGAL_BUILD,
+      equipment: { ...LEGAL_BUILD.equipment, weaponSets: [set1, staff, set1, staff] },
+    };
+    expect(validatePlayerBuild(fourSets, MINIMAL_GW_INSPIRED_PVP_V1.attributes)).toEqual([]);
+    const legal = await joinWith(fourSets);
+    expect(legal.slots).toEqual(LEGAL_BUILD.skillBar);
+    expect(self(legal.connection)?.weaponId).toBe(set1.mainHand.weaponId);
+
+    const illegal = await joinWith({
+      ...fourSets,
+      equipment: {
+        ...fourSets.equipment,
+        weaponSets: [set1, null, { ...staff, offHand: set1.offHand }, null],
+      },
+    });
+    expect(illegal.slots).toEqual(DEFAULT_SKILL_BAR);
+  });
+
+  it("treats the single-weapon gear shape as malformed, not old (#489)", async () => {
+    const [set1] = LEGAL_BUILD.equipment.weaponSets;
+    const { slots } = await joinWith({
+      ...LEGAL_BUILD,
+      equipment: {
+        mainHand: set1.mainHand,
+        offHand: set1.offHand,
+        armor: LEGAL_BUILD.equipment.armor,
+      },
+    });
 
     expect(slots).toEqual(DEFAULT_SKILL_BAR);
   });

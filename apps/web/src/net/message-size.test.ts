@@ -320,6 +320,10 @@ describe("every message fits in one Trystero chunk (#403)", () => {
   });
 
   it("a hello with a full build", () => {
+    const linkedSet = {
+      mainHand: { weaponId: "wand", requirementAttributeId: "elementalist.fire-magic" },
+      offHand: { offhandId: "focus", requirementAttributeId: "necromancer.soul-reaping" },
+    } as const;
     const build: PlayerBuild = {
       name: NAME,
       primaryProfession: "necromancer",
@@ -327,8 +331,16 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       attributes: NECRO_ELE_ATTRIBUTES.map((attributeId) => ({ attributeId, rank: 12 })),
       skillBar: [...SKILL_IDS].sort((a, b) => b.length - a.length).slice(0, 8),
       equipment: {
-        mainHand: { weaponId: "staff", requirementAttributeId: "necromancer.soul-reaping" },
-        offHand: null,
+        weaponSets: [
+          {
+            mainHand: { weaponId: "staff", requirementAttributeId: "necromancer.soul-reaping" },
+            offHand: null,
+          },
+          // Every set carried, each with both hands linked: the largest gear.
+          linkedSet,
+          linkedSet,
+          linkedSet,
+        ],
         armor: Object.fromEntries(
           Object.keys(bare).map((slot) => [
             slot,

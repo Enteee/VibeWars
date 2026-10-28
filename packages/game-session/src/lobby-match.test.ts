@@ -91,7 +91,9 @@ describe("a lobby's own match", () => {
     });
     await lobby.step(0.05);
     // The house loadout is a warrior's; only the build carries this weapon.
-    expect(self(match)?.weaponId).toBe(defaultBuildEquipment("elementalist").mainHand.weaponId);
+    expect(self(match)?.weaponId).toBe(
+      defaultBuildEquipment("elementalist").weaponSets[0].mainHand.weaponId,
+    );
   });
 
   it("seats each member on the team the lobby gave them, not one the host picks", async () => {

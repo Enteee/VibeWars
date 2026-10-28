@@ -121,7 +121,7 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
           team,
           skillBar: [],
           attributeRanks: resolved.attributeRanks,
-          equipment: resolved.equipment,
+          equipment: resolved.weaponSets[0].equipment,
           baseEnergyPips: HOUSE_LOADOUT.baseEnergyPips,
           maxHealth: 1e7,
           spawn: at,

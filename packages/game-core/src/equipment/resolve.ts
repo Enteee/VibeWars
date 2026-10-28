@@ -11,7 +11,7 @@ import {
   type ConditionalArmor,
 } from "./armor.js";
 import { getInsignia, perSlotAmount } from "./insignias.js";
-import type { BuildEquipment } from "./loadout.js";
+import type { BuildEquipment, WeaponSet } from "./loadout.js";
 import { getOffhand, type OffhandId } from "./offhands.js";
 import {
   ATTRIBUTE_RUNE_TIERS,
@@ -31,12 +31,14 @@ import { getWeapon, weaponDamageType, type Weapon } from "./weapons.js";
  * (ADR-0012).
  *
  * This runs **once, before a `Combatant` is constructed**, and that is
- * the whole design. `Combatant.maxHealth`, `maxEnergy` and
- * `attributeRanks` are `readonly` because they are the character sheet,
- * not simulation state; gear is fixed at join, so there is never a
- * reason to mutate them. Resolving up front means a rune cannot be
- * applied twice, cannot be applied in the wrong order, and cannot
- * disagree between the build editor and the server — both call this.
+ * the whole design. `Combatant.maxHealth` and `attributeRanks` are
+ * `readonly` because they are the character sheet, not simulation
+ * state. Every weapon set is resolved here too, each to its own
+ * `ResolvedEquipment` and maximum energy, and a swap in a match only
+ * picks another of them (ADR-0036): nothing is resolved twice.
+ * Resolving up front means a rune cannot be applied twice, cannot be
+ * applied in the wrong order, and cannot disagree between the build
+ * editor and the server — both call this.
  */
 
 export interface ResolvedWeapon {
@@ -67,14 +69,29 @@ export interface ResolvedEquipment {
   readonly offhandId: OffhandId | undefined;
 }
 
+/** One carried set, resolved (ADR-0036). */
+export interface ResolvedWeaponSet {
+  /** Main hand, off-hand, and armor with this set's shield; the runes' share is the same in every set. */
+  readonly equipment: ResolvedEquipment;
+  /** Maximum energy holding this set, before morale: a focus's bonus is in it. */
+  readonly maxEnergy: number;
+}
+
+export type ResolvedWeaponSets = readonly [
+  ResolvedWeaponSet,
+  ResolvedWeaponSet | null,
+  ResolvedWeaponSet | null,
+  ResolvedWeaponSet | null,
+];
+
 export interface ResolvedLoadout {
   readonly maxHealth: number;
-  readonly maxEnergy: number;
   /** Energy regeneration before any status, in pips: the primary profession's. */
   readonly baseEnergyPips: number;
   /** Allocated ranks plus rune bonuses, clamped to `MAX_EFFECTIVE_RANK`. */
   readonly attributeRanks: ReadonlyMap<string, number>;
-  readonly equipment: ResolvedEquipment;
+  /** Index i is build set i; `null` where the build's is. */
+  readonly weaponSets: ResolvedWeaponSets;
 }
 
 export interface LoadoutInput {
@@ -262,20 +279,59 @@ export function resolveLoadout(input: LoadoutInput, rules: CombatRules): Resolve
   const rankOf = (attributeId: string | undefined): number =>
     attributeId === undefined ? 0 : (attributeRanks.get(attributeId) ?? 0);
 
-  const weapon = getWeapon(input.equipment.mainHand.weaponId);
-  const resolvedWeapon = resolveWeapon(
-    weapon,
-    input.equipment.mainHand.requirementAttributeId,
-    rankOf,
-  );
-
-  let baseArmor = baseArmorFor(input.primaryProfession);
   // Energy Storage (#532) adds to the maximum like Attunement does, once
   // at join; only an Elementalist primary holds its rank.
-  let energyDelta = runes.energyDelta + energyStorageBonus(rankOf(ENERGY_STORAGE_ATTRIBUTE));
+  const shared: SharedGear = {
+    baseArmor: baseArmorFor(input.primaryProfession),
+    energyDelta: runes.energyDelta + energyStorageBonus(rankOf(ENERGY_STORAGE_ATTRIBUTE)),
+    conditionalArmor: conditionalArmorOf(input.primaryProfession, input.equipment),
+    flatPhysicalReduction: runes.flatPhysicalReduction,
+    statusDurationScale: runes.statusDurationScale,
+    attributeBonuses: runes.attributeBonuses,
+  };
+  const [set1, set2, set3, set4] = input.equipment.weaponSets;
+  const resolve = (set: WeaponSet | null): ResolvedWeaponSet | null =>
+    set === null ? null : resolveWeaponSet(set, shared, rankOf, rules);
+
+  return {
+    maxHealth: Math.max(rules.minimumMaxHealth, rules.baseHealth + runes.healthDelta),
+    baseEnergyPips: baseEnergyPipsFor(input.primaryProfession),
+    attributeRanks,
+    weaponSets: [
+      resolveWeaponSet(set1, shared, rankOf, rules),
+      resolve(set2),
+      resolve(set3),
+      resolve(set4),
+    ],
+  };
+}
+
+/** What every weapon set shares: armor and runes are one set (ADR-0036). */
+interface SharedGear {
+  /** Before a shield's bonus. */
+  readonly baseArmor: number;
+  /** Before a focus's bonus. */
+  readonly energyDelta: number;
+  readonly conditionalArmor: readonly ConditionalArmor[];
+  readonly flatPhysicalReduction: number;
+  readonly statusDurationScale: ReadonlyMap<StatusId, number>;
+  readonly attributeBonuses: ReadonlyMap<string, number>;
+}
+
+function resolveWeaponSet(
+  set: WeaponSet,
+  shared: SharedGear,
+  rankOf: (attributeId: string | undefined) => number,
+  rules: CombatRules,
+): ResolvedWeaponSet {
+  const weapon = getWeapon(set.mainHand.weaponId);
+  const resolvedWeapon = resolveWeapon(weapon, set.mainHand.requirementAttributeId, rankOf);
+
+  let baseArmor = shared.baseArmor;
+  let energyDelta = shared.energyDelta;
   let offhandId: OffhandId | undefined;
 
-  const offHand = input.equipment.offHand;
+  const offHand = set.offHand;
   if (offHand !== null) {
     const definition = getOffhand(offHand.offhandId);
     // An off-hand alongside a two-handed weapon is rejected by
@@ -295,19 +351,16 @@ export function resolveLoadout(input: LoadoutInput, rules: CombatRules): Resolve
   }
 
   return {
-    maxHealth: Math.max(rules.minimumMaxHealth, rules.baseHealth + runes.healthDelta),
-    maxEnergy: Math.max(1, rules.baseEnergy + energyDelta),
-    baseEnergyPips: baseEnergyPipsFor(input.primaryProfession),
-    attributeRanks,
     equipment: {
       mainHand: resolvedWeapon,
       baseArmor,
-      conditionalArmor: conditionalArmorOf(input.primaryProfession, input.equipment),
-      flatPhysicalReduction: runes.flatPhysicalReduction,
-      statusDurationScale: runes.statusDurationScale,
-      attributeBonuses: runes.attributeBonuses,
+      conditionalArmor: shared.conditionalArmor,
+      flatPhysicalReduction: shared.flatPhysicalReduction,
+      statusDurationScale: shared.statusDurationScale,
+      attributeBonuses: shared.attributeBonuses,
       offhandId,
     },
+    maxEnergy: Math.max(1, rules.baseEnergy + energyDelta),
   };
 }
 

@@ -1,8 +1,11 @@
 import type { SkillBar } from "../build.js";
+import { isWeaponSetIndex, type WeaponSetIndex } from "../equipment/loadout.js";
 import {
   unarmedResolvedEquipment,
   type ResolvedEquipment,
   type ResolvedLoadout,
+  type ResolvedWeaponSet,
+  type ResolvedWeaponSets,
 } from "../equipment/resolve.js";
 import type { WeaponId } from "../equipment/weapons.js";
 import {
@@ -91,7 +94,7 @@ import {
   type StatusId,
   type StatusTriggerEvent,
 } from "../skills/status.js";
-import { effectiveMaxEnergy, recoverOvercast } from "../skills/overcast.js";
+import { effectiveMaxEnergy, energyFloor, recoverOvercast } from "../skills/overcast.js";
 import { resolveMagnitude } from "../skills/scaling.js";
 import { resolveTargets } from "../skills/targeting.js";
 import {
@@ -228,6 +231,45 @@ export interface ParticipantSpec {
   readonly reset?: ResetPolicy | undefined;
   /** Omitted: a player or a training dummy, not a creature (#1052). */
   readonly creature?: Creature | undefined;
+  /**
+   * Sets 2-4 (#489), `null` where empty; `equipment` and `maxEnergy`
+   * are set 1, in hand at the start. Omitted: none, as dummies,
+   * creatures and the headless runner carry.
+   */
+  readonly spareWeaponSets?: readonly [
+    ResolvedWeaponSet | null,
+    ResolvedWeaponSet | null,
+    ResolvedWeaponSet | null,
+  ];
+}
+
+/** What `requestWeaponSet` did (#489). */
+export type WeaponSetRequest =
+  | { readonly kind: "swapped" }
+  | { readonly kind: "queued" }
+  /** The active set's key: nothing to do, and a queued swap is dropped. */
+  | { readonly kind: "kept" }
+  | { readonly kind: "refused"; readonly reason: "dead" | "empty-set" | "no-such-set" };
+
+/**
+ * The loadout's half of a participant spec, so every caller turns a
+ * loadout into one the same way: set 1 in hand, the others spare (#489).
+ */
+export function loadoutSpec(
+  loadout: ResolvedLoadout,
+): Pick<
+  ParticipantSpec,
+  "attributeRanks" | "equipment" | "maxHealth" | "maxEnergy" | "baseEnergyPips" | "spareWeaponSets"
+> {
+  const [set1, set2, set3, set4] = loadout.weaponSets;
+  return {
+    attributeRanks: loadout.attributeRanks,
+    equipment: set1.equipment,
+    maxHealth: loadout.maxHealth,
+    maxEnergy: set1.maxEnergy,
+    baseEnergyPips: loadout.baseEnergyPips,
+    spareWeaponSets: [set2, set3, set4],
+  };
 }
 
 export interface Participant {
@@ -265,6 +307,12 @@ export interface Participant {
   readonly outOfCombatSeconds: number;
   /** `undefined`: a player or a training dummy (#1052). */
   readonly creature: Creature | undefined;
+  /** Every carried set, set 1 first (#489, ADR-0036). */
+  readonly weaponSets: ResolvedWeaponSets;
+  /** The set in hand: `combatant.equipment` is `weaponSets[activeWeaponSet].equipment`. */
+  readonly activeWeaponSet: WeaponSetIndex;
+  /** A swap waiting for the cast, aftercast, swing or knockdown to end; `undefined` for none. */
+  readonly pendingWeaponSet: WeaponSetIndex | undefined;
 }
 
 /** A skill walking in to its target (#499). */
@@ -341,6 +389,9 @@ interface ParticipantRecord extends Participant {
   resolvedMaxEnergy: number;
   /** Match time of the last resurrection (#812); `-Infinity` for none. */
   resurrectedAtSeconds: number;
+  weaponSets: ResolvedWeaponSets;
+  activeWeaponSet: WeaponSetIndex;
+  pendingWeaponSet: WeaponSetIndex | undefined;
 }
 
 /**
@@ -612,6 +663,9 @@ export class MatchSimulation {
       resolvedMaxEnergy: spec.maxEnergy ?? this.#ruleset.combat.baseEnergy,
       resurrectedAtSeconds: Number.NEGATIVE_INFINITY,
       creature: spec.creature === undefined ? undefined : { ...spec.creature },
+      weaponSets: this.#weaponSets(spec),
+      activeWeaponSet: 0,
+      pendingWeaponSet: undefined,
     };
     this.#participants.set(spec.id, record);
     if (countsForTeam(record)) {
@@ -718,23 +772,52 @@ export class MatchSimulation {
     }
     const before = record.combatant;
     const fraction = before.maxHealth > 0 ? before.health / before.maxHealth : 0;
-    record.combatant = this.#combatant({
-      ...record.spec,
-      skillBar,
-      attributeRanks: loadout.attributeRanks,
-      equipment: loadout.equipment,
-      maxHealth: loadout.maxHealth,
-      maxEnergy: loadout.maxEnergy,
-      baseEnergyPips: loadout.baseEnergyPips,
-    });
+    const spec: ParticipantSpec = { ...record.spec, skillBar, ...loadoutSpec(loadout) };
+    record.combatant = this.#combatant(spec);
     record.resolvedMaxHealth = loadout.maxHealth;
-    record.resolvedMaxEnergy = loadout.maxEnergy;
+    record.resolvedMaxEnergy = loadout.weaponSets[0].maxEnergy;
+    // Back to set 1, as a fresh build starts (#489).
+    record.weaponSets = this.#weaponSets(spec);
+    record.activeWeaponSet = 0;
+    record.pendingWeaponSet = undefined;
     this.#setMorale(record, before.morale);
     record.combatant.health = record.combatant.maxHealth * fraction;
     record.combatant.dead = before.dead;
     record.combatant.soulReapingTriggers = before.soulReapingTriggers;
     record.skillBar = skillBar;
     record.pendingSkill = undefined;
+  }
+
+  /**
+   * Swap to `set` (#489, ADR-0036), numbered 0-3 for F1-F4: at once, or
+   * queued until the cast, aftercast, swing in progress or knockdown
+   * ends. Pressing another set while one is queued replaces it; the
+   * active set's key drops it. `undefined`: no such participant.
+   */
+  public requestWeaponSet(id: string, set: number): WeaponSetRequest | undefined {
+    const record = this.#participants.get(id);
+    if (record === undefined) {
+      return undefined;
+    }
+    if (record.combatant.dead) {
+      return { kind: "refused", reason: "dead" };
+    }
+    if (!isWeaponSetIndex(set)) {
+      return { kind: "refused", reason: "no-such-set" };
+    }
+    if (record.weaponSets[set] === null) {
+      return { kind: "refused", reason: "empty-set" };
+    }
+    if (set === record.activeWeaponSet) {
+      record.pendingWeaponSet = undefined;
+      return { kind: "kept" };
+    }
+    if (this.#swapBlocked(record)) {
+      record.pendingWeaponSet = set;
+      return { kind: "queued" };
+    }
+    this.#swapWeapons(record, set);
+    return { kind: "swapped" };
   }
 
   /** Put a participant back as they started, exactly as a respawn does. */
@@ -1215,7 +1298,7 @@ export class MatchSimulation {
       const energyPips = netPips(record.combatant, natural, this.#upkeep(record.id)).energy;
       // Up to the ceiling overcast leaves, which can be below 0 (#461).
       record.combatant.energy = Math.max(
-        0,
+        energyFloor(record.combatant),
         Math.min(
           effectiveMaxEnergy(record.combatant),
           record.combatant.energy + energyPips * ENERGY_PER_PIP * dt,
@@ -1265,8 +1348,13 @@ export class MatchSimulation {
       }
 
       if (!down) {
+        // Before a skill queued behind the same cast goes off, and after a
+        // blow that just landed: a swap is an action, queued behind the
+        // one in progress (#489).
+        this.#settleWeaponSwap(record);
         this.#advancePendingSkill(record, dt);
         this.#advanceAttack(record, dt);
+        this.#settleWeaponSwap(record);
         this.#faceCastTarget(record);
       }
       // Walked or approached: either way, it is what a shot leads.
@@ -2190,6 +2278,11 @@ export class MatchSimulation {
       return;
     }
     attack.swingElapsed = Math.max(0, attack.swingElapsed - interval);
+    // The blow is the old weapon's; a swap waiting on it takes the next
+    // settle, this tick, and the new weapon swings afresh (#489).
+    if (record.pendingWeaponSet !== undefined) {
+      attack.swingElapsed = 0;
+    }
     record.outOfCombatSeconds = 0;
     this.#blowStarted(record, target);
 
@@ -2678,6 +2771,7 @@ export class MatchSimulation {
         victim.combatant.cast.endAftercast();
         victim.walkGoal = undefined;
         victim.combatant.knockdownRemaining = 0;
+        victim.pendingWeaponSet = undefined;
         victim.combatant.statuses.endAll();
         this.#clearChainMarks(victim);
         emptyAdrenaline(victim.combatant);
@@ -2921,7 +3015,63 @@ export class MatchSimulation {
     combatant.maxHealth = moraleMaximum(baseHealth, record.resolvedMaxHealth, morale);
     combatant.maxEnergy = moraleMaximum(baseEnergy, record.resolvedMaxEnergy, morale);
     combatant.health = Math.min(combatant.health, effectiveMaxHealth(combatant));
-    combatant.energy = Math.max(0, Math.min(combatant.energy, effectiveMaxEnergy(combatant)));
+    combatant.energy = Math.max(
+      energyFloor(combatant),
+      Math.min(combatant.energy, effectiveMaxEnergy(combatant)),
+    );
+  }
+
+  /**
+   * Whether a swap must wait (#489): GW1 changes no equipment during a
+   * skill's activation or an attack's swing, and a knocked-down body takes
+   * no action. An attack paused out of reach with a swing begun waits for
+   * its next blow; moving or Esc ends the attack, and the swap with it.
+   */
+  #swapBlocked(record: ParticipantRecord): boolean {
+    const { combatant } = record;
+    return (
+      combatant.knockdownRemaining > 0 ||
+      combatant.cast.isCasting ||
+      combatant.cast.inAftercast ||
+      (combatant.attack !== undefined && combatant.attack.swingElapsed > 0)
+    );
+  }
+
+  /** Take a queued swap if nothing blocks it any more (#489). */
+  #settleWeaponSwap(record: ParticipantRecord): void {
+    const set = record.pendingWeaponSet;
+    if (set !== undefined && !record.combatant.dead && !this.#swapBlocked(record)) {
+      this.#swapWeapons(record, set);
+    }
+  }
+
+  /**
+   * Put `set` in hand (#489): the only writer of `combatant.equipment`.
+   * Maximum energy becomes the set's, and current energy moves by the
+   * same amount, below 0 if it must (GW1's hidden energy, ADR-0036).
+   * `moraleMaximum` is linear, so the move is the sets' difference at any
+   * morale. An attack in progress swings afresh with the new weapon.
+   */
+  #swapWeapons(record: ParticipantRecord, set: WeaponSetIndex): void {
+    const held = record.weaponSets[set];
+    if (held === null) {
+      return;
+    }
+    const { combatant } = record;
+    const before = combatant.maxEnergy;
+    record.activeWeaponSet = set;
+    record.pendingWeaponSet = undefined;
+    combatant.equipment = held.equipment;
+    record.resolvedMaxEnergy = held.maxEnergy;
+    combatant.maxEnergy = moraleMaximum(
+      this.#ruleset.combat.baseEnergy,
+      record.resolvedMaxEnergy,
+      combatant.morale,
+    );
+    combatant.energy += combatant.maxEnergy - before;
+    if (combatant.attack !== undefined) {
+      combatant.attack.swingElapsed = 0;
+    }
   }
 
   /** Whether `record`'s reset policy, other than `on-death`, calls for a reset now. */
@@ -3122,6 +3272,8 @@ export class MatchSimulation {
     record.combatant.cast.endAftercast();
     record.combatant.attack = undefined;
     record.combatant.knockdownRemaining = 0;
+    // The set in hand stays: GW1 resurrects you holding it (#489).
+    record.pendingWeaponSet = undefined;
     this.#clearChainMarks(record);
     record.pendingSkill = undefined;
     record.sinceReset = 0;
@@ -3151,6 +3303,17 @@ export class MatchSimulation {
       2,
       Math.round(this.#ruleset.combat.trackWindowSeconds * this.#ruleset.tickRateHz),
     );
+  }
+
+  /** Set 1 from the spec's own gear, the others spare (#489). */
+  #weaponSets(spec: ParticipantSpec): ResolvedWeaponSets {
+    const [set2, set3, set4] = spec.spareWeaponSets ?? [null, null, null];
+    return [
+      { equipment: spec.equipment, maxEnergy: spec.maxEnergy ?? this.#ruleset.combat.baseEnergy },
+      set2,
+      set3,
+      set4,
+    ];
   }
 
   #combatant(spec: ParticipantSpec): Combatant {

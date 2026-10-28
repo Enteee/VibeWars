@@ -188,8 +188,12 @@ describe("damage taken multipliers (#919)", () => {
         primaryProfession: "warrior",
         allocatedRanks: new Map(),
         equipment: {
-          mainHand: { weaponId: "sword", requirementAttributeId: null },
-          offHand: null,
+          weaponSets: [
+            { mainHand: { weaponId: "sword", requirementAttributeId: null }, offHand: null },
+            null,
+            null,
+            null,
+          ],
           armor: {
             ...bareArmorSet(),
             feet: {
@@ -201,7 +205,7 @@ describe("damage taken multipliers (#919)", () => {
       },
       RULES,
     );
-    const runed = makeCombatant({ id: "d", team: 1, equipment: resolved.equipment });
+    const runed = makeCombatant({ id: "d", team: 1, equipment: resolved.weaponSets[0].equipment });
     const before = mitigate(physical(100), runed, RULES);
     runed.statuses.apply("frenzy", 8, "self");
     // (x + 3) × 2 − 3, not (x − 3) × 2.
@@ -244,14 +248,18 @@ describe("conditional insignia armor", () => {
         primaryProfession: "warrior",
         allocatedRanks: new Map(),
         equipment: {
-          mainHand: { weaponId: "sword", requirementAttributeId: null },
-          offHand: null,
+          weaponSets: [
+            { mainHand: { weaponId: "sword", requirementAttributeId: null }, offHand: null },
+            null,
+            null,
+            null,
+          ],
           armor: { ...bareArmorSet(), chest: { insigniaId, rune: null } },
         },
       },
       RULES,
     );
-    return makeCombatant({ id: "d", team: 1, equipment: resolved.equipment });
+    return makeCombatant({ id: "d", team: 1, equipment: resolved.weaponSets[0].equipment });
   }
 
   it("applies Stalwart against a physical hit and not a typeless one", () => {
@@ -301,11 +309,19 @@ function primary(profession: "warrior" | "ranger" | "monk"): Combatant {
       primaryProfession: profession,
       allocatedRanks: new Map(),
       // No off-hand and no insignias: only the profession's armor.
-      equipment: { ...defaultEquipmentFor(profession), offHand: null, armor: bareArmorSet() },
+      equipment: {
+        weaponSets: [
+          { ...defaultEquipmentFor(profession).weaponSets[0], offHand: null },
+          null,
+          null,
+          null,
+        ],
+        armor: bareArmorSet(),
+      },
     },
     RULES,
   );
-  return makeCombatant({ id: "d", team: 1, equipment: resolved.equipment });
+  return makeCombatant({ id: "d", team: 1, equipment: resolved.weaponSets[0].equipment });
 }
 
 describe("a profession's typed armor (#759)", () => {
@@ -394,8 +410,12 @@ describe("Rune of Absorption", () => {
         primaryProfession: "warrior",
         allocatedRanks: new Map(),
         equipment: {
-          mainHand: { weaponId: "sword", requirementAttributeId: null },
-          offHand: null,
+          weaponSets: [
+            { mainHand: { weaponId: "sword", requirementAttributeId: null }, offHand: null },
+            null,
+            null,
+            null,
+          ],
           armor: {
             ...bareArmorSet(),
             feet: { insigniaId: null, rune: { kind: "universal", runeId: "absorption", tier } },
@@ -404,7 +424,7 @@ describe("Rune of Absorption", () => {
       },
       RULES,
     );
-    return makeCombatant({ id: "d", team: 1, equipment: resolved.equipment });
+    return makeCombatant({ id: "d", team: 1, equipment: resolved.weaponSets[0].equipment });
   }
 
   it("subtracts a flat amount from a physical hit, after mitigation", () => {
@@ -551,10 +571,18 @@ describe("resolved loadouts feeding the pipeline", () => {
         {
           primaryProfession: profession,
           allocatedRanks: new Map(),
-          equipment: { ...defaultEquipmentFor(profession), offHand: null },
+          equipment: {
+            ...defaultEquipmentFor(profession),
+            weaponSets: [
+              { ...defaultEquipmentFor(profession).weaponSets[0], offHand: null },
+              null,
+              null,
+              null,
+            ],
+          },
         },
         RULES,
-      ).equipment.baseArmor;
+      ).weaponSets[0].equipment.baseArmor;
 
     expect(armorFor("warrior")).toBe(80);
     expect(armorFor("ranger")).toBe(70);
@@ -568,13 +596,20 @@ describe("resolved loadouts feeding the pipeline", () => {
           primaryProfession: "warrior",
           allocatedRanks: new Map([["warrior.strength", rank]]),
           equipment: {
-            mainHand: { weaponId: "sword", requirementAttributeId: null },
-            offHand: { offhandId: "shield", requirementAttributeId: "warrior.strength" },
+            weaponSets: [
+              {
+                mainHand: { weaponId: "sword", requirementAttributeId: null },
+                offHand: { offhandId: "shield", requirementAttributeId: "warrior.strength" },
+              },
+              null,
+              null,
+              null,
+            ],
             armor: bareArmorSet(),
           },
         },
         RULES,
-      ).equipment.baseArmor;
+      ).weaponSets[0].equipment.baseArmor;
 
     expect(withRank(0)).toBe(88);
     expect(withRank(9)).toBe(96);
@@ -588,14 +623,21 @@ describe("resolved loadouts feeding the pipeline", () => {
         primaryProfession: "warrior",
         allocatedRanks: new Map([["warrior.strength", 12]]),
         equipment: {
-          mainHand: { weaponId: "hammer", requirementAttributeId: null },
-          offHand: { offhandId: "shield", requirementAttributeId: "warrior.strength" },
+          weaponSets: [
+            {
+              mainHand: { weaponId: "hammer", requirementAttributeId: null },
+              offHand: { offhandId: "shield", requirementAttributeId: "warrior.strength" },
+            },
+            null,
+            null,
+            null,
+          ],
           armor: bareArmorSet(),
         },
       },
       RULES,
     );
-    expect(resolved.equipment.baseArmor).toBe(80);
+    expect(resolved.weaponSets[0].equipment.baseArmor).toBe(80);
   });
 });
 
@@ -611,11 +653,19 @@ describe("the off-hand a resolved loadout holds (#276)", () => {
             ? equipment
             : {
                 ...equipment,
-                mainHand: { weaponId, requirementAttributeId: null },
+                weaponSets: [
+                  {
+                    ...equipment.weaponSets[0],
+                    mainHand: { weaponId, requirementAttributeId: null },
+                  },
+                  null,
+                  null,
+                  null,
+                ],
               },
       },
       RULES,
-    ).equipment.offhandId;
+    ).weaponSets[0].equipment.offhandId;
   };
 
   it("names the shield or focus held beside a one-handed weapon", () => {

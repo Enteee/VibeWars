@@ -135,8 +135,9 @@ export type {
   ParticipantSpec,
   SkillRequest,
   StepResult,
+  WeaponSetRequest,
 } from "./match/simulation.js";
-export { countsForTeam, MAX_CREATURES, MatchSimulation } from "./match/simulation.js";
+export { countsForTeam, loadoutSpec, MAX_CREATURES, MatchSimulation } from "./match/simulation.js";
 export { facingToward, spawnFacing } from "./match/facing.js";
 export type { IntentRefusal, MatchIntent } from "./match/apply-intent.js";
 export { applyIntent } from "./match/apply-intent.js";

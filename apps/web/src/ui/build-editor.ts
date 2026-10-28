@@ -348,8 +348,9 @@ export function describeProfessionChange(
     .filter((id, slot): id is string => id !== null && after.skillBar[slot] !== id)
     .map((id) => `${getSkill(id)?.name ?? id} from the bar`);
 
-  const was = before.equipment;
-  const now = after.equipment;
+  // Set 1: sets 2-4 are left as they are (#489).
+  const was = before.equipment.weaponSets[0];
+  const now = after.equipment.weaponSets[0];
   const gear: string[] = [];
   if (was.mainHand.weaponId !== now.mainHand.weaponId) {
     const name = (id: string): string => getWeapon(id)?.name ?? id;
@@ -364,8 +365,8 @@ export function describeProfessionChange(
     );
   }
   for (const slot of ARMOR_SLOTS) {
-    const rune = was.armor[slot].rune;
-    if (rune !== null && now.armor[slot].rune === null) {
+    const rune = before.equipment.armor[slot].rune;
+    if (rune !== null && after.equipment.armor[slot].rune === null) {
       gear.push(runeDisplayName(rune));
     }
   }
@@ -385,18 +386,24 @@ function fitWeapon(
   primary: ProfessionId,
   accessible: ReadonlySet<string>,
 ): BuildEquipment {
-  const weapon = getWeapon(equipment.mainHand.weaponId);
+  // Set 1 only: sets 2-4 are left as they are (#489).
+  const [set1, set2, set3, set4] = equipment.weaponSets;
+  const weapon = getWeapon(set1.mainHand.weaponId);
   if (weapon === undefined || weaponReachable(weapon.requirement, accessible)) {
     return equipment;
   }
-  const fallback = defaultEquipmentFor(primary);
+  const [fallback] = defaultEquipmentFor(primary).weaponSets;
   const fallbackWeapon = getWeapon(fallback.mainHand.weaponId);
   const keepOffhand =
-    equipment.offHand !== null && fallbackWeapon !== undefined && allowsOffhand(fallbackWeapon);
+    set1.offHand !== null && fallbackWeapon !== undefined && allowsOffhand(fallbackWeapon);
   return {
     ...equipment,
-    mainHand: fallback.mainHand,
-    offHand: keepOffhand ? equipment.offHand : fallback.offHand,
+    weaponSets: [
+      { mainHand: fallback.mainHand, offHand: keepOffhand ? set1.offHand : fallback.offHand },
+      set2,
+      set3,
+      set4,
+    ],
   };
 }
 
@@ -1634,7 +1641,7 @@ function mountSkillBar(panel: HTMLElement, context: EditorContext): Region {
         const warning =
           skill === undefined
             ? undefined
-            : weaponWarning(skill, character.equipment.mainHand.weaponId);
+            : weaponWarning(skill, character.equipment.weaponSets[0].mainHand.weaponId);
         const signature = `${label}|${skill === undefined ? "" : `${skill.id}|${description?.cost ?? ""}|${warning?.title ?? ""}`}`;
         if (built.get(slot) === signature) {
           return;
@@ -2293,8 +2300,8 @@ function mountGear(panel: HTMLElement, context: EditorContext): Region {
   const offhandSlot = mountGearSlot("off-hand", context, drop({ kind: "off-hand" }), () => {
     context.showLibrary("gear", "off-hands");
   });
-  weaponSlot.element.dataset.cause = "equipment.mainHand";
-  offhandSlot.element.dataset.cause = "equipment.offHand";
+  weaponSlot.element.dataset.cause = "equipment.weaponSets[0].mainHand";
+  offhandSlot.element.dataset.cause = "equipment.weaponSets[0].offHand";
   handsGrid.append(weaponSlot.element, offhandSlot.element);
   section.appendChild(handsGrid);
 
@@ -2365,12 +2372,13 @@ function mountGear(panel: HTMLElement, context: EditorContext): Region {
 
   return {
     update(character) {
-      const weapon = getWeapon(character.equipment.mainHand.weaponId);
-      const offHand = character.equipment.offHand;
+      // Set 1, until the editor has a tab per set (#489).
+      const { mainHand, offHand } = character.equipment.weaponSets[0];
+      const weapon = getWeapon(mainHand.weaponId);
       const offhandDefinition = offHand === null ? undefined : getOffhand(offHand.offhandId);
       weaponSlot.update({
         filled: weapon?.name,
-        icon: weaponIcon(character.equipment.mainHand.weaponId),
+        icon: weaponIcon(mainHand.weaponId),
         detail:
           weapon === undefined
             ? undefined
@@ -2403,7 +2411,7 @@ function mountGear(panel: HTMLElement, context: EditorContext): Region {
         weaponLink.update(
           `${weapon.name.toLowerCase()} attribute`,
           attributeOptions(weaponChoices),
-          character.equipment.mainHand.requirementAttributeId ?? "",
+          mainHand.requirementAttributeId ?? "",
         );
       }
       if (offHand !== null && offhandChoices.length > 0) {
@@ -2659,10 +2667,16 @@ function mountGearLibrary(context: EditorContext): LibraryBody {
     elements: [host],
     update(character) {
       for (const { id, node } of weaponBoxes) {
-        node.classList.toggle("is-equipped", id === character.equipment.mainHand.weaponId);
+        node.classList.toggle(
+          "is-equipped",
+          id === character.equipment.weaponSets[0].mainHand.weaponId,
+        );
       }
       for (const { id, node } of offhandBoxes) {
-        node.classList.toggle("is-equipped", id === character.equipment.offHand?.offhandId);
+        node.classList.toggle(
+          "is-equipped",
+          id === character.equipment.weaponSets[0].offHand?.offhandId,
+        );
       }
       const worn = ARMOR_SLOTS.map((slot) => character.equipment.armor[slot]);
       const wornInsignias = new Set(worn.map((piece) => piece.insigniaId));

@@ -1,5 +1,12 @@
 import type { ArmorPiece, ArmorSet } from "./armor.js";
-import type { BuildEquipment, EquippedOffhand, EquippedWeapon } from "./loadout.js";
+import {
+  WEAPON_SETS,
+  type BuildEquipment,
+  type EquippedOffhand,
+  type EquippedWeapon,
+  type WeaponSet,
+  type WeaponSets,
+} from "./loadout.js";
 import { isOffhandId } from "./offhands.js";
 import { isInsigniaId, type InsigniaId } from "./insignias.js";
 import { isRuneTier, isUniversalRuneId, type EquippedRune } from "./runes.js";
@@ -131,6 +138,44 @@ function parseOffHand(value: unknown): EquippedOffhand | null | undefined {
   return { offhandId: record.offhandId, requirementAttributeId };
 }
 
+function parseWeaponSet(value: unknown): WeaponSet | undefined {
+  if (typeof value !== "object" || value === null) {
+    return undefined;
+  }
+  const record = value as Record<string, unknown>;
+  const mainHand = parseMainHand(record.mainHand);
+  if (mainHand === undefined) {
+    return undefined;
+  }
+  const offHand = parseOffHand(record.offHand);
+  if (offHand === undefined) {
+    return undefined;
+  }
+  return { mainHand, offHand };
+}
+
+/** Exactly `WEAPON_SETS` entries: set 1 a set, the others a set or `null` (ADR-0036). */
+function parseWeaponSets(value: unknown): WeaponSets | undefined {
+  if (!Array.isArray(value) || value.length !== WEAPON_SETS) {
+    return undefined;
+  }
+  const [first, ...rest] = value as unknown[];
+  const set1 = parseWeaponSet(first);
+  if (set1 === undefined) {
+    return undefined;
+  }
+  const spares: (WeaponSet | null)[] = [];
+  for (const entry of rest) {
+    const set = entry === null ? null : parseWeaponSet(entry);
+    if (set === undefined) {
+      return undefined;
+    }
+    spares.push(set);
+  }
+  const [set2 = null, set3 = null, set4 = null] = spares;
+  return [set1, set2, set3, set4];
+}
+
 /**
  * Parse the gear half of a build.
  *
@@ -146,12 +191,8 @@ export function parseBuildEquipment(value: unknown): BuildEquipment | undefined 
   }
   const record = value as Record<string, unknown>;
 
-  const mainHand = parseMainHand(record.mainHand);
-  if (mainHand === undefined) {
-    return undefined;
-  }
-  const offHand = parseOffHand(record.offHand);
-  if (offHand === undefined) {
+  const weaponSets = parseWeaponSets(record.weaponSets);
+  if (weaponSets === undefined) {
     return undefined;
   }
   const armor = parseArmorSet(record.armor);
@@ -159,5 +200,5 @@ export function parseBuildEquipment(value: unknown): BuildEquipment | undefined 
     return undefined;
   }
 
-  return { mainHand, offHand, armor };
+  return { weaponSets, armor };
 }

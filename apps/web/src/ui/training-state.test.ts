@@ -48,7 +48,15 @@ describe("buildSignature", () => {
       ...elementalist,
       equipment: {
         ...elementalist.equipment,
-        offHand: { offhandId: "shield" as const, requirementAttributeId: null },
+        weaponSets: [
+          {
+            ...elementalist.equipment.weaponSets[0],
+            offHand: { offhandId: "shield" as const, requirementAttributeId: null },
+          },
+          null,
+          null,
+          null,
+        ] as const,
       },
     };
     expect(buildSignature(shielded)).not.toBe(base);
