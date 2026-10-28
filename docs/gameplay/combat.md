@@ -593,7 +593,8 @@ Training Ground, and is named first in its tooltip ("Signet.", "Hex
 Spell."). Some types play by rules of their own (#465). Spells,
 enchantments, hexes and weapon spells are **spells**; attacks, signets,
 shouts, chants, stances, rituals and plain skills are not, and every rule that "affects spells" (dazed
-and Fast Casting, so far) leaves them alone. Rituals, nature and binding,
+and Fast Casting, so far) leaves them alone, except that Fast Casting speeds up signets
+too (#1100). Rituals, nature and binding,
 plant spirits (see Creatures).
 
 **Elite skills** wear a doubled gold frame wherever a skill is drawn,
@@ -1158,13 +1159,16 @@ GW1 PvP (#473). Only a primary can hold its rank, and runes count.
   activation is 2 s or more, so a Mesmer/Necromancer casts Malaise in
   1.15 s but Faintheartedness in 1 s as usual. It multiplies with dazed
   (rank 12 and dazed: ×1.149). Aftercast and recharge are unchanged;
-  attack skills and other non-spells too.
+  attack skills and other non-spells too. Signets, under the same
+  Mesmer-or-2-s rule, activate 3% faster a rank, linear: ×0.64 at rank
+  12, so a Me/Mo casts Resurrection Signet (3 s) in 1.92 s. Dazed does
+  not slow a signet (#1100).
 - **Strength** (Warrior). Attack skills ignore 1% of armor a rank (12%
   at 12), unless the weapon has armor penetration of its own (a
   hornbow's 10%), which stands instead; the two do not add. Plain swings
   get none.
-- **Expertise** (Ranger). Attack skills and every Ranger skill cost 4%
-  less energy a rank (−48% at 12), rounded once, never below 0.
+- **Expertise** (Ranger). Attack skills, rituals of any profession and
+  every Ranger skill cost 4% less energy a rank (−48% at 12), rounded once, never below 0.
   Adrenaline costs are untouched.
 - **Divine Favor** (Monk). A Monk spell cast on an ally, yourself
   included, heals that ally another floor(3.2 × rank) when it lands: +38
@@ -1172,8 +1176,8 @@ GW1 PvP (#473). Only a primary can hold its rank, and runes count.
   also reaches others. An interrupted spell, a dead target or a Monk
   spell at a foe gets nothing.
 - **Critical Strikes** (Assassin). +1% critical chance a rank on weapon
-  blows, and every crit gives the striker energy: 1 at ranks 1–7, 2 at
-  8–12, 3 at 13 and above.
+  blows, and every crit gives the striker energy: none at ranks 1–2, 1 at
+  3–7, 2 at 8–12, 3 at 13 and above (#1100).
 - **Soul Reaping** (Necromancer). When anyone else, ally or foe, dies
   within spirit range (850), you gain energy equal to your rank, up to
   your maximum, at most 3 times in any 15 s. Not while you are dead.
@@ -1193,7 +1197,7 @@ GW1 PvP (#473). Only a primary can hold its rank, and runes count.
 The others have no effect yet.
 
 The build editor says under a primary's row what it does at its rank
-("Fast Casting 12: spells cast 43% faster"), and a skill tooltip for a
+("Fast Casting 12: spells cast 43% faster, signets 36% faster"), and a skill tooltip for a
 known character shows the cost and activation Expertise, Mysticism and
 Fast Casting make of it, the base in brackets: "5 energy (10)",
 "1.1s (2s)" (#531). The skill bar shows icons only (#719); a slot's
