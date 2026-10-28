@@ -3013,14 +3013,6 @@ body.has-expanded-training #screens {
   text-transform: uppercase;
 }
 
-.skill-corpus-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.3rem 0.8rem;
-}
-
 .skill-corpus-toggle {
   display: flex;
   align-items: center;
@@ -3028,11 +3020,6 @@ body.has-expanded-training #screens {
   color: var(--ink-dim);
   font-size: 0.8rem;
   cursor: pointer;
-}
-
-.skill-corpus-credit {
-  color: var(--ink-dim);
-  font-size: 0.7rem;
 }
 
 .skill-locked {
@@ -4762,4 +4749,25 @@ body:has(#app > .chat) .now-playing {
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
+}
+
+.licenses-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.license-name {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.license-text {
+  margin: 0.4rem 0 0;
+  padding: 0.6rem;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink-dim);
+  font-size: 0.72rem;
+  white-space: pre-wrap;
 }

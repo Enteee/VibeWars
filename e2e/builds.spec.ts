@@ -1899,22 +1899,3 @@ test("the library lists GW1 skills not in the game yet only when asked, greyed a
   await page.getByRole("button", { name: "new character" }).click();
   await expect(page.getByLabel("Show skills not in the game yet")).toBeChecked();
 });
-
-test("the library credits the GW1 skill corpus and the build serves its MIT notice (#1235)", async ({
-  page,
-}) => {
-  await openElementalist(page);
-  const credit = page.getByRole("link", { name: "GW1 skill data: gw-skilldata (MIT)" });
-  // Shown whether the corpus toggle is on or off.
-  await expect(page.getByLabel("Show skills not in the game yet")).not.toBeChecked();
-  await expect(credit).toBeVisible();
-  expect(await credit.getAttribute("target")).toBe("_blank");
-  expect(await credit.getAttribute("rel")).toBe("noopener");
-  // The notice survives the build, unmodified.
-  const href = await credit.evaluate((a) => (a as HTMLAnchorElement).href);
-  const response = await page.request.get(href);
-  expect(response.status()).toBe(200);
-  const text = await response.text();
-  expect(text).toContain("Permission is hereby granted");
-  expect(text).toContain("smiley");
-});
