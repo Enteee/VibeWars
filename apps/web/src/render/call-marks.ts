@@ -6,13 +6,12 @@ import { screenPx } from "./screen-text.js";
 
 /**
  * What your team's calls look like in the arena (#443,
- * docs/art/art-direction.md "Calls, pings and the watched ally"). Plain
+ * docs/art/art-direction.md "Calls and pings"). Plain
  * geometry, no Phaser, so every shape is tested in Node.
  *
  * - The called foe: a `condition` chevron pointing down at it, over its name.
  * - A ping: a `friend` pin standing on the spot, and a ring that grows from
  *   it and fades over the ping's life.
- * - The ally you watch: four `ink` corner brackets round the body.
  */
 
 /** A ping on the floor, as the scene draws it. */
@@ -62,30 +61,4 @@ export function pingRing(
   }
   const age = Math.max(0, Math.min(1, 1 - remaining / PING_SECONDS));
   return { radius: PING_RING_FROM + (PING_RING_TO - PING_RING_FROM) * age, alpha: 1 - age };
-}
-
-/** The brackets sit this far outside the body's edge, outside the target ring. */
-const BRACKET_GAP = 13;
-const BRACKET_ARM = 5;
-
-/**
- * The watched ally's four corner brackets, each an L of three points:
- * a square round the body, open at the middle of every side, so it is
- * never a ring.
- */
-export function watchBrackets(centre: Vec2, r: number): readonly (readonly [Vec2, Vec2, Vec2])[] {
-  const d = r + BRACKET_GAP;
-  return [
-    [-1, -1],
-    [1, -1],
-    [1, 1],
-    [-1, 1],
-  ].map(([sx = 0, sy = 0]) => {
-    const corner = { x: centre.x + sx * d, y: centre.y + sy * d };
-    return [
-      { x: corner.x - sx * BRACKET_ARM, y: corner.y },
-      corner,
-      { x: corner.x, y: corner.y - sy * BRACKET_ARM },
-    ] as const;
-  });
 }
