@@ -849,6 +849,33 @@ describe("match rules over the network (P2P)", () => {
     expect(snapshot.scoreTeam1).toBe(0);
     expect(snapshot.winningTeam).toBeUndefined();
   });
+
+  it("counts a kill-count team's kills in the snapshot score (#1200)", async () => {
+    const match = startMatch({ matchRules: KILL_COUNT_MATCH_RULES });
+    const { connection: a } = await match.join(hello({ build: toJson(DAGGERS) }));
+    const { connection: b } = await match.join();
+    await match.step(TICK);
+    const foe = b.selfSessionId;
+    await closeDistance(match, a, foe, 30);
+    await target(match, a, foe);
+
+    a.sendIntent({ kind: "attack", targetId: foe });
+    await until(
+      match,
+      () => {
+        if (self(a)?.castingSkillId === undefined) {
+          a.sendIntent({ kind: "use-skill", slot: a.getChainMark(foe) === "lead" ? 1 : 0 });
+        }
+        return self(b)?.dead === true;
+      },
+      "b dead",
+      120,
+    );
+
+    expect([self(a)?.team, self(b)?.team]).toEqual([0, 1]);
+    expect(a.getSnapshot()).toMatchObject({ scoreTeam0: 1, scoreTeam1: 0 });
+    expect(b.getSnapshot()).toMatchObject({ scoreTeam0: 1, scoreTeam1: 0 });
+  });
 });
 
 describe("wireCombat and combatMessage (#288, #375)", () => {

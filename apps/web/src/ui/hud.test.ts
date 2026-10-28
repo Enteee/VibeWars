@@ -313,8 +313,8 @@ describe("scoreboardText (#881)", () => {
   ];
 
   it("counts the living per side, your own first, beside the clock", () => {
-    expect(scoreboardText(players, 0, 42, null)).toBe("2 v 1 · 0:42");
-    expect(scoreboardText(players, 1, 42, null)).toBe("1 v 2 · 0:42");
+    expect(scoreboardText(players, 0, 42, null, "annihilation", [0, 0])).toBe("2 v 1 · 0:42");
+    expect(scoreboardText(players, 1, 42, null, "annihilation", [0, 0])).toBe("1 v 2 · 0:42");
   });
 
   it("counts no creature, alive or not (#1052)", () => {
@@ -330,20 +330,43 @@ describe("scoreboardText (#881)", () => {
           armedAttack: null,
         },
       });
-    expect(scoreboardText([...players, minion("a/c1", 0), minion("c/c1", 1)], 0, 42, null)).toBe(
-      "2 v 1 · 0:42",
-    );
+    expect(
+      scoreboardText(
+        [...players, minion("a/c1", 0), minion("c/c1", 1)],
+        0,
+        42,
+        null,
+        "annihilation",
+        [0, 0],
+      ),
+    ).toBe("2 v 1 · 0:42");
   });
 
   it("reads team 1 first for a spectator", () => {
-    expect(scoreboardText(players, undefined, 432, null)).toBe("2 v 1 · 7:12");
+    expect(scoreboardText(players, undefined, 432, null, "annihilation", [0, 0])).toBe(
+      "2 v 1 · 7:12",
+    );
   });
 
   it("counts down from the match's limit, reading 0:00 only once time is out (#476)", () => {
-    expect(scoreboardText(players, 0, 0, 180)).toBe("2 v 1 · 3:00");
-    expect(scoreboardText(players, 0, 42.5, 180)).toBe("2 v 1 · 2:18");
-    expect(scoreboardText(players, 0, 179.5, 180)).toBe("2 v 1 · 0:01");
-    expect(scoreboardText(players, 0, 181, 180)).toBe("2 v 1 · 0:00");
+    expect(scoreboardText(players, 0, 0, 180, "annihilation", [0, 0])).toBe("2 v 1 · 3:00");
+    expect(scoreboardText(players, 0, 42.5, 180, "annihilation", [0, 0])).toBe("2 v 1 · 2:18");
+    expect(scoreboardText(players, 0, 179.5, 180, "annihilation", [0, 0])).toBe("2 v 1 · 0:01");
+    expect(scoreboardText(players, 0, 181, 180, "annihilation", [0, 0])).toBe("2 v 1 · 0:00");
+  });
+
+  it("counts the living, not the score, in Annihilation", () => {
+    expect(scoreboardText(players, 0, 42, null, "annihilation", [4, 0])).toBe("2 v 1 · 0:42");
+  });
+
+  it("counts each team's kills in Kill Count, your own first (#1200)", () => {
+    expect(scoreboardText(players, 0, 35, 180, "kill-count", [4, 0])).toBe("4 – 0 · 2:25");
+    expect(scoreboardText(players, 1, 35, 180, "kill-count", [4, 0])).toBe("0 – 4 · 2:25");
+  });
+
+  it("reads team 1's kills first for a spectator, and 0 – 0 before any (#1200)", () => {
+    expect(scoreboardText(players, undefined, 35, 180, "kill-count", [4, 1])).toBe("4 – 1 · 2:25");
+    expect(scoreboardText(players, 0, 0, 180, "kill-count", [0, 0])).toBe("0 – 0 · 3:00");
   });
 });
 
