@@ -22,7 +22,7 @@ import { parseAlive } from "./hub-health.mjs";
 import { ROLES } from "./hub-policy.mjs";
 import { deliverSystem } from "./protocol.mjs";
 import { parseNudgeClock } from "./schedule.mjs";
-import { parseStaff, seedStaff } from "./staff.mjs";
+import { parseStaff, seedStaff, writeAtomic } from "./staff.mjs";
 
 const HUBD = path.join(path.dirname(fileURLToPath(import.meta.url)), "hubd.mjs");
 const HUB = path.join(path.dirname(fileURLToPath(import.meta.url)), "hub.mjs");
@@ -248,7 +248,8 @@ function employ(root, more) {
       readyAt: null,
     };
   }
-  fs.writeFileSync(path.join(root, "staff.json"), JSON.stringify(staff));
+  // Whole or not at all, as staff.mjs writes it: hubd polls it (#1091).
+  writeAtomic(root, "staff.json", JSON.stringify(staff));
 }
 
 /**
@@ -2295,7 +2296,12 @@ describe("hubd hiring and firing", () => {
     /** @type {unknown} */
     const raw = JSON.parse(fs.readFileSync(file, "utf8"));
     const cfg = typeof raw === "object" && raw !== null ? raw : {};
-    fs.writeFileSync(file, JSON.stringify(maxAgents === null ? cfg : { ...cfg, maxAgents }));
+    // Whole or not at all: the running hubd reads both (#1091).
+    writeAtomic(
+      hubd.root,
+      "company.json",
+      JSON.stringify(maxAgents === null ? cfg : { ...cfg, maxAgents }),
+    );
     const first = {
       hiredAt: 1,
       by: "operator",
@@ -2303,8 +2309,9 @@ describe("hubd hiring and firing", () => {
       state: "working",
       readyAt: null,
     };
-    fs.writeFileSync(
-      path.join(hubd.root, "staff.json"),
+    writeAtomic(
+      hubd.root,
+      "staff.json",
       JSON.stringify({
         employees: {
           manager: { role: "manager", ...first },
