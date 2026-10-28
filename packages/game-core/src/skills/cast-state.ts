@@ -8,6 +8,7 @@
  */
 
 import type { StatusId, StatusSet } from "./status.js";
+import type { Skill } from "./types.js";
 
 export interface ActiveCast {
   readonly skillId: string;
@@ -39,6 +40,8 @@ export class CastState {
   /** The longer of the two, per skill: what the bar shows and readiness reads. */
   readonly #rechargeRemaining = new Map<string, number>();
   readonly #rechargeTotal = new Map<string, number>();
+  /** Skills used and waiting for a morale boost (#474). */
+  readonly #spent = new Set<string>();
   #aftercastRemaining = 0;
   #queuedSlot: number | undefined;
 
@@ -159,6 +162,27 @@ export class CastState {
     this.#queuedSlot = undefined;
   }
 
+  /**
+   * Skills used and waiting for a morale boost rather than recharging
+   * (#474): Resurrection Signet's. Apart from `rechargeRemaining`, which a
+   * disable still fills.
+   */
+  public get spent(): ReadonlySet<string> {
+    return this.#spent;
+  }
+
+  /** `skillId` is spent until a morale boost (#474). */
+  public spend(skillId: string): void {
+    this.#spent.add(skillId);
+  }
+
+  /** A morale boost (#474): every spent skill is ready. Whether any was spent. */
+  public refreshSpent(): boolean {
+    const any = this.#spent.size > 0;
+    this.#spent.clear();
+    return any;
+  }
+
   /** Start `skillId`'s recharge; a disable it has runs on regardless (#914). */
   public startRecharge(skillId: string, rechargeSeconds: number): void {
     if (rechargeSeconds > 0) {
@@ -261,5 +285,18 @@ export class CastState {
     }
 
     return this.#endCast();
+  }
+}
+
+/**
+ * Start `skill`'s recharge as it is used, interrupted or knocked out of
+ * its cast: by time, or spent until a morale boost (#474). The one call
+ * every such path makes.
+ */
+export function beginRecharge(cast: CastState, skill: Skill, seconds: number): void {
+  if (skill.rechargesOnMoraleBoost === true) {
+    cast.spend(skill.id);
+  } else {
+    cast.startRecharge(skill.id, seconds);
   }
 }

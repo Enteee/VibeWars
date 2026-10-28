@@ -3635,12 +3635,162 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "resurrect",
-        healthPercent: {
-          scaling: { attributeId: "monk.healing-prayers", atZero: 20, atTwelve: 56 },
+        health: {
+          kind: "percent",
+          percent: {
+            scaling: { attributeId: "monk.healing-prayers", atZero: 20, atTwelve: 56 },
+          },
         },
         energyPercent: {
           scaling: { attributeId: "monk.healing-prayers", atZero: 42, atTwelve: 80 },
         },
+        perPartyMemberWithin: undefined,
+        at: "corpse",
+      },
+    ],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Resurrection skills (#474)                                             */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "common.resurrection-signet",
+    name: "Resurrection Signet",
+    type: "signet",
+    elite: false,
+    profession: "common",
+    attributeId: undefined,
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 3,
+    rechargeSeconds: 0,
+    // "This signet only recharges when you gain a morale boost."
+    rechargesOnMoraleBoost: true,
+    range: RANGE_SPELL,
+    target: "single-dead-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Resurrect target party member. That party member is returned to
+    // life with 100% Health and 25% Energy."
+    effects: [
+      {
+        kind: "resurrect",
+        health: { kind: "percent", percent: { flat: 100 } },
+        energyPercent: { flat: 25 },
+        perPartyMemberWithin: undefined,
+        at: "corpse",
+      },
+    ],
+  },
+  {
+    id: "monk.rebirth",
+    name: "Rebirth",
+    type: "spell",
+    elite: false,
+    profession: "monk",
+    attributeId: "monk.protection-prayers",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 5,
+    rechargeSeconds: 0,
+    range: RANGE_SPELL,
+    target: "single-dead-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Target party member is returned to life with 25% Health and zero
+    // Energy, and is teleported to your current location. All of target's
+    // skills are disabled for 10...4...3 seconds. This spell consumes all
+    // your remaining energy." 4 s at Protection Prayers 12.
+    effects: [
+      {
+        kind: "resurrect",
+        health: { kind: "percent", percent: { flat: 25 } },
+        energyPercent: { flat: 0 },
+        perPartyMemberWithin: undefined,
+        at: "caster",
+      },
+      {
+        kind: "if",
+        condition: { kind: "resurrected" },
+        effects: [
+          {
+            kind: "disable-skill",
+            which: "all",
+            seconds: {
+              scaling: { attributeId: "monk.protection-prayers", atZero: 10, atTwelve: 4 },
+            },
+          },
+        ],
+      },
+      { kind: "drain-own-energy" },
+    ],
+  },
+  {
+    id: "paragon.signet-of-return",
+    name: "Signet of Return",
+    type: "signet",
+    elite: false,
+    profession: "paragon",
+    attributeId: "paragon.leadership",
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 5,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-dead-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Resurrect target party member with 5...13...15% Health and
+    // 1...3...4% Energy for each party member within earshot." 13% and 3%
+    // at Leadership 12; the caster is a party member.
+    effects: [
+      {
+        kind: "resurrect",
+        health: {
+          kind: "percent",
+          percent: { scaling: { attributeId: "paragon.leadership", atZero: 5, atTwelve: 13 } },
+        },
+        energyPercent: { scaling: { attributeId: "paragon.leadership", atZero: 1, atTwelve: 3 } },
+        perPartyMemberWithin: AREA_EARSHOT,
+        at: "corpse",
+      },
+    ],
+  },
+  {
+    id: "ritualist.flesh-of-my-flesh",
+    name: "Flesh of My Flesh",
+    type: "spell",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.restoration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 4,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-dead-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Lose half your Health. Resurrect target ally with your current
+    // Health and 5...17...20% Energy." 17% at Restoration Magic 12.
+    effects: [
+      {
+        kind: "resurrect",
+        health: { kind: "caster-current", casterLosesFractionOfCurrent: 0.5 },
+        energyPercent: {
+          scaling: { attributeId: "ritualist.restoration-magic", atZero: 5, atTwelve: 17 },
+        },
+        perPartyMemberWithin: undefined,
+        at: "corpse",
       },
     ],
   },

@@ -1,6 +1,7 @@
 import { isPhysicalDamage, type DamageType } from "../equipment/types.js";
 import { DIVINE_FAVOR_ATTRIBUTE, divineFavorBonusHeal } from "../primary-attributes.js";
 import { emptyAdrenaline, fillPools } from "./adrenaline.js";
+import { beginRecharge } from "./cast-state.js";
 import { getSkill } from "./catalog.js";
 import { mitigate, skillDamage } from "./damage.js";
 import { effectiveMaxEnergy } from "./overcast.js";
@@ -27,6 +28,7 @@ import {
   type EffectCondition,
   type HealEffect,
   type InterruptEffect,
+  type ResurrectEffect,
   type SkillEffect,
   type StateCondition,
   type Surroundings,
@@ -185,7 +187,12 @@ export type CombatEvent =
    * Shadow Stepped (#988): `targetId`, the caster, moves to `toId`. The
    * simulation places the body when it reads this.
    */
-  | { readonly kind: "shadow-stepped"; readonly targetId: string; readonly toId: string };
+  | { readonly kind: "shadow-stepped"; readonly targetId: string; readonly toId: string }
+  /**
+   * Teleported (#474): `targetId` is put beside `toId`, as Rebirth brings
+   * its ally to the caster. The simulation places the body.
+   */
+  | { readonly kind: "teleported"; readonly targetId: string; readonly toId: string };
 
 /**
  * Apply an already-mitigated amount, clamping at 0 and flagging death
@@ -375,25 +382,57 @@ function loseEnergy(target: Combatant, amount: number, events: CombatEvent[]): v
 
 /**
  * Bring a dead `target` back (#812), as a respawn leaves it but where it
- * lies: these shares of its maximum health (at least 1) and energy, no
- * effects, no adrenaline. Its recharges carry on, and so does its
- * overcast: energy stops at the ceiling that leaves (#461).
+ * lies: `health` points, at least 1 and at most its maximum, and this
+ * share of its maximum energy, no effects, no adrenaline. Its recharges
+ * carry on, and so does its overcast: energy stops at the ceiling that
+ * leaves (#461).
  */
 function resurrect(
   target: Combatant,
-  healthFraction: number,
+  health: number,
   energyFraction: number,
   events: CombatEvent[],
 ): void {
   target.statuses.clear();
   target.dead = false;
-  target.health = Math.max(1, Math.floor(target.maxHealth * healthFraction));
+  const points = Math.min(health, target.maxHealth);
+  target.health = Math.max(1, Math.floor(points));
   target.energy = Math.max(
     0,
     Math.min(Math.floor(target.maxEnergy * energyFraction), effectiveMaxEnergy(target)),
   );
   emptyAdrenaline(target);
-  events.push({ kind: "resurrected", targetId: target.id, healthFraction, energyFraction });
+  events.push({
+    kind: "resurrected",
+    targetId: target.id,
+    healthFraction: points / target.maxHealth,
+    energyFraction,
+  });
+}
+
+/**
+ * How many times a resurrection's shares count (#474): once, or with
+ * `perPartyMemberWithin`, once for the caster and each living team-mate
+ * within that radius of it, creatures aside (ADR-0035): Signet of
+ * Return's "for each party member within earshot".
+ */
+function partyShares(
+  effect: ResurrectEffect,
+  caster: Combatant,
+  surroundings: Surroundings,
+): number {
+  const radius = effect.perPartyMemberWithin;
+  const at = surroundings.get(caster.id)?.position;
+  if (radius === undefined || at === undefined) {
+    return 1;
+  }
+  return [...surroundings.values()].filter(
+    ({ combatant, position, creature }) =>
+      creature === undefined &&
+      !combatant.dead &&
+      combatant.team === caster.team &&
+      distance(position, at) <= radius,
+  ).length;
 }
 
 /**
@@ -493,7 +532,7 @@ function knockDown(target: Combatant, durationSeconds: number): void {
   const cancelled = target.cast.cancelCast();
   const skill = cancelled === undefined ? undefined : getSkill(cancelled.skillId);
   if (skill !== undefined) {
-    target.cast.startRecharge(skill.id, skill.rechargeSeconds);
+    beginRecharge(target.cast, skill, skill.rechargeSeconds);
   }
   target.cast.clearQueue();
   target.attack = undefined;
@@ -513,7 +552,7 @@ function interruptCast(target: Combatant, events: CombatEvent[]): boolean {
   }
   const skill = getSkill(cancelled.skillId);
   if (skill !== undefined) {
-    target.cast.startRecharge(skill.id, skill.rechargeSeconds);
+    beginRecharge(target.cast, skill, skill.rechargeSeconds);
   }
   events.push({ kind: "interrupted", targetId: target.id, skillId: cancelled.skillId });
   return true;
@@ -899,12 +938,30 @@ export function applyEffect(
       if (!target?.dead) {
         return events;
       }
-      resurrect(
-        target,
-        resolveMagnitude(effect.healthPercent, caster) / 100,
-        resolveMagnitude(effect.energyPercent, caster) / 100,
-        events,
-      );
+      const shares = partyShares(effect, caster, context.surroundings);
+      const share = (percent: number): number => Math.min(100, percent * shares) / 100;
+      let health: number;
+      if (effect.health.kind === "percent") {
+        health = target.maxHealth * share(resolveMagnitude(effect.health.percent, caster));
+      } else {
+        // Not damage, and half of what is left is less than all of it: it
+        // never kills, as Infuse Health's loss.
+        const lost = Math.floor(effect.health.casterLosesFractionOfCurrent * caster.health);
+        if (lost > 0) {
+          caster.health -= lost;
+          events.push({ kind: "sacrifice", targetId: caster.id, amount: lost });
+        }
+        health = caster.health;
+      }
+      resurrect(target, health, share(resolveMagnitude(effect.energyPercent, caster)), events);
+      if (effect.at === "caster") {
+        events.push({ kind: "teleported", targetId: target.id, toId: caster.id });
+      }
+      return events;
+    }
+
+    case "drain-own-energy": {
+      loseEnergy(caster, Math.floor(caster.energy), events);
       return events;
     }
 
@@ -929,8 +986,11 @@ export function applyEffect(
     }
 
     case "disable-skill": {
-      const interrupted = target === undefined ? undefined : interruptedSkill(target.id, earlier);
-      if (target === undefined || interrupted === undefined) {
+      if (target === undefined) {
+        return events;
+      }
+      const interrupted = interruptedSkill(target.id, earlier);
+      if (effect.which !== "all" && interrupted === undefined) {
         return events;
       }
       const seconds = resolveMagnitude(effect.seconds, caster);
@@ -967,6 +1027,7 @@ function isStateCondition(condition: EffectCondition): condition is StateConditi
     case "interrupted":
     case "interrupted-spell":
     case "removed":
+    case "resurrected":
       return false;
     case "target-health-below":
     case "target-has":
@@ -1105,13 +1166,20 @@ function interruptedSkill(targetId: string, earlier: readonly CombatEvent[]): st
 /**
  * The skills a `disable-skill` reaches on `target` (#914): the one
  * interrupted, and for Power Block every skill on its bar of the same
- * attribute. One with no attribute is linked to nothing (GW1).
+ * attribute. One with no attribute is linked to nothing (GW1). With
+ * `all`, the whole bar, empty slots aside (#474).
  */
 function disabledBy(
   effect: DisableSkillEffect,
   target: Combatant,
-  interrupted: string,
+  interrupted: string | undefined,
 ): readonly string[] {
+  if (effect.which === "all") {
+    return target.skillBar.filter((skillId): skillId is string => skillId !== null);
+  }
+  if (interrupted === undefined) {
+    return [];
+  }
   const attributeId = getSkill(interrupted)?.attributeId;
   if (effect.which === "interrupted" || attributeId === undefined) {
     return [interrupted];
@@ -1158,6 +1226,8 @@ function conditionHolds(
           getStatusDefinition(event.statusId).category === condition.category,
       );
     }
+    case "resurrected":
+      return earlier.some((event) => event.kind === "resurrected" && event.targetId === target.id);
     case "target-health-below":
     case "target-has":
     case "target-casting":
@@ -1242,6 +1312,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "recharge-faster":
     case "recharge-others":
     case "summon":
+    case "drain-own-energy":
       return true;
     case "heal":
       return effect.recipient === "caster";

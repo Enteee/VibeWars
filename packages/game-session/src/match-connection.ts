@@ -146,11 +146,13 @@ export interface ProjectileSnapshot {
 /** One slot of the server-assigned skill bar. */
 export type SkillSlot = SkillBarSlot;
 
-/** One slot's recharge: `remaining` is 0 when the skill is ready. */
+/** One slot's recharge: `remaining` is 0 and `spent` false when the skill is ready. */
 export interface SlotRecharge {
   readonly remaining: number;
   /** What the recharge started with, for the wipe's proportion. */
   readonly total: number;
+  /** Spent until a morale boost (#474): Resurrection Signet's, used. */
+  readonly spent: boolean;
 }
 
 /**

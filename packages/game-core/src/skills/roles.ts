@@ -52,6 +52,7 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     case "lose-health":
     case "shadow-step":
     case "resurrect":
+    case "drain-own-energy":
     case "recharge-faster":
     case "recharge-others":
     case "disable-skill":

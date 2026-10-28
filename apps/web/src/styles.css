@@ -423,18 +423,21 @@ body {
    the status icons and the pips say it too. */
 .hud-bar-health.is-tint-hex .hud-bar-fill,
 .training-bar-health.is-tint-hex .training-bar-fill,
+.party-health.is-tint-hex .hud-bar-fill,
 .hud-target-health.is-tint-hex .hud-bar-fill {
   background: #7a3a7a;
 }
 
 .hud-bar-health.is-tint-poison .hud-bar-fill,
 .training-bar-health.is-tint-poison .training-bar-fill,
+.party-health.is-tint-poison .hud-bar-fill,
 .hud-target-health.is-tint-poison .hud-bar-fill {
   background: #66601e;
 }
 
 .hud-bar-health.is-tint-bleeding .hud-bar-fill,
 .training-bar-health.is-tint-bleeding .training-bar-fill,
+.party-health.is-tint-bleeding .hud-bar-fill,
 .hud-target-health.is-tint-bleeding .hud-bar-fill {
   background: #8c4a42;
 }
@@ -3858,37 +3861,172 @@ body:has(#app > .chat) .now-playing {
 }
 
 /*
- * The ally you watch (#443): name and health, top right, under the
- * compass, live. Yours alone.
+ * The party window (#1055): your team's health, right middle, you first.
+ * The dock spans the right edge; its spacers centre the panel on the
+ * screen, but the top one never gets shorter than the compass's bottom
+ * plus 8 px (#1056), so a long party starts under the compass instead and
+ * scrolls past the bottom margin. Past 8 members the rows go compact.
  */
-.ally-watch {
+.party-dock {
   position: absolute;
-  top: calc(var(--compass-top) + var(--compass-size) + 0.4rem);
+  top: 0;
   right: 0.9rem;
+  bottom: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
-  padding: 0.35rem 0.5rem;
-  background: rgb(14 17 22 / 85%);
-  border: 1px solid var(--line);
-  color: var(--ink);
+  width: 200px;
   pointer-events: none;
 }
 
-.ally-watch[hidden] {
+.party-dock::before,
+.party-dock::after {
+  content: "";
+  flex: 1 1 0;
+}
+
+.party-dock::before {
+  min-height: calc(var(--compass-top) + var(--compass-size) + 8px);
+}
+
+.party-dock::after {
+  min-height: 0.9rem;
+}
+
+.party-window {
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-height: 0;
+  box-sizing: border-box;
+  padding: 0.3rem;
+  background: rgb(22 27 34 / 85%);
+  border: 1px solid var(--line);
+  overflow-y: auto;
+  pointer-events: auto;
+}
+
+/* The Training Ground's stage is small, and its dummies stand to your
+   right: the top-left corner, compact, is the side left clear. */
+.training-stage .party-dock {
+  top: 0.5rem;
+  right: auto;
+  bottom: 0.5rem;
+  left: 0.5rem;
+  width: 150px;
+}
+
+.training-stage .party-dock::before {
   display: none;
 }
 
-.ally-watch .ally-watch-health {
-  width: 9rem;
+.party-window[hidden] {
+  display: none;
 }
 
-.ally-watch-health .hud-bar-fill {
+.party-row {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  gap: 0.1rem;
+  padding: 0.15rem 0.25rem;
+  background: none;
+  border: 1px solid transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.8rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.party-row:hover {
+  border-color: var(--line);
+}
+
+/* Your target, in the target ring's colour. */
+.party-row.is-targeted {
+  border-color: #ffd866;
+}
+
+.party-row-header {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.party-row-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.party-row.is-dead .party-row-name,
+.party-row-dead {
+  color: #4a5464;
+}
+
+.party-row-dead[hidden] {
+  display: none;
+}
+
+.party-row-professions img {
+  width: 1em;
+  height: 1em;
+  margin-right: 0.2em;
+  vertical-align: -0.15em;
+}
+
+.party-window .party-health {
+  width: 100%;
+  height: 12px;
+  box-sizing: border-box;
+}
+
+.party-health[hidden] {
+  display: none;
+}
+
+.party-health .hud-bar-fill {
   background: #3a6a3e;
 }
 
-.ally-watch.is-dead .hud-bar-label {
-  color: var(--ink-dim);
+.party-health .hud-bar-label,
+.party-health .vital-pips {
+  font-size: 0.7rem;
+  line-height: 10px;
+}
+
+/* More than 8 members, or the small Training stage: name and a 10 px bar
+   on one line. */
+.party-window.is-compact .party-row,
+.training-stage .party-window .party-row {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.3rem;
+  padding-block: 0.05rem;
+}
+
+.party-window.is-compact .party-row-header,
+.training-stage .party-window .party-row-header {
+  flex: 0 0 45%;
+}
+
+.party-window.is-compact .party-health,
+.training-stage .party-window .party-health {
+  flex: 1;
+  height: 10px;
+}
+
+.party-window.is-compact .party-health .hud-bar-label,
+.party-window.is-compact .party-health .vital-pips,
+.training-stage .party-window .party-health .hud-bar-label,
+.training-stage .party-window .party-health .vital-pips {
+  line-height: 8px;
+}
+
+.party-window.is-compact .party-health-points,
+.training-stage .party-window .party-health-points {
+  display: none;
 }
 
 /*

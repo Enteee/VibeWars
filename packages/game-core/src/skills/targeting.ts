@@ -1,5 +1,6 @@
 import { hasLineOfSight, type Segment } from "../geometry.js";
 import { distance, type Vec2 } from "../vec2.js";
+import type { Creature } from "../match/simulation.js";
 import type { Combatant, Skill } from "./types.js";
 
 /**
@@ -22,6 +23,8 @@ import type { Combatant, Skill } from "./types.js";
 export interface TargetCandidate {
   readonly combatant: Combatant;
   readonly position: Vec2;
+  /** `undefined`: a player or a training dummy, not a creature (#1052), so a party member (#474). */
+  readonly creature: Creature | undefined;
 }
 
 export interface TargetSelection {

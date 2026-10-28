@@ -1,6 +1,6 @@
 import {
-  PROFESSIONS,
   describeSkill,
+  skillProfessionName,
   type ProfessionId,
   type Skill,
   type SkillDescription,
@@ -66,14 +66,20 @@ export function skillTypesOf(
 
 /**
  * The library's locked group (#568): the skills of professions you do not
- * have, in catalogue order, each a reason to try another profession.
+ * have, in catalogue order, each a reason to try another profession. A
+ * Common skill (#474) is never locked: everyone has it.
  */
 export function lockedSkills(
   skills: readonly Skill[],
   primary: ProfessionId,
   secondary: ProfessionId | undefined,
 ): readonly Skill[] {
-  return skills.filter((skill) => skill.profession !== primary && skill.profession !== secondary);
+  return skills.filter(
+    (skill) =>
+      skill.profession !== "common" &&
+      skill.profession !== primary &&
+      skill.profession !== secondary,
+  );
 }
 
 /** The library's "Elite" toggle (#459): elite skills only, in order. */
@@ -88,7 +94,8 @@ export function filterEliteSkills(skills: readonly Skill[]): readonly Skill[] {
  * building: the attribute is what you spend points on, so seeing which
  * skills a point in Fire Magic would improve is the actual question.
  *
- * A profession's "No Attribute" skills are a group of their own.
+ * A profession's "No Attribute" skills are a group of their own, and so
+ * are the Common ones (#474): "No Attribute (Common)".
  *
  * Groups come out in the order the skills do, so a stable catalog gives
  * a stable library and the list does not reshuffle as you type.
@@ -118,7 +125,7 @@ export function groupSkillsByAttribute(skills: readonly Skill[]): readonly Skill
         // reusing it keeps one spelling of "Fire Magic" in the codebase.
         attributeName:
           describeSkill(first).attributeName ??
-          `No Attribute (${PROFESSIONS[first.profession].name})`,
+          `No Attribute (${skillProfessionName(first.profession)})`,
         skills: grouped,
       },
     ];
