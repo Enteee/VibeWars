@@ -31,8 +31,6 @@ export interface MenuCallbacks {
   readonly onCreateLobby: (name: string) => void;
   readonly onJoinLobby: (code: string, name: string) => void;
   readonly onManageTeams: () => void;
-  /** Open the Options screen (#423). */
-  readonly onOptions: () => void;
   /** Open the jukebox (#372). */
   readonly onMusic: () => void;
   /** Open the build editor on a new character. */
@@ -156,16 +154,11 @@ export function renderMenu(
   const panel = h("div", "screen screen-menu");
 
   // No way back from here, so Esc has nothing to do but cancel (#578).
-  panel.appendChild(
-    screenBar({
-      title: [h("h1", "screen-title", "VibeWars")],
-      actions: [
-        button("Teams", "", callbacks.onManageTeams),
-        button("Options", "", callbacks.onOptions),
-        button("Music", "", callbacks.onMusic),
-      ],
-    }).element,
-  );
+  // Options is the top bar's ⚙ (#1272).
+  screenBar({
+    crumbs: ["VibeWars"],
+    actions: [button("Teams", "", callbacks.onManageTeams), button("Music", "", callbacks.onMusic)],
+  });
   const subtitle = h(
     "p",
     "screen-subtitle",
@@ -377,14 +370,12 @@ export function renderTeamList(
 ): void {
   root.replaceChildren();
   const panel = h("div", "screen team-list");
-  panel.appendChild(
-    screenBar({
-      back: { label: "Back", onBack: callbacks.onBack },
-      title: [h("h2", "screen-title", "Teams")],
-      // An empty list holds the one "New team" itself.
-      actions: teams.length === 0 ? [] : [button("New team", "primary", callbacks.onNew)],
-    }).element,
-  );
+  screenBar({
+    crumbs: ["VibeWars", "Teams"],
+    back: { label: "Back", onBack: callbacks.onBack },
+    // An empty list holds the one "New team" itself.
+    actions: teams.length === 0 ? [] : [button("New team", "primary", callbacks.onNew)],
+  });
 
   for (const problem of problems) {
     panel.appendChild(h("div", "screen-problem", problem));

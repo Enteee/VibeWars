@@ -10,7 +10,7 @@ import { startSoloMatch } from "./helpers/peers.js";
 
 test("a sound effects volume of 0 set in Options is kept after a reload", async ({ page }) => {
   await page.goto("./");
-  await page.locator("#screens").getByRole("button", { name: "options" }).click();
+  await page.locator(".topbar-options").click();
   // Sound is the first section, so Options opens on it.
   await expect(page.locator('.options-entry[data-section="sound"]')).toHaveClass(/is-selected/);
   const sfx = page.locator(".sound-sfx-volume input");
@@ -19,7 +19,7 @@ test("a sound effects volume of 0 set in Options is kept after a reload", async 
   await expect(page.locator(".sound-sfx-volume .sound-volume-readout")).toHaveText("0 %");
 
   await page.reload();
-  await page.locator("#screens").getByRole("button", { name: "options" }).click();
+  await page.locator(".topbar-options").click();
   await expect(page.locator(".sound-sfx-volume input")).toHaveValue("0");
 });
 
@@ -27,9 +27,9 @@ test("music muted in Options shows muted in the HUD popover, and mute all follow
   page,
 }) => {
   await page.goto("./");
-  await page.locator("#screens").getByRole("button", { name: "options" }).click();
+  await page.locator(".topbar-options").click();
   await page.getByLabel("Mute music").check();
-  await page.getByRole("button", { name: "Back", exact: true }).click();
+  await page.getByRole("button", { name: "Close", exact: true }).click();
 
   await startSoloMatch(page);
   await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp");

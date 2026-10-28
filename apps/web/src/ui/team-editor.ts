@@ -372,9 +372,9 @@ export function mountTeamEditor(
     );
   });
 
-  const { element: bar, back } = screenBar({
+  const { back } = screenBar({
+    crumbs: ["VibeWars", "Teams", "Edit team"],
     back: { label: "Back", onBack: close },
-    title: [h("h2", "screen-title", "Edit team")],
     status: [chip.element, unsaved],
     actions: [save, shareWrap, duplicate, remove],
     // Esc puts away Share and the problem list, then clears the counter's
@@ -396,7 +396,7 @@ export function mountTeamEditor(
       return false;
     },
   });
-  panel.append(bar, nameField);
+  panel.append(nameField);
 
   // What the bars hold; a counter marks its cells in the grid (#575).
   const counterBar = h("div", "team-counters");

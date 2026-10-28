@@ -1251,15 +1251,14 @@ function mountCommandBar(
     }
     return false;
   };
-  const { element, back } = screenBar({
+  // The name is the last crumb: the place is the character (#1272).
+  const { back } = screenBar({
+    crumbs: ["VibeWars", nameInput],
     back: { label: "Close", onBack: close },
-    title: [nameInput, professions],
-    status: [budget, chip.element, unsaved],
+    status: [professions, budget, chip.element, unsaved],
     actions: [save, moreWrap],
     putAway,
   });
-  element.classList.add("editor-bar");
-  layout.appendChild(element);
 
   // A press anywhere else puts the ⋯ menu and the problem list away.
   const onPointerDown = (event: PointerEvent): void => {

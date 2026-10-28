@@ -261,7 +261,8 @@ export function renderLobbyScreen(
       "Stay",
     );
   };
-  const { element: bar, back } = screenBar({
+  const { back } = screenBar({
+    crumbs: ["VibeWars", "Lobby"],
     back: {
       label: "Leave",
       onBack: () => {
@@ -272,11 +273,9 @@ export function renderLobbyScreen(
         }
       },
     },
-    title: [header],
-    status: [mapBlock],
+    status: [header, mapBlock],
     actions,
   });
-  panel.appendChild(bar);
 
   if (notice !== undefined) {
     panel.appendChild(h("div", "screen-problem", notice));

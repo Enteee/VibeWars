@@ -162,7 +162,10 @@ function playedTracks(page: Page): Promise<string[]> {
 test("a pinned track is what plays after a reload (#372)", async ({ page }) => {
   await recordMessages(page);
   await page.goto("./");
-  await page.locator("#screens").getByRole("button", { name: "Music", exact: true }).click();
+  await page
+    .locator(".topbar-screen-actions")
+    .getByRole("button", { name: "Music", exact: true })
+    .click();
   await page
     .locator(".jukebox-row", { hasText: "Ember Deep" })
     .getByRole("button", { name: "pin" })
@@ -177,7 +180,10 @@ test("a pinned track is what plays after a reload (#372)", async ({ page }) => {
 
 test("tracks are selectable rows: Enter previews and keeps focus (#581)", async ({ page }) => {
   await page.goto("./");
-  await page.locator("#screens").getByRole("button", { name: "Music", exact: true }).click();
+  await page
+    .locator(".topbar-screen-actions")
+    .getByRole("button", { name: "Music", exact: true })
+    .click();
   const row = page.locator(".jukebox-row", { hasText: "Ember Deep" });
   const play = row.locator(".selectable-row-choose");
   await play.focus();
@@ -224,7 +230,10 @@ test("the beat editor plays a change, keeps it across a reload, and an error lea
   await recordMessages(page);
   await recordHostInbox(page);
   await page.goto("./?musicstats");
-  await page.locator("#screens").getByRole("button", { name: "Music", exact: true }).click();
+  await page
+    .locator(".topbar-screen-actions")
+    .getByRole("button", { name: "Music", exact: true })
+    .click();
   const row = page.locator(".jukebox-row", { hasText: "Ember Deep" });
   await row.getByRole("button", { name: "Open Ember Deep in the beat editor" }).click();
   const editor = page.getByRole("dialog", { name: "Beat editor: Ember Deep" });
@@ -249,7 +258,10 @@ test("the beat editor plays a change, keeps it across a reload, and an error lea
   await expect(row).toHaveClass(/is-edited/);
 
   await page.reload();
-  await page.locator("#screens").getByRole("button", { name: "Music", exact: true }).click();
+  await page
+    .locator(".topbar-screen-actions")
+    .getByRole("button", { name: "Music", exact: true })
+    .click();
   await expect(row).toHaveClass(/is-edited/);
   await row.getByRole("button", { name: "Open Ember Deep in the beat editor" }).click();
   // CodeMirror draws only the lines in view; the change is on the last.
@@ -285,7 +297,10 @@ test("a pasted beat that floods the game is switched off, and its edit is not re
   page,
 }) => {
   await page.goto("./");
-  await page.locator("#screens").getByRole("button", { name: "Music", exact: true }).click();
+  await page
+    .locator(".topbar-screen-actions")
+    .getByRole("button", { name: "Music", exact: true })
+    .click();
   const row = page.locator(".jukebox-row", { hasText: "Ember Deep" });
   await row.getByRole("button", { name: "Open Ember Deep in the beat editor" }).click();
   const editor = page.getByRole("dialog", { name: "Beat editor: Ember Deep" });
@@ -314,7 +329,10 @@ test("a pasted beat that floods the game is switched off, and its edit is not re
     page.getByText("Your edit of Ember Deep stopped the music and was removed."),
   ).toBeVisible();
   await page.reload();
-  await page.locator("#screens").getByRole("button", { name: "Music", exact: true }).click();
+  await page
+    .locator(".topbar-screen-actions")
+    .getByRole("button", { name: "Music", exact: true })
+    .click();
   await expect(row).not.toHaveClass(/is-edited/);
 });
 
@@ -374,7 +392,10 @@ test("Off plays nothing after a click, and the music mute survives a reload (#37
 }) => {
   await recordMessages(page);
   await page.goto("./");
-  await page.locator("#screens").getByRole("button", { name: "Music", exact: true }).click();
+  await page
+    .locator(".topbar-screen-actions")
+    .getByRole("button", { name: "Music", exact: true })
+    .click();
   await page.locator(".jukebox-mode").selectOption("off");
   // The music's mute lives in Options → Sound, a link away.
   await page.getByRole("button", { name: "sound settings" }).click();
@@ -389,7 +410,10 @@ test("Off plays nothing after a click, and the music mute survives a reload (#37
   await page.waitForTimeout(4_000);
   expect(await playedTracks(page)).toEqual([]);
 
-  await page.locator("#screens").getByRole("button", { name: "Music", exact: true }).click();
+  await page
+    .locator(".topbar-screen-actions")
+    .getByRole("button", { name: "Music", exact: true })
+    .click();
   await expect(page.locator(".jukebox-mode")).toHaveValue("off");
   await page.getByRole("button", { name: "sound settings" }).click();
   await expect(page.getByLabel("Mute music")).toBeChecked();
@@ -566,7 +590,7 @@ test("Options → Sound names the menu's track, and a fixed intensity reaches th
   await expect.poll(() => playedTracks(page), { timeout: 5_000 }).toHaveLength(1);
   const [menuTrack] = await playedTracks(page);
 
-  await page.locator("#screens").getByRole("button", { name: "options" }).click();
+  await page.locator(".topbar-options").click();
   await expect(page.locator('.options-entry[data-section="sound"]')).toHaveClass(/is-selected/);
   await expect(page.locator(".music-now-playing-title")).toContainText(
     titles.get(menuTrack ?? "") ?? "no such track",

@@ -376,7 +376,7 @@ async function main(): Promise<void> {
   // The bar's [?] and ⚙ open Help and Options over the screen, which
   // stays as it was underneath: an editor keeps its edits, a lobby keeps
   // updating (#454, #1257).
-  mountTopbar(topbar, requireElement("#topbar-actions"), {
+  const topbarView = mountTopbar(topbar, {
     onHelp: () => {
       openHelpOverlay(app);
     },
@@ -395,7 +395,7 @@ async function main(): Promise<void> {
     }
     // In a match the viewport has the whole height; the HUD has the bar's
     // buttons (#454).
-    topbar.hidden = visible;
+    topbarView.setInMatch(visible);
     viewport.style.display = visible ? "block" : "none";
     screenRoot.style.display = visible ? "none" : "flex";
     if (chat !== undefined) {
@@ -527,10 +527,6 @@ async function main(): Promise<void> {
         },
         onManageTeams: () => {
           void showTeams();
-        },
-        onOptions: () => {
-          leaveScreen();
-          renderOptionsScreen(screenRoot, { onBack: showMenu });
         },
         onMusic: showJukebox,
         onNewCharacter: () => {

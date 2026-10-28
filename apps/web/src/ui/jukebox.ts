@@ -229,13 +229,11 @@ export function renderJukeboxScreen(
   disposeJukeboxScreen();
   root.replaceChildren();
   const screen = h("div", "screen jukebox-screen");
-  screen.appendChild(
-    screenBar({
-      back: { label: "Back", onBack: callbacks.onBack },
-      title: [h("h2", "screen-title", "Music")],
-      actions: [button("Sound settings", "jukebox-sound-settings", callbacks.onSoundSettings)],
-    }).element,
-  );
+  screenBar({
+    crumbs: ["VibeWars", "Music"],
+    back: { label: "Back", onBack: callbacks.onBack },
+    actions: [button("Sound settings", "jukebox-sound-settings", callbacks.onSoundSettings)],
+  });
   screen.appendChild(h("p", "screen-subtitle", "Click a track to hear it. Changes save at once."));
   const panel = jukeboxPanel(callbacks.onBack);
   screen.appendChild(panel.element);

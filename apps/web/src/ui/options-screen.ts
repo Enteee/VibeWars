@@ -134,14 +134,13 @@ function optionsPanel(
 ): { readonly panel: HTMLElement; readonly dispose: () => void } {
   const panel = document.createElement("div");
 
-  panel.appendChild(
-    screenBar({
-      back,
-      title: [h("h2", "screen-title", "Options")],
-      actions: [],
-      overlay: asOverlay,
-    }).element,
-  );
+  const { release } = screenBar({
+    crumbs: ["VibeWars", "Options"],
+    back,
+    actions: [],
+    overlay: asOverlay,
+    own: "options",
+  });
 
   const body = document.createElement("div");
   body.className = "options-body";
@@ -193,6 +192,7 @@ function optionsPanel(
     panel,
     dispose: () => {
       switcher.close();
+      release();
     },
   };
 }

@@ -13,13 +13,17 @@ import {
  * Close, or Esc, puts it away and leaves the screen or match beneath
  * exactly as it was. A link to another page switches page in place.
  *
- * The bar says where you are, `VibeWars > Help > <Page>`, until #1251
- * moves headers into the title bar.
+ * The top bar says where you are, `VibeWars > Help > <Page>` (#1272).
  */
 
 /** The open overlay, closed by `closeHelpOverlay`. */
 let overlay:
-  { readonly element: HTMLElement; readonly onClose: (() => void) | undefined } | undefined;
+  | {
+      readonly element: HTMLElement;
+      readonly onClose: (() => void) | undefined;
+      readonly release: () => void;
+    }
+  | undefined;
 
 /** Help over `parent`, on `pageId` or the first page. `onClose` hears every way it closes. */
 export function openHelpOverlay(parent: HTMLElement, onClose?: () => void, pageId?: string): void {
@@ -30,18 +34,14 @@ export function openHelpOverlay(parent: HTMLElement, onClose?: () => void, pageI
   panel.setAttribute("aria-modal", "true");
   panel.setAttribute("aria-label", "Help");
 
-  const crumb = h("span", "help-crumb-page");
-  const title = h("h2", "screen-title help-breadcrumb");
-  title.append("VibeWars", h("span", "help-crumb-separator", " > "), "Help");
-  title.append(h("span", "help-crumb-separator", " > "), crumb);
-  panel.appendChild(
-    screenBar({
-      back: { label: "Close", onBack: closeHelpOverlay },
-      title: [title],
-      actions: [],
-      overlay: true,
-    }).element,
-  );
+  const crumb = h("span");
+  const { release } = screenBar({
+    crumbs: ["VibeWars", "Help", crumb],
+    back: { label: "Close", onBack: closeHelpOverlay },
+    actions: [],
+    overlay: true,
+    own: "help",
+  });
 
   const body = h("div", "options-body");
   const nav = h("nav", "options-nav");
@@ -95,7 +95,7 @@ export function openHelpOverlay(parent: HTMLElement, onClose?: () => void, pageI
   show(pageId ?? PLAYER_DOC_PAGES[0]?.id ?? "");
   backdrop.appendChild(panel);
   parent.appendChild(backdrop);
-  overlay = { element: backdrop, onClose };
+  overlay = { element: backdrop, onClose, release };
   panel.querySelector<HTMLElement>(".options-entry.is-selected")?.focus();
 }
 
@@ -111,6 +111,7 @@ export function closeHelpOverlay(): void {
   }
   overlay = undefined;
   closing.element.remove();
+  closing.release();
   closing.onClose?.();
 }
 
