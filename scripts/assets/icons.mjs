@@ -144,6 +144,15 @@ const skillType = {
   // Shield ring: a spell held on an ally's weapon, one at a time (#758).
   "weapon-spell": () =>
     `<path d="M4.5 3.5h15v7c0 4.5-3.5 7.5-7.5 9.5-4-2-7.5-5-7.5-9.5z" ${stroke(C.weaponSpell, 3)}/>`,
+  // A sprout, two leaves on a stem: a nature ritual plants a spirit that
+  // reaches everyone near it (#1064).
+  "nature-ritual": () =>
+    `<path d="M12 21V10" ${stroke(C.ink, 2.5)}/>` +
+    `<path d="M12 12C12 7 9 4 4 4c0 5 3 8 8 8zM12 15c0-4 3-7 8-7 0 4-3 7-8 7z" fill="${C.ink}"/>`,
+  // An urn on a base line: a binding ritual binds a spirit to its side (#1064).
+  "binding-ritual": () =>
+    `<path d="M9 3h6v2l-1.5 2c2.5 1 4 3 4 6 0 3-2.5 5-5.5 5s-5.5-2-5.5-5c0-3 1.5-5 4-6L9 5z" fill="${C.ink}"/>` +
+    `<path d="M5 21h14" ${stroke(C.ink, 2.5)}/>`,
   // Plain square: a skill with no other type.
   skill: () => `<rect x="6" y="6" width="12" height="12" rx="1" fill="${C.ink}"/>`,
 };
@@ -648,6 +657,14 @@ const status = {
       `<path d="M8.5 6.5h7v4c0 2.2-1.8 3.7-3.5 4.8-1.7-1.1-3.5-2.6-3.5-4.8z" ${stroke(c, 1.8)}/>` +
       `<path d="M6.5 16.5l11-11" ${stroke(c, 2)}/>`,
   ],
+  // Skill effect: a blade and a plus, hits land harder near Winnowing (#1064).
+  winnowing: [
+    "skill-effect",
+    (c) =>
+      `<path d="M5 17L13 9" ${stroke(c, 2.2)}/>` + `<path d="M17 6v6M14 9h6" ${stroke(c, 2)}/>`,
+  ],
+  // Skill effect: two regeneration arrows, Recuperation's +2 (#1064).
+  recuperation: ["skill-effect", (c) => `<path d="M7 13l3-3 3 3M11 13l3-3 3 3" ${stroke(c, 2)}/>`],
 };
 
 // ---------------------------------------------------------------------------
@@ -1056,7 +1073,7 @@ const skillGlyph = {
   // A peak split by a crack: earth that breaks armor (#1034).
   "mountain-crack": () =>
     inkFill("M2 20L9.5 6L13.5 13L16.5 9L22 20Z") +
-    `<path d="M10 7.5L11.5 12L9.5 14L11 19" fill="none" stroke="${C.bg}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>`,
+    `<path d="M9.8 6.5L12 11.5L9.5 14.5L11.5 20" fill="none" stroke="${C.bg}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>`,
   // A cloud of grains: dust thrown to blind (#1034).
   dust: () =>
     [
@@ -1064,7 +1081,7 @@ const skillGlyph = {
       [13, 6],
       [18, 10],
       [10, 13],
-      [15, 15],
+      [14, 13.5],
       [6, 17],
       [12, 19],
     ]
@@ -1076,7 +1093,7 @@ const skillGlyph = {
   // A bramble stem with barbs: thorns (#1034).
   thorns: () =>
     inkLine("M3.5 19.5C8 17 14 12 20.5 4.5", 2.2) +
-    inkLine("M7.5 16L6 11M11 13.5L9.5 8.5M15 10.5L14.5 5M9 17.5L12 21M13 14.5L17 17", 2.2),
+    inkLine("M7.5 16L6 11M11 13.5L9.5 8.5M15 10.5L14.5 5M9 17.5L12 21M12.5 13L14.5 15", 2.2),
   mountain: () => inkFill("M2 20L9.5 6L13.5 13L16.5 9L22 20Z"),
   cleanse: () =>
     `<path d="M12 3C12 3 5.5 11 5.5 15A6.5 6.5 0 0 0 18.5 15C18.5 11 12 3 12 3Z" ${stroke(C.ink, 2)}/>` +
@@ -1090,6 +1107,20 @@ const skillGlyph = {
     `<path d="M9.5 3H14.5M10.5 3V9L4.5 19Q3.5 21 6 21H18Q20.5 21 19.5 19L13.5 9V3" ${stroke(C.ink, 2)}/>` +
     inkFill("M7.5 15H16.5L19 19.5H5Z"),
   germ: () => germ(C.ink),
+  // A head and shoulders with a plus beside it: a heal aimed at another (#996).
+  "heal-other": () =>
+    `<circle cx="9" cy="12" r="3.4" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
+    `<path d="M3 21.5C3 17 5.5 15.5 9 15.5S15 17 15 21.5Z" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
+    inkLine("M17 3.5V11M13.2 7.2H20.8", 2.6),
+  // A plus in a ring of arrow: the blow turned back into a heal (#996).
+  "heal-turn": () =>
+    `<path d="M18.5 8A8 8 0 1 0 20 12" ${stroke(C.ink, 2.2)}/>` +
+    inkFill("M21.5 3.5V10.5H14.5Z") +
+    inkLine("M12 8.5V15.5M8.5 12H15.5", 2.4),
+  // A dashed ring (a hex) with a bolt through it: a hex smitten (#996).
+  "hex-bolt": () =>
+    `<circle cx="12" cy="12" r="8.5" ${stroke(C.ink, 2.2)} stroke-dasharray="4.2 3.2"/>` +
+    inkLine("M14.5 3.5L9 12.5H15L9.5 20.5", 2.4),
   // A spear with barbs on its shaft: it hooks and bleeds (#1036).
   "spear-barb": () =>
     inkLine("M12 21V9", 2.4) +

@@ -50,7 +50,7 @@ import {
   updateHud,
   updateRecharges,
 } from "./ui/hud.js";
-import { createCompass } from "./ui/compass.js";
+import { compassReach, createCompass } from "./ui/compass.js";
 import { noWebGlNotice } from "./ui/arena-notice.js";
 import { attachFullscreenButton, fullscreenTarget } from "./ui/fullscreen.js";
 import { attachJukeboxPopover } from "./ui/jukebox.js";
@@ -249,7 +249,7 @@ export async function startMatchView(
     connection.sendIntent({ kind: "target", targetSessionId });
   });
   // The compass (#486), top right under the match controls.
-  const compass = createCompass(parent);
+  const compass = createCompass(parent, compassReach(connection.map));
   // The arena's edge stops below the target frame and above the bars, not
   // under them (#440, #1042). From the bars, as the lines above them come
   // and go; to the frame's bottom, as its effects row grows.

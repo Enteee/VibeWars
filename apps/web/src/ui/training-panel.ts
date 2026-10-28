@@ -100,6 +100,7 @@ import {
   buildSignature,
   escapeStep,
   loadScenarioChoice,
+  logActorName,
   overlayMessage,
   resolveScenarioId,
   saveScenarioChoice,
@@ -309,7 +310,9 @@ export function createTrainingPanel(): TrainingPanel {
       ? { primary: character.primaryProfession, secondary: character.secondaryProfession }
       : NO_PROFESSIONS;
   const nameOf = (id: string): string =>
-    id === SELF_ID ? displayName.trim() || "You" : (session?.names.get(id) ?? id);
+    id === SELF_ID
+      ? displayName.trim() || "You"
+      : logActorName(id, session?.names, latestMatch?.players);
 
   /* --- painting -------------------------------------------------------- */
 

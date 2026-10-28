@@ -316,8 +316,9 @@ focus or the area flash.
 
 GW1's radar (#486), top right under the match buttons: a disc 160 px
 across (120 px on a window under 1280 px wide), centred on you, north up,
-showing everything within 1700 units (`RANGE_COMPASS`). It never rotates,
-as the arena does not. A body beyond it is not on it: the edge markers
+showing everything within the arena's longer side, at most 1700 units
+(`RANGE_COMPASS`), so a small arena fills the disc. It never rotates, as
+the arena does not. A body beyond it is not on it: the edge markers
 (#440) give direction, the compass gives distance.
 
 - **Disc**: `panel` at 85 %, a 1 px `line` rim.
@@ -645,20 +646,22 @@ marker on someone, which carry that marker's colour. A stance marks you, so
 it carries the stance colour too, a preparation its amber, a glyph its
 lime and a weapon spell its periwinkle.
 
-| Type         | Badge                     |
-| ------------ | ------------------------- |
-| Attack       | Blade                     |
-| Spell        | Four-point star           |
-| Enchantment  | Solid teal ring           |
-| Hex          | Broken purple ring        |
-| Stance       | Pink pentagon ring        |
-| Preparation  | Amber triangle ring       |
-| Glyph        | Lime triangle ring, down  |
-| Weapon Spell | Periwinkle shield ring    |
-| Signet       | Ring with a seal on top   |
-| Shout        | Mouth and two sound waves |
-| Chant        | A note                    |
-| Skill        | Square                    |
+| Type           | Badge                     |
+| -------------- | ------------------------- |
+| Attack         | Blade                     |
+| Spell          | Four-point star           |
+| Enchantment    | Solid teal ring           |
+| Hex            | Broken purple ring        |
+| Stance         | Pink pentagon ring        |
+| Preparation    | Amber triangle ring       |
+| Glyph          | Lime triangle ring, down  |
+| Weapon Spell   | Periwinkle shield ring    |
+| Signet         | Ring with a seal on top   |
+| Shout          | Mouth and two sound waves |
+| Chant          | A note                    |
+| Nature Ritual  | A sprout                  |
+| Binding Ritual | An urn on a base line     |
+| Skill          | Square                    |
 
 ### Skill icons
 
@@ -694,9 +697,10 @@ it, not baked in, so one file serves every screen.
   right), slow (chevrons left), dash, energy (bolt), mountain (earth), cleanse
   (drop, struck through), armor (shield), flask, flame, trident, hawk, rock,
   arrow-burst, arrow-pierce, arrow-flame, crescent (shadow), armor-half (a
-  half-filled shield), eye, blade-cleanse, blade-hook, blade-shards, hilt,
-  mountain-crack, dust, thorns. A new primary effect adds a glyph; a new skill
-  adds a row.
+  half-filled shield), eye, heal-other (a head and a plus), heal-turn (a plus
+  in an arrow ring), hex-bolt (dashed ring, bolt), blade-cleanse, blade-hook,
+  blade-shards, hilt, banner-note, mountain-crack, dust, thorns. A new primary
+  effect adds a glyph; a new skill adds a row.
 
 ### Skill slot states
 

@@ -592,8 +592,9 @@ A skill's type is its badge on the slot, in the library and in the
 Training Ground, and is named first in its tooltip ("Signet.", "Hex
 Spell."). Some types play by rules of their own (#465). Spells,
 enchantments, hexes and weapon spells are **spells**; attacks, signets,
-shouts, chants, stances and plain skills are not, and every rule that "affects spells" (dazed
-and Fast Casting, so far) leaves them alone.
+shouts, chants, stances, rituals and plain skills are not, and every rule that "affects spells" (dazed
+and Fast Casting, so far) leaves them alone. Rituals, nature and binding,
+plant spirits (see Creatures).
 
 **Elite skills** wear a doubled gold frame wherever a skill is drawn,
 and their tooltip says "Elite" before the type (#459). A bar holds at most
@@ -786,8 +787,9 @@ when you cast it on yourself. **Weapon of Aggression** (Channeling
 Magic, 10 energy, ¼ s, 10 s recharge, yourself only) makes you attack
 25% faster for 13 s; attacking does not end it, and as with every
 speed-up only the strongest counts, so under Frenzy it adds nothing.
-Spirit Light Weapon's extra 21 a second near a spirit and Weapon of
-Quickening's binding rituals wait for spirits (#467).
+Spirit Light Weapon heals 21 more a second while its bearer is in
+earshot of a spirit, any team's, and Weapon of Quickening shortens the
+recharge of binding rituals as of spells (#1064).
 
 Three more (#1022), which still replace any other weapon spell. Each
 lasts on an ally or yourself. **Vengeful Weapon** (Restoration Magic, 5
@@ -813,8 +815,9 @@ recharge) heals 51, and 63 more if the ally is under a weapon spell.
 **Mending Grip** (5 energy, 1 s, 4 s recharge) heals 68, and if the ally
 is under a weapon spell it also loses one condition, the newest: the
 Ritualist's first condition removal (#1022).
-Their spirit clauses, a condition removed per spirit in earshot and no
-sacrifice with a spirit near, wait for spirits (#467).
+Mend Body and Soul also removes one condition from the ally for each
+spirit, any team's, in earshot of the ally, and Spirit Light sacrifices
+nothing while a spirit, any team's, is in earshot of you (#1064).
 
 ## Weapon attacks
 
@@ -1208,6 +1211,32 @@ at the end of the tick, with no corpse and no respawn; running out is not
 a death. Its owner's death does not end it; its owner leaving the match
 does. Soul Reaping answers a minion's death but not a spirit's. At most
 32 creatures are on the field at once (ADR-0035).
+
+**Spirits** (#1064) are planted by a ritual, a cast that can be
+interrupted, where its caster stands. A spirit never moves: bodies are
+pushed out of it, never it out of them. While it lives, everyone in its
+range (a nature ritual's 1,190, a binding ritual's spirit range of 850;
+walls do not matter) that it reaches wears its
+effect as a status, with no bar, its hover "from Winnowing, while in
+its range": on the step a body walks in, off the
+step it walks out, and off everyone the step after the spirit dies or
+runs out. Nothing removes that status but leaving. A **nature ritual**
+(Ranger) reaches every body in range, both teams, so your Winnowing
+helps the foe beside you too; a **binding ritual** (Ritualist) reaches
+only its own team. No spirit is ever reached by a spirit. A body in
+range of two spirits with the same effect, its side's and the foe's,
+wears it once. One of a skill in range: planting a spirit ends every
+spirit of the same skill on your side within the new one's range, as an
+expiry, not a death. A foe's spirit of that skill lives on.
+
+**Winnowing** (Ranger, Wilderness Survival, nature ritual, 5 energy,
+2 s, 60 s recharge) plants a spirit of 210 Health and armor 51 for 198 s:
+every body in its range takes 4 more from each physical hit it takes,
+before armor. A hit that "deals only" its number, as Concussion Shot's,
+takes the 4 too: it is on the one hit, not on the attack.
+**Recuperation** (Ritualist, Restoration Magic, binding ritual, 25
+energy, 3 s, 45 s recharge) plants one of 210 Health and armor 51 for
+39 s: your side in its range gains +3 Health regeneration.
 
 ## Death and scoring
 

@@ -369,6 +369,7 @@ describe("createEffectsMonitor (#834)", () => {
     const yours = row("mending", undefined, true, {
       bearerId: "bob",
       bearerName: "Bob",
+      category: "enchantment",
       secondsLeft: undefined,
       endable: true,
     });
@@ -383,11 +384,23 @@ describe("createEffectsMonitor (#834)", () => {
       const { monitor, root } = mount(24, () => undefined);
       monitor.update([
         row("bleeding", 0.5),
-        row("mending", undefined, false, { secondsLeft: undefined }),
+        row("mending", undefined, false, { category: "enchantment", secondsLeft: undefined }),
       ]);
       expect(hover(root, 0)).not.toContain("double-click to end");
       expect(hover(root, 1)).toEqual(expect.arrayContaining(["maintained"]));
       expect(hover(root, 1)).not.toContain("double-click to end");
+    });
+
+    it("says a spirit's aura lasts while in its range, not that it is maintained (#1064)", () => {
+      const { monitor, root } = mount(24, () => undefined);
+      monitor.update([
+        row("winnowing", undefined, false, {
+          category: "skill-effect",
+          casterName: "Winnowing",
+          secondsLeft: undefined,
+        }),
+      ]);
+      expect(hover(root, 0).slice(-2)).toEqual(["from Winnowing", "while in its range"]);
     });
 
     it("not in a monitor that cannot end it: the target frame's", () => {

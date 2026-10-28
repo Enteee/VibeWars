@@ -13,6 +13,7 @@ import { createMemoryBoard, type MemoryBoard, type QueueBoardEvent } from "./que
 import {
   createQueueClient,
   type QueueClient,
+  type QueueParty,
   type QueueState,
   type TicketKey,
 } from "./queue-client.js";
@@ -55,11 +56,12 @@ class Queue {
     this.memory.board().subscribe(mode, (event) => this.heard.push(event));
   }
 
-  public join(): QueueClient {
+  /** A client alone, or as a member of `party`. */
+  public join(party?: QueueParty): QueueClient {
     const client = createQueueClient({
       board: this.memory.board(),
       mode: this.mode,
-      partySize: 1,
+      ...(party === undefined ? {} : { party }),
       now: () => this.now,
       newTicketKey: () => fakeKey((this.keys += 1)),
       mapPool: MAPS,
@@ -73,7 +75,7 @@ class Queue {
     this.memory.board().publish({
       protocol: PROTOCOL_VERSION,
       mode: this.mode,
-      partySize: 1,
+      members: [ticket.ticketId],
       enteredAt: START,
       heartbeatAt: this.now,
       ...ticket,
@@ -120,6 +122,16 @@ function ticketIdOf(client: QueueClient): string {
 }
 
 const EARLY = "0".repeat(63) + "1";
+
+/** A 2v2 party of two fresh keys (#882): the lower leads. */
+function partyOf(queue: Queue): { leader: QueueParty; follower: QueueParty } {
+  const keys = [fakeKey((queue.keys += 1)), fakeKey((queue.keys += 1))].sort((a, b) =>
+    a.ticketId < b.ticketId ? -1 : 1,
+  );
+  const [first, second] = keys as [TicketKey, TicketKey];
+  const members = [first.ticketId, second.ticketId];
+  return { leader: { members, key: first }, follower: { members, key: second } };
+}
 
 describe("createQueueClient", () => {
   it("brings 2 × teamSize clients into one lobby, the same group on each", async () => {
@@ -318,5 +330,119 @@ describe("createQueueClient", () => {
     await queue.advance();
 
     expect(a.state).toMatchObject({ kind: "searching", searching: 1 });
+  });
+
+  describe("a party that stayed together (#882)", () => {
+    it("publishes one ticket listing both members, and meets two solos", async () => {
+      const queue = new Queue("random-arena-2v2");
+      const { leader, follower } = partyOf(queue);
+      const clients = [queue.join(leader), queue.join(follower), queue.join(), queue.join()];
+
+      await queue.until(() => clients.every((client) => client.state.kind === "in-lobby"));
+
+      const [lead, follow] = clients.map((client) => inLobby(client.state));
+      expect(lead?.key.ticketId).toBe(leader.members[0]);
+      expect(follow?.key.ticketId).toBe(follower.key.ticketId);
+      expect(follow?.group).toEqual(lead?.group);
+      expect(lead?.group.teams).toContainEqual(leader.members);
+      expect(queue.published(new Set(leader.members)).map((ticket) => ticket.ticketId)).toEqual(
+        expect.arrayContaining([leader.members[0]]),
+      );
+      expect(
+        queue.published(new Set([follower.key.ticketId])),
+        "the follower publishes nothing",
+      ).toEqual([]);
+      expect(queue.published(new Set([leader.members[0] ?? ""]))[0]?.members).toEqual(
+        leader.members,
+      );
+    });
+
+    it("keeps the leader's key and place across a fall-through, without a withdrawal", async () => {
+      const queue = new Queue("random-arena-2v2");
+      const { leader, follower } = partyOf(queue);
+      const lead = queue.join(leader);
+      const clients = [lead, queue.join(follower), queue.join(), queue.join()];
+      await queue.until(() => clients.every((client) => client.state.kind === "in-lobby"));
+      const [first] = queue.published(new Set([leader.members[0] ?? ""]));
+
+      // Blamed for a member of its own that never came: it queues on.
+      lead.fellThrough([leader.members[0] ?? ""]);
+      await queue.advance();
+
+      expect(queue.heard.some((event) => event.kind === "withdrawn")).toBe(false);
+      const again = queue.published(new Set([leader.members[0] ?? ""])).at(-1);
+      expect(again?.heartbeatAt).toBe(queue.now - STEP_MS);
+      expect(again?.enteredAt).toBe(first?.enteredAt);
+    });
+
+    it("goes party-gone once its leader's ticket has been dead for TICKET_TTL_MS", async () => {
+      const queue = new Queue("random-arena-2v2");
+      const { leader, follower } = partyOf(queue);
+      const lead = queue.join(leader);
+      const follow = queue.join(follower);
+      await queue.advance();
+      expect(follow.state).toMatchObject({ kind: "searching", searching: 2 });
+
+      lead.leave();
+      await deliver();
+      await queue.advance(TICKET_TTL_MS - 2 * STEP_MS);
+      expect(follow.state.kind).toBe("searching");
+      await queue.advance();
+      expect(follow.state.kind).toBe("party-gone");
+    });
+
+    it("gives a follower its leader's first heartbeat's time before it gives up", async () => {
+      const queue = new Queue("random-arena-2v2");
+      const { follower } = partyOf(queue);
+      const follow = queue.join(follower);
+
+      await queue.advance(TICKET_TTL_MS - STEP_MS);
+      expect(follow.state.kind).toBe("searching");
+      await queue.advance();
+      expect(follow.state.kind).toBe("party-gone");
+    });
+
+    /** A stranger's party ticket naming `member`, signed by a key of its own below it. */
+    const forged = (member: string): Partial<QueueTicket> & { ticketId: string } => ({
+      ticketId: "0".repeat(64),
+      members: ["0".repeat(64), member],
+    });
+
+    it("splits up once a stranger has named one of its members for TICKET_TTL_MS", async () => {
+      const queue = new Queue("random-arena-2v2");
+      const { leader, follower } = partyOf(queue);
+      const lead = queue.join(leader);
+      const follow = queue.join(follower);
+      await queue.advance();
+
+      // The stranger heartbeats its claim for as long as it likes.
+      for (let waited = 0; waited < TICKET_TTL_MS; waited += STEP_MS) {
+        await queue.publish(forged(follower.key.ticketId));
+        await queue.advance();
+      }
+      expect(lead.state.kind).toBe("searching");
+      await queue.publish(forged(follower.key.ticketId));
+      await queue.advance();
+
+      expect(lead.state.kind).toBe("party-gone");
+      expect(follow.state.kind).toBe("party-gone");
+      expect(queue.heard).toContainEqual({ kind: "withdrawn", ticketId: leader.members[0] });
+    });
+
+    it("waits out a claim that is not kept alive: a stale ticket is no split", async () => {
+      const queue = new Queue("random-arena-2v2");
+      const { leader, follower } = partyOf(queue);
+      const lead = queue.join(leader);
+      const follow = queue.join(follower);
+      await queue.advance();
+
+      await queue.publish(forged(follower.key.ticketId));
+      for (let waited = 0; waited < 2 * TICKET_TTL_MS; waited += STEP_MS) {
+        await queue.advance();
+      }
+
+      expect(lead.state.kind).toBe("searching");
+      expect(follow.state.kind).toBe("searching");
+    });
   });
 });

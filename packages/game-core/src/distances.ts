@@ -34,6 +34,12 @@ export const AREA_EARSHOT = 350;
  */
 export const RANGE_SPIRIT = 850;
 /**
+ * A nature ritual's range (#1064): Winnowing's. GW1's February 2026
+ * update made it about 3,500 units, larger than a binding ritual's
+ * `RANGE_SPIRIT`, rescaled by the same ~0.34.
+ */
+export const RANGE_NATURE_RITUAL = 1190;
+/**
  * Compass range, beyond which a maintained enchantment's bearer is lost
  * to its caster (#839). GW1's is about 5,000 units, rescaled by the same
  * ~0.34 as `RANGE_SPIRIT`.

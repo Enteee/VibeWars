@@ -147,12 +147,16 @@ export function mitigate(packet: DamagePacket, target: Combatant, rules: CombatR
     return 0;
   }
 
+  // Winnowing's +4 (#1064): on the bearer of every physical hit, before
+  // armor, so a fixed "deals only N" hit takes it too.
+  const modifiers = aggregateModifiers(target.statuses.active);
+  const armored =
+    packet.armored + (isPhysicalDamage(packet.type) ? modifiers.physicalDamageTakenBonus : 0);
   const armor = effectiveArmor(target, packet);
-  let dealt = packet.armored * armorMultiplier(armor, rules) + packet.armorIgnoring;
+  let dealt = armored * armorMultiplier(armor, rules) + packet.armorIgnoring;
 
   // Frenzy's double and Dark Escape's half (#919): every packet, armored
   // or not, after armor and before the flat shield below.
-  const modifiers = aggregateModifiers(target.statuses.active);
   dealt *= modifiers.damageTakenMultiplier;
 
   // Rune of Absorption, last and only against physical hits. After

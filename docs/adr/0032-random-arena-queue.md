@@ -62,7 +62,7 @@ with nobody negotiating.**
    key, and the ticket id is its x-only public key (64 hex). The board
    accepts a ticket or a withdrawal for id X only from an event whose
    `pubkey` is X with a valid signature, so nobody can republish an
-   honest id with another `enteredAt` or party size. Throwaway keys
+   honest id with another `enteredAt` or members. Throwaway keys
    also mean tickets do not link a player across visits.
 6. **Admission by signature, both ways; the key never leaves the
    client.** The room's name can be worked out by anyone watching the
@@ -87,6 +87,32 @@ with nobody negotiating.**
    `rejoin-proof.ts`, a proof names the peer that sends it. A client
    that requeues after a fall-through still makes a fresh key, so a
    fresh ticket id, and keeps its original `enteredAt`.
+
+   _Amended by #882, for a party._ A team that stayed together has no
+   shared secret: each member keeps a key of its own, and the ticket
+   lists their public keys, sorted, as `members`. Its leader, the
+   lowest, publishes it with its own key, so `ticketId = members[0]`;
+   the others publish nothing and follow it. A side is seated by **seat
+   key**, a solo's ticket id or a member's own key, and the join carries
+   `seatKey` in place of `ticketId`, signed by that key as above. **A
+   party keeps its key, and so its id and `enteredAt`, across a
+   fall-through**: its followers find it by that id, and there is no
+   channel left to tell them a new one. The cost is that a party blamed
+   as a no-show is ignored by those clients for `NO_SHOW_IGNORE_MS`.
+   A party is a no-show when any of its members is.
+
+   Only `ticketId` is signed; the other members are the leader's word.
+   So **a seat key seats once**: formation drops a party that names
+   another live ticket's id, and both parties that name one member,
+   since `enteredAt` is forgeable and neither can be trusted to have
+   been first. A client settles only into a group where it sits as its
+   own ticket: a solo as a solo, a member in exactly the `members` it
+   was told. A forger can still get a party dropped by naming one of
+   its members; closing that needs member signatures on the ticket
+   (#1078). Until then a party whose ticket has been contested for
+   `TICKET_TTL_MS`, longer than a stale honest ticket can last, splits
+   up and each member queues alone, so it is not held for ever.
+
 7. **Signing with `@noble/secp256k1`**, which Trystero already brings into
    the lockfile at 3.2.0. It becomes a direct dependency at that version.
 8. **No proof-of-work at first.** A fake ticket costs its sender nothing.
