@@ -35,6 +35,7 @@ function snapshot(castingSkillId: string | undefined): MatchSnapshot {
     secondaryProfession: undefined,
     team: 0,
     dead: false,
+    corpseExploited: false,
     castingSkillId,
     castRemaining: castingSkillId === undefined ? 0 : 1,
     castTotal: castingSkillId === undefined ? 0 : 1,

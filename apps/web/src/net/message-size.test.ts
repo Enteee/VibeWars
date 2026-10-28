@@ -125,6 +125,7 @@ function player(index: number): WirePlayer {
     primaryProfession: "necromancer",
     secondaryProfession: "elementalist",
     dead: false,
+    corpseExploited: false,
     castingSkillId: SKILL_ID,
     castRemaining: FLOAT,
     castTotal: FLOAT,

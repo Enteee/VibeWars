@@ -133,6 +133,7 @@ const player: WirePlayer = {
   primaryProfession: "monk",
   secondaryProfession: null,
   dead: false,
+  corpseExploited: false,
   castingSkillId: "healing-breeze",
   castRemaining: 0.75,
   castTotal: 1,
@@ -353,6 +354,11 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["refuse", parsePeerRefuse, refuse],
   ["snapshot", parseWireSnapshotPart, snapshot],
   ["snapshot with a creature", parseWireSnapshotPart, { ...snapshot, players: [player, minion] }],
+  [
+    "snapshot with an exploited corpse (#466)",
+    parseWireSnapshotPart,
+    { ...snapshot, players: [{ ...player, dead: true, corpseExploited: true }] },
+  ],
   [
     "snapshot with every player and creature there may be",
     parseWireSnapshotPart,
@@ -615,6 +621,16 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     "snapshot with a string for dead",
     parseWireSnapshotPart,
     { ...snapshot, players: [{ ...player, dead: "no" }] },
+  ],
+  [
+    "snapshot with a living player whose corpse was exploited (#466)",
+    parseWireSnapshotPart,
+    { ...snapshot, players: [{ ...player, dead: false, corpseExploited: true }] },
+  ],
+  [
+    "snapshot with a player that does not say whether its corpse was exploited (#466)",
+    parseWireSnapshotPart,
+    { ...snapshot, players: [{ ...player, corpseExploited: undefined }] },
   ],
   [
     "snapshot with too many statuses",

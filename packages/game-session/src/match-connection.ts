@@ -65,6 +65,8 @@ export interface PlayerSnapshot {
   readonly secondaryProfession: ProfessionId | undefined;
   readonly team: number;
   readonly dead: boolean;
+  /** Its corpse was exploited (#466): drawn darker. Only ever true while `dead`. */
+  readonly corpseExploited: boolean;
   readonly castingSkillId: string | undefined;
   readonly castRemaining: number;
   /** The current cast's whole length, dazed included; 0 when not casting. */

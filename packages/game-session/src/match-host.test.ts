@@ -1,4 +1,9 @@
-import { StatusSet, type ActiveStatus } from "@vibewars/game-core";
+import {
+  MatchSimulation,
+  StatusSet,
+  type ActiveStatus,
+  type Participant,
+} from "@vibewars/game-core";
 import {
   MAX_LOBBY_PLAYERS,
   MAX_WIRE_STATUSES,
@@ -118,5 +123,34 @@ describe("the match summary's size (#1057)", () => {
     };
     expect(parseWireEnded(ended)).toEqual(ended);
     expect(messageBytes(ended)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
+  });
+});
+
+describe("corpses on the wire (#466)", () => {
+  it("sends whether a corpse was exploited", async () => {
+    const match = startMatch();
+    const { connection: remote } = await match.join();
+    await match.step(0.05);
+    expect(self(remote)?.corpseExploited).toBe(false);
+
+    const participants = Object.getOwnPropertyDescriptor(MatchSimulation.prototype, "participants")
+      ?.value as (this: MatchSimulation) => IterableIterator<Participant>;
+    vi.spyOn(MatchSimulation.prototype, "participants").mockImplementation(function* (
+      this: MatchSimulation,
+    ) {
+      for (const participant of participants.call(this)) {
+        yield participant.id === remote.selfSessionId
+          ? {
+              ...participant,
+              combatant: Object.create(participant.combatant, { dead: { value: true } }),
+              corpseExploited: true,
+            }
+          : participant;
+      }
+    });
+    await match.step(0.05);
+    vi.restoreAllMocks();
+
+    expect(self(remote)).toMatchObject({ dead: true, corpseExploited: true });
   });
 });

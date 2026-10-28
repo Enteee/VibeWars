@@ -37,6 +37,7 @@ function player(index: number): WirePlayer {
     primaryProfession: "warrior",
     secondaryProfession: null,
     dead: false,
+    corpseExploited: false,
     castingSkillId: null,
     castRemaining: 0,
     castTotal: 0,

@@ -34,6 +34,7 @@ function player(sessionId: string, extra: Partial<PlayerSnapshot> = {}): PlayerS
     secondaryProfession: undefined,
     team: 0,
     dead: false,
+    corpseExploited: false,
     castingSkillId: undefined,
     castRemaining: 0,
     castTotal: 0,
