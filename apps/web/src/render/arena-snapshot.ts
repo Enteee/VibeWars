@@ -187,8 +187,11 @@ export interface SwingFlash {
   readonly remainingSeconds: number;
 }
 
-/** Every body's radius, as drawn: the ruleset's collision radius. */
+/** A player's radius, as drawn: the ruleset's collision radius. */
 export const ACTOR_RADIUS = 14;
+
+/** A creature's (#1052), as drawn: the ruleset's `creatureRadius`. */
+export const CREATURE_RADIUS = 10;
 
 /**
  * Where a damage or heal number starts, from the body's centre: right of

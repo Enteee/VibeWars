@@ -66,6 +66,7 @@ function player(fields: Partial<PlayerSnapshot>): PlayerSnapshot {
     knockdownRemaining: 0,
     healthPips: 0,
     energyPips: 0,
+    creature: undefined,
     statuses: [],
     ...fields,
   };
@@ -231,6 +232,15 @@ describe("enemyPips (#881)", () => {
     ]);
   });
 
+  it("has no pip for a creature (#1052)", () => {
+    const minion = player({
+      sessionId: "f1/c1",
+      team: 1,
+      creature: { ownerId: "f1", kind: "minion" },
+    });
+    expect(enemyPips([...players, minion], 0)).toEqual(enemyPips(players, 0));
+  });
+
   it("has no pip for a seat nobody is in", () => {
     expect(enemyPips([player({ sessionId: "a", team: 0 })], 0)).toEqual([]);
   });
@@ -247,6 +257,14 @@ describe("scoreboardText (#881)", () => {
   it("counts the living per side, your own first, beside the clock", () => {
     expect(scoreboardText(players, 0, 42)).toBe("2 v 1 · 0:42");
     expect(scoreboardText(players, 1, 42)).toBe("1 v 2 · 0:42");
+  });
+
+  it("counts no creature, alive or not (#1052)", () => {
+    const minion = (sessionId: string, team: number) =>
+      player({ sessionId, team, creature: { ownerId: "a", kind: "minion" } });
+    expect(scoreboardText([...players, minion("a/c1", 0), minion("c/c1", 1)], 0, 42)).toBe(
+      "2 v 1 · 0:42",
+    );
   });
 
   it("reads team 1 first for a spectator", () => {
@@ -339,6 +357,7 @@ describe("targetHintDismissed", () => {
     knockdownRemaining: 0,
     healthPips: 0,
     energyPips: 0,
+    creature: undefined,
     statuses: [],
   });
 
@@ -424,6 +443,7 @@ describe("isAttackingTarget", () => {
     knockdownRemaining: 0,
     healthPips: 0,
     energyPips: 0,
+    creature: undefined,
     statuses: [],
   });
 
@@ -528,6 +548,7 @@ describe("targetProfessionIcons (#281)", () => {
     knockdownRemaining: 0,
     healthPips: 0,
     energyPips: 0,
+    creature: undefined,
     statuses: [],
   });
 

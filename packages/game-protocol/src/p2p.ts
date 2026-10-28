@@ -68,6 +68,18 @@ export const MAX_WIRE_TEXT = 256;
 export const MAX_WIRE_STATUSES = 32;
 
 /**
+ * The most creatures a snapshot carries (#1052): game-core's
+ * `MAX_CREATURES`, mirrored, with a test holding the two together.
+ */
+export const MAX_WIRE_CREATURES = 32;
+
+/** The most bodies a snapshot carries: every player and every creature. */
+export const MAX_WIRE_ACTORS = MAX_LOBBY_PLAYERS + MAX_WIRE_CREATURES;
+
+/** What kind of creature a body is (#1052). */
+export const CREATURE_KINDS = ["spirit", "minion"] as const;
+
+/**
  * The largest status index a snapshot may carry (#632): a bound of its
  * own, so this package needs no status catalogue.
  */
@@ -120,8 +132,12 @@ export const MAX_WIRE_COMBATS = 64;
 /** The most shots in flight one snapshot carries. */
 export const MAX_WIRE_PROJECTILES = 256;
 
-/** The most `"snapshot"` messages one tick's snapshot is split into (#662). */
-export const MAX_SNAPSHOT_PARTS = 8;
+/**
+ * The most `"snapshot"` messages one tick's snapshot is split into (#662):
+ * enough for 8 players at every status, every creature (#1052) and every
+ * shot in flight.
+ */
+export const MAX_SNAPSHOT_PARTS = 12;
 
 /**
  * The deepest nesting, and the most values in all, an opaque JSON field
@@ -259,6 +275,17 @@ export interface WirePlayer {
   readonly swingTotal: number;
   /** Its statuses, in the order applied, oldest first (#803). */
   readonly statuses: readonly WireStatus[];
+  /**
+   * A creature's owner and kind (#1052); `null` for a player or a dummy.
+   * A creature's `name` is its kind's, and its professions are `null`.
+   */
+  readonly creature: WireCreature | null;
+}
+
+/** What makes a body a creature (#1052). */
+export interface WireCreature {
+  readonly ownerId: string;
+  readonly kind: (typeof CREATURE_KINDS)[number];
 }
 
 /** One status on a player (#803): what the effects monitor draws. */
@@ -1000,7 +1027,8 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
     return undefined;
   }
   const statuses = parseArray(raw.statuses, MAX_WIRE_STATUSES, parseStatus);
-  return statuses === undefined
+  const creature = raw.creature === null ? null : parseCreature(raw.creature);
+  return statuses === undefined || creature === undefined
     ? undefined
     : {
         id: raw.id,
@@ -1033,7 +1061,15 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
         healthPips: raw.healthPips,
         energyPips: raw.energyPips,
         statuses,
+        creature,
       };
+}
+
+function parseCreature(value: unknown): WireCreature | undefined {
+  const raw = fields(value);
+  return raw !== undefined && isString(raw.ownerId) && isOneOf(raw.kind, CREATURE_KINDS)
+    ? { ownerId: raw.ownerId, kind: raw.kind }
+    : undefined;
 }
 
 function parseProjectile(value: unknown): WireProjectile | undefined {
@@ -1090,7 +1126,7 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
   ) {
     return undefined;
   }
-  const players = parseArray(raw.players, MAX_LOBBY_PLAYERS, parsePlayer);
+  const players = parseArray(raw.players, MAX_WIRE_ACTORS, parsePlayer);
   const projectiles = parseArray(raw.projectiles, MAX_WIRE_PROJECTILES, parseProjectile);
   const [team0 = 0, team1 = 0] = score;
   return players === undefined || projectiles === undefined

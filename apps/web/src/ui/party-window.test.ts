@@ -39,6 +39,7 @@ function player(sessionId: string, overrides: Partial<PlayerSnapshot> = {}): Pla
     knockdownRemaining: 0,
     healthPips: 0,
     energyPips: 0,
+    creature: undefined,
     statuses: [],
     ...overrides,
   };
@@ -97,6 +98,12 @@ describe("partyRows (#1055)", () => {
   it("is empty when you are alone on your team, or spectating", () => {
     expect(partyRows(match([ME, FOE]))).toEqual([]);
     expect(partyRows(match([ME, KAJA], "spectator"))).toEqual([]);
+  });
+
+  it("never lists a creature, even your own", () => {
+    const minion = player("minion", { creature: { ownerId: "me", kind: "minion" } });
+    expect(partyRows(match([ME, minion]))).toEqual([]);
+    expect(partyRows(match([ME, minion, KAJA])).map((row) => row.id)).toEqual(["me", "kaja"]);
   });
 });
 

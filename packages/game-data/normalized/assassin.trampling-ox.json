@@ -1,0 +1,26 @@
+{
+  "id": "assassin.trampling-ox",
+  "name": "Trampling Ox",
+  "profession": "assassin",
+  "attribute": "Dagger Mastery",
+  "type": "Dual attack.",
+  "elite": false,
+  "campaign": "Eye Of The North",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 0,
+  "rechargeSeconds": 8,
+  "upkeep": false,
+  "description": "Must follow an off-hand attack. If it hits, you deal +5...17...20 damage. If you hit a Crippled foe, that foe is knocked down.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Assassin/1199-Trampling_Ox",
+    "fetchedAt": "2026-10-27T22:30:30.150Z"
+  },
+  "unmapped": {}
+}

@@ -13,7 +13,7 @@ import { pipsElement, renderPips } from "./pips.js";
 /**
  * The party window (#1055, docs/art/art-direction.md "Party window"): your
  * team's health at a glance, right middle, you first. A click on a row
- * targets that member. No energy, as GW1.
+ * targets that member. No energy, as GW1. Creatures (#1052) are not listed.
  */
 
 /** Past this many rows, they go compact: name and bar on one line. */
@@ -56,7 +56,10 @@ export function partyRows(snapshot: MatchSnapshot): readonly PartyRow[] {
     return [];
   }
   const others = snapshot.players.filter(
-    (player) => player.team === self.team && player.sessionId !== self.sessionId,
+    (player) =>
+      player.team === self.team &&
+      player.sessionId !== self.sessionId &&
+      player.creature === undefined,
   );
   if (others.length === 0) {
     return [];

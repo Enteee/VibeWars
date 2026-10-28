@@ -26,6 +26,7 @@ import { music } from "./music/play-music.js";
 import { TRACKS } from "./music/tracks/index.js";
 import {
   ACTOR_RADIUS,
+  CREATURE_RADIUS,
   withCalls,
   withNames,
   teamColour,
@@ -146,7 +147,7 @@ export function toArenaSnapshot(
         attackCast: attackCastOf(player.castingSkillId, player.castRemaining, player.castTotal),
         offhandId: player.offhandId,
         profession: player.primaryProfession,
-        radius: ACTOR_RADIUS,
+        radius: player.creature === undefined ? ACTOR_RADIUS : CREATURE_RADIUS,
         team:
           player.sessionId === match.selfSessionId
             ? ("self" as const)
