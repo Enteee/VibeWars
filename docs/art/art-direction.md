@@ -501,6 +501,11 @@ it is drawn in code. `node scripts/assets/player-mark.mjs` draws the
 reference sheet [`player-mark.svg`](player-mark.svg) at true size and at 4×,
 off-hands included.
 
+The main menu's roster and team list show each character with the same
+drawing (#1250, `render/body-painter.ts`): your standing body at rest,
+facing right, holding what it enters a match with. A build the host would
+refuse plays a random starter, so it is shown empty-handed.
+
 ![Player mark reference sheet](player-mark.svg)
 
 Outward from the centre:

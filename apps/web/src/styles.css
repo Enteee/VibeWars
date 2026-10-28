@@ -3428,6 +3428,12 @@ body.has-expanded-training #screens {
 
 /* A random starter build is not a character, so it reads as a placeholder
    rather than pretending to be one. */
+/* The character as the arena draws it (#1250): sized by its canvas. */
+.character-figure {
+  display: block;
+  flex: 0 0 auto;
+}
+
 .character-dot.is-house {
   width: 28px;
   height: 28px;

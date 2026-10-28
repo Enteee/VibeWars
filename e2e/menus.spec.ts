@@ -159,6 +159,22 @@ test("#853: the first start rolls a starter character, chosen; Reroll replaces i
   await expect(original).toHaveClass(/is-selected/);
 });
 
+test("#1250: a roster row shows the character as the arena draws it, its body in your colour", async ({
+  page,
+}) => {
+  await openMenu(page);
+  const figure = page.locator(".roster .selectable-row canvas.character-figure");
+  await expect(figure).toHaveCount(1);
+  // The body's centre is painted the arena's self blue (teamColour("self")).
+  const centre = await figure.evaluate((canvas: HTMLCanvasElement) => {
+    const pixel = canvas
+      .getContext("2d")
+      ?.getImageData(canvas.width / 2, canvas.height / 2, 1, 1).data;
+    return pixel === undefined ? [] : [...pixel];
+  });
+  expect(centre).toEqual([0x59, 0xc2, 0xff, 255]);
+});
+
 test("#579: the roster's rows are buttons: Enter or Space chooses, Edit sits beside", async ({
   page,
 }) => {

@@ -5,12 +5,8 @@ import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 import type { StoredCharacter, StoredTeam } from "../storage/schema.js";
 import { validateBuild } from "../storage/build-validation.js";
 import { looksLikeTeam } from "../storage/team-transfer.js";
-import {
-  createCharacterDot,
-  equippedCount,
-  miniSkillBar,
-  professionLabel,
-} from "./character-preview.js";
+import { createCharacterFigure } from "./character-figure.js";
+import { equippedCount, miniSkillBar, professionLabel } from "./character-preview.js";
 import { button, emptyState, h, listenForPaste, screenBar, selectableRow } from "./kit.js";
 
 /** What every peer in a lobby learns about you (#541): WebRTC connects you directly. */
@@ -229,7 +225,7 @@ export function renderMenu(
           ];
     list.appendChild(
       selectableRow({
-        dot: createCharacterDot(character),
+        dot: createCharacterFigure(character),
         name: character.name,
         subtitle: rosterSubtitle(character),
         miniBar: miniSkillBar(character),
@@ -396,12 +392,12 @@ export function renderTeamList(
 
   const list = h("div", "entity-list");
   for (const team of teams) {
-    // A member whose character is gone has no dot; the editor shows it.
+    // A member whose character is gone has no figure; the editor shows it.
     const dots = h("span", "team-list-dots");
     for (const member of team.members) {
       const character = characters.find((c) => c.id === member.characterId);
       if (character !== undefined) {
-        dots.appendChild(createCharacterDot(character));
+        dots.appendChild(createCharacterFigure(character));
       }
     }
     list.appendChild(
