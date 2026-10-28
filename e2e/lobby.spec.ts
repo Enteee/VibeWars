@@ -162,7 +162,9 @@ test("the host closing its page takes the guest to the menu, and says why", asyn
     await joinLobby(guest, "Guest", code);
     await expect(host.locator(".screen-lobby")).toContainText("Guest");
 
-    await host.close();
+    // A navigation fires pagehide, as a closed tab does; page.close() does
+    // not run unload handlers (#1085).
+    await host.goto("about:blank");
 
     await expect(guest.locator(".screen-connection-problem")).toHaveText(
       "The host closed the lobby.",
