@@ -126,6 +126,7 @@ function benchMatch(field: BenchField, crowd: BenchCrowd, seed: string): MatchSi
             ownerId: follower.ownerId,
             kind: "minion",
             name: "Bone Minion",
+            look: "bone-minion",
             expiresInSeconds: Number.POSITIVE_INFINITY,
             ageSeconds: 0,
             summonedAtTick: 0,
