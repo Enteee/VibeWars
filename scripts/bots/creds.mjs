@@ -6,6 +6,7 @@
  *     <root>/gh/                     a GH_CONFIG_DIR of the company's own
  *     <root>/ssh/id_ed25519(.pub)    the company's push key
  *     <root>/telegram-manager-token
+ *     <root>/telegram-chat-id        the company's group
  *
  * Everything here only reads, and nothing prints a credential: the identity
  * functions parse the few fields they need (an address, a login, an expiry,
@@ -15,6 +16,8 @@
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+
+import { visible } from "./protocol.mjs";
 
 /**
  * Where each credential lives under a credential home.
@@ -33,6 +36,7 @@ export function paths(root) {
     sshKey: path.join(root, "ssh", "id_ed25519"),
     sshPub: path.join(root, "ssh", "id_ed25519.pub"),
     telegram: path.join(root, "telegram-manager-token"),
+    telegramChat: path.join(root, "telegram-chat-id"),
   };
 }
 
@@ -292,6 +296,141 @@ export async function telegramBot(token, get = (url) => fetch(url)) {
 }
 
 /**
+ * @param {string} token
+ * @param {string} method
+ * @param {Record<string, string>} params
+ * @param {Get} get
+ * @returns {Promise<unknown>} the result, or null when telegram refused or
+ *   could not be reached; the url holds the token, so nothing of a failure
+ *   is kept
+ */
+async function telegramResult(token, method, params, get) {
+  try {
+    const query = new URLSearchParams(params).toString();
+    const reply = await get(`https://api.telegram.org/bot${token}/${method}?${query}`);
+    const body = parseObject(JSON.stringify(await reply.json()));
+    return reply.ok && body?.ok === true ? (body.result ?? null) : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * @param {string} token
+ * @param {string} method
+ * @param {Record<string, string>} params
+ * @param {Get} get
+ * @returns {Promise<Record<string, unknown> | null>}
+ */
+async function telegramCall(token, method, params, get) {
+  return parseObject(JSON.stringify(await telegramResult(token, method, params, get)));
+}
+
+/**
+ * The ids of the groups the bot has been told about since `offset`, and the
+ * offset to ask from next. Asking confirms those updates: telegram never
+ * hands them back.
+ *
+ * @param {string} token
+ * @param {number} offset
+ * @param {Get} [get]
+ * @returns {Promise<{ chats: string[], offset: number }>}
+ */
+export async function telegramUpdates(token, offset, get = (url) => fetch(url)) {
+  const result = await telegramResult(token, "getUpdates", { offset: String(offset) }, get);
+  /** @type {string[]} */
+  const chats = [];
+  let next = offset;
+  for (const raw of Array.isArray(result) ? /** @type {unknown[]} */ (result) : []) {
+    const update = parseObject(JSON.stringify(raw)) ?? {};
+    if (typeof update.update_id === "number") {
+      next = update.update_id + 1;
+    }
+    // Being added fires my_chat_member; a message does as well if it was
+    // added before this started.
+    for (const key of ["my_chat_member", "message", "chat_member"]) {
+      const chat = parseObject(JSON.stringify(parseObject(JSON.stringify(update[key]))?.chat));
+      if (typeof chat?.id === "number" && chat.type !== "private") {
+        chats.push(String(chat.id));
+      }
+    }
+  }
+  return { chats, offset: next };
+}
+
+/**
+ * The chat id a file holds, or null when it is absent or not an integer.
+ *
+ * @param {string} file
+ * @returns {string | null}
+ */
+export function readChatId(file) {
+  if (!fs.existsSync(file)) {
+    return null;
+  }
+  const id = fs.readFileSync(file, "utf8").trim();
+  return /^-?\d+$/.test(id) ? id : null;
+}
+
+/**
+ * Whether the bot can run the company in this chat: a supergroup with topics
+ * on, where the bot is an admin who can manage them.
+ *
+ * @param {string} token
+ * @param {string} chatId
+ * @param {Get} [get]
+ * @returns {Promise<{ ok: boolean, title: string, checks: { good: boolean, text: string }[] }>}
+ */
+export async function checkChat(token, chatId, get = (url) => fetch(url)) {
+  const me = await telegramCall(token, "getMe", {}, get);
+  const chat = await telegramCall(token, "getChat", { chat_id: chatId }, get);
+  const member =
+    me === null || typeof me.id !== "number"
+      ? null
+      : await telegramCall(
+          token,
+          "getChatMember",
+          { chat_id: chatId, user_id: String(me.id) },
+          get,
+        );
+  // Whoever owns a group sets its title, and anyone can add a bot to one.
+  const title = visible(text(chat?.title) ?? chatId);
+  const checks = [
+    { good: chat !== null && chat.type === "supergroup", text: "a supergroup the bot can see" },
+    { good: chat?.is_forum === true, text: "Topics enabled" },
+    { good: member?.status === "administrator", text: "bot is an administrator" },
+    { good: member?.can_manage_topics === true, text: "bot can Manage Topics" },
+  ];
+  return { ok: checks.every((c) => c.good), title, checks };
+}
+
+/**
+ * The company's group, by the file and a check of it.
+ *
+ * @param {string} tokenFile
+ * @param {string} chatFile
+ * @param {Get} [get]
+ * @returns {Promise<Identity>}
+ */
+export async function telegramGroupIdentity(tokenFile, chatFile, get = (url) => fetch(url)) {
+  if (!fs.existsSync(chatFile)) {
+    return NOT_SET_UP;
+  }
+  const chatId = readChatId(chatFile);
+  if (chatId === null) {
+    return failed("telegram-chat-id is not a chat id");
+  }
+  if (!fs.existsSync(tokenFile)) {
+    return failed("no token to check the group with");
+  }
+  const checked = await checkChat(fs.readFileSync(tokenFile, "utf8").trim(), chatId, get);
+  const bad = checked.checks.find((c) => !c.good);
+  return bad === undefined
+    ? { state: "ok", who: `${checked.title} (${chatId})`, expiry: null, scopes: null }
+    : failed(`group ${chatId}: not ${bad.text}`);
+}
+
+/**
  * Step 0 of `claude-llc-init` (#864): the credential directory itself, at
  * 0700, and whether the Telegram token is there. It refuses a directory that
  * is wider than that, and never widens or narrows one: the operator decides.
@@ -319,7 +458,11 @@ export function ensureHome(root) {
   }
   lines.push({
     step: "telegram token",
-    outcome: fs.existsSync(p.telegram) ? "present" : "missing (run claude-bot-setup)",
+    outcome: fs.existsSync(p.telegram) ? "present" : "missing (run claude-llc auth telegram)",
+  });
+  lines.push({
+    step: "telegram group",
+    outcome: fs.existsSync(p.telegramChat) ? "present" : "missing (run claude-llc auth telegram)",
   });
   return { ok: true, lines };
 }

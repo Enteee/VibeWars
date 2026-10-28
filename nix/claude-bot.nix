@@ -420,7 +420,7 @@ let
         # keys on .nix files only — so editing scripts/bots/*.mjs silently keeps
         # running the previous copy until the cache is cleared. That is a
         # genuinely confusing hour to lose, so say it out loud.
-        for f in protocol.mjs tg.mjs link.mjs setup.mjs; do
+        for f in protocol.mjs tg.mjs link.mjs; do
           if [ -e "$DEVENV_ROOT/scripts/bots/$f" ] &&
              ! ${pkgs.diffutils}/bin/cmp -s "$DEVENV_ROOT/scripts/bots/$f" "${botScripts}/$f"; then
             echo "claude-bot: warning: scripts/bots/$f differs from the staged copy being run." >&2
@@ -471,8 +471,9 @@ let
       peek [employee]            manager only: what a colleague's pane shows
 
     first-time setup:
-      claude-bot-setup <token-file>
-          Verifies the manager bot, waits for the group, writes devenv.local.nix.
+      claude-llc auth telegram
+          Verifies the manager bot, waits for the group, keeps both in the
+          credential home.
 
     state (all gitignored, 0600):
       .bots/registry.json        the Bots, Manager and Operator topics, and the
@@ -578,21 +579,19 @@ let
           echo "claude-bot: warning: prefer managerTokenFile = \"/path/to/secret\";" >&2
           TELEGRAM_MANAGER_TOKEN="$tokenLiteral"
         else
-          echo "claude-bot: no Telegram manager token configured." >&2
-          echo "claude-bot: add to devenv.local.nix:" >&2
-          echo "" >&2
-          echo "  { vibewars.telegram = {" >&2
-          echo "      managerTokenFile = \"/path/to/secret\";" >&2
-          echo "      chatId           = \"-1001234567890\";" >&2
-          echo "    }; }" >&2
+          echo "claude-bot: no Telegram manager token configured: run claude-llc auth telegram" >&2
           exit 1
         fi
         export TELEGRAM_MANAGER_TOKEN
 
-        if [ -z "${cfg.chatId}" ]; then
-          echo "claude-bot: vibewars.telegram.chatId must be set in devenv.local.nix" >&2
+        # The group, kept by `claude-llc auth telegram` and read now, not baked
+        # in at eval time, so a fixed one takes effect on the next turn.
+        chatFile="${config.vibewars.claudeBot.credentials}/telegram-chat-id"
+        if [ ! -r "$chatFile" ]; then
+          echo "claude-bot: no Telegram group configured: run claude-llc auth telegram" >&2
           exit 1
         fi
+        TELEGRAM_CHAT_ID="$(tr -d '[:space:]' < "$chatFile")"
 
         # The role's model, from its briefing's frontmatter, or the default
         # (#322). One that is not a model id stops the start, loudly.
@@ -654,7 +653,7 @@ let
         export VIBEWARS_BOT_EMPLOYEE="$employee"
         export VIBEWARS_BOT_ROLE="$role"
         export VIBEWARS_BOT_BUS="$DEVENV_ROOT/.bots/bus"
-        export TELEGRAM_CHAT_ID="${cfg.chatId}"
+        export TELEGRAM_CHAT_ID
 
         mkdir -p "$VIBEWARS_BOT_ROOT" "$VIBEWARS_BOT_BUS" "$VIBEWARS_BOT_ROOT/link" "$VIBEWARS_BOT_ROOT/wt"
         mkdir -p "$VIBEWARS_BOT_ROOT/hub/$employee/req" "$VIBEWARS_BOT_ROOT/hub/$employee/res"
@@ -1103,7 +1102,7 @@ in
         Path to a file containing the manager bot's token, read at runtime.
         Preferred over `managerToken`: the value never reaches the Nix store.
         Defaults to telegram-manager-token in the credential home, where
-        claude-bot-setup keeps it.
+        `claude-llc auth telegram` keeps it.
       '';
     };
 
@@ -1115,18 +1114,6 @@ in
         into a world-readable /nix/store path; `managerTokenFile` is safer.
       '';
     };
-
-    chatId = lib.mkOption {
-      type = lib.types.str;
-      default = "";
-      example = "-1001234567890";
-      description = ''
-        Numeric id of the forum supergroup the company lives in. Topics must
-        be enabled on it, and the bot must be an admin there with
-        `can_manage_topics`.
-      '';
-    };
-
   };
 
   config = lib.mkIf config.vibewars.claudeBot.enable {
@@ -1144,17 +1131,6 @@ in
     scripts.claude-bot = {
       description = "Run a sandboxed Claude agent in a given role, on Telegram";
       exec = claudeBot;
-    };
-
-    # Deliberately not driven by the options below: it exists to discover the
-    # values those options need, so it takes the token file as an argument and
-    # reads no config at all.
-    scripts.claude-bot-setup = {
-      description = "One-time Telegram setup: verify the manager bot, find the group, write devenv.local.nix";
-      exec = ''
-        export VIBEWARS_CREDENTIALS="${config.vibewars.claudeBot.credentials}"
-        exec ${node} ${botScripts}/setup.mjs "$@"
-      '';
     };
   };
 }

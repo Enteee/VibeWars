@@ -13,6 +13,26 @@ import { paths } from "./creds.mjs";
 
 const TOKEN = "123456:sentinel-token-that-must-never-be-printed";
 
+const CHAT = "-1001234567890";
+
+/** What telegram answers, for a world whose group is fit (or not). */
+function telegramAnswer(
+  /** @type {string} */ url,
+  /** @type {{ forum: boolean, topics: boolean, chats: string[], title?: string }} */ group,
+) {
+  const method = /\/([A-Za-z]+)\?/.exec(url)?.[1] ?? /\/([A-Za-z]+)$/.exec(url)?.[1];
+  const result = {
+    getMe: { id: 7, username: "vw_bot" },
+    getUpdates: group.chats.map((id, n) => ({
+      update_id: n + 1,
+      my_chat_member: { chat: { id: Number(id), type: "supergroup" } },
+    })),
+    getChat: { type: "supergroup", title: group.title ?? "VW", is_forum: group.forum },
+    getChatMember: { status: "administrator", can_manage_topics: group.topics },
+  }[method ?? ""];
+  return { ok: true, json: () => Promise.resolve({ ok: true, result }) };
+}
+
 /** @type {Identity} */
 const NONE = { state: "not set up", who: null, expiry: null, scopes: null };
 
@@ -23,18 +43,26 @@ const NONE = { state: "not set up", who: null, expiry: null, scopes: null };
 const ok = (who) => ({ state: "ok", who, expiry: null, scopes: null });
 
 /**
- * @param {Partial<Record<"claude" | "github api" | "github push" | "telegram", Identity>>} states
+ * @param {Partial<Record<"claude" | "github api" | "github push" | "telegram" | "telegram group", Identity>>} states
  * @param {Partial<Record<string, boolean | null>>} [operators]
  * @returns {Row[]}
  */
 function rows(states, operators = {}) {
-  return ["claude", "github api", "github push", "telegram"].map((name) => ({
+  return ["claude", "github api", "github push", "telegram", "telegram group"].map((name) => ({
     name,
     identity: /** @type {Record<string, Identity>} */ (states)[name] ?? NONE,
     stored: `/c/${name}`,
     operators: operators[name] ?? null,
   }));
 }
+
+const TG_OK = rows({
+  claude: ok("c"),
+  "github api": ok("g"),
+  "github push": ok("g"),
+  telegram: ok("@vw"),
+  "telegram group": ok("VW"),
+});
 
 /** @type {string[]} */
 const homes = [];
@@ -56,8 +84,19 @@ afterEach(() => {
  * @param {string | null} [options.answer]
  * @param {boolean} [options.getMeOk]
  * @param {boolean} [options.tty]
+ * @param {{ forum: boolean, topics: boolean, chats: string[], title?: string }} [options.group] what telegram says of the chats the bot sees
+ * @param {string[]} [options.answers] prompt answers after the token
  */
-function world({ tables, checks = {}, act, answer = TOKEN, getMeOk = true, tty = true }) {
+function world({
+  tables,
+  checks = {},
+  act,
+  answer = TOKEN,
+  getMeOk = true,
+  tty = true,
+  group = { forum: true, topics: true, chats: [CHAT] },
+  answers = ["", "y"],
+}) {
   const root = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "auth-")), "creds");
   homes.push(path.dirname(root));
   /** @type {{ command: string, args: string[], env: Record<string, string> }[]} */
@@ -85,7 +124,7 @@ function world({ tables, checks = {}, act, answer = TOKEN, getMeOk = true, tty =
     },
     prompt: (question) => {
       printed.push(question);
-      return Promise.resolve(answer);
+      return Promise.resolve(question.startsWith("Manager") ? answer : (answers.shift() ?? ""));
     },
     collect: () =>
       Promise.resolve({ rows: tables.length > 1 ? (tables.shift() ?? []) : (tables[0] ?? []) }),
@@ -97,11 +136,10 @@ function world({ tables, checks = {}, act, answer = TOKEN, getMeOk = true, tty =
     },
     get: (url) => {
       urls.push(url);
-      return Promise.resolve({
-        ok: getMeOk,
-        json: () =>
-          Promise.resolve(getMeOk ? { ok: true, result: { username: "vw_bot" } } : { ok: false }),
-      });
+      if (!getMeOk) {
+        return Promise.resolve({ ok: false, json: () => Promise.resolve({ ok: false }) });
+      }
+      return Promise.resolve(telegramAnswer(url, group));
     },
     sleep: () => {
       sleeps += 1;
@@ -139,6 +177,7 @@ describe("plan", () => {
         claude: ok("co@x.org"),
         "github api": { ...NONE, state: "error", note: "x" },
         telegram: ok("@vw"),
+        "telegram group": ok("VW"),
       }),
       null,
     );
@@ -148,6 +187,11 @@ describe("plan", () => {
       ["push", true],
       ["telegram", false],
     ]);
+  });
+
+  it("runs the telegram step while the bot is ok but its group is not", () => {
+    const steps = plan(rows({ telegram: ok("@vw") }), "telegram");
+    expect(steps.map((s) => [s.step, s.run])).toEqual([["telegram", true]]);
   });
 
   it("runs nothing for an ok row that is the operator's, or might be", () => {
@@ -207,6 +251,7 @@ describe("auth", () => {
         "github api": ok("co"),
         "github push": ok("co"),
         telegram: ok("@vw"),
+        "telegram group": ok("VW"),
       },
       { claude: true },
     );
@@ -222,6 +267,7 @@ describe("auth", () => {
       "github api": ok("co"),
       "github push": ok("co"),
       telegram: ok("@vw_bot"),
+      "telegram group": ok("VW"),
     });
     const w = world({
       tables: [rows({}), signedIn],
@@ -249,7 +295,9 @@ describe("auth", () => {
 
     expect(fs.readFileSync(p.telegram, "utf8").trim()).toBe(TOKEN);
     expect(fs.statSync(p.telegram).mode & 0o777).toBe(0o600);
-    expect(w.urls).toEqual([`https://api.telegram.org/bot${TOKEN}/getMe`]);
+    expect(w.urls[0]).toBe(`https://api.telegram.org/bot${TOKEN}/getMe`);
+    expect(fs.readFileSync(p.telegramChat, "utf8").trim()).toBe(CHAT);
+    expect(fs.statSync(p.telegramChat).mode & 0o777).toBe(0o600);
 
     const screen = w.printed.join("\n");
     expect(screen).not.toContain(TOKEN);
@@ -263,6 +311,92 @@ describe("auth", () => {
     expect(await auth(["telegram"], w.deps)).toBe(1);
     expect(fs.existsSync(paths(w.root).telegram)).toBe(false);
     expect(w.printed.join("\n")).not.toContain(TOKEN);
+  });
+
+  it("keeps a group that still checks out and does not poll", async () => {
+    const w = world({ tables: [rows({}), TG_OK] });
+    fs.mkdirSync(w.root, { recursive: true, mode: 0o700 });
+    fs.writeFileSync(paths(w.root).telegramChat, `${CHAT}\n`);
+    expect(await auth(["telegram"], w.deps)).toBe(0);
+    expect(w.urls.some((u) => u.includes("getUpdates"))).toBe(false);
+    expect(w.printed.join("\n")).toContain("already set up");
+  });
+
+  it("looks again when the kept group is no longer fit", async () => {
+    const w = world({
+      tables: [rows({})],
+      group: { forum: false, topics: true, chats: [] },
+    });
+    fs.mkdirSync(w.root, { recursive: true, mode: 0o700 });
+    fs.writeFileSync(paths(w.root).telegramChat, CHAT);
+    expect(await auth(["telegram"], w.deps)).toBe(1);
+    expect(w.urls.some((u) => u.includes("getUpdates"))).toBe(true);
+  });
+
+  it("treats a malformed chat id file as missing", async () => {
+    const w = world({ tables: [rows({}), TG_OK] });
+    fs.mkdirSync(w.root, { recursive: true, mode: 0o700 });
+    fs.writeFileSync(paths(w.root).telegramChat, "not-a-number");
+    expect(await auth(["telegram"], w.deps)).toBe(0);
+    expect(fs.readFileSync(paths(w.root).telegramChat, "utf8").trim()).toBe(CHAT);
+  });
+
+  it("writes no group that is not a forum", async () => {
+    const w = world({
+      tables: [rows({})],
+      group: { forum: false, topics: true, chats: [CHAT] },
+    });
+    expect(await auth(["telegram"], w.deps)).toBe(1);
+    expect(fs.existsSync(paths(w.root).telegramChat)).toBe(false);
+    expect(w.printed).toContain("  ✗ Topics enabled");
+  });
+
+  it("writes no group where the bot cannot manage topics", async () => {
+    const w = world({
+      tables: [rows({})],
+      group: { forum: true, topics: false, chats: [CHAT] },
+    });
+    expect(await auth(["telegram"], w.deps)).toBe(1);
+    expect(fs.existsSync(paths(w.root).telegramChat)).toBe(false);
+    expect(w.printed).toContain("  ✗ bot can Manage Topics");
+  });
+
+  it("takes a pasted chat id", async () => {
+    const w = world({
+      tables: [rows({}), TG_OK],
+      group: { forum: true, topics: true, chats: [] },
+      answers: ["-1009", "y"],
+    });
+    expect(await auth(["telegram"], w.deps)).toBe(0);
+    expect(fs.readFileSync(paths(w.root).telegramChat, "utf8").trim()).toBe("-1009");
+  });
+
+  it("writes nothing when the operator declines the only candidate", async () => {
+    const w = world({ tables: [rows({})], answers: ["", "n"] });
+    expect(await auth(["telegram"], w.deps)).toBe(1);
+    expect(fs.existsSync(paths(w.root).telegramChat)).toBe(false);
+  });
+
+  it("prints a group title with its control characters made visible", async () => {
+    const w = world({
+      tables: [rows({}), TG_OK],
+      group: { forum: true, topics: true, chats: [CHAT], title: "x\u001b]0;pwned\u0007y" },
+    });
+    expect(await auth(["telegram"], w.deps)).toBe(0);
+    const screen = w.printed.join("\n");
+    expect(screen).not.toContain("\u001b");
+    expect(screen).toContain("␛");
+  });
+
+  it("lists several groups and takes the one picked", async () => {
+    const w = world({
+      tables: [rows({}), TG_OK],
+      group: { forum: true, topics: true, chats: ["-1001", "-1002"] },
+      answers: ["", "2"],
+    });
+    expect(await auth(["telegram"], w.deps)).toBe(0);
+    expect(w.printed).toContain('  1. "VW" (-1001)');
+    expect(fs.readFileSync(paths(w.root).telegramChat, "utf8").trim()).toBe("-1002");
   });
 
   it("stops at once on Ctrl-C at the token prompt", async () => {
