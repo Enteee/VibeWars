@@ -334,6 +334,20 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
       `damage from a single hit is capped at ${String(Math.round(definition.maxDamageFractionPerHit * 100))}% of max health`,
     );
   }
+  if (definition.attackDamageCapFraction !== undefined) {
+    parts.push(
+      `damage from a single attack is capped at ${String(Math.round(definition.attackDamageCapFraction * 100))}% of max health`,
+    );
+  }
+  if (definition.lifeStealReduction > 0) {
+    parts.push(`−${String(definition.lifeStealReduction)} life stolen`);
+  }
+  if (definition.knockdownMinSeconds !== undefined) {
+    parts.push(`knockdowns last at least ${String(definition.knockdownMinSeconds)}s`);
+  }
+  if (definition.sourceLosesHealth !== undefined) {
+    parts.push(`its spirit loses ${String(definition.sourceLosesHealth)} health each time`);
+  }
   if (definition.reversesNextDamage !== undefined) {
     parts.push(
       `the next damage or life steal heals for that much instead, up to ${String(definition.reversesNextDamage)}`,

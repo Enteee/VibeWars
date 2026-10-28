@@ -839,6 +839,8 @@ interface Region {
 }
 
 export interface BuildEditorView {
+  /** Leave for `then`, as Close does: unsaved edits ask first (#1268). */
+  leave(then: () => void): void;
   /** Tear down the tooltip and the Training Ground; call when leaving the editor. */
   dispose(): void;
 }
@@ -1073,6 +1075,9 @@ export function mountBuildEditor(
   });
 
   return {
+    leave: (then) => {
+      bar.leave(then);
+    },
     dispose() {
       disposed = true;
       dropUndo();
@@ -1090,6 +1095,8 @@ export function mountBuildEditor(
 interface CommandBar extends Region {
   /** Whether a confirmation, the ⋯ menu or the problems list is open. */
   isOpen(): boolean;
+  /** Leave for `then`; unsaved edits ask first. */
+  leave(then: () => void): void;
   dispose(): void;
 }
 
@@ -1118,12 +1125,15 @@ function mountCommandBar(
     asking = inlineConfirm(anchor, question, confirmLabel, onConfirm, cancelLabel);
   };
 
-  const close = (): void => {
+  const leave = (then: () => void): void => {
     if (!isUnsaved(opened, context.current())) {
-      callbacks.onClose();
+      then();
       return;
     }
-    ask(back, "Discard changes?", "Discard", callbacks.onClose, "Keep editing");
+    ask(back, "Discard changes?", "Discard", then, "Keep editing");
+  };
+  const close = (): void => {
+    leave(callbacks.onClose);
   };
 
   const nameInput = document.createElement("input");
@@ -1297,6 +1307,7 @@ function mountCommandBar(
     isOpen() {
       return asking?.isOpen() === true || !menu.hidden || share.isOpen() || chip.isOpen();
     },
+    leave,
     dispose() {
       document.removeEventListener("pointerdown", onPointerDown);
     },

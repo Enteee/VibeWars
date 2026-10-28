@@ -29,6 +29,14 @@ import {
   parseTurnFragment,
   type TurnFragment,
 } from "./net/transport/turn-config.js";
+import {
+  CHECK_EVERY_MS,
+  DEV_BUILD,
+  createBuildWatch,
+  fetchServedBuild,
+  isStaleChunkError,
+  type BuildWatch,
+} from "./build-check.js";
 import { startMatchView, type MatchView } from "./match-view.js";
 import { beatEdits } from "./music/beat-edits.js";
 import { musicPlayer } from "./music/music-player.js";
@@ -47,6 +55,7 @@ import type { StoredCharacter } from "./storage/schema.js";
 import { rerollStarterCharacter, rollStarterCharacter } from "./storage/starter-character.js";
 import { importTeam, importedTeamSummary, type TeamImportResult } from "./storage/team-transfer.js";
 import { closeBeatEditor } from "./ui/beat-editor.js";
+import { mountBuildBanner } from "./ui/build-banner.js";
 import { mountBuildEditor, newCharacter, type BuildEditorView } from "./ui/build-editor.js";
 import { closeHelpOverlay, openHelpOverlay } from "./ui/help-screen.js";
 import { disposeJukeboxScreen, renderJukeboxScreen } from "./ui/jukebox.js";
@@ -87,6 +96,7 @@ import {
   type TeamEditorView,
 } from "./ui/team-editor.js";
 import { toPlayerBuild } from "./storage/build-validation.js";
+import { STORAGE_NAMESPACE } from "./storage/namespace.js";
 import { teamSizeOf, type QueueMode } from "@vibewars/game-protocol";
 import {
   MINIMAL_GW_INSPIRED_PVP_V1,
@@ -155,6 +165,9 @@ function takeRelayLink(): TurnFragment {
   }
   return fragment;
 }
+
+/** The served build id this tab last reloaded for (#1268): once per id, never a loop. */
+const RELOADED_FOR_KEY = `${STORAGE_NAMESPACE}.reloaded-for`;
 
 /** What a player takes into a lobby, read once when they enter it (#1070). */
 interface Entrant {
@@ -343,12 +356,19 @@ async function main(): Promise<void> {
   };
 
   /**
+   * On the menu or the queue's ended view (#1268), the screens a newer
+   * build may reload away. Every screen change clears it first.
+   */
+  let idleScreen = false;
+
+  /**
    * The first thing every screen change does (#710): a toast belongs to
    * the screen that raised it, so it goes when that screen does. One the
    * next screen raises while it mounts stays. A screen added later calls
    * this first too, before anything mounts.
    */
   const leaveScreen = (): void => {
+    idleScreen = false;
     dismissToast();
     closeBeatEditor();
   };
@@ -457,6 +477,7 @@ async function main(): Promise<void> {
     disposeJukeboxScreen();
     showViewport(false);
     music().screen("menu");
+    idleScreen = true;
     void (async () => {
       const { characters: list, problems } = await characters.list();
       renderMenuWith(list, [...problems, ...editNotices]);
@@ -1008,6 +1029,8 @@ async function main(): Promise<void> {
   ): Promise<void> => {
     setStatus("connecting…", "offline");
     menuNotice = undefined;
+    // Still the menu, but on its way into a lobby.
+    idleScreen = false;
     try {
       lobby = await connect();
     } catch (error) {
@@ -1134,6 +1157,7 @@ async function main(): Promise<void> {
     music().screen("menu");
     endedOutcome = outcome;
     endedSummary = summary;
+    idleScreen = true;
     if (offered && leavingLobby !== undefined) {
       offerStay(leavingLobby, ending);
     }
@@ -1231,6 +1255,9 @@ async function main(): Promise<void> {
     } catch (error) {
       console.error("[web] could not enter match", error);
       enteringMatch = false;
+      if (isStaleChunkError(error)) {
+        void buildWatch?.chunkFailed();
+      }
       const notice = matchFailureNotice(error) ?? LOST_MATCH_NOTICE;
       // Back to the lobby. If it closed while this was joining, closing it
       // already took the player to the menu, and said why. A queued
@@ -1243,6 +1270,69 @@ async function main(): Promise<void> {
       }
     }
   };
+
+  /**
+   * A newer deployed build (#1268): the banner, and the reload once the
+   * player is idle. Never for a build without an id.
+   */
+  const watchServedBuild = (): BuildWatch | undefined => {
+    if (__VIBEWARS_BUILD__ === DEV_BUILD) {
+      return undefined;
+    }
+    const reload = (): void => {
+      watch.reloadNow();
+    };
+    const show = mountBuildBanner(document.body, {
+      // Unsaved edits ask first, as their Close does.
+      onReloadNow: () => {
+        if (editor !== undefined) {
+          editor.leave(reload);
+        } else if (teamEditor !== undefined) {
+          teamEditor.leave(reload);
+        } else {
+          reload();
+        }
+      },
+      onNotNow: () => {
+        watch.dismiss();
+      },
+    });
+    const watch = createBuildWatch({
+      current: __VIBEWARS_BUILD__,
+      fetchLatest: () => fetchServedBuild(import.meta.env.BASE_URL),
+      idle: () =>
+        idleScreen &&
+        lobby === undefined &&
+        match === undefined &&
+        !enteringMatch &&
+        stay === undefined &&
+        document.querySelector('[aria-modal="true"]') === null,
+      reloadedFor: {
+        load: () => sessionStorage.getItem(RELOADED_FOR_KEY) ?? undefined,
+        save: (id) => {
+          sessionStorage.setItem(RELOADED_FOR_KEY, id);
+        },
+      },
+      reload: () => {
+        location.reload();
+      },
+      show,
+    });
+    const checkIfVisible = (): void => {
+      if (document.visibilityState === "visible") {
+        void watch.check();
+      }
+    };
+    window.setInterval(checkIfVisible, CHECK_EVERY_MS);
+    document.addEventListener("visibilitychange", checkIfVisible);
+    // A chunk the page itself preloads, before the import that needs it.
+    window.addEventListener("vite:preloadError", () => {
+      void watch.chunkFailed();
+    });
+    checkIfVisible();
+    return watch;
+  };
+  const buildWatch = watchServedBuild();
 
   showMenu();
   if (relayLink.kind === "config" && !framed) {

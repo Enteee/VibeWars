@@ -158,6 +158,11 @@ export type StatusId =
   // Spirits' auras (#1064), worn while in a spirit's range.
   | "winnowing"
   | "recuperation"
+  // Ritualist protective spirits' auras (#1265).
+  | "shelter"
+  | "union"
+  | "displacement"
+  | "earthbind"
   // Wards' auras (#1087), worn while inside a ward.
   | "ward-against-melee"
   // Wells' auras (#1104), worn while inside a well.
@@ -452,6 +457,27 @@ export interface StatusDefinition {
    */
   readonly maxDamageFractionPerHit: number | undefined;
   /**
+   * As `maxDamageFractionPerHit`, but only for an attack's blow (#1265):
+   * Shelter's 0.1, after everything else in `mitigate`. A spell, life
+   * steal and degeneration are not capped. `undefined`: no cap.
+   */
+  readonly attackDamageCapFraction: number | undefined;
+  /** Taken off every life steal on the bearer (#1265): Union's 15. Never below 0. */
+  readonly lifeStealReduction: number;
+  /**
+   * A knockdown of the bearer lasts at least this long (#1265):
+   * Earthbind's 3 s. `undefined`: as long as it says.
+   */
+  readonly knockdownMinSeconds: number | undefined;
+  /**
+   * The health the status's source loses each time the status changes an
+   * outcome for its bearer (#1265): a protective spirit paying for its
+   * protection, Shelter's 51 for a capped blow. Plain health loss, no
+   * armor, and it can kill; a source already dead or gone pays nothing.
+   * `undefined`: the protection is free.
+   */
+  readonly sourceLosesHealth: number | undefined;
+  /**
    * The next damage or life steal the bearer would take heals it instead,
    * up to this much, and the status ends (#987): Reversal of Fortune's 67.
    * The whole packet is negated, after `mitigate`; degeneration and
@@ -597,7 +623,14 @@ export type StatusChange =
       readonly offenderId: string;
       readonly fired: readonly AnsweringTrigger[];
     }
-  | { readonly kind: "redirected-damage"; readonly toId: string; readonly amount: number };
+  | { readonly kind: "redirected-damage"; readonly toId: string; readonly amount: number }
+  /** A status of `toId`'s changed an outcome, and `toId` pays `amount` health (#1265). */
+  | {
+      readonly kind: "charged-source";
+      readonly statusId: StatusId;
+      readonly toId: string;
+      readonly amount: number;
+    };
 
 /** A trigger on the bearer that answered an event, the status that holds it, and who applied it. */
 export interface AnsweringTrigger {
@@ -687,6 +720,10 @@ function define(
     damageReduction: 0,
     redirectsPhysicalDamage: 0,
     maxDamageFractionPerHit: undefined,
+    attackDamageCapFraction: undefined,
+    lifeStealReduction: 0,
+    knockdownMinSeconds: undefined,
+    sourceLosesHealth: undefined,
     reversesNextDamage: undefined,
     extraStrikesPerHit: 0,
     spellRechargeFaster: 0,
@@ -1125,6 +1162,39 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   recuperation: define("recuperation", "Recuperation", "skill-effect", {
     profession: "ritualist",
     healthPips: 3,
+  }),
+  // The protective spirits (#1265), each paying for what it does with its
+  // own health, at rank 12. "Non-spirit allies within its range cannot
+  // lose more than 10% maximum Health from a single attack. When this
+  // spirit prevents damage, it loses 75...45 Health."
+  shelter: define("shelter", "Shelter", "skill-effect", {
+    profession: "ritualist",
+    attackDamageCapFraction: 0.1,
+    sourceLosesHealth: 51,
+  }),
+  // "Whenever a non-spirit ally in its range takes damage or life steal,
+  // it is reduced by 15 and the spirit takes 15 damage."
+  union: define("union", "Union", "skill-effect", {
+    profession: "ritualist",
+    damageReduction: 15,
+    lifeStealReduction: 15,
+    sourceLosesHealth: 15,
+  }),
+  // "All non-spirit allies within its range have a 75% chance to block
+  // incoming attacks. Every time an attack is blocked in this way, this
+  // spirit takes 60 damage."
+  displacement: define("displacement", "Displacement", "skill-effect", {
+    profession: "ritualist",
+    block: { chance: 0.75, against: "all" },
+    sourceLosesHealth: 60,
+  }),
+  // "All non-spirit foes knocked down within its range are knocked down
+  // for at least 3 seconds. Whenever this happens, this spirit loses
+  // 50...25 Health."
+  earthbind: define("earthbind", "Earthbind", "skill-effect", {
+    profession: "ritualist",
+    knockdownMinSeconds: 3,
+    sourceLosesHealth: 30,
   }),
   // What a ward projects on the allies inside it (#1087), as a spirit's
   // aura: "non-spirit allies in this area have a 50% chance to block
@@ -1982,6 +2052,25 @@ export class StatusSet {
   }
 
   /**
+   * Every status on the bearer that `acted` names, and whose source pays
+   * for it (#1265), records that payment for its source, landed when the
+   * tick drains: Shelter's spirit loses 51 for the blow it capped.
+   */
+  public chargeSources(acted: (definition: StatusDefinition) => boolean): void {
+    for (const status of this.#statuses.values()) {
+      const definition = getStatusDefinition(status.id);
+      if (definition.sourceLosesHealth !== undefined && acted(definition)) {
+        this.#changes.push({
+          kind: "charged-source",
+          statusId: status.id,
+          toId: status.sourceId,
+          amount: definition.sourceLosesHealth,
+        });
+      }
+    }
+  }
+
+  /**
    * Spend the newest status that reverses the next damage (#987),
    * recorded as ended, and return its cap; `undefined` if none is up.
    */
@@ -2254,6 +2343,12 @@ export interface StatusModifiers {
   readonly damageReduction: number;
   /** The lowest single status's (#936); `undefined`: no cap. */
   readonly maxDamageFractionPerHit: number | undefined;
+  /** The lowest single status's (#1265); `undefined`: no cap. */
+  readonly attackDamageCapFraction: number | undefined;
+  /** Every status's, summed (#1265). */
+  readonly lifeStealReduction: number;
+  /** The longest single status's (#1265); `undefined`: none. */
+  readonly knockdownMinSeconds: number | undefined;
   /** Every status's, summed (#936). */
   readonly extraStrikesPerHit: number;
   /**
@@ -2326,6 +2421,9 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let damageTakenMultiplier = 1;
   let damageReduction = 0;
   let maxDamageFractionPerHit: number | undefined;
+  let attackDamageCapFraction: number | undefined;
+  let lifeStealReduction = 0;
+  let knockdownMinSeconds: number | undefined;
   let extraStrikesPerHit = 0;
   let spellRechargeKept = 1;
   let bindingRitualRechargeKept = 1;
@@ -2379,6 +2477,20 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     ) {
       maxDamageFractionPerHit = def.maxDamageFractionPerHit;
     }
+    if (
+      def.attackDamageCapFraction !== undefined &&
+      (attackDamageCapFraction === undefined ||
+        def.attackDamageCapFraction < attackDamageCapFraction)
+    ) {
+      attackDamageCapFraction = def.attackDamageCapFraction;
+    }
+    lifeStealReduction += def.lifeStealReduction;
+    if (
+      def.knockdownMinSeconds !== undefined &&
+      (knockdownMinSeconds === undefined || def.knockdownMinSeconds > knockdownMinSeconds)
+    ) {
+      knockdownMinSeconds = def.knockdownMinSeconds;
+    }
     extraStrikesPerHit += def.extraStrikesPerHit;
     spellRechargeKept *= 1 - def.spellRechargeFaster;
     bindingRitualRechargeKept *= 1 - def.bindingRitualRechargeFaster;
@@ -2408,6 +2520,9 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     damageTakenMultiplier,
     damageReduction,
     maxDamageFractionPerHit,
+    attackDamageCapFraction,
+    lifeStealReduction,
+    knockdownMinSeconds,
     extraStrikesPerHit,
     spellRechargeFaster: Math.min(MAX_RECHARGE_REDUCTION, 1 - spellRechargeKept),
     bindingRitualRechargeFaster: Math.min(MAX_RECHARGE_REDUCTION, 1 - bindingRitualRechargeKept),

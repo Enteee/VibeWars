@@ -246,7 +246,11 @@ export const SKILL_ICONS = {
   "ritualist.shadowsong": { glyph: "eye", modifier: "hourglass" },
   "ritualist.dissonance": { glyph: "interrupt", modifier: "hourglass" },
   "ritualist.disenchantment": { glyph: "hex-cut", modifier: "hourglass" },
-
+  // Placeholders until the asset-designer's (#1265): the protective spirits.
+  "ritualist.shelter": { glyph: "totem", modifier: "self" },
+  "ritualist.union": { glyph: "totem", modifier: "half" },
+  "ritualist.displacement": { glyph: "totem", modifier: "stun" },
+  "ritualist.earthbind": { glyph: "totem", modifier: "down" },
   "assassin.shroud-of-silence": { glyph: "hex-mute" },
   "assassin.expose-defenses": { glyph: "armor-crack" },
   "assassin.enduring-toxin": { glyph: "drop-run" },
