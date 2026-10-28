@@ -1426,6 +1426,54 @@ const skillGlyph = {
   "ring-heal": () =>
     `<circle cx="12" cy="12" r="9" ${stroke(C.ink, 2)}/>` +
     inkFill("M10.4 7.5h3.2v2.9h2.9v3.2h-2.9v2.9h-3.2v-2.9H7.5v-3.2h2.9z"),
+  // A hammer slamming a ground line, bars thrown off either side: the knockdown (#1217).
+  "hammer-slam": () =>
+    inkLine("M7 4.5L12 11", 2.4) +
+    `<rect x="9.5" y="9" width="9" height="6" rx="1" transform="rotate(35 14 12)" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
+    inkLine("M3 19.5H21M5 15.5L3.5 13.5M21 15.5L22 13.5", 2.2),
+  // A dashed ring (a hex) with a burst in it: the hex bursts on those near (#1217).
+  "hex-burst": () =>
+    `<circle cx="12" cy="12" r="9" ${stroke(C.ink, 2.2)} stroke-dasharray="4.4 3.4"/>` +
+    inkFill(burst(5.5)),
+  // A drop with an arrow leaving it: health drawn off, as the status shows (#1217).
+  "drop-arrow": () =>
+    `<path d="M9 5c2.4 3.6 4.2 5.8 4.2 8.5a4.2 4.2 0 0 1-8.4 0C4.8 10.8 6.6 8.6 9 5z" fill="${C.ink}"/>` +
+    inkLine("M15 12.5H21M18.5 9.5L21.5 12.5L18.5 15.5", 2.2),
+  // A cross with a ring either side: pain passed to who stands near, as the status shows (#1217).
+  "pain-cross": () =>
+    inkLine("M9 8.5L15 14.5M15 8.5L9 14.5", 2.8) +
+    `<circle cx="4.8" cy="17.5" r="2.3" ${stroke(C.ink, 1.8)}/><circle cx="19.2" cy="17.5" r="2.3" ${stroke(C.ink, 1.8)}/>`,
+  // An eye with a drop under it: a gaze that drinks (#1217).
+  "eye-drop": () =>
+    `<path d="M2.5 8.5C5 4.5 8.5 3 12 3S19 4.5 21.5 8.5C19 12.5 15.5 14 12 14S5 12.5 2.5 8.5Z" ${stroke(C.ink, 2)}/>` +
+    `<circle cx="12" cy="8.5" r="2.4" fill="${C.ink}"/>` +
+    `<path d="M12 15.5C12 15.5 8.6 19 8.6 20.2A3.4 3.4 0 0 0 15.4 20.2C15.4 19 12 15.5 12 15.5Z" fill="${C.ink}"/>`,
+  // An arrowhead leaving two hollow ones behind it: a step through the shadows (#1217).
+  blink: () =>
+    `<path d="M3.5 5L8.5 10L3.5 15Z" ${stroke(C.ink, 1.6)}/>` +
+    `<path d="M9 5L14 10L9 15Z" ${stroke(C.ink, 1.6)}/>` +
+    inkFill("M15 4.5L21 10L15 15.5Z"),
+  // A post with a bright head: a spirit planted where it was called (#1217).
+  totem: () =>
+    inkFill("M9 11H14L14.2 20H8.8Z") + `<circle cx="12" cy="6.5" r="3.8" fill="${C.ink}"/>`,
+  // The ward's ring and pole, with a blade struck from it: it turns melee (#1217).
+  "ward-blade": () =>
+    `<ellipse cx="12" cy="17" rx="8.5" ry="4" ${stroke(C.ink, 2.5)}/>` +
+    inkLine("M12 17V9", 2.5) +
+    inkLine("M5 3.5L11 9.5M19 3.5L13 9.5", 2.2),
+  // A flame over a ground line with teeth: a trap that burns (#1217).
+  "trap-flame": () =>
+    `<g transform="translate(12,9) scale(0.62) translate(-12,-12)">${skillGlyph.flame()}</g>` +
+    inkLine("M3 20H21", 2.5) +
+    inkLine("M5 20L7 16L9 20M10 20L12 16L14 20M15 20L17 16L19 20", 2),
+  // A ring on the ground and light thrown up out of it: a symbol laid down (#1217).
+  "ring-rays": () =>
+    `<ellipse cx="12" cy="17" rx="9" ry="4.2" ${stroke(C.ink, 2.4)}/>` +
+    inkLine("M12 3.5V12M6 6L8.5 12M18 6L15.5 12", 2.4),
+  // The well's ring with an arrow sinking into it: drawn from a corpse (#1217).
+  "well-sink": () =>
+    `<ellipse cx="8.5" cy="17" rx="6" ry="3.4" ${stroke(C.ink, 2.5)}/>` +
+    inkLine("M8.5 3.5V12.5M5 9.5L8.5 13L12 9.5", 2.5),
   // The resurrect figure in a ring: a signet's seal, one use (#1081).
   "resurrect-seal": () =>
     `<circle cx="10.5" cy="10.5" r="8" ${stroke(C.ink, 2)}/>` + smallFigure(10.5, 10.5, 0.55),
