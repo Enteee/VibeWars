@@ -105,6 +105,8 @@ test("(4) Back leaves Options for the menu; on a narrow screen the sections sit 
 }) => {
   await page.setViewportSize({ width: 400, height: 800 });
   await page.goto("./");
+  // On a phone the top bar's icons fold into ⋯ (#1272).
+  await page.locator("#topbar .topbar-more").click();
   await openKeys(page);
   const entry = await page.locator('.options-entry[data-section="controls"]').boundingBox();
   const pane = await page.locator(".options-pane").boundingBox();
@@ -116,7 +118,7 @@ test("(4) Back leaves Options for the menu; on a narrow screen the sections sit 
 
   await page.getByRole("button", { name: "Close", exact: true }).click();
   await expect(page.locator(".options-screen")).toHaveCount(0);
-  await expect(page.locator(".topbar-options")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "VibeWars" })).toBeVisible();
 });
 
 test("the top bar's ⚙ opens Options over the screen; Esc closes it and leaves the screen as it was (#454)", async ({
@@ -139,7 +141,8 @@ test("the top bar's ⚙ opens Options over the screen; Esc closes it and leaves 
 
   // Close does the same; then Esc is the screen's again.
   await page.locator("#topbar").getByRole("button", { name: "Options" }).click();
-  await options.getByRole("button", { name: "Close" }).click();
+  // The overlay's Close is in the top bar, beside its place (#1272).
+  await page.locator("#topbar").getByRole("button", { name: "Close", exact: true }).click();
   await expect(options).toHaveCount(0);
   await page.keyboard.press("Escape");
   await expect(page.getByRole("heading", { name: "VibeWars" })).toBeVisible();
