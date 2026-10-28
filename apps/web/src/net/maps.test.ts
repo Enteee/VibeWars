@@ -71,6 +71,13 @@ describe("hostMap (#476)", () => {
     ]);
     expect(hostMap("arena-split")?.guildLords).toEqual([]);
   });
+
+  it("carries a Guild Battle map's guards in its order, and none elsewhere (#1223)", () => {
+    const guards = hostMap("guild-hall-isle")?.guards ?? [];
+    expect(guards).toHaveLength(16);
+    expect(guards[0]).toEqual({ team: 0, role: "bodyguard", position: { x: 170, y: 1000 } });
+    expect(hostMap("arena-split")?.guards).toEqual([]);
+  });
 });
 
 describe("mapMode (#1200)", () => {

@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 /**
  * The TURN server's commands (#974). nix/turn.nix exposes each as its own
- * command: turn-user, turn-link, turn-check and turn-dash. `conf` writes the
- * server's config for processes.turn, and `pane` is one of turn-dash's panes.
+ * command: turn-user, turn-link, turn-check and turn-dash. `conf` and `nft`
+ * write the server's config and its nftables rules for processes.turn, and
+ * `pane` is one of turn-dash's panes.
  * See docs/development/turn.md.
  */
 import { spawnSync } from "node:child_process";
@@ -13,7 +14,7 @@ import { healthy, runChecks, serverPid } from "./check.mjs";
 import { DEFAULT_BASE, inviteLink, turnUrls } from "./link.mjs";
 import { filterLog, lastAllocations, tailLines } from "./log.mjs";
 import { formatBytes, procIo, rate, scrape } from "./metrics.mjs";
-import { files, readSettings, turnserverConf } from "./settings.mjs";
+import { files, readSettings, turnNft, turnserverConf } from "./settings.mjs";
 import { HEALTH_USER, allUsers, newPassword, removeUser, setUser, validName } from "./users.mjs";
 
 const HELP = {
@@ -26,7 +27,8 @@ const HELP = {
   (default ${DEFAULT_BASE}).`,
   check: `usage: turn-check
   Checks the TURN server once: process, STUN binding, an authenticated
-  allocation, the external IP and the TLS certificate. Exit 0 when healthy.`,
+  allocation, which peers it may relay to, whether turn.nft is loaded, the
+  external IP and the TLS certificate. Exit 0 when healthy.`,
   dash: `usage: turn-dash [stop]
   The TURN dashboard, a tmux session on a server of its own
   (tmux -L vibewars-turn): stats, health, users and the log. Running it again
@@ -319,6 +321,7 @@ if (args.includes("--help") || args.includes("-h")) {
 }
 try {
   if (command === "conf") process.stdout.write(turnserverConf(readSettings(process.env)));
+  else if (command === "nft") process.stdout.write(turnNft(readSettings(process.env)));
   else if (command === "user") user(args);
   else if (command === "link") link(args);
   else if (command === "check") await check();
