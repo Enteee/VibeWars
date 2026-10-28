@@ -189,4 +189,7 @@ export const SKILL_ICONS = {
   "assassin.shadow-refuge": { glyph: "plaster", modifier: "clock" },
   "assassin.shroud-of-distress": { glyph: "armor", modifier: "stun" },
   "assassin.critical-eye": { glyph: "dagger", modifier: "hourglass" },
+  // Placeholders until the asset-designer's (#1064).
+  "ranger.winnowing": { glyph: "blade-plus", modifier: "area" },
+  "ritualist.recuperation": { glyph: "plaster", modifier: "hourglass" },
 };

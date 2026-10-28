@@ -159,11 +159,15 @@ function renderTip(node: HTMLElement, row: EffectRow, canEnd: boolean): void {
   if (row.secondsLeft === undefined || row.fraction !== undefined) {
     const left = document.createElement("div");
     left.className = "tip-effect";
+    // No end of its own: a maintained enchantment, or, of any other
+    // category, a spirit's aura (#1064), worn while in its range.
     left.textContent =
       row.secondsLeft === undefined
-        ? row.endable
-          ? "maintained, −1 energy"
-          : "maintained"
+        ? row.category !== "enchantment"
+          ? "while in its range"
+          : row.endable
+            ? "maintained, −1 energy"
+            : "maintained"
         : `${String(row.secondsLeft)} s left`;
     node.appendChild(left);
   }

@@ -80,3 +80,7 @@ built for players and is the larger, safe value.
   `PlayerSnapshot.creature` on the client), or creatures will count.
 - A snapshot can be larger: `MAX_SNAPSHOT_PARTS` went from 8 to 12 so
   8 players at every status, every creature and every shot still fit.
+- A spirit projects its effect as a status on whoever is in its range
+  (#1064), not as a ground entity: the status system already carries
+  modifiers, the effects monitor and the wire, so an aura needs only a
+  pass that puts it on and takes it off.

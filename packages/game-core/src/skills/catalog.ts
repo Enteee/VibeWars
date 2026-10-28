@@ -5,6 +5,7 @@ import {
   AREA_NEARBY,
   RANGE_MELEE,
   RANGE_SPELL,
+  RANGE_SPIRIT,
 } from "../distances.js";
 import { WEAPONS } from "../equipment/weapons.js";
 import { KNOCKDOWN_SECONDS, type Skill } from "./types.js";
@@ -2052,8 +2053,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     attack: undefined,
     whileActivating: undefined,
     projectile: undefined,
-    // "That ally loses one condition for each spirit within earshot": there
-    // are no spirits yet (#467), so it removes none, as in GW1 with none up.
+    // "That ally loses one condition for each spirit within earshot"
+    // (#1064): earshot of the ally, any team's spirit.
     effects: [
       {
         kind: "heal",
@@ -2062,6 +2063,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
           scaling: { attributeId: "ritualist.restoration-magic", atZero: 20, atTwelve: 96 },
         },
       },
+      { kind: "remove-status", category: "condition", count: 1, perSpiritNear: AREA_EARSHOT },
     ],
   },
   {
@@ -2081,11 +2083,14 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     attack: undefined,
     whileActivating: undefined,
     projectile: undefined,
-    // "If any Spirits are within earshot, you don't sacrifice Health": there
-    // are no spirits yet (#467), so the 17% is always paid, as in GW1 with
-    // none up.
+    // "If any Spirits are within earshot, you don't sacrifice Health"
+    // (#1064): earshot of you, any team's spirit.
     effects: [
-      { kind: "sacrifice-health", percentOfMax: 17 },
+      {
+        kind: "if",
+        condition: { kind: "caster-no-spirit-within", radius: AREA_EARSHOT },
+        effects: [{ kind: "sacrifice-health", percentOfMax: 17 }],
+      },
       {
         kind: "heal",
         perStatusOnTarget: [],
@@ -5106,6 +5111,90 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     projectile: undefined,
     effects: [{ kind: "apply-status", statusId: "poison", durationSeconds: 17 }],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Spirits (#1064)                                                        */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "ranger.winnowing",
+    name: "Winnowing",
+    type: "nature-ritual",
+    elite: false,
+    profession: "ranger",
+    attributeId: "ranger.beast-mastery",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 5,
+    rechargeSeconds: 60,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Create a level 1...10 spirit. For non-spirit creatures within its
+    // range, physical damage is increased by 3. This spirit dies after
+    // 30...78 seconds": 68 s at 12. Its Health and armor are house rules.
+    effects: [
+      {
+        kind: "summon",
+        count: 1,
+        creature: {
+          kind: "spirit",
+          name: "Winnowing",
+          maxHealth: {
+            scaling: { attributeId: "ranger.beast-mastery", atZero: 100, atTwelve: 340 },
+          },
+          armor: 40,
+          durationSeconds: {
+            scaling: { attributeId: "ranger.beast-mastery", atZero: 30, atTwelve: 68 },
+          },
+          behaviour: { kind: "idle" },
+          aura: { statusId: "winnowing", affects: "all", radius: RANGE_SPIRIT },
+        },
+      },
+    ],
+  },
+  {
+    id: "ritualist.recuperation",
+    name: "Recuperation",
+    type: "binding-ritual",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.restoration-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 5,
+    rechargeSeconds: 45,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Create a level 1...10 spirit. Non-spirit allies within its range
+    // gain +2 Health regeneration. This spirit dies after 30...54 seconds":
+    // 49 s at 12. Its Health and armor are house rules.
+    effects: [
+      {
+        kind: "summon",
+        count: 1,
+        creature: {
+          kind: "spirit",
+          name: "Recuperation",
+          maxHealth: {
+            scaling: { attributeId: "ritualist.restoration-magic", atZero: 100, atTwelve: 340 },
+          },
+          armor: 40,
+          durationSeconds: {
+            scaling: { attributeId: "ritualist.restoration-magic", atZero: 30, atTwelve: 49 },
+          },
+          behaviour: { kind: "idle" },
+          aura: { statusId: "recuperation", affects: "allies", radius: RANGE_SPIRIT },
+        },
+      },
+    ],
   },
 ];
 

@@ -96,7 +96,8 @@ export interface StatusSnapshot {
   readonly id: StatusId;
   /**
    * Match clock (`elapsedSeconds`) at which it runs out; `null` for a
-   * maintained enchantment (#837), which lasts until something ends it.
+   * maintained enchantment (#837), which lasts until something ends it,
+   * and for a spirit's aura (#1064), which lasts while its bearer is in range.
    */
   readonly endsAt: number | null;
   /**

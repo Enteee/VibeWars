@@ -145,6 +145,7 @@ describe("describeSkill", () => {
         armor: 20,
         ...(durationSeconds === undefined ? {} : { durationSeconds: { flat: durationSeconds } }),
         behaviour: { kind: "idle" },
+        aura: undefined,
       },
     });
     const lines = (effect: SkillEffect) =>
@@ -354,9 +355,16 @@ describe("describeSkill", () => {
   it("produces a line for every effect of every catalog skill", () => {
     // Guards the switch in `describeEffect`: a new effect kind that
     // nobody described would silently vanish from tooltips. An `if` is
-    // a line per effect inside it (#521).
+    // a line per effect inside it (#521), a spirit's summon one more for
+    // what it projects (#1064).
+    const linesOf = (effect: SkillEffect): number => {
+      if (effect.kind === "if") {
+        return effect.effects.length;
+      }
+      return effect.kind === "summon" && effect.creature.aura !== undefined ? 2 : 1;
+    };
     const lines = (effects: readonly SkillEffect[]): number =>
-      effects.reduce((sum, effect) => sum + (effect.kind === "if" ? effect.effects.length : 1), 0);
+      effects.reduce((sum, effect) => sum + linesOf(effect), 0);
     for (const entry of IMPLEMENTED_SKILLS) {
       const described = describeSkill(entry);
       expect(described.effects, `${entry.id} lost an effect line`).toHaveLength(
@@ -519,9 +527,13 @@ describe("attack skills (#417)", () => {
     expect(describeStatus("mantra-of-recovery")).toBe("spells recharge 33% faster");
   });
 
-  it("words the Ritualist's weapon spells (#975)", () => {
-    expect(describeStatus("spirit-light-weapon")).toBe("+21 Health per second");
-    expect(describeStatus("weapon-of-quickening")).toBe("spells recharge 33% faster");
+  it("words the Ritualist's weapon spells (#975, #1064)", () => {
+    expect(describeStatus("spirit-light-weapon")).toBe(
+      "+21 Health per second, +21 Health per second more in earshot of a spirit",
+    );
+    expect(describeStatus("weapon-of-quickening")).toBe(
+      "spells and binding rituals recharge 33% faster",
+    );
     expect(describeStatus("weapon-of-aggression")).toBe("attacks 25% faster");
   });
 

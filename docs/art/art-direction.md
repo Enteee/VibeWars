@@ -606,20 +606,22 @@ marker on someone, which carry that marker's colour. A stance marks you, so
 it carries the stance colour too, a preparation its amber, a glyph its
 lime and a weapon spell its periwinkle.
 
-| Type         | Badge                     |
-| ------------ | ------------------------- |
-| Attack       | Blade                     |
-| Spell        | Four-point star           |
-| Enchantment  | Solid teal ring           |
-| Hex          | Broken purple ring        |
-| Stance       | Pink pentagon ring        |
-| Preparation  | Amber triangle ring       |
-| Glyph        | Lime triangle ring, down  |
-| Weapon Spell | Periwinkle shield ring    |
-| Signet       | Ring with a seal on top   |
-| Shout        | Mouth and two sound waves |
-| Chant        | A note                    |
-| Skill        | Square                    |
+| Type           | Badge                     |
+| -------------- | ------------------------- |
+| Attack         | Blade                     |
+| Spell          | Four-point star           |
+| Enchantment    | Solid teal ring           |
+| Hex            | Broken purple ring        |
+| Stance         | Pink pentagon ring        |
+| Preparation    | Amber triangle ring       |
+| Glyph          | Lime triangle ring, down  |
+| Weapon Spell   | Periwinkle shield ring    |
+| Signet         | Ring with a seal on top   |
+| Shout          | Mouth and two sound waves |
+| Chant          | A note                    |
+| Nature Ritual  | A sprout                  |
+| Binding Ritual | An urn on a base line     |
+| Skill          | Square                    |
 
 ### Skill icons
 

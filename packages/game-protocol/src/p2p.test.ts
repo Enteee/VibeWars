@@ -353,6 +353,20 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
       players: [{ ...player, statuses: [{ ...status, endsAt: null, durationSeconds: null }] }],
     },
   ],
+  [
+    "snapshot with a spirit and a body wearing its aura (#1064)",
+    parseWireSnapshotPart,
+    {
+      ...snapshot,
+      players: [
+        {
+          ...player,
+          statuses: [{ ...status, endsAt: null, durationSeconds: null, casterId: "peer-1/c1" }],
+        },
+        { ...minion, name: "Winnowing", creature: { ownerId: "peer-1", kind: "spirit" } },
+      ],
+    },
+  ],
   ["last of three snapshot parts", parseWireSnapshotPart, { ...snapshot, part: 2, parts: 3 }],
   ["combat batch", parseWireCombatBatch, combatBatch],
   ["skill-bar", parseWireSkillBar, skillBar],

@@ -13,7 +13,7 @@ import {
   resolveCircleSegmentCollision,
 } from "../geometry.js";
 import type { Segment } from "../geometry.js";
-import { AREA_ADJACENT, RANGE_COMPASS, RANGE_SPIRIT } from "../distances.js";
+import { AREA_ADJACENT, AREA_EARSHOT, RANGE_COMPASS, RANGE_SPIRIT } from "../distances.js";
 import {
   addKill,
   DEATH_PENALTY_PERCENT,
@@ -93,7 +93,7 @@ import {
 } from "../skills/status.js";
 import { effectiveMaxEnergy, recoverOvercast } from "../skills/overcast.js";
 import { resolveMagnitude } from "../skills/scaling.js";
-import { resolveTargets } from "../skills/targeting.js";
+import { resolveTargets, spiritsWithin } from "../skills/targeting.js";
 import {
   advanceStatuses,
   effectiveActivationSeconds,
@@ -106,7 +106,13 @@ import {
   upkeepPips,
   type NetPips,
 } from "../skills/tick.js";
-import { isSpell, type Combatant, type CreatureTemplate, type Skill } from "../skills/types.js";
+import {
+  isSpell,
+  type Combatant,
+  type CreatureTemplate,
+  type Skill,
+  type SpiritAura,
+} from "../skills/types.js";
 import {
   leadAimPoint,
   PositionHistory,
@@ -192,6 +198,10 @@ export interface Creature {
   expiresInSeconds: number;
   /** The tick it was summoned, for "oldest first" caps. */
   readonly summonedAtTick: number;
+  /** The skill that summoned it (#1064): one spirit of a skill in range. */
+  readonly skillId: string;
+  /** What a spirit projects on whoever is in range (#1064); `undefined`: nothing. */
+  readonly aura: SpiritAura | undefined;
 }
 
 /** At most this many creatures in a match at once (#1052): a summon past it makes as many as fit. */
@@ -648,8 +658,17 @@ export class MatchSimulation {
    * team (#1052): as many as `MAX_CREATURES` leaves room for. Added to the
    * end of the match, so they act from this very tick, after everyone
    * already there.
+   *
+   * A spirit made ends every allied spirit of the same `skillId` within
+   * spirit range of it (#1064): it leaves at the end of the step, as an
+   * expiry, so nobody scores. A foe's lives on.
    */
-  #summon(owner: ParticipantRecord, template: CreatureTemplate, count: number): void {
+  #summon(
+    owner: ParticipantRecord,
+    skillId: string,
+    template: CreatureTemplate,
+    count: number,
+  ): void {
     let creatures = 0;
     for (const record of this.#participants.values()) {
       if (record.creature !== undefined && !this.#leaving.has(record.id)) {
@@ -657,6 +676,19 @@ export class MatchSimulation {
       }
     }
     const fits = Math.max(0, Math.min(count, MAX_CREATURES - creatures));
+    if (fits > 0 && template.kind === "spirit") {
+      for (const record of this.#participants.values()) {
+        if (
+          record.creature?.kind === "spirit" &&
+          record.creature.skillId === skillId &&
+          record.combatant.team === owner.combatant.team &&
+          !record.combatant.dead &&
+          distance(record.position, owner.position) <= RANGE_SPIRIT
+        ) {
+          this.#leaving.add(record.id);
+        }
+      }
+    }
     for (let i = 0; i < fits; i += 1) {
       const id = `${owner.id}/c${String(this.#nextCreature)}`;
       this.#nextCreature += 1;
@@ -681,8 +713,53 @@ export class MatchSimulation {
               ? Number.POSITIVE_INFINITY
               : resolveMagnitude(template.durationSeconds, owner.combatant),
           summonedAtTick: this.#tick,
+          skillId,
+          aura: template.aura,
         },
       });
+    }
+  }
+
+  /**
+   * What every living spirit projects (#1064), settled once a step before
+   * anyone acts, so a hit this step sees this step's auras. Every living
+   * body that is not a spirit wears an aura's status exactly while some
+   * spirit with it, on a side it reaches, stands within its radius; one
+   * worn from two spirits is worn once. A spirit gone since the last step
+   * is gone from everyone now: one step late at worst. Spirits in the
+   * order they were summoned, bodies in match order.
+   */
+  #projectAuras(): void {
+    const spirits: { readonly record: ParticipantRecord; readonly aura: SpiritAura }[] = [];
+    for (const record of this.#participants.values()) {
+      const aura = record.creature?.aura;
+      if (aura !== undefined && !record.combatant.dead) {
+        spirits.push({ record, aura });
+      }
+    }
+    for (const body of this.#participants.values()) {
+      if (body.combatant.dead || body.creature?.kind === "spirit") {
+        continue;
+      }
+      const wears = new Map<StatusId, string>();
+      for (const { record, aura } of spirits) {
+        if (
+          !wears.has(aura.statusId) &&
+          (aura.affects === "all" || record.combatant.team === body.combatant.team) &&
+          distance(record.position, body.position) <= aura.radius
+        ) {
+          wears.set(aura.statusId, record.id);
+        }
+      }
+      const { statuses } = body.combatant;
+      for (const status of statuses.active) {
+        if (status.projected && !wears.has(status.id)) {
+          statuses.remove(status.id);
+        }
+      }
+      for (const [statusId, spiritId] of wears) {
+        statuses.project(statusId, spiritId);
+      }
     }
   }
 
@@ -1140,6 +1217,7 @@ export class MatchSimulation {
     for (const record of this.#participants.values()) {
       this.#stepStart.set(record.id, record.position);
     }
+    this.#projectAuras();
     // Every knockdown counts down before anyone acts, so one lasts its
     // full duration whoever lands it, and the tick it ends is one its
     // bearer acts in again (#468).
@@ -1223,7 +1301,12 @@ export class MatchSimulation {
       );
 
       const sources = degenerationSources(record.combatant);
-      const statusEvents = advanceStatuses(record.combatant, dt, natural);
+      // Spirit Light Weapon's more near a spirit (#1064): counted only for
+      // a bearer it could matter to.
+      const nearSpirit =
+        modifiers.healthPerSecondNearSpirit !== 0 &&
+        spiritsWithin(this.#participants.values(), record.position, AREA_EARSHOT) > 0;
+      const statusEvents = advanceStatuses(record.combatant, dt, natural, nearSpirit);
       if (statusEvents.length > 0) {
         const drained = statusEvents.some((event) => event.kind === "damage");
         this.#log.push({
@@ -1711,7 +1794,7 @@ export class MatchSimulation {
     this.#recordShadowSteps(events);
     this.#recordResurrections(events);
     for (const summon of summons) {
-      this.#summon(record, summon.creature, summon.count);
+      this.#summon(record, skill.id, summon.creature, summon.count);
     }
     // An attack skill is a swing, so it turns on its target with the
     // weapon: it starts an attack, or switches one to them. Any other skill
@@ -1738,12 +1821,16 @@ export class MatchSimulation {
       !events.some((event) => event.kind === "attack-missed" && event.reason === "out-of-sequence")
     ) {
       // A spell recharges faster under Mantra of Recovery (#938) or Weapon
-      // of Quickening (#975), read now: one that ends later leaves this
+      // of Quickening (#975), and a binding ritual under Weapon of
+      // Quickening (#1064), read now: one that ends later leaves this
       // recharge as it started. Read after the spell resolved, so Weapon of
       // Quickening cast on yourself already shortens its own.
+      const modifiers = aggregateModifiers(record.combatant.statuses.active);
       const faster = isSpell(skill.type)
-        ? aggregateModifiers(record.combatant.statuses.active).spellRechargeFaster
-        : 0;
+        ? modifiers.spellRechargeFaster
+        : skill.type === "binding-ritual"
+          ? modifiers.bindingRitualRechargeFaster
+          : 0;
       record.combatant.cast.startRecharge(
         skill.id,
         reducedRecharge(skill.rechargeSeconds * (1 - rechargeFraction), faster),
@@ -2993,6 +3080,11 @@ export class MatchSimulation {
   }
 
   private advanceMovement(record: ParticipantRecord, direction: Vec2, dt: number): void {
+    // A spirit stands where it was planted (#1064): nothing moves it, and
+    // bodies are pushed out of it, never it out of them.
+    if (record.creature?.kind === "spirit") {
+      return;
+    }
     // Where it pushes, even into a wall.
     if (direction.x !== 0 || direction.y !== 0) {
       record.facing = directionAngle(direction.x, direction.y);

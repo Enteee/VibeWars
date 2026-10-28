@@ -42,6 +42,7 @@ function status(id: StatusId, remainingSeconds: number): ActiveStatus {
     sourceId: "caster",
     outbreak: null,
     maintained: null,
+    projected: false,
   };
 }
 
@@ -51,6 +52,7 @@ function maintained(id: StatusId): ActiveStatus {
     ...status(id, Infinity),
     durationSeconds: Infinity,
     maintained: { seq: 0, outOfRangeSeconds: 0 },
+    projected: false,
   };
 }
 
@@ -152,6 +154,22 @@ describe("statusSnapshot (#803)", () => {
       casterId: "monk",
     });
   });
+
+  it("sends a spirit's aura with no times either, while its bearer casts (#1064)", () => {
+    const cast = { remainingSeconds: 1.5, totalSeconds: 2 };
+    const aura = {
+      ...status("winnowing", Infinity),
+      durationSeconds: Infinity,
+      sourceId: "ranger/c1",
+      projected: true,
+    };
+    expect(statusSnapshot(aura, 4, cast)).toEqual({
+      id: "winnowing",
+      endsAt: null,
+      durationSeconds: null,
+      casterId: "ranger/c1",
+    });
+  });
 });
 
 describe("skillBarSlots", () => {
@@ -210,6 +228,8 @@ describe("wireIdentity (#1052)", () => {
       name: "Bone Minion",
       expiresInSeconds: Number.POSITIVE_INFINITY,
       summonedAtTick: 1,
+      skillId: "test.summon",
+      aura: undefined,
     },
   });
 

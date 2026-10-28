@@ -59,6 +59,7 @@ function summonSkill(
     armor: 20,
     ...(durationSeconds === undefined ? {} : { durationSeconds: { flat: durationSeconds } }),
     behaviour: { kind: "idle" },
+    aura: undefined,
   };
   TEST_SKILLS.set(id, {
     id,

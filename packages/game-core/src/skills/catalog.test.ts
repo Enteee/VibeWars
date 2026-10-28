@@ -48,6 +48,23 @@ describe("skill catalog integrity", () => {
     }
   });
 
+  it("gives an aura only to a spirit, and a ritual is what summons one (#1064)", () => {
+    const summons = IMPLEMENTED_SKILLS.flatMap((skill) =>
+      skill.effects.flatMap((effect) => (effect.kind === "summon" ? [{ skill, effect }] : [])),
+    );
+    expect(summons.length).toBeGreaterThan(0);
+    for (const { skill, effect } of summons) {
+      const { kind, aura } = effect.creature;
+      if (aura !== undefined) {
+        expect(kind, skill.id).toBe("spirit");
+        expect(aura.affects, skill.id).toBe(skill.type === "nature-ritual" ? "all" : "allies");
+      }
+      expect(kind === "spirit", skill.id).toBe(
+        skill.type === "nature-ritual" || skill.type === "binding-ritual",
+      );
+    }
+  });
+
   it("makes every attack skill a blow of its weapon, and no other skill (ADR-0029)", () => {
     for (const skill of IMPLEMENTED_SKILLS) {
       expect(skill.attack !== undefined, skill.id).toBe(skill.type === "attack");

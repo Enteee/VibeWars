@@ -241,6 +241,12 @@ export interface RemoveStatusEffect {
    * `heal`'s `recipient` (#845). Absent: the target.
    */
   readonly from?: "caster";
+  /**
+   * The count is per living spirit, any team's, within this radius of the
+   * target (#1064), as Mend Body and Soul's "loses one condition for each
+   * Spirit within earshot". Absent: `count` as it is.
+   */
+  readonly perSpiritNear?: number;
 }
 
 /**
@@ -362,6 +368,18 @@ export interface CreatureTemplate {
   readonly durationSeconds?: Magnitude;
   /** What it does each tick. */
   readonly behaviour: Behaviour;
+  /** `undefined`: it projects nothing (every minion). Only a spirit has one. */
+  readonly aura: SpiritAura | undefined;
+}
+
+/** What a spirit projects while it lives (#1064). */
+export interface SpiritAura {
+  /** Worn by every body it affects, for as long as it is in range. */
+  readonly statusId: StatusId;
+  /** `all`: a nature ritual's, both teams. `allies`: a binding ritual's, the spirit's team. */
+  readonly affects: "all" | "allies";
+  /** Centre to centre, world units. Walls do not block it. */
+  readonly radius: number;
 }
 
 /**
@@ -471,7 +489,12 @@ export type StateCondition =
    * swinging, not walking to its foe, or an attack skill being activated,
    * as Shadow Refuge's "if you are attacking".
    */
-  | { readonly kind: "target-attacking" };
+  | { readonly kind: "target-attacking" }
+  /**
+   * No living spirit, any team's, stands within `radius` of the caster
+   * (#1064): Spirit Light's sacrifice, which it skips near one.
+   */
+  | { readonly kind: "caster-no-spirit-within"; readonly radius: number };
 
 export type EffectCondition = EventCondition | StateCondition;
 
@@ -538,6 +561,8 @@ export type SkillType =
   | "glyph"
   | "chant"
   | "weapon-spell"
+  | "nature-ritual"
+  | "binding-ritual"
   | "skill";
 
 /**

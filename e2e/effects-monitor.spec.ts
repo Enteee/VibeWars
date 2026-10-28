@@ -73,6 +73,33 @@ test("a maintained enchantment has no bar, its hover says maintained, costs you 
   await expect(energyPips).toHaveAttribute("data-pips", "4");
 });
 
+test("a spirit's aura shows with no bar, from the spirit, while you stand in its range (#1064)", async ({
+  page,
+}) => {
+  await page.goto("./");
+  await page.getByRole("button", { name: "new character" }).click();
+  await chooseProfession(page, "primary", "ranger");
+  await page.locator("input.editor-name").fill("Winnower");
+  await page.locator(".skill-box", { hasText: "Winnowing" }).locator(".skill-box-equip").click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await page.locator(".roster").getByText("Winnower", { exact: true }).click();
+  await startSoloMatch(page);
+
+  // A 5 s ritual: the spirit stands where you do, so you are in its range.
+  await page.keyboard.press(key("skill-1"));
+  const effects = page.getByRole("list", { name: "your effects" });
+  const icon = effects.getByRole("listitem").filter({ has: page.getByAltText("Winnowing") });
+  await expect(icon).toBeVisible({ timeout: 10_000 });
+  await expect(icon.locator(".effect-bar")).toBeHidden();
+
+  await icon.hover();
+  const tip = page.getByRole("tooltip");
+  await expect(tip).toContainText("physical hits deal +3 damage");
+  await expect(tip).toContainText("from Winnowing");
+  await expect(tip).toContainText("while in its range");
+  await expect(tip).not.toContainText("maintained");
+});
+
 test("the target frame shows a foe's enchantment, at 16 px and not marked yours (#835)", async ({
   page,
 }) => {

@@ -94,6 +94,8 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "dust-cloak": icon("dust-cloak"),
   "aura-of-thorns": icon("aura-of-thorns"),
   "never-surrender": icon("never-surrender"),
+  winnowing: icon("winnowing"),
+  recuperation: icon("recuperation"),
 };
 
 /** Drawn size of one icon, in world pixels. */

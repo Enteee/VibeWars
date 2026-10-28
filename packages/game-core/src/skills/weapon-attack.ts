@@ -178,6 +178,8 @@ export interface WeaponSnapshot {
   readonly damageMultiplier: number;
   /** Added to the chance to crit by the attacker's statuses: Critical Eye's 0.13 (#988). */
   readonly criticalChanceBonus: number;
+  /** Added to a physical blow by the attacker's statuses, before armor: Winnowing's 3 (#1064). */
+  readonly physicalDamageBonus: number;
   /**
    * The type the blow deals unless the skill names its own: a status's
    * `attackDamageType` (#1021), else the weapon's. Riders still read the
@@ -189,13 +191,15 @@ export interface WeaponSnapshot {
 export function weaponSnapshotOf(attacker: Combatant): WeaponSnapshot {
   const { mainHand } = attacker.equipment;
   const rank = rankIn(attacker, mainHand.attributeId);
+  const modifiers = aggregateModifiers(attacker.statuses.active);
   return {
     mainHand,
     rank,
     criticalStrikes: rankIn(attacker, CRITICAL_STRIKES_ATTRIBUTE),
     requirementMet: mainHand.attributeId === undefined || rank >= mainHand.weapon.requirement.rank,
     damageMultiplier: weaponDamageMultiplierOf(attacker),
-    criticalChanceBonus: aggregateModifiers(attacker.statuses.active).criticalChanceBonus,
+    criticalChanceBonus: modifiers.criticalChanceBonus,
+    physicalDamageBonus: modifiers.physicalDamageBonus,
     damageType: attackDamageTypeOf(attacker) ?? mainHand.damageType,
   };
 }
@@ -361,7 +365,9 @@ export function settleBlow(
  * victim is exposed, then skips the damage roll, so the stream does
  * depend on who stands where, deterministically. A crit takes the weapon's maximum times its
  * `criticalMultiplier` instead of rolling; an attack skill's bonus is
- * added after, unmultiplied, and ignores armor (#760). A melee blow at an `exposed` victim always
+ * added after, unmultiplied, and ignores armor (#760). A physical blow
+ * gains the attacker's `physicalDamageBonus` (#1064) before armor, unless
+ * it "deals only N damage" (`weaponDamage` 0), which keeps its N. A melee blow at an `exposed` victim always
  * crits; a projectile never does that way, however it lands. Returns
  * whether the blow crit.
  *
@@ -388,15 +394,19 @@ export function landBlow(
   const base = critical
     ? weapon.damageMax * weapon.criticalMultiplier
     : rng.nextInt(weapon.damageMin, weapon.damageMax + 1);
+  const type = blow.damageType ?? snapshot.damageType;
+  const physicalBonus =
+    blow.weaponDamage > 0 && isPhysicalDamage(type) ? snapshot.physicalDamageBonus : 0;
   const packet: DamagePacket = {
     armored:
       base *
-      snapshot.damageMultiplier *
-      blow.weaponDamage *
-      weaponAttributeMultiplier(snapshot.rank, rules) *
-      (snapshot.requirementMet ? 1 : rules.unmetRequirementMultiplier),
+        snapshot.damageMultiplier *
+        blow.weaponDamage *
+        weaponAttributeMultiplier(snapshot.rank, rules) *
+        (snapshot.requirementMet ? 1 : rules.unmetRequirementMultiplier) +
+      physicalBonus,
     armorIgnoring: blow.bonus,
-    type: blow.damageType ?? snapshot.damageType,
+    type,
     source: "weapon",
     armorPenetration: Math.max(
       blow.armorPenetration,
