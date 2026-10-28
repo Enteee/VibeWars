@@ -21,7 +21,7 @@ import type { Combatant, Skill } from "./types.js";
  *
  * A party area (#1013) is no radius: the caster first, then every living
  * team-mate by distance from the caster, however far and behind whatever
- * wall.
+ * wall. Creatures are not party members: no spirit, minion or pet.
  */
 
 export interface TargetCandidate {
@@ -69,8 +69,11 @@ export function resolveTargets(selection: TargetSelection): readonly Combatant[]
   }
   if (area.origin === "party") {
     const team = selection.candidates.filter(
-      ({ combatant }) =>
-        !combatant.dead && combatant.team === caster.team && combatant.id !== caster.id,
+      ({ combatant, creature }) =>
+        creature === undefined &&
+        !combatant.dead &&
+        combatant.team === caster.team &&
+        combatant.id !== caster.id,
     );
     return [caster, ...nearestFirst(team, selection.casterPosition)];
   }

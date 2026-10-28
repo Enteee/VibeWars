@@ -175,7 +175,7 @@ A deep wound among them is gone before the heal, so it does not cut it.
 With no condition it heals nothing and still costs its energy.
 **Heal Party** (#1013, Healing Prayers, 15 energy, 1 s, 20 s) heals you
 and every living team-mate 66, wherever they stand and through walls:
-your party is your team. Divine Favor adds to your own heal only, as for
+your party is your team, without its creatures: no spirit, minion or pet. Divine Favor adds to your own heal only, as for
 every untargeted Monk spell, and a deep wound cuts the heal of whoever
 has one. **Healing Breeze** (Healing Prayers, 10 energy, 1 s, 5 s) gives
 an ally +8 Health regeneration for 15 s; it is an enchantment, so

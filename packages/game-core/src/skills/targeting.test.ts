@@ -5,6 +5,7 @@ import { vec2, type Vec2 } from "../vec2.js";
 import { getSkill } from "./catalog.js";
 import { resolveTargets, type TargetCandidate, type TargetSelection } from "./targeting.js";
 import { makeCombatant } from "./testing.js";
+import type { Creature } from "../match/simulation.js";
 import type { AreaRule, Combatant, Skill } from "./types.js";
 
 const SPLASH: AreaRule = {
@@ -128,6 +129,38 @@ describe("resolveTargets", () => {
     expect(party).toEqual(["caster", "a", "b", "walled", "far"]);
     // Alone on its team: only the caster.
     expect(select({ origin: "party" }, [at("foe", 1, vec2(20, 0))])).toEqual(["caster"]);
+  });
+
+  it("leaves creatures out of a party area: no spirit, minion or pet is a party member (#1013)", () => {
+    const creature = (id: string, kind: Creature["kind"]): TargetCandidate => ({
+      ...at(id, 0, vec2(10, 0)),
+      creature: {
+        ownerId: "caster",
+        kind,
+        name: id,
+        expiresInSeconds: Infinity,
+        ageSeconds: 0,
+        summonedAtTick: 0,
+        skillId: "test.creature",
+        aura: undefined,
+        onDeath: "vanish",
+        ownerDisableSeconds: 0,
+        companionSkillId: undefined,
+      },
+    });
+    const wall = segment(vec2(500, -100), vec2(500, 100));
+    expect(
+      select(
+        { origin: "party" },
+        [
+          creature("spirit", "spirit"),
+          creature("minion", "minion"),
+          creature("pet", "pet"),
+          at("walled", 0, vec2(5000, 0)),
+        ],
+        { losBlockers: [wall] },
+      ),
+    ).toEqual(["caster", "walled"]);
   });
 
   it("gives the same answer however the candidates are ordered", () => {
