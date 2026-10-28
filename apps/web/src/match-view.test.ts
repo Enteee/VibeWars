@@ -106,6 +106,22 @@ describe("toArenaSnapshot", () => {
     ]);
   });
 
+  it("cues a burning body's flames, and a corpse's never (#1138)", () => {
+    const burning: StatusSnapshot = {
+      id: "burning",
+      endsAt: 10,
+      durationSeconds: 10,
+      casterId: "me",
+    };
+    const alive = { ...player("alive", 0), statuses: [burning] };
+    const dead = { ...player("dead", 0), dead: true, statuses: [burning] };
+    const arena = toArenaSnapshot(match([alive, dead]), []);
+    expect(arena.actors.map((actor) => [actor.id, actor.conditionCues])).toEqual([
+      ["alive", ["burning"]],
+      ["dead", []],
+    ]);
+  });
+
   it("badges a cast bar with the casting skill's type, and nothing else (#1125)", () => {
     const casting = (id: string, skillId: string, castTotal: number): PlayerSnapshot => ({
       ...player(id, 0),

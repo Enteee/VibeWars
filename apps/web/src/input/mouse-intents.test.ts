@@ -92,6 +92,7 @@ function body(id: string, x: number, team: RenderableActor["team"]): RenderableA
     statuses: [],
     enchanted: false,
     hexed: false,
+    conditionCues: [],
   };
 }
 

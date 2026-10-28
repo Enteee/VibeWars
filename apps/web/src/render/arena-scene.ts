@@ -56,6 +56,7 @@ import {
   type WalkMarker,
 } from "./walk-marker.js";
 import { AttackClock, REST_FRAME, shownFrame } from "./attack-clock.js";
+import { conditionMarks, cuePhase } from "./body-conditions.js";
 import { bodyRings } from "./body-rings.js";
 import { CAST_BADGE_SIZE, CAST_BAR_RISE, castBadgeLayout } from "./cast-badge.js";
 import {
@@ -104,6 +105,8 @@ const CAST_BAR_FILL = 0xd7dee8;
 /** Marks the actor you control, inside its circle, in any team colour. */
 const SELF_RIM = 0xd7dee8;
 const BODY_EDGE_WIDTH = 1.5;
+/** A condition cue's outline, and a bubble's stroke (#1138). */
+const CUE_EDGE_WIDTH = 1;
 /** How opaque a weapon swing's number is at most: present, never louder than a skill (#160). */
 const LIGHT_TEXT_ALPHA = 0.8;
 /** A floating text's size by weight: a critical hit is the loudest number on screen (#533). */
@@ -130,12 +133,12 @@ const EDGE_MARKER_LENGTH = 12;
 const EDGE_MARKER_WIDTH = 10;
 /**
  * The world's layers, bottom up (#1037). Wards on the floor and their
- * icons (#1087), under everything that stands on them; the floor and the bodies,
- * with their enchantment and hex rings (#1117); the profession glyph
- * inside each body; every mark on a body (off-hand,
- * weapon, target ring, call chevron, bars, swing flashes),
- * so a weapon crosses the glyph, never the reverse; the casting skill's
- * type badge by the cast bar (#1125); then shots, status icons, names and
+ * icons (#1087), under everything that stands on them; the floor and the
+ * bodies, with their enchantment and hex rings (#1117) and condition cues
+ * (#1138); the profession glyph inside each body; every mark on a body
+ * (off-hand, weapon, target ring, call chevron, bars, swing flashes), so
+ * a weapon crosses the glyph, never the reverse; the casting skill's type
+ * badge by the cast bar (#1125); then shots, status icons, names and
  * numbers, which were over the bodies before the split, so a long name may
  * cover a badge's top edge.
  */
@@ -795,6 +798,7 @@ export class ArenaScene extends Phaser.Scene {
     }
     // On the body layer, after the body and its self rim: every mark draws over the rings.
     this.drawBodyRings(g, actor);
+    this.drawConditionCues(g, actor);
 
     if (actor.id === this.snapshot.targetId) {
       marks.lineStyle(2, TARGET_RING, 1);
@@ -820,6 +824,40 @@ export class ArenaScene extends Phaser.Scene {
         g.beginPath();
         g.arc(x, y, ring.radius, arc.from, arc.to);
         g.strokePath();
+      }
+    }
+  }
+
+  /**
+   * Flames, drops or bubbles on a burning, bleeding or poisoned body
+   * (#1138), over its rings, round its centre even lying down.
+   */
+  private drawConditionCues(g: Phaser.GameObjects.Graphics, actor: RenderableActor): void {
+    if (actor.conditionCues.length === 0) {
+      return;
+    }
+    const { x, y } = actor.position;
+    const phase = cuePhase(actor.id);
+    for (const cue of actor.conditionCues) {
+      for (const mark of conditionMarks(cue, actor.radius, this.now, phase, this.reducedMotion)) {
+        if (mark.kind === "flame") {
+          const [a, b, tip] = mark.points;
+          g.fillStyle(mark.colour, 1);
+          g.fillTriangle(x + a.x, y + a.y, x + b.x, y + b.y, x + tip.x, y + tip.y);
+          g.lineStyle(CUE_EDGE_WIDTH, BODY_EDGE, 1);
+          g.strokeTriangle(x + a.x, y + a.y, x + b.x, y + b.y, x + tip.x, y + tip.y);
+        } else if (mark.kind === "drop") {
+          g.fillStyle(mark.colour, mark.alpha);
+          g.fillCircle(x + mark.x, y + mark.y, mark.radius);
+          g.lineStyle(CUE_EDGE_WIDTH, BODY_EDGE, mark.alpha);
+          g.strokeCircle(x + mark.x, y + mark.y, mark.radius);
+        } else {
+          // A dark halo under the hollow stroke, so it reads on any team colour.
+          g.lineStyle(CUE_EDGE_WIDTH + 1, BODY_EDGE, mark.alpha);
+          g.strokeCircle(x + mark.x, y + mark.y, mark.radius);
+          g.lineStyle(CUE_EDGE_WIDTH, mark.colour, mark.alpha);
+          g.strokeCircle(x + mark.x, y + mark.y, mark.radius);
+        }
       }
     }
   }
