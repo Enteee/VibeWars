@@ -156,8 +156,13 @@ export type { IntentRefusal, MatchIntent } from "./match/apply-intent.js";
 export { applyIntent } from "./match/apply-intent.js";
 export { MAX_CATCHUP_SECONDS, drainAccumulator } from "./match/accumulator.js";
 
-export type { CombatCause, CombatLogEntry, CombatTally } from "./match/combat-log.js";
-export { CombatMeter, tallyCombat } from "./match/combat-log.js";
+export type {
+  CombatCause,
+  CombatLogEntry,
+  CombatTally,
+  MatchTallyRow,
+} from "./match/combat-log.js";
+export { CombatMeter, MatchTally, tallyCombat } from "./match/combat-log.js";
 
 export type {
   Behaviour,

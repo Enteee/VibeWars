@@ -53,6 +53,7 @@ import {
 import { mountChat, type ChatPanel } from "./ui/chat.js";
 import { openRelayPrompt } from "./ui/relay-prompt.js";
 import { describeOutcome } from "./ui/hud.js";
+import type { SummaryTable } from "./ui/match-summary.js";
 import {
   mountQueueScreen,
   nextStreak,
@@ -236,6 +237,8 @@ async function main(): Promise<void> {
     { readonly outcome: string; readonly won: boolean; readonly timer: number } | undefined;
   /** The ended view's result line, while it is up. */
   let endedOutcome: string | undefined;
+  /** The ended view's match summary (#1057), while it is up. */
+  let endedSummary: readonly SummaryTable[] | undefined;
   /**
    * *Stay together* after a queued win (#882), while it is offered: the
    * lobby the vote goes through, the hosted lobby when this tab hosts it,
@@ -293,6 +296,7 @@ async function main(): Promise<void> {
     clearQueuedEnd();
     closeStay();
     endedOutcome = undefined;
+    endedSummary = undefined;
     queue?.place.leave();
     queue?.screen.dispose();
     queue = undefined;
@@ -763,6 +767,7 @@ async function main(): Promise<void> {
       kind: "ended",
       outcome: endedOutcome,
       streak: queueStreak,
+      summary: endedSummary,
       ...(offer === undefined ? {} : { stay: offer }),
     });
   };
@@ -998,6 +1003,8 @@ async function main(): Promise<void> {
       return;
     }
     match = undefined;
+    // Read before the view goes: the table moves with the player (#1057).
+    const summary = leaving.summary();
     await leaving.dispose();
     enteringMatch = false;
     const leavingLobby = lobby;
@@ -1032,6 +1039,7 @@ async function main(): Promise<void> {
     showViewport(false);
     music().screen("menu");
     endedOutcome = outcome;
+    endedSummary = summary;
     if (offered && leavingLobby !== undefined) {
       offerStay(leavingLobby, ending);
     }

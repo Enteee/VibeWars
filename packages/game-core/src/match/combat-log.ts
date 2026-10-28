@@ -52,12 +52,21 @@ export interface CombatTally {
   readonly unattributedDamage: number;
 }
 
+/** Damage to yourself is not damage dealt, as the headless runner has always counted it. */
+const notSelf = (sourceId: string, targetId: string): boolean => sourceId !== targetId;
+
 /** A tally that can still be added to. */
 class TallyBuilder {
   readonly damageByActor = new Map<string, number>();
   readonly healingByActor = new Map<string, number>();
   readonly damageTakenByActor = new Map<string, number>();
   unattributedDamage = 0;
+  /** Whether damage `sourceId` did to `targetId` counts as dealt. */
+  readonly #dealt: (sourceId: string, targetId: string) => boolean;
+
+  constructor(dealt: (sourceId: string, targetId: string) => boolean) {
+    this.#dealt = dealt;
+  }
 
   add(entry: CombatLogEntry): void {
     for (const event of entry.events) {
@@ -65,9 +74,7 @@ class TallyBuilder {
         bump(this.damageTakenByActor, event.targetId, event.amount);
         if (entry.sourceId === undefined) {
           this.unattributedDamage += event.amount;
-        } else if (event.targetId !== entry.sourceId) {
-          // Damage to yourself is not damage dealt, as the headless
-          // runner has always counted it.
+        } else if (this.#dealt(entry.sourceId, event.targetId)) {
           bump(this.damageByActor, entry.sourceId, event.amount);
         }
       } else if (event.kind === "heal" && entry.sourceId !== undefined) {
@@ -87,11 +94,78 @@ function bump(map: Map<string, number>, key: string, amount: number): void {
 
 /** Total damage dealt, healing done and damage taken, per participant. */
 export function tallyCombat(entries: Iterable<CombatLogEntry>): CombatTally {
-  const tally = new TallyBuilder();
+  const tally = new TallyBuilder(notSelf);
   for (const entry of entries) {
     tally.add(entry);
   }
   return tally;
+}
+
+/** One player's line in the match summary (#1057). */
+export interface MatchTallyRow {
+  readonly damage: number;
+  readonly healing: number;
+  readonly taken: number;
+  readonly kills: number;
+  readonly deaths: number;
+  readonly interrupts: number;
+}
+
+/**
+ * A whole match's totals per participant, for the summary at its end
+ * (#1057). Damage, healing and taken follow `tallyCombat`'s rules, except
+ * that only damage to a foe is dealt: hurting an ally is not an
+ * achievement. A kill is credited to the source of the entry that carries
+ * the death, when that source is on the other team; a death with no
+ * source, or by a teammate's hand, credits nobody. An interrupt is a
+ * successful one: `interrupted`, never `interrupt-missed`.
+ */
+export class MatchTally {
+  readonly #teamOf: (id: string) => number | undefined;
+  readonly #combat: TallyBuilder;
+  readonly #kills = new Map<string, number>();
+  readonly #deaths = new Map<string, number>();
+  readonly #interrupts = new Map<string, number>();
+
+  /** `teamOf` says which team an id is on; kills and damage dealt need it. */
+  public constructor(teamOf: (id: string) => number | undefined) {
+    this.#teamOf = teamOf;
+    this.#combat = new TallyBuilder((sourceId, targetId) => this.#foes(sourceId, targetId));
+  }
+
+  public add(entries: readonly CombatLogEntry[]): void {
+    for (const entry of entries) {
+      this.#combat.add(entry);
+      for (const event of entry.events) {
+        if (event.kind === "death") {
+          bump(this.#deaths, event.targetId, 1);
+          if (entry.sourceId !== undefined && this.#foes(entry.sourceId, event.targetId)) {
+            bump(this.#kills, entry.sourceId, 1);
+          }
+        } else if (event.kind === "interrupted" && entry.sourceId !== undefined) {
+          bump(this.#interrupts, entry.sourceId, 1);
+        }
+      }
+    }
+  }
+
+  /** Zeros for an id never seen. */
+  public row(id: string): MatchTallyRow {
+    return {
+      damage: this.#combat.damageByActor.get(id) ?? 0,
+      healing: this.#combat.healingByActor.get(id) ?? 0,
+      taken: this.#combat.damageTakenByActor.get(id) ?? 0,
+      kills: this.#kills.get(id) ?? 0,
+      deaths: this.#deaths.get(id) ?? 0,
+      interrupts: this.#interrupts.get(id) ?? 0,
+    };
+  }
+
+  #foes(a: string, b: string): boolean {
+    const teamA = this.#teamOf(a);
+    const teamB = this.#teamOf(b);
+    return teamA !== undefined && teamB !== undefined && teamA !== teamB;
+  }
 }
 
 /** Sum of one kind of event credited to `actorId` across `entries`. */
@@ -124,7 +198,7 @@ function sumFor(
 export class CombatMeter {
   readonly #windowSeconds: number;
   #recent: CombatLogEntry[] = [];
-  #totals = new TallyBuilder();
+  #totals = new TallyBuilder(notSelf);
 
   public constructor(options: { windowSeconds?: number } = {}) {
     this.#windowSeconds = options.windowSeconds ?? 10;
@@ -158,7 +232,7 @@ export class CombatMeter {
 
   public reset(): void {
     this.#recent = [];
-    this.#totals = new TallyBuilder();
+    this.#totals = new TallyBuilder(notSelf);
   }
 
   #rate(actorId: string, kind: "damage" | "heal", atSeconds: number): number {
