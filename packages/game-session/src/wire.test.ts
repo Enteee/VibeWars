@@ -181,7 +181,10 @@ describe("groundEffectSnapshot (#1087)", () => {
     ownerId: "ele",
     team: 1,
     position: { x: 120.5, y: 80 },
-    aura: { statusId: "ward-against-melee", affects: "allies", radius: 109 },
+    act: {
+      kind: "aura",
+      aura: { statusId: "ward-against-melee", affects: "allies", radius: 109 },
+    },
     durationSeconds: 17.04,
     remainingSeconds: 6.345,
   };
@@ -201,6 +204,28 @@ describe("groundEffectSnapshot (#1087)", () => {
 
   it("never sends a duration of nothing", () => {
     expect(groundEffectSnapshot({ ...ward, durationSeconds: 0.01 }, 0).durationSeconds).toBe(0.1);
+  });
+
+  it("draws a trap at the area its spring hits (#1105)", () => {
+    const trap: GroundEffect = {
+      ...ward,
+      skillId: "ranger.barbed-trap",
+      act: {
+        kind: "trap",
+        trap: {
+          triggerRadius: 40,
+          area: {
+            radius: 81,
+            origin: "caster",
+            affects: "enemies",
+            maxTargets: undefined,
+            includesCaster: false,
+          },
+          effects: [],
+        },
+      },
+    };
+    expect(groundEffectSnapshot(trap, 10.01).radius).toBe(81);
   });
 });
 

@@ -50,11 +50,11 @@ export const SKILL_ICONS = {
   "assassin.twisting-fangs": { glyph: "dagger", modifier: "clock" },
   "assassin.horns-of-the-ox": { glyph: "dagger", modifier: "stun" },
   "assassin.moebius-strike": { glyph: "dagger", modifier: "self" },
-  // Placeholders until asset-designer's icons (#1041).
-  "assassin.leaping-mantis-sting": { glyph: "slow", modifier: "up" },
-  "assassin.jungle-strike": { glyph: "slow", modifier: "down" },
-  "assassin.trampling-ox": { glyph: "slow", modifier: "stun" },
-  "assassin.falling-spider": { glyph: "flask", modifier: "stun" },
+  // The dagger chain: a cripple, its spread, a knockdown and a poison, each its own picture (#1049).
+  "assassin.leaping-mantis-sting": { glyph: "limp" },
+  "assassin.jungle-strike": { glyph: "dagger-burst" },
+  "assassin.trampling-ox": { glyph: "ox-horns" },
+  "assassin.falling-spider": { glyph: "spider" },
   "ranger.punishing-shot": { glyph: "arrow", modifier: "up" },
   "ranger.pin-down": { glyph: "pin", modifier: "less" },
   "ranger.hunters-shot": { glyph: "arrow", modifier: "bleed" },
@@ -205,6 +205,8 @@ export const SKILL_ICONS = {
   "monk.rebirth": { glyph: "resurrect-arrive" },
   "paragon.signet-of-return": { glyph: "resurrect-return" },
   "ritualist.flesh-of-my-flesh": { glyph: "resurrect-blood" },
+  // A placeholder until the asset-designer's (#1105).
+  "ranger.barbed-trap": { glyph: "pin", modifier: "bleed" },
   // Health taken from a corpse: the heal glyph with the corpse mark (#1075).
   "necromancer.soul-feast": { glyph: "heal", modifier: "corpse" },
   // Placeholders until the asset-designer's (#467): bodies raised from a corpse.
