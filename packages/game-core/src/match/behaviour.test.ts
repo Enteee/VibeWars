@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
-import { segment } from "../geometry.js";
+import { segment, type Segment } from "../geometry.js";
+import { buildNavGraph, createPathFinder } from "../pathing.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { distance, vec2, ZERO, type Vec2 } from "../vec2.js";
 import { createCursor, decide, type Behaviour } from "./behaviour.js";
@@ -374,12 +375,17 @@ describe("follow-and-attack (#467)", () => {
 
   it("stands still beside its owner with no foe about", () => {
     const sim = world(spec("owner", 0, vec2(0, 0)), minion(vec2(50, 0)));
-    expect(ask(sim)).toMatchObject({ moveDirection: ZERO, attackTargetId: undefined });
+    expect(ask(sim)).toMatchObject({
+      moveDirection: ZERO,
+      moveTo: undefined,
+      attackTargetId: undefined,
+    });
   });
 
   it("walks to an owner 200 away and stops a step short of 109", () => {
     const sim = world(spec("owner", 0, vec2(0, 0)), { ...minion(vec2(200, 0)), behaviour: FOLLOW });
-    expect(ask(sim).moveDirection).toEqual(vec2(-1, 0));
+    // By path, round anything in the way (#1153), not straight.
+    expect(ask(sim)).toMatchObject({ moveDirection: ZERO, moveTo: vec2(0, 0) });
     run(sim, 2);
     const d = distance(at(sim, "minion"), at(sim, "owner"));
     expect(d).toBeLessThanOrEqual(109 + STEP);
@@ -421,7 +427,8 @@ describe("follow-and-attack (#467)", () => {
     );
     const cursor = createCursor();
     expect(ask(sim, cursor)).toMatchObject({
-      moveDirection: vec2(-1, 0),
+      moveDirection: ZERO,
+      moveTo: vec2(0, 0),
       attackTargetId: undefined,
     });
     expect(cursor.returning).toBe(true);
@@ -435,7 +442,8 @@ describe("follow-and-attack (#467)", () => {
     );
     const cursor = { ...createCursor(), returning: true };
     expect(ask(sim, cursor)).toMatchObject({
-      moveDirection: vec2(-1, 0),
+      moveDirection: ZERO,
+      moveTo: vec2(0, 0),
       attackTargetId: undefined,
     });
     const heel = world(
@@ -455,7 +463,70 @@ describe("follow-and-attack (#467)", () => {
       throw new Error("no owner");
     }
     owner.combatant.dead = true;
-    expect(ask(sim).moveDirection).toEqual(vec2(0, -1));
+    expect(ask(sim).moveTo).toEqual(vec2(0, 0));
+  });
+
+  describe("walking back round walls (#1153)", () => {
+    const BOUNDS = { width: 960, height: 640 };
+
+    /** A rectangle's four sides, as a map's rect wall becomes. */
+    function rect(x: number, y: number, width: number, height: number): Segment[] {
+      const a = vec2(x, y);
+      const b = vec2(x + width, y);
+      const c = vec2(x + width, y + height);
+      const d = vec2(x, y + height);
+      return [segment(a, b), segment(b, c), segment(c, d), segment(d, a)];
+    }
+
+    /** The owner at (200, 320), its minion 500 off, past the leash, at (700, 320). */
+    function walled(walls: readonly Segment[]): MatchSimulation {
+      return new MatchSimulation({
+        seed: "follow-walls",
+        walls,
+        bounds: BOUNDS,
+        participants: [
+          spec("owner", 0, vec2(200, 320)),
+          { ...minion(vec2(700, 320)), behaviour: FOLLOW },
+        ],
+      });
+    }
+
+    it("walks round a wall between it and its owner, to heel", () => {
+      // Square across the straight line, which only pushes into it.
+      const walls = rect(440, 120, 24, 400);
+      const path = createPathFinder(
+        buildNavGraph(walls, BOUNDS, RULES.collision.playerRadius),
+      ).find(vec2(700, 320), vec2(200, 320));
+      if (path === undefined) {
+        throw new Error("no way round");
+      }
+      let length = 0;
+      let from = vec2(700, 320);
+      for (const point of path) {
+        length += distance(from, point);
+        from = point;
+      }
+      const sim = walled(walls);
+
+      run(sim, length / RULES.movement.maxSpeedUnitsPerSecond + 1);
+
+      expect(distance(at(sim, "minion"), at(sim, "owner"))).toBeLessThanOrEqual(109 + STEP);
+    });
+
+    it("stands still, without jitter, with no way to its owner", () => {
+      // A closed room round the owner, of four walls.
+      const sim = walled([
+        ...rect(100, 200, 240, 20),
+        ...rect(100, 420, 240, 20),
+        ...rect(100, 200, 20, 240),
+        ...rect(320, 200, 20, 240),
+      ]);
+
+      for (let i = 0; i < 2 / DT; i += 1) {
+        sim.step(DT);
+        expect(at(sim, "minion")).toEqual(vec2(700, 320));
+      }
+    });
   });
 
   describe("engaging its owner's target, as a pet (#1046)", () => {
@@ -474,7 +545,11 @@ describe("follow-and-attack (#467)", () => {
         minion(vec2(200, 0)),
         spec("foe", 1, vec2(220, 0)),
       );
-      expect(askPet(sim)).toMatchObject({ moveDirection: vec2(-1, 0), attackTargetId: undefined });
+      expect(askPet(sim)).toMatchObject({
+        moveDirection: ZERO,
+        moveTo: vec2(0, 0),
+        attackTargetId: undefined,
+      });
     });
 
     it("goes for its owner's foe within 700 of itself, and not one at 701", () => {
@@ -544,7 +619,8 @@ describe("follow-and-attack (#467)", () => {
       sim.requestAttack("owner", "foe");
       const cursor = createCursor();
       expect(askPet(sim, cursor)).toMatchObject({
-        moveDirection: vec2(-1, 0),
+        moveDirection: ZERO,
+        moveTo: vec2(0, 0),
         attackTargetId: undefined,
       });
       expect(cursor.returning).toBe(true);
@@ -555,6 +631,7 @@ describe("follow-and-attack (#467)", () => {
     const sim = world(spec("minion", 0, vec2(0, 200)), spec("foe", 1, vec2(0, 250)));
     expect(ask(sim)).toEqual({
       moveDirection: ZERO,
+      moveTo: undefined,
       targetId: undefined,
       useSkillId: undefined,
       attackTargetId: undefined,

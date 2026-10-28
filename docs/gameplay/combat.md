@@ -1335,6 +1335,9 @@ plus half its Death Magic, rounded down (8 at 12): raising past it kills
 the weakest first, by Health left and the oldest of equals, and that is
 a death, so Soul Reaping answers it. A minion leaves no corpse, outlives
 its master's death and follows the body, and leaves with its master.
+A minion or a pet walking back to its owner goes round walls and
+bodies, as a click-to-walk does; with no way there at all, it stands
+where it is until there is one.
 
 **Animate Bone Minions** (Necromancer, Death Magic, spell, 10 energy,
 1 s, 5 s recharge) raises two Bone Minions of 280 Health and armor 30,
