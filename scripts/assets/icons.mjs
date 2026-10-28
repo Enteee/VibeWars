@@ -474,6 +474,14 @@ const status = {
     "enchantment",
     (c) => `<path d="M8 6v7a4 4 0 0 0 8 0V8M13 11l3-3 3 3" ${stroke(c, 2.2)}/>`,
   ],
+  // Enchantment: a plus thrown up by two strokes, healed on each attack
+  // or spell (#1039).
+  "vigorous-spirit": [
+    "enchantment",
+    (c) =>
+      `<path d="M12 5v8M8 9h8" ${stroke(c, 2.5)}/>` +
+      `<path d="M6.5 18.5l3-3M17.5 18.5l-3-3" ${stroke(c, 2)}/>`,
+  ],
   // Shout: an arrow turning back, run and be healed for it (#921).
   "fall-back": ["shout", (c) => `<path d="M17 12H7.5M11 8l-4 4 4 4" ${stroke(c, 2.5)}/>`],
   // Shout: a shield planted on the ground, armor while you stand (#921).

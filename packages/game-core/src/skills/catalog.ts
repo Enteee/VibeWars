@@ -4812,6 +4812,144 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Monk staples 3 (#1039)                                                 */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "monk.cure-hex",
+    name: "Cure Hex",
+    type: "spell",
+    elite: false,
+    profession: "monk",
+    attributeId: "monk.healing-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Remove one Hex from target ally. If a Hex was removed, that ally is
+    // healed for 30...86...100 Health": the current page's 86, not the 102
+    // guildwars.fandom still quotes from before the cut.
+    effects: [
+      { kind: "remove-status", category: "hex", count: 1 },
+      {
+        kind: "if",
+        condition: { kind: "removed", category: "hex" },
+        effects: [
+          {
+            kind: "heal",
+            perStatusOnTarget: [],
+            amount: {
+              scaling: { attributeId: "monk.healing-prayers", atZero: 30, atTwelve: 86 },
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "monk.smite-condition",
+    name: "Smite Condition",
+    type: "spell",
+    elite: false,
+    profession: "monk",
+    attributeId: "monk.smiting-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 7,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Remove one Condition from target ally. If a Condition was removed,
+    // foes in the area take 10...50...60 damage": holy, and the area is the
+    // ally's, as Smite Hex's.
+    effects: [
+      { kind: "remove-status", category: "condition", count: 1 },
+      {
+        kind: "if",
+        condition: { kind: "removed", category: "condition" },
+        effects: [
+          {
+            kind: "splash",
+            radius: AREA_IN_THE_AREA,
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "monk.smiting-prayers", atZero: 10, atTwelve: 50 },
+                },
+                type: "holy",
+                armorPenetration: 0,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "monk.mending-touch",
+    name: "Mending Touch",
+    type: "spell",
+    elite: false,
+    profession: "monk",
+    attributeId: "monk.protection-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 6,
+    // "Touched ally": at hand, as Blood Ritual's.
+    range: RANGE_MELEE,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Touched ally loses two conditions and is healed for 15...51...60
+    // Health for each condition removed in this way."
+    effects: [
+      { kind: "remove-status", category: "condition", count: 2 },
+      {
+        kind: "heal",
+        perStatusOnTarget: [],
+        perRemoved: "condition",
+        amount: {
+          scaling: { attributeId: "monk.protection-prayers", atZero: 15, atTwelve: 51 },
+        },
+      },
+    ],
+  },
+  {
+    id: "monk.vigorous-spirit",
+    name: "Vigorous Spirit",
+    type: "enchantment",
+    elite: false,
+    profession: "monk",
+    attributeId: "monk.healing-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 4,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 30 seconds, each time target ally attacks or casts a spell, that
+    // ally is healed for 5...17...20 health": the 17 is the status's.
+    effects: [{ kind: "apply-status", statusId: "vigorous-spirit", durationSeconds: 30 }],
+  },
 
   /* ---------------------------------------------------------------------- */
   /* Assassin staples (#988)                                                */

@@ -38,4 +38,11 @@ describe("skillRoles", () => {
     expect(rolesOf("monk.smite-hex")).toContain("removal");
     expect(rolesOf("monk.restore-condition")).toEqual(["healing", "removal"]);
   });
+
+  it("counts a heal on each attack or spell as healing, and the Monk staples 3 (#1039)", () => {
+    expect(rolesOf("monk.vigorous-spirit")).toEqual(["healing"]);
+    expect(rolesOf("monk.cure-hex")).toEqual(["healing", "removal"]);
+    expect(rolesOf("monk.mending-touch")).toEqual(["healing", "removal"]);
+    expect(rolesOf("monk.smite-condition")).toEqual(["removal"]);
+  });
 });
