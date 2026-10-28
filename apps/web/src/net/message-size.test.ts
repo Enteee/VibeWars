@@ -137,6 +137,7 @@ function player(index: number): WirePlayer {
     healthPips: -MAX_WIRE_PIPS,
     energyPips: -MAX_WIRE_PIPS,
     creature: null,
+    bot: false,
     statuses: WIRE_STATUSES,
   };
 }
@@ -405,6 +406,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
         ready: true,
         isHost: i === 0,
         character: { name: NAME, primary: longest(professions), secondary: longest(professions) },
+        bot: false,
       })),
       countdownSeconds: 5,
     };

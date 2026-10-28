@@ -174,6 +174,8 @@ export interface BehaviourContext {
   check(skillId: string, targetId: string | undefined): ActivationCheck;
   /** Whether `participantId` is driven by `play-build` (#1189): a bot. */
   isBot(participantId: string): boolean;
+  /** The foe `self`'s team called (#443), if any: a bot's target while it lives (#1193). */
+  readonly calledTargetId: string | undefined;
 }
 
 export function createCursor(): BehaviourCursor {

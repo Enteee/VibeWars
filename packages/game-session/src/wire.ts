@@ -521,7 +521,7 @@ function absent<T>(value: T | null): T | undefined {
 /** The fields of a body's `WirePlayer` that say who it is, not how it stands. */
 export type WireIdentity = Pick<
   WirePlayer,
-  "name" | "team" | "primaryProfession" | "secondaryProfession" | "creature"
+  "name" | "team" | "primaryProfession" | "secondaryProfession" | "creature" | "bot"
 >;
 
 /** What a seat says about who sits in it. */
@@ -530,6 +530,8 @@ export interface SeatIdentity {
   readonly team: 0 | 1;
   readonly primaryProfession: ProfessionId;
   readonly secondaryProfession: ProfessionId | undefined;
+  /** A lobby's bot sits in it (#1193). */
+  readonly bot: boolean;
 }
 
 /**
@@ -552,6 +554,7 @@ export function wireIdentity(
       primaryProfession: seat.primaryProfession,
       secondaryProfession: seat.secondaryProfession ?? null,
       creature: null,
+      bot: seat.bot,
     };
   }
   const { creature } = participant;
@@ -570,6 +573,7 @@ export function wireIdentity(
           mode: companionMode(creature),
           armedAttack: armedAttackSnapshot(participant.armedAttack, elapsedSeconds),
         },
+        bot: false,
       };
 }
 
@@ -630,6 +634,7 @@ export function playerSnapshot(player: WirePlayer): PlayerSnapshot | undefined {
     energyPips: player.energyPips,
     statuses,
     creature: player.creature ?? undefined,
+    bot: player.bot,
   };
 }
 

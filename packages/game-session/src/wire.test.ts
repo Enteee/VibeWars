@@ -309,7 +309,13 @@ describe("wireIdentity (#1052)", () => {
   const seats = new Map<string, SeatIdentity>([
     [
       "p1",
-      { name: "Ann", team: 1, primaryProfession: "necromancer", secondaryProfession: undefined },
+      {
+        name: "Ann",
+        team: 1,
+        primaryProfession: "necromancer",
+        secondaryProfession: undefined,
+        bot: false,
+      },
     ],
   ]);
   const minion = (ownerId: string) => ({

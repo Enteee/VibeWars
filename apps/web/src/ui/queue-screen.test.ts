@@ -37,7 +37,15 @@ function snapshot(selfTeam: 0 | 1, countdownSeconds: number | null): LobbySnapsh
     mapId: "arena-open",
     hostId: "host",
     players: [
-      { sessionId: "me", name: "Me", team: selfTeam, ready: false, isHost: false, character: null },
+      {
+        sessionId: "me",
+        name: "Me",
+        team: selfTeam,
+        ready: false,
+        isHost: false,
+        character: null,
+        bot: false,
+      },
       {
         sessionId: "mate",
         name: "Mate",
@@ -45,6 +53,7 @@ function snapshot(selfTeam: 0 | 1, countdownSeconds: number | null): LobbySnapsh
         ready: false,
         isHost: false,
         character: { name: "Mhenlo", primary: "monk", secondary: null },
+        bot: false,
       },
       {
         sessionId: "foe",
@@ -53,6 +62,7 @@ function snapshot(selfTeam: 0 | 1, countdownSeconds: number | null): LobbySnapsh
         ready: false,
         isHost: true,
         character: null,
+        bot: false,
       },
     ],
     isHost: false,

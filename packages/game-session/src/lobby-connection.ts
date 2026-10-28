@@ -25,6 +25,8 @@ export interface LobbyPlayerSnapshot {
   readonly isHost: boolean;
   /** `null` brings a starter build. */
   readonly character: LobbyCharacter | null;
+  /** A bot the host added (#1193): no peer behind it. */
+  readonly bot: boolean;
 }
 
 export interface LobbySnapshot {

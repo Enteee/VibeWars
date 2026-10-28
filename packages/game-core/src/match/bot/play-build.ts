@@ -196,12 +196,16 @@ function think(context: BehaviourContext): BehaviourIntent {
 }
 
 /**
- * The foe the team's bots already target, if one is alive; else the
- * living foe within spell range with the lowest health fraction, ties to
- * the nearer, then simulation order. A creature only while no other foe
- * is in range.
+ * The foe the team called (#1193), while it is alive; else the foe the
+ * team's bots already target, if one is alive; else the living foe within
+ * spell range with the lowest health fraction, ties to the nearer, then
+ * simulation order. A creature only while no other foe is in range.
  */
 function teamTarget(context: BehaviourContext, foes: readonly Participant[]): string | undefined {
+  const called = foes.find((foe) => foe.id === context.calledTargetId);
+  if (called !== undefined) {
+    return called.id;
+  }
   const self = context.self;
   const inRange = foes.filter((foe) => distance(foe.position, self.position) <= RANGE_SPELL);
   const fightersInRange = inRange.some((foe) => foe.creature === undefined);

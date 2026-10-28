@@ -1,3 +1,4 @@
+import { STARTER_BUILDS, getProfession, type PlayerBuild } from "@vibewars/game-core";
 import {
   MAX_LOBBY_PLAYERS,
   PROTOCOL_VERSION,
@@ -142,7 +143,12 @@ interface Member {
   character: LobbyCharacter | null;
   /** The seat key it was admitted on, in a queued lobby (#882). */
   readonly seatKey: string | null;
+  /** A bot's build (#1193): it has no peer, is always ready and plays this. */
+  readonly bot: PlayerBuild | null;
 }
+
+/** Whether `member` counts as ready: a bot always is (#1193). */
+const isReady = (member: Member): boolean => member.bot !== null || member.ready;
 
 /** Whether the lobby satisfies the rules for starting, and if not, why. */
 export function canStart(
@@ -175,6 +181,11 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   const { host: transport, local } = createLocalPeer(sizeChecked(options.transport));
   /** In the order they joined, which is the order they are listed in. */
   const members = new Map<string, Member>();
+  /** The member peer `peerId` is: never a bot, whatever a peer calls itself (#1193). */
+  const peerMember = (peerId: string): Member | undefined => {
+    const member = members.get(peerId);
+    return member?.bot === null ? member : undefined;
+  };
   /**
    * Members whose peer left during a match (#596), and when, on the
    * lobby's clock: their seat is held, team and all, for the match's
@@ -192,6 +203,8 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   let phase: LobbyPhase = "waiting";
   let mapId = queued?.group.mapId ?? defaultMap;
   let joined = 0;
+  /** Bots ever added (#1193), for their ids. */
+  let bots = 0;
   let matches = 0;
   /** The lobby's clock: the seconds `advance` was given, for the budget. */
   let elapsed = 0;
@@ -233,9 +246,10 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       id: member.id,
       name: member.name,
       team: member.team,
-      ready: member.ready,
+      ready: isReady(member),
       isHost: member.id === local.selfId,
       character: member.character,
+      bot: member.bot !== null,
     })),
     countdownSeconds: countdownEndsAt === undefined ? null : countdownLeft(countdownEndsAt),
   });
@@ -264,7 +278,9 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     const id = `match-${String(matches)}`;
     const seats: PlannedSeats = new Map(
       [...members.values()].flatMap((member) =>
-        member.team === null ? [] : [[member.id, { team: member.team, name: member.name }]],
+        member.team === null
+          ? []
+          : [[member.id, { team: member.team, name: member.name, bot: member.bot }]],
       ),
     );
     const room = scopeTransport(transport);
@@ -287,8 +303,10 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     // lobby says is on, and each peer's messages arrive in order.
     broadcast();
     const message: WireMatchStart = { mapId, matchId: id };
-    for (const peerId of seats.keys()) {
-      transport.send("match-start", message, peerId);
+    for (const [peerId, seat] of seats) {
+      if (seat.bot === null) {
+        transport.send("match-start", message, peerId);
+      }
     }
   };
 
@@ -325,7 +343,9 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         if (member.id !== local.selfId) {
           return false;
         }
-        const check = canStart([...members.values()]);
+        const check = canStart(
+          [...members.values()].map((other) => ({ team: other.team, ready: isReady(other) })),
+        );
         if (check.ok) {
           start();
         } else {
@@ -333,7 +353,70 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         }
         return false;
       }
+      case "add-bot": {
+        if (member.id !== local.selfId) {
+          refuse(member.id, "not-host");
+          return false;
+        }
+        const build = STARTER_BUILDS.find((held) => held.primaryProfession === command.profession);
+        if (build === undefined) {
+          refuse(member.id, "invalid-bot");
+          return false;
+        }
+        // Bots take seats like anyone.
+        if (members.size >= MAX_LOBBY_PLAYERS) {
+          refuse(member.id, "lobby-full");
+          return false;
+        }
+        addBot(build, command.team);
+        return true;
+      }
+      case "remove-bot": {
+        if (member.id !== local.selfId) {
+          refuse(member.id, "not-host");
+          return false;
+        }
+        const bot = members.get(command.botId);
+        if (bot === undefined || bot.bot === null) {
+          refuse(member.id, "invalid-bot");
+          return false;
+        }
+        members.delete(bot.id);
+        return true;
+      }
     }
+  };
+
+  /**
+   * Seat a bot playing `build` on `team` (#1193): `"<Profession> Bot"`,
+   * numbered from 2 when the name is taken, under an id no member has.
+   */
+  const addBot = (build: PlayerBuild, team: 0 | 1): void => {
+    let id: string;
+    do {
+      bots += 1;
+      id = `bot-${String(bots)}`;
+    } while (members.has(id));
+    const names = new Set([...members.values()].map((other) => other.name));
+    const base = `${getProfession(build.primaryProfession).name} Bot`;
+    let name = base;
+    for (let n = 2; names.has(name); n += 1) {
+      name = `${base} ${String(n)}`;
+    }
+    name = sanitizeName(name, id);
+    members.set(id, {
+      id,
+      name,
+      team,
+      ready: true,
+      character: {
+        name,
+        primary: build.primaryProfession,
+        secondary: build.secondaryProfession ?? null,
+      },
+      seatKey: null,
+      bot: build,
+    });
   };
 
   /** Seat `from`, which `join` brought, on `team`. */
@@ -355,6 +438,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       ready: false,
       character: lobbyCharacter(join.character),
       seatKey,
+      bot: null,
     });
     beginCountdown();
     broadcast();
@@ -491,20 +575,23 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   });
 
   transport.on("lobby-cmd", (data, from) => {
-    const member = members.get(from);
-    // Nothing a peer says before its lobby-join counts, and in a queued
-    // lobby nothing is chosen.
-    if (
-      closed ||
-      member === undefined ||
-      !budget.take(from, nowMs()) ||
-      phase !== "waiting" ||
-      queued !== undefined
-    ) {
+    const member = peerMember(from);
+    // Nothing a peer says before its lobby-join counts.
+    if (closed || member === undefined || !budget.take(from, nowMs()) || phase !== "waiting") {
       return;
     }
     const command = parseWireLobbyCommand(data);
-    if (command !== undefined && apply(member, command)) {
+    if (command === undefined) {
+      return;
+    }
+    // In a queued lobby nothing is chosen, and bots are a coded lobby's (#1193).
+    if (queued !== undefined) {
+      if (command.kind === "add-bot" || command.kind === "remove-bot") {
+        refuse(from, "invalid-bot");
+      }
+      return;
+    }
+    if (apply(member, command)) {
       broadcast();
     }
   });
@@ -513,7 +600,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   // lobby's: all chat reaches every member, spectators too; team chat
   // only the sender's team, and a spectator has none.
   transport.on("chat", (data, from) => {
-    const member = members.get(from);
+    const member = peerMember(from);
     if (closed || member === undefined || away.has(from)) {
       return;
     }
@@ -541,7 +628,11 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       text,
     };
     for (const to of members.values()) {
-      if (!away.has(to.id) && (chat.channel === "all" || to.team === member.team)) {
+      if (
+        to.bot === null &&
+        !away.has(to.id) &&
+        (chat.channel === "all" || to.team === member.team)
+      ) {
         transport.send("chat-line", line, to.id);
       }
     }
@@ -824,7 +915,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       void host.close();
       return;
     }
-    if (closed || !members.has(peerId)) {
+    if (closed || peerMember(peerId) === undefined) {
       return;
     }
     // During a match a drop may be a blip (#515, #596): the entry stays,

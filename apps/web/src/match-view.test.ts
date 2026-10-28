@@ -38,6 +38,7 @@ function player(sessionId: string, knockdownRemaining: number): PlayerSnapshot {
     healthPips: 0,
     energyPips: 0,
     creature: undefined,
+    bot: false,
     statuses: [],
   };
 }

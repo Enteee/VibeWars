@@ -6,14 +6,17 @@ import {
   adrenalineLossIn,
   applyIntent,
   drainAccumulator,
+  loadoutOf,
   resolveJoinLoadout,
   loadoutSpec,
   resolveLoadout,
   spawnFacing,
   swingProgress,
   type MatchMode,
+  type JoinLoadout,
   type MatchRules,
   type Participant,
+  type PlayerBuild,
   type ProfessionId,
   type Segment,
 } from "@vibewars/game-core";
@@ -129,8 +132,14 @@ export interface MatchHostOptions {
   readonly seats: PlannedSeats | null;
 }
 
-/** A lobby's seating for its match: each seated peer's team and sanitised name. */
-export type PlannedSeats = ReadonlyMap<string, { readonly team: 0 | 1; readonly name: string }>;
+/**
+ * A lobby's seating for its match: each seated peer's team and sanitised
+ * name, and for a bot (#1193), keyed by its lobby id, the build it plays.
+ */
+export type PlannedSeats = ReadonlyMap<
+  string,
+  { readonly team: 0 | 1; readonly name: string; readonly bot: PlayerBuild | null }
+>;
 
 /** Weapon swaps one seat may have handled (#489): sustained, and at once. */
 export const WEAPON_SWAPS_PER_SECOND = 4;
@@ -161,6 +170,8 @@ interface Seat {
   readonly name: string;
   readonly primaryProfession: ProfessionId;
   readonly secondaryProfession: ProfessionId | undefined;
+  /** A bot plays it (#1193): no peer ever, nothing sent to one. */
+  readonly bot: boolean;
   /**
    * The adrenaline the peer was last sent, and the combat it counted its
    * loss from, so only a change goes (#463, #828).
@@ -223,8 +234,13 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
    * and a team re-roll, as often as the budget allows.
    */
   const departed = new Set<string>();
-  /** The planned peers that have not said hello yet, while they are in the room. */
-  const awaited = new Set(planned?.keys());
+  /**
+   * The planned peers that have not said hello yet, while they are in the
+   * room. A bot never says one: it is seated at once.
+   */
+  const awaited = new Set(
+    [...(planned ?? [])].flatMap(([peerId, plan]) => (plan.bot === null ? [peerId] : [])),
+  );
   /** At most one per peer: a new rejoin hello kills the old nonce. */
   const challenges = new Map<string, Challenge>();
   /**
@@ -475,17 +491,15 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     transport.send("traps", trapsOf(seat.team), peerId);
   };
 
+  /** A new seat on `team` playing `loadout`, named by `nameOf` its player id; a bot's if `bot`. */
   const seatNew = (
-    hello: PeerHello,
-    peerId: string,
-    plan: { readonly team: 0 | 1; readonly name: string } | undefined,
-  ): void => {
+    loadout: JoinLoadout,
+    team: 0 | 1,
+    nameOf: (playerId: string) => string,
+    bot: boolean,
+  ): Seat => {
     seated += 1;
     const playerId = `player-${String(seated)}`;
-    // Without a plan, teams alternate as players arrive, so a 1v1 is
-    // adversarial by default.
-    const team: 0 | 1 = plan?.team ?? (seats.size % 2 === 0 ? 0 : 1);
-    const { loadout } = resolveJoinLoadout(hello.build, RULESET.attributes, random);
     // Gear becomes numbers exactly once, before the combatant exists (ADR-0012).
     const resolved = resolveLoadout(
       {
@@ -513,15 +527,16 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       ),
       // The house loadout's, which is not its primary's (join-loadout.ts).
       baseEnergyPips: loadout.baseEnergyPips,
+      // As fast as GW1's heroes: a decision every tick (#1193).
+      behaviour: bot ? { kind: "play-build", thinkSeconds: 0 } : undefined,
     });
     const seat: Seat = {
       playerId,
       team,
-      // The lobby's name, whatever the hello says (#53). Without a lobby the
-      // name is the peer's to choose, so it is sanitised before anyone sees it.
-      name: plan?.name ?? sanitizeName(hello.name, playerId),
+      name: nameOf(playerId),
       primaryProfession: loadout.primaryProfession,
       secondaryProfession: loadout.secondaryProfession,
+      bot,
       peerId: undefined,
       token: "",
       droppedAt: undefined,
@@ -541,7 +556,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
         everSeated.delete(id);
       }
     }
-    welcome(seat, peerId);
+    return seat;
   };
 
   transport.on("hello", (data, from) => {
@@ -598,7 +613,19 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       return;
     }
     awaited.delete(from);
-    seatNew(hello, from, plan);
+    const { loadout } = resolveJoinLoadout(hello.build, RULESET.attributes, random);
+    // Without a plan, teams alternate as players arrive, so a 1v1 is
+    // adversarial by default.
+    const team: 0 | 1 = plan?.team ?? (seats.size % 2 === 0 ? 0 : 1);
+    // The lobby's name, whatever the hello says (#53). Without a lobby the
+    // name is the peer's to choose, so it is sanitised before anyone sees it.
+    const seat = seatNew(
+      loadout,
+      team,
+      (playerId) => plan?.name ?? sanitizeName(hello.name, playerId),
+      false,
+    );
+    welcome(seat, from);
   };
 
   transport.on("rejoin-proof", (data, from) => {
@@ -845,6 +872,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       callsDirty.add(team);
     }
     for (const team of callsDirty) {
+      // Its bots fight the called foe (#1193).
+      sim.setCalledTarget(team, calls.view(team, sim.elapsedSeconds).target?.targetId);
       sendCalls(team);
     }
     callsDirty.clear();
@@ -874,6 +903,13 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       transport.send("ended", ended);
     }
   };
+
+  // A lobby's bots (#1193) take their seats at once: none of them says hello.
+  for (const plan of planned?.values() ?? []) {
+    if (plan.bot !== null) {
+      seatNew(loadoutOf(plan.bot), plan.team, () => plan.name, true);
+    }
+  }
 
   return {
     advance(seconds) {

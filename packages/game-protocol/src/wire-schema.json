@@ -1243,8 +1243,10 @@
       "union": [
         { "literal": "fell-through" },
         { "literal": "host-left" },
+        { "literal": "invalid-bot" },
         { "literal": "lobby-full" },
         { "literal": "not-admitted" },
+        { "literal": "not-host" },
         { "literal": "protocol-mismatch" },
         { "literal": "ticket-used" }
       ]
@@ -2020,6 +2022,23 @@
       "union": [
         {
           "properties": [
+            { "name": "botId", "optional": false, "type": "string" },
+            { "name": "kind", "optional": false, "type": { "literal": "remove-bot" } }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "add-bot" } },
+            { "name": "profession", "optional": false, "type": "string" },
+            {
+              "name": "team",
+              "optional": false,
+              "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+            }
+          ]
+        },
+        {
+          "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "choose-team" } },
             {
               "name": "team",
@@ -2061,6 +2080,7 @@
     },
     "WireLobbyPlayer": {
       "properties": [
+        { "name": "bot", "optional": false, "type": "boolean" },
         {
           "name": "character",
           "optional": false,
@@ -2116,6 +2136,7 @@
           "type": {
             "array": {
               "properties": [
+                { "name": "bot", "optional": false, "type": "boolean" },
                 {
                   "name": "character",
                   "optional": false,
@@ -2187,6 +2208,7 @@
       "properties": [
         { "name": "armor", "optional": false, "type": "number" },
         { "name": "attackTargetId", "optional": false, "type": { "union": ["null", "string"] } },
+        { "name": "bot", "optional": false, "type": "boolean" },
         { "name": "castRemaining", "optional": false, "type": "number" },
         { "name": "castTotal", "optional": false, "type": "number" },
         { "name": "castingSkillId", "optional": false, "type": { "union": ["null", "string"] } },
@@ -2426,6 +2448,7 @@
                   "optional": false,
                   "type": { "union": ["null", "string"] }
                 },
+                { "name": "bot", "optional": false, "type": "boolean" },
                 { "name": "castRemaining", "optional": false, "type": "number" },
                 { "name": "castTotal", "optional": false, "type": "number" },
                 {
@@ -2661,6 +2684,7 @@
                   "optional": false,
                   "type": { "union": ["null", "string"] }
                 },
+                { "name": "bot", "optional": false, "type": "boolean" },
                 { "name": "castRemaining", "optional": false, "type": "number" },
                 { "name": "castTotal", "optional": false, "type": "number" },
                 {

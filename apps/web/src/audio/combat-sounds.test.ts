@@ -217,6 +217,7 @@ function player(sessionId: string, extra: Partial<PlayerSnapshot> = {}): PlayerS
     healthPips: 0,
     energyPips: 0,
     creature: undefined,
+    bot: false,
     statuses: [],
     ...extra,
   };

@@ -250,6 +250,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       ready: player.ready,
       isHost: player.isHost,
       character: lobbyCharacter(player.character),
+      bot: player.bot,
     })),
     isHost: state.players.some((player) => player.id === selfId && player.isHost),
     countdownSeconds: state.countdownSeconds,

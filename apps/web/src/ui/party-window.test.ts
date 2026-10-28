@@ -41,6 +41,7 @@ function player(sessionId: string, overrides: Partial<PlayerSnapshot> = {}): Pla
     healthPips: 0,
     energyPips: 0,
     creature: undefined,
+    bot: false,
     statuses: [],
     ...overrides,
   };

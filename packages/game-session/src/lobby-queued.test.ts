@@ -457,7 +457,17 @@ describe("a queued lobby", () => {
           mapId: "other-arena",
           hostId: "impostor",
           matchId: null,
-          players: [{ id: from, name: "x", team: 1, ready: false, isHost: false, character: null }],
+          players: [
+            {
+              id: from,
+              name: "x",
+              team: 1,
+              ready: false,
+              isHost: false,
+              character: null,
+              bot: false,
+            },
+          ],
           countdownSeconds: null,
         };
         impostor.send("lobby-state", state, from);
