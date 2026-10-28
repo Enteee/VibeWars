@@ -914,6 +914,32 @@ differ by shape, so the icon shows the current state at a glance.
 UI text is sentence case: "Edit team", "New character", "Save". A small
 uppercase field label is styled so by CSS; the words themselves stay sentence case.
 
+### Title bar study (#1251)
+
+![Title bar, three variants](titlebar-study.svg)
+
+Study, not decided. The operator likes the top bar and dislikes the header on
+every other menu screen, so the study moves each screen's title and controls
+into the bar as a breadcrumb. The Team list moves under the character on the
+main menu. Each variant is drawn on the same five screens (main menu, Options,
+Music, Team and character, build editor) at 1280 px and 390 px;
+`node scripts/assets/titlebar-study.mjs` regenerates the sheet.
+
+- **A: plain breadcrumb.** `VibeWars > Options`, then a Back button, the
+  screen's own buttons right of a divider, the global icons (Options, music,
+  mute, fullscreen) at the far right; a screen's own icon is hidden on itself.
+  Cost: the smallest. Every `screenBar` header goes, the top bar gains a slot
+  per screen. Phone: a back chevron and the place name, the primary action
+  and a ⋯ overflow.
+- **B: chips.** Each crumb is a chip; a parent chip is Back and Esc does the
+  same, so there is no Back button and the editor's name field is its last
+  chip. Cost: the same as A plus a chip component; Back is less discoverable.
+  Phone: the parent chip (with its chevron) and the place chip.
+- **C: context dock.** A slim bar holds the breadcrumb and global icons; a dock
+  right under it holds Back and the screen's actions, grouped. Cost: the
+  tallest (two rows, about 80 px), but the screen's buttons are never mixed with
+  the global ones. Phone: the dock scrolls sideways, with a fade at its edge.
+
 ## Creatures
 
 Pets, minions and spirits must read as not-a-player at a glance and say what
