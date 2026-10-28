@@ -384,18 +384,6 @@ export function resetBoxesOnAccountChange(root, boxes, who) {
 }
 
 /**
- * The command that signs the company's GitHub account in, in its own `gh`
- * config directory, with the token in that directory's `hosts.yml` (never
- * the operator's keyring) and the scope the board needs.
- *
- * @param {string} root
- * @returns {string}
- */
-export function githubSignIn(root) {
-  return `GH_CONFIG_DIR=${paths(root).gh} gh auth login --insecure-storage --scopes project   (as the company's machine account, not yours)`;
-}
-
-/**
  * Whether the company may work on GitHub as itself (#866): its `gh` config
  * directory holds a token, and its push key is there. Local only, so a boot
  * without the network says the network, not "not set up". Whose account it
@@ -410,7 +398,7 @@ export function githubVerdict(root, run = runCommand) {
   if (!fs.existsSync(p.ghHosts)) {
     return {
       ok: false,
-      message: `the company's GitHub account is not set up. Sign it in: ${githubSignIn(root)}`,
+      message: `the company's GitHub account is not set up. Sign it in: claude-llc auth github`,
     };
   }
   // The token goes to stdout, which is read for emptiness and dropped.
@@ -420,47 +408,16 @@ export function githubVerdict(root, run = runCommand) {
   if (token.code !== 0 || token.stdout.trim() === "") {
     return {
       ok: false,
-      message: `the company's GitHub token could not be read. Sign it in again: ${githubSignIn(root)}`,
+      message: `the company's GitHub token could not be read. Sign it in again: claude-llc auth github`,
     };
   }
   if (!fs.existsSync(p.sshKey)) {
     return {
       ok: false,
-      message: `the company's push key ${p.sshKey} is missing: run claude-llc-init`,
+      message: `the company's push key ${p.sshKey} is missing. Add it: claude-llc auth push`,
     };
   }
   return { ok: true };
-}
-
-/**
- * The company's push key (#866): generated, without a passphrase, if it is
- * not there yet; an existing one is never replaced.
- *
- * @param {string} root
- * @param {Run} [run]
- * @returns {{ ok: true, created: boolean, pub: string } | { ok: false, message: string }}
- */
-export function ensurePushKey(root, run = runCommand) {
-  const p = paths(root);
-  let created = false;
-  if (!fs.existsSync(p.sshKey)) {
-    fs.mkdirSync(p.ssh, { recursive: true, mode: 0o700 });
-    fs.chmodSync(p.ssh, 0o700);
-    const made = run(
-      "ssh-keygen",
-      ["-q", "-t", "ed25519", "-N", "", "-C", "vibewars company push key", "-f", p.sshKey],
-      {},
-      [],
-    );
-    if (made.code !== 0 || !fs.existsSync(p.sshPub)) {
-      return { ok: false, message: "ssh-keygen could not make the push key" };
-    }
-    created = true;
-  }
-  if (!fs.existsSync(p.sshPub)) {
-    return { ok: false, message: `${p.sshPub} is missing: delete ${p.sshKey} to make a new pair` };
-  }
-  return { ok: true, created, pub: fs.readFileSync(p.sshPub, "utf8").trim() };
 }
 
 /**

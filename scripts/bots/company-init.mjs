@@ -25,14 +25,11 @@ import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import { createInterface } from "node:readline/promises";
-import { setTimeout as sleep } from "node:timers/promises";
 
 import {
   claudeVerdict,
   ensureHome,
-  ensurePushKey,
   githubIdentity,
-  githubSignIn,
   paths,
   projectAccess,
   pushIdentity,
@@ -159,7 +156,7 @@ if (github.state !== "ok" || github.who === null) {
   console.error(
     github.state === "error"
       ? `claude-llc-init: the company's GitHub account could not be read: ${github.note ?? "?"}`
-      : `claude-llc-init: the company's GitHub account is not set up. Sign it in: ${githubSignIn(credentials)}`,
+      : "claude-llc-init: the company's GitHub account is not set up. Sign it in: claude-llc auth github",
   );
   process.exit(1);
 }
@@ -167,40 +164,22 @@ const companyLogin = github.who;
 say("github", `${companyLogin} (the company's own)`);
 if (!/\bproject\b/.test(github.scopes ?? "")) {
   say("github project scope", "MISSING");
-  console.error("  The board cannot be worked without it. Run:");
-  console.error(`  GH_CONFIG_DIR=${githubHome.gh} gh auth refresh -s project`);
+  console.error("  The board cannot be worked without it. Sign in again: claude-llc auth github");
   process.exit(1);
 }
 say("github project scope", "present");
 
-const key = ensurePushKey(credentials);
-if (!key.ok) {
-  say("github push key", "FAILED");
-  console.error(`claude-llc-init: ${key.message}`);
-  process.exit(1);
-}
-let greeted = pushIdentity(githubHome.sshKey);
+// The key is made, and added to GitHub, by `claude-llc auth push`, which
+// waits until GitHub greets it as the company's login.
+const greeted = pushIdentity(githubHome.sshKey);
 if (greeted.who?.toLowerCase() !== companyLogin.toLowerCase()) {
-  say("github push key", key.created ? "created, waiting for GitHub" : "waiting for GitHub");
-  console.log("");
-  console.log(`  Signed in to GitHub as ${companyLogin}, add this key at`);
-  console.log("  https://github.com/settings/ssh/new (as an authentication key):");
-  console.log("");
-  console.log(`    ${key.pub}`);
-  console.log("");
-  console.log("  This waits until GitHub greets the key as that account.");
-  /**  {string | null} */
-  let told = null;
-  while (greeted.who?.toLowerCase() !== companyLogin.toLowerCase()) {
-    if (greeted.who !== null && greeted.who !== told) {
-      told = greeted.who;
-      console.log(
-        `  GitHub greets it as ${told}, not ${companyLogin}: move it to ${companyLogin}.`,
-      );
-    }
-    await sleep(5000);
-    greeted = pushIdentity(githubHome.sshKey);
-  }
+  say("github push key", "NOT READY");
+  console.error(
+    greeted.who === null
+      ? "claude-llc-init: the company's push key is not set up. Add it: claude-llc auth push"
+      : `claude-llc-init: GitHub greets the push key as ${greeted.who}, not ${companyLogin}. Fix it: claude-llc auth push`,
+  );
+  process.exit(1);
 }
 say("github push key", `accepted as ${companyLogin}`);
 console.log("");

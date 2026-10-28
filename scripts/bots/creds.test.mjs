@@ -10,7 +10,6 @@ import {
   claudeVerdict,
   resetBoxesOnAccountChange,
   ensureHome,
-  ensurePushKey,
   githubIdentity,
   githubVerdict,
   isOperators,
@@ -367,7 +366,7 @@ describe("githubVerdict (#866)", () => {
     const verdict = githubVerdict(home(), token);
     expect(verdict).toMatchObject({ ok: false });
     expect(JSON.stringify(verdict)).toContain("not set up");
-    expect(JSON.stringify(verdict)).toContain("gh auth login --insecure-storage");
+    expect(JSON.stringify(verdict)).toContain("claude-llc auth github");
   });
 
   it("refuses a token gh cannot read, without echoing its output", () => {
@@ -376,40 +375,10 @@ describe("githubVerdict (#866)", () => {
     expect(JSON.stringify(verdict)).not.toContain(SECRET);
   });
 
-  it("refuses a missing push key", () => {
+  it("refuses a missing push key, pointing at claude-llc auth push", () => {
     const root = ready();
     fs.rmSync(path.join(root, "ssh", "id_ed25519"));
-    expect(JSON.stringify(githubVerdict(root, token))).toContain("push key");
-  });
-});
-
-describe("ensurePushKey (#866)", () => {
-  /** @type {import("./creds.mjs").Run} */
-  const keygen = (_c, args) => {
-    const file = args[args.indexOf("-f") + 1] ?? "";
-    fs.writeFileSync(file, "private");
-    fs.writeFileSync(`${file}.pub`, "ssh-ed25519 AAAA company\n");
-    return { code: 0, stdout: "" };
-  };
-
-  it("makes the pair in a 0700 ssh directory and hands back the public key", () => {
-    const root = home();
-    const key = ensurePushKey(root, keygen);
-    expect(key).toEqual({ ok: true, created: true, pub: "ssh-ed25519 AAAA company" });
-    expect(fs.statSync(path.join(root, "ssh")).mode & 0o777).toBe(0o700);
-  });
-
-  it("never replaces a key that is there (idempotent)", () => {
-    const root = home();
-    ensurePushKey(root, keygen);
-    const again = ensurePushKey(root, () => {
-      throw new Error("ssh-keygen ran again");
-    });
-    expect(again).toMatchObject({ ok: true, created: false });
-  });
-
-  it("says when ssh-keygen fails", () => {
-    expect(ensurePushKey(home(), () => ({ code: 1, stdout: "" }))).toMatchObject({ ok: false });
+    expect(JSON.stringify(githubVerdict(root, token))).toContain("claude-llc auth push");
   });
 });
 
