@@ -1449,6 +1449,8 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
  */
 export interface Outbreak {
   readonly infected: Set<string>;
+  /** Invulnerable bodies it has already been refused by (#1233): each says so once. */
+  readonly refused: Set<string>;
 }
 
 export interface ActiveStatus {
@@ -1622,7 +1624,9 @@ export class StatusSet {
       this.removeByCategory(definition.category);
     }
     const existing = this.#statuses.get(id);
-    const outbreak = definition.spreads ? { infected: new Set<string>() } : null;
+    const outbreak = definition.spreads
+      ? { infected: new Set<string>(), refused: new Set<string>() }
+      : null;
     // A re-application is the newest, whichever duration wins: removal
     // takes the newest first (`removeByCategory`).
     this.#statuses.delete(id);

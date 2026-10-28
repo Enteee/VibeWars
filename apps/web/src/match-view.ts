@@ -200,6 +200,7 @@ export function toArenaSnapshot(
         statuses,
         enchanted: rings.enchanted,
         hexed: rings.hexed,
+        invulnerable: !player.dead && player.invulnerableSeconds > 0,
         conditionCues: conditionCues(living),
       };
     }),

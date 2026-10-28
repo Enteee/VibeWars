@@ -149,6 +149,7 @@ const player: WirePlayer = {
   swingElapsed: 0.4,
   swingTotal: 1.75,
   knockdownRemaining: 2.5,
+  invulnerableSeconds: 3.25,
   healthPips: -3,
   energyPips: 4,
   statuses: [status],
@@ -1004,6 +1005,11 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     "snapshot with a player missing knockdownRemaining (#545)",
     parseWireSnapshotPart,
     { ...snapshot, players: [{ ...player, knockdownRemaining: undefined }] },
+  ],
+  [
+    "snapshot with a player missing invulnerableSeconds (#1233)",
+    parseWireSnapshotPart,
+    { ...snapshot, players: [{ ...player, invulnerableSeconds: undefined }] },
   ],
   [
     "snapshot with a player missing overcast (#461)",

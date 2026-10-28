@@ -181,6 +181,11 @@ export type CombatEvent =
    * riders; an attack skill's own if-blocked effects follow it.
    */
   | { readonly kind: "attack-blocked"; readonly targetId: string }
+  /**
+   * A damage packet, a life steal, a hex or a condition an invulnerable
+   * target (#1208) took none of (#1233): one per negated packet, per body.
+   */
+  | { readonly kind: "invulnerable"; readonly targetId: string }
   /** A projectile that landed where its target would have been, had it kept moving. */
   | { readonly kind: "attack-dodged"; readonly targetId: string }
   /** A ranged swing released with a wall in the way: nothing flies (GW1's "Obstructed"). */
@@ -216,7 +221,7 @@ export type CombatEvent =
  * recorded too, for Vengeful Weapon (#1022); with no dealer, as a
  * sacrifice, it is not. A bond on the target (#1108) takes its share of
  * a physical hit, after Reversal of Fortune. An invulnerable target
- * (#1208) takes none of it and nothing is reported.
+ * (#1208) takes none of it, and says so (#1233).
  */
 export function applyDamage(
   target: Combatant,
@@ -226,7 +231,11 @@ export function applyDamage(
   events: CombatEvent[],
   dealer: Combatant | undefined,
 ): void {
-  if (amount <= 0 || target.dead || isInvulnerable(target)) {
+  if (amount <= 0 || target.dead) {
+    return;
+  }
+  if (isInvulnerable(target)) {
+    events.push({ kind: "invulnerable", targetId: target.id });
     return;
   }
   if (reverse(target, amount, events)) {
@@ -335,7 +344,7 @@ function applyHeal(target: Combatant, amount: number, events: CombatEvent[]): vo
  * maximum. Not damage, so no armor and nothing that reacts to damage; not
  * a heal either, so the caster's healing modifiers do not touch it. It
  * can kill, with one `death`, as `applyDamage` does. Nothing is stolen
- * from an invulnerable target (#1208).
+ * from an invulnerable target (#1208), which says so (#1233).
  */
 function stealLife(
   caster: Combatant,
@@ -344,7 +353,11 @@ function stealLife(
   events: CombatEvent[],
 ): void {
   const stolen = Math.min(amount, target.health);
-  if (stolen <= 0 || isInvulnerable(target)) {
+  if (stolen <= 0) {
+    return;
+  }
+  if (isInvulnerable(target)) {
+    events.push({ kind: "invulnerable", targetId: target.id });
     return;
   }
   if (reverse(target, stolen, events)) {
@@ -651,8 +664,8 @@ export function applyStatus(
 /**
  * `statusId` on `target` for `durationSeconds`, from `sourceId`, as every
  * skill puts one on: what it ends (#919), the health it takes as it lands
- * (#800) and Dazed's interrupt, each reported. A refused one (#1208) is
- * not, and does none of it.
+ * (#800) and Dazed's interrupt, each reported. A refused one (#1208)
+ * does none of it, and the target says it is invulnerable (#1233).
  */
 function landStatus(
   target: Combatant,
@@ -664,6 +677,7 @@ function landStatus(
   const ending = endedByGaining(target, statusId);
   const loss = applyStatus(target, statusId, durationSeconds, sourceId);
   if (loss === undefined) {
+    events.push({ kind: "invulnerable", targetId: target.id });
     return;
   }
   events.push({ kind: "status-applied", targetId: target.id, statusId, durationSeconds });

@@ -304,7 +304,7 @@ describe("StatusSet durationSeconds (#803)", () => {
   });
 
   it("is the caught duration, and a catch never leaves more time than length (#765)", () => {
-    const outbreak = { infected: new Set<string>() };
+    const outbreak = { infected: new Set<string>(), refused: new Set<string>() };
     const fresh = new StatusSet();
     fresh.catch("disease", 7, "a", outbreak);
     expect(fresh.get("disease")).toMatchObject({ remainingSeconds: 7, durationSeconds: 7 });
@@ -404,7 +404,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
 
   it("records a condition caught from an outbreak, once (#765)", () => {
     const set = new StatusSet();
-    const outbreak = { infected: new Set<string>() };
+    const outbreak = { infected: new Set<string>(), refused: new Set<string>() };
     set.catch("disease", 6, "a", outbreak);
     set.catch("disease", 9, "a", outbreak);
     expect(set.drainChanges()).toEqual([
