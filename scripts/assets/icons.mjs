@@ -928,6 +928,12 @@ const projectile = {
     ["M3 4.5L7 4L6 6.5ZM6 8.5L11 8L10 10.5Z", "#c8c8c8"],
     ["M14 7L16 2.5L21 1L27 2L30 6L28 10L22 11L16 10Z", "#fff"],
   ],
+  // Thrown dagger (Disrupting, Crippling): a grey hilt and crossguard, a long
+  // white blade.
+  "thrown-dagger": [
+    ["M2 4.75h7v2.5H2zM9 1.5h2.5v9H9z", "#c8c8c8"],
+    ["M11.5 3.5L26 4.5L31 6L26 7.5L11.5 8.5Z", "#fff"],
+  ],
 };
 
 // ---------------------------------------------------------------------------
