@@ -240,6 +240,10 @@ describe("outOfRange", () => {
     expect(outOfRange([slot(COMFORT)], self({}), undefined, pet(500), [])).toEqual([true]);
     const wall = segment(vec2(150, -50), vec2(150, 50));
     expect(outOfRange([slot(COMFORT)], self({}), undefined, pet(300), [wall])).toEqual([true]);
+    // A call on your living pet is measured the same way.
+    const HASTE = "ranger.call-of-haste";
+    expect(outOfRange([slot(HASTE)], self({}), foe(5000), pet(800), [])).toEqual([true]);
+    expect(outOfRange([slot(HASTE)], self({}), foe(5000), pet(300), [])).toEqual([false]);
   });
 
   it("marks no pet skill with no pet, and no resurrection against a dead creature (#1046)", () => {

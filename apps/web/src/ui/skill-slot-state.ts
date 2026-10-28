@@ -4,6 +4,7 @@ import {
   distanceWithinRange,
   getSkill,
   hasLineOfSight,
+  isCompanionRule,
   isWeaponId,
   targetLivenessAllows,
   targetRuleAllows,
@@ -248,7 +249,7 @@ export function outOfRange(
   let petSight: boolean | undefined;
   return skillBar.map((slot) => {
     const skill = slot === null ? undefined : getSkill(slot.id);
-    if (skill?.target === "companion") {
+    if (skill !== undefined && isCompanionRule(skill.target)) {
       if (companion === undefined) {
         return false;
       }
