@@ -190,6 +190,8 @@ export interface BehaviourContext {
   isBot(participantId: string): boolean;
   /** The foe `self`'s team called (#443), if any: a bot's target while it lives (#1193). */
   readonly calledTargetId: string | undefined;
+  /** Whether `self` sees `participantId`: no wall between them. */
+  inSight(participantId: string): boolean;
 }
 
 export function createCursor(): BehaviourCursor {
@@ -230,9 +232,15 @@ export function nearestLiving(
   return best;
 }
 
+/**
+ * Who `targeting` picks, among those `eligible` lets through: a nearest
+ * pick takes the nearest eligible, and a self or fixed one is eligible or
+ * nobody.
+ */
 export function resolveTargeting(
   targeting: Targeting,
   context: BehaviourContext,
+  eligible: (other: Participant) => boolean = () => true,
 ): string | undefined {
   const team = context.self.combatant.team;
   switch (targeting.kind) {
@@ -240,18 +248,20 @@ export function resolveTargeting(
       return nearestLiving(
         context.self,
         context.participants,
-        (other) => other.combatant.team !== team,
+        (other) => other.combatant.team !== team && eligible(other),
       );
     case "nearest-ally":
       return nearestLiving(
         context.self,
         context.participants,
-        (other) => other.combatant.team === team,
+        (other) => other.combatant.team === team && eligible(other),
       );
     case "self":
-      return context.self.id;
-    case "fixed":
-      return targeting.participantId;
+      return eligible(context.self) ? context.self.id : undefined;
+    case "fixed": {
+      const fixed = context.participants.find((other) => other.id === targeting.participantId);
+      return fixed === undefined || eligible(fixed) ? targeting.participantId : undefined;
+    }
   }
 }
 
@@ -285,15 +295,16 @@ export function decide(
     case "parallel":
       return parallel(behaviour, cursor, context);
     case "auto-attack": {
-      // The nearest out of reach means every one is.
-      const resolved = resolveTargeting(behaviour.targeting, context);
-      const target = context.participants.find((other) => other.id === resolved);
-      const targetId =
-        behaviour.reach === undefined ||
-        (target !== undefined &&
-          distance(target.position, context.self.position) <= behaviour.reach)
-          ? resolved
-          : undefined;
+      // A spirit's pick is the nearest it can shoot: in reach and in sight.
+      const { reach } = behaviour;
+      const targetId = resolveTargeting(
+        behaviour.targeting,
+        context,
+        reach === undefined
+          ? undefined
+          : (other) =>
+              distance(other.position, context.self.position) <= reach && context.inSight(other.id),
+      );
       return {
         ...STAND_STILL,
         targetId,

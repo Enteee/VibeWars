@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { RANGE_SPIRIT } from "../distances.js";
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
+import type { Segment } from "../geometry.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { getSkill } from "../skills/catalog.js";
 import type { CombatEvent } from "../skills/effects.js";
@@ -46,10 +47,15 @@ function spec(id: string, team: number, spawn: Vec2, communing = 12): Participan
   };
 }
 
-/** `r` on team 0 at the origin, and `more`. */
-function match(more: readonly ParticipantSpec[], communing = 12): MatchSimulation {
+/** `r` on team 0 at the origin, and `more`, among `walls`. */
+function match(
+  more: readonly ParticipantSpec[],
+  communing = 12,
+  walls: readonly Segment[] = [],
+): MatchSimulation {
   return new MatchSimulation({
     seed: "attack-spirits",
+    walls,
     participants: [spec("r", 0, vec2(0, 0), communing), ...more],
   });
 }
@@ -133,6 +139,18 @@ describe("an attacking spirit (#1239)", () => {
     expect(damaged(events, "near")).toBeGreaterThanOrEqual(3);
     expect(damaged(events, "farther")).toBe(0);
     expect(get(sim, "near").combatant.health).toBeLessThan(get(sim, "near").combatant.maxHealth);
+    expect(pain.position).toEqual(vec2(0, 0));
+  });
+
+  it("shoots a farther foe it sees, never a nearer one behind a wall", () => {
+    const wall: Segment = { a: vec2(150, -200), b: vec2(150, 200) };
+    const sim = match([spec("hidden", 1, vec2(300, 0)), spec("seen", 1, vec2(-500, 0))], 12, [
+      wall,
+    ]);
+    const pain = ritual(sim, PAIN);
+    const events = shots(stepFor(sim, 7), pain.id);
+    expect(damaged(events, "seen")).toBeGreaterThanOrEqual(3);
+    expect(damaged(events, "hidden")).toBe(0);
     expect(pain.position).toEqual(vec2(0, 0));
   });
 

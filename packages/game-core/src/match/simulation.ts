@@ -2476,6 +2476,10 @@ export class MatchSimulation {
       isBot: (participantId) =>
         this.#participants.get(participantId)?.behaviour?.kind === "play-build",
       calledTargetId: this.#calledTargets.get(record.combatant.team),
+      inSight: (participantId) => {
+        const other = this.#participants.get(participantId);
+        return other !== undefined && hasLineOfSight(record.position, other.position, this.#walls);
+      },
     });
     this.setInputDirection(record.id, intent.moveDirection);
     const following = record.followGoal !== undefined;
