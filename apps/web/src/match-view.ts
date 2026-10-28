@@ -167,6 +167,7 @@ export function toArenaSnapshot(
       return {
         id: player.sessionId,
         name: player.name,
+        bot: player.bot,
         position: { x: player.x, y: player.y },
         facing: player.facing,
         weaponId: player.weaponId,

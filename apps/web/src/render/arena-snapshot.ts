@@ -31,6 +31,8 @@ export interface RenderableActor {
   readonly id: string;
   /** Drawn above the actor, so a player can tell who is who. */
   readonly name: string;
+  /** A lobby's bot (#1194): its name plate wears the BOT tag. */
+  readonly bot: boolean;
   readonly position: Vec2;
   /** Radians, `atan2` convention, 0 = +x (#187). Not drawn yet. */
   readonly facing: number;

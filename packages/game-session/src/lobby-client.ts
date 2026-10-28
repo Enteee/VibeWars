@@ -143,6 +143,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
   const changeHandlers: (() => void)[] = [];
   const startingHandlers: ((start: MatchStarting) => void)[] = [];
   const rejectedHandlers: ((reason: string) => void)[] = [];
+  const refusedHandlers: ((reason: LobbyRefusal) => void)[] = [];
   const closedHandlers: ((reason: LobbyClosedReason) => void)[] = [];
   const chatHandlers: ((line: ChatLine) => void)[] = [];
   const throttledHandlers: (() => void)[] = [];
@@ -172,6 +173,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     changeHandlers.length = 0;
     startingHandlers.length = 0;
     rejectedHandlers.length = 0;
+    refusedHandlers.length = 0;
     closedHandlers.length = 0;
     chatHandlers.length = 0;
     throttledHandlers.length = 0;
@@ -289,6 +291,12 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       startMatch() {
         send({ kind: "start" });
       },
+      addBot(team, profession) {
+        send({ kind: "add-bot", team, profession });
+      },
+      removeBot(botId) {
+        send({ kind: "remove-bot", botId });
+      },
       sendChat(channel, text) {
         if (hostId !== undefined && !closed) {
           // Past the wire's bound the host would drop it whole; it cuts to a line itself.
@@ -303,6 +311,9 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       },
       onStartRejected(handler) {
         rejectedHandlers.push(handler);
+      },
+      onRefused(handler) {
+        refusedHandlers.push(handler);
       },
       onClosed(handler) {
         closedHandlers.push(handler);
@@ -417,6 +428,10 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
             failJoin(new LobbyRefusedError(note.reason));
           } else if (note.reason === "host-left" || note.reason === "fell-through") {
             close(note.reason);
+          } else {
+            for (const handler of [...refusedHandlers]) {
+              handler(note.reason);
+            }
           }
         }
       }),

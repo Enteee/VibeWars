@@ -5,6 +5,7 @@ import {
   PROTOCOL_MISMATCH_MESSAGE,
   PROTOCOL_VERSION,
   type JsonValue,
+  type LobbyRefusal,
   type PeerHello,
   type QueueMode,
 } from "@vibewars/game-protocol";
@@ -76,6 +77,10 @@ export const NOT_ADMITTED_MESSAGE = "The match would not let this ticket in.";
 export const TICKET_USED_MESSAGE = "This ticket is already in the match, in another tab.";
 /** #854 C7's wording. */
 export const FELL_THROUGH_MESSAGE = "Match fell through, searching again.";
+/** A joined player's ask the host turned down (#1194): a bot it had no seat for, or could not add. */
+export const NO_SEAT_FOR_BOT_MESSAGE = "The lobby is full: there is no seat for a bot.";
+export const BOT_REFUSED_MESSAGE = "The host could not add or remove that bot.";
+export const NOT_HOST_MESSAGE = "Only the host can add or remove bots.";
 
 /** A lobby hosted in this tab, and how to end it for everyone. */
 export interface HostedLobby {
@@ -479,6 +484,18 @@ export function joinFailureNotice(
     }
   }
   return "Could not join the lobby.";
+}
+
+/** What the lobby says when the host refused something this player asked for, once joined (#1194). */
+export function lobbyRefusalNotice(reason: LobbyRefusal): string {
+  switch (reason) {
+    case "lobby-full":
+      return NO_SEAT_FOR_BOT_MESSAGE;
+    case "not-host":
+      return NOT_HOST_MESSAGE;
+    default:
+      return BOT_REFUSED_MESSAGE;
+  }
 }
 
 /** What the menu says when the lobby closed for `reason`. */

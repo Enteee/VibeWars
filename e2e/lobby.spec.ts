@@ -416,3 +416,27 @@ test("a match plays the character the lobby lists, not one selected after joinin
     await context.close();
   }
 });
+
+test("the host adds a Monk bot to the other team; it plays, named and tagged BOT (#1194)", async ({
+  page,
+}) => {
+  await hostLobby(page, "Host");
+  await page.getByRole("button", { name: "join team 1" }).click();
+  await page.getByRole("combobox", { name: "bot profession for team 2" }).selectOption("monk");
+  await page.getByRole("button", { name: "add a bot to team 2" }).click();
+
+  const team = page.locator(".lobby-team").nth(1);
+  const row = team.locator(".lobby-slot", { hasText: "Monk Bot" });
+  await expect(row.locator(".bot-tag")).toHaveText("BOT");
+  await expect(row.getByRole("button", { name: "remove Monk Bot" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Ready", exact: true }).click();
+  await page.getByRole("button", { name: "start match" }).click();
+  await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp");
+
+  // The only foe in the arena is the bot.
+  await page.keyboard.press(key("target-closest"));
+  await expect(page.locator(".hud-target-text")).toHaveText("Monk Bot");
+  await expect(page.locator(".hud-target-bot")).toBeVisible();
+  await expect(page.locator(".hud-target-bot")).toHaveText("BOT");
+});

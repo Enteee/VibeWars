@@ -1,5 +1,10 @@
 import type { ProfessionId } from "@vibewars/game-core";
-import type { ChatChannel, LobbyPhase, WirePartyFormed } from "@vibewars/game-protocol";
+import type {
+  ChatChannel,
+  LobbyPhase,
+  LobbyRefusal,
+  WirePartyFormed,
+} from "@vibewars/game-protocol";
 
 import type { TicketKey } from "./queue-client.js";
 import type { Transport } from "./transport.js";
@@ -78,12 +83,18 @@ export interface LobbyConnection {
   setReady(ready: boolean): void;
   selectMap(mapId: string): void;
   startMatch(): void;
+  /** Host only (#1194): seat a bot playing `profession`'s starter build on `team`. */
+  addBot(team: 0 | 1, profession: ProfessionId): void;
+  /** Host only (#1194): unseat bot `botId`. */
+  removeBot(botId: string): void;
   /** Say `text` on `channel` (#479), in the lobby or its match; the host cleans and routes it. */
   sendChat(channel: ChatChannel, text: string): void;
   onChange(handler: () => void): void;
   onMatchStarting(handler: (start: MatchStarting) => void): void;
   /** The host's own player alone: why the start it asked for did not happen. */
   onStartRejected(handler: (reason: string) => void): void;
+  /** Once joined: the host refused something this player asked for, such as a bot (#1194). */
+  onRefused(handler: (reason: LobbyRefusal) => void): void;
   /** A chat line reached this player. */
   onChat(handler: (line: ChatLine) => void): void;
   /** The host is dropping this player's lines, too many too fast: once a burst. */

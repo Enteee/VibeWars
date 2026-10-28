@@ -11,6 +11,7 @@ import {
   joinFailureNotice,
   joinLobbyByCode,
   lobbyClosedNotice,
+  lobbyRefusalNotice,
   matchFailureNotice,
   openPartyBoard,
   PARTY_ANSWER_MS,
@@ -966,6 +967,12 @@ async function main(): Promise<void> {
         onStart: () => {
           lobby?.startMatch();
         },
+        onAddBot: (team, profession) => {
+          lobby?.addBot(team, profession);
+        },
+        onRemoveBot: (botId) => {
+          lobby?.removeBot(botId);
+        },
         onLeave: () => {
           void leaveLobby();
         },
@@ -1040,6 +1047,10 @@ async function main(): Promise<void> {
     joined.onChange(renderLobby);
     joined.onStartRejected((reason) => {
       lobbyNotice = reason;
+      renderLobby();
+    });
+    joined.onRefused((reason) => {
+      lobbyNotice = lobbyRefusalNotice(reason);
       renderLobby();
     });
     joined.onMatchStarting((start) => {

@@ -23,6 +23,7 @@ import type {
 import type { KeyLabeller } from "../input/key-labels.js";
 import { SKILL_ACTIONS, actionLabel, codeLabel, type Keymap } from "../input/keymap.js";
 import { teamColour } from "../render/arena-snapshot.js";
+import { botTagElement } from "./bot-tag.js";
 import { cssColour } from "./character-preview.js";
 import { paintHealthTint } from "./health-tint.js";
 import {
@@ -132,6 +133,8 @@ export interface HudElements {
   readonly targetProfessions: HTMLElement;
   /** The target's name, or "no target", in the panel's header. */
   readonly targetText: HTMLElement;
+  /** The BOT tag after a lobby bot's name (#1194); hidden for anyone else. */
+  readonly targetBot: HTMLElement;
   /** The target's health bar (#484), labelled with its percentage. */
   readonly targetHealth: HTMLElement;
   readonly targetHealthFill: HTMLElement;
@@ -258,6 +261,7 @@ export function createHud(
   const targetHeader = element("div", "hud-target-header", targetPanel);
   const targetProfessions = element("span", "hud-target-professions", targetHeader);
   const targetText = element("span", "hud-target-text", targetHeader);
+  const targetBot = targetHeader.appendChild(botTagElement("hud-target-bot"));
   const attacking = element("span", "hud-attacking", targetHeader);
   const swords = attacking.appendChild(document.createElement("img"));
   swords.src = attackingIcon();
@@ -357,6 +361,7 @@ export function createHud(
     targetEffects,
     targetProfessions,
     targetText,
+    targetBot,
     targetHealth,
     targetHealthFill,
     targetHealthLost,
@@ -1216,6 +1221,7 @@ function renderTarget(
 ): void {
   renderTargetProfessions(hud.targetProfessions, target);
   hud.targetText.textContent = target === undefined ? "no target" : target.name;
+  hud.targetBot.hidden = target?.bot !== true;
   hud.attacking.hidden = !isAttackingTarget(self, target);
   const invulnerable = target === undefined || target.dead ? 0 : target.invulnerableSeconds;
   hud.targetInvulnerable.hidden = invulnerable <= 0;

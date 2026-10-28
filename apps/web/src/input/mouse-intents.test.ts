@@ -74,6 +74,7 @@ function body(id: string, x: number, team: RenderableActor["team"]): RenderableA
   return {
     id,
     name: id,
+    bot: false,
     position: vec2(x, 0),
     facing: 0,
     weaponId: undefined,
