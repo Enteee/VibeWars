@@ -6,7 +6,7 @@ import {
   spawningPowerMultiplier,
 } from "../primary-attributes.js";
 import { emptyAdrenaline, emptyPool, fillPools } from "./adrenaline.js";
-import { beginRecharge } from "./cast-state.js";
+import { beginRecharge, resolvedBar, skillIdOfKey } from "./cast-state.js";
 import { getSkill } from "./catalog.js";
 import { mitigate, skillDamage } from "./damage.js";
 import { effectiveMaxEnergy } from "./overcast.js";
@@ -548,8 +548,8 @@ function knockDown(target: Combatant, durationSeconds: number): void {
   target.knockdownRemaining = durationSeconds;
   const cancelled = target.cast.cancelCast();
   const skill = cancelled === undefined ? undefined : getSkill(cancelled.skillId);
-  if (skill !== undefined) {
-    beginRecharge(target.cast, skill, skill.rechargeSeconds);
+  if (cancelled !== undefined && skill !== undefined) {
+    beginRecharge(target.cast, skill, skill.rechargeSeconds, cancelled.key);
   }
   target.cast.clearQueue();
   target.attack = undefined;
@@ -569,7 +569,7 @@ function interruptCast(target: Combatant, events: CombatEvent[]): boolean {
   }
   const skill = getSkill(cancelled.skillId);
   if (skill !== undefined) {
-    beginRecharge(target.cast, skill, skill.rechargeSeconds);
+    beginRecharge(target.cast, skill, skill.rechargeSeconds, cancelled.key);
   }
   events.push({ kind: "interrupted", targetId: target.id, skillId: cancelled.skillId });
   return true;
@@ -1045,11 +1045,12 @@ export function applyEffect(
         return events;
       }
       const seconds = resolveMagnitude(effect.seconds, caster);
-      for (const skillId of disabledBy(effect, target, interrupted)) {
+      for (const key of disabledBy(effect, target, interrupted)) {
         // A disabled skill loses all its adrenaline (GW1, #1097), though
         // a longer recharge kept the disable from lengthening its wait.
-        emptyPool(target, skillId);
-        if (target.cast.disable(skillId, seconds)) {
+        emptyPool(target, key);
+        if (target.cast.disable(key, seconds)) {
+          const skillId = skillIdOfKey(key);
           events.push({ kind: "skill-disabled", targetId: target.id, skillId, seconds });
         }
       }
@@ -1057,13 +1058,18 @@ export function applyEffect(
     }
 
     case "lengthen-recharge": {
-      const skillId = context.usedSkillId;
-      if (target === undefined || skillId === undefined) {
+      const used = context.usedSkill;
+      if (target === undefined || used === undefined) {
         return events;
       }
       const seconds = resolveMagnitude(effect.seconds, caster);
-      target.cast.lengthenRecharge(skillId, seconds);
-      events.push({ kind: "recharge-lengthened", targetId: target.id, skillId, seconds });
+      target.cast.lengthenRecharge(used.key, seconds);
+      events.push({
+        kind: "recharge-lengthened",
+        targetId: target.id,
+        skillId: used.skillId,
+        seconds,
+      });
       return events;
     }
 
@@ -1243,31 +1249,34 @@ function interruptedSkill(targetId: string, earlier: readonly CombatEvent[]): st
 }
 
 /**
- * The skills a `disable-skill` reaches on `target` (#914): the one
+ * The keys a `disable-skill` reaches on `target` (#914): the one
  * interrupted, and for Power Block every skill on its bar of the same
  * attribute. One with no attribute is linked to nothing (GW1). With
- * `all`, the whole bar, empty slots aside (#474).
+ * `all`, the whole bar, empty slots aside (#474). The bar is the one
+ * standing now (#469): a copy is disabled under its own key.
  */
 function disabledBy(
   effect: DisableSkillEffect,
   target: Combatant,
   interrupted: string | undefined,
 ): readonly string[] {
+  const bar = resolvedBar(target.skillBar, target.cast).filter((slot) => slot !== null);
   if (effect.which === "all") {
-    return target.skillBar.filter((skillId): skillId is string => skillId !== null);
+    return bar.map(({ key }) => key);
   }
   if (interrupted === undefined) {
     return [];
   }
+  const cancelled = target.cast.lastCancelled;
+  const key = cancelled?.skillId === interrupted ? cancelled.key : interrupted;
   const attributeId = getSkill(interrupted)?.attributeId;
   if (effect.which === "interrupted" || attributeId === undefined) {
-    return [interrupted];
+    return [key];
   }
-  const linked = target.skillBar.filter(
-    (skillId): skillId is string =>
-      skillId !== null && skillId !== interrupted && getSkill(skillId)?.attributeId === attributeId,
+  const linked = bar.filter(
+    (slot) => slot.key !== key && getSkill(slot.skillId)?.attributeId === attributeId,
   );
-  return [interrupted, ...linked];
+  return [key, ...linked.map((slot) => slot.key)];
 }
 
 /** Whether the skill `skillId` names is a spell (`isSpell`; a chant is not one). */
@@ -1535,7 +1544,7 @@ export function resolveSkillEffects(
  */
 function rechargeOthers(caster: Combatant, skillId: string, which: "attack"): void {
   for (const id of [...caster.cast.rechargeRemaining.keys()]) {
-    if (id !== skillId && getSkill(id)?.type === which) {
+    if (id !== skillId && getSkill(skillIdOfKey(id))?.type === which) {
       caster.cast.endRecharge(id);
     }
   }

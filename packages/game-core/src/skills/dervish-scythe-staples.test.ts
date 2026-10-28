@@ -110,7 +110,7 @@ describe("Vow of Strength (#939)", () => {
         rng: createRng(1),
         rules: RULES,
         surroundings,
-        usedSkillId: undefined,
+        usedSkill: undefined,
       },
       new Set(),
     ).flatMap(({ events }) => events);

@@ -212,6 +212,9 @@ export const SKILL_ICONS = {
   // Placeholders until the asset-designer's (#467): bodies raised from a corpse.
   "necromancer.animate-bone-minions": { glyph: "resurrect", modifier: "down" },
   "necromancer.animate-bone-horror": { glyph: "resurrect", modifier: "up" },
+  // Placeholders until the asset-designer's (#469): a skill seen again.
+  "mesmer.arcane-echo": { glyph: "eye", modifier: "clock" },
+  "mesmer.echo": { glyph: "eye", modifier: "self" },
   // Placeholders until the asset-designer's (#1046): the pet's skills.
   "ranger.charm-animal": { glyph: "eye", modifier: "plus" },
   "ranger.comfort-animal": { glyph: "heal", modifier: "plus" },

@@ -175,7 +175,8 @@ export function groundEffectSnapshot(
 
 /**
  * The bar a client draws, every slot in its place, `null` where it is
- * empty (#347). Energy costs are what `bearer` pays right now, Expertise
+ * empty (#347): `skillBar` as `resolvedBar` has it, a copy standing in a
+ * slot (#469) drawn there. Energy costs are what `bearer` pays right now, Expertise
  * (#528) at its weakened rank (#762) and an active glyph (#637) and all.
  */
 export function skillBarSlots(skillBar: SkillBar, bearer: RankHolder): (SkillBarSlot | null)[] {
