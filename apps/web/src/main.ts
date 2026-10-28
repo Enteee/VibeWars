@@ -782,6 +782,8 @@ async function main(): Promise<void> {
       return;
     }
     match = undefined;
+    // Read before the view goes: the table moves with the player (#1057).
+    const summary = leaving.summary();
     await leaving.dispose();
     enteringMatch = false;
     const leavingLobby = lobby;
@@ -798,7 +800,7 @@ async function main(): Promise<void> {
     setStatus("", "offline");
     showViewport(false);
     music().screen("menu");
-    queue.screen.show({ kind: "ended", outcome, streak: queueStreak });
+    queue.screen.show({ kind: "ended", outcome, streak: queueStreak, summary });
   };
 
   /**

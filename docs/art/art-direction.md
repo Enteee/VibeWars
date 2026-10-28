@@ -130,6 +130,27 @@ target has an empty track edged in `dead`. An interrupted cast keeps the
 row for 400 ms with a `damage` ✕ and edge, a cancelled one dimmed, as the
 skill slot does (#300). Armor is in the frame's hover title.
 
+### Match summary
+
+When a match ends (#1057), a table per team sits under the result banner:
+yours on the left, or team 1 for a spectator. A queued match carries it
+on to the queue screen, under the outcome line.
+
+| Name | Damage | Healing | Taken | Kills | Deaths | Interrupts |
+| ---- | -----: | ------: | ----: | ----: | -----: | ---------: |
+
+- `panel` at 92 % under each table, edged in `line`; the caption and the
+  column heads in `ink-dim`, the caption uppercase.
+- Names left, numbers right in tabular figures, whole, no units. A long
+  name is cut with an ellipsis at 9 rem.
+- **Your row** has a 3 px `friend` border on its left edge; nothing else
+  about it changes.
+- **The best of each column**, across the whole match, is `ink` bold, every
+  tie included. A column that is zero throughout has no best.
+- **Zeros** are `ink-dim`, so the numbers that happened stand out.
+- 0.75 rem monospace, both tables side by side: 8v8 fits at 1024 px wide
+  with no scroll. It takes no clicks.
+
 ### Professions (menus only)
 
 Never used in the arena: there, colour means team.
