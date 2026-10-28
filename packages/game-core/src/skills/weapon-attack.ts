@@ -440,7 +440,8 @@ export function landBlow(
  * mid-swing or mid-flight adds nothing. Physical attacks only, as GW1
  * says: a wand's or a staff's bolt carries none. Then every status that
  * ends after so many hits with this weapon spends one (#939): Sand
- * Shards' fourth hit splashes, then ends it. Returns those endings.
+ * Shards' fourth hit splashes, then ends it. Returns those endings,
+ * after what the weapon itself does to whoever it hits (#1239).
  */
 export function attackHitRiders(
   attacker: Combatant,
@@ -451,8 +452,9 @@ export function attackHitRiders(
   surroundings: Surroundings,
   fired: FiredTrigger[],
 ): CombatEvent[] {
+  const onHit = weaponOnHit(attacker, victim, mainHand.weapon, rng, rules, surroundings);
   if (!isPhysicalDamage(mainHand.damageType)) {
-    return [];
+    return onHit;
   }
   for (const { id } of attacker.statuses.active) {
     const rider = getStatusDefinition(id).onAttackHit;
@@ -470,11 +472,37 @@ export function attackHitRiders(
       fired.push({ sourceId: attacker.id, skillId: rider.skillId, events });
     }
   }
-  const events: CombatEvent[] = [];
+  const events: CombatEvent[] = [...onHit];
   for (const statusId of attacker.statuses.countHit(mainHand.weapon.id)) {
     events.push({ kind: "status-expired", targetId: attacker.id, statusId });
   }
   return events;
+}
+
+/**
+ * What `weapon` does to `victim` besides its damage (#1239): Shadowsong's
+ * blindness, Dissonance's interrupt, Disenchantment's strip. Only a
+ * spirit's does anything. An interrupt with nothing to interrupt is no
+ * miss: GW1 says "anyone struck is interrupted", not that it tries.
+ */
+function weaponOnHit(
+  attacker: Combatant,
+  victim: Combatant,
+  weapon: Weapon,
+  rng: SimulationRng,
+  rules: CombatRules,
+  surroundings: Surroundings,
+): CombatEvent[] {
+  if (weapon.onHit.length === 0) {
+    return [];
+  }
+  return applyEffects(weapon.onHit, {
+    caster: attacker,
+    target: victim,
+    rng,
+    rules,
+    surroundings,
+  }).filter((event) => event.kind !== "interrupt-missed");
 }
 
 /**
