@@ -37,6 +37,7 @@ test("[?] opens Help on Getting started; Esc returns to the menu as it was (#125
 test("the HUD's [?] opens Help over a match; Esc closes it and gives focus back (#1257)", async ({
   page,
 }) => {
+  await page.goto("./");
   await startSoloMatch(page);
   await expect(page.locator("#topbar")).toBeHidden();
   await page.locator(".hud-help").click();
