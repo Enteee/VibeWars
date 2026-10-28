@@ -2,12 +2,15 @@
  * turn-check (#974): is the TURN server up and usable from the internet?
  * Each check is ok, fail or skip (not configured); healthy is no fail.
  */
+import { spawnSync } from "node:child_process";
 import crypto from "node:crypto";
+import dns from "node:dns/promises";
 import fs from "node:fs";
 import net from "node:net";
+import process from "node:process";
 
-import { files, tls } from "./settings.mjs";
-import { allocate, binding } from "./stun.mjs";
+import { files, ownAddresses, tls } from "./settings.mjs";
+import { allocate, binding, permissions } from "./stun.mjs";
 import { HEALTH_USER, healthPassword } from "./users.mjs";
 
 /** @typedef {{ name: string, status: "ok" | "fail" | "skip", detail: string }} Check */
@@ -129,6 +132,101 @@ function certificate(s, now) {
   };
 }
 
+/** Private peers coturn must refuse; the first that is no own address is asked. */
+const PRIVATE_PROBES = ["10.255.255.254", "192.168.255.254", "172.31.255.254"];
+
+/**
+ * The peers the permission check asks for (#1266), each with whether it
+ * must be granted: a public address (stunProbe's), the host's own public
+ * address, so two players on this relay reach each other, and a private
+ * address, which must be refused.
+ *
+ * @param {import("./settings.mjs").TurnSettings} s
+ * @param {(host: string) => Promise<string>} lookup  a name's IPv4 address
+ * @returns {Promise<{ label: string, peer: string, granted: boolean }[]>}
+ */
+export async function permissionProbes(s, lookup) {
+  const own = ownAddresses(s);
+  const priv = PRIVATE_PROBES.find((ip) => !own.includes(ip)) ?? "10.255.255.254";
+  const probes = [{ label: "private", peer: priv, granted: false }];
+  const pub = s.externalIp?.split("/")[0];
+  if (pub !== undefined && net.isIPv4(pub))
+    probes.unshift({ label: "own", peer: pub, granted: true });
+  if (s.stunProbe !== null) {
+    const [host = ""] = s.stunProbe.split(/:(?=\d+$)/);
+    probes.unshift({ label: "public", peer: await lookup(host), granted: true });
+  }
+  return probes;
+}
+
+/** @param {string} host */
+async function lookupV4(host) {
+  return net.isIPv4(host) ? host : (await dns.lookup(host, { family: 4 })).address;
+}
+
+/**
+ * Whether a relay may reach a public peer and the host's own address, and
+ * is refused a private one.
+ *
+ * @param {import("./settings.mjs").TurnSettings} s
+ * @param {string} host
+ * @returns {Promise<Check>}
+ */
+async function permissionCheck(s, host) {
+  const name = "permissions";
+  try {
+    const password = healthPassword(s);
+    const probes = await permissionProbes(s, lookupV4);
+    const res = await permissions({
+      host,
+      port: s.listeningPort,
+      username: HEALTH_USER,
+      password,
+      peers: probes.map((p) => p.peer),
+    });
+    if (!res.ok) {
+      const code = res.code === null ? "no code" : String(res.code);
+      return { name, status: "fail", detail: `no allocation (${code})` };
+    }
+    const codes = probes.map((_p, i) => res.answers[i]?.code ?? null);
+    const ok = probes.every((p, i) => (codes[i] === null) === p.granted);
+    const detail = probes.map((p, i) => {
+      const code = codes[i] ?? null;
+      const answer = code === null ? "granted" : `refused (${String(code)})`;
+      return `${p.label} ${p.peer} ${answer}`;
+    });
+    return { name, status: ok ? "ok" : "fail", detail: detail.join(", ") };
+  } catch (e) {
+    return { name, status: "fail", detail: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+/**
+ * Whether turn.nft is loaded. Only root can tell; anyone else gets a skip.
+ *
+ * @returns {Check}
+ */
+export function nftCheck() {
+  const name = "nftables";
+  if (process.getuid?.() !== 0) {
+    return {
+      name,
+      status: "skip",
+      detail: "cannot tell: not root (nft list table inet vibewars_turn)",
+    };
+  }
+  const res = spawnSync("nft", ["list", "table", "inet", "vibewars_turn"], { encoding: "utf8" });
+  if (res.error !== undefined) return { name, status: "skip", detail: "cannot tell: no nft" };
+  return res.status === 0
+    ? { name, status: "ok", detail: "table inet vibewars_turn is loaded" }
+    : {
+        name,
+        status: "fail",
+        detail:
+          "table inet vibewars_turn is not loaded: relay users reach this host's UDP services",
+      };
+}
+
 /**
  * @param {import("./settings.mjs").TurnSettings} s
  * @param {Date} [now]
@@ -178,6 +276,12 @@ export async function runChecks(s, now = new Date()) {
       detail: e instanceof Error ? e.message : String(e),
     });
   }
+  checks.push(
+    checks.at(-1)?.status === "ok"
+      ? await permissionCheck(s, host)
+      : { name: "permissions", status: "skip", detail: "no allocation" },
+  );
+  checks.push(nftCheck());
   checks.push(await externalIp(s));
   checks.push(certificate(s, now));
   return checks;

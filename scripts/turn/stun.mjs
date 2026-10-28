@@ -4,6 +4,8 @@
  * at once. turnutils_uclient allocates too, but then relays to a peer, which
  * DENIED_PEERS refuses on loopback, and its output does not say plainly
  * whether the allocation itself succeeded. Here the answer is a STUN code.
+ * A CreatePermission on the allocation asks whether a peer is allowed
+ * (#1266) without sending it a packet.
  */
 import crypto from "node:crypto";
 import dgram from "node:dgram";
@@ -11,7 +13,7 @@ import net from "node:net";
 
 const MAGIC = 0x2112a442;
 
-const TYPE = { binding: 0x0001, allocate: 0x0003, refresh: 0x0004 };
+const TYPE = { binding: 0x0001, allocate: 0x0003, refresh: 0x0004, createPermission: 0x0008 };
 const SUCCESS = 0x0100;
 
 const ATTR = {
@@ -19,6 +21,7 @@ const ATTR = {
   integrity: 0x0008,
   errorCode: 0x0009,
   lifetime: 0x000d,
+  peer: 0x0012,
   realm: 0x0014,
   nonce: 0x0015,
   relayed: 0x0016,
@@ -197,12 +200,39 @@ export function binding(host, port, timeoutMs = 2000) {
 }
 
 /**
- * An authenticated TURN Allocate, released again at once.
+ * An XOR-PEER-ADDRESS for an IPv4 peer, port 0.
  *
- * @param {{ host: string, port: number, username: string, password: string, timeoutMs?: number }} opts
- * @returns {Promise<{ ok: true, relayed: string } | { ok: false, code: number | null }>}
+ * @param {string} ip
+ * @returns {Buffer}
  */
-export function allocate({ host, port, username, password, timeoutMs = 2000 }) {
+export function xorPeerV4(ip) {
+  const v = Buffer.alloc(8);
+  v[1] = 0x01;
+  v.writeUInt16BE(MAGIC >>> 16, 2);
+  const raw = ip.split(".").reduce((acc, part) => (acc << 8) | Number(part), 0);
+  v.writeUInt32BE((raw ^ MAGIC) >>> 0, 4);
+  return v;
+}
+
+/**
+ * @typedef {object} AllocateOptions
+ * @property {string} host
+ * @property {number} port
+ * @property {string} username
+ * @property {string} password
+ * @property {number} [timeoutMs]
+ */
+
+/**
+ * An authenticated TURN Allocate. `body` runs on the allocation, which is
+ * released again after it.
+ *
+ * @param {AllocateOptions} opts
+ * @param {(relayed: string, ask: (type: number, attrs: [number, Buffer][]) => Promise<Message>) => Promise<T>} body
+ * @returns {Promise<{ ok: true, relayed: string, result: T } | { ok: false, code: number | null }>}
+ * @template T
+ */
+function withAllocation({ host, port, username, password, timeoutMs = 2000 }, body) {
   const udp = Buffer.from([17, 0, 0, 0]);
   return exchange(host, port, timeoutMs, async (ask) => {
     // The first, unauthenticated, request is answered 401 with a realm and a nonce.
@@ -220,12 +250,51 @@ export function allocate({ host, port, username, password, timeoutMs = 2000 }) {
     ]);
     const res = await ask(TYPE.allocate, [[ATTR.transport, udp], ...auth], key);
     if (res.type !== (TYPE.allocate | SUCCESS)) return { ok: false, code: errorCode(res) };
-    const relayed = xorAddress(res, ATTR.relayed);
-    const zero = Buffer.alloc(4);
-    await ask(TYPE.refresh, [[ATTR.lifetime, zero], ...auth], key).catch(() => null);
-    return {
-      ok: true,
-      relayed: relayed === null ? "?" : `${relayed.address}:${String(relayed.port)}`,
-    };
+    const address = xorAddress(res, ATTR.relayed);
+    const relayed = address === null ? "?" : `${address.address}:${String(address.port)}`;
+    try {
+      const result = await body(relayed, (type, attrs) => ask(type, [...attrs, ...auth], key));
+      return { ok: true, relayed, result };
+    } finally {
+      const zero = Buffer.alloc(4);
+      await ask(TYPE.refresh, [[ATTR.lifetime, zero], ...auth], key).catch(() => null);
+    }
   });
+}
+
+/**
+ * An authenticated TURN Allocate, released again at once.
+ *
+ * @param {AllocateOptions} opts
+ * @returns {Promise<{ ok: true, relayed: string } | { ok: false, code: number | null }>}
+ */
+export async function allocate(opts) {
+  const res = await withAllocation(opts, () => Promise.resolve(null));
+  return res.ok ? { ok: true, relayed: res.relayed } : res;
+}
+
+/** @typedef {{ peer: string, code: number | null }} Answer */
+
+/**
+ * Allocates, asks for a permission toward each IPv4 peer, and releases.
+ * A peer's answer is null when it was granted, else the error code: 403 is
+ * a peer coturn refuses.
+ *
+ * @param {AllocateOptions & { peers: readonly string[] }} opts
+ * @returns {Promise<{ ok: true, answers: Answer[] } | { ok: false, code: number | null }>}
+ */
+export async function permissions(opts) {
+  /** @type {(relayed: string, ask: (type: number, attrs: [number, Buffer][]) => Promise<Message>) => Promise<Answer[]>} */
+  const body = async (_relayed, ask) => {
+    /** @type {Answer[]} */
+    const answers = [];
+    for (const peer of opts.peers) {
+      const reply = await ask(TYPE.createPermission, [[ATTR.peer, xorPeerV4(peer)]]);
+      const granted = reply.type === (TYPE.createPermission | SUCCESS);
+      answers.push({ peer, code: granted ? null : (errorCode(reply) ?? 0) });
+    }
+    return answers;
+  };
+  const res = await withAllocation(opts, body);
+  return res.ok ? { ok: true, answers: res.result } : res;
 }

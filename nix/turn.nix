@@ -200,6 +200,7 @@ in
         mkdir -p ${lib.escapeShellArg cfg.stateDir}
         chmod 700 ${lib.escapeShellArg cfg.stateDir}
         ${node} ${turnScripts}/turn.mjs conf > ${lib.escapeShellArg "${cfg.stateDir}/turnserver.conf"}
+        ${node} ${turnScripts}/turn.mjs nft > ${lib.escapeShellArg "${cfg.stateDir}/turn.nft"}
         exec turnserver -c ${lib.escapeShellArg "${cfg.stateDir}/turnserver.conf"}
       '';
 
