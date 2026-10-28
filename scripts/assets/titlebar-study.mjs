@@ -1,6 +1,6 @@
 // Draws a study of the title bar when it carries every menu screen's title and
 // controls (#1251). It is a design reference for that decision, not a game
-// asset. Study, not decided.
+// asset. Decided: variant A (#1251).
 //
 //   node scripts/assets/titlebar-study.mjs
 //
@@ -600,7 +600,7 @@ parts.push(
   text(
     20,
     y,
-    "Title bar: study, not decided (#1251). Three variants, each on the same five screens. 1280 px wide, then 390 px (phone).",
+    "Title bar: study (#1251), the operator picked A. Three variants, each on the same five screens. 1280 px wide, then 390 px (phone).",
     { size: 16 },
   ),
 );
