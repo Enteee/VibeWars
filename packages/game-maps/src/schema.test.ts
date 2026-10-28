@@ -27,6 +27,7 @@ const validMap = {
     },
   ],
   spawnPoints: [{ team: 0, position: { x: 1, y: 1 } }],
+  objectives: [],
 };
 
 describe("validateMapData", () => {
@@ -281,5 +282,64 @@ describe("every map's walls", () => {
         });
       });
     }
+  });
+});
+
+describe("resurrection shrines (#1186)", () => {
+  const priestMap = {
+    ...validMap,
+    mode: "priest-annihilation",
+    walls: [{ kind: "rect", x: 45, y: 0, width: 10, height: 40 }],
+    spawnPoints: [
+      { team: 0, position: { x: 20, y: 50 } },
+      { team: 1, position: { x: 80, y: 50 } },
+    ],
+    objectives: [
+      { kind: "resurrection-shrine", team: 0, position: { x: 20, y: 80 } },
+      { kind: "resurrection-shrine", team: 1, position: { x: 80, y: 20 } },
+    ],
+  };
+  const shrine = (team: number, x: number, y: number) => ({
+    kind: "resurrection-shrine",
+    team,
+    position: { x, y },
+  });
+
+  it("accepts one shrine per spawning team, clear of the walls", () => {
+    expect(validateMapData(priestMap).objectives).toHaveLength(2);
+  });
+
+  it("refuses objectives missing altogether", () => {
+    const { objectives: _objectives, ...without } = validMap;
+    expect(() => validateMapData(without)).toThrow(MapValidationError);
+  });
+
+  it("refuses a team with no shrine, or two", () => {
+    expect(() => validateMapData({ ...priestMap, objectives: [shrine(0, 20, 80)] })).toThrow(
+      /team 1 has 0/,
+    );
+    expect(() =>
+      validateMapData({
+        ...priestMap,
+        objectives: [...priestMap.objectives, shrine(1, 80, 80)],
+      }),
+    ).toThrow(/team 1 has 2/);
+  });
+
+  it("refuses a shrine off the map, against a wall, or of a team with no spawns", () => {
+    for (const bad of [shrine(1, 99, 20), shrine(1, 50, 20), shrine(2, 80, 80)]) {
+      expect(() =>
+        validateMapData({ ...priestMap, objectives: [shrine(0, 20, 80), shrine(1, 80, 20), bad] }),
+      ).toThrow(MapValidationError);
+    }
+    expect(() =>
+      validateMapData({ ...priestMap, objectives: [shrine(0, 20, 80), shrine(1, 50, 20)] }),
+    ).toThrow(/a body clear of every wall/);
+  });
+
+  it("refuses a shrine on a map of any other mode", () => {
+    expect(() => validateMapData({ ...validMap, objectives: [shrine(0, 50, 50)] })).toThrow(
+      /annihilation map has no resurrection shrine/,
+    );
   });
 });

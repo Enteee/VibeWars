@@ -534,13 +534,15 @@ export interface SeatIdentity {
 
 /**
  * Who a body on the wire is: a seat's player, or a creature (#1052),
- * named for its kind, on its owner's team, with no professions.
- * `undefined` for a body with no seat that is not a seated player's
- * creature: it is not sent. A companion's armed pet attack lapses at
- * `elapsedSeconds` on.
+ * named for its kind, on its owner's team, with no professions; a map's
+ * NPC (#1186) on its own. `undefined` for a body with no seat that is
+ * neither a seated player's creature nor a map's: it is not sent. A
+ * companion's armed pet attack lapses at `elapsedSeconds` on.
  */
 export function wireIdentity(
-  participant: Pick<Participant, "id" | "creature" | "armedAttack">,
+  participant: Pick<Participant, "id" | "creature" | "armedAttack"> & {
+    readonly combatant: { readonly team: number };
+  },
   seats: ReadonlyMap<string, SeatIdentity>,
   elapsedSeconds: number,
 ): WireIdentity | undefined {
@@ -555,16 +557,21 @@ export function wireIdentity(
     };
   }
   const { creature } = participant;
-  const owner = creature === undefined ? undefined : seats.get(creature.ownerId);
-  return creature === undefined || owner === undefined
+  if (creature === undefined) {
+    return undefined;
+  }
+  const { team } = participant.combatant;
+  const ownTeam = team === 0 || team === 1 ? team : undefined;
+  const sentTeam = creature.ownerId === undefined ? ownTeam : seats.get(creature.ownerId)?.team;
+  return sentTeam === undefined
     ? undefined
     : {
         name: creature.name,
-        team: owner.team,
+        team: sentTeam,
         primaryProfession: null,
         secondaryProfession: null,
         creature: {
-          ownerId: creature.ownerId,
+          ownerId: creature.ownerId ?? null,
           kind: creature.kind,
           look: creature.look,
           mode: companionMode(creature),

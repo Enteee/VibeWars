@@ -25,9 +25,10 @@ const NAMES = new Map([
   ["you", "Pyro"],
   ["dummy", "Caster dummy"],
   ["wolf", "Wolf"],
+  ["priest/0", "Priest"],
 ]);
 const nameOf = (id: string): string => NAMES.get(id) ?? id;
-const CREATURES = new Set(["wolf"]);
+const CREATURES = new Set(["wolf", "priest/0"]);
 const isCreature = (id: string): boolean => CREATURES.has(id);
 
 function entry(events: CombatEvent[], extra: Partial<CombatLogEntry> = {}): CombatLogEntry {
@@ -188,6 +189,19 @@ describe("describeCombatEvent", () => {
     const swing = entry([event], { cause: "weapon", skillId: undefined, weaponId: "longbow" });
     expect(describeCombatEvent(swing, event, nameOf, isCreature)).toBe(
       "Longbow (Pyro) hits Caster dummy for 21",
+    );
+  });
+
+  it("names a priest's wave for the priest (#1186)", () => {
+    const event: CombatEvent = {
+      kind: "resurrected",
+      targetId: "dummy",
+      healthFraction: 1,
+      energyFraction: 1,
+    };
+    const wave = entry([event], { sourceId: "priest/0", skillId: undefined });
+    expect(describeCombatEvent(wave, event, nameOf, isCreature)).toBe(
+      "Priest resurrects Caster dummy (100% health, 100% energy)",
     );
   });
 

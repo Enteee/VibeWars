@@ -1,4 +1,6 @@
+import { AREA_ADJACENT } from "../distances.js";
 import type { StatusId } from "../skills/status.js";
+import { effectiveMaxHealth } from "../skills/tick.js";
 import { distance, normalize, sub, ZERO, type Vec2 } from "../vec2.js";
 import type { Participant } from "./simulation.js";
 
@@ -96,7 +98,13 @@ export type Behaviour =
       readonly aggroUnits: number;
       readonly leashUnits: number;
       readonly heelUnits: number;
-    };
+    }
+  /**
+   * A priest's (#1186): stand still and cast `skillId` on itself whenever
+   * it, or a living ally adjacent to it, is below full Health and the
+   * skill may be cast. Nobody hurt, nothing cast, so energy keeps.
+   */
+  | { readonly kind: "heal-when-hurt"; readonly skillId: string };
 
 /**
  * When a participant is put back as it started: the respawn path, at its
@@ -256,6 +264,8 @@ export function decide(
     }
     case "follow-and-attack":
       return followAndAttack(behaviour, cursor, context);
+    case "heal-when-hurt":
+      return healWhenHurt(behaviour, context);
   }
 }
 
@@ -287,6 +297,24 @@ function castLoop(
   }
   cursor.waitSeconds = behaviour.gapSeconds;
   return { ...waiting, useSkillId };
+}
+
+function healWhenHurt(
+  behaviour: Extract<Behaviour, { kind: "heal-when-hurt" }>,
+  context: BehaviourContext,
+): BehaviourIntent {
+  const { self } = context;
+  const hurt = context.participants.some(
+    (other) =>
+      !other.combatant.dead &&
+      other.combatant.team === self.combatant.team &&
+      (other.id === self.id || distance(other.position, self.position) <= AREA_ADJACENT) &&
+      other.combatant.health < effectiveMaxHealth(other.combatant),
+  );
+  const waiting = { ...STAND_STILL, targetId: self.id };
+  return hurt && !self.combatant.cast.isCasting && context.canUse(behaviour.skillId, self.id)
+    ? { ...waiting, useSkillId: behaviour.skillId }
+    : waiting;
 }
 
 function patrol(

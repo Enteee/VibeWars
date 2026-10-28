@@ -3315,6 +3315,42 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     ],
   },
   {
+    id: "monk.heal-area",
+    name: "Heal Area",
+    type: "spell",
+    elite: false,
+    profession: "monk",
+    attributeId: "monk.healing-prayers",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "self",
+    // "Heal yourself and all adjacent creatures for 30...150...180
+    // Health": foes too. Priest Annihilation's priest casts it (#1186).
+    area: {
+      radius: AREA_ADJACENT,
+      origin: "caster",
+      affects: "all",
+      maxTargets: undefined,
+      includesCaster: true,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    effects: [
+      {
+        kind: "heal",
+        perStatusOnTarget: [],
+        amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 30, atTwelve: 150 } },
+      },
+    ],
+  },
+  {
     id: "dervish.mystic-sweep",
     name: "Mystic Sweep",
     type: "attack",

@@ -45,7 +45,7 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
   const walls = allWallSegments(map.walls);
   const bounds = { width: map.width, height: map.height };
 
-  it("is the same map turned half round its centre: walls and spawns, the teams swapped", () => {
+  it("is the same map turned half round its centre: walls, spawns and shrines, the teams swapped", () => {
     for (const wall of walls) {
       const image = { a: turned(map, wall.a), b: turned(map, wall.b) };
       expect(
@@ -58,6 +58,13 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
       expect(
         map.spawnPoints.some((other) => other.team !== spawn.team && near(other.position, image)),
         JSON.stringify(spawn),
+      ).toBe(true);
+    }
+    for (const shrine of map.objectives) {
+      const image = turned(map, shrine.position);
+      expect(
+        map.objectives.some((other) => other.team !== shrine.team && near(other.position, image)),
+        JSON.stringify(shrine),
       ).toBe(true);
     }
   });
@@ -167,10 +174,23 @@ describe("the arena set (#444)", () => {
     );
   });
 
-  it("plays Kill Count on Pillar Hall and Annihilation everywhere else (#476)", () => {
+  it("plays Kill Count on Pillar Hall, Priest Annihilation on Split Paths and Annihilation everywhere else (#476, #1186)", () => {
     expect(MAPS.filter((map) => map.mode === "kill-count").map((map) => map.id)).toEqual([
       "arena-pillars",
     ]);
-    expect(MAPS.filter((map) => map.mode === "annihilation")).toHaveLength(MAPS.length - 1);
+    expect(MAPS.filter((map) => map.mode === "priest-annihilation").map((map) => map.id)).toEqual([
+      "arena-split",
+    ]);
+    expect(MAPS.filter((map) => map.mode === "annihilation")).toHaveLength(MAPS.length - 2);
+  });
+
+  it("puts each team's shrine on Split Paths behind its spawns (#1186)", () => {
+    const split = MAPS.find((map) => map.id === "arena-split");
+    for (const shrine of split?.objectives ?? []) {
+      const spawns = split?.spawnPoints.filter((spawn) => spawn.team === shrine.team) ?? [];
+      const farthest = Math.max(...spawns.map((spawn) => Math.abs(spawn.position.x - 500)));
+      expect(Math.abs(shrine.position.x - 500)).toBeGreaterThan(farthest);
+    }
+    expect(split?.objectives).toHaveLength(2);
   });
 });

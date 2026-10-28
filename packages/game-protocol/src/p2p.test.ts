@@ -512,6 +512,26 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
       ],
     },
   ],
+  [
+    "snapshot with a map's priest, owned by nobody (#1186)",
+    parseWireSnapshotPart,
+    {
+      ...snapshot,
+      players: [
+        {
+          ...minion,
+          name: "Priest",
+          creature: {
+            ownerId: null,
+            kind: "priest",
+            look: "priest",
+            mode: null,
+            armedAttack: null,
+          },
+        },
+      ],
+    },
+  ],
   ["last of three snapshot parts", parseWireSnapshotPart, { ...snapshot, part: 2, parts: 3 }],
   ["combat batch", parseWireCombatBatch, combatBatch],
   ["skill-bar", parseWireSkillBar, skillBar],
@@ -771,6 +791,14 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     {
       ...snapshot,
       players: [{ ...minion, creature: { ownerId: "peer-1", kind: "golem", mode: null } }],
+    },
+  ],
+  [
+    "snapshot with a creature whose owner is neither a peer nor null (#1186)",
+    parseWireSnapshotPart,
+    {
+      ...snapshot,
+      players: [{ ...minion, creature: { ...minion.creature, ownerId: 7 } }],
     },
   ],
   [
