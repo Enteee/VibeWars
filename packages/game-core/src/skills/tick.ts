@@ -61,13 +61,18 @@ export function advanceStatuses(
     const change = (pips * HEALTH_PER_PIP + perSecond) * dt;
     // Degeneration takes nothing from an invulnerable body (#1208); regeneration still heals.
     const unguarded = change < 0 && isInvulnerable(combatant) ? 0 : change;
-    // A Guild Lord loses no more than its cap lets through (#1223).
-    const delta =
-      unguarded < 0
-        ? -guardedDegeneration(combatant, Math.min(-unguarded, combatant.health))
-        : unguarded;
-    const effectiveMax = effectiveMaxHealth(combatant);
-    const next = Math.min(effectiveMax, Math.max(0, combatant.health + delta));
+    const wanted = Math.min(
+      effectiveMaxHealth(combatant),
+      Math.max(0, combatant.health + unguarded),
+    );
+    // A Guild Lord loses no more than its cap lets through (#1223), and
+    // that includes coming down to its effective maximum: a Deep Wound
+    // whose cut the cap held back leaves it above, to lose the rest as
+    // later seconds allow.
+    const next =
+      wanted < combatant.health
+        ? combatant.health - guardedDegeneration(combatant, combatant.health - wanted)
+        : wanted;
     const applied = next - combatant.health;
     combatant.health = next;
 

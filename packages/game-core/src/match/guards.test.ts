@@ -279,7 +279,7 @@ describe("the Guild Lord's Health-loss cap in a match (#1223)", () => {
     expect(damageTo(log, lord.id)).toEqual([]);
   });
 
-  it("lets a Deep Wound cut no more than the second's cap", () => {
+  it("lets a Deep Wound cut no more than the second's cap, in that second or any later one", () => {
     const sim = match([]);
     sim.step(DT);
     const lord = get(sim, guildLordId(0)).combatant;
@@ -290,5 +290,16 @@ describe("the Guild Lord's Health-loss cap in a match (#1223)", () => {
     lord.statuses.remove("deep-wound");
     expect(applyStatus(lord, "deep-wound", 20, "x")).toBe(0);
     expect(lord.health).toBe(GUILD_LORD_HEALTH - 25);
+    // Nor does coming down to its new maximum, for the rest of the second.
+    stepTo(sim, 1 - DT);
+    expect(lord.health).toBe(GUILD_LORD_HEALTH - 25);
+    // Each later second takes at most its cap, until it is at its maximum.
+    let before = lord.health;
+    for (let second = 1; second < 5; second++) {
+      stepTo(sim, second + 1 - DT);
+      expect(before - lord.health).toBeLessThanOrEqual(guildLordLossCap(second) + 1e-9);
+      before = lord.health;
+    }
+    expect(lord.health).toBe(GUILD_LORD_HEALTH - 100);
   });
 });

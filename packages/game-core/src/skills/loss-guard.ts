@@ -48,9 +48,10 @@ export function guardedLoss(target: Combatant, amount: number): number {
 }
 
 /**
- * Of `amount` Health a tick's degeneration would take, what `target`
- * loses: what is left of this second's cap, to the fraction, which it
- * spends. Never more, so degeneration cannot kill past the cap.
+ * Of `amount` Health a tick would take, by degeneration or by coming
+ * down to the effective maximum, what `target` loses: what is left of
+ * this second's cap, to the fraction, which it spends. Never more, so
+ * degeneration cannot kill past the cap.
  */
 export function guardedDegeneration(target: Combatant, amount: number): number {
   const guard = target.lossGuard;
