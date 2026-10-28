@@ -1284,6 +1284,40 @@ refused ("That ally is alive."). If the corpse is back on its feet by
 the time the cast ends, a second resurrection landing first or the
 respawn timer running out, it does nothing, and the energy is spent.
 
+Four more resurrections reach a corpse from casting range (#474), each
+with the same no effects, no adrenaline and 5 s death-penalty grace.
+**Resurrection Signet** is Common: any character may take it, whatever
+their professions. It returns the ally at 100% health and 25% energy
+after 3 s, and then it is spent, not recharging, until a morale boost
+reaches its owner. An interrupted one is spent too, and a cancelled one
+is not. Nothing in today's modes gives a morale boost, so it is one
+resurrection per match. **Rebirth** (Monk) brings the ally to your side
+at 25% health and no energy, disables every skill on their bar for 4 s
+at Protection Prayers 12, and empties your own energy. **Signet of
+Return** (Paragon) gives 13% health and 3% energy at Leadership 12 for
+each party member in earshot of you, yourself included. Creatures do not
+count. **Flesh of My Flesh** (Ritualist) costs you half your health and
+returns the ally with what you have left, and 17% energy at Restoration
+Magic 12.
+
+**Corpses** (#466). Every dead player or training dummy is a corpse where
+it fell, of either team: a Necromancer can feed on a foe's body or an
+ally's, and denying a foe the bodies is part of the fight. A creature
+leaves none. A corpse is fresh until a skill exploits it, once; after
+that it is drawn darker, and a skill that wants a corpse ignores it. A
+corpse skill takes the fresh corpse nearest the caster within its
+radius, ties going to the smaller id, with no line of sight needed: a
+body lies on the ground. With none in reach the press is refused ("No
+corpse in range.") and nothing is paid; the corpse is picked again when
+the cast ends, so one used up meanwhile leaves the cast with no effect,
+paid for. An exploited corpse can still be resurrected, and its next
+death leaves a fresh one; a respawn takes it away.
+
+**Soul Feast** (Necromancer, Death Magic, 10 energy, 1 s, no recharge)
+exploits the nearest corpse within cast range and steals 50...234
+Health from it. That is life stealing, as Vampiric Gaze's, not a heal:
+Deep Wound does not cut it, and it stops at your maximum.
+
 ## Match end
 
 An Annihilation match (#846, today's match) is won by **wiping the other

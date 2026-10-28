@@ -76,6 +76,7 @@ export function logToneOf(kind: CombatEvent["kind"]): Exclude<LogTone, "divider"
     case "attack-unreachable":
     case "knocked-down":
     case "shadow-stepped":
+    case "teleported":
     case "skill-disabled":
     case "recharge-lengthened":
       return "control";
@@ -199,6 +200,8 @@ export function describeCombatEvent(
       return `${target}'s ${skillName(event.skillId) ?? event.skillId} takes ${formatAmount(event.seconds)} s longer to recharge`;
     case "shadow-stepped":
       return `${target} shadow steps to ${nameOf(event.toId)}`;
+    case "teleported":
+      return `${target} is teleported to ${nameOf(event.toId)}`;
   }
 }
 

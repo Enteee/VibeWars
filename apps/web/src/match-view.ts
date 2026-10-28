@@ -50,7 +50,6 @@ import {
   updateHud,
   updateRecharges,
 } from "./ui/hud.js";
-import { createAllyWatch } from "./ui/ally-watch.js";
 import { createCompass } from "./ui/compass.js";
 import { noWebGlNotice } from "./ui/arena-notice.js";
 import { attachFullscreenButton, fullscreenTarget } from "./ui/fullscreen.js";
@@ -60,6 +59,7 @@ import {
   isOptionsOverlayOpen,
   openOptionsOverlay,
 } from "./ui/options-screen.js";
+import { createPartyWindow } from "./ui/party-window.js";
 import { attachReconnectCountdown, mountReconnectOverlay } from "./ui/reconnect-overlay.js";
 import { flashSlot, slotFlashes } from "./ui/skill-slot-state.js";
 
@@ -133,9 +133,8 @@ export function toArenaSnapshot(
     // Whose names show is the caller's to say (`withNames`, #253).
     hoverId: undefined,
     showAllNames: false,
-    // Your team's calls and the ally you watch are the caller's (`withCalls`, #443).
+    // Your team's calls are the caller's (`withCalls`, #443).
     calledId: undefined,
-    watchedId: undefined,
     pings: [],
     actors: match.players.map((player) => {
       return {
@@ -159,6 +158,7 @@ export function toArenaSnapshot(
         health: player.health,
         maxHealth: player.maxHealth,
         dead: player.dead,
+        exploited: player.corpseExploited,
         // From the snapshot, not the event, so a dropped event or a late
         // joiner still draws it right, and it stands up the moment it is 0.
         knockedDown: player.knockdownRemaining > 0,
@@ -244,8 +244,10 @@ export async function startMatchView(
   const hud = createHud(parent, (targetId, status) => {
     connection.sendIntent({ kind: "end-upkeep", targetId, status });
   });
-  // The ally you watch (#443), top right: yours alone.
-  const allyWatch = createAllyWatch(parent);
+  // Your team's health, right middle (#1055); a row's click targets its member.
+  const partyWindow = createPartyWindow(parent, (targetSessionId) => {
+    connection.sendIntent({ kind: "target", targetSessionId });
+  });
   // The compass (#486), top right under the match controls.
   const compass = createCompass(parent);
   // The arena's edge stops below the target frame and above the bars, not
@@ -520,11 +522,10 @@ export async function startMatchView(
     // Hover is hit-tested every frame, through the camera as it is now, so
     // a body that walks under a still cursor, or a camera that moves under
     // it, shows the right name.
-    allyWatch.update(latestMatch);
+    partyWindow.update(latestMatch);
     latestArena = withCalls(
       withNames(toArenaSnapshot(latestMatch, walls), viewport?.pointerWorld(), nameReveal.held()),
       connection.getCalls(),
-      allyWatch.watchedId,
     );
     viewport?.scene.setSnapshot(latestArena);
     compass.update(latestArena, connection.selfSessionId);
@@ -563,12 +564,10 @@ export async function startMatchView(
       connection.sendIntent({ kind: "walk-to", x: world.x, y: world.y });
       viewport.scene.showWalkMarker(world);
     } else if (button === "middle" && phase === "down") {
-      // A wheel click calls a foe, watches an ally, or pings the ground (#443).
+      // A wheel click calls a foe, or pings the point (#443, #1055).
       const action = middleClickAction(latestMatch, latestArena, world);
       if (action.kind === "call") {
         connection.sendCall(action.call);
-      } else if (action.kind === "watch") {
-        allyWatch.toggle(action.allyId);
       }
     }
   });
@@ -596,7 +595,7 @@ export async function startMatchView(
       offPointer?.();
       coverObserver.disconnect();
       camera?.dispose();
-      allyWatch.dispose();
+      partyWindow.dispose();
       compass.dispose();
       delete parent.dataset.called;
       parent.style.removeProperty("--hud-height");

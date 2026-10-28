@@ -23,6 +23,7 @@ import {
   BODY_GLYPH_ALPHA,
   BODY_GLYPH_SIZE,
   DEAD_COLOUR,
+  EXPLOITED_CORPSE_COLOUR,
   PROFESSION_GLYPH_SIZE,
   withNames,
   placeFloatingText,
@@ -63,6 +64,7 @@ function actor(
     health: 500,
     maxHealth: 500,
     dead: false,
+    exploited: false,
     knockedDown: false,
     castProgress: undefined,
     statuses: [],
@@ -81,7 +83,6 @@ describe("actorAtPoint", () => {
       hoverId: undefined,
       showAllNames: false,
       calledId: undefined,
-      watchedId: undefined,
       pings: [],
     };
     expect(actorAtPoint(snapshot, vec2(0, 0))).toBeUndefined();
@@ -98,7 +99,6 @@ describe("actorAtPoint", () => {
       hoverId: undefined,
       showAllNames: false,
       calledId: undefined,
-      watchedId: undefined,
       pings: [],
     };
     expect(actorAtPoint(snapshot, vec2(105, 100))?.id).toBe("a");
@@ -115,7 +115,6 @@ describe("actorAtPoint", () => {
       hoverId: undefined,
       showAllNames: false,
       calledId: undefined,
-      watchedId: undefined,
       pings: [],
     };
     expect(actorAtPoint(snapshot, vec2(200, 200))).toBeUndefined();
@@ -132,7 +131,6 @@ describe("actorAtPoint", () => {
       hoverId: undefined,
       showAllNames: false,
       calledId: undefined,
-      watchedId: undefined,
       pings: [],
     };
     expect(actorAtPoint(snapshot, vec2(10, 0))?.id).toBe("a");
@@ -150,7 +148,6 @@ describe("actorAtPoint", () => {
       hoverId: undefined,
       showAllNames: false,
       calledId: undefined,
-      watchedId: undefined,
       pings: [],
     };
     expect(actorAtPoint(snapshot, vec2(100, 100))?.id).toBe("near");
@@ -170,7 +167,6 @@ describe("actorAtPoint and the dead", () => {
       hoverId: undefined,
       showAllNames: false,
       calledId: undefined,
-      watchedId: undefined,
       pings: [],
     };
     expect(actorAtPoint(snapshot, vec2(100, 100))?.id).toBe("living");
@@ -187,7 +183,6 @@ describe("actorAtPoint and the dead", () => {
       hoverId: undefined,
       showAllNames: false,
       calledId: undefined,
-      watchedId: undefined,
       pings: [],
     };
     expect(actorAtPoint(snapshot, vec2(100, 100))).toBeUndefined();
@@ -576,6 +571,13 @@ describe("bodyGlyphLayout (#1037)", () => {
       actor("m", 200, 100, 14, { profession: "necromancer", dead: true }),
     );
     expect(layout).toMatchObject({ size: 13, tint: DEAD_COLOUR, alpha: 1, x: 200, y: 100 });
+  });
+
+  it("darkens an exploited corpse's glyph (#466)", () => {
+    const layout = bodyGlyphLayout(
+      actor("m", 200, 100, 14, { profession: "necromancer", dead: true, exploited: true }),
+    );
+    expect(layout).toMatchObject({ tint: EXPLOITED_CORPSE_COLOUR, alpha: 1 });
   });
 
   it("shrinks it to fit the flattened disc of a knocked-down body", () => {

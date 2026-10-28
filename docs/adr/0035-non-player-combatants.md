@@ -80,3 +80,4 @@ built for players and is the larger, safe value.
   `PlayerSnapshot.creature` on the client), or creatures will count.
 - A snapshot can be larger: `MAX_SNAPSHOT_PARTS` went from 8 to 12 so
   8 players at every status, every creature and every shot still fit.
+- A creature leaves no corpse (#466) unless the card that adds it says so.

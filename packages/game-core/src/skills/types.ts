@@ -6,7 +6,7 @@ import type { SkillBar } from "../build.js";
 import type { DamageType } from "../equipment/types.js";
 import type { Behaviour } from "../match/behaviour.js";
 import type { CreatureKind } from "../match/simulation.js";
-import type { ProfessionId } from "../professions.js";
+import type { ProfessionId, SkillProfession } from "../professions.js";
 import type { CastState } from "./cast-state.js";
 import type { TargetCandidate } from "./targeting.js";
 import type { AttackState } from "./weapon-attack.js";
@@ -167,6 +167,17 @@ export interface LifeStealEffect {
   readonly amount: Magnitude;
 }
 
+/**
+ * The caster gains up to `amount` Health from the corpse its skill
+ * exploited (#466), as Soul Feast's "steal 50...234...280 Health": life
+ * stealing's gain without a living target. Not a heal: no healing
+ * modifier, capped at effective maximum health.
+ */
+export interface StealFromCorpseEffect {
+  readonly kind: "steal-from-corpse";
+  readonly amount: Magnitude;
+}
+
 /** Health sacrificed by the *caster*, as a percentage of their maximum. */
 export interface SacrificeHealthEffect {
   readonly kind: "sacrifice-health";
@@ -289,15 +300,49 @@ export interface ShadowStepEffect {
 }
 
 /**
- * Bring a dead target back to life where it lies (#812), with these
- * percentages of its maximum health and energy, as Restore Life's
+ * Bring a dead target back to life (#812, #474), as Restore Life's
  * "returned to life with 20...56...65% health and 42...80...90% energy".
- * A living target is left alone.
+ * A living target is left alone, and so is everything below: no health
+ * lost, no teleport.
  */
 export interface ResurrectEffect {
   readonly kind: "resurrect";
-  readonly healthPercent: Magnitude;
+  readonly health: ResurrectHealth;
+  /** A share of the target's maximum energy. */
   readonly energyPercent: Magnitude;
+  /**
+   * Both percentages are per party member within this radius of the
+   * caster: the caster and its living team-mates, creatures aside, each
+   * share capped at 100 (Signet of Return's "for each party member within
+   * earshot"). `undefined`: once.
+   */
+  readonly perPartyMemberWithin: number | undefined;
+  /**
+   * Where it stands up: where it lies, or beside the caster (Rebirth's
+   * "teleported to your current location").
+   */
+  readonly at: "corpse" | "caster";
+}
+
+/** How much health a resurrection returns (#474). */
+export type ResurrectHealth =
+  /** A share of the target's maximum: Restore Life's 56%. */
+  | { readonly kind: "percent"; readonly percent: Magnitude }
+  /**
+   * The caster first loses `casterLosesFractionOfCurrent` of its current
+   * health, floored, as Infuse Health's loss (never kills, not damage);
+   * the target gets the caster's health after it, at most its own
+   * maximum: Flesh of My Flesh's "lose half your Health ... with your
+   * current Health".
+   */
+  | { readonly kind: "caster-current"; readonly casterLosesFractionOfCurrent: number };
+
+/**
+ * The caster's energy drops to 0 (#474): Rebirth's "consumes all your
+ * remaining energy". Acts on the caster, once.
+ */
+export interface DrainOwnEnergyEffect {
+  readonly kind: "drain-own-energy";
 }
 
 /**
@@ -328,11 +373,13 @@ export interface RechargeOthersEffect {
  * Distracting Shot's "that skill is disabled for an additional 20
  * seconds". With `interrupted-and-attribute`, every skill on the
  * target's bar of the same attribute too, as Power Block's; a skill with
- * no attribute disables only itself. Nothing interrupted: nothing.
+ * no attribute disables only itself. Nothing interrupted: nothing. With
+ * `all`, every skill on the target's bar, nothing interrupted needed
+ * (#474): Rebirth's "all of target's skills are disabled".
  */
 export interface DisableSkillEffect {
   readonly kind: "disable-skill";
-  readonly which: "interrupted" | "interrupted-and-attribute";
+  readonly which: "interrupted" | "interrupted-and-attribute" | "all";
   readonly seconds: Magnitude;
 }
 
@@ -392,7 +439,12 @@ export type EventCondition =
    * this category; with `from: "caster"`, from the caster (#845), which
    * holds for every target of that use.
    */
-  | { readonly kind: "removed"; readonly category: StatusCategory; readonly from?: "caster" };
+  | { readonly kind: "removed"; readonly category: StatusCategory; readonly from?: "caster" }
+  /**
+   * A `resurrect` earlier in the list brought this target back (#474), so
+   * Rebirth's disable stays off a living ally whom another res reached first.
+   */
+  | { readonly kind: "resurrected" };
 
 /**
  * How the target or the caster stands (#794), read once, before any
@@ -497,6 +549,7 @@ export type UnconditionalEffect =
   | AdrenalineGainEffect
   | EnergyLossEffect
   | LifeStealEffect
+  | StealFromCorpseEffect
   | SacrificeHealthEffect
   | LoseHealthEffect
   | TransferConditionsEffect
@@ -508,6 +561,7 @@ export type UnconditionalEffect =
   | KnockdownEffect
   | ShadowStepEffect
   | ResurrectEffect
+  | DrainOwnEnergyEffect
   | RechargeFasterEffect
   | SplashEffect
   | RechargeOthersEffect
@@ -659,8 +713,9 @@ export interface Skill {
    * whose effects are not attribute-scaled (a pure interrupt, say) still
    * belongs to a profession, and inferring it would wrongly make such
    * skills equippable by everyone — a real bug this field replaced.
+   * `"common"` may be equipped by everyone (#474): Resurrection Signet.
    */
-  readonly profession: ProfessionId;
+  readonly profession: SkillProfession;
   /**
    * The attribute of `profession` it is linked to; `undefined` for GW1's
    * "No Attribute" skills, whose numbers are written for rank 0 (#445).
@@ -675,6 +730,12 @@ export interface Skill {
   /** Cast time in seconds. `0` is instant. */
   readonly activationSeconds: number;
   readonly rechargeSeconds: number;
+  /**
+   * GW1's "only recharges when you gain a morale boost" (#474): used, it is
+   * spent rather than recharging, until `CastState.refreshSpent`.
+   * `rechargeSeconds` is 0. Absent: it recharges by time, as every other skill.
+   */
+  readonly rechargesOnMoraleBoost?: true;
   /** Maximum distance to target, in world units. */
   readonly range: number;
   /** What must be selected, and whether the cast is legal. */
@@ -694,7 +755,15 @@ export interface Skill {
    * it is dodged. `undefined`: it lands at once.
    */
   readonly projectile: SkillProjectile | undefined;
+  /** `undefined`: it needs no corpse. */
+  readonly corpse: CorpseRule | undefined;
   readonly effects: readonly SkillEffect[];
+}
+
+/** A skill that exploits a corpse (#466): Soul Feast, later wells and minions. */
+export interface CorpseRule {
+  /** The nearest fresh corpse within this of the caster, world units. */
+  readonly radius: number;
 }
 
 /** How a flying spell flies (#535). */

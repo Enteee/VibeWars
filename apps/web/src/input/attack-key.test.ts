@@ -33,6 +33,7 @@ function player(sessionId: string, overrides: Partial<PlayerSnapshot> = {}): Pla
     secondaryProfession: undefined,
     team: 0,
     dead: false,
+    corpseExploited: false,
     castingSkillId: undefined,
     castRemaining: 0,
     castTotal: 0,

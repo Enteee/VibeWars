@@ -133,6 +133,7 @@ const player: WirePlayer = {
   primaryProfession: "monk",
   secondaryProfession: null,
   dead: false,
+  corpseExploited: false,
   castingSkillId: "healing-breeze",
   castRemaining: 0.75,
   castTotal: 1,
@@ -293,6 +294,7 @@ const refused: CastRefusedMessage = {
 
 const recharge: RechargeMessage = {
   slots: [{ slot: 0, remainingSeconds: 3.5, totalSeconds: 5 }],
+  spent: [2],
 };
 
 /** Each parser, with the one fixture it must round-trip. */
@@ -340,6 +342,11 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["refuse", parsePeerRefuse, refuse],
   ["snapshot", parseWireSnapshotPart, snapshot],
   ["snapshot with a creature", parseWireSnapshotPart, { ...snapshot, players: [player, minion] }],
+  [
+    "snapshot with an exploited corpse (#466)",
+    parseWireSnapshotPart,
+    { ...snapshot, players: [{ ...player, dead: true, corpseExploited: true }] },
+  ],
   [
     "snapshot with every player and creature there may be",
     parseWireSnapshotPart,
@@ -584,6 +591,16 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     { ...snapshot, players: [{ ...player, dead: "no" }] },
   ],
   [
+    "snapshot with a living player whose corpse was exploited (#466)",
+    parseWireSnapshotPart,
+    { ...snapshot, players: [{ ...player, dead: false, corpseExploited: true }] },
+  ],
+  [
+    "snapshot with a player that does not say whether its corpse was exploited (#466)",
+    parseWireSnapshotPart,
+    { ...snapshot, players: [{ ...player, corpseExploited: undefined }] },
+  ],
+  [
     "snapshot with too many statuses",
     parseWireSnapshotPart,
     {
@@ -808,8 +825,11 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "recharge past the last slot",
     parseRecharge,
-    { slots: [{ slot: MAX_WIRE_SLOTS, remainingSeconds: 1, totalSeconds: 5 }] },
+    { ...recharge, slots: [{ slot: MAX_WIRE_SLOTS, remainingSeconds: 1, totalSeconds: 5 }] },
   ],
+  ["recharge spent past the last slot", parseRecharge, { ...recharge, spent: [MAX_WIRE_SLOTS] }],
+  ["recharge spent not a slot", parseRecharge, { ...recharge, spent: ["0"] }],
+  ["recharge with no spent list", parseRecharge, { slots: recharge.slots }],
   ["refused of an unknown kind", parseCastRefused, { kind: "move", reason: "stuck" }],
   ["adrenaline below 0", parseAdrenaline, { slots: [0, -25], lossInSeconds: null }],
   ["adrenaline lost in less than no time", parseAdrenaline, { slots: [25], lossInSeconds: -1 }],
@@ -847,7 +867,7 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "recharge with a NaN",
     parseRecharge,
-    { slots: [{ slot: 0, remainingSeconds: NaN, totalSeconds: 5 }] },
+    { ...recharge, slots: [{ slot: 0, remainingSeconds: NaN, totalSeconds: 5 }] },
   ],
   ["lobby-join without a name", parsePeerLobbyJoin, { protocolVersion: PROTOCOL_VERSION }],
   [

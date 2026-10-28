@@ -24,7 +24,8 @@ export interface RechargeView {
 /**
  * What a slot shows for `recharge`, or `undefined` when the skill is
  * ready. With reduced motion, the wipe moves in eighths, rounded up so it
- * never looks readier than it is.
+ * never looks readier than it is. A skill spent until a morale boost
+ * (#474) is shaded in full, with no number, once no disable is running.
  */
 export function rechargeView(
   recharge: SlotRecharge,
@@ -32,7 +33,9 @@ export function rechargeView(
   reducedMotion: boolean,
 ): RechargeView | undefined {
   if (recharge.remaining <= 0 || recharge.total <= 0) {
-    return undefined;
+    return recharge.spent
+      ? { fraction: 1, seconds: "", label: `${skillName}, spent until a morale boost` }
+      : undefined;
   }
   const exact = Math.min(1, recharge.remaining / recharge.total);
   const fraction = reducedMotion

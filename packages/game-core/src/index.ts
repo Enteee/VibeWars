@@ -50,8 +50,19 @@ export type {
 export { ADRENALINE_PER_STRIKE, MINIMAL_GW_INSPIRED_PVP_V1 } from "./ruleset.js";
 export { adrenalineLossIn } from "./skills/adrenaline.js";
 
-export type { AttributeDefinition, ProfessionDefinition, ProfessionId } from "./professions.js";
-export { PROFESSIONS, getAttribute, getProfession, primaryAttributeOf } from "./professions.js";
+export type {
+  AttributeDefinition,
+  ProfessionDefinition,
+  ProfessionId,
+  SkillProfession,
+} from "./professions.js";
+export {
+  PROFESSIONS,
+  getAttribute,
+  getProfession,
+  primaryAttributeOf,
+  skillProfessionName,
+} from "./professions.js";
 
 export type { AttributeAllocation, AttributeModifier } from "./attributes.js";
 export {
@@ -138,6 +149,8 @@ export type {
   WeaponSetRequest,
 } from "./match/simulation.js";
 export { countsForTeam, loadoutSpec, MAX_CREATURES, MatchSimulation } from "./match/simulation.js";
+export type { CorpseCandidate } from "./match/corpses.js";
+export { isFreshCorpse, nearestFreshCorpse } from "./match/corpses.js";
 export { facingToward, spawnFacing } from "./match/facing.js";
 export type { IntentRefusal, MatchIntent } from "./match/apply-intent.js";
 export { applyIntent } from "./match/apply-intent.js";

@@ -97,9 +97,9 @@ is at the screen's two centres, and the arena between them is clear.
 
 ```text
  now-playing        [ scoreboard: score · clock · enemies ]        controls
-                    [ target frame, effects growing down   ]        ally-watch
+                    [ target frame, effects growing down   ]
 
-                               (arena)
+                               (arena)                             party
 
  chat               [ hint / message                       ]
                     [ your effects, growing up             ]
@@ -109,8 +109,8 @@ is at the screen's two centres, and the arena between them is clear.
                     [ skill bar                            ]
 ```
 
-Your bars are as wide as the skill bar. The left edge under now-playing
-stays free for a party window (#486).
+Your bars are as wide as the skill bar. The party window (#1055) holds
+the right edge, vertically centred.
 
 ### Target frame
 
@@ -129,6 +129,26 @@ A foe shows the percentage alone, as GW1 shows a foe's bar alone. A dead
 target has an empty track edged in `dead`. An interrupted cast keeps the
 row for 400 ms with a `damage` ✕ and edge, a cancelled one dimmed, as the
 skill slot does (#300). Armor is in the frame's hover title.
+
+### Party window
+
+Your team's health at a glance (#1055), on the right edge, vertically
+centred: one row per member, you first, then the others in seat order.
+Creatures are not listed; alone, or spectating, there is no window. A
+long party starts under the compass instead of centring (#1056). In
+the small Training stage it sits top-left and compact, the side the
+dummies leave clear.
+
+| Part    | Look                                                                                                                 |
+| ------- | -------------------------------------------------------------------------------------------------------------------- |
+| Panel   | 200 px wide, `panel` at 85 %, 1 px `line` border; its top never above the compass plus 8 px, scrolls past the bottom |
+| Row     | Profession icons, the name in `ink`, and under it a 12 px health bar                                                 |
+| Health  | Built as yours: the same tint, deep-wound band and pips, labelled with the percentage, as the target frame           |
+| Target  | Your target's row outlined 1 px `target` (`#ffd866`)                                                                 |
+| Dead    | The name in `dead`, and the word "dead" where the bar was                                                            |
+| Compact | Past 8 members, name and a 10 px bar on one line, labelled with the percentage alone, so 16 still fit                |
+
+No energy, as GW1. A click on a row targets that member, yourself too.
 
 ### Professions (menus only)
 
@@ -177,7 +197,6 @@ so the silhouette identifies the profession and the colour only supports it.
 | Walk marker  | `ink` cross of four ticks where you clicked the floor |
 | Called foe   | `condition` chevron pointing down, over its name      |
 | Ping         | `friend` pin on the spot, a `friend` ring growing off |
-| Watched ally | Four `ink` corner brackets round the body             |
 
 The status plates differ in outline as well as colour. Hex purple and
 enchantment teal are close for a deuteranope (simulated ΔE ≈ 18); diamond
@@ -271,11 +290,12 @@ your target, and a small ink ring beside a body is a focus. An × of ticks
 is the only shape here that is a point, not a thing, and the open centre
 shows exactly where you clicked.
 
-### Calls, pings and the watched ally
+### Calls and pings
 
-A wheel click calls a foe for your team, pings the ground, or watches an
-ally (#443). Each has a shape nothing else in the arena has, so none can be
-taken for the target ring, the off-hand focus or the area flash.
+A wheel click calls a foe for your team, or pings the point under it, on
+the ground or on an ally (#443, #1055). Each has a shape nothing else in
+the arena has, so none can be taken for the target ring, the off-hand
+focus or the area flash.
 
 - **The called foe** wears a chevron pointing down at it, its tip 4 px
   above the name label's top, so it clears the name at every zoom. The two arms are 6
@@ -291,11 +311,6 @@ taken for the target ring, the off-hand focus or the area flash.
   radius, fading in 0.4 s, with nothing standing in it; a ping is small,
   slow, and has its pin. Under the actors, as the walk marker is. Reduced
   motion: the ring holds at 6 units, whole, until the ping goes.
-- **The watched ally** gets four `ink` corner brackets, a square r + 13
-  out, each arm 5 units, 2 px on a 4 px `edge` casing. Open at the middle
-  of every side, it is never a ring: not the target ring, not the focus.
-  Only you see it, so it is `ink`, the colour of "you". A corner panel
-  shows the ally's name and health.
 
 ### Compass
 
@@ -583,7 +598,7 @@ every body also shows its primary profession's glyph inside its circle
   profession colour. The self rim stays over it.
 - **Under** the off-hand and weapon marks. The scene draws in layers, bottom
   up: bodies, body glyphs, every mark on a body (off-hand, weapon, target
-  ring, call chevron, watch brackets, bars), then shots, status icons, names
+  ring, call chevron, bars), then shots, status icons, names
   and numbers. So in a clump a neighbour's weapon crosses your body: the
   weapon is the more urgent read.
 - **A corpse**: the glyph in `dead` at full opacity, same size, inside the

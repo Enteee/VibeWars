@@ -65,6 +65,8 @@ export interface PlayerSnapshot {
   readonly secondaryProfession: ProfessionId | undefined;
   readonly team: number;
   readonly dead: boolean;
+  /** Its corpse was exploited (#466): drawn darker. Only ever true while `dead`. */
+  readonly corpseExploited: boolean;
   readonly castingSkillId: string | undefined;
   readonly castRemaining: number;
   /** The current cast's whole length, dazed included; 0 when not casting. */
@@ -146,11 +148,13 @@ export interface ProjectileSnapshot {
 /** One slot of the server-assigned skill bar. */
 export type SkillSlot = SkillBarSlot;
 
-/** One slot's recharge: `remaining` is 0 when the skill is ready. */
+/** One slot's recharge: `remaining` is 0 and `spent` false when the skill is ready. */
 export interface SlotRecharge {
   readonly remaining: number;
   /** What the recharge started with, for the wipe's proportion. */
   readonly total: number;
+  /** Spent until a morale boost (#474): Resurrection Signet's, used. */
+  readonly spent: boolean;
 }
 
 /**

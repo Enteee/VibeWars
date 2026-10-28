@@ -4,6 +4,7 @@ import {
   MAX_ATTRIBUTE_RANK,
   MINIMAL_GW_INSPIRED_PVP_V1,
   PROFESSIONS,
+  skillProfessionName,
   accessibleAttributeIds,
   ALL_INSIGNIAS,
   ALL_OFFHANDS,
@@ -1941,7 +1942,7 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
     card.appendChild(h("span", "skill-box-cost"));
     card.appendChild(h("span", "skill-box-headline"));
     box.appendChild(card);
-    box.appendChild(h("span", "skill-box-needs", `needs ${PROFESSIONS[skill.profession].name}`));
+    box.appendChild(h("span", "skill-box-needs", `needs ${skillProfessionName(skill.profession)}`));
     const details = h("div", "skill-box-details");
     details.hidden = true;
     box.appendChild(details);

@@ -94,7 +94,10 @@ function crowd(self: Combatant): {
     [foe("far"), vec2(30 + AREA_ADJACENT + 1, 0)],
   ];
   const surroundings: Surroundings = new Map(
-    placed.map(([combatant, position]) => [combatant.id, { combatant, position }]),
+    placed.map(([combatant, position]) => [
+      combatant.id,
+      { combatant, position, creature: undefined },
+    ]),
   );
   return { target: placed[1]?.[0] ?? foe("missing"), surroundings };
 }
