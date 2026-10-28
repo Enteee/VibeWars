@@ -28,6 +28,7 @@ import {
   MORALE_CEILING,
   MORALE_FLOOR,
   moraleMaximum,
+  PRIEST_WAVE_SECONDS,
   type MatchOutcome,
   type MatchPhase,
   type MatchRules,
@@ -187,7 +188,8 @@ import type { CombatLogEntry } from "./combat-log.js";
 import { nearestFreshCorpse } from "./corpses.js";
 import { companionSkills, PET_DEATH_GRACE_SECONDS } from "./companions.js";
 import { MINION_CAP_ATTRIBUTE, minionCap, minionDegenerationPips } from "./minions.js";
-import { directionAngle, showsBackTo } from "./facing.js";
+import { directionAngle, showsBackTo, spawnFacing } from "./facing.js";
+import { priestId, priestSpec, type Shrine } from "./priest.js";
 import { steerAround } from "./steering.js";
 
 /**
@@ -209,8 +211,8 @@ import { steerAround } from "./steering.js";
  * `walkTo`, `setTarget`, `requestSkill`, `requestAttack` and `cancelAction`.
  */
 
-/** What kind of non-player body this is (#467). */
-export type CreatureKind = "spirit" | "minion" | "pet";
+/** What kind of non-player body this is (#467); a priest is a map's (#1186). */
+export type CreatureKind = "spirit" | "minion" | "pet" | "priest";
 
 /**
  * How a companion fights (#1110, GW1 pet control): game-protocol's
@@ -228,7 +230,7 @@ export interface CreatureOrder {
 /**
  * What a creature looks like (#1162): the glyph on its plate. The wire mirrors it as `CREATURE_LOOKS`, a test holding the two.
  */
-export const CREATURE_LOOKS = ["beast", "bone-minion", "bone-horror", "spirit"] as const;
+export const CREATURE_LOOKS = ["beast", "bone-minion", "bone-horror", "spirit", "priest"] as const;
 export type CreatureLook = (typeof CREATURE_LOOKS)[number];
 
 /**
@@ -237,8 +239,11 @@ export type CreatureLook = (typeof CREATURE_LOOKS)[number];
  * dies or expires; a companion lies where it fell (#1046).
  */
 export interface Creature {
-  /** Whoever summoned it, and whom it answers to: it leaves with them. */
-  readonly ownerId: string;
+  /**
+   * Whoever summoned it, and whom it answers to: it leaves with them.
+   * `undefined`: a map's NPC, as a priest (#1186), which answers to nobody.
+   */
+  readonly ownerId: string | undefined;
   readonly kind: CreatureKind;
   /** From the template (#1162): how it is drawn. */
   readonly look: CreatureLook;
@@ -250,8 +255,8 @@ export interface Creature {
   ageSeconds: number;
   /** The tick it was summoned: the tie-break of a minion cap (#1130). */
   readonly summonedAtTick: number;
-  /** The skill that summoned it (#1064): one spirit of a skill in range. */
-  readonly skillId: string;
+  /** The skill that summoned it (#1064): one spirit of a skill in range. `undefined`: a map's NPC. */
+  readonly skillId: string | undefined;
   /** What a spirit projects on whoever is in range (#1064); `undefined`: nothing. */
   readonly aura: Aura | undefined;
   /** From the template (#1046): lies as a body when dead, or vanishes. */
@@ -485,6 +490,12 @@ export interface MatchSimulationOptions {
    */
   readonly bounds?: { readonly width: number; readonly height: number } | undefined;
   readonly participants?: readonly ParticipantSpec[];
+  /**
+   * Priest Annihilation's shrines (#1186): a priest of each one's team
+   * stands on it from the start, and the team's dead come back there.
+   * Omitted or `[]`: no priests.
+   */
+  readonly shrines?: readonly Shrine[];
 }
 
 export interface StepResult {
@@ -728,6 +739,10 @@ export class MatchSimulation {
    * removed once, at its end, never mid-loop.
    */
   readonly #leaving = new Set<string>();
+  /** Priest Annihilation's shrines (#1186), one a team; `[]` for every other match. */
+  readonly #shrines: readonly Shrine[];
+  /** Priest waves gone by (#1186): the next is at `PRIEST_WAVE_SECONDS` times one more. */
+  #priestWaves = 0;
   /** Every ground effect in the match (#1087), in id order. */
   #groundEffects: GroundEffect[] = [];
   /** The id of the next ground effect placed (#1087). */
@@ -751,6 +766,21 @@ export class MatchSimulation {
     );
     for (const spec of options.participants ?? []) {
       this.add(spec);
+    }
+    this.#shrines = options.shrines ?? [];
+    const shrinePositions = this.#shrines.map((shrine) => shrine.position);
+    for (const shrine of this.#shrines) {
+      const foes = this.#shrines.filter((other) => other.team !== shrine.team);
+      this.add(
+        priestSpec(
+          shrine,
+          spawnFacing(
+            shrine.position,
+            foes.map((other) => other.position),
+            shrinePositions,
+          ),
+        ),
+      );
     }
   }
 
@@ -1432,8 +1462,9 @@ export class MatchSimulation {
       if (creature === undefined || creature.kind === "pet" || record.combatant.dead) {
         continue;
       }
-      const owner = this.#participants.get(creature.ownerId);
-      if (owner !== undefined) {
+      const owner =
+        creature.ownerId === undefined ? undefined : this.#participants.get(creature.ownerId);
+      if (owner !== undefined && (creature.kind === "minion" || creature.kind === "spirit")) {
         owner.combatant.controlled[creature.kind] += 1;
       }
     }
@@ -2143,6 +2174,7 @@ export class MatchSimulation {
     this.#awardKillMorale();
     this.#settleMoving();
     this.#removeLeaving();
+    this.#priestWave();
     // After every death this step, so two teams wiped in it both lose.
     this.checkMatchEnd();
 
@@ -3840,7 +3872,8 @@ export class MatchSimulation {
     ) {
       return;
     }
-    const owner = this.#participants.get(creature.ownerId);
+    const owner =
+      creature.ownerId === undefined ? undefined : this.#participants.get(creature.ownerId);
     if (owner === undefined) {
       return;
     }
@@ -4205,20 +4238,107 @@ export class MatchSimulation {
   /** Every team that had members: who is alive and its total morale (#846); creatures are neither (#1052). */
   #standing(): MatchStanding {
     const byTeam = new Map<number, TeamStanding>(
-      [...this.#teams].map((team) => [team, { living: 0, morale: 0 }]),
+      [...this.#teams].map((team) => [
+        team,
+        { living: 0, morale: 0, priestLives: this.#priestLives(team) },
+      ]),
     );
     for (const record of this.#participants.values()) {
       if (!countsForTeam(record)) {
         continue;
       }
       const { combatant } = record;
-      const team = byTeam.get(combatant.team) ?? { living: 0, morale: 0 };
+      const team = byTeam.get(combatant.team) ?? {
+        living: 0,
+        morale: 0,
+        priestLives: this.#priestLives(combatant.team),
+      };
       byTeam.set(combatant.team, {
         living: team.living + (combatant.dead ? 0 : 1),
         morale: team.morale + combatant.morale,
+        priestLives: team.priestLives,
       });
     }
     return { byTeam };
+  }
+
+  /** Whether `team`'s priest is in the match and alive (#1186). */
+  #priestLives(team: number): boolean {
+    const priest = this.#participants.get(priestId(team));
+    return priest !== undefined && !priest.combatant.dead && !this.#leaving.has(priest.id);
+  }
+
+  /**
+   * The priests' wave (#1186, GW1): at every `PRIEST_WAVE_SECONDS` of match
+   * clock, each living priest raises its team's dead players above
+   * `MORALE_FLOOR` on its shrine, at full Health and Energy, their morale
+   * kept. After the step's deaths, so a priest killed this tick raises
+   * nobody. A creature is never raised, a companion neither.
+   */
+  #priestWave(): void {
+    const due = (this.#priestWaves + 1) * PRIEST_WAVE_SECONDS;
+    if (this.#shrines.length === 0 || this.#elapsedSeconds + SWING_EPSILON < due) {
+      return;
+    }
+    this.#priestWaves += 1;
+    for (const shrine of this.#shrines) {
+      if (!this.#priestLives(shrine.team)) {
+        continue;
+      }
+      const events: CombatEvent[] = [];
+      for (const record of this.#participants.values()) {
+        const { combatant } = record;
+        if (
+          !countsForTeam(record) ||
+          combatant.team !== shrine.team ||
+          !combatant.dead ||
+          combatant.morale <= MORALE_FLOOR
+        ) {
+          continue;
+        }
+        this.#raiseAtShrine(record, shrine.position);
+        events.push({
+          kind: "resurrected",
+          targetId: record.id,
+          healthFraction: 1,
+          energyFraction: 1,
+        });
+      }
+      if (events.length === 0) {
+        continue;
+      }
+      this.#log.push({
+        tick: this.#tick,
+        atSeconds: this.#elapsedSeconds,
+        cause: "skill",
+        sourceId: priestId(shrine.team),
+        skillId: undefined,
+        weaponId: undefined,
+        attributeId: undefined,
+        area: undefined,
+        doubleStrike: false,
+        events,
+      });
+      this.#recordResurrections(events);
+    }
+  }
+
+  /** `record` back from the dead on a shrine at `at`, pushed clear as anyone is (#1186). */
+  #raiseAtShrine(record: ParticipantRecord, at: Vec2): void {
+    const { combatant } = record;
+    combatant.statuses.clear();
+    combatant.dead = false;
+    combatant.health = effectiveMaxHealth(combatant);
+    combatant.energy = Math.max(0, effectiveMaxEnergy(combatant));
+    emptyAdrenaline(combatant);
+    let position = nearestStandable(this.#graph, at);
+    for (let pass = 0; pass < MOVEMENT_RELAX_PASSES; pass += 1) {
+      position = this.#pushOut(record.id, position, this.#radiusOf(record));
+    }
+    record.position = position;
+    record.inputDirection = ZERO;
+    record.history.clear();
+    this.#stepStart.set(record.id, position);
   }
 
   private checkMatchEnd(): void {
@@ -4238,9 +4358,10 @@ export class MatchSimulation {
   }
 
   private advanceMovement(record: ParticipantRecord, direction: Vec2, dt: number): void {
-    // A spirit stands where it was planted (#1064): nothing moves it, and
-    // bodies are pushed out of it, never it out of them.
-    if (record.creature?.kind === "spirit") {
+    // A spirit stands where it was planted (#1064), a priest on its
+    // shrine (#1186): nothing moves it, and bodies are pushed out of it,
+    // never it out of them.
+    if (record.creature?.kind === "spirit" || record.creature?.kind === "priest") {
       return;
     }
     // Where it pushes, even into a wall.

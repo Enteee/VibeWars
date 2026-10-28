@@ -1,0 +1,11 @@
+{
+  "repository": "https://github.com/build-wars/gw-skilldata",
+  "commit": "8495ca2c6125e1a03269c2932f099f7e7c09fb36",
+  "files": {
+    "skilldata.json": "data/json-full/skilldata.json",
+    "skilldesc-en.json": "data/json-full/skilldesc-en.json",
+    "LICENSE": "LICENSE"
+  },
+  "fetchedAt": "2026-10-28T14:55:00.000Z",
+  "license": "MIT"
+}

@@ -20,6 +20,7 @@ const SPELL: Skill = {
   id: "test.spell",
   name: "Test Spell",
   type: "spell",
+  gwId: undefined,
   elite: false,
   profession: "elementalist",
   attributeId: "elementalist.fire-magic",

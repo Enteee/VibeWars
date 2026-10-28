@@ -143,9 +143,12 @@ export function describeCombatEvent(
           : "degeneration"
         : (skill ?? "a skill"));
   // A creature swings its own jaws or bones: "Wolf hits Bob", not
-  // "Unarmed (Wolf)" (#1144).
+  // "Unarmed (Wolf)" (#1144); a priest raises with no skill: "Priest
+  // resurrects Bob" (#1186).
   const byCreature =
-    entry.cause === "weapon" && entry.sourceId !== undefined && isCreature(entry.sourceId);
+    (entry.cause === "weapon" || (entry.cause === "skill" && entry.skillId === undefined)) &&
+    entry.sourceId !== undefined &&
+    isCreature(entry.sourceId);
   const by =
     byCreature && source !== undefined
       ? source

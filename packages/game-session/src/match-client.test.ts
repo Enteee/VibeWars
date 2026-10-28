@@ -3,6 +3,7 @@ import {
   ANNIHILATION_MATCH_RULES,
   MAX_CREATURES,
   MAX_GROUND_EFFECTS,
+  PRIEST_ANNIHILATION_MATCH_RULES,
 } from "@vibewars/game-core";
 import {
   CREATURE_LOOKS as WIRE_CREATURE_LOOKS,
@@ -22,7 +23,15 @@ import {
 } from "./match-client.js";
 import type { PlayerSnapshot } from "./match-connection.js";
 import { MATCH_FULL_MESSAGE, MATCH_OVER_MESSAGE, RECONNECT_WINDOW_SECONDS } from "./match-host.js";
-import { hello, helloAs, self, settle, startMatch, until } from "./match-harness.test-support.js";
+import {
+  ARENA,
+  hello,
+  helloAs,
+  self,
+  settle,
+  startMatch,
+  until,
+} from "./match-harness.test-support.js";
 import { createMemoryNetwork } from "./memory-transport.js";
 import { WIRE_STATUS_IDS, playerSnapshot, statusFromWire, statusWireIndex } from "./wire.js";
 
@@ -264,6 +273,30 @@ describe("the host's own player (createLocalPeer)", () => {
     const { connection: remote } = await match.join();
     await match.step(0.1);
     expect(local.getSnapshot().players).toEqual(remote.getSnapshot().players);
+  });
+
+  it("sees each team's priest on its shrine, owned by nobody, on a Priest Annihilation map (#1186)", async () => {
+    const match = startMatch({
+      map: {
+        ...ARENA,
+        mode: "priest-annihilation",
+        shrines: [
+          { team: 0, position: { x: 300, y: 550 } },
+          { team: 1, position: { x: 800, y: 550 } },
+        ],
+      },
+      matchRules: PRIEST_ANNIHILATION_MATCH_RULES,
+    });
+    const { connection } = await match.join();
+    await match.step(0.1);
+    const priests = connection
+      .getSnapshot()
+      .players.filter((player) => player.creature?.kind === "priest")
+      .map(({ name, team, x, y, creature }) => ({ name, team, x, y, ownerId: creature?.ownerId }));
+    expect(priests).toEqual([
+      { name: "Priest", team: 0, x: 300, y: 550, ownerId: null },
+      { name: "Priest", team: 1, x: 800, y: 550, ownerId: null },
+    ]);
   });
 });
 

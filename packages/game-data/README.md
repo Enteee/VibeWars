@@ -19,6 +19,18 @@ src/
   run-import.ts            The curated skill list + CLI entrypoint.
 ```
 
+## The two sources
+
+`raw/gw-skilldata/` is GW1's whole skill table (1,517 records: every
+skill, its PvP variant, GW1's ids and English text) from
+[build-wars/gw-skilldata](https://github.com/build-wars/gw-skilldata)
+(MIT), unmodified at the commit its `meta.json` pins.
+`sources/gw-skilldata.ts` reads and validates it, and every catalog skill's
+`gwId` must name one of its base records (`coverage-gate.test.ts`). To
+re-pin, replace the files and the commit in one pull request (ADR-0038).
+`raw/gw-memorial/` is the older, per-skill source the importer below
+scrapes; it stays until its cross-checks move onto gw-skilldata.
+
 ## Running the importer
 
 ```sh

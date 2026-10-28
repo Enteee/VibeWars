@@ -19,6 +19,7 @@ import {
   type PlayerBuild,
   type ProfessionId,
   type Segment,
+  type Shrine,
 } from "@vibewars/game-core";
 import {
   MAX_WIRE_COMBATS,
@@ -108,6 +109,8 @@ export interface HostMap {
   readonly walls: readonly Segment[];
   readonly bounds: { readonly width: number; readonly height: number };
   readonly spawns: readonly SpawnPoint[];
+  /** Its resurrection shrines (#1186), `[]` but on a Priest Annihilation map. */
+  readonly shrines: readonly Shrine[];
 }
 
 export interface MatchHostOptions {
@@ -217,6 +220,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     matchRules: options.matchRules,
     walls: map.walls,
     bounds: map.bounds,
+    shrines: map.shrines,
   });
   const seats = new Map<string, Seat>();
   const seatOfPeer = new Map<string, Seat>();

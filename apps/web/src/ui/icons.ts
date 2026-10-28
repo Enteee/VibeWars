@@ -71,6 +71,8 @@ const CREATURE_ICON: Readonly<Record<CreatureLook, string>> = {
   "bone-minion": iconUrl("creature", "bone-minion"),
   "bone-horror": iconUrl("creature", "bone-horror"),
   spirit: iconUrl("creature", "spirit"),
+  // Until the priest's own glyph is drawn (#1186): a spirit's.
+  priest: iconUrl("creature", "spirit"),
 };
 
 /** The kind glyph on a creature's plate in the arena (#1162), drawn in ink and tinted there. */

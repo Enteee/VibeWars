@@ -106,3 +106,8 @@ built for players and is the larger, safe value.
   `"intent"` channel, keyed on its `ownerId`: the host drops an order
   from anyone but the owner, and for anything but a companion. Its
   `order` is a union, so a hero's flag joins it without a new channel.
+- A map may bring its own NPC (#1186): Priest Annihilation's priest is a
+  creature whose `ownerId` is `undefined` (`null` on the wire), so it
+  answers to nobody, never leaves with anyone, and is sent on its own
+  team. It counts for no team either; whether its team is beaten reads
+  its life separately (`TeamStanding.priestLives`).
