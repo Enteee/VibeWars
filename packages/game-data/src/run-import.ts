@@ -348,6 +348,26 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Assassin/661-Moebius_Strike",
   },
   {
+    id: "assassin.leaping-mantis-sting",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/660-Leaping_Mantis_Sting",
+  },
+  {
+    id: "assassin.jungle-strike",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/659-Jungle_Strike",
+  },
+  {
+    id: "assassin.trampling-ox",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/1199-Trampling_Ox",
+  },
+  {
+    id: "assassin.falling-spider",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/652-Falling_Spider",
+  },
+  {
     id: "paragon.cruel-spear",
     profession: "paragon",
     url: "https://www.gw-memorial.net/skills/Paragon/1119-Cruel_Spear",
@@ -791,6 +811,26 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     id: "monk.restore-condition",
     profession: "monk",
     url: "https://www.gw-memorial.net/skills/Monk/194-Restore_Condition",
+  },
+  {
+    id: "monk.cure-hex",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/1156-Cure_Hex",
+  },
+  {
+    id: "monk.smite-condition",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/1164-Smite_Condition",
+  },
+  {
+    id: "monk.mending-touch",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/849-Mending_Touch",
+  },
+  {
+    id: "monk.vigorous-spirit",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/177-Vigorous_Spirit",
   },
 ];
 

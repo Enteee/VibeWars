@@ -1582,3 +1582,75 @@ describe("dual attacks (#885)", () => {
     });
   });
 });
+
+describe("a chain attack's state requirement (#1041)", () => {
+  /** A float stream of 0.9: no crit, no block, no blind miss. */
+  const steady = (): SimulationRng =>
+    Object.assign(createRng(1), { nextInt: () => 10, nextFloat: () => 0.9 });
+
+  const fallingSpider = (): Skill => {
+    const skill = getSkill("assassin.falling-spider");
+    if (skill === undefined) {
+      throw new Error("missing assassin.falling-spider");
+    }
+    return skill;
+  };
+
+  function resolve(skill: Skill, caster: Combatant, target: Combatant): CombatEvent[] {
+    return resolveAttackSkill(
+      { skill, caster, targets: [target], rng: steady(), rules: RULES, surroundings: new Map() },
+      NOWHERE,
+      [],
+    );
+  }
+
+  const assassin = (): Combatant => attacker(WEAPONS.daggers, "assassin.dagger-mastery", 12);
+  const victim = (knockedDown: boolean): Combatant => {
+    const target = makeCombatant({ id: "t", team: 1, health: 1e6, maxHealth: 1e6 });
+    target.knockdownRemaining = knockedDown ? 2 : 0;
+    return target;
+  };
+
+  it("unmet, misses out of sequence: no damage, no mark, no effects", () => {
+    const caster = assassin();
+    const target = victim(false);
+    expect(resolve(fallingSpider(), caster, target)).toEqual([
+      { kind: "attack-missed", targetId: "t", reason: "out-of-sequence" },
+    ]);
+    expect(caster.chainMarks.has("t")).toBe(false);
+    expect(target.statuses.has("poison")).toBe(false);
+  });
+
+  it("met, hits with no lead and leaves its off-hand mark", () => {
+    const caster = assassin();
+    const target = victim(true);
+    const events = resolve(fallingSpider(), caster, target);
+    expect(events.some((event) => event.kind === "damage" && event.targetId === "t")).toBe(true);
+    expect(target.statuses.has("poison")).toBe(true);
+    expect(caster.chainMarks.get("t")?.role).toBe("off-hand");
+  });
+
+  it("with `follows` too, either unmet misses", () => {
+    const spider = fallingSpider();
+    const both: Skill = {
+      ...spider,
+      attack: spider.attack && {
+        ...spider.attack,
+        chain: { role: "off-hand", follows: "lead", requires: { kind: "target-knocked-down" } },
+      },
+    };
+    const missed = (lead: boolean, knockedDown: boolean): boolean => {
+      const caster = assassin();
+      const target = victim(knockedDown);
+      if (lead) {
+        caster.chainMarks.set("t", { role: "lead", remainingSeconds: 15 });
+      }
+      return resolve(both, caster, target).some(
+        (event) => event.kind === "attack-missed" && event.reason === "out-of-sequence",
+      );
+    };
+    expect(missed(true, false)).toBe(true);
+    expect(missed(false, true)).toBe(true);
+    expect(missed(true, true)).toBe(false);
+  });
+});

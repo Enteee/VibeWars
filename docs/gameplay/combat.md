@@ -169,6 +169,10 @@ Protection Prayers, 5 energy, ¾ s, 2 s) removes every condition from
 another ally and then heals it 58 for each one removed: three are 174.
 A deep wound among them is gone before the heal, so it does not cut it.
 With no condition it heals nothing and still costs its energy.
+**Mending Touch** (#1039, Protection Prayers, 5 energy, ¾ s, 6 s) is a
+touch: the ally, or you, must be at hand. It removes the newest two
+conditions and heals 51 for each one removed. A deep wound among the
+two is gone before the heal; one left as a third cuts it.
 
 ## Interrupts
 
@@ -285,6 +289,14 @@ of energy or by a death, it takes the newest hex off its ally. A hex it
 removes does not fire its own end: a Parasitic Bond taken this way
 heals nobody.
 
+**Vigorous Spirit** (#1039, Monk, Healing Prayers, 5 energy, ¼ s, 4 s)
+heals its ally 17 (5 at Healing Prayers 0) for 30 s each time it attacks or casts a spell: each
+swing, each shot, each attack skill and each completed spell. A signet,
+a shout, a stance, a chant, or a spell interrupted or cancelled heals
+nothing, and cast on yourself its own cast does not count. The Monk who
+cast it is the healer: a deep wound cuts it, and Divine Favor, which
+adds once as a spell lands, does not add to each heal.
+
 **Shadow Refuge** (#988; Assassin, Shadow Arts, 5 energy, 1 s, 8 s
 recharge) gives you +9 health regeneration for 6 s. When it ends, for any
 reason, a strip included, you gain 88 Health if you are attacking right
@@ -394,7 +406,11 @@ its caster energy and health, and Mend Condition heals the ally.
 hex from any ally, yourself included; if it removed one, every foe in
 the area of that ally takes 70 holy damage, through armor. Allies are
 never hit. With no hex nothing happens, and the energy and recharge are
-spent.
+spent. **Cure Hex** (#1039, Healing Prayers, 5 energy, 1 s, 12 s)
+removes one hex from any ally and, if it removed one, heals that ally 86.
+**Smite Condition** (#1039, Smiting Prayers, 5 energy, 1 s, 7 s) is
+Smite Hex for a condition: if it removed one, every foe in the area of
+the ally takes 50 holy damage.
 
 **A Dervish spends its own enchantments** (#845). Wounding Strike,
 Signet of Pious Light and Pious Restoration each make you lose 1 Dervish
@@ -874,6 +890,19 @@ Moebius Strike, the elite, is an off-hand attack that follows a dual,
 and against a foe below half health recharges all your other attack
 skills at once, so the chain loops: lead, off-hand, dual, Moebius,
 dual, Moebius. The weapon's own double strike never adds to a skill.
+
+**Off-hand attacks that ask for a state** (#1041). Falling Spider needs
+no lead: it hits only a knocked-down foe, whoever knocked it down, read
+as its blow lands. On a foe standing, it is out of sequence like an
+off-hand without its lead: it costs its energy, misses ("Falling Spider
+misses Warrior (only if target is knocked down)") and recharges at
+once. A hit poisons and leaves your off-hand mark, so a dual follows.
+The tooltip reads "Off-hand attack. Only if target is knocked down."
+The crippling knockdown chain sets each step up: Leaping Mantis Sting,
+a lead, cripples a foe that is moving; Jungle Strike, an off-hand,
+deals a crippled foe and every foe adjacent to it 25 more; Trampling
+Ox, a dual, knocks a crippled foe down; then Falling Spider, and Death
+Blossom or Twisting Fangs after it.
 
 Your mark on your target shows right of its health in the target frame
 (#916): one dagger for lead, one in the left hand for off-hand, two

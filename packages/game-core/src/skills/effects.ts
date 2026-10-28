@@ -156,8 +156,8 @@ export type CombatEvent =
     }
   /**
    * An attack that swung and missed: paid for, no effect. Blind's miss,
-   * or an off-hand attack out of sequence (#831), which also recharges
-   * at once.
+   * or an off-hand attack out of sequence (#831), or whose chain
+   * `requires` does not hold (#1041), which also recharges at once.
    */
   | {
       readonly kind: "attack-missed";

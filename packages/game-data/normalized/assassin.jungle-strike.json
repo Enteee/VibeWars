@@ -1,0 +1,26 @@
+{
+  "id": "assassin.jungle-strike",
+  "name": "Jungle Strike",
+  "profession": "assassin",
+  "attribute": "Dagger Mastery",
+  "type": "Off-hand attack.",
+  "elite": false,
+  "campaign": "Factions",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 0.5,
+  "rechargeSeconds": 6,
+  "upkeep": false,
+  "description": "Must follow a lead attack. If it hits, this attack strikes for +10...22...25 damage. If it hits a foe that was Crippled, that foe and all adjacent foes take 1...25...31 damage.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Assassin/659-Jungle_Strike",
+    "fetchedAt": "2026-10-27T22:30:30.064Z"
+  },
+  "unmapped": {}
+}
