@@ -3280,6 +3280,7 @@ body.has-expanded-training #screens {
 }
 
 .roster-edit,
+.roster-clone,
 .roster-reroll {
   flex: 0 0 auto;
 }

@@ -41,6 +41,7 @@ import {
   openIndexedDbStore,
   type KeyValueStore,
 } from "./storage/repository.js";
+import { cloneCharacter } from "./storage/clone-character.js";
 import type { StoredCharacter } from "./storage/schema.js";
 import { rerollStarterCharacter, rollStarterCharacter } from "./storage/starter-character.js";
 import { importTeam, importedTeamSummary, type TeamImportResult } from "./storage/team-transfer.js";
@@ -509,6 +510,24 @@ async function main(): Promise<void> {
             }
           })();
         },
+        onCloneCharacter: (id) => {
+          void (async () => {
+            const character = await characters.load(id);
+            if (character === undefined) {
+              showMenu();
+              return;
+            }
+            const copy = cloneCharacter(character, crypto.randomUUID(), Date.now());
+            try {
+              await characters.save(copy);
+            } catch (error) {
+              console.warn("[web] could not save the clone", error);
+              showMenu();
+              return;
+            }
+            showCharacterEditor(copy);
+          })();
+        },
         onRerollCharacter: (id) => {
           void (async () => {
             const character = await characters.load(id);
@@ -548,12 +567,7 @@ async function main(): Promise<void> {
         })();
       },
       onDuplicate: (source: StoredCharacter) => {
-        const copy: StoredCharacter = {
-          ...source,
-          id: crypto.randomUUID(),
-          name: `${source.name} (copy)`,
-          updatedAt: Date.now(),
-        };
+        const copy = cloneCharacter(source, crypto.randomUUID(), Date.now());
         void (async () => {
           await characters.save(copy);
           back();
