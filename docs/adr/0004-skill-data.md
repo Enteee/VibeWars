@@ -2,7 +2,9 @@
 
 ## Status
 
-Accepted (2026-10-23); importer implementation is Sprint 9.
+Accepted (2026-10-23); importer implementation is Sprint 9. Amended by
+[ADR-0038](0038-skill-corpus.md): gw-skilldata is the corpus, and GW1's
+own description text is kept.
 
 ## Context
 
