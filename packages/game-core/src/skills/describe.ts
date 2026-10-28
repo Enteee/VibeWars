@@ -255,6 +255,17 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
     const way = definition.attackDurationMultiplier > 1 ? "slower" : "faster";
     parts.push(`attacks ${String(change)}% ${way}`);
   }
+  if (definition.preventsSpells) {
+    parts.push("cannot cast spells");
+  }
+  if (definition.unblockableBySource) {
+    parts.push("cannot block its caster's attacks");
+  }
+  if (definition.renewsWhileMoving !== undefined) {
+    parts.push(
+      `renewed for ${String(definition.renewsWhileMoving)} seconds if moving as it would end`,
+    );
+  }
   if (definition.preventsKnockdown) {
     parts.push("cannot be knocked down");
   }
@@ -602,6 +613,8 @@ function conditionText(condition: EffectCondition): string {
       return `If target is below ${String(Math.round(condition.fraction * 100))}% Health`;
     case "target-has":
       return `If target has ${aCategory(condition.category)}`;
+    case "target-has-any":
+      return `If target has ${condition.categories.map(aCategory).join(" or ")}`;
     case "caster-has":
       return condition.profession === undefined
         ? `If you have ${aCategory(condition.category)}`
@@ -1024,6 +1037,13 @@ function describeEffect(
         magnitude,
       };
     }
+    case "disable-own-skills":
+      return {
+        text: `All of your spells are disabled for ${String(effect.seconds)} seconds`,
+        magnitude: undefined,
+      };
+    case "chain-mark":
+      return { text: "Counts as a lead attack", magnitude: undefined };
     case "lengthen-recharge": {
       const magnitude = describeMagnitude(effect.seconds, ranks);
       return {

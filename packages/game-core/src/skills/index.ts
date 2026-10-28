@@ -65,6 +65,7 @@ export {
   findStatusDefinition,
   getStatusDefinition,
   isStatusId,
+  preventsSpells,
   scaledStatusDuration,
 } from "./status.js";
 
@@ -123,7 +124,7 @@ export type {
   TrapRule,
 } from "./types.js";
 
-export { KNOCKDOWN_SECONDS, PET_ATTACK_SECONDS } from "./types.js";
+export { KNOCKDOWN_SECONDS, PET_ATTACK_SECONDS, isSpell } from "./types.js";
 
 export { CHAIN_MARK_SECONDS } from "./chain.js";
 

@@ -9,6 +9,7 @@ import { emptyAdrenaline, emptyPool, fillPools } from "./adrenaline.js";
 import { isAttacking } from "./attacking.js";
 import { beginRecharge, resolvedBar, skillIdOfKey } from "./cast-state.js";
 import { getSkill } from "./catalog.js";
+import { CHAIN_MARK_SECONDS } from "./chain.js";
 import { hitLocationOf, mitigate, skillDamage } from "./damage.js";
 import { effectiveMaxEnergy } from "./overcast.js";
 import { resolveMagnitude } from "./scaling.js";
@@ -1112,6 +1113,31 @@ export function applyEffect(
       return events;
     }
 
+    case "disable-own-skills": {
+      const bar = resolvedBar(caster.skillBar, caster.cast).filter((slot) => slot !== null);
+      for (const { key, skillId } of bar.filter((slot) => isSpellId(slot.skillId))) {
+        emptyPool(caster, key);
+        if (caster.cast.disable(key, effect.seconds)) {
+          events.push({
+            kind: "skill-disabled",
+            targetId: caster.id,
+            skillId,
+            seconds: effect.seconds,
+          });
+        }
+      }
+      return events;
+    }
+
+    case "chain-mark":
+      if (target !== undefined && !target.dead) {
+        caster.chainMarks.set(target.id, {
+          role: effect.role,
+          remainingSeconds: CHAIN_MARK_SECONDS,
+        });
+      }
+      return events;
+
     case "lengthen-recharge": {
       const used = context.usedSkill;
       if (target === undefined || used === undefined) {
@@ -1147,6 +1173,7 @@ function isStateCondition(condition: EffectCondition): condition is StateConditi
       return false;
     case "target-health-below":
     case "target-has":
+    case "target-has-any":
     case "target-casting":
     case "caster-has":
     case "target-alone":
@@ -1182,6 +1209,8 @@ export function stateHolds(
       return target.health < effectiveMaxHealth(target) * condition.fraction;
     case "target-has":
       return target.statuses.countByCategory(condition.category) > 0;
+    case "target-has-any":
+      return condition.categories.some((category) => target.statuses.countByCategory(category) > 0);
     case "caster-has":
       return caster.statuses.countByCategory(condition.category, condition.profession) > 0;
     case "target-casting": {
@@ -1374,6 +1403,7 @@ function conditionHolds(
       return earlier.some((event) => event.kind === "resurrected" && event.targetId === target.id);
     case "target-health-below":
     case "target-has":
+    case "target-has-any":
     case "target-casting":
     case "caster-has":
     case "target-alone":
@@ -1461,6 +1491,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "create-ground-effect":
     case "drain-own-energy":
     case "resurrect-companions":
+    case "disable-own-skills":
       return true;
     case "heal":
       return effect.recipient === "caster";
@@ -1481,6 +1512,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "splash":
     case "disable-skill":
     case "lengthen-recharge":
+    case "chain-mark":
     case "if":
       return false;
   }

@@ -470,17 +470,18 @@ team colour, so a spell is told from another by its silhouette and a friend
 from a foe by the tint. Element colour is not baked in: it would multiply
 with the team tint and lose the team.
 
-| Sprite          | Weapons       | Silhouette                                 |
-| --------------- | ------------- | ------------------------------------------ |
-| `arrow`         | Bows          | Thin shaft, triangular head, chevron tail  |
-| `spear`         | Spear         | Thicker shaft, long leaf blade, no tail    |
-| `bolt`          | Wand, staff   | Round orb with a tapering comet tail       |
-| `fireball`      | Fireball      | Round head, ragged flame tail              |
-| `lightning-orb` | Lightning Orb | Round head, jagged sparks forking back     |
-| `ice-shard`     | Shard Storm   | Long faceted diamond, a pale top facet     |
-| `water-trident` | Water Trident | Shaft, three parallel prongs on a crossbar |
-| `ebon-hawk`     | Ebon Hawk     | Hooked beak, wings swept back              |
-| `stone`         | Stoning       | Rough boulder, chips flying off behind     |
+| Sprite          | Weapons                             | Silhouette                                 |
+| --------------- | ----------------------------------- | ------------------------------------------ |
+| `arrow`         | Bows                                | Thin shaft, triangular head, chevron tail  |
+| `spear`         | Spear                               | Thicker shaft, long leaf blade, no tail    |
+| `bolt`          | Wand, staff                         | Round orb with a tapering comet tail       |
+| `fireball`      | Fireball                            | Round head, ragged flame tail              |
+| `lightning-orb` | Lightning Orb                       | Round head, jagged sparks forking back     |
+| `ice-shard`     | Shard Storm                         | Long faceted diamond, a pale top facet     |
+| `water-trident` | Water Trident                       | Shaft, three parallel prongs on a crossbar |
+| `ebon-hawk`     | Ebon Hawk                           | Hooked beak, wings swept back              |
+| `stone`         | Stoning                             | Rough boulder, chips flying off behind     |
+| `thrown-dagger` | Disrupting Dagger, Crippling Dagger | Grey hilt and crossguard, long white blade |
 
 Drawn at 32×12 px, over the actors and under the HUD: a shot is
 gameplay information, and the player has to see where it will land in time
