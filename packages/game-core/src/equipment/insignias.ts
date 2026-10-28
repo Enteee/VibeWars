@@ -1,7 +1,8 @@
 import { STRENGTH_ATTRIBUTE } from "../primary-attributes.js";
 import type { ProfessionId } from "../professions.js";
+import type { StatusCategory } from "../skills/status.js";
 import type { ConditionalArmor } from "./armor.js";
-import type { ArmorSlot } from "./types.js";
+import type { ArmorSlot, DamageType } from "./types.js";
 
 /**
  * Armor insignias (ADR-0012).
@@ -18,6 +19,7 @@ export type InsigniaId =
   | "stalwart"
   | "blessed"
   | "brawlers"
+  | "sentrys"
   | "knights"
   | "sentinels"
   | "nightstalkers"
@@ -32,20 +34,39 @@ export type InsigniaId =
   | "minion-masters"
   | "forsaken"
   | "shamans"
-  | "prismatic";
+  | "prismatic"
+  | "infiltrators"
+  | "saboteurs"
+  | "vanguards"
+  | "bonelace"
+  | "earthbound"
+  | "frostbound"
+  | "pyrebound"
+  | "stormbound"
+  | "scouts"
+  | "beastmasters"
+  | "aeromancer"
+  | "geomancer"
+  | "hydromancer"
+  | "pyromancer"
+  | "artificers"
+  | "virtuosos"
+  | "mystics"
+  | "ghost-forge"
+  | "centurions";
 
 /**
  * One test a conditional armor bonus needs to pass (#1142).
  *
  * Closed: every kind is answerable from the packet and the defender,
- * state the simulation already has. The reference also has "while in a
- * stance" insignias; this game has no stances, so they are absent from
- * the catalog entirely and recorded as a gap in `coverage.ts`
- * (`"stances"`). A number that is always zero is a lie with a tooltip.
+ * state the simulation already has. An insignia whose test the game
+ * cannot answer is absent from the catalog and recorded in
+ * `coverage.ts`: a number that is always zero is a lie with a tooltip.
  */
 export type ArmorCondition =
   | { readonly kind: "vs-physical" }
   | { readonly kind: "vs-elemental" }
+  | { readonly kind: "vs-type"; readonly type: DamageType }
   /** Shadow Refuge's test: swinging while standing, or casting an attack skill. */
   | { readonly kind: "attacking" }
   | { readonly kind: "enchantments-at-least"; readonly count: number }
@@ -53,19 +74,21 @@ export type ArmorCondition =
   | { readonly kind: "recharging-at-least"; readonly count: number }
   /** The rank now, runes, headgear and weakness included. */
   | { readonly kind: "attribute-at-least"; readonly attributeId: string; readonly rank: number }
-  /** Any status of category "condition" on you. */
-  | { readonly kind: "has-condition" }
-  /** Any status of category "hex" on you. */
-  | { readonly kind: "has-hex" }
+  /** Any status on you of any of `categories`. */
+  | { readonly kind: "affected-by"; readonly categories: readonly StatusCategory[] }
   | { readonly kind: "no-enchantment" }
   /** Health under `fraction` of the maximum now, morale included. */
   | { readonly kind: "health-below"; readonly fraction: number }
-  /** Your living minions or spirits; a pet is neither. */
+  /** Your living minions, spirits or pets. */
   | {
       readonly kind: "controls-at-least";
-      readonly creature: "minion" | "spirit";
+      readonly creature: "minion" | "spirit" | "pet";
       readonly count: number;
-    };
+    }
+  /** Activating any skill, attack skills included; a plain swing is not one. */
+  | { readonly kind: "activating" }
+  /** Slots of your bar whose skill now is a signet, an echoed one's copy counted. */
+  | { readonly kind: "signets-at-least"; readonly count: number };
 
 export type InsigniaEffect =
   /** Per-piece amounts: chest is worth most, legs next, the rest equal. */
@@ -139,6 +162,13 @@ export const INSIGNIAS: Readonly<Record<InsigniaId, Insignia>> = Object.freeze({
     effect: armor(bonus(10, { kind: "attacking" })),
   } satisfies Insignia),
 
+  sentrys: Object.freeze({
+    id: "sentrys",
+    name: "Sentry's Insignia",
+    profession: undefined,
+    effect: armor(bonus(10, { kind: "affected-by", categories: ["stance"] })),
+  } satisfies Insignia),
+
   knights: Object.freeze({
     id: "knights",
     name: "Knight's Insignia",
@@ -204,7 +234,7 @@ export const INSIGNIAS: Readonly<Record<InsigniaId, Insignia>> = Object.freeze({
     id: "disciples",
     name: "Disciple's Insignia",
     profession: "monk",
-    effect: armor(bonus(15, { kind: "has-condition" })),
+    effect: armor(bonus(15, { kind: "affected-by", categories: ["condition"] })),
   } satisfies Insignia),
 
   wanderers: Object.freeze({
@@ -225,7 +255,7 @@ export const INSIGNIAS: Readonly<Record<InsigniaId, Insignia>> = Object.freeze({
     id: "blighters",
     name: "Blighter's Insignia",
     profession: "necromancer",
-    effect: armor(bonus(20, { kind: "has-hex" })),
+    effect: armor(bonus(20, { kind: "affected-by", categories: ["hex"] })),
   } satisfies Insignia),
 
   undertakers: Object.freeze({
@@ -282,6 +312,162 @@ export const INSIGNIAS: Readonly<Record<InsigniaId, Insignia>> = Object.freeze({
         }),
       ),
     ),
+  } satisfies Insignia),
+
+  infiltrators: Object.freeze({
+    id: "infiltrators",
+    name: "Infiltrator's Insignia",
+    profession: "assassin",
+    effect: armor(
+      bonus(10, { kind: "vs-physical" }),
+      bonus(10, { kind: "vs-type", type: "piercing" }),
+    ),
+  } satisfies Insignia),
+
+  saboteurs: Object.freeze({
+    id: "saboteurs",
+    name: "Saboteur's Insignia",
+    profession: "assassin",
+    effect: armor(
+      bonus(10, { kind: "vs-physical" }),
+      bonus(10, { kind: "vs-type", type: "slashing" }),
+    ),
+  } satisfies Insignia),
+
+  vanguards: Object.freeze({
+    id: "vanguards",
+    name: "Vanguard's Insignia",
+    profession: "assassin",
+    effect: armor(
+      bonus(10, { kind: "vs-physical" }),
+      bonus(10, { kind: "vs-type", type: "blunt" }),
+    ),
+  } satisfies Insignia),
+
+  bonelace: Object.freeze({
+    id: "bonelace",
+    name: "Bonelace Insignia",
+    profession: "necromancer",
+    effect: armor(bonus(15, { kind: "vs-type", type: "piercing" })),
+  } satisfies Insignia),
+
+  earthbound: Object.freeze({
+    id: "earthbound",
+    name: "Earthbound Insignia",
+    profession: "ranger",
+    effect: armor(bonus(15, { kind: "vs-type", type: "earth" })),
+  } satisfies Insignia),
+
+  frostbound: Object.freeze({
+    id: "frostbound",
+    name: "Frostbound Insignia",
+    profession: "ranger",
+    effect: armor(bonus(15, { kind: "vs-type", type: "cold" })),
+  } satisfies Insignia),
+
+  pyrebound: Object.freeze({
+    id: "pyrebound",
+    name: "Pyrebound Insignia",
+    profession: "ranger",
+    effect: armor(bonus(15, { kind: "vs-type", type: "fire" })),
+  } satisfies Insignia),
+
+  stormbound: Object.freeze({
+    id: "stormbound",
+    name: "Stormbound Insignia",
+    profession: "ranger",
+    effect: armor(bonus(15, { kind: "vs-type", type: "lightning" })),
+  } satisfies Insignia),
+
+  scouts: Object.freeze({
+    id: "scouts",
+    name: "Scout's Insignia",
+    profession: "ranger",
+    effect: armor(bonus(10, { kind: "affected-by", categories: ["preparation"] })),
+  } satisfies Insignia),
+
+  beastmasters: Object.freeze({
+    id: "beastmasters",
+    name: "Beastmaster's Insignia",
+    profession: "ranger",
+    effect: armor(bonus(10, { kind: "controls-at-least", creature: "pet", count: 1 })),
+  } satisfies Insignia),
+
+  aeromancer: Object.freeze({
+    id: "aeromancer",
+    name: "Aeromancer Insignia",
+    profession: "elementalist",
+    effect: armor(
+      bonus(10, { kind: "vs-elemental" }),
+      bonus(10, { kind: "vs-type", type: "lightning" }),
+    ),
+  } satisfies Insignia),
+
+  geomancer: Object.freeze({
+    id: "geomancer",
+    name: "Geomancer Insignia",
+    profession: "elementalist",
+    effect: armor(
+      bonus(10, { kind: "vs-elemental" }),
+      bonus(10, { kind: "vs-type", type: "earth" }),
+    ),
+  } satisfies Insignia),
+
+  hydromancer: Object.freeze({
+    id: "hydromancer",
+    name: "Hydromancer Insignia",
+    profession: "elementalist",
+    effect: armor(
+      bonus(10, { kind: "vs-elemental" }),
+      bonus(10, { kind: "vs-type", type: "cold" }),
+    ),
+  } satisfies Insignia),
+
+  pyromancer: Object.freeze({
+    id: "pyromancer",
+    name: "Pyromancer Insignia",
+    profession: "elementalist",
+    effect: armor(
+      bonus(10, { kind: "vs-elemental" }),
+      bonus(10, { kind: "vs-type", type: "fire" }),
+    ),
+  } satisfies Insignia),
+
+  artificers: Object.freeze({
+    id: "artificers",
+    name: "Artificer's Insignia",
+    profession: "mesmer",
+    effect: armor(
+      ...[1, 2, 3, 4, 5, 6, 7, 8].map((count) => bonus(3, { kind: "signets-at-least", count })),
+    ),
+  } satisfies Insignia),
+
+  virtuosos: Object.freeze({
+    id: "virtuosos",
+    name: "Virtuoso's Insignia",
+    profession: "mesmer",
+    effect: armor(bonus(15, { kind: "activating" })),
+  } satisfies Insignia),
+
+  mystics: Object.freeze({
+    id: "mystics",
+    name: "Mystic's Insignia",
+    profession: "ritualist",
+    effect: armor(bonus(15, { kind: "activating" })),
+  } satisfies Insignia),
+
+  "ghost-forge": Object.freeze({
+    id: "ghost-forge",
+    name: "Ghost Forge Insignia",
+    profession: "ritualist",
+    effect: armor(bonus(15, { kind: "affected-by", categories: ["weapon-spell"] })),
+  } satisfies Insignia),
+
+  centurions: Object.freeze({
+    id: "centurions",
+    name: "Centurion's Insignia",
+    profession: "paragon",
+    effect: armor(bonus(10, { kind: "affected-by", categories: ["shout", "chant"] })),
   } satisfies Insignia),
 });
 

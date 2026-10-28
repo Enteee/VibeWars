@@ -4,6 +4,7 @@ import {
   MINIMAL_GW_INSPIRED_PVP_V1,
   getWeapon,
   primaryAttributeIds,
+  type InsigniaId,
 } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
@@ -289,7 +290,7 @@ describe("headgear (#1140)", () => {
 });
 
 describe("profession insignias (#1142)", () => {
-  it("offers a Mesmer the five common insignias and Prodigy's", () => {
+  it("offers a Mesmer the six common insignias and its own three", () => {
     const mesmer = setProfessions(newCharacter("c1"), "mesmer", undefined);
     expect(insigniaChoices(mesmer).map((insignia) => insignia.id)).toEqual([
       "survivor",
@@ -297,7 +298,10 @@ describe("profession insignias (#1142)", () => {
       "stalwart",
       "blessed",
       "brawlers",
+      "sentrys",
       "prodigys",
+      "artificers",
+      "virtuosos",
     ]);
   });
 
@@ -353,6 +357,29 @@ describe("profession insignias (#1142)", () => {
     expect(insigniaEffectNote(shamans)).toBe(
       "+5 armor while you control 1+ spirits, +5 at 2+, +5 at 3+",
     );
+  });
+
+  it("describes #1206's conditions, and Artificer's in one line", () => {
+    const conditionsOf = (id: InsigniaId): string[] => {
+      const effect = INSIGNIAS[id].effect;
+      if (effect.kind !== "conditional-armor") {
+        throw new Error(`${id} is armor`);
+      }
+      return effect.bonuses.map((bonus) => describeConditions(bonus.conditions));
+    };
+    expect(conditionsOf("bonelace")).toEqual(["vs piercing damage"]);
+    expect(conditionsOf("pyromancer")).toEqual(["vs elemental damage", "vs fire damage"]);
+    expect(conditionsOf("sentrys")).toEqual(["while in a stance"]);
+    expect(conditionsOf("scouts")).toEqual(["while using a preparation"]);
+    expect(conditionsOf("ghost-forge")).toEqual(["while under a weapon spell"]);
+    expect(conditionsOf("centurions")).toEqual(["while under a shout or chant"]);
+    expect(conditionsOf("beastmasters")).toEqual(["while your pet is alive"]);
+    expect(conditionsOf("virtuosos")).toEqual(["while activating a skill"]);
+    const artificers = INSIGNIAS.artificers.effect;
+    if (artificers.kind !== "conditional-armor") {
+      throw new Error("Artificer's is armor");
+    }
+    expect(insigniaEffectNote(artificers)).toBe("+3 armor per signet on your bar");
   });
 
   it("takes Knight's off a Warrior turned Monk, and keeps Brawler's", () => {
@@ -512,6 +539,13 @@ describe("the gear summary", () => {
     expect(firstSummary(setInsignia(bare, "chest", "knights")).conditionalArmor).toEqual([
       "+20 armor vs physical damage",
       "−3 physical damage taken on chest (avg −1.1)",
+    ]);
+  });
+
+  it("lists Artificer's as one line a signet, not eight (#1206)", () => {
+    const mesmer = setProfessions(newCharacter("c1"), "mesmer", undefined);
+    expect(firstSummary(setInsignia(mesmer, "chest", "artificers")).conditionalArmor).toEqual([
+      "+3 armor per signet on your bar on chest (avg +1.1 a signet)",
     ]);
   });
 

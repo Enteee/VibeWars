@@ -1449,20 +1449,21 @@ export class MatchSimulation {
     }
   }
 
-  /** Everyone's living minions and spirits (#1188), for this tick's armor. */
+  /** Everyone's living minions, spirits (#1188) and pets (#1206), for this tick's armor. */
   #countControlled(): void {
     for (const record of this.#participants.values()) {
       record.combatant.controlled.minion = 0;
       record.combatant.controlled.spirit = 0;
+      record.combatant.controlled.pet = 0;
     }
     for (const record of this.#participants.values()) {
       const creature = record.creature;
-      if (creature === undefined || creature.kind === "pet" || record.combatant.dead) {
+      if (creature === undefined || creature.kind === "priest" || record.combatant.dead) {
         continue;
       }
       const owner =
         creature.ownerId === undefined ? undefined : this.#participants.get(creature.ownerId);
-      if (owner !== undefined && (creature.kind === "minion" || creature.kind === "spirit")) {
+      if (owner !== undefined) {
         owner.combatant.controlled[creature.kind] += 1;
       }
     }
@@ -4566,7 +4567,7 @@ export class MatchSimulation {
       nextMaintainSeq: 0,
       chainMarks: new Map(),
       moving: false,
-      controlled: { minion: 0, spirit: 0 },
+      controlled: { minion: 0, spirit: 0, pet: 0 },
       equipment: spec.equipment,
     };
   }
