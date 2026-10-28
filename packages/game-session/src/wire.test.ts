@@ -347,6 +347,7 @@ describe("wireIdentity (#1052)", () => {
       primaryProfession: "necromancer",
       secondaryProfession: null,
       creature: null,
+      bot: false,
     });
   });
 
@@ -363,6 +364,7 @@ describe("wireIdentity (#1052)", () => {
         mode: null,
         armedAttack: null,
       },
+      bot: false,
     });
   });
 
