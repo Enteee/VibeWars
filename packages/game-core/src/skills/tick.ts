@@ -14,6 +14,7 @@ import {
   type ActiveStatus,
   type ArmorReduction,
   type BlockRule,
+  type StatusId,
 } from "./status.js";
 import { isInvulnerable, isSpell, type Combatant, type Skill } from "./types.js";
 
@@ -343,17 +344,31 @@ export function combinedBlockChance(
  * reads the bearer's health as it is now.
  */
 export function blockChanceOf(combatant: Combatant, kind: "melee" | "projectile"): number {
-  if (combatant.knockdownRemaining > 0) {
-    return 0;
-  }
-  const maxHealth = effectiveMaxHealth(combatant);
   return combinedBlockChance(
-    combatant.statuses.active.flatMap((status) => {
-      const { block, blockBelowHealth } = getStatusDefinition(status.id);
-      const holds =
-        blockBelowHealth === undefined || combatant.health < maxHealth * blockBelowHealth;
-      return block !== undefined && holds ? [block] : [];
-    }),
+    blockingStatusesOf(combatant).map(({ block }) => block),
     kind,
   );
+}
+
+/** A status the bearer blocks with, and its rule (#1265). */
+export interface BlockingStatus {
+  readonly statusId: StatusId;
+  readonly block: BlockRule;
+}
+
+/**
+ * The bearer's statuses that block now, in the order they roll (#1265),
+ * as `blockChanceOf` reads them: none while knocked down, and one that
+ * holds only below a share of health only below it.
+ */
+export function blockingStatusesOf(combatant: Combatant): readonly BlockingStatus[] {
+  if (combatant.knockdownRemaining > 0) {
+    return [];
+  }
+  const maxHealth = effectiveMaxHealth(combatant);
+  return combatant.statuses.active.flatMap((status) => {
+    const { block, blockBelowHealth } = getStatusDefinition(status.id);
+    const holds = blockBelowHealth === undefined || combatant.health < maxHealth * blockBelowHealth;
+    return block !== undefined && holds ? [{ statusId: status.id, block }] : [];
+  });
 }
