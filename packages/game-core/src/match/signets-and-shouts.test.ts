@@ -26,6 +26,7 @@ const swordsman: ResolvedEquipment = {
     attributeId: "warrior.swordsmanship",
     damageType: WEAPONS.sword.damageType,
     requirementMet: true,
+    creatureDamageScale: undefined,
   },
 };
 

@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
-import { weaponAttributeMultiplier } from "../skills/damage.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { distance, vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
@@ -215,7 +214,7 @@ describe("Animate Bone Minions (#467)", () => {
     expect(sim.pips(minion).health).toBe(10);
   });
 
-  it("swings at a foe beside it every 3.17 s for 5-12 blunt, scaled by its master's rank", () => {
+  it("swings at a foe beside it every 3.10 s for 6-11 blunt, scaled by its master's rank", () => {
     const blows = (rank: number): CombatLogEntry[] => {
       const sim = match([spec("y", 1, vec2(330, 0))], rank);
       kill(sim, "x");
@@ -229,7 +228,7 @@ describe("Animate Bone Minions (#467)", () => {
     expect(strong.length).toBeGreaterThanOrEqual(3);
     const gaps = strong.slice(1).map((entry, i) => entry.atSeconds - (strong[i]?.atSeconds ?? 0));
     for (const gap of gaps) {
-      expect(gap).toBeCloseTo(3.17, 1);
+      expect(gap).toBeCloseTo(3.1, 1);
     }
     const amounts = (entries: CombatLogEntry[]): number[] =>
       entries.flatMap((entry) =>
@@ -240,13 +239,24 @@ describe("Animate Bone Minions (#467)", () => {
         ),
       );
     for (const amount of amounts(strong)) {
-      expect(amount).toBeGreaterThanOrEqual(5);
-      expect(amount).toBeLessThanOrEqual(12);
+      expect(amount).toBeGreaterThanOrEqual(6);
+      expect(amount).toBeLessThanOrEqual(11);
     }
     expect(strong.every((entry) => entry.weaponId === "unarmed")).toBe(true);
-    const weak = amounts(blows(0))[0] ?? 0;
-    const full = amounts(strong)[0] ?? 0;
-    expect(weak / full).toBeCloseTo(weaponAttributeMultiplier(0, RULES.combat), 1);
+    // GWW: a Death Magic 0 Bone Minion hits for 0, a rank-6 one for 2-6
+    // with criticals, 2-4 without (#1131).
+    const zero = blows(0);
+    expect(zero.length).toBeGreaterThanOrEqual(3);
+    const damage = zero.flatMap((entry) =>
+      entry.events.flatMap((event) => (event.kind === "damage" ? [event.amount] : [])),
+    );
+    expect(damage.every((amount) => amount === 0)).toBe(true);
+    const six = amounts(blows(6));
+    expect(six.length).toBeGreaterThanOrEqual(1);
+    for (const amount of six) {
+      expect(amount).toBeGreaterThanOrEqual(2);
+      expect(amount).toBeLessThanOrEqual(4);
+    }
   });
 
   it("holds 2 + half its master's Death Magic: past it one dies, and that is a death", () => {

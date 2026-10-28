@@ -7,6 +7,7 @@ import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { createRng } from "../rng.js";
 import {
   armorMultiplier,
+  creatureDamageMultiplier,
   effectiveArmor,
   mitigate,
   skillDamage,
@@ -487,6 +488,33 @@ describe("the weapon attribute multiplier", () => {
 
   it("treats a negative rank as zero rather than inverting the curve", () => {
     expect(weaponAttributeMultiplier(-5, RULES)).toBe(weaponAttributeMultiplier(0, RULES));
+  });
+});
+
+describe("the creature damage multiplier (#1131)", () => {
+  const attack = (levelAtZero: number, levelAtTwelve: number) => ({
+    attributeId: "necromancer.death-magic",
+    damageMin: 6,
+    damageMax: 11,
+    levelAtZero,
+    levelAtTwelve,
+    damageType: "blunt" as const,
+    attackIntervalSeconds: 3.1,
+    range: 40,
+  });
+
+  it("is 1 at rank 12, 0 at rank 0 for a level-0 creature, and (5/10)^1.5 at 6", () => {
+    expect(creatureDamageMultiplier(12, attack(0, 10))).toBe(1);
+    expect(creatureDamageMultiplier(0, attack(0, 10))).toBe(0);
+    expect(creatureDamageMultiplier(6, attack(0, 10))).toBeCloseTo(Math.pow(5 / 10, 1.5), 10);
+  });
+
+  it("keeps rising past 12, on the same line of levels", () => {
+    // A Bone Horror at Death Magic 16 is level 1 + 13 × 16/12.
+    expect(creatureDamageMultiplier(16, attack(1, 14))).toBeCloseTo(
+      Math.pow((1 + (13 * 16) / 12) / 14, 1.5),
+      10,
+    );
   });
 });
 

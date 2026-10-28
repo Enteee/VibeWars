@@ -37,6 +37,7 @@ function archer(spawn: Vec2, weapon: Weapon = LONGBOW): ParticipantSpec {
         attributeId: "ranger.marksmanship",
         damageType: weapon.damageType,
         requirementMet: true,
+        creatureDamageScale: undefined,
       },
     },
     spawn,

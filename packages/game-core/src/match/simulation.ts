@@ -853,6 +853,7 @@ export class MatchSimulation {
         equipment: creatureResolvedEquipment(
           resolveMagnitude(template.armor, owner.combatant),
           template.attack,
+          template.attack === undefined ? 0 : rankOf(owner.combatant, template.attack.attributeId),
         ),
         spawn: at,
         facing: owner.facing,

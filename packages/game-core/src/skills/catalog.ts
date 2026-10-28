@@ -50,9 +50,9 @@ const MINION_BEHAVIOUR: Behaviour = {
 
 /**
  * Level 0...10 at Death Magic 0...12. Health 80 + 20 per level and armor
- * about 3 per level (fandom "Health", "Bone Minion"); a blow every 3.17 s
- * (fandom "Minion"). Its damage is published nowhere: 5-12 is fandom's
- * level-13 7-21, criticals taken out, scaled to level 10 (unverified).
+ * about 3 per level (fandom "Health", "Bone Minion"); a blow every 3.10 s
+ * (GWW "Bone Minion"). 6-11 is GWW's 6-15 against armor 60 at Death
+ * Magic 12, its maximum a critical's, so ÷√2 (#1131).
  */
 const BONE_MINION: CreatureTemplate = {
   kind: "minion",
@@ -61,10 +61,12 @@ const BONE_MINION: CreatureTemplate = {
   armor: { scaling: { attributeId: "necromancer.death-magic", atZero: 0, atTwelve: 30 } },
   attack: {
     attributeId: "necromancer.death-magic",
-    damageMin: 5,
-    damageMax: 12,
+    damageMin: 6,
+    damageMax: 11,
+    levelAtZero: 0,
+    levelAtTwelve: 10,
     damageType: "blunt",
-    attackIntervalSeconds: 3.17,
+    attackIntervalSeconds: 3.1,
     range: RANGE_MELEE,
   },
   behaviour: MINION_BEHAVIOUR,
@@ -73,9 +75,9 @@ const BONE_MINION: CreatureTemplate = {
 
 /**
  * Level 1...14 at Death Magic 0...12. Health 80 + 20 per level and armor
- * 4 per level (fandom "Bone Horror"); a blow every 3.17 s. 13-27 is
- * fandom's 17-49 against armor 60, criticals taken out, scaled to level 14
- * (unverified).
+ * 4 per level (fandom "Bone Horror"); a blow every 3.10 s (GWW "Bone
+ * Horror"). 12-24 is GWW's 12-34 against armor 60 at Death Magic 12, its
+ * maximum a critical's, so ÷√2 (#1131).
  */
 const BONE_HORROR: CreatureTemplate = {
   kind: "minion",
@@ -84,10 +86,12 @@ const BONE_HORROR: CreatureTemplate = {
   armor: { scaling: { attributeId: "necromancer.death-magic", atZero: 4, atTwelve: 56 } },
   attack: {
     attributeId: "necromancer.death-magic",
-    damageMin: 13,
-    damageMax: 27,
+    damageMin: 12,
+    damageMax: 24,
+    levelAtZero: 1,
+    levelAtTwelve: 14,
     damageType: "blunt",
-    attackIntervalSeconds: 3.17,
+    attackIntervalSeconds: 3.1,
     range: RANGE_MELEE,
   },
   behaviour: MINION_BEHAVIOUR,

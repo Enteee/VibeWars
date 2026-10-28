@@ -30,7 +30,13 @@ const SEVER_ARTERY = "warrior.sever-artery";
 function wielding(weapon: Weapon, attributeId: string | undefined): ResolvedEquipment {
   return {
     ...unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
-    mainHand: { weapon, attributeId, damageType: weapon.damageType, requirementMet: true },
+    mainHand: {
+      weapon,
+      attributeId,
+      damageType: weapon.damageType,
+      requirementMet: true,
+      creatureDamageScale: undefined,
+    },
   };
 }
 

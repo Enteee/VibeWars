@@ -982,6 +982,7 @@ describe("state conditions (#794)", () => {
             attributeId: undefined,
             damageType: "slashing",
             requirementMet: true,
+            creatureDamageScale: undefined,
           },
         },
       });

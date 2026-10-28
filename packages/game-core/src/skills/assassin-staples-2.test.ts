@@ -35,6 +35,7 @@ function assassin(): Combatant {
         attributeId: "assassin.dagger-mastery",
         damageType: WEAPONS.daggers.damageType,
         requirementMet: true,
+        creatureDamageScale: undefined,
       },
     },
     attributeRanks: new Map([["assassin.dagger-mastery", 12]]),

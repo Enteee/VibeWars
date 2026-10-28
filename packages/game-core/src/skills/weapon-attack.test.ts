@@ -44,6 +44,7 @@ function wielding(weapon: Weapon, attributeId: string | undefined): ResolvedEqui
       attributeId,
       damageType: weaponDamageType(weapon, attributeId),
       requirementMet: true,
+      creatureDamageScale: undefined,
     },
   };
 }

@@ -3,6 +3,7 @@ import { ENERGY_STORAGE_ATTRIBUTE, energyStorageBonus } from "../primary-attribu
 import type { ProfessionId } from "../professions.js";
 import type { CombatRules } from "../ruleset.js";
 import type { StatusId } from "../skills/status.js";
+import { creatureDamageMultiplier } from "../skills/damage.js";
 import type { CreatureAttack } from "../skills/types.js";
 import {
   INHERENT_ARMOR_BY_PROFESSION,
@@ -50,6 +51,11 @@ export interface ResolvedWeapon {
   readonly damageType: DamageType;
   /** Whether the bearer actually meets the requirement. */
   readonly requirementMet: boolean;
+  /**
+   * A creature's (#1131): what its summoner's rank does to every blow, in
+   * place of weapon mastery. `undefined` for every weapon a player holds.
+   */
+  readonly creatureDamageScale: number | undefined;
 }
 
 export interface ResolvedEquipment {
@@ -385,6 +391,7 @@ function resolveWeapon(
     // Fists and anything else with no attribute link are always "met":
     // there is no training that would improve them.
     requirementMet: attributeId === undefined || rankOf(attributeId) >= resolved.requirement.rank,
+    creatureDamageScale: undefined,
   };
 }
 
@@ -400,6 +407,7 @@ export function unarmedResolvedEquipment(baseArmor: number): ResolvedEquipment {
       attributeId: undefined,
       damageType: unarmed.damageType,
       requirementMet: true,
+      creatureDamageScale: undefined,
     },
     baseArmor,
     conditionalArmor: [],
@@ -412,12 +420,14 @@ export function unarmedResolvedEquipment(baseArmor: number): ResolvedEquipment {
 
 /**
  * A creature's (#467 child 3): unarmed with `armor`, or, with an attack,
- * a weapon of its numbers keyed to `attack.attributeId`. The weapon keeps
- * the id "unarmed", which is all the client draws and the log names.
+ * a weapon of its numbers keyed to `attack.attributeId`, scaled by its
+ * summoner's `rank` there (#1131). The weapon keeps the id "unarmed",
+ * which is all the client draws and the log names.
  */
 export function creatureResolvedEquipment(
   armor: number,
   attack: CreatureAttack | undefined,
+  rank: number,
 ): ResolvedEquipment {
   const unarmed = unarmedResolvedEquipment(armor);
   if (attack === undefined) {
@@ -437,6 +447,7 @@ export function creatureResolvedEquipment(
       attributeId: attack.attributeId,
       damageType: attack.damageType,
       requirementMet: true,
+      creatureDamageScale: creatureDamageMultiplier(rank, attack),
     },
   };
 }

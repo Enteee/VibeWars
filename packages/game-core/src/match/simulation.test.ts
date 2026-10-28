@@ -979,6 +979,7 @@ describe("moving cancels a cast (#279)", () => {
                 attributeId: "ranger.marksmanship",
                 damageType: WEAPONS.longbow.damageType,
                 requirementMet: true,
+                creatureDamageScale: undefined,
               },
             },
           }),

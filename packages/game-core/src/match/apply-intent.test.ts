@@ -70,6 +70,7 @@ describe("applyIntent", () => {
         attributeId: "ranger.marksmanship",
         damageType: WEAPONS["recurve-bow"].damageType,
         requirementMet: true,
+        creatureDamageScale: undefined,
       },
     };
     const sim = new MatchSimulation({

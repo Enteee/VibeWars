@@ -430,13 +430,17 @@ export interface CreatureTemplate {
  * A creature's melee or ranged blow (#467 child 3), as a weapon's numbers.
  * `damageMin`–`damageMax` is what it deals with its summoner at rank 12 in
  * `attributeId`, against armor 60. The summoner's rank, read once at
- * summoning, scales every blow as weapon mastery scales a player's
- * (`weaponAttributeMultiplier`): ×1 at 12, ×0.35 at 0.
+ * summoning, sets the creature's level, and the level every blow
+ * (`creatureDamageMultiplier`, #1131): ×1 at 12, ×0 at a level of 0.
  */
 export interface CreatureAttack {
   readonly attributeId: string;
   readonly damageMin: number;
   readonly damageMax: number;
+  /** Its GW1 level with its summoner at rank 0 in `attributeId`. */
+  readonly levelAtZero: number;
+  /** Its GW1 level at rank 12; the level is linear in the rank between, and past. */
+  readonly levelAtTwelve: number;
   readonly damageType: DamageType;
   readonly attackIntervalSeconds: number;
   readonly range: number;
