@@ -37,6 +37,10 @@ packages, and Vite for the client. There is no server: the client plays
 peer to peer (#15, ADR-0022). Two tabs of the dev client on one machine find each other over the public
 Nostr relays, as two browsers anywhere do.
 
+Players behind symmetric NAT or CGNAT need a TURN relay. To run one for
+your friends from this devenv, see
+[Running a TURN relay](docs/development/turn.md).
+
 ## Before opening a PR
 
 A sprint (or a PR within one) is not done until its required checks are

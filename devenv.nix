@@ -22,6 +22,9 @@ in
     # `claude-llc` — the nine of them at once, in a tmux session, taking work
     # from a GitHub kanban board. See docs/adr/0015-agent-company.md.
     ./nix/claude-llc.nix
+    # A TURN relay for friends behind NAT (#974), off unless enabled in
+    # devenv.local.nix. See docs/development/turn.md.
+    ./nix/turn.nix
   ];
 
   # ---------------------------------------------------------------------------
