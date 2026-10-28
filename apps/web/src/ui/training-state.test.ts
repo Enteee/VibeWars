@@ -94,11 +94,13 @@ describe("resolveScenarioId", () => {
 });
 
 describe("escapeStep (#495)", () => {
-  it("cancels an action first, then collapses an expanded arena, then releases control", () => {
-    expect(escapeStep(true, true)).toBe("cancel");
-    expect(escapeStep(true, false)).toBe("cancel");
-    expect(escapeStep(false, true)).toBe("collapse");
-    expect(escapeStep(false, false)).toBe("release");
+  it("does the match's Esc first, then collapses an expanded arena, then releases control", () => {
+    expect(escapeStep("cancel", true)).toBe("cancel");
+    expect(escapeStep("cancel", false)).toBe("cancel");
+    expect(escapeStep("clear-target", true)).toBe("clear-target");
+    expect(escapeStep("clear-target", false)).toBe("clear-target");
+    expect(escapeStep(undefined, true)).toBe("collapse");
+    expect(escapeStep(undefined, false)).toBe("release");
   });
 });
 

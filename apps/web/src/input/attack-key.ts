@@ -86,3 +86,20 @@ export function isWalking(snapshot: MatchSnapshot): boolean {
 export function hasActionToCancel(snapshot: MatchSnapshot): boolean {
   return isCasting(snapshot) || isAttacking(snapshot) || isWalking(snapshot);
 }
+
+/** What Esc asks for in the match, once the overlays have had it (#1151). */
+export type EscapeIntent = "cancel" | "clear-target";
+
+/**
+ * Esc is Cancel Action while there is something to cancel, and the target
+ * stays; with nothing running it clears the target, as in GW1. So an
+ * attack takes two: the first stops it, the second deselects. Nothing,
+ * with neither.
+ */
+export function escapeIntent(snapshot: MatchSnapshot): EscapeIntent | undefined {
+  if (hasActionToCancel(snapshot)) {
+    return "cancel";
+  }
+  const self = snapshot.players.find((player) => player.sessionId === snapshot.selfSessionId);
+  return self?.targetSessionId === undefined ? undefined : "clear-target";
+}

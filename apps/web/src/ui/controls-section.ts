@@ -327,7 +327,7 @@ function mountControls(container: HTMLElement): () => void {
     body.appendChild(row);
   }
   for (const [name, key] of [
-    ["Cancel action", "Esc"],
+    ["Cancel action; again: clear target", "Esc"],
     ["Leave match", "F10"],
   ] as const) {
     const row = document.createElement("tr");
