@@ -4,7 +4,9 @@
  * fetches main by URL, never from the shared repository's refs, which any
  * jail can write (#61). Each commit gets its own directory, written beside
  * and renamed in whole, so a turn sees one main, never half of two; the
- * older ones are deleted.
+ * older ones are deleted. `<sources>` is one support seat's own
+ * (`support-src/<employee>`), so no seat deletes the tree another's turn
+ * runs in.
  *
  * Run with the host's hardened git (git-hardening.mjs): no system or
  * global config, so no filter driver, and no replace refs.

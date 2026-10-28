@@ -26,9 +26,11 @@ nothing another agent reads:
 
 - **Source:** no `.git` and no worktree. Before every turn the host exports
   main with `git archive` from hubd's mirror (`support-src.mjs`), never from
-  the shared repository's refs, into `.bots/support-src/<sha>/`, and deletes
-  the older exports. That tree, read-only, is the working directory, and
-  `VIBEWARS_SOURCE_SHA` names its commit so answers can cite it.
+  the shared repository's refs, into `.bots/support-src/<employee>/<sha>/`,
+  and deletes that seat's older exports; each seat has its own, so one
+  seat never deletes the tree another's turn runs in. That tree,
+  read-only, is the working directory, and `VIBEWARS_SOURCE_SHA` names its
+  commit so answers can cite it.
 - **Bus and hub:** only `bus/<employee>` and `hub/<employee>`, and the
   `_alive/` directories beside them that hold the sidecar's and hubd's
   heartbeats. Those moved there from the roots so that a jail can bind them
@@ -50,8 +52,9 @@ nothing another agent reads:
 - **Budget:** the proxy refuses over `supportRequestsPerHour` requests an
   hour (`company.json`, 200 by default) with 429. A login has no per-key
   spend limit, so this is the only cap on what an injected support can
-  spend. One proxy serves every turn: a second start finds it answering
-  and exits.
+  spend. Each support seat runs its own proxy, so the budget is per
+  seat. One proxy serves every turn of its seat: a second start finds it
+  answering and exits.
 - **Sidecar:** support's `tg send` reaches only the manager; any other
   role, employee or a broadcast is refused. `tg reply` stays Support-topic
   only.

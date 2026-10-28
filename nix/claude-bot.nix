@@ -748,7 +748,7 @@ let
         # holds the company's credential on the host.
         if [ "$role" = "support" ]; then
           if ! exported="$(PATH="${pkgs.git}/bin:${pkgs.gnutar}/bin:$PATH" ${node} ${botScripts}/support-src.mjs \
-               "$VIBEWARS_BOT_ROOT/hub/.git-mirror" "$VIBEWARS_BOT_ROOT/support-src")"; then
+               "$VIBEWARS_BOT_ROOT/hub/.git-mirror" "$VIBEWARS_BOT_ROOT/support-src/$employee")"; then
             echo "claude-bot: refusing to start $employee: main could not be exported for it" >&2
             exit 1
           fi
