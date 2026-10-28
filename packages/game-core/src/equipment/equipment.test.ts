@@ -1064,8 +1064,7 @@ describe("creatureResolvedEquipment (#467)", () => {
       attributeId: "necromancer.death-magic",
       damageMin: 6,
       damageMax: 11,
-      levelAtZero: 0,
-      levelAtTwelve: 10,
+      level: { atZero: 0, atTwelve: 10 },
       damageType: "blunt" as const,
       attackIntervalSeconds: 3.1,
       range: 40,
@@ -1087,5 +1086,10 @@ describe("creatureResolvedEquipment (#467)", () => {
       creatureDamageScale: Math.pow(5 / 10, 1.5),
     });
     expect(creatureResolvedEquipment(30, attack, 12).mainHand.creatureDamageScale).toBe(1);
+    // A pet scales as weapon mastery does (#1046).
+    expect(
+      creatureResolvedEquipment(30, { ...attack, level: undefined }, 6).mainHand
+        .creatureDamageScale,
+    ).toBeUndefined();
   });
 });

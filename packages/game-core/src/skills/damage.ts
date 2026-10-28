@@ -4,7 +4,7 @@ import { MYSTICISM_ATTRIBUTE, mysticismArmor } from "../primary-attributes.js";
 import type { CombatRules } from "../ruleset.js";
 import { aggregateModifiers } from "./status.js";
 import { armorReductionOf, effectiveMaxHealth, rankOf } from "./tick.js";
-import type { Combatant, CreatureAttack } from "./types.js";
+import type { Combatant, CreatureLevel } from "./types.js";
 
 /**
  * The damage pipeline (ADR-0012).
@@ -196,9 +196,9 @@ export function mitigate(packet: DamagePacket, target: Combatant, rules: CombatR
  * No source gives a formula; this one fits GWW's damage tables for Bone
  * Minion and Bone Horror within about a point at every rank 0-12.
  */
-export function creatureDamageMultiplier(rank: number, attack: CreatureAttack): number {
+export function creatureDamageMultiplier(rank: number, levels: CreatureLevel): number {
   const level = (at: number): number =>
-    attack.levelAtZero + ((attack.levelAtTwelve - attack.levelAtZero) * at) / 12;
+    levels.atZero + ((levels.atTwelve - levels.atZero) * at) / 12;
   return Math.pow(level(Math.max(0, rank)) / level(12), 1.5);
 }
 

@@ -52,8 +52,9 @@ export interface ResolvedWeapon {
   /** Whether the bearer actually meets the requirement. */
   readonly requirementMet: boolean;
   /**
-   * A creature's (#1131): what its summoner's rank does to every blow, in
-   * place of weapon mastery. `undefined` for every weapon a player holds.
+   * A minion's (#1131): what its summoner's rank does to every blow, in
+   * place of weapon mastery. `undefined` for every weapon a player holds,
+   * and a pet's, which scale with weapon mastery.
    */
   readonly creatureDamageScale: number | undefined;
 }
@@ -447,7 +448,8 @@ export function creatureResolvedEquipment(
       attributeId: attack.attributeId,
       damageType: attack.damageType,
       requirementMet: true,
-      creatureDamageScale: creatureDamageMultiplier(rank, attack),
+      creatureDamageScale:
+        attack.level === undefined ? undefined : creatureDamageMultiplier(rank, attack.level),
     },
   };
 }
