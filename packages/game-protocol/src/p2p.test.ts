@@ -97,6 +97,7 @@ const welcome: PeerWelcome = {
   rejoinToken: TOKEN,
   tickIntervalMs: 50,
   elapsedSeconds: 12.5,
+  timeLimitSeconds: 180,
   map: {
     id: "isle",
     name: "Isle of the Nameless",
@@ -721,6 +722,8 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["welcome with a zero tick", parsePeerWelcome, { ...welcome, tickIntervalMs: 0 }],
   ["welcome with an infinite tick", parsePeerWelcome, { ...welcome, tickIntervalMs: Infinity }],
   ["welcome without a map", parsePeerWelcome, { ...welcome, map: null }],
+  ["welcome without a time limit", parsePeerWelcome, { ...welcome, timeLimitSeconds: undefined }],
+  ["welcome with a zero time limit", parsePeerWelcome, { ...welcome, timeLimitSeconds: 0 }],
   [
     "welcome with a NaN wall",
     parsePeerWelcome,

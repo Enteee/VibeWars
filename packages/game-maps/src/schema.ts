@@ -40,6 +40,8 @@ export const mapDataSchema = z.object({
     .min(1)
     .regex(/^[a-z0-9-]+$/, "map id must be lowercase-kebab-case"),
   name: z.string().min(1),
+  /** The mode its matches play (#476), one of game-core's `MatchMode`s; there is no default. */
+  mode: z.enum(["annihilation", "kill-count"]),
   width: z.number().positive(),
   height: z.number().positive(),
   walls: z.array(wallSchema),

@@ -9,6 +9,7 @@ import {
   displayLobbyCode,
   lobbyControls,
   mapLabel,
+  modeLine,
   waitingFor,
 } from "./lobby-screen.js";
 
@@ -95,9 +96,17 @@ describe("displayLobbyCode", () => {
 
 describe("mapLabel (#444)", () => {
   it("names an arena, then how big it plays", () => {
-    expect(mapLabel({ id: "arena-long-hall", name: "Long Hall", size: "large" })).toBe(
-      "Long Hall (large)",
-    );
+    expect(
+      mapLabel({ id: "arena-long-hall", name: "Long Hall", size: "large", mode: "annihilation" }),
+    ).toBe("Long Hall (large)");
+  });
+});
+
+describe("modeLine (#476)", () => {
+  it("says what the map's mode is, in a line", () => {
+    const map = { id: "arena-pillars", name: "Pillar Hall", size: "small" } as const;
+    expect(modeLine({ ...map, mode: "kill-count" })).toBe("Kill Count: most kills in 3 minutes");
+    expect(modeLine({ ...map, mode: "annihilation" })).toBe("Annihilation: defeat every foe");
   });
 });
 

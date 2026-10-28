@@ -18,6 +18,29 @@ import { key } from "./keys.js";
  */
 const BUILD = "Elementalist/Mesmer";
 
+/**
+ * Make `page`'s ticket keys from `seed`, so its group's map is known.
+ * The map follows from the tickets' ids (`formGroups`), and the map
+ * decides the mode (#476): a 1v1 drawn onto Pillar Hall would play Kill
+ * Count, where Bob respawns and one kill wins nothing. Pinning the keys
+ * keeps the product free of a test hook. Only 48-byte draws are seeded,
+ * which is what @noble/secp256k1 makes a secret key from, each the same
+ * whatever drew before it; every other draw stays random. Seeds 5 and 6
+ * meet on Arena Alpha, an Annihilation map; the test checks it, so a
+ * change to formation fails here, loudly.
+ */
+async function seedTicketKeys(page: Page, seed: number): Promise<void> {
+  // Source text, as the e2e tsconfig has no DOM lib (see builds.spec.ts).
+  await page.addInitScript(`
+    const random = crypto.getRandomValues.bind(crypto);
+    crypto.getRandomValues = (array) => {
+      if (!(array instanceof Uint8Array) || array.length !== 48) return random(array);
+      for (let i = 0; i < 48; i += 1) array[i] = (${String(seed)} * 97 + i * 13) & 0xff;
+      return array;
+    };
+  `);
+}
+
 /** Make a character and choose it: the queue needs one. */
 async function makeCharacter(page: Page): Promise<void> {
   await bringStarter(page, BUILD);
@@ -73,6 +96,8 @@ test("two players queue for a 1v1, are matched, see the versus splash, play it o
   test.setTimeout(150_000);
   const { context, pages } = await openPeers(browser, 2);
   const [alice, bob] = pages as [Page, Page];
+  await seedTicketKeys(alice, 5);
+  await seedTicketKeys(bob, 6);
 
   try {
     await makeCharacter(alice);
@@ -93,9 +118,10 @@ test("two players queue for a 1v1, are matched, see the versus splash, play it o
     await expect(aliceSplash.locator(".versus-team.is-theirs")).toContainText("Bob");
     await expect(bobSplash.locator(".versus-team.is-ours")).toContainText("Bob");
     // One lobby, so one planned map.
-    const map = (await aliceSplash.locator(".versus-map").textContent()) ?? "";
-    expect(map).not.toBe("");
-    await expect(bobSplash.locator(".versus-map")).toHaveText(map);
+    await expect(aliceSplash.locator(".versus-map")).toContainText("Arena Alpha");
+    await expect(bobSplash.locator(".versus-map")).toHaveText(
+      (await aliceSplash.locator(".versus-map").textContent()) ?? "",
+    );
 
     for (const page of [alice, bob]) {
       await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp", {

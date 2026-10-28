@@ -2,8 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   ANNIHILATION_MATCH_RULES,
-  DEFAULT_MATCH_RULES,
   KILL_COUNT_MATCH_RULES,
+  MATCH_IN_PROGRESS,
+  MATCH_MODES,
   addKill,
   emptyScore,
   evaluateMatch,
@@ -107,11 +108,11 @@ describe("evaluateMatch", () => {
     expect(evaluateMatch(score, BOTH_ALIVE, 60, RULES).reason).toBe("score");
   });
 
-  it("keeps today's kill-count rules as a preset", () => {
+  it("keeps the kill-count rules as a preset", () => {
     expect(KILL_COUNT_MATCH_RULES).toEqual({
       victory: "kill-count",
       scoreToWin: 15,
-      timeLimitSeconds: 600,
+      timeLimitSeconds: 180,
       deathRule: "respawn",
       respawnSeconds: 8,
       deathPenalty: false,
@@ -119,11 +120,51 @@ describe("evaluateMatch", () => {
   });
 });
 
+describe("MATCH_MODES (#476)", () => {
+  const rules = MATCH_MODES["kill-count"];
+  const score = (team0: number, team1: number) =>
+    new Map([
+      [0, team0],
+      [1, team1],
+    ]);
+
+  it("names each mode's rules", () => {
+    expect(MATCH_MODES.annihilation).toBe(ANNIHILATION_MATCH_RULES);
+    expect(rules).toBe(KILL_COUNT_MATCH_RULES);
+  });
+
+  it("kill count: the most kills at 3 minutes wins, and not a moment before", () => {
+    expect(evaluateMatch({ byTeam: score(4, 2) }, BOTH_ALIVE, 179.9, rules)).toBe(
+      MATCH_IN_PROGRESS,
+    );
+    expect(evaluateMatch({ byTeam: score(4, 2) }, BOTH_ALIVE, 180, rules)).toEqual({
+      phase: "finished",
+      winningTeam: 0,
+      reason: "time",
+    });
+  });
+
+  it("kill count: equal kills at 3 minutes is a draw", () => {
+    expect(evaluateMatch({ byTeam: score(5, 5) }, BOTH_ALIVE, 180, rules)).toEqual({
+      phase: "finished",
+      winningTeam: undefined,
+      reason: "time",
+    });
+  });
+
+  it("kill count: 15 kills ends it early", () => {
+    expect(evaluateMatch({ byTeam: score(3, 15) }, BOTH_ALIVE, 42, rules)).toEqual({
+      phase: "finished",
+      winningTeam: 1,
+      reason: "score",
+    });
+  });
+});
+
 describe("evaluateMatch: annihilation (#846)", () => {
   const rules = ANNIHILATION_MATCH_RULES;
 
-  it("is the default: resurrection only, the death penalty, 8 minutes", () => {
-    expect(DEFAULT_MATCH_RULES).toBe(ANNIHILATION_MATCH_RULES);
+  it("is resurrection only, the death penalty, 8 minutes", () => {
     expect(rules.victory).toBe("annihilation");
     expect(rules.deathRule).toBe("resurrection-only");
     expect(rules.deathPenalty).toBe(true);

@@ -1494,7 +1494,8 @@
         { "name": "playerId", "optional": false, "type": "string" },
         { "name": "protocolVersion", "optional": false, "type": "string" },
         { "name": "rejoinToken", "optional": false, "type": "string" },
-        { "name": "tickIntervalMs", "optional": false, "type": "number" }
+        { "name": "tickIntervalMs", "optional": false, "type": "number" },
+        { "name": "timeLimitSeconds", "optional": false, "type": "number" }
       ]
     },
     "PolygonWallDescriptor": {
