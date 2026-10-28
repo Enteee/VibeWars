@@ -196,6 +196,8 @@ export const SKILL_ICONS = {
   // Placeholders until the asset-designer's (#1064).
   "ranger.winnowing": { glyph: "blade-plus", modifier: "area" },
   "ritualist.recuperation": { glyph: "plaster", modifier: "hourglass" },
+  // A placeholder until the asset-designer's (#1087).
+  "elementalist.ward-against-melee": { glyph: "mountain", modifier: "clock" },
   // Placeholders until the asset-designer's (#1068): resurrections.
   "common.resurrection-signet": { glyph: "resurrect", modifier: "plus" },
   "monk.rebirth": { glyph: "resurrect", modifier: "self" },
