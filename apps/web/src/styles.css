@@ -682,11 +682,14 @@ body {
 
 /* A hint, not a gate: the server still decides whether a cast is legal.
    The wrong weapon in hand dims an attack skill the same way (#417). An
-   adrenaline skill short of its charge shows its gauge instead (#826). */
+   adrenaline skill short of its charge shows its gauge instead (#826). A
+   spell a hex bars, as Shroud of Silence's, dims too (#1234). */
 .hud-skill.is-unaffordable:not(:has(> .adrenaline-gauge)),
 .hud-skill.is-wrong-weapon,
+.hud-skill.is-silenced,
 .training-skill.is-unaffordable:not(:has(> .adrenaline-gauge)),
-.training-skill.is-wrong-weapon {
+.training-skill.is-wrong-weapon,
+.training-skill.is-silenced {
   opacity: 0.45;
 }
 

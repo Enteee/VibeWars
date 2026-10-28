@@ -786,6 +786,33 @@ const status = {
       `<path d="M6 17.5h5l2-4" ${stroke(c, 2.2)}/>` +
       `<path d="M14 7l2.5 3L19 7" ${stroke(c, 2)}/>`,
   ],
+  // Hex: a spark struck through, the foe cannot cast spells (#1234).
+  "shroud-of-silence": [
+    "hex",
+    (c) =>
+      `<path d="M12 6l1.5 4.5L18 12l-4.5 1.5L12 18l-1.5-4.5L6 12l4.5-1.5z" fill="${c}"/>` +
+      `<path d="M5.5 18.5l13-13" ${stroke(c, 2)}/>`,
+  ],
+  // Hex: a shield split open, blows of its caster cannot be blocked (#1234).
+  "expose-defenses": [
+    "hex",
+    (c) =>
+      `<path d="M11 6H7v5.5c0 2.6 1.8 4.4 4 5.5z" fill="${c}"/>` +
+      `<path d="M13.5 6H17v5.5c0 2.6-1.8 4.4-3.5 5.5z" ${stroke(c, 1.6)}/>`,
+  ],
+  // Hex: a drop in a loop, a poison that renews while its foe moves (#1234).
+  "enduring-toxin": [
+    "hex",
+    (c) =>
+      `<path d="M12 8c-1.8 2.4-2.5 3.6-2.5 4.6a2.5 2.5 0 0 0 5 0c0-1-.7-2.2-2.5-4.6z" fill="${c}"/>` +
+      `<path d="M18 12a6 6 0 1 1-2-4.5M16 5v3h3" ${stroke(c, 1.6)}/>`,
+  ],
+  // Hex: a cross over a halved plus, heals worth half (#1234).
+  "mark-of-death": [
+    "hex",
+    (c) =>
+      `<path d="M12 6v12M8 10h8" ${stroke(c, 2.2)}/>` + `<path d="M6 18l12-12" ${stroke(c, 1.6)}/>`,
+  ],
 };
 
 // ---------------------------------------------------------------------------
@@ -900,6 +927,12 @@ const projectile = {
   stone: [
     ["M3 4.5L7 4L6 6.5ZM6 8.5L11 8L10 10.5Z", "#c8c8c8"],
     ["M14 7L16 2.5L21 1L27 2L30 6L28 10L22 11L16 10Z", "#fff"],
+  ],
+  // Thrown dagger (Disrupting, Crippling): a grey hilt and crossguard, a long
+  // white blade.
+  "thrown-dagger": [
+    ["M2 4.75h7v2.5H2zM9 1.5h2.5v9H9z", "#c8c8c8"],
+    ["M11.5 3.5L26 4.5L31 6L26 7.5L11.5 8.5Z", "#fff"],
   ],
 };
 
@@ -1604,27 +1637,27 @@ const skillGlyph = {
     `<circle cx="12" cy="12" r="3.4" fill="${C.ink}"/>`,
   // A ghost with dark eyes, wavy hem: the phantasm that gnaws (#1243).
   ghost: () =>
-    inkFill("M4 20V10A6.5 6.5 0 0 1 17 10V20L14.5 17.5L12 20L9.5 17.5L7 20Z") +
-    `<circle cx="7.6" cy="10" r="1.5" fill="${C.bg}"/><circle cx="13.4" cy="10" r="1.5" fill="${C.bg}"/>`,
+    inkFill("M3.5 17.5V9A5.5 5.5 0 0 1 14.5 9V17.5L12.2 15.3L9 17.5L5.8 15.3Z") +
+    `<circle cx="6.8" cy="9" r="1.3" fill="${C.bg}"/><circle cx="11.2" cy="9" r="1.3" fill="${C.bg}"/>`,
   // A hung weight: a burden on the foe's legs (#1243).
   weight: () =>
-    `<path d="M8 8Q8 3.5 12 3.5T16 8" ${stroke(C.ink, 2.2)}/>` + inkFill("M6 8H18L20 17.5H4Z"),
+    `<path d="M7 7Q7 3 9.75 3T12.5 7" ${stroke(C.ink, 2.2)}/>` + inkFill("M4.5 7H15L16 14H3.5Z"),
   // A jagged ache over a cross cut: pain now, a deep wound when it ends (#1243).
   "ache-cross": () =>
     inkLine("M3.5 6L7 3.5L10.5 6L14 3.5L17.5 6", 2.2) +
-    inkLine("M5.5 10.5L15.5 20.5M15.5 10.5L5.5 20.5", 3),
+    inkLine("M5.5 10.5L13.5 18.5M13.5 10.5L5.5 18.5", 3),
   // A shield inside its own outline: armor drawing in, cracked when it ends (#1243).
   "armor-shrink": () =>
     `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 1.8)} stroke-dasharray="3.4 2.4"/>` +
     inkFill("M12 7L16 8.6V12.4C16 14.6 14.4 16 12 17.2C9.6 16 8 14.6 8 12.4V8.6Z"),
   // A whole chevron and a broken one: fast now, crippled after (#1243).
   "speed-break": () =>
-    inkLine("M3.5 5L10 12L3.5 19", 2.6) + inkLine("M13.5 5L16.5 8.5M16.5 15.5L13.5 19", 2.4),
+    inkLine("M3.5 5L10 12L3.5 19", 2.6) + inkLine("M13.5 5L16.5 8.5M16.5 14L13.5 17.5", 2.4),
   // An eye with a slash through it: the next attack is blinded (#1243).
   "eye-slash": () =>
-    `<path d="M2.5 12C5 7.5 8.5 5.5 12 5.5S19 7.5 21.5 12C19 16.5 15.5 18.5 12 18.5S5 16.5 2.5 12Z" ${stroke(C.ink, 2.2)}/>` +
-    `<circle cx="12" cy="12" r="2.8" fill="${C.ink}"/>` +
-    inkLine("M5 20L19 4", 2.6),
+    `<g transform="scale(0.78)"><path d="M2.5 12C5 7.5 8.5 5.5 12 5.5S19 7.5 21.5 12C19 16.5 15.5 18.5 12 18.5S5 16.5 2.5 12Z" ${stroke(C.ink, 2.8)}/>` +
+    `<circle cx="12" cy="12" r="3.4" fill="${C.ink}"/></g>` +
+    inkLine("M3.5 17L16.5 3.5", 2.6),
   // A limping line over two drain chevrons: slowed and bleeding health (#1243).
   "limp-drain": () =>
     inkLine("M9 3L5 9.5L9 13.5L4 20", 2.8) +

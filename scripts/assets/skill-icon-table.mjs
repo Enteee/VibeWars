@@ -241,4 +241,12 @@ export const SKILL_ICONS = {
   "mesmer.illusion-of-haste": { glyph: "speed-break", modifier: "self" },
   "mesmer.ineptitude": { glyph: "eye-slash", modifier: "area" },
   "mesmer.crippling-anguish": { glyph: "limp-drain" },
+  // Placeholders until the asset-designer's (#1234).
+  "assassin.shroud-of-silence": { glyph: "hex-bolt", modifier: "self" },
+  "assassin.expose-defenses": { glyph: "armor-half", modifier: "stun" },
+  "assassin.enduring-toxin": { glyph: "hex-bolt", modifier: "clock" },
+  "assassin.mark-of-death": { glyph: "hex-bolt", modifier: "less" },
+  "assassin.disrupting-dagger": { glyph: "dagger-burst", modifier: "stun" },
+  "assassin.crippling-dagger": { glyph: "limp", modifier: "bolt" },
+  "assassin.iron-palm": { glyph: "hilt", modifier: "stun" },
 };

@@ -5,7 +5,9 @@ import {
   getSkill,
   hasLineOfSight,
   isCompanionRule,
+  isSpell,
   isWeaponId,
+  preventsSpells,
   targetLivenessAllows,
   targetRuleAllows,
   wieldsFor,
@@ -202,6 +204,20 @@ export function wrongWeapon(
       return false;
     }
     return !isWeaponId(weaponId) || !wieldsFor(weaponId, needed);
+  });
+}
+
+/**
+ * Which slots hold a spell `self` cannot start (#1234): a hex such as
+ * Shroud of Silence bars them, the same check activation makes
+ * (`preventsSpells`), so the dimmed slot and the refusal agree. A hint,
+ * not a gate.
+ */
+export function silenced(skillBar: readonly (SkillSlot | null)[], self: PlayerSnapshot): boolean[] {
+  const barred = preventsSpells(self.statuses);
+  return skillBar.map((slot) => {
+    const skill = slot === null ? undefined : getSkill(slot.id);
+    return barred && skill !== undefined && isSpell(skill.type);
   });
 }
 

@@ -18,6 +18,7 @@ import {
   SLOT_FLASH_MS,
   slotAffordable,
   slotFlashes,
+  silenced,
   wrongWeapon,
 } from "./skill-slot-state.js";
 
@@ -387,6 +388,37 @@ describe("slotAffordable (#637)", () => {
     const rush = { ...slot("rush"), energyCost: 0, adrenalineCost: 4 };
     expect(slotAffordable(rush, self({ energy: 0 }), 4 * 25 - 1)).toBe(false);
     expect(slotAffordable(rush, self({ energy: 0 }), 4 * 25)).toBe(true);
+  });
+});
+
+describe("silenced (#1234)", () => {
+  // A hex, a spell, a skill and an attack skill: only the first two are spells.
+  const bar = [
+    slot("assassin.mark-of-death"),
+    slot("elementalist.fireball"),
+    slot("assassin.iron-palm"),
+    slot("warrior.swift-chop"),
+    null,
+  ];
+  const shrouded = {
+    id: "shroud-of-silence",
+    endsAt: 5,
+    durationSeconds: 5,
+    casterId: "foe",
+  } as const;
+
+  it("marks every spell while a hex bars spells, and nothing else", () => {
+    expect(silenced(bar, self({ statuses: [shrouded] }))).toEqual([
+      true,
+      true,
+      false,
+      false,
+      false,
+    ]);
+  });
+
+  it("marks nothing without one", () => {
+    expect(silenced(bar, self({}))).toEqual([false, false, false, false, false]);
   });
 });
 

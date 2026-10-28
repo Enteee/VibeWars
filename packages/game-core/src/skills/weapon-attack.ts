@@ -254,15 +254,24 @@ export function blowKind(weapon: Weapon): "melee" | "projectile" {
 }
 
 /**
- * Whether `victim` blocks a blow of this kind (#534), rolled after blind
- * and before the damage roll. Rolled only when there is a chance to
- * block, as blind is, so a fight without blocking keeps its random stream.
+ * Whether `victim` blocks a blow of this kind from `attackerId` (#534),
+ * rolled after blind and before the damage roll. Rolled only when there
+ * is a chance to block, as blind is, so a fight without blocking keeps
+ * its random stream. A hex of the attacker's that bars blocking it
+ * (#1234, `unblockableBySource`) leaves no chance.
  */
 export function blocks(
   victim: Combatant,
+  attackerId: string,
   kind: "melee" | "projectile",
   rng: SimulationRng,
 ): boolean {
+  const exposed = victim.statuses.active.some(
+    ({ id, sourceId }) => sourceId === attackerId && getStatusDefinition(id).unblockableBySource,
+  );
+  if (exposed) {
+    return false;
+  }
   const chance = blockChanceOf(victim, kind);
   return chance > 0 && rng.nextFloat() < chance;
 }
@@ -568,7 +577,7 @@ function strike(
     events.push({ kind: "attack-missed", targetId: victim.id });
     return;
   }
-  if (blocks(victim, "melee", rng)) {
+  if (blocks(victim, attacker.id, "melee", rng)) {
     events.push({ kind: "attack-blocked", targetId: victim.id });
     attackReached(victim, events);
     return;
@@ -733,7 +742,7 @@ export function resolveAttackSkill(
         events.push({ kind: "attack-missed", targetId: victim.id });
         continue;
       }
-      if (rule?.unblockable !== true && blocks(victim, kind, rng)) {
+      if (rule?.unblockable !== true && blocks(victim, caster.id, kind, rng)) {
         events.push({ kind: "attack-blocked", targetId: victim.id });
         attackReached(victim, events);
         blocked.push(victim);
