@@ -741,6 +741,51 @@ const status = {
     (c) =>
       `<circle cx="9.5" cy="12" r="3.5" ${stroke(c, 2)}/><circle cx="14.5" cy="12" r="3.5" ${stroke(c, 2)}/>`,
   ],
+  // Hex: three degeneration arrows, a phantasm's -5 (#1228).
+  "conjure-phantasm": [
+    "hex",
+    (c) => `<path d="M5 9l2.5 3L10 9M9.5 9l2.5 3 2.5-3M14 9l2.5 3L19 9" ${stroke(c, 2)}/>`,
+  ],
+  // Hex: a weight hung on a foot, moving 50% slower (#1228).
+  "imagined-burden": [
+    "hex",
+    (c) => `<path d="M12 5v4" ${stroke(c, 2)}/>` + `<path d="M8.5 9h7l2 9h-11z" fill="${c}"/>`,
+  ],
+  // Hex: a jagged ache over a drop, a deep wound when it ends (#1228).
+  "phantom-pain": [
+    "hex",
+    (c) =>
+      `<path d="M5 9l3-3 3 3 3-3 3 3" ${stroke(c, 2)}/>` +
+      `<path d="M12 11.5c-1.8 2.4-2.5 3.6-2.5 4.6a2.5 2.5 0 0 0 5 0c0-1-.7-2.2-2.5-4.6z" fill="${c}"/>`,
+  ],
+  // Hex: a shield closing in on itself, cracked armor when it ends (#1228).
+  "shrinking-armor": [
+    "hex",
+    (c) =>
+      `<path d="M8.5 7h7v4.5c0 2.4-1.8 4-3.5 5-1.7-1-3.5-2.6-3.5-5z" ${stroke(c, 2)}/>` +
+      `<path d="M12 8.5l-1 3 1.5 1.5-.5 2.5" ${stroke(c, 1.4)}/>`,
+  ],
+  // Enchantment: a chevron and a broken one, faster now and crippled after (#1228).
+  "illusion-of-haste": [
+    "enchantment",
+    (c) =>
+      `<path d="M6 7.5l4.5 4.5L6 16.5" ${stroke(c, 2.4)}/>` +
+      `<path d="M13 7.5l3 3M16 13.5l-3 3" ${stroke(c, 2)}/>`,
+  ],
+  // Hex: a blade crossed out, the next attack hurts and blinds (#1228).
+  ineptitude: [
+    "hex",
+    (c) =>
+      `<path d="M12 18.5v-10M8.5 8.5h7M12 8.5v-4" ${stroke(c, 2.2)}/>` +
+      `<path d="M6 6l12 12" ${stroke(c, 2)}/>`,
+  ],
+  // Hex: a limping foot and a degeneration arrow, slowed and draining (#1228).
+  "crippling-anguish": [
+    "hex",
+    (c) =>
+      `<path d="M6 17.5h5l2-4" ${stroke(c, 2.2)}/>` +
+      `<path d="M14 7l2.5 3L19 7" ${stroke(c, 2)}/>`,
+  ],
 };
 
 // ---------------------------------------------------------------------------

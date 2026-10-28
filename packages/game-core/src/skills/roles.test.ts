@@ -74,4 +74,11 @@ describe("skillRoles", () => {
     expect(rolesOf("ranger.disrupting-lunge")).toEqual(["interrupt"]);
     expect(rolesOf("ranger.comfort-animal")).toEqual([]);
   });
+
+  it("does not count the cripple a self-enchantment puts on its bearer as it ends (#1228)", () => {
+    // Illusion of Haste's price; Aura of Thorns' cripple lands on foes.
+    expect(rolesOf("mesmer.illusion-of-haste")).toEqual([]);
+    expect(rolesOf("dervish.aura-of-thorns")).toEqual(["condition"]);
+    expect(rolesOf("mesmer.phantom-pain")).toEqual(["hex"]);
+  });
 });
