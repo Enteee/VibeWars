@@ -109,7 +109,7 @@ test("#578: a host with others in the lobby is asked before Leave or Esc closes 
   }
 });
 
-test("#853: the first start rolls a starter character, chosen; Reroll asks, then replaces it in place", async ({
+test("#853: the first start rolls a starter character, chosen; Reroll replaces it in place", async ({
   page,
 }) => {
   await openMenu(page);
