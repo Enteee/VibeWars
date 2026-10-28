@@ -34,6 +34,7 @@ const AXE: ResolvedEquipment = {
     attributeId: "warrior.axe-mastery",
     damageType: WEAPONS.axe.damageType,
     requirementMet: true,
+    creatureDamageScale: undefined,
   },
 };
 
@@ -457,6 +458,7 @@ describe("Winnowing's +4 (#1064)", () => {
           attributeId: "ranger.marksmanship",
           damageType: WEAPONS.flatbow.damageType,
           requirementMet: true,
+          creatureDamageScale: undefined,
         },
       },
     });

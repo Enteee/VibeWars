@@ -684,15 +684,26 @@ function describeEffects(
       // chance to block melee attacks".
       return [describeEffect(effect, ranks), describeAura(act.aura, "in the area")];
     }
-    // What the trap does when sprung (#1105): "When sprung, foes nearby:
-    // deals 20 piercing damage".
-    const { radius } = act.trap.area;
-    const who = `When sprung, foes ${AREA_TEXT.get(radius) ?? `within ${String(radius)}`}`;
+    // What a trap does when sprung (#1105), and a pulse each time
+    // (#1113): "When sprung, every 1s for 3s, foes nearby: deals 17
+    // damage".
+    const pulse = act.kind === "trap" ? act.trap.spring : act.pulse;
+    const { radius } = pulse.area;
+    const who = [
+      ...(act.kind === "trap" ? ["when sprung"] : []),
+      ...(pulse.count > 1
+        ? [`every ${seconds(pulse.everySeconds)} for ${seconds(pulse.count * pulse.everySeconds)}`]
+        : []),
+      `foes ${AREA_TEXT.get(radius) ?? `within ${String(radius)}`}`,
+    ].join(", ");
     return [
       describeEffect(effect, ranks),
-      ...act.trap.effects.flatMap((inner) =>
+      ...(act.kind === "trap" && act.trap.springsAtEnd
+        ? [{ text: "Springs by itself as its time runs out", magnitude: undefined }]
+        : []),
+      ...pulse.effects.flatMap((inner) =>
         describeEffects(inner, ranks).map(({ text, magnitude }) => ({
-          text: `${who}: ${lowerFirst(text)}`,
+          text: `${who.charAt(0).toUpperCase()}${who.slice(1)}: ${lowerFirst(text)}`,
           magnitude,
         })),
       ),
@@ -723,6 +734,7 @@ const AURA_WHO: Record<Aura["affects"], string> = {
 const GROUND_ANCHOR_TEXT: Record<CreateGroundEffect["anchor"], string> = {
   caster: "at your location",
   corpse: "at its location",
+  target: "at your target's location",
 };
 
 /** A share of health as GW1 words it (#936): "half", or "25%". */
@@ -956,15 +968,18 @@ function describeEffect(
     }
     case "create-ground-effect": {
       // "Creates a ward at your location for 17 seconds" (#1087), "Sets a
-      // trap at your location for 90 seconds" (#1105), or a well "at its
-      // location", the corpse's (#1104).
+      // trap at your location for 90 seconds" (#1105), a well "at its
+      // location", the corpse's (#1104), or a symbol at your target's
+      // (#1113).
       const magnitude = describeMagnitude(effect.durationSeconds, ranks);
       const what =
         effect.act.kind === "trap"
           ? "Sets a trap"
-          : effect.anchor === "corpse"
-            ? "Creates a well"
-            : "Creates a ward";
+          : effect.act.kind === "pulse"
+            ? "Creates a symbol"
+            : effect.anchor === "corpse"
+              ? "Creates a well"
+              : "Creates a ward";
       const where = GROUND_ANCHOR_TEXT[effect.anchor];
       return {
         text: `${what} ${where} for ${String(magnitude.current)} seconds`,
@@ -1085,11 +1100,14 @@ function headlineOf(
       return inner.find((number) => number.scales) ?? inner[0];
     }
     case "create-ground-effect": {
-      // A trap's card leads with what its spring deals (#1105).
-      if (effect.act.kind !== "trap") {
+      // A trap's card leads with what its spring deals (#1105), a pulse's
+      // with what each pulse deals (#1113).
+      const { act } = effect;
+      if (act.kind === "aura") {
         return undefined;
       }
-      const inner = effect.act.trap.effects.flatMap((each) => headlineOf(each, ranks) ?? []);
+      const pulse = act.kind === "trap" ? act.trap.spring : act.pulse;
+      const inner = pulse.effects.flatMap((each) => headlineOf(each, ranks) ?? []);
       return inner.find((number) => number.scales) ?? inner[0];
     }
     default:

@@ -1325,6 +1325,31 @@ test("(41) a well needs a corpse, then lands on one (#1104)", async ({ page }) =
   await expect(slot).toHaveAttribute("aria-label", /^Well of Suffering, recharging/);
 });
 
+test("(42) Symbol of Wrath strikes the dummy it was cast at once a second, five times (#1113)", async ({
+  page,
+}) => {
+  await page.setViewportSize(WIDE);
+  await page.goto("./");
+  await page.getByRole("button", { name: "new character" }).click();
+  await chooseProfession(page, "primary", "monk");
+  await page
+    .locator(".skill-box", { hasText: "Symbol of Wrath" })
+    .locator(".skill-box-equip")
+    .click();
+  await takeControl(page);
+
+  // No target: the cast picks the nearest dummy, and the symbol lands
+  // under it. Each pulse is a damage row naming the skill.
+  await page.keyboard.press(skillKey(0));
+  const hits = page.locator('.training-log-row[data-tone="damage"]', {
+    hasText: "Symbol of Wrath",
+  });
+  // Game time runs slower than wall time under load (#327).
+  await expect(hits).toHaveCount(5, { timeout: 20_000 });
+  await page.waitForTimeout(2_000);
+  await expect(hits).toHaveCount(5);
+});
+
 test("2 swaps to weapon set 2, the empty 3 does nothing, and a slot's click swaps back (#489)", async ({
   page,
 }) => {

@@ -42,7 +42,13 @@ function holding(id: string, team: number, weapon: Weapon, attributeId: string):
     team,
     equipment: {
       ...unarmedResolvedEquipment(RULES.armorReferenceLevel),
-      mainHand: { weapon, attributeId, damageType: weapon.damageType, requirementMet: true },
+      mainHand: {
+        weapon,
+        attributeId,
+        damageType: weapon.damageType,
+        requirementMet: true,
+        creatureDamageScale: undefined,
+      },
     },
     attributeRanks: new Map([
       [attributeId, 12],

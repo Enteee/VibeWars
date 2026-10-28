@@ -1341,10 +1341,13 @@ where it is until there is one.
 
 **Animate Bone Minions** (Necromancer, Death Magic, spell, 10 energy,
 1 s, 5 s recharge) raises two Bone Minions of 280 Health and armor 30,
-each a 5–12 blunt blow every 3.17 s. **Animate Bone Horror** (5
+each a 6–11 blunt blow every 3.10 s. **Animate Bone Horror** (5
 energy, 1 s, 5 s recharge) raises one Bone Horror of 360 Health and
-armor 56, 13–27 blunt every 3.17 s. Numbers at Death Magic 12; their
-damage is a house estimate, as no source publishes it.
+armor 56, 12–24 blunt every 3.10 s. Numbers at Death Magic 12, from
+GWW's damage tables, criticals taken out. A minion's blows scale with
+its level, which its Necromancer's Death Magic sets as it rises: ×(level
+÷ its level at 12)^1.5, a fit to GWW's tables. A Bone Minion raised at
+Death Magic 0 is level 0 and deals nothing; at 6 it hits for 2–4.
 
 **Pets** (#1046). A Ranger with **Charm Animal** (Beast Mastery, 10
 energy, 10 s) on the bar brings a level-20 wolf from the moment it
@@ -1400,7 +1403,7 @@ whole time, whether the body later stands up, respawns or not. With no
 corpse in reach the cast is refused and nothing is paid. A well acts on
 foes: your side standing in it gets nothing. Otherwise it is a ward:
 drawn the same, one status from two of a skill, at most 32 on the
-ground counting wards and traps.
+ground counting wards, traps and pulses.
 
 **Well of Suffering** (Necromancer, Death Magic, well spell, 10 energy,
 1 s, 10 s recharge) leaves a well of radius 109 on the nearest corpse
@@ -1415,7 +1418,8 @@ slow it, but setting one is easily interrupted: any attack that lands on
 the setter during it interrupts it, a swing, an arrow or an attack skill;
 a miss, a block or a spell's damage does not. Interrupted or moved, there
 is no trap, the energy is spent and the skill recharges. Set, it waits for
-up to its duration, then ends with no effect. The first step a living foe
+up to its duration, then ends with no effect, unless it springs by
+itself as its time runs out, as Flame Trap does. The first step a living foe
 that is not a spirit has its centre within 40 of it (adjacent, walls do
 not matter), it springs: its effects land on every foe its area takes
 around the trap, as an area skill's would, from its owner, alive or dead,
@@ -1427,6 +1431,32 @@ sees nothing until it springs, and the host never sends it a foe's trap.
 **Barbed Trap** (Ranger, Wilderness Survival, trap, 10 energy, 2 s, 20 s
 recharge) lasts 90 seconds. Sprung, every foe nearby (81) takes 7...20
 piercing damage, becomes Crippled and begins Bleeding, both for 21 s.
+
+**Flame Trap** (Ranger, Wilderness Survival, trap, 10 energy, 2 s, 20 s
+recharge) lasts 90 seconds and springs by itself at the end. Sprung, it
+pulses three times, a second apart (see Pulses): every foe nearby (81)
+takes 5...17 fire damage and is set on fire for 3 s.
+
+## Pulses
+
+A **pulse** (#1113) is a ground effect that lands its effects again and
+again: a number of pulses, a fixed interval apart, the first the step it
+is placed, and it is gone one interval after the last. Each pulse lands
+from the owner, alive or dead, on every body its area takes around the
+effect, as an area skill's would, in line of sight of the effect, and is
+logged as a cast, even when it hits nobody. A body that walks in is hit
+from the next pulse. An owner who left the match takes it with them. Two
+of a skill on one spot both pulse, each on its own clock. Everyone sees
+it: a filled circle in its side's colour, which flashes as it pulses.
+
+A trap whose spring has more than one pulse leaves a pulse where it lay
+as it springs, its first pulse already landed: a sprung Flame Trap is
+seen by its foes too.
+
+**Symbol of Wrath** (Monk, Smiting Prayers, spell, 5 energy, 1 s, 20 s
+recharge) leaves a symbol where its target stands as the cast lands; it
+does not follow them. It pulses five times, a second apart: every foe
+adjacent (40) takes 10...34 holy damage.
 
 ## Death and scoring
 

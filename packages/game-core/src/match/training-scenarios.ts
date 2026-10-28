@@ -183,6 +183,7 @@ function dummyEquipment(dummy: TrainingDummy): ResolvedEquipment {
       damageType: weapon.damageType,
       requirementMet:
         attributeId === undefined || (dummy.attributeRanks[attributeId] ?? 0) >= requirement.rank,
+      creatureDamageScale: undefined,
     },
   };
 }
