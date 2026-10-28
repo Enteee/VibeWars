@@ -3436,6 +3436,12 @@ body.has-expanded-training #screens {
   color: var(--ink-dim);
 }
 
+/* The character figure (#1250): your standing body as a match draws it,
+   weapon and off-hand included, on a canvas of its own. */
+.character-figure {
+  flex: 0 0 auto;
+}
+
 /* --- gear: weapon, off-hand, armor, runes -------------------------------- */
 
 .editor-gear {
