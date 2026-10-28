@@ -39,6 +39,7 @@ import {
   type WeaponSet,
   type WeaponSetIndex,
 } from "@vibewars/game-core";
+import type { CorpusSkill } from "@vibewars/game-data/corpus";
 
 import { loadLayoutLabeller, type KeyLabeller } from "../input/key-labels.js";
 import {
@@ -100,12 +101,17 @@ import {
   weaponIcon,
   type GearIcon,
 } from "./icons.js";
+import { loadShowCorpus, saveShowCorpus } from "./corpus-preference.js";
 import {
+  corpusByAccess,
+  corpusCostText,
+  filterCorpus,
   filterEliteSkills,
   filterSkillsByText,
   filterSkillsByType,
   groupSkillsByAttribute,
   lockedSkills,
+  missingFromCatalog,
   skillTypesOf,
 } from "./skill-library.js";
 import { createSkillTooltip, renderSkillDescription, type SkillTooltip } from "./skill-tooltip.js";
@@ -1905,6 +1911,16 @@ function renderDetails(
   node.appendChild(scale);
 }
 
+/** A GW1 skill not in the game yet (#1220), told from a playable one by its lack of an id. */
+function isCorpus(skill: Skill | CorpusSkill): skill is CorpusSkill {
+  return !("id" in skill);
+}
+
+/** A library card's key: a skill's id, or a corpus entry's GW1 id, which no skill id looks like. */
+function libraryKey(skill: Skill | CorpusSkill): string {
+  return isCorpus(skill) ? `gw:${String(skill.gwId)}` : skill.id;
+}
+
 function mountSkillLibrary(context: EditorContext): LibraryBody {
   const { tooltip } = context;
   const search = document.createElement("input");
@@ -1920,6 +1936,36 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
   // On the search's own row, so the library is no taller for it.
   const filters = h("div", "skill-filters");
   filters.append(search, eliteFilter);
+  // The GW1 skills not in the game yet (#1220), off by default and
+  // remembered. Their data is a chunk of its own, loaded the first time
+  // this is on; until it arrives the library lists what it has.
+  const showCorpus = document.createElement("input");
+  showCorpus.type = "checkbox";
+  showCorpus.checked = loadShowCorpus();
+  const corpusToggle = h("label", "skill-corpus-toggle");
+  corpusToggle.append(showCorpus, " Show skills not in the game yet");
+  let corpus: readonly CorpusSkill[] | undefined;
+  let corpusLoading = false;
+  const loadCorpus = (): void => {
+    if (corpus !== undefined || corpusLoading) {
+      return;
+    }
+    corpusLoading = true;
+    import("@vibewars/game-data/corpus")
+      .then(({ corpusSkills }) => {
+        corpus = missingFromCatalog(corpusSkills(), IMPLEMENTED_SKILLS);
+        render(context.current());
+      })
+      .catch(() => {
+        // A chunk that failed to load is asked for again at the next toggle.
+      })
+      .finally(() => {
+        corpusLoading = false;
+      });
+  };
+  if (showCorpus.checked) {
+    loadCorpus();
+  }
   // One chip per type the catalogue has (#567); several may be on.
   const types = new Set<SkillType>();
   const chips = h("div", "skill-type-chips");
@@ -2044,6 +2090,40 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
     return box;
   };
 
+  /**
+   * A GW1 skill not in the game yet (#1220): greyed, badged, with GW1's
+   * fields on hover. It neither opens, equips nor drags. Nothing on it
+   * changes, so each is built once and kept: a search cleared brings a
+   * thousand back without building one (#1220 "stays responsive").
+   */
+  const corpusBoxes = new Map<number, HTMLElement>();
+  const createCorpusBox = (skill: CorpusSkill): HTMLElement => {
+    const built = corpusBoxes.get(skill.gwId);
+    if (built !== undefined) {
+      return built;
+    }
+    const box = h("div", "skill-corpus-box");
+    corpusBoxes.set(skill.gwId, box);
+    box.dataset.gwId = String(skill.gwId);
+    box.classList.toggle("is-elite", skill.elite);
+    const card = h("div", "skill-box-card");
+    card.insertAdjacentHTML("beforeend", skillIconHtml("", LIBRARY_ICON_PX));
+    card.appendChild(h("span", "skill-box-name", skill.name));
+    if (skill.skillType !== undefined) {
+      card.insertAdjacentHTML("beforeend", skillTypeBadgeHtml(skill.skillType));
+    }
+    card.appendChild(h("span", "skill-box-cost", corpusCostText(skill)));
+    box.appendChild(card);
+    box.appendChild(h("span", "skill-corpus-badge", "not in the game yet"));
+    box.addEventListener("mouseenter", () => {
+      tooltip.showCorpus(box, skill);
+    });
+    box.addEventListener("mouseleave", () => {
+      tooltip.hide();
+    });
+    return box;
+  };
+
   /** A card's cost, headline and open details, as of `ranks`: the same for a locked card. */
   const paintCard = (box: HTMLElement, skill: Skill, ranks: ReadonlyMap<string, number>): void => {
     const description = describeSkill(skill, ranks);
@@ -2103,11 +2183,18 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
     const lockedMatches = filtered(
       lockedSkills(IMPLEMENTED_SKILLS, character.primaryProfession, character.secondaryProfession),
     );
+    const corpusMatches = corpusByAccess(
+      showCorpus.checked && corpus !== undefined
+        ? filterCorpus(corpus, search.value, types, eliteOnly.checked)
+        : [],
+      character.primaryProfession,
+      character.secondaryProfession,
+    );
     // A card the filters took away closes; it does not reopen on its own.
     if (![...matches, ...lockedMatches].some((skill) => skill.id === open)) {
       open = undefined;
     }
-    const groups = groupSkillsByAttribute(matches);
+    const groups = groupSkillsByAttribute(matches, corpusMatches.open);
     syncList(
       groupHost,
       groups,
@@ -2135,10 +2222,13 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
         if (boxes instanceof HTMLElement) {
           syncList(
             boxes,
-            group.skills,
-            (skill) => skill.id,
-            createBox,
+            [...group.skills, ...group.corpus],
+            libraryKey,
+            (skill) => (isCorpus(skill) ? createCorpusBox(skill) : createBox(skill)),
             (box, skill) => {
+              if (isCorpus(skill)) {
+                return;
+              }
               const on = character.skillBar.indexOf(skill.id);
               box.classList.toggle("is-equipped", on >= 0);
               // On the bar: where, and no Equip. Else where an equip goes.
@@ -2166,17 +2256,22 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
     if (groups.length === 0) {
       groupHost.appendChild(emptyNote);
     }
-    lockedSummary.textContent = `Other professions (${String(lockedMatches.length)})`;
+    const lockedAll = [...lockedMatches, ...corpusMatches.locked];
+    lockedSummary.textContent = `Other professions (${String(lockedAll.length)})`;
+    // Collapsed, the near thousand GW1 skills of other professions are
+    // counted, not laid out: they come in as it opens (#1220).
     syncList(
       lockedBoxes,
-      lockedMatches,
-      (skill) => skill.id,
-      createLockedBox,
+      locked.open ? lockedAll : lockedMatches,
+      libraryKey,
+      (skill) => (isCorpus(skill) ? createCorpusBox(skill) : createLockedBox(skill)),
       (box, skill) => {
-        paintCard(box, skill, ranks);
+        if (!isCorpus(skill)) {
+          paintCard(box, skill, ranks);
+        }
       },
     );
-    locked.hidden = lockedMatches.length === 0;
+    locked.hidden = lockedAll.length === 0;
   };
 
   search.addEventListener("input", () => {
@@ -2185,8 +2280,20 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
   eliteOnly.addEventListener("change", () => {
     render(context.current());
   });
+  locked.addEventListener("toggle", () => {
+    if (showCorpus.checked) {
+      render(context.current());
+    }
+  });
+  showCorpus.addEventListener("change", () => {
+    saveShowCorpus(showCorpus.checked);
+    if (showCorpus.checked) {
+      loadCorpus();
+    }
+    render(context.current());
+  });
 
-  return { elements: [filters, chips, groupHost, locked], update: render };
+  return { elements: [corpusToggle, filters, chips, groupHost, locked], update: render };
 }
 
 /* -------------------------------------------------------------------------- */
