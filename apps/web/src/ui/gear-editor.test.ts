@@ -1,4 +1,4 @@
-import { MINIMAL_GW_INSPIRED_PVP_V1, getWeapon } from "@vibewars/game-core";
+import { ARMOR_SLOTS, MINIMAL_GW_INSPIRED_PVP_V1, getWeapon } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
 import { validateBuild } from "../storage/build-validation.js";
@@ -330,10 +330,26 @@ describe("the gear summary", () => {
     const summary = firstSummary(setInsignia(bare, "chest", "stalwart"));
     // It is not unconditional, so it must not inflate the headline number.
     expect(summary.armor).toBe(80);
-    // A Warrior's own +20 first, then the insignia's.
+    // A Warrior's own +20 first, then the insignia's, on its piece (#1135).
     expect(summary.conditionalArmor).toEqual([
       "+20 armor vs physical damage",
+      "+10 armor vs physical damage on chest (avg +3.8)",
+    ]);
+  });
+
+  it("lists five Stalwart as one line on every hit, two as one line on both pieces (#1135)", () => {
+    let five = setOffhand(setWeapon(warrior(), 0, "sword"), 0, null);
+    for (const slot of ARMOR_SLOTS) {
+      five = setInsignia(five, slot, "stalwart");
+    }
+    expect(firstSummary(five).conditionalArmor).toEqual([
+      "+20 armor vs physical damage",
       "+10 armor vs physical damage",
+    ]);
+    const two = setInsignia(setInsignia(warrior(), "chest", "stalwart"), "legs", "stalwart");
+    expect(firstSummary(two).conditionalArmor).toEqual([
+      "+20 armor vs physical damage",
+      "+10 armor vs physical damage on chest, legs (avg +6.3)",
     ]);
   });
 

@@ -8,7 +8,7 @@ import {
 import { emptyAdrenaline, emptyPool, fillPools } from "./adrenaline.js";
 import { beginRecharge } from "./cast-state.js";
 import { getSkill } from "./catalog.js";
-import { mitigate, skillDamage } from "./damage.js";
+import { hitLocationOf, mitigate, skillDamage } from "./damage.js";
 import { effectiveMaxEnergy } from "./overcast.js";
 import { resolveMagnitude } from "./scaling.js";
 import {
@@ -773,7 +773,7 @@ export function applyEffect(
       const packet = skillDamage(amount, effect.type, effect.armorPenetration);
       applyDamage(
         target,
-        mitigate(packet, target, context.rules),
+        mitigate(packet, target, context.rules, hitLocationOf(packet, context.rng)),
         packet.type,
         false,
         events,

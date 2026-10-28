@@ -13,7 +13,7 @@ import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
 import { distance } from "../vec2.js";
 import { chainAllows, markChain } from "./chain.js";
-import { mitigate, weaponAttributeMultiplier, type DamagePacket } from "./damage.js";
+import { hitLocationOf, mitigate, weaponAttributeMultiplier, type DamagePacket } from "./damage.js";
 import {
   applyDamage,
   applyEffects,
@@ -402,7 +402,16 @@ export function landBlow(
       strengthArmorPenetration(blow.strengthRank, weapon.armorPenetration),
     ),
   };
-  applyDamage(victim, mitigate(packet, victim, rules), packet.type, critical, events, attacker);
+  // After the crit and damage rolls: the piece it lands on (#1135).
+  const location = hitLocationOf(packet, rng);
+  applyDamage(
+    victim,
+    mitigate(packet, victim, rules, location),
+    packet.type,
+    critical,
+    events,
+    attacker,
+  );
   return critical;
 }
 

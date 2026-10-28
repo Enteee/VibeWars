@@ -127,10 +127,11 @@ export { CHAIN_MARK_SECONDS } from "./chain.js";
 
 export { makeCombatant } from "./testing.js";
 
-export type { DamagePacket, DamageSource } from "./damage.js";
+export type { DamagePacket, DamageSource, HitLocation } from "./damage.js";
 export {
   armorMultiplier,
   effectiveArmor,
+  hitLocationOf,
   mitigate,
   skillDamage,
   unmitigatedDamage,
