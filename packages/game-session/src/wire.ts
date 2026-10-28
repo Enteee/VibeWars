@@ -531,7 +531,7 @@ export function wireIdentity(
         team: owner.team,
         primaryProfession: null,
         secondaryProfession: null,
-        creature: { ownerId: creature.ownerId, kind: creature.kind },
+        creature: { ownerId: creature.ownerId, kind: creature.kind, look: creature.look },
       };
 }
 

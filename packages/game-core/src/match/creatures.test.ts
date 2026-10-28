@@ -54,6 +54,7 @@ function summonSkill(
 ): string {
   const creature: CreatureTemplate = {
     kind,
+    look: kind === "minion" ? "bone-minion" : "spirit",
     name: kind === "minion" ? "Bone Minion" : "Test Spirit",
     maxHealth: { scaling: { attributeId: DEATH_MAGIC, atZero: 50, atTwelve: 290 } },
     armor: { flat: 20 },
@@ -175,6 +176,17 @@ describe("summon (#1052)", () => {
       expect(countsForTeam(creature)).toBe(false);
     }
     expect(countsForTeam(get(sim, "n"))).toBe(true);
+  });
+
+  it("gives each creature its template's look (#1162)", () => {
+    const sim = match();
+    summon(sim, TWO);
+    summon(sim, SPIRIT);
+    expect(creatures(sim).map((p) => p.creature?.look)).toEqual([
+      "bone-minion",
+      "bone-minion",
+      "spirit",
+    ]);
   });
 
   it("numbers ids per match, and two runs make the same ones in the same order", () => {

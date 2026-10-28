@@ -342,6 +342,7 @@ describe("follow-and-attack (#467)", () => {
       creature: {
         ownerId: owner,
         kind: "minion",
+        look: "bone-minion",
         name: "Bone Minion",
         expiresInSeconds: Number.POSITIVE_INFINITY,
         ageSeconds: 0,

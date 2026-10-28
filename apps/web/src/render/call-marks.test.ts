@@ -18,6 +18,7 @@ const CALLED: RenderableActor = {
   attackCast: undefined,
   offhandId: undefined,
   profession: undefined,
+  creatureLook: undefined,
   radius: R,
   team: "enemy",
   health: 500,

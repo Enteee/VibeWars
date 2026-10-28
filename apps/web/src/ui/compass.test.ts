@@ -29,6 +29,7 @@ function actor(
     attackCast: undefined,
     offhandId: undefined,
     profession: undefined,
+    creatureLook: undefined,
     radius: ACTOR_RADIUS,
     team: "ally",
     health: 500,

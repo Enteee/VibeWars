@@ -66,6 +66,7 @@ function around(
         creature: {
           ownerId: "f",
           kind: "spirit",
+          look: "spirit",
           name: "Winnowing",
           expiresInSeconds: Infinity,
           ageSeconds: 0,

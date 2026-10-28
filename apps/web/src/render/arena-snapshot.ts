@@ -1,5 +1,6 @@
 import {
   Vec,
+  type CreatureLook,
   type OffhandId,
   type ProfessionId,
   type SkillType,
@@ -44,6 +45,8 @@ export interface RenderableActor {
   readonly offhandId: OffhandId | undefined;
   /** The primary profession, whose glyph leads the name (#281); `undefined` draws none. */
   readonly profession: ProfessionId | undefined;
+  /** A creature's shape and kind glyph (#1162); `undefined`: a player or a dummy, a disc. */
+  readonly creatureLook: CreatureLook | undefined;
   readonly radius: number;
   readonly team: "ally" | "enemy" | "self";
   readonly health: number;
@@ -559,8 +562,19 @@ export function nameplateLayout(
 export const BODY_GLYPH_SIZE = 13;
 export const BODY_GLYPH_ALPHA = 0.6;
 
+/**
+ * A creature's kind glyph (#1162): the study's glyph scale (0.95) over the
+ * icon's 14-unit box, at `CREATURE_RADIUS`. Opaque, as the study draws it.
+ */
+export const CREATURE_GLYPH_SIZE = 13.3;
+
+/** What a body glyph shows: its primary profession, or a creature's kind (#1162). */
+export type BodyGlyph =
+  | { readonly kind: "profession"; readonly profession: ProfessionId }
+  | { readonly kind: "creature"; readonly look: CreatureLook };
+
 export interface BodyGlyphLayout {
-  readonly profession: ProfessionId;
+  readonly glyph: BodyGlyph;
   readonly x: number;
   readonly y: number;
   /** World units, square. */
@@ -571,34 +585,44 @@ export interface BodyGlyphLayout {
 }
 
 /**
- * The primary profession's glyph inside `actor`'s body (#1037): upright,
- * centred, a dark mark on the team colour, under the weapon mark. World
- * sized, so it scales with the body at every zoom. A knocked-down body
- * shrinks it to fit its flattened disc; a corpse greys it.
+ * The glyph inside `actor`'s body (#1037): upright, centred, a dark mark
+ * on the team colour, under the weapon mark. World sized, so it scales
+ * with the body at every zoom. A player's is its primary profession's, at
+ * 60 %, shrunk to fit its flattened disc when knocked down; a creature's
+ * is its kind's (#1162), opaque, and its shape never lies down. A corpse
+ * greys it.
  *
- * `undefined`: no profession, so no glyph.
+ * `undefined`: neither a profession nor a creature, so no glyph.
  */
 export function bodyGlyphLayout(actor: RenderableActor): BodyGlyphLayout | undefined {
-  if (actor.profession === undefined) {
+  const creature = actor.creatureLook !== undefined;
+  const glyph: BodyGlyph | undefined =
+    actor.creatureLook !== undefined
+      ? { kind: "creature", look: actor.creatureLook }
+      : actor.profession !== undefined
+        ? { kind: "profession", profession: actor.profession }
+        : undefined;
+  if (glyph === undefined) {
     return undefined;
   }
   const { x, y } = actor.position;
+  const size = creature ? CREATURE_GLYPH_SIZE : BODY_GLYPH_SIZE;
   if (actor.dead) {
     return {
-      profession: actor.profession,
+      glyph,
       x,
       y,
-      size: BODY_GLYPH_SIZE,
+      size,
       tint: actor.exploited ? EXPLOITED_CORPSE_COLOUR : DEAD_COLOUR,
       alpha: 1,
     };
   }
   return {
-    profession: actor.profession,
+    glyph,
     x,
     y,
-    size: actor.knockedDown ? BODY_GLYPH_SIZE * LYING_WIDTH : BODY_GLYPH_SIZE,
+    size: actor.knockedDown && !creature ? size * LYING_WIDTH : size,
     tint: BODY_EDGE,
-    alpha: BODY_GLYPH_ALPHA,
+    alpha: creature ? 1 : BODY_GLYPH_ALPHA,
   };
 }
