@@ -19,6 +19,8 @@
   --elite: #d4a72c;
   /* Enchantment markers (art direction palette). */
   --enchantment: #56d4dd;
+  /* A shrine raise's invulnerability (art direction palette, #1233). */
+  --invulnerable: #f5e6b8;
   font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
 }
 
@@ -2111,6 +2113,16 @@ body {
 .hud-attacking img {
   width: 16px;
   height: 16px;
+}
+
+/* After the name, as "attacking", so the frame never grows for it (#1233). */
+.hud-target-invulnerable {
+  margin-left: 0.6rem;
+  color: var(--invulnerable);
+}
+
+.hud-target-invulnerable[hidden] {
+  display: none;
 }
 
 .hud-result {

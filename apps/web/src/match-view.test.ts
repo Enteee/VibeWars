@@ -35,6 +35,7 @@ function player(sessionId: string, knockdownRemaining: number): PlayerSnapshot {
     swingElapsed: 0,
     swingTotal: 0,
     knockdownRemaining,
+    invulnerableSeconds: 0,
     healthPips: 0,
     energyPips: 0,
     creature: undefined,
@@ -125,6 +126,17 @@ describe("toArenaSnapshot", () => {
       ["enchanted", true, false],
       ["hexed", false, true],
       ["dead", false, false],
+    ]);
+  });
+
+  it("shimmers a body while it is invulnerable, and not at 0 or as a corpse (#1233)", () => {
+    const raised = { ...player("raised", 0), invulnerableSeconds: 4.2 };
+    const dead = { ...player("dead", 0), invulnerableSeconds: 4.2, dead: true };
+    const arena = toArenaSnapshot(match([player("me", 0), raised, dead]), [], []);
+    expect(arena.actors.map((actor) => [actor.id, actor.invulnerable])).toEqual([
+      ["me", false],
+      ["raised", true],
+      ["dead", false],
     ]);
   });
 

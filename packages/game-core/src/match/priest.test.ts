@@ -234,6 +234,15 @@ describe("a shrine's raise (#1208)", () => {
     expect(window.some((entry) => entry.skillId === "elementalist.fireball")).toBe(true);
     expect(toA(window, "damage")).toEqual([]);
     expect(a.combatant.health).toBe(effectiveMaxHealth(a.combatant));
+    // The Fireball says so, once (#1233); bleeding, not a packet, never does.
+    const fireball = window.filter((entry) => entry.skillId === "elementalist.fireball");
+    expect(toA(fireball, "invulnerable")).toHaveLength(1);
+    expect(
+      toA(
+        window.filter((entry) => entry.cause === "degeneration"),
+        "invulnerable",
+      ),
+    ).toEqual([]);
 
     const after = stepTo(sim, PRIEST_WAVE_SECONDS + SHRINE_INVULNERABLE_SECONDS + 2);
     expect(a.combatant.invulnerableRemaining).toBe(0);
@@ -253,6 +262,8 @@ describe("a shrine's raise (#1208)", () => {
       "necromancer.rotting-flesh",
     ]);
     expect(toA(window, "status-applied")).toEqual([]);
+    // Each says it was refused, once (#1233).
+    expect(toA(cast, "invulnerable")).toHaveLength(2);
     const statuses = get(sim, "a").combatant.statuses;
     expect(statuses.has("malaise") || statuses.has("disease")).toBe(false);
   });

@@ -2313,13 +2313,31 @@ export class MatchSimulation {
     }
     for (const { record, status, outbreak, remainingSeconds } of carriers) {
       for (const other of living) {
-        // A spreading status is a condition: an invulnerable body (#1208)
-        // does not catch it, and can once its window ends.
         if (
           outbreak.infected.has(other.id) ||
-          distance(record.position, other.position) > AREA_ADJACENT ||
-          isInvulnerable(other.combatant)
+          distance(record.position, other.position) > AREA_ADJACENT
         ) {
+          continue;
+        }
+        // A spreading status is a condition: an invulnerable body (#1208)
+        // does not catch it, and can once its window ends. It says so
+        // once an outbreak, not every tick it stands there (#1233).
+        if (isInvulnerable(other.combatant)) {
+          if (!outbreak.refused.has(other.id)) {
+            outbreak.refused.add(other.id);
+            this.#log.push({
+              tick: this.#tick,
+              atSeconds: this.#elapsedSeconds,
+              cause: "degeneration",
+              sourceId: status.sourceId,
+              skillId: undefined,
+              weaponId: undefined,
+              attributeId: undefined,
+              area: undefined,
+              doubleStrike: false,
+              events: [{ kind: "invulnerable", targetId: other.id }],
+            });
+          }
           continue;
         }
         outbreak.infected.add(other.id);

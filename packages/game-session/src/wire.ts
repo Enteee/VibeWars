@@ -396,6 +396,7 @@ function wireEvent(event: CombatEvent): WireCombatEvent {
       };
     case "death":
     case "attack-blocked":
+    case "invulnerable":
     case "attack-dodged":
     case "attack-obstructed":
     case "attack-unreachable":
@@ -489,6 +490,7 @@ function combatEvent(event: WireCombatEvent): CombatEvent | undefined {
     case "attack-missed":
     case "death":
     case "attack-blocked":
+    case "invulnerable":
     case "attack-dodged":
     case "attack-obstructed":
     case "attack-unreachable":
@@ -637,6 +639,7 @@ export function playerSnapshot(player: WirePlayer): PlayerSnapshot | undefined {
     swingElapsed: player.swingElapsed,
     swingTotal: player.swingTotal,
     knockdownRemaining: player.knockdownRemaining,
+    invulnerableSeconds: player.invulnerableSeconds,
     healthPips: player.healthPips,
     energyPips: player.energyPips,
     statuses,
