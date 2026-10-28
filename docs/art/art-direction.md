@@ -194,30 +194,31 @@ so the silhouette identifies the profession and the colour only supports it.
 
 ## Shapes
 
-| Thing        | Shape                                                 |
-| ------------ | ----------------------------------------------------- |
-| Actor        | Filled circle in team colour                          |
-| You          | Your team's circle plus an `ink` rim, 2 px inside     |
-| Target       | `target` ring, 9 px outside the actor                 |
-| Dead         | Hollow `dead` circle, no bars                         |
-| Cast         | Bar above the health bar, fills as the cast completes |
-| Condition    | Circle plate, glyph inside                            |
-| Hex          | Diamond plate, glyph inside                           |
-| Enchantment  | Rounded-square plate, glyph inside                    |
-| Stance       | Pentagon plate, point up, glyph inside                |
-| Preparation  | Triangle plate, point up, glyph inside                |
-| Glyph        | Triangle plate, point down, glyph inside              |
-| Shout        | `ink` hexagon plate, glyph inside                     |
-| Chant        | `ink` banner plate, notched at the foot, glyph inside |
-| Weapon spell | Shield plate, glyph inside                            |
-| Skill effect | `ink-dim` wide capsule plate, glyph inside            |
-| Area flash   | Caster's team colour ring at the area's true radius   |
-| Swing flash  | Attacker's team colour arc between it and its target  |
-| Projectile   | Weapon silhouette, tinted the shooter's team colour   |
-| Weapon mark  | `ink` weapon held in the hands, one shape per weapon  |
-| Walk marker  | `ink` cross of four ticks where you clicked the floor |
-| Called foe   | `condition` chevron pointing down, over its name      |
-| Ping         | `friend` pin on the spot, a `friend` ring growing off |
+| Thing        | Shape                                                   |
+| ------------ | ------------------------------------------------------- |
+| Actor        | Filled circle in team colour                            |
+| You          | Your team's circle plus an `ink` rim, 2 px inside       |
+| Target       | `target` ring, 9 px outside the actor                   |
+| Dead         | Hollow `dead` circle, no bars                           |
+| Cast         | Bar above the health bar, fills as the cast completes   |
+| Condition    | Circle plate, glyph inside                              |
+| Hex          | Diamond plate, glyph inside                             |
+| Enchantment  | Rounded-square plate, glyph inside                      |
+| Stance       | Pentagon plate, point up, glyph inside                  |
+| Preparation  | Triangle plate, point up, glyph inside                  |
+| Glyph        | Triangle plate, point down, glyph inside                |
+| Shout        | `ink` hexagon plate, glyph inside                       |
+| Chant        | `ink` banner plate, notched at the foot, glyph inside   |
+| Weapon spell | Shield plate, glyph inside                              |
+| Skill effect | `ink-dim` wide capsule plate, glyph inside              |
+| Area flash   | Caster's team colour ring at the area's true radius     |
+| Ward         | Owner's team colour disc, faint, its skill's icon in it |
+| Swing flash  | Attacker's team colour arc between it and its target    |
+| Projectile   | Weapon silhouette, tinted the shooter's team colour     |
+| Weapon mark  | `ink` weapon held in the hands, one shape per weapon    |
+| Walk marker  | `ink` cross of four ticks where you clicked the floor   |
+| Called foe   | `condition` chevron pointing down, over its name        |
+| Ping         | `friend` pin on the spot, a `friend` ring growing off   |
 
 The status plates differ in outline as well as colour. Hex purple and
 enchantment teal are close for a deuteranope (simulated ΔE ≈ 18); diamond
@@ -273,6 +274,21 @@ Where an area skill lands (#5), the scene flashes the area it hit:
 It cannot be confused with the target ring. The target ring is yellow and
 hugs one actor (9 px outside a radius of 14). The flash is team-coloured,
 at least 40 units in radius, and gone in under half a second.
+
+### Ward
+
+A ward (#1087) lies on the ground for as long as it lasts:
+
+- **Colour is its owner's team**, `friend` or `foe`, as the area flash's.
+- **A fill at 15 % alpha and a 1.5 px rim at 60 %**, at its true radius:
+  who stands inside it is who it reaches. It does not fade or pulse, and
+  does not change as it nears its end.
+- **Its skill's icon at the centre**, 22 units across at 55 % alpha.
+- **It is drawn under the grid, the walls and every body**, so a ward
+  never hides who stands in it.
+
+It cannot be confused with the area flash, which is gone in 0.4 s, or a
+ping, which is a pin and a growing ring.
 
 ### Swing flash
 
@@ -667,22 +683,23 @@ marker on someone, which carry that marker's colour. A stance marks you, so
 it carries the stance colour too, a preparation its amber, a glyph its
 lime and a weapon spell its periwinkle.
 
-| Type           | Badge                     |
-| -------------- | ------------------------- |
-| Attack         | Blade                     |
-| Spell          | Four-point star           |
-| Enchantment    | Solid teal ring           |
-| Hex            | Broken purple ring        |
-| Stance         | Pink pentagon ring        |
-| Preparation    | Amber triangle ring       |
-| Glyph          | Lime triangle ring, down  |
-| Weapon Spell   | Periwinkle shield ring    |
-| Signet         | Ring with a seal on top   |
-| Shout          | Mouth and two sound waves |
-| Chant          | A note                    |
-| Nature Ritual  | A sprout                  |
-| Binding Ritual | An urn on a base line     |
-| Skill          | Square                    |
+| Type           | Badge                                     |
+| -------------- | ----------------------------------------- |
+| Attack         | Blade                                     |
+| Spell          | Four-point star                           |
+| Enchantment    | Solid teal ring                           |
+| Hex            | Broken purple ring                        |
+| Stance         | Pink pentagon ring                        |
+| Preparation    | Amber triangle ring                       |
+| Glyph          | Lime triangle ring, down                  |
+| Weapon Spell   | Periwinkle shield ring                    |
+| Signet         | Ring with a seal on top                   |
+| Shout          | Mouth and two sound waves                 |
+| Chant          | A note                                    |
+| Nature Ritual  | A sprout                                  |
+| Binding Ritual | An urn on a base line                     |
+| Ward           | A ring on the ground, a post at its heart |
+| Skill          | Square                                    |
 
 ### Skill icons
 

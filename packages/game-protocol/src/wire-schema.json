@@ -102,6 +102,7 @@
     "vengeful-weapon",
     "vigorous-spirit",
     "vow-of-strength",
+    "ward-against-melee",
     "watch-yourself",
     "weakness",
     "weapon-of-aggression",
@@ -122,6 +123,7 @@
     "MAX_WIRE_COMBATS": { "literal": 64 },
     "MAX_WIRE_CREATURES": { "literal": 32 },
     "MAX_WIRE_EVENTS": { "literal": 64 },
+    "MAX_WIRE_GROUND_EFFECTS": { "literal": 32 },
     "MAX_WIRE_JSON_DEPTH": { "literal": 16 },
     "MAX_WIRE_JSON_VALUES": { "literal": 4096 },
     "MAX_WIRE_MORALE": { "literal": 10 },
@@ -447,6 +449,7 @@
                   { "literal": "vengeful-weapon" },
                   { "literal": "vigorous-spirit" },
                   { "literal": "vow-of-strength" },
+                  { "literal": "ward-against-melee" },
                   { "literal": "watch-yourself" },
                   { "literal": "weakness" },
                   { "literal": "weapon-of-aggression" },
@@ -553,6 +556,7 @@
                   { "literal": "vengeful-weapon" },
                   { "literal": "vigorous-spirit" },
                   { "literal": "vow-of-strength" },
+                  { "literal": "ward-against-melee" },
                   { "literal": "watch-yourself" },
                   { "literal": "weakness" },
                   { "literal": "weapon-of-aggression" },
@@ -656,6 +660,7 @@
                   { "literal": "vengeful-weapon" },
                   { "literal": "vigorous-spirit" },
                   { "literal": "vow-of-strength" },
+                  { "literal": "ward-against-melee" },
                   { "literal": "watch-yourself" },
                   { "literal": "weakness" },
                   { "literal": "weapon-of-aggression" },
@@ -756,6 +761,7 @@
                   { "literal": "vengeful-weapon" },
                   { "literal": "vigorous-spirit" },
                   { "literal": "vow-of-strength" },
+                  { "literal": "ward-against-melee" },
                   { "literal": "watch-yourself" },
                   { "literal": "weakness" },
                   { "literal": "weapon-of-aggression" },
@@ -932,6 +938,7 @@
                   { "literal": "vengeful-weapon" },
                   { "literal": "vigorous-spirit" },
                   { "literal": "vow-of-strength" },
+                  { "literal": "ward-against-melee" },
                   { "literal": "watch-yourself" },
                   { "literal": "weakness" },
                   { "literal": "weapon-of-aggression" },
@@ -1023,6 +1030,7 @@
                   { "literal": "vengeful-weapon" },
                   { "literal": "vigorous-spirit" },
                   { "literal": "vow-of-strength" },
+                  { "literal": "ward-against-melee" },
                   { "literal": "watch-yourself" },
                   { "literal": "weakness" },
                   { "literal": "weapon-of-aggression" },
@@ -1770,6 +1778,22 @@
         }
       ]
     },
+    "WireGroundEffect": {
+      "properties": [
+        { "name": "durationSeconds", "optional": false, "type": "number" },
+        { "name": "endsAt", "optional": false, "type": "number" },
+        { "name": "id", "optional": false, "type": "number" },
+        { "name": "radius", "optional": false, "type": "number" },
+        { "name": "skillId", "optional": false, "type": "string" },
+        {
+          "name": "team",
+          "optional": false,
+          "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+        },
+        { "name": "x", "optional": false, "type": "number" },
+        { "name": "y", "optional": false, "type": "number" }
+      ]
+    },
     "WireLobbyCharacter": {
       "properties": [
         { "name": "name", "optional": false, "type": "string" },
@@ -2089,6 +2113,28 @@
           }
         },
         {
+          "name": "groundEffects",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "durationSeconds", "optional": false, "type": "number" },
+                { "name": "endsAt", "optional": false, "type": "number" },
+                { "name": "id", "optional": false, "type": "number" },
+                { "name": "radius", "optional": false, "type": "number" },
+                { "name": "skillId", "optional": false, "type": "string" },
+                {
+                  "name": "team",
+                  "optional": false,
+                  "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+                },
+                { "name": "x", "optional": false, "type": "number" },
+                { "name": "y", "optional": false, "type": "number" }
+              ]
+            }
+          }
+        },
+        {
           "name": "phase",
           "optional": false,
           "type": { "union": [{ "literal": "active" }, { "literal": "finished" }] }
@@ -2252,6 +2298,28 @@
               { "literal": "score" },
               { "literal": "time" }
             ]
+          }
+        },
+        {
+          "name": "groundEffects",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "durationSeconds", "optional": false, "type": "number" },
+                { "name": "endsAt", "optional": false, "type": "number" },
+                { "name": "id", "optional": false, "type": "number" },
+                { "name": "radius", "optional": false, "type": "number" },
+                { "name": "skillId", "optional": false, "type": "string" },
+                {
+                  "name": "team",
+                  "optional": false,
+                  "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+                },
+                { "name": "x", "optional": false, "type": "number" },
+                { "name": "y", "optional": false, "type": "number" }
+              ]
+            }
           }
         },
         { "name": "part", "optional": false, "type": "number" },

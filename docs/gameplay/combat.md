@@ -591,10 +591,10 @@ maximum, not the raw one.
 A skill's type is its badge on the slot, in the library and in the
 Training Ground, and is named first in its tooltip ("Signet.", "Hex
 Spell."). Some types play by rules of their own (#465). Spells,
-enchantments, hexes and weapon spells are **spells**; attacks, signets,
+enchantments, hexes, weapon spells and ward spells are **spells**; attacks, signets,
 shouts, chants, stances, rituals and plain skills are not, and every rule that "affects spells" (dazed
 and Fast Casting, so far) leaves them alone. Rituals, nature and binding,
-plant spirits (see Creatures).
+plant spirits (see Creatures); ward spells leave wards (see Wards).
 
 **Elite skills** wear a doubled gold frame wherever a skill is drawn,
 and their tooltip says "Elite" before the type (#459). A bar holds at most
@@ -1261,6 +1261,28 @@ takes the 4 too: it is on the one hit, not on the attack.
 **Recuperation** (Ritualist, Restoration Magic, binding ritual, 25
 energy, 3 s, 45 s recharge) plants one of 210 Health and armor 51 for
 39 s: your side in its range gains +3 Health regeneration.
+
+## Wards
+
+A **ward** (#1087) is a circle left on the ground where its caster
+stands as the ward spell lands. It is not a body: nothing can target,
+hit, kill or move it, and its owner dying does not end it. Interrupted,
+or dead before the cast ends, nothing is placed. For as long as it lasts,
+every living body of the caster's side whose centre is inside it (walls
+do not matter, spirits excepted) wears its effect as a status with no
+bar, its hover "while in its range": on the step after it lands or a
+body walks in, off the step a body walks out or the ward ends. A foe
+standing in your ward gets nothing. Two wards of one skill overlapping
+give their effect once; two different wards stack. Recasting leaves a
+new ward and the old one stays until its time is up. Everyone sees every
+ward: a faint disc in its side's colour, under the bodies, with its
+skill's icon at the centre. At most 32 are on the ground at once; one
+more ends the oldest.
+
+**Ward Against Melee** (Elementalist, Earth Magic, ward spell, 15
+energy, 1 s, 30 s recharge) leaves a ward of radius 109 for 5...17
+seconds: your side inside it has a 50% chance to block melee attacks,
+75% on top of a 50% stance. Arrows and spells are not blocked.
 
 ## Death and scoring
 

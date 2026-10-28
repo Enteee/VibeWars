@@ -8,6 +8,7 @@ import {
   MAX_SNAPSHOT_PARTS,
   MAX_WIRE_PINGS,
   MAX_WIRE_PROJECTILES,
+  MAX_WIRE_GROUND_EFFECTS,
   MAX_WIRE_RADIUS,
   MAX_WIRE_MORALE,
   MAX_WIRE_PIPS,
@@ -186,6 +187,18 @@ const snapshot: WireSnapshotPart = {
       to: { x: 10, y: 20 },
       launchedAt: 2,
       flightSeconds: 0.7,
+    },
+  ],
+  groundEffects: [
+    {
+      id: 1,
+      skillId: "elementalist.ward-against-melee",
+      team: 0,
+      x: 120,
+      y: 80,
+      radius: 109,
+      endsAt: 19.1,
+      durationSeconds: 17,
     },
   ],
 };
@@ -776,6 +789,37 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     "snapshot with a projectile that does not say whether it carries a spell",
     parseWireSnapshotPart,
     { ...snapshot, projectiles: [{ ...snapshot.projectiles[0], skillId: undefined }] },
+  ],
+  [
+    "snapshot without ground effects",
+    parseWireSnapshotPart,
+    { ...snapshot, groundEffects: undefined },
+  ],
+  [
+    "snapshot with too many ground effects",
+    parseWireSnapshotPart,
+    {
+      ...snapshot,
+      groundEffects: Array.from(
+        { length: MAX_WIRE_GROUND_EFFECTS + 1 },
+        () => snapshot.groundEffects[0],
+      ),
+    },
+  ],
+  [
+    "snapshot with a ground effect of no radius",
+    parseWireSnapshotPart,
+    { ...snapshot, groundEffects: [{ ...snapshot.groundEffects[0], radius: 0 }] },
+  ],
+  [
+    "snapshot with a ground effect wider than any area",
+    parseWireSnapshotPart,
+    { ...snapshot, groundEffects: [{ ...snapshot.groundEffects[0], radius: MAX_WIRE_RADIUS + 1 }] },
+  ],
+  [
+    "snapshot with a ground effect on a third team",
+    parseWireSnapshotPart,
+    { ...snapshot, groundEffects: [{ ...snapshot.groundEffects[0], team: 2 }] },
   ],
   ["combat that is one entry, not a batch", parseWireCombatBatch, combat],
   [

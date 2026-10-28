@@ -9,6 +9,7 @@ import {
   type ActiveStatus,
   type CombatEvent,
   type CombatLogEntry,
+  type GroundEffect,
   type Participant,
   type ProfessionId,
   type RankHolder,
@@ -28,6 +29,7 @@ import {
 
 import type {
   CombatMessage,
+  GroundEffectSnapshot,
   MatchSnapshot,
   PlayerSnapshot,
   ProjectileSnapshot,
@@ -145,6 +147,27 @@ export function statusSnapshot(
     endsAt: tenths(elapsedSeconds + remaining),
     durationSeconds: Math.max(0.1, tenths(duration)),
     casterId: status.sourceId,
+  };
+}
+
+/**
+ * A ground effect as a snapshot carries it (#1087): when it ends on the
+ * match clock and how long it was placed for, both to 0.1 s, the latter
+ * never under it, as the wire refuses one of nothing.
+ */
+export function groundEffectSnapshot(
+  effect: Readonly<GroundEffect>,
+  elapsedSeconds: number,
+): GroundEffectSnapshot {
+  return {
+    id: effect.id,
+    skillId: effect.skillId,
+    team: effect.team,
+    x: effect.position.x,
+    y: effect.position.y,
+    radius: effect.aura.radius,
+    endsAt: tenths(elapsedSeconds + effect.remainingSeconds),
+    durationSeconds: Math.max(0.1, tenths(effect.durationSeconds)),
   };
 }
 
@@ -566,6 +589,7 @@ export function matchSnapshot(
     winningTeam: absent(snapshot.winningTeam),
     endReason: absent(snapshot.endReason),
     projectiles: snapshot.projectiles.map(projectileSnapshot),
+    groundEffects: snapshot.groundEffects,
     // Only the host's `ended` carries it.
     summary: undefined,
   };

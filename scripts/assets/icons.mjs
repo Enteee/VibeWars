@@ -153,6 +153,11 @@ const skillType = {
   "binding-ritual": () =>
     `<path d="M9 3h6v2l-1.5 2c2.5 1 4 3 4 6 0 3-2.5 5-5.5 5s-5.5-2-5.5-5c0-3 1.5-5 4-6L9 5z" fill="${C.ink}"/>` +
     `<path d="M5 21h14" ${stroke(C.ink, 2.5)}/>`,
+  // A ring on the ground with a post at its heart: a ward stays where it
+  // was cast and reaches whoever stands in it (#1087).
+  ward: () =>
+    `<ellipse cx="12" cy="16" rx="8.5" ry="4" ${stroke(C.ink, 2.5)}/>` +
+    `<path d="M12 16V4" ${stroke(C.ink, 2.5)}/>`,
   // Plain square: a skill with no other type.
   skill: () => `<rect x="6" y="6" width="12" height="12" rx="1" fill="${C.ink}"/>`,
 };
@@ -668,6 +673,13 @@ const status = {
   ],
   // Skill effect: two regeneration arrows, Recuperation's +2 (#1064).
   recuperation: ["skill-effect", (c) => `<path d="M7 13l3-3 3 3M11 13l3-3 3 3" ${stroke(c, 2)}/>`],
+  // Skill effect: a shield on a ground line, melee blocked inside a ward (#1087).
+  "ward-against-melee": [
+    "skill-effect",
+    (c) =>
+      `<path d="M8 5.5h8v4.5c0 2.5-2 4.2-4 5.5-2-1.3-4-3-4-5.5z" ${stroke(c, 2)}/>` +
+      `<path d="M5 18.5h14" ${stroke(c, 2.2)}/>`,
+  ],
 };
 
 // ---------------------------------------------------------------------------

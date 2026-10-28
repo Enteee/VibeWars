@@ -154,7 +154,9 @@ export type StatusId =
   | "aura-of-thorns"
   // Spirits' auras (#1064), worn while in a spirit's range.
   | "winnowing"
-  | "recuperation";
+  | "recuperation"
+  // Wards' auras (#1087), worn while inside a ward.
+  | "ward-against-melee";
 
 /** Health one pip of regeneration or degeneration is worth, per second (GW1). */
 export const HEALTH_PER_PIP = 2;
@@ -1019,6 +1021,13 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   recuperation: define("recuperation", "Recuperation", "skill-effect", {
     profession: "ritualist",
     healthPips: 3,
+  }),
+  // What a ward projects on the allies inside it (#1087), as a spirit's
+  // aura: "non-spirit allies in this area have a 50% chance to block
+  // melee attacks".
+  "ward-against-melee": define("ward-against-melee", "Ward Against Melee", "skill-effect", {
+    profession: "elementalist",
+    block: { chance: 0.5, against: "melee" },
   }),
   // "Fall Back!" at rank 12: 13 Health per second while moving, 33%
   // faster, ending on its bearer's hit.
