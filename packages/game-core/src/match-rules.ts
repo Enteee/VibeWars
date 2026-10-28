@@ -9,9 +9,10 @@
 export interface MatchRules {
   /**
    * How a match is won (GW1 modes, #474/#476): `"kill-count"` by kills,
-   * `"annihilation"` by wiping the other team, or by morale at time.
+   * `"annihilation"` by wiping the other team, `"priest-annihilation"` by
+   * wiping it and killing its priest (#1186), or by morale at time.
    */
-  readonly victory: "kill-count" | "annihilation";
+  readonly victory: "kill-count" | "annihilation" | "priest-annihilation";
   /** Kills one team needs to win; only for `"kill-count"`. */
   readonly scoreToWin: number;
   /** Match length in seconds; at zero time the lead wins. */
@@ -55,13 +56,28 @@ export const ANNIHILATION_MATCH_RULES: MatchRules = Object.freeze({
   deathPenalty: true,
 });
 
+/**
+ * GW1's Priest Annihilation (#1186): annihilation with a priest at each
+ * team's shrine, who raises the team's dead every 2 minutes. A team is
+ * beaten once every player and its priest are dead; 12 minutes.
+ */
+export const PRIEST_ANNIHILATION_MATCH_RULES: MatchRules = Object.freeze({
+  ...ANNIHILATION_MATCH_RULES,
+  victory: "priest-annihilation",
+  timeLimitSeconds: 720,
+});
+
+/** A living priest raises its team's dead at every multiple of this, match clock (#1186, GW1). */
+export const PRIEST_WAVE_SECONDS = 120;
+
 /** The modes a map can name (#476): which one a match plays follows from its map alone. */
-export type MatchMode = "annihilation" | "kill-count";
+export type MatchMode = "annihilation" | "kill-count" | "priest-annihilation";
 
 /** Each mode's rules, by the name a map gives it. */
 export const MATCH_MODES: Readonly<Record<MatchMode, MatchRules>> = Object.freeze({
   annihilation: ANNIHILATION_MATCH_RULES,
   "kill-count": KILL_COUNT_MATCH_RULES,
+  "priest-annihilation": PRIEST_ANNIHILATION_MATCH_RULES,
 });
 
 /** Morale a death costs, in percent, with `deathPenalty` (GW1). */
@@ -101,6 +117,8 @@ export interface TeamStanding {
   readonly living: number;
   /** The sum of every member's morale, dead or alive, in percent. */
   readonly morale: number;
+  /** Whether its priest lives (#1186); `false` for a team that never had one. */
+  readonly priestLives: boolean;
 }
 
 /**
@@ -160,6 +178,7 @@ export function evaluateMatch(
     case "kill-count":
       return evaluateKillCount(score, elapsedSeconds, rules);
     case "annihilation":
+    case "priest-annihilation":
       return evaluateAnnihilation(standing, elapsedSeconds, rules);
   }
 }
@@ -189,36 +208,33 @@ function evaluateKillCount(
 }
 
 /**
- * Annihilation (GW1): once a team is wiped and at most one team still
- * has anyone alive, that one wins; with nobody left, every team loses.
- * A team that never had members is not in `standing`, so it is never wiped. At
- * time the highest total morale wins, and a tie is lost by all: GW1's
- * arenas have no draw.
+ * Annihilation (GW1): once a team is beaten and at most one team is not,
+ * that one wins; with none left, every team loses. Beaten is every member
+ * dead and, in Priest Annihilation (#1186), its priest too: a wiped team
+ * whose priest lives waits for the wave. A team that never had members is
+ * not in `standing`, so it is never beaten. At time the highest total
+ * morale wins; of the teams tied on it, the one whose priest lives, if it
+ * is the only one; otherwise all lose: GW1's arenas have no draw.
  */
 function evaluateAnnihilation(
   standing: MatchStanding,
   elapsedSeconds: number,
   rules: MatchRules,
 ): MatchOutcome {
-  const alive = [...standing.byTeam].filter(([, team]) => team.living > 0);
-  if (alive.length < standing.byTeam.size && alive.length <= 1) {
-    return { phase: "finished", winningTeam: alive[0]?.[0], reason: "annihilation" };
+  const standingTeams = [...standing.byTeam].filter(
+    ([, team]) => team.living > 0 || team.priestLives,
+  );
+  if (standingTeams.length < standing.byTeam.size && standingTeams.length <= 1) {
+    return { phase: "finished", winningTeam: standingTeams[0]?.[0], reason: "annihilation" };
   }
 
   if (elapsedSeconds >= rules.timeLimitSeconds) {
-    let best = -Infinity;
-    let bestTeam: number | undefined;
-    let tied = false;
-    for (const [team, { morale }] of standing.byTeam) {
-      if (morale > best) {
-        best = morale;
-        bestTeam = team;
-        tied = false;
-      } else if (morale === best) {
-        tied = true;
-      }
-    }
-    return { phase: "finished", winningTeam: tied ? undefined : bestTeam, reason: "morale" };
+    const best = Math.max(...[...standing.byTeam.values()].map((team) => team.morale));
+    const leaders = [...standing.byTeam].filter(([, team]) => team.morale === best);
+    const withPriest = leaders.filter(([, team]) => team.priestLives);
+    const winner =
+      leaders.length === 1 ? leaders[0] : withPriest.length === 1 ? withPriest[0] : undefined;
+    return { phase: "finished", winningTeam: winner?.[0], reason: "morale" };
   }
 
   return MATCH_IN_PROGRESS;

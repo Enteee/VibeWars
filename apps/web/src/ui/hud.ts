@@ -730,9 +730,10 @@ export function livingCount(players: readonly PlayerSnapshot[], team: number): n
  * left, counting down from the match's limit (#476), or the time played
  * where there is none. A spectator reads team 1 first.
  *
- * What a side is depends on the map's `mode`: Annihilation counts the
- * living, "4 v 3 · 7:12"; Kill Count the team's kills, "4 – 0 · 2:25"
- * (#1200), as the snapshot's `score` carries them, team 1's first.
+ * What a side is depends on the map's `mode`: Annihilation and Priest
+ * Annihilation count the living, "4 v 3 · 7:12"; Kill Count the team's
+ * kills, "4 – 0 · 2:25" (#1200), as the snapshot's `score` carries them,
+ * team 1's first.
  */
 export function scoreboardText(
   players: readonly PlayerSnapshot[],
@@ -751,6 +752,7 @@ export function scoreboardText(
       : formatClock(Math.ceil(timeLimitSeconds - elapsedSeconds));
   switch (mode) {
     case "annihilation":
+    case "priest-annihilation":
       return `${String(livingCount(players, ours))} v ${String(livingCount(players, theirs))} · ${clock}`;
     case "kill-count":
       return `${String(score[ours])} – ${String(score[theirs])} · ${clock}`;

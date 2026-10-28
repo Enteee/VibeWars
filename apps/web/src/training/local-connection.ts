@@ -121,7 +121,7 @@ function toPlayerSnapshot(
       participant.creature === undefined
         ? undefined
         : {
-            ownerId: participant.creature.ownerId,
+            ownerId: participant.creature.ownerId ?? null,
             kind: participant.creature.kind,
             look: participant.creature.look,
             mode: companionMode(participant.creature),

@@ -10,6 +10,9 @@ export { SkillValidationError, normalizedSkillSchema, validateNormalizedSkill } 
 export type { GwMemorialParseResult, ParseGwMemorialSkillInput } from "./sources/gw-memorial.js";
 export { parseGwMemorialSkill } from "./sources/gw-memorial.js";
 
+export type { GwSkillRecord } from "./sources/gw-skilldata.js";
+export { gwSkillDataDir, readGwSkillData } from "./sources/gw-skilldata.js";
+
 export type { ImportOptions, ImportProblem, ImportReport, SkillSpec } from "./importer.js";
 export { importSkills } from "./importer.js";
 

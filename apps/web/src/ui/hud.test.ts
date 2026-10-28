@@ -360,6 +360,17 @@ describe("scoreboardText (#881)", () => {
     expect(scoreboardText(players, 0, 42, null, "annihilation", [4, 0])).toBe("2 v 1 · 0:42");
   });
 
+  it("counts the living, not the priests, in Priest Annihilation (#1186)", () => {
+    const priest = player({
+      sessionId: "priest-1",
+      team: 1,
+      creature: { ownerId: null, kind: "priest", look: "priest", mode: null, armedAttack: null },
+    });
+    expect(scoreboardText([...players, priest], 0, 42, null, "priest-annihilation", [0, 0])).toBe(
+      "2 v 1 · 0:42",
+    );
+  });
+
   it("counts each team's kills in Kill Count, your own first (#1200)", () => {
     expect(scoreboardText(players, 0, 35, 180, "kill-count", [4, 0])).toBe("4 – 0 · 2:25");
     expect(scoreboardText(players, 1, 35, 180, "kill-count", [4, 0])).toBe("0 – 4 · 2:25");

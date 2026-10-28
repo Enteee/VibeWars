@@ -64,6 +64,7 @@ export const ARENA: HostMap = {
     { team: 0, position: { x: 400, y: 600 } },
     { team: 1, position: { x: 700, y: 600 } },
   ],
+  shrines: [],
 };
 
 /** Let every message in flight land, and every message those send in turn. */
@@ -149,6 +150,7 @@ export interface TestMatch {
 
 export function startMatch(
   options: {
+    map?: HostMap;
     matchRules?: MatchRules;
     maxPlayers?: number;
     random?: () => number;
@@ -161,7 +163,7 @@ export function startMatch(
   let draws = 0;
   const host = createMatchHost({
     transport: hostTransport,
-    map: ARENA,
+    map: options.map ?? ARENA,
     seed: "test",
     matchRules: options.matchRules ?? ANNIHILATION_MATCH_RULES,
     // Reproducible, and different each draw.

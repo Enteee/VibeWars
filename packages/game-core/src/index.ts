@@ -126,6 +126,8 @@ export {
   MATCH_MODES,
   MORALE_CEILING,
   MORALE_FLOOR,
+  PRIEST_ANNIHILATION_MATCH_RULES,
+  PRIEST_WAVE_SECONDS,
   addKill,
   emptyScore,
   evaluateMatch,
@@ -175,6 +177,8 @@ export {
 export type { CompanionSkill } from "./match/companions.js";
 export { companionSkills, PET_DEATH_GRACE_SECONDS } from "./match/companions.js";
 export { facingToward, spawnFacing } from "./match/facing.js";
+export type { Shrine } from "./match/priest.js";
+export { PRIEST_SKILL_ID, priestId } from "./match/priest.js";
 export type { IntentRefusal, MatchIntent } from "./match/apply-intent.js";
 export { applyIntent } from "./match/apply-intent.js";
 export { MAX_CATCHUP_SECONDS, drainAccumulator } from "./match/accumulator.js";
