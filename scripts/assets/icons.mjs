@@ -158,6 +158,11 @@ const skillType = {
   ward: () =>
     `<ellipse cx="12" cy="16" rx="8.5" ry="4" ${stroke(C.ink, 2.5)}/>` +
     `<path d="M12 16V4" ${stroke(C.ink, 2.5)}/>`,
+  // The same ring with an arrow sinking into it: a well is drawn from a
+  // corpse and acts on whoever stands in it (#1104).
+  well: () =>
+    `<ellipse cx="12" cy="16" rx="8.5" ry="4" ${stroke(C.ink, 2.5)}/>` +
+    `<path d="M12 3v10M8.5 9.5L12 13l3.5-3.5" ${stroke(C.ink, 2.5)}/>`,
   // Jaws on the ground, teeth up: a trap waits where it was set (#1105).
   trap: () =>
     `<path d="M3 19h18" ${stroke(C.ink, 2.5)}/>` +
@@ -701,6 +706,14 @@ const status = {
     "skill-effect",
     (c) =>
       `<path d="M8 5.5h8v4.5c0 2.5-2 4.2-4 5.5-2-1.3-4-3-4-5.5z" ${stroke(c, 2)}/>` +
+      `<path d="M5 18.5h14" ${stroke(c, 2.2)}/>`,
+  ],
+  // Skill effect: two degeneration arrows over a ground line, Well of
+  // Suffering's -5 to the foes inside it (#1104).
+  "well-of-suffering": [
+    "skill-effect",
+    (c) =>
+      `<path d="M7 8l3 3 3-3M11 8l3 3 3-3" ${stroke(c, 2)}/>` +
       `<path d="M5 18.5h14" ${stroke(c, 2.2)}/>`,
   ],
 };

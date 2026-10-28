@@ -4550,6 +4550,43 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     ],
   },
   {
+    id: "necromancer.well-of-suffering",
+    name: "Well of Suffering",
+    type: "well",
+    elite: false,
+    profession: "necromancer",
+    attributeId: "necromancer.death-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    // The nearest fresh corpse, as Soul Feast's (#1104).
+    corpse: { radius: RANGE_SPELL },
+    companion: undefined,
+    projectile: undefined,
+    // PvP: "Exploit nearest corpse to create a Well of Suffering at its
+    // location. For 10...26...30 seconds, foes in that area suffer health
+    // degeneration of -1...5...6."
+    effects: [
+      {
+        kind: "create-ground-effect",
+        anchor: "corpse",
+        durationSeconds: {
+          scaling: { attributeId: "necromancer.death-magic", atZero: 10, atTwelve: 26 },
+        },
+        act: {
+          kind: "aura",
+          aura: { statusId: "well-of-suffering", affects: "foes", radius: AREA_IN_THE_AREA },
+        },
+      },
+    ],
+  },
+  {
     id: "necromancer.shadow-of-fear",
     name: "Shadow of Fear",
     type: "hex",

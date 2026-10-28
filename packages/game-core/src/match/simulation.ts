@@ -976,17 +976,22 @@ export class MatchSimulation {
   }
 
   /**
-   * A ground effect left where `owner` stands, on its team (#1087). Past
+   * A ground effect left at `position`, on `owner`'s team (#1087). Past
    * `MAX_GROUND_EFFECTS`, the oldest ends now: a ward always lands.
    */
-  #placeGroundEffect(owner: ParticipantRecord, skillId: string, effect: CreateGroundEffect): void {
+  #placeGroundEffect(
+    owner: ParticipantRecord,
+    skillId: string,
+    effect: CreateGroundEffect,
+    position: Vec2,
+  ): void {
     const durationSeconds = resolveMagnitude(effect.durationSeconds, owner.combatant);
     this.#groundEffects.push({
       id: this.#nextGroundEffect,
       skillId,
       ownerId: owner.id,
       team: owner.combatant.team,
-      position: owner.position,
+      position,
       act: effect.act,
       durationSeconds,
       remainingSeconds: durationSeconds,
@@ -994,6 +999,28 @@ export class MatchSimulation {
     this.#nextGroundEffect += 1;
     if (this.#groundEffects.length > MAX_GROUND_EFFECTS) {
       this.#groundEffects.shift();
+    }
+  }
+
+  /**
+   * Where a ground effect `owner` leaves lands (#1104): where it stands, or
+   * where the corpse its skill exploited lies, as they are now. A well
+   * does not follow a body that later stands up or respawns.
+   */
+  #groundAnchor(
+    owner: ParticipantRecord,
+    effect: CreateGroundEffect,
+    corpse: ParticipantRecord | undefined,
+  ): Vec2 {
+    switch (effect.anchor) {
+      case "caster":
+        return owner.position;
+      case "corpse":
+        // A corpse skill with no corpse never resolves, so this is a bug.
+        if (corpse === undefined) {
+          throw new Error(`${owner.id}: a corpse-anchored ground effect with no corpse`);
+        }
+        return corpse.position;
     }
   }
 
@@ -2381,7 +2408,7 @@ export class MatchSimulation {
       );
     }
     for (const ground of grounds) {
-      this.#placeGroundEffect(record, skill.id, ground);
+      this.#placeGroundEffect(record, skill.id, ground, this.#groundAnchor(record, ground, corpse));
     }
     // An attack skill is a swing, so it turns on its target with the
     // weapon: it starts an attack, or switches one to them. Any other skill
