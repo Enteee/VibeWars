@@ -429,6 +429,9 @@ test("the host adds a Monk bot to the other team; it plays, named and tagged BOT
   const row = team.locator(".lobby-slot", { hasText: "Monk Bot" });
   await expect(row.locator(".bot-tag")).toHaveText("BOT");
   await expect(row.getByRole("button", { name: "remove Monk Bot" })).toBeVisible();
+  // Its subtitle is the professions alone, not its name again (#1241).
+  await expect(row.locator(".lobby-character")).toHaveText(/^Monk\b/);
+  await expect(row.locator(".lobby-character")).not.toContainText("Bot");
 
   await page.getByRole("button", { name: "Ready", exact: true }).click();
   await page.getByRole("button", { name: "start match" }).click();

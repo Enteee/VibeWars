@@ -590,7 +590,10 @@ export async function startMatchView(
       summary === undefined &&
       latestMatch.summary !== undefined
     ) {
-      const tables = summaryTables(latestMatch.summary, connection.selfSessionId, self?.team);
+      const bots = new Set(
+        latestMatch.players.filter((player) => player.bot).map((player) => player.sessionId),
+      );
+      const tables = summaryTables(latestMatch.summary, connection.selfSessionId, self?.team, bots);
       const panel = renderSummary(parent, tables);
       panel.classList.add("hud-summary");
       summary = { tables, panel };

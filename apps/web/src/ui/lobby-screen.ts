@@ -95,13 +95,17 @@ export function waitingFor(snapshot: LobbySnapshot): string | undefined {
   return notReady.length === 0 ? undefined : `Waiting for ${notReady.join(", ")} to ready up`;
 }
 
-/** "Mhenlo · Monk / Elementalist", or "Random starter build" without a usable one (#580, #853). */
-export function characterLine(character: LobbyCharacter | null): string {
+/**
+ * "Mhenlo · Monk / Elementalist", or "Random starter build" without a
+ * usable one (#580, #853). A bot's character is named after the bot, so
+ * its line is the professions alone (#1241).
+ */
+export function characterLine(character: LobbyCharacter | null, bot: boolean): string {
   if (character === null) {
     return RANDOM_STARTER;
   }
   const professions = professionLabel(character.primary, character.secondary ?? undefined);
-  return `${character.name} · ${professions}`;
+  return bot ? professions : `${character.name} · ${professions}`;
 }
 
 export const RANDOM_STARTER = "Random starter build";
@@ -375,7 +379,7 @@ function playerRow(
   );
   const text = h("span", "lobby-slot-text");
   text.appendChild(h("span", "lobby-player", `${member.name}${member.isHost ? " (host)" : ""}`));
-  text.appendChild(h("span", "lobby-character", characterLine(character)));
+  text.appendChild(h("span", "lobby-character", characterLine(character, member.bot)));
   row.appendChild(text);
   // A bot is always ready, so its pill says what it is instead (#1194).
   row.appendChild(

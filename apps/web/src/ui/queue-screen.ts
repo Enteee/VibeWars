@@ -234,7 +234,7 @@ function splashRow(player: LobbyPlayerSnapshot, ours: boolean, self: boolean): H
   );
   const text = h("span", "versus-player-text");
   text.appendChild(h("span", "versus-player-name", player.name));
-  text.appendChild(h("span", "versus-player-character", characterLine(character)));
+  text.appendChild(h("span", "versus-player-character", characterLine(character, false)));
   row.appendChild(text);
   return row;
 }

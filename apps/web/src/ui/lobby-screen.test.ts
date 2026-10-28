@@ -186,16 +186,22 @@ describe("waitingFor (#580)", () => {
 
 describe("characterLine (#580)", () => {
   it("gives the character name, then its professions", () => {
-    expect(characterLine({ name: "Mhenlo", primary: "monk", secondary: "elementalist" })).toBe(
-      "Mhenlo · Monk / Elementalist",
-    );
-    expect(characterLine({ name: "Cynn", primary: "elementalist", secondary: null })).toBe(
+    expect(
+      characterLine({ name: "Mhenlo", primary: "monk", secondary: "elementalist" }, false),
+    ).toBe("Mhenlo · Monk / Elementalist");
+    expect(characterLine({ name: "Cynn", primary: "elementalist", secondary: null }, false)).toBe(
       "Cynn · Elementalist",
     );
   });
 
+  it("gives a bot its professions alone: its character is named after it (#1241)", () => {
+    expect(characterLine({ name: "Bot 1", primary: "warrior", secondary: "monk" }, true)).toBe(
+      "Warrior / Monk",
+    );
+  });
+
   it("calls a player without a usable build a random starter build (#853)", () => {
-    expect(characterLine(null)).toBe(RANDOM_STARTER);
+    expect(characterLine(null, false)).toBe(RANDOM_STARTER);
   });
 });
 
