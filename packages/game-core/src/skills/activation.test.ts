@@ -20,6 +20,7 @@ const SPELL: Skill = {
   id: "test.spell",
   name: "Test Spell",
   type: "spell",
+  gwId: undefined,
   elite: false,
   profession: "elementalist",
   attributeId: "elementalist.fire-magic",
@@ -32,6 +33,9 @@ const SPELL: Skill = {
   area: undefined,
   attack: undefined,
   whileActivating: undefined,
+  corpse: undefined,
+  companion: undefined,
+  petAttack: undefined,
   projectile: undefined,
   effects: [{ kind: "damage", amount: { flat: 50 }, type: "typeless", armorPenetration: 0 }],
 };
@@ -44,6 +48,7 @@ function request(overrides: Partial<ActivationRequest> = {}): ActivationRequest 
     target: makeCombatant({ id: "target", team: 1 }),
     targetPosition: vec2(100, 0),
     rechargeRemaining: new Map(),
+    spent: new Set(),
     isCasting: false,
     skillBar: [SPELL.id],
     losBlockers: [],
@@ -81,6 +86,18 @@ describe("canActivate", () => {
       ok: false,
       reason: "still-recharging",
     });
+  });
+
+  it("rejects a skill spent until a morale boost, and a disabled one as recharging (#474)", () => {
+    expect(canActivate(request({ spent: new Set([SPELL.id]) }))).toEqual({
+      ok: false,
+      reason: "spent-until-morale-boost",
+    });
+    expect(
+      canActivate(
+        request({ spent: new Set([SPELL.id]), rechargeRemaining: new Map([[SPELL.id, 4]]) }),
+      ),
+    ).toEqual({ ok: false, reason: "still-recharging" });
   });
 
   it("accepts once recharge has elapsed to exactly zero", () => {
@@ -279,6 +296,124 @@ describe("targetRuleAllows (#599)", () => {
   });
 });
 
+describe("canActivate, a pet's skills (#1046)", () => {
+  const skill = (id: string): Skill => {
+    const found = getSkill(id);
+    if (found === undefined) {
+      throw new Error(`${id} is not in the catalog`);
+    }
+    return found;
+  };
+  const comfort = skill("ranger.comfort-animal");
+  const charm = skill("ranger.charm-animal");
+  const caster = makeCombatant({ id: "caster", team: 0, energy: 50 });
+  const ask = (target: Parameters<typeof makeCombatant>[0] | undefined) =>
+    canActivate(
+      request({
+        skill: comfort,
+        caster,
+        target: target === undefined ? undefined : makeCombatant(target),
+        targetPosition: target === undefined ? undefined : vec2(20, 0),
+        skillBar: [comfort.id],
+      }),
+    );
+
+  it('Comfort Animal with no pet is "no-companion"', () => {
+    expect(ask(undefined)).toEqual({ ok: false, reason: "no-companion" });
+  });
+
+  it("Comfort Animal takes the pet alive or dead", () => {
+    expect(ask({ id: "pet", team: 0 })).toEqual({ ok: true });
+    expect(ask({ id: "pet", team: 0, dead: true })).toEqual({ ok: true });
+  });
+
+  it('a call takes a living pet only: none is "no-companion", a dead one "invalid-target-dead" (#1108)', () => {
+    const haste = skill("ranger.call-of-haste");
+    const call = (target: Parameters<typeof makeCombatant>[0] | undefined) =>
+      canActivate(
+        request({
+          skill: haste,
+          caster,
+          target: target === undefined ? undefined : makeCombatant(target),
+          targetPosition: target === undefined ? undefined : vec2(20, 0),
+          skillBar: [haste.id],
+        }),
+      );
+    expect(call(undefined)).toEqual({ ok: false, reason: "no-companion" });
+    expect(call({ id: "pet", team: 0 })).toEqual({ ok: true });
+    expect(call({ id: "pet", team: 0, dead: true })).toEqual({
+      ok: false,
+      reason: "invalid-target-dead",
+    });
+  });
+
+  it("Charm Animal is refused before its cost: there is no animal to charm", () => {
+    expect(
+      canActivate(
+        request({
+          skill: charm,
+          caster: makeCombatant({ id: "caster", team: 0, energy: 0 }),
+          skillBar: [charm.id],
+        }),
+      ),
+    ).toEqual({ ok: false, reason: "no-animal-to-charm" });
+  });
+
+  describe("a pet attack", () => {
+    const brutal = skill("ranger.brutal-strike");
+    const strike = (
+      target: Parameters<typeof makeCombatant>[0] | undefined,
+      at = vec2(350, 0),
+      overrides: Partial<ActivationRequest> = {},
+    ) =>
+      canActivate(
+        request({
+          skill: brutal,
+          caster,
+          target: target === undefined ? undefined : makeCombatant(target),
+          targetPosition: target === undefined ? undefined : at,
+          skillBar: [brutal.id],
+          ...overrides,
+        }),
+      );
+
+    it('with no pet is "no-companion", with a dead one "companion-dead"', () => {
+      expect(strike(undefined)).toEqual({ ok: false, reason: "no-companion" });
+      expect(strike({ id: "pet", team: 0, dead: true })).toEqual({
+        ok: false,
+        reason: "companion-dead",
+      });
+    });
+
+    it('reaches a pet within earshot, 350, seen or not; past it is "companion-too-far"', () => {
+      const wall = { losBlockers: [segment(vec2(100, -50), vec2(100, 50))] };
+      expect(strike({ id: "pet", team: 0 }, vec2(350, 0), wall)).toEqual({ ok: true });
+      expect(strike({ id: "pet", team: 0 }, vec2(351, 0))).toEqual({
+        ok: false,
+        reason: "companion-too-far",
+      });
+    });
+
+    it("is used mid-cast, where any other skill is refused", () => {
+      expect(strike({ id: "pet", team: 0 }, vec2(20, 0), { isCasting: true })).toEqual({
+        ok: true,
+      });
+      expect(
+        canActivate(
+          request({
+            skill: comfort,
+            caster,
+            target: makeCombatant({ id: "pet", team: 0 }),
+            targetPosition: vec2(20, 0),
+            skillBar: [comfort.id],
+            isCasting: true,
+          }),
+        ),
+      ).toEqual({ ok: false, reason: "already-casting" });
+    });
+  });
+});
+
 describe("canActivate, a resurrection (#812)", () => {
   const restoreLife = getSkill("monk.restore-life");
   if (restoreLife === undefined) {
@@ -401,6 +536,7 @@ describe("canActivate, an attack skill's weapon (ADR-0029)", () => {
           attributeId: undefined,
           damageType: WEAPONS[weaponId].damageType,
           requirementMet: true,
+          creatureDamageScale: undefined,
         },
       },
     });

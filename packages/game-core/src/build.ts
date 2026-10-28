@@ -11,7 +11,7 @@ import {
   validateEquipment,
   type BuildEquipment,
 } from "./equipment/index.js";
-import { PROFESSIONS, type ProfessionId } from "./professions.js";
+import { PROFESSIONS, skillProfessionName, type ProfessionId } from "./professions.js";
 import type { AttributeRules } from "./ruleset.js";
 import { IMPLEMENTED_SKILLS, getSkill } from "./skills/catalog.js";
 import type { Skill } from "./skills/types.js";
@@ -80,10 +80,13 @@ export function toCharacter(build: PlayerBuild, id: string): Character {
  * May a character of these professions equip `skill`? Only if it is a
  * skill of its primary or secondary: the same rule the attribute
  * allocator enforces, and the one that covers a "No Attribute" skill.
+ * A Common skill (#474) any character may equip.
  */
 function hasProfessionOf(skill: Skill, build: PlayerBuild): boolean {
   return (
-    skill.profession === build.primaryProfession || skill.profession === build.secondaryProfession
+    skill.profession === "common" ||
+    skill.profession === build.primaryProfession ||
+    skill.profession === build.secondaryProfession
   );
 }
 
@@ -130,6 +133,7 @@ export function validatePlayerBuild(build: PlayerBuild, rules: AttributeRules): 
   problems.push(
     ...validateEquipment(build.equipment, {
       primaryProfession: build.primaryProfession,
+      secondaryProfession: build.secondaryProfession,
       accessibleAttributeIds: accessible,
     }),
   );
@@ -154,7 +158,7 @@ export function validatePlayerBuild(build: PlayerBuild, rules: AttributeRules): 
     if (!hasProfessionOf(skill, build)) {
       problems.push({
         field: `skillBar[${String(index)}]`,
-        message: `${skill.name} is ${article(PROFESSIONS[skill.profession].name)} skill, which this character cannot access`,
+        message: `${skill.name} is ${article(skillProfessionName(skill.profession))} skill, which this character cannot access`,
       });
     }
     if (seen.has(skillId)) {

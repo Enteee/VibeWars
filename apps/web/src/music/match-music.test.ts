@@ -34,14 +34,18 @@ function player(sessionId: string, extra: Partial<PlayerSnapshot> = {}): PlayerS
     secondaryProfession: undefined,
     team: 0,
     dead: false,
+    corpseExploited: false,
     castingSkillId: undefined,
     castRemaining: 0,
     castTotal: 0,
     swingElapsed: 0,
     swingTotal: 0,
     knockdownRemaining: 0,
+    invulnerableSeconds: 0,
     healthPips: 0,
     energyPips: 0,
+    creature: undefined,
+    bot: false,
     statuses: [],
     ...extra,
   };
@@ -67,6 +71,9 @@ function snapshot(
     winningTeam: over.finished,
     endReason: over.finished === undefined ? undefined : "score",
     projectiles: [],
+    groundEffects: [],
+    traps: [],
+    summary: undefined,
   };
 }
 

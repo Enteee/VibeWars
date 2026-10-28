@@ -1,4 +1,8 @@
-import { DEFAULT_MATCH_RULES, defaultBuildEquipment, type PlayerBuild } from "@vibewars/game-core";
+import {
+  ANNIHILATION_MATCH_RULES,
+  defaultBuildEquipment,
+  type PlayerBuild,
+} from "@vibewars/game-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -24,7 +28,7 @@ import { hello, playerIn, self, settle, toJson, until } from "./match-harness.te
 /** A lobby whose members, after the host, are named `names` and sit on `teams` (host first). */
 async function lobbyOf(
   teams: readonly (0 | 1 | null)[],
-  matchRules = DEFAULT_MATCH_RULES,
+  matchRules = ANNIHILATION_MATCH_RULES,
 ): Promise<{ lobby: TestLobby; members: Member[] }> {
   const lobby = await openLobby({ matchRules });
   const members = [lobby.host];
@@ -90,8 +94,11 @@ describe("a lobby's own match", () => {
       timeoutMs: 1000,
     });
     await lobby.step(0.05);
-    // The house loadout is a warrior's; only the build carries this weapon.
-    expect(self(match)?.weaponId).toBe(defaultBuildEquipment("elementalist").mainHand.weaponId);
+    // A starter build fills all eight slots: only this build has the gaps (#852).
+    expect(match.skillBar.map((slot) => slot?.id ?? null)).toEqual(pyro.skillBar);
+    expect(self(match)?.weaponId).toBe(
+      defaultBuildEquipment("elementalist").weaponSets[0].mainHand.weaponId,
+    );
   });
 
   it("seats each member on the team the lobby gave them, not one the host picks", async () => {
@@ -210,7 +217,7 @@ describe("a lobby's own match", () => {
 
   it("ignores a match start that comes after its match is over", async () => {
     const { lobby, members } = await lobbyOf([0, 1], {
-      ...DEFAULT_MATCH_RULES,
+      ...ANNIHILATION_MATCH_RULES,
       timeLimitSeconds: 1,
     });
     await start(lobby);
@@ -228,7 +235,7 @@ describe("a lobby's own match", () => {
 
   it("plays a host and three guests through a match and back, then another (#379)", async () => {
     const { lobby, members } = await lobbyOf([0, 1, 0, 1], {
-      ...DEFAULT_MATCH_RULES,
+      ...ANNIHILATION_MATCH_RULES,
       timeLimitSeconds: 2,
     });
     lobby.host.connection.selectMap("other-arena");
@@ -338,7 +345,8 @@ describe("a lobby's match played to its end (#403)", () => {
     await lobby.step(0.05);
     hunter.sendIntent({ kind: "attack", targetId: prey.selfSessionId });
 
-    // The house sword walks in and swings until Prey's team is wiped.
+    // The hunter's weapon, whichever starter build it came with, swings
+    // until Prey's team is wiped.
     for (let i = 0; i < 1200 && hunter.getSnapshot().phase === "active"; i += 1) {
       await lobby.step(0.1);
     }

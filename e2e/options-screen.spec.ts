@@ -143,3 +143,18 @@ test("the top bar's ⚙ opens Options over the screen; Esc closes it and leaves 
     page.locator("#screens").getByRole("button", { name: "Options", exact: true }),
   ).toBeVisible();
 });
+
+test("Options lists the third-party licences, each with its full text (#1235)", async ({
+  page,
+}) => {
+  await page.goto("./");
+  await page.locator("#screens").getByRole("button", { name: "options" }).click();
+  await page.locator('.options-entry[data-section="licences"]').click();
+  const corpus = page.locator('.licence-entry[data-licence="gw-skilldata"]');
+  await expect(corpus.locator(".licence-name")).toHaveText("gw-skilldata (MIT)");
+  await expect(corpus).toContainText("GW1 skill data");
+  // The notice survives the build, verbatim from the vendored file.
+  const text = corpus.locator(".licence-text");
+  await expect(text).toContainText("Copyright (c) 2024 smiley");
+  await expect(text).toContainText("Permission is hereby granted");
+});

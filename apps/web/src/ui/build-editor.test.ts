@@ -34,7 +34,7 @@ import {
   trySetRank,
   weaponWarning,
 } from "./build-editor.js";
-import { setWeapon } from "./gear-editor.js";
+import { setHeadgearAttribute, setWeapon } from "./gear-editor.js";
 
 /**
  * The editor's *rules* are tested here; its DOM rendering is covered by
@@ -202,7 +202,34 @@ describe("describeProfessionChange (#569)", () => {
   it("names a swapped weapon and off-hand (#614)", () => {
     const warrior = setProfessions(newCharacter("c1"), "warrior", undefined);
     const mesmer = setProfessions(warrior, "mesmer", undefined);
-    expect(describeProfessionChange(warrior, mesmer)).toEqual(["Sword → Wand", "Shield → Focus"]);
+    expect(describeProfessionChange(warrior, mesmer)).toEqual([
+      "Sword → Wand",
+      "Shield → Focus",
+      "Headgear: Strength → Fast Casting",
+    ]);
+  });
+
+  it("names the headgear moved when its attribute left both professions (#1140)", () => {
+    const monk = setHeadgearAttribute(
+      setProfessions(newCharacter("c1"), "warrior", "monk"),
+      "monk.healing-prayers",
+    );
+    const ranger = setProfessions(monk, "warrior", "ranger");
+    expect(ranger.equipment.armor.head.headgearAttributeId).toBe("warrior.strength");
+    expect(describeProfessionChange(monk, ranger)).toEqual([
+      "Headgear: Healing Prayers → Strength",
+    ]);
+  });
+
+  it("names a set 2-4 a profession change empties (#489)", () => {
+    const warrior = setWeapon(setProfessions(newCharacter("c1"), "warrior", undefined), 1, "sword");
+    const mesmer = setProfessions(warrior, "mesmer", undefined);
+    expect(describeProfessionChange(warrior, mesmer)).toEqual([
+      "Sword → Wand",
+      "Shield → Focus",
+      "Set 2: Sword removed",
+      "Headgear: Strength → Fast Casting",
+    ]);
   });
 
   it("is empty when nothing was dropped", () => {
@@ -253,22 +280,34 @@ describe("setProfessions", () => {
 
   it("swaps a weapon nothing can govern for the new primary's default (#614)", () => {
     const warrior = setProfessions(newCharacter("c1"), "warrior", undefined);
-    expect(warrior.equipment.mainHand.weaponId).toBe("sword");
+    expect(warrior.equipment.weaponSets[0].mainHand.weaponId).toBe("sword");
 
     const mesmer = setProfessions(warrior, "mesmer", undefined);
-    expect(mesmer.equipment.mainHand).toEqual({
+    expect(mesmer.equipment.weaponSets[0].mainHand).toEqual({
       weaponId: "wand",
       requirementAttributeId: primaryAttributeOf("mesmer").id,
     });
-    expect(mesmer.equipment.offHand?.offhandId).toBe("focus");
+    expect(mesmer.equipment.weaponSets[0].offHand?.offhandId).toBe("focus");
+    expect(validateBuild(mesmer)).toEqual([]);
+  });
+
+  it("empties a set 2-4 nothing can govern and keeps a reachable one (#489)", () => {
+    const warrior = setWeapon(
+      setWeapon(setProfessions(newCharacter("c1"), "warrior", undefined), 1, "sword"),
+      2,
+      "wand",
+    );
+    const mesmer = setProfessions(warrior, "mesmer", undefined);
+    expect(mesmer.equipment.weaponSets[1]).toBeNull();
+    expect(mesmer.equipment.weaponSets[2]?.mainHand.weaponId).toBe("wand");
     expect(validateBuild(mesmer)).toEqual([]);
   });
 
   it("gives a Warrior turned Assassin daggers and no off-hand (#614)", () => {
     const warrior = setProfessions(newCharacter("c1"), "warrior", undefined);
     const assassin = setProfessions(warrior, "assassin", undefined);
-    expect(assassin.equipment.mainHand.weaponId).toBe("daggers");
-    expect(assassin.equipment.offHand).toBeNull();
+    expect(assassin.equipment.weaponSets[0].mainHand.weaponId).toBe("daggers");
+    expect(assassin.equipment.weaponSets[0].offHand).toBeNull();
   });
 
   it("keeps a weapon the new pair can still govern, because it is a choice (#614)", () => {
@@ -276,28 +315,32 @@ describe("setProfessions", () => {
     // is a choice, and only one no attribute can govern is swapped.
     const warrior = setProfessions(newCharacter("c1"), "warrior", "assassin");
     const swapped = setProfessions(warrior, "assassin", "warrior");
-    expect(swapped.equipment.mainHand.weaponId).toBe("sword");
+    expect(swapped.equipment.weaponSets[0].mainHand.weaponId).toBe("sword");
   });
 
   it("keeps a wand and re-points its nomination (#614)", () => {
     const elementalist = setProfessions(newCharacter("c1"), "elementalist", undefined);
-    expect(elementalist.equipment.mainHand.weaponId).toBe("wand");
+    expect(elementalist.equipment.weaponSets[0].mainHand.weaponId).toBe("wand");
 
     const monk = setProfessions(elementalist, "monk", undefined);
-    expect(monk.equipment.mainHand.weaponId).toBe("wand");
+    expect(monk.equipment.weaponSets[0].mainHand.weaponId).toBe("wand");
     expect(accessibleAttributeIds("monk", undefined)).toContain(
-      monk.equipment.mainHand.requirementAttributeId,
+      monk.equipment.weaponSets[0].mainHand.requirementAttributeId,
     );
   });
 
   it("drops an off-hand the new professions cannot link", () => {
     // Fists are never swapped, so the shield is reconciled on its own.
-    const warrior = setWeapon(setProfessions(newCharacter("c1"), "warrior", undefined), "unarmed");
-    expect(warrior.equipment.offHand).not.toBeNull();
+    const warrior = setWeapon(
+      setProfessions(newCharacter("c1"), "warrior", undefined),
+      0,
+      "unarmed",
+    );
+    expect(warrior.equipment.weaponSets[0].offHand).not.toBeNull();
 
     const switched = setProfessions(warrior, "mesmer", undefined);
-    expect(switched.equipment.mainHand.weaponId).toBe("unarmed");
-    expect(switched.equipment.offHand).toBeNull();
+    expect(switched.equipment.weaponSets[0].mainHand.weaponId).toBe("unarmed");
+    expect(switched.equipment.weaponSets[0].offHand).toBeNull();
   });
 
   it("leaves a build that still validates after any profession change", () => {
@@ -610,22 +653,29 @@ describe("weaponWarning (#417)", () => {
   };
 
   it("says what an attack skill needs and what is in hand", () => {
-    expect(weaponWarning(skill("warrior.swift-chop"), "sword")).toEqual({
+    expect(weaponWarning(skill("warrior.swift-chop"), ["sword"])).toEqual({
       badge: "Needs an axe",
       title: "Needs an axe — your weapon is a sword",
     });
-    expect(weaponWarning(skill("ranger.barrage"), "daggers")?.title).toBe(
+    expect(weaponWarning(skill("ranger.barrage"), ["daggers"])?.title).toBe(
       "Needs a bow — your weapon is daggers",
     );
-    expect(weaponWarning(skill("warrior.distracting-blow"), "unarmed")?.title).toBe(
+    expect(weaponWarning(skill("warrior.distracting-blow"), ["unarmed"])?.title).toBe(
       "Needs a melee weapon — you have no weapon",
     );
   });
 
   it("clears when the weapon fits, and never warns for a skill that is no attack", () => {
-    expect(weaponWarning(skill("warrior.swift-chop"), "axe")).toBeUndefined();
-    expect(weaponWarning(skill("ranger.barrage"), "hornbow")).toBeUndefined();
-    expect(weaponWarning(skill("warrior.distracting-blow"), "spear")).toBeUndefined();
-    expect(weaponWarning(skill("elementalist.fireball"), "unarmed")).toBeUndefined();
+    expect(weaponWarning(skill("warrior.swift-chop"), ["axe"])).toBeUndefined();
+    expect(weaponWarning(skill("ranger.barrage"), ["hornbow"])).toBeUndefined();
+    expect(weaponWarning(skill("warrior.distracting-blow"), ["spear"])).toBeUndefined();
+    expect(weaponWarning(skill("elementalist.fireball"), ["unarmed"])).toBeUndefined();
+  });
+
+  it("is quiet when any carried set wields it, and names set 1 when none does (#489)", () => {
+    expect(weaponWarning(skill("warrior.swift-chop"), ["sword", "axe"])).toBeUndefined();
+    expect(weaponWarning(skill("warrior.swift-chop"), ["sword", "daggers"])?.title).toBe(
+      "Needs an axe — your weapon is a sword",
+    );
   });
 });

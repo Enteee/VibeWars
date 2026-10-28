@@ -15,6 +15,7 @@ import {
   MAX_SNAPSHOT_PARTS,
   MAX_WIRE_COMBATS,
   MAX_WIRE_PIPS,
+  MAX_WIRE_GROUND_EFFECTS,
   MAX_WIRE_PROJECTILES,
   MAX_WIRE_STATUSES,
   MAX_WIRE_STATUS_INDEX,
@@ -125,15 +126,19 @@ function player(index: number): WirePlayer {
     primaryProfession: "necromancer",
     secondaryProfession: "elementalist",
     dead: false,
+    corpseExploited: false,
     castingSkillId: SKILL_ID,
     castRemaining: FLOAT,
     castTotal: FLOAT,
     swingElapsed: rounded(3),
     swingTotal: rounded(3),
     knockdownRemaining: rounded(2),
+    invulnerableSeconds: 0,
     // The longest a pip count is on the wire.
     healthPips: -MAX_WIRE_PIPS,
     energyPips: -MAX_WIRE_PIPS,
+    creature: null,
+    bot: false,
     statuses: WIRE_STATUSES,
   };
 }
@@ -200,8 +205,8 @@ const NECRO_ELE_ATTRIBUTES = [
 ];
 
 describe("every message fits in one Trystero chunk (#403)", () => {
-  /** The worst snapshot: `players` and `projectiles` at their worst. */
-  function worstSnapshot(players: number, projectiles: number): WireSnapshot {
+  /** The worst snapshot: `players`, `projectiles` and `groundEffects` at their worst. */
+  function worstSnapshot(players: number, projectiles: number, groundEffects = 0): WireSnapshot {
     return {
       tick: 1_000_000,
       elapsedSeconds: FLOAT,
@@ -211,6 +216,16 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       endReason: "score",
       players: Array.from({ length: players }, (_, i) => player(i)),
       projectiles: Array.from({ length: projectiles }, (_, i) => projectile(i)),
+      groundEffects: Array.from({ length: groundEffects }, (_, i) => ({
+        id: 100_000 + i,
+        skillId: SKILL_ID,
+        team: 1,
+        x: FLOAT,
+        y: FLOAT,
+        radius: FLOAT,
+        endsAt: FLOAT,
+        durationSeconds: FLOAT,
+      })),
     };
   }
 
@@ -226,8 +241,11 @@ describe("every message fits in one Trystero chunk (#403)", () => {
     expect(messageBytes(part)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES - 4 * 1024);
   });
 
-  it("a snapshot of 8 such players and 256 projectiles packs into MAX_SNAPSHOT_PARTS parts or fewer", () => {
-    const parts = packSnapshot(worstSnapshot(8, MAX_WIRE_PROJECTILES), MAX_MESSAGE_BYTES);
+  it("a snapshot of 8 such players, 256 projectiles and every ward packs into MAX_SNAPSHOT_PARTS parts or fewer", () => {
+    const parts = packSnapshot(
+      worstSnapshot(8, MAX_WIRE_PROJECTILES, MAX_WIRE_GROUND_EFFECTS),
+      MAX_MESSAGE_BYTES,
+    );
     expect(parts.length).toBeLessThanOrEqual(MAX_SNAPSHOT_PARTS);
     for (const part of parts) {
       expect(messageBytes(part)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
@@ -297,6 +315,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       rejoinToken: "x".repeat(64),
       tickIntervalMs: 50,
       elapsedSeconds: FLOAT,
+      timeLimitSeconds: FLOAT,
       map: biggest ?? { id: "", name: "", width: 0, height: 0, walls: [] },
     };
     const longestSkills = [...IMPLEMENTED_SKILLS]
@@ -310,6 +329,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
         adrenalineCost: 10,
         activationSeconds: FLOAT,
         rechargeSeconds: FLOAT,
+        copyEndsAt: FLOAT,
       })),
       // Two digits each, as runes and headgear can make them.
       ranks: Object.fromEntries(NECRO_ELE_ATTRIBUTES.map((attributeId) => [attributeId, 20])),
@@ -319,6 +339,10 @@ describe("every message fits in one Trystero chunk (#403)", () => {
   });
 
   it("a hello with a full build", () => {
+    const linkedSet = {
+      mainHand: { weaponId: "wand", requirementAttributeId: "elementalist.fire-magic" },
+      offHand: { offhandId: "focus", requirementAttributeId: "necromancer.soul-reaping" },
+    } as const;
     const build: PlayerBuild = {
       name: NAME,
       primaryProfession: "necromancer",
@@ -326,8 +350,16 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       attributes: NECRO_ELE_ATTRIBUTES.map((attributeId) => ({ attributeId, rank: 12 })),
       skillBar: [...SKILL_IDS].sort((a, b) => b.length - a.length).slice(0, 8),
       equipment: {
-        mainHand: { weaponId: "staff", requirementAttributeId: "necromancer.soul-reaping" },
-        offHand: null,
+        weaponSets: [
+          {
+            mainHand: { weaponId: "staff", requirementAttributeId: "necromancer.soul-reaping" },
+            offHand: null,
+          },
+          // Every set carried, each with both hands linked: the largest gear.
+          linkedSet,
+          linkedSet,
+          linkedSet,
+        ],
         armor: Object.fromEntries(
           Object.keys(bare).map((slot) => [
             slot,
@@ -375,6 +407,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
         ready: true,
         isHost: i === 0,
         character: { name: NAME, primary: longest(professions), secondary: longest(professions) },
+        bot: false,
       })),
       countdownSeconds: 5,
     };

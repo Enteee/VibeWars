@@ -15,6 +15,8 @@ export { ZERO, length, normalize, vec2 } from "./vec2.js";
 
 export { clampInputDirection, integrateMovement } from "./movement.js";
 
+export { AREA_EARSHOT, RANGE_COMPASS, RANGE_SPELL } from "./distances.js";
+
 export type { Segment } from "./geometry.js";
 export {
   buildNavGraph,
@@ -48,8 +50,19 @@ export type {
 export { ADRENALINE_PER_STRIKE, MINIMAL_GW_INSPIRED_PVP_V1 } from "./ruleset.js";
 export { adrenalineLossIn } from "./skills/adrenaline.js";
 
-export type { AttributeDefinition, ProfessionDefinition, ProfessionId } from "./professions.js";
-export { PROFESSIONS, getAttribute, getProfession, primaryAttributeOf } from "./professions.js";
+export type {
+  AttributeDefinition,
+  ProfessionDefinition,
+  ProfessionId,
+  SkillProfession,
+} from "./professions.js";
+export {
+  PROFESSIONS,
+  getAttribute,
+  getProfession,
+  primaryAttributeOf,
+  skillProfessionName,
+} from "./professions.js";
 
 export type { AttributeAllocation, AttributeModifier } from "./attributes.js";
 export {
@@ -66,6 +79,7 @@ export type { Character } from "./character.js";
 export {
   CharacterValidationError,
   accessibleAttributeIds,
+  primaryAttributeIds,
   validateCharacter,
 } from "./character.js";
 
@@ -86,12 +100,15 @@ export {
   validatePlayerBuild,
 } from "./build.js";
 export type { JoinLoadout, JoinRefusal } from "./join-loadout.js";
-export { DEFAULT_SKILL_BAR, HOUSE_LOADOUT, resolveJoinLoadout } from "./join-loadout.js";
+export { loadoutOf, resolveJoinLoadout } from "./join-loadout.js";
+export { STARTER_BUILDS, pickBuildFrom, pickStarterBuild } from "./starter-builds.js";
+export { FIRST_NAMES, SURNAMES, randomCharacterName } from "./character-names.js";
 
 export * from "./skills/index.js";
 
 export type {
   MatchEndReason,
+  MatchMode,
   MatchOutcome,
   MatchPhase,
   MatchRules,
@@ -102,14 +119,16 @@ export type {
 export {
   ANNIHILATION_MATCH_RULES,
   DEATH_PENALTY_PERCENT,
-  DEFAULT_MATCH_RULES,
   DP_GRACE_AFTER_RES_SECONDS,
+  GUILD_BATTLE_MATCH_RULES,
   KILL_COUNT_MATCH_RULES,
   KILL_MORALE_PERCENT,
   MATCH_IN_PROGRESS,
+  MATCH_MODES,
   MORALE_CEILING,
   MORALE_FLOOR,
-  RANDOM_ARENA_RULES,
+  PRIEST_ANNIHILATION_MATCH_RULES,
+  PRIEST_WAVE_SECONDS,
   addKill,
   emptyScore,
   evaluateMatch,
@@ -122,24 +141,58 @@ export type {
   HeadlessMatchResult,
 } from "./tools/headless-match.js";
 export { fighter, runHeadlessMatch } from "./tools/headless-match.js";
-export type { BenchField, TickBench } from "./tools/tick-bench.js";
+export type { BenchCrowd, BenchField, TickBench } from "./tools/tick-bench.js";
 export { DENSE_FIELD, runTickBench, tickStats } from "./tools/tick-bench.js";
 
 export type {
+  Creature,
+  CreatureKind,
+  CompanionMode,
+  CreatureOrder,
+  CreatureLook,
+  GroundEffect,
   MatchSimulationOptions,
   Participant,
   ParticipantSpec,
   SkillRequest,
   StepResult,
+  WeaponSetRequest,
 } from "./match/simulation.js";
-export { MatchSimulation } from "./match/simulation.js";
+export {
+  countsForTeam,
+  CREATURE_LOOKS,
+  loadoutSpec,
+  MAX_CREATURES,
+  companionMode,
+  MAX_GROUND_EFFECTS,
+  MatchSimulation,
+} from "./match/simulation.js";
+export type { CorpseCandidate } from "./match/corpses.js";
+export { isFreshCorpse, nearestFreshCorpse } from "./match/corpses.js";
+export {
+  MINION_CAP_ATTRIBUTE,
+  MINION_DEGENERATION_STEP_SECONDS,
+  minionCap,
+  minionDegenerationPips,
+} from "./match/minions.js";
+export type { CompanionSkill } from "./match/companions.js";
+export { companionSkills, PET_DEATH_GRACE_SECONDS } from "./match/companions.js";
 export { facingToward, spawnFacing } from "./match/facing.js";
+export type { Shrine } from "./match/priest.js";
+export { PRIEST_SKILL_ID, priestId } from "./match/priest.js";
+export type { GuildLord } from "./match/guild-lord.js";
+export { GUILD_LORD_HEALTH, guildLordId } from "./match/guild-lord.js";
 export type { IntentRefusal, MatchIntent } from "./match/apply-intent.js";
 export { applyIntent } from "./match/apply-intent.js";
 export { MAX_CATCHUP_SECONDS, drainAccumulator } from "./match/accumulator.js";
 
-export type { CombatCause, CombatLogEntry, CombatTally } from "./match/combat-log.js";
-export { CombatMeter, tallyCombat } from "./match/combat-log.js";
+export type {
+  CombatCause,
+  CombatLogEntry,
+  CombatTally,
+  MatchTallyRow,
+} from "./match/combat-log.js";
+export { CombatMeter, MatchTally, tallyCombat } from "./match/combat-log.js";
 
 export type {
   Behaviour,

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { vec2 } from "@vibewars/game-core";
+import { CREATURE_LOOKS, vec2 } from "@vibewars/game-core";
 
 import {
   AREA_FLASH_SECONDS,
@@ -18,14 +18,23 @@ import {
   offhandMarkLayout,
   type OffhandMarkLayout,
   nameplateLayout,
+  bodyGlyphLayout,
+  BODY_EDGE,
+  BODY_GLYPH_ALPHA,
+  BODY_GLYPH_SIZE,
+  CREATURE_GLYPH_SIZE,
+  DEAD_COLOUR,
+  EXPLOITED_CORPSE_COLOUR,
   PROFESSION_GLYPH_SIZE,
   withNames,
   placeFloatingText,
   teamColour,
+  toRenderableGroundEffect,
   type ArenaSnapshot,
   type FloatingText,
   type RenderableActor,
 } from "./arena-snapshot.js";
+import { LYING_WIDTH } from "./lying-pose.js";
 
 describe("teamColour", () => {
   it("draws you in your team's colour, and the two sides apart", () => {
@@ -44,6 +53,7 @@ function actor(
   return {
     id,
     name: id,
+    bot: false,
     position: vec2(x, y),
     facing: 0,
     weaponId: undefined,
@@ -52,30 +62,71 @@ function actor(
     attackCast: undefined,
     offhandId: undefined,
     profession: undefined,
+    creatureLook: undefined,
     radius,
     team: "ally",
     health: 500,
     maxHealth: 500,
     dead: false,
+    exploited: false,
     knockedDown: false,
     castProgress: undefined,
+    castType: undefined,
     statuses: [],
+    enchanted: false,
+    hexed: false,
+    invulnerable: false,
+    conditionCues: [],
     ...overrides,
   };
 }
+
+describe("toRenderableGroundEffect (#1087)", () => {
+  const ward = {
+    id: 4,
+    skillId: "elementalist.ward-against-melee",
+    team: 1,
+    x: 120,
+    y: 80,
+    radius: 109,
+    endsAt: 19,
+    durationSeconds: 17,
+  };
+
+  it("draws a ward where it was placed, at its radius, with its skill", () => {
+    expect(toRenderableGroundEffect(ward, 1, "ward")).toEqual({
+      id: 4,
+      skillId: "elementalist.ward-against-melee",
+      position: { x: 120, y: 80 },
+      radius: 109,
+      colour: teamColour("ally"),
+      filled: true,
+    });
+  });
+
+  it("colours a ward by side: yours as an ally's, any other team's as a foe's", () => {
+    expect(toRenderableGroundEffect(ward, 0, "ward").colour).toBe(teamColour("enemy"));
+    expect(toRenderableGroundEffect(ward, undefined, "ward").colour).toBe(teamColour("enemy"));
+  });
+
+  it("draws a trap as its outline alone (#1105)", () => {
+    expect(toRenderableGroundEffect(ward, 1, "trap").filled).toBe(false);
+  });
+});
 
 describe("actorAtPoint", () => {
   it("returns undefined when there are no actors", () => {
     const snapshot: ArenaSnapshot = {
       actors: [],
       walls: [],
+      shrines: [],
       targetId: undefined,
       projectiles: [],
+      groundEffects: [],
       clock: 0,
       hoverId: undefined,
       showAllNames: false,
       calledId: undefined,
-      watchedId: undefined,
       pings: [],
     };
     expect(actorAtPoint(snapshot, vec2(0, 0))).toBeUndefined();
@@ -86,13 +137,14 @@ describe("actorAtPoint", () => {
     const snapshot: ArenaSnapshot = {
       actors: [self],
       walls: [],
+      shrines: [],
       targetId: undefined,
       projectiles: [],
+      groundEffects: [],
       clock: 0,
       hoverId: undefined,
       showAllNames: false,
       calledId: undefined,
-      watchedId: undefined,
       pings: [],
     };
     expect(actorAtPoint(snapshot, vec2(105, 100))?.id).toBe("a");
@@ -103,13 +155,14 @@ describe("actorAtPoint", () => {
     const snapshot: ArenaSnapshot = {
       actors: [self],
       walls: [],
+      shrines: [],
       targetId: undefined,
       projectiles: [],
+      groundEffects: [],
       clock: 0,
       hoverId: undefined,
       showAllNames: false,
       calledId: undefined,
-      watchedId: undefined,
       pings: [],
     };
     expect(actorAtPoint(snapshot, vec2(200, 200))).toBeUndefined();
@@ -120,13 +173,14 @@ describe("actorAtPoint", () => {
     const snapshot: ArenaSnapshot = {
       actors: [self],
       walls: [],
+      shrines: [],
       targetId: undefined,
       projectiles: [],
+      groundEffects: [],
       clock: 0,
       hoverId: undefined,
       showAllNames: false,
       calledId: undefined,
-      watchedId: undefined,
       pings: [],
     };
     expect(actorAtPoint(snapshot, vec2(10, 0))?.id).toBe("a");
@@ -138,13 +192,14 @@ describe("actorAtPoint", () => {
     const snapshot: ArenaSnapshot = {
       actors: [far, near],
       walls: [],
+      shrines: [],
       targetId: undefined,
       projectiles: [],
+      groundEffects: [],
       clock: 0,
       hoverId: undefined,
       showAllNames: false,
       calledId: undefined,
-      watchedId: undefined,
       pings: [],
     };
     expect(actorAtPoint(snapshot, vec2(100, 100))?.id).toBe("near");
@@ -158,13 +213,14 @@ describe("actorAtPoint and the dead", () => {
     const snapshot: ArenaSnapshot = {
       actors: [corpse, living],
       walls: [],
+      shrines: [],
       targetId: undefined,
       projectiles: [],
+      groundEffects: [],
       clock: 0,
       hoverId: undefined,
       showAllNames: false,
       calledId: undefined,
-      watchedId: undefined,
       pings: [],
     };
     expect(actorAtPoint(snapshot, vec2(100, 100))?.id).toBe("living");
@@ -175,13 +231,14 @@ describe("actorAtPoint and the dead", () => {
     const snapshot: ArenaSnapshot = {
       actors: [corpse],
       walls: [],
+      shrines: [],
       targetId: undefined,
       projectiles: [],
+      groundEffects: [],
       clock: 0,
       hoverId: undefined,
       showAllNames: false,
       calledId: undefined,
-      watchedId: undefined,
       pings: [],
     };
     expect(actorAtPoint(snapshot, vec2(100, 100))).toBeUndefined();
@@ -547,5 +604,70 @@ describe("nameplateLayout (#281)", () => {
     const layout = nameplateLayout(actor("d", 200, 100), 40, 1);
     expect(layout.glyphX).toBeUndefined();
     expect(layout.textX).toBe(200);
+  });
+});
+
+describe("bodyGlyphLayout (#1037)", () => {
+  it("centres a 13 u glyph on a living body, in edge at 60 %", () => {
+    const layout = bodyGlyphLayout(actor("m", 200, 100, 14, { profession: "monk" }));
+    expect(layout).toEqual({
+      glyph: { kind: "profession", profession: "monk" },
+      x: 200,
+      y: 100,
+      size: 13,
+      tint: BODY_EDGE,
+      alpha: 0.6,
+    });
+    expect(BODY_GLYPH_SIZE).toBe(13);
+    expect(BODY_GLYPH_ALPHA).toBe(0.6);
+  });
+
+  it("greys a corpse's glyph at full opacity, same size", () => {
+    const layout = bodyGlyphLayout(
+      actor("m", 200, 100, 14, { profession: "necromancer", dead: true }),
+    );
+    expect(layout).toMatchObject({ size: 13, tint: DEAD_COLOUR, alpha: 1, x: 200, y: 100 });
+  });
+
+  it("darkens an exploited corpse's glyph (#466)", () => {
+    const layout = bodyGlyphLayout(
+      actor("m", 200, 100, 14, { profession: "necromancer", dead: true, exploited: true }),
+    );
+    expect(layout).toMatchObject({ tint: EXPLOITED_CORPSE_COLOUR, alpha: 1 });
+  });
+
+  it("shrinks it to fit the flattened disc of a knocked-down body", () => {
+    const layout = bodyGlyphLayout(
+      actor("m", 200, 100, 14, { profession: "warrior", knockedDown: true }),
+    );
+    expect(layout?.size).toBeCloseTo(13 * LYING_WIDTH, 9);
+    expect(layout).toMatchObject({ x: 200, y: 100, tint: BODY_EDGE, alpha: 0.6 });
+  });
+
+  it("draws none without a profession", () => {
+    expect(bodyGlyphLayout(actor("m", 200, 100))).toBeUndefined();
+  });
+
+  it("gives a creature its kind's glyph, opaque, and keeps its size knocked down (#1162)", () => {
+    for (const look of CREATURE_LOOKS) {
+      const standing = bodyGlyphLayout(actor("c", 200, 100, 10, { creatureLook: look }));
+      expect(standing).toEqual({
+        glyph: { kind: "creature", look },
+        x: 200,
+        y: 100,
+        size: CREATURE_GLYPH_SIZE,
+        tint: BODY_EDGE,
+        alpha: 1,
+      });
+      expect(
+        bodyGlyphLayout(actor("c", 200, 100, 10, { creatureLook: look, knockedDown: true })),
+      ).toEqual(standing);
+    }
+  });
+
+  it("greys a dead pet's glyph (#1162)", () => {
+    expect(
+      bodyGlyphLayout(actor("c", 200, 100, 10, { creatureLook: "beast", dead: true })),
+    ).toMatchObject({ glyph: { kind: "creature", look: "beast" }, tint: DEAD_COLOUR, alpha: 1 });
   });
 });

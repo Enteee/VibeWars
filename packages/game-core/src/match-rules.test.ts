@@ -2,13 +2,17 @@ import { describe, expect, it } from "vitest";
 
 import {
   ANNIHILATION_MATCH_RULES,
-  DEFAULT_MATCH_RULES,
+  GUILD_BATTLE_MATCH_RULES,
   KILL_COUNT_MATCH_RULES,
+  MATCH_IN_PROGRESS,
+  MATCH_MODES,
+  PRIEST_ANNIHILATION_MATCH_RULES,
   addKill,
   emptyScore,
   evaluateMatch,
   type MatchRules,
   type MatchStanding,
+  type TeamStanding,
 } from "./match-rules.js";
 
 const RULES: MatchRules = {
@@ -20,9 +24,16 @@ const RULES: MatchRules = {
   deathPenalty: false,
 };
 
-/** `[team, living, total morale]` for each team with members. */
-function standing(...teams: [number, number, number][]): MatchStanding {
-  return { byTeam: new Map(teams.map(([team, living, morale]) => [team, { living, morale }])) };
+/** `[team, living, total morale, priest lives?]` for each team with members. */
+function standing(...teams: [number, number, number, boolean?][]): MatchStanding {
+  return {
+    byTeam: new Map(
+      teams.map(([team, living, morale, priestLives = false]) => [
+        team,
+        { living, morale, priestLives, guildLordLives: false, beyondRaising: false, aggression: 0 },
+      ]),
+    ),
+  };
 }
 
 const BOTH_ALIVE = standing([0, 4, 0], [1, 4, 0]);
@@ -107,11 +118,11 @@ describe("evaluateMatch", () => {
     expect(evaluateMatch(score, BOTH_ALIVE, 60, RULES).reason).toBe("score");
   });
 
-  it("keeps today's kill-count rules as a preset", () => {
+  it("keeps the kill-count rules as a preset", () => {
     expect(KILL_COUNT_MATCH_RULES).toEqual({
       victory: "kill-count",
       scoreToWin: 15,
-      timeLimitSeconds: 600,
+      timeLimitSeconds: 180,
       deathRule: "respawn",
       respawnSeconds: 8,
       deathPenalty: false,
@@ -119,11 +130,53 @@ describe("evaluateMatch", () => {
   });
 });
 
+describe("MATCH_MODES (#476)", () => {
+  const rules = MATCH_MODES["kill-count"];
+  const score = (team0: number, team1: number) =>
+    new Map([
+      [0, team0],
+      [1, team1],
+    ]);
+
+  it("names each mode's rules", () => {
+    expect(MATCH_MODES.annihilation).toBe(ANNIHILATION_MATCH_RULES);
+    expect(MATCH_MODES["priest-annihilation"]).toBe(PRIEST_ANNIHILATION_MATCH_RULES);
+    expect(MATCH_MODES["guild-battle"]).toBe(GUILD_BATTLE_MATCH_RULES);
+    expect(rules).toBe(KILL_COUNT_MATCH_RULES);
+  });
+
+  it("kill count: the most kills at 3 minutes wins, and not a moment before", () => {
+    expect(evaluateMatch({ byTeam: score(4, 2) }, BOTH_ALIVE, 179.9, rules)).toBe(
+      MATCH_IN_PROGRESS,
+    );
+    expect(evaluateMatch({ byTeam: score(4, 2) }, BOTH_ALIVE, 180, rules)).toEqual({
+      phase: "finished",
+      winningTeam: 0,
+      reason: "time",
+    });
+  });
+
+  it("kill count: equal kills at 3 minutes is a draw", () => {
+    expect(evaluateMatch({ byTeam: score(5, 5) }, BOTH_ALIVE, 180, rules)).toEqual({
+      phase: "finished",
+      winningTeam: undefined,
+      reason: "time",
+    });
+  });
+
+  it("kill count: 15 kills ends it early", () => {
+    expect(evaluateMatch({ byTeam: score(3, 15) }, BOTH_ALIVE, 42, rules)).toEqual({
+      phase: "finished",
+      winningTeam: 1,
+      reason: "score",
+    });
+  });
+});
+
 describe("evaluateMatch: annihilation (#846)", () => {
   const rules = ANNIHILATION_MATCH_RULES;
 
-  it("is the default: resurrection only, the death penalty, 8 minutes", () => {
-    expect(DEFAULT_MATCH_RULES).toBe(ANNIHILATION_MATCH_RULES);
+  it("is resurrection only, the death penalty, 8 minutes", () => {
     expect(rules.victory).toBe("annihilation");
     expect(rules.deathRule).toBe("resurrection-only");
     expect(rules.deathPenalty).toBe(true);
@@ -189,6 +242,132 @@ describe("evaluateMatch: annihilation (#846)", () => {
       phase: "finished",
       winningTeam: 0,
       reason: "annihilation",
+    });
+  });
+});
+
+describe("evaluateMatch: priest annihilation (#1186)", () => {
+  const rules = PRIEST_ANNIHILATION_MATCH_RULES;
+
+  it("is annihilation's resurrection only and death penalty, over 12 minutes", () => {
+    expect(rules.victory).toBe("priest-annihilation");
+    expect(rules.deathRule).toBe("resurrection-only");
+    expect(rules.deathPenalty).toBe(true);
+    expect(rules.timeLimitSeconds).toBe(720);
+  });
+
+  it("does not beat a wiped team whose priest lives: it waits for the wave", () => {
+    expect(evaluateMatch(NO_KILLS, standing([0, 2, 0, true], [1, 0, -45, true]), 100, rules)).toBe(
+      MATCH_IN_PROGRESS,
+    );
+  });
+
+  it("beats a team once every player and its priest are dead", () => {
+    expect(
+      evaluateMatch(NO_KILLS, standing([0, 1, 0, false], [1, 0, -45, false]), 100, rules),
+    ).toEqual({ phase: "finished", winningTeam: 0, reason: "annihilation" });
+  });
+
+  it("is lost by both when both teams and both priests fall in the same tick", () => {
+    expect(
+      evaluateMatch(NO_KILLS, standing([0, 0, 0, false], [1, 0, 0, false]), 100, rules),
+    ).toEqual({ phase: "finished", winningTeam: undefined, reason: "annihilation" });
+  });
+
+  it("goes at 12 minutes to morale, then to the team whose priest lives, else all lose", () => {
+    expect(
+      evaluateMatch(NO_KILLS, standing([0, 2, -15, true], [1, 2, -15, true]), 719.9, rules),
+    ).toBe(MATCH_IN_PROGRESS);
+    expect(
+      evaluateMatch(NO_KILLS, standing([0, 2, -30, true], [1, 2, -15, false]), 720, rules),
+    ).toEqual({ phase: "finished", winningTeam: 1, reason: "morale" });
+    expect(
+      evaluateMatch(NO_KILLS, standing([0, 2, -15, false], [1, 2, -15, true]), 720, rules),
+    ).toEqual({ phase: "finished", winningTeam: 1, reason: "morale" });
+    expect(
+      evaluateMatch(NO_KILLS, standing([0, 2, -15, true], [1, 2, -15, true]), 720, rules),
+    ).toEqual({ phase: "finished", winningTeam: undefined, reason: "morale" });
+  });
+});
+
+describe("evaluateMatch: guild battle (#1222)", () => {
+  const rules = GUILD_BATTLE_MATCH_RULES;
+  const NO_SCORE = emptyScore([0, 1]);
+  const team = (overrides: Partial<TeamStanding> = {}): TeamStanding => ({
+    living: 8,
+    morale: 0,
+    priestLives: false,
+    guildLordLives: true,
+    beyondRaising: false,
+    aggression: 0,
+    ...overrides,
+  });
+  const guild = (zero: Partial<TeamStanding>, one: Partial<TeamStanding>): MatchStanding => ({
+    byTeam: new Map([
+      [0, team(zero)],
+      [1, team(one)],
+    ]),
+  });
+
+  it("plays 28 minutes, the dead down until the shrine raises them, with the death penalty", () => {
+    expect(rules.timeLimitSeconds).toBe(1680);
+    expect(rules.deathRule).toBe("resurrection-only");
+    expect(rules.deathPenalty).toBe(true);
+  });
+
+  it("goes on while both lords live, whoever is dead", () => {
+    expect(evaluateMatch(NO_SCORE, guild({ living: 0 }, {}), 100, rules)).toBe(MATCH_IN_PROGRESS);
+  });
+
+  it("is lost by the team whose Guild Lord dies", () => {
+    expect(evaluateMatch(NO_SCORE, guild({}, { guildLordLives: false }), 100, rules)).toEqual({
+      phase: "finished",
+      winningTeam: 0,
+      reason: "guild-lord",
+    });
+  });
+
+  it("is lost by both teams when both lords die together", () => {
+    const both = guild({ guildLordLives: false }, { guildLordLives: false });
+    expect(evaluateMatch(NO_SCORE, both, 100, rules)).toEqual({
+      phase: "finished",
+      winningTeam: undefined,
+      reason: "guild-lord",
+    });
+  });
+
+  it("is lost by a team all dead at the morale floor", () => {
+    expect(evaluateMatch(NO_SCORE, guild({ beyondRaising: true }, {}), 100, rules)).toEqual({
+      phase: "finished",
+      winningTeam: 1,
+      reason: "morale",
+    });
+  });
+
+  it("at time, is won by the most aggression, and lost by both on a tie", () => {
+    expect(
+      evaluateMatch(NO_SCORE, guild({ aggression: 300 }, { aggression: 500 }), 1679.9, rules),
+    ).toBe(MATCH_IN_PROGRESS);
+    expect(
+      evaluateMatch(NO_SCORE, guild({ aggression: 300 }, { aggression: 500 }), 1680, rules),
+    ).toEqual({ phase: "finished", winningTeam: 1, reason: "aggression" });
+    expect(
+      evaluateMatch(NO_SCORE, guild({ aggression: 300 }, { aggression: 300 }), 1680, rules),
+    ).toEqual({ phase: "finished", winningTeam: undefined, reason: "aggression" });
+  });
+
+  it("checks the lord before morale, and both before time", () => {
+    const all = guild({ guildLordLives: false, aggression: 900 }, { beyondRaising: true });
+    expect(evaluateMatch(NO_SCORE, all, 1680, rules)).toEqual({
+      phase: "finished",
+      winningTeam: 1,
+      reason: "guild-lord",
+    });
+    const morale = guild({ aggression: 900 }, { beyondRaising: true });
+    expect(evaluateMatch(NO_SCORE, morale, 1680, rules)).toEqual({
+      phase: "finished",
+      winningTeam: 0,
+      reason: "morale",
     });
   });
 });

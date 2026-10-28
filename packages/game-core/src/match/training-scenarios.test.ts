@@ -32,6 +32,15 @@ const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
 const FIREBALL = "elementalist.fireball";
 
+/** Fireball's splash radius: a radius area, never a party one (#1013). */
+function fireballRadius(): number {
+  const area = getSkill(FIREBALL)?.area;
+  if (area === undefined || area.origin === "party") {
+    throw new Error("Fireball splashes in a radius");
+  }
+  return area.radius;
+}
+
 /**
  * The training maps' size and player spawn, copied from
  * `game-maps/training/*`: `game-core` must not import `game-maps`. The
@@ -143,7 +152,7 @@ describe("armor-ladder, headless", () => {
   it("spaces its rungs wider than Fireball's splash", () => {
     // A rung inside a neighbour's splash takes two hits, and the ladder
     // stops being one hit per armor value.
-    const radius = getSkill(FIREBALL)?.area?.radius ?? Infinity;
+    const radius = fireballRadius();
     for (const a of ladder.dummies) {
       for (const b of ladder.dummies) {
         if (a !== b) {
@@ -258,7 +267,13 @@ function armedArena(played: TrainingScenario, seed: string, weapon: Weapon): Mat
         attributeRanks: new Map([[attributeId, 12]]),
         equipment: {
           ...unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
-          mainHand: { weapon, attributeId, damageType: weapon.damageType, requirementMet: true },
+          mainHand: {
+            weapon,
+            attributeId,
+            damageType: weapon.damageType,
+            requirementMet: true,
+            creatureDamageScale: undefined,
+          },
         },
         maxHealth: 1e6,
         spawn: map.playerSpawn,
@@ -659,7 +674,7 @@ describe("aoe-line-of-sight, headless (#111)", () => {
   it("a Fireball at the front burns the three in front of the pillar, not the two behind", () => {
     const sim = pillarArena(scenario("aoe-line-of-sight"), "pillar");
     // The two behind are inside the splash by straight-line distance.
-    const radius = getSkill(FIREBALL)?.area?.radius ?? 0;
+    const radius = fireballRadius();
     for (const id of ["behind-north", "behind-south"]) {
       const behind = scenario("aoe-line-of-sight").dummies.find((dummy) => dummy.id === id);
       expect(distance(behind?.position ?? vec2(0, 0), vec2(235, 210))).toBeLessThan(radius);
@@ -894,6 +909,7 @@ describe("the area scenarios, headless (#111)", () => {
               attributeId: "ranger.marksmanship",
               damageType: WEAPONS.longbow.damageType,
               requirementMet: true,
+              creatureDamageScale: undefined,
             },
           },
           spawn: map.playerSpawn,

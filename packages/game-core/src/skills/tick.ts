@@ -1,5 +1,6 @@
 import { effectiveRank } from "../attributes.js";
 import type { ResolvedEquipment } from "../equipment/resolve.js";
+import type { DamageType } from "../equipment/types.js";
 import { FAST_CASTING_ATTRIBUTE, fastCastingMultiplier } from "../primary-attributes.js";
 import type { ResourceRules } from "../ruleset.js";
 import type { CombatEvent } from "./effects.js";
@@ -14,7 +15,7 @@ import {
   type ArmorReduction,
   type BlockRule,
 } from "./status.js";
-import { isSpell, type Combatant, type Skill } from "./types.js";
+import { isInvulnerable, isSpell, type Combatant, type Skill } from "./types.js";
 
 /**
  * Per-tick status processing (brief §13's "durations", §12's degeneration).
@@ -28,14 +29,17 @@ import { isSpell, type Combatant, type Skill } from "./types.js";
  * `naturalPips` is natural regeneration (`naturalHealthPips`): not a
  * status, but summed with theirs before the clamp, as GW1 does.
  *
- * A moving bearer's health per second (#921, "Fall Back!") is a heal,
- * not pips: outside the clamp, scaled by `healingMultiplier`, and added
- * to the same change, so one tick emits one damage or heal event.
+ * Health per second (#975, Spirit Light Weapon), and a moving bearer's
+ * (#921, "Fall Back!"), and one `nearSpirit`'s (#1064, the simulation
+ * knows where spirits stand), is a heal, not pips: outside the clamp,
+ * scaled by `healingMultiplier`, and added to the same change, so one
+ * tick emits one damage or heal event.
  */
 export function advanceStatuses(
   combatant: Combatant,
   dt: number,
   naturalPips: number,
+  nearSpirit = false,
 ): CombatEvent[] {
   const events: CombatEvent[] = [];
   if (combatant.dead) {
@@ -45,11 +49,15 @@ export function advanceStatuses(
   // Health only: upkeep is energy, so none is owed here.
   const pips = netPips(combatant, naturalPips, 0).health;
   const modifiers = aggregateModifiers(combatant.statuses.active);
-  const whileMoving = combatant.moving
-    ? modifiers.healthPerSecondWhileMoving * modifiers.healingMultiplier
-    : 0;
-  if (pips !== 0 || whileMoving !== 0) {
-    const delta = (pips * HEALTH_PER_PIP + whileMoving) * dt;
+  const perSecond =
+    (modifiers.healthPerSecond +
+      (combatant.moving ? modifiers.healthPerSecondWhileMoving : 0) +
+      (nearSpirit ? modifiers.healthPerSecondNearSpirit : 0)) *
+    modifiers.healingMultiplier;
+  if (pips !== 0 || perSecond !== 0) {
+    const change = (pips * HEALTH_PER_PIP + perSecond) * dt;
+    // Degeneration takes nothing from an invulnerable body (#1208); regeneration still heals.
+    const delta = change < 0 && isInvulnerable(combatant) ? 0 : change;
     const effectiveMax = effectiveMaxHealth(combatant);
     const next = Math.min(effectiveMax, Math.max(0, combatant.health + delta));
     const applied = next - combatant.health;
@@ -69,7 +77,7 @@ export function advanceStatuses(
     }
   }
 
-  for (const statusId of combatant.statuses.advance(dt)) {
+  for (const statusId of combatant.statuses.advance(dt, combatant.moving)) {
     events.push({ kind: "status-expired", targetId: combatant.id, statusId });
   }
 
@@ -256,20 +264,47 @@ export function weaponDamageMultiplierOf(combatant: Combatant): number {
 }
 
 /**
+ * The type the bearer's attacks deal while a status sets one (#1021):
+ * the newest such status's, a pick and not a sum. `undefined`: the
+ * weapon's own.
+ */
+export function attackDamageTypeOf(combatant: Combatant): DamageType | undefined {
+  for (const { id } of [...combatant.statuses.active].reverse()) {
+    const type = getStatusDefinition(id).attackDamageType;
+    if (type !== undefined) {
+      return type;
+    }
+  }
+  return undefined;
+}
+
+/**
  * How long this caster takes to cast this skill. Dazed doubles a spell's;
  * a signet or any other skill that is not a spell casts at normal speed,
  * as in GW1 (#524). An instant skill stays instant (0 × 2 = 0). Fast
- * Casting multiplies in too (#527), judged on the skill's own activation.
+ * Casting multiplies in too (#527), judged on the skill's own activation,
+ * and speeds up a signet as well (#1100), which dazed does not.
+ * A hex cast on a `target` under Holy Veil takes twice as long (#944);
+ * with no target, as in a tooltip, nothing on one counts.
  */
-export function effectiveActivationSeconds(skill: Skill, caster: RankHolder): number {
-  if (!isSpell(skill.type)) {
-    return skill.activationSeconds;
-  }
+export function effectiveActivationSeconds(
+  skill: Skill,
+  caster: RankHolder,
+  target?: Pick<Combatant, "statuses">,
+): number {
   const fastCasting = fastCastingMultiplier(rankOf(caster, FAST_CASTING_ATTRIBUTE), skill);
+  if (!isSpell(skill.type)) {
+    return skill.activationSeconds * fastCasting;
+  }
+  const onTarget =
+    skill.type === "hex" && target !== undefined
+      ? aggregateModifiers(target.statuses.active).incomingHexCastTimeMultiplier
+      : 1;
   return (
     skill.activationSeconds *
     aggregateModifiers(caster.statuses.active).castTimeMultiplier *
-    fastCasting
+    fastCasting *
+    onTarget
   );
 }
 
@@ -304,14 +339,21 @@ export function combinedBlockChance(
 /**
  * The chance in [0, 1] that the bearer blocks an attack of this kind
  * (#534). None while knocked down, as in GW1 (#610): 0, so no block is
- * rolled at all.
+ * rolled at all. A block that holds only below a share of health (#988)
+ * reads the bearer's health as it is now.
  */
 export function blockChanceOf(combatant: Combatant, kind: "melee" | "projectile"): number {
   if (combatant.knockdownRemaining > 0) {
     return 0;
   }
+  const maxHealth = effectiveMaxHealth(combatant);
   return combinedBlockChance(
-    combatant.statuses.active.flatMap((status) => getStatusDefinition(status.id).block ?? []),
+    combatant.statuses.active.flatMap((status) => {
+      const { block, blockBelowHealth } = getStatusDefinition(status.id);
+      const holds =
+        blockBelowHealth === undefined || combatant.health < maxHealth * blockBelowHealth;
+      return block !== undefined && holds ? [block] : [];
+    }),
     kind,
   );
 }

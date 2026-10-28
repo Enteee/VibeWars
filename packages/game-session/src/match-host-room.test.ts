@@ -1,4 +1,4 @@
-import { DEFAULT_MATCH_RULES, DEFAULT_SKILL_BAR } from "@vibewars/game-core";
+import { ANNIHILATION_MATCH_RULES, SKILL_BAR_SLOTS } from "@vibewars/game-core";
 import {
   PROTOCOL_MISMATCH_MESSAGE,
   PROTOCOL_VERSION,
@@ -19,10 +19,12 @@ import {
   ARENA,
   TICK_SECONDS,
   hello,
+  helloAs,
   playerIn,
   self,
   settle,
   startMatch,
+  starterBuild,
   type TestMatch,
 } from "./match-harness.test-support.js";
 import type { Transport } from "./transport.js";
@@ -164,7 +166,7 @@ describe("a P2P match host, as the match room (#375)", () => {
 
   it("never places a Quick Match player in a match that has ended (#249)", async () => {
     // The host has no `endMatch`: a short time limit ends it the way a real match ends.
-    const match = startMatch({ matchRules: { ...DEFAULT_MATCH_RULES, timeLimitSeconds: 1 } });
+    const match = startMatch({ matchRules: { ...ANNIHILATION_MATCH_RULES, timeLimitSeconds: 1 } });
     const { connection: first, transport } = await match.join();
     const ended = collect(transport, "ended", (value) => value);
 
@@ -260,7 +262,7 @@ describe("a P2P match host, as the match room (#375)", () => {
 
   it("shows a spell walking in as walking, and cancel drops it unpaid (#499)", async () => {
     const match = startMatch();
-    const { connection: a } = await match.join();
+    const { connection: a } = await match.join(helloAs("Elementalist/Mesmer"));
     const { connection: b } = await match.join();
     // Back off from the foe across the way, past Fireball range.
     a.sendIntent({ kind: "walk-to", x: 50, y: FIRST_SPAWN.y });
@@ -269,7 +271,10 @@ describe("a P2P match host, as the match room (#375)", () => {
     expect(self(a)?.x).toBeLessThan(100);
 
     a.sendIntent({ kind: "target", targetSessionId: b.selfSessionId });
-    a.sendIntent({ kind: "use-skill", slot: DEFAULT_SKILL_BAR.indexOf("elementalist.fireball") });
+    a.sendIntent({
+      kind: "use-skill",
+      slot: starterBuild("Elementalist/Mesmer").skillBar.indexOf("elementalist.fireball"),
+    });
     await landAndTick(match);
     expect(self(a)?.walking).toBe(true);
 
@@ -367,7 +372,8 @@ describe("a P2P match host, as the match room (#375)", () => {
       const connection = await connectMatch({
         transport,
         hostId: "host",
-        hello: hello(),
+        // Armor of Earth on its bar (#852).
+        hello: helloAs("Elementalist/Mesmer"),
         timeoutMs: 1000,
       });
       return { connection, received };
@@ -384,7 +390,9 @@ describe("a P2P match host, as the match room (#375)", () => {
       expect(caster.received[0]?.slots).toEqual([]);
 
       // Armor of Earth: self-targeted, so it fires with nobody in range.
-      const slot = DEFAULT_SKILL_BAR.indexOf("elementalist.armor-of-earth");
+      const slot = starterBuild("Elementalist/Mesmer").skillBar.indexOf(
+        "elementalist.armor-of-earth",
+      );
       caster.connection.sendIntent({ kind: "use-skill", slot });
       await match.step(1);
       expect(caster.received).toHaveLength(2);
@@ -413,8 +421,10 @@ describe("a P2P match host, as the match room (#375)", () => {
         timeoutMs: 1000,
       });
       await settle();
-      expect(received).toEqual([{ slots: DEFAULT_SKILL_BAR.map(() => 0), lossInSeconds: null }]);
-      expect(connection.getAdrenaline()).toEqual(DEFAULT_SKILL_BAR.map(() => 0));
+      expect(received).toEqual([
+        { slots: Array.from({ length: SKILL_BAR_SLOTS }, () => 0), lossInSeconds: null },
+      ]);
+      expect(connection.getAdrenaline()).toEqual(Array.from({ length: SKILL_BAR_SLOTS }, () => 0));
       // Nothing changed: nothing more.
       await match.step(1);
       expect(received).toHaveLength(1);

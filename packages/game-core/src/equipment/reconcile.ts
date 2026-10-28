@@ -1,5 +1,8 @@
-import { armorPieces, type ArmorPiece, type ArmorSet } from "./armor.js";
-import type { BuildEquipment, EquippedOffhand, EquippedWeapon } from "./loadout.js";
+import { primaryAttributeIds } from "../character.js";
+import { primaryAttributeOf, type ProfessionId } from "../professions.js";
+import { headgearAttributeOf, type ArmorPiece, type ArmorSet } from "./armor.js";
+import { getInsignia, insigniaAllowed, type InsigniaId } from "./insignias.js";
+import type { BuildEquipment, EquippedOffhand, EquippedWeapon, WeaponSet } from "./loadout.js";
 import { getOffhand } from "./offhands.js";
 import { getUniversalRune, type EquippedRune } from "./runes.js";
 import type { EquipmentRequirement } from "./types.js";
@@ -10,8 +13,8 @@ import { allowsOffhand, getWeapon } from "./weapons.js";
  * (ADR-0012).
  *
  * Changing profession can invalidate gear in three ways: a nominated
- * requirement attribute stops being reachable, an attribute rune points
- * at an attribute you can no longer raise, or a profession-locked rune
+ * requirement attribute stops being reachable, an attribute rune is no
+ * longer of the primary profession (#1141), or a profession-locked rune
  * loses its profession. The build editor already does exactly this for
  * attributes and skills in `setProfessions`; gear joins the same rule
  * rather than getting its own.
@@ -27,7 +30,8 @@ import { allowsOffhand, getWeapon } from "./weapons.js";
 
 export interface ReconcileContext {
   readonly accessibleAttributeIds: ReadonlySet<string>;
-  readonly primaryProfession: string;
+  readonly primaryProfession: ProfessionId;
+  readonly secondaryProfession: ProfessionId | undefined;
 }
 
 /**
@@ -96,7 +100,7 @@ function reconcileRune(rune: EquippedRune | null, context: ReconcileContext): Eq
     return null;
   }
   if (rune.kind === "attribute") {
-    return context.accessibleAttributeIds.has(rune.attributeId) ? rune : null;
+    return primaryAttributeIds(context.primaryProfession).includes(rune.attributeId) ? rune : null;
   }
   const definition = getUniversalRune(rune.runeId);
   if (definition === undefined) {
@@ -111,25 +115,51 @@ function reconcileRune(rune: EquippedRune | null, context: ReconcileContext): Eq
   return rune;
 }
 
-function reconcileArmor(armor: ArmorSet, context: ReconcileContext): ArmorSet {
-  const next: Record<string, ArmorPiece> = {};
-  for (const [slot, piece] of armorPieces(armor)) {
-    next[slot] = { insigniaId: piece.insigniaId, rune: reconcileRune(piece.rune, context) };
-  }
-  return next as ArmorSet;
+/** A profession insignia goes with its primary (#1142); a common one stays. */
+function reconcileInsignia(
+  insigniaId: InsigniaId | null,
+  context: ReconcileContext,
+): InsigniaId | null {
+  const insignia = insigniaId === null ? undefined : getInsignia(insigniaId);
+  return insignia === undefined || insigniaAllowed(insignia, context.primaryProfession)
+    ? insigniaId
+    : null;
 }
 
-export function reconcileEquipment(
-  equipment: BuildEquipment,
-  context: ReconcileContext,
-): BuildEquipment {
-  const weapon = getWeapon(equipment.mainHand.weaponId);
+function reconcileArmor(armor: ArmorSet, context: ReconcileContext): ArmorSet {
+  const next = (piece: ArmorPiece): ArmorPiece => ({
+    insigniaId: reconcileInsignia(piece.insigniaId, context),
+    rune: reconcileRune(piece.rune, context),
+  });
+  // The headgear keeps its attribute while the primary or the secondary
+  // has it, and moves to the new primary attribute otherwise (#1140): a
+  // cleared one would leave the build illegal.
+  const kept = headgearAttributeOf(
+    armor.head,
+    context.primaryProfession,
+    context.secondaryProfession,
+  );
+  return {
+    head: {
+      ...next(armor.head),
+      headgearAttributeId: kept ?? primaryAttributeOf(context.primaryProfession).id,
+    },
+    chest: next(armor.chest),
+    hands: next(armor.hands),
+    legs: next(armor.legs),
+    feet: next(armor.feet),
+  };
+}
 
-  let mainHand: EquippedWeapon = equipment.mainHand;
+/** One weapon set's nominations repointed; a set is never emptied here (ADR-0036). */
+function reconcileWeaponSet(set: WeaponSet, context: ReconcileContext): WeaponSet {
+  const weapon = getWeapon(set.mainHand.weaponId);
+
+  let mainHand: EquippedWeapon = set.mainHand;
   if (weapon !== undefined) {
     const repointed = repointRequirement(
       weapon.requirement,
-      equipment.mainHand.requirementAttributeId,
+      set.mainHand.requirementAttributeId,
       context,
     );
     // A weapon with no legal nomination left keeps the one it had: the
@@ -137,13 +167,13 @@ export function reconcileEquipment(
     // better than silently swapping their weapon out from under them.
     if (repointed !== undefined) {
       mainHand = {
-        weaponId: equipment.mainHand.weaponId,
+        weaponId: set.mainHand.weaponId,
         requirementAttributeId: repointed.attributeId,
       };
     }
   }
 
-  let offHand: EquippedOffhand | null = equipment.offHand;
+  let offHand: EquippedOffhand | null = set.offHand;
   if (offHand !== null) {
     const definition = getOffhand(offHand.offhandId);
     if (definition === undefined || (weapon !== undefined && !allowsOffhand(weapon))) {
@@ -163,5 +193,23 @@ export function reconcileEquipment(
     }
   }
 
-  return { mainHand, offHand, armor: reconcileArmor(equipment.armor, context) };
+  return { mainHand, offHand };
+}
+
+export function reconcileEquipment(
+  equipment: BuildEquipment,
+  context: ReconcileContext,
+): BuildEquipment {
+  const [set1, set2, set3, set4] = equipment.weaponSets;
+  const reconcile = (set: WeaponSet | null): WeaponSet | null =>
+    set === null ? null : reconcileWeaponSet(set, context);
+  return {
+    weaponSets: [
+      reconcileWeaponSet(set1, context),
+      reconcile(set2),
+      reconcile(set3),
+      reconcile(set4),
+    ],
+    armor: reconcileArmor(equipment.armor, context),
+  };
 }

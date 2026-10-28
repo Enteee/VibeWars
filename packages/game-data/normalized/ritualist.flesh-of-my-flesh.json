@@ -1,0 +1,26 @@
+{
+  "id": "ritualist.flesh-of-my-flesh",
+  "name": "Flesh of My Flesh",
+  "profession": "ritualist",
+  "attribute": "Restoration Magic",
+  "type": "Spell.",
+  "elite": false,
+  "campaign": "Factions",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 4,
+  "rechargeSeconds": 10,
+  "upkeep": false,
+  "description": "Lose half your Health. Resurrect target ally with your current Health and 5...17...20% Energy.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Ritualist/751-Flesh_of_My_Flesh",
+    "fetchedAt": "2026-10-28T00:51:21.947Z"
+  },
+  "unmapped": {}
+}

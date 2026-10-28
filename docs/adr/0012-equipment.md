@@ -14,6 +14,10 @@ types (physical, elemental, and chaos, dark, holy, shadow, typeless),
 now that a Warrior's +20 vs physical and a Ranger's +30 vs elemental
 consume them.
 
+Amended (#489): a build carries up to four weapon sets, and which one is
+in hand is simulation state. Every set is still resolved once, at join
+([ADR-0036](0036-weapon-sets.md)).
+
 ## Context
 
 The game shipped without any weapon system at all. Not a partial one —
@@ -70,11 +74,12 @@ itself the moment a secondary profession was involved. A Mesmer with a
 hammer has made a bad build, not an illegal one.
 
 **Runes and insignias are resolved, never mutated.** `Combatant`'s
-`maxHealth`, `maxEnergy` and `attributeRanks` are `readonly` by design —
-they are the character sheet, not simulation state. Gear is fixed at
-join, so the correct seam is _before_ the combatant is constructed. No
-mutable derived fields, no recompute step, no risk of applying a rune
-twice.
+`maxHealth` and `attributeRanks` are `readonly` by design — they are
+the character sheet, not simulation state. Gear is **resolved** at
+join, every weapon set with it, so the correct seam is _before_ the
+combatant is constructed. Which resolved weapon set is in hand is
+simulation state ([ADR-0036](0036-weapon-sets.md)): a swap picks
+another, and nothing is recomputed. No risk of applying a rune twice.
 
 **Off-hands require a free hand.** A two-handed weapon excludes a shield
 or focus. That single rule is the trade the whole system turns on: a
@@ -106,12 +111,15 @@ five pieces are therefore insignia-and-rune carriers, which is the half
 that carries the actual decisions.
 
 **Nothing ships that cannot fire.** The reference has a "while in a
-stance" insignia. This game has no stances, so rather than ship a stat
-line that is permanently zero, it is omitted and recorded as a gap. Only
-the physical damage split (slashing, piercing, blunt) plus `untyped`
-exists, because only Stalwart and Absorption consult it — adding fire,
-cold, lightning and holy when nothing reacts to them would be exactly
-the decorative data `skills/coverage.ts` was built to prevent. Rune of
+stance" insignia. This game had no stances, so rather than ship a stat
+line that is permanently zero, it was omitted and recorded as a gap
+(Sentry's shipped once stances existed, #1206). Damage types
+followed the same rule: at first only the physical split (slashing,
+piercing, blunt) plus `untyped` existed, because only Stalwart and
+Absorption consulted it, and fire, cold, lightning and holy came only
+once something reacted to them. Now they all exist and armor reads
+them: a Ranger's +30 vs elemental, Sentinel's, and the -mancer and
+-bound insignias (#1206). Rune of
 Purity covered Burning in place of the reference's Disease until Disease
 existed; it covers Poison and Disease, as in GW1, since #765.
 
@@ -154,12 +162,12 @@ Harder, and worth stating plainly:
 - Fifteen catalog entries are a tuning surface nobody has playtested.
   The headless runner is the tool for that, and it is not wired to
   weapons yet.
-- Deriving armor from the profession costs one real mechanic:
+- Deriving armor from the profession cost one real mechanic:
   **attribute headgear**, the reference's `+1` to a chosen attribute on
-  the head slot. It is the only genuinely non-cosmetic per-piece choice
-  in the reference, and without it the head slot is no different from
-  the feet. Recorded as a gap in `equipment/coverage.ts` rather than
-  left implicit.
+  the head slot. It was recorded as a gap in `equipment/coverage.ts`,
+  and is closed now (armor parity, issue 488): the head piece names an
+  attribute of the primary or the secondary, its +1 stacks with any rune,
+  and ranks cap at 16.
 
 ## Alternatives Considered
 

@@ -19,12 +19,7 @@
 
 /** A piece of gear behaviour this project does not simulate. */
 export type MissingGearMechanic =
-  | "stances"
-  | "armor-while-attacking"
-  | "attribute-headgear"
-  | "profession-insignias"
-  | "weapon-upgrades"
-  | "per-piece-armor-ratings";
+  "profession-insignias" | "weapon-upgrades" | "per-piece-armor-ratings";
 
 export interface GearOmission {
   readonly mechanic: MissingGearMechanic;
@@ -43,43 +38,13 @@ export interface GearOmission {
 
 export const GEAR_OMISSIONS: readonly GearOmission[] = Object.freeze([
   {
-    mechanic: "stances",
-    description: "a self-targeted state that armor and skills can key off",
-    kind: "gap",
-    reason:
-      "No stance mechanic exists, so a 'while in a stance' armor bonus could never fire. " +
-      "The reference's Sentry's Insignia is therefore not in the catalog at all rather than " +
-      "shipped as a stat line that is permanently zero.",
-    affects: [],
-  },
-  {
-    mechanic: "armor-while-attacking",
-    description: "armor that applies while its wearer is attacking: Brawler's Insignia",
-    kind: "gap",
-    reason:
-      "Weapon auto-attack now gives every combatant an attack state (ADR-0026), but armor " +
-      "does not key off it yet. Brawler's Insignia stays out of the catalog until it does, " +
-      "rather than shipping as a stat line nothing reads (ADR-0019).",
-    affects: [],
-  },
-  {
-    mechanic: "attribute-headgear",
-    description: "a headpiece granting +1 to a chosen attribute, stacking with its rune",
-    kind: "gap",
-    reason:
-      "The one genuinely non-cosmetic per-piece choice in the reference, and the reason a " +
-      "maxed character reaches rank 16 rather than 15. Armor pieces here carry an insignia " +
-      "and a rune and nothing else, so the head slot is currently no different from the feet.",
-    affects: [],
-  },
-  {
     mechanic: "profession-insignias",
     description: "insignias available to one profession only, each with its own bonus",
     kind: "gap",
     reason:
-      "Only universal insignias are modelled. The profession-specific ones are what " +
-      "make an armor set feel like a set, and they are roughly forty more catalog entries " +
-      "with no new mechanics behind them.",
+      "All but five are in (#1142, #1188, #1206). Herald's needs bundles, which this game " +
+      "does not have; Lieutenant's, Stonefist, Bloodstained and Tormentor's do something " +
+      "other than armor, and each needs its own mechanic.",
     affects: [],
   },
   {
@@ -96,10 +61,10 @@ export const GEAR_OMISSIONS: readonly GearOmission[] = Object.freeze([
     description: "each armor piece contributing its own armor rating to the total",
     kind: "simplification",
     reason:
-      "Armor is derived from the primary profession, which matches the reference at max " +
-      "armor: every max set within a profession has the same rating, and the differences " +
-      "between sets became insignias. Modelling per-piece ratings would add arithmetic " +
-      "without adding a decision.",
+      "Base armor is derived from the primary profession, which matches the reference at " +
+      "max armor: every max set within a profession has the same rating on every piece, so " +
+      "it stays one number. Insignia armor is per piece, and each hit rolls the piece it " +
+      "lands on (ADR-0037).",
     affects: [],
   },
 ]);

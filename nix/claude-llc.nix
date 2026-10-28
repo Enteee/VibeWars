@@ -112,6 +112,8 @@ let
     sandboxes — `hubd` holds it out here and enforces what each role may do.
 
     first time:
+      claude-llc auth         sign the company's accounts in: Claude, GitHub,
+                              push key, Telegram
       claude-llc-init         create the board, protect main, write company.json
       claude-llc doctor       the company's credentials: whose they are, expiry
                               (also: claude-llc-doctor). Writes nothing.
@@ -249,6 +251,11 @@ let
           -h | --help)
             usage
             exit 0
+            ;;
+          auth)
+            # Signs in what doctor shows missing (#961); interactive.
+            shift
+            exec ${node} ${llcScripts}/auth.mjs "$@"
             ;;
           doctor)
             # Read-only: what each company credential resolves to (#864).

@@ -1,0 +1,26 @@
+{
+  "id": "elementalist.water-trident",
+  "name": "Water Trident",
+  "profession": "elementalist",
+  "attribute": "Water Magic",
+  "type": "Spell.",
+  "elite": true,
+  "campaign": "Prophecies",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 1,
+  "rechargeSeconds": 3,
+  "upkeep": false,
+  "description": "Send out a fast-moving Water Trident, striking target foe and up to 2 adjacent foes for 10...74...90 cold damage if it hits. If it hits a moving foe, that foe is knocked down.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Elementalist/447-Water_Trident",
+    "fetchedAt": "2026-10-27T21:01:18.912Z"
+  },
+  "unmapped": {}
+}

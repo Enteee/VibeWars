@@ -3,6 +3,7 @@ import {
   getSkill,
   getWeapon,
   type ChainRole,
+  type CreatureLook,
   type OffhandId,
   type ProfessionId,
   type SkillType,
@@ -35,6 +36,12 @@ export const SKILL_TYPE_NAME: Readonly<Record<SkillType, string>> = {
   glyph: "Glyph",
   chant: "Chant",
   "weapon-spell": "Weapon Spell",
+  "nature-ritual": "Nature Ritual",
+  "binding-ritual": "Binding Ritual",
+  ward: "Ward",
+  well: "Well",
+  trap: "Trap",
+  "pet-attack": "Pet Attack",
   skill: "Skill",
 };
 
@@ -57,6 +64,22 @@ const PROFESSION_ICON: Readonly<Record<ProfessionId, string>> = {
 
 export function professionIcon(profession: ProfessionId): string {
   return PROFESSION_ICON[profession];
+}
+
+const CREATURE_ICON: Readonly<Record<CreatureLook, string>> = {
+  beast: iconUrl("creature", "beast"),
+  "bone-minion": iconUrl("creature", "bone-minion"),
+  "bone-horror": iconUrl("creature", "bone-horror"),
+  spirit: iconUrl("creature", "spirit"),
+  // Until the priest's own glyph is drawn (#1186): a spirit's.
+  priest: iconUrl("creature", "spirit"),
+  // Until the Guild Lord's own glyph is drawn (#1222): a Ranger's, for its bow.
+  "guild-lord": iconUrl("profession", "ranger"),
+};
+
+/** The kind glyph on a creature's plate in the arena (#1162), drawn in ink and tinted there. */
+export function creatureIcon(look: CreatureLook): string {
+  return CREATURE_ICON[look];
 }
 
 const WEAPON_ICON: Readonly<Record<WeaponId, string>> = {

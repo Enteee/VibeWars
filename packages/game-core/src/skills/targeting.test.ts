@@ -5,6 +5,7 @@ import { vec2, type Vec2 } from "../vec2.js";
 import { getSkill } from "./catalog.js";
 import { resolveTargets, type TargetCandidate, type TargetSelection } from "./targeting.js";
 import { makeCombatant } from "./testing.js";
+import type { Creature } from "../match/simulation.js";
 import type { AreaRule, Combatant, Skill } from "./types.js";
 
 const SPLASH: AreaRule = {
@@ -24,7 +25,7 @@ function withArea(area: AreaRule | undefined): Skill {
 }
 
 function at(id: string, team: number, position: Vec2, dead = false): TargetCandidate {
-  return { combatant: makeCombatant({ id, team, dead }), position };
+  return { combatant: makeCombatant({ id, team, dead }), position, creature: undefined };
 }
 
 const caster = at("caster", 0, vec2(0, 0));
@@ -109,6 +110,59 @@ describe("resolveTargets", () => {
 
   it("with a target origin and no primary, hits nobody", () => {
     expect(select(SPLASH, [at("x", 1, vec2(300, 0))], { primary: undefined })).toEqual([]);
+  });
+
+  it("with a party area: the caster, then every living team-mate by distance, however far or walled off (#1013)", () => {
+    const wall = segment(vec2(500, -100), vec2(500, 100));
+    const party = select(
+      { origin: "party" },
+      [
+        at("far", 0, vec2(5000, 0)),
+        at("walled", 0, vec2(600, 0)),
+        at("b", 0, vec2(0, 100)),
+        at("a", 0, vec2(100, 0)),
+        at("dead", 0, vec2(10, 0), true),
+        at("foe", 1, vec2(20, 0)),
+      ],
+      { losBlockers: [wall] },
+    );
+    expect(party).toEqual(["caster", "a", "b", "walled", "far"]);
+    // Alone on its team: only the caster.
+    expect(select({ origin: "party" }, [at("foe", 1, vec2(20, 0))])).toEqual(["caster"]);
+  });
+
+  it("leaves creatures out of a party area: no spirit, minion or pet is a party member (#1013)", () => {
+    const creature = (id: string, kind: Creature["kind"]): TargetCandidate => ({
+      ...at(id, 0, vec2(10, 0)),
+      creature: {
+        ownerId: "caster",
+        kind,
+        look: kind === "pet" ? "beast" : kind === "minion" ? "bone-minion" : "spirit",
+        name: id,
+        expiresInSeconds: Infinity,
+        ageSeconds: 0,
+        summonedAtTick: 0,
+        skillId: "test.creature",
+        aura: undefined,
+        onDeath: "vanish",
+        ownerDisableSeconds: 0,
+        companionSkillId: undefined,
+        mode: "guard",
+      },
+    });
+    const wall = segment(vec2(500, -100), vec2(500, 100));
+    expect(
+      select(
+        { origin: "party" },
+        [
+          creature("spirit", "spirit"),
+          creature("minion", "minion"),
+          creature("pet", "pet"),
+          at("walled", 0, vec2(5000, 0)),
+        ],
+        { losBlockers: [wall] },
+      ),
+    ).toEqual(["caster", "walled"]);
   });
 
   it("gives the same answer however the candidates are ordered", () => {

@@ -28,6 +28,13 @@
  *                    decides whether it is on loopback
  *   --timeout <s>    how long a join may take before it counts as failed
  *                    (default 45, past the client's own timeout)
+ *   --turn <link>    a TURN relay (#972) for both sides, as an invite link
+ *                    (`…#turn=…`) or its JSON: each page opens it as an
+ *                    invite link and presses Use
+ *   --relay-only     force `iceTransportPolicy: "relay"` on every peer
+ *                    connection, so a join succeeds only through the relay
+ *                    and `peers` shows `relay` candidates alone. A seam in
+ *                    this script only; the app never sets it
  *
  * `firefox-private` runs the joiner with the prefs a Firefox private window
  * sets: strict Enhanced Tracking Protection. Every Firefox context keeps
@@ -71,9 +78,43 @@ const { values: options } = parseArgs({
     pairs: { type: "string", default: PAIRS.join(",") },
     url: { type: "string" },
     timeout: { type: "string", default: "45" },
+    turn: { type: "string" },
+    "relay-only": { type: "boolean", default: false },
   },
 });
 const TIMEOUT_MS = Number(options.timeout) * 1000;
+const RELAY_ONLY = options["relay-only"];
+const TURN = options.turn === undefined ? undefined : turnConfig(options.turn);
+if (RELAY_ONLY && TURN === undefined) {
+  throw new Error("--relay-only needs --turn: with no relay, nothing could connect");
+}
+
+/**
+ * The relay config in `--turn`: an invite link's `#turn=<base64url(JSON)>`,
+ * or the JSON itself. The app validates it again when it loads it.
+ *
+ * @param {string} value
+ * @returns {{ urls: string[], username: string, credential: string }}
+ */
+function turnConfig(value) {
+  const encoded = /[#&]turn=([A-Za-z0-9_-]+)/.exec(value)?.[1];
+  const json = encoded === undefined ? value : Buffer.from(encoded, "base64url").toString("utf8");
+  /** @type {unknown} */
+  const parsed = JSON.parse(json);
+  const config = /** @type {Record<string, unknown>} */ (parsed);
+  if (
+    !Array.isArray(config.urls) ||
+    typeof config.username !== "string" ||
+    typeof config.credential !== "string"
+  ) {
+    throw new Error("--turn is not a relay: it needs urls, username and credential");
+  }
+  return {
+    urls: config.urls.map(String),
+    username: config.username,
+    credential: config.credential,
+  };
+}
 
 /**
  * Firefox's own defaults for WebRTC, which Playwright's Firefox changes
@@ -221,40 +262,54 @@ async function openSide(kind, url) {
   });
   // Every peer connection the page makes, its states and the types of
   // the candidates it gathered.
-  await page.addInitScript(() => {
-    /** @type {{ ice: string, connection: string, candidates: string[] }[]} */
-    const seen = [];
-    Object.assign(window, { p2pSmokePeers: seen });
-    const Original = RTCPeerConnection;
-    class Watched extends Original {
-      /** @param {RTCConfiguration} [config] */
-      constructor(config) {
-        super(config);
-        const entry = { ice: "new", connection: "new", candidates: /** @type {string[]} */ ([]) };
-        seen.push(entry);
-        this.addEventListener("iceconnectionstatechange", () => {
-          entry.ice = this.iceConnectionState;
-        });
-        this.addEventListener("connectionstatechange", () => {
-          entry.connection = this.connectionState;
-        });
-        this.addEventListener("icecandidate", (event) => {
-          const candidate = event.candidate?.candidate;
-          if (candidate === undefined || candidate === "") {
-            return;
-          }
-          const type = / typ (\w+)/.exec(candidate)?.[1] ?? "?";
-          const address = candidate.split(" ")[4] ?? "";
-          const label = type === "host" && address.endsWith(".local") ? "host(mdns)" : type;
-          if (!entry.candidates.includes(label)) {
-            entry.candidates.push(label);
-          }
-        });
+  await page.addInitScript(
+    ({ relayOnly }) => {
+      /** @type {{ ice: string, connection: string, candidates: string[] }[]} */
+      const seen = [];
+      Object.assign(window, { p2pSmokePeers: seen });
+      const Original = RTCPeerConnection;
+      class Watched extends Original {
+        /** @param {RTCConfiguration} [config] */
+        constructor(config) {
+          super(relayOnly ? { ...config, iceTransportPolicy: "relay" } : config);
+          const entry = { ice: "new", connection: "new", candidates: /** @type {string[]} */ ([]) };
+          seen.push(entry);
+          this.addEventListener("iceconnectionstatechange", () => {
+            entry.ice = this.iceConnectionState;
+          });
+          this.addEventListener("connectionstatechange", () => {
+            entry.connection = this.connectionState;
+          });
+          this.addEventListener("icecandidate", (event) => {
+            const candidate = event.candidate?.candidate;
+            if (candidate === undefined || candidate === "") {
+              return;
+            }
+            const type = / typ (\w+)/.exec(candidate)?.[1] ?? "?";
+            const address = candidate.split(" ")[4] ?? "";
+            const label = type === "host" && address.endsWith(".local") ? "host(mdns)" : type;
+            if (!entry.candidates.includes(label)) {
+              entry.candidates.push(label);
+            }
+          });
+        }
       }
-    }
-    Object.assign(window, { RTCPeerConnection: Watched });
-  });
-  await page.goto(url);
+      Object.assign(window, { RTCPeerConnection: Watched });
+    },
+    { relayOnly: RELAY_ONLY },
+  );
+  if (TURN === undefined) {
+    await page.goto(url);
+  } else {
+    // As a player takes a relay: its invite link, then Use. A build on a
+    // sub-path keeps it for the visit only, so nothing could be seeded.
+    const fragment = Buffer.from(JSON.stringify(TURN)).toString("base64url");
+    await page.goto(`${url}#turn=${fragment}`);
+    await page
+      .getByRole("dialog", { name: "Relay link" })
+      .getByRole("button", { name: "Use" })
+      .click();
+  }
   await page.locator(".screen-menu").waitFor();
   return { page, watch, close: () => context.close() };
 }

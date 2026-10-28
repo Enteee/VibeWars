@@ -1,0 +1,26 @@
+{
+  "id": "ranger.comfort-animal",
+  "name": "Comfort Animal",
+  "profession": "ranger",
+  "attribute": "Beast Mastery",
+  "type": "Skill.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 10
+  },
+  "overcast": 0,
+  "activationSeconds": 1,
+  "rechargeSeconds": 1,
+  "upkeep": false,
+  "description": "You heal your animal companion for 20...87...104 Health. If your companion is dead, it is resurrected with 10...48...58% Health.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Ranger/81-Comfort_Animal",
+    "fetchedAt": "2026-10-28T05:15:50.803Z"
+  },
+  "unmapped": {}
+}

@@ -113,6 +113,12 @@ describe("effectiveRank", () => {
     expect(MAX_EFFECTIVE_RANK).toBeGreaterThan(MAX_ATTRIBUTE_RANK);
   });
 
+  it("caps at 16: 12 bought, a superior rune's 3 and the headgear's 1 (#1140)", () => {
+    expect(MAX_EFFECTIVE_RANK).toBe(16);
+    expect(effectiveRank(MAX_ATTRIBUTE_RANK, [{ delta: 3 }, { delta: 1 }])).toBe(16);
+    expect(effectiveRank(MAX_ATTRIBUTE_RANK, [{ delta: 3 }, { delta: 1 }, { delta: 1 }])).toBe(16);
+  });
+
   it("still refuses to go negative, however heavy the penalty", () => {
     expect(effectiveRank(2, [{ delta: -50 }])).toBe(0);
   });

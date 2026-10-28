@@ -1,0 +1,26 @@
+{
+  "id": "paragon.barbed-spear",
+  "name": "Barbed Spear",
+  "profession": "paragon",
+  "attribute": "Spear Mastery",
+  "type": "Spear attack.",
+  "elite": false,
+  "campaign": "Nightfall",
+  "cost": {
+    "kind": "adrenaline",
+    "amount": 2
+  },
+  "overcast": 0,
+  "activationSeconds": 0,
+  "rechargeSeconds": 0,
+  "upkeep": false,
+  "description": "If this attack hits, your target begins Bleeding for 5...17...20 seconds.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Paragon/1117-Barbed_Spear",
+    "fetchedAt": "2026-10-27T22:12:25.081Z"
+  },
+  "unmapped": {}
+}

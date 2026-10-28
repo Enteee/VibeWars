@@ -4,14 +4,15 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
-import { circleIntersectsSegment, hasLineOfSight } from "@vibewars/game-core";
+import { MATCH_MODES, circleIntersectsSegment, hasLineOfSight } from "@vibewars/game-core";
 
 import { allWallSegments } from "./geometry.js";
-import { MapValidationError, validateMapData, type Wall } from "./schema.js";
+import { MapValidationError, mapDataSchema, validateMapData, type Wall } from "./schema.js";
 
 const validMap = {
   id: "arena-test",
   name: "Arena Test",
+  mode: "annihilation",
   width: 100,
   height: 100,
   walls: [
@@ -26,6 +27,7 @@ const validMap = {
     },
   ],
   spawnPoints: [{ team: 0, position: { x: 1, y: 1 } }],
+  objectives: [],
 };
 
 describe("validateMapData", () => {
@@ -41,6 +43,16 @@ describe("validateMapData", () => {
 
   it("rejects an empty name", () => {
     expect(() => validateMapData({ ...validMap, name: "" })).toThrow(MapValidationError);
+  });
+
+  it("refuses a map without a mode, or with one no match plays (#476)", () => {
+    const { mode: _mode, ...modeless } = validMap;
+    expect(() => validateMapData(modeless)).toThrow(MapValidationError);
+    expect(() => validateMapData({ ...validMap, mode: "crag" })).toThrow(MapValidationError);
+  });
+
+  it("knows exactly game-core's modes", () => {
+    expect([...mapDataSchema.shape.mode.options].sort()).toEqual(Object.keys(MATCH_MODES).sort());
   });
 
   it("rejects non-positive dimensions", () => {
@@ -270,5 +282,140 @@ describe("every map's walls", () => {
         });
       });
     }
+  });
+});
+
+describe("resurrection shrines (#1186)", () => {
+  const priestMap = {
+    ...validMap,
+    mode: "priest-annihilation",
+    walls: [{ kind: "rect", x: 45, y: 0, width: 10, height: 40 }],
+    spawnPoints: [
+      { team: 0, position: { x: 20, y: 50 } },
+      { team: 1, position: { x: 80, y: 50 } },
+    ],
+    objectives: [
+      { kind: "resurrection-shrine", team: 0, position: { x: 20, y: 80 } },
+      { kind: "resurrection-shrine", team: 1, position: { x: 80, y: 20 } },
+    ],
+  };
+  const shrine = (team: number, x: number, y: number) => ({
+    kind: "resurrection-shrine",
+    team,
+    position: { x, y },
+  });
+
+  it("accepts one shrine per spawning team, clear of the walls", () => {
+    expect(validateMapData(priestMap).objectives).toHaveLength(2);
+  });
+
+  it("refuses objectives missing altogether", () => {
+    const { objectives: _objectives, ...without } = validMap;
+    expect(() => validateMapData(without)).toThrow(MapValidationError);
+  });
+
+  it("refuses a team with no shrine, or two", () => {
+    expect(() => validateMapData({ ...priestMap, objectives: [shrine(0, 20, 80)] })).toThrow(
+      /team 1 has 0/,
+    );
+    expect(() =>
+      validateMapData({
+        ...priestMap,
+        objectives: [...priestMap.objectives, shrine(1, 80, 80)],
+      }),
+    ).toThrow(/team 1 has 2/);
+  });
+
+  it("refuses a shrine off the map, against a wall, or of a team with no spawns", () => {
+    for (const bad of [shrine(1, 99, 20), shrine(1, 50, 20), shrine(2, 80, 80)]) {
+      expect(() =>
+        validateMapData({ ...priestMap, objectives: [shrine(0, 20, 80), shrine(1, 80, 20), bad] }),
+      ).toThrow(MapValidationError);
+    }
+    expect(() =>
+      validateMapData({ ...priestMap, objectives: [shrine(0, 20, 80), shrine(1, 50, 20)] }),
+    ).toThrow(/a body clear of every wall/);
+  });
+
+  it("refuses a shrine on a map of any other mode", () => {
+    expect(() => validateMapData({ ...validMap, objectives: [shrine(0, 50, 50)] })).toThrow(
+      /annihilation map has no resurrection shrine/,
+    );
+  });
+});
+
+describe("guild battle maps (#1222)", () => {
+  const objective = (kind: string, team: number, x: number, y: number) => ({
+    kind,
+    team,
+    position: { x, y },
+  });
+  const guildMap = {
+    ...validMap,
+    mode: "guild-battle",
+    walls: [{ kind: "rect", x: 45, y: 0, width: 10, height: 40 }],
+    spawnPoints: [
+      { team: 0, position: { x: 20, y: 50 } },
+      { team: 1, position: { x: 80, y: 50 } },
+    ],
+    objectives: [
+      objective("resurrection-shrine", 0, 20, 80),
+      objective("resurrection-shrine", 1, 80, 20),
+      objective("guild-lord", 0, 20, 20),
+      objective("guild-lord", 1, 80, 80),
+    ],
+  };
+
+  it("accepts one shrine and one Guild Lord per spawning team", () => {
+    expect(validateMapData(guildMap).objectives).toHaveLength(4);
+  });
+
+  it("refuses a team with no Guild Lord, or two", () => {
+    expect(() =>
+      validateMapData({
+        ...guildMap,
+        objectives: guildMap.objectives.filter(
+          (candidate) => !(candidate.kind === "guild-lord" && candidate.team === 1),
+        ),
+      }),
+    ).toThrow(/team 1 has 0 Guild Lords/);
+    expect(() =>
+      validateMapData({
+        ...guildMap,
+        objectives: [...guildMap.objectives, objective("guild-lord", 0, 30, 70)],
+      }),
+    ).toThrow(/team 0 has 2 Guild Lords/);
+  });
+
+  it("refuses a team with no shrine", () => {
+    expect(() =>
+      validateMapData({
+        ...guildMap,
+        objectives: guildMap.objectives.filter(
+          (candidate) => !(candidate.kind === "resurrection-shrine" && candidate.team === 0),
+        ),
+      }),
+    ).toThrow(/team 0 has 0 resurrection shrines/);
+  });
+
+  it("refuses a Guild Lord against a wall", () => {
+    expect(() =>
+      validateMapData({
+        ...guildMap,
+        objectives: [...guildMap.objectives.slice(0, 3), objective("guild-lord", 1, 50, 20)],
+      }),
+    ).toThrow(/a body clear of every wall/);
+  });
+
+  it("refuses a Guild Lord on a map of any other mode", () => {
+    expect(() =>
+      validateMapData({
+        ...guildMap,
+        mode: "priest-annihilation",
+      }),
+    ).toThrow(/priest-annihilation map has no Guild Lord/);
+    expect(() =>
+      validateMapData({ ...validMap, objectives: [objective("guild-lord", 0, 50, 50)] }),
+    ).toThrow(/annihilation map has no Guild Lord/);
   });
 });

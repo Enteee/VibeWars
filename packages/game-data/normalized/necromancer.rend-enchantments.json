@@ -1,0 +1,26 @@
+{
+  "id": "necromancer.rend-enchantments",
+  "name": "Rend Enchantments",
+  "profession": "necromancer",
+  "attribute": "Curses",
+  "type": "Spell.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 2,
+  "rechargeSeconds": 20,
+  "upkeep": false,
+  "description": "Remove 5...8...9 enchantments from target foe. For each Monk Enchantment removed, you lose 55...31...25 damage.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Necromancer/268-Rend_Enchantments",
+    "fetchedAt": "2026-10-27T16:59:48.259Z"
+  },
+  "unmapped": {}
+}

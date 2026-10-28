@@ -1,6 +1,8 @@
-import { formatScalingRange, type SkillDescription } from "@vibewars/game-core";
+import { formatScalingRange, getAttribute, type SkillDescription } from "@vibewars/game-core";
+import type { CorpusSkill } from "@vibewars/game-data/corpus";
 
 import { skillIconHtml } from "./icons.js";
+import { corpusCastText, corpusCostText, corpusRechargeText } from "./skill-library.js";
 
 /**
  * The hover tooltip for a skill box.
@@ -13,6 +15,8 @@ import { skillIconHtml } from "./icons.js";
 
 export interface SkillTooltip {
   show(anchor: HTMLElement, description: SkillDescription): void;
+  /** A GW1 skill not in the game yet (#1220): GW1's own fields. */
+  showCorpus(anchor: HTMLElement, skill: CorpusSkill): void;
   hide(): void;
   dispose(): void;
 }
@@ -119,13 +123,59 @@ export function renderSkillDescription(
 }
 
 /**
- * Where the tooltip goes. `beside` the anchor suits a list; `above` suits
- * a skill bar at the bottom of the screen, which it must never cover (#485).
+ * A GW1 skill not in the game yet (#1220) into `node`, as its library
+ * card shows it on hover: its name, GW1's type, its attribute, GW1's text
+ * as is, and its cost, cast and recharge. Nothing in it is ours to scale.
  */
-export type SkillTooltipPlacement = "beside" | "above";
+export function renderCorpusDescription(node: HTMLElement, skill: CorpusSkill): void {
+  node.replaceChildren();
+  const header = document.createElement("div");
+  header.className = "tip-header";
+  header.insertAdjacentHTML("beforeend", skillIconHtml("", TIP_ICON_PX));
+  const heading = document.createElement("div");
+  const title = document.createElement("div");
+  title.className = "tip-title";
+  title.textContent = skill.name;
+  const type = document.createElement("div");
+  type.className = "tip-type";
+  type.textContent = `${skill.elite ? "Elite " : ""}${skill.typeText}. Not in the game yet.`;
+  heading.append(title, type);
+  header.appendChild(heading);
+  node.appendChild(header);
+
+  const attribute = document.createElement("div");
+  attribute.className = "tip-attribute";
+  attribute.textContent =
+    skill.attributeId === undefined
+      ? "No Attribute"
+      : (getAttribute(skill.attributeId)?.name ?? skill.attributeId);
+  node.appendChild(attribute);
+
+  const text = document.createElement("div");
+  text.className = "tip-effects";
+  const line = document.createElement("div");
+  line.className = "tip-effect";
+  line.textContent = skill.description;
+  text.appendChild(line);
+  node.appendChild(text);
+
+  const stats = document.createElement("div");
+  stats.className = "tip-stats";
+  row(stats, "cost", corpusCostText(skill));
+  row(stats, "cast", corpusCastText(skill));
+  row(stats, "recharge", corpusRechargeText(skill));
+  node.appendChild(stats);
+}
 
 /**
- * Place a tooltip `node` beside or above its anchor, nudged back inside
+ * Where the tooltip goes. `beside` the anchor suits a list; `above` suits
+ * a skill bar at the bottom of the screen, which it must never cover (#485);
+ * `below` suits the target frame at the top (#1042).
+ */
+export type SkillTooltipPlacement = "beside" | "above" | "below";
+
+/**
+ * Place a tooltip `node` beside, above or below its anchor, nudged back inside
  * the viewport, and show it.
  *
  * Positioned in viewport coordinates against `position: fixed`, so a
@@ -147,6 +197,9 @@ export function placeTip(
   if (placement === "above") {
     left = box.left + box.width / 2 - tip.width / 2;
     top = box.top - tip.height - margin;
+  } else if (placement === "below") {
+    left = box.left + box.width / 2 - tip.width / 2;
+    top = box.bottom + margin;
   } else {
     left = box.left - tip.width - margin;
     if (left < margin) {
@@ -179,6 +232,11 @@ export function createSkillTooltip(placement: SkillTooltipPlacement = "beside"):
   return {
     show(anchor, description) {
       render(description);
+      placeTip(node, anchor, placement);
+    },
+    showCorpus(anchor, skill) {
+      node.classList.toggle("is-elite", skill.elite);
+      renderCorpusDescription(node, skill);
       placeTip(node, anchor, placement);
     },
     hide() {

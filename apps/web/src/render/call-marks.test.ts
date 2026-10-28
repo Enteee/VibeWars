@@ -3,13 +3,14 @@ import { describe, expect, it } from "vitest";
 import { PING_SECONDS } from "@vibewars/game-session";
 
 import { NAME_LABEL_HEIGHT, nameLabelBottom, type RenderableActor } from "./arena-snapshot.js";
-import { callChevron, pingRing, watchBrackets } from "./call-marks.js";
+import { callChevron, pingRing } from "./call-marks.js";
 
 const CENTRE = { x: 100, y: 100 };
 const R = 14;
 const CALLED: RenderableActor = {
   id: "foe",
   name: "foe",
+  bot: false,
   position: CENTRE,
   facing: 0,
   weaponId: undefined,
@@ -18,14 +19,21 @@ const CALLED: RenderableActor = {
   attackCast: undefined,
   offhandId: undefined,
   profession: undefined,
+  creatureLook: undefined,
   radius: R,
   team: "enemy",
   health: 500,
   maxHealth: 500,
   dead: false,
+  exploited: false,
   knockedDown: false,
   castProgress: undefined,
+  castType: undefined,
   statuses: [],
+  enchanted: false,
+  hexed: false,
+  invulnerable: false,
+  conditionCues: [],
 };
 
 describe("call marks (#443)", () => {
@@ -49,20 +57,5 @@ describe("call marks (#443)", () => {
     expect(half.alpha).toBeCloseTo(0.5, 9);
     expect(done.alpha).toBe(0);
     expect(pingRing(0.1, true)).toEqual(pingRing(PING_SECONDS, true));
-  });
-
-  it("brackets the watched ally at four corners, outside the target ring, open at the sides", () => {
-    const brackets = watchBrackets(CENTRE, R);
-    expect(brackets).toHaveLength(4);
-    for (const [a, corner, b] of brackets) {
-      // Outside the target ring's r + 10.
-      expect(Math.abs(corner.x - CENTRE.x)).toBeGreaterThan(R + 10);
-      expect(Math.abs(corner.y - CENTRE.y)).toBeGreaterThan(R + 10);
-      // Each arm runs along one axis from the corner, toward the side's middle.
-      expect(a.y).toBe(corner.y);
-      expect(b.x).toBe(corner.x);
-      expect(Math.abs(a.x - CENTRE.x)).toBeLessThan(Math.abs(corner.x - CENTRE.x));
-      expect(Math.abs(b.y - CENTRE.y)).toBeLessThan(Math.abs(corner.y - CENTRE.y));
-    }
   });
 });

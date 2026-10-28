@@ -6,6 +6,7 @@ import type { CombatMessage } from "@vibewars/game-session";
 
 import { AttackClock } from "../render/attack-clock.js";
 import { setProfessions, setRank, setSkill, newCharacter } from "../ui/build-editor.js";
+import { setWeapon } from "../ui/gear-editor.js";
 import { slotAffordable } from "../ui/skill-slot-state.js";
 import { TICK_SECONDS, NO_PROFESSIONS, createLocalConnection } from "./local-connection.js";
 import { SELF_ID, playerArming, setupScenario } from "./scenario-setup.js";
@@ -255,6 +256,32 @@ describe("createLocalConnection", () => {
     ]);
   });
 
+  it("swaps weapon sets on the intent, and weaponSets follows, a rearm included (#489)", () => {
+    const { connection } = targetDummy(setWeapon(pyro(), 1, "recurve-bow"));
+    const weapon = (): string | undefined =>
+      connection.getSnapshot().players.find((player) => player.sessionId === SELF_ID)?.weaponId;
+    expect(connection.weaponSets).toMatchObject({ active: 0, pending: null });
+    expect(connection.weaponSets?.sets[1]).toEqual({ weaponId: "recurve-bow", offhandId: null });
+
+    connection.sendIntent({ kind: "weapon-set", set: 1 });
+    expect(connection.weaponSets?.active).toBe(1);
+    expect(weapon()).toBe("recurve-bow");
+
+    // An empty set: nothing happens, and nothing is said.
+    let refused = 0;
+    connection.onCastRefused(() => {
+      refused += 1;
+    });
+    connection.sendIntent({ kind: "weapon-set", set: 2 });
+    expect(connection.weaponSets?.active).toBe(1);
+    expect(refused).toBe(0);
+
+    const arming = playerArming(pyro());
+    connection.rearm(arming.loadout, arming.skillBar);
+    expect(connection.weaponSets).toMatchObject({ active: 0, pending: null });
+    expect(connection.weaponSets?.sets[1]).toBeNull();
+  });
+
   it("describes the bar at the ranks it plays, rearmed or not (#485)", () => {
     const { connection } = targetDummy();
     expect(connection.ranks.get("elementalist.fire-magic")).toBe(9);
@@ -356,5 +383,47 @@ describe("calls in the Training Ground (#443)", () => {
     connection.sendCall({ kind: "target", targetId: "dummy" });
     connection.sendCall({ kind: "ping", x: 100, y: 100 });
     expect(connection.getCalls()).toEqual({ target: null, pings: [] });
+  });
+});
+
+describe("a pet's armed attack (#1167)", () => {
+  it("rides the wolf's creature from Brutal Strike with no foe until it lapses, 10 s on", () => {
+    let character = setProfessions(newCharacter("c1"), "ranger", undefined);
+    character = setRank(character, "ranger.beast-mastery", 12);
+    character = setSkill(character, 0, "ranger.charm-animal");
+    character = setSkill(character, 1, "ranger.brutal-strike");
+    const scenario = getTrainingScenario("target-dummy");
+    if (scenario === undefined) {
+      throw new Error("the target-dummy scenario is gone");
+    }
+    const setup = setupScenario(scenario, character);
+    const connection = createLocalConnection({
+      simulation: setup.simulation,
+      selfId: SELF_ID,
+      map: setup.map,
+      nameOf: (id) => id,
+      professionsOf: () => NO_PROFESSIONS,
+    });
+    const armed = () =>
+      connection.getSnapshot().players.find((p) => p.creature?.ownerId === SELF_ID)?.creature
+        ?.armedAttack;
+    expect(armed()).toBeNull();
+
+    connection.sendIntent({ kind: "use-skill", slot: 1 });
+    connection.advance(TICK_SECONDS);
+    const shown = armed();
+    expect(shown?.skillId).toBe("ranger.brutal-strike");
+    expect(
+      Math.abs((shown?.endsAt ?? 0) - connection.getSnapshot().elapsedSeconds - 10),
+    ).toBeLessThan(0.11);
+
+    for (let i = 0; i < Math.round(9 / TICK_SECONDS); i += 1) {
+      connection.advance(TICK_SECONDS);
+    }
+    expect(armed()?.skillId).toBe("ranger.brutal-strike");
+    for (let i = 0; i < Math.round(1.1 / TICK_SECONDS); i += 1) {
+      connection.advance(TICK_SECONDS);
+    }
+    expect(armed()).toBeNull();
   });
 });

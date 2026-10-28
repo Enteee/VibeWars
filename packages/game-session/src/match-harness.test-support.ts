@@ -7,7 +7,13 @@
  * Not a test file itself (vitest runs `*.test.ts` only), and left out of
  * the build.
  */
-import { DEFAULT_MATCH_RULES, segment, type MatchRules } from "@vibewars/game-core";
+import {
+  ANNIHILATION_MATCH_RULES,
+  STARTER_BUILDS,
+  segment,
+  type MatchRules,
+  type PlayerBuild,
+} from "@vibewars/game-core";
 import {
   PROTOCOL_VERSION,
   parsePeerRejoinChallenge,
@@ -44,6 +50,7 @@ export const ARENA: HostMap = {
     height: 1200,
     walls: [{ kind: "rect", x: 990, y: 900, width: 20, height: 200 }],
   },
+  mode: "annihilation",
   walls: [
     segment({ x: 990, y: 900 }, { x: 1010, y: 900 }),
     segment({ x: 1010, y: 900 }, { x: 1010, y: 1100 }),
@@ -57,6 +64,8 @@ export const ARENA: HostMap = {
     { team: 0, position: { x: 400, y: 600 } },
     { team: 1, position: { x: 700, y: 600 } },
   ],
+  shrines: [],
+  guildLords: [],
 };
 
 /** Let every message in flight land, and every message those send in turn. */
@@ -142,6 +151,7 @@ export interface TestMatch {
 
 export function startMatch(
   options: {
+    map?: HostMap;
     matchRules?: MatchRules;
     maxPlayers?: number;
     random?: () => number;
@@ -154,9 +164,9 @@ export function startMatch(
   let draws = 0;
   const host = createMatchHost({
     transport: hostTransport,
-    map: ARENA,
+    map: options.map ?? ARENA,
     seed: "test",
-    matchRules: options.matchRules ?? DEFAULT_MATCH_RULES,
+    matchRules: options.matchRules ?? ANNIHILATION_MATCH_RULES,
     // Reproducible, and different each draw.
     random: options.random ?? (() => ((draws += 1) * 0.6180339887) % 1),
     maxPlayers: options.maxPlayers ?? 8,
@@ -241,4 +251,27 @@ export function toJson(value: unknown): JsonValue {
     );
   }
   throw new Error(`not JSON: ${typeof value}`);
+}
+
+/** The starter build named `name` (#852), "Warrior/Monk" and so on. */
+export function starterBuild(name: string): PlayerBuild {
+  const build = STARTER_BUILDS.find((starter) => starter.name === name);
+  if (build === undefined) {
+    throw new Error(`no starter build ${name}`);
+  }
+  return build;
+}
+
+/** A hello that brings the starter build named `name`, so a test knows its bar. */
+export function helloAs(name: string): PeerHello {
+  return hello({ build: toJson(starterBuild(name)) });
+}
+
+/** Whether `skillIds` is the bar of one of the starter builds, as a player with no build gets. */
+export function isStarterBar(skillIds: readonly (string | null | undefined)[]): boolean {
+  return STARTER_BUILDS.some(
+    (build) =>
+      build.skillBar.length === skillIds.length &&
+      build.skillBar.every((id, slot) => id === skillIds[slot]),
+  );
 }

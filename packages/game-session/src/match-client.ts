@@ -9,9 +9,11 @@ import {
   parseChainMarks,
   parseRecharge,
   parseWireCalls,
+  parseWireTraps,
   parseWireCombatBatch,
   parseWireEnded,
   parseWireSkillBar,
+  parseWireWeaponSets,
   parseWireSnapshotPart,
   type AdrenalineMessage,
   type CastRefusedMessage,
@@ -25,10 +27,12 @@ import {
   type PeerRefuse,
   type PeerRejoinProof,
   type PeerWelcome,
-  type RechargeSlot,
+  type RechargeMessage,
   type WireCalls,
+  type WireTraps,
   type WireEnded,
   type WireSkillBar,
+  type WireWeaponSets,
   type WireSnapshot,
 } from "@vibewars/game-protocol";
 
@@ -105,7 +109,7 @@ export interface ConnectMatchOptions {
 
 /** The latest recharges, and the match time they were told at, to count down from. */
 interface Recharges {
-  readonly slots: readonly RechargeSlot[];
+  readonly message: RechargeMessage;
   readonly at: number;
 }
 
@@ -114,10 +118,13 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
   const unsubscribe: (() => void)[] = [];
   let welcomed: PeerWelcome | undefined;
   let skillBar: WireSkillBar | undefined;
+  let weaponSets: WireWeaponSets | undefined;
   let latest:
     { readonly wire: WireSnapshot; readonly players: readonly PlayerSnapshot[] } | undefined;
   let ended: WireEnded | undefined;
-  let recharges: Recharges = { slots: [], at: 0 };
+  /** The host's summary from any `ended`, a host leaving's included (#1057). */
+  let summary: WireEnded["summary"] | undefined;
+  let recharges: Recharges = { message: { slots: [], spent: [] }, at: 0 };
   /**
    * Your own adrenaline per slot as last sent (#463), with when its loss
    * was due, and the match time it came at (#828).
@@ -133,6 +140,8 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
   };
   /** Your team's calls as last sent, and the match time they came at (#443). */
   let calls: { readonly wire: WireCalls; readonly at: number } | undefined;
+  /** Your team's traps as last sent (#1105). */
+  let traps: WireTraps["traps"] = [];
   let lost = false;
   /** When the host's peer went, by `Date.now`, while waiting for it back. */
   let droppedAt: number | undefined;
@@ -236,7 +245,7 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
     }
   });
   fromHost("recharge", parseRecharge, (message) => {
-    recharges = { slots: message.slots, at: elapsed() };
+    recharges = { message, at: elapsed() };
   });
   fromHost("adrenaline", parseAdrenaline, (message) => {
     adrenaline = { message, at: elapsed() };
@@ -247,7 +256,11 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
   fromHost("calls", parseWireCalls, (message) => {
     calls = { wire: message, at: elapsed() };
   });
+  fromHost("traps", parseWireTraps, (message) => {
+    traps = message.traps;
+  });
   fromHost("ended", parseWireEnded, (message) => {
+    summary = message.summary;
     if (message.endReason === "host-left") {
       loseHost();
     } else {
@@ -325,11 +338,15 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
         return (welcomed ?? welcome).rejoinToken;
       },
       map: welcome.map,
+      timeLimitSeconds: welcome.timeLimitSeconds,
       get skillBar() {
         // The latest the host sent: it sends again when a cost changes (#637).
         return (skillBar ?? bar).slots;
       },
       ranks: new Map(Object.entries(bar.ranks)),
+      get weaponSets() {
+        return weaponSets;
+      },
       onConnectionChange(handler) {
         connectionHandlers.push(handler);
       },
@@ -351,8 +368,11 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
                 winningTeam: undefined,
                 endReason: undefined,
                 projectiles: [],
+                groundEffects: [],
+                traps,
+                summary,
               }
-            : matchSnapshot(latest.wire, latest.players, welcome.playerId);
+            : { ...matchSnapshot(latest.wire, latest.players, welcome.playerId), traps, summary };
         // An `ended` may land before the snapshot that says so.
         return ended === undefined
           ? snapshot
@@ -390,12 +410,14 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
         // Counted down on the match clock: no wall time crosses the wire.
         const passed = elapsed() - recharges.at;
         return bar.slots.map((_, slot) => {
-          const entry = recharges.slots.find((candidate) => candidate.slot === slot);
+          const entry = recharges.message.slots.find((candidate) => candidate.slot === slot);
+          const spent = recharges.message.spent.includes(slot);
           return entry === undefined
-            ? { remaining: 0, total: 0 }
+            ? { remaining: 0, total: 0, spent }
             : {
                 remaining: Math.max(0, entry.remainingSeconds - passed),
                 total: entry.totalSeconds,
+                spent,
               };
         });
       },
@@ -463,6 +485,9 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
     fromHost("skill-bar", parseWireSkillBar, (message) => {
       skillBar = message;
       ready();
+    });
+    fromHost("weapon-sets", parseWireWeaponSets, (message) => {
+      weaponSets = message;
     });
     fromHost("refuse", parsePeerRefuse, (refusal) => {
       // A rejoin turned away: the match is over, or the seat is gone.

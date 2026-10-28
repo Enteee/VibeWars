@@ -44,26 +44,39 @@ describe("status definitions", () => {
         def.healthPips !== 0 ||
         def.healthPipsPerEnchantment !== undefined ||
         def.preventsKnockdown ||
+        def.preventsSpells ||
+        def.unblockableBySource ||
         def.energyPips !== 0 ||
         def.armorModifier !== 0 ||
         def.armorWhileStill !== 0 ||
         def.healthPerSecondWhileMoving !== 0 ||
+        def.healthPerSecond !== 0 ||
+        def.healthPerSecondNearSpirit !== 0 ||
         def.armorReduction !== undefined ||
         def.moveSpeedMultiplier !== 1 ||
         def.attackMissChance !== 0 ||
         def.maxHealthLoss !== undefined ||
         def.healingMultiplier !== 1 ||
         def.weaponDamageMultiplier !== 1 ||
+        def.physicalDamageTakenBonus !== 0 ||
         def.attributeDelta !== 0 ||
         def.castTimeMultiplier !== 1 ||
         def.interruptsSpells ||
         def.attackDurationMultiplier !== 1 ||
         def.block !== undefined ||
+        def.maxDamageFractionPerHit !== undefined ||
+        def.reversesNextDamage !== undefined ||
+        def.extraStrikesPerHit !== 0 ||
         def.onAttackHit !== undefined ||
         def.triggers.length > 0 ||
         def.nextSpells !== undefined ||
         def.nextAttackSkill !== undefined ||
-        def.spellRechargeFaster !== 0;
+        def.spellRechargeFaster !== 0 ||
+        def.bindingRitualRechargeFaster !== 0 ||
+        def.criticalChanceBonus !== 0 ||
+        def.energyPerCritical !== 0 ||
+        def.damageReduction !== 0 ||
+        def.redirectsPhysicalDamage !== 0;
       expect(hasEffect, `${id} has no mechanical effect`).toBe(true);
     }
   });
@@ -105,6 +118,16 @@ describe("status definitions", () => {
       regeneration: 4,
       "weapon-of-warding": 4,
       "never-surrender": 4,
+      "healing-breeze": 8,
+      "shadow-refuge": 9,
+      recuperation: 3,
+      "well-of-suffering": -5,
+      "symbiotic-bond": 3,
+      "conjure-phantasm": -5,
+      "phantom-pain": -3,
+      "shrinking-armor": -3,
+      "crippling-anguish": -5,
+      "enduring-toxin": -4,
     });
   });
 
@@ -264,7 +287,7 @@ describe("StatusSet durationSeconds (#803)", () => {
   it("is the applied duration, and stays as the time runs down", () => {
     const set = new StatusSet();
     set.apply("bleeding", 10, "a");
-    set.advance(4);
+    set.advance(4, false);
     expect(set.get("bleeding")).toMatchObject({ remainingSeconds: 6, durationSeconds: 10 });
   });
 
@@ -272,7 +295,7 @@ describe("StatusSet durationSeconds (#803)", () => {
     const set = new StatusSet();
     set.apply("bleeding", 10, "a");
     set.apply("burning", 5, "a");
-    set.advance(4);
+    set.advance(4, false);
     set.apply("bleeding", 8, "b");
     expect(set.get("bleeding")).toMatchObject({ remainingSeconds: 8, durationSeconds: 8 });
     expect(order(set)).toEqual(["burning", "bleeding"]);
@@ -288,14 +311,14 @@ describe("StatusSet durationSeconds (#803)", () => {
   });
 
   it("is the caught duration, and a catch never leaves more time than length (#765)", () => {
-    const outbreak = { infected: new Set<string>() };
+    const outbreak = { infected: new Set<string>(), refused: new Set<string>() };
     const fresh = new StatusSet();
     fresh.catch("disease", 7, "a", outbreak);
     expect(fresh.get("disease")).toMatchObject({ remainingSeconds: 7, durationSeconds: 7 });
 
     const set = new StatusSet();
     set.apply("disease", 10, "a");
-    set.advance(6);
+    set.advance(6, false);
     set.catch("disease", 8, "b", outbreak);
     expect(set.get("disease")).toMatchObject({ remainingSeconds: 8, durationSeconds: 10 });
     set.catch("disease", 12, "b", outbreak);
@@ -314,7 +337,7 @@ describe("StatusSet stances, one at a time (#523)", () => {
   it("the same stance again restarts at its full duration, shorter or not", () => {
     const set = new StatusSet();
     set.apply("sprint", 13, "a");
-    set.advance(10);
+    set.advance(10, false);
     set.apply("sprint", 13, "a");
     expect(set.get("sprint")?.remainingSeconds).toBe(13);
     set.apply("sprint", 5, "a");
@@ -338,14 +361,14 @@ describe("StatusSet duration advance", () => {
   it("counts durations down", () => {
     const set = new StatusSet();
     set.apply("bleeding", 10, "a");
-    set.advance(3);
+    set.advance(3, false);
     expect(set.get("bleeding")?.remainingSeconds).toBeCloseTo(7, 10);
   });
 
   it("expires a status once its duration elapses and reports it", () => {
     const set = new StatusSet();
     set.apply("bleeding", 1, "a");
-    expect(set.advance(1.5)).toEqual(["bleeding"]);
+    expect(set.advance(1.5, false)).toEqual(["bleeding"]);
     expect(set.has("bleeding")).toBe(false);
   });
 
@@ -354,7 +377,7 @@ describe("StatusSet duration advance", () => {
     set.apply("bleeding", 1, "a");
     set.apply("burning", 1, "a");
     set.apply("poison", 10, "a");
-    const expired = set.advance(2);
+    const expired = set.advance(2, false);
     expect(expired.sort()).toEqual(["bleeding", "burning"]);
     expect(set.has("poison")).toBe(true);
   });
@@ -362,7 +385,7 @@ describe("StatusSet duration advance", () => {
   it("reports nothing when nothing expires", () => {
     const set = new StatusSet();
     set.apply("bleeding", 10, "a");
-    expect(set.advance(1)).toEqual([]);
+    expect(set.advance(1, false)).toEqual([]);
   });
 });
 
@@ -388,7 +411,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
 
   it("records a condition caught from an outbreak, once (#765)", () => {
     const set = new StatusSet();
-    const outbreak = { infected: new Set<string>() };
+    const outbreak = { infected: new Set<string>(), refused: new Set<string>() };
     set.catch("disease", 6, "a", outbreak);
     set.catch("disease", 9, "a", outbreak);
     expect(set.drainChanges()).toEqual([
@@ -396,7 +419,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
     ]);
   });
 
-  it("records every ending with its source", () => {
+  it("records every ending with its source, and only the duration running out as expired (#944)", () => {
     const set = new StatusSet();
     set.apply("parasitic-bond", 1, "expiry");
     set.apply("backfire", 10, "removed");
@@ -407,7 +430,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
     set.apply("fleeting-stability", 10, "knockdown");
     set.drainChanges();
 
-    set.advance(1);
+    set.advance(1, false);
     set.remove("backfire");
     set.removeByCategory("hex");
     for (let attack = 0; attack < 3; attack += 1) {
@@ -415,17 +438,36 @@ describe("StatusSet changes, for the triggers (#887)", () => {
     }
     set.countSpellStarted();
     set.countSpellStarted();
-    set.endOnBearerAttack();
+    set.endOnBearerAttack("melee");
     set.endOnKnockdownPrevented();
 
     expect(set.drainChanges()).toEqual([
-      { kind: "ended", id: "parasitic-bond", sourceId: "expiry" },
-      { kind: "ended", id: "backfire", sourceId: "removed" },
-      { kind: "ended", id: "malaise", sourceId: "by-category" },
-      { kind: "ended", id: "watch-yourself", sourceId: "attacked" },
-      { kind: "ended", id: "glyph-of-lesser-energy", sourceId: "spells" },
-      { kind: "ended", id: "weapon-of-warding", sourceId: "attacks" },
-      { kind: "ended", id: "fleeting-stability", sourceId: "knockdown" },
+      { kind: "ended", id: "parasitic-bond", sourceId: "expiry", expired: true },
+      { kind: "ended", id: "backfire", sourceId: "removed", expired: false },
+      { kind: "ended", id: "malaise", sourceId: "by-category", expired: false },
+      { kind: "ended", id: "watch-yourself", sourceId: "attacked", expired: false },
+      { kind: "ended", id: "glyph-of-lesser-energy", sourceId: "spells", expired: false },
+      { kind: "ended", id: "weapon-of-warding", sourceId: "attacks", expired: false },
+      { kind: "ended", id: "fleeting-stability", sourceId: "knockdown", expired: false },
+    ]);
+  });
+
+  it("takeNewest takes the newest of a category first, with the time each had left (#944)", () => {
+    const set = new StatusSet();
+    set.apply("bleeding", 10, "a");
+    set.apply("guardian", 10, "a");
+    set.apply("blind", 8, "a");
+    set.apply("poison", 6, "a");
+    set.advance(1, false);
+    set.drainChanges();
+    expect(set.takeNewest("condition", 2)).toEqual([
+      { id: "poison", remainingSeconds: 5 },
+      { id: "blind", remainingSeconds: 7 },
+    ]);
+    expect(set.active.map(({ id }) => id)).toEqual(["bleeding", "guardian"]);
+    expect(set.drainChanges()).toEqual([
+      { kind: "ended", id: "poison", sourceId: "a", expired: false },
+      { kind: "ended", id: "blind", sourceId: "a", expired: false },
     ]);
   });
 
@@ -441,6 +483,30 @@ describe("StatusSet changes, for the triggers (#887)", () => {
     expect(set.active).toEqual([]);
   });
 
+  it("ends what ends on a skill used, but what that skill spared (#999)", () => {
+    const set = new StatusSet();
+    set.apply("song-of-restoration", 10, "p");
+    set.apply("diversion", 6, "foe");
+    expect(set.endOnBearerUseSkill(new Set(["song-of-restoration"]))).toEqual(["diversion"]);
+    expect(set.has("song-of-restoration")).toBe(true);
+
+    set.apply("diversion", 6, "foe");
+    expect(set.endOnBearerUseSkill(new Set())).toEqual(["song-of-restoration", "diversion"]);
+    expect(set.active).toEqual([]);
+  });
+
+  it("ends Stand Your Ground! on any attack, Escape only on a melee one (#976)", () => {
+    const set = new StatusSet();
+    set.apply("stand-your-ground", 10, "p");
+    set.apply("escape", 7, "p");
+    expect(set.endOnBearerAttack("projectile")).toEqual(["stand-your-ground"]);
+    expect(set.has("escape")).toBe(true);
+
+    set.apply("stand-your-ground", 10, "p");
+    expect([...set.endOnBearerAttack("melee")].sort()).toEqual(["escape", "stand-your-ground"]);
+    expect(set.active).toEqual([]);
+  });
+
   it("ends every status on a death, each recorded with its source, in order (#940)", () => {
     const set = new StatusSet();
     set.apply("burning", 5, "a");
@@ -453,10 +519,10 @@ describe("StatusSet changes, for the triggers (#887)", () => {
 
     expect(set.active).toEqual([]);
     expect(set.drainChanges()).toEqual([
-      { kind: "ended", id: "burning", sourceId: "a" },
-      { kind: "ended", id: "parasitic-bond", sourceId: "b" },
-      { kind: "ended", id: "regeneration", sourceId: "c" },
-      { kind: "ended", id: "sprint", sourceId: "d" },
+      { kind: "ended", id: "burning", sourceId: "a", expired: false },
+      { kind: "ended", id: "parasitic-bond", sourceId: "b", expired: false },
+      { kind: "ended", id: "regeneration", sourceId: "c", expired: false },
+      { kind: "ended", id: "sprint", sourceId: "d", expired: false },
     ]);
   });
 
@@ -470,6 +536,16 @@ describe("StatusSet changes, for the triggers (#887)", () => {
   });
 
   it("records a hit and physical damage only while a status answers them (#935)", () => {
+    const parasite = {
+      statusId: "insidious-parasite",
+      sourceId: "a",
+      trigger: getStatusDefinition("insidious-parasite").triggers[0],
+    };
+    const mark = {
+      statusId: "mark-of-pain",
+      sourceId: "b",
+      trigger: getStatusDefinition("mark-of-pain").triggers[0],
+    };
     const set = new StatusSet();
     set.apply("backfire", 10, "a");
     set.drainChanges();
@@ -481,13 +557,65 @@ describe("StatusSet changes, for the triggers (#887)", () => {
     set.recordHit();
     set.recordPhysicalDamage();
     set.recordHit();
-    expect(set.drainChanges()).toEqual([{ kind: "hit" }, { kind: "hit" }]);
+    expect(set.drainChanges()).toEqual([
+      { kind: "hit", fired: [parasite] },
+      { kind: "hit", fired: [parasite] },
+    ]);
 
-    set.apply("mark-of-pain", 30, "a");
+    set.apply("mark-of-pain", 30, "b");
     set.drainChanges();
     set.recordPhysicalDamage();
     set.recordHit();
-    expect(set.drainChanges()).toEqual([{ kind: "took-physical-damage" }, { kind: "hit" }]);
+    expect(set.drainChanges()).toEqual([
+      { kind: "took-physical-damage", fired: [mark] },
+      { kind: "hit", fired: [parasite] },
+    ]);
+  });
+
+  it("a record keeps the triggers it was made with, though they end before the drain (#953)", () => {
+    const set = new StatusSet();
+    set.apply("mark-of-pain", 30, "b");
+    set.drainChanges();
+    set.recordPhysicalDamage();
+    set.endAll();
+    set.apply("mark-of-pain", 30, "c");
+    expect(set.drainChanges()).toEqual([
+      {
+        kind: "took-physical-damage",
+        fired: [
+          {
+            statusId: "mark-of-pain",
+            sourceId: "b",
+            trigger: getStatusDefinition("mark-of-pain").triggers[0],
+          },
+        ],
+      },
+      { kind: "ended", id: "mark-of-pain", sourceId: "b", expired: false },
+    ]);
+  });
+
+  it("records damage from a foe only while a status answers it, once per status until drained (#1022)", () => {
+    const vengeful = {
+      statusId: "vengeful-weapon",
+      sourceId: "rit",
+      trigger: getStatusDefinition("vengeful-weapon").triggers[0],
+    };
+    const set = new StatusSet();
+    set.recordDamageFromFoe("war");
+    expect(set.drainChanges()).toEqual([]);
+
+    set.apply("vengeful-weapon", 8, "rit");
+    set.drainChanges();
+    set.recordDamageFromFoe("war");
+    set.recordDamageFromFoe("ele");
+    expect(set.drainChanges()).toEqual([
+      { kind: "took-damage-from-foe", offenderId: "war", fired: [vengeful] },
+    ]);
+
+    set.recordDamageFromFoe("ele");
+    expect(set.drainChanges()).toEqual([
+      { kind: "took-damage-from-foe", offenderId: "ele", fired: [vengeful] },
+    ]);
   });
 });
 
@@ -590,13 +718,16 @@ describe("attack duration (ADR-0029)", () => {
     });
   }
 
-  it("is 1 with nothing on; Faintheartedness (#493) and Shadow of Fear (#918) are 50% slower, Heart of Fury 25% faster (#845), Frenzy 33% (#919)", () => {
+  it("is 1 with nothing on; Faintheartedness (#493) and Shadow of Fear (#918) are 50% slower, Heart of Fury and Weapon of Aggression (#975) 25% faster (#845), Frenzy (#919) and Lightning Reflexes (#976) 33%, Call of Haste (#1108) 25% faster", () => {
     expect(aggregateModifiers([]).attackDurationMultiplier).toBe(1);
     const multipliers: Partial<Record<StatusId, number>> = {
       faintheartedness: 1.5,
       "heart-of-fury": 0.75,
       "shadow-of-fear": 1.5,
       frenzy: 0.67,
+      "lightning-reflexes": 0.67,
+      "weapon-of-aggression": 0.75,
+      "call-of-haste": 0.75,
     };
     for (const id of ALL_STATUS_IDS) {
       const expected = multipliers[id] ?? 1;
@@ -645,5 +776,20 @@ describe("StatusSet.countIncomingAttack (#524)", () => {
     set.countIncomingAttack();
     set.apply("watch-yourself", 10, "w");
     expect(set.get("watch-yourself")?.attacksLeft).toBe(3);
+  });
+});
+
+describe("countHit (#939)", () => {
+  it("counts a hit with any weapon for a status that names none (#1022)", () => {
+    const set = new StatusSet();
+    set.apply("splinter-weapon", 20, "rit");
+    set.apply("sand-shards", 20, "dervish");
+    expect(set.countHit("sword")).toEqual([]);
+    expect(set.countHit("flatbow")).toEqual([]);
+    expect(set.countHit("spear")).toEqual([]);
+    expect(set.get("splinter-weapon")?.hitsLeft).toBe(1);
+    expect(set.get("sand-shards")?.hitsLeft).toBe(4);
+    expect(set.countHit("sword")).toEqual(["splinter-weapon"]);
+    expect(set.has("splinter-weapon")).toBe(false);
   });
 });

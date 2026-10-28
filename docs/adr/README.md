@@ -9,7 +9,7 @@ rewriting history.
 | [0001](0001-architecture.md)                  | Overall architecture; amended by 0022                           |
 | [0002](0002-networking.md)                    | Networking (Colyseus); superseded by 0022                       |
 | [0003](0003-simulation.md)                    | Simulation (fixed tick, determinism)                            |
-| [0004](0004-skill-data.md)                    | Skill data representation and acquisition                       |
+| [0004](0004-skill-data.md)                    | Skill data representation and acquisition; amended by 0038      |
 | [0005](0005-persistence.md)                   | Browser persistence                                             |
 | [0006](0006-map-format.md)                    | Map representation                                              |
 | [0007](0007-development-environment.md)       | Development environment (devenv)                                |
@@ -30,6 +30,7 @@ rewriting history.
 | [0022](0022-peer-to-peer-networking.md)       | Peer-to-peer networking, host as authority; amended by 0032     |
 | [0023](0023-one-telegram-bot.md)              | One Telegram bot for the whole company                          |
 | [0024](0024-telegram-topics.md)               | Four Telegram topics: General, Bots, Manager, Operator          |
+| [0025](0025-support-jail.md)                  | Support's jail holds no secret and can write nothing shared     |
 | [0026](0026-weapon-auto-attack.md)            | Weapon auto-attack                                              |
 | [0027](0027-one-turn-per-process.md)          | Agents run one turn per process                                 |
 | [0028](0028-strudel-music-host.md)            | Strudel music engine in a sandboxed host                        |
@@ -38,3 +39,8 @@ rewriting history.
 | [0031](0031-company-credentials.md)           | The company authenticates as itself                             |
 | [0032](0032-random-arena-queue.md)            | Strangers meet in unranked play through a ticket queue on Nostr |
 | [0033](0033-company-commit-lock.md)           | A host-only lock pins the commit the company runs               |
+| [0035](0035-non-player-combatants.md)         | A creature is a participant with a creature record              |
+| [0036](0036-weapon-sets.md)                   | Weapon sets are resolved at join and swapped by index           |
+| [0037](0037-per-piece-armor.md)               | Insignia armor is per piece, and each hit rolls its piece       |
+| [0038](0038-skill-corpus.md)                  | gw-skilldata is the skill corpus, vendored at a pinned commit   |
+| [0039](0039-third-party-licences-page.md)     | Third-party credits and licences live on one Options page       |

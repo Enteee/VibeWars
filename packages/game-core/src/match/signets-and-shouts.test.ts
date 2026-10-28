@@ -26,6 +26,7 @@ const swordsman: ResolvedEquipment = {
     attributeId: "warrior.swordsmanship",
     damageType: WEAPONS.sword.damageType,
     requirementMet: true,
+    creatureDamageScale: undefined,
   },
 };
 
@@ -64,7 +65,8 @@ function stepFor(match: MatchSimulation, seconds: number): CombatLogEntry[] {
 
 const events = (log: readonly CombatLogEntry[]) => log.flatMap((entry) => entry.events);
 
-const armorOf = (combatant: Combatant) => effectiveArmor(combatant, skillDamage(1, "typeless", 0));
+const armorOf = (combatant: Combatant) =>
+  effectiveArmor(combatant, skillDamage(1, "typeless", 0), "chest");
 
 describe("Healing Signet (#524)", () => {
   function signetter(): MatchSimulation {

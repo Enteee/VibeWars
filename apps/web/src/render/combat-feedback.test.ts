@@ -8,6 +8,7 @@ import {
   type AreaFlash,
   type FloatingText,
 } from "./arena-snapshot.js";
+import type { Impact } from "./body-impacts.js";
 import { showCombatFeedback, swingFlashFor } from "./combat-feedback.js";
 
 function player(sessionId: string): PlayerSnapshot {
@@ -33,14 +34,18 @@ function player(sessionId: string): PlayerSnapshot {
     secondaryProfession: undefined,
     team: 0,
     dead: false,
+    corpseExploited: false,
     castingSkillId: undefined,
     castRemaining: 0,
     castTotal: 0,
     swingElapsed: 0,
     swingTotal: 0,
     knockdownRemaining: 0,
+    invulnerableSeconds: 0,
     healthPips: 0,
     energyPips: 0,
+    creature: undefined,
+    bot: false,
     statuses: [],
   };
 }
@@ -55,6 +60,9 @@ const SNAPSHOT: MatchSnapshot = {
   winningTeam: undefined,
   endReason: undefined,
   projectiles: [],
+  groundEffects: [],
+  traps: [],
+  summary: undefined,
 };
 
 /** The texts a scene would have been asked to float, for these events. */
@@ -68,6 +76,7 @@ function floated(
       addFloatingText: (text) => texts.push(text),
       addAreaFlash: () => undefined,
       addSwingFlash: () => undefined,
+      addImpacts: () => undefined,
       struckTwice: () => undefined,
     },
     {
@@ -121,6 +130,7 @@ describe("showCombatFeedback", () => {
           addFloatingText: (text) => texts.push(text),
           addAreaFlash: () => undefined,
           addSwingFlash: () => undefined,
+          addImpacts: () => undefined,
           struckTwice: () => undefined,
         },
         {
@@ -156,6 +166,7 @@ describe("showCombatFeedback", () => {
         addFloatingText: (text) => texts.push(text),
         addAreaFlash: () => undefined,
         addSwingFlash: () => undefined,
+        addImpacts: () => undefined,
         struckTwice: () => undefined,
       },
       {
@@ -213,6 +224,7 @@ describe("showCombatFeedback", () => {
         addFloatingText: (text) => texts.push(text),
         addAreaFlash: () => undefined,
         addSwingFlash: () => undefined,
+        addImpacts: () => undefined,
         struckTwice: () => undefined,
       },
       {
@@ -246,6 +258,7 @@ describe("showCombatFeedback and areas", () => {
         addFloatingText: () => undefined,
         addAreaFlash: (flash) => flashes.push(flash),
         addSwingFlash: () => undefined,
+        addImpacts: () => undefined,
         struckTwice: () => undefined,
       },
       {
@@ -330,6 +343,7 @@ describe("swingFlashFor (#161)", () => {
             arcs += 1;
           },
           struckTwice: () => undefined,
+          addImpacts: () => undefined,
         },
         swing("weapon"),
         snapshot(weaponId),
@@ -346,11 +360,33 @@ describe("swingFlashFor (#161)", () => {
       addFloatingText: () => undefined,
       addAreaFlash: () => undefined,
       addSwingFlash: () => undefined,
+      addImpacts: () => undefined,
       struckTwice: (actorId: string) => told.push(actorId),
     };
     showCombatFeedback(sink, swing("weapon"), snapshot("daggers"));
     expect(told).toEqual([]);
     showCombatFeedback(sink, { ...swing("weapon"), doubleStrike: true }, snapshot("daggers"));
     expect(told).toEqual(["me"]);
+  });
+
+  it("tells the scene a skill landed, and not a swing (#1139)", () => {
+    const landed: string[] = [];
+    const sink = {
+      addFloatingText: () => undefined,
+      addAreaFlash: () => undefined,
+      addSwingFlash: () => undefined,
+      addImpacts: (impacts: readonly Impact[]) => {
+        landed.push(...impacts.map((impact) => impact.anchorId));
+      },
+      struckTwice: () => undefined,
+    };
+    showCombatFeedback(sink, swing("weapon"), snapshot("sword"));
+    expect(landed).toEqual([]);
+    showCombatFeedback(
+      sink,
+      { ...swing("skill"), skillId: "warrior.sever-artery" },
+      snapshot("sword"),
+    );
+    expect(landed).toEqual(["them"]);
   });
 });

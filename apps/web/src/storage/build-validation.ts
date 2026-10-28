@@ -9,7 +9,7 @@ import {
   type PlayerBuild,
 } from "@vibewars/game-core";
 
-import type { StoredCharacter } from "./schema.js";
+import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "./schema.js";
 
 /**
  * Validation for stored builds (brief §23: "validate every build before
@@ -39,6 +39,21 @@ export function toPlayerBuild(stored: StoredCharacter): PlayerBuild {
     // this line went missing the weapon would validate locally, save
     // locally, and then simply never arrive at the match.
     equipment: stored.equipment,
+  };
+}
+
+/** A domain build as a stored character `id`, saved `now`: `toPlayerBuild`'s inverse. */
+export function fromPlayerBuild(build: PlayerBuild, id: string, now: number): StoredCharacter {
+  return {
+    schemaVersion: CHARACTER_SCHEMA_VERSION,
+    id,
+    name: build.name,
+    primaryProfession: build.primaryProfession,
+    secondaryProfession: build.secondaryProfession,
+    attributes: build.attributes.map((a) => ({ attributeId: a.attributeId, rank: a.rank })),
+    skillBar: build.skillBar,
+    equipment: build.equipment,
+    updatedAt: now,
   };
 }
 

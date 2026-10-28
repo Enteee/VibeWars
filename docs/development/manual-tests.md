@@ -66,6 +66,12 @@ and the notice the joiner was shown. It exits 0 only if every pair joined.
 at the address it prints; `--pairs` picks pairs. Browsers come from
 `VIBEWARS_CHROMIUM` and `VIBEWARS_FIREFOX`, as for the music stress run.
 
+`--turn <invite-link-or-json>` gives both sides a TURN relay (#972): each
+page opens it as an invite link and presses _Use_.
+`--relay-only` also forces `iceTransportPolicy: "relay"` on every peer
+connection, a seam in the script only: a join then succeeds only through
+the relay, and `peers` shows `relay` candidates alone.
+
 When a join fails, the joiner is told how far it got (#707): "Couldn't
 reach the lobby servers" when no relay socket opened, "Found the lobby, but
 couldn't connect to its host" when Trystero exchanged SDP and nothing
@@ -80,9 +86,9 @@ Run on the Pages `/next/` build after #404 merges, and record each run in
 the table below: date, browsers and networks, and result.
 
 1. **Two networks.** Host on a home network; join from a phone on its
-   mobile hotspot, a different NAT. Play one match to its end. There is no
-   TURN (ADR-0022), so a failure here is filed as a bug against #15 with
-   both network types; it does not reopen #404.
+   mobile hotspot, a different NAT. Play one match to its end, with no
+   relay saved. A failure here is filed as a bug against #15 with both
+   network types; it does not reopen #404. The next section is the fix.
 2. **A hidden Firefox host.** Host in Firefox. During a match, hide its tab
    behind another for 5 minutes or more. Pass: the joiner sees normal
    speed throughout, never one tick a second.
@@ -92,6 +98,24 @@ A failure in 2 or 3 is a bug.
 
 | Date | Check | Host (browser, network) | Joiner (browser, network) | Result |
 | ---- | ----- | ----------------------- | ------------------------- | ------ |
+
+## Two networks through a TURN relay
+
+Code: `apps/web/src/net/transport/turn-config.ts` and `trystero.ts`
+(#972). Needs a TURN server reachable from both networks, such as the
+devenv coturn (#974).
+
+1. `node scripts/p2p-smoke.mjs --pairs chromium-chromium --relay-only --turn '<invite link>'`.
+   Pass: it joins, and every `peers` line shows `relay` candidates only.
+2. Two networks that fail check 1 of the section above, such as a
+   home network and a phone on mobile data. The host opens the invite
+   link and presses _Use_: the address bar keeps no `#turn=`, and Options
+   shows the relay's host. Its lobby screen says "Relay: _host_".
+3. The joiner, with no relay, joins the code. Pass: it reaches the
+   lobby, and the match plays to its end. One side having the relay is
+   enough.
+4. Options, _Forget relay_. Relay: None, and the lobby says nothing of
+   a relay.
 
 ## Random Arena tickets on the relays: `scripts/net/nostr-kind-probe.mjs`
 
@@ -129,6 +153,25 @@ Code: `apps/web/src/net/transport/nostr-queue.ts` and the queue under
 
 Pass: every step as written. A pair that queues but never meets, with
 `scripts/net/nostr-kind-probe.mjs` passing, is a bug against #854.
+
+## Stay together over real relays
+
+Code: `packages/game-session/src/stay-together.ts`, `lobby-host.ts` and
+`queue-client.ts`, and `apps/web/src/main.ts` (#882). On the Pages
+`/next/` build, with six players in 2 v 2, at least two of them on
+another network.
+
+1. Four press _Random Arena_ in 2 v 2 and play the match to its end.
+2. Four seconds after the result, the two winners see _Stay together
+   (15)_ counting down beside _Queue again_; the losers do not.
+3. Both winners press it. Both land on the searching screen at once,
+   counting 2 searching; one more stranger brings it to 3, a fourth
+   to a match, the two winners on one side.
+4. Win again and repeat, but one winner presses _Queue again_ instead:
+   the other sees "The team split up" under the searching screen, queued
+   alone.
+
+Pass: every step as written.
 
 ## Music under load, on a phone
 

@@ -1,6 +1,7 @@
 import { ADRENALINE_PER_STRIKE, MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { describe, expect, it } from "vitest";
 
+import { AREA_NEARBY, PET_REACH } from "../distances.js";
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { isElementalDamage, isPhysicalDamage } from "../equipment/types.js";
 import { WEAPONS } from "../equipment/weapons.js";
@@ -14,7 +15,7 @@ import { computeCoverage, formatCoverage } from "./coverage.js";
 import { applyEffects } from "./effects.js";
 import { chargeAdrenaline, makeCombatant } from "./testing.js";
 import { getStatusDefinition } from "./status.js";
-import type { Combatant } from "./types.js";
+import { blowRuleOf, type Combatant } from "./types.js";
 
 /** A hammer in hand, for the hammer's attack skills. */
 const HAMMER = {
@@ -24,6 +25,7 @@ const HAMMER = {
     attributeId: "warrior.hammer-mastery",
     damageType: WEAPONS.hammer.damageType,
     requirementMet: true,
+    creatureDamageScale: undefined,
   },
 };
 
@@ -41,10 +43,95 @@ describe("skill catalog integrity", () => {
   });
 
   it("gives every skill something to do — no empty placeholder skills", () => {
+    // A companion's skill does its job by being on the bar, a pet attack
+    // by its pet's blow (#1046).
     for (const skill of IMPLEMENTED_SKILLS) {
-      expect(skill.effects.length + (skill.attack === undefined ? 0 : 1), skill.id).toBeGreaterThan(
-        0,
+      expect(
+        skill.effects.length +
+          (blowRuleOf(skill) === undefined ? 0 : 1) +
+          (skill.companion === undefined ? 0 : 1),
+        skill.id,
+      ).toBeGreaterThan(0);
+    }
+  });
+
+  it("gives an aura only to a spirit, and a ritual is what summons one (#1064)", () => {
+    const summons = IMPLEMENTED_SKILLS.flatMap((skill) =>
+      skill.effects.flatMap((effect) => (effect.kind === "summon" ? [{ skill, effect }] : [])),
+    );
+    expect(summons.length).toBeGreaterThan(0);
+    for (const { skill, effect } of summons) {
+      const { kind, aura } = effect.creature;
+      if (aura !== undefined) {
+        expect(kind, skill.id).toBe("spirit");
+        expect(aura.affects, skill.id).toBe(skill.type === "nature-ritual" ? "all" : "allies");
+      }
+      expect(kind === "spirit", skill.id).toBe(
+        skill.type === "nature-ritual" || skill.type === "binding-ritual",
       );
+    }
+  });
+
+  it("leaves a ground effect from a ward, a well, a trap or a symbol, and only from those (#1087, #1104, #1105, #1113)", () => {
+    for (const type of ["ward", "well", "trap"]) {
+      expect(
+        IMPLEMENTED_SKILLS.some((skill) => skill.type === type),
+        type,
+      ).toBe(true);
+    }
+    for (const skill of IMPLEMENTED_SKILLS) {
+      const grounds = skill.effects.flatMap((effect) =>
+        effect.kind === "create-ground-effect" ? [effect.act.kind] : [],
+      );
+      // A spell may leave a pulse where its target stands: a symbol.
+      const pulse = skill.type === "spell" && grounds.length > 0 ? ["pulse"] : [];
+      expect(grounds, skill.id).toEqual(
+        skill.type === "ward" || skill.type === "well"
+          ? ["aura"]
+          : skill.type === "trap"
+            ? ["trap"]
+            : pulse,
+      );
+    }
+  });
+
+  it("anchors a ground effect where its act says (#1104, #1113)", () => {
+    for (const skill of IMPLEMENTED_SKILLS) {
+      for (const effect of skill.effects) {
+        if (effect.kind === "create-ground-effect") {
+          expect(effect.anchor === "corpse", skill.id).toBe(skill.corpse !== undefined);
+          expect(effect.anchor === "corpse", skill.id).toBe(skill.type === "well");
+          expect(effect.anchor === "target", skill.id).toBe(effect.act.kind === "pulse");
+          if (effect.anchor === "target") {
+            expect(skill.target, skill.id).toBe("single-enemy");
+          }
+        }
+      }
+    }
+  });
+
+  it("lasts a pulse its pulses, and nests no ground effect in one (#1113)", () => {
+    const pulses = IMPLEMENTED_SKILLS.flatMap((skill) =>
+      skill.effects.flatMap((effect) => {
+        if (effect.kind !== "create-ground-effect" || effect.act.kind === "aura") {
+          return [];
+        }
+        const pulse = effect.act.kind === "trap" ? effect.act.trap.spring : effect.act.pulse;
+        return [{ id: skill.id, effect, pulse }];
+      }),
+    );
+    expect(pulses.some(({ effect }) => effect.act.kind === "pulse")).toBe(true);
+    for (const { id, effect, pulse } of pulses) {
+      expect(pulse.count, id).toBeGreaterThanOrEqual(1);
+      expect(pulse.everySeconds, id).toBeGreaterThan(0);
+      expect(pulse.area.origin, id).toBe("caster");
+      expect(
+        pulse.effects.some((inner) => inner.kind === "create-ground-effect"),
+        id,
+      ).toBe(false);
+      if (effect.act.kind === "pulse") {
+        expect(effect.durationSeconds, id).toEqual({ flat: pulse.count * pulse.everySeconds });
+      }
     }
   });
 
@@ -92,6 +179,14 @@ describe("skill catalog integrity", () => {
     }
   });
 
+  it("flies no skill whose area is the whole party (#1013)", () => {
+    const party = IMPLEMENTED_SKILLS.filter((skill) => skill.area?.origin === "party");
+    expect(party.map((skill) => skill.id)).toContain("monk.heal-party");
+    for (const skill of party) {
+      expect(skill.projectile, skill.id).toBeUndefined();
+    }
+  });
+
   it("uses non-negative activation and recharge everywhere", () => {
     for (const skill of IMPLEMENTED_SKILLS) {
       expect(skill.activationSeconds).toBeGreaterThanOrEqual(0);
@@ -107,12 +202,16 @@ describe("skill catalog integrity", () => {
 
 describe("skill coverage reporting", () => {
   it("counts implemented vs imported and names the gap", () => {
-    const imported = ["elementalist.fireball", "monk.orison-of-healing", "mesmer.echo"];
+    const imported = [
+      "elementalist.fireball",
+      "monk.orison-of-healing",
+      "warrior.whirlwind-attack",
+    ];
     const coverage = computeCoverage(imported);
     expect(coverage.imported).toBe(3);
     expect(coverage.implemented).toBe(IMPLEMENTED_SKILLS.length);
     const ids = coverage.unimplemented.map((skill) => skill.id);
-    expect(ids).toContain("mesmer.echo");
+    expect(ids).toContain("warrior.whirlwind-attack");
     expect(ids).not.toContain("elementalist.fireball");
   });
 
@@ -122,8 +221,10 @@ describe("skill coverage reporting", () => {
   });
 
   it("formats a human-readable report naming every unimplemented skill", () => {
-    const text = formatCoverage(computeCoverage(["mesmer.echo", "elementalist.fireball"]));
-    expect(text).toContain("mesmer.echo");
+    const text = formatCoverage(
+      computeCoverage(["warrior.whirlwind-attack", "elementalist.fireball"]),
+    );
+    expect(text).toContain("warrior.whirlwind-attack");
     expect(text).toContain("imported:");
     expect(text).toContain("implemented:");
   });
@@ -171,6 +272,7 @@ describe("headless combat simulation", () => {
       target: target?.combatant,
       targetPosition: target?.position,
       rechargeRemaining: caster.cast.rechargeRemaining,
+      spent: caster.cast.spent,
       isCasting: caster.cast.isCasting,
       skillBar: caster.skillBar,
       losBlockers: [],
@@ -441,6 +543,14 @@ describe("skill attribute ownership", () => {
     }
   });
 
+  it("gives a Common skill no attribute (#474)", () => {
+    const common = IMPLEMENTED_SKILLS.filter((skill) => skill.profession === "common");
+    expect(common.map((skill) => skill.id)).toEqual(["common.resurrection-signet"]);
+    for (const skill of common) {
+      expect(skill.attributeId, skill.id).toBeUndefined();
+    }
+  });
+
   it("has Distracting Blow as a warrior skill with no attribute (#445)", () => {
     const blow = getSkill("warrior.distracting-blow");
     expect(blow?.profession).toBe("warrior");
@@ -468,5 +578,99 @@ describe("skill types", () => {
     expect(typeOf("necromancer.enfeeble")).toBe("spell");
     expect(typeOf("necromancer.blood-ritual")).toBe("enchantment");
     expect(typeOf("ranger.troll-unguent")).toBe("skill");
+  });
+
+  it("has the three pet attacks of the corpus (#1046): the owner pays, the pet strikes", () => {
+    const pet = (id: string) => {
+      const found = getSkill(id);
+      return {
+        type: found?.type,
+        cost: found?.cost,
+        recharge: found?.rechargeSeconds,
+        target: found?.target,
+        attack: found?.attack,
+        bonus: found?.petAttack?.bonusDamage,
+      };
+    };
+    const beastMastery = (atZero: number, atTwelve: number) => ({
+      scaling: { attributeId: "ranger.beast-mastery", atZero, atTwelve },
+    });
+    const energy = (amount: number) => ({ kind: "energy", amount });
+    const common = { type: "pet-attack", target: "companion", attack: undefined };
+    expect(pet("ranger.brutal-strike")).toEqual({
+      ...common,
+      cost: energy(10),
+      recharge: 5,
+      bonus: beastMastery(5, 29),
+    });
+    expect(getSkill("ranger.brutal-strike")?.petAttack?.conditionalBonus).toEqual({
+      condition: { kind: "target-health-below", fraction: 0.5 },
+      amount: beastMastery(5, 29),
+    });
+    expect(pet("ranger.maiming-strike")).toEqual({
+      ...common,
+      cost: energy(10),
+      recharge: 5,
+      bonus: beastMastery(5, 17),
+    });
+    expect(pet("ranger.disrupting-lunge")).toEqual({
+      ...common,
+      cost: energy(5),
+      recharge: 10,
+      bonus: beastMastery(1, 10),
+    });
+  });
+
+  it("has the calls and bonds on the pet (#1108): a living pet's, within reach of it", () => {
+    const call = (id: string) => {
+      const found = getSkill(id);
+      return {
+        type: found?.type,
+        cost: found?.cost,
+        recharge: found?.rechargeSeconds,
+        target: found?.target,
+        range: found?.range,
+        effects: found?.effects,
+      };
+    };
+    const energy = (amount: number) => ({ kind: "energy", amount });
+    const common = { type: "shout", target: "living-companion", range: PET_REACH };
+    const status = (statusId: string, durationSeconds: number) => [
+      { kind: "apply-status", statusId, durationSeconds },
+    ];
+    expect(call("ranger.call-of-haste")).toEqual({
+      ...common,
+      cost: energy(10),
+      recharge: 25,
+      effects: status("call-of-haste", 30),
+    });
+    expect(call("ranger.call-of-protection")).toEqual({
+      ...common,
+      cost: energy(5),
+      recharge: 90,
+      effects: status("call-of-protection", 120),
+    });
+    expect(call("ranger.symbiotic-bond")).toEqual({
+      ...common,
+      cost: energy(10),
+      recharge: 55,
+      effects: status("symbiotic-bond", 264),
+    });
+    expect(getSkill("ranger.revive-animal")).toMatchObject({
+      type: "skill",
+      target: "self",
+      cost: energy(5),
+      activationSeconds: 0.25,
+      rechargeSeconds: 5,
+      effects: [
+        {
+          kind: "resurrect-companions",
+          radius: AREA_NEARBY,
+          healthPercent: {
+            scaling: { attributeId: "ranger.beast-mastery", atZero: 10, atTwelve: 77 },
+          },
+        },
+      ],
+    });
   });
 });

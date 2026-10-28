@@ -1,5 +1,9 @@
+import { AREA_ADJACENT } from "../distances.js";
+import type { ActivationCheck } from "../skills/activation.js";
 import type { StatusId } from "../skills/status.js";
+import { effectiveMaxHealth } from "../skills/tick.js";
 import { distance, normalize, sub, ZERO, type Vec2 } from "../vec2.js";
+import { guard, playBuild } from "./bot/play-build.js";
 import type { Participant } from "./simulation.js";
 
 /**
@@ -72,9 +76,61 @@ export type Behaviour =
   /**
    * Attack the target with the weapon, as Space does (#162), and ask again
    * whenever no attack is going: after the target's respawn, or the
-   * dummy's own reset.
+   * dummy's own reset. An attack going on stays on its target, even with
+   * another nearer.
    */
-  | { readonly kind: "auto-attack"; readonly targeting: Targeting };
+  | { readonly kind: "auto-attack"; readonly targeting: Targeting }
+  /**
+   * A minion's (#467 child 3) or a pet's (#1046): stay by the owner, attack
+   * a foe as `engage` picks it, and break off to walk back once the
+   * owner is farther than `leashUnits`, until within `heelUnits` again.
+   * The owner is `self.creature.ownerId`; anyone else holding it stands still.
+   */
+  | {
+      readonly kind: "follow-and-attack";
+      /**
+       * Whom it goes for (#1046). `"owner-target"`: a companion's, the foe
+       * its owner is attacking or, on Fight, has selected (#1110), if within
+       * `aggroUnits` of itself; on Heel, none.
+       * `"owner-target-then-nearest"`: a minion's (#1118), with no fight
+       * going, the foe its owner is attacking, if within `leashUnits` of
+       * the owner, else the nearest foe within `aggroUnits` of itself.
+       */
+      readonly engage: "owner-target" | "owner-target-then-nearest";
+      readonly aggroUnits: number;
+      readonly leashUnits: number;
+      readonly heelUnits: number;
+    }
+  /**
+   * A priest's (#1186): stand still and cast `skillId` on itself whenever
+   * it, or a living ally adjacent to it, is below full Health and the
+   * skill may be cast. Nobody hurt, nothing cast, so energy keeps.
+   */
+  | { readonly kind: "heal-when-hurt"; readonly skillId: string }
+  /**
+   * A bot playing its own skill bar (#1189), as `bot/play-build.ts` says:
+   * interrupt, heal, cleanse, raise, then fight the team target.
+   */
+  | {
+      readonly kind: "play-build";
+      /** Seconds between decisions: the reaction time. `0`: every tick. */
+      readonly thinkSeconds: number;
+    }
+  /**
+   * A guard's (#1222): hold `post`, and play its bar as `play-build` does
+   * against the foes within `aggroUnits` of it, at its own pick of them.
+   * Past `leashUnits` from `post`, it walks back and ignores foes until
+   * home again. `rooted`: it never moves, as a Guild Lord.
+   */
+  | {
+      readonly kind: "guard";
+      readonly post: Vec2;
+      readonly aggroUnits: number;
+      readonly leashUnits: number;
+      readonly rooted: boolean;
+      /** Seconds between decisions, as `play-build`'s. */
+      readonly thinkSeconds: number;
+    };
 
 /**
  * When a participant is put back as it started: the respawn path, at its
@@ -96,6 +152,11 @@ export interface StatusApplication {
 /** What a behaviour *asks* for. Never what happens. */
 export interface BehaviourIntent {
   readonly moveDirection: Vec2;
+  /**
+   * A point to walk to round walls and bodies, as a click-to-walk goes
+   * (#1153); `undefined` for none. The simulation owns the path.
+   */
+  readonly moveTo: Vec2 | undefined;
   readonly targetId: string | undefined;
   readonly useSkillId: string | undefined;
   /** Whom to attack with the weapon, through `requestAttack`. */
@@ -113,6 +174,10 @@ export interface BehaviourCursor {
   waypoint: number;
   /** `parallel`: one cursor per child, in the same order. */
   readonly children: BehaviourCursor[];
+  /** `follow-and-attack` and `guard`: walking back to the owner or the post, past the leash. */
+  returning: boolean;
+  /** `play-build` and `guard`: the movement its last think asked for, held until the next. */
+  heldMove: Pick<BehaviourIntent, "moveTo">;
 }
 
 export interface BehaviourContext {
@@ -126,14 +191,27 @@ export interface BehaviourContext {
    */
   readonly stepUnits: number;
   /**
-   * Whether `self` may cast `skillId` at `targetId` right now. The same
-   * `canActivate` check `requestSkill` makes, asked without casting.
+   * Whether `self` may cast `skillId` at `targetId` right now, and why not:
+   * the same `canActivate` check `requestSkill` makes, asked without casting.
    */
-  canUse(skillId: string, targetId: string | undefined): boolean;
+  check(skillId: string, targetId: string | undefined): ActivationCheck;
+  /** Whether `participantId` is driven by `play-build` (#1189): a bot. */
+  isBot(participantId: string): boolean;
+  /** The foe `self`'s team called (#443), if any: a bot's target while it lives (#1193). */
+  readonly calledTargetId: string | undefined;
+  /** Whether nothing blocks the line of sight from `self` to `point` (#1222). */
+  sees(point: Vec2): boolean;
 }
 
 export function createCursor(): BehaviourCursor {
-  return { nextSkill: 0, waitSeconds: 0, waypoint: 0, children: [] };
+  return {
+    nextSkill: 0,
+    waitSeconds: 0,
+    waypoint: 0,
+    children: [],
+    returning: false,
+    heldMove: { moveTo: undefined },
+  };
 }
 
 /**
@@ -190,6 +268,7 @@ export function resolveTargeting(
 
 const STAND_STILL: BehaviourIntent = {
   moveDirection: ZERO,
+  moveTo: undefined,
   targetId: undefined,
   useSkillId: undefined,
   attackTargetId: undefined,
@@ -218,8 +297,20 @@ export function decide(
       return parallel(behaviour, cursor, context);
     case "auto-attack": {
       const targetId = resolveTargeting(behaviour.targeting, context);
-      return { ...STAND_STILL, targetId, attackTargetId: targetId };
+      return {
+        ...STAND_STILL,
+        targetId,
+        attackTargetId: context.self.combatant.attack?.targetId ?? targetId,
+      };
     }
+    case "follow-and-attack":
+      return followAndAttack(behaviour, cursor, context);
+    case "heal-when-hurt":
+      return healWhenHurt(behaviour, context);
+    case "play-build":
+      return playBuild(behaviour, cursor, context);
+    case "guard":
+      return guard(behaviour, cursor, context);
   }
 }
 
@@ -238,10 +329,10 @@ function castLoop(
 
   let useSkillId: string | undefined;
   if (behaviour.firstLegal) {
-    useSkillId = behaviour.skillIds.find((skillId) => context.canUse(skillId, targetId));
+    useSkillId = behaviour.skillIds.find((skillId) => context.check(skillId, targetId).ok);
   } else {
     const next = behaviour.skillIds[cursor.nextSkill % behaviour.skillIds.length];
-    if (next !== undefined && context.canUse(next, targetId)) {
+    if (next !== undefined && context.check(next, targetId).ok) {
       useSkillId = next;
       cursor.nextSkill = (cursor.nextSkill + 1) % behaviour.skillIds.length;
     }
@@ -251,6 +342,24 @@ function castLoop(
   }
   cursor.waitSeconds = behaviour.gapSeconds;
   return { ...waiting, useSkillId };
+}
+
+function healWhenHurt(
+  behaviour: Extract<Behaviour, { kind: "heal-when-hurt" }>,
+  context: BehaviourContext,
+): BehaviourIntent {
+  const { self } = context;
+  const hurt = context.participants.some(
+    (other) =>
+      !other.combatant.dead &&
+      other.combatant.team === self.combatant.team &&
+      (other.id === self.id || distance(other.position, self.position) <= AREA_ADJACENT) &&
+      other.combatant.health < effectiveMaxHealth(other.combatant),
+  );
+  const waiting = { ...STAND_STILL, targetId: self.id };
+  return hurt && !self.combatant.cast.isCasting && context.check(behaviour.skillId, self.id).ok
+    ? { ...waiting, useSkillId: behaviour.skillId }
+    : waiting;
 }
 
 function patrol(
@@ -312,6 +421,85 @@ function keepRange(
   };
 }
 
+/**
+ * The owner's body, alive or dead, is what a minion keeps to. Past the
+ * leash it walks back and fights nobody until at heel again, so it does
+ * not flip each tick at the boundary. A pet on Guard goes for whatever its
+ * living owner is attacking, within its aggro, switching when the owner
+ * does (#1046); on Fight, for whatever foe its owner has selected; on Heel
+ * it fights nobody and keeps to heel (#1110). Otherwise a fight it is in
+ * goes on, to the foe's death. A minion with none assists (#1118): its
+ * living owner's attack target within the leash of the owner, else a foe
+ * in aggro of the minion itself, through `requestAttack` as Space does.
+ * Otherwise it walks to heel, stopping a step early.
+ */
+function followAndAttack(
+  behaviour: Extract<Behaviour, { kind: "follow-and-attack" }>,
+  cursor: BehaviourCursor,
+  context: BehaviourContext,
+): BehaviourIntent {
+  const self = context.self;
+  const ownerId = self.creature?.ownerId;
+  const owner = context.participants.find((other) => other.id === ownerId);
+  if (owner === undefined) {
+    return STAND_STILL;
+  }
+  const d = distance(owner.position, self.position);
+  if (cursor.returning && d <= behaviour.heelUnits) {
+    cursor.returning = false;
+  } else if (!cursor.returning && d > behaviour.leashUnits) {
+    cursor.returning = true;
+  }
+  // By path, not straight: a wall between them is walked round (#1153).
+  const toOwner = { ...STAND_STILL, moveTo: owner.position };
+  if (cursor.returning) {
+    return toOwner;
+  }
+  const team = self.combatant.team;
+  const inAggro = (other: Participant): boolean =>
+    other.combatant.team !== team &&
+    distance(other.position, self.position) <= behaviour.aggroUnits;
+  const livingFoe = (id: string | undefined): Participant | undefined =>
+    owner.combatant.dead
+      ? undefined
+      : context.participants.find(
+          (other) => other.id === id && other.combatant.team !== team && !other.combatant.dead,
+        );
+  // A spell at a foe is not attacking it: only a weapon attack or an
+  // attack skill sets `attack` (#1079).
+  const ownerFoe = livingFoe(owner.combatant.attack?.targetId);
+  const mode = self.creature?.mode;
+  if (behaviour.engage === "owner-target" && mode === "heel") {
+    return d > behaviour.heelUnits && d - context.stepUnits > behaviour.heelUnits
+      ? toOwner
+      : STAND_STILL;
+  }
+  if (behaviour.engage === "owner-target") {
+    // Guard goes for what its owner attacks, Fight for what its owner
+    // has selected, attacking or not (#1110).
+    const foe = mode === "fight" ? livingFoe(owner.targetId) : ownerFoe;
+    if (foe !== undefined && inAggro(foe)) {
+      return { ...STAND_STILL, targetId: foe.id, attackTargetId: foe.id };
+    }
+  }
+  const attack = self.combatant.attack;
+  if (attack !== undefined) {
+    return { ...STAND_STILL, targetId: attack.targetId, attackTargetId: attack.targetId };
+  }
+  if (behaviour.engage === "owner-target-then-nearest") {
+    const assisted =
+      ownerFoe !== undefined && distance(ownerFoe.position, owner.position) <= behaviour.leashUnits;
+    const foe = assisted ? ownerFoe.id : nearestLiving(self, context.participants, inAggro);
+    if (foe !== undefined) {
+      return { ...STAND_STILL, targetId: foe, attackTargetId: foe };
+    }
+  }
+  if (d > behaviour.heelUnits && d - context.stepUnits > behaviour.heelUnits) {
+    return toOwner;
+  }
+  return STAND_STILL;
+}
+
 function statusCadence(
   behaviour: Extract<Behaviour, { kind: "apply-status-cadence" }>,
   cursor: BehaviourCursor,
@@ -353,8 +541,12 @@ function parallel(
     return decide(child, childCursor, context);
   });
   const casting = intents.find((intent) => intent.useSkillId !== undefined);
+  const steering = intents.find(
+    (intent) => intent.moveDirection !== ZERO || intent.moveTo !== undefined,
+  );
   return {
-    moveDirection: intents.find((intent) => intent.moveDirection !== ZERO)?.moveDirection ?? ZERO,
+    moveDirection: steering?.moveDirection ?? ZERO,
+    moveTo: steering?.moveTo,
     targetId: (casting ?? intents.find((intent) => intent.targetId !== undefined))?.targetId,
     useSkillId: casting?.useSkillId,
     attackTargetId: intents.find((intent) => intent.attackTargetId !== undefined)?.attackTargetId,

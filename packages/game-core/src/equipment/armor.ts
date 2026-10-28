@@ -1,4 +1,6 @@
+import { accessibleAttributeIds } from "../character.js";
 import type { ProfessionId } from "../professions.js";
+import type { SimulationRng } from "../rng.js";
 import type { EquippedRune } from "./runes.js";
 import type { ArmorCondition, InsigniaId } from "./insignias.js";
 import { ARMOR_SLOTS, type ArmorSlot } from "./types.js";
@@ -30,6 +32,7 @@ import { ARMOR_SLOTS, type ArmorSlot } from "./types.js";
  * armor is profession-locked in the reference, so a light profession
  * wearing heavy armor is not a trade-off, it is a rule that does not
  * exist. Recorded in `coverage.ts` as `"per-piece-armor-ratings"`.
+ * Insignias are per piece, though (#1135): see `rollHitLocation`.
  */
 export const BASE_ARMOR_BY_PROFESSION: Readonly<Record<ProfessionId, number>> = Object.freeze({
   warrior: 80,
@@ -48,11 +51,36 @@ export function baseArmorFor(profession: ProfessionId): number {
   return BASE_ARMOR_BY_PROFESSION[profession];
 }
 
-/** Armor that applies only when its condition holds, from a profession or an insignia. */
+/** Armor that applies only when its conditions hold, from a profession or an insignia. */
 export interface ConditionalArmor {
   readonly amount: number;
-  readonly condition: ArmorCondition;
+  /** Every one must hold (#1142); `[]` always does. */
+  readonly conditions: readonly ArmorCondition[];
 }
+
+/** Each piece's own conditional armor: its insignia's (#1135). */
+export type PieceArmor = Readonly<Record<ArmorSlot, readonly ConditionalArmor[]>>;
+
+/** Each piece's cut off a physical hit to it, after armor: Knight's (#1142). */
+export type PieceReduction = Readonly<Record<ArmorSlot, number>>;
+
+/** No piece reduction at all. */
+export const NO_PIECE_REDUCTION: PieceReduction = Object.freeze({
+  head: 0,
+  chest: 0,
+  hands: 0,
+  legs: 0,
+  feet: 0,
+});
+
+/** No piece armor at all: a bare body, a creature, a dummy. */
+export const NO_PIECE_ARMOR: PieceArmor = Object.freeze({
+  head: [],
+  chest: [],
+  hands: [],
+  legs: [],
+  feet: [],
+});
 
 /**
  * Armor a **primary** profession carries against one kind of damage
@@ -63,8 +91,12 @@ export interface ConditionalArmor {
 export const INHERENT_ARMOR_BY_PROFESSION: Readonly<
   Record<ProfessionId, readonly ConditionalArmor[]>
 > = Object.freeze({
-  warrior: Object.freeze([Object.freeze({ amount: 20, condition: "vs-physical" })]),
-  ranger: Object.freeze([Object.freeze({ amount: 30, condition: "vs-elemental" })]),
+  warrior: Object.freeze([
+    Object.freeze<ConditionalArmor>({ amount: 20, conditions: [{ kind: "vs-physical" }] }),
+  ]),
+  ranger: Object.freeze([
+    Object.freeze<ConditionalArmor>({ amount: 30, conditions: [{ kind: "vs-elemental" }] }),
+  ]),
   paragon: [],
   assassin: [],
   dervish: [],
@@ -105,14 +137,27 @@ export interface ArmorPiece {
   readonly rune: EquippedRune | null;
 }
 
-export type ArmorSet = Readonly<Record<ArmorSlot, ArmorPiece>>;
+/** What attribute headgear adds to its attribute (GW1, #1140): stacks with any rune. */
+export const HEADGEAR_BONUS = 1;
+
+/** The head piece: an insignia and a rune, like any, and the attribute its headgear raises (#1140). */
+export interface HeadPiece extends ArmorPiece {
+  /** `null` only in `bareArmorSet` (creatures, fixtures); a player build must name one. */
+  readonly headgearAttributeId: string | null;
+}
+
+export type ArmorSet = Readonly<Record<Exclude<ArmorSlot, "head">, ArmorPiece>> & {
+  readonly head: HeadPiece;
+};
 
 const BARE_PIECE: ArmorPiece = Object.freeze({ insigniaId: null, rune: null });
+
+const BARE_HEAD: HeadPiece = Object.freeze({ ...BARE_PIECE, headgearAttributeId: null });
 
 /** Five pieces with nothing slotted into them. The honest default. */
 export function bareArmorSet(): ArmorSet {
   return Object.freeze({
-    head: BARE_PIECE,
+    head: BARE_HEAD,
     chest: BARE_PIECE,
     hands: BARE_PIECE,
     legs: BARE_PIECE,
@@ -120,7 +165,52 @@ export function bareArmorSet(): ArmorSet {
   });
 }
 
+/**
+ * The attribute `head`'s headgear raises (#1140): one the character can
+ * put points in, of the primary or the secondary. Anything else is wrong
+ * data, `null` included, and gives no bonus; validation reports it.
+ */
+export function headgearAttributeOf(
+  head: HeadPiece,
+  primary: ProfessionId,
+  secondary: ProfessionId | undefined,
+): string | undefined {
+  const attributeId = head.headgearAttributeId;
+  return attributeId !== null && accessibleAttributeIds(primary, secondary).includes(attributeId)
+    ? attributeId
+    : undefined;
+}
+
 /** Pieces in a stable order, so iteration never depends on key order. */
 export function armorPieces(set: ArmorSet): readonly (readonly [ArmorSlot, ArmorPiece])[] {
   return ARMOR_SLOTS.map((slot) => [slot, set[slot]] as const);
+}
+
+/**
+ * How often a hit lands on each piece (GW1, Q127): the chest 3/8, the
+ * legs 2/8, the head, hands and feet 1/8 each. An insignia's armor
+ * counts only on hits to its own piece (#1135).
+ */
+export const HIT_LOCATION_WEIGHTS: Readonly<Record<ArmorSlot, number>> = Object.freeze({
+  head: 1 / 8,
+  chest: 3 / 8,
+  hands: 1 / 8,
+  legs: 2 / 8,
+  feet: 1 / 8,
+});
+
+/** The order `rollHitLocation` lays the weights out in, heaviest first. */
+const HIT_LOCATION_ORDER: readonly ArmorSlot[] = ["chest", "legs", "head", "hands", "feet"];
+
+/** The piece a hit lands on: one `nextFloat`, cumulative in `HIT_LOCATION_ORDER`. */
+export function rollHitLocation(rng: SimulationRng): ArmorSlot {
+  const roll = rng.nextFloat();
+  let cumulative = 0;
+  for (const slot of HIT_LOCATION_ORDER) {
+    cumulative += HIT_LOCATION_WEIGHTS[slot];
+    if (roll < cumulative) {
+      return slot;
+    }
+  }
+  return "feet";
 }

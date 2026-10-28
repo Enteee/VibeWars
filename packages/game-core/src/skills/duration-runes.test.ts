@@ -20,22 +20,31 @@ function wearing(id: string, team: number, ...runeIds: UniversalRuneId[]): Comba
   ARMOR_SLOTS.forEach((slot, index) => {
     const runeId = runeIds[index];
     if (runeId !== undefined) {
-      armor[slot] = { insigniaId: null, rune: { kind: "universal", runeId, tier: "minor" } };
+      armor[slot] = {
+        insigniaId: null,
+        rune: { kind: "universal", runeId, tier: "minor" },
+        headgearAttributeId: null,
+      };
     }
   });
   const resolved = resolveLoadout(
     {
       primaryProfession: "warrior",
+      secondaryProfession: undefined,
       allocatedRanks: new Map(),
       equipment: {
-        mainHand: { weaponId: "sword", requirementAttributeId: null },
-        offHand: null,
+        weaponSets: [
+          { mainHand: { weaponId: "sword", requirementAttributeId: null }, offHand: null },
+          null,
+          null,
+          null,
+        ],
         armor,
       },
     },
     RULES,
   );
-  return makeCombatant({ id, team, equipment: resolved.equipment });
+  return makeCombatant({ id, team, equipment: resolved.weaponSets[0].equipment });
 }
 
 function skill(id: string): Skill {

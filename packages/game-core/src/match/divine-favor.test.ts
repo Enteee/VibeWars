@@ -87,6 +87,30 @@ describe("Divine Favor (#529)", () => {
     expect(favored).toEqual([...plain, 38]);
   });
 
+  it("adds to Heal Party's caster only, an untargeted Monk spell's primary (#1013)", () => {
+    const HEAL_PARTY = "monk.heal-party";
+    const match = new MatchSimulation({
+      seed: "divine-favor",
+      participants: [
+        { ...monk("m", 12), skillBar: [HEAL_PARTY] },
+        bystander("ally", 0, vec2(100, 0)),
+      ],
+    });
+    get(match, "m").combatant.health = 100;
+    get(match, "ally").combatant.health = 100;
+    expect(match.requestSkill("m", 0)?.check).toEqual({ ok: true });
+    const log = stepFor(match, 1.5).filter((entry) => entry.skillId === HEAL_PARTY);
+    const heals = (targetId: string): number[] =>
+      log
+        .flatMap((entry) => entry.events)
+        .flatMap((event) =>
+          event.kind === "heal" && event.targetId === targetId ? [event.amount] : [],
+        );
+    // Heal Party at Healing Prayers 0: 30 each, and the caster's +38.
+    expect(heals("m")).toEqual([30, 38]);
+    expect(heals("ally")).toEqual([30]);
+  });
+
   it("counts the caster as an ally", () => {
     expect(orisonHeals(castOrison(12, "m"), "m").slice(1)).toEqual([38]);
   });

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { PlayerSnapshot } from "@vibewars/game-session";
 
-import { nextTabTarget } from "./tab-target.js";
+import { closestTarget, nextTabTarget, selfTargetIntent } from "./tab-target.js";
 
 function player(sessionId: string, overrides: Partial<PlayerSnapshot> = {}): PlayerSnapshot {
   return {
@@ -26,14 +26,18 @@ function player(sessionId: string, overrides: Partial<PlayerSnapshot> = {}): Pla
     secondaryProfession: undefined,
     team: 1,
     dead: false,
+    corpseExploited: false,
     castingSkillId: undefined,
     castRemaining: 0,
     castTotal: 0,
     swingElapsed: 0,
     swingTotal: 0,
     knockdownRemaining: 0,
+    invulnerableSeconds: 0,
     healthPips: 0,
     energyPips: 0,
+    creature: undefined,
+    bot: false,
     statuses: [],
     ...overrides,
   };
@@ -66,6 +70,36 @@ describe("nextTabTarget", () => {
     expect(nextTabTarget(PLAYERS, "me", "far", -1)).toBe("mid");
   });
 
+  it("cycles a foe's creature with the foes, and skips your own (#1052)", () => {
+    const players = [
+      ME,
+      player("me/c1", {
+        team: 0,
+        x: 5,
+        creature: {
+          ownerId: "me",
+          kind: "minion",
+          look: "bone-minion",
+          mode: null,
+          armedAttack: null,
+        },
+      }),
+      player("foe/c1", {
+        x: 15,
+        creature: {
+          ownerId: "foe",
+          kind: "minion",
+          look: "bone-minion",
+          mode: null,
+          armedAttack: null,
+        },
+      }),
+      NEAR,
+    ];
+    expect(nextTabTarget(players, "me", undefined, 1)).toBe("near");
+    expect(nextTabTarget(players, "me", "near", 1)).toBe("foe/c1");
+  });
+
   it("skips the dead and allies", () => {
     const players = [
       ME,
@@ -92,5 +126,37 @@ describe("nextTabTarget", () => {
   it("finds nobody with no enemy, or no self", () => {
     expect(nextTabTarget([ME, player("ally", { team: 0 })], "me", undefined, 1)).toBeUndefined();
     expect(nextTabTarget([NEAR], "me", undefined, 1)).toBeUndefined();
+  });
+});
+
+describe("closestTarget (#1024)", () => {
+  it("picks the nearest living foe, and stays on it when pressed again", () => {
+    expect(closestTarget(PLAYERS, "me")).toBe("near");
+    expect(closestTarget([ME, player("near", { x: 10, dead: true }), MID], "me")).toBe("mid");
+    expect(closestTarget([ME, player("ally", { team: 0, x: 1 }), FAR], "me")).toBe("far");
+  });
+
+  it("breaks ties by id", () => {
+    expect(closestTarget([ME, player("b", { x: 10 }), player("a", { y: 10 })], "me")).toBe("a");
+  });
+
+  it("finds nobody with no living foe, or no self", () => {
+    expect(closestTarget([ME, player("ally", { team: 0 })], "me")).toBeUndefined();
+    expect(closestTarget([NEAR], "me")).toBeUndefined();
+  });
+});
+
+describe("selfTargetIntent (#1028)", () => {
+  it("targets yourself when your target is someone else, or nobody", () => {
+    const intent = { kind: "target", targetSessionId: "me" };
+    expect(selfTargetIntent(PLAYERS, "me")).toEqual(intent);
+    expect(selfTargetIntent([player("me", { targetSessionId: "near" }), NEAR], "me")).toEqual(
+      intent,
+    );
+  });
+
+  it("sends nothing when you are already your target, or not in the match", () => {
+    expect(selfTargetIntent([player("me", { targetSessionId: "me" }), NEAR], "me")).toBeUndefined();
+    expect(selfTargetIntent([NEAR], "me")).toBeUndefined();
   });
 });

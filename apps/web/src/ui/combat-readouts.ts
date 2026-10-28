@@ -1,5 +1,6 @@
 import {
   STATUS_DEFINITIONS,
+  chainRequirementText,
   getAttribute,
   getSkill,
   getWeapon,
@@ -70,11 +71,15 @@ export function logToneOf(kind: CombatEvent["kind"]): Exclude<LogTone, "divider"
     case "interrupt-missed":
     case "attack-missed":
     case "attack-blocked":
+    case "invulnerable":
     case "attack-dodged":
     case "attack-obstructed":
     case "attack-unreachable":
     case "knocked-down":
+    case "shadow-stepped":
+    case "teleported":
     case "skill-disabled":
+    case "recharge-lengthened":
       return "control";
     case "death":
       return "death";
@@ -91,18 +96,32 @@ function skillName(skillId: string | undefined): string | undefined {
 }
 
 /** One event as a sentence a player can learn from. */
-/** " (must follow an off-hand attack)": what a chain attack out of sequence needed (#831, #885). */
+/**
+ * " (must follow an off-hand attack)", " (only if target is knocked
+ * down)": what a chain attack out of sequence needed (#831, #885, #1041).
+ */
 function outOfSequence(skillId: string | undefined): string {
-  const follows = skillId === undefined ? undefined : getSkill(skillId)?.attack?.chain?.follows;
-  return follows === undefined
-    ? ""
-    : ` (must follow ${follows === "off-hand" ? "an off-hand" : `a ${follows}`} attack)`;
+  const skill = skillId === undefined ? undefined : getSkill(skillId);
+  const needed = skill === undefined ? undefined : chainRequirementText(skill);
+  return needed === undefined ? "" : ` (${needed})`;
+}
+
+/** "not a spell": why a picky interrupt let a cast through, by its filter (#796, #1008). */
+function interruptRefusal(skillId: string | undefined): string {
+  const interrupt =
+    skillId === undefined
+      ? undefined
+      : getSkill(skillId)?.effects.find((effect) => effect.kind === "interrupt");
+  return interrupt?.kind === "interrupt" && interrupt.only === "spell"
+    ? "not a spell"
+    : "not a spell or chant";
 }
 
 export function describeCombatEvent(
   entry: Pick<CombatLogEntry, "cause" | "sourceId" | "skillId" | "weaponId" | "attributeId">,
   event: CombatEvent,
   nameOf: (id: string) => string,
+  isCreature: (id: string) => boolean,
 ): string {
   const target = nameOf(event.targetId);
   const skill = skillName(entry.skillId);
@@ -123,8 +142,22 @@ export function describeCombatEvent(
         ? event.kind === "heal"
           ? "regeneration"
           : "degeneration"
-        : (skill ?? "a skill"));
-  const by = `${what}${source === undefined ? "" : ` (${source})`}`;
+        : (skill ??
+          // A Guild Battle's shrine raises on its own (#1222): nobody's, no skill.
+          (entry.cause === "skill" && entry.sourceId === undefined && event.kind === "resurrected"
+            ? "The shrine"
+            : "a skill")));
+  // A creature swings its own jaws or bones: "Wolf hits Bob", not
+  // "Unarmed (Wolf)" (#1144); a priest raises with no skill: "Priest
+  // resurrects Bob" (#1186).
+  const byCreature =
+    (entry.cause === "weapon" || (entry.cause === "skill" && entry.skillId === undefined)) &&
+    entry.sourceId !== undefined &&
+    isCreature(entry.sourceId);
+  const by =
+    byCreature && source !== undefined
+      ? source
+      : `${what}${source === undefined ? "" : ` (${source})`}`;
   switch (event.kind) {
     case "damage":
       return `${by} hits ${target} for ${formatAmount(event.amount)}${event.critical ? ", a critical hit" : ""}`;
@@ -164,11 +197,14 @@ export function describeCombatEvent(
       // A picky interrupt says why it let a cast through (#796).
       return event.refusedSkillId === null
         ? `${by} finds nothing to interrupt on ${target}`
-        : `${by} can't interrupt ${target}'s ${skillName(event.refusedSkillId) ?? event.refusedSkillId}: not a spell or chant`;
+        : `${by} can't interrupt ${target}'s ${skillName(event.refusedSkillId) ?? event.refusedSkillId}: ${interruptRefusal(entry.skillId)}`;
     case "attack-missed":
       return `${by} misses ${target}${event.reason === "out-of-sequence" ? outOfSequence(entry.skillId) : ""}`;
     case "attack-blocked":
       return `${target} blocks ${by}`;
+    case "invulnerable":
+      // A shrine raise's window (#1208) turned it away (#1233).
+      return `${by}: ${target} is invulnerable`;
     case "attack-dodged":
       return `${target} dodges ${by}`;
     case "attack-obstructed":
@@ -179,6 +215,12 @@ export function describeCombatEvent(
       return `${by} knocks down ${target} (${formatAmount(event.durationSeconds)} s)`;
     case "skill-disabled":
       return `${by} disables ${target}'s ${skillName(event.skillId) ?? event.skillId} for ${formatAmount(event.seconds)} s`;
+    case "recharge-lengthened":
+      return `${target}'s ${skillName(event.skillId) ?? event.skillId} takes ${formatAmount(event.seconds)} s longer to recharge`;
+    case "shadow-stepped":
+      return `${target} shadow steps to ${nameOf(event.toId)}`;
+    case "teleported":
+      return `${target} is teleported to ${nameOf(event.toId)}`;
   }
 }
 
@@ -189,10 +231,11 @@ export function combatEventToRow(
   >,
   event: CombatEvent,
   nameOf: (id: string) => string,
+  isCreature: (id: string) => boolean,
 ): LogRow {
   return {
     time: formatSimClock(entry.atSeconds),
-    text: describeCombatEvent(entry, event, nameOf),
+    text: describeCombatEvent(entry, event, nameOf, isCreature),
     tone: logToneOf(event.kind),
   };
 }
@@ -224,8 +267,12 @@ export class StatusTickBatcher {
   readonly #open = new Map<string, TickWindow>();
 
   /** The rows `entry` makes ready now. */
-  public push(entry: CombatLogEntry, nameOf: (id: string) => string): LogRow[] {
-    const rows = this.advance(entry.atSeconds, nameOf);
+  public push(
+    entry: CombatLogEntry,
+    nameOf: (id: string) => string,
+    isCreature: (id: string) => boolean,
+  ): LogRow[] {
+    const rows = this.advance(entry.atSeconds, nameOf, isCreature);
     for (const event of entry.events) {
       if (entry.cause !== "degeneration") {
         // A skill or a swing can finish off someone still ticking too.
@@ -235,10 +282,11 @@ export class StatusTickBatcher {
               (open) => open.targetId === event.targetId,
               () => entry.atSeconds,
               nameOf,
+              isCreature,
             ),
           );
         }
-        rows.push(combatEventToRow(entry, event, nameOf));
+        rows.push(combatEventToRow(entry, event, nameOf, isCreature));
         continue;
       }
       if (event.kind === "damage" || event.kind === "heal") {
@@ -265,28 +313,39 @@ export class StatusTickBatcher {
           (open) => open.targetId === event.targetId,
           () => entry.atSeconds,
           nameOf,
+          isCreature,
         ),
       );
-      rows.push(combatEventToRow(entry, event, nameOf));
+      rows.push(combatEventToRow(entry, event, nameOf, isCreature));
     }
     return rows;
   }
 
   /** Close the windows that are a full second old at `atSeconds`. */
-  public advance(atSeconds: number, nameOf: (id: string) => string): LogRow[] {
+  public advance(
+    atSeconds: number,
+    nameOf: (id: string) => string,
+    isCreature: (id: string) => boolean,
+  ): LogRow[] {
     return this.#close(
       (open) => atSeconds >= open.startedAt + STATUS_TICK_WINDOW_SECONDS,
       (open) => open.startedAt + STATUS_TICK_WINDOW_SECONDS,
       nameOf,
+      isCreature,
     );
   }
 
   /** Close every window at `atSeconds`, as before a divider. */
-  public flush(atSeconds: number, nameOf: (id: string) => string): LogRow[] {
+  public flush(
+    atSeconds: number,
+    nameOf: (id: string) => string,
+    isCreature: (id: string) => boolean,
+  ): LogRow[] {
     return this.#close(
       () => true,
       () => atSeconds,
       nameOf,
+      isCreature,
     );
   }
 
@@ -295,6 +354,7 @@ export class StatusTickBatcher {
     due: (open: TickWindow) => boolean,
     closedAt: (open: TickWindow) => number,
     nameOf: (id: string) => string,
+    isCreature: (id: string) => boolean,
   ): LogRow[] {
     const closing = [...this.#open.entries()]
       .filter(([, open]) => due(open))
@@ -319,6 +379,7 @@ export class StatusTickBatcher {
           ? { kind: open.kind, targetId: open.targetId, amount: open.amount, critical: false }
           : { kind: open.kind, targetId: open.targetId, amount: open.amount },
         nameOf,
+        isCreature,
       );
       // Degeneration stays tick by tick: a damage run is worth reading.
       rows.push(
@@ -544,6 +605,9 @@ export function floatingCueFor(
     case "attack-blocked":
       // Guardian and the like turned the blow aside (#534).
       return { text: "block", tone: "neutral", critical: false };
+    case "invulnerable":
+      // A body a shrine just raised took none of it (#1233).
+      return { text: "Invulnerable", tone: "neutral", critical: false };
     case "attack-dodged":
       // A shot that landed where the target would have been (#159).
       return { text: "dodge", tone: "neutral", critical: false };

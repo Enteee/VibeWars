@@ -1,6 +1,7 @@
 {
   "id": "arena-split",
   "name": "Split Paths",
+  "mode": "priest-annihilation",
   "width": 1000,
   "height": 700,
   "walls": [
@@ -9,6 +10,10 @@
     { "kind": "rect", "x": 670, "y": 0, "width": 30, "height": 260 },
     { "kind": "rect", "x": 670, "y": 440, "width": 30, "height": 260 },
     { "kind": "rect", "x": 440, "y": 300, "width": 120, "height": 100 }
+  ],
+  "objectives": [
+    { "kind": "resurrection-shrine", "team": 0, "position": { "x": 50, "y": 350 } },
+    { "kind": "resurrection-shrine", "team": 1, "position": { "x": 950, "y": 350 } }
   ],
   "spawnPoints": [
     { "team": 0, "position": { "x": 100, "y": 200 } },

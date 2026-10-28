@@ -4,11 +4,12 @@ import {
   MAX_ATTRIBUTE_RANK,
   MINIMAL_GW_INSPIRED_PVP_V1,
   PROFESSIONS,
+  skillProfessionName,
   accessibleAttributeIds,
-  ALL_INSIGNIAS,
   ALL_OFFHANDS,
   ALL_WEAPONS,
   ARMOR_SLOTS,
+  WEAPON_SETS,
   allowsOffhand,
   cumulativeCostForRank,
   defaultBuildEquipment,
@@ -35,7 +36,10 @@ import {
   type SkillDescription,
   type SkillType,
   type WeaponId,
+  type WeaponSet,
+  type WeaponSetIndex,
 } from "@vibewars/game-core";
+import type { CorpusSkill } from "@vibewars/game-data/corpus";
 
 import { loadLayoutLabeller, type KeyLabeller } from "../input/key-labels.js";
 import {
@@ -47,21 +51,37 @@ import {
 } from "../input/keymap.js";
 import { loadKeymap } from "../input/keymap-preference.js";
 import { NoWebGlError } from "../render/arena-viewport.js";
-import { exportBuild, importBuild, looksLikeBuild } from "../storage/build-transfer.js";
+import {
+  exportBuild,
+  importBuild,
+  looksLikeBuild,
+  type ImportResult,
+} from "../storage/build-transfer.js";
 import { SKILL_BAR_SLOTS, equippableSkills, validateBuild } from "../storage/build-validation.js";
 import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "../storage/schema.js";
+import {
+  decodeTemplate,
+  encodeTemplate,
+  looksLikeTemplate,
+  missingSkillsNote,
+} from "../storage/gw1-template.js";
 import { looksLikeTeam } from "../storage/team-transfer.js";
 import { noWebGlNotice } from "./arena-notice.js";
 import {
   armorTarget,
   canEquipOffhand,
+  clearWeaponSet,
   clearArmorUpgrades,
   applyGearDrop,
   decodeGearDrag,
   encodeGearDrag,
   encodeRune,
+  headgearChoices,
   offhandAttributeChoices,
+  insigniaChoices,
+  insigniaEffectNote,
   runeChoices,
+  setHeadgearAttribute,
   setInsignia,
   setOffhand,
   setRequirementAttribute,
@@ -81,12 +101,17 @@ import {
   weaponIcon,
   type GearIcon,
 } from "./icons.js";
+import { loadShowCorpus, saveShowCorpus } from "./corpus-preference.js";
 import {
+  corpusByAccess,
+  corpusCostText,
+  filterCorpus,
   filterEliteSkills,
   filterSkillsByText,
   filterSkillsByType,
   groupSkillsByAttribute,
   lockedSkills,
+  missingFromCatalog,
   skillTypesOf,
 } from "./skill-library.js";
 import { createSkillTooltip, renderSkillDescription, type SkillTooltip } from "./skill-tooltip.js";
@@ -262,6 +287,7 @@ export function setProfessions(
     equipment: fitWeapon(
       reconcileEquipment(next.equipment, {
         primaryProfession: primary,
+        secondaryProfession: effectiveSecondary,
         accessibleAttributeIds: accessible,
       }),
       primary,
@@ -348,12 +374,12 @@ export function describeProfessionChange(
     .filter((id, slot): id is string => id !== null && after.skillBar[slot] !== id)
     .map((id) => `${getSkill(id)?.name ?? id} from the bar`);
 
-  const was = before.equipment;
-  const now = after.equipment;
+  const was = before.equipment.weaponSets[0];
+  const now = after.equipment.weaponSets[0];
   const gear: string[] = [];
+  const weaponName = (id: string): string => getWeapon(id)?.name ?? id;
   if (was.mainHand.weaponId !== now.mainHand.weaponId) {
-    const name = (id: string): string => getWeapon(id)?.name ?? id;
-    gear.push(`${name(was.mainHand.weaponId)} → ${name(now.mainHand.weaponId)}`);
+    gear.push(`${weaponName(was.mainHand.weaponId)} → ${weaponName(now.mainHand.weaponId)}`);
   }
   if (was.offHand !== null && was.offHand.offhandId !== now.offHand?.offhandId) {
     const name = (id: string): string => getOffhand(id)?.name ?? id;
@@ -363,11 +389,24 @@ export function describeProfessionChange(
         : `${name(was.offHand.offhandId)} → ${name(now.offHand.offhandId)}`,
     );
   }
+  // Sets 2-4 are emptied, not swapped (#489).
+  before.equipment.weaponSets.forEach((set, index) => {
+    if (index > 0 && set !== null && after.equipment.weaponSets[index] === null) {
+      gear.push(`Set ${String(index + 1)}: ${weaponName(set.mainHand.weaponId)} removed`);
+    }
+  });
   for (const slot of ARMOR_SLOTS) {
-    const rune = was.armor[slot].rune;
-    if (rune !== null && now.armor[slot].rune === null) {
+    const rune = before.equipment.armor[slot].rune;
+    if (rune !== null && after.equipment.armor[slot].rune === null) {
       gear.push(runeDisplayName(rune));
     }
+  }
+  // Moved, not removed, when it left both professions (#1140).
+  const headWas = before.equipment.armor.head.headgearAttributeId;
+  const headNow = after.equipment.armor.head.headgearAttributeId;
+  if (headWas !== null && headNow !== null && headWas !== headNow) {
+    const name = (id: string): string => getAttribute(id)?.name ?? id;
+    gear.push(`Headgear: ${name(headWas)} → ${name(headNow)}`);
   }
   return [...ranks, ...skills, ...gear];
 }
@@ -378,44 +417,65 @@ export function describeProfessionChange(
  * an Assassin becomes Daggers, so Dagger Mastery works at once. A weapon
  * still reachable stays, because it is a choice. The off hand stays if
  * the new weapon leaves a hand free and it survived reconciling, and is
- * the default's otherwise.
+ * the default's otherwise. Sets 2-4 have no default: one whose weapon
+ * nothing can govern is emptied (#489).
  */
 function fitWeapon(
   equipment: BuildEquipment,
   primary: ProfessionId,
   accessible: ReadonlySet<string>,
 ): BuildEquipment {
-  const weapon = getWeapon(equipment.mainHand.weaponId);
-  if (weapon === undefined || weaponReachable(weapon.requirement, accessible)) {
-    return equipment;
+  const reachable = (set: WeaponSet): boolean => {
+    const weapon = getWeapon(set.mainHand.weaponId);
+    return weapon === undefined || weaponReachable(weapon.requirement, accessible);
+  };
+  // Sets 2-4 may be empty, so one whose weapon nothing governs empties (#489).
+  const fit = (set: WeaponSet | null): WeaponSet | null =>
+    set !== null && reachable(set) ? set : null;
+  const [set1, two, three, four] = equipment.weaponSets;
+  const [set2, set3, set4] = [fit(two), fit(three), fit(four)];
+  if (reachable(set1)) {
+    return { ...equipment, weaponSets: [set1, set2, set3, set4] };
   }
-  const fallback = defaultEquipmentFor(primary);
+  const [fallback] = defaultEquipmentFor(primary).weaponSets;
   const fallbackWeapon = getWeapon(fallback.mainHand.weaponId);
   const keepOffhand =
-    equipment.offHand !== null && fallbackWeapon !== undefined && allowsOffhand(fallbackWeapon);
+    set1.offHand !== null && fallbackWeapon !== undefined && allowsOffhand(fallbackWeapon);
   return {
     ...equipment,
-    mainHand: fallback.mainHand,
-    offHand: keepOffhand ? equipment.offHand : fallback.offHand,
+    weaponSets: [
+      { mainHand: fallback.mainHand, offHand: keepOffhand ? set1.offHand : fallback.offHand },
+      set2,
+      set3,
+      set4,
+    ],
   };
 }
 
+/** Every carried set's main hand, set 1 first (#489). */
+function carriedWeapons(character: StoredCharacter): readonly WeaponId[] {
+  return character.equipment.weaponSets.flatMap((set) =>
+    set === null ? [] : [set.mainHand.weaponId],
+  );
+}
+
 /**
- * Why an attack skill on the bar will not work with `weaponId` (#417):
- * "Needs an axe" on its slot, "Needs an axe — your weapon is a sword"
- * when hovered. `undefined` when it will, or for a skill that is no
- * attack. The bar still saves: GW1 lets you carry one for a weapon you
- * swap to.
+ * Why an attack skill on the bar will not work with any of `weaponIds`,
+ * set 1 first (#417, #489): "Needs an axe" on its slot, "Needs an axe —
+ * your weapon is a sword" when hovered, naming set 1's. `undefined` when
+ * some set wields it, or for a skill that is no attack. The bar still
+ * saves: GW1 lets you carry one for a weapon you swap to.
  */
 export function weaponWarning(
   skill: Skill,
-  weaponId: WeaponId,
+  weaponIds: readonly WeaponId[],
 ): { readonly badge: string; readonly title: string } | undefined {
   const needed = skill.attack?.weapon;
-  if (needed === undefined || wieldsFor(weaponId, needed)) {
+  if (needed === undefined || weaponIds.some((id) => wieldsFor(id, needed))) {
     return undefined;
   }
-  const held = getWeapon(weaponId);
+  const [first] = weaponIds;
+  const held = first === undefined ? undefined : getWeapon(first);
   const yours =
     held === undefined || held.id === "unarmed"
       ? "you have no weapon"
@@ -629,6 +689,10 @@ const SLOT_ICON_PX = 48;
 const LIBRARY_ICON_PX = 24;
 
 const SLOT_FIELD = /^skillBar\[(\d+)\]$/;
+/** A gear problem in weapon set i (#489): `equipment.weaponSets[i]…`. */
+const SET_FIELD = /^equipment\.weaponSets\[(\d)\]/;
+/** Every weapon set, in tab order (#489). */
+const WEAPON_SET_INDICES: readonly WeaponSetIndex[] = [0, 1, 2, 3];
 const DUPLICATE = " appears more than once on the bar";
 
 /**
@@ -707,6 +771,13 @@ const FLAG_MS = 1600;
 /** Scroll to the element `cause` is about, highlight it a moment, and focus it if it takes focus. */
 function showCause(scope: HTMLElement, cause: ProblemCause): void {
   const key = causeKey(cause);
+  // Another weapon set's problem: its tab is picked first, so its slot shows (#489).
+  const set = SET_FIELD.exec(key);
+  if (set !== null) {
+    scope
+      .querySelector<HTMLElement>(`[data-cause="equipment.weaponSets[${set[1] ?? ""}]"]`)
+      ?.click();
+  }
   // An armor piece's problem without a mark of its own falls back to the gear.
   const target =
     scope.querySelector<HTMLElement>(`[data-cause="${key}"]`) ??
@@ -750,6 +821,10 @@ interface EditorContext {
   readonly piece: () => ArmorSlot | undefined;
   /** Pick an armor piece, or none; every region shows it. */
   readonly selectPiece: (slot: ArmorSlot | undefined) => void;
+  /** The weapon set the gear panel shows and edits (#489); screen state, never stored. */
+  readonly weaponSet: () => WeaponSetIndex;
+  /** Show and edit another weapon set; every region shows it. */
+  readonly selectWeaponSet: (set: WeaponSetIndex) => void;
   /** Open a library tab, scrolled to one of its groups if given (#570). */
   readonly showLibrary: (tab: LibraryTab, group?: string) => void;
   /** Equip `skillId` to `slot`, as `equip` does; the pick, used, is let go. */
@@ -816,6 +891,7 @@ export function mountBuildEditor(
   let notice: string | undefined;
   let selected: number | undefined;
   let piece: ArmorSlot | undefined;
+  let weaponSet: WeaponSetIndex = 0;
   // Read once per open, as the arena's bar does; labels by code until the
   // browser says what the layout is.
   const keymap = loadKeymap();
@@ -884,6 +960,11 @@ export function mountBuildEditor(
     piece: () => piece,
     selectPiece: (slot) => {
       piece = slot;
+      update();
+    },
+    weaponSet: () => weaponSet,
+    selectWeaponSet: (set) => {
+      weaponSet = set;
       update();
     },
     showLibrary: (tab, group) => {
@@ -962,16 +1043,24 @@ export function mountBuildEditor(
   // A build pasted anywhere but a field imports it (#572), unsaved: the
   // player sees what arrived and chooses to keep it. Other text is
   // ignored; a broken build says why. A team code holds builds too, so it
-  // is told apart first (#577).
+  // is told apart first (#577); a GW1 template code comes last (#494).
   const stopPaste = listenForPaste((text) => {
     if (looksLikeTeam(text)) {
       toast("That is a team code. Paste it on the Teams screen.");
       return true;
     }
-    if (!looksLikeBuild(text)) {
+    let result: ImportResult;
+    // A GW1 code's skills this game lacks arrive as empty slots (#494).
+    let missing: readonly number[] = [];
+    if (looksLikeBuild(text)) {
+      result = importBuild(text, context.current().id, Date.now());
+    } else if (looksLikeTemplate(text)) {
+      const decoded = decodeTemplate(text, context.current().id, Date.now());
+      result = decoded;
+      missing = decoded.ok ? decoded.missingSkills : [];
+    } else {
       return false;
     }
-    const result = importBuild(text, context.current().id, Date.now());
     if (!result.ok) {
       // Every problem at once: someone fixing a pasted build should not
       // discover its faults one round trip at a time.
@@ -979,7 +1068,7 @@ export function mountBuildEditor(
       return true;
     }
     context.commit(result.character);
-    toast(`Imported ${result.character.name}`);
+    toast(`Imported ${result.character.name}${missingSkillsNote(missing)}`);
     return true;
   });
 
@@ -1094,6 +1183,16 @@ function mountCommandBar(
     button("Share", "", () => {
       closeMenu();
       share.show(exportBuild(context.current()));
+    }),
+    // The same build as a GW1 template code (#494), for GW1's build sites.
+    button("Share as GW1 code", "", () => {
+      closeMenu();
+      const encoded = encodeTemplate(context.current());
+      if (encoded.ok) {
+        share.show(encoded.code);
+      } else {
+        toast(encoded.problem);
+      }
     }),
     // An edited character duplicates as edited, as it always has.
     button("Duplicate", "", () => {
@@ -1430,7 +1529,11 @@ function mountAttributes(panel: HTMLElement, context: EditorContext): Region {
     const colour = (attributeId: string): string =>
       `hsl(${String(Math.round((200 + (shown.indexOf(attributeId) * 360) / shown.length) % 360))} 55% 60%)`;
     const bonuses = new Map(
-      summariseGear(character).runeBonuses.map((rune) => [rune.attributeId, rune.bonus]),
+      // Runes are worn by every set, so set 1 says them.
+      (summariseGear(character, 0)?.attributeBonuses ?? []).map((bonus) => [
+        bonus.attributeId,
+        bonus,
+      ]),
     );
     const preview =
       hover === undefined
@@ -1504,7 +1607,9 @@ function mountAttributes(panel: HTMLElement, context: EditorContext): Region {
           // to click, so a suffix after it.
           rankText.textContent = String(rank);
           if (bonus !== undefined) {
-            rankText.appendChild(h("span", "editor-attribute-bonus", ` +${String(bonus)}`));
+            const suffix = h("span", "editor-attribute-bonus", ` +${String(bonus.bonus)}`);
+            suffix.title = bonus.sources;
+            rankText.appendChild(suffix);
           }
         }
         const next = row.querySelector(".editor-attribute-next");
@@ -1632,9 +1737,7 @@ function mountSkillBar(panel: HTMLElement, context: EditorContext): Region {
         }
         const label = context.slotLabel(slot);
         const warning =
-          skill === undefined
-            ? undefined
-            : weaponWarning(skill, character.equipment.mainHand.weaponId);
+          skill === undefined ? undefined : weaponWarning(skill, carriedWeapons(character));
         const signature = `${label}|${skill === undefined ? "" : `${skill.id}|${description?.cost ?? ""}|${warning?.title ?? ""}`}`;
         if (built.get(slot) === signature) {
           return;
@@ -1808,6 +1911,16 @@ function renderDetails(
   node.appendChild(scale);
 }
 
+/** A GW1 skill not in the game yet (#1220), told from a playable one by its lack of an id. */
+function isCorpus(skill: Skill | CorpusSkill): skill is CorpusSkill {
+  return !("id" in skill);
+}
+
+/** A library card's key: a skill's id, or a corpus entry's GW1 id, which no skill id looks like. */
+function libraryKey(skill: Skill | CorpusSkill): string {
+  return isCorpus(skill) ? `gw:${String(skill.gwId)}` : skill.id;
+}
+
 function mountSkillLibrary(context: EditorContext): LibraryBody {
   const { tooltip } = context;
   const search = document.createElement("input");
@@ -1823,6 +1936,36 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
   // On the search's own row, so the library is no taller for it.
   const filters = h("div", "skill-filters");
   filters.append(search, eliteFilter);
+  // The GW1 skills not in the game yet (#1220), off by default and
+  // remembered. Their data is a chunk of its own, loaded the first time
+  // this is on; until it arrives the library lists what it has.
+  const showCorpus = document.createElement("input");
+  showCorpus.type = "checkbox";
+  showCorpus.checked = loadShowCorpus();
+  const corpusToggle = h("label", "skill-corpus-toggle");
+  corpusToggle.append(showCorpus, " Show skills not in the game yet");
+  let corpus: readonly CorpusSkill[] | undefined;
+  let corpusLoading = false;
+  const loadCorpus = (): void => {
+    if (corpus !== undefined || corpusLoading) {
+      return;
+    }
+    corpusLoading = true;
+    import("@vibewars/game-data/corpus")
+      .then(({ corpusSkills }) => {
+        corpus = missingFromCatalog(corpusSkills(), IMPLEMENTED_SKILLS);
+        render(context.current());
+      })
+      .catch(() => {
+        // A chunk that failed to load is asked for again at the next toggle.
+      })
+      .finally(() => {
+        corpusLoading = false;
+      });
+  };
+  if (showCorpus.checked) {
+    loadCorpus();
+  }
   // One chip per type the catalogue has (#567); several may be on.
   const types = new Set<SkillType>();
   const chips = h("div", "skill-type-chips");
@@ -1934,12 +2077,46 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
     card.appendChild(h("span", "skill-box-cost"));
     card.appendChild(h("span", "skill-box-headline"));
     box.appendChild(card);
-    box.appendChild(h("span", "skill-box-needs", `needs ${PROFESSIONS[skill.profession].name}`));
+    box.appendChild(h("span", "skill-box-needs", `needs ${skillProfessionName(skill.profession)}`));
     const details = h("div", "skill-box-details");
     details.hidden = true;
     box.appendChild(details);
     box.addEventListener("mouseenter", () => {
       tooltip.show(box, describeSkill(skill, ranksOf(context.current())));
+    });
+    box.addEventListener("mouseleave", () => {
+      tooltip.hide();
+    });
+    return box;
+  };
+
+  /**
+   * A GW1 skill not in the game yet (#1220): greyed, badged, with GW1's
+   * fields on hover. It neither opens, equips nor drags. Nothing on it
+   * changes, so each is built once and kept: a search cleared brings a
+   * thousand back without building one (#1220 "stays responsive").
+   */
+  const corpusBoxes = new Map<number, HTMLElement>();
+  const createCorpusBox = (skill: CorpusSkill): HTMLElement => {
+    const built = corpusBoxes.get(skill.gwId);
+    if (built !== undefined) {
+      return built;
+    }
+    const box = h("div", "skill-corpus-box");
+    corpusBoxes.set(skill.gwId, box);
+    box.dataset.gwId = String(skill.gwId);
+    box.classList.toggle("is-elite", skill.elite);
+    const card = h("div", "skill-box-card");
+    card.insertAdjacentHTML("beforeend", skillIconHtml("", LIBRARY_ICON_PX));
+    card.appendChild(h("span", "skill-box-name", skill.name));
+    if (skill.skillType !== undefined) {
+      card.insertAdjacentHTML("beforeend", skillTypeBadgeHtml(skill.skillType));
+    }
+    card.appendChild(h("span", "skill-box-cost", corpusCostText(skill)));
+    box.appendChild(card);
+    box.appendChild(h("span", "skill-corpus-badge", "not in the game yet"));
+    box.addEventListener("mouseenter", () => {
+      tooltip.showCorpus(box, skill);
     });
     box.addEventListener("mouseleave", () => {
       tooltip.hide();
@@ -2006,11 +2183,18 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
     const lockedMatches = filtered(
       lockedSkills(IMPLEMENTED_SKILLS, character.primaryProfession, character.secondaryProfession),
     );
+    const corpusMatches = corpusByAccess(
+      showCorpus.checked && corpus !== undefined
+        ? filterCorpus(corpus, search.value, types, eliteOnly.checked)
+        : [],
+      character.primaryProfession,
+      character.secondaryProfession,
+    );
     // A card the filters took away closes; it does not reopen on its own.
     if (![...matches, ...lockedMatches].some((skill) => skill.id === open)) {
       open = undefined;
     }
-    const groups = groupSkillsByAttribute(matches);
+    const groups = groupSkillsByAttribute(matches, corpusMatches.open);
     syncList(
       groupHost,
       groups,
@@ -2038,10 +2222,13 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
         if (boxes instanceof HTMLElement) {
           syncList(
             boxes,
-            group.skills,
-            (skill) => skill.id,
-            createBox,
+            [...group.skills, ...group.corpus],
+            libraryKey,
+            (skill) => (isCorpus(skill) ? createCorpusBox(skill) : createBox(skill)),
             (box, skill) => {
+              if (isCorpus(skill)) {
+                return;
+              }
               const on = character.skillBar.indexOf(skill.id);
               box.classList.toggle("is-equipped", on >= 0);
               // On the bar: where, and no Equip. Else where an equip goes.
@@ -2069,17 +2256,22 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
     if (groups.length === 0) {
       groupHost.appendChild(emptyNote);
     }
-    lockedSummary.textContent = `Other professions (${String(lockedMatches.length)})`;
+    const lockedAll = [...lockedMatches, ...corpusMatches.locked];
+    lockedSummary.textContent = `Other professions (${String(lockedAll.length)})`;
+    // Collapsed, the near thousand GW1 skills of other professions are
+    // counted, not laid out: they come in as it opens (#1220).
     syncList(
       lockedBoxes,
-      lockedMatches,
-      (skill) => skill.id,
-      createLockedBox,
+      locked.open ? lockedAll : lockedMatches,
+      libraryKey,
+      (skill) => (isCorpus(skill) ? createCorpusBox(skill) : createLockedBox(skill)),
       (box, skill) => {
-        paintCard(box, skill, ranks);
+        if (!isCorpus(skill)) {
+          paintCard(box, skill, ranks);
+        }
       },
     );
-    locked.hidden = lockedMatches.length === 0;
+    locked.hidden = lockedAll.length === 0;
   };
 
   search.addEventListener("input", () => {
@@ -2088,8 +2280,20 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
   eliteOnly.addEventListener("change", () => {
     render(context.current());
   });
+  locked.addEventListener("toggle", () => {
+    if (showCorpus.checked) {
+      render(context.current());
+    }
+  });
+  showCorpus.addEventListener("change", () => {
+    saveShowCorpus(showCorpus.checked);
+    if (showCorpus.checked) {
+      loadCorpus();
+    }
+    render(context.current());
+  });
 
-  return { elements: [filters, chips, groupHost, locked], update: render };
+  return { elements: [corpusToggle, filters, chips, groupHost, locked], update: render };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -2150,6 +2354,8 @@ function gearIconImg(icon: GearIcon | undefined): HTMLImageElement | undefined {
 /** What a gear slot shows; see `mountGearSlot`. */
 interface GearSlotState {
   readonly filled: string | undefined;
+  /** What an empty slot says; "empty" if unset. */
+  readonly emptyNote?: string | undefined;
   readonly icon?: GearIcon | undefined;
   readonly detail?: string | undefined;
   readonly disabledNote?: string | undefined;
@@ -2238,7 +2444,7 @@ function mountGearSlot(
       cell.classList.toggle("is-disabled", off);
       cell.classList.toggle("is-empty", !off && next.filled === undefined);
       const icon = off ? undefined : next.icon;
-      const text = next.disabledNote ?? next.filled ?? "empty";
+      const text = next.disabledNote ?? next.filled ?? next.emptyNote ?? "empty";
       const signature = `${icon?.src ?? ""}|${text}`;
       if (signature !== shownName) {
         shownName = signature;
@@ -2284,31 +2490,97 @@ function mountGear(panel: HTMLElement, context: EditorContext): Region {
     commit(applyGearDrop(current(), source, target));
   };
 
+  // --- weapon sets ----------------------------------------------------
+  // One tab per set (#489): the hands, their attributes and the summary
+  // below show and edit the selected one.
+  const tabRow = h("div", "gear-set-tabs");
+  tabRow.setAttribute("role", "tablist");
+  tabRow.setAttribute("aria-label", "weapon sets");
+  const tabs = WEAPON_SET_INDICES.map((set) => {
+    const tab = h("button", "gear-set-tab");
+    tab.setAttribute("type", "button");
+    tab.setAttribute("role", "tab");
+    tab.dataset.cause = `equipment.weaponSets[${String(set)}]`;
+    tab.addEventListener("click", () => {
+      context.selectWeaponSet(set);
+    });
+    // Arrow keys move between the tabs, as a tablist's do.
+    tab.addEventListener("keydown", (event: KeyboardEvent) => {
+      const step = event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
+      if (step === 0) {
+        return;
+      }
+      event.preventDefault();
+      const next = WEAPON_SET_INDICES[(set + step + WEAPON_SETS) % WEAPON_SETS] ?? set;
+      context.selectWeaponSet(next);
+      tabs[next]?.tab.focus();
+    });
+    const number = h("span", "gear-set-tab-number", String(set + 1));
+    const icons = h("span", "gear-set-tab-icons");
+    tab.append(number, icons);
+    // Set 1 always holds a weapon, so only 2-4 can be emptied.
+    const clear =
+      set === 0
+        ? undefined
+        : button("×", "gear-set-tab-clear", () => {
+            commit(clearWeaponSet(current(), set));
+          });
+    if (clear !== undefined) {
+      clear.title = `empty set ${String(set + 1)}`;
+      clear.setAttribute("aria-label", `empty set ${String(set + 1)}`);
+    }
+    const cell = h("div", "gear-set-tab-cell");
+    cell.append(tab, ...(clear === undefined ? [] : [clear]));
+    tabRow.appendChild(cell);
+    // Nothing drawn yet, so even an empty set's first draw differs.
+    return { set, tab, icons, clear, shown: undefined as string | undefined };
+  });
+  section.appendChild(tabRow);
+
   // --- weapon and off-hand -------------------------------------------
   const handsGrid = h("div", "gear-hands");
   // A hand clicked opens what can go in it (#570).
-  const weaponSlot = mountGearSlot("weapon", context, drop({ kind: "main-hand" }), () => {
-    context.showLibrary("gear", "weapons");
-  });
-  const offhandSlot = mountGearSlot("off-hand", context, drop({ kind: "off-hand" }), () => {
-    context.showLibrary("gear", "off-hands");
-  });
-  weaponSlot.element.dataset.cause = "equipment.mainHand";
-  offhandSlot.element.dataset.cause = "equipment.offHand";
+  const weaponSlot = mountGearSlot(
+    "weapon",
+    context,
+    (source) => {
+      drop({ kind: "main-hand", set: context.weaponSet() })(source);
+    },
+    () => {
+      context.showLibrary("gear", "weapons");
+    },
+  );
+  const offhandSlot = mountGearSlot(
+    "off-hand",
+    context,
+    (source) => {
+      drop({ kind: "off-hand", set: context.weaponSet() })(source);
+    },
+    () => {
+      context.showLibrary("gear", "off-hands");
+    },
+  );
   handsGrid.append(weaponSlot.element, offhandSlot.element);
   section.appendChild(handsGrid);
 
   // --- attribute nominations ------------------------------------------
   // Only shown for gear that genuinely has a choice to make. A sword is
   // always Swordsmanship, and offering a one-option dropdown would imply
-  // otherwise.
+  // otherwise. The headgear always has one (#1140), so the row is always
+  // there, the weapon's and the off-hand's ahead of it.
   const linkRow = h("div", "editor-row");
   const weaponLink = mountSelectRow((value) => {
-    commit(setRequirementAttribute(current(), "mainHand", value));
+    commit(setRequirementAttribute(current(), context.weaponSet(), "mainHand", value));
   });
   const offhandLink = mountSelectRow((value) => {
-    commit(setRequirementAttribute(current(), "offHand", value));
+    commit(setRequirementAttribute(current(), context.weaponSet(), "offHand", value));
   });
+  const headgearLink = mountSelectRow((value) => {
+    commit(setHeadgearAttribute(current(), value));
+  });
+  headgearLink.element.classList.add("editor-headgear");
+  linkRow.appendChild(headgearLink.element);
+  section.appendChild(linkRow);
 
   // --- armor ----------------------------------------------------------
   const armorHeader = h("div", "editor-subheader");
@@ -2365,17 +2637,62 @@ function mountGear(panel: HTMLElement, context: EditorContext): Region {
 
   return {
     update(character) {
-      const weapon = getWeapon(character.equipment.mainHand.weaponId);
-      const offHand = character.equipment.offHand;
+      const selected = context.weaponSet();
+      const sets = character.equipment.weaponSets;
+      // A set's problems mark its tab (#489), as a slot's mark the slot.
+      const troubled = new Set(
+        validateBuild(character).flatMap((problem) => {
+          const match = SET_FIELD.exec(problem.field);
+          return match === null ? [] : [Number(match[1])];
+        }),
+      );
+      for (const entry of tabs) {
+        const held = sets[entry.set];
+        entry.tab.classList.toggle("is-selected", entry.set === selected);
+        entry.tab.setAttribute("aria-selected", String(entry.set === selected));
+        entry.tab.tabIndex = entry.set === selected ? 0 : -1;
+        entry.tab.classList.toggle("is-empty", held === null);
+        entry.tab.classList.toggle("has-problem", troubled.has(entry.set));
+        entry.tab.title =
+          held === null
+            ? `Set ${String(entry.set + 1)}: empty`
+            : `Set ${String(entry.set + 1)}: ${getWeapon(held.mainHand.weaponId)?.name ?? held.mainHand.weaponId}`;
+        const signature =
+          held === null ? "" : `${held.mainHand.weaponId}|${held.offHand?.offhandId ?? ""}`;
+        if (signature !== entry.shown) {
+          entry.shown = signature;
+          const main = held === null ? undefined : gearIconImg(weaponIcon(held.mainHand.weaponId));
+          const offhandId = held?.offHand?.offhandId;
+          const off = offhandId === undefined ? undefined : gearIconImg(offhandIcon(offhandId));
+          off?.classList.add("is-offhand");
+          entry.icons.replaceChildren(
+            ...(held === null ? [h("span", "gear-set-tab-add", "+")] : []),
+            ...(main === undefined ? [] : [main]),
+            ...(off === undefined ? [] : [off]),
+          );
+        }
+        if (entry.clear !== undefined) {
+          entry.clear.hidden = held === null;
+        }
+      }
+
+      const held = sets[selected];
+      const mainHand = held?.mainHand;
+      const offHand = held?.offHand ?? null;
+      const weapon = mainHand === undefined ? undefined : getWeapon(mainHand.weaponId);
       const offhandDefinition = offHand === null ? undefined : getOffhand(offHand.offhandId);
+      weaponSlot.element.dataset.cause = `equipment.weaponSets[${String(selected)}].mainHand`;
+      offhandSlot.element.dataset.cause = `equipment.weaponSets[${String(selected)}].offHand`;
       weaponSlot.update({
         filled: weapon?.name,
-        icon: weaponIcon(character.equipment.mainHand.weaponId),
+        emptyNote: "Add a weapon",
+        icon: mainHand === undefined ? undefined : weaponIcon(mainHand.weaponId),
         detail:
           weapon === undefined
             ? undefined
             : `${String(weapon.damageMin)}–${String(weapon.damageMax)} · ${weapon.attackIntervalSeconds.toFixed(2)}s`,
-        dragSource: { from: "hand", hand: "mainHand" },
+        dragSource:
+          mainHand === undefined ? undefined : { from: "hand", set: selected, hand: "mainHand" },
       });
       offhandSlot.update({
         filled: offhandDefinition?.name,
@@ -2386,24 +2703,29 @@ function mountGear(panel: HTMLElement, context: EditorContext): Region {
             : `+${String(offhandDefinition.baseBonus + offhandDefinition.metRequirementBonus)} ${offhandDefinition.kind}`,
         // Said in the slot itself rather than left for the player to
         // discover by dragging a shield onto it and seeing nothing happen.
-        disabledNote: canEquipOffhand(character) ? undefined : "both hands full",
-        dragSource: offHand === null ? undefined : { from: "hand", hand: "offHand" },
+        disabledNote:
+          held === null
+            ? "no weapon in this set"
+            : canEquipOffhand(character, selected)
+              ? undefined
+              : "both hands full",
+        dragSource: offHand === null ? undefined : { from: "hand", set: selected, hand: "offHand" },
         onClear: () => {
-          commit(setOffhand(current(), null));
+          commit(setOffhand(current(), context.weaponSet(), null));
         },
       });
 
       const weaponChoices =
-        weapon?.requirement.kind === "chosen" ? weaponAttributeChoices(character) : [];
+        weapon?.requirement.kind === "chosen" ? weaponAttributeChoices(character, selected) : [];
       const offhandChoices =
         offHand === null ? [] : offhandAttributeChoices(character, offHand.offhandId);
       const attributeOptions = (ids: readonly string[]) =>
         ids.map((id) => ({ value: id, label: getAttribute(id)?.name ?? id }));
-      if (weapon !== undefined && weaponChoices.length > 0) {
+      if (weapon !== undefined && mainHand !== undefined && weaponChoices.length > 0) {
         weaponLink.update(
           `${weapon.name.toLowerCase()} attribute`,
           attributeOptions(weaponChoices),
-          character.equipment.mainHand.requirementAttributeId ?? "",
+          mainHand.requirementAttributeId ?? "",
         );
       }
       if (offHand !== null && offhandChoices.length > 0) {
@@ -2413,14 +2735,16 @@ function mountGear(panel: HTMLElement, context: EditorContext): Region {
           offHand.requirementAttributeId ?? "",
         );
       }
+      headgearLink.update(
+        "Headgear +1",
+        attributeOptions(headgearChoices(character)),
+        character.equipment.armor.head.headgearAttributeId ?? "",
+      );
       present(weaponLink.element, weaponChoices.length > 0, (node) => {
         linkRow.prepend(node);
       });
       present(offhandLink.element, offhandChoices.length > 0, (node) => {
-        linkRow.appendChild(node);
-      });
-      present(linkRow, linkRow.children.length > 0, (node) => {
-        handsGrid.after(node);
+        headgearLink.element.before(node);
       });
 
       for (const { slot, row, insignia, rune } of armorSlots) {
@@ -2446,7 +2770,7 @@ function mountGear(panel: HTMLElement, context: EditorContext): Region {
         });
       }
 
-      const lines = statLines(character);
+      const lines = statLines(character, selected);
       stats.replaceChildren(...lines);
       present(stats, lines.length > 0, (node) => {
         section.appendChild(node);
@@ -2478,7 +2802,11 @@ function mountStats(): Region & { readonly element: HTMLElement } {
   return {
     element,
     update(character) {
-      const summary = summariseGear(character);
+      // Set 1, beside the preview that shows it: a match starts with it (ADR-0036).
+      const summary = summariseGear(character, 0);
+      if (summary === undefined) {
+        return;
+      }
       health.textContent = String(summary.maxHealth);
       energy.textContent = `${String(summary.maxEnergy)} · ${String(summary.baseEnergyPips)} pips`;
       armor.textContent = String(summary.armor);
@@ -2494,11 +2822,17 @@ function mountStats(): Region & { readonly element: HTMLElement } {
   };
 }
 
-/** What the gear adds beyond the headline stats; nothing takes focus, so rebuilt. */
-function statLines(character: StoredCharacter): HTMLElement[] {
-  const summary = summariseGear(character);
+/**
+ * What set `set`'s gear adds beyond the headline stats; nothing takes
+ * focus, so rebuilt.
+ */
+function statLines(character: StoredCharacter, set: WeaponSetIndex): HTMLElement[] {
+  const summary = summariseGear(character, set);
+  if (summary === undefined) {
+    return [h("div", "gear-stat-note", "Empty set")];
+  }
   const lines: HTMLElement[] = [];
-  for (const bonus of summary.runeBonuses) {
+  for (const bonus of summary.attributeBonuses) {
     lines.push(
       statLine(
         getAttribute(bonus.attributeId)?.name ?? bonus.attributeId,
@@ -2540,9 +2874,9 @@ function insigniaAmountNote(insigniaId: InsigniaId, slot: ArmorSlot): string {
     return "";
   }
   const { effect } = insignia;
-  return effect.kind === "conditional-armor"
-    ? `+${String(effect.amount)} armor`
-    : `+${String(perSlotAmount(effect, slot))} ${effect.kind}`;
+  return effect.kind === "health" || effect.kind === "energy"
+    ? `+${String(perSlotAmount(effect, slot))} ${effect.kind}`
+    : insigniaEffectNote(effect);
 }
 
 /**
@@ -2601,7 +2935,7 @@ function mountGearLibrary(context: EditorContext): LibraryBody {
       detail: `${String(weapon.damageMin)}–${String(weapon.damageMax)} · ${weapon.attackIntervalSeconds.toFixed(2)}s`,
       drag: { from: "weapon-library", weaponId: weapon.id },
       onClick: () => {
-        commit(setWeapon(current(), weapon.id));
+        commit(setWeapon(current(), context.weaponSet(), weapon.id));
       },
     });
     weapons.appendChild(node);
@@ -2617,7 +2951,7 @@ function mountGearLibrary(context: EditorContext): LibraryBody {
       detail: `+${String(offhand.baseBonus + offhand.metRequirementBonus)} ${offhand.kind}`,
       drag: { from: "offhand-library", offhandId: offhand.id },
       onClick: () => {
-        commit(setOffhand(current(), offhand.id));
+        commit(setOffhand(current(), context.weaponSet(), offhand.id));
       },
     });
     offhands.appendChild(node);
@@ -2631,22 +2965,10 @@ function mountGearLibrary(context: EditorContext): LibraryBody {
   };
 
   // --- insignias -------------------------------------------------------
+  // The common ones and the primary's own (#1142), so this list changes too.
   const insignias = group("insignias");
-  const insigniaBoxes = ALL_INSIGNIAS.map((insignia) => {
-    const node = box({
-      name: insignia.name,
-      detail: insigniaLibraryNote(insignia.effect),
-      drag: { from: "insignia-library", insigniaId: insignia.id },
-      onClick: () => {
-        const next = current();
-        commit(setInsignia(next, armorTarget(next, "insignia", context.piece()), insignia.id));
-      },
-    });
-    const target = targetNote();
-    node.appendChild(target);
-    insignias.appendChild(node);
-    return { id: insignia.id, node, target };
-  });
+  const insigniaBoxes = h("div", "skill-group-boxes");
+  insignias.appendChild(insigniaBoxes);
 
   // --- runes -----------------------------------------------------------
   // Which runes there are depends on the primary profession, so this list
@@ -2658,18 +2980,42 @@ function mountGearLibrary(context: EditorContext): LibraryBody {
   return {
     elements: [host],
     update(character) {
+      const held = character.equipment.weaponSets[context.weaponSet()];
       for (const { id, node } of weaponBoxes) {
-        node.classList.toggle("is-equipped", id === character.equipment.mainHand.weaponId);
+        node.classList.toggle("is-equipped", id === held?.mainHand.weaponId);
       }
       for (const { id, node } of offhandBoxes) {
-        node.classList.toggle("is-equipped", id === character.equipment.offHand?.offhandId);
+        node.classList.toggle("is-equipped", id === held?.offHand?.offhandId);
       }
       const worn = ARMOR_SLOTS.map((slot) => character.equipment.armor[slot]);
       const wornInsignias = new Set(worn.map((piece) => piece.insigniaId));
-      for (const { id, node, target } of insigniaBoxes) {
-        node.classList.toggle("is-equipped", wornInsignias.has(id));
-        showTarget(target, character, "insignia");
-      }
+      syncList(
+        insigniaBoxes,
+        insigniaChoices(character),
+        (insignia) => insignia.id,
+        (insignia) => {
+          const node = box({
+            name: insignia.name,
+            detail: insigniaLibraryNote(insignia.effect),
+            drag: { from: "insignia-library", insigniaId: insignia.id },
+            onClick: () => {
+              const next = current();
+              commit(
+                setInsignia(next, armorTarget(next, "insignia", context.piece()), insignia.id),
+              );
+            },
+          });
+          node.appendChild(targetNote());
+          return node;
+        },
+        (node, insignia) => {
+          node.classList.toggle("is-equipped", wornInsignias.has(insignia.id));
+          const target = node.querySelector<HTMLElement>(".gear-box-target");
+          if (target !== null) {
+            showTarget(target, character, "insignia");
+          }
+        },
+      );
       const wornRunes = new Set(
         worn.flatMap((piece) => (piece.rune === null ? [] : [encodeRune(piece.rune)])),
       );
@@ -2704,8 +3050,8 @@ function mountGearLibrary(context: EditorContext): LibraryBody {
 
 /** A one-line summary of what an insignia does, for the library list. */
 function insigniaLibraryNote(effect: InsigniaEffect): string {
-  if (effect.kind === "conditional-armor") {
-    return `+${String(effect.amount)} armor`;
+  if (effect.kind === "conditional-armor" || effect.kind === "physical-reduction") {
+    return insigniaEffectNote(effect);
   }
   // The chest value, as the headline — the library cannot know which
   // slot it will land in, and the chest is the best case.

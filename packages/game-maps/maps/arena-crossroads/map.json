@@ -1,6 +1,7 @@
 {
   "id": "arena-crossroads",
   "name": "Crossroads",
+  "mode": "annihilation",
   "width": 2600,
   "height": 2600,
   "walls": [
@@ -75,6 +76,7 @@
       "height": 200
     }
   ],
+  "objectives": [],
   "spawnPoints": [
     {
       "team": 0,

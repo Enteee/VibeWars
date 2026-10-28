@@ -22,10 +22,15 @@ export interface FormedGroup {
   readonly groupId: string;
   /** Where it meets: `ROOM_PREFIX` and `groupId`, which no lobby code can be. */
   readonly room: string;
-  /** Who hosts: see `hostOf`. */
+  /** Who hosts: see `hostOf`. A party chosen hosts by its leader, `members[0]`. */
   readonly hostTicketId: string;
-  /** Ticket ids per side, shuffled by `groupId`; a party is its whole side. */
+  /**
+   * Seat keys per side, shuffled by `groupId` (#882): a solo's ticket id,
+   * or every member key of a party, which is its whole side.
+   */
   readonly teams: readonly [readonly string[], readonly string[]];
+  /** Each party's members, sorted, `members[0]` its ticket id. */
+  readonly parties: readonly (readonly string[])[];
   /** Picked from the pool by `groupId`. */
   readonly mapId: string;
 }
@@ -54,7 +59,8 @@ function queueOrder(a: QueueTicket, b: QueueTicket): number {
     a.enteredAt - b.enteredAt ||
     compare(a.ticketId, b.ticketId) ||
     b.heartbeatAt - a.heartbeatAt ||
-    a.partySize - b.partySize
+    a.members.length - b.members.length ||
+    compare(a.members.join(), b.members.join())
   );
 }
 
@@ -73,26 +79,54 @@ export function isLive(ticket: QueueTicket, now: number): boolean {
 
 /**
  * The live tickets, first queued first: this protocol and mode, `isLive`,
- * not ignored, each id once.
+ * each id once. Ignored ones are still here: see `liveQueue`.
  */
-function liveQueue(input: FormGroupsInput): QueueTicket[] {
-  const sorted = input.tickets
+function liveTickets(input: Pick<FormGroupsInput, "tickets" | "now" | "mode">): QueueTicket[] {
+  const live = input.tickets
     .filter(
       (ticket) =>
         ticket.protocol === PROTOCOL_VERSION &&
         ticket.mode === input.mode &&
-        isLive(ticket, input.now) &&
-        !input.ignored.has(ticket.ticketId),
+        isLive(ticket, input.now),
     )
     .sort(queueOrder);
-  const seen = new Set<string>();
-  return sorted.filter((ticket) => {
-    if (seen.has(ticket.ticketId)) {
+  const ids = new Set<string>();
+  return live.filter((ticket) => {
+    if (ids.has(ticket.ticketId)) {
       return false;
     }
-    seen.add(ticket.ticketId);
+    ids.add(ticket.ticketId);
     return true;
   });
+}
+
+/**
+ * Which of `live` keep their seat keys to themselves (#882): a seat key
+ * seats once. The board passes a party only with every member's consent
+ * (#1078), so a key on two live tickets signed both, and that is its
+ * holder's own doing. A party naming another live ticket's id is
+ * dropped, and two parties naming one member are both dropped: neither
+ * queued first can win, since `enteredAt` is the owner's claim.
+ * Counted over every live ticket, ignored or not, so a client's own
+ * ignored set never changes which party is dropped.
+ */
+function unclaimed(live: readonly QueueTicket[]): (ticket: QueueTicket) => boolean {
+  const ids = new Set(live.map((ticket) => ticket.ticketId));
+  const claims = new Map<string, number>();
+  for (const ticket of live) {
+    for (const member of ticket.members.slice(1)) {
+      claims.set(member, (claims.get(member) ?? 0) + 1);
+    }
+  }
+  return (ticket) =>
+    ticket.members.slice(1).every((member) => !ids.has(member) && claims.get(member) === 1);
+}
+
+/** The tickets formation takes: `liveTickets`, not ignored and `unclaimed`. */
+function liveQueue(input: FormGroupsInput): QueueTicket[] {
+  const live = liveTickets(input);
+  const own = unclaimed(live);
+  return live.filter((ticket) => !input.ignored.has(ticket.ticketId) && own(ticket));
 }
 
 /** A ticket and where it stands in the queue. */
@@ -126,7 +160,7 @@ function takeGroups(queue: readonly QueueTicket[], teamSize: number): QueueTicke
   let parties: Queued[] = [];
   queue.forEach((ticket, place) => {
     // At a team size of 1, every ticket is a solo.
-    (ticket.partySize > 1 ? parties : solos).push({ ticket, place });
+    (ticket.members.length > 1 ? parties : solos).push({ ticket, place });
     const candidates: Queued[][] = [];
     if (parties.length >= 2) {
       candidates.push(parties.slice(0, 2));
@@ -180,7 +214,7 @@ async function hostOf(groupId: string, ids: readonly string[]): Promise<string |
 
 /**
  * Split `group` into two sides of `teamSize`, shuffled by `groupId`: each
- * party is a side of its own, the solo players fill the rest.
+ * party's member keys are a side of their own, the solo players fill the rest.
  */
 function sides(
   group: readonly QueueTicket[],
@@ -189,18 +223,18 @@ function sides(
 ): readonly [readonly string[], readonly string[]] {
   const rng = createRng(seedFromString(groupId));
   const parties = group
-    .filter((ticket) => ticket.partySize > 1)
-    .map((ticket) => ticket.ticketId)
-    .sort(compare);
+    .filter((ticket) => ticket.members.length > 1)
+    .sort((a, b) => compare(a.ticketId, b.ticketId))
+    .map((ticket) => ticket.members);
   // Each solo drawn a key in id order, so every client draws the same.
   const solos = group
-    .filter((ticket) => ticket.partySize === 1)
+    .filter((ticket) => ticket.members.length === 1)
     .map((ticket) => ticket.ticketId)
     .sort(compare)
     .map((ticketId) => ({ ticketId, key: rng.nextUint32() }))
     .sort((a, b) => a.key - b.key || compare(a.ticketId, b.ticketId))
     .map(({ ticketId }) => ticketId);
-  const filled = parties.map((party) => [party]);
+  const filled = parties.map((members) => [...members]);
   while (filled.length < 2) {
     filled.push(solos.splice(0, teamSize));
   }
@@ -231,15 +265,45 @@ export async function formGroups(input: FormGroupsInput): Promise<FormedGroup[]>
       room: `${ROOM_PREFIX}${groupId}`,
       hostTicketId,
       teams: sides(group, teamSize, groupId),
+      parties: group
+        .filter((ticket) => ticket.members.length > 1)
+        .map((ticket) => ticket.members)
+        .sort((a, b) => compare(a.join(), b.join())),
       mapId,
     });
   }
   return groups;
 }
 
-/** The group `ticketId` is in, if any. */
-export function groupOf(groups: readonly FormedGroup[], ticketId: string): FormedGroup | undefined {
-  return groups.find(
-    (group) => group.teams[0].includes(ticketId) || group.teams[1].includes(ticketId),
+/**
+ * The group `seatKey` settles into (#882): one where it sits as `members`,
+ * its own ticket's. A solo's (`[seatKey]`) only where it is a solo, a
+ * party member's only where that very party is. A party ticket can name
+ * any key it likes, so sitting in a group is not enough.
+ */
+export function groupOf(
+  groups: readonly FormedGroup[],
+  seatKey: string,
+  members: readonly string[],
+): FormedGroup | undefined {
+  const own = members.join();
+  return groups.find((group) => {
+    if (!group.teams[0].includes(seatKey) && !group.teams[1].includes(seatKey)) {
+      return false;
+    }
+    const party = group.parties.find((partyMembers) => partyMembers.includes(seatKey));
+    return party === undefined ? members.length === 1 : party.join() === own;
+  });
+}
+
+/**
+ * The ticket ids behind `seatKeys`, as a no-show is reported (#882): a
+ * party's, when any of its members is among them, else the seat key,
+ * which is a solo's ticket id. Each once, in `seatKeys`' order.
+ */
+export function ticketsOf(group: FormedGroup, seatKeys: readonly string[]): string[] {
+  const ids = seatKeys.map(
+    (seatKey) => group.parties.find((members) => members.includes(seatKey))?.[0] ?? seatKey,
   );
+  return [...new Set(ids)];
 }

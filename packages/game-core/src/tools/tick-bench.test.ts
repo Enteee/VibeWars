@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { DENSE_FIELD, runTickBench, tickStats } from "./tick-bench.js";
+import { DENSE_FIELD, runTickBench, tickStats, type BenchCrowd } from "./tick-bench.js";
 
 /**
  * The tick bench (#542). Always a 40-tick smoke run; with `BENCH_TICKS`
  * set (`pnpm run bench:ticks`), that many, and the numbers printed for
- * ticks after the first 50, which hold the JIT's warm-up. No timing
+ * ticks after the first 50, which hold the JIT's warm-up; `BENCH_CROWD=followers`
+ * times 32 minions walking back to their owners instead (#1157). No timing
  * assertion: CI machines vary, and a timing gate would flake.
  */
 
@@ -21,8 +22,28 @@ const WARM_UP = 50;
 describe("the tick bench (#542)", () => {
   it("runs the dense field: 252 wall segments, and every fighter moves", () => {
     expect(DENSE_FIELD.walls).toHaveLength(252);
-    const { tickMs, moved } = runTickBench({ ticks: 40, seed: "bench", now, field: DENSE_FIELD });
+    const { tickMs, moved } = runTickBench({
+      ticks: 40,
+      seed: "bench",
+      now,
+      field: DENSE_FIELD,
+      crowd: "fighters",
+    });
     expect(tickMs).toHaveLength(40);
+    for (const [id, { from, to }] of moved) {
+      expect(Math.hypot(to.x - from.x, to.y - from.y), id).toBeGreaterThan(0);
+    }
+  });
+
+  it("runs 32 followers across the dense field, and every one walks back (#1157)", () => {
+    const { moved } = runTickBench({
+      ticks: 40,
+      seed: "bench",
+      now,
+      field: DENSE_FIELD,
+      crowd: "followers",
+    });
+    expect(moved.size).toBe(32);
     for (const [id, { from, to }] of moved) {
       expect(Math.hypot(to.x - from.x, to.y - from.y), id).toBeGreaterThan(0);
     }
@@ -31,12 +52,18 @@ describe("the tick bench (#542)", () => {
   // An arena's own bench is game-maps' (`map-bench.test.ts`, #444): game-core has no maps.
   const ticks = Number(process.env.BENCH_TICKS ?? "0");
   const dense = (process.env.BENCH_MAP ?? "dense") === "dense";
-  it.runIf(ticks > WARM_UP && dense)(`times ${String(ticks)} ticks`, () => {
-    const { tickMs } = runTickBench({ ticks, seed: "bench", now, field: DENSE_FIELD });
-    const { p50, p95, max } = tickStats(tickMs.slice(WARM_UP));
-    console.log(
-      `ticks ${String(WARM_UP)}–${String(ticks)}: p50 ${p50.toFixed(3)} ms, p95 ${p95.toFixed(3)} ms, max ${max.toFixed(3)} ms`,
-    );
-    expect(tickMs).toHaveLength(ticks);
-  });
+  const crowd: BenchCrowd = process.env.BENCH_CROWD === "followers" ? "followers" : "fighters";
+  it.runIf(ticks > WARM_UP && dense)(
+    `times ${String(ticks)} ticks of ${crowd}`,
+    () => {
+      const { tickMs } = runTickBench({ ticks, seed: "bench", now, field: DENSE_FIELD, crowd });
+      const { p50, p95, max } = tickStats(tickMs.slice(WARM_UP));
+      console.log(
+        `ticks ${String(WARM_UP)}–${String(ticks)}: p50 ${p50.toFixed(3)} ms, p95 ${p95.toFixed(3)} ms, max ${max.toFixed(3)} ms`,
+      );
+      expect(tickMs).toHaveLength(ticks);
+    },
+    // Hundreds of ticks on a loaded machine outlast the default 5 s.
+    60_000,
+  );
 });

@@ -1,10 +1,11 @@
-import { RANDOM_ARENA_RULES, type PlayerBuild } from "@vibewars/game-core";
+import { MATCH_MODES, type PlayerBuild } from "@vibewars/game-core";
 import {
   FORMATION_TIMEOUT_MS,
   MAX_LOBBY_PLAYERS,
   PROTOCOL_MISMATCH_MESSAGE,
   PROTOCOL_VERSION,
   type JsonValue,
+  type LobbyRefusal,
   type PeerHello,
   type QueueMode,
 } from "@vibewars/game-protocol";
@@ -12,6 +13,7 @@ import {
   LobbyNoAnswerError,
   LobbyRefusedError,
   MatchRefusedError,
+  PARTY_CONSENT_MS,
   connectMatch,
   createLobbyHost,
   createMatchHost,
@@ -25,6 +27,7 @@ import {
   type MatchPlan,
   type MatchStarting,
   type PeerMatchConnection,
+  type QueueParty,
   type QueueState,
   type QueuedPlan,
   type QueuedSeat,
@@ -34,7 +37,9 @@ import {
 import { arenaIds, hostMap, randomArenaMapPool } from "./maps.js";
 import { startHostClock } from "./transport/host-clock.js";
 import { joinQueueBoard, joinRoom } from "./transport/index.js";
+import type { NostrQueue } from "./transport/nostr-queue.js";
 import { verifyTicketSig } from "./transport/ticket-key.js";
+import { loadTurnConfig } from "./transport/turn-config.js";
 
 /**
  * The glue between the app shell and a peer-to-peer lobby (#15, #403):
@@ -60,6 +65,9 @@ export const NO_RELAY_MESSAGE = "Couldn't reach the lobby servers. Check your in
 /** A host was found and offered a connection that never came up (#707). */
 export const PEER_UNREACHABLE_MESSAGE =
   "Found the lobby, but couldn't connect to its host. One of your networks blocks direct connections.";
+/** Its second line when no TURN relay is saved (#972). */
+export const TURN_RELAY_HINT =
+  "A TURN relay link from a friend can fix this: open it, or enter the relay in Options.";
 export const LOBBY_FULL_MESSAGE = "That lobby is full.";
 export const HOST_CLOSED_MESSAGE = "The host closed the lobby.";
 /** True whichever side dropped: a guest cannot tell its own drop from the host's. */
@@ -69,10 +77,20 @@ export const NOT_ADMITTED_MESSAGE = "The match would not let this ticket in.";
 export const TICKET_USED_MESSAGE = "This ticket is already in the match, in another tab.";
 /** #854 C7's wording. */
 export const FELL_THROUGH_MESSAGE = "Match fell through, searching again.";
+/** A joined player's ask the host turned down (#1194): a bot it had no seat for, or could not add. */
+export const NO_SEAT_FOR_BOT_MESSAGE = "The lobby is full: there is no seat for a bot.";
+export const BOT_REFUSED_MESSAGE = "The host could not add or remove that bot.";
+export const NOT_HOST_MESSAGE = "Only the host can add or remove bots.";
 
 /** A lobby hosted in this tab, and how to end it for everyone. */
 export interface HostedLobby {
   readonly lobby: LobbyConnection;
+  /**
+   * A queued lobby's match is over and nobody waits on it (#882): its
+   * winners have their Stay together answer, or its window ran out. A
+   * coded lobby's never settles.
+   */
+  readonly done: Promise<void>;
   close(): Promise<void>;
 }
 
@@ -82,7 +100,7 @@ function secureRandom(): number {
   return value / 2 ** 32;
 }
 
-/** Build the match the lobby planned, on its map. Throws for a map it does not have. */
+/** Build the match the lobby planned, on its map and by its mode. Throws for a map it does not have. */
 function startMatch(plan: MatchPlan) {
   const map = hostMap(plan.mapId);
   if (map === undefined) {
@@ -94,7 +112,7 @@ function startMatch(plan: MatchPlan) {
     // A match is reproducible from its seed; the lobby's match id is
     // unique only within the lobby, so the code goes in too.
     seed: `${plan.transport.selfId}:${plan.matchId}`,
-    matchRules: plan.matchRules,
+    matchRules: MATCH_MODES[map.mode],
     random: secureRandom,
     maxPlayers: MAX_LOBBY_PLAYERS,
     seats: plan.seats,
@@ -114,8 +132,12 @@ function startMatch(plan: MatchPlan) {
 export async function hostLobby(
   name: string,
   character: LobbyCharacter | null,
-  queued?: QueuedPlan,
+  queued?: Omit<QueuedPlan, "onDone">,
 ): Promise<HostedLobby> {
+  let settle: () => void = () => undefined;
+  const done = new Promise<void>((resolve) => {
+    settle = resolve;
+  });
   // Best effort: a page going away tells its guests, rather than leaving
   // them to wait out a dropped host's reconnect window (#515). Added
   // before the room exists, so it runs before a transport's own pagehide
@@ -133,7 +155,16 @@ export async function hostLobby(
     code,
     mapIds: arenaIds(),
     startMatch,
-    ...(queued === undefined ? {} : { queued }),
+    ...(queued === undefined
+      ? {}
+      : {
+          queued: {
+            ...queued,
+            onDone: () => {
+              settle();
+            },
+          },
+        }),
   });
   const stopClock = startHostClock((seconds) => {
     host.advance(seconds);
@@ -158,7 +189,7 @@ export async function hostLobby(
       // The host is one of its own group: it proves its ticket like the rest.
       ...(queued === undefined ? {} : { queued }),
     });
-    return { lobby, close };
+    return { lobby, done, close };
   } catch (error) {
     await close();
     throw error;
@@ -194,6 +225,24 @@ export async function joinLobbyByCode(
 
 /** A queued lobby's countdown, from everyone seated to the match: the versus splash's time. */
 export const QUEUED_COUNTDOWN_SECONDS = 5;
+/** How long a queued match's result stays on the HUD before the queue's ended view (#881). */
+export const QUEUED_RESULT_SECONDS = 4;
+/** How long the ended view offers *Stay together* to a winning team (#882). */
+export const STAY_TOGETHER_SECONDS = 15;
+/**
+ * The host's window for Stay together runs from the result: the HUD's
+ * seconds, the offer's, and this much for the last vote to arrive.
+ */
+export const STAY_TOGETHER_GRACE_SECONDS = 2;
+export const STAY_TOGETHER_WINDOW_SECONDS =
+  QUEUED_RESULT_SECONDS + STAY_TOGETHER_SECONDS + STAY_TOGETHER_GRACE_SECONDS;
+/**
+ * From signing the host's party proposal (#1078), how long a member waits
+ * for its answer: the host's consent window, and the same grace.
+ */
+export const PARTY_ANSWER_MS = PARTY_CONSENT_MS + STAY_TOGETHER_GRACE_SECONDS * 1000;
+/** #882's wording, for a party that did not form or did not last. */
+export const TEAM_SPLIT_MESSAGE = "The team split up";
 /**
  * How often the queue client ticks, in seconds of the host clock: often
  * enough that the wait reads smoothly, and a settle window ends close to
@@ -209,6 +258,25 @@ export interface RandomArenaEvents {
   readonly onLobby: (lobby: LobbyConnection, hosted: HostedLobby | undefined) => void;
   /** The group's lobby would not have this ticket: the queue is over, and this says why. */
   readonly onRefused: (notice: string) => void;
+  /** A party member's leader is gone from the queue (#882): this place is over. */
+  readonly onPartyGone: () => void;
+}
+
+/**
+ * A board, and a fresh member key made on it, for a winner who presses
+ * *Stay together* (#882): the key goes to the host, and the board to the
+ * party's queue if it forms. Closed by whoever drops it.
+ */
+export function openPartyBoard(): { readonly board: NostrQueue; readonly key: TicketKey } {
+  const board = joinQueueBoard();
+  return { board, key: board.newTicketKey() };
+}
+
+/** A team that stayed together (#882), as this member brings it to the queue. */
+export interface PartyPlace {
+  readonly party: QueueParty;
+  /** The board `party.key` was made on: the Nostr board signs only with its own keys. */
+  readonly board: NostrQueue;
 }
 
 /** One player's place in the Random Arena queue (#880). */
@@ -228,19 +296,21 @@ export interface RandomArenaQueue {
  * or loses its host before the match, puts the player back in the queue
  * with their place. The board closes when the player leaves or the match
  * starts, not on entering the lobby, since a lobby that falls through
- * queues again on it.
+ * queues again on it. With `party`, it queues as a member of a team that
+ * stayed together.
  */
 export function enterQueue(
   mode: QueueMode,
   name: string,
   character: LobbyCharacter | null,
   events: RandomArenaEvents,
+  party?: PartyPlace,
 ): RandomArenaQueue {
-  const queue = joinQueueBoard();
+  const queue = party?.board ?? joinQueueBoard();
   const client = createQueueClient({
     board: queue.board,
     mode,
-    partySize: 1,
+    ...(party === undefined ? {} : { party: party.party }),
     now: () => Date.now(),
     newTicketKey: () => queue.newTicketKey(),
     mapPool: randomArenaMapPool(mode),
@@ -278,9 +348,9 @@ export function enterQueue(
           group,
           key,
           verifyTicketSig,
-          matchRules: RANDOM_ARENA_RULES,
           countdownSeconds: QUEUED_COUNTDOWN_SECONDS,
           timeoutSeconds: FORMATION_TIMEOUT_MS / 1000,
+          stayTogetherSeconds: STAY_TOGETHER_WINDOW_SECONDS,
           onFellThrough: (noShows) => {
             if (!done) {
               client.fellThrough(noShows);
@@ -304,7 +374,7 @@ export function enterQueue(
         (error.reason === "not-admitted" || error.reason === "ticket-used")
       ) {
         finish();
-        events.onRefused(joinFailureNotice(error, location));
+        events.onRefused(joinFailureNotice(error, location, loadTurnConfig() !== undefined));
         return;
       }
       // A host that never answered is skipped next time, as a no-show is.
@@ -337,6 +407,11 @@ export function enterQueue(
   };
 
   client.onChange((state) => {
+    if (state.kind === "party-gone") {
+      finish();
+      events.onPartyGone();
+      return;
+    }
     events.onState(state);
     if (state.kind === "in-lobby") {
       void meet(state.group, state.key);
@@ -367,11 +442,14 @@ const IPV6_LOOPBACK_NAMES: readonly string[] = ["localhost", "[::1]"];
 
 /**
  * What the menu says when hosting or joining failed with `error`, on the
- * page at `where` (the app passes `location`).
+ * page at `where` (the app passes `location`). `relayed` is whether the
+ * player has a TURN relay saved (#972): without one, an unreachable host
+ * is the thing a relay fixes, so the notice says so.
  */
 export function joinFailureNotice(
   error: unknown,
   where: { readonly hostname: string; readonly port: string },
+  relayed: boolean,
 ): string {
   if (error instanceof LobbyNoAnswerError) {
     // As far as the join got: past that, a wrong code and an unreachable
@@ -380,9 +458,11 @@ export function joinFailureNotice(
       case "no-relay":
         return NO_RELAY_MESSAGE;
       case "peer-unreachable":
-        return IPV6_LOOPBACK_NAMES.includes(where.hostname)
-          ? `${PEER_UNREACHABLE_MESSAGE}\n${loopbackHint(where.port)}`
-          : PEER_UNREACHABLE_MESSAGE;
+        return [
+          PEER_UNREACHABLE_MESSAGE,
+          ...(relayed ? [] : [TURN_RELAY_HINT]),
+          ...(IPV6_LOOPBACK_NAMES.includes(where.hostname) ? [loopbackHint(where.port)] : []),
+        ].join("\n");
       case null:
         return NO_ANSWER_MESSAGE;
     }
@@ -404,6 +484,18 @@ export function joinFailureNotice(
     }
   }
   return "Could not join the lobby.";
+}
+
+/** What the lobby says when the host refused something this player asked for, once joined (#1194). */
+export function lobbyRefusalNotice(reason: LobbyRefusal): string {
+  switch (reason) {
+    case "lobby-full":
+      return NO_SEAT_FOR_BOT_MESSAGE;
+    case "not-host":
+      return NOT_HOST_MESSAGE;
+    default:
+      return BOT_REFUSED_MESSAGE;
+  }
 }
 
 /** What the menu says when the lobby closed for `reason`. */

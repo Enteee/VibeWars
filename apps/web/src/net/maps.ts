@@ -1,5 +1,5 @@
 import { allWallSegments } from "@vibewars/game-maps/geometry";
-import { validateMapData, type MapData } from "@vibewars/game-maps/schema";
+import { validateMapData, type MapData, type Objective } from "@vibewars/game-maps/schema";
 import { sizeClass, type SizeClass } from "@vibewars/game-maps/size-class";
 import arenaAlpha from "@vibewars/game-maps/maps/arena-alpha/map.json" with { type: "json" };
 import arenaCanyon from "@vibewars/game-maps/maps/arena-canyon/map.json" with { type: "json" };
@@ -9,8 +9,11 @@ import arenaOpen from "@vibewars/game-maps/maps/arena-open/map.json" with { type
 import arenaPillars from "@vibewars/game-maps/maps/arena-pillars/map.json" with { type: "json" };
 import arenaRing from "@vibewars/game-maps/maps/arena-ring/map.json" with { type: "json" };
 import arenaSplit from "@vibewars/game-maps/maps/arena-split/map.json" with { type: "json" };
+import guildHallIsle from "@vibewars/game-maps/maps/guild-hall-isle/map.json" with { type: "json" };
+import type { GuildLord, MatchMode, Vec2 } from "@vibewars/game-core";
 import { teamSizeOf, type QueueMode } from "@vibewars/game-protocol";
 import type { HostMap } from "@vibewars/game-session";
+import { TRAINING_MAPS } from "../training/maps.js";
 
 /**
  * The arenas a lobby can be played on (#403), as the host's browser
@@ -30,6 +33,8 @@ export const ARENA_MAPS: readonly MapData[] = [
   arenaCrossroads,
   arenaCanyon,
   arenaLongHall,
+  // The Guild Battle's (#1222).
+  guildHallIsle,
 ].map((raw) => validateMapData(raw));
 
 /** The arena a new lobby starts on, the server's default before (#403). */
@@ -57,15 +62,58 @@ const PLAYERS_BY_SIZE: Readonly<Record<SizeClass, { readonly min: number; readon
 /**
  * The arenas a Random Arena of `mode` is drawn from (#854 A2): every one
  * whose size class seats both teams, so a map added later joins by its
- * size and not by a list. In `ARENA_MAPS`' order, as `formGroups` wants
- * the same pool on every client.
+ * size and not by a list. Never a Guild Battle's (#1222): a 28-minute
+ * siege is not a Random Arena. In `ARENA_MAPS`' order, as `formGroups`
+ * wants the same pool on every client.
  */
 export function randomArenaMapPool(mode: QueueMode): string[] {
   const players = 2 * teamSizeOf(mode);
   return ARENA_MAPS.filter((map) => {
     const { min, max } = PLAYERS_BY_SIZE[sizeClass(map)];
-    return players >= min && players <= max;
+    return map.mode !== "guild-battle" && players >= min && players <= max;
   }).map((map) => map.id);
+}
+
+/**
+ * The mode a match on `mapId` plays (#476), from the same map file the
+ * host plays it by: what a joining peer's scoreboard counts (#1200). An
+ * arena or a training ground; a map this build does not have gets
+ * Annihilation's.
+ */
+export function mapMode(mapId: string): MatchMode {
+  return (
+    (ARENA_MAPS.find((map) => map.id === mapId) ?? TRAINING_MAPS.get(mapId))?.mode ?? "annihilation"
+  );
+}
+
+/**
+ * The resurrection shrines on `mapId` (#1199), from the same map file the
+ * host plays it by, as `mapMode` reads the mode: none on a map without
+ * them, or one this build does not have.
+ */
+export function mapShrines(mapId: string): readonly MapShrine[] {
+  const map = ARENA_MAPS.find((candidate) => candidate.id === mapId) ?? TRAINING_MAPS.get(mapId);
+  return shrinesOf(map?.objectives ?? []);
+}
+
+/** The resurrection shrines among a map's objectives. */
+function shrinesOf(objectives: readonly Objective[]): readonly MapShrine[] {
+  return objectives.flatMap(({ kind, team, position }) =>
+    kind === "resurrection-shrine" ? [{ team, position }] : [],
+  );
+}
+
+/** The Guild Lords among a map's objectives (#1222). */
+function guildLordsOf(objectives: readonly Objective[]): readonly GuildLord[] {
+  return objectives.flatMap(({ kind, team, position }) =>
+    kind === "guild-lord" ? [{ team, position }] : [],
+  );
+}
+
+/** A team's resurrection shrine (#1186), where its priest stands. */
+export interface MapShrine {
+  readonly team: number;
+  readonly position: Vec2;
 }
 
 /** The map `mapId` names, built for a `MatchHost`; `undefined` for no such map. */
@@ -86,8 +134,11 @@ export function hostMap(mapId: string): HostMap | undefined {
           : { kind: "polygon", points: wall.points },
       ),
     },
+    mode: map.mode,
     walls: allWallSegments(map.walls),
     bounds: { width: map.width, height: map.height },
     spawns: map.spawnPoints,
+    shrines: shrinesOf(map.objectives),
+    guildLords: guildLordsOf(map.objectives),
   };
 }

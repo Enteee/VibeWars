@@ -1,6 +1,6 @@
 import {
-  DEFAULT_SKILL_BAR,
   MINIMAL_GW_INSPIRED_PVP_V1,
+  STARTER_BUILDS,
   defaultBuildEquipment,
   validatePlayerBuild,
   type PlayerBuild,
@@ -57,7 +57,7 @@ const LEGAL_BUILD: PlayerBuild = {
   equipment: defaultBuildEquipment("elementalist"),
 };
 
-/** A legal warrior with the house sword and shield. */
+/** A legal warrior with a sword and shield. */
 const SHIELD_BUILD: PlayerBuild = {
   name: "Shield Wall",
   primaryProfession: "warrior",
@@ -66,6 +66,18 @@ const SHIELD_BUILD: PlayerBuild = {
   skillBar: ["warrior.swift-chop", null, null, null, null, null, null, null],
   equipment: defaultBuildEquipment("warrior"),
 };
+
+/**
+ * What a refused build plays: the first starter build, as the host's
+ * `random` in `joinWith` always says 0 (#852).
+ */
+const REFUSED_AS = (() => {
+  const [first] = STARTER_BUILDS;
+  if (first === undefined) {
+    throw new Error("no starter builds");
+  }
+  return first;
+})();
 
 /**
  * Join a fresh match as a remote peer with `build` (`null` for none, as a
@@ -79,7 +91,7 @@ async function joinWith(
   connection: PeerMatchConnection;
   slots: (string | null)[];
 }> {
-  const match = startMatch();
+  const match = startMatch({ random: () => 0 });
   const { connection } = await match.join(hello({ name, build: toJson(build) }));
   await match.step(TICK_SECONDS);
   return { match, connection, slots: connection.skillBar.map((slot) => slot?.id ?? null) };
@@ -89,7 +101,7 @@ describe("joining a P2P match with a build (#375)", () => {
   it("sanity-checks that the fixture build is actually legal", () => {
     // If this fixture drifted into being invalid, every test below would
     // pass for the wrong reason: the host would refuse it and hand back
-    // the house loadout.
+    // a starter build.
     expect(validatePlayerBuild(LEGAL_BUILD, MINIMAL_GW_INSPIRED_PVP_V1.attributes)).toEqual([]);
     expect(validatePlayerBuild(SHIELD_BUILD, MINIMAL_GW_INSPIRED_PVP_V1.attributes)).toEqual([]);
   });
@@ -100,7 +112,10 @@ describe("joining a P2P match with a build (#375)", () => {
 
     const empty = await joinWith({
       ...LEGAL_BUILD,
-      equipment: { ...LEGAL_BUILD.equipment, offHand: null },
+      equipment: {
+        ...LEGAL_BUILD.equipment,
+        weaponSets: [{ ...LEGAL_BUILD.equipment.weaponSets[0], offHand: null }, null, null, null],
+      },
     });
     expect(self(empty.connection)).toBeDefined();
     expect(self(empty.connection)?.offhandId).toBeUndefined();
@@ -126,11 +141,15 @@ describe("joining a P2P match with a build (#375)", () => {
     expect(connection.ranks.get("elementalist.fire-magic")).toBe(12);
     expect(connection.ranks.get("monk.healing-prayers")).toBe(8);
 
-    // A refused build plays, and so describes, the house loadout.
+    // A refused build plays, and so describes, a starter build: here the
+    // Warrior/Monk: Swordsmanship 12, the head's minor rune and its headgear (#1140),
+    // Tactics 9 and Healing Prayers 8.
     const refused = await joinWith({ ...LEGAL_BUILD, skillBar: null });
-    expect(refused.connection.ranks.get("elementalist.fire-magic")).toBe(12);
-    expect(refused.connection.ranks.get("monk.healing-prayers")).toBe(12);
-    expect(refused.connection.ranks.get("necromancer.curses")).toBe(12);
+    expect(REFUSED_AS.name).toBe("Warrior/Monk");
+    expect(refused.connection.ranks.get("warrior.swordsmanship")).toBe(14);
+    expect(refused.connection.ranks.get("warrior.tactics")).toBe(9);
+    expect(refused.connection.ranks.get("monk.healing-prayers")).toBe(8);
+    expect(refused.connection.ranks.get("elementalist.fire-magic")).toBeUndefined();
   });
 
   it("keeps a gap in the bar: the empty slot casts nothing, the next its own skill (#347)", async () => {
@@ -160,7 +179,13 @@ describe("joining a P2P match with a build (#375)", () => {
 
   it("starts an Elementalist full, at the maximum Energy Storage raised (#532)", async () => {
     // No focus: its Energy Storage requirement would add energy of its own.
-    const storing = { ...LEGAL_BUILD, equipment: { ...LEGAL_BUILD.equipment, offHand: null } };
+    const storing = {
+      ...LEGAL_BUILD,
+      equipment: {
+        ...LEGAL_BUILD.equipment,
+        weaponSets: [{ ...LEGAL_BUILD.equipment.weaponSets[0], offHand: null }, null, null, null],
+      },
+    };
     const withoutStorage = {
       ...storing,
       attributes: LEGAL_BUILD.attributes.filter(
@@ -173,15 +198,15 @@ describe("joining a P2P match with a build (#375)", () => {
     expect(self(connection)?.energy).toBe(plain + 30);
   });
 
-  it("shows the professions the host resolved, and the house loadout's for a broken build (#281)", async () => {
+  it("shows the professions the host resolved, and a starter build's for a broken build (#281)", async () => {
     const legal = await joinWith(LEGAL_BUILD);
     expect(self(legal.connection)?.primaryProfession).toBe("elementalist");
     expect(self(legal.connection)?.secondaryProfession).toBe("monk");
 
     // A claim the host refused is never what the arena shows.
     const broken = await joinWith({ ...LEGAL_BUILD, primaryProfession: "bogus" });
-    expect(self(broken.connection)?.primaryProfession).toBe("warrior");
-    expect(self(broken.connection)?.secondaryProfession).toBeUndefined();
+    expect(self(broken.connection)?.primaryProfession).toBe(REFUSED_AS.primaryProfession);
+    expect(self(broken.connection)?.secondaryProfession).toBe(REFUSED_AS.secondaryProfession);
   });
 
   it("names the player what they asked to be called, not after their build", async () => {
@@ -203,12 +228,12 @@ describe("joining a P2P match with a build (#375)", () => {
     expect(name.length).toBeLessThanOrEqual(16);
   });
 
-  it("falls back to the house loadout when no build is sent", async () => {
+  it("gives a starter build, whole, when no build is sent (#852)", async () => {
     // A hello's `build` is always present; `null` is "no build".
     const { slots } = await joinWith(null);
 
-    expect(slots).toEqual(DEFAULT_SKILL_BAR);
-    expect(slots).toContain("elementalist.fireball");
+    expect(slots).toEqual(REFUSED_AS.skillBar);
+    expect(slots).not.toContain(null);
   });
 
   it("treats a build with no equipment as invalid, not old", async () => {
@@ -217,7 +242,46 @@ describe("joining a P2P match with a build (#375)", () => {
     const { equipment: _dropped, ...withoutGear } = LEGAL_BUILD;
     const { slots } = await joinWith(withoutGear);
 
-    expect(slots).toEqual(DEFAULT_SKILL_BAR);
+    expect(slots).toEqual(REFUSED_AS.skillBar);
+  });
+
+  it("seats a legal four-set build holding set 1, and refuses one with an illegal set 3 (#489)", async () => {
+    const [set1] = LEGAL_BUILD.equipment.weaponSets;
+    const staff = {
+      mainHand: { weaponId: "staff", requirementAttributeId: "elementalist.fire-magic" },
+      offHand: null,
+    } as const;
+    const fourSets: PlayerBuild = {
+      ...LEGAL_BUILD,
+      equipment: { ...LEGAL_BUILD.equipment, weaponSets: [set1, staff, set1, staff] },
+    };
+    expect(validatePlayerBuild(fourSets, MINIMAL_GW_INSPIRED_PVP_V1.attributes)).toEqual([]);
+    const legal = await joinWith(fourSets);
+    expect(legal.slots).toEqual(LEGAL_BUILD.skillBar);
+    expect(self(legal.connection)?.weaponId).toBe(set1.mainHand.weaponId);
+
+    const illegal = await joinWith({
+      ...fourSets,
+      equipment: {
+        ...fourSets.equipment,
+        weaponSets: [set1, null, { ...staff, offHand: set1.offHand }, null],
+      },
+    });
+    expect(illegal.slots).toEqual(REFUSED_AS.skillBar);
+  });
+
+  it("treats the single-weapon gear shape as malformed, not old (#489)", async () => {
+    const [set1] = LEGAL_BUILD.equipment.weaponSets;
+    const { slots } = await joinWith({
+      ...LEGAL_BUILD,
+      equipment: {
+        mainHand: set1.mainHand,
+        offHand: set1.offHand,
+        armor: LEGAL_BUILD.equipment.armor,
+      },
+    });
+
+    expect(slots).toEqual(REFUSED_AS.skillBar);
   });
 
   it("refuses a build whose skills its professions cannot access", async () => {
@@ -232,7 +296,7 @@ describe("joining a P2P match with a build (#375)", () => {
     const { slots } = await joinWith(cheat);
 
     expect(slots).not.toEqual(["elementalist.fireball"]);
-    expect(slots).toEqual(DEFAULT_SKILL_BAR);
+    expect(slots).toEqual(REFUSED_AS.skillBar);
   });
 
   it("refuses a build that overspends the attribute budget", async () => {
@@ -249,8 +313,8 @@ describe("joining a P2P match with a build (#375)", () => {
     };
     const { slots } = await joinWith(cheat);
 
-    // Refused: the house loadout's full bar, not the build's.
-    expect(slots).toEqual(DEFAULT_SKILL_BAR);
+    // Refused: a starter build's full bar, not the build's.
+    expect(slots).toEqual(REFUSED_AS.skillBar);
   });
 
   it("refuses a build claiming another profession's primary attribute", async () => {
@@ -263,20 +327,20 @@ describe("joining a P2P match with a build (#375)", () => {
     };
     const { slots } = await joinWith(cheat);
 
-    // Refused: the house loadout's full bar, not the build's.
-    expect(slots).toEqual(DEFAULT_SKILL_BAR);
+    // Refused: a starter build's full bar, not the build's.
+    expect(slots).toEqual(REFUSED_AS.skillBar);
   });
 
   it("refuses an unimplemented skill rather than granting a blank slot", async () => {
     const cheat = {
       ...LEGAL_BUILD,
-      name: "Meteor Dreamer",
-      skillBar: ["elementalist.meteor-shower", null, null, null, null, null, null, null],
+      name: "Whirlwind Dreamer",
+      skillBar: ["warrior.whirlwind-attack", null, null, null, null, null, null, null],
     };
     const { slots } = await joinWith(cheat);
 
-    // Refused: the house loadout's full bar, not the build's.
-    expect(slots).toEqual(DEFAULT_SKILL_BAR);
+    // Refused: a starter build's full bar, not the build's.
+    expect(slots).toEqual(REFUSED_AS.skillBar);
   });
 
   it("survives a hostile build payload and still seats the player", async () => {

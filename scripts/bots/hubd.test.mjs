@@ -16,13 +16,13 @@ import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, TestRunner } from "vitest";
 
-import { parseAlive } from "./hub-health.mjs";
+import { HUBD_ALIVE, parseAlive } from "./hub-health.mjs";
 import { ROLES } from "./hub-policy.mjs";
 import { deliverSystem } from "./protocol.mjs";
 import { parseNudgeClock } from "./schedule.mjs";
-import { parseStaff, seedStaff } from "./staff.mjs";
+import { parseStaff, seedStaff, writeAtomic } from "./staff.mjs";
 
 const HUBD = path.join(path.dirname(fileURLToPath(import.meta.url)), "hubd.mjs");
 const HUB = path.join(path.dirname(fileURLToPath(import.meta.url)), "hub.mjs");
@@ -250,7 +250,8 @@ function employ(root, more) {
       readyAt: null,
     };
   }
-  fs.writeFileSync(path.join(root, "staff.json"), JSON.stringify(staff));
+  // Whole or not at all, as staff.mjs writes it: hubd polls it (#1091).
+  writeAtomic(root, "staff.json", JSON.stringify(staff));
 }
 
 /**
@@ -327,7 +328,12 @@ async function startHubd(remaining, before, extra) {
   child.stderr.on("data", (chunk) => (stderr += String(chunk)));
 
   const hub = path.join(root, "hub");
-  await until(() => fs.existsSync(path.join(hub, "hubd.alive")), "hubd to start");
+  // Up once it serves every employee: it makes their spools on its first
+  // pass over staff.json, after the heartbeat and its startup reads (#1096).
+  await until(
+    () => fs.existsSync(path.join(hub, HUBD_ALIVE)) && spoolsExist(hub, employed(root)),
+    "hubd to start",
+  );
 
   let next = 0;
   return {
@@ -339,8 +345,9 @@ async function startHubd(remaining, before, extra) {
      *
      * @param {string[]} more
      */
-    employ(...more) {
+    async employ(...more) {
       employ(root, more);
+      await until(() => spoolsExist(hub, more), `hubd to serve ${more.join(", ")}`);
     },
     repo,
     remote: path.join(dir, "remote.git"),
@@ -417,7 +424,7 @@ async function startHubd(remaining, before, extra) {
     until,
     /** The heartbeat as hubd last wrote it. */
     alive() {
-      return parseAlive(fs.readFileSync(path.join(root, "hub", "hubd.alive"), "utf8"));
+      return parseAlive(fs.readFileSync(path.join(root, "hub", HUBD_ALIVE), "utf8"));
     },
     /** Every REST read of a commit's checks fails, as on a GitHub outage. */
     failRest() {
@@ -470,7 +477,6 @@ async function startHubd(remaining, before, extra) {
       const id = `${String(Date.now())}-${String(next)}`;
       const req = path.join(hub, role, "req");
       const res = path.join(hub, role, "res", `${id}.json`);
-      await until(() => fs.existsSync(req), "the spool to exist");
       fs.writeFileSync(
         path.join(req, `.${id}.json.part`),
         JSON.stringify({ id, role, kind, argv }),
@@ -480,6 +486,27 @@ async function startHubd(remaining, before, extra) {
       return readJson(res);
     },
   };
+}
+
+/**
+ * Who staff.json employs.
+ *
+ * @param {string} root
+ * @returns {string[]}
+ */
+function employed(root) {
+  return Object.keys(parseStaff(fs.readFileSync(path.join(root, "staff.json"), "utf8")).employees);
+}
+
+/**
+ * Whether hubd has made each employee's spool.
+ *
+ * @param {string} hub
+ * @param {string[]} employees
+ * @returns {boolean}
+ */
+function spoolsExist(hub, employees) {
+  return employees.every((employee) => fs.existsSync(path.join(hub, employee, "req")));
 }
 
 /**
@@ -529,12 +556,23 @@ function printed(response) {
   );
 }
 
+/** Left of the test timeout when `until` gives up, so its label is what fails. */
+const UNTIL_MARGIN_MS = 1000;
+
 /**
+ * Poll `condition` until the running test is nearly out of time, then fail
+ * naming `label`: a loaded runner is slow, and a fixed bound of its own
+ * failed before the test's (#1096).
+ *
  * @param {() => boolean} condition
  * @param {string} label
  */
 async function until(condition, label) {
-  const deadline = Date.now() + 8000;
+  const test = TestRunner.getCurrentTest();
+  if (test?.result?.startTime === undefined) {
+    throw new Error(`until(${label}) outside a running test`);
+  }
+  const deadline = test.result.startTime + test.timeout - UNTIL_MARGIN_MS;
   while (!condition()) {
     if (Date.now() > deadline) {
       throw new Error(`timed out waiting for ${label}`);
@@ -1167,7 +1205,7 @@ describe("hubd and the GraphQL budget", () => {
 
   it("keeps the heartbeat fresh and names the request in flight while a child hangs (#496)", async () => {
     const hubd = await startHubd(5000);
-    const alivePath = path.join(hubd.hub, "hubd.alive");
+    const alivePath = path.join(hubd.hub, HUBD_ALIVE);
     const request = hubd.request("developer", "gh", ["run", "list", "--hang"]);
 
     await until(() => parseAlive(fs.readFileSync(alivePath, "utf8"))?.current != null, "a current");
@@ -1186,7 +1224,7 @@ describe("hubd and the GraphQL budget", () => {
 
   it("never echoes a peer's argv into the heartbeat (#496)", async () => {
     const hubd = await startHubd(5000);
-    const alivePath = path.join(hubd.hub, "hubd.alive");
+    const alivePath = path.join(hubd.hub, HUBD_ALIVE);
     const request = hubd.request("developer", "gh", [
       "run",
       "list",
@@ -1574,7 +1612,7 @@ describe("hubd and what a jail plants in its spool (#329)", () => {
 describe("hubd serving one spool per employee (#62)", () => {
   it("gives a second employee its role's permissions, and its own push prefix", async () => {
     const hubd = await startHubd(5000);
-    hubd.employ("developer@3");
+    await hubd.employ("developer@3");
 
     const read = await hubd.request("developer@3", "board", ["ls", "Ready"]);
     expect(read.code, String(read.reason)).toBe(0);
@@ -1604,14 +1642,13 @@ describe("hubd serving one spool per employee (#62)", () => {
 
     // hubd makes the spool again only once it has read the new staff.
     fs.rmSync(path.join(hubd.hub, "qa-tester@2"), { recursive: true });
-    hubd.employ("qa-tester@2");
+    await hubd.employ("qa-tester@2");
     const hired = await hubd.request("qa-tester@2", "board", ["ls"]);
     expect(hired.code, String(hired.reason)).toBe(0);
   }, 20_000);
 
   it("keeps serving the employees it knows while staff.json is broken", async () => {
     const hubd = await startHubd(5000);
-    await hubd.until(() => fs.existsSync(path.join(hubd.hub, "architect", "req")), "a spool");
     fs.writeFileSync(path.join(hubd.root, "staff.json"), "{");
     await hubd.until(() => hubd.stderr().includes("staff.json: "), "hubd to read the broken staff");
 
@@ -2304,9 +2341,8 @@ describe("hubd scheduling a company reboot", () => {
     });
 
     // Kept per employee (#62): two employees of one role are two agents to wait for.
-    hubd.employ("developer@3");
+    await hubd.employ("developer@3");
     for (const employee of ["qa-tester", "qa-tester", "developer", "developer@3"]) {
-      await hubd.until(() => fs.existsSync(path.join(hubd.hub, employee, "req")), employee);
       const ready = await hubd.request(employee, "reboot", ["ready"]);
       expect(ready.code, employee).toBe(0);
     }
@@ -2359,7 +2395,12 @@ describe("hubd hiring and firing", () => {
     /** @type {unknown} */
     const raw = JSON.parse(fs.readFileSync(file, "utf8"));
     const cfg = typeof raw === "object" && raw !== null ? raw : {};
-    fs.writeFileSync(file, JSON.stringify(maxAgents === null ? cfg : { ...cfg, maxAgents }));
+    // Whole or not at all: the running hubd reads both (#1091).
+    writeAtomic(
+      hubd.root,
+      "company.json",
+      JSON.stringify(maxAgents === null ? cfg : { ...cfg, maxAgents }),
+    );
     const first = {
       hiredAt: 1,
       by: "operator",
@@ -2367,8 +2408,9 @@ describe("hubd hiring and firing", () => {
       state: "working",
       readyAt: null,
     };
-    fs.writeFileSync(
-      path.join(hubd.root, "staff.json"),
+    writeAtomic(
+      hubd.root,
+      "staff.json",
       JSON.stringify({
         employees: {
           manager: { role: "manager", ...first },

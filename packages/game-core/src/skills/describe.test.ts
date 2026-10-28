@@ -1,11 +1,18 @@
 import { describe, expect, it } from "vitest";
 
+import { AREA_ADJACENT, AREA_IN_THE_AREA, AREA_NEARBY, RANGE_SPELL } from "../distances.js";
+
 import { IMPLEMENTED_SKILLS, getSkill } from "./catalog.js";
-import { describeSkill, describeStatus, formatScalingRange } from "./describe.js";
+import {
+  chainRequirementText,
+  describeSkill,
+  describeStatus,
+  formatScalingRange,
+} from "./describe.js";
 import { makeCombatant, withAttackDuration } from "./testing.js";
 import { resolveMagnitude } from "./scaling.js";
 import { STATUS_DEFINITIONS } from "./status.js";
-import type { SkillEffect } from "./types.js";
+import { blowRuleOf, isEasilyInterrupted, type SkillEffect } from "./types.js";
 
 /**
  * Descriptions are generated from the effect data, never authored, so
@@ -82,8 +89,56 @@ describe("describeSkill", () => {
 
     expect(described.cost).toBe("10 energy");
     expect(described.castTime).toBe("1s");
-    expect(described.targetText).toBe("One foe");
-    expect(described.rangeText).toContain("range");
+    expect(described.targetText).toBe("One foe, and foes nearby it");
+    expect(described.rangeText).toBe(`${String(RANGE_SPELL)} range, ${String(AREA_NEARBY)} radius`);
+  });
+
+  it("words Monk staples 2 (#1013)", () => {
+    const ranks = new Map([
+      ["monk.healing-prayers", 12],
+      ["monk.protection-prayers", 12],
+    ]);
+    const party = describeSkill(skill("monk.heal-party"), ranks);
+    expect(party.targetText).toBe("Your whole party");
+    expect(party.rangeText).toBeUndefined();
+    expect(party.effects.map((line) => line.text)).toEqual(["Heals for 66"]);
+    expect(
+      describeSkill(skill("monk.dismiss-condition"), ranks).effects.map((line) => line.text),
+    ).toEqual(["Removes 1 condition", "If target has an enchantment: heals for 63"]);
+    expect(describeSkill(skill("monk.healing-breeze"), ranks).effects[0]?.text).toBe(
+      "Applies Healing Breeze for 15s (+8 Health regeneration)",
+    );
+    expect(describeSkill(skill("monk.remove-hex")).effects[0]?.text).toBe("Removes 1 hex");
+  });
+
+  it("names the foes round its target a target-centred area also hits (#998)", () => {
+    const lines = (id: string): readonly [string, string | undefined] => {
+      const described = describeSkill(skill(id));
+      return [described.targetText, described.rangeText];
+    };
+    const range = (radius: number): string =>
+      `${String(RANGE_SPELL)} range, ${String(radius)} radius`;
+    expect(lines("elementalist.chain-lightning")).toEqual([
+      "One foe, and up to 2 foes nearby it",
+      range(AREA_NEARBY),
+    ]);
+    expect(lines("elementalist.ice-spikes")).toEqual([
+      "One foe, and foes adjacent to it",
+      range(AREA_ADJACENT),
+    ]);
+    expect(lines("elementalist.meteor")).toEqual([
+      "One foe, and foes adjacent to it",
+      range(AREA_ADJACENT),
+    ]);
+    expect(lines("elementalist.deep-freeze")).toEqual([
+      "One foe, and foes in the area around it",
+      range(AREA_IN_THE_AREA),
+    ]);
+    // No area, and a shout round its caster: as before.
+    const orison = describeSkill(skill("monk.orison-of-healing"));
+    expect(orison.targetText).toBe("One ally");
+    expect(orison.rangeText).toBe(`${String(skill("monk.orison-of-healing").range)} range`);
+    expect(lines("warrior.watch-yourself")).toEqual(["Allies in earshot", "350 radius"]);
   });
 
   it("says a flying spell can be dodged (#535)", () => {
@@ -93,6 +148,59 @@ describe("describeSkill", () => {
     expect(describeSkill(skill("monk.orison-of-healing")).effects.map((e) => e.text)).not.toContain(
       "Projectile: can be dodged",
     );
+  });
+
+  it("says Comfort Animal acts on your pet, and Charm Animal brings one (#1046)", () => {
+    const comfort = describeSkill(
+      skill("ranger.comfort-animal"),
+      new Map([["ranger.beast-mastery", 12]]),
+    );
+    expect(comfort.targetText).toBe("Your pet");
+    expect(comfort.effects.map((e) => e.text)).toEqual([
+      "Heals for 87",
+      "Returns the target to life with 48% health and 0% energy",
+    ]);
+    expect(describeSkill(skill("ranger.charm-animal")).effects.map((e) => e.text)).toEqual([
+      "While on your bar, a Wolf (480 Health) fights beside you",
+    ]);
+  });
+
+  it("says a call acts on your living pet, and Revive Animal on every dead pet nearby (#1108)", () => {
+    const ranks = new Map([["ranger.beast-mastery", 12]]);
+    const described = (id: string) => describeSkill(skill(id), ranks);
+    expect(described("ranger.call-of-haste").targetText).toBe("Your living pet");
+    expect(described("ranger.revive-animal").effects.map((e) => e.text)).toEqual([
+      "Returns every dead allied pet nearby to life with 77% health",
+    ]);
+  });
+
+  it("says what a summon makes, how tough and for how long (#1052)", () => {
+    const summon = (durationSeconds?: number): SkillEffect => ({
+      kind: "summon",
+      count: 2,
+      creature: {
+        kind: "minion",
+        look: "bone-minion",
+        name: "Bone Minion",
+        maxHealth: {
+          scaling: { attributeId: "necromancer.death-magic", atZero: 50, atTwelve: 290 },
+        },
+        armor: { flat: 20 },
+        attack: undefined,
+        ...(durationSeconds === undefined ? {} : { durationSeconds: { flat: durationSeconds } }),
+        behaviour: { kind: "idle" },
+        aura: undefined,
+        onDeath: "vanish",
+        ownerDisableOnDeath: undefined,
+      },
+    });
+    const lines = (effect: SkillEffect) =>
+      describeSkill(
+        { ...skill("monk.orison-of-healing"), effects: [effect] },
+        new Map([["necromancer.death-magic", 12]]),
+      ).effects.map((e) => e.text);
+    expect(lines(summon(30))).toContain("Summons 2 Bone Minion (290 Health, lasts 30 seconds)");
+    expect(lines(summon())).toContain("Summons 2 Bone Minion (290 Health)");
   });
 
   it("says Instant rather than 0s", () => {
@@ -155,6 +263,17 @@ describe("describeSkill", () => {
     expect(describeSkill(skill("mesmer.power-spike"), ranks).headline).toBe("102 damage");
   });
 
+  it("words Concussion Shot's spell-only interrupt and its daze (#1008)", () => {
+    const ranks = new Map([["ranger.marksmanship", 12]]);
+    expect(
+      describeSkill(skill("ranger.concussion-shot"), ranks).effects.map((e) => e.text),
+    ).toEqual([
+      "Deals only 13 damage",
+      "Interrupts the target's spell, if they are casting one",
+      "If that action was a spell: applies Dazed for 17s (spells take 2× as long to cast, spells are interrupted by attacks)",
+    ]);
+  });
+
   it("says what a disable locks out, and for how long (#914)", () => {
     const ranks = new Map([
       ["mesmer.domination-magic", 12],
@@ -166,7 +285,7 @@ describe("describeSkill", () => {
       "That skill and all skills of the same attribute are disabled for 10 seconds",
     ]);
     expect(lines("ranger.distracting-shot")).toEqual([
-      "+13 damage",
+      "Deals only 13 damage",
       "Interrupts the target's current cast, if they are casting",
       "The interrupted skill is disabled for 20 seconds",
     ]);
@@ -206,6 +325,50 @@ describe("describeSkill", () => {
     ]);
     expect(card.headline).toBe("resurrects, 56% health");
     expect(card.targetText).toBe("A dead ally");
+  });
+
+  it("words the four resurrection skills at rank 0 and 12 (#474)", () => {
+    const at = (rank: number) =>
+      new Map([
+        ["monk.protection-prayers", rank],
+        ["paragon.leadership", rank],
+        ["ritualist.restoration-magic", rank],
+      ]);
+    const lines = (id: string, rank: number) =>
+      describeSkill(skill(id), at(rank)).effects.map((e) => e.text);
+    expect(lines("common.resurrection-signet", 0)).toEqual([
+      "Returns the target to life with 100% health and 25% energy",
+    ]);
+    expect(lines("monk.rebirth", 12)).toEqual([
+      "Returns the target to life with 25% health and 0% energy, and teleports the target to you",
+      "If it resurrects: all of the target's skills are disabled for 4 seconds",
+      "You lose all your remaining energy",
+    ]);
+    expect(lines("monk.rebirth", 0)[1]).toBe(
+      "If it resurrects: all of the target's skills are disabled for 10 seconds",
+    );
+    expect(lines("paragon.signet-of-return", 12)).toEqual([
+      "Returns the target to life with 13% health and 3% energy per party member in earshot",
+    ]);
+    expect(lines("paragon.signet-of-return", 0)).toEqual([
+      "Returns the target to life with 5% health and 1% energy per party member in earshot",
+    ]);
+    expect(lines("ritualist.flesh-of-my-flesh", 12)).toEqual([
+      "Returns the target to life with your health after losing half and 17% energy",
+    ]);
+    expect(lines("ritualist.flesh-of-my-flesh", 0)).toEqual([
+      "Returns the target to life with your health after losing half and 5% energy",
+    ]);
+    expect(describeSkill(skill("ritualist.flesh-of-my-flesh"), at(12)).headline).toBe(
+      "resurrects, 17% energy",
+    );
+  });
+
+  it("says a skill spent until a morale boost recharges on one (#474)", () => {
+    expect(describeSkill(skill("common.resurrection-signet"), new Map()).recharge).toBe(
+      "Morale boost",
+    );
+    expect(describeSkill(skill("monk.restore-life"), new Map()).recharge).toBe("8s");
   });
 
   it("says what is taken, and what comes per point of it (#793)", () => {
@@ -251,6 +414,13 @@ describe("describeSkill", () => {
     expect(describeStatus("guardian")).toBe("50% chance to block attacks");
   });
 
+  it("says what the calls and the bond do to a pet (#1108)", () => {
+    expect(describeStatus("call-of-protection")).toBe("−17 damage taken");
+    expect(describeStatus("symbiotic-bond")).toContain(
+      "half its physical damage goes to its caster",
+    );
+  });
+
   it("says weakness cuts the weapon and every attribute (#762)", () => {
     expect(describeStatus("weakness")).toBe("−66% weapon damage, −1 to all attributes");
   });
@@ -282,20 +452,48 @@ describe("describeSkill", () => {
   it("produces a line for every effect of every catalog skill", () => {
     // Guards the switch in `describeEffect`: a new effect kind that
     // nobody described would silently vanish from tooltips. An `if` is
-    // a line per effect inside it (#521).
+    // a line per effect inside it (#521), a spirit's summon one more for
+    // what it projects (#1064), and so does a ward (#1087); a trap is one
+    // line, then one per effect of its spring (#1105), and one more if it
+    // springs by itself; a pulse one, then one per effect (#1113).
+    const linesOf = (effect: SkillEffect): number => {
+      if (effect.kind === "if") {
+        return effect.effects.length;
+      }
+      if (effect.kind === "create-ground-effect") {
+        const { act } = effect;
+        switch (act.kind) {
+          case "aura":
+            return 2;
+          case "trap":
+            return 1 + (act.trap.springsAtEnd ? 1 : 0) + act.trap.spring.effects.length;
+          case "pulse":
+            return 1 + act.pulse.effects.length;
+        }
+      }
+      return effect.kind === "summon" && effect.creature.aura !== undefined ? 2 : 1;
+    };
     const lines = (effects: readonly SkillEffect[]): number =>
-      effects.reduce((sum, effect) => sum + (effect.kind === "if" ? effect.effects.length : 1), 0);
+      effects.reduce((sum, effect) => sum + linesOf(effect), 0);
     for (const entry of IMPLEMENTED_SKILLS) {
       const described = describeSkill(entry);
+      const rule = blowRuleOf(entry);
       expect(described.effects, `${entry.id} lost an effect line`).toHaveLength(
         lines(entry.effects) +
-          (entry.attack?.chain === undefined ? 0 : 1) +
-          (entry.attack?.bonusDamage === undefined ? 0 : 1) +
-          (entry.attack?.conditionalBonus === undefined ? 0 : 1) +
-          ((entry.attack?.armorPenetration ?? 0) > 0 ? 1 : 0) +
-          lines(entry.attack?.onBlocked ?? []) +
+          (entry.cost?.kind === "adrenaline" && entry.cost.losesAll === true ? 1 : 0) +
+          (rule?.chain === undefined ? 0 : 1) +
+          (rule?.bonusDamage === undefined && rule?.weaponDamage !== 0 ? 0 : 1) +
+          (rule?.unblockable === true ? 1 : 0) +
+          (entry.attack?.weapon === "scythe" && entry.area === undefined ? 1 : 0) +
+          (entry.attack?.cleavesAllWhen === undefined ? 0 : 1) +
+          (rule?.conditionalBonus === undefined ? 0 : 1) +
+          ((rule?.armorPenetration ?? 0) > 0 ? 1 : 0) +
+          lines(rule?.onBlocked ?? []) +
           (entry.whileActivating === undefined ? 0 : 1) +
-          (entry.projectile === undefined ? 0 : 1),
+          (entry.projectile === undefined ? 0 : 1) +
+          (isEasilyInterrupted(entry.type) ? 1 : 0) +
+          (entry.corpse === undefined ? 0 : 1) +
+          (entry.companion === undefined ? 0 : 1),
       );
       for (const line of described.effects) {
         expect(line.text.length, `${entry.id} has an empty description line`).toBeGreaterThan(0);
@@ -332,6 +530,51 @@ describe("attack skills (#417)", () => {
     expect(first("warrior.swift-chop")).not.toMatch(/attack\./);
   });
 
+  it("says an unblockable attack cannot be blocked, right after its damage (#1038)", () => {
+    const texts = (id: string) => describeSkill(skill(id)).effects.map(({ text }) => text);
+    for (const id of ["assassin.fox-fangs", "assassin.wild-strike", "paragon.wild-throw"]) {
+      const lines = texts(id);
+      const damage = lines.findIndex((text) => /^\+\d+ damage$/.test(text));
+      expect(damage, id).toBeGreaterThanOrEqual(0);
+      expect(lines[damage + 1], id).toBe("Cannot be blocked");
+    }
+    // Crippling Shot has no bonus damage: the line leads.
+    expect(texts("ranger.crippling-shot")[0]).toBe("Cannot be blocked");
+    expect(texts("assassin.jagged-strike")).not.toContain("Cannot be blocked");
+  });
+
+  it("words an attack whose weapon deals nothing as 'deals only' or 'no damage' (#1038)", () => {
+    const ranks = new Map([
+      ["ranger.expertise", 12],
+      ["ranger.marksmanship", 12],
+      ["warrior.tactics", 12],
+      ["warrior.axe-mastery", 12],
+    ]);
+    const shot = describeSkill(skill("ranger.distracting-shot"), ranks);
+    expect(shot.effects[0]?.text).toBe("Deals only 13 damage");
+    expect(shot.headline).toBe("Deals only 13 damage");
+    expect(shot.effects.map(({ text }) => text)).not.toContain("+13 damage");
+    expect(describeSkill(skill("ranger.concussion-shot"), ranks).headline).toBe(
+      "Deals only 13 damage",
+    );
+    const blow = describeSkill(skill("warrior.distracting-blow"), ranks);
+    expect(blow.effects[0]?.text).toBe("Deals no damage");
+    expect(blow.headline).not.toBe("Deals no damage");
+    expect(describeSkill(skill("warrior.swift-chop"), ranks).effects[0]?.text).toBe("+16 damage");
+  });
+
+  it("starts a skill that loses all adrenaline with it; its cost stays its strikes (#1097)", () => {
+    const bash = describeSkill(skill("warrior.hammer-bash"));
+    expect(bash.effects.map(({ text }) => text)).toEqual([
+      "Lose all adrenaline",
+      "Knocks down for 2s",
+    ]);
+    expect(bash.cost).toBe("6 adrenaline");
+    expect(describeSkill(skill("warrior.backbreaker")).effects[0]?.text).not.toBe(
+      "Lose all adrenaline",
+    );
+  });
+
   it("words a splash, a lone target and a recharge of the others as GW1 does (#885)", () => {
     const texts = (id: string) => describeSkill(skill(id)).effects.map(({ text }) => text);
     expect(texts("assassin.death-blossom")).toContain("Adjacent foes take 20 damage");
@@ -344,10 +587,64 @@ describe("attack skills (#417)", () => {
     expect(texts("assassin.moebius-strike")[0]).toBe("Off-hand attack. Must follow a dual attack.");
   });
 
+  it("words the crippling knockdown chain, and a state its attack requires (#1041)", () => {
+    const texts = (id: string) => describeSkill(skill(id)).effects.map(({ text }) => text);
+    expect(texts("assassin.falling-spider")[0]).toBe(
+      "Off-hand attack. Only if target is knocked down.",
+    );
+    expect(texts("assassin.leaping-mantis-sting")).toContain(
+      "If target is moving: applies Crippled for 13s (moves at 50% speed)",
+    );
+    expect(texts("assassin.trampling-ox")).toContain("If target has Crippled: knocks down for 2s");
+    expect(texts("assassin.jungle-strike")[0]).toBe("Off-hand attack. Must follow a lead attack.");
+    expect(chainRequirementText(skill("assassin.falling-spider"))).toBe(
+      "only if target is knocked down",
+    );
+    expect(chainRequirementText(skill("assassin.fox-fangs"))).toBe("must follow a lead attack");
+    expect(chainRequirementText(skill("assassin.jagged-strike"))).toBeUndefined();
+    const spider = skill("assassin.falling-spider");
+    const both = {
+      ...spider,
+      attack: spider.attack && {
+        ...spider.attack,
+        chain: { ...spider.attack.chain, role: "off-hand", follows: "lead" } as const,
+      },
+    };
+    expect(chainRequirementText(both)).toBe(
+      "must follow a lead attack; only if target is knocked down",
+    );
+  });
+
   it("words Mind Shock's energy comparison as GW1 does (#918)", () => {
     expect(
       describeSkill(skill("elementalist.mind-shock")).effects.map(({ text }) => text),
     ).toContain("If you have more Energy than target: knocks down for 2s");
+  });
+
+  it("words the #997 conditions: moving, has a status, lacks it", () => {
+    const ranks = new Map([
+      ["elementalist.water-magic", 12],
+      ["elementalist.earth-magic", 12],
+      ["elementalist.fire-magic", 12],
+    ]);
+    const texts = (id: string): string[] =>
+      describeSkill(skill(id), ranks).effects.map(({ text }) => text);
+    expect(texts("elementalist.water-trident")).toContain(
+      "If target is moving: knocks down for 2s",
+    );
+    expect(texts("elementalist.stoning")).toContain("If target has Weakness: knocks down for 2s");
+    expect(texts("elementalist.searing-flames")).toEqual([
+      "If target has Burning: deals 82 damage",
+      "If target does not have Burning: applies Burning for 6s (−7 Health degeneration)",
+    ]);
+  });
+
+  it("words Aftershock's bonus on a foe that is down (#985)", () => {
+    const ranks = new Map([["elementalist.earth-magic", 12]]);
+    const texts = describeSkill(skill("elementalist.aftershock"), ranks).effects.map(
+      ({ text }) => text,
+    );
+    expect(texts.at(-1)).toBe("If target is knocked down: deals 56 damage");
   });
 
   it("words Cry of Frustration's splash and Mantra of Recovery's faster spells (#938)", () => {
@@ -355,6 +652,36 @@ describe("attack skills (#417)", () => {
       describeSkill(skill("mesmer.cry-of-frustration")).effects.map(({ text }) => text),
     ).toContain("If it interrupts: foes in the area are interrupted if casting and take 11 damage");
     expect(describeStatus("mantra-of-recovery")).toBe("spells recharge 33% faster");
+  });
+
+  it("words the Ritualist's weapon spells (#975, #1064)", () => {
+    expect(describeStatus("spirit-light-weapon")).toBe(
+      "+21 Health per second, +21 Health per second more in earshot of a spirit",
+    );
+    expect(describeStatus("weapon-of-quickening")).toBe(
+      "spells and binding rituals recharge 33% faster",
+    );
+    expect(describeStatus("weapon-of-aggression")).toBe("attacks 25% faster");
+  });
+
+  it("words the Assassin's staples (#988)", () => {
+    const lines = (id: string) =>
+      describeSkill(skill(id), new Map([["assassin.shadow-arts", 12]])).effects.map(
+        ({ text }) => text,
+      );
+    expect(lines("assassin.deaths-charge")).toEqual([
+      "Shadow steps to the target",
+      "If target has more Health than you: you gain 173 health",
+    ]);
+    expect(lines("assassin.shadow-refuge")).toEqual([
+      "Applies Shadow Refuge for 6s (+9 Health regeneration. When it ends, if it is attacking: heals for 88)",
+    ]);
+    expect(describeStatus("shroud-of-distress")).toBe(
+      "75% chance to block attacks while below 50% Health",
+    );
+    expect(describeStatus("critical-eye")).toBe(
+      "+13% critical chance, gain 1 Energy per critical hit",
+    );
   });
 
   it("words Spear of Lightning's type and penetration, and Leader's Comfort's per ally (#923)", () => {
@@ -366,6 +693,35 @@ describe("attack skills (#417)", () => {
     ]);
     expect(at12("paragon.leaders-comfort", "paragon.leadership")).toEqual([
       "Heals for 66, +18 Health for each ally in earshot (max 140)",
+    ]);
+  });
+
+  it("words Patient Spirit's expiry, Holy Veil's hexes, Rend's price and Plague Touch (#944)", () => {
+    const lines = (id: string) =>
+      describeSkill(skill(id), new Map([["necromancer.curses", 12]])).effects.map(
+        ({ text }) => text,
+      );
+    expect(lines("monk.patient-spirit")).toEqual([
+      "Applies Patient Spirit for 2s (when it expires: heals for 30)",
+    ]);
+    expect(
+      describeSkill(skill("monk.patient-spirit"), new Map([["monk.healing-prayers", 12]])).effects,
+    ).toEqual([
+      {
+        text: "Applies Patient Spirit for 2s (when it expires: heals for 102)",
+        magnitude: undefined,
+      },
+    ]);
+    expect(lines("monk.holy-veil")).toEqual([
+      "Maintained: −1 Energy regeneration while it lasts. " +
+        "Hexes cast on the bearer take 2× as long to cast. When it ends: removes 1 hex.",
+    ]);
+    expect(lines("necromancer.rend-enchantments")).toEqual([
+      "Removes 8 enchantments",
+      "You lose 31 health for each Monk enchantment removed",
+    ]);
+    expect(lines("necromancer.plague-touch")).toEqual([
+      "Moves up to 3 of your conditions to the target",
     ]);
   });
 
@@ -433,6 +789,31 @@ describe("describeStatus", () => {
     ).toEqual(["Steals up to 52 Health"]);
   });
 
+  it("says Soul Feast exploits the nearest corpse, then what it steals (#466)", () => {
+    const feast = describeSkill(
+      skill("necromancer.soul-feast"),
+      new Map([["necromancer.death-magic", 12]]),
+    );
+    expect(feast.effects.map(({ text }) => text)).toEqual([
+      "Exploits the nearest corpse",
+      "You steal 234 Health",
+    ]);
+    expect(feast.headline).toBe("steals 234 health");
+  });
+
+  it("says the animate skills exploit a corpse, then what rises (#467)", () => {
+    const ranks = new Map([["necromancer.death-magic", 12]]);
+    const texts = (id: string) => describeSkill(skill(id), ranks).effects.map(({ text }) => text);
+    expect(texts("necromancer.animate-bone-minions")).toEqual([
+      "Exploits the nearest corpse",
+      "Summons 2 Bone Minion (280 Health)",
+    ]);
+    expect(texts("necromancer.animate-bone-horror")).toEqual([
+      "Exploits the nearest corpse",
+      "Summons 1 Bone Horror (360 Health)",
+    ]);
+  });
+
   it("returns the id for an unknown status rather than throwing", () => {
     expect(describeStatus("not-a-status")).toBe("not-a-status");
   });
@@ -479,6 +860,18 @@ describe("signets and shouts (#524)", () => {
     expect(describeSkill(skill("necromancer.malaise")).typeText).toBe("Hex Spell.");
   });
 
+  it("names a pet attack, and its bonus as an attack skill's (#1046)", () => {
+    const brutal = describeSkill(
+      skill("ranger.brutal-strike"),
+      new Map([["ranger.beast-mastery", 12]]),
+    );
+    expect(brutal.typeText).toBe("Pet Attack.");
+    expect(brutal.effects.map((effect) => effect.text)).toEqual([
+      "+29 damage",
+      "If target is below 50% Health: +29 damage",
+    ]);
+  });
+
   it("says Healing Signet is free and what it costs in armor while activating", () => {
     const description = describeSkill(skill("warrior.healing-signet"));
     expect(description.cost).toBe("Free");
@@ -514,11 +907,35 @@ describe("describeSkill at a primary attribute's rank (#531)", () => {
     );
   });
 
+  it("shows Fast Casting's signet activation too (#1100)", () => {
+    const signet = skill("common.resurrection-signet");
+    expect(describeSkill(signet, new Map([["mesmer.fast-casting", 12]])).castTime).toBe(
+      "1.9s (3s)",
+    );
+  });
+
   it("shows the base alone when the rank changes nothing", () => {
     const broadHead = skill("ranger.broad-head-arrow");
     const fireball = skill("elementalist.fireball");
     expect(describeSkill(broadHead, new Map()).cost).toBe("10 energy");
     expect(describeSkill(fireball, new Map([["ranger.expertise", 12]])).cost).toBe("10 energy");
     expect(describeSkill(fireball, new Map([["mesmer.fast-casting", 12]])).castTime).toBe("1s");
+  });
+});
+
+describe("Spawning Power in the tooltip (#1098)", () => {
+  it("lengthens a weapon spell's duration, the base in brackets", () => {
+    const quickening = skill("ritualist.weapon-of-quickening");
+    const line = (rank: number) =>
+      describeSkill(quickening, new Map([["ritualist.spawning-power", rank]])).effects[0]?.text;
+    expect(line(12)).toMatch(/^Applies Weapon of Quickening for 31\.1s \(21s\) \(/);
+    expect(line(0)).toMatch(/^Applies Weapon of Quickening for 21s \(/);
+  });
+
+  it("leaves a status that is no weapon spell alone", () => {
+    const unguent = skill("ranger.troll-unguent");
+    expect(
+      describeSkill(unguent, new Map([["ritualist.spawning-power", 12]])).effects[0]?.text,
+    ).toMatch(/^Applies Regeneration for 13s \(/);
   });
 });

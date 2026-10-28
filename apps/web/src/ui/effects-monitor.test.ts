@@ -147,6 +147,7 @@ class FakeElement {
   readonly widths: string[] = [];
   readonly style = ((widths: string[]) => ({
     setProperty: (): void => undefined,
+    top: "",
     set width(value: string) {
       widths.push(value);
     },
@@ -155,7 +156,10 @@ class FakeElement {
 
   readonly setAttribute = (): void => undefined;
 
-  readonly getBoundingClientRect = () => ({ left: 0, top: 0, right: 0, width: 0, height: 0 });
+  /** What `getBoundingClientRect` answers; a test sets it to lay out a hover. */
+  rect = { left: 0, top: 0, right: 0, bottom: 0, width: 0, height: 0 };
+
+  readonly getBoundingClientRect = () => this.rect;
 
   /** The listeners added, by event. */
   readonly listeners = new Map<string, () => void>();
@@ -231,11 +235,16 @@ describe("createEffectsMonitor (#834)", () => {
     vi.unstubAllGlobals();
   });
 
-  const mount = (size = 24, onEnd?: (bearerId: string, statusId: string) => void) => {
+  const mount = (
+    size = 24,
+    onEnd?: (bearerId: string, statusId: string) => void,
+    placement: "above" | "below" = "above",
+  ) => {
     const monitor = createEffectsMonitor(
       parent as unknown as HTMLElement,
       size,
       "your effects",
+      placement,
       onEnd,
     );
     const root = monitor.root as unknown as FakeElement;
@@ -360,6 +369,7 @@ describe("createEffectsMonitor (#834)", () => {
     const yours = row("mending", undefined, true, {
       bearerId: "bob",
       bearerName: "Bob",
+      category: "enchantment",
       secondsLeft: undefined,
       endable: true,
     });
@@ -374,11 +384,23 @@ describe("createEffectsMonitor (#834)", () => {
       const { monitor, root } = mount(24, () => undefined);
       monitor.update([
         row("bleeding", 0.5),
-        row("mending", undefined, false, { secondsLeft: undefined }),
+        row("mending", undefined, false, { category: "enchantment", secondsLeft: undefined }),
       ]);
       expect(hover(root, 0)).not.toContain("double-click to end");
       expect(hover(root, 1)).toEqual(expect.arrayContaining(["maintained"]));
       expect(hover(root, 1)).not.toContain("double-click to end");
+    });
+
+    it("says a spirit's aura lasts while in its range, not that it is maintained (#1064)", () => {
+      const { monitor, root } = mount(24, () => undefined);
+      monitor.update([
+        row("winnowing", undefined, false, {
+          category: "skill-effect",
+          casterName: "Winnowing",
+          secondsLeft: undefined,
+        }),
+      ]);
+      expect(hover(root, 0).slice(-2)).toEqual(["from Winnowing", "while in its range"]);
     });
 
     it("not in a monitor that cannot end it: the target frame's", () => {
@@ -386,6 +408,18 @@ describe("createEffectsMonitor (#834)", () => {
       monitor.update([yours]);
       expect(hover(root, 0)).toContain("maintained, −1 energy");
       expect(hover(root, 0)).not.toContain("double-click to end");
+    });
+
+    it("opens below the icon in the target frame, at the top of the screen (#1042)", () => {
+      const { monitor, root } = mount(16, undefined, "below");
+      monitor.update([row("bleeding", 0.5)]);
+      const icon = root.children[0];
+      if (icon === undefined) throw new Error("no icon");
+      icon.rect = { left: 500, top: 40, right: 516, bottom: 56, width: 16, height: 16 };
+      hover(root, 0);
+      const tip = body.children[0];
+      if (tip === undefined) throw new Error("no tooltip");
+      expect(Number.parseFloat(tip.style.top)).toBeGreaterThanOrEqual(icon.rect.bottom);
     });
   });
 });

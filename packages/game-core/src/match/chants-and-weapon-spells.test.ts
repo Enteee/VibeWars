@@ -35,7 +35,13 @@ function skill(id: string): Skill {
 function wielding(weapon: Weapon, attributeId: string): ResolvedEquipment {
   return {
     ...unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
-    mainHand: { weapon, attributeId, damageType: weapon.damageType, requirementMet: true },
+    mainHand: {
+      weapon,
+      attributeId,
+      damageType: weapon.damageType,
+      requirementMet: true,
+      creatureDamageScale: undefined,
+    },
   };
 }
 
@@ -76,7 +82,7 @@ function chop(attacker: Combatant, targets: readonly Combatant[], seed = 1): Com
 function swing(attacker: Combatant, target: Combatant, seed = 1): CombatEvent[] {
   return resolveSwing({
     attacker,
-    target: { combatant: target, position: vec2(40, 0) },
+    target: { combatant: target, position: vec2(40, 0), creature: undefined },
     surroundings: new Map(),
     rng: createRng(seed),
     rules: RULES.combat,
@@ -191,7 +197,7 @@ describe("Weapon of Warding (#758)", () => {
     const rng = createRng(758);
     let blocked = 0;
     for (let i = 0; i < 2000; i += 1) {
-      if (blocks(ally, i % 2 === 0 ? "melee" : "projectile", rng)) {
+      if (blocks(ally, "e", i % 2 === 0 ? "melee" : "projectile", rng)) {
         blocked += 1;
       }
     }

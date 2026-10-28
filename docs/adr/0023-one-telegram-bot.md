@@ -128,7 +128,9 @@ rewrites and which is easier to leak.
 - Agents talk to each other even when Telegram is slow, rate-limited or
   down. Only the operator's copy waits.
 - Per-role avatars and `@vw_<role>_bot` mentions are gone. The operator
-  addresses a role by its topic or a `role:` prefix.
+  addresses a role by its topic or a `role:` prefix. The single bot's
+  avatar is `.claude/bots/avatars/company.*` (#973); the per-role files
+  there are unused.
 - `vibewars.telegram.managerUsername` and `usernamePrefix` are removed. A
   `devenv.local.nix` that still sets `managerUsername` (written by older
   `claude-bot-setup`) fails to evaluate until that line is deleted.

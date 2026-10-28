@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
-import { segment } from "../geometry.js";
+import { segment, type Segment } from "../geometry.js";
+import { buildNavGraph, createPathFinder } from "../pathing.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
-import { distance, vec2, type Vec2 } from "../vec2.js";
-import type { Behaviour } from "./behaviour.js";
+import { distance, vec2, ZERO, type Vec2 } from "../vec2.js";
+import { createCursor, decide, type Behaviour } from "./behaviour.js";
 import type { CombatLogEntry } from "./combat-log.js";
-import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { MatchSimulation, type CompanionMode, type ParticipantSpec } from "./simulation.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
@@ -292,5 +293,465 @@ describe("parallel", () => {
     const log = run(sim, 8);
     expect(distance(at(sim, "dummy"), at(sim, "p"))).toBeLessThanOrEqual(100 + STEP);
     expect(log.some((entry) => entry.cause === "skill" && entry.sourceId === "dummy")).toBe(true);
+  });
+});
+
+describe("auto-attack", () => {
+  it("keeps at the target it is attacking though another foe is nearer (#1046)", () => {
+    const sim = new MatchSimulation({
+      seed: "auto-attack",
+      participants: [
+        spec("dummy", 0, vec2(0, 0)),
+        spec("first", 1, vec2(300, 0)),
+        spec("nearer", 1, vec2(-100, 0)),
+      ],
+    });
+    sim.requestAttack("dummy", "first");
+    const self = sim.get("dummy");
+    if (self === undefined) {
+      throw new Error("no dummy");
+    }
+    const intent = decide(
+      { kind: "auto-attack", targeting: { kind: "nearest-enemy" } },
+      createCursor(),
+      {
+        self,
+        participants: [...sim.participants()],
+        dt: DT,
+        stepUnits: STEP,
+        check: () => ({ ok: false, reason: "skill-not-on-bar" }),
+        isBot: () => false,
+        calledTargetId: undefined,
+        sees: () => true,
+      },
+    );
+    expect(intent.attackTargetId).toBe("first");
+  });
+});
+
+describe("follow-and-attack (#467)", () => {
+  const FOLLOW: Behaviour = {
+    kind: "follow-and-attack",
+    engage: "owner-target-then-nearest",
+    aggroUnits: 350,
+    leashUnits: 420,
+    heelUnits: 109,
+  };
+
+  /** A minion of `owner`'s at `here`, driven by nobody, so a test can ask it. */
+  function minion(here: Vec2, owner = "owner"): ParticipantSpec {
+    return {
+      ...spec("minion", 0, here),
+      creature: {
+        ownerId: owner,
+        kind: "minion",
+        look: "bone-minion",
+        name: "Bone Minion",
+        expiresInSeconds: Number.POSITIVE_INFINITY,
+        ageSeconds: 0,
+        summonedAtTick: 0,
+        skillId: "necromancer.animate-bone-minions",
+        aura: undefined,
+        onDeath: "vanish",
+        ownerDisableSeconds: 0,
+        companionSkillId: undefined,
+        mode: "guard",
+      },
+    };
+  }
+
+  function ask(sim: MatchSimulation, cursor = createCursor(), behaviour = FOLLOW) {
+    const self = sim.get("minion");
+    if (self === undefined) {
+      throw new Error("no minion");
+    }
+    return decide(behaviour, cursor, {
+      self,
+      participants: [...sim.participants()],
+      dt: DT,
+      stepUnits: STEP,
+      check: () => ({ ok: false, reason: "skill-not-on-bar" }),
+      isBot: () => false,
+      calledTargetId: undefined,
+      sees: () => true,
+    });
+  }
+
+  function world(...participants: ParticipantSpec[]): MatchSimulation {
+    return new MatchSimulation({ seed: "follow", participants });
+  }
+
+  it("stands still beside its owner with no foe about", () => {
+    const sim = world(spec("owner", 0, vec2(0, 0)), minion(vec2(50, 0)));
+    expect(ask(sim)).toMatchObject({
+      moveDirection: ZERO,
+      moveTo: undefined,
+      attackTargetId: undefined,
+    });
+  });
+
+  it("walks to an owner 200 away and stops a step short of 109", () => {
+    const sim = world(spec("owner", 0, vec2(0, 0)), { ...minion(vec2(200, 0)), behaviour: FOLLOW });
+    // By path, round anything in the way (#1153), not straight.
+    expect(ask(sim)).toMatchObject({ moveDirection: ZERO, moveTo: vec2(0, 0) });
+    run(sim, 2);
+    const d = distance(at(sim, "minion"), at(sim, "owner"));
+    expect(d).toBeLessThanOrEqual(109 + STEP);
+    expect(d).toBeGreaterThan(109);
+  });
+
+  it("attacks the nearest foe within 350 of itself, and none at 351", () => {
+    const near = world(
+      spec("owner", 0, vec2(0, 0)),
+      minion(vec2(0, 0)),
+      spec("far", 1, vec2(0, 340)),
+      spec("foe", 1, vec2(0, -300)),
+    );
+    expect(ask(near)).toMatchObject({ targetId: "foe", attackTargetId: "foe" });
+    const out = world(
+      spec("owner", 0, vec2(0, 0)),
+      minion(vec2(0, 0)),
+      spec("foe", 1, vec2(351, 0)),
+    );
+    expect(ask(out).attackTargetId).toBeUndefined();
+  });
+
+  it("keeps at the foe it is attacking though another comes nearer", () => {
+    const sim = world(
+      spec("owner", 0, vec2(0, 0)),
+      minion(vec2(0, 0)),
+      spec("first", 1, vec2(300, 0)),
+      spec("nearer", 1, vec2(-100, 0)),
+    );
+    sim.requestAttack("minion", "first");
+    expect(ask(sim)).toMatchObject({ targetId: "first", attackTargetId: "first" });
+  });
+
+  it("walks back past 420 from its owner, fighting nobody until within 109", () => {
+    const sim = world(
+      spec("owner", 0, vec2(0, 0)),
+      minion(vec2(430, 0)),
+      spec("foe", 1, vec2(450, 0)),
+    );
+    const cursor = createCursor();
+    expect(ask(sim, cursor)).toMatchObject({
+      moveDirection: ZERO,
+      moveTo: vec2(0, 0),
+      attackTargetId: undefined,
+    });
+    expect(cursor.returning).toBe(true);
+  });
+
+  it("still returning at 200, it walks on; at heel it fights again", () => {
+    const sim = world(
+      spec("owner", 0, vec2(0, 0)),
+      minion(vec2(200, 0)),
+      spec("foe", 1, vec2(300, 0)),
+    );
+    const cursor = { ...createCursor(), returning: true };
+    expect(ask(sim, cursor)).toMatchObject({
+      moveDirection: ZERO,
+      moveTo: vec2(0, 0),
+      attackTargetId: undefined,
+    });
+    const heel = world(
+      spec("owner", 0, vec2(0, 0)),
+      minion(vec2(100, 0)),
+      spec("foe", 1, vec2(300, 0)),
+    );
+    const back = { ...createCursor(), returning: true };
+    expect(ask(heel, back)).toMatchObject({ attackTargetId: "foe" });
+    expect(back.returning).toBe(false);
+  });
+
+  it("keeps to its owner's body when the owner is dead", () => {
+    const sim = world(spec("owner", 0, vec2(0, 0)), minion(vec2(0, 200)));
+    const owner = sim.get("owner");
+    if (owner === undefined) {
+      throw new Error("no owner");
+    }
+    owner.combatant.dead = true;
+    expect(ask(sim).moveTo).toEqual(vec2(0, 0));
+  });
+
+  describe("walking back round walls (#1153)", () => {
+    const BOUNDS = { width: 960, height: 640 };
+
+    /** A rectangle's four sides, as a map's rect wall becomes. */
+    function rect(x: number, y: number, width: number, height: number): Segment[] {
+      const a = vec2(x, y);
+      const b = vec2(x + width, y);
+      const c = vec2(x + width, y + height);
+      const d = vec2(x, y + height);
+      return [segment(a, b), segment(b, c), segment(c, d), segment(d, a)];
+    }
+
+    /** The owner at (200, 320), its minion 500 off, past the leash, at (700, 320). */
+    function walled(walls: readonly Segment[]): MatchSimulation {
+      return new MatchSimulation({
+        seed: "follow-walls",
+        walls,
+        bounds: BOUNDS,
+        participants: [
+          spec("owner", 0, vec2(200, 320)),
+          { ...minion(vec2(700, 320)), behaviour: FOLLOW },
+        ],
+      });
+    }
+
+    it("walks round a wall between it and its owner, to heel", () => {
+      // Square across the straight line, which only pushes into it.
+      const walls = rect(440, 120, 24, 400);
+      const path = createPathFinder(
+        buildNavGraph(walls, BOUNDS, RULES.collision.playerRadius),
+      ).find(vec2(700, 320), vec2(200, 320));
+      if (path === undefined) {
+        throw new Error("no way round");
+      }
+      let length = 0;
+      let from = vec2(700, 320);
+      for (const point of path) {
+        length += distance(from, point);
+        from = point;
+      }
+      const sim = walled(walls);
+
+      run(sim, length / RULES.movement.maxSpeedUnitsPerSecond + 1);
+
+      expect(distance(at(sim, "minion"), at(sim, "owner"))).toBeLessThanOrEqual(109 + STEP);
+    });
+
+    it("stands still, without jitter, with no way to its owner", () => {
+      // A closed room round the owner, of four walls.
+      const sim = walled([
+        ...rect(100, 200, 240, 20),
+        ...rect(100, 420, 240, 20),
+        ...rect(100, 200, 20, 240),
+        ...rect(320, 200, 20, 240),
+      ]);
+
+      for (let i = 0; i < 2 / DT; i += 1) {
+        sim.step(DT);
+        expect(at(sim, "minion")).toEqual(vec2(700, 320));
+      }
+    });
+  });
+
+  describe("assisting its master, as a minion (#1118)", () => {
+    it("attacks its master's foe 400 from the master and 380 from itself, not one 430 off", () => {
+      const sim = world(
+        spec("owner", 0, vec2(0, 0)),
+        minion(vec2(20, 0)),
+        spec("foe", 1, vec2(400, 0)),
+      );
+      sim.requestAttack("owner", "foe");
+      expect(ask(sim)).toMatchObject({ targetId: "foe", attackTargetId: "foe" });
+      const far = world(
+        spec("owner", 0, vec2(0, 0)),
+        minion(vec2(50, 0)),
+        spec("foe", 1, vec2(430, 0)),
+      );
+      far.requestAttack("owner", "foe");
+      expect(ask(far).attackTargetId).toBeUndefined();
+    });
+
+    it("with its master attacking nobody, attacks a foe 300 from itself", () => {
+      const sim = world(
+        spec("owner", 0, vec2(0, 0)),
+        minion(vec2(0, 0)),
+        spec("foe", 1, vec2(0, 300)),
+      );
+      expect(ask(sim)).toMatchObject({ targetId: "foe", attackTargetId: "foe" });
+    });
+
+    it("stays on its foe when its master switches, and takes the master's once it dies", () => {
+      const sim = world(
+        spec("owner", 0, vec2(0, 0)),
+        minion(vec2(0, 0)),
+        spec("x", 1, vec2(50, 0)),
+        spec("y", 1, vec2(-50, 0)),
+      );
+      sim.requestAttack("minion", "x");
+      sim.requestAttack("owner", "y");
+      expect(ask(sim)).toMatchObject({ targetId: "x", attackTargetId: "x" });
+      const x = sim.get("x");
+      if (x === undefined) {
+        throw new Error("no x");
+      }
+      x.combatant.dead = true;
+      sim.step(DT);
+      expect(ask(sim)).toMatchObject({ targetId: "y", attackTargetId: "y" });
+    });
+
+    it("does not assist a spell cast at a foe", () => {
+      const sim = world(
+        spec("owner", 0, vec2(0, 0)),
+        minion(vec2(20, 0)),
+        spec("foe", 1, vec2(400, 0)),
+      );
+      sim.setTarget("owner", "foe");
+      expect(sim.requestSkill("owner", 0)?.check).toEqual({ ok: true });
+      expect(sim.get("owner")?.combatant.attack).toBeUndefined();
+      expect(ask(sim).attackTargetId).toBeUndefined();
+    });
+  });
+
+  describe("engaging its owner's target, as a pet (#1046)", () => {
+    const PET: Behaviour = {
+      kind: "follow-and-attack",
+      engage: "owner-target",
+      aggroUnits: 700,
+      leashUnits: 700,
+      heelUnits: 109,
+    };
+    const askPet = (sim: MatchSimulation, cursor = createCursor()) => ask(sim, cursor, PET);
+
+    it("follows to heel while its owner attacks nobody, a foe beside it or not", () => {
+      const sim = world(
+        spec("owner", 0, vec2(0, 0)),
+        minion(vec2(200, 0)),
+        spec("foe", 1, vec2(220, 0)),
+      );
+      expect(askPet(sim)).toMatchObject({
+        moveDirection: ZERO,
+        moveTo: vec2(0, 0),
+        attackTargetId: undefined,
+      });
+    });
+
+    it("goes for its owner's foe within 700 of itself, and not one at 701", () => {
+      const sim = world(
+        spec("owner", 0, vec2(0, 0)),
+        minion(vec2(0, 0)),
+        spec("foe", 1, vec2(700, 0)),
+      );
+      sim.requestAttack("owner", "foe");
+      expect(askPet(sim)).toMatchObject({ targetId: "foe", attackTargetId: "foe" });
+      const out = world(
+        spec("owner", 0, vec2(0, 0)),
+        minion(vec2(0, 0)),
+        spec("foe", 1, vec2(701, 0)),
+      );
+      out.requestAttack("owner", "foe");
+      expect(askPet(out).attackTargetId).toBeUndefined();
+    });
+
+    it("switches from its own foe to the one its owner switched to", () => {
+      const sim = world(
+        spec("owner", 0, vec2(0, 0)),
+        minion(vec2(0, 0)),
+        spec("x", 1, vec2(50, 0)),
+        spec("y", 1, vec2(-50, 0)),
+      );
+      sim.requestAttack("minion", "x");
+      sim.requestAttack("owner", "y");
+      expect(askPet(sim)).toMatchObject({ targetId: "y", attackTargetId: "y" });
+    });
+
+    it("with its owner dead, keeps at its foe and picks no new one", () => {
+      const sim = world(
+        spec("owner", 0, vec2(0, 0)),
+        minion(vec2(0, 0)),
+        spec("x", 1, vec2(50, 0)),
+        spec("y", 1, vec2(-50, 0)),
+      );
+      sim.requestAttack("minion", "x");
+      sim.requestAttack("owner", "y");
+      const owner = sim.get("owner");
+      if (owner === undefined) {
+        throw new Error("no owner");
+      }
+      owner.combatant.dead = true;
+      expect(askPet(sim)).toMatchObject({ attackTargetId: "x" });
+      const idle = world(
+        spec("owner", 0, vec2(0, 0)),
+        minion(vec2(0, 0)),
+        spec("x", 1, vec2(50, 0)),
+      );
+      idle.requestAttack("owner", "x");
+      const dead = idle.get("owner");
+      if (dead === undefined) {
+        throw new Error("no owner");
+      }
+      dead.combatant.dead = true;
+      expect(askPet(idle).attackTargetId).toBeUndefined();
+    });
+
+    /** `sim`'s pet, told `mode` (#1110). */
+    function order(sim: MatchSimulation, mode: CompanionMode): void {
+      const creature = sim.get("minion")?.creature;
+      if (creature === undefined) {
+        throw new Error("no pet");
+      }
+      creature.mode = mode;
+    }
+
+    it("on Fight, goes for its owner's selection, not its owner's attack (#1110)", () => {
+      const sim = world(
+        spec("owner", 0, vec2(0, 0)),
+        minion(vec2(0, 0)),
+        spec("x", 1, vec2(50, 0)),
+        spec("y", 1, vec2(-50, 0)),
+      );
+      order(sim, "fight");
+      sim.setTarget("owner", "x");
+      expect(askPet(sim)).toMatchObject({ targetId: "x", attackTargetId: "x" });
+      sim.requestAttack("owner", "y");
+      sim.setTarget("owner", "x");
+      expect(askPet(sim)).toMatchObject({ targetId: "x", attackTargetId: "x" });
+    });
+
+    it("on Fight, keeps its own foe with an ally selected (#1110)", () => {
+      const sim = world(
+        spec("owner", 0, vec2(0, 0)),
+        minion(vec2(0, 0)),
+        spec("x", 1, vec2(50, 0)),
+        spec("ally", 0, vec2(-50, 0)),
+      );
+      order(sim, "fight");
+      sim.requestAttack("minion", "x");
+      sim.setTarget("owner", "ally");
+      expect(askPet(sim)).toMatchObject({ attackTargetId: "x" });
+    });
+
+    it("on Heel, attacks nobody, its owner's foe nor its own, and keeps to heel (#1110)", () => {
+      const sim = world(
+        spec("owner", 0, vec2(0, 0)),
+        minion(vec2(200, 0)),
+        spec("x", 1, vec2(220, 0)),
+      );
+      order(sim, "heel");
+      sim.requestAttack("minion", "x");
+      sim.requestAttack("owner", "x");
+      expect(askPet(sim)).toMatchObject({ moveTo: vec2(0, 0), attackTargetId: undefined });
+    });
+
+    it("walks back past 700 from its owner until within 109, ignoring the owner's foe", () => {
+      const sim = world(
+        spec("owner", 0, vec2(0, 0)),
+        minion(vec2(710, 0)),
+        spec("foe", 1, vec2(720, 0)),
+      );
+      sim.requestAttack("owner", "foe");
+      const cursor = createCursor();
+      expect(askPet(sim, cursor)).toMatchObject({
+        moveDirection: ZERO,
+        moveTo: vec2(0, 0),
+        attackTargetId: undefined,
+      });
+      expect(cursor.returning).toBe(true);
+    });
+  });
+
+  it("stands still in a body that is no creature", () => {
+    const sim = world(spec("minion", 0, vec2(0, 200)), spec("foe", 1, vec2(0, 250)));
+    expect(ask(sim)).toEqual({
+      moveDirection: ZERO,
+      moveTo: undefined,
+      targetId: undefined,
+      useSkillId: undefined,
+      attackTargetId: undefined,
+      applyStatuses: [],
+    });
   });
 });

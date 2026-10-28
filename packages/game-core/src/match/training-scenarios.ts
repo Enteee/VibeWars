@@ -166,7 +166,10 @@ function dummyEquipment(dummy: TrainingDummy): ResolvedEquipment {
       ? { ...unarmedResolvedEquipment(dummy.armor), conditionalArmor: inherent }
       : {
           ...unarmedResolvedEquipment(dummy.armor),
-          conditionalArmor: [...inherent, { amount: guard.armor, condition: "vs-physical" }],
+          conditionalArmor: [
+            ...inherent,
+            { amount: guard.armor, conditions: [{ kind: "vs-physical" }] },
+          ],
           flatPhysicalReduction: guard.reduction,
         };
   if (dummy.weapon === undefined) {
@@ -183,6 +186,7 @@ function dummyEquipment(dummy: TrainingDummy): ResolvedEquipment {
       damageType: weapon.damageType,
       requirementMet:
         attributeId === undefined || (dummy.attributeRanks[attributeId] ?? 0) >= requirement.rank,
+      creatureDamageScale: undefined,
     },
   };
 }

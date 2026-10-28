@@ -10,7 +10,29 @@ import { isWeaponId, type Vec2, type WeaponId } from "@vibewars/game-core";
  * No Phaser here, so the sprite choice and the flight can be tested in Node.
  */
 
-export type ProjectileSprite = "arrow" | "spear" | "bolt";
+export type ProjectileSprite =
+  | "arrow"
+  | "spear"
+  | "bolt"
+  | "fireball"
+  | "lightning-orb"
+  | "ice-shard"
+  | "water-trident"
+  | "ebon-hawk"
+  | "stone"
+  | "thrown-dagger";
+
+/** A flying spell's own sprite (#1176). A new flying spell needs a row, or the test fails. */
+export const SKILL_SPRITE: Readonly<Record<string, ProjectileSprite>> = {
+  "elementalist.fireball": "fireball",
+  "elementalist.lightning-orb": "lightning-orb",
+  "elementalist.shard-storm": "ice-shard",
+  "elementalist.water-trident": "water-trident",
+  "elementalist.ebon-hawk": "ebon-hawk",
+  "elementalist.stoning": "stone",
+  "assassin.disrupting-dagger": "thrown-dagger",
+  "assassin.crippling-dagger": "thrown-dagger",
+};
 
 /** Every weapon's sprite. A melee weapon never shoots; it gets `bolt` rather than a throw in the render loop. */
 const SPRITE: Readonly<Record<WeaponId, ProjectileSprite>> = {
@@ -32,18 +54,24 @@ const SPRITE: Readonly<Record<WeaponId, ProjectileSprite>> = {
 
 /**
  * A shot's sprite, from its shooter's weapon (`undefined` once they have
- * left). A flying spell (#535) is a bolt until it has art of its own (#487).
+ * left). A flying spell (#535) is drawn by its skill, a bolt if it has no row.
  */
 export function projectileSprite(
   weaponId: string | undefined,
   skillId: string | undefined,
 ): ProjectileSprite {
-  return skillId === undefined && weaponId !== undefined && isWeaponId(weaponId)
-    ? SPRITE[weaponId]
-    : "bolt";
+  if (skillId !== undefined) {
+    return SKILL_SPRITE[skillId] ?? "bolt";
+  }
+  return weaponId !== undefined && isWeaponId(weaponId) ? SPRITE[weaponId] : "bolt";
 }
 
-export const PROJECTILE_SPRITES: readonly ProjectileSprite[] = ["arrow", "spear", "bolt"];
+export const PROJECTILE_SPRITES: readonly ProjectileSprite[] = [
+  "arrow",
+  "spear",
+  "bolt",
+  ...Object.values(SKILL_SPRITE),
+];
 
 export function projectileSpriteUrl(sprite: ProjectileSprite): string {
   return `${import.meta.env.BASE_URL}icons/projectile/${sprite}.svg`;

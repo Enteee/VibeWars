@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { CastState } from "./cast-state.js";
+import { getSkill } from "./catalog.js";
+import { CastState, beginRecharge, copyKey, resolvedBar, slotSkill } from "./cast-state.js";
 import { StatusSet } from "./status.js";
 
 describe("CastState casting", () => {
@@ -184,6 +185,44 @@ describe("CastState disable (#914)", () => {
   });
 });
 
+describe("CastState lengthenRecharge (#949)", () => {
+  it("lengthens a running recharge, its total too", () => {
+    const state = new CastState("caster", new StatusSet());
+    state.startRecharge("skill.a", 4);
+    state.advance(1);
+    state.lengthenRecharge("skill.a", 47);
+    expect(state.rechargeRemaining.get("skill.a")).toBe(50);
+    expect(state.rechargeTotal.get("skill.a")).toBe(51);
+  });
+
+  it("starts one on a ready skill, which counts down as a recharge", () => {
+    const state = new CastState("caster", new StatusSet());
+    state.lengthenRecharge("skill.a", 47);
+    expect(state.rechargeRemaining.get("skill.a")).toBe(47);
+    expect(state.rechargeTotal.get("skill.a")).toBe(47);
+    state.advance(47);
+    expect(state.rechargeRemaining.has("skill.a")).toBe(false);
+  });
+
+  it("is recharge: ending the recharge ends it, not a disable", () => {
+    const state = new CastState("caster", new StatusSet());
+    state.startRecharge("skill.a", 4);
+    state.disable("skill.a", 10);
+    state.lengthenRecharge("skill.a", 47);
+    expect(state.rechargeRemaining.get("skill.a")).toBe(51);
+    state.endRecharge("skill.a");
+    expect(state.rechargeRemaining.get("skill.a")).toBe(10);
+  });
+
+  it("shows a longer disable over it", () => {
+    const state = new CastState("caster", new StatusSet());
+    state.startRecharge("skill.a", 2);
+    state.disable("skill.a", 60);
+    state.lengthenRecharge("skill.a", 47);
+    expect(state.rechargeRemaining.get("skill.a")).toBe(60);
+  });
+});
+
 describe("aftercast and the queue (#317)", () => {
   it("counts down from the next advance, and is not casting", () => {
     const state = new CastState("caster", new StatusSet());
@@ -244,5 +283,76 @@ describe("CastState whileActivating (#524)", () => {
     const statuses = new StatusSet();
     new CastState("caster", statuses).beginCast("x", undefined, 0, "healing-signet-armor");
     expect(statuses.size).toBe(0);
+  });
+});
+
+describe("spent until a morale boost (#474)", () => {
+  const signet = getSkill("common.resurrection-signet");
+  const fireball = getSkill("elementalist.fireball");
+
+  it("spends a morale-boost skill, and times any other", () => {
+    if (signet === undefined || fireball === undefined) {
+      throw new Error("missing skill");
+    }
+    const state = new CastState("caster", new StatusSet());
+    beginRecharge(state, signet, 0);
+    beginRecharge(state, fireball, 5);
+    expect([...state.spent]).toEqual([signet.id]);
+    expect(state.rechargeRemaining.get(signet.id)).toBeUndefined();
+    expect(state.rechargeRemaining.get(fireball.id)).toBe(5);
+    state.advance(600);
+    expect([...state.spent]).toEqual([signet.id]);
+  });
+
+  it("readies every spent skill on a boost, and says whether there was one", () => {
+    const state = new CastState("caster", new StatusSet());
+    expect(state.refreshSpent()).toBe(false);
+    state.spend("common.resurrection-signet");
+    expect(state.refreshSpent()).toBe(true);
+    expect(state.spent.size).toBe(0);
+  });
+});
+
+describe("CastState slot overrides (#469)", () => {
+  const ECHO = "mesmer.arcane-echo";
+  const FIREBALL = "elementalist.fireball";
+  const bar = [ECHO, null, FIREBALL];
+  const copy = () => ({
+    skillId: FIREBALL,
+    key: copyKey(FIREBALL, 0),
+    remainingSeconds: 20,
+    restores: { skillId: ECHO, rechargeSeconds: 20 },
+  });
+
+  it("resolves a slot to the copy standing there, and the rest to the build", () => {
+    const state = new CastState("p", new StatusSet());
+    state.override(0, copy());
+    expect(slotSkill(bar, state, 0)).toEqual({ skillId: FIREBALL, key: "elementalist.fireball@0" });
+    expect(resolvedBar(bar, state)).toEqual([
+      { skillId: FIREBALL, key: "elementalist.fireball@0" },
+      null,
+      { skillId: FIREBALL, key: FIREBALL },
+    ]);
+  });
+
+  it("ends a copy after its time, with its waits, and starts the echo's recharge", () => {
+    const state = new CastState("p", new StatusSet());
+    state.override(0, copy());
+    state.startRecharge(copyKey(FIREBALL, 0), 30);
+    state.advance(19.5);
+    expect(slotSkill(bar, state, 0)?.skillId).toBe(FIREBALL);
+    state.advance(0.5);
+    expect(slotSkill(bar, state, 0)).toEqual({ skillId: ECHO, key: ECHO });
+    expect(state.rechargeRemaining.has(copyKey(FIREBALL, 0))).toBe(false);
+    expect(state.rechargeTotal.get(ECHO)).toBe(20);
+  });
+
+  it("a copy gone mid-cast has nothing to recharge", () => {
+    const state = new CastState("p", new StatusSet());
+    state.override(0, copy());
+    state.clearOverrides();
+    state.startRecharge(copyKey(FIREBALL, 0), 7);
+    expect(state.rechargeRemaining.size).toBe(0);
+    expect(state.rechargeRemaining.has(ECHO)).toBe(false);
   });
 });

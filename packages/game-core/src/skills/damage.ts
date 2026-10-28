@@ -1,10 +1,18 @@
-import { isElementalDamage, isPhysicalDamage, type DamageType } from "../equipment/types.js";
+import { rollHitLocation } from "../equipment/armor.js";
+import {
+  isElementalDamage,
+  isPhysicalDamage,
+  type ArmorSlot,
+  type DamageType,
+} from "../equipment/types.js";
 import type { ArmorCondition } from "../equipment/insignias.js";
 import { MYSTICISM_ATTRIBUTE, mysticismArmor } from "../primary-attributes.js";
+import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
+import { isAttacking, signetsOnBar } from "./attacking.js";
 import { aggregateModifiers } from "./status.js";
-import { armorReductionOf, rankOf } from "./tick.js";
-import type { Combatant } from "./types.js";
+import { armorReductionOf, effectiveMaxHealth, rankOf } from "./tick.js";
+import type { Combatant, CreatureLevel } from "./types.js";
 
 /**
  * The damage pipeline (ADR-0012).
@@ -61,14 +69,32 @@ export function unmitigatedDamage(amount: number, source: DamageSource): DamageP
 }
 
 /**
- * The defender's armor against this packet. Every conditional bonus is
- * answerable from the packet and the defender alone.
+ * The piece a packet strikes (#1135), or `null` for one armor never
+ * meets: holy, shadow and typeless damage, degeneration, life steal.
+ * Those draw nothing; every armored packet draws one float, whatever the
+ * target wears, so the stream never depends on gear.
  */
-export function effectiveArmor(target: Combatant, packet: DamagePacket): number {
+export type HitLocation = ArmorSlot | null;
+
+export function hitLocationOf(packet: DamagePacket, rng: SimulationRng): HitLocation {
+  return packet.armored > 0 ? rollHitLocation(rng) : null;
+}
+
+/**
+ * The defender's armor against this packet, struck at `location`. Every
+ * conditional bonus is answerable from the packet and the defender alone;
+ * an insignia's only on a hit to its own piece (#1135).
+ */
+export function effectiveArmor(
+  target: Combatant,
+  packet: DamagePacket,
+  location: HitLocation,
+): number {
   let armor = target.equipment.baseArmor;
 
-  for (const bonus of target.equipment.conditionalArmor) {
-    if (conditionHolds(bonus.condition, target, packet)) {
+  const pieceArmor = location === null ? [] : target.equipment.pieceArmor[location];
+  for (const bonus of [...target.equipment.conditionalArmor, ...pieceArmor]) {
+    if (bonus.conditions.every((condition) => conditionHolds(condition, target, packet))) {
       armor += bonus.amount;
     }
   }
@@ -108,13 +134,40 @@ function conditionHolds(
   target: Combatant,
   packet: DamagePacket,
 ): boolean {
-  switch (condition) {
+  switch (condition.kind) {
     case "vs-physical":
       return isPhysicalDamage(packet.type);
     case "vs-elemental":
       return isElementalDamage(packet.type);
-    case "while-enchanted":
-      return target.statuses.countByCategory("enchantment") > 0;
+    case "vs-type":
+      return packet.type === condition.type;
+    case "attacking":
+      return isAttacking(target);
+    case "enchantments-at-least":
+      return target.statuses.countByCategory("enchantment") >= condition.count;
+    case "recharging-at-least": {
+      let recharging = 0;
+      for (const seconds of target.cast.rechargeRemaining.values()) {
+        if (seconds > 0) {
+          recharging += 1;
+        }
+      }
+      return recharging >= condition.count;
+    }
+    case "attribute-at-least":
+      return rankOf(target, condition.attributeId) >= condition.rank;
+    case "affected-by":
+      return condition.categories.some((category) => target.statuses.countByCategory(category) > 0);
+    case "no-enchantment":
+      return target.statuses.countByCategory("enchantment") === 0;
+    case "health-below":
+      return target.health < condition.fraction * target.maxHealth;
+    case "controls-at-least":
+      return target.controlled[condition.creature] >= condition.count;
+    case "activating":
+      return target.cast.activeCast !== undefined;
+    case "signets-at-least":
+      return signetsOnBar(target) >= condition.count;
   }
 }
 
@@ -142,27 +195,68 @@ export function armorMultiplier(armor: number, rules: CombatRules): number {
  * Rounded once, at the end. Rounding earlier would make a long fight
  * drift away from the arithmetic by a few points per hit.
  */
-export function mitigate(packet: DamagePacket, target: Combatant, rules: CombatRules): number {
+export function mitigate(
+  packet: DamagePacket,
+  target: Combatant,
+  rules: CombatRules,
+  location: HitLocation,
+): number {
   if (packet.armored + packet.armorIgnoring <= 0) {
     return 0;
   }
 
-  const armor = effectiveArmor(target, packet);
-  let dealt = packet.armored * armorMultiplier(armor, rules) + packet.armorIgnoring;
+  // Winnowing's +4 (#1064): on the bearer of every physical hit, before
+  // armor, so a fixed "deals only N" hit takes it too.
+  const modifiers = aggregateModifiers(target.statuses.active);
+  const armored =
+    packet.armored + (isPhysicalDamage(packet.type) ? modifiers.physicalDamageTakenBonus : 0);
+  const armor = effectiveArmor(target, packet, location);
+  let dealt = armored * armorMultiplier(armor, rules) + packet.armorIgnoring;
 
   // Frenzy's double and Dark Escape's half (#919): every packet, armored
   // or not, after armor and before the flat shield below.
-  dealt *= aggregateModifiers(target.statuses.active).damageTakenMultiplier;
+  dealt *= modifiers.damageTakenMultiplier;
+
+  // Call of Protection (#1108): a flat cut off every packet, after
+  // armor and the multiplier, before Rune of Absorption.
+  dealt -= modifiers.damageReduction;
 
   // Rune of Absorption, last and only against physical hits. After
   // mitigation on purpose: it is a flat shield against each blow, so it
   // is proportionally worth most against the many small hits an
   // auto-attack chain produces, which is the niche it exists to fill.
+  // Knight's (#1142) beside it, and stacking with it, but only on a hit
+  // to its own piece.
   if (isPhysicalDamage(packet.type)) {
     dealt -= target.equipment.flatPhysicalReduction;
+    if (location !== null) {
+      dealt -= target.equipment.pieceReduction[location];
+    }
+  }
+
+  // Protective Spirit (#936), after everything else: no single hit takes
+  // more than its share of the target's max health, deep wound's lower
+  // max included, however much armor, Frenzy or a crit gave it.
+  if (modifiers.maxDamageFractionPerHit !== undefined) {
+    dealt = Math.min(
+      dealt,
+      Math.floor(modifiers.maxDamageFractionPerHit * effectiveMaxHealth(target)),
+    );
   }
 
   return Math.max(0, Math.round(dealt));
+}
+
+/**
+ * What a creature's summoner's `rank` does to its blows (#1131): its GW1
+ * level, linear in the rank, against its level at 12, to the power 1.5.
+ * No source gives a formula; this one fits GWW's damage tables for Bone
+ * Minion and Bone Horror within about a point at every rank 0-12.
+ */
+export function creatureDamageMultiplier(rank: number, levels: CreatureLevel): number {
+  const level = (at: number): number =>
+    levels.atZero + ((levels.atTwelve - levels.atZero) * at) / 12;
+  return Math.pow(level(Math.max(0, rank)) / level(12), 1.5);
 }
 
 /**

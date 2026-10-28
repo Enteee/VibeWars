@@ -1,5 +1,6 @@
 import { hasLineOfSight, type Segment } from "../geometry.js";
 import { distance, type Vec2 } from "../vec2.js";
+import type { Creature } from "../match/simulation.js";
 import type { Combatant, Skill } from "./types.js";
 
 /**
@@ -17,11 +18,36 @@ import type { Combatant, Skill } from "./types.js";
  * The sort is what keeps this deterministic (ADR-0003): the server
  * iterates a Map and the headless runner an array, and without it the
  * cut would keep different targets in each. Nothing here is random.
+ *
+ * A party area (#1013) is no radius: the caster first, then every living
+ * team-mate by distance from the caster, however far and behind whatever
+ * wall. Creatures are not party members: no spirit, minion or pet.
  */
 
 export interface TargetCandidate {
   readonly combatant: Combatant;
   readonly position: Vec2;
+  /** `undefined`: a player or a training dummy, not a creature (#1052), so a party member (#474). */
+  readonly creature: Creature | undefined;
+}
+
+/**
+ * How many living spirits, any team's, stand within `radius` of `at`
+ * (#1064): what Mend Body and Soul, Spirit Light and Spirit Light Weapon
+ * count. Walls do not matter.
+ */
+export function spiritsWithin(
+  candidates: Iterable<TargetCandidate>,
+  at: Vec2,
+  radius: number,
+): number {
+  let spirits = 0;
+  for (const { combatant, position, creature } of candidates) {
+    if (creature?.kind === "spirit" && !combatant.dead && distance(position, at) <= radius) {
+      spirits += 1;
+    }
+  }
+  return spirits;
 }
 
 export interface TargetSelection {
@@ -40,6 +66,16 @@ export function resolveTargets(selection: TargetSelection): readonly Combatant[]
   const area = skill.area;
   if (area === undefined) {
     return primary === undefined ? [] : [primary.combatant];
+  }
+  if (area.origin === "party") {
+    const team = selection.candidates.filter(
+      ({ combatant, creature }) =>
+        creature === undefined &&
+        !combatant.dead &&
+        combatant.team === caster.team &&
+        combatant.id !== caster.id,
+    );
+    return [caster, ...nearestFirst(team, selection.casterPosition)];
   }
 
   const origin = area.origin === "caster" ? selection.casterPosition : primary?.position;

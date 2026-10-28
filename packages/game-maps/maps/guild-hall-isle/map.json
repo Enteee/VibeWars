@@ -1,0 +1,57 @@
+{
+  "id": "guild-hall-isle",
+  "name": "Guild Hall Isle",
+  "mode": "guild-battle",
+  "width": 3000,
+  "height": 2000,
+  "walls": [
+    { "kind": "rect", "x": 0, "y": 300, "width": 730, "height": 30 },
+    { "kind": "rect", "x": 0, "y": 1670, "width": 730, "height": 30 },
+    { "kind": "rect", "x": 700, "y": 330, "width": 30, "height": 420 },
+    { "kind": "rect", "x": 700, "y": 900, "width": 30, "height": 200 },
+    { "kind": "rect", "x": 700, "y": 1250, "width": 30, "height": 420 },
+    { "kind": "rect", "x": 0, "y": 750, "width": 280, "height": 30 },
+    { "kind": "rect", "x": 0, "y": 1220, "width": 280, "height": 30 },
+    { "kind": "rect", "x": 250, "y": 780, "width": 30, "height": 140 },
+    { "kind": "rect", "x": 250, "y": 1080, "width": 30, "height": 140 },
+
+    { "kind": "rect", "x": 2270, "y": 1670, "width": 730, "height": 30 },
+    { "kind": "rect", "x": 2270, "y": 300, "width": 730, "height": 30 },
+    { "kind": "rect", "x": 2270, "y": 1250, "width": 30, "height": 420 },
+    { "kind": "rect", "x": 2270, "y": 900, "width": 30, "height": 200 },
+    { "kind": "rect", "x": 2270, "y": 330, "width": 30, "height": 420 },
+    { "kind": "rect", "x": 2720, "y": 1220, "width": 280, "height": 30 },
+    { "kind": "rect", "x": 2720, "y": 750, "width": 280, "height": 30 },
+    { "kind": "rect", "x": 2720, "y": 1080, "width": 30, "height": 140 },
+    { "kind": "rect", "x": 2720, "y": 780, "width": 30, "height": 140 },
+
+    { "kind": "rect", "x": 1100, "y": 500, "width": 120, "height": 120 },
+    { "kind": "rect", "x": 1780, "y": 500, "width": 120, "height": 120 },
+    { "kind": "rect", "x": 1100, "y": 1380, "width": 120, "height": 120 },
+    { "kind": "rect", "x": 1780, "y": 1380, "width": 120, "height": 120 }
+  ],
+  "objectives": [
+    { "kind": "guild-lord", "team": 0, "position": { "x": 80, "y": 1000 } },
+    { "kind": "guild-lord", "team": 1, "position": { "x": 2920, "y": 1000 } },
+    { "kind": "resurrection-shrine", "team": 0, "position": { "x": 450, "y": 1000 } },
+    { "kind": "resurrection-shrine", "team": 1, "position": { "x": 2550, "y": 1000 } }
+  ],
+  "spawnPoints": [
+    { "team": 0, "position": { "x": 360, "y": 860 } },
+    { "team": 0, "position": { "x": 440, "y": 860 } },
+    { "team": 0, "position": { "x": 520, "y": 860 } },
+    { "team": 0, "position": { "x": 600, "y": 860 } },
+    { "team": 0, "position": { "x": 360, "y": 1140 } },
+    { "team": 0, "position": { "x": 440, "y": 1140 } },
+    { "team": 0, "position": { "x": 520, "y": 1140 } },
+    { "team": 0, "position": { "x": 600, "y": 1140 } },
+    { "team": 1, "position": { "x": 2640, "y": 1140 } },
+    { "team": 1, "position": { "x": 2560, "y": 1140 } },
+    { "team": 1, "position": { "x": 2480, "y": 1140 } },
+    { "team": 1, "position": { "x": 2400, "y": 1140 } },
+    { "team": 1, "position": { "x": 2640, "y": 860 } },
+    { "team": 1, "position": { "x": 2560, "y": 860 } },
+    { "team": 1, "position": { "x": 2480, "y": 860 } },
+    { "team": 1, "position": { "x": 2400, "y": 860 } }
+  ]
+}

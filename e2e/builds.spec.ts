@@ -1,9 +1,13 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { codeLabel } from "../apps/web/src/input/keymap.js";
+import { exportBuild } from "../apps/web/src/storage/build-transfer.js";
+import { CHARACTER_SCHEMA_VERSION } from "../apps/web/src/storage/schema.js";
+import { defaultEquipmentFor } from "../packages/game-core/src/equipment/loadout.js";
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
 import { chooseProfession, professionField } from "./helpers/professions.js";
 import { startSoloMatch } from "./helpers/peers.js";
+import { bringStarter } from "./helpers/starter.js";
 import { skillKey } from "./keys.js";
 
 /**
@@ -237,6 +241,37 @@ test("12/12/3 spends all 200 points, GW1's split (#470)", async ({ page }) => {
   await expect(page.locator(".attribute-budget-segment")).toHaveCount(3);
 });
 
+test("a rune's bonus stays clear of max, and the pips stay in line (#1102)", async ({ page }) => {
+  // The Warrior/Monk starter wears a rune: its rank reads "12 +1".
+  await bringStarter(page, "Warrior/Monk");
+  await page
+    .locator(".selectable-row", { hasText: "Warrior/Monk" })
+    .first()
+    .getByRole("button", { name: "Edit", exact: true })
+    .click();
+  const boosted = page.locator(".editor-attribute", {
+    has: page.locator(".editor-attribute-bonus"),
+  });
+  await expect(boosted.first()).toBeVisible();
+
+  const box = async (locator: Locator) => {
+    const found = await locator.boundingBox();
+    if (found === null) {
+      throw new Error("not laid out");
+    }
+    return found;
+  };
+  // The bonus's own box, not its cell's: the cell is the column, text spills past it.
+  const bonus = await box(boosted.first().locator(".editor-attribute-bonus"));
+  const next = await box(boosted.first().locator(".editor-attribute-next"));
+  expect(bonus.x + bonus.width).toBeLessThanOrEqual(next.x);
+
+  const pipLefts = await page
+    .locator(".editor-attribute .attribute-pips")
+    .evaluateAll((all) => all.map((pips) => pips.getBoundingClientRect().left));
+  expect(new Set(pipLefts).size).toBe(1);
+});
+
 /** Save characters named `names` from the main menu, one after another. */
 async function saveCharacters(page: Page, names: readonly string[]): Promise<void> {
   for (const name of names) {
@@ -249,6 +284,9 @@ async function saveCharacters(page: Page, names: readonly string[]): Promise<voi
     await expect(page.locator(".roster")).toContainText(name);
   }
 }
+
+/** The character the first start rolls (#853) has a random name (#1149): "Kaelen Ashvale". */
+const ROLLED_STARTER = /^[A-Z][a-z]+ [A-Z][a-z]+$/;
 
 /** The team editor's member rows, and their names. */
 const memberRows = (page: Page) => page.locator(".team-grid .team-row");
@@ -352,14 +390,15 @@ test("team edits stay on screen until Save; Back and Delete ask first (#573)", a
   await page.getByRole("button", { name: "new team" }).click();
   await page.getByLabel("team name").fill("GvG Practice");
 
-  // Add both; an added character leaves the picker.
+  // Add both; an added character leaves the picker, which keeps the
+  // first start's rolled starter, oldest and last (#853).
   const picks = page.locator(".team-picker .team-pick-name");
-  await expect(picks).toHaveText(["Bravo", "Alpha"]);
+  await expect(picks).toHaveText(["Bravo", "Alpha", ROLLED_STARTER]);
   await page.getByRole("button", { name: "add Alpha" }).click();
-  await expect(picks).toHaveText(["Bravo"]);
+  await expect(picks).toHaveText(["Bravo", ROLLED_STARTER]);
   await page.getByRole("button", { name: "add Bravo" }).click();
   await expect(memberNames(page)).toHaveText(["Alpha", "Bravo"]);
-  await expect(page.locator(".team-picker-empty")).toBeVisible();
+  await expect(picks).toHaveText([ROLLED_STARTER]);
 
   // Reorder, still on the editor.
   const up = memberRows(page).nth(1).getByRole("button", { name: "move up" });
@@ -412,7 +451,8 @@ test("the team grid: eight cells a member, drag or ↑ ↓ to reorder, places le
     await page.getByRole("button", { name: `add ${name}` }).click();
   }
   await expect(header).toHaveText("13 places left");
-  await expect(page.locator(".team-pick")).toHaveCount(0);
+  // Only the first start's rolled starter is left to add (#853).
+  await expect(page.locator(".team-pick")).toHaveCount(1);
 
   await expect(memberRows(page)).toHaveCount(3);
   for (const row of await memberRows(page).all()) {
@@ -575,6 +615,55 @@ test("⋯ Share copies the build as one line, and a paste on the editor imports 
   await expect(page.locator(".editor-unsaved")).toBeVisible();
 });
 
+test("⋯ Share as GW1 code shows a template code; a pasted one imports, missing skills empty (#494)", async ({
+  page,
+}) => {
+  await newCharacter(page);
+  await page.locator("input.editor-name").fill("Scratch");
+
+  // Warrior/Monk, Strength 12, Swift Chop and Orison of Healing, its fields
+  // wider than they need be: gw1-template.test.ts spells out its bits.
+  await paste(page.locator(".editor"), "OUwQEROqaGBAAAAAAAAA");
+  await expect(page.locator(".toast")).toHaveText("Imported Warrior/Monk build");
+  await expect(page.locator("input.editor-name")).toHaveValue("Warrior/Monk build");
+  await expect(page.locator(".editor-unsaved")).toBeVisible();
+
+  // Shared back, as the encoder writes it: the narrowest fields.
+  await page.getByRole("button", { name: "more actions" }).click();
+  await page.getByRole("button", { name: "Share as GW1 code", exact: true }).click();
+  await expect(page.getByLabel("build to share")).toHaveValue("OQMRE5oqZEAAAAAAAAA");
+  await page.keyboard.press("Escape");
+
+  // GW1 skills 3000 and 567 are not in VibeWars: their slots arrive empty.
+  await paste(page.locator(".editor"), "OQMAQVF4u3IAAAAAAAAAA");
+  await expect(page.locator(".toast")).toHaveText(
+    "Imported Warrior/Monk build. 2 skills are not in VibeWars yet: GW1 skill 3000, 567.",
+  );
+
+  // Vital Transfer is this game's own: a bar with it has no GW1 code.
+  await paste(
+    page.locator(".editor"),
+    exportBuild({
+      schemaVersion: CHARACTER_SCHEMA_VERSION,
+      id: "vital",
+      name: "Vital",
+      primaryProfession: "necromancer",
+      secondaryProfession: undefined,
+      attributes: [],
+      skillBar: ["necromancer.blood-renewal-lite", null, null, null, null, null, null, null],
+      equipment: defaultEquipmentFor("necromancer"),
+      updatedAt: 0,
+    }),
+  );
+  await expect(page.locator(".toast")).toHaveText("Imported Vital");
+  await page.getByRole("button", { name: "more actions" }).click();
+  await page.getByRole("button", { name: "Share as GW1 code", exact: true }).click();
+  await expect(page.locator(".toast")).toHaveText(
+    "Vital Transfer is not a GW1 skill, so this build has no GW1 code.",
+  );
+  await expect(page.getByLabel("build to share")).toBeHidden();
+});
+
 test("Share keeps the line selected when the clipboard is refused (#572)", async ({ page }) => {
   await newCharacter(page);
   await page.evaluate(() => {
@@ -687,10 +776,10 @@ test("a saved character can be chosen and is taken into a match", async ({ page 
   await expect(row).toHaveClass(/is-selected/);
 
   await startSoloMatch(page);
-  await expect(page.locator("#viewport canvas")).toBeVisible();
+  await expect(page.locator("#viewport canvas:not(.compass)")).toBeVisible();
 
   // The server grants the build's bar, so the HUD shows exactly the one
-  // skill that was equipped, not the house loadout, and seven empty slots.
+  // skill that was equipped, not a starter build, and seven empty slots.
   await expect(page.locator(".hud-skills .hud-skill:not(.is-empty)")).toHaveCount(1);
   await expect(page.locator(".hud-skills .hud-skill.is-empty")).toHaveCount(7);
 });
@@ -896,11 +985,11 @@ test("the primary attribute's row says what it does at its rank (#531)", async (
   await expect(fastCasting.locator(".editor-attribute-effect")).toHaveCount(0);
   await pip(fastCasting, 11).click();
   await expect(fastCasting.locator(".editor-attribute-effect")).toHaveText(
-    "spells cast 40% faster",
+    "spells cast 40% faster, signets 33% faster",
   );
   await pip(fastCasting, 12).click();
   await expect(fastCasting.locator(".editor-attribute-effect")).toHaveText(
-    "spells cast 43% faster",
+    "spells cast 43% faster, signets 36% faster",
   );
 });
 
@@ -947,7 +1036,7 @@ test("the in-match skill bar is not draggable", async ({ page }) => {
   // interaction the server would refuse.
   await page.goto("./");
   await startSoloMatch(page);
-  await expect(page.locator("#viewport canvas")).toBeVisible();
+  await expect(page.locator("#viewport canvas:not(.compass)")).toBeVisible();
 
   const hudSkills = page.locator(".hud-skill");
   await expect(hudSkills.first()).toBeVisible();
@@ -1120,6 +1209,9 @@ test("an attack skill for another weapon is flagged on its slot until the weapon
 test("a weapon can be dragged from the library onto the weapon slot", async ({ page }) => {
   await newCharacter(page);
   await openGearLibrary(page);
+  // The set tabs (#489) put the hands below the fold: a mouse drag that has
+  // to scroll the editor mid-gesture drops nowhere, so bring them up first.
+  await page.locator(".gear-slot").first().scrollIntoViewIfNeeded();
 
   await page
     .locator(".gear-box")
@@ -1250,6 +1342,13 @@ test("a chosen weapon and insignia survive a reload", async ({ page }) => {
   await openGearLibrary(page);
   await equipFromLibrary(page, "Axe");
   await equipFromLibrary(page, "Survivor Insignia");
+  // Set 2 (#489): its tab, then a weapon from the library goes into it.
+  const setTab = (n: number): Locator =>
+    page.getByRole("tab", { name: new RegExp(`^${String(n)}`) });
+  await setTab(2).click();
+  await expect(page.locator(".gear-slot").first()).toContainText("Add a weapon");
+  await equipFromLibrary(page, "Hammer");
+  await expect(page.locator(".gear-slot").first()).toContainText("Hammer");
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.locator(".roster")).toContainText("Gear Keeper");
 
@@ -1265,6 +1364,8 @@ test("a chosen weapon and insignia survive a reload", async ({ page }) => {
   await expect(page.locator(".armor-row").first().locator(".gear-slot").first()).toContainText(
     "Survivor",
   );
+  await setTab(2).click();
+  await expect(page.locator(".gear-slot").first()).toContainText("Hammer");
 });
 
 /* --- the editor updates in place (#563, ADR-0030) ------------------------- */
@@ -1375,13 +1476,14 @@ test("a pip sets its rank, the top pip lowers by one, and the next rank is price
   const strength = page.locator(".editor-attribute", { hasText: "Strength" });
   const rank = strength.locator(".editor-attribute-rank");
   await expect(strength.locator(".editor-attribute-next")).toHaveText("next: 1 pts");
+  // The starter's headgear is of Strength: +1 on every rank (#1140).
   await pip(strength, 5).click();
-  await expect(rank).toHaveText("5");
+  await expect(rank).toHaveText("5 +1");
   await expect(strength.locator(".editor-attribute-next")).toHaveText("next: 6 pts");
   await pip(strength, 5).click();
-  await expect(rank).toHaveText("4");
+  await expect(rank).toHaveText("4 +1");
   await pip(strength, 2).click();
-  await expect(rank).toHaveText("2");
+  await expect(rank).toHaveText("2 +1");
 });
 
 test("hovering a pip previews its cost; one the points cannot pay for is refused (#565)", async ({
@@ -1757,4 +1859,43 @@ test("other professions' skills are listed, locked, with what they need (#568)",
   await page.locator("input.skill-search").fill("barrage");
   await expect(locked.locator(".skill-locked-box")).toHaveCount(1);
   await expect(locked.locator("summary")).toHaveText("Other professions (1)");
+});
+
+test("the library lists GW1 skills not in the game yet only when asked, greyed and unslottable (#1220)", async ({
+  page,
+}) => {
+  await openElementalist(page);
+  const toggle = page.getByLabel("Show skills not in the game yet");
+  // Off by default: the library is as it was.
+  await expect(toggle).not.toBeChecked();
+  await expect(page.locator(".skill-corpus-box")).toHaveCount(0);
+
+  await toggle.check();
+  const fire = page.locator(".skill-group", { hasText: "FIRE MAGIC" });
+  // Rodgort's Invocation is GW1 Fire Magic VibeWars does not have yet.
+  const rodgort = fire.locator(".skill-corpus-box", { hasText: "Rodgort's Invocation" });
+  await expect(rodgort).toContainText("not in the game yet");
+  // After the group's playable skills.
+  await expect(fire.locator(".skill-box, .skill-corpus-box").last()).toHaveClass(
+    /skill-corpus-box/,
+  );
+  // It neither drags nor equips.
+  expect(await rodgort.getAttribute("draggable")).toBeNull();
+  await expect(rodgort.locator("button")).toHaveCount(0);
+  await rodgort.click();
+  await expect(page.locator(".skill-slot", { hasText: "Rodgort" })).toHaveCount(0);
+  // Its hover shows GW1's own text.
+  await rodgort.hover();
+  await expect(page.locator(".skill-tip")).toContainText("Not in the game yet");
+
+  // The search finds it; remembered across a reload.
+  // Mark of Rodgort is not in the game yet either, so it is found too.
+  await page.locator("input.skill-search").fill("rodgort");
+  await expect(page.locator(".skill-corpus-box", { hasText: "Rodgort's Invocation" })).toHaveCount(
+    1,
+  );
+  await expect(page.locator(".skill-box, .skill-corpus-box")).toHaveCount(2);
+  await page.reload();
+  await page.getByRole("button", { name: "new character" }).click();
+  await expect(page.getByLabel("Show skills not in the game yet")).toBeChecked();
 });

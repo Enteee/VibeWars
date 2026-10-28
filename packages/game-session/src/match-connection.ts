@@ -1,6 +1,9 @@
 import type {
   ChainRole,
   CombatEvent,
+  CompanionMode,
+  CreatureKind,
+  CreatureLook,
   OffhandId,
   ProfessionId,
   StatusId,
@@ -15,6 +18,7 @@ import type {
   SkillBarSlot,
   WireCalls,
   WirePing,
+  WireWeaponSets,
 } from "@vibewars/game-protocol";
 
 /**
@@ -64,6 +68,8 @@ export interface PlayerSnapshot {
   readonly secondaryProfession: ProfessionId | undefined;
   readonly team: number;
   readonly dead: boolean;
+  /** Its corpse was exploited (#466): drawn darker. Only ever true while `dead`. */
+  readonly corpseExploited: boolean;
   readonly castingSkillId: string | undefined;
   readonly castRemaining: number;
   /** The current cast's whole length, dazed included; 0 when not casting. */
@@ -77,11 +83,39 @@ export interface PlayerSnapshot {
   readonly swingTotal: number;
   /** Seconds left lying down from a knockdown (#468); 0 standing. Drawn from this, never from the event. */
   readonly knockdownRemaining: number;
+  /** Seconds left of a shrine raise's invulnerability (#1233); 0 when not. Drawn from this. */
+  readonly invulnerableSeconds: number;
   /** Net health and energy pips as the host applies them (#504): ±10, 0 dead. Drawn, never derived. */
   readonly healthPips: number;
   readonly energyPips: number;
   /** In the order applied, oldest first (#803). */
   readonly statuses: readonly StatusSnapshot[];
+  /**
+   * A creature's owner, kind and look (#1052, #1162), `undefined` for a
+   * player or a dummy. A creature never counts for its team: not in the
+   * scoreboard, the enemy pips or the music. `mode` is a companion's
+   * (#1110), `null` for any other creature. `armedAttack` is the pet
+   * attack its next blow carries (#1167), `null` when none is armed.
+   * `ownerId` is `null` for a map's NPC, as a priest (#1186).
+   */
+  readonly creature:
+    | {
+        readonly ownerId: string | null;
+        readonly kind: CreatureKind;
+        readonly look: CreatureLook;
+        readonly mode: CompanionMode | null;
+        readonly armedAttack: ArmedAttackSnapshot | null;
+      }
+    | undefined;
+  /** A lobby's bot plays it (#1193), not a peer. */
+  readonly bot: boolean;
+}
+
+/** A companion's armed pet attack (#1167): a pet-attack skill, and when it lapses. */
+export interface ArmedAttackSnapshot {
+  readonly skillId: string;
+  /** Match clock (`elapsedSeconds`) at which it lapses unused. */
+  readonly endsAt: number;
 }
 
 /** One status on a player (#803): what the effects monitor draws. */
@@ -89,7 +123,8 @@ export interface StatusSnapshot {
   readonly id: StatusId;
   /**
    * Match clock (`elapsedSeconds`) at which it runs out; `null` for a
-   * maintained enchantment (#837), which lasts until something ends it.
+   * maintained enchantment (#837), which lasts until something ends it,
+   * and for a spirit's aura (#1064), which lasts while its bearer is in range.
    */
   readonly endsAt: number | null;
   /**
@@ -111,10 +146,44 @@ export interface MatchSnapshot {
   readonly phase: string;
   /** The winning team, or `undefined` while active or on a draw. */
   readonly winningTeam: number | undefined;
-  /** "score", "time", "annihilation", "morale", "host-left", or `undefined` while active. */
+  /** "score", "time", "annihilation", "morale", "guild-lord", "aggression", "host-left", or `undefined` while active. */
   readonly endReason: string | undefined;
   /** Weapon shots and flying spells in flight, oldest first (#160, #535). */
   readonly projectiles: readonly ProjectileSnapshot[];
+  /** Wards on the ground, oldest first (#1087). */
+  readonly groundEffects: readonly GroundEffectSnapshot[];
+  /** Your team's traps, oldest first (#1105); a foe's never reach you. */
+  readonly traps: readonly GroundEffectSnapshot[];
+  /** What each player did, from the host's `ended` (#1057); `undefined` until then. */
+  readonly summary: readonly MatchSummaryRow[] | undefined;
+}
+
+/** A ward or a trap on the ground (#1087, #1105): a circle at `x`, `y` in `team`'s colour, until `endsAt`. */
+export interface GroundEffectSnapshot {
+  readonly id: number;
+  /** The skill that placed it, for its icon. */
+  readonly skillId: string;
+  readonly team: number;
+  readonly x: number;
+  readonly y: number;
+  readonly radius: number;
+  /** Match clock (`elapsedSeconds`) at which it ends. */
+  readonly endsAt: number;
+  /** How long it was placed for. */
+  readonly durationSeconds: number;
+}
+
+/** One player's line in the match summary (#1057), as the host tallied it: whole numbers. */
+export interface MatchSummaryRow {
+  readonly id: string;
+  readonly name: string;
+  readonly team: number;
+  readonly damage: number;
+  readonly healing: number;
+  readonly taken: number;
+  readonly kills: number;
+  readonly deaths: number;
+  readonly interrupts: number;
 }
 
 /**
@@ -139,11 +208,13 @@ export interface ProjectileSnapshot {
 /** One slot of the server-assigned skill bar. */
 export type SkillSlot = SkillBarSlot;
 
-/** One slot's recharge: `remaining` is 0 when the skill is ready. */
+/** One slot's recharge: `remaining` is 0 and `spent` false when the skill is ready. */
 export interface SlotRecharge {
   readonly remaining: number;
   /** What the recharge started with, for the wipe's proportion. */
   readonly total: number;
+  /** Spent until a morale boost (#474): Resurrection Signet's, used. */
+  readonly spent: boolean;
 }
 
 /**
@@ -170,6 +241,11 @@ export interface MatchConnection {
   /** The match's static geometry, received once on join (brief §19). */
   readonly map: MapDescriptor;
   /**
+   * How long the match runs, from the host (#476): the clock counts down
+   * from it. `null` for one with no limit, as training is.
+   */
+  readonly timeLimitSeconds: number | null;
+  /**
    * The server-assigned skill bar, received on join and again whenever a
    * slot changes, such as a cost a glyph lowers (#637): every slot in its
    * place, `null` where it is empty (#347).
@@ -177,9 +253,15 @@ export interface MatchConnection {
   readonly skillBar: readonly (SkillSlot | null)[];
   /**
    * Attribute id to effective rank, as the host resolved this player's
-   * build, house loadout included: what the bar's tooltips describe (#485).
+   * build, a starter build included: what the bar's tooltips describe (#485).
    */
   readonly ranks: ReadonlyMap<string, number>;
+  /**
+   * The weapon sets this player carries, and which is in hand or queued
+   * (#489): sent on join and when either changes; `undefined` until the
+   * first arrives.
+   */
+  readonly weaponSets: WireWeaponSets | undefined;
   sendIntent(intent: ClientIntent): void;
   getSnapshot(): MatchSnapshot;
   onCombat(handler: (message: CombatMessage) => void): void;

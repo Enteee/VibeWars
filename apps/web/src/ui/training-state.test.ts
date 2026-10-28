@@ -10,6 +10,7 @@ import {
   buildSignature,
   escapeStep,
   loadScenarioChoice,
+  logActorName,
   overlayMessage,
   resolveScenarioId,
   saveScenarioChoice,
@@ -48,7 +49,15 @@ describe("buildSignature", () => {
       ...elementalist,
       equipment: {
         ...elementalist.equipment,
-        offHand: { offhandId: "shield" as const, requirementAttributeId: null },
+        weaponSets: [
+          {
+            ...elementalist.equipment.weaponSets[0],
+            offHand: { offhandId: "shield" as const, requirementAttributeId: null },
+          },
+          null,
+          null,
+          null,
+        ] as const,
       },
     };
     expect(buildSignature(shielded)).not.toBe(base);
@@ -85,11 +94,13 @@ describe("resolveScenarioId", () => {
 });
 
 describe("escapeStep (#495)", () => {
-  it("cancels an action first, then collapses an expanded arena, then releases control", () => {
-    expect(escapeStep(true, true)).toBe("cancel");
-    expect(escapeStep(true, false)).toBe("cancel");
-    expect(escapeStep(false, true)).toBe("collapse");
-    expect(escapeStep(false, false)).toBe("release");
+  it("does the match's Esc first, then collapses an expanded arena, then releases control", () => {
+    expect(escapeStep("cancel", true)).toBe("cancel");
+    expect(escapeStep("cancel", false)).toBe("cancel");
+    expect(escapeStep("clear-target", true)).toBe("clear-target");
+    expect(escapeStep("clear-target", false)).toBe("clear-target");
+    expect(escapeStep(undefined, true)).toBe("collapse");
+    expect(escapeStep(undefined, false)).toBe("release");
   });
 });
 
@@ -140,5 +151,23 @@ describe("the scenario choice in storage", () => {
       saveScenarioChoice(blocked, "armor-ladder");
     }).not.toThrow();
     expect(loadScenarioChoice(memoryStorage)).toBeUndefined();
+  });
+});
+
+describe("logActorName", () => {
+  const names = new Map([["dummy", "Target dummy"]]);
+  const players = [
+    { sessionId: "dummy", name: "dummy" },
+    { sessionId: "you/c1", name: "Recuperation" },
+  ];
+
+  it("names a dummy as the scenario does, and a spirit you summoned as the match does (#1064)", () => {
+    expect(logActorName("dummy", names, players)).toBe("Target dummy");
+    expect(logActorName("you/c1", names, players)).toBe("Recuperation");
+  });
+
+  it("falls back to the id for someone neither knows", () => {
+    expect(logActorName("gone", names, players)).toBe("gone");
+    expect(logActorName("gone", undefined, undefined)).toBe("gone");
   });
 });

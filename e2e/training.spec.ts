@@ -68,14 +68,18 @@ async function releaseControl(page: Page): Promise<void> {
 }
 
 /**
- * Take control of the arena by clicking a spot with nobody on it. The
- * pointer stays in the corner, so the camera leans that way (#721): wait
- * for it to settle.
+ * Release the arena without Esc, so the target stays (#1151): by clicking
+ * into the name field, as a player would.
  */
+async function releaseByClickAway(page: Page): Promise<void> {
+  await page.locator("input.editor-name").click();
+  await expect(page.locator(".training")).not.toHaveClass(/is-armed/);
+}
+
+/** Take control of the arena by clicking a spot with nobody on it. */
 async function takeControl(page: Page): Promise<void> {
   await page.locator(".training-stage").click({ position: { x: 12, y: 12 } });
   await expect(page.locator(".training")).toHaveClass(/is-armed/);
-  await settleCamera(page);
 }
 
 /**
@@ -165,7 +169,7 @@ test("(3) typing in the editor never drives the arena", async ({ page }) => {
   // Clicking a text field takes the keyboard, and with it the arena.
   await name.click();
   const rowsBefore = await logRows(page).count();
-  // The pointer left the arena, so the camera's lean eases home first (#721).
+  // Wait for the arena to hold still before the frames are compared.
   await stillArena(page, canvas);
   const before = await arenaShot(page, canvas);
 
@@ -268,10 +272,10 @@ test("(8) leaving the editor leaves no arena behind", async ({ page }) => {
 test("(9) a match is unaffected", async ({ page }) => {
   await page.goto("./");
   await startSoloMatch(page);
-  await expect(page.locator("#viewport canvas")).toHaveCount(1);
+  await expect(page.locator("#viewport canvas:not(.compass)")).toHaveCount(1);
   await expect(page.locator(".hud-skills .hud-skill")).toHaveCount(8);
   await expect(page.locator(".training")).toHaveCount(0);
-  await expect(page.locator("canvas")).toHaveCount(1);
+  await expect(page.locator("canvas:not(.compass)")).toHaveCount(1);
 });
 
 test("(10) on a narrow screen the columns stack: training, editor, library", async ({ page }) => {
@@ -457,7 +461,10 @@ test("(17) after Esc releases the arena, Tab is the browser's again (#268)", asy
   await page.keyboard.press("Tab");
   await expect(page.locator(".training-stage")).toBeFocused();
 
-  // Nothing is attacking, so one Esc releases; no keyboard trap.
+  // Nothing is attacking: one Esc lets the target go (#1151), the next
+  // releases; no keyboard trap.
+  await page.keyboard.press("Escape");
+  await expect(page.locator(".training")).toHaveClass(/is-armed/);
   await releaseControl(page);
   await page.keyboard.press("Tab");
   await expect(page.locator(".training-stage")).not.toBeFocused();
@@ -844,13 +851,14 @@ test("(27) a right click on the ground moves nobody and keeps the target (#438)"
   await page.locator("select.training-scenario").selectOption("armor-ladder");
   await expect(page.locator(".training-log")).toContainText("── Armor ladder ──");
   await takeControl(page);
-  // The cursor leaving the arena eases the camera's lean home (#721).
+  // Off the arena, so no name shows under the cursor.
   await page.mouse.move(1, 1);
   const named = async (): Promise<number> => (await shownNames(page)).length;
 
   await page.keyboard.press("Tab");
   await expect.poll(named).toBe(1);
-  await releaseControl(page);
+  // Not by Esc, which would let the target go (#1151).
+  await releaseByClickAway(page);
   const before = await stillArena(page, canvas);
 
   // Empty ground between the spawn and the ladder.
@@ -858,7 +866,7 @@ test("(27) a right click on the ground moves nobody and keeps the target (#438)"
   const ground = (await trainingView(page, canvas)).onPage({ x: 220, y: 330 });
   await page.mouse.click(ground.x, ground.y, { button: "right" });
   await page.mouse.move(1, 1);
-  await releaseControl(page);
+  await releaseByClickAway(page);
   const after = await stillArena(page, canvas);
   expect(await named()).toBe(1);
   expect(after.equals(before), "nobody should have moved").toBe(true);
@@ -1125,7 +1133,7 @@ async function inkHeight(page: Page, blank: Buffer, named: Buffer): Promise<numb
   );
 }
 
-/** Wait out a wheel's zoom ease and the camera's lean: `data-camera` holds still. */
+/** Wait out a wheel's zoom ease: `data-camera` holds still. */
 async function cameraSettled(page: Page): Promise<void> {
   const stage = page.locator(".training-stage");
   await page.waitForTimeout(600);
@@ -1294,4 +1302,213 @@ test("(40) an adrenaline skill's slot fills from dark to lit as it charges (#826
   await expect.poll(fill, { timeout: 30_000 }).toBe(1);
   await expect(slot).not.toHaveClass(/is-unaffordable/);
   await expect(gauge).toBeHidden();
+});
+
+test("(41) a well needs a corpse, then lands on one (#1104)", async ({ page }) => {
+  await page.setViewportSize(WIDE);
+  await page.goto("./");
+  await page.getByRole("button", { name: "new character" }).click();
+  await chooseProfession(page, "primary", "necromancer");
+  await page
+    .locator(".skill-box", { hasText: "Well of Suffering" })
+    .locator(".skill-box-equip")
+    .click();
+  await page.locator("select.training-scenario").selectOption("healing-throughput");
+  await expect(page.locator(".training-log")).toContainText("── Healing throughput ──");
+  await takeControl(page);
+
+  // Nobody has died yet: refused, and nothing paid.
+  const slot = page.locator(FILLED_SLOTS).first();
+  await page.keyboard.press(skillKey(0));
+  await expect(page.locator(".training-message")).toHaveText("No corpse in range.");
+  await expect(slot).not.toHaveClass(/\bis-recharging\b/);
+
+  // The burners kill the monk ally in a few Fireballs, and its body lies
+  // 2 s before it is back: keep pressing until one press is not refused.
+  // Game time runs slower than wall time under load (#327).
+  await expect
+    .poll(
+      async () => {
+        await page.keyboard.press(skillKey(0));
+        return slot.evaluate((node) => node.classList.contains("is-recharging"));
+      },
+      { intervals: [100], timeout: 30_000 },
+    )
+    .toBe(true);
+  await expect(slot).toHaveAttribute("aria-label", /^Well of Suffering, recharging/);
+});
+
+test("(42) Symbol of Wrath strikes the dummy it was cast at once a second, five times (#1113)", async ({
+  page,
+}) => {
+  await page.setViewportSize(WIDE);
+  await page.goto("./");
+  await page.getByRole("button", { name: "new character" }).click();
+  await chooseProfession(page, "primary", "monk");
+  await page
+    .locator(".skill-box", { hasText: "Symbol of Wrath" })
+    .locator(".skill-box-equip")
+    .click();
+  await takeControl(page);
+
+  // No target: the cast picks the nearest dummy, and the symbol lands
+  // under it. Each pulse is a damage row naming the skill.
+  await page.keyboard.press(skillKey(0));
+  const hits = page.locator('.training-log-row[data-tone="damage"]', {
+    hasText: "Symbol of Wrath",
+  });
+  // Game time runs slower than wall time under load (#327).
+  await expect(hits).toHaveCount(5, { timeout: 20_000 });
+  await page.waitForTimeout(2_000);
+  await expect(hits).toHaveCount(5);
+});
+
+test("(44) a burning dummy wears flames on its top edge until the burning ends (#1138)", async ({
+  page,
+}) => {
+  // A walk and a wait for a still camera (#721), then 6 s of burning.
+  test.setTimeout(90_000);
+  // Frozen flames, so a shot of them holds still.
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  const canvas = await openTraining(page);
+  await page
+    .locator(".skill-box", { hasText: "Searing Flames" })
+    .locator(".skill-box-equip")
+    .click();
+  await expectFilledSlots(page, ["Fireball", "Searing Flames"]);
+  await takeControl(page);
+  // The view follows you (#721): nearer the dummy, it is on the stage.
+  await wholeMap(page);
+  await walkTo(page, canvas, { x: 250, y: 210 });
+  await page.mouse.move(1, 1);
+  // Targeted first, so its target ring is in the before shot too.
+  await page.keyboard.press("Tab");
+  await expect.poll(() => shownNames(page)).toHaveLength(1);
+
+  // All three flames of the target dummy at (380, 210): from its top edge,
+  // r above the centre, to under its health bar, r + 8.
+  const flame = async (): Promise<Buffer> => {
+    const view = await trainingView(page, canvas);
+    const from = view.onPage({ x: 380 - 10, y: 210 - 22 });
+    const to = view.onPage({ x: 380 + 10, y: 210 - 14 });
+    return page.screenshot({
+      clip: { x: from.x, y: from.y, width: to.x - from.x, height: to.y - from.y },
+    });
+  };
+  const before = await flame();
+
+  // Searing Flames sets it burning for 6 s.
+  await page.keyboard.press(skillKey(1));
+  await expect.poll(async () => (await flame()).equals(before)).toBe(false);
+  // Still there once any floating text over it has gone.
+  await page.waitForTimeout(1_500);
+  expect((await flame()).equals(before), "the flames should still show").toBe(false);
+  // Game time runs slower than wall time under load (#327).
+  await expect.poll(async () => (await flame()).equals(before), { timeout: 20_000 }).toBe(true);
+});
+
+test("(43) Esc stops the attack and keeps the target, then a second Esc clears it (#1151)", async ({
+  page,
+}) => {
+  await openTraining(page);
+  await page.locator("select.training-scenario").selectOption("armor-ladder");
+  await expect(page.locator(".training-log")).toContainText("── Armor ladder ──");
+  await takeControl(page);
+  // Off the arena, so no name shows under the cursor: only the target's.
+  await page.mouse.move(1, 1);
+  const attacking = page.locator(".training-attacking");
+
+  await page.keyboard.press("Tab");
+  await expect.poll(() => shownNames(page)).toHaveLength(1);
+  await page.keyboard.press(key("attack"));
+  await expect(attacking).toContainText("attacking");
+
+  await page.keyboard.press("Escape");
+  await expect(attacking).not.toContainText("attacking");
+  await expect.poll(() => shownNames(page)).toHaveLength(1);
+  await expect(page.locator(".training")).toHaveClass(/is-armed/);
+
+  await page.keyboard.press("Escape");
+  await expect.poll(() => shownNames(page)).toEqual([]);
+  await expect(page.locator(".training")).toHaveClass(/is-armed/);
+
+  // Nothing left to stop or let go: Esc releases the arena.
+  await releaseControl(page);
+});
+
+test("2 swaps to weapon set 2, the empty 3 does nothing, and a slot's click swaps back (#489)", async ({
+  page,
+}) => {
+  await page.setViewportSize(WIDE);
+  await page.goto("./");
+  // A new character is a warrior with a sword and shield in set 1.
+  await page.getByRole("button", { name: "new character" }).click();
+  await page.getByRole("button", { name: "gear", exact: true }).click();
+  await page.getByRole("tab", { name: /^2/ }).click();
+  await page.locator(".gear-box").filter({ hasText: "Recurve Bow" }).first().click();
+  await expect(page.locator(".training canvas")).toBeVisible();
+  const slots = page.locator(".training .weapon-set");
+  await expect(slots).toHaveText(["1", "2", "3", "4"]);
+  await expect(slots.nth(0)).toHaveClass(/is-active/);
+  await expect(slots.nth(1)).toHaveAccessibleName("Weapon set 2: Recurve Bow");
+  await expect(slots.nth(2)).toHaveClass(/is-empty/);
+  await takeControl(page);
+
+  await page.keyboard.press(key("weapon-set-2"));
+  await expect(slots.nth(1)).toHaveClass(/is-active/);
+  await expect(slots.nth(0)).not.toHaveClass(/is-active/);
+
+  await page.keyboard.press(key("weapon-set-3"));
+  await expect(page.locator(".training-message")).toHaveText("");
+  await expect(slots.nth(1)).toHaveClass(/is-active/);
+
+  await slots.nth(0).click();
+  await expect(slots.nth(0)).toHaveClass(/is-active/);
+  // The click left the keyboard with the arena.
+  await expect(page.locator(".training")).toHaveClass(/is-armed/);
+});
+
+test("a pet attack arms the wolf's next bite, and the log says so (#1107)", async ({ page }) => {
+  await page.setViewportSize(WIDE);
+  await page.goto("./");
+  await page.getByRole("button", { name: "new character" }).click();
+  await chooseProfession(page, "primary", "ranger");
+  for (const name of ["Charm Animal", "Brutal Strike"]) {
+    await page.locator(".skill-box", { hasText: name }).locator(".skill-box-equip").click();
+  }
+  await expectFilledSlots(page, ["Charm Animal", "Brutal Strike"]);
+  await takeControl(page);
+  // An equip re-arms the arena a moment later, which drops what was
+  // pressed before it: press again until the armed bite lands. The walk
+  // and the bite are game time, slower than wall time under load (#327).
+  await expect(async () => {
+    await page.keyboard.press(key("target-next"));
+    await page.keyboard.press(key("attack"));
+    await page.keyboard.press(skillKey(1));
+    await expect(page.locator(".training-log")).toContainText(/Brutal Strike \(Wolf\) hits/, {
+      timeout: 8000,
+    });
+  }).toPass();
+});
+
+test("(45) your wolf's row in the party window takes Heel, and lights it (#1110)", async ({
+  page,
+}) => {
+  await page.setViewportSize(WIDE);
+  await page.goto("./");
+  await page.getByRole("button", { name: "new character" }).click();
+  await chooseProfession(page, "primary", "ranger");
+  await page.locator(".skill-box", { hasText: "Charm Animal" }).locator(".skill-box-equip").click();
+  await expectFilledSlots(page, ["Charm Animal"]);
+  const orders = page.getByRole("group", { name: "Pet orders" });
+  const guard = orders.getByRole("button", { name: "Guard" });
+  const heel = orders.getByRole("button", { name: "Heel" });
+  await expect(guard).toHaveAttribute("aria-pressed", "true");
+  // An equip re-arms the arena a moment later, which can drop an order
+  // sent before it: press again until the wolf's mode comes back lit.
+  await expect(async () => {
+    await heel.click();
+    await expect(heel).toHaveAttribute("aria-pressed", "true", { timeout: 2000 });
+  }).toPass();
+  await expect(guard).toHaveAttribute("aria-pressed", "false");
 });

@@ -9,6 +9,7 @@ import {
 } from "../render/arena-snapshot.js";
 import { createDoubleClick } from "./double-click.js";
 import {
+  calledTargetIntent,
   callTargetCall,
   middleClickAction,
   pingCall,
@@ -38,14 +39,18 @@ function player(sessionId: string, team: number, x: number): PlayerSnapshot {
     secondaryProfession: undefined,
     team,
     dead: false,
+    corpseExploited: false,
     castingSkillId: undefined,
     castRemaining: 0,
     castTotal: 0,
     swingElapsed: 0,
     swingTotal: 0,
     knockdownRemaining: 0,
+    invulnerableSeconds: 0,
     healthPips: 0,
     energyPips: 0,
+    creature: undefined,
+    bot: false,
     statuses: [],
   };
 }
@@ -60,12 +65,16 @@ const MATCH: MatchSnapshot = {
   winningTeam: undefined,
   endReason: undefined,
   projectiles: [],
+  groundEffects: [],
+  traps: [],
+  summary: undefined,
 };
 
 function body(id: string, x: number, team: RenderableActor["team"]): RenderableActor {
   return {
     id,
     name: id,
+    bot: false,
     position: vec2(x, 0),
     facing: 0,
     weaponId: undefined,
@@ -74,14 +83,21 @@ function body(id: string, x: number, team: RenderableActor["team"]): RenderableA
     attackCast: undefined,
     offhandId: undefined,
     profession: undefined,
+    creatureLook: undefined,
     radius: 14,
     team,
     health: 500,
     maxHealth: 500,
     dead: false,
+    exploited: false,
     knockedDown: false,
     castProgress: undefined,
+    castType: undefined,
     statuses: [],
+    enchanted: false,
+    hexed: false,
+    invulnerable: false,
+    conditionCues: [],
   };
 }
 
@@ -130,14 +146,14 @@ describe("middleClickAction (#443)", () => {
     players: MATCH.players.map((p) => (p.sessionId === id ? { ...p, dead: true } : p)),
   });
 
-  it("calls a living foe, watches a living ally, and pings the ground", () => {
+  it("calls a living foe, and pings a living ally's point and the ground (#1055)", () => {
     expect(middleClickAction(MATCH, ARENA, vec2(201, 2))).toEqual({
       kind: "call",
       call: { kind: "target", targetId: "foe" },
     });
-    expect(middleClickAction(MATCH, ARENA, vec2(100, 0))).toEqual({
-      kind: "watch",
-      allyId: "ally",
+    expect(middleClickAction(MATCH, ARENA, vec2(101, 2))).toEqual({
+      kind: "call",
+      call: { kind: "ping", x: 101, y: 2 },
     });
     expect(middleClickAction(MATCH, ARENA, vec2(150, 60))).toEqual({
       kind: "call",
@@ -171,5 +187,19 @@ describe("the call keys (#443)", () => {
     expect(pingCall(MATCH, vec2(5, 6))).toEqual({ kind: "ping", x: 5, y: 6 });
     expect(pingCall(MATCH, undefined)).toBeUndefined();
     expect(pingCall(targeting(undefined, true), vec2(5, 6))).toBeUndefined();
+  });
+
+  it("targets the foe your team called, unless there is none or it is already yours", () => {
+    const called = { target: { targetId: "foe", callerId: "ally" }, pings: [] };
+    expect(calledTargetIntent(targeting(undefined), called)).toEqual({
+      kind: "target",
+      targetSessionId: "foe",
+    });
+    expect(calledTargetIntent(targeting("ally"), called)).toEqual({
+      kind: "target",
+      targetSessionId: "foe",
+    });
+    expect(calledTargetIntent(targeting("foe"), called)).toBeUndefined();
+    expect(calledTargetIntent(targeting(undefined), { target: null, pings: [] })).toBeUndefined();
   });
 });

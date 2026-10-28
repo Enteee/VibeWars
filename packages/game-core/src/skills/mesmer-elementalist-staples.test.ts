@@ -10,7 +10,7 @@ import { payCost } from "./activation.js";
 import { getSkill } from "./catalog.js";
 import { mitigate, skillDamage } from "./damage.js";
 import { applySkillEffects, type CombatEvent } from "./effects.js";
-import { aggregateModifiers } from "./status.js";
+import { aggregateModifiers, MAX_RECHARGE_REDUCTION } from "./status.js";
 import { resolveTargets, type TargetCandidate } from "./targeting.js";
 import { makeCombatant } from "./testing.js";
 import { moveSpeedMultiplier } from "./tick.js";
@@ -69,7 +69,7 @@ function use(
 }
 
 function at(combatant: Combatant, position: Vec2): TargetCandidate {
-  return { combatant, position };
+  return { combatant, position, creature: undefined };
 }
 
 describe("Cry of Frustration (#938)", () => {
@@ -159,7 +159,9 @@ describe("Ice Spikes and Deep Freeze (#938)", () => {
   ] as const)("%s deals %s's cold and slows to 34% speed", (skillId, statusId, cold, seconds) => {
     const target = foe("target");
     use(caster(), skillId, [target]);
-    expect(target.health).toBe(1000 - mitigate(skillDamage(cold, "cold", 0), target, RULES));
+    expect(target.health).toBe(
+      1000 - mitigate(skillDamage(cold, "cold", 0), target, RULES, "chest"),
+    );
     expect(target.statuses.get(statusId)?.remainingSeconds).toBe(seconds);
     expect(moveSpeedMultiplier(target)).toBeCloseTo(0.34, 9);
   });
@@ -232,14 +234,15 @@ describe("Mantra of Recovery (#938)", () => {
     expect(recharge(SIGNET, true)).toBe(30);
   });
 
-  it("two such statuses would combine as 1 − Π(1 − f)", () => {
+  it("two such statuses combine as 1 − Π(1 − f), at most 50% (#975)", () => {
     const one = aggregateModifiers([{ id: "mantra-of-recovery" }]).spellRechargeFaster;
     const two = aggregateModifiers([
       { id: "mantra-of-recovery" },
-      { id: "mantra-of-recovery" },
+      { id: "weapon-of-quickening" },
     ]).spellRechargeFaster;
     expect(one).toBeCloseTo(0.33, 9);
-    expect(two).toBeCloseTo(1 - 0.67 * 0.67, 9);
+    expect(1 - 0.67 * 0.67).toBeGreaterThan(MAX_RECHARGE_REDUCTION);
+    expect(two).toBe(MAX_RECHARGE_REDUCTION);
     expect(aggregateModifiers([]).spellRechargeFaster).toBe(0);
   });
 });

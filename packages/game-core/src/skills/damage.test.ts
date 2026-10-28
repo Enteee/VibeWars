@@ -1,13 +1,19 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-import { bareArmorSet } from "../equipment/armor.js";
+import { bareArmorSet, type ArmorSet } from "../equipment/armor.js";
 import { defaultEquipmentFor } from "../equipment/loadout.js";
 import { resolveLoadout, unarmedResolvedEquipment } from "../equipment/resolve.js";
+import type { InsigniaId } from "../equipment/insignias.js";
+import type { EquippedRune } from "../equipment/runes.js";
+import { ARMOR_SLOTS, type ArmorSlot, type DamageType } from "../equipment/types.js";
+import type { ProfessionId } from "../professions.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { createRng } from "../rng.js";
 import {
   armorMultiplier,
+  creatureDamageMultiplier,
   effectiveArmor,
+  hitLocationOf,
   mitigate,
   skillDamage,
   unmitigatedDamage,
@@ -73,16 +79,16 @@ describe("the armor curve", () => {
 
   it("makes a warrior measurably tougher than a caster against the same hit", () => {
     const packet = skillDamage(100, "chaos", 0);
-    expect(mitigate(packet, defender(60), RULES)).toBe(100);
-    expect(mitigate(packet, defender(70), RULES)).toBe(84);
-    expect(mitigate(packet, defender(80), RULES)).toBe(71);
+    expect(mitigate(packet, defender(60), RULES, "chest")).toBe(100);
+    expect(mitigate(packet, defender(70), RULES, "chest")).toBe(84);
+    expect(mitigate(packet, defender(80), RULES, "chest")).toBe(71);
   });
 });
 
 describe("what armor does and does not stop", () => {
   it("applies to physical, elemental, chaos and dark skill damage", () => {
     for (const type of ["slashing", "fire", "chaos", "dark"] as const) {
-      expect(mitigate(skillDamage(100, type, 0), defender(80), RULES), type).toBe(71);
+      expect(mitigate(skillDamage(100, type, 0), defender(80), RULES, "chest"), type).toBe(71);
     }
   });
 
@@ -91,7 +97,7 @@ describe("what armor does and does not stop", () => {
       expect(skillDamage(20, type, 0)).toMatchObject({ armored: 0, armorIgnoring: 20 });
       for (const armor of [0, 60, 100, -50]) {
         expect(
-          mitigate(skillDamage(20, type, 0), defender(armor), RULES),
+          mitigate(skillDamage(20, type, 0), defender(armor), RULES, "chest"),
           `${type} at ${String(armor)}`,
         ).toBe(20);
       }
@@ -100,10 +106,10 @@ describe("what armor does and does not stop", () => {
 
   it("adds the armor-ignoring part after the curve, which still bends the armored part", () => {
     const packet: DamagePacket = { ...physical(40), armorIgnoring: 20 };
-    expect(mitigate(physical(40), defender(100), RULES)).toBe(20);
-    expect(mitigate(packet, defender(100), RULES)).toBe(40);
+    expect(mitigate(physical(40), defender(100), RULES, "chest")).toBe(20);
+    expect(mitigate(packet, defender(100), RULES, "chest")).toBe(40);
     // The −100 floor amplifies only the armored part: 40 × 2^(160/40) + 20.
-    expect(mitigate(packet, defender(-300), RULES)).toBe(40 * 16 + 20);
+    expect(mitigate(packet, defender(-300), RULES, "chest")).toBe(40 * 16 + 20);
   });
 
   it("never applies to degeneration or life steal", () => {
@@ -111,13 +117,13 @@ describe("what armor does and does not stop", () => {
     // heavily-armored target rather than a smaller version of the same
     // one.
     const target = defender(100);
-    expect(mitigate(unmitigatedDamage(50, "degeneration"), target, RULES)).toBe(50);
-    expect(mitigate(unmitigatedDamage(50, "life-steal"), target, RULES)).toBe(50);
+    expect(mitigate(unmitigatedDamage(50, "degeneration"), target, RULES, null)).toBe(50);
+    expect(mitigate(unmitigatedDamage(50, "life-steal"), target, RULES, null)).toBe(50);
   });
 
   it("returns nothing for a zero or negative packet", () => {
-    expect(mitigate(skillDamage(0, "chaos", 0), defender(60), RULES)).toBe(0);
-    expect(mitigate(skillDamage(-10, "typeless", 0), defender(60), RULES)).toBe(0);
+    expect(mitigate(skillDamage(0, "chaos", 0), defender(60), RULES, "chest")).toBe(0);
+    expect(mitigate(skillDamage(-10, "typeless", 0), defender(60), RULES, "chest")).toBe(0);
   });
 });
 
@@ -131,16 +137,18 @@ describe("status modifiers reaching the armor calculation", () => {
     const healthy = defender(100);
     const packet = skillDamage(100, "chaos", 0);
 
-    expect(mitigate(packet, exposed, RULES)).toBeGreaterThan(mitigate(packet, healthy, RULES));
+    expect(mitigate(packet, exposed, RULES, "chest")).toBeGreaterThan(
+      mitigate(packet, healthy, RULES, "chest"),
+    );
     // 100 - 40 = 60, the reference level: exactly unmitigated.
-    expect(mitigate(packet, exposed, RULES)).toBe(100);
+    expect(mitigate(packet, exposed, RULES, "chest")).toBe(100);
   });
 
   it("lets Armor of Earth's enchantment actually protect its bearer", () => {
     const warded = defender(60);
     warded.statuses.apply("armor-boost", 30, "self");
     // 60 + 24 = 84.
-    expect(mitigate(skillDamage(100, "chaos", 0), warded, RULES)).toBe(66);
+    expect(mitigate(skillDamage(100, "chaos", 0), warded, RULES, "chest")).toBe(66);
   });
 
   it("stacks a buff and a debuff additively, as aggregateModifiers does", () => {
@@ -148,22 +156,22 @@ describe("status modifiers reaching the armor calculation", () => {
     both.statuses.apply("healing-signet-armor", 2, "self");
     both.statuses.apply("armor-boost", 30, "self");
     // 80 - 40 + 24 = 64.
-    expect(effectiveArmor(both, skillDamage(1, "typeless", 0))).toBe(64);
+    expect(effectiveArmor(both, skillDamage(1, "typeless", 0), "chest")).toBe(64);
   });
 });
 
 describe("damage taken multipliers (#919)", () => {
   it("doubles a packet against Frenzy and halves it against Dark Escape", () => {
     const packet = skillDamage(100, "chaos", 0);
-    const plain = mitigate(packet, defender(60), RULES);
+    const plain = mitigate(packet, defender(60), RULES, "chest");
     const frenzied = defender(60);
     frenzied.statuses.apply("frenzy", 8, "self");
     const escaping = defender(60);
     escaping.statuses.apply("dark-escape", 13, "self");
 
     expect(plain).toBe(100);
-    expect(mitigate(packet, frenzied, RULES)).toBe(200);
-    expect(mitigate(packet, escaping, RULES)).toBe(50);
+    expect(mitigate(packet, frenzied, RULES, "chest")).toBe(200);
+    expect(mitigate(packet, escaping, RULES, "chest")).toBe(50);
   });
 
   it("multiplies the multipliers of statuses that are up together", () => {
@@ -178,18 +186,23 @@ describe("damage taken multipliers (#919)", () => {
     escaping.statuses.apply("dark-escape", 13, "self");
     // (40 + 15) × 0.5 = 27.5: rounded once, at the end.
     const packet: DamagePacket = { ...physical(40), armorIgnoring: 15 };
-    expect(mitigate(packet, escaping, RULES)).toBe(28);
-    expect(mitigate(skillDamage(25, "typeless", 0), escaping, RULES)).toBe(13);
+    expect(mitigate(packet, escaping, RULES, "chest")).toBe(28);
+    expect(mitigate(skillDamage(25, "typeless", 0), escaping, RULES, null)).toBe(13);
   });
 
   it("applies before a Rune of Absorption's flat reduction", () => {
     const resolved = resolveLoadout(
       {
         primaryProfession: "warrior",
+        secondaryProfession: undefined,
         allocatedRanks: new Map(),
         equipment: {
-          mainHand: { weaponId: "sword", requirementAttributeId: null },
-          offHand: null,
+          weaponSets: [
+            { mainHand: { weaponId: "sword", requirementAttributeId: null }, offHand: null },
+            null,
+            null,
+            null,
+          ],
           armor: {
             ...bareArmorSet(),
             feet: {
@@ -201,19 +214,51 @@ describe("damage taken multipliers (#919)", () => {
       },
       RULES,
     );
-    const runed = makeCombatant({ id: "d", team: 1, equipment: resolved.equipment });
-    const before = mitigate(physical(100), runed, RULES);
+    const runed = makeCombatant({ id: "d", team: 1, equipment: resolved.weaponSets[0].equipment });
+    const before = mitigate(physical(100), runed, RULES, "chest");
     runed.statuses.apply("frenzy", 8, "self");
     // (x + 3) × 2 − 3, not (x − 3) × 2.
-    expect(mitigate(physical(100), runed, RULES)).toBe((before + 3) * 2 - 3);
+    expect(mitigate(physical(100), runed, RULES, "chest")).toBe((before + 3) * 2 - 3);
+  });
+});
+
+describe("damage reduction (#1108)", () => {
+  function protectedDefender(): Combatant {
+    const target = defender(60);
+    target.statuses.apply("call-of-protection", 120, "owner");
+    return target;
+  }
+
+  it("takes 17 off every type of packet: Call of Protection", () => {
+    for (const packet of [
+      physical(40),
+      skillDamage(40, "fire", 0),
+      skillDamage(40, "holy", 0),
+      skillDamage(40, "typeless", 0),
+    ]) {
+      expect(mitigate(packet, protectedDefender(), RULES, "chest")).toBe(
+        mitigate(packet, defender(60), RULES, "chest") - 17,
+      );
+    }
+  });
+
+  it("never takes a packet below 0", () => {
+    expect(mitigate(physical(10), protectedDefender(), RULES, "chest")).toBe(0);
+  });
+
+  it("comes after the damage taken multiplier", () => {
+    const target = protectedDefender();
+    target.statuses.apply("frenzy", 8, "self");
+    // 40 × 2 − 17, not (40 − 17) × 2.
+    expect(mitigate(skillDamage(40, "chaos", 0), target, RULES, "chest")).toBe(63);
   });
 });
 
 describe("armor penetration", () => {
   it("scales down whatever armor remains rather than subtracting flat", () => {
     const target = defender(80);
-    expect(effectiveArmor(target, physical(10, 0))).toBe(80);
-    expect(effectiveArmor(target, physical(10, 0.1))).toBeCloseTo(72, 10);
+    expect(effectiveArmor(target, physical(10, 0), "chest")).toBe(80);
+    expect(effectiveArmor(target, physical(10, 0.1), "chest")).toBeCloseTo(72, 10);
   });
 
   it("is proportionally worth more the better armored the target is", () => {
@@ -223,51 +268,446 @@ describe("armor penetration", () => {
     // absolute gain moves the other way (a soft target lets more damage
     // through to begin with), which is why this asserts the ratio.
     const ratio = (armor: number): number =>
-      mitigate(physical(100, 0.1), defender(armor), RULES) /
-      mitigate(physical(100, 0), defender(armor), RULES);
+      mitigate(physical(100, 0.1), defender(armor), RULES, "chest") /
+      mitigate(physical(100, 0), defender(armor), RULES, "chest");
     expect(ratio(100)).toBeGreaterThan(ratio(60));
   });
 
   it("takes a quarter of a typed bonus too: Lightning Orb's 25% (#761)", () => {
     const orb = skillDamage(82, "lightning", 0.25);
     // A Ranger's 70 + 30 vs elemental, a Warrior's 80 vs lightning.
-    expect(effectiveArmor(primary("ranger"), orb)).toBe(75);
-    expect(effectiveArmor(primary("warrior"), orb)).toBe(60);
-    expect(mitigate(orb, primary("ranger"), RULES)).toBe(63);
+    expect(effectiveArmor(primary("ranger"), orb, "chest")).toBe(75);
+    expect(effectiveArmor(primary("warrior"), orb, "chest")).toBe(60);
+    expect(mitigate(orb, primary("ranger"), RULES, "chest")).toBe(63);
   });
 });
 
-describe("conditional insignia armor", () => {
-  function withInsignia(insigniaId: "stalwart" | "blessed"): Combatant {
+describe("conditional insignia armor, per piece (#1135)", () => {
+  function withInsignia(
+    insigniaId: "stalwart" | "blessed",
+    slots: readonly ArmorSlot[] = ["chest"],
+  ): Combatant {
+    const piece = (slot: ArmorSlot) => ({
+      insigniaId: slots.includes(slot) ? insigniaId : null,
+      rune: null,
+    });
+    const armor: ArmorSet = {
+      head: { ...piece("head"), headgearAttributeId: null },
+      chest: piece("chest"),
+      hands: piece("hands"),
+      legs: piece("legs"),
+      feet: piece("feet"),
+    };
     const resolved = resolveLoadout(
       {
         primaryProfession: "warrior",
+        secondaryProfession: undefined,
         allocatedRanks: new Map(),
         equipment: {
-          mainHand: { weaponId: "sword", requirementAttributeId: null },
-          offHand: null,
-          armor: { ...bareArmorSet(), chest: { insigniaId, rune: null } },
+          weaponSets: [
+            { mainHand: { weaponId: "sword", requirementAttributeId: null }, offHand: null },
+            null,
+            null,
+            null,
+          ],
+          armor,
         },
       },
       RULES,
     );
-    return makeCombatant({ id: "d", team: 1, equipment: resolved.equipment });
+    return makeCombatant({ id: "d", team: 1, equipment: resolved.weaponSets[0].equipment });
   }
 
-  it("applies Stalwart against a physical hit and not a typeless one", () => {
+  it("counts a chest Stalwart on a physical hit to the chest only, never on a typeless one", () => {
     const target = withInsignia("stalwart");
-    // 80, +20 a Warrior's own vs physical, +10 Stalwart's.
-    expect(effectiveArmor(target, physical(10))).toBe(110);
-    expect(effectiveArmor(target, { ...physical(10), type: "blunt" })).toBe(110);
-    expect(effectiveArmor(target, skillDamage(10, "typeless", 0))).toBe(80);
+    // 80, +20 a Warrior's own vs physical, +10 Stalwart's on the chest.
+    expect(effectiveArmor(target, physical(10), "chest")).toBe(110);
+    expect(effectiveArmor(target, { ...physical(10), type: "blunt" }, "chest")).toBe(110);
+    expect(effectiveArmor(target, physical(10), "legs")).toBe(100);
+    const typeless = skillDamage(10, "typeless", 0);
+    expect(hitLocationOf(typeless, createRng(1))).toBeNull();
+    expect(effectiveArmor(target, typeless, null)).toBe(80);
   });
 
-  it("applies Blessed only while an enchantment is up", () => {
+  it("draws one float for an armored packet, none for holy, typeless or degeneration", () => {
+    const rng = createRng(7);
+    const nextFloat = vi.spyOn(rng, "nextFloat");
+    for (const packet of [
+      skillDamage(10, "holy", 0),
+      skillDamage(10, "typeless", 0),
+      unmitigatedDamage(5, "degeneration"),
+    ]) {
+      expect(hitLocationOf(packet, rng)).toBeNull();
+    }
+    expect(nextFloat).not.toHaveBeenCalled();
+    expect(hitLocationOf(physical(10), rng)).not.toBeNull();
+    expect(nextFloat).toHaveBeenCalledOnce();
+  });
+
+  it("gives five Stalwart +10 on every piece, never +50", () => {
+    const target = withInsignia("stalwart", ARMOR_SLOTS);
+    for (const slot of ARMOR_SLOTS) {
+      expect(effectiveArmor(target, physical(10), slot)).toBe(110);
+    }
+  });
+
+  it("applies Blessed on its own piece only while an enchantment is up", () => {
     const target = withInsignia("blessed");
-    expect(effectiveArmor(target, skillDamage(10, "typeless", 0))).toBe(80);
+    expect(effectiveArmor(target, physical(10), "chest")).toBe(100);
     target.statuses.apply("armor-boost", 30, "self");
-    // +24 from the enchantment itself, +10 because one is active at all.
-    expect(effectiveArmor(target, skillDamage(10, "typeless", 0))).toBe(114);
+    // +24 from the enchantment itself, +10 on the chest because one is active at all.
+    expect(effectiveArmor(target, physical(10), "chest")).toBe(134);
+    expect(effectiveArmor(target, physical(10), "feet")).toBe(124);
+  });
+});
+
+describe("profession and attacking insignias, per piece (#1142)", () => {
+  /** A `profession` primary with `insigniaId` on `slots`, `ranks` allocated, a rune on the chest. */
+  function wearing(
+    profession: ProfessionId,
+    insigniaId: InsigniaId,
+    options: {
+      readonly slots?: readonly ArmorSlot[];
+      readonly ranks?: ReadonlyMap<string, number>;
+      readonly chestRune?: EquippedRune;
+      readonly skillBar?: readonly (string | null)[];
+    } = {},
+  ): Combatant {
+    const slots = options.slots ?? ["chest"];
+    const piece = (slot: ArmorSlot) => ({
+      insigniaId: slots.includes(slot) ? insigniaId : null,
+      rune: slot === "chest" ? (options.chestRune ?? null) : null,
+    });
+    const resolved = resolveLoadout(
+      {
+        primaryProfession: profession,
+        secondaryProfession: undefined,
+        allocatedRanks: options.ranks ?? new Map(),
+        equipment: {
+          weaponSets: [
+            { ...defaultEquipmentFor(profession).weaponSets[0], offHand: null },
+            null,
+            null,
+            null,
+          ],
+          armor: {
+            head: { ...piece("head"), headgearAttributeId: null },
+            chest: piece("chest"),
+            hands: piece("hands"),
+            legs: piece("legs"),
+            feet: piece("feet"),
+          },
+        },
+      },
+      RULES,
+    );
+    return makeCombatant({
+      id: "d",
+      team: 1,
+      attributeRanks: resolved.attributeRanks,
+      equipment: resolved.weaponSets[0].equipment,
+      skillBar: options.skillBar ?? [],
+    });
+  }
+
+  const swinging = (target: Combatant): Combatant => {
+    target.attack = { targetId: "x", swingElapsed: 0, unreachableSeconds: 0 };
+    return target;
+  };
+  const fire = skillDamage(10, "fire", 0);
+
+  it("gives Brawler's +10 on its piece while attacking, not on the run-up", () => {
+    const monk = wearing("monk", "brawlers");
+    expect(effectiveArmor(monk, physical(10), "chest")).toBe(60);
+    swinging(monk);
+    expect(effectiveArmor(monk, physical(10), "chest")).toBe(70);
+    expect(effectiveArmor(monk, fire, "chest")).toBe(70);
+    expect(effectiveArmor(monk, physical(10), "legs")).toBe(60);
+    monk.moving = true;
+    expect(effectiveArmor(monk, physical(10), "chest")).toBe(60);
+    // Five give +10 a hit, not +50.
+    const five = swinging(wearing("monk", "brawlers", { slots: ARMOR_SLOTS }));
+    expect(effectiveArmor(five, physical(10), "feet")).toBe(70);
+  });
+
+  it("gives Nightstalker's +15 on its piece while attacking", () => {
+    const assassin = wearing("assassin", "nightstalkers");
+    expect(effectiveArmor(assassin, physical(10), "chest")).toBe(70);
+    swinging(assassin);
+    expect(effectiveArmor(assassin, physical(10), "chest")).toBe(85);
+    expect(effectiveArmor(assassin, physical(10), "legs")).toBe(70);
+  });
+
+  it("gives Sentinel's +20 vs elemental from 13 Strength, runes in, weakness out", () => {
+    const strength = (rank: number) => new Map([["warrior.strength", rank]]);
+    expect(
+      effectiveArmor(wearing("warrior", "sentinels", { ranks: strength(12) }), fire, "chest"),
+    ).toBe(80);
+    const thirteen = wearing("warrior", "sentinels", { ranks: strength(13) });
+    expect(effectiveArmor(thirteen, fire, "chest")).toBe(100);
+    expect(effectiveArmor(thirteen, fire, "legs")).toBe(80);
+    // Physical: the Warrior's own +20 alone.
+    expect(effectiveArmor(thirteen, physical(10), "chest")).toBe(100);
+    const runed = wearing("warrior", "sentinels", {
+      ranks: strength(12),
+      chestRune: { kind: "attribute", attributeId: "warrior.strength", tier: "minor" },
+    });
+    expect(effectiveArmor(runed, fire, "chest")).toBe(100);
+    runed.statuses.apply("weakness", 10, "x");
+    expect(effectiveArmor(runed, fire, "chest")).toBe(80);
+  });
+
+  it("gives Prodigy's +5 at 1, 3 and 5 skills recharging", () => {
+    const mesmer = wearing("mesmer", "prodigys");
+    const armorAt = (recharging: number): number => {
+      for (let i = 0; i < recharging; i += 1) {
+        mesmer.cast.startRecharge(`skill-${String(i)}`, 10);
+      }
+      return effectiveArmor(mesmer, physical(10), "chest");
+    };
+    expect(armorAt(0)).toBe(60);
+    expect(armorAt(1)).toBe(65);
+    expect(armorAt(2)).toBe(65);
+    expect(armorAt(3)).toBe(70);
+    expect(armorAt(4)).toBe(70);
+    expect(armorAt(5)).toBe(75);
+    expect(armorAt(8)).toBe(75);
+    expect(effectiveArmor(mesmer, physical(10), "legs")).toBe(60);
+  });
+
+  it("gives Windwalker +5 at each of 1 to 4 enchantments", () => {
+    const dervish = wearing("dervish", "windwalker");
+    const enchantments = [
+      "regeneration",
+      "mending",
+      "holy-veil",
+      "healing-breeze",
+      "vigorous-spirit",
+      "patient-spirit",
+    ] as const;
+    expect(effectiveArmor(dervish, physical(10), "chest")).toBe(70);
+    const seen = enchantments.map((id) => {
+      dervish.statuses.apply(id, 30, "x");
+      return effectiveArmor(dervish, physical(10), "chest");
+    });
+    expect(seen).toEqual([75, 80, 85, 90, 90, 90]);
+    expect(effectiveArmor(dervish, physical(10), "legs")).toBe(70);
+  });
+
+  it("cuts 3 off a physical hit to Knight's piece, after armor, and stacks with Absorption", () => {
+    // 100 armor vs physical halves a hit: 40 is 20 before the cut.
+    const knight = wearing("warrior", "knights");
+    expect(mitigate(physical(40), knight, RULES, "chest")).toBe(17);
+    expect(mitigate(physical(40), knight, RULES, "legs")).toBe(20);
+    expect(mitigate(physical(40), knight, RULES, null)).toBe(20);
+    expect(mitigate(skillDamage(40, "fire", 0), knight, RULES, "chest")).toBe(
+      mitigate(skillDamage(40, "fire", 0), knight, RULES, "legs"),
+    );
+    const absorbing = wearing("warrior", "knights", {
+      chestRune: { kind: "universal", runeId: "absorption", tier: "superior" },
+    });
+    expect(mitigate(physical(40), absorbing, RULES, "chest")).toBe(14);
+    // Never a heal.
+    expect(mitigate(physical(2), knight, RULES, "chest")).toBe(0);
+  });
+
+  it("grants another primary's insignia nothing", () => {
+    const monk = wearing("monk", "knights");
+    expect(monk.equipment.pieceReduction.chest).toBe(0);
+    expect(wearing("monk", "nightstalkers").equipment.pieceArmor.chest).toEqual([]);
+  });
+
+  it("gives Anchorite's +5 at 1, 3 and 5 skills recharging (#1188)", () => {
+    const monk = wearing("monk", "anchorites");
+    const armorAt = (recharging: number): number => {
+      for (let i = 0; i < recharging; i += 1) {
+        monk.cast.startRecharge(`skill-${String(i)}`, 10);
+      }
+      return effectiveArmor(monk, physical(10), "chest");
+    };
+    expect([0, 1, 2, 3, 5].map(armorAt)).toEqual([60, 65, 65, 70, 75]);
+  });
+
+  it("gives Disciple's +15 while you have a condition, Blighter's +20 while hexed (#1188)", () => {
+    const monk = wearing("monk", "disciples");
+    expect(effectiveArmor(monk, physical(10), "chest")).toBe(60);
+    monk.statuses.apply("malaise", 10, "x");
+    expect(effectiveArmor(monk, physical(10), "chest")).toBe(60);
+    monk.statuses.apply("bleeding", 10, "x");
+    expect(effectiveArmor(monk, physical(10), "chest")).toBe(75);
+    expect(effectiveArmor(monk, physical(10), "legs")).toBe(60);
+
+    const necromancer = wearing("necromancer", "blighters");
+    necromancer.statuses.apply("bleeding", 10, "x");
+    expect(effectiveArmor(necromancer, physical(10), "chest")).toBe(60);
+    necromancer.statuses.apply("malaise", 10, "x");
+    expect(effectiveArmor(necromancer, physical(10), "chest")).toBe(80);
+  });
+
+  it("gives Wanderer's and Dreadnought +10 vs elemental only (#1188)", () => {
+    const monk = wearing("monk", "wanderers");
+    expect(effectiveArmor(monk, fire, "chest")).toBe(70);
+    expect(effectiveArmor(monk, physical(10), "chest")).toBe(60);
+    const warrior = wearing("warrior", "dreadnought");
+    expect(effectiveArmor(warrior, fire, "chest")).toBe(90);
+    expect(effectiveArmor(warrior, fire, "legs")).toBe(80);
+  });
+
+  it("gives Undertaker's +5 below each of 80, 60, 40 and 20% of the maximum now (#1188)", () => {
+    const necromancer = wearing("necromancer", "undertakers");
+    const armorAt = (percent: number): number => {
+      necromancer.health = (percent / 100) * necromancer.maxHealth;
+      return effectiveArmor(necromancer, physical(10), "chest");
+    };
+    expect([100, 80, 79, 59, 39, 19].map(armorAt)).toEqual([60, 60, 65, 70, 75, 80]);
+    // Morale lowers the maximum: 70% of a 500 maximum is below 80%.
+    necromancer.maxHealth = 500;
+    necromancer.health = 350;
+    expect(effectiveArmor(necromancer, physical(10), "chest")).toBe(65);
+  });
+
+  it("gives Minion Master's and Shaman's +5 a tier of what you control (#1188)", () => {
+    const necromancer = wearing("necromancer", "minion-masters");
+    const minions = (count: number): number => {
+      necromancer.controlled.minion = count;
+      return effectiveArmor(necromancer, physical(10), "chest");
+    };
+    expect([0, 1, 2, 3, 5].map(minions)).toEqual([60, 65, 65, 70, 75]);
+    necromancer.controlled.minion = 0;
+    necromancer.controlled.spirit = 5;
+    expect(effectiveArmor(necromancer, physical(10), "chest")).toBe(60);
+
+    const ritualist = wearing("ritualist", "shamans");
+    const spirits = (count: number): number => {
+      ritualist.controlled.spirit = count;
+      return effectiveArmor(ritualist, physical(10), "chest");
+    };
+    expect([0, 1, 2, 3, 4].map(spirits)).toEqual([60, 65, 70, 75, 75]);
+  });
+
+  it("gives Forsaken +10 until the first enchantment (#1188)", () => {
+    const dervish = wearing("dervish", "forsaken");
+    expect(effectiveArmor(dervish, physical(10), "chest")).toBe(80);
+    dervish.statuses.apply("malaise", 10, "x");
+    expect(effectiveArmor(dervish, physical(10), "chest")).toBe(80);
+    dervish.statuses.apply("regeneration", 10, "x");
+    expect(effectiveArmor(dervish, physical(10), "chest")).toBe(70);
+  });
+
+  it("gives Prismatic +5 for each element at 9 or more (#1188)", () => {
+    const ranks = (fire: number, water: number, air: number, earth: number) =>
+      new Map([
+        ["elementalist.fire-magic", fire],
+        ["elementalist.water-magic", water],
+        ["elementalist.air-magic", air],
+        ["elementalist.earth-magic", earth],
+      ]);
+    const armorWith = (ranked: ReadonlyMap<string, number>): number =>
+      effectiveArmor(
+        wearing("elementalist", "prismatic", { ranks: ranked }),
+        physical(10),
+        "chest",
+      );
+    expect(armorWith(ranks(8, 8, 8, 8))).toBe(60);
+    expect(armorWith(ranks(9, 9, 0, 0))).toBe(70);
+    expect(armorWith(ranks(9, 9, 9, 9))).toBe(80);
+  });
+
+  /** What `target`'s chest insignia adds to a `packet` hit: its chest over its bare legs. */
+  const insigniaArmor = (target: Combatant, packet: DamagePacket = physical(10)): number =>
+    effectiveArmor(target, packet, "chest") - effectiveArmor(target, packet, "legs");
+  const typed = (type: DamageType): DamagePacket =>
+    type === "slashing" || type === "piercing" || type === "blunt"
+      ? { ...physical(10), type }
+      : skillDamage(10, type, 0);
+
+  it("gives Pyromancer +20 vs fire, +10 vs cold, nothing vs piercing (#1206)", () => {
+    const elementalist = wearing("elementalist", "pyromancer");
+    expect(
+      ["fire", "cold", "piercing"].map((type) =>
+        insigniaArmor(elementalist, typed(type as DamageType)),
+      ),
+    ).toEqual([20, 10, 0]);
+  });
+
+  it("gives Infiltrator's +20 vs piercing, +10 vs slashing, nothing vs fire (#1206)", () => {
+    const assassin = wearing("assassin", "infiltrators");
+    expect(
+      ["piercing", "slashing", "fire"].map((type) =>
+        insigniaArmor(assassin, typed(type as DamageType)),
+      ),
+    ).toEqual([20, 10, 0]);
+  });
+
+  it("gives Bonelace and the -bound ones +15 vs their one type only (#1206)", () => {
+    expect(insigniaArmor(wearing("necromancer", "bonelace"), typed("piercing"))).toBe(15);
+    expect(insigniaArmor(wearing("necromancer", "bonelace"), typed("slashing"))).toBe(0);
+    const ranger = wearing("ranger", "frostbound");
+    expect(insigniaArmor(ranger, typed("cold"))).toBe(15);
+    expect(insigniaArmor(ranger, typed("fire"))).toBe(0);
+  });
+
+  it("gives Sentry's +10 for as long as the stance lasts (#1206)", () => {
+    const monk = wearing("monk", "sentrys");
+    expect(insigniaArmor(monk)).toBe(0);
+    monk.statuses.apply("dash", 1, "d");
+    expect(insigniaArmor(monk)).toBe(10);
+    monk.statuses.remove("dash");
+    expect(insigniaArmor(monk)).toBe(0);
+  });
+
+  it("gives Scout's +10 under a preparation, Ghost Forge +15 under a weapon spell (#1206)", () => {
+    const ranger = wearing("ranger", "scouts");
+    ranger.statuses.apply("weapon-of-quickening", 10, "x");
+    expect(insigniaArmor(ranger)).toBe(0);
+    ranger.statuses.apply("apply-poison", 10, "r");
+    expect(insigniaArmor(ranger)).toBe(10);
+    const ritualist = wearing("ritualist", "ghost-forge");
+    ritualist.statuses.apply("apply-poison", 10, "x");
+    expect(insigniaArmor(ritualist)).toBe(0);
+    ritualist.statuses.apply("weapon-of-quickening", 10, "x");
+    expect(insigniaArmor(ritualist)).toBe(15);
+  });
+
+  it("gives Centurion's +10 under a shout, and under a chant (#1206)", () => {
+    const shouted = wearing("paragon", "centurions");
+    expect(insigniaArmor(shouted)).toBe(0);
+    shouted.statuses.apply("for-great-justice", 10, "x");
+    expect(insigniaArmor(shouted)).toBe(10);
+    const chanted = wearing("paragon", "centurions");
+    chanted.statuses.apply("song-of-restoration", 10, "x");
+    expect(insigniaArmor(chanted)).toBe(10);
+  });
+
+  it("gives Beastmaster's +10 while the pet lives; a minion is no pet (#1206)", () => {
+    const ranger = wearing("ranger", "beastmasters");
+    ranger.controlled.minion = 3;
+    expect(insigniaArmor(ranger)).toBe(0);
+    ranger.controlled.pet = 1;
+    expect(insigniaArmor(ranger)).toBe(10);
+  });
+
+  it("gives Virtuoso's and Mystic's +15 while activating any skill, not on a plain swing (#1206)", () => {
+    const mesmer = wearing("mesmer", "virtuosos");
+    swinging(mesmer);
+    expect(insigniaArmor(mesmer)).toBe(0);
+    mesmer.cast.beginCast("warrior.swift-chop", "x", 1, undefined);
+    expect(insigniaArmor(mesmer)).toBe(15);
+    const ritualist = wearing("ritualist", "mystics");
+    ritualist.cast.beginCast("ritualist.spirit-light", "x", 1, undefined);
+    expect(insigniaArmor(ritualist)).toBe(15);
+  });
+
+  it("gives Artificer's +3 a signet on the bar: 0, 2 and 8 give 0, 6 and 24 (#1206)", () => {
+    const signets = (count: number): number =>
+      insigniaArmor(
+        wearing("mesmer", "artificers", {
+          skillBar: Array.from({ length: 8 }, (_, slot) =>
+            slot < count ? "mesmer.leech-signet" : "mesmer.power-drain",
+          ),
+        }),
+      );
+    expect([0, 2, 8].map(signets)).toEqual([0, 6, 24]);
   });
 });
 
@@ -278,19 +718,19 @@ describe("Mysticism's armor while enchanted (#874)", () => {
 
   it("adds +1 a rank while any enchantment is up, and nothing without one", () => {
     const target = dervish(12);
-    expect(effectiveArmor(target, physical(10))).toBe(80);
+    expect(effectiveArmor(target, physical(10), "chest")).toBe(80);
     // Armor of Earth's own +24, then Mysticism's +12.
     target.statuses.apply("armor-boost", 30, "someone-else");
-    expect(effectiveArmor(target, physical(10))).toBe(116);
-    expect(mitigate(physical(100), target, RULES)).toBeLessThan(
-      mitigate(physical(100), dervish(12), RULES),
+    expect(effectiveArmor(target, physical(10), "chest")).toBe(116);
+    expect(mitigate(physical(100), target, RULES, "chest")).toBeLessThan(
+      mitigate(physical(100), dervish(12), RULES, "chest"),
     );
   });
 
   it("adds nothing at rank 0", () => {
     const target = dervish(0);
     target.statuses.apply("armor-boost", 30, "self");
-    expect(effectiveArmor(target, physical(10))).toBe(104);
+    expect(effectiveArmor(target, physical(10), "chest")).toBe(104);
   });
 });
 
@@ -299,44 +739,53 @@ function primary(profession: "warrior" | "ranger" | "monk"): Combatant {
   const resolved = resolveLoadout(
     {
       primaryProfession: profession,
+      secondaryProfession: undefined,
       allocatedRanks: new Map(),
       // No off-hand and no insignias: only the profession's armor.
-      equipment: { ...defaultEquipmentFor(profession), offHand: null, armor: bareArmorSet() },
+      equipment: {
+        weaponSets: [
+          { ...defaultEquipmentFor(profession).weaponSets[0], offHand: null },
+          null,
+          null,
+          null,
+        ],
+        armor: bareArmorSet(),
+      },
     },
     RULES,
   );
-  return makeCombatant({ id: "d", team: 1, equipment: resolved.equipment });
+  return makeCombatant({ id: "d", team: 1, equipment: resolved.weaponSets[0].equipment });
 }
 
 describe("a profession's typed armor (#759)", () => {
   it("gives a Warrior +20 against physical damage only", () => {
     const warrior = primary("warrior");
-    expect(effectiveArmor(warrior, physical(10))).toBe(100);
-    expect(effectiveArmor(warrior, skillDamage(10, "fire", 0))).toBe(80);
-    expect(effectiveArmor(warrior, skillDamage(10, "typeless", 0))).toBe(80);
+    expect(effectiveArmor(warrior, physical(10), "chest")).toBe(100);
+    expect(effectiveArmor(warrior, skillDamage(10, "fire", 0), "chest")).toBe(80);
+    expect(effectiveArmor(warrior, skillDamage(10, "typeless", 0), "chest")).toBe(80);
   });
 
   it("gives a Ranger +30 against elemental damage only", () => {
     const ranger = primary("ranger");
-    expect(effectiveArmor(ranger, physical(10))).toBe(70);
-    expect(effectiveArmor(ranger, skillDamage(10, "fire", 0))).toBe(100);
-    expect(effectiveArmor(ranger, skillDamage(10, "cold", 0))).toBe(100);
-    expect(effectiveArmor(ranger, skillDamage(10, "typeless", 0))).toBe(70);
-    expect(effectiveArmor(ranger, skillDamage(10, "chaos", 0))).toBe(70);
+    expect(effectiveArmor(ranger, physical(10), "chest")).toBe(70);
+    expect(effectiveArmor(ranger, skillDamage(10, "fire", 0), "chest")).toBe(100);
+    expect(effectiveArmor(ranger, skillDamage(10, "cold", 0), "chest")).toBe(100);
+    expect(effectiveArmor(ranger, skillDamage(10, "typeless", 0), "chest")).toBe(70);
+    expect(effectiveArmor(ranger, skillDamage(10, "chaos", 0), "chest")).toBe(70);
   });
 
   it("gives a Monk nothing typed", () => {
     const monk = primary("monk");
-    expect(effectiveArmor(monk, physical(10))).toBe(60);
-    expect(effectiveArmor(monk, skillDamage(10, "fire", 0))).toBe(60);
+    expect(effectiveArmor(monk, physical(10), "chest")).toBe(60);
+    expect(effectiveArmor(monk, skillDamage(10, "fire", 0), "chest")).toBe(60);
   });
 
   it("lets armor penetration cut through the typed bonus too", () => {
-    expect(effectiveArmor(primary("warrior"), physical(10, 0.1))).toBeCloseTo(90, 10);
+    expect(effectiveArmor(primary("warrior"), physical(10, 0.1), "chest")).toBeCloseTo(90, 10);
   });
 
   it("halves a Fireball on a Ranger: 91 lands for 46", () => {
-    expect(mitigate(skillDamage(91, "fire", 0), primary("ranger"), RULES)).toBe(46);
+    expect(mitigate(skillDamage(91, "fire", 0), primary("ranger"), RULES, "chest")).toBe(46);
   });
 });
 
@@ -349,7 +798,7 @@ describe("Cracked Armor (#763)", () => {
 
   it("takes 20 armor, but never below 60", () => {
     const at = (armor: number): number =>
-      effectiveArmor(cracked(armor), skillDamage(1, "typeless", 0));
+      effectiveArmor(cracked(armor), skillDamage(1, "typeless", 0), "chest");
     expect(at(100)).toBe(80);
     expect(at(80)).toBe(60);
     expect(at(70)).toBe(60);
@@ -360,30 +809,30 @@ describe("Cracked Armor (#763)", () => {
   it("is taken before Armor of Earth adds: a cracked 60 caster still reaches 84", () => {
     const warded = cracked(60);
     warded.statuses.apply("armor-boost", 30, "self");
-    expect(effectiveArmor(warded, skillDamage(1, "typeless", 0))).toBe(84);
+    expect(effectiveArmor(warded, skillDamage(1, "typeless", 0), "chest")).toBe(84);
   });
 
   it("counts a typed bonus as armor it can take", () => {
     const ranger = primary("ranger");
     ranger.statuses.apply("cracked-armor", 17, "attacker");
-    expect(effectiveArmor(ranger, skillDamage(10, "fire", 0))).toBe(80);
-    expect(effectiveArmor(ranger, physical(10))).toBe(60);
+    expect(effectiveArmor(ranger, skillDamage(10, "fire", 0), "chest")).toBe(80);
+    expect(effectiveArmor(ranger, physical(10), "chest")).toBe(60);
     const warrior = primary("warrior");
     warrior.statuses.apply("cracked-armor", 17, "attacker");
-    expect(effectiveArmor(warrior, physical(10))).toBe(80);
+    expect(effectiveArmor(warrior, physical(10), "chest")).toBe(80);
   });
 
   it("is taken before armor penetration: 25% of a cracked Warrior's 60 leaves 45", () => {
     const warrior = primary("warrior");
     warrior.statuses.apply("cracked-armor", 17, "attacker");
-    expect(effectiveArmor(warrior, skillDamage(10, "lightning", 0.25))).toBe(45);
+    expect(effectiveArmor(warrior, skillDamage(10, "lightning", 0.25), "chest")).toBe(45);
   });
 
   it("makes a sword hit a cracked Warrior about 41% harder", () => {
     const warrior = primary("warrior");
-    const healthy = mitigate(physical(100), warrior, RULES);
+    const healthy = mitigate(physical(100), warrior, RULES, "chest");
     warrior.statuses.apply("cracked-armor", 17, "attacker");
-    expect(mitigate(physical(100), warrior, RULES) / healthy).toBeCloseTo(1.41, 1);
+    expect(mitigate(physical(100), warrior, RULES, "chest") / healthy).toBeCloseTo(1.41, 1);
   });
 });
 
@@ -392,10 +841,15 @@ describe("Rune of Absorption", () => {
     const resolved = resolveLoadout(
       {
         primaryProfession: "warrior",
+        secondaryProfession: undefined,
         allocatedRanks: new Map(),
         equipment: {
-          mainHand: { weaponId: "sword", requirementAttributeId: null },
-          offHand: null,
+          weaponSets: [
+            { mainHand: { weaponId: "sword", requirementAttributeId: null }, offHand: null },
+            null,
+            null,
+            null,
+          ],
           armor: {
             ...bareArmorSet(),
             feet: { insigniaId: null, rune: { kind: "universal", runeId: "absorption", tier } },
@@ -404,26 +858,26 @@ describe("Rune of Absorption", () => {
       },
       RULES,
     );
-    return makeCombatant({ id: "d", team: 1, equipment: resolved.equipment });
+    return makeCombatant({ id: "d", team: 1, equipment: resolved.weaponSets[0].equipment });
   }
 
   it("subtracts a flat amount from a physical hit, after mitigation", () => {
     // A Warrior's 80, +20 vs physical.
     const plain = defender(100);
     const runed = absorbing("superior");
-    const before = mitigate(physical(100), plain, RULES);
-    expect(mitigate(physical(100), runed, RULES)).toBe(before - 3);
+    const before = mitigate(physical(100), plain, RULES, "chest");
+    expect(mitigate(physical(100), runed, RULES, "chest")).toBe(before - 3);
   });
 
   it("subtracts from the whole of a physical hit, its armor-ignoring part included", () => {
     const packet: DamagePacket = { ...physical(40), armorIgnoring: 16 };
     // 40 at 100 armor is 20, plus 16, minus 3.
-    expect(mitigate(packet, absorbing("superior"), RULES)).toBe(33);
+    expect(mitigate(packet, absorbing("superior"), RULES, "chest")).toBe(33);
   });
 
   it("does nothing against non-physical damage", () => {
-    expect(mitigate(skillDamage(100, "chaos", 0), absorbing("superior"), RULES)).toBe(
-      mitigate(skillDamage(100, "chaos", 0), defender(80), RULES),
+    expect(mitigate(skillDamage(100, "chaos", 0), absorbing("superior"), RULES, "chest")).toBe(
+      mitigate(skillDamage(100, "chaos", 0), defender(80), RULES, "chest"),
     );
   });
 
@@ -433,14 +887,14 @@ describe("Rune of Absorption", () => {
     const runed = absorbing("superior");
     const plain = defender(100);
     const lossFraction = (amount: number): number => {
-      const base = mitigate(physical(amount), plain, RULES);
-      return (base - mitigate(physical(amount), runed, RULES)) / base;
+      const base = mitigate(physical(amount), plain, RULES, "chest");
+      return (base - mitigate(physical(amount), runed, RULES, "chest")) / base;
     };
     expect(lossFraction(10)).toBeGreaterThan(lossFraction(100));
   });
 
   it("never drives a hit below zero", () => {
-    expect(mitigate(physical(1), absorbing("superior"), RULES)).toBe(0);
+    expect(mitigate(physical(1), absorbing("superior"), RULES, "chest")).toBe(0);
   });
 });
 
@@ -467,6 +921,24 @@ describe("the weapon attribute multiplier", () => {
 
   it("treats a negative rank as zero rather than inverting the curve", () => {
     expect(weaponAttributeMultiplier(-5, RULES)).toBe(weaponAttributeMultiplier(0, RULES));
+  });
+});
+
+describe("the creature damage multiplier (#1131)", () => {
+  const level = (atZero: number, atTwelve: number) => ({ atZero, atTwelve });
+
+  it("is 1 at rank 12, 0 at rank 0 for a level-0 creature, and (5/10)^1.5 at 6", () => {
+    expect(creatureDamageMultiplier(12, level(0, 10))).toBe(1);
+    expect(creatureDamageMultiplier(0, level(0, 10))).toBe(0);
+    expect(creatureDamageMultiplier(6, level(0, 10))).toBeCloseTo(Math.pow(5 / 10, 1.5), 10);
+  });
+
+  it("keeps rising past 12, on the same line of levels", () => {
+    // A Bone Horror at Death Magic 16 is level 1 + 13 × 16/12.
+    expect(creatureDamageMultiplier(16, level(1, 14))).toBeCloseTo(
+      Math.pow((1 + (13 * 16) / 12) / 14, 1.5),
+      10,
+    );
   });
 });
 
@@ -550,11 +1022,20 @@ describe("resolved loadouts feeding the pipeline", () => {
       resolveLoadout(
         {
           primaryProfession: profession,
+          secondaryProfession: undefined,
           allocatedRanks: new Map(),
-          equipment: { ...defaultEquipmentFor(profession), offHand: null },
+          equipment: {
+            ...defaultEquipmentFor(profession),
+            weaponSets: [
+              { ...defaultEquipmentFor(profession).weaponSets[0], offHand: null },
+              null,
+              null,
+              null,
+            ],
+          },
         },
         RULES,
-      ).equipment.baseArmor;
+      ).weaponSets[0].equipment.baseArmor;
 
     expect(armorFor("warrior")).toBe(80);
     expect(armorFor("ranger")).toBe(70);
@@ -566,15 +1047,23 @@ describe("resolved loadouts feeding the pipeline", () => {
       resolveLoadout(
         {
           primaryProfession: "warrior",
+          secondaryProfession: undefined,
           allocatedRanks: new Map([["warrior.strength", rank]]),
           equipment: {
-            mainHand: { weaponId: "sword", requirementAttributeId: null },
-            offHand: { offhandId: "shield", requirementAttributeId: "warrior.strength" },
+            weaponSets: [
+              {
+                mainHand: { weaponId: "sword", requirementAttributeId: null },
+                offHand: { offhandId: "shield", requirementAttributeId: "warrior.strength" },
+              },
+              null,
+              null,
+              null,
+            ],
             armor: bareArmorSet(),
           },
         },
         RULES,
-      ).equipment.baseArmor;
+      ).weaponSets[0].equipment.baseArmor;
 
     expect(withRank(0)).toBe(88);
     expect(withRank(9)).toBe(96);
@@ -586,16 +1075,24 @@ describe("resolved loadouts feeding the pipeline", () => {
     const resolved = resolveLoadout(
       {
         primaryProfession: "warrior",
+        secondaryProfession: undefined,
         allocatedRanks: new Map([["warrior.strength", 12]]),
         equipment: {
-          mainHand: { weaponId: "hammer", requirementAttributeId: null },
-          offHand: { offhandId: "shield", requirementAttributeId: "warrior.strength" },
+          weaponSets: [
+            {
+              mainHand: { weaponId: "hammer", requirementAttributeId: null },
+              offHand: { offhandId: "shield", requirementAttributeId: "warrior.strength" },
+            },
+            null,
+            null,
+            null,
+          ],
           armor: bareArmorSet(),
         },
       },
       RULES,
     );
-    expect(resolved.equipment.baseArmor).toBe(80);
+    expect(resolved.weaponSets[0].equipment.baseArmor).toBe(80);
   });
 });
 
@@ -605,17 +1102,26 @@ describe("the off-hand a resolved loadout holds (#276)", () => {
     return resolveLoadout(
       {
         primaryProfession: profession,
+        secondaryProfession: undefined,
         allocatedRanks: new Map(),
         equipment:
           weaponId === undefined
             ? equipment
             : {
                 ...equipment,
-                mainHand: { weaponId, requirementAttributeId: null },
+                weaponSets: [
+                  {
+                    ...equipment.weaponSets[0],
+                    mainHand: { weaponId, requirementAttributeId: null },
+                  },
+                  null,
+                  null,
+                  null,
+                ],
               },
       },
       RULES,
-    ).equipment.offhandId;
+    ).weaponSets[0].equipment.offhandId;
   };
 
   it("names the shield or focus held beside a one-handed weapon", () => {

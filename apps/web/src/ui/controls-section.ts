@@ -3,6 +3,7 @@ import {
   KEYMAP_PRESETS,
   KEY_ACTIONS,
   SKILL_ACTIONS,
+  WEAPON_SET_ACTIONS,
   codeLabel,
   isBindable,
   isShortcut,
@@ -39,11 +40,18 @@ export const ACTION_NAMES: Readonly<Record<KeyAction, string>> = {
   "move-left": "Move left",
   "move-right": "Move right",
   "target-next": "Next target",
+  "target-closest": "Target the closest foe",
+  "target-called": "Target the called foe",
+  "target-self": "Target yourself",
   attack: "Attack",
   "call-target": "Call your target",
   ping: "Ping under the pointer",
   "show-names": "Show names (hold)",
   mute: "Mute",
+  "weapon-set-1": "Weapon set 1",
+  "weapon-set-2": "Weapon set 2",
+  "weapon-set-3": "Weapon set 3",
+  "weapon-set-4": "Weapon set 4",
 };
 
 export const PRESET_NAMES: Readonly<Record<keyof typeof KEYMAP_PRESETS, string>> = {
@@ -283,6 +291,15 @@ function mountControls(container: HTMLElement): () => void {
     a?.action === b.action && a.index === b.index;
 
   for (const action of KEY_ACTIONS) {
+    if (action === WEAPON_SET_ACTIONS[0]) {
+      // The four sets read as one group (#489).
+      const heading = document.createElement("tr");
+      heading.className = "keys-group";
+      const title = h("th", "keys-group-title", "Weapon sets");
+      title.setAttribute("colspan", "4");
+      heading.appendChild(title);
+      body.appendChild(heading);
+    }
     const row = document.createElement("tr");
     row.appendChild(h("th", "keys-action", ACTION_NAMES[action]));
     for (const index of [0, 1] as const) {
@@ -310,7 +327,7 @@ function mountControls(container: HTMLElement): () => void {
     body.appendChild(row);
   }
   for (const [name, key] of [
-    ["Cancel action", "Esc"],
+    ["Cancel action; again: clear target", "Esc"],
     ["Leave match", "F10"],
   ] as const) {
     const row = document.createElement("tr");

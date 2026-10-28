@@ -1,7 +1,13 @@
-import type { ProfessionId } from "../professions.js";
+import { primaryAttributeIds } from "../character.js";
+import {
+  getAttribute,
+  getProfession,
+  primaryAttributeOf,
+  type ProfessionId,
+} from "../professions.js";
 import { armorPieces } from "./armor.js";
-import { getInsignia } from "./insignias.js";
-import type { BuildEquipment } from "./loadout.js";
+import { getInsignia, insigniaAllowed } from "./insignias.js";
+import type { BuildEquipment, WeaponSet } from "./loadout.js";
 import { getOffhand } from "./offhands.js";
 import { getUniversalRune, runeDisplayName, type EquippedRune } from "./runes.js";
 import type { EquipmentRequirement } from "./types.js";
@@ -21,6 +27,7 @@ export interface EquipmentProblem {
 
 export interface EquipmentValidationContext {
   readonly primaryProfession: ProfessionId;
+  readonly secondaryProfession: ProfessionId | undefined;
   /** Attribute ids the character can actually reach, from `accessibleAttributeIds`. */
   readonly accessibleAttributeIds: ReadonlySet<string>;
 }
@@ -88,14 +95,15 @@ function checkRune(
   problems: EquipmentProblem[],
 ): void {
   if (rune.kind === "attribute") {
-    // Rejected, not merely warned about. A rune on an attribute you
-    // cannot raise is pure health penalty for no bonus — a trap rather
-    // than a trade-off, and the skill bar already refuses inaccessible
-    // skills for the same reason.
-    if (!context.accessibleAttributeIds.has(rune.attributeId)) {
+    // Rejected, not merely warned about. An attribute rune fits only the
+    // primary's armor (#1141, GW1), and one on an attribute you cannot
+    // raise is pure health penalty for no bonus — a trap rather than a
+    // trade-off, as the skill bar refuses inaccessible skills.
+    if (!primaryAttributeIds(context.primaryProfession).includes(rune.attributeId)) {
+      const name = getAttribute(rune.attributeId)?.name ?? rune.attributeId;
       problems.push({
         field,
-        message: `a rune of ${rune.attributeId}, which this character cannot access`,
+        message: `a rune of ${name}, which is not a ${getProfession(context.primaryProfession).name} attribute`,
       });
     }
     return;
@@ -117,63 +125,128 @@ function checkRune(
   }
 }
 
-export function validateEquipment(
-  equipment: BuildEquipment,
+/**
+ * One weapon set's checks, `index` 0 for set 1. Set 1's messages read as
+ * they always have; sets 2-4's say which set (ADR-0036).
+ */
+function validateWeaponSet(
+  set: WeaponSet,
+  index: number,
   context: EquipmentValidationContext,
-): EquipmentProblem[] {
-  const problems: EquipmentProblem[] = [];
-
-  const weapon = getWeapon(equipment.mainHand.weaponId);
+  problems: EquipmentProblem[],
+): void {
+  const field = `equipment.weaponSets[${String(index)}]`;
+  const prefix = index === 0 ? "" : `Set ${String(index + 1)}: `;
+  const weapon = getWeapon(set.mainHand.weaponId);
   if (weapon === undefined) {
     problems.push({
-      field: "equipment.mainHand",
-      message: `unknown weapon ${equipment.mainHand.weaponId}`,
+      field: `${field}.mainHand`,
+      message: `${prefix}unknown weapon ${set.mainHand.weaponId}`,
     });
   } else {
     checkRequirement(
-      "equipment.mainHand",
-      weapon.name,
+      `${field}.mainHand`,
+      `${prefix}${weapon.name}`,
       weapon.requirement,
-      equipment.mainHand.requirementAttributeId,
+      set.mainHand.requirementAttributeId,
       context,
       problems,
     );
   }
 
-  if (equipment.offHand !== null) {
-    const offhand = getOffhand(equipment.offHand.offhandId);
+  if (set.offHand !== null) {
+    const offhand = getOffhand(set.offHand.offhandId);
     if (offhand === undefined) {
       problems.push({
-        field: "equipment.offHand",
-        message: `unknown off-hand ${equipment.offHand.offhandId}`,
+        field: `${field}.offHand`,
+        message: `${prefix}unknown off-hand ${set.offHand.offhandId}`,
       });
     } else {
       // The trade the whole gear system turns on: a free hand or a
       // bigger weapon, never both.
       if (weapon !== undefined && !allowsOffhand(weapon)) {
         problems.push({
-          field: "equipment.offHand",
-          message: `${weapon.name} needs both hands, so it cannot be carried with a ${offhand.name.toLowerCase()}`,
+          field: `${field}.offHand`,
+          message: `${prefix}${weapon.name} needs both hands, so it cannot be carried with a ${offhand.name.toLowerCase()}`,
         });
       }
       checkRequirement(
-        "equipment.offHand",
-        offhand.name,
+        `${field}.offHand`,
+        `${prefix}${offhand.name}`,
         offhand.requirement,
-        equipment.offHand.requirementAttributeId,
+        set.offHand.requirementAttributeId,
         context,
         problems,
       );
     }
   }
+}
+
+/**
+ * The headgear's attribute (#1140): every player build names one, of an
+ * attribute it can put points in. `null` would be a head that does
+ * nothing, a trap rather than a choice.
+ */
+function checkHeadgear(
+  equipment: BuildEquipment,
+  context: EquipmentValidationContext,
+  problems: EquipmentProblem[],
+): void {
+  const field = "equipment.armor.head";
+  const attributeId = equipment.armor.head.headgearAttributeId;
+  if (attributeId === null) {
+    problems.push({ field, message: "headgear needs an attribute" });
+    return;
+  }
+  if (!context.accessibleAttributeIds.has(attributeId)) {
+    const name = getAttribute(attributeId)?.name ?? attributeId;
+    const secondary = context.secondaryProfession;
+    if (secondary !== undefined && primaryAttributeOf(secondary).id === attributeId) {
+      problems.push({
+        field,
+        message: `headgear of ${name}, which only a ${getProfession(secondary).name} primary can use`,
+      });
+      return;
+    }
+    const professions = [context.primaryProfession, context.secondaryProfession]
+      .flatMap((id) => (id === undefined ? [] : [getProfession(id).name]))
+      .join(" or ");
+    problems.push({
+      field,
+      message: `headgear of ${name}, which is not a ${professions} attribute`,
+    });
+  }
+}
+
+export function validateEquipment(
+  equipment: BuildEquipment,
+  context: EquipmentValidationContext,
+): EquipmentProblem[] {
+  const problems: EquipmentProblem[] = [];
+
+  equipment.weaponSets.forEach((set, index) => {
+    if (set !== null) {
+      validateWeaponSet(set, index, context, problems);
+    }
+  });
+
+  checkHeadgear(equipment, context, problems);
 
   const runedAttributes = new Set<string>();
   const universalRunes = new Set<string>();
   for (const [slot, piece] of armorPieces(equipment.armor)) {
     const field = `equipment.armor.${slot}`;
 
-    if (piece.insigniaId !== null && getInsignia(piece.insigniaId) === undefined) {
-      problems.push({ field, message: `unknown insignia ${piece.insigniaId}` });
+    if (piece.insigniaId !== null) {
+      const insignia = getInsignia(piece.insigniaId);
+      if (insignia === undefined) {
+        problems.push({ field, message: `unknown insignia ${piece.insigniaId}` });
+      } else if (!insigniaAllowed(insignia, context.primaryProfession)) {
+        problems.push({
+          field,
+          message: `${insignia.name} needs a primary ${String(insignia.profession)}`,
+        });
+      }
     }
 
     if (piece.rune === null) {

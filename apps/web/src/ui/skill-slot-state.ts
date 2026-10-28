@@ -4,7 +4,10 @@ import {
   distanceWithinRange,
   getSkill,
   hasLineOfSight,
+  isCompanionRule,
+  isSpell,
   isWeaponId,
+  preventsSpells,
   targetLivenessAllows,
   targetRuleAllows,
   wieldsFor,
@@ -205,36 +208,79 @@ export function wrongWeapon(
 }
 
 /**
+ * Which slots hold a spell `self` cannot start (#1234): a hex such as
+ * Shroud of Silence bars them, the same check activation makes
+ * (`preventsSpells`), so the dimmed slot and the refusal agree. A hint,
+ * not a gate.
+ */
+export function silenced(skillBar: readonly (SkillSlot | null)[], self: PlayerSnapshot): boolean[] {
+  const barred = preventsSpells(self.statuses);
+  return skillBar.map((slot) => {
+    const skill = slot === null ? undefined : getSkill(slot.id);
+    return barred && skill !== undefined && isSpell(skill.type);
+  });
+}
+
+/** Your own companion (#1046), alive or dead, among `players`; `undefined` with none. */
+export function ownCompanion(
+  players: readonly PlayerSnapshot[],
+  self: PlayerSnapshot,
+): PlayerSnapshot | undefined {
+  return players.find(
+    (player) => player.creature?.ownerId === self.sessionId && player.creature.mode !== null,
+  );
+}
+
+/**
  * Which slots could not reach `target` from where `self` stands (#485):
  * too far, or a wall in the way. The same two game-core checks activation
  * makes, so the hint and the refusal cannot disagree. A hint, not a gate:
  * the press still goes to the host (brief §32).
  *
  * Nothing is out of range with no target, or for a skill that only targets
- * its caster. A corpse is out of range only for a resurrection, and a
+ * its caster. A skill on your pet (#1046) is measured to `companion`,
+ * whatever is selected (#1110), and is never marked with no pet. A corpse
+ * is out of range only for a resurrection, and a
  * resurrection only against a corpse (#812), by game-core's
  * `targetLivenessAllows`. An ally skill with a foe selected is not either:
  * the host casts it on the caster then, as the simulation's `#castTarget` does.
  * Nor is a skill the target is wrong for, by game-core's `targetRuleAllows`
  * (#599): Blood Ritual on a foe is refused for who, not where, so walking
- * closer would not help.
+ * closer would not help. Nor is a resurrection on a creature (#1046), which
+ * it can never revive.
  */
 export function outOfRange(
   skillBar: readonly (SkillSlot | null)[],
   self: PlayerSnapshot | undefined,
   target: PlayerSnapshot | undefined,
+  companion: PlayerSnapshot | undefined,
   walls: readonly Segment[],
 ): boolean[] {
-  if (self === undefined || target === undefined) {
+  if (self === undefined) {
     return skillBar.map(() => false);
   }
   const from = { x: self.x, y: self.y };
-  const to = { x: target.x, y: target.y };
   // Measured once for the whole bar: only the range differs per skill.
   let sight: boolean | undefined;
+  let petSight: boolean | undefined;
   return skillBar.map((slot) => {
     const skill = slot === null ? undefined : getSkill(slot.id);
-    if (skill === undefined || skill.target === "self") {
+    if (skill !== undefined && isCompanionRule(skill.target)) {
+      if (companion === undefined) {
+        return false;
+      }
+      const pet = { x: companion.x, y: companion.y };
+      if (!distanceWithinRange(from, pet, skill.range)) {
+        return true;
+      }
+      petSight ??= hasLineOfSight(from, pet, walls);
+      return !petSight;
+    }
+    if (skill === undefined || skill.target === "self" || target === undefined) {
+      return false;
+    }
+    const to = { x: target.x, y: target.y };
+    if (skill.target === "single-dead-ally" && target.creature !== undefined) {
       return false;
     }
     if (targetLivenessAllows(skill.target, target) !== undefined) {

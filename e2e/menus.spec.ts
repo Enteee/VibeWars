@@ -109,20 +109,69 @@ test("#578: a host with others in the lobby is asked before Leave or Esc closes 
   }
 });
 
+/** A rolled character's random name (#1149): "Kaelen Ashvale". */
+const ROLLED_NAME = /^[A-Z][a-z]+ [A-Z][a-z]+$/;
+
+test("#853: the first start rolls a starter character, chosen; Reroll replaces it in place, Clone copies it", async ({
+  page,
+}) => {
+  await openMenu(page);
+  const roster = page.locator(".roster");
+  const row = roster.locator(".selectable-row");
+  await expect(row).toHaveCount(1);
+  await expect(row).toHaveClass(/is-selected/);
+  await expect(page.getByRole("button", { name: "Random Arena", exact: true })).toBeEnabled();
+  const name = row.locator(".selectable-row-name");
+  await expect(name).toHaveText(ROLLED_NAME);
+  const first = await name.innerText();
+
+  // Rolled once: a reload keeps it, and rolls nothing new.
+  await page.reload();
+  await expect(row).toHaveCount(1);
+  await expect(name).toHaveText(first);
+
+  // Rerolled at once, unasked (#1146): another starter build under
+  // another random name (#1149), the same row, still chosen.
+  const actions = roster.locator(".selectable-row-actions");
+  await actions.getByRole("button", { name: "Reroll", exact: true }).click();
+  await expect(name).not.toHaveText(first);
+  await expect(name).toHaveText(ROLLED_NAME);
+  await expect(row).toHaveCount(1);
+  await expect(row).toHaveClass(/is-selected/);
+
+  // It has Clone, not Edit (#1147): Clone opens the editor on a copy,
+  // one copy even for a double-click.
+  const rolled = await name.innerText();
+  await expect(actions.getByRole("button", { name: "Edit", exact: true })).toHaveCount(0);
+  await actions.getByRole("button", { name: "Clone", exact: true }).dblclick();
+  await expect(page.locator("input.editor-name")).toHaveValue(`${rolled} (copy)`);
+  await page.locator("input.editor-name").fill("Pyro");
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+
+  // The copy is an ordinary character: Edit, no Clone or Reroll. The
+  // rolled one is still chosen.
+  await expect(row).toHaveCount(2);
+  const pyro = roster.locator(".selectable-row", { hasText: "Pyro" });
+  const original = roster.locator(".selectable-row", { hasText: rolled });
+  await expect(pyro.getByRole("button", { name: "Edit", exact: true })).toBeVisible();
+  await expect(pyro.locator(".roster-clone, .roster-reroll")).toHaveCount(0);
+  await expect(original.locator(".roster-reroll")).toHaveCount(1);
+  await expect(original).toHaveClass(/is-selected/);
+});
+
 test("#579: the roster's rows are buttons: Enter or Space chooses, Edit sits beside", async ({
   page,
 }) => {
   await openMenu(page);
-  // No characters: the default loadout, chosen, and the way to make one.
+  // The first start's rolled character (#853), chosen.
   const roster = page.locator(".roster");
   await expect(roster.locator(".selectable-row")).toHaveCount(1);
-  await expect(roster.locator(".selectable-row.is-selected")).toContainText("Default loadout");
-  await expect(roster.locator(".empty-state")).toContainText("No characters yet.");
+  const rolled = roster.locator(".selectable-row").first();
+  await expect(rolled).toHaveClass(/is-selected/);
   await roster.getByRole("button", { name: "New character" }).click();
   await page.locator("input.editor-name").fill("Pyro");
   await page.getByRole("button", { name: "Save", exact: true }).click();
 
-  await expect(roster.locator(".empty-state")).toHaveCount(0);
   const pyro = roster.locator(".selectable-row", { hasText: "Pyro" });
   await expect(pyro.locator(".mini-skill")).toHaveCount(8);
   const choosePyro = pyro.locator(".selectable-row-choose");
@@ -131,17 +180,17 @@ test("#579: the roster's rows are buttons: Enter or Space chooses, Edit sits bes
   await expect(pyro).toHaveClass(/is-selected/);
   await expect(choosePyro).toBeFocused();
 
-  const house = roster.locator(".selectable-row", { hasText: "Default loadout" });
-  await house.locator(".selectable-row-choose").focus();
+  const starter = roster.locator(".selectable-row").filter({ hasNotText: "Pyro" });
+  await starter.locator(".selectable-row-choose").focus();
   await page.keyboard.press(" ");
-  await expect(house).toHaveClass(/is-selected/);
+  await expect(starter).toHaveClass(/is-selected/);
   await expect(pyro).not.toHaveClass(/is-selected/);
 
   // Edit opens the editor and chooses nobody.
   await pyro.getByRole("button", { name: "Edit", exact: true }).click();
   await expect(page.locator("input.editor-name")).toHaveValue("Pyro");
   await page.keyboard.press("Escape");
-  await expect(house).toHaveClass(/is-selected/);
+  await expect(starter).toHaveClass(/is-selected/);
 
   // Teams, Options and Music are in the screen bar.
   for (const name of ["Teams", "Options", "Music"]) {

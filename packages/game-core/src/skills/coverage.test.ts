@@ -19,14 +19,8 @@ import {
  * `catalog.test.ts`.
  */
 
-/** The five corpus skills that have no implementation. Kept literal on purpose. */
-const KNOWN_UNIMPLEMENTED = [
-  "elementalist.meteor-shower",
-  "mesmer.arcane-echo",
-  "mesmer.echo",
-  "monk.contemplation-of-purity",
-  "warrior.whirlwind-attack",
-] as const;
+/** The one corpus skill that has no implementation. Kept literal on purpose. */
+const KNOWN_UNIMPLEMENTED = ["warrior.whirlwind-attack"] as const;
 
 const CORPUS = [
   "elementalist.armor-of-earth",
@@ -102,14 +96,12 @@ describe("skill coverage regression gate", () => {
   it("groups skills by the mechanic they wait on", () => {
     const grouped = missingMechanics(computeCoverage(CORPUS));
 
-    expect(grouped.get("skill-bar-mutation")).toEqual(["mesmer.arcane-echo", "mesmer.echo"]);
-    expect(grouped.get("ground-targeting")).toEqual(["elementalist.meteor-shower"]);
     expect(grouped.get("title-attribute")).toEqual(["warrior.whirlwind-attack"]);
   });
 
   it("does not blame a mechanic that now exists", () => {
-    // Areas shipped (#5). Fireball and Barrage use them; the three skills
-    // that waited on them still wait, on something else.
+    // Areas shipped (#5). Fireball and Barrage use them; the skill that
+    // waited on them still waits, on something else.
     for (const skill of computeCoverage(CORPUS).unimplemented) {
       expect(skill.missing, skill.id).not.toContain("area-of-effect");
     }
@@ -124,9 +116,9 @@ describe("skill coverage regression gate", () => {
   it("reports a reason in the human-readable output", () => {
     const text = formatCoverage(computeCoverage(CORPUS));
 
-    expect(text).toContain("mesmer.echo — needs skill-bar-mutation");
+    expect(text).toContain("warrior.whirlwind-attack — needs title-attribute");
     expect(text).toContain("blocked on:");
-    expect(text).toContain(MISSING_MECHANIC_DESCRIPTIONS.knockdown);
+    expect(text).toContain(MISSING_MECHANIC_DESCRIPTIONS["title-attribute"]);
   });
 
   it("passes an upkeep skill the catalog maintains (Mending, #840)", () => {

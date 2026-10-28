@@ -40,21 +40,25 @@ and pick **join**. The host's tab runs the match, so it has to stay open: if
 it closes, the lobby ends for everyone. The two builds keep separate
 saved characters.
 
-| Key             | Action                                    |
-| --------------- | ----------------------------------------- |
-| `W` `A` `S` `D` | Move                                      |
-| Left click      | Walk there                                |
-| Right click     | Target (double: attack)                   |
-| Right drag      | Look around; let go to come back          |
-| Wheel click     | Call a foe, watch an ally, or ping        |
-| `1`–`9`, `0`    | Use the matching skill-bar slot           |
-| `Tab`           | Target the next nearest enemy             |
-| `Shift` `Tab`   | Target the previous one                   |
-| `Space`         | Attack your target with your weapon       |
-| `Esc`           | Cancel your cast and your attack          |
-| `M`             | Mute or unmute the sound                  |
-| `F10`           | Leave the match (asks first)              |
-| `Enter`         | Chat: `!` all, `#` team (lobby and match) |
+| Key             | Action                                                     |
+| --------------- | ---------------------------------------------------------- |
+| `W` `A` `S` `D` | Move                                                       |
+| Left click      | Walk there                                                 |
+| Right click     | Target (double: attack)                                    |
+| Right drag      | Look around; let go to come back                           |
+| Wheel click     | Call a foe, or ping                                        |
+| `1`–`9`, `0`    | Use the matching skill-bar slot                            |
+| `Tab`           | Target the next nearest enemy                              |
+| `Shift` `Tab`   | Target the previous one                                    |
+| `C`             | Target the closest foe                                     |
+| `T`             | Target the foe your team called                            |
+| `G`             | Target yourself                                            |
+| `Space`         | Attack your target with your weapon                        |
+| `Esc`           | Cancel your cast and your attack; again: clear your target |
+| `M`             | Mute or unmute the sound                                   |
+| `F1`–`F4`       | Swap to weapon set 1–4                                     |
+| `F10`           | Leave the match (asks first)                               |
+| `Enter`         | Chat: `!` all, `#` team (lobby and match)                  |
 
 To leave a match, press `F10` or use **leave match** at the top right; it asks first.
 
@@ -83,10 +87,11 @@ own development was verified that way; see
 - **Lobby** with shareable codes, team assignment, ready state and
   repeatable matches.
 - **Character builder** with profession/attribute rules and versioned
-  browser-local persistence. Pick a character on the menu and you take
-  that build into the match — the host validates it and falls back to a
-  default loadout if it is illegal, so a build is a request, never a
-  claim.
+  browser-local persistence. The first start rolls you a random starter
+  character under a random name, with Clone and Reroll on its row: Clone
+  gives you a copy to edit. Pick a character on the menu and you take
+  that build into the match — the host validates it and hands a random
+  starter build if it is illegal, so a build is a request, never a claim.
 - **Team builder** for planning a roster: create, rename, add, remove,
   reorder, duplicate and delete, at any team size. A team is a local
   planning tool — see the limits below.

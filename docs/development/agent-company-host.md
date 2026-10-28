@@ -63,16 +63,23 @@ chat id to `devenv.local.nix`. Without the file every employee refuses to
 start and retries. To keep it elsewhere, set
 `vibewars.telegram.managerTokenFile` in `devenv.local.nix`.
 
-The agents run on the company's own Claude account (ADR-0031), never yours.
-Sign it in once, in its own config directory (a separate account from yours is
-best, but not checked):
+The agents run on the company's own Claude account (ADR-0031), never yours
+(a separate account from yours is best, but not checked).
+
+The first run, in a terminal:
 
 ```sh
-CLAUDE_CONFIG_DIR=~/.claude-bot/creds/claude claude   # then /login
+claude-llc auth        # Claude, GitHub, the push key, the Telegram token
+claude-bot-setup ~/.claude-bot/creds/telegram-manager-token   # the group, once
+claude-llc-init
 ```
 
-`claude-llc-init` then records it, and `claude-llc` refuses to start unless
-it is signed in.
+`claude-llc auth` shows the doctor's table, signs in each credential that is
+not signed in, each in the company's own directory and never with a token
+from your shell, and shows the table again. `claude-llc auth claude` (or
+`github`, `push`, `telegram`) does only that one. It prints no secret: the
+public push key is the only key it shows. `claude-llc-init` then records the
+Claude account, and `claude-llc` refuses to start unless it is signed in.
 
 On GitHub the company works as its own machine account too: hubd's every
 `gh` call, and every push and fetch (ADR-0031). `claude-llc-init` itself

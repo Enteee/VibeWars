@@ -2,13 +2,14 @@ export type { ActivationCheck, ActivationRejection, ActivationRequest } from "./
 export {
   canActivate,
   energyCostOf,
+  isCompanionRule,
   payCost,
   targetLivenessAllows,
   targetRuleAllows,
 } from "./activation.js";
 
-export type { ActiveCast } from "./cast-state.js";
-export { CastState } from "./cast-state.js";
+export type { ActiveCast, SlotSkill } from "./cast-state.js";
+export { CastState, resolvedBar } from "./cast-state.js";
 
 export { IMPLEMENTED_SKILLS, SKILLS_BY_ID, getSkill } from "./catalog.js";
 
@@ -17,6 +18,7 @@ export {
   describeSkill,
   describeStatus,
   formatScalingRange,
+  chainRequirementText,
   neededWeaponText,
   overcastText,
 } from "./describe.js";
@@ -63,6 +65,7 @@ export {
   findStatusDefinition,
   getStatusDefinition,
   isStatusId,
+  preventsSpells,
   scaledStatusDuration,
 } from "./status.js";
 
@@ -93,15 +96,20 @@ export type {
   AttackSkillRule,
   AttackWeaponClass,
   AttributeScaling,
+  Aura,
   ChainMark,
   ChainRole,
   Combatant,
+  CreateGroundEffect,
+  GroundAct,
+  CreatureTemplate,
   DamageEffect,
   EnergyGainEffect,
   HealEffect,
   InterruptEffect,
   KnockdownEffect,
   Magnitude,
+  PulseRule,
   RemoveStatusEffect,
   ResourceKind,
   SacrificeHealthEffect,
@@ -111,19 +119,22 @@ export type {
   SkillEffect,
   SkillProjectile,
   SkillType,
+  SummonEffect,
   TargetRule,
+  TrapRule,
 } from "./types.js";
 
-export { KNOCKDOWN_SECONDS } from "./types.js";
+export { KNOCKDOWN_SECONDS, PET_ATTACK_SECONDS, isSpell } from "./types.js";
 
 export { CHAIN_MARK_SECONDS } from "./chain.js";
 
 export { makeCombatant } from "./testing.js";
 
-export type { DamagePacket, DamageSource } from "./damage.js";
+export type { DamagePacket, DamageSource, HitLocation } from "./damage.js";
 export {
   armorMultiplier,
   effectiveArmor,
+  hitLocationOf,
   mitigate,
   skillDamage,
   unmitigatedDamage,

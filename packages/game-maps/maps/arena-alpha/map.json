@@ -1,6 +1,7 @@
 {
   "id": "arena-alpha",
   "name": "Arena Alpha",
+  "mode": "annihilation",
   "width": 960,
   "height": 640,
   "walls": [
@@ -9,6 +10,7 @@
     { "kind": "rect", "x": 300, "y": 300, "width": 120, "height": 24 },
     { "kind": "rect", "x": 540, "y": 316, "width": 120, "height": 24 }
   ],
+  "objectives": [],
   "spawnPoints": [
     { "team": 0, "position": { "x": 80, "y": 200 } },
     { "team": 0, "position": { "x": 80, "y": 320 } },

@@ -341,7 +341,7 @@ describe("build format version", () => {
       return;
     }
     expect(result.problems).toHaveLength(1);
-    expect(result.problems[0]).toMatch(/uses format version 1, but this game reads only version 2/);
+    expect(result.problems[0]).toMatch(/uses format version 1, but this game reads only version 4/);
   });
 
   it("refuses a build with no usable format version", () => {

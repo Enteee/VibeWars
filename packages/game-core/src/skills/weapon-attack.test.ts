@@ -44,6 +44,7 @@ function wielding(weapon: Weapon, attributeId: string | undefined): ResolvedEqui
       attributeId,
       damageType: weaponDamageType(weapon, attributeId),
       requirementMet: true,
+      creatureDamageScale: undefined,
     },
   };
 }
@@ -61,6 +62,7 @@ function foe(id: string, position: Vec2 = vec2(40, 0)) {
   return {
     combatant: makeCombatant({ id, team: 1, health: 1e6, maxHealth: 1e6 }),
     position,
+    creature: undefined,
   };
 }
 
@@ -218,8 +220,12 @@ describe("resolveSwing", () => {
       foe("near", vec2(40, 10)),
       foe("mid", vec2(40, -20)),
       foe("outside", vec2(40, 90)),
-      { combatant: makeCombatant({ id: "ally", team: 0 }), position: vec2(41, 0) },
-      { combatant: scythe, position: vec2(0, 0) },
+      {
+        combatant: makeCombatant({ id: "ally", team: 0 }),
+        position: vec2(41, 0),
+        creature: undefined,
+      },
+      { combatant: scythe, position: vec2(0, 0), creature: undefined },
     ];
     const events = resolveSwing({
       attacker: scythe,
@@ -294,6 +300,7 @@ describe("resolveAttackSkill (ADR-0029)", () => {
       },
       target,
       RULES,
+      "chest",
     );
     expect(events).toEqual([{ kind: "damage", targetId: "t", amount: expected, critical: false }]);
   });
@@ -349,6 +356,7 @@ describe("resolveAttackSkill (ADR-0029)", () => {
         },
         target,
         RULES,
+        "chest",
       );
 
     it("gives Swift Chop 1% armor penetration a rank: 12% at 12", () => {
@@ -410,6 +418,7 @@ describe("resolveAttackSkill (ADR-0029)", () => {
         },
         target,
         RULES,
+        "chest",
       );
     /** A target with +40 armor against `condition`. */
     const armoredVs = (condition: ArmorCondition): Combatant =>
@@ -420,7 +429,7 @@ describe("resolveAttackSkill (ADR-0029)", () => {
         maxHealth: 1e6,
         equipment: {
           ...unarmedResolvedEquipment(RULES.armorReferenceLevel),
-          conditionalArmor: [{ condition, amount: 40 }],
+          conditionalArmor: [{ conditions: [condition], amount: 40 }],
         },
       });
 
@@ -435,8 +444,8 @@ describe("resolveAttackSkill (ADR-0029)", () => {
     });
 
     it("meets armor against elemental damage, not against physical (#759)", () => {
-      const elemental = armoredVs("vs-elemental");
-      const physical = armoredVs("vs-physical");
+      const elemental = armoredVs({ kind: "vs-elemental" });
+      const physical = armoredVs({ kind: "vs-physical" });
       const [vsElemental] = damages(resolve(spearOfLightning, thrower(), [elemental]));
       const [vsPhysical] = damages(resolve(spearOfLightning, thrower(), [physical]));
       expect(vsElemental).toBe(blowOf("lightning", 0.25, elemental));
@@ -483,6 +492,8 @@ describe("resolveAttackSkill (ADR-0029)", () => {
     if (replay.nextFloat() >= criticalChance(weaponSnapshotOf(sword), RULES)) {
       replay.nextInt(WEAPONS.sword.damageMin, WEAPONS.sword.damageMax + 1);
     }
+    // The piece it lands on (#1135).
+    replay.nextFloat();
     expect(rng.getState()).toBe(replay.getState());
   });
 
@@ -698,7 +709,7 @@ describe("block (#534)", () => {
         {
           kind: "damage",
           targetId: "t",
-          amount: mitigate(skillDamage(16, "typeless", 0), target, RULES),
+          amount: mitigate(skillDamage(16, "typeless", 0), target, RULES, null),
           critical: false,
         },
         { kind: "status-applied", targetId: "t", statusId: "deep-wound", durationSeconds: 20 },
@@ -731,8 +742,8 @@ describe("block (#534)", () => {
       for (const target of targets) {
         target.statuses.apply("guardian", 10, "monk");
       }
-      // Block; land with no crit; block.
-      const floats = [0.1, 0.9, 0.9, 0.1];
+      // Block; land with no crit, on the chest or wherever; block.
+      const floats = [0.1, 0.9, 0.9, 0.9, 0.1];
       const rng = Object.assign(createRng(1), {
         nextInt: () => 10,
         nextFloat: () => floats.shift() ?? 0.9,
@@ -784,6 +795,7 @@ describe("critical hits (#533)", () => {
       },
       foe("dummy").combatant,
       RULES,
+      "chest",
     );
 
   it.each([0, 9, 12, 15])("crits at 1%% plus 1.37%% a rank of mastery, at rank %i", (rank) => {
@@ -889,12 +901,12 @@ describe("critical hits (#533)", () => {
 
   it("rolls each blow of a double strike on its own", () => {
     const daggers = attacker(WEAPONS.daggers, "assassin.dagger-mastery");
-    const floats = [0, 0, 0.99];
+    const floats = [0, 0, 0.5, 0.99];
     const rng = Object.assign(createRng(1), {
       nextInt: () => 10,
       nextFloat: () => floats.shift() ?? 0.99,
     });
-    // Double strike, then a crit, then not.
+    // Double strike, then a crit and its hit location, then not.
     expect(swingAt(daggers, rng)).toMatchObject([{ critical: true }, { critical: false }]);
   });
 
@@ -1144,6 +1156,38 @@ describe("daze (#546)", () => {
     throw new Error("no seed blocked");
   });
 
+  it("a landed swing interrupts a trap being set, dazed or not (#1105)", () => {
+    const target = dazedCasting("ranger.barbed-trap", false);
+    const events = swingAt(target, attacker(WEAPONS.sword, "warrior.swordsmanship"));
+    expect(events[0]).toEqual({
+      kind: "interrupted",
+      targetId: "caster",
+      skillId: "ranger.barbed-trap",
+    });
+    expect(target.combatant.cast.rechargeRemaining.has("ranger.barbed-trap")).toBe(true);
+  });
+
+  it("a block does not interrupt a trap being set (#1105)", () => {
+    const sword = attacker(WEAPONS.sword, "warrior.swordsmanship");
+    for (let seed = 1; seed < 20; seed += 1) {
+      const target = dazedCasting("ranger.barbed-trap", false);
+      target.combatant.statuses.apply("guardian", 10, "caster");
+      const events = resolveSwing({
+        attacker: sword,
+        target,
+        surroundings: new Map(),
+        rng: createRng(seed),
+        rules: RULES,
+        exposed: NOWHERE,
+      }).events;
+      if (events[0]?.kind === "attack-blocked") {
+        expect(target.combatant.cast.isCasting).toBe(true);
+        return;
+      }
+    }
+    throw new Error("no seed blocked");
+  });
+
   it("an attack skill's blow interrupts too", () => {
     const target = dazedCasting("elementalist.fireball");
     const chop = getSkill("warrior.swift-chop");
@@ -1218,6 +1262,7 @@ describe("weakness (#762)", () => {
       },
       foe("dummy").combatant,
       RULES,
+      "chest",
     );
 
   const weakened = (who: Combatant): Combatant => {
@@ -1290,19 +1335,37 @@ describe("a caster weapon's element (#761)", () => {
     const resolved = resolveLoadout(
       {
         primaryProfession: "ranger",
+        secondaryProfession: undefined,
         allocatedRanks: new Map(),
-        equipment: { ...defaultEquipmentFor("ranger"), offHand: null, armor: bareArmorSet() },
+        equipment: {
+          weaponSets: [
+            { ...defaultEquipmentFor("ranger").weaponSets[0], offHand: null },
+            null,
+            null,
+            null,
+          ],
+          armor: bareArmorSet(),
+        },
       },
       RULES,
     );
-    return makeCombatant({ id: "ranger", team: 1, equipment: resolved.equipment });
+    return makeCombatant({ id: "ranger", team: 1, equipment: resolved.weaponSets[0].equipment });
   }
 
   /** What one wand bolt linked to `attributeId` does to a Ranger. */
   function boltOnRanger(attributeId: string): number[] {
     const events: CombatEvent[] = [];
     const caster = attacker(WEAPONS.wand, attributeId);
-    landBlow(weaponSnapshotOf(caster), ranger(), PLAIN_BLOW, false, noCrit(), RULES, events);
+    landBlow(
+      weaponSnapshotOf(caster),
+      caster,
+      ranger(),
+      PLAIN_BLOW,
+      false,
+      noCrit(),
+      RULES,
+      events,
+    );
     return damages(events);
   }
 
@@ -1318,6 +1381,7 @@ describe("a caster weapon's element (#761)", () => {
       },
       makeCombatant({ id: "plain", equipment: unarmedResolvedEquipment(armor) }),
       RULES,
+      "chest",
     );
 
   it("a Fire Magic wand meets a Ranger's 100 armor, a Domination wand its 70", () => {
@@ -1378,7 +1442,12 @@ describe("dual attacks (#885)", () => {
     makeCombatant({ id, team, health: 1e6, maxHealth: 1e6 });
 
   const standing = (...placed: [Combatant, Vec2][]): Surroundings =>
-    new Map(placed.map(([combatant, position]) => [combatant.id, { combatant, position }]));
+    new Map(
+      placed.map(([combatant, position]) => [
+        combatant.id,
+        { combatant, position, creature: undefined },
+      ]),
+    );
 
   const damageTo = (events: readonly CombatEvent[], targetId: string): number[] =>
     events.flatMap((event) =>
@@ -1397,6 +1466,7 @@ describe("dual attacks (#885)", () => {
       },
       target,
       RULES,
+      "chest",
     );
 
   it("after an off-hand strikes twice, its bonus on each, and leaves the dual mark", () => {
@@ -1469,7 +1539,7 @@ describe("dual attacks (#885)", () => {
         [ally, vec2(40, -10)],
       ),
     });
-    const splash = mitigate(skillDamage(40, "piercing", 0), near, RULES);
+    const splash = mitigate(skillDamage(40, "piercing", 0), near, RULES, "chest");
     expect(damageTo(events, "near")).toEqual([splash, splash]);
     expect(damageTo(events, "far")).toEqual([]);
     expect(damageTo(events, "ally")).toEqual([]);
@@ -1571,5 +1641,77 @@ describe("dual attacks (#885)", () => {
       ]);
       expect(ready(caster)).toEqual([]);
     });
+  });
+});
+
+describe("a chain attack's state requirement (#1041)", () => {
+  /** A float stream of 0.9: no crit, no block, no blind miss. */
+  const steady = (): SimulationRng =>
+    Object.assign(createRng(1), { nextInt: () => 10, nextFloat: () => 0.9 });
+
+  const fallingSpider = (): Skill => {
+    const skill = getSkill("assassin.falling-spider");
+    if (skill === undefined) {
+      throw new Error("missing assassin.falling-spider");
+    }
+    return skill;
+  };
+
+  function resolve(skill: Skill, caster: Combatant, target: Combatant): CombatEvent[] {
+    return resolveAttackSkill(
+      { skill, caster, targets: [target], rng: steady(), rules: RULES, surroundings: new Map() },
+      NOWHERE,
+      [],
+    );
+  }
+
+  const assassin = (): Combatant => attacker(WEAPONS.daggers, "assassin.dagger-mastery", 12);
+  const victim = (knockedDown: boolean): Combatant => {
+    const target = makeCombatant({ id: "t", team: 1, health: 1e6, maxHealth: 1e6 });
+    target.knockdownRemaining = knockedDown ? 2 : 0;
+    return target;
+  };
+
+  it("unmet, misses out of sequence: no damage, no mark, no effects", () => {
+    const caster = assassin();
+    const target = victim(false);
+    expect(resolve(fallingSpider(), caster, target)).toEqual([
+      { kind: "attack-missed", targetId: "t", reason: "out-of-sequence" },
+    ]);
+    expect(caster.chainMarks.has("t")).toBe(false);
+    expect(target.statuses.has("poison")).toBe(false);
+  });
+
+  it("met, hits with no lead and leaves its off-hand mark", () => {
+    const caster = assassin();
+    const target = victim(true);
+    const events = resolve(fallingSpider(), caster, target);
+    expect(events.some((event) => event.kind === "damage" && event.targetId === "t")).toBe(true);
+    expect(target.statuses.has("poison")).toBe(true);
+    expect(caster.chainMarks.get("t")?.role).toBe("off-hand");
+  });
+
+  it("with `follows` too, either unmet misses", () => {
+    const spider = fallingSpider();
+    const both: Skill = {
+      ...spider,
+      attack: spider.attack && {
+        ...spider.attack,
+        chain: { role: "off-hand", follows: "lead", requires: { kind: "target-knocked-down" } },
+      },
+    };
+    const missed = (lead: boolean, knockedDown: boolean): boolean => {
+      const caster = assassin();
+      const target = victim(knockedDown);
+      if (lead) {
+        caster.chainMarks.set("t", { role: "lead", remainingSeconds: 15 });
+      }
+      return resolve(both, caster, target).some(
+        (event) => event.kind === "attack-missed" && event.reason === "out-of-sequence",
+      );
+    };
+    expect(missed(true, false)).toBe(true);
+    expect(missed(false, true)).toBe(true);
+    expect(missed(true, true)).toBe(false);
   });
 });

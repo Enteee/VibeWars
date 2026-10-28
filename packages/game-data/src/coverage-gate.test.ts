@@ -8,6 +8,7 @@ import {
 } from "@vibewars/game-core";
 
 import { generateSkillBundle } from "./generate.js";
+import { gwSkillDataDir, readGwSkillData } from "./sources/gw-skilldata.js";
 
 /**
  * The coverage gate, run against the *real* committed corpus (brief §9, §29).
@@ -61,5 +62,35 @@ describe("coverage gate against the committed corpus", () => {
         expect(skill.elite, skill.id).toBe(elite);
       }
     }
+  });
+});
+
+describe("every catalog skill against gw-skilldata (#1207)", () => {
+  const corpus = readGwSkillData(gwSkillDataDir());
+
+  it("names the base record of the GW1 skill it is, by its exact name", () => {
+    for (const skill of IMPLEMENTED_SKILLS) {
+      if (skill.gwId !== undefined) {
+        const record = corpus.get(skill.gwId);
+        // A PvP split's own record is never the one: template codes carry the base id.
+        expect({ name: record?.name, pvp: record?.pvp }, skill.id).toEqual({
+          name: skill.name,
+          pvp: false,
+        });
+      }
+    }
+  });
+
+  it("gives no two skills one GW1 id", () => {
+    const ids = IMPLEMENTED_SKILLS.flatMap((skill) =>
+      skill.gwId === undefined ? [] : [skill.gwId],
+    );
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("leaves only this game's own design without one: Vital Transfer", () => {
+    expect(
+      IMPLEMENTED_SKILLS.filter((skill) => skill.gwId === undefined).map((skill) => skill.id),
+    ).toEqual(["necromancer.blood-renewal-lite"]);
   });
 });

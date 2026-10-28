@@ -1,5 +1,18 @@
-import { DEFAULT_MATCH_RULES } from "@vibewars/game-core";
-import { MAX_WIRE_SLOTS, MAX_WIRE_STATUS_INDEX, type WirePlayer } from "@vibewars/game-protocol";
+import {
+  CREATURE_LOOKS,
+  ANNIHILATION_MATCH_RULES,
+  MAX_CREATURES,
+  MAX_GROUND_EFFECTS,
+  PRIEST_ANNIHILATION_MATCH_RULES,
+} from "@vibewars/game-core";
+import {
+  CREATURE_LOOKS as WIRE_CREATURE_LOOKS,
+  MAX_WIRE_CREATURES,
+  MAX_WIRE_GROUND_EFFECTS,
+  MAX_WIRE_SLOTS,
+  MAX_WIRE_STATUS_INDEX,
+  type WirePlayer,
+} from "@vibewars/game-protocol";
 import { afterEach, beforeEach, describe, expect, expectTypeOf, it, vi } from "vitest";
 
 import {
@@ -10,7 +23,15 @@ import {
 } from "./match-client.js";
 import type { PlayerSnapshot } from "./match-connection.js";
 import { MATCH_FULL_MESSAGE, MATCH_OVER_MESSAGE, RECONNECT_WINDOW_SECONDS } from "./match-host.js";
-import { hello, self, settle, startMatch, until } from "./match-harness.test-support.js";
+import {
+  ARENA,
+  hello,
+  helloAs,
+  self,
+  settle,
+  startMatch,
+  until,
+} from "./match-harness.test-support.js";
 import { createMemoryNetwork } from "./memory-transport.js";
 import { WIRE_STATUS_IDS, playerSnapshot, statusFromWire, statusWireIndex } from "./wire.js";
 
@@ -36,6 +57,7 @@ describe("connectMatch", () => {
       parts: 1,
       players: [],
       projectiles: [],
+      groundEffects: [],
     });
     await settle();
     expect(connection.getSnapshot().scoreTeam0).toBe(0);
@@ -62,6 +84,7 @@ describe("connectMatch", () => {
         parts: 1,
         players: [],
         projectiles: [],
+        groundEffects: [],
       },
       transport.selfId,
     );
@@ -111,6 +134,7 @@ describe("connectMatch", () => {
             },
           ],
           projectiles: [],
+          groundEffects: [],
         },
         transport.selfId,
       );
@@ -142,7 +166,7 @@ describe("connectMatch", () => {
     await expect(full.join()).rejects.toThrow(MATCH_FULL_MESSAGE);
 
     const over = startMatch({
-      matchRules: { ...DEFAULT_MATCH_RULES, timeLimitSeconds: 0.1 },
+      matchRules: { ...ANNIHILATION_MATCH_RULES, timeLimitSeconds: 0.1 },
     });
     await over.join();
     await over.step(0.2);
@@ -184,7 +208,9 @@ describe("connectMatch", () => {
   });
 
   it("shows the result once the match ends", async () => {
-    const match = startMatch({ matchRules: { ...DEFAULT_MATCH_RULES, timeLimitSeconds: 0.1 } });
+    const match = startMatch({
+      matchRules: { ...ANNIHILATION_MATCH_RULES, timeLimitSeconds: 0.1 },
+    });
     const { connection } = await match.join();
     await match.step(0.2);
     const snapshot = connection.getSnapshot();
@@ -194,10 +220,10 @@ describe("connectMatch", () => {
 
   it("counts recharges down on the match clock, with no wall time", async () => {
     const match = startMatch();
-    const { connection } = await match.join();
+    const { connection } = await match.join(helloAs("Elementalist/Mesmer"));
     const { connection: foe } = await match.join();
     await match.step(0.05);
-    // The house bar's Armor of Earth is a self-buff: castable at once.
+    // Armor of Earth is a self-buff: castable at once.
     const slot = connection.skillBar.findIndex((s) => s?.id === "elementalist.armor-of-earth");
     expect(slot).toBeGreaterThanOrEqual(0);
     connection.sendIntent({ kind: "use-skill", slot });
@@ -216,8 +242,9 @@ describe("connectMatch", () => {
 describe("the host's own player (createLocalPeer)", () => {
   it("joins, moves, casts and is refused exactly as a remote player is", async () => {
     const match = startMatch();
-    const local = await match.joinLocal();
-    const { connection: remote } = await match.join();
+    // One build for both, so the bars match (#852).
+    const local = await match.joinLocal(helloAs("Warrior/Monk"));
+    const { connection: remote } = await match.join(helloAs("Warrior/Monk"));
     const refusals: string[] = [];
     local.onCastRefused((refusal) => refusals.push(`local:${refusal.reason}`));
     remote.onCastRefused((refusal) => refusals.push(`remote:${refusal.reason}`));
@@ -247,6 +274,30 @@ describe("the host's own player (createLocalPeer)", () => {
     await match.step(0.1);
     expect(local.getSnapshot().players).toEqual(remote.getSnapshot().players);
   });
+
+  it("sees each team's priest on its shrine, owned by nobody, on a Priest Annihilation map (#1186)", async () => {
+    const match = startMatch({
+      map: {
+        ...ARENA,
+        mode: "priest-annihilation",
+        shrines: [
+          { team: 0, position: { x: 300, y: 550 } },
+          { team: 1, position: { x: 800, y: 550 } },
+        ],
+      },
+      matchRules: PRIEST_ANNIHILATION_MATCH_RULES,
+    });
+    const { connection } = await match.join();
+    await match.step(0.1);
+    const priests = connection
+      .getSnapshot()
+      .players.filter((player) => player.creature?.kind === "priest")
+      .map(({ name, team, x, y, creature }) => ({ name, team, x, y, ownerId: creature?.ownerId }));
+    expect(priests).toEqual([
+      { name: "Priest", team: 0, x: 300, y: 550, ownerId: null },
+      { name: "Priest", team: 1, x: 800, y: 550, ownerId: null },
+    ]);
+  });
 });
 
 describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
@@ -273,15 +324,19 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
     primaryProfession: "primaryProfession",
     secondaryProfession: "secondaryProfession",
     dead: "dead",
+    corpseExploited: "corpseExploited",
     castingSkillId: "castingSkillId",
     castRemaining: "castRemaining",
     castTotal: "castTotal",
     swingElapsed: "swingElapsed",
     swingTotal: "swingTotal",
     knockdownRemaining: "knockdownRemaining",
+    invulnerableSeconds: "invulnerableSeconds",
     healthPips: "healthPips",
     energyPips: "energyPips",
     statuses: "statuses",
+    creature: "creature",
+    bot: "bot",
   } as const satisfies Record<keyof WirePlayer, keyof PlayerSnapshot>;
 
   it("have one field for each field of the other", () => {
@@ -313,6 +368,48 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
             : (sent ?? undefined);
       expect(got, wireKey).toEqual(expected);
     }
+  });
+
+  it("keep a creature's owner and kind (#1052)", () => {
+    const creature = {
+      ownerId: "p2",
+      kind: "minion",
+      look: "bone-minion",
+      mode: null,
+      armedAttack: null,
+    } as const;
+    expect(playerSnapshot({ ...WIRE_PLAYER, creature })?.creature).toEqual(creature);
+  });
+
+  it("keep a pet's armed attack, and refuse one that is not a known pet attack (#1167)", () => {
+    const pet = (skillId: string): WirePlayer => ({
+      ...WIRE_PLAYER,
+      creature: {
+        ownerId: "p2",
+        kind: "pet",
+        look: "beast",
+        mode: "fight",
+        armedAttack: { skillId, endsAt: 12.1 },
+      },
+    });
+    expect(playerSnapshot(pet("ranger.brutal-strike"))?.creature?.armedAttack).toEqual({
+      skillId: "ranger.brutal-strike",
+      endsAt: 12.1,
+    });
+    expect(playerSnapshot(pet("ranger.no-such-skill"))).toBeUndefined();
+    expect(playerSnapshot(pet("warrior.swift-chop"))).toBeUndefined();
+  });
+
+  it("hold the wire's creature cap to game-core's (#1052)", () => {
+    expect(MAX_WIRE_CREATURES).toBe(MAX_CREATURES);
+  });
+
+  it("hold the wire's creature looks to game-core's (#1162)", () => {
+    expect(WIRE_CREATURE_LOOKS).toEqual(CREATURE_LOOKS);
+  });
+
+  it("hold the wire's ground-effect cap to game-core's (#1087)", () => {
+    expect(MAX_WIRE_GROUND_EFFECTS).toBe(MAX_GROUND_EFFECTS);
   });
 
   it("map every status to its index and back (#632)", () => {
@@ -354,15 +451,19 @@ const WIRE_PLAYER: WirePlayer = {
   primaryProfession: "monk",
   secondaryProfession: "no-such-profession",
   dead: false,
+  corpseExploited: false,
   castingSkillId: null,
   castRemaining: 0,
   castTotal: 0,
   swingElapsed: 0.5,
   swingTotal: 1.75,
   knockdownRemaining: 0,
+  invulnerableSeconds: 0,
   healthPips: 0,
   energyPips: 0,
+  creature: null,
   statuses: [],
+  bot: false,
 };
 
 /**
@@ -471,7 +572,9 @@ describe("connectMatch, when the host's peer drops", () => {
   });
 
   it("is lost when the host turns the rejoin away because the match is over", async () => {
-    const match = startMatch({ matchRules: { ...DEFAULT_MATCH_RULES, timeLimitSeconds: 0.5 } });
+    const match = startMatch({
+      matchRules: { ...ANNIHILATION_MATCH_RULES, timeLimitSeconds: 0.5 },
+    });
     const { states } = await dropped(match);
 
     await match.step(1);

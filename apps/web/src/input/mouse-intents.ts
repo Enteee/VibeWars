@@ -1,6 +1,6 @@
 import type { Vec2 } from "@vibewars/game-core";
 import type { ClientIntent, PeerCall } from "@vibewars/game-protocol";
-import type { MatchSnapshot } from "@vibewars/game-session";
+import type { CallsSnapshot, MatchSnapshot } from "@vibewars/game-session";
 
 import { actorAtPoint, type ArenaSnapshot } from "../render/arena-snapshot.js";
 import { attackClickIntents } from "./attack-key.js";
@@ -37,14 +37,13 @@ export function secondaryClickIntents(
 
 /** What a wheel click does (#443). */
 export type MiddleClick =
-  | { readonly kind: "call"; readonly call: PeerCall }
-  | { readonly kind: "watch"; readonly allyId: string }
-  | { readonly kind: "none" };
+  { readonly kind: "call"; readonly call: PeerCall } | { readonly kind: "none" };
 
 /**
  * What a wheel click at `world` means, shared by the match and the
  * Training Ground: on a living foe, call it for your team; on a living
- * ally, watch them (or stop); on the ground, ping it. On yourself, on a
+ * ally or the ground, ping that point (#1055: the party window shows
+ * every ally's health, so there is no one to watch). On yourself, on a
  * corpse, or while you are dead: nothing.
  */
 export function middleClickAction(
@@ -56,16 +55,17 @@ export function middleClickAction(
   if (self === undefined || self.dead) {
     return { kind: "none" };
   }
+  const ping: MiddleClick = { kind: "call", call: { kind: "ping", x: world.x, y: world.y } };
   const hit = actorAtPoint(arena, world);
   if (hit === undefined) {
-    return { kind: "call", call: { kind: "ping", x: world.x, y: world.y } };
+    return ping;
   }
   const body = snapshot.players.find((player) => player.sessionId === hit.id);
   if (body === undefined || body.dead || body.sessionId === self.sessionId) {
     return { kind: "none" };
   }
   return body.team === self.team
-    ? { kind: "watch", allyId: body.sessionId }
+    ? ping
     : { kind: "call", call: { kind: "target", targetId: body.sessionId } };
 }
 
@@ -80,6 +80,23 @@ export function callTargetCall(snapshot: MatchSnapshot): PeerCall | undefined {
     return undefined;
   }
   return target.team === self.team ? undefined : { kind: "target", targetId: target.sessionId };
+}
+
+/**
+ * The `target-called` key (#1024): your team's called foe as your target,
+ * as a right click on it would. The host clears a call when its foe
+ * dies, so a call here is a living foe; nothing when there is none or it
+ * is already your target.
+ */
+export function calledTargetIntent(
+  snapshot: MatchSnapshot,
+  calls: CallsSnapshot,
+): ClientIntent | undefined {
+  const self = snapshot.players.find((player) => player.sessionId === snapshot.selfSessionId);
+  const called = calls.target?.targetId;
+  return self === undefined || called === undefined || called === self.targetSessionId
+    ? undefined
+    : { kind: "target", targetSessionId: called };
 }
 
 /** The `ping` key (#443): the ground under the pointer, while you are alive. */

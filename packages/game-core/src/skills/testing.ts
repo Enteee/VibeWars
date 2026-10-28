@@ -36,10 +36,12 @@ export function makeCombatant(overrides: Partial<Combatant> & { id: string }): C
     cast: new CastState(overrides.id, statuses),
     attack: undefined,
     knockdownRemaining: 0,
+    invulnerableRemaining: 0,
     soulReapingTriggers: [],
     nextMaintainSeq: 0,
     chainMarks: new Map(),
     moving: false,
+    controlled: { minion: 0, spirit: 0, pet: 0 },
     // Armor at the reference level, so an unconfigured test combatant
     // takes damage for exactly its stated amount. A test that wants to
     // exercise mitigation says so explicitly.

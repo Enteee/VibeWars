@@ -282,7 +282,7 @@ describe("claudeVerdict", () => {
   it("refuses a missing company credential, with the sign-in command", () => {
     const verdict = claudeVerdict(home(), accounts("co@x.org", "me@x.org"));
     expect(JSON.stringify(verdict)).toContain("not set up");
-    expect(JSON.stringify(verdict)).toContain("CLAUDE_CONFIG_DIR=");
+    expect(JSON.stringify(verdict)).toContain("claude-llc auth claude");
   });
 
   it("refuses an unreadable company account, without echoing output", () => {

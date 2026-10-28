@@ -1,5 +1,12 @@
 import type { SkillBar } from "../build.js";
-import type { ResolvedEquipment, ResolvedLoadout } from "../equipment/resolve.js";
+import { isWeaponSetIndex, type WeaponSetIndex } from "../equipment/loadout.js";
+import {
+  creatureResolvedEquipment,
+  type ResolvedEquipment,
+  type ResolvedLoadout,
+  type ResolvedWeaponSet,
+  type ResolvedWeaponSets,
+} from "../equipment/resolve.js";
 import type { WeaponId } from "../equipment/weapons.js";
 import {
   distanceWithinRange,
@@ -9,7 +16,7 @@ import {
   resolveCircleSegmentCollision,
 } from "../geometry.js";
 import type { Segment } from "../geometry.js";
-import { AREA_ADJACENT, RANGE_COMPASS, RANGE_SPIRIT } from "../distances.js";
+import { AREA_ADJACENT, AREA_EARSHOT, RANGE_COMPASS, RANGE_SPIRIT } from "../distances.js";
 import {
   addKill,
   DEATH_PENALTY_PERCENT,
@@ -21,6 +28,8 @@ import {
   MORALE_CEILING,
   MORALE_FLOOR,
   moraleMaximum,
+  PRIEST_WAVE_SECONDS,
+  SHRINE_INVULNERABLE_SECONDS,
   type MatchOutcome,
   type MatchPhase,
   type MatchRules,
@@ -32,9 +41,11 @@ import { clampInputDirection, integrateMovement } from "../movement.js";
 import {
   buildNavGraph,
   createPathFinder,
+  isStandable,
   nearestStandable,
   type NavGraph,
   type PathFinder,
+  walkIsClear,
 } from "../pathing.js";
 import {
   LEADERSHIP_ATTRIBUTE,
@@ -42,12 +53,15 @@ import {
   SOUL_REAPING_ATTRIBUTE,
   soulReapingEnergy,
   soulReapingTrigger,
+  SPAWNING_POWER_ATTRIBUTE,
+  spawningPowerHealth,
 } from "../primary-attributes.js";
 import { createRng, seedFromString, type SimulationRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1, type Ruleset } from "../ruleset.js";
 import {
   canActivate,
   hasAftercast,
+  isCompanionRule,
   payCost,
   type ActivationCheck,
   type ActivationRejection,
@@ -57,12 +71,22 @@ import {
   adrenalinePools,
   emptyAdrenaline,
   gainStrikes,
+  dropEndedCopyPools,
   gainUnits,
+  losesAllAdrenaline,
 } from "../skills/adrenaline.js";
-import { CastState, type ActiveCast } from "../skills/cast-state.js";
+import {
+  CastState,
+  beginRecharge,
+  resolvedBar,
+  slotSkill,
+  type ActiveCast,
+  type SlotSkill,
+} from "../skills/cast-state.js";
 import { getSkill } from "../skills/catalog.js";
 import { clearChainMarksOn, tickChainMarks } from "../skills/chain.js";
 import {
+  applyDamage,
   applyEffects,
   applySkillEffects,
   applyStatus,
@@ -78,6 +102,7 @@ import {
   ENERGY_PER_PIP,
   isStatusId,
   MAX_PIPS,
+  reducedRecharge,
   scaledStatusDuration,
   STATUS_DEFINITIONS,
   StatusSet,
@@ -86,8 +111,9 @@ import {
   type StatusId,
   type StatusTriggerEvent,
 } from "../skills/status.js";
-import { effectiveMaxEnergy, recoverOvercast } from "../skills/overcast.js";
-import { resolveTargets } from "../skills/targeting.js";
+import { effectiveMaxEnergy, energyFloor, recoverOvercast } from "../skills/overcast.js";
+import { resolveMagnitude } from "../skills/scaling.js";
+import { resolveTargets, spiritsWithin } from "../skills/targeting.js";
 import {
   advanceStatuses,
   effectiveActivationSeconds,
@@ -100,7 +126,19 @@ import {
   upkeepPips,
   type NetPips,
 } from "../skills/tick.js";
-import { isSpell, type Combatant, type Skill } from "../skills/types.js";
+import {
+  isInvulnerable,
+  isSpell,
+  PET_ATTACK_SECONDS,
+  type Combatant,
+  type CorpseRule,
+  type Aura,
+  type CreateGroundEffect,
+  type CreatureTemplate,
+  type GroundAct,
+  type PulseRule,
+  type Skill,
+} from "../skills/types.js";
 import {
   leadAimPoint,
   PositionHistory,
@@ -133,6 +171,8 @@ import {
 import {
   fireChangeTriggers,
   fireTriggers,
+  isEchoSkill,
+  isEchoStatus,
   type FiredTrigger,
   type SpreadGainedCondition,
   type TriggerContext,
@@ -147,7 +187,17 @@ import {
   type ResetPolicy,
 } from "./behaviour.js";
 import type { CombatLogEntry } from "./combat-log.js";
-import { directionAngle, showsBackTo } from "./facing.js";
+import { nearestFreshCorpse } from "./corpses.js";
+import { companionSkills, PET_DEATH_GRACE_SECONDS } from "./companions.js";
+import { MINION_CAP_ATTRIBUTE, minionCap, minionDegenerationPips } from "./minions.js";
+import { directionAngle, showsBackTo, spawnFacing } from "./facing.js";
+import {
+  GUILD_LORD_HEALTH_PIPS,
+  guildLordId,
+  guildLordSpec,
+  type GuildLord,
+} from "./guild-lord.js";
+import { priestId, priestSpec, type Shrine } from "./priest.js";
 import { steerAround } from "./steering.js";
 
 /**
@@ -168,6 +218,156 @@ import { steerAround } from "./steering.js";
  * none: their intents arrive between steps, through `setInputDirection`,
  * `walkTo`, `setTarget`, `requestSkill`, `requestAttack` and `cancelAction`.
  */
+
+/** What kind of non-player body this is (#467); a priest (#1186) and a Guild Lord (#1222) are a map's. */
+export type CreatureKind = "spirit" | "minion" | "pet" | "priest" | "guild-lord";
+
+/**
+ * How a companion fights (#1110, GW1 pet control): game-protocol's
+ * `CompanionMode`, restated (ADR-0001). Guard bites what its owner
+ * attacks, Fight what its owner has selected, Heel nothing.
+ */
+export type CompanionMode = "guard" | "fight" | "heel";
+
+/** What an owner may tell a creature of theirs (#1046): game-protocol's `CreatureOrder`. */
+export interface CreatureOrder {
+  readonly kind: "mode";
+  readonly mode: CompanionMode;
+}
+
+/**
+ * What a creature looks like (#1162): the glyph on its plate. The wire mirrors it as `CREATURE_LOOKS`, a test holding the two.
+ */
+export const CREATURE_LOOKS = [
+  "beast",
+  "bone-minion",
+  "bone-horror",
+  "spirit",
+  "priest",
+  "guild-lord",
+] as const;
+export type CreatureLook = (typeof CREATURE_LOOKS)[number];
+
+/**
+ * A body that is not a player (#1052, ADR-0035): a participant that never
+ * counts for its team and has no seat. A spirit or minion is gone once it
+ * dies or expires; a companion lies where it fell (#1046).
+ */
+export interface Creature {
+  /**
+   * Whoever summoned it, and whom it answers to: it leaves with them.
+   * `undefined`: a map's NPC, as a priest (#1186), which answers to nobody.
+   */
+  readonly ownerId: string | undefined;
+  readonly kind: CreatureKind;
+  /** From the template (#1162): how it is drawn. */
+  readonly look: CreatureLook;
+  /** Shown in the target frame and the name label, e.g. "Bone Minion". */
+  readonly name: string;
+  /** Seconds left before it vanishes; `Infinity`: until it is killed. */
+  expiresInSeconds: number;
+  /** Seconds alive, summed from `dt`: what a minion's rot grows with (#467). */
+  ageSeconds: number;
+  /** The tick it was summoned: the tie-break of a minion cap (#1130). */
+  readonly summonedAtTick: number;
+  /** The skill that summoned it (#1064): one spirit of a skill in range. `undefined`: a map's NPC. */
+  readonly skillId: string | undefined;
+  /** What a spirit projects on whoever is in range (#1064); `undefined`: nothing. */
+  readonly aura: Aura | undefined;
+  /** From the template (#1046): lies as a body when dead, or vanishes. */
+  readonly onDeath: "vanish" | "lie";
+  /** Its owner's bar is disabled this long on its death, read at arrival; 0: never. */
+  readonly ownerDisableSeconds: number;
+  /**
+   * The skill on its owner's bar it travels with (#1046): a companion.
+   * `undefined`: summoned by a cast.
+   */
+  readonly companionSkillId: string | undefined;
+  /**
+   * Its owner's last order (#1110): kept through its death, Comfort Animal
+   * and its owner's respawn. Only a companion takes orders.
+   */
+  mode: CompanionMode;
+}
+
+/** A companion's mode (#1110); `null` for a creature that takes no orders. */
+export function companionMode(creature: Creature): CompanionMode | null {
+  return creature.companionSkillId === undefined ? null : creature.mode;
+}
+
+/**
+ * A creature's own Health pips: a minion's rot (#467), a Guild Lord's
+ * innate regeneration (#1222); 0 for anyone else.
+ */
+function creaturePips(participant: Participant): number {
+  switch (participant.creature?.kind) {
+    case "minion":
+      return minionDegenerationPips(participant.creature.ageSeconds);
+    case "guild-lord":
+      return GUILD_LORD_HEALTH_PIPS;
+    default:
+      return 0;
+  }
+}
+
+/** At most this many creatures in a match at once (#1052): a summon past it makes as many as fit. */
+export const MAX_CREATURES = 32;
+
+/**
+ * A circle on the ground (#1087, ADR-0035): not a body, so nothing can
+ * target, kill or move it. It does `act` from where it was placed until
+ * it ends: a ward projects an aura, a trap waits to be sprung (#1105), a
+ * pulse lands its effects every interval (#1113).
+ * Its owner dying does not end it.
+ */
+export interface GroundEffect {
+  /** From 1, in the order they were placed. */
+  readonly id: number;
+  readonly skillId: string;
+  readonly ownerId: string;
+  /** The owner's, as it was placed. */
+  readonly team: number;
+  readonly position: Vec2;
+  readonly act: GroundAct;
+  /** How long it was placed for. */
+  readonly durationSeconds: number;
+  remainingSeconds: number;
+  /** Pulses it has landed (#1113); 0 for any act but a pulse. */
+  pulsed: number;
+}
+
+/** At most this many ground effects at once (#1087): past it, the oldest ends early. */
+export const MAX_GROUND_EFFECTS = 32;
+
+/** Whether an aura that `affects` this, from a source on `sourceTeam`, reaches a body on `team`. */
+function reaches(affects: Aura["affects"], sourceTeam: number, team: number): boolean {
+  switch (affects) {
+    case "all":
+      return true;
+    case "allies":
+      return team === sourceTeam;
+    case "foes":
+      return team !== sourceTeam;
+  }
+}
+
+/**
+ * Whether `participant` counts for its team (ADR-0035): its roster,
+ * score, morale total and win condition. A creature never does.
+ */
+export function countsForTeam(participant: Participant): boolean {
+  return participant.creature === undefined;
+}
+
+/**
+ * Whether `participant` has morale (#843): a player, and a companion, a
+ * creature that lies when dead (#1133). Keyed on lying, not on pets, so a
+ * hero later gets the same rule. A companion's morale never counts for
+ * its team.
+ */
+function hasMorale(participant: Participant): boolean {
+  return participant.creature === undefined || participant.creature.onDeath === "lie";
+}
 
 export interface ParticipantSpec {
   readonly id: string;
@@ -190,6 +390,47 @@ export interface ParticipantSpec {
   readonly behaviour?: Behaviour | undefined;
   /** Omitted: `never`. Death then follows the match rules' respawn. */
   readonly reset?: ResetPolicy | undefined;
+  /** Omitted: a player or a training dummy, not a creature (#1052). */
+  readonly creature?: Creature | undefined;
+  /**
+   * Sets 2-4 (#489), `null` where empty; `equipment` and `maxEnergy`
+   * are set 1, in hand at the start. Omitted: none, as dummies,
+   * creatures and the headless runner carry.
+   */
+  readonly spareWeaponSets?: readonly [
+    ResolvedWeaponSet | null,
+    ResolvedWeaponSet | null,
+    ResolvedWeaponSet | null,
+  ];
+}
+
+/** What `requestWeaponSet` did (#489). */
+export type WeaponSetRequest =
+  | { readonly kind: "swapped" }
+  | { readonly kind: "queued" }
+  /** The active set's key: nothing to do, and a queued swap is dropped. */
+  | { readonly kind: "kept" }
+  | { readonly kind: "refused"; readonly reason: "dead" | "empty-set" | "no-such-set" };
+
+/**
+ * The loadout's half of a participant spec, so every caller turns a
+ * loadout into one the same way: set 1 in hand, the others spare (#489).
+ */
+export function loadoutSpec(
+  loadout: ResolvedLoadout,
+): Pick<
+  ParticipantSpec,
+  "attributeRanks" | "equipment" | "maxHealth" | "maxEnergy" | "baseEnergyPips" | "spareWeaponSets"
+> {
+  const [set1, set2, set3, set4] = loadout.weaponSets;
+  return {
+    attributeRanks: loadout.attributeRanks,
+    equipment: set1.equipment,
+    maxHealth: loadout.maxHealth,
+    maxEnergy: set1.maxEnergy,
+    baseEnergyPips: loadout.baseEnergyPips,
+    spareWeaponSets: [set2, set3, set4],
+  };
 }
 
 export interface Participant {
@@ -225,6 +466,25 @@ export interface Participant {
    * the target of a foe's as it began. What natural regeneration waits on.
    */
   readonly outOfCombatSeconds: number;
+  /** `undefined`: a player or a training dummy (#1052). */
+  readonly creature: Creature | undefined;
+  /** Every carried set, set 1 first (#489, ADR-0036). */
+  readonly weaponSets: ResolvedWeaponSets;
+  /** The set in hand: `combatant.equipment` is `weaponSets[activeWeaponSet].equipment`. */
+  readonly activeWeaponSet: WeaponSetIndex;
+  /** A swap waiting for the cast, aftercast, swing or knockdown to end; `undefined` for none. */
+  readonly pendingWeaponSet: WeaponSetIndex | undefined;
+  /**
+   * Its corpse was exploited (#466): false while alive, and false for a
+   * corpse no skill has used yet. Cleared by every way back to life.
+   */
+  readonly corpseExploited: boolean;
+  /**
+   * A companion's next blow, armed by its owner's pet attack (#1046):
+   * the skill, and how long it waits. `undefined`: a plain blow. Shown on
+   * the pet's party-window row (#1167).
+   */
+  readonly armedAttack: { readonly skillId: string; readonly remainingSeconds: number } | undefined;
 }
 
 /** A skill walking in to its target (#499). */
@@ -253,6 +513,18 @@ export interface MatchSimulationOptions {
    */
   readonly bounds?: { readonly width: number; readonly height: number } | undefined;
   readonly participants?: readonly ParticipantSpec[];
+  /**
+   * Priest Annihilation's shrines (#1186): a priest of each one's team
+   * stands on it from the start, and the team's dead come back there.
+   * Omitted or `[]`: no priests.
+   */
+  readonly shrines?: readonly Shrine[];
+  /**
+   * The Guild Battle's Guild Lords (#1222): each stands at its post from
+   * the start, and in that mode the shrines raise with no priest.
+   * Omitted or `[]`: none.
+   */
+  readonly guildLords?: readonly GuildLord[];
 }
 
 export interface StepResult {
@@ -281,7 +553,8 @@ interface ParticipantRecord extends Participant {
   skillBar: SkillBar;
   readonly spec: ParticipantSpec;
   readonly behaviour: Behaviour | undefined;
-  readonly cursor: BehaviourCursor;
+  /** Fresh on a respawn: a bot back from the dead starts its thinking over (#1189). */
+  cursor: BehaviourCursor;
   /** `on-interval`: seconds since the last reset. */
   sinceReset: number;
   outOfCombatSeconds: number;
@@ -294,6 +567,17 @@ interface ParticipantRecord extends Participant {
   /** Whether `walkGoal` is settled: pulled onto a spot a body fits on, with a way there. */
   walkSettled: boolean;
   /**
+   * Where its behaviour walks it by path (#1153), a creature to its owner,
+   * passing `passing`'s body; `undefined` when it does not. Asked anew
+   * every tick.
+   */
+  followGoal: { readonly point: Vec2; readonly passing: string | undefined } | undefined;
+  /**
+   * The way an approach, a walk or a follow last planned (#1157), to
+   * `goal`; `undefined` until one is asked for, and once its order ends.
+   */
+  route: { goal: Vec2; waypoints: Vec2[] } | undefined;
+  /**
    * Maximum health and energy before morale (#843): the participant's,
    * or its loadout's since the last `rearm`.
    */
@@ -301,6 +585,11 @@ interface ParticipantRecord extends Participant {
   resolvedMaxEnergy: number;
   /** Match time of the last resurrection (#812); `-Infinity` for none. */
   resurrectedAtSeconds: number;
+  weaponSets: ResolvedWeaponSets;
+  activeWeaponSet: WeaponSetIndex;
+  pendingWeaponSet: WeaponSetIndex | undefined;
+  corpseExploited: boolean;
+  armedAttack: { readonly skillId: string; remainingSeconds: number } | undefined;
 }
 
 /**
@@ -327,7 +616,8 @@ function degenerationSources(combatant: Combatant): {
     } else if (
       definition.healthPips > 0 ||
       definition.healthPipsPerEnchantment !== undefined ||
-      definition.healthPerSecondWhileMoving > 0
+      definition.healthPerSecondWhileMoving > 0 ||
+      definition.healthPerSecond > 0
     ) {
       healing.add(status.sourceId);
     }
@@ -343,6 +633,9 @@ const SWING_EPSILON = 1e-9;
 /** How close to zero a knockdown may be and count as over: 4 s in 0.05 s ticks leaves a float crumb. */
 const KNOCKDOWN_EPSILON = 1e-9;
 
+/** What a use of a skill spares when that skill put nothing on its own user (#999). */
+const NONE_SPARED: ReadonlySet<StatusId> = new Set();
+
 /** At most this many push-out passes per move; see `advanceMovement`. */
 const MOVEMENT_RELAX_PASSES = 4;
 
@@ -353,9 +646,9 @@ const MOVEMENT_RELAX_PASSES = 4;
  */
 const UPKEEP_RANGE_GRACE_SECONDS = 5;
 
-/** How deep a body of `radius` at `position` is inside a living body of the same radius at `other`. */
-function penetration(position: Vec2, other: Vec2, radius: number): number {
-  return Math.max(0, 2 * radius - distance(position, other));
+/** How deep a body at `position` is inside a living body at `other`, their radii summing to `reach`. */
+function penetration(position: Vec2, other: Vec2, reach: number): number {
+  return Math.max(0, reach - distance(position, other));
 }
 
 /**
@@ -369,6 +662,9 @@ const STALL_FRACTION = 0.1;
 /** A walk this close to its goal has arrived (#310). */
 const ARRIVE_UNITS = 1;
 
+/** Replan once the goal is this far from the one the route was planned to (#1157): a body width. */
+export const REPLAN_GOAL_UNITS = 28;
+
 /**
  * Refusals that mean the target is gone, or no longer one the skill can be
  * used on: a skill walking in to it is dropped (#499). Any other waits for
@@ -376,6 +672,8 @@ const ARRIVE_UNITS = 1;
  */
 const TARGET_REJECTIONS: ReadonlySet<ActivationRejection> = new Set([
   "no-target",
+  "no-companion",
+  "invalid-target-creature",
   "invalid-target-dead",
   "invalid-target-alive",
   "invalid-target-self",
@@ -431,6 +729,8 @@ export class MatchSimulation {
    * still in the standing, wiped, rather than gone.
    */
   readonly #teams = new Set<number>();
+  /** Each team's called foe (#443), which its bots fight (#1193). */
+  readonly #calledTargets = new Map<number, string>();
   #projectiles: Projectile[] = [];
   #nextProjectileId = 1;
 
@@ -461,6 +761,31 @@ export class MatchSimulation {
    * here, so being put back is not walking.
    */
   #stepStart = new Map<string, Vec2>();
+  /** The `n` of the next creature's id, `<ownerId>/c<n>` (#1052). */
+  #nextCreature = 1;
+  /**
+   * Creatures that died or expired this step (#1052), in that order:
+   * removed once, at its end, never mid-loop.
+   */
+  readonly #leaving = new Set<string>();
+  /** Priest Annihilation's shrines (#1186), one a team; `[]` for every other match. */
+  readonly #shrines: readonly Shrine[];
+  /** Priest waves gone by (#1186): the next is at `PRIEST_WAVE_SECONDS` times one more. */
+  #priestWaves = 0;
+  /** The teams with a Guild Lord in the match (#1222), dead or alive. */
+  readonly #guildLordTeams: ReadonlySet<number>;
+  /** Damage each team dealt to a foe's Guild Lord (#1222), after armor. */
+  readonly #aggression = new Map<number, number>();
+  /** Every ground effect in the match (#1087), in id order. */
+  #groundEffects: GroundEffect[] = [];
+  /** The id of the next ground effect placed (#1087). */
+  #nextGroundEffect = 1;
+  /**
+   * Whether the last aura pass found a spirit or a ground effect (#1064,
+   * #1087): with none now and none then, nobody wears an aura and the
+   * pass has nothing to do.
+   */
+  #auras = false;
 
   public constructor(options: MatchSimulationOptions) {
     this.#ruleset = options.ruleset ?? MINIMAL_GW_INSPIRED_PVP_V1;
@@ -474,6 +799,38 @@ export class MatchSimulation {
     );
     for (const spec of options.participants ?? []) {
       this.add(spec);
+    }
+    this.#shrines = options.shrines ?? [];
+    const shrinePositions = this.#shrines.map((shrine) => shrine.position);
+    // A Guild Battle's shrines raise on their own: no priest stands on one.
+    for (const shrine of this.#shrinesRaiseAlone() ? [] : this.#shrines) {
+      const foes = this.#shrines.filter((other) => other.team !== shrine.team);
+      this.add(
+        priestSpec(
+          shrine,
+          spawnFacing(
+            shrine.position,
+            foes.map((other) => other.position),
+            shrinePositions,
+          ),
+        ),
+      );
+    }
+    const lords = options.guildLords ?? [];
+    this.#guildLordTeams = new Set(lords.map((lord) => lord.team));
+    const lordPositions = lords.map((lord) => lord.position);
+    for (const lord of lords) {
+      const foes = lords.filter((other) => other.team !== lord.team);
+      this.add(
+        guildLordSpec(
+          lord,
+          spawnFacing(
+            lord.position,
+            foes.map((other) => other.position),
+            lordPositions,
+          ),
+        ),
+      );
     }
   }
 
@@ -503,18 +860,38 @@ export class MatchSimulation {
     return this.#projectiles;
   }
 
+  /** Every ground effect in the match (#1087), in id order. */
+  public get groundEffects(): readonly Readonly<GroundEffect>[] {
+    return this.#groundEffects;
+  }
+
+  /** Damage `team` has dealt to a foe's Guild Lord so far (#1222), after armor. */
+  public aggression(team: number): number {
+    return this.#aggression.get(team) ?? 0;
+  }
+
   public get(id: string): Participant | undefined {
     return this.#participants.get(id);
   }
 
   /** A participant's net pips as they stand (#504): what the next tick applies, natural regeneration included. */
   public pips(participant: Participant): NetPips {
-    const { combatant, outOfCombatSeconds } = participant;
     return netPips(
-      combatant,
-      naturalHealthPips(combatant, outOfCombatSeconds, this.#ruleset.resources),
+      participant.combatant,
+      this.#naturalPips(participant) + creaturePips(participant),
       this.#upkeep(participant.id),
     );
+  }
+
+  /** Natural regeneration as it stands: none for a minion (#467), which only rots. */
+  #naturalPips(participant: Participant): number {
+    return participant.creature?.kind === "minion"
+      ? 0
+      : naturalHealthPips(
+          participant.combatant,
+          participant.outOfCombatSeconds,
+          this.#ruleset.resources,
+        );
   }
 
   public participants(): IterableIterator<Participant> {
@@ -557,24 +934,515 @@ export class MatchSimulation {
       walkStalledSeconds: 0,
       walkLeast: Number.POSITIVE_INFINITY,
       walkSettled: false,
+      followGoal: undefined,
+      route: undefined,
       resolvedMaxHealth: spec.maxHealth ?? this.#ruleset.combat.baseHealth,
       resolvedMaxEnergy: spec.maxEnergy ?? this.#ruleset.combat.baseEnergy,
       resurrectedAtSeconds: Number.NEGATIVE_INFINITY,
+      creature: spec.creature === undefined ? undefined : { ...spec.creature },
+      weaponSets: this.#weaponSets(spec),
+      activeWeaponSet: 0,
+      pendingWeaponSet: undefined,
+      corpseExploited: false,
+      armedAttack: undefined,
     };
     this.#participants.set(spec.id, record);
-    this.#teams.add(spec.team);
+    if (countsForTeam(record)) {
+      this.#teams.add(spec.team);
+    }
+    // A companion arrives with its owner, right after it (#1046), so the
+    // order and the ids are the same every run.
+    if (spec.creature === undefined) {
+      for (const skill of companionSkills(spec.skillBar)) {
+        this.#summon(record, skill.id, skill.companion, 1, record.position, true);
+      }
+    }
     return record;
   }
 
-  /** Remove a participant and every target that pointed at them. */
+  /**
+   * Remove a participant, the creatures it owns (#1052), and every target
+   * that pointed at any of them.
+   */
   public remove(id: string): void {
-    this.#participants.delete(id);
-    this.#stepStart.delete(id);
+    const leaving = new Set([id]);
+    for (const record of this.#participants.values()) {
+      if (record.creature?.ownerId === id) {
+        leaving.add(record.id);
+      }
+    }
+    for (const gone of leaving) {
+      this.#participants.delete(gone);
+      this.#stepStart.delete(gone);
+      this.#leaving.delete(gone);
+    }
     for (const other of this.#participants.values()) {
-      if (other.targetId === id) {
+      if (other.targetId !== undefined && leaving.has(other.targetId)) {
         other.targetId = undefined;
       }
     }
+  }
+
+  /**
+   * `count` creatures of `template` at `at`, facing as `owner` does, on its
+   * team (#1052): as many as `MAX_CREATURES` leaves room for. Added to the
+   * end of the match, so they act from this very tick, after everyone
+   * already there.
+   *
+   * Minions past their master's cap (#467) die first, weakest first, so the
+   * slots they free are free for the new ones. Each is a death: Soul
+   * Reaping answers it, and the log names the summoning skill.
+   *
+   * A spirit made ends every allied spirit of the same `skillId` within
+   * the new one's aura radius (#1064): it leaves at the end of the step, as an
+   * expiry, so nobody scores. A foe's lives on.
+   *
+   * `companion`: it travels with `skillId` on the owner's bar (#1046),
+   * rather than coming from a cast.
+   */
+  #summon(
+    owner: ParticipantRecord,
+    skillId: string,
+    template: CreatureTemplate,
+    count: number,
+    at: Vec2,
+    companion: boolean,
+  ): void {
+    if (template.kind === "minion") {
+      this.#cullMinions(owner, skillId, count);
+    }
+    let creatures = 0;
+    for (const record of this.#participants.values()) {
+      if (record.creature !== undefined && !this.#leaving.has(record.id)) {
+        creatures += 1;
+      }
+    }
+    const fits = Math.max(0, Math.min(count, MAX_CREATURES - creatures));
+    const radius = template.aura?.radius;
+    if (fits > 0 && radius !== undefined) {
+      for (const record of this.#participants.values()) {
+        if (
+          record.creature?.kind === "spirit" &&
+          record.creature.skillId === skillId &&
+          record.combatant.team === owner.combatant.team &&
+          !record.combatant.dead &&
+          distance(record.position, owner.position) <= radius
+        ) {
+          this.#leaving.add(record.id);
+        }
+      }
+    }
+    for (let i = 0; i < fits; i += 1) {
+      const id = `${owner.id}/c${String(this.#nextCreature)}`;
+      this.#nextCreature += 1;
+      this.add({
+        id,
+        team: owner.combatant.team,
+        skillBar: [],
+        // The summoner's rank, read once (#467): the creature's weapon mastery.
+        attributeRanks:
+          template.attack === undefined
+            ? new Map()
+            : new Map([
+                [template.attack.attributeId, rankOf(owner.combatant, template.attack.attributeId)],
+              ]),
+        equipment: creatureResolvedEquipment(
+          resolveMagnitude(template.armor, owner.combatant),
+          template.attack,
+          template.attack === undefined ? 0 : rankOf(owner.combatant, template.attack.attributeId),
+        ),
+        spawn: at,
+        facing: owner.facing,
+        // Spawning Power is the summoner's (#1098), for what they create: spirits
+        // and minions. A pet is charmed, not created, and is not on the wiki's
+        // list (#1144).
+        maxHealth:
+          template.kind === "pet"
+            ? resolveMagnitude(template.maxHealth, owner.combatant)
+            : spawningPowerHealth(
+                rankOf(owner.combatant, SPAWNING_POWER_ATTRIBUTE),
+                resolveMagnitude(template.maxHealth, owner.combatant),
+              ),
+        maxEnergy: 0,
+        baseEnergyPips: 0,
+        behaviour: template.behaviour,
+        creature: {
+          ownerId: owner.id,
+          kind: template.kind,
+          look: template.look,
+          name: template.name,
+          expiresInSeconds:
+            template.durationSeconds === undefined
+              ? Number.POSITIVE_INFINITY
+              : resolveMagnitude(template.durationSeconds, owner.combatant),
+          ageSeconds: 0,
+          summonedAtTick: this.#tick,
+          skillId,
+          aura: template.aura,
+          onDeath: template.onDeath,
+          ownerDisableSeconds:
+            template.ownerDisableOnDeath === undefined
+              ? 0
+              : resolveMagnitude(template.ownerDisableOnDeath, owner.combatant),
+          companionSkillId: companion ? skillId : undefined,
+          mode: "guard",
+        },
+      });
+    }
+  }
+
+  /**
+   * Kills `owner`'s weakest minions until `count` more fit under its cap
+   * (#467, #1130, GW1): the cap is `minionCap` of its Death Magic as it
+   * raises. Weakest is the least Health left, absolute, not a share of
+   * its max; ties go to the oldest, then to match order, which is summon
+   * order.
+   */
+  #cullMinions(owner: ParticipantRecord, skillId: string, count: number): void {
+    const cap = minionCap(rankOf(owner.combatant, MINION_CAP_ATTRIBUTE));
+    const mine = [...this.#participants.values()].flatMap((record) =>
+      record.creature?.kind === "minion" &&
+      record.creature.ownerId === owner.id &&
+      !record.combatant.dead &&
+      !this.#leaving.has(record.id)
+        ? [{ record, summonedAtTick: record.creature.summonedAtTick }]
+        : [],
+    );
+    const excess = mine.length + count - cap;
+    if (excess <= 0) {
+      return;
+    }
+    // A stable sort: equal Health and tick keep match order.
+    mine.sort(
+      (a, b) =>
+        a.record.combatant.health - b.record.combatant.health ||
+        a.summonedAtTick - b.summonedAtTick,
+    );
+    const events: CombatEvent[] = mine.slice(0, excess).map(({ record }) => {
+      record.combatant.health = 0;
+      record.combatant.dead = true;
+      return { kind: "death", targetId: record.id };
+    });
+    this.#log.push({
+      tick: this.#tick,
+      atSeconds: this.#elapsedSeconds,
+      cause: "skill",
+      sourceId: owner.id,
+      skillId,
+      weaponId: undefined,
+      attributeId: undefined,
+      area: undefined,
+      doubleStrike: false,
+      events,
+    });
+    this.#recordDeaths(events);
+  }
+
+  /**
+   * A ground effect left at `position`, on `owner`'s team (#1087). Past
+   * `MAX_GROUND_EFFECTS`, the oldest ends now: a ward always lands.
+   */
+  #placeGroundEffect(
+    owner: ParticipantRecord,
+    skillId: string,
+    effect: CreateGroundEffect,
+    position: Vec2,
+  ): void {
+    this.#addGroundEffect({
+      skillId,
+      ownerId: owner.id,
+      team: owner.combatant.team,
+      position,
+      act: effect.act,
+      durationSeconds: resolveMagnitude(effect.durationSeconds, owner.combatant),
+      pulsed: 0,
+    });
+  }
+
+  /** `effect`, numbered and with its whole time left; past the cap, the oldest ends now. */
+  #addGroundEffect(effect: Omit<GroundEffect, "id" | "remainingSeconds">): void {
+    this.#groundEffects.push({
+      ...effect,
+      id: this.#nextGroundEffect,
+      remainingSeconds: effect.durationSeconds,
+    });
+    this.#nextGroundEffect += 1;
+    if (this.#groundEffects.length > MAX_GROUND_EFFECTS) {
+      this.#groundEffects.shift();
+    }
+  }
+
+  /**
+   * Where a ground effect `owner` leaves lands (#1104): where it stands,
+   * where the corpse its skill exploited lies, or where its target stands
+   * (#1113), as they are now. A well or a symbol does not follow a body
+   * that later moves, stands up or respawns. Nowhere, when a target
+   * anchor has no target.
+   */
+  #groundAnchor(
+    owner: ParticipantRecord,
+    effect: CreateGroundEffect,
+    corpse: ParticipantRecord | undefined,
+    primary: ParticipantRecord | undefined,
+  ): Vec2 | undefined {
+    switch (effect.anchor) {
+      case "caster":
+        return owner.position;
+      case "corpse":
+        // A corpse skill with no corpse never resolves, so this is a bug.
+        if (corpse === undefined) {
+          throw new Error(`${owner.id}: a corpse-anchored ground effect with no corpse`);
+        }
+        return corpse.position;
+      case "target":
+        return primary?.position;
+    }
+  }
+
+  /**
+   * Every ground effect counts down `dt` (#1087); one at zero is gone,
+   * except a trap that springs as its time runs out (#1113): this step's
+   * `#springTraps` springs it.
+   */
+  #advanceGroundEffects(dt: number): void {
+    if (this.#groundEffects.length === 0) {
+      return;
+    }
+    for (const effect of this.#groundEffects) {
+      effect.remainingSeconds -= dt;
+    }
+    this.#groundEffects = this.#groundEffects.filter(
+      (effect) =>
+        effect.remainingSeconds > 0 || (effect.act.kind === "trap" && effect.act.trap.springsAtEnd),
+    );
+  }
+
+  /**
+   * Every trap a living foe stands on springs (#1105), once everyone has
+   * moved this step, in id order, as does one whose time ran out if it
+   * springs at its end (#1113). Its first pulse lands at once from its
+   * owner, alive or dead, and it is gone; with more pulses to come, a
+   * pulse effect takes its place, which everyone sees. A foe is a body of
+   * another team that is not a spirit, its centre within the trigger
+   * radius; walls do not matter. A trap whose owner has left the match is
+   * gone with no effect.
+   */
+  #springTraps(): void {
+    if (!this.#groundEffects.some((effect) => effect.act.kind === "trap")) {
+      return;
+    }
+    const sprung = new Set<number>();
+    const pulsing: GroundEffect[] = [];
+    for (const effect of this.#groundEffects) {
+      if (effect.act.kind !== "trap") {
+        continue;
+      }
+      const owner = this.#participants.get(effect.ownerId);
+      if (owner === undefined) {
+        sprung.add(effect.id);
+        continue;
+      }
+      const { trap } = effect.act;
+      const triggered =
+        (trap.springsAtEnd && effect.remainingSeconds <= 0) ||
+        [...this.#participants.values()].some(
+          (body) =>
+            !body.combatant.dead &&
+            body.creature?.kind !== "spirit" &&
+            body.combatant.team !== effect.team &&
+            distance(body.position, effect.position) <= trap.triggerRadius,
+        );
+      if (!triggered) {
+        continue;
+      }
+      sprung.add(effect.id);
+      this.#landPulse(owner, effect.skillId, effect.position, trap.spring);
+      if (trap.spring.count > 1) {
+        pulsing.push(effect);
+      }
+    }
+    if (sprung.size > 0) {
+      this.#groundEffects = this.#groundEffects.filter((effect) => !sprung.has(effect.id));
+    }
+    for (const trap of pulsing) {
+      if (trap.act.kind !== "trap") {
+        continue;
+      }
+      const { spring } = trap.act.trap;
+      this.#addGroundEffect({
+        skillId: trap.skillId,
+        ownerId: trap.ownerId,
+        team: trap.team,
+        position: trap.position,
+        act: { kind: "pulse", pulse: spring },
+        durationSeconds: spring.count * spring.everySeconds,
+        pulsed: 1,
+      });
+    }
+  }
+
+  /**
+   * Every pulse effect whose next pulse is due lands it (#1113), after
+   * traps spring, in id order: at most one each a step, the first the step
+   * it was placed, then one every interval of its age. One whose owner
+   * has left the match is gone with no effect.
+   */
+  #pulseGroundEffects(): void {
+    if (!this.#groundEffects.some((effect) => effect.act.kind === "pulse")) {
+      return;
+    }
+    const gone = new Set<number>();
+    for (const effect of this.#groundEffects) {
+      if (effect.act.kind !== "pulse") {
+        continue;
+      }
+      const owner = this.#participants.get(effect.ownerId);
+      if (owner === undefined) {
+        gone.add(effect.id);
+        continue;
+      }
+      const { pulse } = effect.act;
+      const age = effect.durationSeconds - effect.remainingSeconds;
+      if (
+        effect.pulsed >= pulse.count ||
+        age < effect.pulsed * pulse.everySeconds - SWING_EPSILON
+      ) {
+        continue;
+      }
+      effect.pulsed += 1;
+      this.#landPulse(owner, effect.skillId, effect.position, pulse);
+    }
+    if (gone.size > 0) {
+      this.#groundEffects = this.#groundEffects.filter((effect) => !gone.has(effect.id));
+    }
+  }
+
+  /**
+   * One pulse of `rule` at `position` (#1113): its effects land from
+   * `owner` on whoever its area takes there, in line of sight of it, and
+   * it is logged as a cast is, even when it hits nobody.
+   */
+  #landPulse(owner: ParticipantRecord, skillId: string, position: Vec2, rule: PulseRule): void {
+    const skill = getSkill(skillId);
+    if (skill === undefined) {
+      return;
+    }
+    const pulsing = { ...skill, area: rule.area, effects: rule.effects };
+    const { events } = resolveSkillEffects({
+      skill: pulsing,
+      caster: owner.combatant,
+      targets: resolveTargets({
+        skill: pulsing,
+        caster: owner.combatant,
+        casterPosition: position,
+        primary: undefined,
+        candidates: [...this.#participants.values()],
+        losBlockers: this.#walls,
+      }),
+      rng: this.#rng,
+      rules: this.#ruleset.combat,
+      surroundings: this.#participants,
+    });
+    this.#log.push({
+      tick: this.#tick,
+      atSeconds: this.#elapsedSeconds,
+      cause: "skill",
+      sourceId: owner.id,
+      skillId,
+      weaponId: undefined,
+      attributeId: undefined,
+      area: { x: position.x, y: position.y, radius: rule.area.radius },
+      doubleStrike: false,
+      events,
+    });
+    this.#chargeFromDamage(owner.combatant, events);
+    this.#recordDeaths(events);
+    this.#recordKnockdowns(events);
+  }
+
+  /**
+   * What every living spirit and every ground effect projects (#1064,
+   * #1087), settled once a step before anyone acts, so a hit this step
+   * sees this step's auras. Every living body that is not a spirit wears
+   * an aura's status exactly while some source with it, on a side it
+   * reaches, stands within its radius; one worn from two sources is worn
+   * once, named for the first. A source gone since the last step is gone
+   * from everyone now: one step late at worst. Spirits in the order they
+   * were summoned, then ground effects in id order; bodies in match order.
+   * One pass for both, as a second would strip what the first projected.
+   */
+  #projectAuras(): void {
+    const sources: {
+      readonly sourceId: string;
+      readonly team: number;
+      readonly position: Vec2;
+      readonly aura: Aura;
+    }[] = [];
+    for (const record of this.#participants.values()) {
+      const aura = record.creature?.aura;
+      if (aura !== undefined && !record.combatant.dead) {
+        sources.push({
+          sourceId: record.id,
+          team: record.combatant.team,
+          position: record.position,
+          aura,
+        });
+      }
+    }
+    // A ward's status names its owner: whoever cast it. A trap projects nothing.
+    for (const effect of this.#groundEffects) {
+      if (effect.act.kind === "aura") {
+        sources.push({
+          sourceId: effect.ownerId,
+          team: effect.team,
+          position: effect.position,
+          aura: effect.act.aura,
+        });
+      }
+    }
+    if (sources.length === 0 && !this.#auras) {
+      return;
+    }
+    this.#auras = sources.length > 0;
+    for (const body of this.#participants.values()) {
+      if (body.combatant.dead || body.creature?.kind === "spirit") {
+        continue;
+      }
+      const wears = new Map<StatusId, string>();
+      for (const { sourceId, team, position, aura } of sources) {
+        if (
+          !wears.has(aura.statusId) &&
+          reaches(aura.affects, team, body.combatant.team) &&
+          distance(position, body.position) <= aura.radius
+        ) {
+          wears.set(aura.statusId, sourceId);
+        }
+      }
+      const { statuses } = body.combatant;
+      for (const status of statuses.active) {
+        if (status.projected && !wears.has(status.id)) {
+          statuses.remove(status.id);
+        }
+      }
+      for (const [statusId, sourceId] of wears) {
+        statuses.project(statusId, sourceId);
+      }
+    }
+  }
+
+  /** A body's radius (#1052): a creature's is smaller than a player's. */
+  #radiusOf(participant: Participant): number {
+    return participant.creature === undefined
+      ? this.#ruleset.collision.playerRadius
+      : this.#ruleset.collision.creatureRadius;
+  }
+
+  /** Every creature that died or expired this step leaves, in that order (#1052). */
+  #removeLeaving(): void {
+    for (const id of [...this.#leaving]) {
+      this.remove(id);
+    }
+    this.#leaving.clear();
   }
 
   /**
@@ -594,23 +1462,120 @@ export class MatchSimulation {
     }
     const before = record.combatant;
     const fraction = before.maxHealth > 0 ? before.health / before.maxHealth : 0;
-    record.combatant = this.#combatant({
-      ...record.spec,
-      skillBar,
-      attributeRanks: loadout.attributeRanks,
-      equipment: loadout.equipment,
-      maxHealth: loadout.maxHealth,
-      maxEnergy: loadout.maxEnergy,
-      baseEnergyPips: loadout.baseEnergyPips,
-    });
+    const spec: ParticipantSpec = { ...record.spec, skillBar, ...loadoutSpec(loadout) };
+    record.combatant = this.#combatant(spec);
     record.resolvedMaxHealth = loadout.maxHealth;
-    record.resolvedMaxEnergy = loadout.maxEnergy;
+    record.resolvedMaxEnergy = loadout.weaponSets[0].maxEnergy;
+    // Back to set 1, as a fresh build starts (#489).
+    record.weaponSets = this.#weaponSets(spec);
+    record.activeWeaponSet = 0;
+    record.pendingWeaponSet = undefined;
     this.#setMorale(record, before.morale);
     record.combatant.health = record.combatant.maxHealth * fraction;
     record.combatant.dead = before.dead;
     record.combatant.soulReapingTriggers = before.soulReapingTriggers;
     record.skillBar = skillBar;
     record.pendingSkill = undefined;
+    this.#rearmCompanions(record);
+  }
+
+  /**
+   * A bar that keeps a companion's skill keeps the companion as it is,
+   * alive or dead; one that drops it sends it away; one that gains it
+   * brings a fresh one beside its owner (#1046).
+   */
+  #rearmCompanions(record: ParticipantRecord): void {
+    if (record.creature !== undefined) {
+      return;
+    }
+    const wanted = companionSkills(record.skillBar);
+    for (const other of [...this.#participants.values()]) {
+      const skillId = other.creature?.companionSkillId;
+      if (
+        other.creature?.ownerId === record.id &&
+        skillId !== undefined &&
+        !wanted.some((skill) => skill.id === skillId)
+      ) {
+        this.remove(other.id);
+      }
+    }
+    for (const skill of wanted) {
+      if (this.#companionOf(record, skill.id) === undefined) {
+        this.#summon(record, skill.id, skill.companion, 1, record.position, true);
+      }
+    }
+  }
+
+  /** Everyone's living minions, spirits (#1188) and pets (#1206), for this tick's armor. */
+  #countControlled(): void {
+    for (const record of this.#participants.values()) {
+      record.combatant.controlled.minion = 0;
+      record.combatant.controlled.spirit = 0;
+      record.combatant.controlled.pet = 0;
+    }
+    for (const record of this.#participants.values()) {
+      const creature = record.creature;
+      if (
+        creature === undefined ||
+        creature.kind === "priest" ||
+        creature.kind === "guild-lord" ||
+        record.combatant.dead
+      ) {
+        continue;
+      }
+      const owner =
+        creature.ownerId === undefined ? undefined : this.#participants.get(creature.ownerId);
+      if (owner !== undefined) {
+        owner.combatant.controlled[creature.kind] += 1;
+      }
+    }
+  }
+
+  /** `owner`'s companion, alive or dead (#1046): of `skillId`, or the first. */
+  #companionOf(owner: ParticipantRecord, skillId?: string): ParticipantRecord | undefined {
+    for (const record of this.#participants.values()) {
+      const creature = record.creature;
+      if (
+        creature?.ownerId === owner.id &&
+        creature.companionSkillId !== undefined &&
+        (skillId === undefined || creature.companionSkillId === skillId)
+      ) {
+        return record;
+      }
+    }
+    return undefined;
+  }
+
+  /**
+   * Swap to `set` (#489, ADR-0036), numbered 0-3 for F1-F4: at once, or
+   * queued until the cast, aftercast, swing in progress or knockdown
+   * ends. Pressing another set while one is queued replaces it; the
+   * active set's key drops it. `undefined`: no such participant.
+   */
+  public requestWeaponSet(id: string, set: number): WeaponSetRequest | undefined {
+    const record = this.#participants.get(id);
+    if (record === undefined) {
+      return undefined;
+    }
+    if (record.combatant.dead) {
+      return { kind: "refused", reason: "dead" };
+    }
+    if (!isWeaponSetIndex(set)) {
+      return { kind: "refused", reason: "no-such-set" };
+    }
+    if (record.weaponSets[set] === null) {
+      return { kind: "refused", reason: "empty-set" };
+    }
+    if (set === record.activeWeaponSet) {
+      record.pendingWeaponSet = undefined;
+      return { kind: "kept" };
+    }
+    if (this.#swapBlocked(record)) {
+      record.pendingWeaponSet = set;
+      return { kind: "queued" };
+    }
+    this.#swapWeapons(record, set);
+    return { kind: "swapped" };
   }
 
   /** Put a participant back as they started, exactly as a respawn does. */
@@ -670,6 +1635,7 @@ export class MatchSimulation {
     record.inputDirection = ZERO;
     this.#moveInterrupts(record);
     record.walkGoal = point;
+    record.route = undefined;
     record.walkSettled = false;
     record.walkStalledSeconds = 0;
     record.walkLeast = Number.POSITIVE_INFINITY;
@@ -726,6 +1692,29 @@ export class MatchSimulation {
   }
 
   /**
+   * `ownerId` tells its companion `creatureId` how to fight (#1110), from
+   * the party window. Anything but the owner's own companion, a minion
+   * above all, is refused quietly; a dead owner may still order. Heel
+   * drops the attack at once, mid-swing or not. Whether it was taken.
+   */
+  public commandCreature(ownerId: string, creatureId: string, order: CreatureOrder): boolean {
+    const record = this.#participants.get(creatureId);
+    const creature = record?.creature;
+    if (
+      record === undefined ||
+      creature?.ownerId !== ownerId ||
+      creature.companionSkillId === undefined
+    ) {
+      return false;
+    }
+    creature.mode = order.mode;
+    if (order.mode === "heel") {
+      record.combatant.attack = undefined;
+    }
+    return true;
+  }
+
+  /**
    * Abandon `record`'s cast and log it as `"cancelled"`. An instant skill
    * has no cast to give up, so it is left to resolve.
    */
@@ -776,6 +1765,7 @@ export class MatchSimulation {
       }
       if (record.combatant.attack?.targetId !== targetId) {
         record.combatant.attack = { targetId, swingElapsed: 0, unreachableSeconds: 0 };
+        record.route = undefined;
       }
     }
     return check;
@@ -807,6 +1797,18 @@ export class MatchSimulation {
   }
 
   /**
+   * The foe `team` called (#443), or none: its bots fight that one while
+   * it lives (#1193). The match host says so whenever the call changes.
+   */
+  public setCalledTarget(team: number, targetId: string | undefined): void {
+    if (targetId === undefined) {
+      this.#calledTargets.delete(team);
+    } else {
+      this.#calledTargets.set(team, targetId);
+    }
+  }
+
+  /**
    * Begin casting the skill in `slot`, if every activation rule passes.
    *
    * The whole validation gate lives in `canActivate`; this method only
@@ -831,12 +1833,10 @@ export class MatchSimulation {
       return undefined;
     }
 
-    const skillId = record.skillBar[slot];
-    if (skillId === undefined || skillId === null) {
-      return undefined;
-    }
-    const skill = getSkill(skillId);
-    if (skill === undefined) {
+    // A copy standing in the slot (#469) is what the slot holds.
+    const used = slotSkill(record.skillBar, record.combatant.cast, slot);
+    const skill = used === undefined ? undefined : getSkill(used.skillId);
+    if (used === undefined || skill === undefined) {
       return undefined;
     }
 
@@ -850,7 +1850,13 @@ export class MatchSimulation {
     }
 
     const castTargetId = skill.target === "self" ? id : this.#castTarget(record, skill);
-    const check = this.#check(record, skill, castTargetId);
+    const check = this.#check(record, skill, castTargetId, used.key);
+    if (skill.type === "pet-attack") {
+      if (check.ok) {
+        this.#armPetAttack(record, skill, used.key);
+      }
+      return { skillId: skill.id, check };
+    }
     // Out of range or out of sight, a skill walks in and goes off there,
     // as Space does (#415, operator Q61). Range and line of sight are
     // checked last, so everything else has passed; it is all checked
@@ -864,6 +1870,7 @@ export class MatchSimulation {
       record.walkGoal = undefined;
       record.combatant.cast.clearQueue();
       record.pendingSkill = { slot, targetId: castTargetId, unreachableSeconds: 0 };
+      record.route = undefined;
       if (skill.attack !== undefined) {
         record.combatant.attack = {
           targetId: castTargetId,
@@ -873,7 +1880,48 @@ export class MatchSimulation {
       }
       return { skillId: skill.id, check: { ok: true }, queued: true };
     }
-    return this.#useSkill(record, slot, skill, castTargetId, check);
+    return this.#useSkill(record, slot, skill, used.key, castTargetId, check);
+  }
+
+  /**
+   * A pet attack, allowed (#1046): its owner pays and it starts
+   * recharging, and its owner's companion's next blow within
+   * `PET_ATTACK_SECONDS` is it, replacing one still waiting, whose energy
+   * is lost. No cast: the owner's cast, aftercast and swing go on. With a
+   * living foe selected, the pet goes for it, as when its owner attacks
+   * one, unless it is on Heel, which never engages (#1110).
+   */
+  #armPetAttack(record: ParticipantRecord, skill: Skill, key: string): void {
+    const pet = this.#companionOf(record);
+    if (pet === undefined) {
+      return;
+    }
+    payCost(skill, record.combatant, key);
+    beginRecharge(record.combatant.cast, skill, skill.rechargeSeconds, key);
+    pet.armedAttack = { skillId: skill.id, remainingSeconds: PET_ATTACK_SECONDS };
+    const foe = record.targetId === undefined ? undefined : this.#participants.get(record.targetId);
+    if (
+      foe !== undefined &&
+      !foe.combatant.dead &&
+      foe.combatant.team !== record.combatant.team &&
+      pet.creature?.mode !== "heel" &&
+      pet.behaviour?.kind === "follow-and-attack" &&
+      distance(foe.position, pet.position) <= pet.behaviour.aggroUnits
+    ) {
+      this.requestAttack(pet.id, foe.id);
+    }
+    this.#log.push({
+      tick: this.#tick,
+      atSeconds: this.#elapsedSeconds,
+      cause: "skill",
+      sourceId: record.id,
+      skillId: skill.id,
+      weaponId: undefined,
+      attributeId: undefined,
+      area: undefined,
+      doubleStrike: false,
+      events: [],
+    });
   }
 
   /**
@@ -885,6 +1933,7 @@ export class MatchSimulation {
     record: ParticipantRecord,
     slot: number,
     skill: Skill,
+    key: string,
     castTargetId: string | undefined,
     check: ActivationCheck,
   ): SkillRequest {
@@ -906,7 +1955,7 @@ export class MatchSimulation {
       return { skillId: skill.id, check, queued: true };
     }
 
-    payCost(skill, record.combatant);
+    payCost(skill, record.combatant, key);
     this.#useGlyph(record, skill);
     // The swing in progress is lost, as in GW1; the attack itself resumes
     // once the skill is done.
@@ -915,13 +1964,20 @@ export class MatchSimulation {
     }
     const activationSeconds =
       skill.attack === undefined
-        ? effectiveActivationSeconds(skill, record.combatant)
+        ? effectiveActivationSeconds(
+            skill,
+            record.combatant,
+            castTargetId === undefined
+              ? undefined
+              : this.#participants.get(castTargetId)?.combatant,
+          )
         : this.#attackHitSeconds(record, skill);
     record.combatant.cast.beginCast(
       skill.id,
       castTargetId,
       activationSeconds,
       skill.whileActivating,
+      key,
     );
     this.#castBegun(record, skill, castTargetId);
     // Casting stops you (operator Q33): a key held as the cast begins
@@ -1010,11 +2066,15 @@ export class MatchSimulation {
     for (const record of this.#participants.values()) {
       this.#stepStart.set(record.id, record.position);
     }
+    this.#countControlled();
+    this.#advanceGroundEffects(dt);
+    this.#projectAuras();
     // Every knockdown counts down before anyone acts, so one lasts its
     // full duration whoever lands it, and the tick it ends is one its
-    // bearer acts in again (#468).
+    // bearer acts in again (#468). A shrine's invulnerability too (#1208).
     for (const record of this.#participants.values()) {
       this.#advanceKnockdown(record.combatant, dt);
+      this.#advanceInvulnerability(record.combatant, dt);
       tickChainMarks(record.combatant, dt);
     }
     this.#advanceProjectiles(dt);
@@ -1032,6 +2092,25 @@ export class MatchSimulation {
           this.#reset(record, "respawn");
         }
         continue;
+      }
+
+      // A creature that has run its time vanishes (#1052): no death, so
+      // nothing answers it and nobody scores.
+      if (record.creature !== undefined) {
+        record.creature.ageSeconds += dt;
+        record.creature.expiresInSeconds -= dt;
+        if (record.creature.expiresInSeconds < SWING_EPSILON) {
+          this.#leaving.add(record.id);
+          continue;
+        }
+      }
+      // A pet attack waits for its pet's blow only so long (#1046); the
+      // energy stays spent.
+      if (record.armedAttack !== undefined) {
+        record.armedAttack.remainingSeconds -= dt;
+        if (record.armedAttack.remainingSeconds < SWING_EPSILON) {
+          record.armedAttack = undefined;
+        }
       }
 
       // Adrenaline does not keep between fights (#828): out of combat for
@@ -1054,20 +2133,19 @@ export class MatchSimulation {
       if (!down && !record.combatant.cast.inAftercast) {
         this.advanceMovement(record, record.inputDirection, dt);
         this.#advanceWalk(record, dt);
+        this.#advanceFollow(record, dt);
       }
 
       // Degeneration its statuses' own regeneration does not cancel is
       // health lost, so natural regeneration stops before it would.
+      // A minion's rot (#467) counts as one, and it never regenerates.
       const modifiers = aggregateModifiers(record.combatant.statuses.active);
+      const rot = creaturePips(record);
       record.outOfCombatSeconds += dt;
-      if (clampPips(modifiers.healthPips) < 0) {
+      if (clampPips(modifiers.healthPips + rot) < 0) {
         record.outOfCombatSeconds = 0;
       }
-      const natural = naturalHealthPips(
-        record.combatant,
-        record.outOfCombatSeconds,
-        this.#ruleset.resources,
-      );
+      const natural = this.#naturalPips(record);
 
       // Energy regenerates continuously, at the net pips (GW1); adrenaline
       // is earned by acting, not by waiting, so it deliberately does not
@@ -1075,7 +2153,7 @@ export class MatchSimulation {
       const energyPips = netPips(record.combatant, natural, this.#upkeep(record.id)).energy;
       // Up to the ceiling overcast leaves, which can be below 0 (#461).
       record.combatant.energy = Math.max(
-        0,
+        energyFloor(record.combatant),
         Math.min(
           effectiveMaxEnergy(record.combatant),
           record.combatant.energy + energyPips * ENERGY_PER_PIP * dt,
@@ -1083,7 +2161,12 @@ export class MatchSimulation {
       );
 
       const sources = degenerationSources(record.combatant);
-      const statusEvents = advanceStatuses(record.combatant, dt, natural);
+      // Spirit Light Weapon's more near a spirit (#1064): counted only for
+      // a bearer it could matter to.
+      const nearSpirit =
+        modifiers.healthPerSecondNearSpirit !== 0 &&
+        spiritsWithin(this.#participants.values(), record.position, AREA_EARSHOT) > 0;
+      const statusEvents = advanceStatuses(record.combatant, dt, natural + rot, nearSpirit);
       if (statusEvents.length > 0) {
         const drained = statusEvents.some((event) => event.kind === "damage");
         this.#log.push({
@@ -1112,6 +2195,7 @@ export class MatchSimulation {
 
       const wasInAftercast = record.combatant.cast.inAftercast;
       const completed = record.combatant.cast.advance(dt);
+      dropEndedCopyPools(record.combatant);
       if (completed !== undefined) {
         this.resolveCast(record, completed, dt);
       }
@@ -1125,8 +2209,13 @@ export class MatchSimulation {
       }
 
       if (!down) {
+        // Before a skill queued behind the same cast goes off, and after a
+        // blow that just landed: a swap is an action, queued behind the
+        // one in progress (#489).
+        this.#settleWeaponSwap(record);
         this.#advancePendingSkill(record, dt);
         this.#advanceAttack(record, dt);
+        this.#settleWeaponSwap(record);
         this.#faceCastTarget(record);
       }
       // Walked or approached: either way, it is what a shot leads.
@@ -1139,11 +2228,16 @@ export class MatchSimulation {
       }
     }
 
+    this.#springTraps();
+    this.#pulseGroundEffects();
     this.#settleUpkeep(dt);
     this.#spreadStatuses();
     this.#fireStatusChanges();
     this.#awardKillMorale();
     this.#settleMoving();
+    this.#tallyAggression();
+    this.#removeLeaving();
+    this.#priestWave();
     // After every death this step, so two teams wiped in it both lose.
     this.checkMatchEnd();
 
@@ -1284,6 +2378,27 @@ export class MatchSimulation {
         ) {
           continue;
         }
+        // A spreading status is a condition: an invulnerable body (#1208)
+        // does not catch it, and can once its window ends. It says so
+        // once an outbreak, not every tick it stands there (#1233).
+        if (isInvulnerable(other.combatant)) {
+          if (!outbreak.refused.has(other.id)) {
+            outbreak.refused.add(other.id);
+            this.#log.push({
+              tick: this.#tick,
+              atSeconds: this.#elapsedSeconds,
+              cause: "degeneration",
+              sourceId: status.sourceId,
+              skillId: undefined,
+              weaponId: undefined,
+              attributeId: undefined,
+              area: undefined,
+              doubleStrike: false,
+              events: [{ kind: "invulnerable", targetId: other.id }],
+            });
+          }
+          continue;
+        }
         outbreak.infected.add(other.id);
         const had = other.combatant.statuses.has(status.id);
         other.combatant.statuses.catch(
@@ -1340,6 +2455,9 @@ export class MatchSimulation {
 
   /** Who a targeted skill lands on: the selection, or the caster for an ally skill with no ally selected. */
   #castTarget(record: ParticipantRecord, skill: Skill): string | undefined {
+    if (isCompanionRule(skill.target)) {
+      return this.#companionOf(record)?.id;
+    }
     if (skill.target !== "single-ally") {
       return record.targetId;
     }
@@ -1348,21 +2466,55 @@ export class MatchSimulation {
     return selected?.combatant.team === record.combatant.team ? selected.id : record.id;
   }
 
-  /** The one activation check, for a cast and for a behaviour asking whether it could. */
-
-  #check(record: ParticipantRecord, skill: Skill, targetId: string | undefined): ActivationCheck {
-    const target = targetId === undefined ? undefined : this.#participants.get(targetId);
-    return canActivate({
+  /**
+   * The one activation check, for a cast and for a behaviour asking
+   * whether it could. `key` is what the slot used waits under (#469): a
+   * copy's, or the skill's own id.
+   */
+  #check(
+    record: ParticipantRecord,
+    skill: Skill,
+    targetId: string | undefined,
+    key: string = skill.id,
+  ): ActivationCheck {
+    // A pet skill acts on the pet, whatever was asked (#1046).
+    const targetedId = isCompanionRule(skill.target) ? this.#companionOf(record)?.id : targetId;
+    const target = targetedId === undefined ? undefined : this.#participants.get(targetedId);
+    const check = canActivate({
       skill,
       caster: record.combatant,
       casterPosition: record.position,
       target: skill.target === "self" ? record.combatant : target?.combatant,
       targetPosition: skill.target === "self" ? record.position : target?.position,
+      key,
       rechargeRemaining: record.combatant.cast.rechargeRemaining,
+      spent: record.combatant.cast.spent,
       isCasting: record.combatant.cast.isCasting,
-      skillBar: record.skillBar,
+      skillBar: resolvedBar(record.skillBar, record.combatant.cast).map(
+        (slot) => slot?.key ?? null,
+      ),
       losBlockers: this.#walls,
     });
+    // Any other refusal first; then a corpse skill needs a fresh corpse in
+    // reach (#466), or nothing is paid.
+    if (
+      check.ok &&
+      skill.corpse !== undefined &&
+      nearestFreshCorpse(record.position, skill.corpse.radius, this.#participants.values()) ===
+        undefined
+    ) {
+      return { ok: false, reason: "no-corpse" };
+    }
+    // Resurrection skills targeted on players cannot target pets (#1046,
+    // fandom): told before a walk toward one starts.
+    if (
+      skill.target === "single-dead-ally" &&
+      target?.creature !== undefined &&
+      (check.ok || check.reason === "out-of-range" || check.reason === "no-line-of-sight")
+    ) {
+      return { ok: false, reason: "invalid-target-creature" };
+    }
+    return check;
   }
 
   /** Put a behaviour's intent through the same calls a player's messages make. */
@@ -1374,19 +2526,43 @@ export class MatchSimulation {
       // The same slowed speed advanceMovement will move it at, so a
       // crippled dummy plans with the step it will really take.
       stepUnits: this.#stepUnits(record, dt),
-      canUse: (skillId, targetId) => {
+      check: (skillId, targetId) => {
         const skill = getSkill(skillId);
-        return skill !== undefined && this.#check(record, skill, targetId).ok;
+        return skill === undefined
+          ? { ok: false, reason: "skill-not-on-bar" }
+          : this.#check(record, skill, targetId);
       },
+      isBot: (participantId) =>
+        this.#participants.get(participantId)?.behaviour?.kind === "play-build",
+      calledTargetId: this.#calledTargets.get(record.combatant.team),
+      sees: (point) => hasLineOfSight(record.position, point, this.#walls),
     });
     this.setInputDirection(record.id, intent.moveDirection);
+    const following = record.followGoal !== undefined;
+    record.followGoal =
+      intent.moveTo === undefined
+        ? undefined
+        : { point: intent.moveTo, passing: record.creature?.ownerId };
+    if (following && record.followGoal === undefined) {
+      record.route = undefined;
+    }
+    // A move, as a held direction is: it ends the attack and the cast.
+    if (record.followGoal !== undefined) {
+      this.#moveInterrupts(record);
+    }
     this.setTarget(record.id, intent.targetId);
-    // Asked only while no attack is going, as a player presses Space once.
-    if (intent.attackTargetId !== undefined && record.combatant.attack === undefined) {
+    // Asked only when the attack wanted is not the one going, as a player
+    // presses Space once: a pet switches with its owner (#1046).
+    if (
+      intent.attackTargetId !== undefined &&
+      record.combatant.attack?.targetId !== intent.attackTargetId
+    ) {
       this.requestAttack(record.id, intent.attackTargetId);
     }
     if (intent.useSkillId !== undefined) {
-      const slot = record.skillBar.indexOf(intent.useSkillId);
+      const slot = resolvedBar(record.skillBar, record.combatant.cast).findIndex(
+        (held) => held?.key === intent.useSkillId,
+      );
       if (slot !== -1) {
         this.requestSkill(record.id, slot);
       }
@@ -1403,7 +2579,7 @@ export class MatchSimulation {
           scaledStatusDuration(target.combatant, application.statusId, application.durationSeconds),
           record.id,
         );
-        if (loss > 0) {
+        if (loss !== undefined && loss > 0) {
           this.#log.push({
             tick: this.#tick,
             atSeconds: this.#elapsedSeconds,
@@ -1472,8 +2648,14 @@ export class MatchSimulation {
     const speed = record.combatant.equipment.mainHand.weapon.projectileSpeed;
     const flight = skill.projectile;
     // Only a skill that lands at once can shorten its own recharge (#845):
-    // one that flies has started it by the time it lands.
-    const only = (events: CombatEvent[]): SkillOutcome => ({ events, rechargeFraction: 0 });
+    // one that flies has started it by the time it lands. Only one can
+    // summon (#1052): no attack skill or flying spell does.
+    const only = (events: CombatEvent[]): SkillOutcome => ({
+      events,
+      rechargeFraction: 0,
+      summons: [],
+      grounds: [],
+    });
     // What the caster's statuses add to its hits, each logged apart (#939).
     const riders: FiredTrigger[] = [];
     const resolve =
@@ -1486,31 +2668,53 @@ export class MatchSimulation {
             ? (resolution: SkillResolution) => only(resolveAttackSkill(resolution, exposed, riders))
             : (resolution: SkillResolution) =>
                 only(this.#releaseSkill(record, resolution, speed, dt));
-    const { events, rechargeFraction } = resolve({
+    const targets = resolveTargets({
       skill,
       caster: record.combatant,
-      targets: resolveTargets({
-        skill,
-        caster: record.combatant,
-        casterPosition: record.position,
-        primary,
-        // Only an area looks past the primary: skip the copy every other
-        // cast would make for nothing. A flying spell's area is found
-        // where it lands, not here.
-        candidates:
-          skill.area === undefined || flight !== undefined ? [] : [...this.#participants.values()],
-        losBlockers: this.#walls,
-      }),
-      rng: this.#rng,
-      rules: this.#ruleset.combat,
-      surroundings: this.#participants,
+      casterPosition: record.position,
+      primary,
+      // Only an area looks past the primary: skip the copy every other
+      // cast would make for nothing. A flying spell's area is found
+      // where it lands, not here.
+      candidates:
+        skill.area === undefined || flight !== undefined ? [] : [...this.#participants.values()],
+      losBlockers: this.#walls,
     });
+    // A corpse skill takes its corpse as it lands, not as it began (#466):
+    // one used up during the cast leaves it with no effect, paid for.
+    const corpse =
+      skill.corpse === undefined ? undefined : this.#exploitCorpse(record, skill.corpse);
+    const { events, rechargeFraction, summons, grounds } =
+      skill.corpse !== undefined && corpse === undefined
+        ? only([])
+        : resolve({
+            skill,
+            caster: record.combatant,
+            targets,
+            rng: this.#rng,
+            rules: this.#ruleset.combat,
+            surroundings: this.#participants,
+          });
+    // What the skill put on its own user does not answer this use of it
+    // (#999): the chanter's own Song of Restoration waits for its next skill.
+    // An echo skill does not use up an echo already up, either (#469).
+    const spared: ReadonlySet<StatusId> = new Set([
+      ...events.flatMap((event) =>
+        event.kind === "status-applied" && event.targetId === record.id ? [event.statusId] : [],
+      ),
+      ...(isEchoSkill(skill.id)
+        ? record.combatant.statuses.active.map(({ id }) => id).filter(isEchoStatus)
+        : []),
+    ]);
     // Where an area landed, for whoever draws it: nowhere, when an area
     // centred on a target had no target to centre on, or when it is still
-    // flying.
+    // flying. A party area (#1013) has no ring to draw.
     const origin = skill.area?.origin === "caster" ? record.position : primary?.position;
     const area =
-      skill.area === undefined || origin === undefined || flight !== undefined
+      skill.area === undefined ||
+      skill.area.origin === "party" ||
+      origin === undefined ||
+      flight !== undefined
         ? undefined
         : { x: origin.x, y: origin.y, radius: skill.area.radius };
 
@@ -1519,9 +2723,14 @@ export class MatchSimulation {
     // adrenaline builders. A blocked blow earns nothing, not even the
     // damage its `onBlocked` deals, as Swift Chop's (#534). Damage on a
     // victim that blocked every blow is all `onBlocked`'s; a dual attack
-    // (#885) blocked once and landed once still landed.
-    if (skill.type === "attack") {
+    // (#885) blocked once and landed once still landed. Each foe it landed
+    // on is a strike (#936): Cyclone Axe on three foes earns three. Only
+    // a foe the skill swung at counts, not one an effect of it hit: Death
+    // Blossom's splash on adjacent foes earns nothing more. One that loses
+    // all adrenaline (#1097) earns none back: GW1 takes it after the strike.
+    if (skill.type === "attack" && !losesAllAdrenaline(skill)) {
       const strikes = skill.attack?.strikes ?? 1;
+      const swungAt = new Set(targets.map((target) => target.id));
       const blocked = (targetId: string): boolean => {
         const blows = events.filter(
           (event) =>
@@ -1530,10 +2739,19 @@ export class MatchSimulation {
         );
         return blows.some(({ kind }) => kind === "attack-blocked") && blows.length >= strikes;
       };
-      this.#gainAdrenaline(
-        record,
-        events.filter((event) => event.kind !== "damage" || !blocked(event.targetId)),
+      const landed = events.filter((event) => event.kind !== "damage" || !blocked(event.targetId));
+      const foesHit = new Set(
+        landed.flatMap((event) => {
+          const victim =
+            event.kind === "damage" ? this.#participants.get(event.targetId) : undefined;
+          return victim !== undefined &&
+            swungAt.has(victim.id) &&
+            victim.combatant.team !== record.combatant.team
+            ? [victim.id]
+            : [];
+        }),
       );
+      this.#gainAdrenaline(record, landed, foesHit.size);
     }
     if (skill.type === "shout" || skill.type === "chant") {
       this.#gainLeadershipEnergy(record, events);
@@ -1541,7 +2759,25 @@ export class MatchSimulation {
     this.#chargeFromDamage(record.combatant, events);
     this.#recordDeaths(events);
     this.#recordKnockdowns(events);
+    this.#recordSteps(events);
     this.#recordResurrections(events);
+    // A raised minion rises where its corpse lay (#467).
+    for (const summon of summons) {
+      this.#summon(
+        record,
+        skill.id,
+        summon.creature,
+        summon.count,
+        corpse?.position ?? record.position,
+        false,
+      );
+    }
+    for (const ground of grounds) {
+      const position = this.#groundAnchor(record, ground, corpse, primary);
+      if (position !== undefined) {
+        this.#placeGroundEffect(record, skill.id, ground, position);
+      }
+    }
     // An attack skill is a swing, so it turns on its target with the
     // weapon: it starts an attack, or switches one to them. Any other skill
     // leaves the attack alone (#317): one in progress resumes on its own
@@ -1561,18 +2797,27 @@ export class MatchSimulation {
       record.combatant.cast.beginAftercast(cast.totalSeconds);
     }
 
-    // An off-hand attack out of sequence recharges at once (#831).
+    // An off-hand attack out of sequence, or whose chain requirement did
+    // not hold, recharges at once (#831, #1041).
     if (
       !events.some((event) => event.kind === "attack-missed" && event.reason === "out-of-sequence")
     ) {
-      // A spell recharges faster under Mantra of Recovery (#938), read now:
-      // a mantra that ends later leaves this recharge as it started.
-      const spellKept = isSpell(skill.type)
-        ? 1 - aggregateModifiers(record.combatant.statuses.active).spellRechargeFaster
-        : 1;
-      record.combatant.cast.startRecharge(
-        skill.id,
-        skill.rechargeSeconds * (1 - rechargeFraction) * spellKept,
+      // A spell recharges faster under Mantra of Recovery (#938) or Weapon
+      // of Quickening (#975), and a binding ritual under Weapon of
+      // Quickening (#1064), read now: one that ends later leaves this
+      // recharge as it started. Read after the spell resolved, so Weapon of
+      // Quickening cast on yourself already shortens its own.
+      const modifiers = aggregateModifiers(record.combatant.statuses.active);
+      const faster = isSpell(skill.type)
+        ? modifiers.spellRechargeFaster
+        : skill.type === "binding-ritual"
+          ? modifiers.bindingRitualRechargeFaster
+          : 0;
+      beginRecharge(
+        record.combatant.cast,
+        skill,
+        reducedRecharge(skill.rechargeSeconds * (1 - rechargeFraction), faster),
+        cast.key,
       );
     }
     this.#log.push({
@@ -1591,29 +2836,67 @@ export class MatchSimulation {
     // After the skill's own effects, as their own entries (#469): a spell
     // finished is Backfire's moment, an attack skill Empathy's. Any skill
     // used is Spiteful Spirit's (#935), and an attack skill twice over.
-    this.#fireTriggers(record, "bearer-uses-skill");
+    this.#fireTriggers(record, "bearer-uses-skill", spared, {
+      skillId: skill.id,
+      key: cast.key,
+    });
+    this.#endOnUseSkill(record, skill, spared);
     if (isSpell(skill.type)) {
-      this.#fireTriggers(record, "bearer-casts-spell");
+      this.#fireTriggers(record, "bearer-casts-spell", spared);
     }
     if (skill.attack !== undefined) {
-      this.#fireTriggers(record, "bearer-attacks");
+      this.#fireTriggers(record, "bearer-attacks", spared);
     }
   }
 
-  /** The bearer did `event` (#469): each status on it that answers fires. */
+  /**
+   * The bearer did `event` (#469): each status on it that answers fires.
+   * `usedSkill` is the skill it used, on `bearer-uses-skill` (#949).
+   * A status in `spared` does not answer (#999), as `fireTriggers`.
+   */
   #fireTriggers(
     record: ParticipantRecord,
-    event: Exclude<StatusTriggerEvent, "bearer-gains-condition" | "ends">,
+    event: Exclude<StatusTriggerEvent, "bearer-gains-condition" | "ends" | "expires">,
+    spared: ReadonlySet<StatusId>,
+    usedSkill?: SlotSkill,
   ): void {
-    this.#logFired(fireTriggers(record.combatant, event, this.#triggerContext()));
+    this.#logFired(fireTriggers(record.combatant, event, this.#triggerContext(usedSkill), spared));
   }
 
-  #triggerContext(): TriggerContext {
+  /**
+   * After its triggers answered the use (#949): every status on the
+   * bearer that ends when it uses a skill, as Diversion, is gone, and
+   * logged against that skill, but those in `spared` (#999).
+   */
+  #endOnUseSkill(record: ParticipantRecord, skill: Skill, spared: ReadonlySet<StatusId>): void {
+    const ended = record.combatant.statuses.endOnBearerUseSkill(spared);
+    if (ended.length > 0) {
+      this.#log.push({
+        tick: this.#tick,
+        atSeconds: this.#elapsedSeconds,
+        cause: "skill",
+        sourceId: record.id,
+        skillId: skill.id,
+        weaponId: undefined,
+        attributeId: undefined,
+        area: undefined,
+        doubleStrike: false,
+        events: ended.map((statusId) => ({
+          kind: "status-expired",
+          targetId: record.id,
+          statusId,
+        })),
+      });
+    }
+  }
+
+  #triggerContext(usedSkill?: SlotSkill): TriggerContext {
     return {
       sourceOf: (id) => this.#participants.get(id)?.combatant,
       rng: this.#rng,
       rules: this.#ruleset.combat,
       surroundings: this.#participants,
+      usedSkill,
     };
   }
 
@@ -1631,6 +2914,13 @@ export class MatchSimulation {
       record,
       changes: record.combatant.statuses.drainChanges(),
     }));
+    for (const { record, changes: recorded } of changes) {
+      for (const change of recorded) {
+        if (change.kind === "redirected-damage") {
+          this.#landRedirected(record, change.toId, change.amount);
+        }
+      }
+    }
     const context = this.#triggerContext();
     for (const { record, changes: recorded } of changes) {
       for (const change of recorded) {
@@ -1640,6 +2930,35 @@ export class MatchSimulation {
     for (const record of this.#participants.values()) {
       record.combatant.statuses.drainChanges();
     }
+  }
+
+  /**
+   * Symbiotic Bond's share of a hit on `bearer` (#1108), on `toId`, the
+   * bond's caster: typeless, unmitigated and from nobody, so it is never
+   * redirected again and answers nothing. With its caster dead or gone,
+   * the bearer takes it back: damage never vanishes.
+   */
+  #landRedirected(bearer: ParticipantRecord, toId: string, amount: number): void {
+    const to = this.#participants.get(toId);
+    const victim = to === undefined || to.combatant.dead ? bearer : to;
+    const events: CombatEvent[] = [];
+    applyDamage(victim.combatant, amount, "typeless", false, events, undefined);
+    if (events.length === 0) {
+      return;
+    }
+    this.#log.push({
+      tick: this.#tick,
+      atSeconds: this.#elapsedSeconds,
+      cause: "skill",
+      sourceId: undefined,
+      skillId: undefined,
+      weaponId: undefined,
+      attributeId: undefined,
+      area: undefined,
+      doubleStrike: false,
+      events,
+    });
+    this.#recordDeaths(events);
   }
 
   /**
@@ -1697,11 +3016,46 @@ export class MatchSimulation {
   }
 
   /**
+   * The way from `record` to `goal` round walls, as `find` gives it,
+   * but planned again only when it must (#1157): with no route yet, once
+   * `goal` is `REPLAN_GOAL_UNITS` from the goal it was planned to, or
+   * when the body no longer sees its next waypoint, shoved round a
+   * corner. Otherwise the route is kept: waypoints the body already sees
+   * past are dropped, and the last becomes `goal` if the way to it is
+   * still clear. Walls never move, so only the goal or the body can make
+   * a route stale. No way there is not kept: the next tick asks again.
+   */
+  #route(record: ParticipantRecord, goal: Vec2): readonly Vec2[] | undefined {
+    const route = record.route;
+    if (route !== undefined && distance(goal, route.goal) <= REPLAN_GOAL_UNITS) {
+      const { waypoints } = route;
+      const next = waypoints[0];
+      if (next !== undefined && walkIsClear(this.#graph, record.position, next)) {
+        for (
+          let after = waypoints[1];
+          after !== undefined && walkIsClear(this.#graph, record.position, after);
+          after = waypoints[1]
+        ) {
+          waypoints.shift();
+        }
+        const before = waypoints.at(-2) ?? record.position;
+        if (walkIsClear(this.#graph, before, goal)) {
+          waypoints[waypoints.length - 1] = goal;
+          return waypoints;
+        }
+      }
+    }
+    const waypoints = this.#paths.find(record.position, goal);
+    record.route = waypoints === undefined ? undefined : { goal, waypoints: [...waypoints] };
+    return waypoints;
+  }
+
+  /**
    * One tick of an approach (ADR-0026): walk until `target` is within
    * `reach` and in sight, round walls (#211), then face it. The only
    * movement the simulation chooses, and never on top of the player's
-   * own. Replanned every tick, so a target that moves, or a shove, is
-   * simply where the next plan starts.
+   * own. Its route follows a target that moves, and a shove, as
+   * `#route` keeps it (#1157).
    *
    * `progress` counts how long it has got nowhere; at
    * `unreachableAfterSeconds` (#218) the approach gives up, and the
@@ -1719,14 +3073,16 @@ export class MatchSimulation {
       hasLineOfSight(record.position, target.position, this.#walls)
     ) {
       faceToward(record, target.position);
+      record.route = undefined;
       return "arrived";
     }
-    const next = this.#paths.find(record.position, target.position)?.[0];
+    const next = this.#route(record, target.position)?.[0];
     if (next === undefined) {
       // No way there, this tick. It has to last before the approach ends
       // (#218); meanwhile, steer straight at the target, which is what
       // usually shoves a squeezed body back out (#211).
       if (this.#stalledFor(progress, dt)) {
+        record.route = undefined;
         return "unreachable";
       }
       this.advanceMovement(record, sub(target.position, record.position), dt);
@@ -1737,7 +3093,11 @@ export class MatchSimulation {
     // too. One held is neither lost nor progress.
     const step = this.#stepToward(record, next, target.id, false, dt);
     if (step === "stalled") {
-      return this.#stalledFor(progress, dt) ? "unreachable" : "walking";
+      if (this.#stalledFor(progress, dt)) {
+        record.route = undefined;
+        return "unreachable";
+      }
+      return "walking";
     }
     if (step === "moved") {
       progress.unreachableSeconds = 0;
@@ -1779,7 +3139,7 @@ export class MatchSimulation {
         this.#bodies.push(other.position);
       }
     }
-    const radius = this.#ruleset.collision.playerRadius;
+    const radius = this.#radiusOf(record);
     const before = record.position;
     const left = distance(before, next);
     const full = this.#stepUnits(record, dt);
@@ -1816,7 +3176,9 @@ export class MatchSimulation {
   #advanceWalk(record: ParticipantRecord, dt: number): void {
     if (record.walkGoal !== undefined && !record.walkSettled) {
       const spot = nearestStandable(this.#graph, record.walkGoal);
-      record.walkGoal = this.#paths.find(record.position, spot) === undefined ? undefined : spot;
+      const path = this.#paths.find(record.position, spot);
+      record.walkGoal = path === undefined ? undefined : spot;
+      record.route = path === undefined ? undefined : { goal: spot, waypoints: [...path] };
       record.walkSettled = true;
     }
     const goal = record.walkGoal;
@@ -1825,9 +3187,10 @@ export class MatchSimulation {
     }
     if (distance(record.position, goal) <= ARRIVE_UNITS) {
       record.walkGoal = undefined;
+      record.route = undefined;
       return;
     }
-    const path = this.#paths.find(record.position, goal);
+    const path = this.#route(record, goal);
     const left = path === undefined ? Number.POSITIVE_INFINITY : pathLength(record.position, path);
     if (left < record.walkLeast - STALL_FRACTION * this.#stepUnits(record, dt)) {
       record.walkLeast = left;
@@ -1839,6 +3202,7 @@ export class MatchSimulation {
         this.#ruleset.combat.unreachableAfterSeconds - SWING_EPSILON
       ) {
         record.walkGoal = undefined;
+        record.route = undefined;
         return;
       }
     }
@@ -1852,6 +3216,29 @@ export class MatchSimulation {
     }
     if (distance(record.position, goal) <= ARRIVE_UNITS) {
       record.walkGoal = undefined;
+      record.route = undefined;
+    }
+  }
+
+  /**
+   * A behaviour's walk to a point (#1153): a path's next step, as
+   * click-to-walk takes it, bent round bodies but `passing`'s. With no
+   * way there it stands still, and asks again next tick; but a body
+   * squeezed where it cannot stand steers straight at the point, which
+   * is what shoves it back out (#211). No stall rule: the behaviour
+   * re-decides every tick.
+   */
+  #advanceFollow(record: ParticipantRecord, dt: number): void {
+    const goal = record.followGoal;
+    if (goal === undefined || record.combatant.attack !== undefined) {
+      return;
+    }
+    const path = this.#route(record, nearestStandable(this.#graph, goal.point));
+    const next = path?.[0];
+    if (next !== undefined) {
+      this.#stepToward(record, next, goal.passing, path?.length === 1, dt);
+    } else if (!isStandable(this.#graph, record.position)) {
+      this.advanceMovement(record, sub(goal.point, record.position), dt);
     }
   }
 
@@ -1871,18 +3258,18 @@ export class MatchSimulation {
     if (pending === undefined) {
       return;
     }
-    const skillId = record.skillBar[pending.slot];
-    const skill = skillId === undefined || skillId === null ? undefined : getSkill(skillId);
+    const used = slotSkill(record.skillBar, record.combatant.cast, pending.slot);
+    const skill = used === undefined ? undefined : getSkill(used.skillId);
     const target = this.#participants.get(pending.targetId);
     const moving =
       record.inputDirection.x !== 0 ||
       record.inputDirection.y !== 0 ||
       record.walkGoal !== undefined;
-    if (skill === undefined || target === undefined || moving) {
+    if (used === undefined || skill === undefined || target === undefined || moving) {
       record.pendingSkill = undefined;
       return;
     }
-    const check = this.#check(record, skill, target.id);
+    const check = this.#check(record, skill, target.id, used.key);
     if (!check.ok && TARGET_REJECTIONS.has(check.reason)) {
       record.pendingSkill = undefined;
       return;
@@ -1916,7 +3303,8 @@ export class MatchSimulation {
     }
     if (approach === "arrived") {
       record.pendingSkill = undefined;
-      this.#useSkill(record, pending.slot, skill, target.id, this.#check(record, skill, target.id));
+      const arrived = this.#check(record, skill, target.id, used.key);
+      this.#useSkill(record, pending.slot, skill, used.key, target.id, arrived);
     }
   }
 
@@ -1979,6 +3367,11 @@ export class MatchSimulation {
       return;
     }
     attack.swingElapsed = Math.max(0, attack.swingElapsed - interval);
+    // The blow is the old weapon's; a swap waiting on it takes the next
+    // settle, this tick, and the new weapon swings afresh (#489).
+    if (record.pendingWeaponSet !== undefined) {
+      attack.swingElapsed = 0;
+    }
     record.outOfCombatSeconds = 0;
     this.#blowStarted(record, target);
 
@@ -1987,7 +3380,13 @@ export class MatchSimulation {
       if (released.length > 0) {
         this.#logWeapon(record.id, weapon.id, released);
       }
-      this.#fireTriggers(record, "bearer-attacks");
+      this.#fireTriggers(record, "bearer-attacks", NONE_SPARED);
+      return;
+    }
+    const armed =
+      record.armedAttack === undefined ? undefined : getSkill(record.armedAttack.skillId);
+    if (armed !== undefined) {
+      this.#landArmedAttack(record, armed, target);
       return;
     }
     const { events, doubleStrike, landed, fired } = resolveSwing({
@@ -2004,7 +3403,48 @@ export class MatchSimulation {
     this.#recordKnockdowns(events);
     this.#logWeapon(record.id, record.combatant.equipment.mainHand.weapon.id, events, doubleStrike);
     this.#logFired(fired);
-    this.#fireTriggers(record, "bearer-attacks");
+    this.#fireTriggers(record, "bearer-attacks", NONE_SPARED);
+  }
+
+  /**
+   * A companion's blow, armed by its owner's pet attack (#1046): the
+   * skill, through the one attack-skill path with the pet as the
+   * attacker, its ranks the ones it arrived with. The arming is used up
+   * whatever the blow does: a hit, a blind miss or a block. A pet attack
+   * is not an attack skill: it earns no adrenaline.
+   */
+  #landArmedAttack(pet: ParticipantRecord, skill: Skill, target: ParticipantRecord): void {
+    pet.armedAttack = undefined;
+    const fired: FiredTrigger[] = [];
+    const events = resolveAttackSkill(
+      {
+        skill,
+        caster: pet.combatant,
+        targets: [target.combatant],
+        rng: this.#rng,
+        rules: this.#ruleset.combat,
+        surroundings: this.#participants,
+      },
+      this.#exposedTo(pet),
+      fired,
+    );
+    this.#chargeFromDamage(pet.combatant, events);
+    this.#recordDeaths(events);
+    this.#recordKnockdowns(events);
+    this.#log.push({
+      tick: this.#tick,
+      atSeconds: this.#elapsedSeconds,
+      cause: "skill",
+      sourceId: pet.id,
+      skillId: skill.id,
+      weaponId: undefined,
+      attributeId: undefined,
+      area: undefined,
+      doubleStrike: false,
+      events,
+    });
+    this.#logFired(fired);
+    this.#fireTriggers(pet, "bearer-attacks", NONE_SPARED);
   }
 
   /**
@@ -2101,7 +3541,8 @@ export class MatchSimulation {
   ): CombatEvent[] {
     const events: CombatEvent[] = [];
     if (skillHit?.kind !== "spell") {
-      bearerAttacked(record.combatant, events);
+      // Only a flying attack is released here.
+      bearerAttacked(record.combatant, events, "projectile");
       if (blindMisses(record.combatant, this.#rng)) {
         return [...events, { kind: "attack-missed", targetId: target.id }];
       }
@@ -2212,7 +3653,7 @@ export class MatchSimulation {
       events.push({ kind: "attack-dodged", targetId: target.id });
     } else if (
       skillHit?.skill.attack?.unblockable !== true &&
-      blocks(target.combatant, "projectile", this.#rng)
+      blocks(target.combatant, projectile.attackerId, "projectile", this.#rng)
     ) {
       blocked = true;
       events.push({ kind: "attack-blocked", targetId: target.id });
@@ -2221,6 +3662,7 @@ export class MatchSimulation {
     } else {
       const critical = landBlow(
         projectile.weaponSnapshot,
+        attacker?.combatant,
         target.combatant,
         settleBlow(
           skillHit?.blow ?? PLAIN_BLOW,
@@ -2266,7 +3708,12 @@ export class MatchSimulation {
       attackReached(target.combatant, events);
       events.push(...riders(skillHit?.skill.effects ?? []));
     }
-    if (attacker !== undefined && !attacker.combatant.dead && !blocked) {
+    if (
+      attacker !== undefined &&
+      !attacker.combatant.dead &&
+      !blocked &&
+      (skillHit === undefined || !losesAllAdrenaline(skillHit.skill))
+    ) {
       this.#gainAdrenaline(attacker, events);
     }
     this.#chargeFromDamage(attacker?.combatant, events);
@@ -2307,7 +3754,7 @@ export class MatchSimulation {
     this.#recordDeaths(events);
     this.#recordKnockdowns(events);
     const area =
-      skill.area === undefined
+      skill.area === undefined || skill.area.origin === "party"
         ? undefined
         : { x: target.position.x, y: target.position.y, radius: skill.area.radius };
     this.#logShot(projectile, events, area);
@@ -2315,7 +3762,7 @@ export class MatchSimulation {
 
   /** Whether a shot landing now finds its target where it was aimed: their body plus the tolerance. */
   #reaches(projectile: Projectile, target: ParticipantRecord): boolean {
-    const reach = this.#ruleset.collision.playerRadius + this.#ruleset.combat.projectileTolerance;
+    const reach = this.#radiusOf(target) + this.#ruleset.combat.projectileTolerance;
     return distance(target.position, projectile.aimPoint) <= reach;
   }
 
@@ -2396,10 +3843,12 @@ export class MatchSimulation {
    * Adrenaline is earned by landing damage on a foe, never by waiting,
    * which makes adrenaline skills a reward for staying in the fight rather
    * than a second energy pool. `blows` strikes to every adrenaline skill
-   * (#463), if anything in `events` damaged a foe: one for an attack skill
-   * or a shot, however many it hit, and one per landed blow of a swing, so
+   * (#463), if anything in `events` damaged a foe: one for each foe an
+   * attack skill landed on (#936), one for a shot, and one per landed blow
+   * of a swing, so
    * a double strike earns two. A blocked blow deals no damage, so it earns
-   * nothing (#534).
+   * nothing (#534). "For Great Justice!" (#936) adds its extra strikes
+   * to each.
    */
   #gainAdrenaline(record: ParticipantRecord, events: readonly CombatEvent[], blows = 1): void {
     const damagedFoe = events.some((event) => {
@@ -2407,7 +3856,8 @@ export class MatchSimulation {
       return victim !== undefined && victim.combatant.team !== record.combatant.team;
     });
     if (damagedFoe) {
-      gainStrikes(record.combatant, blows, this.#elapsedSeconds);
+      const { extraStrikesPerHit } = aggregateModifiers(record.combatant.statuses.active);
+      gainStrikes(record.combatant, blows * (1 + extraStrikesPerHit), this.#elapsedSeconds);
     }
   }
 
@@ -2446,7 +3896,7 @@ export class MatchSimulation {
   /**
    * Every death in `events` drops the victim's cast, so a resurrection
    * (#812) never finishes it, scores for the other side and starts its
-   * respawn. Read from the emitted events so every death routes through
+   * respawn; a creature's does neither, and it leaves (#1052). Read from the emitted events so every death routes through
    * one place, whether a skill, a swing or degeneration caused it.
    */
   #recordDeaths(events: readonly CombatEvent[]): void {
@@ -2461,15 +3911,73 @@ export class MatchSimulation {
         victim.combatant.cast.cancelCast();
         victim.combatant.cast.endAftercast();
         victim.walkGoal = undefined;
+        victim.route = undefined;
         victim.combatant.knockdownRemaining = 0;
+        victim.combatant.invulnerableRemaining = 0;
+        victim.pendingWeaponSet = undefined;
         victim.combatant.statuses.endAll();
+        victim.armedAttack = undefined;
         this.#clearChainMarks(victim);
+        victim.combatant.cast.clearOverrides();
+        dropEndedCopyPools(victim.combatant);
         emptyAdrenaline(victim.combatant);
+        // A creature (#1052) scores nothing and never respawns on its own:
+        // a spirit or minion leaves at the end of the step, a pet lies where
+        // it fell (#1046) and pays the death penalty (#1133). Only a
+        // spirit's death is no soul to reap (GW1: "a non-Spirit creature").
+        if (victim.creature !== undefined) {
+          victim.respawnInSeconds = Number.POSITIVE_INFINITY;
+          if (victim.creature.onDeath === "vanish") {
+            this.#leaving.add(victim.id);
+          } else {
+            this.#deathPenalty(victim);
+          }
+          if (victim.creature.kind !== "spirit") {
+            this.#reapSoul(victim);
+          }
+          this.#companionDied(victim, victim.creature);
+          continue;
+        }
         victim.respawnInSeconds = this.#respawnSeconds(victim);
         this.#deathPenalty(victim);
         this.#reapSoul(victim);
         this.recordDeath(victim.combatant.team);
       }
+    }
+  }
+
+  /**
+   * A pet's death disables its owner's whole bar (#1046, fandom "Beast
+   * Mastery"), alive or dead, unless it was resurrected less than
+   * `PET_DEATH_GRACE_SECONDS` ago. Alongside any recharge, the longer wins.
+   */
+  #companionDied(victim: ParticipantRecord, creature: Creature): void {
+    if (
+      creature.ownerDisableSeconds <= 0 ||
+      this.#elapsedSeconds - victim.resurrectedAtSeconds < PET_DEATH_GRACE_SECONDS
+    ) {
+      return;
+    }
+    const owner =
+      creature.ownerId === undefined ? undefined : this.#participants.get(creature.ownerId);
+    if (owner === undefined) {
+      return;
+    }
+    // A copy standing in a slot (#469) waits under its own key; the skill
+    // it hides is disabled too, for when the copy ends.
+    const keys = new Set<string>();
+    for (const skillId of owner.skillBar) {
+      if (skillId !== null) {
+        keys.add(skillId);
+      }
+    }
+    for (const slot of resolvedBar(owner.skillBar, owner.combatant.cast)) {
+      if (slot !== null) {
+        keys.add(slot.key);
+      }
+    }
+    for (const key of keys) {
+      owner.combatant.cast.disable(key, creature.ownerDisableSeconds);
     }
   }
 
@@ -2530,6 +4038,16 @@ export class MatchSimulation {
     }
   }
 
+  /** Count `combatant`'s invulnerability (#1208) down by `dt`, to exactly 0 at the end. */
+  #advanceInvulnerability(combatant: Combatant, dt: number): void {
+    if (combatant.invulnerableRemaining > 0) {
+      combatant.invulnerableRemaining -= dt;
+      if (combatant.invulnerableRemaining <= KNOCKDOWN_EPSILON) {
+        combatant.invulnerableRemaining = 0;
+      }
+    }
+  }
+
   /**
    * Everyone knocked down in `events` stops where they are (#468): the
    * skill effect already ended their cast and attack; this drops what
@@ -2551,6 +4069,66 @@ export class MatchSimulation {
   }
 
   /**
+   * Every shadow step in `events` (#988) puts its caster beside its
+   * target, and every teleport (#474) its target beside whom it names,
+   * where that one stands now: touching it, on the side the caster came
+   * from, or behind it when the two stood on one spot. With a wall between
+   * the target and that spot, on the target, and the push-outs move it
+   * clear as they do a walk; the doorway rule does not hold, since a step
+   * is not a walk. It faces the target, and nothing reads the step as a
+   * run: its track starts over, and it did not walk this step. An attack
+   * and a skill walking in stay.
+   */
+  #recordSteps(events: readonly CombatEvent[]): void {
+    for (const event of events) {
+      if (event.kind !== "shadow-stepped" && event.kind !== "teleported") {
+        continue;
+      }
+      const record = this.#participants.get(event.targetId);
+      const target = this.#participants.get(event.toId);
+      if (record === undefined || target === undefined) {
+        continue;
+      }
+      const radius = this.#ruleset.collision.playerRadius;
+      const away =
+        distance(record.position, target.position) > 0
+          ? normalize(sub(record.position, target.position))
+          : vec2(-Math.cos(target.facing), -Math.sin(target.facing));
+      const beside = add(target.position, scale(away, 2 * radius));
+      let position = hasLineOfSight(target.position, beside, this.#walls)
+        ? beside
+        : target.position;
+      for (let pass = 0; pass < MOVEMENT_RELAX_PASSES; pass += 1) {
+        const relaxed = this.#pushOut(record.id, position, radius);
+        const settled = relaxed.x === position.x && relaxed.y === position.y;
+        position = relaxed;
+        if (settled) {
+          break;
+        }
+      }
+      record.position = position;
+      faceToward(record, target.position);
+      record.walkGoal = undefined;
+      record.route = undefined;
+      record.history.clear();
+      this.#stepStart.set(record.id, position);
+    }
+  }
+
+  /**
+   * Marks the fresh corpse nearest `record` within the rule's radius as
+   * exploited (#466) and returns it; `undefined` for none. Wells and
+   * minions (#466, #467) will want its position.
+   */
+  #exploitCorpse(record: ParticipantRecord, rule: CorpseRule): ParticipantRecord | undefined {
+    const corpse = nearestFreshCorpse(record.position, rule.radius, this.#participants.values());
+    if (corpse !== undefined) {
+      corpse.corpseExploited = true;
+    }
+    return corpse;
+  }
+
+  /**
    * Every resurrection in `events` (#812) cancels its respawn timer. The
    * body stays where it fell, and what its death cleared stays clear.
    */
@@ -2564,6 +4142,7 @@ export class MatchSimulation {
         record.respawnInSeconds = 0;
         record.outOfCombatSeconds = 0;
         record.resurrectedAtSeconds = this.#elapsedSeconds;
+        record.corpseExploited = false;
       }
     }
   }
@@ -2587,13 +4166,16 @@ export class MatchSimulation {
   /**
    * The death penalty (#843, GW1): with `deathPenalty` on, `victim` loses
    * 15% morale, down to −60%, unless it was resurrected less than 5 s ago;
-   * its foes' +2% waits for the end of the step.
+   * its foes' +2% waits for the end of the step. A companion's death
+   * costs it the same but gives its foes nothing (#1133): it is no player.
    */
   #deathPenalty(victim: ParticipantRecord): void {
     if (this.#matchRules?.deathPenalty !== true) {
       return;
     }
-    this.#moraleKills.push(victim.combatant.team);
+    if (countsForTeam(victim)) {
+      this.#moraleKills.push(victim.combatant.team);
+    }
     if (this.#elapsedSeconds - victim.resurrectedAtSeconds < DP_GRACE_AFTER_RES_SECONDS) {
       return;
     }
@@ -2605,13 +4187,19 @@ export class MatchSimulation {
 
   /**
    * Every death this step gives each living foe in the death penalty 2%
-   * back, up to 0 (#843): a kill never boosts.
+   * back, up to 0 (#843): a kill never boosts. Of creatures, only a
+   * companion has morale (#1133).
    */
   #awardKillMorale(): void {
     for (const team of this.#moraleKills) {
       for (const record of this.#participants.values()) {
         const { combatant } = record;
-        if (combatant.team !== team && !combatant.dead && combatant.morale < 0) {
+        if (
+          combatant.team !== team &&
+          !combatant.dead &&
+          combatant.morale < 0 &&
+          hasMorale(record)
+        ) {
           this.#setMorale(record, Math.min(0, combatant.morale + KILL_MORALE_PERCENT));
         }
       }
@@ -2621,30 +4209,93 @@ export class MatchSimulation {
 
   /**
    * A morale boost (GvG's flag stand, HA's altar): `amount` percent to
-   * every member of `team`, dead or alive, up to +10%. Not capped at 0,
-   * so it lifts a death penalty too.
+   * every member of `team`, dead or alive, up to +10%, companions too but no
+   * other creature (#1052, #1133). Not capped at 0,
+   * so it lifts a death penalty too. It readies every skill spent until a
+   * morale boost (#474), at +10% too.
    */
   public moraleBoost(team: number, amount: number): void {
     for (const record of this.#participants.values()) {
-      if (record.combatant.team === team) {
+      if (record.combatant.team === team && hasMorale(record)) {
         this.#setMorale(record, Math.min(MORALE_CEILING, record.combatant.morale + amount));
+        record.combatant.cast.refreshSpent();
       }
     }
   }
 
   /**
    * Set `record`'s morale and the maxima that follow it (GW1: on the base,
-   * before upgrades). A drop clamps health and energy to the new
-   * ceilings; a rise leaves them where they are.
+   * before upgrades; a creature has none, so its base is its own). A drop
+   * clamps health and energy to the new ceilings; a rise leaves them where
+   * they are.
    */
   #setMorale(record: ParticipantRecord, morale: number): void {
     const { combatant } = record;
-    const { baseHealth, baseEnergy } = this.#ruleset.combat;
+    const { baseHealth, baseEnergy } =
+      record.creature === undefined
+        ? this.#ruleset.combat
+        : { baseHealth: record.resolvedMaxHealth, baseEnergy: record.resolvedMaxEnergy };
     combatant.morale = morale;
     combatant.maxHealth = moraleMaximum(baseHealth, record.resolvedMaxHealth, morale);
     combatant.maxEnergy = moraleMaximum(baseEnergy, record.resolvedMaxEnergy, morale);
     combatant.health = Math.min(combatant.health, effectiveMaxHealth(combatant));
-    combatant.energy = Math.max(0, Math.min(combatant.energy, effectiveMaxEnergy(combatant)));
+    combatant.energy = Math.max(
+      energyFloor(combatant),
+      Math.min(combatant.energy, effectiveMaxEnergy(combatant)),
+    );
+  }
+
+  /**
+   * Whether a swap must wait (#489): GW1 changes no equipment during a
+   * skill's activation or an attack's swing, and a knocked-down body takes
+   * no action. An attack paused out of reach with a swing begun waits for
+   * its next blow; moving or Esc ends the attack, and the swap with it.
+   */
+  #swapBlocked(record: ParticipantRecord): boolean {
+    const { combatant } = record;
+    return (
+      combatant.knockdownRemaining > 0 ||
+      combatant.cast.isCasting ||
+      combatant.cast.inAftercast ||
+      (combatant.attack !== undefined && combatant.attack.swingElapsed > 0)
+    );
+  }
+
+  /** Take a queued swap if nothing blocks it any more (#489). */
+  #settleWeaponSwap(record: ParticipantRecord): void {
+    const set = record.pendingWeaponSet;
+    if (set !== undefined && !record.combatant.dead && !this.#swapBlocked(record)) {
+      this.#swapWeapons(record, set);
+    }
+  }
+
+  /**
+   * Put `set` in hand (#489): the only writer of `combatant.equipment`.
+   * Maximum energy becomes the set's, and current energy moves by the
+   * same amount, below 0 if it must (GW1's hidden energy, ADR-0036).
+   * `moraleMaximum` is linear, so the move is the sets' difference at any
+   * morale. An attack in progress swings afresh with the new weapon.
+   */
+  #swapWeapons(record: ParticipantRecord, set: WeaponSetIndex): void {
+    const held = record.weaponSets[set];
+    if (held === null) {
+      return;
+    }
+    const { combatant } = record;
+    const before = combatant.maxEnergy;
+    record.activeWeaponSet = set;
+    record.pendingWeaponSet = undefined;
+    combatant.equipment = held.equipment;
+    record.resolvedMaxEnergy = held.maxEnergy;
+    combatant.maxEnergy = moraleMaximum(
+      this.#ruleset.combat.baseEnergy,
+      record.resolvedMaxEnergy,
+      combatant.morale,
+    );
+    combatant.energy += combatant.maxEnergy - before;
+    if (combatant.attack !== undefined) {
+      combatant.attack.swingElapsed = 0;
+    }
   }
 
   /** Whether `record`'s reset policy, other than `on-death`, calls for a reset now. */
@@ -2680,19 +4331,167 @@ export class MatchSimulation {
     this.#score = addKill(this.#score, scoringTeam);
   }
 
-  /** Every team that had members: who is alive and its total morale (#846). */
+  /**
+   * Every team that had members, or has a Guild Lord (#1222): who is alive,
+   * its total morale (#846), and its lord's and its aggression; creatures
+   * are not members (#1052).
+   */
   #standing(): MatchStanding {
-    const byTeam = new Map<number, TeamStanding>(
-      [...this.#teams].map((team) => [team, { living: 0, morale: 0 }]),
+    const teams = new Set([...this.#teams, ...this.#guildLordTeams]);
+    const members = new Map<number, { living: number; morale: number; raisable: number }>(
+      [...teams].map((team) => [team, { living: 0, morale: 0, raisable: 0 }]),
     );
-    for (const { combatant } of this.#participants.values()) {
-      const team = byTeam.get(combatant.team) ?? { living: 0, morale: 0 };
-      byTeam.set(combatant.team, {
-        living: team.living + (combatant.dead ? 0 : 1),
-        morale: team.morale + combatant.morale,
+    for (const record of this.#participants.values()) {
+      if (!countsForTeam(record)) {
+        continue;
+      }
+      const { combatant } = record;
+      const team = members.get(combatant.team) ?? { living: 0, morale: 0, raisable: 0 };
+      team.living += combatant.dead ? 0 : 1;
+      team.morale += combatant.morale;
+      team.raisable += combatant.dead && combatant.morale <= MORALE_FLOOR ? 0 : 1;
+      members.set(combatant.team, team);
+    }
+    const byTeam = new Map<number, TeamStanding>();
+    for (const [team, { living, morale, raisable }] of members) {
+      byTeam.set(team, {
+        living,
+        morale,
+        priestLives: this.#priestLives(team),
+        guildLordLives: this.#guildLordLives(team),
+        beyondRaising: this.#teams.has(team) && raisable === 0,
+        aggression: this.#aggression.get(team) ?? 0,
       });
     }
     return { byTeam };
+  }
+
+  /** Whether `team`'s Guild Lord is in the match and alive (#1222). */
+  #guildLordLives(team: number): boolean {
+    const lord = this.#participants.get(guildLordId(team));
+    return lord !== undefined && !lord.combatant.dead && !this.#leaving.has(lord.id);
+  }
+
+  /** Whether the shrines raise with no priest: a Guild Battle's (#1222). */
+  #shrinesRaiseAlone(): boolean {
+    return this.#matchRules?.victory === "guild-battle";
+  }
+
+  /**
+   * Add this step's damage to a Guild Lord to the aggression of the team
+   * that dealt it (#1222, GW1): direct damage after armor, a creature's
+   * for its own team, which is its owner's. Degeneration is not counted,
+   * nor life stealing, which is not damage. Before the step's leavers go,
+   * so a creature's last blow still has a team.
+   */
+  #tallyAggression(): void {
+    if (this.#guildLordTeams.size === 0) {
+      return;
+    }
+    for (const entry of [...this.#log, ...this.#reaped]) {
+      if (entry.cause === "degeneration" || entry.sourceId === undefined) {
+        continue;
+      }
+      const team = this.#participants.get(entry.sourceId)?.combatant.team;
+      if (team === undefined) {
+        continue;
+      }
+      for (const event of entry.events) {
+        const lord = this.#participants.get(event.targetId);
+        if (
+          event.kind === "damage" &&
+          lord?.creature?.kind === "guild-lord" &&
+          lord.combatant.team !== team
+        ) {
+          this.#aggression.set(team, (this.#aggression.get(team) ?? 0) + event.amount);
+        }
+      }
+    }
+  }
+
+  /** Whether `team`'s priest is in the match and alive (#1186). */
+  #priestLives(team: number): boolean {
+    const priest = this.#participants.get(priestId(team));
+    return priest !== undefined && !priest.combatant.dead && !this.#leaving.has(priest.id);
+  }
+
+  /**
+   * The priests' wave (#1186, GW1): at every `PRIEST_WAVE_SECONDS` of match
+   * clock, each living priest raises its team's dead players above
+   * `MORALE_FLOOR` on its shrine, at full Health and Energy, their morale
+   * kept. After the step's deaths, so a priest killed this tick raises
+   * nobody. A creature is never raised, a companion neither.
+   * In a Guild Battle (#1222) every shrine raises, with no priest at all.
+   */
+  #priestWave(): void {
+    const due = (this.#priestWaves + 1) * PRIEST_WAVE_SECONDS;
+    if (this.#shrines.length === 0 || this.#elapsedSeconds + SWING_EPSILON < due) {
+      return;
+    }
+    this.#priestWaves += 1;
+    const alone = this.#shrinesRaiseAlone();
+    for (const shrine of this.#shrines) {
+      if (!alone && !this.#priestLives(shrine.team)) {
+        continue;
+      }
+      const events: CombatEvent[] = [];
+      for (const record of this.#participants.values()) {
+        const { combatant } = record;
+        if (
+          !countsForTeam(record) ||
+          combatant.team !== shrine.team ||
+          !combatant.dead ||
+          combatant.morale <= MORALE_FLOOR
+        ) {
+          continue;
+        }
+        this.#raiseAtShrine(record, shrine.position);
+        events.push({
+          kind: "resurrected",
+          targetId: record.id,
+          healthFraction: 1,
+          energyFraction: 1,
+        });
+      }
+      if (events.length === 0) {
+        continue;
+      }
+      this.#log.push({
+        tick: this.#tick,
+        atSeconds: this.#elapsedSeconds,
+        cause: "skill",
+        sourceId: alone ? undefined : priestId(shrine.team),
+        skillId: undefined,
+        weaponId: undefined,
+        attributeId: undefined,
+        area: undefined,
+        doubleStrike: false,
+        events,
+      });
+      this.#recordResurrections(events);
+    }
+  }
+
+  /**
+   * `record` back from the dead on a shrine at `at`, pushed clear as anyone
+   * is (#1186), and invulnerable for its first seconds (#1208).
+   */
+  #raiseAtShrine(record: ParticipantRecord, at: Vec2): void {
+    const { combatant } = record;
+    combatant.statuses.clear();
+    combatant.dead = false;
+    combatant.health = effectiveMaxHealth(combatant);
+    combatant.invulnerableRemaining = SHRINE_INVULNERABLE_SECONDS;
+    combatant.energy = Math.max(0, effectiveMaxEnergy(combatant));
+    emptyAdrenaline(combatant);
+    let position = nearestStandable(this.#graph, at);
+    for (let pass = 0; pass < MOVEMENT_RELAX_PASSES; pass += 1) {
+      position = this.#pushOut(record.id, position, this.#radiusOf(record));
+    }
+    record.position = position;
+    record.inputDirection = ZERO;
+    record.history.clear();
+    this.#stepStart.set(record.id, position);
   }
 
   private checkMatchEnd(): void {
@@ -2712,11 +4511,21 @@ export class MatchSimulation {
   }
 
   private advanceMovement(record: ParticipantRecord, direction: Vec2, dt: number): void {
+    // A spirit stands where it was planted (#1064), a priest on its
+    // shrine (#1186), a Guild Lord at its post (#1222): nothing moves it, and bodies are pushed out of it,
+    // never it out of them.
+    if (
+      record.creature?.kind === "spirit" ||
+      record.creature?.kind === "priest" ||
+      record.creature?.kind === "guild-lord"
+    ) {
+      return;
+    }
     // Where it pushes, even into a wall.
     if (direction.x !== 0 || direction.y !== 0) {
       record.facing = directionAngle(direction.x, direction.y);
     }
-    const radius = this.#ruleset.collision.playerRadius;
+    const radius = this.#radiusOf(record);
     const start = record.position;
     let position = integrateMovement(
       start,
@@ -2745,9 +4554,10 @@ export class MatchSimulation {
       if (otherId === record.id || other.combatant.dead) {
         continue;
       }
+      const reach = radius + this.#radiusOf(other);
       if (
-        penetration(position, other.position, radius) >
-        penetration(start, other.position, radius) + 1e-6
+        penetration(position, other.position, reach) >
+        penetration(start, other.position, reach) + 1e-6
       ) {
         return;
       }
@@ -2766,7 +4576,12 @@ export class MatchSimulation {
       if (otherId === id || other.combatant.dead) {
         continue;
       }
-      position = resolveCircleCircleCollision(position, radius, other.position, radius);
+      position = resolveCircleCircleCollision(
+        position,
+        radius,
+        other.position,
+        this.#radiusOf(other),
+      );
     }
 
     // Walls resolve after bodies so a player squeezed between a blocker
@@ -2813,15 +4628,18 @@ export class MatchSimulation {
    * cast dropped, at spawn. Recharges carry on, as they would in a match.
    * A respawn keeps its overcast and fills only to the ceiling it leaves,
    * as GW1 keeps it through death; a reset clears it (#461), and morale
-   * with it, maxima and all (#843).
+   * with it, maxima and all (#843), and readies a skill spent until a
+   * morale boost (#474).
    */
   #reset(record: ParticipantRecord, why: "respawn" | "reset"): void {
     if (why === "reset") {
       record.combatant.overcast = 0;
       this.#setMorale(record, 0);
+      record.combatant.cast.refreshSpent();
     }
     record.combatant.dead = false;
     record.combatant.health = record.combatant.maxHealth * (record.spec.startHealthFraction ?? 1);
+    record.corpseExploited = false;
     record.combatant.energy = Math.max(0, effectiveMaxEnergy(record.combatant));
     emptyAdrenaline(record.combatant);
     record.combatant.lastCombatAt = this.#elapsedSeconds;
@@ -2830,18 +4648,36 @@ export class MatchSimulation {
     record.facing = record.spec.facing;
     record.inputDirection = ZERO;
     record.walkGoal = undefined;
+    record.route = undefined;
     record.respawnInSeconds = 0;
     record.combatant.cast.cancelCast();
     record.combatant.cast.endAftercast();
+    record.combatant.cast.clearOverrides();
+    dropEndedCopyPools(record.combatant);
     record.combatant.attack = undefined;
     record.combatant.knockdownRemaining = 0;
+    record.combatant.invulnerableRemaining = 0;
+    // The set in hand stays: GW1 resurrects you holding it (#489).
+    record.pendingWeaponSet = undefined;
     this.#clearChainMarks(record);
     record.pendingSkill = undefined;
     record.sinceReset = 0;
+    if (why === "respawn") {
+      record.cursor = createCursor();
+    }
+    record.armedAttack = undefined;
     record.outOfCombatSeconds = 0;
     record.history.clear();
     record.combatant.moving = false;
     this.#stepStart.set(record.id, record.spawn);
+    // A companion comes back with its owner, alive, beside them (#1046),
+    // wherever it was summoned.
+    const companion = record.creature === undefined ? this.#companionOf(record) : undefined;
+    if (companion !== undefined) {
+      this.#reset(companion, why);
+      companion.position = record.position;
+      this.#stepStart.set(companion.id, record.position);
+    }
   }
 
   /**
@@ -2866,6 +4702,17 @@ export class MatchSimulation {
     );
   }
 
+  /** Set 1 from the spec's own gear, the others spare (#489). */
+  #weaponSets(spec: ParticipantSpec): ResolvedWeaponSets {
+    const [set2, set3, set4] = spec.spareWeaponSets ?? [null, null, null];
+    return [
+      { equipment: spec.equipment, maxEnergy: spec.maxEnergy ?? this.#ruleset.combat.baseEnergy },
+      set2,
+      set3,
+      set4,
+    ];
+  }
+
   #combatant(spec: ParticipantSpec): Combatant {
     const maxHealth = spec.maxHealth ?? this.#ruleset.combat.baseHealth;
     const statuses = new StatusSet();
@@ -2888,10 +4735,12 @@ export class MatchSimulation {
       cast: new CastState(spec.id, statuses),
       attack: undefined,
       knockdownRemaining: 0,
+      invulnerableRemaining: 0,
       soulReapingTriggers: [],
       nextMaintainSeq: 0,
       chainMarks: new Map(),
       moving: false,
+      controlled: { minion: 0, spirit: 0, pet: 0 },
       equipment: spec.equipment,
     };
   }

@@ -6,6 +6,8 @@ import {
   neededWeaponText,
   type ActivationRejection,
   type ChainRole,
+  PRIEST_WAVE_SECONDS,
+  type MatchMode,
   type Segment,
   type StatusId,
 } from "@vibewars/game-core";
@@ -21,6 +23,7 @@ import type {
 import type { KeyLabeller } from "../input/key-labels.js";
 import { SKILL_ACTIONS, actionLabel, codeLabel, type Keymap } from "../input/keymap.js";
 import { teamColour } from "../render/arena-snapshot.js";
+import { botTagElement } from "./bot-tag.js";
 import { cssColour } from "./character-preview.js";
 import { paintHealthTint } from "./health-tint.js";
 import {
@@ -51,6 +54,7 @@ import {
   castFill,
   flashSlot,
   outOfRange,
+  ownCompanion,
   adrenalineFading,
   adrenalineFill,
   adrenalineGaugeHtml,
@@ -58,9 +62,11 @@ import {
   paintCastFill,
   paintKnockdown,
   slotAffordable,
+  silenced,
   wrongWeapon,
 } from "./skill-slot-state.js";
 import { createSlotTooltips, type SlotTooltips } from "./slot-tooltip.js";
+import { echoStripHtml, paintEchoStrip } from "./echo-strip.js";
 
 /**
  * The player's heads-up display: health/energy, skill bar, and status
@@ -78,9 +84,15 @@ function describeWeaponName(weaponId: string): string {
 }
 
 export interface HudElements {
+  /** Your block, bottom centre (#1042): hint, message, effects, bars, skill bar. */
   readonly root: HTMLElement;
-  /** Health, energy and statuses, then the skill bar: from its top down, the HUD hides the arena. */
+  /** Morale and gear, health and energy: from its top down, the HUD hides the arena. */
   readonly bars: HTMLElement;
+  /**
+   * Top centre (#1042): the scoreboard and the target frame under it; down
+   * to its bottom, the HUD hides the arena.
+   */
+  readonly top: HTMLElement;
   /** Your health bar, tinted by your worst degeneration (#807). */
   readonly healthRow: HTMLElement;
   readonly healthFill: HTMLElement;
@@ -97,6 +109,8 @@ export interface HudElements {
   readonly energyText: HTMLElement;
   readonly energyPips: HTMLElement;
   readonly gearText: HTMLElement;
+  /** The skill bar's row: the weapon-set slots go first in it (#489). */
+  readonly skillRow: HTMLElement;
   /** Your statuses as icons with draining bars (#834); `dispose` it with the HUD. */
   readonly effects: EffectsMonitor;
   /**
@@ -107,7 +121,7 @@ export interface HudElements {
   readonly skillBar: HTMLElement;
   /** The skill bar's hover tooltips (#485); `dispose` it with the HUD. */
   readonly slotTips: SlotTooltips;
-  /** One line above the skill bar, for why a key did nothing. */
+  /** One line above your bars, for why a key did nothing. */
   readonly message: HTMLElement;
   /** How to target, until the first target of the match (#55). */
   readonly hint: HTMLElement;
@@ -120,6 +134,8 @@ export interface HudElements {
   readonly targetProfessions: HTMLElement;
   /** The target's name, or "no target", in the panel's header. */
   readonly targetText: HTMLElement;
+  /** The BOT tag after a lobby bot's name (#1194); hidden for anyone else. */
+  readonly targetBot: HTMLElement;
   /** The target's health bar (#484), labelled with its percentage. */
   readonly targetHealth: HTMLElement;
   readonly targetHealthFill: HTMLElement;
@@ -136,6 +152,8 @@ export interface HudElements {
   readonly targetCastFill: HTMLElement;
   /** Crossed swords and "attacking", shown while self attacks the target (#160). */
   readonly attacking: HTMLElement;
+  /** "Invulnerable 0:04" while a shrine raise protects the target (#1233). */
+  readonly targetInvulnerable: HTMLElement;
   /** The count and clock, and beside them the foes' pips (#881). */
   readonly scoreboard: HTMLElement;
   readonly scoreboardText: HTMLElement;
@@ -163,7 +181,7 @@ function element(tag: string, className: string, parent: HTMLElement): HTMLEleme
 }
 
 /**
- * Shown above the skill bar until the player first has a target (#55),
+ * Shown above your bars until the player first has a target (#55),
  * with the keymap's target and names keys (#253, #302). A clause whose
  * action has no key is left out.
  */
@@ -215,9 +233,11 @@ export function createHud(
 ): HudElements {
   const root = element("div", "hud", parent);
 
-  // Score and clock sit at the top, away from the skill bar, so a glance
-  // for "am I winning" never competes with a glance for "what can I cast".
-  const scoreboard = element("div", "hud-scoreboard", parent);
+  // Top centre, as GW1 (#1042): score and clock, away from the skill bar,
+  // so a glance for "am I winning" never competes with a glance for "what
+  // can I cast"; the target frame under them.
+  const top = element("div", "hud-top", parent);
+  const scoreboard = element("div", "hud-scoreboard", top);
   const scoreboardText = element("span", "hud-scoreboard-text", scoreboard);
   const enemies = element("span", "hud-enemies", scoreboard);
   const result = element("div", "hud-result", parent);
@@ -236,17 +256,21 @@ export function createHud(
   music.setAttribute("aria-haspopup", "dialog");
 
   // Three rows (#484): who, how hurt, and what they are casting. The cast
-  // row keeps its space when empty, so the HUD never jumps.
-  const targetPanel = element("div", "hud-target", root);
+  // row keeps its space when empty, so the HUD never jumps; the effects
+  // under it grow downward (#1042), so the health bar never moves.
+  const targetPanel = element("div", "hud-target", top);
   const targetHeader = element("div", "hud-target-header", targetPanel);
   const targetProfessions = element("span", "hud-target-professions", targetHeader);
   const targetText = element("span", "hud-target-text", targetHeader);
+  const targetBot = targetHeader.appendChild(botTagElement("hud-target-bot"));
   const attacking = element("span", "hud-attacking", targetHeader);
   const swords = attacking.appendChild(document.createElement("img"));
   swords.src = attackingIcon();
   swords.alt = "";
   attacking.append("attacking");
   attacking.hidden = true;
+  const targetInvulnerable = element("span", "hud-target-invulnerable", targetHeader);
+  targetInvulnerable.hidden = true;
   const targetHealthRow = element("div", "hud-target-health-row", targetPanel);
   const targetHealth = element("div", "hud-bar hud-target-health", targetHealthRow);
   const targetHealthFill = element("div", "hud-bar-fill", targetHealth);
@@ -258,11 +282,6 @@ export function createHud(
   targetChain.alt = "";
   targetChain.hidden = true;
   targetHealth.hidden = true;
-  const targetEffects = createEffectsMonitor(
-    targetPanel,
-    TARGET_EFFECT_ICON_PX,
-    "your target's effects",
-  );
   const targetCast = element("div", "hud-target-cast", targetPanel);
   const targetCastIcon = targetCast.appendChild(document.createElement("img"));
   targetCastIcon.className = "skill-icon hud-target-cast-icon";
@@ -273,16 +292,39 @@ export function createHud(
   const targetCastName = element("span", "hud-target-cast-name", targetCast);
   const targetCastBar = element("span", "hud-target-cast-bar", targetCast);
   const targetCastFill = element("span", "hud-target-cast-fill", targetCastBar);
+  const targetEffects = createEffectsMonitor(
+    targetPanel,
+    TARGET_EFFECT_ICON_PX,
+    "your target's effects",
+    "below",
+  );
 
-  const bars = element("div", "hud-bars", root);
+  // Bottom centre, as GW1 (#1042), bottom up: the skill bar, energy,
+  // health, morale and gear, your effects growing upward, hint and message.
+  const hint = element("div", "hud-hint", root);
+  const message = element("div", "hud-message", root);
+  message.setAttribute("role", "status");
+  // As wide as the skill bar: everything else in it takes its width.
+  const column = element("div", "hud-column", root);
+  const effects = createEffectsMonitor(
+    column,
+    EFFECT_ICON_PX,
+    "your effects",
+    "above",
+    onEndUpkeep,
+  );
+  const bars = element("div", "hud-bars", column);
+
+  const status = element("div", "hud-status", bars);
+  const morale = element("span", "hud-morale", status);
+  morale.hidden = true;
+  const gearText = element("span", "hud-gear", status);
 
   const healthRow = element("div", "hud-bar hud-bar-health", bars);
   const healthFill = element("div", "hud-bar-fill", healthRow);
   const healthLost = element("div", "hud-bar-lost", healthRow);
   const healthText = element("span", "hud-bar-label", healthRow);
   const healthPips = healthRow.appendChild(pipsElement());
-  const morale = element("span", "hud-morale", bars);
-  morale.hidden = true;
 
   const energyRow = element("div", "hud-bar hud-bar-energy", bars);
   const energyFill = element("div", "hud-bar-fill", energyRow);
@@ -290,17 +332,13 @@ export function createHud(
   const energyText = element("span", "hud-bar-label", energyRow);
   const energyPips = energyRow.appendChild(pipsElement());
 
-  const gearText = element("div", "hud-gear", bars);
-  const effects = createEffectsMonitor(bars, EFFECT_ICON_PX, "your effects", onEndUpkeep);
-
-  const hint = element("div", "hud-hint", root);
-  const message = element("div", "hud-message", root);
-  message.setAttribute("role", "status");
-  const skillBar = element("div", "hud-skills", root);
+  const skillRow = element("div", "hud-skill-row", column);
+  const skillBar = element("div", "hud-skills", skillRow);
 
   return {
     root,
     bars,
+    top,
     healthRow,
     healthFill,
     healthLost,
@@ -312,6 +350,7 @@ export function createHud(
     energyText,
     energyPips,
     gearText,
+    skillRow,
     effects,
     clock: { matchSeconds: Number.NaN, arrivedMs: 0 },
     skillBar,
@@ -323,6 +362,7 @@ export function createHud(
     targetEffects,
     targetProfessions,
     targetText,
+    targetBot,
     targetHealth,
     targetHealthFill,
     targetHealthLost,
@@ -335,6 +375,7 @@ export function createHud(
     targetCastName,
     targetCastFill,
     attacking,
+    targetInvulnerable,
     scoreboard,
     scoreboardText,
     enemies,
@@ -393,6 +434,7 @@ const REFUSALS: Readonly<Record<ActivationRejection, string>> = {
   "caster-knocked-down": "You are knocked down.",
   "skill-not-on-bar": "That skill is not on your bar.",
   "still-recharging": "That skill is recharging.",
+  "spent-until-morale-boost": "That skill recharges only on a morale boost.",
   "already-casting": "You are already using a skill.",
   "wrong-weapon": "You need another weapon for that.",
   "insufficient-energy": "Not enough energy.",
@@ -405,6 +447,13 @@ const REFUSALS: Readonly<Record<ActivationRejection, string>> = {
   "invalid-target-enemy": "That skill needs an ally target.",
   "out-of-range": "Target is out of range.",
   "no-line-of-sight": "Target is not in line of sight.",
+  "no-corpse": "No corpse in range.",
+  "no-companion": "You have no pet.",
+  "companion-dead": "Your pet is dead.",
+  "companion-too-far": "Your pet is too far away.",
+  "no-animal-to-charm": "There is no animal to charm here.",
+  "invalid-target-creature": "That cannot be revived that way.",
+  "cannot-cast-spells": "You cannot cast spells.",
 };
 
 /** Where an attack's refusal differs from a cast's: it is about the weapon, not a skill. */
@@ -462,13 +511,16 @@ export function flashMessage(hud: HudElements, text: string): void {
 /**
  * The inside of one skill-bar button (#719): the skill's icon edge to
  * edge, and over it an empty hotkey span for `renderKeyLabels` to fill,
- * the type badge and the out-of-range mark. No name and no cost: the
+ * the type badge, the out-of-range mark and an echo's copy's strip (#1154). No name and no cost: the
  * button's `aria-label` names it and the tooltip prices it (Q77). The
  * type comes from game-core's catalogue, so the wire needs no field for
  * it; a skill this client does not know gets the bare plate and no badge.
  */
 export function skillSlotHtml(slot: SkillSlot): string {
+  // The echo strip first, so the hotkey and the range mark, lifted as
+  // high, draw over it.
   return (
+    echoStripHtml(slot) +
     skillIconHtml(slot.id, SKILL_SLOT_ICON_PX) +
     adrenalineGaugeHtml(slot) +
     `<span class="hud-skill-key"></span>` +
@@ -481,9 +533,10 @@ export function skillSlotHtml(slot: SkillSlot): string {
 export const SKILL_SLOT_ICON_PX = 48;
 
 /**
- * Render the skill bar once; slots are stable for the match's lifetime.
- * `bar` is read again on each hover, so the tooltip prices a slot as the
- * host last sent it, a glyph's discount included (#637).
+ * Render the skill bar once; its slots keep their places for the match's
+ * lifetime, and `refreshSkillBar` redraws one whose skill changed (#469).
+ * `bar` is read again on each hover, so the tooltip prices and names a
+ * slot as the host last sent it, a glyph's discount included (#637).
  */
 export function renderSkillBar(
   hud: HudElements,
@@ -505,9 +558,7 @@ export function renderSkillBar(
       hud.skillBar.appendChild(button);
       return;
     }
-    button.innerHTML = skillSlotHtml(slot);
-    button.classList.toggle("is-elite", isEliteSkill(slot.id));
-    button.setAttribute("aria-label", slot.name);
+    paintSkillSlot(button, slot);
     button.addEventListener("click", () => {
       onUse(index);
     });
@@ -516,9 +567,61 @@ export function renderSkillBar(
       index,
       () => bar()[index] ?? null,
       () => ranks,
+      () => hud.clock.matchSeconds,
     );
     hud.skillBar.appendChild(button);
   });
+}
+
+/** Draw `slot` on `button`: its icon, gauge, badge and name. */
+function paintSkillSlot(button: HTMLButtonElement, slot: SkillSlot): void {
+  button.innerHTML = skillSlotHtml(slot);
+  button.dataset.skillId = slot.id;
+  button.classList.toggle("is-elite", isEliteSkill(slot.id));
+  button.setAttribute("aria-label", slot.name);
+}
+
+/**
+ * The slots of `bar` that hold another skill than `painted` drew there
+ * (#469): an echo's copy standing in its slot, or the echo back. A slot
+ * empty in either is never one: an empty slot stays empty.
+ */
+export function changedSlots(
+  painted: readonly (string | null)[],
+  bar: readonly (SkillSlot | null)[],
+): number[] {
+  return bar.flatMap((slot, index) => {
+    const before = painted[index] ?? null;
+    return slot !== null && before !== null && slot.id !== before ? [index] : [];
+  });
+}
+
+/**
+ * Redraw each slot whose skill changed since it was drawn (#469), from the
+ * render loop, keeping its key label. Its click and tooltip read the slot
+ * by index, so they follow on their own; an open tooltip is hidden, as it
+ * still names the skill that was there. A redrawn slot starts with no
+ * recharge mark: the next `updateRecharges` puts one back if it waits.
+ */
+export function refreshSkillBar(hud: HudElements, bar: readonly (SkillSlot | null)[]): void {
+  const buttons = [...hud.skillBar.querySelectorAll("button")];
+  const painted = buttons.map((button) => button.dataset.skillId ?? null);
+  const changed = changedSlots(painted, bar);
+  hud.slotTips.repainted(changed);
+  for (const index of changed) {
+    const button = buttons[index];
+    const slot = bar[index];
+    if (button === undefined || slot === undefined || slot === null) {
+      continue;
+    }
+    const key = button.querySelector(".hud-skill-key")?.textContent ?? "";
+    button.classList.remove("is-recharging");
+    paintSkillSlot(button, slot);
+    const label = button.querySelector(".hud-skill-key");
+    if (label !== null) {
+      label.textContent = key;
+    }
+  }
 }
 
 /** Paint each slot's recharge wipe, from the render loop (#152). */
@@ -609,37 +712,166 @@ export interface EnemyPip {
 /**
  * The pips for `players` as `selfTeam` sees them: every player not on it,
  * in snapshot order. A spectator, with no team, gets every player, grouped
- * by team. Only players in the snapshot get one, so an empty seat has none.
+ * by team. Only players in the snapshot get one, so an empty seat has none,
+ * and a creature (#1052) never counts.
  */
 export function enemyPips(
   players: readonly PlayerSnapshot[],
   selfTeam: number | undefined,
 ): EnemyPip[] {
   const pips = players
-    .filter((player) => player.team !== selfTeam)
+    .filter((player) => player.team !== selfTeam && player.creature === undefined)
     .map(({ name, team, dead }) => ({ name, team, dead }));
   // Stable, so each team keeps its snapshot order.
   return selfTeam === undefined ? pips.sort((a, b) => a.team - b.team) : pips;
 }
 
-/** How many of `team` are alive. */
+/** How many of `team`'s players are alive: its creatures never count (#1052). */
 export function livingCount(players: readonly PlayerSnapshot[], team: number): number {
-  return players.filter((player) => player.team === team && !player.dead).length;
+  return players.filter(
+    (player) => player.team === team && !player.dead && player.creature === undefined,
+  ).length;
+}
+/** Seconds before a priest's wave its countdown pulses (#1199). */
+export const RAISE_SOON_SECONDS = 5;
+
+/**
+ * One piece of the scoreboard (#1199): text, a side's priest `✚`, alive
+ * or struck out, or the countdown to the next priest wave.
+ */
+export type ScoreboardPart =
+  | { readonly kind: "text"; readonly text: string }
+  | { readonly kind: "priest"; readonly team: number; readonly alive: boolean }
+  | { readonly kind: "raise"; readonly text: string; readonly soon: boolean };
+
+/** Whether `team`'s priest stands (#1199): a living priest body of that team. */
+export function priestLives(players: readonly PlayerSnapshot[], team: number): boolean {
+  return players.some(
+    (player) => player.team === team && !player.dead && player.creature?.kind === "priest",
+  );
 }
 
 /**
- * "4 v 3 · 7:12": the living on each side, your own first, and the clock
- * (#881). Every match is annihilation (#846), so this is the one
- * scoreboard there is. A spectator reads team 1 first.
+ * Your side against theirs, your own first, and the clock (#881): the time
+ * left, counting down from the match's limit (#476), or the time played
+ * where there is none. A spectator reads team 1 first.
+ *
+ * What a side is depends on the map's `mode`: Annihilation counts the
+ * living, "4 v 3 · 7:12"; Kill Count the team's kills, "4 – 0 · 2:25"
+ * (#1200), as the snapshot's `score` carries them, team 1's first.
+ * Priest Annihilation counts the living, then each side's priest and the
+ * next wave, "4 v 3 · ✚ ✚ · raise 0:47 · 7:12" (#1199): `raise —` once
+ * both priests are dead, and no countdown once time is out. A Guild
+ * Battle counts the living, as Annihilation, until its own scoreboard
+ * (#1226).
  */
-export function scoreboardText(
+export function scoreboardParts(
   players: readonly PlayerSnapshot[],
   selfTeam: number | undefined,
   elapsedSeconds: number,
-): string {
+  timeLimitSeconds: number | null,
+  mode: MatchMode,
+  score: readonly [number, number],
+): readonly ScoreboardPart[] {
   const ours = selfTeam ?? 0;
   const theirs = ours === 0 ? 1 : 0;
-  return `${String(livingCount(players, ours))} v ${String(livingCount(players, theirs))} · ${formatClock(elapsedSeconds)}`;
+  // Rounded up, so the clock reads 0:00 only once time is out.
+  const clock: ScoreboardPart = {
+    kind: "text",
+    text:
+      timeLimitSeconds === null
+        ? formatClock(elapsedSeconds)
+        : formatClock(Math.ceil(timeLimitSeconds - elapsedSeconds)),
+  };
+  const living: ScoreboardPart = {
+    kind: "text",
+    text: `${String(livingCount(players, ours))} v ${String(livingCount(players, theirs))}`,
+  };
+  switch (mode) {
+    case "annihilation":
+    case "guild-battle":
+      return [living, clock];
+    case "kill-count":
+      return [{ kind: "text", text: `${String(score[ours])} – ${String(score[theirs])}` }, clock];
+    case "priest-annihilation": {
+      const priests = [ours, theirs].map((team): ScoreboardPart => ({
+        kind: "priest",
+        team,
+        alive: priestLives(players, team),
+      }));
+      const timeUp = timeLimitSeconds !== null && elapsedSeconds >= timeLimitSeconds;
+      if (timeUp) {
+        return [living, ...priests, clock];
+      }
+      return [living, ...priests, raisePart(players, elapsedSeconds), clock];
+    }
+  }
+}
+
+/** The next priest wave's countdown (#1199), rounded up as the clock is. */
+function raisePart(players: readonly PlayerSnapshot[], elapsedSeconds: number): ScoreboardPart {
+  if (!priestLives(players, 0) && !priestLives(players, 1)) {
+    return { kind: "raise", text: "raise —", soon: false };
+  }
+  const left = Math.ceil(PRIEST_WAVE_SECONDS - (elapsedSeconds % PRIEST_WAVE_SECONDS));
+  return { kind: "raise", text: `raise ${formatClock(left)}`, soon: left <= RAISE_SOON_SECONDS };
+}
+
+/** What goes before `parts[index]`: nothing first, a space between two priests, else ` · `. */
+function separatorBefore(parts: readonly ScoreboardPart[], index: number): string {
+  if (index === 0) {
+    return "";
+  }
+  return parts[index - 1]?.kind === "priest" && parts[index]?.kind === "priest" ? " " : " · ";
+}
+
+/** The scoreboard as one line of text, as `renderScoreboard` paints it. */
+export function scoreboardText(...args: Parameters<typeof scoreboardParts>): string {
+  return scoreboardParts(...args)
+    .map(
+      (part, index, parts) =>
+        separatorBefore(parts, index) + (part.kind === "priest" ? "✚" : part.text),
+    )
+    .join("");
+}
+
+/**
+ * Paint the scoreboard's `parts` into `row` (#1199), rebuilt only when one
+ * changes. A priest is drawn in its side's colour, as the foes' pips, and
+ * struck out dead; the wave countdown pulses for its last seconds.
+ */
+function renderScoreboard(
+  row: HTMLElement,
+  parts: readonly ScoreboardPart[],
+  selfTeam: number | undefined,
+): void {
+  const key = JSON.stringify(parts);
+  if (row.dataset.parts === key) {
+    return;
+  }
+  row.dataset.parts = key;
+  row.replaceChildren();
+  parts.forEach((part, index) => {
+    row.append(separatorBefore(parts, index));
+    switch (part.kind) {
+      case "text":
+        row.append(part.text);
+        return;
+      case "priest": {
+        const node = element("span", part.alive ? "hud-priest" : "hud-priest is-dead", row);
+        node.textContent = "✚";
+        const ally = selfTeam === undefined ? part.team === 0 : part.team === selfTeam;
+        node.style.setProperty("--pip-colour", cssColour(teamColour(ally ? "ally" : "enemy")));
+        node.setAttribute("aria-label", part.alive ? "priest" : "priest (dead)");
+        return;
+      }
+      case "raise": {
+        const node = element("span", part.soon ? "hud-raise hud-raise-soon" : "hud-raise", row);
+        node.textContent = part.text;
+        return;
+      }
+    }
+  });
 }
 
 /**
@@ -675,19 +907,32 @@ function renderEnemyPips(
   }
 }
 
+/** What the end-of-match line adds for a reason; nothing for a score or a wipe. */
+const OUTCOME_REASONS: Readonly<Record<string, string>> = {
+  time: " (time)",
+  morale: " (morale)",
+  "guild-lord": " (Guild Lord slain)",
+  aggression: " (most aggression at time)",
+};
+
 /**
  * The end-of-match line a player reads, from their own team's point of
  * view. An annihilation match nobody won is lost by every team (GW1,
- * #846); only kill-count draws.
+ * #846), and so is a Guild Battle (#1222); only kill-count draws.
  */
 export function describeOutcome(
   winningTeam: number | undefined,
   reason: string | undefined,
   selfTeam: number | undefined,
 ): string {
-  const why = reason === "time" ? " (time)" : reason === "morale" ? " (morale)" : "";
+  const why = reason === undefined ? "" : (OUTCOME_REASONS[reason] ?? "");
   if (winningTeam === undefined) {
-    if (reason === "annihilation" || reason === "morale") {
+    if (
+      reason === "annihilation" ||
+      reason === "morale" ||
+      reason === "guild-lord" ||
+      reason === "aggression"
+    ) {
       return selfTeam === undefined ? `No winner${why}` : `Defeat${why}`;
     }
     return `Draw${why}`;
@@ -979,6 +1224,13 @@ export function flashTargetCast(
   }
 }
 
+/** "Invulnerable 0:04": the seconds left, rounded up, as a clock (#1233). */
+export function invulnerableLabel(seconds: number): string {
+  const whole = Math.ceil(seconds);
+  const minutes = Math.floor(whole / 60);
+  return `Invulnerable ${String(minutes)}:${String(whole % 60).padStart(2, "0")}`;
+}
+
 /** The target frame (#484): header, health bar and cast row. */
 function renderTarget(
   hud: HudElements,
@@ -987,7 +1239,11 @@ function renderTarget(
 ): void {
   renderTargetProfessions(hud.targetProfessions, target);
   hud.targetText.textContent = target === undefined ? "no target" : target.name;
+  hud.targetBot.hidden = target?.bot !== true;
   hud.attacking.hidden = !isAttackingTarget(self, target);
+  const invulnerable = target === undefined || target.dead ? 0 : target.invulnerableSeconds;
+  hud.targetInvulnerable.hidden = invulnerable <= 0;
+  hud.targetInvulnerable.textContent = invulnerable > 0 ? invulnerableLabel(invulnerable) : "";
   // Armor on hover: a number to look up, not to read at a glance.
   hud.targetPanel.title = target === undefined ? "" : `armor ${String(target.armor)}`;
   hud.targetHealth.hidden = target === undefined;
@@ -1052,13 +1308,20 @@ export function updateHud(
   /** Your chain mark on a target, still running (#916). */
   chainMark: (targetId: string) => ChainRole | undefined,
   walls: readonly Segment[],
+  /** The match's length, from the host (#476); `null` for none. */
+  timeLimitSeconds: number | null,
+  /** The map's mode (#476), which decides what the scoreboard counts (#1200). */
+  mode: MatchMode,
   match?: MatchSnapshot,
 ): void {
   if (match !== undefined) {
-    hud.scoreboardText.textContent = scoreboardText(
-      match.players,
+    renderScoreboard(
+      hud.scoreboardText,
+      scoreboardParts(match.players, self?.team, match.elapsedSeconds, timeLimitSeconds, mode, [
+        match.scoreTeam0,
+        match.scoreTeam1,
+      ]),
       self?.team,
-      match.elapsedSeconds,
     );
     renderEnemyPips(hud.enemies, enemyPips(match.players, self?.team), self?.team);
 
@@ -1114,9 +1377,12 @@ export function updateHud(
   // hand cannot use (#417), and mark those that cannot reach the target. The server is still the authority on
   // whether a cast is legal — these are hints, not gates (brief §32).
   const buttons = hud.skillBar.querySelectorAll("button");
+  const reducedMotion = prefersReducedMotion();
   const fill = castFill(skillBar, self);
-  const far = outOfRange(skillBar, self, target, walls);
+  const companion = match === undefined ? undefined : ownCompanion(match.players, self);
+  const far = outOfRange(skillBar, self, target, companion, walls);
   const unwielded = wrongWeapon(skillBar, self);
+  const barred = silenced(skillBar, self);
   hud.slotTips.casting(fill?.slot);
   paintKnockdown(hud.skillBar, self.knockdownRemaining);
   skillBar.forEach((slot, index) => {
@@ -1138,5 +1404,10 @@ export function updateHud(
       adrenalineFading(adrenaline[index] ?? 0, adrenalineLossIn),
     );
     button.classList.toggle("is-wrong-weapon", unwielded[index] === true);
+    button.classList.toggle("is-silenced", barred[index] === true);
+    // An echo's copy drains its strip as its time runs out (#1154).
+    if (now !== undefined) {
+      paintEchoStrip(button, slot, now, reducedMotion);
+    }
   });
 }

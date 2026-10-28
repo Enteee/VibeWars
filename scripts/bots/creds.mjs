@@ -91,7 +91,11 @@ const failed = (note) => ({ state: "error", who: null, expiry: null, scopes: nul
  * would make the company's row show the operator's login. Removed, not
  * overridden, whenever a company directory is probed.
  */
-const CLAUDE_TOKEN_VARS = ["CLAUDE_CODE_OAUTH_TOKEN", "ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN"];
+export const CLAUDE_TOKEN_VARS = [
+  "CLAUDE_CODE_OAUTH_TOKEN",
+  "ANTHROPIC_API_KEY",
+  "ANTHROPIC_AUTH_TOKEN",
+];
 export const GITHUB_TOKEN_VARS = [
   "GH_TOKEN",
   "GITHUB_TOKEN",
@@ -249,17 +253,32 @@ export function pushIdentity(key, run = runCommand) {
 }
 
 /**
+ * @typedef {(url: string) => Promise<{ ok: boolean, json: () => Promise<unknown> }>} Get
+ */
+
+/**
  * The bot a token file belongs to, by `getMe`.
  *
  * @param {string} file
- * @param {(url: string) => Promise<{ ok: boolean, json: () => Promise<unknown> }>} [get]
+ * @param {Get} [get]
  * @returns {Promise<Identity>}
  */
 export async function telegramIdentity(file, get = (url) => fetch(url)) {
   if (!fs.existsSync(file)) {
     return NOT_SET_UP;
   }
-  const token = fs.readFileSync(file, "utf8").trim();
+  return telegramBot(fs.readFileSync(file, "utf8").trim(), get);
+}
+
+/**
+ * The bot a token belongs to, by `getMe`: `claude-llc auth` asks before it
+ * stores one.
+ *
+ * @param {string} token
+ * @param {Get} [get]
+ * @returns {Promise<Identity>}
+ */
+export async function telegramBot(token, get = (url) => fetch(url)) {
   try {
     const reply = await get(`https://api.telegram.org/bot${token}/getMe`);
     const body = parseObject(JSON.stringify(await reply.json()));
@@ -306,17 +325,6 @@ export function ensureHome(root) {
 }
 
 /**
- * The command that signs the company's Claude account in, in its own config
- * directory and nobody else's.
- *
- * @param {string} root
- * @returns {string}
- */
-export function claudeSignIn(root) {
-  return `CLAUDE_CONFIG_DIR=${paths(root).claude} claude   (then /login, as a separate account from yours)`;
-}
-
-/**
  * Whether the agents may run on the company's Claude account (#865): it must
  * be signed in, in the company's config directory. Whose account that is, is
  * the operator's responsibility (the doctor shows it, informationally); the
@@ -338,7 +346,7 @@ export function claudeVerdict(root, run = runCommand) {
   if (company.state !== "ok" || company.who === null) {
     return {
       ok: false,
-      message: `the company's Claude account is not set up. Sign it in: ${claudeSignIn(root)}`,
+      message: `the company's Claude account is not set up. Sign it in: claude-llc auth claude`,
     };
   }
   return { ok: true, who: company.who };

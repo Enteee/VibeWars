@@ -4,12 +4,16 @@
  * on the host.
  *
  * A jail can see neither host processes nor `link/serve.pid`, so
- * `link.mjs serve` writes a heartbeat into the bus root, which every jail
- * mounts read-only: `<bus>/sidecar.json`, `{ "lastSeen": <ms> }`, every
+ * `link.mjs serve` writes a heartbeat under the bus root, which every jail
+ * mounts read-only: `<bus>/_alive/sidecar.json`, `{ "lastSeen": <ms> }`, every
  * `HEARTBEAT_MS`, removed when it stops cleanly. A sidecar that died
  * without cleaning up, or hung, stops writing it, so an old one counts as
  * down too. A jail cannot write the bus root, but nothing here relies on
  * that: a forged heartbeat would only silence the jail's own warning.
+ *
+ * In a directory of its own, because the file is replaced by rename: a
+ * jail that may not see the bus root, support's (#148), binds `_alive/`,
+ * and a bind of the file would pin the first one it saw.
  *
  *   node sidecar.mjs fresh <bus>   exit 0 if the heartbeat is fresh, 1 if not
  */
@@ -21,6 +25,8 @@ import { fileURLToPath } from "node:url";
 import { withJailDir } from "./jail-fs.mjs";
 import { obj } from "./protocol.mjs";
 
+/** Under the bus root; `_`, so it is never taken for an employee's. */
+export const SIDECAR_DIR = "_alive";
 export const SIDECAR_FILE = "sidecar.json";
 /** How often the sidecar writes its heartbeat. */
 export const HEARTBEAT_MS = 10_000;
@@ -63,7 +69,9 @@ export function sidecarDown(now, record) {
  */
 export function readSidecar(bus) {
   try {
-    return parseSidecar(withJailDir(bus, "", {}, (dir) => dir.readSmall(SIDECAR_FILE, 4096)));
+    return parseSidecar(
+      withJailDir(bus, SIDECAR_DIR, {}, (dir) => dir.readSmall(SIDECAR_FILE, 4096)),
+    );
   } catch {
     return null;
   }
@@ -77,7 +85,8 @@ export function readSidecar(bus) {
  * @returns {void}
  */
 export function writeSidecar(bus, now) {
-  const file = path.join(bus, SIDECAR_FILE);
+  fs.mkdirSync(path.join(bus, SIDECAR_DIR), { recursive: true });
+  const file = path.join(bus, SIDECAR_DIR, SIDECAR_FILE);
   const tmp = `${file}.tmp`;
   fs.writeFileSync(tmp, `${JSON.stringify({ lastSeen: now })}\n`);
   fs.renameSync(tmp, file);

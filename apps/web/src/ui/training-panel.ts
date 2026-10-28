@@ -11,9 +11,10 @@ import type { MatchSnapshot, SkillSlot } from "@vibewars/game-session";
 import { attachMatchSounds, type MatchSounds } from "../audio/match-sounds.js";
 import { setGlobalMute } from "../audio/global-mute.js";
 import { soundPlayer } from "../audio/sound-player.js";
-import { attackKeyIntents, hasActionToCancel } from "../input/attack-key.js";
+import { attackKeyIntents, escapeIntent } from "../input/attack-key.js";
 import { createDoubleClick } from "../input/double-click.js";
 import {
+  calledTargetIntent,
   callTargetCall,
   middleClickAction,
   pingCall,
@@ -23,6 +24,7 @@ import { attachKeyboardMoveInput } from "../input/keyboard-move.js";
 import { loadLayoutLabeller, type KeyLabeller } from "../input/key-labels.js";
 import {
   SKILL_ACTIONS,
+  WEAPON_SET_ACTIONS,
   actionForCode,
   actionLabel,
   codeLabel,
@@ -30,11 +32,13 @@ import {
 } from "../input/keymap.js";
 import { loadKeymap } from "../input/keymap-preference.js";
 import { skillSlotForKeyDown } from "../input/skill-keys.js";
+import { weaponSetIntent } from "../input/weapon-set-keys.js";
 import { attachNameReveal } from "../input/name-reveal.js";
-import { nextTabTarget } from "../input/tab-target.js";
+import { closestTarget, nextTabTarget, selfTargetIntent } from "../input/tab-target.js";
 import { toArenaSnapshot, toRenderableWall } from "../match-view.js";
 import { attachMatchMusic, type MatchMusic } from "../music/match-music.js";
 import { music } from "../music/play-music.js";
+import { mapShrines, type MapShrine } from "../net/maps.js";
 import { TRACKS } from "../music/tracks/index.js";
 import {
   EMPTY_SNAPSHOT,
@@ -72,17 +76,18 @@ import {
   type LogRow,
   type MeterTotals,
 } from "./combat-readouts.js";
-import { describeRefusal, MESSAGE_SECONDS, SKILL_SLOT_ICON_PX } from "./hud.js";
+import { changedSlots, describeRefusal, MESSAGE_SECONDS, SKILL_SLOT_ICON_PX } from "./hud.js";
 import { isEliteSkill, skillBadgeHtml, skillIconHtml } from "./icons.js";
-import { createAllyWatch } from "./ally-watch.js";
 import { energyLabel, overcastBandElement, renderOvercastBand } from "./overcast-band.js";
 import { paintHealthTint } from "./health-tint.js";
+import { createPartyWindow } from "./party-window.js";
 import { pipsElement, renderPips } from "./pips.js";
 import { paintRecharge, prefersReducedMotion } from "./recharge-overlay.js";
 import {
   castFill,
   flashSlot,
   outOfRange,
+  ownCompanion,
   adrenalineFading,
   adrenalineFill,
   adrenalineGaugeHtml,
@@ -91,20 +96,24 @@ import {
   paintKnockdown,
   slotAffordable,
   slotFlashes,
+  silenced,
   wrongWeapon,
 } from "./skill-slot-state.js";
 import { createSlotTooltips } from "./slot-tooltip.js";
+import { echoStripHtml, paintEchoStrip } from "./echo-strip.js";
 import {
   armedHint,
   buildSignature,
   escapeStep,
   loadScenarioChoice,
+  logActorName,
   overlayMessage,
   resolveScenarioId,
   saveScenarioChoice,
   shouldRestoreFocus,
 } from "./training-state.js";
 import { h } from "./kit.js";
+import { labelWeaponSets, renderWeaponSets, weaponSetSlots } from "./weapon-set-slots.js";
 
 /**
  * The Training Ground: a live arena beside the build editor (#2 §6).
@@ -183,6 +192,8 @@ interface Session {
   readonly connection: LocalMatchConnection;
   readonly names: ReadonlyMap<string, string>;
   readonly walls: readonly RenderableWall[];
+  /** The map's resurrection shrines (#1199), as a match's. */
+  readonly shrines: readonly MapShrine[];
   /** The same walls as segments, for the skill bar's line-of-sight hint (#485). */
   readonly wallSegments: readonly Segment[];
   readonly sounds: MatchSounds;
@@ -226,8 +237,26 @@ export function createTrainingPanel(): TrainingPanel {
   const teaches = h("p", "training-teaches");
 
   const stage = h("div", "training-stage");
-  // The ally you watch (#443), in the stage's corner, as on the match HUD.
-  const allyWatch = createAllyWatch(stage);
+  // Your team's health (#1055), as on the match HUD: shown when the
+  // scenario gives you allies. A row's click targets its member.
+  const partyWindow = createPartyWindow(
+    stage,
+    (targetSessionId) => {
+      if (session !== undefined && !session.parked) {
+        session.connection.sendIntent({ kind: "target", targetSessionId });
+      }
+    },
+    // Your pet's Guard, Fight and Heel (#1110).
+    (creatureId, mode) => {
+      if (session !== undefined && !session.parked) {
+        session.connection.sendIntent({
+          kind: "command",
+          creatureId,
+          order: { kind: "mode", mode },
+        });
+      }
+    },
+  );
   stage.tabIndex = 0;
   stage.setAttribute("role", "application");
   stage.setAttribute("aria-label", "training arena");
@@ -248,6 +277,10 @@ export function createTrainingPanel(): TrainingPanel {
   vitals.append(health.root, energy.root, attacking);
 
   const skills = h("div", "training-skills");
+  // The weapon sets, at the bar's left end as on the match HUD (#489).
+  const weaponSets = weaponSetSlots((set) => {
+    swapTo(set);
+  });
 
   const meter = h("dl", "training-meter");
 
@@ -295,6 +328,8 @@ export function createTrainingPanel(): TrainingPanel {
   let latestArena: ArenaSnapshot = EMPTY_SNAPSHOT;
   let messageTimer: ReturnType<typeof setTimeout> | undefined;
   let skillButtons: HTMLButtonElement[] = [];
+  /** The skill each slot was painted with: a copy standing in one redraws the bar (#469). */
+  let paintedSkills: readonly (string | null)[] = [];
   const slotTips = createSlotTooltips();
 
   // The player's professions follow the build being edited (#281).
@@ -303,7 +338,12 @@ export function createTrainingPanel(): TrainingPanel {
       ? { primary: character.primaryProfession, secondary: character.secondaryProfession }
       : NO_PROFESSIONS;
   const nameOf = (id: string): string =>
-    id === SELF_ID ? displayName.trim() || "You" : (session?.names.get(id) ?? id);
+    id === SELF_ID
+      ? displayName.trim() || "You"
+      : logActorName(id, session?.names, latestMatch?.players);
+  // A creature in the latest snapshot (#1052): it swings under its own name (#1144).
+  const isCreature = (id: string): boolean =>
+    latestMatch?.players.find((player) => player.sessionId === id)?.creature !== undefined;
 
   /* --- painting -------------------------------------------------------- */
 
@@ -360,7 +400,7 @@ export function createTrainingPanel(): TrainingPanel {
     paintMeter();
     // The gathered ticks belong before the line, not after it.
     const now = session?.connection.simulation.elapsedSeconds ?? 0;
-    appendLog([...ticks.flush(now, nameOf), dividerRow(label, now)]);
+    appendLog([...ticks.flush(now, nameOf, isCreature), dividerRow(label, now)]);
   };
 
   const flash = (text: string): void => {
@@ -378,6 +418,18 @@ export function createTrainingPanel(): TrainingPanel {
       return;
     }
     session.connection.sendIntent({ kind: "use-skill", slot });
+  };
+
+  /** Swap to weapon set `set` (0-3), by its key or its slot (#489). */
+  const swapTo = (set: number): void => {
+    const action = WEAPON_SET_ACTIONS[set];
+    if (session === undefined || session.parked || action === undefined) {
+      return;
+    }
+    const intent = weaponSetIntent(action, session.connection.weaponSets);
+    if (intent !== undefined) {
+      session.connection.sendIntent(intent);
+    }
   };
 
   const attack = (): void => {
@@ -402,7 +454,33 @@ export function createTrainingPanel(): TrainingPanel {
     }
   };
 
+  const targetByKey = (action: "target-closest" | "target-called" | "target-self"): void => {
+    if (session === undefined || session.parked) {
+      return;
+    }
+    const { connection } = session;
+    const snapshot = connection.getSnapshot();
+    if (action === "target-called" || action === "target-self") {
+      const intent =
+        action === "target-called"
+          ? calledTargetIntent(snapshot, connection.getCalls())
+          : selfTargetIntent(snapshot.players, SELF_ID);
+      if (intent !== undefined) {
+        connection.sendIntent(intent);
+      }
+      return;
+    }
+    const current = snapshot.players.find(
+      (player) => player.sessionId === SELF_ID,
+    )?.targetSessionId;
+    const closest = closestTarget(snapshot.players, SELF_ID);
+    if (closest !== undefined && closest !== current) {
+      connection.sendIntent({ kind: "target", targetSessionId: closest });
+    }
+  };
+
   const paintSkills = (slots: readonly (SkillSlot | null)[]): void => {
+    paintedSkills = slots.map((slot) => slot?.id ?? null);
     skillButtons = slots.map((slot, index) => {
       const button = document.createElement("button");
       button.type = "button";
@@ -437,11 +515,15 @@ export function createTrainingPanel(): TrainingPanel {
         index,
         () => session?.connection.skillBar[index] ?? null,
         () => session?.connection.ranks ?? new Map(),
+        () => session?.connection.simulation.elapsedSeconds ?? 0,
       );
       // The icon alone, as on the match HUD (#719): the name is the label.
+      // The echo strip first, so the hotkey and the range mark draw over it.
       button.insertAdjacentHTML(
         "afterbegin",
-        skillIconHtml(slot.id, SKILL_SLOT_ICON_PX) + adrenalineGaugeHtml(slot),
+        echoStripHtml(slot) +
+          skillIconHtml(slot.id, SKILL_SLOT_ICON_PX) +
+          adrenalineGaugeHtml(slot),
       );
       button.insertAdjacentHTML("beforeend", skillBadgeHtml(slot.id));
       button.insertAdjacentHTML(
@@ -452,7 +534,8 @@ export function createTrainingPanel(): TrainingPanel {
       button.setAttribute("aria-label", slot.name);
       return button;
     });
-    skills.replaceChildren(...skillButtons);
+    labelWeaponSets(weaponSets, keymap, keyLabel);
+    skills.replaceChildren(weaponSets, ...skillButtons);
   };
 
   const paintOverlay = (problem: string | undefined): void => {
@@ -477,15 +560,30 @@ export function createTrainingPanel(): TrainingPanel {
     renderPips(health.pips, self.healthPips);
     renderPips(energy.pips, self.energyPips);
     attacking.textContent = self.attackTargetSessionId === undefined ? "" : "attacking";
+    renderWeaponSets(weaponSets, session?.connection.weaponSets);
     const slots = session?.connection.skillBar ?? [];
+    if (changedSlots(paintedSkills, slots).length > 0) {
+      // Every button is made anew, so a tooltip on any of them would hang
+      // off one no longer on the page.
+      slotTips.repainted(slots.map((_, index) => index));
+      paintSkills(slots);
+    }
     const recharges = session?.connection.getRecharges() ?? [];
     const adrenaline = session?.connection.getAdrenaline() ?? [];
     const adrenalineLossIn = session?.connection.getAdrenalineLossIn() ?? null;
     const reducedMotion = prefersReducedMotion();
+    const now = session?.connection.simulation.elapsedSeconds ?? 0;
     const fill = castFill(slots, self);
     const target = match.players.find((player) => player.sessionId === self.targetSessionId);
-    const far = outOfRange(slots, self, target, session?.wallSegments ?? []);
+    const far = outOfRange(
+      slots,
+      self,
+      target,
+      ownCompanion(match.players, self),
+      session?.wallSegments ?? [],
+    );
     const unwielded = wrongWeapon(slots, self);
+    const barred = silenced(slots, self);
     slotTips.casting(fill?.slot);
     // Greyed while you lie knocked down, as on the match HUD (#545).
     paintKnockdown(skills, self.knockdownRemaining);
@@ -510,8 +608,10 @@ export function createTrainingPanel(): TrainingPanel {
         adrenalineFading(adrenaline[index] ?? 0, adrenalineLossIn),
       );
       button.classList.toggle("is-wrong-weapon", unwielded[index] === true);
+      button.classList.toggle("is-silenced", barred[index] === true);
       // The same wipe as the match HUD (#152).
       paintRecharge(button, recharges[index], slot.name, reducedMotion);
+      paintEchoStrip(button, slot, now, reducedMotion);
     });
   };
 
@@ -521,7 +621,7 @@ export function createTrainingPanel(): TrainingPanel {
     totals = accumulate(totals, result.log, SELF_ID, TICK_SECONDS);
     const rows: LogRow[] = [];
     for (const entry of result.log) {
-      rows.push(...ticks.push(entry, nameOf));
+      rows.push(...ticks.push(entry, nameOf, isCreature));
     }
     appendLog(rows);
   };
@@ -544,6 +644,7 @@ export function createTrainingPanel(): TrainingPanel {
       connection,
       names: setup.names,
       walls: setup.map.walls.map(toRenderableWall),
+      shrines: mapShrines(setup.map.id),
       wallSegments: allWallSegments(setup.map.walls),
       // The same sounds as a match (#112), muted by the same M.
       sounds: attachMatchSounds(connection, soundPlayer()),
@@ -627,9 +728,14 @@ export function createTrainingPanel(): TrainingPanel {
         return;
       }
       const snapshot = session?.connection.getSnapshot();
-      const step = escapeStep(snapshot !== undefined && hasActionToCancel(snapshot), expanded);
+      const step = escapeStep(
+        snapshot === undefined ? undefined : escapeIntent(snapshot),
+        expanded,
+      );
       if (step === "cancel") {
         session?.connection.sendIntent({ kind: "cancel" });
+      } else if (step === "clear-target") {
+        session?.connection.sendIntent({ kind: "target", targetSessionId: null });
       } else if (step === "collapse") {
         setExpanded(false);
       } else {
@@ -653,6 +759,12 @@ export function createTrainingPanel(): TrainingPanel {
       }
       return;
     }
+    if (action === "target-closest" || action === "target-called" || action === "target-self") {
+      if (!event.repeat) {
+        targetByKey(action);
+      }
+      return;
+    }
     if (action === "attack") {
       // Held Space auto-repeats; one attack is all it means (#160).
       if (!event.repeat) {
@@ -671,6 +783,12 @@ export function createTrainingPanel(): TrainingPanel {
             : pingCall(snapshot, viewport?.pointerWorld());
       if (call !== undefined) {
         session?.connection.sendCall(call);
+      }
+      return;
+    }
+    if (WEAPON_SET_ACTIONS.includes(action)) {
+      if (!event.repeat) {
+        swapTo(WEAPON_SET_ACTIONS.indexOf(action));
       }
       return;
     }
@@ -877,21 +995,20 @@ export function createTrainingPanel(): TrainingPanel {
       }
       const { connection } = session;
       connection.advance(deltaSeconds);
-      appendLog(ticks.advance(connection.simulation.elapsedSeconds, nameOf));
+      appendLog(ticks.advance(connection.simulation.elapsedSeconds, nameOf, isCreature));
       latestMatch = connection.getSnapshot();
       session.sounds.snapshot(latestMatch);
       session.music.snapshot(latestMatch);
       const self = latestMatch.players.find((player) => player.sessionId === SELF_ID);
       follow.frame(deltaSeconds, self);
-      allyWatch.update(latestMatch);
+      partyWindow.update(latestMatch);
       latestArena = withCalls(
         withNames(
-          toArenaSnapshot(latestMatch, session.walls),
+          toArenaSnapshot(latestMatch, session.walls, session.shrines),
           created.pointerWorld(),
           nameReveal.held(),
         ),
         connection.getCalls(),
-        allyWatch.watchedId,
       );
       created.scene.setSnapshot(latestArena);
       // For the e2e specs: who your team has called.
@@ -936,13 +1053,11 @@ export function createTrainingPanel(): TrainingPanel {
       if (session === undefined) {
         return;
       }
-      // A wheel click calls a foe, watches an ally, or pings the ground (#443).
+      // A wheel click calls a foe, or pings the point (#443, #1055).
       if (button === "middle" && phase === "down") {
         const action = middleClickAction(session.connection.getSnapshot(), latestArena, world);
         if (action.kind === "call") {
           session.connection.sendCall(action.call);
-        } else if (action.kind === "watch") {
-          allyWatch.toggle(action.allyId);
         }
         return;
       }
@@ -998,7 +1113,7 @@ export function createTrainingPanel(): TrainingPanel {
       offPointer?.();
       camera?.dispose();
       camera = undefined;
-      allyWatch.dispose();
+      partyWindow.dispose();
       delete stage.dataset.called;
       delete stage.dataset.names;
       nameReveal.detach();
