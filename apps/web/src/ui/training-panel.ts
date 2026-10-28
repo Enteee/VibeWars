@@ -500,14 +500,17 @@ export function createTrainingPanel(): TrainingPanel {
         () => session?.connection.simulation.elapsedSeconds ?? 0,
       );
       // The icon alone, as on the match HUD (#719): the name is the label.
+      // The echo strip first, so the hotkey and the range mark draw over it.
       button.insertAdjacentHTML(
         "afterbegin",
-        skillIconHtml(slot.id, SKILL_SLOT_ICON_PX) + adrenalineGaugeHtml(slot),
+        echoStripHtml(slot) +
+          skillIconHtml(slot.id, SKILL_SLOT_ICON_PX) +
+          adrenalineGaugeHtml(slot),
       );
       button.insertAdjacentHTML("beforeend", skillBadgeHtml(slot.id));
       button.insertAdjacentHTML(
         "beforeend",
-        `<span class="skill-range-mark" aria-hidden="true"></span>` + echoStripHtml(slot),
+        `<span class="skill-range-mark" aria-hidden="true"></span>`,
       );
       button.classList.toggle("is-elite", isEliteSkill(slot.id));
       button.setAttribute("aria-label", slot.name);

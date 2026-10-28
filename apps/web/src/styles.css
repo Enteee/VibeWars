@@ -3683,12 +3683,13 @@ body.has-expanded-training #screens {
   display: none;
 }
 
-/* An echo's copy in its slot (#1154): a strip along the top edge that
+/* An echo's copy in its slot (#1154): a strip along the bottom edge that
    drains as the copy's time runs out, over the recharge wipe, clear of
-   its number. Under reduced motion it steps once a second. */
+   its number, and under the hotkey and the range mark. Under reduced
+   motion it steps once a second. */
 .echo-strip {
   position: absolute;
-  top: 0;
+  bottom: 0;
   left: 0;
   z-index: 1;
   width: calc(var(--echo, 1) * 100%);

@@ -502,13 +502,15 @@ export function flashMessage(hud: HudElements, text: string): void {
  * it; a skill this client does not know gets the bare plate and no badge.
  */
 export function skillSlotHtml(slot: SkillSlot): string {
+  // The echo strip first, so the hotkey and the range mark, lifted as
+  // high, draw over it.
   return (
+    echoStripHtml(slot) +
     skillIconHtml(slot.id, SKILL_SLOT_ICON_PX) +
     adrenalineGaugeHtml(slot) +
     `<span class="hud-skill-key"></span>` +
     skillBadgeHtml(slot.id) +
-    `<span class="skill-range-mark" aria-hidden="true"></span>` +
-    echoStripHtml(slot)
+    `<span class="skill-range-mark" aria-hidden="true"></span>`
   );
 }
 
