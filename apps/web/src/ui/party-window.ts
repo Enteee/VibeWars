@@ -3,7 +3,6 @@ import type { MatchSnapshot, PlayerSnapshot } from "@vibewars/game-session";
 import { healthTint, paintHealthTint, type HealthTint } from "./health-tint.js";
 import {
   lostHealthPercent,
-  targetHealthLabel,
   targetHealthPercent,
   targetProfessionIcons,
   type ProfessionIcon,
@@ -29,7 +28,8 @@ export interface PartyRow {
   readonly targeted: boolean;
   /** 0 … 100; undefined when dead. */
   readonly healthPercent: number | undefined;
-  readonly healthLabel: string;
+  /** "120 / 480", beside the percentage while there is room; undefined when dead. */
+  readonly healthPoints: string | undefined;
   readonly tint: HealthTint | null;
   readonly pips: number;
 }
@@ -43,7 +43,9 @@ function partyRow(player: PlayerSnapshot, self: PlayerSnapshot): PartyRow {
     dead: player.dead,
     targeted: player.sessionId === self.targetSessionId,
     healthPercent: player.dead ? undefined : targetHealthPercent(player),
-    healthLabel: player.dead ? "dead" : targetHealthLabel(player, self.team),
+    healthPoints: player.dead
+      ? undefined
+      : `${String(Math.round(player.health))} / ${String(Math.round(player.maxHealth))}`,
     tint: player.dead ? null : healthTint(player.statuses.map((status) => status.id)),
     pips: player.healthPips,
   };
@@ -81,7 +83,8 @@ interface RowElements {
   readonly bar: HTMLElement;
   readonly fill: HTMLElement;
   readonly lost: HTMLElement;
-  readonly label: HTMLElement;
+  readonly percent: HTMLElement;
+  readonly points: HTMLElement;
   readonly pips: HTMLElement;
   readonly deadText: HTMLElement;
   /** What was last painted, so an unchanged row costs nothing. */
@@ -116,10 +119,13 @@ function createRow(id: string, onTarget: (sessionId: string) => void): RowElemen
   const fill = span("hud-bar-fill", bar);
   const lost = span("hud-bar-lost", bar);
   const label = span("hud-bar-label", bar);
+  const percent = span("party-health-percent", label);
+  // Gone in a compact row, where only the percentage fits.
+  const points = span("party-health-points", label);
   const pips = bar.appendChild(pipsElement());
   const deadText = span("party-row-dead", row);
   deadText.textContent = "dead";
-  return { row, professions, name, bar, fill, lost, label, pips, deadText, key: "" };
+  return { row, professions, name, bar, fill, lost, percent, points, pips, deadText, key: "" };
 }
 
 function paintRow(elements: RowElements, row: PartyRow, player: PlayerSnapshot): void {
@@ -153,7 +159,8 @@ function paintRow(elements: RowElements, row: PartyRow, player: PlayerSnapshot):
   paintHealthTint(elements.bar, player);
   elements.fill.style.width = `${String(row.healthPercent ?? 0)}%`;
   elements.lost.style.width = `${String(lost)}%`;
-  elements.label.textContent = row.healthLabel;
+  elements.percent.textContent = `${String(row.healthPercent ?? 0)}%`;
+  elements.points.textContent = row.healthPoints === undefined ? "" : ` · ${row.healthPoints}`;
 }
 
 /** The window, in `parent`: hidden while there is no party to show. */

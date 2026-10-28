@@ -3883,11 +3883,14 @@ body:has(#app > .chat) .now-playing {
   pointer-events: auto;
 }
 
-/* The Training Ground's stage is small: its corner, clear of the dummies. */
+/* The Training Ground's stage is small, and its dummies stand to your
+   right: the top-left corner, compact, is the side left clear. */
 .training-stage .party-dock {
   top: 0.5rem;
-  right: 0.5rem;
+  right: auto;
   bottom: 0.5rem;
+  left: 0.5rem;
+  width: 150px;
 }
 
 .training-stage .party-dock::before {
@@ -3970,26 +3973,37 @@ body:has(#app > .chat) .now-playing {
   line-height: 10px;
 }
 
-/* More than 8 members: name and a 10 px bar on one line. */
-.party-window.is-compact .party-row {
+/* More than 8 members, or the small Training stage: name and a 10 px bar
+   on one line. */
+.party-window.is-compact .party-row,
+.training-stage .party-window .party-row {
   flex-direction: row;
   align-items: center;
   gap: 0.3rem;
   padding-block: 0.05rem;
 }
 
-.party-window.is-compact .party-row-header {
+.party-window.is-compact .party-row-header,
+.training-stage .party-window .party-row-header {
   flex: 0 0 45%;
 }
 
-.party-window.is-compact .party-health {
+.party-window.is-compact .party-health,
+.training-stage .party-window .party-health {
   flex: 1;
   height: 10px;
 }
 
 .party-window.is-compact .party-health .hud-bar-label,
-.party-window.is-compact .party-health .vital-pips {
+.party-window.is-compact .party-health .vital-pips,
+.training-stage .party-window .party-health .hud-bar-label,
+.training-stage .party-window .party-health .vital-pips {
   line-height: 8px;
+}
+
+.party-window.is-compact .party-health-points,
+.training-stage .party-window .party-health-points {
+  display: none;
 }
 
 /*

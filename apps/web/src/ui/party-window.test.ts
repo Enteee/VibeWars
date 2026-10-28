@@ -79,14 +79,14 @@ describe("partyRows (#1055)", () => {
     const [me, kaja, odo, bleeder] = partyRows(match([ME, KAJA, ODO, BLEEDER]));
     expect(kaja?.targeted).toBe(true);
     expect(me?.targeted).toBe(false);
-    expect(odo).toMatchObject({ dead: true, healthPercent: undefined, healthLabel: "dead" });
+    expect(odo).toMatchObject({ dead: true, healthPercent: undefined, healthPoints: undefined });
     expect(bleeder).toMatchObject({ tint: "bleeding", pips: -3 });
     expect(me?.tint).toBeNull();
   });
 
-  it("labels health as the target frame does for an ally", () => {
+  it("labels health with the percentage and the points, as the target frame does for an ally", () => {
     const [, kaja] = partyRows(match([ME, KAJA]));
-    expect(kaja).toMatchObject({ healthPercent: 25, healthLabel: "25% · 120 / 480" });
+    expect(kaja).toMatchObject({ healthPercent: 25, healthPoints: "120 / 480" });
   });
 
   it("carries the professions as the target frame shows them", () => {
