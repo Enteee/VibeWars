@@ -1301,7 +1301,7 @@ const skillGlyph = {
       "M12 21C3.5 14.5 2.5 8.5 6.3 5.7 9 3.8 11.3 5 12 7 12.7 5 15 3.8 17.7 5.7 21.5 8.5 20.5 14.5 12 21Z",
     ) + `<g transform="translate(12,13.2) scale(0.42) translate(-12,-12)">${pawPrint(C.bg)}</g>`,
   // Three gashes: a claw, a strike that tears (#1215).
-  claw: () => inkLine("M6 3.5L11 20.5M11.5 3.5L16.5 20.5M17 3.5L22 20.5", 2.8),
+  claw: () => inkLine("M5.5 4L9.5 20M10.5 4L13 15M15.5 4L18 11", 2.6),
   // Two linked rings: the pet's hurt shared, as the status shows (#1215).
   bond: () =>
     `<circle cx="8.5" cy="12" r="5.5" ${stroke(C.ink, 2.6)}/><circle cx="15.5" cy="12" r="5.5" ${stroke(C.ink, 2.6)}/>`,

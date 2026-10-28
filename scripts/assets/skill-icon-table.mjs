@@ -229,11 +229,11 @@ export const SKILL_ICONS = {
   "mesmer.echo": { glyph: "echo-skill" },
   "ranger.charm-animal": { glyph: "paw-heart" },
   "ranger.comfort-animal": { glyph: "heal", modifier: "paw" },
-  // Placeholders until the asset-designer's (#1107): the pet's attacks.
+  // The pet's attacks: a glyph for the blow and the paw modifier (#1107).
   "ranger.brutal-strike": { glyph: "claw", modifier: "paw" },
   "ranger.maiming-strike": { glyph: "limp", modifier: "paw" },
   "ranger.disrupting-lunge": { glyph: "interrupt", modifier: "paw" },
-  // Placeholders until the asset-designer's (#1108): calls and bonds on the pet.
+  // The pet's calls and bond: shapes of the statuses they apply (#1108).
   "ranger.call-of-haste": { glyph: "paw-speed" },
   "ranger.call-of-protection": { glyph: "paw-shield" },
   "ranger.symbiotic-bond": { glyph: "bond" },
