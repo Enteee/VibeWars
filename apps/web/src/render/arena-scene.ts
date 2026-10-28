@@ -15,6 +15,7 @@ import {
   BODY_EDGE,
   DEAD_COLOUR,
   EMPTY_SNAPSHOT,
+  EXPLOITED_CORPSE_COLOUR,
   PROFESSION_GLYPH_SIZE,
   areaFlashAlpha,
   bodyGlyphLayout,
@@ -727,8 +728,9 @@ export class ArenaScene extends Phaser.Scene {
     const { x, y } = actor.position;
 
     if (actor.dead) {
-      // A corpse stays visible but obviously inert: hollow, grey, no bars.
-      g.lineStyle(2, DEAD_COLOUR, 1);
+      // A corpse stays visible but obviously inert: hollow, grey, no bars;
+      // darker once a skill has exploited it (#466).
+      g.lineStyle(2, actor.exploited ? EXPLOITED_CORPSE_COLOUR : DEAD_COLOUR, 1);
       g.strokeCircle(x, y, actor.radius);
       return;
     }

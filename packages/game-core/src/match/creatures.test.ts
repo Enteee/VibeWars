@@ -77,6 +77,7 @@ function summonSkill(
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
     projectile: undefined,
     effects: [{ kind: "summon", creature, count }],
   });

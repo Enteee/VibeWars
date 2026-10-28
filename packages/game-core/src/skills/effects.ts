@@ -338,14 +338,23 @@ function stealLife(
   target.health -= stolen;
   events.push({ kind: "life-stolen", targetId: target.id, amount: stolen });
   recordFromFoe(target, caster);
-  const gained = Math.min(stolen, effectiveMaxHealth(caster) - caster.health);
-  if (gained > 0) {
-    caster.health += gained;
-    events.push({ kind: "heal", targetId: caster.id, amount: gained });
-  }
+  gainStolenHealth(caster, stolen, events);
   if (target.health <= 0) {
     target.dead = true;
     events.push({ kind: "death", targetId: target.id });
+  }
+}
+
+/**
+ * The caster's half of life stealing: up to `amount`, capped at its
+ * effective maximum. No healing modifier touches it, but it is logged as a
+ * `heal` on the caster.
+ */
+function gainStolenHealth(caster: Combatant, amount: number, events: CombatEvent[]): void {
+  const gained = Math.min(amount, effectiveMaxHealth(caster) - caster.health);
+  if (gained > 0) {
+    caster.health += gained;
+    events.push({ kind: "heal", targetId: caster.id, amount: gained });
   }
 }
 
@@ -784,6 +793,15 @@ export function applyEffect(
         return events;
       }
       stealLife(caster, target, resolveMagnitude(effect.amount, caster), events);
+      return events;
+    }
+
+    // The corpse was exploited before the skill resolved (#466): the
+    // simulation skips every effect of a cast that found none.
+    case "steal-from-corpse": {
+      if (!caster.dead) {
+        gainStolenHealth(caster, resolveMagnitude(effect.amount, caster), events);
+      }
       return events;
     }
 
@@ -1337,6 +1355,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "sacrifice-health":
     case "recharge-faster":
     case "recharge-others":
+    case "steal-from-corpse":
     case "summon":
     case "drain-own-energy":
       return true;

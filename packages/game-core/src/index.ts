@@ -148,6 +148,8 @@ export type {
   StepResult,
 } from "./match/simulation.js";
 export { countsForTeam, MAX_CREATURES, MatchSimulation } from "./match/simulation.js";
+export type { CorpseCandidate } from "./match/corpses.js";
+export { isFreshCorpse, nearestFreshCorpse } from "./match/corpses.js";
 export { facingToward, spawnFacing } from "./match/facing.js";
 export type { IntentRefusal, MatchIntent } from "./match/apply-intent.js";
 export { applyIntent } from "./match/apply-intent.js";

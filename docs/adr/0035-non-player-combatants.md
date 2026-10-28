@@ -84,3 +84,4 @@ built for players and is the larger, safe value.
   (#1064), not as a ground entity: the status system already carries
   modifiers, the effects monitor and the wire, so an aura needs only a
   pass that puts it on and takes it off.
+- A creature leaves no corpse (#466) unless the card that adds it says so.

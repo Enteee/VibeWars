@@ -58,6 +58,7 @@ function player(fields: Partial<PlayerSnapshot>): PlayerSnapshot {
     secondaryProfession: undefined,
     team: 1,
     dead: false,
+    corpseExploited: false,
     castingSkillId: undefined,
     castRemaining: 0,
     castTotal: 0,
@@ -349,6 +350,7 @@ describe("targetHintDismissed", () => {
     secondaryProfession: undefined,
     team: 0,
     dead: false,
+    corpseExploited: false,
     castingSkillId: undefined,
     castRemaining: 0,
     castTotal: 0,
@@ -385,6 +387,7 @@ describe("describeRefusal", () => {
     expect(describeRefusal(cast("no-line-of-sight"))).toBe("Target is not in line of sight.");
     expect(describeRefusal(cast("no-target"))).toBe("Select a target first.");
     expect(describeRefusal(cast("insufficient-energy"))).toBe("Not enough energy.");
+    expect(describeRefusal(cast("no-corpse"))).toBe("No corpse in range.");
   });
 
   it("says a spent skill waits for a morale boost (#474)", () => {
@@ -441,6 +444,7 @@ describe("isAttackingTarget", () => {
     secondaryProfession: undefined,
     team: 0,
     dead: false,
+    corpseExploited: false,
     castingSkillId: undefined,
     castRemaining: 0,
     castTotal: 0,
@@ -546,6 +550,7 @@ describe("targetProfessionIcons (#281)", () => {
     secondaryProfession,
     team: 1,
     dead: false,
+    corpseExploited: false,
     castingSkillId: undefined,
     castRemaining: 0,
     castTotal: 0,

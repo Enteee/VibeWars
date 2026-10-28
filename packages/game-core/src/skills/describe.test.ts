@@ -422,7 +422,8 @@ describe("describeSkill", () => {
           ((entry.attack?.armorPenetration ?? 0) > 0 ? 1 : 0) +
           lines(entry.attack?.onBlocked ?? []) +
           (entry.whileActivating === undefined ? 0 : 1) +
-          (entry.projectile === undefined ? 0 : 1),
+          (entry.projectile === undefined ? 0 : 1) +
+          (entry.corpse === undefined ? 0 : 1),
       );
       for (const line of described.effects) {
         expect(line.text.length, `${entry.id} has an empty description line`).toBeGreaterThan(0);
@@ -704,6 +705,18 @@ describe("describeStatus", () => {
         new Map([["necromancer.blood-magic", 12]]),
       ).effects.map(({ text }) => text),
     ).toEqual(["Steals up to 52 Health"]);
+  });
+
+  it("says Soul Feast exploits the nearest corpse, then what it steals (#466)", () => {
+    const feast = describeSkill(
+      skill("necromancer.soul-feast"),
+      new Map([["necromancer.death-magic", 12]]),
+    );
+    expect(feast.effects.map(({ text }) => text)).toEqual([
+      "Exploits the nearest corpse",
+      "You steal 234 Health",
+    ]);
+    expect(feast.headline).toBe("steals 234 health");
   });
 
   it("returns the id for an unknown status rather than throwing", () => {

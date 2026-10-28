@@ -109,6 +109,7 @@ import {
 import {
   isSpell,
   type Combatant,
+  type CorpseRule,
   type CreatureTemplate,
   type Skill,
   type SpiritAura,
@@ -159,6 +160,7 @@ import {
   type ResetPolicy,
 } from "./behaviour.js";
 import type { CombatLogEntry } from "./combat-log.js";
+import { nearestFreshCorpse } from "./corpses.js";
 import { directionAngle, showsBackTo } from "./facing.js";
 import { steerAround } from "./steering.js";
 
@@ -275,6 +277,11 @@ export interface Participant {
   readonly outOfCombatSeconds: number;
   /** `undefined`: a player or a training dummy (#1052). */
   readonly creature: Creature | undefined;
+  /**
+   * Its corpse was exploited (#466): false while alive, and false for a
+   * corpse no skill has used yet. Cleared by every way back to life.
+   */
+  readonly corpseExploited: boolean;
 }
 
 /** A skill walking in to its target (#499). */
@@ -351,6 +358,7 @@ interface ParticipantRecord extends Participant {
   resolvedMaxEnergy: number;
   /** Match time of the last resurrection (#812); `-Infinity` for none. */
   resurrectedAtSeconds: number;
+  corpseExploited: boolean;
 }
 
 /**
@@ -627,6 +635,7 @@ export class MatchSimulation {
       resolvedMaxEnergy: spec.maxEnergy ?? this.#ruleset.combat.baseEnergy,
       resurrectedAtSeconds: Number.NEGATIVE_INFINITY,
       creature: spec.creature === undefined ? undefined : { ...spec.creature },
+      corpseExploited: false,
     };
     this.#participants.set(spec.id, record);
     if (countsForTeam(record)) {
@@ -1586,7 +1595,7 @@ export class MatchSimulation {
 
   #check(record: ParticipantRecord, skill: Skill, targetId: string | undefined): ActivationCheck {
     const target = targetId === undefined ? undefined : this.#participants.get(targetId);
-    return canActivate({
+    const check = canActivate({
       skill,
       caster: record.combatant,
       casterPosition: record.position,
@@ -1598,6 +1607,17 @@ export class MatchSimulation {
       skillBar: record.skillBar,
       losBlockers: this.#walls,
     });
+    // Any other refusal first; then a corpse skill needs a fresh corpse in
+    // reach (#466), or nothing is paid.
+    if (
+      check.ok &&
+      skill.corpse !== undefined &&
+      nearestFreshCorpse(record.position, skill.corpse.radius, this.#participants.values()) ===
+        undefined
+    ) {
+      return { ok: false, reason: "no-corpse" };
+    }
+    return check;
   }
 
   /** Put a behaviour's intent through the same calls a player's messages make. */
@@ -1738,14 +1758,21 @@ export class MatchSimulation {
         skill.area === undefined || flight !== undefined ? [] : [...this.#participants.values()],
       losBlockers: this.#walls,
     });
-    const { events, rechargeFraction, summons } = resolve({
-      skill,
-      caster: record.combatant,
-      targets,
-      rng: this.#rng,
-      rules: this.#ruleset.combat,
-      surroundings: this.#participants,
-    });
+    // A corpse skill takes its corpse as it lands, not as it began (#466):
+    // one used up during the cast leaves it with no effect, paid for.
+    const corpse =
+      skill.corpse === undefined ? undefined : this.#exploitCorpse(record, skill.corpse);
+    const { events, rechargeFraction, summons } =
+      skill.corpse !== undefined && corpse === undefined
+        ? only([])
+        : resolve({
+            skill,
+            caster: record.combatant,
+            targets,
+            rng: this.#rng,
+            rules: this.#ruleset.combat,
+            surroundings: this.#participants,
+          });
     // What the skill put on its own user does not answer this use of it
     // (#999): the chanter's own Song of Restoration waits for its next skill.
     const spared: ReadonlySet<StatusId> = new Set(
@@ -2923,6 +2950,19 @@ export class MatchSimulation {
   }
 
   /**
+   * Marks the fresh corpse nearest `record` within the rule's radius as
+   * exploited (#466) and returns it; `undefined` for none. Wells and
+   * minions (#466, #467) will want its position.
+   */
+  #exploitCorpse(record: ParticipantRecord, rule: CorpseRule): ParticipantRecord | undefined {
+    const corpse = nearestFreshCorpse(record.position, rule.radius, this.#participants.values());
+    if (corpse !== undefined) {
+      corpse.corpseExploited = true;
+    }
+    return corpse;
+  }
+
+  /**
    * Every resurrection in `events` (#812) cancels its respawn timer. The
    * body stays where it fell, and what its death cleared stays clear.
    */
@@ -2936,6 +2976,7 @@ export class MatchSimulation {
         record.respawnInSeconds = 0;
         record.outOfCombatSeconds = 0;
         record.resurrectedAtSeconds = this.#elapsedSeconds;
+        record.corpseExploited = false;
       }
     }
   }
@@ -3218,6 +3259,7 @@ export class MatchSimulation {
     }
     record.combatant.dead = false;
     record.combatant.health = record.combatant.maxHealth * (record.spec.startHealthFraction ?? 1);
+    record.corpseExploited = false;
     record.combatant.energy = Math.max(0, effectiveMaxEnergy(record.combatant));
     emptyAdrenaline(record.combatant);
     record.combatant.lastCombatAt = this.#elapsedSeconds;

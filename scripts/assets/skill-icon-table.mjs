@@ -201,4 +201,6 @@ export const SKILL_ICONS = {
   "monk.rebirth": { glyph: "resurrect", modifier: "self" },
   "paragon.signet-of-return": { glyph: "resurrect", modifier: "area" },
   "ritualist.flesh-of-my-flesh": { glyph: "resurrect", modifier: "half" },
+  // A placeholder: health taken from a corpse (#466).
+  "necromancer.soul-feast": { glyph: "heal", modifier: "plus" },
 };
