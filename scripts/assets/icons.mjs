@@ -1084,7 +1084,6 @@ const skillGlyph = {
   speed: () => inkLine("M4 4L10 12L4 20M11 4L17 12L11 20", 2.5),
   slow: () => inkLine("M20 4L14 12L20 20M13 4L7 12L13 20", 2.5),
   dash: () => inkLine("M3 7H11M2 12H9M3 17H11", 2) + inkLine("M13 4L21 12L13 20", 2.6),
-  // An ankh: life returned, a resurrection (#812).
   // The resurrect figure in a ring: a signet's seal, one use (#1081).
   "resurrect-seal": () =>
     `<circle cx="10.5" cy="10.5" r="8" ${stroke(C.ink, 2)}/>` + smallFigure(10.5, 10.5, 0.55),
@@ -1100,6 +1099,7 @@ const skillGlyph = {
   "resurrect-blood": () =>
     smallFigure(9, 12.5, 0.85) +
     inkFill("M18 2.5C18 2.5 14.5 6.5 14.5 9A3.5 3.5 0 0 0 21.5 9C21.5 6.5 18 2.5 18 2.5Z"),
+  // An ankh: life returned, a resurrection (#812).
   resurrect: () =>
     `<ellipse cx="12" cy="7.5" rx="4" ry="4.5" ${stroke(C.ink, 2.2)}/>` +
     inkLine("M12 12V21M6 14.5H18", 2.6),
