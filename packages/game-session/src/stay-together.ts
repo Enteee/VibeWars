@@ -1,8 +1,9 @@
 /**
  * Stay together (#882): after a queued 2v2 or 4v4 match, its host asks
  * nothing and decides everything. Each winner sends a fresh member key,
- * or `null`; once every winner of a whole side has sent a key, they are a
- * party, and each of them is told the keys. One no, one winner gone, or
+ * or `null`; once every winner of a whole side has sent a key, each of
+ * them is proposed the party, and signs its consent to it (#1078,
+ * `lobby-host.ts`). One no, one winner gone, or
  * the window running out, and those who said yes are told the team split.
  * The host may be a winner too, and votes like one.
  */

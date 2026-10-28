@@ -48,6 +48,8 @@ export const CHANNELS = [
   "lobby-hello",
   "lobby-welcome",
   "stay-together",
+  "party-proposal",
+  "party-consent",
   "party-formed",
   "party-split",
   "match-start",
@@ -611,11 +613,36 @@ export interface PeerStayTogether {
 }
 
 /**
+ * The host to each winner who said yes, and only to it, once every winner
+ * did (#1078): the group they won and their keys, sorted. Each signs its
+ * consent to exactly this party, or the party does not form.
+ */
+export interface WirePartyProposal {
+  readonly groupId: string;
+  readonly members: readonly string[];
+}
+
+/**
+ * A yes-voter to its host (#1078): `consent`, 128 hex digits, is
+ * `memberKey`'s signature over `admissionDigest("vibewars-party",
+ * groupId, members.join(""), "")` for the proposal it answers. The
+ * party's ticket publishes every consent, so nobody can name a member who
+ * did not agree to that very party.
+ */
+export interface PeerPartyConsent {
+  readonly memberKey: string;
+  readonly consent: string;
+}
+
+/**
  * The host to each winner who said yes, and only to it (#882): every
- * winner did, and these are their keys, sorted. They queue as one party.
+ * winner consented, and these are their keys, sorted, with each one's
+ * consent, `consents[i]` by `members[i]` (#1078). They queue as one party.
  */
 export interface WirePartyFormed {
+  readonly groupId: string;
   readonly members: readonly string[];
+  readonly consents: readonly string[];
 }
 
 /** The host to each winner who said yes (#882): someone did not; queue alone. */
@@ -1570,22 +1597,63 @@ export function parsePeerStayTogether(value: unknown): PeerStayTogether | undefi
 /** The longest party there is: a 4v4 side (`teamSizeOf`). */
 const MAX_PARTY_MEMBERS = 4;
 
-/** The `"party-formed"` channel: two or more keys, sorted, each once. */
-export function parseWirePartyFormed(value: unknown): WirePartyFormed | undefined {
-  const raw = fields(value);
-  const members: unknown = raw?.members;
-  if (!Array.isArray(members) || members.length < 2 || members.length > MAX_PARTY_MEMBERS) {
+/** A party's members: two or more keys, sorted, each once. */
+function parsePartyMembers(value: unknown): string[] | undefined {
+  if (!Array.isArray(value) || value.length < 2 || value.length > MAX_PARTY_MEMBERS) {
     return undefined;
   }
   const keys: string[] = [];
-  for (const member of members as readonly unknown[]) {
+  for (const member of value as readonly unknown[]) {
     const previous = keys.at(-1);
     if (!isTicketId(member) || (previous !== undefined && previous >= member)) {
       return undefined;
     }
     keys.push(member);
   }
-  return { members: keys };
+  return keys;
+}
+
+/** The `"party-proposal"` channel: a group id and the party's members. */
+export function parseWirePartyProposal(value: unknown): WirePartyProposal | undefined {
+  const raw = fields(value);
+  const groupId: unknown = raw?.groupId;
+  const members = parsePartyMembers(raw?.members);
+  return isTicketId(groupId) && members !== undefined ? { groupId, members } : undefined;
+}
+
+/** The `"party-consent"` channel. */
+export function parsePeerPartyConsent(value: unknown): PeerPartyConsent | undefined {
+  const raw = fields(value);
+  return raw !== undefined && isTicketId(raw.memberKey) && isTicketSig(raw.consent)
+    ? { memberKey: raw.memberKey, consent: raw.consent }
+    : undefined;
+}
+
+/**
+ * The `"party-formed"` channel: a group id, the party's members, and one
+ * consent a member.
+ */
+export function parseWirePartyFormed(value: unknown): WirePartyFormed | undefined {
+  const raw = fields(value);
+  const groupId: unknown = raw?.groupId;
+  const members = parsePartyMembers(raw?.members);
+  const consents: unknown = raw?.consents;
+  if (
+    !isTicketId(groupId) ||
+    members === undefined ||
+    !Array.isArray(consents) ||
+    consents.length !== members.length
+  ) {
+    return undefined;
+  }
+  const signed: string[] = [];
+  for (const consent of consents as readonly unknown[]) {
+    if (!isTicketSig(consent)) {
+      return undefined;
+    }
+    signed.push(consent);
+  }
+  return { groupId, members, consents: signed };
 }
 
 /** The `"party-split"` channel. */

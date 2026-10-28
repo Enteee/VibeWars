@@ -11,8 +11,14 @@
 import type { FormedGroup } from "./queue-formation.js";
 import type { TicketKey } from "./queue-client.js";
 
-/** Whose proof a digest is for: a joiner's, or the host's welcome to one. */
-export type AdmissionTag = "vibewars-admit" | "vibewars-host";
+/**
+ * Whose proof a digest is for: a joiner's, the host's welcome to one, or a
+ * party member's consent to the party (#1078), which signs
+ * `("vibewars-party", groupId, members.join(""), "")`: the group it won
+ * and its members, sorted 64-hex keys, so the concatenation is
+ * unambiguous.
+ */
+export type AdmissionTag = "vibewars-admit" | "vibewars-host" | "vibewars-party";
 
 /**
  * Whether `sig`, 128 hex digits, is a BIP-340 signature of `digest` by
@@ -30,16 +36,18 @@ export interface QueuedSeat {
 }
 
 /**
- * `sha256(tag ‖ len(groupId) ‖ groupId ‖ len(hostTicketId) ‖ hostTicketId ‖
- * len(peerId) ‖ peerId)`, each `len` the field's UTF-8 byte count as 4
- * bytes big-endian, so no two splits of the same characters collide.
+ * What `admissionDigest` hashes: `tag ‖ len(groupId) ‖ groupId ‖
+ * len(hostTicketId) ‖ hostTicketId ‖ len(peerId) ‖ peerId`, each `len` the
+ * field's UTF-8 byte count as 4 bytes big-endian, so no two splits of the
+ * same characters collide. For a caller that must hash it at once, as the
+ * queue board does (#1078); everyone else calls `admissionDigest`.
  */
-export async function admissionDigest(
+export function admissionBytes(
   tag: AdmissionTag,
   groupId: string,
   hostTicketId: string,
   peerId: string,
-): Promise<Uint8Array> {
+): Uint8Array {
   const encoder = new TextEncoder();
   const fields = [groupId, hostTicketId, peerId].map((field) => encoder.encode(field));
   const head = encoder.encode(tag);
@@ -54,5 +62,16 @@ export async function admissionDigest(
     bytes.set(field, at + 4);
     at += 4 + field.length;
   }
+  return bytes;
+}
+
+/** `sha256` of `admissionBytes`. */
+export async function admissionDigest(
+  tag: AdmissionTag,
+  groupId: string,
+  hostTicketId: string,
+  peerId: string,
+): Promise<Uint8Array> {
+  const bytes = admissionBytes(tag, groupId, hostTicketId, peerId);
   return new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
 }
