@@ -132,6 +132,14 @@ function takeRelayLink(): TurnFragment {
   return fragment;
 }
 
+/** What a player takes into a lobby, read once when they enter it (#1070). */
+interface Entrant {
+  /** Played every match of the lobby; `undefined` is the house loadout. */
+  readonly build: PlayerBuild | undefined;
+  /** How the lobby lists it (#580). */
+  readonly character: LobbyCharacter | null;
+}
+
 async function main(): Promise<void> {
   // Before anything mounts or waits.
   const relayLink = takeRelayLink();
@@ -276,11 +284,12 @@ async function main(): Promise<void> {
   };
 
   /**
-   * The build to take into the next match, read fresh from storage.
+   * The selected character's build, read fresh from storage.
    *
-   * Read at join time rather than cached when the player picked it, so
-   * editing a character takes effect on the next match instead of the
-   * next time they happen to re-select it. An id pointing at a character
+   * Read once, when the player enters a lobby (`readEntrant`), and played
+   * every match of it: a character selected, edited or deleted elsewhere
+   * meanwhile (another tab) is taken by leaving and joining again, as in
+   * GW1 (#1070). An id pointing at a character
    * that no longer exists, or one that no longer validates, resolves to
    * `undefined` and the host's house loadout.
    */
@@ -301,22 +310,26 @@ async function main(): Promise<void> {
   };
 
   /**
-   * The character the lobby lists this player with (#580): the selected
-   * one's name and professions, or `null` for the house loadout, read
-   * the way `activeBuild` reads the build it plays with. A build the host
-   * would refuse, an empty bar or an illegal one, plays the house loadout,
-   * so it is listed as that too.
+   * The selected character, read fresh: the one read per lobby (#1070).
+   * The lobby lists it (#580) by the selected one's name and professions,
+   * or `null` for the house loadout. A build the host would refuse, an
+   * empty bar or an illegal one, plays the house loadout, so it is listed
+   * as that too.
    */
-  const lobbyCharacter = async (): Promise<LobbyCharacter | null> => {
+  const readEntrant = async (): Promise<Entrant> => {
     const build = await activeBuild();
-    return build === undefined ||
-      resolveJoinLoadout(build, MINIMAL_GW_INSPIRED_PVP_V1.attributes).refused !== undefined
-      ? null
-      : {
-          name: build.name,
-          primary: build.primaryProfession,
-          secondary: build.secondaryProfession ?? null,
-        };
+    return {
+      build,
+      character:
+        build === undefined ||
+        resolveJoinLoadout(build, MINIMAL_GW_INSPIRED_PVP_V1.attributes).refused !== undefined
+          ? null
+          : {
+              name: build.name,
+              primary: build.primaryProfession,
+              secondary: build.secondaryProfession ?? null,
+            },
+    };
   };
 
   /** The open build editor; every way out of it passes through `showMenu`. */
@@ -364,13 +377,21 @@ async function main(): Promise<void> {
       screenRoot,
       {
         onCreateLobby: (name) => {
-          void enterLobby(name, async () => {
-            hosted = await hostLobby(name, await lobbyCharacter());
-            return hosted.lobby;
-          });
+          void (async () => {
+            const entrant = await readEntrant();
+            await enterLobby(name, entrant, async () => {
+              hosted = await hostLobby(name, entrant.character);
+              return hosted.lobby;
+            });
+          })();
         },
         onJoinLobby: (code, name) => {
-          void enterLobby(name, async () => joinLobbyByCode(code, name, await lobbyCharacter()));
+          void (async () => {
+            const entrant = await readEntrant();
+            await enterLobby(name, entrant, async () =>
+              joinLobbyByCode(code, name, entrant.character),
+            );
+          })();
         },
         onRandomArena: (mode, name) => {
           void enterRandomArena(mode, name);
@@ -571,10 +592,10 @@ async function main(): Promise<void> {
     }
     joiningQueue = true;
     let stored: StoredCharacter | undefined;
-    let character: LobbyCharacter | null;
+    let entrant: Entrant;
     try {
       stored = await characters.load(id);
-      character = await lobbyCharacter();
+      entrant = await readEntrant();
     } finally {
       joiningQueue = false;
     }
@@ -609,14 +630,14 @@ async function main(): Promise<void> {
         },
       },
     );
-    const place = enterQueue(mode, name, character, {
+    const place = enterQueue(mode, name, entrant.character, {
       // Never past `in-lobby` while a lobby is up, unless it fell through.
       onState: (state) => {
         screen.show({ kind: "queue", state });
       },
       onLobby: (joined, host) => {
         hosted = host;
-        seatLobby(name, joined);
+        seatLobby(name, joined, entrant);
       },
       onRefused: (notice) => {
         setStatus("could not join", "error");
@@ -696,6 +717,7 @@ async function main(): Promise<void> {
 
   const enterLobby = async (
     name: string,
+    entrant: Entrant,
     connect: () => Promise<LobbyConnection>,
   ): Promise<void> => {
     setStatus("connecting…", "offline");
@@ -711,11 +733,14 @@ async function main(): Promise<void> {
       setStatus("could not join", "error");
       return;
     }
-    seatLobby(name, lobby);
+    seatLobby(name, lobby, entrant);
   };
 
-  /** Show `joined`, coded or queued, and play its matches as `name`. */
-  const seatLobby = (name: string, joined: LobbyConnection): void => {
+  /**
+   * Show `joined`, coded or queued, and play its matches as `name` with
+   * `entrant`'s build, every one of them (#1070).
+   */
+  const seatLobby = (name: string, joined: LobbyConnection, entrant: Entrant): void => {
     lobby = joined;
     lobbyNotice = undefined;
     // Here and not in renderLobby, which every lobby change repaints:
@@ -746,7 +771,7 @@ async function main(): Promise<void> {
     });
     joined.onMatchStarting((start) => {
       // Only players on a team are sent this; a spectator stays here.
-      void enterMatch(name, start);
+      void enterMatch(name, start, entrant);
     });
     joined.onClosed((reason) => {
       // From the lobby or from its match: either way, it is over.
@@ -838,7 +863,11 @@ async function main(): Promise<void> {
     }
   };
 
-  const enterMatch = async (name: string, start: MatchStarting): Promise<void> => {
+  const enterMatch = async (
+    name: string,
+    start: MatchStarting,
+    entrant: Entrant,
+  ): Promise<void> => {
     const from = lobby;
     if (from === undefined) {
       return;
@@ -850,7 +879,6 @@ async function main(): Promise<void> {
     showViewport(true);
     setStatus("entering match…", "offline");
     try {
-      const build = await activeBuild();
       match = await startMatchView(
         viewport,
         {
@@ -883,7 +911,7 @@ async function main(): Promise<void> {
                 },
               }),
         },
-        { connect: () => connectMatchFor(from, start, name, build) },
+        { connect: () => connectMatchFor(from, start, name, entrant.build) },
       );
     } catch (error) {
       console.error("[web] could not enter match", error);
