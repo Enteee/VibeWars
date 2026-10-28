@@ -38,6 +38,8 @@ function actor(
     knockedDown: false,
     castProgress: undefined,
     statuses: [],
+    enchanted: false,
+    hexed: false,
     ...overrides,
   };
 }
