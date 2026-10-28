@@ -2,6 +2,7 @@ export type { ActivationCheck, ActivationRejection, ActivationRequest } from "./
 export {
   canActivate,
   energyCostOf,
+  isCompanionRule,
   payCost,
   targetLivenessAllows,
   targetRuleAllows,

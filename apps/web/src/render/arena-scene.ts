@@ -6,11 +6,12 @@ import {
   isStatusId,
   isWeaponId,
   type ProfessionId,
+  type SkillType,
   type StatusId,
   type Vec2,
 } from "@vibewars/game-core";
 
-import { professionIcon, skillIcon } from "../ui/icons.js";
+import { SKILL_TYPE_NAME, professionIcon, skillIcon, skillTypeIcon } from "../ui/icons.js";
 import { prefersReducedMotion } from "../ui/recharge-overlay.js";
 import {
   BODY_EDGE,
@@ -56,6 +57,7 @@ import {
 } from "./walk-marker.js";
 import { AttackClock, REST_FRAME, shownFrame } from "./attack-clock.js";
 import { bodyRings } from "./body-rings.js";
+import { CAST_BADGE_SIZE, CAST_BAR_RISE, castBadgeLayout } from "./cast-badge.js";
 import {
   PING_HEAD_RADIUS,
   PING_PIN_HEIGHT,
@@ -132,13 +134,16 @@ const EDGE_MARKER_WIDTH = 10;
  * with their enchantment and hex rings (#1117); the profession glyph
  * inside each body; every mark on a body (off-hand,
  * weapon, target ring, call chevron, bars, swing flashes),
- * so a weapon crosses the glyph, never the reverse; then shots, status
- * icons, names and numbers, which were over the bodies before the split.
+ * so a weapon crosses the glyph, never the reverse; the casting skill's
+ * type badge by the cast bar (#1125); then shots, status icons, names and
+ * numbers, which were over the bodies before the split, so a long name may
+ * cover a badge's top edge.
  */
 const GROUND_DEPTH = -1;
 const BODY_DEPTH = 0;
 const BODY_GLYPH_DEPTH = 1;
 const MARK_DEPTH = 2;
+const CAST_BADGE_DEPTH = 2.5;
 const OVERLAY_DEPTH = 3;
 /** Over every world object, names and numbers included. */
 const EDGE_MARKER_DEPTH = 10;
@@ -147,6 +152,8 @@ const EDGE_MARKER_DEPTH = 10;
  * (1080 / 640) on a 2x display is about 44 px, so it stays crisp there.
  */
 const BODY_GLYPH_TEXTURE_SIZE = 48;
+/** The cast badge's texture size, px: 8 world units at the Close zoom on a 2x display, and then some. */
+const CAST_BADGE_TEXTURE_SIZE = 32;
 
 /** A ward's icon at its centre (#1087), world units, and its texture size, px, as the body glyph's. */
 const GROUND_ICON_SIZE = 22;
@@ -206,6 +213,8 @@ export class ArenaScene extends Phaser.Scene {
   private nameGlyphs = new Map<string, Phaser.GameObjects.Image>();
   /** The primary profession's glyph inside each body, one pooled image per actor (#1037). */
   private bodyGlyphs = new Map<string, Phaser.GameObjects.Image>();
+  /** The casting skill's type badge by each cast bar, one pooled image per actor (#1125). */
+  private castBadges = new Map<string, Phaser.GameObjects.Image>();
   /** Status ids the server sent that this client has no icon for. */
   private readonly unknownStatuses = new Set<string>();
   /** Each attacker's swing, which its weapon mark plays (#558), by actor id. */
@@ -288,6 +297,13 @@ export class ArenaScene extends Phaser.Scene {
         height: BODY_GLYPH_TEXTURE_SIZE,
       });
     }
+    // The slot's badges as they are: hex and enchantment baked in colour, the rest in ink.
+    for (const type of Object.keys(SKILL_TYPE_NAME) as SkillType[]) {
+      this.load.svg(skillTypeTexture(type), skillTypeIcon(type), {
+        width: CAST_BADGE_TEXTURE_SIZE,
+        height: CAST_BADGE_TEXTURE_SIZE,
+      });
+    }
     for (const sprite of PROJECTILE_SPRITES) {
       this.load.svg(projectileTexture(sprite), projectileSpriteUrl(sprite), {
         width: PROJECTILE_WIDTH,
@@ -351,6 +367,7 @@ export class ArenaScene extends Phaser.Scene {
       this.drawSwingFlash(marks, flash);
     }
     this.updateBodyGlyphs();
+    this.updateCastBadges();
     this.updateProjectiles(time / 1000);
     this.updateStatusIcons();
     this.updateNameLabels();
@@ -1033,6 +1050,43 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /**
+   * The casting skill's type badge left of every cast bar (#1125): shown
+   * and gone with the bar, none for a skill this client does not know. The
+   * texture is set only when it changes; an actor that left takes its
+   * badge with it.
+   */
+  private updateCastBadges(): void {
+    const seen = new Set<string>();
+    for (const actor of this.snapshot.actors) {
+      seen.add(actor.id);
+      let badge = this.castBadges.get(actor.id);
+      if (actor.castType === undefined || actor.castProgress === undefined || actor.dead) {
+        badge?.setVisible(false);
+        continue;
+      }
+      const texture = skillTypeTexture(actor.castType);
+      if (badge === undefined) {
+        badge = this.add.image(0, 0, texture).setDepth(CAST_BADGE_DEPTH);
+        this.castBadges.set(actor.id, badge);
+      }
+      if (badge.texture.key !== texture) {
+        badge.setTexture(texture);
+      }
+      const centre = castBadgeLayout(actor.position.x, actor.position.y, actor.radius);
+      badge
+        .setDisplaySize(CAST_BADGE_SIZE, CAST_BADGE_SIZE)
+        .setPosition(centre.x, centre.y)
+        .setVisible(true);
+    }
+    for (const [id, badge] of this.castBadges) {
+      if (!seen.has(id)) {
+        badge.destroy();
+        this.castBadges.delete(id);
+      }
+    }
+  }
+
+  /**
    * The statuses there is an icon for. A wire string this client does not
    * know (a newer server, say) is skipped and reported once, never thrown
    * on: the render loop must keep running.
@@ -1067,7 +1121,7 @@ export class ArenaScene extends Phaser.Scene {
     progress: number,
   ): void {
     const left = actor.position.x - HEALTH_BAR_WIDTH / 2;
-    const top = actor.position.y - actor.radius - 19;
+    const top = actor.position.y - actor.radius - CAST_BAR_RISE;
     g.fillStyle(HEALTH_BAR_BG, 1);
     g.fillRect(left, top, HEALTH_BAR_WIDTH, HEALTH_BAR_HEIGHT);
     g.fillStyle(CAST_BAR_FILL, 1);
@@ -1162,6 +1216,10 @@ function professionTexture(profession: ProfessionId): string {
 /** The glyph inside the body (#1037), loaded larger than the name's: it is world sized. */
 function bodyProfessionTexture(profession: ProfessionId): string {
   return `body-profession:${profession}`;
+}
+
+function skillTypeTexture(type: SkillType): string {
+  return `skill-type:${type}`;
 }
 
 function statusTexture(id: string): string {

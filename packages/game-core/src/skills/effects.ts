@@ -212,7 +212,8 @@ export type CombatEvent =
  * (#935). Degeneration has its own path in `tick.ts` and never comes
  * here, so it can never count as physical. Damage a foe `dealer` dealt is
  * recorded too, for Vengeful Weapon (#1022); with no dealer, as a
- * sacrifice, it is not.
+ * sacrifice, it is not. A bond on the target (#1108) takes its share of
+ * a physical hit, after Reversal of Fortune.
  */
 export function applyDamage(
   target: Combatant,
@@ -228,7 +229,10 @@ export function applyDamage(
   if (reverse(target, amount, events)) {
     return;
   }
-  const applied = Math.min(amount, target.health);
+  // Symbiotic Bond (#1108): its share of a physical hit goes to its
+  // source when the tick drains; the bearer takes the rest.
+  const kept = isPhysicalDamage(type) ? target.statuses.redirect(amount) : amount;
+  const applied = Math.min(kept, target.health);
   target.health -= applied;
   events.push({ kind: "damage", targetId: target.id, amount: applied, critical });
   if (isPhysicalDamage(type)) {
@@ -1011,6 +1015,26 @@ export function applyEffect(
       return events;
     }
 
+    // Revive Animal (#1108): every dead allied companion near the caster.
+    case "resurrect-companions": {
+      const at = context.surroundings.get(caster.id)?.position;
+      if (at === undefined) {
+        return events;
+      }
+      const percent = resolveMagnitude(effect.healthPercent, caster);
+      for (const { combatant, position, creature } of context.surroundings.values()) {
+        if (
+          creature?.companionSkillId !== undefined &&
+          combatant.dead &&
+          combatant.team === caster.team &&
+          distance(position, at) <= effect.radius
+        ) {
+          resurrect(combatant, (combatant.maxHealth * percent) / 100, 0, events);
+        }
+      }
+      return events;
+    }
+
     case "drain-own-energy": {
       loseEnergy(caster, Math.floor(caster.energy), events);
       return events;
@@ -1404,6 +1428,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "summon":
     case "create-ground-effect":
     case "drain-own-energy":
+    case "resurrect-companions":
       return true;
     case "heal":
       return effect.recipient === "caster";

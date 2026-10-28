@@ -1346,10 +1346,14 @@ and blows are set by their Necromancer's Death Magic as they rise and
 never change after. A minion rots: it loses 1 pip of Health at once and
 1 more every 20 s it lives, summed with its statuses before the −10
 cap, and it never regenerates naturally; healing fights it as usual. A
-rank-12 Bone Minion nobody touches lives 65 s. It stays by its master,
-attacks the nearest foe within earshot of itself, not its master's
-target nor a called one, and breaks off to walk back once its master is
-past cast range, picking no fight until at heel again. A master holds 2
+rank-12 Bone Minion nobody touches lives 65 s. It stays by its master
+and assists it (#1118): with no fight going, it attacks the foe its
+master is attacking with a weapon or an attack skill, if within cast
+range of the master, else the nearest foe within earshot of itself; a
+called target or a spell does not count. It stays on its foe until that
+foe dies, whatever its master switches to, and breaks off to walk back
+once its master is past cast range, picking no fight until at heel
+again. A master holds 2
 plus half its Death Magic, rounded down (8 at 12): raising past it kills
 the weakest first, by Health left and the oldest of equals, and that is
 a death, so Soul Reaping answers it. A minion leaves no corpse, outlives
@@ -1416,6 +1420,32 @@ nothing. At Beast Mastery 12:
 | Brutal Strike    | 10     | 5 s      | +29, and +29 more on a foe below 50% Health                     |
 | Maiming Strike   | 10     | 5 s      | +17; a hit cripples for 13 s                                    |
 | Disrupting Lunge | 5      | 10 s     | +10; a hit on a foe using a skill interrupts it, +20 s disabled |
+
+**Calls and bonds** (#1108) are Beast Mastery shouts on your own living
+wolf, whatever you have selected, from up to 700 away: past it you walk
+in. With no wolf ("You have no pet.") or a dead one ("Your target is
+dead.") they are refused and cost nothing. At Beast Mastery 12:
+
+| Skill              | Energy | Recharge | On the wolf                                                   |
+| ------------------ | ------ | -------- | ------------------------------------------------------------- |
+| Call of Haste      | 10     | 25 s     | 30 s: bites 25% faster (every 1.61 s), moves 25% faster       |
+| Call of Protection | 5      | 90 s     | 120 s: every hit on it is 17 lower, after armor               |
+| Symbiotic Bond     | 10     | 55 s     | 264 s: +3 regeneration, half of each physical hit goes to you |
+
+Symbiotic Bond's half is rounded down and reaches you at the end of the
+step, typeless: no armor of yours stops it, nothing answers it, and it
+is never sent on again, so two bonds never chain. With you dead or gone
+the wolf takes it back. Reversal of Fortune on the wolf negates the whole
+hit first, and Protective Spirit caps it before it is split. A wolf that
+dies loses its calls and bond; call them again once it is back. The
+fastest attack-speed boost wins: Call of Haste does not stack with
+another.
+
+**Revive Animal** (Beast Mastery, 5 energy, ¼ s, 5 s recharge) raises
+every dead allied pet within 81 of you, yours or a teammate's, with
+10…77% Health; foes' pets and living ones are left alone. With none near
+it still goes off and is spent. A pet it raises has the 15 s grace: its
+death within it costs its owner nothing.
 
 ## Wards and wells
 
