@@ -37,6 +37,7 @@ import {
 } from "./render/arena-snapshot.js";
 import { attackCastOf } from "./render/attack-clock.js";
 import { bodyFlags } from "./render/body-rings.js";
+import { castBadgeType } from "./render/cast-badge.js";
 import { NoWebGlError, createArenaViewport, type ArenaViewport } from "./render/arena-viewport.js";
 import { attachFollowCamera } from "./render/follow-camera.js";
 import { showCombatFeedback } from "./render/combat-feedback.js";
@@ -183,6 +184,7 @@ export function toArenaSnapshot(
           player.castingSkillId !== undefined && player.castTotal > 0
             ? Math.max(0, Math.min(1, 1 - player.castRemaining / player.castTotal))
             : undefined,
+        castType: player.castTotal > 0 ? castBadgeType(player.castingSkillId) : undefined,
         statuses,
         enchanted: rings.enchanted,
         hexed: rings.hexed,
