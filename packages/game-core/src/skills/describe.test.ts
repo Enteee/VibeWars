@@ -142,7 +142,8 @@ describe("describeSkill", () => {
         maxHealth: {
           scaling: { attributeId: "necromancer.death-magic", atZero: 50, atTwelve: 290 },
         },
-        armor: 20,
+        armor: { flat: 20 },
+        attack: undefined,
         ...(durationSeconds === undefined ? {} : { durationSeconds: { flat: durationSeconds } }),
         behaviour: { kind: "idle" },
         aura: undefined,
@@ -720,6 +721,19 @@ describe("describeStatus", () => {
       "You steal 234 Health",
     ]);
     expect(feast.headline).toBe("steals 234 health");
+  });
+
+  it("says the animate skills exploit a corpse, then what rises (#467)", () => {
+    const ranks = new Map([["necromancer.death-magic", 12]]);
+    const texts = (id: string) => describeSkill(skill(id), ranks).effects.map(({ text }) => text);
+    expect(texts("necromancer.animate-bone-minions")).toEqual([
+      "Exploits the nearest corpse",
+      "Summons 2 Bone Minion (280 Health)",
+    ]);
+    expect(texts("necromancer.animate-bone-horror")).toEqual([
+      "Exploits the nearest corpse",
+      "Summons 1 Bone Horror (360 Health)",
+    ]);
   });
 
   it("returns the id for an unknown status rather than throwing", () => {

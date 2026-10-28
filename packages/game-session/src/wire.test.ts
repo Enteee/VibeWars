@@ -259,6 +259,7 @@ describe("wireIdentity (#1052)", () => {
       kind: "minion" as const,
       name: "Bone Minion",
       expiresInSeconds: Number.POSITIVE_INFINITY,
+      ageSeconds: 0,
       summonedAtTick: 1,
       skillId: "test.summon",
       aura: undefined,

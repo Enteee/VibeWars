@@ -20,7 +20,7 @@ import {
 } from "./weapons.js";
 import { ALL_INSIGNIAS } from "./insignias.js";
 import { ALL_OFFHANDS, SHIELD_REQUIREMENT_ATTRIBUTES } from "./offhands.js";
-import { resolveLoadout } from "./resolve.js";
+import { creatureResolvedEquipment, resolveLoadout, unarmedResolvedEquipment } from "./resolve.js";
 import {
   ATTRIBUTE_RUNE_TIERS,
   UNIVERSAL_RUNES,
@@ -1051,5 +1051,36 @@ describe("weapon sets (#489, ADR-0036)", () => {
     });
     const [shield, bare] = warrior.weaponSets;
     expect(shield.equipment.baseArmor).toBe((bare?.equipment.baseArmor ?? 0) + 16);
+  });
+});
+
+describe("creatureResolvedEquipment (#467)", () => {
+  it("is unarmed with its armor when the creature never swings", () => {
+    expect(creatureResolvedEquipment(51, undefined)).toEqual(unarmedResolvedEquipment(51));
+  });
+
+  it("swings the attack's numbers, as fists keyed to the summoner's attribute", () => {
+    const equipment = creatureResolvedEquipment(30, {
+      attributeId: "necromancer.death-magic",
+      damageMin: 5,
+      damageMax: 12,
+      damageType: "blunt",
+      attackIntervalSeconds: 3.17,
+      range: 40,
+    });
+    expect(equipment.baseArmor).toBe(30);
+    expect(equipment.mainHand).toMatchObject({
+      weapon: {
+        id: "unarmed",
+        damageMin: 5,
+        damageMax: 12,
+        damageType: "blunt",
+        attackIntervalSeconds: 3.17,
+        range: 40,
+      },
+      attributeId: "necromancer.death-magic",
+      damageType: "blunt",
+      requirementMet: true,
+    });
   });
 });
