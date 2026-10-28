@@ -1,3 +1,4 @@
+import { isCompanionRule } from "./activation.js";
 import { getStatusDefinition } from "./status.js";
 import type { StatusDefinition } from "./status.js";
 import type { Skill, SkillEffect } from "./types.js";
@@ -53,6 +54,7 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     case "lose-health":
     case "shadow-step":
     case "resurrect":
+    case "resurrect-companions":
     case "drain-own-energy":
     case "recharge-faster":
     case "recharge-others":
@@ -155,7 +157,7 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
  * its bite hits: Maiming Strike cripples, Disrupting Lunge interrupts.
  */
 export function skillRoles(skill: Skill): readonly SkillRole[] {
-  if (skill.target === "companion" && skill.petAttack === undefined) {
+  if (isCompanionRule(skill.target) && skill.petAttack === undefined) {
     return [];
   }
   const effects = [...skill.effects, ...(skill.attack?.onBlocked ?? [])];

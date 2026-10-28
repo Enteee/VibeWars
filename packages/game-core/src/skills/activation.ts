@@ -120,6 +120,7 @@ export function targetRuleAllows(
     case "single-other-ally":
     case "single-dead-ally":
     case "companion":
+    case "living-companion":
       return isAlly ? undefined : isSelf ? "invalid-target-self" : "invalid-target-enemy";
   }
 }
@@ -145,6 +146,11 @@ export function targetLivenessAllows(
   return target.dead ? "invalid-target-dead" : undefined;
 }
 
+/** Whether `rule` acts on the caster's own companion, whatever is selected (#1046, #1108). */
+export function isCompanionRule(rule: TargetRule): boolean {
+  return rule === "companion" || rule === "living-companion";
+}
+
 /** Validate a target against a skill's targeting rule. */
 function checkTarget(request: ActivationRequest): ActivationCheck {
   const { skill, caster, target } = request;
@@ -155,7 +161,7 @@ function checkTarget(request: ActivationRequest): ActivationCheck {
   }
 
   if (target === undefined) {
-    return reject(skill.target === "companion" ? "no-companion" : "no-target");
+    return reject(isCompanionRule(skill.target) ? "no-companion" : "no-target");
   }
   const byWho = targetRuleAllows(skill.target, caster, target);
   const byLife = targetLivenessAllows(skill.target, target);

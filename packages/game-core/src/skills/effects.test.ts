@@ -93,6 +93,45 @@ describe("damage or life steal from a foe (#1022)", () => {
   });
 });
 
+describe("Symbiotic Bond's redirect (#1108)", () => {
+  /** A bonded pet at full Health, with `owner` as the bond's source. */
+  function bonded(): Combatant {
+    const pet = makeCombatant({ id: "pet", team: 0 });
+    pet.statuses.apply("symbiotic-bond", 264, "owner");
+    pet.statuses.drainChanges();
+    return pet;
+  }
+
+  function redirected(pet: Combatant): unknown[] {
+    return pet.statuses.drainChanges().filter((change) => change.kind === "redirected-damage");
+  }
+
+  it("keeps 13 of a 25 physical hit and records 12 for its source", () => {
+    const pet = bonded();
+    const events: CombatEvent[] = [];
+    applyDamage(pet, 25, "slashing", false, events, undefined);
+    expect(events).toEqual([{ kind: "damage", targetId: "pet", amount: 13, critical: false }]);
+    expect(redirected(pet)).toEqual([{ kind: "redirected-damage", toId: "owner", amount: 12 }]);
+  });
+
+  it("does not split elemental damage", () => {
+    const pet = bonded();
+    const events: CombatEvent[] = [];
+    applyDamage(pet, 25, "fire", false, events, undefined);
+    expect(events).toEqual([{ kind: "damage", targetId: "pet", amount: 25, critical: false }]);
+    expect(redirected(pet)).toEqual([]);
+  });
+
+  it("comes after Reversal of Fortune, which negates the whole hit", () => {
+    const pet = bonded();
+    pet.health = 100;
+    pet.statuses.apply("reversal-of-fortune", 8, "monk");
+    applyDamage(pet, 25, "slashing", false, [], undefined);
+    expect(pet.health).toBe(125);
+    expect(redirected(pet)).toEqual([]);
+  });
+});
+
 describe("damage effect", () => {
   it("reduces target health by a flat amount", () => {
     const ctx = context();

@@ -72,7 +72,9 @@ describe("status definitions", () => {
         def.spellRechargeFaster !== 0 ||
         def.bindingRitualRechargeFaster !== 0 ||
         def.criticalChanceBonus !== 0 ||
-        def.energyPerCritical !== 0;
+        def.energyPerCritical !== 0 ||
+        def.damageReduction !== 0 ||
+        def.redirectsPhysicalDamage !== 0;
       expect(hasEffect, `${id} has no mechanical effect`).toBe(true);
     }
   });
@@ -118,6 +120,7 @@ describe("status definitions", () => {
       "shadow-refuge": 9,
       recuperation: 3,
       "well-of-suffering": -5,
+      "symbiotic-bond": 3,
     });
   });
 
@@ -708,7 +711,7 @@ describe("attack duration (ADR-0029)", () => {
     });
   }
 
-  it("is 1 with nothing on; Faintheartedness (#493) and Shadow of Fear (#918) are 50% slower, Heart of Fury and Weapon of Aggression (#975) 25% faster (#845), Frenzy (#919) and Lightning Reflexes (#976) 33%", () => {
+  it("is 1 with nothing on; Faintheartedness (#493) and Shadow of Fear (#918) are 50% slower, Heart of Fury and Weapon of Aggression (#975) 25% faster (#845), Frenzy (#919) and Lightning Reflexes (#976) 33%, Call of Haste (#1108) 25% faster", () => {
     expect(aggregateModifiers([]).attackDurationMultiplier).toBe(1);
     const multipliers: Partial<Record<StatusId, number>> = {
       faintheartedness: 1.5,
@@ -717,6 +720,7 @@ describe("attack duration (ADR-0029)", () => {
       frenzy: 0.67,
       "lightning-reflexes": 0.67,
       "weapon-of-aggression": 0.75,
+      "call-of-haste": 0.75,
     };
     for (const id of ALL_STATUS_IDS) {
       const expected = multipliers[id] ?? 1;
