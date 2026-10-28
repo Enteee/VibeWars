@@ -21,6 +21,7 @@ import {
   type Segment,
   type FlagField,
   type GuildLord,
+  type BaseGuard,
   type Shrine,
 } from "@vibewars/game-core";
 import {
@@ -118,6 +119,8 @@ export interface HostMap {
   readonly guildLords: readonly GuildLord[];
   /** Its flag stand and flag spawns (#1225), `undefined` but on a Guild Battle map. */
   readonly flagField: FlagField | undefined;
+  /** Its base guards (#1223), in the map's order, `[]` but on a Guild Battle map. */
+  readonly guards: readonly BaseGuard[];
 }
 
 export interface MatchHostOptions {
@@ -230,6 +233,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     shrines: map.shrines,
     guildLords: map.guildLords,
     flagField: map.flagField,
+    guards: map.guards,
   });
   const seats = new Map<string, Seat>();
   const seatOfPeer = new Map<string, Seat>();

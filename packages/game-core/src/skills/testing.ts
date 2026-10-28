@@ -46,6 +46,7 @@ export function makeCombatant(overrides: Partial<Combatant> & { id: string }): C
     // takes damage for exactly its stated amount. A test that wants to
     // exercise mitigation says so explicitly.
     equipment: unarmedResolvedEquipment(MINIMAL_GW_INSPIRED_PVP_V1.combat.armorReferenceLevel),
+    lossGuard: undefined,
     ...overrides,
   };
 }

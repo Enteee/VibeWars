@@ -96,8 +96,11 @@ export const MAX_WIRE_GROUND_EFFECTS = 32;
 /** The most bodies a snapshot carries: every player and every creature. */
 export const MAX_WIRE_ACTORS = MAX_LOBBY_PLAYERS + MAX_WIRE_CREATURES;
 
-/** What kind of creature a body is (#1052); a priest (#1186) and a Guild Lord (#1222) are a map's. */
-export const CREATURE_KINDS = ["spirit", "minion", "pet", "priest", "guild-lord"] as const;
+/**
+ * What kind of creature a body is (#1052); a priest (#1186), a Guild Lord
+ * (#1222) and a base guard (#1223) are a map's.
+ */
+export const CREATURE_KINDS = ["spirit", "minion", "pet", "priest", "guild-lord", "guard"] as const;
 
 /** How a creature is drawn (#1162); game-core's `CREATURE_LOOKS`, mirrored. */
 export const CREATURE_LOOKS = [
@@ -107,6 +110,7 @@ export const CREATURE_LOOKS = [
   "spirit",
   "priest",
   "guild-lord",
+  "guard",
 ] as const;
 
 /**

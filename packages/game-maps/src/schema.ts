@@ -1,5 +1,6 @@
 import {
   distancePointToSegment,
+  GUARD_ROLE_IDS,
   MINIMAL_GW_INSPIRED_PVP_V1,
   type MatchMode,
 } from "@vibewars/game-core";
@@ -44,8 +45,8 @@ const spawnPointSchema = z.object({
 /**
  * A map objective: a team's Resurrection Shrine (#1186), where its dead
  * come back and Priest Annihilation's priest stands, where a Guild
- * Battle's Guild Lord stands (#1222), or its flag stand and where each
- * team's flag starts (#1225).
+ * Battle's Guild Lord stands (#1222), one of its base guards' posts
+ * (#1223), or its flag stand and where each team's flag starts (#1225).
  */
 const objectiveSchema = z.discriminatedUnion("kind", [
   z.object({
@@ -56,6 +57,12 @@ const objectiveSchema = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("guild-lord"),
     team: z.number().int().nonnegative(),
+    position: vec2Schema,
+  }),
+  z.object({
+    kind: z.literal("guard"),
+    team: z.number().int().nonnegative(),
+    role: z.enum(GUARD_ROLE_IDS),
     position: vec2Schema,
   }),
   z.object({
@@ -73,10 +80,10 @@ const objectiveSchema = z.discriminatedUnion("kind", [
 type SharedKind = Extract<Objective, { kind: "flag-stand" }>["kind"];
 type TeamKind = Exclude<Objective["kind"], SharedKind>;
 
-/** Which objectives each mode has, one a spawning team; none for a mode not here. */
+/** Which team objectives each mode may have; none for a mode not here. */
 const OBJECTIVES_BY_MODE: Readonly<Partial<Record<MatchMode, readonly TeamKind[]>>> = {
   "priest-annihilation": ["resurrection-shrine"],
-  "guild-battle": ["resurrection-shrine", "guild-lord", "flag-spawn"],
+  "guild-battle": ["resurrection-shrine", "guild-lord", "guard", "flag-spawn"],
 };
 
 /** Which modes have exactly one of each shared objective; none for a mode not here. */
@@ -84,10 +91,14 @@ const SHARED_OBJECTIVES_BY_MODE: Readonly<Partial<Record<MatchMode, readonly Sha
   "guild-battle": ["flag-stand"],
 };
 
+/** The kinds a map of a mode that has them has exactly one of per spawning team. */
+const ONE_PER_TEAM: readonly TeamKind[] = ["resurrection-shrine", "guild-lord", "flag-spawn"];
+
 /** What a map calls each objective kind, in its validation messages. */
 const OBJECTIVE_NAMES: Readonly<Record<Objective["kind"], string>> = {
   "resurrection-shrine": "resurrection shrine",
   "guild-lord": "Guild Lord",
+  guard: "guard",
   "flag-spawn": "flag spawn",
   "flag-stand": "flag stand",
 };
@@ -135,7 +146,7 @@ export const mapDataSchema = z
       }
     }
     const teams = new Set(map.spawnPoints.map((spawn) => spawn.team));
-    for (const kind of kinds) {
+    for (const kind of kinds.filter((each) => ONE_PER_TEAM.includes(each))) {
       for (const team of teams) {
         const count = map.objectives.filter(
           (objective) => objective.kind === kind && objective.team === team,
@@ -147,6 +158,19 @@ export const mapDataSchema = z
             message: `team ${String(team)} has ${String(count)} ${OBJECTIVE_NAMES[kind]}s, not one`,
           });
         }
+      }
+    }
+    for (const team of teams) {
+      const bodyguards = map.objectives.filter(
+        (objective) =>
+          objective.kind === "guard" && objective.team === team && objective.role === "bodyguard",
+      ).length;
+      if (bodyguards > 1) {
+        context.addIssue({
+          code: "custom",
+          path: ["objectives"],
+          message: `team ${String(team)} has ${String(bodyguards)} bodyguards, at most one`,
+        });
       }
     }
     const walls = allWallSegments(map.walls);

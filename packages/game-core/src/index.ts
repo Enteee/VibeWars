@@ -190,7 +190,9 @@ export {
   flagTeamOf,
   isFlagObjectId,
 } from "./match/flags.js";
-export { GUILD_LORD_HEALTH, guildLordId } from "./match/guild-lord.js";
+export { GUILD_LORD_HEALTH, guildLordId, guildLordLossCap } from "./match/guild-lord.js";
+export type { BaseGuard, GuardRole } from "./match/guards.js";
+export { GUARD_ROLE_IDS, GUARD_ROLES, guardId } from "./match/guards.js";
 export type { IntentRefusal, MatchIntent } from "./match/apply-intent.js";
 export { applyIntent } from "./match/apply-intent.js";
 export { MAX_CATCHUP_SECONDS, drainAccumulator } from "./match/accumulator.js";

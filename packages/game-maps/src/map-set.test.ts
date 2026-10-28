@@ -239,6 +239,53 @@ describe("Guild Hall Isle (#1222)", () => {
     }
   });
 
+  it("guards each base as GW1 does, point-symmetric (#1223)", () => {
+    const centre = { x: isle.width / 2, y: isle.height / 2 };
+    const guards = isle.objectives.flatMap((objective) =>
+      objective.kind === "guard" ? [objective] : [],
+    );
+    for (const team of [0, 1]) {
+      const roles = guards.filter((each) => each.team === team).map((each) => each.role);
+      expect(roles.sort()).toEqual([
+        "archer",
+        "archer",
+        "archer",
+        "bodyguard",
+        "footman",
+        "footman",
+        "knight",
+        "knight",
+      ]);
+      const lord = isle.objectives.find(
+        (objective) => objective.kind === "guild-lord" && objective.team === team,
+      );
+      if (lord === undefined) throw new Error(`no lord for team ${String(team)}`);
+      for (const near of guards.filter(
+        (each) => each.team === team && (each.role === "bodyguard" || each.role === "knight"),
+      )) {
+        expect(
+          Math.hypot(near.position.x - lord.position.x, near.position.y - lord.position.y),
+        ).toBeLessThanOrEqual(150);
+      }
+    }
+    for (const each of guards.filter((guard) => guard.team === 0)) {
+      const mirror = {
+        x: 2 * centre.x - each.position.x,
+        y: 2 * centre.y - each.position.y,
+      };
+      expect(
+        guards.some(
+          (other) =>
+            other.team === 1 &&
+            other.role === each.role &&
+            other.position.x === mirror.x &&
+            other.position.y === mirror.y,
+        ),
+        JSON.stringify(each),
+      ).toBe(true);
+    }
+  });
+
   it("keeps a 200-unit circle at its centre clear, for the flag stand", () => {
     const centre = { x: isle.width / 2, y: isle.height / 2 };
     for (const wall of walls) {

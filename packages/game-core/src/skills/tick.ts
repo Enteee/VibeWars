@@ -4,6 +4,7 @@ import type { DamageType } from "../equipment/types.js";
 import { FAST_CASTING_ATTRIBUTE, fastCastingMultiplier } from "../primary-attributes.js";
 import type { ResourceRules } from "../ruleset.js";
 import type { CombatEvent } from "./effects.js";
+import { guardedDegeneration } from "./loss-guard.js";
 import {
   aggregateModifiers,
   clampPips,
@@ -34,7 +35,8 @@ import { isInvulnerable, isSpell, type Combatant, type Skill } from "./types.js"
  * (#921, "Fall Back!"), and one `nearSpirit`'s (#1064, the simulation
  * knows where spirits stand), is a heal, not pips: outside the clamp,
  * scaled by `healingMultiplier`, and added to the same change, so one
- * tick emits one damage or heal event.
+ * tick emits one damage or heal event. A Guild Lord loses no more than
+ * its per-second cap lets through (#1223).
  */
 export function advanceStatuses(
   combatant: Combatant,
@@ -58,9 +60,19 @@ export function advanceStatuses(
   if (pips !== 0 || perSecond !== 0) {
     const change = (pips * HEALTH_PER_PIP + perSecond) * dt;
     // Degeneration takes nothing from an invulnerable body (#1208); regeneration still heals.
-    const delta = change < 0 && isInvulnerable(combatant) ? 0 : change;
-    const effectiveMax = effectiveMaxHealth(combatant);
-    const next = Math.min(effectiveMax, Math.max(0, combatant.health + delta));
+    const unguarded = change < 0 && isInvulnerable(combatant) ? 0 : change;
+    const wanted = Math.min(
+      effectiveMaxHealth(combatant),
+      Math.max(0, combatant.health + unguarded),
+    );
+    // A Guild Lord loses no more than its cap lets through (#1223), and
+    // that includes coming down to its effective maximum: a Deep Wound
+    // whose cut the cap held back leaves it above, to lose the rest as
+    // later seconds allow.
+    const next =
+      wanted < combatant.health
+        ? combatant.health - guardedDegeneration(combatant, combatant.health - wanted)
+        : wanted;
     const applied = next - combatant.health;
     combatant.health = next;
 

@@ -479,3 +479,73 @@ describe("guild battle maps (#1222)", () => {
     ).toThrow(/annihilation map has no Guild Lord/);
   });
 });
+
+describe("guild battle guards (#1223)", () => {
+  const guard = (team: number, role: string, x: number, y: number) => ({
+    kind: "guard",
+    team,
+    role,
+    position: { x, y },
+  });
+  const guildMap = {
+    ...validMap,
+    mode: "guild-battle",
+    walls: [],
+    spawnPoints: [
+      { team: 0, position: { x: 20, y: 50 } },
+      { team: 1, position: { x: 80, y: 50 } },
+    ],
+    objectives: [
+      { kind: "resurrection-shrine", team: 0, position: { x: 20, y: 80 } },
+      { kind: "resurrection-shrine", team: 1, position: { x: 80, y: 20 } },
+      { kind: "guild-lord", team: 0, position: { x: 20, y: 20 } },
+      { kind: "guild-lord", team: 1, position: { x: 80, y: 80 } },
+      { kind: "flag-spawn", team: 0, position: { x: 30, y: 60 } },
+      { kind: "flag-spawn", team: 1, position: { x: 70, y: 60 } },
+      { kind: "flag-stand", position: { x: 50, y: 70 } },
+    ],
+  };
+
+  it("accepts any number of guards a team, or none", () => {
+    expect(validateMapData(guildMap).objectives).toHaveLength(7);
+    const guarded = {
+      ...guildMap,
+      objectives: [
+        ...guildMap.objectives,
+        guard(0, "bodyguard", 30, 30),
+        guard(0, "knight", 40, 30),
+        guard(0, "knight", 30, 40),
+        guard(1, "archer", 70, 70),
+      ],
+    };
+    expect(validateMapData(guarded).objectives).toHaveLength(11);
+  });
+
+  it("refuses a second bodyguard on one team", () => {
+    expect(() =>
+      validateMapData({
+        ...guildMap,
+        objectives: [
+          ...guildMap.objectives,
+          guard(1, "bodyguard", 70, 70),
+          guard(1, "bodyguard", 60, 70),
+        ],
+      }),
+    ).toThrow(/team 1 has 2 bodyguards, at most one/);
+  });
+
+  it("refuses a role it does not know", () => {
+    expect(() =>
+      validateMapData({
+        ...guildMap,
+        objectives: [...guildMap.objectives, guard(0, "catapult", 30, 30)],
+      }),
+    ).toThrow();
+  });
+
+  it("refuses a guard on a map of any other mode", () => {
+    expect(() =>
+      validateMapData({ ...validMap, objectives: [guard(0, "knight", 50, 50)] }),
+    ).toThrow(/annihilation map has no guard/);
+  });
+});
