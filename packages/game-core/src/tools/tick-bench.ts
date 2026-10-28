@@ -135,6 +135,7 @@ function benchMatch(field: BenchField, crowd: BenchCrowd, seed: string): MatchSi
             onDeath: "vanish",
             ownerDisableSeconds: 0,
             companionSkillId: undefined,
+            mode: "guard",
           },
         });
       }
