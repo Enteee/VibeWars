@@ -115,6 +115,7 @@ describe("applyIntent — command (#1110)", () => {
           creature: {
             ownerId: "r",
             kind: "minion",
+            look: "bone-minion",
             name: "Bone Minion",
             expiresInSeconds: Number.POSITIVE_INFINITY,
             ageSeconds: 0,

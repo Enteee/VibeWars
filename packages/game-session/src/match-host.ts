@@ -9,7 +9,6 @@ import {
   resolveJoinLoadout,
   loadoutSpec,
   resolveLoadout,
-  resolvedBar,
   spawnFacing,
   swingProgress,
   type MatchRules,
@@ -368,10 +367,10 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       participant === undefined
         ? []
         : skillBarSlots(
-            resolvedBar(participant.skillBar, participant.combatant.cast).map(
-              (held) => held?.skillId ?? null,
-            ),
+            participant.skillBar,
+            participant.combatant.cast,
             participant.combatant,
+            sim.elapsedSeconds,
           );
     if (!force && seat.skillBar !== undefined && sameSkillBar(seat.skillBar, slots)) {
       return;

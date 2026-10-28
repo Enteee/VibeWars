@@ -1,4 +1,5 @@
 import {
+  CastState,
   outsideMatch,
   getStatusDefinition,
   type ActiveStatus,
@@ -235,10 +236,15 @@ describe("groundEffectSnapshot (#1087)", () => {
   });
 });
 
+/** A bar with no copy standing in it. */
+function idle(): CastState {
+  return new CastState("r", outsideMatch(new Map()).statuses);
+}
+
 describe("skillBarSlots", () => {
   it("describes each skill as the host's skill-bar message does", () => {
     const bearer = outsideMatch(new Map());
-    expect(skillBarSlots(["elementalist.fireball", null], bearer)).toEqual([
+    expect(skillBarSlots(["elementalist.fireball", null], idle(), bearer, 0)).toEqual([
       {
         id: "elementalist.fireball",
         name: "Fireball",
@@ -246,21 +252,44 @@ describe("skillBarSlots", () => {
         adrenalineCost: 0,
         activationSeconds: 1,
         rechargeSeconds: 7,
+        copyEndsAt: null,
       },
       null,
     ]);
   });
 
+  it("draws a copy standing in a slot, with the match clock it ends at (#1154)", () => {
+    const bearer = outsideMatch(new Map());
+    const cast = new CastState("r", bearer.statuses);
+    cast.override(0, {
+      skillId: "warrior.healing-signet",
+      key: "warrior.healing-signet@0",
+      remainingSeconds: 19.96,
+      restores: { skillId: "mesmer.echo", rechargeSeconds: 30 },
+    });
+    const [copy, build] = skillBarSlots(
+      ["mesmer.echo", "elementalist.fireball"],
+      cast,
+      bearer,
+      12.5,
+    );
+    expect(copy).toMatchObject({ id: "warrior.healing-signet", copyEndsAt: 32.5 });
+    expect(build).toMatchObject({ id: "elementalist.fireball", copyEndsAt: null });
+  });
+
   it("costs a spell what the glyph leaves of it (#637)", () => {
     const bearer = outsideMatch(new Map());
     bearer.statuses.apply("glyph-of-lesser-energy", 15, "e");
-    expect(skillBarSlots(["elementalist.fireball"], bearer)[0]?.energyCost).toBe(0);
+    expect(skillBarSlots(["elementalist.fireball"], idle(), bearer, 0)[0]?.energyCost).toBe(0);
   });
 });
 
 describe("sameSkillBar (#637)", () => {
   const bar = ["elementalist.fireball", null, "warrior.healing-signet"] as const;
-  const plain = () => skillBarSlots([...bar], outsideMatch(new Map()));
+  const plain = () => {
+    const bearer = outsideMatch(new Map());
+    return skillBarSlots([...bar], idle(), bearer, 0);
+  };
 
   it("holds for two bars built alike, gaps included", () => {
     expect(sameSkillBar(plain(), plain())).toBe(true);
@@ -269,7 +298,7 @@ describe("sameSkillBar (#637)", () => {
   it("tells a changed cost, a moved gap and a different length apart", () => {
     const glyphed = outsideMatch(new Map());
     glyphed.statuses.apply("glyph-of-lesser-energy", 15, "e");
-    const cheaper = skillBarSlots([...bar], glyphed);
+    const cheaper = skillBarSlots([...bar], idle(), glyphed, 0);
     expect(sameSkillBar(plain(), cheaper)).toBe(false);
     expect(sameSkillBar(plain(), [...plain()].reverse())).toBe(false);
     expect(sameSkillBar(plain(), plain().slice(0, 2))).toBe(false);
@@ -288,6 +317,7 @@ describe("wireIdentity (#1052)", () => {
     creature: {
       ownerId,
       kind: "minion" as const,
+      look: "bone-minion" as const,
       name: "Bone Minion",
       expiresInSeconds: Number.POSITIVE_INFINITY,
       ageSeconds: 0,
@@ -317,7 +347,7 @@ describe("wireIdentity (#1052)", () => {
       team: 1,
       primaryProfession: null,
       secondaryProfession: null,
-      creature: { ownerId: "p1", kind: "minion", mode: null },
+      creature: { ownerId: "p1", kind: "minion", look: "bone-minion", mode: null },
     });
   });
 
@@ -327,6 +357,7 @@ describe("wireIdentity (#1052)", () => {
       creature: {
         ...minion("p1").creature,
         kind: "pet" as const,
+        look: "beast" as const,
         name: "Wolf",
         companionSkillId: "ranger.charm-animal",
         mode: "heel" as const,
@@ -335,6 +366,7 @@ describe("wireIdentity (#1052)", () => {
     expect(wireIdentity(wolf, seats)?.creature).toEqual({
       ownerId: "p1",
       kind: "pet",
+      look: "beast",
       mode: "heel",
     });
   });

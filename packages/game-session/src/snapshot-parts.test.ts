@@ -138,7 +138,7 @@ describe("packSnapshot (#662)", () => {
       ...player(index),
       primaryProfession: null,
       statuses: [],
-      creature: { ownerId: player(0).id, kind: "minion", mode: null },
+      creature: { ownerId: player(0).id, kind: "minion", look: "bone-minion", mode: null },
     });
     const players = [
       ...whole.players,

@@ -73,7 +73,7 @@ const BLEEDER = player("bleeder", {
 });
 const WOLF = player("me/c1", {
   name: "Wolf",
-  creature: { ownerId: "me", kind: "pet", mode: "fight" },
+  creature: { ownerId: "me", kind: "pet", look: "beast", mode: "fight" },
 });
 
 describe("partyRows (#1055)", () => {
@@ -109,14 +109,16 @@ describe("partyRows (#1055)", () => {
   });
 
   it("never lists a minion, even your own", () => {
-    const minion = player("minion", { creature: { ownerId: "me", kind: "minion", mode: null } });
+    const minion = player("minion", {
+      creature: { ownerId: "me", kind: "minion", look: "bone-minion", mode: null },
+    });
     expect(partyRows(match([ME, minion]))).toEqual([]);
     expect(partyRows(match([ME, minion, KAJA])).map((row) => row.id)).toEqual(["me", "kaja"]);
   });
 
   it("lists your own pet under you, in its mode, but not a teammate's (#1110)", () => {
     const kajaWolf = player("kaja/c1", {
-      creature: { ownerId: "kaja", kind: "pet", mode: "guard" },
+      creature: { ownerId: "kaja", kind: "pet", look: "beast", mode: "guard" },
     });
     const rows = partyRows(match([KAJA, kajaWolf, ME, WOLF]));
     expect(rows.map((row) => row.id)).toEqual(["me", "me/c1", "kaja"]);
@@ -293,7 +295,12 @@ describe("createPartyWindow (#1055)", () => {
     expect(commanded).toEqual([["me/c1", "heel"]]);
     row?.listeners.get("click")?.({ preventDefault: () => undefined });
     expect(targeted).toEqual(["me/c1"]);
-    party.update(match([ME, { ...WOLF, creature: { ownerId: "me", kind: "pet", mode: "heel" } }]));
+    party.update(
+      match([
+        ME,
+        { ...WOLF, creature: { ownerId: "me", kind: "pet", look: "beast", mode: "heel" } },
+      ]),
+    );
     expect(buttons.map((button) => button.classes.has("is-lit"))).toEqual([false, false, true]);
   });
 

@@ -29,6 +29,7 @@ function slot(id: string): SkillSlot {
     adrenalineCost: 0,
     activationSeconds: 1,
     rechargeSeconds: 5,
+    copyEndsAt: null,
   };
 }
 
@@ -234,7 +235,11 @@ describe("outOfRange", () => {
   it("measures a pet skill to your pet, whatever is selected (#1110)", () => {
     const COMFORT = "ranger.comfort-animal";
     const pet = (x: number) =>
-      self({ sessionId: "me/c1", x, creature: { ownerId: "me", kind: "pet", mode: "guard" } });
+      self({
+        sessionId: "me/c1",
+        x,
+        creature: { ownerId: "me", kind: "pet", look: "beast", mode: "guard" },
+      });
     expect(outOfRange([slot(COMFORT)], self({}), foe(5000), pet(500), [])).toEqual([true]);
     expect(outOfRange([slot(COMFORT)], self({}), foe(5000), pet(300), [])).toEqual([false]);
     expect(outOfRange([slot(COMFORT)], self({}), undefined, pet(500), [])).toEqual([true]);
@@ -255,7 +260,7 @@ describe("outOfRange", () => {
       x: 1000,
       team: 0,
       dead: true,
-      creature: { ownerId: "r", kind: "pet", mode: "guard" },
+      creature: { ownerId: "r", kind: "pet", look: "beast", mode: "guard" },
     });
     expect(outOfRange([slot(COMFORT), slot(RESTORE_LIFE)], self({}), pet, undefined, [])).toEqual([
       false,

@@ -46,6 +46,7 @@ the code and `scripts/assets/icons.mjs` copy them.
 | `heal`         | `#7ee787` | Health gained, arena health bar          |
 | `damage`       | `#ff7b72` | Health lost                              |
 | `condition`    | `#ffa657` | Condition markers                        |
+| `poison`       | `#b4d62c` | Poison and disease bubbles on a body     |
 | `hex`          | `#d2a8ff` | Hex markers                              |
 | `enchantment`  | `#56d4dd` | Enchantment markers                      |
 | `stance`       | `#f778ba` | Stance markers                           |
@@ -202,7 +203,11 @@ so the silhouette identifies the profession and the colour only supports it.
 | Target       | `target` ring, 9 px outside the actor                   |
 | Enchanted    | Solid `enchantment` ring, 2.5 px outside the actor      |
 | Hexed        | Broken `hex` ring, 8 dashes, 5 px outside the actor     |
+| Burning      | Three `condition` flames flickering on the top edge     |
+| Bleeding     | `damage` drops falling from the bottom edge             |
+| Poisoned     | Two hollow `poison` bubbles rising from its flanks      |
 | Dead         | Hollow `dead` circle, no bars                           |
+| Creature     | Team hexagon, kind glyph in `edge`                      |
 | Cast         | Bar above the health bar, fills as the cast completes   |
 | Condition    | Circle plate, glyph inside                              |
 | Hex          | Diamond plate, glyph inside                             |
@@ -462,16 +467,17 @@ off-hands included.
 
 Outward from the centre:
 
-| Ring     | Radius              | Style                                 |
-| -------- | ------------------- | ------------------------------------- |
-| Body     | 0 … r               | Team colour fill                      |
-| Edge     | r − 1.5 … r         | 1.5 px `edge` `#0b0f14`, living only  |
-| Self rim | r − 3 … r − 1       | 2 px `ink`, your own body only        |
-| Off-hand | r … r + 7           | See below, living only, left side     |
-| Weapon   | centre … r + 7.5    | See below, living only                |
-| Enchant  | r + 1.75 … r + 3.25 | 1.5 px `enchantment`, while enchanted |
-| Hex      | r + 4.25 … r + 5.75 | 1.5 px `hex`, 8 dashes, while hexed   |
-| Target   | r + 8 … r + 10      | 2 px `target`, your target only       |
+| Ring       | Radius              | Style                                                 |
+| ---------- | ------------------- | ----------------------------------------------------- |
+| Body       | 0 … r               | Team colour fill                                      |
+| Edge       | r − 1.5 … r         | 1.5 px `edge` `#0b0f14`, living only                  |
+| Self rim   | r − 3 … r − 1       | 2 px `ink`, your own body only                        |
+| Off-hand   | r … r + 7           | See below, living only, left side                     |
+| Weapon     | centre … r + 7.5    | See below, living only                                |
+| Enchant    | r + 1.75 … r + 3.25 | 1.5 px `enchantment`, while enchanted                 |
+| Hex        | r + 4.25 … r + 5.75 | 1.5 px `hex`, 8 dashes, while hexed                   |
+| Conditions | r − 1 … r + 6       | Flames top, drops bottom, bubbles at 10 and 2 o'clock |
+| Target     | r + 8 … r + 10      | 2 px `target`, your target only                       |
 
 **The target ring sits at r + 9** (operator, Q26), its 2 px stroke from
 r + 8 to r + 10, so nothing on the body reaches it: the weapon mark stops at
@@ -488,6 +494,21 @@ colour. Both stay inside r + 6, clear of the target ring and the status row.
 They are drawn on the body, under every mark, so the weapon and the off-hand
 cross them. They are static, reduced motion or not; a knocked-down body keeps
 them round its centre, and a corpse wears none.
+
+**The condition cues** (#1138) say a living body is burning, bleeding or
+poisoned: three `condition` flames on its top edge, 3 wide, flickering
+between r + 3 and r + 6 every 0.3 s; a `damage` drop falling from its
+bottom edge to r + 6, one every 0.4 s, alternating sides; two hollow
+`poison` bubbles rising 4 from its rim at 10 and 2 o'clock over 1.2 s,
+growing as they rise, on a dark halo. Disease shows as poison. Shape
+tells them apart without the colour: triangles up, dots down, hollow
+circles. At most two per body, burning before bleeding before poisoned;
+the third stays in the status row. Each body runs its own phase, from
+its id, so a burning team does not flicker in step. They draw over the
+rings and under every mark. Under reduced motion they are the same marks,
+frozen: flames at 4.5, 6 and 4.5, one drop at r + 3, the bubbles
+half-risen, all opaque. A corpse shows none; crippled, blind, weakness,
+dazed, deep wound and cracked armor have no cue.
 
 **The weapon mark** (#188, #418) is the weapon held in the hands: one
 silhouette for each of the 14 weapons. The shapes are data in
@@ -812,6 +833,11 @@ hotkey.
 - **The `✕` must win at a glance.** On the HUD it is about half the slot's
   height (1.9rem), centred over the name and cased in `bg`. In the Training
   Ground row it sits at the right end, at row height.
+- **An echo's copy** (#1154): a slot an echo filled carries a 3 px
+  `enchantment` strip along its bottom edge, over the recharge wipe and
+  clear of its number, under the hotkey and the `↔`, draining from full
+  to empty over the copy's 20 s; the tooltip adds "Echoed: 12 s left".
+  Under reduced motion it steps once a second.
 
 ### Elite frame
 
@@ -844,8 +870,8 @@ uppercase field label is styled so by CSS; the words themselves stay sentence ca
 ## Creatures
 
 Pets, minions and spirits must read as not-a-player at a glance and say what
-they are (#1158). Today a creature is a smaller actor circle, radius 10 to a
-player's 14. `scripts/assets/creature-study.mjs` drew three directions in
+they are (#1158). A creature's radius is 10 to a player's 14.
+`scripts/assets/creature-study.mjs` drew three directions in
 `docs/art/creature-study.svg`: true size, then 4x, ally, foe and dead. Team
 colour stays the fill or outline everywhere.
 
@@ -865,12 +891,18 @@ colour stays the fill or outline everywhere.
   better than B. Fails: one shape for every family, so only the glyph tells
   kinds apart.
 
-**Decided: C** (operator, #1158). Every creature is a solid team-colour
-hexagon with its kind glyph cut from it (paw, skull, horned skull, wisp). No
-wolf tip from A: a pet's heading is not worth a second shape. The spirit
-keeps the hexagon and the wisp glyph; if it reads as a status at true size,
-that is a follow-up for the implementing card, not a reason to bring back A's
-ring. The study stays in `creature-study.svg` for the rejected directions.
+**Decided: C** (operator, #1158; built in #1162). Every creature, pets
+included, is a solid team-colour hexagon, pointy top, circumradius 1.1 ×
+its radius, upright whatever its facing, with the same `edge` as a
+player's body. No wolf tip from A: a pet's heading is not worth a second
+shape. Inside, upright and opaque, sits its kind glyph in `edge`: paw
+(pet), skull (bone minion), horned skull (bone horror), wisp (spirit). The
+skull's eyes are holes, so the plate shows through. A creature has no
+profession glyph, weapon or off-hand. Knocked down, it keeps its shape. A
+dead pet is its hexagon hollow, `dead` and dashed, its glyph `dead`;
+minions and spirits vanish. The glyphs are `creature/*.svg`, generated by
+`scripts/assets/icons.mjs`; the shapes are `apps/web/src/render/creature-shape.ts`.
+The study stays in `creature-study.svg` for the rejected directions.
 
 ## Sizes
 

@@ -225,6 +225,12 @@ export interface CreatureOrder {
 }
 
 /**
+ * What a creature looks like (#1162): the glyph on its plate. The wire mirrors it as `CREATURE_LOOKS`, a test holding the two.
+ */
+export const CREATURE_LOOKS = ["beast", "bone-minion", "bone-horror", "spirit"] as const;
+export type CreatureLook = (typeof CREATURE_LOOKS)[number];
+
+/**
  * A body that is not a player (#1052, ADR-0035): a participant that never
  * counts for its team and has no seat. A spirit or minion is gone once it
  * dies or expires; a companion lies where it fell (#1046).
@@ -233,6 +239,8 @@ export interface Creature {
   /** Whoever summoned it, and whom it answers to: it leaves with them. */
   readonly ownerId: string;
   readonly kind: CreatureKind;
+  /** From the template (#1162): how it is drawn. */
+  readonly look: CreatureLook;
   /** Shown in the target frame and the name label, e.g. "Bone Minion". */
   readonly name: string;
   /** Seconds left before it vanishes; `Infinity`: until it is killed. */
@@ -961,6 +969,7 @@ export class MatchSimulation {
         creature: {
           ownerId: owner.id,
           kind: template.kind,
+          look: template.look,
           name: template.name,
           expiresInSeconds:
             template.durationSeconds === undefined

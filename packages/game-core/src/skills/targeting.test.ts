@@ -137,6 +137,7 @@ describe("resolveTargets", () => {
       creature: {
         ownerId: "caster",
         kind,
+        look: kind === "pet" ? "beast" : kind === "minion" ? "bone-minion" : "spirit",
         name: id,
         expiresInSeconds: Infinity,
         ageSeconds: 0,

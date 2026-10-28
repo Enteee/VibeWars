@@ -437,6 +437,11 @@ export interface SkillBarSlot {
   readonly adrenalineCost: number;
   readonly activationSeconds: number;
   readonly rechargeSeconds: number;
+  /**
+   * Match clock (`elapsedSeconds`) at which the echo's copy standing in
+   * this slot ends (#1154), rounded to 0.1 s; `null` for a build slot.
+   */
+  readonly copyEndsAt: number | null;
 }
 
 /**

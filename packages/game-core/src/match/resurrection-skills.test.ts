@@ -266,6 +266,7 @@ describe("Signet of Return (#474)", () => {
         creature: {
           ownerId: "m",
           kind: "minion",
+          look: "bone-minion",
           name: "Bone Minion",
           expiresInSeconds: Infinity,
           ageSeconds: 0,

@@ -1594,6 +1594,7 @@
       "properties": [
         { "name": "activationSeconds", "optional": false, "type": "number" },
         { "name": "adrenalineCost", "optional": false, "type": "number" },
+        { "name": "copyEndsAt", "optional": false, "type": { "union": ["null", "number"] } },
         { "name": "energyCost", "optional": false, "type": "number" },
         { "name": "id", "optional": false, "type": "string" },
         { "name": "name", "optional": false, "type": "string" },
@@ -1904,6 +1905,18 @@
           }
         },
         {
+          "name": "look",
+          "optional": false,
+          "type": {
+            "union": [
+              { "literal": "beast" },
+              { "literal": "bone-horror" },
+              { "literal": "bone-minion" },
+              { "literal": "spirit" }
+            ]
+          }
+        },
+        {
           "name": "mode",
           "optional": false,
           "type": {
@@ -2176,6 +2189,18 @@
                     }
                   },
                   {
+                    "name": "look",
+                    "optional": false,
+                    "type": {
+                      "union": [
+                        { "literal": "beast" },
+                        { "literal": "bone-horror" },
+                        { "literal": "bone-minion" },
+                        { "literal": "spirit" }
+                      ]
+                    }
+                  },
+                  {
                     "name": "mode",
                     "optional": false,
                     "type": {
@@ -2292,6 +2317,11 @@
                   "properties": [
                     { "name": "activationSeconds", "optional": false, "type": "number" },
                     { "name": "adrenalineCost", "optional": false, "type": "number" },
+                    {
+                      "name": "copyEndsAt",
+                      "optional": false,
+                      "type": { "union": ["null", "number"] }
+                    },
                     { "name": "energyCost", "optional": false, "type": "number" },
                     { "name": "id", "optional": false, "type": "string" },
                     { "name": "name", "optional": false, "type": "string" },
@@ -2382,6 +2412,18 @@
                               "union": [
                                 { "literal": "minion" },
                                 { "literal": "pet" },
+                                { "literal": "spirit" }
+                              ]
+                            }
+                          },
+                          {
+                            "name": "look",
+                            "optional": false,
+                            "type": {
+                              "union": [
+                                { "literal": "beast" },
+                                { "literal": "bone-horror" },
+                                { "literal": "bone-minion" },
                                 { "literal": "spirit" }
                               ]
                             }
@@ -2590,6 +2632,18 @@
                               "union": [
                                 { "literal": "minion" },
                                 { "literal": "pet" },
+                                { "literal": "spirit" }
+                              ]
+                            }
+                          },
+                          {
+                            "name": "look",
+                            "optional": false,
+                            "type": {
+                              "union": [
+                                { "literal": "beast" },
+                                { "literal": "bone-horror" },
+                                { "literal": "bone-minion" },
                                 { "literal": "spirit" }
                               ]
                             }

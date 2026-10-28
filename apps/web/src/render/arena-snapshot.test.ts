@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { vec2 } from "@vibewars/game-core";
+import { CREATURE_LOOKS, vec2 } from "@vibewars/game-core";
 
 import {
   AREA_FLASH_SECONDS,
@@ -22,6 +22,7 @@ import {
   BODY_EDGE,
   BODY_GLYPH_ALPHA,
   BODY_GLYPH_SIZE,
+  CREATURE_GLYPH_SIZE,
   DEAD_COLOUR,
   EXPLOITED_CORPSE_COLOUR,
   PROFESSION_GLYPH_SIZE,
@@ -60,6 +61,7 @@ function actor(
     attackCast: undefined,
     offhandId: undefined,
     profession: undefined,
+    creatureLook: undefined,
     radius,
     team: "ally",
     health: 500,
@@ -72,6 +74,7 @@ function actor(
     statuses: [],
     enchanted: false,
     hexed: false,
+    conditionCues: [],
     ...overrides,
   };
 }
@@ -599,7 +602,7 @@ describe("bodyGlyphLayout (#1037)", () => {
   it("centres a 13 u glyph on a living body, in edge at 60 %", () => {
     const layout = bodyGlyphLayout(actor("m", 200, 100, 14, { profession: "monk" }));
     expect(layout).toEqual({
-      profession: "monk",
+      glyph: { kind: "profession", profession: "monk" },
       x: 200,
       y: 100,
       size: 13,
@@ -634,5 +637,28 @@ describe("bodyGlyphLayout (#1037)", () => {
 
   it("draws none without a profession", () => {
     expect(bodyGlyphLayout(actor("m", 200, 100))).toBeUndefined();
+  });
+
+  it("gives a creature its kind's glyph, opaque, and keeps its size knocked down (#1162)", () => {
+    for (const look of CREATURE_LOOKS) {
+      const standing = bodyGlyphLayout(actor("c", 200, 100, 10, { creatureLook: look }));
+      expect(standing).toEqual({
+        glyph: { kind: "creature", look },
+        x: 200,
+        y: 100,
+        size: CREATURE_GLYPH_SIZE,
+        tint: BODY_EDGE,
+        alpha: 1,
+      });
+      expect(
+        bodyGlyphLayout(actor("c", 200, 100, 10, { creatureLook: look, knockedDown: true })),
+      ).toEqual(standing);
+    }
+  });
+
+  it("greys a dead pet's glyph (#1162)", () => {
+    expect(
+      bodyGlyphLayout(actor("c", 200, 100, 10, { creatureLook: "beast", dead: true })),
+    ).toMatchObject({ glyph: { kind: "creature", look: "beast" }, tint: DEAD_COLOUR, alpha: 1 });
   });
 });

@@ -85,12 +85,14 @@ export type Behaviour =
   | {
       readonly kind: "follow-and-attack";
       /**
-       * Whom it goes for (#1046). `"nearest-foe"`: a minion's, the nearest foe
-       * within `aggroUnits` of itself. `"owner-target"`: a companion's, the foe
+       * Whom it goes for (#1046). `"owner-target"`: a companion's, the foe
        * its owner is attacking or, on Fight, has selected (#1110), if within
        * `aggroUnits` of itself; on Heel, none.
+       * `"owner-target-then-nearest"`: a minion's (#1118), with no fight
+       * going, the foe its owner is attacking, if within `leashUnits` of
+       * the owner, else the nearest foe within `aggroUnits` of itself.
        */
-      readonly engage: "nearest-foe" | "owner-target";
+      readonly engage: "owner-target" | "owner-target-then-nearest";
       readonly aggroUnits: number;
       readonly leashUnits: number;
       readonly heelUnits: number;
@@ -353,9 +355,10 @@ function keepRange(
  * living owner is attacking, within its aggro, switching when the owner
  * does (#1046); on Fight, for whatever foe its owner has selected; on Heel
  * it fights nobody and keeps to heel (#1110). Otherwise a fight it is in
- * goes on; for a minion, a foe in aggro of the minion itself starts one,
- * through `requestAttack` as Space does. Otherwise it walks to heel,
- * stopping a step early.
+ * goes on, to the foe's death. A minion with none assists (#1118): its
+ * living owner's attack target within the leash of the owner, else a foe
+ * in aggro of the minion itself, through `requestAttack` as Space does.
+ * Otherwise it walks to heel, stopping a step early.
  */
 function followAndAttack(
   behaviour: Extract<Behaviour, { kind: "follow-and-attack" }>,
@@ -383,6 +386,15 @@ function followAndAttack(
   const inAggro = (other: Participant): boolean =>
     other.combatant.team !== team &&
     distance(other.position, self.position) <= behaviour.aggroUnits;
+  const livingFoe = (id: string | undefined): Participant | undefined =>
+    owner.combatant.dead
+      ? undefined
+      : context.participants.find(
+          (other) => other.id === id && other.combatant.team !== team && !other.combatant.dead,
+        );
+  // A spell at a foe is not attacking it: only a weapon attack or an
+  // attack skill sets `attack` (#1079).
+  const ownerFoe = livingFoe(owner.combatant.attack?.targetId);
   const mode = self.creature?.mode;
   if (behaviour.engage === "owner-target" && mode === "heel") {
     return d > behaviour.heelUnits && d - context.stepUnits > behaviour.heelUnits
@@ -392,13 +404,8 @@ function followAndAttack(
   if (behaviour.engage === "owner-target") {
     // Guard goes for what its owner attacks, Fight for what its owner
     // has selected, attacking or not (#1110).
-    const wanted = owner.combatant.dead
-      ? undefined
-      : mode === "fight"
-        ? owner.targetId
-        : owner.combatant.attack?.targetId;
-    const foe = context.participants.find((other) => other.id === wanted);
-    if (foe !== undefined && !foe.combatant.dead && inAggro(foe)) {
+    const foe = mode === "fight" ? livingFoe(owner.targetId) : ownerFoe;
+    if (foe !== undefined && inAggro(foe)) {
       return { ...STAND_STILL, targetId: foe.id, attackTargetId: foe.id };
     }
   }
@@ -406,12 +413,13 @@ function followAndAttack(
   if (attack !== undefined) {
     return { ...STAND_STILL, targetId: attack.targetId, attackTargetId: attack.targetId };
   }
-  const foe =
-    behaviour.engage === "nearest-foe"
-      ? nearestLiving(self, context.participants, inAggro)
-      : undefined;
-  if (foe !== undefined) {
-    return { ...STAND_STILL, targetId: foe, attackTargetId: foe };
+  if (behaviour.engage === "owner-target-then-nearest") {
+    const assisted =
+      ownerFoe !== undefined && distance(ownerFoe.position, owner.position) <= behaviour.leashUnits;
+    const foe = assisted ? ownerFoe.id : nearestLiving(self, context.participants, inAggro);
+    if (foe !== undefined) {
+      return { ...STAND_STILL, targetId: foe, attackTargetId: foe };
+    }
   }
   if (d > behaviour.heelUnits && d - context.stepUnits > behaviour.heelUnits) {
     return toOwner;

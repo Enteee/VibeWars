@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MINIMAL_GW_INSPIRED_PVP_V1, type StatusId } from "@vibewars/game-core";
+import { CREATURE_LOOKS, MINIMAL_GW_INSPIRED_PVP_V1, type StatusId } from "@vibewars/game-core";
 import type { MatchSnapshot, PlayerSnapshot, StatusSnapshot } from "@vibewars/game-session";
 
 import { toArenaSnapshot } from "./match-view.js";
@@ -71,7 +71,7 @@ describe("toArenaSnapshot", () => {
   it("draws a creature smaller than a player, at the ruleset's radii (#1052)", () => {
     const minion: PlayerSnapshot = {
       ...player("me/c1", 0),
-      creature: { ownerId: "me", kind: "minion", mode: null },
+      creature: { ownerId: "me", kind: "minion", look: "bone-minion", mode: null },
     };
     const arena = toArenaSnapshot(match([player("me", 0), minion]), []);
     expect(arena.actors.map((actor) => actor.radius)).toEqual([
@@ -82,6 +82,20 @@ describe("toArenaSnapshot", () => {
       MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius,
       MINIMAL_GW_INSPIRED_PVP_V1.collision.creatureRadius,
     ]);
+  });
+
+  it("gives each creature its look, and a player none (#1162)", () => {
+    const creatures = CREATURE_LOOKS.map((look, i): PlayerSnapshot => ({
+      ...player(`me/c${String(i + 1)}`, 0),
+      creature: {
+        ownerId: "me",
+        kind: look === "beast" ? "pet" : look === "spirit" ? "spirit" : "minion",
+        look,
+        mode: null,
+      },
+    }));
+    const arena = toArenaSnapshot(match([player("me", 0), ...creatures]), []);
+    expect(arena.actors.map((actor) => actor.creatureLook)).toEqual([undefined, ...CREATURE_LOOKS]);
   });
 
   it("rings a body enchanted or hexed by its statuses, and a corpse never (#1117)", () => {
@@ -103,6 +117,22 @@ describe("toArenaSnapshot", () => {
       ["enchanted", true, false],
       ["hexed", false, true],
       ["dead", false, false],
+    ]);
+  });
+
+  it("cues a burning body's flames, and a corpse's never (#1138)", () => {
+    const burning: StatusSnapshot = {
+      id: "burning",
+      endsAt: 10,
+      durationSeconds: 10,
+      casterId: "me",
+    };
+    const alive = { ...player("alive", 0), statuses: [burning] };
+    const dead = { ...player("dead", 0), dead: true, statuses: [burning] };
+    const arena = toArenaSnapshot(match([alive, dead]), []);
+    expect(arena.actors.map((actor) => [actor.id, actor.conditionCues])).toEqual([
+      ["alive", ["burning"]],
+      ["dead", []],
     ]);
   });
 

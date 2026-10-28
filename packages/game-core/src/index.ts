@@ -146,6 +146,7 @@ export type {
   CreatureKind,
   CompanionMode,
   CreatureOrder,
+  CreatureLook,
   GroundEffect,
   MatchSimulationOptions,
   Participant,
@@ -156,6 +157,7 @@ export type {
 } from "./match/simulation.js";
 export {
   countsForTeam,
+  CREATURE_LOOKS,
   loadoutSpec,
   MAX_CREATURES,
   companionMode,
