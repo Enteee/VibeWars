@@ -1543,6 +1543,25 @@ body {
   gap: 0.4rem;
 }
 
+/* A character no longer legal (#1290): struck through in red stripes,
+   faint enough to read through, and never chosen. */
+.screen .selectable-row.is-invalid .selectable-row-choose {
+  border-color: var(--damage);
+  background: repeating-linear-gradient(135deg, rgb(255 123 114 / 14%) 0 6px, transparent 6px 12px);
+  cursor: not-allowed;
+}
+
+.roster-invalid-tag {
+  align-self: flex-start;
+  padding: 0 0.35rem;
+  border: 1px solid var(--damage);
+  border-radius: 3px;
+  color: var(--damage);
+  font-size: 0.65rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
 .empty-state {
   display: flex;
   flex-direction: column;
