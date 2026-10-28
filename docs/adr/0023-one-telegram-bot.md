@@ -132,8 +132,8 @@ rewrites and which is easier to leak.
   avatar is `.claude/bots/avatars/company.*` (#973); the per-role files
   there are unused.
 - `vibewars.telegram.managerUsername` and `usernamePrefix` are removed. A
-  `devenv.local.nix` that still sets `managerUsername` (written by older
-  `claude-bot-setup`) fails to evaluate until that line is deleted.
+  `devenv.local.nix` that still sets `managerUsername` (written by an
+  older `claude-bot-setup`, since removed) fails to evaluate until that line is deleted.
 - After a burst, the operator sees joined messages and may lag behind the
   agents by a minute or two.
 - The old role bots should be deleted in BotFather. Nothing uses them.
