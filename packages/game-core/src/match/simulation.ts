@@ -122,6 +122,7 @@ import {
 } from "../skills/tick.js";
 import {
   isSpell,
+  PET_ATTACK_SECONDS,
   type Combatant,
   type CorpseRule,
   type Aura,
@@ -481,6 +482,11 @@ interface ParticipantRecord extends Participant {
   activeWeaponSet: WeaponSetIndex;
   pendingWeaponSet: WeaponSetIndex | undefined;
   corpseExploited: boolean;
+  /**
+   * A companion's next blow, armed by its owner's pet attack (#1046):
+   * the skill, and how long it waits. `undefined`: a plain blow.
+   */
+  armedAttack: { readonly skillId: string; remainingSeconds: number } | undefined;
 }
 
 /**
@@ -783,6 +789,7 @@ export class MatchSimulation {
       activeWeaponSet: 0,
       pendingWeaponSet: undefined,
       corpseExploited: false,
+      armedAttack: undefined,
     };
     this.#participants.set(spec.id, record);
     if (countsForTeam(record)) {
@@ -1502,6 +1509,12 @@ export class MatchSimulation {
 
     const castTargetId = skill.target === "self" ? id : this.#castTarget(record, skill);
     const check = this.#check(record, skill, castTargetId, used.key);
+    if (skill.type === "pet-attack") {
+      if (check.ok) {
+        this.#armPetAttack(record, skill, used.key);
+      }
+      return { skillId: skill.id, check };
+    }
     // Out of range or out of sight, a skill walks in and goes off there,
     // as Space does (#415, operator Q61). Range and line of sight are
     // checked last, so everything else has passed; it is all checked
@@ -1525,6 +1538,46 @@ export class MatchSimulation {
       return { skillId: skill.id, check: { ok: true }, queued: true };
     }
     return this.#useSkill(record, slot, skill, used.key, castTargetId, check);
+  }
+
+  /**
+   * A pet attack, allowed (#1046): its owner pays and it starts
+   * recharging, and its owner's companion's next blow within
+   * `PET_ATTACK_SECONDS` is it, replacing one still waiting, whose energy
+   * is lost. No cast: the owner's cast, aftercast and swing go on. With a
+   * living foe selected, the pet goes for it, as when its owner attacks
+   * one.
+   */
+  #armPetAttack(record: ParticipantRecord, skill: Skill, key: string): void {
+    const pet = this.#companionOf(record);
+    if (pet === undefined) {
+      return;
+    }
+    payCost(skill, record.combatant, key);
+    beginRecharge(record.combatant.cast, skill, skill.rechargeSeconds, key);
+    pet.armedAttack = { skillId: skill.id, remainingSeconds: PET_ATTACK_SECONDS };
+    const foe = record.targetId === undefined ? undefined : this.#participants.get(record.targetId);
+    if (
+      foe !== undefined &&
+      !foe.combatant.dead &&
+      foe.combatant.team !== record.combatant.team &&
+      pet.behaviour?.kind === "follow-and-attack" &&
+      distance(foe.position, pet.position) <= pet.behaviour.aggroUnits
+    ) {
+      this.requestAttack(pet.id, foe.id);
+    }
+    this.#log.push({
+      tick: this.#tick,
+      atSeconds: this.#elapsedSeconds,
+      cause: "skill",
+      sourceId: record.id,
+      skillId: skill.id,
+      weaponId: undefined,
+      attributeId: undefined,
+      area: undefined,
+      doubleStrike: false,
+      events: [],
+    });
   }
 
   /**
@@ -1703,6 +1756,14 @@ export class MatchSimulation {
         if (record.creature.expiresInSeconds < SWING_EPSILON) {
           this.#leaving.add(record.id);
           continue;
+        }
+      }
+      // A pet attack waits for its pet's blow only so long (#1046); the
+      // energy stays spent.
+      if (record.armedAttack !== undefined) {
+        record.armedAttack.remainingSeconds -= dt;
+        if (record.armedAttack.remainingSeconds < SWING_EPSILON) {
+          record.armedAttack = undefined;
         }
       }
 
@@ -2823,6 +2884,12 @@ export class MatchSimulation {
       this.#fireTriggers(record, "bearer-attacks", NONE_SPARED);
       return;
     }
+    const armed =
+      record.armedAttack === undefined ? undefined : getSkill(record.armedAttack.skillId);
+    if (armed !== undefined) {
+      this.#landArmedAttack(record, armed, target);
+      return;
+    }
     const { events, doubleStrike, landed, fired } = resolveSwing({
       attacker: record.combatant,
       target,
@@ -2838,6 +2905,47 @@ export class MatchSimulation {
     this.#logWeapon(record.id, record.combatant.equipment.mainHand.weapon.id, events, doubleStrike);
     this.#logFired(fired);
     this.#fireTriggers(record, "bearer-attacks", NONE_SPARED);
+  }
+
+  /**
+   * A companion's blow, armed by its owner's pet attack (#1046): the
+   * skill, through the one attack-skill path with the pet as the
+   * attacker, its ranks the ones it arrived with. The arming is used up
+   * whatever the blow does: a hit, a blind miss or a block. A pet attack
+   * is not an attack skill: it earns no adrenaline.
+   */
+  #landArmedAttack(pet: ParticipantRecord, skill: Skill, target: ParticipantRecord): void {
+    pet.armedAttack = undefined;
+    const fired: FiredTrigger[] = [];
+    const events = resolveAttackSkill(
+      {
+        skill,
+        caster: pet.combatant,
+        targets: [target.combatant],
+        rng: this.#rng,
+        rules: this.#ruleset.combat,
+        surroundings: this.#participants,
+      },
+      this.#exposedTo(pet),
+      fired,
+    );
+    this.#chargeFromDamage(pet.combatant, events);
+    this.#recordDeaths(events);
+    this.#recordKnockdowns(events);
+    this.#log.push({
+      tick: this.#tick,
+      atSeconds: this.#elapsedSeconds,
+      cause: "skill",
+      sourceId: pet.id,
+      skillId: skill.id,
+      weaponId: undefined,
+      attributeId: undefined,
+      area: undefined,
+      doubleStrike: false,
+      events,
+    });
+    this.#logFired(fired);
+    this.#fireTriggers(pet, "bearer-attacks", NONE_SPARED);
   }
 
   /**
@@ -3307,6 +3415,7 @@ export class MatchSimulation {
         victim.combatant.knockdownRemaining = 0;
         victim.pendingWeaponSet = undefined;
         victim.combatant.statuses.endAll();
+        victim.armedAttack = undefined;
         this.#clearChainMarks(victim);
         victim.combatant.cast.clearOverrides();
         dropEndedCopyPools(victim.combatant);
@@ -3878,6 +3987,7 @@ export class MatchSimulation {
     this.#clearChainMarks(record);
     record.pendingSkill = undefined;
     record.sinceReset = 0;
+    record.armedAttack = undefined;
     record.outOfCombatSeconds = 0;
     record.history.clear();
     record.combatant.moving = false;

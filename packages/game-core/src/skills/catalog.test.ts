@@ -14,7 +14,7 @@ import { computeCoverage, formatCoverage } from "./coverage.js";
 import { applyEffects } from "./effects.js";
 import { chargeAdrenaline, makeCombatant } from "./testing.js";
 import { getStatusDefinition } from "./status.js";
-import type { Combatant } from "./types.js";
+import { blowRuleOf, type Combatant } from "./types.js";
 
 /** A hammer in hand, for the hammer's attack skills. */
 const HAMMER = {
@@ -41,11 +41,12 @@ describe("skill catalog integrity", () => {
   });
 
   it("gives every skill something to do — no empty placeholder skills", () => {
-    // A companion's skill does its job by being on the bar (#1046).
+    // A companion's skill does its job by being on the bar, a pet attack
+    // by its pet's blow (#1046).
     for (const skill of IMPLEMENTED_SKILLS) {
       expect(
         skill.effects.length +
-          (skill.attack === undefined ? 0 : 1) +
+          (blowRuleOf(skill) === undefined ? 0 : 1) +
           (skill.companion === undefined ? 0 : 1),
         skill.id,
       ).toBeGreaterThan(0);
@@ -519,5 +520,46 @@ describe("skill types", () => {
     expect(typeOf("necromancer.enfeeble")).toBe("spell");
     expect(typeOf("necromancer.blood-ritual")).toBe("enchantment");
     expect(typeOf("ranger.troll-unguent")).toBe("skill");
+  });
+
+  it("has the three pet attacks of the corpus (#1046): the owner pays, the pet strikes", () => {
+    const pet = (id: string) => {
+      const found = getSkill(id);
+      return {
+        type: found?.type,
+        cost: found?.cost,
+        recharge: found?.rechargeSeconds,
+        target: found?.target,
+        attack: found?.attack,
+        bonus: found?.petAttack?.bonusDamage,
+      };
+    };
+    const beastMastery = (atZero: number, atTwelve: number) => ({
+      scaling: { attributeId: "ranger.beast-mastery", atZero, atTwelve },
+    });
+    const energy = (amount: number) => ({ kind: "energy", amount });
+    const common = { type: "pet-attack", target: "companion", attack: undefined };
+    expect(pet("ranger.brutal-strike")).toEqual({
+      ...common,
+      cost: energy(10),
+      recharge: 5,
+      bonus: beastMastery(5, 29),
+    });
+    expect(getSkill("ranger.brutal-strike")?.petAttack?.conditionalBonus).toEqual({
+      condition: { kind: "target-health-below", fraction: 0.5 },
+      amount: beastMastery(5, 29),
+    });
+    expect(pet("ranger.maiming-strike")).toEqual({
+      ...common,
+      cost: energy(10),
+      recharge: 5,
+      bonus: beastMastery(5, 17),
+    });
+    expect(pet("ranger.disrupting-lunge")).toEqual({
+      ...common,
+      cost: energy(5),
+      recharge: 10,
+      bonus: beastMastery(1, 10),
+    });
   });
 });

@@ -1322,3 +1322,26 @@ test("2 swaps to weapon set 2, the empty 3 does nothing, and a slot's click swap
   // The click left the keyboard with the arena.
   await expect(page.locator(".training")).toHaveClass(/is-armed/);
 });
+
+test("a pet attack arms the wolf's next bite, and the log says so (#1107)", async ({ page }) => {
+  await page.setViewportSize(WIDE);
+  await page.goto("./");
+  await page.getByRole("button", { name: "new character" }).click();
+  await chooseProfession(page, "primary", "ranger");
+  for (const name of ["Charm Animal", "Brutal Strike"]) {
+    await page.locator(".skill-box", { hasText: name }).locator(".skill-box-equip").click();
+  }
+  await expectFilledSlots(page, ["Charm Animal", "Brutal Strike"]);
+  await takeControl(page);
+  // An equip re-arms the arena a moment later, which drops what was
+  // pressed before it: press again until the armed bite lands. The walk
+  // and the bite are game time, slower than wall time under load (#327).
+  await expect(async () => {
+    await page.keyboard.press(key("target-next"));
+    await page.keyboard.press(key("attack"));
+    await page.keyboard.press(skillKey(1));
+    await expect(page.locator(".training-log")).toContainText(/Brutal Strike \(Wolf\) hits/, {
+      timeout: 8000,
+    });
+  }).toPass();
+});

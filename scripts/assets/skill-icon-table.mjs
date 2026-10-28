@@ -218,4 +218,8 @@ export const SKILL_ICONS = {
   // Placeholders until the asset-designer's (#1046): the pet's skills.
   "ranger.charm-animal": { glyph: "eye", modifier: "plus" },
   "ranger.comfort-animal": { glyph: "heal", modifier: "plus" },
+  // Placeholders until the asset-designer's (#1107): the pet's attacks.
+  "ranger.brutal-strike": { glyph: "hawk", modifier: "half" },
+  "ranger.maiming-strike": { glyph: "limp", modifier: "plus" },
+  "ranger.disrupting-lunge": { glyph: "interrupt", modifier: "plus" },
 };
