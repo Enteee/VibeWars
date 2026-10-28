@@ -33,6 +33,12 @@ export interface SlotTooltips {
   ): void;
   /** `slot` is casting, or none is: hide that slot's tooltip, shown or waiting. */
   casting(slot: number | undefined): void;
+  /**
+   * `slots` were redrawn (#469): an echo's copy came or went. Hide the
+   * tooltip if it is one of theirs, shown or waiting, as it describes the
+   * skill that was there, or hangs off a button no longer on the page.
+   */
+  repainted(slots: readonly number[]): void;
   dispose(): void;
 }
 
@@ -74,6 +80,11 @@ export function createSlotTooltips(): SlotTooltips {
     },
     casting(slot) {
       if (slot !== undefined && slot === current) {
+        hide();
+      }
+    },
+    repainted(slots) {
+      if (current !== undefined && slots.includes(current)) {
         hide();
       }
     },

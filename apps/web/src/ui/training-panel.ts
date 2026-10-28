@@ -516,6 +516,9 @@ export function createTrainingPanel(): TrainingPanel {
     attacking.textContent = self.attackTargetSessionId === undefined ? "" : "attacking";
     const slots = session?.connection.skillBar ?? [];
     if (changedSlots(paintedSkills, slots).length > 0) {
+      // Every button is made anew, so a tooltip on any of them would hang
+      // off one no longer on the page.
+      slotTips.repainted(slots.map((_, index) => index));
       paintSkills(slots);
     }
     const recharges = session?.connection.getRecharges() ?? [];

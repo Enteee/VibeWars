@@ -570,12 +570,15 @@ export function changedSlots(
 /**
  * Redraw each slot whose skill changed since it was drawn (#469), from the
  * render loop, keeping its key label. Its click and tooltip read the slot
- * by index, so they follow on their own.
+ * by index, so they follow on their own; an open tooltip is hidden, as it
+ * still names the skill that was there.
  */
 export function refreshSkillBar(hud: HudElements, bar: readonly (SkillSlot | null)[]): void {
   const buttons = [...hud.skillBar.querySelectorAll("button")];
   const painted = buttons.map((button) => button.dataset.skillId ?? null);
-  for (const index of changedSlots(painted, bar)) {
+  const changed = changedSlots(painted, bar);
+  hud.slotTips.repainted(changed);
+  for (const index of changed) {
     const button = buttons[index];
     const slot = bar[index];
     if (button === undefined || slot === undefined || slot === null) {
