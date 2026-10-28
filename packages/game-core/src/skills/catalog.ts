@@ -39,12 +39,13 @@ import { KNOCKDOWN_SECONDS, type CreatureTemplate, type Skill } from "./types.js
 const RANGE_LONG = 520;
 
 /**
- * What a minion does (#467): heel by its master, fight foes in earshot of
- * itself, back to heel past cast range. House numbers.
+ * What a minion does (#467): heel by its master, fight what its master
+ * attacks within cast range of the master, else foes in earshot of
+ * itself (#1118), back to heel past cast range. House numbers.
  */
 const MINION_BEHAVIOUR: Behaviour = {
   kind: "follow-and-attack",
-  engage: "nearest-foe",
+  engage: "owner-target-then-nearest",
   aggroUnits: AREA_EARSHOT,
   leashUnits: RANGE_SPELL,
   heelUnits: AREA_IN_THE_AREA,
