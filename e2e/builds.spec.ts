@@ -1837,8 +1837,12 @@ test("the library lists GW1 skills not in the game yet only when asked, greyed a
   await expect(page.locator(".skill-tip")).toContainText("Not in the game yet");
 
   // The search finds it; remembered across a reload.
+  // Mark of Rodgort is not in the game yet either, so it is found too.
   await page.locator("input.skill-search").fill("rodgort");
-  await expect(page.locator(".skill-corpus-box")).toHaveCount(1);
+  await expect(page.locator(".skill-corpus-box", { hasText: "Rodgort's Invocation" })).toHaveCount(
+    1,
+  );
+  await expect(page.locator(".skill-box, .skill-corpus-box")).toHaveCount(2);
   await page.reload();
   await page.getByRole("button", { name: "new character" }).click();
   await expect(page.getByLabel("Show skills not in the game yet")).toBeChecked();
