@@ -88,16 +88,12 @@ describe("characterAppearance (#1250)", () => {
     expect(characterAppearance(longbow)).toEqual(hostHeld(longbow));
   });
 
-  it("gives an illegal build what the host gives it: a starter build's", () => {
+  it("gives a build the host would refuse no weapon and no off-hand: its starter is random", () => {
     const illegal = stored({
       ...starter("ranger"),
       attributes: [{ attributeId: "ranger.marksmanship", rank: 99 }],
     });
-    expect(characterAppearance(illegal)).toEqual(hostHeld(illegal));
-    expect(characterAppearance(illegal)).not.toEqual({
-      weaponId: "recurve-bow",
-      offhandId: undefined,
-    });
+    expect(characterAppearance(illegal)).toEqual({ weaponId: undefined, offhandId: undefined });
   });
 });
 

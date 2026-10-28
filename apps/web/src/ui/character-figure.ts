@@ -28,18 +28,30 @@ const FIGURE_FACING = 0;
 
 /** What a character holds in a match: `weaponId` and `offhandId` as the host sends them. */
 export interface CharacterAppearance {
-  readonly weaponId: string;
+  /** `undefined` for a build the host would refuse: what it plays is not known here. */
+  readonly weaponId: string | undefined;
   readonly offhandId: OffhandId | undefined;
 }
+
+/** A refused build's: the bare body, no marks. */
+const UNKNOWN: CharacterAppearance = { weaponId: undefined, offhandId: undefined };
 
 /**
  * The weapon and off-hand `character` enters a match with: its claimed
  * build through the host's own checks, set 1 in hand. A build the host
- * would refuse plays a starter build; the figure shows the first one,
- * where the host picks one at random.
+ * would refuse, by the test the lobby uses too (`main.ts`), plays a
+ * starter build the host picks at random (#852): unknowable here, so the
+ * figure is the bare body. Not an error.
  */
 export function characterAppearance(character: StoredCharacter): CharacterAppearance {
-  const { loadout } = resolveJoinLoadout(toPlayerBuild(character), RULES.attributes, () => 0);
+  const { loadout, refused } = resolveJoinLoadout(
+    toPlayerBuild(character),
+    RULES.attributes,
+    Math.random,
+  );
+  if (refused !== undefined) {
+    return UNKNOWN;
+  }
   const resolved = resolveLoadout(
     {
       primaryProfession: loadout.primaryProfession,
