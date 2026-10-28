@@ -115,27 +115,34 @@ describe("play-build (#1189)", () => {
     expect(sim.get("monk")?.combatant.attack).toBeUndefined();
   });
 
-  it("stands and fights a melee foe at its elbow with the bow, however fast it thinks", () => {
-    for (const thinkSeconds of [0, 0.25]) {
-      const sim = match([
-        // No skills: only the bow can do the damage.
-        fighter("ranger", 0, RANGER, vec2(10, 400), {
-          behaviour: { kind: "play-build", thinkSeconds },
-          skillBar: [],
-        }),
-        fighter("foe", 1, WARRIOR, vec2(50, 400), { behaviour: undefined, maxHealth: 1e6 }),
-      ]);
-      let hits = 0;
-      for (let t = 0; t < 10; t += DT) {
-        for (const entry of sim.step(DT).log) {
-          if (entry.sourceId === "ranger" && entry.weaponId !== undefined) {
-            hits += entry.events.filter(
-              (event) => event.kind === "damage" && event.targetId === "foe",
-            ).length;
+  it("stands and fights a melee foe at its elbow with the bow, by a wall or in the open, however fast it thinks", () => {
+    // By the field's left edge, and in the middle of it.
+    for (const x of [10, 800]) {
+      for (const thinkSeconds of [0, 0.25]) {
+        const sim = match([
+          // No skills: only the bow can do the damage.
+          fighter("ranger", 0, RANGER, vec2(x, 400), {
+            behaviour: { kind: "play-build", thinkSeconds },
+            skillBar: [],
+          }),
+          fighter("foe", 1, WARRIOR, vec2(x + 40, 400), { behaviour: undefined, maxHealth: 1e6 }),
+        ]);
+        let hits = 0;
+        let stood: Vec2 | undefined;
+        for (let t = 0; t < 10; t += DT) {
+          for (const entry of sim.step(DT).log) {
+            if (entry.sourceId === "ranger" && entry.weaponId !== undefined) {
+              hits += entry.events.filter(
+                (event) => event.kind === "damage" && event.targetId === "foe",
+              ).length;
+            }
           }
+          // Where it stands once the field's edge has placed it: it never leaves.
+          stood ??= { ...(sim.get("ranger")?.position ?? vec2(Number.NaN, Number.NaN)) };
         }
+        expect(hits, `x ${String(x)}, thinkSeconds ${String(thinkSeconds)}`).toBeGreaterThan(3);
+        expect(sim.get("ranger")?.position).toEqual(stood);
       }
-      expect(hits, `thinkSeconds ${String(thinkSeconds)}`).toBeGreaterThan(3);
     }
   });
 
