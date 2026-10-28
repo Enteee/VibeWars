@@ -3683,7 +3683,6 @@ body.has-expanded-training #screens {
   display: none;
 }
 
-/* A skill's type, by shape (#75): top-right of every skill tile. */
 /* An echo's copy in its slot (#1154): a strip along the top edge that
    drains as the copy's time runs out, over the recharge wipe, clear of
    its number. Under reduced motion it steps once a second. */
@@ -3698,6 +3697,7 @@ body.has-expanded-training #screens {
   pointer-events: none;
 }
 
+/* A skill's type, by shape (#75): top-right of every skill tile. */
 .skill-type-badge {
   position: absolute;
   top: 4px;
