@@ -1,4 +1,9 @@
-import { StatusSet, type ActiveStatus } from "@vibewars/game-core";
+import {
+  MatchSimulation,
+  StatusSet,
+  type ActiveStatus,
+  type Participant,
+} from "@vibewars/game-core";
 import { MAX_WIRE_STATUSES } from "@vibewars/game-protocol";
 import { describe, expect, it, vi } from "vitest";
 
@@ -88,5 +93,34 @@ describe("a P2P match (#375)", () => {
     // To 0.1 s: on 20 Hz ticks, the rounding is off by 0 or exactly 0.05.
     expect(Math.abs((sent?.endsAt ?? 0) - snapshot.elapsedSeconds - 5.25)).toBeLessThan(0.051);
     vi.restoreAllMocks();
+  });
+});
+
+describe("corpses on the wire (#466)", () => {
+  it("sends whether a corpse was exploited", async () => {
+    const match = startMatch();
+    const { connection: remote } = await match.join();
+    await match.step(0.05);
+    expect(self(remote)?.corpseExploited).toBe(false);
+
+    const participants = Object.getOwnPropertyDescriptor(MatchSimulation.prototype, "participants")
+      ?.value as (this: MatchSimulation) => IterableIterator<Participant>;
+    vi.spyOn(MatchSimulation.prototype, "participants").mockImplementation(function* (
+      this: MatchSimulation,
+    ) {
+      for (const participant of participants.call(this)) {
+        yield participant.id === remote.selfSessionId
+          ? {
+              ...participant,
+              combatant: Object.create(participant.combatant, { dead: { value: true } }),
+              corpseExploited: true,
+            }
+          : participant;
+      }
+    });
+    await match.step(0.05);
+    vi.restoreAllMocks();
+
+    expect(self(remote)).toMatchObject({ dead: true, corpseExploited: true });
   });
 });

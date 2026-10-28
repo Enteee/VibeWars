@@ -61,6 +61,7 @@ function foe(id: string, position: Vec2 = vec2(40, 0)) {
   return {
     combatant: makeCombatant({ id, team: 1, health: 1e6, maxHealth: 1e6 }),
     position,
+    creature: undefined,
   };
 }
 
@@ -218,8 +219,12 @@ describe("resolveSwing", () => {
       foe("near", vec2(40, 10)),
       foe("mid", vec2(40, -20)),
       foe("outside", vec2(40, 90)),
-      { combatant: makeCombatant({ id: "ally", team: 0 }), position: vec2(41, 0) },
-      { combatant: scythe, position: vec2(0, 0) },
+      {
+        combatant: makeCombatant({ id: "ally", team: 0 }),
+        position: vec2(41, 0),
+        creature: undefined,
+      },
+      { combatant: scythe, position: vec2(0, 0), creature: undefined },
     ];
     const events = resolveSwing({
       attacker: scythe,
@@ -1387,7 +1392,12 @@ describe("dual attacks (#885)", () => {
     makeCombatant({ id, team, health: 1e6, maxHealth: 1e6 });
 
   const standing = (...placed: [Combatant, Vec2][]): Surroundings =>
-    new Map(placed.map(([combatant, position]) => [combatant.id, { combatant, position }]));
+    new Map(
+      placed.map(([combatant, position]) => [
+        combatant.id,
+        { combatant, position, creature: undefined },
+      ]),
+    );
 
   const damageTo = (events: readonly CombatEvent[], targetId: string): number[] =>
     events.flatMap((event) =>

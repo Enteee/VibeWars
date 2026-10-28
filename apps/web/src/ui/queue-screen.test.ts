@@ -4,7 +4,9 @@ import type { FormedGroup, LobbySnapshot, QueueState } from "@vibewars/game-sess
 
 import {
   FELL_THROUGH,
+  HOST_LEFT,
   MATCH_FOUND,
+  TEAM_SPLIT,
   UNREACHABLE,
   endedLines,
   modeLabel,
@@ -12,6 +14,7 @@ import {
   queueLines,
   queueTitle,
   searchingLabel,
+  stayButton,
   streakLine,
   versusTeams,
   waitedLabel,
@@ -22,6 +25,7 @@ const GROUP: FormedGroup = {
   room: "ra-g",
   hostTicketId: "a",
   teams: [["a"], ["b"]],
+  parties: [],
   mapId: "arena-alpha",
 };
 
@@ -110,6 +114,27 @@ describe("queueLines (#880)", () => {
       action: "back",
     });
   });
+
+  it("party-gone: the team split up (#882)", () => {
+    expect(queueLines({ kind: "party-gone" }, false)).toEqual({
+      status: TEAM_SPLIT,
+      action: "leave",
+    });
+  });
+});
+
+describe("stayButton (#882)", () => {
+  it("offers Stay together with its countdown, waits once pressed, and is off when the host left", () => {
+    expect(stayButton({ kind: "offer", secondsLeft: 12 })).toEqual({
+      label: "Stay together (12)",
+      enabled: true,
+    });
+    expect(stayButton({ kind: "waiting", secondsLeft: 9 })).toEqual({
+      label: "Waiting for your team (9)",
+      enabled: false,
+    });
+    expect(stayButton({ kind: "host-left" })).toEqual({ label: HOST_LEFT, enabled: false });
+  });
 });
 
 describe("nextStreak (#881)", () => {
@@ -135,6 +160,13 @@ describe("endedLines (#881)", () => {
       status: "Victory",
       streak: "1 win in a row this visit (not a rating)",
       action: "ended",
+    });
+  });
+
+  it("adds Stay together beside both buttons when a winning team may stay (#882)", () => {
+    expect(endedLines("Victory", 1, { kind: "offer", secondsLeft: 15 })).toMatchObject({
+      action: "ended",
+      stay: { label: "Stay together (15)", enabled: true },
     });
   });
 

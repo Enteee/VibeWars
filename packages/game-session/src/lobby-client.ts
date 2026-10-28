@@ -8,7 +8,10 @@ import {
   parseWireLobbyState,
   parseWireLobbyWelcome,
   parseWireMatchStart,
+  parseWirePartyFormed,
+  parseWirePartySplit,
   type LobbyRefusal,
+  type PeerStayTogether,
   type PeerLobbyHello,
   type PeerLobbyJoin,
   type WireLobbyCommand,
@@ -81,7 +84,7 @@ export interface JoinLobbyOptions {
   readonly transport: Transport;
   readonly code: string;
   readonly name: string;
-  /** The selected character's name and professions; `null` brings the house loadout. */
+  /** The selected character's name and professions; `null` brings a starter build. */
   readonly character: LobbyCharacter | null;
   /** How long to wait for a state that lists this player. */
   readonly timeoutMs: number;
@@ -119,7 +122,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
         ]).then(([admit, hostDigest]) => ({
           join: {
             ...base,
-            admission: { ticketId: queued.key.ticketId, admissionSig: queued.key.sign(admit) },
+            admission: { seatKey: queued.key.ticketId, admissionSig: queued.key.sign(admit) },
           } satisfies PeerLobbyJoin,
           hostDigest,
         }));
@@ -139,6 +142,9 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
   const closedHandlers: ((reason: LobbyClosedReason) => void)[] = [];
   const chatHandlers: ((line: ChatLine) => void)[] = [];
   const throttledHandlers: (() => void)[] = [];
+  const partyHandlers: ((members: readonly string[] | null) => void)[] = [];
+  /** The host answered a Stay together; a second answer is not heard. */
+  let partyAnswered = false;
   /** Until the join settles: how a refusal or the timeout ends it. */
   let failJoin: ((error: Error) => void) | undefined;
   /** When the host's peer went mid-match, by `Date.now`, while waiting for it back. */
@@ -158,6 +164,18 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     closedHandlers.length = 0;
     chatHandlers.length = 0;
     throttledHandlers.length = 0;
+    partyHandlers.length = 0;
+  };
+
+  /** The host's answer to this player's Stay together, once. */
+  const answerParty = (members: readonly string[] | null): void => {
+    if (partyAnswered) {
+      return;
+    }
+    partyAnswered = true;
+    for (const handler of [...partyHandlers]) {
+      handler(members);
+    }
   };
 
   const close = (reason: LobbyClosedReason): void => {
@@ -282,6 +300,14 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       onChatThrottled(handler) {
         throttledHandlers.push(handler);
       },
+      stayTogether(memberKey) {
+        if (hostId !== undefined && !closed) {
+          transport.send("stay-together", { memberKey } satisfies PeerStayTogether, hostId);
+        }
+      },
+      onParty(handler) {
+        partyHandlers.push(handler);
+      },
       async disconnect() {
         closed = true;
         stop();
@@ -387,6 +413,17 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
         const line = { ...wire, name: sanitizeName(wire.name, UNNAMED_SPEAKER), text };
         for (const handler of [...chatHandlers]) {
           handler(line);
+        }
+      }),
+      transport.on("party-formed", (data, from) => {
+        const formed = parseWirePartyFormed(data);
+        if (from === hostId && formed !== undefined) {
+          answerParty(formed.members);
+        }
+      }),
+      transport.on("party-split", (data, from) => {
+        if (from === hostId && parseWirePartySplit(data) !== undefined) {
+          answerParty(null);
         }
       }),
       transport.on("match-start", (data, from) => {

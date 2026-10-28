@@ -46,6 +46,9 @@ import {
   parseWireLobbyNote,
   parsePeerLobbyHello,
   parseWireLobbyWelcome,
+  parsePeerStayTogether,
+  parseWirePartyFormed,
+  parseWirePartySplit,
   parseWireLobbyState,
   parseWireMatchStart,
 } from "./p2p.js";
@@ -133,6 +136,7 @@ const player: WirePlayer = {
   primaryProfession: "monk",
   secondaryProfession: null,
   dead: false,
+  corpseExploited: false,
   castingSkillId: "healing-breeze",
   castRemaining: 0.75,
   castTotal: 1,
@@ -293,6 +297,7 @@ const refused: CastRefusedMessage = {
 
 const recharge: RechargeMessage = {
   slots: [{ slot: 0, remainingSeconds: 3.5, totalSeconds: 5 }],
+  spent: [2],
 };
 
 /** Each parser, with the one fixture it must round-trip. */
@@ -304,7 +309,7 @@ const lobbyJoin: PeerLobbyJoin = {
 };
 
 /** A queued join's proof (#871): a ticket id and a signature, as hex. */
-const admission = { ticketId: "ab".repeat(32), admissionSig: "cd".repeat(64) };
+const admission = { seatKey: "ab".repeat(32), admissionSig: "cd".repeat(64) };
 
 const lobbyState: WireLobbyState = {
   code: "ACDEFG",
@@ -340,6 +345,11 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["refuse", parsePeerRefuse, refuse],
   ["snapshot", parseWireSnapshotPart, snapshot],
   ["snapshot with a creature", parseWireSnapshotPart, { ...snapshot, players: [player, minion] }],
+  [
+    "snapshot with an exploited corpse (#466)",
+    parseWireSnapshotPart,
+    { ...snapshot, players: [{ ...player, dead: true, corpseExploited: true }] },
+  ],
   [
     "snapshot with every player and creature there may be",
     parseWireSnapshotPart,
@@ -407,10 +417,23 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["chat-line from a spectator (#479)", parseWireChatLine, { ...chatLine, team: null }],
   ["chat-throttled (#479)", parseWireLobbyNote, { kind: "chat-throttled", reason: "" }],
   ["lobby-join", parsePeerLobbyJoin, lobbyJoin],
-  ["lobby-join on the house loadout", parsePeerLobbyJoin, { ...lobbyJoin, character: null }],
+  ["lobby-join on a starter build", parsePeerLobbyJoin, { ...lobbyJoin, character: null }],
   ["queued lobby-join (#871)", parsePeerLobbyJoin, { ...lobbyJoin, admission }],
   ["lobby-hello (#871)", parsePeerLobbyHello, {}],
   ["lobby-welcome (#871)", parseWireLobbyWelcome, { hostSig: "ef".repeat(64) }],
+  ["stay-together yes (#882)", parsePeerStayTogether, { memberKey: "ab".repeat(32) }],
+  ["stay-together no (#882)", parsePeerStayTogether, { memberKey: null }],
+  [
+    "party-formed of two (#882)",
+    parseWirePartyFormed,
+    { members: ["ab".repeat(32), "cd".repeat(32)] },
+  ],
+  [
+    "party-formed of four (#882)",
+    parseWirePartyFormed,
+    { members: ["1", "2", "3", "4"].map((digit) => digit.repeat(64)) },
+  ],
+  ["party-split (#882)", parseWirePartySplit, {}],
   [
     "counting-down lobby-state (#871)",
     parseWireLobbyState,
@@ -582,6 +605,16 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     "snapshot with a string for dead",
     parseWireSnapshotPart,
     { ...snapshot, players: [{ ...player, dead: "no" }] },
+  ],
+  [
+    "snapshot with a living player whose corpse was exploited (#466)",
+    parseWireSnapshotPart,
+    { ...snapshot, players: [{ ...player, dead: false, corpseExploited: true }] },
+  ],
+  [
+    "snapshot with a player that does not say whether its corpse was exploited (#466)",
+    parseWireSnapshotPart,
+    { ...snapshot, players: [{ ...player, corpseExploited: undefined }] },
   ],
   [
     "snapshot with too many statuses",
@@ -808,8 +841,11 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "recharge past the last slot",
     parseRecharge,
-    { slots: [{ slot: MAX_WIRE_SLOTS, remainingSeconds: 1, totalSeconds: 5 }] },
+    { ...recharge, slots: [{ slot: MAX_WIRE_SLOTS, remainingSeconds: 1, totalSeconds: 5 }] },
   ],
+  ["recharge spent past the last slot", parseRecharge, { ...recharge, spent: [MAX_WIRE_SLOTS] }],
+  ["recharge spent not a slot", parseRecharge, { ...recharge, spent: ["0"] }],
+  ["recharge with no spent list", parseRecharge, { slots: recharge.slots }],
   ["refused of an unknown kind", parseCastRefused, { kind: "move", reason: "stuck" }],
   ["adrenaline below 0", parseAdrenaline, { slots: [0, -25], lossInSeconds: null }],
   ["adrenaline lost in less than no time", parseAdrenaline, { slots: [25], lossInSeconds: -1 }],
@@ -847,7 +883,7 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "recharge with a NaN",
     parseRecharge,
-    { slots: [{ slot: 0, remainingSeconds: NaN, totalSeconds: 5 }] },
+    { ...recharge, slots: [{ slot: 0, remainingSeconds: NaN, totalSeconds: 5 }] },
   ],
   ["lobby-join without a name", parsePeerLobbyJoin, { protocolVersion: PROTOCOL_VERSION }],
   [
@@ -873,12 +909,12 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "lobby-join with an upper-case ticket id (#871)",
     parsePeerLobbyJoin,
-    { ...lobbyJoin, admission: { ...admission, ticketId: "AB".repeat(32) } },
+    { ...lobbyJoin, admission: { ...admission, seatKey: "AB".repeat(32) } },
   ],
   [
     "lobby-join with a short ticket id (#871)",
     parsePeerLobbyJoin,
-    { ...lobbyJoin, admission: { ...admission, ticketId: "ab".repeat(31) } },
+    { ...lobbyJoin, admission: { ...admission, seatKey: "ab".repeat(31) } },
   ],
   [
     "lobby-join with a long admission signature (#871)",
@@ -888,10 +924,39 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "lobby-join with an admission of no signature (#871)",
     parsePeerLobbyJoin,
-    { ...lobbyJoin, admission: { ticketId: admission.ticketId } },
+    { ...lobbyJoin, admission: { seatKey: admission.seatKey } },
   ],
   ["lobby-hello with a field (#871)", parsePeerLobbyHello, { ticketId: "ab".repeat(32) }],
   ["lobby-welcome of no signature (#871)", parseWireLobbyWelcome, {}],
+  ["stay-together of no key (#882)", parsePeerStayTogether, {}],
+  ["stay-together of a short key (#882)", parsePeerStayTogether, { memberKey: "ab".repeat(31) }],
+  [
+    "stay-together of an upper-case key (#882)",
+    parsePeerStayTogether,
+    { memberKey: "AB".repeat(32) },
+  ],
+  ["party-formed of one (#882)", parseWirePartyFormed, { members: ["ab".repeat(32)] }],
+  [
+    "party-formed of five (#882)",
+    parseWirePartyFormed,
+    { members: ["1", "2", "3", "4", "5"].map((digit) => digit.repeat(64)) },
+  ],
+  [
+    "party-formed unsorted (#882)",
+    parseWirePartyFormed,
+    { members: ["cd".repeat(32), "ab".repeat(32)] },
+  ],
+  [
+    "party-formed with a key twice (#882)",
+    parseWirePartyFormed,
+    { members: ["ab".repeat(32), "ab".repeat(32)] },
+  ],
+  [
+    "party-formed of a non-hex key (#882)",
+    parseWirePartyFormed,
+    { members: ["ab".repeat(32), "zz".repeat(32)] },
+  ],
+  ["party-split with a field (#882)", parseWirePartySplit, { members: [] }],
   [
     "lobby-welcome of a non-hex signature (#871)",
     parseWireLobbyWelcome,

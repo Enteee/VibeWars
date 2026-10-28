@@ -123,10 +123,10 @@ describe("Smite Condition (#1039)", () => {
     const far = makeCombatant({ id: "far", team: 1, health: 500 });
     const friend = makeCombatant({ id: "friend", health: 500 });
     const surroundings: Surroundings = new Map([
-      ["ally", { combatant: target, position: vec2(0, 0) }],
-      ["near", { combatant: near, position: vec2(AREA_ADJACENT, 0) }],
-      ["far", { combatant: far, position: vec2(2 * AREA_IN_THE_AREA, 0) }],
-      ["friend", { combatant: friend, position: vec2(0, AREA_ADJACENT) }],
+      ["ally", { combatant: target, position: vec2(0, 0), creature: undefined }],
+      ["near", { combatant: near, position: vec2(AREA_ADJACENT, 0), creature: undefined }],
+      ["far", { combatant: far, position: vec2(2 * AREA_IN_THE_AREA, 0), creature: undefined }],
+      ["friend", { combatant: friend, position: vec2(0, AREA_ADJACENT), creature: undefined }],
     ]);
     return { target, near, far, friend, surroundings };
   }

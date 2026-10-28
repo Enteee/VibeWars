@@ -1075,6 +1075,20 @@ const skillGlyph = {
     `<path d="M9.5 3H14.5M10.5 3V9L4.5 19Q3.5 21 6 21H18Q20.5 21 19.5 19L13.5 9V3" ${stroke(C.ink, 2)}/>` +
     inkFill("M7.5 15H16.5L19 19.5H5Z"),
   germ: () => germ(C.ink),
+  // A head and shoulders with a plus beside it: a heal aimed at another (#996).
+  "heal-other": () =>
+    `<circle cx="9" cy="12" r="3.4" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
+    `<path d="M3 21.5C3 17 5.5 15.5 9 15.5S15 17 15 21.5Z" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
+    inkLine("M17 3.5V11M13.2 7.2H20.8", 2.6),
+  // A plus in a ring of arrow: the blow turned back into a heal (#996).
+  "heal-turn": () =>
+    `<path d="M18.5 8A8 8 0 1 0 20 12" ${stroke(C.ink, 2.2)}/>` +
+    inkFill("M21.5 3.5V10.5H14.5Z") +
+    inkLine("M12 8.5V15.5M8.5 12H15.5", 2.4),
+  // A dashed ring (a hex) with a bolt through it: a hex smitten (#996).
+  "hex-bolt": () =>
+    `<circle cx="12" cy="12" r="8.5" ${stroke(C.ink, 2.2)} stroke-dasharray="4.2 3.2"/>` +
+    inkLine("M14.5 3.5L9 12.5H15L9.5 20.5", 2.4),
   // A spear with barbs on its shaft: it hooks and bleeds (#1036).
   "spear-barb": () =>
     inkLine("M12 21V9", 2.4) +
@@ -1172,8 +1186,10 @@ function plateTint(hex) {
  * @param {{ glyph: string, modifier?: string }} row
  */
 function skillIcon(id, row) {
-  const name = /** @type {keyof typeof profession} */ (id.slice(0, id.indexOf(".")));
-  const hue = C[name];
+  const owner = id.slice(0, id.indexOf("."));
+  // A Common skill (#474) belongs to no profession: the dim ink, no watermark.
+  const name = owner === "common" ? undefined : /** @type {keyof typeof profession} */ (owner);
+  const hue = name === undefined ? C.inkDim : C[name];
   /** @type {Record<string, (() => string) | undefined>} */
   const glyphs = skillGlyph;
   /** @type {Record<string, (() => string) | undefined>} */
@@ -1184,7 +1200,9 @@ function skillIcon(id, row) {
   if (modifier === undefined) throw new Error(`${id}: no modifier "${String(row.modifier)}"`);
   return svg(
     `<rect x="1" y="1" width="22" height="22" rx="3.5" fill="${plateTint(hue)}" stroke="${hue}" stroke-width="1"/>` +
-      `<g opacity="0.2" transform="translate(3,3) scale(0.75)">${profession[name]()}</g>` +
+      (name === undefined
+        ? ""
+        : `<g opacity="0.2" transform="translate(3,3) scale(0.75)">${profession[name]()}</g>`) +
       `<g transform="translate(1.2,1.2) scale(0.88)">${glyph()}</g>` +
       (modifier === ""
         ? ""

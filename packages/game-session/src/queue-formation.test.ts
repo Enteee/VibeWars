@@ -8,7 +8,14 @@ import {
   type QueueTicket,
 } from "@vibewars/game-protocol";
 
-import { ROOM_PREFIX, formGroups, groupOf, type FormedGroup } from "./queue-formation.js";
+import {
+  ROOM_PREFIX,
+  formGroups,
+  groupOf,
+  isContested,
+  ticketsOf,
+  type FormedGroup,
+} from "./queue-formation.js";
 
 /** Queue formation (#869, #854 C4): the same tickets make the same groups everywhere. */
 
@@ -17,15 +24,29 @@ const MAPS = ["arena-a", "arena-b", "arena-c"];
 
 /** Ticket `n`: its id is `n` in hex, it entered `n` seconds before `NOW`'s epoch start. */
 function ticket(n: number, fields: Partial<QueueTicket> = {}): QueueTicket {
+  const ticketId = n.toString(16).padStart(64, "0");
   return {
-    ticketId: n.toString(16).padStart(64, "0"),
+    ticketId,
     protocol: PROTOCOL_VERSION,
     mode: "random-arena-4v4",
-    partySize: 1,
+    members: [ticketId],
     enteredAt: 1_700_000_000_000 + n * 1_000,
     heartbeatAt: NOW,
     ...fields,
   };
+}
+
+/**
+ * Ticket `n` as a party of `mode`'s whole team (#882): its id leads, and
+ * each other member's key is the id with a higher first digit.
+ */
+function party(n: number, mode: QueueMode = "random-arena-4v4"): QueueTicket {
+  const leader = ticket(n, { mode });
+  const others = Array.from(
+    { length: teamSizeOf(mode) - 1 },
+    (_, i) => `${String(i + 1)}${leader.ticketId.slice(1)}`,
+  );
+  return { ...leader, members: [leader.ticketId, ...others] };
 }
 
 function solos(from: number, count: number, fields: Partial<QueueTicket> = {}): QueueTicket[] {
@@ -44,8 +65,9 @@ function members(group: FormedGroup): string[] {
   return [...group.teams[0], ...group.teams[1]].sort();
 }
 
+/** The seat keys `tickets` bring: each solo's id, each party's members. */
 function ids(tickets: readonly QueueTicket[]): string[] {
-  return tickets.map((t) => t.ticketId).sort();
+  return tickets.flatMap((t) => t.members).sort();
 }
 
 async function sha256Hex(text: string): Promise<string> {
@@ -116,9 +138,9 @@ describe("formGroups (#869)", () => {
       expect(await form([...queued].reverse())).toEqual([expected]);
     }
     for (const own of queued) {
-      expect(groupOf(await form(queued), own.ticketId)).toEqual(expected);
+      expect(groupOf(await form(queued), own.ticketId, own.members)).toEqual(expected);
     }
-    expect(groupOf(await form(queued), ticket(99).ticketId)).toBeUndefined();
+    expect(groupOf(await form(queued), ticket(99).ticketId, ticket(99).members)).toBeUndefined();
   });
 
   it("a different set of tickets shuffles and names differently", async () => {
@@ -153,45 +175,115 @@ describe("formGroups (#869)", () => {
     expect(await form(queued)).toEqual([]);
   });
 
-  it("a party is a side of its own, facing four solo players", async () => {
-    const party = ticket(1, { partySize: 4 });
-    const [group] = await form([party, ...solos(2, 4)]);
-    expect(group?.teams.map((side) => [...side].sort())).toContainEqual([party.ticketId]);
+  it("a party's member keys are a side of their own, facing four solo players", async () => {
+    const team = party(1);
+    const [group] = await form([team, ...solos(2, 4)]);
+    expect(group?.teams.map((side) => [...side].sort())).toContainEqual(team.members);
     expect(group?.teams.map((side) => [...side].sort())).toContainEqual(ids(solos(2, 4)));
+    expect(group?.parties).toEqual([team.members]);
   });
 
-  it("two parties face each other", async () => {
-    const parties = [
-      ticket(1, { mode: "random-arena-2v2", partySize: 2 }),
-      ticket(2, { mode: "random-arena-2v2", partySize: 2 }),
-    ];
+  it("two parties face each other, and the host is one of their tickets (#882)", async () => {
+    const parties = [party(1, "random-arena-2v2"), party(2, "random-arena-2v2")];
     const [group] = await form(parties, "random-arena-2v2");
     expect(group?.teams.map((side) => [...side])).toEqual(
-      expect.arrayContaining([[parties[0]?.ticketId], [parties[1]?.ticketId]]),
+      expect.arrayContaining([parties[0]?.members, parties[1]?.members]),
     );
+    expect(parties.map((t) => t.ticketId)).toContain(group?.hostTicketId);
+    expect(group?.groupId).toBe(await sha256Hex(parties.map((t) => t.ticketId).join("\n")));
+  });
+
+  it("finds a party member's group by its own key (#882)", async () => {
+    const team = party(1);
+    const groups = await form([team, ...solos(2, 4)]);
+    expect(groupOf(groups, team.members[3] ?? "", team.members)).toBe(groups[0]);
+  });
+
+  it("drops a party that names a live solo's id, and the solo plays on its own (#882)", async () => {
+    // The forger's id sorts below the victim's, and claims to have queued first.
+    const victim = ticket(9, { mode: "random-arena-2v2" });
+    const forged = {
+      ...ticket(1, { mode: "random-arena-2v2", enteredAt: 0 }),
+      members: [ticket(1).ticketId, victim.ticketId],
+    };
+    const others = solos(10, 3, { mode: "random-arena-2v2" });
+    const groups = await form([forged, victim, ...others], "random-arena-2v2");
+    expect(groups.map((group) => group.parties)).toEqual([[]]);
+    expect(groups[0] && members(groups[0])).toEqual(ids([victim, ...others]));
+    expect(groupOf(groups, victim.ticketId, victim.members)).toBe(groups[0]);
+  });
+
+  it("drops both parties that name one member, so neither seats the follower (#882)", async () => {
+    const real = party(2, "random-arena-2v2");
+    const follower = real.members[1] ?? "";
+    const forged = {
+      ...ticket(1, { mode: "random-arena-2v2", enteredAt: 0 }),
+      members: [ticket(1).ticketId, follower],
+    };
+    const queued = [forged, real, ...solos(10, 2, { mode: "random-arena-2v2" })];
+    expect(await form(queued, "random-arena-2v2")).toEqual([]);
+  });
+
+  it("calls a party contested while another live ticket names its member (#882)", () => {
+    const real = party(2, "random-arena-2v2");
+    const forged = {
+      ...ticket(1, { mode: "random-arena-2v2" }),
+      members: [ticket(1).ticketId, real.members[1] ?? ""],
+    };
+    const input = { now: NOW, mode: "random-arena-2v2" } as const;
+    expect(isContested({ ...input, tickets: [real] }, real.ticketId)).toBe(false);
+    expect(isContested({ ...input, tickets: [forged, real] }, real.ticketId)).toBe(true);
+    expect(isContested({ ...input, tickets: [forged, real] }, ticket(9).ticketId)).toBe(false);
+    const stale = { ...forged, heartbeatAt: NOW - TICKET_TTL_MS - 1 };
+    expect(isContested({ ...input, tickets: [stale, real] }, real.ticketId)).toBe(false);
+  });
+
+  it("settles a seat only where it sits as its own ticket (#882)", async () => {
+    const team = party(1);
+    const groups = await form([team, ...solos(2, 4)]);
+    const follower = team.members[1] ?? "";
+    // A solo whose id a party claims, or a follower of a party it never joined.
+    expect(groupOf(groups, follower, [follower])).toBeUndefined();
+    expect(groupOf(groups, follower, [team.ticketId, follower])).toBeUndefined();
+    const solo = ticket(2);
+    expect(groupOf(groups, solo.ticketId, solo.members)).toBe(groups[0]);
+    expect(groupOf(groups, solo.ticketId, [solo.ticketId, follower])).toBeUndefined();
+  });
+
+  it("names the ticket behind a missing seat: a party's, or the solo's own (#882)", async () => {
+    const team = party(1);
+    const [group] = await form([team, ...solos(2, 4)]);
+    if (group === undefined) {
+      throw new Error("no group");
+    }
+    const solo = ticket(2).ticketId;
+    expect(ticketsOf(group, [team.members[2] ?? "", solo, team.members[3] ?? ""])).toEqual([
+      team.ticketId,
+      solo,
+    ]);
   });
 
   it("a party forms with the first side of solos, and the solo left over waits", async () => {
     // Five solos ahead of it: the party and the first four make a match,
     // the fifth leads the next with the solos after it.
-    const party = ticket(6, { partySize: 4 });
-    const queued = [...solos(1, 5), party, ...solos(7, 7)];
+    const team = party(6);
+    const queued = [...solos(1, 5), team, ...solos(7, 7)];
     const [first, second, ...rest] = await form(queued);
     expect(rest).toEqual([]);
-    expect(first && members(first)).toEqual(ids([party, ...solos(1, 4)]));
-    expect(first?.teams.map((side) => [...side].sort())).toContainEqual([party.ticketId]);
+    expect(first && members(first)).toEqual(ids([team, ...solos(1, 4)]));
+    expect(first?.teams.map((side) => [...side].sort())).toContainEqual(team.members);
     expect(second && members(second)).toEqual(ids([ticket(5), ...solos(7, 7)]));
   });
 
   it("two parties behind too few solos still face each other", async () => {
-    const parties = [ticket(4, { partySize: 4 }), ticket(5, { partySize: 4 })];
+    const parties = [party(4), party(5)];
     const [group, ...rest] = await form([...solos(1, 3), ...parties]);
     expect(rest).toEqual([]);
     expect(group && members(group)).toEqual(ids(parties));
   });
 
   it("a party waits while there are not four solos to face it", async () => {
-    expect(await form([ticket(1, { partySize: 4 }), ...solos(2, 3)])).toEqual([]);
+    expect(await form([party(1), ...solos(2, 3)])).toEqual([]);
   });
 
   it("a large queue forms groups that never share a ticket, earliest first", async () => {

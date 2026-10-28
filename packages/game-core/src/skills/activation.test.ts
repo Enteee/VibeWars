@@ -32,6 +32,7 @@ const SPELL: Skill = {
   area: undefined,
   attack: undefined,
   whileActivating: undefined,
+  corpse: undefined,
   projectile: undefined,
   effects: [{ kind: "damage", amount: { flat: 50 }, type: "typeless", armorPenetration: 0 }],
 };
@@ -44,6 +45,7 @@ function request(overrides: Partial<ActivationRequest> = {}): ActivationRequest 
     target: makeCombatant({ id: "target", team: 1 }),
     targetPosition: vec2(100, 0),
     rechargeRemaining: new Map(),
+    spent: new Set(),
     isCasting: false,
     skillBar: [SPELL.id],
     losBlockers: [],
@@ -81,6 +83,18 @@ describe("canActivate", () => {
       ok: false,
       reason: "still-recharging",
     });
+  });
+
+  it("rejects a skill spent until a morale boost, and a disabled one as recharging (#474)", () => {
+    expect(canActivate(request({ spent: new Set([SPELL.id]) }))).toEqual({
+      ok: false,
+      reason: "spent-until-morale-boost",
+    });
+    expect(
+      canActivate(
+        request({ spent: new Set([SPELL.id]), rechargeRemaining: new Map([[SPELL.id, 4]]) }),
+      ),
+    ).toEqual({ ok: false, reason: "still-recharging" });
   });
 
   it("accepts once recharge has elapsed to exactly zero", () => {

@@ -687,10 +687,10 @@ test("a saved character can be chosen and is taken into a match", async ({ page 
   await expect(row).toHaveClass(/is-selected/);
 
   await startSoloMatch(page);
-  await expect(page.locator("#viewport canvas")).toBeVisible();
+  await expect(page.locator("#viewport canvas:not(.compass)")).toBeVisible();
 
   // The server grants the build's bar, so the HUD shows exactly the one
-  // skill that was equipped, not the house loadout, and seven empty slots.
+  // skill that was equipped, not a starter build, and seven empty slots.
   await expect(page.locator(".hud-skills .hud-skill:not(.is-empty)")).toHaveCount(1);
   await expect(page.locator(".hud-skills .hud-skill.is-empty")).toHaveCount(7);
 });
@@ -947,7 +947,7 @@ test("the in-match skill bar is not draggable", async ({ page }) => {
   // interaction the server would refuse.
   await page.goto("./");
   await startSoloMatch(page);
-  await expect(page.locator("#viewport canvas")).toBeVisible();
+  await expect(page.locator("#viewport canvas:not(.compass)")).toBeVisible();
 
   const hudSkills = page.locator(".hud-skill");
   await expect(hudSkills.first()).toBeVisible();

@@ -98,6 +98,7 @@ function toPlayerSnapshot(
     secondaryProfession: participant.creature === undefined ? professions.secondary : undefined,
     team: combatant.team,
     dead: combatant.dead,
+    corpseExploited: participant.corpseExploited,
     castingSkillId: activeCast?.skillId,
     castRemaining: activeCast?.remainingSeconds ?? 0,
     castTotal: activeCast?.totalSeconds ?? 0,
@@ -278,6 +279,7 @@ export function createLocalConnection(options: {
       return skillBar.map((slot) => ({
         remaining: (slot === null ? undefined : cast?.rechargeRemaining.get(slot.id)) ?? 0,
         total: (slot === null ? undefined : cast?.rechargeTotal.get(slot.id)) ?? 0,
+        spent: slot !== null && cast?.spent.has(slot.id) === true,
       }));
     },
     onStep(handler) {

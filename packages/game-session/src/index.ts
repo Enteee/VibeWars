@@ -27,7 +27,7 @@ export type {
 export { MESSAGE_BURST, MESSAGES_PER_SECOND, MessageBudget } from "./intent-budget.js";
 export type { DropReport } from "./intent-budget.js";
 export { sanitizeChatText, sanitizeName } from "./names.js";
-export { RECHARGE_TOLERANCE_SECONDS, rechargePredicted, rechargeSlots } from "./recharge.js";
+export { RECHARGE_TOLERANCE_SECONDS, rechargePredicted, rechargeState } from "./recharge.js";
 export { adrenalineSlots, sameAdrenaline } from "./adrenaline.js";
 export { spawnPoint } from "./spawn-points.js";
 export type { SpawnPoint } from "./spawn-points.js";
@@ -70,11 +70,26 @@ export {
   statusSnapshot,
   wireStatuses,
 } from "./wire.js";
-export { ROOM_PREFIX, formGroups, groupOf, isLive } from "./queue-formation.js";
+export {
+  ROOM_PREFIX,
+  formGroups,
+  groupOf,
+  isContested,
+  isLive,
+  ticketsOf,
+} from "./queue-formation.js";
 export type { FormGroupsInput, FormedGroup } from "./queue-formation.js";
 export { createMemoryBoard } from "./queue-board.js";
 export type { MemoryBoard, QueueBoard, QueueBoardEvent } from "./queue-board.js";
 export { createQueueClient } from "./queue-client.js";
-export type { QueueClient, QueueClientOptions, QueueState, TicketKey } from "./queue-client.js";
+export type {
+  QueueClient,
+  QueueClientOptions,
+  QueueParty,
+  QueueState,
+  TicketKey,
+} from "./queue-client.js";
+export { decideStayTogether } from "./stay-together.js";
+export type { StayTogetherDecision, StayTogetherInput } from "./stay-together.js";
 export { admissionDigest } from "./queue-admission.js";
 export type { AdmissionTag, QueuedSeat, VerifyTicketSig } from "./queue-admission.js";

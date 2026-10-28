@@ -532,6 +532,8 @@ function conditionText(condition: EffectCondition): string {
       return "If it interrupts";
     case "interrupted-spell":
       return "If that action was a spell";
+    case "resurrected":
+      return "If it resurrects";
     case "removed":
       return condition.from === "caster"
         ? `If ${aCategory(condition.category)} was removed`
@@ -698,6 +700,10 @@ function describeEffect(
       const magnitude = describeMagnitude(effect.amount, ranks);
       return { text: `Steals up to ${String(magnitude.current)} Health`, magnitude };
     }
+    case "steal-from-corpse": {
+      const magnitude = describeMagnitude(effect.amount, ranks);
+      return { text: `You steal ${String(magnitude.current)} Health`, magnitude };
+    }
     case "sacrifice-health":
       return {
         text: `You sacrifice ${String(effect.percentOfMax)}% of your maximum health`,
@@ -796,13 +802,30 @@ function describeEffect(
     case "shadow-step":
       return { text: "Shadow steps to the target", magnitude: undefined };
     case "resurrect": {
-      const health = describeMagnitude(effect.healthPercent, ranks);
+      // "13% health and 3% energy per party member in earshot",
+      // "your health after losing half and 17% energy" (#474).
       const energy = describeMagnitude(effect.energyPercent, ranks);
+      const health =
+        effect.health.kind === "percent"
+          ? describeMagnitude(effect.health.percent, ranks)
+          : undefined;
+      const healthText =
+        effect.health.kind === "percent"
+          ? `${String(health?.current)}% health`
+          : `your health after losing ${share(effect.health.casterLosesFractionOfCurrent)}`;
+      const radius = effect.perPartyMemberWithin;
+      const per =
+        radius === undefined
+          ? ""
+          : ` per party member ${AREA_TEXT.get(radius) ?? `within ${String(radius)}`}`;
+      const teleport = effect.at === "caster" ? ", and teleports the target to you" : "";
       return {
-        text: `Returns the target to life with ${String(health.current)}% health and ${String(energy.current)}% energy`,
-        magnitude: health,
+        text: `Returns the target to life with ${healthText} and ${String(energy.current)}% energy${per}${teleport}`,
+        magnitude: health ?? energy,
       };
     }
+    case "drain-own-energy":
+      return { text: "You lose all your remaining energy", magnitude: undefined };
     case "recharge-faster":
       return {
         text: `This skill recharges ${String(Math.round(effect.fraction * 100))}% faster`,
@@ -827,9 +850,11 @@ function describeEffect(
       const time = `${String(magnitude.current)} seconds`;
       return {
         text:
-          effect.which === "interrupted"
-            ? `The interrupted skill is disabled for ${time}`
-            : `That skill and all skills of the same attribute are disabled for ${time}`,
+          effect.which === "all"
+            ? `All of the target's skills are disabled for ${time}`
+            : effect.which === "interrupted"
+              ? `The interrupted skill is disabled for ${time}`
+              : `That skill and all skills of the same attribute are disabled for ${time}`,
         magnitude,
       };
     }
@@ -900,8 +925,22 @@ function headlineOf(
         scales: magnitude.attributeId !== undefined,
       };
     }
+    case "steal-from-corpse": {
+      const magnitude = describeMagnitude(effect.amount, ranks);
+      return {
+        text: `steals ${String(magnitude.current)} health`,
+        scales: magnitude.attributeId !== undefined,
+      };
+    }
     case "resurrect": {
-      const health = describeMagnitude(effect.healthPercent, ranks);
+      if (effect.health.kind === "caster-current") {
+        const energy = describeMagnitude(effect.energyPercent, ranks);
+        return {
+          text: `resurrects, ${String(energy.current)}% energy`,
+          scales: energy.attributeId !== undefined,
+        };
+      }
+      const health = describeMagnitude(effect.health.percent, ranks);
       return {
         text: `resurrects, ${String(health.current)}% health`,
         scales: health.attributeId !== undefined,
@@ -1224,6 +1263,11 @@ export function describeSkill(
     skill.projectile === undefined
       ? []
       : [{ text: "Projectile: can be dodged", magnitude: undefined }];
+  // A skill that exploits a corpse (#466) says so before what it does.
+  const corpseLine =
+    skill.corpse === undefined
+      ? []
+      : [{ text: "Exploits the nearest corpse", magnitude: undefined }];
   const effects = [
     ...chainLine,
     ...bonusLine,
@@ -1231,6 +1275,7 @@ export function describeSkill(
     ...cleaveLine,
     ...cleaveAllLine,
     ...penetrationLine,
+    ...corpseLine,
     ...skill.effects.flatMap((effect) => describeEffects(effect, ranks)),
     ...onBlocked,
     ...whileActivating,
@@ -1258,7 +1303,8 @@ export function describeSkill(
     effects,
     cost: costText(skill, ranks),
     castTime: castTimeText(skill, ranks),
-    recharge: seconds(skill.rechargeSeconds),
+    recharge:
+      skill.rechargesOnMoraleBoost === true ? "Morale boost" : seconds(skill.rechargeSeconds),
     rangeText: range,
     targetText: target,
     scalesWithAttribute: effects.some((effect) => effect.magnitude?.attributeId !== undefined),

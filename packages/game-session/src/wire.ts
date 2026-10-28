@@ -280,6 +280,7 @@ function wireEvent(event: CombatEvent): WireCombatEvent {
         fromId: event.casterId,
       };
     case "shadow-stepped":
+    case "teleported":
       return { ...none, kind: event.kind, targetId: event.targetId, fromId: event.toId };
     case "interrupted":
     case "cancelled":
@@ -381,6 +382,7 @@ function combatEvent(event: WireCombatEvent): CombatEvent | undefined {
         ? { kind: event.kind, targetId, fromId, statusId }
         : undefined;
     case "shadow-stepped":
+    case "teleported":
       return fromId === null ? undefined : { kind: event.kind, targetId, toId: fromId };
     case "interrupted":
     case "cancelled":
@@ -513,6 +515,7 @@ export function playerSnapshot(player: WirePlayer): PlayerSnapshot | undefined {
       : undefined,
     team: player.team,
     dead: player.dead,
+    corpseExploited: player.corpseExploited,
     castingSkillId: absent(player.castingSkillId),
     castRemaining: player.castRemaining,
     castTotal: player.castTotal,

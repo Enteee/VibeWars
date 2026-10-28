@@ -74,7 +74,7 @@ describe("playerArming", () => {
     expect(playerArming(newCharacter("c1")).problem).toBeUndefined();
   });
 
-  it("an illegal build is parked with an empty bar, not given the house loadout", () => {
+  it("an illegal build is parked with an empty bar, not given a starter build", () => {
     const character = newCharacter("c1");
     // A skill the profession cannot use. No path through the editor makes
     // this; a hand-edited or imported record could.

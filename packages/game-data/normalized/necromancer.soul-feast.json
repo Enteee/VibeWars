@@ -1,0 +1,26 @@
+{
+  "id": "necromancer.soul-feast",
+  "name": "Soul Feast",
+  "profession": "necromancer",
+  "attribute": "Death Magic",
+  "type": "Spell.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 10
+  },
+  "overcast": 0,
+  "activationSeconds": 1,
+  "rechargeSeconds": 0,
+  "upkeep": false,
+  "description": "Exploit nearest corpse to steal 50...234...280 Health.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Necromancer/292-Soul_Feast",
+    "fetchedAt": "2026-10-28T00:42:31.357Z"
+  },
+  "unmapped": {}
+}

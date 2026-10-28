@@ -28,6 +28,7 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
       return ["interrupt"];
     case "heal":
     case "give-health":
+    case "steal-from-corpse":
       return ["healing"];
     case "remove-status":
       // Stripping a foe's enchantment helps no ally: not removal.
@@ -52,6 +53,7 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     case "lose-health":
     case "shadow-step":
     case "resurrect":
+    case "drain-own-energy":
     case "recharge-faster":
     case "recharge-others":
     case "disable-skill":

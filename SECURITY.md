@@ -78,6 +78,13 @@ channels, as often as they like.
   so a sybil flood can stall the queue, every group falling through. A
   ticket id is its signing key, so nobody can rewrite an honest ticket.
   NIP-13 proof-of-work is the lever if it happens.
+- **Naming a Random Arena party's member.** A party ticket lists its
+  members' public keys, and only its leader signs it (ADR-0032 §6). So
+  anyone reading the board can publish a party of its own naming one of
+  them, and both parties are dropped from formation. A party named for
+  `TICKET_TTL_MS` splits up, each member queuing alone ("The team split
+  up"), so it is not held for ever, but one bot can split every party
+  in the queue. Member signatures on the ticket close it (#1078).
 - **A Random Arena peer id is self-asserted.** Admission and the host's
   welcome are Schnorr signatures by ticket keys that name the group, the
   host's ticket and the joiner's transport peer id, so an outsider in the
@@ -201,7 +208,7 @@ channels, as often as they like.
   the joiner one welcome; the host checks a seated ticket not at all.
 - `hello.build` is capped in values and depth by `parsePeerHello`, then
   goes through `resolveJoinLoadout` and `validatePlayerBuild`: an illegal
-  build gets the house loadout.
+  build gets a starter build, picked by the host's own random.
 - The Trystero transport (#392) passes `maxReceiveBytes`
   (`MAX_RECEIVE_BYTES` in `relays.ts`), so Trystero drops an oversized
   message before decoding it, and a peer cannot make another allocate an

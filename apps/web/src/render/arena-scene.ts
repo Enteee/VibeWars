@@ -15,6 +15,7 @@ import {
   BODY_EDGE,
   DEAD_COLOUR,
   EMPTY_SNAPSHOT,
+  EXPLOITED_CORPSE_COLOUR,
   PROFESSION_GLYPH_SIZE,
   areaFlashAlpha,
   bodyGlyphLayout,
@@ -58,7 +59,6 @@ import {
   PING_PIN_HEIGHT,
   callChevron,
   pingRing,
-  watchBrackets,
   type RenderablePing,
 } from "./call-marks.js";
 import { lyingPose } from "./lying-pose.js";
@@ -127,7 +127,7 @@ const EDGE_MARKER_WIDTH = 10;
 /**
  * The world's layers, bottom up (#1037). The floor and the bodies; the
  * profession glyph inside each body; every mark on a body (off-hand,
- * weapon, target ring, call chevron, watch brackets, bars, swing flashes),
+ * weapon, target ring, call chevron, bars, swing flashes),
  * so a weapon crosses the glyph, never the reverse; then shots, status
  * icons, names and numbers, which were over the bodies before the split.
  */
@@ -640,19 +640,6 @@ export class ArenaScene extends Phaser.Scene {
     }
   }
 
-  /** The ally you watch (#443): four `ink` corner brackets, cased in `edge`. */
-  private drawWatchBrackets(g: Phaser.GameObjects.Graphics, actor: RenderableActor): void {
-    for (const [width, colour] of [
-      [4, BODY_EDGE],
-      [2, SELF_RIM],
-    ] as const) {
-      g.lineStyle(width, colour, 1);
-      for (const bracket of watchBrackets(actor.position, actor.radius)) {
-        g.strokePoints(bracket.map(({ x, y }) => new Phaser.Math.Vector2(x, y)));
-      }
-    }
-  }
-
   private drawSwingFlash(g: Phaser.GameObjects.Graphics, flash: SwingFlash): void {
     const alpha = swingFlashAlpha(flash);
     const { x, y } = flash.centre;
@@ -741,8 +728,9 @@ export class ArenaScene extends Phaser.Scene {
     const { x, y } = actor.position;
 
     if (actor.dead) {
-      // A corpse stays visible but obviously inert: hollow, grey, no bars.
-      g.lineStyle(2, DEAD_COLOUR, 1);
+      // A corpse stays visible but obviously inert: hollow, grey, no bars;
+      // darker once a skill has exploited it (#466).
+      g.lineStyle(2, actor.exploited ? EXPLOITED_CORPSE_COLOUR : DEAD_COLOUR, 1);
       g.strokeCircle(x, y, actor.radius);
       return;
     }
@@ -773,9 +761,6 @@ export class ArenaScene extends Phaser.Scene {
     }
     if (actor.id === this.snapshot.calledId) {
       this.drawCallChevron(marks, actor);
-    }
-    if (actor.id === this.snapshot.watchedId) {
-      this.drawWatchBrackets(marks, actor);
     }
 
     this.drawHealthBar(marks, actor);

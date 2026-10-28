@@ -47,6 +47,9 @@ export const CHANNELS = [
   "lobby-note",
   "lobby-hello",
   "lobby-welcome",
+  "stay-together",
+  "party-formed",
+  "party-split",
   "match-start",
   "rejoin-challenge",
   "rejoin-proof",
@@ -254,6 +257,8 @@ export interface WirePlayer {
   readonly primaryProfession: string | null;
   readonly secondaryProfession: string | null;
   readonly dead: boolean;
+  /** Its corpse was exploited (#466); only ever true while `dead`. */
+  readonly corpseExploited: boolean;
   readonly castingSkillId: string | null;
   readonly castRemaining: number;
   /** The current cast's whole length, dazed included; 0 when not casting. */
@@ -385,7 +390,7 @@ export interface WireCombatEvent {
   /**
    * Whom a spreading status was caught from (#765), who could not pay
    * a maintained enchantment's upkeep (#837), or whom a shadow step went
-   * to (#988); `null` for any other kind.
+   * to (#988) or a teleport put it beside (#474); `null` for any other kind.
    */
   readonly fromId: string | null;
   /**
@@ -519,14 +524,17 @@ export interface PeerLobbyJoin {
 }
 
 /**
- * A queued joiner's proof of its ticket (#871): `admissionSig` is its
- * ticket key's BIP-340 signature of the `vibewars-admit` digest, which
+ * A queued joiner's proof of its seat (#871, #882): `admissionSig` is its
+ * seat key's BIP-340 signature of the `vibewars-admit` digest, which
  * names the group, the planned host and the joiner's own peer id, so it
  * is good for that host and that peer alone. The key never leaves it.
  */
 export interface WireAdmission {
-  /** 64 lowercase hex digits: the ticket's x-only public key. */
-  readonly ticketId: string;
+  /**
+   * 64 lowercase hex digits: a solo's ticket id, or a party member's own
+   * x-only public key.
+   */
+  readonly seatKey: string;
   /** 128 lowercase hex digits. */
   readonly admissionSig: string;
 }
@@ -550,8 +558,28 @@ export interface WireLobbyWelcome {
 }
 
 /**
+ * A winner of a queued match to its host, while the host holds the lobby
+ * open after it (#882): a fresh member key, 64 lowercase hex digits, to
+ * stay together as a party, or `null` not to.
+ */
+export interface PeerStayTogether {
+  readonly memberKey: string | null;
+}
+
+/**
+ * The host to each winner who said yes, and only to it (#882): every
+ * winner did, and these are their keys, sorted. They queue as one party.
+ */
+export interface WirePartyFormed {
+  readonly members: readonly string[];
+}
+
+/** The host to each winner who said yes (#882): someone did not; queue alone. */
+export type WirePartySplit = Readonly<Record<string, never>>;
+
+/**
  * The character a lobby member brings (#580), for the others to see:
- * `null` is the house loadout. What it plays with is the match `hello`'s
+ * `null` is a starter build. What it plays with is the match `hello`'s
  * build; this is only its name and professions.
  */
 export interface WireLobbyCharacter {
@@ -1015,6 +1043,9 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
     !isNullableString(raw.primaryProfession) ||
     !isNullableString(raw.secondaryProfession) ||
     typeof raw.dead !== "boolean" ||
+    typeof raw.corpseExploited !== "boolean" ||
+    // Only a corpse can have been exploited: malformed, not old.
+    (raw.corpseExploited && !raw.dead) ||
     !isNullableString(raw.castingSkillId) ||
     !isNumber(raw.castRemaining) ||
     !isNumber(raw.castTotal) ||
@@ -1052,6 +1083,7 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
         primaryProfession: raw.primaryProfession,
         secondaryProfession: raw.secondaryProfession,
         dead: raw.dead,
+        corpseExploited: raw.corpseExploited,
         castingSkillId: raw.castingSkillId,
         castRemaining: raw.castRemaining,
         castTotal: raw.castTotal,
@@ -1314,8 +1346,10 @@ function parseRechargeSlot(value: unknown): RechargeSlot | undefined {
 
 /** The `"recharge"` channel: a `RechargeMessage`, to one player alone (#152). */
 export function parseRecharge(value: unknown): RechargeMessage | undefined {
-  const slots = parseArray(fields(value)?.slots, MAX_WIRE_SLOTS, parseRechargeSlot);
-  return slots === undefined ? undefined : { slots };
+  const raw = fields(value);
+  const slots = parseArray(raw?.slots, MAX_WIRE_SLOTS, parseRechargeSlot);
+  const spent = parseArray(raw?.spent, MAX_WIRE_SLOTS, (slot) => (isSlot(slot) ? slot : undefined));
+  return slots === undefined || spent === undefined ? undefined : { slots, spent };
 }
 
 /** The `"adrenaline"` channel: an `AdrenalineMessage`, to one player alone (#463). */
@@ -1354,7 +1388,7 @@ export function parseChainMarks(value: unknown): ChainMarksMessage | undefined {
   return marks === undefined ? undefined : { marks };
 }
 
-/** A lobby character; `null` is the house loadout, a missing one is malformed. */
+/** A lobby character; `null` is a starter build, a missing one is malformed. */
 function parseLobbyCharacter(value: unknown): WireLobbyCharacter | null | undefined {
   if (value === null) {
     return null;
@@ -1371,6 +1405,10 @@ function parseLobbyCharacter(value: unknown): WireLobbyCharacter | null | undefi
 const TICKET_ID = /^[0-9a-f]{64}$/;
 const TICKET_SIG = /^[0-9a-f]{128}$/;
 
+function isTicketId(value: unknown): value is string {
+  return typeof value === "string" && TICKET_ID.test(value);
+}
+
 function isTicketSig(value: unknown): value is string {
   return typeof value === "string" && TICKET_SIG.test(value);
 }
@@ -1381,11 +1419,8 @@ function parseAdmission(value: unknown): WireAdmission | null | undefined {
     return null;
   }
   const raw = fields(value);
-  return raw !== undefined &&
-    typeof raw.ticketId === "string" &&
-    TICKET_ID.test(raw.ticketId) &&
-    isTicketSig(raw.admissionSig)
-    ? { ticketId: raw.ticketId, admissionSig: raw.admissionSig }
+  return raw !== undefined && isTicketId(raw.seatKey) && isTicketSig(raw.admissionSig)
+    ? { seatKey: raw.seatKey, admissionSig: raw.admissionSig }
     : undefined;
 }
 
@@ -1421,6 +1456,41 @@ export function parsePeerLobbyHello(value: unknown): PeerLobbyHello | undefined 
 export function parseWireLobbyWelcome(value: unknown): WireLobbyWelcome | undefined {
   const raw = fields(value);
   return raw !== undefined && isTicketSig(raw.hostSig) ? { hostSig: raw.hostSig } : undefined;
+}
+
+/** The `"stay-together"` channel. */
+export function parsePeerStayTogether(value: unknown): PeerStayTogether | undefined {
+  const raw = fields(value);
+  return raw !== undefined && (raw.memberKey === null || isTicketId(raw.memberKey))
+    ? { memberKey: raw.memberKey }
+    : undefined;
+}
+
+/** The longest party there is: a 4v4 side (`teamSizeOf`). */
+const MAX_PARTY_MEMBERS = 4;
+
+/** The `"party-formed"` channel: two or more keys, sorted, each once. */
+export function parseWirePartyFormed(value: unknown): WirePartyFormed | undefined {
+  const raw = fields(value);
+  const members: unknown = raw?.members;
+  if (!Array.isArray(members) || members.length < 2 || members.length > MAX_PARTY_MEMBERS) {
+    return undefined;
+  }
+  const keys: string[] = [];
+  for (const member of members as readonly unknown[]) {
+    const previous = keys.at(-1);
+    if (!isTicketId(member) || (previous !== undefined && previous >= member)) {
+      return undefined;
+    }
+    keys.push(member);
+  }
+  return { members: keys };
+}
+
+/** The `"party-split"` channel. */
+export function parseWirePartySplit(value: unknown): WirePartySplit | undefined {
+  const raw = fields(value);
+  return raw !== undefined && Object.keys(raw).length === 0 ? {} : undefined;
 }
 
 function parseLobbyTeam(value: unknown): 0 | 1 | null | undefined {

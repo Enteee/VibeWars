@@ -33,7 +33,7 @@ import {
   type PeerRefuse,
   type PeerRejoinChallenge,
   type PeerWelcome,
-  type RechargeSlot,
+  type RechargeMessage,
   type SkillBarSlot,
   type WireEnded,
   type WirePlayer,
@@ -47,7 +47,7 @@ import { MESSAGE_BURST, MESSAGES_PER_SECOND, MessageBudget } from "./intent-budg
 import { sanitizeName } from "./names.js";
 import { adrenalineSlots, sameAdrenaline } from "./adrenaline.js";
 import { chainMarks, chainMarksPredicted } from "./chain-marks.js";
-import { rechargePredicted, rechargeSlots } from "./recharge.js";
+import { rechargePredicted, rechargeState } from "./recharge.js";
 import { rejoinProof } from "./rejoin-proof.js";
 import { packSnapshot } from "./snapshot-parts.js";
 import { spawnPoint, type SpawnPoint } from "./spawn-points.js";
@@ -125,6 +125,8 @@ export interface MatchHost {
   /** Run as many whole ticks as `seconds` holds, carrying the rest. */
   advance(seconds: number): void;
   readonly phase: "active" | "finished";
+  /** The team that won, once it is `finished` with a winner; `null` until then, or for none. */
+  readonly winningTeam: 0 | 1 | null;
   /**
    * A lobby's match nobody is playing any more: every seat is gone, and
    * every seated peer that never came has left the room. The lobby then
@@ -154,7 +156,7 @@ interface Seat {
   /** The match time it dropped at, while it is dropped. */
   droppedAt: number | undefined;
   /** The recharges the peer was last told, and when, so only news is sent (#152). */
-  recharges: { readonly slots: RechargeSlot[]; readonly at: number } | undefined;
+  recharges: { readonly message: RechargeMessage; readonly at: number } | undefined;
   /** The chain marks the peer was last told, and when, so only news is sent (#916). */
   chainMarks: { readonly marks: readonly WireChainMark[]; readonly at: number } | undefined;
   /** The bar the peer was last sent, so it goes again only when it changes (#637). */
@@ -233,13 +235,13 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       return;
     }
     const at = sim.elapsedSeconds;
-    const slots = rechargeSlots(participant.skillBar, participant.combatant.cast);
+    const message = rechargeState(participant.skillBar, participant.combatant.cast);
     const sent = seat.recharges;
-    if (!force && sent !== undefined && rechargePredicted(sent.slots, at - sent.at, slots)) {
+    if (!force && sent !== undefined && rechargePredicted(sent.message, at - sent.at, message)) {
       return;
     }
-    seat.recharges = { slots, at };
-    transport.send("recharge", { slots }, seat.peerId);
+    seat.recharges = { message, at };
+    transport.send("recharge", message, seat.peerId);
   };
 
   /**
@@ -362,7 +364,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     // Without a plan, teams alternate as players arrive, so a 1v1 is
     // adversarial by default.
     const team: 0 | 1 = plan?.team ?? (seats.size % 2 === 0 ? 0 : 1);
-    const { loadout } = resolveJoinLoadout(hello.build, RULESET.attributes);
+    const { loadout } = resolveJoinLoadout(hello.build, RULESET.attributes, random);
     // Gear becomes numbers exactly once, before the combatant exists (ADR-0012).
     const resolved = resolveLoadout(
       {
@@ -635,6 +637,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       weaponId: combatant.equipment.mainHand.weapon.id,
       offhandId: combatant.equipment.offhandId ?? null,
       dead: combatant.dead,
+      corpseExploited: participant.corpseExploited,
       castingSkillId: cast?.skillId ?? null,
       castRemaining: cast?.remainingSeconds ?? 0,
       castTotal: cast?.totalSeconds ?? 0,
@@ -734,6 +737,9 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     },
     get phase() {
       return finished ? "finished" : "active";
+    },
+    get winningTeam() {
+      return sim.phase === "finished" ? wireTeam(sim.outcome.winningTeam) : null;
     },
     get abandoned() {
       return planned !== null && awaited.size === 0 && seats.size === 0;
