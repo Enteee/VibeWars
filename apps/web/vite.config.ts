@@ -1,6 +1,7 @@
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { defineConfig } from "vite";
+import { defineConfig, type Plugin } from "vite";
 
 // The transport the client plays over (#403): see `src/net/transport/index.ts`.
 // A typo would otherwise build a client that quietly uses Trystero.
@@ -9,6 +10,39 @@ if (TRANSPORT !== undefined && TRANSPORT !== "trystero" && TRANSPORT !== "broadc
   throw new Error(
     `VITE_VIBEWARS_TRANSPORT must be "trystero" or "broadcast", got ${JSON.stringify(TRANSPORT)}`,
   );
+}
+
+// The vendored GW1 skill corpus is MIT (#1235) and ships to the browser
+// (#1220), so its notice ships too, read from the vendored file itself:
+// one source of the text, nothing copied into `public/`.
+const CORPUS_LICENSE = fileURLToPath(
+  new URL("../../packages/game-data/raw/gw-skilldata/LICENSE", import.meta.url),
+);
+const CORPUS_LICENSE_PATH = "licenses/gw-skilldata.txt";
+
+function corpusLicense(): Plugin {
+  return {
+    name: "vibewars-corpus-license",
+    generateBundle() {
+      this.emitFile({
+        type: "asset",
+        fileName: CORPUS_LICENSE_PATH,
+        source: readFileSync(CORPUS_LICENSE, "utf8"),
+      });
+    },
+    // The dev server serves it at the same path, so the credit link works there.
+    configureServer(server) {
+      const url = `${server.config.base}${CORPUS_LICENSE_PATH}`;
+      server.middlewares.use((req, res, next) => {
+        if (req.url !== url) {
+          next();
+          return;
+        }
+        res.setHeader("Content-Type", "text/plain; charset=utf-8");
+        res.end(readFileSync(CORPUS_LICENSE, "utf8"));
+      });
+    },
+  };
 }
 
 /**
@@ -20,6 +54,7 @@ export default defineConfig({
   // (`/VibeWars/`, `/VibeWars/next/`). Read at config time, so it is not a
   // `VITE_` variable. Dev and the server-served build stay at the root.
   base: process.env.VIBEWARS_BASE ?? "/",
+  plugins: [corpusLicense()],
   build: {
     outDir: "dist",
     emptyOutDir: true,

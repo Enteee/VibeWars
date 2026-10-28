@@ -1944,6 +1944,16 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
   showCorpus.checked = loadShowCorpus();
   const corpusToggle = h("label", "skill-corpus-toggle");
   corpusToggle.append(showCorpus, " Show skills not in the game yet");
+  // The corpus is MIT (#1235): its notice ships beside the skills it lists,
+  // on or off, served by the build at `licenses/gw-skilldata.txt`.
+  const corpusCredit = document.createElement("a");
+  corpusCredit.className = "skill-corpus-credit";
+  corpusCredit.href = `${import.meta.env.BASE_URL}licenses/gw-skilldata.txt`;
+  corpusCredit.target = "_blank";
+  corpusCredit.rel = "noopener";
+  corpusCredit.textContent = "GW1 skill data: gw-skilldata (MIT)";
+  const corpusRow = h("div", "skill-corpus-row");
+  corpusRow.append(corpusToggle, corpusCredit);
   let corpus: readonly CorpusSkill[] | undefined;
   let corpusLoading = false;
   const loadCorpus = (): void => {
@@ -2293,7 +2303,7 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
     render(context.current());
   });
 
-  return { elements: [corpusToggle, filters, chips, groupHost, locked], update: render };
+  return { elements: [corpusRow, filters, chips, groupHost, locked], update: render };
 }
 
 /* -------------------------------------------------------------------------- */

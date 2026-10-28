@@ -3013,6 +3013,14 @@ body.has-expanded-training #screens {
   text-transform: uppercase;
 }
 
+.skill-corpus-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.3rem 0.8rem;
+}
+
 .skill-corpus-toggle {
   display: flex;
   align-items: center;
@@ -3020,6 +3028,11 @@ body.has-expanded-training #screens {
   color: var(--ink-dim);
   font-size: 0.8rem;
   cursor: pointer;
+}
+
+.skill-corpus-credit {
+  color: var(--ink-dim);
+  font-size: 0.7rem;
 }
 
 .skill-locked {
