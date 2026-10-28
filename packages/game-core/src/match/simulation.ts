@@ -43,6 +43,7 @@ import {
   nearestStandable,
   type NavGraph,
   type PathFinder,
+  walkIsClear,
 } from "../pathing.js";
 import {
   LEADERSHIP_ATTRIBUTE,
@@ -212,6 +213,19 @@ import { steerAround } from "./steering.js";
 export type CreatureKind = "spirit" | "minion" | "pet";
 
 /**
+ * How a companion fights (#1110, GW1 pet control): game-protocol's
+ * `CompanionMode`, restated (ADR-0001). Guard bites what its owner
+ * attacks, Fight what its owner has selected, Heel nothing.
+ */
+export type CompanionMode = "guard" | "fight" | "heel";
+
+/** What an owner may tell a creature of theirs (#1046): game-protocol's `CreatureOrder`. */
+export interface CreatureOrder {
+  readonly kind: "mode";
+  readonly mode: CompanionMode;
+}
+
+/**
  * What a creature looks like (#1162): the glyph on its plate. The wire mirrors it as `CREATURE_LOOKS`, a test holding the two.
  */
 export const CREATURE_LOOKS = ["beast", "bone-minion", "bone-horror", "spirit"] as const;
@@ -249,6 +263,16 @@ export interface Creature {
    * `undefined`: summoned by a cast.
    */
   readonly companionSkillId: string | undefined;
+  /**
+   * Its owner's last order (#1110): kept through its death, Comfort Animal
+   * and its owner's respawn. Only a companion takes orders.
+   */
+  mode: CompanionMode;
+}
+
+/** A companion's mode (#1110); `null` for a creature that takes no orders. */
+export function companionMode(creature: Creature): CompanionMode | null {
+  return creature.companionSkillId === undefined ? null : creature.mode;
 }
 
 /** A minion's own rot in pips (#467): 0 for anyone else. */
@@ -502,6 +526,11 @@ interface ParticipantRecord extends Participant {
    */
   followGoal: { readonly point: Vec2; readonly passing: string | undefined } | undefined;
   /**
+   * The way an approach, a walk or a follow last planned (#1157), to
+   * `goal`; `undefined` until one is asked for, and once its order ends.
+   */
+  route: { goal: Vec2; waypoints: Vec2[] } | undefined;
+  /**
    * Maximum health and energy before morale (#843): the participant's,
    * or its loadout's since the last `rearm`.
    */
@@ -589,6 +618,9 @@ const STALL_FRACTION = 0.1;
 
 /** A walk this close to its goal has arrived (#310). */
 const ARRIVE_UNITS = 1;
+
+/** Replan once the goal is this far from the one the route was planned to (#1157): a body width. */
+export const REPLAN_GOAL_UNITS = 28;
 
 /**
  * Refusals that mean the target is gone, or no longer one the skill can be
@@ -813,6 +845,7 @@ export class MatchSimulation {
       walkLeast: Number.POSITIVE_INFINITY,
       walkSettled: false,
       followGoal: undefined,
+      route: undefined,
       resolvedMaxHealth: spec.maxHealth ?? this.#ruleset.combat.baseHealth,
       resolvedMaxEnergy: spec.maxEnergy ?? this.#ruleset.combat.baseEnergy,
       resurrectedAtSeconds: Number.NEGATIVE_INFINITY,
@@ -962,6 +995,7 @@ export class MatchSimulation {
               ? 0
               : resolveMagnitude(template.ownerDisableOnDeath, owner.combatant),
           companionSkillId: companion ? skillId : undefined,
+          mode: "guard",
         },
       });
     }
@@ -1382,6 +1416,24 @@ export class MatchSimulation {
     }
   }
 
+  /** Everyone's living minions and spirits (#1188), for this tick's armor. */
+  #countControlled(): void {
+    for (const record of this.#participants.values()) {
+      record.combatant.controlled.minion = 0;
+      record.combatant.controlled.spirit = 0;
+    }
+    for (const record of this.#participants.values()) {
+      const creature = record.creature;
+      if (creature === undefined || creature.kind === "pet" || record.combatant.dead) {
+        continue;
+      }
+      const owner = this.#participants.get(creature.ownerId);
+      if (owner !== undefined) {
+        owner.combatant.controlled[creature.kind] += 1;
+      }
+    }
+  }
+
   /** `owner`'s companion, alive or dead (#1046): of `skillId`, or the first. */
   #companionOf(owner: ParticipantRecord, skillId?: string): ParticipantRecord | undefined {
     for (const record of this.#participants.values()) {
@@ -1486,6 +1538,7 @@ export class MatchSimulation {
     record.inputDirection = ZERO;
     this.#moveInterrupts(record);
     record.walkGoal = point;
+    record.route = undefined;
     record.walkSettled = false;
     record.walkStalledSeconds = 0;
     record.walkLeast = Number.POSITIVE_INFINITY;
@@ -1542,6 +1595,29 @@ export class MatchSimulation {
   }
 
   /**
+   * `ownerId` tells its companion `creatureId` how to fight (#1110), from
+   * the party window. Anything but the owner's own companion, a minion
+   * above all, is refused quietly; a dead owner may still order. Heel
+   * drops the attack at once, mid-swing or not. Whether it was taken.
+   */
+  public commandCreature(ownerId: string, creatureId: string, order: CreatureOrder): boolean {
+    const record = this.#participants.get(creatureId);
+    const creature = record?.creature;
+    if (
+      record === undefined ||
+      creature?.ownerId !== ownerId ||
+      creature.companionSkillId === undefined
+    ) {
+      return false;
+    }
+    creature.mode = order.mode;
+    if (order.mode === "heel") {
+      record.combatant.attack = undefined;
+    }
+    return true;
+  }
+
+  /**
    * Abandon `record`'s cast and log it as `"cancelled"`. An instant skill
    * has no cast to give up, so it is left to resolve.
    */
@@ -1592,6 +1668,7 @@ export class MatchSimulation {
       }
       if (record.combatant.attack?.targetId !== targetId) {
         record.combatant.attack = { targetId, swingElapsed: 0, unreachableSeconds: 0 };
+        record.route = undefined;
       }
     }
     return check;
@@ -1684,6 +1761,7 @@ export class MatchSimulation {
       record.walkGoal = undefined;
       record.combatant.cast.clearQueue();
       record.pendingSkill = { slot, targetId: castTargetId, unreachableSeconds: 0 };
+      record.route = undefined;
       if (skill.attack !== undefined) {
         record.combatant.attack = {
           targetId: castTargetId,
@@ -1702,7 +1780,7 @@ export class MatchSimulation {
    * `PET_ATTACK_SECONDS` is it, replacing one still waiting, whose energy
    * is lost. No cast: the owner's cast, aftercast and swing go on. With a
    * living foe selected, the pet goes for it, as when its owner attacks
-   * one.
+   * one, unless it is on Heel, which never engages (#1110).
    */
   #armPetAttack(record: ParticipantRecord, skill: Skill, key: string): void {
     const pet = this.#companionOf(record);
@@ -1717,6 +1795,7 @@ export class MatchSimulation {
       foe !== undefined &&
       !foe.combatant.dead &&
       foe.combatant.team !== record.combatant.team &&
+      pet.creature?.mode !== "heel" &&
       pet.behaviour?.kind === "follow-and-attack" &&
       distance(foe.position, pet.position) <= pet.behaviour.aggroUnits
     ) {
@@ -1878,6 +1957,7 @@ export class MatchSimulation {
     for (const record of this.#participants.values()) {
       this.#stepStart.set(record.id, record.position);
     }
+    this.#countControlled();
     this.#advanceGroundEffects(dt);
     this.#projectAuras();
     // Every knockdown counts down before anyone acts, so one lasts its
@@ -2319,10 +2399,14 @@ export class MatchSimulation {
       },
     });
     this.setInputDirection(record.id, intent.moveDirection);
+    const following = record.followGoal !== undefined;
     record.followGoal =
       intent.moveTo === undefined
         ? undefined
         : { point: intent.moveTo, passing: record.creature?.ownerId };
+    if (following && record.followGoal === undefined) {
+      record.route = undefined;
+    }
     // A move, as a held direction is: it ends the attack and the cast.
     if (record.followGoal !== undefined) {
       this.#moveInterrupts(record);
@@ -2793,11 +2877,46 @@ export class MatchSimulation {
   }
 
   /**
+   * The way from `record` to `goal` round walls, as `find` gives it,
+   * but planned again only when it must (#1157): with no route yet, once
+   * `goal` is `REPLAN_GOAL_UNITS` from the goal it was planned to, or
+   * when the body no longer sees its next waypoint, shoved round a
+   * corner. Otherwise the route is kept: waypoints the body already sees
+   * past are dropped, and the last becomes `goal` if the way to it is
+   * still clear. Walls never move, so only the goal or the body can make
+   * a route stale. No way there is not kept: the next tick asks again.
+   */
+  #route(record: ParticipantRecord, goal: Vec2): readonly Vec2[] | undefined {
+    const route = record.route;
+    if (route !== undefined && distance(goal, route.goal) <= REPLAN_GOAL_UNITS) {
+      const { waypoints } = route;
+      const next = waypoints[0];
+      if (next !== undefined && walkIsClear(this.#graph, record.position, next)) {
+        for (
+          let after = waypoints[1];
+          after !== undefined && walkIsClear(this.#graph, record.position, after);
+          after = waypoints[1]
+        ) {
+          waypoints.shift();
+        }
+        const before = waypoints.at(-2) ?? record.position;
+        if (walkIsClear(this.#graph, before, goal)) {
+          waypoints[waypoints.length - 1] = goal;
+          return waypoints;
+        }
+      }
+    }
+    const waypoints = this.#paths.find(record.position, goal);
+    record.route = waypoints === undefined ? undefined : { goal, waypoints: [...waypoints] };
+    return waypoints;
+  }
+
+  /**
    * One tick of an approach (ADR-0026): walk until `target` is within
    * `reach` and in sight, round walls (#211), then face it. The only
    * movement the simulation chooses, and never on top of the player's
-   * own. Replanned every tick, so a target that moves, or a shove, is
-   * simply where the next plan starts.
+   * own. Its route follows a target that moves, and a shove, as
+   * `#route` keeps it (#1157).
    *
    * `progress` counts how long it has got nowhere; at
    * `unreachableAfterSeconds` (#218) the approach gives up, and the
@@ -2815,14 +2934,16 @@ export class MatchSimulation {
       hasLineOfSight(record.position, target.position, this.#walls)
     ) {
       faceToward(record, target.position);
+      record.route = undefined;
       return "arrived";
     }
-    const next = this.#paths.find(record.position, target.position)?.[0];
+    const next = this.#route(record, target.position)?.[0];
     if (next === undefined) {
       // No way there, this tick. It has to last before the approach ends
       // (#218); meanwhile, steer straight at the target, which is what
       // usually shoves a squeezed body back out (#211).
       if (this.#stalledFor(progress, dt)) {
+        record.route = undefined;
         return "unreachable";
       }
       this.advanceMovement(record, sub(target.position, record.position), dt);
@@ -2833,7 +2954,11 @@ export class MatchSimulation {
     // too. One held is neither lost nor progress.
     const step = this.#stepToward(record, next, target.id, false, dt);
     if (step === "stalled") {
-      return this.#stalledFor(progress, dt) ? "unreachable" : "walking";
+      if (this.#stalledFor(progress, dt)) {
+        record.route = undefined;
+        return "unreachable";
+      }
+      return "walking";
     }
     if (step === "moved") {
       progress.unreachableSeconds = 0;
@@ -2912,7 +3037,9 @@ export class MatchSimulation {
   #advanceWalk(record: ParticipantRecord, dt: number): void {
     if (record.walkGoal !== undefined && !record.walkSettled) {
       const spot = nearestStandable(this.#graph, record.walkGoal);
-      record.walkGoal = this.#paths.find(record.position, spot) === undefined ? undefined : spot;
+      const path = this.#paths.find(record.position, spot);
+      record.walkGoal = path === undefined ? undefined : spot;
+      record.route = path === undefined ? undefined : { goal: spot, waypoints: [...path] };
       record.walkSettled = true;
     }
     const goal = record.walkGoal;
@@ -2921,9 +3048,10 @@ export class MatchSimulation {
     }
     if (distance(record.position, goal) <= ARRIVE_UNITS) {
       record.walkGoal = undefined;
+      record.route = undefined;
       return;
     }
-    const path = this.#paths.find(record.position, goal);
+    const path = this.#route(record, goal);
     const left = path === undefined ? Number.POSITIVE_INFINITY : pathLength(record.position, path);
     if (left < record.walkLeast - STALL_FRACTION * this.#stepUnits(record, dt)) {
       record.walkLeast = left;
@@ -2935,6 +3063,7 @@ export class MatchSimulation {
         this.#ruleset.combat.unreachableAfterSeconds - SWING_EPSILON
       ) {
         record.walkGoal = undefined;
+        record.route = undefined;
         return;
       }
     }
@@ -2948,6 +3077,7 @@ export class MatchSimulation {
     }
     if (distance(record.position, goal) <= ARRIVE_UNITS) {
       record.walkGoal = undefined;
+      record.route = undefined;
     }
   }
 
@@ -2964,7 +3094,7 @@ export class MatchSimulation {
     if (goal === undefined || record.combatant.attack !== undefined) {
       return;
     }
-    const path = this.#paths.find(record.position, nearestStandable(this.#graph, goal.point));
+    const path = this.#route(record, nearestStandable(this.#graph, goal.point));
     const next = path?.[0];
     if (next !== undefined) {
       this.#stepToward(record, next, goal.passing, path?.length === 1, dt);
@@ -3642,6 +3772,7 @@ export class MatchSimulation {
         victim.combatant.cast.cancelCast();
         victim.combatant.cast.endAftercast();
         victim.walkGoal = undefined;
+        victim.route = undefined;
         victim.combatant.knockdownRemaining = 0;
         victim.pendingWeaponSet = undefined;
         victim.combatant.statuses.endAll();
@@ -3827,6 +3958,7 @@ export class MatchSimulation {
       record.position = position;
       faceToward(record, target.position);
       record.walkGoal = undefined;
+      record.route = undefined;
       record.history.clear();
       this.#stepStart.set(record.id, position);
     }
@@ -4216,6 +4348,7 @@ export class MatchSimulation {
     record.facing = record.spec.facing;
     record.inputDirection = ZERO;
     record.walkGoal = undefined;
+    record.route = undefined;
     record.respawnInSeconds = 0;
     record.combatant.cast.cancelCast();
     record.combatant.cast.endAftercast();
@@ -4302,6 +4435,7 @@ export class MatchSimulation {
       nextMaintainSeq: 0,
       chainMarks: new Map(),
       moving: false,
+      controlled: { minion: 0, spirit: 0 },
       equipment: spec.equipment,
     };
   }

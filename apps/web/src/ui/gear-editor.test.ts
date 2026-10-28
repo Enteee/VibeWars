@@ -1,5 +1,6 @@
 import {
   ARMOR_SLOTS,
+  INSIGNIAS,
   MINIMAL_GW_INSPIRED_PVP_V1,
   getWeapon,
   primaryAttributeIds,
@@ -16,10 +17,13 @@ import {
   clearArmorUpgrades,
   decodeGearDrag,
   decodeRune,
+  describeConditions,
   encodeGearDrag,
   encodeRune,
   armorTarget,
   firstFreeArmorSlot,
+  insigniaChoices,
+  insigniaEffectNote,
   offhandAttributeChoices,
   runeChoices,
   setInsignia,
@@ -249,6 +253,81 @@ describe("runes and insignias", () => {
   });
 });
 
+describe("profession insignias (#1142)", () => {
+  it("offers a Mesmer the five common insignias and Prodigy's", () => {
+    const mesmer = setProfessions(newCharacter("c1"), "mesmer", undefined);
+    expect(insigniaChoices(mesmer).map((insignia) => insignia.id)).toEqual([
+      "survivor",
+      "radiant",
+      "stalwart",
+      "blessed",
+      "brawlers",
+      "prodigys",
+    ]);
+  });
+
+  it("describes Sentinel's conditions together and Prodigy's tiers short", () => {
+    const sentinels = INSIGNIAS.sentinels.effect;
+    if (sentinels.kind !== "conditional-armor") {
+      throw new Error("Sentinel's is armor");
+    }
+    expect(describeConditions(sentinels.bonuses[0]?.conditions ?? [])).toBe(
+      "vs elemental damage, with 13+ Strength",
+    );
+    const prodigys = INSIGNIAS.prodigys.effect;
+    if (prodigys.kind !== "conditional-armor") {
+      throw new Error("Prodigy's is armor");
+    }
+    expect(describeConditions(prodigys.bonuses[0]?.conditions ?? [])).toBe(
+      "while 1+ skills recharge",
+    );
+    expect(insigniaEffectNote(prodigys)).toBe(
+      "+5 armor while 1+ skills recharge, +5 at 3+, +5 at 5+",
+    );
+  });
+
+  it("describes #1188's conditions, Undertaker's in full and Minion Master's short", () => {
+    const conditionOf = (id: "disciples" | "blighters" | "forsaken" | "prismatic"): string => {
+      const effect = INSIGNIAS[id].effect;
+      if (effect.kind !== "conditional-armor") {
+        throw new Error(`${id} is armor`);
+      }
+      return describeConditions(effect.bonuses[0]?.conditions ?? []);
+    };
+    expect(conditionOf("disciples")).toBe("while you have a condition");
+    expect(conditionOf("blighters")).toBe("while hexed");
+    expect(conditionOf("forsaken")).toBe("while not enchanted");
+    expect(conditionOf("prismatic")).toBe("with 9+ Air Magic");
+    const undertakers = INSIGNIAS.undertakers.effect;
+    const minionMasters = INSIGNIAS["minion-masters"].effect;
+    const shamans = INSIGNIAS.shamans.effect;
+    if (
+      undertakers.kind !== "conditional-armor" ||
+      minionMasters.kind !== "conditional-armor" ||
+      shamans.kind !== "conditional-armor"
+    ) {
+      throw new Error("they are armor");
+    }
+    expect(insigniaEffectNote(undertakers)).toBe(
+      "+5 armor below 80% Health, +5 armor below 60% Health, +5 armor below 40% Health, " +
+        "+5 armor below 20% Health",
+    );
+    expect(insigniaEffectNote(minionMasters)).toBe(
+      "+5 armor while you control 1+ minions, +5 at 3+, +5 at 5+",
+    );
+    expect(insigniaEffectNote(shamans)).toBe(
+      "+5 armor while you control 1+ spirits, +5 at 2+, +5 at 3+",
+    );
+  });
+
+  it("takes Knight's off a Warrior turned Monk, and keeps Brawler's", () => {
+    const worn = setInsignia(setInsignia(warrior(), "chest", "knights"), "legs", "brawlers");
+    const turned = setProfessions(worn, "monk", undefined);
+    expect(turned.equipment.armor.chest.insigniaId).toBeNull();
+    expect(turned.equipment.armor.legs.insigniaId).toBe("brawlers");
+  });
+});
+
 describe("rune encoding", () => {
   it("round-trips both kinds of rune", () => {
     const runes = [
@@ -368,6 +447,14 @@ describe("the gear summary", () => {
     expect(firstSummary(two).conditionalArmor).toEqual([
       "+20 armor vs physical damage",
       "+10 armor vs physical damage on chest, legs (avg +6.3)",
+    ]);
+  });
+
+  it("lists Knight's cut per piece, after the armor lines (#1142)", () => {
+    const bare = setOffhand(setWeapon(warrior(), 0, "sword"), 0, null);
+    expect(firstSummary(setInsignia(bare, "chest", "knights")).conditionalArmor).toEqual([
+      "+20 armor vs physical damage",
+      "−3 physical damage taken on chest (avg −1.1)",
     ]);
   });
 

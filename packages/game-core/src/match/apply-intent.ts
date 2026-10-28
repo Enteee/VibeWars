@@ -1,5 +1,5 @@
 import { ZERO, vec2 } from "../vec2.js";
-import type { MatchSimulation } from "./simulation.js";
+import type { CreatureOrder, MatchSimulation } from "./simulation.js";
 
 /**
  * One player's request to the simulation (#375): the shape of
@@ -16,7 +16,8 @@ export type MatchIntent =
   | { readonly kind: "cancel" }
   | { readonly kind: "walk-to"; readonly x: number; readonly y: number }
   | { readonly kind: "end-upkeep"; readonly targetId: string; readonly status: string }
-  | { readonly kind: "weapon-set"; readonly set: 0 | 1 | 2 | 3 };
+  | { readonly kind: "weapon-set"; readonly set: 0 | 1 | 2 | 3 }
+  | { readonly kind: "command"; readonly creatureId: string; readonly order: CreatureOrder };
 
 /**
  * Why a cast or an attack was turned down, for its caster alone: the
@@ -83,6 +84,10 @@ export function applyIntent(
     case "weapon-set":
       // No refusal to tell: GW1 says nothing for an empty set (#489).
       sim.requestWeaponSet(playerId, intent.set);
+      return null;
+    case "command":
+      // Not theirs to command: dropped quietly, as `end-upkeep` is (#1110).
+      sim.commandCreature(playerId, intent.creatureId, intent.order);
       return null;
   }
 }

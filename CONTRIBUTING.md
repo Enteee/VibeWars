@@ -25,6 +25,7 @@ pnpm run format:check  # Prettier, checks only (what CI runs)
 pnpm run typecheck     # tsc --build across every project, plus tests/configs
 pnpm run ci            # format:check + lint + typecheck + test + build, in order
 pnpm run bench:ticks   # time MatchSimulation.step on a dense field: p50/p95/max (#542)
+                       # BENCH_CROWD=followers: 32 minions walking back round its pillars (#1157)
 ```
 
 `devenv test` runs the same sequence as `pnpm run ci` via `enterTest` in

@@ -21,7 +21,14 @@ import type {
   SkillBarSlot,
   WallDescriptor,
 } from "./protocol.js";
-import { CHAIN_ROLES, MAX_LOBBY_PLAYERS, type LobbyPhase, type WireChainMark } from "./protocol.js";
+import {
+  CHAIN_ROLES,
+  COMPANION_MODES,
+  MAX_LOBBY_PLAYERS,
+  type CompanionMode,
+  type LobbyPhase,
+  type WireChainMark,
+} from "./protocol.js";
 
 /**
  * The channels a lobby and its match use. Trystero caps an action name at
@@ -296,7 +303,7 @@ export interface WirePlayer {
   /** Its statuses, in the order applied, oldest first (#803). */
   readonly statuses: readonly WireStatus[];
   /**
-   * A creature's owner, kind and look (#1052, #1162); `null` for a player
+   * A creature's owner, kind, look and mode (#1052, #1162, #1110); `null` for a player
    * or a dummy. A creature's `name` is its kind's, and its professions are `null`.
    */
   readonly creature: WireCreature | null;
@@ -307,6 +314,8 @@ export interface WireCreature {
   readonly ownerId: string;
   readonly kind: (typeof CREATURE_KINDS)[number];
   readonly look: (typeof CREATURE_LOOKS)[number];
+  /** How a companion fights (#1110); `null` for a creature that is not one. */
+  readonly mode: CompanionMode | null;
 }
 
 /** One status on a player (#803): what the effects monitor draws. */
@@ -1224,8 +1233,9 @@ function parseCreature(value: unknown): WireCreature | undefined {
   return raw !== undefined &&
     isString(raw.ownerId) &&
     isOneOf(raw.kind, CREATURE_KINDS) &&
-    isOneOf(raw.look, CREATURE_LOOKS)
-    ? { ownerId: raw.ownerId, kind: raw.kind, look: raw.look }
+    isOneOf(raw.look, CREATURE_LOOKS) &&
+    (raw.mode === null || isOneOf(raw.mode, COMPANION_MODES))
+    ? { ownerId: raw.ownerId, kind: raw.kind, look: raw.look, mode: raw.mode }
     : undefined;
 }
 

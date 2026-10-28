@@ -1,4 +1,5 @@
 import {
+  companionMode,
   energyCostOf,
   getSkill,
   getStatusDefinition,
@@ -543,7 +544,12 @@ export function wireIdentity(
         team: owner.team,
         primaryProfession: null,
         secondaryProfession: null,
-        creature: { ownerId: creature.ownerId, kind: creature.kind, look: creature.look },
+        creature: {
+          ownerId: creature.ownerId,
+          kind: creature.kind,
+          look: creature.look,
+          mode: companionMode(creature),
+        },
       };
 }
 

@@ -1,6 +1,7 @@
 import type {
   ChainRole,
   CombatEvent,
+  CompanionMode,
   CreatureKind,
   CreatureLook,
   OffhandId,
@@ -89,11 +90,17 @@ export interface PlayerSnapshot {
   readonly statuses: readonly StatusSnapshot[];
   /**
    * A creature's owner, kind and look (#1052, #1162), `undefined` for a
-   * player or a dummy. A creature never counts for its team: not in the scoreboard,
-   * the enemy pips or the music.
+   * player or a dummy. A creature never counts for its team: not in the
+   * scoreboard, the enemy pips or the music. `mode` is a companion's
+   * (#1110), `null` for any other creature.
    */
   readonly creature:
-    | { readonly ownerId: string; readonly kind: CreatureKind; readonly look: CreatureLook }
+    | {
+        readonly ownerId: string;
+        readonly kind: CreatureKind;
+        readonly look: CreatureLook;
+        readonly mode: CompanionMode | null;
+      }
     | undefined;
 }
 

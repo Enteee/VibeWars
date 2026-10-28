@@ -9,6 +9,7 @@ import type { ArmorCondition } from "../equipment/insignias.js";
 import { MYSTICISM_ATTRIBUTE, mysticismArmor } from "../primary-attributes.js";
 import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
+import { isAttacking } from "./attacking.js";
 import { aggregateModifiers } from "./status.js";
 import { armorReductionOf, effectiveMaxHealth, rankOf } from "./tick.js";
 import type { Combatant, CreatureLevel } from "./types.js";
@@ -93,7 +94,7 @@ export function effectiveArmor(
 
   const pieceArmor = location === null ? [] : target.equipment.pieceArmor[location];
   for (const bonus of [...target.equipment.conditionalArmor, ...pieceArmor]) {
-    if (conditionHolds(bonus.condition, target, packet)) {
+    if (bonus.conditions.every((condition) => conditionHolds(condition, target, packet))) {
       armor += bonus.amount;
     }
   }
@@ -133,13 +134,36 @@ function conditionHolds(
   target: Combatant,
   packet: DamagePacket,
 ): boolean {
-  switch (condition) {
+  switch (condition.kind) {
     case "vs-physical":
       return isPhysicalDamage(packet.type);
     case "vs-elemental":
       return isElementalDamage(packet.type);
-    case "while-enchanted":
-      return target.statuses.countByCategory("enchantment") > 0;
+    case "attacking":
+      return isAttacking(target);
+    case "enchantments-at-least":
+      return target.statuses.countByCategory("enchantment") >= condition.count;
+    case "recharging-at-least": {
+      let recharging = 0;
+      for (const seconds of target.cast.rechargeRemaining.values()) {
+        if (seconds > 0) {
+          recharging += 1;
+        }
+      }
+      return recharging >= condition.count;
+    }
+    case "attribute-at-least":
+      return rankOf(target, condition.attributeId) >= condition.rank;
+    case "has-condition":
+      return target.statuses.countByCategory("condition") > 0;
+    case "has-hex":
+      return target.statuses.countByCategory("hex") > 0;
+    case "no-enchantment":
+      return target.statuses.countByCategory("enchantment") === 0;
+    case "health-below":
+      return target.health < condition.fraction * target.maxHealth;
+    case "controls-at-least":
+      return target.controlled[condition.creature] >= condition.count;
   }
 }
 
@@ -197,8 +221,13 @@ export function mitigate(
   // mitigation on purpose: it is a flat shield against each blow, so it
   // is proportionally worth most against the many small hits an
   // auto-attack chain produces, which is the niche it exists to fill.
+  // Knight's (#1142) beside it, and stacking with it, but only on a hit
+  // to its own piece.
   if (isPhysicalDamage(packet.type)) {
     dealt -= target.equipment.flatPhysicalReduction;
+    if (location !== null) {
+      dealt -= target.equipment.pieceReduction[location];
+    }
   }
 
   // Protective Spirit (#936), after everything else: no single hit takes

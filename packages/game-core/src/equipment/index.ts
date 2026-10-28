@@ -39,13 +39,20 @@ export {
   isOffhandId,
 } from "./offhands.js";
 
-export type { ArmorPiece, ArmorSet, ConditionalArmor, PieceArmor } from "./armor.js";
+export type {
+  ArmorPiece,
+  ArmorSet,
+  ConditionalArmor,
+  PieceArmor,
+  PieceReduction,
+} from "./armor.js";
 export {
   BASE_ARMOR_BY_PROFESSION,
   BASE_ENERGY_PIPS_BY_PROFESSION,
   HIT_LOCATION_WEIGHTS,
   INHERENT_ARMOR_BY_PROFESSION,
   NO_PIECE_ARMOR,
+  NO_PIECE_REDUCTION,
   armorPieces,
   bareArmorSet,
   baseArmorFor,
@@ -73,7 +80,14 @@ export {
 } from "./runes.js";
 
 export type { ArmorCondition, Insignia, InsigniaEffect, InsigniaId } from "./insignias.js";
-export { ALL_INSIGNIAS, INSIGNIAS, getInsignia, isInsigniaId, perSlotAmount } from "./insignias.js";
+export {
+  ALL_INSIGNIAS,
+  INSIGNIAS,
+  getInsignia,
+  insigniaAllowed,
+  isInsigniaId,
+  perSlotAmount,
+} from "./insignias.js";
 
 export type {
   BuildEquipment,
