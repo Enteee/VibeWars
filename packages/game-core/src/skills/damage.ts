@@ -181,16 +181,6 @@ export function mitigate(packet: DamagePacket, target: Combatant, rules: CombatR
 }
 
 /**
- * The attribute multiplier on weapon damage.
- *
- * Pivots on rank 12, not on the weapon's requirement of 9: at the pivot
- * the exponent is zero and the weapon deals exactly its stated damage,
- * which is what "a max-damage weapon" has to mean for the catalog
- * numbers to be readable. Above the pivot — reachable only with runes —
- * the slope flattens, so a superior rune is a bonus rather than a
- * second doubling.
- */
-/**
  * What a creature's summoner's `rank` does to its blows (#1131): its GW1
  * level, linear in the rank, against its level at 12, to the power 1.5.
  * No source gives a formula; this one fits GWW's damage tables for Bone
@@ -202,6 +192,16 @@ export function creatureDamageMultiplier(rank: number, levels: CreatureLevel): n
   return Math.pow(level(Math.max(0, rank)) / level(12), 1.5);
 }
 
+/**
+ * The attribute multiplier on weapon damage.
+ *
+ * Pivots on rank 12, not on the weapon's requirement of 9: at the pivot
+ * the exponent is zero and the weapon deals exactly its stated damage,
+ * which is what "a max-damage weapon" has to mean for the catalog
+ * numbers to be readable. Above the pivot — reachable only with runes —
+ * the slope flattens, so a superior rune is a bonus rather than a
+ * second doubling.
+ */
 export function weaponAttributeMultiplier(rank: number, rules: CombatRules): number {
   const under = Math.min(rules.damageRankPivot, Math.max(0, rank));
   const over = Math.max(0, rank - rules.damageRankPivot);
