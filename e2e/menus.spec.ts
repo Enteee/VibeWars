@@ -112,6 +112,22 @@ test("#578: a host with others in the lobby is asked before Leave or Esc closes 
 /** A rolled character's random name (#1149): "Kaelen Ashvale". */
 const ROLLED_NAME = /^[A-Z][a-z]+ [A-Z][a-z]+$/;
 
+test("#1250: a roster row shows the character figure, the arena's body, painted", async ({
+  page,
+}) => {
+  await openMenu(page);
+  const figure = page.locator(".roster .selectable-row .character-figure");
+  await expect(figure).toHaveCount(1);
+  await expect(figure).toHaveJSProperty("tagName", "CANVAS");
+  // Painted: the body's centre is opaque, in the colour the arena draws you.
+  const centre = await figure.evaluate((canvas: HTMLCanvasElement) => {
+    const context = canvas.getContext("2d");
+    const pixel = context?.getImageData(canvas.width / 2, canvas.height / 2, 1, 1).data;
+    return pixel === undefined ? [] : [...pixel];
+  });
+  expect(centre[3]).toBe(255);
+});
+
 test("#853: the first start rolls a starter character, chosen; Reroll replaces it in place, Clone copies it", async ({
   page,
 }) => {

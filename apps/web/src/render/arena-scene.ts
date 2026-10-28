@@ -36,7 +36,6 @@ import {
   floatingTextY,
   healthFraction,
   nameShown,
-  offhandMarkLayout,
   nameplateLayout,
   placeFloatingText,
   swingFlashAlpha,
@@ -65,10 +64,17 @@ import {
   walkMarkerTicks,
   type WalkMarker,
 } from "./walk-marker.js";
-import { AttackClock, REST_FRAME, shownFrame } from "./attack-clock.js";
+import { AttackClock, REST_FRAME, shownFrame, type AttackFrame } from "./attack-clock.js";
 import { impactMarks, mergeImpacts, type Impact } from "./body-impacts.js";
 import { conditionMarks, cuePhase } from "./body-conditions.js";
 import { bodyRings, invulnerableAlpha, invulnerableRing } from "./body-rings.js";
+import {
+  BODY_EDGE_WIDTH,
+  SELF_RIM,
+  paintStandingBody,
+  paintWeaponMark,
+  type Painter,
+} from "./body-painter.js";
 import { DEAD_DASH, DEAD_GAP, creatureOutline, dashes } from "./creature-shape.js";
 import { CAST_BADGE_SIZE, CAST_BAR_RISE, castBadgeLayout } from "./cast-badge.js";
 import {
@@ -80,7 +86,6 @@ import {
 } from "./call-marks.js";
 import { lyingPose } from "./lying-pose.js";
 import { screenSized } from "./screen-text.js";
-import { weaponMarkLayout } from "./weapon-mark.js";
 import type { Point } from "./weapon-mark-geometry.js";
 import type {
   ArenaSnapshot,
@@ -115,9 +120,6 @@ const HEALTH_BAR_FILL = 0x7ee787;
 const HEALTH_BAR_LOW = 0xff7b72;
 // Ink, not blue: a blue bar over an enemy would read as "an ally".
 const CAST_BAR_FILL = 0xd7dee8;
-/** Marks the actor you control, inside its circle, in any team colour. */
-const SELF_RIM = 0xd7dee8;
-const BODY_EDGE_WIDTH = 1.5;
 /** A condition cue's outline, and a bubble's stroke (#1138). */
 const CUE_EDGE_WIDTH = 1;
 /** How opaque a weapon swing's number is at most: present, never louder than a skill (#160). */
@@ -501,32 +503,6 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /**
-   * The off-hand mark (#276): an `edge` casing under an `ink` core, like
-   * the weapon mark. The shield is one arc path stroked twice, the focus
-   * one circle per colour.
-   */
-  private drawOffhandMark(g: Phaser.GameObjects.Graphics, actor: RenderableActor): void {
-    const { x, y } = actor.position;
-    const mark = offhandMarkLayout(x, y, actor.radius, actor.facing, actor.offhandId);
-    if (mark === undefined) {
-      return;
-    }
-    for (const [width, colour] of [
-      [mark.casing, BODY_EDGE],
-      [mark.core, SELF_RIM],
-    ] as const) {
-      g.lineStyle(width, colour, 1);
-      if (mark.kind === "arc") {
-        g.beginPath();
-        g.arc(mark.x, mark.y, mark.radius, mark.from, mark.to);
-        g.strokePath();
-      } else {
-        g.strokeCircle(mark.x, mark.y, mark.radius);
-      }
-    }
-  }
-
-  /**
    * A knocked-down body (#545): the disc flattened along its facing, edged
    * as a standing one is, with the weapon mark dropped beside it. The
    * off-hand is not drawn: one dropped thing reads, two clutter.
@@ -548,106 +524,20 @@ export class ArenaScene extends Phaser.Scene {
       tracePath(g, lyingPose(x, y, actor.radius - 2, actor.facing).body);
       g.strokePath();
     }
-    this.drawWeaponMark(marks, actor, pose.weapon);
+    // Where it dropped: lying still, at rest.
+    paintWeaponMark(phaserPainter(marks), pose.weapon, actor.weaponId, REST_FRAME);
   }
 
-  /**
-   * The weapon mark (#188, #418): a 4 px `edge` casing, then a 2 px `ink` core,
-   * so the line reads on either team's colour. The casing also outlines the
-   * filled shapes, which the core then fills. Bow strings are one extra
-   * pass, thinner: a 3 px casing under a 1 px core.
-   */
-  private drawWeaponMark(
-    g: Phaser.GameObjects.Graphics,
-    actor: RenderableActor,
-    // Where a knocked-down body dropped it (#545): lying still, at rest.
-    dropped?: {
-      readonly x: number;
-      readonly y: number;
-      readonly r: number;
-      readonly facing: number;
-    },
-  ): void {
-    const at = dropped ?? { ...actor.position, r: actor.radius, facing: actor.facing };
-    const frame =
-      actor.weaponId === undefined || !isWeaponId(actor.weaponId)
-        ? undefined
-        : dropped !== undefined
-          ? REST_FRAME
-          : shownFrame(
-              this.attackClocks.get(actor.id),
-              this.clock.read(this.now),
-              actor.weaponId,
-              this.reducedMotion,
-            );
-    if (frame === undefined) {
-      return;
-    }
-    const { strokes, fills, strings, alpha } = weaponMarkLayout(
-      at.x,
-      at.y,
-      at.r,
-      at.facing,
-      actor.weaponId,
-      frame,
-    );
-    if ((strokes.length === 0 && fills.length === 0) || alpha <= 0) {
-      return;
-    }
-    const trace = (
-      points: readonly { readonly x: number; readonly y: number }[],
-      close: boolean,
-    ) => {
-      const [first, ...rest] = points;
-      if (first === undefined) {
-        return;
-      }
-      g.moveTo(first.x, first.y);
-      for (const point of rest) {
-        g.lineTo(point.x, point.y);
-      }
-      if (close) {
-        g.lineTo(first.x, first.y);
-      }
-    };
-
-    g.lineStyle(4, BODY_EDGE, alpha);
-    g.beginPath();
-    for (const line of strokes) {
-      trace(line, false);
-    }
-    for (const shape of fills) {
-      trace(shape, true);
-    }
-    g.strokePath();
-
-    g.lineStyle(2, SELF_RIM, alpha);
-    g.beginPath();
-    for (const line of strokes) {
-      trace(line, false);
-    }
-    g.strokePath();
-    g.fillStyle(SELF_RIM, alpha);
-    for (const shape of fills) {
-      g.fillPoints(
-        shape.map((point) => new Phaser.Math.Vector2(point.x, point.y)),
-        true,
-      );
-    }
-
-    for (const [width, colour] of strings.length === 0
-      ? []
-      : ([
-          [3, BODY_EDGE],
-          [1, SELF_RIM],
-        ] as const)) {
-      g.lineStyle(width, colour, alpha);
-      g.beginPath();
-      for (const line of strings) {
-        trace(line, false);
-      }
-      g.strokePath();
-    }
+  /** Where the weapon is in its swing: at rest unless an attack clock says otherwise. */
+  private weaponFrame(actor: RenderableActor): AttackFrame {
+    return actor.weaponId === undefined || !isWeaponId(actor.weaponId)
+      ? REST_FRAME
+      : shownFrame(
+          this.attackClocks.get(actor.id),
+          this.clock.read(this.now),
+          actor.weaponId,
+          this.reducedMotion,
+        );
   }
 
   /** The walk marker (#310): cased like the weapon mark, a 4 px `edge` under a 2 px `ink` core. */
@@ -840,21 +730,21 @@ export class ArenaScene extends Phaser.Scene {
     } else if (actor.knockedDown) {
       this.drawLyingBody(g, marks, actor);
     } else {
-      g.fillStyle(teamColour(actor.team), 1);
-      g.fillCircle(x, y, actor.radius);
-      // Centred half its width in, so the edge stays inside the collision
-      // radius (#166) and only touches the self rim inside it.
-      g.lineStyle(BODY_EDGE_WIDTH, BODY_EDGE, 1);
-      g.strokeCircle(x, y, actor.radius - BODY_EDGE_WIDTH / 2);
-
-      if (actor.team === "self") {
-        g.lineStyle(2, SELF_RIM, 1);
-        g.strokeCircle(x, y, actor.radius - 2);
-      }
-
-      // Off-hand, then weapon mark, then target ring: the order #275 gives.
-      this.drawOffhandMark(marks, actor);
-      this.drawWeaponMark(marks, actor);
+      // Its marks, then the target ring: the order #275 gives.
+      paintStandingBody(
+        phaserPainter(g),
+        {
+          x,
+          y,
+          r: actor.radius,
+          facing: actor.facing,
+          team: actor.team,
+          weaponId: actor.weaponId,
+          offhandId: actor.offhandId,
+          frame: this.weaponFrame(actor),
+        },
+        phaserPainter(marks),
+      );
     }
     // On the body layer, after the body and its self rim: every mark draws over the rings.
     this.drawBodyRings(g, actor);
@@ -1368,3 +1258,23 @@ export type {
   RenderableWall,
 } from "./arena-snapshot.js";
 export { EMPTY_SNAPSHOT, actorAtPoint, healthFraction, teamColour } from "./arena-snapshot.js";
+
+/** `g` as a body painter (#1250): the same calls, a filled shape as Phaser's points. */
+function phaserPainter(g: Phaser.GameObjects.Graphics): Painter {
+  return {
+    lineStyle: (width, colour, alpha) => g.lineStyle(width, colour, alpha),
+    fillStyle: (colour, alpha) => g.fillStyle(colour, alpha),
+    fillCircle: (x, y, r) => g.fillCircle(x, y, r),
+    strokeCircle: (x, y, r) => g.strokeCircle(x, y, r),
+    beginPath: () => g.beginPath(),
+    moveTo: (x, y) => g.moveTo(x, y),
+    lineTo: (x, y) => g.lineTo(x, y),
+    arc: (x, y, r, from, to) => g.arc(x, y, r, from, to),
+    strokePath: () => g.strokePath(),
+    fillPoints: (points) =>
+      g.fillPoints(
+        points.map((point) => new Phaser.Math.Vector2(point.x, point.y)),
+        true,
+      ),
+  };
+}

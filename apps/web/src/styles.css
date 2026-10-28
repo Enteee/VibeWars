@@ -3426,6 +3426,12 @@ body.has-expanded-training #screens {
   user-select: none;
 }
 
+/* The character figure (#1250): the arena body, drawn by the arena's painter. */
+.character-figure {
+  display: block;
+  flex: 0 0 auto;
+}
+
 /* A random starter build is not a character, so it reads as a placeholder
    rather than pretending to be one. */
 .character-dot.is-house {

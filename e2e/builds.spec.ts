@@ -377,7 +377,7 @@ test("the team list: an empty one offers New team; a row shows its members and o
   await page.getByRole("button", { name: "back" }).click();
 
   await expect.poll(() => teamList(page)).toEqual(["Duo · 2 members"]);
-  await expect(teamRows(page).locator(".team-list-dots .character-dot")).toHaveCount(2);
+  await expect(teamRows(page).locator(".team-list-dots .character-figure")).toHaveCount(2);
   await expect(page.locator(".empty-state")).toHaveCount(0);
   await teamRows(page).first().getByRole("button").focus();
   await page.keyboard.press("Enter");
