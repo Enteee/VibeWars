@@ -540,16 +540,21 @@ body {
   border-radius: 1px;
 }
 
-/* As wide as its slots, not the HUD: the knockdown drain fills this box
-   and must end at the last slot (#545). */
-/* The weapon sets, then the skills (#489). */
+/* The skills, the weapon sets hung off their left end (#489): the skill
+   bar stays centred, as GW1's. */
 .hud-skill-row {
-  display: flex;
-  gap: 8px;
-  align-items: flex-start;
+  position: relative;
   width: fit-content;
 }
 
+.hud-skill-row > .weapon-sets {
+  position: absolute;
+  top: 0;
+  right: calc(100% + 8px);
+}
+
+/* As wide as its slots, not the HUD: the knockdown drain fills this box
+   and must end at the last slot (#545). */
 .hud-skills {
   display: flex;
   gap: 6px;
