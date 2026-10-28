@@ -100,5 +100,10 @@ export interface LobbyConnection {
    * team split up.
    */
   onParty(handler: (party: WirePartyFormed | null) => void): void;
+  /**
+   * This player signed the host's party proposal (#1078): its answer
+   * comes up to the host's `PARTY_CONSENT_MS` after this, once.
+   */
+  onPartyProposal(handler: () => void): void;
   disconnect(): Promise<void>;
 }

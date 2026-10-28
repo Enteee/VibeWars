@@ -645,11 +645,17 @@ describe("Stay together, on a queued lobby's host (#882, #1078)", () => {
 
   it("proposes the party once every winner sends a key, forms it once each consents, and tells only them", async () => {
     const { queued, ally, allyRoom, answers, parties } = await afterMatch();
+    // What the shell extends its own deadline on (PR 1092).
+    let signed = 0;
+    ally.onPartyProposal(() => {
+      signed += 1;
+    });
     queued.host.stayTogether(KEY_H);
     await settle();
     expect(answers.get("host")).toEqual([]);
     ally.stayTogether(KEY_A);
     await answered(answers);
+    expect(signed).toBe(1);
     expect(answers.get("host")).toEqual([PARTY]);
     expect(answers.get("ally")).toEqual([PARTY]);
     // Each consent beside its key, in the members' order.
@@ -809,6 +815,23 @@ describe("Stay together, on a queued lobby's host (#882, #1078)", () => {
     expect(answers.get("ally")).toEqual([null]);
   });
 
+  it("splits when a member leaves after the proposal, with every other consent in (PR 1092)", async () => {
+    const { queued, allyRoom, answers } = await afterMatch();
+    const before = verifications;
+    queued.host.stayTogether(KEY_H);
+    // By hand, so the ally's connection holds no key to consent with.
+    allyRoom.send("stay-together", { memberKey: KEY_A.ticketId }, "host");
+    // The host's own consent is in: the ally's is all that is missing.
+    await until(() => verifications > before);
+    await settle();
+    expect(answers.get("host")).toEqual([]);
+    await allyRoom.leave();
+    await settle();
+    expect(answers.get("host")).toEqual([null]);
+    expect(queued.sent.filter((message) => message.channel === "party-formed")).toEqual([]);
+    expect(queued.done()).toBe(1);
+  });
+
   it("signs no proposal without this player's key, or of another group (#1078)", async () => {
     const rewrites: ((proposal: WirePartyProposal) => WirePartyProposal)[] = [
       (proposal) => ({ ...proposal, groupId: "b".repeat(64) }),
@@ -817,12 +840,17 @@ describe("Stay together, on a queued lobby's host (#882, #1078)", () => {
     for (const rewrite of rewrites) {
       const { queued, ally, allySent, answers } = await afterMatch();
       queued.proposals.rewrite = rewrite;
+      let signed = 0;
+      ally.onPartyProposal(() => {
+        signed += 1;
+      });
       const before = verifications;
       queued.host.stayTogether(KEY_H);
       ally.stayTogether(KEY_A);
       await until(() => verifications > before);
       await queued.step(PARTY_CONSENT_MS / 1000);
       expect(allySent.filter((message) => message.channel === "party-consent")).toEqual([]);
+      expect(signed).toBe(0);
       expect(answers.get("host")).toEqual([null]);
     }
   });

@@ -673,7 +673,10 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         const consent = proposal.consents.get(memberKey);
         return consent === undefined ? [] : [consent];
       });
-      if (consents.length === proposal.members.length) {
+      // A member gone splits it even with every consent in: a consent can
+      // verify after its sender left, and a party naming them never forms.
+      const left = told.some((peerId) => !members.has(peerId));
+      if (!left && consents.length === proposal.members.length) {
         proposal.settled = true;
         const formed: WirePartyFormed = {
           groupId: plan.group.groupId,
@@ -683,7 +686,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         for (const to of told) {
           transport.send("party-formed", formed, to);
         }
-      } else if (clockMs() >= proposal.endsAt || told.some((peerId) => !members.has(peerId))) {
+      } else if (left || clockMs() >= proposal.endsAt) {
         // A consent missing, or bad, or a member gone: no party, and no
         // second proposal of fewer.
         proposal.settled = true;

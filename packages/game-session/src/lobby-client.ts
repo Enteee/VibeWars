@@ -147,6 +147,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
   const chatHandlers: ((line: ChatLine) => void)[] = [];
   const throttledHandlers: (() => void)[] = [];
   const partyHandlers: ((party: WirePartyFormed | null) => void)[] = [];
+  const proposalHandlers: (() => void)[] = [];
   /** The host answered a Stay together; a second answer is not heard. */
   let partyAnswered = false;
   /** This player voted on Stay together; the host counts that first vote alone. */
@@ -175,6 +176,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     chatHandlers.length = 0;
     throttledHandlers.length = 0;
     partyHandlers.length = 0;
+    proposalHandlers.length = 0;
   };
 
   /** The host's answer to this player's Stay together, once. */
@@ -323,6 +325,9 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       onParty(handler) {
         partyHandlers.push(handler);
       },
+      onPartyProposal(handler) {
+        proposalHandlers.push(handler);
+      },
       async disconnect() {
         closed = true;
         stop();
@@ -446,6 +451,9 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
           return;
         }
         consented = true;
+        for (const handler of [...proposalHandlers]) {
+          handler();
+        }
         const { groupId, members } = proposal;
         void admissionDigest("vibewars-party", groupId, members.join(""), "").then((digest) => {
           if (hostId !== undefined && !closed) {

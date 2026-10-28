@@ -110,7 +110,10 @@ with nobody negotiating.**
    only for a proposal that holds its own key and its own lobby's group,
    and the host checks every consent. One missing or bad after
    `PARTY_CONSENT_MS`, and the team splits, with no second proposal of
-   fewer. A consent over the group alone would not do: the winning
+   fewer. A member gone before the party forms splits it too, whatever
+   consents are in. A member that signed waits `PARTY_CONSENT_MS` plus the
+   vote's grace from signing for the answer, so it never requeues alone
+   while the host forms its party. A consent over the group alone would not do: the winning
    match's host could mint a key and publish it in a party with any one
    winner's consent. The host hands every consent to every member, and
    the leader's ticket carries them as `party`, beside `members`. The board verifies each one, paid for from the same verify
