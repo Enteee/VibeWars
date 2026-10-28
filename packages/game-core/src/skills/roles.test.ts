@@ -49,4 +49,10 @@ describe("skillRoles", () => {
   it("counts Soul Feast's stolen Health as healing (#466)", () => {
     expect(rolesOf("necromancer.soul-feast")).toEqual(["healing"]);
   });
+
+  it("counts what a pet attack does to the foe its bite hits (#1107)", () => {
+    expect(rolesOf("ranger.maiming-strike")).toEqual(["condition"]);
+    expect(rolesOf("ranger.disrupting-lunge")).toEqual(["interrupt"]);
+    expect(rolesOf("ranger.comfort-animal")).toEqual([]);
+  });
 });
