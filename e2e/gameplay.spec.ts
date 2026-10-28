@@ -54,6 +54,29 @@ async function arenaShot(page: Page, canvas: Locator): Promise<Buffer> {
 }
 
 /**
+ * The arena once it holds still: shots 200 ms apart until two match,
+ * for at most 3 s. A cast that lands glows on its body for a moment
+ * (#1139); a shot inside the glow is not the frame the player stands in.
+ */
+async function settledArenaShot(page: Page, canvas: Locator): Promise<Buffer> {
+  let previous = await arenaShot(page, canvas);
+  let settled = previous;
+  await expect
+    .poll(
+      async () => {
+        const next = await arenaShot(page, canvas);
+        const still = next.equals(previous);
+        previous = next;
+        settled = next;
+        return still;
+      },
+      { message: "the arena should hold still", intervals: [200], timeout: 3000 },
+    )
+    .toBe(true);
+  return settled;
+}
+
+/**
  * A match in a lobby of one, which is what a test with nobody to fight
  * needs: nothing moves in it that the test did not move (#128).
  */
@@ -224,12 +247,13 @@ test("the arrows move; A, once move-left, casts slot 5 and moves nobody (#302)",
   expect(key("skill-5")).toBe("KeyA");
 
   // Slot 5 is Armor of Earth, a self-cast enchantment. Held, A casts it
-  // once, and the player stays where they are while it is held.
+  // once, and the player stays where they are while it is held. The
+  // frame to compare is taken once its impact glow is over.
   await page.keyboard.down("a");
   await expect(
     page.getByRole("list", { name: "your effects" }).getByRole("listitem"),
   ).not.toHaveCount(0);
-  const held = await arenaShot(page, canvas);
+  const held = await settledArenaShot(page, canvas);
   await page.waitForTimeout(500);
   expect((await arenaShot(page, canvas)).equals(held), "A should not move the player").toBe(true);
   await page.keyboard.up("a");
