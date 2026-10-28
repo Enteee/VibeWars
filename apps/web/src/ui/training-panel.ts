@@ -38,6 +38,7 @@ import { closestTarget, nextTabTarget, selfTargetIntent } from "../input/tab-tar
 import { toArenaSnapshot, toRenderableWall } from "../match-view.js";
 import { attachMatchMusic, type MatchMusic } from "../music/match-music.js";
 import { music } from "../music/play-music.js";
+import { mapShrines, type MapShrine } from "../net/maps.js";
 import { TRACKS } from "../music/tracks/index.js";
 import {
   EMPTY_SNAPSHOT,
@@ -190,6 +191,8 @@ interface Session {
   readonly connection: LocalMatchConnection;
   readonly names: ReadonlyMap<string, string>;
   readonly walls: readonly RenderableWall[];
+  /** The map's resurrection shrines (#1199), as a match's. */
+  readonly shrines: readonly MapShrine[];
   /** The same walls as segments, for the skill bar's line-of-sight hint (#485). */
   readonly wallSegments: readonly Segment[];
   readonly sounds: MatchSounds;
@@ -638,6 +641,7 @@ export function createTrainingPanel(): TrainingPanel {
       connection,
       names: setup.names,
       walls: setup.map.walls.map(toRenderableWall),
+      shrines: mapShrines(setup.map.id),
       wallSegments: allWallSegments(setup.map.walls),
       // The same sounds as a match (#112), muted by the same M.
       sounds: attachMatchSounds(connection, soundPlayer()),
@@ -997,7 +1001,7 @@ export function createTrainingPanel(): TrainingPanel {
       partyWindow.update(latestMatch);
       latestArena = withCalls(
         withNames(
-          toArenaSnapshot(latestMatch, session.walls),
+          toArenaSnapshot(latestMatch, session.walls, session.shrines),
           created.pointerWorld(),
           nameReveal.held(),
         ),

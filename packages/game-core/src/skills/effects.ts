@@ -944,7 +944,7 @@ export function applyEffect(
       }
       const removed = bearer.statuses.removeByCategory(
         effect.category,
-        removeCount(effect, bearer, context.surroundings),
+        removeCount(effect, caster, bearer, context.surroundings, earlier),
         effect.profession,
       );
       for (const statusId of removed) {
@@ -1217,21 +1217,32 @@ export function stateHolds(
 
 /**
  * How many a `remove-status` takes off `bearer`: its `count`, or that
- * for each living spirit within `perSpiritNear` of it (#1064). A bearer
- * nowhere in `surroundings` has no spirit near.
+ * for each living spirit within `perSpiritNear` of it (#1064), or one for
+ * each `perRemoved` status `earlier` took off it, to its `max` (#1205). A
+ * bearer nowhere in `surroundings` has no spirit near.
  */
 function removeCount(
   effect: RemoveStatusEffect,
+  caster: Combatant,
   bearer: Combatant,
   surroundings: Surroundings,
+  earlier: readonly CombatEvent[],
 ): number {
+  // Contemplation of Purity's one each for the enchantments it took (#1205).
+  if (effect.perRemoved !== undefined) {
+    return Math.min(
+      perRemoved(effect.perRemoved.category, bearer, earlier),
+      resolveMagnitude(effect.perRemoved.max, caster),
+    );
+  }
+  const count = effect.count === "all" ? Number.POSITIVE_INFINITY : effect.count;
   if (effect.perSpiritNear === undefined) {
-    return effect.count;
+    return count;
   }
   const at = surroundings.get(bearer.id)?.position;
   return at === undefined
     ? 0
-    : effect.count * spiritsWithin(surroundings.values(), at, effect.perSpiritNear);
+    : count * spiritsWithin(surroundings.values(), at, effect.perSpiritNear);
 }
 
 /** No state held: a resolution with no target. */

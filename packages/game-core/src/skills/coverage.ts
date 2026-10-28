@@ -24,20 +24,11 @@ import { IMPLEMENTED_SKILLS } from "./catalog.js";
  * string would quietly create a new "mechanic" and split the report, and
  * grouping skills by what they are waiting on is the whole point.
  */
-export type MissingMechanic =
-  | "knockdown"
-  | "ground-targeting"
-  | "persistent-ground-area"
-  | "enchantment-sacrifice"
-  | "title-attribute";
+export type MissingMechanic = "title-attribute";
 
 /** What each missing mechanic would mean to build, in one line. */
 export const MISSING_MECHANIC_DESCRIPTIONS: Readonly<Record<MissingMechanic, string>> =
   Object.freeze({
-    knockdown: "a control state that stops a combatant acting for a duration",
-    "ground-targeting": "casting at a point on the ground rather than at a target",
-    "persistent-ground-area": "an area that stays on the ground and acts on whoever is in it",
-    "enchantment-sacrifice": "removing your own enchantments as a cost, scaled by how many",
     "title-attribute": "a PvE title track as the skill's attribute",
   });
 
@@ -45,15 +36,9 @@ export const MISSING_MECHANIC_DESCRIPTIONS: Readonly<Record<MissingMechanic, str
  * Why each imported-but-unimplemented skill is not in the catalog.
  *
  * Keyed by skill id; several mechanics per skill where the skill genuinely
- * needs all of them (Meteor Shower is not blocked on knockdown alone,
- * and saying so would understate the work).
+ * needs all of them, since naming one alone would understate the work.
  */
 const UNIMPLEMENTED_REASONS: Readonly<Record<string, readonly MissingMechanic[]>> = Object.freeze({
-  // "...foes adjacent to that location are struck... and knocked down every 3 seconds."
-  // A ground-targeted area that keeps striking: three missing mechanics, not one.
-  "elementalist.meteor-shower": ["knockdown", "ground-targeting", "persistent-ground-area"],
-  // "Lose all enchantments. For each one lost, you gain health, lose one hex..."
-  "monk.contemplation-of-purity": ["enchantment-sacrifice"],
   // PvE-only: its attribute is "Sunspear rank", a title track (ADR-0029).
   "warrior.whirlwind-attack": ["title-attribute"],
 });

@@ -27,6 +27,7 @@ import {
   EMPTY_SNAPSHOT,
   EXPLOITED_CORPSE_COLOUR,
   PROFESSION_GLYPH_SIZE,
+  SHRINE_RADIUS,
   areaFlashAlpha,
   bodyGlyphLayout,
   decayAreaFlashes,
@@ -1067,6 +1068,12 @@ export class ArenaScene extends Phaser.Scene {
       return;
     }
     g.clear();
+    // Each team's resurrection shrine (#1199): a ring in its side's colour,
+    // under the wards, whether its priest stands or not.
+    for (const shrine of this.snapshot.shrines) {
+      g.lineStyle(2, teamColour(shrine.side), 0.7);
+      g.strokeCircle(shrine.position.x, shrine.position.y, SHRINE_RADIUS);
+    }
     const seen = new Set<number>();
     for (const effect of this.snapshot.groundEffects) {
       seen.add(effect.id);

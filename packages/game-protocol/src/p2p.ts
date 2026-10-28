@@ -307,6 +307,8 @@ export interface WirePlayer {
    * or a dummy. A creature's `name` is its kind's, and its professions are `null`.
    */
   readonly creature: WireCreature | null;
+  /** A lobby's bot plays it (#1193), not a peer. */
+  readonly bot: boolean;
 }
 
 /** What makes a body a creature (#1052). */
@@ -734,6 +736,8 @@ export interface WireLobbyPlayer {
   /** The host's own player: the one who picks the map and starts. */
   readonly isHost: boolean;
   readonly character: WireLobbyCharacter | null;
+  /** A bot the host added (#1193): no peer, always ready, never the host. */
+  readonly bot: boolean;
 }
 
 /** Lobby host to every peer, on every change: the whole lobby, not a delta. */
@@ -758,7 +762,10 @@ export type WireLobbyCommand =
   | { readonly kind: "choose-team"; readonly team: 0 | 1 | null }
   | { readonly kind: "ready"; readonly ready: boolean }
   | { readonly kind: "select-map"; readonly mapId: string }
-  | { readonly kind: "start" };
+  | { readonly kind: "start" }
+  /** Host only (#1193): a bot playing `profession`'s starter build, a `ProfessionId`. */
+  | { readonly kind: "add-bot"; readonly team: 0 | 1; readonly profession: string }
+  | { readonly kind: "remove-bot"; readonly botId: string };
 
 /** Lobby host to one peer: a start it turned down, or a member it turned away. */
 export interface WireLobbyNote {
@@ -781,6 +788,10 @@ export const LOBBY_REFUSALS = [
   "not-admitted",
   "ticket-used",
   "fell-through",
+  // A bot command (#1193) from anyone but the host; one naming no bot or
+  // no starter profession, or sent in a queued lobby.
+  "not-host",
+  "invalid-bot",
 ] as const;
 
 export type LobbyRefusal = (typeof LOBBY_REFUSALS)[number];
@@ -1198,7 +1209,8 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
     !isNumber(raw.swingTotal) ||
     !isNumber(raw.knockdownRemaining) ||
     !isPips(raw.healthPips) ||
-    !isPips(raw.energyPips)
+    !isPips(raw.energyPips) ||
+    typeof raw.bot !== "boolean"
   ) {
     return undefined;
   }
@@ -1239,6 +1251,7 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
         energyPips: raw.energyPips,
         statuses,
         creature,
+        bot: raw.bot,
       };
 }
 
@@ -1799,8 +1812,17 @@ function parseLobbyPlayer(value: unknown): WireLobbyPlayer | undefined {
     team !== undefined &&
     typeof raw.ready === "boolean" &&
     typeof raw.isHost === "boolean" &&
-    character !== undefined
-    ? { id: raw.id, name: raw.name, team, ready: raw.ready, isHost: raw.isHost, character }
+    character !== undefined &&
+    typeof raw.bot === "boolean"
+    ? {
+        id: raw.id,
+        name: raw.name,
+        team,
+        ready: raw.ready,
+        isHost: raw.isHost,
+        character,
+        bot: raw.bot,
+      }
     : undefined;
 }
 
@@ -1846,6 +1868,12 @@ export function parseWireLobbyCommand(value: unknown): WireLobbyCommand | undefi
       return isString(raw.mapId) ? { kind: "select-map", mapId: raw.mapId } : undefined;
     case "start":
       return { kind: "start" };
+    case "add-bot":
+      return isTeam(raw.team) && isString(raw.profession)
+        ? { kind: "add-bot", team: raw.team, profession: raw.profession }
+        : undefined;
+    case "remove-bot":
+      return isString(raw.botId) ? { kind: "remove-bot", botId: raw.botId } : undefined;
     default:
       return undefined;
   }

@@ -38,6 +38,7 @@ function player(sessionId: string, knockdownRemaining: number): PlayerSnapshot {
     healthPips: 0,
     energyPips: 0,
     creature: undefined,
+    bot: false,
     statuses: [],
   };
 }
@@ -61,7 +62,7 @@ function match(players: readonly PlayerSnapshot[]): MatchSnapshot {
 
 describe("toArenaSnapshot", () => {
   it("lays a body down while its knockdown lasts, and stands it up at 0 (#545)", () => {
-    const arena = toArenaSnapshot(match([player("me", 0), player("down", 2.5)]), []);
+    const arena = toArenaSnapshot(match([player("me", 0), player("down", 2.5)]), [], []);
     expect(arena.actors.map((actor) => [actor.id, actor.knockedDown])).toEqual([
       ["me", false],
       ["down", true],
@@ -79,7 +80,7 @@ describe("toArenaSnapshot", () => {
         armedAttack: null,
       },
     };
-    const arena = toArenaSnapshot(match([player("me", 0), minion]), []);
+    const arena = toArenaSnapshot(match([player("me", 0), minion]), [], []);
     expect(arena.actors.map((actor) => actor.radius)).toEqual([
       MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius,
       MINIMAL_GW_INSPIRED_PVP_V1.collision.creatureRadius,
@@ -101,7 +102,7 @@ describe("toArenaSnapshot", () => {
         armedAttack: null,
       },
     }));
-    const arena = toArenaSnapshot(match([player("me", 0), ...creatures]), []);
+    const arena = toArenaSnapshot(match([player("me", 0), ...creatures]), [], []);
     expect(arena.actors.map((actor) => actor.creatureLook)).toEqual([undefined, ...CREATURE_LOOKS]);
   });
 
@@ -119,7 +120,7 @@ describe("toArenaSnapshot", () => {
       dead: true,
       statuses: [status("armor-boost"), status("backfire")],
     };
-    const arena = toArenaSnapshot(match([enchanted, hexed, dead]), []);
+    const arena = toArenaSnapshot(match([enchanted, hexed, dead]), [], []);
     expect(arena.actors.map((actor) => [actor.id, actor.enchanted, actor.hexed])).toEqual([
       ["enchanted", true, false],
       ["hexed", false, true],
@@ -136,7 +137,7 @@ describe("toArenaSnapshot", () => {
     };
     const alive = { ...player("alive", 0), statuses: [burning] };
     const dead = { ...player("dead", 0), dead: true, statuses: [burning] };
-    const arena = toArenaSnapshot(match([alive, dead]), []);
+    const arena = toArenaSnapshot(match([alive, dead]), [], []);
     expect(arena.actors.map((actor) => [actor.id, actor.conditionCues])).toEqual([
       ["alive", ["burning"]],
       ["dead", []],
@@ -157,6 +158,7 @@ describe("toArenaSnapshot", () => {
         casting("unknown", "nobody.no-such-skill", 2),
         player("idle", 0),
       ]),
+      [],
       [],
     );
     expect(arena.actors.map((actor) => [actor.id, actor.castType])).toEqual([

@@ -272,9 +272,20 @@ export function toRenderableGroundEffect(
   };
 }
 
+/** How far a shrine's ring reaches round it, world units (#1199). */
+export const SHRINE_RADIUS = 40;
+
+/** A team's resurrection shrine on the ground (#1199), in its side's colour. */
+export interface RenderableShrine {
+  readonly position: Vec2;
+  readonly side: "ally" | "enemy";
+}
+
 export interface ArenaSnapshot {
   readonly actors: readonly RenderableActor[];
   readonly walls: readonly RenderableWall[];
+  /** The map's resurrection shrines (#1199), their priests alive or not. */
+  readonly shrines: readonly RenderableShrine[];
   readonly targetId: string | undefined;
   /** Weapon shots in flight (#161). */
   readonly projectiles: readonly RenderableProjectile[];
@@ -295,6 +306,7 @@ export interface ArenaSnapshot {
 export const EMPTY_SNAPSHOT: ArenaSnapshot = {
   actors: [],
   walls: [],
+  shrines: [],
   targetId: undefined,
   projectiles: [],
   groundEffects: [],

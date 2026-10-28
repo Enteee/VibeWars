@@ -702,6 +702,8 @@ export class MatchSimulation {
    * still in the standing, wiped, rather than gone.
    */
   readonly #teams = new Set<number>();
+  /** Each team's called foe (#443), which its bots fight (#1193). */
+  readonly #calledTargets = new Map<number, string>();
   #projectiles: Projectile[] = [];
   #nextProjectileId = 1;
 
@@ -1736,6 +1738,18 @@ export class MatchSimulation {
   }
 
   /**
+   * The foe `team` called (#443), or none: its bots fight that one while
+   * it lives (#1193). The match host says so whenever the call changes.
+   */
+  public setCalledTarget(team: number, targetId: string | undefined): void {
+    if (targetId === undefined) {
+      this.#calledTargets.delete(team);
+    } else {
+      this.#calledTargets.set(team, targetId);
+    }
+  }
+
+  /**
    * Begin casting the skill in `slot`, if every activation rule passes.
    *
    * The whole validation gate lives in `canActivate`; this method only
@@ -2442,6 +2456,7 @@ export class MatchSimulation {
       },
       isBot: (participantId) =>
         this.#participants.get(participantId)?.behaviour?.kind === "play-build",
+      calledTargetId: this.#calledTargets.get(record.combatant.team),
     });
     this.setInputDirection(record.id, intent.moveDirection);
     const following = record.followGoal !== undefined;

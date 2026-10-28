@@ -321,6 +321,7 @@ describe("auto-attack", () => {
         stepUnits: STEP,
         check: () => ({ ok: false, reason: "skill-not-on-bar" }),
         isBot: () => false,
+        calledTargetId: undefined,
       },
     );
     expect(intent.attackTargetId).toBe("first");
@@ -370,6 +371,7 @@ describe("follow-and-attack (#467)", () => {
       stepUnits: STEP,
       check: () => ({ ok: false, reason: "skill-not-on-bar" }),
       isBot: () => false,
+      calledTargetId: undefined,
     });
   }
 

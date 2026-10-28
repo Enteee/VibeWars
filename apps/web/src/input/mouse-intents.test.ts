@@ -49,6 +49,7 @@ function player(sessionId: string, team: number, x: number): PlayerSnapshot {
     healthPips: 0,
     energyPips: 0,
     creature: undefined,
+    bot: false,
     statuses: [],
   };
 }

@@ -13,9 +13,15 @@ import {
 } from "@vibewars/game-protocol";
 import { describe, expect, it, vi } from "vitest";
 
-import { RULESET, WEAPON_SWAPS_PER_SECOND, WEAPON_SWAP_BURST } from "./match-host.js";
+import {
+  RULESET,
+  WEAPON_SWAPS_PER_SECOND,
+  WEAPON_SWAP_BURST,
+  type PlannedSeats,
+} from "./match-host.js";
 import {
   ARENA,
+  answerChallenges,
   hello,
   playerIn,
   self,
@@ -24,7 +30,11 @@ import {
   starterBuild,
   toJson,
 } from "./match-harness.test-support.js";
+import type { MatchSnapshot } from "./match-connection.js";
 import { MAX_MESSAGE_BYTES, messageBytes } from "./transport.js";
+
+/** One entry of a lobby's plan. */
+type PlannedSeat = NonNullable<ReturnType<PlannedSeats["get"]>>;
 
 describe("a P2P match (#375)", () => {
   it("seats remote players and the host's own, and moves them", async () => {
@@ -315,5 +325,111 @@ describe("pet orders (#1110)", () => {
     await match.step(TICK);
     expect(playerIn(owner.getSnapshot(), heel.creatureId)?.creature?.mode).toBe("heel");
     expect(playerIn(other.getSnapshot(), heel.creatureId)?.creature?.mode).toBe("heel");
+  });
+});
+
+describe("a lobby's bots (#1193)", () => {
+  const TICK = 1 / RULESET.tickRateHz;
+  /** A bot's planned seat, keyed by its name as a lobby keys it by its id. */
+  const bot = (team: 0 | 1, name: string, build: string) =>
+    [name, { team, name, bot: starterBuild(build) }] as const;
+  const human = (team: 0 | 1) => ["host/local", { team, name: "Me", bot: null }] as const;
+  const named = (snapshot: MatchSnapshot, name: string) =>
+    snapshot.players.find((player) => player.name === name);
+
+  it("seats a bot at once, on its team, and it casts at a foe in range within 10 s", async () => {
+    const match = startMatch({
+      seats: new Map<string, PlannedSeat>([
+        bot(1, "Elementalist Bot", "Elementalist/Mesmer"),
+        human(0),
+      ]),
+    });
+    const local = await match.joinLocal();
+    await match.step(TICK);
+    expect(named(local.getSnapshot(), "Elementalist Bot")).toMatchObject({ team: 1, bot: true });
+    expect(self(local)?.bot).toBe(false);
+    let cast: string | undefined;
+    for (let t = 0; t < 10 && cast === undefined; t += 0.1) {
+      await match.step(0.1);
+      cast = named(local.getSnapshot(), "Elementalist Bot")?.castingSkillId;
+    }
+    expect(cast).toBeDefined();
+  });
+
+  it("lets no peer play a bot's seat, even one calling itself by the bot's id", async () => {
+    const match = startMatch({
+      seats: new Map<string, PlannedSeat>([bot(1, "Warrior Bot", "Warrior/Monk"), human(0)]),
+    });
+    const local = await match.joinLocal();
+    const intruder = match.network.join("Warrior Bot");
+    const refused: unknown[] = [];
+    intruder.on("refuse", (data) => refused.push(data));
+    await settle();
+    intruder.send("hello", hello(), "host");
+    await settle();
+    expect(refused).toHaveLength(1);
+    await match.step(TICK);
+    const before = named(local.getSnapshot(), "Warrior Bot")?.y;
+    for (let i = 0; i < 10; i += 1) {
+      intruder.send("intent", { kind: "move", dirX: 0, dirY: 1 }, "host");
+      await match.step(TICK);
+    }
+    // It walks to its foe, level with it: never down, as the intent asked.
+    expect(named(local.getSnapshot(), "Warrior Bot")?.y).toBeCloseTo(before ?? Number.NaN, 0);
+  });
+
+  it("never asks a peer to prove itself for a bot's seat, which has no token", async () => {
+    const match = startMatch({
+      seats: new Map<string, PlannedSeat>([bot(1, "Warrior Bot", "Warrior/Monk"), human(0)]),
+    });
+    const local = await match.joinLocal();
+    await match.step(TICK);
+    const playerId = named(local.getSnapshot(), "Warrior Bot")?.sessionId ?? "";
+    const intruder = match.network.join("Warrior Bot");
+    const challenges: unknown[] = [];
+    intruder.on("rejoin-challenge", (data) => challenges.push(data));
+    answerChallenges(intruder, "");
+    await settle();
+    intruder.send("hello", hello({ rejoin: { playerId } }), "host");
+    await match.step(0.3);
+    expect(challenges).toEqual([]);
+    expect(named(local.getSnapshot(), "Warrior Bot")?.bot).toBe(true);
+  });
+
+  it("is not abandoned for bots that never say hello, even with nobody else seated", async () => {
+    const match = startMatch({
+      seats: new Map<string, PlannedSeat>([
+        bot(0, "Monk Bot", "Monk/Elementalist"),
+        bot(1, "Ranger Bot", "Ranger/Mesmer"),
+      ]),
+    });
+    await match.step(1);
+    expect(match.host.abandoned).toBe(false);
+    expect(match.host.phase).toBe("active");
+  });
+
+  it("fights the foe its team called", async () => {
+    const match = startMatch({
+      seats: new Map<string, PlannedSeat>([
+        bot(1, "Elementalist Bot", "Elementalist/Mesmer"),
+        human(1),
+        bot(0, "Warrior Bot", "Warrior/Monk"),
+        bot(0, "Monk Bot", "Monk/Elementalist"),
+      ]),
+    });
+    const local = await match.joinLocal();
+    await match.step(0.5);
+    const targetOf = () => named(local.getSnapshot(), "Elementalist Bot")?.targetSessionId;
+    const warrior = named(local.getSnapshot(), "Warrior Bot")?.sessionId;
+    const monk = named(local.getSnapshot(), "Monk Bot")?.sessionId ?? "";
+    // The nearer of two whole foes, before any call.
+    expect(targetOf()).toBe(warrior);
+    local.sendCall({ kind: "target", targetId: monk });
+    await settle();
+    // Once the cast under way, if any, is done.
+    for (let t = 0; t < 5 && targetOf() !== monk; t += 0.1) {
+      await match.step(0.1);
+    }
+    expect(targetOf()).toBe(monk);
   });
 });
