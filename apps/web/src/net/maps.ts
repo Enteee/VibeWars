@@ -1,5 +1,5 @@
 import { allWallSegments } from "@vibewars/game-maps/geometry";
-import { validateMapData, type MapData } from "@vibewars/game-maps/schema";
+import { validateMapData, type MapData, type Objective } from "@vibewars/game-maps/schema";
 import { sizeClass, type SizeClass } from "@vibewars/game-maps/size-class";
 import arenaAlpha from "@vibewars/game-maps/maps/arena-alpha/map.json" with { type: "json" };
 import arenaCanyon from "@vibewars/game-maps/maps/arena-canyon/map.json" with { type: "json" };
@@ -9,7 +9,7 @@ import arenaOpen from "@vibewars/game-maps/maps/arena-open/map.json" with { type
 import arenaPillars from "@vibewars/game-maps/maps/arena-pillars/map.json" with { type: "json" };
 import arenaRing from "@vibewars/game-maps/maps/arena-ring/map.json" with { type: "json" };
 import arenaSplit from "@vibewars/game-maps/maps/arena-split/map.json" with { type: "json" };
-import type { MatchMode } from "@vibewars/game-core";
+import type { MatchMode, Vec2 } from "@vibewars/game-core";
 import { teamSizeOf, type QueueMode } from "@vibewars/game-protocol";
 import type { HostMap } from "@vibewars/game-session";
 import { TRAINING_MAPS } from "../training/maps.js";
@@ -82,6 +82,33 @@ export function mapMode(mapId: string): MatchMode {
   );
 }
 
+/**
+ * The resurrection shrines on `mapId` (#1199), from the same map file the
+ * host plays it by, as `mapMode` reads the mode: none on a map without
+ * them, or one this build does not have.
+ */
+export function mapShrines(mapId: string): readonly MapShrine[] {
+  const map = ARENA_MAPS.find((candidate) => candidate.id === mapId) ?? TRAINING_MAPS.get(mapId);
+  return shrinesOf(map?.objectives ?? []);
+}
+
+/**
+ * The resurrection shrines among a map's objectives. The only kind so far,
+ * so the parameter's type is the check: a second kind fails to compile
+ * here until it is filtered out, not drawn as a shrine.
+ */
+function shrinesOf(
+  objectives: readonly Extract<Objective, { kind: "resurrection-shrine" }>[],
+): readonly MapShrine[] {
+  return objectives.map(({ team, position }) => ({ team, position }));
+}
+
+/** A team's resurrection shrine (#1186), where its priest stands. */
+export interface MapShrine {
+  readonly team: number;
+  readonly position: Vec2;
+}
+
 /** The map `mapId` names, built for a `MatchHost`; `undefined` for no such map. */
 export function hostMap(mapId: string): HostMap | undefined {
   const map = ARENA_MAPS.find((candidate) => candidate.id === mapId);
@@ -104,6 +131,6 @@ export function hostMap(mapId: string): HostMap | undefined {
     walls: allWallSegments(map.walls),
     bounds: { width: map.width, height: map.height },
     spawns: map.spawnPoints,
-    shrines: map.objectives.map(({ team, position }) => ({ team, position })),
+    shrines: shrinesOf(map.objectives),
   };
 }
