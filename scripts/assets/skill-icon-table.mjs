@@ -176,6 +176,11 @@ export const SKILL_ICONS = {
   "monk.smite-hex": { glyph: "cleanse", modifier: "area" },
   // A placeholder: every condition removed; no modifier says "all" (#987).
   "monk.restore-condition": { glyph: "cleanse", modifier: "stun" },
+  // Placeholders until the asset-designer's (#1039).
+  "monk.cure-hex": { glyph: "cleanse", modifier: "clock" },
+  "monk.smite-condition": { glyph: "cleanse", modifier: "upkeep" },
+  "monk.mending-touch": { glyph: "plaster", modifier: "less" },
+  "monk.vigorous-spirit": { glyph: "sword-heal", modifier: "clock" },
   "paragon.spear-of-lightning": { glyph: "spear-bolt" },
   "paragon.never-surrender": { glyph: "banner", modifier: "area" },
   "paragon.leaders-comfort": { glyph: "banner-cross", modifier: "self" },
@@ -184,11 +189,10 @@ export const SKILL_ICONS = {
   "necromancer.insidious-parasite": { glyph: "chain", modifier: "self" },
   "necromancer.mark-of-pain": { glyph: "hammer", modifier: "area" },
   "necromancer.vampiric-gaze": { glyph: "heal", modifier: "bleed" },
-  // Placeholders until asset-designer's icons (#988).
-  "assassin.deaths-charge": { glyph: "dash", modifier: "stun" },
-  "assassin.shadow-refuge": { glyph: "plaster", modifier: "clock" },
-  "assassin.shroud-of-distress": { glyph: "armor", modifier: "stun" },
-  "assassin.critical-eye": { glyph: "dagger", modifier: "hourglass" },
+  "assassin.deaths-charge": { glyph: "dash", modifier: "plus" },
+  "assassin.shadow-refuge": { glyph: "crescent", modifier: "plus" },
+  "assassin.shroud-of-distress": { glyph: "armor-half" },
+  "assassin.critical-eye": { glyph: "eye" },
   // Placeholders until the asset-designer's (#1064).
   "ranger.winnowing": { glyph: "blade-plus", modifier: "area" },
   "ritualist.recuperation": { glyph: "plaster", modifier: "hourglass" },

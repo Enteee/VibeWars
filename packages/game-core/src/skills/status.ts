@@ -30,7 +30,13 @@ import { AREA_ADJACENT, AREA_IN_THE_AREA, AREA_NEARBY } from "../distances.js";
 import type { DamageType } from "../equipment/types.js";
 import { wieldsFor, type WeaponId } from "../equipment/weapons.js";
 import type { ProfessionId } from "../professions.js";
-import type { AttackWeaponClass, Combatant, DamageEffect, SkillEffect } from "./types.js";
+import type {
+  AttackWeaponClass,
+  Combatant,
+  DamageEffect,
+  HealEffect,
+  SkillEffect,
+} from "./types.js";
 
 export type StatusCategory =
   | "condition"
@@ -94,6 +100,7 @@ export type StatusId =
   | "shadow-refuge"
   | "shroud-of-distress"
   | "reversal-of-fortune"
+  | "vigorous-spirit"
   // Stances.
   | "sprint"
   | "dash"
@@ -630,6 +637,16 @@ const SPITEFUL_SPIRIT_DAMAGE: DamageEffect = {
   type: "shadow",
   armorPenetration: 0,
 };
+/**
+ * Vigorous Spirit's heal, each time its bearer attacks or casts a spell:
+ * scaled by its caster's Healing Prayers, as the trigger's caster is the
+ * status's source.
+ */
+const VIGOROUS_SPIRIT_HEAL: HealEffect = {
+  kind: "heal",
+  amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 5, atTwelve: 17 } },
+  perStatusOnTarget: [],
+};
 
 export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = {
   bleeding: define("bleeding", "Bleeding", "condition", { healthPips: -3 }),
@@ -902,6 +919,17 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   "reversal-of-fortune": define("reversal-of-fortune", "Reversal of Fortune", "enchantment", {
     profession: "monk",
     reversesNextDamage: 67,
+  }),
+  // "For 30 seconds, each time target ally attacks or casts a spell,
+  // that ally is healed for 5...17...20 health", at the caster's rank.
+  "vigorous-spirit": define("vigorous-spirit", "Vigorous Spirit", "enchantment", {
+    profession: "monk",
+    triggers: (["bearer-attacks", "bearer-casts-spell"] as const).map((on) => ({
+      on,
+      effects: [VIGOROUS_SPIRIT_HEAL],
+      target: "bearer",
+      skillId: "monk.vigorous-spirit",
+    })),
   }),
 
   sprint: define("sprint", "Sprint", "stance", {

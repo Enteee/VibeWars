@@ -483,6 +483,14 @@ const status = {
     "enchantment",
     (c) => `<path d="M8 6v7a4 4 0 0 0 8 0V8M13 11l3-3 3 3" ${stroke(c, 2.2)}/>`,
   ],
+  // Enchantment: a plus thrown up by two strokes, healed on each attack
+  // or spell (#1039).
+  "vigorous-spirit": [
+    "enchantment",
+    (c) =>
+      `<path d="M12 5v8M8 9h8" ${stroke(c, 2.5)}/>` +
+      `<path d="M6.5 18.5l3-3M17.5 18.5l-3-3" ${stroke(c, 2)}/>`,
+  ],
   // Shout: an arrow turning back, run and be healed for it (#921).
   "fall-back": ["shout", (c) => `<path d="M17 12H7.5M11 8l-4 4 4 4" ${stroke(c, 2.5)}/>`],
   // Shout: a shield planted on the ground, armor while you stand (#921).
@@ -1090,12 +1098,24 @@ const skillGlyph = {
     ),
   // A rough boulder: a stone thrown (#1007).
   rock: () => inkFill("M5 8L10 3.5L17 4.5L21 10L19 17L12 20.5L5.5 17.5L3.5 12Z"),
+  // A crescent: shadow, the cover an assassin heals in (#1001).
+  crescent: () => inkFill("M15 3A9 9 0 1 0 15 21A11 11 0 0 1 15 3Z"),
+  // A shield hollow above, filled below: it holds when Health is low (#1001).
+  "armor-half": () =>
+    `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2)}/>` +
+    inkFill("M4 13H20C19 17 16 19.5 12 21.5C8 19.5 5 17 4 13Z"),
+  // An open eye: it sees the weak spot (#1001).
+  eye: () =>
+    `<path d="M2.5 12C5 7.5 8.5 5.5 12 5.5S19 7.5 21.5 12C19 16.5 15.5 18.5 12 18.5S5 16.5 2.5 12Z" ${stroke(C.ink, 2.2)}/>` +
+    `<circle cx="12" cy="12" r="3.4" fill="${C.ink}"/>`,
 };
 
 /** Modifiers, drawn around the bottom right corner on a dark disc. */
 const skillModifier = {
   up: () => inkLine("M19 21V15M16.5 17.5L19 15L21.5 17.5", 1.7),
   down: () => inkLine("M19 15V21M16.5 18.5L19 21L21.5 18.5", 1.7),
+  // A plus: it heals as it works (#996).
+  plus: () => inkLine("M19 15.4V20.6M16.4 18H21.6", 1.7),
   // A half disc: below half Health (#1036).
   half: () =>
     `<circle cx="19" cy="18" r="3.4" ${stroke(C.ink, 1.5)}/><path d="M19 18H15.6A3.4 3.4 0 0 0 22.4 18Z" fill="${C.ink}"/>`,

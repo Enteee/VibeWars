@@ -46,7 +46,11 @@ test("a maintained enchantment has no bar, its hover says maintained, costs you 
   await page.getByRole("button", { name: "new character" }).click();
   await chooseProfession(page, "primary", "monk");
   await page.locator("input.editor-name").fill("Mender");
-  await page.locator(".skill-box", { hasText: "Mending" }).locator(".skill-box-equip").click();
+  // Exactly Mending: Mending Touch is a Monk skill too (#1039).
+  await page
+    .locator(".skill-box", { has: page.locator(".skill-box-name", { hasText: /^Mending$/ }) })
+    .locator(".skill-box-equip")
+    .click();
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await page.locator(".roster").getByText("Mender", { exact: true }).click();
   await startSoloMatch(page);
