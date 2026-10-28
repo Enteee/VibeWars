@@ -69,12 +69,18 @@ describe("skill catalog integrity", () => {
     }
   });
 
-  it("leaves a ground effect from a ward, and only from a ward (#1087)", () => {
+  it("leaves a ground effect from a ward or a trap, and only from those (#1087, #1105)", () => {
     const wards = IMPLEMENTED_SKILLS.filter((skill) => skill.type === "ward");
+    const traps = IMPLEMENTED_SKILLS.filter((skill) => skill.type === "trap");
     expect(wards.length).toBeGreaterThan(0);
+    expect(traps.length).toBeGreaterThan(0);
     for (const skill of IMPLEMENTED_SKILLS) {
-      const grounds = skill.effects.filter((effect) => effect.kind === "create-ground-effect");
-      expect(grounds.length > 0, skill.id).toBe(skill.type === "ward");
+      const grounds = skill.effects.flatMap((effect) =>
+        effect.kind === "create-ground-effect" ? [effect.act.kind] : [],
+      );
+      expect(grounds, skill.id).toEqual(
+        skill.type === "ward" ? ["aura"] : skill.type === "trap" ? ["trap"] : [],
+      );
     }
   });
 

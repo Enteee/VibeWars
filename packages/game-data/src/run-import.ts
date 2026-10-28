@@ -809,6 +809,11 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Ranger/81-Comfort_Animal",
   },
   {
+    id: "ranger.barbed-trap",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/123-Barbed_Trap",
+  },
+  {
     id: "monk.patient-spirit",
     profession: "monk",
     url: "https://www.gw-memorial.net/skills/Monk/1158-Patient_Spirit",

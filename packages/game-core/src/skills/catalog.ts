@@ -6145,7 +6145,66 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         durationSeconds: {
           scaling: { attributeId: "elementalist.earth-magic", atZero: 5, atTwelve: 17 },
         },
-        aura: { statusId: "ward-against-melee", affects: "allies", radius: AREA_IN_THE_AREA },
+        act: {
+          kind: "aura",
+          aura: { statusId: "ward-against-melee", affects: "allies", radius: AREA_IN_THE_AREA },
+        },
+      },
+    ],
+  },
+  {
+    id: "ranger.barbed-trap",
+    name: "Barbed Trap",
+    type: "trap",
+    elite: false,
+    profession: "ranger",
+    attributeId: "ranger.wilderness-survival",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    companion: undefined,
+    // PvP: "When Barbed Trap is triggered, all nearby foes are struck for
+    // 7...20...23 piercing damage, become Crippled, and begin Bleeding for
+    // 3...21...25 seconds. Barbed Trap ends after 90 seconds" (#1105): the
+    // conditions last 21 s, their rank-12 value.
+    effects: [
+      {
+        kind: "create-ground-effect",
+        anchor: "caster",
+        durationSeconds: { flat: 90 },
+        act: {
+          kind: "trap",
+          trap: {
+            triggerRadius: AREA_ADJACENT,
+            area: {
+              radius: AREA_NEARBY,
+              origin: "caster",
+              affects: "enemies",
+              maxTargets: undefined,
+              includesCaster: false,
+            },
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "ranger.wilderness-survival", atZero: 7, atTwelve: 20 },
+                },
+                type: "piercing",
+                armorPenetration: 0,
+              },
+              { kind: "apply-status", statusId: "crippled", durationSeconds: 21 },
+              { kind: "apply-status", statusId: "bleeding", durationSeconds: 21 },
+            ],
+          },
+        },
       },
     ],
   },

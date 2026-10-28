@@ -54,6 +54,7 @@ function match(players: readonly PlayerSnapshot[]): MatchSnapshot {
     endReason: undefined,
     projectiles: [],
     groundEffects: [],
+    traps: [],
     summary: undefined,
   };
 }

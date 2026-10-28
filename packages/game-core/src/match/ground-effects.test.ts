@@ -66,7 +66,10 @@ function testWard(id: string, affects: Aura["affects"], seconds: number): string
         kind: "create-ground-effect",
         anchor: "caster",
         durationSeconds: { flat: seconds },
-        aura: { statusId: "ward-against-melee", affects, radius: AREA_IN_THE_AREA },
+        act: {
+          kind: "aura",
+          aura: { statusId: "ward-against-melee", affects, radius: AREA_IN_THE_AREA },
+        },
       },
     ],
   });
@@ -167,7 +170,7 @@ describe("Ward Against Melee (#1087)", () => {
       position: vec2(0, 0),
       durationSeconds: 17,
     });
-    expect(ward?.aura.radius).toBe(AREA_IN_THE_AREA);
+    expect(ward?.act).toMatchObject({ kind: "aura", aura: { radius: AREA_IN_THE_AREA } });
   });
 
   it("is worn by an ally at its edge, not one a unit past it, nor a foe inside it", () => {

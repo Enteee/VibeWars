@@ -70,6 +70,7 @@ function snapshot(
     endReason: over.finished === undefined ? undefined : "score",
     projectiles: [],
     groundEffects: [],
+    traps: [],
     summary: undefined,
   };
 }
