@@ -474,6 +474,14 @@ const status = {
     "enchantment",
     (c) => `<path d="M8 6v7a4 4 0 0 0 8 0V8M13 11l3-3 3 3" ${stroke(c, 2.2)}/>`,
   ],
+  // Enchantment: a plus thrown up by two strokes, healed on each attack
+  // or spell (#1039).
+  "vigorous-spirit": [
+    "enchantment",
+    (c) =>
+      `<path d="M12 5v8M8 9h8" ${stroke(c, 2.5)}/>` +
+      `<path d="M6.5 18.5l3-3M17.5 18.5l-3-3" ${stroke(c, 2)}/>`,
+  ],
   // Shout: an arrow turning back, run and be healed for it (#921).
   "fall-back": ["shout", (c) => `<path d="M17 12H7.5M11 8l-4 4 4 4" ${stroke(c, 2.5)}/>`],
   // Shout: a shield planted on the ground, armor while you stand (#921).
@@ -543,7 +551,8 @@ const status = {
     "weapon-spell",
     (c) =>
       `<path d="M10 4.5v10M6.5 14.5h7M10 14.5v4" ${stroke(c, 2.5)}/>` +
-      `<path d="M17 5.5c-1.8 2.4-2.5 3.6-2.5 4.6a2.5 2.5 0 0 0 5 0c0-1-.7-2.2-2.5-4.6z" fill="${c}"/>`,
+      `<path d="M17 4.5c-1.8 2.4-2.5 3.6-2.5 4.6a2.5 2.5 0 0 0 5 0c0-1-.7-2.2-2.5-4.6z" ${stroke(c, 1.5)}/>` +
+      `<path d="M13.5 4L20.5 11.5" ${stroke(c, 1.6)}/>`,
   ],
   // Weapon spell: a blade and a hook turning back, steals from who hurt it (#1022).
   "vengeful-weapon": [
@@ -557,7 +566,7 @@ const status = {
     "weapon-spell",
     (c) =>
       `<path d="M10 4.5v10M6.5 14.5h7M10 14.5v4" ${stroke(c, 2.5)}/>` +
-      `<path d="M15 6l4-2M15 9h5M15 12l4 2" ${stroke(c, 1.8)}/>`,
+      `<path d="M14 4.5l3.5-1-.5 3zM18 7.5l3.5-1-1 3.5zM14.5 10.5l3.5-.5-1 3z" fill="${c}"/>`,
   ],
   // Shout: a plus with a chevron rising over it, regeneration called for (#923).
   "never-surrender": [
@@ -927,6 +936,39 @@ const skillGlyph = {
     bladeMark(inkLine("M11 6.5A3.5 3.5 0 1 0 8.5 11.5M8.5 11.5L10.5 12M8.5 11.5L9 9.5", 1.8)),
   "blade-fast": () =>
     bladeMark(inkLine("M3.5 5.5L6.5 8.5L3.5 11.5M7.5 5.5L10.5 8.5L7.5 11.5", 1.8)),
+  // A blade with a drop struck through above it: a weapon spell that cleanses (#1048).
+  "blade-cleanse": () =>
+    bladeMark(
+      `<path d="M8 3C8 3 4.5 7 4.5 9.2A3.5 3.5 0 0 0 11.5 9.2C11.5 7 8 3 8 3Z" ${stroke(C.ink, 1.5)}/>` +
+        inkLine("M3.5 3.5L12 12", 1.6),
+    ),
+  // A blade with a hook turning back above it: a weapon spell that hits back at the attacker (#1048).
+  "blade-hook": () =>
+    bladeMark(inkLine("M11.5 4.5H8a2.5 2.5 0 0 0 0 5H10.5M6.5 3L5 4.5L6.5 6", 1.8)),
+  // A blade with shards flying off above it: a weapon spell that splinters (#1048).
+  "blade-shards": () => bladeMark(inkFill("M3 4L6 3L5.5 6ZM8 6L11 5L10 8.5ZM4 9L7 8.5L6 11.5Z")),
+  // A sword hilt with a plus on its grip: a weapon spell that mends (#1048).
+  hilt: () =>
+    inkLine("M5 9.5H19", 2.8) +
+    inkLine("M12 9.5V20.5", 4) +
+    inkFill("M12 2.5L15 6.5L12 8L9 6.5Z") +
+    `<path d="M12 12.5V17.5M9.5 15H14.5" stroke="${C.bg}" stroke-width="1.6" stroke-linecap="round" fill="none"/>`,
+  // A white-hot disc ringed by rays: a flash that blinds (#992).
+  flash: () =>
+    `<circle cx="12" cy="12" r="4.2" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
+    inkLine(
+      "M12 2.5V6M12 18V21.5M2.5 12H6M18 12H21.5M5.3 5.3L7.8 7.8M16.2 16.2L18.7 18.7M18.7 5.3L16.2 7.8M7.8 16.2L5.3 18.7",
+      2,
+    ),
+  // A cracked ground line with a ring of tremor above it (#992).
+  quake: () =>
+    inkLine("M2.5 17L7 15L10 19L13.5 14L17 18L21.5 15.5", 2.4) +
+    `<path d="M6.5 11A7 7 0 0 1 17.5 11M9.5 7.5A3.5 3.5 0 0 1 14.5 7.5" ${stroke(C.ink, 2)}/>`,
+  // A jagged rock dropping straight down onto the ground, streaks above it (#992).
+  meteor: () =>
+    inkFill("M6 10L10 6.5L15.5 8L17 13L13.5 17L8 16Z") +
+    inkLine("M8 3V5M12.5 1.5V4.5M16.5 3V6M3 11V13", 2) +
+    inkLine("M2.5 20.5H14M4.5 18.5L6 19.5", 2.2),
   // A scythe: a long haft, the blade curved over its top (#990).
   scythe: () =>
     inkLine("M7 21L16 6", 2.4) + inkFill("M16 6C12 2.5 7 3 3.5 6.5C8 5.5 11.5 6.5 14.5 9Z"),
@@ -1024,6 +1066,14 @@ const skillGlyph = {
     `<path d="M9.5 3H14.5M10.5 3V9L4.5 19Q3.5 21 6 21H18Q20.5 21 19.5 19L13.5 9V3" ${stroke(C.ink, 2)}/>` +
     inkFill("M7.5 15H16.5L19 19.5H5Z"),
   germ: () => germ(C.ink),
+  // A spear with barbs on its shaft: it hooks and bleeds (#1036).
+  "spear-barb": () =>
+    inkLine("M12 21V9", 2.4) +
+    inkFill("M12 2.5L16.5 10H7.5Z") +
+    inkLine("M12 18L7.5 14.5M12 14L16.5 10.5", 2),
+  // A spear with speed lines trailing it: a toss at a runner (#1036).
+  "spear-dash": () =>
+    inkLine("M15 21V9", 2.4) + inkFill("M15 2.5L19.5 10H10.5Z") + inkLine("M4 11V17M8 13V20", 2),
   // A shaft whose head is a burst: a shot that breaks a cast (#1018).
   "arrow-burst": () =>
     inkLine("M5 21L16 10", 2.2) +
@@ -1049,12 +1099,27 @@ const skillGlyph = {
     ),
   // A rough boulder: a stone thrown (#1007).
   rock: () => inkFill("M5 8L10 3.5L17 4.5L21 10L19 17L12 20.5L5.5 17.5L3.5 12Z"),
+  // A crescent: shadow, the cover an assassin heals in (#1001).
+  crescent: () => inkFill("M15 3A9 9 0 1 0 15 21A11 11 0 0 1 15 3Z"),
+  // A shield hollow above, filled below: it holds when Health is low (#1001).
+  "armor-half": () =>
+    `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2)}/>` +
+    inkFill("M4 13H20C19 17 16 19.5 12 21.5C8 19.5 5 17 4 13Z"),
+  // An open eye: it sees the weak spot (#1001).
+  eye: () =>
+    `<path d="M2.5 12C5 7.5 8.5 5.5 12 5.5S19 7.5 21.5 12C19 16.5 15.5 18.5 12 18.5S5 16.5 2.5 12Z" ${stroke(C.ink, 2.2)}/>` +
+    `<circle cx="12" cy="12" r="3.4" fill="${C.ink}"/>`,
 };
 
 /** Modifiers, drawn around the bottom right corner on a dark disc. */
 const skillModifier = {
   up: () => inkLine("M19 21V15M16.5 17.5L19 15L21.5 17.5", 1.7),
   down: () => inkLine("M19 15V21M16.5 18.5L19 21L21.5 18.5", 1.7),
+  // A plus: it heals as it works (#996).
+  plus: () => inkLine("M19 15.4V20.6M16.4 18H21.6", 1.7),
+  // A half disc: below half Health (#1036).
+  half: () =>
+    `<circle cx="19" cy="18" r="3.4" ${stroke(C.ink, 1.5)}/><path d="M19 18H15.6A3.4 3.4 0 0 0 22.4 18Z" fill="${C.ink}"/>`,
   // An energy bolt: it takes energy (#1018).
   bolt: () => inkFill("M20 14.2L16.4 18.4H19L18.2 21.8L22 17.4H19.4Z"),
   less: () => inkLine("M16.5 18H21.5", 2),

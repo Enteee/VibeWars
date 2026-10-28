@@ -15,6 +15,8 @@ export { ZERO, length, normalize, vec2 } from "./vec2.js";
 
 export { clampInputDirection, integrateMovement } from "./movement.js";
 
+export { AREA_EARSHOT, RANGE_COMPASS, RANGE_SPELL } from "./distances.js";
+
 export type { Segment } from "./geometry.js";
 export {
   buildNavGraph,

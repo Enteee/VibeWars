@@ -149,7 +149,7 @@ body {
   position: relative;
 }
 
-#viewport canvas {
+#viewport canvas:not(.compass) {
   display: block;
   width: 100%;
   height: 100%;
@@ -3827,11 +3827,10 @@ body:has(#app > .chat) .now-playing {
 }
 
 /*
- * The party window (#1055): your team's health, right middle, you first.
- * The dock spans the right edge; its spacers centre the panel on the
- * screen, but the top one never gets shorter than the compass's bottom
- * plus 8 px (#1056), so a long party starts under the compass instead and
- * scrolls past the bottom margin. Past 8 members the rows go compact.
+ * The compass (#486): GW1's radar, top right under the match buttons,
+ * centred on you, north up. A canvas `ui/compass.ts` draws; hidden keeps
+ * its box, so its size is there to read. Smaller on a narrow window, clear
+ * of the scoreboard.
  */
 :root {
   --compass-top: 5.8rem;
@@ -3844,6 +3843,30 @@ body:has(#app > .chat) .now-playing {
   }
 }
 
+.compass {
+  position: absolute;
+  top: var(--compass-top);
+  right: 0.9rem;
+  display: block;
+  width: var(--compass-size);
+  height: var(--compass-size);
+  background: rgb(22 27 34 / 85%);
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.compass[hidden] {
+  visibility: hidden;
+}
+
+/*
+ * The party window (#1055): your team's health, right middle, you first.
+ * The dock spans the right edge; its spacers centre the panel on the
+ * screen, but the top one never gets shorter than the compass's bottom
+ * plus 8 px (#1056), so a long party starts under the compass instead and
+ * scrolls past the bottom margin. Past 8 members the rows go compact.
+ */
 .party-dock {
   position: absolute;
   top: 0;

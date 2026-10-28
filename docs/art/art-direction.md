@@ -312,6 +312,30 @@ focus or the area flash.
   slow, and has its pin. Under the actors, as the walk marker is. Reduced
   motion: the ring holds at 6 units, whole, until the ping goes.
 
+### Compass
+
+GW1's radar (#486), top right under the match buttons: a disc 160 px
+across (120 px on a window under 1280 px wide), centred on you, north up,
+showing everything within 1700 units (`RANGE_COMPASS`). It never rotates,
+as the arena does not. A body beyond it is not on it: the edge markers
+(#440) give direction, the compass gives distance.
+
+- **Disc**: `panel` at 85 %, a 1 px `line` rim.
+- **Rings**: two 1 px `ink-dim` circles round you, the earshot (350,
+  solid) and cast range (420, dashed). Thin, dim and centred on you, so
+  neither reads as the target ring or an area flash.
+- **Walls**: 1 px `wall-stroke` outlines, clipped to the disc.
+- **Bodies**: 3 px dots, `friend` or `foe`, on a 1 px `edge` rim; you at
+  the centre with an `ink` rim, as in the arena, dead or not. A creature
+  (#1052) is a 2 px dot, so it never reads as a player. Corpses are not
+  shown.
+- **Your target**: a 1 px `target` ring 2 px outside its dot.
+- **The called foe**: a small `condition` chevron over its dot.
+- **Pings**: a 1 px `friend` ring growing from 3 to 10 px and fading over
+  the ping's life. Reduced motion: it holds at 3 px, whole.
+
+Clicking it does nothing. Spectators have none.
+
 ### Damage and heal numbers
 
 Above a body, the column is already full: the health bar at r + 8 … r + 12,
@@ -652,7 +676,7 @@ it, not baked in, so one file serves every screen.
 |          |                 | in full, its silhouette as a 20% watermark                                 |
 | Glyph    | Primary effect  | One shape from the table below, `ink` with a `bg` casing, in the box 3..21 |
 | Modifier | How it bends it | Bottom right, on a dark disc, `ink`: up, down, less, area, clock, stun,    |
-|          |                 | bleed, self, bolt                                                          |
+|          |                 | bleed, self, bolt, half, plus                                              |
 
 - **Shape first.** Glyph and modifier are `ink` only; the plate's hue is
   decoration, so every icon reads with the colour taken out.
@@ -669,8 +693,9 @@ it, not baked in, so one file serves every screen.
   axe, sword, hammer, spear, arrow, volley, interrupt (burst), speed (chevrons
   right), slow (chevrons left), dash, energy (bolt), mountain (earth), cleanse
   (drop, struck through), armor (shield), flask, flame, trident, hawk, rock,
-  arrow-burst, arrow-pierce, arrow-flame. A new primary effect adds a glyph; a
-  new skill adds a row.
+  arrow-burst, arrow-pierce, arrow-flame, crescent (shadow), armor-half (a
+  half-filled shield), eye, blade-cleanse, blade-hook, blade-shards, hilt. A
+  new primary effect adds a glyph; a new skill adds a row.
 
 ### Skill slot states
 
