@@ -608,6 +608,7 @@ export async function startMatchView(
       connection.getAdrenalineLossIn(),
       (targetId) => connection.getChainMark(targetId),
       wallSegments,
+      connection.timeLimitSeconds,
       latestMatch,
     );
     updateRecharges(hud, connection.skillBar, connection.getRecharges());

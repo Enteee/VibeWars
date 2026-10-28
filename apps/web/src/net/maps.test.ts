@@ -1,7 +1,7 @@
 import { sizeClass } from "@vibewars/game-maps/size-class";
 import { describe, expect, it } from "vitest";
 
-import { ARENA_MAPS, randomArenaMapPool } from "./maps.js";
+import { ARENA_MAPS, hostMap, randomArenaMapPool } from "./maps.js";
 
 function sizesOf(ids: readonly string[]): string[] {
   return ids.map((id) => {
@@ -35,5 +35,14 @@ describe("randomArenaMapPool", () => {
       ),
     );
     expect([...pooled].sort()).toEqual(ARENA_MAPS.map((map) => map.id).sort());
+  });
+});
+
+describe("hostMap (#476)", () => {
+  it("carries the mode its map names: Kill Count on Pillar Hall, Annihilation elsewhere", () => {
+    expect(hostMap("arena-pillars")?.mode).toBe("kill-count");
+    for (const map of ARENA_MAPS.filter((candidate) => candidate.id !== "arena-pillars")) {
+      expect(hostMap(map.id)?.mode).toBe("annihilation");
+    }
   });
 });

@@ -1553,14 +1553,16 @@ and inventing an attribution would be a plausible-looking lie in the
 scoreboard.
 
 What death costs, and how the dead come back, are properties of the
-match rules, set per mode as GW1 sets them (#843). Today's match is
-GW1's Annihilation (#846): there is no respawn, the dead stay corpses
+match rules, set per mode as GW1 sets them (#843), and each map plays
+one mode ([modes](modes.md), #476). Most maps play GW1's Annihilation
+(#846): there is no respawn, the dead stay corpses
 until resurrected or the match ends, and the **death penalty** is on.
 So the scoreboard counts who is left, not kills: `4 v 3 · 7:12` reads
 the living on your side, then theirs, beside the clock, and a pip per
 foe beside it is filled while they live and hollow once they fall
-(#881). Hover a pip for the name.
-In GW1's Kill Count, which no map picks yet, a dead player **respawns**
+(#881). Hover a pip for the name. The clock counts down to the end of
+the match.
+In GW1's Kill Count, which Pillar Hall plays, a dead player **respawns**
 at a spawn point of their own team after 8 seconds, at full health and
 energy, with all statuses cleared, and there is no death penalty.
 
@@ -1620,7 +1622,7 @@ Deep Wound does not cut it, and it stops at your maximum.
 
 ## Match end
 
-An Annihilation match (#846, today's match) is won by **wiping the other
+An Annihilation match (#846) is won by **wiping the other
 team**: the moment every member of it is dead at once, your team wins.
 A team whose members have all left the match counts as wiped too, so
 quitting a 1v1 forfeits it. Kills still show in the score, but no number of them ends the match.
@@ -1635,7 +1637,7 @@ on it is never "wiped"; that match runs to time. The wipe is checked
 **before** time, so the last foe falling as the clock expires is an
 annihilation win.
 
-A Kill Count match ends when a team reaches 15 kills, or after 10
+A Kill Count match ends when a team reaches 15 kills, or after 3
 minutes, when the team with more kills wins. Score is checked
 **before** time, so landing the winning kill as the clock expires reads
 as a score win, which is what happened from the player's point of

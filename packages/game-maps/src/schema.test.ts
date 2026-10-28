@@ -4,14 +4,15 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
-import { circleIntersectsSegment, hasLineOfSight } from "@vibewars/game-core";
+import { MATCH_MODES, circleIntersectsSegment, hasLineOfSight } from "@vibewars/game-core";
 
 import { allWallSegments } from "./geometry.js";
-import { MapValidationError, validateMapData, type Wall } from "./schema.js";
+import { MapValidationError, mapDataSchema, validateMapData, type Wall } from "./schema.js";
 
 const validMap = {
   id: "arena-test",
   name: "Arena Test",
+  mode: "annihilation",
   width: 100,
   height: 100,
   walls: [
@@ -41,6 +42,16 @@ describe("validateMapData", () => {
 
   it("rejects an empty name", () => {
     expect(() => validateMapData({ ...validMap, name: "" })).toThrow(MapValidationError);
+  });
+
+  it("refuses a map without a mode, or with one no match plays (#476)", () => {
+    const { mode: _mode, ...modeless } = validMap;
+    expect(() => validateMapData(modeless)).toThrow(MapValidationError);
+    expect(() => validateMapData({ ...validMap, mode: "crag" })).toThrow(MapValidationError);
+  });
+
+  it("knows exactly game-core's modes", () => {
+    expect([...mapDataSchema.shape.mode.options].sort()).toEqual(Object.keys(MATCH_MODES).sort());
   });
 
   it("rejects non-positive dimensions", () => {

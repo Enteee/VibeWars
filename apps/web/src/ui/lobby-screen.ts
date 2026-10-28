@@ -1,3 +1,4 @@
+import type { MatchMode } from "@vibewars/game-core";
 import { LOBBY_CODE_LENGTH } from "@vibewars/game-protocol";
 import type { LobbyCharacter, LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 
@@ -122,11 +123,23 @@ function dotTeam(
   return player.team === (self?.team ?? 0) ? "ally" : "enemy";
 }
 
-/** An arena the host may pick, and how big it plays (#444). */
+/** An arena the host may pick, how big it plays (#444), and the mode it plays (#476). */
 export interface LobbyMap {
   readonly id: string;
   readonly name: string;
   readonly size: string;
+  readonly mode: MatchMode;
+}
+
+/** What each mode is, in a line, as the lobby shows it under the map (#476). */
+const MODE_LINES: Readonly<Record<MatchMode, string>> = {
+  annihilation: "Annihilation: defeat every foe",
+  "kill-count": "Kill Count: most kills in 3 minutes",
+};
+
+/** The mode `map` plays, in a line: "Kill Count: most kills in 3 minutes". */
+export function modeLine(map: LobbyMap): string {
+  return MODE_LINES[map.mode];
 }
 
 /** The arena as the picker names it: its name, then its size class, e.g. "Long Hall (large)". */
@@ -171,6 +184,7 @@ export function renderLobbyScreen(
 
   // Only the host may change the map, so everyone else sees it as a
   // label rather than a control they would be refused on clicking.
+  const current = availableMaps.find((map) => map.id === snapshot.mapId);
   let mapPart: HTMLElement;
   if (snapshot.isHost && availableMaps.length > 1) {
     mapPart = h("label", "lobby-map");
@@ -189,12 +203,18 @@ export function renderLobbyScreen(
     });
     mapPart.appendChild(select);
   } else {
-    const current = availableMaps.find((map) => map.id === snapshot.mapId);
     mapPart = h(
       "div",
       "lobby-map",
       `Map: ${current === undefined ? snapshot.mapId : mapLabel(current)}`,
     );
+  }
+
+  // The mode follows from the map (#476), so it reads under it.
+  const mapBlock = h("div", "lobby-map-block");
+  mapBlock.appendChild(mapPart);
+  if (current !== undefined) {
+    mapBlock.appendChild(h("div", "lobby-mode", modeLine(current)));
   }
 
   const readyLabel = self?.ready === true ? "Not ready" : "Ready";
@@ -234,7 +254,7 @@ export function renderLobbyScreen(
       },
     },
     title: [header],
-    status: [mapPart],
+    status: [mapBlock],
     actions,
   });
   panel.appendChild(bar);

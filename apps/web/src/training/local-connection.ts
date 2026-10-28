@@ -227,6 +227,7 @@ export function createLocalConnection(options: {
     sendCall,
     getCalls,
     map,
+    timeLimitSeconds: null,
     get skillBar() {
       return skillBar;
     },

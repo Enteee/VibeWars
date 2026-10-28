@@ -1,6 +1,7 @@
 {
   "id": "training-hall",
   "name": "Training Hall",
+  "mode": "annihilation",
   "width": 560,
   "height": 420,
   "walls": [],

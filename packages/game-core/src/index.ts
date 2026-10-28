@@ -108,6 +108,7 @@ export * from "./skills/index.js";
 
 export type {
   MatchEndReason,
+  MatchMode,
   MatchOutcome,
   MatchPhase,
   MatchRules,
@@ -118,14 +119,13 @@ export type {
 export {
   ANNIHILATION_MATCH_RULES,
   DEATH_PENALTY_PERCENT,
-  DEFAULT_MATCH_RULES,
   DP_GRACE_AFTER_RES_SECONDS,
   KILL_COUNT_MATCH_RULES,
   KILL_MORALE_PERCENT,
   MATCH_IN_PROGRESS,
+  MATCH_MODES,
   MORALE_CEILING,
   MORALE_FLOOR,
-  RANDOM_ARENA_RULES,
   addKill,
   emptyScore,
   evaluateMatch,

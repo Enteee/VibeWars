@@ -8,7 +8,7 @@
  * the build.
  */
 import {
-  DEFAULT_MATCH_RULES,
+  ANNIHILATION_MATCH_RULES,
   STARTER_BUILDS,
   segment,
   type MatchRules,
@@ -50,6 +50,7 @@ export const ARENA: HostMap = {
     height: 1200,
     walls: [{ kind: "rect", x: 990, y: 900, width: 20, height: 200 }],
   },
+  mode: "annihilation",
   walls: [
     segment({ x: 990, y: 900 }, { x: 1010, y: 900 }),
     segment({ x: 1010, y: 900 }, { x: 1010, y: 1100 }),
@@ -162,7 +163,7 @@ export function startMatch(
     transport: hostTransport,
     map: ARENA,
     seed: "test",
-    matchRules: options.matchRules ?? DEFAULT_MATCH_RULES,
+    matchRules: options.matchRules ?? ANNIHILATION_MATCH_RULES,
     // Reproducible, and different each draw.
     random: options.random ?? (() => ((draws += 1) * 0.6180339887) % 1),
     maxPlayers: options.maxPlayers ?? 8,

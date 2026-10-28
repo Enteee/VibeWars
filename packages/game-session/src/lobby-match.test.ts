@@ -1,4 +1,8 @@
-import { DEFAULT_MATCH_RULES, defaultBuildEquipment, type PlayerBuild } from "@vibewars/game-core";
+import {
+  ANNIHILATION_MATCH_RULES,
+  defaultBuildEquipment,
+  type PlayerBuild,
+} from "@vibewars/game-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -24,7 +28,7 @@ import { hello, playerIn, self, settle, toJson, until } from "./match-harness.te
 /** A lobby whose members, after the host, are named `names` and sit on `teams` (host first). */
 async function lobbyOf(
   teams: readonly (0 | 1 | null)[],
-  matchRules = DEFAULT_MATCH_RULES,
+  matchRules = ANNIHILATION_MATCH_RULES,
 ): Promise<{ lobby: TestLobby; members: Member[] }> {
   const lobby = await openLobby({ matchRules });
   const members = [lobby.host];
@@ -213,7 +217,7 @@ describe("a lobby's own match", () => {
 
   it("ignores a match start that comes after its match is over", async () => {
     const { lobby, members } = await lobbyOf([0, 1], {
-      ...DEFAULT_MATCH_RULES,
+      ...ANNIHILATION_MATCH_RULES,
       timeLimitSeconds: 1,
     });
     await start(lobby);
@@ -231,7 +235,7 @@ describe("a lobby's own match", () => {
 
   it("plays a host and three guests through a match and back, then another (#379)", async () => {
     const { lobby, members } = await lobbyOf([0, 1, 0, 1], {
-      ...DEFAULT_MATCH_RULES,
+      ...ANNIHILATION_MATCH_RULES,
       timeLimitSeconds: 2,
     });
     lobby.host.connection.selectMap("other-arena");

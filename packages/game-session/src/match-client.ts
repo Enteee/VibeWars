@@ -338,6 +338,7 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
         return (welcomed ?? welcome).rejoinToken;
       },
       map: welcome.map,
+      timeLimitSeconds: welcome.timeLimitSeconds,
       get skillBar() {
         // The latest the host sent: it sends again when a cost changes (#637).
         return (skillBar ?? bar).slots;
