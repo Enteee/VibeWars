@@ -87,6 +87,14 @@ describe("renderPlayerDoc (#1257)", () => {
     expect(textOf(nodes)).toContain("x < y");
   });
 
+  it("shows inline code and entities literally, never escaped twice", () => {
+    const nodes = renderPlayerDoc(
+      "Press `<Esc>` &amp; go, `a &amp;& b` &lt;3 &#x41;&#66; &bogus;\n",
+      TARGETS,
+    );
+    expect(textOf(nodes)).toBe("Press <Esc> & go, a &amp;& b <3 AB &bogus;");
+  });
+
   it("drops <script>, event handlers and any other raw HTML", () => {
     const nodes = renderPlayerDoc(
       '<script>alert(1)</script>\n\nHi <b onclick="alert(2)">there</b><img src=x onerror=alert(3)>\n',

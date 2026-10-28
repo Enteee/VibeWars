@@ -154,6 +154,34 @@ function text(value: string): DocNode {
   return { kind: "text", text: value };
 }
 
+/** The entities Markdown text may use, as characters. */
+const ENTITIES: Readonly<Record<string, string>> = {
+  amp: "&",
+  lt: "<",
+  gt: ">",
+  quot: '"',
+  apos: "'",
+  nbsp: "\u00a0",
+};
+
+/**
+ * Prose as the reader sees it: marked leaves `&amp;` and `&#60;` in a text
+ * token as written. Decoded here, never by the DOM; an unknown entity, or a
+ * code point out of range, stays as written.
+ */
+function prose(value: string): DocNode {
+  return text(
+    value.replace(/&(#x[0-9a-f]+|#[0-9]+|[a-z]+);/gi, (entity, name: string) => {
+      if (name.startsWith("#")) {
+        const hex = name[1] === "x" || name[1] === "X";
+        const code = Number.parseInt(name.slice(hex ? 2 : 1), hex ? 16 : 10);
+        return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : entity;
+      }
+      return ENTITIES[name] ?? entity;
+    }),
+  );
+}
+
 function blocks(tokens: readonly Token[], targets: DocTargets): DocNode[] {
   return tokens.flatMap((token) => block(token, targets));
 }
@@ -198,7 +226,7 @@ function block(token: Token, targets: DocTargets): DocNode[] {
     case "text": {
       // A tight list item's text, which carries its own inline tokens.
       const run = token as Tokens.Text;
-      return run.tokens === undefined ? [text(run.text)] : inline(run.tokens, targets);
+      return run.tokens === undefined ? [prose(run.text)] : inline(run.tokens, targets);
     }
     default:
       // Raw HTML, link definitions, blank lines and anything new.
@@ -211,7 +239,7 @@ function inline(tokens: readonly Token[], targets: DocTargets): DocNode[] {
     switch (token.type) {
       case "text": {
         const run = token as Tokens.Text;
-        return run.tokens === undefined ? [text(run.text)] : inline(run.tokens, targets);
+        return run.tokens === undefined ? [prose(run.text)] : inline(run.tokens, targets);
       }
       case "escape":
         return [text((token as Tokens.Escape).text)];
