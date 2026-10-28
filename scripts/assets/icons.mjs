@@ -507,11 +507,11 @@ const status = {
       `<path d="M8 6h8v4.5c0 2.5-2 4-4 5.2-2-1.2-4-2.7-4-5.2z" ${stroke(c, 2)}/>` +
       `<path d="M9.5 10h5" ${stroke(c, 2)}/>`,
   ],
-  // Chant: a plus over a bar, healed on your next skill (#999).
+  // Chant: a banner with a note, healed on your next skill (#1012).
   "song-of-restoration": [
     "chant",
     (c) =>
-      `<path d="M7 4V20" ${stroke(c, 2)}/>` +
+      `<path d="M7 4V19.5" ${stroke(c, 2)}/>` +
       `<path d="M7 5H18.5L15 9.5L18.5 14H7Z" ${stroke(c, 1.6)}/>` +
       `<ellipse cx="10.8" cy="11" rx="1.6" ry="1.2" fill="${c}"/>` +
       `<path d="M12.3 11V7.5L14.5 8.4" ${stroke(c, 1.3)}/>`,
