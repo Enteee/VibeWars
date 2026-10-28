@@ -21,6 +21,7 @@ import {
 } from "./match-host.js";
 import {
   ARENA,
+  answerChallenges,
   hello,
   playerIn,
   self,
@@ -375,6 +376,24 @@ describe("a lobby's bots (#1193)", () => {
     }
     // It walks to its foe, level with it: never down, as the intent asked.
     expect(named(local.getSnapshot(), "Warrior Bot")?.y).toBeCloseTo(before ?? Number.NaN, 0);
+  });
+
+  it("never asks a peer to prove itself for a bot's seat, which has no token", async () => {
+    const match = startMatch({
+      seats: new Map<string, PlannedSeat>([bot(1, "Warrior Bot", "Warrior/Monk"), human(0)]),
+    });
+    const local = await match.joinLocal();
+    await match.step(TICK);
+    const playerId = named(local.getSnapshot(), "Warrior Bot")?.sessionId ?? "";
+    const intruder = match.network.join("Warrior Bot");
+    const challenges: unknown[] = [];
+    intruder.on("rejoin-challenge", (data) => challenges.push(data));
+    answerChallenges(intruder, "");
+    await settle();
+    intruder.send("hello", hello({ rejoin: { playerId } }), "host");
+    await match.step(0.3);
+    expect(challenges).toEqual([]);
+    expect(named(local.getSnapshot(), "Warrior Bot")?.bot).toBe(true);
   });
 
   it("is not abandoned for bots that never say hello, even with nobody else seated", async () => {

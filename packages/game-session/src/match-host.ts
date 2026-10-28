@@ -592,8 +592,11 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     join(hello, from);
   });
 
-  /** Whether `peerId` may take `seat`: it plays no other seat. */
+  /** Whether `peerId` may take `seat`: no bot plays it, and it plays no other seat. */
   const claimable = (seat: Seat, peerId: string): boolean => {
+    if (seat.bot) {
+      return false;
+    }
     const current = seatOfPeer.get(peerId);
     return current === undefined || current === seat;
   };
