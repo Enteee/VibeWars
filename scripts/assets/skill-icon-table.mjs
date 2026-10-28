@@ -205,8 +205,8 @@ export const SKILL_ICONS = {
   "monk.rebirth": { glyph: "resurrect-arrive" },
   "paragon.signet-of-return": { glyph: "resurrect-return" },
   "ritualist.flesh-of-my-flesh": { glyph: "resurrect-blood" },
-  // A placeholder until the asset-designer's (#1105).
-  "ranger.barbed-trap": { glyph: "pin", modifier: "bleed" },
+  // Jaws on the ground, barbs that bleed (#1129).
+  "ranger.barbed-trap": { glyph: "jaws", modifier: "bleed" },
   // Placeholders until the asset-designer's (#1113): pulses.
   "ranger.flame-trap": { glyph: "flame", modifier: "clock" },
   "monk.symbol-of-wrath": { glyph: "flash", modifier: "area" },
@@ -214,12 +214,12 @@ export const SKILL_ICONS = {
   "necromancer.soul-feast": { glyph: "heal", modifier: "corpse" },
   // A placeholder until the asset-designer's (#1104).
   "necromancer.well-of-suffering": { glyph: "germ", modifier: "corpse" },
-  // Placeholders until the asset-designer's (#467): bodies raised from a corpse.
-  "necromancer.animate-bone-minions": { glyph: "resurrect", modifier: "down" },
-  "necromancer.animate-bone-horror": { glyph: "resurrect", modifier: "up" },
-  // Placeholders until the asset-designer's (#469): a skill seen again.
-  "mesmer.arcane-echo": { glyph: "eye", modifier: "clock" },
-  "mesmer.echo": { glyph: "eye", modifier: "self" },
+  // Bodies raised from a corpse: a skull pack, and one horned skull (#1112).
+  "necromancer.animate-bone-minions": { glyph: "bone-minions" },
+  "necromancer.animate-bone-horror": { glyph: "bone-horror" },
+  // A skill seen again: a spell, or any skill, echoed on (#1136).
+  "mesmer.arcane-echo": { glyph: "echo-spell", modifier: "clock" },
+  "mesmer.echo": { glyph: "echo-skill" },
   // Placeholders until the asset-designer's (#1046): the pet's skills.
   "ranger.charm-animal": { glyph: "eye", modifier: "plus" },
   "ranger.comfort-animal": { glyph: "heal", modifier: "plus" },

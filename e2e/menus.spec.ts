@@ -109,7 +109,10 @@ test("#578: a host with others in the lobby is asked before Leave or Esc closes 
   }
 });
 
-test("#853: the first start rolls a starter character, chosen; Reroll replaces it in place", async ({
+/** A rolled character's random name (#1149): "Kaelen Ashvale". */
+const ROLLED_NAME = /^[A-Z][a-z]+ [A-Z][a-z]+$/;
+
+test("#853: the first start rolls a starter character, chosen; Reroll replaces it in place, Clone copies it", async ({
   page,
 }) => {
   await openMenu(page);
@@ -119,7 +122,7 @@ test("#853: the first start rolls a starter character, chosen; Reroll replaces i
   await expect(row).toHaveClass(/is-selected/);
   await expect(page.getByRole("button", { name: "Random Arena", exact: true })).toBeEnabled();
   const name = row.locator(".selectable-row-name");
-  await expect(name).toHaveText(/^\w+\/\w+$/);
+  await expect(name).toHaveText(ROLLED_NAME);
   const first = await name.innerText();
 
   // Rolled once: a reload keeps it, and rolls nothing new.
@@ -127,23 +130,33 @@ test("#853: the first start rolls a starter character, chosen; Reroll replaces i
   await expect(row).toHaveCount(1);
   await expect(name).toHaveText(first);
 
-  // Rerolled at once, unasked (#1146): another starter build, the same
-  // row, still chosen.
+  // Rerolled at once, unasked (#1146): another starter build under
+  // another random name (#1149), the same row, still chosen.
   const actions = roster.locator(".selectable-row-actions");
   await actions.getByRole("button", { name: "Reroll", exact: true }).click();
   await expect(name).not.toHaveText(first);
-  await expect(name).toHaveText(/^\w+\/\w+$/);
+  await expect(name).toHaveText(ROLLED_NAME);
   await expect(row).toHaveCount(1);
   await expect(row).toHaveClass(/is-selected/);
 
-  // Another character has no Reroll.
-  await roster.getByRole("button", { name: "New character" }).click();
+  // It has Clone, not Edit (#1147): Clone opens the editor on a copy,
+  // one copy even for a double-click.
+  const rolled = await name.innerText();
+  await expect(actions.getByRole("button", { name: "Edit", exact: true })).toHaveCount(0);
+  await actions.getByRole("button", { name: "Clone", exact: true }).dblclick();
+  await expect(page.locator("input.editor-name")).toHaveValue(`${rolled} (copy)`);
   await page.locator("input.editor-name").fill("Pyro");
   await page.getByRole("button", { name: "Save", exact: true }).click();
-  await expect(roster.locator(".roster-reroll")).toHaveCount(1);
-  await expect(
-    roster.locator(".selectable-row", { hasText: "Pyro" }).locator(".roster-reroll"),
-  ).toHaveCount(0);
+
+  // The copy is an ordinary character: Edit, no Clone or Reroll. The
+  // rolled one is still chosen.
+  await expect(row).toHaveCount(2);
+  const pyro = roster.locator(".selectable-row", { hasText: "Pyro" });
+  const original = roster.locator(".selectable-row", { hasText: rolled });
+  await expect(pyro.getByRole("button", { name: "Edit", exact: true })).toBeVisible();
+  await expect(pyro.locator(".roster-clone, .roster-reroll")).toHaveCount(0);
+  await expect(original.locator(".roster-reroll")).toHaveCount(1);
+  await expect(original).toHaveClass(/is-selected/);
 });
 
 test("#579: the roster's rows are buttons: Enter or Space chooses, Edit sits beside", async ({

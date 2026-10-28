@@ -49,7 +49,7 @@ export async function bringStarter(page: Page, name: string): Promise<void> {
   await expect(page.locator(".toast")).toHaveText(`Imported ${name}`);
   await page.getByRole("button", { name: "Save", exact: true }).click();
   // Saving returns to the roster; a click on the row picks who to play.
-  // Newest first: the first start may have rolled this very build (#853).
+  // Newest first, should a roster hold two of the name.
   const row = page.locator(".selectable-row", { hasText: name }).first();
   await row.click();
   await expect(row).toHaveClass(/is-selected/);

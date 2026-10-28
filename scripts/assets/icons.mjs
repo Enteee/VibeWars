@@ -1007,6 +1007,19 @@ const smallFigure = (cx, cy, k) =>
   inkLine("M12 12V21M6 14.5H18", 2.6) +
   "</g>";
 
+/**
+ * A skull with dark sockets, scaled and centred on a point.
+ * @param {number} cx
+ * @param {number} cy
+ * @param {number} k
+ */
+const smallSkull = (cx, cy, k) =>
+  `<g transform="translate(${String(cx)},${String(cy)}) scale(${String(k)}) translate(-12,-12)">` +
+  inkFill("M12 2.5a8 8 0 0 1 5 14.2V21.5H7V16.7A8 8 0 0 1 12 2.5z") +
+  `<circle cx="9" cy="11" r="2" fill="${C.bg}"/><circle cx="15" cy="11" r="2" fill="${C.bg}"/>` +
+  `<path d="M10.5 17V21M13.5 17V21" stroke="${C.bg}" stroke-width="1.2"/>` +
+  "</g>";
+
 /** Glyphs, drawn in the box 3..21; the plate scales them to leave the corner free. */
 const skillGlyph = {
   heal: () => inkFill("M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"),
@@ -1156,6 +1169,26 @@ const skillGlyph = {
   speed: () => inkLine("M4 4L10 12L4 20M11 4L17 12L11 20", 2.5),
   slow: () => inkLine("M20 4L14 12L20 20M13 4L7 12L13 20", 2.5),
   dash: () => inkLine("M3 7H11M2 12H9M3 17H11", 2) + inkLine("M13 4L21 12L13 20", 2.6),
+  // Two small skulls, one raised: a pack of minions (#1112).
+  "bone-minions": () => smallSkull(8.5, 14, 0.62) + smallSkull(15.5, 9.5, 0.62),
+  // One big horned skull: the horror (#1112).
+  "bone-horror": () =>
+    smallSkull(12, 13, 0.85) + inkLine("M6.5 8.5C4 7.5 3.5 5 4 3M17.5 8.5C20 7.5 20.5 5 20 3", 2.2),
+  // A row of teeth rising from the ground: a trap's jaws, ready to bite (#1129).
+  jaws: () =>
+    inkLine("M3 19.5H14", 2.2) +
+    inkFill("M3 18.5L4.8 6.5L6.6 18.5L8.4 6.5L10.2 18.5L12 6.5L13.8 18.5Z"),
+  // A spell, and arcs of it carried on: Arcane Echo copies the next spell (#1136).
+  "echo-spell": () =>
+    `<circle cx="6" cy="11" r="3.4" fill="${C.ink}"/>` +
+    inkLine("M10.5 7A5.5 5.5 0 0 1 10.5 15M14 4A9 9 0 0 1 14 18", 2.2),
+  // A plain skill square, and three arcs: Echo copies the next skill of any type (#1136).
+  "echo-skill": () =>
+    `<rect x="3" y="8.5" width="7" height="7" rx="1" fill="${C.ink}"/>` +
+    inkLine(
+      "M12.5 8A5 5 0 0 1 12.5 16M16 5.5A8.5 8.5 0 0 1 16 18.5M19.5 3.5A12 12 0 0 1 19.5 20.5",
+      2,
+    ),
   // The resurrect figure in a ring: a signet's seal, one use (#1081).
   "resurrect-seal": () =>
     `<circle cx="10.5" cy="10.5" r="8" ${stroke(C.ink, 2)}/>` + smallFigure(10.5, 10.5, 0.55),
