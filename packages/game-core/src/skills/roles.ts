@@ -143,8 +143,12 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
  * A skill's roles, derived from its effects only, never a hand-kept
  * list: adding a skill tags it. A blocked blow's effects count too,
  * since they are still what the skill does (Swift Chop's Deep Wound).
+ * One on your own pet (#1046) does nothing for the team: no role.
  */
 export function skillRoles(skill: Skill): readonly SkillRole[] {
+  if (skill.target === "companion") {
+    return [];
+  }
   const effects = [...skill.effects, ...(skill.attack?.onBlocked ?? [])];
   const roles = new Set(effects.flatMap(effectRoles));
   return SKILL_ROLES.filter((role) => roles.has(role));

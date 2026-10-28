@@ -23,6 +23,9 @@ function body(
             summonedAtTick: 0,
             skillId: "necromancer.animate-bone-minions",
             aura: undefined,
+            onDeath: "vanish",
+            ownerDisableSeconds: 0,
+            companionSkillId: undefined,
           }
         : undefined,
     corpseExploited: extra.exploited ?? false,

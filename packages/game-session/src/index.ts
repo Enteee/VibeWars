@@ -72,6 +72,7 @@ export {
   statusSnapshot,
   groundEffectSnapshot,
   wireStatuses,
+  wireWeaponSets,
 } from "./wire.js";
 export { ROOM_PREFIX, formGroups, groupOf, isLive, ticketsOf } from "./queue-formation.js";
 export type { FormGroupsInput, FormedGroup } from "./queue-formation.js";
