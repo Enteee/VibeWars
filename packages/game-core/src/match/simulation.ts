@@ -4580,15 +4580,16 @@ export class MatchSimulation {
   }
 
   /**
-   * A creature and its own team pass through each other (#1278): a
-   * spirit planted at its caster's feet never shoves them aside, and a
-   * pet never jostles its owner. Foes stay solid to it, and two players
-   * of one team stay solid to each other.
+   * A creature and its own team, still overlapping where they stand, pass
+   * through each other (#1278): the caster walks off the spirit planted
+   * at their feet, or a pet that spawned on them, in any direction,
+   * unshoved. Once apart they are solid again, as foes always are.
    */
   #passesThrough(a: ParticipantRecord, b: ParticipantRecord): boolean {
     return (
       a.combatant.team === b.combatant.team &&
-      (a.creature !== undefined || b.creature !== undefined)
+      (a.creature !== undefined || b.creature !== undefined) &&
+      penetration(a.position, b.position, this.#radiusOf(a) + this.#radiusOf(b)) > 0
     );
   }
 

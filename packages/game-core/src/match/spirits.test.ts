@@ -266,7 +266,7 @@ describe("one spirit of a skill in range (#1064)", () => {
   });
 });
 
-describe("a creature and its own team pass through each other (#1278)", () => {
+describe("a creature and its own team pass through each other while they overlap (#1278)", () => {
   it("lets a Ritualist walk off the spirit planted at their feet, unpushed", () => {
     const sim = match();
     ritual(sim, RECUPERATION);
@@ -280,6 +280,23 @@ describe("a creature and its own team pass through each other (#1278)", () => {
       stepFor(each, 0.5);
     }
     expect(get(sim, "r").position).toEqual(get(bare, "r").position);
+    expect(spirits(sim)[0]?.position).toEqual(vec2(0, 0));
+  });
+
+  it("is solid to its Ritualist again once they are apart", () => {
+    const sim = match();
+    ritual(sim, RECUPERATION);
+    stepFor(sim, 1);
+    sim.setInputDirection("r", vec2(0, -1));
+    stepFor(sim, 1);
+    sim.setInputDirection("r", vec2(0, 1));
+    stepFor(sim, 3);
+    const r = get(sim, "r");
+    expect(r.position.x).toBe(0);
+    expect(r.position.y).toBeCloseTo(
+      -(RULES.collision.playerRadius + RULES.collision.creatureRadius),
+      6,
+    );
     expect(spirits(sim)[0]?.position).toEqual(vec2(0, 0));
   });
 
