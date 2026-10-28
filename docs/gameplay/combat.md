@@ -1244,11 +1244,12 @@ GW1 PvP (#473). Only a primary can hold its rank, and runes count.
   never below 0. While any enchantment is on you, yours or an ally's,
   you have +1 armor a rank against every hit.
 - **Spawning Power** (Ritualist). A creature you summon, of any
-  profession, has 4% more Health a rank, rounded once: a spirit of 210
-  has 311 at rank 12. A weapon spell you put on anyone, yourself
-  included, lasts 4% longer a rank: Weapon of Quickening 31.08 s instead
-  of 21 s. A spirit's lifetime is unchanged. The tooltip shows both, the
-  base in brackets: "311 Health (210)", "31.1s (21s)" (#1098).
+  profession (spirits and minions, not a charmed pet), has 4% more
+  Health a rank, rounded once: a spirit of 210 has 311 at rank 12. A
+  weapon spell you put on anyone, yourself included, lasts 4% longer a
+  rank: Weapon of Quickening 31.08 s instead of 21 s. A spirit's lifetime
+  is unchanged. The tooltip shows both, the base in brackets: "311 Health
+  (210)", "31.1s (21s)" (#1098).
 
 The build editor says under a primary's row what it does at its rank
 ("Fast Casting 12: spells cast 43% faster, signets 36% faster"), and a skill tooltip for a
