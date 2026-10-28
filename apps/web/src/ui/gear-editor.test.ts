@@ -1,4 +1,9 @@
-import { ARMOR_SLOTS, MINIMAL_GW_INSPIRED_PVP_V1, getWeapon } from "@vibewars/game-core";
+import {
+  ARMOR_SLOTS,
+  MINIMAL_GW_INSPIRED_PVP_V1,
+  getWeapon,
+  primaryAttributeIds,
+} from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
 import { validateBuild } from "../storage/build-validation.js";
@@ -214,6 +219,19 @@ describe("runes and insignias", () => {
     expect(runeChoices(warrior()).some((c) => c.key.includes("absorption"))).toBe(true);
     // An attribute rune for an attribute a monk cannot raise.
     expect(monkChoices.some((k) => k.includes("warrior.strength"))).toBe(false);
+  });
+
+  it("offers attribute runes of the primary only, never the secondary (#1141)", () => {
+    const warriorMonk = setProfessions(newCharacter("c1"), "warrior", "monk");
+    const attributes = new Set(
+      runeChoices(warriorMonk).flatMap((c) =>
+        c.rune.kind === "attribute" ? [c.rune.attributeId] : [],
+      ),
+    );
+    expect([...attributes].sort()).toEqual([...primaryAttributeIds("warrior")].sort());
+    const universal = (character: StoredCharacter) =>
+      runeChoices(character).filter((c) => c.rune.kind === "universal");
+    expect(universal(warriorMonk)).toEqual(universal(warrior()));
   });
 
   it("names the health cost in the label, where the decision is made", () => {

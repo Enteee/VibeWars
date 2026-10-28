@@ -161,7 +161,11 @@ export type StatusId =
   // Wards' auras (#1087), worn while inside a ward.
   | "ward-against-melee"
   // Wells' auras (#1104), worn while inside a well.
-  | "well-of-suffering";
+  | "well-of-suffering"
+  // Ranger calls and bonds on a pet (#1108).
+  | "call-of-haste"
+  | "call-of-protection"
+  | "symbiotic-bond";
 
 /** Health one pip of regeneration or degeneration is worth, per second (GW1). */
 export const HEALTH_PER_PIP = 2;
@@ -400,6 +404,16 @@ export interface StatusDefinition {
    */
   readonly damageTakenMultiplier: number;
   /**
+   * Taken off every damage packet the bearer takes, after armor and
+   * `damageTakenMultiplier` (#1108): Call of Protection's 17. Never below 0.
+   */
+  readonly damageReduction: number;
+  /**
+   * The share of each physical hit on the bearer that its source takes
+   * instead (#1108): Symbiotic Bond's 0.5, rounded down. 0: none.
+   */
+  readonly redirectsPhysicalDamage: number;
+  /**
    * The most of its max health the bearer can lose to one hit (#936):
    * Protective Spirit's 0.1. Applied last in `mitigate`, so it caps
    * every typed damage packet; degeneration and sacrifice are not hits.
@@ -535,6 +549,7 @@ export type TriggerEffect = SkillEffect | SpreadGainedConditionEffect | EchoEffe
  * took, with the triggers on it that answered at that moment (#953): a
  * killing blow ends them before the drain, and they still fire for it.
  * Or (#1022) damage or life steal it took from a foe, with that foe.
+ * Or (#1108) the share of a physical hit a bond sent to `toId`, its source.
  */
 export type StatusChange =
   | { readonly kind: "gained-condition"; readonly id: StatusId; readonly durationSeconds: number }
@@ -550,7 +565,8 @@ export type StatusChange =
       readonly kind: "took-damage-from-foe";
       readonly offenderId: string;
       readonly fired: readonly AnsweringTrigger[];
-    };
+    }
+  | { readonly kind: "redirected-damage"; readonly toId: string; readonly amount: number };
 
 /** A trigger on the bearer that answered an event, the status that holds it, and who applied it. */
 export interface AnsweringTrigger {
@@ -634,6 +650,8 @@ function define(
     endsWhenBearerHitsWithAttackSkill: false,
     endsWhenBearerGains: [],
     damageTakenMultiplier: 1,
+    damageReduction: 0,
+    redirectsPhysicalDamage: 0,
     maxDamageFractionPerHit: undefined,
     reversesNextDamage: undefined,
     extraStrikesPerHit: 0,
@@ -1087,6 +1105,25 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   "well-of-suffering": define("well-of-suffering", "Well of Suffering", "skill-effect", {
     profession: "necromancer",
     healthPips: -5,
+  }),
+  // Calls and a bond on a Ranger's pet (#1108), at rank 12. Call of
+  // Haste: "25% faster attack speed and moves 25% faster".
+  "call-of-haste": define("call-of-haste", "Call of Haste", "shout", {
+    profession: "ranger",
+    moveSpeedMultiplier: 1.25,
+    attackDurationMultiplier: 0.75,
+  }),
+  // Call of Protection: "5...17...20 base damage reduction".
+  "call-of-protection": define("call-of-protection", "Call of Protection", "shout", {
+    profession: "ranger",
+    damageReduction: 17,
+  }),
+  // Symbiotic Bond: "+1...3...3 health regeneration, and half of any
+  // physical damage dealt to your animal companion is redirected to you".
+  "symbiotic-bond": define("symbiotic-bond", "Symbiotic Bond", "shout", {
+    profession: "ranger",
+    healthPips: 3,
+    redirectsPhysicalDamage: 0.5,
   }),
   // "Fall Back!" at rank 12: 13 Health per second while moving, 33%
   // faster, ending on its bearer's hit.
@@ -1773,6 +1810,25 @@ export class StatusSet {
   }
 
   /**
+   * Split a physical hit of `amount` on the bearer (#1108): with a status
+   * that redirects, the newest, its share, rounded down, is recorded for
+   * its source and the rest returned; without one, all of it.
+   */
+  public redirect(amount: number): number {
+    for (const status of [...this.#statuses.values()].reverse()) {
+      const share = getStatusDefinition(status.id).redirectsPhysicalDamage;
+      if (share > 0) {
+        const sent = Math.floor(amount * share);
+        if (sent > 0) {
+          this.#changes.push({ kind: "redirected-damage", toId: status.sourceId, amount: sent });
+        }
+        return amount - sent;
+      }
+    }
+    return amount;
+  }
+
+  /**
    * Spend the newest status that reverses the next damage (#987),
    * recorded as ended, and return its cap; `undefined` if none is up.
    */
@@ -2025,6 +2081,8 @@ export interface StatusModifiers {
   readonly attackDurationMultiplier: number;
   /** Every status's, multiplied (#919). */
   readonly damageTakenMultiplier: number;
+  /** Every status's, summed (#1108). */
+  readonly damageReduction: number;
   /** The lowest single status's (#936); `undefined`: no cap. */
   readonly maxDamageFractionPerHit: number | undefined;
   /** Every status's, summed (#936). */
@@ -2097,6 +2155,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let attackFaster = 1;
   let attackSlower = 1;
   let damageTakenMultiplier = 1;
+  let damageReduction = 0;
   let maxDamageFractionPerHit: number | undefined;
   let extraStrikesPerHit = 0;
   let spellRechargeKept = 1;
@@ -2143,6 +2202,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     attackFaster = Math.min(attackFaster, def.attackDurationMultiplier);
     attackSlower = Math.max(attackSlower, def.attackDurationMultiplier);
     damageTakenMultiplier *= def.damageTakenMultiplier;
+    damageReduction += def.damageReduction;
     if (
       def.maxDamageFractionPerHit !== undefined &&
       (maxDamageFractionPerHit === undefined ||
@@ -2177,6 +2237,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     castTimeMultiplier,
     attackDurationMultiplier: attackFaster * attackSlower,
     damageTakenMultiplier,
+    damageReduction,
     maxDamageFractionPerHit,
     extraStrikesPerHit,
     spellRechargeFaster: Math.min(MAX_RECHARGE_REDUCTION, 1 - spellRechargeKept),

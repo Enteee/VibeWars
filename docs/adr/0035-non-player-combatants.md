@@ -92,6 +92,9 @@ built for players and is the larger, safe value.
   build, lies when dead, is reset with its owner, and engages its owner's
   target. That is the shape an NPC hero takes, differing only in where it
   comes from and who may revive it.
+- A companion has morale (#1133), by the players' death penalty, on its
+  own maximum Health; it never counts for the team, and its death gives
+  its foes none.
 - A creature leaves no corpse (#466) unless the card that adds it says so.
 - A creature that fights swings a weapon built from its template, its
   summoner's rank snapshotted as its mastery (#467), so every attack

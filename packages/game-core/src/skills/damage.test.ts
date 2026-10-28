@@ -218,6 +218,38 @@ describe("damage taken multipliers (#919)", () => {
   });
 });
 
+describe("damage reduction (#1108)", () => {
+  function protectedDefender(): Combatant {
+    const target = defender(60);
+    target.statuses.apply("call-of-protection", 120, "owner");
+    return target;
+  }
+
+  it("takes 17 off every type of packet: Call of Protection", () => {
+    for (const packet of [
+      physical(40),
+      skillDamage(40, "fire", 0),
+      skillDamage(40, "holy", 0),
+      skillDamage(40, "typeless", 0),
+    ]) {
+      expect(mitigate(packet, protectedDefender(), RULES, "chest")).toBe(
+        mitigate(packet, defender(60), RULES, "chest") - 17,
+      );
+    }
+  });
+
+  it("never takes a packet below 0", () => {
+    expect(mitigate(physical(10), protectedDefender(), RULES, "chest")).toBe(0);
+  });
+
+  it("comes after the damage taken multiplier", () => {
+    const target = protectedDefender();
+    target.statuses.apply("frenzy", 8, "self");
+    // 40 × 2 − 17, not (40 − 17) × 2.
+    expect(mitigate(skillDamage(40, "chaos", 0), target, RULES, "chest")).toBe(63);
+  });
+});
+
 describe("armor penetration", () => {
   it("scales down whatever armor remains rather than subtracting flat", () => {
     const target = defender(80);

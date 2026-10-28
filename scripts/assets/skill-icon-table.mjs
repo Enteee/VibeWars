@@ -232,4 +232,9 @@ export const SKILL_ICONS = {
   "ranger.brutal-strike": { glyph: "hawk", modifier: "half" },
   "ranger.maiming-strike": { glyph: "limp", modifier: "plus" },
   "ranger.disrupting-lunge": { glyph: "interrupt", modifier: "plus" },
+  // Placeholders until the asset-designer's (#1108): calls and bonds on the pet.
+  "ranger.call-of-haste": { glyph: "speed", modifier: "plus" },
+  "ranger.call-of-protection": { glyph: "armor", modifier: "plus" },
+  "ranger.symbiotic-bond": { glyph: "chain", modifier: "plus" },
+  "ranger.revive-animal": { glyph: "resurrect", modifier: "plus" },
 };
