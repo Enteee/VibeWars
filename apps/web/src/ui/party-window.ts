@@ -1,7 +1,8 @@
-import type { CompanionMode } from "@vibewars/game-core";
+import { getSkill, PET_ATTACK_SECONDS, type CompanionMode } from "@vibewars/game-core";
 import type { MatchSnapshot, PlayerSnapshot } from "@vibewars/game-session";
 
 import { healthTint, paintHealthTint, type HealthTint } from "./health-tint.js";
+import { skillIcon } from "./icons.js";
 import {
   lostHealthPercent,
   targetHealthPercent,
@@ -15,7 +16,7 @@ import { pipsElement, renderPips } from "./pips.js";
  * team's health at a glance, right middle, you first. A click on a row
  * targets that member. No energy, as GW1. Of the creatures (#1052), only
  * your own companion is listed, under you, with its Guard, Fight and Heel
- * buttons (#1110).
+ * buttons (#1110), and the pet attack its next blow is armed with (#1167).
  */
 
 /** Past this many rows, they go compact: name and bar on one line. */
@@ -37,6 +38,8 @@ export interface PartyRow {
   readonly pips: number;
   /** Your companion's mode, lit on its row (#1110); undefined on a person's row. */
   readonly companionMode: CompanionMode | undefined;
+  /** The pet attack your companion's next blow carries (#1167); undefined for none. */
+  readonly armedAttack: { readonly skillId: string; readonly name: string } | undefined;
 }
 
 function partyRow(player: PlayerSnapshot, self: PlayerSnapshot): PartyRow {
@@ -54,7 +57,23 @@ function partyRow(player: PlayerSnapshot, self: PlayerSnapshot): PartyRow {
     tint: player.dead ? null : healthTint(player.statuses.map((status) => status.id)),
     pips: player.healthPips,
     companionMode: player.creature?.mode ?? undefined,
+    armedAttack: armedAttackOf(player),
   };
+}
+
+function armedAttackOf(player: PlayerSnapshot): PartyRow["armedAttack"] {
+  const armed = player.creature?.armedAttack ?? null;
+  return armed === null
+    ? undefined
+    : { skillId: armed.skillId, name: getSkill(armed.skillId)?.name ?? armed.skillId };
+}
+
+/**
+ * How much of an armed pet attack's wait has run at match clock `now`
+ * (#1167), 0 just armed to 1 lapsing: the dark sweep over its icon.
+ */
+export function armedSweep(endsAt: number, now: number): number {
+  return Math.min(1, Math.max(0, 1 - (endsAt - now) / PET_ATTACK_SECONDS));
 }
 
 /**
@@ -88,6 +107,12 @@ export interface PartyWindow {
   dispose(): void;
 }
 
+interface ArmedElements {
+  readonly root: HTMLElement;
+  readonly icon: HTMLImageElement;
+  readonly sweep: HTMLElement;
+}
+
 /** A member's row elements, made once and reused while they stay (ADR-0030). */
 interface RowElements {
   /** What sits in the panel: the row, or a companion's row and its buttons. */
@@ -104,6 +129,8 @@ interface RowElements {
   readonly deadText: HTMLElement;
   /** A companion's Guard, Fight and Heel buttons (#1110), by mode; empty on a person's row. */
   readonly commands: ReadonlyMap<CompanionMode, HTMLButtonElement>;
+  /** A companion's armed pet attack (#1167): its icon and sweep; undefined on a person's row. */
+  readonly armed: ArmedElements | undefined;
   /** What was last painted, so an unchanged row costs nothing. */
   key: string;
 }
@@ -160,7 +187,15 @@ function createRow(
   deadText.textContent = "dead";
   const commands = new Map<CompanionMode, HTMLButtonElement>();
   let element: HTMLElement = row;
+  let armed: ArmedElements | undefined;
   if (companion) {
+    // Right of the health bar (styles.css); hidden while nothing is armed.
+    const root = span("party-armed", row);
+    root.hidden = true;
+    const icon = document.createElement("img");
+    icon.alt = "";
+    root.appendChild(icon);
+    armed = { root, icon, sweep: span("party-armed-sweep", root) };
     // Buttons cannot nest in the row's button: they sit beside it, in one block.
     element = document.createElement("div");
     element.className = "party-companion";
@@ -195,12 +230,21 @@ function createRow(
     pips,
     deadText,
     commands,
+    armed,
     key: "",
   };
 }
 
-function paintRow(elements: RowElements, row: PartyRow, player: PlayerSnapshot): void {
+function paintRow(elements: RowElements, row: PartyRow, player: PlayerSnapshot, now: number): void {
   renderPips(elements.pips, row.pips);
+  // The sweep moves every snapshot: set apart from the rest, which seldom does.
+  const endsAt = player.creature?.armedAttack?.endsAt;
+  if (elements.armed !== undefined && endsAt !== undefined) {
+    const sweep = String(armedSweep(endsAt, now));
+    if (elements.armed.sweep.style.getPropertyValue("--armed") !== sweep) {
+      elements.armed.sweep.style.setProperty("--armed", sweep);
+    }
+  }
   const lost = lostHealthPercent(player);
   const key = JSON.stringify([row, lost]);
   if (elements.key === key) {
@@ -236,6 +280,13 @@ function paintRow(elements: RowElements, row: PartyRow, player: PlayerSnapshot):
     const lit = mode === row.companionMode;
     button.classList.toggle("is-lit", lit);
     button.setAttribute("aria-pressed", String(lit));
+  }
+  if (elements.armed !== undefined) {
+    elements.armed.root.hidden = row.armedAttack === undefined;
+    if (row.armedAttack !== undefined) {
+      elements.armed.icon.src = skillIcon(row.armedAttack.skillId);
+      elements.armed.root.title = row.armedAttack.name;
+    }
   }
 }
 
@@ -283,7 +334,7 @@ export function createPartyWindow(
           elements = createRow(row.id, row.companionMode !== undefined, onTarget, onCommand);
           rows.set(row.id, elements);
         }
-        paintRow(elements, row, player);
+        paintRow(elements, row, player, snapshot.elapsedSeconds);
       }
       const nextOrder = party.map((row) => row.id).join(" ");
       if (nextOrder !== order) {

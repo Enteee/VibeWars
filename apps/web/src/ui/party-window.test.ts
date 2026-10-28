@@ -1,7 +1,7 @@
 import type { MatchSnapshot, PlayerSnapshot } from "@vibewars/game-session";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { createPartyWindow, partyRows, type PartyWindow } from "./party-window.js";
+import { armedSweep, createPartyWindow, partyRows, type PartyWindow } from "./party-window.js";
 
 /**
  * The party window (#1055): who it lists, in what order, and the rows it
@@ -46,13 +46,17 @@ function player(sessionId: string, overrides: Partial<PlayerSnapshot> = {}): Pla
   };
 }
 
-function match(players: readonly PlayerSnapshot[], selfSessionId = "me"): MatchSnapshot {
+function match(
+  players: readonly PlayerSnapshot[],
+  selfSessionId = "me",
+  elapsedSeconds = 0,
+): MatchSnapshot {
   return {
     selfSessionId,
     players,
     scoreTeam0: 0,
     scoreTeam1: 0,
-    elapsedSeconds: 0,
+    elapsedSeconds,
     phase: "active",
     winningTeam: undefined,
     endReason: undefined,
@@ -73,7 +77,19 @@ const BLEEDER = player("bleeder", {
 });
 const WOLF = player("me/c1", {
   name: "Wolf",
-  creature: { ownerId: "me", kind: "pet", look: "beast", mode: "fight" },
+  creature: { ownerId: "me", kind: "pet", look: "beast", mode: "fight", armedAttack: null },
+});
+
+/** WOLF, its next blow armed with Brutal Strike until 12 s on the match clock (#1167). */
+const ARMED_WOLF = player("me/c1", {
+  name: "Wolf",
+  creature: {
+    ownerId: "me",
+    kind: "pet",
+    look: "beast",
+    mode: "fight",
+    armedAttack: { skillId: "ranger.brutal-strike", endsAt: 12 },
+  },
 });
 
 describe("partyRows (#1055)", () => {
@@ -110,7 +126,13 @@ describe("partyRows (#1055)", () => {
 
   it("never lists a minion, even your own", () => {
     const minion = player("minion", {
-      creature: { ownerId: "me", kind: "minion", look: "bone-minion", mode: null },
+      creature: {
+        ownerId: "me",
+        kind: "minion",
+        look: "bone-minion",
+        mode: null,
+        armedAttack: null,
+      },
     });
     expect(partyRows(match([ME, minion]))).toEqual([]);
     expect(partyRows(match([ME, minion, KAJA])).map((row) => row.id)).toEqual(["me", "kaja"]);
@@ -118,12 +140,31 @@ describe("partyRows (#1055)", () => {
 
   it("lists your own pet under you, in its mode, but not a teammate's (#1110)", () => {
     const kajaWolf = player("kaja/c1", {
-      creature: { ownerId: "kaja", kind: "pet", look: "beast", mode: "guard" },
+      creature: { ownerId: "kaja", kind: "pet", look: "beast", mode: "guard", armedAttack: null },
     });
     const rows = partyRows(match([KAJA, kajaWolf, ME, WOLF]));
     expect(rows.map((row) => row.id)).toEqual(["me", "me/c1", "kaja"]);
     expect(rows.map((row) => row.companionMode)).toEqual([undefined, "fight", undefined]);
     expect(partyRows(match([ME, WOLF])).map((row) => row.id)).toEqual(["me", "me/c1"]);
+  });
+
+  it("carries the pet attack your pet's next blow is armed with, by name (#1167)", () => {
+    const rows = partyRows(match([ME, ARMED_WOLF]));
+    expect(rows.map((row) => row.armedAttack)).toEqual([
+      undefined,
+      { skillId: "ranger.brutal-strike", name: "Brutal Strike" },
+    ]);
+    expect(partyRows(match([ME, WOLF]))[1]?.armedAttack).toBeUndefined();
+  });
+});
+
+describe("armedSweep (#1167)", () => {
+  it("runs from nothing when armed to whole when it lapses, and no further", () => {
+    expect(armedSweep(12, 2)).toBe(0);
+    expect(armedSweep(12, 7)).toBe(0.5);
+    expect(armedSweep(12, 12)).toBe(1);
+    expect(armedSweep(12, 13)).toBe(1);
+    expect(armedSweep(12, 1)).toBe(0);
   });
 });
 
@@ -144,7 +185,16 @@ class FakeElement {
   alt = "";
   parent: FakeElement | undefined;
   readonly dataset: Record<string, string> = {};
-  readonly style = { width: "" };
+  readonly style = {
+    width: "",
+    properties: new Map<string, string>(),
+    setProperty(name: string, value: string): void {
+      this.properties.set(name, value);
+    },
+    getPropertyValue(name: string): string {
+      return this.properties.get(name) ?? "";
+    },
+  };
   readonly children: FakeElement[] = [];
   readonly classes = new Set<string>();
   readonly classList = {
@@ -298,7 +348,10 @@ describe("createPartyWindow (#1055)", () => {
     party.update(
       match([
         ME,
-        { ...WOLF, creature: { ownerId: "me", kind: "pet", look: "beast", mode: "heel" } },
+        {
+          ...WOLF,
+          creature: { ownerId: "me", kind: "pet", look: "beast", mode: "heel", armedAttack: null },
+        },
       ]),
     );
     expect(buttons.map((button) => button.classes.has("is-lit"))).toEqual([false, false, true]);
@@ -313,6 +366,31 @@ describe("createPartyWindow (#1055)", () => {
     expect(dead?.hidden).toBe(false);
     orders?.children[0]?.listeners.get("click")?.({ preventDefault: () => undefined });
     expect(commanded).toEqual([["me/c1", "guard"]]);
+  });
+
+  it("shows your pet's armed attack right of its bar, sweeping as it runs out, gone once used (#1167)", () => {
+    const armed = (): FakeElement | undefined => {
+      const [, block] = panel().children;
+      return block?.children[0]?.children.find((child) => child.className === "party-armed");
+    };
+    party.update(match([ME, WOLF]));
+    expect(armed()?.hidden).toBe(true);
+    party.update(match([ME, ARMED_WOLF], "me", 4.5));
+    expect(armed()?.hidden).toBe(false);
+    expect(armed()?.title).toBe("Brutal Strike");
+    expect(armed()?.children[0]?.src).toContain("ranger.brutal-strike");
+    expect(armed()?.children[1]?.style.getPropertyValue("--armed")).toBe("0.25");
+    party.update(match([ME, ARMED_WOLF], "me", 9.5));
+    expect(armed()?.children[1]?.style.getPropertyValue("--armed")).toBe("0.75");
+    party.update(match([ME, WOLF], "me", 10));
+    expect(armed()?.hidden).toBe(true);
+  });
+
+  it("never gives a person's row an armed attack (#1167)", () => {
+    party.update(match([ME, KAJA]));
+    for (const row of panel().children) {
+      expect(row.children.some((child) => child.className === "party-armed")).toBe(false);
+    }
   });
 
   it("is gone once disposed", () => {

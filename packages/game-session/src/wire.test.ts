@@ -329,10 +329,13 @@ describe("wireIdentity (#1052)", () => {
       companionSkillId: undefined,
       mode: "guard" as const,
     },
+    armedAttack: undefined,
   });
 
   it("sends a seated player as its seat says", () => {
-    expect(wireIdentity({ id: "p1", creature: undefined }, seats)).toEqual({
+    expect(
+      wireIdentity({ id: "p1", creature: undefined, armedAttack: undefined }, seats, 0),
+    ).toEqual({
       name: "Ann",
       team: 1,
       primaryProfession: "necromancer",
@@ -342,12 +345,18 @@ describe("wireIdentity (#1052)", () => {
   });
 
   it("sends a creature with no seat, on its owner's team, named for its kind", () => {
-    expect(wireIdentity(minion("p1"), seats)).toEqual({
+    expect(wireIdentity(minion("p1"), seats, 0)).toEqual({
       name: "Bone Minion",
       team: 1,
       primaryProfession: null,
       secondaryProfession: null,
-      creature: { ownerId: "p1", kind: "minion", look: "bone-minion", mode: null },
+      creature: {
+        ownerId: "p1",
+        kind: "minion",
+        look: "bone-minion",
+        mode: null,
+        armedAttack: null,
+      },
     });
   });
 
@@ -362,17 +371,32 @@ describe("wireIdentity (#1052)", () => {
         companionSkillId: "ranger.charm-animal",
         mode: "heel" as const,
       },
+      armedAttack: undefined,
     };
-    expect(wireIdentity(wolf, seats)?.creature).toEqual({
+    expect(wireIdentity(wolf, seats, 0)?.creature).toEqual({
       ownerId: "p1",
       kind: "pet",
       look: "beast",
       mode: "heel",
+      armedAttack: null,
+    });
+  });
+
+  it("sends a companion's armed pet attack and when it lapses on the match clock (#1167)", () => {
+    const wolf = {
+      ...minion("p1"),
+      armedAttack: { skillId: "ranger.brutal-strike", remainingSeconds: 7.46 },
+    };
+    expect(wireIdentity(wolf, seats, 3.2)?.creature?.armedAttack).toEqual({
+      skillId: "ranger.brutal-strike",
+      endsAt: 10.7,
     });
   });
 
   it("sends neither a body with no seat nor a creature whose owner has none", () => {
-    expect(wireIdentity({ id: "dummy", creature: undefined }, seats)).toBeUndefined();
-    expect(wireIdentity(minion("gone"), seats)).toBeUndefined();
+    expect(
+      wireIdentity({ id: "dummy", creature: undefined, armedAttack: undefined }, seats, 0),
+    ).toBeUndefined();
+    expect(wireIdentity(minion("gone"), seats, 0)).toBeUndefined();
   });
 });

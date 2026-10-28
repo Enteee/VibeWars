@@ -92,7 +92,9 @@ export interface PlayerSnapshot {
    * A creature's owner, kind and look (#1052, #1162), `undefined` for a
    * player or a dummy. A creature never counts for its team: not in the
    * scoreboard, the enemy pips or the music. `mode` is a companion's
-   * (#1110), `null` for any other creature.
+   * (#1110), `null` for any other creature. `armedAttack` is the pet
+   * attack a companion's next blow carries, and the match clock it lapses
+   * at (#1167); `null` when none is armed.
    */
   readonly creature:
     | {
@@ -100,6 +102,7 @@ export interface PlayerSnapshot {
         readonly kind: CreatureKind;
         readonly look: CreatureLook;
         readonly mode: CompanionMode | null;
+        readonly armedAttack: { readonly skillId: string; readonly endsAt: number } | null;
       }
     | undefined;
 }

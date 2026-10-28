@@ -450,6 +450,11 @@ export interface Participant {
    * corpse no skill has used yet. Cleared by every way back to life.
    */
   readonly corpseExploited: boolean;
+  /**
+   * A companion's next blow, armed by its owner's pet attack (#1046):
+   * the skill, and how long it waits. `undefined`: a plain blow.
+   */
+  readonly armedAttack: { readonly skillId: string; readonly remainingSeconds: number } | undefined;
 }
 
 /** A skill walking in to its target (#499). */
@@ -536,10 +541,6 @@ interface ParticipantRecord extends Participant {
   activeWeaponSet: WeaponSetIndex;
   pendingWeaponSet: WeaponSetIndex | undefined;
   corpseExploited: boolean;
-  /**
-   * A companion's next blow, armed by its owner's pet attack (#1046):
-   * the skill, and how long it waits. `undefined`: a plain blow.
-   */
   armedAttack: { readonly skillId: string; remainingSeconds: number } | undefined;
 }
 

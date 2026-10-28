@@ -4234,6 +4234,43 @@ body:has(#app > .chat) .now-playing {
   flex-shrink: 0;
 }
 
+/* Room right of its bar for the armed pet attack (#1167), kept while
+   none is armed so the bar never jumps. */
+.party-companion .party-row {
+  position: relative;
+  padding-right: calc(24px + 0.5rem);
+}
+
+/* The armed pet attack, 24 px, right of the bar; a dark sweep grows
+   clockwise from 12 as its 10 s run out, the recharge wipe's shade. */
+.party-armed {
+  position: absolute;
+  right: 0.25rem;
+  bottom: 0.15rem;
+  width: 24px;
+  height: 24px;
+}
+
+.party-armed[hidden] {
+  display: none;
+}
+
+.party-armed img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.party-armed-sweep {
+  position: absolute;
+  inset: 0;
+  background: conic-gradient(
+    from 0deg,
+    var(--recharge-shade) calc(var(--armed, 0) * 1turn),
+    transparent 0
+  );
+}
+
 .party-commands {
   display: flex;
   gap: 0.2rem;

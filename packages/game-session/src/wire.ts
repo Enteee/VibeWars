@@ -178,6 +178,20 @@ export function groundEffectSnapshot(
   };
 }
 
+/**
+ * A companion's armed pet attack as a snapshot carries it (#1167): the
+ * skill, and the match clock at which it lapses, to 0.1 s; `null` for none.
+ */
+export function armedAttackSnapshot(
+  participant: Pick<Participant, "armedAttack">,
+  elapsedSeconds: number,
+): { readonly skillId: string; readonly endsAt: number } | null {
+  const armed = participant.armedAttack;
+  return armed === undefined
+    ? null
+    : { skillId: armed.skillId, endsAt: tenths(elapsedSeconds + armed.remainingSeconds) };
+}
+
 /** The circle a ground effect draws: what its act reaches. */
 function groundRadius(act: GroundAct): number {
   switch (act.kind) {
@@ -522,8 +536,9 @@ export interface SeatIdentity {
  * creature: it is not sent.
  */
 export function wireIdentity(
-  participant: Pick<Participant, "id" | "creature">,
+  participant: Pick<Participant, "id" | "creature" | "armedAttack">,
   seats: ReadonlyMap<string, SeatIdentity>,
+  elapsedSeconds: number,
 ): WireIdentity | undefined {
   const seat = seats.get(participant.id);
   if (seat !== undefined) {
@@ -549,6 +564,7 @@ export function wireIdentity(
           kind: creature.kind,
           look: creature.look,
           mode: companionMode(creature),
+          armedAttack: armedAttackSnapshot(participant, elapsedSeconds),
         },
       };
 }
@@ -604,7 +620,17 @@ export function playerSnapshot(player: WirePlayer): PlayerSnapshot | undefined {
     healthPips: player.healthPips,
     energyPips: player.energyPips,
     statuses,
-    creature: player.creature ?? undefined,
+    creature:
+      player.creature === null
+        ? undefined
+        : {
+            ...player.creature,
+            // One this client does not know as a pet attack draws as none.
+            armedAttack:
+              getSkill(player.creature.armedAttack?.skillId ?? "")?.type === "pet-attack"
+                ? player.creature.armedAttack
+                : null,
+          },
   };
 }
 
