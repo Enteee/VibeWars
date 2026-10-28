@@ -1212,10 +1212,11 @@ a death. Its owner's death does not end it; its owner leaving the match
 does. Soul Reaping answers a minion's death but not a spirit's. At most
 32 creatures are on the field at once (ADR-0035).
 
-**Spirits** (#1064) are planted by a ritual, a 5 s cast that can be
+**Spirits** (#1064) are planted by a ritual, a cast that can be
 interrupted, where its caster stands. A spirit never moves: bodies are
-pushed out of it, never it out of them. While it lives, everyone in
-spirit range of it (850, walls do not matter) that it reaches wears its
+pushed out of it, never it out of them. While it lives, everyone in its
+range (a nature ritual's 1,190, a binding ritual's spirit range of 850;
+walls do not matter) that it reaches wears its
 effect as a status, with no bar, its hover "from Winnowing, while in
 its range": on the step a body walks in, off the
 step it walks out, and off everyone the step after the spirit dies or
@@ -1225,16 +1226,17 @@ helps the foe beside you too; a **binding ritual** (Ritualist) reaches
 only its own team. No spirit is ever reached by a spirit. A body in
 range of two spirits with the same effect, its side's and the foe's,
 wears it once. One of a skill in range: planting a spirit ends every
-spirit of the same skill on your side within spirit range of it, as an
+spirit of the same skill on your side within the new one's range, as an
 expiry, not a death. A foe's spirit of that skill lives on.
 
-**Winnowing** (Ranger, Beast Mastery, nature ritual, 10 energy, 5 s,
-60 s recharge) plants a spirit of 340 Health and armor 40 for 68 s: every
-physical hit dealt by a body in its range deals 3 more damage, before
-armor. A hit that "deals only" its number, as Concussion Shot's, keeps
-it. **Recuperation** (Ritualist, Restoration Magic, binding ritual, 10
-energy, 5 s, 45 s recharge) plants one of 340 Health for 49 s: your side
-in its range gains +2 Health regeneration.
+**Winnowing** (Ranger, Wilderness Survival, nature ritual, 5 energy,
+2 s, 60 s recharge) plants a spirit of 210 Health and armor 51 for 198 s:
+every body in its range takes 4 more from each physical hit it takes,
+before armor. A hit that "deals only" its number, as Concussion Shot's,
+takes the 4 too: it is on the one hit, not on the attack.
+**Recuperation** (Ritualist, Restoration Magic, binding ritual, 25
+energy, 3 s, 45 s recharge) plants one of 210 Health and armor 51 for
+39 s: your side in its range gains +3 Health regeneration.
 
 ## Death and scoring
 

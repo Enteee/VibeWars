@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { AREA_EARSHOT, RANGE_SPIRIT } from "../distances.js";
+import { AREA_EARSHOT, RANGE_NATURE_RITUAL, RANGE_SPIRIT } from "../distances.js";
 import { unarmedResolvedEquipment, type ResolvedEquipment } from "../equipment/resolve.js";
 import { WEAPONS } from "../equipment/weapons.js";
 import { createRng, type SimulationRng } from "../rng.js";
@@ -43,7 +43,7 @@ function spec(id: string, team: number, spawn: Vec2, extra?: Partial<Participant
     team,
     skillBar: [WINNOWING, RECUPERATION, "mesmer.leech-signet"],
     attributeRanks: new Map([
-      ["ranger.beast-mastery", 12],
+      ["ranger.wilderness-survival", 12],
       ["ritualist.restoration-magic", 12],
     ]),
     equipment: unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
@@ -63,7 +63,7 @@ function match(...more: ParticipantSpec[]): MatchSimulation {
       spec("r", 0, vec2(0, 0)),
       spec("a", 0, vec2(0, 200)),
       spec("f", 1, vec2(300, 0)),
-      spec("far", 0, vec2(RANGE_SPIRIT + 300, 0)),
+      spec("far", 0, vec2(RANGE_NATURE_RITUAL + 300, 0)),
       ...more,
     ],
   });
@@ -85,7 +85,7 @@ function spirits(sim: MatchSimulation): Participant[] {
 function ritual(sim: MatchSimulation, skillId: string, by = "r"): CombatLogEntry[] {
   const slot = get(sim, by).skillBar.indexOf(skillId);
   expect(sim.requestSkill(by, slot)?.check.ok).toBe(true);
-  return stepFor(sim, 5.5);
+  return stepFor(sim, skillOf(skillId).activationSeconds + 0.5);
 }
 
 function stepFor(sim: MatchSimulation, seconds: number): CombatLogEntry[] {
@@ -101,7 +101,7 @@ function wears(sim: MatchSimulation, id: string, statusId: StatusId): boolean {
 }
 
 describe("Winnowing (#1064)", () => {
-  it("plants one spirit where its Ranger stands: 340 Health, armor 40, 68 s", () => {
+  it("plants one spirit where its Ranger stands: 210 Health, armor 51, 198 s", () => {
     const sim = match();
     ritual(sim, WINNOWING);
     const [spirit, ...others] = spirits(sim);
@@ -113,10 +113,10 @@ describe("Winnowing (#1064)", () => {
       skillId: WINNOWING,
     });
     expect(spirit?.position).toEqual(vec2(0, 0));
-    expect(spirit?.combatant.maxHealth).toBe(340);
-    expect(spirit?.combatant.equipment).toEqual(unarmedResolvedEquipment(40));
-    // Planted half a second ago, at the tick its cast ended.
-    expect(spirit?.creature?.expiresInSeconds).toBeCloseTo(67.5, 1);
+    expect(spirit?.combatant.maxHealth).toBe(210);
+    expect(spirit?.combatant.equipment).toEqual(unarmedResolvedEquipment(51));
+    // Planted at the tick its cast ended, half a second and a tick ago.
+    expect(spirit?.creature?.expiresInSeconds).toBeCloseTo(197.5 - DT, 5);
   });
 
   it("never moves, whoever walks into it", () => {
@@ -159,7 +159,9 @@ describe("Winnowing (#1064)", () => {
       for (let i = 0; i < 4 * RULES.tickRateHz; i += 1) {
         const from = far.position;
         sim.step(DT);
-        expect(wears(sim, "far", "winnowing")).toBe(distance(from, vec2(0, 0)) <= RANGE_SPIRIT);
+        expect(wears(sim, "far", "winnowing")).toBe(
+          distance(from, vec2(0, 0)) <= RANGE_NATURE_RITUAL,
+        );
         seen.push(wears(sim, "far", "winnowing"));
       }
       return seen;
@@ -199,7 +201,7 @@ describe("Winnowing (#1064)", () => {
 
     const expired = match();
     ritual(expired, WINNOWING);
-    stepFor(expired, 67.5 + 2 * DT);
+    stepFor(expired, 197.5 + 2 * DT);
     expect(spirits(expired)).toEqual([]);
     expect(["r", "a", "f"].some((id) => wears(expired, id, "winnowing"))).toBe(false);
   });
@@ -226,8 +228,17 @@ describe("one spirit of a skill in range (#1064)", () => {
     );
   });
 
+  it("reaches as far as its own aura: a Winnowing 1,000 away, past spirit range, ends too", () => {
+    const sim = match(spec("r2", 0, vec2(1000, 0)));
+    ritual(sim, WINNOWING);
+    expect(RANGE_SPIRIT).toBeLessThan(1000);
+    expect(RANGE_NATURE_RITUAL).toBeGreaterThan(1000);
+    ritual(sim, WINNOWING, "r2");
+    expect(spirits(sim).map((spirit) => spirit.creature?.ownerId)).toEqual(["r2"]);
+  });
+
   it("out of its range, both live; a foe's of the same skill lives beside it", () => {
-    const apart = match(spec("r2", 0, vec2(RANGE_SPIRIT + 100, 300)));
+    const apart = match(spec("r2", 0, vec2(RANGE_NATURE_RITUAL + 100, 300)));
     ritual(apart, WINNOWING);
     ritual(apart, WINNOWING, "r2");
     expect(spirits(apart)).toHaveLength(2);
@@ -255,7 +266,7 @@ describe("one spirit of a skill in range (#1064)", () => {
 });
 
 describe("Recuperation (#1064)", () => {
-  it("gives its own side +2 Health regeneration in range, never a foe on top of it", () => {
+  it("gives its own side +3 Health regeneration in range, never a foe on top of it", () => {
     const sim = match();
     ritual(sim, RECUPERATION);
     expect(["r", "a", "f", "far"].map((id) => wears(sim, id, "recuperation"))).toEqual([
@@ -274,16 +285,23 @@ describe("Recuperation (#1064)", () => {
     expect(distance(get(sim, "f").position, vec2(0, 0))).toBeLessThan(100);
   });
 
+  it("reaches spirit range, not a nature ritual's", () => {
+    const sim = match(spec("mid", 0, vec2(0, -(RANGE_SPIRIT + 100))));
+    ritual(sim, RECUPERATION);
+    expect(wears(sim, "a", "recuperation")).toBe(true);
+    expect(wears(sim, "mid", "recuperation")).toBe(false);
+  });
+
   it("says what its spirit does, and to whom", () => {
     const lines = (id: string, attributeId: string) =>
       describeSkill(skillOf(id), new Map([[attributeId, 12]])).effects.map(({ text }) => text);
     expect(lines(RECUPERATION, "ritualist.restoration-magic")).toEqual([
-      "Summons 1 Recuperation (340 Health, lasts 49 seconds)",
-      "Non-spirit allies in its range: +2 Health regeneration",
+      "Summons 1 Recuperation (210 Health, lasts 39 seconds)",
+      "Non-spirit allies in its range: +3 Health regeneration",
     ]);
-    expect(lines(WINNOWING, "ranger.beast-mastery")).toEqual([
-      "Summons 1 Winnowing (340 Health, lasts 68 seconds)",
-      "Non-spirit creatures in its range: physical hits deal +3 damage",
+    expect(lines(WINNOWING, "ranger.wilderness-survival")).toEqual([
+      "Summons 1 Winnowing (210 Health, lasts 198 seconds)",
+      "Non-spirit creatures in its range: take +4 from physical damage",
     ]);
   });
 });
@@ -323,13 +341,17 @@ describe("what a spirit lets the Ritualist do (#1064)", () => {
   });
 });
 
-describe("Winnowing's +3 (#1064)", () => {
+describe("Winnowing's +4 (#1064)", () => {
   /** A stream that always rolls `roll` and never crits. */
   const steady = (roll = 10): SimulationRng =>
     Object.assign(createRng(1), { nextInt: () => roll, nextFloat: () => 0.95 });
 
-  const struck = (attacker: Combatant, blow = PLAIN_BLOW): number => {
+  /** What `blow` takes off a reference-armor victim, under Winnowing or not. */
+  const struck = (attacker: Combatant, winnowed: boolean, blow = PLAIN_BLOW): number => {
     const victim = makeCombatant({ id: "victim", team: 1, maxHealth: 1000, health: 1000 });
+    if (winnowed) {
+      victim.statuses.project("winnowing", "r/c1");
+    }
     const events: CombatEvent[] = [];
     landBlow(
       weaponSnapshotOf(attacker),
@@ -344,14 +366,19 @@ describe("Winnowing's +3 (#1064)", () => {
     return 1000 - victim.health;
   };
 
-  it("adds 3 to a physical hit against armor at the reference level", () => {
+  it("adds 4 to a physical hit its bearer takes, against armor at the reference level", () => {
     const warrior = makeCombatant({ id: "w", equipment: AXE });
-    const plain = struck(warrior);
-    warrior.statuses.project("winnowing", "r/c1");
-    expect(struck(warrior)).toBe(plain + 3);
+    expect(struck(warrior, true)).toBe(struck(warrior, false) + 4);
   });
 
-  it("leaves a shot that deals only its fixed damage as it is (Concussion Shot)", () => {
+  it("is on the attacker's own hits nothing: it is what the bearer takes", () => {
+    const warrior = makeCombatant({ id: "w", equipment: AXE });
+    const plain = struck(warrior, false);
+    warrior.statuses.project("winnowing", "r/c1");
+    expect(struck(warrior, false)).toBe(plain);
+  });
+
+  it("adds 4 to a shot that deals only its fixed damage too (Concussion Shot)", () => {
     const ranger = makeCombatant({
       id: "ranger",
       attributeRanks: new Map([["ranger.marksmanship", 12]]),
@@ -366,9 +393,13 @@ describe("Winnowing's +3 (#1064)", () => {
       },
     });
     const blow = skillBlow(skillOf("ranger.concussion-shot"), ranger);
-    const plain = struck(ranger, blow);
-    ranger.statuses.project("winnowing", "r/c1");
-    expect(struck(ranger, blow)).toBe(plain);
+    expect(struck(ranger, true, blow)).toBe(struck(ranger, false, blow) + 4);
+  });
+
+  it("adds nothing to fire damage", () => {
+    const warrior = makeCombatant({ id: "w", equipment: AXE });
+    const fire = { ...PLAIN_BLOW, damageType: "fire" as const };
+    expect(struck(warrior, true, fire)).toBe(struck(warrior, false, fire));
   });
 });
 

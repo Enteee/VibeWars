@@ -207,8 +207,8 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
     const change = Math.round((definition.weaponDamageMultiplier - 1) * 100);
     parts.push(`${signed(change)}% weapon damage`);
   }
-  if (definition.physicalDamageBonus !== 0) {
-    parts.push(`physical hits deal ${signed(definition.physicalDamageBonus)} damage`);
+  if (definition.physicalDamageTakenBonus !== 0) {
+    parts.push(`take ${signed(definition.physicalDamageTakenBonus)} from physical damage`);
   }
   if (definition.attackDamageType !== undefined) {
     parts.push(`attacks deal ${definition.attackDamageType} damage`);
@@ -637,7 +637,7 @@ function describeEffects(
 ): EffectDescription[] {
   if (effect.kind === "summon" && effect.creature.aura !== undefined) {
     // What the spirit projects (#1064): "Non-spirit allies in its range:
-    // +2 Health regeneration".
+    // +3 Health regeneration".
     const { statusId, affects } = effect.creature.aura;
     const who = affects === "all" ? "Non-spirit creatures" : "Non-spirit allies";
     return [

@@ -89,7 +89,7 @@ test("a spirit's aura shows with no bar, from the spirit, while you stand in its
   await page.locator(".roster").getByText("Winnower", { exact: true }).click();
   await startSoloMatch(page);
 
-  // A 5 s ritual: the spirit stands where you do, so you are in its range.
+  // A 2 s ritual: the spirit stands where you do, so you are in its range.
   await page.keyboard.press(key("skill-1"));
   const effects = page.getByRole("list", { name: "your effects" });
   const icon = effects.getByRole("listitem").filter({ has: page.getByAltText("Winnowing") });
@@ -98,7 +98,7 @@ test("a spirit's aura shows with no bar, from the spirit, while you stand in its
 
   await icon.hover();
   const tip = page.getByRole("tooltip");
-  await expect(tip).toContainText("physical hits deal +3 damage");
+  await expect(tip).toContainText("take +4 from physical damage");
   await expect(tip).toContainText("from Winnowing");
   await expect(tip).toContainText("while in its range");
   await expect(tip).not.toContainText("maintained");

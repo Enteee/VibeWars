@@ -56,7 +56,7 @@ describe("status definitions", () => {
         def.maxHealthLoss !== undefined ||
         def.healingMultiplier !== 1 ||
         def.weaponDamageMultiplier !== 1 ||
-        def.physicalDamageBonus !== 0 ||
+        def.physicalDamageTakenBonus !== 0 ||
         def.attributeDelta !== 0 ||
         def.castTimeMultiplier !== 1 ||
         def.interruptsSpells ||
@@ -115,7 +115,7 @@ describe("status definitions", () => {
       "weapon-of-warding": 4,
       "never-surrender": 4,
       "shadow-refuge": 9,
-      recuperation: 2,
+      recuperation: 3,
     });
   });
 

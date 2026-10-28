@@ -660,7 +660,7 @@ export class MatchSimulation {
    * already there.
    *
    * A spirit made ends every allied spirit of the same `skillId` within
-   * spirit range of it (#1064): it leaves at the end of the step, as an
+   * the new one's aura radius (#1064): it leaves at the end of the step, as an
    * expiry, so nobody scores. A foe's lives on.
    */
   #summon(
@@ -676,14 +676,15 @@ export class MatchSimulation {
       }
     }
     const fits = Math.max(0, Math.min(count, MAX_CREATURES - creatures));
-    if (fits > 0 && template.kind === "spirit") {
+    const radius = template.aura?.radius;
+    if (fits > 0 && radius !== undefined) {
       for (const record of this.#participants.values()) {
         if (
           record.creature?.kind === "spirit" &&
           record.creature.skillId === skillId &&
           record.combatant.team === owner.combatant.team &&
           !record.combatant.dead &&
-          distance(record.position, owner.position) <= RANGE_SPIRIT
+          distance(record.position, owner.position) <= radius
         ) {
           this.#leaving.add(record.id);
         }

@@ -255,11 +255,12 @@ export interface StatusDefinition {
    */
   readonly weaponDamageMultiplier: number;
   /**
-   * Damage added to each physical hit the bearer deals (#1064):
-   * Winnowing's 3. After the attack's own bonus and before armor; a hit
-   * that "deals only N damage" keeps its N.
+   * Damage added to each physical hit the bearer takes (#1064):
+   * Winnowing's 4. After the attacker's side and before armor, fixed
+   * "deals only N damage" hits included: it is on the victim, not on the
+   * attack.
    */
-  readonly physicalDamageBonus: number;
+  readonly physicalDamageTakenBonus: number;
   /**
    * The type the bearer's attacks deal, the weapon's roll included
    * (#1021): Staggering Force's and Dust Cloak's "your attacks deal
@@ -588,7 +589,7 @@ function define(
     maxHealthLoss: undefined,
     healingMultiplier: 1,
     weaponDamageMultiplier: 1,
-    physicalDamageBonus: 0,
+    physicalDamageTakenBonus: 0,
     attackDamageType: undefined,
     attributeDelta: 0,
     castTimeMultiplier: 1,
@@ -1007,16 +1008,17 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     armorModifier: -40,
   }),
   // What a spirit projects on whoever is in its range (#1064): worn while
-  // there, never stripped, only escaped. "For non-spirit creatures within
-  // its range, physical damage is increased by 3."
+  // there, never stripped, only escaped. "Non-spirit creatures within
+  // range take 4 additional damage whenever they take physical damage."
   winnowing: define("winnowing", "Winnowing", "skill-effect", {
     profession: "ranger",
-    physicalDamageBonus: 3,
+    physicalDamageTakenBonus: 4,
   }),
-  // "Non-spirit allies within its range gain +2 Health regeneration."
+  // "Non-Spirit allies within its range gain +1...3...3 Health
+  // regeneration": the rank-12 3, as statuses carry fixed numbers.
   recuperation: define("recuperation", "Recuperation", "skill-effect", {
     profession: "ritualist",
-    healthPips: 2,
+    healthPips: 3,
   }),
   // "Fall Back!" at rank 12: 13 Health per second while moving, 33%
   // faster, ending on its bearer's hit.
@@ -1949,7 +1951,7 @@ export interface StatusModifiers {
   readonly healingMultiplier: number;
   readonly weaponDamageMultiplier: number;
   /** Every status's, summed (#1064). */
-  readonly physicalDamageBonus: number;
+  readonly physicalDamageTakenBonus: number;
   readonly attributeDelta: number;
   readonly castTimeMultiplier: number;
   readonly attackDurationMultiplier: number;
@@ -2021,7 +2023,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let maxHealthLoss: MaxHealthLoss | undefined;
   const healingMultipliers: number[] = [];
   let weaponDamageMultiplier = 1;
-  let physicalDamageBonus = 0;
+  let physicalDamageTakenBonus = 0;
   let attributeDelta = 0;
   let castTimeMultiplier = 1;
   let attackFaster = 1;
@@ -2067,7 +2069,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     }
     healingMultipliers.push(def.healingMultiplier);
     weaponDamageMultiplier *= def.weaponDamageMultiplier;
-    physicalDamageBonus += def.physicalDamageBonus;
+    physicalDamageTakenBonus += def.physicalDamageTakenBonus;
     attributeDelta += def.attributeDelta;
     castTimeMultiplier *= def.castTimeMultiplier;
     attackFaster = Math.min(attackFaster, def.attackDurationMultiplier);
@@ -2102,7 +2104,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     maxHealthLoss,
     healingMultiplier: combinedHealingMultiplier(healingMultipliers),
     weaponDamageMultiplier,
-    physicalDamageBonus,
+    physicalDamageTakenBonus,
     attributeDelta,
     castTimeMultiplier,
     attackDurationMultiplier: attackFaster * attackSlower,

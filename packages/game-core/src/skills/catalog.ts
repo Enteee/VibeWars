@@ -4,6 +4,7 @@ import {
   AREA_IN_THE_AREA,
   AREA_NEARBY,
   RANGE_MELEE,
+  RANGE_NATURE_RITUAL,
   RANGE_SPELL,
   RANGE_SPIRIT,
 } from "../distances.js";
@@ -5260,10 +5261,10 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     type: "nature-ritual",
     elite: false,
     profession: "ranger",
-    attributeId: "ranger.beast-mastery",
-    cost: { kind: "energy", amount: 10 },
+    attributeId: "ranger.wilderness-survival",
+    cost: { kind: "energy", amount: 5 },
     overcast: 0,
-    activationSeconds: 5,
+    activationSeconds: 2,
     rechargeSeconds: 60,
     range: RANGE_SPELL,
     target: "self",
@@ -5271,9 +5272,10 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     attack: undefined,
     whileActivating: undefined,
     projectile: undefined,
-    // "Create a level 1...10 spirit. For non-spirit creatures within its
-    // range, physical damage is increased by 3. This spirit dies after
-    // 30...78 seconds": 68 s at 12. Its Health and armor are house rules.
+    // "Create a level 1...8...10 Spirit. Non-spirit creatures within range
+    // take 4 additional damage whenever they take physical damage. This
+    // Spirit dies after 30...198...240 seconds." A level-8 spirit: 50 + 20
+    // per level, armor 51.
     effects: [
       {
         kind: "summon",
@@ -5282,14 +5284,14 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
           kind: "spirit",
           name: "Winnowing",
           maxHealth: {
-            scaling: { attributeId: "ranger.beast-mastery", atZero: 100, atTwelve: 340 },
+            scaling: { attributeId: "ranger.wilderness-survival", atZero: 70, atTwelve: 210 },
           },
-          armor: 40,
+          armor: 51,
           durationSeconds: {
-            scaling: { attributeId: "ranger.beast-mastery", atZero: 30, atTwelve: 68 },
+            scaling: { attributeId: "ranger.wilderness-survival", atZero: 30, atTwelve: 198 },
           },
           behaviour: { kind: "idle" },
-          aura: { statusId: "winnowing", affects: "all", radius: RANGE_SPIRIT },
+          aura: { statusId: "winnowing", affects: "all", radius: RANGE_NATURE_RITUAL },
         },
       },
     ],
@@ -5301,9 +5303,9 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     elite: false,
     profession: "ritualist",
     attributeId: "ritualist.restoration-magic",
-    cost: { kind: "energy", amount: 10 },
+    cost: { kind: "energy", amount: 25 },
     overcast: 0,
-    activationSeconds: 5,
+    activationSeconds: 3,
     rechargeSeconds: 45,
     range: RANGE_SPELL,
     target: "self",
@@ -5311,9 +5313,9 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     attack: undefined,
     whileActivating: undefined,
     projectile: undefined,
-    // "Create a level 1...10 spirit. Non-spirit allies within its range
-    // gain +2 Health regeneration. This spirit dies after 30...54 seconds":
-    // 49 s at 12. Its Health and armor are house rules.
+    // PvP: "Create a level 1...8...10 Spirit. Non-Spirit allies within its
+    // range gain +1...3...3 Health regeneration. This Spirit dies after
+    // 15...39...45 seconds." A level-8 spirit: 50 + 20 per level, armor 51.
     effects: [
       {
         kind: "summon",
@@ -5322,11 +5324,11 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
           kind: "spirit",
           name: "Recuperation",
           maxHealth: {
-            scaling: { attributeId: "ritualist.restoration-magic", atZero: 100, atTwelve: 340 },
+            scaling: { attributeId: "ritualist.restoration-magic", atZero: 70, atTwelve: 210 },
           },
-          armor: 40,
+          armor: 51,
           durationSeconds: {
-            scaling: { attributeId: "ritualist.restoration-magic", atZero: 30, atTwelve: 49 },
+            scaling: { attributeId: "ritualist.restoration-magic", atZero: 15, atTwelve: 39 },
           },
           behaviour: { kind: "idle" },
           aura: { statusId: "recuperation", affects: "allies", radius: RANGE_SPIRIT },
