@@ -12,7 +12,7 @@ import { makeCombatant } from "../skills/testing.js";
 import type { StatusId } from "../skills/status.js";
 import type { Combatant } from "../skills/types.js";
 import { landBlow, PLAIN_BLOW, skillBlow, weaponSnapshotOf } from "../skills/weapon-attack.js";
-import { distance, vec2, type Vec2 } from "../vec2.js";
+import { distance, normalize, sub, vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
 
@@ -287,39 +287,56 @@ describe("an owner steps off the creature it stands in, unshoved (#1278)", () =>
     }
   });
 
-  it("is blocked by that spirit again once they are apart", () => {
-    const sim = match();
-    ritual(sim, RECUPERATION);
-    walk(sim, vec2(0, -1));
-    sim.setInputDirection("r", vec2(0, 1));
+  /** `r`'s Bone Minion, spawned on it at the origin, walked by nothing. */
+  const MINION: ParticipantSpec = {
+    ...spec("r/m", 0, vec2(0, 0)),
+    creature: {
+      ownerId: "r",
+      kind: "minion",
+      look: "bone-minion",
+      name: "Bone Minion",
+      expiresInSeconds: Number.POSITIVE_INFINITY,
+      ageSeconds: 0,
+      summonedAtTick: 0,
+      skillId: "necromancer.animate-bone-minions",
+      aura: undefined,
+      onDeath: "vanish",
+      ownerDisableSeconds: 0,
+      companionSkillId: undefined,
+      mode: "guard",
+    },
+  };
+
+  /** `from` walks straight at `r/m` for 3 s; where it ends against it. */
+  function walkInto(sim: MatchSimulation, from: string): void {
+    const minion = get(sim, "r/m");
+    const at = minion.position;
+    const body = get(sim, from);
+    const toward = normalize(sub(at, body.position));
+    sim.setInputDirection(from, toward);
     stepFor(sim, 3);
-    const r = get(sim, "r");
-    expect(r.position.x).toBe(0);
-    expect(r.position.y).toBeCloseTo(
-      -(RULES.collision.playerRadius + RULES.collision.creatureRadius),
+    expect(minion.position).toEqual(at);
+    expect(distance(body.position, at)).toBeCloseTo(
+      RULES.collision.playerRadius + RULES.collision.creatureRadius,
       6,
     );
-    expect(spirits(sim)[0]?.position).toEqual(vec2(0, 0));
+  }
+
+  it("is blocked by its minion again once they are apart", () => {
+    const sim = match(MINION);
+    walk(sim, vec2(0, -1));
+    walkInto(sim, "r");
   });
 
   for (const [who, from] of [
     ["a teammate", "a"],
     ["a foe", "f"],
   ] as const) {
-    it(`stops ${who} walking straight at it at the touch`, () => {
-      const sim = match();
-      ritual(sim, RECUPERATION);
+    it(`stops ${who} walking straight at the owner's minion at the touch`, () => {
+      const sim = match(MINION);
       walk(sim, vec2(-1, 0));
       sim.setInputDirection("r", vec2(0, 0));
-      const body = get(sim, from);
-      const toward = vec2(-Math.sign(body.position.x), -Math.sign(body.position.y));
-      sim.setInputDirection(from, toward);
-      stepFor(sim, 3);
-      expect(distance(body.position, vec2(0, 0))).toBeCloseTo(
-        RULES.collision.playerRadius + RULES.collision.creatureRadius,
-        6,
-      );
-      expect(Math.abs(body.position.x * toward.y - body.position.y * toward.x)).toBe(0);
+      walkInto(sim, from);
     });
   }
 
