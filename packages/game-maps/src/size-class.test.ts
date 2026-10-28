@@ -11,7 +11,7 @@ describe("sizeClass (#444)", () => {
     expect(sizeClass({ width: 2401, height: 100 })).toBe("large");
   });
 
-  it("calls today's four small and sorts the new four by size", () => {
+  it("calls today's four small and sorts the rest by size", () => {
     expect(Object.fromEntries(loadAllMaps().map((map) => [map.id, sizeClass(map)]))).toEqual({
       "arena-alpha": "small",
       "arena-open": "small",
@@ -21,6 +21,7 @@ describe("sizeClass (#444)", () => {
       "arena-crossroads": "large",
       "arena-canyon": "large",
       "arena-long-hall": "large",
+      "guild-hall-isle": "large",
     });
   });
 });
