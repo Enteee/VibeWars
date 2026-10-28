@@ -319,7 +319,8 @@ describe("auto-attack", () => {
         participants: [...sim.participants()],
         dt: DT,
         stepUnits: STEP,
-        canUse: () => false,
+        check: () => ({ ok: false, reason: "skill-not-on-bar" }),
+        isBot: () => false,
       },
     );
     expect(intent.attackTargetId).toBe("first");
@@ -366,7 +367,8 @@ describe("follow-and-attack (#467)", () => {
       participants: [...sim.participants()],
       dt: DT,
       stepUnits: STEP,
-      canUse: () => false,
+      check: () => ({ ok: false, reason: "skill-not-on-bar" }),
+      isBot: () => false,
     });
   }
 

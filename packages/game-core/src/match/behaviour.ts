@@ -1,5 +1,7 @@
+import type { ActivationCheck } from "../skills/activation.js";
 import type { StatusId } from "../skills/status.js";
 import { distance, normalize, sub, ZERO, type Vec2 } from "../vec2.js";
+import { playBuild } from "./bot/play-build.js";
 import type { Participant } from "./simulation.js";
 
 /**
@@ -95,6 +97,15 @@ export type Behaviour =
       readonly aggroUnits: number;
       readonly leashUnits: number;
       readonly heelUnits: number;
+    }
+  /**
+   * A bot playing its own skill bar (#1189), as `bot/play-build.ts` says:
+   * interrupt, heal, cleanse, raise, then fight the team target.
+   */
+  | {
+      readonly kind: "play-build";
+      /** Seconds between decisions: the reaction time. `0`: every tick. */
+      readonly thinkSeconds: number;
     };
 
 /**
@@ -141,6 +152,8 @@ export interface BehaviourCursor {
   readonly children: BehaviourCursor[];
   /** `follow-and-attack`: walking back to the owner, past the leash. */
   returning: boolean;
+  /** `play-build`: the movement its last think asked for, held until the next. */
+  heldMove: Pick<BehaviourIntent, "moveDirection" | "moveTo">;
 }
 
 export interface BehaviourContext {
@@ -154,14 +167,23 @@ export interface BehaviourContext {
    */
   readonly stepUnits: number;
   /**
-   * Whether `self` may cast `skillId` at `targetId` right now. The same
-   * `canActivate` check `requestSkill` makes, asked without casting.
+   * Whether `self` may cast `skillId` at `targetId` right now, and why not:
+   * the same `canActivate` check `requestSkill` makes, asked without casting.
    */
-  canUse(skillId: string, targetId: string | undefined): boolean;
+  check(skillId: string, targetId: string | undefined): ActivationCheck;
+  /** Whether `participantId` is driven by `play-build` (#1189): a bot. */
+  isBot(participantId: string): boolean;
 }
 
 export function createCursor(): BehaviourCursor {
-  return { nextSkill: 0, waitSeconds: 0, waypoint: 0, children: [], returning: false };
+  return {
+    nextSkill: 0,
+    waitSeconds: 0,
+    waypoint: 0,
+    children: [],
+    returning: false,
+    heldMove: { moveDirection: ZERO, moveTo: undefined },
+  };
 }
 
 /**
@@ -255,6 +277,8 @@ export function decide(
     }
     case "follow-and-attack":
       return followAndAttack(behaviour, cursor, context);
+    case "play-build":
+      return playBuild(behaviour, cursor, context);
   }
 }
 
@@ -273,10 +297,10 @@ function castLoop(
 
   let useSkillId: string | undefined;
   if (behaviour.firstLegal) {
-    useSkillId = behaviour.skillIds.find((skillId) => context.canUse(skillId, targetId));
+    useSkillId = behaviour.skillIds.find((skillId) => context.check(skillId, targetId).ok);
   } else {
     const next = behaviour.skillIds[cursor.nextSkill % behaviour.skillIds.length];
-    if (next !== undefined && context.canUse(next, targetId)) {
+    if (next !== undefined && context.check(next, targetId).ok) {
       useSkillId = next;
       cursor.nextSkill = (cursor.nextSkill + 1) % behaviour.skillIds.length;
     }
