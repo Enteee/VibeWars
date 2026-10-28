@@ -551,7 +551,8 @@ const status = {
     "weapon-spell",
     (c) =>
       `<path d="M10 4.5v10M6.5 14.5h7M10 14.5v4" ${stroke(c, 2.5)}/>` +
-      `<path d="M17 5.5c-1.8 2.4-2.5 3.6-2.5 4.6a2.5 2.5 0 0 0 5 0c0-1-.7-2.2-2.5-4.6z" fill="${c}"/>`,
+      `<path d="M17 4.5c-1.8 2.4-2.5 3.6-2.5 4.6a2.5 2.5 0 0 0 5 0c0-1-.7-2.2-2.5-4.6z" ${stroke(c, 1.5)}/>` +
+      `<path d="M13.5 4L20.5 11.5" ${stroke(c, 1.6)}/>`,
   ],
   // Weapon spell: a blade and a hook turning back, steals from who hurt it (#1022).
   "vengeful-weapon": [
@@ -565,7 +566,7 @@ const status = {
     "weapon-spell",
     (c) =>
       `<path d="M10 4.5v10M6.5 14.5h7M10 14.5v4" ${stroke(c, 2.5)}/>` +
-      `<path d="M15 6l4-2M15 9h5M15 12l4 2" ${stroke(c, 1.8)}/>`,
+      `<path d="M14 4.5l3.5-1-.5 3zM18 7.5l3.5-1-1 3.5zM14.5 10.5l3.5-.5-1 3z" fill="${c}"/>`,
   ],
   // Shout: a plus with a chevron rising over it, regeneration called for (#923).
   "never-surrender": [
@@ -935,6 +936,23 @@ const skillGlyph = {
     bladeMark(inkLine("M11 6.5A3.5 3.5 0 1 0 8.5 11.5M8.5 11.5L10.5 12M8.5 11.5L9 9.5", 1.8)),
   "blade-fast": () =>
     bladeMark(inkLine("M3.5 5.5L6.5 8.5L3.5 11.5M7.5 5.5L10.5 8.5L7.5 11.5", 1.8)),
+  // A blade with a drop struck through above it: a weapon spell that cleanses (#1048).
+  "blade-cleanse": () =>
+    bladeMark(
+      `<path d="M8 3C8 3 4.5 7 4.5 9.2A3.5 3.5 0 0 0 11.5 9.2C11.5 7 8 3 8 3Z" ${stroke(C.ink, 1.5)}/>` +
+        inkLine("M3.5 3.5L12 12", 1.6),
+    ),
+  // A blade with a hook turning back above it: a weapon spell that hits back at the attacker (#1048).
+  "blade-hook": () =>
+    bladeMark(inkLine("M11.5 4.5H8a2.5 2.5 0 0 0 0 5H10.5M6.5 3L5 4.5L6.5 6", 1.8)),
+  // A blade with shards flying off above it: a weapon spell that splinters (#1048).
+  "blade-shards": () => bladeMark(inkFill("M3 4L6 3L5.5 6ZM8 6L11 5L10 8.5ZM4 9L7 8.5L6 11.5Z")),
+  // A sword hilt with a plus on its grip: a weapon spell that mends (#1048).
+  hilt: () =>
+    inkLine("M5 9.5H19", 2.8) +
+    inkLine("M12 9.5V20.5", 4) +
+    inkFill("M12 2.5L15 6.5L12 8L9 6.5Z") +
+    `<path d="M12 12.5V17.5M9.5 15H14.5" stroke="${C.bg}" stroke-width="1.6" stroke-linecap="round" fill="none"/>`,
   // A white-hot disc ringed by rays: a flash that blinds (#992).
   flash: () =>
     `<circle cx="12" cy="12" r="4.2" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
