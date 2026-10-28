@@ -239,4 +239,7 @@ export const SKILL_ICONS = {
   "ranger.call-of-protection": { glyph: "armor", modifier: "plus" },
   "ranger.symbiotic-bond": { glyph: "chain", modifier: "plus" },
   "ranger.revive-animal": { glyph: "resurrect", modifier: "plus" },
+  // Placeholders until the asset-designer's (#1205).
+  "elementalist.meteor-shower": { glyph: "meteor", modifier: "area" },
+  "monk.contemplation-of-purity": { glyph: "cleanse", modifier: "half" },
 };

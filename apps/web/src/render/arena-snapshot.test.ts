@@ -117,6 +117,7 @@ describe("actorAtPoint", () => {
     const snapshot: ArenaSnapshot = {
       actors: [],
       walls: [],
+      shrines: [],
       targetId: undefined,
       projectiles: [],
       groundEffects: [],
@@ -134,6 +135,7 @@ describe("actorAtPoint", () => {
     const snapshot: ArenaSnapshot = {
       actors: [self],
       walls: [],
+      shrines: [],
       targetId: undefined,
       projectiles: [],
       groundEffects: [],
@@ -151,6 +153,7 @@ describe("actorAtPoint", () => {
     const snapshot: ArenaSnapshot = {
       actors: [self],
       walls: [],
+      shrines: [],
       targetId: undefined,
       projectiles: [],
       groundEffects: [],
@@ -168,6 +171,7 @@ describe("actorAtPoint", () => {
     const snapshot: ArenaSnapshot = {
       actors: [self],
       walls: [],
+      shrines: [],
       targetId: undefined,
       projectiles: [],
       groundEffects: [],
@@ -186,6 +190,7 @@ describe("actorAtPoint", () => {
     const snapshot: ArenaSnapshot = {
       actors: [far, near],
       walls: [],
+      shrines: [],
       targetId: undefined,
       projectiles: [],
       groundEffects: [],
@@ -206,6 +211,7 @@ describe("actorAtPoint and the dead", () => {
     const snapshot: ArenaSnapshot = {
       actors: [corpse, living],
       walls: [],
+      shrines: [],
       targetId: undefined,
       projectiles: [],
       groundEffects: [],
@@ -223,6 +229,7 @@ describe("actorAtPoint and the dead", () => {
     const snapshot: ArenaSnapshot = {
       actors: [corpse],
       walls: [],
+      shrines: [],
       targetId: undefined,
       projectiles: [],
       groundEffects: [],

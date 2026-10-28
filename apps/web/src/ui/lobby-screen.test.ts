@@ -21,8 +21,24 @@ function snapshot(phase: LobbySnapshot["phase"]): LobbySnapshot {
     mapId: "arena",
     hostId: "host-peer",
     players: [
-      { sessionId: "host", name: "Host", team: 0, ready: true, isHost: true, character: null },
-      { sessionId: "guest", name: "Guest", team: 1, ready: true, isHost: false, character: null },
+      {
+        sessionId: "host",
+        name: "Host",
+        team: 0,
+        ready: true,
+        isHost: true,
+        character: null,
+        bot: false,
+      },
+      {
+        sessionId: "guest",
+        name: "Guest",
+        team: 1,
+        ready: true,
+        isHost: false,
+        character: null,
+        bot: false,
+      },
     ],
     isHost: true,
     countdownSeconds: null,
@@ -72,6 +88,7 @@ describe("lobbyControls", () => {
           ready: false,
           isHost: true,
           character: null,
+          bot: false,
         },
         {
           sessionId: "guest",
@@ -80,6 +97,7 @@ describe("lobbyControls", () => {
           ready: false,
           isHost: false,
           character: null,
+          bot: false,
         },
       ],
     });
@@ -118,6 +136,7 @@ describe("waitingFor (#580)", () => {
     ready,
     isHost: false,
     character: null,
+    bot: false,
   });
 
   it("names everyone on a team who is not ready, in lobby order", () => {
