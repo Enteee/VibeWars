@@ -127,18 +127,10 @@ test("#853: the first start rolls a starter character, chosen; Reroll asks, then
   await expect(row).toHaveCount(1);
   await expect(name).toHaveText(first);
 
-  // Cancel keeps it.
+  // Rerolled at once, unasked (#1146): another starter build, the same
+  // row, still chosen.
   const actions = roster.locator(".selectable-row-actions");
   await actions.getByRole("button", { name: "Reroll", exact: true }).click();
-  await expect(actions.locator(".inline-confirm")).toContainText(
-    `Replace ${first} with another random build?`,
-  );
-  await actions.getByRole("button", { name: "Cancel", exact: true }).click();
-  await expect(name).toHaveText(first);
-
-  // Confirmed: another starter build, the same row, still chosen.
-  await actions.getByRole("button", { name: "Reroll", exact: true }).click();
-  await actions.locator(".inline-confirm").getByRole("button", { name: "Reroll" }).click();
   await expect(name).not.toHaveText(first);
   await expect(name).toHaveText(/^\w+\/\w+$/);
   await expect(row).toHaveCount(1);
