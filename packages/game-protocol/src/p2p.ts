@@ -96,11 +96,18 @@ export const MAX_WIRE_GROUND_EFFECTS = 32;
 /** The most bodies a snapshot carries: every player and every creature. */
 export const MAX_WIRE_ACTORS = MAX_LOBBY_PLAYERS + MAX_WIRE_CREATURES;
 
-/** What kind of creature a body is (#1052); a priest is a map's (#1186). */
-export const CREATURE_KINDS = ["spirit", "minion", "pet", "priest"] as const;
+/** What kind of creature a body is (#1052); a priest (#1186) and a Guild Lord (#1222) are a map's. */
+export const CREATURE_KINDS = ["spirit", "minion", "pet", "priest", "guild-lord"] as const;
 
 /** How a creature is drawn (#1162); game-core's `CREATURE_LOOKS`, mirrored. */
-export const CREATURE_LOOKS = ["beast", "bone-minion", "bone-horror", "spirit", "priest"] as const;
+export const CREATURE_LOOKS = [
+  "beast",
+  "bone-minion",
+  "bone-horror",
+  "spirit",
+  "priest",
+  "guild-lord",
+] as const;
 
 /**
  * The largest status index a snapshot may carry (#632): a bound of its
@@ -394,8 +401,18 @@ export interface WireGroundEffect {
   readonly durationSeconds: number;
 }
 
-/** Why a match ended (#846): kill-count's score and time, annihilation's wipe and morale at time. */
-const END_REASONS = ["score", "time", "annihilation", "morale"] as const;
+/**
+ * Why a match ended (#846): kill-count's score and time, annihilation's
+ * wipe and morale at time, a Guild Battle's slain lord and aggression (#1222).
+ */
+const END_REASONS = [
+  "score",
+  "time",
+  "annihilation",
+  "morale",
+  "guild-lord",
+  "aggression",
+] as const;
 
 type EndReason = (typeof END_REASONS)[number];
 

@@ -3,7 +3,7 @@ import type { ActivationCheck } from "../skills/activation.js";
 import type { StatusId } from "../skills/status.js";
 import { effectiveMaxHealth } from "../skills/tick.js";
 import { distance, normalize, sub, ZERO, type Vec2 } from "../vec2.js";
-import { playBuild } from "./bot/play-build.js";
+import { guard, playBuild } from "./bot/play-build.js";
 import type { Participant } from "./simulation.js";
 
 /**
@@ -115,6 +115,21 @@ export type Behaviour =
       readonly kind: "play-build";
       /** Seconds between decisions: the reaction time. `0`: every tick. */
       readonly thinkSeconds: number;
+    }
+  /**
+   * A guard's (#1222): hold `post`, and play its bar as `play-build` does
+   * against the foes within `aggroUnits` of it, at its own pick of them.
+   * Past `leashUnits` from `post`, it walks back and ignores foes until
+   * home again. `rooted`: it never moves, as a Guild Lord.
+   */
+  | {
+      readonly kind: "guard";
+      readonly post: Vec2;
+      readonly aggroUnits: number;
+      readonly leashUnits: number;
+      readonly rooted: boolean;
+      /** Seconds between decisions, as `play-build`'s. */
+      readonly thinkSeconds: number;
     };
 
 /**
@@ -159,9 +174,9 @@ export interface BehaviourCursor {
   waypoint: number;
   /** `parallel`: one cursor per child, in the same order. */
   readonly children: BehaviourCursor[];
-  /** `follow-and-attack`: walking back to the owner, past the leash. */
+  /** `follow-and-attack` and `guard`: walking back to the owner or the post, past the leash. */
   returning: boolean;
-  /** `play-build`: the movement its last think asked for, held until the next. */
+  /** `play-build` and `guard`: the movement its last think asked for, held until the next. */
   heldMove: Pick<BehaviourIntent, "moveTo">;
 }
 
@@ -184,6 +199,8 @@ export interface BehaviourContext {
   isBot(participantId: string): boolean;
   /** The foe `self`'s team called (#443), if any: a bot's target while it lives (#1193). */
   readonly calledTargetId: string | undefined;
+  /** Whether nothing blocks the line of sight from `self` to `point` (#1222). */
+  sees(point: Vec2): boolean;
 }
 
 export function createCursor(): BehaviourCursor {
@@ -292,6 +309,8 @@ export function decide(
       return healWhenHurt(behaviour, context);
     case "play-build":
       return playBuild(behaviour, cursor, context);
+    case "guard":
+      return guard(behaviour, cursor, context);
   }
 }
 

@@ -9,7 +9,8 @@ import arenaOpen from "@vibewars/game-maps/maps/arena-open/map.json" with { type
 import arenaPillars from "@vibewars/game-maps/maps/arena-pillars/map.json" with { type: "json" };
 import arenaRing from "@vibewars/game-maps/maps/arena-ring/map.json" with { type: "json" };
 import arenaSplit from "@vibewars/game-maps/maps/arena-split/map.json" with { type: "json" };
-import type { MatchMode, Vec2 } from "@vibewars/game-core";
+import guildHallIsle from "@vibewars/game-maps/maps/guild-hall-isle/map.json" with { type: "json" };
+import type { GuildLord, MatchMode, Vec2 } from "@vibewars/game-core";
 import { teamSizeOf, type QueueMode } from "@vibewars/game-protocol";
 import type { HostMap } from "@vibewars/game-session";
 import { TRAINING_MAPS } from "../training/maps.js";
@@ -32,6 +33,8 @@ export const ARENA_MAPS: readonly MapData[] = [
   arenaCrossroads,
   arenaCanyon,
   arenaLongHall,
+  // The Guild Battle's (#1222).
+  guildHallIsle,
 ].map((raw) => validateMapData(raw));
 
 /** The arena a new lobby starts on, the server's default before (#403). */
@@ -59,14 +62,15 @@ const PLAYERS_BY_SIZE: Readonly<Record<SizeClass, { readonly min: number; readon
 /**
  * The arenas a Random Arena of `mode` is drawn from (#854 A2): every one
  * whose size class seats both teams, so a map added later joins by its
- * size and not by a list. In `ARENA_MAPS`' order, as `formGroups` wants
- * the same pool on every client.
+ * size and not by a list. Never a Guild Battle's (#1222): a 28-minute
+ * siege is not a Random Arena. In `ARENA_MAPS`' order, as `formGroups`
+ * wants the same pool on every client.
  */
 export function randomArenaMapPool(mode: QueueMode): string[] {
   const players = 2 * teamSizeOf(mode);
   return ARENA_MAPS.filter((map) => {
     const { min, max } = PLAYERS_BY_SIZE[sizeClass(map)];
-    return players >= min && players <= max;
+    return map.mode !== "guild-battle" && players >= min && players <= max;
   }).map((map) => map.id);
 }
 
@@ -92,15 +96,18 @@ export function mapShrines(mapId: string): readonly MapShrine[] {
   return shrinesOf(map?.objectives ?? []);
 }
 
-/**
- * The resurrection shrines among a map's objectives. The only kind so far,
- * so the parameter's type is the check: a second kind fails to compile
- * here until it is filtered out, not drawn as a shrine.
- */
-function shrinesOf(
-  objectives: readonly Extract<Objective, { kind: "resurrection-shrine" }>[],
-): readonly MapShrine[] {
-  return objectives.map(({ team, position }) => ({ team, position }));
+/** The resurrection shrines among a map's objectives. */
+function shrinesOf(objectives: readonly Objective[]): readonly MapShrine[] {
+  return objectives.flatMap(({ kind, team, position }) =>
+    kind === "resurrection-shrine" ? [{ team, position }] : [],
+  );
+}
+
+/** The Guild Lords among a map's objectives (#1222). */
+function guildLordsOf(objectives: readonly Objective[]): readonly GuildLord[] {
+  return objectives.flatMap(({ kind, team, position }) =>
+    kind === "guild-lord" ? [{ team, position }] : [],
+  );
 }
 
 /** A team's resurrection shrine (#1186), where its priest stands. */
@@ -132,5 +139,6 @@ export function hostMap(mapId: string): HostMap | undefined {
     bounds: { width: map.width, height: map.height },
     spawns: map.spawnPoints,
     shrines: shrinesOf(map.objectives),
+    guildLords: guildLordsOf(map.objectives),
   };
 }

@@ -2009,6 +2009,7 @@
           "optional": false,
           "type": {
             "union": [
+              { "literal": "guild-lord" },
               { "literal": "minion" },
               { "literal": "pet" },
               { "literal": "priest" },
@@ -2024,6 +2025,7 @@
               { "literal": "beast" },
               { "literal": "bone-horror" },
               { "literal": "bone-minion" },
+              { "literal": "guild-lord" },
               { "literal": "priest" },
               { "literal": "spirit" }
             ]
@@ -2046,7 +2048,9 @@
           "optional": false,
           "type": {
             "union": [
+              { "literal": "aggression" },
               { "literal": "annihilation" },
+              { "literal": "guild-lord" },
               { "literal": "host-left" },
               { "literal": "morale" },
               { "literal": "score" },
@@ -2330,6 +2334,7 @@
                     "optional": false,
                     "type": {
                       "union": [
+                        { "literal": "guild-lord" },
                         { "literal": "minion" },
                         { "literal": "pet" },
                         { "literal": "priest" },
@@ -2345,6 +2350,7 @@
                         { "literal": "beast" },
                         { "literal": "bone-horror" },
                         { "literal": "bone-minion" },
+                        { "literal": "guild-lord" },
                         { "literal": "priest" },
                         { "literal": "spirit" }
                       ]
@@ -2494,7 +2500,9 @@
           "type": {
             "union": [
               "null",
+              { "literal": "aggression" },
               { "literal": "annihilation" },
+              { "literal": "guild-lord" },
               { "literal": "morale" },
               { "literal": "score" },
               { "literal": "time" }
@@ -2577,6 +2585,7 @@
                             "optional": false,
                             "type": {
                               "union": [
+                                { "literal": "guild-lord" },
                                 { "literal": "minion" },
                                 { "literal": "pet" },
                                 { "literal": "priest" },
@@ -2592,6 +2601,7 @@
                                 { "literal": "beast" },
                                 { "literal": "bone-horror" },
                                 { "literal": "bone-minion" },
+                                { "literal": "guild-lord" },
                                 { "literal": "priest" },
                                 { "literal": "spirit" }
                               ]
@@ -2735,7 +2745,9 @@
           "type": {
             "union": [
               "null",
+              { "literal": "aggression" },
               { "literal": "annihilation" },
+              { "literal": "guild-lord" },
               { "literal": "morale" },
               { "literal": "score" },
               { "literal": "time" }
@@ -2820,6 +2832,7 @@
                             "optional": false,
                             "type": {
                               "union": [
+                                { "literal": "guild-lord" },
                                 { "literal": "minion" },
                                 { "literal": "pet" },
                                 { "literal": "priest" },
@@ -2835,6 +2848,7 @@
                                 { "literal": "beast" },
                                 { "literal": "bone-horror" },
                                 { "literal": "bone-minion" },
+                                { "literal": "guild-lord" },
                                 { "literal": "priest" },
                                 { "literal": "spirit" }
                               ]

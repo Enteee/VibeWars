@@ -224,18 +224,17 @@ export const SKILL_ICONS = {
   // A skill seen again: a spell, or any skill, echoed on (#1136).
   "mesmer.arcane-echo": { glyph: "echo-spell", modifier: "clock" },
   "mesmer.echo": { glyph: "echo-skill" },
-  // Placeholders until the asset-designer's (#1046): the pet's skills.
-  "ranger.charm-animal": { glyph: "eye", modifier: "plus" },
-  "ranger.comfort-animal": { glyph: "heal", modifier: "plus" },
-  // Placeholders until the asset-designer's (#1107): the pet's attacks.
-  "ranger.brutal-strike": { glyph: "hawk", modifier: "half" },
-  "ranger.maiming-strike": { glyph: "limp", modifier: "plus" },
-  "ranger.disrupting-lunge": { glyph: "interrupt", modifier: "plus" },
-  // Placeholders until the asset-designer's (#1108): calls and bonds on the pet.
-  "ranger.call-of-haste": { glyph: "speed", modifier: "plus" },
-  "ranger.call-of-protection": { glyph: "armor", modifier: "plus" },
-  "ranger.symbiotic-bond": { glyph: "chain", modifier: "plus" },
-  "ranger.revive-animal": { glyph: "resurrect", modifier: "plus" },
+  "ranger.charm-animal": { glyph: "paw-heart" },
+  "ranger.comfort-animal": { glyph: "heal", modifier: "paw" },
+  // The pet's attacks: a glyph for the blow and the paw modifier (#1107).
+  "ranger.brutal-strike": { glyph: "claw", modifier: "paw" },
+  "ranger.maiming-strike": { glyph: "limp", modifier: "paw" },
+  "ranger.disrupting-lunge": { glyph: "interrupt", modifier: "paw" },
+  // The pet's calls and bond: shapes of the statuses they apply (#1108).
+  "ranger.call-of-haste": { glyph: "paw-speed" },
+  "ranger.call-of-protection": { glyph: "paw-shield" },
+  "ranger.symbiotic-bond": { glyph: "bond" },
+  "ranger.revive-animal": { glyph: "paw", modifier: "up" },
   // Three meteors in a falling line; a heal cross spent from the enchantment's ring (#1214).
   "elementalist.meteor-shower": { glyph: "meteor-trio" },
   "monk.contemplation-of-purity": { glyph: "ring-heal" },
