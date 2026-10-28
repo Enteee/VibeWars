@@ -1313,6 +1313,26 @@ const skillGlyph = {
   "paw-shield": () =>
     inkFill("M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z") +
     `<g transform="translate(12,12.5) scale(0.5) translate(-12,-12)">${pawPrint(C.bg)}</g>`,
+  // Three rocks falling in a staggered line, a trail behind each: the shower (#1214).
+  "meteor-trio": () =>
+    [
+      [18, 8],
+      [13, 12],
+      [8, 16],
+    ]
+      .map(
+        ([x, y]) =>
+          `<circle cx="${String(x)}" cy="${String(y)}" r="2.6" fill="${C.ink}"/>` +
+          inkLine(
+            `M${String((x ?? 0) - 2.5)} ${String((y ?? 0) - 2.5)}L${String((x ?? 0) - 4.5)} ${String((y ?? 0) - 4.5)}`,
+            2,
+          ),
+      )
+      .join("") + inkLine("M4 21H20", 2),
+  // A heal cross inside the enchantment's ring: the ring is spent for health (#1214).
+  "ring-heal": () =>
+    `<circle cx="12" cy="12" r="9" ${stroke(C.ink, 2)}/>` +
+    inkFill("M10.4 7.5h3.2v2.9h2.9v3.2h-2.9v2.9h-3.2v-2.9H7.5v-3.2h2.9z"),
   // The resurrect figure in a ring: a signet's seal, one use (#1081).
   "resurrect-seal": () =>
     `<circle cx="10.5" cy="10.5" r="8" ${stroke(C.ink, 2)}/>` + smallFigure(10.5, 10.5, 0.55),

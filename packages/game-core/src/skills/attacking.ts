@@ -1,4 +1,5 @@
 import { getSkill } from "./catalog.js";
+import { resolvedBar } from "./cast-state.js";
 import type { Combatant } from "./types.js";
 
 /**
@@ -17,4 +18,14 @@ export function isAttacking(combatant: Combatant): boolean {
     (combatant.attack !== undefined && !combatant.moving) ||
     (cast !== undefined && getSkill(cast.skillId)?.type === "attack")
   );
+}
+
+/**
+ * Slots of `combatant`'s bar whose skill now is a signet (#1206), an
+ * echoed slot's copy counted rather than the build's: Artificer's test.
+ */
+export function signetsOnBar(combatant: Combatant): number {
+  return resolvedBar(combatant.skillBar, combatant.cast).filter(
+    (slot) => slot !== null && getSkill(slot.skillId)?.type === "signet",
+  ).length;
 }

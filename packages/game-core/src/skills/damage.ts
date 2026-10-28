@@ -9,7 +9,7 @@ import type { ArmorCondition } from "../equipment/insignias.js";
 import { MYSTICISM_ATTRIBUTE, mysticismArmor } from "../primary-attributes.js";
 import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
-import { isAttacking } from "./attacking.js";
+import { isAttacking, signetsOnBar } from "./attacking.js";
 import { aggregateModifiers } from "./status.js";
 import { armorReductionOf, effectiveMaxHealth, rankOf } from "./tick.js";
 import type { Combatant, CreatureLevel } from "./types.js";
@@ -139,6 +139,8 @@ function conditionHolds(
       return isPhysicalDamage(packet.type);
     case "vs-elemental":
       return isElementalDamage(packet.type);
+    case "vs-type":
+      return packet.type === condition.type;
     case "attacking":
       return isAttacking(target);
     case "enchantments-at-least":
@@ -154,16 +156,18 @@ function conditionHolds(
     }
     case "attribute-at-least":
       return rankOf(target, condition.attributeId) >= condition.rank;
-    case "has-condition":
-      return target.statuses.countByCategory("condition") > 0;
-    case "has-hex":
-      return target.statuses.countByCategory("hex") > 0;
+    case "affected-by":
+      return condition.categories.some((category) => target.statuses.countByCategory(category) > 0);
     case "no-enchantment":
       return target.statuses.countByCategory("enchantment") === 0;
     case "health-below":
       return target.health < condition.fraction * target.maxHealth;
     case "controls-at-least":
       return target.controlled[condition.creature] >= condition.count;
+    case "activating":
+      return target.cast.activeCast !== undefined;
+    case "signets-at-least":
+      return signetsOnBar(target) >= condition.count;
   }
 }
 

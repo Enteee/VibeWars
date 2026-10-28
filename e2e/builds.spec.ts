@@ -1,6 +1,9 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { codeLabel } from "../apps/web/src/input/keymap.js";
+import { exportBuild } from "../apps/web/src/storage/build-transfer.js";
+import { CHARACTER_SCHEMA_VERSION } from "../apps/web/src/storage/schema.js";
+import { defaultEquipmentFor } from "../packages/game-core/src/equipment/loadout.js";
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
 import { chooseProfession, professionField } from "./helpers/professions.js";
 import { startSoloMatch } from "./helpers/peers.js";
@@ -610,6 +613,55 @@ test("⋯ Share copies the build as one line, and a paste on the editor imports 
   await expect(page.locator(".toast")).toHaveText("Imported Shared Build");
   await expect(page.locator("input.editor-name")).toHaveValue("Shared Build");
   await expect(page.locator(".editor-unsaved")).toBeVisible();
+});
+
+test("⋯ Share as GW1 code shows a template code; a pasted one imports, missing skills empty (#494)", async ({
+  page,
+}) => {
+  await newCharacter(page);
+  await page.locator("input.editor-name").fill("Scratch");
+
+  // Warrior/Monk, Strength 12, Swift Chop and Orison of Healing, its fields
+  // wider than they need be: gw1-template.test.ts spells out its bits.
+  await paste(page.locator(".editor"), "OUwQEROqaGBAAAAAAAAA");
+  await expect(page.locator(".toast")).toHaveText("Imported Warrior/Monk build");
+  await expect(page.locator("input.editor-name")).toHaveValue("Warrior/Monk build");
+  await expect(page.locator(".editor-unsaved")).toBeVisible();
+
+  // Shared back, as the encoder writes it: the narrowest fields.
+  await page.getByRole("button", { name: "more actions" }).click();
+  await page.getByRole("button", { name: "Share as GW1 code", exact: true }).click();
+  await expect(page.getByLabel("build to share")).toHaveValue("OQMRE5oqZEAAAAAAAAA");
+  await page.keyboard.press("Escape");
+
+  // GW1 skills 3000 and 567 are not in VibeWars: their slots arrive empty.
+  await paste(page.locator(".editor"), "OQMAQVF4u3IAAAAAAAAAA");
+  await expect(page.locator(".toast")).toHaveText(
+    "Imported Warrior/Monk build. 2 skills are not in VibeWars yet: GW1 skill 3000, 567.",
+  );
+
+  // Vital Transfer is this game's own: a bar with it has no GW1 code.
+  await paste(
+    page.locator(".editor"),
+    exportBuild({
+      schemaVersion: CHARACTER_SCHEMA_VERSION,
+      id: "vital",
+      name: "Vital",
+      primaryProfession: "necromancer",
+      secondaryProfession: undefined,
+      attributes: [],
+      skillBar: ["necromancer.blood-renewal-lite", null, null, null, null, null, null, null],
+      equipment: defaultEquipmentFor("necromancer"),
+      updatedAt: 0,
+    }),
+  );
+  await expect(page.locator(".toast")).toHaveText("Imported Vital");
+  await page.getByRole("button", { name: "more actions" }).click();
+  await page.getByRole("button", { name: "Share as GW1 code", exact: true }).click();
+  await expect(page.locator(".toast")).toHaveText(
+    "Vital Transfer is not a GW1 skill, so this build has no GW1 code.",
+  );
+  await expect(page.getByLabel("build to share")).toBeHidden();
 });
 
 test("Share keeps the line selected when the clipboard is refused (#572)", async ({ page }) => {
@@ -1807,4 +1859,43 @@ test("other professions' skills are listed, locked, with what they need (#568)",
   await page.locator("input.skill-search").fill("barrage");
   await expect(locked.locator(".skill-locked-box")).toHaveCount(1);
   await expect(locked.locator("summary")).toHaveText("Other professions (1)");
+});
+
+test("the library lists GW1 skills not in the game yet only when asked, greyed and unslottable (#1220)", async ({
+  page,
+}) => {
+  await openElementalist(page);
+  const toggle = page.getByLabel("Show skills not in the game yet");
+  // Off by default: the library is as it was.
+  await expect(toggle).not.toBeChecked();
+  await expect(page.locator(".skill-corpus-box")).toHaveCount(0);
+
+  await toggle.check();
+  const fire = page.locator(".skill-group", { hasText: "FIRE MAGIC" });
+  // Rodgort's Invocation is GW1 Fire Magic VibeWars does not have yet.
+  const rodgort = fire.locator(".skill-corpus-box", { hasText: "Rodgort's Invocation" });
+  await expect(rodgort).toContainText("not in the game yet");
+  // After the group's playable skills.
+  await expect(fire.locator(".skill-box, .skill-corpus-box").last()).toHaveClass(
+    /skill-corpus-box/,
+  );
+  // It neither drags nor equips.
+  expect(await rodgort.getAttribute("draggable")).toBeNull();
+  await expect(rodgort.locator("button")).toHaveCount(0);
+  await rodgort.click();
+  await expect(page.locator(".skill-slot", { hasText: "Rodgort" })).toHaveCount(0);
+  // Its hover shows GW1's own text.
+  await rodgort.hover();
+  await expect(page.locator(".skill-tip")).toContainText("Not in the game yet");
+
+  // The search finds it; remembered across a reload.
+  // Mark of Rodgort is not in the game yet either, so it is found too.
+  await page.locator("input.skill-search").fill("rodgort");
+  await expect(page.locator(".skill-corpus-box", { hasText: "Rodgort's Invocation" })).toHaveCount(
+    1,
+  );
+  await expect(page.locator(".skill-box, .skill-corpus-box")).toHaveCount(2);
+  await page.reload();
+  await page.getByRole("button", { name: "new character" }).click();
+  await expect(page.getByLabel("Show skills not in the game yet")).toBeChecked();
 });

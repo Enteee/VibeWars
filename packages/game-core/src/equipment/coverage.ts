@@ -19,7 +19,7 @@
 
 /** A piece of gear behaviour this project does not simulate. */
 export type MissingGearMechanic =
-  "stances" | "profession-insignias" | "weapon-upgrades" | "per-piece-armor-ratings";
+  "profession-insignias" | "weapon-upgrades" | "per-piece-armor-ratings";
 
 export interface GearOmission {
   readonly mechanic: MissingGearMechanic;
@@ -38,26 +38,13 @@ export interface GearOmission {
 
 export const GEAR_OMISSIONS: readonly GearOmission[] = Object.freeze([
   {
-    mechanic: "stances",
-    description: "a self-targeted state that armor and skills can key off",
-    kind: "gap",
-    reason:
-      "No stance mechanic exists, so a 'while in a stance' armor bonus could never fire. " +
-      "The reference's Sentry's Insignia is therefore not in the catalog at all rather than " +
-      "shipped as a stat line that is permanently zero.",
-    affects: [],
-  },
-  {
     mechanic: "profession-insignias",
     description: "insignias available to one profession only, each with its own bonus",
     kind: "gap",
     reason:
-      "Partial (#1142, #1188): Knight's, Sentinel's, Nightstalker's, Prodigy's, Windwalker, " +
-      "Anchorite's, Disciple's, Wanderer's, Dreadnought, Blighter's, Undertaker's, Minion " +
-      "Master's, Forsaken, Shaman's and Prismatic are in. Infiltrator's, Saboteur's, " +
-      "Vanguard's, Sentry's, Herald's and the non-armor ones (Scout's, Centurion's, " +
-      "Virtuoso's, Mystic's, Artificer's, Beastmaster's, Tormentor's, Lieutenant's, Ghost " +
-      "Forge, Stonefist, Bloodstained and the elemental ones) each need one.",
+      "All but five are in (#1142, #1188, #1206). Herald's needs bundles, which this game " +
+      "does not have; Lieutenant's, Stonefist, Bloodstained and Tormentor's do something " +
+      "other than armor, and each needs its own mechanic.",
     affects: [],
   },
   {

@@ -238,7 +238,7 @@ export const SKILL_ICONS = {
   "ranger.call-of-protection": { glyph: "paw-shield" },
   "ranger.symbiotic-bond": { glyph: "bond" },
   "ranger.revive-animal": { glyph: "paw", modifier: "up" },
-  // Placeholders until the asset-designer's (#1205).
-  "elementalist.meteor-shower": { glyph: "meteor", modifier: "area" },
-  "monk.contemplation-of-purity": { glyph: "cleanse", modifier: "half" },
+  // Three meteors in a falling line; a heal cross spent from the enchantment's ring (#1214).
+  "elementalist.meteor-shower": { glyph: "meteor-trio" },
+  "monk.contemplation-of-purity": { glyph: "ring-heal" },
 };

@@ -346,17 +346,17 @@ describe("Animate Bone Minions (#467)", () => {
     expect(newest.combatant.dead).toBe(false);
   });
 
-  it("counts its living minions for its master's armor, not a dead one or a pet (#1188)", () => {
+  it("counts its living minions for its master's armor, not a dead one; a pet apart (#1206)", () => {
     const sim = match([
       standing("m1", "n", vec2(40, 0)),
       standing("m2", "n", vec2(-40, 0)),
       standing("p", "n", vec2(0, 40), "pet"),
     ]);
     stepFor(sim, DT);
-    expect(get(sim, "n").combatant.controlled).toEqual({ minion: 2, spirit: 0 });
+    expect(get(sim, "n").combatant.controlled).toEqual({ minion: 2, spirit: 0, pet: 1 });
     kill(sim, "m1");
     stepFor(sim, DT);
-    expect(get(sim, "n").combatant.controlled).toEqual({ minion: 1, spirit: 0 });
+    expect(get(sim, "n").combatant.controlled).toEqual({ minion: 1, spirit: 0, pet: 1 });
   });
 
   it("leaves no corpse when it dies", () => {
