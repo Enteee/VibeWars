@@ -161,11 +161,16 @@ export function createPartyWindow(
   parent: HTMLElement,
   onTarget: (sessionId: string) => void,
 ): PartyWindow {
+  // The dock spans the right edge and centres the panel in it, clamped
+  // under the compass (styles.css).
+  const dock = document.createElement("div");
+  dock.className = "party-dock";
   const panel = document.createElement("div");
   panel.className = "party-window";
   panel.setAttribute("aria-label", "Party");
   panel.hidden = true;
-  parent.appendChild(panel);
+  dock.appendChild(panel);
+  parent.appendChild(dock);
   const rows = new Map<string, RowElements>();
   let order = "";
 
@@ -205,7 +210,7 @@ export function createPartyWindow(
       }
     },
     dispose() {
-      panel.remove();
+      dock.remove();
       rows.clear();
     },
   };

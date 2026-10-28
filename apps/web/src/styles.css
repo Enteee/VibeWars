@@ -3828,30 +3828,70 @@ body:has(#app > .chat) .now-playing {
 
 /*
  * The party window (#1055): your team's health, right middle, you first.
- * Never scrolls: past 8 members the rows go compact, so 16 fit.
+ * The dock spans the right edge; its spacers centre the panel on the
+ * screen, but the top one never gets shorter than the compass's bottom
+ * plus 8 px (#1056), so a long party starts under the compass instead and
+ * scrolls past the bottom margin. Past 8 members the rows go compact.
  */
-.party-window {
+:root {
+  --compass-top: 5.8rem;
+  --compass-size: 160px;
+}
+
+@media (width < 80rem) {
+  :root {
+    --compass-size: 120px;
+  }
+}
+
+.party-dock {
   position: absolute;
-  top: 50%;
+  top: 0;
   right: 0.9rem;
-  transform: translateY(-50%);
+  bottom: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
   width: 200px;
-  max-height: 60%;
+  pointer-events: none;
+}
+
+.party-dock::before,
+.party-dock::after {
+  content: "";
+  flex: 1 1 0;
+}
+
+.party-dock::before {
+  min-height: calc(var(--compass-top) + var(--compass-size) + 8px);
+}
+
+.party-dock::after {
+  min-height: 0.9rem;
+}
+
+.party-window {
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-height: 0;
   box-sizing: border-box;
   padding: 0.3rem;
   background: rgb(22 27 34 / 85%);
   border: 1px solid var(--line);
-  overflow: hidden;
+  overflow-y: auto;
+  pointer-events: auto;
 }
 
 /* The Training Ground's stage is small: its corner, clear of the dummies. */
-.training-stage .party-window {
+.training-stage .party-dock {
   top: 0.5rem;
   right: 0.5rem;
-  transform: none;
+  bottom: 0.5rem;
+}
+
+.training-stage .party-dock::before {
+  display: none;
 }
 
 .party-window[hidden] {
@@ -3861,6 +3901,7 @@ body:has(#app > .chat) .now-playing {
 .party-row {
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
   gap: 0.1rem;
   padding: 0.15rem 0.25rem;
   background: none;

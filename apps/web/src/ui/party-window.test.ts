@@ -174,7 +174,7 @@ describe("createPartyWindow (#1055)", () => {
   let party: PartyWindow;
 
   const panel = (): FakeElement => {
-    const found = parent.children[0];
+    const found = parent.children[0]?.children[0];
     if (found === undefined) {
       throw new Error("no panel");
     }
