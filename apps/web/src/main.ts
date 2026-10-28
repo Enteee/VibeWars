@@ -781,7 +781,7 @@ async function main(): Promise<void> {
       return;
     }
     stay.pressed = openPartyBoard();
-    stay.lobby.stayTogether(stay.pressed.key.ticketId);
+    stay.lobby.stayTogether(stay.pressed.key);
     showEnded();
   };
 
@@ -812,18 +812,19 @@ async function main(): Promise<void> {
       hostLeft: false,
     };
     const offered = stay;
-    through.onParty((members) => {
+    through.onParty((formed) => {
       if (stay !== offered || offered.pressed === undefined || queue === undefined) {
         return;
       }
-      if (members === null) {
+      if (formed === null) {
         splitUp();
         return;
       }
       const { board, key } = offered.pressed;
       const { mode, name } = queue;
       closeStay(board);
-      requeue(mode, name, { party: { party: { members, key }, board } });
+      const { groupId, members, consents } = formed;
+      requeue(mode, name, { party: { party: { members, key, groupId, consents }, board } });
     });
     through.onClosed(() => {
       if (stay !== offered) {

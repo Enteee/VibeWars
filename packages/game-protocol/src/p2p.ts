@@ -560,18 +560,26 @@ export interface WireLobbyWelcome {
 /**
  * A winner of a queued match to its host, while the host holds the lobby
  * open after it (#882): a fresh member key, 64 lowercase hex digits, to
- * stay together as a party, or `null` not to.
+ * stay together as a party, or `null` not to. A yes carries that key's
+ * consent (#1078): its signature over `admissionDigest("vibewars-party",
+ * groupId, memberKey, "")`, `groupId` the group that won. The party's
+ * ticket publishes every consent, so nobody can name a member who did
+ * not say yes.
  */
-export interface PeerStayTogether {
-  readonly memberKey: string | null;
-}
+export type PeerStayTogether =
+  | { readonly memberKey: string; readonly consent: string; readonly groupId: string }
+  | { readonly memberKey: null };
 
 /**
  * The host to each winner who said yes, and only to it (#882): every
- * winner did, and these are their keys, sorted. They queue as one party.
+ * winner did, and these are their keys, sorted, with each one's consent
+ * over `groupId`, `consents[i]` by `members[i]` (#1078). They queue as
+ * one party.
  */
 export interface WirePartyFormed {
+  readonly groupId: string;
   readonly members: readonly string[];
+  readonly consents: readonly string[];
 }
 
 /** The host to each winner who said yes (#882): someone did not; queue alone. */
@@ -1461,20 +1469,45 @@ export function parseWireLobbyWelcome(value: unknown): WireLobbyWelcome | undefi
 /** The `"stay-together"` channel. */
 export function parsePeerStayTogether(value: unknown): PeerStayTogether | undefined {
   const raw = fields(value);
-  return raw !== undefined && (raw.memberKey === null || isTicketId(raw.memberKey))
-    ? { memberKey: raw.memberKey }
+  if (raw?.memberKey === null) {
+    return { memberKey: null };
+  }
+  return raw !== undefined &&
+    isTicketId(raw.memberKey) &&
+    isTicketSig(raw.consent) &&
+    isTicketId(raw.groupId)
+    ? { memberKey: raw.memberKey, consent: raw.consent, groupId: raw.groupId }
     : undefined;
 }
 
 /** The longest party there is: a 4v4 side (`teamSizeOf`). */
 const MAX_PARTY_MEMBERS = 4;
 
-/** The `"party-formed"` channel: two or more keys, sorted, each once. */
+/**
+ * The `"party-formed"` channel: a group id, two or more keys, sorted, each
+ * once, and one consent a key.
+ */
 export function parseWirePartyFormed(value: unknown): WirePartyFormed | undefined {
   const raw = fields(value);
+  const groupId: unknown = raw?.groupId;
   const members: unknown = raw?.members;
-  if (!Array.isArray(members) || members.length < 2 || members.length > MAX_PARTY_MEMBERS) {
+  const consents: unknown = raw?.consents;
+  if (
+    !isTicketId(groupId) ||
+    !Array.isArray(members) ||
+    members.length < 2 ||
+    members.length > MAX_PARTY_MEMBERS ||
+    !Array.isArray(consents) ||
+    consents.length !== members.length
+  ) {
     return undefined;
+  }
+  const signed: string[] = [];
+  for (const consent of consents as readonly unknown[]) {
+    if (!isTicketSig(consent)) {
+      return undefined;
+    }
+    signed.push(consent);
   }
   const keys: string[] = [];
   for (const member of members as readonly unknown[]) {
@@ -1484,7 +1517,7 @@ export function parseWirePartyFormed(value: unknown): WirePartyFormed | undefine
     }
     keys.push(member);
   }
-  return { members: keys };
+  return { groupId, members: keys, consents: signed };
 }
 
 /** The `"party-split"` channel. */

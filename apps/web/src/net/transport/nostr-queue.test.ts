@@ -7,7 +7,13 @@ import {
   type QueueMode,
   type QueueTicket,
 } from "@vibewars/game-protocol";
-import type { QueueBoardEvent, TicketKey, TransportTrouble } from "@vibewars/game-session";
+import {
+  admissionBytes,
+  formGroups,
+  type QueueBoardEvent,
+  type TicketKey,
+  type TransportTrouble,
+} from "@vibewars/game-session";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -66,6 +72,7 @@ function ticketOf(key: TicketKey, extra: Partial<QueueTicket> = {}): QueueTicket
     members: [key.ticketId],
     enteredAt: NOW - 1_000,
     heartbeatAt: NOW,
+    party: null,
     ...extra,
   };
 }
@@ -348,5 +355,145 @@ describe("the Nostr queue board (#872)", () => {
     vi.advanceTimersByTime(RELAY_RETRY_MS);
     expect(sockets).toHaveLength(2);
     expect(sockets[1]?.closed).toBe(true);
+  });
+});
+
+describe("party consents on the Nostr queue board (#1078)", () => {
+  const GROUP_WON = "f".repeat(64);
+
+  /** `key`'s consent to the party that won `groupId`. */
+  const consentOf = (key: TicketKey, groupId = GROUP_WON): string =>
+    key.sign(sha256(admissionBytes("vibewars-party", groupId, key.ticketId, "")));
+
+  /** Two fresh keys, sorted: a 2v2 party's members, the lower its leader. */
+  const membersOf = (): [TicketKey, TicketKey] =>
+    [newTicketKey(), newTicketKey()].sort((a, b) => (a.ticketId < b.ticketId ? -1 : 1)) as [
+      TicketKey,
+      TicketKey,
+    ];
+
+  /** `members`' ticket, led by the first, with `consents` in their order. */
+  const partyTicket = (
+    members: readonly TicketKey[],
+    consents: readonly string[],
+    extra: Partial<QueueTicket> = {},
+  ): QueueTicket => {
+    const [leader] = members;
+    if (leader === undefined) {
+      throw new Error("a party has members");
+    }
+    return ticketOf(leader, {
+      members: members.map((key) => key.ticketId),
+      party: { groupId: GROUP_WON, consents },
+      ...extra,
+    });
+  };
+
+  it("hears a party ticket whose every consent verifies: one check for the event, one a member", () => {
+    const { queue, sockets, verified } = fakeRelays();
+    const heard = listen(queue);
+    const members = membersOf();
+    const ticket = partyTicket(
+      members,
+      members.map((key) => consentOf(key)),
+    );
+    deliver(sockets[0], remoteEvent(members[0], ticket));
+    expect(heard).toEqual([{ kind: "ticket", ticket }]);
+    expect(verified).toEqual([members[0].ticketId, ...members.map((key) => key.ticketId)]);
+  });
+
+  it("drops a forger's party naming a real follower, and the real party still forms", async () => {
+    const { queue, sockets } = fakeRelays();
+    const heard = listen(queue);
+    const real = membersOf();
+    const realTicket = partyTicket(
+      real,
+      real.map((key) => consentOf(key)),
+    );
+    const follower = real[1];
+    // The forger leads with a key below the follower's and signs for both.
+    let forger = newTicketKey();
+    while (forger.ticketId >= follower.ticketId) {
+      forger = newTicketKey();
+    }
+    const forged = partyTicket([forger, follower], [consentOf(forger), consentOf(forger)], {
+      enteredAt: 0,
+    });
+    // And one with the follower's real consent, which signs the group won, not this ticket.
+    const replayed = partyTicket([forger, follower], [consentOf(forger), consentOf(follower)], {
+      enteredAt: 0,
+      party: { groupId: "e".repeat(64), consents: [consentOf(forger), consentOf(follower)] },
+    });
+    deliver(sockets[0], remoteEvent(forger, forged));
+    deliver(sockets[0], remoteEvent(forger, { ...replayed, heartbeatAt: NOW + 1 }));
+    deliver(sockets[0], remoteEvent(real[0], realTicket));
+    const solos = [newTicketKey(), newTicketKey()];
+    for (const solo of solos) {
+      deliver(sockets[0], remoteEvent(solo, ticketOf(solo)));
+    }
+
+    expect(heard.map((event) => event.kind === "ticket" && event.ticket.ticketId)).toEqual([
+      real[0].ticketId,
+      ...solos.map((solo) => solo.ticketId),
+    ]);
+    const groups = await formGroups({
+      tickets: heard.flatMap((event) => (event.kind === "ticket" ? [event.ticket] : [])),
+      now: NOW,
+      mode: "random-arena-2v2",
+      ignored: new Set(),
+      mapPool: ["arena"],
+    });
+    expect(groups.map((group) => group.parties)).toEqual([[realTicket.members]]);
+  });
+
+  it("checks a heartbeat with the same consents once, and a changed party again", () => {
+    const { queue, sockets, verified } = fakeRelays();
+    const heard = listen(queue);
+    const members = membersOf();
+    const ticket = partyTicket(
+      members,
+      members.map((key) => consentOf(key)),
+    );
+    deliver(sockets[0], remoteEvent(members[0], ticket));
+    expect(verified).toHaveLength(3);
+
+    deliver(sockets[0], remoteEvent(members[0], { ...ticket, heartbeatAt: NOW + 5_000 }));
+    expect(verified).toHaveLength(4);
+
+    const elsewhere = "e".repeat(64);
+    const moved = {
+      ...ticket,
+      heartbeatAt: NOW + 10_000,
+      party: { groupId: elsewhere, consents: members.map((key) => consentOf(key, elsewhere)) },
+    };
+    deliver(sockets[0], remoteEvent(members[0], moved));
+    expect(verified).toHaveLength(7);
+    expect(heard).toHaveLength(3);
+  });
+
+  it("drops a party it cannot pay every check for, and hears another relay's copy later", () => {
+    let now = NOW;
+    const { queue, sockets, verified } = fakeRelays(() => now);
+    const heard = listen(queue);
+    // Leave two checks: the event's own and one consent, of three.
+    for (let n = 0; n < VERIFY_BURST - 2; n += 1) {
+      const key = newTicketKey();
+      deliver(sockets[0], { ...remoteEvent(key, ticketOf(key)), sig: "0".repeat(128) });
+    }
+    const members = membersOf();
+    const event = remoteEvent(
+      members[0],
+      partyTicket(
+        members,
+        members.map((key) => consentOf(key)),
+      ),
+    );
+    deliver(sockets[0], event);
+    expect(verified).toHaveLength(VERIFY_BURST - 1);
+    expect(heard).toEqual([]);
+
+    now += 1000;
+    deliver(sockets[1], event);
+    expect(heard).toHaveLength(1);
   });
 });

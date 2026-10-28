@@ -101,17 +101,31 @@ with nobody negotiating.**
    as a no-show is ignored by those clients for `NO_SHOW_IGNORE_MS`.
    A party is a no-show when any of its members is.
 
-   Only `ticketId` is signed; the other members are the leader's word.
-   So **a seat key seats once**: formation drops a party that names
-   another live ticket's id, and both parties that name one member,
-   since `enteredAt` is forgeable and neither can be trusted to have
-   been first. A client settles only into a group where it sits as its
-   own ticket: a solo as a solo, a member in exactly the `members` it
-   was told. A forger can still get a party dropped by naming one of
-   its members; closing that needs member signatures on the ticket
-   (#1078). Until then a party whose ticket has been contested for
-   `TICKET_TTL_MS`, longer than a stale honest ticket can last, splits
-   up and each member queues alone, so it is not held for ever.
+   **Party membership is proven by each member's signature over the
+   group it won** (#1078). A winner who votes to stay together signs
+   `sha256("vibewars-party" ‖ groupId ‖ memberKey ‖ "")` with its fresh
+   member key, `groupId` the queued lobby's, and the host checks it
+   before it counts the vote. The host hands every consent to every
+   member, and the leader's ticket carries them as `party`, beside
+   `members`. The board verifies each one, paid for from the same verify
+   budget, before formation sees the ticket, and remembers a ticket's
+   verified `party` so a heartbeat costs no second check. A ticket that
+   names a key without that key's consent never reaches formation. A
+   party keeps its `party` across fall-throughs, as it keeps its key:
+   the consents sign the group it won, not the one it is in.
+
+   **A seat key seats once**: formation drops a party that names another
+   live ticket's id, and both parties that name one member, since
+   `enteredAt` is forgeable and neither can be trusted to have been
+   first. With consents, a key on two verified tickets signed both, so
+   only its holder can cause that. A client settles only into a group
+   where it sits as its own ticket: a solo as a solo, a member in
+   exactly the `members` it was told.
+
+   What remains: the host of the winning match sees every consent, so
+   it can republish them, but only under the same group and the same
+   members. That party already exists, and this ADR accepts the
+   cheating host.
 
 7. **Signing with `@noble/secp256k1`**, which Trystero already brings into
    the lockfile at 3.2.0. It becomes a direct dependency at that version.

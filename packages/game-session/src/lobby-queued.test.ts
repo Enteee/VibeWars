@@ -8,6 +8,7 @@ import {
   type WireLobbyNote,
   type WireLobbyState,
   type WireLobbyWelcome,
+  type WirePartyFormed,
 } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
@@ -18,7 +19,12 @@ import { createLobbyHost, type LobbyHost, type MatchPlan } from "./lobby-host.js
 import { ARENA, TICK_SECONDS, settle, until } from "./match-harness.test-support.js";
 import { createMatchHost, type MatchHost } from "./match-host.js";
 import { createMemoryNetwork, type MemoryNetwork } from "./memory-transport.js";
-import { admissionDigest, type AdmissionTag, type VerifyTicketSig } from "./queue-admission.js";
+import {
+  admissionBytes,
+  admissionDigest,
+  type AdmissionTag,
+  type VerifyTicketSig,
+} from "./queue-admission.js";
 import { createMemoryBoard } from "./queue-board.js";
 import {
   createQueueClient,
@@ -565,7 +571,7 @@ describe("a queued lobby with parties (#882)", () => {
   });
 });
 
-describe("Stay together, on a queued lobby's host (#882)", () => {
+describe("Stay together, on a queued lobby's host (#882, #1078)", () => {
   /** A 2v2 lobby whose match is over, team 0 (HOST and ALLY) the winner. */
   async function afterMatch(winningTeam: 0 | 1 | null = 0) {
     const match = fakeMatch();
@@ -578,7 +584,10 @@ describe("Stay together, on a queued lobby's host (#882)", () => {
     expect(queued.plans).toHaveLength(1);
     match.finish(winningTeam);
     await queued.step(TICK_SECONDS);
+    /** Each connection's answers: the party's members, or `null`. */
     const answers = new Map<string, (readonly string[] | null)[]>();
+    /** The ally's, whole. */
+    const parties: (WirePartyFormed | null)[] = [];
     for (const [name, connection] of [
       ["host", queued.host],
       ["ally", ally],
@@ -586,23 +595,43 @@ describe("Stay together, on a queued lobby's host (#882)", () => {
     ] as const) {
       const heard: (readonly string[] | null)[] = [];
       answers.set(name, heard);
-      connection.onParty((members) => heard.push(members));
+      connection.onParty((party) => heard.push(party === null ? null : party.members));
     }
-    return { queued, ally, allyRoom, foe, answers };
+    ally.onParty((party) => parties.push(party));
+    return { queued, ally, allyRoom, foe, answers, parties };
   }
 
-  const KEY_H = "e".repeat(64);
-  const KEY_A = "d".repeat(64);
+  const KEY_H = keyOf("e".repeat(64));
+  const KEY_A = keyOf("d".repeat(64));
+  /** `key`'s consent to `groupId`, as the stand-in signs it. */
+  const consentOf = async (key: TicketKey, groupId = GROUP_ID): Promise<string> =>
+    key.sign(await admissionDigest("vibewars-party", groupId, key.ticketId, ""));
+  /**
+   * Cast a yes and wait until the host has checked its consent: signing
+   * and checking are on `crypto.subtle`, which `settle` cannot wait for.
+   */
+  const yesLands = async (vote: () => void): Promise<void> => {
+    const before = verifications;
+    vote();
+    await until(() => verifications > before);
+    await settle();
+  };
 
   it("forms the party once every winner sends a key, and tells only them, sorted", async () => {
-    const { queued, ally, allyRoom, answers } = await afterMatch();
-    queued.host.stayTogether(KEY_H);
-    await settle();
+    const { queued, ally, allyRoom, answers, parties } = await afterMatch();
+    await yesLands(() => queued.host.stayTogether(KEY_H));
     expect(answers.get("host")).toEqual([]);
-    ally.stayTogether(KEY_A);
-    await settle();
-    expect(answers.get("host")).toEqual([[KEY_A, KEY_H]]);
-    expect(answers.get("ally")).toEqual([[KEY_A, KEY_H]]);
+    await yesLands(() => ally.stayTogether(KEY_A));
+    expect(answers.get("host")).toEqual([[KEY_A.ticketId, KEY_H.ticketId]]);
+    expect(answers.get("ally")).toEqual([[KEY_A.ticketId, KEY_H.ticketId]]);
+    // Each consent beside its key, in the members' order.
+    expect(parties).toEqual([
+      {
+        groupId: GROUP_ID,
+        members: [KEY_A.ticketId, KEY_H.ticketId],
+        consents: [await consentOf(KEY_A), await consentOf(KEY_H)],
+      },
+    ]);
     expect(answers.get("foe")).toEqual([]);
     // To the ally alone over the room; the host's own player is told in memory.
     expect(
@@ -616,16 +645,14 @@ describe("Stay together, on a queued lobby's host (#882)", () => {
   });
 
   it("end to end: both stay, the party meets two fresh solos, and each member seats on its own key", async () => {
-    const { queued, ally } = await afterMatch();
-    queued.host.stayTogether(KEY_H);
-    ally.stayTogether(KEY_A);
-    const answered: (readonly string[] | null)[] = [];
-    ally.onParty((members) => answered.push(members));
-    await settle();
-    const [members] = answered;
-    if (members === undefined || members === null) {
+    const { queued, ally, parties } = await afterMatch();
+    await yesLands(() => queued.host.stayTogether(KEY_H));
+    await yesLands(() => ally.stayTogether(KEY_A));
+    const [formed] = parties;
+    if (formed === undefined || formed === null) {
       throw new Error("no party formed");
     }
+    const { members, groupId, consents } = formed;
 
     // The next queue: the two members as one party, two strangers alone.
     const board = createMemoryBoard();
@@ -641,8 +668,8 @@ describe("Stay together, on a queued lobby's host (#882)", () => {
         mapPool: ["other-arena"],
       });
     const clients = [
-      client({ members, key: keyOf(KEY_H) }),
-      client({ members, key: keyOf(KEY_A) }),
+      client({ members, key: KEY_H, groupId, consents }),
+      client({ members, key: KEY_A, groupId, consents }),
       client(),
       client(),
     ];
@@ -673,7 +700,7 @@ describe("Stay together, on a queued lobby's host (#882)", () => {
     await settle();
     const seated = next.host.getSnapshot().players;
     expect(seated).toHaveLength(4);
-    const partySide = group.teams.findIndex((team) => team.includes(KEY_H));
+    const partySide = group.teams.findIndex((team) => team.includes(KEY_H.ticketId));
     expect(
       seated
         .filter((player) => player.team === partySide)
@@ -684,16 +711,24 @@ describe("Stay together, on a queued lobby's host (#882)", () => {
 
   it("splits on one no, telling those who said yes", async () => {
     const { queued, ally, answers } = await afterMatch();
-    queued.host.stayTogether(KEY_H);
+    await yesLands(() => queued.host.stayTogether(KEY_H));
     ally.stayTogether(null);
     await settle();
     expect(answers.get("host")).toEqual([null]);
     expect(answers.get("ally")).toEqual([]);
   });
 
+  it("tells a yes still on its way when a no splits the team (#1078)", async () => {
+    const { queued, ally, answers } = await afterMatch();
+    queued.host.stayTogether(KEY_H);
+    ally.stayTogether(null);
+    await until(() => answers.get("host")?.length !== 0);
+    expect(answers.get("host")).toEqual([null]);
+  });
+
   it("splits when a winner leaves before voting", async () => {
     const { queued, allyRoom, answers } = await afterMatch();
-    queued.host.stayTogether(KEY_H);
+    await yesLands(() => queued.host.stayTogether(KEY_H));
     await allyRoom.leave();
     await settle();
     expect(answers.get("host")).toEqual([null]);
@@ -702,7 +737,7 @@ describe("Stay together, on a queued lobby's host (#882)", () => {
 
   it("splits when the window runs out, and is done", async () => {
     const { queued, answers } = await afterMatch();
-    queued.host.stayTogether(KEY_H);
+    await yesLands(() => queued.host.stayTogether(KEY_H));
     await queued.step(STAY_TOGETHER_SECONDS - 1);
     expect(answers.get("host")).toEqual([]);
     expect(queued.done()).toBe(0);
@@ -714,15 +749,34 @@ describe("Stay together, on a queued lobby's host (#882)", () => {
   it("ignores a loser's vote, a second vote and a key that is not one", async () => {
     const { queued, ally, foe, answers } = await afterMatch();
     foe.stayTogether(KEY_A);
-    queued.host.stayTogether(KEY_H);
+    await yesLands(() => queued.host.stayTogether(KEY_H));
     queued.host.stayTogether(null);
     await settle();
     expect(answers.get("host")).toEqual([]);
     const raw = rawPeer(queued.network);
     raw.transport.send("stay-together", { memberKey: "nope" }, "host");
-    ally.stayTogether(KEY_A);
+    await yesLands(() => ally.stayTogether(KEY_A));
+    expect(answers.get("host")).toEqual([[KEY_A.ticketId, KEY_H.ticketId]]);
+  });
+
+  it("ignores a yes whose consent does not verify, or is to another group", async () => {
+    const { queued, ally, allyRoom, answers } = await afterMatch();
+    await yesLands(() => queued.host.stayTogether(KEY_H));
+    const yes = { memberKey: KEY_A.ticketId, groupId: GROUP_ID };
+    // Signed by another key, and signed for another group.
+    const forged = await consentOf(KEY_H);
+    await yesLands(() => allyRoom.send("stay-together", { ...yes, consent: forged }, "host"));
+    const elsewhere = "b".repeat(64);
+    allyRoom.send(
+      "stay-together",
+      { ...yes, groupId: elsewhere, consent: await consentOf(KEY_A, elsewhere) },
+      "host",
+    );
     await settle();
-    expect(answers.get("host")).toEqual([[KEY_A, KEY_H]]);
+    expect(answers.get("host")).toEqual([]);
+    // Neither was a vote, so the ally's real one still counts.
+    await yesLands(() => ally.stayTogether(KEY_A));
+    expect(answers.get("host")).toEqual([[KEY_A.ticketId, KEY_H.ticketId]]);
   });
 
   it("is done at once when no team won, with nothing to vote on", async () => {
@@ -755,5 +809,18 @@ describe("admissionDigest", () => {
     const admit = await admissionDigest("vibewars-admit", GROUP_ID, HOST, "peer-2");
     const welcome = await admissionDigest("vibewars-host", GROUP_ID, HOST, "peer-2");
     expect(hex(admit)).not.toBe(hex(welcome));
+  });
+
+  it("differs between a party consent and either proof of the same fields (#1078)", async () => {
+    const party = hex(await admissionDigest("vibewars-party", GROUP_ID, HOST, ""));
+    for (const tag of ["vibewars-admit", "vibewars-host"] as const) {
+      expect(hex(await admissionDigest(tag, GROUP_ID, HOST, ""))).not.toBe(party);
+    }
+  });
+
+  it("is the sha256 of admissionBytes, which the queue board hashes at once", async () => {
+    const bytes = admissionBytes("vibewars-party", GROUP_ID, HOST, "");
+    const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+    expect(hex(await admissionDigest("vibewars-party", GROUP_ID, HOST, ""))).toBe(hex(digest));
   });
 });

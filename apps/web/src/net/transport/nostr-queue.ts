@@ -18,11 +18,12 @@ import {
   type QueueMode,
   type QueueTicket,
 } from "@vibewars/game-protocol";
-import type {
-  QueueBoard,
-  QueueBoardEvent,
-  TicketKey,
-  TransportTrouble,
+import {
+  admissionBytes,
+  type QueueBoard,
+  type QueueBoardEvent,
+  type TicketKey,
+  type TransportTrouble,
 } from "@vibewars/game-session";
 
 import { APP_ID, NOSTR_RELAYS } from "./relays.js";
@@ -46,13 +47,18 @@ const PENDING_LIMIT = 16;
 /** Event ids remembered to drop the copy each other relay delivers. */
 const SEEN_LIMIT = 1024;
 
+/** Party tickets whose consents were verified, remembered as many. */
+const CONSENTED_LIMIT = SEEN_LIMIT;
+
 /**
  * Signature checks a board makes a second, and in one burst. A Schnorr
  * verify costs about 3 ms of main thread, and anyone on the public relays
  * can send events that need one at no cost to themselves: past the
  * budget an event is dropped, so a flood slows matchmaking and never
  * freezes the tab. Honest load is far below it: a ticket heartbeats every
- * 5 s, and the other relays' copies are dropped before any check.
+ * 5 s, and the other relays' copies are dropped before any check. A party
+ * ticket costs one more a member the first time (#1078), and its
+ * heartbeats none, since the consents they carry do not change.
  */
 export const VERIFY_PER_SECOND = 30;
 export const VERIFY_BURST = 60;
@@ -262,6 +268,12 @@ export function createNostrQueue(deps: NostrQueueDeps = BROWSER): NostrQueue {
   let saidNoRelay = false;
   let verifyTokens = VERIFY_BURST;
   let verifyRefilledAt = deps.now();
+  /**
+   * Party ticket id to its last verified `party`, as text (#1078): a
+   * party heartbeats the same consents every 5 s, which need no second
+   * check.
+   */
+  const consented = new Map<string, string>();
 
   const request = JSON.stringify([
     "REQ",
@@ -287,19 +299,53 @@ export function createNostrQueue(deps: NostrQueueDeps = BROWSER): NostrQueue {
     return withdrawn.has(said.ticket.ticketId);
   }
 
-  /** Whether the verify budget has room for one more; takes it if so. */
-  function mayVerify(): boolean {
+  /** Whether the verify budget has room for `count` more; takes them if so. */
+  function mayVerify(count = 1): boolean {
     const at = deps.now();
     verifyTokens = Math.min(
       VERIFY_BURST,
       verifyTokens + ((at - verifyRefilledAt) * VERIFY_PER_SECOND) / 1000,
     );
     verifyRefilledAt = at;
-    if (verifyTokens < 1) {
+    if (verifyTokens < count) {
       return false;
     }
-    verifyTokens -= 1;
+    verifyTokens -= count;
     return true;
+  }
+
+  /**
+   * Whether `ticket` names only members who consented to it (#1078): a
+   * solo always does, a party when every `consents[i]` is `members[i]`'s
+   * signature over its group. The checks are paid for from the verify
+   * budget, all or none, and `unpaid` when it cannot; a party heard with
+   * the same consents before costs nothing.
+   */
+  function consentOf(ticket: QueueTicket): "held" | "forged" | "unpaid" {
+    const { party } = ticket;
+    if (party === null) {
+      return "held";
+    }
+    const said = JSON.stringify(party);
+    if (consented.get(ticket.ticketId) === said) {
+      return "held";
+    }
+    if (!mayVerify(ticket.members.length)) {
+      return "unpaid";
+    }
+    const holds = ticket.members.every((member, i) => {
+      const consent = party.consents[i];
+      const digest = sha256(admissionBytes("vibewars-party", party.groupId, member, ""));
+      return consent !== undefined && deps.verifyTicketSig(member, digest, consent);
+    });
+    if (!holds) {
+      return "forged";
+    }
+    if (consented.size >= CONSENTED_LIMIT) {
+      consented.clear();
+    }
+    consented.set(ticket.ticketId, said);
+    return "held";
   }
 
   /** Whether `event` is tagged with a mode somebody here listens to. */
@@ -341,12 +387,17 @@ export function createNostrQueue(deps: NostrQueueDeps = BROWSER): NostrQueue {
     if (!deps.verifyTicketSig(event.pubkey, digest, event.sig)) {
       return;
     }
+    const said = boardEvent(event);
+    const consent = said?.kind === "ticket" ? consentOf(said.ticket) : "held";
+    if (consent === "unpaid") {
+      // Over budget, as above: another relay's copy may yet be checked.
+      return;
+    }
     if (seen.size >= SEEN_LIMIT) {
       seen.clear();
     }
     seen.add(event.id);
-    const said = boardEvent(event);
-    if (said === undefined || isWithdrawn(said)) {
+    if (said === undefined || consent === "forged" || isWithdrawn(said)) {
       return;
     }
     for (const subscriber of [...subscribers]) {

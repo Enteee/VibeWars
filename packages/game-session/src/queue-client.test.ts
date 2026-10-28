@@ -78,6 +78,7 @@ class Queue {
       members: [ticket.ticketId],
       enteredAt: START,
       heartbeatAt: this.now,
+      party: null,
       ...ticket,
     });
     await deliver();
@@ -123,6 +124,9 @@ function ticketIdOf(client: QueueClient): string {
 
 const EARLY = "0".repeat(63) + "1";
 
+/** The group a party in these tests won together. */
+const GROUP_WON = "f".repeat(64);
+
 /** A 2v2 party of two fresh keys (#882): the lower leads. */
 function partyOf(queue: Queue): { leader: QueueParty; follower: QueueParty } {
   const keys = [fakeKey((queue.keys += 1)), fakeKey((queue.keys += 1))].sort((a, b) =>
@@ -130,7 +134,12 @@ function partyOf(queue: Queue): { leader: QueueParty; follower: QueueParty } {
   );
   const [first, second] = keys as [TicketKey, TicketKey];
   const members = [first.ticketId, second.ticketId];
-  return { leader: { members, key: first }, follower: { members, key: second } };
+  // The board checks consents, not the client: these are only shaped like some.
+  const proof = { groupId: GROUP_WON, consents: members.map(() => "e".repeat(128)) };
+  return {
+    leader: { members, key: first, ...proof },
+    follower: { members, key: second, ...proof },
+  };
 }
 
 describe("createQueueClient", () => {
@@ -352,9 +361,12 @@ describe("createQueueClient", () => {
         queue.published(new Set([follower.key.ticketId])),
         "the follower publishes nothing",
       ).toEqual([]);
-      expect(queue.published(new Set([leader.members[0] ?? ""]))[0]?.members).toEqual(
-        leader.members,
-      );
+      const [ticket] = queue.published(new Set([leader.members[0] ?? ""]));
+      expect(ticket?.members).toEqual(leader.members);
+      expect(ticket?.party).toEqual({ groupId: GROUP_WON, consents: leader.consents });
+      for (const solo of clients.slice(2)) {
+        expect(queue.published(new Set([ticketIdOf(solo)]))[0]?.party, "a solo's").toBeNull();
+      }
     });
 
     it("keeps the leader's key and place across a fall-through, without a withdrawal", async () => {
@@ -373,6 +385,7 @@ describe("createQueueClient", () => {
       const again = queue.published(new Set([leader.members[0] ?? ""])).at(-1);
       expect(again?.heartbeatAt).toBe(queue.now - STEP_MS);
       expect(again?.enteredAt).toBe(first?.enteredAt);
+      expect(again?.party, "the consents sign the group won").toEqual(first?.party);
     });
 
     it("goes party-gone once its leader's ticket has been dead for TICKET_TTL_MS", async () => {
@@ -400,49 +413,6 @@ describe("createQueueClient", () => {
       expect(follow.state.kind).toBe("searching");
       await queue.advance();
       expect(follow.state.kind).toBe("party-gone");
-    });
-
-    /** A stranger's party ticket naming `member`, signed by a key of its own below it. */
-    const forged = (member: string): Partial<QueueTicket> & { ticketId: string } => ({
-      ticketId: "0".repeat(64),
-      members: ["0".repeat(64), member],
-    });
-
-    it("splits up once a stranger has named one of its members for TICKET_TTL_MS", async () => {
-      const queue = new Queue("random-arena-2v2");
-      const { leader, follower } = partyOf(queue);
-      const lead = queue.join(leader);
-      const follow = queue.join(follower);
-      await queue.advance();
-
-      // The stranger heartbeats its claim for as long as it likes.
-      for (let waited = 0; waited < TICKET_TTL_MS; waited += STEP_MS) {
-        await queue.publish(forged(follower.key.ticketId));
-        await queue.advance();
-      }
-      expect(lead.state.kind).toBe("searching");
-      await queue.publish(forged(follower.key.ticketId));
-      await queue.advance();
-
-      expect(lead.state.kind).toBe("party-gone");
-      expect(follow.state.kind).toBe("party-gone");
-      expect(queue.heard).toContainEqual({ kind: "withdrawn", ticketId: leader.members[0] });
-    });
-
-    it("waits out a claim that is not kept alive: a stale ticket is no split", async () => {
-      const queue = new Queue("random-arena-2v2");
-      const { leader, follower } = partyOf(queue);
-      const lead = queue.join(leader);
-      const follow = queue.join(follower);
-      await queue.advance();
-
-      await queue.publish(forged(follower.key.ticketId));
-      for (let waited = 0; waited < 2 * TICKET_TTL_MS; waited += STEP_MS) {
-        await queue.advance();
-      }
-
-      expect(lead.state.kind).toBe("searching");
-      expect(follow.state.kind).toBe("searching");
     });
   });
 });

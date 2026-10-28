@@ -161,4 +161,4 @@ export {
   parseQueueTicket,
   teamSizeOf,
 } from "./queue.js";
-export type { QueueMode, QueueTicket } from "./queue.js";
+export type { QueueMode, QueueTicket, TicketParty } from "./queue.js";

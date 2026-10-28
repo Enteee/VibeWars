@@ -1290,8 +1290,15 @@
       ]
     },
     "PeerStayTogether": {
-      "properties": [
-        { "name": "memberKey", "optional": false, "type": { "union": ["null", "string"] } }
+      "union": [
+        {
+          "properties": [
+            { "name": "consent", "optional": false, "type": "string" },
+            { "name": "groupId", "optional": false, "type": "string" },
+            { "name": "memberKey", "optional": false, "type": "string" }
+          ]
+        },
+        { "properties": [{ "name": "memberKey", "optional": false, "type": "null" }] }
       ]
     },
     "PeerWelcome": {
@@ -1391,6 +1398,21 @@
             ]
           }
         },
+        {
+          "name": "party",
+          "optional": false,
+          "type": {
+            "union": [
+              "null",
+              {
+                "properties": [
+                  { "name": "consents", "optional": false, "type": { "array": "string" } },
+                  { "name": "groupId", "optional": false, "type": "string" }
+                ]
+              }
+            ]
+          }
+        },
         { "name": "protocol", "optional": false, "type": "string" },
         { "name": "ticketId", "optional": false, "type": "string" }
       ]
@@ -1446,6 +1468,12 @@
       "properties": [
         { "name": "kind", "optional": false, "type": { "literal": "target" } },
         { "name": "targetSessionId", "optional": false, "type": { "union": ["null", "string"] } }
+      ]
+    },
+    "TicketParty": {
+      "properties": [
+        { "name": "consents", "optional": false, "type": { "array": "string" } },
+        { "name": "groupId", "optional": false, "type": "string" }
       ]
     },
     "UseSkillIntent": {
@@ -1899,7 +1927,11 @@
       ]
     },
     "WirePartyFormed": {
-      "properties": [{ "name": "members", "optional": false, "type": { "array": "string" } }]
+      "properties": [
+        { "name": "consents", "optional": false, "type": { "array": "string" } },
+        { "name": "groupId", "optional": false, "type": "string" },
+        { "name": "members", "optional": false, "type": { "array": "string" } }
+      ]
     },
     "WirePartySplit": { "properties": [], "index": [{ "key": "string", "value": "never" }] },
     "WirePing": {

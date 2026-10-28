@@ -16,6 +16,7 @@ import {
   type PeerLobbyJoin,
   type WireLobbyCommand,
   type WireLobbyState,
+  type WirePartyFormed,
 } from "@vibewars/game-protocol";
 
 import { lobbyCharacter } from "./lobby-character.js";
@@ -142,7 +143,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
   const closedHandlers: ((reason: LobbyClosedReason) => void)[] = [];
   const chatHandlers: ((line: ChatLine) => void)[] = [];
   const throttledHandlers: (() => void)[] = [];
-  const partyHandlers: ((members: readonly string[] | null) => void)[] = [];
+  const partyHandlers: ((party: WirePartyFormed | null) => void)[] = [];
   /** The host answered a Stay together; a second answer is not heard. */
   let partyAnswered = false;
   /** Until the join settles: how a refusal or the timeout ends it. */
@@ -168,13 +169,13 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
   };
 
   /** The host's answer to this player's Stay together, once. */
-  const answerParty = (members: readonly string[] | null): void => {
+  const answerParty = (party: WirePartyFormed | null): void => {
     if (partyAnswered) {
       return;
     }
     partyAnswered = true;
     for (const handler of [...partyHandlers]) {
-      handler(members);
+      handler(party);
     }
   };
 
@@ -300,10 +301,30 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       onChatThrottled(handler) {
         throttledHandlers.push(handler);
       },
-      stayTogether(memberKey) {
-        if (hostId !== undefined && !closed) {
-          transport.send("stay-together", { memberKey } satisfies PeerStayTogether, hostId);
+      stayTogether(key) {
+        if (hostId === undefined || closed) {
+          return;
         }
+        if (key === null) {
+          transport.send("stay-together", { memberKey: null } satisfies PeerStayTogether, hostId);
+          return;
+        }
+        if (queued === undefined) {
+          // Only a queued lobby votes.
+          return;
+        }
+        // The consent names the group this lobby is, the one they won (#1078).
+        const { groupId } = queued.group;
+        void admissionDigest("vibewars-party", groupId, key.ticketId, "").then((digest) => {
+          if (hostId !== undefined && !closed) {
+            const said: PeerStayTogether = {
+              memberKey: key.ticketId,
+              consent: key.sign(digest),
+              groupId,
+            };
+            transport.send("stay-together", said, hostId);
+          }
+        });
       },
       onParty(handler) {
         partyHandlers.push(handler);
@@ -418,7 +439,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       transport.on("party-formed", (data, from) => {
         const formed = parseWirePartyFormed(data);
         if (from === hostId && formed !== undefined) {
-          answerParty(formed.members);
+          answerParty(formed);
         }
       }),
       transport.on("party-split", (data, from) => {
