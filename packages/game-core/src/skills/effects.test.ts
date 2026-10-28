@@ -1262,7 +1262,12 @@ describe("lengthen-recharge (#949)", () => {
 
   it("lengthens the skill its target just used", () => {
     const target = makeCombatant({ id: "target", team: 1 });
-    expect(applyEffect(effect, { ...context(undefined, target), usedSkillId: "skill.a" })).toEqual([
+    expect(
+      applyEffect(effect, {
+        ...context(undefined, target),
+        usedSkill: { skillId: "skill.a", key: "skill.a" },
+      }),
+    ).toEqual([
       { kind: "recharge-lengthened", targetId: "target", skillId: "skill.a", seconds: 47 },
     ]);
     expect(target.cast.rechargeRemaining.get("skill.a")).toBe(47);

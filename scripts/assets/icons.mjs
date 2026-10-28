@@ -392,6 +392,20 @@ const status = {
       `<path d="M8 6h8M8 18h8" ${stroke(c, 2)}/>` +
       `<path d="M9 6.5c0 3 6 3.5 6 5.5s-6 2.5-6 5.5M15 6.5c0 3-6 3.5-6 5.5s6 2.5 6 5.5" ${stroke(c, 1.6)}/>`,
   ],
+  // Enchantment: a dot and two waves, the next spell sounding again (#469).
+  "arcane-echo": [
+    "enchantment",
+    (c) =>
+      `<circle cx="8" cy="12" r="2.2" fill="${c}"/>` +
+      `<path d="M12 8a5 5 0 0 1 0 8M15.5 5.5a8.5 8.5 0 0 1 0 13" ${stroke(c, 2)}/>`,
+  ],
+  // Enchantment: a bar and two waves, the next skill sounding again (#469).
+  echo: [
+    "enchantment",
+    (c) =>
+      `<path d="M7.5 8v8" ${stroke(c, 2.5)}/>` +
+      `<path d="M12 8a5 5 0 0 1 0 8M15.5 5.5a8.5 8.5 0 0 1 0 13" ${stroke(c, 2)}/>`,
+  ],
   // Hex: two links of a chain, the bond that heals its caster when it ends (#887).
   "parasitic-bond": [
     "hex",

@@ -64,10 +64,18 @@ import {
   adrenalinePools,
   emptyAdrenaline,
   gainStrikes,
+  dropEndedCopyPools,
   gainUnits,
   losesAllAdrenaline,
 } from "../skills/adrenaline.js";
-import { CastState, beginRecharge, type ActiveCast } from "../skills/cast-state.js";
+import {
+  CastState,
+  beginRecharge,
+  resolvedBar,
+  slotSkill,
+  type ActiveCast,
+  type SlotSkill,
+} from "../skills/cast-state.js";
 import { getSkill } from "../skills/catalog.js";
 import { clearChainMarksOn, tickChainMarks } from "../skills/chain.js";
 import {
@@ -151,6 +159,8 @@ import {
 import {
   fireChangeTriggers,
   fireTriggers,
+  isEchoSkill,
+  isEchoStatus,
   type FiredTrigger,
   type SpreadGainedCondition,
   type TriggerContext,
@@ -1310,12 +1320,10 @@ export class MatchSimulation {
       return undefined;
     }
 
-    const skillId = record.skillBar[slot];
-    if (skillId === undefined || skillId === null) {
-      return undefined;
-    }
-    const skill = getSkill(skillId);
-    if (skill === undefined) {
+    // A copy standing in the slot (#469) is what the slot holds.
+    const used = slotSkill(record.skillBar, record.combatant.cast, slot);
+    const skill = used === undefined ? undefined : getSkill(used.skillId);
+    if (used === undefined || skill === undefined) {
       return undefined;
     }
 
@@ -1329,7 +1337,7 @@ export class MatchSimulation {
     }
 
     const castTargetId = skill.target === "self" ? id : this.#castTarget(record, skill);
-    const check = this.#check(record, skill, castTargetId);
+    const check = this.#check(record, skill, castTargetId, used.key);
     // Out of range or out of sight, a skill walks in and goes off there,
     // as Space does (#415, operator Q61). Range and line of sight are
     // checked last, so everything else has passed; it is all checked
@@ -1352,7 +1360,7 @@ export class MatchSimulation {
       }
       return { skillId: skill.id, check: { ok: true }, queued: true };
     }
-    return this.#useSkill(record, slot, skill, castTargetId, check);
+    return this.#useSkill(record, slot, skill, used.key, castTargetId, check);
   }
 
   /**
@@ -1364,6 +1372,7 @@ export class MatchSimulation {
     record: ParticipantRecord,
     slot: number,
     skill: Skill,
+    key: string,
     castTargetId: string | undefined,
     check: ActivationCheck,
   ): SkillRequest {
@@ -1385,7 +1394,7 @@ export class MatchSimulation {
       return { skillId: skill.id, check, queued: true };
     }
 
-    payCost(skill, record.combatant);
+    payCost(skill, record.combatant, key);
     this.#useGlyph(record, skill);
     // The swing in progress is lost, as in GW1; the attack itself resumes
     // once the skill is done.
@@ -1407,6 +1416,7 @@ export class MatchSimulation {
       castTargetId,
       activationSeconds,
       skill.whileActivating,
+      key,
     );
     this.#castBegun(record, skill, castTargetId);
     // Casting stops you (operator Q33): a key held as the cast begins
@@ -1613,6 +1623,7 @@ export class MatchSimulation {
 
       const wasInAftercast = record.combatant.cast.inAftercast;
       const completed = record.combatant.cast.advance(dt);
+      dropEndedCopyPools(record.combatant);
       if (completed !== undefined) {
         this.resolveCast(record, completed, dt);
       }
@@ -1855,9 +1866,17 @@ export class MatchSimulation {
     return selected?.combatant.team === record.combatant.team ? selected.id : record.id;
   }
 
-  /** The one activation check, for a cast and for a behaviour asking whether it could. */
-
-  #check(record: ParticipantRecord, skill: Skill, targetId: string | undefined): ActivationCheck {
+  /**
+   * The one activation check, for a cast and for a behaviour asking
+   * whether it could. `key` is what the slot used waits under (#469): a
+   * copy's, or the skill's own id.
+   */
+  #check(
+    record: ParticipantRecord,
+    skill: Skill,
+    targetId: string | undefined,
+    key: string = skill.id,
+  ): ActivationCheck {
     const target = targetId === undefined ? undefined : this.#participants.get(targetId);
     const check = canActivate({
       skill,
@@ -1865,10 +1884,13 @@ export class MatchSimulation {
       casterPosition: record.position,
       target: skill.target === "self" ? record.combatant : target?.combatant,
       targetPosition: skill.target === "self" ? record.position : target?.position,
+      key,
       rechargeRemaining: record.combatant.cast.rechargeRemaining,
       spent: record.combatant.cast.spent,
       isCasting: record.combatant.cast.isCasting,
-      skillBar: record.skillBar,
+      skillBar: resolvedBar(record.skillBar, record.combatant.cast).map(
+        (slot) => slot?.key ?? null,
+      ),
       losBlockers: this.#walls,
     });
     // Any other refusal first; then a corpse skill needs a fresh corpse in
@@ -1905,7 +1927,9 @@ export class MatchSimulation {
       this.requestAttack(record.id, intent.attackTargetId);
     }
     if (intent.useSkillId !== undefined) {
-      const slot = record.skillBar.indexOf(intent.useSkillId);
+      const slot = resolvedBar(record.skillBar, record.combatant.cast).findIndex(
+        (held) => held?.key === intent.useSkillId,
+      );
       if (slot !== -1) {
         this.requestSkill(record.id, slot);
       }
@@ -2040,11 +2064,15 @@ export class MatchSimulation {
           });
     // What the skill put on its own user does not answer this use of it
     // (#999): the chanter's own Song of Restoration waits for its next skill.
-    const spared: ReadonlySet<StatusId> = new Set(
-      events.flatMap((event) =>
+    // An echo skill does not use up an echo already up, either (#469).
+    const spared: ReadonlySet<StatusId> = new Set([
+      ...events.flatMap((event) =>
         event.kind === "status-applied" && event.targetId === record.id ? [event.statusId] : [],
       ),
-    );
+      ...(isEchoSkill(skill.id)
+        ? record.combatant.statuses.active.map(({ id }) => id).filter(isEchoStatus)
+        : []),
+    ]);
     // Where an area landed, for whoever draws it: nowhere, when an area
     // centred on a target had no target to centre on, or when it is still
     // flying.
@@ -2149,6 +2177,7 @@ export class MatchSimulation {
         record.combatant.cast,
         skill,
         reducedRecharge(skill.rechargeSeconds * (1 - rechargeFraction), faster),
+        cast.key,
       );
     }
     this.#log.push({
@@ -2167,7 +2196,10 @@ export class MatchSimulation {
     // After the skill's own effects, as their own entries (#469): a spell
     // finished is Backfire's moment, an attack skill Empathy's. Any skill
     // used is Spiteful Spirit's (#935), and an attack skill twice over.
-    this.#fireTriggers(record, "bearer-uses-skill", spared, skill.id);
+    this.#fireTriggers(record, "bearer-uses-skill", spared, {
+      skillId: skill.id,
+      key: cast.key,
+    });
     this.#endOnUseSkill(record, skill, spared);
     if (isSpell(skill.type)) {
       this.#fireTriggers(record, "bearer-casts-spell", spared);
@@ -2179,18 +2211,16 @@ export class MatchSimulation {
 
   /**
    * The bearer did `event` (#469): each status on it that answers fires.
-   * `usedSkillId` is the skill it used, on `bearer-uses-skill` (#949).
+   * `usedSkill` is the skill it used, on `bearer-uses-skill` (#949).
    * A status in `spared` does not answer (#999), as `fireTriggers`.
    */
   #fireTriggers(
     record: ParticipantRecord,
     event: Exclude<StatusTriggerEvent, "bearer-gains-condition" | "ends" | "expires">,
     spared: ReadonlySet<StatusId>,
-    usedSkillId?: string,
+    usedSkill?: SlotSkill,
   ): void {
-    this.#logFired(
-      fireTriggers(record.combatant, event, this.#triggerContext(usedSkillId), spared),
-    );
+    this.#logFired(fireTriggers(record.combatant, event, this.#triggerContext(usedSkill), spared));
   }
 
   /**
@@ -2220,13 +2250,13 @@ export class MatchSimulation {
     }
   }
 
-  #triggerContext(usedSkillId?: string): TriggerContext {
+  #triggerContext(usedSkill?: SlotSkill): TriggerContext {
     return {
       sourceOf: (id) => this.#participants.get(id)?.combatant,
       rng: this.#rng,
       rules: this.#ruleset.combat,
       surroundings: this.#participants,
-      usedSkillId,
+      usedSkill,
     };
   }
 
@@ -2484,18 +2514,18 @@ export class MatchSimulation {
     if (pending === undefined) {
       return;
     }
-    const skillId = record.skillBar[pending.slot];
-    const skill = skillId === undefined || skillId === null ? undefined : getSkill(skillId);
+    const used = slotSkill(record.skillBar, record.combatant.cast, pending.slot);
+    const skill = used === undefined ? undefined : getSkill(used.skillId);
     const target = this.#participants.get(pending.targetId);
     const moving =
       record.inputDirection.x !== 0 ||
       record.inputDirection.y !== 0 ||
       record.walkGoal !== undefined;
-    if (skill === undefined || target === undefined || moving) {
+    if (used === undefined || skill === undefined || target === undefined || moving) {
       record.pendingSkill = undefined;
       return;
     }
-    const check = this.#check(record, skill, target.id);
+    const check = this.#check(record, skill, target.id, used.key);
     if (!check.ok && TARGET_REJECTIONS.has(check.reason)) {
       record.pendingSkill = undefined;
       return;
@@ -2529,7 +2559,8 @@ export class MatchSimulation {
     }
     if (approach === "arrived") {
       record.pendingSkill = undefined;
-      this.#useSkill(record, pending.slot, skill, target.id, this.#check(record, skill, target.id));
+      const arrived = this.#check(record, skill, target.id, used.key);
+      this.#useSkill(record, pending.slot, skill, used.key, target.id, arrived);
     }
   }
 
@@ -3093,6 +3124,8 @@ export class MatchSimulation {
         victim.pendingWeaponSet = undefined;
         victim.combatant.statuses.endAll();
         this.#clearChainMarks(victim);
+        victim.combatant.cast.clearOverrides();
+        dropEndedCopyPools(victim.combatant);
         emptyAdrenaline(victim.combatant);
         // A creature (#1052) scores nothing, costs no morale and never
         // respawns: it leaves at the end of the step. Only a spirit's death
@@ -3614,6 +3647,8 @@ export class MatchSimulation {
     record.respawnInSeconds = 0;
     record.combatant.cast.cancelCast();
     record.combatant.cast.endAftercast();
+    record.combatant.cast.clearOverrides();
+    dropEndedCopyPools(record.combatant);
     record.combatant.attack = undefined;
     record.combatant.knockdownRemaining = 0;
     // The set in hand stays: GW1 resurrects you holding it (#489).

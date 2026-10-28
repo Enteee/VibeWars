@@ -7,8 +7,8 @@ export {
   targetRuleAllows,
 } from "./activation.js";
 
-export type { ActiveCast } from "./cast-state.js";
-export { CastState } from "./cast-state.js";
+export type { ActiveCast, SlotSkill } from "./cast-state.js";
+export { CastState, resolvedBar } from "./cast-state.js";
 
 export { IMPLEMENTED_SKILLS, SKILLS_BY_ID, getSkill } from "./catalog.js";
 

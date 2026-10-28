@@ -73,7 +73,7 @@ import {
   type LogRow,
   type MeterTotals,
 } from "./combat-readouts.js";
-import { describeRefusal, MESSAGE_SECONDS, SKILL_SLOT_ICON_PX } from "./hud.js";
+import { changedSlots, describeRefusal, MESSAGE_SECONDS, SKILL_SLOT_ICON_PX } from "./hud.js";
 import { isEliteSkill, skillBadgeHtml, skillIconHtml } from "./icons.js";
 import { energyLabel, overcastBandElement, renderOvercastBand } from "./overcast-band.js";
 import { paintHealthTint } from "./health-tint.js";
@@ -302,6 +302,8 @@ export function createTrainingPanel(): TrainingPanel {
   let latestArena: ArenaSnapshot = EMPTY_SNAPSHOT;
   let messageTimer: ReturnType<typeof setTimeout> | undefined;
   let skillButtons: HTMLButtonElement[] = [];
+  /** The skill each slot was painted with: a copy standing in one redraws the bar (#469). */
+  let paintedSkills: readonly (string | null)[] = [];
   const slotTips = createSlotTooltips();
 
   // The player's professions follow the build being edited (#281).
@@ -437,6 +439,7 @@ export function createTrainingPanel(): TrainingPanel {
   };
 
   const paintSkills = (slots: readonly (SkillSlot | null)[]): void => {
+    paintedSkills = slots.map((slot) => slot?.id ?? null);
     skillButtons = slots.map((slot, index) => {
       const button = document.createElement("button");
       button.type = "button";
@@ -512,6 +515,9 @@ export function createTrainingPanel(): TrainingPanel {
     renderPips(energy.pips, self.energyPips);
     attacking.textContent = self.attackTargetSessionId === undefined ? "" : "attacking";
     const slots = session?.connection.skillBar ?? [];
+    if (changedSlots(paintedSkills, slots).length > 0) {
+      paintSkills(slots);
+    }
     const recharges = session?.connection.getRecharges() ?? [];
     const adrenaline = session?.connection.getAdrenaline() ?? [];
     const adrenalineLossIn = session?.connection.getAdrenalineLossIn() ?? null;

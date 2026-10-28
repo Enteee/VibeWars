@@ -9,6 +9,7 @@ import {
   resolveJoinLoadout,
   loadoutSpec,
   resolveLoadout,
+  resolvedBar,
   spawnFacing,
   swingProgress,
   type MatchRules,
@@ -342,7 +343,14 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     }
     const participant = sim.get(seat.playerId);
     const slots =
-      participant === undefined ? [] : skillBarSlots(participant.skillBar, participant.combatant);
+      participant === undefined
+        ? []
+        : skillBarSlots(
+            resolvedBar(participant.skillBar, participant.combatant.cast).map(
+              (held) => held?.skillId ?? null,
+            ),
+            participant.combatant,
+          );
     if (!force && seat.skillBar !== undefined && sameSkillBar(seat.skillBar, slots)) {
       return;
     }

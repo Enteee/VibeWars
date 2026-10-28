@@ -3,6 +3,7 @@ import {
   adrenalineLossIn,
   applyIntent,
   drainAccumulator,
+  resolvedBar,
   swingProgress,
   type MatchSimulation,
   type NetPips,
@@ -10,6 +11,7 @@ import {
   type ProfessionId,
   type ResolvedLoadout,
   type SkillBar,
+  type SlotSkill,
   type StepResult,
 } from "@vibewars/game-core";
 import type {
@@ -128,11 +130,21 @@ export function createLocalConnection(options: {
   readonly professionsOf: (id: string) => Professions;
 }): LocalMatchConnection {
   const { simulation, selfId, map, nameOf, professionsOf } = options;
+  // What each slot holds now, a copy standing in one (#469) included.
+  const held = (): readonly (SlotSkill | null)[] => {
+    const self = simulation.get(selfId);
+    return self === undefined ? [] : resolvedBar(self.skillBar, self.combatant.cast);
+  };
   // The bar as the host would send it: costs follow the player, glyph and
   // all, and it changes only when a slot does (#637).
   const selfBar = (): (SkillSlot | null)[] => {
     const self = simulation.get(selfId);
-    return self === undefined ? [] : skillBarSlots(self.skillBar, self.combatant);
+    return self === undefined
+      ? []
+      : skillBarSlots(
+          held().map((slot) => slot?.skillId ?? null),
+          self.combatant,
+        );
   };
   let skillBar = selfBar();
   let accumulator = 0;
@@ -261,9 +273,7 @@ export function createLocalConnection(options: {
     getAdrenaline() {
       // Straight from the simulation, as the recharges are (#463).
       const combatant = simulation.get(selfId)?.combatant;
-      return skillBar.map((slot) =>
-        slot === null ? 0 : (combatant?.adrenaline.get(slot.id) ?? 0),
-      );
+      return held().map((slot) => (slot === null ? 0 : (combatant?.adrenaline.get(slot.key) ?? 0)));
     },
     getAdrenalineLossIn() {
       const combatant = simulation.get(selfId)?.combatant;
@@ -282,10 +292,10 @@ export function createLocalConnection(options: {
     getRecharges() {
       // Straight from the simulation: there is no wire to extrapolate over.
       const cast = simulation.get(selfId)?.combatant.cast;
-      return skillBar.map((slot) => ({
-        remaining: (slot === null ? undefined : cast?.rechargeRemaining.get(slot.id)) ?? 0,
-        total: (slot === null ? undefined : cast?.rechargeTotal.get(slot.id)) ?? 0,
-        spent: slot !== null && cast?.spent.has(slot.id) === true,
+      return held().map((slot) => ({
+        remaining: (slot === null ? undefined : cast?.rechargeRemaining.get(slot.key)) ?? 0,
+        total: (slot === null ? undefined : cast?.rechargeTotal.get(slot.key)) ?? 0,
+        spent: slot !== null && cast?.spent.has(slot.key) === true,
       }));
     },
     onStep(handler) {

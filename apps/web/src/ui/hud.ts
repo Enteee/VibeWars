@@ -505,9 +505,10 @@ export function skillSlotHtml(slot: SkillSlot): string {
 export const SKILL_SLOT_ICON_PX = 48;
 
 /**
- * Render the skill bar once; slots are stable for the match's lifetime.
- * `bar` is read again on each hover, so the tooltip prices a slot as the
- * host last sent it, a glyph's discount included (#637).
+ * Render the skill bar once; its slots keep their places for the match's
+ * lifetime, and `refreshSkillBar` redraws one whose skill changed (#469).
+ * `bar` is read again on each hover, so the tooltip prices and names a
+ * slot as the host last sent it, a glyph's discount included (#637).
  */
 export function renderSkillBar(
   hud: HudElements,
@@ -529,9 +530,7 @@ export function renderSkillBar(
       hud.skillBar.appendChild(button);
       return;
     }
-    button.innerHTML = skillSlotHtml(slot);
-    button.classList.toggle("is-elite", isEliteSkill(slot.id));
-    button.setAttribute("aria-label", slot.name);
+    paintSkillSlot(button, slot);
     button.addEventListener("click", () => {
       onUse(index);
     });
@@ -543,6 +542,52 @@ export function renderSkillBar(
     );
     hud.skillBar.appendChild(button);
   });
+}
+
+/** Draw `slot` on `button`: its icon, gauge, badge and name. */
+function paintSkillSlot(button: HTMLButtonElement, slot: SkillSlot): void {
+  button.innerHTML = skillSlotHtml(slot);
+  button.dataset.skillId = slot.id;
+  button.classList.toggle("is-elite", isEliteSkill(slot.id));
+  button.setAttribute("aria-label", slot.name);
+}
+
+/**
+ * The slots of `bar` that hold another skill than `painted` drew there
+ * (#469): an echo's copy standing in its slot, or the echo back. A slot
+ * empty in either is never one: an empty slot stays empty.
+ */
+export function changedSlots(
+  painted: readonly (string | null)[],
+  bar: readonly (SkillSlot | null)[],
+): number[] {
+  return bar.flatMap((slot, index) => {
+    const before = painted[index] ?? null;
+    return slot !== null && before !== null && slot.id !== before ? [index] : [];
+  });
+}
+
+/**
+ * Redraw each slot whose skill changed since it was drawn (#469), from the
+ * render loop, keeping its key label. Its click and tooltip read the slot
+ * by index, so they follow on their own.
+ */
+export function refreshSkillBar(hud: HudElements, bar: readonly (SkillSlot | null)[]): void {
+  const buttons = [...hud.skillBar.querySelectorAll("button")];
+  const painted = buttons.map((button) => button.dataset.skillId ?? null);
+  for (const index of changedSlots(painted, bar)) {
+    const button = buttons[index];
+    const slot = bar[index];
+    if (button === undefined || slot === undefined || slot === null) {
+      continue;
+    }
+    const key = button.querySelector(".hud-skill-key")?.textContent ?? "";
+    paintSkillSlot(button, slot);
+    const label = button.querySelector(".hud-skill-key");
+    if (label !== null) {
+      label.textContent = key;
+    }
+  }
 }
 
 /** Paint each slot's recharge wipe, from the render loop (#152). */

@@ -459,7 +459,7 @@ function describeTrigger(
         const plural = effect.count === 1 ? "" : "s";
         return [`loses ${String(effect.count)} ${effect.category}${plural}`];
       }
-      return effect.kind === "spread-gained-condition"
+      return effect.kind === "spread-gained-condition" || effect.kind === "echo"
         ? []
         : describeEffects(effect, ranks).map(({ text }) => lowerFirst(text));
     });
@@ -468,6 +468,14 @@ function describeTrigger(
   return trigger.effects.flatMap((effect): TriggerLine[] => {
     if (effect.kind === "spread-gained-condition") {
       return [sentence(`${when}: foes in the area suffer it too`)];
+    }
+    // "the next time it uses a skill: if a spell, it takes this skill's
+    // slot for 20 seconds" (#469).
+    if (effect.kind === "echo") {
+      const which = effect.spellsOnly ? "if a spell, it" : "that skill";
+      return [
+        sentence(`${when}: ${which} takes this skill's slot for ${String(effect.seconds)} seconds`),
+      ];
     }
     if (effect.kind === "damage" && trigger.target === "bearer") {
       return [clause(`takes ${amount(effect.amount)} damage ${when}`)];
