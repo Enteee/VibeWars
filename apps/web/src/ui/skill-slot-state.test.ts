@@ -29,6 +29,7 @@ function slot(id: string): SkillSlot {
     adrenalineCost: 0,
     activationSeconds: 1,
     rechargeSeconds: 5,
+    copyEndsAt: null,
   };
 }
 

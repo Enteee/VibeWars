@@ -1510,6 +1510,7 @@
       "properties": [
         { "name": "activationSeconds", "optional": false, "type": "number" },
         { "name": "adrenalineCost", "optional": false, "type": "number" },
+        { "name": "copyEndsAt", "optional": false, "type": { "union": ["null", "number"] } },
         { "name": "energyCost", "optional": false, "type": "number" },
         { "name": "id", "optional": false, "type": "string" },
         { "name": "name", "optional": false, "type": "string" },
@@ -2189,6 +2190,11 @@
                   "properties": [
                     { "name": "activationSeconds", "optional": false, "type": "number" },
                     { "name": "adrenalineCost", "optional": false, "type": "number" },
+                    {
+                      "name": "copyEndsAt",
+                      "optional": false,
+                      "type": { "union": ["null", "number"] }
+                    },
                     { "name": "energyCost", "optional": false, "type": "number" },
                     { "name": "id", "optional": false, "type": "string" },
                     { "name": "name", "optional": false, "type": "string" },

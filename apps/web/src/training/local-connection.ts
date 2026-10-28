@@ -144,8 +144,10 @@ export function createLocalConnection(options: {
     return self === undefined
       ? []
       : skillBarSlots(
-          held().map((slot) => slot?.skillId ?? null),
+          self.skillBar,
+          self.combatant.cast,
           self.combatant,
+          simulation.elapsedSeconds,
         );
   };
   let skillBar = selfBar();

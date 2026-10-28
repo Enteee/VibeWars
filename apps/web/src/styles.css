@@ -17,6 +17,8 @@
   --adrenaline-shade: rgb(0 0 0 / 65%);
   /* An elite skill's frame (#459). */
   --elite: #d4a72c;
+  /* Enchantment markers (art direction palette). */
+  --enchantment: #56d4dd;
   font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
 }
 
@@ -3682,6 +3684,20 @@ body.has-expanded-training #screens {
 }
 
 /* A skill's type, by shape (#75): top-right of every skill tile. */
+/* An echo's copy in its slot (#1154): a strip along the top edge that
+   drains as the copy's time runs out, over the recharge wipe, clear of
+   its number. Under reduced motion it steps once a second. */
+.echo-strip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  width: calc(var(--echo, 1) * 100%);
+  height: 3px;
+  background: var(--enchantment);
+  pointer-events: none;
+}
+
 .skill-type-badge {
   position: absolute;
   top: 4px;

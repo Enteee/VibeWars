@@ -61,6 +61,7 @@ import {
   wrongWeapon,
 } from "./skill-slot-state.js";
 import { createSlotTooltips, type SlotTooltips } from "./slot-tooltip.js";
+import { echoStripHtml, paintEchoStrip } from "./echo-strip.js";
 
 /**
  * The player's heads-up display: health/energy, skill bar, and status
@@ -495,7 +496,7 @@ export function flashMessage(hud: HudElements, text: string): void {
 /**
  * The inside of one skill-bar button (#719): the skill's icon edge to
  * edge, and over it an empty hotkey span for `renderKeyLabels` to fill,
- * the type badge and the out-of-range mark. No name and no cost: the
+ * the type badge, the out-of-range mark and an echo's copy's strip (#1154). No name and no cost: the
  * button's `aria-label` names it and the tooltip prices it (Q77). The
  * type comes from game-core's catalogue, so the wire needs no field for
  * it; a skill this client does not know gets the bare plate and no badge.
@@ -506,7 +507,8 @@ export function skillSlotHtml(slot: SkillSlot): string {
     adrenalineGaugeHtml(slot) +
     `<span class="hud-skill-key"></span>` +
     skillBadgeHtml(slot.id) +
-    `<span class="skill-range-mark" aria-hidden="true"></span>`
+    `<span class="skill-range-mark" aria-hidden="true"></span>` +
+    echoStripHtml(slot)
   );
 }
 
@@ -548,6 +550,7 @@ export function renderSkillBar(
       index,
       () => bar()[index] ?? null,
       () => ranks,
+      () => hud.clock.matchSeconds,
     );
     hud.skillBar.appendChild(button);
   });
@@ -580,7 +583,8 @@ export function changedSlots(
  * Redraw each slot whose skill changed since it was drawn (#469), from the
  * render loop, keeping its key label. Its click and tooltip read the slot
  * by index, so they follow on their own; an open tooltip is hidden, as it
- * still names the skill that was there.
+ * still names the skill that was there. A redrawn slot starts with no
+ * recharge mark: the next `updateRecharges` puts one back if it waits.
  */
 export function refreshSkillBar(hud: HudElements, bar: readonly (SkillSlot | null)[]): void {
   const buttons = [...hud.skillBar.querySelectorAll("button")];
@@ -594,6 +598,7 @@ export function refreshSkillBar(hud: HudElements, bar: readonly (SkillSlot | nul
       continue;
     }
     const key = button.querySelector(".hud-skill-key")?.textContent ?? "";
+    button.classList.remove("is-recharging");
     paintSkillSlot(button, slot);
     const label = button.querySelector(".hud-skill-key");
     if (label !== null) {
@@ -1198,6 +1203,7 @@ export function updateHud(
   // hand cannot use (#417), and mark those that cannot reach the target. The server is still the authority on
   // whether a cast is legal — these are hints, not gates (brief §32).
   const buttons = hud.skillBar.querySelectorAll("button");
+  const reducedMotion = prefersReducedMotion();
   const fill = castFill(skillBar, self);
   const far = outOfRange(skillBar, self, target, walls);
   const unwielded = wrongWeapon(skillBar, self);
@@ -1222,5 +1228,9 @@ export function updateHud(
       adrenalineFading(adrenaline[index] ?? 0, adrenalineLossIn),
     );
     button.classList.toggle("is-wrong-weapon", unwielded[index] === true);
+    // An echo's copy drains its strip as its time runs out (#1154).
+    if (now !== undefined) {
+      paintEchoStrip(button, slot, now, reducedMotion);
+    }
   });
 }
