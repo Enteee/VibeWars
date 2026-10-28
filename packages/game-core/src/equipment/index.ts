@@ -72,8 +72,21 @@ export {
 export type { ArmorCondition, Insignia, InsigniaEffect, InsigniaId } from "./insignias.js";
 export { ALL_INSIGNIAS, INSIGNIAS, getInsignia, isInsigniaId, perSlotAmount } from "./insignias.js";
 
-export type { BuildEquipment, EquippedOffhand, EquippedWeapon } from "./loadout.js";
-export { defaultEquipmentFor, defaultOffhandFor, defaultWeaponFor } from "./loadout.js";
+export type {
+  BuildEquipment,
+  EquippedOffhand,
+  EquippedWeapon,
+  WeaponSet,
+  WeaponSetIndex,
+  WeaponSets,
+} from "./loadout.js";
+export {
+  WEAPON_SETS,
+  defaultEquipmentFor,
+  defaultOffhandFor,
+  defaultWeaponFor,
+  isWeaponSetIndex,
+} from "./loadout.js";
 
 export type { GearOmission, MissingGearMechanic } from "./coverage.js";
 export { GEAR_OMISSIONS, formatGearCoverage, gearOmission, openGearGaps } from "./coverage.js";
@@ -85,6 +98,8 @@ export type {
   ResolvedEquipment,
   ResolvedLoadout,
   ResolvedWeapon,
+  ResolvedWeaponSet,
+  ResolvedWeaponSets,
 } from "./resolve.js";
 export { resolveLoadout, unarmedResolvedEquipment } from "./resolve.js";
 

@@ -244,6 +244,8 @@ export function createLocalConnection(options: {
           launchedAt: simulation.elapsedSeconds - shot.elapsed,
           flightSeconds: shot.flightSeconds,
         })),
+        // No match with rules ends here, so there is never a summary (#1057).
+        summary: undefined,
       };
     },
     onCombat(handler) {

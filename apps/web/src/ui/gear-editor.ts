@@ -19,12 +19,14 @@ import {
   resolveLoadout,
   runeDisplayName,
   type ArmorSlot,
+  type BuildEquipment,
   type EquippedRune,
   type InsigniaId,
   type OffhandId,
   type ResolvedLoadout,
   type RuneTier,
   type WeaponId,
+  type WeaponSet,
 } from "@vibewars/game-core";
 
 import type { StoredCharacter } from "../storage/schema.js";
@@ -77,6 +79,17 @@ function defaultNomination(
 /* Weapons and off-hands                                                       */
 /* -------------------------------------------------------------------------- */
 
+/** Set 1 (#489): the one weapon set this editor edits. */
+function firstSet(character: StoredCharacter): WeaponSet {
+  return character.equipment.weaponSets[0];
+}
+
+/** `character`'s gear with set 1 replaced; sets 2-4 as they were. */
+function withFirstSet(character: StoredCharacter, set: WeaponSet): BuildEquipment {
+  const [, set2, set3, set4] = character.equipment.weaponSets;
+  return { ...character.equipment, weaponSets: [set, set2, set3, set4] };
+}
+
 export function setWeapon(character: StoredCharacter, weaponId: WeaponId): StoredCharacter {
   const weapon = getWeapon(weaponId);
   if (weapon === undefined) {
@@ -91,18 +104,17 @@ export function setWeapon(character: StoredCharacter, weaponId: WeaponId): Store
   // Picking a two-hander puts the off-hand down. That coupling lives
   // here, in a tested function, rather than in a click handler — it is
   // the rule the whole gear trade-off rests on.
-  const offHand = allowsOffhand(weapon) ? character.equipment.offHand : null;
+  const offHand = allowsOffhand(weapon) ? firstSet(character).offHand : null;
 
-  return touched(character, {
-    ...character.equipment,
-    mainHand: { weaponId, requirementAttributeId },
-    offHand,
-  });
+  return touched(
+    character,
+    withFirstSet(character, { mainHand: { weaponId, requirementAttributeId }, offHand }),
+  );
 }
 
 /** Whether this character's current weapon leaves a hand free. */
 export function canEquipOffhand(character: StoredCharacter): boolean {
-  const weapon = getWeapon(character.equipment.mainHand.weaponId);
+  const weapon = getWeapon(firstSet(character).mainHand.weaponId);
   return weapon !== undefined && allowsOffhand(weapon);
 }
 
@@ -111,7 +123,7 @@ export function setOffhand(
   offhandId: OffhandId | null,
 ): StoredCharacter {
   if (offhandId === null) {
-    return touched(character, { ...character.equipment, offHand: null });
+    return touched(character, withFirstSet(character, { ...firstSet(character), offHand: null }));
   }
   // A no-op rather than an error when both hands are full, in the spirit
   // of `swapSkillSlots(a, a)` returning the character unchanged.
@@ -122,16 +134,19 @@ export function setOffhand(
   if (offhand === undefined) {
     return character;
   }
-  return touched(character, {
-    ...character.equipment,
-    offHand: {
-      offhandId,
-      requirementAttributeId:
-        offhand.requirement.kind === "fixed"
-          ? null
-          : defaultNomination(character, offhand.requirement.from),
-    },
-  });
+  return touched(
+    character,
+    withFirstSet(character, {
+      ...firstSet(character),
+      offHand: {
+        offhandId,
+        requirementAttributeId:
+          offhand.requirement.kind === "fixed"
+            ? null
+            : defaultNomination(character, offhand.requirement.from),
+      },
+    }),
+  );
 }
 
 /** Re-link a piece of gear to a different attribute. */
@@ -140,20 +155,26 @@ export function setRequirementAttribute(
   hand: "mainHand" | "offHand",
   attributeId: string | null,
 ): StoredCharacter {
+  const set = firstSet(character);
   if (hand === "mainHand") {
-    return touched(character, {
-      ...character.equipment,
-      mainHand: { ...character.equipment.mainHand, requirementAttributeId: attributeId },
-    });
+    return touched(
+      character,
+      withFirstSet(character, {
+        ...set,
+        mainHand: { ...set.mainHand, requirementAttributeId: attributeId },
+      }),
+    );
   }
-  const offHand = character.equipment.offHand;
-  if (offHand === null) {
+  if (set.offHand === null) {
     return character;
   }
-  return touched(character, {
-    ...character.equipment,
-    offHand: { ...offHand, requirementAttributeId: attributeId },
-  });
+  return touched(
+    character,
+    withFirstSet(character, {
+      ...set,
+      offHand: { ...set.offHand, requirementAttributeId: attributeId },
+    }),
+  );
 }
 
 /**
@@ -163,7 +184,7 @@ export function setRequirementAttribute(
  * and showing a one-option dropdown would imply it did.
  */
 export function weaponAttributeChoices(character: StoredCharacter): readonly string[] {
-  const weapon = getWeapon(character.equipment.mainHand.weaponId);
+  const weapon = getWeapon(firstSet(character).mainHand.weaponId);
   if (weapon === undefined || weapon.requirement.kind === "fixed") {
     return [];
   }
@@ -273,7 +294,9 @@ const CONDITION_LABELS: Readonly<Record<string, string>> = {
 
 export function summariseGear(character: StoredCharacter): GearSummary {
   const resolved = resolveForDisplay(character);
-  const { mainHand } = resolved.equipment;
+  // Set 1's, until the editor has a tab per set (#489).
+  const held = resolved.weaponSets[0];
+  const { mainHand } = held.equipment;
   const allocated = new Map(character.attributes.map((a) => [a.attributeId, a.rank]));
 
   const runeBonuses: { attributeId: string; bonus: number }[] = [];
@@ -293,9 +316,9 @@ export function summariseGear(character: StoredCharacter): GearSummary {
 
   return {
     maxHealth: resolved.maxHealth,
-    maxEnergy: resolved.maxEnergy,
+    maxEnergy: held.maxEnergy,
     baseEnergyPips: resolved.baseEnergyPips,
-    armor: resolved.equipment.baseArmor,
+    armor: held.equipment.baseArmor,
     weaponName: weapon.name,
     damageRange: `${dealt(weapon.damageMin)}–${dealt(weapon.damageMax)}`,
     attackInterval: `${weapon.attackIntervalSeconds.toFixed(2)}s`,
@@ -304,11 +327,11 @@ export function summariseGear(character: StoredCharacter): GearSummary {
         ? undefined
         : { attributeId, rank: weapon.requirement.rank },
     runeBonuses,
-    conditionalArmor: resolved.equipment.conditionalArmor.map(
+    conditionalArmor: held.equipment.conditionalArmor.map(
       (bonus) =>
         `+${String(bonus.amount)} armor ${CONDITION_LABELS[bonus.condition] ?? bonus.condition}`,
     ),
-    flatPhysicalReduction: resolved.equipment.flatPhysicalReduction,
+    flatPhysicalReduction: held.equipment.flatPhysicalReduction,
   };
 }
 

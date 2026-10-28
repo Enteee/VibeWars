@@ -18,6 +18,7 @@ export type {
   CombatMessage,
   MatchConnection,
   MatchSnapshot,
+  MatchSummaryRow,
   PlayerSnapshot,
   ProjectileSnapshot,
   SkillSlot,

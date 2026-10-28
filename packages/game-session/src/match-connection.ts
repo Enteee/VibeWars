@@ -125,6 +125,21 @@ export interface MatchSnapshot {
   readonly endReason: string | undefined;
   /** Weapon shots and flying spells in flight, oldest first (#160, #535). */
   readonly projectiles: readonly ProjectileSnapshot[];
+  /** What each player did, from the host's `ended` (#1057); `undefined` until then. */
+  readonly summary: readonly MatchSummaryRow[] | undefined;
+}
+
+/** One player's line in the match summary (#1057), as the host tallied it: whole numbers. */
+export interface MatchSummaryRow {
+  readonly id: string;
+  readonly name: string;
+  readonly team: number;
+  readonly damage: number;
+  readonly healing: number;
+  readonly taken: number;
+  readonly kills: number;
+  readonly deaths: number;
+  readonly interrupts: number;
 }
 
 /**

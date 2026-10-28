@@ -6,7 +6,7 @@ import { PROFESSIONS, getAttribute, type ProfessionId } from "../professions.js"
 import { SKILL_BAR_SLOTS, validatePlayerBuild, type PlayerBuild } from "../build.js";
 import { bareArmorSet } from "./armor.js";
 import { GEAR_OMISSIONS, gearOmission, openGearGaps } from "./coverage.js";
-import { defaultEquipmentFor, defaultWeaponFor } from "./loadout.js";
+import { defaultEquipmentFor, defaultWeaponFor, type BuildEquipment } from "./loadout.js";
 import { parseBuildEquipment } from "./parse.js";
 import { reconcileEquipment } from "./reconcile.js";
 import { validateEquipment } from "./validate.js";
@@ -207,8 +207,12 @@ describe("resolving universal runes", () => {
         primaryProfession: "warrior",
         allocatedRanks: new Map(),
         equipment: {
-          mainHand: { weaponId: "sword", requirementAttributeId: null },
-          offHand: null,
+          weaponSets: [
+            { mainHand: { weaponId: "sword", requirementAttributeId: null }, offHand: null },
+            null,
+            null,
+            null,
+          ],
           armor,
         },
       },
@@ -234,13 +238,17 @@ describe("what a weapon deals (#761)", () => {
         primaryProfession: "elementalist",
         allocatedRanks: new Map(),
         equipment: {
-          mainHand: { weaponId, requirementAttributeId: nominated },
-          offHand: null,
+          weaponSets: [
+            { mainHand: { weaponId, requirementAttributeId: nominated }, offHand: null },
+            null,
+            null,
+            null,
+          ],
           armor: bareArmorSet(),
         },
       },
       MINIMAL_GW_INSPIRED_PVP_V1.combat,
-    ).equipment.mainHand.damageType;
+    ).weaponSets[0].equipment.mainHand.damageType;
   }
 
   it("gives a wand or staff its nominated attribute's element", () => {
@@ -274,13 +282,17 @@ describe("inherent armor by profession (#759)", () => {
         primaryProfession,
         allocatedRanks: new Map(),
         equipment: {
-          mainHand: { weaponId: "sword", requirementAttributeId: null },
-          offHand: null,
+          weaponSets: [
+            { mainHand: { weaponId: "sword", requirementAttributeId: null }, offHand: null },
+            null,
+            null,
+            null,
+          ],
           armor: { ...bareArmorSet(), chest: { insigniaId: insignia, rune: null } },
         },
       },
       MINIMAL_GW_INSPIRED_PVP_V1.combat,
-    ).equipment.conditionalArmor;
+    ).weaponSets[0].equipment.conditionalArmor;
   }
 
   it("lists a Warrior's +20 vs physical before the insignias'", () => {
@@ -318,9 +330,10 @@ describe("default loadouts", () => {
     "never pairs %s's default off-hand with both hands full",
     (profession) => {
       const equipment = defaultEquipmentFor(profession);
-      const weapon = getWeapon(equipment.mainHand.weaponId);
+      const [set1] = equipment.weaponSets;
+      const weapon = getWeapon(set1.mainHand.weaponId);
       expect(weapon).toBeDefined();
-      if (weapon === undefined || equipment.offHand === null) {
+      if (weapon === undefined || set1.offHand === null) {
         return;
       }
       expect(allowsOffhand(weapon), `${profession} holds a ${weapon.id}`).toBe(true);
@@ -352,21 +365,35 @@ describe("validateEquipment", () => {
   it("refuses an off-hand alongside a two-handed weapon", () => {
     const problems = validateEquipment(
       {
-        mainHand: { weaponId: "hammer", requirementAttributeId: null },
-        offHand: { offhandId: "shield", requirementAttributeId: "warrior.strength" },
+        weaponSets: [
+          {
+            mainHand: { weaponId: "hammer", requirementAttributeId: null },
+            offHand: { offhandId: "shield", requirementAttributeId: "warrior.strength" },
+          },
+          null,
+          null,
+          null,
+        ],
         armor: bareArmorSet(),
       },
       contextFor("warrior"),
     );
-    expect(problems.map((p) => p.field)).toContain("equipment.offHand");
+    expect(problems.map((p) => p.field)).toContain("equipment.weaponSets[0].offHand");
     expect(problems.some((p) => p.message.includes("both hands"))).toBe(true);
   });
 
   it("refuses a nomination on a weapon whose attribute is fixed", () => {
     const problems = validateEquipment(
       {
-        mainHand: { weaponId: "sword", requirementAttributeId: "warrior.axe-mastery" },
-        offHand: null,
+        weaponSets: [
+          {
+            mainHand: { weaponId: "sword", requirementAttributeId: "warrior.axe-mastery" },
+            offHand: null,
+          },
+          null,
+          null,
+          null,
+        ],
         armor: bareArmorSet(),
       },
       contextFor("warrior"),
@@ -378,8 +405,15 @@ describe("validateEquipment", () => {
   it("refuses a shield linked to an attribute shields do not use", () => {
     const problems = validateEquipment(
       {
-        mainHand: { weaponId: "sword", requirementAttributeId: null },
-        offHand: { offhandId: "shield", requirementAttributeId: "monk.divine-favor" },
+        weaponSets: [
+          {
+            mainHand: { weaponId: "sword", requirementAttributeId: null },
+            offHand: { offhandId: "shield", requirementAttributeId: "monk.divine-favor" },
+          },
+          null,
+          null,
+          null,
+        ],
         armor: bareArmorSet(),
       },
       contextFor("warrior", "monk"),
@@ -392,8 +426,15 @@ describe("validateEquipment", () => {
       {
         // A monk may hold a sword — weapons are not profession-gated —
         // but a focus linked to Fire Magic is a rule they do not have.
-        mainHand: { weaponId: "sword", requirementAttributeId: null },
-        offHand: { offhandId: "focus", requirementAttributeId: "elementalist.fire-magic" },
+        weaponSets: [
+          {
+            mainHand: { weaponId: "sword", requirementAttributeId: null },
+            offHand: { offhandId: "focus", requirementAttributeId: "elementalist.fire-magic" },
+          },
+          null,
+          null,
+          null,
+        ],
         armor: bareArmorSet(),
       },
       contextFor("monk"),
@@ -406,8 +447,12 @@ describe("validateEquipment", () => {
     // a hammer has made a poor choice, not an illegal one.
     const problems = validateEquipment(
       {
-        mainHand: { weaponId: "hammer", requirementAttributeId: null },
-        offHand: null,
+        weaponSets: [
+          { mainHand: { weaponId: "hammer", requirementAttributeId: null }, offHand: null },
+          null,
+          null,
+          null,
+        ],
         armor: bareArmorSet(),
       },
       contextFor("mesmer"),
@@ -419,8 +464,12 @@ describe("validateEquipment", () => {
     const armor = { ...bareArmorSet() };
     const problems = validateEquipment(
       {
-        mainHand: { weaponId: "sword", requirementAttributeId: null },
-        offHand: null,
+        weaponSets: [
+          { mainHand: { weaponId: "sword", requirementAttributeId: null }, offHand: null },
+          null,
+          null,
+          null,
+        ],
         armor: {
           ...armor,
           head: {
@@ -437,8 +486,15 @@ describe("validateEquipment", () => {
   it("refuses Absorption on anyone who is not a primary warrior", () => {
     const problems = validateEquipment(
       {
-        mainHand: { weaponId: "wand", requirementAttributeId: "monk.divine-favor" },
-        offHand: null,
+        weaponSets: [
+          {
+            mainHand: { weaponId: "wand", requirementAttributeId: "monk.divine-favor" },
+            offHand: null,
+          },
+          null,
+          null,
+          null,
+        ],
         armor: {
           ...bareArmorSet(),
           chest: {
@@ -456,8 +512,12 @@ describe("validateEquipment", () => {
     const rune = { kind: "attribute", attributeId: "warrior.strength", tier: "superior" } as const;
     const problems = validateEquipment(
       {
-        mainHand: { weaponId: "sword", requirementAttributeId: null },
-        offHand: null,
+        weaponSets: [
+          { mainHand: { weaponId: "sword", requirementAttributeId: null }, offHand: null },
+          null,
+          null,
+          null,
+        ],
         armor: {
           ...bareArmorSet(),
           head: { insigniaId: null, rune },
@@ -474,8 +534,12 @@ describe("validateEquipment", () => {
       const rune = { kind: "universal", runeId, tier: "minor" } as const;
       return validateEquipment(
         {
-          mainHand: { weaponId: "sword", requirementAttributeId: null },
-          offHand: null,
+          weaponSets: [
+            { mainHand: { weaponId: "sword", requirementAttributeId: null }, offHand: null },
+            null,
+            null,
+            null,
+          ],
           armor: {
             ...bareArmorSet(),
             head: { insigniaId: null, rune },
@@ -499,8 +563,15 @@ describe("validateEquipment", () => {
       {
         // Only reachable from a hand-edited record; the parser rejects
         // this shape. Validation still has to have an answer for it.
-        mainHand: { weaponId: "chainsaw" as never, requirementAttributeId: null },
-        offHand: null,
+        weaponSets: [
+          {
+            mainHand: { weaponId: "chainsaw" as never, requirementAttributeId: null },
+            offHand: null,
+          },
+          null,
+          null,
+          null,
+        ],
         armor: bareArmorSet(),
       },
       contextFor("warrior"),
@@ -513,8 +584,15 @@ describe("validateEquipment", () => {
       const attributeId = offhand.id === "shield" ? "warrior.strength" : "warrior.tactics";
       const problems = validateEquipment(
         {
-          mainHand: { weaponId: "sword", requirementAttributeId: null },
-          offHand: { offhandId: offhand.id, requirementAttributeId: attributeId },
+          weaponSets: [
+            {
+              mainHand: { weaponId: "sword", requirementAttributeId: null },
+              offHand: { offhandId: offhand.id, requirementAttributeId: attributeId },
+            },
+            null,
+            null,
+            null,
+          ],
           armor: bareArmorSet(),
         },
         contextFor("warrior"),
@@ -544,12 +622,25 @@ describe("parseBuildEquipment", () => {
       "sword",
       [],
       { mainHand: null },
-      { mainHand: { weaponId: "chainsaw" }, offHand: null, armor: {} },
-      { mainHand: { weaponId: "sword" }, offHand: { offhandId: "bagpipes" }, armor: {} },
-      { mainHand: { weaponId: "sword" }, offHand: null, armor: null },
       {
-        mainHand: { weaponId: "sword" },
-        offHand: null,
+        weaponSets: [{ mainHand: { weaponId: "chainsaw" }, offHand: null }, null, null, null],
+        armor: {},
+      },
+      {
+        weaponSets: [
+          { mainHand: { weaponId: "sword" }, offHand: { offhandId: "bagpipes" } },
+          null,
+          null,
+          null,
+        ],
+        armor: {},
+      },
+      {
+        weaponSets: [{ mainHand: { weaponId: "sword" }, offHand: null }, null, null, null],
+        armor: null,
+      },
+      {
+        weaponSets: [{ mainHand: { weaponId: "sword" }, offHand: null }, null, null, null],
         armor: { head: { rune: { kind: "attribute" } } },
       },
     ];
@@ -560,8 +651,7 @@ describe("parseBuildEquipment", () => {
 
   it("fills in missing armor slots rather than failing on a sparse record", () => {
     const parsed = parseBuildEquipment({
-      mainHand: { weaponId: "sword" },
-      offHand: null,
+      weaponSets: [{ mainHand: { weaponId: "sword" }, offHand: null }, null, null, null],
       armor: {},
     });
     expect(parsed).toBeDefined();
@@ -577,71 +667,109 @@ describe("reconcileEquipment", () => {
     // deleting the player's choice would be the editor overruling them.
     const reconciled = reconcileEquipment(
       {
-        mainHand: { weaponId: "hammer", requirementAttributeId: null },
-        offHand: null,
+        weaponSets: [
+          { mainHand: { weaponId: "hammer", requirementAttributeId: null }, offHand: null },
+          null,
+          null,
+          null,
+        ],
         armor: bareArmorSet(),
       },
       contextFor("mesmer"),
     );
-    expect(reconciled.mainHand.weaponId).toBe("hammer");
+    expect(reconciled.weaponSets[0].mainHand.weaponId).toBe("hammer");
   });
 
   it("drops an off-hand whose attribute is no longer reachable", () => {
     const reconciled = reconcileEquipment(
       {
-        mainHand: { weaponId: "sword", requirementAttributeId: null },
-        offHand: { offhandId: "shield", requirementAttributeId: "warrior.strength" },
+        weaponSets: [
+          {
+            mainHand: { weaponId: "sword", requirementAttributeId: null },
+            offHand: { offhandId: "shield", requirementAttributeId: "warrior.strength" },
+          },
+          null,
+          null,
+          null,
+        ],
         armor: bareArmorSet(),
       },
       contextFor("mesmer"),
     );
-    expect(reconciled.offHand).toBeNull();
+    expect(reconciled.weaponSets[0].offHand).toBeNull();
   });
 
   it("drops an off-hand when the weapon became two-handed", () => {
     const reconciled = reconcileEquipment(
       {
-        mainHand: { weaponId: "hammer", requirementAttributeId: null },
-        offHand: { offhandId: "shield", requirementAttributeId: "warrior.strength" },
+        weaponSets: [
+          {
+            mainHand: { weaponId: "hammer", requirementAttributeId: null },
+            offHand: { offhandId: "shield", requirementAttributeId: "warrior.strength" },
+          },
+          null,
+          null,
+          null,
+        ],
         armor: bareArmorSet(),
       },
       contextFor("warrior"),
     );
-    expect(reconciled.offHand).toBeNull();
+    expect(reconciled.weaponSets[0].offHand).toBeNull();
   });
 
   it("re-points a caster weapon rather than dropping it", () => {
     const reconciled = reconcileEquipment(
       {
-        mainHand: { weaponId: "wand", requirementAttributeId: "monk.divine-favor" },
-        offHand: null,
+        weaponSets: [
+          {
+            mainHand: { weaponId: "wand", requirementAttributeId: "monk.divine-favor" },
+            offHand: null,
+          },
+          null,
+          null,
+          null,
+        ],
         armor: bareArmorSet(),
       },
       contextFor("elementalist"),
     );
-    expect(reconciled.mainHand.weaponId).toBe("wand");
-    expect(reconciled.mainHand.requirementAttributeId).not.toBe("monk.divine-favor");
-    expect(reconciled.mainHand.requirementAttributeId).not.toBeNull();
+    expect(reconciled.weaponSets[0].mainHand.weaponId).toBe("wand");
+    expect(reconciled.weaponSets[0].mainHand.requirementAttributeId).not.toBe("monk.divine-favor");
+    expect(reconciled.weaponSets[0].mainHand.requirementAttributeId).not.toBeNull();
   });
 
   it("picks the same replacement attribute every time", () => {
     // An editor that chose a different attribute each time you toggled
     // professions would be maddening to use.
-    const before = {
-      mainHand: { weaponId: "wand", requirementAttributeId: "monk.divine-favor" } as const,
-      offHand: null,
+    const before: BuildEquipment = {
+      weaponSets: [
+        {
+          mainHand: { weaponId: "wand", requirementAttributeId: "monk.divine-favor" } as const,
+          offHand: null,
+        },
+        null,
+        null,
+        null,
+      ],
       armor: bareArmorSet(),
     };
     const first = reconcileEquipment(before, contextFor("elementalist"));
     const second = reconcileEquipment(before, contextFor("elementalist"));
-    expect(first.mainHand.requirementAttributeId).toBe(second.mainHand.requirementAttributeId);
+    expect(first.weaponSets[0].mainHand.requirementAttributeId).toBe(
+      second.weaponSets[0].mainHand.requirementAttributeId,
+    );
   });
 
   it("clears a rune the character can no longer use, keeping the rest", () => {
     const reconciled = reconcileEquipment(
       {
-        mainHand: { weaponId: "sword", requirementAttributeId: null },
-        offHand: null,
+        weaponSets: [
+          { mainHand: { weaponId: "sword", requirementAttributeId: null }, offHand: null },
+          null,
+          null,
+          null,
+        ],
         armor: {
           ...bareArmorSet(),
           head: {
@@ -662,8 +790,12 @@ describe("reconcileEquipment", () => {
   it("clears Absorption when the primary profession stops being warrior", () => {
     const reconciled = reconcileEquipment(
       {
-        mainHand: { weaponId: "sword", requirementAttributeId: null },
-        offHand: null,
+        weaponSets: [
+          { mainHand: { weaponId: "sword", requirementAttributeId: null }, offHand: null },
+          null,
+          null,
+          null,
+        ],
         armor: {
           ...bareArmorSet(),
           feet: {
@@ -767,13 +899,17 @@ describe("Energy Storage (#532)", () => {
         primaryProfession: "elementalist",
         allocatedRanks: new Map([["elementalist.energy-storage", rank]]),
         equipment: {
-          mainHand: { weaponId: "staff", requirementAttributeId: null },
-          offHand: null,
+          weaponSets: [
+            { mainHand: { weaponId: "staff", requirementAttributeId: null }, offHand: null },
+            null,
+            null,
+            null,
+          ],
           armor: { ...bareArmorSet(), chest: { insigniaId: null, rune: chestRune } },
         },
       },
       MINIMAL_GW_INSPIRED_PVP_V1.combat,
-    ).maxEnergy;
+    ).weaponSets[0].maxEnergy;
   }
 
   const base = MINIMAL_GW_INSPIRED_PVP_V1.combat.baseEnergy;
@@ -795,5 +931,125 @@ describe("Energy Storage (#532)", () => {
   it("adds to Rune of Attunement, neither replacing the other", () => {
     const attunement = { kind: "universal", runeId: "attunement", tier: "superior" } as const;
     expect(maxEnergyAt(12, attunement)).toBe(base + 36 + 9);
+  });
+});
+
+describe("weapon sets (#489, ADR-0036)", () => {
+  const SWORD = {
+    mainHand: { weaponId: "sword", requirementAttributeId: null },
+    offHand: null,
+  } as const;
+  const WAND_FOCUS = {
+    mainHand: { weaponId: "wand", requirementAttributeId: "elementalist.fire-magic" },
+    offHand: { offhandId: "focus", requirementAttributeId: "elementalist.fire-magic" },
+  } as const;
+  const STAFF = {
+    mainHand: { weaponId: "staff", requirementAttributeId: "elementalist.fire-magic" },
+    offHand: null,
+  } as const;
+  const SWORD_SHIELD = {
+    mainHand: { weaponId: "sword", requirementAttributeId: null },
+    offHand: { offhandId: "shield", requirementAttributeId: "warrior.strength" },
+  } as const;
+
+  it("parses four sets, set 1 required and the others a set or empty, in any pattern", () => {
+    const armor = bareArmorSet();
+    expect(parseBuildEquipment({ weaponSets: [SWORD, null, STAFF, null], armor })).toEqual({
+      weaponSets: [SWORD, null, STAFF, null],
+      armor,
+    });
+    const malformed: readonly unknown[] = [
+      { armor },
+      { weaponSets: [SWORD, null, null], armor },
+      { weaponSets: [SWORD, null, null, null, null], armor },
+      { weaponSets: [null, SWORD, null, null], armor },
+      { weaponSets: [SWORD, 7, null, null], armor },
+      // The single-weapon shape: malformed, not old (ADR-0016).
+      { mainHand: SWORD.mainHand, offHand: null, armor },
+    ];
+    for (const value of malformed) {
+      expect(parseBuildEquipment(value), JSON.stringify(value)).toBeUndefined();
+    }
+  });
+
+  it("checks every set, and says which one past set 1", () => {
+    const problems = validateEquipment(
+      {
+        weaponSets: [
+          SWORD,
+          null,
+          {
+            mainHand: { weaponId: "hammer", requirementAttributeId: null },
+            offHand: { offhandId: "shield", requirementAttributeId: "warrior.strength" },
+          },
+          null,
+        ],
+        armor: bareArmorSet(),
+      },
+      contextFor("warrior"),
+    );
+    expect(problems).toHaveLength(1);
+    expect(problems[0]?.field).toBe("equipment.weaponSets[2].offHand");
+    expect(problems[0]?.message).toMatch(/^Set 3: Hammer needs both hands/);
+  });
+
+  it("re-points a wand's nomination in set 2, and never empties a set", () => {
+    const reconciled = reconcileEquipment(
+      {
+        weaponSets: [
+          SWORD,
+          {
+            mainHand: { weaponId: "wand", requirementAttributeId: "monk.divine-favor" },
+            offHand: null,
+          },
+          null,
+          null,
+        ],
+        armor: bareArmorSet(),
+      },
+      contextFor("elementalist"),
+    );
+    const set2 = reconciled.weaponSets[1];
+    expect(set2?.mainHand.weaponId).toBe("wand");
+    expect(set2?.mainHand.requirementAttributeId).not.toBe("monk.divine-favor");
+    expect(set2?.mainHand.requirementAttributeId).not.toBeNull();
+    expect(reconciled.weaponSets[2]).toBeNull();
+  });
+
+  it("resolves each set on its own: a focus's energy, a shield's armor, the runes once", () => {
+    const superiorFire = {
+      insigniaId: null,
+      rune: { kind: "attribute", attributeId: "elementalist.fire-magic", tier: "superior" },
+    } as const;
+    const resolve = (primaryProfession: ProfessionId, equipment: BuildEquipment) =>
+      resolveLoadout(
+        {
+          primaryProfession,
+          allocatedRanks: new Map([
+            ["elementalist.fire-magic", 9],
+            ["warrior.strength", 9],
+          ]),
+          equipment,
+        },
+        MINIMAL_GW_INSPIRED_PVP_V1.combat,
+      );
+
+    const caster = resolve("elementalist", {
+      weaponSets: [WAND_FOCUS, STAFF, null, WAND_FOCUS],
+      armor: { ...bareArmorSet(), head: superiorFire, chest: superiorFire },
+    });
+    const [focus, staff, empty, again] = caster.weaponSets;
+    expect(empty).toBeNull();
+    expect(focus.maxEnergy).toBe((staff?.maxEnergy ?? 0) + 12);
+    expect(again).toEqual(focus);
+    // Superior: +3, counted once however many sets or runes.
+    expect(caster.attributeRanks.get("elementalist.fire-magic")).toBe(12);
+
+    const warrior = resolve("warrior", {
+      weaponSets: [SWORD_SHIELD, SWORD, null, null],
+      armor: bareArmorSet(),
+    });
+    const [shield, bare] = warrior.weaponSets;
+    expect(shield.equipment.baseArmor).toBe((bare?.equipment.baseArmor ?? 0) + 16);
   });
 });
