@@ -247,4 +247,9 @@ export const SKILL_ICONS = {
   "mesmer.illusion-of-haste": { glyph: "speed", modifier: "half" },
   "mesmer.ineptitude": { glyph: "flash", modifier: "stun" },
   "mesmer.crippling-anguish": { glyph: "limp", modifier: "down" },
+  // Placeholders until the asset-designer's (#1239): the attacking spirits.
+  "ritualist.pain": { glyph: "hex-bolt", modifier: "hourglass" },
+  "ritualist.shadowsong": { glyph: "eye", modifier: "hourglass" },
+  "ritualist.dissonance": { glyph: "interrupt", modifier: "hourglass" },
+  "ritualist.disenchantment": { glyph: "hex-cut", modifier: "hourglass" },
 };

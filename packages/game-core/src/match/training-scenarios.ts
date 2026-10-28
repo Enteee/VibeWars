@@ -196,7 +196,7 @@ function archer(id: string, label: string, position: Vec2): TrainingDummy {
   return {
     ...target(id, label, position, 60),
     attributeRanks: { "ranger.marksmanship": 12 },
-    behaviour: { kind: "auto-attack", targeting: { kind: "nearest-enemy" } },
+    behaviour: { kind: "auto-attack", targeting: { kind: "nearest-enemy" }, reach: undefined },
     weapon: "longbow",
   };
 }
@@ -503,7 +503,7 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
         behaviour: {
           kind: "parallel",
           behaviours: [
-            { kind: "auto-attack", targeting: { kind: "nearest-enemy" } },
+            { kind: "auto-attack", targeting: { kind: "nearest-enemy" }, reach: undefined },
             {
               kind: "apply-status-cadence",
               statusId: "blind",
@@ -581,7 +581,7 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
         skillBar: [],
         attributeRanks: { "ranger.marksmanship": 12 },
         baseEnergyPips: 0,
-        behaviour: { kind: "auto-attack", targeting: { kind: "nearest-enemy" } },
+        behaviour: { kind: "auto-attack", targeting: { kind: "nearest-enemy" }, reach: undefined },
         weapon: "longbow",
       },
     ],

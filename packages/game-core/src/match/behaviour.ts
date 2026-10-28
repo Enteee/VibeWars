@@ -77,9 +77,15 @@ export type Behaviour =
    * Attack the target with the weapon, as Space does (#162), and ask again
    * whenever no attack is going: after the target's respawn, or the
    * dummy's own reset. An attack going on stays on its target, even with
-   * another nearer.
+   * another nearer. With a `reach`, a spirit's (#1239): only a target
+   * within it, and it never walks; the simulation ends an attack on one
+   * that leaves it. `undefined`: any, walked to.
    */
-  | { readonly kind: "auto-attack"; readonly targeting: Targeting }
+  | {
+      readonly kind: "auto-attack";
+      readonly targeting: Targeting;
+      readonly reach: number | undefined;
+    }
   /**
    * A minion's (#467 child 3) or a pet's (#1046): stay by the owner, attack
    * a foe as `engage` picks it, and break off to walk back once the
@@ -279,7 +285,15 @@ export function decide(
     case "parallel":
       return parallel(behaviour, cursor, context);
     case "auto-attack": {
-      const targetId = resolveTargeting(behaviour.targeting, context);
+      // The nearest out of reach means every one is.
+      const resolved = resolveTargeting(behaviour.targeting, context);
+      const target = context.participants.find((other) => other.id === resolved);
+      const targetId =
+        behaviour.reach === undefined ||
+        (target !== undefined &&
+          distance(target.position, context.self.position) <= behaviour.reach)
+          ? resolved
+          : undefined;
       return {
         ...STAND_STILL,
         targetId,

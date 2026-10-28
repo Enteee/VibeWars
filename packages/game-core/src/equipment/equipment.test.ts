@@ -1435,10 +1435,12 @@ describe("creatureResolvedEquipment (#467)", () => {
       attributeId: "necromancer.death-magic",
       damageMin: 6,
       damageMax: 11,
-      level: { atZero: 0, atTwelve: 10 },
+      scaling: { kind: "level" as const, level: { atZero: 0, atTwelve: 10 } },
       damageType: "blunt" as const,
       attackIntervalSeconds: 3.1,
       range: 40,
+      projectileSpeed: undefined,
+      onHit: [],
     };
     const equipment = creatureResolvedEquipment(30, attack, 6);
     expect(equipment.baseArmor).toBe(30);
@@ -1459,8 +1461,12 @@ describe("creatureResolvedEquipment (#467)", () => {
     expect(creatureResolvedEquipment(30, attack, 12).mainHand.creatureDamageScale).toBe(1);
     // A pet scales as weapon mastery does (#1046).
     expect(
-      creatureResolvedEquipment(30, { ...attack, level: undefined }, 6).mainHand
+      creatureResolvedEquipment(30, { ...attack, scaling: { kind: "weapon-mastery" } }, 6).mainHand
         .creatureDamageScale,
     ).toBeUndefined();
+    // A spirit's stated damage is linear in the rank (#1239): 5 at 0, 25 at 12.
+    const spirit = { ...attack, damageMax: 25, scaling: { kind: "rank" as const, atZero: 5 } };
+    expect(creatureResolvedEquipment(30, spirit, 6).mainHand.creatureDamageScale).toBe(15 / 25);
+    expect(creatureResolvedEquipment(30, spirit, 15).mainHand.creatureDamageScale).toBe(30 / 25);
   });
 });

@@ -11,7 +11,13 @@ import {
 } from "../distances.js";
 import { WEAPONS } from "../equipment/weapons.js";
 import type { Behaviour } from "../match/behaviour.js";
-import { KNOCKDOWN_SECONDS, type CreatureTemplate, type Skill } from "./types.js";
+import {
+  KNOCKDOWN_SECONDS,
+  type CreatureTemplate,
+  type Magnitude,
+  type OnHitEffect,
+  type Skill,
+} from "./types.js";
 
 /**
  * The implemented skill catalog (brief §9's "Implemented" stage).
@@ -67,10 +73,12 @@ const BONE_MINION: CreatureTemplate = {
     attributeId: "necromancer.death-magic",
     damageMin: 6,
     damageMax: 11,
-    level: { atZero: 0, atTwelve: 10 },
+    scaling: { kind: "level", level: { atZero: 0, atTwelve: 10 } },
     damageType: "blunt",
     attackIntervalSeconds: 3.1,
     range: RANGE_MELEE,
+    projectileSpeed: undefined,
+    onHit: [],
   },
   behaviour: MINION_BEHAVIOUR,
   aura: undefined,
@@ -94,10 +102,12 @@ const BONE_HORROR: CreatureTemplate = {
     attributeId: "necromancer.death-magic",
     damageMin: 12,
     damageMax: 24,
-    level: { atZero: 1, atTwelve: 14 },
+    scaling: { kind: "level", level: { atZero: 1, atTwelve: 14 } },
     damageType: "blunt",
     attackIntervalSeconds: 3.1,
     range: RANGE_MELEE,
+    projectileSpeed: undefined,
+    onHit: [],
   },
   behaviour: MINION_BEHAVIOUR,
   aura: undefined,
@@ -136,10 +146,12 @@ const WOLF: CreatureTemplate = {
     attributeId: "ranger.beast-mastery",
     damageMin: 17,
     damageMax: 29,
-    level: undefined,
+    scaling: { kind: "weapon-mastery" },
     damageType: "slashing",
     attackIntervalSeconds: 2.15,
     range: RANGE_MELEE,
+    projectileSpeed: undefined,
+    onHit: [],
   },
   behaviour: PET_BEHAVIOUR,
   aura: undefined,
@@ -148,6 +160,51 @@ const WOLF: CreatureTemplate = {
     scaling: { attributeId: "ranger.beast-mastery", atZero: 10, atTwelve: 4 },
   },
 };
+
+/** A spirit's shot, world units per second: a wand's (house tuning). */
+const SPIRIT_SHOT_SPEED = 900;
+
+/**
+ * A binding ritual's attacking spirit (#1239), as Pain: it stands where
+ * it was made and shoots the nearest foe within spirit range, a blow
+ * every 2 s (house tuning: GW1 publishes none) for its stated damage,
+ * linear in Communing. A level-L spirit has 50 + 20 per L Health; armor
+ * 51, as every other spirit's.
+ */
+function attackingSpirit(
+  name: string,
+  healthAtTwelve: number,
+  durationSeconds: Magnitude,
+  damage: { readonly atZero: number; readonly atTwelve: number },
+  onHit: readonly OnHitEffect[],
+): CreatureTemplate {
+  return {
+    kind: "spirit",
+    look: "spirit",
+    name,
+    maxHealth: {
+      scaling: { attributeId: "ritualist.communing", atZero: 70, atTwelve: healthAtTwelve },
+    },
+    armor: { flat: 51 },
+    attack: {
+      attributeId: "ritualist.communing",
+      damageMin: damage.atTwelve,
+      damageMax: damage.atTwelve,
+      scaling: { kind: "rank", atZero: damage.atZero },
+      // GW1 names no damage type for a spirit's attack.
+      damageType: "piercing",
+      attackIntervalSeconds: 2,
+      range: RANGE_SPIRIT,
+      projectileSpeed: SPIRIT_SHOT_SPEED,
+      onHit,
+    },
+    durationSeconds,
+    behaviour: { kind: "auto-attack", targeting: { kind: "nearest-enemy" }, reach: RANGE_SPIRIT },
+    aura: undefined,
+    onDeath: "vanish",
+    ownerDisableOnDeath: undefined,
+  };
+}
 
 export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
@@ -6828,6 +6885,154 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
           onDeath: "vanish",
           ownerDisableOnDeath: undefined,
         },
+      },
+    ],
+  },
+  {
+    id: "ritualist.pain",
+    name: "Pain",
+    gwId: 1247,
+    type: "binding-ritual",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.communing",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1.5,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    // PvP: "Create a level 1...8 spirit. This spirit's attacks deal 5...30
+    // damage. This spirit dies after 30...150 seconds." Rank 0...15, so
+    // at 12: level 6.6, 25 damage, 126 s.
+    effects: [
+      {
+        kind: "summon",
+        count: 1,
+        creature: attackingSpirit(
+          "Pain",
+          182,
+          { scaling: { attributeId: "ritualist.communing", atZero: 30, atTwelve: 126 } },
+          { atZero: 5, atTwelve: 25 },
+          [],
+        ),
+      },
+    ],
+  },
+  {
+    id: "ritualist.shadowsong",
+    name: "Shadowsong",
+    gwId: 871,
+    type: "binding-ritual",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.communing",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    // PvP: "Create a level 1...6 spirit. This spirit's attacks deal 5...20
+    // damage and cause Blindness for 1...6 seconds. This spirit dies after
+    // 30 seconds." At 12: level 5, 17 damage, blind 5 s.
+    effects: [
+      {
+        kind: "summon",
+        count: 1,
+        creature: attackingSpirit("Shadowsong", 150, { flat: 30 }, { atZero: 5, atTwelve: 17 }, [
+          { kind: "apply-status", statusId: "blind", durationSeconds: 5 },
+        ]),
+      },
+    ],
+  },
+  {
+    id: "ritualist.dissonance",
+    name: "Dissonance",
+    gwId: 921,
+    type: "binding-ritual",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.communing",
+    cost: { kind: "energy", amount: 25 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    // PvP: "Create a level 1...8 spirit. This spirit deals 5...20 damage
+    // and anyone struck by its attack is interrupted. This spirit dies
+    // after 10...25 seconds." At 12: level 6.6, 17 damage, 22 s.
+    effects: [
+      {
+        kind: "summon",
+        count: 1,
+        creature: attackingSpirit(
+          "Dissonance",
+          182,
+          { scaling: { attributeId: "ritualist.communing", atZero: 10, atTwelve: 22 } },
+          { atZero: 5, atTwelve: 17 },
+          [{ kind: "interrupt" }],
+        ),
+      },
+    ],
+  },
+  {
+    id: "ritualist.disenchantment",
+    name: "Disenchantment",
+    gwId: 923,
+    type: "binding-ritual",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.communing",
+    cost: { kind: "energy", amount: 25 },
+    overcast: 0,
+    activationSeconds: 3,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    // PvP: "Create a level 1...8 spirit. This spirit deals 5...20 damage
+    // and anyone struck by its attack loses one enchantment. This spirit
+    // dies after 15...40 seconds." At 12: level 6.6, 17 damage, 35 s.
+    effects: [
+      {
+        kind: "summon",
+        count: 1,
+        creature: attackingSpirit(
+          "Disenchantment",
+          182,
+          { scaling: { attributeId: "ritualist.communing", atZero: 15, atTwelve: 35 } },
+          { atZero: 5, atTwelve: 17 },
+          [{ kind: "remove-status", category: "enchantment", count: 1 }],
+        ),
       },
     ],
   },

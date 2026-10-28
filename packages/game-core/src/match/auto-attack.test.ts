@@ -855,7 +855,7 @@ describe("the auto-attack behaviour (#162)", () => {
     const attacker: ParticipantSpec = {
       ...swordsman("bot", vec2(0, 0)),
       team: 1,
-      behaviour: { kind: "auto-attack", targeting: { kind: "nearest-enemy" } },
+      behaviour: { kind: "auto-attack", targeting: { kind: "nearest-enemy" }, reach: undefined },
     };
     const victim: ParticipantSpec = {
       ...dummy("v", vec2(30, 0)),
