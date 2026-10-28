@@ -207,7 +207,7 @@ export const SKILL_ICONS = {
   "ritualist.flesh-of-my-flesh": { glyph: "resurrect", modifier: "half" },
   // Health taken from a corpse: the heal glyph with the corpse mark (#1075).
   "necromancer.soul-feast": { glyph: "heal", modifier: "corpse" },
-  // Placeholders until the asset-designer's (#467): bodies raised from a corpse.
-  "necromancer.animate-bone-minions": { glyph: "resurrect", modifier: "down" },
-  "necromancer.animate-bone-horror": { glyph: "resurrect", modifier: "up" },
+  // Bodies raised from a corpse: a skull pack, and one horned skull (#1112).
+  "necromancer.animate-bone-minions": { glyph: "bone-minions" },
+  "necromancer.animate-bone-horror": { glyph: "bone-horror" },
 };
