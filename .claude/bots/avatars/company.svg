@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640">
+  <!-- The company bot's avatar: apps/web/public/icon.svg ("Target Lock") recut
+       for Telegram's circular crop. Full-bleed field, the hairline as a circle
+       at r=300, ring and player 10% larger than the icon's at 10x. Same four
+       colour tokens. -->
+  <rect width="640" height="640" fill="#0e1116"/>
+  <circle cx="320" cy="320" r="300" fill="none" stroke="#2b3440" stroke-width="15"/>
+  <circle cx="320" cy="320" r="209" fill="none" stroke="#ffd866" stroke-width="39.6"
+          stroke-dasharray="231 97.3" stroke-dashoffset="115.5"
+          transform="rotate(-45 320 320)"/>
+  <circle cx="320" cy="320" r="88" fill="#59c2ff"/>
+</svg>
