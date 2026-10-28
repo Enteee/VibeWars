@@ -1287,7 +1287,7 @@ const skillGlyph = {
   // A dashed ring (a hex) struck through: the hex is lifted (#1216).
   "hex-cut": () =>
     `<circle cx="12" cy="12" r="8.5" ${stroke(C.ink, 2.2)} stroke-dasharray="4.2 3.2"/>` +
-    inkLine("M4 4L20 20", 2.6),
+    inkLine("M20 4L4 20", 2.6),
   // A drop with a bolt through it: the condition is smitten (#1216).
   "drop-bolt": () =>
     `<path d="M12 3C12 3 5.5 11 5.5 15A6.5 6.5 0 0 0 18.5 15C18.5 11 12 3 12 3Z" ${stroke(C.ink, 2)}/>` +
