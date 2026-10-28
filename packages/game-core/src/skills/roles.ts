@@ -64,6 +64,9 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
       return effect.creature.aura === undefined
         ? []
         : statusRoles(getStatusDefinition(effect.creature.aura.statusId));
+    // So does a ward (#1087): Ward Against Melee defends.
+    case "create-ground-effect":
+      return statusRoles(getStatusDefinition(effect.aura.statusId));
   }
 }
 

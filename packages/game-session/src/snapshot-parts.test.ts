@@ -2,8 +2,10 @@ import {
   MAX_SNAPSHOT_PARTS,
   MAX_WIRE_ACTORS,
   MAX_WIRE_CREATURES,
+  MAX_WIRE_GROUND_EFFECTS,
   MAX_WIRE_PROJECTILES,
   MAX_WIRE_STATUSES,
+  type WireGroundEffect,
   type WirePlayer,
   type WireProjectile,
   type WireSnapshot,
@@ -68,7 +70,25 @@ function projectile(index: number): WireProjectile {
   };
 }
 
-function snapshot(tick: number, players: number, projectiles: number): WireSnapshot {
+function groundEffect(index: number): WireGroundEffect {
+  return {
+    id: index,
+    skillId: "elementalist.ward-against-melee",
+    team: 1,
+    x: 1000 / 3,
+    y: 1000 / 3,
+    radius: 109,
+    endsAt: 1000 / 3,
+    durationSeconds: 1000 / 3,
+  };
+}
+
+function snapshot(
+  tick: number,
+  players: number,
+  projectiles: number,
+  groundEffects = 0,
+): WireSnapshot {
   return {
     tick,
     elapsedSeconds: tick / 20,
@@ -78,6 +98,7 @@ function snapshot(tick: number, players: number, projectiles: number): WireSnaps
     endReason: null,
     players: Array.from({ length: players }, (_, i) => player(i)),
     projectiles: Array.from({ length: projectiles }, (_, i) => projectile(i)),
+    groundEffects: Array.from({ length: groundEffects }, (_, i) => groundEffect(i)),
   };
 }
 
@@ -111,8 +132,8 @@ describe("packSnapshot (#662)", () => {
     expect(parts.flatMap((part) => part.projectiles)).toEqual(whole.projectiles);
   });
 
-  it("splits 8 players, every creature and 256 projectiles into no more parts than a client takes (#1052)", () => {
-    const whole = snapshot(9, 8, MAX_WIRE_PROJECTILES);
+  it("splits 8 players, every creature, 256 projectiles and every ward into no more parts than a client takes (#1052, #1087)", () => {
+    const whole = snapshot(9, 8, MAX_WIRE_PROJECTILES, MAX_WIRE_GROUND_EFFECTS);
     const creature = (index: number): WirePlayer => ({
       ...player(index),
       primaryProfession: null,
@@ -125,7 +146,7 @@ describe("packSnapshot (#662)", () => {
     ];
     const parts = packSnapshot({ ...whole, players }, MAX_MESSAGE_BYTES);
     expect(parts.length).toBeLessThanOrEqual(MAX_SNAPSHOT_PARTS);
-    expect(assembleAll(parts).at(-1)?.players).toEqual(players);
+    expect(assembleAll(parts).at(-1)).toEqual({ ...whole, players });
   });
 
   it("fills a part exactly to the budget, and not a byte past it", () => {
@@ -144,7 +165,10 @@ describe("packSnapshot (#662)", () => {
 
 describe("snapshotAssembler (#662)", () => {
   it("gives back an equal snapshot from one part and from many", () => {
-    for (const whole of [snapshot(3, 2, 1), snapshot(4, 8, MAX_WIRE_PROJECTILES)]) {
+    for (const whole of [
+      snapshot(3, 2, 1, 1),
+      snapshot(4, 8, MAX_WIRE_PROJECTILES, MAX_WIRE_GROUND_EFFECTS),
+    ]) {
       const assembled = assembleAll(packSnapshot(whole, MAX_MESSAGE_BYTES));
       expect(assembled.at(-1)).toEqual(whole);
       expect(assembled.slice(0, -1)).toEqual(assembled.slice(0, -1).map(() => undefined));

@@ -5787,6 +5787,38 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  {
+    id: "elementalist.ward-against-melee",
+    name: "Ward Against Melee",
+    type: "ward",
+    elite: false,
+    profession: "elementalist",
+    attributeId: "elementalist.earth-magic",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    // PvP: "You create a Ward Against Melee at your current location. For
+    // 5...17...20 seconds, non-spirit allies in this area have a 50%
+    // chance to block melee attacks" (#1087).
+    effects: [
+      {
+        kind: "create-ground-effect",
+        anchor: "caster",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.earth-magic", atZero: 5, atTwelve: 17 },
+        },
+        aura: { statusId: "ward-against-melee", affects: "allies", radius: AREA_IN_THE_AREA },
+      },
+    ],
+  },
 ];
 
 export const SKILLS_BY_ID: ReadonlyMap<string, Skill> = new Map(

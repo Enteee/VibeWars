@@ -2,6 +2,7 @@ import {
   outsideMatch,
   getStatusDefinition,
   type ActiveStatus,
+  type GroundEffect,
   type StatusCategory,
   type StatusId,
 } from "@vibewars/game-core";
@@ -10,6 +11,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   WIRE_STATUS_IDS,
+  groundEffectSnapshot,
   sameSkillBar,
   skillBarSlots,
   statusSnapshot,
@@ -169,6 +171,36 @@ describe("statusSnapshot (#803)", () => {
       durationSeconds: null,
       casterId: "ranger/c1",
     });
+  });
+});
+
+describe("groundEffectSnapshot (#1087)", () => {
+  const ward: GroundEffect = {
+    id: 3,
+    skillId: "elementalist.ward-against-melee",
+    ownerId: "ele",
+    team: 1,
+    position: { x: 120.5, y: 80 },
+    aura: { statusId: "ward-against-melee", affects: "allies", radius: 109 },
+    durationSeconds: 17.04,
+    remainingSeconds: 6.345,
+  };
+
+  it("sits where it was placed, at its aura's radius, ending on the match clock to 0.1 s", () => {
+    expect(groundEffectSnapshot(ward, 10.01)).toEqual({
+      id: 3,
+      skillId: "elementalist.ward-against-melee",
+      team: 1,
+      x: 120.5,
+      y: 80,
+      radius: 109,
+      endsAt: 16.4,
+      durationSeconds: 17,
+    });
+  });
+
+  it("never sends a duration of nothing", () => {
+    expect(groundEffectSnapshot({ ...ward, durationSeconds: 0.01 }, 0).durationSeconds).toBe(0.1);
   });
 });
 

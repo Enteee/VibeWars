@@ -113,9 +113,10 @@ import {
   isSpell,
   type Combatant,
   type CorpseRule,
+  type Aura,
+  type CreateGroundEffect,
   type CreatureTemplate,
   type Skill,
-  type SpiritAura,
 } from "../skills/types.js";
 import {
   leadAimPoint,
@@ -209,7 +210,7 @@ export interface Creature {
   /** The skill that summoned it (#1064): one spirit of a skill in range. */
   readonly skillId: string;
   /** What a spirit projects on whoever is in range (#1064); `undefined`: nothing. */
-  readonly aura: SpiritAura | undefined;
+  readonly aura: Aura | undefined;
 }
 
 /** A minion's own rot in pips (#467): 0 for anyone else. */
@@ -221,6 +222,40 @@ function minionPips(participant: Participant): number {
 
 /** At most this many creatures in a match at once (#1052): a summon past it makes as many as fit. */
 export const MAX_CREATURES = 32;
+
+/**
+ * A circle on the ground (#1087, ADR-0035): not a body, so nothing can
+ * target, kill or move it. It projects `aura` from where it was placed
+ * until it ends; its owner dying does not end it.
+ */
+export interface GroundEffect {
+  /** From 1, in the order they were placed. */
+  readonly id: number;
+  readonly skillId: string;
+  readonly ownerId: string;
+  /** The owner's, as it was placed. */
+  readonly team: number;
+  readonly position: Vec2;
+  readonly aura: Aura;
+  /** How long it was placed for. */
+  readonly durationSeconds: number;
+  remainingSeconds: number;
+}
+
+/** At most this many ground effects at once (#1087): past it, the oldest ends early. */
+export const MAX_GROUND_EFFECTS = 32;
+
+/** Whether an aura that `affects` this, from a source on `sourceTeam`, reaches a body on `team`. */
+function reaches(affects: Aura["affects"], sourceTeam: number, team: number): boolean {
+  switch (affects) {
+    case "all":
+      return true;
+    case "allies":
+      return team === sourceTeam;
+    case "foes":
+      return team !== sourceTeam;
+  }
+}
 
 /**
  * Whether `participant` counts for its team (ADR-0035): its roster,
@@ -591,9 +626,14 @@ export class MatchSimulation {
    * removed once, at its end, never mid-loop.
    */
   readonly #leaving = new Set<string>();
+  /** Every ground effect in the match (#1087), in id order. */
+  #groundEffects: GroundEffect[] = [];
+  /** The id of the next ground effect placed (#1087). */
+  #nextGroundEffect = 1;
   /**
-   * Whether the last aura pass found a spirit (#1064): with none now and
-   * none then, nobody wears an aura and the pass has nothing to do.
+   * Whether the last aura pass found a spirit or a ground effect (#1064,
+   * #1087): with none now and none then, nobody wears an aura and the
+   * pass has nothing to do.
    */
   #auras = false;
 
@@ -636,6 +676,11 @@ export class MatchSimulation {
   /** Ranged weapons' shots in flight, oldest first. */
   public get projectiles(): readonly Readonly<Projectile>[] {
     return this.#projectiles;
+  }
+
+  /** Every ground effect in the match (#1087), in id order. */
+  public get groundEffects(): readonly Readonly<GroundEffect>[] {
+    return this.#groundEffects;
   }
 
   public get(id: string): Participant | undefined {
@@ -866,38 +911,92 @@ export class MatchSimulation {
   }
 
   /**
-   * What every living spirit projects (#1064), settled once a step before
-   * anyone acts, so a hit this step sees this step's auras. Every living
-   * body that is not a spirit wears an aura's status exactly while some
-   * spirit with it, on a side it reaches, stands within its radius; one
-   * worn from two spirits is worn once. A spirit gone since the last step
-   * is gone from everyone now: one step late at worst. Spirits in the
-   * order they were summoned, bodies in match order.
+   * A ground effect left where `owner` stands, on its team (#1087). Past
+   * `MAX_GROUND_EFFECTS`, the oldest ends now: a ward always lands.
+   */
+  #placeGroundEffect(owner: ParticipantRecord, skillId: string, effect: CreateGroundEffect): void {
+    const durationSeconds = resolveMagnitude(effect.durationSeconds, owner.combatant);
+    this.#groundEffects.push({
+      id: this.#nextGroundEffect,
+      skillId,
+      ownerId: owner.id,
+      team: owner.combatant.team,
+      position: owner.position,
+      aura: effect.aura,
+      durationSeconds,
+      remainingSeconds: durationSeconds,
+    });
+    this.#nextGroundEffect += 1;
+    if (this.#groundEffects.length > MAX_GROUND_EFFECTS) {
+      this.#groundEffects.shift();
+    }
+  }
+
+  /** Every ground effect counts down `dt` (#1087); one at zero is gone. */
+  #advanceGroundEffects(dt: number): void {
+    if (this.#groundEffects.length === 0) {
+      return;
+    }
+    for (const effect of this.#groundEffects) {
+      effect.remainingSeconds -= dt;
+    }
+    this.#groundEffects = this.#groundEffects.filter((effect) => effect.remainingSeconds > 0);
+  }
+
+  /**
+   * What every living spirit and every ground effect projects (#1064,
+   * #1087), settled once a step before anyone acts, so a hit this step
+   * sees this step's auras. Every living body that is not a spirit wears
+   * an aura's status exactly while some source with it, on a side it
+   * reaches, stands within its radius; one worn from two sources is worn
+   * once, named for the first. A source gone since the last step is gone
+   * from everyone now: one step late at worst. Spirits in the order they
+   * were summoned, then ground effects in id order; bodies in match order.
+   * One pass for both, as a second would strip what the first projected.
    */
   #projectAuras(): void {
-    const spirits: { readonly record: ParticipantRecord; readonly aura: SpiritAura }[] = [];
+    const sources: {
+      readonly sourceId: string;
+      readonly team: number;
+      readonly position: Vec2;
+      readonly aura: Aura;
+    }[] = [];
     for (const record of this.#participants.values()) {
       const aura = record.creature?.aura;
       if (aura !== undefined && !record.combatant.dead) {
-        spirits.push({ record, aura });
+        sources.push({
+          sourceId: record.id,
+          team: record.combatant.team,
+          position: record.position,
+          aura,
+        });
       }
     }
-    if (spirits.length === 0 && !this.#auras) {
+    // A ward's status names its owner: whoever cast it.
+    for (const effect of this.#groundEffects) {
+      sources.push({
+        sourceId: effect.ownerId,
+        team: effect.team,
+        position: effect.position,
+        aura: effect.aura,
+      });
+    }
+    if (sources.length === 0 && !this.#auras) {
       return;
     }
-    this.#auras = spirits.length > 0;
+    this.#auras = sources.length > 0;
     for (const body of this.#participants.values()) {
       if (body.combatant.dead || body.creature?.kind === "spirit") {
         continue;
       }
       const wears = new Map<StatusId, string>();
-      for (const { record, aura } of spirits) {
+      for (const { sourceId, team, position, aura } of sources) {
         if (
           !wears.has(aura.statusId) &&
-          (aura.affects === "all" || record.combatant.team === body.combatant.team) &&
-          distance(record.position, body.position) <= aura.radius
+          reaches(aura.affects, team, body.combatant.team) &&
+          distance(position, body.position) <= aura.radius
         ) {
-          wears.set(aura.statusId, record.id);
+          wears.set(aura.statusId, sourceId);
         }
       }
       const { statuses } = body.combatant;
@@ -906,8 +1005,8 @@ export class MatchSimulation {
           statuses.remove(status.id);
         }
       }
-      for (const [statusId, spiritId] of wears) {
-        statuses.project(statusId, spiritId);
+      for (const [statusId, sourceId] of wears) {
+        statuses.project(statusId, sourceId);
       }
     }
   }
@@ -1395,6 +1494,7 @@ export class MatchSimulation {
     for (const record of this.#participants.values()) {
       this.#stepStart.set(record.id, record.position);
     }
+    this.#advanceGroundEffects(dt);
     this.#projectAuras();
     // Every knockdown counts down before anyone acts, so one lasts its
     // full duration whoever lands it, and the tick it ends is one its
@@ -1896,6 +1996,7 @@ export class MatchSimulation {
       events,
       rechargeFraction: 0,
       summons: [],
+      grounds: [],
     });
     // What the caster's statuses add to its hits, each logged apart (#939).
     const riders: FiredTrigger[] = [];
@@ -1925,7 +2026,7 @@ export class MatchSimulation {
     // one used up during the cast leaves it with no effect, paid for.
     const corpse =
       skill.corpse === undefined ? undefined : this.#exploitCorpse(record, skill.corpse);
-    const { events, rechargeFraction, summons } =
+    const { events, rechargeFraction, summons, grounds } =
       skill.corpse !== undefined && corpse === undefined
         ? only([])
         : resolve({
@@ -2003,6 +2104,9 @@ export class MatchSimulation {
         summon.count,
         corpse?.position ?? record.position,
       );
+    }
+    for (const ground of grounds) {
+      this.#placeGroundEffect(record, skill.id, ground);
     }
     // An attack skill is a swing, so it turns on its target with the
     // weapon: it starts an attack, or switches one to them. Any other skill

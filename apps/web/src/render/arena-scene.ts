@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 
 import {
+  IMPLEMENTED_SKILLS,
   PROFESSIONS,
   isStatusId,
   isWeaponId,
@@ -9,7 +10,7 @@ import {
   type Vec2,
 } from "@vibewars/game-core";
 
-import { professionIcon } from "../ui/icons.js";
+import { professionIcon, skillIcon } from "../ui/icons.js";
 import { prefersReducedMotion } from "../ui/recharge-overlay.js";
 import {
   BODY_EDGE,
@@ -125,12 +126,14 @@ const DEAD_INK_TINT = 0x4a5464;
 const EDGE_MARKER_LENGTH = 12;
 const EDGE_MARKER_WIDTH = 10;
 /**
- * The world's layers, bottom up (#1037). The floor and the bodies; the
+ * The world's layers, bottom up (#1037). Wards on the floor and their
+ * icons (#1087), under everything that stands on them; the floor and the bodies; the
  * profession glyph inside each body; every mark on a body (off-hand,
  * weapon, target ring, call chevron, bars, swing flashes),
  * so a weapon crosses the glyph, never the reverse; then shots, status
  * icons, names and numbers, which were over the bodies before the split.
  */
+const GROUND_DEPTH = -1;
 const BODY_DEPTH = 0;
 const BODY_GLYPH_DEPTH = 1;
 const MARK_DEPTH = 2;
@@ -143,12 +146,21 @@ const EDGE_MARKER_DEPTH = 10;
  */
 const BODY_GLYPH_TEXTURE_SIZE = 48;
 
+/** A ward's icon at its centre (#1087), world units, and its texture size, px, as the body glyph's. */
+const GROUND_ICON_SIZE = 22;
+const GROUND_ICON_TEXTURE_SIZE = 48;
+const GROUND_ICON_ALPHA = 0.55;
+
 const HEALTH_BAR_WIDTH = 34;
 const HEALTH_BAR_HEIGHT = 4;
 
 export class ArenaScene extends Phaser.Scene {
   public static readonly KEY = "arena";
 
+  /** Wards on the floor (#1087), under the grid, walls and bodies. */
+  private groundGraphics: Phaser.GameObjects.Graphics | undefined;
+  /** Each ward's icon, by ground effect id (#1087). */
+  private groundIcons = new Map<number, Phaser.GameObjects.Image>();
   /** The floor and the bodies, under the body glyphs. */
   private graphics: Phaser.GameObjects.Graphics | undefined;
   /** Every mark on a body, over the body glyphs (#1037). */
@@ -280,9 +292,16 @@ export class ArenaScene extends Phaser.Scene {
         height: PROJECTILE_HEIGHT,
       });
     }
+    for (const skillId of GROUND_EFFECT_SKILLS) {
+      this.load.svg(groundIconTexture(skillId), skillIcon(skillId), {
+        width: GROUND_ICON_TEXTURE_SIZE,
+        height: GROUND_ICON_TEXTURE_SIZE,
+      });
+    }
   }
 
   public create(): void {
+    this.groundGraphics = this.add.graphics().setDepth(GROUND_DEPTH);
     this.graphics = this.add.graphics().setDepth(BODY_DEPTH);
     this.markGraphics = this.add.graphics().setDepth(MARK_DEPTH);
     this.markerGraphics = this.add.graphics().setDepth(EDGE_MARKER_DEPTH);
@@ -300,6 +319,7 @@ export class ArenaScene extends Phaser.Scene {
     this.reducedMotion = prefersReducedMotion();
     this.clock.observe(this.snapshot.clock, this.now);
     this.observeAttacks();
+    this.updateGroundEffects();
     this.drawGrid(g);
     for (const wall of this.snapshot.walls) {
       this.drawWall(g, wall);
@@ -906,6 +926,47 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /**
+   * Every ward on the ground (#1087): a translucent disc with a thin rim
+   * in its side's colour, and its skill's icon at the centre, under
+   * whoever stands in it. A ward that ended takes its icon with it.
+   */
+  private updateGroundEffects(): void {
+    const g = this.groundGraphics;
+    if (g === undefined) {
+      return;
+    }
+    g.clear();
+    const seen = new Set<number>();
+    for (const effect of this.snapshot.groundEffects) {
+      seen.add(effect.id);
+      const { x, y } = effect.position;
+      g.fillStyle(effect.colour, 0.15);
+      g.fillCircle(x, y, effect.radius);
+      g.lineStyle(1.5, effect.colour, 0.6);
+      g.strokeCircle(x, y, effect.radius);
+      const texture = groundIconTexture(effect.skillId);
+      if (!this.textures.exists(texture)) {
+        continue;
+      }
+      let icon = this.groundIcons.get(effect.id);
+      if (icon === undefined) {
+        icon = this.add
+          .image(x, y, texture)
+          .setDisplaySize(GROUND_ICON_SIZE, GROUND_ICON_SIZE)
+          .setAlpha(GROUND_ICON_ALPHA)
+          .setDepth(GROUND_DEPTH);
+        this.groundIcons.set(effect.id, icon);
+      }
+    }
+    for (const [id, icon] of this.groundIcons) {
+      if (!seen.has(id)) {
+        icon.destroy();
+        this.groundIcons.delete(id);
+      }
+    }
+  }
+
+  /**
    * The primary profession's glyph inside every body (#1037): upright,
    * world sized, between the bodies and their marks. Texture, tint and
    * alpha are set only when they change, as the name glyph's are; an actor
@@ -1059,6 +1120,15 @@ export class ArenaScene extends Phaser.Scene {
     g.lineStyle(1, WALL_STROKE, 1);
     g.strokeRect(0, 0, width, height);
   }
+}
+
+/** Every skill that leaves a ground effect (#1087): its icon is loaded for the ward's centre. */
+const GROUND_EFFECT_SKILLS: readonly string[] = IMPLEMENTED_SKILLS.filter((skill) =>
+  skill.effects.some((effect) => effect.kind === "create-ground-effect"),
+).map((skill) => skill.id);
+
+function groundIconTexture(skillId: string): string {
+  return `ground-icon:${skillId}`;
 }
 
 function projectileTexture(sprite: string): string {

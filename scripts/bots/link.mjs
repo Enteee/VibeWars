@@ -677,7 +677,8 @@ async function answerOperator(company, mirror, answer) {
 
 /**
  * Every employee's outbox: delivered locally at once, then queued for
- * Telegram. A fired employee's is no longer read.
+ * Telegram. A fired employee's is no longer read, and the roster is read
+ * again for every message, so nothing sent after a fire reaches the fired.
  *
  * @param {Company} company
  * A question (`tg ask`) is numbered here, saved, and answered with a
@@ -689,10 +690,15 @@ async function answerOperator(company, mirror, answer) {
 async function drainOutboxes(company, mirror) {
   for (;;) {
     let moved = false;
-    const employees = company.employees();
-    for (const sender of employees.keys()) {
+    for (const sender of company.employees().keys()) {
+      if (!company.employees().has(sender)) {
+        continue;
+      }
       moved =
         takeOutbox(busPaths(company.at.bus, sender).dir, sender, (name, payload) => {
+          // The roster as of this message, not of the cycle: a message
+          // written after a fire must not reach the one fired (#1091).
+          const employees = company.employees();
           const delivered = deliverPeer(payload, {
             from: sender,
             roles: ROLES,

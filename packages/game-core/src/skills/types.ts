@@ -419,7 +419,7 @@ export interface CreatureTemplate {
   /** What it does each tick. */
   readonly behaviour: Behaviour;
   /** `undefined`: it projects nothing (every minion). Only a spirit has one. */
-  readonly aura: SpiritAura | undefined;
+  readonly aura: Aura | undefined;
 }
 
 /**
@@ -438,12 +438,15 @@ export interface CreatureAttack {
   readonly range: number;
 }
 
-/** What a spirit projects while it lives (#1064). */
-export interface SpiritAura {
+/** What a spirit projects while it lives (#1064), or a ground effect while it lasts (#1087). */
+export interface Aura {
   /** Worn by every body it affects, for as long as it is in range. */
   readonly statusId: StatusId;
-  /** `all`: a nature ritual's, both teams. `allies`: a binding ritual's, the spirit's team. */
-  readonly affects: "all" | "allies";
+  /**
+   * Relative to the source's team. `all`: a nature ritual's, both teams.
+   * `allies`: a binding ritual's or a ward's. `foes`: the other teams'.
+   */
+  readonly affects: "all" | "allies" | "foes";
   /** Centre to centre, world units. Walls do not block it. */
   readonly radius: number;
 }
@@ -457,6 +460,19 @@ export interface SummonEffect {
   readonly kind: "summon";
   readonly creature: CreatureTemplate;
   readonly count: number;
+}
+
+/**
+ * Leave a ground effect where the caster stands as the skill lands
+ * (#1087): a circle that is not a body, projecting `aura` for
+ * `durationSeconds`. Acts on the caster, once. A match holds at most
+ * `MAX_GROUND_EFFECTS`: past it, the oldest ends early.
+ */
+export interface CreateGroundEffect {
+  readonly kind: "create-ground-effect";
+  readonly anchor: "caster";
+  readonly durationSeconds: Magnitude;
+  readonly aura: Aura;
 }
 
 /** How long "knocks down" lasts when a skill names no duration (GW1). */
@@ -609,7 +625,8 @@ export type UnconditionalEffect =
   | RechargeOthersEffect
   | DisableSkillEffect
   | LengthenRechargeEffect
-  | SummonEffect;
+  | SummonEffect
+  | CreateGroundEffect;
 
 export type SkillEffect = UnconditionalEffect | ConditionalEffect;
 
@@ -636,16 +653,23 @@ export type SkillType =
   | "weapon-spell"
   | "nature-ritual"
   | "binding-ritual"
+  | "ward"
   | "skill";
 
 /**
  * Whether a skill of this type is a spell, as GW1's rules that "affect
- * spells" mean it: enchantments, hexes and weapon spells are spells,
+ * spells" mean it: enchantments, hexes, weapon spells and wards (#1087) are spells,
  * signets, shouts, chants, stances and glyphs are not (#524, #526, #527,
  * #758). Every such rule asks this, never the type directly.
  */
 export function isSpell(type: SkillType): boolean {
-  return type === "spell" || type === "enchantment" || type === "hex" || type === "weapon-spell";
+  return (
+    type === "spell" ||
+    type === "enchantment" ||
+    type === "hex" ||
+    type === "weapon-spell" ||
+    type === "ward"
+  );
 }
 
 /**

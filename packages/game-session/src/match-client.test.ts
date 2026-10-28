@@ -1,6 +1,7 @@
-import { DEFAULT_MATCH_RULES, MAX_CREATURES } from "@vibewars/game-core";
+import { DEFAULT_MATCH_RULES, MAX_CREATURES, MAX_GROUND_EFFECTS } from "@vibewars/game-core";
 import {
   MAX_WIRE_CREATURES,
+  MAX_WIRE_GROUND_EFFECTS,
   MAX_WIRE_SLOTS,
   MAX_WIRE_STATUS_INDEX,
   type WirePlayer,
@@ -41,6 +42,7 @@ describe("connectMatch", () => {
       parts: 1,
       players: [],
       projectiles: [],
+      groundEffects: [],
     });
     await settle();
     expect(connection.getSnapshot().scoreTeam0).toBe(0);
@@ -67,6 +69,7 @@ describe("connectMatch", () => {
         parts: 1,
         players: [],
         projectiles: [],
+        groundEffects: [],
       },
       transport.selfId,
     );
@@ -116,6 +119,7 @@ describe("connectMatch", () => {
             },
           ],
           projectiles: [],
+          groundEffects: [],
         },
         transport.selfId,
       );
@@ -330,6 +334,10 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
 
   it("hold the wire's creature cap to game-core's (#1052)", () => {
     expect(MAX_WIRE_CREATURES).toBe(MAX_CREATURES);
+  });
+
+  it("hold the wire's ground-effect cap to game-core's (#1087)", () => {
+    expect(MAX_WIRE_GROUND_EFFECTS).toBe(MAX_GROUND_EFFECTS);
   });
 
   it("map every status to its index and back (#632)", () => {

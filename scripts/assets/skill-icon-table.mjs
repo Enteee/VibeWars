@@ -123,10 +123,10 @@ export const SKILL_ICONS = {
   "dervish.zealous-sweep": { glyph: "scythe", modifier: "area" },
   "dervish.mystic-twister": { glyph: "twister" },
   "dervish.victorious-sweep": { glyph: "axe", modifier: "self" },
-  "dervish.eremites-attack": { glyph: "axe", modifier: "less" },
-  "dervish.staggering-force": { glyph: "mountain", modifier: "self" },
-  "dervish.dust-cloak": { glyph: "shard", modifier: "self" },
-  "dervish.aura-of-thorns": { glyph: "shard", modifier: "bleed" },
+  "dervish.eremites-attack": { glyph: "scythe", modifier: "up" },
+  "dervish.staggering-force": { glyph: "mountain-crack", modifier: "area" },
+  "dervish.dust-cloak": { glyph: "dust", modifier: "area" },
+  "dervish.aura-of-thorns": { glyph: "thorns", modifier: "bleed" },
   "ranger.savage-shot": { glyph: "arrow" },
   "ranger.concussion-shot": { glyph: "arrow-burst" },
   "ranger.distracting-shot": { glyph: "interrupt", modifier: "less" },
@@ -196,6 +196,8 @@ export const SKILL_ICONS = {
   // Placeholders until the asset-designer's (#1064).
   "ranger.winnowing": { glyph: "blade-plus", modifier: "area" },
   "ritualist.recuperation": { glyph: "plaster", modifier: "hourglass" },
+  // A placeholder until the asset-designer's (#1087).
+  "elementalist.ward-against-melee": { glyph: "mountain", modifier: "clock" },
   // Placeholders until the asset-designer's (#1068): resurrections.
   "common.resurrection-signet": { glyph: "resurrect", modifier: "plus" },
   "monk.rebirth": { glyph: "resurrect", modifier: "self" },

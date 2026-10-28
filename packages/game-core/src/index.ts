@@ -142,6 +142,7 @@ export { DENSE_FIELD, runTickBench, tickStats } from "./tools/tick-bench.js";
 export type {
   Creature,
   CreatureKind,
+  GroundEffect,
   MatchSimulationOptions,
   Participant,
   ParticipantSpec,
@@ -149,7 +150,13 @@ export type {
   StepResult,
   WeaponSetRequest,
 } from "./match/simulation.js";
-export { countsForTeam, loadoutSpec, MAX_CREATURES, MatchSimulation } from "./match/simulation.js";
+export {
+  countsForTeam,
+  loadoutSpec,
+  MAX_CREATURES,
+  MAX_GROUND_EFFECTS,
+  MatchSimulation,
+} from "./match/simulation.js";
 export type { CorpseCandidate } from "./match/corpses.js";
 export { isFreshCorpse, nearestFreshCorpse } from "./match/corpses.js";
 export {

@@ -535,7 +535,7 @@ export function checkStaff(staff, roster, roles, now) {
  * @param {string} name
  * @param {string} text
  */
-function writeAtomic(dir, name, text) {
+export function writeAtomic(dir, name, text) {
   fs.writeFileSync(path.join(dir, `.${name}.part`), text);
   fs.renameSync(path.join(dir, `.${name}.part`), path.join(dir, name));
 }

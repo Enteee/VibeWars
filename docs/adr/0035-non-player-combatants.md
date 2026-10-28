@@ -84,6 +84,10 @@ built for players and is the larger, safe value.
   (#1064), not as a ground entity: the status system already carries
   modifiers, the effects monitor and the wire, so an aura needs only a
   pass that puts it on and takes it off.
+- A ground effect (#1087), a ward, is not a combatant either: a circle
+  with an owner, a team and an end time, projecting its effect through
+  the same aura pass as a spirit, so a spirit's aura and a ward's never
+  strip each other. It cannot be targeted or killed, so it has no body.
 - A creature leaves no corpse (#466) unless the card that adds it says so.
 - A creature that fights swings a weapon built from its template, its
   summoner's rank snapshotted as its mastery (#467), so every attack
