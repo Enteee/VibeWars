@@ -430,13 +430,23 @@ Ranged weapon shots in flight (#161). Each is a sprite on a 32×12 grid,
 pointing along +x, centred on the shot's position. The scene rotates it to
 the heading and tints it to the shooter's team colour (`friend` or `foe`).
 The sprites are white under a `bg` outline, so the tint gives the exact team
-colour and the outline keeps them off the floor.
+colour and the outline keeps them off the floor. A flying spell (#1176) is
+white and light grey the same way: the grey part stays a darker tone of the
+team colour, so a spell is told from another by its silhouette and a friend
+from a foe by the tint. Element colour is not baked in: it would multiply
+with the team tint and lose the team.
 
-| Sprite  | Weapons     | Silhouette                                |
-| ------- | ----------- | ----------------------------------------- |
-| `arrow` | Bows        | Thin shaft, triangular head, chevron tail |
-| `spear` | Spear       | Thicker shaft, long leaf blade, no tail   |
-| `bolt`  | Wand, staff | Round orb with a tapering comet tail      |
+| Sprite          | Weapons       | Silhouette                                 |
+| --------------- | ------------- | ------------------------------------------ |
+| `arrow`         | Bows          | Thin shaft, triangular head, chevron tail  |
+| `spear`         | Spear         | Thicker shaft, long leaf blade, no tail    |
+| `bolt`          | Wand, staff   | Round orb with a tapering comet tail       |
+| `fireball`      | Fireball      | Round head, ragged flame tail              |
+| `lightning-orb` | Lightning Orb | Round head, jagged sparks forking back     |
+| `ice-shard`     | Shard Storm   | Long faceted diamond, a pale top facet     |
+| `water-trident` | Water Trident | Shaft, three parallel prongs on a crossbar |
+| `ebon-hawk`     | Ebon Hawk     | Hooked beak, wings swept back              |
+| `stone`         | Stoning       | Rough boulder, chips flying off behind     |
 
 Drawn at 32×12 px, over the actors and under the HUD: a shot is
 gameplay information, and the player has to see where it will land in time

@@ -1,6 +1,10 @@
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { describe, expect, it } from "vitest";
 
-import { vec2 } from "@vibewars/game-core";
+import { IMPLEMENTED_SKILLS, vec2 } from "@vibewars/game-core";
 
 import {
   MatchClock,
@@ -8,7 +12,9 @@ import {
   shotFadeAlpha,
   projectileHeading,
   projectilePosition,
+  PROJECTILE_SPRITES,
   projectileSprite,
+  SKILL_SPRITE,
   type RenderableProjectile,
 } from "./projectiles.js";
 
@@ -34,9 +40,32 @@ describe("projectileSprite", () => {
     expect(projectileSprite("trebuchet", undefined)).toBe("bolt");
   });
 
-  it("gives a flying spell a bolt, whatever its caster holds (#535)", () => {
-    expect(projectileSprite("longbow", "elementalist.fireball")).toBe("bolt");
-    expect(projectileSprite("spear", "elementalist.fireball")).toBe("bolt");
+  it("gives a flying spell its own sprite, whatever its caster holds (#535, #1176)", () => {
+    expect(projectileSprite("longbow", "elementalist.fireball")).toBe("fireball");
+    expect(projectileSprite("spear", "elementalist.stoning")).toBe("stone");
+    expect(projectileSprite(undefined, "elementalist.ebon-hawk")).toBe("ebon-hawk");
+  });
+
+  it("gives a skill with no row a bolt", () => {
+    expect(projectileSprite("staff", "nobody.nothing")).toBe("bolt");
+  });
+
+  it("has a row for every skill that flies, so a new flying spell needs art", () => {
+    const flying = IMPLEMENTED_SKILLS.filter((skill) => skill.projectile !== undefined);
+    expect(flying.length).toBeGreaterThan(0);
+    for (const skill of flying) {
+      expect(SKILL_SPRITE[skill.id], skill.id).toBeDefined();
+    }
+  });
+
+  it("has a file for every sprite", () => {
+    const dir = path.resolve(
+      path.dirname(fileURLToPath(import.meta.url)),
+      "../../public/icons/projectile",
+    );
+    for (const sprite of PROJECTILE_SPRITES) {
+      expect(fs.existsSync(path.join(dir, `${sprite}.svg`)), sprite).toBe(true);
+    }
   });
 });
 
