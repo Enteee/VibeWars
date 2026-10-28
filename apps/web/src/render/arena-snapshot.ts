@@ -49,6 +49,10 @@ export interface RenderableActor {
   /** Fraction of the current cast still remaining, or `undefined`. */
   readonly castProgress: number | undefined;
   readonly statuses: readonly string[];
+  /** Wears the solid enchantment ring (#1117); never a corpse. */
+  readonly enchanted: boolean;
+  /** Wears the broken hex ring (#1117); never a corpse. */
+  readonly hexed: boolean;
 }
 
 export interface RectRenderableWall {

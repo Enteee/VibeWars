@@ -1,6 +1,7 @@
 // Draws the reference sheet for the arena player mark (#166): body, dark edge
-// (#186), self rim, target ring, the 14 weapon marks (#188, #418) and the
-// off-hand mark (#275), at true size and enlarged.
+// (#186), self rim, enchantment and hex rings (#1117), target ring, the 14
+// weapon marks (#188, #418) and the off-hand mark (#275), at true size and
+// enlarged.
 //
 //   node scripts/assets/player-mark.mjs
 //
@@ -34,6 +35,8 @@ const C = {
   barFill: "#7ee787",
   barBg: "#11161d",
   condition: "#ffa657",
+  hex: "#d2a8ff",
+  enchantment: "#56d4dd",
 };
 
 /** Body radius in world units; also the collision radius. */
@@ -56,6 +59,11 @@ const ONE_HANDED = new Set(["sword", "axe", "spear", "wand"]);
 
 /** Where the target ring's 2 px stroke is centred: r + 8 … r + 10 (Q26). */
 const TARGET_AT = 9;
+/** Where the enchantment ring's 1.5 px stroke is centred: r + 1.75 … r + 3.25 (#1117). */
+const ENCHANT_AT = 2.5;
+/** Where the hex ring's is: r + 4.25 … r + 5.75, in 8 dashes at 50% duty, one centred on 12 o'clock. */
+const HEX_AT = 5;
+const HEX_DASHES = 8;
 
 /** @param {number} n */
 const f = (n) => String(Math.round(n * 100) / 100);
@@ -174,7 +182,7 @@ function weaponLine(x, y, a, family) {
  * One living player mark.
  * @param {number} x
  * @param {number} y
- * @param {{ team: string, self?: boolean, target?: boolean, facing: number, family: Family, offhand?: Offhand, hud?: boolean }} p
+ * @param {{ team: string, self?: boolean, enchanted?: boolean, hexed?: boolean, target?: boolean, facing: number, family: Family, offhand?: Offhand, hud?: boolean }} p
  */
 function actor(x, y, p) {
   const offhand = ONE_HANDED.has(p.family) ? (p.offhand ?? "none") : "none";
@@ -182,6 +190,13 @@ function actor(x, y, p) {
   out += `<circle cx="${f(x)}" cy="${f(y)}" r="${f(R - 0.75)}" fill="none" stroke="${C.edge}" stroke-width="1.5"/>`;
   if (p.self)
     out += `<circle cx="${f(x)}" cy="${f(y)}" r="${f(R - 2)}" fill="none" stroke="${C.ink}" stroke-width="2"/>`;
+  if (p.enchanted)
+    out += `<circle cx="${f(x)}" cy="${f(y)}" r="${f(R + ENCHANT_AT)}" fill="none" stroke="${C.enchantment}" stroke-width="1.5"/>`;
+  if (p.hexed) {
+    // SVG strokes a circle from 3 o'clock, where a dash is centred too, as on every eighth.
+    const dash = (2 * Math.PI * (R + HEX_AT)) / (2 * HEX_DASHES);
+    out += `<circle cx="${f(x)}" cy="${f(y)}" r="${f(R + HEX_AT)}" fill="none" stroke="${C.hex}" stroke-width="1.5" stroke-dasharray="${f(dash)} ${f(dash)}" stroke-dashoffset="${f(dash / 2)}"/>`;
+  }
   out += offhandMark(x, y, p.facing, offhand);
   out += weaponLine(x, y, p.facing, p.family);
   if (p.target)
@@ -218,15 +233,25 @@ const BIG_ROW = 200;
 const W = Math.max(LEFT + COL * FAMILIES.length, LEFT + BIG_COL * BIG_PER_ROW) + 20;
 
 /**
- * The off-hand row of the 4x band. The target example carries the health bar
- * and a status plate, drawn over the ring as the arena draws them.
- * @type {readonly { label: string, family: Family, offhand: Offhand, target?: boolean }[]}
+ * The off-hand and ring row of the 4x band. The target examples carry the
+ * health bar and a status plate, drawn over the rings as the arena draws them.
+ * @type {readonly { label: string, family: Family, offhand: Offhand, target?: boolean, enchanted?: boolean, hexed?: boolean }[]}
  */
 const OFFHANDS = [
   { label: "sword + shield", family: "sword", offhand: "shield" },
   { label: "axe + shield", family: "axe", offhand: "shield" },
   { label: "wand + focus", family: "wand", offhand: "focus" },
   { label: "target, r + 9", family: "sword", offhand: "shield", target: true },
+  { label: "enchanted, r + 2.5", family: "wand", offhand: "focus", enchanted: true },
+  { label: "hexed, r + 5", family: "sword", offhand: "shield", hexed: true },
+  {
+    label: "both, target",
+    family: "staff",
+    offhand: "none",
+    target: true,
+    enchanted: true,
+    hexed: true,
+  },
 ];
 const BIG_ROWS = Math.ceil(FAMILIES.length / BIG_PER_ROW) + 1;
 /** Where the true-size grid starts, below the 4x band. */
@@ -277,12 +302,12 @@ FAMILIES.forEach(({ family, label }, i) => {
   parts.push(actor(cx, DY + 420, { team: C.friend, facing: 0, family, offhand: "focus" }));
 });
 
-OFFHANDS.forEach(({ label, family, offhand, target }, i) => {
+OFFHANDS.forEach(({ label, family, offhand, target, enchanted, hexed }, i) => {
   const bx = LEFT + BIG_COL * i + BIG_COL / 2;
   const by = 110 + BIG_ROW * (BIG_ROWS - 1);
   parts.push(
     text(bx, by - 90, label),
-    `<g transform="translate(${f(bx)},${f(by)}) scale(${f(BIG)}) translate(${f(-bx)},${f(-by)})">${actor(bx, by, { team: C.foe, facing: 0, family, offhand, target: target === true, hud: target === true })}</g>`,
+    `<g transform="translate(${f(bx)},${f(by)}) scale(${f(BIG)}) translate(${f(-bx)},${f(-by)})">${actor(bx, by, { team: C.foe, facing: 0, family, offhand, target: target === true, enchanted, hexed, hud: target === true })}</g>`,
   );
 });
 
@@ -295,7 +320,7 @@ parts.push(
   text(10, DY + 324, "1×, at a wall ↑", "start"),
   text(10, DY + 374, "1×, + shield ↗", "start"),
   text(10, DY + 424, "1×, + focus →", "start"),
-  text(10, 114 + BIG_ROW * (BIG_ROWS - 1), "4×, off-hand", "start"),
+  text(10, 114 + BIG_ROW * (BIG_ROWS - 1), "4×, off-hand, rings", "start"),
 );
 
 // Row 6: a crowded clump at true size, mixed families and facings.
@@ -308,6 +333,8 @@ for (let k = 0; k < 16; k++) {
     actor(x, y, {
       team: k >= 8 ? C.foe : C.friend,
       self: k === 3,
+      enchanted: k === 3 || k === 5 || k === 13,
+      hexed: k === 10 || k === 13,
       target: k === 12,
       facing: k >= 8 ? -Math.PI / 2 + k * 0.4 : Math.PI / 2 - k * 0.5,
       family: fam,
