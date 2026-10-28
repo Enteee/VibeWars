@@ -438,6 +438,7 @@ describe("wireIdentity (#1052)", () => {
       primaryProfession: null,
       secondaryProfession: null,
       creature: { ownerId: null, kind: "priest", look: "priest", mode: null, armedAttack: null },
+      bot: false,
     });
   });
 });
