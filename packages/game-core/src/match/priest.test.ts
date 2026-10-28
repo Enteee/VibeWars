@@ -5,6 +5,7 @@ import {
   MORALE_FLOOR,
   PRIEST_ANNIHILATION_MATCH_RULES,
   PRIEST_WAVE_SECONDS,
+  SHRINE_INVULNERABLE_SECONDS,
 } from "../match-rules.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { effectiveMaxEnergy } from "../skills/overcast.js";
@@ -178,5 +179,116 @@ describe("the priest (#1186)", () => {
     stepTo(sim, PRIEST_WAVE_SECONDS + DT);
     expect(get(sim, "x").combatant.dead).toBe(false);
     expect(sim.phase).toBe("active");
+  });
+});
+
+describe("a shrine's raise (#1208)", () => {
+  /**
+   * `a` raised at the wave, with `x` and `y` of team 1 casting `skills`
+   * in spell range of the shrine, and `b`, alive, beside them.
+   */
+  function raised(skills: { x: string; y: string }): MatchSimulation {
+    const caster = (id: string, skillId: string): ParticipantSpec => ({
+      ...spec(id, 1, vec2(SHRINE_0.x + 200, SHRINE_0.y + (id === "x" ? -60 : 60))),
+      skillBar: [skillId],
+      maxEnergy: 80,
+    });
+    const sim = new MatchSimulation({
+      seed: "invulnerable",
+      matchRules: PRIEST_ANNIHILATION_MATCH_RULES,
+      bounds: { width: 1000, height: 600 },
+      shrines: [
+        { team: 0, position: SHRINE_0 },
+        { team: 1, position: SHRINE_1 },
+      ],
+      participants: [
+        { ...spec("a", 0, vec2(400, 100)), skillBar: ["necromancer.blood-renewal-lite"] },
+        spec("b", 0, vec2(400, 500)),
+        caster("x", skills.x),
+        caster("y", skills.y),
+      ],
+    });
+    kill(sim, "a");
+    stepTo(sim, PRIEST_WAVE_SECONDS + DT);
+    expect(get(sim, "a").combatant.dead).toBe(false);
+    return sim;
+  }
+
+  const toA = (log: readonly CombatLogEntry[], kind: string) =>
+    log.flatMap((entry) =>
+      entry.events
+        .filter((event) => event.kind === kind && "targetId" in event && event.targetId === "a")
+        .map(() => entry.atSeconds),
+    );
+
+  it("takes no damage from an attack, a spell or bleeding for 5 s, and does from then on", () => {
+    const sim = raised({ x: "elementalist.fireball", y: "necromancer.malaise" });
+    const a = get(sim, "a");
+    expect(a.combatant.invulnerableRemaining).toBeGreaterThan(SHRINE_INVULNERABLE_SECONDS - DT * 2);
+    expect(sim.requestAttack("y", "a")?.ok).toBe(true);
+    sim.setTarget("x", "a");
+    expect(sim.requestSkill("x", 0)?.check).toEqual({ ok: true });
+    a.combatant.statuses.apply("bleeding", 20, "x");
+
+    const window = stepTo(sim, PRIEST_WAVE_SECONDS + SHRINE_INVULNERABLE_SECONDS - DT);
+    expect(window.some((entry) => entry.skillId === "elementalist.fireball")).toBe(true);
+    expect(toA(window, "damage")).toEqual([]);
+    expect(a.combatant.health).toBe(effectiveMaxHealth(a.combatant));
+
+    const after = stepTo(sim, PRIEST_WAVE_SECONDS + SHRINE_INVULNERABLE_SECONDS + 2);
+    expect(a.combatant.invulnerableRemaining).toBe(0);
+    expect(toA(after, "damage").length).toBeGreaterThan(0);
+  });
+
+  it("gains no hex and no condition cast on it in the window", () => {
+    const sim = raised({ x: "necromancer.malaise", y: "necromancer.rotting-flesh" });
+    for (const id of ["x", "y"]) {
+      sim.setTarget(id, "a");
+      expect(sim.requestSkill(id, 0)?.check).toEqual({ ok: true });
+    }
+    const window = stepTo(sim, PRIEST_WAVE_SECONDS + SHRINE_INVULNERABLE_SECONDS - DT);
+    const cast = window.filter((entry) => entry.sourceId === "x" || entry.sourceId === "y");
+    expect(cast.map((entry) => entry.skillId).sort()).toEqual([
+      "necromancer.malaise",
+      "necromancer.rotting-flesh",
+    ]);
+    expect(toA(window, "status-applied")).toEqual([]);
+    const statuses = get(sim, "a").combatant.statuses;
+    expect(statuses.has("malaise") || statuses.has("disease")).toBe(false);
+  });
+
+  it("lets its own sacrifice skill cost no health", () => {
+    const sim = raised({ x: "necromancer.malaise", y: "necromancer.malaise" });
+    const a = get(sim, "a");
+    sim.setTarget("a", "a");
+    expect(sim.requestSkill("a", 0)?.check).toEqual({ ok: true });
+    const window = stepTo(sim, PRIEST_WAVE_SECONDS + 2);
+    expect(window.some((entry) => entry.skillId === "necromancer.blood-renewal-lite")).toBe(true);
+    expect(toA(window, "sacrifice")).toEqual([]);
+    expect(a.combatant.health).toBe(effectiveMaxHealth(a.combatant));
+  });
+
+  it("is the shrine's alone: Resurrection Signet raises without it", () => {
+    const sim = new MatchSimulation({
+      seed: "signet",
+      matchRules: PRIEST_ANNIHILATION_MATCH_RULES,
+      bounds: { width: 1000, height: 600 },
+      shrines: [
+        { team: 0, position: SHRINE_0 },
+        { team: 1, position: SHRINE_1 },
+      ],
+      participants: [
+        spec("a", 0, vec2(400, 100)),
+        { ...spec("b", 0, vec2(400, 300)), skillBar: ["common.resurrection-signet"] },
+        spec("x", 1, vec2(600, 300)),
+      ],
+    });
+    kill(sim, "a");
+    sim.setTarget("b", "a");
+    expect(sim.requestSkill("b", 0)?.check).toEqual({ ok: true });
+    stepTo(sim, 5);
+    const a = get(sim, "a");
+    expect(a.combatant.dead).toBe(false);
+    expect(a.combatant.invulnerableRemaining).toBe(0);
   });
 });

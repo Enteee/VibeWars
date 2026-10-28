@@ -29,6 +29,7 @@ import {
   MORALE_FLOOR,
   moraleMaximum,
   PRIEST_WAVE_SECONDS,
+  SHRINE_INVULNERABLE_SECONDS,
   type MatchOutcome,
   type MatchPhase,
   type MatchRules,
@@ -126,6 +127,7 @@ import {
   type NetPips,
 } from "../skills/tick.js";
 import {
+  isInvulnerable,
   isSpell,
   PET_ATTACK_SECONDS,
   type Combatant,
@@ -1451,20 +1453,21 @@ export class MatchSimulation {
     }
   }
 
-  /** Everyone's living minions and spirits (#1188), for this tick's armor. */
+  /** Everyone's living minions, spirits (#1188) and pets (#1206), for this tick's armor. */
   #countControlled(): void {
     for (const record of this.#participants.values()) {
       record.combatant.controlled.minion = 0;
       record.combatant.controlled.spirit = 0;
+      record.combatant.controlled.pet = 0;
     }
     for (const record of this.#participants.values()) {
       const creature = record.creature;
-      if (creature === undefined || creature.kind === "pet" || record.combatant.dead) {
+      if (creature === undefined || creature.kind === "priest" || record.combatant.dead) {
         continue;
       }
       const owner =
         creature.ownerId === undefined ? undefined : this.#participants.get(creature.ownerId);
-      if (owner !== undefined && (creature.kind === "minion" || creature.kind === "spirit")) {
+      if (owner !== undefined) {
         owner.combatant.controlled[creature.kind] += 1;
       }
     }
@@ -2010,9 +2013,10 @@ export class MatchSimulation {
     this.#projectAuras();
     // Every knockdown counts down before anyone acts, so one lasts its
     // full duration whoever lands it, and the tick it ends is one its
-    // bearer acts in again (#468).
+    // bearer acts in again (#468). A shrine's invulnerability too (#1208).
     for (const record of this.#participants.values()) {
       this.#advanceKnockdown(record.combatant, dt);
+      this.#advanceInvulnerability(record.combatant, dt);
       tickChainMarks(record.combatant, dt);
     }
     this.#advanceProjectiles(dt);
@@ -2309,9 +2313,12 @@ export class MatchSimulation {
     }
     for (const { record, status, outbreak, remainingSeconds } of carriers) {
       for (const other of living) {
+        // A spreading status is a condition: an invulnerable body (#1208)
+        // does not catch it, and can once its window ends.
         if (
           outbreak.infected.has(other.id) ||
-          distance(record.position, other.position) > AREA_ADJACENT
+          distance(record.position, other.position) > AREA_ADJACENT ||
+          isInvulnerable(other.combatant)
         ) {
           continue;
         }
@@ -2494,7 +2501,7 @@ export class MatchSimulation {
           scaledStatusDuration(target.combatant, application.statusId, application.durationSeconds),
           record.id,
         );
-        if (loss > 0) {
+        if (loss !== undefined && loss > 0) {
           this.#log.push({
             tick: this.#tick,
             atSeconds: this.#elapsedSeconds,
@@ -3828,6 +3835,7 @@ export class MatchSimulation {
         victim.walkGoal = undefined;
         victim.route = undefined;
         victim.combatant.knockdownRemaining = 0;
+        victim.combatant.invulnerableRemaining = 0;
         victim.pendingWeaponSet = undefined;
         victim.combatant.statuses.endAll();
         victim.armedAttack = undefined;
@@ -3948,6 +3956,16 @@ export class MatchSimulation {
       combatant.knockdownRemaining -= dt;
       if (combatant.knockdownRemaining <= KNOCKDOWN_EPSILON) {
         combatant.knockdownRemaining = 0;
+      }
+    }
+  }
+
+  /** Count `combatant`'s invulnerability (#1208) down by `dt`, to exactly 0 at the end. */
+  #advanceInvulnerability(combatant: Combatant, dt: number): void {
+    if (combatant.invulnerableRemaining > 0) {
+      combatant.invulnerableRemaining -= dt;
+      if (combatant.invulnerableRemaining <= KNOCKDOWN_EPSILON) {
+        combatant.invulnerableRemaining = 0;
       }
     }
   }
@@ -4323,12 +4341,16 @@ export class MatchSimulation {
     }
   }
 
-  /** `record` back from the dead on a shrine at `at`, pushed clear as anyone is (#1186). */
+  /**
+   * `record` back from the dead on a shrine at `at`, pushed clear as anyone
+   * is (#1186), and invulnerable for its first seconds (#1208).
+   */
   #raiseAtShrine(record: ParticipantRecord, at: Vec2): void {
     const { combatant } = record;
     combatant.statuses.clear();
     combatant.dead = false;
     combatant.health = effectiveMaxHealth(combatant);
+    combatant.invulnerableRemaining = SHRINE_INVULNERABLE_SECONDS;
     combatant.energy = Math.max(0, effectiveMaxEnergy(combatant));
     emptyAdrenaline(combatant);
     let position = nearestStandable(this.#graph, at);
@@ -4499,6 +4521,7 @@ export class MatchSimulation {
     dropEndedCopyPools(record.combatant);
     record.combatant.attack = undefined;
     record.combatant.knockdownRemaining = 0;
+    record.combatant.invulnerableRemaining = 0;
     // The set in hand stays: GW1 resurrects you holding it (#489).
     record.pendingWeaponSet = undefined;
     this.#clearChainMarks(record);
@@ -4577,11 +4600,12 @@ export class MatchSimulation {
       cast: new CastState(spec.id, statuses),
       attack: undefined,
       knockdownRemaining: 0,
+      invulnerableRemaining: 0,
       soulReapingTriggers: [],
       nextMaintainSeq: 0,
       chainMarks: new Map(),
       moving: false,
-      controlled: { minion: 0, spirit: 0 },
+      controlled: { minion: 0, spirit: 0, pet: 0 },
       equipment: spec.equipment,
     };
   }

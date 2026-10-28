@@ -27,6 +27,7 @@ import {
   resolveLoadout,
   runeDisplayName,
   type ArmorCondition,
+  type StatusCategory,
   type ArmorPiece,
   type ArmorSlot,
   type BuildEquipment,
@@ -405,16 +406,47 @@ function conditionLabel(condition: ArmorCondition): string {
       return `while ${String(condition.count)}+ skills recharge`;
     case "attribute-at-least":
       return `with ${String(condition.rank)}+ ${getAttribute(condition.attributeId)?.name ?? condition.attributeId}`;
-    case "has-condition":
-      return "while you have a condition";
-    case "has-hex":
-      return "while hexed";
+    case "vs-type":
+      return `vs ${condition.type} damage`;
+    case "affected-by":
+      return `while ${condition.categories.map(categoryPhrase).join(" or ")}`;
     case "no-enchantment":
       return "while not enchanted";
     case "health-below":
       return `below ${String(Math.round(condition.fraction * 100))}% Health`;
     case "controls-at-least":
-      return `while you control ${String(condition.count)}+ ${condition.creature === "minion" ? "minions" : "spirits"}`;
+      return condition.creature === "pet"
+        ? "while your pet is alive"
+        : `while you control ${String(condition.count)}+ ${condition.creature === "minion" ? "minions" : "spirits"}`;
+    case "activating":
+      return "while activating a skill";
+    case "signets-at-least":
+      return `with ${String(condition.count)}+ signets on your bar`;
+  }
+}
+
+/** What being under a status of `category` reads as, after "while": "under a shout or chant". */
+function categoryPhrase(category: StatusCategory, index: number): string {
+  switch (category) {
+    case "condition":
+      return "you have a condition";
+    case "hex":
+      return "hexed";
+    case "enchantment":
+      return "enchanted";
+    case "stance":
+      return "in a stance";
+    case "preparation":
+      return "using a preparation";
+    case "glyph":
+      return "under a glyph";
+    case "weapon-spell":
+      return "under a weapon spell";
+    case "skill-effect":
+      return "under a skill effect";
+    case "shout":
+    case "chant":
+      return index === 0 ? `under a ${category}` : category;
   }
 }
 
@@ -440,6 +472,21 @@ function tierCount(bonus: ConditionalArmor): number | undefined {
     : undefined;
 }
 
+/** `+3 armor per signet on your bar` when every bonus is one signet more for the same amount (#1206). */
+function perSignetLine(bonuses: readonly ConditionalArmor[]): string | undefined {
+  const [first] = bonuses;
+  const perSignet = bonuses.every(
+    (bonus, index) =>
+      bonus.amount === first?.amount &&
+      bonus.conditions.length === 1 &&
+      bonus.conditions[0]?.kind === "signets-at-least" &&
+      bonus.conditions[0].count === index + 1,
+  );
+  return perSignet && first !== undefined
+    ? `+${String(first.amount)} armor per signet on your bar`
+    : undefined;
+}
+
 /**
  * An insignia's armor or cut in a line (#1142), a tiered one's later
  * tiers short: "+5 armor while 1+ skills recharge, +5 at 3+, +5 at 5+".
@@ -449,6 +496,10 @@ export function insigniaEffectNote(
 ): string {
   if (effect.kind === "physical-reduction") {
     return `−${String(effect.amount)} physical damage taken`;
+  }
+  const perSignet = perSignetLine(effect.bonuses);
+  if (perSignet !== undefined) {
+    return perSignet;
   }
   return effect.bonuses
     .map((bonus, index) => {
@@ -475,13 +526,21 @@ function pieceArmorLines(pieceArmor: PieceArmor): string[] {
       groups.set(key, group);
     }
   }
-  return [...groups.values()].map(({ bonus, slots }) => {
+  // Artificer's (#1206): its first signet's line stands for all eight.
+  const shown = [...groups.values()].filter(({ bonus }) => {
+    const [only] = bonus.conditions;
+    return only?.kind !== "signets-at-least" || only.count === 1;
+  });
+  return shown.map(({ bonus, slots }) => {
+    const perSignet = perSignetLine([bonus]);
+    const line = perSignet ?? armorLine(bonus);
     if (slots.length === ARMOR_SLOTS.length) {
-      return armorLine(bonus);
+      return line;
     }
     const chance = slots.reduce((sum, slot) => sum + HIT_LOCATION_WEIGHTS[slot], 0);
     const average = Math.round(bonus.amount * chance * 10) / 10;
-    return `${armorLine(bonus)} on ${slots.join(", ")} (avg +${average.toFixed(1)})`;
+    const each = perSignet === undefined ? "" : " a signet";
+    return `${line} on ${slots.join(", ")} (avg +${average.toFixed(1)}${each})`;
   });
 }
 

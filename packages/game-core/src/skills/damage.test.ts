@@ -5,7 +5,7 @@ import { defaultEquipmentFor } from "../equipment/loadout.js";
 import { resolveLoadout, unarmedResolvedEquipment } from "../equipment/resolve.js";
 import type { InsigniaId } from "../equipment/insignias.js";
 import type { EquippedRune } from "../equipment/runes.js";
-import { ARMOR_SLOTS, type ArmorSlot } from "../equipment/types.js";
+import { ARMOR_SLOTS, type ArmorSlot, type DamageType } from "../equipment/types.js";
 import type { ProfessionId } from "../professions.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { createRng } from "../rng.js";
@@ -370,6 +370,7 @@ describe("profession and attacking insignias, per piece (#1142)", () => {
       readonly slots?: readonly ArmorSlot[];
       readonly ranks?: ReadonlyMap<string, number>;
       readonly chestRune?: EquippedRune;
+      readonly skillBar?: readonly (string | null)[];
     } = {},
   ): Combatant {
     const slots = options.slots ?? ["chest"];
@@ -405,6 +406,7 @@ describe("profession and attacking insignias, per piece (#1142)", () => {
       team: 1,
       attributeRanks: resolved.attributeRanks,
       equipment: resolved.weaponSets[0].equipment,
+      skillBar: options.skillBar ?? [],
     });
   }
 
@@ -609,6 +611,103 @@ describe("profession and attacking insignias, per piece (#1142)", () => {
     expect(armorWith(ranks(8, 8, 8, 8))).toBe(60);
     expect(armorWith(ranks(9, 9, 0, 0))).toBe(70);
     expect(armorWith(ranks(9, 9, 9, 9))).toBe(80);
+  });
+
+  /** What `target`'s chest insignia adds to a `packet` hit: its chest over its bare legs. */
+  const insigniaArmor = (target: Combatant, packet: DamagePacket = physical(10)): number =>
+    effectiveArmor(target, packet, "chest") - effectiveArmor(target, packet, "legs");
+  const typed = (type: DamageType): DamagePacket =>
+    type === "slashing" || type === "piercing" || type === "blunt"
+      ? { ...physical(10), type }
+      : skillDamage(10, type, 0);
+
+  it("gives Pyromancer +20 vs fire, +10 vs cold, nothing vs piercing (#1206)", () => {
+    const elementalist = wearing("elementalist", "pyromancer");
+    expect(
+      ["fire", "cold", "piercing"].map((type) =>
+        insigniaArmor(elementalist, typed(type as DamageType)),
+      ),
+    ).toEqual([20, 10, 0]);
+  });
+
+  it("gives Infiltrator's +20 vs piercing, +10 vs slashing, nothing vs fire (#1206)", () => {
+    const assassin = wearing("assassin", "infiltrators");
+    expect(
+      ["piercing", "slashing", "fire"].map((type) =>
+        insigniaArmor(assassin, typed(type as DamageType)),
+      ),
+    ).toEqual([20, 10, 0]);
+  });
+
+  it("gives Bonelace and the -bound ones +15 vs their one type only (#1206)", () => {
+    expect(insigniaArmor(wearing("necromancer", "bonelace"), typed("piercing"))).toBe(15);
+    expect(insigniaArmor(wearing("necromancer", "bonelace"), typed("slashing"))).toBe(0);
+    const ranger = wearing("ranger", "frostbound");
+    expect(insigniaArmor(ranger, typed("cold"))).toBe(15);
+    expect(insigniaArmor(ranger, typed("fire"))).toBe(0);
+  });
+
+  it("gives Sentry's +10 for as long as the stance lasts (#1206)", () => {
+    const monk = wearing("monk", "sentrys");
+    expect(insigniaArmor(monk)).toBe(0);
+    monk.statuses.apply("dash", 1, "d");
+    expect(insigniaArmor(monk)).toBe(10);
+    monk.statuses.remove("dash");
+    expect(insigniaArmor(monk)).toBe(0);
+  });
+
+  it("gives Scout's +10 under a preparation, Ghost Forge +15 under a weapon spell (#1206)", () => {
+    const ranger = wearing("ranger", "scouts");
+    ranger.statuses.apply("weapon-of-quickening", 10, "x");
+    expect(insigniaArmor(ranger)).toBe(0);
+    ranger.statuses.apply("apply-poison", 10, "r");
+    expect(insigniaArmor(ranger)).toBe(10);
+    const ritualist = wearing("ritualist", "ghost-forge");
+    ritualist.statuses.apply("apply-poison", 10, "x");
+    expect(insigniaArmor(ritualist)).toBe(0);
+    ritualist.statuses.apply("weapon-of-quickening", 10, "x");
+    expect(insigniaArmor(ritualist)).toBe(15);
+  });
+
+  it("gives Centurion's +10 under a shout, and under a chant (#1206)", () => {
+    const shouted = wearing("paragon", "centurions");
+    expect(insigniaArmor(shouted)).toBe(0);
+    shouted.statuses.apply("for-great-justice", 10, "x");
+    expect(insigniaArmor(shouted)).toBe(10);
+    const chanted = wearing("paragon", "centurions");
+    chanted.statuses.apply("song-of-restoration", 10, "x");
+    expect(insigniaArmor(chanted)).toBe(10);
+  });
+
+  it("gives Beastmaster's +10 while the pet lives; a minion is no pet (#1206)", () => {
+    const ranger = wearing("ranger", "beastmasters");
+    ranger.controlled.minion = 3;
+    expect(insigniaArmor(ranger)).toBe(0);
+    ranger.controlled.pet = 1;
+    expect(insigniaArmor(ranger)).toBe(10);
+  });
+
+  it("gives Virtuoso's and Mystic's +15 while activating any skill, not on a plain swing (#1206)", () => {
+    const mesmer = wearing("mesmer", "virtuosos");
+    swinging(mesmer);
+    expect(insigniaArmor(mesmer)).toBe(0);
+    mesmer.cast.beginCast("warrior.swift-chop", "x", 1, undefined);
+    expect(insigniaArmor(mesmer)).toBe(15);
+    const ritualist = wearing("ritualist", "mystics");
+    ritualist.cast.beginCast("ritualist.spirit-light", "x", 1, undefined);
+    expect(insigniaArmor(ritualist)).toBe(15);
+  });
+
+  it("gives Artificer's +3 a signet on the bar: 0, 2 and 8 give 0, 6 and 24 (#1206)", () => {
+    const signets = (count: number): number =>
+      insigniaArmor(
+        wearing("mesmer", "artificers", {
+          skillBar: Array.from({ length: 8 }, (_, slot) =>
+            slot < count ? "mesmer.leech-signet" : "mesmer.power-drain",
+          ),
+        }),
+      );
+    expect([0, 2, 8].map(signets)).toEqual([0, 6, 24]);
   });
 });
 

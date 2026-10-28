@@ -1132,7 +1132,7 @@ and typeless damage, degeneration and life steal hit no piece. The gear
 editor lists an insignia under the armor with its pieces and what it
 adds on average: `+10 armor vs physical damage on chest (avg +3.8)`.
 
-Insignias (#1142, #1188), each only on hits to its own piece; five of one kind
+Insignias (#1142, #1188, #1206), each only on hits to its own piece; five of one kind
 give its bonus on every hit, never five times over:
 
 | Insignia        | Who                  | On its piece                                       |
@@ -1140,6 +1140,7 @@ give its bonus on every hit, never five times over:
 | Stalwart        | anyone               | +10 vs physical                                    |
 | Blessed         | anyone               | +10 while enchanted                                |
 | Brawler's       | anyone               | +10 while attacking                                |
+| Sentry's        | anyone               | +10 while in a stance                              |
 | Knight's        | Warrior primary      | −3 physical damage taken, after armor              |
 | Sentinel's      | Warrior primary      | +20 vs elemental, with 13+ Strength                |
 | Nightstalker's  | Assassin primary     | +15 while attacking                                |
@@ -1155,13 +1156,35 @@ give its bonus on every hit, never five times over:
 | Forsaken        | Dervish primary      | +10 while not enchanted                            |
 | Shaman's        | Ritualist primary    | +5 each with 1, 2 and 3+ living spirits            |
 | Prismatic       | Elementalist primary | +5 each for 9+ in Air, Earth, Fire and Water Magic |
+| Infiltrator's   | Assassin primary     | +10 vs physical, +10 more vs piercing              |
+| Saboteur's      | Assassin primary     | +10 vs physical, +10 more vs slashing              |
+| Vanguard's      | Assassin primary     | +10 vs physical, +10 more vs blunt                 |
+| Bonelace        | Necromancer primary  | +15 vs piercing                                    |
+| Earthbound      | Ranger primary       | +15 vs earth                                       |
+| Frostbound      | Ranger primary       | +15 vs cold                                        |
+| Pyrebound       | Ranger primary       | +15 vs fire                                        |
+| Stormbound      | Ranger primary       | +15 vs lightning                                   |
+| Scout's         | Ranger primary       | +10 while using a preparation                      |
+| Beastmaster's   | Ranger primary       | +10 while your pet is alive                        |
+| Aeromancer      | Elementalist primary | +10 vs elemental, +10 more vs lightning            |
+| Geomancer       | Elementalist primary | +10 vs elemental, +10 more vs earth                |
+| Hydromancer     | Elementalist primary | +10 vs elemental, +10 more vs cold                 |
+| Pyromancer      | Elementalist primary | +10 vs elemental, +10 more vs fire                 |
+| Artificer's     | Mesmer primary       | +3 for each signet on your bar                     |
+| Virtuoso's      | Mesmer primary       | +15 while activating a skill                       |
+| Mystic's        | Ritualist primary    | +15 while activating a skill                       |
+| Ghost Forge     | Ritualist primary    | +15 while under a weapon spell                     |
+| Centurion's     | Paragon primary      | +10 while under a shout or chant                   |
 
 Attacking is swinging while standing or casting an attack skill: an
 auto-attack still walking to its foe is not. Strength counts runes, and
 weakness lowers it. Knight's sits beside a Rune of
 Absorption and adds to it, and never takes a hit below 0. Undertaker's
 reads your maximum now, so morale moves it; a pet is neither a minion
-nor a spirit. A profession
+nor a spirit, and only a living one counts for Beastmaster's. Activating
+is any skill's activation, an attack skill's included, never a plain
+swing. Artificer's counts the skill each slot holds now, an echo's copy
+included. A profession
 insignia needs that primary: the gear library shows only the common
 ones and your primary's, and changing primary takes the others off.
 
@@ -1618,6 +1641,10 @@ at a spawn point of their own team after 8 seconds, at full health and
 energy, with all statuses cleared, and there is no death penalty. There
 the scoreboard counts kills instead: `4 – 0 · 2:25` reads your team's
 kills, then theirs, beside the clock (#1200).
+In Priest Annihilation it counts the living, then each team's priest,
+yours first, and the next wave: `4 v 3 · ✚ ✚ · raise 0:47 · 7:12`
+(#1199). A priest's ✚ dims once it is dead, and the countdown reads
+`raise —` once both are.
 
 With the death penalty on, each player has a **morale** between −60%
 and +10%, starting at 0. A death takes 15%, down to −60%, unless it came
@@ -1694,7 +1721,9 @@ A Priest Annihilation match (#1186) is Annihilation with a priest on each
 team's shrine: a team is wiped only once its priest is dead too, and at
 **12 minutes** equal morale goes to the team whose priest lives. Every
 2 minutes a living priest raises its team's dead above -60% on its
-shrine, at full Health and Energy (see [modes](modes.md)).
+shrine, at full Health and Energy, invulnerable for 5 seconds (#1208):
+no damage, life steal, sacrifice or degeneration takes Health, and no
+hex or condition lands (see [modes](modes.md)).
 
 A Kill Count match ends when a team reaches 15 kills, or after 3
 minutes, when the team with more kills wins. Score is checked

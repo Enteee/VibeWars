@@ -70,6 +70,9 @@ export const PRIEST_ANNIHILATION_MATCH_RULES: MatchRules = Object.freeze({
 /** A living priest raises its team's dead at every multiple of this, match clock (#1186, GW1). */
 export const PRIEST_WAVE_SECONDS = 120;
 
+/** Seconds a player a shrine raised takes no damage, health loss, hex or condition (#1208, GW1). */
+export const SHRINE_INVULNERABLE_SECONDS = 5;
+
 /** The modes a map can name (#476): which one a match plays follows from its map alone. */
 export type MatchMode = "annihilation" | "kill-count" | "priest-annihilation";
 

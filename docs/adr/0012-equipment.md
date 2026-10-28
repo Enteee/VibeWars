@@ -111,12 +111,15 @@ five pieces are therefore insignia-and-rune carriers, which is the half
 that carries the actual decisions.
 
 **Nothing ships that cannot fire.** The reference has a "while in a
-stance" insignia. This game has no stances, so rather than ship a stat
-line that is permanently zero, it is omitted and recorded as a gap. Only
-the physical damage split (slashing, piercing, blunt) plus `untyped`
-exists, because only Stalwart and Absorption consult it — adding fire,
-cold, lightning and holy when nothing reacts to them would be exactly
-the decorative data `skills/coverage.ts` was built to prevent. Rune of
+stance" insignia. This game had no stances, so rather than ship a stat
+line that is permanently zero, it was omitted and recorded as a gap
+(Sentry's shipped once stances existed, #1206). Damage types
+followed the same rule: at first only the physical split (slashing,
+piercing, blunt) plus `untyped` existed, because only Stalwart and
+Absorption consulted it, and fire, cold, lightning and holy came only
+once something reacted to them. Now they all exist and armor reads
+them: a Ranger's +30 vs elemental, Sentinel's, and the -mancer and
+-bound insignias (#1206). Rune of
 Purity covered Burning in place of the reference's Disease until Disease
 existed; it covers Poison and Disease, as in GW1, since #765.
 
