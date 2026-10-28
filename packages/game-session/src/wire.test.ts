@@ -263,6 +263,9 @@ describe("wireIdentity (#1052)", () => {
       summonedAtTick: 1,
       skillId: "test.summon",
       aura: undefined,
+      onDeath: "vanish" as const,
+      ownerDisableSeconds: 0,
+      companionSkillId: undefined,
     },
   });
 

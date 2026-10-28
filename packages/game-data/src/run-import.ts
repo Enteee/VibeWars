@@ -793,6 +793,17 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Ranger/818-Burning_Arrow",
   },
   {
+    id: "ranger.charm-animal",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/80-Charm_Animal",
+  },
+  {
+    // The PvP page (#1046): 1324 is the PvE version.
+    id: "ranger.comfort-animal",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/81-Comfort_Animal",
+  },
+  {
     id: "monk.patient-spirit",
     profession: "monk",
     url: "https://www.gw-memorial.net/skills/Monk/1158-Patient_Spirit",

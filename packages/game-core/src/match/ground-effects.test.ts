@@ -59,6 +59,7 @@ function testWard(id: string, affects: Aura["affects"], seconds: number): string
     attack: undefined,
     whileActivating: undefined,
     corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     effects: [
       {

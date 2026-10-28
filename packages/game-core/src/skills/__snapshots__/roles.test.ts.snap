@@ -133,6 +133,8 @@ exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
   "ranger.barrage": "",
   "ranger.broad-head-arrow": "interrupt condition",
   "ranger.burning-arrow": "condition",
+  "ranger.charm-animal": "",
+  "ranger.comfort-animal": "",
   "ranger.concussion-shot": "interrupt condition",
   "ranger.crippling-shot": "condition",
   "ranger.debilitating-shot": "",

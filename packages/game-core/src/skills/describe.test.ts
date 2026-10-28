@@ -132,6 +132,21 @@ describe("describeSkill", () => {
     );
   });
 
+  it("says Comfort Animal acts on your pet, and Charm Animal brings one (#1046)", () => {
+    const comfort = describeSkill(
+      skill("ranger.comfort-animal"),
+      new Map([["ranger.beast-mastery", 12]]),
+    );
+    expect(comfort.targetText).toBe("Your pet");
+    expect(comfort.effects.map((e) => e.text)).toEqual([
+      "Heals for 87",
+      "Returns the target to life with 48% health and 0% energy",
+    ]);
+    expect(describeSkill(skill("ranger.charm-animal")).effects.map((e) => e.text)).toEqual([
+      "While on your bar, a Wolf (480 Health) fights beside you",
+    ]);
+  });
+
   it("says what a summon makes, how tough and for how long (#1052)", () => {
     const summon = (durationSeconds?: number): SkillEffect => ({
       kind: "summon",
@@ -147,6 +162,8 @@ describe("describeSkill", () => {
         ...(durationSeconds === undefined ? {} : { durationSeconds: { flat: durationSeconds } }),
         behaviour: { kind: "idle" },
         aura: undefined,
+        onDeath: "vanish",
+        ownerDisableOnDeath: undefined,
       },
     });
     const lines = (effect: SkillEffect) =>
@@ -427,7 +444,8 @@ describe("describeSkill", () => {
           lines(entry.attack?.onBlocked ?? []) +
           (entry.whileActivating === undefined ? 0 : 1) +
           (entry.projectile === undefined ? 0 : 1) +
-          (entry.corpse === undefined ? 0 : 1),
+          (entry.corpse === undefined ? 0 : 1) +
+          (entry.companion === undefined ? 0 : 1),
       );
       for (const line of described.effects) {
         expect(line.text.length, `${entry.id} has an empty description line`).toBeGreaterThan(0);
