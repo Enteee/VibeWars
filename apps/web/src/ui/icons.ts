@@ -73,6 +73,8 @@ const CREATURE_ICON: Readonly<Record<CreatureLook, string>> = {
   spirit: iconUrl("creature", "spirit"),
   // Until the priest's own glyph is drawn (#1186): a spirit's.
   priest: iconUrl("creature", "spirit"),
+  // Until the Guild Lord's own glyph is drawn (#1222): a Ranger's, for its bow.
+  "guild-lord": iconUrl("profession", "ranger"),
 };
 
 /** The kind glyph on a creature's plate in the arena (#1162), drawn in ink and tinted there. */

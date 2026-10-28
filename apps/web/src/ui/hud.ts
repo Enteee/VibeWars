@@ -749,7 +749,9 @@ export function priestLives(players: readonly PlayerSnapshot[], team: number): b
  * (#1200), as the snapshot's `score` carries them, team 1's first.
  * Priest Annihilation counts the living, then each side's priest and the
  * next wave, "4 v 3 · ✚ ✚ · raise 0:47 · 7:12" (#1199): `raise —` once
- * both priests are dead, and no countdown once time is out.
+ * both priests are dead, and no countdown once time is out. A Guild
+ * Battle counts the living, as Annihilation, until its own scoreboard
+ * (#1226).
  */
 export function scoreboardParts(
   players: readonly PlayerSnapshot[],
@@ -775,6 +777,7 @@ export function scoreboardParts(
   };
   switch (mode) {
     case "annihilation":
+    case "guild-battle":
       return [living, clock];
     case "kill-count":
       return [{ kind: "text", text: `${String(score[ours])} – ${String(score[theirs])}` }, clock];
@@ -892,19 +895,32 @@ function renderEnemyPips(
   }
 }
 
+/** What the end-of-match line adds for a reason; nothing for a score or a wipe. */
+const OUTCOME_REASONS: Readonly<Record<string, string>> = {
+  time: " (time)",
+  morale: " (morale)",
+  "guild-lord": " (Guild Lord slain)",
+  aggression: " (most aggression at time)",
+};
+
 /**
  * The end-of-match line a player reads, from their own team's point of
  * view. An annihilation match nobody won is lost by every team (GW1,
- * #846); only kill-count draws.
+ * #846), and so is a Guild Battle (#1222); only kill-count draws.
  */
 export function describeOutcome(
   winningTeam: number | undefined,
   reason: string | undefined,
   selfTeam: number | undefined,
 ): string {
-  const why = reason === "time" ? " (time)" : reason === "morale" ? " (morale)" : "";
+  const why = reason === undefined ? "" : (OUTCOME_REASONS[reason] ?? "");
   if (winningTeam === undefined) {
-    if (reason === "annihilation" || reason === "morale") {
+    if (
+      reason === "annihilation" ||
+      reason === "morale" ||
+      reason === "guild-lord" ||
+      reason === "aggression"
+    ) {
       return selfTeam === undefined ? `No winner${why}` : `Defeat${why}`;
     }
     return `Draw${why}`;

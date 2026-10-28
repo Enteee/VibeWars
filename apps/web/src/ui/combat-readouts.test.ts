@@ -205,6 +205,19 @@ describe("describeCombatEvent", () => {
     );
   });
 
+  it("names a Guild Battle's wave for the shrine, which has no priest (#1222)", () => {
+    const event: CombatEvent = {
+      kind: "resurrected",
+      targetId: "dummy",
+      healthFraction: 1,
+      energyFraction: 1,
+    };
+    const wave = entry([event], { sourceId: undefined, skillId: undefined });
+    expect(describeCombatEvent(wave, event, nameOf, isCreature)).toBe(
+      "The shrine resurrects Caster dummy (100% health, 100% energy)",
+    );
+  });
+
   it("says which attribute an attribute's energy came from (#633)", () => {
     const event: CombatEvent = { kind: "energy-gain", targetId: "you", amount: 12 };
     const reaped = entry([event], {

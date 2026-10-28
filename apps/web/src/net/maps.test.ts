@@ -28,13 +28,17 @@ describe("randomArenaMapPool", () => {
     expect(sizesOf(pool)).not.toContain("small");
   });
 
-  it("leaves no arena out of every pool", () => {
+  it("leaves no arena out of every pool but the Guild Battle's (#1222)", () => {
     const pooled = new Set(
       (["random-arena-1v1", "random-arena-2v2", "random-arena-4v4"] as const).flatMap((mode) =>
         randomArenaMapPool(mode),
       ),
     );
-    expect([...pooled].sort()).toEqual(ARENA_MAPS.map((map) => map.id).sort());
+    expect([...pooled].sort()).toEqual(
+      ARENA_MAPS.map((map) => map.id)
+        .filter((id) => id !== "guild-hall-isle")
+        .sort(),
+    );
   });
 });
 
@@ -45,14 +49,27 @@ describe("hostMap (#476)", () => {
     );
   });
 
-  it("carries the mode its map names: Kill Count on Pillar Hall, Priest Annihilation on Split Paths, Annihilation elsewhere", () => {
+  it("carries the mode its map names: Kill Count on Pillar Hall, Priest Annihilation on Split Paths, Guild Battle on Guild Hall Isle, Annihilation elsewhere", () => {
     expect(hostMap("arena-pillars")?.mode).toBe("kill-count");
     expect(hostMap("arena-split")?.mode).toBe("priest-annihilation");
+    expect(hostMap("guild-hall-isle")?.mode).toBe("guild-battle");
     for (const map of ARENA_MAPS.filter(
-      (candidate) => candidate.id !== "arena-pillars" && candidate.id !== "arena-split",
+      (candidate) => !["arena-pillars", "arena-split", "guild-hall-isle"].includes(candidate.id),
     )) {
       expect(hostMap(map.id)?.mode).toBe("annihilation");
     }
+  });
+
+  it("carries a Guild Battle map's Guild Lords and shrines apart, and none elsewhere (#1222)", () => {
+    expect(hostMap("guild-hall-isle")?.guildLords).toEqual([
+      { team: 0, position: { x: 80, y: 1000 } },
+      { team: 1, position: { x: 2920, y: 1000 } },
+    ]);
+    expect(hostMap("guild-hall-isle")?.shrines).toEqual([
+      { team: 0, position: { x: 450, y: 1000 } },
+      { team: 1, position: { x: 2550, y: 1000 } },
+    ]);
+    expect(hostMap("arena-split")?.guildLords).toEqual([]);
   });
 });
 

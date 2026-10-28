@@ -92,6 +92,7 @@ function askBot(sim: MatchSimulation, id: string) {
     check: () => ({ ok: true }),
     isBot: () => true,
     calledTargetId: undefined,
+    sees: () => true,
   });
 }
 

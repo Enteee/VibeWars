@@ -191,6 +191,12 @@ import { nearestFreshCorpse } from "./corpses.js";
 import { companionSkills, PET_DEATH_GRACE_SECONDS } from "./companions.js";
 import { MINION_CAP_ATTRIBUTE, minionCap, minionDegenerationPips } from "./minions.js";
 import { directionAngle, showsBackTo, spawnFacing } from "./facing.js";
+import {
+  GUILD_LORD_HEALTH_PIPS,
+  guildLordId,
+  guildLordSpec,
+  type GuildLord,
+} from "./guild-lord.js";
 import { priestId, priestSpec, type Shrine } from "./priest.js";
 import { steerAround } from "./steering.js";
 
@@ -213,8 +219,8 @@ import { steerAround } from "./steering.js";
  * `walkTo`, `setTarget`, `requestSkill`, `requestAttack` and `cancelAction`.
  */
 
-/** What kind of non-player body this is (#467); a priest is a map's (#1186). */
-export type CreatureKind = "spirit" | "minion" | "pet" | "priest";
+/** What kind of non-player body this is (#467); a priest (#1186) and a Guild Lord (#1222) are a map's. */
+export type CreatureKind = "spirit" | "minion" | "pet" | "priest" | "guild-lord";
 
 /**
  * How a companion fights (#1110, GW1 pet control): game-protocol's
@@ -232,7 +238,14 @@ export interface CreatureOrder {
 /**
  * What a creature looks like (#1162): the glyph on its plate. The wire mirrors it as `CREATURE_LOOKS`, a test holding the two.
  */
-export const CREATURE_LOOKS = ["beast", "bone-minion", "bone-horror", "spirit", "priest"] as const;
+export const CREATURE_LOOKS = [
+  "beast",
+  "bone-minion",
+  "bone-horror",
+  "spirit",
+  "priest",
+  "guild-lord",
+] as const;
 export type CreatureLook = (typeof CREATURE_LOOKS)[number];
 
 /**
@@ -282,11 +295,19 @@ export function companionMode(creature: Creature): CompanionMode | null {
   return creature.companionSkillId === undefined ? null : creature.mode;
 }
 
-/** A minion's own rot in pips (#467): 0 for anyone else. */
-function minionPips(participant: Participant): number {
-  return participant.creature?.kind === "minion"
-    ? minionDegenerationPips(participant.creature.ageSeconds)
-    : 0;
+/**
+ * A creature's own Health pips: a minion's rot (#467), a Guild Lord's
+ * innate regeneration (#1222); 0 for anyone else.
+ */
+function creaturePips(participant: Participant): number {
+  switch (participant.creature?.kind) {
+    case "minion":
+      return minionDegenerationPips(participant.creature.ageSeconds);
+    case "guild-lord":
+      return GUILD_LORD_HEALTH_PIPS;
+    default:
+      return 0;
+  }
 }
 
 /** At most this many creatures in a match at once (#1052): a summon past it makes as many as fit. */
@@ -498,6 +519,12 @@ export interface MatchSimulationOptions {
    * Omitted or `[]`: no priests.
    */
   readonly shrines?: readonly Shrine[];
+  /**
+   * The Guild Battle's Guild Lords (#1222): each stands at its post from
+   * the start, and in that mode the shrines raise with no priest.
+   * Omitted or `[]`: none.
+   */
+  readonly guildLords?: readonly GuildLord[];
 }
 
 export interface StepResult {
@@ -745,6 +772,10 @@ export class MatchSimulation {
   readonly #shrines: readonly Shrine[];
   /** Priest waves gone by (#1186): the next is at `PRIEST_WAVE_SECONDS` times one more. */
   #priestWaves = 0;
+  /** The teams with a Guild Lord in the match (#1222), dead or alive. */
+  readonly #guildLordTeams: ReadonlySet<number>;
+  /** Damage each team dealt to a foe's Guild Lord (#1222), after armor. */
+  readonly #aggression = new Map<number, number>();
   /** Every ground effect in the match (#1087), in id order. */
   #groundEffects: GroundEffect[] = [];
   /** The id of the next ground effect placed (#1087). */
@@ -771,7 +802,8 @@ export class MatchSimulation {
     }
     this.#shrines = options.shrines ?? [];
     const shrinePositions = this.#shrines.map((shrine) => shrine.position);
-    for (const shrine of this.#shrines) {
+    // A Guild Battle's shrines raise on their own: no priest stands on one.
+    for (const shrine of this.#shrinesRaiseAlone() ? [] : this.#shrines) {
       const foes = this.#shrines.filter((other) => other.team !== shrine.team);
       this.add(
         priestSpec(
@@ -780,6 +812,22 @@ export class MatchSimulation {
             shrine.position,
             foes.map((other) => other.position),
             shrinePositions,
+          ),
+        ),
+      );
+    }
+    const lords = options.guildLords ?? [];
+    this.#guildLordTeams = new Set(lords.map((lord) => lord.team));
+    const lordPositions = lords.map((lord) => lord.position);
+    for (const lord of lords) {
+      const foes = lords.filter((other) => other.team !== lord.team);
+      this.add(
+        guildLordSpec(
+          lord,
+          spawnFacing(
+            lord.position,
+            foes.map((other) => other.position),
+            lordPositions,
           ),
         ),
       );
@@ -817,6 +865,11 @@ export class MatchSimulation {
     return this.#groundEffects;
   }
 
+  /** Damage `team` has dealt to a foe's Guild Lord so far (#1222), after armor. */
+  public aggression(team: number): number {
+    return this.#aggression.get(team) ?? 0;
+  }
+
   public get(id: string): Participant | undefined {
     return this.#participants.get(id);
   }
@@ -825,7 +878,7 @@ export class MatchSimulation {
   public pips(participant: Participant): NetPips {
     return netPips(
       participant.combatant,
-      this.#naturalPips(participant) + minionPips(participant),
+      this.#naturalPips(participant) + creaturePips(participant),
       this.#upkeep(participant.id),
     );
   }
@@ -1462,7 +1515,12 @@ export class MatchSimulation {
     }
     for (const record of this.#participants.values()) {
       const creature = record.creature;
-      if (creature === undefined || creature.kind === "priest" || record.combatant.dead) {
+      if (
+        creature === undefined ||
+        creature.kind === "priest" ||
+        creature.kind === "guild-lord" ||
+        record.combatant.dead
+      ) {
         continue;
       }
       const owner =
@@ -2082,7 +2140,7 @@ export class MatchSimulation {
       // health lost, so natural regeneration stops before it would.
       // A minion's rot (#467) counts as one, and it never regenerates.
       const modifiers = aggregateModifiers(record.combatant.statuses.active);
-      const rot = minionPips(record);
+      const rot = creaturePips(record);
       record.outOfCombatSeconds += dt;
       if (clampPips(modifiers.healthPips + rot) < 0) {
         record.outOfCombatSeconds = 0;
@@ -2177,6 +2235,7 @@ export class MatchSimulation {
     this.#fireStatusChanges();
     this.#awardKillMorale();
     this.#settleMoving();
+    this.#tallyAggression();
     this.#removeLeaving();
     this.#priestWave();
     // After every death this step, so two teams wiped in it both lose.
@@ -2458,6 +2517,7 @@ export class MatchSimulation {
       isBot: (participantId) =>
         this.#participants.get(participantId)?.behaviour?.kind === "play-build",
       calledTargetId: this.#calledTargets.get(record.combatant.team),
+      sees: (point) => hasLineOfSight(record.position, point, this.#walls),
     });
     this.setInputDirection(record.id, intent.moveDirection);
     const following = record.followGoal !== undefined;
@@ -4253,31 +4313,82 @@ export class MatchSimulation {
     this.#score = addKill(this.#score, scoringTeam);
   }
 
-  /** Every team that had members: who is alive and its total morale (#846); creatures are neither (#1052). */
+  /**
+   * Every team that had members, or has a Guild Lord (#1222): who is alive,
+   * its total morale (#846), and its lord's and its aggression; creatures
+   * are not members (#1052).
+   */
   #standing(): MatchStanding {
-    const byTeam = new Map<number, TeamStanding>(
-      [...this.#teams].map((team) => [
-        team,
-        { living: 0, morale: 0, priestLives: this.#priestLives(team) },
-      ]),
+    const teams = new Set([...this.#teams, ...this.#guildLordTeams]);
+    const members = new Map<number, { living: number; morale: number; raisable: number }>(
+      [...teams].map((team) => [team, { living: 0, morale: 0, raisable: 0 }]),
     );
     for (const record of this.#participants.values()) {
       if (!countsForTeam(record)) {
         continue;
       }
       const { combatant } = record;
-      const team = byTeam.get(combatant.team) ?? {
-        living: 0,
-        morale: 0,
-        priestLives: this.#priestLives(combatant.team),
-      };
-      byTeam.set(combatant.team, {
-        living: team.living + (combatant.dead ? 0 : 1),
-        morale: team.morale + combatant.morale,
-        priestLives: team.priestLives,
+      const team = members.get(combatant.team) ?? { living: 0, morale: 0, raisable: 0 };
+      team.living += combatant.dead ? 0 : 1;
+      team.morale += combatant.morale;
+      team.raisable += combatant.dead && combatant.morale <= MORALE_FLOOR ? 0 : 1;
+      members.set(combatant.team, team);
+    }
+    const byTeam = new Map<number, TeamStanding>();
+    for (const [team, { living, morale, raisable }] of members) {
+      byTeam.set(team, {
+        living,
+        morale,
+        priestLives: this.#priestLives(team),
+        guildLordLives: this.#guildLordLives(team),
+        beyondRaising: this.#teams.has(team) && raisable === 0,
+        aggression: this.#aggression.get(team) ?? 0,
       });
     }
     return { byTeam };
+  }
+
+  /** Whether `team`'s Guild Lord is in the match and alive (#1222). */
+  #guildLordLives(team: number): boolean {
+    const lord = this.#participants.get(guildLordId(team));
+    return lord !== undefined && !lord.combatant.dead && !this.#leaving.has(lord.id);
+  }
+
+  /** Whether the shrines raise with no priest: a Guild Battle's (#1222). */
+  #shrinesRaiseAlone(): boolean {
+    return this.#matchRules?.victory === "guild-battle";
+  }
+
+  /**
+   * Add this step's damage to a Guild Lord to the aggression of the team
+   * that dealt it (#1222, GW1): direct damage after armor, a creature's
+   * for its own team, which is its owner's. Degeneration is not counted,
+   * nor life stealing, which is not damage. Before the step's leavers go,
+   * so a creature's last blow still has a team.
+   */
+  #tallyAggression(): void {
+    if (this.#guildLordTeams.size === 0) {
+      return;
+    }
+    for (const entry of [...this.#log, ...this.#reaped]) {
+      if (entry.cause === "degeneration" || entry.sourceId === undefined) {
+        continue;
+      }
+      const team = this.#participants.get(entry.sourceId)?.combatant.team;
+      if (team === undefined) {
+        continue;
+      }
+      for (const event of entry.events) {
+        const lord = this.#participants.get(event.targetId);
+        if (
+          event.kind === "damage" &&
+          lord?.creature?.kind === "guild-lord" &&
+          lord.combatant.team !== team
+        ) {
+          this.#aggression.set(team, (this.#aggression.get(team) ?? 0) + event.amount);
+        }
+      }
+    }
   }
 
   /** Whether `team`'s priest is in the match and alive (#1186). */
@@ -4292,6 +4403,7 @@ export class MatchSimulation {
    * `MORALE_FLOOR` on its shrine, at full Health and Energy, their morale
    * kept. After the step's deaths, so a priest killed this tick raises
    * nobody. A creature is never raised, a companion neither.
+   * In a Guild Battle (#1222) every shrine raises, with no priest at all.
    */
   #priestWave(): void {
     const due = (this.#priestWaves + 1) * PRIEST_WAVE_SECONDS;
@@ -4299,8 +4411,9 @@ export class MatchSimulation {
       return;
     }
     this.#priestWaves += 1;
+    const alone = this.#shrinesRaiseAlone();
     for (const shrine of this.#shrines) {
-      if (!this.#priestLives(shrine.team)) {
+      if (!alone && !this.#priestLives(shrine.team)) {
         continue;
       }
       const events: CombatEvent[] = [];
@@ -4329,7 +4442,7 @@ export class MatchSimulation {
         tick: this.#tick,
         atSeconds: this.#elapsedSeconds,
         cause: "skill",
-        sourceId: priestId(shrine.team),
+        sourceId: alone ? undefined : priestId(shrine.team),
         skillId: undefined,
         weaponId: undefined,
         attributeId: undefined,
@@ -4381,9 +4494,13 @@ export class MatchSimulation {
 
   private advanceMovement(record: ParticipantRecord, direction: Vec2, dt: number): void {
     // A spirit stands where it was planted (#1064), a priest on its
-    // shrine (#1186): nothing moves it, and bodies are pushed out of it,
+    // shrine (#1186), a Guild Lord at its post (#1222): nothing moves it, and bodies are pushed out of it,
     // never it out of them.
-    if (record.creature?.kind === "spirit" || record.creature?.kind === "priest") {
+    if (
+      record.creature?.kind === "spirit" ||
+      record.creature?.kind === "priest" ||
+      record.creature?.kind === "guild-lord"
+    ) {
       return;
     }
     // Where it pushes, even into a wall.

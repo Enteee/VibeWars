@@ -120,6 +120,7 @@ export {
   ANNIHILATION_MATCH_RULES,
   DEATH_PENALTY_PERCENT,
   DP_GRACE_AFTER_RES_SECONDS,
+  GUILD_BATTLE_MATCH_RULES,
   KILL_COUNT_MATCH_RULES,
   KILL_MORALE_PERCENT,
   MATCH_IN_PROGRESS,
@@ -179,6 +180,8 @@ export { companionSkills, PET_DEATH_GRACE_SECONDS } from "./match/companions.js"
 export { facingToward, spawnFacing } from "./match/facing.js";
 export type { Shrine } from "./match/priest.js";
 export { PRIEST_SKILL_ID, priestId } from "./match/priest.js";
+export type { GuildLord } from "./match/guild-lord.js";
+export { GUILD_LORD_HEALTH, guildLordId } from "./match/guild-lord.js";
 export type { IntentRefusal, MatchIntent } from "./match/apply-intent.js";
 export { applyIntent } from "./match/apply-intent.js";
 export { MAX_CATCHUP_SECONDS, drainAccumulator } from "./match/accumulator.js";

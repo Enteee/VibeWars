@@ -19,6 +19,7 @@ import {
   type PlayerBuild,
   type ProfessionId,
   type Segment,
+  type GuildLord,
   type Shrine,
 } from "@vibewars/game-core";
 import {
@@ -109,8 +110,10 @@ export interface HostMap {
   readonly walls: readonly Segment[];
   readonly bounds: { readonly width: number; readonly height: number };
   readonly spawns: readonly SpawnPoint[];
-  /** Its resurrection shrines (#1186), `[]` but on a Priest Annihilation map. */
+  /** Its resurrection shrines (#1186), `[]` but on a Priest Annihilation or Guild Battle map. */
   readonly shrines: readonly Shrine[];
+  /** Its Guild Lords (#1222), `[]` but on a Guild Battle map. */
+  readonly guildLords: readonly GuildLord[];
 }
 
 export interface MatchHostOptions {
@@ -221,6 +224,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     walls: map.walls,
     bounds: map.bounds,
     shrines: map.shrines,
+    guildLords: map.guildLords,
   });
   const seats = new Map<string, Seat>();
   const seatOfPeer = new Map<string, Seat>();
