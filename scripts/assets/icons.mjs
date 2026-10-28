@@ -1287,19 +1287,19 @@ const skillGlyph = {
   // Three rocks falling in a staggered line, a trail behind each: the shower (#1214).
   "meteor-trio": () =>
     [
-      [17, 7],
-      [11, 12.5],
-      [5.5, 18],
+      [18, 8],
+      [13, 12],
+      [8, 16],
     ]
       .map(
         ([x, y]) =>
-          `<circle cx="${String(x)}" cy="${String(y)}" r="2.8" fill="${C.ink}"/>` +
+          `<circle cx="${String(x)}" cy="${String(y)}" r="2.6" fill="${C.ink}"/>` +
           inkLine(
-            `M${String((x ?? 0) - 3)} ${String((y ?? 0) - 3)}L${String((x ?? 0) - 6)} ${String((y ?? 0) - 6)}`,
+            `M${String((x ?? 0) - 2.5)} ${String((y ?? 0) - 2.5)}L${String((x ?? 0) - 4.5)} ${String((y ?? 0) - 4.5)}`,
             2,
           ),
       )
-      .join("") + inkLine("M3 21.5H21", 2),
+      .join("") + inkLine("M4 21H20", 2),
   // A heal cross inside the enchantment's ring: the ring is spent for health (#1214).
   "ring-heal": () =>
     `<circle cx="12" cy="12" r="9" ${stroke(C.ink, 2)}/>` +
