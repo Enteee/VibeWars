@@ -918,7 +918,9 @@ uppercase field label is styled so by CSS; the words themselves stay sentence ca
 
 ![Title bar, three variants](titlebar-study.svg)
 
-Study, not decided. The operator likes the top bar and dislikes the header on
+**Decided: A, the plain breadcrumb** (the operator's pick, #1251; built in
+issue 1272). B and C stay on the sheet as the road not taken. The operator
+likes the top bar and dislikes the header on
 every other menu screen, so the study moves each screen's title and controls
 into the bar as a breadcrumb. The Team list moves under the character on the
 main menu. Each variant is drawn on the same five screens (main menu, Options,
