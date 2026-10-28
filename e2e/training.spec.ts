@@ -1366,6 +1366,8 @@ test("(42) Symbol of Wrath strikes the dummy it was cast at once a second, five 
 test("(44) a burning dummy wears flames on its top edge until the burning ends (#1138)", async ({
   page,
 }) => {
+  // A walk and a wait for a still camera (#721), then 6 s of burning.
+  test.setTimeout(90_000);
   // Frozen flames, so a shot of them holds still.
   await page.emulateMedia({ reducedMotion: "reduce" });
   const canvas = await openTraining(page);
@@ -1375,6 +1377,9 @@ test("(44) a burning dummy wears flames on its top edge until the burning ends (
     .click();
   await expectFilledSlots(page, ["Fireball", "Searing Flames"]);
   await takeControl(page);
+  // The view follows you (#721): nearer the dummy, it is on the stage.
+  await wholeMap(page);
+  await walkTo(page, canvas, { x: 250, y: 210 });
   await page.mouse.move(1, 1);
   // Targeted first, so its target ring is in the before shot too.
   await page.keyboard.press("Tab");
