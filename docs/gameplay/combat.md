@@ -1383,6 +1383,11 @@ and stays in the match: its corpse cannot be exploited, and an ordinary
 resurrection is refused ("That cannot be revived that way."). Its
 death disables its owner's whole bar for 10…4 s by Beast Mastery 0…12
 (unverified), unless it was resurrected less than 15 s before.
+With the death penalty on, the wolf has morale by the players' rules
+(#1133): −15% of its 480 Health a death, to −60%, none within 5 s of
+a resurrection, +2% back for each foe death while it lives, a morale
+boost too. It keeps its morale through its owner's respawn, loses it on
+a reset, and its death gives its foes nothing.
 **Comfort Animal** (Beast Mastery, 10 energy, 1 s, 1 s recharge, cast
 range) acts on your own wolf whatever you have selected: it heals a
 living one for 20…87 and raises a dead one with 10…48% Health; with no
