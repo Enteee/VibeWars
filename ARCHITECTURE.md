@@ -230,6 +230,11 @@ match, and no server is involved. Each base path gets its own storage
 namespace (`storage/namespace.ts`), so the two builds on one origin never
 read each other's saves. Local play is `pnpm run dev`.
 
+A deploy deletes the previous build's chunks, so a tab left open across it
+would fail at its next lazy import. Each build carries its commit as an id
+and serves it as `build.json` (#1268); a tab that sees another id says so,
+and reloads itself once the player is back on the menu (`build-check.ts`).
+
 ## Two rules worth stating plainly
 
 **The client sends intent, never outcomes** (brief §12, §32, §33). It may

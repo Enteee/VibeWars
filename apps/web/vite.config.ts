@@ -1,6 +1,6 @@
 import { fileURLToPath } from "node:url";
 
-import { defineConfig } from "vite";
+import { defineConfig, type Plugin } from "vite";
 
 import { licencesPlugin } from "./plugins/licences.js";
 
@@ -13,6 +13,30 @@ if (TRANSPORT !== undefined && TRANSPORT !== "trystero" && TRANSPORT !== "broadc
   );
 }
 
+// This build's id (#1268): `pages.yml` passes the commit it builds, e2e its
+// own. Without one it is `dev`, which never checks for a newer build.
+const BUILD = process.env.VIBEWARS_BUILD ?? "dev";
+if (!/^[\w.-]+$/.test(BUILD)) {
+  throw new Error(
+    `VIBEWARS_BUILD must be letters, digits, ".", "_" or "-", got ${JSON.stringify(BUILD)}`,
+  );
+}
+
+/** `build.json` beside `index.html`: the id a running tab compares its own to. */
+function buildFile(): Plugin {
+  return {
+    name: "vibewars-build-file",
+    apply: "build",
+    generateBundle() {
+      this.emitFile({
+        type: "asset",
+        fileName: "build.json",
+        source: `${JSON.stringify({ build: BUILD })}\n`,
+      });
+    },
+  };
+}
+
 /**
  * The client is a plain ESM app — no framework. The HTML/CSS shell owns menus
  * and build editors; Phaser owns only the game viewport (brief §21).
@@ -22,8 +46,9 @@ export default defineConfig({
   // (`/VibeWars/`, `/VibeWars/next/`). Read at config time, so it is not a
   // `VITE_` variable. Dev and the server-served build stay at the root.
   base: process.env.VIBEWARS_BASE ?? "/",
+  define: { __VIBEWARS_BUILD__: JSON.stringify(BUILD) },
   // Every bundled npm package's licence, for Options (#1242, ADR-0039).
-  plugins: [licencesPlugin()],
+  plugins: [licencesPlugin(), buildFile()],
   build: {
     outDir: "dist",
     emptyOutDir: true,
