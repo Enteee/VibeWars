@@ -71,6 +71,10 @@ const BLEEDER = player("bleeder", {
   statuses: [{ id: "bleeding", endsAt: 10, durationSeconds: 10, casterId: "foe" }],
   healthPips: -3,
 });
+const WOLF = player("me/c1", {
+  name: "Wolf",
+  creature: { ownerId: "me", kind: "pet", look: "beast", mode: "fight" },
+});
 
 describe("partyRows (#1055)", () => {
   it("lists you first, then your team in seat order, and never a foe", () => {
@@ -104,12 +108,22 @@ describe("partyRows (#1055)", () => {
     expect(partyRows(match([ME, KAJA], "spectator"))).toEqual([]);
   });
 
-  it("never lists a creature, even your own", () => {
+  it("never lists a minion, even your own", () => {
     const minion = player("minion", {
-      creature: { ownerId: "me", kind: "minion", look: "bone-minion" },
+      creature: { ownerId: "me", kind: "minion", look: "bone-minion", mode: null },
     });
     expect(partyRows(match([ME, minion]))).toEqual([]);
     expect(partyRows(match([ME, minion, KAJA])).map((row) => row.id)).toEqual(["me", "kaja"]);
+  });
+
+  it("lists your own pet under you, in its mode, but not a teammate's (#1110)", () => {
+    const kajaWolf = player("kaja/c1", {
+      creature: { ownerId: "kaja", kind: "pet", look: "beast", mode: "guard" },
+    });
+    const rows = partyRows(match([KAJA, kajaWolf, ME, WOLF]));
+    expect(rows.map((row) => row.id)).toEqual(["me", "me/c1", "kaja"]);
+    expect(rows.map((row) => row.companionMode)).toEqual([undefined, "fight", undefined]);
+    expect(partyRows(match([ME, WOLF])).map((row) => row.id)).toEqual(["me", "me/c1"]);
   });
 });
 
@@ -144,7 +158,11 @@ class FakeElement {
   };
   readonly listeners = new Map<string, (event: FakeEvent) => void>();
 
-  readonly setAttribute = (): void => undefined;
+  readonly attributes = new Map<string, string>();
+
+  readonly setAttribute = (name: string, value: string): void => {
+    this.attributes.set(name, value);
+  };
 
   readonly addEventListener = (type: string, listener: (event: FakeEvent) => void): void => {
     this.listeners.set(type, listener);
@@ -177,6 +195,7 @@ class FakeElement {
 describe("createPartyWindow (#1055)", () => {
   let parent: FakeElement;
   let targeted: string[];
+  let commanded: [string, string][];
   let party: PartyWindow;
 
   const panel = (): FakeElement => {
@@ -191,8 +210,13 @@ describe("createPartyWindow (#1055)", () => {
   beforeEach(() => {
     parent = new FakeElement();
     targeted = [];
+    commanded = [];
     vi.stubGlobal("document", { createElement: () => new FakeElement() });
-    party = createPartyWindow(parent as unknown as HTMLElement, (id) => targeted.push(id));
+    party = createPartyWindow(
+      parent as unknown as HTMLElement,
+      (id) => targeted.push(id),
+      (id, mode) => commanded.push([id, mode]),
+    );
   });
 
   afterEach(() => {
@@ -255,6 +279,40 @@ describe("createPartyWindow (#1055)", () => {
     party.update(match(team(9)));
     expect(panel().classes.has("is-compact")).toBe(true);
     expect(panel().children).toHaveLength(9);
+  });
+
+  it("gives your pet a row under yours, its mode lit, its buttons ordering it (#1110)", () => {
+    party.update(match([ME, WOLF]));
+    expect(panel().hidden).toBe(false);
+    const [, block] = panel().children;
+    const [row, orders] = block?.children ?? [];
+    expect(row?.dataset.member).toBe("me/c1");
+    const buttons = orders?.children ?? [];
+    expect(buttons.map((button) => button.textContent)).toEqual(["Guard", "Fight", "Heel"]);
+    expect(buttons.map((button) => button.classes.has("is-lit"))).toEqual([false, true, false]);
+    expect(buttons[1]?.attributes.get("aria-pressed")).toBe("true");
+    buttons[2]?.listeners.get("click")?.({ preventDefault: () => undefined });
+    expect(commanded).toEqual([["me/c1", "heel"]]);
+    row?.listeners.get("click")?.({ preventDefault: () => undefined });
+    expect(targeted).toEqual(["me/c1"]);
+    party.update(
+      match([
+        ME,
+        { ...WOLF, creature: { ownerId: "me", kind: "pet", look: "beast", mode: "heel" } },
+      ]),
+    );
+    expect(buttons.map((button) => button.classes.has("is-lit"))).toEqual([false, false, true]);
+  });
+
+  it("shows a dead pet's word, and its buttons still order it (#1110)", () => {
+    party.update(match([ME, { ...WOLF, dead: true, health: 0 }]));
+    const [, block] = panel().children;
+    const [row, orders] = block?.children ?? [];
+    const [, bar, dead] = row?.children ?? [];
+    expect(bar?.hidden).toBe(true);
+    expect(dead?.hidden).toBe(false);
+    orders?.children[0]?.listeners.get("click")?.({ preventDefault: () => undefined });
+    expect(commanded).toEqual([["me/c1", "guard"]]);
   });
 
   it("is gone once disposed", () => {

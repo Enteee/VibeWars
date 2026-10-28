@@ -212,6 +212,19 @@ import { steerAround } from "./steering.js";
 export type CreatureKind = "spirit" | "minion" | "pet";
 
 /**
+ * How a companion fights (#1110, GW1 pet control): game-protocol's
+ * `CompanionMode`, restated (ADR-0001). Guard bites what its owner
+ * attacks, Fight what its owner has selected, Heel nothing.
+ */
+export type CompanionMode = "guard" | "fight" | "heel";
+
+/** What an owner may tell a creature of theirs (#1046): game-protocol's `CreatureOrder`. */
+export interface CreatureOrder {
+  readonly kind: "mode";
+  readonly mode: CompanionMode;
+}
+
+/**
  * What a creature looks like (#1162): the glyph on its plate. The wire mirrors it as `CREATURE_LOOKS`, a test holding the two.
  */
 export const CREATURE_LOOKS = ["beast", "bone-minion", "bone-horror", "spirit"] as const;
@@ -249,6 +262,16 @@ export interface Creature {
    * `undefined`: summoned by a cast.
    */
   readonly companionSkillId: string | undefined;
+  /**
+   * Its owner's last order (#1110): kept through its death, Comfort Animal
+   * and its owner's respawn. Only a companion takes orders.
+   */
+  mode: CompanionMode;
+}
+
+/** A companion's mode (#1110); `null` for a creature that takes no orders. */
+export function companionMode(creature: Creature): CompanionMode | null {
+  return creature.companionSkillId === undefined ? null : creature.mode;
 }
 
 /** A minion's own rot in pips (#467): 0 for anyone else. */
@@ -962,6 +985,7 @@ export class MatchSimulation {
               ? 0
               : resolveMagnitude(template.ownerDisableOnDeath, owner.combatant),
           companionSkillId: companion ? skillId : undefined,
+          mode: "guard",
         },
       });
     }
@@ -1542,6 +1566,29 @@ export class MatchSimulation {
   }
 
   /**
+   * `ownerId` tells its companion `creatureId` how to fight (#1110), from
+   * the party window. Anything but the owner's own companion, a minion
+   * above all, is refused quietly; a dead owner may still order. Heel
+   * drops the attack at once, mid-swing or not. Whether it was taken.
+   */
+  public commandCreature(ownerId: string, creatureId: string, order: CreatureOrder): boolean {
+    const record = this.#participants.get(creatureId);
+    const creature = record?.creature;
+    if (
+      record === undefined ||
+      creature?.ownerId !== ownerId ||
+      creature.companionSkillId === undefined
+    ) {
+      return false;
+    }
+    creature.mode = order.mode;
+    if (order.mode === "heel") {
+      record.combatant.attack = undefined;
+    }
+    return true;
+  }
+
+  /**
    * Abandon `record`'s cast and log it as `"cancelled"`. An instant skill
    * has no cast to give up, so it is left to resolve.
    */
@@ -1702,7 +1749,7 @@ export class MatchSimulation {
    * `PET_ATTACK_SECONDS` is it, replacing one still waiting, whose energy
    * is lost. No cast: the owner's cast, aftercast and swing go on. With a
    * living foe selected, the pet goes for it, as when its owner attacks
-   * one.
+   * one, unless it is on Heel, which never engages (#1110).
    */
   #armPetAttack(record: ParticipantRecord, skill: Skill, key: string): void {
     const pet = this.#companionOf(record);
@@ -1717,6 +1764,7 @@ export class MatchSimulation {
       foe !== undefined &&
       !foe.combatant.dead &&
       foe.combatant.team !== record.combatant.team &&
+      pet.creature?.mode !== "heel" &&
       pet.behaviour?.kind === "follow-and-attack" &&
       distance(foe.position, pet.position) <= pet.behaviour.aggroUnits
     ) {

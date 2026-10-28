@@ -1425,6 +1425,20 @@ brings it back. It outlives its owner's death and leaves with its
 owner. A build change that keeps Charm Animal keeps the wolf as it is;
 one that drops it sends it away; one that gains it brings a fresh one.
 
+**Guard, Fight and Heel** (#1110). Your wolf has a row under yours in
+the party window, with three buttons; the lit one is its mode. Clicking
+its name or bar targets it. **Guard**, where every wolf starts, is the
+behaviour above: it bites what you attack. On **Fight** it goes for the
+foe you have selected, attacking or not, within 700 of it, and switches
+with your selection; with yourself, an ally, a corpse or nobody selected
+it keeps its foe. On **Heel** it drops its attack at once, mid-bite or
+not, keeps within 109 of you and fights nobody, not even what hits it,
+nor a foe a pet attack would send it at. The leash is the same in all
+three. A dead wolf's buttons still work, and so do a dead owner's. The
+mode outlasts the wolf's death, Comfort Animal and your respawn; a
+build change that keeps the wolf keeps it, and a fresh wolf starts on
+Guard. Only you can order your wolf: the host drops anyone else's order.
+
 **Pet attacks** (#1107) are Beast Mastery skills the owner uses and the
 wolf lands. The owner pays and the skill starts recharging, but there
 is no cast: it can be used mid-cast or mid-swing and stops neither. It

@@ -144,6 +144,8 @@ export { DENSE_FIELD, runTickBench, tickStats } from "./tools/tick-bench.js";
 export type {
   Creature,
   CreatureKind,
+  CompanionMode,
+  CreatureOrder,
   CreatureLook,
   GroundEffect,
   MatchSimulationOptions,
@@ -158,6 +160,7 @@ export {
   CREATURE_LOOKS,
   loadoutSpec,
   MAX_CREATURES,
+  companionMode,
   MAX_GROUND_EFFECTS,
   MatchSimulation,
 } from "./match/simulation.js";

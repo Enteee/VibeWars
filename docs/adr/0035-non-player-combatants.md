@@ -102,3 +102,7 @@ built for players and is the larger, safe value.
 - A creature's blow may carry its owner's skill (#1046): a pet attack
   arms the companion's next blow, which resolves as the attack skill it
   is, with the pet as the attacker and its snapshotted ranks.
+- Orders reach a creature through one `command` intent (#1110), on the
+  `"intent"` channel, keyed on its `ownerId`: the host drops an order
+  from anyone but the owner, and for anything but a companion. Its
+  `order` is a union, so a hero's flag joins it without a new channel.

@@ -278,3 +278,42 @@ describe("weapon sets (#489)", () => {
     expect(self(remote)?.energy).toBe(0);
   });
 });
+
+describe("pet orders (#1110)", () => {
+  const TICK = 1 / RULESET.tickRateHz;
+
+  /** The Ranger/Mesmer starter, with Charm Animal for Savage Shot. */
+  function houndmaster(): PeerHello {
+    const build = starterBuild("Ranger/Mesmer");
+    return hello({
+      build: toJson({ ...build, skillBar: ["ranger.charm-animal", ...build.skillBar.slice(1)] }),
+    });
+  }
+
+  it("takes the owner's order for their wolf, and drops anyone else's", async () => {
+    const match = startMatch();
+    const { connection: owner } = await match.join(houndmaster());
+    const { connection: other } = await match.join();
+    await match.step(TICK);
+    const wolf = owner
+      .getSnapshot()
+      .players.find((player) => player.creature?.ownerId === owner.selfSessionId);
+    expect(wolf?.creature).toMatchObject({ kind: "pet", mode: "guard" });
+    const heel = {
+      kind: "command",
+      creatureId: wolf?.sessionId ?? "",
+      order: { kind: "mode", mode: "heel" },
+    } as const;
+
+    other.sendIntent(heel);
+    await settle();
+    await match.step(TICK);
+    expect(playerIn(owner.getSnapshot(), heel.creatureId)?.creature?.mode).toBe("guard");
+
+    owner.sendIntent(heel);
+    await settle();
+    await match.step(TICK);
+    expect(playerIn(owner.getSnapshot(), heel.creatureId)?.creature?.mode).toBe("heel");
+    expect(playerIn(other.getSnapshot(), heel.creatureId)?.creature?.mode).toBe("heel");
+  });
+});

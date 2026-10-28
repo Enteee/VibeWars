@@ -4227,6 +4227,42 @@ body:has(#app > .chat) .now-playing {
   border-color: #ffd866;
 }
 
+/* Your pet's row and its orders (#1110), one block in the panel. */
+.party-companion {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.party-commands {
+  display: flex;
+  gap: 0.2rem;
+  padding: 0 0.25rem 0.15rem;
+}
+
+.party-command {
+  flex: 1;
+  padding: 0.05rem 0;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+
+.party-command:hover {
+  border-color: var(--ink);
+}
+
+/* The mode it is in, inverted: shape and value, not the target colour. */
+.party-command.is-lit,
+.party-command.is-lit:hover {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--bg);
+}
+
 .party-row-header {
   display: flex;
   align-items: center;
