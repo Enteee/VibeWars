@@ -35,7 +35,7 @@ export interface PlayerArming {
   /**
    * Why the build cannot be tested, or `undefined` when it can. An
    * illegal build gets an empty bar and stands still: the server swaps
-   * in the house loadout instead, but here that would quietly test a
+   * in a starter build instead, but here that would quietly test a
    * build the player never wrote.
    */
   readonly problem: string | undefined;

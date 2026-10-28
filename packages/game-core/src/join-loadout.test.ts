@@ -2,11 +2,27 @@ import { describe, expect, it } from "vitest";
 
 import { defaultBuildEquipment, type PlayerBuild } from "./build.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "./ruleset.js";
-import { wieldsFor } from "./equipment/weapons.js";
-import { HOUSE_LOADOUT, resolveJoinLoadout } from "./join-loadout.js";
-import { getSkill } from "./skills/catalog.js";
+import { loadoutOf, resolveJoinLoadout } from "./join-loadout.js";
+import { STARTER_BUILDS } from "./starter-builds.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1.attributes;
+
+/** A `random` that always says `value`. */
+const always = (value: number) => () => value;
+
+/** A `random` that fails the test if called: a legal claim never rolls. */
+const never = (): number => {
+  throw new Error("random was called");
+};
+
+/** The starter build at `index`. */
+function starter(index: number): PlayerBuild {
+  const build = STARTER_BUILDS[index];
+  if (build === undefined) {
+    throw new Error(`no starter build ${String(index)}`);
+  }
+  return build;
+}
 
 /** A legal elementalist/monk: both professions' attributes, both their skills. */
 const LEGAL: PlayerBuild = {
@@ -22,8 +38,8 @@ const LEGAL: PlayerBuild = {
 };
 
 describe("resolveJoinLoadout", () => {
-  it("plays a legal build as claimed", () => {
-    const { loadout, refused } = resolveJoinLoadout(LEGAL, RULES);
+  it("plays a legal build as claimed, without rolling", () => {
+    const { loadout, refused } = resolveJoinLoadout(LEGAL, RULES, never);
     expect(refused).toBeUndefined();
     expect(loadout.skillBar).toEqual(LEGAL.skillBar);
     expect(loadout.primaryProfession).toBe("elementalist");
@@ -34,37 +50,45 @@ describe("resolveJoinLoadout", () => {
 
   it("keeps the bar's gaps where the build has them, so a key always means its slot (#347)", () => {
     const gappy = [null, "elementalist.fireball", null, null, null, null, null, null];
-    const { loadout, refused } = resolveJoinLoadout({ ...LEGAL, skillBar: gappy }, RULES);
+    const { loadout, refused } = resolveJoinLoadout({ ...LEGAL, skillBar: gappy }, RULES, never);
     expect(refused).toBeUndefined();
     expect(loadout.skillBar).toEqual(gappy);
   });
 
-  it("gives the house loadout for no build, without calling it a refusal", () => {
-    expect(resolveJoinLoadout(undefined, RULES)).toEqual({
-      loadout: HOUSE_LOADOUT,
+  it("gives the starter build random picks for no build, without calling it a refusal (#852)", () => {
+    expect(resolveJoinLoadout(undefined, RULES, always(0.5))).toEqual({
+      loadout: loadoutOf(starter(2)),
       refused: undefined,
     });
+    expect(resolveJoinLoadout(undefined, RULES, always(0)).loadout).toEqual(loadoutOf(starter(0)));
   });
 
-  it("gives the house loadout for a malformed, an illegal or an empty build, and says why", () => {
-    expect(resolveJoinLoadout({ name: 3 }, RULES)).toEqual({
-      loadout: HOUSE_LOADOUT,
+  it("gives the starter build random picks for a malformed, an illegal or an empty build, and says why (#852)", () => {
+    // 0.5 picks the third of five.
+    const middle = loadoutOf(starter(2));
+    expect(resolveJoinLoadout({ name: 3 }, RULES, always(0.5))).toEqual({
+      loadout: middle,
       refused: { kind: "malformed" },
     });
     const illegal = resolveJoinLoadout(
       { ...LEGAL, skillBar: ["warrior.swift-chop", ...LEGAL.skillBar.slice(1)] },
       RULES,
+      always(0.5),
     );
-    expect(illegal.loadout).toBe(HOUSE_LOADOUT);
+    expect(illegal.loadout).toEqual(middle);
     expect(illegal.refused?.kind).toBe("illegal");
-    const empty = resolveJoinLoadout({ ...LEGAL, skillBar: Array(8).fill(null) }, RULES);
+    const empty = resolveJoinLoadout(
+      { ...LEGAL, skillBar: Array(8).fill(null) },
+      RULES,
+      always(0.5),
+    );
     expect(empty).toEqual({
-      loadout: HOUSE_LOADOUT,
+      loadout: middle,
       refused: { kind: "empty-bar", build: expect.objectContaining({ name: "Flame Caller" }) },
     });
   });
 
-  it("gives the house loadout for a bar with two elites (#459)", () => {
+  it("gives a starter build for a bar with two elites (#459)", () => {
     const twoElites = resolveJoinLoadout(
       {
         ...LEGAL,
@@ -75,39 +99,16 @@ describe("resolveJoinLoadout", () => {
         equipment: defaultBuildEquipment("warrior"),
       },
       RULES,
+      always(0),
     );
-    expect(twoElites.loadout).toBe(HOUSE_LOADOUT);
+    expect(twoElites.loadout).toEqual(loadoutOf(starter(0)));
     expect(twoElites.refused?.kind).toBe("illegal");
   });
 });
 
-describe("HOUSE_LOADOUT", () => {
-  it("holds no elite, so it is legal under the one-elite rule (#459)", () => {
-    for (const id of HOUSE_LOADOUT.skillBar) {
-      expect(id === null ? false : getSkill(id)?.elite, String(id)).toBe(false);
-    }
-  });
-
-  it("regenerates 4 energy pips, a caster's, though it wears a warrior's kit (#502)", () => {
-    expect(HOUSE_LOADOUT.primaryProfession).toBe("warrior");
-    expect(HOUSE_LOADOUT.baseEnergyPips).toBe(4);
-  });
-
-  it("has no dead slot: every attack skill on it can be used with the house weapon (#445)", () => {
-    const weapon = HOUSE_LOADOUT.equipment.weaponSets[0].mainHand.weaponId;
-    for (const id of HOUSE_LOADOUT.skillBar) {
-      const rule = id === null ? undefined : getSkill(id)?.attack;
-      if (rule !== undefined) {
-        expect(wieldsFor(weapon, rule.weapon), `${String(id)} with ${weapon}`).toBe(true);
-      }
-    }
-  });
-
-  it("has every skill it lists, and an interrupt", () => {
-    const skills = HOUSE_LOADOUT.skillBar.map((id) => (id === null ? undefined : getSkill(id)));
-    expect(skills).not.toContain(undefined);
-    expect(
-      skills.some((skill) => skill?.effects.some((effect) => effect.kind === "interrupt")),
-    ).toBe(true);
+describe("loadoutOf", () => {
+  it("regenerates the primary's energy pips (#502)", () => {
+    expect(loadoutOf(LEGAL).baseEnergyPips).toBe(4);
+    expect(loadoutOf({ ...LEGAL, primaryProfession: "warrior" }).baseEnergyPips).toBe(2);
   });
 });

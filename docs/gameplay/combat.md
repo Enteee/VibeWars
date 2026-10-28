@@ -602,8 +602,8 @@ Shot, so far. In the build
 editor, placing a second elite takes the first one's place on the bar
 and says so ("Broad Head Arrow replaced Barrage: only one elite skill per
 bar."); the library's Elite toggle lists only elites. A bar with two
-elites, from an import or storage, cannot be saved, and a match plays the
-house loadout instead.
+elites, from an import or storage, cannot be saved, and a match plays a
+starter build instead (#852).
 
 **Stances** are yours alone, and only one is up at a time. Using a
 stance ends the one you are in, the same one included, which restarts

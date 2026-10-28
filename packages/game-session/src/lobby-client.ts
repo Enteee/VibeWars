@@ -81,7 +81,7 @@ export interface JoinLobbyOptions {
   readonly transport: Transport;
   readonly code: string;
   readonly name: string;
-  /** The selected character's name and professions; `null` brings the house loadout. */
+  /** The selected character's name and professions; `null` brings a starter build. */
   readonly character: LobbyCharacter | null;
   /** How long to wait for a state that lists this player. */
   readonly timeoutMs: number;
