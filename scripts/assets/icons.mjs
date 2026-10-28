@@ -1133,6 +1133,20 @@ const skillGlyph = {
   speed: () => inkLine("M4 4L10 12L4 20M11 4L17 12L11 20", 2.5),
   slow: () => inkLine("M20 4L14 12L20 20M13 4L7 12L13 20", 2.5),
   dash: () => inkLine("M3 7H11M2 12H9M3 17H11", 2) + inkLine("M13 4L21 12L13 20", 2.6),
+  // A row of teeth rising from the ground: a trap's jaws, ready to bite (#1129).
+  jaws: () =>
+    inkLine("M3 19.5H21", 2.2) + inkFill("M3.5 18.5L6 6.5L9 18.5L12 6.5L15 18.5L18 6.5L20.5 18.5Z"),
+  // A spell, and arcs of it carried on: Arcane Echo copies the next spell (#1136).
+  "echo-spell": () =>
+    `<circle cx="6.5" cy="12" r="3.6" fill="${C.ink}"/>` +
+    inkLine("M11.5 7.5A6 6 0 0 1 11.5 16.5M15.5 4.5A10 10 0 0 1 15.5 19.5", 2.2),
+  // A plain skill square, and three arcs: Echo copies the next skill of any type (#1136).
+  "echo-skill": () =>
+    `<rect x="3" y="8.5" width="7" height="7" rx="1" fill="${C.ink}"/>` +
+    inkLine(
+      "M12.5 8A5 5 0 0 1 12.5 16M16 5.5A8.5 8.5 0 0 1 16 18.5M19.5 3.5A12 12 0 0 1 19.5 20.5",
+      2,
+    ),
   // The resurrect figure in a ring: a signet's seal, one use (#1081).
   "resurrect-seal": () =>
     `<circle cx="10.5" cy="10.5" r="8" ${stroke(C.ink, 2)}/>` + smallFigure(10.5, 10.5, 0.55),
