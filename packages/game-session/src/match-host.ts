@@ -11,6 +11,7 @@ import {
   resolveLoadout,
   spawnFacing,
   swingProgress,
+  type MatchMode,
   type MatchRules,
   type Participant,
   type ProfessionId,
@@ -102,6 +103,8 @@ export interface HostMap {
   readonly walls: readonly Segment[];
   readonly bounds: { readonly width: number; readonly height: number };
   readonly spawns: readonly SpawnPoint[];
+  /** The mode its match plays (#1185): the caller's rules are `MATCH_MODES[mode]`. */
+  readonly mode: MatchMode;
 }
 
 export interface MatchHostOptions {
@@ -458,6 +461,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       rejoinToken: seat.token,
       tickIntervalMs: 1000 / RULESET.tickRateHz,
       elapsedSeconds: sim.elapsedSeconds,
+      timeLimitSeconds: options.matchRules.timeLimitSeconds,
       map: map.descriptor,
     };
     transport.send("welcome", message, peerId);

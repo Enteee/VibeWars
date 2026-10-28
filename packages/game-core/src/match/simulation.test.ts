@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { unarmedResolvedEquipment, type ResolvedLoadout } from "../equipment/resolve.js";
 import { WEAPONS } from "../equipment/weapons.js";
 import { segment } from "../geometry.js";
-import { DEFAULT_MATCH_RULES, type MatchRules } from "../match-rules.js";
+import { ANNIHILATION_MATCH_RULES, type MatchRules } from "../match-rules.js";
 import { BASE_ENERGY_PIPS_BY_PROFESSION } from "../equipment/armor.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { getSkill } from "../skills/catalog.js";
@@ -594,7 +594,7 @@ describe("match end", () => {
   it("under the default annihilation, keeps the dead down and ends on the wipe (#846)", () => {
     const sim = new MatchSimulation({
       seed: "annihilation",
-      matchRules: DEFAULT_MATCH_RULES,
+      matchRules: ANNIHILATION_MATCH_RULES,
       participants: [
         spec("a", 0, vec2(0, 0)),
         spec("b", 1, vec2(200, 0)),
@@ -618,7 +618,7 @@ describe("match end", () => {
   });
 
   it("counts a team whose members all left as wiped (#846)", () => {
-    const sim = duel(DEFAULT_MATCH_RULES);
+    const sim = duel(ANNIHILATION_MATCH_RULES);
     sim.step(DT);
     sim.remove("b");
     sim.step(DT);

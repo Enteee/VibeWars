@@ -1,4 +1,3 @@
-import { DEFAULT_MATCH_RULES, type MatchRules } from "@vibewars/game-core";
 import {
   MAX_LOBBY_PLAYERS,
   PROTOCOL_VERSION,
@@ -83,8 +82,6 @@ export interface MatchPlan {
   readonly mapId: string;
   /** Every member on a team, by peer id; spectators are not in it. */
   readonly seats: PlannedSeats;
-  /** `DEFAULT_MATCH_RULES` in a coded lobby, the plan's in a queued one. */
-  readonly matchRules: MatchRules;
   /** The room, for this match alone: build the `MatchHost` on it. */
   readonly transport: Transport;
 }
@@ -97,7 +94,6 @@ export interface MatchPlan {
  * sent off. `key` is the host's own ticket key, the group's host ticket.
  */
 export interface QueuedPlan extends QueuedSeat {
-  readonly matchRules: MatchRules;
   readonly countdownSeconds: number;
   /** From the lobby's start, on its clock. */
   readonly timeoutSeconds: number;
@@ -273,10 +269,9 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     );
     const room = scopeTransport(transport);
     try {
-      const matchRules = queued?.matchRules ?? DEFAULT_MATCH_RULES;
       match = {
         id,
-        host: startMatch({ matchId: id, mapId, seats, matchRules, transport: room }),
+        host: startMatch({ matchId: id, mapId, seats, transport: room }),
         room,
       };
     } catch {

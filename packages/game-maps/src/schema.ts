@@ -46,12 +46,27 @@ export const mapDataSchema = z.object({
   spawnPoints: z.array(spawnPointSchema).min(1),
 });
 
+/**
+ * The modes a map may name (#1185), game-core's `MatchMode`: a test keeps
+ * the two equal. Kept here as a list, as zod's enum wants one.
+ */
+export const MAP_MODES = ["annihilation", "kill-count"] as const;
+
+/**
+ * An arena: a map a match is played on, so it names its mode, with no
+ * default (#1185). The training arenas have no match and no mode.
+ */
+export const arenaMapSchema = mapDataSchema.extend({
+  mode: z.enum(MAP_MODES),
+});
+
 export type Vec2Data = z.infer<typeof vec2Schema>;
 export type RectWall = z.infer<typeof rectWallSchema>;
 export type PolygonWall = z.infer<typeof polygonWallSchema>;
 export type Wall = z.infer<typeof wallSchema>;
 export type SpawnPoint = z.infer<typeof spawnPointSchema>;
 export type MapData = z.infer<typeof mapDataSchema>;
+export type ArenaMapData = z.infer<typeof arenaMapSchema>;
 
 export class MapValidationError extends Error {
   public override readonly name = "MapValidationError";
@@ -64,7 +79,16 @@ export class MapValidationError extends Error {
  * much to map data as to skill data).
  */
 export function validateMapData(value: unknown): MapData {
-  const result = mapDataSchema.safeParse(value);
+  return parseOrThrow(mapDataSchema, value);
+}
+
+/** Validate `value` as an arena, mode and all; `validateMapData`'s rules otherwise. */
+export function validateArenaMap(value: unknown): ArenaMapData {
+  return parseOrThrow(arenaMapSchema, value);
+}
+
+function parseOrThrow<T>(schema: z.ZodType<T>, value: unknown): T {
+  const result = schema.safeParse(value);
   if (!result.success) {
     const issues = result.error.issues
       .map((issue) => `  - ${issue.path.join(".") || "(root)"}: ${issue.message}`)

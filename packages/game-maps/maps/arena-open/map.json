@@ -1,6 +1,7 @@
 {
   "id": "arena-open",
   "name": "Open Field",
+  "mode": "annihilation",
   "width": 900,
   "height": 600,
   "walls": [{ "kind": "rect", "x": 420, "y": 250, "width": 60, "height": 100 }],

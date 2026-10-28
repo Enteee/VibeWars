@@ -1,4 +1,4 @@
-import { RANDOM_ARENA_RULES } from "@vibewars/game-core";
+import { MATCH_MODES } from "@vibewars/game-core";
 import {
   PROTOCOL_VERSION,
   parseWireLobbyNote,
@@ -210,7 +210,7 @@ async function openQueued(options: OpenQueuedOptions = {}): Promise<QueuedLobby>
         transport: plan.transport,
         map: ARENA,
         seed: plan.matchId,
-        matchRules: plan.matchRules,
+        matchRules: MATCH_MODES[ARENA.mode],
         random: () => 0.5,
         maxPlayers: 8,
         seats: plan.seats,
@@ -220,7 +220,6 @@ async function openQueued(options: OpenQueuedOptions = {}): Promise<QueuedLobby>
       group,
       key: keyOf(hostTicket),
       verifyTicketSig,
-      matchRules: RANDOM_ARENA_RULES,
       countdownSeconds: COUNTDOWN_SECONDS,
       timeoutSeconds: TIMEOUT_SECONDS,
       onFellThrough: (noShows) => fellThrough.push(noShows),
@@ -493,7 +492,7 @@ describe("a queued lobby", () => {
     expect(foe.getSnapshot().mapId).toBe("other-arena");
   });
 
-  it("counts down once all are seated, then starts the match with RANDOM_ARENA_RULES", async () => {
+  it("counts down once all are seated, then starts the match on the group's map", async () => {
     const queued = await openQueued();
     const ally = await queued.join(ALLY);
     await queued.join(FOE);
@@ -507,7 +506,6 @@ describe("a queued lobby", () => {
     await queued.step(COUNTDOWN_SECONDS - 1);
     expect(queued.plans).toHaveLength(1);
     const [plan] = queued.plans;
-    expect(plan?.matchRules).toBe(RANDOM_ARENA_RULES);
     expect(plan?.mapId).toBe("other-arena");
     expect([...(plan?.seats.values() ?? [])].map((seat) => seat.team).sort()).toEqual([0, 0, 1, 1]);
     expect(ally.getSnapshot()).toMatchObject({ phase: "in-match", countdownSeconds: null });

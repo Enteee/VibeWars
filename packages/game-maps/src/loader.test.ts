@@ -12,7 +12,7 @@ import arenaRing from "../maps/arena-ring/map.json" with { type: "json" };
 import arenaSplit from "../maps/arena-split/map.json" with { type: "json" };
 import { allWallSegments } from "./geometry.js";
 import { MapNotFoundError, listMapIds, loadAllMaps, loadMap } from "./loader.js";
-import { validateMapData } from "./schema.js";
+import { validateArenaMap } from "./schema.js";
 
 describe("listMapIds", () => {
   it("includes the bundled arena-alpha map", () => {
@@ -39,7 +39,7 @@ describe("the maps the browser imports", () => {
       arenaPillars,
       arenaRing,
       arenaSplit,
-    ].map((raw) => validateMapData(raw));
+    ].map((raw) => validateArenaMap(raw));
     expect(imported.map((map) => map.id)).toEqual(listMapIds());
     for (const map of imported) {
       expect(loadMap(map.id)).toEqual(map);

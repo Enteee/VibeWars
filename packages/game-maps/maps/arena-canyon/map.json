@@ -1,6 +1,7 @@
 {
   "id": "arena-canyon",
   "name": "Canyon",
+  "mode": "annihilation",
   "width": 2800,
   "height": 1800,
   "walls": [

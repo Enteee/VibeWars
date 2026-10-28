@@ -1830,6 +1830,18 @@ body {
   color: var(--ink-dim);
 }
 
+/* The map, and its mode under it (#1185). */
+.lobby-map-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.lobby-mode {
+  color: var(--ink-dim);
+  font-size: 0.85rem;
+}
+
 .lobby-teams {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));

@@ -1,7 +1,8 @@
+import { ANNIHILATION_MATCH_RULES, KILL_COUNT_MATCH_RULES, MATCH_MODES } from "@vibewars/game-core";
 import { sizeClass } from "@vibewars/game-maps/size-class";
 import { describe, expect, it } from "vitest";
 
-import { ARENA_MAPS, randomArenaMapPool } from "./maps.js";
+import { ARENA_MAPS, hostMap, randomArenaMapPool } from "./maps.js";
 
 function sizesOf(ids: readonly string[]): string[] {
   return ids.map((id) => {
@@ -35,5 +36,20 @@ describe("randomArenaMapPool", () => {
       ),
     );
     expect([...pooled].sort()).toEqual(ARENA_MAPS.map((map) => map.id).sort());
+  });
+});
+
+describe("hostMap's mode (#1185)", () => {
+  /** The rules a lobby's match on `mapId` plays, as `session.ts` picks them. */
+  const rulesOn = (mapId: string) => {
+    const map = hostMap(mapId);
+    return map === undefined ? undefined : MATCH_MODES[map.mode];
+  };
+
+  it("plays Kill Count on Pillar Hall and Annihilation on the rest", () => {
+    expect(rulesOn("arena-pillars")).toBe(KILL_COUNT_MATCH_RULES);
+    for (const map of ARENA_MAPS.filter((candidate) => candidate.id !== "arena-pillars")) {
+      expect(rulesOn(map.id)).toBe(ANNIHILATION_MATCH_RULES);
+    }
   });
 });

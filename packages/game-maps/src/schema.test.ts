@@ -4,10 +4,17 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
-import { circleIntersectsSegment, hasLineOfSight } from "@vibewars/game-core";
+import { MATCH_MODES, circleIntersectsSegment, hasLineOfSight } from "@vibewars/game-core";
 
 import { allWallSegments } from "./geometry.js";
-import { MapValidationError, validateMapData, type Wall } from "./schema.js";
+import { loadAllMaps } from "./loader.js";
+import {
+  MAP_MODES,
+  MapValidationError,
+  validateArenaMap,
+  validateMapData,
+  type Wall,
+} from "./schema.js";
 
 const validMap = {
   id: "arena-test",
@@ -27,6 +34,36 @@ const validMap = {
   ],
   spawnPoints: [{ team: 0, position: { x: 1, y: 1 } }],
 };
+
+describe("validateArenaMap (#1185)", () => {
+  it("accepts an arena that names its mode", () => {
+    expect(validateArenaMap({ ...validMap, mode: "kill-count" }).mode).toBe("kill-count");
+  });
+
+  it("refuses an arena with no mode, or one no match plays", () => {
+    expect(() => validateArenaMap(validMap)).toThrow(MapValidationError);
+    expect(() => validateArenaMap({ ...validMap, mode: "crag" })).toThrow(MapValidationError);
+  });
+
+  it("knows exactly game-core's modes", () => {
+    expect([...MAP_MODES].sort()).toEqual(Object.keys(MATCH_MODES).sort());
+  });
+
+  it("gives every committed arena its mode: Pillar Hall plays Kill Count", () => {
+    expect(new Map(loadAllMaps().map((map) => [map.id, map.mode]))).toEqual(
+      new Map([
+        ["arena-alpha", "annihilation"],
+        ["arena-canyon", "annihilation"],
+        ["arena-crossroads", "annihilation"],
+        ["arena-long-hall", "annihilation"],
+        ["arena-open", "annihilation"],
+        ["arena-pillars", "kill-count"],
+        ["arena-ring", "annihilation"],
+        ["arena-split", "annihilation"],
+      ]),
+    );
+  });
+});
 
 describe("validateMapData", () => {
   it("accepts a well-formed map", () => {

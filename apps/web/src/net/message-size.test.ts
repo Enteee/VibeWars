@@ -313,6 +313,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       rejoinToken: "x".repeat(64),
       tickIntervalMs: 50,
       elapsedSeconds: FLOAT,
+      timeLimitSeconds: 480,
       map: biggest ?? { id: "", name: "", width: 0, height: 0, walls: [] },
     };
     const longestSkills = [...IMPLEMENTED_SKILLS]

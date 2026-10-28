@@ -1,4 +1,4 @@
-import { RANDOM_ARENA_RULES, type PlayerBuild } from "@vibewars/game-core";
+import { MATCH_MODES, type PlayerBuild } from "@vibewars/game-core";
 import {
   FORMATION_TIMEOUT_MS,
   MAX_LOBBY_PLAYERS,
@@ -107,7 +107,8 @@ function startMatch(plan: MatchPlan) {
     // A match is reproducible from its seed; the lobby's match id is
     // unique only within the lobby, so the code goes in too.
     seed: `${plan.transport.selfId}:${plan.matchId}`,
-    matchRules: plan.matchRules,
+    // The map's mode alone decides the rules, coded lobby or queued (#1185).
+    matchRules: MATCH_MODES[map.mode],
     random: secureRandom,
     maxPlayers: MAX_LOBBY_PLAYERS,
     seats: plan.seats,
@@ -343,7 +344,6 @@ export function enterQueue(
           group,
           key,
           verifyTicketSig,
-          matchRules: RANDOM_ARENA_RULES,
           countdownSeconds: QUEUED_COUNTDOWN_SECONDS,
           timeoutSeconds: FORMATION_TIMEOUT_MS / 1000,
           stayTogetherSeconds: STAY_TOGETHER_WINDOW_SECONDS,

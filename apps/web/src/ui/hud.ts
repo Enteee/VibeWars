@@ -720,17 +720,24 @@ export function livingCount(players: readonly PlayerSnapshot[], team: number): n
 
 /**
  * "4 v 3 · 7:12": the living on each side, your own first, and the clock
- * (#881). Every match is annihilation (#846), so this is the one
- * scoreboard there is. A spectator reads team 1 first.
+ * (#881), counting down to the mode's time limit (#1185), or up with
+ * none. Every mode keeps this scoreboard for now. A spectator reads team
+ * 1 first.
  */
 export function scoreboardText(
   players: readonly PlayerSnapshot[],
   selfTeam: number | undefined,
   elapsedSeconds: number,
+  timeLimitSeconds: number | null,
 ): string {
   const ours = selfTeam ?? 0;
   const theirs = ours === 0 ? 1 : 0;
-  return `${String(livingCount(players, ours))} v ${String(livingCount(players, theirs))} · ${formatClock(elapsedSeconds)}`;
+  // Up rounds down and down rounds up, so the clock reads 0:00 only at the end.
+  const clock =
+    timeLimitSeconds === null
+      ? formatClock(elapsedSeconds)
+      : formatClock(Math.ceil(timeLimitSeconds - elapsedSeconds));
+  return `${String(livingCount(players, ours))} v ${String(livingCount(players, theirs))} · ${clock}`;
 }
 
 /**
@@ -1143,6 +1150,8 @@ export function updateHud(
   /** Your chain mark on a target, still running (#916). */
   chainMark: (targetId: string) => ChainRole | undefined,
   walls: readonly Segment[],
+  /** The match's time limit, `null` with none (#1185). */
+  timeLimitSeconds: number | null,
   match?: MatchSnapshot,
 ): void {
   if (match !== undefined) {
@@ -1150,6 +1159,7 @@ export function updateHud(
       match.players,
       self?.team,
       match.elapsedSeconds,
+      timeLimitSeconds,
     );
     renderEnemyPips(hud.enemies, enemyPips(match.players, self?.team), self?.team);
 

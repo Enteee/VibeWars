@@ -8,7 +8,7 @@
  * the build.
  */
 import {
-  DEFAULT_MATCH_RULES,
+  MATCH_MODES,
   STARTER_BUILDS,
   segment,
   type MatchRules,
@@ -63,6 +63,7 @@ export const ARENA: HostMap = {
     { team: 0, position: { x: 400, y: 600 } },
     { team: 1, position: { x: 700, y: 600 } },
   ],
+  mode: "annihilation",
 };
 
 /** Let every message in flight land, and every message those send in turn. */
@@ -162,7 +163,7 @@ export function startMatch(
     transport: hostTransport,
     map: ARENA,
     seed: "test",
-    matchRules: options.matchRules ?? DEFAULT_MATCH_RULES,
+    matchRules: options.matchRules ?? MATCH_MODES[ARENA.mode],
     // Reproducible, and different each draw.
     random: options.random ?? (() => ((draws += 1) * 0.6180339887) % 1),
     maxPlayers: options.maxPlayers ?? 8,

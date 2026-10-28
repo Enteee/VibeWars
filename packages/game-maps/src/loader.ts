@@ -2,7 +2,7 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { validateMapData, type MapData } from "./schema.js";
+import { validateArenaMap, type ArenaMapData } from "./schema.js";
 
 export class MapNotFoundError extends Error {
   public override readonly name = "MapNotFoundError";
@@ -29,17 +29,17 @@ export function listMapIds(): string[] {
     .sort();
 }
 
-/** Load and validate one map by id. Throws if it does not exist or is invalid. */
-export function loadMap(mapId: string): MapData {
+/** Load and validate one arena by id. Throws if it does not exist or is invalid. */
+export function loadMap(mapId: string): ArenaMapData {
   const file = resolve(mapsRoot(), mapId, "map.json");
   if (!existsSync(file)) {
     throw new MapNotFoundError(`No map named ${JSON.stringify(mapId)} (looked in ${file})`);
   }
   const raw: unknown = JSON.parse(readFileSync(file, "utf8"));
-  return validateMapData(raw);
+  return validateArenaMap(raw);
 }
 
 /** Load and validate every bundled map — used by CI-facing validation tests. */
-export function loadAllMaps(): MapData[] {
+export function loadAllMaps(): ArenaMapData[] {
   return listMapIds().map((id) => loadMap(id));
 }

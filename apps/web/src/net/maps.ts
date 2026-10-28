@@ -1,5 +1,5 @@
 import { allWallSegments } from "@vibewars/game-maps/geometry";
-import { validateMapData, type MapData } from "@vibewars/game-maps/schema";
+import { validateArenaMap, type ArenaMapData } from "@vibewars/game-maps/schema";
 import { sizeClass, type SizeClass } from "@vibewars/game-maps/size-class";
 import arenaAlpha from "@vibewars/game-maps/maps/arena-alpha/map.json" with { type: "json" };
 import arenaCanyon from "@vibewars/game-maps/maps/arena-canyon/map.json" with { type: "json" };
@@ -20,7 +20,7 @@ import type { HostMap } from "@vibewars/game-session";
  * Vite inlines the JSON, and it is validated here, at module load, as
  * `training/maps.ts` does for the training arenas.
  */
-export const ARENA_MAPS: readonly MapData[] = [
+export const ARENA_MAPS: readonly ArenaMapData[] = [
   // The small four, then #444's, smallest first.
   arenaAlpha,
   arenaOpen,
@@ -30,7 +30,7 @@ export const ARENA_MAPS: readonly MapData[] = [
   arenaCrossroads,
   arenaCanyon,
   arenaLongHall,
-].map((raw) => validateMapData(raw));
+].map((raw) => validateArenaMap(raw));
 
 /** The arena a new lobby starts on, the server's default before (#403). */
 export const DEFAULT_ARENA_ID = "arena-alpha";
@@ -89,5 +89,6 @@ export function hostMap(mapId: string): HostMap | undefined {
     walls: allWallSegments(map.walls),
     bounds: { width: map.width, height: map.height },
     spawns: map.spawnPoints,
+    mode: map.mode,
   };
 }

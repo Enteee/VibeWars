@@ -227,6 +227,8 @@ export interface PeerWelcome {
    * from the start of the match.
    */
   readonly elapsedSeconds: number;
+  /** When the match ends on time, from its map's mode (#1185): the clock counts down to it. */
+  readonly timeLimitSeconds: number;
   readonly map: MapDescriptor;
 }
 
@@ -1109,7 +1111,9 @@ export function parsePeerWelcome(value: unknown): PeerWelcome | undefined {
     !isNumber(raw.tickIntervalMs) ||
     raw.tickIntervalMs <= 0 ||
     !isNumber(raw.elapsedSeconds) ||
-    raw.elapsedSeconds < 0
+    raw.elapsedSeconds < 0 ||
+    !isNumber(raw.timeLimitSeconds) ||
+    raw.timeLimitSeconds <= 0
   ) {
     return undefined;
   }
@@ -1122,6 +1126,7 @@ export function parsePeerWelcome(value: unknown): PeerWelcome | undefined {
         rejoinToken: raw.rejoinToken,
         tickIntervalMs: raw.tickIntervalMs,
         elapsedSeconds: raw.elapsedSeconds,
+        timeLimitSeconds: raw.timeLimitSeconds,
         map,
       };
 }

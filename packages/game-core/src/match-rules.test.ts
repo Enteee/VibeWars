@@ -2,8 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   ANNIHILATION_MATCH_RULES,
-  DEFAULT_MATCH_RULES,
   KILL_COUNT_MATCH_RULES,
+  MATCH_IN_PROGRESS,
+  MATCH_MODES,
   addKill,
   emptyScore,
   evaluateMatch,
@@ -107,11 +108,11 @@ describe("evaluateMatch", () => {
     expect(evaluateMatch(score, BOTH_ALIVE, 60, RULES).reason).toBe("score");
   });
 
-  it("keeps today's kill-count rules as a preset", () => {
+  it("keeps GW1's Kill Count as a preset: 3 minutes, 15 kills, respawn, no death penalty", () => {
     expect(KILL_COUNT_MATCH_RULES).toEqual({
       victory: "kill-count",
       scoreToWin: 15,
-      timeLimitSeconds: 600,
+      timeLimitSeconds: 180,
       deathRule: "respawn",
       respawnSeconds: 8,
       deathPenalty: false,
@@ -119,11 +120,51 @@ describe("evaluateMatch", () => {
   });
 });
 
+describe("MATCH_MODES (#1185)", () => {
+  const rules = MATCH_MODES["kill-count"];
+
+  it("names each mode's rules", () => {
+    expect(rules).toBe(KILL_COUNT_MATCH_RULES);
+    expect(MATCH_MODES.annihilation).toBe(ANNIHILATION_MATCH_RULES);
+  });
+
+  it("gives Kill Count to the most kills at 3 minutes", () => {
+    const score = addKill(addKill(addKill(NO_KILLS, 1), 0), 1);
+    expect(evaluateMatch(score, BOTH_ALIVE, 179.9, rules)).toBe(MATCH_IN_PROGRESS);
+    expect(evaluateMatch(score, BOTH_ALIVE, 180, rules)).toEqual({
+      phase: "finished",
+      winningTeam: 1,
+      reason: "time",
+    });
+  });
+
+  it("draws Kill Count on equal kills at 3 minutes", () => {
+    const score = addKill(addKill(NO_KILLS, 0), 1);
+    expect(evaluateMatch(score, BOTH_ALIVE, 180, rules)).toEqual({
+      phase: "finished",
+      winningTeam: undefined,
+      reason: "time",
+    });
+  });
+
+  it("ends Kill Count early at 15 kills", () => {
+    let score = NO_KILLS;
+    for (let i = 0; i < 14; i += 1) {
+      score = addKill(score, 0);
+    }
+    expect(evaluateMatch(score, BOTH_ALIVE, 60, rules)).toBe(MATCH_IN_PROGRESS);
+    expect(evaluateMatch(addKill(score, 0), BOTH_ALIVE, 60, rules)).toEqual({
+      phase: "finished",
+      winningTeam: 0,
+      reason: "score",
+    });
+  });
+});
+
 describe("evaluateMatch: annihilation (#846)", () => {
   const rules = ANNIHILATION_MATCH_RULES;
 
-  it("is the default: resurrection only, the death penalty, 8 minutes", () => {
-    expect(DEFAULT_MATCH_RULES).toBe(ANNIHILATION_MATCH_RULES);
+  it("is resurrection only, the death penalty, 8 minutes", () => {
     expect(rules.victory).toBe("annihilation");
     expect(rules.deathRule).toBe("resurrection-only");
     expect(rules.deathPenalty).toBe(true);

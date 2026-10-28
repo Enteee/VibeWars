@@ -29,13 +29,13 @@ export interface MatchRules {
 }
 
 /**
- * GW1's Kill Count (The Crag): first to 15 kills, respawn, and no death
- * penalty. Nothing selects it yet (#476 picks a mode per map).
+ * GW1's Kill Count (The Crag): the most kills in 3 minutes, or the first
+ * to 15, respawn after 8 s, and no death penalty.
  */
 export const KILL_COUNT_MATCH_RULES: MatchRules = Object.freeze({
   victory: "kill-count",
   scoreToWin: 15,
-  timeLimitSeconds: 600,
+  timeLimitSeconds: 180,
   deathRule: "respawn",
   respawnSeconds: 8,
   deathPenalty: false,
@@ -55,14 +55,14 @@ export const ANNIHILATION_MATCH_RULES: MatchRules = Object.freeze({
   deathPenalty: true,
 });
 
-export const DEFAULT_MATCH_RULES: MatchRules = ANNIHILATION_MATCH_RULES;
+/** A map's mode (#1185): every map names one, and its match plays it. */
+export type MatchMode = "annihilation" | "kill-count";
 
-/**
- * A Random Arena's (#854, #871): GW1's Random Arenas are annihilation,
- * 8 minutes, highest total morale at time (#846). The same rules, not a
- * copy of them.
- */
-export const RANDOM_ARENA_RULES: MatchRules = ANNIHILATION_MATCH_RULES;
+/** Each mode's rules, as GW1's Random Arenas fix a mode per map. */
+export const MATCH_MODES: Readonly<Record<MatchMode, MatchRules>> = Object.freeze({
+  annihilation: ANNIHILATION_MATCH_RULES,
+  "kill-count": KILL_COUNT_MATCH_RULES,
+});
 
 /** Morale a death costs, in percent, with `deathPenalty` (GW1). */
 export const DEATH_PENALTY_PERCENT = 15;

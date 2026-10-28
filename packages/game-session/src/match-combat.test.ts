@@ -1,7 +1,7 @@
 import {
   ADRENALINE_PER_STRIKE,
   CHAIN_MARK_SECONDS,
-  DEFAULT_MATCH_RULES,
+  ANNIHILATION_MATCH_RULES,
   KILL_COUNT_MATCH_RULES,
   MINIMAL_GW_INSPIRED_PVP_V1,
   defaultBuildEquipment,
@@ -1155,7 +1155,7 @@ describe("the match summary (#1057)", () => {
   }
 
   it("ends with every seat's line, one who left included, in seat order", async () => {
-    const match = startMatch({ matchRules: { ...DEFAULT_MATCH_RULES, timeLimitSeconds: 30 } });
+    const match = startMatch({ matchRules: { ...ANNIHILATION_MATCH_RULES, timeLimitSeconds: 30 } });
     const { connection: a } = await match.join(nuker("Ann"));
     const { connection: b } = await match.join(nuker("Bob"));
     const { connection: c } = await match.join(nuker("Cat"));

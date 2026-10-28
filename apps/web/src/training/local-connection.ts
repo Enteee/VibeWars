@@ -227,6 +227,8 @@ export function createLocalConnection(options: {
     sendCall,
     getCalls,
     map,
+    // The Training Ground has no match rules, so no end on time: its clock counts up.
+    timeLimitSeconds: null,
     get skillBar() {
       return skillBar;
     },

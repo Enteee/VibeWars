@@ -1,6 +1,6 @@
 import {
   CREATURE_LOOKS,
-  DEFAULT_MATCH_RULES,
+  ANNIHILATION_MATCH_RULES,
   MAX_CREATURES,
   MAX_GROUND_EFFECTS,
 } from "@vibewars/game-core";
@@ -157,7 +157,7 @@ describe("connectMatch", () => {
     await expect(full.join()).rejects.toThrow(MATCH_FULL_MESSAGE);
 
     const over = startMatch({
-      matchRules: { ...DEFAULT_MATCH_RULES, timeLimitSeconds: 0.1 },
+      matchRules: { ...ANNIHILATION_MATCH_RULES, timeLimitSeconds: 0.1 },
     });
     await over.join();
     await over.step(0.2);
@@ -199,7 +199,9 @@ describe("connectMatch", () => {
   });
 
   it("shows the result once the match ends", async () => {
-    const match = startMatch({ matchRules: { ...DEFAULT_MATCH_RULES, timeLimitSeconds: 0.1 } });
+    const match = startMatch({
+      matchRules: { ...ANNIHILATION_MATCH_RULES, timeLimitSeconds: 0.1 },
+    });
     const { connection } = await match.join();
     await match.step(0.2);
     const snapshot = connection.getSnapshot();
@@ -508,7 +510,9 @@ describe("connectMatch, when the host's peer drops", () => {
   });
 
   it("is lost when the host turns the rejoin away because the match is over", async () => {
-    const match = startMatch({ matchRules: { ...DEFAULT_MATCH_RULES, timeLimitSeconds: 0.5 } });
+    const match = startMatch({
+      matchRules: { ...ANNIHILATION_MATCH_RULES, timeLimitSeconds: 0.5 },
+    });
     const { states } = await dropped(match);
 
     await match.step(1);
