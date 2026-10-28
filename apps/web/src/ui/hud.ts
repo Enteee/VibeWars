@@ -433,6 +433,9 @@ const REFUSALS: Readonly<Record<ActivationRejection, string>> = {
   "out-of-range": "Target is out of range.",
   "no-line-of-sight": "Target is not in line of sight.",
   "no-corpse": "No corpse in range.",
+  "no-companion": "You have no pet.",
+  "no-animal-to-charm": "There is no animal to charm here.",
+  "invalid-target-creature": "That cannot be revived that way.",
 };
 
 /** Where an attack's refusal differs from a cast's: it is about the weapon, not a skill. */

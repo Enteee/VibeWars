@@ -1257,14 +1257,14 @@ brackets.
 ## Creatures
 
 A creature (#1052) is a body that is not a player: a spirit or a minion,
-summoned by a skill. It has health, armor, statuses and its owner's team,
+summoned by a skill, or a pet, which comes with one on the bar. It has health, armor, statuses and its owner's team,
 so every attack, spell, area and condition hits it, and it can be
 targeted with Tab, C, a click or a call. It is drawn smaller (radius 10
 to a player's 14) and blocks bodies at that radius.
 
 It never counts for its team: killing one scores nothing and gives no
 morale, it has no morale of its own, and a team with only creatures left
-standing has lost. A creature that dies or runs out its time disappears
+standing has lost. A spirit or minion that dies or runs out its time disappears
 at the end of the tick, with no corpse and no respawn; running out is not
 a death. Its owner's death does not end it; its owner leaving the match
 does. Soul Reaping answers a minion's death but not a spirit's. At most
@@ -1318,6 +1318,31 @@ each a 5–12 blunt blow every 3.17 s. **Animate Bone Horror** (5
 energy, 1 s, 5 s recharge) raises one Bone Horror of 360 Health and
 armor 56, 13–27 blunt every 3.17 s. Numbers at Death Magic 12; their
 damage is a house estimate, as no source publishes it.
+
+**Pets** (#1046). A Ranger with **Charm Animal** (Beast Mastery, 10
+energy, 10 s) on the bar brings a level-20 wolf from the moment it
+joins: 480 Health and armor 80 whatever its owner's attributes, a
+17–29 slashing bite every 2.15 s at Beast Mastery 12, weaker below on
+the minions' curve, read as it arrives. Charm Animal does nothing else:
+no match has an animal to charm, so pressing it is refused and costs
+nothing. The wolf goes for whatever its owner is attacking, with the
+weapon or an attack skill, not a spell, if that foe is within 700 of
+it, and switches when its owner does; it keeps biting after its owner
+stops, and otherwise heels within 109. Past 700 from its owner it walks
+back and picks no fight until at heel. A dead wolf lies where it fell
+and stays in the match: its corpse cannot be exploited, and an ordinary
+resurrection is refused ("That cannot be revived that way."). Its
+death disables its owner's whole bar for 10…4 s by Beast Mastery 0…12
+(unverified), unless it was resurrected less than 15 s before.
+**Comfort Animal** (Beast Mastery, 10 energy, 1 s, 1 s recharge, cast
+range) acts on your own wolf whatever you have selected: it heals a
+living one for 20…87 and raises a dead one with 10…48% Health; with no
+wolf it is refused ("You have no pet.") and costs nothing. The wolf
+also comes back beside its owner, at full Health, whenever its owner
+respawns or is reset; under resurrection-only only Comfort Animal
+brings it back. It outlives its owner's death and leaves with its
+owner. A build change that keeps Charm Animal keeps the wolf as it is;
+one that drops it sends it away; one that gains it brings a fresh one.
 
 ## Wards
 

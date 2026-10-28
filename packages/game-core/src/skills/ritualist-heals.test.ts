@@ -72,6 +72,9 @@ function around(
           summonedAtTick: 0,
           skillId: "ranger.winnowing",
           aura: { statusId: "winnowing", affects: "all", radius: RANGE_NATURE_RITUAL },
+          onDeath: "vanish",
+          ownerDisableSeconds: 0,
+          companionSkillId: undefined,
         },
       };
       return [id, candidate] as const;

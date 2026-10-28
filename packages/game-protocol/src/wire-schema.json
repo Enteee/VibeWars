@@ -1787,7 +1787,9 @@
         {
           "name": "kind",
           "optional": false,
-          "type": { "union": [{ "literal": "minion" }, { "literal": "spirit" }] }
+          "type": {
+            "union": [{ "literal": "minion" }, { "literal": "pet" }, { "literal": "spirit" }]
+          }
         },
         { "name": "ownerId", "optional": false, "type": "string" }
       ]
@@ -2046,7 +2048,13 @@
                   {
                     "name": "kind",
                     "optional": false,
-                    "type": { "union": [{ "literal": "minion" }, { "literal": "spirit" }] }
+                    "type": {
+                      "union": [
+                        { "literal": "minion" },
+                        { "literal": "pet" },
+                        { "literal": "spirit" }
+                      ]
+                    }
                   },
                   { "name": "ownerId", "optional": false, "type": "string" }
                 ]
@@ -2239,7 +2247,13 @@
                           {
                             "name": "kind",
                             "optional": false,
-                            "type": { "union": [{ "literal": "minion" }, { "literal": "spirit" }] }
+                            "type": {
+                              "union": [
+                                { "literal": "minion" },
+                                { "literal": "pet" },
+                                { "literal": "spirit" }
+                              ]
+                            }
                           },
                           { "name": "ownerId", "optional": false, "type": "string" }
                         ]
@@ -2429,7 +2443,13 @@
                           {
                             "name": "kind",
                             "optional": false,
-                            "type": { "union": [{ "literal": "minion" }, { "literal": "spirit" }] }
+                            "type": {
+                              "union": [
+                                { "literal": "minion" },
+                                { "literal": "pet" },
+                                { "literal": "spirit" }
+                              ]
+                            }
                           },
                           { "name": "ownerId", "optional": false, "type": "string" }
                         ]

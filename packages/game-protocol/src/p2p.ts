@@ -90,7 +90,7 @@ export const MAX_WIRE_GROUND_EFFECTS = 32;
 export const MAX_WIRE_ACTORS = MAX_LOBBY_PLAYERS + MAX_WIRE_CREATURES;
 
 /** What kind of creature a body is (#1052). */
-export const CREATURE_KINDS = ["spirit", "minion"] as const;
+export const CREATURE_KINDS = ["spirit", "minion", "pet"] as const;
 
 /**
  * The largest status index a snapshot may carry (#632): a bound of its
