@@ -850,13 +850,12 @@ colour stays the fill or outline everywhere.
   better than B. Fails: one shape for every family, so only the glyph tells
   kinds apart.
 
-**Decided: C, with A's wolf silhouette** (operator, #1158). A minion or spirit
-is a solid team-colour hexagon with its kind glyph cut from it (skull, horned
-skull, wisp). A pet is A's teardrop, round back and a point toward its facing,
-with the paw. The spirit keeps the hexagon and the wisp; if it reads as a
-status at true size, that is a follow-up for the implementing card, not a
-reason to bring back A's ring. The study stays in `creature-study.svg` for the
-rejected directions.
+**Decided: C** (operator, #1158). Every creature is a solid team-colour
+hexagon with its kind glyph cut from it (paw, skull, horned skull, wisp). No
+wolf tip from A: a pet's heading is not worth a second shape. The spirit
+keeps the hexagon and the wisp glyph; if it reads as a status at true size,
+that is a follow-up for the implementing card, not a reason to bring back A's
+ring. The study stays in `creature-study.svg` for the rejected directions.
 
 ## Sizes
 
