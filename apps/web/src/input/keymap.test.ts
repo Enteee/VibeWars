@@ -4,6 +4,7 @@ import {
   DEFAULT_KEYMAP,
   KEYMAP_PRESETS,
   KEY_ACTIONS,
+  WEAPON_SET_ACTIONS,
   actionForCode,
   actionLabel,
   codeLabel,
@@ -22,7 +23,7 @@ describe("the keymap presets (#302)", () => {
     "%s is a valid keymap that binds every action but the two call keys (#443)",
     (_, map) => {
       expect(parseKeymap(map)).toEqual(map);
-      expect(KEY_ACTIONS).toHaveLength(21);
+      expect(KEY_ACTIONS).toHaveLength(25);
       // The wheel click calls and pings; the keys are for a mouse without one.
       const unbound = new Set(["call-target", "ping"]);
       for (const action of KEY_ACTIONS) {
@@ -115,6 +116,17 @@ describe("parseKeymap", () => {
     }
   });
 
+  it("rejects a keymap stored before the weapon-set keys (#489), so the default plays", () => {
+    const {
+      "weapon-set-1": _one,
+      "weapon-set-2": _two,
+      "weapon-set-3": _three,
+      "weapon-set-4": _four,
+      ...stored
+    } = classic;
+    expect(parseKeymap(stored)).toBeUndefined();
+  });
+
   it("accepts an action with no key", () => {
     expect(parseKeymap({ ...classic, mute: [] })).toEqual({ ...classic, mute: [] });
   });
@@ -130,11 +142,23 @@ describe("isBindable and isShortcut", () => {
       "Escape",
       "F10",
       "F5",
+      "F11",
       "",
     ]) {
       expect(isBindable(code)).toBe(false);
     }
-    for (const code of ["KeyQ", "Digit1", "ArrowUp", "Space", "ShiftLeft", "F2", "Tab"]) {
+    for (const code of [
+      "KeyQ",
+      "Digit1",
+      "ArrowUp",
+      "Space",
+      "ShiftLeft",
+      "F2",
+      "Tab",
+      "F1",
+      "F3",
+      "F4",
+    ]) {
       expect(isBindable(code)).toBe(true);
     }
   });
@@ -249,5 +273,19 @@ describe("presetOf (#309)", () => {
     expect(presetOf(KEYMAP_PRESETS.classic)).toBe("classic");
     expect(presetOf(rebind(DEFAULT_KEYMAP, "skill-1", 0, "KeyZ").map)).toBeUndefined();
     expect(presetOf(rebind(DEFAULT_KEYMAP, "mute", 1, "KeyN").map)).toBeUndefined();
+  });
+});
+
+describe("the weapon-set keys (#489)", () => {
+  it("are F1 to F4 in both presets, set 1 first", () => {
+    for (const map of Object.values(KEYMAP_PRESETS)) {
+      expect(WEAPON_SET_ACTIONS.map((action) => map[action])).toEqual([
+        ["F1"],
+        ["F2"],
+        ["F3"],
+        ["F4"],
+      ]);
+      expect(parseKeymap(map)).toEqual(map);
+    }
   });
 });

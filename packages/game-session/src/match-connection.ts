@@ -16,6 +16,7 @@ import type {
   SkillBarSlot,
   WireCalls,
   WirePing,
+  WireWeaponSets,
 } from "@vibewars/game-protocol";
 
 /**
@@ -224,6 +225,12 @@ export interface MatchConnection {
    * build, a starter build included: what the bar's tooltips describe (#485).
    */
   readonly ranks: ReadonlyMap<string, number>;
+  /**
+   * The weapon sets this player carries, and which is in hand or queued
+   * (#489): sent on join and when either changes; `undefined` until the
+   * first arrives.
+   */
+  readonly weaponSets: WireWeaponSets | undefined;
   sendIntent(intent: ClientIntent): void;
   getSnapshot(): MatchSnapshot;
   onCombat(handler: (message: CombatMessage) => void): void;

@@ -36,6 +36,7 @@ export const CHANNELS = [
   "combat",
   "refused",
   "skill-bar",
+  "weapon-sets",
   "recharge",
   "adrenaline",
   "chain",
@@ -453,6 +454,26 @@ export interface WireSkillBar {
   readonly slots: readonly (SkillBarSlot | null)[];
   /** Attribute id to effective rank, as the host resolved the build (#485). */
   readonly ranks: Readonly<Record<string, number>>;
+}
+
+/** One carried weapon set, as its owner sees it (#489). */
+export interface WireWeaponSet {
+  readonly weaponId: string;
+  readonly offhandId: string | null;
+}
+
+/**
+ * Host to one client: the weapon sets it carries and which is in hand
+ * (#489). On welcome, and again on the tick the active or queued set
+ * changes. Spare sets stay private: others see the swap in
+ * `WirePlayer.weaponId`.
+ */
+export interface WireWeaponSets {
+  /** Set 1 first, always four; `null` for an empty set. */
+  readonly sets: readonly (WireWeaponSet | null)[];
+  readonly active: 0 | 1 | 2 | 3;
+  /** A swap waiting for the cast, aftercast, swing or knockdown to end. */
+  readonly pending: 0 | 1 | 2 | 3 | null;
 }
 
 /**
@@ -1382,6 +1403,36 @@ export function parseWireSkillBar(value: unknown): WireSkillBar | undefined {
   const slots = parseArray(raw?.slots, MAX_WIRE_SLOTS, parseSlot);
   const ranks = parseRanks(raw?.ranks);
   return slots === undefined || ranks === undefined ? undefined : { slots, ranks };
+}
+
+/**
+ * Exactly four sets, set 1 carried, and `active` and `pending` each naming
+ * a carried set.
+ */
+export function parseWireWeaponSets(value: unknown): WireWeaponSets | undefined {
+  const raw = fields(value);
+  const sets = parseArray(raw?.sets, WEAPON_SET_COUNT, parseWeaponSetOrEmpty);
+  if (raw === undefined || sets?.length !== WEAPON_SET_COUNT) {
+    return undefined;
+  }
+  const carried = (index: unknown): index is 0 | 1 | 2 | 3 =>
+    (index === 0 || index === 1 || index === 2 || index === 3) && sets[index] !== null;
+  const { active, pending } = raw;
+  return carried(0) && carried(active) && (pending === null || carried(pending))
+    ? { sets, active, pending }
+    : undefined;
+}
+
+const WEAPON_SET_COUNT = 4;
+
+function parseWeaponSetOrEmpty(value: unknown): WireWeaponSet | null | undefined {
+  if (value === null) {
+    return null;
+  }
+  const raw = fields(value);
+  return raw !== undefined && isString(raw.weaponId) && isNullableString(raw.offhandId)
+    ? { weaponId: raw.weaponId, offhandId: raw.offhandId }
+    : undefined;
 }
 
 function parseSummaryRow(value: unknown): WireSummaryRow | undefined {

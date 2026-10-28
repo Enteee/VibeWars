@@ -72,6 +72,7 @@ export {
   statusSnapshot,
   groundEffectSnapshot,
   wireStatuses,
+  wireWeaponSets,
 } from "./wire.js";
 export {
   ROOM_PREFIX,

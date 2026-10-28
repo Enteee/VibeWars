@@ -56,6 +56,7 @@ saved characters.
 | `Space`         | Attack your target with your weapon       |
 | `Esc`           | Cancel your cast and your attack          |
 | `M`             | Mute or unmute the sound                  |
+| `F1`–`F4`       | Swap to weapon set 1–4                    |
 | `F10`           | Leave the match (asks first)              |
 | `Enter`         | Chat: `!` all, `#` team (lobby and match) |
 
