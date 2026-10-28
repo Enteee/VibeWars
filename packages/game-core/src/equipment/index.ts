@@ -43,12 +43,14 @@ export type {
   ArmorPiece,
   ArmorSet,
   ConditionalArmor,
+  HeadPiece,
   PieceArmor,
   PieceReduction,
 } from "./armor.js";
 export {
   BASE_ARMOR_BY_PROFESSION,
   BASE_ENERGY_PIPS_BY_PROFESSION,
+  HEADGEAR_BONUS,
   HIT_LOCATION_WEIGHTS,
   INHERENT_ARMOR_BY_PROFESSION,
   NO_PIECE_ARMOR,
@@ -57,6 +59,7 @@ export {
   bareArmorSet,
   baseArmorFor,
   baseEnergyPipsFor,
+  headgearAttributeOf,
   rollHitLocation,
 } from "./armor.js";
 

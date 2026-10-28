@@ -19,11 +19,7 @@
 
 /** A piece of gear behaviour this project does not simulate. */
 export type MissingGearMechanic =
-  | "stances"
-  | "attribute-headgear"
-  | "profession-insignias"
-  | "weapon-upgrades"
-  | "per-piece-armor-ratings";
+  "stances" | "profession-insignias" | "weapon-upgrades" | "per-piece-armor-ratings";
 
 export interface GearOmission {
   readonly mechanic: MissingGearMechanic;
@@ -49,16 +45,6 @@ export const GEAR_OMISSIONS: readonly GearOmission[] = Object.freeze([
       "No stance mechanic exists, so a 'while in a stance' armor bonus could never fire. " +
       "The reference's Sentry's Insignia is therefore not in the catalog at all rather than " +
       "shipped as a stat line that is permanently zero.",
-    affects: [],
-  },
-  {
-    mechanic: "attribute-headgear",
-    description: "a headpiece granting +1 to a chosen attribute, stacking with its rune",
-    kind: "gap",
-    reason:
-      "The one genuinely non-cosmetic per-piece choice in the reference, and the reason a " +
-      "maxed character reaches rank 16 rather than 15. Armor pieces here carry an insignia " +
-      "and a rune and nothing else, so the head slot is currently no different from the feet.",
     affects: [],
   },
   {

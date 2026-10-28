@@ -142,11 +142,11 @@ describe("joining a P2P match with a build (#375)", () => {
     expect(connection.ranks.get("monk.healing-prayers")).toBe(8);
 
     // A refused build plays, and so describes, a starter build: here the
-    // Warrior/Monk: Swordsmanship 12 and the head's minor rune, Tactics 9
-    // and Healing Prayers 8.
+    // Warrior/Monk: Swordsmanship 12, the head's minor rune and its headgear (#1140),
+    // Tactics 9 and Healing Prayers 8.
     const refused = await joinWith({ ...LEGAL_BUILD, skillBar: null });
     expect(REFUSED_AS.name).toBe("Warrior/Monk");
-    expect(refused.connection.ranks.get("warrior.swordsmanship")).toBe(13);
+    expect(refused.connection.ranks.get("warrior.swordsmanship")).toBe(14);
     expect(refused.connection.ranks.get("warrior.tactics")).toBe(9);
     expect(refused.connection.ranks.get("monk.healing-prayers")).toBe(8);
     expect(refused.connection.ranks.get("elementalist.fire-magic")).toBeUndefined();

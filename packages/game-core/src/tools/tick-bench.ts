@@ -97,6 +97,7 @@ function benchMatch(field: BenchField, crowd: BenchCrowd, seed: string): MatchSi
   const resolved = resolveLoadout(
     {
       primaryProfession: BENCH_LOADOUT.primaryProfession,
+      secondaryProfession: BENCH_LOADOUT.secondaryProfession,
       allocatedRanks: BENCH_LOADOUT.attributeRanks,
       equipment: BENCH_LOADOUT.equipment,
     },

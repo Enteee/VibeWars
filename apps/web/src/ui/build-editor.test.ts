@@ -34,7 +34,7 @@ import {
   trySetRank,
   weaponWarning,
 } from "./build-editor.js";
-import { setWeapon } from "./gear-editor.js";
+import { setHeadgearAttribute, setWeapon } from "./gear-editor.js";
 
 /**
  * The editor's *rules* are tested here; its DOM rendering is covered by
@@ -202,7 +202,23 @@ describe("describeProfessionChange (#569)", () => {
   it("names a swapped weapon and off-hand (#614)", () => {
     const warrior = setProfessions(newCharacter("c1"), "warrior", undefined);
     const mesmer = setProfessions(warrior, "mesmer", undefined);
-    expect(describeProfessionChange(warrior, mesmer)).toEqual(["Sword → Wand", "Shield → Focus"]);
+    expect(describeProfessionChange(warrior, mesmer)).toEqual([
+      "Sword → Wand",
+      "Shield → Focus",
+      "Headgear: Strength → Fast Casting",
+    ]);
+  });
+
+  it("names the headgear moved when its attribute left both professions (#1140)", () => {
+    const monk = setHeadgearAttribute(
+      setProfessions(newCharacter("c1"), "warrior", "monk"),
+      "monk.healing-prayers",
+    );
+    const ranger = setProfessions(monk, "warrior", "ranger");
+    expect(ranger.equipment.armor.head.headgearAttributeId).toBe("warrior.strength");
+    expect(describeProfessionChange(monk, ranger)).toEqual([
+      "Headgear: Healing Prayers → Strength",
+    ]);
   });
 
   it("names a set 2-4 a profession change empties (#489)", () => {
@@ -212,6 +228,7 @@ describe("describeProfessionChange (#569)", () => {
       "Sword → Wand",
       "Shield → Focus",
       "Set 2: Sword removed",
+      "Headgear: Strength → Fast Casting",
     ]);
   });
 

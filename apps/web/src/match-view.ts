@@ -57,6 +57,7 @@ import {
   updateRecharges,
 } from "./ui/hud.js";
 import { labelWeaponSets, renderWeaponSets, weaponSetSlots } from "./ui/weapon-set-slots.js";
+import { mapMode } from "./net/maps.js";
 import { compassReach, createCompass } from "./ui/compass.js";
 import { noWebGlNotice } from "./ui/arena-notice.js";
 import { attachFullscreenButton, fullscreenTarget } from "./ui/fullscreen.js";
@@ -260,6 +261,7 @@ export async function startMatchView(
   const walls = connection.map.walls.map(toRenderableWall);
   // Once per match, for the skill bar's line-of-sight hint (#485).
   const wallSegments = allWallSegments(connection.map.walls);
+  const mode = mapMode(connection.map.id);
   const camera =
     viewport === undefined
       ? undefined
@@ -616,6 +618,7 @@ export async function startMatchView(
       (targetId) => connection.getChainMark(targetId),
       wallSegments,
       connection.timeLimitSeconds,
+      mode,
       latestMatch,
     );
     updateRecharges(hud, connection.skillBar, connection.getRecharges());

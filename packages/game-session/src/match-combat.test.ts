@@ -297,15 +297,15 @@ describe("networked combat (P2P)", () => {
       "the target to take damage",
     );
 
-    // Both are the Elementalist/Mesmer starter build. Fire Magic 12 and
-    // the head's minor rune make 13: 7 + 7 * 13 = 98 before mitigation.
-    // The target's armor is an elementalist's 60 (a focus adds none), so
-    // the curve leaves it at 98. Its health is 500 + 50 (superior Vigor)
+    // Both are the Elementalist/Mesmer starter build. Fire Magic 12, the
+    // head's minor rune and its headgear (#1140) make 14: 7 + 7 * 14 = 105
+    // before mitigation. The target's armor is an elementalist's 60 (a focus
+    // adds none), so the curve leaves it at 105. Its health is 500 + 50 (superior Vigor)
     // + 15 + 10 + 3 * 5 (Survivor on chest, legs and the other three) =
     // 590. Spelled out, not derived, so a change to either the curve or
     // the build fails loudly.
     expect(playerIn(a.getSnapshot(), b.selfSessionId)?.maxHealth).toBe(590);
-    expect(playerIn(a.getSnapshot(), b.selfSessionId)?.health).toBe(590 - 98);
+    expect(playerIn(a.getSnapshot(), b.selfSessionId)?.health).toBe(590 - 105);
   });
 
   it("deducts energy when a skill is cast", async () => {
@@ -849,6 +849,33 @@ describe("match rules over the network (P2P)", () => {
     expect(snapshot.scoreTeam1).toBe(0);
     expect(snapshot.winningTeam).toBeUndefined();
   });
+
+  it("counts a kill-count team's kills in the snapshot score (#1200)", async () => {
+    const match = startMatch({ matchRules: KILL_COUNT_MATCH_RULES });
+    const { connection: a } = await match.join(hello({ build: toJson(DAGGERS) }));
+    const { connection: b } = await match.join();
+    await match.step(TICK);
+    const foe = b.selfSessionId;
+    await closeDistance(match, a, foe, 30);
+    await target(match, a, foe);
+
+    a.sendIntent({ kind: "attack", targetId: foe });
+    await until(
+      match,
+      () => {
+        if (self(a)?.castingSkillId === undefined) {
+          a.sendIntent({ kind: "use-skill", slot: a.getChainMark(foe) === "lead" ? 1 : 0 });
+        }
+        return self(b)?.dead === true;
+      },
+      "b dead",
+      120,
+    );
+
+    expect([self(a)?.team, self(b)?.team]).toEqual([0, 1]);
+    expect(a.getSnapshot()).toMatchObject({ scoreTeam0: 1, scoreTeam1: 0 });
+    expect(b.getSnapshot()).toMatchObject({ scoreTeam0: 1, scoreTeam1: 0 });
+  });
 });
 
 describe("wireCombat and combatMessage (#288, #375)", () => {
@@ -1142,7 +1169,7 @@ describe("the match summary (#1057)", () => {
     return hello({ name, build: toJson(starterBuild(NUKER)) });
   }
 
-  /** `a` closes on `b` and lands one Fireball: 98 after armor (see above). */
+  /** `a` closes on `b` and lands one Fireball: 105 after armor (see above). */
   async function fireball(match: TestMatch, a: MatchConnection, b: MatchConnection) {
     await closeDistance(match, a, b.selfSessionId, 300);
     await target(match, a, b.selfSessionId);
@@ -1171,8 +1198,8 @@ describe("the match summary (#1057)", () => {
       ["Bob", 1],
       ["Cat", 0],
     ]);
-    expect(line(a, a.selfSessionId)).toMatchObject({ damage: 98, taken: 0, kills: 0, deaths: 0 });
-    expect(line(a, b.selfSessionId)).toMatchObject({ damage: 0, taken: 98, deaths: 0 });
+    expect(line(a, a.selfSessionId)).toMatchObject({ damage: 105, taken: 0, kills: 0, deaths: 0 });
+    expect(line(a, b.selfSessionId)).toMatchObject({ damage: 0, taken: 105, deaths: 0 });
     expect(line(a, c.selfSessionId)).toMatchObject({ damage: 0, taken: 0, interrupts: 0 });
     // Everyone is told the same.
     expect(b.getSnapshot().summary).toEqual(a.getSnapshot().summary);
@@ -1213,7 +1240,7 @@ describe("the match summary (#1057)", () => {
     await match.host.close("host-left");
     await settle();
 
-    expect(line(b, a.selfSessionId)?.damage).toBe(98);
-    expect(line(b, b.selfSessionId)?.taken).toBe(98);
+    expect(line(b, a.selfSessionId)?.damage).toBe(105);
+    expect(line(b, b.selfSessionId)?.taken).toBe(105);
   });
 });
