@@ -19,6 +19,7 @@ const MALAISE = "necromancer.malaise";
 const HEALING_SIGNET = "warrior.healing-signet";
 const POWER_SPIKE = "mesmer.power-spike";
 const SEVER_ARTERY = "warrior.sever-artery";
+const DIVERSION = "mesmer.diversion";
 
 function wielding(weapon: Weapon, attributeId: string): ResolvedEquipment {
   return {
@@ -50,12 +51,12 @@ function fighter(id: string, spawn: Vec2, weapon: Weapon = WEAPONS.axe): Partici
   };
 }
 
-/** The Mesmer: Backfire, Empathy and Power Spike, at rank 12. */
+/** The Mesmer: Backfire, Empathy, Power Spike and Diversion, at rank 12. */
 function mesmer(id: string, spawn: Vec2): ParticipantSpec {
   return {
     id,
     team: 1,
-    skillBar: [BACKFIRE, EMPATHY, POWER_SPIKE],
+    skillBar: [BACKFIRE, EMPATHY, POWER_SPIKE, DIVERSION],
     attributeRanks: new Map([["mesmer.domination-magic", 12]]),
     equipment: unarmedResolvedEquipment(60),
     maxHealth: 1e6,
@@ -277,6 +278,121 @@ describe("Empathy (#469)", () => {
   });
 });
 
+/** Every `recharge-lengthened` event in `log` (#949). */
+function lengthened(log: readonly CombatLogEntry[]) {
+  return log.flatMap((entry) =>
+    entry.events.flatMap((event) =>
+      event.kind === "recharge-lengthened" ? [{ entry, event }] : [],
+    ),
+  );
+}
+
+/** Steps until a recharge is lengthened, at most `seconds`, and returns that tick's log. */
+function untilLengthened(match: MatchSimulation, seconds = 3): readonly CombatLogEntry[] {
+  for (let i = 0; i < Math.round(seconds / DT); i += 1) {
+    const { log } = match.step(DT);
+    if (lengthened(log).length > 0) {
+      return log;
+    }
+  }
+  throw new Error("no recharge was lengthened");
+}
+
+describe("Diversion (#949)", () => {
+  it("is cast as the diversion hex, for 6 s", () => {
+    const match = sim(WEAPONS.axe, vec2(200, 0));
+    match.setTarget("m", "a");
+    expect(match.requestSkill("m", 3)?.check).toEqual({ ok: true });
+    stepFor(match, 3 + 2 * DT);
+    const hex = get(match, "a").statuses.get("diversion");
+    expect(hex?.sourceId).toBe("m");
+    expect(hex?.remainingSeconds).toBeGreaterThan(5.8);
+    expect(describeStatus("diversion")).toBe(
+      "the next skill it uses takes 47 seconds longer to recharge",
+    );
+  });
+
+  it("the next skill used recharges 47 s longer, credited to the Mesmer, and the hex ends", () => {
+    const match = sim();
+    get(match, "a").statuses.apply("diversion", 6, "m");
+    use(match, 2);
+    const log = untilLengthened(match);
+    const [only, ...rest] = lengthened(log);
+    expect(rest).toEqual([]);
+    expect(only?.entry).toMatchObject({ sourceId: "m", skillId: DIVERSION });
+    expect(only?.event).toEqual({
+      kind: "recharge-lengthened",
+      targetId: "a",
+      skillId: MALAISE,
+      seconds: 47,
+    });
+    expect(get(match, "a").cast.rechargeRemaining.get(MALAISE)).toBeCloseTo(2 + 47, 5);
+    expect(get(match, "a").statuses.has("diversion")).toBe(false);
+    expect(log).toContainEqual(
+      expect.objectContaining({
+        sourceId: "a",
+        skillId: MALAISE,
+        events: [{ kind: "status-expired", targetId: "a", statusId: "diversion" }],
+      }),
+    );
+  });
+
+  it("leaves the skill used after it alone", () => {
+    const match = sim();
+    get(match, "a").statuses.apply("diversion", 6, "m");
+    use(match, 2);
+    stepFor(match, 2.5);
+    expect(match.requestSkill("a", 3)?.check).toEqual({ ok: true });
+    const log = stepFor(match, 2.5);
+    expect(log.some((entry) => entry.skillId === HEALING_SIGNET)).toBe(true);
+    expect(lengthened(log)).toEqual([]);
+    expect(get(match, "a").cast.rechargeRemaining.get(HEALING_SIGNET)).toBeLessThanOrEqual(4);
+  });
+
+  it("an interrupted skill is not used: the hex stays", () => {
+    const match = sim();
+    get(match, "a").statuses.apply("diversion", 6, "m");
+    use(match, 2);
+    match.setTarget("m", "a");
+    expect(match.requestSkill("m", 2)?.check).toEqual({ ok: true });
+    const log = stepFor(match, 2);
+    expect(log.some((entry) => entry.events.some((event) => event.kind === "interrupted"))).toBe(
+      true,
+    );
+    expect(lengthened(log)).toEqual([]);
+    expect(get(match, "a").statuses.has("diversion")).toBe(true);
+  });
+
+  it("a plain attack is not a skill: the hex stays", () => {
+    const match = sim();
+    get(match, "a").statuses.apply("diversion", 6, "m");
+    expect(match.requestAttack("a", "m")).toEqual({ ok: true });
+    const log = stepFor(match, 3);
+    expect(log.some((entry) => entry.cause === "weapon" && entry.sourceId === "a")).toBe(true);
+    expect(lengthened(log)).toEqual([]);
+    expect(get(match, "a").statuses.has("diversion")).toBe(true);
+  });
+
+  it("an attack skill is lengthened once", () => {
+    const match = sim();
+    get(match, "a").statuses.apply("diversion", 6, "m");
+    use(match, 0);
+    const log = untilLengthened(match);
+    expect(lengthened(log).map(({ event }) => event.skillId)).toEqual([SWIFT_CHOP]);
+    expect(get(match, "a").cast.rechargeRemaining.get(SWIFT_CHOP)).toBeCloseTo(4 + 47, 5);
+  });
+
+  it("expires unused after 6 s, changing nothing", () => {
+    const match = sim();
+    get(match, "a").statuses.apply("diversion", 6, "m");
+    stepFor(match, 6 + DT);
+    expect(get(match, "a").statuses.has("diversion")).toBe(false);
+    use(match, 2);
+    expect(lengthened(stepFor(match, 2.5))).toEqual([]);
+    expect(get(match, "a").cast.rechargeRemaining.get(MALAISE) ?? 0).toBeLessThanOrEqual(2);
+  });
+});
+
 describe("reactive hexes together (#469)", () => {
   it("both on one bearer fire once each, and trigger damage fires neither", () => {
     const match = sim();
@@ -491,6 +607,15 @@ describe("Mark of Pain (#935)", () => {
     const match = marked();
     use(match, 0);
     expect(damageTo(triggered(stepFor(match, 1), MARK_OF_PAIN), "m2")).toEqual([34]);
+  });
+
+  it("an earth blow fires nothing: Staggering Force makes the axe's swing earth (#1021)", () => {
+    const match = marked();
+    get(match, "a").statuses.apply("staggering-force", 30, "a");
+    expect(match.requestAttack("a", "m")).toEqual({ ok: true });
+    const log = stepFor(match, 3);
+    expect(weaponHits(log)).toBeGreaterThanOrEqual(2);
+    expect(triggered(log, MARK_OF_PAIN)).toEqual([]);
   });
 
   it("a blocked blow, a Fireball and bleeding fire nothing", () => {

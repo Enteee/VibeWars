@@ -14,6 +14,7 @@ import { soundPlayer } from "../audio/sound-player.js";
 import { attackKeyIntents, hasActionToCancel } from "../input/attack-key.js";
 import { createDoubleClick } from "../input/double-click.js";
 import {
+  calledTargetIntent,
   callTargetCall,
   middleClickAction,
   pingCall,
@@ -31,7 +32,7 @@ import {
 import { loadKeymap } from "../input/keymap-preference.js";
 import { skillSlotForKeyDown } from "../input/skill-keys.js";
 import { attachNameReveal } from "../input/name-reveal.js";
-import { nextTabTarget } from "../input/tab-target.js";
+import { closestTarget, nextTabTarget, selfTargetIntent } from "../input/tab-target.js";
 import { toArenaSnapshot, toRenderableWall } from "../match-view.js";
 import { attachMatchMusic, type MatchMusic } from "../music/match-music.js";
 import { music } from "../music/play-music.js";
@@ -402,6 +403,31 @@ export function createTrainingPanel(): TrainingPanel {
     }
   };
 
+  const targetByKey = (action: "target-closest" | "target-called" | "target-self"): void => {
+    if (session === undefined || session.parked) {
+      return;
+    }
+    const { connection } = session;
+    const snapshot = connection.getSnapshot();
+    if (action === "target-called" || action === "target-self") {
+      const intent =
+        action === "target-called"
+          ? calledTargetIntent(snapshot, connection.getCalls())
+          : selfTargetIntent(snapshot.players, SELF_ID);
+      if (intent !== undefined) {
+        connection.sendIntent(intent);
+      }
+      return;
+    }
+    const current = snapshot.players.find(
+      (player) => player.sessionId === SELF_ID,
+    )?.targetSessionId;
+    const closest = closestTarget(snapshot.players, SELF_ID);
+    if (closest !== undefined && closest !== current) {
+      connection.sendIntent({ kind: "target", targetSessionId: closest });
+    }
+  };
+
   const paintSkills = (slots: readonly (SkillSlot | null)[]): void => {
     skillButtons = slots.map((slot, index) => {
       const button = document.createElement("button");
@@ -650,6 +676,12 @@ export function createTrainingPanel(): TrainingPanel {
       // the stage, and then Tab is the browser's again.
       if (!event.repeat) {
         cycleTarget(event.shiftKey ? -1 : 1);
+      }
+      return;
+    }
+    if (action === "target-closest" || action === "target-called" || action === "target-self") {
+      if (!event.repeat) {
+        targetByKey(action);
       }
       return;
     }

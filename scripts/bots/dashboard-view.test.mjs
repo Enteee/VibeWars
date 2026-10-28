@@ -1053,7 +1053,9 @@ describe("companyLines", () => {
         cycleP90Ms: 19 * HOUR,
         reviewWaitMedianMs: 40 * MIN,
         qaWaitMedianMs: HOUR + 5 * MIN,
+        bounces24h: 1,
         bounces7d: 4,
+        topBounced: [],
         blocked: 2,
         oldestBlockedMs: 27 * HOUR,
       },
@@ -1103,12 +1105,29 @@ describe("companyLines", () => {
       const lines = pane(full);
       expect(lines.map(plain)).toEqual([
         "KPI (since 27 Oct, 7 d window)  updated 2 min ago",
-        "flow    done 24h 6 · 7d 31 · cycle med 5h10 p90 19h · review wait 40m · QA wait 1h05 · bounces 4",
+        "flow    done 24h 6 · 7d 31 · cycle med 5h10 p90 19h · review wait 40m · QA wait 1h05 · bounces 24h 1 · 7d 4",
         "blocked 2, oldest 1d3h",
         "host    jails 9.8 GiB · cpu 340% · disk free 41 GiB",
         "top     developer@2 2.1 GiB 95% · qa-tester 1.6 GiB 80% · developer 1.4 GiB 60%",
       ]);
       expect(lines[0]).toContain("\x1b[1m");
+    });
+
+    it("names the most-bounced cards after the 7 d bounces", () => {
+      const lines = pane(
+        {
+          ...full,
+          flow: {
+            ...full.flow,
+            topBounced: [
+              { issue: 12, bounces: 3 },
+              { issue: 7, bounces: 1 },
+            ],
+          },
+        },
+        { width: 160 },
+      );
+      expect(plain(lines[1] ?? "")).toMatch(/· bounces 24h 1 · 7d 4 \(#12 ×3, #7 ×1\)$/);
     });
 
     it("paints blocked over 24 h and disk free under 1.5 × the hold", () => {

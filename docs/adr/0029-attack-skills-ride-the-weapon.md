@@ -66,7 +66,8 @@ multiplier, plus the bonus, is one damage packet of the weapon's type and
 armor penetration, mitigated once. (Amended, #491/Q85, #760: the bonus
 ignores armor; it is added after the armor curve, still in the one
 packet, so Rune of Absorption still cuts the whole.) No double strike and no cleave on an
-attack skill. Adrenaline as for any hit. A blow that hits also carries
+attack skill. (Amended, #977: a scythe's attack skill cleaves, as the swing does;
+each foe struck gets the skill's effects.) Adrenaline as for any hit. A blow that hits also carries
 the attacker's statuses' `onAttackHit` riders (a preparation, #525), in
 one place for swings, arrows and attack skills alike: `attackHitRiders`.
 

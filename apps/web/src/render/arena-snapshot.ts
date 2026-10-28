@@ -4,6 +4,7 @@ import type { CallsSnapshot } from "@vibewars/game-session";
 
 import type { AttackCast } from "./attack-clock.js";
 import type { RenderablePing } from "./call-marks.js";
+import { LYING_WIDTH } from "./lying-pose.js";
 import type { RenderableProjectile } from "./projectiles.js";
 import { screenPx } from "./screen-text.js";
 
@@ -186,8 +187,11 @@ export interface SwingFlash {
   readonly remainingSeconds: number;
 }
 
-/** Every body's radius, as drawn: the ruleset's collision radius. */
+/** A player's radius, as drawn: the ruleset's collision radius. */
 export const ACTOR_RADIUS = 14;
+
+/** A creature's (#1052), as drawn: the ruleset's `creatureRadius`. */
+export const CREATURE_RADIUS = 10;
 
 /**
  * Where a damage or heal number starts, from the body's centre: right of
@@ -276,6 +280,11 @@ const TEAM_COLOURS: Record<RenderableActor["team"], number> = {
   ally: 0x59c2ff,
   enemy: 0xff7b72,
 };
+
+/** Edges every living body, darker than the grid and walls, so no body blends into what it stands on. */
+export const BODY_EDGE = 0x0b0f14;
+/** A corpse's hollow circle, and the glyph inside it. */
+export const DEAD_COLOUR = 0x4a5464;
 
 /** Colour lookup must stay total over the team union. */
 export function teamColour(team: RenderableActor["team"]): number {
@@ -495,5 +504,53 @@ export function nameplateLayout(
     glyphX: left + glyph / 2,
     textX: left + glyph + gap + text / 2,
     bottom,
+  };
+}
+
+/** The primary profession's glyph inside the body (#1037, Q105 B), world units. */
+export const BODY_GLYPH_SIZE = 13;
+export const BODY_GLYPH_ALPHA = 0.6;
+
+export interface BodyGlyphLayout {
+  readonly profession: ProfessionId;
+  readonly x: number;
+  readonly y: number;
+  /** World units, square. */
+  readonly size: number;
+  /** Tint colour and alpha: edge at 60 % alive, dead grey at 1 on a corpse. */
+  readonly tint: number;
+  readonly alpha: number;
+}
+
+/**
+ * The primary profession's glyph inside `actor`'s body (#1037): upright,
+ * centred, a dark mark on the team colour, under the weapon mark. World
+ * sized, so it scales with the body at every zoom. A knocked-down body
+ * shrinks it to fit its flattened disc; a corpse greys it.
+ *
+ * `undefined`: no profession, so no glyph.
+ */
+export function bodyGlyphLayout(actor: RenderableActor): BodyGlyphLayout | undefined {
+  if (actor.profession === undefined) {
+    return undefined;
+  }
+  const { x, y } = actor.position;
+  if (actor.dead) {
+    return {
+      profession: actor.profession,
+      x,
+      y,
+      size: BODY_GLYPH_SIZE,
+      tint: DEAD_COLOUR,
+      alpha: 1,
+    };
+  }
+  return {
+    profession: actor.profession,
+    x,
+    y,
+    size: actor.knockedDown ? BODY_GLYPH_SIZE * LYING_WIDTH : BODY_GLYPH_SIZE,
+    tint: BODY_EDGE,
+    alpha: BODY_GLYPH_ALPHA,
   };
 }

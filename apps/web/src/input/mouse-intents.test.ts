@@ -9,6 +9,7 @@ import {
 } from "../render/arena-snapshot.js";
 import { createDoubleClick } from "./double-click.js";
 import {
+  calledTargetIntent,
   callTargetCall,
   middleClickAction,
   pingCall,
@@ -46,6 +47,7 @@ function player(sessionId: string, team: number, x: number): PlayerSnapshot {
     knockdownRemaining: 0,
     healthPips: 0,
     energyPips: 0,
+    creature: undefined,
     statuses: [],
   };
 }
@@ -171,5 +173,19 @@ describe("the call keys (#443)", () => {
     expect(pingCall(MATCH, vec2(5, 6))).toEqual({ kind: "ping", x: 5, y: 6 });
     expect(pingCall(MATCH, undefined)).toBeUndefined();
     expect(pingCall(targeting(undefined, true), vec2(5, 6))).toBeUndefined();
+  });
+
+  it("targets the foe your team called, unless there is none or it is already yours", () => {
+    const called = { target: { targetId: "foe", callerId: "ally" }, pings: [] };
+    expect(calledTargetIntent(targeting(undefined), called)).toEqual({
+      kind: "target",
+      targetSessionId: "foe",
+    });
+    expect(calledTargetIntent(targeting("ally"), called)).toEqual({
+      kind: "target",
+      targetSessionId: "foe",
+    });
+    expect(calledTargetIntent(targeting("foe"), called)).toBeUndefined();
+    expect(calledTargetIntent(targeting(undefined), { target: null, pings: [] })).toBeUndefined();
   });
 });

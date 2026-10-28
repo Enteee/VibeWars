@@ -1,0 +1,26 @@
+{
+  "id": "ritualist.splinter-weapon",
+  "name": "Splinter Weapon",
+  "profession": "ritualist",
+  "attribute": "Channeling Magic",
+  "type": "Weapon spell.",
+  "elite": false,
+  "campaign": "Factions",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 1,
+  "rechargeSeconds": 8,
+  "upkeep": false,
+  "description": "For 20 seconds, target ally has a Splinter Weapon. Target ally's next 1...4...5 attacks deal 5...25...30 damage to up to 4 adjacent foes.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Ritualist/726-Splinter_Weapon",
+    "fetchedAt": "2026-10-27T22:01:08.630Z"
+  },
+  "unmapped": {}
+}

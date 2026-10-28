@@ -1,0 +1,26 @@
+{
+  "id": "monk.cure-hex",
+  "name": "Cure Hex",
+  "profession": "monk",
+  "attribute": "Healing Prayers",
+  "type": "Spell.",
+  "elite": false,
+  "campaign": "Eye Of The North",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 1,
+  "rechargeSeconds": 12,
+  "upkeep": false,
+  "description": "Remove one Hex from target ally. If a Hex was removed, that ally is healed for 30...86...100 Health.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Monk/1156-Cure_Hex",
+    "fetchedAt": "2026-10-27T22:29:48.777Z"
+  },
+  "unmapped": {}
+}

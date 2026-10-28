@@ -327,7 +327,8 @@ the whole game: online play is peer to peer from the page itself.
   release and `next` from reading each other's saves _by accident_. It does
   nothing against another site on that origin, which can read and write
   them. Saves are builds and a display name, so we accept this. Nothing
-  secret may ever be stored in the browser on Pages.
+  secret may ever be stored in the browser on Pages. A TURN relay
+  (#972) is kept in memory for the visit there, never in storage.
 - **A manual run cannot publish a side branch.** `workflow_dispatch`
   builds whatever `--ref` it is given, so `deploy` is held back by the
   environments' deployment-branch rules instead: `test` accepts `main`,

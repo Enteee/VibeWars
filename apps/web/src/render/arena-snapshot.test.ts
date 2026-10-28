@@ -18,6 +18,11 @@ import {
   offhandMarkLayout,
   type OffhandMarkLayout,
   nameplateLayout,
+  bodyGlyphLayout,
+  BODY_EDGE,
+  BODY_GLYPH_ALPHA,
+  BODY_GLYPH_SIZE,
+  DEAD_COLOUR,
   PROFESSION_GLYPH_SIZE,
   withNames,
   placeFloatingText,
@@ -26,6 +31,7 @@ import {
   type FloatingText,
   type RenderableActor,
 } from "./arena-snapshot.js";
+import { LYING_WIDTH } from "./lying-pose.js";
 
 describe("teamColour", () => {
   it("draws you in your team's colour, and the two sides apart", () => {
@@ -547,5 +553,40 @@ describe("nameplateLayout (#281)", () => {
     const layout = nameplateLayout(actor("d", 200, 100), 40, 1);
     expect(layout.glyphX).toBeUndefined();
     expect(layout.textX).toBe(200);
+  });
+});
+
+describe("bodyGlyphLayout (#1037)", () => {
+  it("centres a 13 u glyph on a living body, in edge at 60 %", () => {
+    const layout = bodyGlyphLayout(actor("m", 200, 100, 14, { profession: "monk" }));
+    expect(layout).toEqual({
+      profession: "monk",
+      x: 200,
+      y: 100,
+      size: 13,
+      tint: BODY_EDGE,
+      alpha: 0.6,
+    });
+    expect(BODY_GLYPH_SIZE).toBe(13);
+    expect(BODY_GLYPH_ALPHA).toBe(0.6);
+  });
+
+  it("greys a corpse's glyph at full opacity, same size", () => {
+    const layout = bodyGlyphLayout(
+      actor("m", 200, 100, 14, { profession: "necromancer", dead: true }),
+    );
+    expect(layout).toMatchObject({ size: 13, tint: DEAD_COLOUR, alpha: 1, x: 200, y: 100 });
+  });
+
+  it("shrinks it to fit the flattened disc of a knocked-down body", () => {
+    const layout = bodyGlyphLayout(
+      actor("m", 200, 100, 14, { profession: "warrior", knockedDown: true }),
+    );
+    expect(layout?.size).toBeCloseTo(13 * LYING_WIDTH, 9);
+    expect(layout).toMatchObject({ x: 200, y: 100, tint: BODY_EDGE, alpha: 0.6 });
+  });
+
+  it("draws none without a profession", () => {
+    expect(bodyGlyphLayout(actor("m", 200, 100))).toBeUndefined();
   });
 });

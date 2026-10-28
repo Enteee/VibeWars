@@ -126,13 +126,15 @@ export type { BenchField, TickBench } from "./tools/tick-bench.js";
 export { DENSE_FIELD, runTickBench, tickStats } from "./tools/tick-bench.js";
 
 export type {
+  Creature,
+  CreatureKind,
   MatchSimulationOptions,
   Participant,
   ParticipantSpec,
   SkillRequest,
   StepResult,
 } from "./match/simulation.js";
-export { MatchSimulation } from "./match/simulation.js";
+export { countsForTeam, MAX_CREATURES, MatchSimulation } from "./match/simulation.js";
 export { facingToward, spawnFacing } from "./match/facing.js";
 export type { IntentRefusal, MatchIntent } from "./match/apply-intent.js";
 export { applyIntent } from "./match/apply-intent.js";

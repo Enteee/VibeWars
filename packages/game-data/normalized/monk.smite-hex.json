@@ -1,0 +1,26 @@
+{
+  "id": "monk.smite-hex",
+  "name": "Smite Hex",
+  "profession": "monk",
+  "attribute": "Smiting Prayers",
+  "type": "Spell.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 1,
+  "rechargeSeconds": 12,
+  "upkeep": false,
+  "description": "Remove a hex from target ally. If a hex is removed, foes in the area suffer 10...70...85 holy damage.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Monk/213-Smite_Hex",
+    "fetchedAt": "2026-10-27T20:04:00.654Z"
+  },
+  "unmapped": {}
+}

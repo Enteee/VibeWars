@@ -4,6 +4,8 @@ import type { CombatRules } from "../ruleset.js";
 import type { ResolvedEquipment } from "../equipment/resolve.js";
 import type { SkillBar } from "../build.js";
 import type { DamageType } from "../equipment/types.js";
+import type { Behaviour } from "../match/behaviour.js";
+import type { CreatureKind } from "../match/simulation.js";
 import type { ProfessionId } from "../professions.js";
 import type { CastState } from "./cast-state.js";
 import type { TargetCandidate } from "./targeting.js";
@@ -74,6 +76,13 @@ export interface DamageEffect {
    * `splash`, the energy its centre lost, as Energy Surge's (#920).
    */
   readonly perEnergyLost?: true;
+  /**
+   * More damage, in the same packet, to each target for which
+   * `condition` holds as it lands, as Mystic Twister's "if you are
+   * enchanted, deals 10...50...60 more damage" (#977): one packet, so
+   * mitigated, and capped, once.
+   */
+  readonly conditionalBonus?: ConditionalBonus;
 }
 
 export interface HealEffect {
@@ -97,6 +106,13 @@ export interface HealEffect {
    * per ally, is capped at `max` before healing modifiers.
    */
   readonly perAlly?: PerAllyHeal;
+  /**
+   * The amount is per status of this category an earlier `remove-status`
+   * of this skill took off the heal's target, as Restore Condition's
+   * "healed 10...58...70 Health for each condition removed" (#987). None
+   * removed: no heal.
+   */
+  readonly perRemoved?: StatusCategory;
 }
 
 /** Leader's Comfort's heal per ally in earshot (#923). */
@@ -116,6 +132,23 @@ export interface EnergyGainEffect {
    * lost (#920).
    */
   readonly perEnergyLost?: true;
+  /**
+   * Once for each target the skill hit, rather than once a use, as
+   * Zealous Sweep's "for each foe you hit, you gain 3 Energy" (#977).
+   */
+  readonly perTarget?: true;
+}
+
+/**
+ * The caster gains `strikes` strikes of adrenaline in every adrenaline
+ * skill that is not recharging, each capped at its cost, as a hit's
+ * strike (#977). `perTarget`: once for each target the skill hit, as
+ * Zealous Sweep's "1 strike of adrenaline for each foe you hit".
+ */
+export interface AdrenalineGainEffect {
+  readonly kind: "adrenaline-gain";
+  readonly strikes: number;
+  readonly perTarget?: true;
 }
 
 /** The effect's target loses up to `amount` energy (never below 0). */
@@ -138,6 +171,30 @@ export interface LifeStealEffect {
 export interface SacrificeHealthEffect {
   readonly kind: "sacrifice-health";
   readonly percentOfMax: number;
+}
+
+/**
+ * The *caster* loses `amount` health for each status of this profession
+ * an earlier `remove-status` of this use took off the target (#944), as
+ * Rend Enchantments' "for each Monk enchantment removed, you lose
+ * 55...31...25 Health". Not damage: never mitigated, and it can kill, as
+ * a sacrifice.
+ */
+export interface LoseHealthEffect {
+  readonly kind: "lose-health";
+  readonly amount: Magnitude;
+  readonly perRemovedOfProfession: ProfessionId;
+}
+
+/**
+ * Move up to `count` of the caster's conditions, newest first, onto the
+ * target, each with the time it had left on the caster (#944), as Plague
+ * Touch's. Each lands as any condition the caster put on: the longer
+ * duration wins.
+ */
+export interface TransferConditionsEffect {
+  readonly kind: "transfer-conditions";
+  readonly count: number;
 }
 
 /**
@@ -203,11 +260,13 @@ export interface RechargeFasterEffect {
 export interface InterruptEffect {
   readonly kind: "interrupt";
   /**
-   * `spell-or-chant`: only a spell (`isSpell`) or a chant is interrupted,
-   * as Power Spike's "If target foe is casting a Spell or Chant" (#521).
-   * Anything else is left alone, as if the target were not casting.
+   * `spell`: only a spell (`isSpell`) is interrupted, as Concussion
+   * Shot's "while target foe is casting a spell" (#1008); a chant is
+   * not one. `spell-or-chant`: a spell or a chant, as Power Spike's
+   * "If target foe is casting a Spell or Chant" (#521). Anything else
+   * is left alone, as if the target were not casting.
    */
-  readonly only?: "spell-or-chant";
+  readonly only?: "spell" | "spell-or-chant";
 }
 
 /**
@@ -218,6 +277,15 @@ export interface InterruptEffect {
 export interface KnockdownEffect {
   readonly kind: "knockdown";
   readonly durationSeconds: number;
+}
+
+/**
+ * Shadow Step (#988): the caster moves to the effect's target, as Death's
+ * Charge's "Shadow Step to target foe". The effect layer only reports it
+ * (`shadow-stepped`); the simulation places the body.
+ */
+export interface ShadowStepEffect {
+  readonly kind: "shadow-step";
 }
 
 /**
@@ -268,6 +336,45 @@ export interface DisableSkillEffect {
   readonly seconds: Magnitude;
 }
 
+/**
+ * The skill its target just used takes `seconds` longer to recharge
+ * (#949), as Diversion's "the next time target foe uses a skill, that
+ * skill takes an additional 47 seconds to recharge". Recharge, not a
+ * disable: what ends a recharge ends it. No skill just used: nothing.
+ */
+export interface LengthenRechargeEffect {
+  readonly kind: "lengthen-recharge";
+  readonly seconds: Magnitude;
+}
+
+/**
+ * What a `summon` makes (#1052, ADR-0035): a body that is not a player,
+ * with health, armor and a team, and no skill bar, attributes or energy.
+ */
+export interface CreatureTemplate {
+  readonly kind: CreatureKind;
+  /** Shown in the target frame and the name label, as "Bone Minion". */
+  readonly name: string;
+  /** Scaled by the summoning skill's caster, as any other magnitude. */
+  readonly maxHealth: Magnitude;
+  readonly armor: number;
+  /** Seconds it lasts; omitted: until it is killed. */
+  readonly durationSeconds?: Magnitude;
+  /** What it does each tick. */
+  readonly behaviour: Behaviour;
+}
+
+/**
+ * Summon `count` creatures at the caster, on the caster's team, owned by
+ * it (#1052). Acts on the caster, once. A match holds at most
+ * `MAX_CREATURES`: past it, as many as fit, possibly none.
+ */
+export interface SummonEffect {
+  readonly kind: "summon";
+  readonly creature: CreatureTemplate;
+  readonly count: number;
+}
+
 /** How long "knocks down" lasts when a skill names no duration (GW1). */
 export const KNOCKDOWN_SECONDS = 2;
 
@@ -299,8 +406,16 @@ export type StateCondition =
   | { readonly kind: "target-has"; readonly category: StatusCategory }
   /** The effect's target is activating a spell (`isSpell`); a chant is not one. */
   | { readonly kind: "target-casting"; readonly spell: true }
-  /** The caster has at least one status of this category. */
-  | { readonly kind: "caster-has"; readonly category: StatusCategory }
+  /**
+   * The caster has at least one status of this category; with a
+   * `profession`, one of that profession's (#1021): Eremite's Attack's
+   * "if a Dervish enchantment is removed", read before it is.
+   */
+  | {
+      readonly kind: "caster-has";
+      readonly category: StatusCategory;
+      readonly profession?: ProfessionId;
+    }
   /**
    * No living ally of the effect's target, the target itself excluded,
    * stands within `radius` of it (#885): Horns of the Ox's "not adjacent
@@ -309,6 +424,26 @@ export type StateCondition =
   | { readonly kind: "target-alone"; readonly radius: number }
   /** The effect's target did not walk in the previous tick (#921, `Combatant.moving`). */
   | { readonly kind: "target-not-moving" }
+  /**
+   * The effect's target is knocked down (#985, `Combatant.knockdownRemaining`):
+   * Aftershock's "knocked down foes are struck for ... additional".
+   */
+  | { readonly kind: "target-knocked-down" }
+  /**
+   * The effect's target walked in the previous tick (#997,
+   * `Combatant.moving`): Water Trident's "a moving foe".
+   */
+  | { readonly kind: "target-moving" }
+  /**
+   * The effect's target has this status (#997): Stoning's "suffering from
+   * Weakness", Searing Flames' "already on fire".
+   */
+  | { readonly kind: "target-has-status"; readonly statusId: StatusId }
+  /**
+   * The effect's target does not have this status (#997): Searing Flames'
+   * "foes not already on fire".
+   */
+  | { readonly kind: "target-lacks-status"; readonly statusId: StatusId }
   /**
    * The caster has more energy than the effect's target (#918): Mind
    * Shock's "if you have more energy than target foe". Equal is not more.
@@ -324,7 +459,19 @@ export type StateCondition =
    * share (#939): Victorious Sweep's "if target foe has less Health than
    * you". Equal is not less.
    */
-  | { readonly kind: "target-less-health" };
+  | { readonly kind: "target-less-health" }
+  /**
+   * The effect's target has more health than the caster, absolute (#988):
+   * Death's Charge's "if that foe has more Health than you". Equal is not
+   * more.
+   */
+  | { readonly kind: "target-more-health" }
+  /**
+   * The effect's target is alive and attacking (#988): an auto-attack
+   * swinging, not walking to its foe, or an attack skill being activated,
+   * as Shadow Refuge's "if you are attacking".
+   */
+  | { readonly kind: "target-attacking" };
 
 export type EffectCondition = EventCondition | StateCondition;
 
@@ -347,20 +494,26 @@ export type UnconditionalEffect =
   | DamageEffect
   | HealEffect
   | EnergyGainEffect
+  | AdrenalineGainEffect
   | EnergyLossEffect
   | LifeStealEffect
   | SacrificeHealthEffect
+  | LoseHealthEffect
+  | TransferConditionsEffect
   | GiveHealthEffect
   | ApplyStatusEffect
   | MaintainStatusEffect
   | RemoveStatusEffect
   | InterruptEffect
   | KnockdownEffect
+  | ShadowStepEffect
   | ResurrectEffect
   | RechargeFasterEffect
   | SplashEffect
   | RechargeOthersEffect
-  | DisableSkillEffect;
+  | DisableSkillEffect
+  | LengthenRechargeEffect
+  | SummonEffect;
 
 export type SkillEffect = UnconditionalEffect | ConditionalEffect;
 
@@ -421,6 +574,14 @@ export interface AttackSkillRule {
   /** Added to the weapon's roll before armor; `undefined`: no bonus. */
   readonly bonusDamage: Magnitude | undefined;
   /**
+   * While this holds for the caster as the skill hits, its cleave takes
+   * every living foe adjacent to its target, not the weapon's
+   * `cleaveTargets` (#1021): Eremite's Attack's "strike all adjacent
+   * foes". Read once, with the primary as the target. A weapon that does
+   * not cleave does not start to. Absent: the weapon's cap.
+   */
+  readonly cleavesAllWhen?: StateCondition;
+  /**
    * The blow's damage type instead of the weapon's (#923): Spear of
    * Lightning's whole blow is lightning, weapon and bonus alike.
    * `undefined`: the weapon's.
@@ -466,6 +627,13 @@ export interface ChainStep {
    * "Must follow a lead attack"; `undefined`: it may open a chain.
    */
   readonly follows: ChainRole | undefined;
+  /**
+   * A state that must hold for it to hit, read per victim with
+   * `stateHolds` before its first blow (#1041): Falling Spider's "Must
+   * strike a knocked-down foe". Unmet, it misses out of sequence, as an
+   * unmet `follows` does. Absent: no requirement but `follows`.
+   */
+  readonly requires?: StateCondition;
 }
 
 /** A chain mark one attacker left on one target (#831). */
@@ -669,6 +837,11 @@ export interface SkillContext {
    * `resolveTargets`'.
    */
   readonly surroundings: Surroundings;
+  /**
+   * The skill the target just used, when a status's trigger answers that
+   * use (#949): what `lengthen-recharge` lengthens. Absent elsewhere.
+   */
+  readonly usedSkillId?: string | undefined;
 }
 
 /** Everyone in the match by id, where they stand (#885). */
