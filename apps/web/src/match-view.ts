@@ -57,7 +57,7 @@ import {
   updateRecharges,
 } from "./ui/hud.js";
 import { labelWeaponSets, renderWeaponSets, weaponSetSlots } from "./ui/weapon-set-slots.js";
-import { mapMode } from "./net/maps.js";
+import { mapMode, mapShrines, type MapShrine } from "./net/maps.js";
 import { compassReach, createCompass } from "./ui/compass.js";
 import { noWebGlNotice } from "./ui/arena-notice.js";
 import { attachFullscreenButton, fullscreenTarget } from "./ui/fullscreen.js";
@@ -119,11 +119,18 @@ export function toRenderableWall(wall: WallDescriptor): RenderableWall {
 export function toArenaSnapshot(
   match: MatchSnapshot,
   walls: readonly RenderableWall[],
+  shrines: readonly MapShrine[],
 ): ArenaSnapshot {
   const self = match.players.find((player) => player.sessionId === match.selfSessionId);
 
   return {
     walls,
+    // Your own side's in the ally colour; a spectator's team 1 is, as the
+    // scoreboard reads it first (#1199).
+    shrines: shrines.map((shrine) => ({
+      position: shrine.position,
+      side: shrine.team === (self?.team ?? 0) ? "ally" : "enemy",
+    })),
     clock: match.elapsedSeconds,
     projectiles: match.projectiles.map((shot) => {
       const shooter = match.players.find((player) => player.sessionId === shot.attackerId);
@@ -263,6 +270,7 @@ export async function startMatchView(
   // Once per match, for the skill bar's line-of-sight hint (#485).
   const wallSegments = allWallSegments(connection.map.walls);
   const mode = mapMode(connection.map.id);
+  const shrines = mapShrines(connection.map.id);
   const camera =
     viewport === undefined
       ? undefined
@@ -503,7 +511,7 @@ export async function startMatchView(
   window.addEventListener("keydown", handleKeyDown);
 
   let latestMatch = connection.getSnapshot();
-  let latestArena = toArenaSnapshot(latestMatch, walls);
+  let latestArena = toArenaSnapshot(latestMatch, walls, shrines);
   // The names key shows every name; the cursor shows one (#253).
   const nameReveal = attachNameReveal(window, keymap);
   // While the match runs, closing or reloading the tab asks first: an
@@ -592,7 +600,11 @@ export async function startMatchView(
     // it, shows the right name.
     partyWindow.update(latestMatch);
     latestArena = withCalls(
-      withNames(toArenaSnapshot(latestMatch, walls), viewport?.pointerWorld(), nameReveal.held()),
+      withNames(
+        toArenaSnapshot(latestMatch, walls, shrines),
+        viewport?.pointerWorld(),
+        nameReveal.held(),
+      ),
       connection.getCalls(),
     );
     viewport?.scene.setSnapshot(latestArena);

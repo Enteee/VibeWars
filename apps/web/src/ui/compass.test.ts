@@ -152,6 +152,25 @@ describe("compassView (#1056)", () => {
     expect(view?.pings).toEqual([{ x: 0, y: 40, age: 0.5 }]);
   });
 
+  it("marks the shrines in range by side, clipping those beyond as pings (#1199)", () => {
+    const view = compassView(
+      arena({
+        shrines: [
+          { position: vec2(1000, 1850), side: "ally" },
+          { position: vec2(1850, 1000), side: "enemy" },
+          { position: vec2(3000, 1000), side: "enemy" },
+        ],
+      }),
+      "me",
+      SIZE,
+      RANGE_COMPASS,
+    );
+    expect(view?.shrines).toEqual([
+      { x: 0, y: 40, side: "ally" },
+      { x: 40, y: 0, side: "enemy" },
+    ]);
+  });
+
   it("clips a wall crossing the disc's edge, keeps one inside whole, skips one outside", () => {
     const view = compassView(
       arena({

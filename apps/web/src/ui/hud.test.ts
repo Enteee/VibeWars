@@ -23,6 +23,7 @@ import {
   moraleLabel,
   muteButtonState,
   refreshSkillBar,
+  scoreboardParts,
   scoreboardText,
   skillSlotHtml,
   castRowSkill,
@@ -360,15 +361,70 @@ describe("scoreboardText (#881)", () => {
     expect(scoreboardText(players, 0, 42, null, "annihilation", [4, 0])).toBe("2 v 1 · 0:42");
   });
 
-  it("counts the living, not the priests, in Priest Annihilation (#1186)", () => {
-    const priest = player({
-      sessionId: "priest-1",
-      team: 1,
-      creature: { ownerId: null, kind: "priest", look: "priest", mode: null, armedAttack: null },
+  describe("on a Priest Annihilation map (#1199)", () => {
+    const priest = (team: number, dead = false) =>
+      player({
+        sessionId: `priest-${String(team)}`,
+        team,
+        dead,
+        creature: { ownerId: null, kind: "priest", look: "priest", mode: null, armedAttack: null },
+      });
+    const priests = (dead0: boolean, dead1: boolean) => [
+      ...players,
+      priest(0, dead0),
+      priest(1, dead1),
+    ];
+
+    it("counts the living, not the priests, then each priest and the next raise", () => {
+      expect(scoreboardText(priests(false, false), 0, 73, 720, "priest-annihilation", [0, 0])).toBe(
+        "2 v 1 · ✚ ✚ · raise 0:47 · 10:47",
+      );
     });
-    expect(scoreboardText([...players, priest], 0, 42, null, "priest-annihilation", [0, 0])).toBe(
-      "2 v 1 · 0:42",
-    );
+
+    it("strikes out a dead priest, your own side's first", () => {
+      expect(
+        scoreboardParts(priests(false, true), 0, 73, 720, "priest-annihilation", [0, 0]),
+      ).toContainEqual({ kind: "priest", team: 1, alive: false });
+      expect(
+        scoreboardParts(priests(false, true), 1, 73, 720, "priest-annihilation", [0, 0]).filter(
+          (part) => part.kind === "priest",
+        ),
+      ).toEqual([
+        { kind: "priest", team: 1, alive: false },
+        { kind: "priest", team: 0, alive: true },
+      ]);
+    });
+
+    it("reads raise — once both priests are dead", () => {
+      expect(scoreboardText(priests(true, true), 0, 73, 720, "priest-annihilation", [0, 0])).toBe(
+        "2 v 1 · ✚ ✚ · raise — · 10:47",
+      );
+    });
+
+    it("counts down to the next wave, every 2 minutes of match clock", () => {
+      const raise = (elapsed: number) =>
+        scoreboardParts(priests(false, false), 0, elapsed, 720, "priest-annihilation", [0, 0]).find(
+          (part) => part.kind === "raise",
+        );
+      expect(raise(0)).toEqual({ kind: "raise", text: "raise 2:00", soon: false });
+      expect(raise(119)).toEqual({ kind: "raise", text: "raise 0:01", soon: true });
+      expect(raise(120)).toEqual({ kind: "raise", text: "raise 2:00", soon: false });
+      expect(raise(121)).toEqual({ kind: "raise", text: "raise 1:59", soon: false });
+      expect(raise(114.5)).toEqual({ kind: "raise", text: "raise 0:06", soon: false });
+      expect(raise(115)).toEqual({ kind: "raise", text: "raise 0:05", soon: true });
+    });
+
+    it("drops the raise once time is out", () => {
+      expect(
+        scoreboardText(priests(false, false), 0, 720, 720, "priest-annihilation", [0, 0]),
+      ).toBe("2 v 1 · ✚ ✚ · 0:00");
+    });
+
+    it("leaves the other modes' scoreboards without priests", () => {
+      expect(scoreboardText(priests(false, false), 0, 42, null, "annihilation", [0, 0])).toBe(
+        "2 v 1 · 0:42",
+      );
+    });
   });
 
   it("counts each team's kills in Kill Count, your own first (#1200)", () => {

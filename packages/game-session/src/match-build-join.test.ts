@@ -334,8 +334,8 @@ describe("joining a P2P match with a build (#375)", () => {
   it("refuses an unimplemented skill rather than granting a blank slot", async () => {
     const cheat = {
       ...LEGAL_BUILD,
-      name: "Meteor Dreamer",
-      skillBar: ["elementalist.meteor-shower", null, null, null, null, null, null, null],
+      name: "Whirlwind Dreamer",
+      skillBar: ["warrior.whirlwind-attack", null, null, null, null, null, null, null],
     };
     const { slots } = await joinWith(cheat);
 

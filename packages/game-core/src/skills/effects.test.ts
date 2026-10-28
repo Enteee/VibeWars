@@ -13,7 +13,7 @@ import {
   resolveSkillEffects,
   type CombatEvent,
 } from "./effects.js";
-import { HEALTH_PER_PIP, type StatusId } from "./status.js";
+import { HEALTH_PER_PIP, getStatusDefinition, type StatusId } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import { advanceStatuses, effectiveMaxHealth } from "./tick.js";
 import type {
@@ -1329,5 +1329,81 @@ describe("lengthen-recharge (#949)", () => {
     const target = makeCombatant({ id: "target", team: 1 });
     expect(applyEffect(effect, context(undefined, target))).toEqual([]);
     expect(target.cast.rechargeRemaining.size).toBe(0);
+  });
+});
+
+describe("removing by what an earlier removal took (#1205)", () => {
+  const stripAll = {
+    kind: "remove-status",
+    category: "enchantment",
+    count: "all",
+    from: "caster",
+  } as const;
+  const hexPerEnchantment = (max: number) =>
+    ({
+      kind: "remove-status",
+      category: "hex",
+      count: 0,
+      from: "caster",
+      perRemoved: { category: "enchantment", max: { flat: max } },
+    }) as const;
+  const healPerEnchantment = {
+    kind: "heal",
+    amount: { flat: 50 },
+    perStatusOnTarget: [],
+    perRemoved: "enchantment",
+  } as const;
+
+  function enchantedAndHexed(enchantments: readonly StatusId[]): SkillContext {
+    const caster = makeCombatant({ id: "caster", health: 100, maxHealth: 1000 });
+    for (const id of enchantments) {
+      caster.statuses.apply(id, 30, "caster");
+    }
+    for (const id of ["malaise", "faintheartedness", "empathy"] as const) {
+      caster.statuses.apply(id, 30, "foe");
+    }
+    return context(caster, caster);
+  }
+
+  const removed = (events: readonly CombatEvent[], category: string) =>
+    events.filter(
+      (event) =>
+        event.kind === "status-removed" &&
+        getStatusDefinition(event.statusId).category === category,
+    ).length;
+
+  it('takes every status of its category with count "all"', () => {
+    const ctx = enchantedAndHexed(["guardian", "armor-boost", "vow-of-strength"]);
+    const events = applyEffects([stripAll], ctx);
+    expect(removed(events, "enchantment")).toBe(3);
+    expect(ctx.caster.statuses.countByCategory("enchantment")).toBe(0);
+  });
+
+  it("takes one for each status an earlier removal took, its count ignored", () => {
+    const ctx = enchantedAndHexed(["guardian", "armor-boost"]);
+    const events = applyEffects([stripAll, hexPerEnchantment(7)], ctx);
+    expect(removed(events, "hex")).toBe(2);
+    expect(ctx.caster.statuses.countByCategory("hex")).toBe(1);
+  });
+
+  it("takes no more than its maximum", () => {
+    const ctx = enchantedAndHexed(["guardian", "armor-boost", "vow-of-strength"]);
+    const events = applyEffects([stripAll, hexPerEnchantment(1)], ctx);
+    expect(removed(events, "hex")).toBe(1);
+  });
+
+  it("takes none, and heals none, when the earlier removal took nothing", () => {
+    const ctx = enchantedAndHexed([]);
+    const events = applyEffects([stripAll, healPerEnchantment, hexPerEnchantment(7)], ctx);
+    expect(events).toEqual([]);
+    expect(ctx.caster.statuses.countByCategory("hex")).toBe(3);
+  });
+
+  it("heals once, for each status the earlier removal took", () => {
+    const ctx = enchantedAndHexed(["guardian", "armor-boost"]);
+    const events = applyEffects([stripAll, healPerEnchantment], ctx);
+    expect(events.filter((event) => event.kind === "heal")).toEqual([
+      { kind: "heal", targetId: "caster", amount: 100 },
+    ]);
   });
 });

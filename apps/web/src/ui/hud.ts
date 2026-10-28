@@ -6,6 +6,7 @@ import {
   neededWeaponText,
   type ActivationRejection,
   type ChainRole,
+  PRIEST_WAVE_SECONDS,
   type MatchMode,
   type Segment,
   type StatusId,
@@ -724,39 +725,143 @@ export function livingCount(players: readonly PlayerSnapshot[], team: number): n
     (player) => player.team === team && !player.dead && player.creature === undefined,
   ).length;
 }
+/** Seconds before a priest's wave its countdown pulses (#1199). */
+export const RAISE_SOON_SECONDS = 5;
+
+/**
+ * One piece of the scoreboard (#1199): text, a side's priest `✚`, alive
+ * or struck out, or the countdown to the next priest wave.
+ */
+export type ScoreboardPart =
+  | { readonly kind: "text"; readonly text: string }
+  | { readonly kind: "priest"; readonly team: number; readonly alive: boolean }
+  | { readonly kind: "raise"; readonly text: string; readonly soon: boolean };
+
+/** Whether `team`'s priest stands (#1199): a living priest body of that team. */
+export function priestLives(players: readonly PlayerSnapshot[], team: number): boolean {
+  return players.some(
+    (player) => player.team === team && !player.dead && player.creature?.kind === "priest",
+  );
+}
 
 /**
  * Your side against theirs, your own first, and the clock (#881): the time
  * left, counting down from the match's limit (#476), or the time played
  * where there is none. A spectator reads team 1 first.
  *
- * What a side is depends on the map's `mode`: Annihilation and Priest
- * Annihilation count the living, "4 v 3 · 7:12"; Kill Count the team's
- * kills, "4 – 0 · 2:25" (#1200), as the snapshot's `score` carries them,
- * team 1's first.
+ * What a side is depends on the map's `mode`: Annihilation counts the
+ * living, "4 v 3 · 7:12"; Kill Count the team's kills, "4 – 0 · 2:25"
+ * (#1200), as the snapshot's `score` carries them, team 1's first.
+ * Priest Annihilation counts the living, then each side's priest and the
+ * next wave, "4 v 3 · ✚ ✚ · raise 0:47 · 7:12" (#1199): `raise —` once
+ * both priests are dead, and no countdown once time is out.
  */
-export function scoreboardText(
+export function scoreboardParts(
   players: readonly PlayerSnapshot[],
   selfTeam: number | undefined,
   elapsedSeconds: number,
   timeLimitSeconds: number | null,
   mode: MatchMode,
   score: readonly [number, number],
-): string {
+): readonly ScoreboardPart[] {
   const ours = selfTeam ?? 0;
   const theirs = ours === 0 ? 1 : 0;
   // Rounded up, so the clock reads 0:00 only once time is out.
-  const clock =
-    timeLimitSeconds === null
-      ? formatClock(elapsedSeconds)
-      : formatClock(Math.ceil(timeLimitSeconds - elapsedSeconds));
+  const clock: ScoreboardPart = {
+    kind: "text",
+    text:
+      timeLimitSeconds === null
+        ? formatClock(elapsedSeconds)
+        : formatClock(Math.ceil(timeLimitSeconds - elapsedSeconds)),
+  };
+  const living: ScoreboardPart = {
+    kind: "text",
+    text: `${String(livingCount(players, ours))} v ${String(livingCount(players, theirs))}`,
+  };
   switch (mode) {
     case "annihilation":
-    case "priest-annihilation":
-      return `${String(livingCount(players, ours))} v ${String(livingCount(players, theirs))} · ${clock}`;
+      return [living, clock];
     case "kill-count":
-      return `${String(score[ours])} – ${String(score[theirs])} · ${clock}`;
+      return [{ kind: "text", text: `${String(score[ours])} – ${String(score[theirs])}` }, clock];
+    case "priest-annihilation": {
+      const priests = [ours, theirs].map((team): ScoreboardPart => ({
+        kind: "priest",
+        team,
+        alive: priestLives(players, team),
+      }));
+      const timeUp = timeLimitSeconds !== null && elapsedSeconds >= timeLimitSeconds;
+      if (timeUp) {
+        return [living, ...priests, clock];
+      }
+      return [living, ...priests, raisePart(players, elapsedSeconds), clock];
+    }
   }
+}
+
+/** The next priest wave's countdown (#1199), rounded up as the clock is. */
+function raisePart(players: readonly PlayerSnapshot[], elapsedSeconds: number): ScoreboardPart {
+  if (!priestLives(players, 0) && !priestLives(players, 1)) {
+    return { kind: "raise", text: "raise —", soon: false };
+  }
+  const left = Math.ceil(PRIEST_WAVE_SECONDS - (elapsedSeconds % PRIEST_WAVE_SECONDS));
+  return { kind: "raise", text: `raise ${formatClock(left)}`, soon: left <= RAISE_SOON_SECONDS };
+}
+
+/** What goes before `parts[index]`: nothing first, a space between two priests, else ` · `. */
+function separatorBefore(parts: readonly ScoreboardPart[], index: number): string {
+  if (index === 0) {
+    return "";
+  }
+  return parts[index - 1]?.kind === "priest" && parts[index]?.kind === "priest" ? " " : " · ";
+}
+
+/** The scoreboard as one line of text, as `renderScoreboard` paints it. */
+export function scoreboardText(...args: Parameters<typeof scoreboardParts>): string {
+  return scoreboardParts(...args)
+    .map(
+      (part, index, parts) =>
+        separatorBefore(parts, index) + (part.kind === "priest" ? "✚" : part.text),
+    )
+    .join("");
+}
+
+/**
+ * Paint the scoreboard's `parts` into `row` (#1199), rebuilt only when one
+ * changes. A priest is drawn in its side's colour, as the foes' pips, and
+ * struck out dead; the wave countdown pulses for its last seconds.
+ */
+function renderScoreboard(
+  row: HTMLElement,
+  parts: readonly ScoreboardPart[],
+  selfTeam: number | undefined,
+): void {
+  const key = JSON.stringify(parts);
+  if (row.dataset.parts === key) {
+    return;
+  }
+  row.dataset.parts = key;
+  row.replaceChildren();
+  parts.forEach((part, index) => {
+    row.append(separatorBefore(parts, index));
+    switch (part.kind) {
+      case "text":
+        row.append(part.text);
+        return;
+      case "priest": {
+        const node = element("span", part.alive ? "hud-priest" : "hud-priest is-dead", row);
+        node.textContent = "✚";
+        const ally = selfTeam === undefined ? part.team === 0 : part.team === selfTeam;
+        node.style.setProperty("--pip-colour", cssColour(teamColour(ally ? "ally" : "enemy")));
+        node.setAttribute("aria-label", part.alive ? "priest" : "priest (dead)");
+        return;
+      }
+      case "raise": {
+        const node = element("span", part.soon ? "hud-raise hud-raise-soon" : "hud-raise", row);
+        node.textContent = part.text;
+        return;
+      }
+    }
+  });
 }
 
 /**
@@ -1177,13 +1282,13 @@ export function updateHud(
   match?: MatchSnapshot,
 ): void {
   if (match !== undefined) {
-    hud.scoreboardText.textContent = scoreboardText(
-      match.players,
+    renderScoreboard(
+      hud.scoreboardText,
+      scoreboardParts(match.players, self?.team, match.elapsedSeconds, timeLimitSeconds, mode, [
+        match.scoreTeam0,
+        match.scoreTeam1,
+      ]),
       self?.team,
-      match.elapsedSeconds,
-      timeLimitSeconds,
-      mode,
-      [match.scoreTeam0, match.scoreTeam1],
     );
     renderEnemyPips(hud.enemies, enemyPips(match.players, self?.team), self?.team);
 

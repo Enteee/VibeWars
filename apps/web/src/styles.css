@@ -1972,6 +1972,29 @@ body {
   pointer-events: none;
 }
 
+/* A side's priest on a Priest Annihilation map (#1199): its side's
+   colour while it stands, dim and struck out once dead. */
+.hud-priest {
+  color: var(--pip-colour);
+}
+
+.hud-priest.is-dead {
+  opacity: 0.4;
+  text-decoration: line-through;
+}
+
+/* The next priest wave close (#1199): the countdown pulses for its last
+   5 s. A warning, so it pulses under reduced motion too, as a blink. */
+.hud-raise-soon {
+  animation: raise-soon 1s step-end infinite;
+}
+
+@keyframes raise-soon {
+  50% {
+    opacity: 0.35;
+  }
+}
+
 .hud-enemies {
   display: flex;
   flex-direction: column;
