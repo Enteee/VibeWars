@@ -1228,6 +1228,11 @@ export function describeSkill(
   skill: Skill,
   ranks: ReadonlyMap<string, number> = new Map(),
 ): SkillDescription {
+  // "Lose all adrenaline" (#1097), before anything, as GW1 prints it.
+  const lossLine =
+    skill.cost?.kind === "adrenaline" && skill.cost.losesAll === true
+      ? [{ text: "Lose all adrenaline", magnitude: undefined }]
+      : [];
   // A chain attack's place in its chain (#831), first, as GW1 prints it.
   const chain = skill.attack?.chain;
   const chainLine = chain === undefined ? [] : [{ text: chainText(chain), magnitude: undefined }];
@@ -1341,6 +1346,7 @@ export function describeSkill(
           },
         ];
   const effects = [
+    ...lossLine,
     ...chainLine,
     ...bonusLine,
     ...unblockableLine,

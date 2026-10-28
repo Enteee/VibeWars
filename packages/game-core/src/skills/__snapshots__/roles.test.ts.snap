@@ -170,6 +170,7 @@ exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
   "warrior.executioners-strike": "",
   "warrior.for-great-justice": "",
   "warrior.frenzy": "",
+  "warrior.hammer-bash": "knockdown",
   "warrior.healing-signet": "healing",
   "warrior.sever-artery": "condition",
   "warrior.sprint": "",
