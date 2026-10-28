@@ -116,6 +116,7 @@ describe("status definitions", () => {
       "never-surrender": 4,
       "shadow-refuge": 9,
       recuperation: 3,
+      "well-of-suffering": -5,
     });
   });
 

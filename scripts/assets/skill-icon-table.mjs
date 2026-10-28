@@ -209,6 +209,8 @@ export const SKILL_ICONS = {
   "ranger.barbed-trap": { glyph: "pin", modifier: "bleed" },
   // Health taken from a corpse: the heal glyph with the corpse mark (#1075).
   "necromancer.soul-feast": { glyph: "heal", modifier: "corpse" },
+  // A placeholder until the asset-designer's (#1104).
+  "necromancer.well-of-suffering": { glyph: "germ", modifier: "corpse" },
   // Bodies raised from a corpse: a skull pack, and one horned skull (#1112).
   "necromancer.animate-bone-minions": { glyph: "bone-minions" },
   "necromancer.animate-bone-horror": { glyph: "bone-horror" },

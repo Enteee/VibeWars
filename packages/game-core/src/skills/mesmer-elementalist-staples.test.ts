@@ -159,7 +159,9 @@ describe("Ice Spikes and Deep Freeze (#938)", () => {
   ] as const)("%s deals %s's cold and slows to 34% speed", (skillId, statusId, cold, seconds) => {
     const target = foe("target");
     use(caster(), skillId, [target]);
-    expect(target.health).toBe(1000 - mitigate(skillDamage(cold, "cold", 0), target, RULES));
+    expect(target.health).toBe(
+      1000 - mitigate(skillDamage(cold, "cold", 0), target, RULES, "chest"),
+    );
     expect(target.statuses.get(statusId)?.remainingSeconds).toBe(seconds);
     expect(moveSpeedMultiplier(target)).toBeCloseTo(0.34, 9);
   });

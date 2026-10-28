@@ -501,14 +501,16 @@ export type GroundAct =
   | { readonly kind: "trap"; readonly trap: TrapRule };
 
 /**
- * Leave a ground effect where the caster stands as the skill lands
- * (#1087): a circle that is not a body, doing `act` for
- * `durationSeconds`. Acts on the caster, once. A match holds at most
+ * Leave a ground effect as the skill lands (#1087): a circle that is not
+ * a body, doing `act` for `durationSeconds`. `caster`: where the caster
+ * stands (a ward, a trap). `corpse`: where the corpse the skill exploited
+ * lies (a well, #1104), so only a skill with a `corpse` rule has one.
+ * Acts on the caster, once. A match holds at most
  * `MAX_GROUND_EFFECTS`: past it, the oldest ends early.
  */
 export interface CreateGroundEffect {
   readonly kind: "create-ground-effect";
-  readonly anchor: "caster";
+  readonly anchor: "caster" | "corpse";
   readonly durationSeconds: Magnitude;
   readonly act: GroundAct;
 }
@@ -692,12 +694,14 @@ export type SkillType =
   | "nature-ritual"
   | "binding-ritual"
   | "ward"
+  | "well"
   | "trap"
   | "skill";
 
 /**
  * Whether a skill of this type is a spell, as GW1's rules that "affect
- * spells" mean it: enchantments, hexes, weapon spells and wards (#1087) are spells,
+ * spells" mean it: enchantments, hexes, weapon spells, wards (#1087) and wells
+ * (#1104) are spells,
  * signets, shouts, chants, stances and glyphs are not (#524, #526, #527,
  * #758). Every such rule asks this, never the type directly.
  */
@@ -707,7 +711,8 @@ export function isSpell(type: SkillType): boolean {
     type === "enchantment" ||
     type === "hex" ||
     type === "weapon-spell" ||
-    type === "ward"
+    type === "ward" ||
+    type === "well"
   );
 }
 

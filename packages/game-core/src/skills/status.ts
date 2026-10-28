@@ -158,7 +158,9 @@ export type StatusId =
   | "winnowing"
   | "recuperation"
   // Wards' auras (#1087), worn while inside a ward.
-  | "ward-against-melee";
+  | "ward-against-melee"
+  // Wells' auras (#1104), worn while inside a well.
+  | "well-of-suffering";
 
 /** Health one pip of regeneration or degeneration is worth, per second (GW1). */
 export const HEALTH_PER_PIP = 2;
@@ -1071,6 +1073,13 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   "ward-against-melee": define("ward-against-melee", "Ward Against Melee", "skill-effect", {
     profession: "elementalist",
     block: { chance: 0.5, against: "melee" },
+  }),
+  // What a well projects on the foes inside it (#1104), at rank 12, as
+  // statuses carry fixed numbers: "foes in that area suffer health
+  // degeneration of -1...5...6".
+  "well-of-suffering": define("well-of-suffering", "Well of Suffering", "skill-effect", {
+    profession: "necromancer",
+    healthPips: -5,
   }),
   // "Fall Back!" at rank 12: 13 Health per second while moving, 33%
   // faster, ending on its bearer's hit.

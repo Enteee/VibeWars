@@ -278,9 +278,10 @@ It cannot be confused with the target ring. The target ring is yellow and
 hugs one actor (9 px outside a radius of 14). The flash is team-coloured,
 at least 40 units in radius, and gone in under half a second.
 
-### Ward
+### Ward and well
 
-A ward (#1087) lies on the ground for as long as it lasts:
+A ward (#1087) or a well (#1104, on the corpse it exploited) lies on the
+ground for as long as it lasts, both drawn the same:
 
 - **Colour is its owner's team**, `friend` or `foe`, as the area flash's.
 - **A fill at 15 % alpha and a 1.5 px rim at 60 %**, at its true radius:

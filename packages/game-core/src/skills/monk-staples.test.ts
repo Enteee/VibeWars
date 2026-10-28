@@ -157,7 +157,7 @@ describe("Reversal of Fortune (#987)", () => {
     target.statuses.apply("protective-spirit", 19, "monk");
     applyDamage(
       target,
-      mitigate(skillDamage(200, "typeless", 0), target, RULES),
+      mitigate(skillDamage(200, "typeless", 0), target, RULES, null),
       "typeless",
       false,
       [],
