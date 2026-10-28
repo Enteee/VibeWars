@@ -176,6 +176,13 @@ describe("parseSettings", () => {
     );
   });
 
+  it("rejects an own address that is not an IP", () => {
+    expect(() => parseSettings({ ...BASE, externalIp: "203.0.113.7/router.lan" })).toThrow(
+      /router.lan is not an IP/,
+    );
+    expect(() => parseSettings({ ...BASE, listeningIps: ["eth0"] })).toThrow(/eth0/);
+  });
+
   it("rejects a missing realm", () => {
     expect(() => parseSettings({ ...BASE, realm: undefined })).toThrow(/realm/);
   });

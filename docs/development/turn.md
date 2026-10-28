@@ -70,20 +70,35 @@ A relay socket can send to the host's own addresses, so without more, a
 relay user reaches every UDP service the host runs on its public address.
 `turn.nft` drops what leaves a relay port for an own address on any port
 outside the relay range. Loading it needs root, so the server cannot do it
-itself. Load it once, and again when the addresses or the relay range
-change:
+itself.
+
+`turn.nft` is written by the unprivileged user the server runs as, on every
+start, so a compromised server could rewrite it, and `nft -f` runs whatever
+it holds, `flush ruleset` included. Never have root load that file as it
+lies. Read it, then install a root-owned copy and load the copy, once and
+again when the addresses or the relay range change:
 
 ```sh
-sudo nft -f .devenv/state/turn/turn.nft
+less .devenv/state/turn/turn.nft
+sudo install -D -o root -g root -m 0644 .devenv/state/turn/turn.nft /etc/nftables.d/vibewars_turn.nft
+sudo nft -f /etc/nftables.d/vibewars_turn.nft
 ```
 
 To keep it across reboots on NixOS, set
 `networking.nftables.tables.vibewars_turn = { family = "inet"; content = …; }`
 with the `chain output { … }` block from the file as `content`. Elsewhere,
-run the command above from a systemd unit that starts before the network.
+have a systemd unit that starts before the network load the root-owned
+copy, `nft -f /etc/nftables.d/vibewars_turn.nft`, never the file under
+`.devenv/state`.
 
 **Without it, relay users can reach the host's UDP services on its public
 IP.** `turn-check`, run as root, fails while the table is not loaded.
+
+The relay ports sit inside Linux's ephemeral port range, so a host process
+whose source port lands in it and sends UDP to an own address outside the
+range is dropped too. Reserve the range so no process is handed one:
+`sysctl net.ipv4.ip_local_reserved_ports=<relay range>` (the `relayPorts`
+setting, as `first-last`).
 
 ## Certificates (optional)
 
