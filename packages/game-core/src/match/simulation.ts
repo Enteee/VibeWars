@@ -4115,7 +4115,7 @@ export class MatchSimulation {
         ? beside
         : target.position;
       for (let pass = 0; pass < MOVEMENT_RELAX_PASSES; pass += 1) {
-        const relaxed = this.#pushOut(record.id, position, radius, NOBODY);
+        const relaxed = this.#pushOut(record, position, radius, NOBODY);
         const settled = relaxed.x === position.x && relaxed.y === position.y;
         position = relaxed;
         if (settled) {
@@ -4502,7 +4502,7 @@ export class MatchSimulation {
     emptyAdrenaline(combatant);
     let position = nearestStandable(this.#graph, at);
     for (let pass = 0; pass < MOVEMENT_RELAX_PASSES; pass += 1) {
-      position = this.#pushOut(record.id, position, this.#radiusOf(record), NOBODY);
+      position = this.#pushOut(record, position, this.#radiusOf(record), NOBODY);
     }
     record.position = position;
     record.inputDirection = ZERO;
@@ -4550,8 +4550,8 @@ export class MatchSimulation {
       dt,
     );
 
-    // A creature of its own the body already stands in, as a spirit
-    // planted at its feet, lets it step off in any direction unshoved
+    // A minion or pet of its own the body already stands in, as one
+    // raised at its feet, lets it step off in any direction unshoved
     // (#1278); once apart, it blocks again. The doorway rule below still
     // holds, so the step can only lead out of it.
     const ownedOverlaps = new Set<string>();
@@ -4569,7 +4569,7 @@ export class MatchSimulation {
     // between a body and a wall, each push undoes the other, so one pass
     // alone can leave a body anywhere; a few settle it.
     for (let pass = 0; pass < MOVEMENT_RELAX_PASSES; pass += 1) {
-      const relaxed = this.#pushOut(record.id, position, radius, ownedOverlaps);
+      const relaxed = this.#pushOut(record, position, radius, ownedOverlaps);
       const settled = relaxed.x === position.x && relaxed.y === position.y;
       position = relaxed;
       if (settled) {
@@ -4582,7 +4582,7 @@ export class MatchSimulation {
     // the wall never squeezes past. Per body and against the start, so two
     // bodies that already overlap (a shared spawn) can still move apart.
     for (const [otherId, other] of this.#participants) {
-      if (otherId === record.id || other.combatant.dead) {
+      if (otherId === record.id || other.combatant.dead || this.#ownSpirit(record, other)) {
         continue;
       }
       const reach = radius + this.#radiusOf(other);
@@ -4598,16 +4598,35 @@ export class MatchSimulation {
   }
 
   /**
-   * One pass of push-outs for a body of `radius` at `position`: bodies,
-   * bar those in `passing`, then walls, then the edge.
+   * A spirit is no body to its own team (#1278), as in GW1: allies, their
+   * pets and minions walk through it; foes are blocked by it.
    */
-  #pushOut(id: string, position: Vec2, radius: number, passing: ReadonlySet<string>): Vec2 {
+  #ownSpirit(mover: ParticipantRecord, other: ParticipantRecord): boolean {
+    return other.creature?.kind === "spirit" && other.combatant.team === mover.combatant.team;
+  }
+
+  /**
+   * One pass of push-outs for `mover`, a body of `radius` at `position`:
+   * bodies, bar its own team's spirits and those in `passing`, then
+   * walls, then the edge.
+   */
+  #pushOut(
+    mover: ParticipantRecord,
+    position: Vec2,
+    radius: number,
+    passing: ReadonlySet<string>,
+  ): Vec2 {
     // Body blocking (brief §21): living players are solid, so a front
     // line can physically deny ground and a caster can be boxed in.
     // Corpses are not solid — standing on a dead player should never
     // trap the living.
     for (const [otherId, other] of this.#participants) {
-      if (otherId === id || other.combatant.dead || passing.has(otherId)) {
+      if (
+        otherId === mover.id ||
+        other.combatant.dead ||
+        passing.has(otherId) ||
+        this.#ownSpirit(mover, other)
+      ) {
         continue;
       }
       position = resolveCircleCircleCollision(
