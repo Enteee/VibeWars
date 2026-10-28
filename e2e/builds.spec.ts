@@ -1120,6 +1120,9 @@ test("an attack skill for another weapon is flagged on its slot until the weapon
 test("a weapon can be dragged from the library onto the weapon slot", async ({ page }) => {
   await newCharacter(page);
   await openGearLibrary(page);
+  // The set tabs (#489) put the hands below the fold: a mouse drag that has
+  // to scroll the editor mid-gesture drops nowhere, so bring them up first.
+  await page.locator(".gear-slot").first().scrollIntoViewIfNeeded();
 
   await page
     .locator(".gear-box")
