@@ -3015,6 +3015,52 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     effects: [{ kind: "apply-status", statusId: "diversion", durationSeconds: 6 }],
   },
   {
+    id: "mesmer.arcane-echo",
+    name: "Arcane Echo",
+    type: "enchantment",
+    elite: false,
+    profession: "mesmer",
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    projectile: undefined,
+    // "If you cast a spell in the next 20 seconds, Arcane Echo is replaced
+    // with that spell for 20 seconds." The copy is the status's (#469).
+    effects: [{ kind: "apply-status", statusId: "arcane-echo", durationSeconds: 20 }],
+  },
+  {
+    id: "mesmer.echo",
+    name: "Echo",
+    type: "enchantment",
+    elite: true,
+    profession: "mesmer",
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    projectile: undefined,
+    // "For 30 seconds, Echo is replaced with the next skill you use. Echo
+    // acts as this skill for 20 seconds." The copy is the status's (#469).
+    effects: [{ kind: "apply-status", statusId: "echo", durationSeconds: 30 }],
+  },
+  {
     id: "mesmer.empathy",
     name: "Empathy",
     type: "hex",
@@ -4372,6 +4418,43 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         kind: "steal-from-corpse",
         amount: {
           scaling: { attributeId: "necromancer.death-magic", atZero: 50, atTwelve: 234 },
+        },
+      },
+    ],
+  },
+  {
+    id: "necromancer.well-of-suffering",
+    name: "Well of Suffering",
+    type: "well",
+    elite: false,
+    profession: "necromancer",
+    attributeId: "necromancer.death-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    // The nearest fresh corpse, as Soul Feast's (#1104).
+    corpse: { radius: RANGE_SPELL },
+    companion: undefined,
+    projectile: undefined,
+    // PvP: "Exploit nearest corpse to create a Well of Suffering at its
+    // location. For 10...26...30 seconds, foes in that area suffer health
+    // degeneration of -1...5...6."
+    effects: [
+      {
+        kind: "create-ground-effect",
+        anchor: "corpse",
+        durationSeconds: {
+          scaling: { attributeId: "necromancer.death-magic", atZero: 10, atTwelve: 26 },
+        },
+        act: {
+          kind: "aura",
+          aura: { statusId: "well-of-suffering", affects: "foes", radius: AREA_IN_THE_AREA },
         },
       },
     ],

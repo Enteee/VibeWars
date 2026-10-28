@@ -230,6 +230,19 @@ interrupted or cancelled skill is not used, nor is a plain attack, so
 Diversion stays on; an attack skill is lengthened once. The log says
 which skill, and by how much.
 
+**Arcane Echo** (#1126, no attribute, 15 energy, 2 s, 20 s recharge)
+and **Echo** (elite, 5 energy, 1 s, 10 s recharge) are
+self-enchantments that change your bar. While Arcane Echo is up (20 s),
+the next spell you finish takes its slot for 20 s; any other skill ends
+it with no copy. While Echo is up (30 s), the next skill you finish,
+of any kind, does the same. The copy is a skill of its own: it recharges
+apart from the original, so both can be used, and a disable or Diversion
+on one leaves the other alone. When its 20 s are over, the echo is back
+in its slot and starts its own recharge. An interrupted skill was never
+finished, so it is not copied and the echo stays. An echo is never
+copied, and does not use up the other. Death or a reset ends every copy
+at once.
+
 **Cry of Frustration** (#938, Domination Magic, 10 energy, ¼ s, 20 s
 recharge) only works on a foe using a skill, any skill. Then that foe is
 interrupted and takes 63 damage, and every foe in the area around it is
@@ -594,11 +607,12 @@ maximum, not the raw one.
 A skill's type is its badge on the slot, in the library and in the
 Training Ground, and is named first in its tooltip ("Signet.", "Hex
 Spell."). Some types play by rules of their own (#465). Spells,
-enchantments, hexes, weapon spells and ward spells are **spells**; attacks, signets,
+enchantments, hexes, weapon spells, ward spells and well spells are **spells**; attacks, signets,
 shouts, chants, stances, rituals and plain skills are not, and every rule that "affects spells" (dazed
 and Fast Casting, so far) leaves them alone, except that Fast Casting speeds up signets
 too (#1100). Rituals, nature and binding,
-plant spirits (see Creatures); ward spells leave wards (see Wards).
+plant spirits (see Creatures); ward spells leave wards and well spells
+wells (see Wards and wells).
 
 **Elite skills** wear a doubled gold frame wherever a skill is drawn,
 and their tooltip says "Elite" before the type (#459). A bar holds at most
@@ -1077,18 +1091,28 @@ Armor comes from the primary profession: 80 for a Warrior or Paragon, 70
 for a Ranger, Assassin or Dervish, 60 for the casters. On top of that,
 some armor applies only against some types:
 
-| Bonus                | Against   | From                   |
-| -------------------- | --------- | ---------------------- |
-| +20                  | physical  | being a Warrior        |
-| +30                  | elemental | being a Ranger         |
-| +10                  | physical  | each Stalwart insignia |
-| −1 to −3 a hit, flat | physical  | Rune of Absorption     |
+| Bonus                | Against   | From                              |
+| -------------------- | --------- | --------------------------------- |
+| +20                  | physical  | being a Warrior                   |
+| +30                  | elemental | being a Ranger                    |
+| +10                  | physical  | a Stalwart insignia, on its piece |
+| −1 to −3 a hit, flat | physical  | Rune of Absorption                |
 
 So a Warrior has 100 armor against a sword and 80 against a Fireball,
 and a Ranger 70 and 100. Damage halves for every 40 armor above 60:
 Fireball's 91 lands for about 46 on a Ranger. Types that are neither
 physical nor elemental get no typed bonus; base armor still applies.
 Armor penetration cuts the whole total, typed bonus included.
+
+An insignia guards only its own piece (#1135). Every hit that armor
+meets lands on one piece, as in GW1: the chest 3 times in 8, the legs 2
+in 8, the head, hands and feet once in 8 each. A Stalwart on the chest
+adds its +10 only to hits on the chest; five Stalwart give +10 on every
+hit, not +50. Base armor, the profession's typed armor, a shield,
+enchantments and the rest count wherever the hit lands. Holy, shadow
+and typeless damage, degeneration and life steal hit no piece. The gear
+editor lists an insignia under the armor with its pieces and what it
+adds on average: `+10 armor vs physical damage on chest (avg +3.8)`.
 
 A status can change the type of your attacks (#1021): under Staggering
 Force or Dust Cloak a scythe deals earth, so a Warrior meets it with 80
@@ -1311,6 +1335,9 @@ plus half its Death Magic, rounded down (8 at 12): raising past it kills
 the weakest first, by Health left and the oldest of equals, and that is
 a death, so Soul Reaping answers it. A minion leaves no corpse, outlives
 its master's death and follows the body, and leaves with its master.
+A minion or a pet walking back to its owner goes round walls and
+bodies, as a click-to-walk does; with no way there at all, it stands
+where it is until there is one.
 
 **Animate Bone Minions** (Necromancer, Death Magic, spell, 10 energy,
 1 s, 5 s recharge) raises two Bone Minions of 280 Health and armor 30,
@@ -1344,7 +1371,7 @@ brings it back. It outlives its owner's death and leaves with its
 owner. A build change that keeps Charm Animal keeps the wolf as it is;
 one that drops it sends it away; one that gains it brings a fresh one.
 
-## Wards
+## Wards and wells
 
 A **ward** (#1087) is a circle left on the ground where its caster
 stands as the ward spell lands. It is not a body: nothing can target,
@@ -1365,6 +1392,20 @@ more ends the oldest.
 energy, 1 s, 30 s recharge) leaves a ward of radius 109 for 5...17
 seconds: your side inside it has a 50% chance to block melee attacks,
 75% on top of a 50% stance. Arrows and spells are not blocked.
+
+A **well** (#1104) is a ward's kin left on a corpse, not on its caster:
+the well spell exploits the nearest fresh corpse as it lands, as Soul
+Feast does (see Corpses), and the well lies where that body did, for its
+whole time, whether the body later stands up, respawns or not. With no
+corpse in reach the cast is refused and nothing is paid. A well acts on
+foes: your side standing in it gets nothing. Otherwise it is a ward:
+drawn the same, one status from two of a skill, at most 32 on the
+ground counting wards and traps.
+
+**Well of Suffering** (Necromancer, Death Magic, well spell, 10 energy,
+1 s, 10 s recharge) leaves a well of radius 109 on the nearest corpse
+within cast range for 10...26 seconds: foes inside it suffer −5 Health
+degeneration.
 
 ## Traps
 

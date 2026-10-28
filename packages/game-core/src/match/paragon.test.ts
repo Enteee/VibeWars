@@ -326,11 +326,11 @@ describe('"Stand Your Ground!" (#921)', () => {
     const bearer = makeCombatant({ id: "a" });
     bearer.statuses.apply("stand-your-ground", 17, "p");
     const blow = skillDamage(100, "piercing", 0);
-    const still = effectiveArmor(bearer, blow);
-    const stillDamage = mitigate(blow, bearer, RULES.combat);
+    const still = effectiveArmor(bearer, blow, "chest");
+    const stillDamage = mitigate(blow, bearer, RULES.combat, "chest");
     bearer.moving = true;
-    expect(still - effectiveArmor(bearer, blow)).toBe(24);
-    expect(stillDamage).toBeLessThan(mitigate(blow, bearer, RULES.combat));
+    expect(still - effectiveArmor(bearer, blow, "chest")).toBe(24);
+    expect(stillDamage).toBeLessThan(mitigate(blow, bearer, RULES.combat, "chest"));
   });
 
   it("starts and stops a tick after its bearer does", () => {
@@ -341,7 +341,7 @@ describe('"Stand Your Ground!" (#921)', () => {
     const bearer = get(match, "a").combatant;
     bearer.statuses.apply("stand-your-ground", 17, "p");
     const blow = skillDamage(100, "piercing", 0);
-    const armored = (): number => effectiveArmor(bearer, blow);
+    const armored = (): number => effectiveArmor(bearer, blow, "chest");
     match.step(DT);
     const standing = armored();
     match.setInputDirection("a", vec2(1, 0));

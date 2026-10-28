@@ -7,7 +7,7 @@ import type { DamageType } from "../equipment/types.js";
 import type { Behaviour } from "../match/behaviour.js";
 import type { CreatureKind } from "../match/simulation.js";
 import type { ProfessionId, SkillProfession } from "../professions.js";
-import type { CastState } from "./cast-state.js";
+import type { CastState, SlotSkill } from "./cast-state.js";
 import type { TargetCandidate } from "./targeting.js";
 import type { AttackState } from "./weapon-attack.js";
 import type { StatusCategory, StatusId, StatusSet } from "./status.js";
@@ -501,14 +501,16 @@ export type GroundAct =
   | { readonly kind: "trap"; readonly trap: TrapRule };
 
 /**
- * Leave a ground effect where the caster stands as the skill lands
- * (#1087): a circle that is not a body, doing `act` for
- * `durationSeconds`. Acts on the caster, once. A match holds at most
+ * Leave a ground effect as the skill lands (#1087): a circle that is not
+ * a body, doing `act` for `durationSeconds`. `caster`: where the caster
+ * stands (a ward, a trap). `corpse`: where the corpse the skill exploited
+ * lies (a well, #1104), so only a skill with a `corpse` rule has one.
+ * Acts on the caster, once. A match holds at most
  * `MAX_GROUND_EFFECTS`: past it, the oldest ends early.
  */
 export interface CreateGroundEffect {
   readonly kind: "create-ground-effect";
-  readonly anchor: "caster";
+  readonly anchor: "caster" | "corpse";
   readonly durationSeconds: Magnitude;
   readonly act: GroundAct;
 }
@@ -692,12 +694,14 @@ export type SkillType =
   | "nature-ritual"
   | "binding-ritual"
   | "ward"
+  | "well"
   | "trap"
   | "skill";
 
 /**
  * Whether a skill of this type is a spell, as GW1's rules that "affect
- * spells" mean it: enchantments, hexes, weapon spells and wards (#1087) are spells,
+ * spells" mean it: enchantments, hexes, weapon spells, wards (#1087) and wells
+ * (#1104) are spells,
  * signets, shouts, chants, stances and glyphs are not (#524, #526, #527,
  * #758). Every such rule asks this, never the type directly.
  */
@@ -707,7 +711,8 @@ export function isSpell(type: SkillType): boolean {
     type === "enchantment" ||
     type === "hex" ||
     type === "weapon-spell" ||
-    type === "ward"
+    type === "ward" ||
+    type === "well"
   );
 }
 
@@ -942,9 +947,9 @@ export interface Combatant {
   /** Energy regeneration before statuses, in pips (`ENERGY_PER_PIP`). */
   readonly baseEnergyPips: number;
   /**
-   * Units per adrenaline skill on the bar (#463), keyed by skill id like
+   * Units per adrenaline skill on the bar (#463), keyed like
    * `cast.rechargeRemaining`. Exactly the bar's adrenaline skills are keys,
-   * set at 0 when the combatant is made.
+   * set at 0 when the combatant is made, and a copy's while it stands (#469).
    */
   readonly adrenaline: Map<string, number>;
   /**
@@ -1030,10 +1035,11 @@ export interface SkillContext {
    */
   readonly surroundings: Surroundings;
   /**
-   * The skill the target just used, when a status's trigger answers that
-   * use (#949): what `lengthen-recharge` lengthens. Absent elsewhere.
+   * The skill the target just used, and the key it waits under (#469),
+   * when a status's trigger answers that use (#949): what
+   * `lengthen-recharge` lengthens. Absent elsewhere.
    */
-  readonly usedSkillId?: string | undefined;
+  readonly usedSkill?: SlotSkill | undefined;
 }
 
 /** Everyone in the match by id, where they stand (#885). */

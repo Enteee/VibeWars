@@ -209,9 +209,14 @@ export const SKILL_ICONS = {
   "ranger.barbed-trap": { glyph: "pin", modifier: "bleed" },
   // Health taken from a corpse: the heal glyph with the corpse mark (#1075).
   "necromancer.soul-feast": { glyph: "heal", modifier: "corpse" },
+  // A placeholder until the asset-designer's (#1104).
+  "necromancer.well-of-suffering": { glyph: "germ", modifier: "corpse" },
   // Placeholders until the asset-designer's (#467): bodies raised from a corpse.
   "necromancer.animate-bone-minions": { glyph: "resurrect", modifier: "down" },
   "necromancer.animate-bone-horror": { glyph: "resurrect", modifier: "up" },
+  // Placeholders until the asset-designer's (#469): a skill seen again.
+  "mesmer.arcane-echo": { glyph: "eye", modifier: "clock" },
+  "mesmer.echo": { glyph: "eye", modifier: "self" },
   // Placeholders until the asset-designer's (#1046): the pet's skills.
   "ranger.charm-animal": { glyph: "eye", modifier: "plus" },
   "ranger.comfort-animal": { glyph: "heal", modifier: "plus" },
