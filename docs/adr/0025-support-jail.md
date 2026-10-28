@@ -37,12 +37,14 @@ nothing another agent reads:
 - **Network:** `--unshare-all`, without `--share-net`. Claude reaches the
   API through `support-proxy.mjs`, a proxy on the host listening on a unix
   socket whose directory is bound in. Inside, socat serves it on loopback
-  and `ANTHROPIC_BASE_URL` points there. The proxy forwards only `/v1/`
-  paths to `api.anthropic.com`, drops any credential header the jail
-  sends, so the jail cannot pick the account, and adds the company's OAuth
-  token, read from its `.credentials.json` on every request. It never
-  writes or refreshes that file: the other jails' sessions keep it fresh,
-  and it keeps one writer. An expired token answers 503 and pauses
+  and `ANTHROPIC_BASE_URL` points there. The proxy forwards
+  only `POST /v1/messages` and `POST /v1/messages/count_tokens` to
+  `api.anthropic.com`, exact paths, since a pattern lets `/v1/../`
+  through. It drops any credential header the jail sends, so the jail
+  cannot pick the account, and adds the company's OAuth token,
+  read from its `.credentials.json` on every request. It never writes or
+  refreshes that file: the other jails' sessions keep it fresh, and it
+  keeps one writer. An expired token answers 503 and pauses
   support until they do. Claude in the jail sends a placeholder token,
   `support-proxy`, which is not a credential.
 - **Budget:** the proxy refuses over `supportRequestsPerHour` requests an
