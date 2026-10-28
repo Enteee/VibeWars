@@ -428,7 +428,11 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
       ...snapshot,
       players: [
         player,
-        { ...minion, name: "Wolf", creature: { ownerId: "peer-1", kind: "pet", mode: "heel" } },
+        {
+          ...minion,
+          name: "Wolf",
+          creature: { ownerId: "peer-1", kind: "pet", look: "beast", mode: "heel" },
+        },
       ],
     },
   ],
