@@ -149,12 +149,12 @@ test("Options lists the third-party licences, each with its full text (#1235)", 
 }) => {
   await page.goto("./");
   await page.locator("#screens").getByRole("button", { name: "options" }).click();
-  await page.locator('.options-entry[data-section="licenses"]').click();
-  const corpus = page.locator('.license-entry[data-license="gw-skilldata"]');
-  await expect(corpus.locator(".license-name")).toHaveText("gw-skilldata (MIT)");
+  await page.locator('.options-entry[data-section="licences"]').click();
+  const corpus = page.locator('.licence-entry[data-licence="gw-skilldata"]');
+  await expect(corpus.locator(".licence-name")).toHaveText("gw-skilldata (MIT)");
   await expect(corpus).toContainText("GW1 skill data");
   // The notice survives the build, verbatim from the vendored file.
-  const text = corpus.locator(".license-text");
+  const text = corpus.locator(".licence-text");
   await expect(text).toContainText("Copyright (c) 2024 smiley");
   await expect(text).toContainText("Permission is hereby granted");
 });

@@ -68,6 +68,9 @@ Concretely:
 - A skill added to `IMPLEMENTED_SKILLS` adds its icon row in
   `scripts/assets/skill-icon-table.mjs` and re-runs `node scripts/assets/icons.mjs`;
   `apps/web/src/ui/icons.test.ts` fails until it does.
+- Vendoring or bundling a third-party work whose licence asks for a notice
+  adds its entry to `THIRD_PARTY_LICENCES` (Options → Third-party licences)
+  in the same PR. That page is the only place the UI credits one: see ADR-0039.
 - `any`, `as any`, and non-null assertions (`!`) are lint errors, not style
   preferences — see ADR-0008. If one is genuinely unavoidable, say why in a
   comment at the exact line, not in a blanket lint-rule override.

@@ -4751,18 +4751,20 @@ body:has(#app > .chat) .now-playing {
   gap: 0.6rem;
 }
 
-.licenses-section {
+.licences-section {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
-.license-name {
+.licence-name {
   margin: 0;
   font-size: 0.95rem;
 }
 
-.license-text {
+.licence-text {
+  max-height: 18rem;
+  overflow: auto;
   margin: 0.4rem 0 0;
   padding: 0.6rem;
   border: 1px solid var(--line);
@@ -4770,4 +4772,8 @@ body:has(#app > .chat) .now-playing {
   color: var(--ink-dim);
   font-size: 0.72rem;
   white-space: pre-wrap;
+}
+
+.licence-source {
+  font-size: 0.8rem;
 }
