@@ -2,6 +2,7 @@ import {
   ALL_UNIVERSAL_RUNES,
   ARMOR_SLOTS,
   ATTRIBUTE_RUNE_TIERS,
+  HIT_LOCATION_WEIGHTS,
   RUNE_TIERS,
   MINIMAL_GW_INSPIRED_PVP_V1,
   SHIELD_REQUIREMENT_ATTRIBUTES,
@@ -21,9 +22,11 @@ import {
   runeDisplayName,
   type ArmorSlot,
   type BuildEquipment,
+  type ConditionalArmor,
   type EquippedRune,
   type InsigniaId,
   type OffhandId,
+  type PieceArmor,
   type ResolvedLoadout,
   type RuneTier,
   type WeaponId,
@@ -328,6 +331,7 @@ export interface GearSummary {
   readonly unmetRequirement: { readonly attributeId: string; readonly rank: number } | undefined;
   /** Attribute ranks raised above what points bought, from runes. */
   readonly runeBonuses: readonly { readonly attributeId: string; readonly bonus: number }[];
+  /** The profession's armor on every hit, then the insignias' per piece (#1135). */
   readonly conditionalArmor: readonly string[];
   readonly flatPhysicalReduction: number;
 }
@@ -337,6 +341,36 @@ const CONDITION_LABELS: Readonly<Record<string, string>> = {
   "vs-elemental": "vs elemental damage",
   "while-enchanted": "while enchanted",
 };
+
+/** `+10 armor vs physical damage`. */
+function armorLine(bonus: ConditionalArmor): string {
+  return `+${String(bonus.amount)} armor ${CONDITION_LABELS[bonus.condition] ?? bonus.condition}`;
+}
+
+/**
+ * One line per insignia bonus (#1135), its pieces named unless it is on
+ * all five, with what it averages over every hit: `+10 armor vs physical
+ * damage on chest, legs (avg +6.3)`.
+ */
+function pieceArmorLines(pieceArmor: PieceArmor): string[] {
+  const groups = new Map<string, { bonus: ConditionalArmor; slots: ArmorSlot[] }>();
+  for (const slot of ARMOR_SLOTS) {
+    for (const bonus of pieceArmor[slot]) {
+      const key = `${bonus.condition}:${String(bonus.amount)}`;
+      const group = groups.get(key) ?? { bonus, slots: [] };
+      group.slots.push(slot);
+      groups.set(key, group);
+    }
+  }
+  return [...groups.values()].map(({ bonus, slots }) => {
+    if (slots.length === ARMOR_SLOTS.length) {
+      return armorLine(bonus);
+    }
+    const chance = slots.reduce((sum, slot) => sum + HIT_LOCATION_WEIGHTS[slot], 0);
+    const average = Math.round(bonus.amount * chance * 10) / 10;
+    return `${armorLine(bonus)} on ${slots.join(", ")} (avg +${average.toFixed(1)})`;
+  });
+}
 
 /** What set `set` comes to; `undefined` for an empty set 2-4 (#489). */
 export function summariseGear(
@@ -379,10 +413,10 @@ export function summariseGear(
         ? undefined
         : { attributeId, rank: weapon.requirement.rank },
     runeBonuses,
-    conditionalArmor: held.equipment.conditionalArmor.map(
-      (bonus) =>
-        `+${String(bonus.amount)} armor ${CONDITION_LABELS[bonus.condition] ?? bonus.condition}`,
-    ),
+    conditionalArmor: [
+      ...held.equipment.conditionalArmor.map(armorLine),
+      ...pieceArmorLines(held.equipment.pieceArmor),
+    ],
     flatPhysicalReduction: held.equipment.flatPhysicalReduction,
   };
 }

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { unarmedResolvedEquipment, type ResolvedLoadout } from "../equipment/resolve.js";
 import type { MatchRules } from "../match-rules.js";
+import { copyKey } from "../skills/cast-state.js";
 import { weaponAttributeMultiplier } from "../skills/damage.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { distance, vec2, type Vec2 } from "../vec2.js";
@@ -20,6 +21,8 @@ const DT = 1 / RULES.tickRateHz;
 const CHARM = "ranger.charm-animal";
 const COMFORT = "ranger.comfort-animal";
 const BEAST_MASTERY = "ranger.beast-mastery";
+const ARCANE_ECHO = "mesmer.arcane-echo";
+const FIREBALL = "elementalist.fireball";
 /** Comfort Animal's 1 s activation, the aftercast, and a tick to spare. */
 const COMFORT_SECONDS = 1 + RULES.combat.aftercastSeconds + 2 * DT;
 
@@ -244,6 +247,22 @@ describe("a dead wolf (#1046)", () => {
       for (const skillId of [CHARM, COMFORT]) {
         expect(remaining.get(skillId)).toBeCloseTo(seconds - 1, 5);
       }
+    }
+  });
+
+  it("disables an echo's copy standing in a slot, and the echo it hides (#469)", () => {
+    const sim = match([ranger([CHARM, COMFORT, ARCANE_ECHO])]);
+    const owner = get(sim, "r").combatant;
+    const key = copyKey(FIREBALL, 2);
+    owner.cast.override(2, {
+      skillId: FIREBALL,
+      key,
+      remainingSeconds: 20,
+      restores: { skillId: ARCANE_ECHO, rechargeSeconds: 30 },
+    });
+    kill(sim, wolf(sim));
+    for (const waits of [key, ARCANE_ECHO, CHARM]) {
+      expect(owner.cast.rechargeRemaining.get(waits)).toBeCloseTo(4, 5);
     }
   });
 

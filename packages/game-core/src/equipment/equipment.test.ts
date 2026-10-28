@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
+import { createRng, type SimulationRng } from "../rng.js";
 import { accessibleAttributeIds } from "../character.js";
 import { PROFESSIONS, getAttribute, type ProfessionId } from "../professions.js";
 import { SKILL_BAR_SLOTS, validatePlayerBuild, type PlayerBuild } from "../build.js";
-import { bareArmorSet } from "./armor.js";
+import { HIT_LOCATION_WEIGHTS, NO_PIECE_ARMOR, bareArmorSet, rollHitLocation } from "./armor.js";
 import { GEAR_OMISSIONS, gearOmission, openGearGaps } from "./coverage.js";
 import { defaultEquipmentFor, defaultWeaponFor, type BuildEquipment } from "./loadout.js";
 import { parseBuildEquipment } from "./parse.js";
@@ -27,7 +28,7 @@ import {
   type EquippedRune,
   type RuneTier,
 } from "./runes.js";
-import { ARMOR_SLOTS } from "./types.js";
+import { ARMOR_SLOTS, type ArmorSlot } from "./types.js";
 
 const PROFESSION_IDS = Object.keys(PROFESSIONS) as readonly ProfessionId[];
 
@@ -275,8 +276,8 @@ describe("what a weapon deals (#761)", () => {
   });
 });
 
-describe("inherent armor by profession (#759)", () => {
-  function conditionalArmor(primaryProfession: ProfessionId, insignia: "stalwart" | null) {
+describe("inherent armor by profession (#759) and insignia armor per piece (#1135)", () => {
+  function armorOf(primaryProfession: ProfessionId, insignia: "stalwart" | null) {
     return resolveLoadout(
       {
         primaryProfession,
@@ -292,25 +293,56 @@ describe("inherent armor by profession (#759)", () => {
         },
       },
       MINIMAL_GW_INSPIRED_PVP_V1.combat,
-    ).weaponSets[0].equipment.conditionalArmor;
+    ).weaponSets[0].equipment;
   }
 
-  it("lists a Warrior's +20 vs physical before the insignias'", () => {
-    expect(conditionalArmor("warrior", "stalwart")).toEqual([
-      { amount: 20, condition: "vs-physical" },
-      { amount: 10, condition: "vs-physical" },
-    ]);
+  it("holds a Warrior's +20 vs physical on every hit, and Stalwart on the chest alone", () => {
+    const { conditionalArmor, pieceArmor } = armorOf("warrior", "stalwart");
+    expect(conditionalArmor).toEqual([{ amount: 20, condition: "vs-physical" }]);
+    expect(pieceArmor.chest).toEqual([{ amount: 10, condition: "vs-physical" }]);
+    for (const slot of ["head", "hands", "legs", "feet"] as const) {
+      expect(pieceArmor[slot]).toEqual([]);
+    }
   });
 
-  it("lists a Ranger's +30 vs elemental before the insignias'", () => {
-    expect(conditionalArmor("ranger", "stalwart")).toEqual([
+  it("holds a Ranger's +30 vs elemental on every hit", () => {
+    expect(armorOf("ranger", "stalwart").conditionalArmor).toEqual([
       { amount: 30, condition: "vs-elemental" },
-      { amount: 10, condition: "vs-physical" },
     ]);
   });
 
   it("gives a Monk none without insignias", () => {
-    expect(conditionalArmor("monk", null)).toEqual([]);
+    const { conditionalArmor, pieceArmor } = armorOf("monk", null);
+    expect(conditionalArmor).toEqual([]);
+    expect(pieceArmor).toEqual(NO_PIECE_ARMOR);
+  });
+});
+
+describe("rollHitLocation (#1135)", () => {
+  const stub = (value: number): SimulationRng => ({ ...createRng(1), nextFloat: () => value });
+
+  it("lays the pieces out chest, legs, head, hands, feet", () => {
+    const at = (value: number) => rollHitLocation(stub(value));
+    expect([0, 0.374].map(at)).toEqual(["chest", "chest"]);
+    expect([0.375, 0.624].map(at)).toEqual(["legs", "legs"]);
+    expect(at(0.625)).toBe("head");
+    expect(at(0.75)).toBe("hands");
+    expect([0.875, 0.999].map(at)).toEqual(["feet", "feet"]);
+  });
+
+  it("lands within 1% of GW1's weights over 80 000 seeded draws", () => {
+    const rng = createRng(1135);
+    const counts = new Map<ArmorSlot, number>();
+    const draws = 80_000;
+    for (let i = 0; i < draws; i += 1) {
+      const slot = rollHitLocation(rng);
+      counts.set(slot, (counts.get(slot) ?? 0) + 1);
+    }
+    for (const slot of ARMOR_SLOTS) {
+      expect(Math.abs((counts.get(slot) ?? 0) / draws - HIT_LOCATION_WEIGHTS[slot])).toBeLessThan(
+        0.01,
+      );
+    }
   });
 });
 

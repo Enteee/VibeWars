@@ -7,10 +7,12 @@ import { creatureDamageMultiplier } from "../skills/damage.js";
 import type { CreatureAttack } from "../skills/types.js";
 import {
   INHERENT_ARMOR_BY_PROFESSION,
+  NO_PIECE_ARMOR,
   armorPieces,
   baseArmorFor,
   baseEnergyPipsFor,
   type ConditionalArmor,
+  type PieceArmor,
 } from "./armor.js";
 import { getInsignia, perSlotAmount } from "./insignias.js";
 import type { BuildEquipment, WeaponSet } from "./loadout.js";
@@ -63,7 +65,10 @@ export interface ResolvedEquipment {
   readonly mainHand: ResolvedWeapon;
   /** Armor before any conditional bonus or status modifier. */
   readonly baseArmor: number;
+  /** On every hit: the profession's inherent armor, a creature's, a guard's. */
   readonly conditionalArmor: readonly ConditionalArmor[];
+  /** Insignias, on hits to their own piece only (#1135). */
+  readonly pieceArmor: PieceArmor;
   /** Rune of Absorption: subtracted from each physical hit, after mitigation. */
   readonly flatPhysicalReduction: number;
   /** Multiplier applied to an incoming condition's duration. Absent means 1. */
@@ -251,22 +256,22 @@ function applyInsignia(
   }
 }
 
-/** The primary profession's inherent armor first, then the insignias'. */
-function conditionalArmorOf(
-  primaryProfession: ProfessionId,
-  equipment: BuildEquipment,
-): readonly ConditionalArmor[] {
-  const bonuses: ConditionalArmor[] = [...INHERENT_ARMOR_BY_PROFESSION[primaryProfession]];
-  for (const [, piece] of armorPieces(equipment.armor)) {
-    if (piece.insigniaId === null) {
-      continue;
-    }
-    const insignia = getInsignia(piece.insigniaId);
+/** Each piece's insignia armor, which only a hit to that piece meets (#1135). */
+function pieceArmorOf(equipment: BuildEquipment): PieceArmor {
+  const pieces: Record<ArmorSlot, readonly ConditionalArmor[]> = {
+    head: [],
+    chest: [],
+    hands: [],
+    legs: [],
+    feet: [],
+  };
+  for (const [slot, piece] of armorPieces(equipment.armor)) {
+    const insignia = piece.insigniaId === null ? undefined : getInsignia(piece.insigniaId);
     if (insignia?.effect.kind === "conditional-armor") {
-      bonuses.push({ amount: insignia.effect.amount, condition: insignia.effect.condition });
+      pieces[slot] = [{ amount: insignia.effect.amount, condition: insignia.effect.condition }];
     }
   }
-  return bonuses;
+  return pieces;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -292,7 +297,8 @@ export function resolveLoadout(input: LoadoutInput, rules: CombatRules): Resolve
   const shared: SharedGear = {
     baseArmor: baseArmorFor(input.primaryProfession),
     energyDelta: runes.energyDelta + energyStorageBonus(rankOf(ENERGY_STORAGE_ATTRIBUTE)),
-    conditionalArmor: conditionalArmorOf(input.primaryProfession, input.equipment),
+    conditionalArmor: INHERENT_ARMOR_BY_PROFESSION[input.primaryProfession],
+    pieceArmor: pieceArmorOf(input.equipment),
     flatPhysicalReduction: runes.flatPhysicalReduction,
     statusDurationScale: runes.statusDurationScale,
     attributeBonuses: runes.attributeBonuses,
@@ -321,6 +327,7 @@ interface SharedGear {
   /** Before a focus's bonus. */
   readonly energyDelta: number;
   readonly conditionalArmor: readonly ConditionalArmor[];
+  readonly pieceArmor: PieceArmor;
   readonly flatPhysicalReduction: number;
   readonly statusDurationScale: ReadonlyMap<StatusId, number>;
   readonly attributeBonuses: ReadonlyMap<string, number>;
@@ -363,6 +370,7 @@ function resolveWeaponSet(
       mainHand: resolvedWeapon,
       baseArmor,
       conditionalArmor: shared.conditionalArmor,
+      pieceArmor: shared.pieceArmor,
       flatPhysicalReduction: shared.flatPhysicalReduction,
       statusDurationScale: shared.statusDurationScale,
       attributeBonuses: shared.attributeBonuses,
@@ -412,6 +420,7 @@ export function unarmedResolvedEquipment(baseArmor: number): ResolvedEquipment {
     },
     baseArmor,
     conditionalArmor: [],
+    pieceArmor: NO_PIECE_ARMOR,
     flatPhysicalReduction: 0,
     statusDurationScale: new Map(),
     attributeBonuses: new Map(),

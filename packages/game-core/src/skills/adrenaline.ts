@@ -7,6 +7,7 @@
 
 import type { SkillBar } from "../build.js";
 import { ADRENALINE_PER_STRIKE } from "../ruleset.js";
+import { isCopyKey, skillIdOfKey } from "./cast-state.js";
 import { getSkill } from "./catalog.js";
 import type { Combatant, Skill } from "./types.js";
 
@@ -31,11 +32,11 @@ export function gainUnits(combatant: Combatant, units: number, atSeconds: number
  * carries one has stamped it already, with its blow.
  */
 export function fillPools(combatant: Combatant, units: number): void {
-  for (const [skillId, held] of combatant.adrenaline) {
-    if ((combatant.cast.rechargeRemaining.get(skillId) ?? 0) > 0) {
+  for (const [key, held] of combatant.adrenaline) {
+    if ((combatant.cast.rechargeRemaining.get(key) ?? 0) > 0) {
       continue;
     }
-    combatant.adrenaline.set(skillId, Math.min(unitsFor(getSkill(skillId)), held + units));
+    combatant.adrenaline.set(key, Math.min(unitsFor(getSkill(skillIdOfKey(key))), held + units));
   }
 }
 
@@ -50,11 +51,11 @@ export function losesAllAdrenaline(skill: Skill): boolean {
 }
 
 /**
- * Pay for `skill`: its own pool empties, and every other adrenaline skill
- * loses one strike, never below 0. One that loses all adrenaline (#1097)
- * empties every pool.
+ * Pay for `skill`: its own pool, `key`'s (#469), empties, and every other
+ * adrenaline skill loses one strike, never below 0. One that loses all
+ * adrenaline (#1097) empties every pool.
  */
-export function spendAdrenaline(combatant: Combatant, skill: Skill): void {
+export function spendAdrenaline(combatant: Combatant, skill: Skill, key: string = skill.id): void {
   if (losesAllAdrenaline(skill)) {
     emptyAdrenaline(combatant);
     return;
@@ -62,7 +63,7 @@ export function spendAdrenaline(combatant: Combatant, skill: Skill): void {
   for (const [skillId, units] of combatant.adrenaline) {
     combatant.adrenaline.set(
       skillId,
-      skillId === skill.id ? 0 : Math.max(0, units - ADRENALINE_PER_STRIKE),
+      skillId === key ? 0 : Math.max(0, units - ADRENALINE_PER_STRIKE),
     );
   }
 }
@@ -77,9 +78,33 @@ export function emptyPool(combatant: Combatant, skillId: string): void {
   }
 }
 
-/** Whether `skill`'s own pool holds its whole cost. */
-export function canAffordAdrenaline(combatant: Combatant, skill: Skill): boolean {
-  return (combatant.adrenaline.get(skill.id) ?? 0) >= unitsFor(skill);
+/** Whether `skill`'s own pool, `key`'s (#469), holds its whole cost. */
+export function canAffordAdrenaline(
+  combatant: Combatant,
+  skill: Skill,
+  key: string = skill.id,
+): boolean {
+  return (combatant.adrenaline.get(key) ?? 0) >= unitsFor(skill);
+}
+
+/**
+ * A copy standing in a slot (#469) fills its own pool, from 0, if it is an
+ * adrenaline skill; the pool goes with the copy (`dropEndedCopyPools`).
+ */
+export function addCopyPool(combatant: Combatant, key: string): void {
+  if (unitsFor(getSkill(skillIdOfKey(key))) > 0) {
+    combatant.adrenaline.set(key, 0);
+  }
+}
+
+/** Every copy's pool whose copy no longer stands is gone (#469). */
+export function dropEndedCopyPools(combatant: Combatant): void {
+  const standing = new Set([...combatant.cast.overrides.values()].map(({ key }) => key));
+  for (const key of [...combatant.adrenaline.keys()]) {
+    if (isCopyKey(key) && !standing.has(key)) {
+      combatant.adrenaline.delete(key);
+    }
+  }
 }
 
 /**

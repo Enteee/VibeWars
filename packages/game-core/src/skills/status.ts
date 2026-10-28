@@ -87,6 +87,8 @@ export type StatusId =
   | "insidious-parasite"
   | "mark-of-pain"
   | "diversion"
+  | "arcane-echo"
+  | "echo"
   | "ice-spikes"
   | "deep-freeze"
   | "regeneration"
@@ -156,7 +158,9 @@ export type StatusId =
   | "winnowing"
   | "recuperation"
   // Wards' auras (#1087), worn while inside a ward.
-  | "ward-against-melee";
+  | "ward-against-melee"
+  // Wells' auras (#1104), worn while inside a well.
+  | "well-of-suffering";
 
 /** Health one pip of regeneration or degeneration is worth, per second (GW1). */
 export const HEALTH_PER_PIP = 2;
@@ -506,8 +510,20 @@ export interface SpreadGainedConditionEffect {
   readonly radius: number;
 }
 
-/** What a trigger can do: any skill effect, or Contagion's spread. */
-export type TriggerEffect = SkillEffect | SpreadGainedConditionEffect;
+/**
+ * An echo's copy (#469): the trigger's own skill's slot holds the skill the
+ * bearer just used, for `seconds`, then gives it back. Only a spell, with
+ * `spellsOnly`; never another echo skill (`isEchoSkill`). The simulation's
+ * trigger context names the skill used.
+ */
+export interface EchoEffect {
+  readonly kind: "echo";
+  readonly spellsOnly: boolean;
+  readonly seconds: number;
+}
+
+/** What a trigger can do: any skill effect, Contagion's spread or an echo. */
+export type TriggerEffect = SkillEffect | SpreadGainedConditionEffect | EchoEffect;
 
 /**
  * What happened to a `StatusSet` that a trigger may answer (#887), in the
@@ -779,6 +795,35 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     ],
     endsWhenBearerUsesSkill: true,
   }),
+  // "If you cast a spell in the next 20 seconds, Arcane Echo is replaced
+  // with that spell for 20 seconds. Arcane Echo ends prematurely if you
+  // use a non-spell skill" (#469).
+  "arcane-echo": define("arcane-echo", "Arcane Echo", "enchantment", {
+    profession: "mesmer",
+    triggers: [
+      {
+        on: "bearer-uses-skill",
+        effects: [{ kind: "echo", spellsOnly: true, seconds: 20 }],
+        target: "bearer",
+        skillId: "mesmer.arcane-echo",
+      },
+    ],
+    endsWhenBearerUsesSkill: true,
+  }),
+  // "For 30 seconds, Echo is replaced with the next skill you use. Echo
+  // acts as this skill for 20 seconds" (#469).
+  echo: define("echo", "Echo", "enchantment", {
+    profession: "mesmer",
+    triggers: [
+      {
+        on: "bearer-uses-skill",
+        effects: [{ kind: "echo", spellsOnly: false, seconds: 20 }],
+        target: "bearer",
+        skillId: "mesmer.echo",
+      },
+    ],
+    endsWhenBearerUsesSkill: true,
+  }),
   // "Whenever target foe hits with an attack, you steal 15...39...45
   // health from that foe" (#935): 39, its rank-12 value.
   "insidious-parasite": define("insidious-parasite", "Insidious Parasite", "hex", {
@@ -1028,6 +1073,13 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   "ward-against-melee": define("ward-against-melee", "Ward Against Melee", "skill-effect", {
     profession: "elementalist",
     block: { chance: 0.5, against: "melee" },
+  }),
+  // What a well projects on the foes inside it (#1104), at rank 12, as
+  // statuses carry fixed numbers: "foes in that area suffer health
+  // degeneration of -1...5...6".
+  "well-of-suffering": define("well-of-suffering", "Well of Suffering", "skill-effect", {
+    profession: "necromancer",
+    healthPips: -5,
   }),
   // "Fall Back!" at rank 12: 13 Health per second while moving, 33%
   // faster, ending on its bearer's hit.

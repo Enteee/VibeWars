@@ -59,7 +59,7 @@ function use(user: Combatant, skillId: string, ...targets: Combatant[]): CombatE
 
 /** What `amount` lightning at 25% armor penetration does to `victim`. */
 function lightning(amount: number, victim: Combatant): number {
-  return mitigate(skillDamage(amount, "lightning", 0.25), victim, RULES);
+  return mitigate(skillDamage(amount, "lightning", 0.25), victim, RULES, "chest");
 }
 
 describe("Lightning Strike (#918)", () => {
@@ -67,7 +67,9 @@ describe("Lightning Strike (#918)", () => {
     const target = foe();
     const events = use(caster(), "elementalist.lightning-strike", target);
     const expected = lightning(33, target);
-    expect(expected).toBeGreaterThan(mitigate(skillDamage(33, "lightning", 0), target, RULES));
+    expect(expected).toBeGreaterThan(
+      mitigate(skillDamage(33, "lightning", 0), target, RULES, "chest"),
+    );
     expect(events).toEqual([
       expect.objectContaining({ kind: "damage", targetId: "foe", amount: expected }),
     ]);
@@ -121,7 +123,7 @@ describe("Shard Storm (#918)", () => {
   it("deals 70 cold and slows its target to 34% speed for 5 s", () => {
     const target = foe();
     use(caster(), "elementalist.shard-storm", target);
-    expect(target.health).toBe(1000 - mitigate(skillDamage(70, "cold", 0), target, RULES));
+    expect(target.health).toBe(1000 - mitigate(skillDamage(70, "cold", 0), target, RULES, "chest"));
     expect(target.statuses.has("shard-storm")).toBe(true);
     expect(target.statuses.active.find(({ id }) => id === "shard-storm")?.remainingSeconds).toBe(5);
     expect(moveSpeedMultiplier(target)).toBeCloseTo(0.34, 9);

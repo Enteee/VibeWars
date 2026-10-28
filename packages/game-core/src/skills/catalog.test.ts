@@ -70,18 +70,35 @@ describe("skill catalog integrity", () => {
     }
   });
 
-  it("leaves a ground effect from a ward or a trap, and only from those (#1087, #1105)", () => {
-    const wards = IMPLEMENTED_SKILLS.filter((skill) => skill.type === "ward");
-    const traps = IMPLEMENTED_SKILLS.filter((skill) => skill.type === "trap");
-    expect(wards.length).toBeGreaterThan(0);
-    expect(traps.length).toBeGreaterThan(0);
+  it("leaves a ground effect from a ward, a well or a trap, and only from those (#1087, #1104, #1105)", () => {
+    for (const type of ["ward", "well", "trap"]) {
+      expect(
+        IMPLEMENTED_SKILLS.some((skill) => skill.type === type),
+        type,
+      ).toBe(true);
+    }
     for (const skill of IMPLEMENTED_SKILLS) {
       const grounds = skill.effects.flatMap((effect) =>
         effect.kind === "create-ground-effect" ? [effect.act.kind] : [],
       );
       expect(grounds, skill.id).toEqual(
-        skill.type === "ward" ? ["aura"] : skill.type === "trap" ? ["trap"] : [],
+        skill.type === "ward" || skill.type === "well"
+          ? ["aura"]
+          : skill.type === "trap"
+            ? ["trap"]
+            : [],
       );
+    }
+  });
+
+  it("anchors a ground effect on a corpse exactly when its skill exploits one (#1104)", () => {
+    for (const skill of IMPLEMENTED_SKILLS) {
+      for (const effect of skill.effects) {
+        if (effect.kind === "create-ground-effect") {
+          expect(effect.anchor === "corpse", skill.id).toBe(skill.corpse !== undefined);
+          expect(effect.anchor === "corpse", skill.id).toBe(skill.type === "well");
+        }
+      }
     }
   });
 
@@ -144,12 +161,16 @@ describe("skill catalog integrity", () => {
 
 describe("skill coverage reporting", () => {
   it("counts implemented vs imported and names the gap", () => {
-    const imported = ["elementalist.fireball", "monk.orison-of-healing", "mesmer.echo"];
+    const imported = [
+      "elementalist.fireball",
+      "monk.orison-of-healing",
+      "monk.contemplation-of-purity",
+    ];
     const coverage = computeCoverage(imported);
     expect(coverage.imported).toBe(3);
     expect(coverage.implemented).toBe(IMPLEMENTED_SKILLS.length);
     const ids = coverage.unimplemented.map((skill) => skill.id);
-    expect(ids).toContain("mesmer.echo");
+    expect(ids).toContain("monk.contemplation-of-purity");
     expect(ids).not.toContain("elementalist.fireball");
   });
 
@@ -159,8 +180,10 @@ describe("skill coverage reporting", () => {
   });
 
   it("formats a human-readable report naming every unimplemented skill", () => {
-    const text = formatCoverage(computeCoverage(["mesmer.echo", "elementalist.fireball"]));
-    expect(text).toContain("mesmer.echo");
+    const text = formatCoverage(
+      computeCoverage(["monk.contemplation-of-purity", "elementalist.fireball"]),
+    );
+    expect(text).toContain("monk.contemplation-of-purity");
     expect(text).toContain("imported:");
     expect(text).toContain("implemented:");
   });
