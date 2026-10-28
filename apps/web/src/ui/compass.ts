@@ -1,7 +1,11 @@
 import { AREA_EARSHOT, RANGE_COMPASS, RANGE_SPELL, type Vec2 } from "@vibewars/game-core";
 import { PING_SECONDS } from "@vibewars/game-session";
 
-import type { ArenaSnapshot, RenderableWall } from "../render/arena-snapshot.js";
+import {
+  CREATURE_RADIUS,
+  type ArenaSnapshot,
+  type RenderableWall,
+} from "../render/arena-snapshot.js";
 import { prefersReducedMotion } from "./recharge-overlay.js";
 
 /**
@@ -24,6 +28,8 @@ export interface CompassView {
     readonly kind: "self" | "friend" | "foe";
     readonly targeted: boolean;
     readonly called: boolean;
+    /** A creature (#1052): a smaller dot, so it never reads as a player. */
+    readonly small: boolean;
   }[];
   /** `age`: 0 when pinged, 1 when it goes. */
   readonly pings: readonly { readonly x: number; readonly y: number; readonly age: number }[];
@@ -137,6 +143,8 @@ export function compassView(
         kind: actor === self ? "self" : actor.team === "enemy" ? "foe" : "friend",
         targeted: actor.id === arena.targetId,
         called: actor.id === arena.calledId,
+        // A creature is drawn at its own radius (match-view.ts).
+        small: actor.radius === CREATURE_RADIUS,
       })),
     pings: arena.pings
       .filter((ping) => within(ping.position))
@@ -158,6 +166,7 @@ const INK_DIM = "#7d8899";
 const WALL_STROKE = "#3b4759";
 const EDGE = "#0b0f14";
 const DOT_RADIUS = 3;
+const SMALL_DOT_RADIUS = 2;
 
 export interface Compass {
   /** Draw this frame's compass for `selfId`; hides it without a self actor. */
@@ -211,23 +220,24 @@ export function createCompass(parent: HTMLElement): Compass {
     }
     context.globalAlpha = 1;
     for (const dot of view.dots) {
+      const radius = dot.small ? SMALL_DOT_RADIUS : DOT_RADIUS;
       context.beginPath();
-      context.arc(dot.x, dot.y, DOT_RADIUS, 0, Math.PI * 2);
+      context.arc(dot.x, dot.y, radius, 0, Math.PI * 2);
       context.fillStyle = dot.kind === "foe" ? FOE : FRIEND;
       context.fill();
       context.strokeStyle = dot.kind === "self" ? INK : EDGE;
       context.stroke();
       if (dot.targeted) {
         context.beginPath();
-        context.arc(dot.x, dot.y, DOT_RADIUS + 2, 0, Math.PI * 2);
+        context.arc(dot.x, dot.y, radius + 2, 0, Math.PI * 2);
         context.strokeStyle = TARGET;
         context.stroke();
       }
       if (dot.called) {
         context.beginPath();
-        context.moveTo(dot.x - 3, dot.y - DOT_RADIUS - 6);
-        context.lineTo(dot.x, dot.y - DOT_RADIUS - 3);
-        context.lineTo(dot.x + 3, dot.y - DOT_RADIUS - 6);
+        context.moveTo(dot.x - 3, dot.y - radius - 6);
+        context.lineTo(dot.x, dot.y - radius - 3);
+        context.lineTo(dot.x + 3, dot.y - radius - 6);
         context.strokeStyle = CALL;
         context.stroke();
       }

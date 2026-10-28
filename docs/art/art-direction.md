@@ -311,8 +311,9 @@ as the arena does not. A body beyond it is not on it: the edge markers
   neither reads as the target ring or an area flash.
 - **Walls**: 1 px `wall-stroke` outlines, clipped to the disc.
 - **Bodies**: 3 px dots, `friend` or `foe`, on a 1 px `edge` rim; you at
-  the centre with an `ink` rim, as in the arena, dead or not. Corpses are
-  not shown.
+  the centre with an `ink` rim, as in the arena, dead or not. A creature
+  (#1052) is a 2 px dot, so it never reads as a player. Corpses are not
+  shown.
 - **Your target**: a 1 px `target` ring 2 px outside its dot.
 - **The called foe**: a small `condition` chevron over its dot.
 - **Pings**: a 1 px `friend` ring growing from 3 to 10 px and fading over

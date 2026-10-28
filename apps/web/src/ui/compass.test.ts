@@ -4,6 +4,8 @@ import { AREA_EARSHOT, RANGE_SPELL, vec2 } from "@vibewars/game-core";
 import { PING_SECONDS } from "@vibewars/game-session";
 
 import {
+  ACTOR_RADIUS,
+  CREATURE_RADIUS,
   EMPTY_SNAPSHOT,
   type ArenaSnapshot,
   type RenderableActor,
@@ -27,7 +29,7 @@ function actor(
     attackCast: undefined,
     offhandId: undefined,
     profession: undefined,
-    radius: 14,
+    radius: ACTOR_RADIUS,
     team: "ally",
     health: 500,
     maxHealth: 500,
@@ -58,9 +60,9 @@ describe("compassView (#1056)", () => {
       SIZE,
     );
     expect(view?.dots).toEqual([
-      { id: "me", x: 0, y: 0, kind: "self", targeted: false, called: false },
-      { id: "east", x: 40, y: 0, kind: "foe", targeted: false, called: false },
-      { id: "north", x: 0, y: -40, kind: "friend", targeted: false, called: false },
+      { id: "me", x: 0, y: 0, kind: "self", targeted: false, called: false, small: false },
+      { id: "east", x: 40, y: 0, kind: "foe", targeted: false, called: false, small: false },
+      { id: "north", x: 0, y: -40, kind: "friend", targeted: false, called: false, small: false },
     ]);
   });
 
@@ -92,6 +94,24 @@ describe("compassView (#1056)", () => {
       called: false,
       targeted: true,
     });
+  });
+
+  it("draws a creature's dot small, a player's not (#1052)", () => {
+    const view = compassView(
+      arena({
+        actors: [
+          actor("wolf", 1100, 1000, { team: "enemy", radius: CREATURE_RADIUS }),
+          actor("warrior", 1200, 1000, { team: "enemy" }),
+        ],
+      }),
+      "me",
+      SIZE,
+    );
+    expect(view?.dots.map((dot) => [dot.id, dot.small])).toEqual([
+      ["me", false],
+      ["wolf", true],
+      ["warrior", false],
+    ]);
   });
 
   it("rings earshot and cast range at their own distances", () => {
