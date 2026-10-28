@@ -90,8 +90,11 @@ units, so a hit for a quarter of your health is a strike; degeneration,
 sacrifice and a killing blow give nothing. Using an adrenaline skill
 empties its own pool and takes one strike from every other, at
 activation, so an interrupted one has still paid; an attack skill that
-lands then earns its strike back like any blow. Death, respawn and a
-reset empty every pool.
+lands then earns its strike back like any blow. A skill that says **"Lose
+all adrenaline"** (Hammer Bash, #1097) empties every pool instead, and its
+blow earns nothing back, hit or miss. A **disabled** adrenaline skill
+loses all its adrenaline and gains none until the disable ends. Death,
+respawn and a reset empty every pool.
 Adrenaline does not keep between fights (#828): **25 s out of combat**
 (`adrenalineLossSeconds`) and every pool empties at once. A blow or an
 attack skill you start, a foe's blow or attack skill at you (even one

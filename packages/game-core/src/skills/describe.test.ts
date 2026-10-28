@@ -413,6 +413,7 @@ describe("describeSkill", () => {
       const described = describeSkill(entry);
       expect(described.effects, `${entry.id} lost an effect line`).toHaveLength(
         lines(entry.effects) +
+          (entry.cost?.kind === "adrenaline" && entry.cost.losesAll === true ? 1 : 0) +
           (entry.attack?.chain === undefined ? 0 : 1) +
           (entry.attack?.bonusDamage === undefined && entry.attack?.weaponDamage !== 0 ? 0 : 1) +
           (entry.attack?.unblockable === true ? 1 : 0) +
@@ -491,6 +492,18 @@ describe("attack skills (#417)", () => {
     expect(blow.effects[0]?.text).toBe("Deals no damage");
     expect(blow.headline).not.toBe("Deals no damage");
     expect(describeSkill(skill("warrior.swift-chop"), ranks).effects[0]?.text).toBe("+16 damage");
+  });
+
+  it("starts a skill that loses all adrenaline with it; its cost stays its strikes (#1097)", () => {
+    const bash = describeSkill(skill("warrior.hammer-bash"));
+    expect(bash.effects.map(({ text }) => text)).toEqual([
+      "Lose all adrenaline",
+      "Knocks down for 2s",
+    ]);
+    expect(bash.cost).toBe("6 adrenaline");
+    expect(describeSkill(skill("warrior.backbreaker")).effects[0]?.text).not.toBe(
+      "Lose all adrenaline",
+    );
   });
 
   it("words a splash, a lone target and a recharge of the others as GW1 does (#885)", () => {

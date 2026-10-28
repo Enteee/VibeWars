@@ -23,6 +23,8 @@ export const SKILL_ICONS = {
   "warrior.swift-chop": { glyph: "axe" },
   "ranger.barrage": { glyph: "volley", modifier: "area" },
   "warrior.backbreaker": { glyph: "hammer", modifier: "down" },
+  // Placeholder until asset-designer's icon (#1097).
+  "warrior.hammer-bash": { glyph: "hammer", modifier: "stun" },
   "necromancer.blood-renewal-lite": { glyph: "heal", modifier: "down" },
   "warrior.distracting-blow": { glyph: "interrupt" },
   "ranger.broad-head-arrow": { glyph: "arrow", modifier: "stun" },

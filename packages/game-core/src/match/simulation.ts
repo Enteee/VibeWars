@@ -65,6 +65,7 @@ import {
   emptyAdrenaline,
   gainStrikes,
   gainUnits,
+  losesAllAdrenaline,
 } from "../skills/adrenaline.js";
 import { CastState, beginRecharge, type ActiveCast } from "../skills/cast-state.js";
 import { getSkill } from "../skills/catalog.js";
@@ -1885,8 +1886,9 @@ export class MatchSimulation {
     // (#885) blocked once and landed once still landed. Each foe it landed
     // on is a strike (#936): Cyclone Axe on three foes earns three. Only
     // a foe the skill swung at counts, not one an effect of it hit: Death
-    // Blossom's splash on adjacent foes earns nothing more.
-    if (skill.type === "attack") {
+    // Blossom's splash on adjacent foes earns nothing more. One that loses
+    // all adrenaline (#1097) earns none back: GW1 takes it after the strike.
+    if (skill.type === "attack" && !losesAllAdrenaline(skill)) {
       const strikes = skill.attack?.strikes ?? 1;
       const swungAt = new Set(targets.map((target) => target.id));
       const blocked = (targetId: string): boolean => {
@@ -2698,7 +2700,12 @@ export class MatchSimulation {
       attackReached(target.combatant, events);
       events.push(...riders(skillHit?.skill.effects ?? []));
     }
-    if (attacker !== undefined && !attacker.combatant.dead && !blocked) {
+    if (
+      attacker !== undefined &&
+      !attacker.combatant.dead &&
+      !blocked &&
+      (skillHit === undefined || !losesAllAdrenaline(skillHit.skill))
+    ) {
       this.#gainAdrenaline(attacker, events);
     }
     this.#chargeFromDamage(attacker?.combatant, events);
