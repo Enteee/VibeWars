@@ -1250,6 +1250,13 @@ test("a chosen weapon and insignia survive a reload", async ({ page }) => {
   await openGearLibrary(page);
   await equipFromLibrary(page, "Axe");
   await equipFromLibrary(page, "Survivor Insignia");
+  // Set 2 (#489): its tab, then a weapon from the library goes into it.
+  const setTab = (n: number): Locator =>
+    page.getByRole("tab", { name: new RegExp(`^${String(n)}`) });
+  await setTab(2).click();
+  await expect(page.locator(".gear-slot").first()).toContainText("Add a weapon");
+  await equipFromLibrary(page, "Hammer");
+  await expect(page.locator(".gear-slot").first()).toContainText("Hammer");
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.locator(".roster")).toContainText("Gear Keeper");
 
@@ -1265,6 +1272,8 @@ test("a chosen weapon and insignia survive a reload", async ({ page }) => {
   await expect(page.locator(".armor-row").first().locator(".gear-slot").first()).toContainText(
     "Survivor",
   );
+  await setTab(2).click();
+  await expect(page.locator(".gear-slot").first()).toContainText("Hammer");
 });
 
 /* --- the editor updates in place (#563, ADR-0030) ------------------------- */

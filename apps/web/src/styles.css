@@ -3309,6 +3309,83 @@ body.has-expanded-training #screens {
   color: #ffb3ae;
 }
 
+/* The weapon sets (#489): one tab per set above the hands, the selected
+   one outlined as a picked armor piece is. */
+.gear-set-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.35rem;
+  margin-bottom: 0.5rem;
+}
+
+.gear-set-tab-cell {
+  position: relative;
+}
+
+.gear-set-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  width: 100%;
+  min-height: 2rem;
+  padding: 0.2rem 0.45rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--panel);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.gear-set-tab.is-selected {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.gear-set-tab.has-problem {
+  border-color: var(--damage);
+}
+
+.gear-set-tab-number {
+  font-weight: 600;
+}
+
+.gear-set-tab-icons {
+  display: flex;
+  align-items: center;
+}
+
+.gear-set-tab .gear-icon {
+  margin-right: 0.15em;
+}
+
+.gear-set-tab .gear-icon.is-offhand {
+  width: 1em;
+  height: 1em;
+}
+
+.gear-set-tab-add {
+  color: var(--ink-dim);
+  opacity: 0.6;
+}
+
+.gear-set-tab-clear {
+  position: absolute;
+  top: 0.1rem;
+  right: 0.15rem;
+  padding: 0 0.2rem;
+  border: 0;
+  background: transparent;
+  color: var(--ink-dim);
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.gear-set-tab-clear:hover {
+  color: #ffb3ae;
+}
+
 .gear-hands {
   display: grid;
   grid-template-columns: 1fr 1fr;
