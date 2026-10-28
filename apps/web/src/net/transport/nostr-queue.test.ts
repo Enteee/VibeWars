@@ -481,6 +481,35 @@ describe("party consents on the Nostr queue board (#1078)", () => {
     expect(heard).toHaveLength(3);
   });
 
+  it("checks a heartbeat that swaps a member again, and drops it (PR 1092)", () => {
+    const { queue, sockets } = fakeRelays();
+    const heard = listen(queue);
+    const follower = membersOf()[1];
+    // The forger's own party of two keys it holds, under the follower.
+    let forger = newTicketKey();
+    while (forger.ticketId >= follower.ticketId) {
+      forger = newTicketKey();
+    }
+    let sybil = newTicketKey();
+    while (sybil.ticketId <= forger.ticketId) {
+      sybil = newTicketKey();
+    }
+    const own = [forger, sybil];
+    const ticket = partyTicket(
+      own,
+      own.map((key) => consentOf(key, own)),
+    );
+    deliver(sockets[0], remoteEvent(forger, ticket));
+    // The same consents, now naming the follower instead.
+    const swapped = {
+      ...ticket,
+      members: [forger.ticketId, follower.ticketId],
+      heartbeatAt: NOW + 5_000,
+    };
+    deliver(sockets[0], remoteEvent(forger, swapped));
+    expect(heard).toEqual([{ kind: "ticket", ticket }]);
+  });
+
   it("drops a party it cannot pay every check for, and hears another relay's copy later", () => {
     let now = NOW;
     const { queue, sockets, verified } = fakeRelays(() => now);

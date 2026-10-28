@@ -269,9 +269,10 @@ export function createNostrQueue(deps: NostrQueueDeps = BROWSER): NostrQueue {
   let verifyTokens = VERIFY_BURST;
   let verifyRefilledAt = deps.now();
   /**
-   * Party ticket id to its last verified `party`, as text (#1078): a
-   * party heartbeats the same consents every 5 s, which need no second
-   * check.
+   * Party ticket id to its last verified `members` and `party`, as text
+   * (#1078): a party heartbeats the same consents every 5 s, which need
+   * no second check. Both, as the consents sign the members: a heartbeat
+   * that swaps one is checked again.
    */
   const consented = new Map<string, string>();
 
@@ -326,7 +327,7 @@ export function createNostrQueue(deps: NostrQueueDeps = BROWSER): NostrQueue {
     if (party === null) {
       return "held";
     }
-    const said = JSON.stringify(party);
+    const said = JSON.stringify([ticket.members, party]);
     if (consented.get(ticket.ticketId) === said) {
       return "held";
     }
