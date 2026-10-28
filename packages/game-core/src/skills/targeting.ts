@@ -27,6 +27,25 @@ export interface TargetCandidate {
   readonly creature: Creature | undefined;
 }
 
+/**
+ * How many living spirits, any team's, stand within `radius` of `at`
+ * (#1064): what Mend Body and Soul, Spirit Light and Spirit Light Weapon
+ * count. Walls do not matter.
+ */
+export function spiritsWithin(
+  candidates: Iterable<TargetCandidate>,
+  at: Vec2,
+  radius: number,
+): number {
+  let spirits = 0;
+  for (const { combatant, position, creature } of candidates) {
+    if (creature?.kind === "spirit" && !combatant.dead && distance(position, at) <= radius) {
+      spirits += 1;
+    }
+  }
+  return spirits;
+}
+
 export interface TargetSelection {
   readonly skill: Skill;
   readonly caster: Combatant;

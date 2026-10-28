@@ -180,6 +180,11 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.healthPerSecond !== 0) {
     parts.push(`+${String(definition.healthPerSecond)} Health per second`);
   }
+  if (definition.healthPerSecondNearSpirit !== 0) {
+    parts.push(
+      `+${String(definition.healthPerSecondNearSpirit)} Health per second more in earshot of a spirit`,
+    );
+  }
   if (definition.armorReduction !== undefined) {
     const { amount, floor } = definition.armorReduction;
     parts.push(`−${String(amount)} armor (not below ${String(floor)})`);
@@ -201,6 +206,9 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.weaponDamageMultiplier !== 1) {
     const change = Math.round((definition.weaponDamageMultiplier - 1) * 100);
     parts.push(`${signed(change)}% weapon damage`);
+  }
+  if (definition.physicalDamageTakenBonus !== 0) {
+    parts.push(`take ${signed(definition.physicalDamageTakenBonus)} from physical damage`);
   }
   if (definition.attackDamageType !== undefined) {
     parts.push(`attacks deal ${definition.attackDamageType} damage`);
@@ -290,9 +298,18 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
       `gain ${String(definition.extraStrikesPerHit)} more ${definition.extraStrikesPerHit === 1 ? "strike" : "strikes"} of adrenaline per hit`,
     );
   }
-  if (definition.spellRechargeFaster !== 0) {
-    const faster = String(Math.round(definition.spellRechargeFaster * 100));
-    parts.push(`spells recharge ${faster}% faster`);
+  const { spellRechargeFaster, bindingRitualRechargeFaster } = definition;
+  if (spellRechargeFaster !== 0 && spellRechargeFaster === bindingRitualRechargeFaster) {
+    const faster = String(Math.round(spellRechargeFaster * 100));
+    parts.push(`spells and binding rituals recharge ${faster}% faster`);
+  } else {
+    if (spellRechargeFaster !== 0) {
+      parts.push(`spells recharge ${String(Math.round(spellRechargeFaster * 100))}% faster`);
+    }
+    if (bindingRitualRechargeFaster !== 0) {
+      const faster = String(Math.round(bindingRitualRechargeFaster * 100));
+      parts.push(`binding rituals recharge ${faster}% faster`);
+    }
   }
   if (definition.incomingHexCastTimeMultiplier !== 1) {
     const times = String(definition.incomingHexCastTimeMultiplier);
@@ -572,6 +589,8 @@ function conditionText(condition: EffectCondition): string {
       return "If target has more Health than you";
     case "target-attacking":
       return "If target is attacking";
+    case "caster-no-spirit-within":
+      return `If no spirit is ${AREA_TEXT.get(condition.radius) ?? `within ${String(condition.radius)}`} of you`;
   }
 }
 
@@ -618,6 +637,16 @@ function describeEffects(
   effect: SkillEffect,
   ranks: ReadonlyMap<string, number>,
 ): EffectDescription[] {
+  if (effect.kind === "summon" && effect.creature.aura !== undefined) {
+    // What the spirit projects (#1064): "Non-spirit allies in its range:
+    // +3 Health regeneration".
+    const { statusId, affects } = effect.creature.aura;
+    const who = affects === "all" ? "Non-spirit creatures" : "Non-spirit allies";
+    return [
+      describeEffect(effect, ranks),
+      { text: `${who} in its range: ${describeStatus(statusId)}`, magnitude: undefined },
+    ];
+  }
   if (effect.kind !== "if") {
     return [describeEffect(effect, ranks)];
   }
@@ -779,8 +808,14 @@ function describeEffect(
       const plural = effect.count === 1 ? "" : "s";
       // Restore Condition's "remove all conditions" (#987).
       const count = Number.isFinite(effect.count) ? String(effect.count) : "all";
+      // Mend Body and Soul's "for each spirit within earshot" (#1064).
+      const near = effect.perSpiritNear;
+      const perSpirit =
+        near === undefined
+          ? ""
+          : ` for each spirit ${AREA_AROUND_TARGET.get(near) ?? `within ${String(near)} of it`}`;
       return {
-        text: `Removes ${count} ${effect.category}${plural}`,
+        text: `Removes ${count} ${effect.category}${plural}${perSpirit}`,
         magnitude: undefined,
       };
     }
@@ -1055,6 +1090,8 @@ const TYPE_TEXT: Record<SkillType, string> = {
   glyph: "Glyph.",
   chant: "Chant.",
   "weapon-spell": "Weapon Spell.",
+  "nature-ritual": "Nature Ritual.",
+  "binding-ritual": "Binding Ritual.",
   skill: "Skill.",
 };
 

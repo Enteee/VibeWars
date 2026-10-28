@@ -269,6 +269,8 @@ describe("Signet of Return (#474)", () => {
           name: "Bone Minion",
           expiresInSeconds: Infinity,
           summonedAtTick: 0,
+          skillId: "test.bone-minion",
+          aura: undefined,
         },
       }),
     );

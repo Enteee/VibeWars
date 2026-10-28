@@ -193,6 +193,9 @@ export const SKILL_ICONS = {
   "assassin.shadow-refuge": { glyph: "crescent", modifier: "plus" },
   "assassin.shroud-of-distress": { glyph: "armor-half" },
   "assassin.critical-eye": { glyph: "eye" },
+  // Placeholders until the asset-designer's (#1064).
+  "ranger.winnowing": { glyph: "blade-plus", modifier: "area" },
+  "ritualist.recuperation": { glyph: "plaster", modifier: "hourglass" },
   // Placeholders until the asset-designer's (#1068): resurrections.
   "common.resurrection-signet": { glyph: "resurrect", modifier: "plus" },
   "monk.rebirth": { glyph: "resurrect", modifier: "self" },

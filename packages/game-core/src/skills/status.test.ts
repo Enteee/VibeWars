@@ -49,12 +49,14 @@ describe("status definitions", () => {
         def.armorWhileStill !== 0 ||
         def.healthPerSecondWhileMoving !== 0 ||
         def.healthPerSecond !== 0 ||
+        def.healthPerSecondNearSpirit !== 0 ||
         def.armorReduction !== undefined ||
         def.moveSpeedMultiplier !== 1 ||
         def.attackMissChance !== 0 ||
         def.maxHealthLoss !== undefined ||
         def.healingMultiplier !== 1 ||
         def.weaponDamageMultiplier !== 1 ||
+        def.physicalDamageTakenBonus !== 0 ||
         def.attributeDelta !== 0 ||
         def.castTimeMultiplier !== 1 ||
         def.interruptsSpells ||
@@ -68,6 +70,7 @@ describe("status definitions", () => {
         def.nextSpells !== undefined ||
         def.nextAttackSkill !== undefined ||
         def.spellRechargeFaster !== 0 ||
+        def.bindingRitualRechargeFaster !== 0 ||
         def.criticalChanceBonus !== 0 ||
         def.energyPerCritical !== 0;
       expect(hasEffect, `${id} has no mechanical effect`).toBe(true);
@@ -112,6 +115,7 @@ describe("status definitions", () => {
       "weapon-of-warding": 4,
       "never-surrender": 4,
       "shadow-refuge": 9,
+      recuperation: 3,
     });
   });
 

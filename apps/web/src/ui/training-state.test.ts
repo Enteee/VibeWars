@@ -10,6 +10,7 @@ import {
   buildSignature,
   escapeStep,
   loadScenarioChoice,
+  logActorName,
   overlayMessage,
   resolveScenarioId,
   saveScenarioChoice,
@@ -140,5 +141,23 @@ describe("the scenario choice in storage", () => {
       saveScenarioChoice(blocked, "armor-ladder");
     }).not.toThrow();
     expect(loadScenarioChoice(memoryStorage)).toBeUndefined();
+  });
+});
+
+describe("logActorName", () => {
+  const names = new Map([["dummy", "Target dummy"]]);
+  const players = [
+    { sessionId: "dummy", name: "dummy" },
+    { sessionId: "you/c1", name: "Recuperation" },
+  ];
+
+  it("names a dummy as the scenario does, and a spirit you summoned as the match does (#1064)", () => {
+    expect(logActorName("dummy", names, players)).toBe("Target dummy");
+    expect(logActorName("you/c1", names, players)).toBe("Recuperation");
+  });
+
+  it("falls back to the id for someone neither knows", () => {
+    expect(logActorName("gone", names, players)).toBe("gone");
+    expect(logActorName("gone", undefined, undefined)).toBe("gone");
   });
 });

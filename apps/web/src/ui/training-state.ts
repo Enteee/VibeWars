@@ -125,3 +125,16 @@ export function saveScenarioChoice(storage: () => Storage, id: string): void {
     // Not remembering the choice costs one click next time; nothing else.
   }
 }
+
+/**
+ * Who `id` is in the Training log: the scenario's name for a dummy,
+ * else the name the match shows, a summoned spirit's "Recuperation"
+ * (#1064), and only then the id.
+ */
+export function logActorName(
+  id: string,
+  names: ReadonlyMap<string, string> | undefined,
+  players: readonly { readonly sessionId: string; readonly name: string }[] | undefined,
+): string {
+  return names?.get(id) ?? players?.find((player) => player.sessionId === id)?.name ?? id;
+}

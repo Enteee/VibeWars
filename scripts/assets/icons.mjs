@@ -144,6 +144,15 @@ const skillType = {
   // Shield ring: a spell held on an ally's weapon, one at a time (#758).
   "weapon-spell": () =>
     `<path d="M4.5 3.5h15v7c0 4.5-3.5 7.5-7.5 9.5-4-2-7.5-5-7.5-9.5z" ${stroke(C.weaponSpell, 3)}/>`,
+  // A sprout, two leaves on a stem: a nature ritual plants a spirit that
+  // reaches everyone near it (#1064).
+  "nature-ritual": () =>
+    `<path d="M12 21V10" ${stroke(C.ink, 2.5)}/>` +
+    `<path d="M12 12C12 7 9 4 4 4c0 5 3 8 8 8zM12 15c0-4 3-7 8-7 0 4-3 7-8 7z" fill="${C.ink}"/>`,
+  // An urn on a base line: a binding ritual binds a spirit to its side (#1064).
+  "binding-ritual": () =>
+    `<path d="M9 3h6v2l-1.5 2c2.5 1 4 3 4 6 0 3-2.5 5-5.5 5s-5.5-2-5.5-5c0-3 1.5-5 4-6L9 5z" fill="${C.ink}"/>` +
+    `<path d="M5 21h14" ${stroke(C.ink, 2.5)}/>`,
   // Plain square: a skill with no other type.
   skill: () => `<rect x="6" y="6" width="12" height="12" rx="1" fill="${C.ink}"/>`,
 };
@@ -648,6 +657,14 @@ const status = {
       `<path d="M8.5 6.5h7v4c0 2.2-1.8 3.7-3.5 4.8-1.7-1.1-3.5-2.6-3.5-4.8z" ${stroke(c, 1.8)}/>` +
       `<path d="M6.5 16.5l11-11" ${stroke(c, 2)}/>`,
   ],
+  // Skill effect: a blade and a plus, hits land harder near Winnowing (#1064).
+  winnowing: [
+    "skill-effect",
+    (c) =>
+      `<path d="M5 17L13 9" ${stroke(c, 2.2)}/>` + `<path d="M17 6v6M14 9h6" ${stroke(c, 2)}/>`,
+  ],
+  // Skill effect: two regeneration arrows, Recuperation's +2 (#1064).
+  recuperation: ["skill-effect", (c) => `<path d="M7 13l3-3 3 3M11 13l3-3 3 3" ${stroke(c, 2)}/>`],
 };
 
 // ---------------------------------------------------------------------------

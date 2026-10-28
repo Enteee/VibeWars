@@ -84,6 +84,7 @@
     "pious-haste-run",
     "poison",
     "protective-spirit",
+    "recuperation",
     "regeneration",
     "reversal-of-fortune",
     "sand-shards",
@@ -106,7 +107,8 @@
     "weapon-of-aggression",
     "weapon-of-quickening",
     "weapon-of-remedy",
-    "weapon-of-warding"
+    "weapon-of-warding",
+    "winnowing"
   ],
   "constants": {
     "FORMATION_SETTLE_MS": { "literal": 3000 },
@@ -427,6 +429,7 @@
                   { "literal": "pious-haste-run" },
                   { "literal": "poison" },
                   { "literal": "protective-spirit" },
+                  { "literal": "recuperation" },
                   { "literal": "regeneration" },
                   { "literal": "reversal-of-fortune" },
                   { "literal": "sand-shards" },
@@ -449,7 +452,8 @@
                   { "literal": "weapon-of-aggression" },
                   { "literal": "weapon-of-quickening" },
                   { "literal": "weapon-of-remedy" },
-                  { "literal": "weapon-of-warding" }
+                  { "literal": "weapon-of-warding" },
+                  { "literal": "winnowing" }
                 ]
               }
             },
@@ -531,6 +535,7 @@
                   { "literal": "pious-haste-run" },
                   { "literal": "poison" },
                   { "literal": "protective-spirit" },
+                  { "literal": "recuperation" },
                   { "literal": "regeneration" },
                   { "literal": "reversal-of-fortune" },
                   { "literal": "sand-shards" },
@@ -553,7 +558,8 @@
                   { "literal": "weapon-of-aggression" },
                   { "literal": "weapon-of-quickening" },
                   { "literal": "weapon-of-remedy" },
-                  { "literal": "weapon-of-warding" }
+                  { "literal": "weapon-of-warding" },
+                  { "literal": "winnowing" }
                 ]
               }
             },
@@ -632,6 +638,7 @@
                   { "literal": "pious-haste-run" },
                   { "literal": "poison" },
                   { "literal": "protective-spirit" },
+                  { "literal": "recuperation" },
                   { "literal": "regeneration" },
                   { "literal": "reversal-of-fortune" },
                   { "literal": "sand-shards" },
@@ -654,7 +661,8 @@
                   { "literal": "weapon-of-aggression" },
                   { "literal": "weapon-of-quickening" },
                   { "literal": "weapon-of-remedy" },
-                  { "literal": "weapon-of-warding" }
+                  { "literal": "weapon-of-warding" },
+                  { "literal": "winnowing" }
                 ]
               }
             },
@@ -730,6 +738,7 @@
                   { "literal": "pious-haste-run" },
                   { "literal": "poison" },
                   { "literal": "protective-spirit" },
+                  { "literal": "recuperation" },
                   { "literal": "regeneration" },
                   { "literal": "reversal-of-fortune" },
                   { "literal": "sand-shards" },
@@ -752,7 +761,8 @@
                   { "literal": "weapon-of-aggression" },
                   { "literal": "weapon-of-quickening" },
                   { "literal": "weapon-of-remedy" },
-                  { "literal": "weapon-of-warding" }
+                  { "literal": "weapon-of-warding" },
+                  { "literal": "winnowing" }
                 ]
               }
             },
@@ -904,6 +914,7 @@
                   { "literal": "pious-haste-run" },
                   { "literal": "poison" },
                   { "literal": "protective-spirit" },
+                  { "literal": "recuperation" },
                   { "literal": "regeneration" },
                   { "literal": "reversal-of-fortune" },
                   { "literal": "sand-shards" },
@@ -926,7 +937,8 @@
                   { "literal": "weapon-of-aggression" },
                   { "literal": "weapon-of-quickening" },
                   { "literal": "weapon-of-remedy" },
-                  { "literal": "weapon-of-warding" }
+                  { "literal": "weapon-of-warding" },
+                  { "literal": "winnowing" }
                 ]
               }
             },
@@ -993,6 +1005,7 @@
                   { "literal": "pious-haste-run" },
                   { "literal": "poison" },
                   { "literal": "protective-spirit" },
+                  { "literal": "recuperation" },
                   { "literal": "regeneration" },
                   { "literal": "reversal-of-fortune" },
                   { "literal": "sand-shards" },
@@ -1015,7 +1028,8 @@
                   { "literal": "weapon-of-aggression" },
                   { "literal": "weapon-of-quickening" },
                   { "literal": "weapon-of-remedy" },
-                  { "literal": "weapon-of-warding" }
+                  { "literal": "weapon-of-warding" },
+                  { "literal": "winnowing" }
                 ]
               }
             },

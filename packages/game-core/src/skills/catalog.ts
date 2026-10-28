@@ -4,7 +4,9 @@ import {
   AREA_IN_THE_AREA,
   AREA_NEARBY,
   RANGE_MELEE,
+  RANGE_NATURE_RITUAL,
   RANGE_SPELL,
+  RANGE_SPIRIT,
 } from "../distances.js";
 import { WEAPONS } from "../equipment/weapons.js";
 import { KNOCKDOWN_SECONDS, type Skill } from "./types.js";
@@ -2118,8 +2120,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     projectile: undefined,
-    // "That ally loses one condition for each spirit within earshot": there
-    // are no spirits yet (#467), so it removes none, as in GW1 with none up.
+    // "That ally loses one condition for each spirit within earshot"
+    // (#1064): earshot of the ally, any team's spirit.
     effects: [
       {
         kind: "heal",
@@ -2128,6 +2130,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
           scaling: { attributeId: "ritualist.restoration-magic", atZero: 20, atTwelve: 96 },
         },
       },
+      { kind: "remove-status", category: "condition", count: 1, perSpiritNear: AREA_EARSHOT },
     ],
   },
   {
@@ -2148,11 +2151,14 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     projectile: undefined,
-    // "If any Spirits are within earshot, you don't sacrifice Health": there
-    // are no spirits yet (#467), so the 17% is always paid, as in GW1 with
-    // none up.
+    // "If any Spirits are within earshot, you don't sacrifice Health"
+    // (#1064): earshot of you, any team's spirit.
     effects: [
-      { kind: "sacrifice-health", percentOfMax: 17 },
+      {
+        kind: "if",
+        condition: { kind: "caster-no-spirit-within", radius: AREA_EARSHOT },
+        effects: [{ kind: "sacrifice-health", percentOfMax: 17 }],
+      },
       {
         kind: "heal",
         perStatusOnTarget: [],
@@ -5589,6 +5595,93 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     corpse: undefined,
     projectile: undefined,
     effects: [{ kind: "apply-status", statusId: "poison", durationSeconds: 17 }],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Spirits (#1064)                                                        */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "ranger.winnowing",
+    name: "Winnowing",
+    type: "nature-ritual",
+    elite: false,
+    profession: "ranger",
+    attributeId: "ranger.wilderness-survival",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 60,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    // "Create a level 1...8...10 Spirit. Non-spirit creatures within range
+    // take 4 additional damage whenever they take physical damage. This
+    // Spirit dies after 30...198...240 seconds." A level-8 spirit: 50 + 20
+    // per level, armor 51.
+    effects: [
+      {
+        kind: "summon",
+        count: 1,
+        creature: {
+          kind: "spirit",
+          name: "Winnowing",
+          maxHealth: {
+            scaling: { attributeId: "ranger.wilderness-survival", atZero: 70, atTwelve: 210 },
+          },
+          armor: 51,
+          durationSeconds: {
+            scaling: { attributeId: "ranger.wilderness-survival", atZero: 30, atTwelve: 198 },
+          },
+          behaviour: { kind: "idle" },
+          aura: { statusId: "winnowing", affects: "all", radius: RANGE_NATURE_RITUAL },
+        },
+      },
+    ],
+  },
+  {
+    id: "ritualist.recuperation",
+    name: "Recuperation",
+    type: "binding-ritual",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.restoration-magic",
+    cost: { kind: "energy", amount: 25 },
+    overcast: 0,
+    activationSeconds: 3,
+    rechargeSeconds: 45,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    // PvP: "Create a level 1...8...10 Spirit. Non-Spirit allies within its
+    // range gain +1...3...3 Health regeneration. This Spirit dies after
+    // 15...39...45 seconds." A level-8 spirit: 50 + 20 per level, armor 51.
+    effects: [
+      {
+        kind: "summon",
+        count: 1,
+        creature: {
+          kind: "spirit",
+          name: "Recuperation",
+          maxHealth: {
+            scaling: { attributeId: "ritualist.restoration-magic", atZero: 70, atTwelve: 210 },
+          },
+          armor: 51,
+          durationSeconds: {
+            scaling: { attributeId: "ritualist.restoration-magic", atZero: 15, atTwelve: 39 },
+          },
+          behaviour: { kind: "idle" },
+          aura: { statusId: "recuperation", affects: "allies", radius: RANGE_SPIRIT },
+        },
+      },
+    ],
   },
 ];
 

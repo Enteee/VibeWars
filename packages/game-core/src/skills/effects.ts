@@ -12,7 +12,7 @@ import {
   type StatusCategory,
   type StatusId,
 } from "./status.js";
-import { nearestFirst } from "./targeting.js";
+import { nearestFirst, spiritsWithin } from "./targeting.js";
 import { effectiveMaxHealth, healingMultiplierOf, maxHealthLossOf, rankOf } from "./tick.js";
 import { wieldsFor } from "../equipment/weapons.js";
 import { distance } from "../vec2.js";
@@ -28,6 +28,7 @@ import {
   type EffectCondition,
   type HealEffect,
   type InterruptEffect,
+  type RemoveStatusEffect,
   type ResurrectEffect,
   type SkillEffect,
   type StateCondition,
@@ -891,7 +892,7 @@ export function applyEffect(
       }
       const removed = bearer.statuses.removeByCategory(
         effect.category,
-        effect.count,
+        removeCount(effect, bearer, context.surroundings),
         effect.profession,
       );
       for (const statusId of removed) {
@@ -1062,6 +1063,7 @@ function isStateCondition(condition: EffectCondition): condition is StateConditi
     case "target-less-health":
     case "target-more-health":
     case "target-attacking":
+    case "caster-no-spirit-within":
       return true;
   }
 }
@@ -1133,7 +1135,30 @@ export function stateHolds(
         (cast !== undefined && getSkill(cast.skillId)?.type === "attack")
       );
     }
+    case "caster-no-spirit-within": {
+      const at = surroundings.get(caster.id)?.position;
+      return at === undefined || spiritsWithin(surroundings.values(), at, condition.radius) === 0;
+    }
   }
+}
+
+/**
+ * How many a `remove-status` takes off `bearer`: its `count`, or that
+ * for each living spirit within `perSpiritNear` of it (#1064). A bearer
+ * nowhere in `surroundings` has no spirit near.
+ */
+function removeCount(
+  effect: RemoveStatusEffect,
+  bearer: Combatant,
+  surroundings: Surroundings,
+): number {
+  if (effect.perSpiritNear === undefined) {
+    return effect.count;
+  }
+  const at = surroundings.get(bearer.id)?.position;
+  return at === undefined
+    ? 0
+    : effect.count * spiritsWithin(surroundings.values(), at, effect.perSpiritNear);
 }
 
 /** No state held: a resolution with no target. */
@@ -1261,6 +1286,7 @@ function conditionHolds(
     case "target-less-health":
     case "target-more-health":
     case "target-attacking":
+    case "caster-no-spirit-within":
       return held.has(condition);
   }
 }

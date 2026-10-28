@@ -20,6 +20,8 @@ function body(
             name: "Bone Minion",
             expiresInSeconds: Number.POSITIVE_INFINITY,
             summonedAtTick: 0,
+            skillId: "necromancer.animate-bone-minions",
+            aura: undefined,
           }
         : undefined,
     corpseExploited: extra.exploited ?? false,

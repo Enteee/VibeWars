@@ -124,7 +124,8 @@ function tenths(seconds: number): number {
  * match clock, how long it was applied for, and who applied it. One with
  * no end of its own is what its bearer bears while activating
  * (`whileActivating`): it ends with `cast`, so it takes the cast's times.
- * A maintained enchantment (#837) has no end at all: both times `null`.
+ * A maintained enchantment (#837) and a spirit's aura (#1064) have no end
+ * at all: both times `null`.
  * A duration under 0.05 s still goes as 0.1, as the wire refuses one of
  * nothing.
  */
@@ -133,7 +134,7 @@ export function statusSnapshot(
   elapsedSeconds: number,
   cast: { readonly remainingSeconds: number; readonly totalSeconds: number } | undefined,
 ): StatusSnapshot {
-  if (status.maintained !== null) {
+  if (status.maintained !== null || status.projected) {
     return { id: status.id, endsAt: null, durationSeconds: null, casterId: status.sourceId };
   }
   const [remaining, duration] = Number.isFinite(status.remainingSeconds)
