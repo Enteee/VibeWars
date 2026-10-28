@@ -27,7 +27,7 @@ import {
 } from "@vibewars/game-protocol";
 
 import type { QueueBoard, QueueBoardEvent } from "./queue-board.js";
-import { formGroups, groupOf, isLive, type FormedGroup } from "./queue-formation.js";
+import { formGroups, groupOf, isContested, isLive, type FormedGroup } from "./queue-formation.js";
 
 /**
  * A ticket's throwaway signing key (ADR-0032 §5, §6), with the private
@@ -58,8 +58,9 @@ export type QueueState =
   /** The board has no relay (#707). */
   | { readonly kind: "unreachable" }
   /**
-   * A party member's leader has had no live ticket for `TICKET_TTL_MS`:
-   * the party is over, and this client has stopped (#882).
+   * A party member's leader has had no live ticket for `TICKET_TTL_MS`,
+   * or another ticket has named one of its members for as long: the party
+   * is over, and this client has stopped (#882).
    */
   | { readonly kind: "party-gone" };
 
@@ -138,6 +139,8 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
    * a slow first heartbeat is no split.
    */
   let leaderSeenAt = enteredAt;
+  /** Since when the party's ticket has been `isContested`, as this member sees it. */
+  let contestedSince: number | undefined;
   let settling: { readonly group: FormedGroup; readonly since: number } | undefined;
   /** Bumped by anything that makes a formation still in flight stale. */
   let generation = 0;
@@ -227,6 +230,24 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
       if (tickets.has(leader)) {
         leaderSeenAt = at;
       } else if (at - leaderSeenAt >= TICKET_TTL_MS) {
+        stop();
+        setState({ kind: "party-gone" });
+        return Promise.resolve();
+      }
+    }
+    if (leader !== undefined) {
+      // Anyone can name a member and so keep the party from ever forming.
+      // A stale ticket of an honest party is gone within `TICKET_TTL_MS`;
+      // one named for longer is held on purpose, and every member, seeing
+      // the same board, splits up and queues alone.
+      if (!isContested({ tickets: [...tickets.values()], now: at, mode }, leader)) {
+        contestedSince = undefined;
+      } else if (contestedSince === undefined) {
+        contestedSince = at;
+      } else if (at - contestedSince >= TICKET_TTL_MS) {
+        if (!follower) {
+          board.withdraw(leader);
+        }
         stop();
         setState({ kind: "party-gone" });
         return Promise.resolve();

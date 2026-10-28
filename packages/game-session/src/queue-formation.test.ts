@@ -12,6 +12,7 @@ import {
   ROOM_PREFIX,
   formGroups,
   groupOf,
+  isContested,
   ticketsOf,
   type FormedGroup,
 } from "./queue-formation.js";
@@ -221,6 +222,20 @@ describe("formGroups (#869)", () => {
     };
     const queued = [forged, real, ...solos(10, 2, { mode: "random-arena-2v2" })];
     expect(await form(queued, "random-arena-2v2")).toEqual([]);
+  });
+
+  it("calls a party contested while another live ticket names its member (#882)", () => {
+    const real = party(2, "random-arena-2v2");
+    const forged = {
+      ...ticket(1, { mode: "random-arena-2v2" }),
+      members: [ticket(1).ticketId, real.members[1] ?? ""],
+    };
+    const input = { now: NOW, mode: "random-arena-2v2" } as const;
+    expect(isContested({ ...input, tickets: [real] }, real.ticketId)).toBe(false);
+    expect(isContested({ ...input, tickets: [forged, real] }, real.ticketId)).toBe(true);
+    expect(isContested({ ...input, tickets: [forged, real] }, ticket(9).ticketId)).toBe(false);
+    const stale = { ...forged, heartbeatAt: NOW - TICKET_TTL_MS - 1 };
+    expect(isContested({ ...input, tickets: [stale, real] }, real.ticketId)).toBe(false);
   });
 
   it("settles a seat only where it sits as its own ticket (#882)", async () => {

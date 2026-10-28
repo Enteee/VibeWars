@@ -401,5 +401,48 @@ describe("createQueueClient", () => {
       await queue.advance();
       expect(follow.state.kind).toBe("party-gone");
     });
+
+    /** A stranger's party ticket naming `member`, signed by a key of its own below it. */
+    const forged = (member: string): Partial<QueueTicket> & { ticketId: string } => ({
+      ticketId: "0".repeat(64),
+      members: ["0".repeat(64), member],
+    });
+
+    it("splits up once a stranger has named one of its members for TICKET_TTL_MS", async () => {
+      const queue = new Queue("random-arena-2v2");
+      const { leader, follower } = partyOf(queue);
+      const lead = queue.join(leader);
+      const follow = queue.join(follower);
+      await queue.advance();
+
+      // The stranger heartbeats its claim for as long as it likes.
+      for (let waited = 0; waited < TICKET_TTL_MS; waited += STEP_MS) {
+        await queue.publish(forged(follower.key.ticketId));
+        await queue.advance();
+      }
+      expect(lead.state.kind).toBe("searching");
+      await queue.publish(forged(follower.key.ticketId));
+      await queue.advance();
+
+      expect(lead.state.kind).toBe("party-gone");
+      expect(follow.state.kind).toBe("party-gone");
+      expect(queue.heard).toContainEqual({ kind: "withdrawn", ticketId: leader.members[0] });
+    });
+
+    it("waits out a claim that is not kept alive: a stale ticket is no split", async () => {
+      const queue = new Queue("random-arena-2v2");
+      const { leader, follower } = partyOf(queue);
+      const lead = queue.join(leader);
+      const follow = queue.join(follower);
+      await queue.advance();
+
+      await queue.publish(forged(follower.key.ticketId));
+      for (let waited = 0; waited < 2 * TICKET_TTL_MS; waited += STEP_MS) {
+        await queue.advance();
+      }
+
+      expect(lead.state.kind).toBe("searching");
+      expect(follow.state.kind).toBe("searching");
+    });
   });
 });

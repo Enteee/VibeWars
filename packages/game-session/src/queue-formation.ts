@@ -79,15 +79,9 @@ export function isLive(ticket: QueueTicket, now: number): boolean {
 
 /**
  * The live tickets, first queued first: this protocol and mode, `isLive`,
- * not ignored, each id once, and each seat key once (#882).
- *
- * The board checks only that a ticket is signed by its id; the rest of a
- * party's members are its leader's word. So a party naming another live
- * ticket's id is dropped, and two parties naming one member are both
- * dropped: neither queued first can win, since `enteredAt` is the
- * owner's claim.
+ * each id once. Ignored ones are still here: see `liveQueue`.
  */
-function liveQueue(input: FormGroupsInput): QueueTicket[] {
+function liveTickets(input: Pick<FormGroupsInput, "tickets" | "now" | "mode">): QueueTicket[] {
   const live = input.tickets
     .filter(
       (ticket) =>
@@ -97,24 +91,56 @@ function liveQueue(input: FormGroupsInput): QueueTicket[] {
     )
     .sort(queueOrder);
   const ids = new Set<string>();
-  const once = live.filter((ticket) => {
+  return live.filter((ticket) => {
     if (ids.has(ticket.ticketId)) {
       return false;
     }
     ids.add(ticket.ticketId);
     return true;
   });
+}
+
+/**
+ * Which of `live` keep their seat keys to themselves (#882). The board
+ * checks only that a ticket is signed by its id; the rest of a party's
+ * members are its leader's word. So a party naming another live ticket's
+ * id is dropped, and two parties naming one member are both dropped:
+ * neither queued first can win, since `enteredAt` is the owner's claim.
+ * Counted over every live ticket, ignored or not, so a client's own
+ * ignored set never changes which party is dropped.
+ */
+function unclaimed(live: readonly QueueTicket[]): (ticket: QueueTicket) => boolean {
+  const ids = new Set(live.map((ticket) => ticket.ticketId));
   const claims = new Map<string, number>();
-  for (const ticket of once) {
+  for (const ticket of live) {
     for (const member of ticket.members.slice(1)) {
       claims.set(member, (claims.get(member) ?? 0) + 1);
     }
   }
-  return once.filter(
-    (ticket) =>
-      !input.ignored.has(ticket.ticketId) &&
-      ticket.members.slice(1).every((member) => !ids.has(member) && claims.get(member) === 1),
-  );
+  return (ticket) =>
+    ticket.members.slice(1).every((member) => !ids.has(member) && claims.get(member) === 1);
+}
+
+/** The tickets formation takes: `liveTickets`, not ignored and `unclaimed`. */
+function liveQueue(input: FormGroupsInput): QueueTicket[] {
+  const live = liveTickets(input);
+  const own = unclaimed(live);
+  return live.filter((ticket) => !input.ignored.has(ticket.ticketId) && own(ticket));
+}
+
+/**
+ * Whether the party ticket `ticketId` is live but dropped, because
+ * another live ticket names one of its members (#882). Anyone can name
+ * any key, so a party that stays contested splits up rather than wait
+ * for ever; see SECURITY.md, "Naming a Random Arena party's member".
+ */
+export function isContested(
+  input: Pick<FormGroupsInput, "tickets" | "now" | "mode">,
+  ticketId: string,
+): boolean {
+  const live = liveTickets(input);
+  const ticket = live.find((candidate) => candidate.ticketId === ticketId);
+  return ticket !== undefined && !unclaimed(live)(ticket);
 }
 
 /** A ticket and where it stands in the queue. */

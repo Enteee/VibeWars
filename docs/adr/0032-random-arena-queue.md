@@ -108,7 +108,10 @@ with nobody negotiating.**
    been first. A client settles only into a group where it sits as its
    own ticket: a solo as a solo, a member in exactly the `members` it
    was told. A forger can still get a party dropped by naming one of
-   its members; closing that needs member signatures on the ticket.
+   its members; closing that needs member signatures on the ticket
+   (#1078). Until then a party whose ticket has been contested for
+   `TICKET_TTL_MS`, longer than a stale honest ticket can last, splits
+   up and each member queues alone, so it is not held for ever.
 
 7. **Signing with `@noble/secp256k1`**, which Trystero already brings into
    the lockfile at 3.2.0. It becomes a direct dependency at that version.
