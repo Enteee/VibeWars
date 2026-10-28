@@ -1375,6 +1375,25 @@ brings it back. It outlives its owner's death and leaves with its
 owner. A build change that keeps Charm Animal keeps the wolf as it is;
 one that drops it sends it away; one that gains it brings a fresh one.
 
+**Pet attacks** (#1107) are Beast Mastery skills the owner uses and the
+wolf lands. The owner pays and the skill starts recharging, but there
+is no cast: it can be used mid-cast or mid-swing and stops neither. It
+arms the wolf's next blow for 10 s; a newer pet attack replaces one
+still waiting, whose energy is lost. With a living foe selected within
+the wolf's 700, the wolf goes for it, as when its owner attacks one.
+The armed blow goes through the attack-skill path with the wolf as the
+attacker, at the ranks the wolf arrived with; a blind miss or a block
+uses it up too, and it earns no adrenaline. With no wolf ("You have no
+pet."), a dead one ("Your pet is dead.") or one farther than 350 from
+its owner ("Your pet is too far away.") it is refused and costs
+nothing. At Beast Mastery 12:
+
+| Skill            | Energy | Recharge | Blow                                                            |
+| ---------------- | ------ | -------- | --------------------------------------------------------------- |
+| Brutal Strike    | 10     | 5 s      | +29, and +29 more on a foe below 50% Health                     |
+| Maiming Strike   | 10     | 5 s      | +17; a hit cripples for 13 s                                    |
+| Disrupting Lunge | 5      | 10 s     | +10; a hit on a foe using a skill interrupts it, +20 s disabled |
+
 ## Wards and wells
 
 A **ward** (#1087) is a circle left on the ground where its caster
