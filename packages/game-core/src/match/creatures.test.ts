@@ -279,6 +279,7 @@ describe("a creature's end (#1052)", () => {
               attributeId: "ranger.marksmanship",
               damageType: longbow.damageType,
               requirementMet: true,
+              creatureDamageScale: undefined,
             },
           },
         }),

@@ -53,6 +53,7 @@ const SCYTHE: ResolvedEquipment = {
     attributeId: "dervish.scythe-mastery",
     damageType: weaponDamageType(WEAPONS.scythe, "dervish.scythe-mastery"),
     requirementMet: true,
+    creatureDamageScale: undefined,
   },
 };
 

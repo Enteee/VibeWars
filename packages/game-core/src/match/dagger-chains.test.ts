@@ -33,6 +33,7 @@ function daggers(): ResolvedEquipment {
       attributeId: "assassin.dagger-mastery",
       damageType: WEAPONS.daggers.damageType,
       requirementMet: true,
+      creatureDamageScale: undefined,
     },
   };
 }

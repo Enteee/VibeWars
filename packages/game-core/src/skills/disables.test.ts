@@ -145,6 +145,7 @@ describe("Distracting Shot (#914)", () => {
           attributeId: "ranger.marksmanship",
           damageType: WEAPONS.longbow.damageType,
           requirementMet: true,
+          creatureDamageScale: undefined,
         },
       },
       attributeRanks: new Map([["ranger.expertise", 12]]),
@@ -212,6 +213,7 @@ describe("Disrupting Chop (#914)", () => {
           attributeId: "warrior.axe-mastery",
           damageType: WEAPONS.axe.damageType,
           requirementMet: true,
+          creatureDamageScale: undefined,
         },
       },
     });

@@ -1341,10 +1341,13 @@ where it is until there is one.
 
 **Animate Bone Minions** (Necromancer, Death Magic, spell, 10 energy,
 1 s, 5 s recharge) raises two Bone Minions of 280 Health and armor 30,
-each a 5–12 blunt blow every 3.17 s. **Animate Bone Horror** (5
+each a 6–11 blunt blow every 3.10 s. **Animate Bone Horror** (5
 energy, 1 s, 5 s recharge) raises one Bone Horror of 360 Health and
-armor 56, 13–27 blunt every 3.17 s. Numbers at Death Magic 12; their
-damage is a house estimate, as no source publishes it.
+armor 56, 12–24 blunt every 3.10 s. Numbers at Death Magic 12, from
+GWW's damage tables, criticals taken out. A minion's blows scale with
+its level, which its Necromancer's Death Magic sets as it rises: ×(level
+÷ its level at 12)^1.5, a fit to GWW's tables. A Bone Minion raised at
+Death Magic 0 is level 0 and deals nothing; at 6 it hits for 2–4.
 
 **Pets** (#1046). A Ranger with **Charm Animal** (Beast Mastery, 10
 energy, 10 s) on the bar brings a level-20 wolf from the moment it

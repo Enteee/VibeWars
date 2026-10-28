@@ -34,7 +34,13 @@ const POWER_BLOCK = "mesmer.power-block";
 function wielding(weapon: Weapon, attributeId: string): ResolvedEquipment {
   return {
     ...unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
-    mainHand: { weapon, attributeId, damageType: weapon.damageType, requirementMet: true },
+    mainHand: {
+      weapon,
+      attributeId,
+      damageType: weapon.damageType,
+      requirementMet: true,
+      creatureDamageScale: undefined,
+    },
   };
 }
 

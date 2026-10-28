@@ -24,6 +24,7 @@ const HAMMER = {
     attributeId: "warrior.hammer-mastery",
     damageType: WEAPONS.hammer.damageType,
     requirementMet: true,
+    creatureDamageScale: undefined,
   },
 };
 
