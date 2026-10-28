@@ -266,6 +266,66 @@ describe("one spirit of a skill in range (#1064)", () => {
   });
 });
 
+describe("a creature and its own team pass through each other (#1278)", () => {
+  it("lets a Ritualist walk off the spirit planted at their feet, unpushed", () => {
+    const sim = match();
+    ritual(sim, RECUPERATION);
+    // The same walk with no spirit there: where an unpushed body ends.
+    const bare = match();
+    stepFor(bare, skillOf(RECUPERATION).activationSeconds + 0.5);
+    for (const each of [sim, bare]) {
+      // Past the aftercast, so both walk from a standstill.
+      stepFor(each, 1);
+      each.setInputDirection("r", vec2(0, -1));
+      stepFor(each, 0.5);
+    }
+    expect(get(sim, "r").position).toEqual(get(bare, "r").position);
+    expect(spirits(sim)[0]?.position).toEqual(vec2(0, 0));
+  });
+
+  it("stops a foe walking straight at the spirit at the touch", () => {
+    const sim = match();
+    ritual(sim, RECUPERATION);
+    sim.setInputDirection("r", vec2(0, -1));
+    stepFor(sim, 1);
+    sim.setInputDirection("r", vec2(0, 0));
+    sim.setInputDirection("f", vec2(-1, 0));
+    stepFor(sim, 3);
+    const f = get(sim, "f");
+    expect(f.position.y).toBe(0);
+    expect(f.position.x).toBeCloseTo(
+      RULES.collision.playerRadius + RULES.collision.creatureRadius,
+      6,
+    );
+  });
+
+  it("lets an owner walk off their own pet standing on them, unpushed", () => {
+    const sim = new MatchSimulation({
+      seed: "pass",
+      participants: [spec("r", 0, vec2(0, 0), { skillBar: ["ranger.charm-animal"] })],
+    });
+    const pet = [...sim.participants()].find((p) => p.creature?.kind === "pet");
+    if (pet === undefined) {
+      throw new Error("no pet");
+    }
+    pet.position = vec2(0, 0);
+    const bare = match();
+    for (const each of [sim, bare]) {
+      each.setInputDirection("r", vec2(0, -1));
+      stepFor(each, 0.5);
+    }
+    expect(get(sim, "r").position).toEqual(get(bare, "r").position);
+  });
+
+  it("still pushes two players of one team apart", () => {
+    const sim = match(spec("b", 0, vec2(5, 0)));
+    stepFor(sim, 0.5);
+    expect(distance(get(sim, "r").position, get(sim, "b").position)).toBeGreaterThanOrEqual(
+      2 * RULES.collision.playerRadius - 1e-6,
+    );
+  });
+});
+
 describe("Recuperation (#1064)", () => {
   it("gives its own side +3 Health regeneration in range, never a foe on top of it", () => {
     const sim = match();

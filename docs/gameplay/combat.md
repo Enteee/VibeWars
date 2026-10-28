@@ -1373,7 +1373,10 @@ brackets.
 
 - **Body blocking**: living players are solid. A front line can deny
   ground; a caster can be boxed in. Corpses are _not_ solid — a dead
-  player should never trap the living.
+  player should never trap the living. A creature (spirit, pet, minion,
+  a map's NPC) and its own team pass through each other (#1278): a
+  spirit planted at your feet never shoves you aside. Foes stay solid
+  to it.
 - **Walls** resolve after players, so someone squeezed between a blocker
   and a wall ends up outside the wall rather than inside it.
 - **Line of sight** is a geometric query against wall segments, shared

@@ -4112,7 +4112,7 @@ export class MatchSimulation {
         ? beside
         : target.position;
       for (let pass = 0; pass < MOVEMENT_RELAX_PASSES; pass += 1) {
-        const relaxed = this.#pushOut(record.id, position, radius);
+        const relaxed = this.#pushOut(record, position, radius);
         const settled = relaxed.x === position.x && relaxed.y === position.y;
         position = relaxed;
         if (settled) {
@@ -4499,7 +4499,7 @@ export class MatchSimulation {
     emptyAdrenaline(combatant);
     let position = nearestStandable(this.#graph, at);
     for (let pass = 0; pass < MOVEMENT_RELAX_PASSES; pass += 1) {
-      position = this.#pushOut(record.id, position, this.#radiusOf(record));
+      position = this.#pushOut(record, position, this.#radiusOf(record));
     }
     record.position = position;
     record.inputDirection = ZERO;
@@ -4551,7 +4551,7 @@ export class MatchSimulation {
     // between a body and a wall, each push undoes the other, so one pass
     // alone can leave a body anywhere; a few settle it.
     for (let pass = 0; pass < MOVEMENT_RELAX_PASSES; pass += 1) {
-      const relaxed = this.#pushOut(record.id, position, radius);
+      const relaxed = this.#pushOut(record, position, radius);
       const settled = relaxed.x === position.x && relaxed.y === position.y;
       position = relaxed;
       if (settled) {
@@ -4564,7 +4564,7 @@ export class MatchSimulation {
     // the wall never squeezes past. Per body and against the start, so two
     // bodies that already overlap (a shared spawn) can still move apart.
     for (const [otherId, other] of this.#participants) {
-      if (otherId === record.id || other.combatant.dead) {
+      if (otherId === record.id || other.combatant.dead || this.#passesThrough(record, other)) {
         continue;
       }
       const reach = radius + this.#radiusOf(other);
@@ -4579,14 +4579,27 @@ export class MatchSimulation {
     record.position = position;
   }
 
+  /**
+   * A creature and its own team pass through each other (#1278): a
+   * spirit planted at its caster's feet never shoves them aside, and a
+   * pet never jostles its owner. Foes stay solid to it, and two players
+   * of one team stay solid to each other.
+   */
+  #passesThrough(a: ParticipantRecord, b: ParticipantRecord): boolean {
+    return (
+      a.combatant.team === b.combatant.team &&
+      (a.creature !== undefined || b.creature !== undefined)
+    );
+  }
+
   /** One pass of push-outs for a body of `radius` at `position`: bodies, then walls, then the edge. */
-  #pushOut(id: string, position: Vec2, radius: number): Vec2 {
+  #pushOut(record: ParticipantRecord, position: Vec2, radius: number): Vec2 {
     // Body blocking (brief §21): living players are solid, so a front
     // line can physically deny ground and a caster can be boxed in.
     // Corpses are not solid — standing on a dead player should never
     // trap the living.
     for (const [otherId, other] of this.#participants) {
-      if (otherId === id || other.combatant.dead) {
+      if (otherId === record.id || other.combatant.dead || this.#passesThrough(record, other)) {
         continue;
       }
       position = resolveCircleCircleCollision(
