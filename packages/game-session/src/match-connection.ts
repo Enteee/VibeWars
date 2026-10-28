@@ -105,6 +105,8 @@ export interface PlayerSnapshot {
         readonly armedAttack: ArmedAttackSnapshot | null;
       }
     | undefined;
+  /** A lobby's bot plays it (#1193), not a peer. */
+  readonly bot: boolean;
 }
 
 /** A companion's armed pet attack (#1167): a pet-attack skill, and when it lapses. */

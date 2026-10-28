@@ -72,6 +72,7 @@ function player(fields: Partial<PlayerSnapshot>): PlayerSnapshot {
     healthPips: 0,
     energyPips: 0,
     creature: undefined,
+    bot: false,
     statuses: [],
     ...fields,
   };
@@ -524,6 +525,7 @@ describe("targetHintDismissed", () => {
     healthPips: 0,
     energyPips: 0,
     creature: undefined,
+    bot: false,
     statuses: [],
   });
 
@@ -618,6 +620,7 @@ describe("isAttackingTarget", () => {
     healthPips: 0,
     energyPips: 0,
     creature: undefined,
+    bot: false,
     statuses: [],
   });
 
@@ -725,6 +728,7 @@ describe("targetProfessionIcons (#281)", () => {
     healthPips: 0,
     energyPips: 0,
     creature: undefined,
+    bot: false,
     statuses: [],
   });
 

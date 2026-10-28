@@ -49,6 +49,7 @@ function player(index: number): WirePlayer {
     healthPips: 0,
     energyPips: 0,
     creature: null,
+    bot: false,
     statuses: Array.from({ length: MAX_WIRE_STATUSES }, (_, i) => ({
       status: i,
       endsAt: 1000 / 3,

@@ -153,6 +153,7 @@ const player: WirePlayer = {
   energyPips: 4,
   statuses: [status],
   creature: null,
+  bot: false,
 };
 
 /** A Bone Minion of `peer-1`'s (#1052): no professions, its kind's name. */
@@ -396,8 +397,26 @@ const lobbyState: WireLobbyState = {
       ready: true,
       isHost: true,
       character: { name: "Cynn", primary: "elementalist", secondary: null },
+      bot: false,
     },
-    { id: "peer-3", name: "Watcher", team: null, ready: false, isHost: false, character: null },
+    {
+      id: "peer-3",
+      name: "Watcher",
+      team: null,
+      ready: false,
+      isHost: false,
+      character: null,
+      bot: false,
+    },
+    {
+      id: "bot-1",
+      name: "Monk Bot",
+      team: 1,
+      ready: true,
+      isHost: false,
+      character: { name: "Monk Bot", primary: "monk", secondary: "elementalist" },
+      bot: true,
+    },
   ],
   countdownSeconds: null,
 };
@@ -654,6 +673,8 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["ready", parseWireLobbyCommand, { kind: "ready", ready: false }],
   ["select-map", parseWireLobbyCommand, { kind: "select-map", mapId: "isle" }],
   ["start", parseWireLobbyCommand, { kind: "start" }],
+  ["add-bot", parseWireLobbyCommand, { kind: "add-bot", team: 0, profession: "monk" }],
+  ["remove-bot", parseWireLobbyCommand, { kind: "remove-bot", botId: "bot-1" }],
   ["start-rejected", parseWireLobbyNote, { kind: "start-rejected", reason: "nobody is ready" }],
   ["lobby refusal", parseWireLobbyNote, { kind: "refused", reason: "lobby-full" }],
   ["fell-through (#871)", parseWireLobbyNote, { kind: "refused", reason: "fell-through" }],
@@ -951,6 +972,11 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     "snapshot with a player missing a field",
     parseWireSnapshotPart,
     { ...snapshot, players: [{ ...player, castTotal: undefined }] },
+  ],
+  [
+    "snapshot with a player not saying whether it is a bot (#1193)",
+    parseWireSnapshotPart,
+    { ...snapshot, players: [{ ...player, bot: undefined }] },
   ],
   ...(["swingElapsed", "swingTotal"] as const).map(
     (field): [string, (value: unknown) => unknown, unknown] => [
@@ -1404,6 +1430,11 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     { ...lobbyState, players: [{ ...lobbyState.players[0], team: 2 }] },
   ],
   [
+    "lobby-state with a bot of a string (#1193)",
+    parseWireLobbyState,
+    { ...lobbyState, players: [{ ...lobbyState.players[2], bot: "true" }] },
+  ],
+  [
     "lobby-state past MAX_LOBBY_PLAYERS",
     parseWireLobbyState,
     {
@@ -1415,6 +1446,9 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["choose-team of a string", parseWireLobbyCommand, { kind: "choose-team", team: "0" }],
   ["ready of a string", parseWireLobbyCommand, { kind: "ready", ready: "true" }],
   ["select-map with a long id", parseWireLobbyCommand, { kind: "select-map", mapId: long }],
+  ["add-bot without a team", parseWireLobbyCommand, { kind: "add-bot", profession: "monk" }],
+  ["add-bot of a number", parseWireLobbyCommand, { kind: "add-bot", team: 1, profession: 3 }],
+  ["remove-bot without an id", parseWireLobbyCommand, { kind: "remove-bot" }],
   ["a command of an unknown kind", parseWireLobbyCommand, { kind: "kick", id: "peer-2" }],
   ["a note of an unknown kind", parseWireLobbyNote, { kind: "kicked", reason: "x" }],
   [

@@ -335,6 +335,7 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
     energyPips: "energyPips",
     statuses: "statuses",
     creature: "creature",
+    bot: "bot",
   } as const satisfies Record<keyof WirePlayer, keyof PlayerSnapshot>;
 
   it("have one field for each field of the other", () => {
@@ -460,6 +461,7 @@ const WIRE_PLAYER: WirePlayer = {
   energyPips: 0,
   creature: null,
   statuses: [],
+  bot: false,
 };
 
 /**

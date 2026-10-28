@@ -91,6 +91,7 @@ function askBot(sim: MatchSimulation, id: string) {
     stepUnits: 1,
     check: () => ({ ok: true }),
     isBot: () => true,
+    calledTargetId: undefined,
   });
 }
 
@@ -225,6 +226,27 @@ describe("play-build (#1189)", () => {
       }),
     ]);
     sim.step(DT);
+    expect(sim.get("a")?.targetId).toBe("hurt");
+    expect(sim.get("b")?.targetId).toBe("hurt");
+  });
+
+  it("fights the foe its team called over the most hurt one, and drops the call when it dies (#1193)", () => {
+    const sim = match([
+      fighter("a", 0, ELEMENTALIST, vec2(400, 400)),
+      fighter("b", 0, ELEMENTALIST, vec2(400, 460)),
+      fighter("called", 1, WARRIOR, vec2(700, 400), { behaviour: undefined, maxHealth: 1 }),
+      fighter("hurt", 1, WARRIOR, vec2(700, 600), {
+        behaviour: undefined,
+        startHealthFraction: 0.7,
+      }),
+    ]);
+    sim.setCalledTarget(0, "called");
+    sim.step(DT);
+    expect(sim.get("a")?.targetId).toBe("called");
+    expect(sim.get("b")?.targetId).toBe("called");
+    for (let t = 0; t < 10 && sim.get("called")?.combatant.dead === false; t += DT) sim.step(DT);
+    expect(sim.get("called")?.combatant.dead).toBe(true);
+    for (let t = 0; t < 5; t += DT) sim.step(DT);
     expect(sim.get("a")?.targetId).toBe("hurt");
     expect(sim.get("b")?.targetId).toBe("hurt");
   });

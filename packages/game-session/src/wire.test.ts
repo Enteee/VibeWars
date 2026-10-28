@@ -309,7 +309,13 @@ describe("wireIdentity (#1052)", () => {
   const seats = new Map<string, SeatIdentity>([
     [
       "p1",
-      { name: "Ann", team: 1, primaryProfession: "necromancer", secondaryProfession: undefined },
+      {
+        name: "Ann",
+        team: 1,
+        primaryProfession: "necromancer",
+        secondaryProfession: undefined,
+        bot: false,
+      },
     ],
   ]);
   const minion = (ownerId: string) => ({
@@ -346,6 +352,7 @@ describe("wireIdentity (#1052)", () => {
       primaryProfession: "necromancer",
       secondaryProfession: null,
       creature: null,
+      bot: false,
     });
   });
 
@@ -362,6 +369,7 @@ describe("wireIdentity (#1052)", () => {
         mode: null,
         armedAttack: null,
       },
+      bot: false,
     });
   });
 
@@ -430,6 +438,7 @@ describe("wireIdentity (#1052)", () => {
       primaryProfession: null,
       secondaryProfession: null,
       creature: { ownerId: null, kind: "priest", look: "priest", mode: null, armedAttack: null },
+      bot: false,
     });
   });
 });
