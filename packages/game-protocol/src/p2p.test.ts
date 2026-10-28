@@ -681,7 +681,7 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "snapshot with a creature of an unknown kind",
     parseWireSnapshotPart,
-    { ...snapshot, players: [{ ...minion, creature: { ownerId: "peer-1", kind: "pet" } }] },
+    { ...snapshot, players: [{ ...minion, creature: { ownerId: "peer-1", kind: "golem" } }] },
   ],
   [
     "snapshot with a creature with no owner",
