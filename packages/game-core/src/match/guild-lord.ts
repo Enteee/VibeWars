@@ -28,6 +28,22 @@ export const GUILD_LORD_SKILL_BAR = ["ranger.hunters-shot", "ranger.crippling-sh
 
 const LONGBOW = WEAPONS.longbow;
 
+/** GW1's Amulet of Protection (#1223): the most Health a Guild Lord loses in a second at 0:00. */
+export const GUILD_LORD_LOSS_CAP_START = 25;
+/** ... and from `GUILD_LORD_LOSS_CAP_FULL_SECONDS` on. */
+export const GUILD_LORD_LOSS_CAP_FULL = 300;
+export const GUILD_LORD_LOSS_CAP_FULL_SECONDS = 12 * 60;
+
+/**
+ * The most Health a Guild Lord loses in the whole second of match clock
+ * starting at `elapsedSeconds` (#1223): rising linearly from 25 at 0:00 to
+ * 300 at 12:00, and 300 after.
+ */
+export function guildLordLossCap(elapsedSeconds: number): number {
+  const share = Math.min(1, Math.max(0, elapsedSeconds) / GUILD_LORD_LOSS_CAP_FULL_SECONDS);
+  return GUILD_LORD_LOSS_CAP_START + (GUILD_LORD_LOSS_CAP_FULL - GUILD_LORD_LOSS_CAP_START) * share;
+}
+
 /** Rooted at its post: shoots what its bow reaches, chases nothing. */
 function guildLordBehaviour(post: Vec2): Behaviour {
   return {

@@ -4,6 +4,7 @@ import type { DamageType } from "../equipment/types.js";
 import { FAST_CASTING_ATTRIBUTE, fastCastingMultiplier } from "../primary-attributes.js";
 import type { ResourceRules } from "../ruleset.js";
 import type { CombatEvent } from "./effects.js";
+import { recordDegeneration } from "./loss-guard.js";
 import {
   aggregateModifiers,
   clampPips,
@@ -33,7 +34,8 @@ import { isInvulnerable, isSpell, type Combatant, type Skill } from "./types.js"
  * (#921, "Fall Back!"), and one `nearSpirit`'s (#1064, the simulation
  * knows where spirits stand), is a heal, not pips: outside the clamp,
  * scaled by `healingMultiplier`, and added to the same change, so one
- * tick emits one damage or heal event.
+ * tick emits one damage or heal event. A Guild Lord's loss is recorded
+ * against its per-second cap (#1223), to be given back past it.
  */
 export function advanceStatuses(
   combatant: Combatant,
@@ -64,6 +66,7 @@ export function advanceStatuses(
     combatant.health = next;
 
     if (applied < 0) {
+      recordDegeneration(combatant, -applied);
       events.push({ kind: "damage", targetId: combatant.id, amount: -applied, critical: false });
     } else if (applied > 0) {
       events.push({ kind: "heal", targetId: combatant.id, amount: applied });

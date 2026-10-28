@@ -11,6 +11,7 @@ import { beginRecharge, resolvedBar, skillIdOfKey } from "./cast-state.js";
 import { getSkill } from "./catalog.js";
 import { CHAIN_MARK_SECONDS } from "./chain.js";
 import { hitLocationOf, mitigate, skillDamage } from "./damage.js";
+import { guardedDamage, guardedLoss } from "./loss-guard.js";
 import { effectiveMaxEnergy } from "./overcast.js";
 import { resolveMagnitude } from "./scaling.js";
 import {
@@ -222,7 +223,8 @@ export type CombatEvent =
  * recorded too, for Vengeful Weapon (#1022); with no dealer, as a
  * sacrifice, it is not. A bond on the target (#1108) takes its share of
  * a physical hit, after Reversal of Fortune. An invulnerable target
- * (#1208) takes none of it, and says so (#1233).
+ * (#1208) takes none of it, and says so (#1233). A Guild Lord's guard
+ * (#1223) cuts and caps what is left, to 0 once its second's cap is spent.
  */
 export function applyDamage(
   target: Combatant,
@@ -245,7 +247,7 @@ export function applyDamage(
   // Symbiotic Bond (#1108): its share of a physical hit goes to its
   // source when the tick drains; the bearer takes the rest.
   const kept = isPhysicalDamage(type) ? target.statuses.redirect(amount) : amount;
-  const applied = Math.min(kept, target.health);
+  const applied = Math.min(guardedDamage(target, kept), target.health);
   target.health -= applied;
   events.push({ kind: "damage", targetId: target.id, amount: applied, critical });
   if (isPhysicalDamage(type)) {
@@ -345,7 +347,8 @@ function applyHeal(target: Combatant, amount: number, events: CombatEvent[]): vo
  * maximum. Not damage, so no armor and nothing that reacts to damage; not
  * a heal either, so the caster's healing modifiers do not touch it. It
  * can kill, with one `death`, as `applyDamage` does. Nothing is stolen
- * from an invulnerable target (#1208), which says so (#1233).
+ * from an invulnerable target (#1208), which says so (#1233). A Guild
+ * Lord's per-second cap (#1223) holds it too.
  */
 function stealLife(
   caster: Combatant,
@@ -364,10 +367,14 @@ function stealLife(
   if (reverse(target, stolen, events)) {
     return;
   }
-  target.health -= stolen;
-  events.push({ kind: "life-stolen", targetId: target.id, amount: stolen });
+  const taken = guardedLoss(target, stolen);
+  if (taken <= 0) {
+    return;
+  }
+  target.health -= taken;
+  events.push({ kind: "life-stolen", targetId: target.id, amount: taken });
   recordFromFoe(target, caster);
-  gainStolenHealth(caster, stolen, events);
+  gainStolenHealth(caster, taken, events);
   if (target.health <= 0) {
     target.dead = true;
     events.push({ kind: "death", targetId: target.id });

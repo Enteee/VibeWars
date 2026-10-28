@@ -2009,6 +2009,7 @@
           "optional": false,
           "type": {
             "union": [
+              { "literal": "guard" },
               { "literal": "guild-lord" },
               { "literal": "minion" },
               { "literal": "pet" },
@@ -2025,6 +2026,7 @@
               { "literal": "beast" },
               { "literal": "bone-horror" },
               { "literal": "bone-minion" },
+              { "literal": "guard" },
               { "literal": "guild-lord" },
               { "literal": "priest" },
               { "literal": "spirit" }
@@ -2334,6 +2336,7 @@
                     "optional": false,
                     "type": {
                       "union": [
+                        { "literal": "guard" },
                         { "literal": "guild-lord" },
                         { "literal": "minion" },
                         { "literal": "pet" },
@@ -2350,6 +2353,7 @@
                         { "literal": "beast" },
                         { "literal": "bone-horror" },
                         { "literal": "bone-minion" },
+                        { "literal": "guard" },
                         { "literal": "guild-lord" },
                         { "literal": "priest" },
                         { "literal": "spirit" }
@@ -2585,6 +2589,7 @@
                             "optional": false,
                             "type": {
                               "union": [
+                                { "literal": "guard" },
                                 { "literal": "guild-lord" },
                                 { "literal": "minion" },
                                 { "literal": "pet" },
@@ -2601,6 +2606,7 @@
                                 { "literal": "beast" },
                                 { "literal": "bone-horror" },
                                 { "literal": "bone-minion" },
+                                { "literal": "guard" },
                                 { "literal": "guild-lord" },
                                 { "literal": "priest" },
                                 { "literal": "spirit" }
@@ -2832,6 +2838,7 @@
                             "optional": false,
                             "type": {
                               "union": [
+                                { "literal": "guard" },
                                 { "literal": "guild-lord" },
                                 { "literal": "minion" },
                                 { "literal": "pet" },
@@ -2848,6 +2855,7 @@
                                 { "literal": "beast" },
                                 { "literal": "bone-horror" },
                                 { "literal": "bone-minion" },
+                                { "literal": "guard" },
                                 { "literal": "guild-lord" },
                                 { "literal": "priest" },
                                 { "literal": "spirit" }
