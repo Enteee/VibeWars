@@ -2,7 +2,7 @@ import { spawnSync } from "node:child_process";
 
 import { defineConfig, devices } from "@playwright/test";
 
-import { E2E_BASE } from "./e2e/helpers/base.js";
+import { E2E_BASE, E2E_BUILD } from "./e2e/helpers/base.js";
 
 /**
  * Browser tests (brief §31 "Browser tests").
@@ -80,7 +80,9 @@ export default defineConfig({
       `pnpm --filter @vibewars/web exec vite preview --outDir dist-static ` +
       `--host 127.0.0.1 --port ${String(PORT)} --strictPort`,
     url: BASE_URL,
-    env: { VIBEWARS_BASE: BASE, VITE_VIBEWARS_TRANSPORT: "broadcast" },
+    // Its own build id, served in its own `build.json`, so no spec but
+    // the one that swaps it sees a newer build (#1268).
+    env: { VIBEWARS_BASE: BASE, VITE_VIBEWARS_TRANSPORT: "broadcast", VIBEWARS_BUILD: E2E_BUILD },
     reuseExistingServer: false,
     // It builds the client first, which takes far longer than a start.
     timeout: 180_000,

@@ -327,9 +327,12 @@ the whole game: online play is peer to peer from the page itself.
   `enteee.github.io` is one origin. `storage/namespace.ts` keeps the
   release and `next` from reading each other's saves _by accident_. It does
   nothing against another site on that origin, which can read and write
-  them. Saves are builds and a display name, so we accept this. Nothing
-  secret may ever be stored in the browser on Pages. A TURN relay
-  (#972) is kept in memory for the visit there, never in storage.
+  them. Saves are builds, a display name and a TURN relay (#972, #1269),
+  and we accept this: every site on that origin is published by the
+  operator alone, so only code the operator deploys can read them. A relay
+  credential is low value, a per-friend password its owner rotates with
+  `turn-link` or revokes with `turn-user remove`. Nothing more secret than
+  that may ever be stored in the browser on Pages.
 - **A manual run cannot publish a side branch.** `workflow_dispatch`
   builds whatever `--ref` it is given, so `deploy` is held back by the
   environments' deployment-branch rules instead: `test` accepts `main`,

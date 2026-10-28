@@ -63,6 +63,7 @@ import { renderableFlags, renderableStand } from "./render/flag-objects.js";
 import { compassReach, createCompass } from "./ui/compass.js";
 import { noWebGlNotice } from "./ui/arena-notice.js";
 import { attachFullscreenButton, fullscreenTarget } from "./ui/fullscreen.js";
+import { closeHelpOverlay, isHelpOverlayOpen, openHelpOverlay } from "./ui/help-screen.js";
 import { attachJukeboxPopover } from "./ui/jukebox.js";
 import {
   closeOptionsOverlay,
@@ -377,6 +378,16 @@ export async function startMatchView(
   };
   hud.options.setAttribute("aria-expanded", "false");
   hud.options.addEventListener("click", openOptions);
+  // Help over the match too (#1257), the same way.
+  const openHelp = (): void => {
+    openHelpOverlay(parent, () => {
+      hud.help.setAttribute("aria-expanded", "false");
+      hud.help.focus();
+    });
+    hud.help.setAttribute("aria-expanded", "true");
+  };
+  hud.help.setAttribute("aria-expanded", "false");
+  hud.help.addEventListener("click", openHelp);
   const detachFullscreen = attachFullscreenButton(hud.fullscreen, fullscreenTarget());
 
   const detachMovement = attachKeyboardMoveInput(window, keymap, (direction) => {
@@ -398,9 +409,9 @@ export async function startMatchView(
       // Some browsers focus their menu bar on F10.
       event.preventDefault();
       event.stopPropagation();
-      // Not under Options (#454): its keys are its own, so no question
-      // opens beneath it.
-      if (!event.repeat && !isOptionsOverlayOpen()) {
+      // Not under Options (#454) or Help (#1257): their keys are their
+      // own, so no question opens beneath them.
+      if (!event.repeat && !isOptionsOverlayOpen() && !isHelpOverlayOpen()) {
         if (leave.isOpen()) {
           leave.close();
         } else {
@@ -427,11 +438,15 @@ export async function startMatchView(
       }
       return;
     }
-    // Options over the match (#454): keys are its, as for the leave
+    // Options or Help over the match (#454, #1257): keys are theirs, as for the leave
     // question. Its Esc closes it, on the screen bar's own listener, which
     // runs first, so an Esc it used is not also Cancel Action. Movement
     // keys still move.
-    if (isOptionsOverlayOpen() || (event.key === "Escape" && event.defaultPrevented)) {
+    if (
+      isOptionsOverlayOpen() ||
+      isHelpOverlayOpen() ||
+      (event.key === "Escape" && event.defaultPrevented)
+    ) {
       return;
     }
     if (event.key === "Escape") {
@@ -722,6 +737,7 @@ export async function startMatchView(
       offMute();
       jukebox.dispose();
       closeOptionsOverlay();
+      closeHelpOverlay();
       detachFullscreen();
       hud.controls.remove();
       viewport?.destroy();

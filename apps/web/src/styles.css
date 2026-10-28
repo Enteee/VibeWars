@@ -1702,6 +1702,49 @@ body {
   box-shadow: none;
 }
 
+/* A newer deployed build (#1268): over every screen and the match, at the
+   top, where a toast never is. */
+.build-banner {
+  position: fixed;
+  z-index: 70;
+  left: 50%;
+  top: 0.6rem;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  width: max-content;
+  max-width: min(40rem, calc(100vw - 2rem));
+  padding: 0.6rem 0.8rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  box-shadow: 0 10px 28px rgb(0 0 0 / 50%);
+}
+
+.build-banner[hidden] {
+  display: none;
+}
+
+.build-banner button {
+  flex: none;
+  white-space: nowrap;
+  padding: 0.4rem 0.8rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.build-banner button.primary {
+  border-color: var(--accent);
+}
+
+.build-banner button:hover {
+  border-color: var(--accent);
+}
+
 /* --- options (#423) ----------------------------------------------------- */
 
 /* Wider than other screens: the section list sits beside the Controls
@@ -1751,6 +1794,71 @@ body {
     flex-direction: row;
     flex-wrap: wrap;
   }
+}
+
+/* --- help (#1257) ------------------------------------------------------- */
+
+/* As wide as Options: the page list beside a page of prose. */
+.screen.help-screen {
+  width: min(52rem, 100%);
+  padding: 1rem;
+  background: var(--bg);
+  border: 1px solid var(--line);
+}
+
+.help-breadcrumb {
+  font-size: 1.2rem;
+}
+
+.help-crumb-separator {
+  color: var(--ink-dim);
+}
+
+.help-page {
+  min-width: 0;
+  overflow-x: auto;
+  line-height: 1.5;
+}
+
+.help-page > :first-child {
+  margin-top: 0;
+}
+
+.help-page h1,
+.help-page h2,
+.help-page h3 {
+  color: var(--accent);
+  letter-spacing: 0.05em;
+}
+
+.help-page a {
+  color: var(--accent);
+}
+
+.help-page code {
+  padding: 0 0.25em;
+  background: rgb(255 255 255 / 6%);
+}
+
+.help-page pre {
+  padding: 0.6rem;
+  overflow-x: auto;
+  background: rgb(255 255 255 / 6%);
+}
+
+.help-page table {
+  border-collapse: collapse;
+}
+
+.help-page th,
+.help-page td {
+  padding: 0.3rem 0.6rem;
+  text-align: left;
+  border: 1px solid var(--line);
+}
+
+.help-page img {
+  max-width: 100%;
 }
 
 /* --- keys (#309) -------------------------------------------------------- */

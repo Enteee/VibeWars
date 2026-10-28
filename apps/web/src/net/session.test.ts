@@ -15,7 +15,22 @@ import {
   lobbyClosedNotice,
   lobbyRefusalNotice,
   loopbackHint,
+  matchFailureNotice,
 } from "./session.js";
+import { NEW_VERSION_NOTICE } from "../build-check.js";
+
+describe("the notice for a match that would not start (#1268)", () => {
+  it("says a new version is out when the match chunk is gone, not that the connection was lost", () => {
+    const gone = new TypeError(
+      "error loading dynamically imported module: https://enteee.github.io/VibeWars/next/assets/arena-scene-BD7V1erG.js",
+    );
+    expect(matchFailureNotice(gone)).toBe(NEW_VERSION_NOTICE);
+  });
+
+  it("leaves any other failure to the caller", () => {
+    expect(matchFailureNotice(new Error("peer went away"))).toBeUndefined();
+  });
+});
 
 describe("the notice for a closed lobby (#515)", () => {
   it("says the host closed it when the host said so", () => {
