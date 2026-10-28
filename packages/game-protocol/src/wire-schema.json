@@ -111,6 +111,7 @@
     "weapon-of-quickening",
     "weapon-of-remedy",
     "weapon-of-warding",
+    "well-of-suffering",
     "winnowing"
   ],
   "constants": {
@@ -460,6 +461,7 @@
                   { "literal": "weapon-of-quickening" },
                   { "literal": "weapon-of-remedy" },
                   { "literal": "weapon-of-warding" },
+                  { "literal": "well-of-suffering" },
                   { "literal": "winnowing" }
                 ]
               }
@@ -567,6 +569,7 @@
                   { "literal": "weapon-of-quickening" },
                   { "literal": "weapon-of-remedy" },
                   { "literal": "weapon-of-warding" },
+                  { "literal": "well-of-suffering" },
                   { "literal": "winnowing" }
                 ]
               }
@@ -671,6 +674,7 @@
                   { "literal": "weapon-of-quickening" },
                   { "literal": "weapon-of-remedy" },
                   { "literal": "weapon-of-warding" },
+                  { "literal": "well-of-suffering" },
                   { "literal": "winnowing" }
                 ]
               }
@@ -772,6 +776,7 @@
                   { "literal": "weapon-of-quickening" },
                   { "literal": "weapon-of-remedy" },
                   { "literal": "weapon-of-warding" },
+                  { "literal": "well-of-suffering" },
                   { "literal": "winnowing" }
                 ]
               }
@@ -949,6 +954,7 @@
                   { "literal": "weapon-of-quickening" },
                   { "literal": "weapon-of-remedy" },
                   { "literal": "weapon-of-warding" },
+                  { "literal": "well-of-suffering" },
                   { "literal": "winnowing" }
                 ]
               }
@@ -1041,6 +1047,7 @@
                   { "literal": "weapon-of-quickening" },
                   { "literal": "weapon-of-remedy" },
                   { "literal": "weapon-of-warding" },
+                  { "literal": "well-of-suffering" },
                   { "literal": "winnowing" }
                 ]
               }

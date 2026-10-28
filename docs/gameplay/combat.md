@@ -591,10 +591,11 @@ maximum, not the raw one.
 A skill's type is its badge on the slot, in the library and in the
 Training Ground, and is named first in its tooltip ("Signet.", "Hex
 Spell."). Some types play by rules of their own (#465). Spells,
-enchantments, hexes, weapon spells and ward spells are **spells**; attacks, signets,
+enchantments, hexes, weapon spells, ward spells and well spells are **spells**; attacks, signets,
 shouts, chants, stances, rituals and plain skills are not, and every rule that "affects spells" (dazed
 and Fast Casting, so far) leaves them alone. Rituals, nature and binding,
-plant spirits (see Creatures); ward spells leave wards (see Wards).
+plant spirits (see Creatures); ward spells leave wards and well spells
+wells (see Wards and wells).
 
 **Elite skills** wear a doubled gold frame wherever a skill is drawn,
 and their tooltip says "Elite" before the type (#459). A bar holds at most
@@ -1274,7 +1275,7 @@ takes the 4 too: it is on the one hit, not on the attack.
 energy, 3 s, 45 s recharge) plants one of 210 Health and armor 51 for
 39 s: your side in its range gains +3 Health regeneration.
 
-## Wards
+## Wards and wells
 
 A **ward** (#1087) is a circle left on the ground where its caster
 stands as the ward spell lands. It is not a body: nothing can target,
@@ -1295,6 +1296,20 @@ more ends the oldest.
 energy, 1 s, 30 s recharge) leaves a ward of radius 109 for 5...17
 seconds: your side inside it has a 50% chance to block melee attacks,
 75% on top of a 50% stance. Arrows and spells are not blocked.
+
+A **well** (#1104) is a ward's kin left on a corpse, not on its caster:
+the well spell exploits the nearest fresh corpse as it lands, as Soul
+Feast does (see Corpses), and the well lies where that body did, for its
+whole time, whether the body later stands up, respawns or not. With no
+corpse in reach the cast is refused and nothing is paid. A well acts on
+foes: your side standing in it gets nothing. Otherwise it is a ward:
+drawn the same, one status from two of a skill, at most 32 on the
+ground counting wards.
+
+**Well of Suffering** (Necromancer, Death Magic, well spell, 10 energy,
+1 s, 10 s recharge) leaves a well of radius 109 on the nearest corpse
+within cast range for 10...26 seconds: foes inside it suffer −5 Health
+degeneration.
 
 ## Death and scoring
 

@@ -109,6 +109,7 @@ exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
   "necromancer.spiteful-spirit": "hex",
   "necromancer.vampiric-gaze": "",
   "necromancer.weaken-armor": "condition",
+  "necromancer.well-of-suffering": "",
   "paragon.anthem-of-flame": "condition",
   "paragon.barbed-spear": "condition",
   "paragon.cruel-spear": "condition",

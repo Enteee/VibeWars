@@ -98,6 +98,7 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   winnowing: icon("winnowing"),
   recuperation: icon("recuperation"),
   "ward-against-melee": icon("ward-against-melee"),
+  "well-of-suffering": icon("well-of-suffering"),
 };
 
 /** Drawn size of one icon, in world pixels. */

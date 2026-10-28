@@ -65,12 +65,27 @@ describe("skill catalog integrity", () => {
     }
   });
 
-  it("leaves a ground effect from a ward, and only from a ward (#1087)", () => {
-    const wards = IMPLEMENTED_SKILLS.filter((skill) => skill.type === "ward");
-    expect(wards.length).toBeGreaterThan(0);
+  it("leaves a ground effect from a ward or a well, and only from those (#1087, #1104)", () => {
+    for (const type of ["ward", "well"]) {
+      expect(
+        IMPLEMENTED_SKILLS.some((skill) => skill.type === type),
+        type,
+      ).toBe(true);
+    }
     for (const skill of IMPLEMENTED_SKILLS) {
       const grounds = skill.effects.filter((effect) => effect.kind === "create-ground-effect");
-      expect(grounds.length > 0, skill.id).toBe(skill.type === "ward");
+      expect(grounds.length > 0, skill.id).toBe(skill.type === "ward" || skill.type === "well");
+    }
+  });
+
+  it("anchors a ground effect on a corpse exactly when its skill exploits one (#1104)", () => {
+    for (const skill of IMPLEMENTED_SKILLS) {
+      for (const effect of skill.effects) {
+        if (effect.kind === "create-ground-effect") {
+          expect(effect.anchor === "corpse", skill.id).toBe(skill.corpse !== undefined);
+          expect(effect.anchor === "corpse", skill.id).toBe(skill.type === "well");
+        }
+      }
     }
   });
 

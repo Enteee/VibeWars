@@ -205,4 +205,6 @@ export const SKILL_ICONS = {
   "ritualist.flesh-of-my-flesh": { glyph: "resurrect", modifier: "half" },
   // Health taken from a corpse: the heal glyph with the corpse mark (#1075).
   "necromancer.soul-feast": { glyph: "heal", modifier: "corpse" },
+  // A placeholder until the asset-designer's (#1104).
+  "necromancer.well-of-suffering": { glyph: "germ", modifier: "corpse" },
 };

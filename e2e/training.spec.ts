@@ -1290,3 +1290,37 @@ test("(40) an adrenaline skill's slot fills from dark to lit as it charges (#826
   await expect(slot).not.toHaveClass(/is-unaffordable/);
   await expect(gauge).toBeHidden();
 });
+
+test("(41) a well needs a corpse, then lands on one (#1104)", async ({ page }) => {
+  await page.setViewportSize(WIDE);
+  await page.goto("./");
+  await page.getByRole("button", { name: "new character" }).click();
+  await chooseProfession(page, "primary", "necromancer");
+  await page
+    .locator(".skill-box", { hasText: "Well of Suffering" })
+    .locator(".skill-box-equip")
+    .click();
+  await page.locator("select.training-scenario").selectOption("healing-throughput");
+  await expect(page.locator(".training-log")).toContainText("── Healing throughput ──");
+  await takeControl(page);
+
+  // Nobody has died yet: refused, and nothing paid.
+  const slot = page.locator(FILLED_SLOTS).first();
+  await page.keyboard.press(skillKey(0));
+  await expect(page.locator(".training-message")).toHaveText("No corpse in range.");
+  await expect(slot).not.toHaveClass(/\bis-recharging\b/);
+
+  // The burners kill the monk ally in a few Fireballs, and its body lies
+  // 2 s before it is back: keep pressing until one press is not refused.
+  // Game time runs slower than wall time under load (#327).
+  await expect
+    .poll(
+      async () => {
+        await page.keyboard.press(skillKey(0));
+        return slot.evaluate((node) => node.classList.contains("is-recharging"));
+      },
+      { intervals: [100], timeout: 30_000 },
+    )
+    .toBe(true);
+  await expect(slot).toHaveAttribute("aria-label", /^Well of Suffering, recharging/);
+});

@@ -19,6 +19,7 @@ import type {
   Aura,
   ChainRole,
   ChainStep,
+  CreateGroundEffect,
   EffectCondition,
   HealEffect,
   Magnitude,
@@ -670,6 +671,11 @@ const AURA_WHO: Record<Aura["affects"], string> = {
   foes: "Non-spirit foes",
 };
 
+const GROUND_ANCHOR_TEXT: Record<CreateGroundEffect["anchor"], string> = {
+  caster: "a ward at your location",
+  corpse: "a well at its location",
+};
+
 /** A share of health as GW1 words it (#936): "half", or "25%". */
 function share(fraction: number): string {
   return fraction === 0.5 ? "half" : `${String(Math.round(fraction * 100))}% of`;
@@ -894,10 +900,12 @@ function describeEffect(
       };
     }
     case "create-ground-effect": {
-      // "Creates a ward at your location for 17 seconds" (#1087).
+      // "Creates a ward at your location for 17 seconds" (#1087), or a well
+      // "at its location", the corpse's (#1104).
       const magnitude = describeMagnitude(effect.durationSeconds, ranks);
+      const where = GROUND_ANCHOR_TEXT[effect.anchor];
       return {
-        text: `Creates a ward at your location for ${String(magnitude.current)} seconds`,
+        text: `Creates ${where} for ${String(magnitude.current)} seconds`,
         magnitude,
       };
     }
@@ -1114,6 +1122,7 @@ const TYPE_TEXT: Record<SkillType, string> = {
   "nature-ritual": "Nature Ritual.",
   "binding-ritual": "Binding Ritual.",
   ward: "Ward Spell.",
+  well: "Well Spell.",
   skill: "Skill.",
 };
 
