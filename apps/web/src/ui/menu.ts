@@ -5,12 +5,8 @@ import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 import type { StoredCharacter, StoredTeam } from "../storage/schema.js";
 import { validateBuild } from "../storage/build-validation.js";
 import { looksLikeTeam } from "../storage/team-transfer.js";
-import {
-  createCharacterDot,
-  equippedCount,
-  miniSkillBar,
-  professionLabel,
-} from "./character-preview.js";
+import { createCharacterFigure } from "./character-figure.js";
+import { equippedCount, miniSkillBar, professionLabel } from "./character-preview.js";
 import { button, emptyState, h, listenForPaste, screenBar, selectableRow } from "./kit.js";
 
 /** What every peer in a lobby learns about you (#541): WebRTC connects you directly. */
@@ -133,12 +129,20 @@ export function savePlayerName(name: string): void {
   }
 }
 
-/** "Elementalist / Monk · 5/8 skills", and says so when the build is illegal. */
+/** "Elementalist / Monk · 5/8 skills". */
 export function rosterSubtitle(character: StoredCharacter): string {
   const professions = professionLabel(character.primaryProfession, character.secondaryProfession);
   const skills = `${String(equippedCount(character))}/${String(character.skillBar.length)} skills`;
-  const invalid = validateBuild(character).length > 0 ? " · invalid build" : "";
-  return `${professions} · ${skills}${invalid}`;
+  return `${professions} · ${skills}`;
+}
+
+/**
+ * Whether `character` can be chosen to play (#1290): an empty bar can, an
+ * invalid build cannot. The editor saves nothing invalid, so only a rule
+ * changed since the save makes one; it stays, to be edited.
+ */
+export function isPlayable(character: StoredCharacter): boolean {
+  return validateBuild(character).length === 0;
 }
 
 /**
@@ -195,7 +199,8 @@ export function renderMenu(
   }
 
   const active = loadActiveCharacterId();
-  const activeExists = characters.some((c) => c.id === active);
+  // An invalid active character is no choice at all (#1290).
+  const activeExists = characters.some((c) => c.id === active && isPlayable(c));
   const starter = loadStarterCharacterId();
 
   const list = h("div", "roster-list");
@@ -227,20 +232,28 @@ export function renderMenu(
               callbacks.onEditCharacter(character.id);
             }),
           ];
-    list.appendChild(
-      selectableRow({
-        dot: createCharacterDot(character),
-        name: character.name,
-        subtitle: rosterSubtitle(character),
-        miniBar: miniSkillBar(character),
-        selected: character.id === active,
-        // Beside the row, not in it: editing never also chooses.
-        actions,
-        onSelect: () => {
+    const playable = isPlayable(character);
+    const row = selectableRow({
+      dot: createCharacterFigure(character),
+      name: character.name,
+      subtitle: rosterSubtitle(character),
+      miniBar: miniSkillBar(character),
+      selected: character.id === active && playable,
+      // Beside the row, not in it: editing never also chooses.
+      actions,
+      onSelect: () => {
+        if (playable) {
           choose(character.id);
-        },
-      }),
-    );
+        }
+      },
+    });
+    if (!playable) {
+      // Shown plainly, never chosen; Edit still fixes it (#1290).
+      row.classList.add("is-invalid");
+      row.querySelector(".selectable-row-choose")?.setAttribute("aria-disabled", "true");
+      row.querySelector(".selectable-row-name")?.after(h("span", "roster-invalid-tag", "Invalid"));
+    }
+    list.appendChild(row);
   }
   roster.appendChild(list);
   roster.appendChild(
@@ -396,12 +409,12 @@ export function renderTeamList(
 
   const list = h("div", "entity-list");
   for (const team of teams) {
-    // A member whose character is gone has no dot; the editor shows it.
+    // A member whose character is gone has no figure; the editor shows it.
     const dots = h("span", "team-list-dots");
     for (const member of team.members) {
       const character = characters.find((c) => c.id === member.characterId);
       if (character !== undefined) {
-        dots.appendChild(createCharacterDot(character));
+        dots.appendChild(createCharacterFigure(character));
       }
     }
     list.appendChild(

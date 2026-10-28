@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { parseSettings, turnserverConf } from "./settings.mjs";
+import { parseSettings, turnNft, turnserverConf } from "./settings.mjs";
 
 /** @type {import("./settings.mjs").TurnSettings} */
 const BASE = {
@@ -43,7 +43,6 @@ describe("turnserverConf", () => {
       "192.168.0.0-192.168.255.255",
       "198.18.0.0-198.19.255.255",
       "240.0.0.0-255.255.255.255",
-      "::",
       "::1",
       "::ffff:0.0.0.0-::ffff:255.255.255.255",
       "64:ff9b::-64:ff9b::ffff:ffff",
@@ -54,7 +53,9 @@ describe("turnserverConf", () => {
     }
   });
 
-  it("denies the host's own public, private, IPv6 and listening addresses as peers", () => {
+  // #1266: coturn reads `::` as every address, and denying the host's own
+  // address breaks relay to relay on one server. turnNft guards those instead.
+  it("denies neither the unspecified address nor the host's own addresses", () => {
     const own = lines(
       turnserverConf({
         ...BASE,
@@ -63,9 +64,25 @@ describe("turnserverConf", () => {
         listeningIps: ["203.0.113.5", "198.51.100.9"],
       }),
     );
-    for (const ip of ["203.0.113.5", "10.0.0.5", "2001:db8::5", "198.51.100.9"]) {
-      expect(own.filter((l) => l === `denied-peer-ip=${ip}`)).toHaveLength(1);
+    const denied = own.filter((l) => l.startsWith("denied-peer-ip=")).map((l) => l.slice(15));
+    for (const ip of ["::", "0.0.0.0", "203.0.113.5", "10.0.0.5", "2001:db8::5", "198.51.100.9"]) {
+      expect(denied).not.toContain(ip);
     }
+    // coturn checks a peer at the public address as the private half, in 10/8.
+    expect(own.filter((l) => l.startsWith("allowed-peer-ip="))).toEqual([
+      "allowed-peer-ip=203.0.113.5",
+      "allowed-peer-ip=10.0.0.5",
+      "allowed-peer-ip=2001:db8::5",
+      "allowed-peer-ip=198.51.100.9",
+    ]);
+  });
+
+  it("never allows loopback, even as a listening address", () => {
+    const conf = lines(turnserverConf({ ...BASE, listeningIps: ["127.0.0.1", "::1"] }));
+    expect(conf.filter((l) => l.startsWith("allowed-peer-ip="))).toEqual([
+      "allowed-peer-ip=203.0.113.7",
+      "allowed-peer-ip=10.0.0.7",
+    ]);
   });
 
   it("uses long-term credentials from the userdb, UDP relays only, and no CLI", () => {
@@ -115,6 +132,35 @@ describe("turnserverConf", () => {
   });
 });
 
+describe("turnNft", () => {
+  it("drops relay traffic to every own address outside the relay range, per family", () => {
+    const nft = lines(
+      turnNft({
+        ...BASE,
+        externalIp: "203.0.113.5/10.0.0.5",
+        externalIp6: "2001:db8::5",
+        listeningIps: ["203.0.113.5", "198.51.100.9", "0.0.0.0", "::"],
+      }),
+    );
+    expect(nft).toContain(
+      "    ip daddr { 203.0.113.5, 10.0.0.5, 198.51.100.9 } udp sport 49160-49200 udp dport != 49160-49200 drop",
+    );
+    expect(nft).toContain(
+      "    ip6 daddr { 2001:db8::5 } udp sport 49160-49200 udp dport != 49160-49200 drop",
+    );
+    expect(nft).toContain("table inet vibewars_turn {");
+    expect(nft).toContain("    type filter hook output priority 0; policy accept;");
+  });
+
+  it("writes no line for a family without an own address", () => {
+    const nft = lines(turnNft(BASE));
+    expect(nft.filter((l) => l.startsWith("    ip daddr"))).toEqual([
+      "    ip daddr { 203.0.113.7, 10.0.0.7 } udp sport 49160-49200 udp dport != 49160-49200 drop",
+    ]);
+    expect(nft.some((l) => l.startsWith("    ip6 "))).toBe(false);
+  });
+});
+
 describe("parseSettings", () => {
   it("accepts what nix/turn.nix writes", () => {
     expect(parseSettings(JSON.parse(JSON.stringify(BASE)))).toEqual(BASE);
@@ -128,6 +174,13 @@ describe("parseSettings", () => {
     expect(() => parseSettings({ ...BASE, relayPorts: { min: 50000, max: 49000 } })).toThrow(
       /relayPorts/,
     );
+  });
+
+  it("rejects an own address that is not an IP", () => {
+    expect(() => parseSettings({ ...BASE, externalIp: "203.0.113.7/router.lan" })).toThrow(
+      /router.lan is not an IP/,
+    );
+    expect(() => parseSettings({ ...BASE, listeningIps: ["eth0"] })).toThrow(/eth0/);
   });
 
   it("rejects a missing realm", () => {

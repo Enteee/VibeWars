@@ -652,7 +652,10 @@ editor, placing a second elite takes the first one's place on the bar
 and says so ("Broad Head Arrow replaced Barrage: only one elite skill per
 bar."); the library's Elite toggle lists only elites. A bar with two
 elites, from an import or storage, cannot be saved, and a match plays a
-starter build instead (#852).
+starter build instead (#852). On the main menu such a character is
+striped red and tagged Invalid, and cannot be chosen until it is fixed
+(#1290). An empty bar is a legal build: it plays as itself, auto-attack
+only.
 
 **Stances** are yours alone, and only one is up at a time. Using a
 stance ends the one you are in, the same one included, which restarts
@@ -1373,7 +1376,11 @@ brackets.
 
 - **Body blocking**: living players are solid. A front line can deny
   ground; a caster can be boxed in. Corpses are _not_ solid — a dead
-  player should never trap the living.
+  player should never trap the living. A spirit is no body to its own team
+  (#1278), as in GW1: you and your allies walk through your spirits,
+  while foes are blocked by them. A minion or pet of yours that you stand
+  in lets you step off it in any direction without a shove; once apart,
+  it blocks you again.
 - **Walls** resolve after players, so someone squeezed between a blocker
   and a wall ends up outside the wall rather than inside it.
 - **Line of sight** is a geometric query against wall segments, shared
@@ -1447,6 +1454,23 @@ for 17 and interrupts whatever its target is activating, any skill.
 **Disenchantment** (25 energy, 3 s) 182 Health, 35 s, hits for 17 and
 strips the target's most recent enchantment. A missed or blocked shot
 does none of it.
+
+**Protective spirits** (#1265, Ritualist, Communing, binding rituals,
+45 s recharge) attack nothing. Each projects one status over spirit
+range and pays for every outcome it changes with its own Health: plain
+health loss, no armor, which can kill it; dead, it pays nothing and its
+aura is gone the next step. At Communing 12, armor 51:
+**Shelter** (25 energy, 5 s) 182 Health, 54 s: no single attack, a
+weapon blow or an attack skill's with its bonus, takes more than 10% of
+an ally's max Health, after everything else; spells, life steal and
+degeneration are not capped. 51 each time it takes something off.
+**Union** (15 energy, 3 s) 182 Health, 54 s: −15 from every hit and
+every life steal on an ally, and 15 each time, a hit it zeroes too.
+**Displacement** (15 energy, 3 s) 214 Health, 54 s: a 75% chance to
+block, combined with the ally's other blocks as any are; 60 for each
+block that was its own. **Earthbind** (15 energy, 3 s) 214 Health,
+39 s: a foe in range knocked down stays down at least 3 s; 30 per
+knockdown, one already as long included, none for one prevented.
 
 **Minions** (#467) are raised from a fresh corpse, of either team, the
 nearest within cast range, and rise where it lay. Their Health, armor

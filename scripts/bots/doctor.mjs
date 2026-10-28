@@ -16,6 +16,7 @@ import {
   modeOk,
   paths,
   pushIdentity,
+  telegramGroupIdentity,
   telegramIdentity,
 } from "./creds.mjs";
 
@@ -90,6 +91,7 @@ export async function collect(root) {
     github: githubIdentity(p.gh),
     push: pushIdentity(p.sshKey),
     telegram: await telegramIdentity(p.telegram),
+    group: await telegramGroupIdentity(p.telegram, p.telegramChat),
   };
   /** @type {Row[]} */
   const rows = [
@@ -115,6 +117,13 @@ export async function collect(root) {
       name: "telegram",
       identity: company.telegram,
       stored: p.telegram,
+      operators: null,
+      applicable: false,
+    },
+    {
+      name: "telegram group",
+      identity: company.group,
+      stored: p.telegramChat,
       operators: null,
       applicable: false,
     },

@@ -11,6 +11,7 @@ import type { CastState, SlotSkill } from "./cast-state.js";
 import type { TargetCandidate } from "./targeting.js";
 import type { AttackState } from "./weapon-attack.js";
 import type { StatusCategory, StatusId, StatusSet } from "./status.js";
+import type { HealthLossGuard } from "./loss-guard.js";
 
 /**
  * The composable skill/effect system (brief §6).
@@ -1179,6 +1180,11 @@ export interface Combatant {
    * what guarantees a rune cannot be applied twice.
    */
   equipment: ResolvedEquipment;
+  /**
+   * A Guild Lord's Bodyguard cut and per-second cap on the Health it
+   * loses (#1223); `undefined` for anyone else. The simulation sets it.
+   */
+  lossGuard: HealthLossGuard | undefined;
 }
 
 export interface SkillContext {

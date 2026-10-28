@@ -124,6 +124,12 @@ test("#853: the first start rolls a starter character, chosen; Reroll replaces i
   const name = row.locator(".selectable-row-name");
   await expect(name).toHaveText(ROLLED_NAME);
   const first = await name.innerText();
+  // Drawn as a match draws it (#1250): the figure, not a lettered dot.
+  const figure = row.locator("canvas.character-figure");
+  await expect(figure).toBeVisible();
+  await expect(row.locator(".character-dot")).toHaveCount(0);
+  // With its primary profession's glyph inside the disc, as in a match (#1037).
+  await expect(figure).toHaveAttribute("data-glyph", /^[a-z]+$/);
 
   // Rolled once: a reload keeps it, and rolls nothing new.
   await page.reload();
@@ -157,6 +163,20 @@ test("#853: the first start rolls a starter character, chosen; Reroll replaces i
   await expect(pyro.locator(".roster-clone, .roster-reroll")).toHaveCount(0);
   await expect(original.locator(".roster-reroll")).toHaveCount(1);
   await expect(original).toHaveClass(/is-selected/);
+});
+
+test("#1290: a fresh character, empty bar and all, holds its weapon on the menu", async ({
+  page,
+}) => {
+  await openMenu(page);
+  const roster = page.locator(".roster");
+  await roster.getByRole("button", { name: "New character" }).click();
+  await page.locator("input.editor-name").fill("Blank");
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+
+  const blank = roster.locator(".selectable-row", { hasText: "Blank" });
+  await expect(blank).not.toHaveClass(/is-invalid/);
+  await expect(blank.locator("canvas.character-figure")).toHaveAttribute("data-weapon-id", "sword");
 });
 
 test("#579: the roster's rows are buttons: Enter or Space chooses, Edit sits beside", async ({

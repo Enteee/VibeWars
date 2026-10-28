@@ -377,7 +377,7 @@ test("the team list: an empty one offers New team; a row shows its members and o
   await page.getByRole("button", { name: "back" }).click();
 
   await expect.poll(() => teamList(page)).toEqual(["Duo · 2 members"]);
-  await expect(teamRows(page).locator(".team-list-dots .character-dot")).toHaveCount(2);
+  await expect(teamRows(page).locator(".team-list-dots .character-figure")).toHaveCount(2);
   await expect(page.locator(".empty-state")).toHaveCount(0);
   await teamRows(page).first().getByRole("button").focus();
   await page.keyboard.press("Enter");
@@ -1116,6 +1116,61 @@ test("a stale saved character is discarded, the player is told once, and it stay
   await page.reload();
   await expect(page.locator(".roster")).toBeVisible();
   await expect(page.locator(".roster .screen-problem")).toHaveCount(0);
+});
+
+/** A character saved legal under rules that no longer allow it (#1290): ranks past the cap. */
+const OUTLAWED_CHARACTER = {
+  schemaVersion: CHARACTER_SCHEMA_VERSION,
+  id: "outlawed-e2e-1",
+  name: "Outlaw",
+  primaryProfession: "warrior",
+  attributes: [{ attributeId: "warrior.swordsmanship", rank: 99 }],
+  skillBar: [null, null, null, null, null, null, null, null],
+  equipment: defaultEquipmentFor("warrior"),
+  updatedAt: 1_700_000_000_000,
+};
+
+test("#1290: an invalid character is striped and tagged Invalid, never chosen, and still edited", async ({
+  page,
+}) => {
+  await page.goto("./");
+  const roster = page.locator(".roster");
+  await expect(roster).toBeVisible();
+  const record = JSON.stringify(OUTLAWED_CHARACTER);
+  await inCharacterStore(
+    page,
+    `(store) => store.put(${record}, ${JSON.stringify(OUTLAWED_CHARACTER.id)})`,
+  );
+  // It was the one chosen when the rules changed under it.
+  await page.evaluate(
+    ([key, id]) => {
+      localStorage.setItem(key, id);
+    },
+    [`${STORAGE_NAMESPACE}.activeCharacterId`, OUTLAWED_CHARACTER.id] as const,
+  );
+  await page.reload();
+
+  const outlaw = roster.locator(".selectable-row", { hasText: "Outlaw" });
+  await expect(outlaw).toHaveClass(/is-invalid/);
+  await expect(outlaw.locator(".roster-invalid-tag")).toHaveText("Invalid");
+  await expect(outlaw.locator(".selectable-row-choose")).toHaveAttribute("aria-disabled", "true");
+  // Kept, but no choice: nothing is chosen, so Random Arena waits.
+  await expect(roster.locator(".selectable-row.is-selected")).toHaveCount(0);
+  const queue = page.getByRole("button", { name: "Random Arena", exact: true });
+  await expect(queue).toBeDisabled();
+
+  // Clicking it anyway chooses nothing; the rolled character still can be.
+  await outlaw.locator(".selectable-row-choose").click({ force: true });
+  await expect(outlaw).not.toHaveClass(/is-selected/);
+  await expect(queue).toBeDisabled();
+  const rolled = roster.locator(".selectable-row").filter({ hasNotText: "Outlaw" });
+  await rolled.locator(".selectable-row-choose").click();
+  await expect(rolled).toHaveClass(/is-selected/);
+  await expect(queue).toBeEnabled();
+
+  // Edit still opens it, to be fixed.
+  await outlaw.getByRole("button", { name: "Edit", exact: true }).click();
+  await expect(page.locator("input.editor-name")).toHaveValue("Outlaw");
 });
 
 /* --- gear ----------------------------------------------------------------- */

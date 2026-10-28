@@ -10,7 +10,7 @@ import arenaPillars from "@vibewars/game-maps/maps/arena-pillars/map.json" with 
 import arenaRing from "@vibewars/game-maps/maps/arena-ring/map.json" with { type: "json" };
 import arenaSplit from "@vibewars/game-maps/maps/arena-split/map.json" with { type: "json" };
 import guildHallIsle from "@vibewars/game-maps/maps/guild-hall-isle/map.json" with { type: "json" };
-import type { GuildLord, MatchMode, Vec2 } from "@vibewars/game-core";
+import type { BaseGuard, GuildLord, MatchMode, Vec2 } from "@vibewars/game-core";
 import { teamSizeOf, type QueueMode } from "@vibewars/game-protocol";
 import type { HostMap } from "@vibewars/game-session";
 import { TRAINING_MAPS } from "../training/maps.js";
@@ -110,6 +110,15 @@ function guildLordsOf(objectives: readonly Objective[]): readonly GuildLord[] {
   );
 }
 
+/** The base guards among a map's objectives (#1223), in its order. */
+function guardsOf(objectives: readonly Objective[]): readonly BaseGuard[] {
+  return objectives.flatMap((objective) =>
+    objective.kind === "guard"
+      ? [{ team: objective.team, role: objective.role, position: objective.position }]
+      : [],
+  );
+}
+
 /** A team's resurrection shrine (#1186), where its priest stands. */
 export interface MapShrine {
   readonly team: number;
@@ -140,5 +149,6 @@ export function hostMap(mapId: string): HostMap | undefined {
     spawns: map.spawnPoints,
     shrines: shrinesOf(map.objectives),
     guildLords: guildLordsOf(map.objectives),
+    guards: guardsOf(map.objectives),
   };
 }

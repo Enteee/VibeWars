@@ -332,7 +332,7 @@ test("a refused clipboard leaves the code selected, to copy by hand (#580)", asy
   expect(await page.evaluate(() => window.getSelection()?.toString())).toBe(code);
 });
 
-test("each row shows the character a player brings, a refused build as Random starter build, and Start says who it waits for (#580)", async ({
+test("each row shows the character a player brings, an empty bar too, and Start says who it waits for (#580)", async ({
   browser,
 }) => {
   const { context, pages } = await openPeers(browser, 2);
@@ -340,9 +340,9 @@ test("each row shows the character a player brings, a refused build as Random st
 
   try {
     // The host plays a saved character with a skill; the guest one with an
-    // empty bar, which the host refuses, so it plays a starter build and
-    // lists as a random one. Both pages share one storage, so the guest
-    // picks its own after the host is in.
+    // empty bar, a build like any other (#1290), so it lists by its own
+    // name. Both pages share one storage, so the guest picks its own after
+    // the host is in.
     await host.goto("./");
     await host.getByRole("button", { name: "new character" }).click();
     await host.locator("input.editor-name").fill("Cynn");
@@ -362,7 +362,7 @@ test("each row shows the character a player brings, a refused build as Random st
     const hostRow = guest.locator(".lobby-team").nth(0).locator(".lobby-slot");
     const guestRow = host.locator(".lobby-team").nth(1).locator(".lobby-slot");
     await expect(hostRow.locator(".lobby-character")).toHaveText("Cynn · Warrior");
-    await expect(guestRow.locator(".lobby-character")).toHaveText("Random starter build");
+    await expect(guestRow.locator(".lobby-character")).toHaveText("Blank · Warrior");
     await expect(guestRow.locator(".lobby-ready")).toHaveText("Not ready");
 
     await host.getByRole("button", { name: "Ready", exact: true }).click();
@@ -409,7 +409,7 @@ test("a match plays the character the lobby lists, not one selected after joinin
     await guest.getByRole("button", { name: "Ready", exact: true }).click();
     await host.getByRole("button", { name: "start match" }).click();
 
-    // Cynn's one skill, not the starter build Blank's refused build would get.
+    // Cynn's one skill, not Blank's empty bar.
     await expect(host.locator("#viewport canvas:not(.compass)")).toBeVisible();
     await expect(host.locator(".hud-skills .hud-skill:not(.is-empty)")).toHaveCount(1);
   } finally {
