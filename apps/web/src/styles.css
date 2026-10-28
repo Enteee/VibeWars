@@ -4801,3 +4801,30 @@ body:has(#app > .chat) .now-playing {
   flex-direction: column;
   gap: 0.6rem;
 }
+
+.licences-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.licence-name {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.licence-text {
+  max-height: 18rem;
+  overflow: auto;
+  margin: 0.4rem 0 0;
+  padding: 0.6rem;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink-dim);
+  font-size: 0.72rem;
+  white-space: pre-wrap;
+}
+
+.licence-source {
+  font-size: 0.8rem;
+}

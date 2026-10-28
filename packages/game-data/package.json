@@ -13,7 +13,8 @@
     "./corpus": {
       "types": "./dist/corpus.d.ts",
       "default": "./dist/corpus.js"
-    }
+    },
+    "./gw-skilldata/LICENSE": "./raw/gw-skilldata/LICENSE"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

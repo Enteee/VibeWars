@@ -43,3 +43,4 @@ rewriting history.
 | [0036](0036-weapon-sets.md)                   | Weapon sets are resolved at join and swapped by index           |
 | [0037](0037-per-piece-armor.md)               | Insignia armor is per piece, and each hit rolls its piece       |
 | [0038](0038-skill-corpus.md)                  | gw-skilldata is the skill corpus, vendored at a pinned commit   |
+| [0039](0039-third-party-licences-page.md)     | Third-party credits and licences live on one Options page       |
