@@ -10,6 +10,8 @@ import {
   mysticismArmor,
   mysticismEnergyCost,
   soulReapingTrigger,
+  spawningPowerHealth,
+  spawningPowerMultiplier,
   strengthArmorPenetration,
 } from "./primary-attributes.js";
 import { unarmedResolvedEquipment } from "./equipment/resolve.js";
@@ -287,6 +289,19 @@ describe("leadershipEnergy (#625)", () => {
   });
 });
 
+describe("Spawning Power (#1098)", () => {
+  it("multiplies by 1 + 4% a rank, unrounded: ×1.48 at 12, ×1.6 at 15", () => {
+    expect(spawningPowerMultiplier(0)).toBe(1);
+    expect(spawningPowerMultiplier(12)).toBeCloseTo(1.48, 9);
+    expect(spawningPowerMultiplier(15)).toBeCloseTo(1.6, 9);
+  });
+
+  it("rounds a creature's health once: 210 is 311 at 12, and exactly 210 at 0", () => {
+    expect(spawningPowerHealth(12, 210)).toBe(311);
+    expect(spawningPowerHealth(0, 210)).toBe(210);
+  });
+});
+
 describe("describePrimaryAttribute (#531)", () => {
   it.each([
     ["mesmer.fast-casting", 12, "spells cast 43% faster"],
@@ -305,6 +320,8 @@ describe("describePrimaryAttribute (#531)", () => {
     ["paragon.leadership", 15, "up to 7 energy per shout, 1 per ally affected"],
     ["elementalist.energy-storage", 12, "+36 maximum energy"],
     ["elementalist.energy-storage", 15, "+45 maximum energy"],
+    ["ritualist.spawning-power", 12, "creatures +48% Health, weapon spells last 48% longer"],
+    ["ritualist.spawning-power", 15, "creatures +60% Health, weapon spells last 60% longer"],
     [
       "dervish.mysticism",
       12,
@@ -324,12 +341,12 @@ describe("describePrimaryAttribute (#531)", () => {
     "paragon.leadership",
     "elementalist.energy-storage",
     "dervish.mysticism",
+    "ritualist.spawning-power",
   ])("says nothing for %s at rank 0", (attributeId) => {
     expect(describePrimaryAttribute(attributeId, 0)).toBeUndefined();
   });
 
-  it("says nothing for a secondary, nor a primary with no effect yet", () => {
+  it("says nothing for a secondary", () => {
     expect(describePrimaryAttribute("mesmer.domination-magic", 12)).toBeUndefined();
-    expect(describePrimaryAttribute("ritualist.spawning-power", 12)).toBeUndefined();
   });
 });

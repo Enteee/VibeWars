@@ -1,5 +1,10 @@
 import { isPhysicalDamage, type DamageType } from "../equipment/types.js";
-import { DIVINE_FAVOR_ATTRIBUTE, divineFavorBonusHeal } from "../primary-attributes.js";
+import {
+  DIVINE_FAVOR_ATTRIBUTE,
+  divineFavorBonusHeal,
+  SPAWNING_POWER_ATTRIBUTE,
+  spawningPowerMultiplier,
+} from "../primary-attributes.js";
 import { emptyAdrenaline, fillPools } from "./adrenaline.js";
 import { beginRecharge } from "./cast-state.js";
 import { getSkill } from "./catalog.js";
@@ -843,7 +848,14 @@ export function applyEffect(
       if (target === undefined || target.dead) {
         return events;
       }
-      const durationSeconds = scaledStatusDuration(target, effect.statusId, effect.durationSeconds);
+      // A weapon spell lasts longer with its caster's Spawning Power (#1098),
+      // whatever skill or trigger lands it.
+      const base =
+        getStatusDefinition(effect.statusId).category === "weapon-spell"
+          ? effect.durationSeconds *
+            spawningPowerMultiplier(rankOf(caster, SPAWNING_POWER_ATTRIBUTE))
+          : effect.durationSeconds;
+      const durationSeconds = scaledStatusDuration(target, effect.statusId, base);
       landStatus(target, effect.statusId, durationSeconds, caster.id, events);
       return events;
     }

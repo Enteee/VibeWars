@@ -1189,8 +1189,12 @@ GW1 PvP (#473). Only a primary can hold its rank, and runes count.
   rank (−48% at 12: Mystic Regeneration 8 instead of 15), rounded once,
   never below 0. While any enchantment is on you, yours or an ally's,
   you have +1 armor a rank against every hit.
-
-The others have no effect yet.
+- **Spawning Power** (Ritualist). A creature you summon, of any
+  profession, has 4% more Health a rank, rounded once: a spirit of 210
+  has 311 at rank 12. A weapon spell you put on anyone, yourself
+  included, lasts 4% longer a rank: Weapon of Quickening 31.08 s instead
+  of 21 s. A spirit's lifetime is unchanged. The tooltip shows both, the
+  base in brackets: "311 Health (210)", "31.1s (21s)" (#1098).
 
 The build editor says under a primary's row what it does at its rank
 ("Fast Casting 12: spells cast 43% faster"), and a skill tooltip for a
@@ -1254,13 +1258,14 @@ spirit of the same skill on your side within the new one's range, as an
 expiry, not a death. A foe's spirit of that skill lives on.
 
 **Winnowing** (Ranger, Wilderness Survival, nature ritual, 5 energy,
-2 s, 60 s recharge) plants a spirit of 210 Health and armor 51 for 198 s:
+2 s, 60 s recharge) plants a spirit of 210 Health (more with Spawning
+Power) and armor 51 for 198 s:
 every body in its range takes 4 more from each physical hit it takes,
 before armor. A hit that "deals only" its number, as Concussion Shot's,
 takes the 4 too: it is on the one hit, not on the attack.
 **Recuperation** (Ritualist, Restoration Magic, binding ritual, 25
-energy, 3 s, 45 s recharge) plants one of 210 Health and armor 51 for
-39 s: your side in its range gains +3 Health regeneration.
+energy, 3 s, 45 s recharge) plants one of 210 Health (more with Spawning
+Power) and armor 51 for 39 s: your side in its range gains +3 Health regeneration.
 
 ## Wards
 

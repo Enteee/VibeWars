@@ -160,6 +160,26 @@ export function energyStorageBonus(rank: number): number {
   return ENERGY_STORAGE_ENERGY_PER_RANK * rank;
 }
 
+/** The Ritualist's primary. */
+export const SPAWNING_POWER_ATTRIBUTE = "ritualist.spawning-power";
+
+/** Share each rank of Spawning Power adds to creature health and weapon spell duration. */
+export const SPAWNING_POWER_BONUS_PER_RANK = 0.04;
+
+/**
+ * What Spawning Power multiplies a creature's health and a weapon
+ * spell's duration by (#1098): 4% more a rank, ×1.48 at rank 12, and on
+ * above it.
+ */
+export function spawningPowerMultiplier(rank: number): number {
+  return 1 + SPAWNING_POWER_BONUS_PER_RANK * rank;
+}
+
+/** A summoned creature's max health with this rank of its summoner's, rounded once. */
+export function spawningPowerHealth(rank: number, health: number): number {
+  return Math.round(health * spawningPowerMultiplier(rank));
+}
+
 /** The Dervish's primary. */
 export const MYSTICISM_ATTRIBUTE = "dervish.mysticism";
 
@@ -195,8 +215,7 @@ function percent(share: number): string {
  * What a primary attribute does at `rank`, in one line, for the build
  * editor (#531): "spells cast 43% faster". Every number comes from the
  * function the simulation uses. `undefined` at rank 0, and for an
- * attribute with no effect of its own: every secondary, and a primary
- * whose effect is not in yet.
+ * attribute with no effect of its own: every secondary.
  */
 export function describePrimaryAttribute(attributeId: string, rank: number): string | undefined {
   if (rank <= 0) {
@@ -228,6 +247,10 @@ export function describePrimaryAttribute(attributeId: string, rank: number): str
         `up to ${String(leadershipEnergy(rank, Number.POSITIVE_INFINITY))} energy per shout, ` +
         "1 per ally affected"
       );
+    case SPAWNING_POWER_ATTRIBUTE: {
+      const more = percent(spawningPowerMultiplier(rank) - 1);
+      return `creatures +${more} Health, weapon spells last ${more} longer`;
+    }
     case MYSTICISM_ATTRIBUTE:
       return (
         `Dervish enchantments cost ${percent(MYSTICISM_COST_CUT_PER_RANK * rank)} less energy, ` +
