@@ -400,10 +400,13 @@ describe("describeSkill", () => {
     // Guards the switch in `describeEffect`: a new effect kind that
     // nobody described would silently vanish from tooltips. An `if` is
     // a line per effect inside it (#521), a spirit's summon one more for
-    // what it projects (#1064).
+    // what it projects (#1064), and so does a ward (#1087).
     const linesOf = (effect: SkillEffect): number => {
       if (effect.kind === "if") {
         return effect.effects.length;
+      }
+      if (effect.kind === "create-ground-effect") {
+        return 2;
       }
       return effect.kind === "summon" && effect.creature.aura !== undefined ? 2 : 1;
     };
