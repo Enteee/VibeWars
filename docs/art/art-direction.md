@@ -316,8 +316,9 @@ focus or the area flash.
 
 GW1's radar (#486), top right under the match buttons: a disc 160 px
 across (120 px on a window under 1280 px wide), centred on you, north up,
-showing everything within 1700 units (`RANGE_COMPASS`). It never rotates,
-as the arena does not. A body beyond it is not on it: the edge markers
+showing everything within the arena's longer side, at most 1700 units
+(`RANGE_COMPASS`), so a small arena fills the disc. It never rotates, as
+the arena does not. A body beyond it is not on it: the edge markers
 (#440) give direction, the compass gives distance.
 
 - **Disc**: `panel` at 85 %, a 1 px `line` rim.
