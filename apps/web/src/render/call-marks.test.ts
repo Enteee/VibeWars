@@ -29,6 +29,7 @@ const CALLED: RenderableActor = {
   statuses: [],
   enchanted: false,
   hexed: false,
+  conditionCues: [],
 };
 
 describe("call marks (#443)", () => {

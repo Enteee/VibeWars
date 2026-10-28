@@ -1350,6 +1350,45 @@ test("(42) Symbol of Wrath strikes the dummy it was cast at once a second, five 
   await expect(hits).toHaveCount(5);
 });
 
+test("(44) a burning dummy wears flames on its top edge until the burning ends (#1138)", async ({
+  page,
+}) => {
+  // Frozen flames, so a shot of them holds still.
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  const canvas = await openTraining(page);
+  await page
+    .locator(".skill-box", { hasText: "Searing Flames" })
+    .locator(".skill-box-equip")
+    .click();
+  await expectFilledSlots(page, ["Fireball", "Searing Flames"]);
+  await takeControl(page);
+  await page.mouse.move(1, 1);
+  // Targeted first, so its target ring is in the before shot too.
+  await page.keyboard.press("Tab");
+  await expect.poll(() => shownNames(page)).toHaveLength(1);
+
+  // The right-hand flame of the target dummy at (380, 210): from r + 1 to
+  // r + 7 above the centre, clear of the health bar and the name.
+  const flame = async (): Promise<Buffer> => {
+    const view = await trainingView(page, canvas);
+    const from = view.onPage({ x: 380 + 6, y: 210 - 21 });
+    const to = view.onPage({ x: 380 + 12, y: 210 - 15 });
+    return page.screenshot({
+      clip: { x: from.x, y: from.y, width: to.x - from.x, height: to.y - from.y },
+    });
+  };
+  const before = await flame();
+
+  // Searing Flames sets it burning for 6 s.
+  await page.keyboard.press(skillKey(1));
+  await expect.poll(async () => (await flame()).equals(before)).toBe(false);
+  // Still there once any floating text over it has gone.
+  await page.waitForTimeout(1_500);
+  expect((await flame()).equals(before), "the flames should still show").toBe(false);
+  // Game time runs slower than wall time under load (#327).
+  await expect.poll(async () => (await flame()).equals(before), { timeout: 20_000 }).toBe(true);
+});
+
 test("2 swaps to weapon set 2, the empty 3 does nothing, and a slot's click swaps back (#489)", async ({
   page,
 }) => {

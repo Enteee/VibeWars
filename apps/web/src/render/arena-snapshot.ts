@@ -3,6 +3,7 @@ import { Vec, type OffhandId, type ProfessionId, type Vec2 } from "@vibewars/gam
 import type { CallsSnapshot, GroundEffectSnapshot } from "@vibewars/game-session";
 
 import type { AttackCast } from "./attack-clock.js";
+import type { ConditionCue } from "./body-conditions.js";
 import type { RenderablePing } from "./call-marks.js";
 import { LYING_WIDTH } from "./lying-pose.js";
 import type { RenderableProjectile } from "./projectiles.js";
@@ -53,6 +54,8 @@ export interface RenderableActor {
   readonly enchanted: boolean;
   /** Wears the broken hex ring (#1117); never a corpse. */
   readonly hexed: boolean;
+  /** Flames, drops or bubbles on the body (#1138), two at most; never a corpse. */
+  readonly conditionCues: readonly ConditionCue[];
 }
 
 export interface RectRenderableWall {

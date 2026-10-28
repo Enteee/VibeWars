@@ -36,6 +36,7 @@ import {
   type RenderableWall,
 } from "./render/arena-snapshot.js";
 import { attackCastOf } from "./render/attack-clock.js";
+import { conditionCues } from "./render/body-conditions.js";
 import { bodyFlags } from "./render/body-rings.js";
 import { NoWebGlError, createArenaViewport, type ArenaViewport } from "./render/arena-viewport.js";
 import { attachFollowCamera } from "./render/follow-camera.js";
@@ -150,8 +151,10 @@ export function toArenaSnapshot(
     pings: [],
     actors: match.players.map((player) => {
       const statuses = player.statuses.map((status) => status.id);
-      // Rings for what the statuses already say (#1117); a corpse wears none.
-      const rings = bodyFlags(player.dead ? [] : statuses);
+      // Rings and condition cues for what the statuses already say (#1117,
+      // #1138); a corpse wears none.
+      const living = player.dead ? [] : statuses;
+      const rings = bodyFlags(living);
       return {
         id: player.sessionId,
         name: player.name,
@@ -186,6 +189,7 @@ export function toArenaSnapshot(
         statuses,
         enchanted: rings.enchanted,
         hexed: rings.hexed,
+        conditionCues: conditionCues(living),
       };
     }),
   };
