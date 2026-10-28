@@ -111,7 +111,7 @@ beforeAll(async () => {
 }, 20_000);
 
 afterAll(async () => {
-  if (server !== null) {
+  if (server !== null && server.exitCode === null && server.signalCode === null) {
     const exited = new Promise((resolve) => server?.once("exit", resolve));
     server.kill();
     await exited;

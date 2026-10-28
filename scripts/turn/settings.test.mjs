@@ -54,6 +54,20 @@ describe("turnserverConf", () => {
     }
   });
 
+  it("denies the host's own public, private, IPv6 and listening addresses as peers", () => {
+    const own = lines(
+      turnserverConf({
+        ...BASE,
+        externalIp: "203.0.113.5/10.0.0.5",
+        externalIp6: "2001:db8::5",
+        listeningIps: ["203.0.113.5", "198.51.100.9"],
+      }),
+    );
+    for (const ip of ["203.0.113.5", "10.0.0.5", "2001:db8::5", "198.51.100.9"]) {
+      expect(own.filter((l) => l === `denied-peer-ip=${ip}`)).toHaveLength(1);
+    }
+  });
+
   it("uses long-term credentials from the userdb, UDP relays only, and no CLI", () => {
     expect(conf).toEqual(
       expect.arrayContaining([

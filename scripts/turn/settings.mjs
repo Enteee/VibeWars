@@ -55,6 +55,24 @@ export const DENIED_PEERS = [
   { cidr: "fe80::/10", range: "fe80::-febf:ffff:ffff:ffff:ffff:ffff:ffff:ffff" },
 ];
 
+/**
+ * The host's own addresses, also refused as peers: a relay to the host's
+ * public address sends from that address, past any firewall rule that
+ * trusts it. Both halves of a `public/private` externalIp, externalIp6
+ * and every listening IP, each once.
+ *
+ * @param {TurnSettings} s
+ * @returns {string[]}
+ */
+export function ownAddresses(s) {
+  const all = [
+    ...(s.externalIp === null ? [] : s.externalIp.split("/")),
+    ...(s.externalIp6 === null ? [] : [s.externalIp6]),
+    ...s.listeningIps,
+  ];
+  return [...new Set(all)];
+}
+
 /** @param {TurnSettings} s */
 export function files(s) {
   return {
@@ -144,8 +162,8 @@ export function tls(s) {
 
 /**
  * turnserver.conf for these settings: long-term credentials from the
- * SQLite userdb, no CLI, UDP relays only, every DENIED_PEERS range refused,
- * and metrics on localhost only.
+ * SQLite userdb, no CLI, UDP relays only, every DENIED_PEERS range and the
+ * host's own addresses refused, and metrics on localhost only.
  *
  * @param {TurnSettings} s
  * @returns {string}
@@ -169,6 +187,7 @@ export function turnserverConf(s) {
     "no-multicast-peers",
     "no-tcp-relay",
     ...DENIED_PEERS.map((d) => `denied-peer-ip=${d.range}`),
+    ...ownAddresses(s).map((ip) => `denied-peer-ip=${ip}`),
     `user-quota=${String(s.userQuota)}`,
     `total-quota=${String(s.totalQuota)}`,
     `max-bps=${String(s.maxBps)}`,

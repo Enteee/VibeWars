@@ -53,8 +53,9 @@ In `devenv.local.nix`:
 The server is configured to be safe on the open internet:
 
 - It refuses to relay to loopback, private, link-local, CGNAT or cloud
-  metadata addresses (`denied-peer-ip`). Otherwise it would be an open proxy
-  into the network it stands in.
+  metadata addresses, or to the host's own external and listening addresses
+  (`denied-peer-ip`). Otherwise it would be an open proxy into the network it
+  stands in, and a way to reach the host's services from its own address.
 - UDP relays only.
 - No admin CLI.
 - Metrics only on `127.0.0.1`.
