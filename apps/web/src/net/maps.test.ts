@@ -39,6 +39,12 @@ describe("randomArenaMapPool", () => {
 });
 
 describe("hostMap (#476)", () => {
+  it("leaves Kill Count maps in the Random Arena pool: the map decides the mode", () => {
+    expect(randomArenaMapPool("random-arena-1v1").map((id) => hostMap(id)?.mode)).toContain(
+      "kill-count",
+    );
+  });
+
   it("carries the mode its map names: Kill Count on Pillar Hall, Annihilation elsewhere", () => {
     expect(hostMap("arena-pillars")?.mode).toBe("kill-count");
     for (const map of ARENA_MAPS.filter((candidate) => candidate.id !== "arena-pillars")) {
