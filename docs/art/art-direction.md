@@ -826,11 +826,11 @@ differ by shape, so the icon shows the current state at a glance.
 UI text is sentence case: "Edit team", "New character", "Save". A small
 uppercase field label is styled so by CSS; the words themselves stay sentence case.
 
-## Creatures (study, not decided)
+## Creatures
 
 Pets, minions and spirits must read as not-a-player at a glance and say what
 they are (#1158). Today a creature is a smaller actor circle, radius 10 to a
-player's 14. `scripts/assets/creature-study.mjs` draws three directions in
+player's 14. `scripts/assets/creature-study.mjs` drew three directions in
 `docs/art/creature-study.svg`: true size, then 4x, ally, foe and dead. Team
 colour stays the fill or outline everywhere.
 
@@ -850,11 +850,12 @@ colour stays the fill or outline everywhere.
   better than B. Fails: one shape for every family, so only the glyph tells
   kinds apart.
 
-**Recommendation: C, with A's wolf tip.** C is the only one that keeps solid
-team colour and is still not a circle. Let the kind glyph carry what it is,
-and add A's facing tip to the beast family only if a pet's heading matters.
-A spirit is the weak case in all three: a drop-like wisp reads as a status,
-so give spirits the ring from A, hollow in C, if they stay.
+**Decided: C** (operator, #1158). Every creature is a solid team-colour
+hexagon with its kind glyph cut from it (paw, skull, horned skull, wisp). No
+wolf tip from A: a pet's heading is not worth a second shape. The spirit
+keeps the hexagon and the wisp glyph; if it reads as a status at true size,
+that is a follow-up for the implementing card, not a reason to bring back A's
+ring. The study stays in `creature-study.svg` for the rejected directions.
 
 ## Sizes
 

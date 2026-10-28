@@ -1,5 +1,5 @@
 // Draws a study of how companions and summoned creatures look (#1158). It is
-// a design reference for that decision, not a game asset: study, not decided.
+// a design reference for that decision, not a game asset. The operator picked C.
 //
 //   node scripts/assets/creature-study.mjs
 //
