@@ -1602,6 +1602,33 @@ const skillGlyph = {
   eye: () =>
     `<path d="M2.5 12C5 7.5 8.5 5.5 12 5.5S19 7.5 21.5 12C19 16.5 15.5 18.5 12 18.5S5 16.5 2.5 12Z" ${stroke(C.ink, 2.2)}/>` +
     `<circle cx="12" cy="12" r="3.4" fill="${C.ink}"/>`,
+  // A ghost with dark eyes, wavy hem: the phantasm that gnaws (#1243).
+  ghost: () =>
+    inkFill("M4 20V10A6.5 6.5 0 0 1 17 10V20L14.5 17.5L12 20L9.5 17.5L7 20Z") +
+    `<circle cx="7.6" cy="10" r="1.5" fill="${C.bg}"/><circle cx="13.4" cy="10" r="1.5" fill="${C.bg}"/>`,
+  // A hung weight: a burden on the foe's legs (#1243).
+  weight: () =>
+    `<path d="M8 8Q8 3.5 12 3.5T16 8" ${stroke(C.ink, 2.2)}/>` + inkFill("M6 8H18L20 17.5H4Z"),
+  // A jagged ache over a cross cut: pain now, a deep wound when it ends (#1243).
+  "ache-cross": () =>
+    inkLine("M3.5 6L7 3.5L10.5 6L14 3.5L17.5 6", 2.2) +
+    inkLine("M5.5 10.5L15.5 20.5M15.5 10.5L5.5 20.5", 3),
+  // A shield inside its own outline: armor drawing in, cracked when it ends (#1243).
+  "armor-shrink": () =>
+    `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 1.8)} stroke-dasharray="3.4 2.4"/>` +
+    inkFill("M12 7L16 8.6V12.4C16 14.6 14.4 16 12 17.2C9.6 16 8 14.6 8 12.4V8.6Z"),
+  // A whole chevron and a broken one: fast now, crippled after (#1243).
+  "speed-break": () =>
+    inkLine("M3.5 5L10 12L3.5 19", 2.6) + inkLine("M13.5 5L16.5 8.5M16.5 15.5L13.5 19", 2.4),
+  // An eye with a slash through it: the next attack is blinded (#1243).
+  "eye-slash": () =>
+    `<path d="M2.5 12C5 7.5 8.5 5.5 12 5.5S19 7.5 21.5 12C19 16.5 15.5 18.5 12 18.5S5 16.5 2.5 12Z" ${stroke(C.ink, 2.2)}/>` +
+    `<circle cx="12" cy="12" r="2.8" fill="${C.ink}"/>` +
+    inkLine("M5 20L19 4", 2.6),
+  // A limping line over two drain chevrons: slowed and bleeding health (#1243).
+  "limp-drain": () =>
+    inkLine("M9 3L5 9.5L9 13.5L4 20", 2.8) +
+    inkLine("M13 4.5L16.5 8L20 4.5M13 10L16.5 13.5L20 10", 2.2),
 };
 
 /** Modifiers, drawn around the bottom right corner on a dark disc. */
