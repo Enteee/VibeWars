@@ -9,7 +9,8 @@ import {
   RANGE_SPIRIT,
 } from "../distances.js";
 import { WEAPONS } from "../equipment/weapons.js";
-import { KNOCKDOWN_SECONDS, type Skill } from "./types.js";
+import type { Behaviour } from "../match/behaviour.js";
+import { KNOCKDOWN_SECONDS, type CreatureTemplate, type Skill } from "./types.js";
 
 /**
  * The implemented skill catalog (brief §9's "Implemented" stage).
@@ -35,6 +36,63 @@ import { KNOCKDOWN_SECONDS, type Skill } from "./types.js";
 
 /** Longbow-ish range. */
 const RANGE_LONG = 520;
+
+/**
+ * What a minion does (#467): heel by its master, fight foes in earshot of
+ * itself, back to heel past cast range. House numbers.
+ */
+const MINION_BEHAVIOUR: Behaviour = {
+  kind: "follow-and-attack",
+  aggroUnits: AREA_EARSHOT,
+  leashUnits: RANGE_SPELL,
+  heelUnits: AREA_IN_THE_AREA,
+};
+
+/**
+ * Level 0...10 at Death Magic 0...12. Health 80 + 20 per level and armor
+ * about 3 per level (fandom "Health", "Bone Minion"); a blow every 3.17 s
+ * (fandom "Minion"). Its damage is published nowhere: 5-12 is fandom's
+ * level-13 7-21, criticals taken out, scaled to level 10 (unverified).
+ */
+const BONE_MINION: CreatureTemplate = {
+  kind: "minion",
+  name: "Bone Minion",
+  maxHealth: { scaling: { attributeId: "necromancer.death-magic", atZero: 80, atTwelve: 280 } },
+  armor: { scaling: { attributeId: "necromancer.death-magic", atZero: 0, atTwelve: 30 } },
+  attack: {
+    attributeId: "necromancer.death-magic",
+    damageMin: 5,
+    damageMax: 12,
+    damageType: "blunt",
+    attackIntervalSeconds: 3.17,
+    range: RANGE_MELEE,
+  },
+  behaviour: MINION_BEHAVIOUR,
+  aura: undefined,
+};
+
+/**
+ * Level 1...14 at Death Magic 0...12. Health 80 + 20 per level and armor
+ * 4 per level (fandom "Bone Horror"); a blow every 3.17 s. 13-27 is
+ * fandom's 17-49 against armor 60, criticals taken out, scaled to level 14
+ * (unverified).
+ */
+const BONE_HORROR: CreatureTemplate = {
+  kind: "minion",
+  name: "Bone Horror",
+  maxHealth: { scaling: { attributeId: "necromancer.death-magic", atZero: 100, atTwelve: 360 } },
+  armor: { scaling: { attributeId: "necromancer.death-magic", atZero: 4, atTwelve: 56 } },
+  attack: {
+    attributeId: "necromancer.death-magic",
+    damageMin: 13,
+    damageMax: 27,
+    damageType: "blunt",
+    attackIntervalSeconds: 3.17,
+    range: RANGE_MELEE,
+  },
+  behaviour: MINION_BEHAVIOUR,
+  aura: undefined,
+};
 
 export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
@@ -255,6 +313,39 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     corpse: undefined,
     projectile: undefined,
     effects: [{ kind: "knockdown", durationSeconds: 4 }],
+  },
+  {
+    id: "warrior.hammer-bash",
+    name: "Hammer Bash",
+    type: "attack",
+    elite: false,
+    profession: "warrior",
+    attributeId: "warrior.hammer-mastery",
+    // GW1: "Lose all adrenaline. If Hammer Bash hits, your target is
+    // knocked down." The loss is the price, paid on a miss too (#1097).
+    cost: { kind: "adrenaline", amount: 6, losesAll: true },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 0,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    attack: {
+      weapon: "hammer",
+      weaponDamage: 1,
+      bonusDamage: undefined,
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    corpse: undefined,
+    projectile: undefined,
+    effects: [{ kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS }],
   },
   {
     id: "necromancer.blood-renewal-lite",
@@ -4039,6 +4130,50 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     ],
   },
   {
+    id: "necromancer.animate-bone-horror",
+    name: "Animate Bone Horror",
+    type: "spell",
+    elite: false,
+    profession: "necromancer",
+    attributeId: "necromancer.death-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    // The nearest fresh corpse within cast range, as Soul Feast's (#467).
+    corpse: { radius: RANGE_SPELL },
+    projectile: undefined,
+    // "Exploit nearest corpse to animate a level 1...14...17 Bone Horror."
+    effects: [{ kind: "summon", creature: BONE_HORROR, count: 1 }],
+  },
+  {
+    id: "necromancer.animate-bone-minions",
+    name: "Animate Bone Minions",
+    type: "spell",
+    elite: false,
+    profession: "necromancer",
+    attributeId: "necromancer.death-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    // The nearest fresh corpse within cast range, as Soul Feast's (#467).
+    corpse: { radius: RANGE_SPELL },
+    projectile: undefined,
+    // "Exploit nearest corpse to animate two level 0...10...12 Bone Minions."
+    effects: [{ kind: "summon", creature: BONE_MINION, count: 2 }],
+  },
+  {
     id: "necromancer.soul-feast",
     name: "Soul Feast",
     type: "spell",
@@ -5665,7 +5800,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
           maxHealth: {
             scaling: { attributeId: "ranger.wilderness-survival", atZero: 70, atTwelve: 210 },
           },
-          armor: 51,
+          armor: { flat: 51 },
+          attack: undefined,
           durationSeconds: {
             scaling: { attributeId: "ranger.wilderness-survival", atZero: 30, atTwelve: 198 },
           },
@@ -5706,7 +5842,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
           maxHealth: {
             scaling: { attributeId: "ritualist.restoration-magic", atZero: 70, atTwelve: 210 },
           },
-          armor: 51,
+          armor: { flat: 51 },
+          attack: undefined,
           durationSeconds: {
             scaling: { attributeId: "ritualist.restoration-magic", atZero: 15, atTwelve: 39 },
           },

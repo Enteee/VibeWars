@@ -23,6 +23,8 @@ export const SKILL_ICONS = {
   "warrior.swift-chop": { glyph: "axe" },
   "ranger.barrage": { glyph: "volley", modifier: "area" },
   "warrior.backbreaker": { glyph: "hammer", modifier: "down" },
+  // Placeholder until asset-designer's icon (#1097).
+  "warrior.hammer-bash": { glyph: "hammer", modifier: "stun" },
   "necromancer.blood-renewal-lite": { glyph: "heal", modifier: "down" },
   "warrior.distracting-blow": { glyph: "interrupt" },
   "ranger.broad-head-arrow": { glyph: "arrow", modifier: "stun" },
@@ -207,4 +209,7 @@ export const SKILL_ICONS = {
   "necromancer.soul-feast": { glyph: "heal", modifier: "corpse" },
   // A placeholder until the asset-designer's (#1104).
   "necromancer.well-of-suffering": { glyph: "germ", modifier: "corpse" },
+  // Placeholders until the asset-designer's (#467): bodies raised from a corpse.
+  "necromancer.animate-bone-minions": { glyph: "resurrect", modifier: "down" },
+  "necromancer.animate-bone-horror": { glyph: "resurrect", modifier: "up" },
 };

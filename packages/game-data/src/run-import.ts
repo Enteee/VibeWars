@@ -33,6 +33,11 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Warrior/11-Backbreaker",
   },
   {
+    id: "warrior.hammer-bash",
+    profession: "warrior",
+    url: "https://www.gw-memorial.net/skills/Warrior/18-Hammer_Bash",
+  },
+  {
     id: "warrior.distracting-blow",
     profession: "warrior",
     url: "https://www.gw-memorial.net/skills/Warrior/71-Distracting_Blow",
@@ -696,6 +701,16 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     id: "necromancer.mark-of-pain",
     profession: "necromancer",
     url: "https://www.gw-memorial.net/skills/Necromancer/263-Mark_of_Pain",
+  },
+  {
+    id: "necromancer.animate-bone-horror",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/278-Animate_Bone_Horror",
+  },
+  {
+    id: "necromancer.animate-bone-minions",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/279-Animate_Bone_Minions",
   },
   {
     id: "necromancer.soul-feast",
