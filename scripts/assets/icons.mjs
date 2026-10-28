@@ -1284,6 +1284,54 @@ const skillGlyph = {
       "M12.5 8A5 5 0 0 1 12.5 16M16 5.5A8.5 8.5 0 0 1 16 18.5M19.5 3.5A12 12 0 0 1 19.5 20.5",
       2,
     ),
+  // A dashed ring (a hex) struck through: the hex is lifted (#1216).
+  "hex-cut": () =>
+    `<circle cx="12" cy="12" r="8.5" ${stroke(C.ink, 2.2)} stroke-dasharray="4.2 3.2"/>` +
+    inkLine("M4 4L20 20", 2.6),
+  // A drop with a bolt through it: the condition is smitten (#1216).
+  "drop-bolt": () =>
+    `<path d="M12 3C12 3 5.5 11 5.5 15A6.5 6.5 0 0 0 18.5 15C18.5 11 12 3 12 3Z" ${stroke(C.ink, 2)}/>` +
+    inkFill("M14 8.5L9.5 14H12.6L10.6 19L15.4 12.8H12.4Z"),
+  // A drop struck through inside a rounded square, the enchantment's plate: the drop goes, the enchantment pays (#1216).
+  "drop-ward": () =>
+    `<rect x="2.5" y="2.5" width="19" height="19" rx="5" ${stroke(C.ink, 2)}/>` +
+    `<path d="M12 6.5C12 6.5 7.8 12 7.8 14.5A4.2 4.2 0 0 0 16.2 14.5C16.2 12 12 6.5 12 6.5Z" ${stroke(C.ink, 1.8)}/>` +
+    inkLine("M6 6L18 18", 2.2),
+  // Two small drops, each struck: two conditions go (#1216).
+  "drop-pair": () =>
+    [
+      [-0.85, 0.9],
+      [8.15, 5.9],
+    ]
+      .map(
+        ([x, y]) =>
+          `<g transform="translate(${String(x)},${String(y)}) scale(0.7)">` +
+          `<path d="M12 3C12 3 5.5 11 5.5 15A6.5 6.5 0 0 0 18.5 15C18.5 11 12 3 12 3Z" ${stroke(C.ink, 2.6)}/>` +
+          inkLine("M4 4L20 20", 3) +
+          "</g>",
+      )
+      .join(""),
+  // A plus throwing sparks: each act heals, as the status shows (#1216).
+  "plus-sparks": () =>
+    inkLine("M12 7.5V18.5M6.5 13H17.5", 3) + inkLine("M4.5 4.5L7 7M19.5 4.5L17 7M12 2.5V4", 2.2),
+  // A plus carried on two gusts: health on the wind (#1216).
+  "plus-gusts": () =>
+    inkLine("M15 3.5V12.5M10.5 8H19.5", 3) +
+    inkLine("M3 15.5H13.5A2.4 2.4 0 1 0 11.2 12.8M3 20H10.5A2.4 2.4 0 1 1 8.5 22.6", 2),
+  // Three heads in a row under a plus: the whole team healed (#1216).
+  "party-heal": () =>
+    inkLine("M12 2.5V9.5M8.5 6H15.5", 2.6) +
+    [5, 12, 19]
+      .map(
+        (x) =>
+          `<circle cx="${String(x)}" cy="14.5" r="2.4" fill="${C.ink}"/>` +
+          `<path d="M${String(x - 3.4)} 21.5C${String(x - 3.4)} 18.5 ${String(x - 1.5)} 17.6 ${String(x)} 17.6S${String(x + 3.4)} 18.5 ${String(x + 3.4)} 21.5Z" fill="${C.ink}"/>`,
+      )
+      .join(""),
+  // A plus with a ripple either side: everyone close by is healed (#1216).
+  "plus-ripple": () =>
+    inkFill("M10.4 6.5h3.2v3.9h3.9v3.2h-3.9v3.9h-3.2v-3.9H6.5v-3.2h3.9z") +
+    inkLine("M3.5 8A6 6 0 0 0 3.5 16M20.5 8A6 6 0 0 1 20.5 16", 2),
   // The resurrect figure in a ring: a signet's seal, one use (#1081).
   "resurrect-seal": () =>
     `<circle cx="10.5" cy="10.5" r="8" ${stroke(C.ink, 2)}/>` + smallFigure(10.5, 10.5, 0.55),

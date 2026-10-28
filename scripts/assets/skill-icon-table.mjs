@@ -178,18 +178,15 @@ export const SKILL_ICONS = {
   "monk.smite-hex": { glyph: "hex-bolt" },
   // Conditions cleansed, a heal for each (#996).
   "monk.restore-condition": { glyph: "cleanse", modifier: "plus" },
-  // Placeholders until the asset-designer's (#1039).
-  "monk.cure-hex": { glyph: "cleanse", modifier: "clock" },
-  "monk.smite-condition": { glyph: "cleanse", modifier: "upkeep" },
-  "monk.mending-touch": { glyph: "plaster", modifier: "less" },
-  "monk.vigorous-spirit": { glyph: "sword-heal", modifier: "clock" },
-  // Placeholders until the asset-designer's (#1013).
-  "monk.remove-hex": { glyph: "cleanse", modifier: "less" },
-  "monk.dismiss-condition": { glyph: "cleanse", modifier: "hourglass" },
-  "monk.healing-breeze": { glyph: "plaster", modifier: "clock" },
-  "monk.heal-party": { glyph: "speed-heal", modifier: "area" },
-  // Placeholder until the asset-designer's (#1186).
-  "monk.heal-area": { glyph: "heal", modifier: "half" },
+  "monk.cure-hex": { glyph: "hex-cut", modifier: "plus" },
+  "monk.smite-condition": { glyph: "drop-bolt" },
+  "monk.mending-touch": { glyph: "drop-pair" },
+  "monk.vigorous-spirit": { glyph: "plus-sparks" },
+  "monk.remove-hex": { glyph: "hex-cut" },
+  "monk.dismiss-condition": { glyph: "drop-ward" },
+  "monk.healing-breeze": { glyph: "plus-gusts" },
+  "monk.heal-party": { glyph: "party-heal" },
+  "monk.heal-area": { glyph: "plus-ripple" },
   "paragon.spear-of-lightning": { glyph: "spear-bolt" },
   "paragon.never-surrender": { glyph: "banner", modifier: "area" },
   "paragon.leaders-comfort": { glyph: "banner-cross", modifier: "self" },
