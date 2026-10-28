@@ -29,6 +29,7 @@ import {
   parsePeerCall,
   parsePeerChat,
   parseWireCalls,
+  parseWireTraps,
   parseWireChatLine,
   parsePeerHello,
   parsePeerRefuse,
@@ -372,6 +373,17 @@ const lobbyState: WireLobbyState = {
 };
 
 const ping = { id: 3, x: 200, y: 150.5, byId: "peer-1", remaining: 2.6 };
+const trap = {
+  id: 2,
+  skillId: "ranger.barbed-trap",
+  team: 1,
+  x: 40,
+  y: -20,
+  radius: 81,
+  endsAt: 92.5,
+  durationSeconds: 90,
+};
+
 const calls = { target: { targetId: "peer-2", callerId: "peer-1" }, pings: [ping] };
 
 const chatLine = { channel: "all", fromId: "peer-2", name: "Ann", team: 0, text: "gg" };
@@ -481,6 +493,13 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
     parseWireCalls,
     { target: null, pings: Array.from({ length: 32 }, () => ping) },
   ],
+  ["traps (#1105)", parseWireTraps, { traps: [{ ...trap }] }],
+  ["no traps (#1105)", parseWireTraps, { traps: [] }],
+  [
+    "every trap the wire carries (#1105)",
+    parseWireTraps,
+    { traps: Array.from({ length: MAX_WIRE_GROUND_EFFECTS }, () => trap) },
+  ],
   ["chat (#479)", parsePeerChat, { channel: "team", text: "spike the monk" }],
   [
     "chat as long as the wire takes (#479)",
@@ -551,6 +570,14 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     { target: null, pings: Array.from({ length: MAX_WIRE_PINGS + 1 }, () => ping) },
   ],
   ["calls with no pings (#443)", parseWireCalls, { target: null }],
+  ["traps without a list (#1105)", parseWireTraps, {}],
+  [
+    "one trap too many (#1105)",
+    parseWireTraps,
+    { traps: Array.from({ length: MAX_WIRE_GROUND_EFFECTS + 1 }, () => trap) },
+  ],
+  ["a trap of no radius (#1105)", parseWireTraps, { traps: [{ ...trap, radius: 0 }] }],
+  ["a trap with no skill (#1105)", parseWireTraps, { traps: [{ ...trap, skillId: 3 }] }],
   [
     "calls with a target and no caller (#443)",
     parseWireCalls,

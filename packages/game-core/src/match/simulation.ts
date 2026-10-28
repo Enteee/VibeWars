@@ -116,6 +116,7 @@ import {
   type Aura,
   type CreateGroundEffect,
   type CreatureTemplate,
+  type GroundAct,
   type Skill,
 } from "../skills/types.js";
 import {
@@ -215,8 +216,9 @@ export const MAX_CREATURES = 32;
 
 /**
  * A circle on the ground (#1087, ADR-0035): not a body, so nothing can
- * target, kill or move it. It projects `aura` from where it was placed
- * until it ends; its owner dying does not end it.
+ * target, kill or move it. It does `act` from where it was placed until
+ * it ends: a ward projects an aura, a trap waits to be sprung (#1105).
+ * Its owner dying does not end it.
  */
 export interface GroundEffect {
   /** From 1, in the order they were placed. */
@@ -226,7 +228,7 @@ export interface GroundEffect {
   /** The owner's, as it was placed. */
   readonly team: number;
   readonly position: Vec2;
-  readonly aura: Aura;
+  readonly act: GroundAct;
   /** How long it was placed for. */
   readonly durationSeconds: number;
   remainingSeconds: number;
@@ -846,7 +848,7 @@ export class MatchSimulation {
       ownerId: owner.id,
       team: owner.combatant.team,
       position: owner.position,
-      aura: effect.aura,
+      act: effect.act,
       durationSeconds,
       remainingSeconds: durationSeconds,
     });
@@ -865,6 +867,78 @@ export class MatchSimulation {
       effect.remainingSeconds -= dt;
     }
     this.#groundEffects = this.#groundEffects.filter((effect) => effect.remainingSeconds > 0);
+  }
+
+  /**
+   * Every trap a living foe stands on springs (#1105), once everyone has
+   * moved this step, in id order: its effects land from its owner, alive
+   * or dead, on whoever its area takes around the trap, and it is gone.
+   * A foe is a body of another team that is not a spirit, its centre
+   * within the trigger radius; walls do not matter. A trap whose owner
+   * has left the match is gone with no effect.
+   */
+  #springTraps(): void {
+    if (!this.#groundEffects.some((effect) => effect.act.kind === "trap")) {
+      return;
+    }
+    const sprung = new Set<number>();
+    for (const effect of this.#groundEffects) {
+      if (effect.act.kind !== "trap") {
+        continue;
+      }
+      const owner = this.#participants.get(effect.ownerId);
+      if (owner === undefined) {
+        sprung.add(effect.id);
+        continue;
+      }
+      const { trap } = effect.act;
+      const triggered = [...this.#participants.values()].some(
+        (body) =>
+          !body.combatant.dead &&
+          body.creature?.kind !== "spirit" &&
+          body.combatant.team !== effect.team &&
+          distance(body.position, effect.position) <= trap.triggerRadius,
+      );
+      const skill = triggered ? getSkill(effect.skillId) : undefined;
+      if (skill === undefined) {
+        continue;
+      }
+      sprung.add(effect.id);
+      const springing = { ...skill, area: trap.area, effects: trap.effects };
+      const { events } = resolveSkillEffects({
+        skill: springing,
+        caster: owner.combatant,
+        targets: resolveTargets({
+          skill: springing,
+          caster: owner.combatant,
+          casterPosition: effect.position,
+          primary: undefined,
+          candidates: [...this.#participants.values()],
+          losBlockers: this.#walls,
+        }),
+        rng: this.#rng,
+        rules: this.#ruleset.combat,
+        surroundings: this.#participants,
+      });
+      this.#log.push({
+        tick: this.#tick,
+        atSeconds: this.#elapsedSeconds,
+        cause: "skill",
+        sourceId: owner.id,
+        skillId: skill.id,
+        weaponId: undefined,
+        attributeId: undefined,
+        area: { x: effect.position.x, y: effect.position.y, radius: trap.area.radius },
+        doubleStrike: false,
+        events,
+      });
+      this.#chargeFromDamage(owner.combatant, events);
+      this.#recordDeaths(events);
+      this.#recordKnockdowns(events);
+    }
+    if (sprung.size > 0) {
+      this.#groundEffects = this.#groundEffects.filter((effect) => !sprung.has(effect.id));
+    }
   }
 
   /**
@@ -896,14 +970,16 @@ export class MatchSimulation {
         });
       }
     }
-    // A ward's status names its owner: whoever cast it.
+    // A ward's status names its owner: whoever cast it. A trap projects nothing.
     for (const effect of this.#groundEffects) {
-      sources.push({
-        sourceId: effect.ownerId,
-        team: effect.team,
-        position: effect.position,
-        aura: effect.aura,
-      });
+      if (effect.act.kind === "aura") {
+        sources.push({
+          sourceId: effect.ownerId,
+          team: effect.team,
+          position: effect.position,
+          aura: effect.act.aura,
+        });
+      }
     }
     if (sources.length === 0 && !this.#auras) {
       return;
@@ -1569,6 +1645,7 @@ export class MatchSimulation {
       }
     }
 
+    this.#springTraps();
     this.#settleUpkeep(dt);
     this.#spreadStatuses();
     this.#fireStatusChanges();

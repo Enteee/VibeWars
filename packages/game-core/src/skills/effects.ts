@@ -20,6 +20,7 @@ import type { ProfessionId } from "../professions.js";
 import type { SimulationRng } from "../rng.js";
 import { ADRENALINE_PER_STRIKE, type CombatRules } from "../ruleset.js";
 import {
+  isEasilyInterrupted,
   isSpell,
   type Combatant,
   type DisableSkillEffect,
@@ -581,6 +582,24 @@ export function interruptIfCastingSpell(target: Combatant, events: CombatEvent[]
   const skill = cast === undefined ? undefined : getSkill(cast.skillId);
   if (skill !== undefined && isSpell(skill.type)) {
     interruptCast(target, events);
+  }
+}
+
+/**
+ * What a landed attack interrupts (#1105): a spell its dazed victim is
+ * casting (#546), or a cast its victim is easily interrupted in, such as
+ * setting a trap. Anything else is left alone, and nothing is said.
+ * Every landed attack calls it; a miss or a block never does.
+ */
+export function interruptOnHit(victim: Combatant, events: CombatEvent[]): void {
+  const cast = victim.cast.activeCast;
+  const skill = cast === undefined ? undefined : getSkill(cast.skillId);
+  if (skill === undefined) {
+    return;
+  }
+  const dazed = victim.statuses.active.some(({ id }) => getStatusDefinition(id).interruptsSpells);
+  if (isEasilyInterrupted(skill.type) || (dazed && isSpell(skill.type))) {
+    interruptCast(victim, events);
   }
 }
 

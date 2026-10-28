@@ -128,6 +128,7 @@ exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
   "paragon.stunning-strike": "interrupt condition",
   "paragon.wild-throw": "",
   "ranger.apply-poison": "condition",
+  "ranger.barbed-trap": "condition",
   "ranger.barrage": "",
   "ranger.broad-head-arrow": "interrupt condition",
   "ranger.burning-arrow": "condition",

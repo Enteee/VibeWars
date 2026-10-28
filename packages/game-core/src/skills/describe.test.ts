@@ -12,7 +12,7 @@ import {
 import { makeCombatant, withAttackDuration } from "./testing.js";
 import { resolveMagnitude } from "./scaling.js";
 import { STATUS_DEFINITIONS } from "./status.js";
-import type { SkillEffect } from "./types.js";
+import { isEasilyInterrupted, type SkillEffect } from "./types.js";
 
 /**
  * Descriptions are generated from the effect data, never authored, so
@@ -400,13 +400,14 @@ describe("describeSkill", () => {
     // Guards the switch in `describeEffect`: a new effect kind that
     // nobody described would silently vanish from tooltips. An `if` is
     // a line per effect inside it (#521), a spirit's summon one more for
-    // what it projects (#1064), and so does a ward (#1087).
+    // what it projects (#1064), and so does a ward (#1087); a trap is one
+    // line, then one per effect of its spring (#1105).
     const linesOf = (effect: SkillEffect): number => {
       if (effect.kind === "if") {
         return effect.effects.length;
       }
       if (effect.kind === "create-ground-effect") {
-        return 2;
+        return effect.act.kind === "aura" ? 2 : 1 + effect.act.trap.effects.length;
       }
       return effect.kind === "summon" && effect.creature.aura !== undefined ? 2 : 1;
     };
@@ -426,6 +427,7 @@ describe("describeSkill", () => {
           lines(entry.attack?.onBlocked ?? []) +
           (entry.whileActivating === undefined ? 0 : 1) +
           (entry.projectile === undefined ? 0 : 1) +
+          (isEasilyInterrupted(entry.type) ? 1 : 0) +
           (entry.corpse === undefined ? 0 : 1),
       );
       for (const line of described.effects) {
