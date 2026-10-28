@@ -18,6 +18,10 @@ import type { Combatant, Skill } from "./types.js";
  * The sort is what keeps this deterministic (ADR-0003): the server
  * iterates a Map and the headless runner an array, and without it the
  * cut would keep different targets in each. Nothing here is random.
+ *
+ * A party area (#1013) is no radius: the caster first, then every living
+ * team-mate by distance from the caster, however far and behind whatever
+ * wall. Creatures are not party members: no spirit, minion or pet.
  */
 
 export interface TargetCandidate {
@@ -62,6 +66,16 @@ export function resolveTargets(selection: TargetSelection): readonly Combatant[]
   const area = skill.area;
   if (area === undefined) {
     return primary === undefined ? [] : [primary.combatant];
+  }
+  if (area.origin === "party") {
+    const team = selection.candidates.filter(
+      ({ combatant, creature }) =>
+        creature === undefined &&
+        !combatant.dead &&
+        combatant.team === caster.team &&
+        combatant.id !== caster.id,
+    );
+    return [caster, ...nearestFirst(team, selection.casterPosition)];
   }
 
   const origin = area.origin === "caster" ? selection.casterPosition : primary?.position;

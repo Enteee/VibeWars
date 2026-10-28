@@ -20,7 +20,7 @@ import { effectiveActivationSeconds, outsideMatch, rankOf } from "./tick.js";
 import { blowRuleOf, isEasilyInterrupted } from "./types.js";
 import type {
   ApplyStatusEffect,
-  AreaRule,
+  RadiusArea,
   AttackWeaponClass,
   Aura,
   ChainRole,
@@ -1242,7 +1242,7 @@ const TARGET_TEXT: Record<Skill["target"], string> = {
   companion: "Your pet",
 };
 
-const AREA_WHO: Record<AreaRule["affects"], string> = {
+const AREA_WHO: Record<RadiusArea["affects"], string> = {
   enemies: "Foes",
   allies: "Allies",
   all: "Everyone",
@@ -1257,6 +1257,10 @@ function targetAndRange(skill: Skill): {
   readonly range: string | undefined;
 } {
   const area = skill.area;
+  if (area?.origin === "party") {
+    // Heal Party (#1013): every team-mate, however far.
+    return { target: "Your whole party", range: undefined };
+  }
   if (skill.target === "self" && area?.origin === "caster") {
     const where = AREA_TEXT.get(area.radius) ?? `within ${String(area.radius)}`;
     return { target: `${AREA_WHO[area.affects]} ${where}`, range: `${String(area.radius)} radius` };

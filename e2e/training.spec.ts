@@ -67,6 +67,15 @@ async function releaseControl(page: Page): Promise<void> {
   await expect(page.locator(".training")).not.toHaveClass(/is-armed/);
 }
 
+/**
+ * Release the arena without Esc, so the target stays (#1151): by clicking
+ * into the name field, as a player would.
+ */
+async function releaseByClickAway(page: Page): Promise<void> {
+  await page.locator("input.editor-name").click();
+  await expect(page.locator(".training")).not.toHaveClass(/is-armed/);
+}
+
 /** Take control of the arena by clicking a spot with nobody on it. */
 async function takeControl(page: Page): Promise<void> {
   await page.locator(".training-stage").click({ position: { x: 12, y: 12 } });
@@ -452,7 +461,10 @@ test("(17) after Esc releases the arena, Tab is the browser's again (#268)", asy
   await page.keyboard.press("Tab");
   await expect(page.locator(".training-stage")).toBeFocused();
 
-  // Nothing is attacking, so one Esc releases; no keyboard trap.
+  // Nothing is attacking: one Esc lets the target go (#1151), the next
+  // releases; no keyboard trap.
+  await page.keyboard.press("Escape");
+  await expect(page.locator(".training")).toHaveClass(/is-armed/);
   await releaseControl(page);
   await page.keyboard.press("Tab");
   await expect(page.locator(".training-stage")).not.toBeFocused();
@@ -845,7 +857,8 @@ test("(27) a right click on the ground moves nobody and keeps the target (#438)"
 
   await page.keyboard.press("Tab");
   await expect.poll(named).toBe(1);
-  await releaseControl(page);
+  // Not by Esc, which would let the target go (#1151).
+  await releaseByClickAway(page);
   const before = await stillArena(page, canvas);
 
   // Empty ground between the spawn and the ladder.
@@ -853,7 +866,7 @@ test("(27) a right click on the ground moves nobody and keeps the target (#438)"
   const ground = (await trainingView(page, canvas)).onPage({ x: 220, y: 330 });
   await page.mouse.click(ground.x, ground.y, { button: "right" });
   await page.mouse.move(1, 1);
-  await releaseControl(page);
+  await releaseByClickAway(page);
   const after = await stillArena(page, canvas);
   expect(await named()).toBe(1);
   expect(after.equals(before), "nobody should have moved").toBe(true);
@@ -1348,6 +1361,35 @@ test("(42) Symbol of Wrath strikes the dummy it was cast at once a second, five 
   await expect(hits).toHaveCount(5, { timeout: 20_000 });
   await page.waitForTimeout(2_000);
   await expect(hits).toHaveCount(5);
+});
+
+test("(43) Esc stops the attack and keeps the target, then a second Esc clears it (#1151)", async ({
+  page,
+}) => {
+  await openTraining(page);
+  await page.locator("select.training-scenario").selectOption("armor-ladder");
+  await expect(page.locator(".training-log")).toContainText("── Armor ladder ──");
+  await takeControl(page);
+  // Off the arena, so no name shows under the cursor: only the target's.
+  await page.mouse.move(1, 1);
+  const attacking = page.locator(".training-attacking");
+
+  await page.keyboard.press("Tab");
+  await expect.poll(() => shownNames(page)).toHaveLength(1);
+  await page.keyboard.press(key("attack"));
+  await expect(attacking).toContainText("attacking");
+
+  await page.keyboard.press("Escape");
+  await expect(attacking).not.toContainText("attacking");
+  await expect.poll(() => shownNames(page)).toHaveLength(1);
+  await expect(page.locator(".training")).toHaveClass(/is-armed/);
+
+  await page.keyboard.press("Escape");
+  await expect.poll(() => shownNames(page)).toEqual([]);
+  await expect(page.locator(".training")).toHaveClass(/is-armed/);
+
+  // Nothing left to stop or let go: Esc releases the arena.
+  await releaseControl(page);
 });
 
 test("2 swaps to weapon set 2, the empty 3 does nothing, and a slot's click swaps back (#489)", async ({

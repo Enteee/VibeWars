@@ -505,7 +505,7 @@ export interface PulseRule {
   /** More than 0. */
   readonly everySeconds: number;
   /** Who a pulse hits; `origin: "caster"` means the effect's position. */
-  readonly area: AreaRule;
+  readonly area: RadiusArea;
   readonly effects: readonly SkillEffect[];
 }
 
@@ -960,7 +960,10 @@ export interface SkillProjectile {
  * An area a skill also hits (ADR-0018). Orthogonal to `target`: Fireball
  * is still a legal-single-enemy spell, with a splash.
  */
-export interface AreaRule {
+export type AreaRule = RadiusArea | PartyArea;
+
+/** Everyone on a side within `radius` of the caster or the target (ADR-0018). */
+export interface RadiusArea {
   readonly radius: number;
   /** Centred on the caster, or on the target it was cast at. */
   readonly origin: "caster" | "target";
@@ -969,6 +972,15 @@ export interface AreaRule {
   readonly maxTargets: number | undefined;
   /** Whether the caster can be caught in its own area. */
   readonly includesCaster: boolean;
+}
+
+/**
+ * The caster and every living combatant on its team, at any distance and
+ * through walls (#1013): Heal Party's "entire party". GW1's party is the
+ * team here.
+ */
+export interface PartyArea {
+  readonly origin: "party";
 }
 
 /* -------------------------------------------------------------------------- */

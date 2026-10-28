@@ -1,0 +1,26 @@
+{
+  "id": "monk.remove-hex",
+  "name": "Remove Hex",
+  "profession": "monk",
+  "attribute": "No Attribute",
+  "type": "Spell.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 1,
+  "rechargeSeconds": 8,
+  "upkeep": false,
+  "description": "Remove a hex from target ally.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Monk/223-Remove_Hex",
+    "fetchedAt": "2026-10-27T21:33:21.412Z"
+  },
+  "unmapped": {}
+}

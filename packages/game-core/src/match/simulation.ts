@@ -2473,10 +2473,13 @@ export class MatchSimulation {
     ]);
     // Where an area landed, for whoever draws it: nowhere, when an area
     // centred on a target had no target to centre on, or when it is still
-    // flying.
+    // flying. A party area (#1013) has no ring to draw.
     const origin = skill.area?.origin === "caster" ? record.position : primary?.position;
     const area =
-      skill.area === undefined || origin === undefined || flight !== undefined
+      skill.area === undefined ||
+      skill.area.origin === "party" ||
+      origin === undefined ||
+      flight !== undefined
         ? undefined
         : { x: origin.x, y: origin.y, radius: skill.area.radius };
 
@@ -3434,7 +3437,7 @@ export class MatchSimulation {
     this.#recordDeaths(events);
     this.#recordKnockdowns(events);
     const area =
-      skill.area === undefined
+      skill.area === undefined || skill.area.origin === "party"
         ? undefined
         : { x: target.position.x, y: target.position.y, radius: skill.area.radius };
     this.#logShot(projectile, events, area);

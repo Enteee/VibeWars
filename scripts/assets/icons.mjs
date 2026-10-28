@@ -313,6 +313,13 @@ const status = {
       `<path d="M5 18c0-7 3-12 7-12s7 5 7 12" ${stroke(c, 2)}/>` +
       `<path d="M9 18c0-4 1.3-7 3-7s3 3 3 7" ${stroke(c, 1.6)}/>`,
   ],
+  // Enchantment: a plus carried on two gusts, health on the wind (#1013).
+  "healing-breeze": [
+    "enchantment",
+    (c) =>
+      `<path d="M15 4v7M11.5 7.5h7" ${stroke(c, 2.5)}/>` +
+      `<path d="M4 15.5h9a2 2 0 1 0-2-2M4 18.5h7a2 2 0 1 1-2 2" ${stroke(c, 1.6)}/>`,
+  ],
   // Stance: two chevrons, forward: move 25% faster.
   sprint: ["stance", (c) => `<path d="M7 9l4.5 5L7 19M12.5 9l4.5 5-4.5 5" ${stroke(c, 2.5)}/>`],
   // Stance: an arrowhead trailing speed lines: run 50% faster.
@@ -1199,6 +1206,21 @@ const skillGlyph = {
   // One big horned skull: the horror (#1112).
   "bone-horror": () =>
     smallSkull(12, 13, 0.85) + inkLine("M6.5 8.5C4 7.5 3.5 5 4 3M17.5 8.5C20 7.5 20.5 5 20 3", 2.2),
+  // A row of teeth rising from the ground: a trap's jaws, ready to bite (#1129).
+  jaws: () =>
+    inkLine("M3 19.5H14", 2.2) +
+    inkFill("M3 18.5L4.8 6.5L6.6 18.5L8.4 6.5L10.2 18.5L12 6.5L13.8 18.5Z"),
+  // A spell, and arcs of it carried on: Arcane Echo copies the next spell (#1136).
+  "echo-spell": () =>
+    `<circle cx="6" cy="11" r="3.4" fill="${C.ink}"/>` +
+    inkLine("M10.5 7A5.5 5.5 0 0 1 10.5 15M14 4A9 9 0 0 1 14 18", 2.2),
+  // A plain skill square, and three arcs: Echo copies the next skill of any type (#1136).
+  "echo-skill": () =>
+    `<rect x="3" y="8.5" width="7" height="7" rx="1" fill="${C.ink}"/>` +
+    inkLine(
+      "M12.5 8A5 5 0 0 1 12.5 16M16 5.5A8.5 8.5 0 0 1 16 18.5M19.5 3.5A12 12 0 0 1 19.5 20.5",
+      2,
+    ),
   // The resurrect figure in a ring: a signet's seal, one use (#1081).
   "resurrect-seal": () =>
     `<circle cx="10.5" cy="10.5" r="8" ${stroke(C.ink, 2)}/>` + smallFigure(10.5, 10.5, 0.55),
