@@ -163,6 +163,10 @@ const skillType = {
   well: () =>
     `<ellipse cx="12" cy="16" rx="8.5" ry="4" ${stroke(C.ink, 2.5)}/>` +
     `<path d="M12 3v10M8.5 9.5L12 13l3.5-3.5" ${stroke(C.ink, 2.5)}/>`,
+  // Jaws on the ground, teeth up: a trap waits where it was set (#1105).
+  trap: () =>
+    `<path d="M3 19h18" ${stroke(C.ink, 2.5)}/>` +
+    `<path d="M4.5 17L7 8l2.5 9M9.5 17L12 5l2.5 12M14.5 17L17 8l2.5 9" ${stroke(C.ink, 2.2)}/>`,
   // Plain square: a skill with no other type.
   skill: () => `<rect x="6" y="6" width="12" height="12" rx="1" fill="${C.ink}"/>`,
 };

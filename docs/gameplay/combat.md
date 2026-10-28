@@ -1329,12 +1329,33 @@ whole time, whether the body later stands up, respawns or not. With no
 corpse in reach the cast is refused and nothing is paid. A well acts on
 foes: your side standing in it gets nothing. Otherwise it is a ward:
 drawn the same, one status from two of a skill, at most 32 on the
-ground counting wards.
+ground counting wards and traps.
 
 **Well of Suffering** (Necromancer, Death Magic, well spell, 10 energy,
 1 s, 10 s recharge) leaves a well of radius 109 on the nearest corpse
 within cast range for 10...26 seconds: foes inside it suffer −5 Health
 degeneration.
+
+## Traps
+
+A **trap** (#1105) is a ground effect, as a ward is, set where its setter
+stands as the trap skill ends. A trap is not a spell, so Dazed does not
+slow it, but setting one is easily interrupted: any attack that lands on
+the setter during it interrupts it, a swing, an arrow or an attack skill;
+a miss, a block or a spell's damage does not. Interrupted or moved, there
+is no trap, the energy is spent and the skill recharges. Set, it waits for
+up to its duration, then ends with no effect. The first step a living foe
+that is not a spirit has its centre within 40 of it (adjacent, walls do
+not matter), it springs: its effects land on every foe its area takes
+around the trap, as an area skill's would, from its owner, alive or dead,
+and it is gone. Two traps under one foe both spring, oldest first. A trap
+whose owner left the match is gone. Only the setter's team sees it: an
+outline in the ally colour with its skill's icon at the centre. A foe
+sees nothing until it springs, and the host never sends it a foe's trap.
+
+**Barbed Trap** (Ranger, Wilderness Survival, trap, 10 energy, 2 s, 20 s
+recharge) lasts 90 seconds. Sprung, every foe nearby (81) takes 7...20
+piercing damage, becomes Crippled and begins Bleeding, both for 21 s.
 
 ## Death and scoring
 

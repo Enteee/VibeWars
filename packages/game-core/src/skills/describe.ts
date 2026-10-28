@@ -12,6 +12,7 @@ import {
   type StatusTriggerEvent,
 } from "./status.js";
 import { effectiveActivationSeconds, outsideMatch } from "./tick.js";
+import { isEasilyInterrupted } from "./types.js";
 import type {
   ApplyStatusEffect,
   AreaRule,
@@ -645,9 +646,25 @@ function describeEffects(
     return [describeEffect(effect, ranks), describeAura(effect.creature.aura, "in its range")];
   }
   if (effect.kind === "create-ground-effect") {
-    // What the ward projects (#1087): "Non-spirit allies in the area: 50%
-    // chance to block melee attacks".
-    return [describeEffect(effect, ranks), describeAura(effect.aura, "in the area")];
+    const { act } = effect;
+    if (act.kind === "aura") {
+      // What the ward projects (#1087): "Non-spirit allies in the area: 50%
+      // chance to block melee attacks".
+      return [describeEffect(effect, ranks), describeAura(act.aura, "in the area")];
+    }
+    // What the trap does when sprung (#1105): "When sprung, foes nearby:
+    // deals 20 piercing damage".
+    const { radius } = act.trap.area;
+    const who = `When sprung, foes ${AREA_TEXT.get(radius) ?? `within ${String(radius)}`}`;
+    return [
+      describeEffect(effect, ranks),
+      ...act.trap.effects.flatMap((inner) =>
+        describeEffects(inner, ranks).map(({ text, magnitude }) => ({
+          text: `${who}: ${lowerFirst(text)}`,
+          magnitude,
+        })),
+      ),
+    ];
   }
   if (effect.kind !== "if") {
     return [describeEffect(effect, ranks)];
@@ -672,8 +689,8 @@ const AURA_WHO: Record<Aura["affects"], string> = {
 };
 
 const GROUND_ANCHOR_TEXT: Record<CreateGroundEffect["anchor"], string> = {
-  caster: "a ward at your location",
-  corpse: "a well at its location",
+  caster: "at your location",
+  corpse: "at its location",
 };
 
 /** A share of health as GW1 words it (#936): "half", or "25%". */
@@ -900,12 +917,19 @@ function describeEffect(
       };
     }
     case "create-ground-effect": {
-      // "Creates a ward at your location for 17 seconds" (#1087), or a well
-      // "at its location", the corpse's (#1104).
+      // "Creates a ward at your location for 17 seconds" (#1087), "Sets a
+      // trap at your location for 90 seconds" (#1105), or a well "at its
+      // location", the corpse's (#1104).
       const magnitude = describeMagnitude(effect.durationSeconds, ranks);
+      const what =
+        effect.act.kind === "trap"
+          ? "Sets a trap"
+          : effect.anchor === "corpse"
+            ? "Creates a well"
+            : "Creates a ward";
       const where = GROUND_ANCHOR_TEXT[effect.anchor];
       return {
-        text: `Creates ${where} for ${String(magnitude.current)} seconds`,
+        text: `${what} ${where} for ${String(magnitude.current)} seconds`,
         magnitude,
       };
     }
@@ -1022,6 +1046,14 @@ function headlineOf(
       const inner = effect.effects.flatMap((each) => headlineOf(each, ranks) ?? []);
       return inner.find((number) => number.scales) ?? inner[0];
     }
+    case "create-ground-effect": {
+      // A trap's card leads with what its spring deals (#1105).
+      if (effect.act.kind !== "trap") {
+        return undefined;
+      }
+      const inner = effect.act.trap.effects.flatMap((each) => headlineOf(each, ranks) ?? []);
+      return inner.find((number) => number.scales) ?? inner[0];
+    }
     default:
       return undefined;
   }
@@ -1123,6 +1155,7 @@ const TYPE_TEXT: Record<SkillType, string> = {
   "binding-ritual": "Binding Ritual.",
   ward: "Ward Spell.",
   well: "Well Spell.",
+  trap: "Trap.",
   skill: "Skill.",
 };
 
@@ -1331,6 +1364,10 @@ export function describeSkill(
             magnitude: undefined,
           },
         ];
+  // A trap (#1105): any attack that lands while it is being set interrupts it.
+  const easilyInterrupted = isEasilyInterrupted(skill.type)
+    ? [{ text: "Easily interrupted", magnitude: undefined }]
+    : [];
   // A spell that flies (#535) lands only if it reaches its target.
   const projectile =
     skill.projectile === undefined
@@ -1353,6 +1390,7 @@ export function describeSkill(
     ...skill.effects.flatMap((effect) => describeEffects(effect, ranks)),
     ...onBlocked,
     ...whileActivating,
+    ...easilyInterrupted,
     ...projectile,
   ];
   const { target, range } = targetAndRange(skill);

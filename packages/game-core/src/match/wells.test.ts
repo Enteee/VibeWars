@@ -137,10 +137,13 @@ describe("Well of Suffering (#1104)", () => {
       position: vec2(100, 0),
       durationSeconds: 26,
     });
-    expect(placed?.aura).toEqual({
-      statusId: "well-of-suffering",
-      affects: "foes",
-      radius: AREA_IN_THE_AREA,
+    expect(placed?.act).toEqual({
+      kind: "aura",
+      aura: {
+        statusId: "well-of-suffering",
+        affects: "foes",
+        radius: AREA_IN_THE_AREA,
+      },
     });
   });
 
