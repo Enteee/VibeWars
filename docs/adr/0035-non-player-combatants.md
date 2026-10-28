@@ -96,3 +96,6 @@ built for players and is the larger, safe value.
 - A creature that fights swings a weapon built from its template, its
   summoner's rank snapshotted as its mastery (#467), so every attack
   path reaches it unchanged.
+- A creature's blow may carry its owner's skill (#1046): a pet attack
+  arms the companion's next blow, which resolves as the attack skill it
+  is, with the pet as the attacker and its snapshotted ranks.

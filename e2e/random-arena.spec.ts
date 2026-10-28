@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import { STORAGE_NAMESPACE } from "./helpers/base.js";
 import { openPeers } from "./helpers/peers.js";
 import { bringStarter, starterKey } from "./helpers/starter.js";
 import { key } from "./keys.js";
@@ -37,14 +38,23 @@ test("Random Arena is greyed out without a character to queue with, and 4v4 is t
 }) => {
   await page.goto("./");
   const row = page.locator(".menu-random-arena");
-  // The first start's rolled character (#853) queues; deleted, it does
-  // not come back, and nothing is left to queue with.
+  // The first start's rolled character (#853) queues; gone, it does not
+  // come back, and nothing is left to queue with. The menu cannot delete
+  // it (#1147), so the store is emptied under the page. Source text, as
+  // the e2e tsconfig has no DOM lib (see builds.spec.ts).
   await expect(row.getByRole("button", { name: "Random Arena", exact: true })).toBeEnabled();
-  await page.locator(".roster").getByRole("button", { name: "Edit", exact: true }).click();
-  await page.getByRole("button", { name: "more actions" }).click();
-  await page.getByRole("button", { name: "Delete", exact: true }).click();
-  await page.locator(".inline-confirm").getByRole("button", { name: "delete" }).click();
-  await expect(page.locator(".roster .empty-state")).toContainText("No characters yet.");
+  await page.evaluate(`
+    new Promise((resolve, reject) => {
+      const open = indexedDB.open(${JSON.stringify(STORAGE_NAMESPACE)}, 1);
+      open.onerror = () => reject(open.error);
+      open.onsuccess = () => {
+        const tx = open.result.transaction("characters", "readwrite");
+        tx.objectStore("characters").clear();
+        tx.onerror = () => reject(tx.error);
+        tx.oncomplete = () => resolve(null);
+      };
+    })
+  `);
   await page.reload();
   await expect(page.locator(".roster .empty-state")).toContainText("No characters yet.");
   await expect(row.getByRole("button", { name: "Random Arena", exact: true })).toBeDisabled();

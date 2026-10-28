@@ -814,6 +814,21 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Ranger/81-Comfort_Animal",
   },
   {
+    id: "ranger.brutal-strike",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/77-Brutal_Strike",
+  },
+  {
+    id: "ranger.maiming-strike",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/88-Maiming_Strike",
+  },
+  {
+    id: "ranger.disrupting-lunge",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/82-Disrupting_Lunge",
+  },
+  {
     id: "ranger.barbed-trap",
     profession: "ranger",
     url: "https://www.gw-memorial.net/skills/Ranger/123-Barbed_Trap",

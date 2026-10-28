@@ -730,6 +730,7 @@ export type SkillType =
   | "ward"
   | "well"
   | "trap"
+  | "pet-attack"
   | "skill";
 
 /**
@@ -825,6 +826,23 @@ export interface AttackSkillRule {
   readonly chain: ChainStep | undefined;
 }
 
+/**
+ * A pet attack's blow (#1046): its owner pays, and its pet's next blow
+ * is it, of the pet's own weapon, the owner's unused.
+ */
+export type PetAttackRule = Omit<AttackSkillRule, "weapon">;
+
+/** How long a pet attack waits for its pet's next blow (#1046). */
+export const PET_ATTACK_SECONDS = 10;
+
+/**
+ * What makes `skill` a blow (#1046): an attack skill's rule, or a pet
+ * attack's, its weapon the pet's own. `undefined` for any other skill.
+ */
+export function blowRuleOf(skill: Skill): PetAttackRule | undefined {
+  return skill.attack ?? skill.petAttack;
+}
+
 /** GW1's dagger chain: a lead attack, then an off-hand, then a dual (#831). */
 export type ChainRole = "lead" | "off-hand" | "dual";
 
@@ -899,6 +917,8 @@ export interface Skill {
   readonly area: AreaRule | undefined;
   /** Set exactly when `type === "attack"` (ADR-0029). */
   readonly attack: AttackSkillRule | undefined;
+  /** Set exactly when `type === "pet-attack"` (#1046); `attack` is then `undefined`. */
+  readonly petAttack: PetAttackRule | undefined;
   /**
    * A status the caster bears while activating it, gone the moment the
    * cast ends however it ends (#524): Healing Signet's armor loss.

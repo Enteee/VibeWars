@@ -167,6 +167,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     effects: [
       {
@@ -203,6 +204,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     // Slower than any arrow: a second's flight at full range, so a foe who
     // sees it leave can step out of where it is led to.
     projectile: { speed: RANGE_SPELL },
@@ -244,6 +246,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     effects: [
       {
@@ -295,6 +298,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     effects: [],
   },
@@ -335,6 +339,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     effects: [],
   },
@@ -371,6 +376,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     effects: [{ kind: "knockdown", durationSeconds: 4 }],
   },
@@ -405,6 +411,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     effects: [{ kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS }],
   },
@@ -426,6 +433,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // An *original* skill, not an import: the corpus's sacrifice skills
     // all also need hexes or regeneration, so none of them could be
@@ -483,6 +491,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     effects: [{ kind: "interrupt" }],
   },
@@ -515,6 +524,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // The real elite: Daze the target. Applying Dazed interrupts a spell
     // by itself (#546), so it still shuts a caster down, a spell-caster
@@ -540,6 +550,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     effects: [{ kind: "apply-status", statusId: "faintheartedness", durationSeconds: 13 }],
   },
@@ -569,6 +580,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "...have Cracked Armor for 5...17...20 seconds": 17 s, its rank-12 value.
     effects: [{ kind: "apply-status", statusId: "cracked-armor", durationSeconds: 17 }],
@@ -591,6 +603,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // GW1's energy-degeneration hex (#503), at its rank-12 duration.
     // Left out: the caster's own -1 health degeneration while it lasts,
@@ -615,6 +628,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "Target suffers from weakness for 10...26...30 seconds": 26 s, its
     // rank-12 value. Weakness's first source (#762).
@@ -645,6 +659,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // The 17% sacrifice is paid once a cast, however many foes it reaches;
     // "...suffer from weakness for 1...13...16 seconds": 13 s, its rank-12
@@ -672,6 +687,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "Target fleshy foe becomes Diseased for 10...22...25 seconds": 22 s,
     // its rank-12 value. Disease spreads on its own (#765); everyone
@@ -698,6 +714,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // GW1's energy-regeneration enchantment (#503), at its rank-12 duration.
     effects: [
@@ -723,6 +740,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // A self-enchantment: real armor gain, and the real movement penalty
     // that makes it a genuine trade-off rather than a free buff.
@@ -746,6 +764,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // Strong self-regeneration behind a long 3s cast — the canonical
     // "interrupt me" target, which is exactly why it pairs well with the
@@ -770,6 +789,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "Remove one condition from target other ally. If a condition is
     // removed, that ally is healed for 5...57...70 health."
@@ -808,6 +828,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // A 50% chance to block attacks (#534), at its rank-12 duration.
     effects: [{ kind: "apply-status", statusId: "guardian", durationSeconds: 6 }],
@@ -830,6 +851,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // The first maintained enchantment (#837): +3 Health regeneration, its
     // rank-12 value, for −1 energy pip on its caster while it lasts.
@@ -864,6 +886,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "...the opponent begins bleeding for 5...21...25 seconds": 21 s, its
     // rank-12 value.
@@ -898,6 +921,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "...and inflict a Deep Wound ... for 5...17...20 seconds": 17 s, its
     // rank-12 value.
@@ -932,6 +956,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     effects: [],
   },
@@ -965,6 +990,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "...your target suffers from Bleeding for 5...17...20 seconds": 17 s,
     // its rank-12 value.
@@ -1002,6 +1028,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "If target foe is suffering from a Hex, you gain 5...11...13 Energy."
     effects: [
@@ -1053,6 +1080,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     effects: [],
   },
@@ -1089,6 +1117,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "...and any Stance being used by target foe ends."
     effects: [{ kind: "remove-status", category: "stance", count: 1 }],
@@ -1127,6 +1156,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     effects: [
       {
@@ -1179,6 +1209,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     effects: [
       { kind: "apply-status", statusId: "bleeding", durationSeconds: 17 },
@@ -1219,6 +1250,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     effects: [
       {
@@ -1263,6 +1295,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     effects: [
       {
@@ -1301,6 +1334,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "...and your target is interrupted": when the arrow lands, so a miss
     // interrupts nothing.
@@ -1335,6 +1369,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "If Pin Down hits, your target is crippled for 3...13...15 seconds":
     // 13 s, its rank-12 value, when the arrow lands.
@@ -1369,6 +1404,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "If Hunter's Shot hits, your target begins Bleeding for 3...21...25
     // seconds": 21 s, its rank-12 value, when the arrow lands.
@@ -1406,6 +1442,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "If Crippling Shot hits, your target becomes Crippled for 1...10...12
     // seconds": 10 s, its rank-12 value, when the arrow lands.
@@ -1440,6 +1477,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "If Debilitating Shot hits, your target loses 1...8...10 energy."
     effects: [
@@ -1479,6 +1517,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "...and cause Burning for 1...6...7 seconds": 6 s, its rank-12 value.
     effects: [{ kind: "apply-status", statusId: "burning", durationSeconds: 6 }],
@@ -1509,6 +1548,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "...become blinded for 3...13...15 seconds": 13 s, its rank-12 value.
     effects: [{ kind: "apply-status", statusId: "blind", durationSeconds: 13 }],
@@ -1536,6 +1576,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "For 8...13...14 seconds, you move 25% faster": 13 s, its rank-12
     // value, until durations scale with ranks.
@@ -1560,6 +1601,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     effects: [{ kind: "apply-status", statusId: "dash", durationSeconds: 3 }],
   },
@@ -1582,6 +1624,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "For 8 seconds, you attack 33% faster but take double damage."
     effects: [{ kind: "apply-status", statusId: "frenzy", durationSeconds: 8 }],
@@ -1604,6 +1647,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "For 5...13...15 seconds, you move 25% faster and take half damage":
     // 13 s, its rank-12 value.
@@ -1627,6 +1671,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "For 1...7...8 seconds, you run 33% faster and have a 50% chance to
     // block incoming attacks": 7 s, its rank-12 value.
@@ -1651,6 +1696,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "For 5...10...11 seconds, you have a 75% chance to block melee and
     // projectile attacks, and you attack 33% faster": 10 s, its rank-12
@@ -1675,6 +1721,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "For 1...7...8 seconds, you move 33% faster and have a 75% chance to
     // block attacks. Escape ends if you make a melee attack" (PvP): 7 s,
@@ -1715,6 +1762,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "...and any Stance being used by your target ends."
     effects: [{ kind: "remove-status", category: "stance", count: 1 }],
@@ -1750,6 +1798,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "If it hits a non-moving target, you inflict a Deep Wound for
     // 5...17...20 seconds": read as the spear lands (#921).
@@ -1790,6 +1839,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "If this attack hits, your target begins Bleeding for 5...17...20
     // seconds": 17 s, its rank-12 value.
@@ -1824,6 +1874,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "If your attack hits a Bleeding foe, that foe is Crippled for
     // 5...17...20 seconds": read as the spear lands.
@@ -1864,6 +1915,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "If this attack hits a foe with less than 50% Health, that foe
     // suffers from a Deep Wound for 5...17...20 seconds": read after the
@@ -1907,6 +1959,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "If it hits a foe suffering from a Condition, that foe is also Dazed
     // for 4...9...10 seconds": 9 s, read after the spear has landed.
@@ -1955,6 +2008,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     effects: [],
   },
@@ -1983,6 +2037,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: "healing-signet-armor",
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     effects: [
       {
@@ -2017,6 +2072,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // +21 armor for 10 seconds, ending after 3 incoming attacks: its
     // rank-12 numbers, in the status.
@@ -2047,6 +2103,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // 13 Health per second while moving and 33% faster for 9 seconds,
     // ending on a hit: its rank-12 numbers, in the status.
@@ -2077,6 +2134,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // +24 armor when not moving for 17 seconds, ending if its bearer
     // attacks: its rank-12 numbers, in the status.
@@ -2107,6 +2165,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // 33% faster and 13 Health per second while moving for 9 seconds:
     // its rank-12 numbers, in the status (#956).
@@ -2130,6 +2189,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "For 5...17...20 seconds, target other ally moves 33% faster. This
     // skill ends if that ally successfully hits with an attack." (#956)
@@ -2158,6 +2218,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "For 24 seconds, enemies struck by your physical attacks become
     // poisoned for 3...13...15 seconds": the poison is the status's
@@ -2187,6 +2248,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "For 15 seconds, your next 2 spells cost 10...16...18 less Energy to
     // cast": the two spells and the 16 are the status's `nextSpells`.
@@ -2222,6 +2284,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "For 10 seconds, the next attack skill used ... also causes Burning
     // for 1...3...3 seconds": the burning is the status's `nextAttackSkill`.
@@ -2252,6 +2315,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // A 50% block for 9 seconds, ending on a member's attack-skill hit:
     // its rank-12 numbers, in the status (#956).
@@ -2282,6 +2346,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "For 10 seconds, the next time each party member within earshot uses
     // a Skill, that party member gains 45...97...110 Health" (PvP, #999):
@@ -2308,6 +2373,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "For 3...7...8 seconds": 7 s, its rank-12 value; the regeneration,
     // the block and the end on attacking are the status's.
@@ -2331,6 +2397,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "That ally loses one condition for each spirit within earshot"
     // (#1064): earshot of the ally, any team's spirit.
@@ -2363,6 +2430,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "If any Spirits are within earshot, you don't sacrifice Health"
     // (#1064): earshot of you, any team's spirit.
@@ -2399,6 +2467,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "If that ally is under the effects of a Weapon Spell, Wielder's Boon
     // heals for an additional 15...63...75 Health."
@@ -2443,6 +2512,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "For 10 seconds, target ally gains 5...21...25 Health per second and an
     // additional 5...21...25 Health per second if that ally is within
@@ -2468,6 +2538,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "For 5...21...25 seconds, target ally has a Weapon of Quickening, and
     // Spells and Binding Rituals recharge 33% faster": 21 s, its rank-12
@@ -2492,6 +2563,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "For 5...13...15 seconds, you attack 25% faster": 13 s, its rank-12
     // value.
@@ -2520,6 +2592,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "For 8 seconds, the next time target ally takes damage or life steal
     // from a foe, that ally steals up to 20...68...80 health from that foe
@@ -2545,6 +2618,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "For 8 seconds, the next time target ally takes damage or life steal
     // from a foe, that ally steals up to 15...51...60 Health from that
@@ -2569,6 +2643,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "For 20 seconds, target ally has a Splinter Weapon. Target ally's next
     // 1...4...5 attacks deal 5...25...30 damage to up to 4 adjacent foes":
@@ -2593,6 +2668,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "Target ally is healed for 15...68...80 Health. If that ally is under
     // the effects of a weapon Spell, that ally loses one Condition": the
@@ -2636,6 +2712,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "If target foe is casting a Spell or Chant, the Skill is interrupted
     // and target foe takes 30...102...120 damage."
@@ -2675,6 +2752,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "If target foe is casting a Spell or Chant, the Skill is interrupted
     // and you gain 1...25...31 Energy."
@@ -2713,6 +2791,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "Interrupt target foe's action. If that action was a spell, you gain
     // 3...13...15 Energy" (#920): any action, and energy for a spell only.
@@ -2750,6 +2829,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "Remove an enchantment from target foe. If an enchantment is
     // removed, that foe takes 14...83...100 damage."
@@ -2789,6 +2869,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "Remove an Enchantment from target foe. If an Enchantment is
     // removed, you gain 8...15...17 Energy and 40...104...120 Health."
@@ -2834,6 +2915,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     // Our own tuning, as GW1 publishes no speeds: lightning flies half as
     // fast again as Fireball, so it is harder to step out of (#761).
     projectile: { speed: 1.5 * RANGE_SPELL },
@@ -2873,6 +2955,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "Target foe loses 1...8...10 Energy and takes 9 damage for each
     // point of energy lost."
@@ -2908,6 +2991,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "Target foe loses 4...6...7 Energy. You then gain 2 Energy for each
     // point of Energy target foe lost."
@@ -2937,6 +3021,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "Target foe loses 1...8...10 energy. For each point of energy lost,
     // that foe and all nearby foes take 7 damage and all nearby foes take
@@ -2991,6 +3076,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "For 10 seconds, whenever target foe casts a spell, that foe takes
     // 35...119...140 damage." The damage is the hex's, at rank 12.
@@ -3014,6 +3100,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "For 6 seconds, the next time target foe uses a skill, that skill
     // takes an additional 10...47...56 seconds to recharge." The extra
@@ -3038,6 +3125,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "If you cast a spell in the next 20 seconds, Arcane Echo is replaced
     // with that spell for 20 seconds." The copy is the status's (#469).
@@ -3061,6 +3149,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "For 30 seconds, Echo is replaced with the next skill you use. Echo
     // acts as this skill for 20 seconds." The copy is the status's (#469).
@@ -3084,6 +3173,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "For 5...13...15 seconds, whenever target foe attacks, that foe takes
     // 15...39...45 damage" (PvP). Both at rank 12, as every status is.
@@ -3107,6 +3197,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "For 20 seconds, target foe suffers health degeneration of 1. The
     // caster is healed for 30...102...120 when Parasitic Bond ends." The
@@ -3131,6 +3222,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "For 60 seconds, whenever you suffer from a new Condition, all foes
     // in the area suffer from that same Condition and you sacrifice
@@ -3161,6 +3253,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "Heal target ally for 5...81...100 Health. Heal for an additional
     // 30...98...115 Health if that ally is below 50% health."
@@ -3203,6 +3296,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "Heal target other ally for 15...51...60 Health and an additional
     // 10...30...35 Health for each enchantment or hex on that ally" (#920).
@@ -3253,6 +3347,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     effects: [],
   },
@@ -3274,6 +3369,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "For 5...17...20 seconds, you have 1...3...4 Health regeneration for
     // each Enchantment (maximum of 3) on you": 17 s, its rank-12 value.
@@ -3298,6 +3394,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "For 4...9...10 seconds, you cannot be knocked down and move 25%
     // faster": 9 s, its rank-12 value.
@@ -3321,6 +3418,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "For 2...8...10 seconds, you attack 25% faster": 8 s, its rank-12 value.
     effects: [{ kind: "apply-status", statusId: "heart-of-fury", durationSeconds: 8 }],
@@ -3354,6 +3452,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "If this attack hits, target foe suffers from Bleeding for 5...17...20
     // seconds, and you lose 1 Dervish enchantment. If an enchantment is
@@ -3394,6 +3493,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "Remove 1 Dervish Enchantment. Target ally is healed for
     // 30...126...150 Health. If an Enchantment was removed in this way,
@@ -3436,6 +3536,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "You gain 80...136...150 Health and remove 1 Dervish enchantment. If
     // an enchantment was removed in this way, you also lose 1...3...3
@@ -3479,6 +3580,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "For 15 seconds, whenever you attack a foe with your scythe, you deal
     // 10...22...25 slashing damage to all adjacent foes": the status deals it.
@@ -3503,6 +3605,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "For 30 seconds, the next 1...4...5 times you hit with a scythe, all
     // other adjacent foes take 10...50...60 earth damage": the status does.
@@ -3526,6 +3629,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "You remove 1 Dervish enchantment and for 1...6...7 you move 25%
     // faster. If an enchantment was removed, you run 50% faster instead":
@@ -3579,6 +3683,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     effects: [
       {
@@ -3629,6 +3734,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     effects: [
       { kind: "energy-gain", amount: { flat: 3 }, perTarget: true },
@@ -3662,6 +3768,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     effects: [
       {
@@ -3715,6 +3822,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     effects: [
       {
@@ -3745,6 +3853,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "All nearby foes are struck for 10...34...40 earth damage. For 30
     // seconds, your attacks deal earth damage": 34, its rank-12 value. The
@@ -3783,6 +3892,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "All nearby foes are struck for 10...34...40 earth damage. For 30
     // seconds, your attacks deal earth damage": 34. The status blinds
@@ -3821,6 +3931,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "All nearby foes begin Bleeding for 5...13...15 seconds. For 30
     // seconds, this enchantment does nothing": 13 s. The status cripples
@@ -3869,6 +3980,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     effects: [{ kind: "interrupt" }],
   },
@@ -3903,6 +4015,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "If Concussion Shot hits while target foe is casting a spell, the
     // spell is interrupted and your target is dazed for 5...17...20
@@ -3940,6 +4053,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "If target foe is casting a spell or chant, that skill and all
     // skills of the same attribute are disabled for 1...10...12 seconds
@@ -3985,6 +4099,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "If the interrupted action was a skill, that skill is disabled for
     // an additional 20 seconds."
@@ -4022,6 +4137,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "If it hits, this attack interrupts the target's current action. If
     // that action was a skill, that skill is disabled for an additional
@@ -4055,6 +4171,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "Target party member is returned to life with 20...56...65% health
     // and 42...80...90% energy."
@@ -4100,6 +4217,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "Resurrect target party member. That party member is returned to
     // life with 100% Health and 25% Energy."
@@ -4131,6 +4249,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "Target party member is returned to life with 25% Health and zero
     // Energy, and is teleported to your current location. All of target's
@@ -4178,6 +4297,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "Resurrect target party member with 5...13...15% Health and
     // 1...3...4% Energy for each party member within earshot." 13% and 3%
@@ -4213,6 +4333,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "Lose half your Health. Resurrect target ally with your current
     // Health and 5...17...20% Energy." 17% at Restoration Magic 12.
@@ -4253,6 +4374,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "Strike target foe for 5...33...40 lightning damage. This spell has
     // 25% armor penetration."
@@ -4286,6 +4408,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "Target foe suffers 10...42...50 lightning damage. If you have more
     // energy than target foe, that foe suffers 10...42...50 additional
@@ -4334,6 +4457,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     // Our own tuning, as GW1 publishes no speeds: a shard flies a little
     // faster than Fireball, slower than Lightning Orb.
     projectile: { speed: 1.25 * RANGE_SPELL },
@@ -4370,6 +4494,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     // The nearest fresh corpse within cast range, as Soul Feast's (#467).
     corpse: { radius: RANGE_SPELL },
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "Exploit nearest corpse to animate a level 1...14...17 Bone Horror."
     effects: [{ kind: "summon", creature: BONE_HORROR, count: 1 }],
@@ -4393,6 +4518,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     // The nearest fresh corpse within cast range, as Soul Feast's (#467).
     corpse: { radius: RANGE_SPELL },
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "Exploit nearest corpse to animate two level 0...10...12 Bone Minions."
     effects: [{ kind: "summon", creature: BONE_MINION, count: 2 }],
@@ -4417,6 +4543,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     // caster, no line of sight (#466, Q2).
     corpse: { radius: RANGE_SPELL },
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "Exploit nearest corpse to steal 50...234...280 Health."
     effects: [
@@ -4447,6 +4574,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     // The nearest fresh corpse, as Soul Feast's (#1104).
     corpse: { radius: RANGE_SPELL },
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // PvP: "Exploit nearest corpse to create a Well of Suffering at its
     // location. For 10...26...30 seconds, foes in that area suffer health
@@ -4491,6 +4619,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "...attack 50% slower for the next 5...25...30 seconds."
     effects: [{ kind: "apply-status", statusId: "shadow-of-fear", durationSeconds: 25 }],
@@ -4518,6 +4647,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "For 10...22...25 seconds, whenever target foe attacks or uses a
     // skill, Spiteful Spirit deals 15...39...45 shadow damage to that foe
@@ -4542,6 +4672,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "For 5...13...15 seconds, whenever target foe hits with an attack,
     // you steal 15...39...45 health from that foe." The steal is the hex's.
@@ -4565,6 +4696,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "For 30 seconds, whenever target foe takes physical damage, Mark of
     // Pain deals 10...34...40 shadow damage to adjacent foes." The damage
@@ -4589,6 +4721,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "Steal up to 18...52...60 Health from target foe."
     effects: [
@@ -4643,6 +4776,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     effects: [],
   },
@@ -4665,6 +4799,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // The PvP split: "For 8 seconds, whenever you hit with an attack, you
     // gain 1 additional strike of adrenaline."
@@ -4688,6 +4823,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "For 5...19...23 seconds, target ally cannot lose more than 10%
     // health due to damage from a single attack or spell": 19 s, its
@@ -4712,6 +4848,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "Lose half your current health. Target other ally is healed for
     // 100...129...136% of the amount you lost."
@@ -4764,6 +4901,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     effects: [],
   },
@@ -4792,6 +4930,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // PvP: "...and below 75% Health, gain +1...4...5 Health regeneration"
     // for 10 seconds. Read as it lands; it stays on one healed above.
@@ -4821,6 +4960,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "You gain 30...66...75 Health. For each ally within earshot, you
     // also gain +10...18...20 Health (maximum 140 Health)." The caster is
@@ -4860,6 +5000,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "If target foe is using a skill, that foe and all foes in the area
     // are interrupted and suffer 15...63...75 damage and foes in the area
@@ -4919,6 +5060,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "For 5...17...20 seconds, spells you cast recharge 33% faster."
     effects: [{ kind: "apply-status", statusId: "mantra-of-recovery", durationSeconds: 17 }],
@@ -4948,6 +5090,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "...are struck for 20...68...80 cold damage and move 66% slower for
     // 2...5...6 seconds."
@@ -4988,6 +5131,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "...are struck for 10...70...85 cold damage. For 10 seconds, all foes
     // move 66% slower."
@@ -5025,6 +5169,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "For 2 seconds ... Unless this enchantment ends prematurely, that
     // ally is healed for 30...102...120 Health": the status's `expires`.
@@ -5048,6 +5193,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "While you maintain this enchantment, any hex cast on target ally
     // take twice as long to cast. When Holy Veil ends, one hex is removed."
@@ -5071,6 +5217,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "Remove 5...8...9 enchantments from target foe. For each Monk
     // Enchantment removed, you lose 55...31...25" Health: fewer, the
@@ -5103,6 +5250,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "Transfer 1...3...3 negative conditions and their remaining
     // durations from yourself to target touched foe."
@@ -5131,6 +5279,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "Target enemy is blinded for 3...7...8 seconds": 7 s, its rank-12 value.
     effects: [{ kind: "apply-status", statusId: "blind", durationSeconds: 7 }],
@@ -5157,6 +5306,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "...is knocked down and struck for 10...50...60 lightning damage. This
     // skill has 25% armor penetration."
@@ -5197,6 +5347,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "...are struck for 26...85...100 earth damage. Knocked down foes are
     // struck for 10...56...68 additional earth damage." Down is read before
@@ -5253,6 +5404,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "...are struck for 7...91...112 fire damage and knocked down."
     effects: [
@@ -5297,6 +5449,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     // Our own tuning, as GW1 publishes no speeds: "fast-moving", Lightning
     // Orb's speed.
     projectile: { speed: 1.5 * RANGE_SPELL },
@@ -5343,6 +5496,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "Foes already on fire ... are struck for 10...82...100 fire damage.
     // Foes not already on fire begin Burning for 1...6...7 seconds": 6 s,
@@ -5388,6 +5542,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     // Our own tuning: Fireball's speed.
     projectile: { speed: RANGE_SPELL },
     // "...strikes target foe for 10...70...85 earth damage and causes
@@ -5422,6 +5577,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     // Our own tuning: "a large stone", Fireball's speed.
     projectile: { speed: RANGE_SPELL },
     // "...for 45...93...105 earth damage if it hits. If Stoning hits a foe
@@ -5466,6 +5622,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "Heal target other ally for 35...151...180 health."
     effects: [
@@ -5496,6 +5653,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "For 8 seconds, the next time target ally would take damage or life
     // steal, that ally gains that amount of health instead, maximum
@@ -5520,6 +5678,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "Remove a hex from target ally. If a hex is removed, foes in the area
     // suffer 10...70...85 holy damage": the area is the ally's.
@@ -5565,6 +5724,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "Remove all conditions from target other ally. That ally is healed
     // 10...58...70 health for each condition removed."
@@ -5602,6 +5762,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "Remove one Hex from target ally. If a Hex was removed, that ally is
     // healed for 30...86...100 Health": the current page's 86, not the 102
@@ -5641,6 +5802,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "Remove one Condition from target ally. If a Condition was removed,
     // foes in the area take 10...50...60 damage": holy, and the area is the
@@ -5688,6 +5850,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "Touched ally loses two conditions and is healed for 15...51...60
     // Health for each condition removed in this way."
@@ -5721,6 +5884,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "For 30 seconds, each time target ally attacks or casts a spell, that
     // ally is healed for 5...17...20 health": the 17 is the status's.
@@ -5748,6 +5912,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "Shadow Step to target foe. If that foe has more Health than you, you
     // are healed for 65...173...200": who has more is read before the step.
@@ -5785,6 +5950,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "For 6 seconds, you gain 5...9...10 Health regeneration. When Shadow
     // Refuge ends, you gain 40...88...100 Health if you are attacking."
@@ -5808,6 +5974,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "For 30...54...60 seconds, if you are below 50% Health, you have a 75%
     // chance to block attacks": 54 s, its rank-12 value.
@@ -5831,6 +5998,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // "For 10...30...35 seconds, you have an additional 3...13...15% chance
     // to land a critical hit when attacking. You gain 1 Energy whenever you
@@ -5877,6 +6045,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     effects: [
       {
@@ -5923,6 +6092,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     effects: [
       {
@@ -5989,6 +6159,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     effects: [
       {
@@ -6034,6 +6205,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     effects: [{ kind: "apply-status", statusId: "poison", durationSeconds: 17 }],
   },
@@ -6063,6 +6235,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     // you have Charm Animal equipped." No match has an animal to charm:
     // on the bar, it brings the wolf, and it is never cast.
     companion: WOLF,
+    petAttack: undefined,
     effects: [],
   },
   {
@@ -6084,6 +6257,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     projectile: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     // The PvP version: "You heal your animal companion for 20...87...104
     // Health. If your companion is dead, it is resurrected with
     // 10...48...58% Health." The heal skips the dead and the
@@ -6112,6 +6286,124 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   },
 
   /* ---------------------------------------------------------------------- */
+  /* Pet attacks (#1046)                                                    */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "ranger.brutal-strike",
+    name: "Brutal Strike",
+    type: "pet-attack",
+    elite: false,
+    profession: "ranger",
+    attributeId: "ranger.beast-mastery",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 5,
+    range: AREA_EARSHOT,
+    target: "companion",
+    area: undefined,
+    attack: undefined,
+    // "Your animal companion attempts a brutal strike that deals
+    // +5...29...35 damage. If that attack strikes a foe whose health is
+    // below 50%, that foe takes an additional +5...29...35 damage."
+    petAttack: {
+      weaponDamage: 1,
+      bonusDamage: { scaling: { attributeId: "ranger.beast-mastery", atZero: 5, atTwelve: 29 } },
+      conditionalBonus: {
+        condition: { kind: "target-health-below", fraction: 0.5 },
+        amount: { scaling: { attributeId: "ranger.beast-mastery", atZero: 5, atTwelve: 29 } },
+      },
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    companion: undefined,
+    effects: [],
+  },
+  {
+    id: "ranger.maiming-strike",
+    name: "Maiming Strike",
+    type: "pet-attack",
+    elite: false,
+    profession: "ranger",
+    attributeId: "ranger.beast-mastery",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 5,
+    range: AREA_EARSHOT,
+    target: "companion",
+    area: undefined,
+    attack: undefined,
+    // "Your animal companion attempts a maiming strike that deals
+    // +5...17...20 damage."
+    petAttack: {
+      weaponDamage: 1,
+      bonusDamage: { scaling: { attributeId: "ranger.beast-mastery", atZero: 5, atTwelve: 17 } },
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    companion: undefined,
+    // "If that attack hits, that foe becomes Crippled for 3...13...15
+    // seconds": 13 s, its rank-12 value, as Pin Down's.
+    effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: 13 }],
+  },
+  {
+    id: "ranger.disrupting-lunge",
+    name: "Disrupting Lunge",
+    type: "pet-attack",
+    elite: false,
+    profession: "ranger",
+    attributeId: "ranger.beast-mastery",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 10,
+    range: AREA_EARSHOT,
+    target: "companion",
+    area: undefined,
+    attack: undefined,
+    // "Your animal companion attempts a disrupting lunge that deals
+    // +1...10...12 damage."
+    petAttack: {
+      weaponDamage: 1,
+      bonusDamage: { scaling: { attributeId: "ranger.beast-mastery", atZero: 1, atTwelve: 10 } },
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    companion: undefined,
+    // "If that attack strikes a foe using a skill, that skill is
+    // interrupted and is disabled for an additional 20 seconds", as
+    // Distracting Shot's.
+    effects: [
+      { kind: "interrupt" },
+      { kind: "disable-skill", which: "interrupted", seconds: { flat: 20 } },
+    ],
+  },
+
+  /* ---------------------------------------------------------------------- */
   /* Spirits (#1064)                                                        */
   /* ---------------------------------------------------------------------- */
   {
@@ -6133,6 +6425,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     projectile: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     // "Create a level 1...8...10 Spirit. Non-spirit creatures within range
     // take 4 additional damage whenever they take physical damage. This
     // Spirit dies after 30...198...240 seconds." A level-8 spirit: 50 + 20
@@ -6180,6 +6473,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     projectile: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     // PvP: "Create a level 1...8...10 Spirit. Non-Spirit allies within its
     // range gain +1...3...3 Health regeneration. This Spirit dies after
     // 15...39...45 seconds." A level-8 spirit: 50 + 20 per level, armor 51.
@@ -6226,6 +6520,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     projectile: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     // PvP: "You create a Ward Against Melee at your current location. For
     // 5...17...20 seconds, non-spirit allies in this area have a 50%
     // chance to block melee attacks" (#1087).
@@ -6262,6 +6557,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     projectile: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     // PvP: "When Barbed Trap is triggered, all nearby foes are struck for
     // 7...20...23 piercing damage, become Crippled, and begin Bleeding for
     // 3...21...25 seconds. Barbed Trap ends after 90 seconds" (#1105): the
@@ -6319,6 +6615,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     target: "self",
     area: undefined,
     attack: undefined,
+    petAttack: undefined,
     whileActivating: undefined,
     projectile: undefined,
     corpse: undefined,
@@ -6379,6 +6676,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     target: "single-enemy",
     area: undefined,
     attack: undefined,
+    petAttack: undefined,
     whileActivating: undefined,
     projectile: undefined,
     corpse: undefined,

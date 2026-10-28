@@ -88,10 +88,10 @@ own development was verified that way; see
   repeatable matches.
 - **Character builder** with profession/attribute rules and versioned
   browser-local persistence. The first start rolls you a random starter
-  character, with a Reroll on its row. Pick a character on the menu and
-  you take that build into the match — the host validates it and hands a
-  random starter build if it is illegal, so a build is a request, never
-  a claim.
+  character under a random name, with Clone and Reroll on its row: Clone
+  gives you a copy to edit. Pick a character on the menu and you take
+  that build into the match — the host validates it and hands a random
+  starter build if it is illegal, so a build is a request, never a claim.
 - **Team builder** for planning a roster: create, rename, add, remove,
   reorder, duplicate and delete, at any team size. A team is a local
   planning tool — see the limits below.

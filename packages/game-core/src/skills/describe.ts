@@ -17,7 +17,7 @@ import {
   type StatusTriggerEvent,
 } from "./status.js";
 import { effectiveActivationSeconds, outsideMatch, rankOf } from "./tick.js";
-import { isEasilyInterrupted } from "./types.js";
+import { blowRuleOf, isEasilyInterrupted } from "./types.js";
 import type {
   ApplyStatusEffect,
   AreaRule,
@@ -631,7 +631,7 @@ function conditionText(condition: EffectCondition): string {
 
 /** An attack skill's damage type (#923), as " lightning" in "+18 lightning damage". */
 function damageTypeText(skill: Skill): string {
-  const type = skill.attack?.damageType;
+  const type = blowRuleOf(skill)?.damageType;
   return type === undefined ? "" : ` ${type}`;
 }
 
@@ -1212,6 +1212,7 @@ const TYPE_TEXT: Record<SkillType, string> = {
   ward: "Ward Spell.",
   well: "Well Spell.",
   trap: "Trap.",
+  "pet-attack": "Pet Attack.",
   skill: "Skill.",
 };
 
@@ -1331,21 +1332,23 @@ export function describeSkill(
     skill.cost?.kind === "adrenaline" && skill.cost.losesAll === true
       ? [{ text: "Lose all adrenaline", magnitude: undefined }]
       : [];
+  // A pet attack's (#1046) reads as an attack skill's.
+  const rule = blowRuleOf(skill);
   // A chain attack's place in its chain (#831), first, as GW1 prints it.
-  const chain = skill.attack?.chain;
+  const chain = rule?.chain;
   const chainLine = chain === undefined ? [] : [{ text: chainText(chain), magnitude: undefined }];
   // An attack skill's "+16 damage" (#417): its bonus over the weapon's
   // blow, first, as GW1 writes it. Broad Head Arrow has none. One whose
   // weapon's own roll counts for nothing (#1038) "deals only" its bonus,
   // or, with none, "deals no damage" (Distracting Blow).
-  const bonusDamage = skill.attack?.bonusDamage;
+  const bonusDamage = rule?.bonusDamage;
   const bonus = bonusDamage === undefined ? undefined : describeMagnitude(bonusDamage, ranks);
   // Then its bonus while a state holds (#794): Mystic Sweep's "If you
   // have an enchantment: +10 damage".
-  const conditionalBonus = skill.attack?.conditionalBonus;
+  const conditionalBonus = rule?.conditionalBonus;
   const more =
     conditionalBonus === undefined ? undefined : describeMagnitude(conditionalBonus.amount, ranks);
-  const weaponless = skill.attack?.weaponDamage === 0;
+  const weaponless = rule?.weaponDamage === 0;
   const bonusLine = [
     ...(bonus === undefined
       ? weaponless
@@ -1370,7 +1373,7 @@ export function describeSkill(
   ];
   // An attack that rolls no block (#1038): Wild Throw, Crippling Shot.
   const unblockableLine =
-    skill.attack?.unblockable === true ? [{ text: "Cannot be blocked", magnitude: undefined }] : [];
+    rule?.unblockable === true ? [{ text: "Cannot be blocked", magnitude: undefined }] : [];
   // A scythe's attack skill cleaves as its swing does (#977), unless it
   // has an area of its own.
   const cleaves = skill.attack?.weapon === "scythe" && skill.area === undefined;
@@ -1394,7 +1397,7 @@ export function describeSkill(
           },
         ];
   // Its own armor penetration (#923): Spear of Lightning's 25%.
-  const armorPenetration = skill.attack?.armorPenetration ?? 0;
+  const armorPenetration = rule?.armorPenetration ?? 0;
   const penetrationLine =
     armorPenetration > 0
       ? [
@@ -1405,7 +1408,7 @@ export function describeSkill(
         ]
       : [];
   // An attack skill's if-blocked effects (#534), after the ones a hit gets.
-  const onBlocked = (skill.attack?.onBlocked ?? []).flatMap((effect) =>
+  const onBlocked = (rule?.onBlocked ?? []).flatMap((effect) =>
     describeEffects(effect, ranks).map(({ text, magnitude }) => ({
       text: `If blocked: ${lowerFirst(text)}`,
       magnitude,
