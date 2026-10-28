@@ -201,8 +201,8 @@ export const SKILL_ICONS = {
   "monk.rebirth": { glyph: "resurrect", modifier: "self" },
   "paragon.signet-of-return": { glyph: "resurrect", modifier: "area" },
   "ritualist.flesh-of-my-flesh": { glyph: "resurrect", modifier: "half" },
-  // A placeholder: health taken from a corpse (#466).
-  "necromancer.soul-feast": { glyph: "heal", modifier: "plus" },
+  // Health taken from a corpse: the heal glyph with the corpse mark (#1075).
+  "necromancer.soul-feast": { glyph: "heal", modifier: "corpse" },
   // Placeholders until the asset-designer's (#467): bodies raised from a corpse.
   "necromancer.animate-bone-minions": { glyph: "resurrect", modifier: "down" },
   "necromancer.animate-bone-horror": { glyph: "resurrect", modifier: "up" },
