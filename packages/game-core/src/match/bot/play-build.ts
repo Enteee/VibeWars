@@ -64,11 +64,34 @@ export function playBuild(
     return { ...holding, ...cursor.heldMove };
   }
   cursor.waitSeconds = behaviour.thinkSeconds;
-  // Backing off got it nowhere: a wall or a corner. It turns and fights.
-  const cornered = cursor.heldMove.moveDirection !== ZERO && !self.combatant.moving;
-  const intent = think(context, cornered);
+  // Backing off got it nowhere: a wall or a corner. It turns and fights,
+  // and keeps fighting while a foe is that close: backing off again would
+  // cancel each swing it began.
+  if (nearestFoeWithin(self, context.participants, KITE_UNITS) === undefined) {
+    cursor.cornered = false;
+  } else if (cursor.backingOff && !self.combatant.moving) {
+    cursor.cornered = true;
+  }
+  const intent = think(context, cursor.cornered);
   cursor.heldMove = { moveDirection: intent.moveDirection, moveTo: intent.moveTo };
+  // The only push `think` makes is a back-off.
+  cursor.backingOff = intent.moveDirection.x !== 0 || intent.moveDirection.y !== 0;
   return intent;
+}
+
+/** The nearest living foe of `self` within `units`, if any. */
+function nearestFoeWithin(
+  self: Participant,
+  participants: readonly Participant[],
+  units: number,
+): Participant | undefined {
+  const near = nearestLiving(
+    self,
+    participants.filter(
+      (other) => !other.combatant.dead && other.combatant.team !== self.combatant.team,
+    ),
+  );
+  return near !== undefined && distance(near.position, self.position) <= units ? near : undefined;
 }
 
 function think(context: BehaviourContext, cornered: boolean): BehaviourIntent {
@@ -183,11 +206,11 @@ function think(context: BehaviourContext, cornered: boolean): BehaviourIntent {
   }
 
   // 7, first half: a ranged bot with a foe at its elbow backs off,
-  // unless the last think backing off went nowhere.
+  // unless backing off has got it nowhere.
   const melee = wieldsFor(self.combatant.equipment.mainHand.weapon.id, "melee");
   if (!melee && !cornered) {
-    const near = nearestLiving(self, foes);
-    if (near !== undefined && distance(near.position, self.position) <= KITE_UNITS) {
+    const near = nearestFoeWithin(self, foes, KITE_UNITS);
+    if (near !== undefined) {
       const d = distance(near.position, self.position);
       // On top of it there is no "away": +x, so the choice is deterministic.
       const away = d < 1e-9 ? { x: 1, y: 0 } : normalize(sub(self.position, near.position));

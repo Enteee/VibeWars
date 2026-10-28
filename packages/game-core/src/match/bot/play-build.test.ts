@@ -115,6 +115,30 @@ describe("play-build (#1189)", () => {
     expect(sim.get("monk")?.combatant.attack).toBeUndefined();
   });
 
+  it("lands bow hits pinned against a wall by a melee foe, however fast it thinks", () => {
+    for (const thinkSeconds of [0, 0.25]) {
+      const sim = match([
+        // No skills: only the bow can do the damage.
+        fighter("ranger", 0, RANGER, vec2(10, 400), {
+          behaviour: { kind: "play-build", thinkSeconds },
+          skillBar: [],
+        }),
+        fighter("foe", 1, WARRIOR, vec2(50, 400), { behaviour: undefined, maxHealth: 1e6 }),
+      ]);
+      let hits = 0;
+      for (let t = 0; t < 10; t += DT) {
+        for (const entry of sim.step(DT).log) {
+          if (entry.sourceId === "ranger" && entry.weaponId !== undefined) {
+            hits += entry.events.filter(
+              (event) => event.kind === "damage" && event.targetId === "foe",
+            ).length;
+          }
+        }
+      }
+      expect(hits, `thinkSeconds ${String(thinkSeconds)}`).toBeGreaterThan(3);
+    }
+  });
+
   it("holds an interrupt with no foe casting", () => {
     const sim = match([
       fighter("ranger", 0, RANGER, vec2(400, 400)),
