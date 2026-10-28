@@ -1,6 +1,6 @@
 import type { Vec2 } from "@vibewars/game-core";
 import type { ClientIntent, PeerCall } from "@vibewars/game-protocol";
-import type { MatchSnapshot } from "@vibewars/game-session";
+import type { CallsSnapshot, MatchSnapshot } from "@vibewars/game-session";
 
 import { actorAtPoint, type ArenaSnapshot } from "../render/arena-snapshot.js";
 import { attackClickIntents } from "./attack-key.js";
@@ -80,6 +80,23 @@ export function callTargetCall(snapshot: MatchSnapshot): PeerCall | undefined {
     return undefined;
   }
   return target.team === self.team ? undefined : { kind: "target", targetId: target.sessionId };
+}
+
+/**
+ * The `target-called` key (#1024): your team's called foe as your target,
+ * as a right click on it would. The host clears a call when its foe
+ * dies, so a call here is a living foe; nothing when there is none or it
+ * is already your target.
+ */
+export function calledTargetIntent(
+  snapshot: MatchSnapshot,
+  calls: CallsSnapshot,
+): ClientIntent | undefined {
+  const self = snapshot.players.find((player) => player.sessionId === snapshot.selfSessionId);
+  const called = calls.target?.targetId;
+  return self === undefined || called === undefined || called === self.targetSessionId
+    ? undefined
+    : { kind: "target", targetSessionId: called };
 }
 
 /** The `ping` key (#443): the ground under the pointer, while you are alive. */

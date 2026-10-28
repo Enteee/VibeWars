@@ -8,7 +8,8 @@ supersedes [ADR-0002](0002-networking.md) and
 [ADR-0009](0009-production-deployment.md), and amends
 [ADR-0001](0001-architecture.md). Amended by
 [ADR-0032](0032-random-arena-queue.md), which lets strangers meet in
-unranked play.
+unranked play. Amended (2026-10-27) by #972: a player may bring their own
+TURN relay, shared by invite link.
 
 ## Context
 
@@ -23,9 +24,11 @@ that shape the design:
 
 - **Signalling goes through relays we do not control.** We host nothing,
   but we depend on someone. The relay list must live in one place.
-- **There is no TURN relay.** STUN gets most pairs through NAT. Some pairs,
-  behind symmetric NAT or strict corporate and mobile networks, cannot
-  connect at all.
+- **The project hosts no TURN relay. A player may bring one (#972).** STUN
+  gets most pairs through NAT. Some pairs, behind symmetric NAT or strict
+  corporate and mobile networks, cannot connect without a relay. Over the
+  internet, a Random Arena match found its opponent over Nostr, and then
+  ICE failed with no relay candidates: the joiner never reached the lobby.
 - **A hidden tab throttles timers.** A host that switches tabs would stall
   its match unless the simulation runs in a dedicated worker.
 
@@ -66,7 +69,20 @@ a host-authoritative star, not lockstep and not a mesh.**
   (#707): "Couldn't reach the lobby servers" with no relay, "Found the
   lobby, but couldn't connect to its host" when the connection itself
   failed, and "No lobby answered that code" otherwise. It does not hang.
-  TURN can be added later as one `rtcConfig` field.
+  A TURN relay the player brings fixes the second (#972): an invite link
+  carries its config in the URL fragment, which no server sees, and the
+  page asks before it uses it. It goes to Trystero as `turnConfig`, next
+  to its STUN, so ICE still prefers a direct path and only pairs that
+  cannot connect directly go through it. One side of a pair having it is
+  enough. While one is set, the lobby and queue screens say so. Only a
+  build at its origin's root saves it; on GitHub Pages, whose origin
+  every other `*.github.io` site of the owner shares (SECURITY.md), it
+  lasts for the visit, so no other site can read the credential or plant
+  a relay that skips Use.
+- **A relay sees who plays.** Whoever runs it sees the IP address and the
+  traffic timing of every player who connects through it, not the content
+  (DTLS). The credential never reaches peers: they see only the relay's
+  address as an ICE candidate. That is why Use is opt-in.
 - **Firefox gathers no ICE candidates on a page loaded over `::1`**,
   where `localhost` resolves first. Dev and preview listen on `127.0.0.1`,
   and a `localhost` or `[::1]` page that cannot reach its host says to
@@ -92,4 +108,7 @@ a host-authoritative star, not lockstep and not a mesh.**
   test suites and two code paths for one feature, which ADR-0016 bans in
   spirit. The server is deleted at the end.
 - **Host a TURN relay.** That is a backend, which is what the operator
-  asked us not to have.
+  asked us not to have. It stays rejected; a player-supplied one (#972)
+  is not ours to run.
+- **Public free TURN services** (#972). Unreliable and rate-limited, and
+  they route strangers' traffic through a third party nobody chose.

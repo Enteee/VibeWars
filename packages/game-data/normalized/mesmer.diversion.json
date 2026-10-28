@@ -1,0 +1,26 @@
+{
+  "id": "mesmer.diversion",
+  "name": "Diversion",
+  "profession": "mesmer",
+  "attribute": "Domination Magic",
+  "type": "Hex Spell.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 10
+  },
+  "overcast": 0,
+  "activationSeconds": 3,
+  "rechargeSeconds": 12,
+  "upkeep": false,
+  "description": "For 6 seconds, the next time target foe uses a skill, that skill takes an additional 10...47...56 seconds to recharge.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Mesmer/309-Diversion",
+    "fetchedAt": "2026-10-27T18:19:10.997Z"
+  },
+  "unmapped": {}
+}

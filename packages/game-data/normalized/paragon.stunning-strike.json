@@ -1,0 +1,26 @@
+{
+  "id": "paragon.stunning-strike",
+  "name": "Stunning Strike",
+  "profession": "paragon",
+  "attribute": "Spear Mastery",
+  "type": "Spear attack.",
+  "elite": true,
+  "campaign": "Nightfall",
+  "cost": {
+    "kind": "adrenaline",
+    "amount": 8
+  },
+  "overcast": 0,
+  "activationSeconds": 0,
+  "rechargeSeconds": 0,
+  "upkeep": false,
+  "description": "If this attack hits, you deal +10...42...50 damage. If it hits a foe suffering from a Condition, that foe is also Dazed for 4...9...10 seconds.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Paragon/1127-Stunning_Strike",
+    "fetchedAt": "2026-10-27T22:12:25.419Z"
+  },
+  "unmapped": {}
+}

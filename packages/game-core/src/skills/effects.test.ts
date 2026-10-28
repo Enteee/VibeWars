@@ -5,6 +5,7 @@ import { WEAPONS, type Weapon } from "../equipment/weapons.js";
 import { createRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import {
+  applyDamage,
   applyEffect,
   applyEffects,
   applySkillEffects,
@@ -12,7 +13,7 @@ import {
   resolveSkillEffects,
   type CombatEvent,
 } from "./effects.js";
-import { HEALTH_PER_PIP } from "./status.js";
+import { HEALTH_PER_PIP, type StatusId } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import { advanceStatuses, effectiveMaxHealth } from "./tick.js";
 import type {
@@ -36,6 +37,61 @@ function context(
     surroundings: new Map(),
   };
 }
+
+describe("damage or life steal from a foe (#1022)", () => {
+  const hit = { kind: "damage", amount: { flat: 50 }, type: "fire", armorPenetration: 0 } as const;
+  const steal = { kind: "life-steal", amount: { flat: 30 } } as const;
+
+  /** A target under Vengeful Weapon, and what it recorded. */
+  function vengeful(team = 1): {
+    ctx: SkillContext;
+    target: Combatant;
+    offenders: () => string[];
+  } {
+    const target = makeCombatant({ id: "target", team });
+    const ctx = context(undefined, target);
+    target.statuses.apply("vengeful-weapon", 8, "rit");
+    target.statuses.drainChanges();
+    return {
+      ctx,
+      target,
+      offenders: () =>
+        target.statuses
+          .drainChanges()
+          .flatMap((change) => (change.kind === "took-damage-from-foe" ? [change.offenderId] : [])),
+    };
+  }
+
+  it("a packet from a foe records its dealer", () => {
+    const { ctx, offenders } = vengeful();
+    applyEffect(hit, ctx);
+    expect(offenders()).toEqual(["caster"]);
+  });
+
+  it("a steal from a foe records its caster", () => {
+    const { ctx, offenders } = vengeful();
+    applyEffect(steal, ctx);
+    expect(offenders()).toEqual(["caster"]);
+  });
+
+  it("a packet from an ally, or from no one, records nothing", () => {
+    const ally = vengeful(0);
+    applyEffect(hit, ally.ctx);
+    expect(ally.offenders()).toEqual([]);
+
+    const nobody = vengeful();
+    applyDamage(nobody.target, 50, "fire", false, [], undefined);
+    expect(nobody.offenders()).toEqual([]);
+  });
+
+  it("a packet Reversal of Fortune reverses records nothing", () => {
+    const { ctx, offenders } = vengeful();
+    ctx.target?.statuses.apply("reversal-of-fortune", 8, "monk");
+    ctx.target?.statuses.drainChanges();
+    applyEffect(hit, ctx);
+    expect(offenders()).toEqual([]);
+  });
+});
 
 describe("damage effect", () => {
   it("reduces target health by a flat amount", () => {
@@ -656,6 +712,29 @@ describe("if effects (#521)", () => {
     }
   });
 
+  it("interrupts only a spell with only: spell, not a chant (#1008)", () => {
+    const spellOnly = [{ kind: "interrupt", only: "spell" }, ifInterrupted] as const;
+    for (const skillId of [
+      "elementalist.fireball",
+      "mesmer.backfire",
+      "monk.guardian",
+      "ritualist.weapon-of-warding",
+    ]) {
+      const foe = casting(skillId);
+      run(spellOnly, foe);
+      expect(foe.cast.isCasting, skillId).toBe(false);
+      expect(foe.health, skillId).toBe(470);
+    }
+    for (const skillId of ["paragon.anthem-of-flame", "warrior.healing-signet"]) {
+      const foe = casting(skillId);
+      const events = run(spellOnly, foe);
+      expect(foe.cast.isCasting, skillId).toBe(true);
+      expect(events, skillId).toEqual([
+        { kind: "interrupt-missed", targetId: "target", refusedSkillId: skillId },
+      ]);
+    }
+  });
+
   it("a picky interrupt on an idle target refuses nothing: refusedSkillId is null (#796)", () => {
     const idle = makeCombatant({ id: "target", team: 1 });
     expect(run([{ kind: "interrupt", only: "spell-or-chant" }], idle)).toEqual([
@@ -837,6 +916,55 @@ describe("state conditions (#794)", () => {
     // A share would say 50% of 1000 is less than 80% of 500: health is absolute.
     const big = makeCombatant({ id: "target", health: 500, maxHealth: 1000 });
     expect(healed(less, at(400, "caster"), big)).toBe(10);
+  });
+
+  it("target-knocked-down: holds while knockdown remains, not at 0 (#985)", () => {
+    const down = healIf({ kind: "target-knocked-down" });
+    const knocked = (remaining: number): Combatant => {
+      const target = at(100);
+      target.knockdownRemaining = remaining;
+      return target;
+    };
+    expect(healed(down, at(100, "caster"), knocked(0.1))).toBe(110);
+    expect(healed(down, at(100, "caster"), knocked(0))).toBe(10);
+    // The caster being down is not read.
+    const downCaster = at(100, "caster");
+    downCaster.knockdownRemaining = 2;
+    expect(healed(down, downCaster, knocked(0))).toBe(10);
+  });
+
+  it("target-moving: holds for a target that walked last tick, not the caster (#997)", () => {
+    const moving = healIf({ kind: "target-moving" });
+    const walking = (id: string): Combatant => {
+      const combatant = at(100, id);
+      combatant.moving = true;
+      return combatant;
+    };
+    expect(healed(moving, at(100, "caster"), walking("target"))).toBe(110);
+    expect(healed(moving, at(100, "caster"), at(100))).toBe(10);
+    expect(healed(moving, walking("caster"), at(100))).toBe(10);
+  });
+
+  it("target-has-status / target-lacks-status: read that one status on the target (#997)", () => {
+    const has = (statusId: StatusId) => healIf({ kind: "target-has-status", statusId });
+    const lacks = (statusId: StatusId) => healIf({ kind: "target-lacks-status", statusId });
+    const bearing = (statusId: StatusId): Combatant => {
+      const target = at(100);
+      target.statuses.apply(statusId, 10, "caster");
+      return target;
+    };
+    for (const statusId of ["burning", "weakness"] as const) {
+      expect(healed(has(statusId), at(100, "caster"), bearing(statusId))).toBe(110);
+      expect(healed(has(statusId), at(100, "caster"), at(100))).toBe(10);
+      expect(healed(lacks(statusId), at(100, "caster"), bearing(statusId))).toBe(10);
+      expect(healed(lacks(statusId), at(100, "caster"), at(100))).toBe(110);
+    }
+    // Another condition is not this one.
+    expect(healed(has("burning"), at(100, "caster"), bearing("bleeding"))).toBe(10);
+    expect(healed(lacks("burning"), at(100, "caster"), bearing("bleeding"))).toBe(110);
+    // The caster's own status is not read.
+    const burningCaster = bearing("burning");
+    expect(healed(has("burning"), burningCaster, at(100, "other"))).toBe(10);
   });
 
   it("caster-wields: the caster's main hand is of the class, the target's is not read (#939)", () => {
@@ -1117,5 +1245,23 @@ describe("a knockdown prevented (#845)", () => {
       applyEffect({ kind: "knockdown", durationSeconds: 2 }, context(undefined, target)),
     ).toEqual([]);
     expect(target.statuses.has("fleeting-stability")).toBe(true);
+  });
+});
+
+describe("lengthen-recharge (#949)", () => {
+  const effect = { kind: "lengthen-recharge", seconds: { flat: 47 } } as const;
+
+  it("lengthens the skill its target just used", () => {
+    const target = makeCombatant({ id: "target", team: 1 });
+    expect(applyEffect(effect, { ...context(undefined, target), usedSkillId: "skill.a" })).toEqual([
+      { kind: "recharge-lengthened", targetId: "target", skillId: "skill.a", seconds: 47 },
+    ]);
+    expect(target.cast.rechargeRemaining.get("skill.a")).toBe(47);
+  });
+
+  it("does nothing without a skill just used", () => {
+    const target = makeCombatant({ id: "target", team: 1 });
+    expect(applyEffect(effect, context(undefined, target))).toEqual([]);
+    expect(target.cast.rechargeRemaining.size).toBe(0);
   });
 });

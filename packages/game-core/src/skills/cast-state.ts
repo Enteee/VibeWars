@@ -177,6 +177,17 @@ export class CastState {
   }
 
   /**
+   * `skillId` takes `seconds` longer to recharge (#949): Diversion's. A
+   * running recharge grows, start and end alike; none running becomes one
+   * of `seconds`. It is recharge, so whatever ends a recharge ends it.
+   */
+  public lengthenRecharge(skillId: string, seconds: number): void {
+    const [remaining, total] = this.#recharge.get(skillId) ?? [0, 0];
+    this.#recharge.set(skillId, [remaining + seconds, total + seconds]);
+    this.#show(skillId);
+  }
+
+  /**
    * Disable `skillId` for `seconds` (#914, GW1): the disable and the
    * recharge run together, apart, so the skill waits for the longer, and
    * nothing that ends a recharge ends a disable. A longer disable already

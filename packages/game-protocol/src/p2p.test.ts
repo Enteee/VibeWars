@@ -16,6 +16,7 @@ import {
   MAX_WIRE_RANKS,
   MAX_WIRE_SLOTS,
   MAX_WIRE_STATUSES,
+  MAX_WIRE_ACTORS,
   MAX_WIRE_STATUS_INDEX,
   MAX_WIRE_STRING,
   MAX_WIRE_TEXT,
@@ -144,6 +145,16 @@ const player: WirePlayer = {
   healthPips: -3,
   energyPips: 4,
   statuses: [status],
+  creature: null,
+};
+
+/** A Bone Minion of `peer-1`'s (#1052): no professions, its kind's name. */
+const minion: WirePlayer = {
+  ...player,
+  id: "peer-1/c1",
+  name: "Bone Minion",
+  primaryProfession: null,
+  creature: { ownerId: "peer-1", kind: "minion" },
 };
 
 const snapshot: WireSnapshotPart = {
@@ -331,6 +342,12 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["welcome", parsePeerWelcome, welcome],
   ["refuse", parsePeerRefuse, refuse],
   ["snapshot", parseWireSnapshotPart, snapshot],
+  ["snapshot with a creature", parseWireSnapshotPart, { ...snapshot, players: [player, minion] }],
+  [
+    "snapshot with every player and creature there may be",
+    parseWireSnapshotPart,
+    { ...snapshot, players: Array.from({ length: MAX_WIRE_ACTORS }, () => minion) },
+  ],
   [
     "snapshot with a maintained enchantment (#837)",
     parseWireSnapshotPart,
@@ -545,7 +562,22 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "snapshot with too many players",
     parseWireSnapshotPart,
-    { ...snapshot, players: Array.from({ length: MAX_LOBBY_PLAYERS + 1 }, () => player) },
+    { ...snapshot, players: Array.from({ length: MAX_WIRE_ACTORS + 1 }, () => player) },
+  ],
+  [
+    "snapshot with a creature of an unknown kind",
+    parseWireSnapshotPart,
+    { ...snapshot, players: [{ ...minion, creature: { ownerId: "peer-1", kind: "pet" } }] },
+  ],
+  [
+    "snapshot with a creature with no owner",
+    parseWireSnapshotPart,
+    { ...snapshot, players: [{ ...minion, creature: { kind: "minion" } }] },
+  ],
+  [
+    "snapshot with a player that does not say whether it is a creature",
+    parseWireSnapshotPart,
+    { ...snapshot, players: [{ ...player, creature: undefined }] },
   ],
   [
     "snapshot with a player on team 2",

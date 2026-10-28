@@ -238,6 +238,9 @@ describe("describeCombatEvent", () => {
     expect(
       describeCombatEvent(entry([missed], { skillId: "assassin.moebius-strike" }), missed, nameOf),
     ).toBe("Moebius Strike (Pyro) misses Caster dummy (must follow a dual attack)");
+    expect(
+      describeCombatEvent(entry([missed], { skillId: "assassin.falling-spider" }), missed, nameOf),
+    ).toBe("Falling Spider (Pyro) misses Caster dummy (only if target is knocked down)");
   });
 
   it("says why a picky interrupt let a cast through, and nothing when it found none (#796)", () => {
@@ -256,6 +259,17 @@ describe("describeCombatEvent", () => {
     );
   });
 
+  it("says a spell-only interrupt let a chant through: not a spell (#1008)", () => {
+    const chant: CombatEvent = {
+      kind: "interrupt-missed",
+      targetId: "dummy",
+      refusedSkillId: "paragon.anthem-of-flame",
+    };
+    expect(
+      describeCombatEvent(entry([chant], { skillId: "ranger.concussion-shot" }), chant, nameOf),
+    ).toBe("Concussion Shot (Pyro) can't interrupt Caster dummy's Anthem of Flame: not a spell");
+  });
+
   it("says whose skill a disable held back, and for how long (#914)", () => {
     const disabled: CombatEvent = {
       kind: "skill-disabled",
@@ -267,6 +281,28 @@ describe("describeCombatEvent", () => {
       describeCombatEvent(entry([disabled], { skillId: "mesmer.power-block" }), disabled, nameOf),
     ).toBe("Power Block (Pyro) disables Caster dummy's Fireball for 10 s");
     expect(logToneOf("skill-disabled")).toBe("control");
+  });
+
+  it("says whose skill takes longer to recharge, and by how much (#949)", () => {
+    const lengthened: CombatEvent = {
+      kind: "recharge-lengthened",
+      targetId: "dummy",
+      skillId: "elementalist.fireball",
+      seconds: 47,
+    };
+    expect(
+      describeCombatEvent(entry([lengthened], { skillId: "mesmer.diversion" }), lengthened, nameOf),
+    ).toBe("Caster dummy's Fireball takes 47 s longer to recharge");
+    expect(logToneOf("recharge-lengthened")).toBe("control");
+  });
+
+  it("says who shadow stepped to whom, with no floating text (#988)", () => {
+    const step: CombatEvent = { kind: "shadow-stepped", targetId: "dummy", toId: "you" };
+    expect(
+      describeCombatEvent(entry([step], { skillId: "assassin.deaths-charge" }), step, nameOf),
+    ).toBe("Caster dummy shadow steps to Pyro");
+    expect(logToneOf("shadow-stepped")).toBe("control");
+    expect(floatingCueFor("shadow-stepped", undefined, false)).toBeUndefined();
   });
 
   it("says who knocked whom down, and for how long (#544)", () => {

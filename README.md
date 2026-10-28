@@ -50,6 +50,9 @@ saved characters.
 | `1`–`9`, `0`    | Use the matching skill-bar slot           |
 | `Tab`           | Target the next nearest enemy             |
 | `Shift` `Tab`   | Target the previous one                   |
+| `C`             | Target the closest foe                    |
+| `T`             | Target the foe your team called           |
+| `G`             | Target yourself                           |
 | `Space`         | Attack your target with your weapon       |
 | `Esc`           | Cancel your cast and your attack          |
 | `M`             | Mute or unmute the sound                  |

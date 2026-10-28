@@ -8,6 +8,7 @@
  * tmux wrap it, and the whole pane jumps.
  */
 import { formatCount } from "./claude-usage.mjs";
+import { SPEND_WINDOW_MS, summarizeSpend } from "./hub-spend.mjs";
 import { KPI_SCHEMA_VERSION } from "./kpi.mjs";
 import { visible } from "./protocol.mjs";
 import { DRAIN_MS, clock } from "./reboot.mjs";
@@ -336,11 +337,15 @@ export function boardScreenLines(snapshot, boardColumns, live, nudgeFacts, { row
 }
 
 /**
- * @typedef {object} Budget
+ * `ratelimit.json`, raw (#963): the view formats all of it.
+ *
+ * @typedef {object} GithubBudget
  * @property {number} remaining
  * @property {number} limit
  * @property {number} resetAt epoch milliseconds
- * @property {string} spend `formatSpend`'s one line on where it went
+ * @property {number} checkedAt epoch milliseconds, when hubd read it
+ * @property {readonly import("./hub-spend.mjs").Spend[]} spend the last hour
+ * @property {number} now epoch milliseconds
  */
 
 /**
@@ -349,7 +354,7 @@ export function boardScreenLines(snapshot, boardColumns, live, nudgeFacts, { row
  * @property {ReadonlySet<string>} live the employees running right now
  * @property {ReadonlyMap<string, number>} stale employees whose agent died without cleaning up, to when it was last seen (#363)
  * @property {StaffFacts | null} staff null while `staff.json` is missing or malformed (#386)
- * @property {Budget | null} budget null before hubd has checked
+ * @property {GithubBudget | null} budget null before hubd has checked
  * @property {ReturnType<typeof import("./hub-health.mjs").hubHealth>} hub hubd, as its heartbeat and restarts say (#23)
  * @property {ClaudeUsage | null} claude null before any agent has logged (#50)
  * @property {TelegramFacts} telegram whether the Telegram sidecar is up (#583)
@@ -467,24 +472,96 @@ function staffSection(facts, width) {
 }
 
 /**
+ * The GraphQL budget as a bar, like Claude's (#963), then where the last
+ * hour of it went: by command, with when it runs dry at that rate, and by
+ * role.
+ *
  * @param {CompanyFacts} facts
  * @param {number} width
  * @returns {string[]}
  */
 function githubSection({ budget }, width) {
-  if (budget === null) {
+  // A malformed file draws no bar of NaN.
+  if (budget === null || budget.limit <= 0 || budget.remaining > budget.limit) {
     return [cut("GITHUB budget unknown (hubd has not checked yet)", width)];
   }
-  const empty = budget.remaining === 0;
+  const { remaining, limit, resetAt, checkedAt, now } = budget;
+  const head = "GITHUB GraphQL";
+  const summary = summarizeSpend(budget.spend);
+  const burn = (/** @type {string} */ projection) => githubBurnLine(summary, projection, width);
+  const byRole = githubRoleLines(summary, width);
+  if (resetAt <= now) {
+    return [
+      cut(`${head}  reset since ${hhmm(resetAt)}, no newer reading`, width),
+      burn(""),
+      ...byRole,
+    ];
+  }
+  const used = 1 - remaining / limit;
+  const empty = remaining === 0;
+  const stale = now - checkedAt > LIMIT_STALE_MS ? ` (as of ${hhmm(checkedAt)})` : "";
   const line = cut(
-    `GITHUB GraphQL ${String(budget.remaining)}/${String(budget.limit)}, resets ${hhmm(budget.resetAt)}`,
+    `${head} ${usageBar(used, BAR_CELLS)}  ${String(Math.round(used * 100))} % used, ${String(remaining)}/${String(limit)} left, resets ${dayClock(resetAt, now)}${stale}`,
     width,
   );
+  // Spent per ms over the last hour, run on from now.
+  const emptyAt = now + remaining / (summary.spent / SPEND_WINDOW_MS);
+  const projection =
+    empty || summary.spent === 0
+      ? ""
+      : emptyAt < resetAt
+        ? `; at this rate empty ~${hhmm(emptyAt)}`
+        : "; lasts to reset";
   return [
-    paint(line, empty ? "1;31" : "1"),
+    tint(line, usageColour(used, empty)),
     ...(empty ? [paint(cut("  RATE-LIMITED, agents are waiting", width), "31")] : []),
-    cut(budget.spend, width),
+    burn(projection),
+    ...byRole,
   ];
+}
+
+/**
+ * Points, calls and the three costliest commands of the last hour (#97),
+ * headed as Claude's burn line is (#963).
+ *
+ * @param {import("./hub-spend.mjs").SpendSummary} summary
+ * @param {string} projection
+ * @param {number} width
+ * @returns {string}
+ */
+function githubBurnLine({ spent, calls, unknown, top }, projection, width) {
+  if (calls === 0) {
+    return cut("  burn    nothing in the last hour", width);
+  }
+  const leaders = top
+    .slice(0, 3)
+    .map((row) => `${visible(row.cmd)} ×${String(row.count)} (~${String(row.cost)})`)
+    .join(", ");
+  const blind = unknown === 0 ? "" : `, ${String(unknown)} uncounted`;
+  return cut(
+    `  burn    ~${String(spent)}/h in ${String(calls)} calls${blind}${projection}  top: ${leaders}`,
+    width,
+  );
+}
+
+/**
+ * The five roles that spent the most counted points in the last hour
+ * (#963), none when nothing was counted.
+ *
+ * @param {import("./hub-spend.mjs").SpendSummary} summary
+ * @param {number} width
+ * @returns {string[]}
+ */
+function githubRoleLines({ byRole }, width) {
+  if (byRole.length === 0) {
+    return [];
+  }
+  // Role names are printed into the operator's tmux: see `visible`.
+  const roles = byRole
+    .slice(0, 5)
+    .map(({ role, points }) => `${visible(role)} ~${String(points)}`)
+    .join(", ");
+  return [cut(`  by role ${roles}`, width)];
 }
 
 /**
@@ -583,11 +660,32 @@ function limitLines(limit, now, width) {
       `${head} ${usageBar(window.utilization, BAR_CELLS)}  ${String(used)} % used, ${String(left)} % left, resets ${dayClock(resetAt, now)}${stale}${rejected ? "  LIMIT REACHED" : ""}`,
       width,
     );
-    if (rejected || window.utilization >= 0.9) {
-      return paint(line, "31");
-    }
-    return window.utilization >= 0.75 ? paint(line, "33") : line;
+    return tint(line, usageColour(window.utilization, rejected));
   });
+}
+
+/**
+ * A usage bar's colour, Claude's and GitHub's alike (#452, #963): red
+ * from 90 % or once `limited`, yellow from 75 %, else none.
+ *
+ * @param {number} used the fraction used
+ * @param {boolean} limited the limit is reached, whatever the fraction says
+ * @returns {string | null} an SGR code
+ */
+function usageColour(used, limited) {
+  if (limited || used >= 0.9) {
+    return "31";
+  }
+  return used >= 0.75 ? "33" : null;
+}
+
+/**
+ * @param {string} text
+ * @param {string | null} sgr
+ * @returns {string}
+ */
+function tint(text, sgr) {
+  return sgr === null ? text : paint(text, sgr);
 }
 
 /**
@@ -819,6 +917,16 @@ export function humanDuration(ms) {
 }
 
 /**
+ * @param {readonly { issue: number, bounces: number }[]} top
+ * @returns {string} ` (#12 ×3, #7 ×2)`, empty for none
+ */
+function topBounced(top) {
+  return top.length === 0
+    ? ""
+    : ` (${top.map(({ issue, bounces }) => `#${String(issue)} ×${String(bounces)}`).join(", ")})`;
+}
+
+/**
  * @param {number} bytes
  * @returns {string} `9.8 GiB`, whole from 10 GiB up
  */
@@ -880,7 +988,8 @@ function kpiSection({ kpi: { file, now } }, width) {
           `cycle med ${humanDuration(flow.cycleMedianMs)} p90 ${humanDuration(flow.cycleP90Ms)}`,
           `review wait ${humanDuration(flow.reviewWaitMedianMs)}`,
           `QA wait ${humanDuration(flow.qaWaitMedianMs)}`,
-          `bounces ${String(flow.bounces7d)}`,
+          `bounces 24h ${String(flow.bounces24h)}`,
+          `7d ${String(flow.bounces7d)}${topBounced(flow.topBounced)}`,
         ].join(" · "),
         width,
       ),

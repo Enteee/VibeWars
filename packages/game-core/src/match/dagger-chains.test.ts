@@ -5,6 +5,7 @@ import { WEAPONS } from "../equipment/weapons.js";
 import { RANGE_MELEE } from "../distances.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { applyStatus } from "../skills/effects.js";
+import { strikesOf } from "../skills/testing.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
@@ -220,5 +221,124 @@ describe("dual attacks and Moebius Strike (#885)", () => {
     const match = fight();
     use(match, "a", JAGGED_STRIKE);
     expect(outOfSequence(use(match, "a", DEATH_BLOSSOM))).toBe(true);
+  });
+});
+
+describe("adrenaline from a dual attack's splash (#936)", () => {
+  /**
+   * `a`'s strikes of Backbreaker after the whole chain to Death Blossom,
+   * with or without a second foe beside the first, in its splash.
+   */
+  const strikesAfterChain = (withNeighbour: boolean): number => {
+    const a = assassin("a", vec2(0, 0));
+    const match = new MatchSimulation({
+      seed: "splash",
+      participants: [
+        { ...a, skillBar: [...a.skillBar, "warrior.backbreaker"] },
+        dummy("foe", NEAR),
+        ...(withNeighbour ? [dummy("beside", vec2(NEAR.x, RANGE_MELEE / 2))] : []),
+      ],
+    });
+    let blossom: CombatLogEntry | undefined;
+    for (const slot of [JAGGED_STRIKE, FOX_FANGS, DEATH_BLOSSOM]) {
+      blossom = use(match, "a", slot);
+      stepFor(match, 1);
+    }
+    expect(blossom === undefined ? 0 : damageTo(blossom, "beside")).toBe(withNeighbour ? 2 : 0);
+    return strikesOf(get(match, "a").combatant, "warrior.backbreaker");
+  };
+
+  it("earns none for the foes Death Blossom's splash hits, only for its target", () => {
+    expect(strikesAfterChain(true)).toBe(strikesAfterChain(false));
+  });
+});
+
+describe("the crippling knockdown chain (#1041)", () => {
+  const MANTIS = 0;
+  const JUNGLE = 1;
+  const TRAMPLING_OX = 2;
+  const FALLING_SPIDER = 3;
+  const BLOSSOM = 4;
+  const HORNS = 5;
+  const OPENER = 6;
+  const OFF_HAND = 7;
+
+  /**
+   * `use`, pressed while a dual still recovers: it goes off when the
+   * recovery ends, inside the knockdown, so it is looked for until then.
+   */
+  function useQueued(match: MatchSimulation, slot: number): CombatLogEntry {
+    expect(match.requestSkill("a", slot)?.check).toEqual({ ok: true });
+    const skillId = get(match, "a").skillBar[slot];
+    for (let i = 0; i < Math.round(2 / DT); i += 1) {
+      const entry = match
+        .step(DT)
+        .log.find((logged) => logged.cause === "skill" && logged.skillId === skillId);
+      if (entry !== undefined) {
+        return entry;
+      }
+    }
+    throw new Error(`${String(skillId)} never resolved`);
+  }
+
+  function chainFight(): MatchSimulation {
+    return new MatchSimulation({
+      seed: "mantis",
+      participants: [
+        {
+          ...assassin("a", vec2(0, 0)),
+          skillBar: [
+            "assassin.leaping-mantis-sting",
+            "assassin.jungle-strike",
+            "assassin.trampling-ox",
+            "assassin.falling-spider",
+            "assassin.death-blossom",
+            "assassin.horns-of-the-ox",
+            "assassin.jagged-strike",
+            "assassin.fox-fangs",
+          ],
+        },
+        dummy("foe", NEAR),
+      ],
+    });
+  }
+
+  it("Falling Spider on a standing foe misses, costs its 5 energy and recharges at once", () => {
+    const match = chainFight();
+    const before = get(match, "a").combatant.energy;
+    const entry = use(match, "a", FALLING_SPIDER);
+    expect(outOfSequence(entry)).toBe(true);
+    expect(damageTo(entry, "foe")).toBe(0);
+    expect(before - get(match, "a").combatant.energy).toBeCloseTo(5, 0);
+    expect(get(match, "a").combatant.cast.rechargeRemaining.has("assassin.falling-spider")).toBe(
+      false,
+    );
+  });
+
+  it("on a runner: crippled, hurt, knocked down, poisoned, then Death Blossom follows", () => {
+    const match = chainFight();
+    match.setInputDirection("foe", vec2(0, 1));
+    const mantis = use(match, "a", MANTIS);
+    expect(damageTo(mantis, "foe")).toBe(1);
+    expect(get(match, "foe").combatant.statuses.has("crippled")).toBe(true);
+    match.setInputDirection("foe", vec2(0, 0));
+    // Jungle Strike: the blow and its 25 on the crippled foe.
+    expect(damageTo(use(match, "a", JUNGLE), "foe")).toBe(2);
+    use(match, "a", TRAMPLING_OX);
+    expect(get(match, "foe").combatant.knockdownRemaining).toBeGreaterThan(0);
+    const spider = useQueued(match, FALLING_SPIDER);
+    expect(outOfSequence(spider)).toBe(false);
+    expect(get(match, "foe").combatant.statuses.has("poison")).toBe(true);
+    stepFor(match, 1);
+    expect(damageTo(use(match, "a", BLOSSOM), "foe")).toBe(2);
+  });
+
+  it("Falling Spider follows Horns of the Ox's knockdown", () => {
+    const match = chainFight();
+    for (const slot of [OPENER, OFF_HAND, HORNS]) {
+      use(match, "a", slot);
+    }
+    expect(get(match, "foe").combatant.knockdownRemaining).toBeGreaterThan(0);
+    expect(outOfSequence(useQueued(match, FALLING_SPIDER))).toBe(false);
   });
 });

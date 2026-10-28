@@ -88,6 +88,8 @@ Everything that decides what happens in a fight.
   source and time. `behaviour.ts` turns behaviours (data) into the same
   intents a player sends. `training-scenarios.ts` holds the Training
   Ground's scenarios as data (ADR-0020).
+  Creatures, bodies that are not players, are participants with a
+  `creature` record that never count for their team (ADR-0035).
 - `tools/headless-match.ts` — runs real combat with no I/O at all, on
   `MatchSimulation`.
 
