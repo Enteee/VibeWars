@@ -214,9 +214,9 @@ export const SKILL_ICONS = {
   "necromancer.soul-feast": { glyph: "heal", modifier: "corpse" },
   // A placeholder until the asset-designer's (#1104).
   "necromancer.well-of-suffering": { glyph: "germ", modifier: "corpse" },
-  // Placeholders until the asset-designer's (#467): bodies raised from a corpse.
-  "necromancer.animate-bone-minions": { glyph: "resurrect", modifier: "down" },
-  "necromancer.animate-bone-horror": { glyph: "resurrect", modifier: "up" },
+  // Bodies raised from a corpse: a skull pack, and one horned skull (#1112).
+  "necromancer.animate-bone-minions": { glyph: "bone-minions" },
+  "necromancer.animate-bone-horror": { glyph: "bone-horror" },
   // A skill seen again: a spell, or any skill, echoed on (#1136).
   "mesmer.arcane-echo": { glyph: "echo-spell", modifier: "clock" },
   "mesmer.echo": { glyph: "echo-skill" },
