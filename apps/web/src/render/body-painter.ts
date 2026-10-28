@@ -53,10 +53,16 @@ export interface StandingBody {
 /**
  * The disc, its edge, the self rim on your own, then the off-hand and the
  * weapon mark on `marks` (the order #275 gives). The arena keeps marks on
- * a layer of their own, over the body glyphs (#1037); a figure passes one
- * painter for both.
+ * a layer of their own, over the body glyphs (#1037); one painter for both
+ * draws no glyph between them.
  */
 export function paintStandingBody(painter: Painter, body: StandingBody, marks = painter): void {
+  paintBodyDisc(painter, body);
+  paintBodyMarks(marks, body);
+}
+
+/** The disc, its edge and the self rim on your own: what lies under the body glyph. */
+export function paintBodyDisc(painter: Painter, body: StandingBody): void {
   const { x, y, r } = body;
   painter.fillStyle(teamColour(body.team), 1);
   painter.fillCircle(x, y, r);
@@ -69,9 +75,12 @@ export function paintStandingBody(painter: Painter, body: StandingBody, marks = 
     painter.lineStyle(2, SELF_RIM, 1);
     painter.strokeCircle(x, y, r - 2);
   }
+}
 
-  paintOffhandMark(marks, body);
-  paintWeaponMark(marks, body, body.weaponId, body.frame);
+/** The off-hand, then the weapon mark: what lies over the body glyph. */
+export function paintBodyMarks(painter: Painter, body: StandingBody): void {
+  paintOffhandMark(painter, body);
+  paintWeaponMark(painter, body, body.weaponId, body.frame);
 }
 
 /**
