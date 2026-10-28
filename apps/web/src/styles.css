@@ -3096,7 +3096,8 @@ body.has-expanded-training #screens {
   gap: 0.35rem;
 }
 
-.roster-edit {
+.roster-edit,
+.roster-reroll {
   flex: 0 0 auto;
 }
 
@@ -3114,7 +3115,7 @@ body.has-expanded-training #screens {
   user-select: none;
 }
 
-/* The default loadout is not a character, so it reads as a placeholder
+/* A random starter build is not a character, so it reads as a placeholder
    rather than pretending to be one. */
 .character-dot.is-house {
   width: 28px;

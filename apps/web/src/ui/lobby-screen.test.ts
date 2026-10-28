@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { LobbySnapshot } from "@vibewars/game-session";
 
 import {
-  DEFAULT_LOADOUT,
+  RANDOM_STARTER,
   MATCH_RUNNING_NOTICE,
   characterLine,
   displayLobbyCode,
@@ -161,7 +161,7 @@ describe("characterLine (#580)", () => {
     );
   });
 
-  it("calls the house build the default loadout", () => {
-    expect(characterLine(null)).toBe(DEFAULT_LOADOUT);
+  it("calls a player without a usable build a random starter build (#853)", () => {
+    expect(characterLine(null)).toBe(RANDOM_STARTER);
   });
 });
