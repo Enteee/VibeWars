@@ -30,7 +30,7 @@ describe("fireTriggers", () => {
         rng: createRng(1),
         rules: MINIMAL_GW_INSPIRED_PVP_V1.combat,
         surroundings: new Map(),
-        usedSkillId: "paragon.song-of-restoration",
+        usedSkill: { skillId: "paragon.song-of-restoration", key: "paragon.song-of-restoration" },
       },
       spared,
     ).map(({ skillId }) => skillId);
@@ -74,7 +74,7 @@ describe("an offender trigger (#1022)", () => {
         rng: createRng(1),
         rules: MINIMAL_GW_INSPIRED_PVP_V1.combat,
         surroundings: new Map(),
-        usedSkillId: undefined,
+        usedSkill: undefined,
       }),
     );
   }

@@ -143,12 +143,16 @@ describe("skill catalog integrity", () => {
 
 describe("skill coverage reporting", () => {
   it("counts implemented vs imported and names the gap", () => {
-    const imported = ["elementalist.fireball", "monk.orison-of-healing", "mesmer.echo"];
+    const imported = [
+      "elementalist.fireball",
+      "monk.orison-of-healing",
+      "monk.contemplation-of-purity",
+    ];
     const coverage = computeCoverage(imported);
     expect(coverage.imported).toBe(3);
     expect(coverage.implemented).toBe(IMPLEMENTED_SKILLS.length);
     const ids = coverage.unimplemented.map((skill) => skill.id);
-    expect(ids).toContain("mesmer.echo");
+    expect(ids).toContain("monk.contemplation-of-purity");
     expect(ids).not.toContain("elementalist.fireball");
   });
 
@@ -158,8 +162,10 @@ describe("skill coverage reporting", () => {
   });
 
   it("formats a human-readable report naming every unimplemented skill", () => {
-    const text = formatCoverage(computeCoverage(["mesmer.echo", "elementalist.fireball"]));
-    expect(text).toContain("mesmer.echo");
+    const text = formatCoverage(
+      computeCoverage(["monk.contemplation-of-purity", "elementalist.fireball"]),
+    );
+    expect(text).toContain("monk.contemplation-of-purity");
     expect(text).toContain("imported:");
     expect(text).toContain("implemented:");
   });

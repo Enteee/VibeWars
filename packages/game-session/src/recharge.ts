@@ -1,4 +1,4 @@
-import type { CastState, SkillBar } from "@vibewars/game-core";
+import { resolvedBar, type CastState, type SkillBar } from "@vibewars/game-core";
 import type { RechargeMessage } from "@vibewars/game-protocol";
 
 /**
@@ -11,24 +11,25 @@ export const RECHARGE_TOLERANCE_SECONDS = 0.05;
 /**
  * A player's running recharges, by slot, and the slots spent until a
  * morale boost (#474), as a `RechargeMessage` lists them; an empty slot
- * has neither.
+ * has neither. A copy standing in a slot (#469) is that slot's.
  */
 export function rechargeState(
   skillBar: SkillBar,
-  cast: Pick<CastState, "rechargeRemaining" | "rechargeTotal" | "spent">,
+  cast: Pick<CastState, "rechargeRemaining" | "rechargeTotal" | "spent" | "overrides">,
 ): RechargeMessage {
-  const slots = skillBar.flatMap((skillId, slot) => {
-    if (skillId === null) {
+  const bar = resolvedBar(skillBar, cast);
+  const slots = bar.flatMap((held, slot) => {
+    if (held === null) {
       return [];
     }
-    const remainingSeconds = cast.rechargeRemaining.get(skillId);
-    const totalSeconds = cast.rechargeTotal.get(skillId);
+    const remainingSeconds = cast.rechargeRemaining.get(held.key);
+    const totalSeconds = cast.rechargeTotal.get(held.key);
     return remainingSeconds === undefined || totalSeconds === undefined
       ? []
       : [{ slot, remainingSeconds, totalSeconds }];
   });
-  const spent = skillBar.flatMap((skillId, slot) =>
-    skillId !== null && cast.spent.has(skillId) ? [slot] : [],
+  const spent = bar.flatMap((held, slot) =>
+    held !== null && cast.spent.has(held.key) ? [slot] : [],
   );
   return { slots, spent };
 }
