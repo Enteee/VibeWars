@@ -51,6 +51,7 @@ import {
   updateRecharges,
 } from "./ui/hud.js";
 import { createAllyWatch } from "./ui/ally-watch.js";
+import { createCompass } from "./ui/compass.js";
 import { noWebGlNotice } from "./ui/arena-notice.js";
 import { attachFullscreenButton, fullscreenTarget } from "./ui/fullscreen.js";
 import { attachJukeboxPopover } from "./ui/jukebox.js";
@@ -245,6 +246,8 @@ export async function startMatchView(
   });
   // The ally you watch (#443), top right: yours alone.
   const allyWatch = createAllyWatch(parent);
+  // The compass (#486), top right under the match controls.
+  const compass = createCompass(parent);
   // The arena's edge stops below the target frame and above the bars, not
   // under them (#440, #1042). From the bars, as the lines above them come
   // and go; to the frame's bottom, as its effects row grows.
@@ -524,6 +527,7 @@ export async function startMatchView(
       allyWatch.watchedId,
     );
     viewport?.scene.setSnapshot(latestArena);
+    compass.update(latestArena, connection.selfSessionId);
     // For the e2e specs: who your team has called.
     const called = latestArena.calledId ?? "";
     if (parent.dataset.called !== called) {
@@ -593,6 +597,7 @@ export async function startMatchView(
       coverObserver.disconnect();
       camera?.dispose();
       allyWatch.dispose();
+      compass.dispose();
       delete parent.dataset.called;
       parent.style.removeProperty("--hud-height");
       nameReveal.detach();
