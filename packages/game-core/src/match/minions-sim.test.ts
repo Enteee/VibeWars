@@ -144,6 +144,24 @@ describe("Animate Bone Minions (#467)", () => {
     }
   });
 
+  it("raises them with 4% more Health a rank of their master's Spawning Power (#1098): 414", () => {
+    const sim = new MatchSimulation({
+      seed: "minions",
+      participants: [
+        spec("n", 0, vec2(0, 0), {
+          attributeRanks: new Map([
+            [DEATH_MAGIC, 12],
+            ["ritualist.spawning-power", 12],
+          ]),
+        }),
+        spec("x", 1, vec2(300, 0)),
+      ],
+    });
+    kill(sim, "x");
+    raise(sim);
+    expect(minionsOf(sim).map((minion) => minion.combatant.maxHealth)).toEqual([414, 414]);
+  });
+
   it("refuses with no corpse in range, and takes nothing", () => {
     const sim = match();
     const n = get(sim, "n");

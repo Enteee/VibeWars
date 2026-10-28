@@ -847,3 +847,20 @@ describe("describeSkill at a primary attribute's rank (#531)", () => {
     expect(describeSkill(fireball, new Map([["mesmer.fast-casting", 12]])).castTime).toBe("1s");
   });
 });
+
+describe("Spawning Power in the tooltip (#1098)", () => {
+  it("lengthens a weapon spell's duration, the base in brackets", () => {
+    const quickening = skill("ritualist.weapon-of-quickening");
+    const line = (rank: number) =>
+      describeSkill(quickening, new Map([["ritualist.spawning-power", rank]])).effects[0]?.text;
+    expect(line(12)).toMatch(/^Applies Weapon of Quickening for 31\.1s \(21s\) \(/);
+    expect(line(0)).toMatch(/^Applies Weapon of Quickening for 21s \(/);
+  });
+
+  it("leaves a status that is no weapon spell alone", () => {
+    const unguent = skill("ranger.troll-unguent");
+    expect(
+      describeSkill(unguent, new Map([["ritualist.spawning-power", 12]])).effects[0]?.text,
+    ).toMatch(/^Applies Regeneration for 13s \(/);
+  });
+});

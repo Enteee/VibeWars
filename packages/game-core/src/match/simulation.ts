@@ -49,6 +49,8 @@ import {
   SOUL_REAPING_ATTRIBUTE,
   soulReapingEnergy,
   soulReapingTrigger,
+  SPAWNING_POWER_ATTRIBUTE,
+  spawningPowerHealth,
 } from "../primary-attributes.js";
 import { createRng, seedFromString, type SimulationRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1, type Ruleset } from "../ruleset.js";
@@ -854,7 +856,11 @@ export class MatchSimulation {
         ),
         spawn: at,
         facing: owner.facing,
-        maxHealth: resolveMagnitude(template.maxHealth, owner.combatant),
+        // Spawning Power is the summoner's (#1098).
+        maxHealth: spawningPowerHealth(
+          rankOf(owner.combatant, SPAWNING_POWER_ATTRIBUTE),
+          resolveMagnitude(template.maxHealth, owner.combatant),
+        ),
         maxEnergy: 0,
         baseEnergyPips: 0,
         behaviour: template.behaviour,
