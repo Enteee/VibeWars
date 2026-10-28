@@ -41,6 +41,7 @@ import {
   parseWireCombatBatch,
   parseWireEnded,
   parseWireSkillBar,
+  parseWireWeaponSets,
   parseWireSnapshotPart,
   parsePeerLobbyJoin,
   parseWireLobbyCommand,
@@ -65,6 +66,7 @@ import type {
   WirePlayer,
   WireStatus,
   WireSkillBar,
+  WireWeaponSets,
   WireSnapshotPart,
   PeerLobbyJoin,
   WireLobbyState,
@@ -286,6 +288,17 @@ const combatBatch: WireCombatBatch = [
   },
 ];
 
+const weaponSets: WireWeaponSets = {
+  sets: [
+    { weaponId: "sword", offhandId: "shield" },
+    { weaponId: "recurve-bow", offhandId: null },
+    null,
+    null,
+  ],
+  active: 0,
+  pending: 1,
+};
+
 const skillBar: WireSkillBar = {
   slots: [
     {
@@ -420,6 +433,8 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["last of three snapshot parts", parseWireSnapshotPart, { ...snapshot, part: 2, parts: 3 }],
   ["combat batch", parseWireCombatBatch, combatBatch],
   ["skill-bar", parseWireSkillBar, skillBar],
+  ["weapon-sets (#489)", parseWireWeaponSets, weaponSets],
+  ["weapon-sets with none queued (#489)", parseWireWeaponSets, { ...weaponSets, pending: null }],
   ["ended", parseWireEnded, ended],
   [
     "ended by a wipe (#846)",
@@ -907,6 +922,37 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     { slots: [{ ...skillBar.slots[0], energyCost: "5" }] },
   ],
   ["skill bar without ranks", parseWireSkillBar, { slots: skillBar.slots }],
+  [
+    "weapon sets of three (#489)",
+    parseWireWeaponSets,
+    { ...weaponSets, sets: weaponSets.sets.slice(0, 3) },
+  ],
+  [
+    "weapon sets of five (#489)",
+    parseWireWeaponSets,
+    { ...weaponSets, sets: [...weaponSets.sets, null] },
+  ],
+  [
+    "weapon sets with set 1 empty (#489)",
+    parseWireWeaponSets,
+    { ...weaponSets, sets: [null, ...weaponSets.sets.slice(1)], active: 1, pending: null },
+  ],
+  [
+    "weapon sets with an empty set active (#489)",
+    parseWireWeaponSets,
+    { ...weaponSets, active: 2 },
+  ],
+  [
+    "weapon sets with an empty set queued (#489)",
+    parseWireWeaponSets,
+    { ...weaponSets, pending: 3 },
+  ],
+  ["weapon sets with set 5 active (#489)", parseWireWeaponSets, { ...weaponSets, active: 4 }],
+  [
+    "weapon sets with no off-hand field (#489)",
+    parseWireWeaponSets,
+    { ...weaponSets, sets: [{ weaponId: "sword" }, null, null, null], pending: null },
+  ],
   [
     "skill bar with a fractional rank",
     parseWireSkillBar,

@@ -127,6 +127,16 @@ export interface EndUpkeepIntent {
 }
 
 /**
+ * Swap to a carried weapon set (#489, ADR-0036), 0-3 for F1-F4: at once,
+ * or queued behind a cast, aftercast, swing or knockdown. An empty set is
+ * refused quietly.
+ */
+export interface WeaponSetIntent {
+  readonly kind: "weapon-set";
+  readonly set: 0 | 1 | 2 | 3;
+}
+
+/**
  * Sent as `"cast-refused"` to the caster alone when the server turns down a
  * `UseSkillIntent` or an `AttackIntent`, so a key that did nothing can say
  * why (issue #51). Advisory only: the refusal has already happened, and
@@ -231,7 +241,8 @@ export type ClientIntent =
   | AttackIntent
   | CancelIntent
   | WalkToIntent
-  | EndUpkeepIntent;
+  | EndUpkeepIntent
+  | WeaponSetIntent;
 
 /**
  * Validate an arbitrary network payload as a `ClientIntent`, or reject it.
@@ -314,6 +325,14 @@ export function parseClientIntent(value: unknown): ClientIntent | undefined {
     isIntentId(record.status)
   ) {
     return { kind: "end-upkeep", targetId: record.targetId, status: record.status };
+  }
+
+  if (
+    record.kind === "weapon-set" &&
+    hasOnlyKeys(record, ["kind", "set"]) &&
+    (record.set === 0 || record.set === 1 || record.set === 2 || record.set === 3)
+  ) {
+    return { kind: "weapon-set", set: record.set };
   }
 
   return undefined;

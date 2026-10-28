@@ -42,6 +42,7 @@ import {
   type EffectRow,
   type EffectsMonitor,
 } from "./effects-monitor.js";
+import { labelWeaponSets } from "./weapon-set-slots.js";
 import { iconButton } from "./kit.js";
 import { energyLabel, overcastBandElement, renderOvercastBand } from "./overcast-band.js";
 import { pipsElement, renderPips } from "./pips.js";
@@ -110,6 +111,8 @@ export interface HudElements {
    * it arrived: the effects count down between snapshots from it.
    */
   clock: { matchSeconds: number; arrivedMs: number };
+  /** Your four weapon sets, left of the skill bar (#489): one button each. */
+  readonly weaponSets: HTMLElement;
   readonly skillBar: HTMLElement;
   /** The skill bar's hover tooltips (#485); `dispose` it with the HUD. */
   readonly slotTips: SlotTooltips;
@@ -197,6 +200,7 @@ export function renderKeyLabels(
     const action = SKILL_ACTIONS[index];
     node.textContent = action === undefined ? "" : actionLabel(keymap, action, label);
   });
+  labelWeaponSets(hud.weaponSets, keymap, label);
 }
 
 /**
@@ -317,7 +321,10 @@ export function createHud(
   const energyText = element("span", "hud-bar-label", energyRow);
   const energyPips = energyRow.appendChild(pipsElement());
 
-  const skillBar = element("div", "hud-skills", column);
+  // The weapon sets at the skill bar's left end, as GW1 (#489).
+  const skillRow = element("div", "hud-skill-row", column);
+  const weaponSets = element("div", "hud-weapon-sets weapon-sets", skillRow);
+  const skillBar = element("div", "hud-skills", skillRow);
 
   return {
     root,
@@ -336,6 +343,7 @@ export function createHud(
     gearText,
     effects,
     clock: { matchSeconds: Number.NaN, arrivedMs: 0 },
+    weaponSets,
     skillBar,
     slotTips: createSlotTooltips(),
     message,

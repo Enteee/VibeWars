@@ -1290,3 +1290,36 @@ test("(40) an adrenaline skill's slot fills from dark to lit as it charges (#826
   await expect(slot).not.toHaveClass(/is-unaffordable/);
   await expect(gauge).toBeHidden();
 });
+
+test("(41) F2 swaps to weapon set 2: its slot lights, set 1's goes out (#489)", async ({
+  page,
+}) => {
+  await page.setViewportSize(WIDE);
+  await page.goto("./");
+  await page.getByRole("button", { name: "new character" }).click();
+  // A new character is a warrior: a sword and shield in set 1. A bow in set 2.
+  await page.getByRole("button", { name: "gear", exact: true }).click();
+  await page.getByRole("tab", { name: /^2/ }).click();
+  await page.locator(".gear-box").filter({ hasText: "Flatbow" }).first().click();
+  await expect(page.locator(".gear-slot").first()).toContainText("Flatbow");
+  await expect(page.locator(".training canvas")).toBeVisible();
+
+  const slots = page.locator(".training-weapon-sets .weapon-set");
+  await expect(slots).toHaveCount(4);
+  await expect(slots.nth(0)).toHaveClass(/is-active/);
+  await expect(slots.nth(0)).toHaveAccessibleName("Weapon set 1: Sword and Shield");
+  await expect(slots.nth(1)).toHaveAccessibleName("Weapon set 2: Flatbow");
+  await expect(slots.nth(2)).toHaveClass(/is-empty/);
+  await expect(slots.nth(1)).toHaveText(codeLabel(key("weapon-set-2")));
+
+  await takeControl(page);
+  await page.keyboard.press(key("weapon-set-2"));
+  await expect(slots.nth(1)).toHaveClass(/is-active/);
+  await expect(slots.nth(0)).not.toHaveClass(/is-active/);
+  // An empty set's key does nothing.
+  await page.keyboard.press(key("weapon-set-3"));
+  await expect(slots.nth(1)).toHaveClass(/is-active/);
+  // A click is the key.
+  await slots.nth(0).click();
+  await expect(slots.nth(0)).toHaveClass(/is-active/);
+});

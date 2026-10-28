@@ -22,7 +22,7 @@ describe("the keymap presets (#302)", () => {
     "%s is a valid keymap that binds every action but the two call keys (#443)",
     (_, map) => {
       expect(parseKeymap(map)).toEqual(map);
-      expect(KEY_ACTIONS).toHaveLength(21);
+      expect(KEY_ACTIONS).toHaveLength(25);
       // The wheel click calls and pings; the keys are for a mouse without one.
       const unbound = new Set(["call-target", "ping"]);
       for (const action of KEY_ACTIONS) {
@@ -42,6 +42,15 @@ describe("the keymap presets (#302)", () => {
         expect(code).not.toMatch(/^(?:Control|Alt|Meta)/);
       }
     }
+  });
+
+  it.each(presets)("%s swaps weapon sets on F1-F4, GW1's keys (#489)", (_, map) => {
+    expect(["F1", "F2", "F3", "F4"].map((code) => actionForCode(map, code))).toEqual([
+      "weapon-set-1",
+      "weapon-set-2",
+      "weapon-set-3",
+      "weapon-set-4",
+    ]);
   });
 
   it("defaults to VibeWars: skills on Q-F, arrows move, Shift shows names", () => {
@@ -100,6 +109,17 @@ describe("parseKeymap", () => {
     expect(parseKeymap({ ...missing, dance: ["KeyM"] })).toBeUndefined();
   });
 
+  it("rejects a keymap stored before the weapon-set actions (#489)", () => {
+    const {
+      "weapon-set-1": _1,
+      "weapon-set-2": _2,
+      "weapon-set-3": _3,
+      "weapon-set-4": _4,
+      ...before
+    } = classic;
+    expect(parseKeymap(before)).toBeUndefined();
+  });
+
   it("rejects a code bound twice, and three codes on one action", () => {
     expect(parseKeymap({ ...classic, mute: ["Digit1"] })).toBeUndefined();
     expect(parseKeymap({ ...classic, mute: ["KeyM", "KeyN", "KeyB"] })).toBeUndefined();
@@ -134,7 +154,18 @@ describe("isBindable and isShortcut", () => {
     ]) {
       expect(isBindable(code)).toBe(false);
     }
-    for (const code of ["KeyQ", "Digit1", "ArrowUp", "Space", "ShiftLeft", "F2", "Tab"]) {
+    for (const code of [
+      "KeyQ",
+      "Digit1",
+      "ArrowUp",
+      "Space",
+      "ShiftLeft",
+      "F1",
+      "F2",
+      "F3",
+      "F4",
+      "Tab",
+    ]) {
       expect(isBindable(code)).toBe(true);
     }
   });

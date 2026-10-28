@@ -33,7 +33,11 @@ export type KeyAction =
   | "call-target"
   | "ping"
   | "show-names"
-  | "mute";
+  | "mute"
+  | "weapon-set-1"
+  | "weapon-set-2"
+  | "weapon-set-3"
+  | "weapon-set-4";
 
 /** Every action, in bar and reading order. */
 export const KEY_ACTIONS: readonly KeyAction[] = [
@@ -58,10 +62,17 @@ export const KEY_ACTIONS: readonly KeyAction[] = [
   "ping",
   "show-names",
   "mute",
+  "weapon-set-1",
+  "weapon-set-2",
+  "weapon-set-3",
+  "weapon-set-4",
 ];
 
 /** The skill actions, slot 0 first. */
 export const SKILL_ACTIONS: readonly KeyAction[] = KEY_ACTIONS.slice(0, 8);
+
+/** The weapon-set actions, set 1 first (#489). */
+export const WEAPON_SET_ACTIONS: readonly KeyAction[] = KEY_ACTIONS.slice(-4);
 
 /** `KeyboardEvent.code` values; 0-2 per action; no code appears twice in a map. */
 export type Keymap = Readonly<Record<KeyAction, readonly string[]>>;
@@ -81,6 +92,11 @@ const SHARED = {
   ping: [],
   "show-names": ["ShiftLeft", "ShiftRight"],
   mute: ["KeyM"],
+  // GW1's (#489).
+  "weapon-set-1": ["F1"],
+  "weapon-set-2": ["F2"],
+  "weapon-set-3": ["F3"],
+  "weapon-set-4": ["F4"],
 } as const satisfies Partial<Keymap>;
 
 export const KEYMAP_PRESETS: Readonly<Record<"vibewars" | "classic", Keymap>> = {
@@ -125,8 +141,6 @@ export const DEFAULT_KEYMAP: Keymap = KEYMAP_PRESETS.vibewars;
 const UNBINDABLE = new Set([
   "ContextMenu",
   "Escape",
-  "F1",
-  "F3",
   "F5",
   "F6",
   "F7",

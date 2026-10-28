@@ -382,7 +382,7 @@ body {
   gap: 0.4rem;
 }
 
-.hud-column > :not(.hud-skills) {
+.hud-column > :not(.hud-skill-row) {
   contain: inline-size;
 }
 
@@ -542,11 +542,100 @@ body {
 
 /* As wide as its slots, not the HUD: the knockdown drain fills this box
    and must end at the last slot (#545). */
+/* The weapon sets, then the skills (#489). */
+.hud-skill-row {
+  display: flex;
+  gap: 6px;
+  align-items: flex-end;
+  width: fit-content;
+}
+
 .hud-skills {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
   width: fit-content;
+}
+
+/* Four small set slots, two by two, as tall as a skill (#489): the set in
+   hand lit, a queued one pulsing, an empty one dimmed with no icon. */
+.weapon-sets {
+  display: grid;
+  grid-template-columns: repeat(2, 23px);
+  grid-auto-rows: 23px;
+  gap: 2px;
+}
+
+.weapon-set {
+  position: relative;
+  box-sizing: border-box;
+  padding: 0;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.weapon-set:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.weapon-set.is-active {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.weapon-set.is-queued {
+  animation: weapon-set-queued 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes weapon-set-queued {
+  from {
+    border-color: var(--line);
+  }
+
+  to {
+    border-color: var(--accent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .weapon-set.is-queued {
+    animation: none;
+    border-style: dashed;
+    border-color: var(--accent);
+  }
+}
+
+.weapon-set.is-empty {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.weapon-set-weapon {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.weapon-set-offhand {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 10px;
+  height: 10px;
+  background: var(--bg);
+}
+
+.weapon-set-key {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 0 1px;
+  background: var(--bg);
+  color: var(--accent);
+  font-size: 0.5rem;
+  line-height: 1;
 }
 
 /* A combat bar slot (#719), on the HUD and the Training Ground alike: a
@@ -1655,6 +1744,11 @@ body {
   min-width: 12rem;
 }
 
+.keys-table th.keys-group-name {
+  padding-top: 0.8rem;
+  color: var(--ink-dim);
+}
+
 .screen button.key-cell,
 .key-cell.is-fixed {
   display: inline-block;
@@ -2256,7 +2350,7 @@ body {
   grid-area: vitals;
 }
 
-.training.is-expanded .training-skills {
+.training.is-expanded .training-skill-row {
   grid-area: skills;
 }
 
@@ -2385,6 +2479,13 @@ body.has-expanded-training #screens {
 .training-attacking {
   color: var(--ink-dim);
   font-size: 0.75rem;
+}
+
+/* The weapon sets, then the skills (#489), as on the match HUD. */
+.training-skill-row {
+  display: flex;
+  gap: 6px;
+  align-items: flex-end;
 }
 
 .training-skills {

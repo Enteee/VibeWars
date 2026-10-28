@@ -31,6 +31,7 @@ import {
 } from "../input/keymap.js";
 import { loadKeymap } from "../input/keymap-preference.js";
 import { skillSlotForKeyDown } from "../input/skill-keys.js";
+import { weaponSetIntent, weaponSetOf } from "../input/weapon-set-keys.js";
 import { attachNameReveal } from "../input/name-reveal.js";
 import { closestTarget, nextTabTarget, selfTargetIntent } from "../input/tab-target.js";
 import { toArenaSnapshot, toRenderableWall } from "../match-view.js";
@@ -107,6 +108,7 @@ import {
   shouldRestoreFocus,
 } from "./training-state.js";
 import { h } from "./kit.js";
+import { labelWeaponSets, renderWeaponSets, updateWeaponSets } from "./weapon-set-slots.js";
 
 /**
  * The Training Ground: a live arena beside the build editor (#2 §6).
@@ -255,6 +257,10 @@ export function createTrainingPanel(): TrainingPanel {
   vitals.append(health.root, energy.root, attacking);
 
   const skills = h("div", "training-skills");
+  // The weapon sets at the bar's left end, as on the match HUD (#489).
+  const weaponSets = h("div", "training-weapon-sets weapon-sets");
+  const skillRow = h("div", "training-skill-row");
+  skillRow.append(weaponSets, skills);
 
   const meter = h("dl", "training-meter");
 
@@ -269,7 +275,7 @@ export function createTrainingPanel(): TrainingPanel {
   log.append(logRowsEl, newest);
 
   const statsSlot = h("div", "training-stats-slot");
-  root.append(controls, teaches, stage, hint, message, statsSlot, vitals, skills, meter, log);
+  root.append(controls, teaches, stage, hint, message, statsSlot, vitals, skillRow, meter, log);
 
   /* --- state ----------------------------------------------------------- */
 
@@ -389,6 +395,25 @@ export function createTrainingPanel(): TrainingPanel {
     session.connection.sendIntent({ kind: "use-skill", slot });
   };
 
+  // An empty set's key or click sends nothing (#489).
+  const swapWeapons = (set: number): void => {
+    if (session === undefined || session.parked) {
+      return;
+    }
+    const intent = weaponSetIntent(session.connection.weaponSets, set);
+    if (intent !== undefined) {
+      session.connection.sendIntent(intent);
+    }
+  };
+  renderWeaponSets(weaponSets, swapWeapons);
+  for (const button of weaponSets.querySelectorAll("button")) {
+    // As the skills: a click must not take the keyboard from the arena.
+    button.tabIndex = -1;
+    button.addEventListener("mousedown", (event) => {
+      event.preventDefault();
+    });
+  }
+
   const attack = (): void => {
     if (session === undefined || session.parked) {
       return;
@@ -487,6 +512,7 @@ export function createTrainingPanel(): TrainingPanel {
       return button;
     });
     skills.replaceChildren(...skillButtons);
+    labelWeaponSets(weaponSets, keymap, keyLabel);
   };
 
   const paintOverlay = (problem: string | undefined): void => {
@@ -521,6 +547,7 @@ export function createTrainingPanel(): TrainingPanel {
     const far = outOfRange(slots, self, target, session?.wallSegments ?? []);
     const unwielded = wrongWeapon(slots, self);
     slotTips.casting(fill?.slot);
+    updateWeaponSets(weaponSets, session?.connection.weaponSets);
     // Greyed while you lie knocked down, as on the match HUD (#545).
     paintKnockdown(skills, self.knockdownRemaining);
     skillButtons.forEach((button, index) => {
@@ -711,6 +738,13 @@ export function createTrainingPanel(): TrainingPanel {
             : pingCall(snapshot, viewport?.pointerWorld());
       if (call !== undefined) {
         session?.connection.sendCall(call);
+      }
+      return;
+    }
+    const set = weaponSetOf(action);
+    if (set !== undefined) {
+      if (!event.repeat) {
+        swapWeapons(set);
       }
       return;
     }

@@ -54,6 +54,7 @@ saved characters.
 | `T`             | Target the foe your team called           |
 | `G`             | Target yourself                           |
 | `Space`         | Attack your target with your weapon       |
+| `F1`–`F4`       | Swap to weapon set 1–4                    |
 | `Esc`           | Cancel your cast and your attack          |
 | `M`             | Mute or unmute the sound                  |
 | `F10`           | Leave the match (asks first)              |

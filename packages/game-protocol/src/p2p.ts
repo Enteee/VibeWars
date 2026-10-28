@@ -36,6 +36,7 @@ export const CHANNELS = [
   "combat",
   "refused",
   "skill-bar",
+  "weapon-sets",
   "recharge",
   "adrenaline",
   "chain",
@@ -455,6 +456,25 @@ export interface WireSkillBar {
   readonly slots: readonly (SkillBarSlot | null)[];
   /** Attribute id to effective rank, as the host resolved the build (#485). */
   readonly ranks: Readonly<Record<string, number>>;
+}
+
+/** One carried weapon set (#489): its weapon, and its off hand or `null`. */
+export interface WireWeaponSet {
+  readonly weaponId: string;
+  readonly offhandId: string | null;
+}
+
+/**
+ * Host to one client: the weapon sets it carries, which is in hand and
+ * which is queued (#489, ADR-0036). On welcome, and again on the tick the
+ * active or the queued set changes. Others see a swap through
+ * `WirePlayer.weaponId` alone.
+ */
+export interface WireWeaponSets {
+  /** Set 1 first; `null` for an empty set. */
+  readonly sets: readonly (WireWeaponSet | null)[];
+  readonly active: 0 | 1 | 2 | 3;
+  readonly pending: 0 | 1 | 2 | 3 | null;
 }
 
 /**
@@ -1409,6 +1429,38 @@ export function parseWireSkillBar(value: unknown): WireSkillBar | undefined {
   const slots = parseArray(raw?.slots, MAX_WIRE_SLOTS, parseSlot);
   const ranks = parseRanks(raw?.ranks);
   return slots === undefined || ranks === undefined ? undefined : { slots, ranks };
+}
+
+function parseWeaponSet(value: unknown): WireWeaponSet | null | undefined {
+  if (value === null) {
+    return null;
+  }
+  const raw = fields(value);
+  return raw !== undefined && isString(raw.weaponId) && isNullableString(raw.offhandId)
+    ? { weaponId: raw.weaponId, offhandId: raw.offhandId }
+    : undefined;
+}
+
+function isWeaponSetIndex(value: unknown): value is 0 | 1 | 2 | 3 {
+  return value === 0 || value === 1 || value === 2 || value === 3;
+}
+
+/** Exactly four sets, set 1 carried, and `active` and `pending` at carried sets. */
+export function parseWireWeaponSets(value: unknown): WireWeaponSets | undefined {
+  const raw = fields(value);
+  const sets = parseArray(raw?.sets, 4, parseWeaponSet);
+  const active: unknown = raw?.active;
+  const pending: unknown = raw?.pending;
+  if (
+    sets?.length !== 4 ||
+    sets[0] === null ||
+    !isWeaponSetIndex(active) ||
+    sets[active] === null ||
+    (pending !== null && (!isWeaponSetIndex(pending) || sets[pending] === null))
+  ) {
+    return undefined;
+  }
+  return { sets, active, pending };
 }
 
 function parseSummaryRow(value: unknown): WireSummaryRow | undefined {

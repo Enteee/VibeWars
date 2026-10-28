@@ -21,6 +21,7 @@ import {
 import { attachNameReveal } from "./input/name-reveal.js";
 import { closestTarget, nextTabTarget, selfTargetIntent } from "./input/tab-target.js";
 import { skillSlotForKeyDown } from "./input/skill-keys.js";
+import { weaponSetIntent, weaponSetOf } from "./input/weapon-set-keys.js";
 import { attachMatchMusic } from "./music/match-music.js";
 import { music } from "./music/play-music.js";
 import { TRACKS } from "./music/tracks/index.js";
@@ -61,6 +62,7 @@ import {
   openOptionsOverlay,
 } from "./ui/options-screen.js";
 import { createPartyWindow } from "./ui/party-window.js";
+import { renderWeaponSets, updateWeaponSets } from "./ui/weapon-set-slots.js";
 import { attachReconnectCountdown, mountReconnectOverlay } from "./ui/reconnect-overlay.js";
 import { renderSummary, summaryTables, type SummaryTable } from "./ui/match-summary.js";
 import { flashSlot, slotFlashes } from "./ui/skill-slot-state.js";
@@ -276,6 +278,14 @@ export async function startMatchView(
     connection.sendIntent({ kind: "use-skill", slot });
   };
   renderSkillBar(hud, () => connection.skillBar, connection.ranks, useSkill);
+  // An empty set's key or click sends nothing (#489).
+  const swapWeapons = (set: number): void => {
+    const intent = weaponSetIntent(connection.weaponSets, set);
+    if (intent !== undefined) {
+      connection.sendIntent(intent);
+    }
+  };
+  renderWeaponSets(hud.weaponSets, swapWeapons);
   // Read once per match: a keymap changed elsewhere applies from the next.
   const keymap = loadKeymap();
   renderKeyLabels(hud, keymap);
@@ -397,6 +407,11 @@ export async function startMatchView(
     // Held keys auto-repeat; one press is one target, attack, toggle or
     // cast (#43, #160).
     if (event.repeat) {
+      return;
+    }
+    const set = weaponSetOf(action);
+    if (set !== undefined) {
+      swapWeapons(set);
       return;
     }
     if (action === "target-next") {
@@ -573,6 +588,7 @@ export async function startMatchView(
       latestMatch,
     );
     updateRecharges(hud, connection.skillBar, connection.getRecharges());
+    updateWeaponSets(hud.weaponSets, connection.weaponSets);
   };
   const offFrame = viewport?.onFrame(onFrame) ?? animationFrames(onFrame);
 

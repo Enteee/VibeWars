@@ -719,7 +719,7 @@ describe("createHud's layout (#1042)", () => {
       .map((node) => node.className.split(" "))
       .flatMap((classes) => names.filter((name) => classes.includes(name)));
 
-  it("stacks your block, top down: hint, message, effects, morale and gear, health, energy, skills", () => {
+  it("stacks your block, top down: hint, message, effects, morale and gear, health, energy, weapon sets, skills", () => {
     const { hud } = build();
     const order = [
       "hud-hint",
@@ -729,6 +729,7 @@ describe("createHud's layout (#1042)", () => {
       "hud-gear",
       "hud-bar-health",
       "hud-bar-energy",
+      "hud-weapon-sets",
       "hud-skills",
     ];
     expect(named(descendants(hud.root as unknown as FakeNode), order)).toEqual(order);

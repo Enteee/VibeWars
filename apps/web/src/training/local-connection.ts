@@ -31,6 +31,7 @@ import {
   type MatchSnapshot,
   type PlayerSnapshot,
   type SkillSlot,
+  weaponSetsOf,
 } from "@vibewars/game-session";
 
 /**
@@ -88,7 +89,8 @@ function toPlayerSnapshot(
     walking: participant.walkGoal !== undefined || participant.pendingSkill !== undefined,
     health: Math.round(combatant.health),
     maxHealth: combatant.maxHealth,
-    energy: Math.round(combatant.energy),
+    // Hidden below 0, as the host sends it (#489).
+    energy: Math.max(0, Math.round(combatant.energy)),
     maxEnergy: combatant.maxEnergy,
     overcast: Math.round(combatant.overcast),
     morale: combatant.morale,
@@ -213,6 +215,11 @@ export function createLocalConnection(options: {
     get ranks() {
       // Straight from the simulation, so a rearm shows at once.
       return simulation.get(selfId)?.combatant.attributeRanks ?? new Map<string, number>();
+    },
+    get weaponSets() {
+      // Straight from the simulation too: a swap or a rearm shows at once.
+      const self = simulation.get(selfId);
+      return self === undefined ? undefined : weaponSetsOf(self);
     },
     onConnectionChange() {
       // Nothing to lose: the simulation is in this tab.

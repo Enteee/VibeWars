@@ -15,7 +15,8 @@ export type MatchIntent =
   | { readonly kind: "attack"; readonly targetId: string }
   | { readonly kind: "cancel" }
   | { readonly kind: "walk-to"; readonly x: number; readonly y: number }
-  | { readonly kind: "end-upkeep"; readonly targetId: string; readonly status: string };
+  | { readonly kind: "end-upkeep"; readonly targetId: string; readonly status: string }
+  | { readonly kind: "weapon-set"; readonly set: 0 | 1 | 2 | 3 };
 
 /**
  * Why a cast or an attack was turned down, for its caster alone: the
@@ -78,6 +79,10 @@ export function applyIntent(
       return null;
     case "end-upkeep":
       sim.endUpkeep(playerId, intent.targetId, intent.status);
+      return null;
+    case "weapon-set":
+      // Quietly: GW1 says nothing for an empty set (#489).
+      sim.requestWeaponSet(playerId, intent.set);
       return null;
   }
 }

@@ -242,6 +242,22 @@ describe("parseClientIntent — end-upkeep (#838)", () => {
   });
 });
 
+describe("parseClientIntent — weapon-set (#489)", () => {
+  it("accepts sets 0 to 3", () => {
+    for (const set of [0, 1, 2, 3]) {
+      expect(parseClientIntent({ kind: "weapon-set", set })).toEqual({ kind: "weapon-set", set });
+    }
+  });
+
+  it("rejects a set out of range, fractional, a string, missing or with a field it does not name", () => {
+    for (const set of [4, -1, 1.5, "1", null, Number.NaN]) {
+      expect(parseClientIntent({ kind: "weapon-set", set }), String(set)).toBeUndefined();
+    }
+    expect(parseClientIntent({ kind: "weapon-set" })).toBeUndefined();
+    expect(parseClientIntent({ kind: "weapon-set", set: 1, playerId: "p2" })).toBeUndefined();
+  });
+});
+
 describe("fingerprint", () => {
   it("is 12 lowercase hex digits", () => {
     expect(fingerprint("")).toMatch(/^[0-9a-f]{12}$/);

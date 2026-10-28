@@ -1034,8 +1034,17 @@ wand and focus (+12) to a staff takes 12 off both, and swapping back
 gives both back. Current energy may go below 0, hidden as in GW1:
 regeneration climbs back through 0 before a skill can be paid for, and
 nothing else takes it deeper. Arrows already in flight keep the bow
-that loosed them. The keys (F1-F4) arrive with #489's second child. See
+that loosed them. See
 [ADR-0036](../adr/0036-weapon-sets.md).
+
+F1-F4 swap to sets 1-4, in both presets, and can be rebound under
+"Weapon sets" in Options, Controls. Four small slots sit at the left
+end of the skill bar, on the match HUD and the Training Ground: each
+shows its set's weapon, its off-hand smaller in the corner, and its key.
+The set in hand is lit, a queued one pulses, and an empty one is dimmed
+with no icon. Clicking a slot is pressing its key. An empty set's key
+does nothing, and says nothing, as in GW1. The energy bar shows 0 while
+energy is below it, and so does everyone else's view of you.
 
 The Gear tab edits every set (#489): a row of four tabs, `1` to `4`,
 sits above the hands, each showing its set's weapon and off-hand, or a
