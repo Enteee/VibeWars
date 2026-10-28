@@ -1694,7 +1694,9 @@ A Priest Annihilation match (#1186) is Annihilation with a priest on each
 team's shrine: a team is wiped only once its priest is dead too, and at
 **12 minutes** equal morale goes to the team whose priest lives. Every
 2 minutes a living priest raises its team's dead above -60% on its
-shrine, at full Health and Energy (see [modes](modes.md)).
+shrine, at full Health and Energy, invulnerable for 5 seconds (#1208):
+no damage, life steal, sacrifice or degeneration takes Health, and no
+hex or condition lands (see [modes](modes.md)).
 
 A Kill Count match ends when a team reaches 15 kills, or after 3
 minutes, when the team with more kills wins. Score is checked

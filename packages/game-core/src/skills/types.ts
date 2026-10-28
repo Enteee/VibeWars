@@ -768,6 +768,14 @@ export function isSpell(type: SkillType): boolean {
 }
 
 /**
+ * Whether `combatant` loses no health and gains no hex or condition now
+ * (#1208, a shrine raise's 5 s). Every site that takes health asks this.
+ */
+export function isInvulnerable(combatant: Combatant): boolean {
+  return combatant.invulnerableRemaining > 0;
+}
+
+/**
  * Whether a skill of this type is interrupted by any attack that lands
  * on its user while it is being used (#1105, GW1's "easily
  * interrupted"): a trap is.
@@ -1069,6 +1077,13 @@ export interface Combatant {
    * statuses can stand anyone up.
    */
   knockdownRemaining: number;
+  /**
+   * Seconds left invulnerable after a shrine raised it (#1208); `0` not.
+   * Still a target, still healed, enchanted, knocked down and
+   * interrupted: only health loss, hexes and conditions are refused
+   * (`isInvulnerable`).
+   */
+  invulnerableRemaining: number;
   /**
    * Match times Soul Reaping last triggered (#530), at most the 3 that can
    * still count against the next. Kept across a respawn.

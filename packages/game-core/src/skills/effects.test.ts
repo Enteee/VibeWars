@@ -1331,3 +1331,35 @@ describe("lengthen-recharge (#949)", () => {
     expect(target.cast.rechargeRemaining.size).toBe(0);
   });
 });
+
+describe("an invulnerable target (#1208)", () => {
+  const invulnerable = (): Combatant =>
+    makeCombatant({ id: "target", team: 1, invulnerableRemaining: 3 });
+
+  it("takes no damage and reports none", () => {
+    const target = invulnerable();
+    const events: CombatEvent[] = [];
+    applyDamage(target, 120, "fire", false, events, undefined);
+    expect(events).toEqual([]);
+    expect(target.health).toBe(target.maxHealth);
+  });
+
+  it("has no life stolen, and its stealer gains none", () => {
+    const caster = makeCombatant({ id: "caster", health: 300 });
+    const target = invulnerable();
+    expect(
+      applyEffect({ kind: "life-steal", amount: { flat: 40 } }, context(caster, target)),
+    ).toEqual([]);
+    expect(target.health).toBe(target.maxHealth);
+    expect(caster.health).toBe(300);
+  });
+
+  it("refuses a hex and a condition, and takes any other status", () => {
+    const target = invulnerable();
+    expect(applyStatus(target, "malaise", 10, "caster")).toBeUndefined();
+    expect(applyStatus(target, "deep-wound", 10, "caster")).toBeUndefined();
+    expect(target.statuses.has("malaise") || target.statuses.has("deep-wound")).toBe(false);
+    expect(applyStatus(target, "armor-boost", 10, "caster")).toBe(0);
+    expect(target.statuses.has("armor-boost")).toBe(true);
+  });
+});
