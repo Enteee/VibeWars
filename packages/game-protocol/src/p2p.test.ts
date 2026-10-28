@@ -13,7 +13,6 @@ import {
   MAX_WIRE_MORALE,
   MAX_WIRE_PIPS,
   MIN_WIRE_MORALE,
-  MAX_WIRE_RANK,
   MAX_WIRE_RANKS,
   MAX_WIRE_SLOTS,
   MAX_WIRE_STATUSES,
@@ -515,6 +514,11 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["last of three snapshot parts", parseWireSnapshotPart, { ...snapshot, part: 2, parts: 3 }],
   ["combat batch", parseWireCombatBatch, combatBatch],
   ["skill-bar", parseWireSkillBar, skillBar],
+  [
+    "skill bar at rank 16, a superior rune and headgear on 12 (#1140)",
+    parseWireSkillBar,
+    { ...skillBar, ranks: { "monk.healing-prayers": 16 } },
+  ],
   ["weapon-sets (#489)", parseWireWeaponSets, weaponSets],
   ["weapon-sets with a swap queued", parseWireWeaponSets, { ...weaponSets, active: 1, pending: 0 }],
   ["ended", parseWireEnded, ended],
@@ -1122,9 +1126,9 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     { ...skillBar, ranks: { "monk.healing-prayers": 11.5 } },
   ],
   [
-    "skill bar with a rank past the most runes give",
+    "skill bar at rank 17, past the most runes and headgear give",
     parseWireSkillBar,
-    { ...skillBar, ranks: { "monk.healing-prayers": MAX_WIRE_RANK + 1 } },
+    { ...skillBar, ranks: { "monk.healing-prayers": 17 } },
   ],
   [
     "skill bar with a negative rank",

@@ -104,6 +104,7 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
     const resolved = resolveLoadout(
       {
         primaryProfession: fighter.primaryProfession,
+        secondaryProfession: fighter.secondaryProfession,
         allocatedRanks: fighter.attributeRanks,
         equipment: fighter.equipment,
       },

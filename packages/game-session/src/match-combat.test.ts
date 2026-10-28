@@ -297,15 +297,15 @@ describe("networked combat (P2P)", () => {
       "the target to take damage",
     );
 
-    // Both are the Elementalist/Mesmer starter build. Fire Magic 12 and
-    // the head's minor rune make 13: 7 + 7 * 13 = 98 before mitigation.
-    // The target's armor is an elementalist's 60 (a focus adds none), so
-    // the curve leaves it at 98. Its health is 500 + 50 (superior Vigor)
+    // Both are the Elementalist/Mesmer starter build. Fire Magic 12, the
+    // head's minor rune and its headgear (#1140) make 14: 7 + 7 * 14 = 105
+    // before mitigation. The target's armor is an elementalist's 60 (a focus
+    // adds none), so the curve leaves it at 105. Its health is 500 + 50 (superior Vigor)
     // + 15 + 10 + 3 * 5 (Survivor on chest, legs and the other three) =
     // 590. Spelled out, not derived, so a change to either the curve or
     // the build fails loudly.
     expect(playerIn(a.getSnapshot(), b.selfSessionId)?.maxHealth).toBe(590);
-    expect(playerIn(a.getSnapshot(), b.selfSessionId)?.health).toBe(590 - 98);
+    expect(playerIn(a.getSnapshot(), b.selfSessionId)?.health).toBe(590 - 105);
   });
 
   it("deducts energy when a skill is cast", async () => {
@@ -1142,7 +1142,7 @@ describe("the match summary (#1057)", () => {
     return hello({ name, build: toJson(starterBuild(NUKER)) });
   }
 
-  /** `a` closes on `b` and lands one Fireball: 98 after armor (see above). */
+  /** `a` closes on `b` and lands one Fireball: 105 after armor (see above). */
   async function fireball(match: TestMatch, a: MatchConnection, b: MatchConnection) {
     await closeDistance(match, a, b.selfSessionId, 300);
     await target(match, a, b.selfSessionId);
@@ -1171,8 +1171,8 @@ describe("the match summary (#1057)", () => {
       ["Bob", 1],
       ["Cat", 0],
     ]);
-    expect(line(a, a.selfSessionId)).toMatchObject({ damage: 98, taken: 0, kills: 0, deaths: 0 });
-    expect(line(a, b.selfSessionId)).toMatchObject({ damage: 0, taken: 98, deaths: 0 });
+    expect(line(a, a.selfSessionId)).toMatchObject({ damage: 105, taken: 0, kills: 0, deaths: 0 });
+    expect(line(a, b.selfSessionId)).toMatchObject({ damage: 0, taken: 105, deaths: 0 });
     expect(line(a, c.selfSessionId)).toMatchObject({ damage: 0, taken: 0, interrupts: 0 });
     // Everyone is told the same.
     expect(b.getSnapshot().summary).toEqual(a.getSnapshot().summary);
@@ -1213,7 +1213,7 @@ describe("the match summary (#1057)", () => {
     await match.host.close("host-left");
     await settle();
 
-    expect(line(b, a.selfSessionId)?.damage).toBe(98);
-    expect(line(b, b.selfSessionId)?.taken).toBe(98);
+    expect(line(b, a.selfSessionId)?.damage).toBe(105);
+    expect(line(b, b.selfSessionId)?.taken).toBe(105);
   });
 });

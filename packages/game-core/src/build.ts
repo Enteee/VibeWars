@@ -133,6 +133,7 @@ export function validatePlayerBuild(build: PlayerBuild, rules: AttributeRules): 
   problems.push(
     ...validateEquipment(build.equipment, {
       primaryProfession: build.primaryProfession,
+      secondaryProfession: build.secondaryProfession,
       accessibleAttributeIds: accessible,
     }),
   );

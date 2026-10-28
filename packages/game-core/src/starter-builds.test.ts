@@ -39,6 +39,14 @@ describe("STARTER_BUILDS (#852)", () => {
         expect(validatePlayerBuild(build, RULES)).toEqual([]);
       });
 
+      it("wears headgear of an attribute, the head rune's (#1140)", () => {
+        const { head } = build.equipment.armor;
+        expect(head.headgearAttributeId).not.toBeNull();
+        expect(head.rune?.kind === "attribute" ? head.rune.attributeId : undefined).toBe(
+          head.headgearAttributeId,
+        );
+      });
+
       it("spends every attribute point", () => {
         expect(totalCost(build.attributes)).toBe(RULES.attributePointBudget);
       });

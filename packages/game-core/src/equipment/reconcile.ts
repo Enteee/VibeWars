@@ -1,6 +1,6 @@
 import { primaryAttributeIds } from "../character.js";
-import type { ProfessionId } from "../professions.js";
-import { armorPieces, type ArmorPiece, type ArmorSet } from "./armor.js";
+import { primaryAttributeOf, type ProfessionId } from "../professions.js";
+import { headgearAttributeOf, type ArmorPiece, type ArmorSet } from "./armor.js";
 import { getInsignia, insigniaAllowed, type InsigniaId } from "./insignias.js";
 import type { BuildEquipment, EquippedOffhand, EquippedWeapon, WeaponSet } from "./loadout.js";
 import { getOffhand } from "./offhands.js";
@@ -31,6 +31,7 @@ import { allowsOffhand, getWeapon } from "./weapons.js";
 export interface ReconcileContext {
   readonly accessibleAttributeIds: ReadonlySet<string>;
   readonly primaryProfession: ProfessionId;
+  readonly secondaryProfession: ProfessionId | undefined;
 }
 
 /**
@@ -126,14 +127,28 @@ function reconcileInsignia(
 }
 
 function reconcileArmor(armor: ArmorSet, context: ReconcileContext): ArmorSet {
-  const next: Record<string, ArmorPiece> = {};
-  for (const [slot, piece] of armorPieces(armor)) {
-    next[slot] = {
-      insigniaId: reconcileInsignia(piece.insigniaId, context),
-      rune: reconcileRune(piece.rune, context),
-    };
-  }
-  return next as ArmorSet;
+  const next = (piece: ArmorPiece): ArmorPiece => ({
+    insigniaId: reconcileInsignia(piece.insigniaId, context),
+    rune: reconcileRune(piece.rune, context),
+  });
+  // The headgear keeps its attribute while the primary or the secondary
+  // has it, and moves to the new primary attribute otherwise (#1140): a
+  // cleared one would leave the build illegal.
+  const kept = headgearAttributeOf(
+    armor.head,
+    context.primaryProfession,
+    context.secondaryProfession,
+  );
+  return {
+    head: {
+      ...next(armor.head),
+      headgearAttributeId: kept ?? primaryAttributeOf(context.primaryProfession).id,
+    },
+    chest: next(armor.chest),
+    hands: next(armor.hands),
+    legs: next(armor.legs),
+    feet: next(armor.feet),
+  };
 }
 
 /** One weapon set's nominations repointed; a set is never emptied here (ADR-0036). */
