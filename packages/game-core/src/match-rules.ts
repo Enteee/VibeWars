@@ -10,9 +10,10 @@ export interface MatchRules {
   /**
    * How a match is won (GW1 modes, #474/#476): `"kill-count"` by kills,
    * `"annihilation"` by wiping the other team, `"priest-annihilation"` by
-   * wiping it and killing its priest (#1186), or by morale at time.
+   * wiping it and killing its priest (#1186), or by morale at time;
+   * `"guild-battle"` by killing the foe's Guild Lord (#1222).
    */
-  readonly victory: "kill-count" | "annihilation" | "priest-annihilation";
+  readonly victory: "kill-count" | "annihilation" | "priest-annihilation" | "guild-battle";
   /** Kills one team needs to win; only for `"kill-count"`. */
   readonly scoreToWin: number;
   /** Match length in seconds; at zero time the lead wins. */
@@ -67,6 +68,18 @@ export const PRIEST_ANNIHILATION_MATCH_RULES: MatchRules = Object.freeze({
   timeLimitSeconds: 720,
 });
 
+/**
+ * GW1's Guild versus Guild (#1222): kill the enemy Guild Lord. The dead
+ * stay down and pay the death penalty; each base's shrine raises them
+ * every 2 minutes, priest or none. A team all dead at the morale floor
+ * loses; at 28 minutes (the operator's, Q138) the most aggression wins.
+ */
+export const GUILD_BATTLE_MATCH_RULES: MatchRules = Object.freeze({
+  ...ANNIHILATION_MATCH_RULES,
+  victory: "guild-battle",
+  timeLimitSeconds: 1680,
+});
+
 /** A living priest raises its team's dead at every multiple of this, match clock (#1186, GW1). */
 export const PRIEST_WAVE_SECONDS = 120;
 
@@ -74,13 +87,14 @@ export const PRIEST_WAVE_SECONDS = 120;
 export const SHRINE_INVULNERABLE_SECONDS = 5;
 
 /** The modes a map can name (#476): which one a match plays follows from its map alone. */
-export type MatchMode = "annihilation" | "kill-count" | "priest-annihilation";
+export type MatchMode = "annihilation" | "kill-count" | "priest-annihilation" | "guild-battle";
 
 /** Each mode's rules, by the name a map gives it. */
 export const MATCH_MODES: Readonly<Record<MatchMode, MatchRules>> = Object.freeze({
   annihilation: ANNIHILATION_MATCH_RULES,
   "kill-count": KILL_COUNT_MATCH_RULES,
   "priest-annihilation": PRIEST_ANNIHILATION_MATCH_RULES,
+  "guild-battle": GUILD_BATTLE_MATCH_RULES,
 });
 
 /** Morale a death costs, in percent, with `deathPenalty` (GW1). */
@@ -122,13 +136,28 @@ export interface TeamStanding {
   readonly morale: number;
   /** Whether its priest lives (#1186); `false` for a team that never had one. */
   readonly priestLives: boolean;
+  /** Whether its Guild Lord lives (#1222); `false` for a team that never had one. */
+  readonly guildLordLives: boolean;
+  /**
+   * Whether it has members and every one is dead at `MORALE_FLOOR` (#1222):
+   * no shrine raises them, so the team has no way back.
+   */
+  readonly beyondRaising: boolean;
+  /**
+   * Damage its members and their creatures dealt to a foe's Guild Lord
+   * (#1222), after armor; degeneration and life stealing are not counted.
+   */
+  readonly aggression: number;
 }
 
 /**
  * Why a match ended: kill-count's `"score"` and `"time"`, annihilation's
- * `"annihilation"` (a team wiped) and `"morale"` (time ran out).
+ * `"annihilation"` (a team wiped) and `"morale"` (time ran out, or in a
+ * Guild Battle a team all dead at the floor), the Guild Battle's
+ * `"guild-lord"` (a lord slain) and `"aggression"` (time ran out, #1222).
  */
-export type MatchEndReason = "score" | "time" | "annihilation" | "morale";
+export type MatchEndReason =
+  "score" | "time" | "annihilation" | "morale" | "guild-lord" | "aggression";
 
 export interface MatchOutcome {
   readonly phase: MatchPhase;
@@ -183,6 +212,8 @@ export function evaluateMatch(
     case "annihilation":
     case "priest-annihilation":
       return evaluateAnnihilation(standing, elapsedSeconds, rules);
+    case "guild-battle":
+      return evaluateGuildBattle(standing, elapsedSeconds, rules);
   }
 }
 
@@ -241,6 +272,40 @@ function evaluateAnnihilation(
   }
 
   return MATCH_IN_PROGRESS;
+}
+
+/**
+ * Guild versus Guild (#1222, GW1), in this order: a team whose Guild Lord
+ * died loses; then a team all dead at the morale floor; at time, the most
+ * aggression wins. Whichever rule decides, the one team it leaves wins,
+ * and none left, or a tie at time, every team loses: GW1's arenas have no
+ * draw. A wipe alone decides nothing: the shrine raises the team.
+ */
+function evaluateGuildBattle(
+  standing: MatchStanding,
+  elapsedSeconds: number,
+  rules: MatchRules,
+): MatchOutcome {
+  const teams = [...standing.byTeam];
+  const withLord = teams.filter(([, team]) => team.guildLordLives);
+  if (withLord.length < teams.length) {
+    return { phase: "finished", winningTeam: lone(withLord), reason: "guild-lord" };
+  }
+  const raisable = teams.filter(([, team]) => !team.beyondRaising);
+  if (raisable.length < teams.length) {
+    return { phase: "finished", winningTeam: lone(raisable), reason: "morale" };
+  }
+  if (elapsedSeconds >= rules.timeLimitSeconds) {
+    const best = Math.max(...teams.map(([, team]) => team.aggression));
+    const leaders = teams.filter(([, team]) => team.aggression === best);
+    return { phase: "finished", winningTeam: lone(leaders), reason: "aggression" };
+  }
+  return MATCH_IN_PROGRESS;
+}
+
+/** The team of the one entry, or `undefined` for none or several. */
+function lone(teams: readonly (readonly [number, TeamStanding])[]): number | undefined {
+  return teams.length === 1 ? teams[0]?.[0] : undefined;
 }
 
 /** Add a kill for `team`, returning a new score (the input is untouched). */

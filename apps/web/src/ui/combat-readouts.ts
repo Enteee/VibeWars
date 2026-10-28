@@ -142,7 +142,11 @@ export function describeCombatEvent(
         ? event.kind === "heal"
           ? "regeneration"
           : "degeneration"
-        : (skill ?? "a skill"));
+        : (skill ??
+          // A Guild Battle's shrine raises on its own (#1222): nobody's, no skill.
+          (entry.cause === "skill" && entry.sourceId === undefined && event.kind === "resurrected"
+            ? "The shrine"
+            : "a skill")));
   // A creature swings its own jaws or bones: "Wolf hits Bob", not
   // "Unarmed (Wolf)" (#1144); a priest raises with no skill: "Priest
   // resurrects Bob" (#1186).

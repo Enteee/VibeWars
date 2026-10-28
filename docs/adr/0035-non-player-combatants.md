@@ -111,3 +111,5 @@ built for players and is the larger, safe value.
   answers to nobody, never leaves with anyone, and is sent on its own
   team. It counts for no team either; whether its team is beaten reads
   its life separately (`TeamStanding.priestLives`).
+- A Guild Battle's Guild Lord (#1222) is one too, rooted at its post by
+  the `guard` behaviour; `TeamStanding.guildLordLives` reads its life.
