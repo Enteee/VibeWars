@@ -45,4 +45,8 @@ describe("skillRoles", () => {
     expect(rolesOf("monk.mending-touch")).toEqual(["healing", "removal"]);
     expect(rolesOf("monk.smite-condition")).toEqual(["removal"]);
   });
+
+  it("counts Soul Feast's stolen Health as healing (#466)", () => {
+    expect(rolesOf("necromancer.soul-feast")).toEqual(["healing"]);
+  });
 });

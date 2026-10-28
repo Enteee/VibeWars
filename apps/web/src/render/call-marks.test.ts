@@ -23,6 +23,7 @@ const CALLED: RenderableActor = {
   health: 500,
   maxHealth: 500,
   dead: false,
+  exploited: false,
   knockedDown: false,
   castProgress: undefined,
   statuses: [],

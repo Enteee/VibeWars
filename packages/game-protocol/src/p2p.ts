@@ -254,6 +254,8 @@ export interface WirePlayer {
   readonly primaryProfession: string | null;
   readonly secondaryProfession: string | null;
   readonly dead: boolean;
+  /** Its corpse was exploited (#466); only ever true while `dead`. */
+  readonly corpseExploited: boolean;
   readonly castingSkillId: string | null;
   readonly castRemaining: number;
   /** The current cast's whole length, dazed included; 0 when not casting. */
@@ -1015,6 +1017,9 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
     !isNullableString(raw.primaryProfession) ||
     !isNullableString(raw.secondaryProfession) ||
     typeof raw.dead !== "boolean" ||
+    typeof raw.corpseExploited !== "boolean" ||
+    // Only a corpse can have been exploited: malformed, not old.
+    (raw.corpseExploited && !raw.dead) ||
     !isNullableString(raw.castingSkillId) ||
     !isNumber(raw.castRemaining) ||
     !isNumber(raw.castTotal) ||
@@ -1052,6 +1057,7 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
         primaryProfession: raw.primaryProfession,
         secondaryProfession: raw.secondaryProfession,
         dead: raw.dead,
+        corpseExploited: raw.corpseExploited,
         castingSkillId: raw.castingSkillId,
         castRemaining: raw.castRemaining,
         castTotal: raw.castTotal,

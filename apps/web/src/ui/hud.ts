@@ -427,6 +427,7 @@ const REFUSALS: Readonly<Record<ActivationRejection, string>> = {
   "invalid-target-enemy": "That skill needs an ally target.",
   "out-of-range": "Target is out of range.",
   "no-line-of-sight": "Target is not in line of sight.",
+  "no-corpse": "No corpse in range.",
 };
 
 /** Where an attack's refusal differs from a cast's: it is about the weapon, not a skill. */

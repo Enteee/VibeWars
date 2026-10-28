@@ -38,6 +38,7 @@ function match(players: readonly Pick<PlayerSnapshot, keyof typeof ally>[]): Mat
       swingElapsed: 0,
       swingTotal: 0,
       knockdownRemaining: 0,
+      corpseExploited: false,
       healthPips: 0,
       energyPips: 0,
       creature: undefined,
@@ -62,6 +63,7 @@ describe("watching an ally (#443)", () => {
       health: 120,
       maxHealth: 480,
       dead: false,
+      corpseExploited: false,
     });
   });
 

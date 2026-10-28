@@ -673,6 +673,11 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Necromancer/263-Mark_of_Pain",
   },
   {
+    id: "necromancer.soul-feast",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/292-Soul_Feast",
+  },
+  {
     id: "necromancer.vampiric-gaze",
     profession: "necromancer",
     url: "https://www.gw-memorial.net/skills/Necromancer/248-Vampiric_Gaze",

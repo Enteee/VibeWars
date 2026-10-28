@@ -635,6 +635,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       weaponId: combatant.equipment.mainHand.weapon.id,
       offhandId: combatant.equipment.offhandId ?? null,
       dead: combatant.dead,
+      corpseExploited: participant.corpseExploited,
       castingSkillId: cast?.skillId ?? null,
       castRemaining: cast?.remainingSeconds ?? 0,
       castTotal: cast?.totalSeconds ?? 0,

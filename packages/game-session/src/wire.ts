@@ -513,6 +513,7 @@ export function playerSnapshot(player: WirePlayer): PlayerSnapshot | undefined {
       : undefined,
     team: player.team,
     dead: player.dead,
+    corpseExploited: player.corpseExploited,
     castingSkillId: absent(player.castingSkillId),
     castRemaining: player.castRemaining,
     castTotal: player.castTotal,

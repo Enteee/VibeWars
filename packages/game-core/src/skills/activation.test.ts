@@ -32,6 +32,7 @@ const SPELL: Skill = {
   area: undefined,
   attack: undefined,
   whileActivating: undefined,
+  corpse: undefined,
   projectile: undefined,
   effects: [{ kind: "damage", amount: { flat: 50 }, type: "typeless", armorPenetration: 0 }],
 };

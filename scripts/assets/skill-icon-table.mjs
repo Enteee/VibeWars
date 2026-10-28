@@ -193,4 +193,6 @@ export const SKILL_ICONS = {
   "assassin.shadow-refuge": { glyph: "crescent", modifier: "plus" },
   "assassin.shroud-of-distress": { glyph: "armor-half" },
   "assassin.critical-eye": { glyph: "eye" },
+  // A placeholder: health taken from a corpse (#466).
+  "necromancer.soul-feast": { glyph: "heal", modifier: "plus" },
 };

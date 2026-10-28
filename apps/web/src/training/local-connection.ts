@@ -98,6 +98,7 @@ function toPlayerSnapshot(
     secondaryProfession: participant.creature === undefined ? professions.secondary : undefined,
     team: combatant.team,
     dead: combatant.dead,
+    corpseExploited: participant.corpseExploited,
     castingSkillId: activeCast?.skillId,
     castRemaining: activeCast?.remainingSeconds ?? 0,
     castTotal: activeCast?.totalSeconds ?? 0,

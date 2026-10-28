@@ -42,6 +42,8 @@ export interface RenderableActor {
   readonly health: number;
   readonly maxHealth: number;
   readonly dead: boolean;
+  /** A corpse a skill has exploited (#466): drawn darker. */
+  readonly exploited: boolean;
   /** Lying down from a knockdown (#545): drawn flattened, the weapon dropped beside it. */
   readonly knockedDown: boolean;
   /** Fraction of the current cast still remaining, or `undefined`. */
@@ -285,6 +287,8 @@ const TEAM_COLOURS: Record<RenderableActor["team"], number> = {
 export const BODY_EDGE = 0x0b0f14;
 /** A corpse's hollow circle, and the glyph inside it. */
 export const DEAD_COLOUR = 0x4a5464;
+/** An exploited corpse's circle and glyph (#466): darker than a fresh one. */
+export const EXPLOITED_CORPSE_COLOUR = 0x262b33;
 
 /** Colour lookup must stay total over the team union. */
 export function teamColour(team: RenderableActor["team"]): number {
@@ -541,7 +545,7 @@ export function bodyGlyphLayout(actor: RenderableActor): BodyGlyphLayout | undef
       x,
       y,
       size: BODY_GLYPH_SIZE,
-      tint: DEAD_COLOUR,
+      tint: actor.exploited ? EXPLOITED_CORPSE_COLOUR : DEAD_COLOUR,
       alpha: 1,
     };
   }
