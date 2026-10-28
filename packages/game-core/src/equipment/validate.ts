@@ -1,5 +1,10 @@
 import { primaryAttributeIds } from "../character.js";
-import { getAttribute, getProfession, type ProfessionId } from "../professions.js";
+import {
+  getAttribute,
+  getProfession,
+  primaryAttributeOf,
+  type ProfessionId,
+} from "../professions.js";
 import { armorPieces } from "./armor.js";
 import { getInsignia } from "./insignias.js";
 import type { BuildEquipment, WeaponSet } from "./loadout.js";
@@ -195,6 +200,14 @@ function checkHeadgear(
   }
   if (!context.accessibleAttributeIds.has(attributeId)) {
     const name = getAttribute(attributeId)?.name ?? attributeId;
+    const secondary = context.secondaryProfession;
+    if (secondary !== undefined && primaryAttributeOf(secondary).id === attributeId) {
+      problems.push({
+        field,
+        message: `headgear of ${name}, which only a ${getProfession(secondary).name} primary can use`,
+      });
+      return;
+    }
     const professions = [context.primaryProfession, context.secondaryProfession]
       .flatMap((id) => (id === undefined ? [] : [getProfession(id).name]))
       .join(" or ");

@@ -1088,6 +1088,15 @@ describe("attribute headgear (#1140)", () => {
     ]);
   });
 
+  it("refuses the secondary's primary attribute, which only its primary can use", () => {
+    expect(validateWith("monk.divine-favor", "monk")).toEqual([
+      {
+        field: "equipment.armor.head",
+        message: "headgear of Divine Favor, which only a Monk primary can use",
+      },
+    ]);
+  });
+
   it("refuses a head with no headgear attribute, which gives nothing", () => {
     expect(
       resolveWith([["warrior.strength", 12]], null).attributeRanks.get("warrior.strength"),
