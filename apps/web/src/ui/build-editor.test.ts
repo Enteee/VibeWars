@@ -205,6 +205,16 @@ describe("describeProfessionChange (#569)", () => {
     expect(describeProfessionChange(warrior, mesmer)).toEqual(["Sword → Wand", "Shield → Focus"]);
   });
 
+  it("names a set 2-4 a profession change empties (#489)", () => {
+    const warrior = setWeapon(setProfessions(newCharacter("c1"), "warrior", undefined), 1, "sword");
+    const mesmer = setProfessions(warrior, "mesmer", undefined);
+    expect(describeProfessionChange(warrior, mesmer)).toEqual([
+      "Sword → Wand",
+      "Shield → Focus",
+      "Set 2: Sword removed",
+    ]);
+  });
+
   it("is empty when nothing was dropped", () => {
     let warrior = setProfessions(newCharacter("c1"), "warrior", "monk");
     warrior = setRank(warrior, "warrior.strength", 8);
@@ -264,6 +274,18 @@ describe("setProfessions", () => {
     expect(validateBuild(mesmer)).toEqual([]);
   });
 
+  it("empties a set 2-4 nothing can govern and keeps a reachable one (#489)", () => {
+    const warrior = setWeapon(
+      setWeapon(setProfessions(newCharacter("c1"), "warrior", undefined), 1, "sword"),
+      2,
+      "wand",
+    );
+    const mesmer = setProfessions(warrior, "mesmer", undefined);
+    expect(mesmer.equipment.weaponSets[1]).toBeNull();
+    expect(mesmer.equipment.weaponSets[2]?.mainHand.weaponId).toBe("wand");
+    expect(validateBuild(mesmer)).toEqual([]);
+  });
+
   it("gives a Warrior turned Assassin daggers and no off-hand (#614)", () => {
     const warrior = setProfessions(newCharacter("c1"), "warrior", undefined);
     const assassin = setProfessions(warrior, "assassin", undefined);
@@ -292,7 +314,11 @@ describe("setProfessions", () => {
 
   it("drops an off-hand the new professions cannot link", () => {
     // Fists are never swapped, so the shield is reconciled on its own.
-    const warrior = setWeapon(setProfessions(newCharacter("c1"), "warrior", undefined), "unarmed");
+    const warrior = setWeapon(
+      setProfessions(newCharacter("c1"), "warrior", undefined),
+      0,
+      "unarmed",
+    );
     expect(warrior.equipment.weaponSets[0].offHand).not.toBeNull();
 
     const switched = setProfessions(warrior, "mesmer", undefined);
@@ -610,22 +636,29 @@ describe("weaponWarning (#417)", () => {
   };
 
   it("says what an attack skill needs and what is in hand", () => {
-    expect(weaponWarning(skill("warrior.swift-chop"), "sword")).toEqual({
+    expect(weaponWarning(skill("warrior.swift-chop"), ["sword"])).toEqual({
       badge: "Needs an axe",
       title: "Needs an axe — your weapon is a sword",
     });
-    expect(weaponWarning(skill("ranger.barrage"), "daggers")?.title).toBe(
+    expect(weaponWarning(skill("ranger.barrage"), ["daggers"])?.title).toBe(
       "Needs a bow — your weapon is daggers",
     );
-    expect(weaponWarning(skill("warrior.distracting-blow"), "unarmed")?.title).toBe(
+    expect(weaponWarning(skill("warrior.distracting-blow"), ["unarmed"])?.title).toBe(
       "Needs a melee weapon — you have no weapon",
     );
   });
 
   it("clears when the weapon fits, and never warns for a skill that is no attack", () => {
-    expect(weaponWarning(skill("warrior.swift-chop"), "axe")).toBeUndefined();
-    expect(weaponWarning(skill("ranger.barrage"), "hornbow")).toBeUndefined();
-    expect(weaponWarning(skill("warrior.distracting-blow"), "spear")).toBeUndefined();
-    expect(weaponWarning(skill("elementalist.fireball"), "unarmed")).toBeUndefined();
+    expect(weaponWarning(skill("warrior.swift-chop"), ["axe"])).toBeUndefined();
+    expect(weaponWarning(skill("ranger.barrage"), ["hornbow"])).toBeUndefined();
+    expect(weaponWarning(skill("warrior.distracting-blow"), ["spear"])).toBeUndefined();
+    expect(weaponWarning(skill("elementalist.fireball"), ["unarmed"])).toBeUndefined();
+  });
+
+  it("is quiet when any carried set wields it, and names set 1 when none does (#489)", () => {
+    expect(weaponWarning(skill("warrior.swift-chop"), ["sword", "axe"])).toBeUndefined();
+    expect(weaponWarning(skill("warrior.swift-chop"), ["sword", "daggers"])?.title).toBe(
+      "Needs an axe — your weapon is a sword",
+    );
   });
 });

@@ -1037,6 +1037,18 @@ nothing else takes it deeper. Arrows already in flight keep the bow
 that loosed them. The keys (F1-F4) arrive with #489's second child. See
 [ADR-0036](../adr/0036-weapon-sets.md).
 
+The Gear tab edits every set (#489): a row of four tabs, `1` to `4`,
+sits above the hands, each showing its set's weapon and off-hand, or a
+dimmed `+` when empty. The hands, their attribute choices and the gear
+summary show and edit the selected tab, set 1 when the editor opens. A
+weapon picked into an empty set creates it, with no off-hand; its ×, or
+dragging its weapon to the library, empties it again. Set 1 cannot be
+emptied. A set's problems mark its tab. A profession change gives set 1
+the new primary's default weapon if nothing can govern its own, and
+empties a set 2-4 in that case. An attack skill is flagged ("Needs an
+axe") only when no set carries its weapon. The character preview shows
+set 1, which every match starts with.
+
 ## Damage types and armor
 
 Every hit has one of GW1's damage types (#759). Slashing, piercing and
