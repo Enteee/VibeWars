@@ -1,7 +1,7 @@
 import { primaryAttributeIds } from "../character.js";
 import { getAttribute, getProfession, type ProfessionId } from "../professions.js";
 import { armorPieces } from "./armor.js";
-import { getInsignia } from "./insignias.js";
+import { getInsignia, insigniaAllowed } from "./insignias.js";
 import type { BuildEquipment, WeaponSet } from "./loadout.js";
 import { getOffhand } from "./offhands.js";
 import { getUniversalRune, runeDisplayName, type EquippedRune } from "./runes.js";
@@ -193,8 +193,16 @@ export function validateEquipment(
   for (const [slot, piece] of armorPieces(equipment.armor)) {
     const field = `equipment.armor.${slot}`;
 
-    if (piece.insigniaId !== null && getInsignia(piece.insigniaId) === undefined) {
-      problems.push({ field, message: `unknown insignia ${piece.insigniaId}` });
+    if (piece.insigniaId !== null) {
+      const insignia = getInsignia(piece.insigniaId);
+      if (insignia === undefined) {
+        problems.push({ field, message: `unknown insignia ${piece.insigniaId}` });
+      } else if (!insigniaAllowed(insignia, context.primaryProfession)) {
+        problems.push({
+          field,
+          message: `${insignia.name} needs a primary ${String(insignia.profession)}`,
+        });
+      }
     }
 
     if (piece.rune === null) {

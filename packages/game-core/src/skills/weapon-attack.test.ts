@@ -429,7 +429,7 @@ describe("resolveAttackSkill (ADR-0029)", () => {
         maxHealth: 1e6,
         equipment: {
           ...unarmedResolvedEquipment(RULES.armorReferenceLevel),
-          conditionalArmor: [{ condition, amount: 40 }],
+          conditionalArmor: [{ conditions: [condition], amount: 40 }],
         },
       });
 
@@ -444,8 +444,8 @@ describe("resolveAttackSkill (ADR-0029)", () => {
     });
 
     it("meets armor against elemental damage, not against physical (#759)", () => {
-      const elemental = armoredVs("vs-elemental");
-      const physical = armoredVs("vs-physical");
+      const elemental = armoredVs({ kind: "vs-elemental" });
+      const physical = armoredVs({ kind: "vs-physical" });
       const [vsElemental] = damages(resolve(spearOfLightning, thrower(), [elemental]));
       const [vsPhysical] = damages(resolve(spearOfLightning, thrower(), [physical]));
       expect(vsElemental).toBe(blowOf("lightning", 0.25, elemental));

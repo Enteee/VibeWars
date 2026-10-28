@@ -20,7 +20,6 @@
 /** A piece of gear behaviour this project does not simulate. */
 export type MissingGearMechanic =
   | "stances"
-  | "armor-while-attacking"
   | "attribute-headgear"
   | "profession-insignias"
   | "weapon-upgrades"
@@ -53,16 +52,6 @@ export const GEAR_OMISSIONS: readonly GearOmission[] = Object.freeze([
     affects: [],
   },
   {
-    mechanic: "armor-while-attacking",
-    description: "armor that applies while its wearer is attacking: Brawler's Insignia",
-    kind: "gap",
-    reason:
-      "Weapon auto-attack now gives every combatant an attack state (ADR-0026), but armor " +
-      "does not key off it yet. Brawler's Insignia stays out of the catalog until it does, " +
-      "rather than shipping as a stat line nothing reads (ADR-0019).",
-    affects: [],
-  },
-  {
     mechanic: "attribute-headgear",
     description: "a headpiece granting +1 to a chosen attribute, stacking with its rune",
     kind: "gap",
@@ -77,9 +66,12 @@ export const GEAR_OMISSIONS: readonly GearOmission[] = Object.freeze([
     description: "insignias available to one profession only, each with its own bonus",
     kind: "gap",
     reason:
-      "Only universal insignias are modelled. The profession-specific ones are what " +
-      "make an armor set feel like a set, and they are roughly forty more catalog entries " +
-      "with no new mechanics behind them.",
+      "Partial (#1142): Knight's, Sentinel's, Nightstalker's, Prodigy's and Windwalker are " +
+      "in. Anchorite's, Wanderer's, Dreadnought, Disciple's, Blighter's, Undertaker's, " +
+      "Forsaken, Shaman's, Minion Master's, Prismatic and the elemental ones need no new " +
+      "mechanic and are next; Infiltrator's, Saboteur's, Vanguard's, Herald's, Scout's, " +
+      "Centurion's, Virtuoso's, Mystic's, Artificer's, Beastmaster's, Tormentor's, " +
+      "Lieutenant's, Ghost Forge, Stonefist and Bloodstained each need one.",
     affects: [],
   },
   {

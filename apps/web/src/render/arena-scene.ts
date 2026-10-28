@@ -64,6 +64,7 @@ import {
   type WalkMarker,
 } from "./walk-marker.js";
 import { AttackClock, REST_FRAME, shownFrame } from "./attack-clock.js";
+import { impactMarks, mergeImpacts, type Impact } from "./body-impacts.js";
 import { conditionMarks, cuePhase } from "./body-conditions.js";
 import { bodyRings } from "./body-rings.js";
 import { DEAD_DASH, DEAD_GAP, creatureOutline, dashes } from "./creature-shape.js";
@@ -141,14 +142,16 @@ const DEAD_INK_TINT = 0x4a5464;
 /** An off-screen marker's length, tip to base, and width, screen px (#440). */
 const EDGE_MARKER_LENGTH = 12;
 const EDGE_MARKER_WIDTH = 10;
+/** A skill impact's spikes and ring (#1139). */
+const IMPACT_LINE_WIDTH = 1.5;
 /**
  * The world's layers, bottom up (#1037). Wards on the floor and their
  * icons (#1087), under everything that stands on them; the floor and the
  * bodies, with their enchantment and hex rings (#1117) and condition cues
  * (#1138); the profession glyph inside each body; every mark on a body
- * (off-hand, weapon, target ring, call chevron, bars, swing flashes), so
- * a weapon crosses the glyph, never the reverse; the casting skill's type
- * badge by the cast bar (#1125); then shots, status icons, names and
+ * (off-hand, weapon, target ring, call chevron, bars, swing flashes, skill
+ * impacts), so a weapon crosses the glyph, never the reverse; the casting
+ * skill's type badge by the cast bar (#1125); then shots, status icons, names and
  * numbers, which were over the bodies before the split, so a long name may
  * cover a badge's top edge.
  */
@@ -198,6 +201,9 @@ export class ArenaScene extends Phaser.Scene {
   private floatingTexts: FloatingText[] = [];
   private areaFlashes: AreaFlash[] = [];
   private swingFlashes: SwingFlash[] = [];
+  /** Skills landing on bodies (#1139), newest last; merged in on the next frame. */
+  private impacts: Impact[] = [];
+  private addedImpacts: Impact[] = [];
   private walkMarker: WalkMarker | undefined;
   /**
    * One sprite per shot, by projectile id: in flight, or ended and fading
@@ -292,6 +298,10 @@ export class ArenaScene extends Phaser.Scene {
     }
   }
 
+  public addImpacts(impacts: readonly Impact[]): void {
+    this.addedImpacts.push(...impacts);
+  }
+
   public preload(): void {
     for (const [id, url] of Object.entries(STATUS_ICON)) {
       this.load.svg(statusTexture(id), url, {
@@ -384,6 +394,11 @@ export class ArenaScene extends Phaser.Scene {
     this.swingFlashes = decaySwingFlashes(this.swingFlashes, deltaMs / 1000);
     for (const flash of this.swingFlashes) {
       this.drawSwingFlash(marks, flash);
+    }
+    this.impacts = mergeImpacts(this.impacts, this.addedImpacts, deltaMs / 1000);
+    this.addedImpacts = [];
+    for (const impact of this.impacts) {
+      this.drawImpact(marks, impact);
     }
     this.updateBodyGlyphs();
     this.updateCastBadges();
@@ -684,6 +699,27 @@ export class ArenaScene extends Phaser.Scene {
     ] as const) {
       g.lineStyle(width, colour, 1);
       g.strokePoints(points.map(({ x, y }) => new Phaser.Math.Vector2(x, y)));
+    }
+  }
+
+  /** A skill's impact on a body (#1139), where that body is now; none once it has left the state. */
+  private drawImpact(g: Phaser.GameObjects.Graphics, impact: Impact): void {
+    const actor = this.snapshot.actors.find((a) => a.id === impact.anchorId);
+    if (actor === undefined) {
+      return;
+    }
+    const { x, y } = actor.position;
+    for (const mark of impactMarks(impact, actor.radius, this.reducedMotion)) {
+      if (mark.kind === "spike") {
+        g.lineStyle(IMPACT_LINE_WIDTH, impact.colour, mark.alpha);
+        g.lineBetween(x + mark.from.x, y + mark.from.y, x + mark.to.x, y + mark.to.y);
+      } else if (mark.kind === "tint") {
+        g.fillStyle(impact.colour, mark.alpha);
+        g.fillCircle(x, y, mark.radius);
+      } else {
+        g.lineStyle(IMPACT_LINE_WIDTH, impact.colour, mark.alpha);
+        g.strokeCircle(x, y, mark.radius);
+      }
     }
   }
 
