@@ -66,6 +66,9 @@ export default defineConfig({
         fileURLToPath(new URL(".", import.meta.url)),
         fileURLToPath(new URL("../../packages", import.meta.url)),
         fileURLToPath(new URL("../../node_modules", import.meta.url)),
+        // The player docs the Help screen renders (#1257), and nothing
+        // else of docs/.
+        fileURLToPath(new URL("../../docs/player", import.meta.url)),
       ],
     },
     port: 5173,

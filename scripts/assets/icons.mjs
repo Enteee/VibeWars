@@ -845,6 +845,10 @@ const ui = {
   settings: () =>
     `<circle cx="12" cy="12" r="6.2" ${stroke(C.ink, 2.2)}/><circle cx="12" cy="12" r="2.4" ${stroke(C.ink, 2)}/>` +
     `<path d="M18.5 12.0L21.8 12.0M16.6 16.6L18.9 18.9M12.0 18.5L12.0 21.8M7.4 16.6L5.1 18.9M5.5 12.0L2.2 12.0M7.4 7.4L5.1 5.1M12.0 5.5L12.0 2.2M16.6 7.4L18.9 5.1" ${stroke(C.ink, 3)}/>`,
+  // A question mark in a ring: the player docs, Help (#1257).
+  help: () =>
+    `<circle cx="12" cy="12" r="9.5" ${stroke(C.ink, 2)}/>` +
+    `<path d="M9 9.2a3 3 0 1 1 4.2 2.8c-.8.4-1.2 1-1.2 1.9v.8" ${stroke(C.ink, 2.2)}/><circle cx="12" cy="17.6" r="1.3" fill="${C.ink}"/>`,
   // Four corner brackets pointing out: enter fullscreen (#454).
   fullscreen: () => `<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" ${stroke(C.ink, 2.2)}/>`,
   // The same corners pointing in: leave fullscreen (#454).
