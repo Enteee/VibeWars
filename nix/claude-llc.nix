@@ -153,7 +153,8 @@ let
       TELEGRAM_MANAGER_TOKEN="${lib.optionalString (tg.managerToken != null) tg.managerToken}"
     fi
     export TELEGRAM_MANAGER_TOKEN
-    export TELEGRAM_CHAT_ID="${tg.chatId}"
+    TELEGRAM_CHAT_ID="$(tr -d '[:space:]' < "${config.vibewars.claudeBot.credentials}/telegram-chat-id" 2>/dev/null || true)"
+    export TELEGRAM_CHAT_ID
     exec ${node} ${llcScripts}/restart.mjs
   '';
 

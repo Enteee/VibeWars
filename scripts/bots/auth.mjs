@@ -25,8 +25,12 @@ import {
   githubIdentity,
   paths,
   pushIdentity,
+  checkChat,
+  readChatId,
   telegramBot,
+  telegramGroupIdentity,
   telegramIdentity,
+  telegramUpdates,
 } from "./creds.mjs";
 import { collect, renderTable } from "./doctor.mjs";
 
@@ -41,12 +45,16 @@ export const STEPS = /** @type {const} */ (["claude", "github", "push", "telegra
 /** @type {Record<Step, string>} the doctor row each step signs in */
 const ROW = { claude: "claude", github: "github api", push: "github push", telegram: "telegram" };
 
+/** The telegram step signs in two rows: the bot, then its group. */
+const GROUP_ROW = "telegram group";
+
 const POLL_MS = 5_000;
 const POLL_FOR_MS = 10 * 60_000;
 
 export const USAGE = `claude-llc auth [claude | github | push | telegram]
 
-  Sign the company's accounts in: Claude, GitHub, the push key, Telegram.
+  Sign the company's accounts in: Claude, GitHub, the push key, Telegram
+  (the manager bot, then the group it runs in).
   Shows what is signed in (as claude-llc doctor does), runs the sign-in of
   each credential that is not, or only of the one named, and prints no
   secret. Interactive: run it in a terminal.`;
@@ -66,8 +74,10 @@ export const USAGE = `claude-llc auth [claude | github | push | telegram]
  * @returns {Identity}
  */
 function identityOf(rows, step) {
+  const token = rows.find((row) => row.name === ROW[step])?.identity;
+  const group = step === "telegram" ? rows.find((row) => row.name === GROUP_ROW)?.identity : null;
   return (
-    rows.find((row) => row.name === ROW[step])?.identity ?? {
+    (token?.state === "ok" ? (group ?? token) : token) ?? {
       state: "error",
       who: null,
       expiry: null,
@@ -336,12 +346,103 @@ async function telegramToken(deps) {
     deps.err(`  ✗ telegram: ${bot.note ?? "refused"}; nothing written`);
     return false;
   }
-  const temp = `${p.telegram}.${String(process.pid)}.tmp`;
-  fs.writeFileSync(temp, `${token.trim()}\n`, { mode: 0o600 });
-  fs.renameSync(temp, p.telegram);
-  deps.out(
-    `Group and chat id: run claude-bot-setup ${p.telegram} if the company has no Telegram group yet.`,
-  );
+  writePrivate(p.telegram, token.trim());
+  return telegramGroup(deps, token.trim());
+}
+
+/**
+ * Atomically, mode 600, like the credentials beside it.
+ *
+ * @param {string} file
+ * @param {string} value
+ */
+function writePrivate(file, value) {
+  const temp = `${file}.${String(process.pid)}.tmp`;
+  fs.writeFileSync(temp, `${value}\n`, { mode: 0o600 });
+  fs.renameSync(temp, file);
+}
+
+/**
+ * @param {Deps} deps
+ * @param {string} token
+ * @param {string} chatId
+ * @returns {Promise<boolean>} whether the chat is fit for the company; the
+ *   checklist is printed either way
+ */
+async function showChat(deps, token, chatId) {
+  const checked = await checkChat(token, chatId, deps.get);
+  deps.out(`Chat "${checked.title}" (${chatId}):`);
+  for (const c of checked.checks) {
+    deps.out(`  ${c.good ? "✓" : "✗"} ${c.text}`);
+  }
+  return checked.ok;
+}
+
+/**
+ * The company's group, after the bot: kept as it is if it still checks out,
+ * else found by waiting for the bot to be added to one (no API creates a
+ * group), or taken pasted. Several candidates are listed and the operator
+ * picks; nothing is written for a chat that is not fit.
+ *
+ * @param {Deps} deps
+ * @param {string} token
+ * @returns {Promise<unknown>}
+ */
+async function telegramGroup(deps, token) {
+  const p = paths(deps.root);
+  const kept = readChatId(p.telegramChat);
+  if (kept !== null && (await showChat(deps, token, kept))) {
+    deps.out("The company's Telegram group is already set up.");
+    return true;
+  }
+  deps.out("");
+  deps.out("The company needs a Telegram group. On your phone:");
+  deps.out("  1. New Group, add the manager bot");
+  deps.out("  2. Open the group -> Edit -> enable Topics");
+  deps.out("  3. Edit -> Administrators -> add the bot, with Manage Topics");
+  deps.out("Waiting for the bot to see it. Ctrl-C to stop.");
+  const pasted = await deps.prompt("Or paste the group's chat id (Enter to wait): ");
+  if (pasted === null) {
+    return INTERRUPTED;
+  }
+  const seen = new Set(/^-?\d+$/.test(pasted.trim()) ? [pasted.trim()] : []);
+  let offset = 0;
+  /** @type {Set<string>} */
+  const fit = new Set();
+  for (let waited = 0; waited <= POLL_FOR_MS; waited += POLL_MS) {
+    const updates = await telegramUpdates(token, offset, deps.get);
+    offset = updates.offset;
+    for (const chat of updates.chats) {
+      seen.add(chat);
+    }
+    for (const chat of seen) {
+      if (!fit.has(chat) && (await showChat(deps, token, chat))) {
+        fit.add(chat);
+      }
+    }
+    if (fit.size > 0) {
+      break;
+    }
+    await deps.sleep(POLL_MS);
+  }
+  const options = [...fit];
+  let chosen = options[0];
+  if (options.length > 1) {
+    deps.out("Several groups fit:");
+    for (const [i, chat] of options.entries()) {
+      deps.out(`  ${String(i + 1)}. ${chat}`);
+    }
+    const answer = await deps.prompt("Which one (number): ");
+    if (answer === null) {
+      return INTERRUPTED;
+    }
+    chosen = options[Number(answer.trim()) - 1];
+  }
+  if (chosen === undefined) {
+    deps.err("  ✗ telegram: no group chosen; nothing written");
+    return false;
+  }
+  writePrivate(p.telegramChat, chosen);
   return true;
 }
 
@@ -484,7 +585,10 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       claude: () => claudeIdentity(p.claude),
       github: () => githubIdentity(p.gh),
       push: () => pushIdentity(p.sshKey),
-      telegram: () => telegramIdentity(p.telegram),
+      telegram: async () => {
+        const bot = await telegramIdentity(p.telegram);
+        return bot.state === "ok" ? telegramGroupIdentity(p.telegram, p.telegramChat) : bot;
+      },
     },
     get: (url) => fetch(url),
     sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),

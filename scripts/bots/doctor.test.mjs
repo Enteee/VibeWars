@@ -26,12 +26,20 @@ describe("renderTable", () => {
         operators: null,
         applicable: false,
       },
+      {
+        name: "telegram group",
+        identity: { state: "error", who: null, expiry: null, scopes: null, note: "not a forum" },
+        stored: "/c/g",
+        operators: null,
+        applicable: false,
+      },
     ]);
     const lines = out.split("\n");
     expect(lines[0]).toMatch(/^credential\s+identity\s+expiry\s+scopes\s+stored\s+operator's$/);
     expect(lines[1]).toMatch(/claude\s+not set up\s.*\s-$/);
     expect(lines[2]).toMatch(/github api\s+bot\s.*YES$/);
     expect(lines[3]).toMatch(/telegram\s+@vw\s.*no$/);
+    expect(lines[4]).toMatch(/telegram group\s+error: not a forum\s/);
   });
 
   it("says can't tell when an identity is unknown", () => {
