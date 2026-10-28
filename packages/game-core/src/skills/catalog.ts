@@ -4568,6 +4568,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     // The nearest fresh corpse, as Soul Feast's (#1104).
     corpse: { radius: RANGE_SPELL },
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     // PvP: "Exploit nearest corpse to create a Well of Suffering at its
     // location. For 10...26...30 seconds, foes in that area suffer health
