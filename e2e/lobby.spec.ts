@@ -374,3 +374,42 @@ test("each row shows the character a player brings, a refused build as Default l
     await context.close();
   }
 });
+
+test("a match plays the character the lobby lists, not one selected after joining (#1070)", async ({
+  browser,
+}) => {
+  const { context, pages } = await openPeers(browser, 2);
+  const [host, guest] = pages as [Page, Page];
+
+  try {
+    // Both pages share one storage, so the guest selecting Blank changes
+    // the host's selection too. The host entered with Cynn and plays Cynn.
+    await host.goto("./");
+    await host.getByRole("button", { name: "new character" }).click();
+    await host.locator("input.editor-name").fill("Cynn");
+    await host.locator(".skill-box").first().locator(".skill-box-equip").click();
+    await host.getByRole("button", { name: "Save", exact: true }).click();
+    await host.getByRole("button", { name: "new character" }).click();
+    await host.locator("input.editor-name").fill("Blank");
+    await host.getByRole("button", { name: "Save", exact: true }).click();
+    await host.locator(".roster").getByText("Cynn", { exact: true }).click();
+    const code = await hostLobby(host, "Host");
+    await guest.goto("./");
+    await guest.locator(".roster").getByText("Blank", { exact: true }).click();
+    await joinLobby(guest, "Guest", code);
+
+    await host.getByRole("button", { name: "join team 1" }).click();
+    await guest.getByRole("button", { name: "join team 2" }).click();
+    const hostRow = host.locator(".lobby-team").nth(0).locator(".lobby-slot");
+    await expect(hostRow.locator(".lobby-character")).toHaveText("Cynn · Warrior");
+    await host.getByRole("button", { name: "Ready", exact: true }).click();
+    await guest.getByRole("button", { name: "Ready", exact: true }).click();
+    await host.getByRole("button", { name: "start match" }).click();
+
+    // Cynn's one skill, not the house bar Blank's refused build would play.
+    await expect(host.locator("#viewport canvas:not(.compass)")).toBeVisible();
+    await expect(host.locator(".hud-skills .hud-skill:not(.is-empty)")).toHaveCount(1);
+  } finally {
+    await context.close();
+  }
+});
