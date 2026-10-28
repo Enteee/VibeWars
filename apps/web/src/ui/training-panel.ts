@@ -75,7 +75,7 @@ import {
   type LogRow,
   type MeterTotals,
 } from "./combat-readouts.js";
-import { describeRefusal, MESSAGE_SECONDS, SKILL_SLOT_ICON_PX } from "./hud.js";
+import { changedSlots, describeRefusal, MESSAGE_SECONDS, SKILL_SLOT_ICON_PX } from "./hud.js";
 import { isEliteSkill, skillBadgeHtml, skillIconHtml } from "./icons.js";
 import { energyLabel, overcastBandElement, renderOvercastBand } from "./overcast-band.js";
 import { paintHealthTint } from "./health-tint.js";
@@ -309,6 +309,8 @@ export function createTrainingPanel(): TrainingPanel {
   let latestArena: ArenaSnapshot = EMPTY_SNAPSHOT;
   let messageTimer: ReturnType<typeof setTimeout> | undefined;
   let skillButtons: HTMLButtonElement[] = [];
+  /** The skill each slot was painted with: a copy standing in one redraws the bar (#469). */
+  let paintedSkills: readonly (string | null)[] = [];
   const slotTips = createSlotTooltips();
 
   // The player's professions follow the build being edited (#281).
@@ -320,6 +322,9 @@ export function createTrainingPanel(): TrainingPanel {
     id === SELF_ID
       ? displayName.trim() || "You"
       : logActorName(id, session?.names, latestMatch?.players);
+  // A creature in the latest snapshot (#1052): it swings under its own name (#1144).
+  const isCreature = (id: string): boolean =>
+    latestMatch?.players.find((player) => player.sessionId === id)?.creature !== undefined;
 
   /* --- painting -------------------------------------------------------- */
 
@@ -376,7 +381,7 @@ export function createTrainingPanel(): TrainingPanel {
     paintMeter();
     // The gathered ticks belong before the line, not after it.
     const now = session?.connection.simulation.elapsedSeconds ?? 0;
-    appendLog([...ticks.flush(now, nameOf), dividerRow(label, now)]);
+    appendLog([...ticks.flush(now, nameOf, isCreature), dividerRow(label, now)]);
   };
 
   const flash = (text: string): void => {
@@ -456,6 +461,7 @@ export function createTrainingPanel(): TrainingPanel {
   };
 
   const paintSkills = (slots: readonly (SkillSlot | null)[]): void => {
+    paintedSkills = slots.map((slot) => slot?.id ?? null);
     skillButtons = slots.map((slot, index) => {
       const button = document.createElement("button");
       button.type = "button";
@@ -533,6 +539,12 @@ export function createTrainingPanel(): TrainingPanel {
     attacking.textContent = self.attackTargetSessionId === undefined ? "" : "attacking";
     renderWeaponSets(weaponSets, session?.connection.weaponSets);
     const slots = session?.connection.skillBar ?? [];
+    if (changedSlots(paintedSkills, slots).length > 0) {
+      // Every button is made anew, so a tooltip on any of them would hang
+      // off one no longer on the page.
+      slotTips.repainted(slots.map((_, index) => index));
+      paintSkills(slots);
+    }
     const recharges = session?.connection.getRecharges() ?? [];
     const adrenaline = session?.connection.getAdrenaline() ?? [];
     const adrenalineLossIn = session?.connection.getAdrenalineLossIn() ?? null;
@@ -576,7 +588,7 @@ export function createTrainingPanel(): TrainingPanel {
     totals = accumulate(totals, result.log, SELF_ID, TICK_SECONDS);
     const rows: LogRow[] = [];
     for (const entry of result.log) {
-      rows.push(...ticks.push(entry, nameOf));
+      rows.push(...ticks.push(entry, nameOf, isCreature));
     }
     appendLog(rows);
   };
@@ -944,7 +956,7 @@ export function createTrainingPanel(): TrainingPanel {
       }
       const { connection } = session;
       connection.advance(deltaSeconds);
-      appendLog(ticks.advance(connection.simulation.elapsedSeconds, nameOf));
+      appendLog(ticks.advance(connection.simulation.elapsedSeconds, nameOf, isCreature));
       latestMatch = connection.getSnapshot();
       session.sounds.snapshot(latestMatch);
       session.music.snapshot(latestMatch);

@@ -36,6 +36,21 @@ describe("rechargeState", () => {
     cast.spend("c");
     expect(rechargeState(["a", null, "c"], cast)).toEqual(told([], [2]));
   });
+
+  it("a copy standing in a slot (#469) shows its own recharge there, not the original's", () => {
+    const cast = new CastState("p", new StatusSet());
+    cast.override(0, {
+      skillId: "c",
+      key: "c@0",
+      remainingSeconds: 20,
+      restores: { skillId: "a", rechargeSeconds: 20 },
+    });
+    cast.startRecharge("c", 8);
+    cast.startRecharge("c@0", 5);
+    expect(rechargeState(["a", null, "c"], cast)).toEqual(
+      told([recharging(0, 5, 5), recharging(2, 8, 8)]),
+    );
+  });
 });
 
 describe("rechargePredicted", () => {

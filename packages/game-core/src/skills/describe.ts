@@ -25,6 +25,7 @@ import type {
   Aura,
   ChainRole,
   ChainStep,
+  CreateGroundEffect,
   EffectCondition,
   HealEffect,
   Magnitude,
@@ -484,7 +485,7 @@ function describeTrigger(
         const plural = effect.count === 1 ? "" : "s";
         return [`loses ${String(effect.count)} ${effect.category}${plural}`];
       }
-      return effect.kind === "spread-gained-condition"
+      return effect.kind === "spread-gained-condition" || effect.kind === "echo"
         ? []
         : describeEffects(effect, ranks).map(({ text }) => lowerFirst(text));
     });
@@ -493,6 +494,14 @@ function describeTrigger(
   return trigger.effects.flatMap((effect): TriggerLine[] => {
     if (effect.kind === "spread-gained-condition") {
       return [sentence(`${when}: foes in the area suffer it too`)];
+    }
+    // "the next time it uses a skill: if a spell, it takes this skill's
+    // slot for 20 seconds" (#469).
+    if (effect.kind === "echo") {
+      const which = effect.spellsOnly ? "if a spell, it" : "that skill";
+      return [
+        sentence(`${when}: ${which} takes this skill's slot for ${String(effect.seconds)} seconds`),
+      ];
     }
     if (effect.kind === "damage" && trigger.target === "bearer") {
       return [clause(`takes ${amount(effect.amount)} damage ${when}`)];
@@ -709,6 +718,11 @@ const AURA_WHO: Record<Aura["affects"], string> = {
   all: "Non-spirit creatures",
   allies: "Non-spirit allies",
   foes: "Non-spirit foes",
+};
+
+const GROUND_ANCHOR_TEXT: Record<CreateGroundEffect["anchor"], string> = {
+  caster: "at your location",
+  corpse: "at its location",
 };
 
 /** A share of health as GW1 words it (#936): "half", or "25%". */
@@ -942,11 +956,18 @@ function describeEffect(
     }
     case "create-ground-effect": {
       // "Creates a ward at your location for 17 seconds" (#1087), "Sets a
-      // trap at your location for 90 seconds" (#1105).
+      // trap at your location for 90 seconds" (#1105), or a well "at its
+      // location", the corpse's (#1104).
       const magnitude = describeMagnitude(effect.durationSeconds, ranks);
-      const what = effect.act.kind === "trap" ? "Sets a trap" : "Creates a ward";
+      const what =
+        effect.act.kind === "trap"
+          ? "Sets a trap"
+          : effect.anchor === "corpse"
+            ? "Creates a well"
+            : "Creates a ward";
+      const where = GROUND_ANCHOR_TEXT[effect.anchor];
       return {
-        text: `${what} at your location for ${String(magnitude.current)} seconds`,
+        text: `${what} ${where} for ${String(magnitude.current)} seconds`,
         magnitude,
       };
     }
@@ -1171,6 +1192,7 @@ const TYPE_TEXT: Record<SkillType, string> = {
   "nature-ritual": "Nature Ritual.",
   "binding-ritual": "Binding Ritual.",
   ward: "Ward Spell.",
+  well: "Well Spell.",
   trap: "Trap.",
   skill: "Skill.",
 };

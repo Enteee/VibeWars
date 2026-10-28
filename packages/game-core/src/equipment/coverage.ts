@@ -96,10 +96,10 @@ export const GEAR_OMISSIONS: readonly GearOmission[] = Object.freeze([
     description: "each armor piece contributing its own armor rating to the total",
     kind: "simplification",
     reason:
-      "Armor is derived from the primary profession, which matches the reference at max " +
-      "armor: every max set within a profession has the same rating, and the differences " +
-      "between sets became insignias. Modelling per-piece ratings would add arithmetic " +
-      "without adding a decision.",
+      "Base armor is derived from the primary profession, which matches the reference at " +
+      "max armor: every max set within a profession has the same rating on every piece, so " +
+      "it stays one number. Insignia armor is per piece, and each hit rolls the piece it " +
+      "lands on (ADR-0037).",
     affects: [],
   },
 ]);

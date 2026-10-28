@@ -42,6 +42,8 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "insidious-parasite": icon("insidious-parasite"),
   "mark-of-pain": icon("mark-of-pain"),
   diversion: icon("diversion"),
+  "arcane-echo": icon("arcane-echo"),
+  echo: icon("echo"),
   "ice-spikes": icon("ice-spikes"),
   "deep-freeze": icon("deep-freeze"),
   regeneration: icon("regeneration"),
@@ -98,6 +100,7 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   winnowing: icon("winnowing"),
   recuperation: icon("recuperation"),
   "ward-against-melee": icon("ward-against-melee"),
+  "well-of-suffering": icon("well-of-suffering"),
 };
 
 /** Drawn size of one icon, in world pixels. */

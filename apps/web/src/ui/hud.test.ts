@@ -11,6 +11,7 @@ import { DEFAULT_KEYMAP } from "../input/keymap.js";
 import { isEliteSkill } from "./icons.js";
 
 import {
+  changedSlots,
   createHud,
   describeOutcome,
   describeRefusal,
@@ -72,6 +73,31 @@ function player(fields: Partial<PlayerSnapshot>): PlayerSnapshot {
     ...fields,
   };
 }
+
+describe("changedSlots (#469)", () => {
+  const slot = (id: string) => ({
+    id,
+    name: id,
+    energyCost: 0,
+    adrenalineCost: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 0,
+  });
+
+  it("names a slot whose skill changed: an echo's copy, and the echo back", () => {
+    const painted = ["mesmer.arcane-echo", null, "elementalist.fireball"];
+    const copied = [slot("elementalist.fireball"), null, slot("elementalist.fireball")];
+    expect(changedSlots(painted, copied)).toEqual([0]);
+    expect(
+      changedSlots(["elementalist.fireball", null], [slot("mesmer.arcane-echo"), null]),
+    ).toEqual([0]);
+  });
+
+  it("names none when every slot holds what it was painted with", () => {
+    const painted = ["mesmer.arcane-echo", null];
+    expect(changedSlots(painted, [slot("mesmer.arcane-echo"), null])).toEqual([]);
+  });
+});
 
 describe("targetHealthPercent (#484)", () => {
   it("rounds down, but never reads 0% for the living", () => {

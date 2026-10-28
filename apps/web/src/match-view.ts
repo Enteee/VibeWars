@@ -49,6 +49,7 @@ import {
   renderLeave,
   renderKeyLabels,
   renderMute,
+  refreshSkillBar,
   renderSkillBar,
   updateHud,
   updateRecharges,
@@ -586,6 +587,7 @@ export async function startMatchView(
     // here left the scoreboard, the match clock and the victory banner
     // permanently blank: the server tracked all three and the HUD could
     // draw all three, and nothing connected them.
+    refreshSkillBar(hud, connection.skillBar);
     updateHud(
       hud,
       self,

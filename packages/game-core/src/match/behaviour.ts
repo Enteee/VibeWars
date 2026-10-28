@@ -115,6 +115,11 @@ export interface StatusApplication {
 /** What a behaviour *asks* for. Never what happens. */
 export interface BehaviourIntent {
   readonly moveDirection: Vec2;
+  /**
+   * A point to walk to round walls and bodies, as a click-to-walk goes
+   * (#1153); `undefined` for none. The simulation owns the path.
+   */
+  readonly moveTo: Vec2 | undefined;
   readonly targetId: string | undefined;
   readonly useSkillId: string | undefined;
   /** Whom to attack with the weapon, through `requestAttack`. */
@@ -211,6 +216,7 @@ export function resolveTargeting(
 
 const STAND_STILL: BehaviourIntent = {
   moveDirection: ZERO,
+  moveTo: undefined,
   targetId: undefined,
   useSkillId: undefined,
   attackTargetId: undefined,
@@ -365,7 +371,8 @@ function followAndAttack(
   } else if (!cursor.returning && d > behaviour.leashUnits) {
     cursor.returning = true;
   }
-  const toOwner = { ...STAND_STILL, moveDirection: normalize(sub(owner.position, self.position)) };
+  // By path, not straight: a wall between them is walked round (#1153).
+  const toOwner = { ...STAND_STILL, moveTo: owner.position };
   if (cursor.returning) {
     return toOwner;
   }
@@ -438,8 +445,12 @@ function parallel(
     return decide(child, childCursor, context);
   });
   const casting = intents.find((intent) => intent.useSkillId !== undefined);
+  const steering = intents.find(
+    (intent) => intent.moveDirection !== ZERO || intent.moveTo !== undefined,
+  );
   return {
-    moveDirection: intents.find((intent) => intent.moveDirection !== ZERO)?.moveDirection ?? ZERO,
+    moveDirection: steering?.moveDirection ?? ZERO,
+    moveTo: steering?.moveTo,
     targetId: (casting ?? intents.find((intent) => intent.targetId !== undefined))?.targetId,
     useSkillId: casting?.useSkillId,
     attackTargetId: intents.find((intent) => intent.attackTargetId !== undefined)?.attackTargetId,

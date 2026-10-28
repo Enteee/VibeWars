@@ -28,7 +28,6 @@ export type MissingMechanic =
   | "knockdown"
   | "ground-targeting"
   | "persistent-ground-area"
-  | "skill-bar-mutation"
   | "enchantment-sacrifice"
   | "title-attribute";
 
@@ -38,7 +37,6 @@ export const MISSING_MECHANIC_DESCRIPTIONS: Readonly<Record<MissingMechanic, str
     knockdown: "a control state that stops a combatant acting for a duration",
     "ground-targeting": "casting at a point on the ground rather than at a target",
     "persistent-ground-area": "an area that stays on the ground and acts on whoever is in it",
-    "skill-bar-mutation": "a skill that replaces itself with a different skill at runtime",
     "enchantment-sacrifice": "removing your own enchantments as a cost, scaled by how many",
     "title-attribute": "a PvE title track as the skill's attribute",
   });
@@ -54,10 +52,6 @@ const UNIMPLEMENTED_REASONS: Readonly<Record<string, readonly MissingMechanic[]>
   // "...foes adjacent to that location are struck... and knocked down every 3 seconds."
   // A ground-targeted area that keeps striking: three missing mechanics, not one.
   "elementalist.meteor-shower": ["knockdown", "ground-targeting", "persistent-ground-area"],
-  // "...Arcane Echo is replaced with that spell for 20 seconds."
-  "mesmer.arcane-echo": ["skill-bar-mutation"],
-  // "...Echo is replaced with the next skill you use."
-  "mesmer.echo": ["skill-bar-mutation"],
   // "Lose all enchantments. For each one lost, you gain health, lose one hex..."
   "monk.contemplation-of-purity": ["enchantment-sacrifice"],
   // PvE-only: its attribute is "Sunspear rank", a title track (ADR-0029).
