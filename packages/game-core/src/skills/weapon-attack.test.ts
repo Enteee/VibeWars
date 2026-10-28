@@ -1335,6 +1335,7 @@ describe("a caster weapon's element (#761)", () => {
     const resolved = resolveLoadout(
       {
         primaryProfession: "ranger",
+        secondaryProfession: undefined,
         allocatedRanks: new Map(),
         equipment: {
           weaponSets: [

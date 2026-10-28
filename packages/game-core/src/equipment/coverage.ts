@@ -21,7 +21,6 @@
 export type MissingGearMechanic =
   | "stances"
   | "armor-while-attacking"
-  | "attribute-headgear"
   | "profession-insignias"
   | "weapon-upgrades"
   | "per-piece-armor-ratings";
@@ -60,16 +59,6 @@ export const GEAR_OMISSIONS: readonly GearOmission[] = Object.freeze([
       "Weapon auto-attack now gives every combatant an attack state (ADR-0026), but armor " +
       "does not key off it yet. Brawler's Insignia stays out of the catalog until it does, " +
       "rather than shipping as a stat line nothing reads (ADR-0019).",
-    affects: [],
-  },
-  {
-    mechanic: "attribute-headgear",
-    description: "a headpiece granting +1 to a chosen attribute, stacking with its rune",
-    kind: "gap",
-    reason:
-      "The one genuinely non-cosmetic per-piece choice in the reference, and the reason a " +
-      "maxed character reaches rank 16 rather than 15. Armor pieces here carry an insignia " +
-      "and a rune and nothing else, so the head slot is currently no different from the feet.",
     affects: [],
   },
   {

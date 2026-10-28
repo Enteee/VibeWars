@@ -6,11 +6,13 @@ import type { StatusId } from "../skills/status.js";
 import { creatureDamageMultiplier } from "../skills/damage.js";
 import type { CreatureAttack } from "../skills/types.js";
 import {
+  HEADGEAR_BONUS,
   INHERENT_ARMOR_BY_PROFESSION,
   NO_PIECE_ARMOR,
   armorPieces,
   baseArmorFor,
   baseEnergyPipsFor,
+  headgearAttributeOf,
   type ConditionalArmor,
   type PieceArmor,
 } from "./armor.js";
@@ -74,7 +76,7 @@ export interface ResolvedEquipment {
   /** Multiplier applied to an incoming condition's duration. Absent means 1. */
   readonly statusDurationScale: ReadonlyMap<StatusId, number>;
   /**
-   * What runes add to each attribute, already in `attributeRanks`: what
+   * What runes and headgear add to each attribute, already in `attributeRanks`: what
    * tells an allocated rank from a boosted one, as weakness must (#762).
    */
   readonly attributeBonuses: ReadonlyMap<string, number>;
@@ -101,7 +103,7 @@ export interface ResolvedLoadout {
   readonly maxHealth: number;
   /** Energy regeneration before any status, in pips: the primary profession's. */
   readonly baseEnergyPips: number;
-  /** Allocated ranks plus rune bonuses, clamped to `MAX_EFFECTIVE_RANK`. */
+  /** Allocated ranks plus rune and headgear bonuses, clamped to `MAX_EFFECTIVE_RANK`. */
   readonly attributeRanks: ReadonlyMap<string, number>;
   /** Index i is build set i; `null` where the build's is. */
   readonly weaponSets: ResolvedWeaponSets;
@@ -109,6 +111,8 @@ export interface ResolvedLoadout {
 
 export interface LoadoutInput {
   readonly primaryProfession: ProfessionId;
+  /** Whose attributes the headgear may raise, with the primary's (#1140). */
+  readonly secondaryProfession: ProfessionId | undefined;
   /** Ranks bought with attribute points, before runes. */
   readonly allocatedRanks: ReadonlyMap<string, number>;
   readonly equipment: BuildEquipment;
@@ -280,11 +284,21 @@ function pieceArmorOf(equipment: BuildEquipment): PieceArmor {
 
 export function resolveLoadout(input: LoadoutInput, rules: CombatRules): ResolvedLoadout {
   const runes = totalRunes(input.equipment, input.primaryProfession);
+  // The headgear's +1 stacks with the best rune of its attribute (#1140).
+  const attributeBonuses = new Map(runes.attributeBonuses);
+  const headgear = headgearAttributeOf(
+    input.equipment.armor.head,
+    input.primaryProfession,
+    input.secondaryProfession,
+  );
+  if (headgear !== undefined) {
+    attributeBonuses.set(headgear, (attributeBonuses.get(headgear) ?? 0) + HEADGEAR_BONUS);
+  }
 
-  // Rune bonuses raise the ceiling past what points alone can buy, which
-  // is exactly what a superior rune is for.
+  // Rune and headgear bonuses raise the ceiling past what points alone
+  // can buy, which is exactly what a superior rune is for.
   const attributeRanks = new Map(input.allocatedRanks);
-  for (const [attributeId, bonus] of runes.attributeBonuses) {
+  for (const [attributeId, bonus] of attributeBonuses) {
     const base = attributeRanks.get(attributeId) ?? 0;
     attributeRanks.set(attributeId, Math.min(MAX_EFFECTIVE_RANK, base + bonus));
   }
@@ -301,7 +315,7 @@ export function resolveLoadout(input: LoadoutInput, rules: CombatRules): Resolve
     pieceArmor: pieceArmorOf(input.equipment),
     flatPhysicalReduction: runes.flatPhysicalReduction,
     statusDurationScale: runes.statusDurationScale,
-    attributeBonuses: runes.attributeBonuses,
+    attributeBonuses,
   };
   const [set1, set2, set3, set4] = input.equipment.weaponSets;
   const resolve = (set: WeaponSet | null): ResolvedWeaponSet | null =>

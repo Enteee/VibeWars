@@ -140,7 +140,7 @@
     "MAX_WIRE_POINTS": { "literal": 256 },
     "MAX_WIRE_PROJECTILES": { "literal": 256 },
     "MAX_WIRE_RADIUS": { "literal": 200 },
-    "MAX_WIRE_RANK": { "literal": 15 },
+    "MAX_WIRE_RANK": { "literal": 16 },
     "MAX_WIRE_RANKS": { "literal": 16 },
     "MAX_WIRE_SLOTS": { "literal": 8 },
     "MAX_WIRE_STATUSES": { "literal": 32 },

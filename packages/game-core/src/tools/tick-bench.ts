@@ -56,6 +56,7 @@ function benchMatch(field: BenchField, seed: string): MatchSimulation {
   const resolved = resolveLoadout(
     {
       primaryProfession: BENCH_LOADOUT.primaryProfession,
+      secondaryProfession: BENCH_LOADOUT.secondaryProfession,
       allocatedRanks: BENCH_LOADOUT.attributeRanks,
       equipment: BENCH_LOADOUT.equipment,
     },

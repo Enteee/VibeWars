@@ -65,8 +65,10 @@ import {
   decodeGearDrag,
   encodeGearDrag,
   encodeRune,
+  headgearChoices,
   offhandAttributeChoices,
   runeChoices,
+  setHeadgearAttribute,
   setInsignia,
   setOffhand,
   setRequirementAttribute,
@@ -267,6 +269,7 @@ export function setProfessions(
     equipment: fitWeapon(
       reconcileEquipment(next.equipment, {
         primaryProfession: primary,
+        secondaryProfession: effectiveSecondary,
         accessibleAttributeIds: accessible,
       }),
       primary,
@@ -379,6 +382,13 @@ export function describeProfessionChange(
     if (rune !== null && after.equipment.armor[slot].rune === null) {
       gear.push(runeDisplayName(rune));
     }
+  }
+  // Moved, not removed, when it left both professions (#1140).
+  const headWas = before.equipment.armor.head.headgearAttributeId;
+  const headNow = after.equipment.armor.head.headgearAttributeId;
+  if (headWas !== null && headNow !== null && headWas !== headNow) {
+    const name = (id: string): string => getAttribute(id)?.name ?? id;
+    gear.push(`Headgear: ${name(headWas)} → ${name(headNow)}`);
   }
   return [...ranks, ...skills, ...gear];
 }
@@ -1484,9 +1494,9 @@ function mountAttributes(panel: HTMLElement, context: EditorContext): Region {
       `hsl(${String(Math.round((200 + (shown.indexOf(attributeId) * 360) / shown.length) % 360))} 55% 60%)`;
     const bonuses = new Map(
       // Runes are worn by every set, so set 1 says them.
-      (summariseGear(character, 0)?.runeBonuses ?? []).map((rune) => [
-        rune.attributeId,
-        rune.bonus,
+      (summariseGear(character, 0)?.attributeBonuses ?? []).map((bonus) => [
+        bonus.attributeId,
+        bonus,
       ]),
     );
     const preview =
@@ -1561,7 +1571,9 @@ function mountAttributes(panel: HTMLElement, context: EditorContext): Region {
           // to click, so a suffix after it.
           rankText.textContent = String(rank);
           if (bonus !== undefined) {
-            rankText.appendChild(h("span", "editor-attribute-bonus", ` +${String(bonus)}`));
+            const suffix = h("span", "editor-attribute-bonus", ` +${String(bonus.bonus)}`);
+            suffix.title = bonus.sources;
+            rankText.appendChild(suffix);
           }
         }
         const next = row.querySelector(".editor-attribute-next");
@@ -2417,7 +2429,8 @@ function mountGear(panel: HTMLElement, context: EditorContext): Region {
   // --- attribute nominations ------------------------------------------
   // Only shown for gear that genuinely has a choice to make. A sword is
   // always Swordsmanship, and offering a one-option dropdown would imply
-  // otherwise.
+  // otherwise. The headgear always has one (#1140), so the row is always
+  // there, the weapon's and the off-hand's ahead of it.
   const linkRow = h("div", "editor-row");
   const weaponLink = mountSelectRow((value) => {
     commit(setRequirementAttribute(current(), context.weaponSet(), "mainHand", value));
@@ -2425,6 +2438,12 @@ function mountGear(panel: HTMLElement, context: EditorContext): Region {
   const offhandLink = mountSelectRow((value) => {
     commit(setRequirementAttribute(current(), context.weaponSet(), "offHand", value));
   });
+  const headgearLink = mountSelectRow((value) => {
+    commit(setHeadgearAttribute(current(), value));
+  });
+  headgearLink.element.classList.add("editor-headgear");
+  linkRow.appendChild(headgearLink.element);
+  section.appendChild(linkRow);
 
   // --- armor ----------------------------------------------------------
   const armorHeader = h("div", "editor-subheader");
@@ -2579,14 +2598,16 @@ function mountGear(panel: HTMLElement, context: EditorContext): Region {
           offHand.requirementAttributeId ?? "",
         );
       }
+      headgearLink.update(
+        "Headgear +1",
+        attributeOptions(headgearChoices(character)),
+        character.equipment.armor.head.headgearAttributeId ?? "",
+      );
       present(weaponLink.element, weaponChoices.length > 0, (node) => {
         linkRow.prepend(node);
       });
       present(offhandLink.element, offhandChoices.length > 0, (node) => {
-        linkRow.appendChild(node);
-      });
-      present(linkRow, linkRow.children.length > 0, (node) => {
-        handsGrid.after(node);
+        headgearLink.element.before(node);
       });
 
       for (const { slot, row, insignia, rune } of armorSlots) {
@@ -2674,7 +2695,7 @@ function statLines(character: StoredCharacter, set: WeaponSetIndex): HTMLElement
     return [h("div", "gear-stat-note", "Empty set")];
   }
   const lines: HTMLElement[] = [];
-  for (const bonus of summary.runeBonuses) {
+  for (const bonus of summary.attributeBonuses) {
     lines.push(
       statLine(
         getAttribute(bonus.attributeId)?.name ?? bonus.attributeId,

@@ -22,6 +22,7 @@ export interface EquipmentProblem {
 
 export interface EquipmentValidationContext {
   readonly primaryProfession: ProfessionId;
+  readonly secondaryProfession: ProfessionId | undefined;
   /** Attribute ids the character can actually reach, from `accessibleAttributeIds`. */
   readonly accessibleAttributeIds: ReadonlySet<string>;
 }
@@ -176,6 +177,34 @@ function validateWeaponSet(
   }
 }
 
+/**
+ * The headgear's attribute (#1140): every player build names one, of an
+ * attribute it can put points in. `null` would be a head that does
+ * nothing, a trap rather than a choice.
+ */
+function checkHeadgear(
+  equipment: BuildEquipment,
+  context: EquipmentValidationContext,
+  problems: EquipmentProblem[],
+): void {
+  const field = "equipment.armor.head";
+  const attributeId = equipment.armor.head.headgearAttributeId;
+  if (attributeId === null) {
+    problems.push({ field, message: "headgear needs an attribute" });
+    return;
+  }
+  if (!context.accessibleAttributeIds.has(attributeId)) {
+    const name = getAttribute(attributeId)?.name ?? attributeId;
+    const professions = [context.primaryProfession, context.secondaryProfession]
+      .flatMap((id) => (id === undefined ? [] : [getProfession(id).name]))
+      .join(" or ");
+    problems.push({
+      field,
+      message: `headgear of ${name}, which is not a ${professions} attribute`,
+    });
+  }
+}
+
 export function validateEquipment(
   equipment: BuildEquipment,
   context: EquipmentValidationContext,
@@ -187,6 +216,8 @@ export function validateEquipment(
       validateWeaponSet(set, index, context, problems);
     }
   });
+
+  checkHeadgear(equipment, context, problems);
 
   const runedAttributes = new Set<string>();
   const universalRunes = new Set<string>();

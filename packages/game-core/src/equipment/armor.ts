@@ -1,3 +1,4 @@
+import { accessibleAttributeIds } from "../character.js";
 import type { ProfessionId } from "../professions.js";
 import type { SimulationRng } from "../rng.js";
 import type { EquippedRune } from "./runes.js";
@@ -119,19 +120,48 @@ export interface ArmorPiece {
   readonly rune: EquippedRune | null;
 }
 
-export type ArmorSet = Readonly<Record<ArmorSlot, ArmorPiece>>;
+/** What attribute headgear adds to its attribute (GW1, #1140): stacks with any rune. */
+export const HEADGEAR_BONUS = 1;
+
+/** The head piece: an insignia and a rune, like any, and the attribute its headgear raises (#1140). */
+export interface HeadPiece extends ArmorPiece {
+  /** `null` only in `bareArmorSet` (creatures, fixtures); a player build must name one. */
+  readonly headgearAttributeId: string | null;
+}
+
+export type ArmorSet = Readonly<Record<Exclude<ArmorSlot, "head">, ArmorPiece>> & {
+  readonly head: HeadPiece;
+};
 
 const BARE_PIECE: ArmorPiece = Object.freeze({ insigniaId: null, rune: null });
+
+const BARE_HEAD: HeadPiece = Object.freeze({ ...BARE_PIECE, headgearAttributeId: null });
 
 /** Five pieces with nothing slotted into them. The honest default. */
 export function bareArmorSet(): ArmorSet {
   return Object.freeze({
-    head: BARE_PIECE,
+    head: BARE_HEAD,
     chest: BARE_PIECE,
     hands: BARE_PIECE,
     legs: BARE_PIECE,
     feet: BARE_PIECE,
   });
+}
+
+/**
+ * The attribute `head`'s headgear raises (#1140): one the character can
+ * put points in, of the primary or the secondary. Anything else is wrong
+ * data, `null` included, and gives no bonus; validation reports it.
+ */
+export function headgearAttributeOf(
+  head: HeadPiece,
+  primary: ProfessionId,
+  secondary: ProfessionId | undefined,
+): string | undefined {
+  const attributeId = head.headgearAttributeId;
+  return attributeId !== null && accessibleAttributeIds(primary, secondary).includes(attributeId)
+    ? attributeId
+    : undefined;
 }
 
 /** Pieces in a stable order, so iteration never depends on key order. */

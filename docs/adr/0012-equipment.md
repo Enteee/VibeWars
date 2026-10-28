@@ -159,12 +159,12 @@ Harder, and worth stating plainly:
 - Fifteen catalog entries are a tuning surface nobody has playtested.
   The headless runner is the tool for that, and it is not wired to
   weapons yet.
-- Deriving armor from the profession costs one real mechanic:
+- Deriving armor from the profession cost one real mechanic:
   **attribute headgear**, the reference's `+1` to a chosen attribute on
-  the head slot. It is the only genuinely non-cosmetic per-piece choice
-  in the reference, and without it the head slot is no different from
-  the feet. Recorded as a gap in `equipment/coverage.ts` rather than
-  left implicit.
+  the head slot. It was recorded as a gap in `equipment/coverage.ts`,
+  and is closed now (armor parity, issue 488): the head piece names an
+  attribute of the primary or the secondary, its +1 stacks with any rune,
+  and ranks cap at 16.
 
 ## Alternatives Considered
 

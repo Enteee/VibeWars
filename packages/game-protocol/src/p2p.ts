@@ -107,8 +107,8 @@ export const MAX_WIRE_SLOTS = 8;
 /** The most attributes a skill bar's ranks name. */
 export const MAX_WIRE_RANKS = 16;
 
-/** The highest rank an attribute reaches, runes included (game-core's MAX_EFFECTIVE_RANK). */
-export const MAX_WIRE_RANK = 15;
+/** The highest rank an attribute reaches, runes and headgear included (game-core's MAX_EFFECTIVE_RANK). */
+export const MAX_WIRE_RANK = 16;
 
 /** The most pings a team's calls carry at once, the newest kept (#443). */
 export const MAX_WIRE_PINGS = 32;

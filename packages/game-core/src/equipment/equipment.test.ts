@@ -5,7 +5,14 @@ import { createRng, type SimulationRng } from "../rng.js";
 import { accessibleAttributeIds } from "../character.js";
 import { PROFESSIONS, getAttribute, type ProfessionId } from "../professions.js";
 import { SKILL_BAR_SLOTS, validatePlayerBuild, type PlayerBuild } from "../build.js";
-import { HIT_LOCATION_WEIGHTS, NO_PIECE_ARMOR, bareArmorSet, rollHitLocation } from "./armor.js";
+import {
+  HEADGEAR_BONUS,
+  HIT_LOCATION_WEIGHTS,
+  NO_PIECE_ARMOR,
+  bareArmorSet,
+  rollHitLocation,
+  type ArmorSet,
+} from "./armor.js";
 import { GEAR_OMISSIONS, gearOmission, openGearGaps } from "./coverage.js";
 import { defaultEquipmentFor, defaultWeaponFor, type BuildEquipment } from "./loadout.js";
 import { parseBuildEquipment } from "./parse.js";
@@ -35,8 +42,14 @@ const PROFESSION_IDS = Object.keys(PROFESSIONS) as readonly ProfessionId[];
 function contextFor(primary: ProfessionId, secondary?: ProfessionId) {
   return {
     primaryProfession: primary,
+    secondaryProfession: secondary,
     accessibleAttributeIds: new Set(accessibleAttributeIds(primary, secondary)),
   };
+}
+
+/** A bare armor set whose headgear raises `attributeId`, as a legal build's must (#1140). */
+function armorWithHeadgear(attributeId: string | null): ArmorSet {
+  return { ...bareArmorSet(), head: { ...bareArmorSet().head, headgearAttributeId: attributeId } };
 }
 
 function buildFor(primary: ProfessionId, secondary?: ProfessionId): PlayerBuild {
@@ -200,12 +213,17 @@ describe("resolving universal runes", () => {
       const worn = runes[index];
       if (worn !== undefined) {
         const [runeId, tier] = worn;
-        armor[slot] = { insigniaId: null, rune: { kind: "universal", runeId, tier } };
+        armor[slot] = {
+          insigniaId: null,
+          rune: { kind: "universal", runeId, tier },
+          headgearAttributeId: null,
+        };
       }
     });
     return resolveLoadout(
       {
         primaryProfession: "warrior",
+        secondaryProfession: undefined,
         allocatedRanks: new Map(),
         equipment: {
           weaponSets: [
@@ -237,6 +255,7 @@ describe("what a weapon deals (#761)", () => {
     return resolveLoadout(
       {
         primaryProfession: "elementalist",
+        secondaryProfession: undefined,
         allocatedRanks: new Map(),
         equipment: {
           weaponSets: [
@@ -281,6 +300,7 @@ describe("inherent armor by profession (#759) and insignia armor per piece (#113
     return resolveLoadout(
       {
         primaryProfession,
+        secondaryProfession: undefined,
         allocatedRanks: new Map(),
         equipment: {
           weaponSets: [
@@ -406,7 +426,7 @@ describe("validateEquipment", () => {
           null,
           null,
         ],
-        armor: bareArmorSet(),
+        armor: armorWithHeadgear("warrior.strength"),
       },
       contextFor("warrior"),
     );
@@ -426,7 +446,7 @@ describe("validateEquipment", () => {
           null,
           null,
         ],
-        armor: bareArmorSet(),
+        armor: armorWithHeadgear("warrior.strength"),
       },
       contextFor("warrior"),
     );
@@ -446,7 +466,7 @@ describe("validateEquipment", () => {
           null,
           null,
         ],
-        armor: bareArmorSet(),
+        armor: armorWithHeadgear("warrior.strength"),
       },
       contextFor("warrior", "monk"),
     );
@@ -467,7 +487,7 @@ describe("validateEquipment", () => {
           null,
           null,
         ],
-        armor: bareArmorSet(),
+        armor: armorWithHeadgear("monk.divine-favor"),
       },
       contextFor("monk"),
     );
@@ -485,7 +505,7 @@ describe("validateEquipment", () => {
           null,
           null,
         ],
-        armor: bareArmorSet(),
+        armor: armorWithHeadgear("mesmer.fast-casting"),
       },
       contextFor("mesmer"),
     );
@@ -507,6 +527,7 @@ describe("validateEquipment", () => {
           head: {
             insigniaId: null,
             rune: { kind: "attribute", attributeId: "monk.divine-favor", tier: "superior" },
+            headgearAttributeId: "warrior.strength",
           },
         },
       },
@@ -525,7 +546,12 @@ describe("validateEquipment", () => {
       ],
       armor: {
         ...bareArmorSet(),
-        head: { insigniaId: null, rune: { kind: "attribute", attributeId, tier: "minor" } },
+        // Tactics is the headgear a W/Mo and a Mo/W can both wear.
+        head: {
+          insigniaId: null,
+          rune: { kind: "attribute", attributeId, tier: "minor" },
+          headgearAttributeId: "warrior.tactics",
+        },
       },
     });
     expect(
@@ -581,7 +607,7 @@ describe("validateEquipment", () => {
         ],
         armor: {
           ...bareArmorSet(),
-          head: { insigniaId: null, rune },
+          head: { insigniaId: null, rune, headgearAttributeId: "warrior.strength" },
           chest: { insigniaId: null, rune },
         },
       },
@@ -603,7 +629,7 @@ describe("validateEquipment", () => {
           ],
           armor: {
             ...bareArmorSet(),
-            head: { insigniaId: null, rune },
+            head: { insigniaId: null, rune, headgearAttributeId: "warrior.strength" },
             chest: { insigniaId: null, rune },
           },
         },
@@ -633,7 +659,7 @@ describe("validateEquipment", () => {
           null,
           null,
         ],
-        armor: bareArmorSet(),
+        armor: armorWithHeadgear("warrior.strength"),
       },
       contextFor("warrior"),
     );
@@ -654,7 +680,7 @@ describe("validateEquipment", () => {
             null,
             null,
           ],
-          armor: bareArmorSet(),
+          armor: armorWithHeadgear("warrior.strength"),
         },
         contextFor("warrior"),
       );
@@ -685,7 +711,7 @@ describe("parseBuildEquipment", () => {
       { mainHand: null },
       {
         weaponSets: [{ mainHand: { weaponId: "chainsaw" }, offHand: null }, null, null, null],
-        armor: {},
+        armor: { head: { headgearAttributeId: null } },
       },
       {
         weaponSets: [
@@ -694,7 +720,7 @@ describe("parseBuildEquipment", () => {
           null,
           null,
         ],
-        armor: {},
+        armor: { head: { headgearAttributeId: null } },
       },
       {
         weaponSets: [{ mainHand: { weaponId: "sword" }, offHand: null }, null, null, null],
@@ -702,7 +728,7 @@ describe("parseBuildEquipment", () => {
       },
       {
         weaponSets: [{ mainHand: { weaponId: "sword" }, offHand: null }, null, null, null],
-        armor: { head: { rune: { kind: "attribute" } } },
+        armor: { head: { rune: { kind: "attribute" }, headgearAttributeId: null } },
       },
     ];
     for (const value of cases) {
@@ -713,12 +739,30 @@ describe("parseBuildEquipment", () => {
   it("fills in missing armor slots rather than failing on a sparse record", () => {
     const parsed = parseBuildEquipment({
       weaponSets: [{ mainHand: { weaponId: "sword" }, offHand: null }, null, null, null],
-      armor: {},
+      armor: { head: { headgearAttributeId: null } },
     });
     expect(parsed).toBeDefined();
-    for (const slot of ARMOR_SLOTS) {
+    expect(parsed?.armor.head).toEqual({ insigniaId: null, rune: null, headgearAttributeId: null });
+    for (const slot of ["chest", "hands", "legs", "feet"] as const) {
       expect(parsed?.armor[slot]).toEqual({ insigniaId: null, rune: null });
     }
+  });
+
+  it("needs the head's headgear attribute, a string or null, never absent (#1140)", () => {
+    const withHead = (head: unknown) =>
+      parseBuildEquipment({
+        weaponSets: [{ mainHand: { weaponId: "sword" }, offHand: null }, null, null, null],
+        armor: { head },
+      });
+    expect(withHead({ insigniaId: null, rune: null })).toBeUndefined();
+    expect(withHead(undefined)).toBeUndefined();
+    expect(withHead({ headgearAttributeId: 7 })).toBeUndefined();
+    expect(withHead({ headgearAttributeId: "warrior.strength" })?.armor.head).toEqual({
+      insigniaId: null,
+      rune: null,
+      headgearAttributeId: "warrior.strength",
+    });
+    expect(withHead({ headgearAttributeId: null })?.armor.head.headgearAttributeId).toBeNull();
   });
 });
 
@@ -736,6 +780,7 @@ describe("reconcileEquipment", () => {
         head: {
           insigniaId: null,
           rune: { kind: "attribute", attributeId: "warrior.tactics", tier: "minor" },
+          headgearAttributeId: "warrior.tactics",
         },
         chest: {
           insigniaId: null,
@@ -865,6 +910,7 @@ describe("reconcileEquipment", () => {
           head: {
             insigniaId: "survivor",
             rune: { kind: "attribute", attributeId: "warrior.strength", tier: "major" },
+            headgearAttributeId: "warrior.strength",
           },
           chest: { insigniaId: null, rune: { kind: "universal", runeId: "vigor", tier: "minor" } },
         },
@@ -910,6 +956,153 @@ describe("reconcileEquipment", () => {
       const context = contextFor(primary);
       const problems = validateEquipment(reconcileEquipment(warriorKit, context), context);
       expect(problems, primary).toEqual([]);
+    }
+  });
+
+  describe("the headgear's attribute (#1140)", () => {
+    const wearing = (attributeId: string): BuildEquipment => ({
+      ...defaultEquipmentFor("warrior"),
+      armor: armorWithHeadgear(attributeId),
+    });
+    const headgearAfter = (
+      attributeId: string,
+      primary: ProfessionId,
+      secondary?: ProfessionId,
+    ): string | null =>
+      reconcileEquipment(wearing(attributeId), contextFor(primary, secondary)).armor.head
+        .headgearAttributeId;
+
+    it("moves to the new primary's primary attribute when the primary changes", () => {
+      // W/Mo to R/Mo: Strength is no Ranger's, so Expertise.
+      expect(headgearAfter("warrior.strength", "ranger", "monk")).toBe("ranger.expertise");
+    });
+
+    it("moves to the primary attribute when the secondary that had it goes", () => {
+      // W/Mo to W/R: Healing Prayers went with the Monk.
+      expect(headgearAfter("monk.healing-prayers", "warrior", "ranger")).toBe("warrior.strength");
+    });
+
+    it("stays across a swap of primary and secondary when both ways can reach it", () => {
+      // W/Mo to Mo/W. Tactics is a Warrior secondary attribute and Healing
+      // Prayers a Monk one; Strength is the Warrior's primary, which a
+      // secondary Warrior does not have, so it moves.
+      expect(headgearAfter("warrior.tactics", "monk", "warrior")).toBe("warrior.tactics");
+      expect(headgearAfter("monk.healing-prayers", "monk", "warrior")).toBe("monk.healing-prayers");
+      expect(headgearAfter("warrior.strength", "monk", "warrior")).toBe("monk.divine-favor");
+    });
+
+    it("stays on a primary attribute when only an unrelated secondary changes", () => {
+      // W/Mo to W/Me.
+      expect(headgearAfter("warrior.strength", "warrior", "mesmer")).toBe("warrior.strength");
+    });
+  });
+});
+
+describe("attribute headgear (#1140)", () => {
+  const superior = {
+    kind: "attribute",
+    attributeId: "warrior.strength",
+    tier: "superior",
+  } as const;
+  const minor = { kind: "attribute", attributeId: "warrior.strength", tier: "minor" } as const;
+
+  /** A W/Mo's resolved ranks with `allocated` bought, wearing this headgear and these runes. */
+  function resolveWith(
+    allocated: readonly [string, number][],
+    headgearAttributeId: string | null,
+    runes: { head?: EquippedRune; chest?: EquippedRune } = {},
+  ) {
+    return resolveLoadout(
+      {
+        primaryProfession: "warrior",
+        secondaryProfession: "monk",
+        allocatedRanks: new Map(allocated),
+        equipment: {
+          ...defaultEquipmentFor("warrior"),
+          armor: {
+            ...bareArmorSet(),
+            head: { insigniaId: null, rune: runes.head ?? null, headgearAttributeId },
+            chest: { insigniaId: null, rune: runes.chest ?? null },
+          },
+        },
+      },
+      MINIMAL_GW_INSPIRED_PVP_V1.combat,
+    );
+  }
+
+  const validateWith = (headgearAttributeId: string | null, secondary?: ProfessionId) =>
+    validateEquipment(
+      { ...defaultEquipmentFor("warrior"), armor: armorWithHeadgear(headgearAttributeId) },
+      contextFor("warrior", secondary),
+    );
+
+  it("adds +1 on top of a superior rune: 12 bought reaches 16", () => {
+    const loadout = resolveWith([["warrior.strength", 12]], "warrior.strength", {
+      head: superior,
+    });
+    expect(HEADGEAR_BONUS).toBe(1);
+    expect(loadout.attributeRanks.get("warrior.strength")).toBe(16);
+    expect(loadout.weaponSets[0].equipment.attributeBonuses.get("warrior.strength")).toBe(4);
+  });
+
+  it("never lifts a rank past 16, whatever was bought", () => {
+    const loadout = resolveWith([["warrior.strength", 15]], "warrior.strength", {
+      head: superior,
+    });
+    expect(loadout.attributeRanks.get("warrior.strength")).toBe(16);
+  });
+
+  it("stacks with the best of two runes on its attribute, not both", () => {
+    const loadout = resolveWith([["warrior.strength", 10]], "warrior.strength", {
+      head: minor,
+      chest: superior,
+    });
+    expect(loadout.attributeRanks.get("warrior.strength")).toBe(10 + 3 + 1);
+  });
+
+  it("raises an attribute with no points in it to rank 1", () => {
+    expect(resolveWith([], "warrior.tactics").attributeRanks.get("warrior.tactics")).toBe(1);
+  });
+
+  it("raises a secondary profession's attribute", () => {
+    const loadout = resolveWith([["monk.healing-prayers", 8]], "monk.healing-prayers");
+    expect(loadout.attributeRanks.get("monk.healing-prayers")).toBe(9);
+    expect(validateWith("monk.healing-prayers", "monk")).toEqual([]);
+  });
+
+  it("gives nothing for a third profession's attribute, and says so once", () => {
+    const loadout = resolveWith([], "mesmer.fast-casting");
+    expect(loadout.attributeRanks.get("mesmer.fast-casting")).toBeUndefined();
+    expect(loadout.weaponSets[0].equipment.attributeBonuses.size).toBe(0);
+    expect(validateWith("mesmer.fast-casting", "monk")).toEqual([
+      {
+        field: "equipment.armor.head",
+        message: "headgear of Fast Casting, which is not a Warrior or Monk attribute",
+      },
+    ]);
+    expect(validateWith("mesmer.fast-casting")).toEqual([
+      {
+        field: "equipment.armor.head",
+        message: "headgear of Fast Casting, which is not a Warrior attribute",
+      },
+    ]);
+  });
+
+  it("refuses a head with no headgear attribute, which gives nothing", () => {
+    expect(
+      resolveWith([["warrior.strength", 12]], null).attributeRanks.get("warrior.strength"),
+    ).toBe(12);
+    expect(validateWith(null, "monk")).toEqual([
+      { field: "equipment.armor.head", message: "headgear needs an attribute" },
+    ]);
+  });
+
+  it("puts every default loadout's headgear on its primary attribute", () => {
+    for (const profession of PROFESSION_IDS) {
+      const primary = PROFESSIONS[profession].attributes.find((attribute) => attribute.isPrimary);
+      expect(defaultEquipmentFor(profession).armor.head.headgearAttributeId, profession).toBe(
+        primary?.id,
+      );
     }
   });
 });
@@ -974,10 +1167,12 @@ describe("the gear coverage record", () => {
     // has the same rating.
     expect(gearOmission("per-piece-armor-ratings")?.kind).toBe("simplification");
     expect(gearOmission("weapon-upgrades")?.kind).toBe("simplification");
-    // Attribute headgear is the one genuinely non-cosmetic per-piece
-    // choice in the reference, and it is missing.
-    expect(gearOmission("attribute-headgear")?.kind).toBe("gap");
+    expect(gearOmission("stances")?.kind).toBe("gap");
     expect(openGearGaps().length).toBeGreaterThan(0);
+  });
+
+  it("no longer records attribute headgear as a gap: the head carries it (#1140)", () => {
+    expect(GEAR_OMISSIONS.map((omission) => omission.mechanic)).not.toContain("attribute-headgear");
   });
 });
 
@@ -987,6 +1182,7 @@ describe("Energy Storage (#532)", () => {
     return resolveLoadout(
       {
         primaryProfession: "elementalist",
+        secondaryProfession: undefined,
         allocatedRanks: new Map([["elementalist.energy-storage", rank]]),
         equipment: {
           weaponSets: [
@@ -1074,7 +1270,7 @@ describe("weapon sets (#489, ADR-0036)", () => {
           },
           null,
         ],
-        armor: bareArmorSet(),
+        armor: armorWithHeadgear("warrior.strength"),
       },
       contextFor("warrior"),
     );
@@ -1115,6 +1311,7 @@ describe("weapon sets (#489, ADR-0036)", () => {
       resolveLoadout(
         {
           primaryProfession,
+          secondaryProfession: undefined,
           allocatedRanks: new Map([
             ["elementalist.fire-magic", 9],
             ["warrior.strength", 9],
@@ -1126,7 +1323,11 @@ describe("weapon sets (#489, ADR-0036)", () => {
 
     const caster = resolve("elementalist", {
       weaponSets: [WAND_FOCUS, STAFF, null, WAND_FOCUS],
-      armor: { ...bareArmorSet(), head: superiorFire, chest: superiorFire },
+      armor: {
+        ...bareArmorSet(),
+        head: { ...superiorFire, headgearAttributeId: null },
+        chest: superiorFire,
+      },
     });
     const [focus, staff, empty, again] = caster.weaponSets;
     expect(empty).toBeNull();

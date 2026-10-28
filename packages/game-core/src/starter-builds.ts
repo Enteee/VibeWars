@@ -25,13 +25,14 @@ const SUPERIOR_VIGOR: EquippedRune = { kind: "universal", runeId: "vigor", tier:
 
 /**
  * One insignia on every piece, a minor rune of the build's main
- * attribute on the head and a superior Vigor on the chest; `hands`
- * takes one more rune where the build has a use for it.
+ * attribute on the head, with its headgear on the same attribute
+ * (#1140), and a superior Vigor on the chest; `hands` takes one more
+ * rune where the build has a use for it.
  */
-function armor(insigniaId: InsigniaId, headRune: EquippedRune, hands?: EquippedRune): ArmorSet {
+function armor(insigniaId: InsigniaId, mainAttributeId: string, hands?: EquippedRune): ArmorSet {
   const piece = (rune: EquippedRune | null): ArmorPiece => ({ insigniaId, rune });
   return {
-    head: piece(headRune),
+    head: { ...piece(minorRune(mainAttributeId)), headgearAttributeId: mainAttributeId },
     chest: piece(SUPERIOR_VIGOR),
     hands: piece(hands ?? null),
     legs: piece(null),
@@ -72,7 +73,7 @@ export const STARTER_BUILDS: readonly PlayerBuild[] = [
         null,
         null,
       ],
-      armor: armor("stalwart", minorRune("warrior.swordsmanship"), {
+      armor: armor("stalwart", "warrior.swordsmanship", {
         kind: "universal",
         runeId: "absorption",
         tier: "minor",
@@ -108,7 +109,7 @@ export const STARTER_BUILDS: readonly PlayerBuild[] = [
         null,
         null,
       ],
-      armor: armor("survivor", minorRune("ranger.marksmanship")),
+      armor: armor("survivor", "ranger.marksmanship"),
     },
   },
   // The healer.
@@ -143,7 +144,7 @@ export const STARTER_BUILDS: readonly PlayerBuild[] = [
         null,
         null,
       ],
-      armor: armor("radiant", minorRune("monk.healing-prayers")),
+      armor: armor("radiant", "monk.healing-prayers"),
     },
   },
   // Hexes and conditions, with fire for damage.
@@ -178,7 +179,7 @@ export const STARTER_BUILDS: readonly PlayerBuild[] = [
         null,
         null,
       ],
-      armor: armor("survivor", minorRune("necromancer.curses")),
+      armor: armor("survivor", "necromancer.curses"),
     },
   },
   // A nuker with the Mesmer's interrupts.
@@ -213,7 +214,7 @@ export const STARTER_BUILDS: readonly PlayerBuild[] = [
         null,
         null,
       ],
-      armor: armor("survivor", minorRune("elementalist.fire-magic")),
+      armor: armor("survivor", "elementalist.fire-magic"),
     },
   },
 ];
