@@ -138,7 +138,7 @@ export type {
   HeadlessMatchResult,
 } from "./tools/headless-match.js";
 export { fighter, runHeadlessMatch } from "./tools/headless-match.js";
-export type { BenchField, TickBench } from "./tools/tick-bench.js";
+export type { BenchCrowd, BenchField, TickBench } from "./tools/tick-bench.js";
 export { DENSE_FIELD, runTickBench, tickStats } from "./tools/tick-bench.js";
 
 export type {
