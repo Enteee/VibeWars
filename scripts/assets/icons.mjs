@@ -1450,12 +1450,12 @@ const skillGlyph = {
     `<path d="M12 15.5C12 15.5 8.6 19 8.6 20.2A3.4 3.4 0 0 0 15.4 20.2C15.4 19 12 15.5 12 15.5Z" fill="${C.ink}"/>`,
   // An arrowhead leaving two hollow ones behind it: a step through the shadows (#1217).
   blink: () =>
-    `<path d="M3.5 7L9 12L3.5 17Z" ${stroke(C.ink, 1.6)}/>` +
-    `<path d="M9.5 7L15 12L9.5 17Z" ${stroke(C.ink, 1.6)}/>` +
-    inkFill("M15.5 6L22 12L15.5 18Z"),
+    `<path d="M3.5 5L8.5 10L3.5 15Z" ${stroke(C.ink, 1.6)}/>` +
+    `<path d="M9 5L14 10L9 15Z" ${stroke(C.ink, 1.6)}/>` +
+    inkFill("M15 4.5L21 10L15 15.5Z"),
   // A post with a bright head: a spirit planted where it was called (#1217).
   totem: () =>
-    inkFill("M9.5 11H14.5L15.5 21H8.5Z") + `<circle cx="12" cy="6.5" r="3.8" fill="${C.ink}"/>`,
+    inkFill("M9 11H14L14.2 20H8.8Z") + `<circle cx="12" cy="6.5" r="3.8" fill="${C.ink}"/>`,
   // The ward's ring and pole, with a blade struck from it: it turns melee (#1217).
   "ward-blade": () =>
     `<ellipse cx="12" cy="17" rx="8.5" ry="4" ${stroke(C.ink, 2.5)}/>` +
@@ -1472,8 +1472,8 @@ const skillGlyph = {
     inkLine("M12 3.5V12M6 6L8.5 12M18 6L15.5 12", 2.4),
   // The well's ring with an arrow sinking into it: drawn from a corpse (#1217).
   "well-sink": () =>
-    `<ellipse cx="12" cy="17" rx="8.5" ry="4" ${stroke(C.ink, 2.5)}/>` +
-    inkLine("M12 3.5V12.5M8.5 9.5L12 13L15.5 9.5", 2.5),
+    `<ellipse cx="8.5" cy="17" rx="6" ry="3.4" ${stroke(C.ink, 2.5)}/>` +
+    inkLine("M8.5 3.5V12.5M5 9.5L8.5 13L12 9.5", 2.5),
   // The resurrect figure in a ring: a signet's seal, one use (#1081).
   "resurrect-seal": () =>
     `<circle cx="10.5" cy="10.5" r="8" ${stroke(C.ink, 2)}/>` + smallFigure(10.5, 10.5, 0.55),
