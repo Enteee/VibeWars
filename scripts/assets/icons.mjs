@@ -511,7 +511,10 @@ const status = {
   "song-of-restoration": [
     "chant",
     (c) =>
-      `<path d="M12 5.5v7M8.5 9h7" ${stroke(c, 2.5)}/>` + `<path d="M8 15.5h8" ${stroke(c, 2)}/>`,
+      `<path d="M7 4V20" ${stroke(c, 2)}/>` +
+      `<path d="M7 5H18.5L15 9.5L18.5 14H7Z" ${stroke(c, 1.6)}/>` +
+      `<ellipse cx="10.8" cy="11" rx="1.6" ry="1.2" fill="${c}"/>` +
+      `<path d="M12.3 11V7.5L14.5 8.4" ${stroke(c, 1.3)}/>`,
   ],
   // Chant: a flame, your next attack skill burns (#758). Burning's flame,
   // smaller and higher, clear of the banner's notch.

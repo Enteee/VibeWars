@@ -655,8 +655,8 @@ it, not baked in, so one file serves every screen.
   right), slow (chevrons left), dash, energy (bolt), mountain (earth), cleanse
   (drop, struck through), armor (shield), flask, flame, trident, hawk, rock,
   arrow-burst, arrow-pierce, arrow-flame, crescent (shadow), armor-half (a
-  half-filled shield), eye, blade-cleanse, blade-hook, blade-shards, hilt, banner-note. A
-  new primary effect adds a glyph; a new skill adds a row.
+  half-filled shield), eye, blade-cleanse, blade-hook, blade-shards, hilt,
+  banner-note. A new primary effect adds a glyph; a new skill adds a row.
 
 ### Skill slot states
 

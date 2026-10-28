@@ -84,7 +84,7 @@ export const SKILL_ICONS = {
   "paragon.incoming": { glyph: "speed-heal" },
   "paragon.make-haste": { glyph: "dash", modifier: "up" },
   "paragon.defensive-anthem": { glyph: "anthem-shield" },
-  // A placeholder: the healing banner, for the party in earshot (#999).
+  // A banner with a note: a song for every ally in earshot, with the heal mark (#1012).
   "paragon.song-of-restoration": { glyph: "banner-note", modifier: "plus" },
   "ranger.apply-poison": { glyph: "flask" },
   "elementalist.glyph-of-lesser-energy": { glyph: "energy", modifier: "less" },
