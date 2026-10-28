@@ -24,6 +24,7 @@ import type {
   Skill,
   SkillEffect,
   SkillType,
+  StateCondition,
   UnconditionalEffect,
 } from "./types.js";
 
@@ -809,6 +810,18 @@ function describeEffect(
       };
     case "recharge-others":
       return { text: "Recharges all your other attack skills", magnitude: undefined };
+    case "summon": {
+      // "Summons 2 Bone Minion (60 Health, lasts 30 seconds)" (#1052).
+      const health = describeMagnitude(effect.creature.maxHealth, ranks);
+      const lasts =
+        effect.creature.durationSeconds === undefined
+          ? ""
+          : `, lasts ${String(describeMagnitude(effect.creature.durationSeconds, ranks).current)} seconds`;
+      return {
+        text: `Summons ${String(effect.count)} ${effect.creature.name} (${String(health.current)} Health${lasts})`,
+        magnitude: health,
+      };
+    }
     case "disable-skill": {
       const magnitude = describeMagnitude(effect.seconds, ranks);
       const time = `${String(magnitude.current)} seconds`;
@@ -937,11 +950,39 @@ const FOLLOWS_TEXT: Record<ChainRole, string> = {
   dual: "Must follow a dual attack.",
 };
 
-/** A chain attack's line (#831): "Off-hand attack. Must follow a lead attack." */
+/**
+ * "Only if target is knocked down" (#1041): a chain's state requirement,
+ * from `conditionText`, every case of which starts "If ".
+ */
+function requiresText(requires: StateCondition): string {
+  return conditionText(requires).replace(/^If /, "Only if ");
+}
+
+/**
+ * A chain attack's line (#831): "Off-hand attack. Must follow a lead
+ * attack.", then its requirement (#1041): "Off-hand attack. Only if
+ * target is knocked down."
+ */
 function chainText(chain: ChainStep): string {
-  return chain.follows === undefined
-    ? CHAIN_ROLE_TEXT[chain.role]
-    : `${CHAIN_ROLE_TEXT[chain.role]} ${FOLLOWS_TEXT[chain.follows]}`;
+  return [
+    CHAIN_ROLE_TEXT[chain.role],
+    ...(chain.follows === undefined ? [] : [FOLLOWS_TEXT[chain.follows]]),
+    ...(chain.requires === undefined ? [] : [`${requiresText(chain.requires)}.`]),
+  ].join(" ");
+}
+
+/**
+ * What a chain attack needs to hit, lower case for the middle of a line
+ * (#1041): "must follow a lead attack", "only if target is knocked
+ * down", both joined by "; "; `undefined` for neither, or no chain.
+ */
+export function chainRequirementText(skill: Skill): string | undefined {
+  const chain = skill.attack?.chain;
+  const parts = [
+    ...(chain?.follows === undefined ? [] : [FOLLOWS_TEXT[chain.follows]]),
+    ...(chain?.requires === undefined ? [] : [requiresText(chain.requires)]),
+  ].map((text) => `${text.charAt(0).toLowerCase()}${text.slice(1).replace(/\.$/, "")}`);
+  return parts.length === 0 ? undefined : parts.join("; ");
 }
 
 const NEEDED_WEAPON: Record<AttackWeaponClass, string> = {

@@ -1,5 +1,10 @@
-import { DEFAULT_MATCH_RULES } from "@vibewars/game-core";
-import { MAX_WIRE_SLOTS, MAX_WIRE_STATUS_INDEX, type WirePlayer } from "@vibewars/game-protocol";
+import { DEFAULT_MATCH_RULES, MAX_CREATURES } from "@vibewars/game-core";
+import {
+  MAX_WIRE_CREATURES,
+  MAX_WIRE_SLOTS,
+  MAX_WIRE_STATUS_INDEX,
+  type WirePlayer,
+} from "@vibewars/game-protocol";
 import { afterEach, beforeEach, describe, expect, expectTypeOf, it, vi } from "vitest";
 
 import {
@@ -282,6 +287,7 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
     healthPips: "healthPips",
     energyPips: "energyPips",
     statuses: "statuses",
+    creature: "creature",
   } as const satisfies Record<keyof WirePlayer, keyof PlayerSnapshot>;
 
   it("have one field for each field of the other", () => {
@@ -313,6 +319,15 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
             : (sent ?? undefined);
       expect(got, wireKey).toEqual(expected);
     }
+  });
+
+  it("keep a creature's owner and kind (#1052)", () => {
+    const creature = { ownerId: "p2", kind: "minion" } as const;
+    expect(playerSnapshot({ ...WIRE_PLAYER, creature })?.creature).toEqual(creature);
+  });
+
+  it("hold the wire's creature cap to game-core's (#1052)", () => {
+    expect(MAX_WIRE_CREATURES).toBe(MAX_CREATURES);
   });
 
   it("map every status to its index and back (#632)", () => {
@@ -362,6 +377,7 @@ const WIRE_PLAYER: WirePlayer = {
   knockdownRemaining: 0,
   healthPips: 0,
   energyPips: 0,
+  creature: null,
   statuses: [],
 };
 

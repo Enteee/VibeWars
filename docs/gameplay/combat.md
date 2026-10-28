@@ -875,6 +875,19 @@ and against a foe below half health recharges all your other attack
 skills at once, so the chain loops: lead, off-hand, dual, Moebius,
 dual, Moebius. The weapon's own double strike never adds to a skill.
 
+**Off-hand attacks that ask for a state** (#1041). Falling Spider needs
+no lead: it hits only a knocked-down foe, whoever knocked it down, read
+as its blow lands. On a foe standing, it is out of sequence like an
+off-hand without its lead: it costs its energy, misses ("Falling Spider
+misses Warrior (only if target is knocked down)") and recharges at
+once. A hit poisons and leaves your off-hand mark, so a dual follows.
+The tooltip reads "Off-hand attack. Only if target is knocked down."
+The crippling knockdown chain sets each step up: Leaping Mantis Sting,
+a lead, cripples a foe that is moving; Jungle Strike, an off-hand,
+deals a crippled foe and every foe adjacent to it 25 more; Trampling
+Ox, a dual, knocks a crippled foe down; then Falling Spider, and Death
+Blossom or Twisting Fangs after it.
+
 Your mark on your target shows right of its health in the target frame
 (#916): one dagger for lead, one in the left hand for off-hand, two
 crossed for dual, with "lead attack landed" and so on on hover. It
@@ -1163,6 +1176,22 @@ brackets.
   arrow already flying at you misses. A long step snaps the camera, as
   a respawn does. If that foe has more Health than you, read before the
   step, you are healed for 173.
+
+## Creatures
+
+A creature (#1052) is a body that is not a player: a spirit or a minion,
+summoned by a skill. It has health, armor, statuses and its owner's team,
+so every attack, spell, area and condition hits it, and it can be
+targeted with Tab, C, a click or a call. It is drawn smaller (radius 10
+to a player's 14) and blocks bodies at that radius.
+
+It never counts for its team: killing one scores nothing and gives no
+morale, it has no morale of its own, and a team with only creatures left
+standing has lost. A creature that dies or runs out its time disappears
+at the end of the tick, with no corpse and no respawn; running out is not
+a death. Its owner's death does not end it; its owner leaving the match
+does. Soul Reaping answers a minion's death but not a spirit's. At most
+32 creatures are on the field at once (ADR-0035).
 
 ## Death and scoring
 

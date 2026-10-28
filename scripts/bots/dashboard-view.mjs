@@ -917,6 +917,16 @@ export function humanDuration(ms) {
 }
 
 /**
+ * @param {readonly { issue: number, bounces: number }[]} top
+ * @returns {string} ` (#12 ×3, #7 ×2)`, empty for none
+ */
+function topBounced(top) {
+  return top.length === 0
+    ? ""
+    : ` (${top.map(({ issue, bounces }) => `#${String(issue)} ×${String(bounces)}`).join(", ")})`;
+}
+
+/**
  * @param {number} bytes
  * @returns {string} `9.8 GiB`, whole from 10 GiB up
  */
@@ -978,7 +988,8 @@ function kpiSection({ kpi: { file, now } }, width) {
           `cycle med ${humanDuration(flow.cycleMedianMs)} p90 ${humanDuration(flow.cycleP90Ms)}`,
           `review wait ${humanDuration(flow.reviewWaitMedianMs)}`,
           `QA wait ${humanDuration(flow.qaWaitMedianMs)}`,
-          `bounces ${String(flow.bounces7d)}`,
+          `bounces 24h ${String(flow.bounces24h)}`,
+          `7d ${String(flow.bounces7d)}${topBounced(flow.topBounced)}`,
         ].join(" · "),
         width,
       ),
