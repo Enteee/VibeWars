@@ -82,6 +82,7 @@ function summonSkill(
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
+    petAttack: undefined,
     projectile: undefined,
     effects: [{ kind: "summon", creature, count }],
   });

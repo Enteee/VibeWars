@@ -49,6 +49,9 @@ export type ActivationRejection =
   | "no-corpse"
   // Comfort Animal with no pet to act on (#1046).
   | "no-companion"
+  // A pet attack with a dead pet, or one beyond earshot of its owner (#1046).
+  | "companion-dead"
+  | "companion-too-far"
   // A skill that brings a companion, as Charm Animal (#1046): no match has
   // an animal to charm, so it is never cast.
   | "no-animal-to-charm"
@@ -178,7 +181,9 @@ export function canActivate(request: ActivationRequest): ActivationCheck {
   if (skill.companion !== undefined) {
     return reject("no-animal-to-charm");
   }
-  if (request.isCasting) {
+  // A pet attack has no activation: it is used mid-cast, mid-aftercast
+  // and mid-swing (#1046).
+  if (request.isCasting && skill.type !== "pet-attack") {
     return reject("already-casting");
   }
   if ((request.rechargeRemaining.get(key) ?? 0) > 0) {
@@ -209,6 +214,17 @@ export function canActivate(request: ActivationRequest): ActivationCheck {
   const targetCheck = checkTarget(request);
   if (!targetCheck.ok) {
     return targetCheck;
+  }
+  // A pet attack needs its pet alive and within earshot of its owner,
+  // seen or not, and never walks its owner in (#1046).
+  if (skill.type === "pet-attack") {
+    if (request.target?.dead === true) {
+      return reject("companion-dead");
+    }
+    return request.targetPosition === undefined ||
+      distanceWithinRange(request.casterPosition, request.targetPosition, skill.range)
+      ? OK
+      : reject("companion-too-far");
   }
 
   // Range and line of sight only apply when there is a distinct target to

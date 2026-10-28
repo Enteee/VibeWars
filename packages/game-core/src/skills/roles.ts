@@ -143,10 +143,12 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
  * A skill's roles, derived from its effects only, never a hand-kept
  * list: adding a skill tags it. A blocked blow's effects count too,
  * since they are still what the skill does (Swift Chop's Deep Wound).
- * One on your own pet (#1046) does nothing for the team: no role.
+ * One on your own pet (#1046) does nothing for the team: no role,
+ * unless it is a pet attack (#1107), whose effects land on the foe
+ * its bite hits: Maiming Strike cripples, Disrupting Lunge interrupts.
  */
 export function skillRoles(skill: Skill): readonly SkillRole[] {
-  if (skill.target === "companion") {
+  if (skill.target === "companion" && skill.petAttack === undefined) {
     return [];
   }
   const effects = [...skill.effects, ...(skill.attack?.onBlocked ?? [])];

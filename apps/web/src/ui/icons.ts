@@ -40,6 +40,7 @@ export const SKILL_TYPE_NAME: Readonly<Record<SkillType, string>> = {
   ward: "Ward",
   well: "Well",
   trap: "Trap",
+  "pet-attack": "Pet Attack",
   skill: "Skill",
 };
 

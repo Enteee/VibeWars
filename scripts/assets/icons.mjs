@@ -167,6 +167,11 @@ const skillType = {
   trap: () =>
     `<path d="M3 19h18" ${stroke(C.ink, 2.5)}/>` +
     `<path d="M4.5 17L7 8l2.5 9M9.5 17L12 5l2.5 12M14.5 17L17 8l2.5 9" ${stroke(C.ink, 2.2)}/>`,
+  // A paw print: the blow is your pet's (#1046).
+  "pet-attack": () =>
+    `<ellipse cx="12" cy="16" rx="4.5" ry="3.8" fill="${C.ink}"/>` +
+    `<circle cx="5.5" cy="10.5" r="2" fill="${C.ink}"/><circle cx="9.5" cy="6.5" r="2" fill="${C.ink}"/>` +
+    `<circle cx="14.5" cy="6.5" r="2" fill="${C.ink}"/><circle cx="18.5" cy="10.5" r="2" fill="${C.ink}"/>`,
   // Plain square: a skill with no other type.
   skill: () => `<rect x="6" y="6" width="12" height="12" rx="1" fill="${C.ink}"/>`,
 };
