@@ -65,6 +65,15 @@ describe("skill catalog integrity", () => {
     }
   });
 
+  it("leaves a ground effect from a ward, and only from a ward (#1087)", () => {
+    const wards = IMPLEMENTED_SKILLS.filter((skill) => skill.type === "ward");
+    expect(wards.length).toBeGreaterThan(0);
+    for (const skill of IMPLEMENTED_SKILLS) {
+      const grounds = skill.effects.filter((effect) => effect.kind === "create-ground-effect");
+      expect(grounds.length > 0, skill.id).toBe(skill.type === "ward");
+    }
+  });
+
   it("makes every attack skill a blow of its weapon, and no other skill (ADR-0029)", () => {
     for (const skill of IMPLEMENTED_SKILLS) {
       expect(skill.attack !== undefined, skill.id).toBe(skill.type === "attack");
