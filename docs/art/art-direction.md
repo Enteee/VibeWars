@@ -765,8 +765,8 @@ it, not baked in, so one file serves every screen.
   in an arrow ring), hex-bolt (dashed ring, bolt), blade-cleanse, blade-hook,
   blade-shards, hilt, banner-note, mountain-crack, dust, thorns, limp,
   dagger-burst, ox-horns, spider, resurrect-seal, resurrect-arrive,
-  resurrect-return, resurrect-blood. A new primary effect adds a glyph; a new
-  skill adds a row.
+  resurrect-return, resurrect-blood, bone-minions, bone-horror. A new primary
+  effect adds a glyph; a new skill adds a row.
 
 ### Skill slot states
 
