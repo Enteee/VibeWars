@@ -27,6 +27,7 @@ import type { SimulationRng } from "../rng.js";
 import { ADRENALINE_PER_STRIKE, type CombatRules } from "../ruleset.js";
 import {
   isEasilyInterrupted,
+  isInvulnerable,
   isSpell,
   type Combatant,
   type DisableSkillEffect,
@@ -214,7 +215,8 @@ export type CombatEvent =
  * here, so it can never count as physical. Damage a foe `dealer` dealt is
  * recorded too, for Vengeful Weapon (#1022); with no dealer, as a
  * sacrifice, it is not. A bond on the target (#1108) takes its share of
- * a physical hit, after Reversal of Fortune.
+ * a physical hit, after Reversal of Fortune. An invulnerable target
+ * (#1208) takes none of it and nothing is reported.
  */
 export function applyDamage(
   target: Combatant,
@@ -224,7 +226,7 @@ export function applyDamage(
   events: CombatEvent[],
   dealer: Combatant | undefined,
 ): void {
-  if (amount <= 0 || target.dead) {
+  if (amount <= 0 || target.dead || isInvulnerable(target)) {
     return;
   }
   if (reverse(target, amount, events)) {
@@ -332,7 +334,8 @@ function applyHeal(target: Combatant, amount: number, events: CombatEvent[]): vo
  * than it has, and the caster gains exactly that, up to its effective
  * maximum. Not damage, so no armor and nothing that reacts to damage; not
  * a heal either, so the caster's healing modifiers do not touch it. It
- * can kill, with one `death`, as `applyDamage` does.
+ * can kill, with one `death`, as `applyDamage` does. Nothing is stolen
+ * from an invulnerable target (#1208).
  */
 function stealLife(
   caster: Combatant,
@@ -341,7 +344,7 @@ function stealLife(
   events: CombatEvent[],
 ): void {
   const stolen = Math.min(amount, target.health);
-  if (stolen <= 0) {
+  if (stolen <= 0 || isInvulnerable(target)) {
     return;
   }
   if (reverse(target, stolen, events)) {
@@ -619,20 +622,26 @@ export function interruptOnHit(victim: Combatant, events: CombatEvent[]): void {
  * too, never below 1, so it alone never kills (#764: GW1 defers the loss
  * to the next health change; flooring it is the accepted approximation).
  * A refresh takes nothing. Returns the health taken, for the caller to
- * report as damage.
+ * report as damage; `undefined` when it is refused, a hex or a condition
+ * on an invulnerable target (#1208), for the caller to report nothing.
+ * An invulnerable target gains any other status, and loses no health to it.
  */
 export function applyStatus(
   target: Combatant,
   statusId: StatusId,
   durationSeconds: number,
   sourceId: string,
-): number {
+): number | undefined {
+  const { category } = getStatusDefinition(statusId);
+  if (isInvulnerable(target) && (category === "hex" || category === "condition")) {
+    return undefined;
+  }
   const lossBefore = maxHealthLossOf(target);
   if (!target.statuses.apply(statusId, durationSeconds, sourceId)) {
     return 0;
   }
   const taken = Math.min(maxHealthLossOf(target) - lossBefore, target.health - 1);
-  if (taken <= 0) {
+  if (taken <= 0 || isInvulnerable(target)) {
     return 0;
   }
   target.health -= taken;
@@ -642,7 +651,8 @@ export function applyStatus(
 /**
  * `statusId` on `target` for `durationSeconds`, from `sourceId`, as every
  * skill puts one on: what it ends (#919), the health it takes as it lands
- * (#800) and Dazed's interrupt, each reported.
+ * (#800) and Dazed's interrupt, each reported. A refused one (#1208) is
+ * not, and does none of it.
  */
 function landStatus(
   target: Combatant,
@@ -653,6 +663,9 @@ function landStatus(
 ): void {
   const ending = endedByGaining(target, statusId);
   const loss = applyStatus(target, statusId, durationSeconds, sourceId);
+  if (loss === undefined) {
+    return;
+  }
   events.push({ kind: "status-applied", targetId: target.id, statusId, durationSeconds });
   reportEnded(target, ending, events);
   if (loss > 0) {
@@ -668,10 +681,11 @@ function landStatus(
  * Health the caster gives up (a sacrifice, #944's health loss too).
  * Self-inflicted and, in this genre, famously *can* kill you, so it has
  * the same death check as damage rather than a special "safe" path.
- * Nothing that reacts to damage sees it.
+ * Nothing that reacts to damage sees it. An invulnerable caster (#1208)
+ * gives up none: the skill works, free.
  */
 function sacrifice(caster: Combatant, amount: number, events: CombatEvent[]): void {
-  if (amount <= 0) {
+  if (amount <= 0 || isInvulnerable(caster)) {
     return;
   }
   const applied = Math.min(amount, caster.health);
@@ -854,9 +868,10 @@ export function applyEffect(
         return events;
       }
       // Not damage: nothing caps, charges or answers it, and half of what
-      // is left is always less than all of it, so it never kills.
+      // is left is always less than all of it, so it never kills. An
+      // invulnerable caster (#1208) heals as much and loses none.
       const lost = Math.floor(effect.fractionOfCurrent * caster.health);
-      if (lost > 0) {
+      if (lost > 0 && !isInvulnerable(caster)) {
         caster.health -= lost;
         events.push({ kind: "sacrifice", targetId: caster.id, amount: lost });
       }
@@ -1001,9 +1016,10 @@ export function applyEffect(
         health = target.maxHealth * share(resolveMagnitude(effect.health.percent, caster));
       } else {
         // Not damage, and half of what is left is less than all of it: it
-        // never kills, as Infuse Health's loss.
+        // never kills, as Infuse Health's loss, and none of it while
+        // invulnerable (#1208).
         const lost = Math.floor(effect.health.casterLosesFractionOfCurrent * caster.health);
-        if (lost > 0) {
+        if (lost > 0 && !isInvulnerable(caster)) {
           caster.health -= lost;
           events.push({ kind: "sacrifice", targetId: caster.id, amount: lost });
         }

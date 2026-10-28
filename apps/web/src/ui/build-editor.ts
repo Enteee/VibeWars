@@ -50,9 +50,20 @@ import {
 } from "../input/keymap.js";
 import { loadKeymap } from "../input/keymap-preference.js";
 import { NoWebGlError } from "../render/arena-viewport.js";
-import { exportBuild, importBuild, looksLikeBuild } from "../storage/build-transfer.js";
+import {
+  exportBuild,
+  importBuild,
+  looksLikeBuild,
+  type ImportResult,
+} from "../storage/build-transfer.js";
 import { SKILL_BAR_SLOTS, equippableSkills, validateBuild } from "../storage/build-validation.js";
 import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "../storage/schema.js";
+import {
+  decodeTemplate,
+  encodeTemplate,
+  looksLikeTemplate,
+  missingSkillsNote,
+} from "../storage/gw1-template.js";
 import { looksLikeTeam } from "../storage/team-transfer.js";
 import { noWebGlNotice } from "./arena-notice.js";
 import {
@@ -1026,16 +1037,24 @@ export function mountBuildEditor(
   // A build pasted anywhere but a field imports it (#572), unsaved: the
   // player sees what arrived and chooses to keep it. Other text is
   // ignored; a broken build says why. A team code holds builds too, so it
-  // is told apart first (#577).
+  // is told apart first (#577); a GW1 template code comes last (#494).
   const stopPaste = listenForPaste((text) => {
     if (looksLikeTeam(text)) {
       toast("That is a team code. Paste it on the Teams screen.");
       return true;
     }
-    if (!looksLikeBuild(text)) {
+    let result: ImportResult;
+    // A GW1 code's skills this game lacks arrive as empty slots (#494).
+    let missing: readonly number[] = [];
+    if (looksLikeBuild(text)) {
+      result = importBuild(text, context.current().id, Date.now());
+    } else if (looksLikeTemplate(text)) {
+      const decoded = decodeTemplate(text, context.current().id, Date.now());
+      result = decoded;
+      missing = decoded.ok ? decoded.missingSkills : [];
+    } else {
       return false;
     }
-    const result = importBuild(text, context.current().id, Date.now());
     if (!result.ok) {
       // Every problem at once: someone fixing a pasted build should not
       // discover its faults one round trip at a time.
@@ -1043,7 +1062,7 @@ export function mountBuildEditor(
       return true;
     }
     context.commit(result.character);
-    toast(`Imported ${result.character.name}`);
+    toast(`Imported ${result.character.name}${missingSkillsNote(missing)}`);
     return true;
   });
 
@@ -1158,6 +1177,16 @@ function mountCommandBar(
     button("Share", "", () => {
       closeMenu();
       share.show(exportBuild(context.current()));
+    }),
+    // The same build as a GW1 template code (#494), for GW1's build sites.
+    button("Share as GW1 code", "", () => {
+      closeMenu();
+      const encoded = encodeTemplate(context.current());
+      if (encoded.ok) {
+        share.show(encoded.code);
+      } else {
+        toast(encoded.problem);
+      }
     }),
     // An edited character duplicates as edited, as it always has.
     button("Duplicate", "", () => {

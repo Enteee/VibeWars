@@ -15,7 +15,7 @@ import {
   type ArmorReduction,
   type BlockRule,
 } from "./status.js";
-import { isSpell, type Combatant, type Skill } from "./types.js";
+import { isInvulnerable, isSpell, type Combatant, type Skill } from "./types.js";
 
 /**
  * Per-tick status processing (brief §13's "durations", §12's degeneration).
@@ -55,7 +55,9 @@ export function advanceStatuses(
       (nearSpirit ? modifiers.healthPerSecondNearSpirit : 0)) *
     modifiers.healingMultiplier;
   if (pips !== 0 || perSecond !== 0) {
-    const delta = (pips * HEALTH_PER_PIP + perSecond) * dt;
+    const change = (pips * HEALTH_PER_PIP + perSecond) * dt;
+    // Degeneration takes nothing from an invulnerable body (#1208); regeneration still heals.
+    const delta = change < 0 && isInvulnerable(combatant) ? 0 : change;
     const effectiveMax = effectiveMaxHealth(combatant);
     const next = Math.min(effectiveMax, Math.max(0, combatant.health + delta));
     const applied = next - combatant.health;

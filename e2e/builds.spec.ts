@@ -1,6 +1,9 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { codeLabel } from "../apps/web/src/input/keymap.js";
+import { exportBuild } from "../apps/web/src/storage/build-transfer.js";
+import { CHARACTER_SCHEMA_VERSION } from "../apps/web/src/storage/schema.js";
+import { defaultEquipmentFor } from "../packages/game-core/src/equipment/loadout.js";
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
 import { chooseProfession, professionField } from "./helpers/professions.js";
 import { startSoloMatch } from "./helpers/peers.js";
@@ -610,6 +613,55 @@ test("⋯ Share copies the build as one line, and a paste on the editor imports 
   await expect(page.locator(".toast")).toHaveText("Imported Shared Build");
   await expect(page.locator("input.editor-name")).toHaveValue("Shared Build");
   await expect(page.locator(".editor-unsaved")).toBeVisible();
+});
+
+test("⋯ Share as GW1 code shows a template code; a pasted one imports, missing skills empty (#494)", async ({
+  page,
+}) => {
+  await newCharacter(page);
+  await page.locator("input.editor-name").fill("Scratch");
+
+  // Warrior/Monk, Strength 12, Swift Chop and Orison of Healing, its fields
+  // wider than they need be: gw1-template.test.ts spells out its bits.
+  await paste(page.locator(".editor"), "OUwQEROqaGBAAAAAAAAA");
+  await expect(page.locator(".toast")).toHaveText("Imported Warrior/Monk build");
+  await expect(page.locator("input.editor-name")).toHaveValue("Warrior/Monk build");
+  await expect(page.locator(".editor-unsaved")).toBeVisible();
+
+  // Shared back, as the encoder writes it: the narrowest fields.
+  await page.getByRole("button", { name: "more actions" }).click();
+  await page.getByRole("button", { name: "Share as GW1 code", exact: true }).click();
+  await expect(page.getByLabel("build to share")).toHaveValue("OQMRE5oqZEAAAAAAAAA");
+  await page.keyboard.press("Escape");
+
+  // GW1 skills 3000 and 567 are not in VibeWars: their slots arrive empty.
+  await paste(page.locator(".editor"), "OQMAQVF4u3IAAAAAAAAAA");
+  await expect(page.locator(".toast")).toHaveText(
+    "Imported Warrior/Monk build. 2 skills are not in VibeWars yet: GW1 skill 3000, 567.",
+  );
+
+  // Vital Transfer is this game's own: a bar with it has no GW1 code.
+  await paste(
+    page.locator(".editor"),
+    exportBuild({
+      schemaVersion: CHARACTER_SCHEMA_VERSION,
+      id: "vital",
+      name: "Vital",
+      primaryProfession: "necromancer",
+      secondaryProfession: undefined,
+      attributes: [],
+      skillBar: ["necromancer.blood-renewal-lite", null, null, null, null, null, null, null],
+      equipment: defaultEquipmentFor("necromancer"),
+      updatedAt: 0,
+    }),
+  );
+  await expect(page.locator(".toast")).toHaveText("Imported Vital");
+  await page.getByRole("button", { name: "more actions" }).click();
+  await page.getByRole("button", { name: "Share as GW1 code", exact: true }).click();
+  await expect(page.locator(".toast")).toHaveText(
+    "Vital Transfer is not a GW1 skill, so this build has no GW1 code.",
+  );
+  await expect(page.getByLabel("build to share")).toBeHidden();
 });
 
 test("Share keeps the line selected when the clipboard is refused (#572)", async ({ page }) => {
