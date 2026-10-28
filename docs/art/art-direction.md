@@ -737,8 +737,9 @@ it, not baked in, so one file serves every screen.
   arrow-burst, arrow-pierce, arrow-flame, crescent (shadow), armor-half (a
   half-filled shield), eye, heal-other (a head and a plus), heal-turn (a plus
   in an arrow ring), hex-bolt (dashed ring, bolt), blade-cleanse, blade-hook,
-  blade-shards, hilt, banner-note, mountain-crack, dust, thorns. A new primary
-  effect adds a glyph; a new skill adds a row.
+  blade-shards, hilt, banner-note, mountain-crack, dust, thorns,
+  resurrect-seal, resurrect-arrive, resurrect-return, resurrect-blood. A new
+  primary effect adds a glyph; a new skill adds a row.
 
 ### Skill slot states
 
