@@ -398,6 +398,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     },
     whileActivating: undefined,
     corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     effects: [{ kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS }],
   },
