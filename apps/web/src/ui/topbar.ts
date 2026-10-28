@@ -1,14 +1,14 @@
 import { isGloballyMuted, onGlobalMute, setGlobalMute } from "../audio/global-mute.js";
 import { attachFullscreenButton, fullscreenTarget } from "./fullscreen.js";
 import { paintMuteButton } from "./hud.js";
-import { settingsIcon } from "./icons.js";
+import { helpIcon, settingsIcon } from "./icons.js";
 import { attachJukeboxPopover } from "./jukebox.js";
 import { iconButton } from "./kit.js";
 
 /**
  * The top bar on the menu screens (#454): the brand, the status when it
  * has something to say, and the buttons a player wants from anywhere:
- * Options, music, mute and fullscreen. In a match it is hidden and the
+ * Help, Options, music, mute and fullscreen. In a match it is hidden and the
  * HUD carries the same buttons.
  */
 
@@ -32,6 +32,8 @@ export function paintStatus(status: StatusElement, text: string, state: StatusSt
 }
 
 export interface TopbarCallbacks {
+  /** [?]: the player docs, Help, over whatever screen shows (#1257). */
+  readonly onHelp: () => void;
   /** ⚙: Options, over whatever screen shows. */
   readonly onOptions: () => void;
 }
@@ -42,6 +44,10 @@ export function mountTopbar(
   actions: HTMLElement,
   callbacks: TopbarCallbacks,
 ): void {
+  const help = iconButton("topbar-help", "Help", helpIcon());
+  help.setAttribute("aria-haspopup", "dialog");
+  help.addEventListener("click", callbacks.onHelp);
+
   const options = iconButton("topbar-options", "Options", settingsIcon());
   options.setAttribute("aria-haspopup", "dialog");
   options.addEventListener("click", callbacks.onOptions);
@@ -62,6 +68,6 @@ export function mountTopbar(
   const fullscreen = iconButton("topbar-fullscreen", "Fullscreen");
   attachFullscreenButton(fullscreen, fullscreenTarget());
 
-  actions.append(options, music, mute, fullscreen);
+  actions.append(help, options, music, mute, fullscreen);
   attachJukeboxPopover(music, bar);
 }

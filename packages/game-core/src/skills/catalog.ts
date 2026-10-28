@@ -11,6 +11,7 @@ import {
 } from "../distances.js";
 import { WEAPONS } from "../equipment/weapons.js";
 import type { Behaviour } from "../match/behaviour.js";
+import type { StatusId } from "./status.js";
 import {
   KNOCKDOWN_SECONDS,
   type CreatureTemplate,
@@ -201,6 +202,36 @@ function attackingSpirit(
     durationSeconds,
     behaviour: { kind: "auto-attack", targeting: { kind: "nearest-enemy" }, reach: RANGE_SPIRIT },
     aura: undefined,
+    onDeath: "vanish",
+    ownerDisableOnDeath: undefined,
+  };
+}
+
+/**
+ * A protective spirit (#1265): it attacks nothing and projects `statusId`
+ * on whoever `affects` in its range, paying for every outcome it
+ * changes with its own health. Health from its level, as Recuperation's:
+ * 50 + 20 per level, armor 51.
+ */
+function protectiveSpirit(
+  name: string,
+  healthAtTwelve: number,
+  duration: { readonly atZero: number; readonly atTwelve: number },
+  statusId: StatusId,
+  affects: "allies" | "foes",
+): CreatureTemplate {
+  return {
+    kind: "spirit",
+    look: "spirit",
+    name,
+    maxHealth: {
+      scaling: { attributeId: "ritualist.communing", atZero: 70, atTwelve: healthAtTwelve },
+    },
+    armor: { flat: 51 },
+    attack: undefined,
+    durationSeconds: { scaling: { attributeId: "ritualist.communing", ...duration } },
+    behaviour: { kind: "idle" },
+    aura: { statusId, affects, radius: RANGE_SPIRIT },
     onDeath: "vanish",
     ownerDisableOnDeath: undefined,
   };
@@ -7032,6 +7063,156 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
           { scaling: { attributeId: "ritualist.communing", atZero: 15, atTwelve: 35 } },
           { atZero: 5, atTwelve: 17 },
           [{ kind: "remove-status", category: "enchantment", count: 1 }],
+        ),
+      },
+    ],
+  },
+  {
+    id: "ritualist.shelter",
+    name: "Shelter",
+    gwId: 982,
+    type: "binding-ritual",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.communing",
+    cost: { kind: "energy", amount: 25 },
+    overcast: 0,
+    activationSeconds: 5,
+    rechargeSeconds: 45,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    // PvP: "Create a level 1...8 spirit. Non-spirit allies within its range
+    // cannot lose more than 10% maximum Health from a single attack. When
+    // this spirit prevents damage, it loses 75...45 Health. This spirit
+    // lasts 30...60 seconds." At 12: level 6.6, 54 s, 51 a capped blow.
+    effects: [
+      {
+        kind: "summon",
+        count: 1,
+        creature: protectiveSpirit(
+          "Shelter",
+          182,
+          { atZero: 30, atTwelve: 54 },
+          "shelter",
+          "allies",
+        ),
+      },
+    ],
+  },
+  {
+    id: "ritualist.union",
+    name: "Union",
+    gwId: 911,
+    type: "binding-ritual",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.communing",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 3,
+    rechargeSeconds: 45,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    // PvP: "Create a level 1...8 spirit. Whenever a non-spirit ally in its
+    // range takes damage or life steal, it is reduced by 15 and the spirit
+    // takes 15 damage. This spirit dies after 30...60 seconds." At 12:
+    // level 6.6, 54 s.
+    effects: [
+      {
+        kind: "summon",
+        count: 1,
+        creature: protectiveSpirit("Union", 182, { atZero: 30, atTwelve: 54 }, "union", "allies"),
+      },
+    ],
+  },
+  {
+    id: "ritualist.displacement",
+    name: "Displacement",
+    gwId: 1249,
+    type: "binding-ritual",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.communing",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 3,
+    rechargeSeconds: 45,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    // PvP: "Create a level 1...10 spirit. All non-spirit allies within its
+    // range have a 75% chance to block incoming attacks. Every time an
+    // attack is blocked in this way, this spirit takes 60 damage. This
+    // spirit dies after 30...60 seconds." At 12: level 8.2, 54 s.
+    effects: [
+      {
+        kind: "summon",
+        count: 1,
+        creature: protectiveSpirit(
+          "Displacement",
+          214,
+          { atZero: 30, atTwelve: 54 },
+          "displacement",
+          "allies",
+        ),
+      },
+    ],
+  },
+  {
+    id: "ritualist.earthbind",
+    name: "Earthbind",
+    gwId: 1252,
+    type: "binding-ritual",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.communing",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 3,
+    rechargeSeconds: 45,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    // PvP: "Create a level 1...10 spirit. All non-spirit foes knocked down
+    // within its range are knocked down for at least 3 seconds. Whenever
+    // this happens, this spirit loses 50...25 Health. This spirit dies
+    // after 15...45 seconds." At 12: level 8.2, 39 s, 30 a knockdown.
+    effects: [
+      {
+        kind: "summon",
+        count: 1,
+        creature: protectiveSpirit(
+          "Earthbind",
+          214,
+          { atZero: 15, atTwelve: 39 },
+          "earthbind",
+          "foes",
         ),
       },
     ],

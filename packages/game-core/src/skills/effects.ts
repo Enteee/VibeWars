@@ -14,6 +14,7 @@ import { hitLocationOf, mitigate, skillDamage } from "./damage.js";
 import { effectiveMaxEnergy } from "./overcast.js";
 import { resolveMagnitude } from "./scaling.js";
 import {
+  aggregateModifiers,
   getStatusDefinition,
   scaledStatusDuration,
   type StatusCategory,
@@ -96,7 +97,8 @@ export type CombatEvent =
     }
   /**
    * Health a status took as it landed (#800): deep wound's share of
-   * maximum health. Not damage: nothing that reacts to damage sees it.
+   * maximum health; or a protective spirit's payment for what its status
+   * did (#1265). Not damage: nothing that reacts to damage sees it.
    */
   | {
       readonly kind: "health-lost";
@@ -353,7 +355,13 @@ function stealLife(
   amount: number,
   events: CombatEvent[],
 ): void {
-  const stolen = Math.min(amount, target.health);
+  // Union (#1265): a flat cut off every steal, paid for by its spirit
+  // whenever it took something.
+  const reduction = aggregateModifiers(target.statuses.active).lifeStealReduction;
+  if (reduction > 0 && amount > 0) {
+    target.statuses.chargeSources((definition) => definition.lifeStealReduction > 0);
+  }
+  const stolen = Math.min(amount - reduction, target.health);
   if (stolen <= 0) {
     return;
   }
@@ -1000,12 +1008,15 @@ export function applyEffect(
         }
         return events;
       }
-      knockDown(target, effect.durationSeconds);
-      events.push({
-        kind: "knocked-down",
-        targetId: target.id,
-        durationSeconds: effect.durationSeconds,
-      });
+      // Earthbind (#1265): never shorter than its minimum, and its spirit
+      // pays for every knockdown, one long enough already included.
+      const minimum = aggregateModifiers(target.statuses.active).knockdownMinSeconds;
+      const durationSeconds = Math.max(effect.durationSeconds, minimum ?? 0);
+      if (minimum !== undefined) {
+        target.statuses.chargeSources((definition) => definition.knockdownMinSeconds !== undefined);
+      }
+      knockDown(target, durationSeconds);
+      events.push({ kind: "knocked-down", targetId: target.id, durationSeconds });
       return events;
     }
 

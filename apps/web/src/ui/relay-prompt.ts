@@ -1,9 +1,4 @@
-import {
-  RELAY_IS_SAVED,
-  relayHosts,
-  saveTurnConfig,
-  type TurnConfig,
-} from "../net/transport/turn-config.js";
+import { relayHosts, saveTurnConfig, type TurnConfig } from "../net/transport/turn-config.js";
 import { button, h, toast } from "./kit.js";
 
 /** How long Use stays disabled after the prompt opens, as a browser's permission prompt does. */
@@ -11,10 +6,6 @@ const ARM_USE_MS = 500;
 
 /** The open prompt's close, so a second link replaces it rather than stacking on it. */
 let closeOpen: (() => void) | undefined;
-
-/** What a build on a shared origin (GitHub Pages) says of the relay. */
-export const RELAY_VISIT_ONLY =
-  "Kept for this visit only: this site shares its storage with others, so it is not saved. Open the link again next time.";
 
 /**
  * Asked over the menu when the page was opened from a relay invite link
@@ -47,9 +38,6 @@ export function openRelayPrompt(
       "Only use a relay from someone you trust: whoever runs it sees your IP address and when you play.",
     ),
   );
-  if (!RELAY_IS_SAVED) {
-    panel.append(h("p", "screen-subtitle", RELAY_VISIT_ONLY));
-  }
 
   const close = (): void => {
     document.removeEventListener("keydown", onKey, true);

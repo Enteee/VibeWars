@@ -708,6 +708,24 @@ const status = {
   ],
   // Skill effect: two regeneration arrows, Recuperation's +2 (#1064).
   recuperation: ["skill-effect", (c) => `<path d="M7 13l3-3 3 3M11 13l3-3 3 3" ${stroke(c, 2)}/>`],
+  // Skill effect: a roof over a bar, no blow takes more than 10% (#1265).
+  shelter: [
+    "skill-effect",
+    (c) => `<path d="M6 12l6-5 6 5" ${stroke(c, 2.2)}/>` + `<path d="M8 16h8" ${stroke(c, 2)}/>`,
+  ],
+  // Skill effect: two links, damage taken shared with the spirit (#1265).
+  union: [
+    "skill-effect",
+    (c) =>
+      `<circle cx="9.5" cy="12" r="3" ${stroke(c, 2)}/><circle cx="14.5" cy="12" r="3" ${stroke(c, 2)}/>`,
+  ],
+  // Skill effect: an arrow turned aside, a blocked attack (#1265).
+  displacement: ["skill-effect", (c) => `<path d="M5 12h6l3-4M14 8h3M14 8v3" ${stroke(c, 2)}/>`],
+  // Skill effect: a body flat on a ground line, held down longer (#1265).
+  earthbind: [
+    "skill-effect",
+    (c) => `<path d="M6 13h12" ${stroke(c, 2.2)}/>` + `<path d="M6 17h12" ${stroke(c, 2)}/>`,
+  ],
   // Skill effect: a shield on a ground line, melee blocked inside a ward (#1087).
   "ward-against-melee": [
     "skill-effect",
@@ -845,6 +863,10 @@ const ui = {
   settings: () =>
     `<circle cx="12" cy="12" r="6.2" ${stroke(C.ink, 2.2)}/><circle cx="12" cy="12" r="2.4" ${stroke(C.ink, 2)}/>` +
     `<path d="M18.5 12.0L21.8 12.0M16.6 16.6L18.9 18.9M12.0 18.5L12.0 21.8M7.4 16.6L5.1 18.9M5.5 12.0L2.2 12.0M7.4 7.4L5.1 5.1M12.0 5.5L12.0 2.2M16.6 7.4L18.9 5.1" ${stroke(C.ink, 3)}/>`,
+  // A question mark in a ring: the player docs, Help (#1257).
+  help: () =>
+    `<circle cx="12" cy="12" r="9.5" ${stroke(C.ink, 2)}/>` +
+    `<path d="M9 9.2a3 3 0 1 1 4.2 2.8c-.8.4-1.2 1-1.2 1.9v.8" ${stroke(C.ink, 2.2)}/><circle cx="12" cy="17.6" r="1.3" fill="${C.ink}"/>`,
   // Four corner brackets pointing out: enter fullscreen (#454).
   fullscreen: () => `<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" ${stroke(C.ink, 2.2)}/>`,
   // The same corners pointing in: leave fullscreen (#454).
@@ -1652,6 +1674,33 @@ const skillGlyph = {
   eye: () =>
     `<path d="M2.5 12C5 7.5 8.5 5.5 12 5.5S19 7.5 21.5 12C19 16.5 15.5 18.5 12 18.5S5 16.5 2.5 12Z" ${stroke(C.ink, 2.2)}/>` +
     `<circle cx="12" cy="12" r="3.4" fill="${C.ink}"/>`,
+  // A ghost with dark eyes, wavy hem: the phantasm that gnaws (#1243).
+  ghost: () =>
+    inkFill("M3.5 17.5V9A5.5 5.5 0 0 1 14.5 9V17.5L12.2 15.3L9 17.5L5.8 15.3Z") +
+    `<circle cx="6.8" cy="9" r="1.3" fill="${C.bg}"/><circle cx="11.2" cy="9" r="1.3" fill="${C.bg}"/>`,
+  // A hung weight: a burden on the foe's legs (#1243).
+  weight: () =>
+    `<path d="M7 7Q7 3 9.75 3T12.5 7" ${stroke(C.ink, 2.2)}/>` + inkFill("M4.5 7H15L16 14H3.5Z"),
+  // A jagged ache over a cross cut: pain now, a deep wound when it ends (#1243).
+  "ache-cross": () =>
+    inkLine("M3.5 6L7 3.5L10.5 6L14 3.5L17.5 6", 2.2) +
+    inkLine("M5.5 10.5L13.5 18.5M13.5 10.5L5.5 18.5", 3),
+  // A shield inside its own outline: armor drawing in, cracked when it ends (#1243).
+  "armor-shrink": () =>
+    `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 1.8)} stroke-dasharray="3.4 2.4"/>` +
+    inkFill("M12 7L16 8.6V12.4C16 14.6 14.4 16 12 17.2C9.6 16 8 14.6 8 12.4V8.6Z"),
+  // A whole chevron and a broken one: fast now, crippled after (#1243).
+  "speed-break": () =>
+    inkLine("M3.5 5L10 12L3.5 19", 2.6) + inkLine("M13.5 5L16.5 8.5M16.5 14L13.5 17.5", 2.4),
+  // An eye with a slash through it: the next attack is blinded (#1243).
+  "eye-slash": () =>
+    `<g transform="scale(0.78)"><path d="M2.5 12C5 7.5 8.5 5.5 12 5.5S19 7.5 21.5 12C19 16.5 15.5 18.5 12 18.5S5 16.5 2.5 12Z" ${stroke(C.ink, 2.8)}/>` +
+    `<circle cx="12" cy="12" r="3.4" fill="${C.ink}"/></g>` +
+    inkLine("M3.5 17L16.5 3.5", 2.6),
+  // A limping line over two drain chevrons: slowed and bleeding health (#1243).
+  "limp-drain": () =>
+    inkLine("M9 3L5 9.5L9 13.5L4 20", 2.8) +
+    inkLine("M13 4.5L16.5 8L20 4.5M13 10L16.5 13.5L20 10", 2.2),
 };
 
 /** The shared spirit post of the attacking spirits, left of the mark it shoots (#1271). */
