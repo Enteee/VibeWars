@@ -59,7 +59,14 @@ export type ActivationRejection =
   // by the simulation, which knows who is one.
   | "invalid-target-creature"
   // A spell while a hex bars them, as Shroud of Silence's (#1234).
-  | "cannot-cast-spells";
+  | "cannot-cast-spells"
+  // An attack or attack skill while carrying a flag (#1225): checked by
+  // the simulation, which knows who carries one.
+  | "hands-full"
+  // Space on a flag or the stand that does nothing (#1225).
+  | "not-your-flag"
+  | "flag-on-stand"
+  | "no-flag-carried";
 
 export type ActivationCheck =
   { readonly ok: true } | { readonly ok: false; readonly reason: ActivationRejection };

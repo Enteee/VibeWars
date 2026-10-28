@@ -17,6 +17,7 @@ export type MatchIntent =
   | { readonly kind: "walk-to"; readonly x: number; readonly y: number }
   | { readonly kind: "end-upkeep"; readonly targetId: string; readonly status: string }
   | { readonly kind: "weapon-set"; readonly set: 0 | 1 | 2 | 3 }
+  | { readonly kind: "drop-bundle" }
   | { readonly kind: "command"; readonly creatureId: string; readonly order: CreatureOrder };
 
 /**
@@ -84,6 +85,9 @@ export function applyIntent(
     case "weapon-set":
       // No refusal to tell: GW1 says nothing for an empty set (#489).
       sim.requestWeaponSet(playerId, intent.set);
+      return null;
+    case "drop-bundle":
+      sim.dropBundle(playerId);
       return null;
     case "command":
       // Not theirs to command: dropped quietly, as `end-upkeep` is (#1110).

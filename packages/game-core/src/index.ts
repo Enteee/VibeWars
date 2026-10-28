@@ -181,6 +181,15 @@ export { facingToward, spawnFacing } from "./match/facing.js";
 export type { Shrine } from "./match/priest.js";
 export { PRIEST_SKILL_ID, priestId } from "./match/priest.js";
 export type { GuildLord } from "./match/guild-lord.js";
+export type { FlagField, FlagPlace, FlagSpawn, FlagState, StandState } from "./match/flags.js";
+export {
+  FLAG_REACH_UNITS,
+  FLAG_STAND_ID,
+  STAND_HOLD_SECONDS,
+  flagId,
+  flagTeamOf,
+  isFlagObjectId,
+} from "./match/flags.js";
 export { GUILD_LORD_HEALTH, guildLordId } from "./match/guild-lord.js";
 export type { IntentRefusal, MatchIntent } from "./match/apply-intent.js";
 export { applyIntent } from "./match/apply-intent.js";

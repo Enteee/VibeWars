@@ -67,6 +67,8 @@ const MATCH: MatchSnapshot = {
   projectiles: [],
   groundEffects: [],
   traps: [],
+  flags: [],
+  stand: undefined,
   summary: undefined,
 };
 
@@ -127,6 +129,27 @@ describe("secondaryClickIntents", () => {
     secondaryClickIntents(MATCH, ARENA, vec2(100, 0), double, 0);
     expect(secondaryClickIntents(MATCH, ARENA, vec2(100, 0), double, 200)).toEqual([
       { kind: "target", targetSessionId: "ally" },
+    ]);
+  });
+
+  it("targets a flag lying on the ground, and walks to it on a double (#1225)", () => {
+    const arena: ArenaSnapshot = {
+      ...ARENA,
+      flags: [
+        { id: "flag/0", side: "ally", position: vec2(0, 300), carried: false, onStand: false },
+      ],
+      stand: { id: "flag-stand", position: vec2(500, 300), holder: undefined },
+    };
+    const double = createDoubleClick();
+    expect(secondaryClickIntents(MATCH, arena, vec2(5, 290), double, 0)).toEqual([
+      { kind: "target", targetSessionId: "flag/0" },
+    ]);
+    expect(secondaryClickIntents(MATCH, arena, vec2(5, 290), double, 200)).toEqual([
+      { kind: "target", targetSessionId: "flag/0" },
+      { kind: "attack", targetId: "flag/0" },
+    ]);
+    expect(secondaryClickIntents(MATCH, arena, vec2(520, 310), createDoubleClick(), 0)).toEqual([
+      { kind: "target", targetSessionId: "flag-stand" },
     ]);
   });
 

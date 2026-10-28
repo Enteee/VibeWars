@@ -229,6 +229,13 @@ describe("parseClientIntent — weapon-set (#489)", () => {
   });
 });
 
+describe("parseClientIntent — drop-bundle (#1225)", () => {
+  it("accepts the bare kind, and nothing with a field it does not name", () => {
+    expect(parseClientIntent({ kind: "drop-bundle" })).toEqual({ kind: "drop-bundle" });
+    expect(parseClientIntent({ kind: "drop-bundle", targetId: "flag/0" })).toBeUndefined();
+  });
+});
+
 describe("parseClientIntent — end-upkeep (#838)", () => {
   it("accepts a target and a status id", () => {
     expect(parseClientIntent({ kind: "end-upkeep", targetId: "p2", status: "mending" })).toEqual({

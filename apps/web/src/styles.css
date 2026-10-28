@@ -486,6 +486,21 @@ body {
   color: var(--ink-dim);
 }
 
+/* GW1's Drop button (#1225), while a flag is in hand. */
+.hud-drop {
+  padding: 0 0.5rem;
+  background: rgb(14 17 22 / 85%);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.hud-drop:hover,
+.hud-drop:focus-visible {
+  border-color: var(--accent);
+}
+
 /* The effects monitor (#834): your statuses in the order applied, each
    with a bar under it that drains to empty. Wraps; never "+N". */
 .effects-monitor {

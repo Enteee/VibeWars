@@ -34,7 +34,10 @@
     { "kind": "guild-lord", "team": 0, "position": { "x": 80, "y": 1000 } },
     { "kind": "guild-lord", "team": 1, "position": { "x": 2920, "y": 1000 } },
     { "kind": "resurrection-shrine", "team": 0, "position": { "x": 450, "y": 1000 } },
-    { "kind": "resurrection-shrine", "team": 1, "position": { "x": 2550, "y": 1000 } }
+    { "kind": "resurrection-shrine", "team": 1, "position": { "x": 2550, "y": 1000 } },
+    { "kind": "flag-spawn", "team": 0, "position": { "x": 560, "y": 1000 } },
+    { "kind": "flag-spawn", "team": 1, "position": { "x": 2440, "y": 1000 } },
+    { "kind": "flag-stand", "position": { "x": 1500, "y": 1000 } }
   ],
   "spawnPoints": [
     { "team": 0, "position": { "x": 360, "y": 860 } },

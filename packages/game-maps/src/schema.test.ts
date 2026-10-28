@@ -363,11 +363,65 @@ describe("guild battle maps (#1222)", () => {
       objective("resurrection-shrine", 1, 80, 20),
       objective("guild-lord", 0, 20, 20),
       objective("guild-lord", 1, 80, 80),
+      objective("flag-spawn", 0, 30, 60),
+      objective("flag-spawn", 1, 70, 60),
+      { kind: "flag-stand", position: { x: 50, y: 70 } },
     ],
   };
 
-  it("accepts one shrine and one Guild Lord per spawning team", () => {
-    expect(validateMapData(guildMap).objectives).toHaveLength(4);
+  it("accepts one shrine, Guild Lord and flag spawn per spawning team, and one stand", () => {
+    expect(validateMapData(guildMap).objectives).toHaveLength(7);
+  });
+
+  it("refuses a guild battle map with no flag stand, or two (#1225)", () => {
+    expect(() =>
+      validateMapData({
+        ...guildMap,
+        objectives: guildMap.objectives.filter((candidate) => candidate.kind !== "flag-stand"),
+      }),
+    ).toThrow(/guild-battle map has 0 flag stands, not one/);
+    expect(() =>
+      validateMapData({
+        ...guildMap,
+        objectives: [...guildMap.objectives, { kind: "flag-stand", position: { x: 50, y: 80 } }],
+      }),
+    ).toThrow(/guild-battle map has 2 flag stands, not one/);
+  });
+
+  it("refuses a team with no flag spawn (#1225)", () => {
+    expect(() =>
+      validateMapData({
+        ...guildMap,
+        objectives: guildMap.objectives.filter(
+          (candidate) =>
+            !(candidate.kind === "flag-spawn" && "team" in candidate && candidate.team === 1),
+        ),
+      }),
+    ).toThrow(/team 1 has 0 flag spawns/);
+  });
+
+  it("refuses flags on a map of any other mode (#1225)", () => {
+    expect(() =>
+      validateMapData({
+        ...validMap,
+        objectives: [{ kind: "flag-stand", position: { x: 50, y: 50 } }],
+      }),
+    ).toThrow(/annihilation map has no flag stand/);
+    expect(() =>
+      validateMapData({ ...validMap, objectives: [objective("flag-spawn", 0, 50, 50)] }),
+    ).toThrow(/annihilation map has no flag spawn/);
+  });
+
+  it("refuses a flag stand against a wall (#1225)", () => {
+    expect(() =>
+      validateMapData({
+        ...guildMap,
+        objectives: [
+          ...guildMap.objectives.filter((candidate) => candidate.kind !== "flag-stand"),
+          { kind: "flag-stand", position: { x: 50, y: 20 } },
+        ],
+      }),
+    ).toThrow(/a body clear of every wall/);
   });
 
   it("refuses a team with no Guild Lord, or two", () => {
@@ -375,7 +429,8 @@ describe("guild battle maps (#1222)", () => {
       validateMapData({
         ...guildMap,
         objectives: guildMap.objectives.filter(
-          (candidate) => !(candidate.kind === "guild-lord" && candidate.team === 1),
+          (candidate) =>
+            !(candidate.kind === "guild-lord" && "team" in candidate && candidate.team === 1),
         ),
       }),
     ).toThrow(/team 1 has 0 Guild Lords/);
@@ -392,7 +447,12 @@ describe("guild battle maps (#1222)", () => {
       validateMapData({
         ...guildMap,
         objectives: guildMap.objectives.filter(
-          (candidate) => !(candidate.kind === "resurrection-shrine" && candidate.team === 0),
+          (candidate) =>
+            !(
+              candidate.kind === "resurrection-shrine" &&
+              "team" in candidate &&
+              candidate.team === 0
+            ),
         ),
       }),
     ).toThrow(/team 0 has 0 resurrection shrines/);

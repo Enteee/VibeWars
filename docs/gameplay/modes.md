@@ -51,4 +51,19 @@ armor, degeneration and life stealing not counted. Equal aggression,
 or both lords dying together, and both lose. Guild Hall Isle plays it,
 and no Random Arena does.
 
+Each team also has a **flag** (#1225), at a `"flag-spawn"` objective
+near its shrine, and the map has one **flag stand**, a `"flag-stand"`
+objective in its centre. Target your own flag (right click) and press
+Space: you walk to it and take it up within 60 units. A foe's flag does
+nothing. While you carry it your hands are full, no weapon attacks and
+no attack skills, though spells work, and you walk at 1/1.2 of your
+speed. Target the stand and press Space to plant it. The flag drops
+where you are when you die, leave, press **Drop flag** above your
+health bar (or the Drop key, unbound by default), or swap weapon sets;
+your team takes it up from there. Planting over a foe's flag sends that
+one home to its spawn. The team whose flag is on the stand holds it,
+and every **2 minutes** held without a break gives the whole team a
+**+10% morale boost**, which readies spent skills too. A foe planting
+over it starts the count again from 0 for them.
+
 How each one ends, in full, is in [combat](combat.md#match-end).

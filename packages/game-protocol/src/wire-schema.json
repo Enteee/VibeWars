@@ -313,6 +313,11 @@
         { "properties": [{ "name": "kind", "optional": false, "type": { "literal": "cancel" } }] },
         {
           "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "drop-bundle" } }
+          ]
+        },
+        {
+          "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "end-upkeep" } },
             { "name": "status", "optional": false, "type": "string" },
             { "name": "targetId", "optional": false, "type": "string" }
@@ -1301,6 +1306,9 @@
         }
       ]
     },
+    "DropBundleIntent": {
+      "properties": [{ "name": "kind", "optional": false, "type": { "literal": "drop-bundle" } }]
+    },
     "EndUpkeepIntent": {
       "properties": [
         { "name": "kind", "optional": false, "type": { "literal": "end-upkeep" } },
@@ -2088,6 +2096,30 @@
         }
       ]
     },
+    "WireFlag": {
+      "properties": [
+        { "name": "carrierId", "optional": false, "type": { "union": ["null", "string"] } },
+        {
+          "name": "place",
+          "optional": false,
+          "type": {
+            "union": [
+              { "literal": "carried" },
+              { "literal": "ground" },
+              { "literal": "spawn" },
+              { "literal": "stand" }
+            ]
+          }
+        },
+        {
+          "name": "team",
+          "optional": false,
+          "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+        },
+        { "name": "x", "optional": false, "type": { "union": ["null", "number"] } },
+        { "name": "y", "optional": false, "type": { "union": ["null", "number"] } }
+      ]
+    },
     "WireGroundEffect": {
       "properties": [
         { "name": "durationSeconds", "optional": false, "type": "number" },
@@ -2510,6 +2542,36 @@
           }
         },
         {
+          "name": "flags",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "carrierId", "optional": false, "type": { "union": ["null", "string"] } },
+                {
+                  "name": "place",
+                  "optional": false,
+                  "type": {
+                    "union": [
+                      { "literal": "carried" },
+                      { "literal": "ground" },
+                      { "literal": "spawn" },
+                      { "literal": "stand" }
+                    ]
+                  }
+                },
+                {
+                  "name": "team",
+                  "optional": false,
+                  "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+                },
+                { "name": "x", "optional": false, "type": { "union": ["null", "number"] } },
+                { "name": "y", "optional": false, "type": { "union": ["null", "number"] } }
+              ]
+            }
+          }
+        },
+        {
           "name": "groundEffects",
           "optional": false,
           "type": {
@@ -2728,6 +2790,25 @@
           }
         },
         { "name": "score", "optional": false, "type": { "tuple": ["number", "number"] } },
+        {
+          "name": "stand",
+          "optional": false,
+          "type": {
+            "union": [
+              "null",
+              {
+                "properties": [
+                  { "name": "heldSeconds", "optional": false, "type": "number" },
+                  {
+                    "name": "holder",
+                    "optional": false,
+                    "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+                  }
+                ]
+              }
+            ]
+          }
+        },
         { "name": "tick", "optional": false, "type": "number" },
         {
           "name": "winningTeam",
@@ -2752,6 +2833,36 @@
               { "literal": "score" },
               { "literal": "time" }
             ]
+          }
+        },
+        {
+          "name": "flags",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "carrierId", "optional": false, "type": { "union": ["null", "string"] } },
+                {
+                  "name": "place",
+                  "optional": false,
+                  "type": {
+                    "union": [
+                      { "literal": "carried" },
+                      { "literal": "ground" },
+                      { "literal": "spawn" },
+                      { "literal": "stand" }
+                    ]
+                  }
+                },
+                {
+                  "name": "team",
+                  "optional": false,
+                  "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+                },
+                { "name": "x", "optional": false, "type": { "union": ["null", "number"] } },
+                { "name": "y", "optional": false, "type": { "union": ["null", "number"] } }
+              ]
+            }
           }
         },
         {
@@ -2975,9 +3086,38 @@
           }
         },
         { "name": "score", "optional": false, "type": { "tuple": ["number", "number"] } },
+        {
+          "name": "stand",
+          "optional": false,
+          "type": {
+            "union": [
+              "null",
+              {
+                "properties": [
+                  { "name": "heldSeconds", "optional": false, "type": "number" },
+                  {
+                    "name": "holder",
+                    "optional": false,
+                    "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+                  }
+                ]
+              }
+            ]
+          }
+        },
         { "name": "tick", "optional": false, "type": "number" },
         {
           "name": "winningTeam",
+          "optional": false,
+          "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+        }
+      ]
+    },
+    "WireStand": {
+      "properties": [
+        { "name": "heldSeconds", "optional": false, "type": "number" },
+        {
+          "name": "holder",
           "optional": false,
           "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
         }

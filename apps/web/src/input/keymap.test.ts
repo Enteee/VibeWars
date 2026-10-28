@@ -21,12 +21,13 @@ const presets = Object.entries(KEYMAP_PRESETS);
 
 describe("the keymap presets (#302)", () => {
   it.each(presets)(
-    "%s is a valid keymap that binds every action but the two call keys (#443)",
+    "%s is a valid keymap that binds every action but the two call keys (#443) and Drop (#1225)",
     (_, map) => {
       expect(parseKeymap(map)).toEqual(map);
-      expect(KEY_ACTIONS).toHaveLength(25);
-      // The wheel click calls and pings; the keys are for a mouse without one.
-      const unbound = new Set(["call-target", "ping"]);
+      expect(KEY_ACTIONS).toHaveLength(26);
+      // The wheel click calls and pings; the keys are for a mouse without
+      // one. The Drop button drops the flag.
+      const unbound = new Set(["call-target", "ping", "drop-bundle"]);
       for (const action of KEY_ACTIONS) {
         if (unbound.has(action)) {
           expect(map[action], action).toEqual([]);
@@ -126,6 +127,11 @@ describe("parseKeymap", () => {
       "weapon-set-4": _four,
       ...stored
     } = classic;
+    expect(parseKeymap(stored)).toBeUndefined();
+  });
+
+  it("rejects a keymap stored before the Drop key (#1225), so the default plays", () => {
+    const { "drop-bundle": _drop, ...stored } = classic;
     expect(parseKeymap(stored)).toBeUndefined();
   });
 

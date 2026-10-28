@@ -19,6 +19,7 @@ import {
   type PlayerBuild,
   type ProfessionId,
   type Segment,
+  type FlagField,
   type GuildLord,
   type Shrine,
 } from "@vibewars/game-core";
@@ -66,6 +67,7 @@ import { spawnPoint, type SpawnPoint } from "./spawn-points.js";
 import { MAX_MESSAGE_BYTES, type Transport } from "./transport.js";
 import {
   groundEffectSnapshot,
+  wireFlag,
   sameSkillBar,
   skillBarSlots,
   statusSnapshot,
@@ -114,6 +116,8 @@ export interface HostMap {
   readonly shrines: readonly Shrine[];
   /** Its Guild Lords (#1222), `[]` but on a Guild Battle map. */
   readonly guildLords: readonly GuildLord[];
+  /** Its flag stand and flag spawns (#1225), `undefined` but on a Guild Battle map. */
+  readonly flagField: FlagField | undefined;
 }
 
 export interface MatchHostOptions {
@@ -225,6 +229,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     bounds: map.bounds,
     shrines: map.shrines,
     guildLords: map.guildLords,
+    flagField: map.flagField,
   });
   const seats = new Map<string, Seat>();
   const seatOfPeer = new Map<string, Seat>();
@@ -805,7 +810,10 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       facing: round(participant.facing, 2),
       targetId: participant.targetId ?? null,
       attackTargetId: combatant.attack?.targetId ?? null,
-      walking: participant.walkGoal !== undefined || participant.pendingSkill !== undefined,
+      walking:
+        participant.walkGoal !== undefined ||
+        participant.pendingSkill !== undefined ||
+        participant.interact !== undefined,
       health: Math.round(combatant.health),
       maxHealth: combatant.maxHealth,
       // Energy below 0 is GW1's hidden energy (#489): nobody sees it.
@@ -865,6 +873,11 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
         const team = wireTeam(effect.team);
         return team === null ? [] : [{ ...groundEffectSnapshot(effect, sim.elapsedSeconds), team }];
       }),
+    flags: sim.flags.flatMap((flag) => wireFlag(flag) ?? []),
+    stand:
+      sim.stand === undefined
+        ? null
+        : { holder: wireTeam(sim.stand.holder), heldSeconds: sim.stand.heldSeconds },
   });
 
   /** Drop the seats whose players did not come back in time. */

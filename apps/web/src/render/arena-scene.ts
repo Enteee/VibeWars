@@ -78,6 +78,7 @@ import {
   pingRing,
   type RenderablePing,
 } from "./call-marks.js";
+import { FLAG_PICK_RADIUS, STAND_RADIUS, type RenderableFlag } from "./flag-objects.js";
 import { lyingPose } from "./lying-pose.js";
 import { screenSized } from "./screen-text.js";
 import { weaponMarkLayout } from "./weapon-mark.js";
@@ -109,6 +110,16 @@ const CALL_CHEVRON = 0xffa657;
  * off-hand mark (inside r + 7).
  */
 const TARGET_RING_OFFSET = 9;
+/** A flag's pole, world units up from its foot (#1225): stand-in shapes until its asset. */
+const FLAG_POLE = 26;
+/** Its pennant, along the pole and out from it. */
+const FLAG_PENNANT_HEIGHT = 11;
+const FLAG_PENNANT_LENGTH = 16;
+/** A carried flag stands on its carrier's head: this far up from the body's centre. */
+const FLAG_CARRIED_LIFT = 22;
+/** The flag stand nobody holds, neutral grey (#1225). */
+const STAND_NEUTRAL = 0x8b949e;
+const FLAG_POLE_COLOUR = 0xd8dee9;
 const GRID = 0x1a212c;
 const HEALTH_BAR_BG = 0x11161d;
 const HEALTH_BAR_FILL = 0x7ee787;
@@ -390,8 +401,13 @@ export class ArenaScene extends Phaser.Scene {
     for (const ping of this.snapshot.pings) {
       this.drawPing(g, ping);
     }
+    this.drawStand(g, marks);
     for (const actor of this.snapshot.actors) {
       this.drawActor(g, marks, actor);
+    }
+    // Over the bodies: a carried flag stands above its carrier's head.
+    for (const flag of this.snapshot.flags) {
+      this.drawFlag(marks, flag);
     }
     this.swingFlashes = decaySwingFlashes(this.swingFlashes, deltaMs / 1000);
     for (const flash of this.swingFlashes) {
@@ -409,6 +425,69 @@ export class ArenaScene extends Phaser.Scene {
     this.updateNameLabels();
     this.updateFloatingTexts(deltaMs / 1000);
     this.updateEdgeMarkers();
+  }
+
+  /**
+   * The flag stand (#1225): a ring on the ground in its holder's colour,
+   * neutral grey with none, round a pole; the target ring when selected.
+   */
+  private drawStand(g: Phaser.GameObjects.Graphics, marks: Phaser.GameObjects.Graphics): void {
+    const stand = this.snapshot.stand;
+    if (stand === undefined) {
+      return;
+    }
+    const { x, y } = stand.position;
+    const colour = stand.holder === undefined ? STAND_NEUTRAL : teamColour(stand.holder);
+    g.fillStyle(colour, 0.18);
+    g.fillCircle(x, y, STAND_RADIUS);
+    g.lineStyle(3, colour, 0.9);
+    g.strokeCircle(x, y, STAND_RADIUS);
+    g.fillStyle(BODY_EDGE, 1);
+    g.fillCircle(x, y, 5);
+    if (!this.snapshot.flags.some((flag) => flag.onStand)) {
+      g.lineStyle(3, FLAG_POLE_COLOUR, 1);
+      g.lineBetween(x, y, x, y - FLAG_POLE);
+    }
+    if (stand.id === this.snapshot.targetId) {
+      marks.lineStyle(2, TARGET_RING, 1);
+      marks.strokeCircle(x, y, STAND_RADIUS + TARGET_RING_OFFSET);
+    }
+  }
+
+  /**
+   * A flag (#1225): a pole with a pennant in its team's colour, standing
+   * at its foot, or on its carrier's head; the target ring when selected.
+   */
+  private drawFlag(marks: Phaser.GameObjects.Graphics, flag: RenderableFlag): void {
+    const x = flag.position.x;
+    const foot = flag.position.y - (flag.carried ? FLAG_CARRIED_LIFT : 0);
+    const top = foot - FLAG_POLE;
+    marks.lineStyle(3, BODY_EDGE, 1);
+    marks.lineBetween(x, foot, x, top);
+    marks.lineStyle(2, FLAG_POLE_COLOUR, 1);
+    marks.lineBetween(x, foot, x, top);
+    marks.fillStyle(teamColour(flag.side), 1);
+    marks.fillTriangle(
+      x + 1,
+      top,
+      x + 1 + FLAG_PENNANT_LENGTH,
+      top + FLAG_PENNANT_HEIGHT / 2,
+      x + 1,
+      top + FLAG_PENNANT_HEIGHT,
+    );
+    marks.lineStyle(1, BODY_EDGE, 1);
+    marks.strokeTriangle(
+      x + 1,
+      top,
+      x + 1 + FLAG_PENNANT_LENGTH,
+      top + FLAG_PENNANT_HEIGHT / 2,
+      x + 1,
+      top + FLAG_PENNANT_HEIGHT,
+    );
+    if (flag.id === this.snapshot.targetId && !flag.carried && !flag.onStand) {
+      marks.lineStyle(2, TARGET_RING, 1);
+      marks.strokeCircle(x, flag.position.y, FLAG_PICK_RADIUS);
+    }
   }
 
   /** Hand each attack clock its actor's swing timer; forget those who left. */

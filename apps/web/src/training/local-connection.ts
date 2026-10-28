@@ -90,7 +90,10 @@ function toPlayerSnapshot(
     facing: participant.facing,
     targetSessionId: participant.targetId,
     attackTargetSessionId: combatant.attack?.targetId,
-    walking: participant.walkGoal !== undefined || participant.pendingSkill !== undefined,
+    walking:
+      participant.walkGoal !== undefined ||
+      participant.pendingSkill !== undefined ||
+      participant.interact !== undefined,
     health: Math.round(combatant.health),
     maxHealth: combatant.maxHealth,
     // Clamped as the host clamps it: energy below 0 is hidden (#489).
@@ -285,6 +288,8 @@ export function createLocalConnection(options: {
         traps: simulation.groundEffects
           .filter((effect) => effect.act.kind === "trap" && effect.team === selfTeam())
           .map((effect) => groundEffectSnapshot(effect, simulation.elapsedSeconds)),
+        flags: simulation.flags,
+        stand: simulation.stand,
         // No match with rules ends here, so there is never a summary (#1057).
         summary: undefined,
       };
