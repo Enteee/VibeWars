@@ -61,10 +61,10 @@ const BENCH_LOADOUT = loadoutOf(pickStarterBuild(() => 0));
  */
 export type BenchCrowd = "fighters" | "followers";
 
-/** A minion's (catalog.ts `MINION_BEHAVIOUR`): heel by its owner, fight foes in earshot. */
+/** A minion's (catalog.ts `MINION_BEHAVIOUR`): heel by its owner, fight its target or foes in earshot. */
 const FOLLOWER_BEHAVIOUR: Behaviour = {
   kind: "follow-and-attack",
-  engage: "nearest-foe",
+  engage: "owner-target-then-nearest",
   aggroUnits: AREA_EARSHOT,
   leashUnits: RANGE_SPELL,
   heelUnits: AREA_IN_THE_AREA,
