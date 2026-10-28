@@ -1738,6 +1738,71 @@ body {
   }
 }
 
+/* --- help (#1257) ------------------------------------------------------- */
+
+/* As wide as Options: the page list beside a page of prose. */
+.screen.help-screen {
+  width: min(52rem, 100%);
+  padding: 1rem;
+  background: var(--bg);
+  border: 1px solid var(--line);
+}
+
+.help-breadcrumb {
+  font-size: 1.2rem;
+}
+
+.help-crumb-separator {
+  color: var(--ink-dim);
+}
+
+.help-page {
+  min-width: 0;
+  overflow-x: auto;
+  line-height: 1.5;
+}
+
+.help-page > :first-child {
+  margin-top: 0;
+}
+
+.help-page h1,
+.help-page h2,
+.help-page h3 {
+  color: var(--accent);
+  letter-spacing: 0.05em;
+}
+
+.help-page a {
+  color: var(--accent);
+}
+
+.help-page code {
+  padding: 0 0.25em;
+  background: rgb(255 255 255 / 6%);
+}
+
+.help-page pre {
+  padding: 0.6rem;
+  overflow-x: auto;
+  background: rgb(255 255 255 / 6%);
+}
+
+.help-page table {
+  border-collapse: collapse;
+}
+
+.help-page th,
+.help-page td {
+  padding: 0.3rem 0.6rem;
+  text-align: left;
+  border: 1px solid var(--line);
+}
+
+.help-page img {
+  max-width: 100%;
+}
+
 /* --- keys (#309) -------------------------------------------------------- */
 
 .keys-screen {

@@ -10,6 +10,12 @@ describe("THIRD_PARTY_LICENCES (#1235)", () => {
     expect(corpus?.text).toContain("Permission is hereby granted");
   });
 
+  it("carries marked's notice, which renders the Help pages (#1257)", () => {
+    const marked = THIRD_PARTY_LICENCES.find((entry) => entry.name === "marked");
+    expect(marked?.spdx).toBe("MIT");
+    expect(marked?.text).toContain("Copyright (c) 2018+, MarkedJS");
+  });
+
   it("names every work once, with its use, source and text", () => {
     const names = THIRD_PARTY_LICENCES.map((entry) => entry.name);
     expect(new Set(names).size).toBe(names.length);

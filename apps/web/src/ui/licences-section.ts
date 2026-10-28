@@ -1,4 +1,6 @@
 import gwSkilldataLicence from "@vibewars/game-data/gw-skilldata/LICENSE?raw";
+// marked's package exports no LICENSE path, so it is read from the install.
+import markedLicence from "../../node_modules/marked/LICENSE?raw";
 
 import { h } from "./kit.js";
 import type { OptionsSection } from "./options-sections.js";
@@ -28,6 +30,13 @@ export const THIRD_PARTY_LICENCES: readonly ThirdPartyLicence[] = [
     url: "https://github.com/build-wars/gw-skilldata",
     spdx: "MIT",
     text: gwSkilldataLicence,
+  },
+  {
+    name: "marked",
+    use: "renders the Help pages",
+    url: "https://github.com/markedjs/marked",
+    spdx: "MIT",
+    text: markedLicence,
   },
 ];
 

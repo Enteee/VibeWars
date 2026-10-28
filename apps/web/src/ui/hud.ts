@@ -29,6 +29,7 @@ import { paintHealthTint } from "./health-tint.js";
 import {
   attackingIcon,
   chainMarkIcon,
+  helpIcon,
   isEliteSkill,
   professionIcon,
   settingsIcon,
@@ -167,6 +168,8 @@ export interface HudElements {
   readonly music: HTMLButtonElement;
   /** Leave the match, after a yes (#160): Esc cancels an attack now. */
   readonly leave: HTMLElement;
+  /** Opens Help, the player docs, over the running match (#1257). */
+  readonly help: HTMLButtonElement;
   /** Opens Options over the running match (#454). */
   readonly options: HTMLButtonElement;
   /** Fullscreen on and off (#454). */
@@ -242,13 +245,15 @@ export function createHud(
   const enemies = element("span", "hud-enemies", scoreboard);
   const result = element("div", "hud-result", parent);
   result.style.display = "none";
-  // One cluster, top right (#454): leave and mute on top, Options,
+  // One cluster, top right (#454): leave and mute on top, Help, Options,
   // fullscreen and music under them.
   const controls = element("div", "hud-controls", parent);
   const controlsTop = element("div", "hud-controls-row", controls);
   const leave = element("div", "hud-leave", controlsTop);
   const mute = controlsTop.appendChild(iconButton("hud-mute", "Mute sounds"));
   const controlsUnder = element("div", "hud-controls-row", controls);
+  const help = controlsUnder.appendChild(iconButton("hud-help", "Help", helpIcon()));
+  help.setAttribute("aria-haspopup", "dialog");
   const options = controlsUnder.appendChild(iconButton("hud-options", "Options", settingsIcon()));
   options.setAttribute("aria-haspopup", "dialog");
   const fullscreen = controlsUnder.appendChild(iconButton("hud-fullscreen", "Fullscreen"));
@@ -384,6 +389,7 @@ export function createHud(
     mute,
     music,
     leave,
+    help,
     options,
     fullscreen,
   };
