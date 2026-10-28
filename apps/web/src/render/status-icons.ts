@@ -105,6 +105,13 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "call-of-haste": icon("call-of-haste"),
   "call-of-protection": icon("call-of-protection"),
   "symbiotic-bond": icon("symbiotic-bond"),
+  "conjure-phantasm": icon("conjure-phantasm"),
+  "imagined-burden": icon("imagined-burden"),
+  "phantom-pain": icon("phantom-pain"),
+  "shrinking-armor": icon("shrinking-armor"),
+  "illusion-of-haste": icon("illusion-of-haste"),
+  ineptitude: icon("ineptitude"),
+  "crippling-anguish": icon("crippling-anguish"),
 };
 
 /** Drawn size of one icon, in world pixels. */

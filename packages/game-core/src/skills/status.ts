@@ -165,7 +165,15 @@ export type StatusId =
   // Ranger calls and bonds on a pet (#1108).
   | "call-of-haste"
   | "call-of-protection"
-  | "symbiotic-bond";
+  | "symbiotic-bond"
+  // Mesmer Illusion Magic (#1228).
+  | "conjure-phantasm"
+  | "imagined-burden"
+  | "phantom-pain"
+  | "shrinking-armor"
+  | "illusion-of-haste"
+  | "ineptitude"
+  | "crippling-anguish";
 
 /** Health one pip of regeneration or degeneration is worth, per second (GW1). */
 export const HEALTH_PER_PIP = 2;
@@ -1436,6 +1444,96 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   "never-surrender": define("never-surrender", "Never Surrender!", "shout", {
     profession: "paragon",
     healthPips: 4,
+  }),
+
+  // Mesmer Illusion Magic (#1228), each at its rank-12 values.
+  // "...target foe experiences -5 Health degeneration."
+  "conjure-phantasm": define("conjure-phantasm", "Conjure Phantasm", "hex", {
+    profession: "mesmer",
+    healthPips: -5,
+  }),
+  // "...target foe moves 50% slower": Crippled's slow, as a hex.
+  "imagined-burden": define("imagined-burden", "Imagined Burden", "hex", {
+    profession: "mesmer",
+    moveSpeedMultiplier: 0.5,
+  }),
+  // "For 10 seconds, target foe suffers -1...3...4 Health degeneration.
+  // When Phantom Pain ends, that foe suffers a Deep Wound ... for
+  // 5...17...20 seconds." Any end, a strip included.
+  "phantom-pain": define("phantom-pain", "Phantom Pain", "hex", {
+    profession: "mesmer",
+    healthPips: -3,
+    triggers: [
+      {
+        on: "ends",
+        target: "bearer",
+        effects: [{ kind: "apply-status", statusId: "deep-wound", durationSeconds: 17 }],
+        skillId: "mesmer.phantom-pain",
+      },
+    ],
+  }),
+  // "For 10 seconds, target foe suffers from -1...3...4 Health
+  // degeneration. When this hex ends, that foe has Cracked Armor for
+  // 5...17...20 seconds." Any end, a strip included.
+  "shrinking-armor": define("shrinking-armor", "Shrinking Armor", "hex", {
+    profession: "mesmer",
+    healthPips: -3,
+    triggers: [
+      {
+        on: "ends",
+        target: "bearer",
+        effects: [{ kind: "apply-status", statusId: "cracked-armor", durationSeconds: 17 }],
+        skillId: "mesmer.shrinking-armor",
+      },
+    ],
+  }),
+  // "...you move 33% faster. When Illusion of Haste ends, you become
+  // Crippled for 3 seconds" (PvP). Any end, a strip included.
+  "illusion-of-haste": define("illusion-of-haste", "Illusion of Haste", "enchantment", {
+    profession: "mesmer",
+    moveSpeedMultiplier: 1.33,
+    triggers: [
+      {
+        on: "ends",
+        target: "bearer",
+        effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: 3 }],
+        skillId: "mesmer.illusion-of-haste",
+      },
+    ],
+  }),
+  // "For 4 seconds, the next time the target foe or any adjacent foe
+  // attacks, they take 30...114...135 damage and are Blinded for 10
+  // seconds": each foe it lands on bears its own, fired once by its own
+  // attack. The damage is its caster's Illusion Magic, as the trigger's
+  // caster is the hex's source.
+  ineptitude: define("ineptitude", "Ineptitude", "hex", {
+    profession: "mesmer",
+    triggers: [
+      {
+        on: "bearer-attacks",
+        target: "bearer",
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "mesmer.illusion-magic", atZero: 30, atTwelve: 114 },
+            },
+            type: "typeless",
+            armorPenetration: 0,
+          },
+          { kind: "apply-status", statusId: "blind", durationSeconds: 10 },
+        ],
+        skillId: "mesmer.ineptitude",
+      },
+    ],
+    endsWhenTriggered: true,
+  }),
+  // "...target moves 50% slower and suffers -2...5...6 Health
+  // degeneration" (PvP).
+  "crippling-anguish": define("crippling-anguish", "Crippling Anguish", "hex", {
+    profession: "mesmer",
+    moveSpeedMultiplier: 0.5,
+    healthPips: -5,
   }),
 };
 

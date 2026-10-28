@@ -135,9 +135,13 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
                 target === "bearer") ||
               target === "offender",
           )
-          .flatMap(({ effects }) =>
+          .flatMap(({ effects, target }) =>
             effects.flatMap((effect) =>
-              effect.kind === "spread-gained-condition" || effect.kind === "echo" ? [] : [effect],
+              effect.kind === "spread-gained-condition" ||
+              effect.kind === "echo" ||
+              (target === "bearer" && isPrice(effect))
+                ? []
+                : [effect],
             ),
           );
   const riders = [
@@ -146,6 +150,18 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
     ...forBearer,
   ];
   return [...roles, ...riders.flatMap(effectRoles)];
+}
+
+/**
+ * A hex or condition an ally's own status puts on its bearer (#1228):
+ * Illusion of Haste's cripple as it ends is its price, not a role.
+ */
+function isPrice(effect: SkillEffect): boolean {
+  if (effect.kind !== "apply-status") {
+    return false;
+  }
+  const { category } = getStatusDefinition(effect.statusId);
+  return category === "hex" || category === "condition";
 }
 
 /**

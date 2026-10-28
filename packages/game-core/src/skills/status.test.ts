@@ -121,6 +121,10 @@ describe("status definitions", () => {
       recuperation: 3,
       "well-of-suffering": -5,
       "symbiotic-bond": 3,
+      "conjure-phantasm": -5,
+      "phantom-pain": -3,
+      "shrinking-armor": -3,
+      "crippling-anguish": -5,
     });
   });
 

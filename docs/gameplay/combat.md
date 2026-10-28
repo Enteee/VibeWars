@@ -286,6 +286,21 @@ armor and is the Mesmer's: the log names their Backfire or Empathy, it
 counts toward their damage, and a kill is theirs, even after they died.
 A Mesmer who has left the match hurts nobody.
 
+Illusion Magic (#1228) has seven staples, each at its rank-12 duration
+and pips. **Conjure Phantasm**: −5 Health degeneration for 15 s.
+**Imagined Burden**: the foe moves 50% slower for 18 s, a hex rather
+than Crippled, so condition removal does not touch it. **Phantom Pain**
+and **Shrinking Armor**: −3 degeneration for 10 s, then Deep Wound or
+Cracked Armor for 17 s when the hex ends, however it ends: a Remove Hex
+sets it off too. **Illusion of Haste** (PvP): you move 33% faster for
+10 s, and are Crippled for 3 s when it ends, a strip included.
+**Ineptitude** (elite) hexes its target and every foe adjacent to it
+for 4 s; the next time each of them attacks, it takes 30…114…135
+damage by the Mesmer's Illusion Magic, ignoring armor, and is Blinded
+for 10 s, and that foe's hex ends. A spell does not set it off.
+**Crippling Anguish** (elite, PvP): 50% slower and −5 degeneration for
+17 s.
+
 Two Necromancer skills answer a status changing (#887). **Contagion**
 (elite enchantment on yourself, 60 s): each time you gain a condition
 you did not already have, every living foe within the area of you gets
