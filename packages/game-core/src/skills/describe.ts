@@ -16,6 +16,7 @@ import type {
   ApplyStatusEffect,
   AreaRule,
   AttackWeaponClass,
+  Aura,
   ChainRole,
   ChainStep,
   EffectCondition,
@@ -640,12 +641,12 @@ function describeEffects(
   if (effect.kind === "summon" && effect.creature.aura !== undefined) {
     // What the spirit projects (#1064): "Non-spirit allies in its range:
     // +3 Health regeneration".
-    const { statusId, affects } = effect.creature.aura;
-    const who = affects === "all" ? "Non-spirit creatures" : "Non-spirit allies";
-    return [
-      describeEffect(effect, ranks),
-      { text: `${who} in its range: ${describeStatus(statusId)}`, magnitude: undefined },
-    ];
+    return [describeEffect(effect, ranks), describeAura(effect.creature.aura, "in its range")];
+  }
+  if (effect.kind === "create-ground-effect") {
+    // What the ward projects (#1087): "Non-spirit allies in the area: 50%
+    // chance to block melee attacks".
+    return [describeEffect(effect, ranks), describeAura(effect.aura, "in the area")];
   }
   if (effect.kind !== "if") {
     return [describeEffect(effect, ranks)];
@@ -656,6 +657,18 @@ function describeEffects(
     return { text: `${condition}: ${lowerFirst(text)}`, magnitude };
   });
 }
+
+/** Who an aura reaches and what they wear: "Non-spirit allies in its range: …". */
+function describeAura(aura: Aura, where: string): EffectDescription {
+  const who = AURA_WHO[aura.affects];
+  return { text: `${who} ${where}: ${describeStatus(aura.statusId)}`, magnitude: undefined };
+}
+
+const AURA_WHO: Record<Aura["affects"], string> = {
+  all: "Non-spirit creatures",
+  allies: "Non-spirit allies",
+  foes: "Non-spirit foes",
+};
 
 /** A share of health as GW1 words it (#936): "half", or "25%". */
 function share(fraction: number): string {
@@ -880,6 +893,14 @@ function describeEffect(
         magnitude: health,
       };
     }
+    case "create-ground-effect": {
+      // "Creates a ward at your location for 17 seconds" (#1087).
+      const magnitude = describeMagnitude(effect.durationSeconds, ranks);
+      return {
+        text: `Creates a ward at your location for ${String(magnitude.current)} seconds`,
+        magnitude,
+      };
+    }
     case "disable-skill": {
       const magnitude = describeMagnitude(effect.seconds, ranks);
       const time = `${String(magnitude.current)} seconds`;
@@ -1092,6 +1113,7 @@ const TYPE_TEXT: Record<SkillType, string> = {
   "weapon-spell": "Weapon Spell.",
   "nature-ritual": "Nature Ritual.",
   "binding-ritual": "Binding Ritual.",
+  ward: "Ward Spell.",
   skill: "Skill.",
 };
 

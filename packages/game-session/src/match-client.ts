@@ -354,6 +354,7 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
                 winningTeam: undefined,
                 endReason: undefined,
                 projectiles: [],
+                groundEffects: [],
                 summary,
               }
             : { ...matchSnapshot(latest.wire, latest.players, welcome.playerId), summary };

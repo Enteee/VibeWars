@@ -21,6 +21,7 @@ export type {
   MatchSummaryRow,
   PlayerSnapshot,
   ProjectileSnapshot,
+  GroundEffectSnapshot,
   SkillSlot,
   SlotRecharge,
   StatusSnapshot,
@@ -69,6 +70,7 @@ export {
   sameSkillBar,
   skillBarSlots,
   statusSnapshot,
+  groundEffectSnapshot,
   wireStatuses,
 } from "./wire.js";
 export {

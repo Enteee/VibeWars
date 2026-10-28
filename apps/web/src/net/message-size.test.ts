@@ -15,6 +15,7 @@ import {
   MAX_SNAPSHOT_PARTS,
   MAX_WIRE_COMBATS,
   MAX_WIRE_PIPS,
+  MAX_WIRE_GROUND_EFFECTS,
   MAX_WIRE_PROJECTILES,
   MAX_WIRE_STATUSES,
   MAX_WIRE_STATUS_INDEX,
@@ -202,8 +203,8 @@ const NECRO_ELE_ATTRIBUTES = [
 ];
 
 describe("every message fits in one Trystero chunk (#403)", () => {
-  /** The worst snapshot: `players` and `projectiles` at their worst. */
-  function worstSnapshot(players: number, projectiles: number): WireSnapshot {
+  /** The worst snapshot: `players`, `projectiles` and `groundEffects` at their worst. */
+  function worstSnapshot(players: number, projectiles: number, groundEffects = 0): WireSnapshot {
     return {
       tick: 1_000_000,
       elapsedSeconds: FLOAT,
@@ -213,6 +214,16 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       endReason: "score",
       players: Array.from({ length: players }, (_, i) => player(i)),
       projectiles: Array.from({ length: projectiles }, (_, i) => projectile(i)),
+      groundEffects: Array.from({ length: groundEffects }, (_, i) => ({
+        id: 100_000 + i,
+        skillId: SKILL_ID,
+        team: 1,
+        x: FLOAT,
+        y: FLOAT,
+        radius: FLOAT,
+        endsAt: FLOAT,
+        durationSeconds: FLOAT,
+      })),
     };
   }
 
@@ -228,8 +239,11 @@ describe("every message fits in one Trystero chunk (#403)", () => {
     expect(messageBytes(part)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES - 4 * 1024);
   });
 
-  it("a snapshot of 8 such players and 256 projectiles packs into MAX_SNAPSHOT_PARTS parts or fewer", () => {
-    const parts = packSnapshot(worstSnapshot(8, MAX_WIRE_PROJECTILES), MAX_MESSAGE_BYTES);
+  it("a snapshot of 8 such players, 256 projectiles and every ward packs into MAX_SNAPSHOT_PARTS parts or fewer", () => {
+    const parts = packSnapshot(
+      worstSnapshot(8, MAX_WIRE_PROJECTILES, MAX_WIRE_GROUND_EFFECTS),
+      MAX_MESSAGE_BYTES,
+    );
     expect(parts.length).toBeLessThanOrEqual(MAX_SNAPSHOT_PARTS);
     for (const part of parts) {
       expect(messageBytes(part)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);

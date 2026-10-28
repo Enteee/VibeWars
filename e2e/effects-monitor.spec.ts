@@ -109,6 +109,34 @@ test("a spirit's aura shows with no bar, from the spirit, while you stand in its
   await expect(tip).not.toContainText("maintained");
 });
 
+test("a ward's aura shows with no bar while you stand in it (#1087)", async ({ page }) => {
+  await page.goto("./");
+  await page.getByRole("button", { name: "new character" }).click();
+  await chooseProfession(page, "primary", "elementalist");
+  await page.locator("input.editor-name").fill("Warder");
+  await page
+    .locator(".skill-box", { hasText: "Ward Against Melee" })
+    .locator(".skill-box-equip")
+    .click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await page.locator(".roster").getByText("Warder", { exact: true }).click();
+  await startSoloMatch(page);
+
+  // A 1 s ward spell: the ward lands where you stand, so you are in it.
+  await page.keyboard.press(key("skill-1"));
+  const effects = page.getByRole("list", { name: "your effects" });
+  const icon = effects
+    .getByRole("listitem")
+    .filter({ has: page.getByAltText("Ward Against Melee") });
+  await expect(icon).toBeVisible({ timeout: 10_000 });
+  await expect(icon.locator(".effect-bar")).toBeHidden();
+
+  await icon.hover();
+  const tip = page.getByRole("tooltip");
+  await expect(tip).toContainText("50% chance to block melee attacks");
+  await expect(tip).toContainText("while in its range");
+});
+
 test("the target frame shows a foe's enchantment, at 16 px and not marked yours (#835)", async ({
   page,
 }) => {

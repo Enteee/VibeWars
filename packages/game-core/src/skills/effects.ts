@@ -34,6 +34,7 @@ import {
   type StateCondition,
   type Surroundings,
   type SummonEffect,
+  type CreateGroundEffect,
   type UnconditionalEffect,
 } from "./types.js";
 
@@ -1035,6 +1036,7 @@ export function applyEffect(
     case "recharge-faster":
     case "recharge-others":
     case "summon":
+    case "create-ground-effect":
       // Nothing lands on anyone: the resolution reads it (`resolveSkillEffects`).
       return events;
   }
@@ -1357,6 +1359,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "recharge-others":
     case "steal-from-corpse":
     case "summon":
+    case "create-ground-effect":
     case "drain-own-energy":
       return true;
     case "heal":
@@ -1426,6 +1429,11 @@ export interface SkillOutcome {
    * creatures, which only it can add to the match.
    */
   readonly summons: readonly SummonEffect[];
+  /**
+   * The `create-ground-effect`s that landed (#1087), in order: the
+   * simulation places them, which only it can add to the match.
+   */
+  readonly grounds: readonly CreateGroundEffect[];
 }
 
 /**
@@ -1445,6 +1453,7 @@ export function resolveSkillEffects(
   const events: CombatEvent[] = [];
   let rechargeFraction = 0;
   const summons: SummonEffect[] = [];
+  const grounds: CreateGroundEffect[] = [];
   for (const effect of skill.effects) {
     const on = effectActsOnCaster(effect) ? [targets[0]] : targets;
     for (const target of on) {
@@ -1460,6 +1469,9 @@ export function resolveSkillEffects(
         }
         if (inner.kind === "summon") {
           summons.push(inner);
+        }
+        if (inner.kind === "create-ground-effect") {
+          grounds.push(inner);
         }
         events.push(...applyEffect(inner, context, before));
       }
@@ -1479,7 +1491,7 @@ export function resolveSkillEffects(
       events,
     );
   }
-  return { events, rechargeFraction, summons };
+  return { events, rechargeFraction, summons, grounds };
 }
 
 /**
