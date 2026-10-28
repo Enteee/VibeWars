@@ -58,6 +58,7 @@ import { MINIMAL_GW_INSPIRED_PVP_V1, type Ruleset } from "../ruleset.js";
 import {
   canActivate,
   hasAftercast,
+  isCompanionRule,
   payCost,
   type ActivationCheck,
   type ActivationRejection,
@@ -82,6 +83,7 @@ import {
 import { getSkill } from "../skills/catalog.js";
 import { clearChainMarksOn, tickChainMarks } from "../skills/chain.js";
 import {
+  applyDamage,
   applyEffects,
   applySkillEffects,
   applyStatus,
@@ -2231,7 +2233,7 @@ export class MatchSimulation {
 
   /** Who a targeted skill lands on: the selection, or the caster for an ally skill with no ally selected. */
   #castTarget(record: ParticipantRecord, skill: Skill): string | undefined {
-    if (skill.target === "companion") {
+    if (isCompanionRule(skill.target)) {
       return this.#companionOf(record)?.id;
     }
     if (skill.target !== "single-ally") {
@@ -2254,7 +2256,7 @@ export class MatchSimulation {
     key: string = skill.id,
   ): ActivationCheck {
     // A pet skill acts on the pet, whatever was asked (#1046).
-    const targetedId = skill.target === "companion" ? this.#companionOf(record)?.id : targetId;
+    const targetedId = isCompanionRule(skill.target) ? this.#companionOf(record)?.id : targetId;
     const target = targetedId === undefined ? undefined : this.#participants.get(targetedId);
     const check = canActivate({
       skill,
@@ -2680,6 +2682,13 @@ export class MatchSimulation {
       record,
       changes: record.combatant.statuses.drainChanges(),
     }));
+    for (const { record, changes: recorded } of changes) {
+      for (const change of recorded) {
+        if (change.kind === "redirected-damage") {
+          this.#landRedirected(record, change.toId, change.amount);
+        }
+      }
+    }
     const context = this.#triggerContext();
     for (const { record, changes: recorded } of changes) {
       for (const change of recorded) {
@@ -2689,6 +2698,35 @@ export class MatchSimulation {
     for (const record of this.#participants.values()) {
       record.combatant.statuses.drainChanges();
     }
+  }
+
+  /**
+   * Symbiotic Bond's share of a hit on `bearer` (#1108), on `toId`, the
+   * bond's caster: typeless, unmitigated and from nobody, so it is never
+   * redirected again and answers nothing. With its caster dead or gone,
+   * the bearer takes it back: damage never vanishes.
+   */
+  #landRedirected(bearer: ParticipantRecord, toId: string, amount: number): void {
+    const to = this.#participants.get(toId);
+    const victim = to === undefined || to.combatant.dead ? bearer : to;
+    const events: CombatEvent[] = [];
+    applyDamage(victim.combatant, amount, "typeless", false, events, undefined);
+    if (events.length === 0) {
+      return;
+    }
+    this.#log.push({
+      tick: this.#tick,
+      atSeconds: this.#elapsedSeconds,
+      cause: "skill",
+      sourceId: undefined,
+      skillId: undefined,
+      weaponId: undefined,
+      attributeId: undefined,
+      area: undefined,
+      doubleStrike: false,
+      events,
+    });
+    this.#recordDeaths(events);
   }
 
   /**

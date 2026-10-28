@@ -189,6 +189,10 @@ export function mitigate(
   // or not, after armor and before the flat shield below.
   dealt *= modifiers.damageTakenMultiplier;
 
+  // Call of Protection (#1108): a flat cut off every packet, after
+  // armor and the multiplier, before Rune of Absorption.
+  dealt -= modifiers.damageReduction;
+
   // Rune of Absorption, last and only against physical hits. After
   // mitigation on purpose: it is a flat shield against each blow, so it
   // is proportionally worth most against the many small hits an

@@ -4,6 +4,7 @@ import {
   distanceWithinRange,
   getSkill,
   hasLineOfSight,
+  isCompanionRule,
   isWeaponId,
   targetLivenessAllows,
   targetRuleAllows,
@@ -235,7 +236,7 @@ export function outOfRange(
   let sight: boolean | undefined;
   return skillBar.map((slot) => {
     const skill = slot === null ? undefined : getSkill(slot.id);
-    if (skill === undefined || skill.target === "self" || skill.target === "companion") {
+    if (skill === undefined || skill.target === "self" || isCompanionRule(skill.target)) {
       return false;
     }
     if (skill.target === "single-dead-ally" && target.creature !== undefined) {
