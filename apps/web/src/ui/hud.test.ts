@@ -387,6 +387,12 @@ describe("describeRefusal", () => {
     expect(describeRefusal(cast("insufficient-energy"))).toBe("Not enough energy.");
   });
 
+  it("says a spent skill waits for a morale boost (#474)", () => {
+    expect(describeRefusal(cast("spent-until-morale-boost"))).toBe(
+      "That skill recharges only on a morale boost.",
+    );
+  });
+
   it("talks about the weapon, not a skill, when an attack is refused", () => {
     expect(describeRefusal(attack("invalid-target-ally"))).toBe("You can only attack an enemy.");
     expect(describeRefusal(attack("invalid-target-self"))).toBe("You cannot attack yourself.");

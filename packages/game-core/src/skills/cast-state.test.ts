@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { CastState } from "./cast-state.js";
+import { getSkill } from "./catalog.js";
+import { CastState, beginRecharge } from "./cast-state.js";
 import { StatusSet } from "./status.js";
 
 describe("CastState casting", () => {
@@ -282,5 +283,32 @@ describe("CastState whileActivating (#524)", () => {
     const statuses = new StatusSet();
     new CastState("caster", statuses).beginCast("x", undefined, 0, "healing-signet-armor");
     expect(statuses.size).toBe(0);
+  });
+});
+
+describe("spent until a morale boost (#474)", () => {
+  const signet = getSkill("common.resurrection-signet");
+  const fireball = getSkill("elementalist.fireball");
+
+  it("spends a morale-boost skill, and times any other", () => {
+    if (signet === undefined || fireball === undefined) {
+      throw new Error("missing skill");
+    }
+    const state = new CastState("caster", new StatusSet());
+    beginRecharge(state, signet, 0);
+    beginRecharge(state, fireball, 5);
+    expect([...state.spent]).toEqual([signet.id]);
+    expect(state.rechargeRemaining.get(signet.id)).toBeUndefined();
+    expect(state.rechargeRemaining.get(fireball.id)).toBe(5);
+    state.advance(600);
+    expect([...state.spent]).toEqual([signet.id]);
+  });
+
+  it("readies every spent skill on a boost, and says whether there was one", () => {
+    const state = new CastState("caster", new StatusSet());
+    expect(state.refreshSpent()).toBe(false);
+    state.spend("common.resurrection-signet");
+    expect(state.refreshSpent()).toBe(true);
+    expect(state.spent.size).toBe(0);
   });
 });

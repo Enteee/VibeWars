@@ -146,8 +146,10 @@ describe("lockedSkills (#568)", () => {
     const locked = lockedSkills(IMPLEMENTED_SKILLS, "elementalist", "monk");
     expect(locked.length).toBeGreaterThan(0);
     expect(locked.length).toBe(
-      IMPLEMENTED_SKILLS.filter((s) => s.profession !== "elementalist" && s.profession !== "monk")
-        .length,
+      IMPLEMENTED_SKILLS.filter(
+        (s) =>
+          s.profession !== "elementalist" && s.profession !== "monk" && s.profession !== "common",
+      ).length,
     );
     expect(locked.some((skill) => skill.profession === "ranger")).toBe(true);
     expect(locked.some((skill) => ["elementalist", "monk"].includes(skill.profession))).toBe(false);
@@ -158,6 +160,20 @@ describe("lockedSkills (#568)", () => {
     expect(locked.some((skill) => skill.profession === "monk")).toBe(true);
     const order = IMPLEMENTED_SKILLS.filter((skill) => locked.includes(skill));
     expect(locked).toEqual(order);
+  });
+
+  it("never locks a Common skill, and groups it as No Attribute (Common) (#474)", () => {
+    for (const primary of ["warrior", "monk", "dervish"] as const) {
+      expect(
+        lockedSkills(IMPLEMENTED_SKILLS, primary, undefined).some(
+          (skill) => skill.id === "common.resurrection-signet",
+        ),
+      ).toBe(false);
+    }
+    const group = groupSkillsByAttribute(IMPLEMENTED_SKILLS).find((each) =>
+      each.skills.some((skill) => skill.id === "common.resurrection-signet"),
+    );
+    expect(group?.attributeName).toBe("No Attribute (Common)");
   });
 
   it("goes through the search and type filters like the rest of the library", () => {
