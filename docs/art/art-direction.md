@@ -845,7 +845,8 @@ it, not baked in, so one file serves every screen.
   paw-heart, claw, bond, paw-speed, paw-shield, hex-cut, drop-bolt, drop-ward,
   drop-pair, plus-sparks, plus-gusts, party-heal, plus-ripple, meteor-trio,
   ring-heal, hammer-slam, hex-burst, drop-arrow, pain-cross, eye-drop, blink,
-  totem, ward-blade, trap-flame, ring-rays, well-sink, echo-spell, echo-skill. A
+  totem, ward-blade, trap-flame, ring-rays, well-sink, echo-spell, echo-skill,
+  hex-mute, armor-crack, drop-run, mark-skull, dagger-stop, dagger-limp, palm. A
   new primary effect adds a glyph; a new skill adds a row.
 
 ### Skill slot states
