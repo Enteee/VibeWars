@@ -1,4 +1,4 @@
-import { HOUSE_LOADOUT, KILL_COUNT_MATCH_RULES } from "@vibewars/game-core";
+import { KILL_COUNT_MATCH_RULES } from "@vibewars/game-core";
 import {
   PROTOCOL_VERSION,
   parsePeerRefuse,
@@ -15,10 +15,13 @@ import { MatchRefusedError, connectMatch, type PeerMatchConnection } from "./mat
 import { RECONNECT_WINDOW_SECONDS, RULESET } from "./match-host.js";
 import {
   hello,
+  helloAs,
+  isStarterBar,
   playerIn,
   self,
   settle,
   startMatch,
+  starterBuild,
   until,
   type TestMatch,
 } from "./match-harness.test-support.js";
@@ -81,8 +84,11 @@ function hostileValues(): JsonValue[] {
   ];
 }
 
-/** The slot of the house bar's self-cast enchantment, Armor of Earth: no target needed. */
-const SELF_ENCHANT_SLOT = 4;
+/** A starter build with a self-cast enchantment, Armor of Earth: no target needed (#852). */
+const SELF_ENCHANTER = "Elementalist/Mesmer";
+const SELF_ENCHANT_SLOT = starterBuild(SELF_ENCHANTER).skillBar.indexOf(
+  "elementalist.armor-of-earth",
+);
 
 const SPEED = RULESET.movement.maxSpeedUnitsPerSecond;
 
@@ -161,7 +167,7 @@ describe("P2P match robustness (#375)", () => {
 
   it("charges a duplicated skill request once", async () => {
     const match = startMatch();
-    const { connection } = await match.join();
+    const { connection } = await match.join(helloAs(SELF_ENCHANTER));
     await match.step(TICK);
     const before = self(connection)?.energy ?? 0;
     expect(before).toBeGreaterThan(0);
@@ -389,7 +395,7 @@ describe("a P2P host survives hostile peers (#375)", () => {
     await match.step(TICK);
 
     // One peer, one seat, whatever it repeats: the first hello seats it
-    // on the house loadout with a fallback name, and the rest are ignored.
+    // on a starter build with a fallback name, and the rest are ignored.
     expect(welcomes).toHaveLength(1);
     const players = watcher.getSnapshot().players;
     expect(players).toHaveLength(2);
@@ -444,10 +450,8 @@ describe("a P2P host survives hostile peers (#375)", () => {
     );
     await match.step(TICK);
 
-    // The build was refused: the peer plays the house loadout instead.
-    expect(connection.skillBar.map((slot) => slot?.id ?? null)).toEqual([
-      ...HOUSE_LOADOUT.skillBar,
-    ]);
+    // The build was refused: the peer plays a starter build instead (#852).
+    expect(isStarterBar(connection.skillBar.map((slot) => slot?.id ?? null))).toBe(true);
     const seen = playerIn(watcher.getSnapshot(), connection.selfSessionId);
     expect(seen?.name).toBeDefined();
     expect(seen?.name).not.toMatch(/[\n\r]/);

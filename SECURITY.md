@@ -201,7 +201,7 @@ channels, as often as they like.
   the joiner one welcome; the host checks a seated ticket not at all.
 - `hello.build` is capped in values and depth by `parsePeerHello`, then
   goes through `resolveJoinLoadout` and `validatePlayerBuild`: an illegal
-  build gets the house loadout.
+  build gets a starter build, picked by the host's own random.
 - The Trystero transport (#392) passes `maxReceiveBytes`
   (`MAX_RECEIVE_BYTES` in `relays.ts`), so Trystero drops an oversized
   message before decoding it, and a peer cannot make another allocate an

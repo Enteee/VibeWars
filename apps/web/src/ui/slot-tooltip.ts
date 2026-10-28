@@ -13,7 +13,7 @@ import { createSkillTooltip, type SkillTooltip } from "./skill-tooltip.js";
  * The hover tooltip on a skill bar's slots in play (#485), shared by the
  * match HUD and the Training Ground. It describes the skill at the ranks
  * the host resolved, never the build the client claimed, so it cannot show
- * numbers for a build the host replaced with the house loadout.
+ * numbers for a build the host replaced with a starter build.
  */
 
 /** How long a slot is hovered or focused before its tooltip shows. */

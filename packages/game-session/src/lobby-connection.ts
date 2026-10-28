@@ -22,7 +22,7 @@ export interface LobbyPlayerSnapshot {
   readonly team: 0 | 1 | null;
   readonly ready: boolean;
   readonly isHost: boolean;
-  /** `null` brings the house loadout. */
+  /** `null` brings a starter build. */
   readonly character: LobbyCharacter | null;
 }
 

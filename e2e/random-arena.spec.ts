@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { openPeers } from "./helpers/peers.js";
+import { bringStarter, starterKey } from "./helpers/starter.js";
 import { key } from "./keys.js";
 
 /**
@@ -10,17 +11,15 @@ import { key } from "./keys.js";
  * mode the menu ships.
  */
 
+/**
+ * The character the queue needs, with a known bar (#852): a blank new
+ * character would be handed a random starter build by the host.
+ */
+const BUILD = "Elementalist/Mesmer";
+
 /** Make a character and choose it: the queue needs one. */
 async function makeCharacter(page: Page): Promise<void> {
-  await page.goto("./");
-  const roster = page.locator(".roster");
-  await roster.getByRole("button", { name: "New character" }).click();
-  await page.locator("input.editor-name").fill("Pyro");
-  await page.getByRole("button", { name: "Save", exact: true }).click();
-  await roster
-    .locator(".selectable-row", { hasText: "Pyro" })
-    .locator(".selectable-row-choose")
-    .click();
+  await bringStarter(page, BUILD);
 }
 
 /** From the menu, queue for a 1v1 as `name`. */
@@ -28,7 +27,9 @@ async function queue1v1(page: Page, name: string): Promise<void> {
   await page.locator(".screen-menu input.field-input").first().fill(name);
   await page.getByRole("button", { name: "1v1", exact: true }).click();
   await page.getByRole("button", { name: "Random Arena", exact: true }).click();
-  await expect(page.locator(".screen-queue .screen-title")).toHaveText("Random Arena 1v1 · Pyro");
+  await expect(page.locator(".screen-queue .screen-title")).toHaveText(
+    `Random Arena 1v1 · ${BUILD}`,
+  );
 }
 
 test("Random Arena is greyed out until there is a character to queue with, and 4v4 is the default", async ({
@@ -47,8 +48,8 @@ test("Random Arena is greyed out until there is a character to queue with, and 4
 test("two players queue for a 1v1, are matched, see the versus splash, play it out and queue again", async ({
   browser,
 }) => {
-  // A group settles for 3 s and its lobby counts down 5 s; the house bar
-  // takes about 35 s to kill a foe who stands still.
+  // A group settles for 3 s and its lobby counts down 5 s; the starter
+  // build's spells take under a minute to kill a foe who stands still.
   test.setTimeout(150_000);
   const { context, pages } = await openPeers(browser, 2);
   const [alice, bob] = pages as [Page, Page];
@@ -88,13 +89,18 @@ test("two players queue for a 1v1, are matched, see the versus splash, play it o
     await expect(pip).toHaveAttribute("title", "Bob");
     await expect(pip).not.toHaveClass(/is-dead/);
 
-    // Alice beats Bob, who stands still, with the house bar's damage.
+    // Alice beats Bob, who stands still, with the starter build's spells.
     await alice.keyboard.press(key("target-next"));
     await alice.keyboard.press(key("attack"));
     const result = alice.locator(".hud-result");
     await expect(async () => {
-      for (const skill of ["skill-1", "skill-3", "skill-4", "skill-7"] as const) {
-        await alice.keyboard.press(key(skill));
+      for (const skill of [
+        "elementalist.glyph-of-lesser-energy",
+        "elementalist.fireball",
+        "elementalist.chain-lightning",
+        "elementalist.lightning-orb",
+      ]) {
+        await alice.keyboard.press(starterKey(BUILD, skill));
       }
       await expect(result).toBeVisible({ timeout: 1_000 });
     }).toPass({ timeout: 90_000 });
@@ -115,7 +121,7 @@ test("two players queue for a 1v1, are matched, see the versus splash, play it o
     await alice.getByRole("button", { name: "Queue again", exact: true }).click();
     await expect(alice.locator(".queue-status")).toHaveText("Searching");
     await expect(alice.locator(".screen-queue .screen-title")).toHaveText(
-      "Random Arena 1v1 · Pyro",
+      `Random Arena 1v1 · ${BUILD}`,
     );
   } finally {
     await context.close();

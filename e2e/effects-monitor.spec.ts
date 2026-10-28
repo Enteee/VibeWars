@@ -3,6 +3,11 @@ import { expect, test } from "@playwright/test";
 import { key } from "./keys.js";
 import { startSoloMatch } from "./helpers/peers.js";
 import { chooseProfession } from "./helpers/professions.js";
+import { bringStarter, starterKey } from "./helpers/starter.js";
+
+/** A starter build (#852) whose Armor of Earth puts Armor Boost on yourself (#302). */
+const ARMORED = "Elementalist/Mesmer";
+const ARMOR_OF_EARTH = starterKey(ARMORED, "elementalist.armor-of-earth");
 
 /**
  * The effects monitor (#834): your statuses as icons under your bars,
@@ -12,13 +17,13 @@ import { chooseProfession } from "./helpers/professions.js";
 test("your enchantment shows as an icon, marked yours, its bar draining; the hover names it (#834)", async ({
   page,
 }) => {
+  await bringStarter(page, ARMORED);
   await page.goto("./");
   await startSoloMatch(page);
   const effects = page.getByRole("list", { name: "your effects" });
   await expect(effects.getByRole("listitem")).toHaveCount(0);
 
-  // Slot 5 of the house bar puts Armor Boost on yourself (#302).
-  await page.keyboard.press(key("skill-5"));
+  await page.keyboard.press(ARMOR_OF_EARTH);
   const icon = effects.getByRole("listitem").filter({ has: page.getByAltText("Armor Boost") });
   await expect(icon).toBeVisible();
   await expect(icon).toHaveClass(/is-yours/);
@@ -82,6 +87,8 @@ test("the target frame shows a foe's enchantment, at 16 px and not marked yours 
 }) => {
   // One context, so the two pages find each other (helpers/peers.ts).
   const foe = await page.context().newPage();
+  // The pages share one storage, so the foe plays this starter too.
+  await bringStarter(page, ARMORED);
   await page.goto("./");
   await page.getByRole("button", { name: "host a lobby" }).click();
   const code = page.locator(".lobby-code");
@@ -104,8 +111,7 @@ test("the target frame shows a foe's enchantment, at 16 px and not marked yours 
   await expect(page.locator(".hud-target-text")).not.toHaveText("no target");
   await expect(effects).toBeHidden();
 
-  // The foe puts Armor Boost on itself, slot 5 of the house bar (#302).
-  await foe.keyboard.press(key("skill-5"));
+  await foe.keyboard.press(ARMOR_OF_EARTH);
   const icon = effects.getByRole("listitem").filter({ has: page.getByAltText("Armor Boost") });
   await expect(icon).toBeVisible();
   await expect(icon).not.toHaveClass(/is-yours/);

@@ -167,8 +167,8 @@ inbound messages, #43: over budget, a message is ignored rather than its
 sender dropped), `sanitizeName`, `spawnPoint`, and `recharge.ts` (when a
 player's recharges are re-sent: only when they drift from the client's
 countdown by more than one 50 ms tick, #152). game-core holds the rest of
-the shared match code: `applyIntent`, `resolveJoinLoadout` and the house
-loadout, and the fixed-step `drainAccumulator`.
+the shared match code: `applyIntent`, `resolveJoinLoadout` and the starter
+builds (`starter-builds.ts`), and the fixed-step `drainAccumulator`.
 
 ### `packages/game-maps` — arenas
 

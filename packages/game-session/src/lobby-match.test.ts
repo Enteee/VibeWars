@@ -90,7 +90,8 @@ describe("a lobby's own match", () => {
       timeoutMs: 1000,
     });
     await lobby.step(0.05);
-    // The house loadout is a warrior's; only the build carries this weapon.
+    // A starter build fills all eight slots: only this build has the gaps (#852).
+    expect(match.skillBar.map((slot) => slot?.id ?? null)).toEqual(pyro.skillBar);
     expect(self(match)?.weaponId).toBe(defaultBuildEquipment("elementalist").mainHand.weaponId);
   });
 
@@ -338,7 +339,8 @@ describe("a lobby's match played to its end (#403)", () => {
     await lobby.step(0.05);
     hunter.sendIntent({ kind: "attack", targetId: prey.selfSessionId });
 
-    // The house sword walks in and swings until Prey's team is wiped.
+    // The hunter's weapon, whichever starter build it came with, swings
+    // until Prey's team is wiped.
     for (let i = 0; i < 1200 && hunter.getSnapshot().phase === "active"; i += 1) {
       await lobby.step(0.1);
     }
