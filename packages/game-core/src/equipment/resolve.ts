@@ -3,7 +3,7 @@ import { ENERGY_STORAGE_ATTRIBUTE, energyStorageBonus } from "../primary-attribu
 import type { ProfessionId } from "../professions.js";
 import type { CombatRules } from "../ruleset.js";
 import type { StatusId } from "../skills/status.js";
-import { creatureDamageMultiplier } from "../skills/damage.js";
+import { creatureDamageMultiplier, creatureRankDamageMultiplier } from "../skills/damage.js";
 import type { CreatureAttack } from "../skills/types.js";
 import {
   HEADGEAR_BONUS,
@@ -58,9 +58,9 @@ export interface ResolvedWeapon {
   /** Whether the bearer actually meets the requirement. */
   readonly requirementMet: boolean;
   /**
-   * A minion's (#1131): what its summoner's rank does to every blow, in
-   * place of weapon mastery. `undefined` for every weapon a player holds,
-   * and a pet's, which scale with weapon mastery.
+   * A minion's (#1131) or a spirit's (#1239): what its summoner's rank does
+   * to every blow, in place of weapon mastery. `undefined` for every weapon
+   * a player holds, and a pet's, which scale with weapon mastery.
    */
   readonly creatureDamageScale: number | undefined;
 }
@@ -467,12 +467,25 @@ export function creatureResolvedEquipment(
         damageType: attack.damageType,
         attackIntervalSeconds: attack.attackIntervalSeconds,
         range: attack.range,
+        projectileSpeed: attack.projectileSpeed,
+        onHit: attack.onHit,
       },
       attributeId: attack.attributeId,
       damageType: attack.damageType,
       requirementMet: true,
-      creatureDamageScale:
-        attack.level === undefined ? undefined : creatureDamageMultiplier(rank, attack.level),
+      creatureDamageScale: creatureDamageScale(attack, rank),
     },
   };
+}
+
+/** What `rank` does to a creature's blows, as its `scaling` says; `undefined`: weapon mastery. */
+function creatureDamageScale(attack: CreatureAttack, rank: number): number | undefined {
+  switch (attack.scaling.kind) {
+    case "level":
+      return creatureDamageMultiplier(rank, attack.scaling.level);
+    case "rank":
+      return creatureRankDamageMultiplier(rank, attack.scaling.atZero, attack.damageMax);
+    case "weapon-mastery":
+      return undefined;
+  }
 }

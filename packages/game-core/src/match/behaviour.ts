@@ -77,9 +77,15 @@ export type Behaviour =
    * Attack the target with the weapon, as Space does (#162), and ask again
    * whenever no attack is going: after the target's respawn, or the
    * dummy's own reset. An attack going on stays on its target, even with
-   * another nearer.
+   * another nearer. With a `reach`, a spirit's (#1239): only a target
+   * within it, and it never walks; the simulation ends an attack on one
+   * that leaves it. `undefined`: any, walked to.
    */
-  | { readonly kind: "auto-attack"; readonly targeting: Targeting }
+  | {
+      readonly kind: "auto-attack";
+      readonly targeting: Targeting;
+      readonly reach: number | undefined;
+    }
   /**
    * A minion's (#467 child 3) or a pet's (#1046): stay by the owner, attack
    * a foe as `engage` picks it, and break off to walk back once the
@@ -241,9 +247,15 @@ export function nearestLiving(
   return best;
 }
 
+/**
+ * Who `targeting` picks, among those `eligible` lets through: a nearest
+ * pick takes the nearest eligible, and a self or fixed one is eligible or
+ * nobody.
+ */
 export function resolveTargeting(
   targeting: Targeting,
   context: BehaviourContext,
+  eligible: (other: Participant) => boolean = () => true,
 ): string | undefined {
   const team = context.self.combatant.team;
   switch (targeting.kind) {
@@ -251,18 +263,20 @@ export function resolveTargeting(
       return nearestLiving(
         context.self,
         context.participants,
-        (other) => other.combatant.team !== team,
+        (other) => other.combatant.team !== team && eligible(other),
       );
     case "nearest-ally":
       return nearestLiving(
         context.self,
         context.participants,
-        (other) => other.combatant.team === team,
+        (other) => other.combatant.team === team && eligible(other),
       );
     case "self":
-      return context.self.id;
-    case "fixed":
-      return targeting.participantId;
+      return eligible(context.self) ? context.self.id : undefined;
+    case "fixed": {
+      const fixed = context.participants.find((other) => other.id === targeting.participantId);
+      return fixed === undefined || eligible(fixed) ? targeting.participantId : undefined;
+    }
   }
 }
 
@@ -296,7 +310,17 @@ export function decide(
     case "parallel":
       return parallel(behaviour, cursor, context);
     case "auto-attack": {
-      const targetId = resolveTargeting(behaviour.targeting, context);
+      // A spirit's pick is the nearest it can shoot: in reach and in sight.
+      const { reach } = behaviour;
+      const targetId = resolveTargeting(
+        behaviour.targeting,
+        context,
+        reach === undefined
+          ? undefined
+          : (other) =>
+              distance(other.position, context.self.position) <= reach &&
+              context.sees(other.position),
+      );
       return {
         ...STAND_STILL,
         targetId,

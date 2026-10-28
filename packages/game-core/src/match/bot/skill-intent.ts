@@ -90,6 +90,9 @@ function dealsDamage(effect: SkillEffect): boolean {
     case "damage":
     case "life-steal":
       return true;
+    // A spirit that shoots (#1239): Pain's. A minion needs a corpse first.
+    case "summon":
+      return effect.creature.kind === "spirit" && effect.creature.attack !== undefined;
     case "if":
     case "splash":
       return effect.effects.some(dealsDamage);

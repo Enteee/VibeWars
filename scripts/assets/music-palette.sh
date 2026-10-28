@@ -5,7 +5,8 @@
 #
 # Writes apps/web/public/music/samples/<sound>/<key>.mp3 and strudel.json, the
 # Strudel sample map. Everything is cut from the Versilian Community Sample
-# Library (VCSL, CC0 1.0, https://github.com/sgossner/VCSL). Strings, brass,
+# Library (VCSL, CC0 1.0, https://github.com/sgossner/VCSL), credited in
+# Options -> Third-party licences (ADR-0039). Strings, brass,
 # choir and bass are NOT here: the tracks synthesise those with Strudel's
 # built-in oscillators, at zero bytes. The palette rules are written down in
 # docs/art/art-direction.md ("Music"). Change them there first, then here.

@@ -260,6 +260,19 @@ export function creatureDamageMultiplier(rank: number, levels: CreatureLevel): n
 }
 
 /**
+ * What a spirit's summoner's `rank` does to its blows (#1239): GW1 states
+ * the damage, "5...30", linear in the rank, so `atZero` at 0 and
+ * `atTwelve` at 12, as a share of `atTwelve`.
+ */
+export function creatureRankDamageMultiplier(
+  rank: number,
+  atZero: number,
+  atTwelve: number,
+): number {
+  return (atZero + ((atTwelve - atZero) * Math.max(0, rank)) / 12) / atTwelve;
+}
+
+/**
  * The attribute multiplier on weapon damage.
  *
  * Pivots on rank 12, not on the weapon's requirement of 9: at the pivot
