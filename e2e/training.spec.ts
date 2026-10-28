@@ -67,9 +67,12 @@ async function releaseControl(page: Page): Promise<void> {
   await expect(page.locator(".training")).not.toHaveClass(/is-armed/);
 }
 
-/** Release the arena without a key, so the target stays. */
-async function releaseByBlur(page: Page): Promise<void> {
-  await page.locator(".training-stage").blur();
+/**
+ * Release the arena without Esc, so the target stays (#1151): by clicking
+ * into the name field, as a player would.
+ */
+async function releaseByClickAway(page: Page): Promise<void> {
+  await page.locator("input.editor-name").click();
   await expect(page.locator(".training")).not.toHaveClass(/is-armed/);
 }
 
@@ -855,7 +858,7 @@ test("(27) a right click on the ground moves nobody and keeps the target (#438)"
   await page.keyboard.press("Tab");
   await expect.poll(named).toBe(1);
   // Not by Esc, which would let the target go (#1151).
-  await releaseByBlur(page);
+  await releaseByClickAway(page);
   const before = await stillArena(page, canvas);
 
   // Empty ground between the spawn and the ladder.
@@ -863,7 +866,7 @@ test("(27) a right click on the ground moves nobody and keeps the target (#438)"
   const ground = (await trainingView(page, canvas)).onPage({ x: 220, y: 330 });
   await page.mouse.click(ground.x, ground.y, { button: "right" });
   await page.mouse.move(1, 1);
-  await releaseByBlur(page);
+  await releaseByClickAway(page);
   const after = await stillArena(page, canvas);
   expect(await named()).toBe(1);
   expect(after.equals(before), "nobody should have moved").toBe(true);
