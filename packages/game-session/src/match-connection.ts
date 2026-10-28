@@ -146,7 +146,7 @@ export interface MatchSnapshot {
   readonly phase: string;
   /** The winning team, or `undefined` while active or on a draw. */
   readonly winningTeam: number | undefined;
-  /** "score", "time", "annihilation", "morale", "host-left", or `undefined` while active. */
+  /** "score", "time", "annihilation", "morale", "guild-lord", "aggression", "host-left", or `undefined` while active. */
   readonly endReason: string | undefined;
   /** Weapon shots and flying spells in flight, oldest first (#160, #535). */
   readonly projectiles: readonly ProjectileSnapshot[];

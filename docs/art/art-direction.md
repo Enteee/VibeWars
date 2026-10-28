@@ -840,10 +840,12 @@ it, not baked in, so one file serves every screen.
   in an arrow ring), hex-bolt (dashed ring, bolt), blade-cleanse, blade-hook,
   blade-shards, hilt, banner-note, mountain-crack, dust, thorns, limp,
   dagger-burst, ox-horns, spider, resurrect-seal, resurrect-arrive,
-  resurrect-return, resurrect-blood, bone-minions, bone-horror, jaws, hex-cut,
-  drop-bolt, drop-ward, drop-pair, plus-sparks, plus-gusts, party-heal,
-  plus-ripple, meteor-trio, ring-heal, echo-spell, echo-skill. A new primary
-  effect adds a glyph; a new skill adds a row.
+  resurrect-return, resurrect-blood, bone-minions, bone-horror, jaws, paw,
+  paw-heart, claw, bond, paw-speed, paw-shield, hex-cut, drop-bolt, drop-ward,
+  drop-pair, plus-sparks, plus-gusts, party-heal, plus-ripple, meteor-trio,
+  ring-heal, hammer-slam, hex-burst, drop-arrow, pain-cross, eye-drop, blink,
+  totem, ward-blade, trap-flame, ring-rays, well-sink, echo-spell, echo-skill. A
+  new primary effect adds a glyph; a new skill adds a row.
 
 ### Skill slot states
 

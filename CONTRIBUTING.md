@@ -33,7 +33,8 @@ pnpm run bench:ticks   # time MatchSimulation.step on a dense field: p50/p95/max
 
 ### How `pnpm run dev` is wired
 
-`scripts/dev.mjs` runs two watchers: `tsc --build --watch` for the
+`scripts/dev.mjs` first builds the packages once, so a fresh pull needs no
+manual build, then runs two watchers: `tsc --build --watch` for the
 packages, and Vite for the client. There is no server: the client plays
 peer to peer (#15, ADR-0022). Two tabs of the dev client on one machine find each other over the public
 Nostr relays, as two browsers anywhere do.
@@ -68,6 +69,9 @@ Concretely:
 - A skill added to `IMPLEMENTED_SKILLS` adds its icon row in
   `scripts/assets/skill-icon-table.mjs` and re-runs `node scripts/assets/icons.mjs`;
   `apps/web/src/ui/icons.test.ts` fails until it does.
+- Vendoring or bundling a third-party work whose licence asks for a notice
+  adds its entry to `THIRD_PARTY_LICENCES` (Options → Third-party licences)
+  in the same PR. That page is the only place the UI credits one: see ADR-0039.
 - `any`, `as any`, and non-null assertions (`!`) are lint errors, not style
   preferences — see ADR-0008. If one is genuinely unavoidable, say why in a
   comment at the exact line, not in a blanket lint-rule override.

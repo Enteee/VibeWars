@@ -23,8 +23,7 @@ export const SKILL_ICONS = {
   "warrior.swift-chop": { glyph: "axe" },
   "ranger.barrage": { glyph: "volley", modifier: "area" },
   "warrior.backbreaker": { glyph: "hammer", modifier: "down" },
-  // Placeholder until asset-designer's icon (#1097).
-  "warrior.hammer-bash": { glyph: "hammer", modifier: "stun" },
+  "warrior.hammer-bash": { glyph: "hammer-slam" },
   "necromancer.blood-renewal-lite": { glyph: "heal", modifier: "down" },
   "warrior.distracting-blow": { glyph: "interrupt" },
   "ranger.broad-head-arrow": { glyph: "arrow", modifier: "stun" },
@@ -82,7 +81,7 @@ export const SKILL_ICONS = {
   "paragon.fall-back": { glyph: "speed", modifier: "area" },
   // A placeholder: no modifier yet says "while not moving" (#921).
   "paragon.stand-your-ground": { glyph: "armor", modifier: "clock" },
-  // Placeholders until asset-designer's icons (#956).
+  // The paragon's shout and chant glyphs, drawn to match their statuses (#956).
   "paragon.incoming": { glyph: "speed-heal" },
   "paragon.make-haste": { glyph: "dash", modifier: "up" },
   "paragon.defensive-anthem": { glyph: "anthem-shield" },
@@ -190,20 +189,18 @@ export const SKILL_ICONS = {
   "paragon.spear-of-lightning": { glyph: "spear-bolt" },
   "paragon.never-surrender": { glyph: "banner", modifier: "area" },
   "paragon.leaders-comfort": { glyph: "banner-cross", modifier: "self" },
-  // Placeholders from existing glyphs (#935).
-  "necromancer.spiteful-spirit": { glyph: "fireball", modifier: "down" },
-  "necromancer.insidious-parasite": { glyph: "chain", modifier: "self" },
-  "necromancer.mark-of-pain": { glyph: "hammer", modifier: "area" },
-  "necromancer.vampiric-gaze": { glyph: "heal", modifier: "bleed" },
-  "assassin.deaths-charge": { glyph: "dash", modifier: "plus" },
+  // Shapes of their statuses (#935).
+  "necromancer.spiteful-spirit": { glyph: "hex-burst" },
+  "necromancer.insidious-parasite": { glyph: "drop-arrow" },
+  "necromancer.mark-of-pain": { glyph: "pain-cross" },
+  "necromancer.vampiric-gaze": { glyph: "eye-drop" },
+  "assassin.deaths-charge": { glyph: "blink", modifier: "plus" },
   "assassin.shadow-refuge": { glyph: "crescent", modifier: "plus" },
   "assassin.shroud-of-distress": { glyph: "armor-half" },
   "assassin.critical-eye": { glyph: "eye" },
-  // Placeholders until the asset-designer's (#1064).
-  "ranger.winnowing": { glyph: "blade-plus", modifier: "area" },
-  "ritualist.recuperation": { glyph: "plaster", modifier: "hourglass" },
-  // A placeholder until the asset-designer's (#1087).
-  "elementalist.ward-against-melee": { glyph: "mountain", modifier: "clock" },
+  "ranger.winnowing": { glyph: "totem", modifier: "up" },
+  "ritualist.recuperation": { glyph: "totem", modifier: "plus" },
+  "elementalist.ward-against-melee": { glyph: "ward-blade" },
   // Resurrections: the resurrect figure and what each does differently (#1081).
   "common.resurrection-signet": { glyph: "resurrect-seal" },
   "monk.rebirth": { glyph: "resurrect-arrive" },
@@ -211,31 +208,28 @@ export const SKILL_ICONS = {
   "ritualist.flesh-of-my-flesh": { glyph: "resurrect-blood" },
   // Jaws on the ground, barbs that bleed (#1129).
   "ranger.barbed-trap": { glyph: "jaws", modifier: "bleed" },
-  // Placeholders until the asset-designer's (#1113): pulses.
-  "ranger.flame-trap": { glyph: "flame", modifier: "clock" },
-  "monk.symbol-of-wrath": { glyph: "flash", modifier: "area" },
+  "ranger.flame-trap": { glyph: "trap-flame" },
+  "monk.symbol-of-wrath": { glyph: "ring-rays" },
   // Health taken from a corpse: the heal glyph with the corpse mark (#1075).
   "necromancer.soul-feast": { glyph: "heal", modifier: "corpse" },
-  // A placeholder until the asset-designer's (#1104).
-  "necromancer.well-of-suffering": { glyph: "germ", modifier: "corpse" },
+  "necromancer.well-of-suffering": { glyph: "well-sink", modifier: "corpse" },
   // Bodies raised from a corpse: a skull pack, and one horned skull (#1112).
   "necromancer.animate-bone-minions": { glyph: "bone-minions" },
   "necromancer.animate-bone-horror": { glyph: "bone-horror" },
   // A skill seen again: a spell, or any skill, echoed on (#1136).
   "mesmer.arcane-echo": { glyph: "echo-spell", modifier: "clock" },
   "mesmer.echo": { glyph: "echo-skill" },
-  // Placeholders until the asset-designer's (#1046): the pet's skills.
-  "ranger.charm-animal": { glyph: "eye", modifier: "plus" },
-  "ranger.comfort-animal": { glyph: "heal", modifier: "plus" },
-  // Placeholders until the asset-designer's (#1107): the pet's attacks.
-  "ranger.brutal-strike": { glyph: "hawk", modifier: "half" },
-  "ranger.maiming-strike": { glyph: "limp", modifier: "plus" },
-  "ranger.disrupting-lunge": { glyph: "interrupt", modifier: "plus" },
-  // Placeholders until the asset-designer's (#1108): calls and bonds on the pet.
-  "ranger.call-of-haste": { glyph: "speed", modifier: "plus" },
-  "ranger.call-of-protection": { glyph: "armor", modifier: "plus" },
-  "ranger.symbiotic-bond": { glyph: "chain", modifier: "plus" },
-  "ranger.revive-animal": { glyph: "resurrect", modifier: "plus" },
+  "ranger.charm-animal": { glyph: "paw-heart" },
+  "ranger.comfort-animal": { glyph: "heal", modifier: "paw" },
+  // The pet's attacks: a glyph for the blow and the paw modifier (#1107).
+  "ranger.brutal-strike": { glyph: "claw", modifier: "paw" },
+  "ranger.maiming-strike": { glyph: "limp", modifier: "paw" },
+  "ranger.disrupting-lunge": { glyph: "interrupt", modifier: "paw" },
+  // The pet's calls and bond: shapes of the statuses they apply (#1108).
+  "ranger.call-of-haste": { glyph: "paw-speed" },
+  "ranger.call-of-protection": { glyph: "paw-shield" },
+  "ranger.symbiotic-bond": { glyph: "bond" },
+  "ranger.revive-animal": { glyph: "paw", modifier: "up" },
   // Three meteors in a falling line; a heal cross spent from the enchantment's ring (#1214).
   "elementalist.meteor-shower": { glyph: "meteor-trio" },
   "monk.contemplation-of-purity": { glyph: "ring-heal" },

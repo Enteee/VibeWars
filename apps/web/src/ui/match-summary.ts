@@ -1,5 +1,6 @@
 import type { MatchSummaryRow } from "@vibewars/game-session";
 
+import { botTagElement } from "./bot-tag.js";
 import { h } from "./kit.js";
 
 /**
@@ -32,6 +33,8 @@ export interface SummaryLine {
   readonly row: MatchSummaryRow;
   /** Your own row, marked with the `friend` border. */
   readonly self: boolean;
+  /** A lobby bot (#1194): its name wears the BOT tag (#1241). */
+  readonly bot: boolean;
   /** The columns where this row holds the match's highest value, ties included. */
   readonly top: ReadonlySet<SummaryColumn>;
 }
@@ -48,11 +51,13 @@ export interface SummaryTable {
  * that is zero throughout flags nobody.
  *
  * @param selfTeam `undefined` for a spectator
+ * @param bots the ids the match roster marks as bots; an id not in it is a player
  */
 export function summaryTables(
   summary: readonly MatchSummaryRow[],
   selfId: string | undefined,
   selfTeam: number | undefined,
+  bots: ReadonlySet<string>,
 ): readonly SummaryTable[] {
   const best = new Map(
     SUMMARY_COLUMNS.map((column) => [column, Math.max(0, ...summary.map((row) => row[column]))]),
@@ -60,6 +65,7 @@ export function summaryTables(
   const line = (row: MatchSummaryRow): SummaryLine => ({
     row,
     self: row.id === selfId,
+    bot: bots.has(row.id),
     top: new Set(
       SUMMARY_COLUMNS.filter((column) => row[column] > 0 && row[column] === best.get(column)),
     ),
@@ -88,10 +94,13 @@ export function renderSummary(parent: HTMLElement, tables: readonly SummaryTable
       head.appendChild(cell);
     }
     const body = table.createTBody();
-    for (const { row, self, top } of lines) {
+    for (const { row, self, top, bot } of lines) {
       const tr = body.insertRow();
       tr.classList.toggle("is-self", self);
       const name = h("th", "match-summary-name", row.name);
+      if (bot) {
+        name.appendChild(botTagElement("match-summary-bot"));
+      }
       name.setAttribute("scope", "row");
       tr.appendChild(name);
       for (const column of SUMMARY_COLUMNS) {

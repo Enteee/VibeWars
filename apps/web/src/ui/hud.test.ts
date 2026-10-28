@@ -478,6 +478,14 @@ describe("describeOutcome", () => {
     expect(describeOutcome(1, "morale", undefined)).toBe("Team 2 wins (morale)");
   });
 
+  it("says why a Guild Battle ended: a lord slain, or aggression at time (#1222)", () => {
+    expect(describeOutcome(0, "guild-lord", 0)).toBe("Victory (Guild Lord slain)");
+    expect(describeOutcome(0, "guild-lord", 1)).toBe("Defeat (Guild Lord slain)");
+    expect(describeOutcome(1, "aggression", 1)).toBe("Victory (most aggression at time)");
+    expect(describeOutcome(undefined, "guild-lord", 0)).toBe("Defeat (Guild Lord slain)");
+    expect(describeOutcome(undefined, "aggression", 1)).toBe("Defeat (most aggression at time)");
+  });
+
   it("calls an annihilation match nobody won a defeat for both teams, never a draw (#846)", () => {
     expect(describeOutcome(undefined, "annihilation", 0)).toBe("Defeat");
     expect(describeOutcome(undefined, "annihilation", 1)).toBe("Defeat");

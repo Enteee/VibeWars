@@ -343,3 +343,79 @@ describe("resurrection shrines (#1186)", () => {
     );
   });
 });
+
+describe("guild battle maps (#1222)", () => {
+  const objective = (kind: string, team: number, x: number, y: number) => ({
+    kind,
+    team,
+    position: { x, y },
+  });
+  const guildMap = {
+    ...validMap,
+    mode: "guild-battle",
+    walls: [{ kind: "rect", x: 45, y: 0, width: 10, height: 40 }],
+    spawnPoints: [
+      { team: 0, position: { x: 20, y: 50 } },
+      { team: 1, position: { x: 80, y: 50 } },
+    ],
+    objectives: [
+      objective("resurrection-shrine", 0, 20, 80),
+      objective("resurrection-shrine", 1, 80, 20),
+      objective("guild-lord", 0, 20, 20),
+      objective("guild-lord", 1, 80, 80),
+    ],
+  };
+
+  it("accepts one shrine and one Guild Lord per spawning team", () => {
+    expect(validateMapData(guildMap).objectives).toHaveLength(4);
+  });
+
+  it("refuses a team with no Guild Lord, or two", () => {
+    expect(() =>
+      validateMapData({
+        ...guildMap,
+        objectives: guildMap.objectives.filter(
+          (candidate) => !(candidate.kind === "guild-lord" && candidate.team === 1),
+        ),
+      }),
+    ).toThrow(/team 1 has 0 Guild Lords/);
+    expect(() =>
+      validateMapData({
+        ...guildMap,
+        objectives: [...guildMap.objectives, objective("guild-lord", 0, 30, 70)],
+      }),
+    ).toThrow(/team 0 has 2 Guild Lords/);
+  });
+
+  it("refuses a team with no shrine", () => {
+    expect(() =>
+      validateMapData({
+        ...guildMap,
+        objectives: guildMap.objectives.filter(
+          (candidate) => !(candidate.kind === "resurrection-shrine" && candidate.team === 0),
+        ),
+      }),
+    ).toThrow(/team 0 has 0 resurrection shrines/);
+  });
+
+  it("refuses a Guild Lord against a wall", () => {
+    expect(() =>
+      validateMapData({
+        ...guildMap,
+        objectives: [...guildMap.objectives.slice(0, 3), objective("guild-lord", 1, 50, 20)],
+      }),
+    ).toThrow(/a body clear of every wall/);
+  });
+
+  it("refuses a Guild Lord on a map of any other mode", () => {
+    expect(() =>
+      validateMapData({
+        ...guildMap,
+        mode: "priest-annihilation",
+      }),
+    ).toThrow(/priest-annihilation map has no Guild Lord/);
+    expect(() =>
+      validateMapData({ ...validMap, objectives: [objective("guild-lord", 0, 50, 50)] }),
+    ).toThrow(/annihilation map has no Guild Lord/);
+  });
+});

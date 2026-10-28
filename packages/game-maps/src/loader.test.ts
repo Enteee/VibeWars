@@ -10,6 +10,7 @@ import arenaOpen from "../maps/arena-open/map.json" with { type: "json" };
 import arenaPillars from "../maps/arena-pillars/map.json" with { type: "json" };
 import arenaRing from "../maps/arena-ring/map.json" with { type: "json" };
 import arenaSplit from "../maps/arena-split/map.json" with { type: "json" };
+import guildHallIsle from "../maps/guild-hall-isle/map.json" with { type: "json" };
 import { allWallSegments } from "./geometry.js";
 import { MapNotFoundError, listMapIds, loadAllMaps, loadMap } from "./loader.js";
 import { validateMapData } from "./schema.js";
@@ -39,6 +40,7 @@ describe("the maps the browser imports", () => {
       arenaPillars,
       arenaRing,
       arenaSplit,
+      guildHallIsle,
     ].map((raw) => validateMapData(raw));
     expect(imported.map((map) => map.id)).toEqual(listMapIds());
     for (const map of imported) {

@@ -26,6 +26,7 @@ import { botUses, onlyInterrupts, removedCategories, removesFromCaster } from ".
  */
 
 type PlayBuild = Extract<Behaviour, { kind: "play-build" }>;
+type Guard = Extract<Behaviour, { kind: "guard" }>;
 
 const NOTHING: BehaviourIntent = {
   moveDirection: ZERO,
@@ -42,10 +43,68 @@ const HURT_FRACTION = 0.6;
 /** How much longer than the interrupt itself a cast must have left. */
 const INTERRUPT_MARGIN_SECONDS = 0.25;
 
+/**
+ * A guard walking back acts again within this of its post (#1222), or
+ * its leash if shorter: not at the leash's edge, so it does not flicker.
+ */
+const GUARD_HOME_UNITS = 30;
+
 export function playBuild(
   behaviour: PlayBuild,
   cursor: BehaviourCursor,
   context: BehaviourContext,
+): BehaviourIntent {
+  return paced(behaviour.thinkSeconds, cursor, context, () => {
+    const foes = livingFoes(context);
+    return think(context, foes, teamTarget(context, foes));
+  });
+}
+
+/**
+ * `guard` (#1222): `play-build` against only the foes within `aggroUnits`
+ * of its post, the weakest of them its target, never the team's. Past the
+ * leash it walks back, dropping its target, until home again; with no foe
+ * near, it walks back too. Rooted, it never moves, and fights only the
+ * foes it sees: it cannot walk round a wall to one.
+ */
+export function guard(
+  behaviour: Guard,
+  cursor: BehaviourCursor,
+  context: BehaviourContext,
+): BehaviourIntent {
+  const self = context.self;
+  const home = distance(self.position, behaviour.post);
+  if (cursor.returning && home <= Math.min(GUARD_HOME_UNITS, behaviour.leashUnits)) {
+    cursor.returning = false;
+  } else if (!cursor.returning && home > behaviour.leashUnits) {
+    cursor.returning = true;
+  }
+  const foes = livingFoes(context).filter(
+    (foe) =>
+      distance(foe.position, behaviour.post) <= behaviour.aggroUnits &&
+      (!behaviour.rooted || context.sees(foe.position)),
+  );
+  if (cursor.returning || foes.length === 0) {
+    cursor.heldMove = { moveTo: undefined };
+    return behaviour.rooted || home <= context.stepUnits
+      ? NOTHING
+      : { ...NOTHING, moveTo: behaviour.post };
+  }
+  const intent = paced(behaviour.thinkSeconds, cursor, context, () =>
+    think(context, foes, weakest(self, foes)?.id),
+  );
+  return behaviour.rooted ? { ...intent, moveDirection: ZERO, moveTo: undefined } : intent;
+}
+
+/**
+ * Think every `thinkSeconds` with `decide`, and in between hold what it
+ * last asked for; nothing new while its last skill is still going.
+ */
+function paced(
+  thinkSeconds: number,
+  cursor: BehaviourCursor,
+  context: BehaviourContext,
+  decide: () => BehaviourIntent,
 ): BehaviourIntent {
   const self = context.self;
   const cast = self.combatant.cast;
@@ -59,19 +118,31 @@ export function playBuild(
   if (cursor.waitSeconds > 0) {
     return { ...holding, ...cursor.heldMove };
   }
-  cursor.waitSeconds = behaviour.thinkSeconds;
-  const intent = think(context);
+  cursor.waitSeconds = thinkSeconds;
+  const intent = decide();
   cursor.heldMove = { moveTo: intent.moveTo };
   return intent;
 }
 
-function think(context: BehaviourContext): BehaviourIntent {
+/** The living foes of `context.self`, in simulation order. */
+function livingFoes(context: BehaviourContext): Participant[] {
+  const team = context.self.combatant.team;
+  return context.participants.filter(
+    (other) => !other.combatant.dead && other.combatant.team !== team,
+  );
+}
+
+/** One decision against `foes`, with `targetId` the one to fight. */
+function think(
+  context: BehaviourContext,
+  foes: readonly Participant[],
+  targetId: string | undefined,
+): BehaviourIntent {
   const self = context.self;
   const team = self.combatant.team;
-  const living = context.participants.filter((other) => !other.combatant.dead);
-  const foes = living.filter((other) => other.combatant.team !== team);
-  const allies = living.filter(
-    (other) => other.combatant.team === team && other.creature === undefined,
+  const allies = context.participants.filter(
+    (other) =>
+      !other.combatant.dead && other.combatant.team === team && other.creature === undefined,
   );
   const bar = self.skillBar.flatMap((id) => {
     const skill = id === null ? undefined : getSkill(id);
@@ -91,8 +162,6 @@ function think(context: BehaviourContext): BehaviourIntent {
     targetId,
     useSkillId: skill.id,
   });
-  const targetId = teamTarget(context, foes);
-
   // 1. Interrupt a cast it can still beat.
   const interrupts = bar.filter((skill) => botUses(skill).includes("interrupt"));
   for (const foe of foes) {
@@ -208,8 +277,7 @@ function teamTarget(context: BehaviourContext, foes: readonly Participant[]): st
   }
   const self = context.self;
   const inRange = foes.filter((foe) => distance(foe.position, self.position) <= RANGE_SPELL);
-  const fightersInRange = inRange.some((foe) => foe.creature === undefined);
-  const eligible = (foe: Participant): boolean => !fightersInRange || foe.creature === undefined;
+  const eligible = fightable(inRange);
   for (const ally of context.participants) {
     if (
       ally.combatant.team !== self.combatant.team ||
@@ -223,8 +291,23 @@ function teamTarget(context: BehaviourContext, foes: readonly Participant[]): st
       return held.id;
     }
   }
+  return weakest(self, inRange)?.id;
+}
+
+/** Of `foes`, a creature only while none of them is a fighter. */
+function fightable(foes: readonly Participant[]): (foe: Participant) => boolean {
+  const fighters = foes.some((foe) => foe.creature === undefined);
+  return (foe) => !fighters || foe.creature === undefined;
+}
+
+/**
+ * Of `foes`, the one with the lowest health fraction, ties to the nearer
+ * to `self`, then simulation order; a creature only while none is a fighter.
+ */
+function weakest(self: Participant, foes: readonly Participant[]): Participant | undefined {
+  const eligible = fightable(foes);
   let best: Participant | undefined;
-  for (const foe of inRange) {
+  for (const foe of foes) {
     if (!eligible(foe)) {
       continue;
     }
@@ -237,7 +320,7 @@ function teamTarget(context: BehaviourContext, foes: readonly Participant[]): st
       best = foe;
     }
   }
-  return best?.id;
+  return best;
 }
 
 function nearestLiving(self: Participant, foes: readonly Participant[]): Participant | undefined {

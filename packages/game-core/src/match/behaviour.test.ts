@@ -322,7 +322,7 @@ describe("auto-attack", () => {
         check: () => ({ ok: false, reason: "skill-not-on-bar" }),
         isBot: () => false,
         calledTargetId: undefined,
-        inSight: () => true,
+        sees: () => true,
       },
     );
     expect(intent.attackTargetId).toBe("first");
@@ -373,7 +373,7 @@ describe("follow-and-attack (#467)", () => {
       check: () => ({ ok: false, reason: "skill-not-on-bar" }),
       isBot: () => false,
       calledTargetId: undefined,
-      inSight: () => true,
+      sees: () => true,
     });
   }
 

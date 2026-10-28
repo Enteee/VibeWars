@@ -1675,6 +1675,8 @@ In Priest Annihilation it counts the living, then each team's priest,
 yours first, and the next wave: `4 v 3 · ✚ ✚ · raise 0:47 · 7:12`
 (#1199). A priest's ✚ dims once it is dead, and the countdown reads
 `raise —` once both are.
+A Guild Battle counts the living, as Annihilation does, until its own
+scoreboard (#1226).
 
 With the death penalty on, each player has a **morale** between −60%
 and +10%, starting at 0. A death takes 15%, down to −60%, unless it came
@@ -1754,6 +1756,14 @@ team's shrine: a team is wiped only once its priest is dead too, and at
 shrine, at full Health and Energy, invulnerable for 5 seconds (#1208):
 no damage, life steal, sacrifice or degeneration takes Health, and no
 hex or condition lands (see [modes](modes.md)).
+
+A Guild Battle (#1222) ends the moment a **Guild Lord dies**: its team
+loses, "(Guild Lord slain)". A team whose every member is dead at -60%
+loses next, "(morale)": no shrine can raise them. A wipe alone does not
+end it; the shrines raise every 2 minutes with no priest. After **28
+minutes** the most aggression wins, "(most aggression at time)". In that
+order: the lord first, then morale, then time. Both lords in one tick,
+or equal aggression, and both teams lose.
 
 A Kill Count match ends when a team reaches 15 kills, or after 3
 minutes, when the team with more kills wins. Score is checked

@@ -65,6 +65,7 @@ export const ARENA: HostMap = {
     { team: 1, position: { x: 700, y: 600 } },
   ],
   shrines: [],
+  guildLords: [],
 };
 
 /** Let every message in flight land, and every message those send in turn. */
