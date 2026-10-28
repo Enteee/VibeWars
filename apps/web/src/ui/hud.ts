@@ -434,6 +434,8 @@ const REFUSALS: Readonly<Record<ActivationRejection, string>> = {
   "no-line-of-sight": "Target is not in line of sight.",
   "no-corpse": "No corpse in range.",
   "no-companion": "You have no pet.",
+  "companion-dead": "Your pet is dead.",
+  "companion-too-far": "Your pet is too far away.",
   "no-animal-to-charm": "There is no animal to charm here.",
   "invalid-target-creature": "That cannot be revived that way.",
 };

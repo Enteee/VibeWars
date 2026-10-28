@@ -1,0 +1,26 @@
+{
+  "id": "ranger.brutal-strike",
+  "name": "Brutal Strike",
+  "profession": "ranger",
+  "attribute": "Beast Mastery",
+  "type": "Pet attack.",
+  "elite": false,
+  "campaign": "Prophecies",
+  "cost": {
+    "kind": "energy",
+    "amount": 10
+  },
+  "overcast": 0,
+  "activationSeconds": 0,
+  "rechargeSeconds": 5,
+  "upkeep": false,
+  "description": "Your animal companion attempts a brutal strike that deals +5...29...35 damage. If that attack strikes a foe whose health is below 50%, that foe takes an additional +5...29...35 damage.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Ranger/77-Brutal_Strike",
+    "fetchedAt": "2026-10-28T07:27:45.922Z"
+  },
+  "unmapped": {}
+}

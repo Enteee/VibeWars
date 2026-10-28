@@ -35,7 +35,14 @@ import {
   weaponDamageMultiplierOf,
 } from "./tick.js";
 import type { FiredTrigger } from "./triggers.js";
-import type { Combatant, Skill, SkillEffect, StateCondition, Surroundings } from "./types.js";
+import {
+  blowRuleOf,
+  type Combatant,
+  type Skill,
+  type SkillEffect,
+  type StateCondition,
+  type Surroundings,
+} from "./types.js";
 
 /**
  * Weapon auto-attack: what one swing does once it lands (ADR-0026).
@@ -309,14 +316,15 @@ export const PLAIN_BLOW: BlowRule = {
 
 /** The blow `skill` makes of `caster`'s weapon, its bonus at the caster's ranks. */
 export function skillBlow(skill: Skill, caster: Combatant): BlowRule {
-  const bonusDamage = skill.attack?.bonusDamage;
-  const conditionalBonus = skill.attack?.conditionalBonus;
+  const rule = blowRuleOf(skill);
+  const bonusDamage = rule?.bonusDamage;
+  const conditionalBonus = rule?.conditionalBonus;
   return {
-    weaponDamage: skill.attack?.weaponDamage ?? PLAIN_BLOW.weaponDamage,
+    weaponDamage: rule?.weaponDamage ?? PLAIN_BLOW.weaponDamage,
     bonus: bonusDamage === undefined ? 0 : resolveMagnitude(bonusDamage, caster),
     strengthRank: rankIn(caster, STRENGTH_ATTRIBUTE),
-    damageType: skill.attack?.damageType,
-    armorPenetration: skill.attack?.armorPenetration ?? PLAIN_BLOW.armorPenetration,
+    damageType: rule?.damageType,
+    armorPenetration: rule?.armorPenetration ?? PLAIN_BLOW.armorPenetration,
     conditionalBonus:
       conditionalBonus === undefined
         ? undefined
@@ -654,6 +662,9 @@ export function resolveSwing(swing: Swing): {
  * A ranged weapon's attack skill does not come here: it flies, and its
  * blow and riders land with the arrow (#416).
  *
+ * A pet attack (#1046) comes here at its pet's next blow, the pet the
+ * caster, its own weapon the blow's.
+ *
  * What the attacker's statuses add to its hits goes onto `fired`, each
  * under its own skill (#939).
  */
@@ -664,6 +675,7 @@ export function resolveAttackSkill(
 ): CombatEvent[] {
   const { skill, caster, rng, rules, surroundings } = resolution;
   const blow = skillBlow(skill, caster);
+  const rule = blowRuleOf(skill);
   const snapshot = weaponSnapshotOf(caster);
   const kind = blowKind(snapshot.mainHand.weapon);
   const events: CombatEvent[] = [];
@@ -674,7 +686,7 @@ export function resolveAttackSkill(
     skill.area !== undefined || primary === undefined || primary.dead
       ? undefined
       : surroundings.get(primary.id);
-  const cleavesAll = skill.attack?.cleavesAllWhen;
+  const cleavesAll = rule?.cleavesAllWhen;
   const all =
     around !== undefined &&
     primary !== undefined &&
@@ -699,7 +711,7 @@ export function resolveAttackSkill(
     if (victim.dead) {
       continue;
     }
-    const requires = skill.attack?.chain?.requires;
+    const requires = rule?.chain?.requires;
     if (
       !chainAllows(caster, skill, victim.id) ||
       (requires !== undefined && !stateHolds(requires, caster, victim, surroundings))
@@ -709,7 +721,7 @@ export function resolveAttackSkill(
     }
     victims.push(victim);
   }
-  const strikes = skill.attack?.strikes ?? 1;
+  const strikes = rule?.strikes ?? 1;
   for (let strike = 0; strike < strikes; strike += 1) {
     const hit: Combatant[] = [];
     const blocked: Combatant[] = [];
@@ -721,7 +733,7 @@ export function resolveAttackSkill(
         events.push({ kind: "attack-missed", targetId: victim.id });
         continue;
       }
-      if (skill.attack?.unblockable !== true && blocks(victim, kind, rng)) {
+      if (rule?.unblockable !== true && blocks(victim, kind, rng)) {
         events.push({ kind: "attack-blocked", targetId: victim.id });
         attackReached(victim, events);
         blocked.push(victim);
@@ -755,12 +767,12 @@ export function resolveAttackSkill(
     }
     events.push(
       ...(hit.length === 0 ? [] : applySkillEffects({ ...resolution, targets: hit }, events)),
-      ...(blocked.length === 0 || skill.attack === undefined
+      ...(blocked.length === 0 || rule === undefined
         ? []
         : applySkillEffects(
             {
               ...resolution,
-              skill: { ...skill, effects: skill.attack.onBlocked },
+              skill: { ...skill, effects: rule.onBlocked },
               targets: blocked,
             },
             events,

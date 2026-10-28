@@ -12,7 +12,7 @@ import {
 import { makeCombatant, withAttackDuration } from "./testing.js";
 import { resolveMagnitude } from "./scaling.js";
 import { STATUS_DEFINITIONS } from "./status.js";
-import { isEasilyInterrupted, type SkillEffect } from "./types.js";
+import { blowRuleOf, isEasilyInterrupted, type SkillEffect } from "./types.js";
 
 /**
  * Descriptions are generated from the effect data, never authored, so
@@ -460,17 +460,18 @@ describe("describeSkill", () => {
       effects.reduce((sum, effect) => sum + linesOf(effect), 0);
     for (const entry of IMPLEMENTED_SKILLS) {
       const described = describeSkill(entry);
+      const rule = blowRuleOf(entry);
       expect(described.effects, `${entry.id} lost an effect line`).toHaveLength(
         lines(entry.effects) +
           (entry.cost?.kind === "adrenaline" && entry.cost.losesAll === true ? 1 : 0) +
-          (entry.attack?.chain === undefined ? 0 : 1) +
-          (entry.attack?.bonusDamage === undefined && entry.attack?.weaponDamage !== 0 ? 0 : 1) +
-          (entry.attack?.unblockable === true ? 1 : 0) +
+          (rule?.chain === undefined ? 0 : 1) +
+          (rule?.bonusDamage === undefined && rule?.weaponDamage !== 0 ? 0 : 1) +
+          (rule?.unblockable === true ? 1 : 0) +
           (entry.attack?.weapon === "scythe" && entry.area === undefined ? 1 : 0) +
           (entry.attack?.cleavesAllWhen === undefined ? 0 : 1) +
-          (entry.attack?.conditionalBonus === undefined ? 0 : 1) +
-          ((entry.attack?.armorPenetration ?? 0) > 0 ? 1 : 0) +
-          lines(entry.attack?.onBlocked ?? []) +
+          (rule?.conditionalBonus === undefined ? 0 : 1) +
+          ((rule?.armorPenetration ?? 0) > 0 ? 1 : 0) +
+          lines(rule?.onBlocked ?? []) +
           (entry.whileActivating === undefined ? 0 : 1) +
           (entry.projectile === undefined ? 0 : 1) +
           (isEasilyInterrupted(entry.type) ? 1 : 0) +
@@ -840,6 +841,18 @@ describe("signets and shouts (#524)", () => {
     expect(describeSkill(skill("warrior.healing-signet")).typeText).toBe("Signet.");
     expect(describeSkill(skill("warrior.watch-yourself")).typeText).toBe("Shout.");
     expect(describeSkill(skill("necromancer.malaise")).typeText).toBe("Hex Spell.");
+  });
+
+  it("names a pet attack, and its bonus as an attack skill's (#1046)", () => {
+    const brutal = describeSkill(
+      skill("ranger.brutal-strike"),
+      new Map([["ranger.beast-mastery", 12]]),
+    );
+    expect(brutal.typeText).toBe("Pet Attack.");
+    expect(brutal.effects.map((effect) => effect.text)).toEqual([
+      "+29 damage",
+      "If target is below 50% Health: +29 damage",
+    ]);
   });
 
   it("says Healing Signet is free and what it costs in armor while activating", () => {

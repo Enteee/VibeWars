@@ -41,6 +41,7 @@ import {
   openIndexedDbStore,
   type KeyValueStore,
 } from "./storage/repository.js";
+import { cloneCharacter } from "./storage/clone-character.js";
 import type { StoredCharacter } from "./storage/schema.js";
 import { rerollStarterCharacter, rollStarterCharacter } from "./storage/starter-character.js";
 import { importTeam, importedTeamSummary, type TeamImportResult } from "./storage/team-transfer.js";
@@ -201,12 +202,17 @@ async function main(): Promise<void> {
   // The first start plays a rolled starter character (#853). Not into
   // memory: it would be gone next start, with the key saying it was rolled.
   if (persistent) {
+    // Its name is none of the roster's (#1149). The list's notices go on
+    // the first menu: the stale records they report are gone after this.
+    const { characters: roster, problems } = await characters.list();
+    editNotices = [...problems, ...editNotices];
     const rolled = await rollStarterCharacter({
       characters,
       key: { load: loadStarterCharacterId, save: saveStarterCharacterId },
       random: Math.random,
       id: crypto.randomUUID(),
       now: Date.now(),
+      taken: roster.map((c) => c.name),
     });
     if (rolled !== undefined) {
       saveActiveCharacterId(rolled.id);
@@ -509,11 +515,35 @@ async function main(): Promise<void> {
             }
           })();
         },
+        onCloneCharacter: (id) => {
+          void (async () => {
+            const character = await characters.load(id);
+            if (character === undefined) {
+              showMenu();
+              return;
+            }
+            const copy = cloneCharacter(character, crypto.randomUUID(), Date.now());
+            try {
+              await characters.save(copy);
+            } catch (error) {
+              console.warn("[web] could not save the clone", error);
+              showMenu();
+              return;
+            }
+            showCharacterEditor(copy);
+          })();
+        },
         onRerollCharacter: (id) => {
           void (async () => {
             const character = await characters.load(id);
             if (character !== undefined) {
-              await rerollStarterCharacter(characters, character, Math.random, Date.now());
+              await rerollStarterCharacter(
+                characters,
+                character,
+                Math.random,
+                Date.now(),
+                list.map((c) => c.name),
+              );
             }
             showMenu();
           })();
@@ -548,12 +578,7 @@ async function main(): Promise<void> {
         })();
       },
       onDuplicate: (source: StoredCharacter) => {
-        const copy: StoredCharacter = {
-          ...source,
-          id: crypto.randomUUID(),
-          name: `${source.name} (copy)`,
-          updatedAt: Date.now(),
-        };
+        const copy = cloneCharacter(source, crypto.randomUUID(), Date.now());
         void (async () => {
           await characters.save(copy);
           back();

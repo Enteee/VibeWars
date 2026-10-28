@@ -765,8 +765,8 @@ it, not baked in, so one file serves every screen.
   in an arrow ring), hex-bolt (dashed ring, bolt), blade-cleanse, blade-hook,
   blade-shards, hilt, banner-note, mountain-crack, dust, thorns, limp,
   dagger-burst, ox-horns, spider, resurrect-seal, resurrect-arrive,
-  resurrect-return, resurrect-blood. A new primary effect adds a glyph; a new
-  skill adds a row.
+  resurrect-return, resurrect-blood, bone-minions, bone-horror. A new primary
+  effect adds a glyph; a new skill adds a row.
 
 ### Skill slot states
 
@@ -829,6 +829,37 @@ differ by shape, so the icon shows the current state at a glance.
 
 UI text is sentence case: "Edit team", "New character", "Save". A small
 uppercase field label is styled so by CSS; the words themselves stay sentence case.
+
+## Creatures
+
+Pets, minions and spirits must read as not-a-player at a glance and say what
+they are (#1158). Today a creature is a smaller actor circle, radius 10 to a
+player's 14. `scripts/assets/creature-study.mjs` drew three directions in
+`docs/art/creature-study.svg`: true size, then 4x, ally, foe and dead. Team
+colour stays the fill or outline everywhere.
+
+- **A, a silhouette per family.** Wolf a teardrop pointing along its facing,
+  minion and horror spiked stars, spirit a ring with a tail. Reads at true
+  size without a glyph: nothing here is a circle. Fails: it says "kind of
+  thing", not which one (minion against horror is only star points), and a
+  dead creature is a dashed shape that needs the dash to be seen at 1x. The
+  facing tip also eats into a neighbour in a crowd of 32.
+- **B, a ghost body.** A team outline round a dim fill, a kind glyph inside.
+  Reads as "not solid, not a player" at once and the glyph names the kind.
+  Fails: at true size the glyph is 6 px and the paw and the skull blur; the
+  dim fill weakens team colour, the one rule, so a foe is only its ring.
+- **C, a hexagon plate.** Every creature a solid team hexagon with the glyph
+  cut from it. Keeps full team colour, the corner shape alone separates it
+  from a player's circle, and the glyph is dark on bright, so it holds at 1x
+  better than B. Fails: one shape for every family, so only the glyph tells
+  kinds apart.
+
+**Decided: C** (operator, #1158). Every creature is a solid team-colour
+hexagon with its kind glyph cut from it (paw, skull, horned skull, wisp). No
+wolf tip from A: a pet's heading is not worth a second shape. The spirit
+keeps the hexagon and the wisp glyph; if it reads as a status at true size,
+that is a follow-up for the implementing card, not a reason to bring back A's
+ring. The study stays in `creature-study.svg` for the rejected directions.
 
 ## Sizes
 

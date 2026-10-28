@@ -1259,13 +1259,13 @@ GW1 PvP (#473). Only a primary can hold its rank, and runes count.
   rank (−48% at 12: Mystic Regeneration 8 instead of 15), rounded once,
   never below 0. While any enchantment is on you, yours or an ally's,
   you have +1 armor a rank against every hit.
-- **Spawning Power** (Ritualist). A spirit or minion you summon, of any
-  profession, has 4% more Health a rank, rounded once, not a charmed
-  pet: a spirit of 210 has 311 at rank 12. A weapon spell you put on
-  anyone, yourself included, lasts 4% longer a rank: Weapon of
-  Quickening 31.08 s instead of 21 s. A spirit's lifetime is unchanged.
-  The tooltip shows both, the base in brackets: "311 Health (210)",
-  "31.1s (21s)" (#1098).
+- **Spawning Power** (Ritualist). A creature you summon, of any
+  profession (spirits and minions, not a charmed pet), has 4% more
+  Health a rank, rounded once: a spirit of 210 has 311 at rank 12. A
+  weapon spell you put on anyone, yourself included, lasts 4% longer a
+  rank: Weapon of Quickening 31.08 s instead of 21 s. A spirit's lifetime
+  is unchanged. The tooltip shows both, the base in brackets: "311 Health
+  (210)", "31.1s (21s)" (#1098).
 
 The build editor says under a primary's row what it does at its rank
 ("Fast Casting 12: spells cast 43% faster, signets 36% faster"), and a skill tooltip for a
@@ -1390,6 +1390,25 @@ respawns or is reset; under resurrection-only only Comfort Animal
 brings it back. It outlives its owner's death and leaves with its
 owner. A build change that keeps Charm Animal keeps the wolf as it is;
 one that drops it sends it away; one that gains it brings a fresh one.
+
+**Pet attacks** (#1107) are Beast Mastery skills the owner uses and the
+wolf lands. The owner pays and the skill starts recharging, but there
+is no cast: it can be used mid-cast or mid-swing and stops neither. It
+arms the wolf's next blow for 10 s; a newer pet attack replaces one
+still waiting, whose energy is lost. With a living foe selected within
+the wolf's 700, the wolf goes for it, as when its owner attacks one.
+The armed blow goes through the attack-skill path with the wolf as the
+attacker, at the ranks the wolf arrived with; a blind miss or a block
+uses it up too, and it earns no adrenaline. With no wolf ("You have no
+pet."), a dead one ("Your pet is dead.") or one farther than 350 from
+its owner ("Your pet is too far away.") it is refused and costs
+nothing. At Beast Mastery 12:
+
+| Skill            | Energy | Recharge | Blow                                                            |
+| ---------------- | ------ | -------- | --------------------------------------------------------------- |
+| Brutal Strike    | 10     | 5 s      | +29, and +29 more on a foe below 50% Health                     |
+| Maiming Strike   | 10     | 5 s      | +17; a hit cripples for 13 s                                    |
+| Disrupting Lunge | 5      | 10 s     | +10; a hit on a foe using a skill interrupts it, +20 s disabled |
 
 ## Wards and wells
 

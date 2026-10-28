@@ -282,8 +282,8 @@ async function saveCharacters(page: Page, names: readonly string[]): Promise<voi
   }
 }
 
-/** The character the first start rolls (#853) is named after its build: "Ranger/Mesmer". */
-const ROLLED_STARTER = /^\w+\/\w+$/;
+/** The character the first start rolls (#853) has a random name (#1149): "Kaelen Ashvale". */
+const ROLLED_STARTER = /^[A-Z][a-z]+ [A-Z][a-z]+$/;
 
 /** The team editor's member rows, and their names. */
 const memberRows = (page: Page) => page.locator(".team-grid .team-row");

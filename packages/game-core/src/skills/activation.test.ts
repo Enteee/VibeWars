@@ -34,6 +34,7 @@ const SPELL: Skill = {
   whileActivating: undefined,
   corpse: undefined,
   companion: undefined,
+  petAttack: undefined,
   projectile: undefined,
   effects: [{ kind: "damage", amount: { flat: 50 }, type: "typeless", armorPenetration: 0 }],
 };
@@ -335,6 +336,60 @@ describe("canActivate, a pet's skills (#1046)", () => {
         }),
       ),
     ).toEqual({ ok: false, reason: "no-animal-to-charm" });
+  });
+
+  describe("a pet attack", () => {
+    const brutal = skill("ranger.brutal-strike");
+    const strike = (
+      target: Parameters<typeof makeCombatant>[0] | undefined,
+      at = vec2(350, 0),
+      overrides: Partial<ActivationRequest> = {},
+    ) =>
+      canActivate(
+        request({
+          skill: brutal,
+          caster,
+          target: target === undefined ? undefined : makeCombatant(target),
+          targetPosition: target === undefined ? undefined : at,
+          skillBar: [brutal.id],
+          ...overrides,
+        }),
+      );
+
+    it('with no pet is "no-companion", with a dead one "companion-dead"', () => {
+      expect(strike(undefined)).toEqual({ ok: false, reason: "no-companion" });
+      expect(strike({ id: "pet", team: 0, dead: true })).toEqual({
+        ok: false,
+        reason: "companion-dead",
+      });
+    });
+
+    it('reaches a pet within earshot, 350, seen or not; past it is "companion-too-far"', () => {
+      const wall = { losBlockers: [segment(vec2(100, -50), vec2(100, 50))] };
+      expect(strike({ id: "pet", team: 0 }, vec2(350, 0), wall)).toEqual({ ok: true });
+      expect(strike({ id: "pet", team: 0 }, vec2(351, 0))).toEqual({
+        ok: false,
+        reason: "companion-too-far",
+      });
+    });
+
+    it("is used mid-cast, where any other skill is refused", () => {
+      expect(strike({ id: "pet", team: 0 }, vec2(20, 0), { isCasting: true })).toEqual({
+        ok: true,
+      });
+      expect(
+        canActivate(
+          request({
+            skill: comfort,
+            caster,
+            target: makeCombatant({ id: "pet", team: 0 }),
+            targetPosition: vec2(20, 0),
+            skillBar: [comfort.id],
+            isCasting: true,
+          }),
+        ),
+      ).toEqual({ ok: false, reason: "already-casting" });
+    });
   });
 });
 
