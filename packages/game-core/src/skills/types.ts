@@ -493,26 +493,42 @@ export interface CreatureTemplate {
  * A creature's melee or ranged blow (#467 child 3), as a weapon's numbers.
  * `damageMin`–`damageMax` is what it deals with its summoner at rank 12 in
  * `attributeId`, against armor 60. The summoner's rank, read once at
- * summoning, scales every blow: through the creature's `level`
- * (`creatureDamageMultiplier`, #1131), ×1 at 12 and ×0 at a level of 0,
- * or, with none, as weapon mastery scales a player's (a pet's).
+ * summoning, scales every blow as `scaling` says.
  */
 export interface CreatureAttack {
   readonly attributeId: string;
   readonly damageMin: number;
   readonly damageMax: number;
-  /**
-   * Its GW1 level with its summoner at rank 0 and 12 in `attributeId`,
-   * linear in the rank between and past. `undefined`: its blows scale as
-   * weapon mastery does (`weaponAttributeMultiplier`), as a pet's.
-   */
-  readonly level: CreatureLevel | undefined;
+  readonly scaling: CreatureDamageScaling;
   readonly damageType: DamageType;
   readonly attackIntervalSeconds: number;
   readonly range: number;
+  /** World units per second, a shot's; `undefined`: a melee blow. */
+  readonly projectileSpeed: number | undefined;
+  /** What each blow that hits does besides its damage (#1239); a missed or blocked one, nothing. */
+  readonly onHit: readonly OnHitEffect[];
 }
 
-/** A minion's level at its summoner's rank 0 and 12 (#1131). */
+/**
+ * How a creature's summoner's rank scales its blows, one way each.
+ * `level`: through its GW1 level (`creatureDamageMultiplier`, #1131), ×1
+ * at 12 and ×0 at a level of 0, a minion's. `weapon-mastery`: as weapon
+ * mastery scales a player's (`weaponAttributeMultiplier`), a pet's.
+ * `rank`: linear in the rank, `atZero` at 0 and `damageMax` at 12, as
+ * GW1 states a spirit's "attacks deal 5...30 damage" (#1239).
+ */
+export type CreatureDamageScaling =
+  | { readonly kind: "level"; readonly level: CreatureLevel }
+  | { readonly kind: "weapon-mastery" }
+  | { readonly kind: "rank"; readonly atZero: number };
+
+/** What a blow lands on whoever it hits (#1239): Shadowsong's blindness, Dissonance's interrupt. */
+export type OnHitEffect = ApplyStatusEffect | InterruptEffect | RemoveStatusEffect;
+
+/**
+ * A minion's GW1 level with its summoner at rank 0 and 12 in the
+ * attack's attribute, linear in the rank between and past (#1131).
+ */
 export interface CreatureLevel {
   readonly atZero: number;
   readonly atTwelve: number;

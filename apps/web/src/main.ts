@@ -48,6 +48,7 @@ import { rerollStarterCharacter, rollStarterCharacter } from "./storage/starter-
 import { importTeam, importedTeamSummary, type TeamImportResult } from "./storage/team-transfer.js";
 import { closeBeatEditor } from "./ui/beat-editor.js";
 import { mountBuildEditor, newCharacter, type BuildEditorView } from "./ui/build-editor.js";
+import { closeHelpOverlay, openHelpOverlay } from "./ui/help-screen.js";
 import { disposeJukeboxScreen, renderJukeboxScreen } from "./ui/jukebox.js";
 import {
   closeOptionsOverlay,
@@ -352,9 +353,13 @@ async function main(): Promise<void> {
     closeBeatEditor();
   };
 
-  // The bar's ⚙ opens Options over the screen, which stays as it was
-  // underneath: an editor keeps its edits, a lobby keeps updating (#454).
+  // The bar's [?] and ⚙ open Help and Options over the screen, which
+  // stays as it was underneath: an editor keeps its edits, a lobby keeps
+  // updating (#454, #1257).
   mountTopbar(topbar, requireElement("#topbar-actions"), {
+    onHelp: () => {
+      openHelpOverlay(app);
+    },
     onOptions: () => {
       openOptionsOverlay(app);
     },
@@ -366,6 +371,7 @@ async function main(): Promise<void> {
       // From the bar, over a lobby whose match just started: it goes with
       // the screens.
       closeOptionsOverlay();
+      closeHelpOverlay();
     }
     // In a match the viewport has the whole height; the HUD has the bar's
     // buttons (#454).

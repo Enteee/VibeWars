@@ -233,14 +233,20 @@ export const SKILL_ICONS = {
   // Three meteors in a falling line; a heal cross spent from the enchantment's ring (#1214).
   "elementalist.meteor-shower": { glyph: "meteor-trio" },
   "monk.contemplation-of-purity": { glyph: "ring-heal" },
-  // Placeholders until the asset-designer's (#1228).
-  "mesmer.conjure-phantasm": { glyph: "hex-bolt", modifier: "down" },
-  "mesmer.imagined-burden": { glyph: "slow", modifier: "half" },
-  "mesmer.phantom-pain": { glyph: "hex-bolt", modifier: "bleed" },
-  "mesmer.shrinking-armor": { glyph: "armor-half", modifier: "down" },
-  "mesmer.illusion-of-haste": { glyph: "speed", modifier: "half" },
-  "mesmer.ineptitude": { glyph: "flash", modifier: "stun" },
-  "mesmer.crippling-anguish": { glyph: "limp", modifier: "down" },
+  // Illusion hexes and haste: each glyph shows the status it leaves, so the cripple and the cracks read apart (#1243).
+  "mesmer.conjure-phantasm": { glyph: "ghost", modifier: "down" },
+  "mesmer.imagined-burden": { glyph: "weight", modifier: "half" },
+  "mesmer.phantom-pain": { glyph: "ache-cross", modifier: "hourglass" },
+  "mesmer.shrinking-armor": { glyph: "armor-shrink", modifier: "hourglass" },
+  "mesmer.illusion-of-haste": { glyph: "speed-break", modifier: "self" },
+  "mesmer.ineptitude": { glyph: "eye-slash", modifier: "area" },
+  "mesmer.crippling-anguish": { glyph: "limp-drain" },
+  // Placeholders until the asset-designer's (#1239): the attacking spirits.
+  "ritualist.pain": { glyph: "hex-bolt", modifier: "hourglass" },
+  "ritualist.shadowsong": { glyph: "eye", modifier: "hourglass" },
+  "ritualist.dissonance": { glyph: "interrupt", modifier: "hourglass" },
+  "ritualist.disenchantment": { glyph: "hex-cut", modifier: "hourglass" },
+
   "assassin.shroud-of-silence": { glyph: "hex-mute" },
   "assassin.expose-defenses": { glyph: "armor-crack" },
   "assassin.enduring-toxin": { glyph: "drop-run" },

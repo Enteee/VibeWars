@@ -2,6 +2,8 @@ import { fileURLToPath } from "node:url";
 
 import { defineConfig } from "vite";
 
+import { licencesPlugin } from "./plugins/licences.js";
+
 // The transport the client plays over (#403): see `src/net/transport/index.ts`.
 // A typo would otherwise build a client that quietly uses Trystero.
 const TRANSPORT = process.env.VITE_VIBEWARS_TRANSPORT;
@@ -20,6 +22,8 @@ export default defineConfig({
   // (`/VibeWars/`, `/VibeWars/next/`). Read at config time, so it is not a
   // `VITE_` variable. Dev and the server-served build stay at the root.
   base: process.env.VIBEWARS_BASE ?? "/",
+  // Every bundled npm package's licence, for Options (#1242, ADR-0039).
+  plugins: [licencesPlugin()],
   build: {
     outDir: "dist",
     emptyOutDir: true,
@@ -62,6 +66,9 @@ export default defineConfig({
         fileURLToPath(new URL(".", import.meta.url)),
         fileURLToPath(new URL("../../packages", import.meta.url)),
         fileURLToPath(new URL("../../node_modules", import.meta.url)),
+        // The player docs the Help screen renders (#1257), and nothing
+        // else of docs/.
+        fileURLToPath(new URL("../../docs/player", import.meta.url)),
       ],
     },
     port: 5173,

@@ -20,7 +20,8 @@ import path from "node:path";
 import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 
-import { GIT_ENV, GIT_HARDENING } from "./git-hardening.mjs";
+import { GITHUB_TOKEN_VARS, paths } from "./creds.mjs";
+import { GIT_ENV, GIT_SSH_VARS, remoteHardening } from "./git-hardening.mjs";
 import {
   HINT_DELAY_MS,
   flagValue,
@@ -207,6 +208,19 @@ const RATE_LIMIT = path.join(HUB, "ratelimit.json");
 const MIRROR = path.join(HUB, ".git-mirror");
 /** An empty directory hubd owns, where gh runs, so gh reads no checkout. */
 const GH_CWD = path.join(HUB, ".gh-cwd");
+/**
+ * The company's credential home (#864). hubd works on GitHub as the company
+ * (#866): gh with its config directory, git with its push key.
+ */
+const CREDENTIALS = paths(process.env.VIBEWARS_CREDENTIALS ?? "");
+// A token in the operator's environment beats GH_CONFIG_DIR, and an ssh
+// command beats the pinned key: either would make calls the operator's.
+// hubd never uses one.
+for (const name of [...GITHUB_TOKEN_VARS, ...GIT_SSH_VARS]) {
+  Reflect.deleteProperty(process.env, name);
+}
+/** git's pins, with the company's push key for whatever reaches GitHub. */
+const GIT_PINS = remoteHardening(CREDENTIALS.sshKey);
 /** The commit and time the company last started from (claude-llc writes it). */
 const BOOT = path.join(ROOT, "boot.json");
 /** A reboot hubd has accepted and the supervisor has not yet carried out. */
@@ -377,7 +391,7 @@ function run(file, args, cwd, extraEnv = {}) {
 function ghRaw(args) {
   // GH_REPO answers gh api's `{owner}/{repo}` placeholders, which gh would
   // otherwise take from the git remote of the directory it runs in.
-  return run("gh", args, GH_CWD, { GH_REPO: company().repo });
+  return run("gh", args, GH_CWD, { GH_REPO: company().repo, GH_CONFIG_DIR: CREDENTIALS.gh });
 }
 
 /**
@@ -642,7 +656,7 @@ function servedByRest(kind, argv) {
  * @returns {Promise<{ code: number, stdout: string, stderr: string }>}
  */
 function git(args) {
-  return run("git", [...GIT_HARDENING, `--git-dir=${MIRROR}`, ...args], HUB, GIT_ENV);
+  return run("git", [...GIT_PINS, `--git-dir=${MIRROR}`, ...args], HUB, GIT_ENV);
 }
 
 /**
@@ -654,7 +668,7 @@ function git(args) {
  */
 function gitBytes(args) {
   return new Promise((resolve) => {
-    const child = spawn("git", [...GIT_HARDENING, `--git-dir=${MIRROR}`, ...args], {
+    const child = spawn("git", [...GIT_PINS, `--git-dir=${MIRROR}`, ...args], {
       cwd: HUB,
       env: { ...process.env, GIT_TERMINAL_PROMPT: "0", ...GIT_ENV },
       stdio: ["ignore", "pipe", "ignore"],
@@ -3737,13 +3751,17 @@ async function main() {
       process.exit(1);
     }
   }
-  const token = await run("gh", ["auth", "token"], GH_CWD);
-  if (token.code !== 0) {
-    console.error("hubd: gh is not authenticated on this machine");
+  if (process.env.VIBEWARS_CREDENTIALS === undefined || process.env.VIBEWARS_CREDENTIALS === "") {
+    console.error("hubd: VIBEWARS_CREDENTIALS is not set");
+    process.exit(1);
+  }
+  const login = await ghRaw(["api", "user", "--jq", ".login"]);
+  if (login.code !== 0 || login.stdout.trim() === "") {
+    console.error(`hubd: the company's gh in ${CREDENTIALS.gh} is not signed in`);
     process.exit(1);
   }
   console.error(
-    `hubd: serving the employees in ${STAFF} on ${cfg.repo} (project ${String(cfg.project)})`,
+    `hubd: serving the employees in ${STAFF} on ${cfg.repo} (project ${String(cfg.project)}) as ${login.stdout.trim()}`,
   );
 
   fs.mkdirSync(HUB, { recursive: true });

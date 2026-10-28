@@ -1,5 +1,5 @@
 import { RANGE_MELEE, RANGE_SPELL } from "../distances.js";
-import type { AttackWeaponClass } from "../skills/types.js";
+import type { AttackWeaponClass, OnHitEffect } from "../skills/types.js";
 import { EQUIPMENT_REQUIREMENT_RANK, type DamageType, type EquipmentRequirement } from "./types.js";
 
 /**
@@ -112,6 +112,8 @@ export interface Weapon {
   readonly range: number;
   /** World units per second. `undefined` means the hit lands immediately. */
   readonly projectileSpeed: number | undefined;
+  /** What a hit does besides its damage, a spirit's (#1239); none for a player's weapon. */
+  readonly onHit: readonly OnHitEffect[];
   /** Fraction of the target's armor ignored, 0..1. */
   readonly armorPenetration: number;
   /** Foes adjacent to the target also struck. Scythes cleave; nothing else does. */
@@ -154,6 +156,7 @@ function martial(
     cleaveTargets: 0,
     criticalMultiplier: Math.SQRT2,
     doubleStrike: undefined,
+    onHit: [],
   };
   return Object.freeze({ ...base, ...overrides });
 }
@@ -207,6 +210,7 @@ const UNARMED: Weapon = Object.freeze({
   cleaveTargets: 0,
   criticalMultiplier: Math.SQRT2,
   doubleStrike: undefined,
+  onHit: [],
 } satisfies Weapon);
 
 /**
@@ -326,6 +330,7 @@ export const WEAPONS: Readonly<Record<WeaponId, Weapon>> = Object.freeze({
     cleaveTargets: 0,
     criticalMultiplier: Math.SQRT2,
     doubleStrike: undefined,
+    onHit: [],
   } satisfies Weapon),
 
   staff: Object.freeze({
@@ -343,6 +348,7 @@ export const WEAPONS: Readonly<Record<WeaponId, Weapon>> = Object.freeze({
     cleaveTargets: 0,
     criticalMultiplier: Math.SQRT2,
     doubleStrike: undefined,
+    onHit: [],
   } satisfies Weapon),
 
   // The five bows differ only in interval, reach and how long the arrow
