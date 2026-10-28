@@ -43,18 +43,29 @@ describe("accessToken", () => {
 });
 
 describe("refusal", () => {
-  it("forwards the API's paths only", () => {
-    expect(refusal("/v1/messages")).toBeNull();
-    expect(refusal("/v1/messages?beta=true")).toBeNull();
-    for (const url of [
-      "http://example.com/v1/messages",
-      "//example.com/v1/messages",
-      "/api/oauth/profile",
-      "/",
-      "example.com:443",
-      undefined,
+  it("forwards the API requests Claude Code makes only", () => {
+    expect(refusal("POST", "/v1/messages")).toBeNull();
+    expect(refusal("POST", "/v1/messages?beta=true")).toBeNull();
+    expect(refusal("POST", "/v1/messages/count_tokens?beta=true")).toBeNull();
+    for (const [method, url] of [
+      ["POST", "http://example.com/v1/messages"],
+      ["POST", "//example.com/v1/messages"],
+      ["POST", "/api/oauth/profile"],
+      ["POST", "/v1/../api/oauth/profile"],
+      ["POST", "/v1/./../api/oauth/profile"],
+      ["POST", "/v1/%2e%2e/api/oauth/profile"],
+      ["POST", "/v1/messages/../../api/oauth/profile"],
+      ["POST", "/v1//messages"],
+      ["POST", "/v1/messages?x=/../a"],
+      ["POST", "/v1/models"],
+      ["GET", "/v1/messages"],
+      ["DELETE", "/v1/messages"],
+      ["POST", "/"],
+      ["CONNECT", "example.com:443"],
+      ["POST", undefined],
+      [undefined, "/v1/messages"],
     ]) {
-      expect(refusal(url), String(url)).not.toBeNull();
+      expect(refusal(method, url), `${String(method)} ${String(url)}`).not.toBeNull();
     }
   });
 });
