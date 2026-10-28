@@ -60,6 +60,8 @@ export function parseGwMemorialSkill(input: ParseGwMemorialSkillInput): GwMemori
   let overcast = 0;
   let activationSeconds = 0;
   let rechargeSeconds = 0;
+  let upkeep = false;
+  let refusal: string | undefined;
 
   dotsRow.find("span.skillsDotsRevision").each((_index, el) => {
     const span = $(el);
@@ -91,11 +93,25 @@ export function parseGwMemorialSkill(input: ParseGwMemorialSkillInput): GwMemori
       case "recharge":
         rechargeSeconds = value;
         break;
+      case "eregen":
+        // The upkeep dot: the page renders GW1's -1 energy pip as "1".
+        // Every upkeep skill in GW1 costs exactly one pip, so anything
+        // else is a page this parser does not understand.
+        if (value === 1) {
+          upkeep = true;
+        } else {
+          refusal = `an upkeep dot of ${valueText.trim()}, not 1`;
+        }
+        break;
       default:
         // An unrecognized resource-dot kind: preserved, not guessed at.
         unmapped[`cost.${kind}`] = value;
     }
   });
+
+  if (refusal !== undefined) {
+    return { kind: "unsupported", reason: refusal };
+  }
 
   const attributeLine = $(".skill_info.skill_infoCurrent").eq(1).text();
   const attributeMatch = /Attribute:\s*([^·]+?)\s*(?:·|$)/.exec(attributeLine);
@@ -142,6 +158,7 @@ export function parseGwMemorialSkill(input: ParseGwMemorialSkillInput): GwMemori
       overcast,
       activationSeconds,
       rechargeSeconds,
+      upkeep,
       description,
       variant: "pvp",
       ruleset: "gw1-reference",

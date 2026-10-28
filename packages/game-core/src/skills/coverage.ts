@@ -30,10 +30,7 @@ export type MissingMechanic =
   | "persistent-ground-area"
   | "skill-bar-mutation"
   | "enchantment-sacrifice"
-  | "reactive-triggers"
-  | "expiry-triggers"
-  | "title-attribute"
-  | "target-movement";
+  | "title-attribute";
 
 /** What each missing mechanic would mean to build, in one line. */
 export const MISSING_MECHANIC_DESCRIPTIONS: Readonly<Record<MissingMechanic, string>> =
@@ -43,10 +40,7 @@ export const MISSING_MECHANIC_DESCRIPTIONS: Readonly<Record<MissingMechanic, str
     "persistent-ground-area": "an area that stays on the ground and acts on whoever is in it",
     "skill-bar-mutation": "a skill that replaces itself with a different skill at runtime",
     "enchantment-sacrifice": "removing your own enchantments as a cost, scaled by how many",
-    "reactive-triggers": "effects that fire in response to something happening to you",
-    "expiry-triggers": "effects that fire when a status ends rather than when it is applied",
     "title-attribute": "a PvE title track as the skill's attribute",
-    "target-movement": "an effect that depends on whether its target is moving",
   });
 
 /**
@@ -66,13 +60,6 @@ const UNIMPLEMENTED_REASONS: Readonly<Record<string, readonly MissingMechanic[]>
   "mesmer.echo": ["skill-bar-mutation"],
   // "Lose all enchantments. For each one lost, you gain health, lose one hex..."
   "monk.contemplation-of-purity": ["enchantment-sacrifice"],
-  // "...whenever you suffer from a new Condition, all foes in the area suffer..."
-  "necromancer.contagion": ["reactive-triggers"],
-  // "The caster is healed for 30...120 when Parasitic Bond ends."
-  "necromancer.parasitic-bond": ["expiry-triggers"],
-  // "If it hits a non-moving target, you inflict a Deep Wound": the
-  // wound, the reason to use it, depends on the target standing still.
-  "paragon.cruel-spear": ["target-movement"],
   // PvE-only: its attribute is "Sunspear rank", a title track (ADR-0029).
   "warrior.whirlwind-attack": ["title-attribute"],
 });
@@ -129,6 +116,22 @@ export function computeCoverage(importedSkillIds: readonly string[]): SkillCover
     originalDesign,
     unexplained: unimplemented.filter((s) => s.missing.length === 0).map((s) => s.id),
   };
+}
+
+/**
+ * Catalog skills the corpus marks as upkeep that are not maintained here
+ * (#840): an upkeep skill implemented as a timed enchantment would be a
+ * different skill wearing its name. Takes the imported upkeep ids for the
+ * same reason `computeCoverage` takes the imported ids. Empty is healthy.
+ */
+export function unmaintainedUpkeepSkills(upkeepSkillIds: readonly string[]): readonly string[] {
+  const upkeep = new Set(upkeepSkillIds);
+  return IMPLEMENTED_SKILLS.filter(
+    (skill) =>
+      upkeep.has(skill.id) && !skill.effects.some((effect) => effect.kind === "maintain-status"),
+  )
+    .map((skill) => skill.id)
+    .sort();
 }
 
 /** Group unimplemented skills by the mechanic they are waiting on. */

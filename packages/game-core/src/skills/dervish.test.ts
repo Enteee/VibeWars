@@ -92,6 +92,7 @@ function strike(caster: Combatant, target: Combatant, rng = steady()): CombatEve
   return resolveAttackSkill(
     { surroundings: new Map(), skill: skill(id), caster, targets: [target], rng, rules: RULES },
     NOWHERE,
+    [],
   );
 }
 
@@ -225,6 +226,7 @@ describe("Fleeting Stability (#845)", () => {
           rules: RULES,
         },
         NOWHERE,
+        [],
       );
     };
     chargeAdrenaline(warrior, "warrior.backbreaker");

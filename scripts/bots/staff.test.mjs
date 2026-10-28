@@ -331,7 +331,7 @@ describe("seedStaff", () => {
     const seeded = seedStaff(["manager", "developer"], NOW);
     expect(Object.keys(seeded.employees)).toEqual(["manager", "developer", "developer@2"]);
     expect(seeded.employees["developer@2"]).toMatchObject({ role: "developer", by: "operator" });
-    expect(Object.keys(seedStaff(ROLES, NOW).employees)).toHaveLength(9);
+    expect(Object.keys(seedStaff(ROLES, NOW).employees)).toHaveLength(10);
   });
 });
 

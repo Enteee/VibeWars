@@ -66,6 +66,12 @@ and the notice the joiner was shown. It exits 0 only if every pair joined.
 at the address it prints; `--pairs` picks pairs. Browsers come from
 `VIBEWARS_CHROMIUM` and `VIBEWARS_FIREFOX`, as for the music stress run.
 
+`--turn <invite-link-or-json>` gives both sides a TURN relay (#972): each
+page opens it as an invite link and presses _Use_.
+`--relay-only` also forces `iceTransportPolicy: "relay"` on every peer
+connection, a seam in the script only: a join then succeeds only through
+the relay, and `peers` shows `relay` candidates alone.
+
 When a join fails, the joiner is told how far it got (#707): "Couldn't
 reach the lobby servers" when no relay socket opened, "Found the lobby, but
 couldn't connect to its host" when Trystero exchanged SDP and nothing
@@ -80,9 +86,9 @@ Run on the Pages `/next/` build after #404 merges, and record each run in
 the table below: date, browsers and networks, and result.
 
 1. **Two networks.** Host on a home network; join from a phone on its
-   mobile hotspot, a different NAT. Play one match to its end. There is no
-   TURN (ADR-0022), so a failure here is filed as a bug against #15 with
-   both network types; it does not reopen #404.
+   mobile hotspot, a different NAT. Play one match to its end, with no
+   relay saved. A failure here is filed as a bug against #15 with both
+   network types; it does not reopen #404. The next section is the fix.
 2. **A hidden Firefox host.** Host in Firefox. During a match, hide its tab
    behind another for 5 minutes or more. Pass: the joiner sees normal
    speed throughout, never one tick a second.
@@ -92,6 +98,61 @@ A failure in 2 or 3 is a bug.
 
 | Date | Check | Host (browser, network) | Joiner (browser, network) | Result |
 | ---- | ----- | ----------------------- | ------------------------- | ------ |
+
+## Two networks through a TURN relay
+
+Code: `apps/web/src/net/transport/turn-config.ts` and `trystero.ts`
+(#972). Needs a TURN server reachable from both networks, such as the
+devenv coturn (#974).
+
+1. `node scripts/p2p-smoke.mjs --pairs chromium-chromium --relay-only --turn '<invite link>'`.
+   Pass: it joins, and every `peers` line shows `relay` candidates only.
+2. Two networks that fail check 1 of the section above, such as a
+   home network and a phone on mobile data. The host opens the invite
+   link and presses _Use_: the address bar keeps no `#turn=`, and Options
+   shows the relay's host. Its lobby screen says "Relay: _host_".
+3. The joiner, with no relay, joins the code. Pass: it reaches the
+   lobby, and the match plays to its end. One side having the relay is
+   enough.
+4. Options, _Forget relay_. Relay: None, and the lobby says nothing of
+   a relay.
+
+## Random Arena tickets on the relays: `scripts/net/nostr-kind-probe.mjs`
+
+Code: `apps/web/src/net/transport/nostr-queue.ts` (#872, ADR-0032 §3).
+Needs the internet; not in CI.
+
+Queue tickets are ephemeral Nostr events, which a relay forwards and does
+not store, and some relays refuse them. `node
+scripts/net/nostr-kind-probe.mjs` puts two real queue boards on each relay
+in `relays.ts` alone, publishes a ticket from one and prints, per relay,
+whether its socket opened, what it answered the event and whether the
+other board heard it. It exits 0 only if most relays delivered. Run it
+when the relay list or the event kind changes. If most relays stop
+delivering, the queue goes back to the architect (ADR-0032 §3); a single
+relay that refuses can be dropped from `relays.ts`.
+
+2026-10-27: 6 of 8. `relay.kaleidoswap.com` refuses kind 23854;
+`relay.degmods.com` accepts it and delivers nothing.
+
+## Random Arena over real relays, from two networks
+
+Code: `apps/web/src/net/transport/nostr-queue.ts` and the queue under
+`packages/game-session` (#854). Run once the Random Arena button exists
+(#880), on the Pages `/next/` build.
+
+1. Two players, on different networks (a home network and a phone on its
+   mobile hotspot), each open the client and press _Random Arena_ in 1 v 1.
+2. Each queue screen counts 2 of 2 searching within a heartbeat (5 s).
+3. Within a few seconds more, both see the versus splash and land in the
+   same match, one of them hosting. Play it to its end.
+4. Four seconds after the result, both see it again on the queue
+   screen, the winner with "1 win in a row this visit (not a rating)".
+   Both press _Queue again_; one leaves the queue. The other player's count drops
+   back at once, from the withdrawal, and no later than the ticket TTL (15 s).
+
+Pass: every step as written. A pair that queues but never meets, with
+`scripts/net/nostr-kind-probe.mjs` passing, is a bug against #854.
 
 ## Music under load, on a phone
 

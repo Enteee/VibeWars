@@ -17,6 +17,7 @@ export {
   describeSkill,
   describeStatus,
   formatScalingRange,
+  chainRequirementText,
   neededWeaponText,
   overcastText,
 } from "./describe.js";
@@ -27,6 +28,7 @@ export {
   computeCoverage,
   formatCoverage,
   missingMechanics,
+  unmaintainedUpkeepSkills,
 } from "./coverage.js";
 
 export type { CombatEvent } from "./effects.js";
@@ -92,7 +94,10 @@ export type {
   AttackSkillRule,
   AttackWeaponClass,
   AttributeScaling,
+  ChainMark,
+  ChainRole,
   Combatant,
+  CreatureTemplate,
   DamageEffect,
   EnergyGainEffect,
   HealEffect,
@@ -108,10 +113,13 @@ export type {
   SkillEffect,
   SkillProjectile,
   SkillType,
+  SummonEffect,
   TargetRule,
 } from "./types.js";
 
 export { KNOCKDOWN_SECONDS } from "./types.js";
+
+export { CHAIN_MARK_SECONDS } from "./chain.js";
 
 export { makeCombatant } from "./testing.js";
 

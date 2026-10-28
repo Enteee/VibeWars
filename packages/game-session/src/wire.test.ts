@@ -14,6 +14,8 @@ import {
   skillBarSlots,
   statusSnapshot,
   wireStatuses,
+  wireIdentity,
+  type SeatIdentity,
 } from "./wire.js";
 
 const ORDER: readonly StatusCategory[] = [
@@ -36,6 +38,7 @@ function status(id: StatusId, remainingSeconds: number): ActiveStatus {
     durationSeconds: 12,
     attacksLeft: undefined,
     spellsLeft: undefined,
+    hitsLeft: undefined,
     sourceId: "caster",
     outbreak: null,
     maintained: null,
@@ -57,9 +60,17 @@ function rank(entry: ActiveStatus): number {
 
 describe("wireStatuses (#636)", () => {
   it("keeps 32 of 40, every condition and hex, by category, then least time left (#803)", () => {
-    // Every status twice, then two more, in reverse table order with
-    // times that run against it: nothing is in place by accident.
-    const ids = [...WIRE_STATUS_IDS, ...WIRE_STATUS_IDS, ...WIRE_STATUS_IDS].reverse();
+    // One of every category first, then the rest, in reverse table order
+    // with times that run against it: nothing is in place by accident, and
+    // the table outgrowing 40 cannot drop a category from the test.
+    const reversed = [...WIRE_STATUS_IDS, ...WIRE_STATUS_IDS].reverse();
+    const firsts = ORDER.map((category) =>
+      reversed.findIndex((id) => getStatusDefinition(id).category === category),
+    );
+    const ids = [
+      ...reversed.filter((_, index) => firsts.includes(index)),
+      ...reversed.filter((_, index) => !firsts.includes(index)),
+    ];
     const active = ids.slice(0, 40).map((id, i) => status(id, (i * 7) % 11));
     expect(new Set(active.map(rank)).size).toBe(ORDER.length);
 
@@ -181,5 +192,49 @@ describe("sameSkillBar (#637)", () => {
     expect(sameSkillBar(plain(), cheaper)).toBe(false);
     expect(sameSkillBar(plain(), [...plain()].reverse())).toBe(false);
     expect(sameSkillBar(plain(), plain().slice(0, 2))).toBe(false);
+  });
+});
+
+describe("wireIdentity (#1052)", () => {
+  const seats = new Map<string, SeatIdentity>([
+    [
+      "p1",
+      { name: "Ann", team: 1, primaryProfession: "necromancer", secondaryProfession: undefined },
+    ],
+  ]);
+  const minion = (ownerId: string) => ({
+    id: `${ownerId}/c1`,
+    creature: {
+      ownerId,
+      kind: "minion" as const,
+      name: "Bone Minion",
+      expiresInSeconds: Number.POSITIVE_INFINITY,
+      summonedAtTick: 1,
+    },
+  });
+
+  it("sends a seated player as its seat says", () => {
+    expect(wireIdentity({ id: "p1", creature: undefined }, seats)).toEqual({
+      name: "Ann",
+      team: 1,
+      primaryProfession: "necromancer",
+      secondaryProfession: null,
+      creature: null,
+    });
+  });
+
+  it("sends a creature with no seat, on its owner's team, named for its kind", () => {
+    expect(wireIdentity(minion("p1"), seats)).toEqual({
+      name: "Bone Minion",
+      team: 1,
+      primaryProfession: null,
+      secondaryProfession: null,
+      creature: { ownerId: "p1", kind: "minion" },
+    });
+  });
+
+  it("sends neither a body with no seat nor a creature whose owner has none", () => {
+    expect(wireIdentity({ id: "dummy", creature: undefined }, seats)).toBeUndefined();
+    expect(wireIdentity(minion("gone"), seats)).toBeUndefined();
   });
 });

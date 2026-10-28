@@ -3,7 +3,7 @@ import type { ArmorCondition } from "../equipment/insignias.js";
 import { MYSTICISM_ATTRIBUTE, mysticismArmor } from "../primary-attributes.js";
 import type { CombatRules } from "../ruleset.js";
 import { aggregateModifiers } from "./status.js";
-import { armorReductionOf, rankOf } from "./tick.js";
+import { armorReductionOf, effectiveMaxHealth, rankOf } from "./tick.js";
 import type { Combatant } from "./types.js";
 
 /**
@@ -86,8 +86,12 @@ export function effectiveArmor(target: Combatant, packet: DamagePacket): number 
   }
 
   // Armor of Earth (+24) and Healing Signet (−40) reach a consumer here for
-  // the first time.
-  armor += aggregateModifiers(target.statuses.active).armorModifier;
+  // the first time; "Stand Your Ground!"'s +24 only while standing (#921).
+  const modifiers = aggregateModifiers(target.statuses.active);
+  armor += modifiers.armorModifier;
+  if (!target.moving) {
+    armor += modifiers.armorWhileStill;
+  }
 
   // Penetration is a fraction of what is left, applied last, so a shield
   // and an enchantment both dilute it rather than being bypassed flat.
@@ -146,12 +150,27 @@ export function mitigate(packet: DamagePacket, target: Combatant, rules: CombatR
   const armor = effectiveArmor(target, packet);
   let dealt = packet.armored * armorMultiplier(armor, rules) + packet.armorIgnoring;
 
+  // Frenzy's double and Dark Escape's half (#919): every packet, armored
+  // or not, after armor and before the flat shield below.
+  const modifiers = aggregateModifiers(target.statuses.active);
+  dealt *= modifiers.damageTakenMultiplier;
+
   // Rune of Absorption, last and only against physical hits. After
   // mitigation on purpose: it is a flat shield against each blow, so it
   // is proportionally worth most against the many small hits an
   // auto-attack chain produces, which is the niche it exists to fill.
   if (isPhysicalDamage(packet.type)) {
     dealt -= target.equipment.flatPhysicalReduction;
+  }
+
+  // Protective Spirit (#936), after everything else: no single hit takes
+  // more than its share of the target's max health, deep wound's lower
+  // max included, however much armor, Frenzy or a crit gave it.
+  if (modifiers.maxDamageFractionPerHit !== undefined) {
+    dealt = Math.min(
+      dealt,
+      Math.floor(modifiers.maxDamageFractionPerHit * effectiveMaxHealth(target)),
+    );
   }
 
   return Math.max(0, Math.round(dealt));

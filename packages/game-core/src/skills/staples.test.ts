@@ -86,6 +86,7 @@ function strike(caster: Combatant, id: string, target: Combatant, rng = steady()
   return resolveAttackSkill(
     { surroundings: new Map(), skill: skill(id), caster, targets: [target], rng, rules: RULES },
     NOWHERE,
+    [],
   );
 }
 
@@ -177,6 +178,7 @@ describe("bonus damage (#522)", () => {
           rules: RULES,
         },
         NOWHERE,
+        [],
       );
     return (
       damage(strike(holding("a", 0, weapon, attributeId), id, foe("t"))) -

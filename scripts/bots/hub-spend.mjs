@@ -73,18 +73,29 @@ export function costBetween(before, after) {
 }
 
 /**
- * The window summed up: points spent, calls made, and every command by
- * cost, largest first, then by count.
+ * The window summed up: points spent, calls made, every command by cost,
+ * largest first, then by count, and every role by the points it counted
+ * (#963), largest first.
+ *
+ * @typedef {object} SpendSummary
+ * @property {number} spent
+ * @property {number} calls
+ * @property {number} unknown calls whose cost could not be told
+ * @property {{ cmd: string, count: number, cost: number }[]} top
+ * @property {{ role: string, points: number }[]} byRole only roles that
+ *   counted a point
  *
  * @param {readonly Spend[]} window
- * @returns {{ spent: number, calls: number, unknown: number, top: { cmd: string, count: number, cost: number }[] }}
+ * @returns {SpendSummary}
  */
 export function summarizeSpend(window) {
   /** @type {Map<string, { cmd: string, count: number, cost: number }>} */
   const byCmd = new Map();
+  /** @type {Map<string, number>} */
+  const points = new Map();
   let spent = 0;
   let unknown = 0;
-  for (const { cmd, cost } of window) {
+  for (const { role, cmd, cost } of window) {
     const row = byCmd.get(cmd) ?? { cmd, count: 0, cost: 0 };
     row.count += 1;
     if (cost === null) {
@@ -92,11 +103,16 @@ export function summarizeSpend(window) {
     } else {
       row.cost += cost;
       spent += cost;
+      points.set(role, (points.get(role) ?? 0) + cost);
     }
     byCmd.set(cmd, row);
   }
   const top = [...byCmd.values()].sort((a, b) => b.cost - a.cost || b.count - a.count);
-  return { spent, calls: window.length, unknown, top };
+  const byRole = [...points]
+    .filter(([, sum]) => sum > 0)
+    .map(([role, sum]) => ({ role, points: sum }))
+    .sort((a, b) => b.points - a.points);
+  return { spent, calls: window.length, unknown, top, byRole };
 }
 
 /**
@@ -131,25 +147,6 @@ export function readSpend(value) {
     }
   }
   return window;
-}
-
-/**
- * The dashboard's line: `GRAPHQL  <spent>/h  top: <cmd> ×N (~cost), …`.
- *
- * @param {readonly Spend[]} window
- * @returns {string}
- */
-export function formatSpend(window) {
-  const { spent, calls, unknown, top } = summarizeSpend(window);
-  if (calls === 0) {
-    return "GRAPHQL  nothing spent in the last hour";
-  }
-  const leaders = top
-    .slice(0, 3)
-    .map((row) => `${row.cmd} ×${String(row.count)} (~${String(row.cost)})`)
-    .join(", ");
-  const blind = unknown === 0 ? "" : `, ${String(unknown)} uncounted`;
-  return `GRAPHQL  ~${String(spent)}/h in ${String(calls)} calls${blind}  top: ${leaders}`;
 }
 
 /* -------------------------------------------------------------------------- */

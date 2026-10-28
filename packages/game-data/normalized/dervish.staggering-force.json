@@ -1,0 +1,26 @@
+{
+  "id": "dervish.staggering-force",
+  "name": "Staggering Force",
+  "profession": "dervish",
+  "attribute": "Earth Prayers",
+  "type": "Flash Enchantment Spell.",
+  "elite": false,
+  "campaign": "Nightfall",
+  "cost": {
+    "kind": "energy",
+    "amount": 10
+  },
+  "overcast": 0,
+  "activationSeconds": 0,
+  "rechargeSeconds": 6,
+  "upkeep": false,
+  "description": "All nearby foes are struck for 10...34...40 earth damage. For 30 seconds, your attacks deal earth damage. When this enchantment ends, all nearby foes have Cracked Armor for 1...8...10 seconds.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Dervish/997-Staggering_Force",
+    "fetchedAt": "2026-10-27T21:59:44.545Z"
+  },
+  "unmapped": {}
+}

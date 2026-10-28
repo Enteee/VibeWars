@@ -40,7 +40,7 @@ let touch = arrange(
 stack(
   // 0: low strings and the cello
   chord(P).voicing().mode("below:g3")
-    .s("supersaw").unison(2).detune(.2).attack(2).release(3).gain(.16)
+    .s("supersaw").unison(2).detune(.2).attack(2).clip(.9).release(.3).gain(.16)
     .lpf(sine.range(500, 1100).slow(32)).room(.9).roomsize(6).orbit(2),
   cello.scale("d3:aeolian")
     .s("sawtooth").attack(.25).release(1.6).gain(.5).vib("5.2:.2")

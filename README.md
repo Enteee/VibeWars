@@ -50,6 +50,9 @@ saved characters.
 | `1`–`9`, `0`    | Use the matching skill-bar slot           |
 | `Tab`           | Target the next nearest enemy             |
 | `Shift` `Tab`   | Target the previous one                   |
+| `C`             | Target the closest foe                    |
+| `T`             | Target the foe your team called           |
+| `G`             | Target yourself                           |
 | `Space`         | Attack your target with your weapon       |
 | `Esc`           | Cancel your cast and your attack          |
 | `M`             | Mute or unmute the sound                  |
@@ -73,7 +76,7 @@ own development was verified that way; see
   movement, collision, body blocking, line of sight, targeting, casting
   with cast and recharge times, energy and adrenaline economies.
 - **Mechanics**: 8 conditions, hexes, enchantments, interrupts, health
-  degeneration and regeneration, death and respawn.
+  degeneration and regeneration, death, morale and resurrection.
 - **12 implemented skills**: 9 of the 16 in a reference corpus imported
   from public GW1 data, plus 3 of our own design. The other 7 need
   mechanics that do not exist yet and are reported as a machine-readable

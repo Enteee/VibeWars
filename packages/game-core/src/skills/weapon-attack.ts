@@ -1,6 +1,6 @@
 import { AREA_ADJACENT } from "../distances.js";
 import type { ResolvedWeapon } from "../equipment/resolve.js";
-import { isPhysicalDamage } from "../equipment/types.js";
+import { isPhysicalDamage, type DamageType } from "../equipment/types.js";
 import type { Weapon } from "../equipment/weapons.js";
 import {
   CRITICAL_STRIKES_ATTRIBUTE,
@@ -27,7 +27,14 @@ import {
 import { resolveMagnitude } from "./scaling.js";
 import { aggregateModifiers, getStatusDefinition, type StatusId } from "./status.js";
 import { nearestFirst, type TargetCandidate } from "./targeting.js";
-import { attackMissChanceOf, blockChanceOf, rankOf, weaponDamageMultiplierOf } from "./tick.js";
+import {
+  attackDamageTypeOf,
+  attackMissChanceOf,
+  blockChanceOf,
+  rankOf,
+  weaponDamageMultiplierOf,
+} from "./tick.js";
+import type { FiredTrigger } from "./triggers.js";
 import type { Combatant, Skill, SkillEffect, StateCondition, Surroundings } from "./types.js";
 
 /**
@@ -110,26 +117,47 @@ export function doubleStrikeChance(attacker: Combatant, weapon: Weapon): number 
 }
 
 /**
- * Who a swing at `target` hits: the target, then up to `cleaveTargets`
- * other living foes adjacent to it, nearest first. Weapon reach is
- * checked before the swing lands, so the target itself is never filtered.
+ * Who a swing at `target` hits: the target, then its cleave victims.
+ * Weapon reach is checked before the swing lands, so the target itself
+ * is never filtered.
  */
 function victimsOf(swing: Swing, weapon: Weapon): readonly Combatant[] {
+  return [
+    swing.target.combatant,
+    ...cleaveVictims(
+      swing.attacker,
+      swing.target,
+      swing.surroundings,
+      weapon,
+      weapon.cleaveTargets,
+    ),
+  ];
+}
+
+/**
+ * Whom else a blow of `weapon` at `target` strikes: up to `max` other
+ * living foes adjacent to it, nearest first, the target excluded. `max`
+ * is the weapon's `cleaveTargets`, or every one for Eremite's Attack
+ * (#1021). None for any weapon but a scythe, whatever `max` says.
+ */
+export function cleaveVictims(
+  attacker: Combatant,
+  target: TargetCandidate,
+  surroundings: Surroundings,
+  weapon: Weapon,
+  max: number,
+): readonly Combatant[] {
   if (weapon.cleaveTargets === 0) {
-    return [swing.target.combatant];
+    return [];
   }
-  const { attacker, target } = swing;
-  const adjacent = [...swing.surroundings.values()].filter(
+  const adjacent = [...surroundings.values()].filter(
     ({ combatant, position }) =>
       !combatant.dead &&
       combatant.id !== target.combatant.id &&
       combatant.team !== attacker.team &&
       distance(position, target.position) <= AREA_ADJACENT,
   );
-  return [
-    target.combatant,
-    ...nearestFirst(adjacent, target.position).slice(0, weapon.cleaveTargets),
-  ];
+  return nearestFirst(adjacent, target.position).slice(0, max);
 }
 
 /**
@@ -148,6 +176,14 @@ export interface WeaponSnapshot {
   readonly requirementMet: boolean;
   /** The multiplier on the weapon's roll: weakness's 0.34 (#762). */
   readonly damageMultiplier: number;
+  /** Added to the chance to crit by the attacker's statuses: Critical Eye's 0.13 (#988). */
+  readonly criticalChanceBonus: number;
+  /**
+   * The type the blow deals unless the skill names its own: a status's
+   * `attackDamageType` (#1021), else the weapon's. Riders still read the
+   * weapon's: an earth scythe blow is still a physical attack.
+   */
+  readonly damageType: DamageType;
 }
 
 export function weaponSnapshotOf(attacker: Combatant): WeaponSnapshot {
@@ -159,6 +195,8 @@ export function weaponSnapshotOf(attacker: Combatant): WeaponSnapshot {
     criticalStrikes: rankIn(attacker, CRITICAL_STRIKES_ATTRIBUTE),
     requirementMet: mainHand.attributeId === undefined || rank >= mainHand.weapon.requirement.rank,
     damageMultiplier: weaponDamageMultiplierOf(attacker),
+    criticalChanceBonus: aggregateModifiers(attacker.statuses.active).criticalChanceBonus,
+    damageType: attackDamageTypeOf(attacker) ?? mainHand.damageType,
   };
 }
 
@@ -167,7 +205,8 @@ export function weaponSnapshotOf(attacker: Combatant): WeaponSnapshot {
  * share per rank in the weapon's mastery, the attribute its requirement
  * names, plus Critical Strikes' (#606). A caster weapon's nominated
  * attribute is no mastery, and fists have none, so both crit at the base
- * chance and Critical Strikes'.
+ * chance and Critical Strikes'. Statuses add theirs (#988), all of it at
+ * most 1.
  */
 export function criticalChance(snapshot: WeaponSnapshot, rules: CombatRules): number {
   const mastery = snapshot.mainHand.weapon.requirement.kind === "fixed" ? snapshot.rank : 0;
@@ -175,17 +214,20 @@ export function criticalChance(snapshot: WeaponSnapshot, rules: CombatRules): nu
     1,
     rules.criticalBaseChance +
       rules.criticalChancePerRank * mastery +
-      CRITICAL_STRIKES_CHANCE_PER_RANK * snapshot.criticalStrikes,
+      CRITICAL_STRIKES_CHANCE_PER_RANK * snapshot.criticalStrikes +
+      snapshot.criticalChanceBonus,
   );
 }
 
 /**
- * Critical Strikes' energy for a critical blow (#606), up to the
- * attacker's maximum. A dead attacker, as one whose arrow lands after it
- * fell, gains none.
+ * Critical Strikes' energy for a critical blow (#606), and its statuses'
+ * (#988, Critical Eye's 1), up to the attacker's maximum. Statuses are
+ * read as the blow lands. A dead attacker, as one whose arrow lands after
+ * it fell, gains none.
  */
 export function gainCriticalEnergy(attacker: Combatant, rank: number, events: CombatEvent[]): void {
-  gainEnergy(attacker, criticalStrikesEnergy(rank), events);
+  const extra = aggregateModifiers(attacker.statuses.active).energyPerCritical;
+  gainEnergy(attacker, criticalStrikesEnergy(rank) + extra, events);
 }
 
 /**
@@ -243,6 +285,10 @@ export interface BlowRule {
    * does not help.
    */
   readonly strengthRank: number;
+  /** The skill's damage type (#923); `undefined`: the weapon's. */
+  readonly damageType: DamageType | undefined;
+  /** The skill's own base armor penetration (#923); it and Strength's do not add. */
+  readonly armorPenetration: number;
   /**
    * More `bonus` while a state holds (#794), at the caster's ranks: read
    * by `settleBlow` as the blow lands on each victim.
@@ -256,6 +302,8 @@ export const PLAIN_BLOW: BlowRule = {
   weaponDamage: 1,
   bonus: 0,
   strengthRank: 0,
+  damageType: undefined,
+  armorPenetration: 0,
   conditionalBonus: undefined,
 };
 
@@ -267,6 +315,8 @@ export function skillBlow(skill: Skill, caster: Combatant): BlowRule {
     weaponDamage: skill.attack?.weaponDamage ?? PLAIN_BLOW.weaponDamage,
     bonus: bonusDamage === undefined ? 0 : resolveMagnitude(bonusDamage, caster),
     strengthRank: rankIn(caster, STRENGTH_ATTRIBUTE),
+    damageType: skill.attack?.damageType,
+    armorPenetration: skill.attack?.armorPenetration ?? PLAIN_BLOW.armorPenetration,
     conditionalBonus:
       conditionalBonus === undefined
         ? undefined
@@ -321,6 +371,7 @@ export function settleBlow(
  */
 export function landBlow(
   snapshot: WeaponSnapshot,
+  attacker: Combatant | undefined,
   victim: Combatant,
   blow: BlowRule,
   exposed: boolean,
@@ -345,20 +396,26 @@ export function landBlow(
       weaponAttributeMultiplier(snapshot.rank, rules) *
       (snapshot.requirementMet ? 1 : rules.unmetRequirementMultiplier),
     armorIgnoring: blow.bonus,
-    type: snapshot.mainHand.damageType,
+    type: blow.damageType ?? snapshot.damageType,
     source: "weapon",
-    armorPenetration: strengthArmorPenetration(blow.strengthRank, weapon.armorPenetration),
+    armorPenetration: Math.max(
+      blow.armorPenetration,
+      strengthArmorPenetration(blow.strengthRank, weapon.armorPenetration),
+    ),
   };
-  applyDamage(victim, mitigate(packet, victim, rules), critical, events);
+  applyDamage(victim, mitigate(packet, victim, rules), packet.type, critical, events, attacker);
   return critical;
 }
 
 /**
  * What the attacker's statuses add to a blow of `mainHand` that hit
  * `victim` (#525): every active status's `onAttackHit`, as Apply
- * Poison's poison. Read when the blow lands, so a preparation that ran
- * out mid-swing or mid-flight adds nothing. Physical attacks only, as GW1
- * says: a wand's or a staff's bolt carries none.
+ * Poison's poison, each onto `fired` under its own skill, apart from the
+ * blow (#939). Read when the blow lands, so a preparation that ran out
+ * mid-swing or mid-flight adds nothing. Physical attacks only, as GW1
+ * says: a wand's or a staff's bolt carries none. Then every status that
+ * ends after so many hits with this weapon spends one (#939): Sand
+ * Shards' fourth hit splashes, then ends it. Returns those endings.
  */
 export function attackHitRiders(
   attacker: Combatant,
@@ -367,28 +424,65 @@ export function attackHitRiders(
   rng: SimulationRng,
   rules: CombatRules,
   surroundings: Surroundings,
+  fired: FiredTrigger[],
 ): CombatEvent[] {
   if (!isPhysicalDamage(mainHand.damageType)) {
     return [];
   }
-  return attacker.statuses.active.flatMap(({ id }) =>
-    applyEffects(getStatusDefinition(id).onAttackHit, {
+  for (const { id } of attacker.statuses.active) {
+    const rider = getStatusDefinition(id).onAttackHit;
+    if (rider === undefined) {
+      continue;
+    }
+    const events = applyEffects(rider.effects, {
       caster: attacker,
       target: victim,
       rng,
       rules,
       surroundings,
-    }),
-  );
+    });
+    if (events.length > 0) {
+      fired.push({ sourceId: attacker.id, skillId: rider.skillId, events });
+    }
+  }
+  const events: CombatEvent[] = [];
+  for (const statusId of attacker.statuses.countHit(mainHand.weapon.id)) {
+    events.push({ kind: "status-expired", targetId: attacker.id, statusId });
+  }
+  return events;
 }
 
 /**
  * The attacker attacked (#758): it struck a blow or released a shot,
  * swing or attack skill alike, hit or miss. Every status of its own that
- * ends when its bearer attacks ends now, as Weapon of Warding.
+ * ends when its bearer attacks ends now, as Weapon of Warding, and, if
+ * the attack was `melee`, every one that ends on a melee attack, as
+ * Escape (#976).
  */
-export function bearerAttacked(attacker: Combatant, events: CombatEvent[]): void {
-  for (const statusId of attacker.statuses.endOnBearerAttack()) {
+export function bearerAttacked(
+  attacker: Combatant,
+  events: CombatEvent[],
+  kind: "melee" | "projectile",
+): void {
+  for (const statusId of attacker.statuses.endOnBearerAttack(kind)) {
+    events.push({ kind: "status-expired", targetId: attacker.id, statusId });
+  }
+}
+
+/**
+ * One of the attacker's blows hit (#919): swing, attack skill or arrow
+ * alike, never a miss or a block. Every status of its own that ends when
+ * its bearer hits ends now, as Dark Escape, and, `withAttackSkill`, every
+ * one that ends when an attack skill hits, as Defensive Anthem (#956). The
+ * hit is recorded for what answers one, as Insidious Parasite (#935).
+ */
+export function bearerHit(
+  attacker: Combatant,
+  events: CombatEvent[],
+  withAttackSkill: boolean,
+): void {
+  attacker.statuses.recordHit();
+  for (const statusId of attacker.statuses.endOnBearerHit(withAttackSkill)) {
     events.push({ kind: "status-expired", targetId: attacker.id, statusId });
   }
 }
@@ -444,7 +538,12 @@ export function useNextAttackSkill(
 }
 
 /** One blow on one victim: blind first, then block, then the crit and damage rolls. */
-function strike(swing: Swing, victim: Combatant, events: CombatEvent[]): void {
+function strike(
+  swing: Swing,
+  victim: Combatant,
+  events: CombatEvent[],
+  fired: FiredTrigger[],
+): void {
   const { attacker, rng, rules } = swing;
   if (victim.dead) {
     return;
@@ -459,12 +558,13 @@ function strike(swing: Swing, victim: Combatant, events: CombatEvent[]): void {
     return;
   }
   const snapshot = weaponSnapshotOf(attacker);
-  if (landBlow(snapshot, victim, PLAIN_BLOW, swing.exposed(victim), rng, rules, events)) {
+  if (landBlow(snapshot, attacker, victim, PLAIN_BLOW, swing.exposed(victim), rng, rules, events)) {
     gainCriticalEnergy(attacker, snapshot.criticalStrikes, events);
   }
   events.push(
-    ...attackHitRiders(attacker, victim, snapshot.mainHand, rng, rules, swing.surroundings),
+    ...attackHitRiders(attacker, victim, snapshot.mainHand, rng, rules, swing.surroundings, fired),
   );
+  bearerHit(attacker, events, false);
   attackReached(victim, events);
 }
 
@@ -478,11 +578,14 @@ function strike(swing: Swing, victim: Combatant, events: CombatEvent[]): void {
  * blows included, so the off hand can stab after the main one (#561).
  * `landed` counts the blows that damaged a victim, however many each
  * cleaved: each earns a strike of adrenaline (#463).
+ * `fired` is what the attacker's statuses added to its hits, each under
+ * its own skill (#939).
  */
 export function resolveSwing(swing: Swing): {
   readonly events: CombatEvent[];
   readonly doubleStrike: boolean;
   readonly landed: number;
+  readonly fired: FiredTrigger[];
 } {
   const { weapon } = swing.attacker.equipment.mainHand;
   const victims = victimsOf(swing, weapon);
@@ -490,12 +593,13 @@ export function resolveSwing(swing: Swing): {
   const strikes = chance > 0 && swing.rng.nextFloat() < chance ? 2 : 1;
 
   const events: CombatEvent[] = [];
-  bearerAttacked(swing.attacker, events);
+  const fired: FiredTrigger[] = [];
+  bearerAttacked(swing.attacker, events, blowKind(weapon));
   let landed = 0;
   for (let blow = 0; blow < strikes; blow += 1) {
     const from = events.length;
     for (const victim of victims) {
-      strike(swing, victim, events);
+      strike(swing, victim, events, fired);
     }
     if (
       events
@@ -505,7 +609,7 @@ export function resolveSwing(swing: Swing): {
       landed += 1;
     }
   }
-  return { events, doubleStrike: strikes === 2, landed };
+  return { events, doubleStrike: strikes === 2, landed, fired };
 }
 
 /**
@@ -516,17 +620,24 @@ export function resolveSwing(swing: Swing): {
  * attacker, as Wounding Strike's lost enchantment (#845), needs a hit
  * too. A victim that blocks gets the skill's `onBlocked` effects instead
  * (#534); an `unblockable` one rolls no block at all (Wild Throw, #523).
- * A chain attack on a victim without the mark it follows misses it
- * outright, before blind, read once before the first blow; a chain
- * attack that hits leaves its own mark (#831).
+ * A chain attack on a victim without the mark it follows, or for which
+ * its `requires` does not hold (#1041), misses it outright, before
+ * blind, read once before the first blow; a chain attack that hits
+ * leaves its own mark (#831).
  *
  * A dual attack strikes twice (#885): each blow rolls its own blind,
  * block, crit and damage, and the skill's effects land after each blow
  * that hits, so a condition applied twice is refreshed. A victim the
  * first blow killed takes no second. The weapon's own double strike is
- * never added to a skill, and nor is cleave: an area, as Barrage's, is
- * already the skill's own, and each of its blows rolls its own block and
- * its own crit.
+ * never added to a skill.
+ *
+ * A scythe's attack skill cleaves, as its swing does (#977): its victims
+ * are the primary and the foes `cleaveVictims` finds round it, read
+ * once, at the hit, and each gets its own blind, block, crit and damage,
+ * and the skill's effects if it is hit. With `cleavesAllWhen` holding,
+ * the foes round it are every one adjacent to it (#1021). A skill with an area, as
+ * Barrage's, has its area's victims instead, each rolling its own block
+ * and its own crit.
  *
  * The attacker's weapon spell ends as it strikes, and its chants' riders
  * (#758) land on each victim a blow hits, after the skill's own blow; the
@@ -534,24 +645,57 @@ export function resolveSwing(swing: Swing): {
  *
  * A ranged weapon's attack skill does not come here: it flies, and its
  * blow and riders land with the arrow (#416).
+ *
+ * What the attacker's statuses add to its hits goes onto `fired`, each
+ * under its own skill (#939).
  */
 export function resolveAttackSkill(
   resolution: SkillResolution,
   exposed: (victim: Combatant) => boolean,
+  fired: FiredTrigger[],
 ): CombatEvent[] {
   const { skill, caster, rng, rules, surroundings } = resolution;
   const blow = skillBlow(skill, caster);
   const snapshot = weaponSnapshotOf(caster);
   const kind = blowKind(snapshot.mainHand.weapon);
   const events: CombatEvent[] = [];
-  bearerAttacked(caster, events);
+  bearerAttacked(caster, events, kind);
   const next = nextAttackSkillOf(caster);
+  const primary = resolution.targets[0];
+  const around =
+    skill.area !== undefined || primary === undefined || primary.dead
+      ? undefined
+      : surroundings.get(primary.id);
+  const cleavesAll = skill.attack?.cleavesAllWhen;
+  const all =
+    around !== undefined &&
+    primary !== undefined &&
+    cleavesAll !== undefined &&
+    stateHolds(cleavesAll, caster, primary, surroundings);
+  const { weapon } = snapshot.mainHand;
+  const targets =
+    around === undefined
+      ? resolution.targets
+      : [
+          ...resolution.targets,
+          ...cleaveVictims(
+            caster,
+            around,
+            surroundings,
+            weapon,
+            all ? Number.POSITIVE_INFINITY : weapon.cleaveTargets,
+          ),
+        ];
   const victims: Combatant[] = [];
-  for (const victim of resolution.targets) {
+  for (const victim of targets) {
     if (victim.dead) {
       continue;
     }
-    if (!chainAllows(caster, skill, victim.id)) {
+    const requires = skill.attack?.chain?.requires;
+    if (
+      !chainAllows(caster, skill, victim.id) ||
+      (requires !== undefined && !stateHolds(requires, caster, victim, surroundings))
+    ) {
       events.push({ kind: "attack-missed", targetId: victim.id, reason: "out-of-sequence" });
       continue;
     }
@@ -578,6 +722,7 @@ export function resolveAttackSkill(
       if (
         landBlow(
           snapshot,
+          caster,
           victim,
           settleBlow(blow, caster, victim, surroundings),
           exposed(victim),
@@ -589,9 +734,10 @@ export function resolveAttackSkill(
         gainCriticalEnergy(caster, snapshot.criticalStrikes, events);
       }
       events.push(
-        ...attackHitRiders(caster, victim, snapshot.mainHand, rng, rules, surroundings),
+        ...attackHitRiders(caster, victim, snapshot.mainHand, rng, rules, surroundings, fired),
         ...nextAttackSkillRiders(next, caster, victim, rng, rules, surroundings),
       );
+      bearerHit(caster, events, true);
       attackReached(victim, events);
       markChain(caster, skill, victim.id);
       hit.push(victim);

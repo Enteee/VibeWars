@@ -38,6 +38,31 @@ describe("parseGwMemorialSkill", () => {
     expect(result.skill.activationSeconds).toBe(0);
     expect(result.skill.description).toContain("Deep Wound");
     expect(Object.keys(result.skill.unmapped)).toHaveLength(0);
+    expect(result.skill.upkeep).toBe(false);
+  });
+
+  it("reads the upkeep dot as a maintained enchantment (Mending, #840)", () => {
+    const result = parseGwMemorialSkill({
+      ...BASE_INPUT,
+      html: fixture("monk-mending.html"),
+    });
+    expect(result.kind).toBe("ok");
+    if (result.kind !== "ok") return;
+
+    expect(result.skill.name).toBe("Mending");
+    expect(result.skill.upkeep).toBe(true);
+    expect(result.skill.cost).toEqual({ kind: "energy", amount: 10 });
+    expect(result.skill.activationSeconds).toBe(2);
+    expect(result.skill.unmapped).toEqual({});
+  });
+
+  it("refuses an upkeep dot that is not one pip rather than guessing", () => {
+    const html = fixture("monk-mending.html").replace(
+      '<b>1</b><span class="skillsDotsRevision eregen">',
+      '<b>2</b><span class="skillsDotsRevision eregen">',
+    );
+    const result = parseGwMemorialSkill({ ...BASE_INPUT, html });
+    expect(result).toEqual({ kind: "unsupported", reason: "an upkeep dot of 2, not 1" });
   });
 
   it("parses an adrenaline-cost skill and distinguishes it from energy (Whirlwind Attack)", () => {

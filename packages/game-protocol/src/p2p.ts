@@ -15,12 +15,13 @@ import type {
   CastRefusedMessage,
   MapDescriptor,
   AdrenalineMessage,
+  ChainMarksMessage,
   RechargeMessage,
   RechargeSlot,
   SkillBarSlot,
   WallDescriptor,
 } from "./protocol.js";
-import { MAX_LOBBY_PLAYERS, type LobbyPhase } from "./protocol.js";
+import { CHAIN_ROLES, MAX_LOBBY_PLAYERS, type LobbyPhase, type WireChainMark } from "./protocol.js";
 
 /**
  * The channels a lobby and its match use. Trystero caps an action name at
@@ -37,12 +38,15 @@ export const CHANNELS = [
   "skill-bar",
   "recharge",
   "adrenaline",
+  "chain",
   "ended",
   "bye",
   "lobby-join",
   "lobby-state",
   "lobby-cmd",
   "lobby-note",
+  "lobby-hello",
+  "lobby-welcome",
   "match-start",
   "rejoin-challenge",
   "rejoin-proof",
@@ -62,6 +66,18 @@ export const MAX_WIRE_TEXT = 256;
 
 /** The most statuses one player carries in a snapshot. */
 export const MAX_WIRE_STATUSES = 32;
+
+/**
+ * The most creatures a snapshot carries (#1052): game-core's
+ * `MAX_CREATURES`, mirrored, with a test holding the two together.
+ */
+export const MAX_WIRE_CREATURES = 32;
+
+/** The most bodies a snapshot carries: every player and every creature. */
+export const MAX_WIRE_ACTORS = MAX_LOBBY_PLAYERS + MAX_WIRE_CREATURES;
+
+/** What kind of creature a body is (#1052). */
+export const CREATURE_KINDS = ["spirit", "minion"] as const;
 
 /**
  * The largest status index a snapshot may carry (#632): a bound of its
@@ -116,8 +132,12 @@ export const MAX_WIRE_COMBATS = 64;
 /** The most shots in flight one snapshot carries. */
 export const MAX_WIRE_PROJECTILES = 256;
 
-/** The most `"snapshot"` messages one tick's snapshot is split into (#662). */
-export const MAX_SNAPSHOT_PARTS = 8;
+/**
+ * The most `"snapshot"` messages one tick's snapshot is split into (#662):
+ * enough for 8 players at every status, every creature (#1052) and every
+ * shot in flight.
+ */
+export const MAX_SNAPSHOT_PARTS = 12;
 
 /**
  * The deepest nesting, and the most values in all, an opaque JSON field
@@ -255,13 +275,24 @@ export interface WirePlayer {
   readonly swingTotal: number;
   /** Its statuses, in the order applied, oldest first (#803). */
   readonly statuses: readonly WireStatus[];
+  /**
+   * A creature's owner and kind (#1052); `null` for a player or a dummy.
+   * A creature's `name` is its kind's, and its professions are `null`.
+   */
+  readonly creature: WireCreature | null;
+}
+
+/** What makes a body a creature (#1052). */
+export interface WireCreature {
+  readonly ownerId: string;
+  readonly kind: (typeof CREATURE_KINDS)[number];
 }
 
 /** One status on a player (#803): what the effects monitor draws. */
 export interface WireStatus {
   /**
    * Its index in the sorted status-id table (#632), which
-   * `wire-schema.json` carries, so a build with another table is refused
+   * `src/wire-schema.json` carries, so a build with another table is refused
    * at join.
    */
   readonly status: number;
@@ -296,6 +327,11 @@ export interface WireProjectile {
   readonly flightSeconds: number;
 }
 
+/** Why a match ended (#846): kill-count's score and time, annihilation's wipe and morale at time. */
+const END_REASONS = ["score", "time", "annihilation", "morale"] as const;
+
+type EndReason = (typeof END_REASONS)[number];
+
 /**
  * The whole match at one tick, not a delta: what a client assembles from
  * that tick's `WireSnapshotPart`s. Never sent as it is.
@@ -307,7 +343,7 @@ export interface WireSnapshot {
   readonly score: readonly [number, number];
   readonly phase: "active" | "finished";
   readonly winningTeam: 0 | 1 | null;
-  readonly endReason: "score" | "time" | null;
+  readonly endReason: EndReason | null;
   readonly players: readonly WirePlayer[];
   /** Oldest first. */
   readonly projectiles: readonly WireProjectile[];
@@ -331,12 +367,12 @@ export interface WireCombatEvent {
   readonly kind: string;
   readonly targetId: string | null;
   readonly amount: number | null;
-  /** The skill an interrupt or a cancel cut short. */
+  /** The skill an interrupt or a cancel cut short, or a disable held back (#914). */
   readonly skillId: string | null;
   /** The status applied, removed or expired. */
   readonly statusId: string | null;
   /**
-   * How long an applied status or a knockdown lasts; `null` too for a
+   * How long an applied status, a knockdown or a disable lasts; `null` too for a
    * maintained enchantment applied (#837), which lasts until ended.
    */
   readonly durationSeconds: number | null;
@@ -347,8 +383,9 @@ export interface WireCombatEvent {
    */
   readonly crit: boolean | null;
   /**
-   * Whom a spreading status was caught from (#765), or who could not pay
-   * a maintained enchantment's upkeep (#837); `null` for any other kind.
+   * Whom a spreading status was caught from (#765), who could not pay
+   * a maintained enchantment's upkeep (#837), or whom a shadow step went
+   * to (#988); `null` for any other kind.
    */
   readonly fromId: string | null;
   /**
@@ -461,7 +498,7 @@ export interface WireChatLine {
 /** Host to every client, once: the match is over. */
 export interface WireEnded {
   readonly winningTeam: 0 | 1 | null;
-  readonly endReason: "score" | "time" | "host-left";
+  readonly endReason: EndReason | "host-left";
 }
 
 /**
@@ -474,6 +511,42 @@ export interface PeerLobbyJoin {
   /** As the player typed it, cut to `MAX_WIRE_TEXT`; the host sanitises it. */
   readonly name: string;
   readonly character: WireLobbyCharacter | null;
+  /**
+   * The seat's proof in a queued lobby (#871, ADR-0032 §6); `null` in a
+   * coded lobby, which refuses one.
+   */
+  readonly admission: WireAdmission | null;
+}
+
+/**
+ * A queued joiner's proof of its ticket (#871): `admissionSig` is its
+ * ticket key's BIP-340 signature of the `vibewars-admit` digest, which
+ * names the group, the planned host and the joiner's own peer id, so it
+ * is good for that host and that peer alone. The key never leaves it.
+ */
+export interface WireAdmission {
+  /** 64 lowercase hex digits: the ticket's x-only public key. */
+  readonly ticketId: string;
+  /** 128 lowercase hex digits. */
+  readonly admissionSig: string;
+}
+
+/**
+ * A queued joiner to the room, and to each peer as it arrives (#871):
+ * "if you host here, welcome me". It carries nothing, so it may go to
+ * the room; the join, with its proof, goes only to a peer whose welcome
+ * proved it the planned host.
+ */
+export type PeerLobbyHello = Readonly<Record<string, never>>;
+
+/**
+ * Queued lobby host to one joiner, and only to it (#871): `hostSig` is
+ * the host ticket's signature of the `vibewars-host` digest for that
+ * joiner. A queued joiner takes lobby messages only from a peer whose
+ * welcome verifies against the planned host.
+ */
+export interface WireLobbyWelcome {
+  readonly hostSig: string;
 }
 
 /**
@@ -512,6 +585,11 @@ export interface WireLobbyState {
   /** The match being played, while `phase` is not `"waiting"`. */
   readonly matchId: string | null;
   readonly players: readonly WireLobbyPlayer[];
+  /**
+   * Whole seconds until a queued lobby's match starts (#871), while
+   * `phase` is `"starting"`; `null` otherwise.
+   */
+  readonly countdownSeconds: number | null;
 }
 
 /** Peer to lobby host: what the member asks for. The host decides. */
@@ -533,7 +611,16 @@ export interface WireLobbyNote {
 }
 
 /** Why a lobby host turns a peer away, or sends everyone off. */
-export const LOBBY_REFUSALS = ["protocol-mismatch", "lobby-full", "host-left"] as const;
+export const LOBBY_REFUSALS = [
+  "protocol-mismatch",
+  "lobby-full",
+  "host-left",
+  // A queued lobby's (#871): no proof, one that does not verify, or one
+  // brought to a coded lobby; a ticket already seated; the group never filled.
+  "not-admitted",
+  "ticket-used",
+  "fell-through",
+] as const;
 
 export type LobbyRefusal = (typeof LOBBY_REFUSALS)[number];
 
@@ -940,7 +1027,8 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
     return undefined;
   }
   const statuses = parseArray(raw.statuses, MAX_WIRE_STATUSES, parseStatus);
-  return statuses === undefined
+  const creature = raw.creature === null ? null : parseCreature(raw.creature);
+  return statuses === undefined || creature === undefined
     ? undefined
     : {
         id: raw.id,
@@ -973,7 +1061,15 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
         healthPips: raw.healthPips,
         energyPips: raw.energyPips,
         statuses,
+        creature,
       };
+}
+
+function parseCreature(value: unknown): WireCreature | undefined {
+  const raw = fields(value);
+  return raw !== undefined && isString(raw.ownerId) && isOneOf(raw.kind, CREATURE_KINDS)
+    ? { ownerId: raw.ownerId, kind: raw.kind }
+    : undefined;
 }
 
 function parseProjectile(value: unknown): WireProjectile | undefined {
@@ -1026,11 +1122,11 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
     score?.length !== 2 ||
     !isOneOf(raw.phase, ["active", "finished"] as const) ||
     !(raw.winningTeam === null || isTeam(raw.winningTeam)) ||
-    !(raw.endReason === null || isOneOf(raw.endReason, ["score", "time"] as const))
+    !(raw.endReason === null || isOneOf(raw.endReason, END_REASONS))
   ) {
     return undefined;
   }
-  const players = parseArray(raw.players, MAX_LOBBY_PLAYERS, parsePlayer);
+  const players = parseArray(raw.players, MAX_WIRE_ACTORS, parsePlayer);
   const projectiles = parseArray(raw.projectiles, MAX_WIRE_PROJECTILES, parseProjectile);
   const [team0 = 0, team1 = 0] = score;
   return players === undefined || projectiles === undefined
@@ -1187,7 +1283,7 @@ export function parseWireEnded(value: unknown): WireEnded | undefined {
   const raw = fields(value);
   return raw !== undefined &&
     (raw.winningTeam === null || isTeam(raw.winningTeam)) &&
-    isOneOf(raw.endReason, ["score", "time", "host-left"] as const)
+    isOneOf(raw.endReason, [...END_REASONS, "host-left"] as const)
     ? { winningTeam: raw.winningTeam, endReason: raw.endReason }
     : undefined;
 }
@@ -1238,6 +1334,26 @@ export function parseAdrenaline(value: unknown): AdrenalineMessage | undefined {
   return { slots, lossInSeconds };
 }
 
+function parseChainMark(value: unknown): WireChainMark | undefined {
+  const raw = fields(value);
+  return raw !== undefined &&
+    isString(raw.targetId) &&
+    isOneOf(raw.role, CHAIN_ROLES) &&
+    isNumber(raw.remainingSeconds) &&
+    raw.remainingSeconds >= 0
+    ? { targetId: raw.targetId, role: raw.role, remainingSeconds: raw.remainingSeconds }
+    : undefined;
+}
+
+/**
+ * The `"chain"` channel: a `ChainMarksMessage`, to one player alone
+ * (#916). At most one mark per other player in the lobby.
+ */
+export function parseChainMarks(value: unknown): ChainMarksMessage | undefined {
+  const marks = parseArray(fields(value)?.marks, MAX_LOBBY_PLAYERS, parseChainMark);
+  return marks === undefined ? undefined : { marks };
+}
+
 /** A lobby character; `null` is a starter build, a missing one is malformed. */
 function parseLobbyCharacter(value: unknown): WireLobbyCharacter | null | undefined {
   if (value === null) {
@@ -1252,15 +1368,38 @@ function parseLobbyCharacter(value: unknown): WireLobbyCharacter | null | undefi
     : undefined;
 }
 
+const TICKET_ID = /^[0-9a-f]{64}$/;
+const TICKET_SIG = /^[0-9a-f]{128}$/;
+
+function isTicketSig(value: unknown): value is string {
+  return typeof value === "string" && TICKET_SIG.test(value);
+}
+
+/** An admission; `null` is none, a malformed one is `undefined`. */
+function parseAdmission(value: unknown): WireAdmission | null | undefined {
+  if (value === null) {
+    return null;
+  }
+  const raw = fields(value);
+  return raw !== undefined &&
+    typeof raw.ticketId === "string" &&
+    TICKET_ID.test(raw.ticketId) &&
+    isTicketSig(raw.admissionSig)
+    ? { ticketId: raw.ticketId, admissionSig: raw.admissionSig }
+    : undefined;
+}
+
 /** The `"lobby-join"` channel. */
 export function parsePeerLobbyJoin(value: unknown): PeerLobbyJoin | undefined {
   const raw = fields(value);
   const character = parseLobbyCharacter(raw?.character);
+  const admission = parseAdmission(raw?.admission);
   if (
     raw === undefined ||
     !isString(raw.protocolVersion) ||
     typeof raw.name !== "string" ||
-    character === undefined
+    character === undefined ||
+    admission === undefined
   ) {
     return undefined;
   }
@@ -1268,7 +1407,20 @@ export function parsePeerLobbyJoin(value: unknown): PeerLobbyJoin | undefined {
     protocolVersion: raw.protocolVersion,
     name: raw.name.slice(0, MAX_WIRE_TEXT),
     character,
+    admission,
   };
+}
+
+/** The `"lobby-hello"` channel. */
+export function parsePeerLobbyHello(value: unknown): PeerLobbyHello | undefined {
+  const raw = fields(value);
+  return raw !== undefined && Object.keys(raw).length === 0 ? {} : undefined;
+}
+
+/** The `"lobby-welcome"` channel. */
+export function parseWireLobbyWelcome(value: unknown): WireLobbyWelcome | undefined {
+  const raw = fields(value);
+  return raw !== undefined && isTicketSig(raw.hostSig) ? { hostSig: raw.hostSig } : undefined;
 }
 
 function parseLobbyTeam(value: unknown): 0 | 1 | null | undefined {
@@ -1299,7 +1451,8 @@ export function parseWireLobbyState(value: unknown): WireLobbyState | undefined 
     !isOneOf(raw.phase, ["waiting", "starting", "in-match"] as const) ||
     !isString(raw.mapId) ||
     !isString(raw.hostId) ||
-    !isNullableString(raw.matchId)
+    !isNullableString(raw.matchId) ||
+    !(raw.countdownSeconds === null || isCount(raw.countdownSeconds))
   ) {
     return undefined;
   }
@@ -1313,6 +1466,7 @@ export function parseWireLobbyState(value: unknown): WireLobbyState | undefined 
         hostId: raw.hostId,
         matchId: raw.matchId,
         players,
+        countdownSeconds: raw.countdownSeconds,
       };
 }
 

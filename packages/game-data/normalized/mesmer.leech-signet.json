@@ -1,0 +1,22 @@
+{
+  "id": "mesmer.leech-signet",
+  "name": "Leech Signet",
+  "profession": "mesmer",
+  "attribute": "Inspiration Magic",
+  "type": "Signet.",
+  "elite": false,
+  "campaign": "Core",
+  "overcast": 0,
+  "activationSeconds": 0.25,
+  "rechargeSeconds": 30,
+  "upkeep": false,
+  "description": "Interrupt target foe's action. If that action was a spell, you gain 3...13...15 Energy.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Mesmer/355-Leech_Signet",
+    "fetchedAt": "2026-10-27T13:39:59.899Z"
+  },
+  "unmapped": {}
+}

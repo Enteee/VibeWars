@@ -47,3 +47,8 @@ pnpm-debug.log*
 # generate`/`pnpm run import`, never hand-edited. raw/ and normalized/ ARE
 # committed (provenance + hand-auditable facts — see ADR-0004).
 packages/game-data/generated/
+
+# Claude Code's per-checkout local files. Named here, not left to a user-level
+# ignore, because the reboot's checkout check reads only this file (#897).
+/.claude/settings.local.json
+/CLAUDE.local.md

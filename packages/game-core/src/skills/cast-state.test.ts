@@ -136,6 +136,92 @@ describe("CastState recharge", () => {
   });
 });
 
+describe("CastState disable (#914)", () => {
+  it("raises a shorter recharge, and its total, to the disable", () => {
+    const state = new CastState("caster", new StatusSet());
+    state.startRecharge("skill.a", 5);
+    state.advance(1);
+    expect(state.disable("skill.a", 10)).toBe(true);
+    expect(state.rechargeRemaining.get("skill.a")).toBe(10);
+    expect(state.rechargeTotal.get("skill.a")).toBe(10);
+  });
+
+  it("leaves a longer recharge alone", () => {
+    const state = new CastState("caster", new StatusSet());
+    state.startRecharge("skill.a", 30);
+    expect(state.disable("skill.a", 10)).toBe(false);
+    expect(state.rechargeRemaining.get("skill.a")).toBe(30);
+    expect(state.rechargeTotal.get("skill.a")).toBe(30);
+  });
+
+  it("disables a ready skill, which then counts down as a recharge", () => {
+    const state = new CastState("caster", new StatusSet());
+    expect(state.disable("skill.a", 10)).toBe(true);
+    state.advance(4);
+    expect(state.rechargeRemaining.get("skill.a")).toBeCloseTo(6, 10);
+    state.advance(6);
+    expect(state.rechargeRemaining.has("skill.a")).toBe(false);
+  });
+
+  it("keeps the disable when the recharge ends early, or restarts shorter", () => {
+    const state = new CastState("caster", new StatusSet());
+    state.startRecharge("skill.a", 5);
+    state.disable("skill.a", 20);
+    state.endRecharge("skill.a");
+    expect(state.rechargeRemaining.get("skill.a")).toBe(20);
+    state.startRecharge("skill.a", 3);
+    state.advance(1);
+    expect(state.rechargeRemaining.get("skill.a")).toBe(19);
+    expect(state.rechargeTotal.get("skill.a")).toBe(20);
+  });
+
+  it("keeps a disable a longer recharge hides, for when that recharge ends early", () => {
+    const state = new CastState("caster", new StatusSet());
+    state.startRecharge("skill.a", 30);
+    expect(state.disable("skill.a", 10)).toBe(false);
+    state.endRecharge("skill.a");
+    expect(state.rechargeRemaining.get("skill.a")).toBe(10);
+  });
+});
+
+describe("CastState lengthenRecharge (#949)", () => {
+  it("lengthens a running recharge, its total too", () => {
+    const state = new CastState("caster", new StatusSet());
+    state.startRecharge("skill.a", 4);
+    state.advance(1);
+    state.lengthenRecharge("skill.a", 47);
+    expect(state.rechargeRemaining.get("skill.a")).toBe(50);
+    expect(state.rechargeTotal.get("skill.a")).toBe(51);
+  });
+
+  it("starts one on a ready skill, which counts down as a recharge", () => {
+    const state = new CastState("caster", new StatusSet());
+    state.lengthenRecharge("skill.a", 47);
+    expect(state.rechargeRemaining.get("skill.a")).toBe(47);
+    expect(state.rechargeTotal.get("skill.a")).toBe(47);
+    state.advance(47);
+    expect(state.rechargeRemaining.has("skill.a")).toBe(false);
+  });
+
+  it("is recharge: ending the recharge ends it, not a disable", () => {
+    const state = new CastState("caster", new StatusSet());
+    state.startRecharge("skill.a", 4);
+    state.disable("skill.a", 10);
+    state.lengthenRecharge("skill.a", 47);
+    expect(state.rechargeRemaining.get("skill.a")).toBe(51);
+    state.endRecharge("skill.a");
+    expect(state.rechargeRemaining.get("skill.a")).toBe(10);
+  });
+
+  it("shows a longer disable over it", () => {
+    const state = new CastState("caster", new StatusSet());
+    state.startRecharge("skill.a", 2);
+    state.disable("skill.a", 60);
+    state.lengthenRecharge("skill.a", 47);
+    expect(state.rechargeRemaining.get("skill.a")).toBe(60);
+  });
+});
+
 describe("aftercast and the queue (#317)", () => {
   it("counts down from the next advance, and is not casting", () => {
     const state = new CastState("caster", new StatusSet());

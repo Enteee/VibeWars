@@ -2,6 +2,7 @@ import {
   getOffhand,
   getSkill,
   getWeapon,
+  type ChainRole,
   type OffhandId,
   type ProfessionId,
   type SkillType,
@@ -148,6 +149,17 @@ export function soundIcon(muted: boolean): string {
 /** The HUD's target panel while you auto-attack that target (#160). */
 export function attackingIcon(): string {
   return iconUrl("ui", "attacking");
+}
+
+const CHAIN_MARK_ICON: Readonly<Record<ChainRole, string>> = {
+  lead: iconUrl("ui", "chain-lead"),
+  "off-hand": iconUrl("ui", "chain-off-hand"),
+  dual: iconUrl("ui", "chain-dual"),
+};
+
+/** Your dagger chain mark on the target, by its target health (#916). */
+export function chainMarkIcon(role: ChainRole): string {
+  return CHAIN_MARK_ICON[role];
 }
 
 /** The music's own mute (#372), on the HUD's ♪ button. */

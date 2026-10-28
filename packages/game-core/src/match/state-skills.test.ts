@@ -112,6 +112,7 @@ describe("Mystic Sweep (#794)", () => {
         rules: RULES.combat,
       },
       () => false,
+      [],
     );
   }
 

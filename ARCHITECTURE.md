@@ -88,6 +88,8 @@ Everything that decides what happens in a fight.
   source and time. `behaviour.ts` turns behaviours (data) into the same
   intents a player sends. `training-scenarios.ts` holds the Training
   Ground's scenarios as data (ADR-0020).
+  Creatures, bodies that are not players, are participants with a
+  `creature` record that never count for their team (ADR-0035).
 - `tools/headless-match.ts` — runs real combat with no I/O at all, on
   `MatchSimulation`.
 
@@ -127,15 +129,17 @@ peer-to-peer messages host and peers exchange, one per `CHANNELS` entry,
 with a validator each (`src/p2p.ts`), the lobby-code alphabet, and the
 protocol version a host checks at join time.
 
-The version is not written by hand (#303). `wire-schema.json` is a committed,
-generated description of everything that crosses between peers: the channel
-names; every type this package exports and game-core's `CombatEvent`,
-structurally; every literal constant it exports (limits, refusal reasons);
-and the status table a snapshot indexes into (#632). `PROTOCOL_VERSION` is
-the first 12 hex digits of its sha256, generated into
-`src/protocol-version.ts`. A wire change changes the snapshot and so the
-version, and two wire changes always conflict on that one line.
-`pnpm run wire:snapshot` regenerates both files, with game-session's
+The version is not written by hand (#303), and no hash is committed (#950).
+`src/wire-schema.json` is a committed, generated description of everything
+that crosses between peers: the channel names; every type this package
+exports and game-core's `CombatEvent`, structurally; every literal constant
+it exports (limits, refusal reasons); and the status table a snapshot
+indexes into (#632). `PROTOCOL_VERSION` is computed when
+`src/protocol-version.ts` loads: a 12-digit FNV-1a fingerprint of that
+file's parsed JSON. A wire change changes the schema and so the version.
+The schema is canonical, with sorted keys, unions and status ids, so two
+wire changes conflict only where they touch the same lines.
+`pnpm run wire:snapshot` regenerates the schema, with game-session's
 `src/tools/wire-snapshot.ts`; its test fails a change that did not. A change
 in meaning with no change in shape bumps `SEMANTICS_REVISION` in the
 generator by hand.

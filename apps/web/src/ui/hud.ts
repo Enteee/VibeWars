@@ -5,6 +5,7 @@ import {
   maxHealthLossOfStatusIds,
   neededWeaponText,
   type ActivationRejection,
+  type ChainRole,
   type Segment,
   type StatusId,
 } from "@vibewars/game-core";
@@ -19,9 +20,12 @@ import type {
 
 import type { KeyLabeller } from "../input/key-labels.js";
 import { SKILL_ACTIONS, actionLabel, codeLabel, type Keymap } from "../input/keymap.js";
+import { teamColour } from "../render/arena-snapshot.js";
+import { cssColour } from "./character-preview.js";
 import { paintHealthTint } from "./health-tint.js";
 import {
   attackingIcon,
+  chainMarkIcon,
   isEliteSkill,
   professionIcon,
   settingsIcon,
@@ -74,9 +78,15 @@ function describeWeaponName(weaponId: string): string {
 }
 
 export interface HudElements {
+  /** Your block, bottom centre (#1042): hint, message, effects, bars, skill bar. */
   readonly root: HTMLElement;
-  /** Health, energy and statuses, then the skill bar: from its top down, the HUD hides the arena. */
+  /** Morale and gear, health and energy: from its top down, the HUD hides the arena. */
   readonly bars: HTMLElement;
+  /**
+   * Top centre (#1042): the scoreboard and the target frame under it; down
+   * to its bottom, the HUD hides the arena.
+   */
+  readonly top: HTMLElement;
   /** Your health bar, tinted by your worst degeneration (#807). */
   readonly healthRow: HTMLElement;
   readonly healthFill: HTMLElement;
@@ -103,7 +113,7 @@ export interface HudElements {
   readonly skillBar: HTMLElement;
   /** The skill bar's hover tooltips (#485); `dispose` it with the HUD. */
   readonly slotTips: SlotTooltips;
-  /** One line above the skill bar, for why a key did nothing. */
+  /** One line above your bars, for why a key did nothing. */
   readonly message: HTMLElement;
   /** How to target, until the first target of the match (#55). */
   readonly hint: HTMLElement;
@@ -122,6 +132,8 @@ export interface HudElements {
   readonly targetHealthLost: HTMLElement;
   readonly targetHealthText: HTMLElement;
   readonly targetHealthPips: HTMLElement;
+  /** Your dagger chain mark on the target, right of its health (#916). */
+  readonly targetChain: HTMLImageElement;
   /** What the target is casting (#484): icon (#727), badge, name and a filling bar. */
   readonly targetCast: HTMLElement;
   readonly targetCastIcon: HTMLImageElement;
@@ -130,7 +142,10 @@ export interface HudElements {
   readonly targetCastFill: HTMLElement;
   /** Crossed swords and "attacking", shown while self attacks the target (#160). */
   readonly attacking: HTMLElement;
+  /** The count and clock, and beside them the foes' pips (#881). */
   readonly scoreboard: HTMLElement;
+  readonly scoreboardText: HTMLElement;
+  readonly enemies: HTMLElement;
   readonly result: HTMLElement;
   /** The match's buttons, top right, as one cluster (#454): the five below. */
   readonly controls: HTMLElement;
@@ -154,7 +169,7 @@ function element(tag: string, className: string, parent: HTMLElement): HTMLEleme
 }
 
 /**
- * Shown above the skill bar until the player first has a target (#55),
+ * Shown above your bars until the player first has a target (#55),
  * with the keymap's target and names keys (#253, #302). A clause whose
  * action has no key is left out.
  */
@@ -206,9 +221,13 @@ export function createHud(
 ): HudElements {
   const root = element("div", "hud", parent);
 
-  // Score and clock sit at the top, away from the skill bar, so a glance
-  // for "am I winning" never competes with a glance for "what can I cast".
-  const scoreboard = element("div", "hud-scoreboard", parent);
+  // Top centre, as GW1 (#1042): score and clock, away from the skill bar,
+  // so a glance for "am I winning" never competes with a glance for "what
+  // can I cast"; the target frame under them.
+  const top = element("div", "hud-top", parent);
+  const scoreboard = element("div", "hud-scoreboard", top);
+  const scoreboardText = element("span", "hud-scoreboard-text", scoreboard);
+  const enemies = element("span", "hud-enemies", scoreboard);
   const result = element("div", "hud-result", parent);
   result.style.display = "none";
   // One cluster, top right (#454): leave and mute on top, Options,
@@ -225,8 +244,9 @@ export function createHud(
   music.setAttribute("aria-haspopup", "dialog");
 
   // Three rows (#484): who, how hurt, and what they are casting. The cast
-  // row keeps its space when empty, so the HUD never jumps.
-  const targetPanel = element("div", "hud-target", root);
+  // row keeps its space when empty, so the HUD never jumps; the effects
+  // under it grow downward (#1042), so the health bar never moves.
+  const targetPanel = element("div", "hud-target", top);
   const targetHeader = element("div", "hud-target-header", targetPanel);
   const targetProfessions = element("span", "hud-target-professions", targetHeader);
   const targetText = element("span", "hud-target-text", targetHeader);
@@ -236,17 +256,17 @@ export function createHud(
   swords.alt = "";
   attacking.append("attacking");
   attacking.hidden = true;
-  const targetHealth = element("div", "hud-bar hud-target-health", targetPanel);
+  const targetHealthRow = element("div", "hud-target-health-row", targetPanel);
+  const targetHealth = element("div", "hud-bar hud-target-health", targetHealthRow);
   const targetHealthFill = element("div", "hud-bar-fill", targetHealth);
   const targetHealthLost = element("div", "hud-bar-lost", targetHealth);
   const targetHealthText = element("span", "hud-bar-label", targetHealth);
   const targetHealthPips = targetHealth.appendChild(pipsElement());
+  const targetChain = targetHealthRow.appendChild(document.createElement("img"));
+  targetChain.className = "hud-target-chain";
+  targetChain.alt = "";
+  targetChain.hidden = true;
   targetHealth.hidden = true;
-  const targetEffects = createEffectsMonitor(
-    targetPanel,
-    TARGET_EFFECT_ICON_PX,
-    "your target's effects",
-  );
   const targetCast = element("div", "hud-target-cast", targetPanel);
   const targetCastIcon = targetCast.appendChild(document.createElement("img"));
   targetCastIcon.className = "skill-icon hud-target-cast-icon";
@@ -257,16 +277,39 @@ export function createHud(
   const targetCastName = element("span", "hud-target-cast-name", targetCast);
   const targetCastBar = element("span", "hud-target-cast-bar", targetCast);
   const targetCastFill = element("span", "hud-target-cast-fill", targetCastBar);
+  const targetEffects = createEffectsMonitor(
+    targetPanel,
+    TARGET_EFFECT_ICON_PX,
+    "your target's effects",
+    "below",
+  );
 
-  const bars = element("div", "hud-bars", root);
+  // Bottom centre, as GW1 (#1042), bottom up: the skill bar, energy,
+  // health, morale and gear, your effects growing upward, hint and message.
+  const hint = element("div", "hud-hint", root);
+  const message = element("div", "hud-message", root);
+  message.setAttribute("role", "status");
+  // As wide as the skill bar: everything else in it takes its width.
+  const column = element("div", "hud-column", root);
+  const effects = createEffectsMonitor(
+    column,
+    EFFECT_ICON_PX,
+    "your effects",
+    "above",
+    onEndUpkeep,
+  );
+  const bars = element("div", "hud-bars", column);
+
+  const status = element("div", "hud-status", bars);
+  const morale = element("span", "hud-morale", status);
+  morale.hidden = true;
+  const gearText = element("span", "hud-gear", status);
 
   const healthRow = element("div", "hud-bar hud-bar-health", bars);
   const healthFill = element("div", "hud-bar-fill", healthRow);
   const healthLost = element("div", "hud-bar-lost", healthRow);
   const healthText = element("span", "hud-bar-label", healthRow);
   const healthPips = healthRow.appendChild(pipsElement());
-  const morale = element("span", "hud-morale", bars);
-  morale.hidden = true;
 
   const energyRow = element("div", "hud-bar hud-bar-energy", bars);
   const energyFill = element("div", "hud-bar-fill", energyRow);
@@ -274,17 +317,12 @@ export function createHud(
   const energyText = element("span", "hud-bar-label", energyRow);
   const energyPips = energyRow.appendChild(pipsElement());
 
-  const gearText = element("div", "hud-gear", bars);
-  const effects = createEffectsMonitor(bars, EFFECT_ICON_PX, "your effects", onEndUpkeep);
-
-  const hint = element("div", "hud-hint", root);
-  const message = element("div", "hud-message", root);
-  message.setAttribute("role", "status");
-  const skillBar = element("div", "hud-skills", root);
+  const skillBar = element("div", "hud-skills", column);
 
   return {
     root,
     bars,
+    top,
     healthRow,
     healthFill,
     healthLost,
@@ -312,6 +350,7 @@ export function createHud(
     targetHealthLost,
     targetHealthText,
     targetHealthPips,
+    targetChain,
     targetCast,
     targetCastIcon,
     targetCastBadge,
@@ -319,6 +358,8 @@ export function createHud(
     targetCastFill,
     attacking,
     scoreboard,
+    scoreboardText,
+    enemies,
     result,
     controls,
     mute,
@@ -580,14 +621,100 @@ export function formatClock(totalSeconds: number): string {
   return `${String(minutes)}:${String(seconds).padStart(2, "0")}`;
 }
 
-/** The end-of-match line a player reads, from their own team's point of view. */
+/** One foe on the HUD's pip row (#881): filled while alive, hollow and grey dead. */
+export interface EnemyPip {
+  readonly name: string;
+  readonly team: number;
+  readonly dead: boolean;
+}
+
+/**
+ * The pips for `players` as `selfTeam` sees them: every player not on it,
+ * in snapshot order. A spectator, with no team, gets every player, grouped
+ * by team. Only players in the snapshot get one, so an empty seat has none,
+ * and a creature (#1052) never counts.
+ */
+export function enemyPips(
+  players: readonly PlayerSnapshot[],
+  selfTeam: number | undefined,
+): EnemyPip[] {
+  const pips = players
+    .filter((player) => player.team !== selfTeam && player.creature === undefined)
+    .map(({ name, team, dead }) => ({ name, team, dead }));
+  // Stable, so each team keeps its snapshot order.
+  return selfTeam === undefined ? pips.sort((a, b) => a.team - b.team) : pips;
+}
+
+/** How many of `team`'s players are alive: its creatures never count (#1052). */
+export function livingCount(players: readonly PlayerSnapshot[], team: number): number {
+  return players.filter(
+    (player) => player.team === team && !player.dead && player.creature === undefined,
+  ).length;
+}
+
+/**
+ * "4 v 3 · 7:12": the living on each side, your own first, and the clock
+ * (#881). Every match is annihilation (#846), so this is the one
+ * scoreboard there is. A spectator reads team 1 first.
+ */
+export function scoreboardText(
+  players: readonly PlayerSnapshot[],
+  selfTeam: number | undefined,
+  elapsedSeconds: number,
+): string {
+  const ours = selfTeam ?? 0;
+  const theirs = ours === 0 ? 1 : 0;
+  return `${String(livingCount(players, ours))} v ${String(livingCount(players, theirs))} · ${formatClock(elapsedSeconds)}`;
+}
+
+/**
+ * Paint `pips` into `row`, one line a team, rebuilt only when one changes.
+ * A foe is drawn in the enemy colour; a spectator sees team 1 in the
+ * ally's and team 2 in the enemy's, as the splash shows a side.
+ */
+function renderEnemyPips(
+  row: HTMLElement,
+  pips: readonly EnemyPip[],
+  selfTeam: number | undefined,
+): void {
+  const key = JSON.stringify(pips);
+  if (row.dataset.pips === key) {
+    return;
+  }
+  row.dataset.pips = key;
+  const lines = new Map<number, HTMLElement>();
+  row.replaceChildren();
+  for (const pip of pips) {
+    let line = lines.get(pip.team);
+    if (line === undefined) {
+      line = element("span", "hud-enemy-row", row);
+      line.style.setProperty(
+        "--pip-colour",
+        cssColour(teamColour(selfTeam === undefined && pip.team === 0 ? "ally" : "enemy")),
+      );
+      lines.set(pip.team, line);
+    }
+    const node = element("span", pip.dead ? "hud-enemy-pip is-dead" : "hud-enemy-pip", line);
+    node.title = pip.name;
+    node.setAttribute("aria-label", pip.dead ? `${pip.name} (dead)` : pip.name);
+  }
+}
+
+/**
+ * The end-of-match line a player reads, from their own team's point of
+ * view. An annihilation match nobody won is lost by every team (GW1,
+ * #846); only kill-count draws.
+ */
 export function describeOutcome(
   winningTeam: number | undefined,
   reason: string | undefined,
   selfTeam: number | undefined,
 ): string {
-  const why = reason === "time" ? " (time)" : "";
+  const why = reason === "time" ? " (time)" : reason === "morale" ? " (morale)" : "";
   if (winningTeam === undefined) {
+    if (reason === "annihilation" || reason === "morale") {
+      return selfTeam === undefined ? `No winner${why}` : `Defeat${why}`;
+    }
     return `Draw${why}`;
   }
   if (selfTeam === undefined) {
@@ -744,6 +871,38 @@ export function targetProfessionIcons(target: PlayerSnapshot | undefined): Profe
  */
 export function targetWeaponIcon(target: PlayerSnapshot | undefined): ProfessionIcon | undefined {
   return target?.weaponId === undefined ? undefined : weaponIcon(target.weaponId);
+}
+
+/** What each chain mark's icon says on hover (#916), as GW1 means it. */
+const CHAIN_MARK_TITLE: Readonly<Record<ChainRole, string>> = {
+  lead: "lead attack landed",
+  "off-hand": "off-hand attack landed",
+  dual: "dual attack landed",
+};
+
+/**
+ * The icon for your dagger chain mark on `target` (#916): which of your
+ * chain attacks last hit it, while that mark runs. Nothing with no target
+ * or no mark of yours on it; nobody else's mark ever shows.
+ */
+export function targetChainIcon(
+  target: PlayerSnapshot | undefined,
+  chainMark: (targetId: string) => ChainRole | undefined,
+): ProfessionIcon | undefined {
+  const role = target === undefined ? undefined : chainMark(target.sessionId);
+  return role === undefined
+    ? undefined
+    : { src: chainMarkIcon(role), name: CHAIN_MARK_TITLE[role] };
+}
+
+/** Touch the chain icon only when its mark changes, never every frame. */
+function renderTargetChain(img: HTMLImageElement, icon: ProfessionIcon | undefined): void {
+  img.hidden = icon === undefined;
+  if (icon !== undefined && img.title !== icon.name) {
+    img.src = icon.src;
+    img.alt = icon.name;
+    img.title = icon.name;
+  }
 }
 
 /** Replace the icons only when the target or its professions changed, never every frame. */
@@ -915,11 +1074,18 @@ export function updateHud(
   adrenaline: readonly number[],
   /** Seconds until that is lost out of combat, `null` with none held (#828). */
   adrenalineLossIn: number | null,
+  /** Your chain mark on a target, still running (#916). */
+  chainMark: (targetId: string) => ChainRole | undefined,
   walls: readonly Segment[],
   match?: MatchSnapshot,
 ): void {
   if (match !== undefined) {
-    hud.scoreboard.textContent = `${String(match.scoreTeam0)} — ${String(match.scoreTeam1)}  ·  ${formatClock(match.elapsedSeconds)}`;
+    hud.scoreboardText.textContent = scoreboardText(
+      match.players,
+      self?.team,
+      match.elapsedSeconds,
+    );
+    renderEnemyPips(hud.enemies, enemyPips(match.players, self?.team), self?.team);
 
     if (match.phase === "finished") {
       hud.result.style.display = "";
@@ -966,6 +1132,7 @@ export function updateHud(
   );
 
   renderTarget(hud, self, target);
+  renderTargetChain(hud.targetChain, targetChainIcon(target, chainMark));
   hud.targetEffects.update(targetEffectRows(self, target, names, now));
 
   // Grey out skills the player cannot currently afford or the weapon in

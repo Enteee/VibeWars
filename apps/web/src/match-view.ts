@@ -12,19 +12,21 @@ import { loadLayoutLabeller } from "./input/key-labels.js";
 import { actionForCode, isShortcut } from "./input/keymap.js";
 import { loadKeymap } from "./input/keymap-preference.js";
 import {
+  calledTargetIntent,
   callTargetCall,
   middleClickAction,
   pingCall,
   secondaryClickIntents,
 } from "./input/mouse-intents.js";
 import { attachNameReveal } from "./input/name-reveal.js";
-import { nextTabTarget } from "./input/tab-target.js";
+import { closestTarget, nextTabTarget, selfTargetIntent } from "./input/tab-target.js";
 import { skillSlotForKeyDown } from "./input/skill-keys.js";
 import { attachMatchMusic } from "./music/match-music.js";
 import { music } from "./music/play-music.js";
 import { TRACKS } from "./music/tracks/index.js";
 import {
   ACTOR_RADIUS,
+  CREATURE_RADIUS,
   withCalls,
   withNames,
   teamColour,
@@ -72,6 +74,15 @@ export interface MatchViewCallbacks {
   readonly onLeave: () => void;
   /** Surfaces connection trouble so the shell can tell the player. */
   readonly onConnectionChange?: (state: "online" | "reconnecting" | "lost") => void;
+  /** Once, on the first snapshot of the match finished (#881): how it ended for this player. */
+  readonly onFinished?: (outcome: MatchOutcome) => void;
+}
+
+/** How a match ended, as `describeOutcome` reads it; `selfTeam` is undefined for a spectator. */
+export interface MatchOutcome {
+  readonly winningTeam: number | undefined;
+  readonly endReason: string | undefined;
+  readonly selfTeam: number | undefined;
 }
 
 export interface MatchViewOptions {
@@ -137,7 +148,7 @@ export function toArenaSnapshot(
         attackCast: attackCastOf(player.castingSkillId, player.castRemaining, player.castTotal),
         offhandId: player.offhandId,
         profession: player.primaryProfession,
-        radius: ACTOR_RADIUS,
+        radius: player.creature === undefined ? ACTOR_RADIUS : CREATURE_RADIUS,
         team:
           player.sessionId === match.selfSessionId
             ? ("self" as const)
@@ -234,20 +245,21 @@ export async function startMatchView(
   });
   // The ally you watch (#443), top right: yours alone.
   const allyWatch = createAllyWatch(parent);
-  // The arena's edge stops below the scoreboard and above the bars, not
-  // under them (#440). From the bars, as the lines above them come and go.
+  // The arena's edge stops below the target frame and above the bars, not
+  // under them (#440, #1042). From the bars, as the lines above them come
+  // and go; to the frame's bottom, as its effects row grows.
   const measureCover = (): void => {
     // The chat panel (#479) sits just above the HUD, wherever its top is.
     parent.style.setProperty("--hud-height", `${String(hud.root.offsetHeight)}px`);
     camera?.setCover({
-      top: hud.scoreboard.offsetTop + hud.scoreboard.offsetHeight,
+      top: hud.top.offsetTop + hud.top.offsetHeight,
       bottom: hud.root.offsetHeight - hud.bars.offsetTop,
     });
   };
   const coverObserver = new ResizeObserver(measureCover);
   coverObserver.observe(hud.root);
   coverObserver.observe(hud.bars);
-  coverObserver.observe(hud.scoreboard);
+  coverObserver.observe(hud.top);
   const useSkill = (slot: number): void => {
     connection.sendIntent({ kind: "use-skill", slot });
   };
@@ -388,6 +400,24 @@ export async function startMatchView(
       if (next !== undefined && next !== current) {
         connection.sendIntent({ kind: "target", targetSessionId: next });
       }
+    } else if (action === "target-closest") {
+      const current = latestMatch.players.find(
+        (player) => player.sessionId === connection.selfSessionId,
+      )?.targetSessionId;
+      const closest = closestTarget(latestMatch.players, connection.selfSessionId);
+      if (closest !== undefined && closest !== current) {
+        connection.sendIntent({ kind: "target", targetSessionId: closest });
+      }
+    } else if (action === "target-called") {
+      const intent = calledTargetIntent(connection.getSnapshot(), connection.getCalls());
+      if (intent !== undefined) {
+        connection.sendIntent(intent);
+      }
+    } else if (action === "target-self") {
+      const intent = selfTargetIntent(latestMatch.players, connection.selfSessionId);
+      if (intent !== undefined) {
+        connection.sendIntent(intent);
+      }
     } else if (action === "attack") {
       for (const intent of attackKeyIntents(connection.getSnapshot())) {
         connection.sendIntent(intent);
@@ -468,12 +498,21 @@ export async function startMatchView(
     flashMessage(hud, describeRefusal(message));
   });
 
+  let finished = false;
   const onFrame = (deltaSeconds: number): void => {
     latestMatch = connection.getSnapshot();
     matchSounds.snapshot(latestMatch);
     matchMusic.snapshot(latestMatch);
     guardUnload(latestMatch.phase !== "finished");
     const self = latestMatch.players.find((p) => p.sessionId === connection.selfSessionId);
+    if (latestMatch.phase === "finished" && !finished) {
+      finished = true;
+      callbacks.onFinished?.({
+        winningTeam: latestMatch.winningTeam,
+        endReason: latestMatch.endReason,
+        selfTeam: self?.team,
+      });
+    }
     camera?.frame(deltaSeconds, self);
     // Hover is hit-tested every frame, through the camera as it is now, so
     // a body that walks under a still cursor, or a camera that moves under
@@ -503,6 +542,7 @@ export async function startMatchView(
       connection.skillBar,
       connection.getAdrenaline(),
       connection.getAdrenalineLossIn(),
+      (targetId) => connection.getChainMark(targetId),
       wallSegments,
       latestMatch,
     );
@@ -562,13 +602,14 @@ export async function startMatchView(
       matchMusic.dispose();
       reconnectCountdown.dispose();
       reconnectOverlay.destroy();
-      // The scoreboard, result and mute button sit beside the HUD root, in
-      // the shared viewport, so they go one by one or pile up per match.
+      // The scoreboard and target frame, result and mute button sit beside
+      // the HUD root, in the shared viewport, so they go one by one or pile
+      // up per match.
       hud.root.remove();
       hud.slotTips.dispose();
       hud.effects.dispose();
       hud.targetEffects.dispose();
-      hud.scoreboard.remove();
+      hud.top.remove();
       hud.result.remove();
       offMute();
       jukebox.dispose();

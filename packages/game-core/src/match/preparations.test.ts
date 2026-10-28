@@ -10,6 +10,7 @@ import { describeSkill } from "../skills/describe.js";
 import type { CombatEvent } from "../skills/effects.js";
 import { EXCLUSIVE_CATEGORIES, getStatusDefinition } from "../skills/status.js";
 import { makeCombatant } from "../skills/testing.js";
+import type { FiredTrigger } from "../skills/triggers.js";
 import type { Combatant } from "../skills/types.js";
 import { resolveAttackSkill, resolveSwing } from "../skills/weapon-attack.js";
 import { vec2, type Vec2 } from "../vec2.js";
@@ -40,14 +41,23 @@ function prepared(weapon: Weapon, attributeId: string): Combatant {
 
 const victim = (id = "t"): Combatant => makeCombatant({ id, team: 1, health: 1e6, maxHealth: 1e6 });
 
-const poisoned = (events: readonly CombatEvent[]): string[] =>
-  events.flatMap((event) =>
-    event.kind === "status-applied" && event.statusId === "poison" ? [event.targetId] : [],
-  );
+/** Whom Apply Poison poisoned, in a group of its own or a log entry: under its own name, not the blow's (#939). */
+const poisoned = (
+  fired: readonly {
+    readonly skillId: string | undefined;
+    readonly events: readonly CombatEvent[];
+  }[],
+): string[] =>
+  fired
+    .filter(({ skillId }) => skillId === APPLY_POISON)
+    .flatMap(({ events }) => events)
+    .flatMap((event) =>
+      event.kind === "status-applied" && event.statusId === "poison" ? [event.targetId] : [],
+    );
 
 const NOWHERE = (): boolean => false;
 
-function swing(attacker: Combatant, target: Combatant, seed = 1): CombatEvent[] {
+function swing(attacker: Combatant, target: Combatant, seed = 1): ReturnType<typeof resolveSwing> {
   return resolveSwing({
     attacker,
     target: { combatant: target, position: vec2(40, 0) },
@@ -55,15 +65,15 @@ function swing(attacker: Combatant, target: Combatant, seed = 1): CombatEvent[] 
     rng: createRng(seed),
     rules: RULES.combat,
     exposed: NOWHERE,
-  }).events;
+  });
 }
 
 describe("Apply Poison on a blow (#525)", () => {
   it("a sword swing that hits poisons its target for 13 s", () => {
     const target = victim();
-    expect(poisoned(swing(prepared(WEAPONS.sword, "warrior.swordsmanship"), target))).toEqual([
-      "t",
-    ]);
+    expect(poisoned(swing(prepared(WEAPONS.sword, "warrior.swordsmanship"), target).fired)).toEqual(
+      ["t"],
+    );
     expect(target.statuses.get("poison")?.remainingSeconds).toBe(13);
   });
 
@@ -72,7 +82,7 @@ describe("Apply Poison on a blow (#525)", () => {
     attacker.statuses.apply("blind", 10, "foe");
     for (let seed = 0; seed < 50; seed += 1) {
       const target = victim();
-      const events = swing(attacker, target, seed);
+      const { events } = swing(attacker, target, seed);
       const missed = events.some((event) => event.kind === "attack-missed");
       expect(target.statuses.has("poison")).toBe(!missed);
     }
@@ -83,7 +93,7 @@ describe("Apply Poison on a blow (#525)", () => {
     for (let seed = 0; seed < 50; seed += 1) {
       const target = victim();
       target.statuses.apply("guardian", 10, "ally");
-      const events = swing(attacker, target, seed);
+      const { events } = swing(attacker, target, seed);
       const blocked = events.some((event) => event.kind === "attack-blocked");
       expect(target.statuses.has("poison")).toBe(!blocked);
     }
@@ -93,12 +103,14 @@ describe("Apply Poison on a blow (#525)", () => {
     const attacker = prepared(WEAPONS.sword, "warrior.swordsmanship");
     attacker.statuses.remove("apply-poison");
     const target = victim();
-    expect(poisoned(swing(attacker, target))).toEqual([]);
+    expect(poisoned(swing(attacker, target).fired)).toEqual([]);
   });
 
   it("a wand's bolt is no physical attack: no poison", () => {
     const target = victim();
-    expect(poisoned(swing(prepared(WEAPONS.wand, "elementalist.fire-magic"), target))).toEqual([]);
+    expect(
+      poisoned(swing(prepared(WEAPONS.wand, "elementalist.fire-magic"), target).fired),
+    ).toEqual([]);
     expect(target.health).toBeLessThan(target.maxHealth);
   });
 
@@ -107,7 +119,8 @@ describe("Apply Poison on a blow (#525)", () => {
     if (barrage === undefined) {
       throw new Error("missing barrage");
     }
-    const events = resolveAttackSkill(
+    const fired: FiredTrigger[] = [];
+    resolveAttackSkill(
       {
         surroundings: new Map(),
         skill: barrage,
@@ -117,8 +130,9 @@ describe("Apply Poison on a blow (#525)", () => {
         rules: RULES.combat,
       },
       NOWHERE,
+      fired,
     );
-    expect(poisoned(events)).toEqual(["x", "y", "z"]);
+    expect(poisoned(fired)).toEqual(["x", "y", "z"]);
   });
 });
 
@@ -181,8 +195,13 @@ describe("Apply Poison in the match (#525)", () => {
       6,
     );
     match.requestAttack("a", "d");
-    stepFor(match, 5);
+    const log = stepFor(match, 5);
     expect(get(match, "d").combatant.statuses.has("poison")).toBe(true);
+    // Logged as Apply Poison's, not the bow's (#939).
+    expect(poisoned(log)).toEqual(["d"]);
+    expect(
+      log.filter(({ cause }) => cause === "weapon").flatMap(({ events }) => events),
+    ).not.toContainEqual(expect.objectContaining({ kind: "status-applied", statusId: "poison" }));
   });
 
   it("an arrow that lands after the preparation ran out poisons nobody", () => {
@@ -212,6 +231,7 @@ describe("Apply Poison in the match (#525)", () => {
       seed: "prep",
       participants: [archer("a", vec2(0, 0)), dummy("d", vec2(600, 0))],
       matchRules: {
+        victory: "kill-count",
         scoreToWin: 10,
         timeLimitSeconds: 600,
         deathRule: "respawn",

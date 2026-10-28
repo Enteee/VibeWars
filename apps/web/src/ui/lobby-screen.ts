@@ -4,6 +4,7 @@ import type { LobbyCharacter, LobbyPlayerSnapshot, LobbySnapshot } from "@vibewa
 import type { RenderableActor } from "../render/arena-snapshot.js";
 import { createProfessionDot, professionLabel } from "./character-preview.js";
 import { button, h, inlineConfirm, screenBar, toast, type InlineConfirm } from "./kit.js";
+import { relayLine } from "./relay-section.js";
 
 /**
  * The lobby screen (brief §21's lobby layout, #580): the bar holds Leave,
@@ -240,6 +241,11 @@ export function renderLobbyScreen(
 
   if (notice !== undefined) {
     panel.appendChild(h("div", "screen-problem", notice));
+  }
+
+  const relay = relayLine();
+  if (relay !== undefined) {
+    panel.appendChild(relay);
   }
 
   // Everyone sees it, not only the host: a guest who is the one being

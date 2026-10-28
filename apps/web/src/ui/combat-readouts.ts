@@ -1,5 +1,6 @@
 import {
   STATUS_DEFINITIONS,
+  chainRequirementText,
   getAttribute,
   getSkill,
   getWeapon,
@@ -51,6 +52,7 @@ export function logToneOf(kind: CombatEvent["kind"]): Exclude<LogTone, "divider"
     case "damage":
     case "health-lost":
     case "sacrifice":
+    case "life-stolen":
       return "damage";
     case "heal":
     case "resurrected":
@@ -73,6 +75,9 @@ export function logToneOf(kind: CombatEvent["kind"]): Exclude<LogTone, "divider"
     case "attack-obstructed":
     case "attack-unreachable":
     case "knocked-down":
+    case "shadow-stepped":
+    case "skill-disabled":
+    case "recharge-lengthened":
       return "control";
     case "death":
       return "death";
@@ -89,12 +94,25 @@ function skillName(skillId: string | undefined): string | undefined {
 }
 
 /** One event as a sentence a player can learn from. */
-/** " (must follow an off-hand attack)": what a chain attack out of sequence needed (#831, #885). */
+/**
+ * " (must follow an off-hand attack)", " (only if target is knocked
+ * down)": what a chain attack out of sequence needed (#831, #885, #1041).
+ */
 function outOfSequence(skillId: string | undefined): string {
-  const follows = skillId === undefined ? undefined : getSkill(skillId)?.attack?.chain?.follows;
-  return follows === undefined
-    ? ""
-    : ` (must follow ${follows === "off-hand" ? "an off-hand" : `a ${follows}`} attack)`;
+  const skill = skillId === undefined ? undefined : getSkill(skillId);
+  const needed = skill === undefined ? undefined : chainRequirementText(skill);
+  return needed === undefined ? "" : ` (${needed})`;
+}
+
+/** "not a spell": why a picky interrupt let a cast through, by its filter (#796, #1008). */
+function interruptRefusal(skillId: string | undefined): string {
+  const interrupt =
+    skillId === undefined
+      ? undefined
+      : getSkill(skillId)?.effects.find((effect) => effect.kind === "interrupt");
+  return interrupt?.kind === "interrupt" && interrupt.only === "spell"
+    ? "not a spell"
+    : "not a spell or chant";
 }
 
 export function describeCombatEvent(
@@ -137,6 +155,8 @@ export function describeCombatEvent(
       return `${STATUS_DEFINITIONS[event.statusId].name}${source === undefined ? "" : ` (${source})`} takes ${formatAmount(event.amount)} health from ${target}`;
     case "sacrifice":
       return `${target} sacrifices ${formatAmount(event.amount)} health`;
+    case "life-stolen":
+      return `${by} steals ${formatAmount(event.amount)} health from ${target}`;
     case "death":
       return `${target} dies`;
     case "resurrected":
@@ -160,7 +180,7 @@ export function describeCombatEvent(
       // A picky interrupt says why it let a cast through (#796).
       return event.refusedSkillId === null
         ? `${by} finds nothing to interrupt on ${target}`
-        : `${by} can't interrupt ${target}'s ${skillName(event.refusedSkillId) ?? event.refusedSkillId}: not a spell or chant`;
+        : `${by} can't interrupt ${target}'s ${skillName(event.refusedSkillId) ?? event.refusedSkillId}: ${interruptRefusal(entry.skillId)}`;
     case "attack-missed":
       return `${by} misses ${target}${event.reason === "out-of-sequence" ? outOfSequence(entry.skillId) : ""}`;
     case "attack-blocked":
@@ -173,6 +193,12 @@ export function describeCombatEvent(
       return `${by} can't reach ${target}`;
     case "knocked-down":
       return `${by} knocks down ${target} (${formatAmount(event.durationSeconds)} s)`;
+    case "skill-disabled":
+      return `${by} disables ${target}'s ${skillName(event.skillId) ?? event.skillId} for ${formatAmount(event.seconds)} s`;
+    case "recharge-lengthened":
+      return `${target}'s ${skillName(event.skillId) ?? event.skillId} takes ${formatAmount(event.seconds)} s longer to recharge`;
+    case "shadow-stepped":
+      return `${target} shadow steps to ${nameOf(event.toId)}`;
   }
 }
 
@@ -443,7 +469,10 @@ export function accumulate(
         }
       } else if (event.kind === "heal" && entry.sourceId === selfId) {
         healing += event.amount;
-      } else if (event.kind === "health-lost" && event.targetId === selfId) {
+      } else if (
+        (event.kind === "health-lost" || event.kind === "life-stolen") &&
+        event.targetId === selfId
+      ) {
         taken += event.amount;
       }
     }
@@ -508,6 +537,7 @@ export function floatingCueFor(
   switch (kind) {
     case "damage":
     case "health-lost":
+    case "life-stolen":
       // The sign says damage or heal; the colour only backs it up, so a
       // player who cannot tell the two colours apart loses nothing.
       // U+2212, a real minus, as wide as the plus.

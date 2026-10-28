@@ -17,9 +17,10 @@ import {
   RELAY_REDUNDANCY,
 } from "./relays.js";
 import { joinTrysteroRoom, type TrysteroDeps } from "./trystero.js";
+import type { TurnConfig } from "./turn-config.js";
 
 /** A Trystero room with no network: the test plays the remote peers. */
-function fakeRoom(options: { sendFails?: boolean } = {}) {
+function fakeRoom(options: { sendFails?: boolean; turn?: TurnConfig } = {}) {
   const actions = new Map<string, MessageAction>();
   const sent: { channel: string; data: DataPayload; target: unknown }[] = [];
   const joins: {
@@ -57,7 +58,12 @@ function fakeRoom(options: { sendFails?: boolean } = {}) {
   };
   /** Each relay's socket state, as the test sets it: 1 is open. */
   const sockets: Record<string, { readyState: number }> = {};
-  const deps: TrysteroDeps = { joinRoom, selfId: "me", relaySockets: () => sockets };
+  const deps: TrysteroDeps = {
+    joinRoom,
+    selfId: "me",
+    relaySockets: () => sockets,
+    turnConfig: () => options.turn,
+  };
   return {
     joinRoom,
     deps,
@@ -100,6 +106,25 @@ describe("the Trystero transport (#392)", () => {
       maxReceiveBytes: MAX_RECEIVE_BYTES,
       relayConfig: { urls: [...NOSTR_RELAYS], redundancy: RELAY_REDUNDANCY },
     });
+  });
+
+  it("passes a saved TURN relay as Trystero's turnConfig, and none without one (#972)", () => {
+    const turn: TurnConfig = {
+      urls: ["turn:turn.example:3478", "turns:turn.example:5349"],
+      username: "ana",
+      credential: "s3cret",
+    };
+    const relayed = fakeRoom({ turn });
+    joinTrysteroRoom("A7KQ", relayed.deps);
+    expect(relayed.joins[0]?.config.turnConfig).toEqual([
+      { urls: [...turn.urls], username: "ana", credential: "s3cret" },
+    ]);
+    // Trystero's STUN stays: no rtcConfig replaces its ICE servers.
+    expect(relayed.joins[0]?.config.rtcConfig).toBeUndefined();
+
+    const direct = fakeRoom();
+    joinTrysteroRoom("A7KQ", direct.deps);
+    expect(direct.joins[0]?.config).not.toHaveProperty("turnConfig");
   });
 
   it("fans one channel out to every handler, and stops calling a removed one", () => {

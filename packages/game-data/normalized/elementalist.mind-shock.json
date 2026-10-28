@@ -1,0 +1,26 @@
+{
+  "id": "elementalist.mind-shock",
+  "name": "Mind Shock",
+  "profession": "elementalist",
+  "attribute": "Air Magic",
+  "type": "Spell.",
+  "elite": true,
+  "campaign": "Prophecies",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 10,
+  "activationSeconds": 1,
+  "rechargeSeconds": 8,
+  "upkeep": false,
+  "description": "Target foe suffers 10...42...50 lightning damage. If you have more energy than target foe, that foe suffers 10...42...50 additional lightning damage and is knocked down. This spell has 25% armor penetration.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Elementalist/388-Mind_Shock",
+    "fetchedAt": "2026-10-27T12:51:28.607Z"
+  },
+  "unmapped": {}
+}

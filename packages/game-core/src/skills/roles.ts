@@ -27,6 +27,7 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     case "interrupt":
       return ["interrupt"];
     case "heal":
+    case "give-health":
       return ["healing"];
     case "remove-status":
       // Stripping a foe's enchantment helps no ally: not removal.
@@ -39,33 +40,84 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     case "if":
     case "splash":
       return effect.effects.flatMap(effectRoles);
+    // Plague Touch (#944): conditions on a foe, and off yourself.
+    case "transfer-conditions":
+      return ["condition", "removal"];
     case "damage":
     case "energy-gain":
+    case "adrenaline-gain":
     case "energy-loss":
+    case "life-steal":
     case "sacrifice-health":
+    case "lose-health":
+    case "shadow-step":
     case "resurrect":
     case "recharge-faster":
     case "recharge-others":
+    case "disable-skill":
+    case "lengthen-recharge":
+    case "summon":
       return [];
   }
 }
 
 /**
  * What applying a status does for a team: hexes and conditions are
- * their own roles, any other status that raises armor or blocks is
- * defence, and one that interrupts a spell (Dazed) is an interrupt.
+ * their own roles, any other status that raises armor, blocks or cuts
+ * the damage its bearer takes (Dark Escape, #919), caps it (Protective
+ * Spirit, #936), reverses it (Reversal of Fortune, #987) or slows the
+ * hexes cast on it (Holy Veil, #944) is defence, and one that interrupts
+ * a spell (Dazed) is an interrupt.
  * What it does on each attack hit counts too: Apply Poison poisons,
  * and so does what it adds to the next attack skill: Anthem of Flame burns.
+ * So does what an ally's status does to its bearer when it ends (#944):
+ * Patient Spirit heals, Holy Veil removes a hex, or when it uses a skill
+ * (#999): Song of Restoration heals, or when it attacks or casts a spell
+ * (#1039): Vigorous Spirit heals, or what its bearer does to the foe that
+ * hurt it (#1022): Weapon of Remedy removes conditions. One that heals every
+ * second (Spirit Light Weapon, #975) is healing.
  */
 function statusRoles(status: StatusDefinition): readonly SkillRole[] {
   const roles: SkillRole[] = [];
   if (status.category === "hex" || status.category === "condition") {
     roles.push(status.category);
-  } else if (status.armorModifier > 0 || status.block !== undefined) {
+  } else if (
+    status.armorModifier > 0 ||
+    status.armorWhileStill > 0 ||
+    status.block !== undefined ||
+    status.damageTakenMultiplier < 1 ||
+    status.maxDamageFractionPerHit !== undefined ||
+    status.reversesNextDamage !== undefined ||
+    status.incomingHexCastTimeMultiplier > 1
+  ) {
     roles.push("defence");
   }
   if (status.interruptsSpells) roles.push("interrupt");
-  const riders = [...status.onAttackHit, ...(status.nextAttackSkill ?? [])];
+  if (status.healthPerSecond > 0) roles.push("healing");
+  const forBearer =
+    status.category === "hex" || status.category === "condition"
+      ? []
+      : status.triggers
+          .filter(
+            ({ on, target }) =>
+              ((on === "ends" ||
+                on === "expires" ||
+                on === "bearer-uses-skill" ||
+                on === "bearer-attacks" ||
+                on === "bearer-casts-spell") &&
+                target === "bearer") ||
+              target === "offender",
+          )
+          .flatMap(({ effects }) =>
+            effects.flatMap((effect) =>
+              effect.kind === "spread-gained-condition" ? [] : [effect],
+            ),
+          );
+  const riders = [
+    ...(status.onAttackHit?.effects ?? []),
+    ...(status.nextAttackSkill ?? []),
+    ...forBearer,
+  ];
   return [...roles, ...riders.flatMap(effectRoles)];
 }
 

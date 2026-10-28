@@ -63,6 +63,17 @@ chat id to `devenv.local.nix`. Without the file every employee refuses to
 start and retries. To keep it elsewhere, set
 `vibewars.telegram.managerTokenFile` in `devenv.local.nix`.
 
+The agents run on the company's own Claude account (ADR-0031), never yours.
+Sign it in once, in its own config directory (a separate account from yours is
+best, but not checked):
+
+```sh
+CLAUDE_CONFIG_DIR=~/.claude-bot/creds/claude claude   # then /login
+```
+
+`claude-llc-init` then records it, and `claude-llc` refuses to start unless
+it is signed in.
+
 A machine set up before this had the token wherever `managerTokenFile`
 pointed and still has that line in `devenv.local.nix`, which keeps working.
 Without that line, move the file once into the credential home.
@@ -88,6 +99,14 @@ sysctl kernel.unprivileged_userns_clone
 its session on that server and switches your client to it, rather than
 nesting an attach. Run without a terminal, from a Claude Code prompt say,
 it brings the company up and tells you to attach with `claude-llc`.
+
+## Pinning the commit the company runs
+
+`claude-llc up` starts only the commit in `.bots/company.lock` (ADR-0033):
+the checkout's HEAD must equal it, be clean, and be on GitHub's `main`. Run
+`claude-llc lock` once to pin the current HEAD, and again after you move the
+checkout yourself. A reboot moves the lock on its own, onto a `main` that
+built. Until the first lock exists, `up` refuses and says so.
 
 ## Scaling the company by hand
 

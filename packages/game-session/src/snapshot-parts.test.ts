@@ -1,4 +1,7 @@
 import {
+  MAX_SNAPSHOT_PARTS,
+  MAX_WIRE_ACTORS,
+  MAX_WIRE_CREATURES,
   MAX_WIRE_PROJECTILES,
   MAX_WIRE_STATUSES,
   type WirePlayer,
@@ -42,6 +45,7 @@ function player(index: number): WirePlayer {
     knockdownRemaining: 0,
     healthPips: 0,
     energyPips: 0,
+    creature: null,
     statuses: Array.from({ length: MAX_WIRE_STATUSES }, (_, i) => ({
       status: i,
       endsAt: 1000 / 3,
@@ -104,6 +108,23 @@ describe("packSnapshot (#662)", () => {
     });
     expect(parts.flatMap((part) => part.players)).toEqual(whole.players);
     expect(parts.flatMap((part) => part.projectiles)).toEqual(whole.projectiles);
+  });
+
+  it("splits 8 players, every creature and 256 projectiles into no more parts than a client takes (#1052)", () => {
+    const whole = snapshot(9, 8, MAX_WIRE_PROJECTILES);
+    const creature = (index: number): WirePlayer => ({
+      ...player(index),
+      primaryProfession: null,
+      statuses: [],
+      creature: { ownerId: player(0).id, kind: "minion" },
+    });
+    const players = [
+      ...whole.players,
+      ...Array.from({ length: MAX_WIRE_CREATURES }, (_, i) => creature(8 + i)),
+    ];
+    const parts = packSnapshot({ ...whole, players }, MAX_MESSAGE_BYTES);
+    expect(parts.length).toBeLessThanOrEqual(MAX_SNAPSHOT_PARTS);
+    expect(assembleAll(parts).at(-1)?.players).toEqual(players);
   });
 
   it("fills a part exactly to the budget, and not a byte past it", () => {
@@ -178,8 +199,8 @@ describe("snapshotAssembler (#662)", () => {
     expect(rescored.every((result) => result === undefined)).toBe(true);
   });
 
-  it("drops a tick whose parts together carry more players than a match holds", () => {
-    const crowd = snapshot(9, 9, 0);
+  it("drops a tick whose parts together carry more bodies than a match holds", () => {
+    const crowd = snapshot(9, Math.floor(MAX_WIRE_ACTORS / 2) + 1, 0);
     const parts = [0, 1].map((part): WireSnapshotPart => ({
       ...crowd,
       part,

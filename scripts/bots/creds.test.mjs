@@ -6,6 +6,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   claudeIdentity,
+  claudeVerdict,
+  resetBoxesOnAccountChange,
   ensureHome,
   githubIdentity,
   isOperators,
@@ -235,5 +237,96 @@ describe("ensureHome", () => {
     fs.chmodSync(root, 0o755);
     expect(ensureHome(root).ok).toBe(false);
     expect(fs.statSync(root).mode & 0o777).toBe(0o755);
+  });
+});
+
+describe("claudeVerdict", () => {
+  /** A credential home whose company Claude is signed in. */
+  function signedIn() {
+    const root = home();
+    fs.mkdirSync(path.join(root, "claude"));
+    fs.writeFileSync(path.join(root, "claude", ".credentials.json"), "{}");
+    return root;
+  }
+  /**
+   * @param {string | null} company
+   * @param {string | null | "broken"} operator
+   * @returns {import("./creds.mjs").Run}
+   */
+  const accounts = (company, operator) => (_c, _a, env) => {
+    const who = "CLAUDE_CONFIG_DIR" in env ? company : operator;
+    if (who === "broken") {
+      return { code: 1, stdout: SECRET };
+    }
+    return {
+      code: 0,
+      stdout: JSON.stringify(who === null ? { loggedIn: false } : { loggedIn: true, email: who }),
+    };
+  };
+
+  it("accepts a signed-in company account", () => {
+    expect(claudeVerdict(signedIn(), accounts("co@x.org", "me@x.org"))).toEqual({
+      ok: true,
+      who: "co@x.org",
+    });
+  });
+
+  it("does not compare it with the operator's: the same account passes", () => {
+    expect(claudeVerdict(signedIn(), accounts("me@x.org", "me@x.org")).ok).toBe(true);
+  });
+
+  it("refuses a missing company credential, with the sign-in command", () => {
+    const verdict = claudeVerdict(home(), accounts("co@x.org", "me@x.org"));
+    expect(JSON.stringify(verdict)).toContain("not set up");
+    expect(JSON.stringify(verdict)).toContain("CLAUDE_CONFIG_DIR=");
+  });
+
+  it("refuses an unreadable company account, without echoing output", () => {
+    const verdict = claudeVerdict(signedIn(), accounts("broken", null));
+    expect(verdict).toMatchObject({ ok: false });
+    expect(JSON.stringify(verdict)).not.toContain(SECRET);
+  });
+});
+
+describe("resetBoxesOnAccountChange", () => {
+  function boxes() {
+    const root = home();
+    const dir = path.join(root, "boxes");
+    for (const name of ["manager", "developer"]) {
+      fs.mkdirSync(path.join(dir, name), { recursive: true });
+      fs.writeFileSync(path.join(dir, name, "claude.json"), "{}");
+    }
+    return { root, dir };
+  }
+
+  it("deletes every box's claude.json when the account is new, and says how many", () => {
+    const b = boxes();
+    expect(resetBoxesOnAccountChange(b.root, b.dir, "co@x.org")).toBe(2);
+    expect(fs.existsSync(path.join(b.dir, "manager", "claude.json"))).toBe(false);
+  });
+
+  it("leaves them alone when the account is the one recorded (idempotent)", () => {
+    const b = boxes();
+    resetBoxesOnAccountChange(b.root, b.dir, "co@x.org");
+    fs.writeFileSync(path.join(b.dir, "manager", "claude.json"), "{}");
+    expect(resetBoxesOnAccountChange(b.root, b.dir, "co@x.org")).toBe(0);
+    expect(fs.existsSync(path.join(b.dir, "manager", "claude.json"))).toBe(true);
+  });
+
+  it("deletes them again when the account changes", () => {
+    const b = boxes();
+    resetBoxesOnAccountChange(b.root, b.dir, "co@x.org");
+    fs.writeFileSync(path.join(b.dir, "manager", "claude.json"), "{}");
+    expect(resetBoxesOnAccountChange(b.root, b.dir, "other@x.org")).toBe(1);
+  });
+});
+
+describe("the jail's Claude credential", () => {
+  it("is the company's, never a path into the operator's ~/.claude", () => {
+    const nix = fs.readFileSync(new URL("../../nix/claude-bot.nix", import.meta.url), "utf8");
+    expect(nix).not.toContain('creds="$HOME/.claude/.credentials.json"');
+    expect(nix).toMatch(
+      /creds="\$\{config\.vibewars\.claudeBot\.credentials\}\/claude\/\.credentials\.json"/,
+    );
   });
 });

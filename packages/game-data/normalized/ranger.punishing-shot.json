@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0.5,
   "rechargeSeconds": 5,
+  "upkeep": false,
   "description": "If Punishing Shot hits, you strike for +10...18...20 damage and your target is interrupted.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

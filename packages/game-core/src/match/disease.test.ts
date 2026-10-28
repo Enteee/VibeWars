@@ -45,6 +45,7 @@ function melee(): MatchSimulation {
       body("necro", 0, vec2(0, 0), [ROTTING_FLESH]),
     ],
     matchRules: {
+      victory: "kill-count",
       scoreToWin: 10,
       timeLimitSeconds: 600,
       deathRule: "respawn",
@@ -181,7 +182,8 @@ describe("Disease spreads (#765)", () => {
     dying(second, "w");
     stepFor(second, 1);
     expect(get(second, "w").dead).toBe(true);
-    expect(diseased(second)).toEqual(["w"]);
+    // The death ends w's own disease (#940), so there is nothing left to spread.
+    expect(diseased(second)).toEqual([]);
   });
 
   it("is −4 health pips, like poison", () => {

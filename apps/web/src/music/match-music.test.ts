@@ -42,6 +42,7 @@ function player(sessionId: string, extra: Partial<PlayerSnapshot> = {}): PlayerS
     knockdownRemaining: 0,
     healthPips: 0,
     energyPips: 0,
+    creature: undefined,
     statuses: [],
     ...extra,
   };

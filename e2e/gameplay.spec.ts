@@ -46,7 +46,7 @@ async function arenaShot(page: Page, canvas: Locator): Promise<Buffer> {
   return canvas.screenshot({
     mask: [
       page.locator(".hud"),
-      page.locator(".hud-scoreboard"),
+      page.locator(".hud-top"),
       page.locator(".hud-result"),
       page.locator(".hud-controls"),
     ],
@@ -111,6 +111,7 @@ async function readEnergy(page: Page): Promise<number> {
 }
 
 test("a match renders the arena and a populated HUD", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
   await startSoloMatch(page);
 
   await expect(page.locator(".hud-skills .hud-skill")).toHaveCount(8);
@@ -123,6 +124,33 @@ test("a match renders the arena and a populated HUD", async ({ page }) => {
   expect(bar !== null && last !== null && bar.x + bar.width - (last.x + last.width)).toBeLessThan(
     2,
   );
+
+  // Laid out as GW1 (#1042): the target frame top centre under the
+  // scoreboard, your bars and skill bar bottom centre, health over energy.
+  const box = async (
+    selector: string,
+  ): Promise<{ x: number; y: number; width: number; height: number }> => {
+    const found = await page.locator(selector).boundingBox();
+    if (found === null) {
+      throw new Error(`${selector} has no box`);
+    }
+    return found;
+  };
+  const centre = (of: { x: number; width: number }): number => of.x + of.width / 2;
+  const target = await box(".hud-target");
+  const scoreboard = await box(".hud-scoreboard");
+  expect(Math.abs(centre(target) - 640)).toBeLessThan(2);
+  expect(target.y).toBeGreaterThan(scoreboard.y + scoreboard.height);
+  expect(target.y).toBeLessThan(720 * 0.3);
+  const skills = await box(".hud-skills");
+  expect(Math.abs(centre(skills) - 640)).toBeLessThan(2);
+  expect(720 - (skills.y + skills.height)).toBeLessThan(1.5 * 16);
+  const health = await box(".hud-bar-health");
+  const energy = await box(".hud-bar-energy");
+  expect(health.y + health.height).toBeLessThanOrEqual(energy.y);
+  expect(energy.y + energy.height).toBeLessThanOrEqual(skills.y);
+  expect(Math.abs(health.width - skills.width)).toBeLessThan(2);
+  expect(Math.abs(energy.width - skills.width)).toBeLessThan(2);
 });
 
 test("hovering a slot shows its tooltip at the host's ranks, above the bar (#485)", async ({
@@ -586,7 +614,7 @@ test("at the arena's bottom edge, an RMB drag down looks past it, and springs ba
     throw new Error("the arena canvas has no box");
   }
 
-  // The pointer at the centre leans the camera nowhere.
+  // Over the canvas, for the wheel.
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   for (const _ of [1, 2]) {
     await page.waitForTimeout(200);
@@ -616,8 +644,6 @@ test("at the arena's bottom edge, an RMB drag down looks past it, and springs ba
   const atWall = await cameraY();
 
   // Not clamped to the map: the view centre goes below the arena, 200 px on.
-  // The drag ends at the centre, so once it is let go the look-ahead has
-  // nothing to lean toward: only the spring-back moves the view (#876).
   const centre = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
   await page.mouse.move(centre.x, centre.y - 200);
   await page.mouse.down({ button: "right" });
@@ -628,7 +654,7 @@ test("at the arena's bottom edge, an RMB drag down looks past it, and springs ba
   expect(await cameraY()).toBeLessThan(panned + 3);
   expect(panned).toBeGreaterThan(arena.height);
 
-  // Let go at the centre: the view is on you again. RETURN_RATE (7/s)
+  // Let go: the view is on you again. RETURN_RATE (7/s)
   // brings it within 3 px in about 0.65 s; a loaded runner needs more than
   // 1 s to see it, and a pan that never returns still fails at 2 s (#876).
   await page.mouse.up({ button: "right" });
@@ -689,7 +715,7 @@ test("an RMB drag pans; a left click then walks to the panned point; letting go 
   const cameraX = async (): Promise<number> =>
     Number(((await stage.getAttribute("data-camera")) ?? "").split(",")[0]);
 
-  // The pointer at the centre leans the camera nowhere; then Close.
+  // Over the canvas, for the wheel; then Close.
   await page.mouse.move(centre.x, centre.y);
   for (const _ of [1, 2]) {
     await page.waitForTimeout(200);

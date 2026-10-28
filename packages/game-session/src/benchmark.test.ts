@@ -1,4 +1,4 @@
-import { DEFAULT_MATCH_RULES, createRng, seedFromString } from "@vibewars/game-core";
+import { KILL_COUNT_MATCH_RULES, createRng, seedFromString } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
 import { connectMatch, type PeerMatchConnection } from "./match-client.js";
@@ -90,7 +90,9 @@ async function runScenario(scenario: Scenario): Promise<Result> {
     transport,
     map: ARENA,
     seed: `bench-${scenario.label}`,
-    matchRules: DEFAULT_MATCH_RULES,
+    // Respawns keep the fight going for the whole measurement; under
+    // annihilation the dead would stay down and the load would drop.
+    matchRules: KILL_COUNT_MATCH_RULES,
     random: () => hostRng.nextFloat(),
     maxPlayers: players,
     seats,

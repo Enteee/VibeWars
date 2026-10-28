@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0.25,
   "rechargeSeconds": 12,
+  "upkeep": false,
   "description": "For 5...17...20 seconds, you have 1...3...4 Health regeneration for each Enchantment (maximum of 3) on you.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

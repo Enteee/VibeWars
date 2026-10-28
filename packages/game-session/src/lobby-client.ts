@@ -6,8 +6,10 @@ import {
   parseWireChatLine,
   parseWireLobbyNote,
   parseWireLobbyState,
+  parseWireLobbyWelcome,
   parseWireMatchStart,
   type LobbyRefusal,
+  type PeerLobbyHello,
   type PeerLobbyJoin,
   type WireLobbyCommand,
   type WireLobbyState,
@@ -24,6 +26,7 @@ import type {
 } from "./lobby-connection.js";
 import { RECONNECT_WINDOW_SECONDS } from "./match-host.js";
 import { sanitizeChatText, sanitizeName } from "./names.js";
+import { admissionDigest, type QueuedSeat } from "./queue-admission.js";
 
 /** Who a chat line is from when nothing of its name is left to show (#479). */
 const UNNAMED_SPEAKER = "Unnamed";
@@ -39,6 +42,11 @@ import type { Transport, TransportTrouble } from "./transport.js";
  * (#515), so the lobby waits as long before it closes, and when the peer
  * is back, joins again: the host dropped this player from the lobby as it
  * went, and the match's end would otherwise find nobody to return to.
+ *
+ * A queued lobby's joiner (#871) says only hello to the room and to each
+ * peer as it arrives. A peer whose welcome proves it holds the planned
+ * host's ticket gets the join, with this ticket's proof, to it alone;
+ * lobby messages count only from such a peer.
  */
 
 /** Nobody answered: a wrong code, or a host that cannot be reached. */
@@ -77,6 +85,8 @@ export interface JoinLobbyOptions {
   readonly character: LobbyCharacter | null;
   /** How long to wait for a state that lists this player. */
   readonly timeoutMs: number;
+  /** The queue's lobby, joined with this seat's ticket; not a coded one. */
+  readonly queued?: QueuedSeat;
 }
 
 function isRefusal(reason: string): reason is LobbyRefusal {
@@ -84,14 +94,39 @@ function isRefusal(reason: string): reason is LobbyRefusal {
 }
 
 export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
-  const { transport, timeoutMs } = options;
+  const { transport, timeoutMs, queued } = options;
   const selfId = transport.selfId;
   const code = normalizeLobbyCode(options.code);
-  const join: PeerLobbyJoin = {
+  const base = {
     protocolVersion: PROTOCOL_VERSION,
     name: options.name,
     character: options.character,
   };
+  /** A coded lobby's join; a queued one's is made with its proof. */
+  const codedJoin: PeerLobbyJoin = { ...base, admission: null };
+  /** A queued join, and what the planned host's welcome to this peer signs. */
+  const proof =
+    queued === undefined
+      ? undefined
+      : Promise.all([
+          admissionDigest(
+            "vibewars-admit",
+            queued.group.groupId,
+            queued.group.hostTicketId,
+            selfId,
+          ),
+          admissionDigest("vibewars-host", queued.group.groupId, queued.group.hostTicketId, selfId),
+        ]).then(([admit, hostDigest]) => ({
+          join: {
+            ...base,
+            admission: { ticketId: queued.key.ticketId, admissionSig: queued.key.sign(admit) },
+          } satisfies PeerLobbyJoin,
+          hostDigest,
+        }));
+  /** Peers whose welcome proved them the planned host; each got the join once. */
+  const provenHosts = new Set<string>();
+  /** Peers whose welcome was checked, proven or not. */
+  const checkedWelcomes = new Set<string>();
   const unsubscribe: (() => void)[] = [];
   let hostId: string | undefined;
   let latest: WireLobbyState | undefined;
@@ -109,8 +144,10 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
   /** When the host's peer went mid-match, by `Date.now`, while waiting for it back. */
   let droppedAt: number | undefined;
   let closeTimer: unknown;
+  let stopped = false;
 
   const stop = (): void => {
+    stopped = true;
     clearTimeout(closeTimer);
     for (const off of unsubscribe.splice(0)) {
       off();
@@ -135,6 +172,35 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     }
   };
 
+  /** Join through `to`; a coded lobby's first join may go to the whole room. */
+  const sendJoin = (to?: string): void => {
+    if (proof === undefined) {
+      transport.send("lobby-join", codedJoin, to);
+    } else if (to !== undefined) {
+      void proof.then(({ join }) => {
+        if (!stopped) {
+          transport.send("lobby-join", join, to);
+        }
+      });
+    }
+  };
+
+  /**
+   * Make this peer known to `to`, or to the room: a coded lobby's join,
+   * or a queued one's hello, which carries nothing and asks a host to
+   * prove itself before the join goes to it.
+   */
+  const knock = (to?: string): void => {
+    if (queued === undefined) {
+      sendJoin(to);
+    } else {
+      transport.send("lobby-hello", {} satisfies PeerLobbyHello, to);
+    }
+  };
+
+  /** Whether lobby messages from `from` count before the host is known. */
+  const mayHost = (from: string): boolean => queued === undefined || provenHosts.has(from);
+
   const send = (command: WireLobbyCommand): void => {
     if (hostId !== undefined && !closed) {
       transport.send("lobby-cmd", command, hostId);
@@ -156,6 +222,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       character: lobbyCharacter(player.character),
     })),
     isHost: state.players.some((player) => player.id === selfId && player.isHost),
+    countdownSeconds: state.countdownSeconds,
   });
 
   return new Promise((resolve, reject) => {
@@ -228,14 +295,41 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
           trouble = said;
         }
       }),
+      transport.on("lobby-welcome", (data, from) => {
+        const welcome = parseWireLobbyWelcome(data);
+        // A signature check costs milliseconds and an honest host welcomes
+        // once, so one welcome per peer is checked; the rest are ignored.
+        if (
+          queued === undefined ||
+          proof === undefined ||
+          welcome === undefined ||
+          hostId !== undefined ||
+          checkedWelcomes.has(from)
+        ) {
+          return;
+        }
+        checkedWelcomes.add(from);
+        void proof.then(({ hostDigest }) => {
+          if (
+            stopped ||
+            hostId !== undefined ||
+            !queued.verifyTicketSig(queued.group.hostTicketId, hostDigest, welcome.hostSig)
+          ) {
+            return;
+          }
+          // Proven the planned host: the join, with its proof, goes to it alone.
+          provenHosts.add(from);
+          sendJoin(from);
+        });
+      }),
       transport.on("lobby-state", (data, from) => {
         // Only the host's, once it is known; before that, only a state the
         // sender says it hosts, and that lists this player.
-        if (hostId !== undefined && from !== hostId) {
+        if (hostId === undefined ? !mayHost(from) : from !== hostId) {
           return;
         }
         const state = parseWireLobbyState(data);
-        if (state?.hostId !== from || state.code !== code) {
+        if (state?.hostId !== from || normalizeLobbyCode(state.code) !== code) {
           return;
         }
         if (hostId === undefined) {
@@ -256,7 +350,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       }),
       transport.on("lobby-note", (data, from) => {
         // A refusal can come before the host is known: it is why it never is.
-        if (hostId !== undefined && from !== hostId) {
+        if (hostId === undefined ? !mayHost(from) : from !== hostId) {
           return;
         }
         const note = parseWireLobbyNote(data);
@@ -274,8 +368,8 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
         } else if (isRefusal(note.reason)) {
           if (failJoin !== undefined) {
             failJoin(new LobbyRefusedError(note.reason));
-          } else if (note.reason === "host-left") {
-            close("host-left");
+          } else if (note.reason === "host-left" || note.reason === "fell-through") {
+            close(note.reason);
           }
         }
       }),
@@ -321,7 +415,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       transport.onPeerJoin((peerId) => {
         // Said to every peer in the room: until one answers, any might host.
         if (hostId === undefined) {
-          transport.send("lobby-join", join, peerId);
+          knock(peerId);
           return;
         }
         if (peerId !== hostId || droppedAt === undefined) {
@@ -335,7 +429,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
           close("connection-lost");
           return;
         }
-        transport.send("lobby-join", join, hostId);
+        sendJoin(hostId);
       }),
       transport.onPeerLeave((peerId) => {
         if (peerId !== hostId || droppedAt !== undefined) {
@@ -352,6 +446,6 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       }),
     );
     // And to those already here, in case their joins were told before now.
-    transport.send("lobby-join", join);
+    knock();
   });
 }

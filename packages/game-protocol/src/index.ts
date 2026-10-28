@@ -10,10 +10,11 @@
  * positions, no cooldown state. See `docs/adr/0002-networking.md` §Security.
  */
 
-export { PROTOCOL_VERSION } from "./protocol-version.js";
+export { PROTOCOL_VERSION, fingerprint } from "./protocol-version.js";
 
 export {
   PROTOCOL_MISMATCH_MESSAGE,
+  CHAIN_ROLES,
   MAX_LOBBY_PLAYERS,
   isLobbyCode,
   normalizeLobbyCode,
@@ -34,6 +35,9 @@ export type {
   EndUpkeepIntent,
   CastRefusedMessage,
   AdrenalineMessage,
+  ChainMarksMessage,
+  WireChainMark,
+  WireChainRole,
   RechargeMessage,
   RechargeSlot,
   MapDescriptor,
@@ -51,6 +55,9 @@ export {
   MAX_WIRE_STRING,
   MAX_WIRE_TEXT,
   MAX_WIRE_STATUSES,
+  MAX_WIRE_CREATURES,
+  MAX_WIRE_ACTORS,
+  CREATURE_KINDS,
   MAX_WIRE_STATUS_INDEX,
   MAX_WIRE_EVENTS,
   MAX_WIRE_SLOTS,
@@ -88,12 +95,15 @@ export {
   parseWireEnded,
   parseCastRefused,
   parseAdrenaline,
+  parseChainMarks,
   parseRecharge,
   LOBBY_REFUSALS,
   parsePeerLobbyJoin,
   parseWireLobbyState,
   parseWireLobbyCommand,
   parseWireLobbyNote,
+  parsePeerLobbyHello,
+  parseWireLobbyWelcome,
   parseWireMatchStart,
 } from "./p2p.js";
 
@@ -112,6 +122,7 @@ export type {
   PeerWelcome,
   PeerRefuse,
   WirePlayer,
+  WireCreature,
   WireSnapshot,
   WireSnapshotPart,
   WireCombatEvent,
@@ -127,6 +138,9 @@ export type {
   WireLobbyState,
   WireLobbyCommand,
   WireLobbyNote,
+  PeerLobbyHello,
+  WireLobbyWelcome,
+  WireAdmission,
   LobbyRefusal,
   WireMatchStart,
 } from "./p2p.js";

@@ -91,15 +91,26 @@ export { STARTER_BUILDS, pickBuildFrom, pickStarterBuild } from "./starter-build
 
 export * from "./skills/index.js";
 
-export type { MatchOutcome, MatchPhase, MatchRules, MatchScore } from "./match-rules.js";
+export type {
+  MatchEndReason,
+  MatchOutcome,
+  MatchPhase,
+  MatchRules,
+  MatchScore,
+  MatchStanding,
+  TeamStanding,
+} from "./match-rules.js";
 export {
+  ANNIHILATION_MATCH_RULES,
   DEATH_PENALTY_PERCENT,
   DEFAULT_MATCH_RULES,
   DP_GRACE_AFTER_RES_SECONDS,
+  KILL_COUNT_MATCH_RULES,
   KILL_MORALE_PERCENT,
   MATCH_IN_PROGRESS,
   MORALE_CEILING,
   MORALE_FLOOR,
+  RANDOM_ARENA_RULES,
   addKill,
   emptyScore,
   evaluateMatch,
@@ -116,13 +127,15 @@ export type { BenchField, TickBench } from "./tools/tick-bench.js";
 export { DENSE_FIELD, runTickBench, tickStats } from "./tools/tick-bench.js";
 
 export type {
+  Creature,
+  CreatureKind,
   MatchSimulationOptions,
   Participant,
   ParticipantSpec,
   SkillRequest,
   StepResult,
 } from "./match/simulation.js";
-export { MatchSimulation } from "./match/simulation.js";
+export { countsForTeam, MAX_CREATURES, MatchSimulation } from "./match/simulation.js";
 export { facingToward, spawnFacing } from "./match/facing.js";
 export type { IntentRefusal, MatchIntent } from "./match/apply-intent.js";
 export { applyIntent } from "./match/apply-intent.js";

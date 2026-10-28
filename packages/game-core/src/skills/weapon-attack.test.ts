@@ -2,12 +2,14 @@ import { describe, expect, it } from "vitest";
 
 import { AREA_ADJACENT } from "../distances.js";
 import { bareArmorSet } from "../equipment/armor.js";
+import type { ArmorCondition } from "../equipment/insignias.js";
 import { defaultEquipmentFor } from "../equipment/loadout.js";
 import {
   resolveLoadout,
   unarmedResolvedEquipment,
   type ResolvedEquipment,
 } from "../equipment/resolve.js";
+import type { DamageType } from "../equipment/types.js";
 import { WEAPONS, weaponDamageType, type Weapon } from "../equipment/weapons.js";
 import { createRng, type SimulationRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
@@ -270,6 +272,7 @@ describe("resolveAttackSkill (ADR-0029)", () => {
     return resolveAttackSkill(
       { surroundings: new Map(), skill, caster, targets, rng, rules: RULES },
       NOWHERE,
+      [],
     );
   }
 
@@ -374,6 +377,83 @@ describe("resolveAttackSkill (ADR-0029)", () => {
       const target = victim();
       const events = resolve(barrage, strong(WEAPONS.hornbow, "ranger.marksmanship", 12), [target]);
       expect(damages(events)).toEqual([blowOf(WEAPONS.hornbow, 12, 0.1, target)]);
+    });
+  });
+
+  describe("Spear of Lightning: a typed, penetrating attack skill (#923)", () => {
+    const spearOfLightning = getSkill("paragon.spear-of-lightning");
+    const thrower = (strength = 0): Combatant =>
+      makeCombatant({
+        id: "attacker",
+        team: 0,
+        equipment: wielding(WEAPONS.spear, "paragon.spear-mastery"),
+        attributeRanks: new Map([
+          ["paragon.spear-mastery", 12],
+          ["warrior.strength", strength],
+        ]),
+      });
+    /** `spearOfLightning` with its own penetration replaced. */
+    const penetrating = (armorPenetration: number): Skill => {
+      if (spearOfLightning?.attack === undefined) {
+        throw new Error("missing skill");
+      }
+      return { ...spearOfLightning, attack: { ...spearOfLightning.attack, armorPenetration } };
+    };
+    const blowOf = (type: DamageType, penetration: number, target: Combatant) =>
+      mitigate(
+        {
+          armored: 10 * weaponAttributeMultiplier(12, RULES),
+          armorIgnoring: 18,
+          type,
+          source: "weapon",
+          armorPenetration: penetration,
+        },
+        target,
+        RULES,
+      );
+    /** A target with +40 armor against `condition`. */
+    const armoredVs = (condition: ArmorCondition): Combatant =>
+      makeCombatant({
+        id: "t",
+        team: 1,
+        health: 1e6,
+        maxHealth: 1e6,
+        equipment: {
+          ...unarmedResolvedEquipment(RULES.armorReferenceLevel),
+          conditionalArmor: [{ condition, amount: 40 }],
+        },
+      });
+
+    it("is one lightning blow, +18, at 25% armor penetration", () => {
+      const target = victim();
+      const events = resolve(spearOfLightning, thrower(), [target]);
+      expect(damages(events)).toEqual([blowOf("lightning", 0.25, target)]);
+      expect(damages(resolve(penetrating(0), thrower(), [victim()]))).toEqual([
+        blowOf("lightning", 0, target),
+      ]);
+      expect(blowOf("lightning", 0.25, target)).toBeGreaterThan(blowOf("lightning", 0, target));
+    });
+
+    it("meets armor against elemental damage, not against physical (#759)", () => {
+      const elemental = armoredVs("vs-elemental");
+      const physical = armoredVs("vs-physical");
+      const [vsElemental] = damages(resolve(spearOfLightning, thrower(), [elemental]));
+      const [vsPhysical] = damages(resolve(spearOfLightning, thrower(), [physical]));
+      expect(vsElemental).toBe(blowOf("lightning", 0.25, elemental));
+      expect(vsPhysical).toBe(blowOf("lightning", 0.25, victim()));
+      expect(vsElemental).toBeLessThan(vsPhysical ?? 0);
+    });
+
+    it("takes the larger of its own and Strength's penetration; they do not add", () => {
+      const target = victim();
+      // 25% beats Strength's 12%.
+      expect(damages(resolve(spearOfLightning, thrower(12), [target]))).toEqual([
+        blowOf("lightning", 0.25, target),
+      ]);
+      // Strength's 12% beats a 5% of the skill's own.
+      expect(damages(resolve(penetrating(0.05), thrower(12), [target]))).toEqual([
+        blowOf("lightning", 0.12, target),
+      ]);
     });
   });
 
@@ -572,6 +652,7 @@ describe("block (#534)", () => {
           rules: RULES,
         },
         NOWHERE,
+        [],
       );
     }
 
@@ -666,6 +747,7 @@ describe("block (#534)", () => {
           rules: RULES,
         },
         NOWHERE,
+        [],
       );
       expect(events.map((event) => `${event.kind}:${event.targetId}`)).toEqual([
         "attack-blocked:a",
@@ -767,6 +849,7 @@ describe("critical hits (#533)", () => {
         rules: RULES,
       },
       NOWHERE,
+      [],
     );
     expect(events).toEqual([
       {
@@ -799,6 +882,7 @@ describe("critical hits (#533)", () => {
         rules: RULES,
       },
       always,
+      [],
     );
     expect(events).toMatchObject([{ kind: "damage", critical: false }]);
   });
@@ -902,6 +986,7 @@ describe("critical hits (#533)", () => {
           rules: RULES,
         },
         always,
+        [],
       );
       expect(events).toContainEqual({ kind: "energy-gain", targetId: "attacker", amount: 2 });
     });
@@ -1075,6 +1160,7 @@ describe("daze (#546)", () => {
         rules: RULES,
       },
       NOWHERE,
+      [],
     );
     expect(events[0]?.kind).toBe("interrupted");
     expect(target.combatant.cast.isCasting).toBe(false);
@@ -1096,6 +1182,7 @@ describe("daze (#546)", () => {
         rules: RULES,
       },
       NOWHERE,
+      [],
     ).map((event) => event.kind);
     expect(kinds.filter((kind) => kind === "interrupted")).toHaveLength(1);
     expect(kinds).not.toContain("interrupt-missed");
@@ -1166,6 +1253,7 @@ describe("weakness (#762)", () => {
         rules: RULES,
       },
       NOWHERE,
+      [],
     );
     const atEleven = resolveMagnitudeAtRanks(bonus, new Map([["warrior.axe-mastery", 11]]));
     expect(damages(events)).toEqual([
@@ -1214,7 +1302,16 @@ describe("a caster weapon's element (#761)", () => {
   function boltOnRanger(attributeId: string): number[] {
     const events: CombatEvent[] = [];
     const caster = attacker(WEAPONS.wand, attributeId);
-    landBlow(weaponSnapshotOf(caster), ranger(), PLAIN_BLOW, false, noCrit(), RULES, events);
+    landBlow(
+      weaponSnapshotOf(caster),
+      caster,
+      ranger(),
+      PLAIN_BLOW,
+      false,
+      noCrit(),
+      RULES,
+      events,
+    );
     return damages(events);
   }
 
@@ -1282,6 +1379,7 @@ describe("dual attacks (#885)", () => {
         surroundings: options.surroundings ?? new Map(),
       },
       NOWHERE,
+      [],
     );
   }
 
@@ -1456,6 +1554,18 @@ describe("dual attacks (#885)", () => {
       expect(caster.chainMarks.get("t")?.role).toBe("off-hand");
     });
 
+    it("leaves an attack skill Distracting Shot disabled waiting (#914)", () => {
+      const { caster, target } = recharging(4e5);
+      caster.cast.beginCast("assassin.jagged-strike", "t", 3, undefined);
+      const ranger = attacker(WEAPONS.longbow, "ranger.marksmanship", 12);
+      resolve("ranger.distracting-shot", ranger, caster);
+      expect(caster.cast.rechargeRemaining.get("assassin.jagged-strike")).toBe(20);
+
+      resolve("assassin.moebius-strike", caster, target);
+      expect(ready(caster)).toEqual(["assassin.death-blossom"]);
+      expect(caster.cast.rechargeRemaining.get("assassin.jagged-strike")).toBe(20);
+    });
+
     it("on a foe above 50% recharges nothing", () => {
       const { caster, target } = recharging(6e5);
       resolve("assassin.moebius-strike", caster, target);
@@ -1470,5 +1580,77 @@ describe("dual attacks (#885)", () => {
       ]);
       expect(ready(caster)).toEqual([]);
     });
+  });
+});
+
+describe("a chain attack's state requirement (#1041)", () => {
+  /** A float stream of 0.9: no crit, no block, no blind miss. */
+  const steady = (): SimulationRng =>
+    Object.assign(createRng(1), { nextInt: () => 10, nextFloat: () => 0.9 });
+
+  const fallingSpider = (): Skill => {
+    const skill = getSkill("assassin.falling-spider");
+    if (skill === undefined) {
+      throw new Error("missing assassin.falling-spider");
+    }
+    return skill;
+  };
+
+  function resolve(skill: Skill, caster: Combatant, target: Combatant): CombatEvent[] {
+    return resolveAttackSkill(
+      { skill, caster, targets: [target], rng: steady(), rules: RULES, surroundings: new Map() },
+      NOWHERE,
+      [],
+    );
+  }
+
+  const assassin = (): Combatant => attacker(WEAPONS.daggers, "assassin.dagger-mastery", 12);
+  const victim = (knockedDown: boolean): Combatant => {
+    const target = makeCombatant({ id: "t", team: 1, health: 1e6, maxHealth: 1e6 });
+    target.knockdownRemaining = knockedDown ? 2 : 0;
+    return target;
+  };
+
+  it("unmet, misses out of sequence: no damage, no mark, no effects", () => {
+    const caster = assassin();
+    const target = victim(false);
+    expect(resolve(fallingSpider(), caster, target)).toEqual([
+      { kind: "attack-missed", targetId: "t", reason: "out-of-sequence" },
+    ]);
+    expect(caster.chainMarks.has("t")).toBe(false);
+    expect(target.statuses.has("poison")).toBe(false);
+  });
+
+  it("met, hits with no lead and leaves its off-hand mark", () => {
+    const caster = assassin();
+    const target = victim(true);
+    const events = resolve(fallingSpider(), caster, target);
+    expect(events.some((event) => event.kind === "damage" && event.targetId === "t")).toBe(true);
+    expect(target.statuses.has("poison")).toBe(true);
+    expect(caster.chainMarks.get("t")?.role).toBe("off-hand");
+  });
+
+  it("with `follows` too, either unmet misses", () => {
+    const spider = fallingSpider();
+    const both: Skill = {
+      ...spider,
+      attack: spider.attack && {
+        ...spider.attack,
+        chain: { role: "off-hand", follows: "lead", requires: { kind: "target-knocked-down" } },
+      },
+    };
+    const missed = (lead: boolean, knockedDown: boolean): boolean => {
+      const caster = assassin();
+      const target = victim(knockedDown);
+      if (lead) {
+        caster.chainMarks.set("t", { role: "lead", remainingSeconds: 15 });
+      }
+      return resolve(both, caster, target).some(
+        (event) => event.kind === "attack-missed" && event.reason === "out-of-sequence",
+      );
+    };
+    expect(missed(true, false)).toBe(true);
+    expect(missed(false, true)).toBe(true);
+    expect(missed(true, true)).toBe(false);
   });
 });

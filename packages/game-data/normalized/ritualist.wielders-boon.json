@@ -1,0 +1,26 @@
+{
+  "id": "ritualist.wielders-boon",
+  "name": "Wielder's Boon",
+  "profession": "ritualist",
+  "attribute": "Restoration Magic",
+  "type": "Spell.",
+  "elite": false,
+  "campaign": "Factions",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 0.25,
+  "rechargeSeconds": 4,
+  "upkeep": false,
+  "description": "Heal target ally for 15...51...60 points. If that ally is under the effects of a Weapon Spell, Wielder's Boon heals for an additional 15...63...75 Health.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Ritualist/770-Wielder's_Boon",
+    "fetchedAt": "2026-10-27T17:37:18.517Z"
+  },
+  "unmapped": {}
+}

@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { MINIMAL_GW_INSPIRED_PVP_V1 } from "@vibewars/game-core";
 import type { MatchSnapshot, PlayerSnapshot } from "@vibewars/game-session";
 
 import { toArenaSnapshot } from "./match-view.js";
+import { ACTOR_RADIUS, CREATURE_RADIUS } from "./render/arena-snapshot.js";
 
 function player(sessionId: string, knockdownRemaining: number): PlayerSnapshot {
   return {
@@ -34,6 +36,7 @@ function player(sessionId: string, knockdownRemaining: number): PlayerSnapshot {
     knockdownRemaining,
     healthPips: 0,
     energyPips: 0,
+    creature: undefined,
     statuses: [],
   };
 }
@@ -58,6 +61,22 @@ describe("toArenaSnapshot", () => {
     expect(arena.actors.map((actor) => [actor.id, actor.knockedDown])).toEqual([
       ["me", false],
       ["down", true],
+    ]);
+  });
+
+  it("draws a creature smaller than a player, at the ruleset's radii (#1052)", () => {
+    const minion: PlayerSnapshot = {
+      ...player("me/c1", 0),
+      creature: { ownerId: "me", kind: "minion" },
+    };
+    const arena = toArenaSnapshot(match([player("me", 0), minion]), []);
+    expect(arena.actors.map((actor) => actor.radius)).toEqual([
+      MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius,
+      MINIMAL_GW_INSPIRED_PVP_V1.collision.creatureRadius,
+    ]);
+    expect([ACTOR_RADIUS, CREATURE_RADIUS]).toEqual([
+      MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius,
+      MINIMAL_GW_INSPIRED_PVP_V1.collision.creatureRadius,
     ]);
   });
 });

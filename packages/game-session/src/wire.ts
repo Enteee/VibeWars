@@ -9,6 +9,8 @@ import {
   type ActiveStatus,
   type CombatEvent,
   type CombatLogEntry,
+  type Participant,
+  type ProfessionId,
   type RankHolder,
   type SkillBar,
   type StatusCategory,
@@ -40,7 +42,7 @@ import type {
 
 /**
  * The status table (#632): every status id, sorted. A snapshot names a
- * status by its index here, and `wire-schema.json` carries the table, so
+ * status by its index here, and `src/wire-schema.json` carries the table, so
  * builds whose tables differ never meet.
  */
 export const WIRE_STATUS_IDS: readonly StatusId[] = Object.keys(STATUS_DEFINITIONS)
@@ -217,6 +219,7 @@ function wireEvent(event: CombatEvent): WireCombatEvent {
     case "energy-gain":
     case "energy-loss":
     case "sacrifice":
+    case "life-stolen":
       return { ...none, kind: event.kind, targetId: event.targetId, amount: event.amount };
     case "status-applied":
       return {
@@ -232,6 +235,22 @@ function wireEvent(event: CombatEvent): WireCombatEvent {
         kind: event.kind,
         targetId: event.targetId,
         durationSeconds: event.durationSeconds,
+      };
+    case "skill-disabled":
+      return {
+        ...none,
+        kind: event.kind,
+        targetId: event.targetId,
+        skillId: event.skillId,
+        durationSeconds: event.seconds,
+      };
+    case "recharge-lengthened":
+      return {
+        ...none,
+        kind: event.kind,
+        targetId: event.targetId,
+        skillId: event.skillId,
+        durationSeconds: event.seconds,
       };
     case "status-removed":
     case "status-expired":
@@ -260,6 +279,8 @@ function wireEvent(event: CombatEvent): WireCombatEvent {
         statusId: event.statusId,
         fromId: event.casterId,
       };
+    case "shadow-stepped":
+      return { ...none, kind: event.kind, targetId: event.targetId, fromId: event.toId };
     case "interrupted":
     case "cancelled":
       return { ...none, kind: event.kind, targetId: event.targetId, skillId: event.skillId };
@@ -331,6 +352,7 @@ function combatEvent(event: WireCombatEvent): CombatEvent | undefined {
     case "energy-gain":
     case "energy-loss":
     case "sacrifice":
+    case "life-stolen":
       return amount === null ? undefined : { kind: event.kind, targetId, amount };
     case "status-applied":
       return isStatusId(statusId)
@@ -342,6 +364,11 @@ function combatEvent(event: WireCombatEvent): CombatEvent | undefined {
         : undefined;
     case "knocked-down":
       return durationSeconds === null ? undefined : { kind: event.kind, targetId, durationSeconds };
+    case "skill-disabled":
+    case "recharge-lengthened":
+      return skillId === null || durationSeconds === null
+        ? undefined
+        : { kind: event.kind, targetId, skillId, seconds: durationSeconds };
     case "status-removed":
     case "status-expired":
       return isStatusId(statusId) ? { kind: event.kind, targetId, statusId } : undefined;
@@ -353,6 +380,8 @@ function combatEvent(event: WireCombatEvent): CombatEvent | undefined {
       return isStatusId(statusId) && fromId !== null
         ? { kind: event.kind, targetId, fromId, statusId }
         : undefined;
+    case "shadow-stepped":
+      return fromId === null ? undefined : { kind: event.kind, targetId, toId: fromId };
     case "interrupted":
     case "cancelled":
       return skillId === null ? undefined : { kind: event.kind, targetId, skillId };
@@ -394,6 +423,53 @@ export function combatMessage(combat: WireCombat): CombatMessage {
 /** `null` on the wire, `undefined` in a snapshot. */
 function absent<T>(value: T | null): T | undefined {
   return value ?? undefined;
+}
+
+/** The fields of a body's `WirePlayer` that say who it is, not how it stands. */
+export type WireIdentity = Pick<
+  WirePlayer,
+  "name" | "team" | "primaryProfession" | "secondaryProfession" | "creature"
+>;
+
+/** What a seat says about who sits in it. */
+export interface SeatIdentity {
+  readonly name: string;
+  readonly team: 0 | 1;
+  readonly primaryProfession: ProfessionId;
+  readonly secondaryProfession: ProfessionId | undefined;
+}
+
+/**
+ * Who a body on the wire is: a seat's player, or a creature (#1052),
+ * named for its kind, on its owner's team, with no professions.
+ * `undefined` for a body with no seat that is not a seated player's
+ * creature: it is not sent.
+ */
+export function wireIdentity(
+  participant: Pick<Participant, "id" | "creature">,
+  seats: ReadonlyMap<string, SeatIdentity>,
+): WireIdentity | undefined {
+  const seat = seats.get(participant.id);
+  if (seat !== undefined) {
+    return {
+      name: seat.name,
+      team: seat.team,
+      primaryProfession: seat.primaryProfession,
+      secondaryProfession: seat.secondaryProfession ?? null,
+      creature: null,
+    };
+  }
+  const { creature } = participant;
+  const owner = creature === undefined ? undefined : seats.get(creature.ownerId);
+  return creature === undefined || owner === undefined
+    ? undefined
+    : {
+        name: creature.name,
+        team: owner.team,
+        primaryProfession: null,
+        secondaryProfession: null,
+        creature: { ownerId: creature.ownerId, kind: creature.kind },
+      };
 }
 
 /**
@@ -446,6 +522,7 @@ export function playerSnapshot(player: WirePlayer): PlayerSnapshot | undefined {
     healthPips: player.healthPips,
     energyPips: player.energyPips,
     statuses,
+    creature: player.creature ?? undefined,
   };
 }
 

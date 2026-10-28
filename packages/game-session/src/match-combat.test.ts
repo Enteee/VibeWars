@@ -1,5 +1,6 @@
 import {
   ADRENALINE_PER_STRIKE,
+  CHAIN_MARK_SECONDS,
   MINIMAL_GW_INSPIRED_PVP_V1,
   defaultBuildEquipment,
   type CombatLogEntry,
@@ -8,10 +9,12 @@ import {
 import {
   MAX_WIRE_COMBATS,
   parseAdrenaline,
+  parseChainMarks,
   parsePeerHello,
   parseWireCombatBatch,
   parseWireSnapshotPart,
   type AdrenalineMessage,
+  type ChainMarksMessage,
   type CastRefusedMessage,
 } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
@@ -86,6 +89,26 @@ const SIGNET: PlayerBuild = {
   attributes: [{ attributeId: "warrior.tactics", rank: 12 }],
   skillBar: ["warrior.healing-signet", null, null, null, null, null, null, null],
   equipment: defaultBuildEquipment("warrior"),
+};
+
+/** A mesmer with Power Block (#914), to disable a foe's spell. */
+const BLOCKER: PlayerBuild = {
+  name: "Blocker",
+  primaryProfession: "mesmer",
+  secondaryProfession: undefined,
+  attributes: [{ attributeId: "mesmer.domination-magic", rank: 12 }],
+  skillBar: ["mesmer.power-block", null, null, null, null, null, null, null],
+  equipment: defaultBuildEquipment("mesmer"),
+};
+
+/** An assassin with daggers, a lead attack and the off-hand that follows it (#916). */
+const DAGGERS: PlayerBuild = {
+  name: "Daggers",
+  primaryProfession: "assassin",
+  secondaryProfession: undefined,
+  attributes: [{ attributeId: "assassin.dagger-mastery", rank: 12 }],
+  skillBar: ["assassin.jagged-strike", "assassin.fox-fangs", null, null, null, null, null, null],
+  equipment: defaultBuildEquipment("assassin"),
 };
 
 /** One tick of match time. */
@@ -354,6 +377,31 @@ describe("networked combat (P2P)", () => {
     await until(match, () => borne() === undefined, "the cast to end");
   });
 
+  it("tells the victim of a Power Block its disabled slot's new recharge (#914)", async () => {
+    const match = startMatch();
+    const { connection: a } = await match.join(hello({ build: toJson(BLOCKER) }));
+    const { connection: b } = await match.join(helloAs(NUKER));
+    await match.step(TICK);
+    await closeDistance(match, a, b.selfSessionId, 300);
+    await target(match, a, b.selfSessionId);
+    await target(match, b, a.selfSessionId);
+
+    // Fireball: a 1 s cast, the nuker's only Fire Magic skill.
+    b.sendIntent({ kind: "use-skill", slot: FIREBALL });
+    await until(match, () => self(b)?.castingSkillId === "elementalist.fireball", "b's cast");
+    a.sendIntent({ kind: "use-skill", slot: 0 });
+    await until(
+      match,
+      () => b.getRecharges()[FIREBALL]?.total === 10,
+      "the disable, as b hears it",
+    );
+
+    // Its own 7 s recharge, raised to the disable's 10 s; nothing else waits.
+    expect(b.getRecharges()[FIREBALL]?.remaining).toBeGreaterThan(9);
+    const armor = slotOf(NUKER, "elementalist.armor-of-earth");
+    expect(b.getRecharges()[armor]).toEqual({ remaining: 0, total: 0 });
+  });
+
   it("sends a knockdown's time left on the victim, and 0 once it rises (#545)", async () => {
     const match = startMatch();
     const { connection: a } = await match.join(hello({ build: toJson(HAMMERER) }));
@@ -526,6 +574,65 @@ describe("networked combat (P2P)", () => {
     expect(toB.length).toBeGreaterThan(0);
     expect(toB.at(-1)?.slots).toEqual(b.getAdrenaline());
     expect(b.getAdrenaline()[severArtery]).toBeLessThan(4 * ADRENALINE_PER_STRIKE);
+  });
+
+  it("sends each player only the chain marks it placed: a lead, then an off-hand, gone with its target (#916)", async () => {
+    const match = startMatch();
+    const { connection: a, transport: ta } = await match.join(hello({ build: toJson(DAGGERS) }));
+    const { connection: b, transport: tb } = await match.join();
+    await match.step(TICK);
+    const toA: ChainMarksMessage[] = [];
+    const toB: ChainMarksMessage[] = [];
+    ta.on("chain", (data) => {
+      const message = parseChainMarks(data);
+      if (message !== undefined) {
+        toA.push(message);
+      }
+    });
+    tb.on("chain", (data) => {
+      const message = parseChainMarks(data);
+      if (message !== undefined) {
+        toB.push(message);
+      }
+    });
+    const foe = b.selfSessionId;
+    await closeDistance(match, a, foe, 30);
+    await target(match, a, foe);
+    expect(a.getChainMark(foe)).toBeUndefined();
+
+    // Jagged Strike lands: a lead mark of a's on b, for the full time.
+    a.sendIntent({ kind: "use-skill", slot: 0 });
+    await until(match, () => a.getChainMark(foe) === "lead", "a's lead mark");
+    expect(toA.at(-1)?.marks).toEqual([
+      { targetId: foe, role: "lead", remainingSeconds: expect.closeTo(CHAIN_MARK_SECONDS, 1) },
+    ]);
+    // Fox Fangs follows it: the mark turns off-hand.
+    await until(match, () => self(a)?.castingSkillId === undefined, "Jagged Strike done");
+    a.sendIntent({ kind: "use-skill", slot: 1 });
+    await until(match, () => a.getChainMark(foe) === "off-hand", "a's off-hand mark");
+    expect(toA.at(-1)?.marks.map((mark) => mark.role)).toEqual(["off-hand"]);
+    // b bears it, and is never told: the mark is a's alone.
+    expect(toB).toEqual([]);
+    expect(b.getChainMark(a.selfSessionId)).toBeUndefined();
+
+    // Chained until b dies, so a mark is on it when it does...
+    a.sendIntent({ kind: "attack", targetId: foe });
+    await until(
+      match,
+      () => {
+        if (self(a)?.castingSkillId === undefined) {
+          a.sendIntent({ kind: "use-skill", slot: a.getChainMark(foe) === "lead" ? 1 : 0 });
+        }
+        return self(b)?.dead === true;
+      },
+      "b dead",
+      120,
+    );
+    // ...and it goes with b, and a is told at once, not left to run out.
+    await match.step(TICK);
+    expect(toA.at(-2)?.marks).toHaveLength(1);
+    expect(toA.at(-1)?.marks).toEqual([]);
+    expect(a.getChainMark(foe)).toBeUndefined();
   });
 
   it("syncs applied statuses so the client can show condition markers, and ticks them as degeneration", async () => {
@@ -870,6 +977,25 @@ describe("wireCombat and combatMessage (#288, #375)", () => {
     ]);
   });
 
+  it("carries the skill a disable held back and for how long (#914)", () => {
+    const disabled = {
+      kind: "skill-disabled",
+      targetId: "b",
+      skillId: "elementalist.fireball",
+      seconds: 10,
+    } as const;
+    const sent = wireCombat([
+      entry({
+        cause: "skill",
+        skillId: "mesmer.power-block",
+        weaponId: undefined,
+        events: [disabled],
+      }),
+    ]);
+    const received = parseWireCombatBatch(JSON.parse(JSON.stringify(sent)));
+    expect(received?.map(combatMessage).map((message) => message.events)).toEqual([[disabled]]);
+  });
+
   it("carries the energy a foe lost and what the caster gained for it (#793)", () => {
     const events = [
       { kind: "energy-loss", targetId: "b", amount: 6 },
@@ -925,6 +1051,26 @@ describe("wireCombat and combatMessage (#288, #375)", () => {
     }));
     expect(wire).toEqual([
       { sent: [{ kind: "knocked-down", targetId: "b", durationSeconds: 4 }], broken: [] },
+    ]);
+  });
+
+  it("carries a shadow step and where it went, and drops one with nowhere (#988)", () => {
+    const wire = wireCombat([
+      entry({
+        cause: "skill",
+        skillId: "assassin.deaths-charge",
+        weaponId: undefined,
+        events: [{ kind: "shadow-stepped", targetId: "a", toId: "b" }],
+      }),
+    ]).map((combat) => ({
+      sent: combatMessage(combat).events,
+      broken: combatMessage({
+        ...combat,
+        events: combat.events.map((event) => ({ ...event, fromId: null })),
+      }).events,
+    }));
+    expect(wire).toEqual([
+      { sent: [{ kind: "shadow-stepped", targetId: "a", toId: "b" }], broken: [] },
     ]);
   });
 

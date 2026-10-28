@@ -4,13 +4,21 @@ import type { LobbyCharacter, LobbyConnection, MatchStarting } from "@vibewars/g
 import { ARENA_MAPS } from "./net/maps.js";
 import {
   connectMatchFor,
+  enterQueue,
   hostLobby,
   joinFailureNotice,
   joinLobbyByCode,
   lobbyClosedNotice,
   matchFailureNotice,
   type HostedLobby,
+  type RandomArenaQueue,
 } from "./net/session.js";
+import {
+  UNREADABLE_RELAY_NOTICE,
+  loadTurnConfig,
+  parseTurnFragment,
+  type TurnFragment,
+} from "./net/transport/turn-config.js";
 import { startMatchView, type MatchView } from "./match-view.js";
 import { beatEdits } from "./music/beat-edits.js";
 import { musicPlayer } from "./music/music-player.js";
@@ -36,6 +44,9 @@ import {
   renderOptionsScreen,
 } from "./ui/options-screen.js";
 import { mountChat, type ChatPanel } from "./ui/chat.js";
+import { openRelayPrompt } from "./ui/relay-prompt.js";
+import { describeOutcome } from "./ui/hud.js";
+import { mountQueueScreen, nextStreak, type QueueScreen } from "./ui/queue-screen.js";
 import { displayLobbyCode, renderLobbyScreen } from "./ui/lobby-screen.js";
 import { createNowPlayingToast, nowPlayingText } from "./ui/now-playing.js";
 import { loadActiveCharacterId, renderMenu, renderTeamList } from "./ui/menu.js";
@@ -50,6 +61,7 @@ import {
   type TeamEditorView,
 } from "./ui/team-editor.js";
 import { toPlayerBuild } from "./storage/build-validation.js";
+import type { QueueMode } from "@vibewars/game-protocol";
 import {
   MINIMAL_GW_INSPIRED_PVP_V1,
   resolveJoinLoadout,
@@ -67,6 +79,9 @@ import {
 
 /** Shown on the lobby or the menu once a match is lost for good. */
 const LOST_MATCH_NOTICE = "Lost the connection to the match.";
+
+/** How long a queued match's result stays on the HUD before the queue's ended view (#881). */
+const QUEUED_RESULT_SECONDS = 4;
 
 function requireElement(selector: string): HTMLElement {
   const element = document.querySelector<HTMLElement>(selector);
@@ -93,7 +108,33 @@ async function openStore(): Promise<KeyValueStore> {
   }
 }
 
+/** A relay link nothing could be read from (#972), on the first menu. */
+const MALFORMED_RELAY_LINK_NOTICE = "That relay link is not valid. Nothing was saved.";
+/**
+ * A relay link opened inside another site's frame (#972): Use is the only
+ * defence, and a framing page could overlay a decoy over it, so a framed
+ * page never asks. Static hosting sends no `frame-ancestors`.
+ */
+const FRAMED_RELAY_LINK_NOTICE = "Open the relay link in its own tab. Nothing was saved.";
+
+/**
+ * The relay invite link this page was opened with, if any (#972), taken
+ * out of the address bar and the history entry at once: a later copy or
+ * screenshot of the URL carries no credential, even from a tab closed at
+ * the prompt. Only `turn=` goes; the rest of the fragment stays.
+ */
+function takeRelayLink(): TurnFragment {
+  const fragment = parseTurnFragment(location.hash);
+  if (fragment.kind !== "none") {
+    const rest = fragment.rest === "" ? "" : `#${fragment.rest}`;
+    history.replaceState(history.state, "", `${location.pathname}${location.search}${rest}`);
+  }
+  return fragment;
+}
+
 async function main(): Promise<void> {
+  // Before anything mounts or waits.
+  const relayLink = takeRelayLink();
   const screenRoot = requireElement("#screens");
   const showNowPlaying = createNowPlayingToast(document.body);
   musicPlayer().onNowPlaying((trackId) => {
@@ -116,6 +157,16 @@ async function main(): Promise<void> {
   music().onNotice((notice) => {
     editNotices = [...editNotices, notice];
   });
+  // A saved relay of the wrong shape goes now, and the first menu says so.
+  const savedRelay = loadTurnConfig(() => {
+    editNotices = [...editNotices, UNREADABLE_RELAY_NOTICE];
+  });
+  const framed = window.top !== window.self;
+  if (relayLink.kind === "malformed") {
+    editNotices = [...editNotices, MALFORMED_RELAY_LINK_NOTICE];
+  } else if (relayLink.kind === "config" && framed) {
+    editNotices = [...editNotices, FRAMED_RELAY_LINK_NOTICE];
+  }
   const characters = new CharacterRepository(store);
   const teams = new TeamRepository(store);
 
@@ -146,6 +197,40 @@ async function main(): Promise<void> {
    * the player lands back on. Cleared when they try again.
    */
   let menuNotice: string | undefined;
+  /**
+   * The Random Arena queue and its screen (#880), from *Random Arena* to
+   * the menu again: through its lobby and its match, which show the
+   * splash and end on the menu rather than a lobby screen.
+   */
+  let queue:
+    | {
+        readonly place: RandomArenaQueue;
+        readonly screen: QueueScreen;
+        readonly mode: QueueMode;
+        readonly name: string;
+      }
+    | undefined;
+  /** Set while *Random Arena* is reading the character, so a second press makes no second ticket. */
+  let joiningQueue = false;
+  /** Queued wins in a row this visit (#881): page memory only, never stored. */
+  let queueStreak = 0;
+  /** The queued match's result line once it finished, and the timer to its ended view. */
+  let queuedEnd: { readonly outcome: string; readonly timer: number } | undefined;
+
+  const clearQueuedEnd = (): void => {
+    if (queuedEnd !== undefined) {
+      clearTimeout(queuedEnd.timer);
+      queuedEnd = undefined;
+    }
+  };
+
+  /** Out of the queue, if in it; the lobby and match, if any, are the caller's to leave. */
+  const dropQueue = (): void => {
+    clearQueuedEnd();
+    queue?.place.leave();
+    queue?.screen.dispose();
+    queue = undefined;
+  };
 
   /**
    * The first thing every screen change does (#710): a toast belongs to
@@ -244,6 +329,8 @@ async function main(): Promise<void> {
     // never keeps saying where the player was: idle, it says nothing (#454).
     // Error paths set theirs after.
     setStatus("", "offline");
+    // Any way off the queue screen leaves the queue (#880).
+    dropQueue();
     editor?.dispose();
     editor = undefined;
     disposeOptionsScreen();
@@ -285,6 +372,9 @@ async function main(): Promise<void> {
         },
         onJoinLobby: (code, name) => {
           void enterLobby(name, async () => joinLobbyByCode(code, name, await lobbyCharacter()));
+        },
+        onRandomArena: (mode, name) => {
+          void enterRandomArena(mode, name);
         },
         onManageTeams: () => {
           void showTeams();
@@ -466,6 +556,78 @@ async function main(): Promise<void> {
     });
   };
 
+  /**
+   * Queue for a Random Arena with the active character (#880): the queue
+   * screen until a group's lobby seats this player, its splash while it
+   * counts down, then the match. Whether it queued: not without an
+   * active character, or while already queueing.
+   */
+  const enterRandomArena = async (mode: QueueMode, name: string): Promise<boolean> => {
+    if (queue !== undefined || joiningQueue) {
+      return false;
+    }
+    const id = loadActiveCharacterId();
+    if (id === undefined) {
+      return false;
+    }
+    joiningQueue = true;
+    let stored: StoredCharacter | undefined;
+    let character: LobbyCharacter | null;
+    try {
+      stored = await characters.load(id);
+      character = await lobbyCharacter();
+    } finally {
+      joiningQueue = false;
+    }
+    if (stored === undefined) {
+      return false;
+    }
+    leaveScreen();
+    menuNotice = undefined;
+    setStatus("in queue", "online");
+    const screen = mountQueueScreen(
+      screenRoot,
+      {
+        mode,
+        characterName: stored.name,
+        mapName: (mapId) => ARENA_MAPS.find((map) => map.id === mapId)?.name ?? mapId,
+      },
+      {
+        onLeave: () => {
+          void leaveLobby();
+        },
+        onBack: () => {
+          void leaveLobby();
+        },
+        onQueueAgain: () => {
+          dropQueue();
+          void enterRandomArena(mode, name).then((queued) => {
+            // The character went meanwhile: the menu, where *Random Arena* is greyed.
+            if (!queued) {
+              showMenu();
+            }
+          });
+        },
+      },
+    );
+    const place = enterQueue(mode, name, character, {
+      // Never past `in-lobby` while a lobby is up, unless it fell through.
+      onState: (state) => {
+        screen.show({ kind: "queue", state });
+      },
+      onLobby: (joined, host) => {
+        hosted = host;
+        seatLobby(name, joined);
+      },
+      onRefused: (notice) => {
+        setStatus("could not join", "error");
+        screen.show({ kind: "refused", notice });
+      },
+    });
+    queue = { place, screen, mode, name };
+    return true;
+  };
+
   const renderLobby = (): void => {
     if (lobby === undefined) {
       return;
@@ -483,6 +645,12 @@ async function main(): Promise<void> {
     // Every way back here (leaving, a finished match, a lost connection)
     // passes through this, so the status bar stops saying "in match".
     const snapshot = lobby.getSnapshot();
+    if (queue !== undefined) {
+      // A queued lobby has nothing to choose: it is the versus splash.
+      setStatus("match found", "online");
+      queue.screen.show({ kind: "splash", snapshot });
+      return;
+    }
     setStatus(`lobby ${displayLobbyCode(snapshot.code)}`, "online");
     showViewport(false);
     music().screen("lobby");
@@ -538,18 +706,24 @@ async function main(): Promise<void> {
     } catch (error) {
       console.warn("[web] could not join the lobby", error);
       hosted = undefined;
-      menuNotice = joinFailureNotice(error, location);
+      menuNotice = joinFailureNotice(error, location, loadTurnConfig() !== undefined);
       showMenu();
       // After showMenu, which would clear the status.
       setStatus("could not join", "error");
       return;
     }
+    seatLobby(name, lobby);
+  };
 
+  /** Show `joined`, coded or queued, and play its matches as `name`. */
+  const seatLobby = (name: string, joined: LobbyConnection): void => {
+    lobby = joined;
     lobbyNotice = undefined;
     // Here and not in renderLobby, which every lobby change repaints:
-    // a "Copied" toast outlives a player joining.
-    leaveScreen();
-    const joined = lobby;
+    // a "Copied" toast outlives a player joining. The queue screen raises none.
+    if (queue === undefined) {
+      leaveScreen();
+    }
     chat = mountChat({
       selfId: joined.selfSessionId,
       selfTeam: () =>
@@ -560,26 +734,31 @@ async function main(): Promise<void> {
       },
     });
     app.append(chat.root);
-    lobby.onChat((line) => {
+    joined.onChat((line) => {
       chat?.add(line);
     });
-    lobby.onChatThrottled(() => {
+    joined.onChatThrottled(() => {
       chat?.notice("Slow down: your last lines were not sent.");
     });
-    lobby.onChange(renderLobby);
-    lobby.onStartRejected((reason) => {
+    joined.onChange(renderLobby);
+    joined.onStartRejected((reason) => {
       lobbyNotice = reason;
       renderLobby();
     });
-    lobby.onMatchStarting((start) => {
+    joined.onMatchStarting((start) => {
       // Only players on a team are sent this; a spectator stays here.
       void enterMatch(name, start);
     });
-    lobby.onClosed((reason) => {
+    joined.onClosed((reason) => {
       // From the lobby or from its match: either way, it is over.
       lobby = undefined;
       hosted = undefined;
       closeChat();
+      if (queue !== undefined && match === undefined && !enteringMatch) {
+        // Before its match, a queued lobby closing puts the player back
+        // in the queue, which says so on its screen.
+        return;
+      }
       const notice = lobbyClosedNotice(reason);
       if (match !== undefined) {
         void exitMatch(notice);
@@ -593,19 +772,62 @@ async function main(): Promise<void> {
   };
 
   /**
-   * Back to where the player came from: the lobby if there is one, else
-   * the menu, with `notice` on it. A no-op once the match is gone, so a
-   * lost connection racing a leave click exits once.
+   * A finished queued match, after its result (#881): out of the match
+   * and its lobby, onto the queue screen's ended view rather than the
+   * menu. The queue's place already closed as the match started.
    */
-  const exitMatch = async (notice?: string): Promise<void> => {
+  const endQueuedMatch = async (outcome: string): Promise<void> => {
+    clearQueuedEnd();
     const leaving = match;
     if (leaving === undefined) {
       return;
     }
     match = undefined;
     await leaving.dispose();
+    enteringMatch = false;
+    const leavingLobby = lobby;
+    const ending = hosted;
+    lobby = undefined;
+    hosted = undefined;
+    closeChat();
+    await leavingLobby?.disconnect();
+    await ending?.close();
+    if (queue === undefined) {
+      return;
+    }
+    leaveScreen();
+    setStatus("", "offline");
+    showViewport(false);
+    music().screen("menu");
+    queue.screen.show({ kind: "ended", outcome, streak: queueStreak });
+  };
+
+  /**
+   * Back to where the player came from: the lobby if there is one, else
+   * the menu, with `notice` on it. A no-op once the match is gone, so a
+   * lost connection racing a leave click exits once.
+   */
+  const exitMatch = async (notice?: string): Promise<void> => {
+    if (match === undefined) {
+      return;
+    }
+    if (queue !== undefined && queuedEnd !== undefined) {
+      // Finished: leaving now, or the host going, only skips the wait.
+      await endQueuedMatch(queuedEnd.outcome);
+      return;
+    }
+    const leaving = match;
+    match = undefined;
+    await leaving.dispose();
     leaveScreen();
     enteringMatch = false;
+    if (queue !== undefined) {
+      // Before the end, the player's own leave forfeits; a host or a
+      // connection lost counts for nothing. Either way, the menu.
+      queueStreak = nextStreak(queueStreak, notice === undefined ? "forfeit" : "host-left");
+      await leaveLobby(notice);
+      return;
+    }
     // The lobby goes back to waiting by itself once the match is over
     // (#44), so another can start straight away (brief §46).
     if (lobby !== undefined) {
@@ -625,6 +847,7 @@ async function main(): Promise<void> {
     enteringMatch = true;
     menuNotice = undefined;
     lobbyNotice = undefined;
+    clearQueuedEnd();
     showViewport(true);
     setStatus("entering match…", "offline");
     try {
@@ -645,6 +868,21 @@ async function main(): Promise<void> {
           onLeave: () => {
             void exitMatch();
           },
+          ...(queue === undefined
+            ? {}
+            : {
+                onFinished: ({ winningTeam, endReason, selfTeam }) => {
+                  const won = selfTeam !== undefined && winningTeam === selfTeam;
+                  queueStreak = nextStreak(queueStreak, won ? "win" : "loss");
+                  const outcome = describeOutcome(winningTeam, endReason, selfTeam);
+                  queuedEnd = {
+                    outcome,
+                    timer: window.setTimeout(() => {
+                      void endQueuedMatch(outcome);
+                    }, QUEUED_RESULT_SECONDS * 1000),
+                  };
+                },
+              }),
         },
         { connect: () => connectMatchFor(from, start, name, build) },
       );
@@ -653,8 +891,11 @@ async function main(): Promise<void> {
       enteringMatch = false;
       const notice = matchFailureNotice(error) ?? LOST_MATCH_NOTICE;
       // Back to the lobby. If it closed while this was joining, closing it
-      // already took the player to the menu, and said why.
-      if (lobby !== undefined) {
+      // already took the player to the menu, and said why. A queued
+      // lobby has no screen of its own to go back to.
+      if (queue !== undefined) {
+        await leaveLobby(notice);
+      } else if (lobby !== undefined) {
         lobbyNotice = notice;
         renderLobby();
       }
@@ -662,6 +903,21 @@ async function main(): Promise<void> {
   };
 
   showMenu();
+  if (relayLink.kind === "config" && !framed) {
+    openRelayPrompt(app, relayLink.config, savedRelay);
+  }
+  // An invite link pasted into this open tab only changes the fragment:
+  // nothing reloads, so it is taken out and asked about here.
+  window.addEventListener("hashchange", () => {
+    const pasted = takeRelayLink();
+    if (pasted.kind === "malformed") {
+      toast(MALFORMED_RELAY_LINK_NOTICE);
+    } else if (pasted.kind === "config" && framed) {
+      toast(FRAMED_RELAY_LINK_NOTICE);
+    } else if (pasted.kind === "config") {
+      openRelayPrompt(app, pasted.config, loadTurnConfig());
+    }
+  });
 }
 
 main().catch((error: unknown) => {

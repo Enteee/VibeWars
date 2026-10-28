@@ -7,7 +7,7 @@ import {
   normalizeLobbyCode,
   parseClientIntent,
 } from "./protocol.js";
-import { PROTOCOL_VERSION } from "./protocol-version.js";
+import { PROTOCOL_VERSION, fingerprint } from "./protocol-version.js";
 
 describe("protocol constants", () => {
   it("derives the protocol version from the wire schema", () => {
@@ -239,5 +239,21 @@ describe("parseClientIntent — end-upkeep (#838)", () => {
     expect(
       parseClientIntent({ kind: "end-upkeep", targetId: "p2", status: "mending", casterId: "p3" }),
     ).toBeUndefined();
+  });
+});
+
+describe("fingerprint", () => {
+  it("is 12 lowercase hex digits", () => {
+    expect(fingerprint("")).toMatch(/^[0-9a-f]{12}$/);
+    expect(fingerprint("any text, with ünïcode ✓")).toMatch(/^[0-9a-f]{12}$/);
+  });
+
+  it("is FNV-1a 64: the empty string is the offset basis, 'a' a known value", () => {
+    expect(fingerprint("")).toBe("cbf29ce48422");
+    expect(fingerprint("a")).toBe("af63dc4c8601");
+  });
+
+  it("differs when one character does", () => {
+    expect(fingerprint("wire-a")).not.toBe(fingerprint("wire-b"));
   });
 });

@@ -1,0 +1,361 @@
+import type { QueueMode } from "@vibewars/game-protocol";
+import type { LobbyPlayerSnapshot, LobbySnapshot, QueueState } from "@vibewars/game-session";
+
+import { teamColour } from "../render/arena-snapshot.js";
+import { createProfessionDot, cssColour } from "./character-preview.js";
+import { characterLine } from "./lobby-screen.js";
+import { PEER_IP_NOTICE, RANDOM_ARENA_MODES } from "./menu.js";
+import { button, h, screenBar } from "./kit.js";
+import { relayLine } from "./relay-section.js";
+
+/**
+ * The Random Arena queue screen (#880, #854 B3–B4): searching, match
+ * found, and the versus splash while the queued lobby counts down. Built
+ * once and updated in place, since the wait ticks several times a second
+ * and a button rebuilt under the pointer would eat the click.
+ */
+
+export const MATCH_FOUND = "Match found";
+export const FELL_THROUGH = "Match fell through, searching again";
+/** #707's wording, as the menu says it for a join. */
+export const UNREACHABLE = "Couldn't reach the lobby servers";
+/** How long "fell through" stays up before the searching view returns. */
+export const FELL_THROUGH_SHOWN_MS = 3000;
+/** The tab title while a match found in a background tab is unseen. */
+export const MATCH_FOUND_TITLE = "Match found!";
+const TITLE_FLASH_MS = 1000;
+
+/** "4v4". */
+export function modeLabel(mode: QueueMode): string {
+  return RANDOM_ARENA_MODES.find((choice) => choice.mode === mode)?.label ?? mode;
+}
+
+/** "Random Arena 4v4 · Mhenlo". */
+export function queueTitle(mode: QueueMode, characterName: string): string {
+  return `Random Arena ${modeLabel(mode)} · ${characterName}`;
+}
+
+/** Time waited as m:ss. */
+export function waitedLabel(ms: number): string {
+  const seconds = Math.floor(Math.max(0, ms) / 1000);
+  return `${String(Math.floor(seconds / 60))}:${String(seconds % 60).padStart(2, "0")}`;
+}
+
+/** "3 searching · 8 needed". */
+export function searchingLabel(searching: number, needed: number): string {
+  return `${String(searching)} searching · ${String(needed)} needed`;
+}
+
+/** How a queued match ended for the streak (#881). */
+export type QueuedResult = "win" | "loss" | "forfeit" | "host-left";
+
+/**
+ * The session streak after `result` (#854 D4): a win adds one, a defeat
+ * or leaving before the end clears it, and a match lost to its host
+ * leaving does not count either way.
+ */
+export function nextStreak(streak: number, result: QueuedResult): number {
+  switch (result) {
+    case "win":
+      return streak + 1;
+    case "loss":
+    case "forfeit":
+      return 0;
+    case "host-left":
+      return streak;
+  }
+}
+
+/** "3 wins in a row this visit (not a rating)"; nothing at 0. */
+export function streakLine(streak: number): string | undefined {
+  if (streak <= 0) {
+    return undefined;
+  }
+  return `${String(streak)} ${streak === 1 ? "win" : "wins"} in a row this visit (not a rating)`;
+}
+
+/** What the screen shows: the queue, the lobby's splash, why the queue ended, or how the match did. */
+export type QueueView =
+  | { readonly kind: "queue"; readonly state: QueueState }
+  | { readonly kind: "splash"; readonly snapshot: LobbySnapshot }
+  | { readonly kind: "refused"; readonly notice: string }
+  | { readonly kind: "ended"; readonly outcome: string; readonly streak: number };
+
+export interface QueueScreenCallbacks {
+  /** *Leave queue*: withdraw and go back to the menu. */
+  readonly onLeave: () => void;
+  /** *Back to menu*, once the queue is over. */
+  readonly onBack: () => void;
+  /** *Queue again*, after a match (#881): same mode, the active character. */
+  readonly onQueueAgain: () => void;
+}
+
+export interface QueueScreen {
+  show(view: QueueView): void;
+  /** Stops the title flashing; the next screen replaces the DOM. */
+  dispose(): void;
+}
+
+export interface QueueScreenOptions {
+  readonly mode: QueueMode;
+  readonly characterName: string;
+  /** The arena's name, for the splash. */
+  readonly mapName: (mapId: string) => string;
+  /** ms; injected for tests. */
+  readonly now?: () => number;
+}
+
+/** What the queue screen says, and which button it offers. */
+export interface QueueLines {
+  readonly status: string;
+  readonly waited?: string;
+  readonly count?: string;
+  readonly problem?: string;
+  readonly streak?: string;
+  /**
+   * *Leave queue* while queued, *Back to menu* once it is over, both
+   * that and *Queue again* after a match, nothing on the splash.
+   */
+  readonly action: "leave" | "back" | "ended" | "none";
+}
+
+/**
+ * The screen for `state`. `fellThroughShown` holds "fell through" up over
+ * the searching it goes straight back to, so it can be read.
+ */
+export function queueLines(state: QueueState, fellThroughShown: boolean): QueueLines {
+  switch (state.kind) {
+    case "searching":
+      return fellThroughShown
+        ? { status: FELL_THROUGH, action: "leave" }
+        : {
+            status: "Searching",
+            waited: waitedLabel(state.waitedMs),
+            count: searchingLabel(state.searching, state.needed),
+            action: "leave",
+          };
+    case "forming":
+    case "in-lobby":
+      return { status: MATCH_FOUND, action: "leave" };
+    case "fell-through":
+      return { status: FELL_THROUGH, action: "leave" };
+    case "unreachable":
+      return { status: UNREACHABLE, action: "back" };
+  }
+}
+
+/** The screen after a queued match (#881): how it ended, the streak, *Queue again* and *Back to menu*. */
+export function endedLines(outcome: string, streak: number): QueueLines {
+  const line = streakLine(streak);
+  return { status: outcome, action: "ended", ...(line === undefined ? {} : { streak: line }) };
+}
+
+/** The splash's two sides and its countdown line, from a queued lobby's snapshot. */
+export interface VersusTeams {
+  readonly ours: readonly LobbyPlayerSnapshot[];
+  readonly theirs: readonly LobbyPlayerSnapshot[];
+  readonly countdown: string;
+}
+
+/** Your side first, then theirs; a spectator watches team 1 as its own. */
+export function versusTeams(snapshot: LobbySnapshot): VersusTeams {
+  const self = snapshot.players.find((p) => p.sessionId === snapshot.selfSessionId);
+  const ours = self?.team === 1 ? 1 : 0;
+  return {
+    ours: snapshot.players.filter((p) => p.team === ours),
+    theirs: snapshot.players.filter((p) => p.team === 1 - ours),
+    countdown:
+      snapshot.countdownSeconds === null
+        ? "Waiting for everyone to arrive"
+        : `Starting in ${String(snapshot.countdownSeconds)}`,
+  };
+}
+
+function splashRow(player: LobbyPlayerSnapshot, ours: boolean, self: boolean): HTMLElement {
+  const row = h("div", "versus-player");
+  const { character } = player;
+  row.appendChild(
+    character === null
+      ? h("span", "character-dot is-house", "?")
+      : createProfessionDot(
+          character.primary,
+          character.secondary ?? undefined,
+          self ? "self" : ours ? "ally" : "enemy",
+        ),
+  );
+  const text = h("span", "versus-player-text");
+  text.appendChild(h("span", "versus-player-name", player.name));
+  text.appendChild(h("span", "versus-player-character", characterLine(character)));
+  row.appendChild(text);
+  return row;
+}
+
+/**
+ * The versus splash (GW1): the map, and both teams side by side in team
+ * colours, each player's name and professions, from the queued lobby's
+ * snapshot. Yours on the left.
+ */
+export function renderVersusSplash(
+  snapshot: LobbySnapshot,
+  mapName: (mapId: string) => string,
+): HTMLElement {
+  const splash = h("div", "versus-splash");
+  splash.appendChild(h("div", "versus-map", mapName(snapshot.mapId)));
+  const teams = h("div", "versus-teams");
+  const { ours, theirs, countdown } = versusTeams(snapshot);
+  const column = (players: readonly LobbyPlayerSnapshot[], isOurs: boolean): HTMLElement => {
+    const node = h("div", `versus-team ${isOurs ? "is-ours" : "is-theirs"}`);
+    node.style.setProperty("--team-colour", cssColour(teamColour(isOurs ? "ally" : "enemy")));
+    node.appendChild(h("h3", "versus-team-title", isOurs ? "Your team" : "Their team"));
+    for (const player of players) {
+      node.appendChild(splashRow(player, isOurs, player.sessionId === snapshot.selfSessionId));
+    }
+    return node;
+  };
+  teams.append(column(ours, true), h("span", "versus-vs", "vs"), column(theirs, false));
+  splash.append(teams, h("div", "versus-countdown", countdown));
+  return splash;
+}
+
+/**
+ * Flash the tab title until the tab is visible; returns how to stop early.
+ * A visible tab is not flashed at all.
+ */
+export function flashTitle(doc: Document): () => void {
+  if (doc.visibilityState === "visible") {
+    return () => undefined;
+  }
+  const original = doc.title;
+  const timer = setInterval(() => {
+    doc.title = doc.title === MATCH_FOUND_TITLE ? original : MATCH_FOUND_TITLE;
+  }, TITLE_FLASH_MS);
+  doc.title = MATCH_FOUND_TITLE;
+  const stop = (): void => {
+    clearInterval(timer);
+    doc.removeEventListener("visibilitychange", onVisible);
+    doc.title = original;
+  };
+  const onVisible = (): void => {
+    if (doc.visibilityState === "visible") {
+      stop();
+    }
+  };
+  doc.addEventListener("visibilitychange", onVisible);
+  return stop;
+}
+
+export function mountQueueScreen(
+  root: HTMLElement,
+  options: QueueScreenOptions,
+  callbacks: QueueScreenCallbacks,
+): QueueScreen {
+  const now = options.now ?? (() => Date.now());
+  root.replaceChildren();
+  const panel = h("div", "screen screen-queue");
+  panel.appendChild(
+    screenBar({
+      title: [h("h2", "screen-title", queueTitle(options.mode, options.characterName))],
+      actions: [],
+    }).element,
+  );
+  const status = h("div", "queue-status");
+  status.setAttribute("role", "status");
+  const waited = h("div", "queue-waited");
+  const count = h("div", "queue-count");
+  const problem = h("div", "screen-problem queue-problem");
+  const streak = h("div", "queue-streak");
+  const body = h("div", "queue-body");
+  body.append(status, waited, count, problem, streak);
+  const relay = relayLine();
+  if (relay !== undefined) {
+    body.append(relay);
+  }
+  const splashHost = h("div", "queue-splash");
+  const notice = h(
+    "p",
+    "menu-peer-notice queue-notice",
+    `Unranked play with strangers, peer to peer. ${PEER_IP_NOTICE}`,
+  );
+  const leave = button("Leave queue", "", callbacks.onLeave);
+  const again = button("Queue again", "primary", callbacks.onQueueAgain);
+  const back = button("Back to menu", "primary", callbacks.onBack);
+  const actions = h("div", "menu-row queue-actions");
+  actions.append(leave, again, back);
+  panel.append(body, splashHost, notice, actions);
+  root.appendChild(panel);
+
+  /** When "fell through" stops being shown, while it is. */
+  let fellThroughUntil = Number.NEGATIVE_INFINITY;
+  let stopFlash: (() => void) | undefined;
+  let found = false;
+
+  const set = (lines: QueueLines, splash?: HTMLElement): void => {
+    status.textContent = lines.status;
+    waited.textContent = lines.waited ?? "";
+    waited.hidden = lines.waited === undefined;
+    count.textContent = lines.count ?? "";
+    count.hidden = lines.count === undefined;
+    problem.textContent = lines.problem ?? "";
+    problem.hidden = lines.problem === undefined;
+    streak.textContent = lines.streak ?? "";
+    streak.hidden = lines.streak === undefined;
+    if (splash === undefined) {
+      splashHost.replaceChildren();
+    } else {
+      splashHost.replaceChildren(splash);
+    }
+    leave.hidden = lines.action !== "leave";
+    again.hidden = lines.action !== "ended";
+    back.hidden = lines.action !== "back" && lines.action !== "ended";
+    // After a match, *Queue again* is the default; *Back to menu* is not.
+    back.classList.toggle("primary", lines.action !== "ended");
+  };
+
+  /** Flash the title once per match found, not on every repaint of it. */
+  const matchFound = (): void => {
+    if (!found) {
+      found = true;
+      stopFlash?.();
+      stopFlash = flashTitle(document);
+    }
+  };
+
+  const showState = (state: QueueState): void => {
+    if (state.kind === "fell-through") {
+      fellThroughUntil = now() + FELL_THROUGH_SHOWN_MS;
+    }
+    if (state.kind === "forming" || state.kind === "in-lobby") {
+      matchFound();
+    } else {
+      found = false;
+    }
+    set(queueLines(state, now() < fellThroughUntil));
+  };
+
+  return {
+    show: (view) => {
+      switch (view.kind) {
+        case "queue":
+          showState(view.state);
+          return;
+        case "splash":
+          matchFound();
+          set(
+            { status: MATCH_FOUND, action: "none" },
+            renderVersusSplash(view.snapshot, options.mapName),
+          );
+          return;
+        case "refused":
+          set({ status: "Could not join the match", problem: view.notice, action: "back" });
+          return;
+        case "ended":
+          set(endedLines(view.outcome, view.streak));
+          return;
+      }
+    },
+    dispose: () => {
+      stopFlash?.();
+      stopFlash = undefined;
+    },
+  };
+}

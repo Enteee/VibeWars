@@ -1,4 +1,11 @@
-import type { CombatEvent, OffhandId, ProfessionId, StatusId } from "@vibewars/game-core";
+import type {
+  ChainRole,
+  CombatEvent,
+  CreatureKind,
+  OffhandId,
+  ProfessionId,
+  StatusId,
+} from "@vibewars/game-core";
 import type {
   CastRefusedMessage,
   ClientIntent,
@@ -76,6 +83,12 @@ export interface PlayerSnapshot {
   readonly energyPips: number;
   /** In the order applied, oldest first (#803). */
   readonly statuses: readonly StatusSnapshot[];
+  /**
+   * A creature's owner and kind (#1052), `undefined` for a player or a
+   * dummy. A creature never counts for its team: not in the scoreboard,
+   * the enemy pips or the music.
+   */
+  readonly creature: { readonly ownerId: string; readonly kind: CreatureKind } | undefined;
 }
 
 /** One status on a player (#803): what the effects monitor draws. */
@@ -105,7 +118,7 @@ export interface MatchSnapshot {
   readonly phase: string;
   /** The winning team, or `undefined` while active or on a draw. */
   readonly winningTeam: number | undefined;
-  /** "score", "time", or `undefined` while active. */
+  /** "score", "time", "annihilation", "morale", "host-left", or `undefined` while active. */
   readonly endReason: string | undefined;
   /** Weapon shots and flying spells in flight, oldest first (#160, #535). */
   readonly projectiles: readonly ProjectileSnapshot[];
@@ -191,6 +204,12 @@ export interface MatchConnection {
    * never below 0; `null` while every slot is empty.
    */
   getAdrenalineLossIn(): number | null;
+  /**
+   * The chain mark this player left on `targetId` and still running
+   * (#916): which dagger attack of theirs last hit it; `undefined` for
+   * none, or one run out.
+   */
+  getChainMark(targetId: string): ChainRole | undefined;
   /** Call a foe for your team, or ping a spot (#443). The host may drop it, and says nothing. */
   sendCall(call: PeerCall): void;
   /** Your team's calls right now; nobody else's ever reach you. */
