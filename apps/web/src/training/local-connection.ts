@@ -2,6 +2,7 @@ import {
   MINIMAL_GW_INSPIRED_PVP_V1,
   adrenalineLossIn,
   applyIntent,
+  companionMode,
   drainAccumulator,
   resolvedBar,
   swingProgress,
@@ -118,7 +119,11 @@ function toPlayerSnapshot(
     creature:
       participant.creature === undefined
         ? undefined
-        : { ownerId: participant.creature.ownerId, kind: participant.creature.kind },
+        : {
+            ownerId: participant.creature.ownerId,
+            kind: participant.creature.kind,
+            mode: companionMode(participant.creature),
+          },
   };
 }
 

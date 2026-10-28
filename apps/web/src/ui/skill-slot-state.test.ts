@@ -225,7 +225,7 @@ describe("outOfRange", () => {
       x: 1000,
       team: 0,
       dead: true,
-      creature: { ownerId: "r", kind: "pet" },
+      creature: { ownerId: "r", kind: "pet", mode: "guard" },
     });
     expect(outOfRange([slot(COMFORT), slot(RESTORE_LIFE)], self({}), pet, [])).toEqual([
       false,

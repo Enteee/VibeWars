@@ -210,6 +210,19 @@ import { steerAround } from "./steering.js";
 export type CreatureKind = "spirit" | "minion" | "pet";
 
 /**
+ * How a companion fights (#1110, GW1 pet control): game-protocol's
+ * `CompanionMode`, restated (ADR-0001). Guard bites what its owner
+ * attacks, Fight what its owner has selected, Heel nothing.
+ */
+export type CompanionMode = "guard" | "fight" | "heel";
+
+/** What an owner may tell a creature of theirs (#1046): game-protocol's `CreatureOrder`. */
+export interface CreatureOrder {
+  readonly kind: "mode";
+  readonly mode: CompanionMode;
+}
+
+/**
  * A body that is not a player (#1052, ADR-0035): a participant that never
  * counts for its team and has no seat. A spirit or minion is gone once it
  * dies or expires; a companion lies where it fell (#1046).
@@ -239,6 +252,16 @@ export interface Creature {
    * `undefined`: summoned by a cast.
    */
   readonly companionSkillId: string | undefined;
+  /**
+   * Its owner's last order (#1110): kept through its death, Comfort Animal
+   * and its owner's respawn. Only a companion takes orders.
+   */
+  mode: CompanionMode;
+}
+
+/** A companion's mode (#1110); `null` for a creature that takes no orders. */
+export function companionMode(creature: Creature): CompanionMode | null {
+  return creature.companionSkillId === undefined ? null : creature.mode;
 }
 
 /** A minion's own rot in pips (#467): 0 for anyone else. */
@@ -951,6 +974,7 @@ export class MatchSimulation {
               ? 0
               : resolveMagnitude(template.ownerDisableOnDeath, owner.combatant),
           companionSkillId: companion ? skillId : undefined,
+          mode: "guard",
         },
       });
     }
@@ -1528,6 +1552,29 @@ export class MatchSimulation {
       return false;
     }
     return bearer.statuses.remove(statusId);
+  }
+
+  /**
+   * `ownerId` tells its companion `creatureId` how to fight (#1110), from
+   * the party window. Anything but the owner's own companion, a minion
+   * above all, is refused quietly; a dead owner may still order. Heel
+   * drops the attack at once, mid-swing or not. Whether it was taken.
+   */
+  public commandCreature(ownerId: string, creatureId: string, order: CreatureOrder): boolean {
+    const record = this.#participants.get(creatureId);
+    const creature = record?.creature;
+    if (
+      record === undefined ||
+      creature?.ownerId !== ownerId ||
+      creature.companionSkillId === undefined
+    ) {
+      return false;
+    }
+    creature.mode = order.mode;
+    if (order.mode === "heel") {
+      record.combatant.attack = undefined;
+    }
+    return true;
   }
 
   /**

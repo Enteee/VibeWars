@@ -21,7 +21,14 @@ import type {
   SkillBarSlot,
   WallDescriptor,
 } from "./protocol.js";
-import { CHAIN_ROLES, MAX_LOBBY_PLAYERS, type LobbyPhase, type WireChainMark } from "./protocol.js";
+import {
+  CHAIN_ROLES,
+  COMPANION_MODES,
+  MAX_LOBBY_PLAYERS,
+  type CompanionMode,
+  type LobbyPhase,
+  type WireChainMark,
+} from "./protocol.js";
 
 /**
  * The channels a lobby and its match use. Trystero caps an action name at
@@ -301,6 +308,8 @@ export interface WirePlayer {
 export interface WireCreature {
   readonly ownerId: string;
   readonly kind: (typeof CREATURE_KINDS)[number];
+  /** How a companion fights (#1110); `null` for a creature that is not one. */
+  readonly mode: CompanionMode | null;
 }
 
 /** One status on a player (#803): what the effects monitor draws. */
@@ -1212,8 +1221,11 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
 
 function parseCreature(value: unknown): WireCreature | undefined {
   const raw = fields(value);
-  return raw !== undefined && isString(raw.ownerId) && isOneOf(raw.kind, CREATURE_KINDS)
-    ? { ownerId: raw.ownerId, kind: raw.kind }
+  return raw !== undefined &&
+    isString(raw.ownerId) &&
+    isOneOf(raw.kind, CREATURE_KINDS) &&
+    (raw.mode === null || isOneOf(raw.mode, COMPANION_MODES))
+    ? { ownerId: raw.ownerId, kind: raw.kind, mode: raw.mode }
     : undefined;
 }
 

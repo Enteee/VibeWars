@@ -351,6 +351,7 @@ describe("follow-and-attack (#467)", () => {
         onDeath: "vanish",
         ownerDisableSeconds: 0,
         companionSkillId: undefined,
+        mode: "guard",
       },
     };
   }

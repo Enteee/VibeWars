@@ -71,8 +71,8 @@ describe("nextTabTarget", () => {
   it("cycles a foe's creature with the foes, and skips your own (#1052)", () => {
     const players = [
       ME,
-      player("me/c1", { team: 0, x: 5, creature: { ownerId: "me", kind: "minion" } }),
-      player("foe/c1", { x: 15, creature: { ownerId: "foe", kind: "minion" } }),
+      player("me/c1", { team: 0, x: 5, creature: { ownerId: "me", kind: "minion", mode: null } }),
+      player("foe/c1", { x: 15, creature: { ownerId: "foe", kind: "minion", mode: null } }),
       NEAR,
     ];
     expect(nextTabTarget(players, "me", undefined, 1)).toBe("near");

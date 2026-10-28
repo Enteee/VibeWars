@@ -328,7 +328,7 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
   });
 
   it("keep a creature's owner and kind (#1052)", () => {
-    const creature = { ownerId: "p2", kind: "minion" } as const;
+    const creature = { ownerId: "p2", kind: "minion", mode: null } as const;
     expect(playerSnapshot({ ...WIRE_PLAYER, creature })?.creature).toEqual(creature);
   });
 

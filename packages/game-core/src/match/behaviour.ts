@@ -87,7 +87,8 @@ export type Behaviour =
       /**
        * Whom it goes for (#1046). `"nearest-foe"`: a minion's, the nearest foe
        * within `aggroUnits` of itself. `"owner-target"`: a companion's, the foe
-       * its owner is attacking, if within `aggroUnits` of itself.
+       * its owner is attacking or, on Fight, has selected (#1110), if within
+       * `aggroUnits` of itself; on Heel, none.
        */
       readonly engage: "nearest-foe" | "owner-target";
       readonly aggroUnits: number;
@@ -348,11 +349,13 @@ function keepRange(
 /**
  * The owner's body, alive or dead, is what a minion keeps to. Past the
  * leash it walks back and fights nobody until at heel again, so it does
- * not flip each tick at the boundary. A pet goes for whatever its living
- * owner is attacking, within its aggro, switching when the owner does
- * (#1046). Otherwise a fight it is in goes on; for a minion, a foe in
- * aggro of the minion itself starts one, through `requestAttack` as Space
- * does. Otherwise it walks to heel, stopping a step early.
+ * not flip each tick at the boundary. A pet on Guard goes for whatever its
+ * living owner is attacking, within its aggro, switching when the owner
+ * does (#1046); on Fight, for whatever foe its owner has selected; on Heel
+ * it fights nobody and keeps to heel (#1110). Otherwise a fight it is in
+ * goes on; for a minion, a foe in aggro of the minion itself starts one,
+ * through `requestAttack` as Space does. Otherwise it walks to heel,
+ * stopping a step early.
  */
 function followAndAttack(
   behaviour: Extract<Behaviour, { kind: "follow-and-attack" }>,
@@ -380,8 +383,20 @@ function followAndAttack(
   const inAggro = (other: Participant): boolean =>
     other.combatant.team !== team &&
     distance(other.position, self.position) <= behaviour.aggroUnits;
+  const mode = self.creature?.mode;
+  if (behaviour.engage === "owner-target" && mode === "heel") {
+    return d > behaviour.heelUnits && d - context.stepUnits > behaviour.heelUnits
+      ? toOwner
+      : STAND_STILL;
+  }
   if (behaviour.engage === "owner-target") {
-    const wanted = owner.combatant.dead ? undefined : owner.combatant.attack?.targetId;
+    // Guard goes for what its owner attacks, Fight for what its owner
+    // has selected, attacking or not (#1110).
+    const wanted = owner.combatant.dead
+      ? undefined
+      : mode === "fight"
+        ? owner.targetId
+        : owner.combatant.attack?.targetId;
     const foe = context.participants.find((other) => other.id === wanted);
     if (foe !== undefined && !foe.combatant.dead && inAggro(foe)) {
       return { ...STAND_STILL, targetId: foe.id, attackTargetId: foe.id };

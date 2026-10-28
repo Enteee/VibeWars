@@ -136,6 +136,26 @@ export interface WeaponSetIntent {
   readonly set: 0 | 1 | 2 | 3;
 }
 
+/** How a companion fights (#1110, GW1 pet control): Guard is the default. */
+export type CompanionMode = "guard" | "fight" | "heel";
+export const COMPANION_MODES: readonly CompanionMode[] = ["guard", "fight", "heel"];
+
+/** What an owner may tell a creature of theirs (#1046). NPC heroes add `{ kind: "flag"; x; y }`. */
+export interface CreatureOrder {
+  readonly kind: "mode";
+  readonly mode: CompanionMode;
+}
+
+/**
+ * Command `creatureId`, which must be the sender's own companion (#1110):
+ * the host drops anything else quietly, as it does `end-upkeep`.
+ */
+export interface CommandIntent {
+  readonly kind: "command";
+  readonly creatureId: string;
+  readonly order: CreatureOrder;
+}
+
 /**
  * Sent as `"cast-refused"` to the caster alone when the server turns down a
  * `UseSkillIntent` or an `AttackIntent`, so a key that did nothing can say
@@ -242,7 +262,8 @@ export type ClientIntent =
   | CancelIntent
   | WalkToIntent
   | EndUpkeepIntent
-  | WeaponSetIntent;
+  | WeaponSetIntent
+  | CommandIntent;
 
 /**
  * Validate an arbitrary network payload as a `ClientIntent`, or reject it.
@@ -335,6 +356,17 @@ export function parseClientIntent(value: unknown): ClientIntent | undefined {
     return { kind: "weapon-set", set: record.set };
   }
 
+  if (
+    record.kind === "command" &&
+    hasOnlyKeys(record, ["kind", "creatureId", "order"]) &&
+    isIntentId(record.creatureId)
+  ) {
+    const order = parseCreatureOrder(record.order);
+    if (order !== undefined) {
+      return { kind: "command", creatureId: record.creatureId, order };
+    }
+  }
+
   return undefined;
 }
 
@@ -351,6 +383,17 @@ function isWeaponSetNumber(value: unknown): value is 0 | 1 | 2 | 3 {
 
 function hasOnlyKeys(record: Record<string, unknown>, keys: readonly string[]): boolean {
   return Object.keys(record).every((key) => keys.includes(key));
+}
+
+function parseCreatureOrder(value: unknown): CreatureOrder | undefined {
+  if (typeof value !== "object" || value === null) {
+    return undefined;
+  }
+  const order = value as Record<string, unknown>;
+  const mode = COMPANION_MODES.find((known) => known === order.mode);
+  return order.kind === "mode" && hasOnlyKeys(order, ["kind", "mode"]) && mode !== undefined
+    ? { kind: "mode", mode }
+    : undefined;
 }
 
 /**

@@ -297,6 +297,7 @@ describe("wireIdentity (#1052)", () => {
       onDeath: "vanish" as const,
       ownerDisableSeconds: 0,
       companionSkillId: undefined,
+      mode: "guard" as const,
     },
   });
 
@@ -316,7 +317,25 @@ describe("wireIdentity (#1052)", () => {
       team: 1,
       primaryProfession: null,
       secondaryProfession: null,
-      creature: { ownerId: "p1", kind: "minion" },
+      creature: { ownerId: "p1", kind: "minion", mode: null },
+    });
+  });
+
+  it("sends a companion's mode, and a minion's as null (#1110)", () => {
+    const wolf = {
+      id: "p1/c2",
+      creature: {
+        ...minion("p1").creature,
+        kind: "pet" as const,
+        name: "Wolf",
+        companionSkillId: "ranger.charm-animal",
+        mode: "heel" as const,
+      },
+    };
+    expect(wireIdentity(wolf, seats)?.creature).toEqual({
+      ownerId: "p1",
+      kind: "pet",
+      mode: "heel",
     });
   });
 
