@@ -11,7 +11,7 @@ import type { MatchSnapshot, SkillSlot } from "@vibewars/game-session";
 import { attachMatchSounds, type MatchSounds } from "../audio/match-sounds.js";
 import { setGlobalMute } from "../audio/global-mute.js";
 import { soundPlayer } from "../audio/sound-player.js";
-import { attackKeyIntents, hasActionToCancel } from "../input/attack-key.js";
+import { attackKeyIntents, escapeIntent } from "../input/attack-key.js";
 import { createDoubleClick } from "../input/double-click.js";
 import {
   calledTargetIntent,
@@ -694,9 +694,14 @@ export function createTrainingPanel(): TrainingPanel {
         return;
       }
       const snapshot = session?.connection.getSnapshot();
-      const step = escapeStep(snapshot !== undefined && hasActionToCancel(snapshot), expanded);
+      const step = escapeStep(
+        snapshot === undefined ? undefined : escapeIntent(snapshot),
+        expanded,
+      );
       if (step === "cancel") {
         session?.connection.sendIntent({ kind: "cancel" });
+      } else if (step === "clear-target") {
+        session?.connection.sendIntent({ kind: "target", targetSessionId: null });
       } else if (step === "collapse") {
         setExpanded(false);
       } else {
