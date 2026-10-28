@@ -1024,6 +1024,14 @@ const skillGlyph = {
     `<path d="M9.5 3H14.5M10.5 3V9L4.5 19Q3.5 21 6 21H18Q20.5 21 19.5 19L13.5 9V3" ${stroke(C.ink, 2)}/>` +
     inkFill("M7.5 15H16.5L19 19.5H5Z"),
   germ: () => germ(C.ink),
+  // A spear with barbs on its shaft: it hooks and bleeds (#1036).
+  "spear-barb": () =>
+    inkLine("M12 21V9", 2.4) +
+    inkFill("M12 2.5L16.5 10H7.5Z") +
+    inkLine("M12 18L7.5 14.5M12 14L16.5 10.5", 2),
+  // A spear with speed lines trailing it: a toss at a runner (#1036).
+  "spear-dash": () =>
+    inkLine("M15 21V9", 2.4) + inkFill("M15 2.5L19.5 10H10.5Z") + inkLine("M4 11V17M8 13V20", 2),
   // A shaft whose head is a burst: a shot that breaks a cast (#1018).
   "arrow-burst": () =>
     inkLine("M5 21L16 10", 2.2) +
@@ -1055,6 +1063,9 @@ const skillGlyph = {
 const skillModifier = {
   up: () => inkLine("M19 21V15M16.5 17.5L19 15L21.5 17.5", 1.7),
   down: () => inkLine("M19 15V21M16.5 18.5L19 21L21.5 18.5", 1.7),
+  // A half disc: below half Health (#1036).
+  half: () =>
+    `<circle cx="19" cy="18" r="3.4" ${stroke(C.ink, 1.5)}/><path d="M19 18H15.6A3.4 3.4 0 0 0 22.4 18Z" fill="${C.ink}"/>`,
   // An energy bolt: it takes energy (#1018).
   bolt: () => inkFill("M20 14.2L16.4 18.4H19L18.2 21.8L22 17.4H19.4Z"),
   less: () => inkLine("M16.5 18H21.5", 2),
