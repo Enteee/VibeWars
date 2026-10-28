@@ -213,6 +213,7 @@ so the silhouette identifies the profession and the colour only supports it.
 | Skill effect | `ink-dim` wide capsule plate, glyph inside              |
 | Area flash   | Caster's team colour ring at the area's true radius     |
 | Ward         | Owner's team colour disc, faint, its skill's icon in it |
+| Trap         | `friend` rim alone, its skill's icon in it; yours only  |
 | Swing flash  | Attacker's team colour arc between it and its target    |
 | Projectile   | Weapon silhouette, tinted the shooter's team colour     |
 | Weapon mark  | `ink` weapon held in the hands, one shape per weapon    |
@@ -289,6 +290,13 @@ A ward (#1087) lies on the ground for as long as it lasts:
 
 It cannot be confused with the area flash, which is gone in 0.4 s, or a
 ping, which is a pin and a growing ring.
+
+### Trap
+
+A trap (#1105) is drawn as a ward is, with no fill: the rim alone, at
+the radius its spring hits, with its skill's icon at the centre. Only
+its own team ever sees one, so it is always `friend`. An open ring
+reads as "waiting", a filled disc as "acting now".
 
 ### Swing flash
 
@@ -737,8 +745,9 @@ it, not baked in, so one file serves every screen.
   arrow-burst, arrow-pierce, arrow-flame, crescent (shadow), armor-half (a
   half-filled shield), eye, heal-other (a head and a plus), heal-turn (a plus
   in an arrow ring), hex-bolt (dashed ring, bolt), blade-cleanse, blade-hook,
-  blade-shards, hilt, banner-note, mountain-crack, dust, thorns. A new primary
-  effect adds a glyph; a new skill adds a row.
+  blade-shards, hilt, banner-note, mountain-crack, dust, thorns, limp,
+  dagger-burst, ox-horns, spider. A new primary effect adds a glyph; a new
+  skill adds a row.
 
 ### Skill slot states
 

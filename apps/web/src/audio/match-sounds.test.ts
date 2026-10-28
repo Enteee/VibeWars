@@ -58,6 +58,7 @@ function snapshot(castingSkillId: string | undefined): MatchSnapshot {
     endReason: undefined,
     projectiles: [],
     groundEffects: [],
+    traps: [],
     summary: undefined,
   };
 }

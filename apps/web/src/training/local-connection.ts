@@ -245,9 +245,13 @@ export function createLocalConnection(options: {
           launchedAt: simulation.elapsedSeconds - shot.elapsed,
           flightSeconds: shot.flightSeconds,
         })),
-        groundEffects: simulation.groundEffects.map((effect) =>
-          groundEffectSnapshot(effect, simulation.elapsedSeconds),
-        ),
+        groundEffects: simulation.groundEffects
+          .filter((effect) => effect.act.kind !== "trap")
+          .map((effect) => groundEffectSnapshot(effect, simulation.elapsedSeconds)),
+        // As the host sends them (#1105): your own team's alone.
+        traps: simulation.groundEffects
+          .filter((effect) => effect.act.kind === "trap" && effect.team === selfTeam())
+          .map((effect) => groundEffectSnapshot(effect, simulation.elapsedSeconds)),
         // No match with rules ends here, so there is never a summary (#1057).
         summary: undefined,
       };

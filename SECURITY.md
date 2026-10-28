@@ -114,9 +114,10 @@ channels, as often as they like.
 - **Cheating that needs only what a peer is shown.** Every peer gets the
   full match state, including enemy positions, health and casts. An
   aimbot-style helper that reads that state is not prevented. There is no
-  fog of war, so there is nothing hidden to leak. If hidden information is
-  ever added, it must be left out of each peer's snapshot by the host,
-  never hidden in the renderer.
+  fog of war. Hidden information must be left out of each peer's snapshot
+  by the host, never hidden in the renderer. Traps are the first (#1105):
+  they are never in a snapshot, and the host sends each team its own on
+  the `"traps"` channel, so a peer never receives a foe's trap.
 - **Players' browser storage.** IndexedDB is the player's own data on the
   player's own machine. A record in the wrong shape is discarded (ADR-0016).
   We do not try to protect it from the player.
