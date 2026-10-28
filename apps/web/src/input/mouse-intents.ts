@@ -37,14 +37,13 @@ export function secondaryClickIntents(
 
 /** What a wheel click does (#443). */
 export type MiddleClick =
-  | { readonly kind: "call"; readonly call: PeerCall }
-  | { readonly kind: "watch"; readonly allyId: string }
-  | { readonly kind: "none" };
+  { readonly kind: "call"; readonly call: PeerCall } | { readonly kind: "none" };
 
 /**
  * What a wheel click at `world` means, shared by the match and the
  * Training Ground: on a living foe, call it for your team; on a living
- * ally, watch them (or stop); on the ground, ping it. On yourself, on a
+ * ally or the ground, ping that point (#1055: the party window shows
+ * every ally's health, so there is no one to watch). On yourself, on a
  * corpse, or while you are dead: nothing.
  */
 export function middleClickAction(
@@ -56,16 +55,17 @@ export function middleClickAction(
   if (self === undefined || self.dead) {
     return { kind: "none" };
   }
+  const ping: MiddleClick = { kind: "call", call: { kind: "ping", x: world.x, y: world.y } };
   const hit = actorAtPoint(arena, world);
   if (hit === undefined) {
-    return { kind: "call", call: { kind: "ping", x: world.x, y: world.y } };
+    return ping;
   }
   const body = snapshot.players.find((player) => player.sessionId === hit.id);
   if (body === undefined || body.dead || body.sessionId === self.sessionId) {
     return { kind: "none" };
   }
   return body.team === self.team
-    ? { kind: "watch", allyId: body.sessionId }
+    ? ping
     : { kind: "call", call: { kind: "target", targetId: body.sessionId } };
 }
 

@@ -382,7 +382,7 @@ describe("networked combat (P2P)", () => {
     // Its own 7 s recharge, raised to the disable's 10 s; nothing else waits.
     expect(b.getRecharges()[FIREBALL]?.remaining).toBeGreaterThan(9);
     const armor = DEFAULT_SKILL_BAR.indexOf("elementalist.armor-of-earth");
-    expect(b.getRecharges()[armor]).toEqual({ remaining: 0, total: 0 });
+    expect(b.getRecharges()[armor]).toEqual({ remaining: 0, total: 0, spent: false });
   });
 
   it("sends a knockdown's time left on the victim, and 0 once it rises (#545)", async () => {
@@ -1046,6 +1046,26 @@ describe("wireCombat and combatMessage (#288, #375)", () => {
     }));
     expect(wire).toEqual([
       { sent: [{ kind: "shadow-stepped", targetId: "a", toId: "b" }], broken: [] },
+    ]);
+  });
+
+  it("carries a teleport and whom it went beside, and drops one with nowhere (#474)", () => {
+    const wire = wireCombat([
+      entry({
+        cause: "skill",
+        skillId: "monk.rebirth",
+        weaponId: undefined,
+        events: [{ kind: "teleported", targetId: "a", toId: "b" }],
+      }),
+    ]).map((combat) => ({
+      sent: combatMessage(combat).events,
+      broken: combatMessage({
+        ...combat,
+        events: combat.events.map((event) => ({ ...event, fromId: null })),
+      }).events,
+    }));
+    expect(wire).toEqual([
+      { sent: [{ kind: "teleported", targetId: "a", toId: "b" }], broken: [] },
     ]);
   });
 

@@ -60,7 +60,7 @@ const NOWHERE = (): boolean => false;
 function swing(attacker: Combatant, target: Combatant, seed = 1): ReturnType<typeof resolveSwing> {
   return resolveSwing({
     attacker,
-    target: { combatant: target, position: vec2(40, 0) },
+    target: { combatant: target, position: vec2(40, 0), creature: undefined },
     surroundings: new Map(),
     rng: createRng(seed),
     rules: RULES.combat,

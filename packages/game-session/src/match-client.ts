@@ -25,7 +25,7 @@ import {
   type PeerRefuse,
   type PeerRejoinProof,
   type PeerWelcome,
-  type RechargeSlot,
+  type RechargeMessage,
   type WireCalls,
   type WireEnded,
   type WireSkillBar,
@@ -105,7 +105,7 @@ export interface ConnectMatchOptions {
 
 /** The latest recharges, and the match time they were told at, to count down from. */
 interface Recharges {
-  readonly slots: readonly RechargeSlot[];
+  readonly message: RechargeMessage;
   readonly at: number;
 }
 
@@ -119,7 +119,7 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
   let ended: WireEnded | undefined;
   /** The host's summary from any `ended`, a host leaving's included (#1057). */
   let summary: WireEnded["summary"] | undefined;
-  let recharges: Recharges = { slots: [], at: 0 };
+  let recharges: Recharges = { message: { slots: [], spent: [] }, at: 0 };
   /**
    * Your own adrenaline per slot as last sent (#463), with when its loss
    * was due, and the match time it came at (#828).
@@ -238,7 +238,7 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
     }
   });
   fromHost("recharge", parseRecharge, (message) => {
-    recharges = { slots: message.slots, at: elapsed() };
+    recharges = { message, at: elapsed() };
   });
   fromHost("adrenaline", parseAdrenaline, (message) => {
     adrenaline = { message, at: elapsed() };
@@ -394,12 +394,14 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
         // Counted down on the match clock: no wall time crosses the wire.
         const passed = elapsed() - recharges.at;
         return bar.slots.map((_, slot) => {
-          const entry = recharges.slots.find((candidate) => candidate.slot === slot);
+          const entry = recharges.message.slots.find((candidate) => candidate.slot === slot);
+          const spent = recharges.message.spent.includes(slot);
           return entry === undefined
-            ? { remaining: 0, total: 0 }
+            ? { remaining: 0, total: 0, spent }
             : {
                 remaining: Math.max(0, entry.remainingSeconds - passed),
                 total: entry.totalSeconds,
+                spent,
               };
         });
       },

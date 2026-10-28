@@ -35,7 +35,7 @@ import {
   type PeerRefuse,
   type PeerRejoinChallenge,
   type PeerWelcome,
-  type RechargeSlot,
+  type RechargeMessage,
   type SkillBarSlot,
   type WireEnded,
   type WirePlayer,
@@ -50,7 +50,7 @@ import { MESSAGE_BURST, MESSAGES_PER_SECOND, MessageBudget } from "./intent-budg
 import { sanitizeName } from "./names.js";
 import { adrenalineSlots, sameAdrenaline } from "./adrenaline.js";
 import { chainMarks, chainMarksPredicted } from "./chain-marks.js";
-import { rechargePredicted, rechargeSlots } from "./recharge.js";
+import { rechargePredicted, rechargeState } from "./recharge.js";
 import { rejoinProof } from "./rejoin-proof.js";
 import { packSnapshot } from "./snapshot-parts.js";
 import { spawnPoint, type SpawnPoint } from "./spawn-points.js";
@@ -157,7 +157,7 @@ interface Seat {
   /** The match time it dropped at, while it is dropped. */
   droppedAt: number | undefined;
   /** The recharges the peer was last told, and when, so only news is sent (#152). */
-  recharges: { readonly slots: RechargeSlot[]; readonly at: number } | undefined;
+  recharges: { readonly message: RechargeMessage; readonly at: number } | undefined;
   /** The chain marks the peer was last told, and when, so only news is sent (#916). */
   chainMarks: { readonly marks: readonly WireChainMark[]; readonly at: number } | undefined;
   /** The bar the peer was last sent, so it goes again only when it changes (#637). */
@@ -266,13 +266,13 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       return;
     }
     const at = sim.elapsedSeconds;
-    const slots = rechargeSlots(participant.skillBar, participant.combatant.cast);
+    const message = rechargeState(participant.skillBar, participant.combatant.cast);
     const sent = seat.recharges;
-    if (!force && sent !== undefined && rechargePredicted(sent.slots, at - sent.at, slots)) {
+    if (!force && sent !== undefined && rechargePredicted(sent.message, at - sent.at, message)) {
       return;
     }
-    seat.recharges = { slots, at };
-    transport.send("recharge", { slots }, seat.peerId);
+    seat.recharges = { message, at };
+    transport.send("recharge", message, seat.peerId);
   };
 
   /**

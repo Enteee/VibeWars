@@ -483,6 +483,26 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Monk/176-Restore_Life",
   },
   {
+    id: "common.resurrection-signet",
+    profession: "common",
+    url: "https://www.gw-memorial.net/skills/Common/0-Resurrection_Signet",
+  },
+  {
+    id: "monk.rebirth",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/193-Rebirth",
+  },
+  {
+    id: "paragon.signet-of-return",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1096-Signet_of_Return",
+  },
+  {
+    id: "ritualist.flesh-of-my-flesh",
+    profession: "ritualist",
+    url: "https://www.gw-memorial.net/skills/Ritualist/751-Flesh_of_My_Flesh",
+  },
+  {
     id: "mesmer.energy-surge",
     profession: "mesmer",
     url: "https://www.gw-memorial.net/skills/Mesmer/312-Energy_Surge",

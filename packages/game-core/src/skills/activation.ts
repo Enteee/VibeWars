@@ -31,6 +31,7 @@ export type ActivationRejection =
   | "caster-knocked-down"
   | "skill-not-on-bar"
   | "still-recharging"
+  | "spent-until-morale-boost"
   | "already-casting"
   | "wrong-weapon"
   | "insufficient-energy"
@@ -61,6 +62,8 @@ export interface ActivationRequest {
   readonly targetPosition: Vec2 | undefined;
   /** Skill ids currently recharging for this caster, with seconds remaining. */
   readonly rechargeRemaining: ReadonlyMap<string, number>;
+  /** Skill ids spent until a morale boost (#474): `CastState.spent`. */
+  readonly spent: ReadonlySet<string>;
   /** True if the caster is mid-cast on something else. */
   readonly isCasting: boolean;
   /** The caster's bar by slot; a skill not on it can never be cast. */
@@ -151,6 +154,10 @@ export function canActivate(request: ActivationRequest): ActivationCheck {
   }
   if ((request.rechargeRemaining.get(skill.id) ?? 0) > 0) {
     return reject("still-recharging");
+  }
+  // After the recharge, so a disabled spent skill still says "recharging".
+  if (request.spent.has(skill.id)) {
+    return reject("spent-until-morale-boost");
   }
   // An attack skill is a blow of its weapon (ADR-0029): checked before the
   // cost, so the player is told what is wrong rather than what it costs.

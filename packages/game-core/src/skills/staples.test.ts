@@ -73,6 +73,7 @@ function check(caster: Combatant, id: string, target: Combatant) {
     target,
     targetPosition: vec2(RANGE_MELEE, 0),
     rechargeRemaining: new Map(),
+    spent: new Set(),
     isCasting: false,
     skillBar: [id, null, null, null, null, null, null, null],
     losBlockers: [],
@@ -116,7 +117,11 @@ function land(
   });
 }
 
-const at = (combatant: Combatant, position: Vec2): TargetCandidate => ({ combatant, position });
+const at = (combatant: Combatant, position: Vec2): TargetCandidate => ({
+  combatant,
+  position,
+  creature: undefined,
+});
 
 describe("the weapon each attack needs (#522)", () => {
   it.each([
@@ -238,6 +243,7 @@ describe("Throw Dirt (#522)", () => {
       target: foe("t"),
       targetPosition: vec2(RANGE_MELEE * 3, 0),
       rechargeRemaining: new Map(),
+      spent: new Set(),
       isCasting: false,
       skillBar: ["ranger.throw-dirt", null, null, null, null, null, null, null],
       losBlockers: [],

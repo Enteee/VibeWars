@@ -280,6 +280,7 @@ export function createLocalConnection(options: {
       return skillBar.map((slot) => ({
         remaining: (slot === null ? undefined : cast?.rechargeRemaining.get(slot.id)) ?? 0,
         total: (slot === null ? undefined : cast?.rechargeTotal.get(slot.id)) ?? 0,
+        spent: slot !== null && cast?.spent.has(slot.id) === true,
       }));
     },
     onStep(handler) {
