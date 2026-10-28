@@ -134,7 +134,7 @@ function takeRelayLink(): TurnFragment {
 
 /** What a player takes into a lobby, read once when they enter it (#1070). */
 interface Entrant {
-  /** Played every match of the lobby; `undefined` is the house loadout. */
+  /** Played every match of the lobby; `undefined` plays a starter build from the host. */
   readonly build: PlayerBuild | undefined;
   /** How the lobby lists it (#580). */
   readonly character: LobbyCharacter | null;
@@ -291,7 +291,7 @@ async function main(): Promise<void> {
    * meanwhile (another tab) is taken by leaving and joining again, as in
    * GW1 (#1070). An id pointing at a character
    * that no longer exists, or one that no longer validates, resolves to
-   * `undefined` and the host's house loadout.
+   * `undefined` and a starter build from the host.
    */
   const activeBuild = async (): Promise<PlayerBuild | undefined> => {
     const id = loadActiveCharacterId();
@@ -312,8 +312,8 @@ async function main(): Promise<void> {
   /**
    * The selected character, read fresh: the one read per lobby (#1070).
    * The lobby lists it (#580) by the selected one's name and professions,
-   * or `null` for the house loadout. A build the host would refuse, an
-   * empty bar or an illegal one, plays the house loadout, so it is listed
+   * or `null` for a starter build. A build the host would refuse, an
+   * empty bar or an illegal one, plays a starter build, so it is listed
    * as that too.
    */
   const readEntrant = async (): Promise<Entrant> => {
@@ -322,7 +322,8 @@ async function main(): Promise<void> {
       build,
       character:
         build === undefined ||
-        resolveJoinLoadout(build, MINIMAL_GW_INSPIRED_PVP_V1.attributes).refused !== undefined
+        resolveJoinLoadout(build, MINIMAL_GW_INSPIRED_PVP_V1.attributes, Math.random).refused !==
+          undefined
           ? null
           : {
               name: build.name,

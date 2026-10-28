@@ -99,7 +99,8 @@ export {
   validatePlayerBuild,
 } from "./build.js";
 export type { JoinLoadout, JoinRefusal } from "./join-loadout.js";
-export { DEFAULT_SKILL_BAR, HOUSE_LOADOUT, resolveJoinLoadout } from "./join-loadout.js";
+export { loadoutOf, resolveJoinLoadout } from "./join-loadout.js";
+export { STARTER_BUILDS, pickBuildFrom, pickStarterBuild } from "./starter-builds.js";
 
 export * from "./skills/index.js";
 

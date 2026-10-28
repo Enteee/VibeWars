@@ -690,7 +690,7 @@ test("a saved character can be chosen and is taken into a match", async ({ page 
   await expect(page.locator("#viewport canvas:not(.compass)")).toBeVisible();
 
   // The server grants the build's bar, so the HUD shows exactly the one
-  // skill that was equipped, not the house loadout, and seven empty slots.
+  // skill that was equipped, not a starter build, and seven empty slots.
   await expect(page.locator(".hud-skills .hud-skill:not(.is-empty)")).toHaveCount(1);
   await expect(page.locator(".hud-skills .hud-skill.is-empty")).toHaveCount(7);
 });
