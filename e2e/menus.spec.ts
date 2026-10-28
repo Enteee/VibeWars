@@ -128,6 +128,12 @@ test("#853: the first start rolls a starter character, chosen; Reroll replaces i
   const name = row.locator(".selectable-row-name");
   await expect(name).toHaveText(ROLLED_NAME);
   const first = await name.innerText();
+  // Drawn as a match draws it (#1250): the figure, not a lettered dot.
+  const figure = row.locator("canvas.character-figure");
+  await expect(figure).toBeVisible();
+  await expect(row.locator(".character-dot")).toHaveCount(0);
+  // With its primary profession's glyph inside the disc, as in a match (#1037).
+  await expect(figure).toHaveAttribute("data-glyph", /^[a-z]+$/);
 
   // Rolled once: a reload keeps it, and rolls nothing new.
   await page.reload();
