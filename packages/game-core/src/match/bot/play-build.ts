@@ -1,5 +1,4 @@
 import { RANGE_SPELL } from "../../distances.js";
-import { wieldsFor } from "../../equipment/weapons.js";
 import { getSkill } from "../../skills/catalog.js";
 import type { Skill } from "../../skills/types.js";
 import { distance, ZERO } from "../../vec2.js";
@@ -17,9 +16,9 @@ import { botUses, onlyInterrupts, removedCategories, removesFromCaster } from ".
  * sensible GW1 hero does. Each think it does the first of: interrupt a
  * foe's cast, heal or protect the most hurt ally, take a hex or condition
  * off an ally, raise a dead one, use an offensive skill on the team
- * target, attack it with the weapon, and otherwise close in (melee) or
- * hold (anything else). A ranged bot stands and fights a foe at its
- * elbow: at equal speed, backing off would never end.
+ * target, attack it with the weapon, and otherwise walk to the nearest
+ * foe. A ranged bot stands and fights a foe at its elbow: at equal speed,
+ * backing off would never end.
  *
  * It reads only what a player reads off the screen: positions, teams,
  * health fractions, the statuses on a body and a foe's cast bar. Never a
@@ -177,7 +176,6 @@ function think(context: BehaviourContext): BehaviourIntent {
     }
   }
 
-  const melee = wieldsFor(self.combatant.equipment.mainHand.weapon.id, "melee");
   if (targetId !== undefined) {
     // 5. Offence, in bar order.
     const skill = bar.find(
@@ -191,8 +189,9 @@ function think(context: BehaviourContext): BehaviourIntent {
     return { ...NOTHING, targetId, attackTargetId: targetId };
   }
 
-  // 7. Nothing to fight in reach: melee closes in, anything else holds.
-  const nearest = melee ? nearestLiving(self, foes) : undefined;
+  // 7. Nothing to fight in reach: walk to the nearest foe, whatever the
+  // weapon. Maps spawn teams beyond spell range.
+  const nearest = nearestLiving(self, foes);
   return nearest === undefined ? NOTHING : { ...NOTHING, moveTo: nearest.position };
 }
 
