@@ -375,7 +375,10 @@ describe("inherent armor by profession (#759) and insignia armor per piece (#113
   it("refuses Blighter's on a Monk (#1188)", () => {
     const equipment: BuildEquipment = {
       ...defaultEquipmentFor("monk"),
-      armor: { ...bareArmorSet(), legs: { insigniaId: "blighters", rune: null } },
+      armor: {
+        ...armorWithHeadgear("monk.divine-favor"),
+        legs: { insigniaId: "blighters", rune: null },
+      },
     };
     expect(validateEquipment(equipment, contextFor("monk"))).toEqual([
       { field: "equipment.armor.legs", message: "Blighter's Insignia needs a primary necromancer" },
