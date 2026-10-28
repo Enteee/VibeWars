@@ -384,6 +384,23 @@ describe("inherent armor by profession (#759) and insignia armor per piece (#113
       { field: "equipment.armor.legs", message: "Blighter's Insignia needs a primary necromancer" },
     ]);
   });
+
+  it("refuses Pyromancer on a Monk, allows Sentry's on anyone (#1206)", () => {
+    const armorWith = (insigniaId: InsigniaId): BuildEquipment => ({
+      ...defaultEquipmentFor("monk"),
+      armor: {
+        ...armorWithHeadgear("monk.divine-favor"),
+        legs: { insigniaId, rune: null },
+      },
+    });
+    expect(validateEquipment(armorWith("pyromancer"), contextFor("monk"))).toEqual([
+      {
+        field: "equipment.armor.legs",
+        message: "Pyromancer Insignia needs a primary elementalist",
+      },
+    ]);
+    expect(validateEquipment(armorWith("sentrys"), contextFor("monk"))).toEqual([]);
+  });
 });
 
 describe("rollHitLocation (#1135)", () => {
@@ -1213,12 +1230,9 @@ describe("the gear coverage record", () => {
     }
   });
 
-  it("does not claim a stance insignia exists", () => {
-    // The specific thing the record was written to keep honest: the
-    // reference's stance insignia is absent from the catalog, not
-    // shipped inert.
-    expect(gearOmission("stances")).toBeDefined();
-    expect(ALL_INSIGNIAS.map((insignia) => insignia.id)).not.toContain("sentrys");
+  it("no longer records stances as a gap: Sentry's reads them (#1206)", () => {
+    expect(GEAR_OMISSIONS.map((omission) => omission.mechanic)).not.toContain("stances");
+    expect(ALL_INSIGNIAS.map((insignia) => insignia.id)).toContain("sentrys");
   });
 
   it("no longer records typed armor as a gap: professions carry it (#759)", () => {
@@ -1233,7 +1247,7 @@ describe("the gear coverage record", () => {
     // has the same rating.
     expect(gearOmission("per-piece-armor-ratings")?.kind).toBe("simplification");
     expect(gearOmission("weapon-upgrades")?.kind).toBe("simplification");
-    expect(gearOmission("stances")?.kind).toBe("gap");
+    expect(gearOmission("profession-insignias")?.kind).toBe("gap");
     expect(openGearGaps().length).toBeGreaterThan(0);
   });
 
