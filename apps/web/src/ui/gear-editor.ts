@@ -7,6 +7,7 @@ import {
   MINIMAL_GW_INSPIRED_PVP_V1,
   SHIELD_REQUIREMENT_ATTRIBUTES,
   accessibleAttributeIds,
+  primaryAttributeIds,
   allowsOffhand,
   getAttribute,
   getOffhand,
@@ -482,8 +483,8 @@ export function decodeRune(raw: string): EquippedRune | undefined {
 /**
  * Every rune this character could legally slot, as one flat list.
  *
- * Attribute runes are offered only for attributes they can actually
- * raise, and profession-locked runes only to the profession that can use
+ * Attribute runes are offered only for the primary profession's
+ * attributes (#1141), and profession-locked runes only to the profession that can use
  * them — so the dropdown never contains an option that would immediately
  * fail validation.
  */
@@ -508,7 +509,7 @@ export function runeChoices(character: StoredCharacter): readonly RuneChoice[] {
     }
   }
 
-  for (const attributeId of [...accessibleAttributes(character)].sort()) {
+  for (const attributeId of [...primaryAttributeIds(character.primaryProfession)].sort()) {
     for (const tier of RUNE_TIERS) {
       const equipped: EquippedRune = { kind: "attribute", attributeId, tier };
       const penalty = ATTRIBUTE_RUNE_TIERS[tier].healthPenalty;

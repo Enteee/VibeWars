@@ -1,4 +1,5 @@
-import type { ProfessionId } from "../professions.js";
+import { primaryAttributeIds } from "../character.js";
+import { getAttribute, getProfession, type ProfessionId } from "../professions.js";
 import { armorPieces } from "./armor.js";
 import { getInsignia } from "./insignias.js";
 import type { BuildEquipment, WeaponSet } from "./loadout.js";
@@ -88,14 +89,15 @@ function checkRune(
   problems: EquipmentProblem[],
 ): void {
   if (rune.kind === "attribute") {
-    // Rejected, not merely warned about. A rune on an attribute you
-    // cannot raise is pure health penalty for no bonus — a trap rather
-    // than a trade-off, and the skill bar already refuses inaccessible
-    // skills for the same reason.
-    if (!context.accessibleAttributeIds.has(rune.attributeId)) {
+    // Rejected, not merely warned about. An attribute rune fits only the
+    // primary's armor (#1141, GW1), and one on an attribute you cannot
+    // raise is pure health penalty for no bonus — a trap rather than a
+    // trade-off, as the skill bar refuses inaccessible skills.
+    if (!primaryAttributeIds(context.primaryProfession).includes(rune.attributeId)) {
+      const name = getAttribute(rune.attributeId)?.name ?? rune.attributeId;
       problems.push({
         field,
-        message: `a rune of ${rune.attributeId}, which this character cannot access`,
+        message: `a rune of ${name}, which is not a ${getProfession(context.primaryProfession).name} attribute`,
       });
     }
     return;

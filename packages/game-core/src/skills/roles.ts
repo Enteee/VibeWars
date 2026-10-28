@@ -93,7 +93,8 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
  * (#999): Song of Restoration heals, or when it attacks or casts a spell
  * (#1039): Vigorous Spirit heals, or what its bearer does to the foe that
  * hurt it (#1022): Weapon of Remedy removes conditions. One that heals every
- * second (Spirit Light Weapon, #975) is healing.
+ * second (Spirit Light Weapon, #975) is healing, and so is one that
+ * regenerates (Healing Breeze, Mending, #1013).
  */
 function statusRoles(status: StatusDefinition): readonly SkillRole[] {
   const roles: SkillRole[] = [];
@@ -111,7 +112,13 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
     roles.push("defence");
   }
   if (status.interruptsSpells) roles.push("interrupt");
-  if (status.healthPerSecond > 0) roles.push("healing");
+  if (
+    status.healthPerSecond > 0 ||
+    status.healthPips > 0 ||
+    status.healthPipsPerEnchantment !== undefined
+  ) {
+    roles.push("healing");
+  }
   const forBearer =
     status.category === "hex" || status.category === "condition"
       ? []

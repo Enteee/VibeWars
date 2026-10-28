@@ -1,5 +1,6 @@
 import type { TrainingScenario } from "@vibewars/game-core";
 
+import type { EscapeIntent } from "../input/attack-key.js";
 import type { KeyLabeller } from "../input/key-labels.js";
 import { actionLabel, codeLabel, type KeyAction, type Keymap } from "../input/keymap.js";
 import type { StoredCharacter } from "../storage/schema.js";
@@ -80,16 +81,17 @@ export function resolveScenarioId(
 }
 
 /** What Esc does on the stage: one step at a time, in this order (#495). */
-export type EscapeStep = "cancel" | "collapse" | "release";
+export type EscapeStep = EscapeIntent | "collapse" | "release";
 
 /**
- * A cast, an attack or a walk in progress is cancelled first (#160,
- * #300, #342); then an expanded arena collapses, keeping control; then
- * control is released. Esc never navigates away from the editor.
+ * The match's Esc comes first: a cast, an attack or a walk in progress is
+ * cancelled (#160, #300, #342), else the target is cleared (#1151). Then
+ * an expanded arena collapses, keeping control; then control is
+ * released. Esc never navigates away from the editor.
  */
-export function escapeStep(actionToCancel: boolean, expanded: boolean): EscapeStep {
-  if (actionToCancel) {
-    return "cancel";
+export function escapeStep(intent: EscapeIntent | undefined, expanded: boolean): EscapeStep {
+  if (intent !== undefined) {
+    return intent;
   }
   return expanded ? "collapse" : "release";
 }

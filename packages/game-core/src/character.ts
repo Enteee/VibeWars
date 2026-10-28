@@ -24,6 +24,15 @@ export class CharacterValidationError extends Error {
 }
 
 /**
+ * The primary profession's own attributes, its primary attribute included:
+ * the only ones an attribute rune can raise, since you always wear your
+ * primary's armor (#1141, GW1).
+ */
+export function primaryAttributeIds(primaryProfession: ProfessionId): readonly string[] {
+  return getProfession(primaryProfession).attributes.map((attr) => attr.id);
+}
+
+/**
  * Every attribute this character is allowed to invest in: all four of the
  * primary profession's attributes (including its primary attribute), plus
  * only the secondary profession's *non-primary* attributes.
@@ -38,7 +47,7 @@ export function accessibleAttributeIds(
   primaryProfession: ProfessionId,
   secondaryProfession: ProfessionId | undefined,
 ): readonly string[] {
-  const primary = getProfession(primaryProfession).attributes.map((attr) => attr.id);
+  const primary = primaryAttributeIds(primaryProfession);
   if (secondaryProfession === undefined) {
     return primary;
   }

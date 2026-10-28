@@ -11,7 +11,7 @@ import { applySkillEffects, type CombatEvent } from "./effects.js";
 import type { StatusId } from "./status.js";
 import { resolveTargets, type TargetCandidate } from "./targeting.js";
 import { makeCombatant } from "./testing.js";
-import { KNOCKDOWN_SECONDS, type Combatant, type Skill } from "./types.js";
+import { KNOCKDOWN_SECONDS, type Combatant, type RadiusArea, type Skill } from "./types.js";
 
 /**
  * The Elementalist condition staples (#997): Water Trident, Searing
@@ -37,6 +37,15 @@ function skill(id: string): Skill {
     throw new Error(`unknown skill ${id}`);
   }
   return found;
+}
+
+/** A skill's area, which these all centre in a radius, never the party (#1013). */
+function radiusArea(id: string): RadiusArea {
+  const area = skill(id).area;
+  if (area === undefined || area.origin === "party") {
+    throw new Error(`${id} hits no radius area`);
+  }
+  return area;
 }
 
 function caster(): Combatant {
@@ -82,8 +91,8 @@ describe("Water Trident (#997)", () => {
       trident.cost,
       trident.activationSeconds,
       trident.rechargeSeconds,
-      trident.area?.radius,
-      trident.area?.maxTargets,
+      radiusArea(WATER_TRIDENT).radius,
+      radiusArea(WATER_TRIDENT).maxTargets,
     ]).toEqual([true, "spell", { kind: "energy", amount: 5 }, 1, 3, AREA_ADJACENT, 3]);
     expect(trident.projectile).toBeDefined();
   });
@@ -150,7 +159,7 @@ describe("Searing Flames (#997)", () => {
       flames.cost,
       flames.activationSeconds,
       flames.rechargeSeconds,
-      flames.area?.radius,
+      radiusArea(SEARING_FLAMES).radius,
       flames.projectile,
     ]).toEqual([true, { kind: "energy", amount: 15 }, 1, 2, AREA_NEARBY, undefined]);
   });

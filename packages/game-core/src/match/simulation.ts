@@ -291,10 +291,20 @@ function reaches(affects: Aura["affects"], sourceTeam: number, team: number): bo
 
 /**
  * Whether `participant` counts for its team (ADR-0035): its roster,
- * score, morale and win condition. A creature never does.
+ * score, morale total and win condition. A creature never does.
  */
 export function countsForTeam(participant: Participant): boolean {
   return participant.creature === undefined;
+}
+
+/**
+ * Whether `participant` has morale (#843): a player, and a companion, a
+ * creature that lies when dead (#1133). Keyed on lying, not on pets, so a
+ * hero later gets the same rule. A companion's morale never counts for
+ * its team.
+ */
+function hasMorale(participant: Participant): boolean {
+  return participant.creature === undefined || participant.creature.onDeath === "lie";
 }
 
 export interface ParticipantSpec {
@@ -2464,10 +2474,13 @@ export class MatchSimulation {
     ]);
     // Where an area landed, for whoever draws it: nowhere, when an area
     // centred on a target had no target to centre on, or when it is still
-    // flying.
+    // flying. A party area (#1013) has no ring to draw.
     const origin = skill.area?.origin === "caster" ? record.position : primary?.position;
     const area =
-      skill.area === undefined || origin === undefined || flight !== undefined
+      skill.area === undefined ||
+      skill.area.origin === "party" ||
+      origin === undefined ||
+      flight !== undefined
         ? undefined
         : { x: origin.x, y: origin.y, radius: skill.area.radius };
 
@@ -3425,7 +3438,7 @@ export class MatchSimulation {
     this.#recordDeaths(events);
     this.#recordKnockdowns(events);
     const area =
-      skill.area === undefined
+      skill.area === undefined || skill.area.origin === "party"
         ? undefined
         : { x: target.position.x, y: target.position.y, radius: skill.area.radius };
     this.#logShot(projectile, events, area);
@@ -3590,14 +3603,16 @@ export class MatchSimulation {
         victim.combatant.cast.clearOverrides();
         dropEndedCopyPools(victim.combatant);
         emptyAdrenaline(victim.combatant);
-        // A creature (#1052) scores nothing, costs no morale and never
-        // respawns on its own: a spirit or minion leaves at the end of the
-        // step, a pet lies where it fell (#1046). Only a spirit's death is
-        // no soul to reap (GW1: "a non-Spirit creature").
+        // A creature (#1052) scores nothing and never respawns on its own:
+        // a spirit or minion leaves at the end of the step, a pet lies where
+        // it fell (#1046) and pays the death penalty (#1133). Only a
+        // spirit's death is no soul to reap (GW1: "a non-Spirit creature").
         if (victim.creature !== undefined) {
           victim.respawnInSeconds = Number.POSITIVE_INFINITY;
           if (victim.creature.onDeath === "vanish") {
             this.#leaving.add(victim.id);
+          } else {
+            this.#deathPenalty(victim);
           }
           if (victim.creature.kind !== "spirit") {
             this.#reapSoul(victim);
@@ -3821,13 +3836,16 @@ export class MatchSimulation {
   /**
    * The death penalty (#843, GW1): with `deathPenalty` on, `victim` loses
    * 15% morale, down to −60%, unless it was resurrected less than 5 s ago;
-   * its foes' +2% waits for the end of the step.
+   * its foes' +2% waits for the end of the step. A companion's death
+   * costs it the same but gives its foes nothing (#1133): it is no player.
    */
   #deathPenalty(victim: ParticipantRecord): void {
     if (this.#matchRules?.deathPenalty !== true) {
       return;
     }
-    this.#moraleKills.push(victim.combatant.team);
+    if (countsForTeam(victim)) {
+      this.#moraleKills.push(victim.combatant.team);
+    }
     if (this.#elapsedSeconds - victim.resurrectedAtSeconds < DP_GRACE_AFTER_RES_SECONDS) {
       return;
     }
@@ -3839,7 +3857,8 @@ export class MatchSimulation {
 
   /**
    * Every death this step gives each living foe in the death penalty 2%
-   * back, up to 0 (#843): a kill never boosts. A creature has no morale (#1052).
+   * back, up to 0 (#843): a kill never boosts. Of creatures, only a
+   * companion has morale (#1133).
    */
   #awardKillMorale(): void {
     for (const team of this.#moraleKills) {
@@ -3849,7 +3868,7 @@ export class MatchSimulation {
           combatant.team !== team &&
           !combatant.dead &&
           combatant.morale < 0 &&
-          countsForTeam(record)
+          hasMorale(record)
         ) {
           this.#setMorale(record, Math.min(0, combatant.morale + KILL_MORALE_PERCENT));
         }
@@ -3860,13 +3879,14 @@ export class MatchSimulation {
 
   /**
    * A morale boost (GvG's flag stand, HA's altar): `amount` percent to
-   * every member of `team`, dead or alive, up to +10%, creatures aside (#1052). Not capped at 0,
+   * every member of `team`, dead or alive, up to +10%, companions too but no
+   * other creature (#1052, #1133). Not capped at 0,
    * so it lifts a death penalty too. It readies every skill spent until a
    * morale boost (#474), at +10% too.
    */
   public moraleBoost(team: number, amount: number): void {
     for (const record of this.#participants.values()) {
-      if (record.combatant.team === team && countsForTeam(record)) {
+      if (record.combatant.team === team && hasMorale(record)) {
         this.#setMorale(record, Math.min(MORALE_CEILING, record.combatant.morale + amount));
         record.combatant.cast.refreshSpent();
       }
@@ -3875,12 +3895,16 @@ export class MatchSimulation {
 
   /**
    * Set `record`'s morale and the maxima that follow it (GW1: on the base,
-   * before upgrades). A drop clamps health and energy to the new
-   * ceilings; a rise leaves them where they are.
+   * before upgrades; a creature has none, so its base is its own). A drop
+   * clamps health and energy to the new ceilings; a rise leaves them where
+   * they are.
    */
   #setMorale(record: ParticipantRecord, morale: number): void {
     const { combatant } = record;
-    const { baseHealth, baseEnergy } = this.#ruleset.combat;
+    const { baseHealth, baseEnergy } =
+      record.creature === undefined
+        ? this.#ruleset.combat
+        : { baseHealth: record.resolvedMaxHealth, baseEnergy: record.resolvedMaxEnergy };
     combatant.morale = morale;
     combatant.maxHealth = moraleMaximum(baseHealth, record.resolvedMaxHealth, morale);
     combatant.maxEnergy = moraleMaximum(baseEnergy, record.resolvedMaxEnergy, morale);

@@ -4,6 +4,7 @@ import type { MatchSnapshot, PlayerSnapshot } from "@vibewars/game-session";
 import {
   attackClickIntents,
   attackKeyIntents,
+  escapeIntent,
   hasActionToCancel,
   isAttacking,
   isCasting,
@@ -140,5 +141,26 @@ describe("hasActionToCancel", () => {
     expect(hasActionToCancel(snapshot([player("me", { attackTargetSessionId: "x" })]))).toBe(true);
     const casting = { castingSkillId: "fireball", castRemaining: 1, castTotal: 2 };
     expect(hasActionToCancel(snapshot([player("me", casting)]))).toBe(true);
+  });
+});
+
+describe("escapeIntent (#1151)", () => {
+  const casting = { castingSkillId: "fireball", castRemaining: 1, castTotal: 2 };
+
+  it("cancels what is running and keeps the target", () => {
+    expect(escapeIntent(snapshot([player("me", { ...casting, targetSessionId: "foe" })]))).toBe(
+      "cancel",
+    );
+    expect(
+      escapeIntent(
+        snapshot([player("me", { targetSessionId: "foe", attackTargetSessionId: "foe" })]),
+      ),
+    ).toBe("cancel");
+    expect(escapeIntent(snapshot([player("me", { walking: true })]))).toBe("cancel");
+  });
+
+  it("with nothing running, clears the target, and with no target does nothing", () => {
+    expect(escapeIntent(snapshot([player("me", { targetSessionId: "foe" })]))).toBe("clear-target");
+    expect(escapeIntent(snapshot([player("me")]))).toBeUndefined();
   });
 });

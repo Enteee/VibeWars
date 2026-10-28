@@ -5,7 +5,7 @@ import type { MatchConnection, MatchSnapshot } from "@vibewars/game-session";
 import { attachMatchSounds } from "./audio/match-sounds.js";
 import { onGlobalMute, setGlobalMute } from "./audio/global-mute.js";
 import { soundPlayer } from "./audio/sound-player.js";
-import { attackKeyIntents, hasActionToCancel } from "./input/attack-key.js";
+import { attackKeyIntents, escapeIntent } from "./input/attack-key.js";
 import { createDoubleClick } from "./input/double-click.js";
 import { attachKeyboardMoveInput } from "./input/keyboard-move.js";
 import { loadLayoutLabeller } from "./input/key-labels.js";
@@ -401,9 +401,13 @@ export async function startMatchView(
       return;
     }
     if (event.key === "Escape") {
-      // Cancel Action (#300): the cast, the attack and a walk, whichever run.
-      if (!event.repeat && hasActionToCancel(connection.getSnapshot())) {
+      // Cancel Action (#300): the cast, the attack and a walk, whichever
+      // run. With none, your target is let go (#1151).
+      const intent = event.repeat ? undefined : escapeIntent(connection.getSnapshot());
+      if (intent === "cancel") {
         connection.sendIntent({ kind: "cancel" });
+      } else if (intent === "clear-target") {
+        connection.sendIntent({ kind: "target", targetSessionId: null });
       }
       return;
     }
