@@ -139,7 +139,7 @@ export type {
 } from "./tools/headless-match.js";
 export { fighter, runHeadlessMatch } from "./tools/headless-match.js";
 export type { BenchField, TickBench } from "./tools/tick-bench.js";
-export { DENSE_FIELD, runTickBench, tickStats } from "./tools/tick-bench.js";
+export { DENSE_FIELD, runTickBench, tickStats, type BenchScenario } from "./tools/tick-bench.js";
 
 export type {
   Creature,

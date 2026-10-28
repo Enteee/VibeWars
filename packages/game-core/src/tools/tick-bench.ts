@@ -1,6 +1,9 @@
 import { resolveLoadout } from "../equipment/resolve.js";
+import { AREA_EARSHOT, AREA_IN_THE_AREA, RANGE_SPELL } from "../distances.js";
+import type { ResolvedEquipment } from "../equipment/resolve.js";
 import { segment, type Segment } from "../geometry.js";
 import { loadoutOf } from "../join-loadout.js";
+import type { Behaviour } from "../match/behaviour.js";
 import { MatchSimulation, loadoutSpec, type ParticipantSpec } from "../match/simulation.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { pickStarterBuild } from "../starter-builds.js";
@@ -50,8 +53,70 @@ export const DENSE_FIELD: BenchField = {
 /** The first starter build, always, so the bench stays the same run to run. */
 const BENCH_LOADOUT = loadoutOf(pickStarterBuild(() => 0));
 
-/** Every fighter with `BENCH_LOADOUT`, all ordered to attack their mirror across the field. */
-function benchMatch(field: BenchField, seed: string): MatchSimulation {
+/**
+ * What the bench's followers do: a minion's (`catalog.ts`), heel by the
+ * owner, fight in earshot, back to heel past cast range.
+ */
+const FOLLOWER: Behaviour = {
+  kind: "follow-and-attack",
+  engage: "nearest-foe",
+  aggroUnits: AREA_EARSHOT,
+  leashUnits: RANGE_SPELL,
+  heelUnits: AREA_IN_THE_AREA,
+};
+
+/** Followers per fighter in `"follow"`: 32 in all on the bench field, the creature cap. */
+const FOLLOWERS_EACH = 2;
+
+/**
+ * What the bench runs (#1157): `"fight"`, every fighter ordered to attack
+ * their mirror across the field; `"follow"`, the fighters idle and two
+ * minions each spawned at the opposite corner, across the pillars from
+ * their owner, walking back to heel (PR 1156's "far" case).
+ */
+export type BenchScenario = "fight" | "follow";
+
+/** Two minions of `owner`'s, mirrored through the field's centre from it, with `equipment`. */
+function followersOf(
+  field: BenchField,
+  owner: BenchField["spawns"][number],
+  equipment: ResolvedEquipment,
+): ParticipantSpec[] {
+  return Array.from({ length: FOLLOWERS_EACH }, (_, k) => ({
+    id: `${owner.id}-m${String(k)}`,
+    team: owner.team,
+    skillBar: [],
+    attributeRanks: new Map(),
+    equipment,
+    maxHealth: 1e7,
+    spawn: vec2(field.bounds.width - owner.at.x, field.bounds.height - owner.at.y - 40 * k),
+    facing: 0,
+    behaviour: FOLLOWER,
+    creature: {
+      ownerId: owner.id,
+      kind: "minion",
+      name: "Bone Minion",
+      expiresInSeconds: Number.POSITIVE_INFINITY,
+      ageSeconds: 0,
+      summonedAtTick: 0,
+      skillId: "necromancer.animate-bone-minions",
+      aura: undefined,
+      onDeath: "vanish",
+      ownerDisableSeconds: 0,
+      companionSkillId: undefined,
+    },
+  }));
+}
+
+/**
+ * Every fighter with `BENCH_LOADOUT`, set up for `scenario`, and who
+ * should be walking in it: the fighters, or the followers.
+ */
+function benchMatch(
+  field: BenchField,
+  seed: string,
+  scenario: BenchScenario,
+): { readonly sim: MatchSimulation; readonly walkers: readonly ParticipantSpec[] } {
   const ruleset = MINIMAL_GW_INSPIRED_PVP_V1;
   const resolved = resolveLoadout(
     {
@@ -72,25 +137,32 @@ function benchMatch(field: BenchField, seed: string): MatchSimulation {
     spawn: spawn.at,
     facing: 0,
   }));
+  const followers =
+    scenario === "follow"
+      ? field.spawns.flatMap((spawn) => followersOf(field, spawn, resolved.weaponSets[0].equipment))
+      : [];
   const sim = new MatchSimulation({
     seed,
     ruleset,
     walls: field.walls,
     bounds: field.bounds,
-    participants,
+    participants: [...participants, ...followers],
   });
+  if (scenario === "follow") {
+    return { sim, walkers: followers };
+  }
   for (const spawn of field.spawns) {
     const index = Number(spawn.id.slice(1));
     const mirror = index % 2 === 0 ? index + 1 : index - 1;
     sim.requestAttack(spawn.id, `p${String(mirror)}`);
   }
-  return sim;
+  return { sim, walkers: participants };
 }
 
 export interface TickBench {
   /** Milliseconds each `step` took, in order. */
   readonly tickMs: readonly number[];
-  /** Where each fighter started and ended, by id, to tell they moved. */
+  /** Where each walker started and ended, by id, to tell they moved. */
   readonly moved: ReadonlyMap<string, { readonly from: Vec2; readonly to: Vec2 }>;
 }
 
@@ -103,9 +175,10 @@ export function runTickBench(options: {
   readonly seed: string;
   readonly now: () => number;
   readonly field: BenchField;
+  readonly scenario: BenchScenario;
 }): TickBench {
-  const { field } = options;
-  const sim = benchMatch(field, options.seed);
+  const { field, scenario } = options;
+  const { sim, walkers } = benchMatch(field, options.seed, scenario);
   const dt = 1 / MINIMAL_GW_INSPIRED_PVP_V1.tickRateHz;
   const tickMs: number[] = [];
   for (let i = 0; i < options.ticks; i += 1) {
@@ -114,9 +187,9 @@ export function runTickBench(options: {
     tickMs.push(options.now() - started);
   }
   const moved = new Map(
-    field.spawns.map((spawn) => [
-      spawn.id,
-      { from: spawn.at, to: sim.get(spawn.id)?.position ?? spawn.at },
+    walkers.map((walker) => [
+      walker.id,
+      { from: walker.spawn, to: sim.get(walker.id)?.position ?? walker.spawn },
     ]),
   );
   return { tickMs, moved };

@@ -41,6 +41,7 @@ import {
   createPathFinder,
   isStandable,
   nearestStandable,
+  walkIsClear,
   type NavGraph,
   type PathFinder,
 } from "../pathing.js";
@@ -492,6 +493,12 @@ interface ParticipantRecord extends Participant {
    */
   followGoal: { readonly point: Vec2; readonly passing: string | undefined } | undefined;
   /**
+   * The way last planned for its walk, follow or approach, and the goal it
+   * was planned to (#1157): kept from tick to tick, so a walker runs A*
+   * only when that goes stale. `undefined` with nothing to walk to.
+   */
+  route: { readonly goal: Vec2; readonly waypoints: Vec2[] } | undefined;
+  /**
    * Maximum health and energy before morale (#843): the participant's,
    * or its loadout's since the last `rearm`.
    */
@@ -579,6 +586,9 @@ const STALL_FRACTION = 0.1;
 
 /** A walk this close to its goal has arrived (#310). */
 const ARRIVE_UNITS = 1;
+
+/** Replan once the goal is this far from the one the route was planned to (#1157): a body width. */
+export const REPLAN_GOAL_UNITS = 28;
 
 /**
  * Refusals that mean the target is gone, or no longer one the skill can be
@@ -803,6 +813,7 @@ export class MatchSimulation {
       walkLeast: Number.POSITIVE_INFINITY,
       walkSettled: false,
       followGoal: undefined,
+      route: undefined,
       resolvedMaxHealth: spec.maxHealth ?? this.#ruleset.combat.baseHealth,
       resolvedMaxEnergy: spec.maxEnergy ?? this.#ruleset.combat.baseEnergy,
       resurrectedAtSeconds: Number.NEGATIVE_INFINITY,
@@ -1475,6 +1486,7 @@ export class MatchSimulation {
     record.inputDirection = ZERO;
     this.#moveInterrupts(record);
     record.walkGoal = point;
+    record.route = undefined;
     record.walkSettled = false;
     record.walkStalledSeconds = 0;
     record.walkLeast = Number.POSITIVE_INFINITY;
@@ -2016,6 +2028,15 @@ export class MatchSimulation {
         this.#advanceAttack(record, dt);
         this.#settleWeaponSwap(record);
         this.#faceCastTarget(record);
+      }
+      // Nothing left to walk to: the next goal plans afresh (#1157).
+      if (
+        record.walkGoal === undefined &&
+        record.followGoal === undefined &&
+        record.pendingSkill === undefined &&
+        record.combatant.attack === undefined
+      ) {
+        record.route = undefined;
       }
       // Walked or approached: either way, it is what a shot leads.
       record.history.push(record.position);
@@ -2749,8 +2770,8 @@ export class MatchSimulation {
    * One tick of an approach (ADR-0026): walk until `target` is within
    * `reach` and in sight, round walls (#211), then face it. The only
    * movement the simulation chooses, and never on top of the player's
-   * own. Replanned every tick, so a target that moves, or a shove, is
-   * simply where the next plan starts.
+   * own. Along `#route`, so a target that moves, or a shove, is simply
+   * where the next plan starts.
    *
    * `progress` counts how long it has got nowhere; at
    * `unreachableAfterSeconds` (#218) the approach gives up, and the
@@ -2770,7 +2791,7 @@ export class MatchSimulation {
       faceToward(record, target.position);
       return "arrived";
     }
-    const next = this.#paths.find(record.position, target.position)?.[0];
+    const next = this.#route(record, target.position)?.[0];
     if (next === undefined) {
       // No way there, this tick. It has to last before the approach ends
       // (#218); meanwhile, steer straight at the target, which is what
@@ -2792,6 +2813,58 @@ export class MatchSimulation {
       progress.unreachableSeconds = 0;
     }
     return "walking";
+  }
+
+  /**
+   * The way from where `record` stands to `goal`, as `#paths.find` gives
+   * it, but planned only when the last one has gone stale (#1157): with
+   * none, with `goal` more than `REPLAN_GOAL_UNITS` from the one it was
+   * planned to, or with the next waypoint out of sight, a body shoved
+   * round a corner. Otherwise the last is kept: waypoints the body now
+   * sees past are dropped, and the goal, crept less than a body width, is
+   * moved onto where it is now, if the waypoint before it still sees it.
+   * Walls never move, so nothing else makes a way stale. No way there is
+   * not kept: the next tick asks again.
+   */
+  #route(record: ParticipantRecord, goal: Vec2): readonly Vec2[] | undefined {
+    const route = record.route;
+    const kept = route === undefined ? undefined : this.#keptRoute(record.position, route, goal);
+    if (kept !== undefined) {
+      return kept;
+    }
+    const found = this.#paths.find(record.position, goal);
+    record.route = found === undefined ? undefined : { goal, waypoints: [...found] };
+    return found;
+  }
+
+  /** `route`'s waypoints brought up to `position` and `goal`; `undefined` if it has gone stale. */
+  #keptRoute(
+    position: Vec2,
+    route: { readonly goal: Vec2; readonly waypoints: Vec2[] },
+    goal: Vec2,
+  ): readonly Vec2[] | undefined {
+    const { waypoints } = route;
+    const first = waypoints[0];
+    if (
+      first === undefined ||
+      distance(goal, route.goal) > REPLAN_GOAL_UNITS ||
+      !walkIsClear(this.#graph, position, first)
+    ) {
+      return undefined;
+    }
+    for (
+      let next = waypoints[1];
+      next !== undefined && walkIsClear(this.#graph, position, next);
+      next = waypoints[1]
+    ) {
+      waypoints.shift();
+    }
+    const last = waypoints.length - 1;
+    if (!walkIsClear(this.#graph, waypoints[last - 1] ?? position, goal)) {
+      return undefined;
+    }
+    waypoints[last] = goal;
+    return waypoints;
   }
 
   /** Another `dt` of an approach getting nowhere; whether it has now lasted too long (#218). */
@@ -2876,7 +2949,7 @@ export class MatchSimulation {
       record.walkGoal = undefined;
       return;
     }
-    const path = this.#paths.find(record.position, goal);
+    const path = this.#route(record, goal);
     const left = path === undefined ? Number.POSITIVE_INFINITY : pathLength(record.position, path);
     if (left < record.walkLeast - STALL_FRACTION * this.#stepUnits(record, dt)) {
       record.walkLeast = left;
@@ -2917,7 +2990,7 @@ export class MatchSimulation {
     if (goal === undefined || record.combatant.attack !== undefined) {
       return;
     }
-    const path = this.#paths.find(record.position, nearestStandable(this.#graph, goal.point));
+    const path = this.#route(record, nearestStandable(this.#graph, goal.point));
     const next = path?.[0];
     if (next !== undefined) {
       this.#stepToward(record, next, goal.passing, path?.length === 1, dt);
@@ -4169,6 +4242,7 @@ export class MatchSimulation {
     record.facing = record.spec.facing;
     record.inputDirection = ZERO;
     record.walkGoal = undefined;
+    record.route = undefined;
     record.respawnInSeconds = 0;
     record.combatant.cast.cancelCast();
     record.combatant.cast.endAftercast();

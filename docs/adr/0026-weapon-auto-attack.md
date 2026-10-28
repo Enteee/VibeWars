@@ -52,9 +52,11 @@ follows a visibility graph over wall corners (`pathing.ts`). Each wall
 endpoint offers the spots just off it, diagonally, that a body fits on,
 inside the map's bounds. Two spots are joined when a body walks from one
 to the other without coming closer to a wall than its radius. The graph
-is built once per map. Every tick the approach replans from where the
-hero stands, with A*, and walks toward the first waypoint, so a target
-that moves or a shove costs nothing extra. Every weapon approaches until
+is built once per map. The approach plans from where the hero stands,
+with A*, and walks toward the first waypoint. The route is kept from tick
+to tick and planned again only once the target has moved a body width
+from where it was planned to, or a shove hides the next waypoint (#1157),
+so a moving target or a shove still costs nothing extra. Every weapon approaches until
 it is in reach **and** in line of sight. Obstruction is checked at
 release, along the whole flight path (#215): the path is fixed then, so
 a shot led round a corner or at a target stepping behind a pillar is cut
