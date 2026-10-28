@@ -310,6 +310,14 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.damageTakenMultiplier !== 1) {
     parts.push(`takes ${damageTaken(definition.damageTakenMultiplier)} damage`);
   }
+  if (definition.damageReduction > 0) {
+    parts.push(`−${String(definition.damageReduction)} damage taken`);
+  }
+  if (definition.redirectsPhysicalDamage > 0) {
+    parts.push(
+      `${share(definition.redirectsPhysicalDamage)} its physical damage goes to its caster`,
+    );
+  }
   if (definition.maxDamageFractionPerHit !== undefined) {
     parts.push(
       `damage from a single hit is capped at ${String(Math.round(definition.maxDamageFractionPerHit * 100))}% of max health`,
@@ -939,6 +947,15 @@ function describeEffect(
         magnitude: health ?? energy,
       };
     }
+    case "resurrect-companions": {
+      // "Returns every dead allied pet nearby to life with 77% health" (#1108).
+      const health = describeMagnitude(effect.healthPercent, ranks);
+      const where = AREA_TEXT.get(effect.radius) ?? `within ${String(effect.radius)}`;
+      return {
+        text: `Returns every dead allied pet ${where} to life with ${String(health.current)}% health`,
+        magnitude: health,
+      };
+    }
     case "drain-own-energy":
       return { text: "You lose all your remaining energy", magnitude: undefined };
     case "recharge-faster":
@@ -1084,6 +1101,13 @@ function headlineOf(
       const health = describeMagnitude(effect.health.percent, ranks);
       return {
         text: `resurrects, ${String(health.current)}% health`,
+        scales: health.attributeId !== undefined,
+      };
+    }
+    case "resurrect-companions": {
+      const health = describeMagnitude(effect.healthPercent, ranks);
+      return {
+        text: `resurrects pets, ${String(health.current)}% health`,
         scales: health.attributeId !== undefined,
       };
     }
@@ -1240,6 +1264,7 @@ const TARGET_TEXT: Record<Skill["target"], string> = {
   "single-any": "Any one target",
   "single-dead-ally": "A dead ally",
   companion: "Your pet",
+  "living-companion": "Your living pet",
 };
 
 const AREA_WHO: Record<AreaRule["affects"], string> = {

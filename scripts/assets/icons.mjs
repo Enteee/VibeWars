@@ -716,6 +716,24 @@ const status = {
       `<path d="M7 8l3 3 3-3M11 8l3 3 3-3" ${stroke(c, 2)}/>` +
       `<path d="M5 18.5h14" ${stroke(c, 2.2)}/>`,
   ],
+  // Shout: two chevrons right, the pet bites and runs faster (#1108).
+  "call-of-haste": [
+    "shout",
+    (c) => `<path d="M7 7.5l4.5 4.5L7 16.5M12.5 7.5l4.5 4.5-4.5 4.5" ${stroke(c, 2.2)}/>`,
+  ],
+  // Shout: a shield with a minus, less damage to the pet (#1108).
+  "call-of-protection": [
+    "shout",
+    (c) =>
+      `<path d="M7 5.5h10v5.5c0 3-2.5 5-5 6.5C9.5 16 7 14 7 11z" ${stroke(c, 2)}/>` +
+      `<path d="M9.5 11h5" ${stroke(c, 2.2)}/>`,
+  ],
+  // Shout: two linked rings, half the pet's hurt shared with you (#1108).
+  "symbiotic-bond": [
+    "shout",
+    (c) =>
+      `<circle cx="9.5" cy="12" r="3.5" ${stroke(c, 2)}/><circle cx="14.5" cy="12" r="3.5" ${stroke(c, 2)}/>`,
+  ],
 };
 
 // ---------------------------------------------------------------------------

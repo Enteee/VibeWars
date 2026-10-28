@@ -829,6 +829,27 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Ranger/82-Disrupting_Lunge",
   },
   {
+    // The PvP page (#1108): 1323 is the PvE version.
+    id: "ranger.call-of-haste",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/78-Call_of_Haste",
+  },
+  {
+    id: "ranger.call-of-protection",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/79-Call_of_Protection",
+  },
+  {
+    id: "ranger.symbiotic-bond",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/97-Symbiotic_Bond",
+  },
+  {
+    id: "ranger.revive-animal",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/94-Revive_Animal",
+  },
+  {
     id: "ranger.barbed-trap",
     profession: "ranger",
     url: "https://www.gw-memorial.net/skills/Ranger/123-Barbed_Trap",

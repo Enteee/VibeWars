@@ -1,0 +1,26 @@
+{
+  "id": "ranger.revive-animal",
+  "name": "Revive Animal",
+  "profession": "ranger",
+  "attribute": "Beast Mastery",
+  "type": "Skill.",
+  "elite": false,
+  "campaign": "Prophecies",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 0.25,
+  "rechargeSeconds": 5,
+  "upkeep": false,
+  "description": "Resurrect all nearby allied animal companions. They come back to life with 10...77...94% Health.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Ranger/94-Revive_Animal",
+    "fetchedAt": "2026-10-28T09:13:03.069Z"
+  },
+  "unmapped": {}
+}

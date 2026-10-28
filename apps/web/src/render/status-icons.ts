@@ -101,6 +101,9 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   recuperation: icon("recuperation"),
   "ward-against-melee": icon("ward-against-melee"),
   "well-of-suffering": icon("well-of-suffering"),
+  "call-of-haste": icon("call-of-haste"),
+  "call-of-protection": icon("call-of-protection"),
+  "symbiotic-bond": icon("symbiotic-bond"),
 };
 
 /** Drawn size of one icon, in world pixels. */

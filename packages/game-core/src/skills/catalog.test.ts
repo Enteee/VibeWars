@@ -1,6 +1,7 @@
 import { ADRENALINE_PER_STRIKE, MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { describe, expect, it } from "vitest";
 
+import { AREA_NEARBY, PET_REACH } from "../distances.js";
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { isElementalDamage, isPhysicalDamage } from "../equipment/types.js";
 import { WEAPONS } from "../equipment/weapons.js";
@@ -609,6 +610,59 @@ describe("skill types", () => {
       cost: energy(5),
       recharge: 10,
       bonus: beastMastery(1, 10),
+    });
+  });
+
+  it("has the calls and bonds on the pet (#1108): a living pet's, within reach of it", () => {
+    const call = (id: string) => {
+      const found = getSkill(id);
+      return {
+        type: found?.type,
+        cost: found?.cost,
+        recharge: found?.rechargeSeconds,
+        target: found?.target,
+        range: found?.range,
+        effects: found?.effects,
+      };
+    };
+    const energy = (amount: number) => ({ kind: "energy", amount });
+    const common = { type: "shout", target: "living-companion", range: PET_REACH };
+    const status = (statusId: string, durationSeconds: number) => [
+      { kind: "apply-status", statusId, durationSeconds },
+    ];
+    expect(call("ranger.call-of-haste")).toEqual({
+      ...common,
+      cost: energy(10),
+      recharge: 25,
+      effects: status("call-of-haste", 30),
+    });
+    expect(call("ranger.call-of-protection")).toEqual({
+      ...common,
+      cost: energy(5),
+      recharge: 90,
+      effects: status("call-of-protection", 120),
+    });
+    expect(call("ranger.symbiotic-bond")).toEqual({
+      ...common,
+      cost: energy(10),
+      recharge: 55,
+      effects: status("symbiotic-bond", 264),
+    });
+    expect(getSkill("ranger.revive-animal")).toMatchObject({
+      type: "skill",
+      target: "self",
+      cost: energy(5),
+      activationSeconds: 0.25,
+      rechargeSeconds: 5,
+      effects: [
+        {
+          kind: "resurrect-companions",
+          radius: AREA_NEARBY,
+          healthPercent: {
+            scaling: { attributeId: "ranger.beast-mastery", atZero: 10, atTwelve: 77 },
+          },
+        },
+      ],
     });
   });
 });
