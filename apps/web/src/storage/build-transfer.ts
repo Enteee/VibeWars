@@ -28,6 +28,12 @@ import {
  * and anyone can see exactly what a build contains before importing it —
  * worth more than a shorter string for a game played among friends on a
  * LAN. It is one line, so a chat client does not reflow it (#572).
+ *
+ * JSON stays the default. GW1 skill template codes (`gw1-template.ts`)
+ * exist beside it for interop with the GW1 build corpus, PvX and the
+ * forums (#494). A code's skills this game lacks become empty slots by
+ * design, so a GW1 build still arrives: the one exception to "never
+ * half-applies".
  */
 
 /** Marks a blob as ours, so a stray paste fails with a useful message. */

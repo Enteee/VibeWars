@@ -835,9 +835,8 @@ it, not baked in, so one file serves every screen.
   dagger-burst, ox-horns, spider, resurrect-seal, resurrect-arrive,
   resurrect-return, resurrect-blood, bone-minions, bone-horror, jaws, hex-cut,
   drop-bolt, drop-ward, drop-pair, plus-sparks, plus-gusts, party-heal,
-  plus-ripple,
-  echo-spell, echo-skill. A new primary effect adds a glyph; a new skill adds a
-  row.
+  plus-ripple, meteor-trio, ring-heal, echo-spell, echo-skill. A new primary
+  effect adds a glyph; a new skill adds a row.
 
 ### Skill slot states
 

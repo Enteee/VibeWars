@@ -235,6 +235,15 @@ describe("the wolf fights what its owner attacks (#1046)", () => {
 });
 
 describe("a dead wolf (#1046)", () => {
+  it("counts for its owner's Beastmaster's while it lives, not once it lies (#1206)", () => {
+    const sim = match([ranger()]);
+    stepFor(sim, DT);
+    expect(get(sim, "r").combatant.controlled.pet).toBe(1);
+    kill(sim, wolf(sim));
+    stepFor(sim, DT);
+    expect(get(sim, "r").combatant.controlled.pet).toBe(0);
+  });
+
   it("lies where it fell, and its owner's bar is disabled 4 s at Beast Mastery 12, 10 s at 0", () => {
     for (const [rank, seconds] of [
       [12, 4],

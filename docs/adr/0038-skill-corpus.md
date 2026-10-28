@@ -33,10 +33,11 @@ its code.
 in `meta.json`. Its diff is the upstream change, and the tests that read
 the corpus judge it.
 
-`readGwSkillData` validates every record and joins the two files. A
-record that does not fit fails, naming its id. Ids, profession,
-attribute, type and campaign codes stay GW1's numbers until a later
-child needs them mapped.
+`parseGwSkillData` validates every record and joins the two files;
+`readGwSkillData` reads them from disk for it. A record that does not
+fit fails, naming its id. Ids and campaign codes stay GW1's numbers;
+`corpus.ts` reads profession, attribute and type as ours for the skill
+library (#1220).
 
 **Every catalog skill names its GW1 id** (`Skill.gwId`): the base
 record's, never the PvP variant's, matched by exact name. A skill this
@@ -51,8 +52,9 @@ gw-memorial stays until a later #458 child moves its cross-checks
 
 ## Consequences
 
-- The full table is 1.1 MB of JSON in the repository, read only by
-  game-data's tools and tests and never shipped to the browser.
+- The full table is 1.1 MB of JSON in the repository. The browser
+  fetches it, as a chunk of its own, only once a player turns on the
+  library's "Show skills not in the game yet" (#1220).
 - Upstream fixes reach us only through a re-pin. That is deliberate: no
   number changes without a diff.
 - Two sources overlap until gw-memorial is retired.

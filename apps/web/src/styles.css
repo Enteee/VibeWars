@@ -2984,6 +2984,44 @@ body.has-expanded-training #screens {
   font-size: 0.72rem;
 }
 
+/* A GW1 skill not in the game yet (#1220): greyed, no Equip, no drag. */
+.skill-corpus-box {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.35rem 0.5rem;
+  border: 1px dashed var(--line);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ink-dim);
+  opacity: 0.6;
+  cursor: default;
+}
+
+.skill-corpus-box:hover {
+  opacity: 0.85;
+}
+
+.skill-corpus-box .skill-box-card {
+  cursor: default;
+}
+
+.skill-corpus-badge {
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.skill-corpus-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--ink-dim);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
 .skill-locked {
   margin-top: 0.6rem;
 }
@@ -3187,6 +3225,7 @@ body.has-expanded-training #screens {
 .skill-slot.is-elite,
 .skill-box.is-elite,
 .skill-locked-box.is-elite,
+.skill-corpus-box.is-elite,
 .skill-tip.is-elite {
   margin: -2px;
   border: 3px double var(--elite);

@@ -23,7 +23,10 @@ NPC that never moves or attacks, and casts Heal Area on itself and
 everyone adjacent, foes too, whenever one of its side there is hurt
 (480 Health, armor 60). Every 2 minutes of match clock, a team whose
 priest lives gets its dead back on its shrine, at full Health and
-Energy, morale kept, unless they are at -60%. The priest is never
+Energy, morale kept, unless they are at -60%. For 5 seconds after (#1208)
+they lose no Health in any way and gain no hex or condition; they can
+still be targeted, healed, enchanted, knocked down and interrupted. A
+skill resurrection gives none of it. The priest is never
 resurrected and counts for nobody: no roster, score or morale. A team is
 beaten once every player on it is dead and its priest too; a wiped team
 whose priest lives waits for the wave. After 12 minutes the highest

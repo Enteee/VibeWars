@@ -89,6 +89,9 @@ importers:
       '@vibewars/game-core':
         specifier: workspace:*
         version: link:../../packages/game-core
+      '@vibewars/game-data':
+        specifier: workspace:*
+        version: link:../../packages/game-data
       '@vibewars/game-maps':
         specifier: workspace:*
         version: link:../../packages/game-maps

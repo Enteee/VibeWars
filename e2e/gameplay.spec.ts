@@ -54,6 +54,27 @@ async function arenaShot(page: Page, canvas: Locator): Promise<Buffer> {
 }
 
 /**
+ * The arena once two shots in a row match, so a frame is not taken
+ * mid-animation, such as inside a cast's impact glow (#1139). Bounded: a
+ * scene that never settles fails here.
+ */
+async function settledArenaShot(page: Page, canvas: Locator): Promise<Buffer> {
+  let last = await arenaShot(page, canvas);
+  await expect
+    .poll(
+      async () => {
+        const next = await arenaShot(page, canvas);
+        const same = next.equals(last);
+        last = next;
+        return same;
+      },
+      { timeout: 3_000, message: "the arena should settle" },
+    )
+    .toBe(true);
+  return last;
+}
+
+/**
  * A match in a lobby of one, which is what a test with nobody to fight
  * needs: nothing moves in it that the test did not move (#128).
  */
@@ -229,7 +250,8 @@ test("the arrows move; A, once move-left, casts slot 5 and moves nobody (#302)",
   await expect(
     page.getByRole("list", { name: "your effects" }).getByRole("listitem"),
   ).not.toHaveCount(0);
-  const held = await arenaShot(page, canvas);
+  // The cast's impact glow (#1139) is still playing here; wait it out.
+  const held = await settledArenaShot(page, canvas);
   await page.waitForTimeout(500);
   expect((await arenaShot(page, canvas)).equals(held), "A should not move the player").toBe(true);
   await page.keyboard.up("a");
