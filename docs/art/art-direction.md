@@ -501,6 +501,9 @@ The body is a circle at the collision radius, r = 14 (#166). Everything on
 it is drawn in code. `node scripts/assets/player-mark.mjs` draws the
 reference sheet [`player-mark.svg`](player-mark.svg) at true size and at 4×,
 off-hands included.
+The main menu draws its characters with the same code
+(`render/body-painter.ts`, #1250): your own standing body, its primary
+profession's glyph inside, holding what the character enters a match with.
 
 ![Player mark reference sheet](player-mark.svg)
 
