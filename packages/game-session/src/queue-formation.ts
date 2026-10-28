@@ -79,26 +79,42 @@ export function isLive(ticket: QueueTicket, now: number): boolean {
 
 /**
  * The live tickets, first queued first: this protocol and mode, `isLive`,
- * not ignored, each id once.
+ * not ignored, each id once, and each seat key once (#882).
+ *
+ * The board checks only that a ticket is signed by its id; the rest of a
+ * party's members are its leader's word. So a party naming another live
+ * ticket's id is dropped, and two parties naming one member are both
+ * dropped: neither queued first can win, since `enteredAt` is the
+ * owner's claim.
  */
 function liveQueue(input: FormGroupsInput): QueueTicket[] {
-  const sorted = input.tickets
+  const live = input.tickets
     .filter(
       (ticket) =>
         ticket.protocol === PROTOCOL_VERSION &&
         ticket.mode === input.mode &&
-        isLive(ticket, input.now) &&
-        !input.ignored.has(ticket.ticketId),
+        isLive(ticket, input.now),
     )
     .sort(queueOrder);
-  const seen = new Set<string>();
-  return sorted.filter((ticket) => {
-    if (seen.has(ticket.ticketId)) {
+  const ids = new Set<string>();
+  const once = live.filter((ticket) => {
+    if (ids.has(ticket.ticketId)) {
       return false;
     }
-    seen.add(ticket.ticketId);
+    ids.add(ticket.ticketId);
     return true;
   });
+  const claims = new Map<string, number>();
+  for (const ticket of once) {
+    for (const member of ticket.members.slice(1)) {
+      claims.set(member, (claims.get(member) ?? 0) + 1);
+    }
+  }
+  return once.filter(
+    (ticket) =>
+      !input.ignored.has(ticket.ticketId) &&
+      ticket.members.slice(1).every((member) => !ids.has(member) && claims.get(member) === 1),
+  );
 }
 
 /** A ticket and where it stands in the queue. */
@@ -247,11 +263,25 @@ export async function formGroups(input: FormGroupsInput): Promise<FormedGroup[]>
   return groups;
 }
 
-/** The group `seatKey`, a ticket id or a party member's key, is in, if any. */
-export function groupOf(groups: readonly FormedGroup[], seatKey: string): FormedGroup | undefined {
-  return groups.find(
-    (group) => group.teams[0].includes(seatKey) || group.teams[1].includes(seatKey),
-  );
+/**
+ * The group `seatKey` settles into (#882): one where it sits as `members`,
+ * its own ticket's. A solo's (`[seatKey]`) only where it is a solo, a
+ * party member's only where that very party is. A party ticket can name
+ * any key it likes, so sitting in a group is not enough.
+ */
+export function groupOf(
+  groups: readonly FormedGroup[],
+  seatKey: string,
+  members: readonly string[],
+): FormedGroup | undefined {
+  const own = members.join();
+  return groups.find((group) => {
+    if (!group.teams[0].includes(seatKey) && !group.teams[1].includes(seatKey)) {
+      return false;
+    }
+    const party = group.parties.find((partyMembers) => partyMembers.includes(seatKey));
+    return party === undefined ? members.length === 1 : party.join() === own;
+  });
 }
 
 /**

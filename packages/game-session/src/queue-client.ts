@@ -196,7 +196,7 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
 
   /** Where `groups`, formed at `at`, leave this client. */
   function settle(groups: readonly FormedGroup[], at: number): void {
-    const group = groupOf(groups, key.ticketId);
+    const group = groupOf(groups, key.ticketId, party === undefined ? [key.ticketId] : members);
     if (group === undefined) {
       settling = undefined;
       setState(searching(at));
