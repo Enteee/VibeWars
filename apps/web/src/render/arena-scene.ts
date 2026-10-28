@@ -55,6 +55,7 @@ import {
   type WalkMarker,
 } from "./walk-marker.js";
 import { AttackClock, REST_FRAME, shownFrame } from "./attack-clock.js";
+import { bodyRings } from "./body-rings.js";
 import {
   PING_HEAD_RADIUS,
   PING_PIN_HEIGHT,
@@ -127,8 +128,9 @@ const EDGE_MARKER_LENGTH = 12;
 const EDGE_MARKER_WIDTH = 10;
 /**
  * The world's layers, bottom up (#1037). Wards on the floor and their
- * icons (#1087), under everything that stands on them; the floor and the bodies; the
- * profession glyph inside each body; every mark on a body (off-hand,
+ * icons (#1087), under everything that stands on them; the floor and the bodies,
+ * with their enchantment and hex rings (#1117); the profession glyph
+ * inside each body; every mark on a body (off-hand,
  * weapon, target ring, call chevron, bars, swing flashes),
  * so a weapon crosses the glyph, never the reverse; then shots, status
  * icons, names and numbers, which were over the bodies before the split.
@@ -774,6 +776,8 @@ export class ArenaScene extends Phaser.Scene {
       this.drawOffhandMark(marks, actor);
       this.drawWeaponMark(marks, actor);
     }
+    // On the body layer, after the body and its self rim: every mark draws over the rings.
+    this.drawBodyRings(g, actor);
 
     if (actor.id === this.snapshot.targetId) {
       marks.lineStyle(2, TARGET_RING, 1);
@@ -787,6 +791,19 @@ export class ArenaScene extends Phaser.Scene {
 
     if (actor.castProgress !== undefined) {
       this.drawCastBar(marks, actor, actor.castProgress);
+    }
+  }
+
+  /** The enchantment and hex rings round a living body (#1117), circular even lying down. */
+  private drawBodyRings(g: Phaser.GameObjects.Graphics, actor: RenderableActor): void {
+    const { x, y } = actor.position;
+    for (const ring of bodyRings(actor.radius, actor)) {
+      g.lineStyle(ring.width, ring.colour, 1);
+      for (const arc of ring.arcs) {
+        g.beginPath();
+        g.arc(x, y, ring.radius, arc.from, arc.to);
+        g.strokePath();
+      }
     }
   }
 

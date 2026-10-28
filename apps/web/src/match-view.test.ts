@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { MINIMAL_GW_INSPIRED_PVP_V1 } from "@vibewars/game-core";
-import type { MatchSnapshot, PlayerSnapshot } from "@vibewars/game-session";
+import { MINIMAL_GW_INSPIRED_PVP_V1, type StatusId } from "@vibewars/game-core";
+import type { MatchSnapshot, PlayerSnapshot, StatusSnapshot } from "@vibewars/game-session";
 
 import { toArenaSnapshot } from "./match-view.js";
 import { ACTOR_RADIUS, CREATURE_RADIUS } from "./render/arena-snapshot.js";
@@ -80,6 +80,28 @@ describe("toArenaSnapshot", () => {
     expect([ACTOR_RADIUS, CREATURE_RADIUS]).toEqual([
       MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius,
       MINIMAL_GW_INSPIRED_PVP_V1.collision.creatureRadius,
+    ]);
+  });
+
+  it("rings a body enchanted or hexed by its statuses, and a corpse never (#1117)", () => {
+    const status = (id: StatusId): StatusSnapshot => ({
+      id,
+      endsAt: 10,
+      durationSeconds: 10,
+      casterId: "me",
+    });
+    const enchanted = { ...player("enchanted", 0), statuses: [status("armor-boost")] };
+    const hexed = { ...player("hexed", 0), statuses: [status("backfire")] };
+    const dead = {
+      ...player("dead", 0),
+      dead: true,
+      statuses: [status("armor-boost"), status("backfire")],
+    };
+    const arena = toArenaSnapshot(match([enchanted, hexed, dead]), []);
+    expect(arena.actors.map((actor) => [actor.id, actor.enchanted, actor.hexed])).toEqual([
+      ["enchanted", true, false],
+      ["hexed", false, true],
+      ["dead", false, false],
     ]);
   });
 });
