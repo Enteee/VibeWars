@@ -48,7 +48,7 @@ export const SKILL_ICONS = {
   "assassin.twisting-fangs": { glyph: "dagger", modifier: "clock" },
   "assassin.horns-of-the-ox": { glyph: "dagger", modifier: "stun" },
   "assassin.moebius-strike": { glyph: "dagger", modifier: "self" },
-  // Placeholders until asset-designer's icons (#1041).
+  // The dagger chain: a cripple, its spread, a knockdown and a poison, each its own picture (#1049).
   "assassin.leaping-mantis-sting": { glyph: "limp" },
   "assassin.jungle-strike": { glyph: "dagger-burst" },
   "assassin.trampling-ox": { glyph: "ox-horns" },
