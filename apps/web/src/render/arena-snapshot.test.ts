@@ -28,6 +28,7 @@ import {
   withNames,
   placeFloatingText,
   teamColour,
+  toRenderableGroundEffect,
   type ArenaSnapshot,
   type FloatingText,
   type RenderableActor,
@@ -72,6 +73,34 @@ function actor(
   };
 }
 
+describe("toRenderableGroundEffect (#1087)", () => {
+  const ward = {
+    id: 4,
+    skillId: "elementalist.ward-against-melee",
+    team: 1,
+    x: 120,
+    y: 80,
+    radius: 109,
+    endsAt: 19,
+    durationSeconds: 17,
+  };
+
+  it("draws a ward where it was placed, at its radius, with its skill", () => {
+    expect(toRenderableGroundEffect(ward, 1)).toEqual({
+      id: 4,
+      skillId: "elementalist.ward-against-melee",
+      position: { x: 120, y: 80 },
+      radius: 109,
+      colour: teamColour("ally"),
+    });
+  });
+
+  it("colours a ward by side: yours as an ally's, any other team's as a foe's", () => {
+    expect(toRenderableGroundEffect(ward, 0).colour).toBe(teamColour("enemy"));
+    expect(toRenderableGroundEffect(ward, undefined).colour).toBe(teamColour("enemy"));
+  });
+});
+
 describe("actorAtPoint", () => {
   it("returns undefined when there are no actors", () => {
     const snapshot: ArenaSnapshot = {
@@ -79,6 +108,7 @@ describe("actorAtPoint", () => {
       walls: [],
       targetId: undefined,
       projectiles: [],
+      groundEffects: [],
       clock: 0,
       hoverId: undefined,
       showAllNames: false,
@@ -95,6 +125,7 @@ describe("actorAtPoint", () => {
       walls: [],
       targetId: undefined,
       projectiles: [],
+      groundEffects: [],
       clock: 0,
       hoverId: undefined,
       showAllNames: false,
@@ -111,6 +142,7 @@ describe("actorAtPoint", () => {
       walls: [],
       targetId: undefined,
       projectiles: [],
+      groundEffects: [],
       clock: 0,
       hoverId: undefined,
       showAllNames: false,
@@ -127,6 +159,7 @@ describe("actorAtPoint", () => {
       walls: [],
       targetId: undefined,
       projectiles: [],
+      groundEffects: [],
       clock: 0,
       hoverId: undefined,
       showAllNames: false,
@@ -144,6 +177,7 @@ describe("actorAtPoint", () => {
       walls: [],
       targetId: undefined,
       projectiles: [],
+      groundEffects: [],
       clock: 0,
       hoverId: undefined,
       showAllNames: false,
@@ -163,6 +197,7 @@ describe("actorAtPoint and the dead", () => {
       walls: [],
       targetId: undefined,
       projectiles: [],
+      groundEffects: [],
       clock: 0,
       hoverId: undefined,
       showAllNames: false,
@@ -179,6 +214,7 @@ describe("actorAtPoint and the dead", () => {
       walls: [],
       targetId: undefined,
       projectiles: [],
+      groundEffects: [],
       clock: 0,
       hoverId: undefined,
       showAllNames: false,

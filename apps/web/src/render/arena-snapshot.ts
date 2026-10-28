@@ -1,6 +1,6 @@
 import { Vec, type OffhandId, type ProfessionId, type Vec2 } from "@vibewars/game-core";
 
-import type { CallsSnapshot } from "@vibewars/game-session";
+import type { CallsSnapshot, GroundEffectSnapshot } from "@vibewars/game-session";
 
 import type { AttackCast } from "./attack-clock.js";
 import type { RenderablePing } from "./call-marks.js";
@@ -220,12 +220,37 @@ export function swingFlashAlpha(flash: SwingFlash): number {
   return Math.max(0, Math.min(1, flash.remainingSeconds / SWING_FLASH_SECONDS));
 }
 
+/** A ward on the ground (#1087): a translucent disc in its side's colour, its skill's icon at the centre. */
+export interface RenderableGroundEffect {
+  readonly id: number;
+  readonly skillId: string;
+  readonly position: Vec2;
+  readonly radius: number;
+  readonly colour: number;
+}
+
+/** `effect` as the arena draws it, for a viewer on `selfTeam`: an ally's in the ally colour, any other's in the enemy's. */
+export function toRenderableGroundEffect(
+  effect: GroundEffectSnapshot,
+  selfTeam: number | undefined,
+): RenderableGroundEffect {
+  return {
+    id: effect.id,
+    skillId: effect.skillId,
+    position: { x: effect.x, y: effect.y },
+    radius: effect.radius,
+    colour: teamColour(effect.team === selfTeam ? "ally" : "enemy"),
+  };
+}
+
 export interface ArenaSnapshot {
   readonly actors: readonly RenderableActor[];
   readonly walls: readonly RenderableWall[];
   readonly targetId: string | undefined;
   /** Weapon shots in flight (#161). */
   readonly projectiles: readonly RenderableProjectile[];
+  /** Wards on the ground, oldest first (#1087). */
+  readonly groundEffects: readonly RenderableGroundEffect[];
   /** The match clock (`elapsedSeconds`), which projectiles fly against. */
   readonly clock: number;
   /** The living body under the mouse cursor, whose name shows (#253). */
@@ -243,6 +268,7 @@ export const EMPTY_SNAPSHOT: ArenaSnapshot = {
   walls: [],
   targetId: undefined,
   projectiles: [],
+  groundEffects: [],
   clock: 0,
   hoverId: undefined,
   showAllNames: false,
