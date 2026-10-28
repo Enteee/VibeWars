@@ -1115,6 +1115,15 @@ const smallSkull = (cx, cy, k) =>
   `<path d="M10.5 17V21M13.5 17V21" stroke="${C.bg}" stroke-width="1.2"/>` +
   "</g>";
 
+/**
+ * A paw print in the box 3..21: a pad and four toes.
+ * @param {string} fill
+ */
+const pawPrint = (fill) =>
+  `<ellipse cx="12" cy="16" rx="4.5" ry="3.8" fill="${fill}"/>` +
+  `<circle cx="5.5" cy="10.5" r="2" fill="${fill}"/><circle cx="9.5" cy="6.5" r="2" fill="${fill}"/>` +
+  `<circle cx="14.5" cy="6.5" r="2" fill="${fill}"/><circle cx="18.5" cy="10.5" r="2" fill="${fill}"/>`;
+
 /** Glyphs, drawn in the box 3..21; the plate scales them to leave the corner free. */
 const skillGlyph = {
   heal: () => inkFill("M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"),
@@ -1284,6 +1293,26 @@ const skillGlyph = {
       "M12.5 8A5 5 0 0 1 12.5 16M16 5.5A8.5 8.5 0 0 1 16 18.5M19.5 3.5A12 12 0 0 1 19.5 20.5",
       2,
     ),
+  // A paw print: your pet (#1215).
+  paw: () => pawPrint(C.ink),
+  // A heart with a paw cut from it: an animal won over (#1215).
+  "paw-heart": () =>
+    inkFill(
+      "M12 21C3.5 14.5 2.5 8.5 6.3 5.7 9 3.8 11.3 5 12 7 12.7 5 15 3.8 17.7 5.7 21.5 8.5 20.5 14.5 12 21Z",
+    ) + `<g transform="translate(12,13.2) scale(0.42) translate(-12,-12)">${pawPrint(C.bg)}</g>`,
+  // Three gashes: a claw, a strike that tears (#1215).
+  claw: () => inkLine("M6 3.5L11 20.5M11.5 3.5L16.5 20.5M17 3.5L22 20.5", 2.8),
+  // Two linked rings: the pet's hurt shared, as the status shows (#1215).
+  bond: () =>
+    `<circle cx="8.5" cy="12" r="5.5" ${stroke(C.ink, 2.6)}/><circle cx="15.5" cy="12" r="5.5" ${stroke(C.ink, 2.6)}/>`,
+  // Two chevrons, a paw behind them: the pet is hurried (#1215).
+  "paw-speed": () =>
+    `<g transform="translate(14.5,14) scale(0.62) translate(-12,-12)">${pawPrint(C.ink)}</g>` +
+    inkLine("M3.5 3.5L9 8.5L3.5 13.5M9.5 3.5L15 8.5L9.5 13.5", 2.2),
+  // A shield with a paw cut from it: the pet is guarded (#1215).
+  "paw-shield": () =>
+    inkFill("M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z") +
+    `<g transform="translate(12,12.5) scale(0.5) translate(-12,-12)">${pawPrint(C.bg)}</g>`,
   // The resurrect figure in a ring: a signet's seal, one use (#1081).
   "resurrect-seal": () =>
     `<circle cx="10.5" cy="10.5" r="8" ${stroke(C.ink, 2)}/>` + smallFigure(10.5, 10.5, 0.55),
@@ -1420,6 +1449,9 @@ const skillModifier = {
   down: () => inkLine("M19 15V21M16.5 18.5L19 21L21.5 18.5", 1.7),
   // A plus: it heals as it works (#996).
   plus: () => inkLine("M19 15.4V20.6M16.4 18H21.6", 1.7),
+  // A small paw: the blow is the pet's (#1215).
+  paw: () =>
+    `<g transform="translate(19,18) scale(0.3) translate(-12,-11.5)">${pawPrint(C.ink)}</g>`,
   // A half disc: below half Health (#1036).
   half: () =>
     `<circle cx="19" cy="18" r="3.4" ${stroke(C.ink, 1.5)}/><path d="M19 18H15.6A3.4 3.4 0 0 0 22.4 18Z" fill="${C.ink}"/>`,
