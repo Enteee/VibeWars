@@ -562,5 +562,7 @@ export function matchSnapshot(
     winningTeam: absent(snapshot.winningTeam),
     endReason: absent(snapshot.endReason),
     projectiles: snapshot.projectiles.map(projectileSnapshot),
+    // Only the host's `ended` carries it.
+    summary: undefined,
   };
 }

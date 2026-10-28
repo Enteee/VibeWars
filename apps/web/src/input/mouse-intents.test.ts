@@ -62,6 +62,7 @@ const MATCH: MatchSnapshot = {
   winningTeam: undefined,
   endReason: undefined,
   projectiles: [],
+  summary: undefined,
 };
 
 function body(id: string, x: number, team: RenderableActor["team"]): RenderableActor {

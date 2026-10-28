@@ -56,6 +56,7 @@ const SNAPSHOT: MatchSnapshot = {
   winningTeam: undefined,
   endReason: undefined,
   projectiles: [],
+  summary: undefined,
 };
 
 /** The texts a scene would have been asked to float, for these events. */

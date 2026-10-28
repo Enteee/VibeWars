@@ -1,9 +1,15 @@
 import { StatusSet, type ActiveStatus } from "@vibewars/game-core";
-import { MAX_WIRE_STATUSES } from "@vibewars/game-protocol";
+import {
+  MAX_LOBBY_PLAYERS,
+  MAX_WIRE_STATUSES,
+  parseWireEnded,
+  type WireEnded,
+} from "@vibewars/game-protocol";
 import { describe, expect, it, vi } from "vitest";
 
 import { RULESET } from "./match-host.js";
 import { ARENA, self, startMatch } from "./match-harness.test-support.js";
+import { MAX_MESSAGE_BYTES, messageBytes } from "./transport.js";
 
 describe("a P2P match (#375)", () => {
   it("seats remote players and the host's own, and moves them", async () => {
@@ -88,5 +94,29 @@ describe("a P2P match (#375)", () => {
     // To 0.1 s: on 20 Hz ticks, the rounding is off by 0 or exactly 0.05.
     expect(Math.abs((sent?.endsAt ?? 0) - snapshot.elapsedSeconds - 5.25)).toBeLessThan(0.051);
     vi.restoreAllMocks();
+  });
+});
+
+describe("the match summary's size (#1057)", () => {
+  it("fits a full lobby's lines in one `ended`", () => {
+    // Sixteen names of sixteen four-byte characters, the most a name keeps,
+    // and numbers no match reaches.
+    const ended: WireEnded = {
+      winningTeam: 0,
+      endReason: "annihilation",
+      summary: Array.from({ length: MAX_LOBBY_PLAYERS }, (_, i) => ({
+        id: `player-${String(1000 + i)}`,
+        name: "\u{1D54E}".repeat(16),
+        team: i % 2 === 0 ? 0 : 1,
+        damage: 9_999_999,
+        healing: 9_999_999,
+        taken: 9_999_999,
+        kills: 9_999,
+        deaths: 9_999,
+        interrupts: 9_999,
+      })),
+    };
+    expect(parseWireEnded(ended)).toEqual(ended);
+    expect(messageBytes(ended)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
   });
 });

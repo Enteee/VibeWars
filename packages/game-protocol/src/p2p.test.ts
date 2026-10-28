@@ -282,7 +282,19 @@ const skillBar: WireSkillBar = {
   ranks: { "monk.healing-prayers": 12, "monk.divine-favor": 0 },
 };
 
-const ended: WireEnded = { winningTeam: null, endReason: "host-left" };
+const summaryRow = {
+  id: "player-1",
+  name: "Ann",
+  team: 0,
+  damage: 1200,
+  healing: 340,
+  taken: 900,
+  kills: 2,
+  deaths: 1,
+  interrupts: 3,
+} as const;
+
+const ended: WireEnded = { winningTeam: null, endReason: "host-left", summary: [summaryRow] };
 
 const refused: CastRefusedMessage = {
   kind: "skill",
@@ -357,8 +369,28 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["combat batch", parseWireCombatBatch, combatBatch],
   ["skill-bar", parseWireSkillBar, skillBar],
   ["ended", parseWireEnded, ended],
-  ["ended by a wipe (#846)", parseWireEnded, { winningTeam: 1, endReason: "annihilation" }],
-  ["ended at time by morale (#846)", parseWireEnded, { winningTeam: null, endReason: "morale" }],
+  [
+    "ended by a wipe (#846)",
+    parseWireEnded,
+    { winningTeam: 1, endReason: "annihilation", summary: [] },
+  ],
+  [
+    "ended at time by morale (#846)",
+    parseWireEnded,
+    { winningTeam: null, endReason: "morale", summary: [] },
+  ],
+  [
+    "ended with a full summary (#1057)",
+    parseWireEnded,
+    {
+      ...ended,
+      summary: Array.from({ length: MAX_LOBBY_PLAYERS }, (_, i) => ({
+        ...summaryRow,
+        id: `player-${String(i)}`,
+        team: i % 2 === 0 ? 0 : 1,
+      })),
+    },
+  ],
   [
     "snapshot ended by a wipe (#846)",
     parseWireSnapshotPart,
@@ -802,7 +834,33 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     },
   ],
   ["ended by an unknown reason", parseWireEnded, { ...ended, endReason: "forfeit" }],
-  ["ended without a winner", parseWireEnded, { endReason: "score" }],
+  ["ended without a winner", parseWireEnded, { endReason: "score", summary: [] }],
+  ["ended without a summary", parseWireEnded, { winningTeam: null, endReason: "time" }],
+  [
+    "ended with a summary past the cap",
+    parseWireEnded,
+    { ...ended, summary: Array.from({ length: MAX_LOBBY_PLAYERS + 1 }, () => summaryRow) },
+  ],
+  [
+    "ended with a negative tally",
+    parseWireEnded,
+    { ...ended, summary: [{ ...summaryRow, damage: -1 }] },
+  ],
+  [
+    "ended with a fractional tally",
+    parseWireEnded,
+    { ...ended, summary: [{ ...summaryRow, kills: 1.5 }] },
+  ],
+  [
+    "ended with a row on team 2",
+    parseWireEnded,
+    { ...ended, summary: [{ ...summaryRow, team: 2 }] },
+  ],
+  [
+    "ended with a row missing a column",
+    parseWireEnded,
+    { ...ended, summary: [{ ...summaryRow, interrupts: undefined }] },
+  ],
   ["refused with a negative slot", parseCastRefused, { ...refused, slot: -1 }],
   ["refused past the last slot", parseCastRefused, { ...refused, slot: MAX_WIRE_SLOTS }],
   [
@@ -980,6 +1038,11 @@ describe("the P2P validators (#82)", () => {
 
   it.each(MALFORMED)("reject %s", (_, parse, value) => {
     expect(parse(value)).toBeUndefined();
+  });
+
+  it("cut a summary name to MAX_WIRE_TEXT (#1057)", () => {
+    const long = { ...ended, summary: [{ ...summaryRow, name: "x".repeat(MAX_WIRE_TEXT + 5) }] };
+    expect(parseWireEnded(long)?.summary[0]?.name).toHaveLength(MAX_WIRE_TEXT);
   });
 
   it("ignore unknown fields, and drop them", () => {

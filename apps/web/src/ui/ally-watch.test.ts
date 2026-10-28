@@ -51,6 +51,7 @@ function match(players: readonly Pick<PlayerSnapshot, keyof typeof ally>[]): Mat
     winningTeam: undefined,
     endReason: undefined,
     projectiles: [],
+    summary: undefined,
   };
 }
 

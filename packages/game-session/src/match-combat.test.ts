@@ -1,6 +1,7 @@
 import {
   ADRENALINE_PER_STRIKE,
   CHAIN_MARK_SECONDS,
+  DEFAULT_MATCH_RULES,
   DEFAULT_SKILL_BAR,
   MINIMAL_GW_INSPIRED_PVP_V1,
   defaultBuildEquipment,
@@ -24,6 +25,7 @@ import {
   hello,
   playerIn,
   self,
+  settle,
   startMatch,
   toJson,
   type TestMatch,
@@ -1071,5 +1073,58 @@ describe("wireCombat and combatMessage (#288, #375)", () => {
     const [wired] = wireCombat([entry({ events: [crit, heal] })]);
     expect(wired?.events.map((event) => event.crit)).toEqual([true, null]);
     expect(wired === undefined ? undefined : combatMessage(wired).events).toEqual([crit, heal]);
+  });
+});
+
+describe("the match summary (#1057)", () => {
+  /** `connection`'s summary line for `id`. */
+  const line = (connection: MatchConnection, id: string) =>
+    connection.getSnapshot().summary?.find((row) => row.id === id);
+
+  /** `a` closes on `b` and lands one Fireball: 56 after armor (see above). */
+  async function fireball(match: TestMatch, a: MatchConnection, b: MatchConnection) {
+    await closeDistance(match, a, b.selfSessionId, 300);
+    await target(match, a, b.selfSessionId);
+    a.sendIntent({ kind: "use-skill", slot: FIREBALL });
+    await until(
+      match,
+      () => (playerIn(a.getSnapshot(), b.selfSessionId)?.health ?? 500) < 500,
+      "the target to take damage",
+    );
+  }
+
+  it("ends with every seat's line, one who left included, in seat order", async () => {
+    const match = startMatch({ matchRules: { ...DEFAULT_MATCH_RULES, timeLimitSeconds: 30 } });
+    const { connection: a } = await match.join(hello({ name: "Ann" }));
+    const { connection: b } = await match.join(hello({ name: "Bob" }));
+    const { connection: c } = await match.join(hello({ name: "Cat" }));
+    await match.step(TICK);
+    await c.disconnect();
+    expect(a.getSnapshot().summary).toBeUndefined();
+
+    await fireball(match, a, b);
+    await until(match, () => a.getSnapshot().phase === "finished", "the end", 40);
+
+    expect(a.getSnapshot().summary?.map(({ name, team }) => [name, team])).toEqual([
+      ["Ann", 0],
+      ["Bob", 1],
+      ["Cat", 0],
+    ]);
+    expect(line(a, a.selfSessionId)).toMatchObject({ damage: 56, taken: 0, kills: 0, deaths: 0 });
+    expect(line(a, b.selfSessionId)).toMatchObject({ damage: 0, taken: 56, deaths: 0 });
+    expect(line(a, c.selfSessionId)).toMatchObject({ damage: 0, taken: 0, interrupts: 0 });
+    // Everyone is told the same.
+    expect(b.getSnapshot().summary).toEqual(a.getSnapshot().summary);
+  });
+
+  it("carries the summary so far when the host leaves", async () => {
+    const { match, a, b } = await joinPair();
+    await fireball(match, a, b);
+
+    await match.host.close("host-left");
+    await settle();
+
+    expect(line(b, a.selfSessionId)?.damage).toBe(56);
+    expect(line(b, b.selfSessionId)?.taken).toBe(56);
   });
 });
