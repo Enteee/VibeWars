@@ -322,6 +322,9 @@ export function createTrainingPanel(): TrainingPanel {
     id === SELF_ID
       ? displayName.trim() || "You"
       : logActorName(id, session?.names, latestMatch?.players);
+  // A creature in the latest snapshot (#1052): it swings under its own name (#1144).
+  const isCreature = (id: string): boolean =>
+    latestMatch?.players.find((player) => player.sessionId === id)?.creature !== undefined;
 
   /* --- painting -------------------------------------------------------- */
 
@@ -378,7 +381,7 @@ export function createTrainingPanel(): TrainingPanel {
     paintMeter();
     // The gathered ticks belong before the line, not after it.
     const now = session?.connection.simulation.elapsedSeconds ?? 0;
-    appendLog([...ticks.flush(now, nameOf), dividerRow(label, now)]);
+    appendLog([...ticks.flush(now, nameOf, isCreature), dividerRow(label, now)]);
   };
 
   const flash = (text: string): void => {
@@ -585,7 +588,7 @@ export function createTrainingPanel(): TrainingPanel {
     totals = accumulate(totals, result.log, SELF_ID, TICK_SECONDS);
     const rows: LogRow[] = [];
     for (const entry of result.log) {
-      rows.push(...ticks.push(entry, nameOf));
+      rows.push(...ticks.push(entry, nameOf, isCreature));
     }
     appendLog(rows);
   };
@@ -953,7 +956,7 @@ export function createTrainingPanel(): TrainingPanel {
       }
       const { connection } = session;
       connection.advance(deltaSeconds);
-      appendLog(ticks.advance(connection.simulation.elapsedSeconds, nameOf));
+      appendLog(ticks.advance(connection.simulation.elapsedSeconds, nameOf, isCreature));
       latestMatch = connection.getSnapshot();
       session.sounds.snapshot(latestMatch);
       session.music.snapshot(latestMatch);

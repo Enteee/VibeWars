@@ -890,11 +890,16 @@ export class MatchSimulation {
         ),
         spawn: at,
         facing: owner.facing,
-        // Spawning Power is the summoner's (#1098).
-        maxHealth: spawningPowerHealth(
-          rankOf(owner.combatant, SPAWNING_POWER_ATTRIBUTE),
-          resolveMagnitude(template.maxHealth, owner.combatant),
-        ),
+        // Spawning Power is the summoner's (#1098), for what they create: spirits
+        // and minions. A pet is charmed, not created, and is not on the wiki's
+        // list (#1144).
+        maxHealth:
+          template.kind === "pet"
+            ? resolveMagnitude(template.maxHealth, owner.combatant)
+            : spawningPowerHealth(
+                rankOf(owner.combatant, SPAWNING_POWER_ATTRIBUTE),
+                resolveMagnitude(template.maxHealth, owner.combatant),
+              ),
         maxEnergy: 0,
         baseEnergyPips: 0,
         behaviour: template.behaviour,
