@@ -97,11 +97,6 @@ const SHARED = {
   ping: [],
   "show-names": ["ShiftLeft", "ShiftRight"],
   mute: ["KeyM"],
-  // GW1's own keys (#489): the browser's help and find give way in a match.
-  "weapon-set-1": ["F1"],
-  "weapon-set-2": ["F2"],
-  "weapon-set-3": ["F3"],
-  "weapon-set-4": ["F4"],
 } as const satisfies Partial<Keymap>;
 
 export const KEYMAP_PRESETS: Readonly<Record<"vibewars" | "classic", Keymap>> = {
@@ -120,6 +115,11 @@ export const KEYMAP_PRESETS: Readonly<Record<"vibewars" | "classic", Keymap>> = 
     "move-down": ["ArrowDown"],
     "move-left": ["ArrowLeft"],
     "move-right": ["ArrowRight"],
+    // The number row is free here (#489): skills sit on QWER and ASDF.
+    "weapon-set-1": ["Digit1"],
+    "weapon-set-2": ["Digit2"],
+    "weapon-set-3": ["Digit3"],
+    "weapon-set-4": ["Digit4"],
     ...SHARED,
   },
   // GW1 muscle memory: skills on the number row, WASD moves.
@@ -136,6 +136,11 @@ export const KEYMAP_PRESETS: Readonly<Record<"vibewars" | "classic", Keymap>> = 
     "move-down": ["KeyS", "ArrowDown"],
     "move-left": ["KeyA", "ArrowLeft"],
     "move-right": ["KeyD", "ArrowRight"],
+    // GW1's own keys (#489): the browser's help and find give way in a match.
+    "weapon-set-1": ["F1"],
+    "weapon-set-2": ["F2"],
+    "weapon-set-3": ["F3"],
+    "weapon-set-4": ["F4"],
     ...SHARED,
   },
 };

@@ -1291,7 +1291,7 @@ test("(40) an adrenaline skill's slot fills from dark to lit as it charges (#826
   await expect(gauge).toBeHidden();
 });
 
-test("F2 swaps to weapon set 2, the empty F3 does nothing, and a slot's click swaps back (#489)", async ({
+test("2 swaps to weapon set 2, the empty 3 does nothing, and a slot's click swaps back (#489)", async ({
   page,
 }) => {
   await page.setViewportSize(WIDE);
@@ -1303,7 +1303,7 @@ test("F2 swaps to weapon set 2, the empty F3 does nothing, and a slot's click sw
   await page.locator(".gear-box").filter({ hasText: "Recurve Bow" }).first().click();
   await expect(page.locator(".training canvas")).toBeVisible();
   const slots = page.locator(".training .weapon-set");
-  await expect(slots).toHaveText(["F1", "F2", "F3", "F4"]);
+  await expect(slots).toHaveText(["1", "2", "3", "4"]);
   await expect(slots.nth(0)).toHaveClass(/is-active/);
   await expect(slots.nth(1)).toHaveAccessibleName("Weapon set 2: Recurve Bow");
   await expect(slots.nth(2)).toHaveClass(/is-empty/);

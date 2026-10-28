@@ -13,6 +13,7 @@ import {
   parseKeymap,
   presetOf,
   rebind,
+  type Keymap,
 } from "./keymap.js";
 import { layoutLabeller, loadLayoutLabeller } from "./key-labels.js";
 
@@ -72,7 +73,8 @@ describe("the keymap presets (#302)", () => {
     expect(action("ShiftLeft")).toBe("show-names");
     expect(action("ShiftRight")).toBe("show-names");
     expect(action("KeyM")).toBe("mute");
-    expect(action("Digit1")).toBeUndefined();
+    expect(action("Digit1")).toBe("weapon-set-1");
+    expect(action("Digit5")).toBeUndefined();
     expect(action("ControlLeft")).toBeUndefined();
   });
 
@@ -277,14 +279,11 @@ describe("presetOf (#309)", () => {
 });
 
 describe("the weapon-set keys (#489)", () => {
-  it("are F1 to F4 in both presets, set 1 first", () => {
+  it("are 1 to 4 in vibewars and F1 to F4 in classic, set 1 first (Q116)", () => {
+    const keys = (map: Keymap) => WEAPON_SET_ACTIONS.map((action) => map[action]);
+    expect(keys(KEYMAP_PRESETS.vibewars)).toEqual([["Digit1"], ["Digit2"], ["Digit3"], ["Digit4"]]);
+    expect(keys(KEYMAP_PRESETS.classic)).toEqual([["F1"], ["F2"], ["F3"], ["F4"]]);
     for (const map of Object.values(KEYMAP_PRESETS)) {
-      expect(WEAPON_SET_ACTIONS.map((action) => map[action])).toEqual([
-        ["F1"],
-        ["F2"],
-        ["F3"],
-        ["F4"],
-      ]);
       expect(parseKeymap(map)).toEqual(map);
     }
   });

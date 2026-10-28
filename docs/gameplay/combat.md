@@ -1037,16 +1037,16 @@ nothing else takes it deeper. The energy bar, and what others see, show
 0 until then. Arrows already in flight keep the bow that loosed them.
 See [ADR-0036](../adr/0036-weapon-sets.md).
 
-F1-F4 swap to sets 1-4 in both key presets, and can be rebound under
-"Weapon sets" on the Keys screen. A held key swaps once. Four small
-slots at the left end of the skill bar, two by two, show each set's
-weapon, its off-hand smaller, and its key, in a match and in the
-Training Ground alike. The set in hand is lit, a set waiting for its
-swap pulses, and an empty set is dimmed and blank. Clicking a slot is
-its key. An empty set's key does nothing, and nothing is said. The host
-handles at most four swaps a second from one player, in a burst of
-four; it drops the rest silently. Which sets you carry stays yours:
-others see only the weapon in your hands.
+1-4 swap to sets 1-4 in the `vibewars` key preset, F1-F4 in `classic`,
+and they can be rebound under "Weapon sets" on the Keys screen. A
+held key swaps once. Four small slots at the left end of the skill bar,
+two by two, show each set's weapon, its off-hand smaller, and its key,
+in a match and in the Training Ground alike. The set in hand is lit, a
+set waiting for its swap pulses, and an empty set is dimmed and blank.
+Clicking a slot is its key. An empty set's key does nothing, and nothing
+is said. The host handles at most four swaps a second from one player,
+in a burst of four; it drops the rest silently. Which sets you carry
+stays yours: others see only the weapon in your hands.
 
 The Gear tab edits every set (#489): a row of four tabs, `1` to `4`,
 sits above the hands, each showing its set's weapon and off-hand, or a
