@@ -7,7 +7,7 @@
   "description": "Browser client: HTML/CSS shell around a Phaser game viewport.",
   "scripts": {
     "build": "tsc --build tsconfig.build.json && vite build",
-    "dev": "vite",
+    "dev": "tsc --build ../../tsconfig.build.json && vite",
     "music:check": "node scripts/music/check.mjs",
     "preview": "vite preview",
     "clean": "rm -rf dist *.tsbuildinfo"

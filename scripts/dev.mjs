@@ -2,11 +2,17 @@
 /**
  * `pnpm run dev` — the whole game, reloading as you edit.
  *
- * Two watchers. There is no server: the game plays peer to peer in the
- * browser (ADR-0022), so the client is the whole game.
+ * One build, then two watchers. There is no server: the game plays peer
+ * to peer in the browser (ADR-0022), so the client is the whole game.
  *
+ *   0. tsc --build           brings packages/ up to date, before anything starts
  *   1. tsc --build --watch   rebuilds packages/ on change
  *   2. vite                  serves the client, reloading it on save
+ *
+ * Step 0 runs to completion first (#1247): the packages export only
+ * `dist/`, so a Vite started beside the watcher resolves a module a fresh
+ * pull added before tsc has emitted it. On an up-to-date tree it is a
+ * no-op. A type error stops it, and nothing starts.
  *
  * The client reloads the page on save rather than hot-patching modules:
  * nothing in it declares an `import.meta.hot` boundary, so Vite falls
@@ -124,18 +130,45 @@ process.stdout.write(
 // Only the packages: building apps/web here too would emit a second copy
 // of the client that Vite does not use. game-session references
 // game-core and game-protocol; game-maps and game-data stand alone.
-//
-// `--preserveWatchOutput` stops tsc clearing the screen on every rebuild,
-// which would wipe the other stream's output.
-start("tsc", "pnpm", [
-  "exec",
-  "tsc",
-  "--build",
+const PACKAGES = [
   "packages/game-session/tsconfig.build.json",
   "packages/game-maps/tsconfig.build.json",
   "packages/game-data/tsconfig.build.json",
-  "--watch",
-  "--preserveWatchOutput",
-]);
+];
 
-start("client", "pnpm", ["--filter", "@vibewars/web", "exec", "vite", "--port", CLIENT_PORT]);
+/**
+ * Step 0: build the packages once, to completion, before either watcher
+ * starts. Its child joins `children`, so Ctrl-C during it stops it too.
+ *
+ * @returns {Promise<number | null>} tsc's exit code; `null` if a signal ended it
+ */
+function buildOnce() {
+  const child = spawn("pnpm", ["exec", "tsc", "--build", ...PACKAGES], {
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  pipe("tsc", child.stdout);
+  pipe("tsc", child.stderr);
+  children.push(child);
+  return new Promise((resolve) => {
+    child.on("exit", (code) => {
+      children.splice(children.indexOf(child), 1);
+      resolve(code);
+    });
+  });
+}
+
+const built = await buildOnce();
+if (typeof built === "number" && built !== 0) {
+  process.stdout.write(
+    `${COLOURS.tsc ?? ""}[tsc]${RESET} the packages do not build (${String(built)}); starting nothing\n`,
+  );
+  process.exit(built);
+}
+// `null` is Ctrl-C during the build: `shutdown` is already on its way out.
+if (built === 0) {
+  // `--preserveWatchOutput` stops tsc clearing the screen on every rebuild,
+  // which would wipe the other stream's output.
+  start("tsc", "pnpm", ["exec", "tsc", "--build", ...PACKAGES, "--watch", "--preserveWatchOutput"]);
+
+  start("client", "pnpm", ["--filter", "@vibewars/web", "exec", "vite", "--port", CLIENT_PORT]);
+}
