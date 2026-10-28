@@ -121,8 +121,9 @@ export function fireChangeTriggers(
       return change.fired.flatMap(({ statusId, sourceId, trigger }) =>
         fire(trigger, statusId, sourceId, bearer, change.offenderId, undefined, context),
       );
-    // Not a trigger: the simulation lands it on its own (#1108).
+    // Not a trigger: the simulation lands it on its own (#1108, #1265).
     case "redirected-damage":
+    case "charged-source":
       return [];
   }
 }

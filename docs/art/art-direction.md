@@ -501,6 +501,9 @@ The body is a circle at the collision radius, r = 14 (#166). Everything on
 it is drawn in code. `node scripts/assets/player-mark.mjs` draws the
 reference sheet [`player-mark.svg`](player-mark.svg) at true size and at 4×,
 off-hands included.
+The main menu draws its characters with the same code
+(`render/body-painter.ts`, #1250): your own standing body, its primary
+profession's glyph inside, holding what the character enters a match with.
 
 ![Player mark reference sheet](player-mark.svg)
 
@@ -845,7 +848,9 @@ it, not baked in, so one file serves every screen.
   paw-heart, claw, bond, paw-speed, paw-shield, hex-cut, drop-bolt, drop-ward,
   drop-pair, plus-sparks, plus-gusts, party-heal, plus-ripple, meteor-trio,
   ring-heal, hammer-slam, hex-burst, drop-arrow, pain-cross, eye-drop, blink,
-  totem, ward-blade, trap-flame, ring-rays, well-sink, echo-spell, echo-skill. A
+  totem, ward-blade, trap-flame, ring-rays, well-sink, echo-spell, echo-skill,
+  ghost, weight, ache-cross, armor-shrink, speed-break (a whole chevron and a
+  broken one), eye-slash, limp-drain. A
   new primary effect adds a glyph; a new skill adds a row.
 
 ### Skill slot states
@@ -914,6 +919,34 @@ differ by shape, so the icon shows the current state at a glance.
 
 UI text is sentence case: "Edit team", "New character", "Save". A small
 uppercase field label is styled so by CSS; the words themselves stay sentence case.
+
+### Title bar study (#1251)
+
+![Title bar, three variants](titlebar-study.svg)
+
+**Decided: A, the plain breadcrumb** (the operator's pick, #1251; built in issue
+1272). B and C stay on the sheet as the road not taken. The operator likes the
+top bar and dislikes the header on every other menu screen, so the study moves
+each screen's title and controls into the bar as a breadcrumb. The Team list
+moves under the character on the main menu. Each variant is drawn on the same
+five screens (main menu, Options, Music, Team and character, build editor) at
+1280 px and 390 px; `node scripts/assets/titlebar-study.mjs` regenerates the
+sheet.
+
+- **A: plain breadcrumb.** `VibeWars > Options`, then a Back button, the
+  screen's own buttons right of a divider, the global icons (Options, music,
+  mute, fullscreen) at the far right; a screen's own icon is hidden on itself.
+  Cost: the smallest. Every `screenBar` header goes, the top bar gains a slot
+  per screen. Phone: a back chevron and the place name, the primary action
+  and a ⋯ overflow.
+- **B: chips.** Each crumb is a chip; a parent chip is Back and Esc does the
+  same, so there is no Back button and the editor's name field is its last
+  chip. Cost: the same as A plus a chip component; Back is less discoverable.
+  Phone: the parent chip (with its chevron) and the place chip.
+- **C: context dock.** A slim bar holds the breadcrumb and global icons; a dock
+  right under it holds Back and the screen's actions, grouped. Cost: the
+  tallest (two rows, about 80 px), but the screen's buttons are never mixed with
+  the global ones. Phone: the dock scrolls sideways, with a fade at its edge.
 
 ## Creatures
 

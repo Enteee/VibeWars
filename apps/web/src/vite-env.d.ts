@@ -25,3 +25,10 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+/**
+ * This build's id (#1268): the commit `pages.yml` builds, the e2e build's
+ * own, or `dev` for every other build, which never checks for a newer
+ * one. `vite.config.ts` stamps it from `VIBEWARS_BUILD`.
+ */
+declare const __VIBEWARS_BUILD__: string;
