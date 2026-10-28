@@ -1286,9 +1286,8 @@ summoned by a skill, or a pet, which comes with one on the bar. It has health, a
 so every attack, spell, area and condition hits it, and it can be
 targeted with Tab, C, a click or a call. It is drawn smaller (radius 10
 to a player's 14) and blocks bodies at that radius. It is never a circle
-(#1162): a minion or spirit is a hexagon in its team's colour, a pet a
-teardrop pointing where it faces, each with its kind's glyph (paw,
-skull, horned skull, wisp).
+(#1162): every creature, pets included, is a hexagon in its team's
+colour with its kind's glyph (paw, skull, horned skull, wisp).
 
 It never counts for its team: killing one scores nothing and gives no
 morale, it has no morale of its own, and a team with only creatures left

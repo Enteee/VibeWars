@@ -759,7 +759,7 @@ export class ArenaScene extends Phaser.Scene {
       }
       // A lying pet keeps its shape, dashed (#1162): a creature's corpse at a glance.
       g.lineStyle(BODY_EDGE_WIDTH, colour, 1);
-      const outline = creatureOutline(actor.creatureLook, x, y, actor.radius, actor.facing);
+      const outline = creatureOutline(x, y, actor.radius);
       for (const [from, to] of dashes(outline, actor.radius * DEAD_DASH, actor.radius * DEAD_GAP)) {
         g.lineBetween(from.x, from.y, to.x, to.y);
       }
@@ -768,7 +768,7 @@ export class ArenaScene extends Phaser.Scene {
 
     if (actor.creatureLook !== undefined) {
       // Its shape, standing or knocked down, and no weapon or off-hand (#1162).
-      tracePath(g, creatureOutline(actor.creatureLook, x, y, actor.radius, actor.facing));
+      tracePath(g, creatureOutline(x, y, actor.radius));
       g.fillStyle(teamColour(actor.team), 1);
       g.fillPath();
       g.lineStyle(BODY_EDGE_WIDTH, BODY_EDGE, 1);

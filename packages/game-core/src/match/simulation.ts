@@ -209,8 +209,7 @@ import { steerAround } from "./steering.js";
 export type CreatureKind = "spirit" | "minion" | "pet";
 
 /**
- * What a creature looks like (#1162): the glyph on its plate, and a pet's
- * teardrop. The wire mirrors it as `CREATURE_LOOKS`, a test holding the two.
+ * What a creature looks like (#1162): the glyph on its plate. The wire mirrors it as `CREATURE_LOOKS`, a test holding the two.
  */
 export const CREATURE_LOOKS = ["beast", "bone-minion", "bone-horror", "spirit"] as const;
 export type CreatureLook = (typeof CREATURE_LOOKS)[number];

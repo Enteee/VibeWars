@@ -412,7 +412,7 @@ export interface LengthenRechargeEffect {
  */
 export interface CreatureTemplate {
   readonly kind: CreatureKind;
-  /** How it is drawn (#1162): a pet's teardrop, the glyph on its plate. */
+  /** How it is drawn (#1162): the glyph on its plate. */
   readonly look: CreatureLook;
   /** Shown in the target frame and the name label, as "Bone Minion". */
   readonly name: string;
