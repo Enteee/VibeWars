@@ -6,7 +6,6 @@ import {
   PROFESSIONS,
   skillProfessionName,
   accessibleAttributeIds,
-  ALL_INSIGNIAS,
   ALL_OFFHANDS,
   ALL_WEAPONS,
   ARMOR_SLOTS,
@@ -67,6 +66,8 @@ import {
   encodeRune,
   headgearChoices,
   offhandAttributeChoices,
+  insigniaChoices,
+  insigniaEffectNote,
   runeChoices,
   setHeadgearAttribute,
   setInsignia,
@@ -2737,9 +2738,9 @@ function insigniaAmountNote(insigniaId: InsigniaId, slot: ArmorSlot): string {
     return "";
   }
   const { effect } = insignia;
-  return effect.kind === "conditional-armor"
-    ? `+${String(effect.amount)} armor`
-    : `+${String(perSlotAmount(effect, slot))} ${effect.kind}`;
+  return effect.kind === "health" || effect.kind === "energy"
+    ? `+${String(perSlotAmount(effect, slot))} ${effect.kind}`
+    : insigniaEffectNote(effect);
 }
 
 /**
@@ -2828,22 +2829,10 @@ function mountGearLibrary(context: EditorContext): LibraryBody {
   };
 
   // --- insignias -------------------------------------------------------
+  // The common ones and the primary's own (#1142), so this list changes too.
   const insignias = group("insignias");
-  const insigniaBoxes = ALL_INSIGNIAS.map((insignia) => {
-    const node = box({
-      name: insignia.name,
-      detail: insigniaLibraryNote(insignia.effect),
-      drag: { from: "insignia-library", insigniaId: insignia.id },
-      onClick: () => {
-        const next = current();
-        commit(setInsignia(next, armorTarget(next, "insignia", context.piece()), insignia.id));
-      },
-    });
-    const target = targetNote();
-    node.appendChild(target);
-    insignias.appendChild(node);
-    return { id: insignia.id, node, target };
-  });
+  const insigniaBoxes = h("div", "skill-group-boxes");
+  insignias.appendChild(insigniaBoxes);
 
   // --- runes -----------------------------------------------------------
   // Which runes there are depends on the primary profession, so this list
@@ -2864,10 +2853,33 @@ function mountGearLibrary(context: EditorContext): LibraryBody {
       }
       const worn = ARMOR_SLOTS.map((slot) => character.equipment.armor[slot]);
       const wornInsignias = new Set(worn.map((piece) => piece.insigniaId));
-      for (const { id, node, target } of insigniaBoxes) {
-        node.classList.toggle("is-equipped", wornInsignias.has(id));
-        showTarget(target, character, "insignia");
-      }
+      syncList(
+        insigniaBoxes,
+        insigniaChoices(character),
+        (insignia) => insignia.id,
+        (insignia) => {
+          const node = box({
+            name: insignia.name,
+            detail: insigniaLibraryNote(insignia.effect),
+            drag: { from: "insignia-library", insigniaId: insignia.id },
+            onClick: () => {
+              const next = current();
+              commit(
+                setInsignia(next, armorTarget(next, "insignia", context.piece()), insignia.id),
+              );
+            },
+          });
+          node.appendChild(targetNote());
+          return node;
+        },
+        (node, insignia) => {
+          node.classList.toggle("is-equipped", wornInsignias.has(insignia.id));
+          const target = node.querySelector<HTMLElement>(".gear-box-target");
+          if (target !== null) {
+            showTarget(target, character, "insignia");
+          }
+        },
+      );
       const wornRunes = new Set(
         worn.flatMap((piece) => (piece.rune === null ? [] : [encodeRune(piece.rune)])),
       );
@@ -2902,8 +2914,8 @@ function mountGearLibrary(context: EditorContext): LibraryBody {
 
 /** A one-line summary of what an insignia does, for the library list. */
 function insigniaLibraryNote(effect: InsigniaEffect): string {
-  if (effect.kind === "conditional-armor") {
-    return `+${String(effect.amount)} armor`;
+  if (effect.kind === "conditional-armor" || effect.kind === "physical-reduction") {
+    return insigniaEffectNote(effect);
   }
   // The chest value, as the headline — the library cannot know which
   // slot it will land in, and the chest is the best case.

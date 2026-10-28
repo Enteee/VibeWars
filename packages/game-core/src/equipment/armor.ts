@@ -51,14 +51,27 @@ export function baseArmorFor(profession: ProfessionId): number {
   return BASE_ARMOR_BY_PROFESSION[profession];
 }
 
-/** Armor that applies only when its condition holds, from a profession or an insignia. */
+/** Armor that applies only when its conditions hold, from a profession or an insignia. */
 export interface ConditionalArmor {
   readonly amount: number;
-  readonly condition: ArmorCondition;
+  /** Every one must hold (#1142); `[]` always does. */
+  readonly conditions: readonly ArmorCondition[];
 }
 
 /** Each piece's own conditional armor: its insignia's (#1135). */
 export type PieceArmor = Readonly<Record<ArmorSlot, readonly ConditionalArmor[]>>;
+
+/** Each piece's cut off a physical hit to it, after armor: Knight's (#1142). */
+export type PieceReduction = Readonly<Record<ArmorSlot, number>>;
+
+/** No piece reduction at all. */
+export const NO_PIECE_REDUCTION: PieceReduction = Object.freeze({
+  head: 0,
+  chest: 0,
+  hands: 0,
+  legs: 0,
+  feet: 0,
+});
 
 /** No piece armor at all: a bare body, a creature, a dummy. */
 export const NO_PIECE_ARMOR: PieceArmor = Object.freeze({
@@ -78,8 +91,12 @@ export const NO_PIECE_ARMOR: PieceArmor = Object.freeze({
 export const INHERENT_ARMOR_BY_PROFESSION: Readonly<
   Record<ProfessionId, readonly ConditionalArmor[]>
 > = Object.freeze({
-  warrior: Object.freeze([Object.freeze({ amount: 20, condition: "vs-physical" })]),
-  ranger: Object.freeze([Object.freeze({ amount: 30, condition: "vs-elemental" })]),
+  warrior: Object.freeze([
+    Object.freeze<ConditionalArmor>({ amount: 20, conditions: [{ kind: "vs-physical" }] }),
+  ]),
+  ranger: Object.freeze([
+    Object.freeze<ConditionalArmor>({ amount: 30, conditions: [{ kind: "vs-elemental" }] }),
+  ]),
   paragon: [],
   assassin: [],
   dervish: [],

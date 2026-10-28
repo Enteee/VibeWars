@@ -3,7 +3,10 @@ import { describe, expect, it, vi } from "vitest";
 import { bareArmorSet, type ArmorSet } from "../equipment/armor.js";
 import { defaultEquipmentFor } from "../equipment/loadout.js";
 import { resolveLoadout, unarmedResolvedEquipment } from "../equipment/resolve.js";
+import type { InsigniaId } from "../equipment/insignias.js";
+import type { EquippedRune } from "../equipment/runes.js";
 import { ARMOR_SLOTS, type ArmorSlot } from "../equipment/types.js";
+import type { ProfessionId } from "../professions.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { createRng } from "../rng.js";
 import {
@@ -355,6 +358,161 @@ describe("conditional insignia armor, per piece (#1135)", () => {
     // +24 from the enchantment itself, +10 on the chest because one is active at all.
     expect(effectiveArmor(target, physical(10), "chest")).toBe(134);
     expect(effectiveArmor(target, physical(10), "feet")).toBe(124);
+  });
+});
+
+describe("profession and attacking insignias, per piece (#1142)", () => {
+  /** A `profession` primary with `insigniaId` on `slots`, `ranks` allocated, a rune on the chest. */
+  function wearing(
+    profession: ProfessionId,
+    insigniaId: InsigniaId,
+    options: {
+      readonly slots?: readonly ArmorSlot[];
+      readonly ranks?: ReadonlyMap<string, number>;
+      readonly chestRune?: EquippedRune;
+    } = {},
+  ): Combatant {
+    const slots = options.slots ?? ["chest"];
+    const piece = (slot: ArmorSlot) => ({
+      insigniaId: slots.includes(slot) ? insigniaId : null,
+      rune: slot === "chest" ? (options.chestRune ?? null) : null,
+    });
+    const resolved = resolveLoadout(
+      {
+        primaryProfession: profession,
+        secondaryProfession: undefined,
+        allocatedRanks: options.ranks ?? new Map(),
+        equipment: {
+          weaponSets: [
+            { ...defaultEquipmentFor(profession).weaponSets[0], offHand: null },
+            null,
+            null,
+            null,
+          ],
+          armor: {
+            head: { ...piece("head"), headgearAttributeId: null },
+            chest: piece("chest"),
+            hands: piece("hands"),
+            legs: piece("legs"),
+            feet: piece("feet"),
+          },
+        },
+      },
+      RULES,
+    );
+    return makeCombatant({
+      id: "d",
+      team: 1,
+      attributeRanks: resolved.attributeRanks,
+      equipment: resolved.weaponSets[0].equipment,
+    });
+  }
+
+  const swinging = (target: Combatant): Combatant => {
+    target.attack = { targetId: "x", swingElapsed: 0, unreachableSeconds: 0 };
+    return target;
+  };
+  const fire = skillDamage(10, "fire", 0);
+
+  it("gives Brawler's +10 on its piece while attacking, not on the run-up", () => {
+    const monk = wearing("monk", "brawlers");
+    expect(effectiveArmor(monk, physical(10), "chest")).toBe(60);
+    swinging(monk);
+    expect(effectiveArmor(monk, physical(10), "chest")).toBe(70);
+    expect(effectiveArmor(monk, fire, "chest")).toBe(70);
+    expect(effectiveArmor(monk, physical(10), "legs")).toBe(60);
+    monk.moving = true;
+    expect(effectiveArmor(monk, physical(10), "chest")).toBe(60);
+    // Five give +10 a hit, not +50.
+    const five = swinging(wearing("monk", "brawlers", { slots: ARMOR_SLOTS }));
+    expect(effectiveArmor(five, physical(10), "feet")).toBe(70);
+  });
+
+  it("gives Nightstalker's +15 on its piece while attacking", () => {
+    const assassin = wearing("assassin", "nightstalkers");
+    expect(effectiveArmor(assassin, physical(10), "chest")).toBe(70);
+    swinging(assassin);
+    expect(effectiveArmor(assassin, physical(10), "chest")).toBe(85);
+    expect(effectiveArmor(assassin, physical(10), "legs")).toBe(70);
+  });
+
+  it("gives Sentinel's +20 vs elemental from 13 Strength, runes in, weakness out", () => {
+    const strength = (rank: number) => new Map([["warrior.strength", rank]]);
+    expect(
+      effectiveArmor(wearing("warrior", "sentinels", { ranks: strength(12) }), fire, "chest"),
+    ).toBe(80);
+    const thirteen = wearing("warrior", "sentinels", { ranks: strength(13) });
+    expect(effectiveArmor(thirteen, fire, "chest")).toBe(100);
+    expect(effectiveArmor(thirteen, fire, "legs")).toBe(80);
+    // Physical: the Warrior's own +20 alone.
+    expect(effectiveArmor(thirteen, physical(10), "chest")).toBe(100);
+    const runed = wearing("warrior", "sentinels", {
+      ranks: strength(12),
+      chestRune: { kind: "attribute", attributeId: "warrior.strength", tier: "minor" },
+    });
+    expect(effectiveArmor(runed, fire, "chest")).toBe(100);
+    runed.statuses.apply("weakness", 10, "x");
+    expect(effectiveArmor(runed, fire, "chest")).toBe(80);
+  });
+
+  it("gives Prodigy's +5 at 1, 3 and 5 skills recharging", () => {
+    const mesmer = wearing("mesmer", "prodigys");
+    const armorAt = (recharging: number): number => {
+      for (let i = 0; i < recharging; i += 1) {
+        mesmer.cast.startRecharge(`skill-${String(i)}`, 10);
+      }
+      return effectiveArmor(mesmer, physical(10), "chest");
+    };
+    expect(armorAt(0)).toBe(60);
+    expect(armorAt(1)).toBe(65);
+    expect(armorAt(2)).toBe(65);
+    expect(armorAt(3)).toBe(70);
+    expect(armorAt(4)).toBe(70);
+    expect(armorAt(5)).toBe(75);
+    expect(armorAt(8)).toBe(75);
+    expect(effectiveArmor(mesmer, physical(10), "legs")).toBe(60);
+  });
+
+  it("gives Windwalker +5 at each of 1 to 4 enchantments", () => {
+    const dervish = wearing("dervish", "windwalker");
+    const enchantments = [
+      "regeneration",
+      "mending",
+      "holy-veil",
+      "healing-breeze",
+      "vigorous-spirit",
+      "patient-spirit",
+    ] as const;
+    expect(effectiveArmor(dervish, physical(10), "chest")).toBe(70);
+    const seen = enchantments.map((id) => {
+      dervish.statuses.apply(id, 30, "x");
+      return effectiveArmor(dervish, physical(10), "chest");
+    });
+    expect(seen).toEqual([75, 80, 85, 90, 90, 90]);
+    expect(effectiveArmor(dervish, physical(10), "legs")).toBe(70);
+  });
+
+  it("cuts 3 off a physical hit to Knight's piece, after armor, and stacks with Absorption", () => {
+    // 100 armor vs physical halves a hit: 40 is 20 before the cut.
+    const knight = wearing("warrior", "knights");
+    expect(mitigate(physical(40), knight, RULES, "chest")).toBe(17);
+    expect(mitigate(physical(40), knight, RULES, "legs")).toBe(20);
+    expect(mitigate(physical(40), knight, RULES, null)).toBe(20);
+    expect(mitigate(skillDamage(40, "fire", 0), knight, RULES, "chest")).toBe(
+      mitigate(skillDamage(40, "fire", 0), knight, RULES, "legs"),
+    );
+    const absorbing = wearing("warrior", "knights", {
+      chestRune: { kind: "universal", runeId: "absorption", tier: "superior" },
+    });
+    expect(mitigate(physical(40), absorbing, RULES, "chest")).toBe(14);
+    // Never a heal.
+    expect(mitigate(physical(2), knight, RULES, "chest")).toBe(0);
+  });
+
+  it("grants another primary's insignia nothing", () => {
+    const monk = wearing("monk", "knights");
+    expect(monk.equipment.pieceReduction.chest).toBe(0);
+    expect(wearing("monk", "nightstalkers").equipment.pieceArmor.chest).toEqual([]);
   });
 });
 

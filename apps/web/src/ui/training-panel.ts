@@ -97,6 +97,7 @@ import {
   wrongWeapon,
 } from "./skill-slot-state.js";
 import { createSlotTooltips } from "./slot-tooltip.js";
+import { echoStripHtml, paintEchoStrip } from "./echo-strip.js";
 import {
   armedHint,
   buildSignature,
@@ -496,11 +497,15 @@ export function createTrainingPanel(): TrainingPanel {
         index,
         () => session?.connection.skillBar[index] ?? null,
         () => session?.connection.ranks ?? new Map(),
+        () => session?.connection.simulation.elapsedSeconds ?? 0,
       );
       // The icon alone, as on the match HUD (#719): the name is the label.
+      // The echo strip first, so the hotkey and the range mark draw over it.
       button.insertAdjacentHTML(
         "afterbegin",
-        skillIconHtml(slot.id, SKILL_SLOT_ICON_PX) + adrenalineGaugeHtml(slot),
+        echoStripHtml(slot) +
+          skillIconHtml(slot.id, SKILL_SLOT_ICON_PX) +
+          adrenalineGaugeHtml(slot),
       );
       button.insertAdjacentHTML("beforeend", skillBadgeHtml(slot.id));
       button.insertAdjacentHTML(
@@ -549,6 +554,7 @@ export function createTrainingPanel(): TrainingPanel {
     const adrenaline = session?.connection.getAdrenaline() ?? [];
     const adrenalineLossIn = session?.connection.getAdrenalineLossIn() ?? null;
     const reducedMotion = prefersReducedMotion();
+    const now = session?.connection.simulation.elapsedSeconds ?? 0;
     const fill = castFill(slots, self);
     const target = match.players.find((player) => player.sessionId === self.targetSessionId);
     const far = outOfRange(slots, self, target, session?.wallSegments ?? []);
@@ -579,6 +585,7 @@ export function createTrainingPanel(): TrainingPanel {
       button.classList.toggle("is-wrong-weapon", unwielded[index] === true);
       // The same wipe as the match HUD (#152).
       paintRecharge(button, recharges[index], slot.name, reducedMotion);
+      paintEchoStrip(button, slot, now, reducedMotion);
     });
   };
 

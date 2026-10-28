@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
+import { WEAPONS } from "../equipment/weapons.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { distance, vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
@@ -48,6 +49,7 @@ function standing(id: string, ownerId: string, spawn: Vec2): ParticipantSpec {
     creature: {
       ownerId,
       kind: "minion",
+      look: "bone-minion",
       name: "Bone Minion",
       expiresInSeconds: Number.POSITIVE_INFINITY,
       ageSeconds: 0,
@@ -409,6 +411,36 @@ describe("Animate Bone Minions (#467)", () => {
       };
     };
     expect(run()).toEqual(run());
+  });
+});
+
+describe("Bone Minions assisting their master (#1118)", () => {
+  it("attack the foe their master wands from 400, out of their own earshot, within 2 s", () => {
+    const unarmed = unarmedResolvedEquipment(RULES.combat.armorReferenceLevel);
+    const wanded = { ...unarmed, mainHand: { ...unarmed.mainHand, weapon: WEAPONS.wand } };
+    const sim = new MatchSimulation({
+      seed: "minions",
+      participants: [
+        spec("n", 0, vec2(0, 0), { equipment: wanded }),
+        spec("x", 1, vec2(300, 0)),
+        spec("y", 1, vec2(0, -400)),
+      ],
+    });
+    kill(sim, "x");
+    raise(sim);
+    // At heel, about 109 from their master: more than 350 from the foe.
+    stepFor(sim, 3);
+    const minions = minionsOf(sim);
+    expect(minions).toHaveLength(2);
+    for (const minion of minions) {
+      expect(distance(minion.position, get(sim, "y").position)).toBeGreaterThan(350);
+      expect(minion.combatant.attack).toBeUndefined();
+    }
+    expect(sim.requestAttack("n", "y")).toEqual({ ok: true });
+    stepFor(sim, 2);
+    for (const minion of minions) {
+      expect(minion.combatant.attack?.targetId).toBe("y");
+    }
   });
 });
 

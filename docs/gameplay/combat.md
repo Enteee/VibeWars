@@ -1132,6 +1132,27 @@ and typeless damage, degeneration and life steal hit no piece. The gear
 editor lists an insignia under the armor with its pieces and what it
 adds on average: `+10 armor vs physical damage on chest (avg +3.8)`.
 
+Insignias (#1142), each only on hits to its own piece; five of one kind
+give its bonus on every hit, never five times over:
+
+| Insignia       | Who              | On its piece                               |
+| -------------- | ---------------- | ------------------------------------------ |
+| Stalwart       | anyone           | +10 vs physical                            |
+| Blessed        | anyone           | +10 while enchanted                        |
+| Brawler's      | anyone           | +10 while attacking                        |
+| Knight's       | Warrior primary  | −3 physical damage taken, after armor      |
+| Sentinel's     | Warrior primary  | +20 vs elemental, with 13+ Strength        |
+| Nightstalker's | Assassin primary | +15 while attacking                        |
+| Prodigy's      | Mesmer primary   | +5 each with 1, 3 and 5+ skills recharging |
+| Windwalker     | Dervish primary  | +5 each with 1, 2, 3 and 4+ enchantments   |
+
+Attacking is swinging while standing or casting an attack skill: an
+auto-attack still walking to its foe is not. Strength counts runes, and
+weakness lowers it. Knight's sits beside a Rune of
+Absorption and adds to it, and never takes a hit below 0. A profession
+insignia needs that primary: the gear library shows only the common
+ones and your primary's, and changing primary takes the others off.
+
 A status can change the type of your attacks (#1021): under Staggering
 Force or Dust Cloak a scythe deals earth, so a Warrior meets it with 80
 armor, not 100, and a Ranger with 100, not 70. It is still an attack:
@@ -1303,7 +1324,9 @@ A creature (#1052) is a body that is not a player: a spirit or a minion,
 summoned by a skill, or a pet, which comes with one on the bar. It has health, armor, statuses and its owner's team,
 so every attack, spell, area and condition hits it, and it can be
 targeted with Tab, C, a click or a call. It is drawn smaller (radius 10
-to a player's 14) and blocks bodies at that radius.
+to a player's 14) and blocks bodies at that radius. It is never a circle
+(#1162): every creature, pets included, is a hexagon in its team's
+colour with its kind's glyph (paw, skull, horned skull, wisp).
 
 It never counts for its team: killing one scores nothing and gives no
 morale, it has no morale of its own, and a team with only creatures left
@@ -1346,10 +1369,14 @@ and blows are set by their Necromancer's Death Magic as they rise and
 never change after. A minion rots: it loses 1 pip of Health at once and
 1 more every 20 s it lives, summed with its statuses before the −10
 cap, and it never regenerates naturally; healing fights it as usual. A
-rank-12 Bone Minion nobody touches lives 65 s. It stays by its master,
-attacks the nearest foe within earshot of itself, not its master's
-target nor a called one, and breaks off to walk back once its master is
-past cast range, picking no fight until at heel again. A master holds 2
+rank-12 Bone Minion nobody touches lives 65 s. It stays by its master
+and assists it (#1118): with no fight going, it attacks the foe its
+master is attacking with a weapon or an attack skill, if within cast
+range of the master, else the nearest foe within earshot of itself; a
+called target or a spell does not count. It stays on its foe until that
+foe dies, whatever its master switches to, and breaks off to walk back
+once its master is past cast range, picking no fight until at heel
+again. A master holds 2
 plus half its Death Magic, rounded down (8 at 12): raising past it kills
 the weakest first, by Health left and the oldest of equals, and that is
 a death, so Soul Reaping answers it. A minion leaves no corpse, outlives

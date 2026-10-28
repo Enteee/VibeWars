@@ -329,7 +329,7 @@ describe("auto-attack", () => {
 describe("follow-and-attack (#467)", () => {
   const FOLLOW: Behaviour = {
     kind: "follow-and-attack",
-    engage: "nearest-foe",
+    engage: "owner-target-then-nearest",
     aggroUnits: 350,
     leashUnits: 420,
     heelUnits: 109,
@@ -342,6 +342,7 @@ describe("follow-and-attack (#467)", () => {
       creature: {
         ownerId: owner,
         kind: "minion",
+        look: "bone-minion",
         name: "Bone Minion",
         expiresInSeconds: Number.POSITIVE_INFINITY,
         ageSeconds: 0,
@@ -526,6 +527,65 @@ describe("follow-and-attack (#467)", () => {
         sim.step(DT);
         expect(at(sim, "minion")).toEqual(vec2(700, 320));
       }
+    });
+  });
+
+  describe("assisting its master, as a minion (#1118)", () => {
+    it("attacks its master's foe 400 from the master and 380 from itself, not one 430 off", () => {
+      const sim = world(
+        spec("owner", 0, vec2(0, 0)),
+        minion(vec2(20, 0)),
+        spec("foe", 1, vec2(400, 0)),
+      );
+      sim.requestAttack("owner", "foe");
+      expect(ask(sim)).toMatchObject({ targetId: "foe", attackTargetId: "foe" });
+      const far = world(
+        spec("owner", 0, vec2(0, 0)),
+        minion(vec2(50, 0)),
+        spec("foe", 1, vec2(430, 0)),
+      );
+      far.requestAttack("owner", "foe");
+      expect(ask(far).attackTargetId).toBeUndefined();
+    });
+
+    it("with its master attacking nobody, attacks a foe 300 from itself", () => {
+      const sim = world(
+        spec("owner", 0, vec2(0, 0)),
+        minion(vec2(0, 0)),
+        spec("foe", 1, vec2(0, 300)),
+      );
+      expect(ask(sim)).toMatchObject({ targetId: "foe", attackTargetId: "foe" });
+    });
+
+    it("stays on its foe when its master switches, and takes the master's once it dies", () => {
+      const sim = world(
+        spec("owner", 0, vec2(0, 0)),
+        minion(vec2(0, 0)),
+        spec("x", 1, vec2(50, 0)),
+        spec("y", 1, vec2(-50, 0)),
+      );
+      sim.requestAttack("minion", "x");
+      sim.requestAttack("owner", "y");
+      expect(ask(sim)).toMatchObject({ targetId: "x", attackTargetId: "x" });
+      const x = sim.get("x");
+      if (x === undefined) {
+        throw new Error("no x");
+      }
+      x.combatant.dead = true;
+      sim.step(DT);
+      expect(ask(sim)).toMatchObject({ targetId: "y", attackTargetId: "y" });
+    });
+
+    it("does not assist a spell cast at a foe", () => {
+      const sim = world(
+        spec("owner", 0, vec2(0, 0)),
+        minion(vec2(20, 0)),
+        spec("foe", 1, vec2(400, 0)),
+      );
+      sim.setTarget("owner", "foe");
+      expect(sim.requestSkill("owner", 0)?.check).toEqual({ ok: true });
+      expect(sim.get("owner")?.combatant.attack).toBeUndefined();
+      expect(ask(sim).attackTargetId).toBeUndefined();
     });
   });
 

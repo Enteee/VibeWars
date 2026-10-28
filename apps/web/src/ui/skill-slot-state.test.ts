@@ -29,6 +29,7 @@ function slot(id: string): SkillSlot {
     adrenalineCost: 0,
     activationSeconds: 1,
     rechargeSeconds: 5,
+    copyEndsAt: null,
   };
 }
 
@@ -225,7 +226,7 @@ describe("outOfRange", () => {
       x: 1000,
       team: 0,
       dead: true,
-      creature: { ownerId: "r", kind: "pet" },
+      creature: { ownerId: "r", kind: "pet", look: "beast" },
     });
     expect(outOfRange([slot(COMFORT), slot(RESTORE_LIFE)], self({}), pet, [])).toEqual([
       false,

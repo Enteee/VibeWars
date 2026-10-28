@@ -80,6 +80,7 @@ function body(id: string, x: number, team: RenderableActor["team"]): RenderableA
     attackCast: undefined,
     offhandId: undefined,
     profession: undefined,
+    creatureLook: undefined,
     radius: 14,
     team,
     health: 500,
@@ -92,6 +93,7 @@ function body(id: string, x: number, team: RenderableActor["team"]): RenderableA
     statuses: [],
     enchanted: false,
     hexed: false,
+    conditionCues: [],
   };
 }
 

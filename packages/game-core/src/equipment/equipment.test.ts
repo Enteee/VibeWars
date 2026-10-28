@@ -26,7 +26,7 @@ import {
   getWeapon,
   type WeaponId,
 } from "./weapons.js";
-import { ALL_INSIGNIAS } from "./insignias.js";
+import { ALL_INSIGNIAS, type InsigniaId } from "./insignias.js";
 import { ALL_OFFHANDS, SHIELD_REQUIREMENT_ATTRIBUTES } from "./offhands.js";
 import { creatureResolvedEquipment, resolveLoadout, unarmedResolvedEquipment } from "./resolve.js";
 import {
@@ -296,7 +296,7 @@ describe("what a weapon deals (#761)", () => {
 });
 
 describe("inherent armor by profession (#759) and insignia armor per piece (#1135)", () => {
-  function armorOf(primaryProfession: ProfessionId, insignia: "stalwart" | null) {
+  function armorOf(primaryProfession: ProfessionId, insignia: InsigniaId | null) {
     return resolveLoadout(
       {
         primaryProfession,
@@ -318,8 +318,8 @@ describe("inherent armor by profession (#759) and insignia armor per piece (#113
 
   it("holds a Warrior's +20 vs physical on every hit, and Stalwart on the chest alone", () => {
     const { conditionalArmor, pieceArmor } = armorOf("warrior", "stalwart");
-    expect(conditionalArmor).toEqual([{ amount: 20, condition: "vs-physical" }]);
-    expect(pieceArmor.chest).toEqual([{ amount: 10, condition: "vs-physical" }]);
+    expect(conditionalArmor).toEqual([{ amount: 20, conditions: [{ kind: "vs-physical" }] }]);
+    expect(pieceArmor.chest).toEqual([{ amount: 10, conditions: [{ kind: "vs-physical" }] }]);
     for (const slot of ["head", "hands", "legs", "feet"] as const) {
       expect(pieceArmor[slot]).toEqual([]);
     }
@@ -327,7 +327,7 @@ describe("inherent armor by profession (#759) and insignia armor per piece (#113
 
   it("holds a Ranger's +30 vs elemental on every hit", () => {
     expect(armorOf("ranger", "stalwart").conditionalArmor).toEqual([
-      { amount: 30, condition: "vs-elemental" },
+      { amount: 30, conditions: [{ kind: "vs-elemental" }] },
     ]);
   });
 
@@ -335,6 +335,41 @@ describe("inherent armor by profession (#759) and insignia armor per piece (#113
     const { conditionalArmor, pieceArmor } = armorOf("monk", null);
     expect(conditionalArmor).toEqual([]);
     expect(pieceArmor).toEqual(NO_PIECE_ARMOR);
+  });
+
+  it("puts each of Prodigy's tiers in its piece, and Knight's cut (#1142)", () => {
+    expect(armorOf("mesmer", "prodigys").pieceArmor.chest).toEqual(
+      [1, 3, 5].map((count) => ({
+        amount: 5,
+        conditions: [{ kind: "recharging-at-least", count }],
+      })),
+    );
+    const knight = armorOf("warrior", "knights");
+    expect(knight.pieceReduction).toEqual({ head: 0, chest: 3, hands: 0, legs: 0, feet: 0 });
+    expect(knight.pieceArmor).toEqual(NO_PIECE_ARMOR);
+  });
+
+  it("resolves another primary's insignia to nothing, and validation names it once (#1142)", () => {
+    expect(armorOf("monk", "prodigys").pieceArmor).toEqual(NO_PIECE_ARMOR);
+    expect(armorOf("monk", "knights").pieceReduction.chest).toBe(0);
+    const equipment: BuildEquipment = {
+      ...defaultEquipmentFor("monk"),
+      // Headgear of an attribute both builds below reach: the monk/mesmer
+      // and the mesmer.
+      armor: {
+        ...armorWithHeadgear("mesmer.inspiration-magic"),
+        chest: { insigniaId: "prodigys", rune: null },
+      },
+    };
+    expect(validateEquipment(equipment, contextFor("monk", "mesmer"))).toEqual([
+      { field: "equipment.armor.chest", message: "Prodigy's Insignia needs a primary mesmer" },
+    ]);
+    expect(
+      validateEquipment(
+        { ...defaultEquipmentFor("mesmer"), armor: equipment.armor },
+        contextFor("mesmer"),
+      ),
+    ).toEqual([]);
   });
 });
 
@@ -797,6 +832,27 @@ describe("reconcileEquipment", () => {
     expect(monkWarrior.armor.chest.rune).toEqual(equipment.armor.chest.rune);
   });
 
+  it("takes another primary's insignias off and keeps the common ones (#1142)", () => {
+    const equipment: BuildEquipment = {
+      ...defaultEquipmentFor("warrior"),
+      armor: {
+        ...bareArmorSet(),
+        head: { insigniaId: "knights", rune: null, headgearAttributeId: "warrior.strength" },
+        chest: { insigniaId: "sentinels", rune: null },
+        legs: { insigniaId: "brawlers", rune: null },
+      },
+    };
+    expect(reconcileEquipment(equipment, contextFor("warrior", "monk")).armor).toEqual(
+      equipment.armor,
+    );
+    const monk = reconcileEquipment(equipment, contextFor("monk", "warrior")).armor;
+    expect([monk.head.insigniaId, monk.chest.insigniaId, monk.legs.insigniaId]).toEqual([
+      null,
+      null,
+      "brawlers",
+    ]);
+  });
+
   it("keeps the weapon class when the character changes profession", () => {
     // A hammer on a mesmer is a bad build, not an illegal one, and
     // deleting the player's choice would be the editor overruling them.
@@ -1144,24 +1200,12 @@ describe("the gear coverage record", () => {
     }
   });
 
-  it("does not claim an attacking insignia exists", () => {
-    // Armor does not read the attack state yet, so Brawler's would be a
-    // permanent zero.
-    expect(gearOmission("armor-while-attacking")).toBeDefined();
-    expect(ALL_INSIGNIAS.map((insignia) => insignia.id)).not.toContain("brawlers");
-  });
-
   it("does not claim a stance insignia exists", () => {
     // The specific thing the record was written to keep honest: the
     // reference's stance insignia is absent from the catalog, not
     // shipped inert.
     expect(gearOmission("stances")).toBeDefined();
     expect(ALL_INSIGNIAS.map((insignia) => insignia.id)).not.toContain("sentrys");
-    for (const insignia of ALL_INSIGNIAS) {
-      if (insignia.effect.kind === "conditional-armor") {
-        expect(insignia.effect.condition).not.toBe("while-in-a-stance");
-      }
-    }
   });
 
   it("no longer records typed armor as a gap: professions carry it (#759)", () => {

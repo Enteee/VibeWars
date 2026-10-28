@@ -74,7 +74,7 @@ function foe(id: string, equipment?: ResolvedEquipment): Combatant {
 /** A Warrior's armor (#759): 80, and +20 against physical damage. */
 const WARRIOR_ARMOR: ResolvedEquipment = {
   ...unarmedResolvedEquipment(80),
-  conditionalArmor: [{ amount: 20, condition: "vs-physical" }],
+  conditionalArmor: [{ amount: 20, conditions: [{ kind: "vs-physical" }] }],
 };
 
 /**

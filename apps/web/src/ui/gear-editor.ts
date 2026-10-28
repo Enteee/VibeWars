@@ -1,4 +1,5 @@
 import {
+  ALL_INSIGNIAS,
   ALL_UNIVERSAL_RUNES,
   ARMOR_SLOTS,
   ATTRIBUTE_RUNE_TIERS,
@@ -14,6 +15,7 @@ import {
   getOffhand,
   getWeapon,
   headgearAttributeOf,
+  insigniaAllowed,
   isArmorSlot,
   isInsigniaId,
   isOffhandId,
@@ -24,14 +26,18 @@ import {
   reconcileEquipment,
   resolveLoadout,
   runeDisplayName,
+  type ArmorCondition,
   type ArmorPiece,
   type ArmorSlot,
   type BuildEquipment,
   type ConditionalArmor,
   type EquippedRune,
+  type Insignia,
+  type InsigniaEffect,
   type InsigniaId,
   type OffhandId,
   type PieceArmor,
+  type PieceReduction,
   type ResolvedLoadout,
   type RuneTier,
   type WeaponId,
@@ -378,20 +384,68 @@ export interface GearSummary {
     readonly bonus: number;
     readonly sources: string;
   }[];
-  /** The profession's armor on every hit, then the insignias' per piece (#1135). */
+  /** The profession's armor on every hit, then the insignias' per piece (#1135), Knight's last (#1142). */
   readonly conditionalArmor: readonly string[];
   readonly flatPhysicalReduction: number;
 }
 
-const CONDITION_LABELS: Readonly<Record<string, string>> = {
-  "vs-physical": "vs physical damage",
-  "vs-elemental": "vs elemental damage",
-  "while-enchanted": "while enchanted",
-};
+function conditionLabel(condition: ArmorCondition): string {
+  switch (condition.kind) {
+    case "vs-physical":
+      return "vs physical damage";
+    case "vs-elemental":
+      return "vs elemental damage";
+    case "attacking":
+      return "while attacking";
+    case "enchantments-at-least":
+      return condition.count === 1
+        ? "while enchanted"
+        : `with ${String(condition.count)}+ enchantments`;
+    case "recharging-at-least":
+      return `while ${String(condition.count)}+ skills recharge`;
+    case "attribute-at-least":
+      return `with ${String(condition.rank)}+ ${getAttribute(condition.attributeId)?.name ?? condition.attributeId}`;
+  }
+}
+
+/** When a bonus holds (#1142): "vs elemental damage, with 13+ Strength"; "" for always. */
+export function describeConditions(conditions: readonly ArmorCondition[]): string {
+  return conditions.map(conditionLabel).join(", ");
+}
 
 /** `+10 armor vs physical damage`. */
 function armorLine(bonus: ConditionalArmor): string {
-  return `+${String(bonus.amount)} armor ${CONDITION_LABELS[bonus.condition] ?? bonus.condition}`;
+  const when = describeConditions(bonus.conditions);
+  return when === "" ? `+${String(bonus.amount)} armor` : `+${String(bonus.amount)} armor ${when}`;
+}
+
+/** A tier's count, for a bonus that is one condition with a count. */
+function tierCount(bonus: ConditionalArmor): number | undefined {
+  const [only, ...rest] = bonus.conditions;
+  return rest.length === 0 &&
+    (only?.kind === "enchantments-at-least" || only?.kind === "recharging-at-least")
+    ? only.count
+    : undefined;
+}
+
+/**
+ * An insignia's armor or cut in a line (#1142), a tiered one's later
+ * tiers short: "+5 armor while 1+ skills recharge, +5 at 3+, +5 at 5+".
+ */
+export function insigniaEffectNote(
+  effect: Extract<InsigniaEffect, { kind: "conditional-armor" | "physical-reduction" }>,
+): string {
+  if (effect.kind === "physical-reduction") {
+    return `−${String(effect.amount)} physical damage taken`;
+  }
+  return effect.bonuses
+    .map((bonus, index) => {
+      const count = tierCount(bonus);
+      return index === 0 || count === undefined
+        ? armorLine(bonus)
+        : `+${String(bonus.amount)} at ${String(count)}+`;
+    })
+    .join(", ");
 }
 
 /**
@@ -403,7 +457,7 @@ function pieceArmorLines(pieceArmor: PieceArmor): string[] {
   const groups = new Map<string, { bonus: ConditionalArmor; slots: ArmorSlot[] }>();
   for (const slot of ARMOR_SLOTS) {
     for (const bonus of pieceArmor[slot]) {
-      const key = `${bonus.condition}:${String(bonus.amount)}`;
+      const key = `${JSON.stringify(bonus.conditions)}:${String(bonus.amount)}`;
       const group = groups.get(key) ?? { bonus, slots: [] };
       group.slots.push(slot);
       groups.set(key, group);
@@ -416,6 +470,26 @@ function pieceArmorLines(pieceArmor: PieceArmor): string[] {
     const chance = slots.reduce((sum, slot) => sum + HIT_LOCATION_WEIGHTS[slot], 0);
     const average = Math.round(bonus.amount * chance * 10) / 10;
     return `${armorLine(bonus)} on ${slots.join(", ")} (avg +${average.toFixed(1)})`;
+  });
+}
+
+/** Knight's (#1142), as the armor lines: "−3 physical damage taken on chest (avg −1.1)". */
+function pieceReductionLines(pieceReduction: PieceReduction): string[] {
+  const groups = new Map<number, ArmorSlot[]>();
+  for (const slot of ARMOR_SLOTS) {
+    const amount = pieceReduction[slot];
+    if (amount > 0) {
+      groups.set(amount, [...(groups.get(amount) ?? []), slot]);
+    }
+  }
+  return [...groups].map(([amount, slots]) => {
+    const line = `−${String(amount)} physical damage taken`;
+    if (slots.length === ARMOR_SLOTS.length) {
+      return line;
+    }
+    const chance = slots.reduce((sum, slot) => sum + HIT_LOCATION_WEIGHTS[slot], 0);
+    const average = Math.round(amount * chance * 10) / 10;
+    return `${line} on ${slots.join(", ")} (avg −${average.toFixed(1)})`;
   });
 }
 
@@ -474,6 +548,7 @@ export function summariseGear(
     conditionalArmor: [
       ...held.equipment.conditionalArmor.map(armorLine),
       ...pieceArmorLines(held.equipment.pieceArmor),
+      ...pieceReductionLines(held.equipment.pieceReduction),
     ],
     flatPhysicalReduction: held.equipment.flatPhysicalReduction,
   };
@@ -546,6 +621,11 @@ export function decodeRune(raw: string): EquippedRune | undefined {
  * them — so the dropdown never contains an option that would immediately
  * fail validation.
  */
+/** The insignias `character` may wear: the common ones and its primary's own (#1142). */
+export function insigniaChoices(character: StoredCharacter): readonly Insignia[] {
+  return ALL_INSIGNIAS.filter((insignia) => insigniaAllowed(insignia, character.primaryProfession));
+}
+
 export function runeChoices(character: StoredCharacter): readonly RuneChoice[] {
   const choices: RuneChoice[] = [];
 
