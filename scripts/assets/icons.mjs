@@ -708,6 +708,24 @@ const status = {
   ],
   // Skill effect: two regeneration arrows, Recuperation's +2 (#1064).
   recuperation: ["skill-effect", (c) => `<path d="M7 13l3-3 3 3M11 13l3-3 3 3" ${stroke(c, 2)}/>`],
+  // Skill effect: a roof over a bar, no blow takes more than 10% (#1265).
+  shelter: [
+    "skill-effect",
+    (c) => `<path d="M6 12l6-5 6 5" ${stroke(c, 2.2)}/>` + `<path d="M8 16h8" ${stroke(c, 2)}/>`,
+  ],
+  // Skill effect: two links, damage taken shared with the spirit (#1265).
+  union: [
+    "skill-effect",
+    (c) =>
+      `<circle cx="9.5" cy="12" r="3" ${stroke(c, 2)}/><circle cx="14.5" cy="12" r="3" ${stroke(c, 2)}/>`,
+  ],
+  // Skill effect: an arrow turned aside, a blocked attack (#1265).
+  displacement: ["skill-effect", (c) => `<path d="M5 12h6l3-4M14 8h3M14 8v3" ${stroke(c, 2)}/>`],
+  // Skill effect: a body flat on a ground line, held down longer (#1265).
+  earthbind: [
+    "skill-effect",
+    (c) => `<path d="M6 13h12" ${stroke(c, 2.2)}/>` + `<path d="M6 17h12" ${stroke(c, 2)}/>`,
+  ],
   // Skill effect: a shield on a ground line, melee blocked inside a ward (#1087).
   "ward-against-melee": [
     "skill-effect",

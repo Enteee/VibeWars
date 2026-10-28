@@ -194,6 +194,8 @@ export function armorMultiplier(armor: number, rules: CombatRules): number {
  *
  * Rounded once, at the end. Rounding earlier would make a long fight
  * drift away from the arithmetic by a few points per hit.
+ * A protective spirit's status that changed the outcome records what its
+ * spirit pays (#1265), so this is only for a packet that lands.
  */
 export function mitigate(
   packet: DamagePacket,
@@ -218,7 +220,11 @@ export function mitigate(
   dealt *= modifiers.damageTakenMultiplier;
 
   // Call of Protection (#1108): a flat cut off every packet, after
-  // armor and the multiplier, before Rune of Absorption.
+  // armor and the multiplier, before Rune of Absorption. Union's spirit
+  // pays for every cut that took something (#1265).
+  if (modifiers.damageReduction > 0 && dealt > 0) {
+    target.statuses.chargeSources((definition) => definition.damageReduction > 0);
+  }
   dealt -= modifiers.damageReduction;
 
   // Rune of Absorption, last and only against physical hits. After
@@ -242,6 +248,18 @@ export function mitigate(
       dealt,
       Math.floor(modifiers.maxDamageFractionPerHit * effectiveMaxHealth(target)),
     );
+  }
+
+  // Shelter (#1265), last: an attack's blow, nothing else, and its spirit
+  // pays only when the cap took something off.
+  if (modifiers.attackDamageCapFraction !== undefined && packet.source === "weapon") {
+    const cap = Math.floor(modifiers.attackDamageCapFraction * effectiveMaxHealth(target));
+    if (Math.round(dealt) > cap) {
+      dealt = cap;
+      target.statuses.chargeSources(
+        (definition) => definition.attackDamageCapFraction !== undefined,
+      );
+    }
   }
 
   return Math.max(0, Math.round(dealt));
