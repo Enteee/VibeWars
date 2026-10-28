@@ -1104,7 +1104,9 @@ pierce, hammers and fists are blunt. Fire, cold, lightning and earth are
 typeless.
 
 Armor comes from the primary profession: 80 for a Warrior or Paragon, 70
-for a Ranger, Assassin or Dervish, 60 for the casters. On top of that,
+for a Ranger, Assassin or Dervish, 60 for the casters. So an attribute
+rune fits only your primary's attributes (#1141): a W/Mo can wear a Rune
+of Strength, not one of Healing Prayers. On top of that,
 some armor applies only against some types:
 
 | Bonus                | Against   | From                              |
@@ -1383,6 +1385,11 @@ and stays in the match: its corpse cannot be exploited, and an ordinary
 resurrection is refused ("That cannot be revived that way."). Its
 death disables its owner's whole bar for 10…4 s by Beast Mastery 0…12
 (unverified), unless it was resurrected less than 15 s before.
+With the death penalty on, the wolf has morale by the players' rules
+(#1133): −15% of its 480 Health a death, to −60%, none within 5 s of
+a resurrection, +2% back for each foe death while it lives, a morale
+boost too. It keeps its morale through its owner's respawn, loses it on
+a reset, and its death gives its foes nothing.
 **Comfort Animal** (Beast Mastery, 10 energy, 1 s, 1 s recharge, cast
 range) acts on your own wolf whatever you have selected: it heals a
 living one for 20…87 and raises a dead one with 10…48% Health; with no
@@ -1411,6 +1418,32 @@ nothing. At Beast Mastery 12:
 | Brutal Strike    | 10     | 5 s      | +29, and +29 more on a foe below 50% Health                     |
 | Maiming Strike   | 10     | 5 s      | +17; a hit cripples for 13 s                                    |
 | Disrupting Lunge | 5      | 10 s     | +10; a hit on a foe using a skill interrupts it, +20 s disabled |
+
+**Calls and bonds** (#1108) are Beast Mastery shouts on your own living
+wolf, whatever you have selected, from up to 700 away: past it you walk
+in. With no wolf ("You have no pet.") or a dead one ("Your target is
+dead.") they are refused and cost nothing. At Beast Mastery 12:
+
+| Skill              | Energy | Recharge | On the wolf                                                   |
+| ------------------ | ------ | -------- | ------------------------------------------------------------- |
+| Call of Haste      | 10     | 25 s     | 30 s: bites 25% faster (every 1.61 s), moves 25% faster       |
+| Call of Protection | 5      | 90 s     | 120 s: every hit on it is 17 lower, after armor               |
+| Symbiotic Bond     | 10     | 55 s     | 264 s: +3 regeneration, half of each physical hit goes to you |
+
+Symbiotic Bond's half is rounded down and reaches you at the end of the
+step, typeless: no armor of yours stops it, nothing answers it, and it
+is never sent on again, so two bonds never chain. With you dead or gone
+the wolf takes it back. Reversal of Fortune on the wolf negates the whole
+hit first, and Protective Spirit caps it before it is split. A wolf that
+dies loses its calls and bond; call them again once it is back. The
+fastest attack-speed boost wins: Call of Haste does not stack with
+another.
+
+**Revive Animal** (Beast Mastery, 5 energy, ¼ s, 5 s recharge) raises
+every dead allied pet within 81 of you, yours or a teammate's, with
+10…77% Health; foes' pets and living ones are left alone. With none near
+it still goes off and is spent. A pet it raises has the 15 s grace: its
+death within it costs its owner nothing.
 
 ## Wards and wells
 

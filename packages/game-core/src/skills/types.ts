@@ -62,7 +62,9 @@ export type TargetRule =
   /** A dead ally other than the caster: a resurrection's (#812). */
   | "single-dead-ally"
   /** The caster's own companion, alive or dead, whatever is selected (#1046). */
-  | "companion";
+  | "companion"
+  /** As `"companion"`, but only a living one (#1108): a call on a dead pet is refused. */
+  | "living-companion";
 
 /* -------------------------------------------------------------------------- */
 /* Effects                                                                     */
@@ -334,6 +336,19 @@ export interface ResurrectEffect {
    * "teleported to your current location").
    */
   readonly at: "corpse" | "caster";
+}
+
+/**
+ * Bring back every dead allied companion within `radius` of the caster
+ * (#1108), anyone's, in participant order, with `healthPercent` of its
+ * maximum and no energy: Revive Animal. Acts on the caster, once; with
+ * none there it does nothing, paid for.
+ */
+export interface ResurrectCompanionsEffect {
+  readonly kind: "resurrect-companions";
+  /** Centre to centre, world units. Walls do not block it. */
+  readonly radius: number;
+  readonly healthPercent: Magnitude;
 }
 
 /** How much health a resurrection returns (#474). */
@@ -693,6 +708,7 @@ export type UnconditionalEffect =
   | KnockdownEffect
   | ShadowStepEffect
   | ResurrectEffect
+  | ResurrectCompanionsEffect
   | DrainOwnEnergyEffect
   | RechargeFasterEffect
   | SplashEffect

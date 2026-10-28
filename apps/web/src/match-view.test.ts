@@ -118,4 +118,28 @@ describe("toArenaSnapshot", () => {
       ["dead", false, false],
     ]);
   });
+
+  it("badges a cast bar with the casting skill's type, and nothing else (#1125)", () => {
+    const casting = (id: string, skillId: string, castTotal: number): PlayerSnapshot => ({
+      ...player(id, 0),
+      castingSkillId: skillId,
+      castRemaining: castTotal / 2,
+      castTotal,
+    });
+    const arena = toArenaSnapshot(
+      match([
+        casting("hex", "mesmer.empathy", 2),
+        casting("instant", "mesmer.empathy", 0),
+        casting("unknown", "nobody.no-such-skill", 2),
+        player("idle", 0),
+      ]),
+      [],
+    );
+    expect(arena.actors.map((actor) => [actor.id, actor.castType])).toEqual([
+      ["hex", "hex"],
+      ["instant", undefined],
+      ["unknown", undefined],
+      ["idle", undefined],
+    ]);
+  });
 });

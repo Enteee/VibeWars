@@ -70,6 +70,7 @@ function actor(
     exploited: false,
     knockedDown: false,
     castProgress: undefined,
+    castType: undefined,
     statuses: [],
     enchanted: false,
     hexed: false,

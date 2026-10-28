@@ -1,3 +1,5 @@
+import { primaryAttributeIds } from "../character.js";
+import type { ProfessionId } from "../professions.js";
 import { armorPieces, type ArmorPiece, type ArmorSet } from "./armor.js";
 import type { BuildEquipment, EquippedOffhand, EquippedWeapon, WeaponSet } from "./loadout.js";
 import { getOffhand } from "./offhands.js";
@@ -10,8 +12,8 @@ import { allowsOffhand, getWeapon } from "./weapons.js";
  * (ADR-0012).
  *
  * Changing profession can invalidate gear in three ways: a nominated
- * requirement attribute stops being reachable, an attribute rune points
- * at an attribute you can no longer raise, or a profession-locked rune
+ * requirement attribute stops being reachable, an attribute rune is no
+ * longer of the primary profession (#1141), or a profession-locked rune
  * loses its profession. The build editor already does exactly this for
  * attributes and skills in `setProfessions`; gear joins the same rule
  * rather than getting its own.
@@ -27,7 +29,7 @@ import { allowsOffhand, getWeapon } from "./weapons.js";
 
 export interface ReconcileContext {
   readonly accessibleAttributeIds: ReadonlySet<string>;
-  readonly primaryProfession: string;
+  readonly primaryProfession: ProfessionId;
 }
 
 /**
@@ -96,7 +98,7 @@ function reconcileRune(rune: EquippedRune | null, context: ReconcileContext): Eq
     return null;
   }
   if (rune.kind === "attribute") {
-    return context.accessibleAttributeIds.has(rune.attributeId) ? rune : null;
+    return primaryAttributeIds(context.primaryProfession).includes(rune.attributeId) ? rune : null;
   }
   const definition = getUniversalRune(rune.runeId);
   if (definition === undefined) {

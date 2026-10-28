@@ -1,0 +1,26 @@
+{
+  "id": "ranger.call-of-haste",
+  "name": "Call of Haste",
+  "profession": "ranger",
+  "attribute": "Beast Mastery",
+  "type": "Shout.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 10
+  },
+  "overcast": 0,
+  "activationSeconds": 0,
+  "rechargeSeconds": 25,
+  "upkeep": false,
+  "description": "For 30 seconds, your animal companion has a 25% faster attack speed and moves 25% faster.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Ranger/78-Call_of_Haste",
+    "fetchedAt": "2026-10-28T09:13:02.884Z"
+  },
+  "unmapped": {}
+}

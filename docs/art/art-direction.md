@@ -393,7 +393,8 @@ Clicking it does nothing. Spectators have none.
 ### Damage and heal numbers
 
 Above a body, the column is already full: the health bar at r + 8 … r + 12,
-the cast bar at r + 15 … r + 19, the name with its bottom 3 px over that. A
+the cast bar at r + 15 … r + 19 with its type badge left of it at
+r + 13 … r + 21 (#1125), the name with its bottom 3 px over that. A
 number that starts on the bar and rises through the name hides both, and the
 name it hides is your target's.
 
@@ -727,6 +728,14 @@ lime and a weapon spell its periwinkle.
 | Binding Ritual | An urn on a base line                     |
 | Ward           | A ring on the ground, a post at its heart |
 | Skill          | Square                                    |
+
+**On the cast bar** (#1125). While a body casts, the same badge stands just
+left of its arena cast bar, so you can tell a hex from a spell before you read
+the name: 8 world units square, 1 unit clear of the bar, centred on it, so it
+spans r + 13 … r + 21 above the body, clear of the health bar. It scales with
+the bar under zoom, is drawn over the marks and under names and numbers (a
+long name may cover its top edge), and goes with the bar. A skill the client
+does not know has no badge. Static: reduced motion changes nothing.
 
 ### Skill icons
 

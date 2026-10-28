@@ -89,6 +89,7 @@ function body(id: string, x: number, team: RenderableActor["team"]): RenderableA
     exploited: false,
     knockedDown: false,
     castProgress: undefined,
+    castType: undefined,
     statuses: [],
     enchanted: false,
     hexed: false,

@@ -3,6 +3,7 @@ import {
   type CreatureLook,
   type OffhandId,
   type ProfessionId,
+  type SkillType,
   type Vec2,
 } from "@vibewars/game-core";
 
@@ -56,6 +57,8 @@ export interface RenderableActor {
   readonly knockedDown: boolean;
   /** Fraction of the current cast still remaining, or `undefined`. */
   readonly castProgress: number | undefined;
+  /** The casting skill's type, for the badge by the cast bar (#1125); only with `castProgress`. */
+  readonly castType: SkillType | undefined;
   readonly statuses: readonly string[];
   /** Wears the solid enchantment ring (#1117); never a corpse. */
   readonly enchanted: boolean;

@@ -409,3 +409,88 @@ describe("the wolf and its owner (#1046)", () => {
     expect(run()).toEqual(run());
   });
 });
+
+describe("the wolf's death penalty (#1133)", () => {
+  const DP: MatchRules = { ...RESPAWN, deathPenalty: true };
+
+  /** Raise the dead wolf with Comfort Animal as soon as its owner's bar allows. */
+  function comfort(sim: MatchSimulation, pet: Participant): void {
+    for (let waited = 0; sim.requestSkill("r", 1)?.check.ok !== true; waited += 1) {
+      expect(waited).toBeLessThan(30 / DT);
+      stepFor(sim, DT);
+    }
+    stepFor(sim, COMFORT_SECONDS);
+    expect(pet.combatant.dead).toBe(false);
+  }
+
+  it("costs it 15% of its 480 Health a death, down to −60%", () => {
+    const sim = match([ranger()], DP);
+    const pet = wolf(sim);
+    const maxima: number[] = [];
+    for (let death = 0; death < 5; death += 1) {
+      kill(sim, pet);
+      maxima.push(pet.combatant.maxHealth);
+      comfort(sim, pet);
+      // Out of the 5 s grace after a resurrection.
+      stepFor(sim, 6);
+    }
+    expect(maxima).toEqual([408, 336, 264, 192, 192]);
+    expect(pet.combatant.morale).toBe(-60);
+  });
+
+  it("costs nothing within 5 s of Comfort Animal raising it", () => {
+    const sim = match([ranger()], DP);
+    const pet = wolf(sim);
+    kill(sim, pet);
+    comfort(sim, pet);
+    stepFor(sim, 3);
+    kill(sim, pet);
+    expect(pet.combatant.morale).toBe(-15);
+  });
+
+  it("wins 2% back for a foe's death while it lives, and a morale boost lifts it", () => {
+    const sim = match([ranger(), spec("x", 1, vec2(600, 0))], DP);
+    const pet = wolf(sim);
+    kill(sim, pet);
+    comfort(sim, pet);
+    kill(sim, get(sim, "x"));
+    expect(pet.combatant.morale).toBe(-13);
+    sim.moraleBoost(0, 10);
+    expect(pet.combatant.morale).toBe(-3);
+    expect(pet.combatant.maxHealth).toBe(Math.floor(480 * 0.97));
+  });
+
+  it("gives its foes nothing when it dies", () => {
+    const sim = match([ranger(), spec("x", 1, vec2(600, 0))], DP);
+    const pet = wolf(sim);
+    const foe = get(sim, "x");
+    kill(sim, foe);
+    stepFor(sim, 1.5);
+    expect(foe.combatant.morale).toBe(-15);
+    kill(sim, pet);
+    stepFor(sim, DT);
+    expect(foe.combatant.morale).toBe(-15);
+  });
+
+  it("is kept when its owner respawns, and cleared by a reset", () => {
+    const sim = match([ranger()], DP);
+    const pet = wolf(sim);
+    kill(sim, pet);
+    kill(sim, get(sim, "r"));
+    stepFor(sim, 1.5);
+    expect(pet.combatant.dead).toBe(false);
+    expect(pet.combatant.morale).toBe(-15);
+    expect(pet.combatant.maxHealth).toBe(408);
+    sim.resetParticipant("r");
+    expect(pet.combatant.morale).toBe(0);
+    expect(pet.combatant.maxHealth).toBe(480);
+  });
+
+  it("costs nothing without the death penalty", () => {
+    const sim = match([ranger()], RESPAWN);
+    const pet = wolf(sim);
+    kill(sim, pet);
+    expect(pet.combatant.morale).toBe(0);
+    expect(pet.combatant.maxHealth).toBe(480);
+  });
+});

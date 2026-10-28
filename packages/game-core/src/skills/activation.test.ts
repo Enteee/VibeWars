@@ -326,6 +326,26 @@ describe("canActivate, a pet's skills (#1046)", () => {
     expect(ask({ id: "pet", team: 0, dead: true })).toEqual({ ok: true });
   });
 
+  it('a call takes a living pet only: none is "no-companion", a dead one "invalid-target-dead" (#1108)', () => {
+    const haste = skill("ranger.call-of-haste");
+    const call = (target: Parameters<typeof makeCombatant>[0] | undefined) =>
+      canActivate(
+        request({
+          skill: haste,
+          caster,
+          target: target === undefined ? undefined : makeCombatant(target),
+          targetPosition: target === undefined ? undefined : vec2(20, 0),
+          skillBar: [haste.id],
+        }),
+      );
+    expect(call(undefined)).toEqual({ ok: false, reason: "no-companion" });
+    expect(call({ id: "pet", team: 0 })).toEqual({ ok: true });
+    expect(call({ id: "pet", team: 0, dead: true })).toEqual({
+      ok: false,
+      reason: "invalid-target-dead",
+    });
+  });
+
   it("Charm Animal is refused before its cost: there is no animal to charm", () => {
     expect(
       canActivate(

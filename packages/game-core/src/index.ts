@@ -79,6 +79,7 @@ export type { Character } from "./character.js";
 export {
   CharacterValidationError,
   accessibleAttributeIds,
+  primaryAttributeIds,
   validateCharacter,
 } from "./character.js";
 

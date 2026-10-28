@@ -165,6 +165,15 @@ describe("describeSkill", () => {
     ]);
   });
 
+  it("says a call acts on your living pet, and Revive Animal on every dead pet nearby (#1108)", () => {
+    const ranks = new Map([["ranger.beast-mastery", 12]]);
+    const described = (id: string) => describeSkill(skill(id), ranks);
+    expect(described("ranger.call-of-haste").targetText).toBe("Your living pet");
+    expect(described("ranger.revive-animal").effects.map((e) => e.text)).toEqual([
+      "Returns every dead allied pet nearby to life with 77% health",
+    ]);
+  });
+
   it("says what a summon makes, how tough and for how long (#1052)", () => {
     const summon = (durationSeconds?: number): SkillEffect => ({
       kind: "summon",
@@ -403,6 +412,13 @@ describe("describeSkill", () => {
 
   it("says Guardian blocks half of all attacks (#534)", () => {
     expect(describeStatus("guardian")).toBe("50% chance to block attacks");
+  });
+
+  it("says what the calls and the bond do to a pet (#1108)", () => {
+    expect(describeStatus("call-of-protection")).toBe("−17 damage taken");
+    expect(describeStatus("symbiotic-bond")).toContain(
+      "half its physical damage goes to its caster",
+    );
   });
 
   it("says weakness cuts the weapon and every attribute (#762)", () => {

@@ -6404,6 +6404,115 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   },
 
   /* ---------------------------------------------------------------------- */
+  /* Pet calls and bonds (#1108)                                            */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "ranger.call-of-haste",
+    name: "Call of Haste",
+    type: "shout",
+    elite: false,
+    profession: "ranger",
+    attributeId: "ranger.beast-mastery",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 25,
+    range: PET_REACH,
+    target: "living-companion",
+    area: undefined,
+    attack: undefined,
+    petAttack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    companion: undefined,
+    // The PvP version: "For 30 seconds, your animal companion has a 25%
+    // faster attack speed and moves 25% faster."
+    effects: [{ kind: "apply-status", statusId: "call-of-haste", durationSeconds: 30 }],
+  },
+  {
+    id: "ranger.call-of-protection",
+    name: "Call of Protection",
+    type: "shout",
+    elite: false,
+    profession: "ranger",
+    attributeId: "ranger.beast-mastery",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 90,
+    range: PET_REACH,
+    target: "living-companion",
+    area: undefined,
+    attack: undefined,
+    petAttack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    companion: undefined,
+    // "For 120 seconds, your animal companion has a 5...17...20 base
+    // damage reduction."
+    effects: [{ kind: "apply-status", statusId: "call-of-protection", durationSeconds: 120 }],
+  },
+  {
+    id: "ranger.symbiotic-bond",
+    name: "Symbiotic Bond",
+    type: "shout",
+    elite: false,
+    profession: "ranger",
+    attributeId: "ranger.beast-mastery",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 55,
+    range: PET_REACH,
+    target: "living-companion",
+    area: undefined,
+    attack: undefined,
+    petAttack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    companion: undefined,
+    // "For 120...264...300 seconds, your animal companion gains
+    // +1...3...3 health regeneration, and half of any physical damage
+    // dealt to your animal companion is redirected to you."
+    effects: [{ kind: "apply-status", statusId: "symbiotic-bond", durationSeconds: 264 }],
+  },
+  {
+    id: "ranger.revive-animal",
+    name: "Revive Animal",
+    type: "skill",
+    elite: false,
+    profession: "ranger",
+    attributeId: "ranger.beast-mastery",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    petAttack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    companion: undefined,
+    // "Resurrect all nearby allied animal companions. They come back to
+    // life with 10...77...94% Health."
+    effects: [
+      {
+        kind: "resurrect-companions",
+        radius: AREA_NEARBY,
+        healthPercent: {
+          scaling: { attributeId: "ranger.beast-mastery", atZero: 10, atTwelve: 77 },
+        },
+      },
+    ],
+  },
+
+  /* ---------------------------------------------------------------------- */
   /* Spirits (#1064)                                                        */
   /* ---------------------------------------------------------------------- */
   {

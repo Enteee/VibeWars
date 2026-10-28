@@ -58,6 +58,7 @@ import { MINIMAL_GW_INSPIRED_PVP_V1, type Ruleset } from "../ruleset.js";
 import {
   canActivate,
   hasAftercast,
+  isCompanionRule,
   payCost,
   type ActivationCheck,
   type ActivationRejection,
@@ -82,6 +83,7 @@ import {
 import { getSkill } from "../skills/catalog.js";
 import { clearChainMarksOn, tickChainMarks } from "../skills/chain.js";
 import {
+  applyDamage,
   applyEffects,
   applySkillEffects,
   applyStatus,
@@ -299,10 +301,20 @@ function reaches(affects: Aura["affects"], sourceTeam: number, team: number): bo
 
 /**
  * Whether `participant` counts for its team (ADR-0035): its roster,
- * score, morale and win condition. A creature never does.
+ * score, morale total and win condition. A creature never does.
  */
 export function countsForTeam(participant: Participant): boolean {
   return participant.creature === undefined;
+}
+
+/**
+ * Whether `participant` has morale (#843): a player, and a companion, a
+ * creature that lies when dead (#1133). Keyed on lying, not on pets, so a
+ * hero later gets the same rule. A companion's morale never counts for
+ * its team.
+ */
+function hasMorale(participant: Participant): boolean {
+  return participant.creature === undefined || participant.creature.onDeath === "lie";
 }
 
 export interface ParticipantSpec {
@@ -2230,7 +2242,7 @@ export class MatchSimulation {
 
   /** Who a targeted skill lands on: the selection, or the caster for an ally skill with no ally selected. */
   #castTarget(record: ParticipantRecord, skill: Skill): string | undefined {
-    if (skill.target === "companion") {
+    if (isCompanionRule(skill.target)) {
       return this.#companionOf(record)?.id;
     }
     if (skill.target !== "single-ally") {
@@ -2253,7 +2265,7 @@ export class MatchSimulation {
     key: string = skill.id,
   ): ActivationCheck {
     // A pet skill acts on the pet, whatever was asked (#1046).
-    const targetedId = skill.target === "companion" ? this.#companionOf(record)?.id : targetId;
+    const targetedId = isCompanionRule(skill.target) ? this.#companionOf(record)?.id : targetId;
     const target = targetedId === undefined ? undefined : this.#participants.get(targetedId);
     const check = canActivate({
       skill,
@@ -2679,6 +2691,13 @@ export class MatchSimulation {
       record,
       changes: record.combatant.statuses.drainChanges(),
     }));
+    for (const { record, changes: recorded } of changes) {
+      for (const change of recorded) {
+        if (change.kind === "redirected-damage") {
+          this.#landRedirected(record, change.toId, change.amount);
+        }
+      }
+    }
     const context = this.#triggerContext();
     for (const { record, changes: recorded } of changes) {
       for (const change of recorded) {
@@ -2688,6 +2707,35 @@ export class MatchSimulation {
     for (const record of this.#participants.values()) {
       record.combatant.statuses.drainChanges();
     }
+  }
+
+  /**
+   * Symbiotic Bond's share of a hit on `bearer` (#1108), on `toId`, the
+   * bond's caster: typeless, unmitigated and from nobody, so it is never
+   * redirected again and answers nothing. With its caster dead or gone,
+   * the bearer takes it back: damage never vanishes.
+   */
+  #landRedirected(bearer: ParticipantRecord, toId: string, amount: number): void {
+    const to = this.#participants.get(toId);
+    const victim = to === undefined || to.combatant.dead ? bearer : to;
+    const events: CombatEvent[] = [];
+    applyDamage(victim.combatant, amount, "typeless", false, events, undefined);
+    if (events.length === 0) {
+      return;
+    }
+    this.#log.push({
+      tick: this.#tick,
+      atSeconds: this.#elapsedSeconds,
+      cause: "skill",
+      sourceId: undefined,
+      skillId: undefined,
+      weaponId: undefined,
+      attributeId: undefined,
+      area: undefined,
+      doubleStrike: false,
+      events,
+    });
+    this.#recordDeaths(events);
   }
 
   /**
@@ -3602,14 +3650,16 @@ export class MatchSimulation {
         victim.combatant.cast.clearOverrides();
         dropEndedCopyPools(victim.combatant);
         emptyAdrenaline(victim.combatant);
-        // A creature (#1052) scores nothing, costs no morale and never
-        // respawns on its own: a spirit or minion leaves at the end of the
-        // step, a pet lies where it fell (#1046). Only a spirit's death is
-        // no soul to reap (GW1: "a non-Spirit creature").
+        // A creature (#1052) scores nothing and never respawns on its own:
+        // a spirit or minion leaves at the end of the step, a pet lies where
+        // it fell (#1046) and pays the death penalty (#1133). Only a
+        // spirit's death is no soul to reap (GW1: "a non-Spirit creature").
         if (victim.creature !== undefined) {
           victim.respawnInSeconds = Number.POSITIVE_INFINITY;
           if (victim.creature.onDeath === "vanish") {
             this.#leaving.add(victim.id);
+          } else {
+            this.#deathPenalty(victim);
           }
           if (victim.creature.kind !== "spirit") {
             this.#reapSoul(victim);
@@ -3833,13 +3883,16 @@ export class MatchSimulation {
   /**
    * The death penalty (#843, GW1): with `deathPenalty` on, `victim` loses
    * 15% morale, down to −60%, unless it was resurrected less than 5 s ago;
-   * its foes' +2% waits for the end of the step.
+   * its foes' +2% waits for the end of the step. A companion's death
+   * costs it the same but gives its foes nothing (#1133): it is no player.
    */
   #deathPenalty(victim: ParticipantRecord): void {
     if (this.#matchRules?.deathPenalty !== true) {
       return;
     }
-    this.#moraleKills.push(victim.combatant.team);
+    if (countsForTeam(victim)) {
+      this.#moraleKills.push(victim.combatant.team);
+    }
     if (this.#elapsedSeconds - victim.resurrectedAtSeconds < DP_GRACE_AFTER_RES_SECONDS) {
       return;
     }
@@ -3851,7 +3904,8 @@ export class MatchSimulation {
 
   /**
    * Every death this step gives each living foe in the death penalty 2%
-   * back, up to 0 (#843): a kill never boosts. A creature has no morale (#1052).
+   * back, up to 0 (#843): a kill never boosts. Of creatures, only a
+   * companion has morale (#1133).
    */
   #awardKillMorale(): void {
     for (const team of this.#moraleKills) {
@@ -3861,7 +3915,7 @@ export class MatchSimulation {
           combatant.team !== team &&
           !combatant.dead &&
           combatant.morale < 0 &&
-          countsForTeam(record)
+          hasMorale(record)
         ) {
           this.#setMorale(record, Math.min(0, combatant.morale + KILL_MORALE_PERCENT));
         }
@@ -3872,13 +3926,14 @@ export class MatchSimulation {
 
   /**
    * A morale boost (GvG's flag stand, HA's altar): `amount` percent to
-   * every member of `team`, dead or alive, up to +10%, creatures aside (#1052). Not capped at 0,
+   * every member of `team`, dead or alive, up to +10%, companions too but no
+   * other creature (#1052, #1133). Not capped at 0,
    * so it lifts a death penalty too. It readies every skill spent until a
    * morale boost (#474), at +10% too.
    */
   public moraleBoost(team: number, amount: number): void {
     for (const record of this.#participants.values()) {
-      if (record.combatant.team === team && countsForTeam(record)) {
+      if (record.combatant.team === team && hasMorale(record)) {
         this.#setMorale(record, Math.min(MORALE_CEILING, record.combatant.morale + amount));
         record.combatant.cast.refreshSpent();
       }
@@ -3887,12 +3942,16 @@ export class MatchSimulation {
 
   /**
    * Set `record`'s morale and the maxima that follow it (GW1: on the base,
-   * before upgrades). A drop clamps health and energy to the new
-   * ceilings; a rise leaves them where they are.
+   * before upgrades; a creature has none, so its base is its own). A drop
+   * clamps health and energy to the new ceilings; a rise leaves them where
+   * they are.
    */
   #setMorale(record: ParticipantRecord, morale: number): void {
     const { combatant } = record;
-    const { baseHealth, baseEnergy } = this.#ruleset.combat;
+    const { baseHealth, baseEnergy } =
+      record.creature === undefined
+        ? this.#ruleset.combat
+        : { baseHealth: record.resolvedMaxHealth, baseEnergy: record.resolvedMaxEnergy };
     combatant.morale = morale;
     combatant.maxHealth = moraleMaximum(baseHealth, record.resolvedMaxHealth, morale);
     combatant.maxEnergy = moraleMaximum(baseEnergy, record.resolvedMaxEnergy, morale);
