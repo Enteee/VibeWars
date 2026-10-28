@@ -38,8 +38,10 @@ adds its entry in the same pull request.**
   the list grows large, the section can load them lazily.
 - Our own licence (the root `LICENSE`, AGPL) is not on the page and is
   untouched: this page is for third-party notices only.
-- npm dependencies the bundle includes (Phaser, Strudel...) are not
-  listed yet; a later card fills the list under this rule.
+- npm dependencies the bundle includes (Phaser, Strudel...) are listed
+  by the build, not by hand (#1242): `apps/web/plugins/licences.ts` writes
+  `licences.json` from the bundle's modules, and fails on a licence
+  outside its allowlist.
 
 ## Alternatives Considered
 
