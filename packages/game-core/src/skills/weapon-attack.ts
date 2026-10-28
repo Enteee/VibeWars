@@ -30,7 +30,8 @@ import { nearestFirst, type TargetCandidate } from "./targeting.js";
 import {
   attackDamageTypeOf,
   attackMissChanceOf,
-  blockChanceOf,
+  blockingStatusesOf,
+  combinedBlockChance,
   rankOf,
   weaponDamageMultiplierOf,
 } from "./tick.js";
@@ -272,8 +273,35 @@ export function blocks(
   if (exposed) {
     return false;
   }
-  const chance = blockChanceOf(victim, kind);
-  return chance > 0 && rng.nextFloat() < chance;
+  const blocking = blockingStatusesOf(victim);
+  const chance = combinedBlockChance(
+    blocking.map(({ block }) => block),
+    kind,
+  );
+  if (chance <= 0) {
+    return false;
+  }
+  const roll = rng.nextFloat();
+  if (roll >= chance) {
+    return false;
+  }
+  // One roll, as before; the status that blocked is the one whose share
+  // of it the roll fell in, in roll order, so only Displacement's own
+  // block charges its spirit (#1265).
+  let covered = 0;
+  let unblocked = 1;
+  for (const { statusId, block } of blocking) {
+    if (block.against !== "all" && block.against !== kind) {
+      continue;
+    }
+    covered += unblocked * block.chance;
+    unblocked *= 1 - block.chance;
+    if (roll < covered) {
+      victim.statuses.chargeSources((definition) => definition.id === statusId);
+      break;
+    }
+  }
+  return true;
 }
 
 /**
