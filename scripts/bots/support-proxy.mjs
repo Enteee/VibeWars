@@ -33,8 +33,12 @@ export const DEFAULT_REQUESTS_PER_HOUR = 200;
 /** The beta flag the API wants on a request authorized by an OAuth token. */
 export const OAUTH_BETA = "oauth-2025-04-20";
 
-/** The API's paths; anything else is refused, never forwarded. */
-const API_PATH = /^\/v1\/[A-Za-z0-9/_.-]*(\?[^#]*)?$/;
+/**
+ * The requests Claude Code makes, as method and path, each with an optional
+ * plain query string. Anything else is refused, never forwarded: a looser
+ * pattern lets `/v1/../api/oauth/...` through, and upstream may resolve it.
+ */
+const API_REQUEST = /^POST \/v1\/messages(\/count_tokens)?(\?[A-Za-z0-9_=&-]*)?$/;
 
 const HOUR_MS = 3_600_000;
 
@@ -93,14 +97,18 @@ export function accessToken(text, now) {
 }
 
 /**
- * Why a request is not forwarded, or null if it is: only the API's own
- * paths, as origin-form URLs, so a jail cannot name another host.
+ * Why a request is not forwarded, or null if it is: only the API requests
+ * Claude Code makes, as origin-form URLs, so a jail can name neither
+ * another host nor another path on this one.
  *
+ * @param {string | undefined} method the request line's method
  * @param {string | undefined} url the request line's target
  * @returns {string | null}
  */
-export function refusal(url) {
-  return url !== undefined && API_PATH.test(url) ? null : "only the Anthropic API is reachable";
+export function refusal(method, url) {
+  return API_REQUEST.test(`${String(method)} ${String(url)}`)
+    ? null
+    : "only the Anthropic API is reachable";
 }
 
 /**
@@ -194,9 +202,15 @@ export function createSupportProxy({ readCredentials, perHour, now, upstream, lo
   };
 
   return http.createServer((req, res) => {
-    const refused = refusal(req.url);
+    const refused = refusal(req.method, req.url);
     if (refused !== null) {
       refuse(res, 403, refused);
+      req.resume();
+      return;
+    }
+    const credential = accessToken(readCredentials(), now());
+    if ("refused" in credential) {
+      refuse(res, 503, credential.refused);
       req.resume();
       return;
     }
@@ -204,12 +218,6 @@ export function createSupportProxy({ readCredentials, perHour, now, upstream, lo
     admitted = budget.admitted;
     if (!budget.admit) {
       refuse(res, 429, `support paused: over ${String(perHour)} requests this hour`);
-      req.resume();
-      return;
-    }
-    const credential = accessToken(readCredentials(), now());
-    if ("refused" in credential) {
-      refuse(res, 503, credential.refused);
       req.resume();
       return;
     }
