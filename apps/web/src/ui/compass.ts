@@ -12,9 +12,9 @@ import { prefersReducedMotion } from "./recharge-overlay.js";
  * The compass (#486, GW1's radar): a disc top right, centred on you, north
  * up, with every living body within its reach (`compassReach`), your
  * target, the called foe, your team's pings, the resurrection shrines
- * (#1199), the earshot and cast-range rings and the walls (docs/art/art-direction.md "Compass"). Bodies
- * beyond it are not shown: the edge markers (#440) give direction, the
- * compass distance.
+ * (#1199), the earshot and cast-range rings and the walls
+ * (docs/art/art-direction.md "Compass"). Bodies beyond it are not shown:
+ * the edge markers (#440) give direction, the compass distance.
  */
 
 /** The compass's content in its own px, centre (0,0), y down, north up (#486). */
