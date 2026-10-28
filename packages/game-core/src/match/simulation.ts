@@ -524,7 +524,8 @@ interface ParticipantRecord extends Participant {
   skillBar: SkillBar;
   readonly spec: ParticipantSpec;
   readonly behaviour: Behaviour | undefined;
-  readonly cursor: BehaviourCursor;
+  /** Fresh on a respawn: a bot back from the dead starts its thinking over (#1189). */
+  cursor: BehaviourCursor;
   /** `on-interval`: seconds since the last reset. */
   sinceReset: number;
   outOfCombatSeconds: number;
@@ -2427,10 +2428,14 @@ export class MatchSimulation {
       // The same slowed speed advanceMovement will move it at, so a
       // crippled dummy plans with the step it will really take.
       stepUnits: this.#stepUnits(record, dt),
-      canUse: (skillId, targetId) => {
+      check: (skillId, targetId) => {
         const skill = getSkill(skillId);
-        return skill !== undefined && this.#check(record, skill, targetId).ok;
+        return skill === undefined
+          ? { ok: false, reason: "skill-not-on-bar" }
+          : this.#check(record, skill, targetId);
       },
+      isBot: (participantId) =>
+        this.#participants.get(participantId)?.behaviour?.kind === "play-build",
     });
     this.setInputDirection(record.id, intent.moveDirection);
     const following = record.followGoal !== undefined;
@@ -4484,6 +4489,9 @@ export class MatchSimulation {
     this.#clearChainMarks(record);
     record.pendingSkill = undefined;
     record.sinceReset = 0;
+    if (why === "respawn") {
+      record.cursor = createCursor();
+    }
     record.armedAttack = undefined;
     record.outOfCombatSeconds = 0;
     record.history.clear();
