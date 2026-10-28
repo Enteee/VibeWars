@@ -1808,3 +1808,38 @@ test("other professions' skills are listed, locked, with what they need (#568)",
   await expect(locked.locator(".skill-locked-box")).toHaveCount(1);
   await expect(locked.locator("summary")).toHaveText("Other professions (1)");
 });
+
+test("the library lists GW1 skills not in the game yet only when asked, greyed and unslottable (#1220)", async ({
+  page,
+}) => {
+  await openElementalist(page);
+  const toggle = page.getByLabel("Show skills not in the game yet");
+  // Off by default: the library is as it was.
+  await expect(toggle).not.toBeChecked();
+  await expect(page.locator(".skill-corpus-box")).toHaveCount(0);
+
+  await toggle.check();
+  const fire = page.locator(".skill-group", { hasText: "FIRE MAGIC" });
+  // Rodgort's Invocation is GW1 Fire Magic VibeWars does not have yet.
+  const rodgort = fire.locator(".skill-corpus-box", { hasText: "Rodgort's Invocation" });
+  await expect(rodgort).toContainText("not in the game yet");
+  // After the group's playable skills.
+  await expect(fire.locator(".skill-box, .skill-corpus-box").last()).toHaveClass(
+    /skill-corpus-box/,
+  );
+  // It neither drags nor equips.
+  expect(await rodgort.getAttribute("draggable")).toBeNull();
+  await expect(rodgort.locator("button")).toHaveCount(0);
+  await rodgort.click();
+  await expect(page.locator(".skill-slot", { hasText: "Rodgort" })).toHaveCount(0);
+  // Its hover shows GW1's own text.
+  await rodgort.hover();
+  await expect(page.locator(".skill-tip")).toContainText("Not in the game yet");
+
+  // The search finds it; remembered across a reload.
+  await page.locator("input.skill-search").fill("rodgort");
+  await expect(page.locator(".skill-corpus-box")).toHaveCount(1);
+  await page.reload();
+  await page.getByRole("button", { name: "new character" }).click();
+  await expect(page.getByLabel("Show skills not in the game yet")).toBeChecked();
+});
