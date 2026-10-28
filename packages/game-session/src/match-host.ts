@@ -608,7 +608,12 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     // A wrong or expired token is a fresh join, and only for a peer the
     // lobby seated: anyone else in the room is a spectator, or a stranger.
     const plan = planned?.get(from);
-    if (seats.size >= maxPlayers || (planned !== null && plan === undefined)) {
+    // A bot's seat is taken already: no peer plays it, whatever it calls itself.
+    if (
+      seats.size >= maxPlayers ||
+      (planned !== null && plan === undefined) ||
+      (plan !== undefined && plan.bot !== null)
+    ) {
       refuse(from, "match-full", MATCH_FULL_MESSAGE);
       return;
     }
