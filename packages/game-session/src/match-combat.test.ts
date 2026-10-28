@@ -81,8 +81,12 @@ const HAMMERER: PlayerBuild = {
   skillBar: ["warrior.backbreaker", null, null, null, null, null, null, null],
   equipment: {
     ...defaultBuildEquipment("warrior"),
-    mainHand: { weaponId: "hammer", requirementAttributeId: null },
-    offHand: null,
+    weaponSets: [
+      { mainHand: { weaponId: "hammer", requirementAttributeId: null }, offHand: null },
+      null,
+      null,
+      null,
+    ],
   },
 };
 

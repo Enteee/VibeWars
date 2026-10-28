@@ -38,7 +38,14 @@ describe("isStoredCharacter", () => {
 
   it("rejects a record at any other schema version", () => {
     // Older and newer alike: a version only ever rejects (ADR-0016).
-    for (const schemaVersion of [0, CHARACTER_SCHEMA_VERSION + 1, 99, "1", undefined]) {
+    for (const schemaVersion of [
+      0,
+      CHARACTER_SCHEMA_VERSION - 1,
+      CHARACTER_SCHEMA_VERSION + 1,
+      99,
+      "1",
+      undefined,
+    ]) {
       expect(isStoredCharacter({ ...CHARACTER, schemaVersion }), String(schemaVersion)).toBe(false);
     }
   });

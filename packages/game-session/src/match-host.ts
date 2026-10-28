@@ -7,6 +7,7 @@ import {
   applyIntent,
   drainAccumulator,
   resolveJoinLoadout,
+  loadoutSpec,
   resolveLoadout,
   spawnFacing,
   swingProgress,
@@ -415,16 +416,14 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       id: playerId,
       team,
       skillBar: loadout.skillBar,
-      attributeRanks: resolved.attributeRanks,
-      equipment: resolved.equipment,
+      ...loadoutSpec(resolved),
       spawn,
       facing: spawnFacing(
         spawn,
         map.spawns.filter((point) => point.team !== team).map((point) => point.position),
         map.spawns.map((point) => point.position),
       ),
-      maxHealth: resolved.maxHealth,
-      maxEnergy: resolved.maxEnergy,
+      // The house loadout's, which is not its primary's (join-loadout.ts).
       baseEnergyPips: loadout.baseEnergyPips,
     });
     const seat: Seat = {

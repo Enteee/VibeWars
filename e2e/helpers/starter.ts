@@ -1,5 +1,6 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
+import { BUILD_FORMAT_VERSION } from "../../apps/web/src/storage/build-transfer.js";
 import { STARTER_BUILDS } from "../../packages/game-core/src/starter-builds.js";
 import { skillKey } from "../keys.js";
 
@@ -40,7 +41,7 @@ export async function bringStarter(page: Page, name: string): Promise<void> {
   // The build editor's import format (apps/web/src/storage/build-transfer.ts).
   const shared = JSON.stringify({
     format: "vibewars.character",
-    formatVersion: 2,
+    formatVersion: BUILD_FORMAT_VERSION,
     ...build,
     secondaryProfession: build.secondaryProfession ?? null,
   });

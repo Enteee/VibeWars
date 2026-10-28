@@ -1296,11 +1296,19 @@ describe("a caster weapon's element (#761)", () => {
       {
         primaryProfession: "ranger",
         allocatedRanks: new Map(),
-        equipment: { ...defaultEquipmentFor("ranger"), offHand: null, armor: bareArmorSet() },
+        equipment: {
+          weaponSets: [
+            { ...defaultEquipmentFor("ranger").weaponSets[0], offHand: null },
+            null,
+            null,
+            null,
+          ],
+          armor: bareArmorSet(),
+        },
       },
       RULES,
     );
-    return makeCombatant({ id: "ranger", team: 1, equipment: resolved.equipment });
+    return makeCombatant({ id: "ranger", team: 1, equipment: resolved.weaponSets[0].equipment });
   }
 
   /** What one wand bolt linked to `attributeId` does to a Ranger. */

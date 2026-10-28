@@ -92,7 +92,9 @@ describe("a lobby's own match", () => {
     await lobby.step(0.05);
     // A starter build fills all eight slots: only this build has the gaps (#852).
     expect(match.skillBar.map((slot) => slot?.id ?? null)).toEqual(pyro.skillBar);
-    expect(self(match)?.weaponId).toBe(defaultBuildEquipment("elementalist").mainHand.weaponId);
+    expect(self(match)?.weaponId).toBe(
+      defaultBuildEquipment("elementalist").weaponSets[0].mainHand.weaponId,
+    );
   });
 
   it("seats each member on the team the lobby gave them, not one the host picks", async () => {

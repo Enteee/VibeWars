@@ -147,8 +147,9 @@ export type {
   ParticipantSpec,
   SkillRequest,
   StepResult,
+  WeaponSetRequest,
 } from "./match/simulation.js";
-export { countsForTeam, MAX_CREATURES, MatchSimulation } from "./match/simulation.js";
+export { countsForTeam, loadoutSpec, MAX_CREATURES, MatchSimulation } from "./match/simulation.js";
 export type { CorpseCandidate } from "./match/corpses.js";
 export { isFreshCorpse, nearestFreshCorpse } from "./match/corpses.js";
 export { facingToward, spawnFacing } from "./match/facing.js";
