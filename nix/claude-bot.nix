@@ -290,6 +290,60 @@ let
     exit "$failed"
   '';
 
+  # What support's API proxy lets through in an hour when company.json names
+  # no supportRequestsPerHour (#148): a login has no spend limit of its own.
+  supportRequestsPerHour = 200;
+
+  # The support jail's entrypoint (#148). It has no network, so Claude's API
+  # traffic goes to loopback, where socat hands each connection to the
+  # host's proxy through the socket bound in. It waits until socat listens,
+  # so Claude's first request finds it.
+  supportInit = pkgs.writeShellScript "vibewars-support-init" ''
+    ${pkgs.socat}/bin/socat \
+      "TCP-LISTEN:$VIBEWARS_PROXY_PORT,bind=127.0.0.1,fork,reuseaddr" \
+      "UNIX-CONNECT:$VIBEWARS_PROXY_SOCKET" &
+    for _ in $(seq 50); do
+      (exec 3<>"/dev/tcp/127.0.0.1/$VIBEWARS_PROXY_PORT") 2>/dev/null && break
+      sleep 0.1
+    done
+    exec "$@"
+  '';
+
+  # `claude-bot --smoke support`: support's jail holds no secret and can
+  # write nothing shared (#148, ADR-0025), checked from inside it.
+  supportSmoke = pkgs.writeShellScript "vibewars-support-smoke" ''
+    failed=0
+    check() {
+      if [ "$2" = "$3" ]; then
+        echo "ok    $1"
+      else
+        echo "FAIL  $1: expected '$3', got '$2'"
+        failed=1
+      fi
+    }
+    others() {
+      ls -A "$1" | grep -vxE "_alive|$VIBEWARS_BOT_EMPLOYEE" || true
+    }
+
+    check "no .git in or above the working directory" \
+      "$(git rev-parse --git-dir 2>/dev/null; find . -name .git -print -quit)" ""
+    check "the source tree is read-only" \
+      "$(touch "smoke-$$" 2>&1 | grep -o 'Read-only file system')" "Read-only file system"
+    check "no Claude credential in the box" \
+      "$(test -e "$HOME/.claude/.credentials.json" && echo present)" ""
+    check "no credential in the environment" \
+      "$(env | grep -E '^(ANTHROPIC_API_KEY|CLAUDE_CODE_OAUTH_TOKEN|GH_TOKEN|GITHUB_TOKEN|TELEGRAM_[A-Z_]+)=' | cut -d= -f1)" ""
+    check "Claude's token is the proxy's placeholder" "$ANTHROPIC_AUTH_TOKEN" "support-proxy"
+    check "no other employee's bus" "$(others "$VIBEWARS_BOT_BUS")" ""
+    check "no other employee's hub spool" "$(others "$(dirname "$VIBEWARS_HUB")")" ""
+    check "no git config of the operator's" "$(test -e "$HOME/.config/git" && echo present)" ""
+    check "no network beyond loopback" \
+      "$(curl -sS --max-time 5 -o /dev/null https://1.1.1.1 2>/dev/null && echo reached)" ""
+    check "the proxy refuses anything but the API" \
+      "$(curl -s -o /dev/null -w '%{http_code}' "$ANTHROPIC_BASE_URL/api/hello")" "403"
+    exit "$failed"
+  '';
+
   # Tools only one role needs. Everything here is reachable from inside the
   # jail only because /nix/store is bind-mounted, so adding a role's tools
   # costs nothing for the other eight.
@@ -605,6 +659,9 @@ let
         mkdir -p "$VIBEWARS_BOT_ROOT" "$VIBEWARS_BOT_BUS" "$VIBEWARS_BOT_ROOT/link" "$VIBEWARS_BOT_ROOT/wt"
         mkdir -p "$VIBEWARS_BOT_ROOT/hub/$employee/req" "$VIBEWARS_BOT_ROOT/hub/$employee/res"
         mkdir -p "$VIBEWARS_BOT_BUS/$employee"
+        # The sidecar's and hubd's heartbeats (#148), made now so support's
+        # jail can bind them before either has written one.
+        mkdir -p "$VIBEWARS_BOT_BUS/_alive" "$VIBEWARS_BOT_ROOT/hub/_alive"
         # Main's skills, which hubd exports here after each fetch (#27). Made
         # now so the bind below has something to bind before hubd's first run.
         mkdir -p "$VIBEWARS_BOT_ROOT/skills-main"
@@ -683,8 +740,39 @@ let
         # ----------------------------------------------------------------------
         # Created, or repaired if its admin dir is gone, here on the host: the
         # jail cannot write .git/worktrees (#69, see the binds below).
-        worktree="$VIBEWARS_BOT_ROOT/wt/$employee"
-        ${node} ${botScripts}/worktree.mjs "$DEVENV_ROOT" "$employee" ${config.git-hooks.configFile}
+        #
+        # Support has none (#148, ADR-0025): it reads strangers' text, so its
+        # jail holds no secret and can write nothing shared. Its working
+        # directory is main, exported as files from hubd's mirror before each
+        # turn, and its only way out is the API proxy started here, which
+        # holds the company's credential on the host.
+        if [ "$role" = "support" ]; then
+          if ! exported="$(PATH="${pkgs.git}/bin:${pkgs.gnutar}/bin:$PATH" ${node} ${botScripts}/support-src.mjs \
+               "$VIBEWARS_BOT_ROOT/hub/.git-mirror" "$VIBEWARS_BOT_ROOT/support-src/$employee")"; then
+            echo "claude-bot: refusing to start $employee: main could not be exported for it" >&2
+            exit 1
+          fi
+          sourceSha="''${exported%%$'\t'*}"
+          worktree="''${exported#*$'\t'}"
+          # Its box never holds a credential, whatever wrote one there.
+          rm -f "$boxDir/config/.credentials.json"
+          proxyDir="$VIBEWARS_BOT_ROOT/support-proxy/$employee"
+          mkdir -p "$proxyDir" && chmod 700 "$VIBEWARS_BOT_ROOT/support-proxy" "$proxyDir"
+          supportBudget="$(${pkgs.jq}/bin/jq -r '.supportRequestsPerHour // ${toString supportRequestsPerHour}' \
+            "$VIBEWARS_BOT_ROOT/company.json" 2>/dev/null || echo ${toString supportRequestsPerHour})"
+          # One proxy serves every turn: a second start finds it answering
+          # and exits. setsid, so it outlives this turn.
+          ${pkgs.util-linux}/bin/setsid ${node} ${botScripts}/support-proxy.mjs \
+            "$proxyDir/proxy.sock" "$creds" "$supportBudget" \
+            >>"$VIBEWARS_BOT_ROOT/support-proxy/$employee.log" 2>&1 </dev/null &
+          for _ in $(seq 50); do
+            [ -S "$proxyDir/proxy.sock" ] && break
+            sleep 0.1
+          done
+        else
+          worktree="$VIBEWARS_BOT_ROOT/wt/$employee"
+          ${node} ${botScripts}/worktree.mjs "$DEVENV_ROOT" "$employee" ${config.git-hooks.configFile}
+        fi
 
         # Marks onboarding done and this worktree trusted. Merged rather than
         # overwritten, so an agent's accumulated state survives.
@@ -813,7 +901,16 @@ let
         [ "$(${pkgs.git}/bin/git -C "$DEVENV_ROOT" config --get gc.packRefs)" = false ] || ${pkgs.git}/bin/git -C "$DEVENV_ROOT" config gc.packRefs false
         [ "$(${pkgs.git}/bin/git -C "$DEVENV_ROOT" config --get maintenance.auto)" = false ] || ${pkgs.git}/bin/git -C "$DEVENV_ROOT" config maintenance.auto false
 
-        if [ "$smoke" = "1" ]; then
+        # Support's tree is read-only and installs nothing; what it needs
+        # first is the forwarder to its proxy (#148).
+        if [ "$role" = "support" ]; then
+          init=(${supportInit})
+        else
+          init=(${jailInit})
+        fi
+        if [ "$smoke" = "1" ] && [ "$role" = "support" ]; then
+          jailCommand=(${supportInit} ${supportSmoke})
+        elif [ "$smoke" = "1" ]; then
           jailCommand=(${jailSmoke})
         else
           # Print mode cannot show a permission prompt, so the skip is
@@ -829,7 +926,7 @@ let
           # every call and have no use here: hub schedule replaces cron, and
           # worktrees are the host's job. --strict-mcp-config with no --mcp-config
           # leaves no MCP server, so no claude.ai connector can load.
-          jailCommand=(${jailInit} claude
+          jailCommand=("''${init[@]}" claude
             -p --output-format stream-json --verbose
             --dangerously-skip-permissions
             --strict-mcp-config
@@ -853,12 +950,39 @@ let
           echo "claude-bot: no systemd-run on PATH; the jail cannot be capped, so it does not start." >&2
           exit 1
         fi
-        exec "$systemdRun" --user --scope --quiet --collect \
-          --unit="vibewars-jail-''${employee/@/-}-$$" --slice=vibewars-jails.slice \
-          -- ${pkgs.util-linux}/bin/choom -n 1000 \
-          -- ${pkgs.coreutils}/bin/nice -n 10 \
-          -- ${pkgs.util-linux}/bin/prlimit --core=0 \
-          -- ${bwrap} \
+        launch=("$systemdRun" --user --scope --quiet --collect
+          --unit="vibewars-jail-''${employee/@/-}-$$" --slice=vibewars-jails.slice
+          -- ${pkgs.util-linux}/bin/choom -n 1000
+          -- ${pkgs.coreutils}/bin/nice -n 10
+          -- ${pkgs.util-linux}/bin/prlimit --core=0
+          -- ${bwrap})
+
+        # Support's arguments are built by jail-args.mjs, where CI tests
+        # them (#148, ADR-0025); everyone else's are below.
+        if [ "$role" = "support" ]; then
+          jailJson="$(${pkgs.jq}/bin/jq -n \
+            --arg employee "$employee" --arg role "$role" \
+            --arg home "$HOME" --arg user "$USER" --arg uid "$(id -u)" \
+            --arg bus "$VIBEWARS_BOT_BUS" --arg hub "$VIBEWARS_BOT_ROOT/hub" \
+            --arg source "$worktree" --arg sourceSha "$sourceSha" \
+            --arg box "$boxDir" --arg proxyDir "$proxyDir" \
+            --arg path "$sandboxPath" --arg shell "${jailShell}/bin/bash" \
+            --arg term "''${TERM:-xterm-256color}" --arg lang "''${LANG:-C.UTF-8}" \
+            --arg colorterm "''${COLORTERM:-truecolor}" \
+            --arg project "$projectNumber" --arg board "$boardIds" \
+            '$ARGS.named')"
+          argsFile="$(mktemp)"
+          if ! ${node} ${botScripts}/jail-args.mjs support "$jailJson" > "$argsFile"; then
+            rm -f "$argsFile"
+            echo "claude-bot: refusing to start $employee: no jail arguments" >&2
+            exit 1
+          fi
+          mapfile -d "" jailArgs < "$argsFile"
+          rm -f "$argsFile"
+          exec "''${launch[@]}" "''${jailArgs[@]}" -- "''${jailCommand[@]}"
+        fi
+
+        exec "''${launch[@]}" \
           --die-with-parent \
           --unshare-all \
           --share-net \

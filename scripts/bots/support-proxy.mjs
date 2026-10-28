@@ -18,10 +18,15 @@
  * only cap on what an injected support agent can spend (429 over it).
  *
  *     node support-proxy.mjs <socket> <credentials.json> <requests per hour>
+ *
+ * claude-bot starts it before every support turn; one that finds a proxy
+ * already answering on the socket exits, so one serves every turn, and
+ * the hour's budget is counted across them.
  */
 import fs from "node:fs";
 import http from "node:http";
 import https from "node:https";
+import net from "node:net";
 import { pathToFileURL } from "node:url";
 
 /** The one host the proxy forwards to. */
@@ -264,6 +269,21 @@ if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.a
   ) {
     console.error("usage: support-proxy.mjs <socket> <credentials.json> <requests per hour>");
     process.exit(2);
+  }
+  const answering = await new Promise(
+    /** @param {(answering: boolean) => void} resolve */ (resolve) => {
+      const probe = net.connect(socket);
+      probe.on("connect", () => {
+        probe.destroy();
+        resolve(true);
+      });
+      probe.on("error", () => {
+        resolve(false);
+      });
+    },
+  );
+  if (answering) {
+    process.exit(0);
   }
   fs.rmSync(socket, { force: true });
   const server = createSupportProxy({
