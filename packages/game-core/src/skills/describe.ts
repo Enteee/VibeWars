@@ -1198,6 +1198,7 @@ const TARGET_TEXT: Record<Skill["target"], string> = {
   "single-other-ally": "Another ally",
   "single-any": "Any one target",
   "single-dead-ally": "A dead ally",
+  companion: "Your pet",
 };
 
 const AREA_WHO: Record<AreaRule["affects"], string> = {
@@ -1394,6 +1395,18 @@ export function describeSkill(
     skill.corpse === undefined
       ? []
       : [{ text: "Exploits the nearest corpse", magnitude: undefined }];
+  // A pet that comes with the skill on the bar (#1046): Charm Animal's.
+  const companionHealth =
+    skill.companion === undefined ? undefined : describeMagnitude(skill.companion.maxHealth, ranks);
+  const companionLine =
+    skill.companion === undefined || companionHealth === undefined
+      ? []
+      : [
+          {
+            text: `While on your bar, a ${skill.companion.name} (${String(companionHealth.current)} Health) fights beside you`,
+            magnitude: companionHealth,
+          },
+        ];
   const effects = [
     ...lossLine,
     ...chainLine,
@@ -1408,6 +1421,7 @@ export function describeSkill(
     ...whileActivating,
     ...easilyInterrupted,
     ...projectile,
+    ...companionLine,
   ];
   const { target, range } = targetAndRange(skill);
   const numbers = [

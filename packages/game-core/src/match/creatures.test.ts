@@ -61,6 +61,8 @@ function summonSkill(
     ...(durationSeconds === undefined ? {} : { durationSeconds: { flat: durationSeconds } }),
     behaviour: { kind: "idle" },
     aura: undefined,
+    onDeath: "vanish",
+    ownerDisableOnDeath: undefined,
   };
   TEST_SKILLS.set(id, {
     id,
@@ -79,6 +81,7 @@ function summonSkill(
     attack: undefined,
     whileActivating: undefined,
     corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     effects: [{ kind: "summon", creature, count }],
   });

@@ -33,6 +33,7 @@ const SPELL: Skill = {
   attack: undefined,
   whileActivating: undefined,
   corpse: undefined,
+  companion: undefined,
   projectile: undefined,
   effects: [{ kind: "damage", amount: { flat: 50 }, type: "typeless", armorPenetration: 0 }],
 };
@@ -290,6 +291,50 @@ describe("targetRuleAllows (#599)", () => {
       undefined,
       "invalid-target-enemy",
     ]);
+  });
+});
+
+describe("canActivate, a pet's skills (#1046)", () => {
+  const skill = (id: string): Skill => {
+    const found = getSkill(id);
+    if (found === undefined) {
+      throw new Error(`${id} is not in the catalog`);
+    }
+    return found;
+  };
+  const comfort = skill("ranger.comfort-animal");
+  const charm = skill("ranger.charm-animal");
+  const caster = makeCombatant({ id: "caster", team: 0, energy: 50 });
+  const ask = (target: Parameters<typeof makeCombatant>[0] | undefined) =>
+    canActivate(
+      request({
+        skill: comfort,
+        caster,
+        target: target === undefined ? undefined : makeCombatant(target),
+        targetPosition: target === undefined ? undefined : vec2(20, 0),
+        skillBar: [comfort.id],
+      }),
+    );
+
+  it('Comfort Animal with no pet is "no-companion"', () => {
+    expect(ask(undefined)).toEqual({ ok: false, reason: "no-companion" });
+  });
+
+  it("Comfort Animal takes the pet alive or dead", () => {
+    expect(ask({ id: "pet", team: 0 })).toEqual({ ok: true });
+    expect(ask({ id: "pet", team: 0, dead: true })).toEqual({ ok: true });
+  });
+
+  it("Charm Animal is refused before its cost: there is no animal to charm", () => {
+    expect(
+      canActivate(
+        request({
+          skill: charm,
+          caster: makeCombatant({ id: "caster", team: 0, energy: 0 }),
+          skillBar: [charm.id],
+        }),
+      ),
+    ).toEqual({ ok: false, reason: "no-animal-to-charm" });
   });
 });
 

@@ -42,10 +42,14 @@ describe("skill catalog integrity", () => {
   });
 
   it("gives every skill something to do — no empty placeholder skills", () => {
+    // A companion's skill does its job by being on the bar (#1046).
     for (const skill of IMPLEMENTED_SKILLS) {
-      expect(skill.effects.length + (skill.attack === undefined ? 0 : 1), skill.id).toBeGreaterThan(
-        0,
-      );
+      expect(
+        skill.effects.length +
+          (skill.attack === undefined ? 0 : 1) +
+          (skill.companion === undefined ? 0 : 1),
+        skill.id,
+      ).toBeGreaterThan(0);
     }
   });
 

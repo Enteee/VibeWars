@@ -54,6 +54,9 @@ function standing(id: string, ownerId: string, spawn: Vec2): ParticipantSpec {
       summonedAtTick: 0,
       skillId: MINIONS,
       aura: undefined,
+      onDeath: "vanish",
+      ownerDisableSeconds: 0,
+      companionSkillId: undefined,
     },
   };
 }

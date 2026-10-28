@@ -562,6 +562,7 @@ describe("applySkillEffects", () => {
     attack: undefined,
     whileActivating: undefined,
     corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     effects: [
       { kind: "sacrifice-health", percentOfMax: 10 },
@@ -792,6 +793,7 @@ describe("if effects (#521)", () => {
       attack: undefined,
       whileActivating: undefined,
       corpse: undefined,
+      companion: undefined,
       projectile: undefined,
       effects: [{ kind: "remove-status", category: "enchantment", count: 1 }, ifRemoved],
     };
@@ -1014,6 +1016,7 @@ describe("state conditions (#794)", () => {
       attack: undefined,
       whileActivating: undefined,
       corpse: undefined,
+      companion: undefined,
       projectile: undefined,
       effects: healIf({ kind: "target-health-below", fraction: 0.5 }),
     };
@@ -1121,6 +1124,7 @@ describe("losing your own enchantment (#845)", () => {
     attack: undefined,
     whileActivating: undefined,
     corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     effects,
   });
