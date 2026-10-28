@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { AREA_EARSHOT } from "../distances.js";
+import { AREA_EARSHOT, RANGE_NATURE_RITUAL } from "../distances.js";
 import { createRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { vec2, type Vec2 } from "../vec2.js";
@@ -55,15 +55,23 @@ function around(
   spirits: readonly Vec2[],
 ): Surroundings {
   return new Map<string, TargetCandidate>([
-    [caster.id, { combatant: caster, position: vec2(0, 0) }],
-    [target.id, { combatant: target, position: allyAt }],
+    [caster.id, { combatant: caster, position: vec2(0, 0), creature: undefined }],
+    [target.id, { combatant: target, position: allyAt, creature: undefined }],
     ...spirits.map((position, index) => {
       const id = `spirit${String(index)}`;
       const spirit = makeCombatant({ id, team: 1 });
       const candidate: TargetCandidate = {
         combatant: spirit,
         position,
-        creature: { kind: "spirit" },
+        creature: {
+          ownerId: "f",
+          kind: "spirit",
+          name: "Winnowing",
+          expiresInSeconds: Infinity,
+          summonedAtTick: 0,
+          skillId: "ranger.winnowing",
+          aura: { statusId: "winnowing", affects: "all", radius: RANGE_NATURE_RITUAL },
+        },
       };
       return [id, candidate] as const;
     }),

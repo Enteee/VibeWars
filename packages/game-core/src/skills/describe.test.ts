@@ -281,6 +281,50 @@ describe("describeSkill", () => {
     expect(card.targetText).toBe("A dead ally");
   });
 
+  it("words the four resurrection skills at rank 0 and 12 (#474)", () => {
+    const at = (rank: number) =>
+      new Map([
+        ["monk.protection-prayers", rank],
+        ["paragon.leadership", rank],
+        ["ritualist.restoration-magic", rank],
+      ]);
+    const lines = (id: string, rank: number) =>
+      describeSkill(skill(id), at(rank)).effects.map((e) => e.text);
+    expect(lines("common.resurrection-signet", 0)).toEqual([
+      "Returns the target to life with 100% health and 25% energy",
+    ]);
+    expect(lines("monk.rebirth", 12)).toEqual([
+      "Returns the target to life with 25% health and 0% energy, and teleports the target to you",
+      "If it resurrects: all of the target's skills are disabled for 4 seconds",
+      "You lose all your remaining energy",
+    ]);
+    expect(lines("monk.rebirth", 0)[1]).toBe(
+      "If it resurrects: all of the target's skills are disabled for 10 seconds",
+    );
+    expect(lines("paragon.signet-of-return", 12)).toEqual([
+      "Returns the target to life with 13% health and 3% energy per party member in earshot",
+    ]);
+    expect(lines("paragon.signet-of-return", 0)).toEqual([
+      "Returns the target to life with 5% health and 1% energy per party member in earshot",
+    ]);
+    expect(lines("ritualist.flesh-of-my-flesh", 12)).toEqual([
+      "Returns the target to life with your health after losing half and 17% energy",
+    ]);
+    expect(lines("ritualist.flesh-of-my-flesh", 0)).toEqual([
+      "Returns the target to life with your health after losing half and 5% energy",
+    ]);
+    expect(describeSkill(skill("ritualist.flesh-of-my-flesh"), at(12)).headline).toBe(
+      "resurrects, 17% energy",
+    );
+  });
+
+  it("says a skill spent until a morale boost recharges on one (#474)", () => {
+    expect(describeSkill(skill("common.resurrection-signet"), new Map()).recharge).toBe(
+      "Morale boost",
+    );
+    expect(describeSkill(skill("monk.restore-life"), new Map()).recharge).toBe("8s");
+  });
+
   it("says what is taken, and what comes per point of it (#793)", () => {
     const ranks = new Map([
       ["mesmer.domination-magic", 12],

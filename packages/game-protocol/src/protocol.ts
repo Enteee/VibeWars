@@ -164,6 +164,12 @@ export interface RechargeSlot {
  */
 export interface RechargeMessage {
   readonly slots: readonly RechargeSlot[];
+  /**
+   * The slots spent until a morale boost (#474): Resurrection Signet's,
+   * used and not recharging by time. A slot may be here and in `slots`,
+   * disabled too, and waits for both.
+   */
+  readonly spent: readonly number[];
 }
 
 /**

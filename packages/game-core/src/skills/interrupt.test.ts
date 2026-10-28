@@ -244,6 +244,7 @@ describe("status-driven combat scenarios", () => {
       target: undefined,
       targetPosition: undefined,
       rechargeRemaining: new Map(),
+      spent: new Set(),
       isCasting: false,
       skillBar: [skill.id],
       losBlockers: [],

@@ -1029,6 +1029,13 @@
             },
             { "name": "targetId", "optional": false, "type": "string" }
           ]
+        },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "teleported" } },
+            { "name": "targetId", "optional": false, "type": "string" },
+            { "name": "toId", "optional": false, "type": "string" }
+          ]
         }
       ]
     },
@@ -1391,7 +1398,8 @@
               ]
             }
           }
-        }
+        },
+        { "name": "spent", "optional": false, "type": { "array": "number" } }
       ]
     },
     "RechargeSlot": {

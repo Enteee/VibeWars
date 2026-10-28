@@ -62,7 +62,12 @@ function resolve(
 }
 
 const standing = (...placed: [Combatant, Vec2][]): Surroundings =>
-  new Map(placed.map(([combatant, position]) => [combatant.id, { combatant, position }]));
+  new Map(
+    placed.map(([combatant, position]) => [
+      combatant.id,
+      { combatant, position, creature: undefined },
+    ]),
+  );
 
 const damageTo = (events: readonly CombatEvent[], targetId: string): number[] =>
   events.flatMap((event) =>

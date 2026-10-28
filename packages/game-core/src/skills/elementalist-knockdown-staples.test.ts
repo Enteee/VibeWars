@@ -44,7 +44,7 @@ function foe(id = "foe", overrides: Partial<Combatant> = {}): Combatant {
 }
 
 function at(combatant: Combatant, position: Vec2): TargetCandidate {
-  return { combatant, position };
+  return { combatant, position, creature: undefined };
 }
 
 /** `user` pays for `skillId` and it lands on `targets`. */

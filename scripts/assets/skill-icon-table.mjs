@@ -196,4 +196,9 @@ export const SKILL_ICONS = {
   // Placeholders until the asset-designer's (#1064).
   "ranger.winnowing": { glyph: "blade-plus", modifier: "area" },
   "ritualist.recuperation": { glyph: "plaster", modifier: "hourglass" },
+  // Placeholders until the asset-designer's (#1068): resurrections.
+  "common.resurrection-signet": { glyph: "resurrect", modifier: "plus" },
+  "monk.rebirth": { glyph: "resurrect", modifier: "self" },
+  "paragon.signet-of-return": { glyph: "resurrect", modifier: "area" },
+  "ritualist.flesh-of-my-flesh": { glyph: "resurrect", modifier: "half" },
 };

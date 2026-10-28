@@ -188,6 +188,7 @@ describe("headless combat simulation", () => {
       target: target?.combatant,
       targetPosition: target?.position,
       rechargeRemaining: caster.cast.rechargeRemaining,
+      spent: caster.cast.spent,
       isCasting: caster.cast.isCasting,
       skillBar: caster.skillBar,
       losBlockers: [],
@@ -455,6 +456,14 @@ describe("skill attribute ownership", () => {
       for (const attributeId of scaled) {
         expect(attributeId, skill.id).toBe(skill.attributeId);
       }
+    }
+  });
+
+  it("gives a Common skill no attribute (#474)", () => {
+    const common = IMPLEMENTED_SKILLS.filter((skill) => skill.profession === "common");
+    expect(common.map((skill) => skill.id)).toEqual(["common.resurrection-signet"]);
+    for (const skill of common) {
+      expect(skill.attributeId, skill.id).toBeUndefined();
     }
   });
 

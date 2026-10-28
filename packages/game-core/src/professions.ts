@@ -140,6 +140,18 @@ export const PROFESSIONS: Readonly<Record<ProfessionId, ProfessionDefinition>> =
   ]),
 };
 
+/**
+ * Who a skill belongs to (#474): a profession, or GW1's "Common", the
+ * skills any character may equip (Resurrection Signet). Statuses,
+ * attributes and characters stay `ProfessionId`: only a skill can be common.
+ */
+export type SkillProfession = ProfessionId | "common";
+
+/** How a skill's owner reads: "Monk", or "Common". */
+export function skillProfessionName(profession: SkillProfession): string {
+  return profession === "common" ? "Common" : PROFESSIONS[profession].name;
+}
+
 export function getProfession(id: ProfessionId): ProfessionDefinition {
   return PROFESSIONS[id];
 }

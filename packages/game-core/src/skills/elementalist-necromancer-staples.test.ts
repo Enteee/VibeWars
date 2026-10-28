@@ -137,7 +137,7 @@ describe("Shadow of Fear (#918)", () => {
   const SHADOW = "necromancer.shadow-of-fear";
 
   function at(combatant: Combatant, position: Vec2): TargetCandidate {
-    return { combatant, position };
+    return { combatant, position, creature: undefined };
   }
 
   it("hexes its target and every foe adjacent to it, no farther, no ally", () => {
