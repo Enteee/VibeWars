@@ -8,13 +8,15 @@ import type { CreatureAttack } from "../skills/types.js";
 import {
   INHERENT_ARMOR_BY_PROFESSION,
   NO_PIECE_ARMOR,
+  NO_PIECE_REDUCTION,
   armorPieces,
   baseArmorFor,
   baseEnergyPipsFor,
   type ConditionalArmor,
   type PieceArmor,
+  type PieceReduction,
 } from "./armor.js";
-import { getInsignia, perSlotAmount } from "./insignias.js";
+import { getInsignia, insigniaAllowed, perSlotAmount, type Insignia } from "./insignias.js";
 import type { BuildEquipment, WeaponSet } from "./loadout.js";
 import { getOffhand, type OffhandId } from "./offhands.js";
 import {
@@ -69,6 +71,8 @@ export interface ResolvedEquipment {
   readonly conditionalArmor: readonly ConditionalArmor[];
   /** Insignias, on hits to their own piece only (#1135). */
   readonly pieceArmor: PieceArmor;
+  /** Knight's, off a physical hit to its own piece only, after armor (#1142). */
+  readonly pieceReduction: PieceReduction;
   /** Rune of Absorption: subtracted from each physical hit, after mitigation. */
   readonly flatPhysicalReduction: number;
   /** Multiplier applied to an incoming condition's duration. Absent means 1. */
@@ -160,11 +164,11 @@ function totalRunes(equipment: BuildEquipment, primaryProfession: ProfessionId):
   const worn: RuneEffect[] = [];
 
   for (const [slot, piece] of armorPieces(equipment.armor)) {
-    if (piece.insigniaId !== null) {
-      applyInsignia(piece.insigniaId, slot, (health, energy) => {
-        healthDelta += health;
-        energyDelta += energy;
-      });
+    const insignia = wornInsignia(piece.insigniaId, primaryProfession);
+    if (insignia?.effect.kind === "health") {
+      healthDelta += perSlotAmount(insignia.effect, slot);
+    } else if (insignia?.effect.kind === "energy") {
+      energyDelta += perSlotAmount(insignia.effect, slot);
     }
 
     const rune: EquippedRune | null = piece.rune;
@@ -239,39 +243,32 @@ function totalRunes(equipment: BuildEquipment, primaryProfession: ProfessionId):
   };
 }
 
-function applyInsignia(
-  insigniaId: string,
-  slot: ArmorSlot,
-  add: (health: number, energy: number) => void,
-): void {
-  const insignia = getInsignia(insigniaId);
-  if (insignia === undefined) {
-    return;
-  }
-  const { effect } = insignia;
-  if (effect.kind === "health") {
-    add(perSlotAmount(effect, slot), 0);
-  } else if (effect.kind === "energy") {
-    add(0, perSlotAmount(effect, slot));
-  }
+/**
+ * The insignia a piece holds, if it counts: another primary's is
+ * rejected by validation, and grants nothing if it gets here anyway, as
+ * a `requiresPrimary` rune does (#1142).
+ */
+function wornInsignia(insigniaId: string | null, primary: ProfessionId): Insignia | undefined {
+  const insignia = insigniaId === null ? undefined : getInsignia(insigniaId);
+  return insignia !== undefined && insigniaAllowed(insignia, primary) ? insignia : undefined;
 }
 
-/** Each piece's insignia armor, which only a hit to that piece meets (#1135). */
-function pieceArmorOf(equipment: BuildEquipment): PieceArmor {
-  const pieces: Record<ArmorSlot, readonly ConditionalArmor[]> = {
-    head: [],
-    chest: [],
-    hands: [],
-    legs: [],
-    feet: [],
-  };
+/** Each piece's insignia armor and cut, which only a hit to that piece meets (#1135, #1142). */
+function pieceInsigniasOf(
+  equipment: BuildEquipment,
+  primary: ProfessionId,
+): { readonly pieceArmor: PieceArmor; readonly pieceReduction: PieceReduction } {
+  const pieceArmor: Record<ArmorSlot, readonly ConditionalArmor[]> = { ...NO_PIECE_ARMOR };
+  const pieceReduction: Record<ArmorSlot, number> = { ...NO_PIECE_REDUCTION };
   for (const [slot, piece] of armorPieces(equipment.armor)) {
-    const insignia = piece.insigniaId === null ? undefined : getInsignia(piece.insigniaId);
-    if (insignia?.effect.kind === "conditional-armor") {
-      pieces[slot] = [{ amount: insignia.effect.amount, condition: insignia.effect.condition }];
+    const effect = wornInsignia(piece.insigniaId, primary)?.effect;
+    if (effect?.kind === "conditional-armor") {
+      pieceArmor[slot] = effect.bonuses;
+    } else if (effect?.kind === "physical-reduction") {
+      pieceReduction[slot] = effect.amount;
     }
   }
-  return pieces;
+  return { pieceArmor, pieceReduction };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -298,7 +295,7 @@ export function resolveLoadout(input: LoadoutInput, rules: CombatRules): Resolve
     baseArmor: baseArmorFor(input.primaryProfession),
     energyDelta: runes.energyDelta + energyStorageBonus(rankOf(ENERGY_STORAGE_ATTRIBUTE)),
     conditionalArmor: INHERENT_ARMOR_BY_PROFESSION[input.primaryProfession],
-    pieceArmor: pieceArmorOf(input.equipment),
+    ...pieceInsigniasOf(input.equipment, input.primaryProfession),
     flatPhysicalReduction: runes.flatPhysicalReduction,
     statusDurationScale: runes.statusDurationScale,
     attributeBonuses: runes.attributeBonuses,
@@ -328,6 +325,7 @@ interface SharedGear {
   readonly energyDelta: number;
   readonly conditionalArmor: readonly ConditionalArmor[];
   readonly pieceArmor: PieceArmor;
+  readonly pieceReduction: PieceReduction;
   readonly flatPhysicalReduction: number;
   readonly statusDurationScale: ReadonlyMap<StatusId, number>;
   readonly attributeBonuses: ReadonlyMap<string, number>;
@@ -371,6 +369,7 @@ function resolveWeaponSet(
       baseArmor,
       conditionalArmor: shared.conditionalArmor,
       pieceArmor: shared.pieceArmor,
+      pieceReduction: shared.pieceReduction,
       flatPhysicalReduction: shared.flatPhysicalReduction,
       statusDurationScale: shared.statusDurationScale,
       attributeBonuses: shared.attributeBonuses,
@@ -421,6 +420,7 @@ export function unarmedResolvedEquipment(baseArmor: number): ResolvedEquipment {
     baseArmor,
     conditionalArmor: [],
     pieceArmor: NO_PIECE_ARMOR,
+    pieceReduction: NO_PIECE_REDUCTION,
     flatPhysicalReduction: 0,
     statusDurationScale: new Map(),
     attributeBonuses: new Map(),

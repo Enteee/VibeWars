@@ -15,6 +15,7 @@ import {
   type FloatingText,
   type SwingFlash,
 } from "./arena-snapshot.js";
+import { impactsFor, type Impact } from "./body-impacts.js";
 
 /**
  * Combat events as floating text. Kept apart from the Phaser scene so it
@@ -28,6 +29,8 @@ export interface FloatingTextSink {
   addSwingFlash(flash: SwingFlash): void;
   /** An actor's swing struck twice: its off hand stabs too (#561). */
   struckTwice(actorId: string): void;
+  /** A skill landed on these bodies (#1139). */
+  addImpacts(impacts: readonly Impact[]): void;
 }
 
 const COLOURS: Record<FloatingCue["tone"], number> = {
@@ -96,6 +99,10 @@ export function showCombatFeedback(
   }
   if (message.doubleStrike) {
     scene.struckTwice(message.casterSessionId);
+  }
+  const impacts = impactsFor(message);
+  if (impacts.length > 0) {
+    scene.addImpacts(impacts);
   }
 
   if (message.area !== undefined) {

@@ -7,7 +7,7 @@
 import { visible } from "./protocol.mjs";
 
 /**
- * hubd's heartbeat, `hubd.alive`.
+ * hubd's heartbeat, `HUBD_ALIVE`.
  *
  * @typedef {object} HubdAlive
  * @property {number} pid on the host; meaningless inside a jail
@@ -21,6 +21,14 @@ import { visible } from "./protocol.mjs";
  * @property {number} refused
  * @property {{ at: number, message: string } | null} lastError
  */
+
+/**
+ * hubd's heartbeat, under the hub root. In a directory of its own, because
+ * hubd replaces it by rename: a jail that may not see the hub root,
+ * support's (#148), binds `_alive/`, and a bind of the file would pin the
+ * first one it saw. `_`, so it is never taken for an employee's spool.
+ */
+export const HUBD_ALIVE = "_alive/hubd.alive";
 
 /** How often hubd writes its heartbeat while idle. */
 export const HEARTBEAT_MS = 5000;

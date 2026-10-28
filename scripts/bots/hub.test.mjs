@@ -11,6 +11,8 @@ import { fileURLToPath } from "node:url";
 
 import { afterEach, describe, expect, it } from "vitest";
 
+import { HUBD_ALIVE } from "./hub-health.mjs";
+
 const HUB = path.join(path.dirname(fileURLToPath(import.meta.url)), "hub.mjs");
 
 /** More than the 1 MiB that both Node's pipe writes and spawnSync cut off at. */
@@ -41,8 +43,9 @@ function stubHubd(answer, seen = [], alive = {}) {
   const res = path.join(spool, "res");
   fs.mkdirSync(req, { recursive: true });
   fs.mkdirSync(res, { recursive: true });
+  fs.mkdirSync(path.dirname(path.join(dir, HUBD_ALIVE)));
   fs.writeFileSync(
-    path.join(dir, "hubd.alive"),
+    path.join(dir, HUBD_ALIVE),
     JSON.stringify({
       pid: 1,
       startedAt: Date.now(),

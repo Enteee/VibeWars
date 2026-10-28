@@ -96,7 +96,7 @@ import {
   recordSpend,
   summarizeSpend,
 } from "./hub-spend.mjs";
-import { HEARTBEAT_MS } from "./hub-health.mjs";
+import { HEARTBEAT_MS, HUBD_ALIVE } from "./hub-health.mjs";
 import {
   closingPulls,
   ciMessage,
@@ -214,7 +214,7 @@ const REBOOT = path.join(ROOT, "reboot.json");
 /** Who is employed (#62): hubd is its only writer. */
 const STAFF = path.join(ROOT, "staff.json");
 /** The heartbeat, `{ ts, inFlight }`: see `heartbeat`. */
-const ALIVE = path.join(HUB, "hubd.alive");
+const ALIVE = path.join(HUB, HUBD_ALIVE);
 /** `schedules.json`: the schedulers' own recurring reminders to themselves (#678). Host-only. */
 const SCHEDULES = path.join(HUB, "schedules.json");
 
@@ -3747,6 +3747,7 @@ async function main() {
   );
 
   fs.mkdirSync(HUB, { recursive: true });
+  fs.mkdirSync(path.dirname(ALIVE), { recursive: true });
   fs.mkdirSync(path.join(HUB, OPERATOR_SPOOL, "req"), { recursive: true });
   fs.mkdirSync(path.join(HUB, OPERATOR_SPOOL, "res"), { recursive: true });
   // One hubd per spool: two would run every request twice (#23).

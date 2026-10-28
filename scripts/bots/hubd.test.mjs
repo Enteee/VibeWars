@@ -18,7 +18,7 @@ import { fileURLToPath } from "node:url";
 
 import { afterEach, describe, expect, it, TestRunner } from "vitest";
 
-import { parseAlive } from "./hub-health.mjs";
+import { HUBD_ALIVE, parseAlive } from "./hub-health.mjs";
 import { ROLES } from "./hub-policy.mjs";
 import { deliverSystem } from "./protocol.mjs";
 import { parseNudgeClock } from "./schedule.mjs";
@@ -321,7 +321,7 @@ async function startHubd(remaining, before) {
   // Up once it serves every employee: it makes their spools on its first
   // pass over staff.json, after the heartbeat and its startup reads (#1096).
   await until(
-    () => fs.existsSync(path.join(hub, "hubd.alive")) && spoolsExist(hub, employed(root)),
+    () => fs.existsSync(path.join(hub, HUBD_ALIVE)) && spoolsExist(hub, employed(root)),
     "hubd to start",
   );
 
@@ -414,7 +414,7 @@ async function startHubd(remaining, before) {
     until,
     /** The heartbeat as hubd last wrote it. */
     alive() {
-      return parseAlive(fs.readFileSync(path.join(root, "hub", "hubd.alive"), "utf8"));
+      return parseAlive(fs.readFileSync(path.join(root, "hub", HUBD_ALIVE), "utf8"));
     },
     /** Every REST read of a commit's checks fails, as on a GitHub outage. */
     failRest() {
@@ -1181,7 +1181,7 @@ describe("hubd and the GraphQL budget", () => {
 
   it("keeps the heartbeat fresh and names the request in flight while a child hangs (#496)", async () => {
     const hubd = await startHubd(5000);
-    const alivePath = path.join(hubd.hub, "hubd.alive");
+    const alivePath = path.join(hubd.hub, HUBD_ALIVE);
     const request = hubd.request("developer", "gh", ["run", "list", "--hang"]);
 
     await until(() => parseAlive(fs.readFileSync(alivePath, "utf8"))?.current != null, "a current");
@@ -1200,7 +1200,7 @@ describe("hubd and the GraphQL budget", () => {
 
   it("never echoes a peer's argv into the heartbeat (#496)", async () => {
     const hubd = await startHubd(5000);
-    const alivePath = path.join(hubd.hub, "hubd.alive");
+    const alivePath = path.join(hubd.hub, HUBD_ALIVE);
     const request = hubd.request("developer", "gh", [
       "run",
       "list",

@@ -8,6 +8,7 @@ import {
   type AreaFlash,
   type FloatingText,
 } from "./arena-snapshot.js";
+import type { Impact } from "./body-impacts.js";
 import { showCombatFeedback, swingFlashFor } from "./combat-feedback.js";
 
 function player(sessionId: string): PlayerSnapshot {
@@ -73,6 +74,7 @@ function floated(
       addFloatingText: (text) => texts.push(text),
       addAreaFlash: () => undefined,
       addSwingFlash: () => undefined,
+      addImpacts: () => undefined,
       struckTwice: () => undefined,
     },
     {
@@ -126,6 +128,7 @@ describe("showCombatFeedback", () => {
           addFloatingText: (text) => texts.push(text),
           addAreaFlash: () => undefined,
           addSwingFlash: () => undefined,
+          addImpacts: () => undefined,
           struckTwice: () => undefined,
         },
         {
@@ -161,6 +164,7 @@ describe("showCombatFeedback", () => {
         addFloatingText: (text) => texts.push(text),
         addAreaFlash: () => undefined,
         addSwingFlash: () => undefined,
+        addImpacts: () => undefined,
         struckTwice: () => undefined,
       },
       {
@@ -218,6 +222,7 @@ describe("showCombatFeedback", () => {
         addFloatingText: (text) => texts.push(text),
         addAreaFlash: () => undefined,
         addSwingFlash: () => undefined,
+        addImpacts: () => undefined,
         struckTwice: () => undefined,
       },
       {
@@ -251,6 +256,7 @@ describe("showCombatFeedback and areas", () => {
         addFloatingText: () => undefined,
         addAreaFlash: (flash) => flashes.push(flash),
         addSwingFlash: () => undefined,
+        addImpacts: () => undefined,
         struckTwice: () => undefined,
       },
       {
@@ -335,6 +341,7 @@ describe("swingFlashFor (#161)", () => {
             arcs += 1;
           },
           struckTwice: () => undefined,
+          addImpacts: () => undefined,
         },
         swing("weapon"),
         snapshot(weaponId),
@@ -351,11 +358,33 @@ describe("swingFlashFor (#161)", () => {
       addFloatingText: () => undefined,
       addAreaFlash: () => undefined,
       addSwingFlash: () => undefined,
+      addImpacts: () => undefined,
       struckTwice: (actorId: string) => told.push(actorId),
     };
     showCombatFeedback(sink, swing("weapon"), snapshot("daggers"));
     expect(told).toEqual([]);
     showCombatFeedback(sink, { ...swing("weapon"), doubleStrike: true }, snapshot("daggers"));
     expect(told).toEqual(["me"]);
+  });
+
+  it("tells the scene a skill landed, and not a swing (#1139)", () => {
+    const landed: string[] = [];
+    const sink = {
+      addFloatingText: () => undefined,
+      addAreaFlash: () => undefined,
+      addSwingFlash: () => undefined,
+      addImpacts: (impacts: readonly Impact[]) => {
+        landed.push(...impacts.map((impact) => impact.anchorId));
+      },
+      struckTwice: () => undefined,
+    };
+    showCombatFeedback(sink, swing("weapon"), snapshot("sword"));
+    expect(landed).toEqual([]);
+    showCombatFeedback(
+      sink,
+      { ...swing("skill"), skillId: "warrior.sever-artery" },
+      snapshot("sword"),
+    );
+    expect(landed).toEqual(["them"]);
   });
 });
