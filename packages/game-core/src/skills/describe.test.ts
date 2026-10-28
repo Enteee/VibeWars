@@ -832,6 +832,13 @@ describe("describeSkill at a primary attribute's rank (#531)", () => {
     );
   });
 
+  it("shows Fast Casting's signet activation too (#1100)", () => {
+    const signet = skill("common.resurrection-signet");
+    expect(describeSkill(signet, new Map([["mesmer.fast-casting", 12]])).castTime).toBe(
+      "1.9s (3s)",
+    );
+  });
+
   it("shows the base alone when the rank changes nothing", () => {
     const broadHead = skill("ranger.broad-head-arrow");
     const fireball = skill("elementalist.fireball");

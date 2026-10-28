@@ -13,7 +13,7 @@ export const CRITICAL_STRIKES_ATTRIBUTE = "assassin.critical-strikes";
 /** Crit chance each rank of Critical Strikes adds to weapon blows. */
 export const CRITICAL_STRIKES_CHANCE_PER_RANK = 0.01;
 
-/** Energy a critical blow gives its striker: GW1's 1 / 2 / 3 at ranks 1–7 / 8–12 / 13+. */
+/** Energy a critical blow gives its striker: GW1's 1 / 2 / 3 at ranks 3–7 / 8–12 / 13+. */
 export function criticalStrikesEnergy(rank: number): number {
   if (rank >= 13) {
     return 3;
@@ -21,7 +21,7 @@ export function criticalStrikesEnergy(rank: number): number {
   if (rank >= 8) {
     return 2;
   }
-  return rank >= 1 ? 1 : 0;
+  return rank >= 3 ? 1 : 0;
 }
 
 /** The Ranger's primary. */
@@ -32,14 +32,25 @@ export const EXPERTISE_COST_CUT_PER_RANK = 0.04;
 
 /**
  * What `skill`'s energy cost comes to with this rank of Expertise (#528):
- * 4% less a rank, rounded once, never below 0, for an attack skill or any
- * Ranger skill. Any other skill's cost stands.
+ * 4% less a rank, rounded once, never below 0, for an attack skill, a
+ * ritual of any profession (#1100) or any Ranger skill. Any other skill's
+ * cost stands.
  */
 export function expertiseEnergyCost(rank: number, skill: Skill, cost: number): number {
-  if (skill.type !== "attack" && skill.profession !== "ranger") {
+  if (!expertiseCuts(skill)) {
     return cost;
   }
   return Math.max(0, Math.round(cost * (1 - EXPERTISE_COST_CUT_PER_RANK * rank)));
+}
+
+/** Whether Expertise cuts `skill`'s cost: an attack, a ritual or a Ranger skill. */
+function expertiseCuts(skill: Skill): boolean {
+  return (
+    skill.type === "attack" ||
+    skill.type === "nature-ritual" ||
+    skill.type === "binding-ritual" ||
+    skill.profession === "ranger"
+  );
 }
 
 /** The Warrior's primary. */
@@ -60,7 +71,7 @@ export function strengthArmorPenetration(rank: number, weaponPenetration: number
 /** The Mesmer's primary. */
 export const FAST_CASTING_ATTRIBUTE = "mesmer.fast-casting";
 
-/** A non-Mesmer spell this slow or slower is sped up by Fast Casting too. */
+/** A non-Mesmer spell or signet this slow or slower is sped up by Fast Casting too. */
 export const FAST_CASTING_MIN_FOREIGN_ACTIVATION_SECONDS = 2;
 
 /**
@@ -71,14 +82,26 @@ export function fastCastingSpeed(rank: number): number {
   return 2 ** (-rank / 15);
 }
 
+/** Share of a signet's activation each rank of Fast Casting takes off (#1100). */
+export const FAST_CASTING_SIGNET_CUT_PER_RANK = 0.03;
+
 /**
- * What Fast Casting multiplies this spell's activation by, GW1's
- * 2^(−rank/15): ×0.574 at rank 12, still shrinking above it. Every Mesmer
- * spell, and another profession's whose base activation is 2 s or more;
- * 1 for anything else, non-spells included.
+ * What Fast Casting multiplies a signet's activation by: 3% less a rank,
+ * linear, ×0.64 at rank 12. Never below 0, for ranks no build reaches.
+ */
+export function fastCastingSignetSpeed(rank: number): number {
+  return Math.max(0, 1 - FAST_CASTING_SIGNET_CUT_PER_RANK * rank);
+}
+
+/**
+ * What Fast Casting multiplies this spell's or signet's activation by:
+ * a spell's by GW1's 2^(−rank/15), ×0.574 at rank 12, still shrinking
+ * above it; a signet's by 3% less a rank, ×0.64 at rank 12 (#1100). Every
+ * Mesmer spell or signet, and another profession's whose base activation
+ * is 2 s or more; 1 for anything else.
  */
 export function fastCastingMultiplier(rank: number, skill: Skill): number {
-  if (!isSpell(skill.type)) {
+  if (!isSpell(skill.type) && skill.type !== "signet") {
     return 1;
   }
   if (
@@ -87,7 +110,7 @@ export function fastCastingMultiplier(rank: number, skill: Skill): number {
   ) {
     return 1;
   }
-  return fastCastingSpeed(rank);
+  return skill.type === "signet" ? fastCastingSignetSpeed(rank) : fastCastingSpeed(rank);
 }
 
 /** The Monk's primary. */
@@ -223,9 +246,12 @@ export function describePrimaryAttribute(attributeId: string, rank: number): str
   }
   switch (attributeId) {
     case FAST_CASTING_ATTRIBUTE:
-      return `spells cast ${percent(1 - fastCastingSpeed(rank))} faster`;
+      return (
+        `spells cast ${percent(1 - fastCastingSpeed(rank))} faster, ` +
+        `signets ${percent(1 - fastCastingSignetSpeed(rank))} faster`
+      );
     case EXPERTISE_ATTRIBUTE:
-      return `attack and Ranger skills cost ${percent(EXPERTISE_COST_CUT_PER_RANK * rank)} less energy`;
+      return `attack skills, rituals and Ranger skills cost ${percent(EXPERTISE_COST_CUT_PER_RANK * rank)} less energy`;
     case STRENGTH_ATTRIBUTE:
       return `attack skills ${percent(strengthArmorPenetration(rank, 0))} armor penetration`;
     case DIVINE_FAVOR_ATTRIBUTE:
