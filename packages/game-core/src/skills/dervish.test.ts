@@ -64,6 +64,7 @@ function check(caster: Combatant, id: string, target: Combatant) {
     target,
     targetPosition: vec2(target === caster ? 0 : RANGE_MELEE, 0),
     rechargeRemaining: new Map(),
+    spent: new Set(),
     isCasting: false,
     skillBar: [id, null, null, null, null, null, null, null],
     losBlockers: [],

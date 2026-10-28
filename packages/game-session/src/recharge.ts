@@ -1,5 +1,5 @@
 import type { CastState, SkillBar } from "@vibewars/game-core";
-import type { RechargeSlot } from "@vibewars/game-protocol";
+import type { RechargeMessage } from "@vibewars/game-protocol";
 
 /**
  * How far a recharge may drift from the client's countdown before the
@@ -8,12 +8,16 @@ import type { RechargeSlot } from "@vibewars/game-protocol";
  */
 export const RECHARGE_TOLERANCE_SECONDS = 0.05;
 
-/** A player's running recharges, by slot, as a `RechargeMessage` lists them; an empty slot has none. */
-export function rechargeSlots(
+/**
+ * A player's running recharges, by slot, and the slots spent until a
+ * morale boost (#474), as a `RechargeMessage` lists them; an empty slot
+ * has neither.
+ */
+export function rechargeState(
   skillBar: SkillBar,
-  cast: Pick<CastState, "rechargeRemaining" | "rechargeTotal">,
-): RechargeSlot[] {
-  return skillBar.flatMap((skillId, slot) => {
+  cast: Pick<CastState, "rechargeRemaining" | "rechargeTotal" | "spent">,
+): RechargeMessage {
+  const slots = skillBar.flatMap((skillId, slot) => {
     if (skillId === null) {
       return [];
     }
@@ -23,23 +27,33 @@ export function rechargeSlots(
       ? []
       : [{ slot, remainingSeconds, totalSeconds }];
   });
+  const spent = skillBar.flatMap((skillId, slot) =>
+    skillId !== null && cast.spent.has(skillId) ? [slot] : [],
+  );
+  return { slots, spent };
 }
 
 /**
  * Whether a client that was sent `sent`, `elapsedSeconds` ago, and has
  * counted down since, already shows `now`. Anything else is news: a
  * recharge started, ended early, was reset, or moved by more than the
- * tolerance.
+ * tolerance, or a skill was spent or readied by a morale boost (#474).
  */
 export function rechargePredicted(
-  sent: readonly RechargeSlot[],
+  sent: RechargeMessage,
   elapsedSeconds: number,
-  now: readonly RechargeSlot[],
+  now: RechargeMessage,
 ): boolean {
-  const slots = new Set([...sent, ...now].map(({ slot }) => slot));
+  if (
+    sent.spent.length !== now.spent.length ||
+    sent.spent.some((slot, index) => now.spent[index] !== slot)
+  ) {
+    return false;
+  }
+  const slots = new Set([...sent.slots, ...now.slots].map(({ slot }) => slot));
   for (const slot of slots) {
-    const before = sent.find((entry) => entry.slot === slot);
-    const after = now.find((entry) => entry.slot === slot);
+    const before = sent.slots.find((entry) => entry.slot === slot);
+    const after = now.slots.find((entry) => entry.slot === slot);
     if (before !== undefined && after !== undefined && before.totalSeconds !== after.totalSeconds) {
       return false;
     }

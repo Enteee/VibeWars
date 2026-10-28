@@ -4,12 +4,16 @@ import { paintRecharge, READY_FLASH_MS, rechargeView } from "./recharge-overlay.
 
 describe("rechargeView", () => {
   it("shows nothing for a ready skill, or one with no recharge at all", () => {
-    expect(rechargeView({ remaining: 0, total: 10 }, "Fireball", false)).toBeUndefined();
-    expect(rechargeView({ remaining: 0, total: 0 }, "Fireball", false)).toBeUndefined();
+    expect(
+      rechargeView({ remaining: 0, total: 10, spent: false }, "Fireball", false),
+    ).toBeUndefined();
+    expect(
+      rechargeView({ remaining: 0, total: 0, spent: false }, "Fireball", false),
+    ).toBeUndefined();
   });
 
   it("shades the share still to go, and says the whole seconds left", () => {
-    expect(rechargeView({ remaining: 7.4, total: 10 }, "Fireball", false)).toEqual({
+    expect(rechargeView({ remaining: 7.4, total: 10, spent: false }, "Fireball", false)).toEqual({
       fraction: 0.74,
       seconds: "7",
       label: "Fireball, recharging, 7 seconds",
@@ -17,20 +21,46 @@ describe("rechargeView", () => {
   });
 
   it("stops the number at 1; the last second is the wipe alone", () => {
-    expect(rechargeView({ remaining: 1.2, total: 10 }, "Fireball", false)?.seconds).toBe("1");
-    const last = rechargeView({ remaining: 0.4, total: 10 }, "Fireball", false);
+    expect(
+      rechargeView({ remaining: 1.2, total: 10, spent: false }, "Fireball", false)?.seconds,
+    ).toBe("1");
+    const last = rechargeView({ remaining: 0.4, total: 10, spent: false }, "Fireball", false);
     expect(last?.seconds).toBe("");
     expect(last?.label).toBe("Fireball, recharging, 1 second");
   });
 
   it("snaps the wipe up to the next eighth with reduced motion", () => {
-    expect(rechargeView({ remaining: 7.4, total: 10 }, "Fireball", true)?.fraction).toBe(0.75);
-    expect(rechargeView({ remaining: 0.1, total: 10 }, "Fireball", true)?.fraction).toBe(0.125);
-    expect(rechargeView({ remaining: 10, total: 10 }, "Fireball", true)?.fraction).toBe(1);
+    expect(
+      rechargeView({ remaining: 7.4, total: 10, spent: false }, "Fireball", true)?.fraction,
+    ).toBe(0.75);
+    expect(
+      rechargeView({ remaining: 0.1, total: 10, spent: false }, "Fireball", true)?.fraction,
+    ).toBe(0.125);
+    expect(
+      rechargeView({ remaining: 10, total: 10, spent: false }, "Fireball", true)?.fraction,
+    ).toBe(1);
+  });
+
+  it("shades a skill spent until a morale boost in full, with no number (#474)", () => {
+    expect(
+      rechargeView({ remaining: 0, total: 0, spent: true }, "Resurrection Signet", false),
+    ).toEqual({
+      fraction: 1,
+      seconds: "",
+      label: "Resurrection Signet, spent until a morale boost",
+    });
+  });
+
+  it("counts a disable down on a spent skill before it shows it spent (#474)", () => {
+    expect(
+      rechargeView({ remaining: 3.5, total: 4, spent: true }, "Resurrection Signet", false)?.label,
+    ).toBe("Resurrection Signet, recharging, 3 seconds");
   });
 
   it("never shades more than the whole slot", () => {
-    expect(rechargeView({ remaining: 12, total: 10 }, "Fireball", false)?.fraction).toBe(1);
+    expect(
+      rechargeView({ remaining: 12, total: 10, spent: false }, "Fireball", false)?.fraction,
+    ).toBe(1);
   });
 });
 
@@ -118,7 +148,12 @@ describe("paintRecharge", () => {
   });
 
   function paint(slot: FakeElement, remaining: number): void {
-    paintRecharge(slot as unknown as HTMLElement, { remaining, total: 10 }, "Fireball", false);
+    paintRecharge(
+      slot as unknown as HTMLElement,
+      { remaining, total: 10, spent: false },
+      "Fireball",
+      false,
+    );
   }
 
   it("puts the seconds in .recharge-seconds, not in the wipe itself", () => {

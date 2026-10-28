@@ -388,7 +388,7 @@ export interface WireCombatEvent {
   /**
    * Whom a spreading status was caught from (#765), who could not pay
    * a maintained enchantment's upkeep (#837), or whom a shadow step went
-   * to (#988); `null` for any other kind.
+   * to (#988) or a teleport put it beside (#474); `null` for any other kind.
    */
   readonly fromId: string | null;
   /**
@@ -1340,8 +1340,10 @@ function parseRechargeSlot(value: unknown): RechargeSlot | undefined {
 
 /** The `"recharge"` channel: a `RechargeMessage`, to one player alone (#152). */
 export function parseRecharge(value: unknown): RechargeMessage | undefined {
-  const slots = parseArray(fields(value)?.slots, MAX_WIRE_SLOTS, parseRechargeSlot);
-  return slots === undefined ? undefined : { slots };
+  const raw = fields(value);
+  const slots = parseArray(raw?.slots, MAX_WIRE_SLOTS, parseRechargeSlot);
+  const spent = parseArray(raw?.spent, MAX_WIRE_SLOTS, (slot) => (isSlot(slot) ? slot : undefined));
+  return slots === undefined || spent === undefined ? undefined : { slots, spent };
 }
 
 /** The `"adrenaline"` channel: an `AdrenalineMessage`, to one player alone (#463). */

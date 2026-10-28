@@ -76,7 +76,7 @@ function chop(attacker: Combatant, targets: readonly Combatant[], seed = 1): Com
 function swing(attacker: Combatant, target: Combatant, seed = 1): CombatEvent[] {
   return resolveSwing({
     attacker,
-    target: { combatant: target, position: vec2(40, 0) },
+    target: { combatant: target, position: vec2(40, 0), creature: undefined },
     surroundings: new Map(),
     rng: createRng(seed),
     rules: RULES.combat,

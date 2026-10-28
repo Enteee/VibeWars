@@ -15,6 +15,8 @@ export { ZERO, length, normalize, vec2 } from "./vec2.js";
 
 export { clampInputDirection, integrateMovement } from "./movement.js";
 
+export { AREA_EARSHOT, RANGE_COMPASS, RANGE_SPELL } from "./distances.js";
+
 export type { Segment } from "./geometry.js";
 export {
   buildNavGraph,
@@ -48,8 +50,19 @@ export type {
 export { ADRENALINE_PER_STRIKE, MINIMAL_GW_INSPIRED_PVP_V1 } from "./ruleset.js";
 export { adrenalineLossIn } from "./skills/adrenaline.js";
 
-export type { AttributeDefinition, ProfessionDefinition, ProfessionId } from "./professions.js";
-export { PROFESSIONS, getAttribute, getProfession, primaryAttributeOf } from "./professions.js";
+export type {
+  AttributeDefinition,
+  ProfessionDefinition,
+  ProfessionId,
+  SkillProfession,
+} from "./professions.js";
+export {
+  PROFESSIONS,
+  getAttribute,
+  getProfession,
+  primaryAttributeOf,
+  skillProfessionName,
+} from "./professions.js";
 
 export type { AttributeAllocation, AttributeModifier } from "./attributes.js";
 export {
