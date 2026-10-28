@@ -162,7 +162,9 @@ test("the host closing its page takes the guest to the menu, and says why", asyn
     await joinLobby(guest, "Guest", code);
     await expect(host.locator(".screen-lobby")).toContainText("Guest");
 
-    await host.close();
+    // A navigation fires pagehide, as a closed tab does; page.close() does
+    // not run unload handlers (#1085).
+    await host.goto("about:blank");
 
     await expect(guest.locator(".screen-connection-problem")).toHaveText(
       "The host closed the lobby.",
@@ -330,7 +332,7 @@ test("a refused clipboard leaves the code selected, to copy by hand (#580)", asy
   expect(await page.evaluate(() => window.getSelection()?.toString())).toBe(code);
 });
 
-test("each row shows the character a player brings, a refused build as Default loadout, and Start says who it waits for (#580)", async ({
+test("each row shows the character a player brings, a refused build as Random starter build, and Start says who it waits for (#580)", async ({
   browser,
 }) => {
   const { context, pages } = await openPeers(browser, 2);
@@ -339,8 +341,8 @@ test("each row shows the character a player brings, a refused build as Default l
   try {
     // The host plays a saved character with a skill; the guest one with an
     // empty bar, which the host refuses, so it plays a starter build and
-    // lists as the default. Both pages share one storage, so the guest picks its
-    // own after the host is in.
+    // lists as a random one. Both pages share one storage, so the guest
+    // picks its own after the host is in.
     await host.goto("./");
     await host.getByRole("button", { name: "new character" }).click();
     await host.locator("input.editor-name").fill("Cynn");
@@ -360,7 +362,7 @@ test("each row shows the character a player brings, a refused build as Default l
     const hostRow = guest.locator(".lobby-team").nth(0).locator(".lobby-slot");
     const guestRow = host.locator(".lobby-team").nth(1).locator(".lobby-slot");
     await expect(hostRow.locator(".lobby-character")).toHaveText("Cynn · Warrior");
-    await expect(guestRow.locator(".lobby-character")).toHaveText("Default loadout");
+    await expect(guestRow.locator(".lobby-character")).toHaveText("Random starter build");
     await expect(guestRow.locator(".lobby-ready")).toHaveText("Not ready");
 
     await host.getByRole("button", { name: "Ready", exact: true }).click();

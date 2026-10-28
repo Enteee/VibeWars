@@ -130,6 +130,27 @@ target has an empty track edged in `dead`. An interrupted cast keeps the
 row for 400 ms with a `damage` ✕ and edge, a cancelled one dimmed, as the
 skill slot does (#300). Armor is in the frame's hover title.
 
+### Match summary
+
+When a match ends (#1057), a table per team sits under the result banner:
+yours on the left, or team 1 for a spectator. A queued match carries it
+on to the queue screen, under the outcome line.
+
+| Name | Damage | Healing | Taken | Kills | Deaths | Interrupts |
+| ---- | -----: | ------: | ----: | ----: | -----: | ---------: |
+
+- `panel` at 92 % under each table, edged in `line`; the caption and the
+  column heads in `ink-dim`, the caption uppercase.
+- Names left, numbers right in tabular figures, whole, no units. A long
+  name is cut with an ellipsis at 9 rem.
+- **Your row** has a 3 px `friend` border on its left edge; nothing else
+  about it changes.
+- **The best of each column**, across the whole match, is `ink` bold, every
+  tie included. A column that is zero throughout has no best.
+- **Zeros** are `ink-dim`, so the numbers that happened stand out.
+- 0.75 rem monospace, both tables side by side: 8v8 fits at 1024 px wide
+  with no scroll. It takes no clicks.
+
 ### Party window
 
 Your team's health at a glance (#1055), on the right edge, vertically
@@ -696,7 +717,7 @@ it, not baked in, so one file serves every screen.
 |          |                 | in full, its silhouette as a 20% watermark                                 |
 | Glyph    | Primary effect  | One shape from the table below, `ink` with a `bg` casing, in the box 3..21 |
 | Modifier | How it bends it | Bottom right, on a dark disc, `ink`: up, down, less, area, clock, stun,    |
-|          |                 | bleed, self, bolt, half, plus                                              |
+|          |                 | bleed, self, bolt, half, plus, corpse (every corpse skill)                 |
 
 - **Shape first.** Glyph and modifier are `ink` only; the plate's hue is
   decoration, so every icon reads with the colour taken out.
@@ -716,8 +737,8 @@ it, not baked in, so one file serves every screen.
   arrow-burst, arrow-pierce, arrow-flame, crescent (shadow), armor-half (a
   half-filled shield), eye, heal-other (a head and a plus), heal-turn (a plus
   in an arrow ring), hex-bolt (dashed ring, bolt), blade-cleanse, blade-hook,
-  blade-shards, hilt. A new primary effect adds a glyph; a new skill adds a
-  row.
+  blade-shards, hilt, banner-note. A new primary effect adds a glyph; a new
+  skill adds a row.
 
 ### Skill slot states
 

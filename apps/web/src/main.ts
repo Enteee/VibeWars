@@ -40,6 +40,7 @@ import {
   type KeyValueStore,
 } from "./storage/repository.js";
 import type { StoredCharacter } from "./storage/schema.js";
+import { rerollStarterCharacter, rollStarterCharacter } from "./storage/starter-character.js";
 import { importTeam, importedTeamSummary, type TeamImportResult } from "./storage/team-transfer.js";
 import { closeBeatEditor } from "./ui/beat-editor.js";
 import { mountBuildEditor, newCharacter, type BuildEditorView } from "./ui/build-editor.js";
@@ -53,6 +54,7 @@ import {
 import { mountChat, type ChatPanel } from "./ui/chat.js";
 import { openRelayPrompt } from "./ui/relay-prompt.js";
 import { describeOutcome } from "./ui/hud.js";
+import type { SummaryTable } from "./ui/match-summary.js";
 import {
   mountQueueScreen,
   nextStreak,
@@ -61,7 +63,14 @@ import {
 } from "./ui/queue-screen.js";
 import { displayLobbyCode, renderLobbyScreen } from "./ui/lobby-screen.js";
 import { createNowPlayingToast, nowPlayingText } from "./ui/now-playing.js";
-import { loadActiveCharacterId, renderMenu, renderTeamList } from "./ui/menu.js";
+import {
+  loadActiveCharacterId,
+  loadStarterCharacterId,
+  renderMenu,
+  renderTeamList,
+  saveActiveCharacterId,
+  saveStarterCharacterId,
+} from "./ui/menu.js";
 import { dismissToast, toast } from "./ui/kit.js";
 import { mountTopbar, paintStatus, type StatusState } from "./ui/topbar.js";
 import { duplicateTeam, newTeam } from "./ui/team-builder.js";
@@ -104,16 +113,17 @@ function setStatus(text: string, state: StatusState): void {
   paintStatus(requireElement("#status"), text, state);
 }
 
-async function openStore(): Promise<KeyValueStore> {
+/** The store builds are kept in; `persistent` unless it lives only in memory. */
+async function openStore(): Promise<{ store: KeyValueStore; persistent: boolean }> {
   try {
-    return await openIndexedDbStore();
+    return { store: await openIndexedDbStore(), persistent: true };
   } catch (error) {
     // Private browsing and some locked-down configurations deny
     // IndexedDB. Falling back to memory keeps the game playable for this
     // session rather than failing at the menu; the player just will not
     // keep their builds.
     console.warn("[web] IndexedDB unavailable; builds will not persist this session", error);
-    return createMemoryStore();
+    return { store: createMemoryStore(), persistent: false };
   }
 }
 
@@ -166,7 +176,7 @@ async function main(): Promise<void> {
     startStress(stress);
   }
 
-  const store = await openStore();
+  const { store, persistent } = await openStore();
   // Before any music: a stale edit is gone before it could play (#373).
   // Its notice goes on the first menu, once.
   let editNotices = await beatEdits.load(TRACKS);
@@ -186,6 +196,20 @@ async function main(): Promise<void> {
   }
   const characters = new CharacterRepository(store);
   const teams = new TeamRepository(store);
+  // The first start plays a rolled starter character (#853). Not into
+  // memory: it would be gone next start, with the key saying it was rolled.
+  if (persistent) {
+    const rolled = await rollStarterCharacter({
+      characters,
+      key: { load: loadStarterCharacterId, save: saveStarterCharacterId },
+      random: Math.random,
+      id: crypto.randomUUID(),
+      now: Date.now(),
+    });
+    if (rolled !== undefined) {
+      saveActiveCharacterId(rolled.id);
+    }
+  }
 
   // The arenas a host can pick, built into the client (#403).
   const availableMaps = ARENA_MAPS.map((map) => ({
@@ -236,6 +260,8 @@ async function main(): Promise<void> {
     { readonly outcome: string; readonly won: boolean; readonly timer: number } | undefined;
   /** The ended view's result line, while it is up. */
   let endedOutcome: string | undefined;
+  /** The ended view's match summary (#1057), while it is up. */
+  let endedSummary: readonly SummaryTable[] | undefined;
   /**
    * *Stay together* after a queued win (#882), while it is offered: the
    * lobby the vote goes through, the hosted lobby when this tab hosts it,
@@ -293,6 +319,7 @@ async function main(): Promise<void> {
     clearQueuedEnd();
     closeStay();
     endedOutcome = undefined;
+    endedSummary = undefined;
     queue?.place.leave();
     queue?.screen.dispose();
     queue = undefined;
@@ -472,6 +499,15 @@ async function main(): Promise<void> {
             if (character !== undefined) {
               showCharacterEditor(character);
             }
+          })();
+        },
+        onRerollCharacter: (id) => {
+          void (async () => {
+            const character = await characters.load(id);
+            if (character !== undefined) {
+              await rerollStarterCharacter(characters, character, Math.random, Date.now());
+            }
+            showMenu();
           })();
         },
         // The menu persists the choice itself; re-render so the
@@ -763,6 +799,7 @@ async function main(): Promise<void> {
       kind: "ended",
       outcome: endedOutcome,
       streak: queueStreak,
+      summary: endedSummary,
       ...(offer === undefined ? {} : { stay: offer }),
     });
   };
@@ -998,6 +1035,8 @@ async function main(): Promise<void> {
       return;
     }
     match = undefined;
+    // Read before the view goes: the table moves with the player (#1057).
+    const summary = leaving.summary();
     await leaving.dispose();
     enteringMatch = false;
     const leavingLobby = lobby;
@@ -1032,6 +1071,7 @@ async function main(): Promise<void> {
     showViewport(false);
     music().screen("menu");
     endedOutcome = outcome;
+    endedSummary = summary;
     if (offered && leavingLobby !== undefined) {
       offerStay(leavingLobby, ending);
     }

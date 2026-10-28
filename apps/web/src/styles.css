@@ -1989,6 +1989,87 @@ body {
   pointer-events: none;
 }
 
+/* The match summary (#1057): both teams side by side under the result
+   banner, compact enough for 8v8 at 1024 px without a scroll. Your row has
+   the friend border; each column's best is ink bold, zeros ink-dim. */
+.match-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+  font-size: 0.75rem;
+}
+
+.match-summary-table {
+  border-collapse: collapse;
+  background: rgb(14 17 22 / 92%);
+  border: 1px solid var(--line);
+}
+
+.match-summary-table caption {
+  padding: 0.25rem 0;
+  color: var(--ink-dim);
+  text-align: left;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.match-summary-table th,
+.match-summary-table td {
+  padding: 0.15rem 0.4rem;
+  white-space: nowrap;
+}
+
+.match-summary-table thead th {
+  color: var(--ink-dim);
+  font-weight: normal;
+  text-align: right;
+  border-bottom: 1px solid var(--line);
+}
+
+.match-summary-table thead th:first-child {
+  text-align: left;
+}
+
+.match-summary-table td {
+  color: var(--ink);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.match-summary-table .match-summary-name {
+  max-width: 9rem;
+  overflow: hidden;
+  color: var(--ink);
+  font-weight: normal;
+  text-align: left;
+  text-overflow: ellipsis;
+  border-left: 3px solid transparent;
+}
+
+.match-summary-table tr.is-self .match-summary-name {
+  border-left-color: var(--accent);
+}
+
+.match-summary-table td.is-top {
+  font-weight: bold;
+}
+
+.match-summary-table td.is-zero {
+  color: var(--ink-dim);
+}
+
+/* In the match, under the result banner; it takes no clicks. */
+.hud-summary {
+  position: absolute;
+  top: calc(38% + 2.6rem);
+  left: 50%;
+  width: max-content;
+  max-width: calc(100% - 2rem);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
 /* Over the arena and the HUD while a guest reconnects (#602); it takes no
    clicks, so the leave control under it still works. */
 .reconnect-overlay {
@@ -3096,7 +3177,8 @@ body.has-expanded-training #screens {
   gap: 0.35rem;
 }
 
-.roster-edit {
+.roster-edit,
+.roster-reroll {
   flex: 0 0 auto;
 }
 
@@ -3114,7 +3196,7 @@ body.has-expanded-training #screens {
   user-select: none;
 }
 
-/* The default loadout is not a character, so it reads as a placeholder
+/* A random starter build is not a character, so it reads as a placeholder
    rather than pretending to be one. */
 .character-dot.is-house {
   width: 28px;

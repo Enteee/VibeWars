@@ -527,10 +527,27 @@ export interface WireChatLine {
   readonly text: string;
 }
 
-/** Host to every client, once: the match is over. */
+/**
+ * One player's line in the match summary (#1057): every player who held a
+ * seat, under the name they joined with. Whole numbers.
+ */
+export interface WireSummaryRow {
+  readonly id: string;
+  readonly name: string;
+  readonly team: 0 | 1;
+  readonly damage: number;
+  readonly healing: number;
+  readonly taken: number;
+  readonly kills: number;
+  readonly deaths: number;
+  readonly interrupts: number;
+}
+
+/** Host to every client, once: the match is over, and what each player did in it. */
 export interface WireEnded {
   readonly winningTeam: 0 | 1 | null;
   readonly endReason: EndReason | "host-left";
+  readonly summary: readonly WireSummaryRow[];
 }
 
 /**
@@ -1367,12 +1384,40 @@ export function parseWireSkillBar(value: unknown): WireSkillBar | undefined {
   return slots === undefined || ranks === undefined ? undefined : { slots, ranks };
 }
 
-export function parseWireEnded(value: unknown): WireEnded | undefined {
+function parseSummaryRow(value: unknown): WireSummaryRow | undefined {
   const raw = fields(value);
   return raw !== undefined &&
+    isString(raw.id) &&
+    typeof raw.name === "string" &&
+    isTeam(raw.team) &&
+    isCount(raw.damage) &&
+    isCount(raw.healing) &&
+    isCount(raw.taken) &&
+    isCount(raw.kills) &&
+    isCount(raw.deaths) &&
+    isCount(raw.interrupts)
+    ? {
+        id: raw.id,
+        name: raw.name.slice(0, MAX_WIRE_TEXT),
+        team: raw.team,
+        damage: raw.damage,
+        healing: raw.healing,
+        taken: raw.taken,
+        kills: raw.kills,
+        deaths: raw.deaths,
+        interrupts: raw.interrupts,
+      }
+    : undefined;
+}
+
+export function parseWireEnded(value: unknown): WireEnded | undefined {
+  const raw = fields(value);
+  const summary = parseArray(raw?.summary, MAX_LOBBY_PLAYERS, parseSummaryRow);
+  return raw !== undefined &&
     (raw.winningTeam === null || isTeam(raw.winningTeam)) &&
-    isOneOf(raw.endReason, [...END_REASONS, "host-left"] as const)
-    ? { winningTeam: raw.winningTeam, endReason: raw.endReason }
+    isOneOf(raw.endReason, [...END_REASONS, "host-left"] as const) &&
+    summary !== undefined
+    ? { winningTeam: raw.winningTeam, endReason: raw.endReason, summary }
     : undefined;
 }
 

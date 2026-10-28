@@ -28,9 +28,28 @@ export interface EquippedOffhand {
   readonly requirementAttributeId: string | null;
 }
 
-export interface BuildEquipment {
+/** How many weapon sets a build carries (GW1, F1-F4). */
+export const WEAPON_SETS = 4;
+
+/** 0..3: set 1..4. */
+export type WeaponSetIndex = 0 | 1 | 2 | 3;
+
+export function isWeaponSetIndex(value: unknown): value is WeaponSetIndex {
+  return value === 0 || value === 1 || value === 2 || value === 3;
+}
+
+/** One weapon set: a main hand and what is in the other (ADR-0012, ADR-0036). */
+export interface WeaponSet {
   readonly mainHand: EquippedWeapon;
   readonly offHand: EquippedOffhand | null;
+}
+
+/** Set 1 always; sets 2-4 `null` when empty. */
+export type WeaponSets = readonly [WeaponSet, WeaponSet | null, WeaponSet | null, WeaponSet | null];
+
+export interface BuildEquipment {
+  /** What a player can swap between in a match (#489, ADR-0036). */
+  readonly weaponSets: WeaponSets;
   readonly armor: ArmorSet;
 }
 
@@ -109,11 +128,19 @@ export function defaultEquipmentFor(profession: ProfessionId): BuildEquipment {
   const needsNomination = weaponId === "wand" || weaponId === "staff";
 
   return {
-    mainHand: {
-      weaponId,
-      requirementAttributeId: needsNomination ? primaryAttributeId : null,
-    },
-    offHand: offhandId === null ? null : { offhandId, requirementAttributeId: primaryAttributeId },
+    weaponSets: [
+      {
+        mainHand: {
+          weaponId,
+          requirementAttributeId: needsNomination ? primaryAttributeId : null,
+        },
+        offHand:
+          offhandId === null ? null : { offhandId, requirementAttributeId: primaryAttributeId },
+      },
+      null,
+      null,
+      null,
+    ],
     armor: bareArmorSet(),
   };
 }

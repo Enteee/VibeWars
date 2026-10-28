@@ -1,7 +1,7 @@
 import type { ProfessionId } from "../professions.js";
 import { armorPieces } from "./armor.js";
 import { getInsignia } from "./insignias.js";
-import type { BuildEquipment } from "./loadout.js";
+import type { BuildEquipment, WeaponSet } from "./loadout.js";
 import { getOffhand } from "./offhands.js";
 import { getUniversalRune, runeDisplayName, type EquippedRune } from "./runes.js";
 import type { EquipmentRequirement } from "./types.js";
@@ -117,55 +117,74 @@ function checkRune(
   }
 }
 
-export function validateEquipment(
-  equipment: BuildEquipment,
+/**
+ * One weapon set's checks, `index` 0 for set 1. Set 1's messages read as
+ * they always have; sets 2-4's say which set (ADR-0036).
+ */
+function validateWeaponSet(
+  set: WeaponSet,
+  index: number,
   context: EquipmentValidationContext,
-): EquipmentProblem[] {
-  const problems: EquipmentProblem[] = [];
-
-  const weapon = getWeapon(equipment.mainHand.weaponId);
+  problems: EquipmentProblem[],
+): void {
+  const field = `equipment.weaponSets[${String(index)}]`;
+  const prefix = index === 0 ? "" : `Set ${String(index + 1)}: `;
+  const weapon = getWeapon(set.mainHand.weaponId);
   if (weapon === undefined) {
     problems.push({
-      field: "equipment.mainHand",
-      message: `unknown weapon ${equipment.mainHand.weaponId}`,
+      field: `${field}.mainHand`,
+      message: `${prefix}unknown weapon ${set.mainHand.weaponId}`,
     });
   } else {
     checkRequirement(
-      "equipment.mainHand",
-      weapon.name,
+      `${field}.mainHand`,
+      `${prefix}${weapon.name}`,
       weapon.requirement,
-      equipment.mainHand.requirementAttributeId,
+      set.mainHand.requirementAttributeId,
       context,
       problems,
     );
   }
 
-  if (equipment.offHand !== null) {
-    const offhand = getOffhand(equipment.offHand.offhandId);
+  if (set.offHand !== null) {
+    const offhand = getOffhand(set.offHand.offhandId);
     if (offhand === undefined) {
       problems.push({
-        field: "equipment.offHand",
-        message: `unknown off-hand ${equipment.offHand.offhandId}`,
+        field: `${field}.offHand`,
+        message: `${prefix}unknown off-hand ${set.offHand.offhandId}`,
       });
     } else {
       // The trade the whole gear system turns on: a free hand or a
       // bigger weapon, never both.
       if (weapon !== undefined && !allowsOffhand(weapon)) {
         problems.push({
-          field: "equipment.offHand",
-          message: `${weapon.name} needs both hands, so it cannot be carried with a ${offhand.name.toLowerCase()}`,
+          field: `${field}.offHand`,
+          message: `${prefix}${weapon.name} needs both hands, so it cannot be carried with a ${offhand.name.toLowerCase()}`,
         });
       }
       checkRequirement(
-        "equipment.offHand",
-        offhand.name,
+        `${field}.offHand`,
+        `${prefix}${offhand.name}`,
         offhand.requirement,
-        equipment.offHand.requirementAttributeId,
+        set.offHand.requirementAttributeId,
         context,
         problems,
       );
     }
   }
+}
+
+export function validateEquipment(
+  equipment: BuildEquipment,
+  context: EquipmentValidationContext,
+): EquipmentProblem[] {
+  const problems: EquipmentProblem[] = [];
+
+  equipment.weaponSets.forEach((set, index) => {
+    if (set !== null) {
+      validateWeaponSet(set, index, context, problems);
+    }
+  });
 
   const runedAttributes = new Set<string>();
   const universalRunes = new Set<string>();

@@ -248,6 +248,8 @@ export function createLocalConnection(options: {
         groundEffects: simulation.groundEffects.map((effect) =>
           groundEffectSnapshot(effect, simulation.elapsedSeconds),
         ),
+        // No match with rules ends here, so there is never a summary (#1057).
+        summary: undefined,
       };
     },
     onCombat(handler) {

@@ -58,6 +58,7 @@ function match(players: readonly PlayerSnapshot[], selfSessionId = "me"): MatchS
     endReason: undefined,
     projectiles: [],
     groundEffects: [],
+    summary: undefined,
   };
 }
 

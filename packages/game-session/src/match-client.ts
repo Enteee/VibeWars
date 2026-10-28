@@ -117,6 +117,8 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
   let latest:
     { readonly wire: WireSnapshot; readonly players: readonly PlayerSnapshot[] } | undefined;
   let ended: WireEnded | undefined;
+  /** The host's summary from any `ended`, a host leaving's included (#1057). */
+  let summary: WireEnded["summary"] | undefined;
   let recharges: Recharges = { message: { slots: [], spent: [] }, at: 0 };
   /**
    * Your own adrenaline per slot as last sent (#463), with when its loss
@@ -248,6 +250,7 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
     calls = { wire: message, at: elapsed() };
   });
   fromHost("ended", parseWireEnded, (message) => {
+    summary = message.summary;
     if (message.endReason === "host-left") {
       loseHost();
     } else {
@@ -352,8 +355,9 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
                 endReason: undefined,
                 projectiles: [],
                 groundEffects: [],
+                summary,
               }
-            : matchSnapshot(latest.wire, latest.players, welcome.playerId);
+            : { ...matchSnapshot(latest.wire, latest.players, welcome.playerId), summary };
         // An `ended` may land before the snapshot that says so.
         return ended === undefined
           ? snapshot

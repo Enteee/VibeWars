@@ -60,6 +60,7 @@ function snapshot(players: PlayerSnapshot[]): MatchSnapshot {
     endReason: undefined,
     projectiles: [],
     groundEffects: [],
+    summary: undefined,
   };
 }
 

@@ -88,7 +88,8 @@ a host-authoritative star, not lockstep and not a mesh.**
   and a `localhost` or `[::1]` page that cannot reach its host says to
   open `127.0.0.1` (#707).
 - **When the host leaves, the match ends** for everyone, with
-  `WireEnded { endReason: "host-left" }`. There is no host migration.
+  `WireEnded { endReason: "host-left" }` and the summary so far. There
+  is no host migration.
 - **Public relays are a dependency.** If every configured relay is down,
   nobody can start a match. CI never uses them: e2e runs two pages over
   BroadcastChannel.

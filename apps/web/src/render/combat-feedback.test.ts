@@ -58,6 +58,7 @@ const SNAPSHOT: MatchSnapshot = {
   endReason: undefined,
   projectiles: [],
   groundEffects: [],
+  summary: undefined,
 };
 
 /** The texts a scene would have been asked to float, for these events. */

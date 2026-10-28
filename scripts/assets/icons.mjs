@@ -521,11 +521,14 @@ const status = {
       `<path d="M8 6h8v4.5c0 2.5-2 4-4 5.2-2-1.2-4-2.7-4-5.2z" ${stroke(c, 2)}/>` +
       `<path d="M9.5 10h5" ${stroke(c, 2)}/>`,
   ],
-  // Chant: a plus over a bar, healed on your next skill (#999).
+  // Chant: a banner with a note, healed on your next skill (#1012).
   "song-of-restoration": [
     "chant",
     (c) =>
-      `<path d="M12 5.5v7M8.5 9h7" ${stroke(c, 2.5)}/>` + `<path d="M8 15.5h8" ${stroke(c, 2)}/>`,
+      `<path d="M7 4V19.5" ${stroke(c, 2)}/>` +
+      `<path d="M7 5H18.5L15 9.5L18.5 14H7Z" ${stroke(c, 1.6)}/>` +
+      `<ellipse cx="10.8" cy="11" rx="1.6" ry="1.2" fill="${c}"/>` +
+      `<path d="M12.3 11V7.5L14.5 8.4" ${stroke(c, 1.3)}/>`,
   ],
   // Chant: a flame, your next attack skill burns (#758). Burning's flame,
   // smaller and higher, clear of the banner's notch.
@@ -1023,6 +1026,12 @@ const skillGlyph = {
     inkLine("M6 3V21", 2.4) +
     `<path d="M6 4H19.5L15.5 8.75L19.5 13.5H6Z" ${stroke(C.ink, 1.6)}/>` +
     inkFill("M10.5 6.2h2v1.8h1.8v2h-1.8v1.8h-2v-1.8H8.7v-2h1.8z"),
+  // A banner with a note on its cloth: a song carried to every ally (#1012).
+  "banner-note": () =>
+    inkLine("M6 3V21", 2.4) +
+    `<path d="M6 4H19.5L15.5 8.75L19.5 13.5H6Z" ${stroke(C.ink, 1.6)}/>` +
+    `<ellipse cx="10.3" cy="10.6" rx="1.7" ry="1.3" fill="${C.ink}"/>` +
+    inkLine("M11.9 10.6V6.6L14.4 7.6", 1.4),
   banner: () => inkLine("M6 3V21", 2.4) + inkFill("M6 4H19.5L15.5 8.75L19.5 13.5H6Z"),
   // Two chevrons and a plus: allies hurried along and healed as they go (#959).
   "speed-heal": () =>
@@ -1165,6 +1174,10 @@ const skillModifier = {
     `<circle cx="19" cy="18" r="3.4" ${stroke(C.ink, 1.5)}/><path d="M19 18H15.6A3.4 3.4 0 0 0 22.4 18Z" fill="${C.ink}"/>`,
   // An energy bolt: it takes energy (#1018).
   bolt: () => inkFill("M20 14.2L16.4 18.4H19L18.2 21.8L22 17.4H19.4Z"),
+  // A small skull: it works on a corpse (#1075). The modifier for corpse skills.
+  corpse: () =>
+    inkFill("M19 14.8a3.4 3.4 0 0 1 2.1 6.1V22h-4.2v-1.1A3.4 3.4 0 0 1 19 14.8z") +
+    `<circle cx="17.7" cy="18.1" r="0.9" fill="${C.bg}"/><circle cx="20.3" cy="18.1" r="0.9" fill="${C.bg}"/>`,
   less: () => inkLine("M16.5 18H21.5", 2),
   area: () => `<circle cx="19" cy="18" r="3.4" ${stroke(C.ink, 1.6)}/>`,
   clock: () =>

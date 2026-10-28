@@ -252,10 +252,14 @@ describe("ranged weapons fire projectiles", () => {
       "archer",
       {
         maxHealth: RULES.combat.baseHealth,
-        maxEnergy: RULES.combat.baseEnergy,
         baseEnergyPips: 0,
         attributeRanks: new Map(),
-        equipment: unarmedResolvedEquipment(60),
+        weaponSets: [
+          { equipment: unarmedResolvedEquipment(60), maxEnergy: RULES.combat.baseEnergy },
+          null,
+          null,
+          null,
+        ],
       },
       [],
     );

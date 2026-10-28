@@ -6,6 +6,7 @@ import { createProfessionDot, cssColour } from "./character-preview.js";
 import { characterLine } from "./lobby-screen.js";
 import { PEER_IP_NOTICE, RANDOM_ARENA_MODES } from "./menu.js";
 import { button, h, screenBar } from "./kit.js";
+import { renderSummary, type SummaryTable } from "./match-summary.js";
 import { relayLine } from "./relay-section.js";
 
 /**
@@ -98,6 +99,8 @@ export type QueueView =
       readonly kind: "ended";
       readonly outcome: string;
       readonly streak: number;
+      /** The match summary (#1057); `undefined` if the host never sent one. */
+      readonly summary: readonly SummaryTable[] | undefined;
       readonly stay?: StayOffer;
     };
 
@@ -310,8 +313,9 @@ export function mountQueueScreen(
   const count = h("div", "queue-count");
   const problem = h("div", "screen-problem queue-problem");
   const streak = h("div", "queue-streak");
+  const summaryHost = h("div", "queue-summary");
   const body = h("div", "queue-body");
-  body.append(status, waited, count, problem, streak);
+  body.append(status, waited, count, problem, streak, summaryHost);
   const relay = relayLine();
   if (relay !== undefined) {
     body.append(relay);
@@ -346,6 +350,7 @@ export function mountQueueScreen(
     problem.hidden = lines.problem === undefined;
     streak.textContent = lines.streak ?? "";
     streak.hidden = lines.streak === undefined;
+    summaryHost.replaceChildren();
     if (splash === undefined) {
       splashHost.replaceChildren();
     } else {
@@ -403,6 +408,10 @@ export function mountQueueScreen(
           return;
         case "ended":
           set(endedLines(view.outcome, view.streak, view.stay));
+          // Under the outcome line, as it was under the result banner.
+          if (view.summary !== undefined) {
+            renderSummary(summaryHost, view.summary);
+          }
           return;
       }
     },

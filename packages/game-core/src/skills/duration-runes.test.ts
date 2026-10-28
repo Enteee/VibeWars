@@ -28,14 +28,18 @@ function wearing(id: string, team: number, ...runeIds: UniversalRuneId[]): Comba
       primaryProfession: "warrior",
       allocatedRanks: new Map(),
       equipment: {
-        mainHand: { weaponId: "sword", requirementAttributeId: null },
-        offHand: null,
+        weaponSets: [
+          { mainHand: { weaponId: "sword", requirementAttributeId: null }, offHand: null },
+          null,
+          null,
+          null,
+        ],
         armor,
       },
     },
     RULES,
   );
-  return makeCombatant({ id, team, equipment: resolved.equipment });
+  return makeCombatant({ id, team, equipment: resolved.weaponSets[0].equipment });
 }
 
 function skill(id: string): Skill {

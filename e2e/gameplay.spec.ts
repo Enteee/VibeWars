@@ -561,7 +561,9 @@ test("a match whose host goes returns to the menu and says why (#195)", async ({
   await startLobbyMatch(host, [page]);
   const canvas = page.locator("#viewport canvas:not(.compass)");
 
-  await host.close();
+  // A navigation fires pagehide, as a closed tab does in a browser; Playwright's
+  // page.close() does not run unload handlers, so it skips it (#1085).
+  await host.goto("about:blank");
 
   const notice = page.getByText("The host closed the lobby.");
   await expect(notice).toBeVisible();
@@ -573,6 +575,7 @@ test("a match whose host goes returns to the menu and says why (#195)", async ({
   // would save a second one.
   await startMatchFromMenu(page);
   await expect(notice).toHaveCount(0);
+  await host.close();
 });
 
 test("the target panel shows the target's professions before its name (#281)", async ({ page }) => {

@@ -1,13 +1,15 @@
-import { defaultBuildEquipment } from "@vibewars/game-core";
+import { STARTER_BUILDS, defaultBuildEquipment } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
 import {
   SKILL_BAR_SLOTS,
   equippableSkills,
+  fromPlayerBuild,
   toCharacter,
+  toPlayerBuild,
   validateBuild,
 } from "./build-validation.js";
-import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "./schema.js";
+import { CHARACTER_SCHEMA_VERSION, isStoredCharacter, type StoredCharacter } from "./schema.js";
 
 function stored(overrides: Partial<StoredCharacter> = {}): StoredCharacter {
   return {
@@ -23,6 +25,18 @@ function stored(overrides: Partial<StoredCharacter> = {}): StoredCharacter {
     ...overrides,
   };
 }
+
+describe("fromPlayerBuild", () => {
+  it("round-trips every starter build through a stored character (#853)", () => {
+    for (const build of STARTER_BUILDS) {
+      const character = fromPlayerBuild(build, "c1", 7);
+      expect(isStoredCharacter(character)).toBe(true);
+      expect(character).toMatchObject({ id: "c1", updatedAt: 7, name: build.name });
+      expect(toPlayerBuild(character)).toEqual(build);
+      expect(fromPlayerBuild(toPlayerBuild(character), "c1", 7)).toEqual(character);
+    }
+  });
+});
 
 describe("toCharacter", () => {
   it("maps stored fields onto the domain character", () => {

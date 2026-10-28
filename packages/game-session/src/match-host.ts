@@ -1,11 +1,13 @@
 import {
   MINIMAL_GW_INSPIRED_PVP_V1,
   MatchSimulation,
+  MatchTally,
   ZERO,
   adrenalineLossIn,
   applyIntent,
   drainAccumulator,
   resolveJoinLoadout,
+  loadoutSpec,
   resolveLoadout,
   spawnFacing,
   swingProgress,
@@ -16,6 +18,7 @@ import {
 } from "@vibewars/game-core";
 import {
   MAX_WIRE_COMBATS,
+  MAX_LOBBY_PLAYERS,
   MAX_WIRE_PROJECTILES,
   MAX_WIRE_GROUND_EFFECTS,
   PROTOCOL_MISMATCH_MESSAGE,
@@ -40,6 +43,7 @@ import {
   type WirePlayer,
   type WireSkillBar,
   type WireSnapshot,
+  type WireSummaryRow,
 } from "@vibewars/game-protocol";
 
 import { createCallBoard, type Team } from "./calls.js";
@@ -217,6 +221,36 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
    */
   const callsDirty = new Set<Team>();
   let seated = 0;
+  /**
+   * The seats the match had, in seat order: whoever left still has a line
+   * in the summary (#1057), under the name they joined with. At most
+   * `MAX_LOBBY_PLAYERS`, all `ended` carries: past it, the earliest seat
+   * no longer held goes (`seatNew`).
+   */
+  const everSeated = new Map<string, { readonly name: string; readonly team: 0 | 1 }>();
+  /**
+   * Every body's team as the tick began, a creature's too: one killed in
+   * a tick has left the simulation by the time that tick is tallied.
+   */
+  const teams = new Map<string, number>();
+  /** The match's totals per player, for the summary. */
+  const tally = new MatchTally((id) => everSeated.get(id)?.team ?? teams.get(id));
+  /** One whole-number line per seat the match ever had. */
+  const summary = (): WireSummaryRow[] =>
+    [...everSeated].map(([id, { name, team }]) => {
+      const row = tally.row(id);
+      return {
+        id,
+        name,
+        team,
+        damage: Math.round(row.damage),
+        healing: Math.round(row.healing),
+        taken: Math.round(row.taken),
+        kills: row.kills,
+        deaths: row.deaths,
+        interrupts: row.interrupts,
+      };
+    });
   let accumulator = 0;
   let finished = false;
 
@@ -384,16 +418,14 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       id: playerId,
       team,
       skillBar: loadout.skillBar,
-      attributeRanks: resolved.attributeRanks,
-      equipment: resolved.equipment,
+      ...loadoutSpec(resolved),
       spawn,
       facing: spawnFacing(
         spawn,
         map.spawns.filter((point) => point.team !== team).map((point) => point.position),
         map.spawns.map((point) => point.position),
       ),
-      maxHealth: resolved.maxHealth,
-      maxEnergy: resolved.maxEnergy,
+      // The house loadout's, which is not its primary's (join-loadout.ts).
       baseEnergyPips: loadout.baseEnergyPips,
     });
     const seat: Seat = {
@@ -413,6 +445,15 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       skillBar: undefined,
     };
     seats.set(playerId, seat);
+    everSeated.set(playerId, { name: seat.name, team });
+    for (const id of everSeated.keys()) {
+      if (everSeated.size <= MAX_LOBBY_PLAYERS) {
+        break;
+      }
+      if (!seats.has(id)) {
+        everSeated.delete(id);
+      }
+    }
     welcome(seat, peerId);
   };
 
@@ -697,6 +738,9 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   };
 
   const tick = (): void => {
+    for (const participant of sim.participants()) {
+      teams.set(participant.id, participant.combatant.team);
+    }
     const result = sim.step(TICK_SECONDS);
     expireDropped();
     for (const team of calls.step(sim.elapsedSeconds, isAlive)) {
@@ -709,6 +753,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     for (const part of packSnapshot(snapshot(), MAX_MESSAGE_BYTES)) {
       transport.send("snapshot", part);
     }
+    tally.add(result.log);
     for (const batch of packCombat(wireCombat(result.log), MAX_MESSAGE_BYTES, MAX_WIRE_COMBATS)) {
       transport.send("combat", batch);
     }
@@ -723,6 +768,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       const ended: WireEnded = {
         winningTeam: wireTeam(sim.outcome.winningTeam),
         endReason: sim.outcome.reason ?? "time",
+        summary: summary(),
       };
       transport.send("ended", ended);
     }
@@ -754,7 +800,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     async close(reason) {
       // Nothing more is ticked onto a transport that has left.
       finished = true;
-      const ended: WireEnded = { winningTeam: null, endReason: reason };
+      const ended: WireEnded = { winningTeam: null, endReason: reason, summary: summary() };
       transport.send("ended", ended);
       await transport.leave();
     },

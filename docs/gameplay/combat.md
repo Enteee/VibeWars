@@ -1013,6 +1013,30 @@ degenerates its target by 2 pips.
 same slow-down without the degeneration, for 25 s, on the target and
 every foe adjacent to it (#918).
 
+### Weapon sets
+
+A build carries up to four weapon sets (#489): a main hand and an
+optional off-hand each. Set 1 is required, and sets 2-4 may be empty in
+any pattern. Armor, runes and insignias are one set. A swap is an
+action: it happens at once if you are doing nothing, and otherwise waits
+for the cast and its aftercast, the swing in progress, or a knockdown to
+end. A blow begun lands with the old weapon, and the new one then swings
+afresh. Moving or Esc swaps at once, because it ends what the swap was
+waiting for. Pressing another set while one waits replaces it, and the
+set in hand drops it. There is no cooldown, as in GW1. Dead, you cannot
+swap; you respawn holding the set you died with.
+
+After a swap, everything reads the new set: auto-attack damage,
+interval and reach, which attack skills work ("Needs an axe."), a
+shield's armor and a focus's energy. Maximum energy becomes the new
+set's, and current energy moves by the same amount. Swapping from a
+wand and focus (+12) to a staff takes 12 off both, and swapping back
+gives both back. Current energy may go below 0, hidden as in GW1:
+regeneration climbs back through 0 before a skill can be paid for, and
+nothing else takes it deeper. Arrows already in flight keep the bow
+that loosed them. The keys (F1-F4) arrive with #489's second child. See
+[ADR-0036](../adr/0036-weapon-sets.md).
+
 ## Damage types and armor
 
 Every hit has one of GW1's damage types (#759). Slashing, piercing and

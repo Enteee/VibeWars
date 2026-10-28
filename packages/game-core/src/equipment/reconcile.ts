@@ -1,5 +1,5 @@
 import { armorPieces, type ArmorPiece, type ArmorSet } from "./armor.js";
-import type { BuildEquipment, EquippedOffhand, EquippedWeapon } from "./loadout.js";
+import type { BuildEquipment, EquippedOffhand, EquippedWeapon, WeaponSet } from "./loadout.js";
 import { getOffhand } from "./offhands.js";
 import { getUniversalRune, type EquippedRune } from "./runes.js";
 import type { EquipmentRequirement } from "./types.js";
@@ -119,17 +119,15 @@ function reconcileArmor(armor: ArmorSet, context: ReconcileContext): ArmorSet {
   return next as ArmorSet;
 }
 
-export function reconcileEquipment(
-  equipment: BuildEquipment,
-  context: ReconcileContext,
-): BuildEquipment {
-  const weapon = getWeapon(equipment.mainHand.weaponId);
+/** One weapon set's nominations repointed; a set is never emptied here (ADR-0036). */
+function reconcileWeaponSet(set: WeaponSet, context: ReconcileContext): WeaponSet {
+  const weapon = getWeapon(set.mainHand.weaponId);
 
-  let mainHand: EquippedWeapon = equipment.mainHand;
+  let mainHand: EquippedWeapon = set.mainHand;
   if (weapon !== undefined) {
     const repointed = repointRequirement(
       weapon.requirement,
-      equipment.mainHand.requirementAttributeId,
+      set.mainHand.requirementAttributeId,
       context,
     );
     // A weapon with no legal nomination left keeps the one it had: the
@@ -137,13 +135,13 @@ export function reconcileEquipment(
     // better than silently swapping their weapon out from under them.
     if (repointed !== undefined) {
       mainHand = {
-        weaponId: equipment.mainHand.weaponId,
+        weaponId: set.mainHand.weaponId,
         requirementAttributeId: repointed.attributeId,
       };
     }
   }
 
-  let offHand: EquippedOffhand | null = equipment.offHand;
+  let offHand: EquippedOffhand | null = set.offHand;
   if (offHand !== null) {
     const definition = getOffhand(offHand.offhandId);
     if (definition === undefined || (weapon !== undefined && !allowsOffhand(weapon))) {
@@ -163,5 +161,23 @@ export function reconcileEquipment(
     }
   }
 
-  return { mainHand, offHand, armor: reconcileArmor(equipment.armor, context) };
+  return { mainHand, offHand };
+}
+
+export function reconcileEquipment(
+  equipment: BuildEquipment,
+  context: ReconcileContext,
+): BuildEquipment {
+  const [set1, set2, set3, set4] = equipment.weaponSets;
+  const reconcile = (set: WeaponSet | null): WeaponSet | null =>
+    set === null ? null : reconcileWeaponSet(set, context);
+  return {
+    weaponSets: [
+      reconcileWeaponSet(set1, context),
+      reconcile(set2),
+      reconcile(set3),
+      reconcile(set4),
+    ],
+    armor: reconcileArmor(equipment.armor, context),
+  };
 }

@@ -127,6 +127,8 @@ export interface MatchSnapshot {
   readonly projectiles: readonly ProjectileSnapshot[];
   /** Wards on the ground, oldest first (#1087). */
   readonly groundEffects: readonly GroundEffectSnapshot[];
+  /** What each player did, from the host's `ended` (#1057); `undefined` until then. */
+  readonly summary: readonly MatchSummaryRow[] | undefined;
 }
 
 /** A ward on the ground (#1087): a circle at `x`, `y` in `team`'s colour, until `endsAt`. */
@@ -142,6 +144,19 @@ export interface GroundEffectSnapshot {
   readonly endsAt: number;
   /** How long it was placed for. */
   readonly durationSeconds: number;
+}
+
+/** One player's line in the match summary (#1057), as the host tallied it: whole numbers. */
+export interface MatchSummaryRow {
+  readonly id: string;
+  readonly name: string;
+  readonly team: number;
+  readonly damage: number;
+  readonly healing: number;
+  readonly taken: number;
+  readonly kills: number;
+  readonly deaths: number;
+  readonly interrupts: number;
 }
 
 /**

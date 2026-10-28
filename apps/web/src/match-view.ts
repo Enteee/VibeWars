@@ -62,6 +62,7 @@ import {
 } from "./ui/options-screen.js";
 import { createPartyWindow } from "./ui/party-window.js";
 import { attachReconnectCountdown, mountReconnectOverlay } from "./ui/reconnect-overlay.js";
+import { renderSummary, summaryTables, type SummaryTable } from "./ui/match-summary.js";
 import { flashSlot, slotFlashes } from "./ui/skill-slot-state.js";
 
 /**
@@ -96,6 +97,8 @@ export interface MatchViewOptions {
 }
 
 export interface MatchView {
+  /** The match summary's tables once the host has sent them (#1057), for the queue screen. */
+  summary(): readonly SummaryTable[] | undefined;
   dispose(): Promise<void>;
 }
 
@@ -508,6 +511,9 @@ export async function startMatchView(
   });
 
   let finished = false;
+  /** The summary (#1057), drawn once under the result banner when the host's `ended` lands. */
+  let summary:
+    { readonly tables: readonly SummaryTable[]; readonly panel: HTMLElement } | undefined;
   const onFrame = (deltaSeconds: number): void => {
     latestMatch = connection.getSnapshot();
     matchSounds.snapshot(latestMatch);
@@ -521,6 +527,17 @@ export async function startMatchView(
         endReason: latestMatch.endReason,
         selfTeam: self?.team,
       });
+    }
+    // The snapshot that says "finished" may land a frame before the `ended` that carries it.
+    if (
+      latestMatch.phase === "finished" &&
+      summary === undefined &&
+      latestMatch.summary !== undefined
+    ) {
+      const tables = summaryTables(latestMatch.summary, connection.selfSessionId, self?.team);
+      const panel = renderSummary(parent, tables);
+      panel.classList.add("hud-summary");
+      summary = { tables, panel };
     }
     camera?.frame(deltaSeconds, self);
     // Hover is hit-tested every frame, through the camera as it is now, so
@@ -590,6 +607,7 @@ export async function startMatchView(
   });
 
   return {
+    summary: () => summary?.tables,
     async dispose(): Promise<void> {
       // Order matters: stop listening before tearing down, so a late
       // event cannot touch a destroyed scene.
@@ -619,6 +637,7 @@ export async function startMatchView(
       hud.targetEffects.dispose();
       hud.top.remove();
       hud.result.remove();
+      summary?.panel.remove();
       offMute();
       jukebox.dispose();
       closeOptionsOverlay();

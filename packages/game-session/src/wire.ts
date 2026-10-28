@@ -590,5 +590,7 @@ export function matchSnapshot(
     endReason: absent(snapshot.endReason),
     projectiles: snapshot.projectiles.map(projectileSnapshot),
     groundEffects: snapshot.groundEffects,
+    // Only the host's `ended` carries it.
+    summary: undefined,
   };
 }

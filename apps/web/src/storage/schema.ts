@@ -10,7 +10,7 @@ import type { BuildEquipment, ProfessionId } from "@vibewars/game-core";
  * data, and nothing should (ADR-0016).
  */
 
-export const CHARACTER_SCHEMA_VERSION = 2;
+export const CHARACTER_SCHEMA_VERSION = 3;
 export const TEAM_SCHEMA_VERSION = 1;
 
 export interface StoredAttribute {
