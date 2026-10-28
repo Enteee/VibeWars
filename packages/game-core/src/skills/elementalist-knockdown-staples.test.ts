@@ -44,7 +44,7 @@ function foe(id = "foe", overrides: Partial<Combatant> = {}): Combatant {
 }
 
 function at(combatant: Combatant, position: Vec2): TargetCandidate {
-  return { combatant, position };
+  return { combatant, position, creature: undefined };
 }
 
 /** `user` pays for `skillId` and it lands on `targets`. */
@@ -62,7 +62,7 @@ function use(user: Combatant, skillId: string, ...targets: Combatant[]): CombatE
 
 /** What `amount` of `type` damage at no armor penetration does to `victim`. */
 function elemental(amount: number, type: "earth" | "fire", victim: Combatant): number {
-  return mitigate(skillDamage(amount, type, 0), victim, RULES);
+  return mitigate(skillDamage(amount, type, 0), victim, RULES, "chest");
 }
 
 describe("Blinding Flash (#985)", () => {
@@ -99,8 +99,10 @@ describe("Shock (#985)", () => {
   it("knocks down for 2 s and strikes for 50 lightning at 25% armor penetration", () => {
     const target = foe();
     const events = use(caster(), "elementalist.shock", target);
-    const expected = mitigate(skillDamage(50, "lightning", 0.25), target, RULES);
-    expect(expected).toBeGreaterThan(mitigate(skillDamage(50, "lightning", 0), target, RULES));
+    const expected = mitigate(skillDamage(50, "lightning", 0.25), target, RULES, "chest");
+    expect(expected).toBeGreaterThan(
+      mitigate(skillDamage(50, "lightning", 0), target, RULES, "chest"),
+    );
     expect(events.map((event) => event.kind)).toEqual(["knocked-down", "damage"]);
     expect(target.knockdownRemaining).toBe(KNOCKDOWN_SECONDS);
     expect(target.health).toBe(1000 - expected);

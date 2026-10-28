@@ -1,9 +1,30 @@
-import { StatusSet, type ActiveStatus } from "@vibewars/game-core";
-import { MAX_WIRE_STATUSES } from "@vibewars/game-protocol";
+import {
+  MatchSimulation,
+  StatusSet,
+  type ActiveStatus,
+  type Participant,
+} from "@vibewars/game-core";
+import {
+  MAX_LOBBY_PLAYERS,
+  MAX_WIRE_STATUSES,
+  parseWireEnded,
+  type PeerHello,
+  type WireEnded,
+} from "@vibewars/game-protocol";
 import { describe, expect, it, vi } from "vitest";
 
-import { RULESET } from "./match-host.js";
-import { ARENA, self, startMatch } from "./match-harness.test-support.js";
+import { RULESET, WEAPON_SWAPS_PER_SECOND, WEAPON_SWAP_BURST } from "./match-host.js";
+import {
+  ARENA,
+  hello,
+  playerIn,
+  self,
+  settle,
+  startMatch,
+  starterBuild,
+  toJson,
+} from "./match-harness.test-support.js";
+import { MAX_MESSAGE_BYTES, messageBytes } from "./transport.js";
 
 describe("a P2P match (#375)", () => {
   it("seats remote players and the host's own, and moves them", async () => {
@@ -52,6 +73,7 @@ describe("a P2P match (#375)", () => {
       sourceId: remote.selfSessionId,
       outbreak: null,
       maintained: null,
+      projected: false,
     }));
     vi.spyOn(StatusSet.prototype, "active", "get").mockReturnValue(many);
     const before = remote.getSnapshot().elapsedSeconds;
@@ -77,6 +99,7 @@ describe("a P2P match (#375)", () => {
       sourceId: "foe",
       outbreak: null,
       maintained: null,
+      projected: false,
     };
     vi.spyOn(StatusSet.prototype, "active", "get").mockReturnValue([bleeding]);
 
@@ -88,5 +111,170 @@ describe("a P2P match (#375)", () => {
     // To 0.1 s: on 20 Hz ticks, the rounding is off by 0 or exactly 0.05.
     expect(Math.abs((sent?.endsAt ?? 0) - snapshot.elapsedSeconds - 5.25)).toBeLessThan(0.051);
     vi.restoreAllMocks();
+  });
+});
+
+describe("the match summary's size (#1057)", () => {
+  it("fits a full lobby's lines in one `ended`", () => {
+    // Sixteen names of sixteen four-byte characters, the most a name keeps,
+    // and numbers no match reaches.
+    const ended: WireEnded = {
+      winningTeam: 0,
+      endReason: "annihilation",
+      summary: Array.from({ length: MAX_LOBBY_PLAYERS }, (_, i) => ({
+        id: `player-${String(1000 + i)}`,
+        name: "\u{1D54E}".repeat(16),
+        team: i % 2 === 0 ? 0 : 1,
+        damage: 9_999_999,
+        healing: 9_999_999,
+        taken: 9_999_999,
+        kills: 9_999,
+        deaths: 9_999,
+        interrupts: 9_999,
+      })),
+    };
+    expect(parseWireEnded(ended)).toEqual(ended);
+    expect(messageBytes(ended)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
+  });
+});
+
+describe("corpses on the wire (#466)", () => {
+  it("sends whether a corpse was exploited", async () => {
+    const match = startMatch();
+    const { connection: remote } = await match.join();
+    await match.step(0.05);
+    expect(self(remote)?.corpseExploited).toBe(false);
+
+    const participants = Object.getOwnPropertyDescriptor(MatchSimulation.prototype, "participants")
+      ?.value as (this: MatchSimulation) => IterableIterator<Participant>;
+    vi.spyOn(MatchSimulation.prototype, "participants").mockImplementation(function* (
+      this: MatchSimulation,
+    ) {
+      for (const participant of participants.call(this)) {
+        yield participant.id === remote.selfSessionId
+          ? {
+              ...participant,
+              combatant: Object.create(participant.combatant, { dead: { value: true } }),
+              corpseExploited: true,
+            }
+          : participant;
+      }
+    });
+    await match.step(0.05);
+    vi.restoreAllMocks();
+
+    expect(self(remote)).toMatchObject({ dead: true, corpseExploited: true });
+  });
+});
+
+describe("weapon sets (#489)", () => {
+  const TICK = 1 / RULESET.tickRateHz;
+
+  /** The Warrior/Monk starter, with a bow in set 2. */
+  function swapper(): PeerHello {
+    const build = starterBuild("Warrior/Monk");
+    const [set1] = build.equipment.weaponSets;
+    const bow = {
+      mainHand: { weaponId: "recurve-bow", requirementAttributeId: null },
+      offHand: null,
+    };
+    return hello({
+      build: toJson({
+        ...build,
+        equipment: { ...build.equipment, weaponSets: [set1, bow, null, null] },
+      }),
+    });
+  }
+
+  it("swaps a seat's set on its intent, and tells that peer alone", async () => {
+    const match = startMatch();
+    const { connection: other } = await match.join();
+    const { connection: remote } = await match.join(swapper());
+    await match.step(TICK);
+    expect(self(remote)?.weaponId).toBe("sword");
+    expect(remote.weaponSets).toMatchObject({ active: 0, pending: null });
+    expect(remote.weaponSets?.sets[1]).toEqual({ weaponId: "recurve-bow", offhandId: null });
+    const send = vi.spyOn(match.hostTransport, "send");
+
+    remote.sendIntent({ kind: "weapon-set", set: 1 });
+    await settle();
+    await match.step(TICK);
+
+    expect(self(remote)?.weaponId).toBe("recurve-bow");
+    expect(playerIn(other.getSnapshot(), remote.selfSessionId)?.weaponId).toBe("recurve-bow");
+    expect(remote.weaponSets?.active).toBe(1);
+    expect(other.weaponSets?.sets[1]).toBeNull();
+    const sent = send.mock.calls.filter(([channel]) => channel === "weapon-sets");
+    expect(sent).toHaveLength(1);
+    expect(sent[0]?.[2]).toBeDefined();
+    vi.restoreAllMocks();
+  });
+
+  it("says nothing for an empty set", async () => {
+    const match = startMatch();
+    const { connection: remote } = await match.join(swapper());
+    await match.step(TICK);
+    const send = vi.spyOn(match.hostTransport, "send");
+
+    remote.sendIntent({ kind: "weapon-set", set: 2 });
+    await settle();
+    await match.step(TICK);
+
+    expect(send.mock.calls.filter(([channel]) => channel === "refused")).toEqual([]);
+    expect(remote.weaponSets?.active).toBe(0);
+    vi.restoreAllMocks();
+  });
+
+  it(`handles ${String(WEAPON_SWAP_BURST)} swaps at once, drops and counts the rest, and refills`, async () => {
+    const match = startMatch();
+    const { connection: remote } = await match.join(swapper());
+    await match.step(TICK);
+
+    // Set 2, set 1, ...: the last handled is set 1, so a dropped one would show.
+    for (let i = 0; i < WEAPON_SWAP_BURST + 3; i += 1) {
+      remote.sendIntent({ kind: "weapon-set", set: i % 2 === 0 ? 1 : 0 });
+    }
+    remote.sendIntent({ kind: "move", dirX: 1, dirY: 0 });
+    const before = self(remote)?.x ?? 0;
+    await settle();
+    await match.step(TICK);
+
+    expect(match.host.droppedWeaponSwaps).toBe(3);
+    expect(remote.weaponSets?.active).toBe(0);
+    await match.step(TICK);
+    // The move was not a swap: it landed.
+    expect(self(remote)?.x).toBeGreaterThan(before);
+
+    await match.step(1 / WEAPON_SWAPS_PER_SECOND);
+    remote.sendIntent({ kind: "weapon-set", set: 1 });
+    await settle();
+    await match.step(TICK);
+    expect(remote.weaponSets?.active).toBe(1);
+    expect(match.host.droppedWeaponSwaps).toBe(3);
+  });
+
+  it("sends energy below 0 as 0", async () => {
+    const match = startMatch();
+    const { connection: remote } = await match.join();
+    await match.step(TICK);
+
+    const participants = Object.getOwnPropertyDescriptor(MatchSimulation.prototype, "participants")
+      ?.value as (this: MatchSimulation) => IterableIterator<Participant>;
+    vi.spyOn(MatchSimulation.prototype, "participants").mockImplementation(function* (
+      this: MatchSimulation,
+    ) {
+      for (const participant of participants.call(this)) {
+        yield participant.id === remote.selfSessionId
+          ? {
+              ...participant,
+              combatant: Object.create(participant.combatant, { energy: { value: -7 } }),
+            }
+          : participant;
+      }
+    });
+    await match.step(TICK);
+    vi.restoreAllMocks();
+
+    expect(self(remote)?.energy).toBe(0);
   });
 });

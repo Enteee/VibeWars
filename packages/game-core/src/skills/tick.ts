@@ -30,14 +30,16 @@ import { isSpell, type Combatant, type Skill } from "./types.js";
  * status, but summed with theirs before the clamp, as GW1 does.
  *
  * Health per second (#975, Spirit Light Weapon), and a moving bearer's
- * (#921, "Fall Back!"), is a heal, not pips: outside the clamp, scaled
- * by `healingMultiplier`, and added to the same change, so one tick
- * emits one damage or heal event.
+ * (#921, "Fall Back!"), and one `nearSpirit`'s (#1064, the simulation
+ * knows where spirits stand), is a heal, not pips: outside the clamp,
+ * scaled by `healingMultiplier`, and added to the same change, so one
+ * tick emits one damage or heal event.
  */
 export function advanceStatuses(
   combatant: Combatant,
   dt: number,
   naturalPips: number,
+  nearSpirit = false,
 ): CombatEvent[] {
   const events: CombatEvent[] = [];
   if (combatant.dead) {
@@ -48,7 +50,9 @@ export function advanceStatuses(
   const pips = netPips(combatant, naturalPips, 0).health;
   const modifiers = aggregateModifiers(combatant.statuses.active);
   const perSecond =
-    (modifiers.healthPerSecond + (combatant.moving ? modifiers.healthPerSecondWhileMoving : 0)) *
+    (modifiers.healthPerSecond +
+      (combatant.moving ? modifiers.healthPerSecondWhileMoving : 0) +
+      (nearSpirit ? modifiers.healthPerSecondNearSpirit : 0)) *
     modifiers.healingMultiplier;
   if (pips !== 0 || perSecond !== 0) {
     const delta = (pips * HEALTH_PER_PIP + perSecond) * dt;
@@ -276,7 +280,8 @@ export function attackDamageTypeOf(combatant: Combatant): DamageType | undefined
  * How long this caster takes to cast this skill. Dazed doubles a spell's;
  * a signet or any other skill that is not a spell casts at normal speed,
  * as in GW1 (#524). An instant skill stays instant (0 × 2 = 0). Fast
- * Casting multiplies in too (#527), judged on the skill's own activation.
+ * Casting multiplies in too (#527), judged on the skill's own activation,
+ * and speeds up a signet as well (#1100), which dazed does not.
  * A hex cast on a `target` under Holy Veil takes twice as long (#944);
  * with no target, as in a tooltip, nothing on one counts.
  */
@@ -285,10 +290,10 @@ export function effectiveActivationSeconds(
   caster: RankHolder,
   target?: Pick<Combatant, "statuses">,
 ): number {
-  if (!isSpell(skill.type)) {
-    return skill.activationSeconds;
-  }
   const fastCasting = fastCastingMultiplier(rankOf(caster, FAST_CASTING_ATTRIBUTE), skill);
+  if (!isSpell(skill.type)) {
+    return skill.activationSeconds * fastCasting;
+  }
   const onTarget =
     skill.type === "hex" && target !== undefined
       ? aggregateModifiers(target.statuses.active).incomingHexCastTimeMultiplier
@@ -332,14 +337,21 @@ export function combinedBlockChance(
 /**
  * The chance in [0, 1] that the bearer blocks an attack of this kind
  * (#534). None while knocked down, as in GW1 (#610): 0, so no block is
- * rolled at all.
+ * rolled at all. A block that holds only below a share of health (#988)
+ * reads the bearer's health as it is now.
  */
 export function blockChanceOf(combatant: Combatant, kind: "melee" | "projectile"): number {
   if (combatant.knockdownRemaining > 0) {
     return 0;
   }
+  const maxHealth = effectiveMaxHealth(combatant);
   return combinedBlockChance(
-    combatant.statuses.active.flatMap((status) => getStatusDefinition(status.id).block ?? []),
+    combatant.statuses.active.flatMap((status) => {
+      const { block, blockBelowHealth } = getStatusDefinition(status.id);
+      const holds =
+        blockBelowHealth === undefined || combatant.health < maxHealth * blockBelowHealth;
+      return block !== undefined && holds ? [block] : [];
+    }),
     kind,
   );
 }

@@ -3,11 +3,15 @@ import {
   AREA_EARSHOT,
   AREA_IN_THE_AREA,
   AREA_NEARBY,
+  PET_REACH,
   RANGE_MELEE,
+  RANGE_NATURE_RITUAL,
   RANGE_SPELL,
+  RANGE_SPIRIT,
 } from "../distances.js";
 import { WEAPONS } from "../equipment/weapons.js";
-import { KNOCKDOWN_SECONDS, type Skill } from "./types.js";
+import type { Behaviour } from "../match/behaviour.js";
+import { KNOCKDOWN_SECONDS, type CreatureTemplate, type Skill } from "./types.js";
 
 /**
  * The implemented skill catalog (brief §9's "Implemented" stage).
@@ -34,6 +38,113 @@ import { KNOCKDOWN_SECONDS, type Skill } from "./types.js";
 /** Longbow-ish range. */
 const RANGE_LONG = 520;
 
+/**
+ * What a minion does (#467): heel by its master, fight foes in earshot of
+ * itself, back to heel past cast range. House numbers.
+ */
+const MINION_BEHAVIOUR: Behaviour = {
+  kind: "follow-and-attack",
+  engage: "nearest-foe",
+  aggroUnits: AREA_EARSHOT,
+  leashUnits: RANGE_SPELL,
+  heelUnits: AREA_IN_THE_AREA,
+};
+
+/**
+ * Level 0...10 at Death Magic 0...12. Health 80 + 20 per level and armor
+ * about 3 per level (fandom "Health", "Bone Minion"); a blow every 3.10 s
+ * (GWW "Bone Minion"). 6-11 is GWW's 6-15 against armor 60 at Death
+ * Magic 12, its maximum a critical's, so ÷√2 (#1131).
+ */
+const BONE_MINION: CreatureTemplate = {
+  kind: "minion",
+  name: "Bone Minion",
+  maxHealth: { scaling: { attributeId: "necromancer.death-magic", atZero: 80, atTwelve: 280 } },
+  armor: { scaling: { attributeId: "necromancer.death-magic", atZero: 0, atTwelve: 30 } },
+  attack: {
+    attributeId: "necromancer.death-magic",
+    damageMin: 6,
+    damageMax: 11,
+    level: { atZero: 0, atTwelve: 10 },
+    damageType: "blunt",
+    attackIntervalSeconds: 3.1,
+    range: RANGE_MELEE,
+  },
+  behaviour: MINION_BEHAVIOUR,
+  aura: undefined,
+  onDeath: "vanish",
+  ownerDisableOnDeath: undefined,
+};
+
+/**
+ * Level 1...14 at Death Magic 0...12. Health 80 + 20 per level and armor
+ * 4 per level (fandom "Bone Horror"); a blow every 3.10 s (GWW "Bone
+ * Horror"). 12-24 is GWW's 12-34 against armor 60 at Death Magic 12, its
+ * maximum a critical's, so ÷√2 (#1131).
+ */
+const BONE_HORROR: CreatureTemplate = {
+  kind: "minion",
+  name: "Bone Horror",
+  maxHealth: { scaling: { attributeId: "necromancer.death-magic", atZero: 100, atTwelve: 360 } },
+  armor: { scaling: { attributeId: "necromancer.death-magic", atZero: 4, atTwelve: 56 } },
+  attack: {
+    attributeId: "necromancer.death-magic",
+    damageMin: 12,
+    damageMax: 24,
+    level: { atZero: 1, atTwelve: 14 },
+    damageType: "blunt",
+    attackIntervalSeconds: 3.1,
+    range: RANGE_MELEE,
+  },
+  behaviour: MINION_BEHAVIOUR,
+  aura: undefined,
+  onDeath: "vanish",
+  ownerDisableOnDeath: undefined,
+};
+
+/**
+ * What a pet does (#1046): heel by its owner, go for whatever its owner is
+ * attacking within twice earshot of itself, back to heel past that.
+ */
+const PET_BEHAVIOUR: Behaviour = {
+  kind: "follow-and-attack",
+  engage: "owner-target",
+  aggroUnits: PET_REACH,
+  leashUnits: PET_REACH,
+  heelUnits: AREA_IN_THE_AREA,
+};
+
+/**
+ * GW1's PvP pet, a level-20 Elder Wolf (fandom "Wolf"). Health = level ×
+ * 20 + 80 and armor = level × 3 + 20 (fandom "Animal companion"),
+ * whatever its owner's attributes. "With the critical hits removed, the
+ * base damage is 17-29" at Beast Mastery 12 against armor 60, "one attack
+ * every 2.15 seconds"; wolves deal slashing damage. Its death disables
+ * its owner's bar "between 10 and 3 seconds based on the owner's Beast
+ * Mastery" (fandom "Beast Mastery"): 10...4 is linear and unverified.
+ */
+const WOLF: CreatureTemplate = {
+  kind: "pet",
+  name: "Wolf",
+  maxHealth: { flat: 480 },
+  armor: { flat: 80 },
+  attack: {
+    attributeId: "ranger.beast-mastery",
+    damageMin: 17,
+    damageMax: 29,
+    level: undefined,
+    damageType: "slashing",
+    attackIntervalSeconds: 2.15,
+    range: RANGE_MELEE,
+  },
+  behaviour: PET_BEHAVIOUR,
+  aura: undefined,
+  onDeath: "lie",
+  ownerDisableOnDeath: {
+    scaling: { attributeId: "ranger.beast-mastery", atZero: 10, atTwelve: 4 },
+  },
+};
+
 export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "monk.orison-of-healing",
@@ -51,6 +162,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     effects: [
       {
@@ -85,6 +198,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     },
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     // Slower than any arrow: a second's flight at full range, so a foe who
     // sees it leave can step out of where it is led to.
     projectile: { speed: RANGE_SPELL },
@@ -124,6 +239,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     },
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     effects: [
       {
@@ -173,6 +290,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       ],
     },
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     effects: [],
   },
@@ -211,6 +330,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       onBlocked: [],
     },
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     effects: [],
   },
@@ -245,8 +366,44 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       onBlocked: [],
     },
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     effects: [{ kind: "knockdown", durationSeconds: 4 }],
+  },
+  {
+    id: "warrior.hammer-bash",
+    name: "Hammer Bash",
+    type: "attack",
+    elite: false,
+    profession: "warrior",
+    attributeId: "warrior.hammer-mastery",
+    // GW1: "Lose all adrenaline. If Hammer Bash hits, your target is
+    // knocked down." The loss is the price, paid on a miss too (#1097).
+    cost: { kind: "adrenaline", amount: 6, losesAll: true },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 0,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    attack: {
+      weapon: "hammer",
+      weaponDamage: 1,
+      bonusDamage: undefined,
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    projectile: undefined,
+    effects: [{ kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS }],
   },
   {
     id: "necromancer.blood-renewal-lite",
@@ -264,6 +421,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // An *original* skill, not an import: the corpus's sacrifice skills
     // all also need hexes or regeneration, so none of them could be
@@ -319,6 +478,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       onBlocked: [],
     },
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     effects: [{ kind: "interrupt" }],
   },
@@ -349,6 +510,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       onBlocked: [],
     },
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // The real elite: Daze the target. Applying Dazed interrupts a spell
     // by itself (#546), so it still shuts a caster down, a spell-caster
@@ -372,6 +535,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     effects: [{ kind: "apply-status", statusId: "faintheartedness", durationSeconds: 13 }],
   },
@@ -399,6 +564,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     },
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "...have Cracked Armor for 5...17...20 seconds": 17 s, its rank-12 value.
     effects: [{ kind: "apply-status", statusId: "cracked-armor", durationSeconds: 17 }],
@@ -419,6 +586,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // GW1's energy-degeneration hex (#503), at its rank-12 duration.
     // Left out: the caster's own -1 health degeneration while it lasts,
@@ -441,6 +610,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "Target suffers from weakness for 10...26...30 seconds": 26 s, its
     // rank-12 value. Weakness's first source (#762).
@@ -469,6 +640,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     },
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // The 17% sacrifice is paid once a cast, however many foes it reaches;
     // "...suffer from weakness for 1...13...16 seconds": 13 s, its rank-12
@@ -494,6 +667,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "Target fleshy foe becomes Diseased for 10...22...25 seconds": 22 s,
     // its rank-12 value. Disease spreads on its own (#765); everyone
@@ -518,6 +693,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // GW1's energy-regeneration enchantment (#503), at its rank-12 duration.
     effects: [
@@ -541,6 +718,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // A self-enchantment: real armor gain, and the real movement penalty
     // that makes it a genuine trade-off rather than a free buff.
@@ -562,6 +741,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // Strong self-regeneration behind a long 3s cast — the canonical
     // "interrupt me" target, which is exactly why it pairs well with the
@@ -584,6 +765,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "Remove one condition from target other ally. If a condition is
     // removed, that ally is healed for 5...57...70 health."
@@ -620,6 +803,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // A 50% chance to block attacks (#534), at its rank-12 duration.
     effects: [{ kind: "apply-status", statusId: "guardian", durationSeconds: 6 }],
@@ -640,6 +825,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // The first maintained enchantment (#837): +3 Health regeneration, its
     // rank-12 value, for −1 energy pip on its caster while it lasts.
@@ -672,6 +859,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       onBlocked: [],
     },
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "...the opponent begins bleeding for 5...21...25 seconds": 21 s, its
     // rank-12 value.
@@ -704,6 +893,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       onBlocked: [],
     },
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "...and inflict a Deep Wound ... for 5...17...20 seconds": 17 s, its
     // rank-12 value.
@@ -736,6 +927,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       onBlocked: [],
     },
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     effects: [],
   },
@@ -767,6 +960,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       onBlocked: [],
     },
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "...your target suffers from Bleeding for 5...17...20 seconds": 17 s,
     // its rank-12 value.
@@ -802,6 +997,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       onBlocked: [],
     },
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "If target foe is suffering from a Hex, you gain 5...11...13 Energy."
     effects: [
@@ -851,6 +1048,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       onBlocked: [],
     },
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     effects: [],
   },
@@ -885,6 +1084,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       onBlocked: [],
     },
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "...and any Stance being used by target foe ends."
     effects: [{ kind: "remove-status", category: "stance", count: 1 }],
@@ -921,6 +1122,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       onBlocked: [],
     },
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     effects: [
       {
@@ -971,6 +1174,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       onBlocked: [],
     },
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     effects: [
       { kind: "apply-status", statusId: "bleeding", durationSeconds: 17 },
@@ -1009,6 +1214,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       onBlocked: [],
     },
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     effects: [
       {
@@ -1051,6 +1258,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       onBlocked: [],
     },
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     effects: [
       {
@@ -1087,6 +1296,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       onBlocked: [],
     },
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "...and your target is interrupted": when the arrow lands, so a miss
     // interrupts nothing.
@@ -1119,6 +1330,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       onBlocked: [],
     },
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "If Pin Down hits, your target is crippled for 3...13...15 seconds":
     // 13 s, its rank-12 value, when the arrow lands.
@@ -1151,6 +1364,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       onBlocked: [],
     },
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "If Hunter's Shot hits, your target begins Bleeding for 3...21...25
     // seconds": 21 s, its rank-12 value, when the arrow lands.
@@ -1186,6 +1401,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       onBlocked: [],
     },
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "If Crippling Shot hits, your target becomes Crippled for 1...10...12
     // seconds": 10 s, its rank-12 value, when the arrow lands.
@@ -1218,6 +1435,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       onBlocked: [],
     },
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "If Debilitating Shot hits, your target loses 1...8...10 energy."
     effects: [
@@ -1255,6 +1474,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       onBlocked: [],
     },
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "...and cause Burning for 1...6...7 seconds": 6 s, its rank-12 value.
     effects: [{ kind: "apply-status", statusId: "burning", durationSeconds: 6 }],
@@ -1283,6 +1504,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     },
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "...become blinded for 3...13...15 seconds": 13 s, its rank-12 value.
     effects: [{ kind: "apply-status", statusId: "blind", durationSeconds: 13 }],
@@ -1308,6 +1531,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "For 8...13...14 seconds, you move 25% faster": 13 s, its rank-12
     // value, until durations scale with ranks.
@@ -1330,6 +1555,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     effects: [{ kind: "apply-status", statusId: "dash", durationSeconds: 3 }],
   },
@@ -1350,6 +1577,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "For 8 seconds, you attack 33% faster but take double damage."
     effects: [{ kind: "apply-status", statusId: "frenzy", durationSeconds: 8 }],
@@ -1370,6 +1599,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "For 5...13...15 seconds, you move 25% faster and take half damage":
     // 13 s, its rank-12 value.
@@ -1391,6 +1622,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "For 1...7...8 seconds, you run 33% faster and have a 50% chance to
     // block incoming attacks": 7 s, its rank-12 value.
@@ -1413,6 +1646,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "For 5...10...11 seconds, you have a 75% chance to block melee and
     // projectile attacks, and you attack 33% faster": 10 s, its rank-12
@@ -1435,6 +1670,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "For 1...7...8 seconds, you move 33% faster and have a 75% chance to
     // block attacks. Escape ends if you make a melee attack" (PvP): 7 s,
@@ -1473,6 +1710,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       onBlocked: [],
     },
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "...and any Stance being used by your target ends."
     effects: [{ kind: "remove-status", category: "stance", count: 1 }],
@@ -1506,6 +1745,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       onBlocked: [],
     },
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "If it hits a non-moving target, you inflict a Deep Wound for
     // 5...17...20 seconds": read as the spear lands (#921).
@@ -1516,6 +1757,203 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         effects: [{ kind: "apply-status", statusId: "deep-wound", durationSeconds: 17 }],
       },
     ],
+  },
+  {
+    id: "paragon.barbed-spear",
+    name: "Barbed Spear",
+    type: "attack",
+    elite: false,
+    profession: "paragon",
+    attributeId: "paragon.spear-mastery",
+    cost: { kind: "adrenaline", amount: 2 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 0,
+    range: WEAPONS.spear.range,
+    target: "single-enemy",
+    area: undefined,
+    attack: {
+      weapon: "spear",
+      weaponDamage: 1,
+      bonusDamage: undefined,
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    projectile: undefined,
+    // "If this attack hits, your target begins Bleeding for 5...17...20
+    // seconds": 17 s, its rank-12 value.
+    effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: 17 }],
+  },
+  {
+    id: "paragon.maiming-spear",
+    name: "Maiming Spear",
+    type: "attack",
+    elite: false,
+    profession: "paragon",
+    attributeId: "paragon.spear-mastery",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 5,
+    range: WEAPONS.spear.range,
+    target: "single-enemy",
+    area: undefined,
+    attack: {
+      weapon: "spear",
+      weaponDamage: 1,
+      bonusDamage: undefined,
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    projectile: undefined,
+    // "If your attack hits a Bleeding foe, that foe is Crippled for
+    // 5...17...20 seconds": read as the spear lands.
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-has-status", statusId: "bleeding" },
+        effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: 17 }],
+      },
+    ],
+  },
+  {
+    id: "paragon.merciless-spear",
+    name: "Merciless Spear",
+    type: "attack",
+    elite: false,
+    profession: "paragon",
+    attributeId: "paragon.spear-mastery",
+    cost: { kind: "adrenaline", amount: 6 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 0,
+    range: WEAPONS.spear.range,
+    target: "single-enemy",
+    area: undefined,
+    attack: {
+      weapon: "spear",
+      weaponDamage: 1,
+      bonusDamage: undefined,
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    projectile: undefined,
+    // "If this attack hits a foe with less than 50% Health, that foe
+    // suffers from a Deep Wound for 5...17...20 seconds": read after the
+    // spear's own damage has landed.
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-health-below", fraction: 0.5 },
+        effects: [{ kind: "apply-status", statusId: "deep-wound", durationSeconds: 17 }],
+      },
+    ],
+  },
+  {
+    id: "paragon.stunning-strike",
+    name: "Stunning Strike",
+    type: "attack",
+    elite: true,
+    profession: "paragon",
+    attributeId: "paragon.spear-mastery",
+    cost: { kind: "adrenaline", amount: 8 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 0,
+    range: WEAPONS.spear.range,
+    target: "single-enemy",
+    area: undefined,
+    attack: {
+      weapon: "spear",
+      weaponDamage: 1,
+      bonusDamage: {
+        scaling: { attributeId: "paragon.spear-mastery", atZero: 10, atTwelve: 42 },
+      },
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    projectile: undefined,
+    // "If it hits a foe suffering from a Condition, that foe is also Dazed
+    // for 4...9...10 seconds": 9 s, read after the spear has landed.
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-has", category: "condition" },
+        effects: [{ kind: "apply-status", statusId: "dazed", durationSeconds: 9 }],
+      },
+    ],
+  },
+  {
+    id: "paragon.harriers-toss",
+    name: "Harrier's Toss",
+    type: "attack",
+    elite: false,
+    profession: "paragon",
+    attributeId: "paragon.spear-mastery",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: WEAPONS.spear.range,
+    target: "single-enemy",
+    area: undefined,
+    // "If this attack hits a moving foe, it deals an additional
+    // 5...33...40 damage": one packet with the +17, read as the spear
+    // lands on `moving`, one tick late (#921).
+    attack: {
+      weapon: "spear",
+      weaponDamage: 1,
+      bonusDamage: {
+        scaling: { attributeId: "paragon.spear-mastery", atZero: 5, atTwelve: 17 },
+      },
+      conditionalBonus: {
+        condition: { kind: "target-moving" },
+        amount: { scaling: { attributeId: "paragon.spear-mastery", atZero: 5, atTwelve: 33 } },
+      },
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    projectile: undefined,
+    effects: [],
   },
 
   /* ---------------------------------------------------------------------- */
@@ -1540,6 +1978,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     attack: undefined,
     // "You have -40 armor while using this skill."
     whileActivating: "healing-signet-armor",
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     effects: [
       {
@@ -1572,6 +2012,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     },
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // +21 armor for 10 seconds, ending after 3 incoming attacks: its
     // rank-12 numbers, in the status.
@@ -1600,6 +2042,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     },
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // 13 Health per second while moving and 33% faster for 9 seconds,
     // ending on a hit: its rank-12 numbers, in the status.
@@ -1628,6 +2072,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     },
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // +24 armor when not moving for 17 seconds, ending if its bearer
     // attacks: its rank-12 numbers, in the status.
@@ -1656,6 +2102,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     },
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // 33% faster and 13 Health per second while moving for 9 seconds:
     // its rank-12 numbers, in the status (#956).
@@ -1677,6 +2125,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "For 5...17...20 seconds, target other ally moves 33% faster. This
     // skill ends if that ally successfully hits with an attack." (#956)
@@ -1703,6 +2153,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "For 24 seconds, enemies struck by your physical attacks become
     // poisoned for 3...13...15 seconds": the poison is the status's
@@ -1730,6 +2182,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "For 15 seconds, your next 2 spells cost 10...16...18 less Energy to
     // cast": the two spells and the 16 are the status's `nextSpells`.
@@ -1763,6 +2217,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     },
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "For 10 seconds, the next attack skill used ... also causes Burning
     // for 1...3...3 seconds": the burning is the status's `nextAttackSkill`.
@@ -1791,6 +2247,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     },
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // A 50% block for 9 seconds, ending on a member's attack-skill hit:
     // its rank-12 numbers, in the status (#956).
@@ -1819,6 +2277,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     },
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "For 10 seconds, the next time each party member within earshot uses
     // a Skill, that party member gains 45...97...110 Health" (PvP, #999):
@@ -1843,6 +2303,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "For 3...7...8 seconds": 7 s, its rank-12 value; the regeneration,
     // the block and the end on attacking are the status's.
@@ -1864,9 +2326,11 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
-    // "That ally loses one condition for each spirit within earshot": there
-    // are no spirits yet (#467), so it removes none, as in GW1 with none up.
+    // "That ally loses one condition for each spirit within earshot"
+    // (#1064): earshot of the ally, any team's spirit.
     effects: [
       {
         kind: "heal",
@@ -1875,6 +2339,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
           scaling: { attributeId: "ritualist.restoration-magic", atZero: 20, atTwelve: 96 },
         },
       },
+      { kind: "remove-status", category: "condition", count: 1, perSpiritNear: AREA_EARSHOT },
     ],
   },
   {
@@ -1893,12 +2358,17 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
-    // "If any Spirits are within earshot, you don't sacrifice Health": there
-    // are no spirits yet (#467), so the 17% is always paid, as in GW1 with
-    // none up.
+    // "If any Spirits are within earshot, you don't sacrifice Health"
+    // (#1064): earshot of you, any team's spirit.
     effects: [
-      { kind: "sacrifice-health", percentOfMax: 17 },
+      {
+        kind: "if",
+        condition: { kind: "caster-no-spirit-within", radius: AREA_EARSHOT },
+        effects: [{ kind: "sacrifice-health", percentOfMax: 17 }],
+      },
       {
         kind: "heal",
         perStatusOnTarget: [],
@@ -1924,6 +2394,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "If that ally is under the effects of a Weapon Spell, Wielder's Boon
     // heals for an additional 15...63...75 Health."
@@ -1966,6 +2438,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "For 10 seconds, target ally gains 5...21...25 Health per second and an
     // additional 5...21...25 Health per second if that ally is within
@@ -1989,6 +2463,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "For 5...21...25 seconds, target ally has a Weapon of Quickening, and
     // Spells and Binding Rituals recharge 33% faster": 21 s, its rank-12
@@ -2011,10 +2487,128 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "For 5...13...15 seconds, you attack 25% faster": 13 s, its rank-12
     // value.
     effects: [{ kind: "apply-status", statusId: "weapon-of-aggression", durationSeconds: 13 }],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Ritualist weapon spells 2 (#1022)                                       */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "ritualist.weapon-of-remedy",
+    name: "Weapon of Remedy",
+    type: "weapon-spell",
+    elite: true,
+    profession: "ritualist",
+    attributeId: "ritualist.restoration-magic",
+    cost: { kind: "energy", amount: 3 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 3,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    projectile: undefined,
+    // "For 8 seconds, the next time target ally takes damage or life steal
+    // from a foe, that ally steals up to 20...68...80 health from that foe
+    // and loses 2 conditions": the 2026-04-28 revision (3 energy, 68, 2
+    // conditions); the steal and the removal are the status's.
+    effects: [{ kind: "apply-status", statusId: "weapon-of-remedy", durationSeconds: 8 }],
+  },
+  {
+    id: "ritualist.vengeful-weapon",
+    name: "Vengeful Weapon",
+    type: "weapon-spell",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.restoration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 3,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    projectile: undefined,
+    // "For 8 seconds, the next time target ally takes damage or life steal
+    // from a foe, that ally steals up to 15...51...60 Health from that
+    // foe": the 51 is the status's.
+    effects: [{ kind: "apply-status", statusId: "vengeful-weapon", durationSeconds: 8 }],
+  },
+  {
+    id: "ritualist.splinter-weapon",
+    name: "Splinter Weapon",
+    type: "weapon-spell",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.channeling-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    projectile: undefined,
+    // "For 20 seconds, target ally has a Splinter Weapon. Target ally's next
+    // 1...4...5 attacks deal 5...25...30 damage to up to 4 adjacent foes":
+    // the PvP page, 726; the 4 hits and the 25 are the status's.
+    effects: [{ kind: "apply-status", statusId: "splinter-weapon", durationSeconds: 20 }],
+  },
+  {
+    id: "ritualist.mending-grip",
+    name: "Mending Grip",
+    type: "spell",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.restoration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 4,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    projectile: undefined,
+    // "Target ally is healed for 15...68...80 Health. If that ally is under
+    // the effects of a weapon Spell, that ally loses one Condition": the
+    // 2026-04-28 revision (4 s, 68). The weapon spell is read before the
+    // heal, as Wielder's Boon's.
+    effects: [
+      {
+        kind: "heal",
+        perStatusOnTarget: [],
+        amount: {
+          scaling: { attributeId: "ritualist.restoration-magic", atZero: 15, atTwelve: 68 },
+        },
+      },
+      {
+        kind: "if",
+        condition: { kind: "target-has", category: "weapon-spell" },
+        effects: [{ kind: "remove-status", category: "condition", count: 1 }],
+      },
+    ],
   },
 
   /* ---------------------------------------------------------------------- */
@@ -2037,6 +2631,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "If target foe is casting a Spell or Chant, the Skill is interrupted
     // and target foe takes 30...102...120 damage."
@@ -2074,6 +2670,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "If target foe is casting a Spell or Chant, the Skill is interrupted
     // and you gain 1...25...31 Energy."
@@ -2110,6 +2708,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "Interrupt target foe's action. If that action was a spell, you gain
     // 3...13...15 Energy" (#920): any action, and energy for a spell only.
@@ -2145,6 +2745,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "Remove an enchantment from target foe. If an enchantment is
     // removed, that foe takes 14...83...100 damage."
@@ -2182,6 +2784,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "Remove an Enchantment from target foe. If an Enchantment is
     // removed, you gain 8...15...17 Energy and 40...104...120 Health."
@@ -2225,6 +2829,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     // Our own tuning, as GW1 publishes no speeds: lightning flies half as
     // fast again as Fireball, so it is harder to step out of (#761).
     projectile: { speed: 1.5 * RANGE_SPELL },
@@ -2262,6 +2868,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "Target foe loses 1...8...10 Energy and takes 9 damage for each
     // point of energy lost."
@@ -2295,6 +2903,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "Target foe loses 4...6...7 Energy. You then gain 2 Energy for each
     // point of Energy target foe lost."
@@ -2322,6 +2932,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "Target foe loses 1...8...10 energy. For each point of energy lost,
     // that foe and all nearby foes take 7 damage and all nearby foes take
@@ -2374,6 +2986,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "For 10 seconds, whenever target foe casts a spell, that foe takes
     // 35...119...140 damage." The damage is the hex's, at rank 12.
@@ -2395,11 +3009,59 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "For 6 seconds, the next time target foe uses a skill, that skill
     // takes an additional 10...47...56 seconds to recharge." The extra
     // recharge is the hex's, at rank 12 (#949).
     effects: [{ kind: "apply-status", statusId: "diversion", durationSeconds: 6 }],
+  },
+  {
+    id: "mesmer.arcane-echo",
+    name: "Arcane Echo",
+    type: "enchantment",
+    elite: false,
+    profession: "mesmer",
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    projectile: undefined,
+    // "If you cast a spell in the next 20 seconds, Arcane Echo is replaced
+    // with that spell for 20 seconds." The copy is the status's (#469).
+    effects: [{ kind: "apply-status", statusId: "arcane-echo", durationSeconds: 20 }],
+  },
+  {
+    id: "mesmer.echo",
+    name: "Echo",
+    type: "enchantment",
+    elite: true,
+    profession: "mesmer",
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    projectile: undefined,
+    // "For 30 seconds, Echo is replaced with the next skill you use. Echo
+    // acts as this skill for 20 seconds." The copy is the status's (#469).
+    effects: [{ kind: "apply-status", statusId: "echo", durationSeconds: 30 }],
   },
   {
     id: "mesmer.empathy",
@@ -2417,6 +3079,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "For 5...13...15 seconds, whenever target foe attacks, that foe takes
     // 15...39...45 damage" (PvP). Both at rank 12, as every status is.
@@ -2438,6 +3102,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "For 20 seconds, target foe suffers health degeneration of 1. The
     // caster is healed for 30...102...120 when Parasitic Bond ends." The
@@ -2460,6 +3126,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "For 60 seconds, whenever you suffer from a new Condition, all foes
     // in the area suffer from that same Condition and you sacrifice
@@ -2488,6 +3156,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "Heal target ally for 5...81...100 Health. Heal for an additional
     // 30...98...115 Health if that ally is below 50% health."
@@ -2528,6 +3198,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "Heal target other ally for 15...51...60 Health and an additional
     // 10...30...35 Health for each enchantment or hex on that ally" (#920).
@@ -2576,6 +3248,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       onBlocked: [],
     },
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     effects: [],
   },
@@ -2595,6 +3269,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "For 5...17...20 seconds, you have 1...3...4 Health regeneration for
     // each Enchantment (maximum of 3) on you": 17 s, its rank-12 value.
@@ -2617,6 +3293,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "For 4...9...10 seconds, you cannot be knocked down and move 25%
     // faster": 9 s, its rank-12 value.
@@ -2638,6 +3316,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "For 2...8...10 seconds, you attack 25% faster": 8 s, its rank-12 value.
     effects: [{ kind: "apply-status", statusId: "heart-of-fury", durationSeconds: 8 }],
@@ -2669,6 +3349,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       onBlocked: [],
     },
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "If this attack hits, target foe suffers from Bleeding for 5...17...20
     // seconds, and you lose 1 Dervish enchantment. If an enchantment is
@@ -2707,6 +3389,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "Remove 1 Dervish Enchantment. Target ally is healed for
     // 30...126...150 Health. If an Enchantment was removed in this way,
@@ -2747,6 +3431,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "You gain 80...136...150 Health and remove 1 Dervish enchantment. If
     // an enchantment was removed in this way, you also lose 1...3...3
@@ -2788,6 +3474,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "For 15 seconds, whenever you attack a foe with your scythe, you deal
     // 10...22...25 slashing damage to all adjacent foes": the status deals it.
@@ -2810,6 +3498,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "For 30 seconds, the next 1...4...5 times you hit with a scythe, all
     // other adjacent foes take 10...50...60 earth damage": the status does.
@@ -2831,6 +3521,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "You remove 1 Dervish enchantment and for 1...6...7 you move 25%
     // faster. If an enchantment was removed, you run 50% faster instead":
@@ -2882,6 +3574,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       onBlocked: [],
     },
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     effects: [
       {
@@ -2930,6 +3624,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       onBlocked: [],
     },
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     effects: [
       { kind: "energy-gain", amount: { flat: 3 }, perTarget: true },
@@ -2961,6 +3657,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     },
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     effects: [
       {
@@ -3012,6 +3710,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       onBlocked: [],
     },
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     effects: [
       {
@@ -3040,6 +3740,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "All nearby foes are struck for 10...34...40 earth damage. For 30
     // seconds, your attacks deal earth damage": 34, its rank-12 value. The
@@ -3076,6 +3778,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "All nearby foes are struck for 10...34...40 earth damage. For 30
     // seconds, your attacks deal earth damage": 34. The status blinds
@@ -3112,6 +3816,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "All nearby foes begin Bleeding for 5...13...15 seconds. For 30
     // seconds, this enchantment does nothing": 13 s. The status cripples
@@ -3158,6 +3864,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       onBlocked: [],
     },
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     effects: [{ kind: "interrupt" }],
   },
@@ -3190,6 +3898,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       onBlocked: [],
     },
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "If Concussion Shot hits while target foe is casting a spell, the
     // spell is interrupted and your target is dazed for 5...17...20
@@ -3225,6 +3935,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "If target foe is casting a spell or chant, that skill and all
     // skills of the same attribute are disabled for 1...10...12 seconds
@@ -3268,6 +3980,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       onBlocked: [],
     },
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "If the interrupted action was a skill, that skill is disabled for
     // an additional 20 seconds."
@@ -3303,6 +4017,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       onBlocked: [],
     },
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "If it hits, this attack interrupts the target's current action. If
     // that action was a skill, that skill is disabled for an additional
@@ -3334,18 +4050,178 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "Target party member is returned to life with 20...56...65% health
     // and 42...80...90% energy."
     effects: [
       {
         kind: "resurrect",
-        healthPercent: {
-          scaling: { attributeId: "monk.healing-prayers", atZero: 20, atTwelve: 56 },
+        health: {
+          kind: "percent",
+          percent: {
+            scaling: { attributeId: "monk.healing-prayers", atZero: 20, atTwelve: 56 },
+          },
         },
         energyPercent: {
           scaling: { attributeId: "monk.healing-prayers", atZero: 42, atTwelve: 80 },
         },
+        perPartyMemberWithin: undefined,
+        at: "corpse",
+      },
+    ],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Resurrection skills (#474)                                             */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "common.resurrection-signet",
+    name: "Resurrection Signet",
+    type: "signet",
+    elite: false,
+    profession: "common",
+    attributeId: undefined,
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 3,
+    rechargeSeconds: 0,
+    // "This signet only recharges when you gain a morale boost."
+    rechargesOnMoraleBoost: true,
+    range: RANGE_SPELL,
+    target: "single-dead-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    projectile: undefined,
+    // "Resurrect target party member. That party member is returned to
+    // life with 100% Health and 25% Energy."
+    effects: [
+      {
+        kind: "resurrect",
+        health: { kind: "percent", percent: { flat: 100 } },
+        energyPercent: { flat: 25 },
+        perPartyMemberWithin: undefined,
+        at: "corpse",
+      },
+    ],
+  },
+  {
+    id: "monk.rebirth",
+    name: "Rebirth",
+    type: "spell",
+    elite: false,
+    profession: "monk",
+    attributeId: "monk.protection-prayers",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 5,
+    rechargeSeconds: 0,
+    range: RANGE_SPELL,
+    target: "single-dead-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    projectile: undefined,
+    // "Target party member is returned to life with 25% Health and zero
+    // Energy, and is teleported to your current location. All of target's
+    // skills are disabled for 10...4...3 seconds. This spell consumes all
+    // your remaining energy." 4 s at Protection Prayers 12.
+    effects: [
+      {
+        kind: "resurrect",
+        health: { kind: "percent", percent: { flat: 25 } },
+        energyPercent: { flat: 0 },
+        perPartyMemberWithin: undefined,
+        at: "caster",
+      },
+      {
+        kind: "if",
+        condition: { kind: "resurrected" },
+        effects: [
+          {
+            kind: "disable-skill",
+            which: "all",
+            seconds: {
+              scaling: { attributeId: "monk.protection-prayers", atZero: 10, atTwelve: 4 },
+            },
+          },
+        ],
+      },
+      { kind: "drain-own-energy" },
+    ],
+  },
+  {
+    id: "paragon.signet-of-return",
+    name: "Signet of Return",
+    type: "signet",
+    elite: false,
+    profession: "paragon",
+    attributeId: "paragon.leadership",
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 5,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-dead-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    projectile: undefined,
+    // "Resurrect target party member with 5...13...15% Health and
+    // 1...3...4% Energy for each party member within earshot." 13% and 3%
+    // at Leadership 12; the caster is a party member.
+    effects: [
+      {
+        kind: "resurrect",
+        health: {
+          kind: "percent",
+          percent: { scaling: { attributeId: "paragon.leadership", atZero: 5, atTwelve: 13 } },
+        },
+        energyPercent: { scaling: { attributeId: "paragon.leadership", atZero: 1, atTwelve: 3 } },
+        perPartyMemberWithin: AREA_EARSHOT,
+        at: "corpse",
+      },
+    ],
+  },
+  {
+    id: "ritualist.flesh-of-my-flesh",
+    name: "Flesh of My Flesh",
+    type: "spell",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.restoration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 4,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-dead-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    projectile: undefined,
+    // "Lose half your Health. Resurrect target ally with your current
+    // Health and 5...17...20% Energy." 17% at Restoration Magic 12.
+    effects: [
+      {
+        kind: "resurrect",
+        health: { kind: "caster-current", casterLosesFractionOfCurrent: 0.5 },
+        energyPercent: {
+          scaling: { attributeId: "ritualist.restoration-magic", atZero: 5, atTwelve: 17 },
+        },
+        perPartyMemberWithin: undefined,
+        at: "corpse",
       },
     ],
   },
@@ -3372,6 +4248,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "Strike target foe for 5...33...40 lightning damage. This spell has
     // 25% armor penetration."
@@ -3403,6 +4281,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "Target foe suffers 10...42...50 lightning damage. If you have more
     // energy than target foe, that foe suffers 10...42...50 additional
@@ -3449,6 +4329,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     // Our own tuning, as GW1 publishes no speeds: a shard flies a little
     // faster than Fireball, slower than Lightning Orb.
     projectile: { speed: 1.25 * RANGE_SPELL },
@@ -3464,6 +4346,120 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         armorPenetration: 0,
       },
       { kind: "apply-status", statusId: "shard-storm", durationSeconds: 5 },
+    ],
+  },
+  {
+    id: "necromancer.animate-bone-horror",
+    name: "Animate Bone Horror",
+    type: "spell",
+    elite: false,
+    profession: "necromancer",
+    attributeId: "necromancer.death-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    // The nearest fresh corpse within cast range, as Soul Feast's (#467).
+    corpse: { radius: RANGE_SPELL },
+    companion: undefined,
+    projectile: undefined,
+    // "Exploit nearest corpse to animate a level 1...14...17 Bone Horror."
+    effects: [{ kind: "summon", creature: BONE_HORROR, count: 1 }],
+  },
+  {
+    id: "necromancer.animate-bone-minions",
+    name: "Animate Bone Minions",
+    type: "spell",
+    elite: false,
+    profession: "necromancer",
+    attributeId: "necromancer.death-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    // The nearest fresh corpse within cast range, as Soul Feast's (#467).
+    corpse: { radius: RANGE_SPELL },
+    companion: undefined,
+    projectile: undefined,
+    // "Exploit nearest corpse to animate two level 0...10...12 Bone Minions."
+    effects: [{ kind: "summon", creature: BONE_MINION, count: 2 }],
+  },
+  {
+    id: "necromancer.soul-feast",
+    name: "Soul Feast",
+    type: "spell",
+    elite: false,
+    profession: "necromancer",
+    attributeId: "necromancer.death-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 0,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    // The nearest fresh corpse of either team within cast range of the
+    // caster, no line of sight (#466, Q2).
+    corpse: { radius: RANGE_SPELL },
+    companion: undefined,
+    projectile: undefined,
+    // "Exploit nearest corpse to steal 50...234...280 Health."
+    effects: [
+      {
+        kind: "steal-from-corpse",
+        amount: {
+          scaling: { attributeId: "necromancer.death-magic", atZero: 50, atTwelve: 234 },
+        },
+      },
+    ],
+  },
+  {
+    id: "necromancer.well-of-suffering",
+    name: "Well of Suffering",
+    type: "well",
+    elite: false,
+    profession: "necromancer",
+    attributeId: "necromancer.death-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    // The nearest fresh corpse, as Soul Feast's (#1104).
+    corpse: { radius: RANGE_SPELL },
+    companion: undefined,
+    projectile: undefined,
+    // PvP: "Exploit nearest corpse to create a Well of Suffering at its
+    // location. For 10...26...30 seconds, foes in that area suffer health
+    // degeneration of -1...5...6."
+    effects: [
+      {
+        kind: "create-ground-effect",
+        anchor: "corpse",
+        durationSeconds: {
+          scaling: { attributeId: "necromancer.death-magic", atZero: 10, atTwelve: 26 },
+        },
+        act: {
+          kind: "aura",
+          aura: { statusId: "well-of-suffering", affects: "foes", radius: AREA_IN_THE_AREA },
+        },
+      },
     ],
   },
   {
@@ -3490,6 +4486,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     },
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "...attack 50% slower for the next 5...25...30 seconds."
     effects: [{ kind: "apply-status", statusId: "shadow-of-fear", durationSeconds: 25 }],
@@ -3515,6 +4513,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "For 10...22...25 seconds, whenever target foe attacks or uses a
     // skill, Spiteful Spirit deals 15...39...45 shadow damage to that foe
@@ -3537,6 +4537,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "For 5...13...15 seconds, whenever target foe hits with an attack,
     // you steal 15...39...45 health from that foe." The steal is the hex's.
@@ -3558,6 +4560,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "For 30 seconds, whenever target foe takes physical damage, Mark of
     // Pain deals 10...34...40 shadow damage to adjacent foes." The damage
@@ -3580,6 +4584,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "Steal up to 18...52...60 Health from target foe."
     effects: [
@@ -3632,6 +4638,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       onBlocked: [],
     },
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     effects: [],
   },
@@ -3652,6 +4660,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // The PvP split: "For 8 seconds, whenever you hit with an attack, you
     // gain 1 additional strike of adrenaline."
@@ -3673,6 +4683,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "For 5...19...23 seconds, target ally cannot lose more than 10%
     // health due to damage from a single attack or spell": 19 s, its
@@ -3695,6 +4707,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "Lose half your current health. Target other ally is healed for
     // 100...129...136% of the amount you lost."
@@ -3745,6 +4759,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       onBlocked: [],
     },
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     effects: [],
   },
@@ -3771,6 +4787,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     },
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // PvP: "...and below 75% Health, gain +1...4...5 Health regeneration"
     // for 10 seconds. Read as it lands; it stays on one healed above.
@@ -3798,6 +4816,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "You gain 30...66...75 Health. For each ally within earshot, you
     // also gain +10...18...20 Health (maximum 140 Health)." The caster is
@@ -3835,6 +4855,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "If target foe is using a skill, that foe and all foes in the area
     // are interrupted and suffer 15...63...75 damage and foes in the area
@@ -3892,6 +4914,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "For 5...17...20 seconds, spells you cast recharge 33% faster."
     effects: [{ kind: "apply-status", statusId: "mantra-of-recovery", durationSeconds: 17 }],
@@ -3919,6 +4943,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     },
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "...are struck for 20...68...80 cold damage and move 66% slower for
     // 2...5...6 seconds."
@@ -3957,6 +4983,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     },
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "...are struck for 10...70...85 cold damage. For 10 seconds, all foes
     // move 66% slower."
@@ -3992,6 +5020,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "For 2 seconds ... Unless this enchantment ends prematurely, that
     // ally is healed for 30...102...120 Health": the status's `expires`.
@@ -4013,6 +5043,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "While you maintain this enchantment, any hex cast on target ally
     // take twice as long to cast. When Holy Veil ends, one hex is removed."
@@ -4034,6 +5066,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "Remove 5...8...9 enchantments from target foe. For each Monk
     // Enchantment removed, you lose 55...31...25" Health: fewer, the
@@ -4064,6 +5098,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "Transfer 1...3...3 negative conditions and their remaining
     // durations from yourself to target touched foe."
@@ -4090,6 +5126,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "Target enemy is blinded for 3...7...8 seconds": 7 s, its rank-12 value.
     effects: [{ kind: "apply-status", statusId: "blind", durationSeconds: 7 }],
@@ -4114,6 +5152,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "...is knocked down and struck for 10...50...60 lightning damage. This
     // skill has 25% armor penetration."
@@ -4152,6 +5192,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     },
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "...are struck for 26...85...100 earth damage. Knocked down foes are
     // struck for 10...56...68 additional earth damage." Down is read before
@@ -4206,6 +5248,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     },
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "...are struck for 7...91...112 fire damage and knocked down."
     effects: [
@@ -4248,6 +5292,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     },
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     // Our own tuning, as GW1 publishes no speeds: "fast-moving", Lightning
     // Orb's speed.
     projectile: { speed: 1.5 * RANGE_SPELL },
@@ -4292,6 +5338,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     },
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "Foes already on fire ... are struck for 10...82...100 fire damage.
     // Foes not already on fire begin Burning for 1...6...7 seconds": 6 s,
@@ -4335,6 +5383,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     // Our own tuning: Fireball's speed.
     projectile: { speed: RANGE_SPELL },
     // "...strikes target foe for 10...70...85 earth damage and causes
@@ -4367,6 +5417,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     // Our own tuning: "a large stone", Fireball's speed.
     projectile: { speed: RANGE_SPELL },
     // "...for 45...93...105 earth damage if it hits. If Stoning hits a foe
@@ -4409,6 +5461,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "Heal target other ally for 35...151...180 health."
     effects: [
@@ -4437,6 +5491,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "For 8 seconds, the next time target ally would take damage or life
     // steal, that ally gains that amount of health instead, maximum
@@ -4459,6 +5515,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "Remove a hex from target ally. If a hex is removed, foes in the area
     // suffer 10...70...85 holy damage": the area is the ally's.
@@ -4502,6 +5560,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "Remove all conditions from target other ally. That ally is healed
     // 10...58...70 health for each condition removed."
@@ -4513,6 +5573,723 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         perRemoved: "condition",
         amount: {
           scaling: { attributeId: "monk.protection-prayers", atZero: 10, atTwelve: 58 },
+        },
+      },
+    ],
+  },
+  /* ---------------------------------------------------------------------- */
+  /* Monk staples 3 (#1039)                                                 */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "monk.cure-hex",
+    name: "Cure Hex",
+    type: "spell",
+    elite: false,
+    profession: "monk",
+    attributeId: "monk.healing-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    projectile: undefined,
+    // "Remove one Hex from target ally. If a Hex was removed, that ally is
+    // healed for 30...86...100 Health": the current page's 86, not the 102
+    // guildwars.fandom still quotes from before the cut.
+    effects: [
+      { kind: "remove-status", category: "hex", count: 1 },
+      {
+        kind: "if",
+        condition: { kind: "removed", category: "hex" },
+        effects: [
+          {
+            kind: "heal",
+            perStatusOnTarget: [],
+            amount: {
+              scaling: { attributeId: "monk.healing-prayers", atZero: 30, atTwelve: 86 },
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "monk.smite-condition",
+    name: "Smite Condition",
+    type: "spell",
+    elite: false,
+    profession: "monk",
+    attributeId: "monk.smiting-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 7,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    projectile: undefined,
+    // "Remove one Condition from target ally. If a Condition was removed,
+    // foes in the area take 10...50...60 damage": holy, and the area is the
+    // ally's, as Smite Hex's.
+    effects: [
+      { kind: "remove-status", category: "condition", count: 1 },
+      {
+        kind: "if",
+        condition: { kind: "removed", category: "condition" },
+        effects: [
+          {
+            kind: "splash",
+            radius: AREA_IN_THE_AREA,
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "monk.smiting-prayers", atZero: 10, atTwelve: 50 },
+                },
+                type: "holy",
+                armorPenetration: 0,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "monk.mending-touch",
+    name: "Mending Touch",
+    type: "spell",
+    elite: false,
+    profession: "monk",
+    attributeId: "monk.protection-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 6,
+    // "Touched ally": at hand, as Blood Ritual's.
+    range: RANGE_MELEE,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    projectile: undefined,
+    // "Touched ally loses two conditions and is healed for 15...51...60
+    // Health for each condition removed in this way."
+    effects: [
+      { kind: "remove-status", category: "condition", count: 2 },
+      {
+        kind: "heal",
+        perStatusOnTarget: [],
+        perRemoved: "condition",
+        amount: {
+          scaling: { attributeId: "monk.protection-prayers", atZero: 15, atTwelve: 51 },
+        },
+      },
+    ],
+  },
+  {
+    id: "monk.vigorous-spirit",
+    name: "Vigorous Spirit",
+    type: "enchantment",
+    elite: false,
+    profession: "monk",
+    attributeId: "monk.healing-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 4,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    projectile: undefined,
+    // "For 30 seconds, each time target ally attacks or casts a spell, that
+    // ally is healed for 5...17...20 health": the 17 is the status's.
+    effects: [{ kind: "apply-status", statusId: "vigorous-spirit", durationSeconds: 30 }],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Assassin staples (#988)                                                */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "assassin.deaths-charge",
+    name: "Death's Charge",
+    type: "spell",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.shadow-arts",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    projectile: undefined,
+    // "Shadow Step to target foe. If that foe has more Health than you, you
+    // are healed for 65...173...200": who has more is read before the step.
+    effects: [
+      { kind: "shadow-step" },
+      {
+        kind: "if",
+        condition: { kind: "target-more-health" },
+        effects: [
+          {
+            kind: "heal",
+            recipient: "caster",
+            amount: { scaling: { attributeId: "assassin.shadow-arts", atZero: 65, atTwelve: 173 } },
+            perStatusOnTarget: [],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "assassin.shadow-refuge",
+    name: "Shadow Refuge",
+    type: "enchantment",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.shadow-arts",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    projectile: undefined,
+    // "For 6 seconds, you gain 5...9...10 Health regeneration. When Shadow
+    // Refuge ends, you gain 40...88...100 Health if you are attacking."
+    effects: [{ kind: "apply-status", statusId: "shadow-refuge", durationSeconds: 6 }],
+  },
+  {
+    id: "assassin.shroud-of-distress",
+    name: "Shroud of Distress",
+    type: "enchantment",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.shadow-arts",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 45,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    projectile: undefined,
+    // "For 30...54...60 seconds, if you are below 50% Health, you have a 75%
+    // chance to block attacks": 54 s, its rank-12 value.
+    effects: [{ kind: "apply-status", statusId: "shroud-of-distress", durationSeconds: 54 }],
+  },
+  {
+    id: "assassin.critical-eye",
+    name: "Critical Eye",
+    type: "skill",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.critical-strikes",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    projectile: undefined,
+    // "For 10...30...35 seconds, you have an additional 3...13...15% chance
+    // to land a critical hit when attacking. You gain 1 Energy whenever you
+    // score a critical hit": 30 s and 13%, the rank-12 values.
+    effects: [{ kind: "apply-status", statusId: "critical-eye", durationSeconds: 30 }],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Assassin staples 2 (#1041)                                             */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "assassin.leaping-mantis-sting",
+    name: "Leaping Mantis Sting",
+    type: "attack",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.dagger-mastery",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.5,
+    rechargeSeconds: 8,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    // "If Mantis Sting hits, target foe takes +5...13...15 damage. If this
+    // attack strikes a moving foe that foe is Crippled for 3...13...15
+    // seconds": 13 s, its rank-12 value. The +13 is the 2012 update;
+    // fandom's template still has the older +14...19.
+    attack: {
+      weapon: "daggers",
+      weaponDamage: 1,
+      bonusDamage: {
+        scaling: { attributeId: "assassin.dagger-mastery", atZero: 5, atTwelve: 13 },
+      },
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: { role: "lead", follows: undefined },
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    projectile: undefined,
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-moving" },
+        effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: 13 }],
+      },
+    ],
+  },
+  {
+    id: "assassin.jungle-strike",
+    name: "Jungle Strike",
+    type: "attack",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.dagger-mastery",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.5,
+    rechargeSeconds: 6,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    // "Must follow a lead attack. If it hits, this attack strikes for
+    // +10...22...25 damage. If it hits a foe that was Crippled, that foe
+    // and all adjacent foes take 1...25...31 damage." The 2026 update's 6 s
+    // recharge; fandom still says 10. The same update dropped the "+" from
+    // the 25, so it is its own damage on the foe, through armor as Death
+    // Blossom's splash, not a bonus on the blow.
+    attack: {
+      weapon: "daggers",
+      weaponDamage: 1,
+      bonusDamage: {
+        scaling: { attributeId: "assassin.dagger-mastery", atZero: 10, atTwelve: 22 },
+      },
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: { role: "off-hand", follows: "lead" },
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    projectile: undefined,
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-has-status", statusId: "crippled" },
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "assassin.dagger-mastery", atZero: 1, atTwelve: 25 },
+            },
+            type: "piercing",
+            armorPenetration: 0,
+          },
+          {
+            kind: "splash",
+            radius: AREA_ADJACENT,
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "assassin.dagger-mastery", atZero: 1, atTwelve: 25 },
+                },
+                type: "piercing",
+                armorPenetration: 0,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "assassin.trampling-ox",
+    name: "Trampling Ox",
+    type: "attack",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.dagger-mastery",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 8,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    // "Must follow an off-hand attack. If it hits, you deal +5...17...20
+    // damage. If you hit a Crippled foe, that foe is knocked down." Both
+    // blows may knock down; the second finds the foe down already.
+    attack: {
+      weapon: "daggers",
+      weaponDamage: 1,
+      bonusDamage: {
+        scaling: { attributeId: "assassin.dagger-mastery", atZero: 5, atTwelve: 17 },
+      },
+      conditionalBonus: undefined,
+      strikes: 2,
+      unblockable: false,
+      chain: { role: "dual", follows: "off-hand" },
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    projectile: undefined,
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-has-status", statusId: "crippled" },
+        effects: [{ kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS }],
+      },
+    ],
+  },
+  {
+    id: "assassin.falling-spider",
+    name: "Falling Spider",
+    type: "attack",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.dagger-mastery",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 8,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    // "Must strike a knocked-down foe. If it hits, Falling Spider strikes
+    // for +15...31...35 damage and target foe is Poisoned for 5...17...20":
+    // 17 s. It needs no lead. On a standing foe it misses as GW1's
+    // off-hand attacks do when their condition is unmet: energy spent,
+    // recharged at once.
+    attack: {
+      weapon: "daggers",
+      weaponDamage: 1,
+      bonusDamage: {
+        scaling: { attributeId: "assassin.dagger-mastery", atZero: 15, atTwelve: 31 },
+      },
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: { role: "off-hand", follows: undefined, requires: { kind: "target-knocked-down" } },
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    projectile: undefined,
+    effects: [{ kind: "apply-status", statusId: "poison", durationSeconds: 17 }],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Pets (#1046)                                                           */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "ranger.charm-animal",
+    name: "Charm Animal",
+    type: "skill",
+    elite: false,
+    profession: "ranger",
+    attributeId: "ranger.beast-mastery",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 10,
+    rechargeSeconds: 0,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    // "Once charmed, your animal companion will travel with you whenever
+    // you have Charm Animal equipped." No match has an animal to charm:
+    // on the bar, it brings the wolf, and it is never cast.
+    companion: WOLF,
+    effects: [],
+  },
+  {
+    id: "ranger.comfort-animal",
+    name: "Comfort Animal",
+    type: "skill",
+    elite: false,
+    profession: "ranger",
+    attributeId: "ranger.beast-mastery",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 1,
+    range: RANGE_SPELL,
+    target: "companion",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    companion: undefined,
+    // The PvP version: "You heal your animal companion for 20...87...104
+    // Health. If your companion is dead, it is resurrected with
+    // 10...48...58% Health." The heal skips the dead and the
+    // resurrection the living, so one cast is never both.
+    effects: [
+      {
+        kind: "heal",
+        perStatusOnTarget: [],
+        amount: {
+          scaling: { attributeId: "ranger.beast-mastery", atZero: 20, atTwelve: 87 },
+        },
+      },
+      {
+        kind: "resurrect",
+        health: {
+          kind: "percent",
+          percent: {
+            scaling: { attributeId: "ranger.beast-mastery", atZero: 10, atTwelve: 48 },
+          },
+        },
+        energyPercent: { flat: 0 },
+        perPartyMemberWithin: undefined,
+        at: "corpse",
+      },
+    ],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Spirits (#1064)                                                        */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "ranger.winnowing",
+    name: "Winnowing",
+    type: "nature-ritual",
+    elite: false,
+    profession: "ranger",
+    attributeId: "ranger.wilderness-survival",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 60,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    companion: undefined,
+    // "Create a level 1...8...10 Spirit. Non-spirit creatures within range
+    // take 4 additional damage whenever they take physical damage. This
+    // Spirit dies after 30...198...240 seconds." A level-8 spirit: 50 + 20
+    // per level, armor 51.
+    effects: [
+      {
+        kind: "summon",
+        count: 1,
+        creature: {
+          kind: "spirit",
+          name: "Winnowing",
+          maxHealth: {
+            scaling: { attributeId: "ranger.wilderness-survival", atZero: 70, atTwelve: 210 },
+          },
+          armor: { flat: 51 },
+          attack: undefined,
+          durationSeconds: {
+            scaling: { attributeId: "ranger.wilderness-survival", atZero: 30, atTwelve: 198 },
+          },
+          behaviour: { kind: "idle" },
+          aura: { statusId: "winnowing", affects: "all", radius: RANGE_NATURE_RITUAL },
+          onDeath: "vanish",
+          ownerDisableOnDeath: undefined,
+        },
+      },
+    ],
+  },
+  {
+    id: "ritualist.recuperation",
+    name: "Recuperation",
+    type: "binding-ritual",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.restoration-magic",
+    cost: { kind: "energy", amount: 25 },
+    overcast: 0,
+    activationSeconds: 3,
+    rechargeSeconds: 45,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    companion: undefined,
+    // PvP: "Create a level 1...8...10 Spirit. Non-Spirit allies within its
+    // range gain +1...3...3 Health regeneration. This Spirit dies after
+    // 15...39...45 seconds." A level-8 spirit: 50 + 20 per level, armor 51.
+    effects: [
+      {
+        kind: "summon",
+        count: 1,
+        creature: {
+          kind: "spirit",
+          name: "Recuperation",
+          maxHealth: {
+            scaling: { attributeId: "ritualist.restoration-magic", atZero: 70, atTwelve: 210 },
+          },
+          armor: { flat: 51 },
+          attack: undefined,
+          durationSeconds: {
+            scaling: { attributeId: "ritualist.restoration-magic", atZero: 15, atTwelve: 39 },
+          },
+          behaviour: { kind: "idle" },
+          aura: { statusId: "recuperation", affects: "allies", radius: RANGE_SPIRIT },
+          onDeath: "vanish",
+          ownerDisableOnDeath: undefined,
+        },
+      },
+    ],
+  },
+  {
+    id: "elementalist.ward-against-melee",
+    name: "Ward Against Melee",
+    type: "ward",
+    elite: false,
+    profession: "elementalist",
+    attributeId: "elementalist.earth-magic",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    companion: undefined,
+    // PvP: "You create a Ward Against Melee at your current location. For
+    // 5...17...20 seconds, non-spirit allies in this area have a 50%
+    // chance to block melee attacks" (#1087).
+    effects: [
+      {
+        kind: "create-ground-effect",
+        anchor: "caster",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.earth-magic", atZero: 5, atTwelve: 17 },
+        },
+        act: {
+          kind: "aura",
+          aura: { statusId: "ward-against-melee", affects: "allies", radius: AREA_IN_THE_AREA },
+        },
+      },
+    ],
+  },
+  {
+    id: "ranger.barbed-trap",
+    name: "Barbed Trap",
+    type: "trap",
+    elite: false,
+    profession: "ranger",
+    attributeId: "ranger.wilderness-survival",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    companion: undefined,
+    // PvP: "When Barbed Trap is triggered, all nearby foes are struck for
+    // 7...20...23 piercing damage, become Crippled, and begin Bleeding for
+    // 3...21...25 seconds. Barbed Trap ends after 90 seconds" (#1105): the
+    // conditions last 21 s, their rank-12 value.
+    effects: [
+      {
+        kind: "create-ground-effect",
+        anchor: "caster",
+        durationSeconds: { flat: 90 },
+        act: {
+          kind: "trap",
+          trap: {
+            triggerRadius: AREA_ADJACENT,
+            area: {
+              radius: AREA_NEARBY,
+              origin: "caster",
+              affects: "enemies",
+              maxTargets: undefined,
+              includesCaster: false,
+            },
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "ranger.wilderness-survival", atZero: 7, atTwelve: 20 },
+                },
+                type: "piercing",
+                armorPenetration: 0,
+              },
+              { kind: "apply-status", statusId: "crippled", durationSeconds: 21 },
+              { kind: "apply-status", statusId: "bleeding", durationSeconds: 21 },
+            ],
+          },
         },
       },
     ],
@@ -4536,6 +6313,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "Remove a hex from target ally": the newest.
     effects: [{ kind: "remove-status", category: "hex", count: 1 }],
@@ -4556,6 +6335,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "Remove one condition from target ally. If that ally is under the
     // effects of an Enchantment, that ally is healed for 15...63...75
@@ -4595,6 +6376,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "For 15 seconds, target ally gains health regeneration of 4...8...9":
     // the status's +8.
@@ -4619,6 +6402,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: { origin: "party" },
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     // "...for 30...66...75 health."
     effects: [

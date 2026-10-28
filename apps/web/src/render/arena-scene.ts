@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 
 import {
+  IMPLEMENTED_SKILLS,
   PROFESSIONS,
   isStatusId,
   isWeaponId,
@@ -9,12 +10,16 @@ import {
   type Vec2,
 } from "@vibewars/game-core";
 
-import { professionIcon } from "../ui/icons.js";
+import { professionIcon, skillIcon } from "../ui/icons.js";
 import { prefersReducedMotion } from "../ui/recharge-overlay.js";
 import {
+  BODY_EDGE,
+  DEAD_COLOUR,
   EMPTY_SNAPSHOT,
+  EXPLOITED_CORPSE_COLOUR,
   PROFESSION_GLYPH_SIZE,
   areaFlashAlpha,
+  bodyGlyphLayout,
   decayAreaFlashes,
   decaySwingFlashes,
   floatingTextY,
@@ -50,12 +55,12 @@ import {
   type WalkMarker,
 } from "./walk-marker.js";
 import { AttackClock, REST_FRAME, shownFrame } from "./attack-clock.js";
+import { bodyRings } from "./body-rings.js";
 import {
   PING_HEAD_RADIUS,
   PING_PIN_HEIGHT,
   callChevron,
   pingRing,
-  watchBrackets,
   type RenderablePing,
 } from "./call-marks.js";
 import { lyingPose } from "./lying-pose.js";
@@ -96,10 +101,7 @@ const HEALTH_BAR_LOW = 0xff7b72;
 const CAST_BAR_FILL = 0xd7dee8;
 /** Marks the actor you control, inside its circle, in any team colour. */
 const SELF_RIM = 0xd7dee8;
-/** Edges every living body, darker than the grid and walls, so no body blends into what it stands on. */
-const BODY_EDGE = 0x0b0f14;
 const BODY_EDGE_WIDTH = 1.5;
-const DEAD_COLOUR = 0x4a5464;
 /** How opaque a weapon swing's number is at most: present, never louder than a skill (#160). */
 const LIGHT_TEXT_ALPHA = 0.8;
 /** A floating text's size by weight: a critical hit is the loudest number on screen (#533). */
@@ -124,8 +126,32 @@ const DEAD_INK_TINT = 0x4a5464;
 /** An off-screen marker's length, tip to base, and width, screen px (#440). */
 const EDGE_MARKER_LENGTH = 12;
 const EDGE_MARKER_WIDTH = 10;
+/**
+ * The world's layers, bottom up (#1037). Wards on the floor and their
+ * icons (#1087), under everything that stands on them; the floor and the bodies,
+ * with their enchantment and hex rings (#1117); the profession glyph
+ * inside each body; every mark on a body (off-hand,
+ * weapon, target ring, call chevron, bars, swing flashes),
+ * so a weapon crosses the glyph, never the reverse; then shots, status
+ * icons, names and numbers, which were over the bodies before the split.
+ */
+const GROUND_DEPTH = -1;
+const BODY_DEPTH = 0;
+const BODY_GLYPH_DEPTH = 1;
+const MARK_DEPTH = 2;
+const OVERLAY_DEPTH = 3;
 /** Over every world object, names and numbers included. */
 const EDGE_MARKER_DEPTH = 10;
+/**
+ * The body glyph's texture size, px: 13 world units at the Close zoom
+ * (1080 / 640) on a 2x display is about 44 px, so it stays crisp there.
+ */
+const BODY_GLYPH_TEXTURE_SIZE = 48;
+
+/** A ward's icon at its centre (#1087), world units, and its texture size, px, as the body glyph's. */
+const GROUND_ICON_SIZE = 22;
+const GROUND_ICON_TEXTURE_SIZE = 48;
+const GROUND_ICON_ALPHA = 0.55;
 
 const HEALTH_BAR_WIDTH = 34;
 const HEALTH_BAR_HEIGHT = 4;
@@ -133,7 +159,14 @@ const HEALTH_BAR_HEIGHT = 4;
 export class ArenaScene extends Phaser.Scene {
   public static readonly KEY = "arena";
 
+  /** Wards on the floor (#1087), under the grid, walls and bodies. */
+  private groundGraphics: Phaser.GameObjects.Graphics | undefined;
+  /** Each ward's icon, by ground effect id (#1087). */
+  private groundIcons = new Map<number, Phaser.GameObjects.Image>();
+  /** The floor and the bodies, under the body glyphs. */
   private graphics: Phaser.GameObjects.Graphics | undefined;
+  /** Every mark on a body, over the body glyphs (#1037). */
+  private markGraphics: Phaser.GameObjects.Graphics | undefined;
   /** The off-screen markers, drawn in screen px over everything (#440). */
   private markerGraphics: Phaser.GameObjects.Graphics | undefined;
   private snapshot: ArenaSnapshot = EMPTY_SNAPSHOT;
@@ -171,6 +204,8 @@ export class ArenaScene extends Phaser.Scene {
   private nameLabels = new Map<string, Phaser.GameObjects.Text>();
   /** The primary profession's glyph before each name, one pooled image per actor (#281). */
   private nameGlyphs = new Map<string, Phaser.GameObjects.Image>();
+  /** The primary profession's glyph inside each body, one pooled image per actor (#1037). */
+  private bodyGlyphs = new Map<string, Phaser.GameObjects.Image>();
   /** Status ids the server sent that this client has no icon for. */
   private readonly unknownStatuses = new Set<string>();
   /** Each attacker's swing, which its weapon mark plays (#558), by actor id. */
@@ -248,6 +283,10 @@ export class ArenaScene extends Phaser.Scene {
         width: PROFESSION_GLYPH_SIZE,
         height: PROFESSION_GLYPH_SIZE,
       });
+      this.load.svg(bodyProfessionTexture(profession), professionIcon(profession), {
+        width: BODY_GLYPH_TEXTURE_SIZE,
+        height: BODY_GLYPH_TEXTURE_SIZE,
+      });
     }
     for (const sprite of PROJECTILE_SPRITES) {
       this.load.svg(projectileTexture(sprite), projectileSpriteUrl(sprite), {
@@ -255,23 +294,34 @@ export class ArenaScene extends Phaser.Scene {
         height: PROJECTILE_HEIGHT,
       });
     }
+    for (const skillId of GROUND_EFFECT_SKILLS) {
+      this.load.svg(groundIconTexture(skillId), skillIcon(skillId), {
+        width: GROUND_ICON_TEXTURE_SIZE,
+        height: GROUND_ICON_TEXTURE_SIZE,
+      });
+    }
   }
 
   public create(): void {
-    this.graphics = this.add.graphics();
+    this.groundGraphics = this.add.graphics().setDepth(GROUND_DEPTH);
+    this.graphics = this.add.graphics().setDepth(BODY_DEPTH);
+    this.markGraphics = this.add.graphics().setDepth(MARK_DEPTH);
     this.markerGraphics = this.add.graphics().setDepth(EDGE_MARKER_DEPTH);
   }
 
   public override update(time: number, deltaMs: number): void {
     const g = this.graphics;
-    if (g === undefined) {
+    const marks = this.markGraphics;
+    if (g === undefined || marks === undefined) {
       return;
     }
     g.clear();
+    marks.clear();
     this.now = time / 1000;
     this.reducedMotion = prefersReducedMotion();
     this.clock.observe(this.snapshot.clock, this.now);
     this.observeAttacks();
+    this.updateGroundEffects();
     this.drawGrid(g);
     for (const wall of this.snapshot.walls) {
       this.drawWall(g, wall);
@@ -294,12 +344,13 @@ export class ArenaScene extends Phaser.Scene {
       this.drawPing(g, ping);
     }
     for (const actor of this.snapshot.actors) {
-      this.drawActor(g, actor);
+      this.drawActor(g, marks, actor);
     }
     this.swingFlashes = decaySwingFlashes(this.swingFlashes, deltaMs / 1000);
     for (const flash of this.swingFlashes) {
-      this.drawSwingFlash(g, flash);
+      this.drawSwingFlash(marks, flash);
     }
+    this.updateBodyGlyphs();
     this.updateProjectiles(time / 1000);
     this.updateStatusIcons();
     this.updateNameLabels();
@@ -427,7 +478,11 @@ export class ArenaScene extends Phaser.Scene {
    * as a standing one is, with the weapon mark dropped beside it. The
    * off-hand is not drawn: one dropped thing reads, two clutter.
    */
-  private drawLyingBody(g: Phaser.GameObjects.Graphics, actor: RenderableActor): void {
+  private drawLyingBody(
+    g: Phaser.GameObjects.Graphics,
+    marks: Phaser.GameObjects.Graphics,
+    actor: RenderableActor,
+  ): void {
     const { x, y } = actor.position;
     const pose = lyingPose(x, y, actor.radius, actor.facing);
     const outline = (points: readonly { readonly x: number; readonly y: number }[]) => {
@@ -451,7 +506,7 @@ export class ArenaScene extends Phaser.Scene {
       outline(lyingPose(x, y, actor.radius - 2, actor.facing).body);
       g.strokePath();
     }
-    this.drawWeaponMark(g, actor, pose.weapon);
+    this.drawWeaponMark(marks, actor, pose.weapon);
   }
 
   /**
@@ -607,19 +662,6 @@ export class ArenaScene extends Phaser.Scene {
     }
   }
 
-  /** The ally you watch (#443): four `ink` corner brackets, cased in `edge`. */
-  private drawWatchBrackets(g: Phaser.GameObjects.Graphics, actor: RenderableActor): void {
-    for (const [width, colour] of [
-      [4, BODY_EDGE],
-      [2, SELF_RIM],
-    ] as const) {
-      g.lineStyle(width, colour, 1);
-      for (const bracket of watchBrackets(actor.position, actor.radius)) {
-        g.strokePoints(bracket.map(({ x, y }) => new Phaser.Math.Vector2(x, y)));
-      }
-    }
-  }
-
   private drawSwingFlash(g: Phaser.GameObjects.Graphics, flash: SwingFlash): void {
     const alpha = swingFlashAlpha(flash);
     const { x, y } = flash.centre;
@@ -663,7 +705,9 @@ export class ArenaScene extends Phaser.Scene {
       }
       flying.add(shot.id);
       if (shown === undefined) {
-        const image = this.add.image(position.x, position.y, projectileTexture(shot.sprite));
+        const image = this.add
+          .image(position.x, position.y, projectileTexture(shot.sprite))
+          .setDepth(OVERLAY_DEPTH);
         image.setRotation(projectileHeading(shot));
         image.setTint(shot.colour);
         this.projectileImages.set(shot.id, { image, to: shot.to, endedAt: undefined });
@@ -693,18 +737,28 @@ export class ArenaScene extends Phaser.Scene {
     }
   }
 
-  private drawActor(g: Phaser.GameObjects.Graphics, actor: RenderableActor): void {
+  /**
+   * One actor: its body on `g`, every mark on it on `marks`, over the
+   * body glyphs (#1037). In a clump a neighbour's weapon now crosses your
+   * body: the weapon is the more urgent read.
+   */
+  private drawActor(
+    g: Phaser.GameObjects.Graphics,
+    marks: Phaser.GameObjects.Graphics,
+    actor: RenderableActor,
+  ): void {
     const { x, y } = actor.position;
 
     if (actor.dead) {
-      // A corpse stays visible but obviously inert: hollow, grey, no bars.
-      g.lineStyle(2, DEAD_COLOUR, 1);
+      // A corpse stays visible but obviously inert: hollow, grey, no bars;
+      // darker once a skill has exploited it (#466).
+      g.lineStyle(2, actor.exploited ? EXPLOITED_CORPSE_COLOUR : DEAD_COLOUR, 1);
       g.strokeCircle(x, y, actor.radius);
       return;
     }
 
     if (actor.knockedDown) {
-      this.drawLyingBody(g, actor);
+      this.drawLyingBody(g, marks, actor);
     } else {
       g.fillStyle(teamColour(actor.team), 1);
       g.fillCircle(x, y, actor.radius);
@@ -719,25 +773,37 @@ export class ArenaScene extends Phaser.Scene {
       }
 
       // Off-hand, then weapon mark, then target ring: the order #275 gives.
-      this.drawOffhandMark(g, actor);
-      this.drawWeaponMark(g, actor);
+      this.drawOffhandMark(marks, actor);
+      this.drawWeaponMark(marks, actor);
     }
+    // On the body layer, after the body and its self rim: every mark draws over the rings.
+    this.drawBodyRings(g, actor);
 
     if (actor.id === this.snapshot.targetId) {
-      g.lineStyle(2, TARGET_RING, 1);
-      g.strokeCircle(x, y, actor.radius + TARGET_RING_OFFSET);
+      marks.lineStyle(2, TARGET_RING, 1);
+      marks.strokeCircle(x, y, actor.radius + TARGET_RING_OFFSET);
     }
     if (actor.id === this.snapshot.calledId) {
-      this.drawCallChevron(g, actor);
-    }
-    if (actor.id === this.snapshot.watchedId) {
-      this.drawWatchBrackets(g, actor);
+      this.drawCallChevron(marks, actor);
     }
 
-    this.drawHealthBar(g, actor);
+    this.drawHealthBar(marks, actor);
 
     if (actor.castProgress !== undefined) {
-      this.drawCastBar(g, actor, actor.castProgress);
+      this.drawCastBar(marks, actor, actor.castProgress);
+    }
+  }
+
+  /** The enchantment and hex rings round a living body (#1117), circular even lying down. */
+  private drawBodyRings(g: Phaser.GameObjects.Graphics, actor: RenderableActor): void {
+    const { x, y } = actor.position;
+    for (const ring of bodyRings(actor.radius, actor)) {
+      g.lineStyle(ring.width, ring.colour, 1);
+      for (const arc of ring.arcs) {
+        g.beginPath();
+        g.arc(x, y, ring.radius, arc.from, arc.to);
+        g.strokePath();
+      }
     }
   }
 
@@ -760,7 +826,7 @@ export class ArenaScene extends Phaser.Scene {
         const texture = statusTexture(statuses[index] ?? "");
         let image = pool[index];
         if (image === undefined) {
-          image = this.add.image(position.x, position.y, texture);
+          image = this.add.image(position.x, position.y, texture).setDepth(OVERLAY_DEPTH);
           pool.push(image);
         }
         image.setTexture(texture).setPosition(position.x, position.y).setVisible(true);
@@ -777,7 +843,8 @@ export class ArenaScene extends Phaser.Scene {
       if (more === undefined) {
         more = this.add
           .text(0, 0, "", { fontSize: "11px", fontFamily: "ui-monospace, monospace", color: INK })
-          .setOrigin(0.5, 0.5);
+          .setOrigin(0.5, 0.5)
+          .setDepth(OVERLAY_DEPTH);
         this.statusOverflow.set(actor.id, more);
       }
       screenSized(more, this.cameras.main.zoom);
@@ -816,7 +883,8 @@ export class ArenaScene extends Phaser.Scene {
       if (label === undefined) {
         label = this.add
           .text(0, 0, "", { fontSize: "11px", fontFamily: "ui-monospace, monospace", color: INK })
-          .setOrigin(0.5, 1);
+          .setOrigin(0.5, 1)
+          .setDepth(OVERLAY_DEPTH);
         this.nameLabels.set(actor.id, label);
       }
       // setText skips an unchanged string, but setColor redraws and
@@ -856,7 +924,11 @@ export class ArenaScene extends Phaser.Scene {
     }
     const texture = professionTexture(actor.profession);
     if (glyph === undefined) {
-      glyph = this.add.image(0, 0, texture).setOrigin(0.5, 1).setTintMode(Phaser.TintModes.FILL);
+      glyph = this.add
+        .image(0, 0, texture)
+        .setOrigin(0.5, 1)
+        .setTintMode(Phaser.TintModes.FILL)
+        .setDepth(OVERLAY_DEPTH);
       this.nameGlyphs.set(actor.id, glyph);
     }
     if (glyph.texture.key !== texture) {
@@ -868,6 +940,96 @@ export class ArenaScene extends Phaser.Scene {
     }
     screenSized(glyph, this.cameras.main.zoom);
     glyph.setPosition(layout.glyphX, layout.bottom).setVisible(shown);
+  }
+
+  /**
+   * Every ward on the ground (#1087): a translucent disc with a thin rim
+   * in its side's colour, and its skill's icon at the centre, under
+   * whoever stands in it; a trap (#1105) the same, with no disc. One that
+   * ended takes its icon with it.
+   */
+  private updateGroundEffects(): void {
+    const g = this.groundGraphics;
+    if (g === undefined) {
+      return;
+    }
+    g.clear();
+    const seen = new Set<number>();
+    for (const effect of this.snapshot.groundEffects) {
+      seen.add(effect.id);
+      const { x, y } = effect.position;
+      if (effect.filled) {
+        g.fillStyle(effect.colour, 0.15);
+        g.fillCircle(x, y, effect.radius);
+      }
+      g.lineStyle(1.5, effect.colour, 0.6);
+      g.strokeCircle(x, y, effect.radius);
+      const texture = groundIconTexture(effect.skillId);
+      if (!this.textures.exists(texture)) {
+        continue;
+      }
+      let icon = this.groundIcons.get(effect.id);
+      if (icon === undefined) {
+        icon = this.add
+          .image(x, y, texture)
+          .setDisplaySize(GROUND_ICON_SIZE, GROUND_ICON_SIZE)
+          .setAlpha(GROUND_ICON_ALPHA)
+          .setDepth(GROUND_DEPTH);
+        this.groundIcons.set(effect.id, icon);
+      }
+    }
+    for (const [id, icon] of this.groundIcons) {
+      if (!seen.has(id)) {
+        icon.destroy();
+        this.groundIcons.delete(id);
+      }
+    }
+  }
+
+  /**
+   * The primary profession's glyph inside every body (#1037): upright,
+   * world sized, between the bodies and their marks. Texture, tint and
+   * alpha are set only when they change, as the name glyph's are; an actor
+   * that left takes its glyph with it.
+   */
+  private updateBodyGlyphs(): void {
+    const seen = new Set<string>();
+    for (const actor of this.snapshot.actors) {
+      seen.add(actor.id);
+      const layout = bodyGlyphLayout(actor);
+      let glyph = this.bodyGlyphs.get(actor.id);
+      if (layout === undefined) {
+        glyph?.setVisible(false);
+        continue;
+      }
+      const texture = bodyProfessionTexture(layout.profession);
+      if (glyph === undefined) {
+        glyph = this.add
+          .image(0, 0, texture)
+          .setTintMode(Phaser.TintModes.FILL)
+          .setDepth(BODY_GLYPH_DEPTH);
+        this.bodyGlyphs.set(actor.id, glyph);
+      }
+      if (glyph.texture.key !== texture) {
+        glyph.setTexture(texture);
+      }
+      if (glyph.tint !== layout.tint) {
+        glyph.setTint(layout.tint);
+      }
+      if (glyph.alpha !== layout.alpha) {
+        glyph.setAlpha(layout.alpha);
+      }
+      glyph
+        .setDisplaySize(layout.size, layout.size)
+        .setPosition(layout.x, layout.y)
+        .setVisible(true);
+    }
+    for (const [id, glyph] of this.bodyGlyphs) {
+      if (!seen.has(id)) {
+        glyph.destroy();
+        this.bodyGlyphs.delete(id);
+      }
+    }
   }
 
   /**
@@ -929,7 +1091,7 @@ export class ArenaScene extends Phaser.Scene {
           strokeThickness: 3,
         });
         // Left-aligned, bottom on the position: it grows away from the bar.
-        object.setOrigin(0, 1);
+        object.setOrigin(0, 1).setDepth(OVERLAY_DEPTH);
         this.floatingTextObjects.set(floating.id, object);
       }
 
@@ -980,12 +1142,26 @@ export class ArenaScene extends Phaser.Scene {
   }
 }
 
+/** Every skill that leaves a ground effect (#1087): its icon is loaded for the ward's centre. */
+const GROUND_EFFECT_SKILLS: readonly string[] = IMPLEMENTED_SKILLS.filter((skill) =>
+  skill.effects.some((effect) => effect.kind === "create-ground-effect"),
+).map((skill) => skill.id);
+
+function groundIconTexture(skillId: string): string {
+  return `ground-icon:${skillId}`;
+}
+
 function projectileTexture(sprite: string): string {
   return `projectile:${sprite}`;
 }
 
 function professionTexture(profession: ProfessionId): string {
   return `profession:${profession}`;
+}
+
+/** The glyph inside the body (#1037), loaded larger than the name's: it is world sized. */
+function bodyProfessionTexture(profession: ProfessionId): string {
+  return `body-profession:${profession}`;
 }
 
 function statusTexture(id: string): string {

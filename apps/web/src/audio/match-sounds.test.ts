@@ -35,6 +35,7 @@ function snapshot(castingSkillId: string | undefined): MatchSnapshot {
     secondaryProfession: undefined,
     team: 0,
     dead: false,
+    corpseExploited: false,
     castingSkillId,
     castRemaining: castingSkillId === undefined ? 0 : 1,
     castTotal: castingSkillId === undefined ? 0 : 1,
@@ -43,6 +44,7 @@ function snapshot(castingSkillId: string | undefined): MatchSnapshot {
     knockdownRemaining: 0,
     healthPips: 0,
     energyPips: 0,
+    creature: undefined,
     statuses: [],
   };
   return {
@@ -55,6 +57,9 @@ function snapshot(castingSkillId: string | undefined): MatchSnapshot {
     winningTeam: undefined,
     endReason: undefined,
     projectiles: [],
+    groundEffects: [],
+    traps: [],
+    summary: undefined,
   };
 }
 

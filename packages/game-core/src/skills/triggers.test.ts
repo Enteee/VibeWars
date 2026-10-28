@@ -4,7 +4,7 @@ import { createRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { makeCombatant } from "./testing.js";
 import type { StatusId } from "./status.js";
-import { fireTriggers } from "./triggers.js";
+import { fireChangeTriggers, fireTriggers, type SpreadGainedCondition } from "./triggers.js";
 import type { Combatant } from "./types.js";
 
 describe("fireTriggers", () => {
@@ -30,7 +30,7 @@ describe("fireTriggers", () => {
         rng: createRng(1),
         rules: MINIMAL_GW_INSPIRED_PVP_V1.combat,
         surroundings: new Map(),
-        usedSkillId: "paragon.song-of-restoration",
+        usedSkill: { skillId: "paragon.song-of-restoration", key: "paragon.song-of-restoration" },
       },
       spared,
     ).map(({ skillId }) => skillId);
@@ -45,5 +45,72 @@ describe("fireTriggers", () => {
 
   it("fires nothing for a status the skill put on its own user, and the rest still (#999)", () => {
     expect(fired(new Set(["song-of-restoration"]))).toEqual(["necromancer.spiteful-spirit"]);
+  });
+});
+
+describe("an offender trigger (#1022)", () => {
+  const noSpread: SpreadGainedCondition = () => [];
+
+  /** A bearer at 300 under a ritualist's Weapon of Remedy, poisoned and bleeding, hit by a warrior. */
+  function struck(): { bearer: Combatant; sources: Map<string, Combatant> } {
+    const self = makeCombatant({ id: "b", team: 0, health: 300 });
+    const sources = new Map([
+      ["b", self],
+      ["rit", makeCombatant({ id: "rit", team: 0, health: 200 })],
+      ["war", makeCombatant({ id: "war", team: 1 })],
+    ]);
+    self.statuses.apply("bleeding", 10, "war");
+    self.statuses.apply("poison", 10, "war");
+    self.statuses.apply("weapon-of-remedy", 8, "rit");
+    self.statuses.drainChanges();
+    self.statuses.recordDamageFromFoe("war");
+    return { bearer: self, sources };
+  }
+
+  function fire(self: Combatant, sources: Map<string, Combatant>) {
+    return self.statuses.drainChanges().flatMap((change) =>
+      fireChangeTriggers(self, change, noSpread, {
+        sourceOf: (id) => sources.get(id),
+        rng: createRng(1),
+        rules: MINIMAL_GW_INSPIRED_PVP_V1.combat,
+        surroundings: new Map(),
+        usedSkill: undefined,
+      }),
+    );
+  }
+
+  it("runs with the bearer as caster and the offender as target, then ends its status", () => {
+    const { bearer: self, sources } = struck();
+    const out = fire(self, sources);
+    expect(out).toEqual([
+      {
+        sourceId: "rit",
+        skillId: "ritualist.weapon-of-remedy",
+        events: [
+          { kind: "life-stolen", targetId: "war", amount: 68 },
+          { kind: "heal", targetId: "b", amount: 68 },
+          { kind: "status-removed", targetId: "b", statusId: "poison" },
+          { kind: "status-removed", targetId: "b", statusId: "bleeding" },
+          { kind: "status-expired", targetId: "b", statusId: "weapon-of-remedy" },
+        ],
+      },
+    ]);
+    expect(self.health).toBe(368);
+    expect(sources.get("rit")?.health).toBe(200);
+    expect(self.statuses.has("weapon-of-remedy")).toBe(false);
+  });
+
+  it("fires nothing, and spends nothing, at an offender gone from the match", () => {
+    const { bearer: self, sources } = struck();
+    sources.delete("war");
+    expect(fire(self, sources)).toEqual([]);
+    expect(self.statuses.has("weapon-of-remedy")).toBe(true);
+  });
+
+  it("fires nothing from a dead bearer", () => {
+    const { bearer: self, sources } = struck();
+    self.dead = true;
+    self.health = 0;
+    expect(fire(self, sources)).toEqual([]);
   });
 });

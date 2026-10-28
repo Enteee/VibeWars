@@ -67,15 +67,10 @@ async function releaseControl(page: Page): Promise<void> {
   await expect(page.locator(".training")).not.toHaveClass(/is-armed/);
 }
 
-/**
- * Take control of the arena by clicking a spot with nobody on it. The
- * pointer stays in the corner, so the camera leans that way (#721): wait
- * for it to settle.
- */
+/** Take control of the arena by clicking a spot with nobody on it. */
 async function takeControl(page: Page): Promise<void> {
   await page.locator(".training-stage").click({ position: { x: 12, y: 12 } });
   await expect(page.locator(".training")).toHaveClass(/is-armed/);
-  await settleCamera(page);
 }
 
 /**
@@ -165,7 +160,7 @@ test("(3) typing in the editor never drives the arena", async ({ page }) => {
   // Clicking a text field takes the keyboard, and with it the arena.
   await name.click();
   const rowsBefore = await logRows(page).count();
-  // The pointer left the arena, so the camera's lean eases home first (#721).
+  // Wait for the arena to hold still before the frames are compared.
   await stillArena(page, canvas);
   const before = await arenaShot(page, canvas);
 
@@ -268,10 +263,10 @@ test("(8) leaving the editor leaves no arena behind", async ({ page }) => {
 test("(9) a match is unaffected", async ({ page }) => {
   await page.goto("./");
   await startSoloMatch(page);
-  await expect(page.locator("#viewport canvas")).toHaveCount(1);
+  await expect(page.locator("#viewport canvas:not(.compass)")).toHaveCount(1);
   await expect(page.locator(".hud-skills .hud-skill")).toHaveCount(8);
   await expect(page.locator(".training")).toHaveCount(0);
-  await expect(page.locator("canvas")).toHaveCount(1);
+  await expect(page.locator("canvas:not(.compass)")).toHaveCount(1);
 });
 
 test("(10) on a narrow screen the columns stack: training, editor, library", async ({ page }) => {
@@ -844,7 +839,7 @@ test("(27) a right click on the ground moves nobody and keeps the target (#438)"
   await page.locator("select.training-scenario").selectOption("armor-ladder");
   await expect(page.locator(".training-log")).toContainText("── Armor ladder ──");
   await takeControl(page);
-  // The cursor leaving the arena eases the camera's lean home (#721).
+  // Off the arena, so no name shows under the cursor.
   await page.mouse.move(1, 1);
   const named = async (): Promise<number> => (await shownNames(page)).length;
 
@@ -1125,7 +1120,7 @@ async function inkHeight(page: Page, blank: Buffer, named: Buffer): Promise<numb
   );
 }
 
-/** Wait out a wheel's zoom ease and the camera's lean: `data-camera` holds still. */
+/** Wait out a wheel's zoom ease: `data-camera` holds still. */
 async function cameraSettled(page: Page): Promise<void> {
   const stage = page.locator(".training-stage");
   await page.waitForTimeout(600);
@@ -1294,4 +1289,70 @@ test("(40) an adrenaline skill's slot fills from dark to lit as it charges (#826
   await expect.poll(fill, { timeout: 30_000 }).toBe(1);
   await expect(slot).not.toHaveClass(/is-unaffordable/);
   await expect(gauge).toBeHidden();
+});
+
+test("(41) a well needs a corpse, then lands on one (#1104)", async ({ page }) => {
+  await page.setViewportSize(WIDE);
+  await page.goto("./");
+  await page.getByRole("button", { name: "new character" }).click();
+  await chooseProfession(page, "primary", "necromancer");
+  await page
+    .locator(".skill-box", { hasText: "Well of Suffering" })
+    .locator(".skill-box-equip")
+    .click();
+  await page.locator("select.training-scenario").selectOption("healing-throughput");
+  await expect(page.locator(".training-log")).toContainText("── Healing throughput ──");
+  await takeControl(page);
+
+  // Nobody has died yet: refused, and nothing paid.
+  const slot = page.locator(FILLED_SLOTS).first();
+  await page.keyboard.press(skillKey(0));
+  await expect(page.locator(".training-message")).toHaveText("No corpse in range.");
+  await expect(slot).not.toHaveClass(/\bis-recharging\b/);
+
+  // The burners kill the monk ally in a few Fireballs, and its body lies
+  // 2 s before it is back: keep pressing until one press is not refused.
+  // Game time runs slower than wall time under load (#327).
+  await expect
+    .poll(
+      async () => {
+        await page.keyboard.press(skillKey(0));
+        return slot.evaluate((node) => node.classList.contains("is-recharging"));
+      },
+      { intervals: [100], timeout: 30_000 },
+    )
+    .toBe(true);
+  await expect(slot).toHaveAttribute("aria-label", /^Well of Suffering, recharging/);
+});
+
+test("2 swaps to weapon set 2, the empty 3 does nothing, and a slot's click swaps back (#489)", async ({
+  page,
+}) => {
+  await page.setViewportSize(WIDE);
+  await page.goto("./");
+  // A new character is a warrior with a sword and shield in set 1.
+  await page.getByRole("button", { name: "new character" }).click();
+  await page.getByRole("button", { name: "gear", exact: true }).click();
+  await page.getByRole("tab", { name: /^2/ }).click();
+  await page.locator(".gear-box").filter({ hasText: "Recurve Bow" }).first().click();
+  await expect(page.locator(".training canvas")).toBeVisible();
+  const slots = page.locator(".training .weapon-set");
+  await expect(slots).toHaveText(["1", "2", "3", "4"]);
+  await expect(slots.nth(0)).toHaveClass(/is-active/);
+  await expect(slots.nth(1)).toHaveAccessibleName("Weapon set 2: Recurve Bow");
+  await expect(slots.nth(2)).toHaveClass(/is-empty/);
+  await takeControl(page);
+
+  await page.keyboard.press(key("weapon-set-2"));
+  await expect(slots.nth(1)).toHaveClass(/is-active/);
+  await expect(slots.nth(0)).not.toHaveClass(/is-active/);
+
+  await page.keyboard.press(key("weapon-set-3"));
+  await expect(page.locator(".training-message")).toHaveText("");
+  await expect(slots.nth(1)).toHaveClass(/is-active/);
+
+  await slots.nth(0).click();
+  await expect(slots.nth(0)).toHaveClass(/is-active/);
+  // The click left the keyboard with the arena.
+  await expect(page.locator(".training")).toHaveClass(/is-armed/);
 });

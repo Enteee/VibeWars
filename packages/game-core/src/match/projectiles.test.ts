@@ -37,6 +37,7 @@ function archer(spawn: Vec2, weapon: Weapon = LONGBOW): ParticipantSpec {
         attributeId: "ranger.marksmanship",
         damageType: weapon.damageType,
         requirementMet: true,
+        creatureDamageScale: undefined,
       },
     },
     spawn,
@@ -252,10 +253,14 @@ describe("ranged weapons fire projectiles", () => {
       "archer",
       {
         maxHealth: RULES.combat.baseHealth,
-        maxEnergy: RULES.combat.baseEnergy,
         baseEnergyPips: 0,
         attributeRanks: new Map(),
-        equipment: unarmedResolvedEquipment(60),
+        weaponSets: [
+          { equipment: unarmedResolvedEquipment(60), maxEnergy: RULES.combat.baseEnergy },
+          null,
+          null,
+          null,
+        ],
       },
       [],
     );
@@ -865,9 +870,9 @@ describe("Lightning Orb flies (#761)", () => {
     expect(completed.events).toEqual([]);
     expect(landed.atSeconds - completed.atSeconds).toBeGreaterThanOrEqual(300 / ORB_SPEED - DT);
     const victim = get(match, "target").combatant;
-    const expected = mitigate(skillDamage(82, "lightning", 0.25), victim, RULES.combat);
+    const expected = mitigate(skillDamage(82, "lightning", 0.25), victim, RULES.combat, "chest");
     expect(expected).toBeGreaterThan(
-      mitigate(skillDamage(82, "lightning", 0), victim, RULES.combat),
+      mitigate(skillDamage(82, "lightning", 0), victim, RULES.combat, "chest"),
     );
     expect(landed.events).toEqual([
       expect.objectContaining({ kind: "damage", targetId: "target", amount: expected }),

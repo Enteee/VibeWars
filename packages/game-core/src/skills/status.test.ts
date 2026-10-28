@@ -49,12 +49,14 @@ describe("status definitions", () => {
         def.armorWhileStill !== 0 ||
         def.healthPerSecondWhileMoving !== 0 ||
         def.healthPerSecond !== 0 ||
+        def.healthPerSecondNearSpirit !== 0 ||
         def.armorReduction !== undefined ||
         def.moveSpeedMultiplier !== 1 ||
         def.attackMissChance !== 0 ||
         def.maxHealthLoss !== undefined ||
         def.healingMultiplier !== 1 ||
         def.weaponDamageMultiplier !== 1 ||
+        def.physicalDamageTakenBonus !== 0 ||
         def.attributeDelta !== 0 ||
         def.castTimeMultiplier !== 1 ||
         def.interruptsSpells ||
@@ -67,7 +69,10 @@ describe("status definitions", () => {
         def.triggers.length > 0 ||
         def.nextSpells !== undefined ||
         def.nextAttackSkill !== undefined ||
-        def.spellRechargeFaster !== 0;
+        def.spellRechargeFaster !== 0 ||
+        def.bindingRitualRechargeFaster !== 0 ||
+        def.criticalChanceBonus !== 0 ||
+        def.energyPerCritical !== 0;
       expect(hasEffect, `${id} has no mechanical effect`).toBe(true);
     }
   });
@@ -110,6 +115,9 @@ describe("status definitions", () => {
       "weapon-of-warding": 4,
       "never-surrender": 4,
       "healing-breeze": 8,
+      "shadow-refuge": 9,
+      recuperation: 3,
+      "well-of-suffering": -5,
     });
   });
 
@@ -519,10 +527,15 @@ describe("StatusSet changes, for the triggers (#887)", () => {
 
   it("records a hit and physical damage only while a status answers them (#935)", () => {
     const parasite = {
+      statusId: "insidious-parasite",
       sourceId: "a",
       trigger: getStatusDefinition("insidious-parasite").triggers[0],
     };
-    const mark = { sourceId: "b", trigger: getStatusDefinition("mark-of-pain").triggers[0] };
+    const mark = {
+      statusId: "mark-of-pain",
+      sourceId: "b",
+      trigger: getStatusDefinition("mark-of-pain").triggers[0],
+    };
     const set = new StatusSet();
     set.apply("backfire", 10, "a");
     set.drainChanges();
@@ -559,9 +572,39 @@ describe("StatusSet changes, for the triggers (#887)", () => {
     expect(set.drainChanges()).toEqual([
       {
         kind: "took-physical-damage",
-        fired: [{ sourceId: "b", trigger: getStatusDefinition("mark-of-pain").triggers[0] }],
+        fired: [
+          {
+            statusId: "mark-of-pain",
+            sourceId: "b",
+            trigger: getStatusDefinition("mark-of-pain").triggers[0],
+          },
+        ],
       },
       { kind: "ended", id: "mark-of-pain", sourceId: "b", expired: false },
+    ]);
+  });
+
+  it("records damage from a foe only while a status answers it, once per status until drained (#1022)", () => {
+    const vengeful = {
+      statusId: "vengeful-weapon",
+      sourceId: "rit",
+      trigger: getStatusDefinition("vengeful-weapon").triggers[0],
+    };
+    const set = new StatusSet();
+    set.recordDamageFromFoe("war");
+    expect(set.drainChanges()).toEqual([]);
+
+    set.apply("vengeful-weapon", 8, "rit");
+    set.drainChanges();
+    set.recordDamageFromFoe("war");
+    set.recordDamageFromFoe("ele");
+    expect(set.drainChanges()).toEqual([
+      { kind: "took-damage-from-foe", offenderId: "war", fired: [vengeful] },
+    ]);
+
+    set.recordDamageFromFoe("ele");
+    expect(set.drainChanges()).toEqual([
+      { kind: "took-damage-from-foe", offenderId: "ele", fired: [vengeful] },
     ]);
   });
 });
@@ -722,5 +765,20 @@ describe("StatusSet.countIncomingAttack (#524)", () => {
     set.countIncomingAttack();
     set.apply("watch-yourself", 10, "w");
     expect(set.get("watch-yourself")?.attacksLeft).toBe(3);
+  });
+});
+
+describe("countHit (#939)", () => {
+  it("counts a hit with any weapon for a status that names none (#1022)", () => {
+    const set = new StatusSet();
+    set.apply("splinter-weapon", 20, "rit");
+    set.apply("sand-shards", 20, "dervish");
+    expect(set.countHit("sword")).toEqual([]);
+    expect(set.countHit("flatbow")).toEqual([]);
+    expect(set.countHit("spear")).toEqual([]);
+    expect(set.get("splinter-weapon")?.hitsLeft).toBe(1);
+    expect(set.get("sand-shards")?.hitsLeft).toBe(4);
+    expect(set.countHit("sword")).toEqual(["splinter-weapon"]);
+    expect(set.has("splinter-weapon")).toBe(false);
   });
 });

@@ -7,10 +7,14 @@
  * without waiting in real time (brief §35).
  */
 
+import type { SkillBar } from "../build.js";
 import type { StatusId, StatusSet } from "./status.js";
+import type { Skill } from "./types.js";
 
 export interface ActiveCast {
   readonly skillId: string;
+  /** What it recharges under (#469): `SlotSkill.key`. */
+  readonly key: string;
   readonly targetId: string | undefined;
   /** The whole cast, dazed included: what the cast bar fills towards. */
   readonly totalSeconds: number;
@@ -29,6 +33,41 @@ const AFTERCAST_EPSILON = 1e-9;
 /** A wait still running: seconds remaining, and the seconds it started with. */
 type Wait = readonly [remaining: number, total: number];
 
+/**
+ * A copy of a skill standing in a slot for a while (#469): Arcane Echo's
+ * and Echo's. It waits apart from the original, under its own key.
+ */
+export interface SlotOverride {
+  readonly skillId: string;
+  /** Wait key for recharge, disable, spent and adrenaline: `copyKey`. */
+  readonly key: string;
+  remainingSeconds: number;
+  /** The build skill's id and recharge, started when the copy ends. */
+  readonly restores: { readonly skillId: string; readonly rechargeSeconds: number };
+}
+
+/** The skill a slot holds now, and the key it waits under. */
+export interface SlotSkill {
+  readonly skillId: string;
+  readonly key: string;
+}
+
+/** The key a copy of `skillId` in `slot` waits under (#469). */
+export function copyKey(skillId: string, slot: number): string {
+  return `${skillId}@${String(slot)}`;
+}
+
+/** The skill a wait key is for: a build slot's key is its skill id. */
+export function skillIdOfKey(key: string): string {
+  const at = key.indexOf("@");
+  return at === -1 ? key : key.slice(0, at);
+}
+
+/** Whether `key` is a copy's rather than a build slot's. */
+export function isCopyKey(key: string): boolean {
+  return key.includes("@");
+}
+
 export class CastState {
   readonly #ownerId: string;
   readonly #statuses: StatusSet;
@@ -39,8 +78,14 @@ export class CastState {
   /** The longer of the two, per skill: what the bar shows and readiness reads. */
   readonly #rechargeRemaining = new Map<string, number>();
   readonly #rechargeTotal = new Map<string, number>();
+  /** Skills used and waiting for a morale boost (#474). */
+  readonly #spent = new Set<string>();
   #aftercastRemaining = 0;
   #queuedSlot: number | undefined;
+  /** Copies standing in slots (#469), by slot. */
+  readonly #overrides = new Map<number, SlotOverride>();
+  /** The cast `cancelCast` last ended: what a disable after an interrupt reads. */
+  #cancelled: ActiveCast | undefined;
 
   /**
    * `statuses` are the caster's own: a cast puts its `whileActivating`
@@ -100,10 +145,12 @@ export class CastState {
     targetId: string | undefined,
     activationSeconds: number,
     whileActivating: StatusId | undefined,
+    key: string = skillId,
   ): void {
     const bears = activationSeconds > 0 ? whileActivating : undefined;
     this.#activeCast = {
       skillId,
+      key,
       targetId,
       totalSeconds: activationSeconds,
       remainingSeconds: activationSeconds,
@@ -130,7 +177,54 @@ export class CastState {
    * apply interrupt consequences.
    */
   public cancelCast(): ActiveCast | undefined {
-    return this.#endCast();
+    this.#cancelled = this.#endCast();
+    return this.#cancelled;
+  }
+
+  /**
+   * The cast `cancelCast` last ended, if any: which key an interrupt just
+   * hit, for a disable that follows it in the same resolution (#914, #469).
+   */
+  public get lastCancelled(): ActiveCast | undefined {
+    return this.#cancelled;
+  }
+
+  /** The copies standing in slots now (#469), by slot. */
+  public get overrides(): ReadonlyMap<number, SlotOverride> {
+    return this.#overrides;
+  }
+
+  /**
+   * `slot` holds a copy (#469). One already there ends at once, its waits
+   * with it, and restores nothing: the new copy stands in for it.
+   */
+  public override(slot: number, copy: SlotOverride): void {
+    const replaced = this.#overrides.get(slot);
+    if (replaced !== undefined) {
+      this.#forget(replaced.key);
+    }
+    this.#overrides.set(slot, copy);
+  }
+
+  /** Every copy is gone, restoring nothing: death, respawn and reset (#469). */
+  public clearOverrides(): void {
+    for (const copy of this.#overrides.values()) {
+      this.#forget(copy.key);
+    }
+    this.#overrides.clear();
+  }
+
+  /** Whether `key` still names a slot: a build skill's always, a copy's while it stands. */
+  #holds(key: string): boolean {
+    return !isCopyKey(key) || [...this.#overrides.values()].some((copy) => copy.key === key);
+  }
+
+  /** A copy's waits go with it. */
+  #forget(key: string): void {
+    this.#recharge.delete(key);
+    this.#disabled.delete(key);
+    this.#spent.delete(key);
+    this.#show(key);
   }
 
   public beginAftercast(seconds: number): void {
@@ -159,9 +253,33 @@ export class CastState {
     this.#queuedSlot = undefined;
   }
 
+  /**
+   * Skills used and waiting for a morale boost rather than recharging
+   * (#474): Resurrection Signet's. Apart from `rechargeRemaining`, which a
+   * disable still fills.
+   */
+  public get spent(): ReadonlySet<string> {
+    return this.#spent;
+  }
+
+  /** `skillId` is spent until a morale boost (#474). */
+  public spend(skillId: string): void {
+    if (this.#holds(skillId)) {
+      this.#spent.add(skillId);
+    }
+  }
+
+  /** A morale boost (#474): every spent skill is ready. Whether any was spent. */
+  public refreshSpent(): boolean {
+    const any = this.#spent.size > 0;
+    this.#spent.clear();
+    return any;
+  }
+
   /** Start `skillId`'s recharge; a disable it has runs on regardless (#914). */
   public startRecharge(skillId: string, rechargeSeconds: number): void {
-    if (rechargeSeconds > 0) {
+    // A copy that ended mid-cast has nothing left to recharge (#469).
+    if (rechargeSeconds > 0 && this.#holds(skillId)) {
       this.#recharge.set(skillId, [rechargeSeconds, rechargeSeconds]);
       this.#show(skillId);
     }
@@ -182,6 +300,9 @@ export class CastState {
    * of `seconds`. It is recharge, so whatever ends a recharge ends it.
    */
   public lengthenRecharge(skillId: string, seconds: number): void {
+    if (!this.#holds(skillId)) {
+      return;
+    }
     const [remaining, total] = this.#recharge.get(skillId) ?? [0, 0];
     this.#recharge.set(skillId, [remaining + seconds, total + seconds]);
     this.#show(skillId);
@@ -197,6 +318,9 @@ export class CastState {
    */
   public disable(skillId: string, seconds: number): boolean {
     const waiting = this.#rechargeRemaining.get(skillId) ?? 0;
+    if (!this.#holds(skillId)) {
+      return false;
+    }
     if (seconds > (this.#disabled.get(skillId)?.[0] ?? 0)) {
       this.#disabled.set(skillId, [seconds, seconds]);
       this.#show(skillId);
@@ -242,6 +366,16 @@ export class CastState {
     for (const skillId of [...this.#rechargeRemaining.keys()]) {
       this.#show(skillId);
     }
+    // A copy that ends gives its slot back, and the echo skill there
+    // starts its own recharge (#469).
+    for (const [slot, copy] of [...this.#overrides]) {
+      copy.remainingSeconds -= dt;
+      if (copy.remainingSeconds <= 0) {
+        this.#overrides.delete(slot);
+        this.#forget(copy.key);
+        this.startRecharge(copy.restores.skillId, copy.restores.rechargeSeconds);
+      }
+    }
 
     if (this.#aftercastRemaining > 0) {
       this.#aftercastRemaining -= dt;
@@ -262,4 +396,48 @@ export class CastState {
 
     return this.#endCast();
   }
+}
+
+/**
+ * Start `skill`'s recharge as it is used, interrupted or knocked out of
+ * its cast: by time, or spent until a morale boost (#474). The one call
+ * every such path makes.
+ */
+export function beginRecharge(
+  cast: CastState,
+  skill: Skill,
+  seconds: number,
+  key: string = skill.id,
+): void {
+  if (skill.rechargesOnMoraleBoost === true) {
+    cast.spend(key);
+  } else {
+    cast.startRecharge(key, seconds);
+  }
+}
+
+/**
+ * The skill in `slot` now (#469): a copy standing there, or the build's.
+ * The one resolver: activation, recharge, disable, adrenaline, the bar
+ * sent to its owner and the AI all ask it. The build is never touched.
+ */
+export function slotSkill(
+  bar: SkillBar,
+  cast: Pick<CastState, "overrides">,
+  slot: number,
+): SlotSkill | undefined {
+  const copy = cast.overrides.get(slot);
+  if (copy !== undefined) {
+    return { skillId: copy.skillId, key: copy.key };
+  }
+  const skillId = bar[slot];
+  return skillId === undefined || skillId === null ? undefined : { skillId, key: skillId };
+}
+
+/** Every slot of `bar` as `slotSkill` resolves it, `null` for an empty one. */
+export function resolvedBar(
+  bar: SkillBar,
+  cast: Pick<CastState, "overrides">,
+): readonly (SlotSkill | null)[] {
+  return bar.map((_, slot) => slotSkill(bar, cast, slot) ?? null);
 }

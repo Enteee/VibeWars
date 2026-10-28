@@ -107,7 +107,7 @@ describe("lobby host", () => {
     expect(playersOf(guest)[1]?.name).toBe("evilname that go");
   });
 
-  it("lists the character a joiner brings to everyone, and the house loadout as null (#580)", async () => {
+  it("lists the character a joiner brings to everyone, and a starter build as null (#580)", async () => {
     const lobby = await openLobby();
     const guest = await lobby.join("Guest", {
       name: "Mhenlo",
@@ -122,7 +122,7 @@ describe("lobby host", () => {
     }
   });
 
-  it("lists a character no build could be as the house loadout, and sanitises its name (#580)", async () => {
+  it("lists a character no build could be as a starter build, and sanitises its name (#580)", async () => {
     const lobby = await openLobby();
     for (const [primary, secondary] of [
       ["pirate", null],

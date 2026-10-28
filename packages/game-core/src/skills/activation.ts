@@ -31,6 +31,7 @@ export type ActivationRejection =
   | "caster-knocked-down"
   | "skill-not-on-bar"
   | "still-recharging"
+  | "spent-until-morale-boost"
   | "already-casting"
   | "wrong-weapon"
   | "insufficient-energy"
@@ -42,7 +43,18 @@ export type ActivationRejection =
   | "invalid-target-ally"
   | "invalid-target-enemy"
   | "out-of-range"
-  | "no-line-of-sight";
+  | "no-line-of-sight"
+  // A corpse skill with no fresh corpse in reach (#466): checked by the
+  // simulation, which knows where the bodies are.
+  | "no-corpse"
+  // Comfort Animal with no pet to act on (#1046).
+  | "no-companion"
+  // A skill that brings a companion, as Charm Animal (#1046): no match has
+  // an animal to charm, so it is never cast.
+  | "no-animal-to-charm"
+  // An ordinary resurrection on a creature, as a dead pet (#1046): checked
+  // by the simulation, which knows who is one.
+  | "invalid-target-creature";
 
 export type ActivationCheck =
   { readonly ok: true } | { readonly ok: false; readonly reason: ActivationRejection };
@@ -59,11 +71,21 @@ export interface ActivationRequest {
   readonly casterPosition: Vec2;
   readonly target: Combatant | undefined;
   readonly targetPosition: Vec2 | undefined;
-  /** Skill ids currently recharging for this caster, with seconds remaining. */
+  /**
+   * The key the slot used waits under (#469): a copy's, or the skill's
+   * own id, which it is when left out.
+   */
+  readonly key?: string;
+  /** Wait keys currently recharging for this caster, with seconds remaining. */
   readonly rechargeRemaining: ReadonlyMap<string, number>;
+  /** Skill ids spent until a morale boost (#474): `CastState.spent`. */
+  readonly spent: ReadonlySet<string>;
   /** True if the caster is mid-cast on something else. */
   readonly isCasting: boolean;
-  /** The caster's bar by slot; a skill not on it can never be cast. */
+  /**
+   * The caster's bar by slot, as keys (`resolvedBar`, #469): a skill whose
+   * key is not on it can never be cast.
+   */
   readonly skillBar: SkillBar;
   readonly losBlockers: readonly Segment[];
 }
@@ -94,6 +116,7 @@ export function targetRuleAllows(
       return isAlly || isSelf ? undefined : "invalid-target-enemy";
     case "single-other-ally":
     case "single-dead-ally":
+    case "companion":
       return isAlly ? undefined : isSelf ? "invalid-target-self" : "invalid-target-enemy";
   }
 }
@@ -111,6 +134,11 @@ export function targetLivenessAllows(
   if (rule === "single-dead-ally") {
     return target.dead ? undefined : "invalid-target-alive";
   }
+  // The pet, alive or dead (#1046): its heal skips the dead, its
+  // resurrection the living.
+  if (rule === "companion") {
+    return undefined;
+  }
   return target.dead ? "invalid-target-dead" : undefined;
 }
 
@@ -124,7 +152,7 @@ function checkTarget(request: ActivationRequest): ActivationCheck {
   }
 
   if (target === undefined) {
-    return reject("no-target");
+    return reject(skill.target === "companion" ? "no-companion" : "no-target");
   }
   const byWho = targetRuleAllows(skill.target, caster, target);
   const byLife = targetLivenessAllows(skill.target, target);
@@ -136,6 +164,7 @@ function checkTarget(request: ActivationRequest): ActivationCheck {
 
 export function canActivate(request: ActivationRequest): ActivationCheck {
   const { skill, caster } = request;
+  const key = request.key ?? skill.id;
 
   if (caster.dead) {
     return reject("caster-dead");
@@ -143,14 +172,21 @@ export function canActivate(request: ActivationRequest): ActivationCheck {
   if (caster.knockdownRemaining > 0) {
     return reject("caster-knocked-down");
   }
-  if (!request.skillBar.includes(skill.id)) {
+  if (!request.skillBar.includes(key)) {
     return reject("skill-not-on-bar");
+  }
+  if (skill.companion !== undefined) {
+    return reject("no-animal-to-charm");
   }
   if (request.isCasting) {
     return reject("already-casting");
   }
-  if ((request.rechargeRemaining.get(skill.id) ?? 0) > 0) {
+  if ((request.rechargeRemaining.get(key) ?? 0) > 0) {
     return reject("still-recharging");
+  }
+  // After the recharge, so a disabled spent skill still says "recharging".
+  if (request.spent.has(key)) {
+    return reject("spent-until-morale-boost");
   }
   // An attack skill is a blow of its weapon (ADR-0029): checked before the
   // cost, so the player is told what is wrong rather than what it costs.
@@ -165,7 +201,7 @@ export function canActivate(request: ActivationRequest): ActivationCheck {
     if (skill.cost.kind === "energy" && caster.energy < energyCostOf(skill, caster)) {
       return reject("insufficient-energy");
     }
-    if (skill.cost.kind === "adrenaline" && !canAffordAdrenaline(caster, skill)) {
+    if (skill.cost.kind === "adrenaline" && !canAffordAdrenaline(caster, skill, key)) {
       return reject("insufficient-adrenaline");
     }
   }
@@ -220,13 +256,14 @@ export function energyCostOf(skill: Skill, caster: RankHolder): number {
  * Deduct a skill's cost from the caster. Call only after `canActivate`
  * returned ok — this deliberately does not re-check affordability, so a
  * caller that skips validation produces an obviously-wrong negative
- * resource rather than a silently-free cast.
+ * resource rather than a silently-free cast. `key` is the pool an
+ * adrenaline skill empties: a copy's own (#469).
  */
-export function payCost(skill: Skill, caster: Combatant): void {
+export function payCost(skill: Skill, caster: Combatant, key: string = skill.id): void {
   if (skill.cost?.kind === "energy") {
     caster.energy -= energyCostOf(skill, caster);
   } else if (skill.cost?.kind === "adrenaline") {
-    spendAdrenaline(caster, skill);
+    spendAdrenaline(caster, skill, key);
   }
   // After the energy, so a spell that lowers the ceiling below its own
   // cost still goes off; at activation start, so an interrupted or

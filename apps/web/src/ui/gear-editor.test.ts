@@ -1,4 +1,4 @@
-import { MINIMAL_GW_INSPIRED_PVP_V1, getWeapon } from "@vibewars/game-core";
+import { ARMOR_SLOTS, MINIMAL_GW_INSPIRED_PVP_V1, getWeapon } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
 import { validateBuild } from "../storage/build-validation.js";
@@ -6,6 +6,7 @@ import type { StoredCharacter } from "../storage/schema.js";
 import { newCharacter, setProfessions, setRank } from "./build-editor.js";
 import {
   applyGearDrop,
+  clearWeaponSet,
   canEquipOffhand,
   clearArmorUpgrades,
   decodeGearDrag,
@@ -22,6 +23,7 @@ import {
   setRune,
   setWeapon,
   summariseGear,
+  type GearSummary,
   weaponAttributeChoices,
 } from "./gear-editor.js";
 
@@ -45,48 +47,59 @@ function monk(): StoredCharacter {
   return setProfessions(newCharacter("c1"), "monk", undefined);
 }
 
+/** Set 1's summary, which is never empty. */
+function firstSummary(character: StoredCharacter): GearSummary {
+  const summary = summariseGear(character, 0);
+  if (summary === undefined) {
+    throw new Error("set 1 is never empty");
+  }
+  return summary;
+}
+
 describe("setWeapon", () => {
   it("swaps the weapon class", () => {
-    const character = setWeapon(warrior(), "hammer");
-    expect(character.equipment.mainHand.weaponId).toBe("hammer");
+    const character = setWeapon(warrior(), 0, "hammer");
+    expect(character.equipment.weaponSets[0].mainHand.weaponId).toBe("hammer");
   });
 
   it("puts the off-hand down when the new weapon needs both hands", () => {
     // The coupling the whole gear trade-off rests on: a shield or a
     // two-hander, never both.
-    const withShield = setOffhand(setWeapon(warrior(), "sword"), "shield");
-    expect(withShield.equipment.offHand).not.toBeNull();
+    const withShield = setOffhand(setWeapon(warrior(), 0, "sword"), 0, "shield");
+    expect(withShield.equipment.weaponSets[0].offHand).not.toBeNull();
 
-    const twoHanded = setWeapon(withShield, "scythe");
-    expect(twoHanded.equipment.offHand).toBeNull();
+    const twoHanded = setWeapon(withShield, 0, "scythe");
+    expect(twoHanded.equipment.weaponSets[0].offHand).toBeNull();
   });
 
   it("keeps the off-hand when swapping between one-handers", () => {
-    const withShield = setOffhand(setWeapon(warrior(), "sword"), "shield");
-    expect(setWeapon(withShield, "axe").equipment.offHand).not.toBeNull();
+    const withShield = setOffhand(setWeapon(warrior(), 0, "sword"), 0, "shield");
+    expect(setWeapon(withShield, 0, "axe").equipment.weaponSets[0].offHand).not.toBeNull();
   });
 
   it("nominates an attribute for a weapon that needs one", () => {
-    const character = setWeapon(monk(), "staff");
-    expect(character.equipment.mainHand.requirementAttributeId).not.toBeNull();
+    const character = setWeapon(monk(), 0, "staff");
+    expect(character.equipment.weaponSets[0].mainHand.requirementAttributeId).not.toBeNull();
     expect(validateBuild(character)).toEqual([]);
   });
 
   it("nominates nothing for a weapon whose attribute is fixed", () => {
-    expect(setWeapon(warrior(), "sword").equipment.mainHand.requirementAttributeId).toBeNull();
+    expect(
+      setWeapon(warrior(), 0, "sword").equipment.weaponSets[0].mainHand.requirementAttributeId,
+    ).toBeNull();
   });
 
   it("prefers the primary attribute when nominating", () => {
     // The one the player is most likely to have invested in.
-    expect(setWeapon(monk(), "wand").equipment.mainHand.requirementAttributeId).toBe(
-      "monk.divine-favor",
-    );
+    expect(
+      setWeapon(monk(), 0, "wand").equipment.weaponSets[0].mainHand.requirementAttributeId,
+    ).toBe("monk.divine-favor");
   });
 
   it("ignores an unknown weapon rather than clearing the slot", () => {
     const before = warrior();
     // Only reachable from a stale DOM value; it must not blank the build.
-    expect(setWeapon(before, "chainsaw" as never)).toBe(before);
+    expect(setWeapon(before, 0, "chainsaw" as never)).toBe(before);
   });
 
   it("leaves a build that still validates, for every weapon", () => {
@@ -107,43 +120,43 @@ describe("setWeapon", () => {
       "unarmed",
     ] as const;
     for (const weaponId of weapons) {
-      expect(validateBuild(setWeapon(warrior(), weaponId)), weaponId).toEqual([]);
+      expect(validateBuild(setWeapon(warrior(), 0, weaponId)), weaponId).toEqual([]);
     }
   });
 });
 
 describe("setOffhand", () => {
   it("equips and clears an off-hand", () => {
-    const withFocus = setOffhand(setWeapon(monk(), "wand"), "focus");
-    expect(withFocus.equipment.offHand?.offhandId).toBe("focus");
-    expect(setOffhand(withFocus, null).equipment.offHand).toBeNull();
+    const withFocus = setOffhand(setWeapon(monk(), 0, "wand"), 0, "focus");
+    expect(withFocus.equipment.weaponSets[0].offHand?.offhandId).toBe("focus");
+    expect(setOffhand(withFocus, 0, null).equipment.weaponSets[0].offHand).toBeNull();
   });
 
   it("refuses silently when both hands are full", () => {
-    const twoHanded = setWeapon(warrior(), "hammer");
-    expect(canEquipOffhand(twoHanded)).toBe(false);
-    expect(setOffhand(twoHanded, "shield")).toBe(twoHanded);
+    const twoHanded = setWeapon(warrior(), 0, "hammer");
+    expect(canEquipOffhand(twoHanded, 0)).toBe(false);
+    expect(setOffhand(twoHanded, 0, "shield")).toBe(twoHanded);
   });
 
   it("produces a build that validates", () => {
-    expect(validateBuild(setOffhand(setWeapon(warrior(), "sword"), "shield"))).toEqual([]);
+    expect(validateBuild(setOffhand(setWeapon(warrior(), 0, "sword"), 0, "shield"))).toEqual([]);
   });
 });
 
 describe("attribute nominations", () => {
   it("offers nothing for a fixed-requirement weapon", () => {
-    expect(weaponAttributeChoices(setWeapon(warrior(), "sword"))).toEqual([]);
+    expect(weaponAttributeChoices(setWeapon(warrior(), 0, "sword"), 0)).toEqual([]);
   });
 
   it("offers every reachable attribute for a caster weapon", () => {
-    const choices = weaponAttributeChoices(setWeapon(monk(), "wand"));
+    const choices = weaponAttributeChoices(setWeapon(monk(), 0, "wand"), 0);
     expect(choices).toContain("monk.divine-favor");
     expect(choices).toContain("monk.healing-prayers");
     expect(choices).not.toContain("warrior.strength");
   });
 
   it("offers a shield only the attributes shields use", () => {
-    const character = setOffhand(setWeapon(warrior(), "sword"), "shield");
+    const character = setOffhand(setWeapon(warrior(), 0, "sword"), 0, "shield");
     const choices = offhandAttributeChoices(character, "shield");
     expect(choices).toContain("warrior.strength");
     expect(choices).toContain("warrior.tactics");
@@ -152,15 +165,17 @@ describe("attribute nominations", () => {
   });
 
   it("re-links gear without disturbing anything else", () => {
-    const before = setWeapon(monk(), "wand");
-    const after = setRequirementAttribute(before, "mainHand", "monk.healing-prayers");
-    expect(after.equipment.mainHand.requirementAttributeId).toBe("monk.healing-prayers");
-    expect(after.equipment.mainHand.weaponId).toBe("wand");
+    const before = setWeapon(monk(), 0, "wand");
+    const after = setRequirementAttribute(before, 0, "mainHand", "monk.healing-prayers");
+    expect(after.equipment.weaponSets[0].mainHand.requirementAttributeId).toBe(
+      "monk.healing-prayers",
+    );
+    expect(after.equipment.weaponSets[0].mainHand.weaponId).toBe("wand");
   });
 
   it("ignores a re-link on an absent off-hand", () => {
-    const character = setWeapon(warrior(), "hammer");
-    expect(setRequirementAttribute(character, "offHand", "warrior.strength")).toBe(character);
+    const character = setWeapon(warrior(), 0, "hammer");
+    expect(setRequirementAttribute(character, 0, "offHand", "warrior.strength")).toBe(character);
   });
 });
 
@@ -243,7 +258,7 @@ describe("the gear summary", () => {
   it("reports the plain numbers for a bare character", () => {
     // Off-hand cleared explicitly: becoming a Monk swaps the Sword for
     // the Monk default, a Wand with a Focus (#614).
-    const summary = summariseGear(setOffhand(setWeapon(monk(), "wand"), null));
+    const summary = firstSummary(setOffhand(setWeapon(monk(), 0, "wand"), 0, null));
     expect(summary.maxHealth).toBe(BASE_HEALTH);
     expect(summary.maxEnergy).toBe(BASE_ENERGY);
     expect(summary.armor).toBe(60);
@@ -253,20 +268,20 @@ describe("the gear summary", () => {
   it("shows a warrior's higher base armor", () => {
     // Off-hand cleared explicitly: a warrior's default kit includes a
     // shield, and this is asserting the profession's own armor.
-    const bare = setOffhand(setWeapon(warrior(), "sword"), null);
-    expect(summariseGear(bare).armor).toBe(80);
+    const bare = setOffhand(setWeapon(warrior(), 0, "sword"), 0, null);
+    expect(firstSummary(bare).armor).toBe(80);
   });
 
   it("counts a shield's armor, and the extra once its requirement is met", () => {
-    const base = setOffhand(setWeapon(warrior(), "sword"), "shield");
-    expect(summariseGear(base).armor).toBe(88);
+    const base = setOffhand(setWeapon(warrior(), 0, "sword"), 0, "shield");
+    expect(firstSummary(base).armor).toBe(88);
 
     const trained = setRank(base, "warrior.strength", 9);
-    expect(summariseGear(trained).armor).toBe(96);
+    expect(firstSummary(trained).armor).toBe(96);
   });
 
   it("shows the primary profession's energy regeneration in pips", () => {
-    expect(summariseGear(warrior()).baseEnergyPips).toBe(2);
+    expect(firstSummary(warrior()).baseEnergyPips).toBe(2);
   });
 
   it("shows the health a rune costs, not just the rank it gives", () => {
@@ -276,7 +291,7 @@ describe("the gear summary", () => {
       attributeId: "warrior.swordsmanship",
       tier: "superior",
     });
-    const summary = summariseGear(runed);
+    const summary = firstSummary(runed);
     expect(summary.maxHealth).toBe(BASE_HEALTH - 75);
     expect(summary.runeBonuses).toEqual([{ attributeId: "warrior.swordsmanship", bonus: 3 }]);
   });
@@ -292,40 +307,56 @@ describe("the gear summary", () => {
       attributeId: "warrior.swordsmanship",
       tier: "superior",
     });
-    const summary = summariseGear(character);
+    const summary = firstSummary(character);
     expect(summary.maxHealth).toBe(BASE_HEALTH - 150);
     expect(summary.runeBonuses).toEqual([{ attributeId: "warrior.swordsmanship", bonus: 3 }]);
   });
 
   it("gives Survivor more health on the chest than on the gloves", () => {
-    const chest = summariseGear(setInsignia(warrior(), "chest", "survivor")).maxHealth;
-    const hands = summariseGear(setInsignia(warrior(), "hands", "survivor")).maxHealth;
+    const chest = firstSummary(setInsignia(warrior(), "chest", "survivor")).maxHealth;
+    const hands = firstSummary(setInsignia(warrior(), "hands", "survivor")).maxHealth;
     expect(chest).toBe(BASE_HEALTH + 15);
     expect(hands).toBe(BASE_HEALTH + 5);
   });
 
   it("adds Radiant energy per piece", () => {
-    expect(summariseGear(setInsignia(warrior(), "chest", "radiant")).maxEnergy).toBe(
+    expect(firstSummary(setInsignia(warrior(), "chest", "radiant")).maxEnergy).toBe(
       BASE_ENERGY + 3,
     );
   });
 
   it("lists a conditional insignia rather than folding it into armor", () => {
-    const bare = setOffhand(setWeapon(warrior(), "sword"), null);
-    const summary = summariseGear(setInsignia(bare, "chest", "stalwart"));
+    const bare = setOffhand(setWeapon(warrior(), 0, "sword"), 0, null);
+    const summary = firstSummary(setInsignia(bare, "chest", "stalwart"));
     // It is not unconditional, so it must not inflate the headline number.
     expect(summary.armor).toBe(80);
-    // A Warrior's own +20 first, then the insignia's.
+    // A Warrior's own +20 first, then the insignia's, on its piece (#1135).
     expect(summary.conditionalArmor).toEqual([
       "+20 armor vs physical damage",
+      "+10 armor vs physical damage on chest (avg +3.8)",
+    ]);
+  });
+
+  it("lists five Stalwart as one line on every hit, two as one line on both pieces (#1135)", () => {
+    let five = setOffhand(setWeapon(warrior(), 0, "sword"), 0, null);
+    for (const slot of ARMOR_SLOTS) {
+      five = setInsignia(five, slot, "stalwart");
+    }
+    expect(firstSummary(five).conditionalArmor).toEqual([
+      "+20 armor vs physical damage",
       "+10 armor vs physical damage",
+    ]);
+    const two = setInsignia(setInsignia(warrior(), "chest", "stalwart"), "legs", "stalwart");
+    expect(firstSummary(two).conditionalArmor).toEqual([
+      "+20 armor vs physical damage",
+      "+10 armor vs physical damage on chest, legs (avg +6.3)",
     ]);
   });
 
   it("lists a Ranger's inherent armor vs elemental damage (#759)", () => {
     const ranger = setProfessions(newCharacter("c1"), "ranger", undefined);
-    expect(summariseGear(ranger).conditionalArmor).toEqual(["+30 armor vs elemental damage"]);
-    expect(summariseGear(monk()).conditionalArmor).toEqual([]);
+    expect(firstSummary(ranger).conditionalArmor).toEqual(["+30 armor vs elemental damage"]);
+    expect(firstSummary(monk()).conditionalArmor).toEqual([]);
   });
 
   it("reports Absorption's flat reduction", () => {
@@ -334,20 +365,20 @@ describe("the gear summary", () => {
       runeId: "absorption",
       tier: "major",
     });
-    expect(summariseGear(runed).flatPhysicalReduction).toBe(2);
+    expect(firstSummary(runed).flatPhysicalReduction).toBe(2);
   });
 
   it("flags an unmet weapon requirement", () => {
     // A monk holding a hammer is legal and bad; the editor says so
     // rather than letting them find out in a match.
-    const unskilled = setWeapon(monk(), "hammer");
-    expect(summariseGear(unskilled).unmetRequirement).toEqual({
+    const unskilled = setWeapon(monk(), 0, "hammer");
+    expect(firstSummary(unskilled).unmetRequirement).toEqual({
       attributeId: "warrior.hammer-mastery",
       rank: 9,
     });
 
-    const trained = setRank(setWeapon(warrior(), "hammer"), "warrior.hammer-mastery", 9);
-    expect(summariseGear(trained).unmetRequirement).toBeUndefined();
+    const trained = setRank(setWeapon(warrior(), 0, "hammer"), "warrior.hammer-mastery", 9);
+    expect(firstSummary(trained).unmetRequirement).toBeUndefined();
   });
 
   it("shows the damage an unmet requirement actually deals, a third (#571)", () => {
@@ -355,11 +386,11 @@ describe("the gear summary", () => {
     if (hammer === undefined) {
       throw new Error("no hammer");
     }
-    const trained = setRank(setWeapon(warrior(), "hammer"), "warrior.hammer-mastery", 9);
-    expect(summariseGear(trained).damageRange).toBe(
+    const trained = setRank(setWeapon(warrior(), 0, "hammer"), "warrior.hammer-mastery", 9);
+    expect(firstSummary(trained).damageRange).toBe(
       `${String(hammer.damageMin)}–${String(hammer.damageMax)}`,
     );
-    expect(summariseGear(setWeapon(monk(), "hammer")).damageRange).toBe(
+    expect(firstSummary(setWeapon(monk(), 0, "hammer")).damageRange).toBe(
       `${String(Math.round(hammer.damageMin / 3))}–${String(Math.round(hammer.damageMax / 3))}`,
     );
   });
@@ -377,7 +408,7 @@ describe("the gear summary", () => {
         tier: "superior",
       });
     }
-    const { maxHealth } = summariseGear(character);
+    const { maxHealth } = firstSummary(character);
     expect(maxHealth).toBe(BASE_HEALTH - 5 * 75);
     expect(maxHealth).toBeGreaterThan(MINIMAL_GW_INSPIRED_PVP_V1.combat.minimumMaxHealth);
   });
@@ -395,7 +426,8 @@ describe("gear drag and drop", () => {
       },
       { from: "rune-library", rune: { kind: "universal", runeId: "vigor", tier: "superior" } },
       { from: "armor-slot", slot: "chest", part: "rune" },
-      { from: "hand", hand: "offHand" },
+      { from: "hand", set: 0, hand: "offHand" },
+      { from: "hand", set: 2, hand: "mainHand" },
     ] as const;
     for (const source of sources) {
       expect(decodeGearDrag(encodeGearDrag(source))).toEqual(source);
@@ -411,7 +443,9 @@ describe("gear drag and drop", () => {
     ["a bar slot drag", "slot:3"],
     ["bad armor slot", "gear-worn:elbow:rune"],
     ["bad armor part", "gear-worn:chest:buckle"],
-    ["bad hand", "gear-hand:tail"],
+    ["bad hand", "gear-hand:0:tail"],
+    ["bad set", "gear-hand:4:mainHand"],
+    ["no set", "gear-hand:mainHand"],
   ])("refuses %s", (_label, raw) => {
     expect(decodeGearDrag(raw)).toBeUndefined();
   });
@@ -420,11 +454,11 @@ describe("gear drag and drop", () => {
     const after = applyGearDrop(
       warrior(),
       { from: "weapon-library", weaponId: "scythe" },
-      { kind: "main-hand" },
+      { kind: "main-hand", set: 0 },
     );
-    expect(after.equipment.mainHand.weaponId).toBe("scythe");
+    expect(after.equipment.weaponSets[0].mainHand.weaponId).toBe("scythe");
     // A scythe needs both hands, so the shield comes off with it.
-    expect(after.equipment.offHand).toBeNull();
+    expect(after.equipment.weaponSets[0].offHand).toBeNull();
   });
 
   it("ignores gear dropped where it does not belong", () => {
@@ -432,9 +466,12 @@ describe("gear drag and drop", () => {
     const nonsense = [
       [
         { from: "rune-library", rune: { kind: "universal", runeId: "vigor", tier: "minor" } },
-        { kind: "main-hand" },
+        { kind: "main-hand", set: 0 },
       ],
-      [{ from: "insignia-library", insigniaId: "survivor" }, { kind: "off-hand" }],
+      [
+        { from: "insignia-library", insigniaId: "survivor" },
+        { kind: "off-hand", set: 0 },
+      ],
       [
         { from: "weapon-library", weaponId: "sword" },
         { kind: "armor", slot: "chest", part: "rune" },
@@ -460,14 +497,14 @@ describe("gear drag and drop", () => {
     expect(moved.equipment.armor.head.rune).toBeNull();
     expect(moved.equipment.armor.feet.rune).toEqual(rune);
     // The health cost is paid once, not twice.
-    expect(summariseGear(moved).maxHealth).toBe(BASE_HEALTH + 50);
+    expect(firstSummary(moved).maxHealth).toBe(BASE_HEALTH + 50);
   });
 
   it("moves an insignia between pieces, re-pricing it for the new slot", () => {
     // Survivor is worth 15 on the chest and 5 everywhere else, so moving
     // it has to change the number rather than carry the old one along.
     const seeded = setInsignia(warrior(), "chest", "survivor");
-    expect(summariseGear(seeded).maxHealth).toBe(BASE_HEALTH + 15);
+    expect(firstSummary(seeded).maxHealth).toBe(BASE_HEALTH + 15);
 
     const moved = applyGearDrop(
       seeded,
@@ -475,7 +512,7 @@ describe("gear drag and drop", () => {
       { kind: "armor", slot: "hands", part: "insignia" },
     );
     expect(moved.equipment.armor.chest.insigniaId).toBeNull();
-    expect(summariseGear(moved).maxHealth).toBe(BASE_HEALTH + 5);
+    expect(firstSummary(moved).maxHealth).toBe(BASE_HEALTH + 5);
   });
 
   it("takes worn gear off when it is dropped back on the library", () => {
@@ -489,17 +526,17 @@ describe("gear drag and drop", () => {
   });
 
   it("lets an off-hand be dropped away but never the weapon", () => {
-    const withShield = setOffhand(setWeapon(warrior(), "sword"), "shield");
+    const withShield = setOffhand(setWeapon(warrior(), 0, "sword"), 0, "shield");
     expect(
-      applyGearDrop(withShield, { from: "hand", hand: "offHand" }, { kind: "library" }).equipment
-        .offHand,
+      applyGearDrop(withShield, { from: "hand", set: 0, hand: "offHand" }, { kind: "library" })
+        .equipment.weaponSets[0].offHand,
     ).toBeNull();
 
     // There is no "no weapon" — bare hands are a weapon, so dragging the
     // main hand away has nothing sensible to do.
-    expect(applyGearDrop(withShield, { from: "hand", hand: "mainHand" }, { kind: "library" })).toBe(
-      withShield,
-    );
+    expect(
+      applyGearDrop(withShield, { from: "hand", set: 0, hand: "mainHand" }, { kind: "library" }),
+    ).toBe(withShield);
   });
 
   it("fills the first free piece on click-to-equip, then wraps", () => {
@@ -519,5 +556,97 @@ describe("gear drag and drop", () => {
     expect(armorTarget(character, "insignia", "legs")).toBe("legs");
     // A selected piece takes the click even when it is already filled.
     expect(armorTarget(character, "insignia", "head")).toBe("head");
+  });
+});
+
+describe("weapon sets 2-4 (#489)", () => {
+  /** A warrior whose set 3 holds an axe and a shield. */
+  function withSet3(): StoredCharacter {
+    return setOffhand(setWeapon(warrior(), 2, "axe"), 2, "shield");
+  }
+
+  it("creates an empty set from a weapon, off hand empty, and leaves set 1 alone", () => {
+    const before = warrior();
+    const after = setWeapon(before, 1, "hammer");
+    expect(before.equipment.weaponSets[1]).toBeNull();
+    expect(after.equipment.weaponSets[1]).toEqual({
+      mainHand: { weaponId: "hammer", requirementAttributeId: null },
+      offHand: null,
+    });
+    expect(after.equipment.weaponSets[0]).toEqual(before.equipment.weaponSets[0]);
+    expect(validateBuild(after)).toEqual([]);
+  });
+
+  it("edits only the set it is given", () => {
+    const character = withSet3();
+    expect(character.equipment.weaponSets[2]?.offHand?.offhandId).toBe("shield");
+    expect(canEquipOffhand(character, 2)).toBe(true);
+    const relinked = setRequirementAttribute(
+      setWeapon(character, 2, "wand"),
+      2,
+      "mainHand",
+      "warrior.strength",
+    );
+    expect(relinked.equipment.weaponSets[2]?.mainHand.requirementAttributeId).toBe(
+      "warrior.strength",
+    );
+    expect(relinked.equipment.weaponSets[0]).toEqual(character.equipment.weaponSets[0]);
+    expect(weaponAttributeChoices(relinked, 2)).toContain("warrior.strength");
+    expect(weaponAttributeChoices(relinked, 0)).toEqual([]);
+  });
+
+  it("puts down only that set's off hand for a two-hander", () => {
+    const character = setOffhand(withSet3(), 0, "shield");
+    const after = setWeapon(character, 2, "hammer");
+    expect(after.equipment.weaponSets[2]?.offHand).toBeNull();
+    expect(after.equipment.weaponSets[0].offHand?.offhandId).toBe("shield");
+  });
+
+  it("does nothing to an empty set but take a weapon", () => {
+    const character = warrior();
+    expect(canEquipOffhand(character, 3)).toBe(false);
+    expect(setOffhand(character, 3, "shield")).toBe(character);
+    expect(setOffhand(character, 3, null)).toBe(character);
+    expect(setRequirementAttribute(character, 3, "mainHand", "warrior.strength")).toBe(character);
+    expect(weaponAttributeChoices(character, 3)).toEqual([]);
+    expect(summariseGear(character, 3)).toBeUndefined();
+    expect(
+      applyGearDrop(
+        character,
+        { from: "offhand-library", offhandId: "shield" },
+        { kind: "off-hand", set: 3 },
+      ),
+    ).toBe(character);
+  });
+
+  it("summarises the set it is asked about", () => {
+    expect(summariseGear(withSet3(), 2)?.weaponName).toBe("Axe");
+    expect(summariseGear(withSet3(), 0)?.weaponName).toBe("Sword");
+  });
+
+  it("empties a set with clearWeaponSet, or by dragging its weapon to the library", () => {
+    const character = withSet3();
+    expect(clearWeaponSet(character, 2).equipment.weaponSets[2]).toBeNull();
+    const dragged = applyGearDrop(
+      character,
+      { from: "hand", set: 2, hand: "mainHand" },
+      { kind: "library" },
+    );
+    expect(dragged.equipment.weaponSets[2]).toBeNull();
+    expect(dragged.equipment.weaponSets[0]).toEqual(character.equipment.weaponSets[0]);
+    // Set 1's weapon still cannot be dragged away.
+    expect(
+      applyGearDrop(character, { from: "hand", set: 0, hand: "mainHand" }, { kind: "library" }),
+    ).toBe(character);
+  });
+
+  it("drops a library weapon into the set the drop names", () => {
+    const after = applyGearDrop(
+      warrior(),
+      { from: "weapon-library", weaponId: "daggers" },
+      { kind: "main-hand", set: 1 },
+    );
+    expect(after.equipment.weaponSets[1]?.mainHand.weaponId).toBe("daggers");
+    expect(after.equipment.weaponSets[0].mainHand.weaponId).toBe("sword");
   });
 });

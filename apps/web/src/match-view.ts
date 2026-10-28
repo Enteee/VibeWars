@@ -9,7 +9,7 @@ import { attackKeyIntents, hasActionToCancel } from "./input/attack-key.js";
 import { createDoubleClick } from "./input/double-click.js";
 import { attachKeyboardMoveInput } from "./input/keyboard-move.js";
 import { loadLayoutLabeller } from "./input/key-labels.js";
-import { actionForCode, isShortcut } from "./input/keymap.js";
+import { WEAPON_SET_ACTIONS, actionForCode, isShortcut } from "./input/keymap.js";
 import { loadKeymap } from "./input/keymap-preference.js";
 import {
   calledTargetIntent,
@@ -19,20 +19,24 @@ import {
   secondaryClickIntents,
 } from "./input/mouse-intents.js";
 import { attachNameReveal } from "./input/name-reveal.js";
-import { closestTarget, nextTabTarget } from "./input/tab-target.js";
+import { closestTarget, nextTabTarget, selfTargetIntent } from "./input/tab-target.js";
 import { skillSlotForKeyDown } from "./input/skill-keys.js";
+import { weaponSetIntent } from "./input/weapon-set-keys.js";
 import { attachMatchMusic } from "./music/match-music.js";
 import { music } from "./music/play-music.js";
 import { TRACKS } from "./music/tracks/index.js";
 import {
   ACTOR_RADIUS,
+  CREATURE_RADIUS,
   withCalls,
   withNames,
   teamColour,
+  toRenderableGroundEffect,
   type ArenaSnapshot,
   type RenderableWall,
 } from "./render/arena-snapshot.js";
 import { attackCastOf } from "./render/attack-clock.js";
+import { bodyFlags } from "./render/body-rings.js";
 import { NoWebGlError, createArenaViewport, type ArenaViewport } from "./render/arena-viewport.js";
 import { attachFollowCamera } from "./render/follow-camera.js";
 import { showCombatFeedback } from "./render/combat-feedback.js";
@@ -45,11 +49,13 @@ import {
   renderLeave,
   renderKeyLabels,
   renderMute,
+  refreshSkillBar,
   renderSkillBar,
   updateHud,
   updateRecharges,
 } from "./ui/hud.js";
-import { createAllyWatch } from "./ui/ally-watch.js";
+import { labelWeaponSets, renderWeaponSets, weaponSetSlots } from "./ui/weapon-set-slots.js";
+import { compassReach, createCompass } from "./ui/compass.js";
 import { noWebGlNotice } from "./ui/arena-notice.js";
 import { attachFullscreenButton, fullscreenTarget } from "./ui/fullscreen.js";
 import { attachJukeboxPopover } from "./ui/jukebox.js";
@@ -58,7 +64,9 @@ import {
   isOptionsOverlayOpen,
   openOptionsOverlay,
 } from "./ui/options-screen.js";
+import { createPartyWindow } from "./ui/party-window.js";
 import { attachReconnectCountdown, mountReconnectOverlay } from "./ui/reconnect-overlay.js";
+import { renderSummary, summaryTables, type SummaryTable } from "./ui/match-summary.js";
 import { flashSlot, slotFlashes } from "./ui/skill-slot-state.js";
 
 /**
@@ -93,6 +101,8 @@ export interface MatchViewOptions {
 }
 
 export interface MatchView {
+  /** The match summary's tables once the host has sent them (#1057), for the queue screen. */
+  summary(): readonly SummaryTable[] | undefined;
   dispose(): Promise<void>;
 }
 
@@ -125,17 +135,23 @@ export function toArenaSnapshot(
         colour: teamColour(shooter !== undefined && shooter.team === self?.team ? "ally" : "enemy"),
       };
     }),
+    groundEffects: [
+      ...match.groundEffects.map((effect) => toRenderableGroundEffect(effect, self?.team, "ward")),
+      ...match.traps.map((effect) => toRenderableGroundEffect(effect, self?.team, "trap")),
+    ],
     // Render the target the *server* confirmed, not whatever was last
     // clicked — a click is only a request (brief §32).
     targetId: self?.targetSessionId,
     // Whose names show is the caller's to say (`withNames`, #253).
     hoverId: undefined,
     showAllNames: false,
-    // Your team's calls and the ally you watch are the caller's (`withCalls`, #443).
+    // Your team's calls are the caller's (`withCalls`, #443).
     calledId: undefined,
-    watchedId: undefined,
     pings: [],
     actors: match.players.map((player) => {
+      const statuses = player.statuses.map((status) => status.id);
+      // Rings for what the statuses already say (#1117); a corpse wears none.
+      const rings = bodyFlags(player.dead ? [] : statuses);
       return {
         id: player.sessionId,
         name: player.name,
@@ -147,7 +163,7 @@ export function toArenaSnapshot(
         attackCast: attackCastOf(player.castingSkillId, player.castRemaining, player.castTotal),
         offhandId: player.offhandId,
         profession: player.primaryProfession,
-        radius: ACTOR_RADIUS,
+        radius: player.creature === undefined ? ACTOR_RADIUS : CREATURE_RADIUS,
         team:
           player.sessionId === match.selfSessionId
             ? ("self" as const)
@@ -157,6 +173,7 @@ export function toArenaSnapshot(
         health: player.health,
         maxHealth: player.maxHealth,
         dead: player.dead,
+        exploited: player.corpseExploited,
         // From the snapshot, not the event, so a dropped event or a late
         // joiner still draws it right, and it stands up the moment it is 0.
         knockedDown: player.knockdownRemaining > 0,
@@ -166,7 +183,9 @@ export function toArenaSnapshot(
           player.castingSkillId !== undefined && player.castTotal > 0
             ? Math.max(0, Math.min(1, 1 - player.castRemaining / player.castTotal))
             : undefined,
-        statuses: player.statuses.map((status) => status.id),
+        statuses,
+        enchanted: rings.enchanted,
+        hexed: rings.hexed,
       };
     }),
   };
@@ -242,33 +261,49 @@ export async function startMatchView(
   const hud = createHud(parent, (targetId, status) => {
     connection.sendIntent({ kind: "end-upkeep", targetId, status });
   });
-  // The ally you watch (#443), top right: yours alone.
-  const allyWatch = createAllyWatch(parent);
-  // The arena's edge stops below the scoreboard and above the bars, not
-  // under them (#440). From the bars, as the lines above them come and go.
+  // Your team's health, right middle (#1055); a row's click targets its member.
+  const partyWindow = createPartyWindow(parent, (targetSessionId) => {
+    connection.sendIntent({ kind: "target", targetSessionId });
+  });
+  // The compass (#486), top right under the match controls.
+  const compass = createCompass(parent, compassReach(connection.map));
+  // The arena's edge stops below the target frame and above the bars, not
+  // under them (#440, #1042). From the bars, as the lines above them come
+  // and go; to the frame's bottom, as its effects row grows.
   const measureCover = (): void => {
     // The chat panel (#479) sits just above the HUD, wherever its top is.
     parent.style.setProperty("--hud-height", `${String(hud.root.offsetHeight)}px`);
     camera?.setCover({
-      top: hud.scoreboard.offsetTop + hud.scoreboard.offsetHeight,
+      top: hud.top.offsetTop + hud.top.offsetHeight,
       bottom: hud.root.offsetHeight - hud.bars.offsetTop,
     });
   };
   const coverObserver = new ResizeObserver(measureCover);
   coverObserver.observe(hud.root);
   coverObserver.observe(hud.bars);
-  coverObserver.observe(hud.scoreboard);
+  coverObserver.observe(hud.top);
   const useSkill = (slot: number): void => {
     connection.sendIntent({ kind: "use-skill", slot });
   };
   renderSkillBar(hud, () => connection.skillBar, connection.ranks, useSkill);
+  const weaponSets = weaponSetSlots((set) => {
+    const action = WEAPON_SET_ACTIONS[set];
+    const intent =
+      action === undefined ? undefined : weaponSetIntent(action, connection.weaponSets);
+    if (intent !== undefined) {
+      connection.sendIntent(intent);
+    }
+  });
+  hud.skillRow.prepend(weaponSets);
   // Read once per match: a keymap changed elsewhere applies from the next.
   const keymap = loadKeymap();
   renderKeyLabels(hud, keymap);
+  labelWeaponSets(weaponSets, keymap);
   let disposed = false;
   void loadLayoutLabeller().then((label) => {
     if (label !== undefined && !disposed) {
       renderKeyLabels(hud, keymap, label);
+      labelWeaponSets(weaponSets, keymap, label);
     }
   });
 
@@ -411,12 +446,22 @@ export async function startMatchView(
       if (intent !== undefined) {
         connection.sendIntent(intent);
       }
+    } else if (action === "target-self") {
+      const intent = selfTargetIntent(latestMatch.players, connection.selfSessionId);
+      if (intent !== undefined) {
+        connection.sendIntent(intent);
+      }
     } else if (action === "attack") {
       for (const intent of attackKeyIntents(connection.getSnapshot())) {
         connection.sendIntent(intent);
       }
     } else if (action === "mute") {
       toggleMute();
+    } else if (WEAPON_SET_ACTIONS.includes(action)) {
+      const intent = weaponSetIntent(action, connection.weaponSets);
+      if (intent !== undefined) {
+        connection.sendIntent(intent);
+      }
     } else if (action === "call-target" || action === "ping") {
       // For a mouse without a wheel click (#443).
       const snapshot = connection.getSnapshot();
@@ -492,6 +537,9 @@ export async function startMatchView(
   });
 
   let finished = false;
+  /** The summary (#1057), drawn once under the result banner when the host's `ended` lands. */
+  let summary:
+    { readonly tables: readonly SummaryTable[]; readonly panel: HTMLElement } | undefined;
   const onFrame = (deltaSeconds: number): void => {
     latestMatch = connection.getSnapshot();
     matchSounds.snapshot(latestMatch);
@@ -506,17 +554,28 @@ export async function startMatchView(
         selfTeam: self?.team,
       });
     }
+    // The snapshot that says "finished" may land a frame before the `ended` that carries it.
+    if (
+      latestMatch.phase === "finished" &&
+      summary === undefined &&
+      latestMatch.summary !== undefined
+    ) {
+      const tables = summaryTables(latestMatch.summary, connection.selfSessionId, self?.team);
+      const panel = renderSummary(parent, tables);
+      panel.classList.add("hud-summary");
+      summary = { tables, panel };
+    }
     camera?.frame(deltaSeconds, self);
     // Hover is hit-tested every frame, through the camera as it is now, so
     // a body that walks under a still cursor, or a camera that moves under
     // it, shows the right name.
-    allyWatch.update(latestMatch);
+    partyWindow.update(latestMatch);
     latestArena = withCalls(
       withNames(toArenaSnapshot(latestMatch, walls), viewport?.pointerWorld(), nameReveal.held()),
       connection.getCalls(),
-      allyWatch.watchedId,
     );
     viewport?.scene.setSnapshot(latestArena);
+    compass.update(latestArena, connection.selfSessionId);
     // For the e2e specs: who your team has called.
     const called = latestArena.calledId ?? "";
     if (parent.dataset.called !== called) {
@@ -528,6 +587,7 @@ export async function startMatchView(
     // here left the scoreboard, the match clock and the victory banner
     // permanently blank: the server tracked all three and the HUD could
     // draw all three, and nothing connected them.
+    refreshSkillBar(hud, connection.skillBar);
     updateHud(
       hud,
       self,
@@ -540,6 +600,7 @@ export async function startMatchView(
       latestMatch,
     );
     updateRecharges(hud, connection.skillBar, connection.getRecharges());
+    renderWeaponSets(weaponSets, connection.weaponSets);
   };
   const offFrame = viewport?.onFrame(onFrame) ?? animationFrames(onFrame);
 
@@ -552,12 +613,10 @@ export async function startMatchView(
       connection.sendIntent({ kind: "walk-to", x: world.x, y: world.y });
       viewport.scene.showWalkMarker(world);
     } else if (button === "middle" && phase === "down") {
-      // A wheel click calls a foe, watches an ally, or pings the ground (#443).
+      // A wheel click calls a foe, or pings the point (#443, #1055).
       const action = middleClickAction(latestMatch, latestArena, world);
       if (action.kind === "call") {
         connection.sendCall(action.call);
-      } else if (action.kind === "watch") {
-        allyWatch.toggle(action.allyId);
       }
     }
   });
@@ -576,6 +635,7 @@ export async function startMatchView(
   });
 
   return {
+    summary: () => summary?.tables,
     async dispose(): Promise<void> {
       // Order matters: stop listening before tearing down, so a late
       // event cannot touch a destroyed scene.
@@ -585,7 +645,8 @@ export async function startMatchView(
       offPointer?.();
       coverObserver.disconnect();
       camera?.dispose();
-      allyWatch.dispose();
+      partyWindow.dispose();
+      compass.dispose();
       delete parent.dataset.called;
       parent.style.removeProperty("--hud-height");
       nameReveal.detach();
@@ -595,14 +656,16 @@ export async function startMatchView(
       matchMusic.dispose();
       reconnectCountdown.dispose();
       reconnectOverlay.destroy();
-      // The scoreboard, result and mute button sit beside the HUD root, in
-      // the shared viewport, so they go one by one or pile up per match.
+      // The scoreboard and target frame, result and mute button sit beside
+      // the HUD root, in the shared viewport, so they go one by one or pile
+      // up per match.
       hud.root.remove();
       hud.slotTips.dispose();
       hud.effects.dispose();
       hud.targetEffects.dispose();
-      hud.scoreboard.remove();
+      hud.top.remove();
       hud.result.remove();
+      summary?.panel.remove();
       offMute();
       jukebox.dispose();
       closeOptionsOverlay();

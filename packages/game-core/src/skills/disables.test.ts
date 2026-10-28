@@ -3,13 +3,14 @@ import { describe, expect, it } from "vitest";
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { WEAPONS } from "../equipment/weapons.js";
 import { createRng, type SimulationRng } from "../rng.js";
-import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
+import { ADRENALINE_PER_STRIKE, MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { payCost } from "./activation.js";
+import { gainStrikes } from "./adrenaline.js";
 import { getSkill } from "./catalog.js";
 import { applyEffects, applySkillEffects, type CombatEvent } from "./effects.js";
 import { makeCombatant } from "./testing.js";
 import { resolveAttackSkill } from "./weapon-attack.js";
-import type { Combatant, Skill } from "./types.js";
+import type { Combatant, DisableSkillEffect, Skill } from "./types.js";
 
 /**
  * Disables (#914): an interrupt that also keeps the skill from being used
@@ -144,6 +145,7 @@ describe("Distracting Shot (#914)", () => {
           attributeId: "ranger.marksmanship",
           damageType: WEAPONS.longbow.damageType,
           requirementMet: true,
+          creatureDamageScale: undefined,
         },
       },
       attributeRanks: new Map([["ranger.expertise", 12]]),
@@ -211,6 +213,7 @@ describe("Disrupting Chop (#914)", () => {
           attributeId: "warrior.axe-mastery",
           damageType: WEAPONS.axe.damageType,
           requirementMet: true,
+          creatureDamageScale: undefined,
         },
       },
     });
@@ -233,5 +236,65 @@ describe("Disrupting Chop (#914)", () => {
     expect(disabled(events)).toEqual([
       { kind: "skill-disabled", targetId: "foe", skillId: "elementalist.fireball", seconds: 20 },
     ]);
+  });
+});
+
+describe("a disabled skill loses all its adrenaline (#1097)", () => {
+  const DISABLE_ALL: DisableSkillEffect = {
+    kind: "disable-skill",
+    which: "all",
+    seconds: { flat: 4 },
+  };
+  const BAR = ["warrior.backbreaker", "warrior.watch-yourself", "warrior.healing-signet"];
+
+  /** A warrior with Backbreaker and "Watch Yourself!" charged, and 20 energy. */
+  function warrior(): Combatant {
+    return makeCombatant({
+      id: "foe",
+      team: 1,
+      skillBar: BAR,
+      energy: 20,
+      adrenaline: new Map([
+        ["warrior.backbreaker", 9 * ADRENALINE_PER_STRIKE],
+        ["warrior.watch-yourself", 4 * ADRENALINE_PER_STRIKE],
+      ]),
+    });
+  }
+
+  function disableAll(target: Combatant): CombatEvent[] {
+    return applyEffects([DISABLE_ALL], {
+      caster: makeCombatant({ id: "caster" }),
+      target,
+      rng: createRng(1),
+      rules: RULES,
+      surroundings: new Map(),
+    });
+  }
+
+  it("empties every disabled pool, leaves energy alone, and fills none until it ends", () => {
+    const target = warrior();
+    disableAll(target);
+    expect([...target.adrenaline.values()]).toEqual([0, 0]);
+    expect(target.energy).toBe(20);
+
+    gainStrikes(target, 2, 0);
+    expect([...target.adrenaline.values()]).toEqual([0, 0]);
+    target.cast.advance(4);
+    gainStrikes(target, 2, 0);
+    expect([...target.adrenaline.values()]).toEqual([
+      2 * ADRENALINE_PER_STRIKE,
+      2 * ADRENALINE_PER_STRIKE,
+    ]);
+  });
+
+  it("empties a pool whose longer recharge the disable left as it was", () => {
+    const target = warrior();
+    target.cast.startRecharge("warrior.backbreaker", 15);
+    const events = disableAll(target);
+    expect(target.cast.rechargeRemaining.get("warrior.backbreaker")).toBe(15);
+    expect(
+      disabled(events).map((event) => event.kind === "skill-disabled" && event.skillId),
+    ).not.toContain("warrior.backbreaker");
+    expect(target.adrenaline.get("warrior.backbreaker")).toBe(0);
   });
 });

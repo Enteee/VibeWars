@@ -3,6 +3,11 @@ import { expect, test } from "@playwright/test";
 import { key } from "./keys.js";
 import { startSoloMatch } from "./helpers/peers.js";
 import { chooseProfession } from "./helpers/professions.js";
+import { bringStarter, starterKey } from "./helpers/starter.js";
+
+/** A starter build (#852) whose Armor of Earth puts Armor Boost on yourself (#302). */
+const ARMORED = "Elementalist/Mesmer";
+const ARMOR_OF_EARTH = starterKey(ARMORED, "elementalist.armor-of-earth");
 
 /**
  * The effects monitor (#834): your statuses as icons under your bars,
@@ -12,13 +17,13 @@ import { chooseProfession } from "./helpers/professions.js";
 test("your enchantment shows as an icon, marked yours, its bar draining; the hover names it (#834)", async ({
   page,
 }) => {
+  await bringStarter(page, ARMORED);
   await page.goto("./");
   await startSoloMatch(page);
   const effects = page.getByRole("list", { name: "your effects" });
   await expect(effects.getByRole("listitem")).toHaveCount(0);
 
-  // Slot 5 of the house bar puts Armor Boost on yourself (#302).
-  await page.keyboard.press(key("skill-5"));
+  await page.keyboard.press(ARMOR_OF_EARTH);
   const icon = effects.getByRole("listitem").filter({ has: page.getByAltText("Armor Boost") });
   await expect(icon).toBeVisible();
   await expect(icon).toHaveClass(/is-yours/);
@@ -46,7 +51,11 @@ test("a maintained enchantment has no bar, its hover says maintained, costs you 
   await page.getByRole("button", { name: "new character" }).click();
   await chooseProfession(page, "primary", "monk");
   await page.locator("input.editor-name").fill("Mender");
-  await page.locator(".skill-box", { hasText: "Mending" }).locator(".skill-box-equip").click();
+  // Exactly Mending: Mending Touch is a Monk skill too (#1039).
+  await page
+    .locator(".skill-box", { has: page.locator(".skill-box-name", { hasText: /^Mending$/ }) })
+    .locator(".skill-box-equip")
+    .click();
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await page.locator(".roster").getByText("Mender", { exact: true }).click();
   await startSoloMatch(page);
@@ -73,11 +82,68 @@ test("a maintained enchantment has no bar, its hover says maintained, costs you 
   await expect(energyPips).toHaveAttribute("data-pips", "4");
 });
 
+test("a spirit's aura shows with no bar, from the spirit, while you stand in its range (#1064)", async ({
+  page,
+}) => {
+  await page.goto("./");
+  await page.getByRole("button", { name: "new character" }).click();
+  await chooseProfession(page, "primary", "ranger");
+  await page.locator("input.editor-name").fill("Winnower");
+  await page.locator(".skill-box", { hasText: "Winnowing" }).locator(".skill-box-equip").click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await page.locator(".roster").getByText("Winnower", { exact: true }).click();
+  await startSoloMatch(page);
+
+  // A 2 s ritual: the spirit stands where you do, so you are in its range.
+  await page.keyboard.press(key("skill-1"));
+  const effects = page.getByRole("list", { name: "your effects" });
+  const icon = effects.getByRole("listitem").filter({ has: page.getByAltText("Winnowing") });
+  await expect(icon).toBeVisible({ timeout: 10_000 });
+  await expect(icon.locator(".effect-bar")).toBeHidden();
+
+  await icon.hover();
+  const tip = page.getByRole("tooltip");
+  await expect(tip).toContainText("take +4 from physical damage");
+  await expect(tip).toContainText("from Winnowing");
+  await expect(tip).toContainText("while in its range");
+  await expect(tip).not.toContainText("maintained");
+});
+
+test("a ward's aura shows with no bar while you stand in it (#1087)", async ({ page }) => {
+  await page.goto("./");
+  await page.getByRole("button", { name: "new character" }).click();
+  await chooseProfession(page, "primary", "elementalist");
+  await page.locator("input.editor-name").fill("Warder");
+  await page
+    .locator(".skill-box", { hasText: "Ward Against Melee" })
+    .locator(".skill-box-equip")
+    .click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await page.locator(".roster").getByText("Warder", { exact: true }).click();
+  await startSoloMatch(page);
+
+  // A 1 s ward spell: the ward lands where you stand, so you are in it.
+  await page.keyboard.press(key("skill-1"));
+  const effects = page.getByRole("list", { name: "your effects" });
+  const icon = effects
+    .getByRole("listitem")
+    .filter({ has: page.getByAltText("Ward Against Melee") });
+  await expect(icon).toBeVisible({ timeout: 10_000 });
+  await expect(icon.locator(".effect-bar")).toBeHidden();
+
+  await icon.hover();
+  const tip = page.getByRole("tooltip");
+  await expect(tip).toContainText("50% chance to block melee attacks");
+  await expect(tip).toContainText("while in its range");
+});
+
 test("the target frame shows a foe's enchantment, at 16 px and not marked yours (#835)", async ({
   page,
 }) => {
   // One context, so the two pages find each other (helpers/peers.ts).
   const foe = await page.context().newPage();
+  // The pages share one storage, so the foe plays this starter too.
+  await bringStarter(page, ARMORED);
   await page.goto("./");
   await page.getByRole("button", { name: "host a lobby" }).click();
   const code = page.locator(".lobby-code");
@@ -100,8 +166,7 @@ test("the target frame shows a foe's enchantment, at 16 px and not marked yours 
   await expect(page.locator(".hud-target-text")).not.toHaveText("no target");
   await expect(effects).toBeHidden();
 
-  // The foe puts Armor Boost on itself, slot 5 of the house bar (#302).
-  await foe.keyboard.press(key("skill-5"));
+  await foe.keyboard.press(ARMOR_OF_EARTH);
   const icon = effects.getByRole("listitem").filter({ has: page.getByAltText("Armor Boost") });
   await expect(icon).toBeVisible();
   await expect(icon).not.toHaveClass(/is-yours/);

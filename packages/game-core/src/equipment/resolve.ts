@@ -3,15 +3,19 @@ import { ENERGY_STORAGE_ATTRIBUTE, energyStorageBonus } from "../primary-attribu
 import type { ProfessionId } from "../professions.js";
 import type { CombatRules } from "../ruleset.js";
 import type { StatusId } from "../skills/status.js";
+import { creatureDamageMultiplier } from "../skills/damage.js";
+import type { CreatureAttack } from "../skills/types.js";
 import {
   INHERENT_ARMOR_BY_PROFESSION,
+  NO_PIECE_ARMOR,
   armorPieces,
   baseArmorFor,
   baseEnergyPipsFor,
   type ConditionalArmor,
+  type PieceArmor,
 } from "./armor.js";
 import { getInsignia, perSlotAmount } from "./insignias.js";
-import type { BuildEquipment } from "./loadout.js";
+import type { BuildEquipment, WeaponSet } from "./loadout.js";
 import { getOffhand, type OffhandId } from "./offhands.js";
 import {
   ATTRIBUTE_RUNE_TIERS,
@@ -31,12 +35,14 @@ import { getWeapon, weaponDamageType, type Weapon } from "./weapons.js";
  * (ADR-0012).
  *
  * This runs **once, before a `Combatant` is constructed**, and that is
- * the whole design. `Combatant.maxHealth`, `maxEnergy` and
- * `attributeRanks` are `readonly` because they are the character sheet,
- * not simulation state; gear is fixed at join, so there is never a
- * reason to mutate them. Resolving up front means a rune cannot be
- * applied twice, cannot be applied in the wrong order, and cannot
- * disagree between the build editor and the server — both call this.
+ * the whole design. `Combatant.maxHealth` and `attributeRanks` are
+ * `readonly` because they are the character sheet, not simulation
+ * state. Every weapon set is resolved here too, each to its own
+ * `ResolvedEquipment` and maximum energy, and a swap in a match only
+ * picks another of them (ADR-0036): nothing is resolved twice.
+ * Resolving up front means a rune cannot be applied twice, cannot be
+ * applied in the wrong order, and cannot disagree between the build
+ * editor and the server — both call this.
  */
 
 export interface ResolvedWeapon {
@@ -47,13 +53,22 @@ export interface ResolvedWeapon {
   readonly damageType: DamageType;
   /** Whether the bearer actually meets the requirement. */
   readonly requirementMet: boolean;
+  /**
+   * A minion's (#1131): what its summoner's rank does to every blow, in
+   * place of weapon mastery. `undefined` for every weapon a player holds,
+   * and a pet's, which scale with weapon mastery.
+   */
+  readonly creatureDamageScale: number | undefined;
 }
 
 export interface ResolvedEquipment {
   readonly mainHand: ResolvedWeapon;
   /** Armor before any conditional bonus or status modifier. */
   readonly baseArmor: number;
+  /** On every hit: the profession's inherent armor, a creature's, a guard's. */
   readonly conditionalArmor: readonly ConditionalArmor[];
+  /** Insignias, on hits to their own piece only (#1135). */
+  readonly pieceArmor: PieceArmor;
   /** Rune of Absorption: subtracted from each physical hit, after mitigation. */
   readonly flatPhysicalReduction: number;
   /** Multiplier applied to an incoming condition's duration. Absent means 1. */
@@ -67,14 +82,29 @@ export interface ResolvedEquipment {
   readonly offhandId: OffhandId | undefined;
 }
 
+/** One carried set, resolved (ADR-0036). */
+export interface ResolvedWeaponSet {
+  /** Main hand, off-hand, and armor with this set's shield; the runes' share is the same in every set. */
+  readonly equipment: ResolvedEquipment;
+  /** Maximum energy holding this set, before morale: a focus's bonus is in it. */
+  readonly maxEnergy: number;
+}
+
+export type ResolvedWeaponSets = readonly [
+  ResolvedWeaponSet,
+  ResolvedWeaponSet | null,
+  ResolvedWeaponSet | null,
+  ResolvedWeaponSet | null,
+];
+
 export interface ResolvedLoadout {
   readonly maxHealth: number;
-  readonly maxEnergy: number;
   /** Energy regeneration before any status, in pips: the primary profession's. */
   readonly baseEnergyPips: number;
   /** Allocated ranks plus rune bonuses, clamped to `MAX_EFFECTIVE_RANK`. */
   readonly attributeRanks: ReadonlyMap<string, number>;
-  readonly equipment: ResolvedEquipment;
+  /** Index i is build set i; `null` where the build's is. */
+  readonly weaponSets: ResolvedWeaponSets;
 }
 
 export interface LoadoutInput {
@@ -226,22 +256,22 @@ function applyInsignia(
   }
 }
 
-/** The primary profession's inherent armor first, then the insignias'. */
-function conditionalArmorOf(
-  primaryProfession: ProfessionId,
-  equipment: BuildEquipment,
-): readonly ConditionalArmor[] {
-  const bonuses: ConditionalArmor[] = [...INHERENT_ARMOR_BY_PROFESSION[primaryProfession]];
-  for (const [, piece] of armorPieces(equipment.armor)) {
-    if (piece.insigniaId === null) {
-      continue;
-    }
-    const insignia = getInsignia(piece.insigniaId);
+/** Each piece's insignia armor, which only a hit to that piece meets (#1135). */
+function pieceArmorOf(equipment: BuildEquipment): PieceArmor {
+  const pieces: Record<ArmorSlot, readonly ConditionalArmor[]> = {
+    head: [],
+    chest: [],
+    hands: [],
+    legs: [],
+    feet: [],
+  };
+  for (const [slot, piece] of armorPieces(equipment.armor)) {
+    const insignia = piece.insigniaId === null ? undefined : getInsignia(piece.insigniaId);
     if (insignia?.effect.kind === "conditional-armor") {
-      bonuses.push({ amount: insignia.effect.amount, condition: insignia.effect.condition });
+      pieces[slot] = [{ amount: insignia.effect.amount, condition: insignia.effect.condition }];
     }
   }
-  return bonuses;
+  return pieces;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -262,20 +292,61 @@ export function resolveLoadout(input: LoadoutInput, rules: CombatRules): Resolve
   const rankOf = (attributeId: string | undefined): number =>
     attributeId === undefined ? 0 : (attributeRanks.get(attributeId) ?? 0);
 
-  const weapon = getWeapon(input.equipment.mainHand.weaponId);
-  const resolvedWeapon = resolveWeapon(
-    weapon,
-    input.equipment.mainHand.requirementAttributeId,
-    rankOf,
-  );
-
-  let baseArmor = baseArmorFor(input.primaryProfession);
   // Energy Storage (#532) adds to the maximum like Attunement does, once
   // at join; only an Elementalist primary holds its rank.
-  let energyDelta = runes.energyDelta + energyStorageBonus(rankOf(ENERGY_STORAGE_ATTRIBUTE));
+  const shared: SharedGear = {
+    baseArmor: baseArmorFor(input.primaryProfession),
+    energyDelta: runes.energyDelta + energyStorageBonus(rankOf(ENERGY_STORAGE_ATTRIBUTE)),
+    conditionalArmor: INHERENT_ARMOR_BY_PROFESSION[input.primaryProfession],
+    pieceArmor: pieceArmorOf(input.equipment),
+    flatPhysicalReduction: runes.flatPhysicalReduction,
+    statusDurationScale: runes.statusDurationScale,
+    attributeBonuses: runes.attributeBonuses,
+  };
+  const [set1, set2, set3, set4] = input.equipment.weaponSets;
+  const resolve = (set: WeaponSet | null): ResolvedWeaponSet | null =>
+    set === null ? null : resolveWeaponSet(set, shared, rankOf, rules);
+
+  return {
+    maxHealth: Math.max(rules.minimumMaxHealth, rules.baseHealth + runes.healthDelta),
+    baseEnergyPips: baseEnergyPipsFor(input.primaryProfession),
+    attributeRanks,
+    weaponSets: [
+      resolveWeaponSet(set1, shared, rankOf, rules),
+      resolve(set2),
+      resolve(set3),
+      resolve(set4),
+    ],
+  };
+}
+
+/** What every weapon set shares: armor and runes are one set (ADR-0036). */
+interface SharedGear {
+  /** Before a shield's bonus. */
+  readonly baseArmor: number;
+  /** Before a focus's bonus. */
+  readonly energyDelta: number;
+  readonly conditionalArmor: readonly ConditionalArmor[];
+  readonly pieceArmor: PieceArmor;
+  readonly flatPhysicalReduction: number;
+  readonly statusDurationScale: ReadonlyMap<StatusId, number>;
+  readonly attributeBonuses: ReadonlyMap<string, number>;
+}
+
+function resolveWeaponSet(
+  set: WeaponSet,
+  shared: SharedGear,
+  rankOf: (attributeId: string | undefined) => number,
+  rules: CombatRules,
+): ResolvedWeaponSet {
+  const weapon = getWeapon(set.mainHand.weaponId);
+  const resolvedWeapon = resolveWeapon(weapon, set.mainHand.requirementAttributeId, rankOf);
+
+  let baseArmor = shared.baseArmor;
+  let energyDelta = shared.energyDelta;
   let offhandId: OffhandId | undefined;
 
-  const offHand = input.equipment.offHand;
+  const offHand = set.offHand;
   if (offHand !== null) {
     const definition = getOffhand(offHand.offhandId);
     // An off-hand alongside a two-handed weapon is rejected by
@@ -295,19 +366,17 @@ export function resolveLoadout(input: LoadoutInput, rules: CombatRules): Resolve
   }
 
   return {
-    maxHealth: Math.max(rules.minimumMaxHealth, rules.baseHealth + runes.healthDelta),
-    maxEnergy: Math.max(1, rules.baseEnergy + energyDelta),
-    baseEnergyPips: baseEnergyPipsFor(input.primaryProfession),
-    attributeRanks,
     equipment: {
       mainHand: resolvedWeapon,
       baseArmor,
-      conditionalArmor: conditionalArmorOf(input.primaryProfession, input.equipment),
-      flatPhysicalReduction: runes.flatPhysicalReduction,
-      statusDurationScale: runes.statusDurationScale,
-      attributeBonuses: runes.attributeBonuses,
+      conditionalArmor: shared.conditionalArmor,
+      pieceArmor: shared.pieceArmor,
+      flatPhysicalReduction: shared.flatPhysicalReduction,
+      statusDurationScale: shared.statusDurationScale,
+      attributeBonuses: shared.attributeBonuses,
       offhandId,
     },
+    maxEnergy: Math.max(1, rules.baseEnergy + energyDelta),
   };
 }
 
@@ -331,6 +400,7 @@ function resolveWeapon(
     // Fists and anything else with no attribute link are always "met":
     // there is no training that would improve them.
     requirementMet: attributeId === undefined || rankOf(attributeId) >= resolved.requirement.rank,
+    creatureDamageScale: undefined,
   };
 }
 
@@ -346,12 +416,49 @@ export function unarmedResolvedEquipment(baseArmor: number): ResolvedEquipment {
       attributeId: undefined,
       damageType: unarmed.damageType,
       requirementMet: true,
+      creatureDamageScale: undefined,
     },
     baseArmor,
     conditionalArmor: [],
+    pieceArmor: NO_PIECE_ARMOR,
     flatPhysicalReduction: 0,
     statusDurationScale: new Map(),
     attributeBonuses: new Map(),
     offhandId: undefined,
+  };
+}
+
+/**
+ * A creature's (#467 child 3): unarmed with `armor`, or, with an attack,
+ * a weapon of its numbers keyed to `attack.attributeId`, scaled by its
+ * summoner's `rank` there (#1131). The weapon keeps the id "unarmed",
+ * which is all the client draws and the log names.
+ */
+export function creatureResolvedEquipment(
+  armor: number,
+  attack: CreatureAttack | undefined,
+  rank: number,
+): ResolvedEquipment {
+  const unarmed = unarmedResolvedEquipment(armor);
+  if (attack === undefined) {
+    return unarmed;
+  }
+  return {
+    ...unarmed,
+    mainHand: {
+      weapon: {
+        ...unarmed.mainHand.weapon,
+        damageMin: attack.damageMin,
+        damageMax: attack.damageMax,
+        damageType: attack.damageType,
+        attackIntervalSeconds: attack.attackIntervalSeconds,
+        range: attack.range,
+      },
+      attributeId: attack.attributeId,
+      damageType: attack.damageType,
+      requirementMet: true,
+      creatureDamageScale:
+        attack.level === undefined ? undefined : creatureDamageMultiplier(rank, attack.level),
+    },
   };
 }

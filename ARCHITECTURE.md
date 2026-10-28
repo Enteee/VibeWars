@@ -88,6 +88,8 @@ Everything that decides what happens in a fight.
   source and time. `behaviour.ts` turns behaviours (data) into the same
   intents a player sends. `training-scenarios.ts` holds the Training
   Ground's scenarios as data (ADR-0020).
+  Creatures, bodies that are not players, are participants with a
+  `creature` record that never count for their team (ADR-0035).
 - `tools/headless-match.ts` — runs real combat with no I/O at all, on
   `MatchSimulation`.
 
@@ -165,8 +167,8 @@ inbound messages, #43: over budget, a message is ignored rather than its
 sender dropped), `sanitizeName`, `spawnPoint`, and `recharge.ts` (when a
 player's recharges are re-sent: only when they drift from the client's
 countdown by more than one 50 ms tick, #152). game-core holds the rest of
-the shared match code: `applyIntent`, `resolveJoinLoadout` and the house
-loadout, and the fixed-step `drainAccumulator`.
+the shared match code: `applyIntent`, `resolveJoinLoadout` and the starter
+builds (`starter-builds.ts`), and the fixed-step `drainAccumulator`.
 
 ### `packages/game-maps` — arenas
 

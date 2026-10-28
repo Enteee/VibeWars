@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { unarmedResolvedEquipment } from "../equipment/resolve.js";
+import { unarmedResolvedEquipment, type ResolvedLoadout } from "../equipment/resolve.js";
 import { WEAPONS } from "../equipment/weapons.js";
 import { segment } from "../geometry.js";
 import { DEFAULT_MATCH_RULES, type MatchRules } from "../match-rules.js";
@@ -747,11 +747,15 @@ describe("reset policies", () => {
 });
 
 describe("rearm", () => {
-  const loadout = (maxHealth: number) => ({
+  const loadout = (maxHealth: number): ResolvedLoadout => ({
     attributeRanks: new Map([["elementalist.fire-magic", 9]]),
-    equipment: unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
+    weaponSets: [
+      { equipment: unarmedResolvedEquipment(RULES.combat.armorReferenceLevel), maxEnergy: 30 },
+      null,
+      null,
+      null,
+    ],
     maxHealth,
-    maxEnergy: 30,
     baseEnergyPips: 4,
   });
 
@@ -975,6 +979,7 @@ describe("moving cancels a cast (#279)", () => {
                 attributeId: "ranger.marksmanship",
                 damageType: WEAPONS.longbow.damageType,
                 requirementMet: true,
+                creatureDamageScale: undefined,
               },
             },
           }),

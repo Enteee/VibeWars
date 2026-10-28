@@ -107,7 +107,7 @@ describe("Reversal of Fortune (#987)", () => {
   it("turns a 200 hit into a heal of 67, and the next hit lands", () => {
     const target = reversed(ally());
     const events: CombatEvent[] = [];
-    applyDamage(target, 200, "typeless", false, events);
+    applyDamage(target, 200, "typeless", false, events, undefined);
     expect(events).toEqual([
       { kind: "status-expired", targetId: "ally", statusId: "reversal-of-fortune" },
       { kind: "heal", targetId: "ally", amount: 67 },
@@ -116,20 +116,20 @@ describe("Reversal of Fortune (#987)", () => {
     expect(target.statuses.has("reversal-of-fortune")).toBe(false);
 
     const next: CombatEvent[] = [];
-    applyDamage(target, 30, "typeless", false, next);
+    applyDamage(target, 30, "typeless", false, next, undefined);
     expect(next).toEqual([{ kind: "damage", targetId: "ally", amount: 30, critical: false }]);
   });
 
   it("heals a 30 hit for 30", () => {
     const target = reversed(ally());
-    applyDamage(target, 30, "typeless", false, []);
+    applyDamage(target, 30, "typeless", false, [], undefined);
     expect(target.health).toBe(130);
   });
 
   it("is spent on an ally at full health, healing nothing", () => {
     const target = reversed(ally({ health: 500 }));
     const events: CombatEvent[] = [];
-    applyDamage(target, 100, "typeless", false, events);
+    applyDamage(target, 100, "typeless", false, events, undefined);
     expect(events).toEqual([
       { kind: "status-expired", targetId: "ally", statusId: "reversal-of-fortune" },
     ]);
@@ -139,14 +139,14 @@ describe("Reversal of Fortune (#987)", () => {
   it("a deep wound cuts the heal by 20%", () => {
     const target = reversed(ally());
     target.statuses.apply("deep-wound", 20, "foe");
-    applyDamage(target, 200, "typeless", false, []);
+    applyDamage(target, 200, "typeless", false, [], undefined);
     expect(target.health).toBeCloseTo(100 + 67 * 0.8);
   });
 
   it("reverses a killing blow: the ally lives", () => {
     const target = reversed(ally({ health: 10 }));
     const events: CombatEvent[] = [];
-    applyDamage(target, 200, "typeless", false, events);
+    applyDamage(target, 200, "typeless", false, events, undefined);
     expect(target.dead).toBe(false);
     expect(target.health).toBe(77);
     expect(events.some((event) => event.kind === "death")).toBe(false);
@@ -157,17 +157,18 @@ describe("Reversal of Fortune (#987)", () => {
     target.statuses.apply("protective-spirit", 19, "monk");
     applyDamage(
       target,
-      mitigate(skillDamage(200, "typeless", 0), target, RULES),
+      mitigate(skillDamage(200, "typeless", 0), target, RULES, null),
       "typeless",
       false,
       [],
+      undefined,
     );
     expect(target.health).toBe(348);
   });
 
   it("records no physical damage, so nothing that answers it fires", () => {
     const target = reversed(ally());
-    applyDamage(target, 50, "slashing", false, []);
+    applyDamage(target, 50, "slashing", false, [], undefined);
     expect(target.statuses.drainChanges()).toEqual([
       { kind: "ended", id: "reversal-of-fortune", sourceId: "monk", expired: false },
     ]);
@@ -196,9 +197,9 @@ describe("Reversal of Fortune (#987)", () => {
 
   it("refreshes on a recast: still one reversal", () => {
     const target = reversed(reversed(ally()));
-    applyDamage(target, 50, "typeless", false, []);
+    applyDamage(target, 50, "typeless", false, [], undefined);
     expect(target.health).toBe(150);
-    applyDamage(target, 50, "typeless", false, []);
+    applyDamage(target, 50, "typeless", false, [], undefined);
     expect(target.health).toBe(100);
   });
 
@@ -227,10 +228,10 @@ describe("Smite Hex (#987)", () => {
     const foes = [left, right];
     const friend = makeCombatant({ id: "friend", health: 500 });
     const surroundings: Surroundings = new Map([
-      ["ally", { combatant: target, position: vec2(0, 0) }],
-      ["foe-1", { combatant: left, position: vec2(AREA_ADJACENT, 0) }],
-      ["foe-2", { combatant: right, position: vec2(-AREA_ADJACENT, 0) }],
-      ["friend", { combatant: friend, position: vec2(0, AREA_ADJACENT) }],
+      ["ally", { combatant: target, position: vec2(0, 0), creature: undefined }],
+      ["foe-1", { combatant: left, position: vec2(AREA_ADJACENT, 0), creature: undefined }],
+      ["foe-2", { combatant: right, position: vec2(-AREA_ADJACENT, 0), creature: undefined }],
+      ["friend", { combatant: friend, position: vec2(0, AREA_ADJACENT), creature: undefined }],
     ]);
     return { target, foes, friend, surroundings };
   }

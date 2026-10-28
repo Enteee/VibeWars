@@ -6,13 +6,13 @@
  */
 
 /** A reader of `kpis.json` that finds another value treats the file as absent. */
-export const KPI_SCHEMA_VERSION = 1;
+export const KPI_SCHEMA_VERSION = 2;
 
 const HOUR_MS = 3_600_000;
 const DAY_MS = 24 * HOUR_MS;
 
-/** The flow, in order. Blocked is outside it. */
-const FLOW = ["Backlog", "Ready", "In Progress", "In Review", "QA", "Done"];
+/** A bounce is work sent back: from one of these to In Progress. */
+const SENT_BACK_FROM = new Set(["In Review", "QA"]);
 
 /**
  * @param {readonly number[]} values
@@ -67,7 +67,9 @@ export function flowKpis({ now, moves, cards }) {
 
   let done24h = 0;
   let done7d = 0;
-  let bounces7d = 0;
+  let bounces24h = 0;
+  /** @type {Map<number, number>} issue → bounces in the week */
+  const bounced = new Map();
   /** @type {number[]} */
   const cycles = [];
   /** @type {number[]} */
@@ -84,10 +86,15 @@ export function flowKpis({ now, moves, cards }) {
         done24h += move.ts > now - DAY_MS ? 1 : 0;
         lastDone = move.ts;
       }
-      const from = move.from === null ? -1 : FLOW.indexOf(move.from);
-      const to = move.to === null ? -1 : FLOW.indexOf(move.to);
-      if (move.ts > week && from !== -1 && to !== -1 && to < from) {
-        bounces7d += 1;
+      if (
+        move.ts > week &&
+        move.ts <= now &&
+        move.to === "In Progress" &&
+        move.from !== null &&
+        SENT_BACK_FROM.has(move.from)
+      ) {
+        bounced.set(move.issue, (bounced.get(move.issue) ?? 0) + 1);
+        bounces24h += move.ts > now - DAY_MS ? 1 : 0;
       }
       const left = history[at + 1];
       if (left !== undefined && left.ts > week && (move.to === "In Review" || move.to === "QA")) {
@@ -106,6 +113,10 @@ export function flowKpis({ now, moves, cards }) {
       return arrivals.at(-1)?.ts ?? null;
     })
     .filter((ts) => ts !== null);
+  const topBounced = [...bounced]
+    .map(([issue, bounces]) => ({ issue, bounces }))
+    .sort((a, b) => b.bounces - a.bounces || a.issue - b.issue)
+    .slice(0, 3);
   return {
     historySince: ordered[0]?.ts ?? null,
     columns,
@@ -115,7 +126,9 @@ export function flowKpis({ now, moves, cards }) {
     cycleP90Ms: p90(cycles),
     reviewWaitMedianMs: median(reviewWaits),
     qaWaitMedianMs: median(qaWaits),
-    bounces7d,
+    bounces24h,
+    bounces7d: [...bounced.values()].reduce((sum, count) => sum + count, 0),
+    topBounced,
     blocked: columns.Blocked ?? 0,
     oldestBlockedMs: blockedSince.length === 0 ? null : now - Math.min(...blockedSince),
   };
@@ -216,7 +229,8 @@ export function staffKpis(staff, live, maxAgents) {
  * @property {number} at
  * @property {{ historySince: number | null, columns: Record<string, number>, done24h: number,
  *   done7d: number, cycleMedianMs: number | null, cycleP90Ms: number | null,
- *   reviewWaitMedianMs: number | null, qaWaitMedianMs: number | null, bounces7d: number,
+ *   reviewWaitMedianMs: number | null, qaWaitMedianMs: number | null, bounces24h: number,
+ *   bounces7d: number, topBounced: { issue: number, bounces: number }[],
  *   blocked: number, oldestBlockedMs: number | null } | null} flow
  * @property {{ fiveHour: import("./stream-format.mjs").LimitWindow | null,
  *   sevenDay: import("./stream-format.mjs").LimitWindow | null,

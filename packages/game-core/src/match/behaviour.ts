@@ -72,9 +72,28 @@ export type Behaviour =
   /**
    * Attack the target with the weapon, as Space does (#162), and ask again
    * whenever no attack is going: after the target's respawn, or the
-   * dummy's own reset.
+   * dummy's own reset. An attack going on stays on its target, even with
+   * another nearer.
    */
-  | { readonly kind: "auto-attack"; readonly targeting: Targeting };
+  | { readonly kind: "auto-attack"; readonly targeting: Targeting }
+  /**
+   * A minion's (#467 child 3) or a pet's (#1046): stay by the owner, attack
+   * a foe as `engage` picks it, and break off to walk back once the
+   * owner is farther than `leashUnits`, until within `heelUnits` again.
+   * The owner is `self.creature.ownerId`; anyone else holding it stands still.
+   */
+  | {
+      readonly kind: "follow-and-attack";
+      /**
+       * Whom it goes for (#1046). `"nearest-foe"`: a minion's, the nearest foe
+       * within `aggroUnits` of itself. `"owner-target"`: a companion's, the foe
+       * its owner is attacking, if within `aggroUnits` of itself.
+       */
+      readonly engage: "nearest-foe" | "owner-target";
+      readonly aggroUnits: number;
+      readonly leashUnits: number;
+      readonly heelUnits: number;
+    };
 
 /**
  * When a participant is put back as it started: the respawn path, at its
@@ -96,6 +115,11 @@ export interface StatusApplication {
 /** What a behaviour *asks* for. Never what happens. */
 export interface BehaviourIntent {
   readonly moveDirection: Vec2;
+  /**
+   * A point to walk to round walls and bodies, as a click-to-walk goes
+   * (#1153); `undefined` for none. The simulation owns the path.
+   */
+  readonly moveTo: Vec2 | undefined;
   readonly targetId: string | undefined;
   readonly useSkillId: string | undefined;
   /** Whom to attack with the weapon, through `requestAttack`. */
@@ -113,6 +137,8 @@ export interface BehaviourCursor {
   waypoint: number;
   /** `parallel`: one cursor per child, in the same order. */
   readonly children: BehaviourCursor[];
+  /** `follow-and-attack`: walking back to the owner, past the leash. */
+  returning: boolean;
 }
 
 export interface BehaviourContext {
@@ -133,7 +159,7 @@ export interface BehaviourContext {
 }
 
 export function createCursor(): BehaviourCursor {
-  return { nextSkill: 0, waitSeconds: 0, waypoint: 0, children: [] };
+  return { nextSkill: 0, waitSeconds: 0, waypoint: 0, children: [], returning: false };
 }
 
 /**
@@ -190,6 +216,7 @@ export function resolveTargeting(
 
 const STAND_STILL: BehaviourIntent = {
   moveDirection: ZERO,
+  moveTo: undefined,
   targetId: undefined,
   useSkillId: undefined,
   attackTargetId: undefined,
@@ -218,8 +245,14 @@ export function decide(
       return parallel(behaviour, cursor, context);
     case "auto-attack": {
       const targetId = resolveTargeting(behaviour.targeting, context);
-      return { ...STAND_STILL, targetId, attackTargetId: targetId };
+      return {
+        ...STAND_STILL,
+        targetId,
+        attackTargetId: context.self.combatant.attack?.targetId ?? targetId,
+      };
     }
+    case "follow-and-attack":
+      return followAndAttack(behaviour, cursor, context);
   }
 }
 
@@ -312,6 +345,65 @@ function keepRange(
   };
 }
 
+/**
+ * The owner's body, alive or dead, is what a minion keeps to. Past the
+ * leash it walks back and fights nobody until at heel again, so it does
+ * not flip each tick at the boundary. A pet goes for whatever its living
+ * owner is attacking, within its aggro, switching when the owner does
+ * (#1046). Otherwise a fight it is in goes on; for a minion, a foe in
+ * aggro of the minion itself starts one, through `requestAttack` as Space
+ * does. Otherwise it walks to heel, stopping a step early.
+ */
+function followAndAttack(
+  behaviour: Extract<Behaviour, { kind: "follow-and-attack" }>,
+  cursor: BehaviourCursor,
+  context: BehaviourContext,
+): BehaviourIntent {
+  const self = context.self;
+  const ownerId = self.creature?.ownerId;
+  const owner = context.participants.find((other) => other.id === ownerId);
+  if (owner === undefined) {
+    return STAND_STILL;
+  }
+  const d = distance(owner.position, self.position);
+  if (cursor.returning && d <= behaviour.heelUnits) {
+    cursor.returning = false;
+  } else if (!cursor.returning && d > behaviour.leashUnits) {
+    cursor.returning = true;
+  }
+  // By path, not straight: a wall between them is walked round (#1153).
+  const toOwner = { ...STAND_STILL, moveTo: owner.position };
+  if (cursor.returning) {
+    return toOwner;
+  }
+  const team = self.combatant.team;
+  const inAggro = (other: Participant): boolean =>
+    other.combatant.team !== team &&
+    distance(other.position, self.position) <= behaviour.aggroUnits;
+  if (behaviour.engage === "owner-target") {
+    const wanted = owner.combatant.dead ? undefined : owner.combatant.attack?.targetId;
+    const foe = context.participants.find((other) => other.id === wanted);
+    if (foe !== undefined && !foe.combatant.dead && inAggro(foe)) {
+      return { ...STAND_STILL, targetId: foe.id, attackTargetId: foe.id };
+    }
+  }
+  const attack = self.combatant.attack;
+  if (attack !== undefined) {
+    return { ...STAND_STILL, targetId: attack.targetId, attackTargetId: attack.targetId };
+  }
+  const foe =
+    behaviour.engage === "nearest-foe"
+      ? nearestLiving(self, context.participants, inAggro)
+      : undefined;
+  if (foe !== undefined) {
+    return { ...STAND_STILL, targetId: foe, attackTargetId: foe };
+  }
+  if (d > behaviour.heelUnits && d - context.stepUnits > behaviour.heelUnits) {
+    return toOwner;
+  }
+  return STAND_STILL;
+}
+
 function statusCadence(
   behaviour: Extract<Behaviour, { kind: "apply-status-cadence" }>,
   cursor: BehaviourCursor,
@@ -353,8 +445,12 @@ function parallel(
     return decide(child, childCursor, context);
   });
   const casting = intents.find((intent) => intent.useSkillId !== undefined);
+  const steering = intents.find(
+    (intent) => intent.moveDirection !== ZERO || intent.moveTo !== undefined,
+  );
   return {
-    moveDirection: intents.find((intent) => intent.moveDirection !== ZERO)?.moveDirection ?? ZERO,
+    moveDirection: steering?.moveDirection ?? ZERO,
+    moveTo: steering?.moveTo,
     targetId: (casting ?? intents.find((intent) => intent.targetId !== undefined))?.targetId,
     useSkillId: casting?.useSkillId,
     attackTargetId: intents.find((intent) => intent.attackTargetId !== undefined)?.attackTargetId,

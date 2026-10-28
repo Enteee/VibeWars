@@ -214,10 +214,10 @@ describe("Energy Surge (#920)", () => {
     const far = makeCombatant({ id: "far", team: 1, energy: 25 });
     const ally = makeCombatant({ id: "ally" });
     const surroundings: Surroundings = new Map([
-      ["foe", { combatant: target, position: vec2(0, 0) }],
-      ["near", { combatant: near, position: vec2(AREA_NEARBY, 0) }],
-      ["far", { combatant: far, position: vec2(2 * AREA_NEARBY, 0) }],
-      ["ally", { combatant: ally, position: vec2(0, 1) }],
+      ["foe", { combatant: target, position: vec2(0, 0), creature: undefined }],
+      ["near", { combatant: near, position: vec2(AREA_NEARBY, 0), creature: undefined }],
+      ["far", { combatant: far, position: vec2(2 * AREA_NEARBY, 0), creature: undefined }],
+      ["ally", { combatant: ally, position: vec2(0, 1), creature: undefined }],
     ]);
     return { target, near, far, ally, surroundings };
   }

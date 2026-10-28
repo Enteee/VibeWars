@@ -1,5 +1,5 @@
 {
-  "semanticsRevision": 1,
+  "semanticsRevision": 2,
   "channels": [
     "hello",
     "welcome",
@@ -9,6 +9,7 @@
     "combat",
     "refused",
     "skill-bar",
+    "weapon-sets",
     "recharge",
     "adrenaline",
     "chain",
@@ -20,17 +21,24 @@
     "lobby-note",
     "lobby-hello",
     "lobby-welcome",
+    "stay-together",
+    "party-proposal",
+    "party-consent",
+    "party-formed",
+    "party-split",
     "match-start",
     "rejoin-challenge",
     "rejoin-proof",
     "call",
     "calls",
+    "traps",
     "chat",
     "chat-line"
   ],
   "statusIds": [
     "anthem-of-flame",
     "apply-poison",
+    "arcane-echo",
     "armor-boost",
     "aura-of-thorns",
     "backfire",
@@ -41,6 +49,7 @@
     "contagion",
     "cracked-armor",
     "crippled",
+    "critical-eye",
     "dark-escape",
     "dash",
     "dazed",
@@ -50,6 +59,7 @@
     "disease",
     "diversion",
     "dust-cloak",
+    "echo",
     "empathy",
     "escape",
     "faintheartedness",
@@ -81,23 +91,33 @@
     "pious-haste-run",
     "poison",
     "protective-spirit",
+    "recuperation",
     "regeneration",
     "reversal-of-fortune",
     "sand-shards",
     "shadow-of-fear",
+    "shadow-refuge",
     "shard-storm",
+    "shroud-of-distress",
     "song-of-restoration",
     "spirit-light-weapon",
     "spiteful-spirit",
+    "splinter-weapon",
     "sprint",
     "staggering-force",
     "stand-your-ground",
+    "vengeful-weapon",
+    "vigorous-spirit",
     "vow-of-strength",
+    "ward-against-melee",
     "watch-yourself",
     "weakness",
     "weapon-of-aggression",
     "weapon-of-quickening",
-    "weapon-of-warding"
+    "weapon-of-remedy",
+    "weapon-of-warding",
+    "well-of-suffering",
+    "winnowing"
   ],
   "constants": {
     "FORMATION_SETTLE_MS": { "literal": 3000 },
@@ -106,10 +126,12 @@
     "LOBBY_CODE_LENGTH": { "literal": 6 },
     "MAX_CHAT_GRAPHEMES": { "literal": 200 },
     "MAX_LOBBY_PLAYERS": { "literal": 16 },
-    "MAX_SNAPSHOT_PARTS": { "literal": 8 },
+    "MAX_SNAPSHOT_PARTS": { "literal": 12 },
     "MAX_WIRE_CHAT_TEXT": { "literal": 2048 },
     "MAX_WIRE_COMBATS": { "literal": 64 },
+    "MAX_WIRE_CREATURES": { "literal": 32 },
     "MAX_WIRE_EVENTS": { "literal": 64 },
+    "MAX_WIRE_GROUND_EFFECTS": { "literal": 32 },
     "MAX_WIRE_JSON_DEPTH": { "literal": 16 },
     "MAX_WIRE_JSON_VALUES": { "literal": 4096 },
     "MAX_WIRE_MORALE": { "literal": 10 },
@@ -215,6 +237,10 @@
         { "literal": "lobby-state" },
         { "literal": "lobby-welcome" },
         { "literal": "match-start" },
+        { "literal": "party-consent" },
+        { "literal": "party-formed" },
+        { "literal": "party-proposal" },
+        { "literal": "party-split" },
         { "literal": "recharge" },
         { "literal": "refuse" },
         { "literal": "refused" },
@@ -222,6 +248,9 @@
         { "literal": "rejoin-proof" },
         { "literal": "skill-bar" },
         { "literal": "snapshot" },
+        { "literal": "stay-together" },
+        { "literal": "traps" },
+        { "literal": "weapon-sets" },
         { "literal": "welcome" }
       ]
     },
@@ -271,6 +300,18 @@
             { "name": "kind", "optional": false, "type": { "literal": "walk-to" } },
             { "name": "x", "optional": false, "type": "number" },
             { "name": "y", "optional": false, "type": "number" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "weapon-set" } },
+            {
+              "name": "set",
+              "optional": false,
+              "type": {
+                "union": [{ "literal": 0 }, { "literal": 1 }, { "literal": 2 }, { "literal": 3 }]
+              }
+            }
           ]
         }
       ]
@@ -364,6 +405,7 @@
                 "union": [
                   { "literal": "anthem-of-flame" },
                   { "literal": "apply-poison" },
+                  { "literal": "arcane-echo" },
                   { "literal": "armor-boost" },
                   { "literal": "aura-of-thorns" },
                   { "literal": "backfire" },
@@ -374,6 +416,7 @@
                   { "literal": "contagion" },
                   { "literal": "cracked-armor" },
                   { "literal": "crippled" },
+                  { "literal": "critical-eye" },
                   { "literal": "dark-escape" },
                   { "literal": "dash" },
                   { "literal": "dazed" },
@@ -383,6 +426,7 @@
                   { "literal": "disease" },
                   { "literal": "diversion" },
                   { "literal": "dust-cloak" },
+                  { "literal": "echo" },
                   { "literal": "empathy" },
                   { "literal": "escape" },
                   { "literal": "faintheartedness" },
@@ -414,23 +458,33 @@
                   { "literal": "pious-haste-run" },
                   { "literal": "poison" },
                   { "literal": "protective-spirit" },
+                  { "literal": "recuperation" },
                   { "literal": "regeneration" },
                   { "literal": "reversal-of-fortune" },
                   { "literal": "sand-shards" },
                   { "literal": "shadow-of-fear" },
+                  { "literal": "shadow-refuge" },
                   { "literal": "shard-storm" },
+                  { "literal": "shroud-of-distress" },
                   { "literal": "song-of-restoration" },
                   { "literal": "spirit-light-weapon" },
                   { "literal": "spiteful-spirit" },
+                  { "literal": "splinter-weapon" },
                   { "literal": "sprint" },
                   { "literal": "staggering-force" },
                   { "literal": "stand-your-ground" },
+                  { "literal": "vengeful-weapon" },
+                  { "literal": "vigorous-spirit" },
                   { "literal": "vow-of-strength" },
+                  { "literal": "ward-against-melee" },
                   { "literal": "watch-yourself" },
                   { "literal": "weakness" },
                   { "literal": "weapon-of-aggression" },
                   { "literal": "weapon-of-quickening" },
-                  { "literal": "weapon-of-warding" }
+                  { "literal": "weapon-of-remedy" },
+                  { "literal": "weapon-of-warding" },
+                  { "literal": "well-of-suffering" },
+                  { "literal": "winnowing" }
                 ]
               }
             },
@@ -462,6 +516,7 @@
                 "union": [
                   { "literal": "anthem-of-flame" },
                   { "literal": "apply-poison" },
+                  { "literal": "arcane-echo" },
                   { "literal": "armor-boost" },
                   { "literal": "aura-of-thorns" },
                   { "literal": "backfire" },
@@ -472,6 +527,7 @@
                   { "literal": "contagion" },
                   { "literal": "cracked-armor" },
                   { "literal": "crippled" },
+                  { "literal": "critical-eye" },
                   { "literal": "dark-escape" },
                   { "literal": "dash" },
                   { "literal": "dazed" },
@@ -481,6 +537,7 @@
                   { "literal": "disease" },
                   { "literal": "diversion" },
                   { "literal": "dust-cloak" },
+                  { "literal": "echo" },
                   { "literal": "empathy" },
                   { "literal": "escape" },
                   { "literal": "faintheartedness" },
@@ -512,23 +569,33 @@
                   { "literal": "pious-haste-run" },
                   { "literal": "poison" },
                   { "literal": "protective-spirit" },
+                  { "literal": "recuperation" },
                   { "literal": "regeneration" },
                   { "literal": "reversal-of-fortune" },
                   { "literal": "sand-shards" },
                   { "literal": "shadow-of-fear" },
+                  { "literal": "shadow-refuge" },
                   { "literal": "shard-storm" },
+                  { "literal": "shroud-of-distress" },
                   { "literal": "song-of-restoration" },
                   { "literal": "spirit-light-weapon" },
                   { "literal": "spiteful-spirit" },
+                  { "literal": "splinter-weapon" },
                   { "literal": "sprint" },
                   { "literal": "staggering-force" },
                   { "literal": "stand-your-ground" },
+                  { "literal": "vengeful-weapon" },
+                  { "literal": "vigorous-spirit" },
                   { "literal": "vow-of-strength" },
+                  { "literal": "ward-against-melee" },
                   { "literal": "watch-yourself" },
                   { "literal": "weakness" },
                   { "literal": "weapon-of-aggression" },
                   { "literal": "weapon-of-quickening" },
-                  { "literal": "weapon-of-warding" }
+                  { "literal": "weapon-of-remedy" },
+                  { "literal": "weapon-of-warding" },
+                  { "literal": "well-of-suffering" },
+                  { "literal": "winnowing" }
                 ]
               }
             },
@@ -557,6 +624,7 @@
                 "union": [
                   { "literal": "anthem-of-flame" },
                   { "literal": "apply-poison" },
+                  { "literal": "arcane-echo" },
                   { "literal": "armor-boost" },
                   { "literal": "aura-of-thorns" },
                   { "literal": "backfire" },
@@ -567,6 +635,7 @@
                   { "literal": "contagion" },
                   { "literal": "cracked-armor" },
                   { "literal": "crippled" },
+                  { "literal": "critical-eye" },
                   { "literal": "dark-escape" },
                   { "literal": "dash" },
                   { "literal": "dazed" },
@@ -576,6 +645,7 @@
                   { "literal": "disease" },
                   { "literal": "diversion" },
                   { "literal": "dust-cloak" },
+                  { "literal": "echo" },
                   { "literal": "empathy" },
                   { "literal": "escape" },
                   { "literal": "faintheartedness" },
@@ -607,23 +677,33 @@
                   { "literal": "pious-haste-run" },
                   { "literal": "poison" },
                   { "literal": "protective-spirit" },
+                  { "literal": "recuperation" },
                   { "literal": "regeneration" },
                   { "literal": "reversal-of-fortune" },
                   { "literal": "sand-shards" },
                   { "literal": "shadow-of-fear" },
+                  { "literal": "shadow-refuge" },
                   { "literal": "shard-storm" },
+                  { "literal": "shroud-of-distress" },
                   { "literal": "song-of-restoration" },
                   { "literal": "spirit-light-weapon" },
                   { "literal": "spiteful-spirit" },
+                  { "literal": "splinter-weapon" },
                   { "literal": "sprint" },
                   { "literal": "staggering-force" },
                   { "literal": "stand-your-ground" },
+                  { "literal": "vengeful-weapon" },
+                  { "literal": "vigorous-spirit" },
                   { "literal": "vow-of-strength" },
+                  { "literal": "ward-against-melee" },
                   { "literal": "watch-yourself" },
                   { "literal": "weakness" },
                   { "literal": "weapon-of-aggression" },
                   { "literal": "weapon-of-quickening" },
-                  { "literal": "weapon-of-warding" }
+                  { "literal": "weapon-of-remedy" },
+                  { "literal": "weapon-of-warding" },
+                  { "literal": "well-of-suffering" },
+                  { "literal": "winnowing" }
                 ]
               }
             },
@@ -649,6 +729,7 @@
                 "union": [
                   { "literal": "anthem-of-flame" },
                   { "literal": "apply-poison" },
+                  { "literal": "arcane-echo" },
                   { "literal": "armor-boost" },
                   { "literal": "aura-of-thorns" },
                   { "literal": "backfire" },
@@ -659,6 +740,7 @@
                   { "literal": "contagion" },
                   { "literal": "cracked-armor" },
                   { "literal": "crippled" },
+                  { "literal": "critical-eye" },
                   { "literal": "dark-escape" },
                   { "literal": "dash" },
                   { "literal": "dazed" },
@@ -668,6 +750,7 @@
                   { "literal": "disease" },
                   { "literal": "diversion" },
                   { "literal": "dust-cloak" },
+                  { "literal": "echo" },
                   { "literal": "empathy" },
                   { "literal": "escape" },
                   { "literal": "faintheartedness" },
@@ -699,23 +782,33 @@
                   { "literal": "pious-haste-run" },
                   { "literal": "poison" },
                   { "literal": "protective-spirit" },
+                  { "literal": "recuperation" },
                   { "literal": "regeneration" },
                   { "literal": "reversal-of-fortune" },
                   { "literal": "sand-shards" },
                   { "literal": "shadow-of-fear" },
+                  { "literal": "shadow-refuge" },
                   { "literal": "shard-storm" },
+                  { "literal": "shroud-of-distress" },
                   { "literal": "song-of-restoration" },
                   { "literal": "spirit-light-weapon" },
                   { "literal": "spiteful-spirit" },
+                  { "literal": "splinter-weapon" },
                   { "literal": "sprint" },
                   { "literal": "staggering-force" },
                   { "literal": "stand-your-ground" },
+                  { "literal": "vengeful-weapon" },
+                  { "literal": "vigorous-spirit" },
                   { "literal": "vow-of-strength" },
+                  { "literal": "ward-against-melee" },
                   { "literal": "watch-yourself" },
                   { "literal": "weakness" },
                   { "literal": "weapon-of-aggression" },
                   { "literal": "weapon-of-quickening" },
-                  { "literal": "weapon-of-warding" }
+                  { "literal": "weapon-of-remedy" },
+                  { "literal": "weapon-of-warding" },
+                  { "literal": "well-of-suffering" },
+                  { "literal": "winnowing" }
                 ]
               }
             },
@@ -794,6 +887,13 @@
         },
         {
           "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "shadow-stepped" } },
+            { "name": "targetId", "optional": false, "type": "string" },
+            { "name": "toId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "skill-disabled" } },
             { "name": "seconds", "optional": false, "type": "number" },
             { "name": "skillId", "optional": false, "type": "string" },
@@ -810,6 +910,7 @@
                 "union": [
                   { "literal": "anthem-of-flame" },
                   { "literal": "apply-poison" },
+                  { "literal": "arcane-echo" },
                   { "literal": "armor-boost" },
                   { "literal": "aura-of-thorns" },
                   { "literal": "backfire" },
@@ -820,6 +921,7 @@
                   { "literal": "contagion" },
                   { "literal": "cracked-armor" },
                   { "literal": "crippled" },
+                  { "literal": "critical-eye" },
                   { "literal": "dark-escape" },
                   { "literal": "dash" },
                   { "literal": "dazed" },
@@ -829,6 +931,7 @@
                   { "literal": "disease" },
                   { "literal": "diversion" },
                   { "literal": "dust-cloak" },
+                  { "literal": "echo" },
                   { "literal": "empathy" },
                   { "literal": "escape" },
                   { "literal": "faintheartedness" },
@@ -860,23 +963,33 @@
                   { "literal": "pious-haste-run" },
                   { "literal": "poison" },
                   { "literal": "protective-spirit" },
+                  { "literal": "recuperation" },
                   { "literal": "regeneration" },
                   { "literal": "reversal-of-fortune" },
                   { "literal": "sand-shards" },
                   { "literal": "shadow-of-fear" },
+                  { "literal": "shadow-refuge" },
                   { "literal": "shard-storm" },
+                  { "literal": "shroud-of-distress" },
                   { "literal": "song-of-restoration" },
                   { "literal": "spirit-light-weapon" },
                   { "literal": "spiteful-spirit" },
+                  { "literal": "splinter-weapon" },
                   { "literal": "sprint" },
                   { "literal": "staggering-force" },
                   { "literal": "stand-your-ground" },
+                  { "literal": "vengeful-weapon" },
+                  { "literal": "vigorous-spirit" },
                   { "literal": "vow-of-strength" },
+                  { "literal": "ward-against-melee" },
                   { "literal": "watch-yourself" },
                   { "literal": "weakness" },
                   { "literal": "weapon-of-aggression" },
                   { "literal": "weapon-of-quickening" },
-                  { "literal": "weapon-of-warding" }
+                  { "literal": "weapon-of-remedy" },
+                  { "literal": "weapon-of-warding" },
+                  { "literal": "well-of-suffering" },
+                  { "literal": "winnowing" }
                 ]
               }
             },
@@ -893,6 +1006,7 @@
                 "union": [
                   { "literal": "anthem-of-flame" },
                   { "literal": "apply-poison" },
+                  { "literal": "arcane-echo" },
                   { "literal": "armor-boost" },
                   { "literal": "aura-of-thorns" },
                   { "literal": "backfire" },
@@ -903,6 +1017,7 @@
                   { "literal": "contagion" },
                   { "literal": "cracked-armor" },
                   { "literal": "crippled" },
+                  { "literal": "critical-eye" },
                   { "literal": "dark-escape" },
                   { "literal": "dash" },
                   { "literal": "dazed" },
@@ -912,6 +1027,7 @@
                   { "literal": "disease" },
                   { "literal": "diversion" },
                   { "literal": "dust-cloak" },
+                  { "literal": "echo" },
                   { "literal": "empathy" },
                   { "literal": "escape" },
                   { "literal": "faintheartedness" },
@@ -943,27 +1059,44 @@
                   { "literal": "pious-haste-run" },
                   { "literal": "poison" },
                   { "literal": "protective-spirit" },
+                  { "literal": "recuperation" },
                   { "literal": "regeneration" },
                   { "literal": "reversal-of-fortune" },
                   { "literal": "sand-shards" },
                   { "literal": "shadow-of-fear" },
+                  { "literal": "shadow-refuge" },
                   { "literal": "shard-storm" },
+                  { "literal": "shroud-of-distress" },
                   { "literal": "song-of-restoration" },
                   { "literal": "spirit-light-weapon" },
                   { "literal": "spiteful-spirit" },
+                  { "literal": "splinter-weapon" },
                   { "literal": "sprint" },
                   { "literal": "staggering-force" },
                   { "literal": "stand-your-ground" },
+                  { "literal": "vengeful-weapon" },
+                  { "literal": "vigorous-spirit" },
                   { "literal": "vow-of-strength" },
+                  { "literal": "ward-against-melee" },
                   { "literal": "watch-yourself" },
                   { "literal": "weakness" },
                   { "literal": "weapon-of-aggression" },
                   { "literal": "weapon-of-quickening" },
-                  { "literal": "weapon-of-warding" }
+                  { "literal": "weapon-of-remedy" },
+                  { "literal": "weapon-of-warding" },
+                  { "literal": "well-of-suffering" },
+                  { "literal": "winnowing" }
                 ]
               }
             },
             { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "teleported" } },
+            { "name": "targetId", "optional": false, "type": "string" },
+            { "name": "toId", "optional": false, "type": "string" }
           ]
         }
       ]
@@ -1154,7 +1287,7 @@
               {
                 "properties": [
                   { "name": "admissionSig", "optional": false, "type": "string" },
-                  { "name": "ticketId", "optional": false, "type": "string" }
+                  { "name": "seatKey", "optional": false, "type": "string" }
                 ]
               }
             ]
@@ -1184,6 +1317,12 @@
         { "name": "protocolVersion", "optional": false, "type": "string" }
       ]
     },
+    "PeerPartyConsent": {
+      "properties": [
+        { "name": "consent", "optional": false, "type": "string" },
+        { "name": "memberKey", "optional": false, "type": "string" }
+      ]
+    },
     "PeerRefuse": {
       "properties": [
         { "name": "message", "optional": false, "type": "string" },
@@ -1210,6 +1349,11 @@
       "properties": [
         { "name": "playerId", "optional": false, "type": "string" },
         { "name": "proof", "optional": false, "type": "string" }
+      ]
+    },
+    "PeerStayTogether": {
+      "properties": [
+        { "name": "memberKey", "optional": false, "type": { "union": ["null", "string"] } }
       ]
     },
     "PeerWelcome": {
@@ -1297,6 +1441,7 @@
       "properties": [
         { "name": "enteredAt", "optional": false, "type": "number" },
         { "name": "heartbeatAt", "optional": false, "type": "number" },
+        { "name": "members", "optional": false, "type": { "array": "string" } },
         {
           "name": "mode",
           "optional": false,
@@ -1308,7 +1453,21 @@
             ]
           }
         },
-        { "name": "partySize", "optional": false, "type": "number" },
+        {
+          "name": "party",
+          "optional": false,
+          "type": {
+            "union": [
+              "null",
+              {
+                "properties": [
+                  { "name": "consents", "optional": false, "type": { "array": "string" } },
+                  { "name": "groupId", "optional": false, "type": "string" }
+                ]
+              }
+            ]
+          }
+        },
         { "name": "protocol", "optional": false, "type": "string" },
         { "name": "ticketId", "optional": false, "type": "string" }
       ]
@@ -1327,7 +1486,8 @@
               ]
             }
           }
-        }
+        },
+        { "name": "spent", "optional": false, "type": { "array": "number" } }
       ]
     },
     "RechargeSlot": {
@@ -1363,6 +1523,12 @@
       "properties": [
         { "name": "kind", "optional": false, "type": { "literal": "target" } },
         { "name": "targetSessionId", "optional": false, "type": { "union": ["null", "string"] } }
+      ]
+    },
+    "TicketParty": {
+      "properties": [
+        { "name": "consents", "optional": false, "type": { "array": "string" } },
+        { "name": "groupId", "optional": false, "type": "string" }
       ]
     },
     "UseSkillIntent": {
@@ -1408,10 +1574,22 @@
         }
       ]
     },
+    "WeaponSetIntent": {
+      "properties": [
+        { "name": "kind", "optional": false, "type": { "literal": "weapon-set" } },
+        {
+          "name": "set",
+          "optional": false,
+          "type": {
+            "union": [{ "literal": 0 }, { "literal": 1 }, { "literal": 2 }, { "literal": 3 }]
+          }
+        }
+      ]
+    },
     "WireAdmission": {
       "properties": [
         { "name": "admissionSig", "optional": false, "type": "string" },
-        { "name": "ticketId", "optional": false, "type": "string" }
+        { "name": "seatKey", "optional": false, "type": "string" }
       ]
     },
     "WireCalls": {
@@ -1632,6 +1810,18 @@
         { "name": "targetId", "optional": false, "type": { "union": ["null", "string"] } }
       ]
     },
+    "WireCreature": {
+      "properties": [
+        {
+          "name": "kind",
+          "optional": false,
+          "type": {
+            "union": [{ "literal": "minion" }, { "literal": "pet" }, { "literal": "spirit" }]
+          }
+        },
+        { "name": "ownerId", "optional": false, "type": "string" }
+      ]
+    },
     "WireEnded": {
       "properties": [
         {
@@ -1648,10 +1838,49 @@
           }
         },
         {
+          "name": "summary",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "damage", "optional": false, "type": "number" },
+                { "name": "deaths", "optional": false, "type": "number" },
+                { "name": "healing", "optional": false, "type": "number" },
+                { "name": "id", "optional": false, "type": "string" },
+                { "name": "interrupts", "optional": false, "type": "number" },
+                { "name": "kills", "optional": false, "type": "number" },
+                { "name": "name", "optional": false, "type": "string" },
+                { "name": "taken", "optional": false, "type": "number" },
+                {
+                  "name": "team",
+                  "optional": false,
+                  "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "winningTeam",
           "optional": false,
           "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
         }
+      ]
+    },
+    "WireGroundEffect": {
+      "properties": [
+        { "name": "durationSeconds", "optional": false, "type": "number" },
+        { "name": "endsAt", "optional": false, "type": "number" },
+        { "name": "id", "optional": false, "type": "number" },
+        { "name": "radius", "optional": false, "type": "number" },
+        { "name": "skillId", "optional": false, "type": "string" },
+        {
+          "name": "team",
+          "optional": false,
+          "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+        },
+        { "name": "x", "optional": false, "type": "number" },
+        { "name": "y", "optional": false, "type": "number" }
       ]
     },
     "WireLobbyCharacter": {
@@ -1805,6 +2034,20 @@
         { "name": "matchId", "optional": false, "type": "string" }
       ]
     },
+    "WirePartyFormed": {
+      "properties": [
+        { "name": "consents", "optional": false, "type": { "array": "string" } },
+        { "name": "groupId", "optional": false, "type": "string" },
+        { "name": "members", "optional": false, "type": { "array": "string" } }
+      ]
+    },
+    "WirePartyProposal": {
+      "properties": [
+        { "name": "groupId", "optional": false, "type": "string" },
+        { "name": "members", "optional": false, "type": { "array": "string" } }
+      ]
+    },
+    "WirePartySplit": { "properties": [], "index": [{ "key": "string", "value": "never" }] },
     "WirePing": {
       "properties": [
         { "name": "byId", "optional": false, "type": "string" },
@@ -1821,6 +2064,32 @@
         { "name": "castRemaining", "optional": false, "type": "number" },
         { "name": "castTotal", "optional": false, "type": "number" },
         { "name": "castingSkillId", "optional": false, "type": { "union": ["null", "string"] } },
+        { "name": "corpseExploited", "optional": false, "type": "boolean" },
+        {
+          "name": "creature",
+          "optional": false,
+          "type": {
+            "union": [
+              "null",
+              {
+                "properties": [
+                  {
+                    "name": "kind",
+                    "optional": false,
+                    "type": {
+                      "union": [
+                        { "literal": "minion" },
+                        { "literal": "pet" },
+                        { "literal": "spirit" }
+                      ]
+                    }
+                  },
+                  { "name": "ownerId", "optional": false, "type": "string" }
+                ]
+              }
+            ]
+          }
+        },
         { "name": "dead", "optional": false, "type": "boolean" },
         { "name": "energy", "optional": false, "type": "number" },
         { "name": "energyPips", "optional": false, "type": "number" },
@@ -1949,6 +2218,28 @@
           }
         },
         {
+          "name": "groundEffects",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "durationSeconds", "optional": false, "type": "number" },
+                { "name": "endsAt", "optional": false, "type": "number" },
+                { "name": "id", "optional": false, "type": "number" },
+                { "name": "radius", "optional": false, "type": "number" },
+                { "name": "skillId", "optional": false, "type": "string" },
+                {
+                  "name": "team",
+                  "optional": false,
+                  "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+                },
+                { "name": "x", "optional": false, "type": "number" },
+                { "name": "y", "optional": false, "type": "number" }
+              ]
+            }
+          }
+        },
+        {
           "name": "phase",
           "optional": false,
           "type": { "union": [{ "literal": "active" }, { "literal": "finished" }] }
@@ -1971,6 +2262,32 @@
                   "name": "castingSkillId",
                   "optional": false,
                   "type": { "union": ["null", "string"] }
+                },
+                { "name": "corpseExploited", "optional": false, "type": "boolean" },
+                {
+                  "name": "creature",
+                  "optional": false,
+                  "type": {
+                    "union": [
+                      "null",
+                      {
+                        "properties": [
+                          {
+                            "name": "kind",
+                            "optional": false,
+                            "type": {
+                              "union": [
+                                { "literal": "minion" },
+                                { "literal": "pet" },
+                                { "literal": "spirit" }
+                              ]
+                            }
+                          },
+                          { "name": "ownerId", "optional": false, "type": "string" }
+                        ]
+                      }
+                    ]
+                  }
                 },
                 { "name": "dead", "optional": false, "type": "boolean" },
                 { "name": "energy", "optional": false, "type": "number" },
@@ -2094,6 +2411,28 @@
             ]
           }
         },
+        {
+          "name": "groundEffects",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "durationSeconds", "optional": false, "type": "number" },
+                { "name": "endsAt", "optional": false, "type": "number" },
+                { "name": "id", "optional": false, "type": "number" },
+                { "name": "radius", "optional": false, "type": "number" },
+                { "name": "skillId", "optional": false, "type": "string" },
+                {
+                  "name": "team",
+                  "optional": false,
+                  "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+                },
+                { "name": "x", "optional": false, "type": "number" },
+                { "name": "y", "optional": false, "type": "number" }
+              ]
+            }
+          }
+        },
         { "name": "part", "optional": false, "type": "number" },
         { "name": "parts", "optional": false, "type": "number" },
         {
@@ -2119,6 +2458,32 @@
                   "name": "castingSkillId",
                   "optional": false,
                   "type": { "union": ["null", "string"] }
+                },
+                { "name": "corpseExploited", "optional": false, "type": "boolean" },
+                {
+                  "name": "creature",
+                  "optional": false,
+                  "type": {
+                    "union": [
+                      "null",
+                      {
+                        "properties": [
+                          {
+                            "name": "kind",
+                            "optional": false,
+                            "type": {
+                              "union": [
+                                { "literal": "minion" },
+                                { "literal": "pet" },
+                                { "literal": "spirit" }
+                              ]
+                            }
+                          },
+                          { "name": "ownerId", "optional": false, "type": "string" }
+                        ]
+                      }
+                    ]
+                  }
                 },
                 { "name": "dead", "optional": false, "type": "boolean" },
                 { "name": "energy", "optional": false, "type": "number" },
@@ -2223,6 +2588,100 @@
           "name": "winningTeam",
           "optional": false,
           "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+        }
+      ]
+    },
+    "WireSummaryRow": {
+      "properties": [
+        { "name": "damage", "optional": false, "type": "number" },
+        { "name": "deaths", "optional": false, "type": "number" },
+        { "name": "healing", "optional": false, "type": "number" },
+        { "name": "id", "optional": false, "type": "string" },
+        { "name": "interrupts", "optional": false, "type": "number" },
+        { "name": "kills", "optional": false, "type": "number" },
+        { "name": "name", "optional": false, "type": "string" },
+        { "name": "taken", "optional": false, "type": "number" },
+        {
+          "name": "team",
+          "optional": false,
+          "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+        }
+      ]
+    },
+    "WireTraps": {
+      "properties": [
+        {
+          "name": "traps",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "durationSeconds", "optional": false, "type": "number" },
+                { "name": "endsAt", "optional": false, "type": "number" },
+                { "name": "id", "optional": false, "type": "number" },
+                { "name": "radius", "optional": false, "type": "number" },
+                { "name": "skillId", "optional": false, "type": "string" },
+                {
+                  "name": "team",
+                  "optional": false,
+                  "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+                },
+                { "name": "x", "optional": false, "type": "number" },
+                { "name": "y", "optional": false, "type": "number" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "WireWeaponSet": {
+      "properties": [
+        { "name": "offhandId", "optional": false, "type": { "union": ["null", "string"] } },
+        { "name": "weaponId", "optional": false, "type": "string" }
+      ]
+    },
+    "WireWeaponSets": {
+      "properties": [
+        {
+          "name": "active",
+          "optional": false,
+          "type": {
+            "union": [{ "literal": 0 }, { "literal": 1 }, { "literal": 2 }, { "literal": 3 }]
+          }
+        },
+        {
+          "name": "pending",
+          "optional": false,
+          "type": {
+            "union": [
+              "null",
+              { "literal": 0 },
+              { "literal": 1 },
+              { "literal": 2 },
+              { "literal": 3 }
+            ]
+          }
+        },
+        {
+          "name": "sets",
+          "optional": false,
+          "type": {
+            "array": {
+              "union": [
+                "null",
+                {
+                  "properties": [
+                    {
+                      "name": "offhandId",
+                      "optional": false,
+                      "type": { "union": ["null", "string"] }
+                    },
+                    { "name": "weaponId", "optional": false, "type": "string" }
+                  ]
+                }
+              ]
+            }
+          }
         }
       ]
     }

@@ -207,6 +207,7 @@ function player(sessionId: string, extra: Partial<PlayerSnapshot> = {}): PlayerS
     secondaryProfession: undefined,
     team: sessionId === ME ? 0 : 1,
     dead: false,
+    corpseExploited: false,
     castingSkillId: undefined,
     castRemaining: 0,
     castTotal: 0,
@@ -215,6 +216,7 @@ function player(sessionId: string, extra: Partial<PlayerSnapshot> = {}): PlayerS
     knockdownRemaining: 0,
     healthPips: 0,
     energyPips: 0,
+    creature: undefined,
     statuses: [],
     ...extra,
   };
@@ -231,6 +233,9 @@ function snapshot(players: PlayerSnapshot[]): MatchSnapshot {
     winningTeam: undefined,
     endReason: undefined,
     projectiles: [],
+    groundEffects: [],
+    traps: [],
+    summary: undefined,
   };
 }
 

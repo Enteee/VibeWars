@@ -8,6 +8,7 @@ import {
   MAX_SNAPSHOT_PARTS,
   MAX_WIRE_PINGS,
   MAX_WIRE_PROJECTILES,
+  MAX_WIRE_GROUND_EFFECTS,
   MAX_WIRE_RADIUS,
   MAX_WIRE_MORALE,
   MAX_WIRE_PIPS,
@@ -16,6 +17,7 @@ import {
   MAX_WIRE_RANKS,
   MAX_WIRE_SLOTS,
   MAX_WIRE_STATUSES,
+  MAX_WIRE_ACTORS,
   MAX_WIRE_STATUS_INDEX,
   MAX_WIRE_STRING,
   MAX_WIRE_TEXT,
@@ -27,6 +29,7 @@ import {
   parsePeerCall,
   parsePeerChat,
   parseWireCalls,
+  parseWireTraps,
   parseWireChatLine,
   parsePeerHello,
   parsePeerRefuse,
@@ -40,11 +43,17 @@ import {
   parseWireEnded,
   parseWireSkillBar,
   parseWireSnapshotPart,
+  parseWireWeaponSets,
   parsePeerLobbyJoin,
   parseWireLobbyCommand,
   parseWireLobbyNote,
   parsePeerLobbyHello,
   parseWireLobbyWelcome,
+  parsePeerStayTogether,
+  parseWirePartyProposal,
+  parsePeerPartyConsent,
+  parseWirePartyFormed,
+  parseWirePartySplit,
   parseWireLobbyState,
   parseWireMatchStart,
 } from "./p2p.js";
@@ -58,6 +67,7 @@ import type {
   WirePlayer,
   WireStatus,
   WireSkillBar,
+  WireWeaponSets,
   WireSnapshotPart,
   PeerLobbyJoin,
   WireLobbyState,
@@ -132,6 +142,7 @@ const player: WirePlayer = {
   primaryProfession: "monk",
   secondaryProfession: null,
   dead: false,
+  corpseExploited: false,
   castingSkillId: "healing-breeze",
   castRemaining: 0.75,
   castTotal: 1,
@@ -141,6 +152,16 @@ const player: WirePlayer = {
   healthPips: -3,
   energyPips: 4,
   statuses: [status],
+  creature: null,
+};
+
+/** A Bone Minion of `peer-1`'s (#1052): no professions, its kind's name. */
+const minion: WirePlayer = {
+  ...player,
+  id: "peer-1/c1",
+  name: "Bone Minion",
+  primaryProfession: null,
+  creature: { ownerId: "peer-1", kind: "minion" },
 };
 
 const snapshot: WireSnapshotPart = {
@@ -171,6 +192,18 @@ const snapshot: WireSnapshotPart = {
       to: { x: 10, y: 20 },
       launchedAt: 2,
       flightSeconds: 0.7,
+    },
+  ],
+  groundEffects: [
+    {
+      id: 1,
+      skillId: "elementalist.ward-against-melee",
+      team: 0,
+      x: 120,
+      y: 80,
+      radius: 109,
+      endsAt: 19.1,
+      durationSeconds: 17,
     },
   ],
 };
@@ -256,6 +289,18 @@ const combatBatch: WireCombatBatch = [
   },
 ];
 
+/** A sword and shield in set 1, a bow in set 2, sets 3 and 4 empty. */
+const weaponSets: WireWeaponSets = {
+  sets: [
+    { weaponId: "sword", offhandId: "shield" },
+    { weaponId: "recurve-bow", offhandId: null },
+    null,
+    null,
+  ],
+  active: 0,
+  pending: null,
+};
+
 const skillBar: WireSkillBar = {
   slots: [
     {
@@ -271,7 +316,19 @@ const skillBar: WireSkillBar = {
   ranks: { "monk.healing-prayers": 12, "monk.divine-favor": 0 },
 };
 
-const ended: WireEnded = { winningTeam: null, endReason: "host-left" };
+const summaryRow = {
+  id: "player-1",
+  name: "Ann",
+  team: 0,
+  damage: 1200,
+  healing: 340,
+  taken: 900,
+  kills: 2,
+  deaths: 1,
+  interrupts: 3,
+} as const;
+
+const ended: WireEnded = { winningTeam: null, endReason: "host-left", summary: [summaryRow] };
 
 const refused: CastRefusedMessage = {
   kind: "skill",
@@ -282,6 +339,7 @@ const refused: CastRefusedMessage = {
 
 const recharge: RechargeMessage = {
   slots: [{ slot: 0, remainingSeconds: 3.5, totalSeconds: 5 }],
+  spent: [2],
 };
 
 /** Each parser, with the one fixture it must round-trip. */
@@ -293,7 +351,20 @@ const lobbyJoin: PeerLobbyJoin = {
 };
 
 /** A queued join's proof (#871): a ticket id and a signature, as hex. */
-const admission = { ticketId: "ab".repeat(32), admissionSig: "cd".repeat(64) };
+const admission = { seatKey: "ab".repeat(32), admissionSig: "cd".repeat(64) };
+
+/** A party's consent to its proposal (#1078). */
+const partyConsent = { memberKey: "ab".repeat(32), consent: "ef".repeat(64) };
+
+/** A party-proposal of `members`, as given (#1078). */
+function proposalOf(members: readonly string[]) {
+  return { groupId: "12".repeat(32), members };
+}
+
+/** A party-formed of `members`, as given, each with a consent. */
+function partyOf(members: readonly string[]) {
+  return { groupId: "12".repeat(32), members, consents: members.map(() => "ef".repeat(64)) };
+}
 
 const lobbyState: WireLobbyState = {
   code: "ACDEFG",
@@ -316,6 +387,17 @@ const lobbyState: WireLobbyState = {
 };
 
 const ping = { id: 3, x: 200, y: 150.5, byId: "peer-1", remaining: 2.6 };
+const trap = {
+  id: 2,
+  skillId: "ranger.barbed-trap",
+  team: 1,
+  x: 40,
+  y: -20,
+  radius: 81,
+  endsAt: 92.5,
+  durationSeconds: 90,
+};
+
 const calls = { target: { targetId: "peer-2", callerId: "peer-1" }, pings: [ping] };
 
 const chatLine = { channel: "all", fromId: "peer-2", name: "Ann", team: 0, text: "gg" };
@@ -328,6 +410,17 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["welcome", parsePeerWelcome, welcome],
   ["refuse", parsePeerRefuse, refuse],
   ["snapshot", parseWireSnapshotPart, snapshot],
+  ["snapshot with a creature", parseWireSnapshotPart, { ...snapshot, players: [player, minion] }],
+  [
+    "snapshot with an exploited corpse (#466)",
+    parseWireSnapshotPart,
+    { ...snapshot, players: [{ ...player, dead: true, corpseExploited: true }] },
+  ],
+  [
+    "snapshot with every player and creature there may be",
+    parseWireSnapshotPart,
+    { ...snapshot, players: Array.from({ length: MAX_WIRE_ACTORS }, () => minion) },
+  ],
   [
     "snapshot with a maintained enchantment (#837)",
     parseWireSnapshotPart,
@@ -336,12 +429,48 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
       players: [{ ...player, statuses: [{ ...status, endsAt: null, durationSeconds: null }] }],
     },
   ],
+  [
+    "snapshot with a spirit and a body wearing its aura (#1064)",
+    parseWireSnapshotPart,
+    {
+      ...snapshot,
+      players: [
+        {
+          ...player,
+          statuses: [{ ...status, endsAt: null, durationSeconds: null, casterId: "peer-1/c1" }],
+        },
+        { ...minion, name: "Winnowing", creature: { ownerId: "peer-1", kind: "spirit" } },
+      ],
+    },
+  ],
   ["last of three snapshot parts", parseWireSnapshotPart, { ...snapshot, part: 2, parts: 3 }],
   ["combat batch", parseWireCombatBatch, combatBatch],
   ["skill-bar", parseWireSkillBar, skillBar],
+  ["weapon-sets (#489)", parseWireWeaponSets, weaponSets],
+  ["weapon-sets with a swap queued", parseWireWeaponSets, { ...weaponSets, active: 1, pending: 0 }],
   ["ended", parseWireEnded, ended],
-  ["ended by a wipe (#846)", parseWireEnded, { winningTeam: 1, endReason: "annihilation" }],
-  ["ended at time by morale (#846)", parseWireEnded, { winningTeam: null, endReason: "morale" }],
+  [
+    "ended by a wipe (#846)",
+    parseWireEnded,
+    { winningTeam: 1, endReason: "annihilation", summary: [] },
+  ],
+  [
+    "ended at time by morale (#846)",
+    parseWireEnded,
+    { winningTeam: null, endReason: "morale", summary: [] },
+  ],
+  [
+    "ended with a full summary (#1057)",
+    parseWireEnded,
+    {
+      ...ended,
+      summary: Array.from({ length: MAX_LOBBY_PLAYERS }, (_, i) => ({
+        ...summaryRow,
+        id: `player-${String(i)}`,
+        team: i % 2 === 0 ? 0 : 1,
+      })),
+    },
+  ],
   [
     "snapshot ended by a wipe (#846)",
     parseWireSnapshotPart,
@@ -380,6 +509,13 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
     parseWireCalls,
     { target: null, pings: Array.from({ length: 32 }, () => ping) },
   ],
+  ["traps (#1105)", parseWireTraps, { traps: [{ ...trap }] }],
+  ["no traps (#1105)", parseWireTraps, { traps: [] }],
+  [
+    "every trap the wire carries (#1105)",
+    parseWireTraps,
+    { traps: Array.from({ length: MAX_WIRE_GROUND_EFFECTS }, () => trap) },
+  ],
   ["chat (#479)", parsePeerChat, { channel: "team", text: "spike the monk" }],
   [
     "chat as long as the wire takes (#479)",
@@ -390,10 +526,29 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["chat-line from a spectator (#479)", parseWireChatLine, { ...chatLine, team: null }],
   ["chat-throttled (#479)", parseWireLobbyNote, { kind: "chat-throttled", reason: "" }],
   ["lobby-join", parsePeerLobbyJoin, lobbyJoin],
-  ["lobby-join on the house loadout", parsePeerLobbyJoin, { ...lobbyJoin, character: null }],
+  ["lobby-join on a starter build", parsePeerLobbyJoin, { ...lobbyJoin, character: null }],
   ["queued lobby-join (#871)", parsePeerLobbyJoin, { ...lobbyJoin, admission }],
   ["lobby-hello (#871)", parsePeerLobbyHello, {}],
   ["lobby-welcome (#871)", parseWireLobbyWelcome, { hostSig: "ef".repeat(64) }],
+  ["stay-together yes (#882)", parsePeerStayTogether, { memberKey: "ab".repeat(32) }],
+  ["stay-together no (#882)", parsePeerStayTogether, { memberKey: null }],
+  [
+    "party-formed of two (#882, #1078)",
+    parseWirePartyFormed,
+    partyOf(["ab".repeat(32), "cd".repeat(32)]),
+  ],
+  [
+    "party-formed of four (#882)",
+    parseWirePartyFormed,
+    partyOf(["1", "2", "3", "4"].map((digit) => digit.repeat(64))),
+  ],
+  [
+    "party-proposal of two (#1078)",
+    parseWirePartyProposal,
+    proposalOf(["ab".repeat(32), "cd".repeat(32)]),
+  ],
+  ["party-consent (#1078)", parsePeerPartyConsent, partyConsent],
+  ["party-split (#882)", parseWirePartySplit, {}],
   [
     "counting-down lobby-state (#871)",
     parseWireLobbyState,
@@ -431,6 +586,14 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     { target: null, pings: Array.from({ length: MAX_WIRE_PINGS + 1 }, () => ping) },
   ],
   ["calls with no pings (#443)", parseWireCalls, { target: null }],
+  ["traps without a list (#1105)", parseWireTraps, {}],
+  [
+    "one trap too many (#1105)",
+    parseWireTraps,
+    { traps: Array.from({ length: MAX_WIRE_GROUND_EFFECTS + 1 }, () => trap) },
+  ],
+  ["a trap of no radius (#1105)", parseWireTraps, { traps: [{ ...trap, radius: 0 }] }],
+  ["a trap with no skill (#1105)", parseWireTraps, { traps: [{ ...trap, skillId: 3 }] }],
   [
     "calls with a target and no caller (#443)",
     parseWireCalls,
@@ -529,7 +692,22 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "snapshot with too many players",
     parseWireSnapshotPart,
-    { ...snapshot, players: Array.from({ length: MAX_LOBBY_PLAYERS + 1 }, () => player) },
+    { ...snapshot, players: Array.from({ length: MAX_WIRE_ACTORS + 1 }, () => player) },
+  ],
+  [
+    "snapshot with a creature of an unknown kind",
+    parseWireSnapshotPart,
+    { ...snapshot, players: [{ ...minion, creature: { ownerId: "peer-1", kind: "golem" } }] },
+  ],
+  [
+    "snapshot with a creature with no owner",
+    parseWireSnapshotPart,
+    { ...snapshot, players: [{ ...minion, creature: { kind: "minion" } }] },
+  ],
+  [
+    "snapshot with a player that does not say whether it is a creature",
+    parseWireSnapshotPart,
+    { ...snapshot, players: [{ ...player, creature: undefined }] },
   ],
   [
     "snapshot with a player on team 2",
@@ -550,6 +728,16 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     "snapshot with a string for dead",
     parseWireSnapshotPart,
     { ...snapshot, players: [{ ...player, dead: "no" }] },
+  ],
+  [
+    "snapshot with a living player whose corpse was exploited (#466)",
+    parseWireSnapshotPart,
+    { ...snapshot, players: [{ ...player, dead: false, corpseExploited: true }] },
+  ],
+  [
+    "snapshot with a player that does not say whether its corpse was exploited (#466)",
+    parseWireSnapshotPart,
+    { ...snapshot, players: [{ ...player, corpseExploited: undefined }] },
   ],
   [
     "snapshot with too many statuses",
@@ -666,6 +854,37 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     parseWireSnapshotPart,
     { ...snapshot, projectiles: [{ ...snapshot.projectiles[0], skillId: undefined }] },
   ],
+  [
+    "snapshot without ground effects",
+    parseWireSnapshotPart,
+    { ...snapshot, groundEffects: undefined },
+  ],
+  [
+    "snapshot with too many ground effects",
+    parseWireSnapshotPart,
+    {
+      ...snapshot,
+      groundEffects: Array.from(
+        { length: MAX_WIRE_GROUND_EFFECTS + 1 },
+        () => snapshot.groundEffects[0],
+      ),
+    },
+  ],
+  [
+    "snapshot with a ground effect of no radius",
+    parseWireSnapshotPart,
+    { ...snapshot, groundEffects: [{ ...snapshot.groundEffects[0], radius: 0 }] },
+  ],
+  [
+    "snapshot with a ground effect wider than any area",
+    parseWireSnapshotPart,
+    { ...snapshot, groundEffects: [{ ...snapshot.groundEffects[0], radius: MAX_WIRE_RADIUS + 1 }] },
+  ],
+  [
+    "snapshot with a ground effect on a third team",
+    parseWireSnapshotPart,
+    { ...snapshot, groundEffects: [{ ...snapshot.groundEffects[0], team: 2 }] },
+  ],
   ["combat that is one entry, not a batch", parseWireCombatBatch, combat],
   [
     "combat batch with too many entries",
@@ -720,6 +939,30 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     [{ ...combat, events: [{ ...combat.events[0], crit: "yes" }] }],
   ],
   [
+    "weapon-sets with three sets",
+    parseWireWeaponSets,
+    { ...weaponSets, sets: weaponSets.sets.slice(0, 3) },
+  ],
+  [
+    "weapon-sets with five sets",
+    parseWireWeaponSets,
+    { ...weaponSets, sets: [...weaponSets.sets, null] },
+  ],
+  [
+    "weapon-sets with set 1 empty",
+    parseWireWeaponSets,
+    { ...weaponSets, sets: [null, ...weaponSets.sets.slice(1)] },
+  ],
+  ["weapon-sets active on an empty set", parseWireWeaponSets, { ...weaponSets, active: 2 }],
+  ["weapon-sets queued on an empty set", parseWireWeaponSets, { ...weaponSets, pending: 3 }],
+  ["weapon-sets active past set 4", parseWireWeaponSets, { ...weaponSets, active: 4 }],
+  [
+    "weapon-sets with a numeric weapon",
+    parseWireWeaponSets,
+    { ...weaponSets, sets: [{ weaponId: 1, offhandId: null }, null, null, null] },
+  ],
+  ["weapon-sets without a pending", parseWireWeaponSets, { sets: weaponSets.sets, active: 0 }],
+  [
     "skill bar with too many slots",
     parseWireSkillBar,
     { slots: Array.from({ length: MAX_WIRE_SLOTS + 1 }, () => null) },
@@ -770,14 +1013,43 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     },
   ],
   ["ended by an unknown reason", parseWireEnded, { ...ended, endReason: "forfeit" }],
-  ["ended without a winner", parseWireEnded, { endReason: "score" }],
+  ["ended without a winner", parseWireEnded, { endReason: "score", summary: [] }],
+  ["ended without a summary", parseWireEnded, { winningTeam: null, endReason: "time" }],
+  [
+    "ended with a summary past the cap",
+    parseWireEnded,
+    { ...ended, summary: Array.from({ length: MAX_LOBBY_PLAYERS + 1 }, () => summaryRow) },
+  ],
+  [
+    "ended with a negative tally",
+    parseWireEnded,
+    { ...ended, summary: [{ ...summaryRow, damage: -1 }] },
+  ],
+  [
+    "ended with a fractional tally",
+    parseWireEnded,
+    { ...ended, summary: [{ ...summaryRow, kills: 1.5 }] },
+  ],
+  [
+    "ended with a row on team 2",
+    parseWireEnded,
+    { ...ended, summary: [{ ...summaryRow, team: 2 }] },
+  ],
+  [
+    "ended with a row missing a column",
+    parseWireEnded,
+    { ...ended, summary: [{ ...summaryRow, interrupts: undefined }] },
+  ],
   ["refused with a negative slot", parseCastRefused, { ...refused, slot: -1 }],
   ["refused past the last slot", parseCastRefused, { ...refused, slot: MAX_WIRE_SLOTS }],
   [
     "recharge past the last slot",
     parseRecharge,
-    { slots: [{ slot: MAX_WIRE_SLOTS, remainingSeconds: 1, totalSeconds: 5 }] },
+    { ...recharge, slots: [{ slot: MAX_WIRE_SLOTS, remainingSeconds: 1, totalSeconds: 5 }] },
   ],
+  ["recharge spent past the last slot", parseRecharge, { ...recharge, spent: [MAX_WIRE_SLOTS] }],
+  ["recharge spent not a slot", parseRecharge, { ...recharge, spent: ["0"] }],
+  ["recharge with no spent list", parseRecharge, { slots: recharge.slots }],
   ["refused of an unknown kind", parseCastRefused, { kind: "move", reason: "stuck" }],
   ["adrenaline below 0", parseAdrenaline, { slots: [0, -25], lossInSeconds: null }],
   ["adrenaline lost in less than no time", parseAdrenaline, { slots: [25], lossInSeconds: -1 }],
@@ -815,7 +1087,7 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "recharge with a NaN",
     parseRecharge,
-    { slots: [{ slot: 0, remainingSeconds: NaN, totalSeconds: 5 }] },
+    { ...recharge, slots: [{ slot: 0, remainingSeconds: NaN, totalSeconds: 5 }] },
   ],
   ["lobby-join without a name", parsePeerLobbyJoin, { protocolVersion: PROTOCOL_VERSION }],
   [
@@ -841,12 +1113,12 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "lobby-join with an upper-case ticket id (#871)",
     parsePeerLobbyJoin,
-    { ...lobbyJoin, admission: { ...admission, ticketId: "AB".repeat(32) } },
+    { ...lobbyJoin, admission: { ...admission, seatKey: "AB".repeat(32) } },
   ],
   [
     "lobby-join with a short ticket id (#871)",
     parsePeerLobbyJoin,
-    { ...lobbyJoin, admission: { ...admission, ticketId: "ab".repeat(31) } },
+    { ...lobbyJoin, admission: { ...admission, seatKey: "ab".repeat(31) } },
   ],
   [
     "lobby-join with a long admission signature (#871)",
@@ -856,10 +1128,79 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "lobby-join with an admission of no signature (#871)",
     parsePeerLobbyJoin,
-    { ...lobbyJoin, admission: { ticketId: admission.ticketId } },
+    { ...lobbyJoin, admission: { seatKey: admission.seatKey } },
   ],
   ["lobby-hello with a field (#871)", parsePeerLobbyHello, { ticketId: "ab".repeat(32) }],
   ["lobby-welcome of no signature (#871)", parseWireLobbyWelcome, {}],
+  ["stay-together of no key (#882)", parsePeerStayTogether, {}],
+  ["stay-together of a short key (#882)", parsePeerStayTogether, { memberKey: "ab".repeat(31) }],
+  [
+    "stay-together of an upper-case key (#882)",
+    parsePeerStayTogether,
+    { memberKey: "AB".repeat(32) },
+  ],
+  ["party-proposal of one (#1078)", parseWirePartyProposal, proposalOf(["ab".repeat(32)])],
+  [
+    "party-proposal unsorted (#1078)",
+    parseWirePartyProposal,
+    proposalOf(["cd".repeat(32), "ab".repeat(32)]),
+  ],
+  [
+    "party-proposal with no group (#1078)",
+    parseWirePartyProposal,
+    { members: ["ab".repeat(32), "cd".repeat(32)] },
+  ],
+  ["party-consent with no consent (#1078)", parsePeerPartyConsent, { memberKey: "ab".repeat(32) }],
+  [
+    "party-consent with a short consent (#1078)",
+    parsePeerPartyConsent,
+    { ...partyConsent, consent: "ef".repeat(63) },
+  ],
+  [
+    "party-consent of a non-hex key (#1078)",
+    parsePeerPartyConsent,
+    { ...partyConsent, memberKey: "zz".repeat(32) },
+  ],
+  ["party-formed of one (#882)", parseWirePartyFormed, partyOf(["ab".repeat(32)])],
+  [
+    "party-formed of five (#882)",
+    parseWirePartyFormed,
+    partyOf(["1", "2", "3", "4", "5"].map((digit) => digit.repeat(64))),
+  ],
+  [
+    "party-formed unsorted (#882)",
+    parseWirePartyFormed,
+    partyOf(["cd".repeat(32), "ab".repeat(32)]),
+  ],
+  [
+    "party-formed with a key twice (#882)",
+    parseWirePartyFormed,
+    partyOf(["ab".repeat(32), "ab".repeat(32)]),
+  ],
+  [
+    "party-formed of a non-hex key (#882)",
+    parseWirePartyFormed,
+    partyOf(["ab".repeat(32), "zz".repeat(32)]),
+  ],
+  [
+    "party-formed with a consent too few (#1078)",
+    parseWirePartyFormed,
+    { ...partyOf(["ab".repeat(32), "cd".repeat(32)]), consents: ["ef".repeat(64)] },
+  ],
+  [
+    "party-formed with a non-hex consent (#1078)",
+    parseWirePartyFormed,
+    {
+      ...partyOf(["ab".repeat(32), "cd".repeat(32)]),
+      consents: ["ef".repeat(64), "zz".repeat(64)],
+    },
+  ],
+  [
+    "party-formed with no group (#1078)",
+    parseWirePartyFormed,
+    { members: ["ab".repeat(32), "cd".repeat(32)], consents: ["ef".repeat(64), "ef".repeat(64)] },
+  ],
+  ["party-split with a field (#882)", parseWirePartySplit, { members: [] }],
   [
     "lobby-welcome of a non-hex signature (#871)",
     parseWireLobbyWelcome,
@@ -948,6 +1289,11 @@ describe("the P2P validators (#82)", () => {
 
   it.each(MALFORMED)("reject %s", (_, parse, value) => {
     expect(parse(value)).toBeUndefined();
+  });
+
+  it("cut a summary name to MAX_WIRE_TEXT (#1057)", () => {
+    const long = { ...ended, summary: [{ ...summaryRow, name: "x".repeat(MAX_WIRE_TEXT + 5) }] };
+    expect(parseWireEnded(long)?.summary[0]?.name).toHaveLength(MAX_WIRE_TEXT);
   });
 
   it("ignore unknown fields, and drop them", () => {

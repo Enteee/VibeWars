@@ -154,6 +154,25 @@ Code: `apps/web/src/net/transport/nostr-queue.ts` and the queue under
 Pass: every step as written. A pair that queues but never meets, with
 `scripts/net/nostr-kind-probe.mjs` passing, is a bug against #854.
 
+## Stay together over real relays
+
+Code: `packages/game-session/src/stay-together.ts`, `lobby-host.ts` and
+`queue-client.ts`, and `apps/web/src/main.ts` (#882). On the Pages
+`/next/` build, with six players in 2 v 2, at least two of them on
+another network.
+
+1. Four press _Random Arena_ in 2 v 2 and play the match to its end.
+2. Four seconds after the result, the two winners see _Stay together
+   (15)_ counting down beside _Queue again_; the losers do not.
+3. Both winners press it. Both land on the searching screen at once,
+   counting 2 searching; one more stranger brings it to 3, a fourth
+   to a match, the two winners on one side.
+4. Win again and repeat, but one winner presses _Queue again_ instead:
+   the other sees "The team split up" under the searching screen, queued
+   alone.
+
+Pass: every step as written.
+
 ## Music under load, on a phone
 
 Code: `apps/web/src/music/host/` and `scripts/music-stress.mjs` (#420).

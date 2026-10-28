@@ -45,7 +45,13 @@ function skill(id: string): Skill {
 function wielding(weapon: Weapon, attributeId: string): ResolvedEquipment {
   return {
     ...unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
-    mainHand: { weapon, attributeId, damageType: weapon.damageType, requirementMet: true },
+    mainHand: {
+      weapon,
+      attributeId,
+      damageType: weapon.damageType,
+      requirementMet: true,
+      creatureDamageScale: undefined,
+    },
   };
 }
 
@@ -72,7 +78,7 @@ function escaping(weapon: Weapon, attributeId: string): Combatant {
 function swing(attacker: Combatant, seed = 1): CombatEvent[] {
   return resolveSwing({
     attacker,
-    target: { combatant: victim(), position: vec2(40, 0) },
+    target: { combatant: victim(), position: vec2(40, 0), creature: undefined },
     surroundings: new Map(),
     rng: createRng(seed),
     rules: RULES.combat,

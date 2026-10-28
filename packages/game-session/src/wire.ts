@@ -9,6 +9,9 @@ import {
   type ActiveStatus,
   type CombatEvent,
   type CombatLogEntry,
+  type GroundEffect,
+  type Participant,
+  type ProfessionId,
   type RankHolder,
   type SkillBar,
   type StatusCategory,
@@ -22,10 +25,12 @@ import {
   type WirePlayer,
   type WireProjectile,
   type WireSnapshot,
+  type WireWeaponSets,
 } from "@vibewars/game-protocol";
 
 import type {
   CombatMessage,
+  GroundEffectSnapshot,
   MatchSnapshot,
   PlayerSnapshot,
   ProjectileSnapshot,
@@ -122,7 +127,8 @@ function tenths(seconds: number): number {
  * match clock, how long it was applied for, and who applied it. One with
  * no end of its own is what its bearer bears while activating
  * (`whileActivating`): it ends with `cast`, so it takes the cast's times.
- * A maintained enchantment (#837) has no end at all: both times `null`.
+ * A maintained enchantment (#837) and a spirit's aura (#1064) have no end
+ * at all: both times `null`.
  * A duration under 0.05 s still goes as 0.1, as the wire refuses one of
  * nothing.
  */
@@ -131,7 +137,7 @@ export function statusSnapshot(
   elapsedSeconds: number,
   cast: { readonly remainingSeconds: number; readonly totalSeconds: number } | undefined,
 ): StatusSnapshot {
-  if (status.maintained !== null) {
+  if (status.maintained !== null || status.projected) {
     return { id: status.id, endsAt: null, durationSeconds: null, casterId: status.sourceId };
   }
   const [remaining, duration] = Number.isFinite(status.remainingSeconds)
@@ -146,8 +152,31 @@ export function statusSnapshot(
 }
 
 /**
+ * A ground effect as the wire carries it (#1087): when it ends on the
+ * match clock and how long it was placed for, both to 0.1 s, the latter
+ * never under it, as the wire refuses one of nothing. A ward's circle is
+ * its aura's reach; a trap's (#1105), the area its spring hits.
+ */
+export function groundEffectSnapshot(
+  effect: Readonly<GroundEffect>,
+  elapsedSeconds: number,
+): GroundEffectSnapshot {
+  return {
+    id: effect.id,
+    skillId: effect.skillId,
+    team: effect.team,
+    x: effect.position.x,
+    y: effect.position.y,
+    radius: effect.act.kind === "aura" ? effect.act.aura.radius : effect.act.trap.area.radius,
+    endsAt: tenths(elapsedSeconds + effect.remainingSeconds),
+    durationSeconds: Math.max(0.1, tenths(effect.durationSeconds)),
+  };
+}
+
+/**
  * The bar a client draws, every slot in its place, `null` where it is
- * empty (#347). Energy costs are what `bearer` pays right now, Expertise
+ * empty (#347): `skillBar` as `resolvedBar` has it, a copy standing in a
+ * slot (#469) drawn there. Energy costs are what `bearer` pays right now, Expertise
  * (#528) at its weakened rank (#762) and an active glyph (#637) and all.
  */
 export function skillBarSlots(skillBar: SkillBar, bearer: RankHolder): (SkillBarSlot | null)[] {
@@ -165,6 +194,26 @@ export function skillBarSlots(skillBar: SkillBar, bearer: RankHolder): (SkillBar
       rechargeSeconds: skill?.rechargeSeconds ?? 0,
     };
   });
+}
+
+/**
+ * The weapon sets `participant` carries, as its own client sees them
+ * (#489): set 1 first, `null` where one is empty, and which is in hand or
+ * queued.
+ */
+export function wireWeaponSets(participant: Participant): WireWeaponSets {
+  return {
+    sets: participant.weaponSets.map((set) =>
+      set === null
+        ? null
+        : {
+            weaponId: set.equipment.mainHand.weapon.id,
+            offhandId: set.equipment.offhandId ?? null,
+          },
+    ),
+    active: participant.activeWeaponSet,
+    pending: participant.pendingWeaponSet ?? null,
+  };
 }
 
 /**
@@ -277,6 +326,9 @@ function wireEvent(event: CombatEvent): WireCombatEvent {
         statusId: event.statusId,
         fromId: event.casterId,
       };
+    case "shadow-stepped":
+    case "teleported":
+      return { ...none, kind: event.kind, targetId: event.targetId, fromId: event.toId };
     case "interrupted":
     case "cancelled":
       return { ...none, kind: event.kind, targetId: event.targetId, skillId: event.skillId };
@@ -376,6 +428,9 @@ function combatEvent(event: WireCombatEvent): CombatEvent | undefined {
       return isStatusId(statusId) && fromId !== null
         ? { kind: event.kind, targetId, fromId, statusId }
         : undefined;
+    case "shadow-stepped":
+    case "teleported":
+      return fromId === null ? undefined : { kind: event.kind, targetId, toId: fromId };
     case "interrupted":
     case "cancelled":
       return skillId === null ? undefined : { kind: event.kind, targetId, skillId };
@@ -419,6 +474,53 @@ function absent<T>(value: T | null): T | undefined {
   return value ?? undefined;
 }
 
+/** The fields of a body's `WirePlayer` that say who it is, not how it stands. */
+export type WireIdentity = Pick<
+  WirePlayer,
+  "name" | "team" | "primaryProfession" | "secondaryProfession" | "creature"
+>;
+
+/** What a seat says about who sits in it. */
+export interface SeatIdentity {
+  readonly name: string;
+  readonly team: 0 | 1;
+  readonly primaryProfession: ProfessionId;
+  readonly secondaryProfession: ProfessionId | undefined;
+}
+
+/**
+ * Who a body on the wire is: a seat's player, or a creature (#1052),
+ * named for its kind, on its owner's team, with no professions.
+ * `undefined` for a body with no seat that is not a seated player's
+ * creature: it is not sent.
+ */
+export function wireIdentity(
+  participant: Pick<Participant, "id" | "creature">,
+  seats: ReadonlyMap<string, SeatIdentity>,
+): WireIdentity | undefined {
+  const seat = seats.get(participant.id);
+  if (seat !== undefined) {
+    return {
+      name: seat.name,
+      team: seat.team,
+      primaryProfession: seat.primaryProfession,
+      secondaryProfession: seat.secondaryProfession ?? null,
+      creature: null,
+    };
+  }
+  const { creature } = participant;
+  const owner = creature === undefined ? undefined : seats.get(creature.ownerId);
+  return creature === undefined || owner === undefined
+    ? undefined
+    : {
+        name: creature.name,
+        team: owner.team,
+        primaryProfession: null,
+        secondaryProfession: null,
+        creature: { ownerId: creature.ownerId, kind: creature.kind },
+      };
+}
+
 /**
  * Each `PlayerSnapshot` field from its `WirePlayer` field. Typed both ways,
  * so a field added to either type without the other does not compile.
@@ -460,6 +562,7 @@ export function playerSnapshot(player: WirePlayer): PlayerSnapshot | undefined {
       : undefined,
     team: player.team,
     dead: player.dead,
+    corpseExploited: player.corpseExploited,
     castingSkillId: absent(player.castingSkillId),
     castRemaining: player.castRemaining,
     castTotal: player.castTotal,
@@ -469,6 +572,7 @@ export function playerSnapshot(player: WirePlayer): PlayerSnapshot | undefined {
     healthPips: player.healthPips,
     energyPips: player.energyPips,
     statuses,
+    creature: player.creature ?? undefined,
   };
 }
 
@@ -508,5 +612,10 @@ export function matchSnapshot(
     winningTeam: absent(snapshot.winningTeam),
     endReason: absent(snapshot.endReason),
     projectiles: snapshot.projectiles.map(projectileSnapshot),
+    groundEffects: snapshot.groundEffects,
+    // Only the host's `"traps"` carries them (#1105).
+    traps: [],
+    // Only the host's `ended` carries it.
+    summary: undefined,
   };
 }

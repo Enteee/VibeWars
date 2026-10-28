@@ -53,6 +53,7 @@ const SCYTHE: ResolvedEquipment = {
     attributeId: "dervish.scythe-mastery",
     damageType: weaponDamageType(WEAPONS.scythe, "dervish.scythe-mastery"),
     requirementMet: true,
+    creatureDamageScale: undefined,
   },
 };
 
@@ -94,7 +95,10 @@ function crowd(self: Combatant): {
     [foe("far"), vec2(30 + AREA_ADJACENT + 1, 0)],
   ];
   const surroundings: Surroundings = new Map(
-    placed.map(([combatant, position]) => [combatant.id, { combatant, position }]),
+    placed.map(([combatant, position]) => [
+      combatant.id,
+      { combatant, position, creature: undefined },
+    ]),
   );
   return { target: placed[1]?.[0] ?? foe("missing"), surroundings };
 }
@@ -221,7 +225,7 @@ describe("earth attacks (#1021)", () => {
     // A Warrior meets an earth blow with 80 armor, not 100.
     const struck = (victim: Combatant, blow = PLAIN_BLOW): number => {
       const events: CombatEvent[] = [];
-      landBlow(weaponSnapshotOf(self), victim, blow, false, steady(), RULES, events);
+      landBlow(weaponSnapshotOf(self), self, victim, blow, false, steady(), RULES, events);
       return damage(events)[0]?.[1] ?? 0;
     };
     const plain80 = struck(foe("plain", unarmedResolvedEquipment(80)));
@@ -235,6 +239,7 @@ describe("earth attacks (#1021)", () => {
     const events: CombatEvent[] = [];
     landBlow(
       weaponSnapshotOf(bare),
+      bare,
       foe("warrior", WARRIOR_ARMOR),
       PLAIN_BLOW,
       false,

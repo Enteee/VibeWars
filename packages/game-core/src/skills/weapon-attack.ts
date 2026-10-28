@@ -13,13 +13,13 @@ import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
 import { distance } from "../vec2.js";
 import { chainAllows, markChain } from "./chain.js";
-import { mitigate, weaponAttributeMultiplier, type DamagePacket } from "./damage.js";
+import { hitLocationOf, mitigate, weaponAttributeMultiplier, type DamagePacket } from "./damage.js";
 import {
   applyDamage,
   applyEffects,
   applySkillEffects,
   gainEnergy,
-  interruptIfCastingSpell,
+  interruptOnHit,
   stateHolds,
   type CombatEvent,
   type SkillResolution,
@@ -176,6 +176,8 @@ export interface WeaponSnapshot {
   readonly requirementMet: boolean;
   /** The multiplier on the weapon's roll: weakness's 0.34 (#762). */
   readonly damageMultiplier: number;
+  /** Added to the chance to crit by the attacker's statuses: Critical Eye's 0.13 (#988). */
+  readonly criticalChanceBonus: number;
   /**
    * The type the blow deals unless the skill names its own: a status's
    * `attackDamageType` (#1021), else the weapon's. Riders still read the
@@ -193,6 +195,7 @@ export function weaponSnapshotOf(attacker: Combatant): WeaponSnapshot {
     criticalStrikes: rankIn(attacker, CRITICAL_STRIKES_ATTRIBUTE),
     requirementMet: mainHand.attributeId === undefined || rank >= mainHand.weapon.requirement.rank,
     damageMultiplier: weaponDamageMultiplierOf(attacker),
+    criticalChanceBonus: aggregateModifiers(attacker.statuses.active).criticalChanceBonus,
     damageType: attackDamageTypeOf(attacker) ?? mainHand.damageType,
   };
 }
@@ -202,7 +205,8 @@ export function weaponSnapshotOf(attacker: Combatant): WeaponSnapshot {
  * share per rank in the weapon's mastery, the attribute its requirement
  * names, plus Critical Strikes' (#606). A caster weapon's nominated
  * attribute is no mastery, and fists have none, so both crit at the base
- * chance and Critical Strikes'.
+ * chance and Critical Strikes'. Statuses add theirs (#988), all of it at
+ * most 1.
  */
 export function criticalChance(snapshot: WeaponSnapshot, rules: CombatRules): number {
   const mastery = snapshot.mainHand.weapon.requirement.kind === "fixed" ? snapshot.rank : 0;
@@ -210,17 +214,20 @@ export function criticalChance(snapshot: WeaponSnapshot, rules: CombatRules): nu
     1,
     rules.criticalBaseChance +
       rules.criticalChancePerRank * mastery +
-      CRITICAL_STRIKES_CHANCE_PER_RANK * snapshot.criticalStrikes,
+      CRITICAL_STRIKES_CHANCE_PER_RANK * snapshot.criticalStrikes +
+      snapshot.criticalChanceBonus,
   );
 }
 
 /**
- * Critical Strikes' energy for a critical blow (#606), up to the
- * attacker's maximum. A dead attacker, as one whose arrow lands after it
- * fell, gains none.
+ * Critical Strikes' energy for a critical blow (#606), and its statuses'
+ * (#988, Critical Eye's 1), up to the attacker's maximum. Statuses are
+ * read as the blow lands. A dead attacker, as one whose arrow lands after
+ * it fell, gains none.
  */
 export function gainCriticalEnergy(attacker: Combatant, rank: number, events: CombatEvent[]): void {
-  gainEnergy(attacker, criticalStrikesEnergy(rank), events);
+  const extra = aggregateModifiers(attacker.statuses.active).energyPerCritical;
+  gainEnergy(attacker, criticalStrikesEnergy(rank) + extra, events);
 }
 
 /**
@@ -358,12 +365,14 @@ export function settleBlow(
  * crits; a projectile never does that way, however it lands. Returns
  * whether the blow crit.
  *
- * A dazed victim casting a spell is interrupted first, before the
- * damage (#546): every landed attack comes here, a swing, an attack
- * skill or an arrow, and a miss or a block never does.
+ * A dazed victim casting a spell, or one setting a trap, is
+ * interrupted first, before the damage (#546, #1105): every landed
+ * attack comes here, a swing, an attack skill or an arrow, and a miss or
+ * a block never does.
  */
 export function landBlow(
   snapshot: WeaponSnapshot,
+  attacker: Combatant | undefined,
   victim: Combatant,
   blow: BlowRule,
   exposed: boolean,
@@ -371,9 +380,7 @@ export function landBlow(
   rules: CombatRules,
   events: CombatEvent[],
 ): boolean {
-  if (victim.statuses.active.some(({ id }) => getStatusDefinition(id).interruptsSpells)) {
-    interruptIfCastingSpell(victim, events);
-  }
+  interruptOnHit(victim, events);
   const { weapon } = snapshot.mainHand;
   const rolledCritical = rng.nextFloat() < criticalChance(snapshot, rules);
   const critical = rolledCritical || (exposed && weapon.projectileSpeed === undefined);
@@ -385,7 +392,7 @@ export function landBlow(
       base *
       snapshot.damageMultiplier *
       blow.weaponDamage *
-      weaponAttributeMultiplier(snapshot.rank, rules) *
+      (snapshot.mainHand.creatureDamageScale ?? weaponAttributeMultiplier(snapshot.rank, rules)) *
       (snapshot.requirementMet ? 1 : rules.unmetRequirementMultiplier),
     armorIgnoring: blow.bonus,
     type: blow.damageType ?? snapshot.damageType,
@@ -395,7 +402,16 @@ export function landBlow(
       strengthArmorPenetration(blow.strengthRank, weapon.armorPenetration),
     ),
   };
-  applyDamage(victim, mitigate(packet, victim, rules), packet.type, critical, events);
+  // After the crit and damage rolls: the piece it lands on (#1135).
+  const location = hitLocationOf(packet, rng);
+  applyDamage(
+    victim,
+    mitigate(packet, victim, rules, location),
+    packet.type,
+    critical,
+    events,
+    attacker,
+  );
   return critical;
 }
 
@@ -550,7 +566,7 @@ function strike(
     return;
   }
   const snapshot = weaponSnapshotOf(attacker);
-  if (landBlow(snapshot, victim, PLAIN_BLOW, swing.exposed(victim), rng, rules, events)) {
+  if (landBlow(snapshot, attacker, victim, PLAIN_BLOW, swing.exposed(victim), rng, rules, events)) {
     gainCriticalEnergy(attacker, snapshot.criticalStrikes, events);
   }
   events.push(
@@ -612,9 +628,10 @@ export function resolveSwing(swing: Swing): {
  * attacker, as Wounding Strike's lost enchantment (#845), needs a hit
  * too. A victim that blocks gets the skill's `onBlocked` effects instead
  * (#534); an `unblockable` one rolls no block at all (Wild Throw, #523).
- * A chain attack on a victim without the mark it follows misses it
- * outright, before blind, read once before the first blow; a chain
- * attack that hits leaves its own mark (#831).
+ * A chain attack on a victim without the mark it follows, or for which
+ * its `requires` does not hold (#1041), misses it outright, before
+ * blind, read once before the first blow; a chain attack that hits
+ * leaves its own mark (#831).
  *
  * A dual attack strikes twice (#885): each blow rolls its own blind,
  * block, crit and damage, and the skill's effects land after each blow
@@ -682,7 +699,11 @@ export function resolveAttackSkill(
     if (victim.dead) {
       continue;
     }
-    if (!chainAllows(caster, skill, victim.id)) {
+    const requires = skill.attack?.chain?.requires;
+    if (
+      !chainAllows(caster, skill, victim.id) ||
+      (requires !== undefined && !stateHolds(requires, caster, victim, surroundings))
+    ) {
       events.push({ kind: "attack-missed", targetId: victim.id, reason: "out-of-sequence" });
       continue;
     }
@@ -709,6 +730,7 @@ export function resolveAttackSkill(
       if (
         landBlow(
           snapshot,
+          caster,
           victim,
           settleBlow(blow, caster, victim, surroundings),
           exposed(victim),

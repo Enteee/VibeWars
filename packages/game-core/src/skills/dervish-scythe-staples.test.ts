@@ -47,6 +47,7 @@ function wielding(weapon: Weapon, attributeId: string): ResolvedEquipment {
       attributeId,
       damageType: weaponDamageType(weapon, attributeId),
       requirementMet: true,
+      creatureDamageScale: undefined,
     },
   };
 }
@@ -68,7 +69,12 @@ function foe(id: string, overrides: Partial<Combatant> = {}): Combatant {
 }
 
 function around(...placed: readonly [Combatant, Vec2][]): Surroundings {
-  return new Map(placed.map(([combatant, position]) => [combatant.id, { combatant, position }]));
+  return new Map(
+    placed.map(([combatant, position]) => [
+      combatant.id,
+      { combatant, position, creature: undefined },
+    ]),
+  );
 }
 
 /** `user` pays for `skillId` and it lands on `targets`. */
@@ -105,7 +111,7 @@ describe("Vow of Strength (#939)", () => {
         rng: createRng(1),
         rules: RULES,
         surroundings,
-        usedSkillId: undefined,
+        usedSkill: undefined,
       },
       new Set(),
     ).flatMap(({ events }) => events);
@@ -239,7 +245,7 @@ describe("Sand Shards (#939)", () => {
     );
     resolveSwing({
       attacker: self,
-      target: { combatant: target, position: vec2(40, 0) },
+      target: { combatant: target, position: vec2(40, 0), creature: undefined },
       surroundings,
       rng: createRng(5),
       rules: RULES,

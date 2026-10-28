@@ -90,22 +90,86 @@ second row, never `+N`, and with none the monitor takes no room.
 No seconds on the icon, as GW1: the hover says the name, the category,
 what it does, who it is from and the whole seconds left.
 
+### HUD layout
+
+The match HUD sits as GW1's does (#1042): what you look at in the fight
+is at the screen's two centres, and the arena between them is clear.
+
+```text
+ now-playing        [ scoreboard: score · clock · enemies ]        controls
+                    [ target frame, effects growing down   ]
+
+                               (arena)                             party
+
+ chat               [ hint / message                       ]
+                    [ your effects, growing up             ]
+                    [ morale · gear                        ]
+                    [ health                               ]
+                    [ energy                               ]
+                    [ skill bar                            ]
+```
+
+Your bars are as wide as the skill bar. The party window (#1055) holds
+the right edge, vertically centred.
+
 ### Target frame
 
 The match HUD's target frame (#484) is three rows of fixed size, so the
-HUD never jumps when a row has nothing to show, and one that grows:
+HUD never jumps when a row has nothing to show, and one under them that
+grows downward:
 
 | Row     | Shows                                                                                                     |
 | ------- | --------------------------------------------------------------------------------------------------------- |
 | Header  | Profession icons, the name in `ink`, the "attacking" swords                                               |
 | Health  | A `hud-health` bar labelled with the percentage, rounded down; `412 / 480` added for you and allies       |
-| Effects | The target's statuses as your effects monitor shows them, at 16 px with a 4 px tick; none, no room (#835) |
 | Cast    | While the target casts: the type badge, the skill's name, and a 6 px bar filling in `ink`, never blue     |
+| Effects | The target's statuses as your effects monitor shows them, at 16 px with a 4 px tick; none, no room (#835) |
 
 A foe shows the percentage alone, as GW1 shows a foe's bar alone. A dead
 target has an empty track edged in `dead`. An interrupted cast keeps the
 row for 400 ms with a `damage` ✕ and edge, a cancelled one dimmed, as the
 skill slot does (#300). Armor is in the frame's hover title.
+
+### Match summary
+
+When a match ends (#1057), a table per team sits under the result banner:
+yours on the left, or team 1 for a spectator. A queued match carries it
+on to the queue screen, under the outcome line.
+
+| Name | Damage | Healing | Taken | Kills | Deaths | Interrupts |
+| ---- | -----: | ------: | ----: | ----: | -----: | ---------: |
+
+- `panel` at 92 % under each table, edged in `line`; the caption and the
+  column heads in `ink-dim`, the caption uppercase.
+- Names left, numbers right in tabular figures, whole, no units. A long
+  name is cut with an ellipsis at 9 rem.
+- **Your row** has a 3 px `friend` border on its left edge; nothing else
+  about it changes.
+- **The best of each column**, across the whole match, is `ink` bold, every
+  tie included. A column that is zero throughout has no best.
+- **Zeros** are `ink-dim`, so the numbers that happened stand out.
+- 0.75 rem monospace, both tables side by side: 8v8 fits at 1024 px wide
+  with no scroll. It takes no clicks.
+
+### Party window
+
+Your team's health at a glance (#1055), on the right edge, vertically
+centred: one row per member, you first, then the others in seat order.
+Creatures are not listed; alone, or spectating, there is no window. A
+long party starts under the compass instead of centring (#1056). In
+the small Training stage it sits top-left and compact, the side the
+dummies leave clear.
+
+| Part    | Look                                                                                                                 |
+| ------- | -------------------------------------------------------------------------------------------------------------------- |
+| Panel   | 200 px wide, `panel` at 85 %, 1 px `line` border; its top never above the compass plus 8 px, scrolls past the bottom |
+| Row     | Profession icons, the name in `ink`, and under it a 12 px health bar                                                 |
+| Health  | Built as yours: the same tint, deep-wound band and pips, labelled with the percentage, as the target frame           |
+| Target  | Your target's row outlined 1 px `target` (`#ffd866`)                                                                 |
+| Dead    | The name in `dead`, and the word "dead" where the bar was                                                            |
+| Compact | Past 8 members, name and a 10 px bar on one line, labelled with the percentage alone, so 16 still fit                |
+
+No energy, as GW1. A click on a row targets that member, yourself too.
 
 ### Professions (menus only)
 
@@ -130,31 +194,34 @@ so the silhouette identifies the profession and the colour only supports it.
 
 ## Shapes
 
-| Thing        | Shape                                                 |
-| ------------ | ----------------------------------------------------- |
-| Actor        | Filled circle in team colour                          |
-| You          | Your team's circle plus an `ink` rim, 2 px inside     |
-| Target       | `target` ring, 9 px outside the actor                 |
-| Dead         | Hollow `dead` circle, no bars                         |
-| Cast         | Bar above the health bar, fills as the cast completes |
-| Condition    | Circle plate, glyph inside                            |
-| Hex          | Diamond plate, glyph inside                           |
-| Enchantment  | Rounded-square plate, glyph inside                    |
-| Stance       | Pentagon plate, point up, glyph inside                |
-| Preparation  | Triangle plate, point up, glyph inside                |
-| Glyph        | Triangle plate, point down, glyph inside              |
-| Shout        | `ink` hexagon plate, glyph inside                     |
-| Chant        | `ink` banner plate, notched at the foot, glyph inside |
-| Weapon spell | Shield plate, glyph inside                            |
-| Skill effect | `ink-dim` wide capsule plate, glyph inside            |
-| Area flash   | Caster's team colour ring at the area's true radius   |
-| Swing flash  | Attacker's team colour arc between it and its target  |
-| Projectile   | Weapon silhouette, tinted the shooter's team colour   |
-| Weapon mark  | `ink` weapon held in the hands, one shape per weapon  |
-| Walk marker  | `ink` cross of four ticks where you clicked the floor |
-| Called foe   | `condition` chevron pointing down, over its name      |
-| Ping         | `friend` pin on the spot, a `friend` ring growing off |
-| Watched ally | Four `ink` corner brackets round the body             |
+| Thing        | Shape                                                   |
+| ------------ | ------------------------------------------------------- |
+| Actor        | Filled circle in team colour                            |
+| You          | Your team's circle plus an `ink` rim, 2 px inside       |
+| Target       | `target` ring, 9 px outside the actor                   |
+| Enchanted    | Solid `enchantment` ring, 2.5 px outside the actor      |
+| Hexed        | Broken `hex` ring, 8 dashes, 5 px outside the actor     |
+| Dead         | Hollow `dead` circle, no bars                           |
+| Cast         | Bar above the health bar, fills as the cast completes   |
+| Condition    | Circle plate, glyph inside                              |
+| Hex          | Diamond plate, glyph inside                             |
+| Enchantment  | Rounded-square plate, glyph inside                      |
+| Stance       | Pentagon plate, point up, glyph inside                  |
+| Preparation  | Triangle plate, point up, glyph inside                  |
+| Glyph        | Triangle plate, point down, glyph inside                |
+| Shout        | `ink` hexagon plate, glyph inside                       |
+| Chant        | `ink` banner plate, notched at the foot, glyph inside   |
+| Weapon spell | Shield plate, glyph inside                              |
+| Skill effect | `ink-dim` wide capsule plate, glyph inside              |
+| Area flash   | Caster's team colour ring at the area's true radius     |
+| Ward         | Owner's team colour disc, faint, its skill's icon in it |
+| Trap         | `friend` rim alone, its skill's icon in it; yours only  |
+| Swing flash  | Attacker's team colour arc between it and its target    |
+| Projectile   | Weapon silhouette, tinted the shooter's team colour     |
+| Weapon mark  | `ink` weapon held in the hands, one shape per weapon    |
+| Walk marker  | `ink` cross of four ticks where you clicked the floor   |
+| Called foe   | `condition` chevron pointing down, over its name        |
+| Ping         | `friend` pin on the spot, a `friend` ring growing off   |
 
 The status plates differ in outline as well as colour. Hex purple and
 enchantment teal are close for a deuteranope (simulated ΔE ≈ 18); diamond
@@ -211,6 +278,29 @@ It cannot be confused with the target ring. The target ring is yellow and
 hugs one actor (9 px outside a radius of 14). The flash is team-coloured,
 at least 40 units in radius, and gone in under half a second.
 
+### Ward and well
+
+A ward (#1087) or a well (#1104, on the corpse it exploited) lies on the
+ground for as long as it lasts, both drawn the same:
+
+- **Colour is its owner's team**, `friend` or `foe`, as the area flash's.
+- **A fill at 15 % alpha and a 1.5 px rim at 60 %**, at its true radius:
+  who stands inside it is who it reaches. It does not fade or pulse, and
+  does not change as it nears its end.
+- **Its skill's icon at the centre**, 22 units across at 55 % alpha.
+- **It is drawn under the grid, the walls and every body**, so a ward
+  never hides who stands in it.
+
+It cannot be confused with the area flash, which is gone in 0.4 s, or a
+ping, which is a pin and a growing ring.
+
+### Trap
+
+A trap (#1105) is drawn as a ward is, with no fill: the rim alone, at
+the radius its spring hits, with its skill's icon at the centre. Only
+its own team ever sees one, so it is always `friend`. An open ring
+reads as "waiting", a filled disc as "acting now".
+
 ### Swing flash
 
 When a weapon attack lands or misses (#161), the scene flashes the swing:
@@ -248,11 +338,12 @@ your target, and a small ink ring beside a body is a focus. An × of ticks
 is the only shape here that is a point, not a thing, and the open centre
 shows exactly where you clicked.
 
-### Calls, pings and the watched ally
+### Calls and pings
 
-A wheel click calls a foe for your team, pings the ground, or watches an
-ally (#443). Each has a shape nothing else in the arena has, so none can be
-taken for the target ring, the off-hand focus or the area flash.
+A wheel click calls a foe for your team, or pings the point under it, on
+the ground or on an ally (#443, #1055). Each has a shape nothing else in
+the arena has, so none can be taken for the target ring, the off-hand
+focus or the area flash.
 
 - **The called foe** wears a chevron pointing down at it, its tip 4 px
   above the name label's top, so it clears the name at every zoom. The two arms are 6
@@ -268,11 +359,31 @@ taken for the target ring, the off-hand focus or the area flash.
   radius, fading in 0.4 s, with nothing standing in it; a ping is small,
   slow, and has its pin. Under the actors, as the walk marker is. Reduced
   motion: the ring holds at 6 units, whole, until the ping goes.
-- **The watched ally** gets four `ink` corner brackets, a square r + 13
-  out, each arm 5 units, 2 px on a 4 px `edge` casing. Open at the middle
-  of every side, it is never a ring: not the target ring, not the focus.
-  Only you see it, so it is `ink`, the colour of "you". A corner panel
-  shows the ally's name and health.
+
+### Compass
+
+GW1's radar (#486), top right under the match buttons: a disc 160 px
+across (120 px on a window under 1280 px wide), centred on you, north up,
+showing everything within the arena's longer side, at most 1700 units
+(`RANGE_COMPASS`), so a small arena fills the disc. It never rotates, as
+the arena does not. A body beyond it is not on it: the edge markers
+(#440) give direction, the compass gives distance.
+
+- **Disc**: `panel` at 85 %, a 1 px `line` rim.
+- **Rings**: two 1 px `ink-dim` circles round you, the earshot (350,
+  solid) and cast range (420, dashed). Thin, dim and centred on you, so
+  neither reads as the target ring or an area flash.
+- **Walls**: 1 px `wall-stroke` outlines, clipped to the disc.
+- **Bodies**: 3 px dots, `friend` or `foe`, on a 1 px `edge` rim; you at
+  the centre with an `ink` rim, as in the arena, dead or not. A creature
+  (#1052) is a 2 px dot, so it never reads as a player. Corpses are not
+  shown.
+- **Your target**: a 1 px `target` ring 2 px outside its dot.
+- **The called foe**: a small `condition` chevron over its dot.
+- **Pings**: a 1 px `friend` ring growing from 3 to 10 px and fading over
+  the ping's life. Reduced motion: it holds at 3 px, whole.
+
+Clicking it does nothing. Spectators have none.
 
 ### Damage and heal numbers
 
@@ -345,14 +456,16 @@ off-hands included.
 
 Outward from the centre:
 
-| Ring     | Radius           | Style                                |
-| -------- | ---------------- | ------------------------------------ |
-| Body     | 0 … r            | Team colour fill                     |
-| Edge     | r − 1.5 … r      | 1.5 px `edge` `#0b0f14`, living only |
-| Self rim | r − 3 … r − 1    | 2 px `ink`, your own body only       |
-| Off-hand | r … r + 7        | See below, living only, left side    |
-| Weapon   | centre … r + 7.5 | See below, living only               |
-| Target   | r + 8 … r + 10   | 2 px `target`, your target only      |
+| Ring     | Radius              | Style                                 |
+| -------- | ------------------- | ------------------------------------- |
+| Body     | 0 … r               | Team colour fill                      |
+| Edge     | r − 1.5 … r         | 1.5 px `edge` `#0b0f14`, living only  |
+| Self rim | r − 3 … r − 1       | 2 px `ink`, your own body only        |
+| Off-hand | r … r + 7           | See below, living only, left side     |
+| Weapon   | centre … r + 7.5    | See below, living only                |
+| Enchant  | r + 1.75 … r + 3.25 | 1.5 px `enchantment`, while enchanted |
+| Hex      | r + 4.25 … r + 5.75 | 1.5 px `hex`, 8 dashes, while hexed   |
+| Target   | r + 8 … r + 10      | 2 px `target`, your target only       |
 
 **The target ring sits at r + 9** (operator, Q26), its 2 px stroke from
 r + 8 to r + 10, so nothing on the body reaches it: the weapon mark stops at
@@ -360,6 +473,15 @@ r + 7.5 and the off-hand mark inside r + 7. It is still drawn last. Its top
 passes under the health bar (r + 8 … r + 12 above the centre) and its bottom
 under the first status plate (from r + 6 below), both drawn over it; the
 sides, where you look for it, stay clear.
+
+**The enchantment and hex rings** (#1117) say a living body is enchanted or
+hexed, one ring per category however many: the status row says which. The
+hex ring is broken into 8 dashes at 50% duty, one centred on 12 o'clock, as
+the broken-ring hex badge; solid against broken still reads without the
+colour. Both stay inside r + 6, clear of the target ring and the status row.
+They are drawn on the body, under every mark, so the weapon and the off-hand
+cross them. They are static, reduced motion or not; a knocked-down body keeps
+them round its centre, and a corpse wears none.
 
 **The weapon mark** (#188, #418) is the weapon held in the hands: one
 silhouette for each of the 14 weapons. The shapes are data in
@@ -515,11 +637,45 @@ team:
 - **A: the primary, 11 px, before the name.** All ten read at true size.
 - **B: A, plus the secondary at 8 px in dim ink.** The secondary is mush at
   that size; at 11 px the name plate doubles in width over a 34 px bar.
-- **C: the primary on the body.** The weapon mark (#188) runs across it, so
-  it does not read.
+- **C: the primary on the body.** At full ink under the weapon mark (#188),
+  the line runs across a plate as loud as itself, so neither reads. That was
+  true of a full-ink plate; B of the body study below fixes it.
 
 It recommended A, with the pair in the target panel, where there is room
 and the profession colours are allowed.
+
+#### The glyph inside the body
+
+Decided (Q104, Q105): option **B** of the body study. Players on the map
+were hard to tell apart with the glyph only before a name that hides, so
+every body also shows its primary profession's glyph inside its circle
+(#1037):
+
+- **13 world units** square, centred on the body (radius 14), **upright**: it
+  never turns with facing. World sized, so it scales with the body at every
+  zoom.
+- Painted in `edge` at **60 %**: a dark mark on the team colour, never the
+  profession colour. The self rim stays over it.
+- **Under** the off-hand and weapon marks. The scene draws in layers, bottom
+  up: bodies, body glyphs, every mark on a body (off-hand, weapon, target
+  ring, call chevron, bars), then shots, status icons, names
+  and numbers. So in a clump a neighbour's weapon crosses your body: the
+  weapon is the more urgent read.
+- **A corpse**: the glyph in `dead` at full opacity, same size, inside the
+  hollow circle, so you can tell whom to resurrect or exploit.
+- **Knocked down**: centred, upright, scaled by the lying width (0.55, about
+  7 units), so it stays inside the flattened disc.
+- No profession: no glyph, as the name plate does.
+
+B works where C did not because the glyph is a 60 % shadow under the
+weapon, not a full-ink plate beside it: the weapon line keeps its contrast
+across it, and the glyph still reads round it.
+
+`node scripts/assets/profession-body-study.mjs` draws the three options at
+the four camera zooms: A, 9 units in full `edge`; B, 13 units at 60 %; C,
+a fixed 11 screen px, which crosses every weapon at Wide.
+
+![Profession body study](profession-body-study.svg)
 
 ### Name labels (study, not decided)
 
@@ -549,20 +705,23 @@ marker on someone, which carry that marker's colour. A stance marks you, so
 it carries the stance colour too, a preparation its amber, a glyph its
 lime and a weapon spell its periwinkle.
 
-| Type         | Badge                     |
-| ------------ | ------------------------- |
-| Attack       | Blade                     |
-| Spell        | Four-point star           |
-| Enchantment  | Solid teal ring           |
-| Hex          | Broken purple ring        |
-| Stance       | Pink pentagon ring        |
-| Preparation  | Amber triangle ring       |
-| Glyph        | Lime triangle ring, down  |
-| Weapon Spell | Periwinkle shield ring    |
-| Signet       | Ring with a seal on top   |
-| Shout        | Mouth and two sound waves |
-| Chant        | A note                    |
-| Skill        | Square                    |
+| Type           | Badge                                     |
+| -------------- | ----------------------------------------- |
+| Attack         | Blade                                     |
+| Spell          | Four-point star                           |
+| Enchantment    | Solid teal ring                           |
+| Hex            | Broken purple ring                        |
+| Stance         | Pink pentagon ring                        |
+| Preparation    | Amber triangle ring                       |
+| Glyph          | Lime triangle ring, down                  |
+| Weapon Spell   | Periwinkle shield ring                    |
+| Signet         | Ring with a seal on top                   |
+| Shout          | Mouth and two sound waves                 |
+| Chant          | A note                                    |
+| Nature Ritual  | A sprout                                  |
+| Binding Ritual | An urn on a base line                     |
+| Ward           | A ring on the ground, a post at its heart |
+| Skill          | Square                                    |
 
 ### Skill icons
 
@@ -580,7 +739,7 @@ it, not baked in, so one file serves every screen.
 |          |                 | in full, its silhouette as a 20% watermark                                 |
 | Glyph    | Primary effect  | One shape from the table below, `ink` with a `bg` casing, in the box 3..21 |
 | Modifier | How it bends it | Bottom right, on a dark disc, `ink`: up, down, less, area, clock, stun,    |
-|          |                 | bleed, self                                                                |
+|          |                 | bleed, self, bolt, half, plus, corpse (every corpse skill)                 |
 
 - **Shape first.** Glyph and modifier are `ink` only; the plate's hue is
   decoration, so every icon reads with the colour taken out.
@@ -596,8 +755,14 @@ it, not baked in, so one file serves every screen.
 - **Glyph vocabulary** (grows by effect, not by skill): heal, fireball (comet),
   axe, sword, hammer, spear, arrow, volley, interrupt (burst), speed (chevrons
   right), slow (chevrons left), dash, energy (bolt), mountain (earth), cleanse
-  (drop, struck through), armor (shield), flask, flame. A new primary effect adds a
-  glyph; a new skill adds a row.
+  (drop, struck through), armor (shield), flask, flame, trident, hawk, rock,
+  arrow-burst, arrow-pierce, arrow-flame, crescent (shadow), armor-half (a
+  half-filled shield), eye, heal-other (a head and a plus), heal-turn (a plus
+  in an arrow ring), hex-bolt (dashed ring, bolt), blade-cleanse, blade-hook,
+  blade-shards, hilt, banner-note, mountain-crack, dust, thorns, limp,
+  dagger-burst, ox-horns, spider, resurrect-seal, resurrect-arrive,
+  resurrect-return, resurrect-blood. A new primary effect adds a glyph; a new
+  skill adds a row.
 
 ### Skill slot states
 

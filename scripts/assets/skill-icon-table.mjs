@@ -23,6 +23,8 @@ export const SKILL_ICONS = {
   "warrior.swift-chop": { glyph: "axe" },
   "ranger.barrage": { glyph: "volley", modifier: "area" },
   "warrior.backbreaker": { glyph: "hammer", modifier: "down" },
+  // Placeholder until asset-designer's icon (#1097).
+  "warrior.hammer-bash": { glyph: "hammer", modifier: "stun" },
   "necromancer.blood-renewal-lite": { glyph: "heal", modifier: "down" },
   "warrior.distracting-blow": { glyph: "interrupt" },
   "ranger.broad-head-arrow": { glyph: "arrow", modifier: "stun" },
@@ -48,13 +50,17 @@ export const SKILL_ICONS = {
   "assassin.twisting-fangs": { glyph: "dagger", modifier: "clock" },
   "assassin.horns-of-the-ox": { glyph: "dagger", modifier: "stun" },
   "assassin.moebius-strike": { glyph: "dagger", modifier: "self" },
+  // The dagger chain: a cripple, its spread, a knockdown and a poison, each its own picture (#1049).
+  "assassin.leaping-mantis-sting": { glyph: "limp" },
+  "assassin.jungle-strike": { glyph: "dagger-burst" },
+  "assassin.trampling-ox": { glyph: "ox-horns" },
+  "assassin.falling-spider": { glyph: "spider" },
   "ranger.punishing-shot": { glyph: "arrow", modifier: "up" },
   "ranger.pin-down": { glyph: "pin", modifier: "less" },
   "ranger.hunters-shot": { glyph: "arrow", modifier: "bleed" },
-  // Placeholders until asset-designer's icons (#1008).
-  "ranger.crippling-shot": { glyph: "arrow", modifier: "clock" },
-  "ranger.debilitating-shot": { glyph: "arrow", modifier: "less" },
-  "ranger.burning-arrow": { glyph: "flame", modifier: "up" },
+  "ranger.crippling-shot": { glyph: "arrow-pierce", modifier: "down" },
+  "ranger.debilitating-shot": { glyph: "arrow", modifier: "bolt" },
+  "ranger.burning-arrow": { glyph: "arrow-flame" },
   "ranger.throw-dirt": { glyph: "mountain", modifier: "area" },
   "warrior.sprint": { glyph: "speed" },
   "assassin.dash": { glyph: "dash" },
@@ -66,6 +72,11 @@ export const SKILL_ICONS = {
   "paragon.wild-throw": { glyph: "spear" },
   // A placeholder: the bleed mark stands in for its Deep Wound (#921).
   "paragon.cruel-spear": { glyph: "spear", modifier: "bleed" },
+  "paragon.barbed-spear": { glyph: "spear-barb", modifier: "bleed" },
+  "paragon.maiming-spear": { glyph: "spear", modifier: "down" },
+  "paragon.merciless-spear": { glyph: "spear", modifier: "half" },
+  "paragon.stunning-strike": { glyph: "spear", modifier: "stun" },
+  "paragon.harriers-toss": { glyph: "spear-dash" },
   "warrior.healing-signet": { glyph: "heal", modifier: "self" },
   "warrior.watch-yourself": { glyph: "armor", modifier: "area" },
   "paragon.fall-back": { glyph: "speed", modifier: "area" },
@@ -75,8 +86,8 @@ export const SKILL_ICONS = {
   "paragon.incoming": { glyph: "speed-heal" },
   "paragon.make-haste": { glyph: "dash", modifier: "up" },
   "paragon.defensive-anthem": { glyph: "anthem-shield" },
-  // A placeholder: the healing banner, for the party in earshot (#999).
-  "paragon.song-of-restoration": { glyph: "banner-cross", modifier: "area" },
+  // A banner with a note: a song for every ally in earshot, with the heal mark (#1012).
+  "paragon.song-of-restoration": { glyph: "banner-note", modifier: "plus" },
   "ranger.apply-poison": { glyph: "flask" },
   "elementalist.glyph-of-lesser-energy": { glyph: "energy", modifier: "less" },
   "elementalist.lightning-orb": { glyph: "lightning-orb" },
@@ -91,6 +102,10 @@ export const SKILL_ICONS = {
   "ritualist.spirit-light-weapon": { glyph: "blade-plus" },
   "ritualist.weapon-of-quickening": { glyph: "blade-turn" },
   "ritualist.weapon-of-aggression": { glyph: "blade-fast" },
+  "ritualist.weapon-of-remedy": { glyph: "blade-cleanse" },
+  "ritualist.vengeful-weapon": { glyph: "blade-hook" },
+  "ritualist.splinter-weapon": { glyph: "blade-shards", modifier: "area" },
+  "ritualist.mending-grip": { glyph: "hilt" },
   "mesmer.power-spike": { glyph: "interrupt", modifier: "down" },
   "mesmer.power-drain": { glyph: "interrupt", modifier: "up" },
   "mesmer.power-block": { glyph: "interrupt", modifier: "clock" },
@@ -107,16 +122,15 @@ export const SKILL_ICONS = {
   "dervish.vow-of-strength": { glyph: "axe", modifier: "area" },
   "dervish.sand-shards": { glyph: "shard", modifier: "up" },
   "dervish.pious-haste": { glyph: "dash", modifier: "self" },
-  "dervish.zealous-sweep": { glyph: "energy", modifier: "clock" },
-  "dervish.mystic-twister": { glyph: "snowflake", modifier: "self" },
+  "dervish.zealous-sweep": { glyph: "scythe", modifier: "area" },
+  "dervish.mystic-twister": { glyph: "twister" },
   "dervish.victorious-sweep": { glyph: "axe", modifier: "self" },
-  "dervish.eremites-attack": { glyph: "axe", modifier: "less" },
-  "dervish.staggering-force": { glyph: "mountain", modifier: "self" },
-  "dervish.dust-cloak": { glyph: "shard", modifier: "self" },
-  "dervish.aura-of-thorns": { glyph: "shard", modifier: "bleed" },
+  "dervish.eremites-attack": { glyph: "scythe", modifier: "up" },
+  "dervish.staggering-force": { glyph: "mountain-crack", modifier: "area" },
+  "dervish.dust-cloak": { glyph: "dust", modifier: "area" },
+  "dervish.aura-of-thorns": { glyph: "thorns", modifier: "bleed" },
   "ranger.savage-shot": { glyph: "arrow" },
-  // A placeholder until asset-designer's icon (#1008).
-  "ranger.concussion-shot": { glyph: "interrupt", modifier: "stun" },
+  "ranger.concussion-shot": { glyph: "arrow-burst" },
   "ranger.distracting-shot": { glyph: "interrupt", modifier: "less" },
   "mesmer.energy-burn": { glyph: "flame", modifier: "down" },
   "mesmer.energy-tap": { glyph: "energy", modifier: "self" },
@@ -129,16 +143,14 @@ export const SKILL_ICONS = {
   "elementalist.shard-storm": { glyph: "shard" },
   "elementalist.ice-spikes": { glyph: "shard", modifier: "area" },
   "elementalist.deep-freeze": { glyph: "snowflake", modifier: "area" },
-  // Placeholders until asset-designer's icons (#985).
-  "elementalist.blinding-flash": { glyph: "lightning", modifier: "less" },
+  "elementalist.blinding-flash": { glyph: "flash" },
   "elementalist.shock": { glyph: "lightning", modifier: "stun" },
-  "elementalist.aftershock": { glyph: "mountain", modifier: "down" },
-  "elementalist.meteor": { glyph: "fireball", modifier: "stun" },
-  // Placeholders until asset-designer's icons (#997).
-  "elementalist.water-trident": { glyph: "spear", modifier: "stun" },
-  "elementalist.searing-flames": { glyph: "flame" },
-  "elementalist.ebon-hawk": { glyph: "mountain", modifier: "less" },
-  "elementalist.stoning": { glyph: "mountain", modifier: "stun" },
+  "elementalist.aftershock": { glyph: "quake" },
+  "elementalist.meteor": { glyph: "meteor", modifier: "stun" },
+  "elementalist.water-trident": { glyph: "trident", modifier: "stun" },
+  "elementalist.searing-flames": { glyph: "flame", modifier: "bleed" },
+  "elementalist.ebon-hawk": { glyph: "hawk", modifier: "less" },
+  "elementalist.stoning": { glyph: "rock", modifier: "stun" },
   "mesmer.cry-of-frustration": { glyph: "interrupt", modifier: "area" },
   "mesmer.mantra-of-recovery": { glyph: "speed", modifier: "clock" },
   "necromancer.shadow-of-fear": { glyph: "slow", modifier: "area" },
@@ -158,14 +170,19 @@ export const SKILL_ICONS = {
   "monk.protective-spirit": { glyph: "armor", modifier: "less" },
   // Your own life, given: the resurrect glyph with the bleed drop (#936).
   "monk.infuse-health": { glyph: "resurrect", modifier: "bleed" },
-  // A placeholder: a plain heal on someone else, the plaster (#987).
-  "monk.heal-other": { glyph: "plaster" },
-  // A placeholder: armor that turns the blood drop into health (#987).
-  "monk.reversal-of-fortune": { glyph: "armor", modifier: "bleed" },
-  // A placeholder: a hex removed, a burst around the ally (#987).
-  "monk.smite-hex": { glyph: "cleanse", modifier: "area" },
-  // A placeholder: every condition removed; no modifier says "all" (#987).
-  "monk.restore-condition": { glyph: "cleanse", modifier: "stun" },
+  // A heal aimed at another, not the plaster of self-heals (#996).
+  "monk.heal-other": { glyph: "heal-other" },
+  // The next blow turned back into a heal (#996).
+  "monk.reversal-of-fortune": { glyph: "heal-turn" },
+  // A hex struck down, the foes near it hurt (#996).
+  "monk.smite-hex": { glyph: "hex-bolt" },
+  // Conditions cleansed, a heal for each (#996).
+  "monk.restore-condition": { glyph: "cleanse", modifier: "plus" },
+  // Placeholders until the asset-designer's (#1039).
+  "monk.cure-hex": { glyph: "cleanse", modifier: "clock" },
+  "monk.smite-condition": { glyph: "cleanse", modifier: "upkeep" },
+  "monk.mending-touch": { glyph: "plaster", modifier: "less" },
+  "monk.vigorous-spirit": { glyph: "sword-heal", modifier: "clock" },
   // Placeholders until the asset-designer's (#1013).
   "monk.remove-hex": { glyph: "cleanse", modifier: "less" },
   "monk.dismiss-condition": { glyph: "cleanse", modifier: "hourglass" },
@@ -179,4 +196,33 @@ export const SKILL_ICONS = {
   "necromancer.insidious-parasite": { glyph: "chain", modifier: "self" },
   "necromancer.mark-of-pain": { glyph: "hammer", modifier: "area" },
   "necromancer.vampiric-gaze": { glyph: "heal", modifier: "bleed" },
+  "assassin.deaths-charge": { glyph: "dash", modifier: "plus" },
+  "assassin.shadow-refuge": { glyph: "crescent", modifier: "plus" },
+  "assassin.shroud-of-distress": { glyph: "armor-half" },
+  "assassin.critical-eye": { glyph: "eye" },
+  // Placeholders until the asset-designer's (#1064).
+  "ranger.winnowing": { glyph: "blade-plus", modifier: "area" },
+  "ritualist.recuperation": { glyph: "plaster", modifier: "hourglass" },
+  // A placeholder until the asset-designer's (#1087).
+  "elementalist.ward-against-melee": { glyph: "mountain", modifier: "clock" },
+  // Resurrections: the resurrect figure and what each does differently (#1081).
+  "common.resurrection-signet": { glyph: "resurrect-seal" },
+  "monk.rebirth": { glyph: "resurrect-arrive" },
+  "paragon.signet-of-return": { glyph: "resurrect-return" },
+  "ritualist.flesh-of-my-flesh": { glyph: "resurrect-blood" },
+  // A placeholder until the asset-designer's (#1105).
+  "ranger.barbed-trap": { glyph: "pin", modifier: "bleed" },
+  // Health taken from a corpse: the heal glyph with the corpse mark (#1075).
+  "necromancer.soul-feast": { glyph: "heal", modifier: "corpse" },
+  // A placeholder until the asset-designer's (#1104).
+  "necromancer.well-of-suffering": { glyph: "germ", modifier: "corpse" },
+  // Placeholders until the asset-designer's (#467): bodies raised from a corpse.
+  "necromancer.animate-bone-minions": { glyph: "resurrect", modifier: "down" },
+  "necromancer.animate-bone-horror": { glyph: "resurrect", modifier: "up" },
+  // Placeholders until the asset-designer's (#469): a skill seen again.
+  "mesmer.arcane-echo": { glyph: "eye", modifier: "clock" },
+  "mesmer.echo": { glyph: "eye", modifier: "self" },
+  // Placeholders until the asset-designer's (#1046): the pet's skills.
+  "ranger.charm-animal": { glyph: "eye", modifier: "plus" },
+  "ranger.comfort-animal": { glyph: "heal", modifier: "plus" },
 };

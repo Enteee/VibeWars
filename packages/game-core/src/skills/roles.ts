@@ -28,6 +28,7 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
       return ["interrupt"];
     case "heal":
     case "give-health":
+    case "steal-from-corpse":
       return ["healing"];
     case "remove-status":
       // Stripping a foe's enchantment helps no ally: not removal.
@@ -50,12 +51,25 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     case "life-steal":
     case "sacrifice-health":
     case "lose-health":
+    case "shadow-step":
     case "resurrect":
+    case "drain-own-energy":
     case "recharge-faster":
     case "recharge-others":
     case "disable-skill":
     case "lengthen-recharge":
       return [];
+    // A spirit does what it projects (#1064): Recuperation heals.
+    case "summon":
+      return effect.creature.aura === undefined
+        ? []
+        : statusRoles(getStatusDefinition(effect.creature.aura.statusId));
+    // So does a ward (#1087): Ward Against Melee defends. A trap does
+    // what its spring does (#1105): Barbed Trap cripples and bleeds.
+    case "create-ground-effect":
+      return effect.act.kind === "aura"
+        ? statusRoles(getStatusDefinition(effect.act.aura.statusId))
+        : effect.act.trap.effects.flatMap(effectRoles);
   }
 }
 
@@ -70,9 +84,11 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
  * and so does what it adds to the next attack skill: Anthem of Flame burns.
  * So does what an ally's status does to its bearer when it ends (#944):
  * Patient Spirit heals, Holy Veil removes a hex, or when it uses a skill
- * (#999): Song of Restoration heals. One that heals every second (Spirit
- * Light Weapon, #975) is healing, and so is one that regenerates (Healing
- * Breeze, Mending, #1013).
+ * (#999): Song of Restoration heals, or when it attacks or casts a spell
+ * (#1039): Vigorous Spirit heals, or what its bearer does to the foe that
+ * hurt it (#1022): Weapon of Remedy removes conditions. One that heals every
+ * second (Spirit Light Weapon, #975) is healing, and so is one that
+ * regenerates (Healing Breeze, Mending, #1013).
  */
 function statusRoles(status: StatusDefinition): readonly SkillRole[] {
   const roles: SkillRole[] = [];
@@ -103,12 +119,17 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
       : status.triggers
           .filter(
             ({ on, target }) =>
-              (on === "ends" || on === "expires" || on === "bearer-uses-skill") &&
-              target === "bearer",
+              ((on === "ends" ||
+                on === "expires" ||
+                on === "bearer-uses-skill" ||
+                on === "bearer-attacks" ||
+                on === "bearer-casts-spell") &&
+                target === "bearer") ||
+              target === "offender",
           )
           .flatMap(({ effects }) =>
             effects.flatMap((effect) =>
-              effect.kind === "spread-gained-condition" ? [] : [effect],
+              effect.kind === "spread-gained-condition" || effect.kind === "echo" ? [] : [effect],
             ),
           );
   const riders = [
@@ -123,8 +144,12 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
  * A skill's roles, derived from its effects only, never a hand-kept
  * list: adding a skill tags it. A blocked blow's effects count too,
  * since they are still what the skill does (Swift Chop's Deep Wound).
+ * One on your own pet (#1046) does nothing for the team: no role.
  */
 export function skillRoles(skill: Skill): readonly SkillRole[] {
+  if (skill.target === "companion") {
+    return [];
+  }
   const effects = [...skill.effects, ...(skill.attack?.onBlocked ?? [])];
   const roles = new Set(effects.flatMap(effectRoles));
   return SKILL_ROLES.filter((role) => roles.has(role));

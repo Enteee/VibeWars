@@ -1,5 +1,4 @@
 import {
-  HOUSE_LOADOUT,
   LONG_BOW_RANGE,
   MatchSimulation,
   MINIMAL_GW_INSPIRED_PVP_V1,
@@ -7,7 +6,9 @@ import {
   createPathFinder,
   Vec,
   distancePointToSegment,
+  loadoutOf,
   nearestStandable,
+  pickStarterBuild,
   resolveLoadout,
   type Segment,
   type Vec2,
@@ -96,12 +97,15 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
 
   it("lets a fighter at each spawn reach the enemy across the arena and hit, without snagging", () => {
     // Swords, so every hit is a walk into reach: on the longest arena, ~18 s.
+    // The first starter build is the Warrior/Monk's (#852).
+    const fighter = loadoutOf(pickStarterBuild(() => 0));
+    expect(fighter.equipment.weaponSets[0].mainHand.weaponId).toBe("sword");
     const ruleset = MINIMAL_GW_INSPIRED_PVP_V1;
     const resolved = resolveLoadout(
       {
-        primaryProfession: HOUSE_LOADOUT.primaryProfession,
-        allocatedRanks: HOUSE_LOADOUT.attributeRanks,
-        equipment: HOUSE_LOADOUT.equipment,
+        primaryProfession: fighter.primaryProfession,
+        allocatedRanks: fighter.attributeRanks,
+        equipment: fighter.equipment,
       },
       ruleset.combat,
     );
@@ -121,8 +125,8 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
           team,
           skillBar: [],
           attributeRanks: resolved.attributeRanks,
-          equipment: resolved.equipment,
-          baseEnergyPips: HOUSE_LOADOUT.baseEnergyPips,
+          equipment: resolved.weaponSets[0].equipment,
+          baseEnergyPips: fighter.baseEnergyPips,
           maxHealth: 1e7,
           spawn: at,
           facing: 0,

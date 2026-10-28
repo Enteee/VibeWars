@@ -5,6 +5,7 @@ import { WEAPONS, type Weapon } from "../equipment/weapons.js";
 import { createRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import {
+  applyDamage,
   applyEffect,
   applyEffects,
   applySkillEffects,
@@ -36,6 +37,61 @@ function context(
     surroundings: new Map(),
   };
 }
+
+describe("damage or life steal from a foe (#1022)", () => {
+  const hit = { kind: "damage", amount: { flat: 50 }, type: "fire", armorPenetration: 0 } as const;
+  const steal = { kind: "life-steal", amount: { flat: 30 } } as const;
+
+  /** A target under Vengeful Weapon, and what it recorded. */
+  function vengeful(team = 1): {
+    ctx: SkillContext;
+    target: Combatant;
+    offenders: () => string[];
+  } {
+    const target = makeCombatant({ id: "target", team });
+    const ctx = context(undefined, target);
+    target.statuses.apply("vengeful-weapon", 8, "rit");
+    target.statuses.drainChanges();
+    return {
+      ctx,
+      target,
+      offenders: () =>
+        target.statuses
+          .drainChanges()
+          .flatMap((change) => (change.kind === "took-damage-from-foe" ? [change.offenderId] : [])),
+    };
+  }
+
+  it("a packet from a foe records its dealer", () => {
+    const { ctx, offenders } = vengeful();
+    applyEffect(hit, ctx);
+    expect(offenders()).toEqual(["caster"]);
+  });
+
+  it("a steal from a foe records its caster", () => {
+    const { ctx, offenders } = vengeful();
+    applyEffect(steal, ctx);
+    expect(offenders()).toEqual(["caster"]);
+  });
+
+  it("a packet from an ally, or from no one, records nothing", () => {
+    const ally = vengeful(0);
+    applyEffect(hit, ally.ctx);
+    expect(ally.offenders()).toEqual([]);
+
+    const nobody = vengeful();
+    applyDamage(nobody.target, 50, "fire", false, [], undefined);
+    expect(nobody.offenders()).toEqual([]);
+  });
+
+  it("a packet Reversal of Fortune reverses records nothing", () => {
+    const { ctx, offenders } = vengeful();
+    ctx.target?.statuses.apply("reversal-of-fortune", 8, "monk");
+    ctx.target?.statuses.drainChanges();
+    applyEffect(hit, ctx);
+    expect(offenders()).toEqual([]);
+  });
+});
 
 describe("damage effect", () => {
   it("reduces target health by a flat amount", () => {
@@ -505,6 +561,8 @@ describe("applySkillEffects", () => {
     },
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     effects: [
       { kind: "sacrifice-health", percentOfMax: 10 },
@@ -734,6 +792,8 @@ describe("if effects (#521)", () => {
       area: undefined,
       attack: undefined,
       whileActivating: undefined,
+      corpse: undefined,
+      companion: undefined,
       projectile: undefined,
       effects: [{ kind: "remove-status", category: "enchantment", count: 1 }, ifRemoved],
     };
@@ -924,6 +984,7 @@ describe("state conditions (#794)", () => {
             attributeId: undefined,
             damageType: "slashing",
             requirementMet: true,
+            creatureDamageScale: undefined,
           },
         },
       });
@@ -954,6 +1015,8 @@ describe("state conditions (#794)", () => {
       area: undefined,
       attack: undefined,
       whileActivating: undefined,
+      corpse: undefined,
+      companion: undefined,
       projectile: undefined,
       effects: healIf({ kind: "target-health-below", fraction: 0.5 }),
     };
@@ -975,8 +1038,13 @@ describe("state conditions (#794)", () => {
 describe("resurrect effect (#812)", () => {
   const RESURRECT: UnconditionalEffect = {
     kind: "resurrect",
-    healthPercent: { scaling: { attributeId: "monk.healing-prayers", atZero: 20, atTwelve: 56 } },
+    health: {
+      kind: "percent",
+      percent: { scaling: { attributeId: "monk.healing-prayers", atZero: 20, atTwelve: 56 } },
+    },
     energyPercent: { scaling: { attributeId: "monk.healing-prayers", atZero: 42, atTwelve: 80 } },
+    perPartyMemberWithin: undefined,
+    at: "corpse",
   };
   const monk = (rank: number) =>
     makeCombatant({ id: "caster", attributeRanks: new Map([["monk.healing-prayers", rank]]) });
@@ -1055,6 +1123,8 @@ describe("losing your own enchantment (#845)", () => {
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
     projectile: undefined,
     effects,
   });
@@ -1197,7 +1267,12 @@ describe("lengthen-recharge (#949)", () => {
 
   it("lengthens the skill its target just used", () => {
     const target = makeCombatant({ id: "target", team: 1 });
-    expect(applyEffect(effect, { ...context(undefined, target), usedSkillId: "skill.a" })).toEqual([
+    expect(
+      applyEffect(effect, {
+        ...context(undefined, target),
+        usedSkill: { skillId: "skill.a", key: "skill.a" },
+      }),
+    ).toEqual([
       { kind: "recharge-lengthened", targetId: "target", skillId: "skill.a", seconds: 47 },
     ]);
     expect(target.cast.rechargeRemaining.get("skill.a")).toBe(47);

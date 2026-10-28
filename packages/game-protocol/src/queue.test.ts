@@ -7,15 +7,22 @@ const TICKET: QueueTicket = {
   ticketId: "a".repeat(64),
   protocol: PROTOCOL_VERSION,
   mode: "random-arena-4v4",
-  partySize: 1,
+  members: ["a".repeat(64)],
   enteredAt: 1_700_000_000_000,
   heartbeatAt: 1_700_000_005_000,
+  party: null,
 };
 
-describe("parseQueueTicket (#869)", () => {
+/** A whole 4v4 team, sorted, led by `TICKET`'s id. */
+const PARTY = ["a", "b", "c", "d"].map((digit) => digit.repeat(64));
+/** Its proof, in shape: parsing checks no signature. */
+const PROOF = { groupId: "f".repeat(64), consents: PARTY.map(() => "e".repeat(128)) };
+const TEAM: QueueTicket = { ...TICKET, members: PARTY, party: PROOF };
+
+describe("parseQueueTicket (#869, #882, #1078)", () => {
   it("keeps a well-formed ticket, a solo or a whole team", () => {
     expect(parseQueueTicket({ ...TICKET })).toEqual(TICKET);
-    expect(parseQueueTicket({ ...TICKET, partySize: 4 })).toEqual({ ...TICKET, partySize: 4 });
+    expect(parseQueueTicket({ ...TEAM })).toEqual(TEAM);
   });
 
   it.each<[string, unknown]>([
@@ -30,15 +37,45 @@ describe("parseQueueTicket (#869)", () => {
     ["a numeric protocol", { ...TICKET, protocol: 3 }],
     ["an oversize protocol", { ...TICKET, protocol: "p".repeat(65) }],
     ["an unknown mode", { ...TICKET, mode: "random-arena-3v3" }],
-    ["a party of neither 1 nor the team", { ...TICKET, partySize: 2 }],
-    ["a party bigger than the team", { ...TICKET, mode: "random-arena-2v2", partySize: 4 }],
-    ["a string party", { ...TICKET, partySize: "1" }],
+    ["a party of neither 1 nor the team", { ...TICKET, members: PARTY.slice(0, 2) }],
+    ["a party bigger than the team", { ...TICKET, mode: "random-arena-2v2", members: PARTY }],
+    ["no members", { ...TICKET, members: [] }],
+    ["unsorted members", { ...TICKET, members: [PARTY[0], PARTY[2], PARTY[1], PARTY[3]] }],
+    ["a member twice", { ...TICKET, members: [PARTY[0], PARTY[1], PARTY[1], PARTY[3]] }],
+    ["members not led by the id", { ...TICKET, members: [...PARTY.slice(1), "e".repeat(64)] }],
+    ["a solo of another key", { ...TICKET, members: ["b".repeat(64)] }],
+    ["a non-hex member", { ...TICKET, members: [...PARTY.slice(0, 3), "g".repeat(64)] }],
+    ["members that are not a list", { ...TICKET, members: "a".repeat(64) }],
     ["a NaN enteredAt", { ...TICKET, enteredAt: Number.NaN }],
     ["a fractional enteredAt", { ...TICKET, enteredAt: 1.5 }],
     ["a negative heartbeatAt", { ...TICKET, heartbeatAt: -1 }],
     ["an infinite heartbeatAt", { ...TICKET, heartbeatAt: Number.POSITIVE_INFINITY }],
     ["a missing field", { ...TICKET, heartbeatAt: undefined }],
     ["an oversize ticket, padded with a field", { ...TICKET, padding: "x".repeat(10_000) }],
+    ["an undefined party", { ...TICKET, party: undefined }],
+    ["six fields: no party at all", (({ party: _, ...six }) => six)(TICKET)],
+    ["a solo with a party", { ...TICKET, party: PROOF }],
+    ["a party with none", { ...TEAM, party: null }],
+    [
+      "a party with a consent too few",
+      { ...TEAM, party: { ...PROOF, consents: PROOF.consents.slice(1) } },
+    ],
+    [
+      "a party with a consent too many",
+      { ...TEAM, party: { ...PROOF, consents: [...PROOF.consents, "e".repeat(128)] } },
+    ],
+    [
+      "a non-hex consent",
+      { ...TEAM, party: { ...PROOF, consents: [...PROOF.consents.slice(1), "g".repeat(128)] } },
+    ],
+    [
+      "a short consent",
+      { ...TEAM, party: { ...PROOF, consents: [...PROOF.consents.slice(1), "e".repeat(127)] } },
+    ],
+    ["a bad group id", { ...TEAM, party: { ...PROOF, groupId: "F".repeat(64) } }],
+    ["consents that are not a list", { ...TEAM, party: { ...PROOF, consents: "e".repeat(128) } }],
+    ["a party padded with a field", { ...TEAM, party: { ...PROOF, padding: 1 } }],
+    ["a party that is a list", { ...TEAM, party: [PROOF.groupId, PROOF.consents] }],
   ])("refuses %s", (_, raw) => {
     expect(parseQueueTicket(raw)).toBeUndefined();
   });

@@ -24,7 +24,7 @@ function withArea(area: AreaRule | undefined): Skill {
 }
 
 function at(id: string, team: number, position: Vec2, dead = false): TargetCandidate {
-  return { combatant: makeCombatant({ id, team, dead }), position };
+  return { combatant: makeCombatant({ id, team, dead }), position, creature: undefined };
 }
 
 const caster = at("caster", 0, vec2(0, 0));

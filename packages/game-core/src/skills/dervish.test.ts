@@ -42,7 +42,13 @@ function holding(id: string, team: number, weapon: Weapon, attributeId: string):
     team,
     equipment: {
       ...unarmedResolvedEquipment(RULES.armorReferenceLevel),
-      mainHand: { weapon, attributeId, damageType: weapon.damageType, requirementMet: true },
+      mainHand: {
+        weapon,
+        attributeId,
+        damageType: weapon.damageType,
+        requirementMet: true,
+        creatureDamageScale: undefined,
+      },
     },
     attributeRanks: new Map([
       [attributeId, 12],
@@ -64,6 +70,7 @@ function check(caster: Combatant, id: string, target: Combatant) {
     target,
     targetPosition: vec2(target === caster ? 0 : RANGE_MELEE, 0),
     rechargeRemaining: new Map(),
+    spent: new Set(),
     isCasting: false,
     skillBar: [id, null, null, null, null, null, null, null],
     losBlockers: [],

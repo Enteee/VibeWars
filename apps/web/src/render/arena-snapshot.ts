@@ -1,9 +1,10 @@
 import { Vec, type OffhandId, type ProfessionId, type Vec2 } from "@vibewars/game-core";
 
-import type { CallsSnapshot } from "@vibewars/game-session";
+import type { CallsSnapshot, GroundEffectSnapshot } from "@vibewars/game-session";
 
 import type { AttackCast } from "./attack-clock.js";
 import type { RenderablePing } from "./call-marks.js";
+import { LYING_WIDTH } from "./lying-pose.js";
 import type { RenderableProjectile } from "./projectiles.js";
 import { screenPx } from "./screen-text.js";
 
@@ -41,11 +42,17 @@ export interface RenderableActor {
   readonly health: number;
   readonly maxHealth: number;
   readonly dead: boolean;
+  /** A corpse a skill has exploited (#466): drawn darker. */
+  readonly exploited: boolean;
   /** Lying down from a knockdown (#545): drawn flattened, the weapon dropped beside it. */
   readonly knockedDown: boolean;
   /** Fraction of the current cast still remaining, or `undefined`. */
   readonly castProgress: number | undefined;
   readonly statuses: readonly string[];
+  /** Wears the solid enchantment ring (#1117); never a corpse. */
+  readonly enchanted: boolean;
+  /** Wears the broken hex ring (#1117); never a corpse. */
+  readonly hexed: boolean;
 }
 
 export interface RectRenderableWall {
@@ -186,8 +193,11 @@ export interface SwingFlash {
   readonly remainingSeconds: number;
 }
 
-/** Every body's radius, as drawn: the ruleset's collision radius. */
+/** A player's radius, as drawn: the ruleset's collision radius. */
 export const ACTOR_RADIUS = 14;
+
+/** A creature's (#1052), as drawn: the ruleset's `creatureRadius`. */
+export const CREATURE_RADIUS = 10;
 
 /**
  * Where a damage or heal number starts, from the body's centre: right of
@@ -214,12 +224,48 @@ export function swingFlashAlpha(flash: SwingFlash): number {
   return Math.max(0, Math.min(1, flash.remainingSeconds / SWING_FLASH_SECONDS));
 }
 
+/**
+ * A ward or a trap on the ground (#1087, #1105): a circle in its side's
+ * colour, its skill's icon at the centre. A ward's is a translucent
+ * disc; a trap's, its outline alone.
+ */
+export interface RenderableGroundEffect {
+  readonly id: number;
+  readonly skillId: string;
+  readonly position: Vec2;
+  readonly radius: number;
+  readonly colour: number;
+  readonly filled: boolean;
+}
+
+/**
+ * `effect` as the arena draws it, for a viewer on `selfTeam`: an ally's in
+ * the ally colour, any other's in the enemy's; `kind` says which list it
+ * came in.
+ */
+export function toRenderableGroundEffect(
+  effect: GroundEffectSnapshot,
+  selfTeam: number | undefined,
+  kind: "ward" | "trap",
+): RenderableGroundEffect {
+  return {
+    id: effect.id,
+    skillId: effect.skillId,
+    position: { x: effect.x, y: effect.y },
+    radius: effect.radius,
+    colour: teamColour(effect.team === selfTeam ? "ally" : "enemy"),
+    filled: kind === "ward",
+  };
+}
+
 export interface ArenaSnapshot {
   readonly actors: readonly RenderableActor[];
   readonly walls: readonly RenderableWall[];
   readonly targetId: string | undefined;
   /** Weapon shots in flight (#161). */
   readonly projectiles: readonly RenderableProjectile[];
+  /** Wards on the ground, oldest first (#1087), then your team's traps (#1105). */
+  readonly groundEffects: readonly RenderableGroundEffect[];
   /** The match clock (`elapsedSeconds`), which projectiles fly against. */
   readonly clock: number;
   /** The living body under the mouse cursor, whose name shows (#253). */
@@ -228,8 +274,6 @@ export interface ArenaSnapshot {
   readonly showAllNames: boolean;
   /** The foe your team has called (#443): a chevron over it. */
   readonly calledId: string | undefined;
-  /** The ally you watch (#443): brackets round it. Yours alone. */
-  readonly watchedId: string | undefined;
   /** Your team's pings on the floor (#443). */
   readonly pings: readonly RenderablePing[];
 }
@@ -239,24 +283,19 @@ export const EMPTY_SNAPSHOT: ArenaSnapshot = {
   walls: [],
   targetId: undefined,
   projectiles: [],
+  groundEffects: [],
   clock: 0,
   hoverId: undefined,
   showAllNames: false,
   calledId: undefined,
-  watchedId: undefined,
   pings: [],
 };
 
-/** `snapshot` with your team's calls and the ally you watch on it (#443). */
-export function withCalls(
-  snapshot: ArenaSnapshot,
-  calls: CallsSnapshot,
-  watchedId: string | undefined,
-): ArenaSnapshot {
+/** `snapshot` with your team's calls on it (#443). */
+export function withCalls(snapshot: ArenaSnapshot, calls: CallsSnapshot): ArenaSnapshot {
   return {
     ...snapshot,
     calledId: calls.target?.targetId,
-    watchedId,
     pings: calls.pings.map((ping) => ({
       id: ping.id,
       position: { x: ping.x, y: ping.y },
@@ -276,6 +315,13 @@ const TEAM_COLOURS: Record<RenderableActor["team"], number> = {
   ally: 0x59c2ff,
   enemy: 0xff7b72,
 };
+
+/** Edges every living body, darker than the grid and walls, so no body blends into what it stands on. */
+export const BODY_EDGE = 0x0b0f14;
+/** A corpse's hollow circle, and the glyph inside it. */
+export const DEAD_COLOUR = 0x4a5464;
+/** An exploited corpse's circle and glyph (#466): darker than a fresh one. */
+export const EXPLOITED_CORPSE_COLOUR = 0x262b33;
 
 /** Colour lookup must stay total over the team union. */
 export function teamColour(team: RenderableActor["team"]): number {
@@ -495,5 +541,53 @@ export function nameplateLayout(
     glyphX: left + glyph / 2,
     textX: left + glyph + gap + text / 2,
     bottom,
+  };
+}
+
+/** The primary profession's glyph inside the body (#1037, Q105 B), world units. */
+export const BODY_GLYPH_SIZE = 13;
+export const BODY_GLYPH_ALPHA = 0.6;
+
+export interface BodyGlyphLayout {
+  readonly profession: ProfessionId;
+  readonly x: number;
+  readonly y: number;
+  /** World units, square. */
+  readonly size: number;
+  /** Tint colour and alpha: edge at 60 % alive, dead grey at 1 on a corpse. */
+  readonly tint: number;
+  readonly alpha: number;
+}
+
+/**
+ * The primary profession's glyph inside `actor`'s body (#1037): upright,
+ * centred, a dark mark on the team colour, under the weapon mark. World
+ * sized, so it scales with the body at every zoom. A knocked-down body
+ * shrinks it to fit its flattened disc; a corpse greys it.
+ *
+ * `undefined`: no profession, so no glyph.
+ */
+export function bodyGlyphLayout(actor: RenderableActor): BodyGlyphLayout | undefined {
+  if (actor.profession === undefined) {
+    return undefined;
+  }
+  const { x, y } = actor.position;
+  if (actor.dead) {
+    return {
+      profession: actor.profession,
+      x,
+      y,
+      size: BODY_GLYPH_SIZE,
+      tint: actor.exploited ? EXPLOITED_CORPSE_COLOUR : DEAD_COLOUR,
+      alpha: 1,
+    };
+  }
+  return {
+    profession: actor.profession,
+    x,
+    y,
+    size: actor.knockedDown ? BODY_GLYPH_SIZE * LYING_WIDTH : BODY_GLYPH_SIZE,
+    tint: BODY_EDGE,
+    alpha: BODY_GLYPH_ALPHA,
   };
 }

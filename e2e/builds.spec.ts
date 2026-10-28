@@ -4,6 +4,7 @@ import { codeLabel } from "../apps/web/src/input/keymap.js";
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
 import { chooseProfession, professionField } from "./helpers/professions.js";
 import { startSoloMatch } from "./helpers/peers.js";
+import { bringStarter } from "./helpers/starter.js";
 import { skillKey } from "./keys.js";
 
 /**
@@ -237,6 +238,37 @@ test("12/12/3 spends all 200 points, GW1's split (#470)", async ({ page }) => {
   await expect(page.locator(".attribute-budget-segment")).toHaveCount(3);
 });
 
+test("a rune's bonus stays clear of max, and the pips stay in line (#1102)", async ({ page }) => {
+  // The Warrior/Monk starter wears a rune: its rank reads "12 +1".
+  await bringStarter(page, "Warrior/Monk");
+  await page
+    .locator(".selectable-row", { hasText: "Warrior/Monk" })
+    .first()
+    .getByRole("button", { name: "Edit", exact: true })
+    .click();
+  const boosted = page.locator(".editor-attribute", {
+    has: page.locator(".editor-attribute-bonus"),
+  });
+  await expect(boosted.first()).toBeVisible();
+
+  const box = async (locator: Locator) => {
+    const found = await locator.boundingBox();
+    if (found === null) {
+      throw new Error("not laid out");
+    }
+    return found;
+  };
+  // The bonus's own box, not its cell's: the cell is the column, text spills past it.
+  const bonus = await box(boosted.first().locator(".editor-attribute-bonus"));
+  const next = await box(boosted.first().locator(".editor-attribute-next"));
+  expect(bonus.x + bonus.width).toBeLessThanOrEqual(next.x);
+
+  const pipLefts = await page
+    .locator(".editor-attribute .attribute-pips")
+    .evaluateAll((all) => all.map((pips) => pips.getBoundingClientRect().left));
+  expect(new Set(pipLefts).size).toBe(1);
+});
+
 /** Save characters named `names` from the main menu, one after another. */
 async function saveCharacters(page: Page, names: readonly string[]): Promise<void> {
   for (const name of names) {
@@ -249,6 +281,9 @@ async function saveCharacters(page: Page, names: readonly string[]): Promise<voi
     await expect(page.locator(".roster")).toContainText(name);
   }
 }
+
+/** The character the first start rolls (#853) is named after its build: "Ranger/Mesmer". */
+const ROLLED_STARTER = /^\w+\/\w+$/;
 
 /** The team editor's member rows, and their names. */
 const memberRows = (page: Page) => page.locator(".team-grid .team-row");
@@ -352,14 +387,15 @@ test("team edits stay on screen until Save; Back and Delete ask first (#573)", a
   await page.getByRole("button", { name: "new team" }).click();
   await page.getByLabel("team name").fill("GvG Practice");
 
-  // Add both; an added character leaves the picker.
+  // Add both; an added character leaves the picker, which keeps the
+  // first start's rolled starter, oldest and last (#853).
   const picks = page.locator(".team-picker .team-pick-name");
-  await expect(picks).toHaveText(["Bravo", "Alpha"]);
+  await expect(picks).toHaveText(["Bravo", "Alpha", ROLLED_STARTER]);
   await page.getByRole("button", { name: "add Alpha" }).click();
-  await expect(picks).toHaveText(["Bravo"]);
+  await expect(picks).toHaveText(["Bravo", ROLLED_STARTER]);
   await page.getByRole("button", { name: "add Bravo" }).click();
   await expect(memberNames(page)).toHaveText(["Alpha", "Bravo"]);
-  await expect(page.locator(".team-picker-empty")).toBeVisible();
+  await expect(picks).toHaveText([ROLLED_STARTER]);
 
   // Reorder, still on the editor.
   const up = memberRows(page).nth(1).getByRole("button", { name: "move up" });
@@ -412,7 +448,8 @@ test("the team grid: eight cells a member, drag or ↑ ↓ to reorder, places le
     await page.getByRole("button", { name: `add ${name}` }).click();
   }
   await expect(header).toHaveText("13 places left");
-  await expect(page.locator(".team-pick")).toHaveCount(0);
+  // Only the first start's rolled starter is left to add (#853).
+  await expect(page.locator(".team-pick")).toHaveCount(1);
 
   await expect(memberRows(page)).toHaveCount(3);
   for (const row of await memberRows(page).all()) {
@@ -687,10 +724,10 @@ test("a saved character can be chosen and is taken into a match", async ({ page 
   await expect(row).toHaveClass(/is-selected/);
 
   await startSoloMatch(page);
-  await expect(page.locator("#viewport canvas")).toBeVisible();
+  await expect(page.locator("#viewport canvas:not(.compass)")).toBeVisible();
 
   // The server grants the build's bar, so the HUD shows exactly the one
-  // skill that was equipped, not the house loadout, and seven empty slots.
+  // skill that was equipped, not a starter build, and seven empty slots.
   await expect(page.locator(".hud-skills .hud-skill:not(.is-empty)")).toHaveCount(1);
   await expect(page.locator(".hud-skills .hud-skill.is-empty")).toHaveCount(7);
 });
@@ -896,11 +933,11 @@ test("the primary attribute's row says what it does at its rank (#531)", async (
   await expect(fastCasting.locator(".editor-attribute-effect")).toHaveCount(0);
   await pip(fastCasting, 11).click();
   await expect(fastCasting.locator(".editor-attribute-effect")).toHaveText(
-    "spells cast 40% faster",
+    "spells cast 40% faster, signets 33% faster",
   );
   await pip(fastCasting, 12).click();
   await expect(fastCasting.locator(".editor-attribute-effect")).toHaveText(
-    "spells cast 43% faster",
+    "spells cast 43% faster, signets 36% faster",
   );
 });
 
@@ -947,7 +984,7 @@ test("the in-match skill bar is not draggable", async ({ page }) => {
   // interaction the server would refuse.
   await page.goto("./");
   await startSoloMatch(page);
-  await expect(page.locator("#viewport canvas")).toBeVisible();
+  await expect(page.locator("#viewport canvas:not(.compass)")).toBeVisible();
 
   const hudSkills = page.locator(".hud-skill");
   await expect(hudSkills.first()).toBeVisible();
@@ -1120,6 +1157,9 @@ test("an attack skill for another weapon is flagged on its slot until the weapon
 test("a weapon can be dragged from the library onto the weapon slot", async ({ page }) => {
   await newCharacter(page);
   await openGearLibrary(page);
+  // The set tabs (#489) put the hands below the fold: a mouse drag that has
+  // to scroll the editor mid-gesture drops nowhere, so bring them up first.
+  await page.locator(".gear-slot").first().scrollIntoViewIfNeeded();
 
   await page
     .locator(".gear-box")
@@ -1250,6 +1290,13 @@ test("a chosen weapon and insignia survive a reload", async ({ page }) => {
   await openGearLibrary(page);
   await equipFromLibrary(page, "Axe");
   await equipFromLibrary(page, "Survivor Insignia");
+  // Set 2 (#489): its tab, then a weapon from the library goes into it.
+  const setTab = (n: number): Locator =>
+    page.getByRole("tab", { name: new RegExp(`^${String(n)}`) });
+  await setTab(2).click();
+  await expect(page.locator(".gear-slot").first()).toContainText("Add a weapon");
+  await equipFromLibrary(page, "Hammer");
+  await expect(page.locator(".gear-slot").first()).toContainText("Hammer");
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.locator(".roster")).toContainText("Gear Keeper");
 
@@ -1265,6 +1312,8 @@ test("a chosen weapon and insignia survive a reload", async ({ page }) => {
   await expect(page.locator(".armor-row").first().locator(".gear-slot").first()).toContainText(
     "Survivor",
   );
+  await setTab(2).click();
+  await expect(page.locator(".gear-slot").first()).toContainText("Hammer");
 });
 
 /* --- the editor updates in place (#563, ADR-0030) ------------------------- */

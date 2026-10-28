@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
-import type { MatchSnapshot, PlayerSnapshot } from "@vibewars/game-session";
+import { MINIMAL_GW_INSPIRED_PVP_V1, type StatusId } from "@vibewars/game-core";
+import type { MatchSnapshot, PlayerSnapshot, StatusSnapshot } from "@vibewars/game-session";
 
 import { toArenaSnapshot } from "./match-view.js";
+import { ACTOR_RADIUS, CREATURE_RADIUS } from "./render/arena-snapshot.js";
 
 function player(sessionId: string, knockdownRemaining: number): PlayerSnapshot {
   return {
@@ -26,6 +28,7 @@ function player(sessionId: string, knockdownRemaining: number): PlayerSnapshot {
     secondaryProfession: undefined,
     team: 0,
     dead: false,
+    corpseExploited: false,
     castingSkillId: undefined,
     castRemaining: 0,
     castTotal: 0,
@@ -34,6 +37,7 @@ function player(sessionId: string, knockdownRemaining: number): PlayerSnapshot {
     knockdownRemaining,
     healthPips: 0,
     energyPips: 0,
+    creature: undefined,
     statuses: [],
   };
 }
@@ -49,6 +53,9 @@ function match(players: readonly PlayerSnapshot[]): MatchSnapshot {
     winningTeam: undefined,
     endReason: undefined,
     projectiles: [],
+    groundEffects: [],
+    traps: [],
+    summary: undefined,
   };
 }
 
@@ -58,6 +65,44 @@ describe("toArenaSnapshot", () => {
     expect(arena.actors.map((actor) => [actor.id, actor.knockedDown])).toEqual([
       ["me", false],
       ["down", true],
+    ]);
+  });
+
+  it("draws a creature smaller than a player, at the ruleset's radii (#1052)", () => {
+    const minion: PlayerSnapshot = {
+      ...player("me/c1", 0),
+      creature: { ownerId: "me", kind: "minion" },
+    };
+    const arena = toArenaSnapshot(match([player("me", 0), minion]), []);
+    expect(arena.actors.map((actor) => actor.radius)).toEqual([
+      MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius,
+      MINIMAL_GW_INSPIRED_PVP_V1.collision.creatureRadius,
+    ]);
+    expect([ACTOR_RADIUS, CREATURE_RADIUS]).toEqual([
+      MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius,
+      MINIMAL_GW_INSPIRED_PVP_V1.collision.creatureRadius,
+    ]);
+  });
+
+  it("rings a body enchanted or hexed by its statuses, and a corpse never (#1117)", () => {
+    const status = (id: StatusId): StatusSnapshot => ({
+      id,
+      endsAt: 10,
+      durationSeconds: 10,
+      casterId: "me",
+    });
+    const enchanted = { ...player("enchanted", 0), statuses: [status("armor-boost")] };
+    const hexed = { ...player("hexed", 0), statuses: [status("backfire")] };
+    const dead = {
+      ...player("dead", 0),
+      dead: true,
+      statuses: [status("armor-boost"), status("backfire")],
+    };
+    const arena = toArenaSnapshot(match([enchanted, hexed, dead]), []);
+    expect(arena.actors.map((actor) => [actor.id, actor.enchanted, actor.hexed])).toEqual([
+      ["enchanted", true, false],
+      ["hexed", false, true],
+      ["dead", false, false],
     ]);
   });
 });

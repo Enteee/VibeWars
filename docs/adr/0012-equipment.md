@@ -14,6 +14,10 @@ types (physical, elemental, and chaos, dark, holy, shadow, typeless),
 now that a Warrior's +20 vs physical and a Ranger's +30 vs elemental
 consume them.
 
+Amended (#489): a build carries up to four weapon sets, and which one is
+in hand is simulation state. Every set is still resolved once, at join
+([ADR-0036](0036-weapon-sets.md)).
+
 ## Context
 
 The game shipped without any weapon system at all. Not a partial one —
@@ -70,11 +74,12 @@ itself the moment a secondary profession was involved. A Mesmer with a
 hammer has made a bad build, not an illegal one.
 
 **Runes and insignias are resolved, never mutated.** `Combatant`'s
-`maxHealth`, `maxEnergy` and `attributeRanks` are `readonly` by design —
-they are the character sheet, not simulation state. Gear is fixed at
-join, so the correct seam is _before_ the combatant is constructed. No
-mutable derived fields, no recompute step, no risk of applying a rune
-twice.
+`maxHealth` and `attributeRanks` are `readonly` by design — they are
+the character sheet, not simulation state. Gear is **resolved** at
+join, every weapon set with it, so the correct seam is _before_ the
+combatant is constructed. Which resolved weapon set is in hand is
+simulation state ([ADR-0036](0036-weapon-sets.md)): a swap picks
+another, and nothing is recomputed. No risk of applying a rune twice.
 
 **Off-hands require a free hand.** A two-handed weapon excludes a shield
 or focus. That single rule is the trade the whole system turns on: a

@@ -149,7 +149,7 @@ body {
   position: relative;
 }
 
-#viewport canvas {
+#viewport canvas:not(.compass) {
   display: block;
   width: 100%;
   height: 100%;
@@ -177,10 +177,12 @@ body {
 }
 
 /* --------------------------------------------------------------------------
-   HUD — plain DOM over the canvas (brief §21). Pinned to the bottom so the
-   arena stays unobstructed; everything is geometry and text, no imagery.
+   HUD — plain DOM over the canvas (brief §21), laid out as GW1's (#1042):
+   your block bottom centre, the scoreboard and target frame top centre, so
+   the arena between stays unobstructed. Geometry and text, no imagery.
    -------------------------------------------------------------------------- */
 
+/* A full-width band, for the gradient; its column is centred. */
 .hud {
   position: absolute;
   left: 0;
@@ -188,6 +190,7 @@ body {
   bottom: 0;
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 0.4rem;
   padding: 0.6rem 0.9rem 0.9rem;
   background: linear-gradient(to top, rgb(14 17 22 / 95%), rgb(14 17 22 / 0%));
@@ -201,12 +204,30 @@ body {
   pointer-events: auto;
 }
 
-/* The target frame (#484): header, health bar, effects, cast row. Only
-   the effects row grows it, upwards, so the bars under it never jump. */
+/* Top centre (#1042): the scoreboard, and the target frame under it. */
+.hud-top {
+  position: absolute;
+  top: 0.6rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  pointer-events: none;
+  font-size: 0.78rem;
+}
+
+/* The target frame (#484): header, health bar, cast row, effects. Only
+   the effects row grows it, downwards, so the rows above it never jump. */
 .hud-target {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 0.2rem;
+  padding: 0.3rem 0.6rem;
+  background: rgb(14 17 22 / 85%);
+  border: 1px solid var(--line);
   color: var(--ink-dim);
   letter-spacing: 0.04em;
 }
@@ -235,6 +256,11 @@ body {
   display: none;
 }
 
+/* A fixed width: no skill bar up here to match. */
+.hud-target-health {
+  width: 260px;
+}
+
 /* Hidden with no target, but its space kept. */
 .hud-target-health[hidden] {
   display: block;
@@ -250,9 +276,10 @@ body {
   border-color: #4a5464;
 }
 
-/* The target's effects (#835) wrap inside the health bar's width. */
+/* The target's effects (#835) wrap inside the health bar's width, down. */
 .hud-target .effects-monitor {
-  max-width: 220px;
+  justify-content: center;
+  max-width: 260px;
 }
 
 /* Maximum health a deep wound took (#764): the bar's far end, greyed, as GW1. */
@@ -347,16 +374,33 @@ body {
   vertical-align: -0.2em;
 }
 
+/* Your block's column (#1042), as wide as the skill bar: nothing else in it
+   counts towards its width, so the bars stretch to the slots'. */
+.hud-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.hud-column > :not(.hud-skill-row) {
+  contain: inline-size;
+}
+
+/* Morale and gear, then health over energy, as GW1. */
 .hud-bars {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.hud-status {
+  display: flex;
+  justify-content: center;
   gap: 0.5rem;
 }
 
 .hud-bar {
   position: relative;
-  width: 220px;
   height: 16px;
   background: #11161d;
   border: 1px solid var(--line);
@@ -379,18 +423,21 @@ body {
    the status icons and the pips say it too. */
 .hud-bar-health.is-tint-hex .hud-bar-fill,
 .training-bar-health.is-tint-hex .training-bar-fill,
+.party-health.is-tint-hex .hud-bar-fill,
 .hud-target-health.is-tint-hex .hud-bar-fill {
   background: #7a3a7a;
 }
 
 .hud-bar-health.is-tint-poison .hud-bar-fill,
 .training-bar-health.is-tint-poison .training-bar-fill,
+.party-health.is-tint-poison .hud-bar-fill,
 .hud-target-health.is-tint-poison .hud-bar-fill {
   background: #66601e;
 }
 
 .hud-bar-health.is-tint-bleeding .hud-bar-fill,
 .training-bar-health.is-tint-bleeding .training-bar-fill,
+.party-health.is-tint-bleeding .hud-bar-fill,
 .hud-target-health.is-tint-bleeding .hud-bar-fill {
   background: #8c4a42;
 }
@@ -436,6 +483,12 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
+}
+
+/* Yours (#1042) wrap upward, away from the bars, centred over them. */
+.hud-column > .effects-monitor {
+  flex-wrap: wrap-reverse;
+  justify-content: center;
 }
 
 .effects-monitor[hidden] {
@@ -487,6 +540,19 @@ body {
   border-radius: 1px;
 }
 
+/* The skills, the weapon sets hung off their left end (#489): the skill
+   bar stays centred, as GW1's. */
+.hud-skill-row {
+  position: relative;
+  width: fit-content;
+}
+
+.hud-skill-row > .weapon-sets {
+  position: absolute;
+  top: 0;
+  right: calc(100% + 8px);
+}
+
 /* As wide as its slots, not the HUD: the knockdown drain fills this box
    and must end at the last slot (#545). */
 .hud-skills {
@@ -494,6 +560,85 @@ body {
   gap: 6px;
   flex-wrap: wrap;
   width: fit-content;
+}
+
+/* Four small slots, two by two, as tall as a skill slot (#489): the set in
+   hand lit, a queued one pulsing, an empty one dimmed and blank. */
+.weapon-sets {
+  display: grid;
+  grid-template-columns: repeat(2, 22px);
+  gap: 4px;
+}
+
+.weapon-set {
+  position: relative;
+  box-sizing: border-box;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.weapon-set:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.weapon-set.is-active {
+  border-color: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+}
+
+.weapon-set.is-queued {
+  outline: 1px solid var(--accent);
+  outline-offset: 1px;
+  animation: weapon-set-queued 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes weapon-set-queued {
+  from {
+    outline-color: transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .weapon-set.is-queued {
+    animation: none;
+  }
+}
+
+.weapon-set.is-empty {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.weapon-set-main {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.weapon-set-off {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 10px;
+  height: 10px;
+}
+
+.weapon-set-key {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 0 1px;
+  background: var(--bg);
+  color: var(--accent);
+  font-size: 0.55rem;
+  font-weight: 700;
+  line-height: 1.1;
 }
 
 /* A combat bar slot (#719), on the HUD and the Training Ground alike: a
@@ -1123,11 +1268,13 @@ body {
 
 /*
  * Each row's colour, shared with its segment of the budget bar (#565). A
- * grid, so every row's pips line up under the one above.
+ * grid, so every row's pips line up under the one above. The rank column is
+ * a fixed width that holds the widest rank, "12 +4" (#1102): a width that
+ * followed the content would move that row's pips.
  */
 .editor-attribute {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto 3ch 10ch;
+  grid-template-columns: minmax(0, 1fr) auto 6ch 10ch;
   column-gap: 0.5rem;
   border-left: 3px solid var(--attribute-colour, var(--line));
 }
@@ -1602,6 +1749,14 @@ body {
   min-width: 12rem;
 }
 
+.keys-table th.keys-group-title {
+  padding-top: 0.8rem;
+  color: var(--ink-dim);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
 .screen button.key-cell,
 .key-cell.is-fixed {
   display: inline-block;
@@ -1752,10 +1907,6 @@ body {
    score never competes with checking what you can cast. The foes' pips
    sit beside them (#881). */
 .hud-scoreboard {
-  position: absolute;
-  top: 0.6rem;
-  left: 50%;
-  transform: translateX(-50%);
   display: flex;
   align-items: center;
   gap: 0.7rem;
@@ -1937,6 +2088,87 @@ body {
   font-size: 1.8rem;
   letter-spacing: 0.15em;
   text-transform: uppercase;
+  pointer-events: none;
+}
+
+/* The match summary (#1057): both teams side by side under the result
+   banner, compact enough for 8v8 at 1024 px without a scroll. Your row has
+   the friend border; each column's best is ink bold, zeros ink-dim. */
+.match-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+  font-size: 0.75rem;
+}
+
+.match-summary-table {
+  border-collapse: collapse;
+  background: rgb(14 17 22 / 92%);
+  border: 1px solid var(--line);
+}
+
+.match-summary-table caption {
+  padding: 0.25rem 0;
+  color: var(--ink-dim);
+  text-align: left;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.match-summary-table th,
+.match-summary-table td {
+  padding: 0.15rem 0.4rem;
+  white-space: nowrap;
+}
+
+.match-summary-table thead th {
+  color: var(--ink-dim);
+  font-weight: normal;
+  text-align: right;
+  border-bottom: 1px solid var(--line);
+}
+
+.match-summary-table thead th:first-child {
+  text-align: left;
+}
+
+.match-summary-table td {
+  color: var(--ink);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.match-summary-table .match-summary-name {
+  max-width: 9rem;
+  overflow: hidden;
+  color: var(--ink);
+  font-weight: normal;
+  text-align: left;
+  text-overflow: ellipsis;
+  border-left: 3px solid transparent;
+}
+
+.match-summary-table tr.is-self .match-summary-name {
+  border-left-color: var(--accent);
+}
+
+.match-summary-table td.is-top {
+  font-weight: bold;
+}
+
+.match-summary-table td.is-zero {
+  color: var(--ink-dim);
+}
+
+/* In the match, under the result banner; it takes no clicks. */
+.hud-summary {
+  position: absolute;
+  top: calc(38% + 2.6rem);
+  left: 50%;
+  width: max-content;
+  max-width: calc(100% - 2rem);
+  transform: translateX(-50%);
   pointer-events: none;
 }
 
@@ -3047,7 +3279,8 @@ body.has-expanded-training #screens {
   gap: 0.35rem;
 }
 
-.roster-edit {
+.roster-edit,
+.roster-reroll {
   flex: 0 0 auto;
 }
 
@@ -3065,7 +3298,7 @@ body.has-expanded-training #screens {
   user-select: none;
 }
 
-/* The default loadout is not a character, so it reads as a placeholder
+/* A random starter build is not a character, so it reads as a placeholder
    rather than pretending to be one. */
 .character-dot.is-house {
   width: 28px;
@@ -3176,6 +3409,83 @@ body.has-expanded-training #screens {
 }
 
 .gear-slot-clear:hover {
+  color: #ffb3ae;
+}
+
+/* The weapon sets (#489): one tab per set above the hands, the selected
+   one outlined as a picked armor piece is. */
+.gear-set-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.35rem;
+  margin-bottom: 0.5rem;
+}
+
+.gear-set-tab-cell {
+  position: relative;
+}
+
+.gear-set-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  width: 100%;
+  min-height: 2rem;
+  padding: 0.2rem 0.45rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--panel);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.gear-set-tab.is-selected {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.gear-set-tab.has-problem {
+  border-color: var(--damage);
+}
+
+.gear-set-tab-number {
+  font-weight: 600;
+}
+
+.gear-set-tab-icons {
+  display: flex;
+  align-items: center;
+}
+
+.gear-set-tab .gear-icon {
+  margin-right: 0.15em;
+}
+
+.gear-set-tab .gear-icon.is-offhand {
+  width: 1em;
+  height: 1em;
+}
+
+.gear-set-tab-add {
+  color: var(--ink-dim);
+  opacity: 0.6;
+}
+
+.gear-set-tab-clear {
+  position: absolute;
+  top: 0.1rem;
+  right: 0.15rem;
+  padding: 0 0.2rem;
+  border: 0;
+  background: transparent;
+  color: var(--ink-dim);
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.gear-set-tab-clear:hover {
   color: #ffb3ae;
 }
 
@@ -3341,6 +3651,7 @@ body.has-expanded-training #screens {
    always reserved, so showing it never shifts the skill bar. */
 .hud-message {
   min-height: 1.2em;
+  text-align: center;
   color: #f2cc60;
   font-size: 0.9rem;
   letter-spacing: 0.04em;
@@ -3361,7 +3672,6 @@ body.has-expanded-training #screens {
   letter-spacing: 0.04em;
   text-shadow: 0 1px 2px rgb(0 0 0 / 80%);
   /* A plate, so the dim ink holds 4.5:1 over walls and bodies too. */
-  align-self: flex-start;
   padding: 0.15rem 0.5rem;
   background: rgb(14 17 22 / 92%);
 }
@@ -3778,38 +4088,206 @@ body:has(#app > .chat) .now-playing {
 }
 
 /*
- * The ally you watch (#443): name and health, top right, under the match
- * buttons and the music button (.hud-music, 3.2rem + 2.2rem), live.
- * Yours alone.
+ * The compass (#486): GW1's radar, top right under the match buttons,
+ * centred on you, north up. A canvas `ui/compass.ts` draws; hidden keeps
+ * its box, so its size is there to read. Smaller on a narrow window, clear
+ * of the scoreboard.
  */
-.ally-watch {
+:root {
+  --compass-top: 5.8rem;
+  --compass-size: 160px;
+}
+
+@media (width < 80rem) {
+  :root {
+    --compass-size: 120px;
+  }
+}
+
+.compass {
   position: absolute;
-  top: 6rem;
+  top: var(--compass-top);
   right: 0.9rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  padding: 0.35rem 0.5rem;
-  background: rgb(14 17 22 / 85%);
+  display: block;
+  width: var(--compass-size);
+  height: var(--compass-size);
+  background: rgb(22 27 34 / 85%);
   border: 1px solid var(--line);
-  color: var(--ink);
+  border-radius: 50%;
   pointer-events: none;
 }
 
-.ally-watch[hidden] {
+.compass[hidden] {
+  visibility: hidden;
+}
+
+/*
+ * The party window (#1055): your team's health, right middle, you first.
+ * The dock spans the right edge; its spacers centre the panel on the
+ * screen, but the top one never gets shorter than the compass's bottom
+ * plus 8 px (#1056), so a long party starts under the compass instead and
+ * scrolls past the bottom margin. Past 8 members the rows go compact.
+ */
+.party-dock {
+  position: absolute;
+  top: 0;
+  right: 0.9rem;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  width: 200px;
+  pointer-events: none;
+}
+
+.party-dock::before,
+.party-dock::after {
+  content: "";
+  flex: 1 1 0;
+}
+
+.party-dock::before {
+  min-height: calc(var(--compass-top) + var(--compass-size) + 8px);
+}
+
+.party-dock::after {
+  min-height: 0.9rem;
+}
+
+.party-window {
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-height: 0;
+  box-sizing: border-box;
+  padding: 0.3rem;
+  background: rgb(22 27 34 / 85%);
+  border: 1px solid var(--line);
+  overflow-y: auto;
+  pointer-events: auto;
+}
+
+/* The Training Ground's stage is small, and its dummies stand to your
+   right: the top-left corner, compact, is the side left clear. */
+.training-stage .party-dock {
+  top: 0.5rem;
+  right: auto;
+  bottom: 0.5rem;
+  left: 0.5rem;
+  width: 150px;
+}
+
+.training-stage .party-dock::before {
   display: none;
 }
 
-.ally-watch .ally-watch-health {
-  width: 9rem;
+.party-window[hidden] {
+  display: none;
 }
 
-.ally-watch-health .hud-bar-fill {
+.party-row {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  gap: 0.1rem;
+  padding: 0.15rem 0.25rem;
+  background: none;
+  border: 1px solid transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.8rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.party-row:hover {
+  border-color: var(--line);
+}
+
+/* Your target, in the target ring's colour. */
+.party-row.is-targeted {
+  border-color: #ffd866;
+}
+
+.party-row-header {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.party-row-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.party-row.is-dead .party-row-name,
+.party-row-dead {
+  color: #4a5464;
+}
+
+.party-row-dead[hidden] {
+  display: none;
+}
+
+.party-row-professions img {
+  width: 1em;
+  height: 1em;
+  margin-right: 0.2em;
+  vertical-align: -0.15em;
+}
+
+.party-window .party-health {
+  width: 100%;
+  height: 12px;
+  box-sizing: border-box;
+}
+
+.party-health[hidden] {
+  display: none;
+}
+
+.party-health .hud-bar-fill {
   background: #3a6a3e;
 }
 
-.ally-watch.is-dead .hud-bar-label {
-  color: var(--ink-dim);
+.party-health .hud-bar-label,
+.party-health .vital-pips {
+  font-size: 0.7rem;
+  line-height: 10px;
+}
+
+/* More than 8 members, or the small Training stage: name and a 10 px bar
+   on one line. */
+.party-window.is-compact .party-row,
+.training-stage .party-window .party-row {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.3rem;
+  padding-block: 0.05rem;
+}
+
+.party-window.is-compact .party-row-header,
+.training-stage .party-window .party-row-header {
+  flex: 0 0 45%;
+}
+
+.party-window.is-compact .party-health,
+.training-stage .party-window .party-health {
+  flex: 1;
+  height: 10px;
+}
+
+.party-window.is-compact .party-health .hud-bar-label,
+.party-window.is-compact .party-health .vital-pips,
+.training-stage .party-window .party-health .hud-bar-label,
+.training-stage .party-window .party-health .vital-pips {
+  line-height: 8px;
+}
+
+.party-window.is-compact .party-health-points,
+.training-stage .party-window .party-health-points {
+  display: none;
 }
 
 /*

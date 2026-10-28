@@ -16,9 +16,10 @@ function ticket(ticketId: string, mode: QueueTicket["mode"] = "random-arena-1v1"
     ticketId,
     protocol: PROTOCOL_VERSION,
     mode,
-    partySize: 1,
+    members: [ticketId],
     enteredAt: at,
     heartbeatAt: at,
+    party: null,
   };
 }
 
@@ -88,7 +89,7 @@ describe("joinBroadcastQueue", () => {
     const raw = new BroadcastChannel(QUEUE_CHANNEL);
     try {
       raw.postMessage("not an event");
-      raw.postMessage({ kind: "ticket", ticket: { ...ticket(ID_A), partySize: 3 } });
+      raw.postMessage({ kind: "ticket", ticket: { ...ticket(ID_A), members: [ID_A, ID_A] } });
       raw.postMessage({ kind: "ticket", ticket: { ...ticket(ID_A), extra: true } });
       raw.postMessage({ kind: "withdrawn", ticketId: 7 });
       raw.postMessage({ kind: "hello", ticketId: ID_A });

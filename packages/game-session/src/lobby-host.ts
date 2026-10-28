@@ -6,6 +6,8 @@ import {
   parsePeerChat,
   parsePeerLobbyHello,
   parsePeerLobbyJoin,
+  parsePeerPartyConsent,
+  parsePeerStayTogether,
   parseWireLobbyCommand,
   type LobbyPhase,
   type PeerLobbyJoin,
@@ -16,6 +18,9 @@ import {
   type WireLobbyState,
   type WireLobbyWelcome,
   type WireMatchStart,
+  type WirePartyFormed,
+  type WirePartyProposal,
+  type WirePartySplit,
 } from "@vibewars/game-protocol";
 
 import { MESSAGE_BURST, MESSAGES_PER_SECOND, MessageBudget } from "./intent-budget.js";
@@ -25,7 +30,9 @@ import { createLocalPeer } from "./local-peer.js";
 import { RECONNECT_WINDOW_SECONDS, type MatchHost, type PlannedSeats } from "./match-host.js";
 import { sanitizeChatText, sanitizeName } from "./names.js";
 import { admissionDigest, type QueuedSeat } from "./queue-admission.js";
+import { ticketsOf } from "./queue-formation.js";
 import { scopeTransport } from "./scoped-transport.js";
+import { decideStayTogether } from "./stay-together.js";
 import { sizeChecked, type Transport } from "./transport.js";
 
 /**
@@ -45,6 +52,30 @@ import { sizeChecked, type Transport } from "./transport.js";
  */
 export const CHAT_LINES_PER_SECOND = 1;
 export const CHAT_BURST = 5;
+
+/**
+ * From a party's proposal, on the lobby's clock, until each member must
+ * have sent a consent that verifies, or the team splits (#1078).
+ */
+export const PARTY_CONSENT_MS = 5000;
+
+/** A party every winner said yes to, waiting for each one's consent (#1078). */
+interface PartyProposal {
+  /** Their keys, sorted. */
+  readonly members: readonly string[];
+  /** Each yes-voter's peer to its key. */
+  readonly keys: ReadonlyMap<string, string>;
+  /** What each consent signs: the group won and exactly these members. */
+  readonly digest: Promise<Uint8Array>;
+  /** Each verified consent, by member key. */
+  readonly consents: Map<string, string>;
+  /** Peers whose consent is being checked: one each, still. */
+  readonly checking: Set<string>;
+  /** On the lobby's clock. */
+  readonly endsAt: number;
+  /** Formed or split, and those it concerns told. */
+  settled: boolean;
+}
 
 /** A lobby's match, as the lobby hands it to whoever builds the `MatchHost`. */
 export interface MatchPlan {
@@ -72,6 +103,18 @@ export interface QueuedPlan extends QueuedSeat {
   readonly timeoutSeconds: number;
   /** The lobby timed out without the `noShows` ticket ids; it has closed. */
   readonly onFellThrough: (noShows: readonly string[]) => void;
+  /**
+   * How long after its match the lobby waits for the winners to say
+   * whether they stay together (#882), on its clock. Only a team of more
+   * than one votes.
+   */
+  readonly stayTogetherSeconds: number;
+  /**
+   * Its match is over and nobody waits on this lobby any more: the vote,
+   * if there was one, is decided and its winners have left, or its window
+   * ran out. Once; the caller closes the lobby.
+   */
+  readonly onDone: () => void;
 }
 
 export interface LobbyHostOptions {
@@ -101,8 +144,8 @@ interface Member {
   team: 0 | 1 | null;
   ready: boolean;
   character: LobbyCharacter | null;
-  /** The ticket it was admitted on, in a queued lobby. */
-  readonly ticketId: string | null;
+  /** The seat key it was admitted on, in a queued lobby (#882). */
+  readonly seatKey: string | null;
 }
 
 /** Whether the lobby satisfies the rules for starting, and if not, why. */
@@ -163,6 +206,22 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   let countdownEndsAt: number | undefined;
   /** A queued lobby starts its match once; after it, the lobby only waits. */
   let queuedStarted = false;
+  /** A queued lobby's Stay together, from its match's end (#882). */
+  let vote:
+    | {
+        readonly teamSize: number;
+        /** The winning side's peers as the match ended. */
+        readonly winners: readonly string[];
+        readonly votes: Map<string, string | null>;
+        /** On the lobby's clock. */
+        readonly endsAt: number;
+        decided: boolean;
+        /** Once every winner said yes: the party each must consent to (#1078). */
+        proposal: PartyProposal | undefined;
+      }
+    | undefined;
+  /** `onDone` was called. */
+  let queuedDone = false;
 
   const nowMs = (): number => elapsed * 1000;
   /** The clock in whole ms, so a countdown of ticks that do not add up exactly still ends. */
@@ -287,7 +346,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     from: string,
     join: PeerLobbyJoin,
     team: 0 | 1 | null,
-    ticketId: string | null,
+    seatKey: string | null,
   ): void => {
     if (members.size >= MAX_LOBBY_PLAYERS) {
       refuse(from, "lobby-full");
@@ -300,16 +359,16 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       team,
       ready: false,
       character: lobbyCharacter(join.character),
-      ticketId,
+      seatKey,
     });
     beginCountdown();
     broadcast();
   };
 
-  /** The group's ticket ids no member holds. */
+  /** The group's seat keys no member holds. */
   const unseated = (plan: QueuedPlan): string[] => {
-    const seated = new Set([...members.values()].map((member) => member.ticketId));
-    return plan.group.teams.flat().filter((ticketId) => !seated.has(ticketId));
+    const seated = new Set([...members.values()].map((member) => member.seatKey));
+    return plan.group.teams.flat().filter((seatKey) => !seated.has(seatKey));
   };
 
   /** A queued lobby with every ticket seated counts down to its match. */
@@ -358,20 +417,20 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     const team =
       admission === null
         ? undefined
-        : ([0, 1] as const).find((side) => group.teams[side].includes(admission.ticketId));
+        : ([0, 1] as const).find((side) => group.teams[side].includes(admission.seatKey));
     if (admission === null || team === undefined) {
       refuse(from, "not-admitted");
       return;
     }
-    if ([...members.values()].some((member) => member.ticketId === admission.ticketId)) {
+    if ([...members.values()].some((member) => member.seatKey === admission.seatKey)) {
       refuse(from, "ticket-used");
       return;
     }
-    if (!verifyTicketSig(admission.ticketId, admitDigest, admission.admissionSig)) {
+    if (!verifyTicketSig(admission.seatKey, admitDigest, admission.admissionSig)) {
       refuse(from, "not-admitted");
       return;
     }
-    admit(from, join, team, admission.ticketId);
+    admit(from, join, team, admission.seatKey);
   };
 
   // A queued joiner asks before it joins: its proof goes only to a peer
@@ -510,7 +569,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   const fallThrough = (plan: QueuedPlan): void => {
     closed = true;
     note("refused", "fell-through" satisfies LobbyRefusal);
-    plan.onFellThrough(unseated(plan));
+    plan.onFellThrough(ticketsOf(plan.group, unseated(plan)));
     void transport.leave();
   };
 
@@ -538,6 +597,170 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     return true;
   };
 
+  /**
+   * The winners of a queued match vote on staying together, if they are
+   * a team: everyone on `winningTeam` still here, who has `stayTogetherSeconds`.
+   */
+  const beginVote = (plan: QueuedPlan, winningTeam: 0 | 1 | null): void => {
+    const teamSize = winningTeam === null ? 0 : plan.group.teams[winningTeam].length;
+    vote = {
+      teamSize,
+      winners:
+        teamSize > 1
+          ? [...members.values()]
+              .filter((member) => member.team === winningTeam && !away.has(member.id))
+              .map((member) => member.id)
+          : [],
+      votes: new Map(),
+      endsAt: clockMs() + plan.stayTogetherSeconds * 1000,
+      // No team won, or a team of one: nothing to vote on.
+      decided: teamSize <= 1,
+      proposal: undefined,
+    };
+  };
+
+  /** Decide the vote if it can be, tell those it concerns, and say when the lobby is done. */
+  const runVote = (plan: QueuedPlan): void => {
+    if (vote === undefined || queuedDone) {
+      return;
+    }
+    const gone = new Set(vote.winners.filter((peerId) => !members.has(peerId)));
+    const timedOut = clockMs() >= vote.endsAt;
+    if (!vote.decided) {
+      const decision = decideStayTogether({
+        teamSize: vote.teamSize,
+        winners: vote.winners,
+        votes: vote.votes,
+        gone,
+        timedOut,
+      });
+      if (decision.kind !== "waiting") {
+        vote.decided = true;
+        // To each yes alone: the losers share these channels.
+        if (decision.kind === "formed") {
+          const { votes } = vote;
+          const { groupId } = plan.group;
+          const party = decision.members;
+          vote.proposal = {
+            members: party,
+            keys: new Map(
+              decision.to.flatMap((peerId) => {
+                const memberKey = votes.get(peerId);
+                return typeof memberKey === "string" ? [[peerId, memberKey] as const] : [];
+              }),
+            ),
+            digest: admissionDigest("vibewars-party", groupId, party.join(""), ""),
+            consents: new Map(),
+            checking: new Set(),
+            endsAt: clockMs() + PARTY_CONSENT_MS,
+            settled: false,
+          };
+          const proposed: WirePartyProposal = { groupId, members: party };
+          for (const to of decision.to) {
+            transport.send("party-proposal", proposed, to);
+          }
+        } else {
+          for (const to of decision.to) {
+            transport.send("party-split", {} satisfies WirePartySplit, to);
+          }
+        }
+      }
+    }
+    const { proposal } = vote;
+    if (proposal !== undefined && !proposal.settled) {
+      const told = [...proposal.keys.keys()];
+      const consents = proposal.members.flatMap((memberKey) => {
+        const consent = proposal.consents.get(memberKey);
+        return consent === undefined ? [] : [consent];
+      });
+      // A member gone splits it even with every consent in: a consent can
+      // verify after its sender left, and a party naming them never forms.
+      const left = told.some((peerId) => !members.has(peerId));
+      if (!left && consents.length === proposal.members.length) {
+        proposal.settled = true;
+        const formed: WirePartyFormed = {
+          groupId: plan.group.groupId,
+          members: proposal.members,
+          consents,
+        };
+        for (const to of told) {
+          transport.send("party-formed", formed, to);
+        }
+      } else if (left || clockMs() >= proposal.endsAt) {
+        // A consent missing, or bad, or a member gone: no party, and no
+        // second proposal of fewer.
+        proposal.settled = true;
+        for (const to of told.filter((peerId) => members.has(peerId))) {
+          transport.send("party-split", {} satisfies WirePartySplit, to);
+        }
+      }
+    }
+    if (proposal !== undefined && !proposal.settled) {
+      return;
+    }
+    const waited = vote.winners.some((peerId) => peerId !== local.selfId && !gone.has(peerId));
+    if (timedOut || (vote.decided && !waited)) {
+      queuedDone = true;
+      plan.onDone();
+    }
+  };
+
+  // A winner's vote, once, while the vote is open.
+  transport.on("stay-together", (data, from) => {
+    if (
+      queued === undefined ||
+      closed ||
+      vote === undefined ||
+      vote.decided ||
+      !vote.winners.includes(from) ||
+      vote.votes.has(from) ||
+      !budget.take(from, nowMs())
+    ) {
+      return;
+    }
+    const said = parsePeerStayTogether(data);
+    if (said === undefined) {
+      return;
+    }
+    vote.votes.set(from, said.memberKey);
+    runVote(queued);
+  });
+
+  // A yes-voter's consent to the proposed party, once, while it is open (#1078).
+  transport.on("party-consent", (data, from) => {
+    const proposal = vote?.proposal;
+    if (
+      queued === undefined ||
+      closed ||
+      proposal === undefined ||
+      proposal.settled ||
+      !budget.take(from, nowMs())
+    ) {
+      return;
+    }
+    const memberKey = proposal.keys.get(from);
+    const said = parsePeerPartyConsent(data);
+    if (
+      memberKey === undefined ||
+      said?.memberKey !== memberKey ||
+      proposal.consents.has(memberKey) ||
+      proposal.checking.has(from)
+    ) {
+      return;
+    }
+    proposal.checking.add(from);
+    void proposal.digest.then((digest) => {
+      proposal.checking.delete(from);
+      // One that does not verify is no consent: the party waits for a
+      // good one until `PARTY_CONSENT_MS`, then splits.
+      if (closed || proposal.settled || !queued.verifyTicketSig(memberKey, digest, said.consent)) {
+        return;
+      }
+      proposal.consents.set(memberKey, said.consent);
+      runVote(queued);
+    });
+  });
+
   const host: LobbyHost = {
     local,
     advance(seconds) {
@@ -548,6 +771,9 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       elapsed += seconds;
       if (queued !== undefined && !runQueue(queued, shown)) {
         return;
+      }
+      if (queued !== undefined) {
+        runVote(queued);
       }
       // Not back within the match's own window: its seat there is gone too.
       if (dropAway((leftAt) => nowMs() - leftAt >= RECONNECT_WINDOW_SECONDS * 1000)) {
@@ -562,9 +788,13 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         // Back to the lobby: teams kept, so sides are not re-picked every
         // round, and ready cleared, so nobody is dragged into a match
         // they did not confirm.
+        const { winningTeam } = match.host;
         void match.room.leave();
         match = undefined;
         phase = "waiting";
+        if (queued !== undefined) {
+          beginVote(queued, winningTeam);
+        }
         // Whoever is still away is not coming back to this lobby.
         dropAway(() => true);
         for (const member of members.values()) {
@@ -610,6 +840,10 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       return;
     }
     members.delete(peerId);
+    if (queued !== undefined) {
+      // A winner gone is a no; the last of them gone, and the lobby is done.
+      runVote(queued);
+    }
     // A queued lobby one short waits for it again, on the clock it started with.
     if (countdownEndsAt !== undefined) {
       countdownEndsAt = undefined;

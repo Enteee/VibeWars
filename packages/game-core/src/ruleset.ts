@@ -19,6 +19,8 @@ export interface MovementRules {
 export interface CollisionRules {
   /** Every player's collision (and rendering) radius, in world units. */
   readonly playerRadius: number;
+  /** A creature's (#1052): smaller than a player's, and as solid. */
+  readonly creatureRadius: number;
 }
 
 export interface AttributeRules {
@@ -136,6 +138,7 @@ export const MINIMAL_GW_INSPIRED_PVP_V1: Ruleset = Object.freeze({
   }),
   collision: Object.freeze({
     playerRadius: 14,
+    creatureRadius: 10,
   }),
   resources: Object.freeze({
     // GW1's 5 s and +7 (14 HP/s); its wiki gives no step, so +7 arrives

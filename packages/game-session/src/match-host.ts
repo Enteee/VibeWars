@@ -1,12 +1,15 @@
 import {
   MINIMAL_GW_INSPIRED_PVP_V1,
   MatchSimulation,
+  MatchTally,
   ZERO,
   adrenalineLossIn,
   applyIntent,
   drainAccumulator,
   resolveJoinLoadout,
+  loadoutSpec,
   resolveLoadout,
+  resolvedBar,
   spawnFacing,
   swingProgress,
   type MatchRules,
@@ -16,7 +19,9 @@ import {
 } from "@vibewars/game-core";
 import {
   MAX_WIRE_COMBATS,
+  MAX_LOBBY_PLAYERS,
   MAX_WIRE_PROJECTILES,
+  MAX_WIRE_GROUND_EFFECTS,
   PROTOCOL_MISMATCH_MESSAGE,
   PROTOCOL_VERSION,
   helloProtocolVersion,
@@ -33,12 +38,14 @@ import {
   type PeerRefuse,
   type PeerRejoinChallenge,
   type PeerWelcome,
-  type RechargeSlot,
+  type RechargeMessage,
   type SkillBarSlot,
   type WireEnded,
   type WirePlayer,
   type WireSkillBar,
   type WireSnapshot,
+  type WireTraps,
+  type WireSummaryRow,
 } from "@vibewars/game-protocol";
 
 import { createCallBoard, type Team } from "./calls.js";
@@ -47,18 +54,22 @@ import { MESSAGE_BURST, MESSAGES_PER_SECOND, MessageBudget } from "./intent-budg
 import { sanitizeName } from "./names.js";
 import { adrenalineSlots, sameAdrenaline } from "./adrenaline.js";
 import { chainMarks, chainMarksPredicted } from "./chain-marks.js";
-import { rechargePredicted, rechargeSlots } from "./recharge.js";
+import { rechargePredicted, rechargeState } from "./recharge.js";
 import { rejoinProof } from "./rejoin-proof.js";
 import { packSnapshot } from "./snapshot-parts.js";
 import { spawnPoint, type SpawnPoint } from "./spawn-points.js";
 import { MAX_MESSAGE_BYTES, type Transport } from "./transport.js";
 import {
+  groundEffectSnapshot,
   sameSkillBar,
   skillBarSlots,
   statusSnapshot,
   statusWireIndex,
   wireCombat,
   wireStatuses,
+  wireIdentity,
+  wireWeaponSets,
+  type WireIdentity,
 } from "./wire.js";
 
 /**
@@ -119,16 +130,24 @@ export interface MatchHostOptions {
 /** A lobby's seating for its match: each seated peer's team and sanitised name. */
 export type PlannedSeats = ReadonlyMap<string, { readonly team: 0 | 1; readonly name: string }>;
 
+/** Weapon swaps one seat may have handled (#489): sustained, and at once. */
+export const WEAPON_SWAPS_PER_SECOND = 4;
+export const WEAPON_SWAP_BURST = 4;
+
 export interface MatchHost {
   /** Run as many whole ticks as `seconds` holds, carrying the rest. */
   advance(seconds: number): void;
   readonly phase: "active" | "finished";
+  /** The team that won, once it is `finished` with a winner; `null` until then, or for none. */
+  readonly winningTeam: 0 | 1 | null;
   /**
    * A lobby's match nobody is playing any more: every seat is gone, and
    * every seated peer that never came has left the room. The lobby then
    * ends it, as the server did with a room everyone left.
    */
   readonly abandoned: boolean;
+  /** Weapon-set intents dropped over `WEAPON_SWAPS_PER_SECOND` (#489), every seat together. */
+  readonly droppedWeaponSwaps: number;
   /** Tell every peer the match is over because the host left, then leave. */
   close(reason: "host-left"): Promise<void>;
 }
@@ -152,11 +171,13 @@ interface Seat {
   /** The match time it dropped at, while it is dropped. */
   droppedAt: number | undefined;
   /** The recharges the peer was last told, and when, so only news is sent (#152). */
-  recharges: { readonly slots: RechargeSlot[]; readonly at: number } | undefined;
+  recharges: { readonly message: RechargeMessage; readonly at: number } | undefined;
   /** The chain marks the peer was last told, and when, so only news is sent (#916). */
   chainMarks: { readonly marks: readonly WireChainMark[]; readonly at: number } | undefined;
   /** The bar the peer was last sent, so it goes again only when it changes (#637). */
   skillBar: readonly (SkillBarSlot | null)[] | undefined;
+  /** The active and queued weapon set the peer was last told, so only a change goes (#489). */
+  weaponSets: { readonly active: number; readonly pending: number | null } | undefined;
 }
 
 /** A rejoin hello the host has challenged, waiting for its proof (#593). */
@@ -188,6 +209,13 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   const seatOfPeer = new Map<string, Seat>();
   const budget = new MessageBudget(MESSAGES_PER_SECOND, MESSAGE_BURST, () => undefined);
   /**
+   * Weapon swaps, by player, on top of `budget` (#489): each moves energy,
+   * rewrites the gear and costs a `weapon-sets` send. Keyed by seat, so a
+   * reconnect does not refill it.
+   */
+  const swapBudget = new MessageBudget(WEAPON_SWAPS_PER_SECOND, WEAPON_SWAP_BURST, () => undefined);
+  let droppedWeaponSwaps = 0;
+  /**
    * The peers that said `bye`, until they leave the room. A quit is never
    * undone by a fresh `hello`: that would be a free heal, a cooldown reset
    * and a team re-roll, as often as the budget allows.
@@ -210,7 +238,42 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
    * per tick, whatever it sends.
    */
   const callsDirty = new Set<Team>();
+  /** The trap ids each team was last sent (#1105), to send again only on a change. */
+  const trapsSent = new Map<Team, string>([
+    [0, ""],
+    [1, ""],
+  ]);
   let seated = 0;
+  /**
+   * The seats the match had, in seat order: whoever left still has a line
+   * in the summary (#1057), under the name they joined with. At most
+   * `MAX_LOBBY_PLAYERS`, all `ended` carries: past it, the earliest seat
+   * no longer held goes (`seatNew`).
+   */
+  const everSeated = new Map<string, { readonly name: string; readonly team: 0 | 1 }>();
+  /**
+   * Every body's team as the tick began, a creature's too: one killed in
+   * a tick has left the simulation by the time that tick is tallied.
+   */
+  const teams = new Map<string, number>();
+  /** The match's totals per player, for the summary. */
+  const tally = new MatchTally((id) => everSeated.get(id)?.team ?? teams.get(id));
+  /** One whole-number line per seat the match ever had. */
+  const summary = (): WireSummaryRow[] =>
+    [...everSeated].map(([id, { name, team }]) => {
+      const row = tally.row(id);
+      return {
+        id,
+        name,
+        team,
+        damage: Math.round(row.damage),
+        healing: Math.round(row.healing),
+        taken: Math.round(row.taken),
+        kills: row.kills,
+        deaths: row.deaths,
+        interrupts: row.interrupts,
+      };
+    });
   let accumulator = 0;
   let finished = false;
 
@@ -231,13 +294,13 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       return;
     }
     const at = sim.elapsedSeconds;
-    const slots = rechargeSlots(participant.skillBar, participant.combatant.cast);
+    const message = rechargeState(participant.skillBar, participant.combatant.cast);
     const sent = seat.recharges;
-    if (!force && sent !== undefined && rechargePredicted(sent.slots, at - sent.at, slots)) {
+    if (!force && sent !== undefined && rechargePredicted(sent.message, at - sent.at, message)) {
       return;
     }
-    seat.recharges = { slots, at };
-    transport.send("recharge", { slots }, seat.peerId);
+    seat.recharges = { message, at };
+    transport.send("recharge", message, seat.peerId);
   };
 
   /**
@@ -302,7 +365,14 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     }
     const participant = sim.get(seat.playerId);
     const slots =
-      participant === undefined ? [] : skillBarSlots(participant.skillBar, participant.combatant);
+      participant === undefined
+        ? []
+        : skillBarSlots(
+            resolvedBar(participant.skillBar, participant.combatant.cast).map(
+              (held) => held?.skillId ?? null,
+            ),
+            participant.combatant,
+          );
     if (!force && seat.skillBar !== undefined && sameSkillBar(seat.skillBar, slots)) {
       return;
     }
@@ -314,12 +384,62 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     transport.send("skill-bar", bar, seat.peerId);
   };
 
+  /**
+   * Send `seat`'s peer its weapon sets when the active or queued one
+   * changed since the last, or whenever `force`, as on a welcome (#489).
+   */
+  const sendWeaponSets = (seat: Seat, force: boolean): void => {
+    const participant = sim.get(seat.playerId);
+    if (seat.peerId === undefined || participant === undefined) {
+      return;
+    }
+    const sets = wireWeaponSets(participant);
+    if (
+      !force &&
+      seat.weaponSets?.active === sets.active &&
+      seat.weaponSets.pending === sets.pending
+    ) {
+      return;
+    }
+    seat.weaponSets = { active: sets.active, pending: sets.pending };
+    transport.send("weapon-sets", sets, seat.peerId);
+  };
+
   /** `team`'s calls to every seated peer of it, each its own: never a broadcast (#443). */
   const sendCalls = (team: Team): void => {
     const view = calls.view(team, sim.elapsedSeconds);
     for (const seat of seats.values()) {
       if (seat.team === team && seat.peerId !== undefined) {
         transport.send("calls", view, seat.peerId);
+      }
+    }
+  };
+
+  /**
+   * `team`'s traps, the newest `MAX_WIRE_GROUND_EFFECTS` (#1105): a
+   * foe's are hidden information, so this is all a peer ever hears of them.
+   */
+  const trapsOf = (team: Team): WireTraps => ({
+    traps: sim.groundEffects
+      .filter((effect) => effect.act.kind === "trap" && effect.team === team)
+      .slice(-MAX_WIRE_GROUND_EFFECTS)
+      .map((effect) => ({ ...groundEffectSnapshot(effect, sim.elapsedSeconds), team })),
+  });
+
+  /**
+   * `team`'s traps to every seated peer of it, each its own, never a
+   * broadcast, when they changed since it was last sent them (#1105).
+   */
+  const sendTraps = (team: Team): void => {
+    const view = trapsOf(team);
+    const ids = view.traps.map(({ id }) => id).join();
+    if (ids === trapsSent.get(team)) {
+      return;
+    }
+    trapsSent.set(team, ids);
+    for (const seat of seats.values()) {
+      if (seat.team === team && seat.peerId !== undefined) {
+        transport.send("traps", view, seat.peerId);
       }
     }
   };
@@ -343,11 +463,13 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     };
     transport.send("welcome", message, peerId);
     sendSkillBar(seat, true);
+    sendWeaponSets(seat, true);
     sendRecharges(seat, true);
     sendAdrenaline(seat, true);
     sendChainMarks(seat, true);
-    // A rejoin sees the call its team has up.
+    // A rejoin sees the call its team has up, and its traps.
     transport.send("calls", calls.view(seat.team, sim.elapsedSeconds), peerId);
+    transport.send("traps", trapsOf(seat.team), peerId);
   };
 
   const seatNew = (
@@ -360,7 +482,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     // Without a plan, teams alternate as players arrive, so a 1v1 is
     // adversarial by default.
     const team: 0 | 1 = plan?.team ?? (seats.size % 2 === 0 ? 0 : 1);
-    const { loadout } = resolveJoinLoadout(hello.build, RULESET.attributes);
+    const { loadout } = resolveJoinLoadout(hello.build, RULESET.attributes, random);
     // Gear becomes numbers exactly once, before the combatant exists (ADR-0012).
     const resolved = resolveLoadout(
       {
@@ -378,16 +500,14 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       id: playerId,
       team,
       skillBar: loadout.skillBar,
-      attributeRanks: resolved.attributeRanks,
-      equipment: resolved.equipment,
+      ...loadoutSpec(resolved),
       spawn,
       facing: spawnFacing(
         spawn,
         map.spawns.filter((point) => point.team !== team).map((point) => point.position),
         map.spawns.map((point) => point.position),
       ),
-      maxHealth: resolved.maxHealth,
-      maxEnergy: resolved.maxEnergy,
+      // The house loadout's, which is not its primary's (join-loadout.ts).
       baseEnergyPips: loadout.baseEnergyPips,
     });
     const seat: Seat = {
@@ -405,8 +525,18 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       adrenaline: undefined,
       chainMarks: undefined,
       skillBar: undefined,
+      weaponSets: undefined,
     };
     seats.set(playerId, seat);
+    everSeated.set(playerId, { name: seat.name, team });
+    for (const id of everSeated.keys()) {
+      if (everSeated.size <= MAX_LOBBY_PLAYERS) {
+        break;
+      }
+      if (!seats.has(id)) {
+        everSeated.delete(id);
+      }
+    }
     welcome(seat, peerId);
   };
 
@@ -542,6 +672,10 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       // Malformed or malicious: nothing is applied, and nothing is said.
       return;
     }
+    if (intent.kind === "weapon-set" && !swapBudget.take(seat.playerId, nowMs())) {
+      droppedWeaponSwaps += 1;
+      return;
+    }
     const refusal = applyIntent(sim, seat.playerId, intent);
     if (refusal !== null) {
       // Only the caster hears it: why a key did nothing is nobody else's business.
@@ -573,6 +707,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     }
     sim.remove(seat.playerId);
     seats.delete(seat.playerId);
+    swapBudget.forget(seat.playerId);
   };
 
   transport.on("bye", (data, from) => {
@@ -604,20 +739,20 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     seat.adrenaline = undefined;
     seat.chainMarks = undefined;
     seat.skillBar = undefined;
+    seat.weaponSets = undefined;
     // Frozen, not left running into a wall while away.
     sim.setInputDirection(seat.playerId, ZERO);
     sim.get(seat.playerId)?.combatant.cast.cancelCast();
   });
 
-  const wirePlayer = (participant: Participant, seat: Seat): WirePlayer => {
+  const wirePlayer = (participant: Participant, who: WireIdentity): WirePlayer => {
     const { combatant } = participant;
     const cast = combatant.cast.activeCast;
     const swing = swingProgress(combatant);
     const pips = sim.pips(participant);
     return {
       id: participant.id,
-      name: seat.name,
-      team: seat.team,
+      ...who,
       x: participant.position.x,
       y: participant.position.y,
       facing: round(participant.facing, 2),
@@ -626,16 +761,16 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       walking: participant.walkGoal !== undefined || participant.pendingSkill !== undefined,
       health: Math.round(combatant.health),
       maxHealth: combatant.maxHealth,
-      energy: Math.round(combatant.energy),
+      // Energy below 0 is GW1's hidden energy (#489): nobody sees it.
+      energy: Math.max(0, Math.round(combatant.energy)),
       maxEnergy: combatant.maxEnergy,
       overcast: Math.round(combatant.overcast),
       morale: combatant.morale,
       armor: combatant.equipment.baseArmor,
       weaponId: combatant.equipment.mainHand.weapon.id,
       offhandId: combatant.equipment.offhandId ?? null,
-      primaryProfession: seat.primaryProfession,
-      secondaryProfession: seat.secondaryProfession ?? null,
       dead: combatant.dead,
+      corpseExploited: participant.corpseExploited,
       castingSkillId: cast?.skillId ?? null,
       castRemaining: cast?.remainingSeconds ?? 0,
       castTotal: cast?.totalSeconds ?? 0,
@@ -659,8 +794,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     winningTeam: wireTeam(sim.outcome.winningTeam),
     endReason: sim.outcome.reason ?? null,
     players: [...sim.participants()].flatMap((participant) => {
-      const seat = seats.get(participant.id);
-      return seat === undefined ? [] : [wirePlayer(participant, seat)];
+      const who = wireIdentity(participant, seats);
+      return who === undefined ? [] : [wirePlayer(participant, who)];
     }),
     // The newest, if ever there were more than a snapshot may carry: a
     // client refuses a whole snapshot past the cap.
@@ -673,6 +808,15 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       launchedAt: sim.elapsedSeconds - shot.elapsed,
       flightSeconds: shot.flightSeconds,
     })),
+    // The newest, as for projectiles; a team the wire has no colour for is
+    // not drawn. A trap goes to its own team alone (`sendTraps`).
+    groundEffects: sim.groundEffects
+      .filter((effect) => effect.act.kind !== "trap")
+      .slice(-MAX_WIRE_GROUND_EFFECTS)
+      .flatMap((effect) => {
+        const team = wireTeam(effect.team);
+        return team === null ? [] : [{ ...groundEffectSnapshot(effect, sim.elapsedSeconds), team }];
+      }),
   });
 
   /** Drop the seats whose players did not come back in time. */
@@ -688,6 +832,9 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   };
 
   const tick = (): void => {
+    for (const participant of sim.participants()) {
+      teams.set(participant.id, participant.combatant.team);
+    }
     const result = sim.step(TICK_SECONDS);
     expireDropped();
     for (const team of calls.step(sim.elapsedSeconds, isAlive)) {
@@ -697,14 +844,18 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       sendCalls(team);
     }
     callsDirty.clear();
+    sendTraps(0);
+    sendTraps(1);
     for (const part of packSnapshot(snapshot(), MAX_MESSAGE_BYTES)) {
       transport.send("snapshot", part);
     }
+    tally.add(result.log);
     for (const batch of packCombat(wireCombat(result.log), MAX_MESSAGE_BYTES, MAX_WIRE_COMBATS)) {
       transport.send("combat", batch);
     }
     for (const seat of seats.values()) {
       sendSkillBar(seat, false);
+      sendWeaponSets(seat, false);
       sendRecharges(seat, false);
       sendAdrenaline(seat, false);
       sendChainMarks(seat, false);
@@ -714,6 +865,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       const ended: WireEnded = {
         winningTeam: wireTeam(sim.outcome.winningTeam),
         endReason: sim.outcome.reason ?? "time",
+        summary: summary(),
       };
       transport.send("ended", ended);
     }
@@ -736,13 +888,19 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     get phase() {
       return finished ? "finished" : "active";
     },
+    get winningTeam() {
+      return sim.phase === "finished" ? wireTeam(sim.outcome.winningTeam) : null;
+    },
     get abandoned() {
       return planned !== null && awaited.size === 0 && seats.size === 0;
+    },
+    get droppedWeaponSwaps() {
+      return droppedWeaponSwaps;
     },
     async close(reason) {
       // Nothing more is ticked onto a transport that has left.
       finished = true;
-      const ended: WireEnded = { winningTeam: null, endReason: reason };
+      const ended: WireEnded = { winningTeam: null, endReason: reason, summary: summary() };
       transport.send("ended", ended);
       await transport.leave();
     },

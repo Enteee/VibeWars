@@ -39,6 +39,7 @@ function player(sessionId: string, team: number, x: number): PlayerSnapshot {
     secondaryProfession: undefined,
     team,
     dead: false,
+    corpseExploited: false,
     castingSkillId: undefined,
     castRemaining: 0,
     castTotal: 0,
@@ -47,6 +48,7 @@ function player(sessionId: string, team: number, x: number): PlayerSnapshot {
     knockdownRemaining: 0,
     healthPips: 0,
     energyPips: 0,
+    creature: undefined,
     statuses: [],
   };
 }
@@ -61,6 +63,9 @@ const MATCH: MatchSnapshot = {
   winningTeam: undefined,
   endReason: undefined,
   projectiles: [],
+  groundEffects: [],
+  traps: [],
+  summary: undefined,
 };
 
 function body(id: string, x: number, team: RenderableActor["team"]): RenderableActor {
@@ -80,9 +85,12 @@ function body(id: string, x: number, team: RenderableActor["team"]): RenderableA
     health: 500,
     maxHealth: 500,
     dead: false,
+    exploited: false,
     knockedDown: false,
     castProgress: undefined,
     statuses: [],
+    enchanted: false,
+    hexed: false,
   };
 }
 
@@ -131,14 +139,14 @@ describe("middleClickAction (#443)", () => {
     players: MATCH.players.map((p) => (p.sessionId === id ? { ...p, dead: true } : p)),
   });
 
-  it("calls a living foe, watches a living ally, and pings the ground", () => {
+  it("calls a living foe, and pings a living ally's point and the ground (#1055)", () => {
     expect(middleClickAction(MATCH, ARENA, vec2(201, 2))).toEqual({
       kind: "call",
       call: { kind: "target", targetId: "foe" },
     });
-    expect(middleClickAction(MATCH, ARENA, vec2(100, 0))).toEqual({
-      kind: "watch",
-      allyId: "ally",
+    expect(middleClickAction(MATCH, ARENA, vec2(101, 2))).toEqual({
+      kind: "call",
+      call: { kind: "ping", x: 101, y: 2 },
     });
     expect(middleClickAction(MATCH, ARENA, vec2(150, 60))).toEqual({
       kind: "call",

@@ -91,8 +91,11 @@ units, so a hit for a quarter of your health is a strike; degeneration,
 sacrifice and a killing blow give nothing. Using an adrenaline skill
 empties its own pool and takes one strike from every other, at
 activation, so an interrupted one has still paid; an attack skill that
-lands then earns its strike back like any blow. Death, respawn and a
-reset empty every pool.
+lands then earns its strike back like any blow. A skill that says **"Lose
+all adrenaline"** (Hammer Bash, #1097) empties every pool instead, and its
+blow earns nothing back, hit or miss. A **disabled** adrenaline skill
+loses all its adrenaline and gains none until the disable ends. Death,
+respawn and a reset empty every pool.
 Adrenaline does not keep between fights (#828): **25 s out of combat**
 (`adrenalineLossSeconds`) and every pool empties at once. A blow or an
 attack skill you start, a foe's blow or attack skill at you (even one
@@ -177,6 +180,10 @@ every untargeted Monk spell, and a deep wound cuts the heal of whoever
 has one. **Healing Breeze** (Healing Prayers, 10 energy, 1 s, 5 s) gives
 an ally +8 Health regeneration for 15 s; it is an enchantment, so
 enchantment removal takes it.
+**Mending Touch** (#1039, Protection Prayers, 5 energy, ¾ s, 6 s) is a
+touch: the ally, or you, must be at hand. It removes the newest two
+conditions and heals 51 for each one removed. A deep wound among the
+two is gone before the heal; one left as a third cuts it.
 
 ## Interrupts
 
@@ -230,6 +237,19 @@ s. Whatever ends a recharge, as Moebius Strike, ends this too. An
 interrupted or cancelled skill is not used, nor is a plain attack, so
 Diversion stays on; an attack skill is lengthened once. The log says
 which skill, and by how much.
+
+**Arcane Echo** (#1126, no attribute, 15 energy, 2 s, 20 s recharge)
+and **Echo** (elite, 5 energy, 1 s, 10 s recharge) are
+self-enchantments that change your bar. While Arcane Echo is up (20 s),
+the next spell you finish takes its slot for 20 s; any other skill ends
+it with no copy. While Echo is up (30 s), the next skill you finish,
+of any kind, does the same. The copy is a skill of its own: it recharges
+apart from the original, so both can be used, and a disable or Diversion
+on one leaves the other alone. When its 20 s are over, the echo is back
+in its slot and starts its own recharge. An interrupted skill was never
+finished, so it is not copied and the echo stays. An echo is never
+copied, and does not use up the other. Death or a reset ends every copy
+at once.
 
 **Cry of Frustration** (#938, Domination Magic, 10 energy, ¼ s, 20 s
 recharge) only works on a foe using a skill, any skill. Then that foe is
@@ -293,6 +313,20 @@ of energy or by a death, it takes the newest hex off its ally. A hex it
 removes does not fire its own end: a Parasitic Bond taken this way
 heals nobody.
 
+**Vigorous Spirit** (#1039, Monk, Healing Prayers, 5 energy, ¼ s, 4 s)
+heals its ally 17 (5 at Healing Prayers 0) for 30 s each time it attacks or casts a spell: each
+swing, each shot, each attack skill and each completed spell. A signet,
+a shout, a stance, a chant, or a spell interrupted or cancelled heals
+nothing, and cast on yourself its own cast does not count. The Monk who
+cast it is the healer: a deep wound cuts it, and Divine Favor, which
+adds once as a spell lands, does not add to each heal.
+
+**Shadow Refuge** (#988; Assassin, Shadow Arts, 5 energy, 1 s, 8 s
+recharge) gives you +9 health regeneration for 6 s. When it ends, for any
+reason, a strip included, you gain 88 Health if you are attacking right
+then: a swing in progress or an attack skill being used. Standing idle,
+casting a spell or dead, it gives nothing.
+
 **Rend Enchantments** (Necromancer, Curses, 5 energy, 2 s, 20 s
 recharge) removes up to 8 enchantments from a foe, the newest first,
 and you lose 31 health for each Monk enchantment among them. That loss
@@ -327,7 +361,8 @@ Parasite 39) is not damage. The target loses up to that much, never more
 than it has, and the caster gains exactly what was taken, up to its
 maximum health. Armor does not apply, healing modifiers do not touch the
 gain, it charges no adrenaline, and Mark of Pain does not see it. It can
-kill. A dead caster steals nothing.
+kill. A dead caster steals nothing. Vengeful Weapon and Weapon of Remedy
+steal for their bearer, not their Ritualist, and only once.
 
 ## Knockdown
 
@@ -401,6 +436,11 @@ ally's newest hex. **Dismiss Condition** (#1013, Protection Prayers, 5
 energy, ¾ s, 3 s) removes an ally's newest condition, and heals 63 if
 the ally is enchanted as it lands, whether or not a condition was
 there to remove.
+spent. **Cure Hex** (#1039, Healing Prayers, 5 energy, 1 s, 12 s)
+removes one hex from any ally and, if it removed one, heals that ally 86.
+**Smite Condition** (#1039, Smiting Prayers, 5 energy, 1 s, 7 s) is
+Smite Hex for a condition: if it removed one, every foe in the area of
+the ally takes 50 holy damage.
 
 **A Dervish spends its own enchantments** (#845). Wounding Strike,
 Signet of Pious Light and Pious Restoration each make you lose 1 Dervish
@@ -581,9 +621,12 @@ maximum, not the raw one.
 A skill's type is its badge on the slot, in the library and in the
 Training Ground, and is named first in its tooltip ("Signet.", "Hex
 Spell."). Some types play by rules of their own (#465). Spells,
-enchantments, hexes and weapon spells are **spells**; attacks, signets,
-shouts, chants, stances and plain skills are not, and every rule that "affects spells" (dazed
-and Fast Casting, so far) leaves them alone.
+enchantments, hexes, weapon spells, ward spells and well spells are **spells**; attacks, signets,
+shouts, chants, stances, rituals and plain skills are not, and every rule that "affects spells" (dazed
+and Fast Casting, so far) leaves them alone, except that Fast Casting speeds up signets
+too (#1100). Rituals, nature and binding,
+plant spirits (see Creatures); ward spells leave wards and well spells
+wells (see Wards and wells).
 
 **Elite skills** wear a doubled gold frame wherever a skill is drawn,
 and their tooltip says "Elite" before the type (#459). A bar holds at most
@@ -592,8 +635,8 @@ Shot, so far. In the build
 editor, placing a second elite takes the first one's place on the bar
 and says so ("Broad Head Arrow replaced Barrage: only one elite skill per
 bar."); the library's Elite toggle lists only elites. A bar with two
-elites, from an import or storage, cannot be saved, and a match plays the
-house loadout instead.
+elites, from an import or storage, cannot be saved, and a match plays a
+starter build instead (#852).
 
 **Stances** are yours alone, and only one is up at a time. Using a
 stance ends the one you are in, the same one included, which restarts
@@ -642,6 +685,17 @@ disable your other attack skills for 3 s: that waits for disabled skills
 (#469). Cruel Spear (Paragon elite spear attack, 6 adrenaline) deals
 +42 damage, and a Deep Wound for 17 s if its target is not moving as the
 spear lands (#921).
+
+Five more Paragon spear attacks (#1030) build the bleed → cripple →
+Deep Wound line. Barbed Spear (2 adrenaline) bleeds its foe for 17 s.
+Maiming Spear (5 energy, 5 s) cripples a foe already Bleeding for 17 s,
+so Barbed Spear then Maiming Spear cripples, and one Barbed Spear alone
+does not. Merciless Spear (6 adrenaline) gives a Deep Wound for 17 s to
+a foe below 50% Health, counting the spear's own damage: a foe at 55%
+it drops to 45% is wounded. Stunning Strike (elite, 8 adrenaline) deals
++42, and Dazes for 9 s a foe suffering from any condition after it
+lands; a hex alone is not enough. Harrier's Toss (10 energy, 1 s, 10 s)
+deals +17, and 33 more on a foe that is moving, in one packet.
 
 **Moving** means walking during the previous tick: a held direction, a
 clicked point, an approach to attack or cast. Knocked down, in
@@ -766,16 +820,37 @@ when you cast it on yourself. **Weapon of Aggression** (Channeling
 Magic, 10 energy, ¼ s, 10 s recharge, yourself only) makes you attack
 25% faster for 13 s; attacking does not end it, and as with every
 speed-up only the strongest counts, so under Frenzy it adds nothing.
-Spirit Light Weapon's extra 21 a second near a spirit and Weapon of
-Quickening's binding rituals wait for spirits (#467).
+Spirit Light Weapon heals 21 more a second while its bearer is in
+earshot of a spirit, any team's, and Weapon of Quickening shortens the
+recharge of binding rituals as of spells (#1064).
+
+Three more (#1022), which still replace any other weapon spell. Each
+lasts on an ally or yourself. **Vengeful Weapon** (Restoration Magic, 5
+energy, ¼ s, 3 s recharge) lasts 8 s: the next time its bearer loses
+health to damage or life steal from a foe, a blow, an arrow or a spell,
+the bearer steals 51 from that foe, and it ends. **Weapon of Remedy**
+(elite, 3 energy, ¼ s, 3 s recharge) is the same with a 68 steal, and
+the bearer also loses its 2 newest conditions. Degeneration, sacrifice,
+a block, a blow armor takes to 0 and a hit Reversal of Fortune reverses
+do not set either off. Neither does damage a trigger deals, so Mark of
+Pain's splash leaves them up, and two Vengeful Weapons never echo. Two
+foes in one tick: it answers the first. The blow that kills the bearer
+steals nothing. **Splinter Weapon** (Channeling Magic, 5 energy, 1 s, 8 s
+recharge) lasts 20 s or 4 hits with any physical weapon: each hit deals
+25 armor-ignoring damage to every other foe adjacent to the foe hit. A
+miss or a block spends nothing, and a wand or a staff carries none.
 
 The Ritualist heals with Restoration Magic, each on an ally or yourself
 (#955). **Mend Body and Soul** (5 energy, ¾ s, 3 s recharge) heals 96.
 **Spirit Light** (5 energy, 1 s, 4 s recharge) sacrifices 17% of your
 maximum health and heals 156. **Wielder's Boon** (5 energy, ¼ s, 4 s
 recharge) heals 51, and 63 more if the ally is under a weapon spell.
-Their spirit clauses, a condition removed per spirit in earshot and no
-sacrifice with a spirit near, wait for spirits (#467).
+**Mending Grip** (5 energy, 1 s, 4 s recharge) heals 68, and if the ally
+is under a weapon spell it also loses one condition, the newest: the
+Ritualist's first condition removal (#1022).
+Mend Body and Soul also removes one condition from the ally for each
+spirit, any team's, in earshot of the ally, and Spirit Light sacrifices
+nothing while a spirit, any team's, is in earshot of you (#1064).
 
 ## Weapon attacks
 
@@ -852,6 +927,19 @@ and against a foe below half health recharges all your other attack
 skills at once, so the chain loops: lead, off-hand, dual, Moebius,
 dual, Moebius. The weapon's own double strike never adds to a skill.
 
+**Off-hand attacks that ask for a state** (#1041). Falling Spider needs
+no lead: it hits only a knocked-down foe, whoever knocked it down, read
+as its blow lands. On a foe standing, it is out of sequence like an
+off-hand without its lead: it costs its energy, misses ("Falling Spider
+misses Warrior (only if target is knocked down)") and recharges at
+once. A hit poisons and leaves your off-hand mark, so a dual follows.
+The tooltip reads "Off-hand attack. Only if target is knocked down."
+The crippling knockdown chain sets each step up: Leaping Mantis Sting,
+a lead, cripples a foe that is moving; Jungle Strike, an off-hand,
+deals a crippled foe and every foe adjacent to it 25 more; Trampling
+Ox, a dual, knocks a crippled foe down; then Falling Spider, and Death
+Blossom or Twisting Fangs after it.
+
 Your mark on your target shows right of its health in the target frame
 (#916): one dagger for lead, one in the left hand for off-hand, two
 crossed for dual, with "lead attack landed" and so on on hover. It
@@ -921,6 +1009,11 @@ the attribute and an unmet requirement; an attack skill's bonus is
 added unmultiplied. A melee blow at a target that is moving with its
 back to you (facing more than 90° away) always crits. A crit floats
 larger, with a "!", and the log says "a critical hit".
+**Critical Eye** (Assassin, Critical Strikes, 5 energy, instant, 30 s
+recharge, #988) adds 13% to the chance for 30 s, all of it capped at
+100%, and gives 1 more energy on each crit, beside Critical Strikes'.
+It is a skill effect, so no strip removes it. An arrow keeps the crit
+chance it was loosed with, but the extra energy is read as it lands.
 
 **Block** (#534). Guardian gives its ally a 50% chance to block attacks;
 several block sources combine as 1 − ∏(1 − p), so two 50% sources make
@@ -933,6 +1026,11 @@ skill's cost and recharge are still spent. "block" floats over the
 target. Swift Chop is the exception that proves it: blocked, it still
 deals its flat damage and a 20 s Deep Wound. Spells are never blocked,
 and shields do not block, as in GW1. Wild Throw and Crippling Shot cannot be blocked at all.
+**Shroud of Distress** (Assassin, Shadow Arts, 10 energy, 1 s, 45 s
+recharge, #988) gives a 75% chance to block attacks for 54 s, but only
+while you are below half your maximum Health (after a deep wound), read
+at each block roll: a heal back over half turns it off. It combines
+with other blocks as above.
 
 Not modelled: evade.
 
@@ -948,6 +1046,53 @@ degenerates its target by 2 pips.
 same slow-down without the degeneration, for 25 s, on the target and
 every foe adjacent to it (#918).
 
+### Weapon sets
+
+A build carries up to four weapon sets (#489): a main hand and an
+optional off-hand each. Set 1 is required, and sets 2-4 may be empty in
+any pattern. Armor, runes and insignias are one set. A swap is an
+action: it happens at once if you are doing nothing, and otherwise waits
+for the cast and its aftercast, the swing in progress, or a knockdown to
+end. A blow begun lands with the old weapon, and the new one then swings
+afresh. Moving or Esc swaps at once, because it ends what the swap was
+waiting for. Pressing another set while one waits replaces it, and the
+set in hand drops it. There is no cooldown, as in GW1. Dead, you cannot
+swap; you respawn holding the set you died with.
+
+After a swap, everything reads the new set: auto-attack damage,
+interval and reach, which attack skills work ("Needs an axe."), a
+shield's armor and a focus's energy. Maximum energy becomes the new
+set's, and current energy moves by the same amount. Swapping from a
+wand and focus (+12) to a staff takes 12 off both, and swapping back
+gives both back. Current energy may go below 0, hidden as in GW1:
+regeneration climbs back through 0 before a skill can be paid for, and
+nothing else takes it deeper. The energy bar, and what others see, show
+0 until then. Arrows already in flight keep the bow that loosed them.
+See [ADR-0036](../adr/0036-weapon-sets.md).
+
+1-4 swap to sets 1-4 in the `vibewars` key preset, F1-F4 in `classic`,
+and they can be rebound under "Weapon sets" on the Keys screen. A
+held key swaps once. Four small slots at the left end of the skill bar,
+two by two, show each set's weapon, its off-hand smaller, and its key,
+in a match and in the Training Ground alike. The set in hand is lit, a
+set waiting for its swap pulses, and an empty set is dimmed and blank.
+Clicking a slot is its key. An empty set's key does nothing, and nothing
+is said. The host handles at most four swaps a second from one player,
+in a burst of four; it drops the rest silently. Which sets you carry
+stays yours: others see only the weapon in your hands.
+
+The Gear tab edits every set (#489): a row of four tabs, `1` to `4`,
+sits above the hands, each showing its set's weapon and off-hand, or a
+dimmed `+` when empty. The hands, their attribute choices and the gear
+summary show and edit the selected tab, set 1 when the editor opens. A
+weapon picked into an empty set creates it, with no off-hand; its ×, or
+dragging its weapon to the library, empties it again. Set 1 cannot be
+emptied. A set's problems mark its tab. A profession change gives set 1
+the new primary's default weapon if nothing can govern its own, and
+empties a set 2-4 in that case. An attack skill is flagged ("Needs an
+axe") only when no set carries its weapon. The character preview shows
+set 1, which every match starts with.
+
 ## Damage types and armor
 
 Every hit has one of GW1's damage types (#759). Slashing, piercing and
@@ -961,18 +1106,28 @@ Armor comes from the primary profession: 80 for a Warrior or Paragon, 70
 for a Ranger, Assassin or Dervish, 60 for the casters. On top of that,
 some armor applies only against some types:
 
-| Bonus                | Against   | From                   |
-| -------------------- | --------- | ---------------------- |
-| +20                  | physical  | being a Warrior        |
-| +30                  | elemental | being a Ranger         |
-| +10                  | physical  | each Stalwart insignia |
-| −1 to −3 a hit, flat | physical  | Rune of Absorption     |
+| Bonus                | Against   | From                              |
+| -------------------- | --------- | --------------------------------- |
+| +20                  | physical  | being a Warrior                   |
+| +30                  | elemental | being a Ranger                    |
+| +10                  | physical  | a Stalwart insignia, on its piece |
+| −1 to −3 a hit, flat | physical  | Rune of Absorption                |
 
 So a Warrior has 100 armor against a sword and 80 against a Fireball,
 and a Ranger 70 and 100. Damage halves for every 40 armor above 60:
 Fireball's 91 lands for about 46 on a Ranger. Types that are neither
 physical nor elemental get no typed bonus; base armor still applies.
 Armor penetration cuts the whole total, typed bonus included.
+
+An insignia guards only its own piece (#1135). Every hit that armor
+meets lands on one piece, as in GW1: the chest 3 times in 8, the legs 2
+in 8, the head, hands and feet once in 8 each. A Stalwart on the chest
+adds its +10 only to hits on the chest; five Stalwart give +10 on every
+hit, not +50. Base armor, the profession's typed armor, a shield,
+enchantments and the rest count wherever the hit lands. Holy, shadow
+and typeless damage, degeneration and life steal hit no piece. The gear
+editor lists an insignia under the armor with its pieces and what it
+adds on average: `+10 armor vs physical damage on chest (avg +3.8)`.
 
 A status can change the type of your attacks (#1021): under Staggering
 Force or Dust Cloak a scythe deals earth, so a Warrior meets it with 80
@@ -1069,13 +1224,16 @@ GW1 PvP (#473). Only a primary can hold its rank, and runes count.
   activation is 2 s or more, so a Mesmer/Necromancer casts Malaise in
   1.15 s but Faintheartedness in 1 s as usual. It multiplies with dazed
   (rank 12 and dazed: ×1.149). Aftercast and recharge are unchanged;
-  attack skills and other non-spells too.
+  attack skills and other non-spells too. Signets, under the same
+  Mesmer-or-2-s rule, activate 3% faster a rank, linear: ×0.64 at rank
+  12, so a Me/Mo casts Resurrection Signet (3 s) in 1.92 s. Dazed does
+  not slow a signet (#1100).
 - **Strength** (Warrior). Attack skills ignore 1% of armor a rank (12%
   at 12), unless the weapon has armor penetration of its own (a
   hornbow's 10%), which stands instead; the two do not add. Plain swings
   get none.
-- **Expertise** (Ranger). Attack skills and every Ranger skill cost 4%
-  less energy a rank (−48% at 12), rounded once, never below 0.
+- **Expertise** (Ranger). Attack skills, rituals of any profession and
+  every Ranger skill cost 4% less energy a rank (−48% at 12), rounded once, never below 0.
   Adrenaline costs are untouched.
 - **Divine Favor** (Monk). A Monk spell cast on an ally, yourself
   included, heals that ally another floor(3.2 × rank) when it lands: +38
@@ -1083,8 +1241,8 @@ GW1 PvP (#473). Only a primary can hold its rank, and runes count.
   also reaches others. An interrupted spell, a dead target or a Monk
   spell at a foe gets nothing.
 - **Critical Strikes** (Assassin). +1% critical chance a rank on weapon
-  blows, and every crit gives the striker energy: 1 at ranks 1–7, 2 at
-  8–12, 3 at 13 and above.
+  blows, and every crit gives the striker energy: none at ranks 1–2, 1 at
+  3–7, 2 at 8–12, 3 at 13 and above (#1100).
 - **Soul Reaping** (Necromancer). When anyone else, ally or foe, dies
   within spirit range (850), you gain energy equal to your rank, up to
   your maximum, at most 3 times in any 15 s. Not while you are dead.
@@ -1100,11 +1258,16 @@ GW1 PvP (#473). Only a primary can hold its rank, and runes count.
   rank (−48% at 12: Mystic Regeneration 8 instead of 15), rounded once,
   never below 0. While any enchantment is on you, yours or an ally's,
   you have +1 armor a rank against every hit.
-
-The others have no effect yet.
+- **Spawning Power** (Ritualist). A spirit or minion you summon, of any
+  profession, has 4% more Health a rank, rounded once, not a charmed
+  pet: a spirit of 210 has 311 at rank 12. A weapon spell you put on
+  anyone, yourself included, lasts 4% longer a rank: Weapon of
+  Quickening 31.08 s instead of 21 s. A spirit's lifetime is unchanged.
+  The tooltip shows both, the base in brackets: "311 Health (210)",
+  "31.1s (21s)" (#1098).
 
 The build editor says under a primary's row what it does at its rank
-("Fast Casting 12: spells cast 43% faster"), and a skill tooltip for a
+("Fast Casting 12: spells cast 43% faster, signets 36% faster"), and a skill tooltip for a
 known character shows the cost and activation Expertise, Mysticism and
 Fast Casting make of it, the base in brackets: "5 energy (10)",
 "1.1s (2s)" (#531). The skill bar shows icons only (#719); a slot's
@@ -1121,6 +1284,168 @@ brackets.
   and a wall ends up outside the wall rather than inside it.
 - **Line of sight** is a geometric query against wall segments, shared
   by the server, the tests and any future client preview.
+- **Shadow step** (#988): **Death's Charge** (Assassin, Shadow Arts,
+  5 energy, ¼ s, 30 s recharge) moves you to the foe it targets, where
+  that foe stands as the spell resolves, touching it on the side you
+  came from, facing it. With a wall between, you land on it, and bodies,
+  walls and the map's edge push you clear as for a walk. It is not a
+  walk: snares do not slow it, nothing reads it as running, and an
+  arrow already flying at you misses. A long step snaps the camera, as
+  a respawn does. If that foe has more Health than you, read before the
+  step, you are healed for 173.
+
+## Creatures
+
+A creature (#1052) is a body that is not a player: a spirit or a minion,
+summoned by a skill, or a pet, which comes with one on the bar. It has health, armor, statuses and its owner's team,
+so every attack, spell, area and condition hits it, and it can be
+targeted with Tab, C, a click or a call. It is drawn smaller (radius 10
+to a player's 14) and blocks bodies at that radius.
+
+It never counts for its team: killing one scores nothing and gives no
+morale, it has no morale of its own, and a team with only creatures left
+standing has lost. A spirit or minion that dies or runs out its time disappears
+at the end of the tick, with no corpse and no respawn; running out is not
+a death. Its owner's death does not end it; its owner leaving the match
+does. Soul Reaping answers a minion's death but not a spirit's. At most
+32 creatures are on the field at once (ADR-0035).
+
+**Spirits** (#1064) are planted by a ritual, a cast that can be
+interrupted, where its caster stands. A spirit never moves: bodies are
+pushed out of it, never it out of them. While it lives, everyone in its
+range (a nature ritual's 1,190, a binding ritual's spirit range of 850;
+walls do not matter) that it reaches wears its
+effect as a status, with no bar, its hover "from Winnowing, while in
+its range": on the step a body walks in, off the
+step it walks out, and off everyone the step after the spirit dies or
+runs out. Nothing removes that status but leaving. A **nature ritual**
+(Ranger) reaches every body in range, both teams, so your Winnowing
+helps the foe beside you too; a **binding ritual** (Ritualist) reaches
+only its own team. No spirit is ever reached by a spirit. A body in
+range of two spirits with the same effect, its side's and the foe's,
+wears it once. One of a skill in range: planting a spirit ends every
+spirit of the same skill on your side within the new one's range, as an
+expiry, not a death. A foe's spirit of that skill lives on.
+
+**Winnowing** (Ranger, Wilderness Survival, nature ritual, 5 energy,
+2 s, 60 s recharge) plants a spirit of 210 Health (more with Spawning
+Power) and armor 51 for 198 s:
+every body in its range takes 4 more from each physical hit it takes,
+before armor. A hit that "deals only" its number, as Concussion Shot's,
+takes the 4 too: it is on the one hit, not on the attack.
+**Recuperation** (Ritualist, Restoration Magic, binding ritual, 25
+energy, 3 s, 45 s recharge) plants one of 210 Health (more with Spawning
+Power) and armor 51 for 39 s: your side in its range gains +3 Health regeneration.
+
+**Minions** (#467) are raised from a fresh corpse, of either team, the
+nearest within cast range, and rise where it lay. Their Health, armor
+and blows are set by their Necromancer's Death Magic as they rise and
+never change after. A minion rots: it loses 1 pip of Health at once and
+1 more every 20 s it lives, summed with its statuses before the −10
+cap, and it never regenerates naturally; healing fights it as usual. A
+rank-12 Bone Minion nobody touches lives 65 s. It stays by its master,
+attacks the nearest foe within earshot of itself, not its master's
+target nor a called one, and breaks off to walk back once its master is
+past cast range, picking no fight until at heel again. A master holds 2
+plus half its Death Magic, rounded down (8 at 12): raising past it kills
+the weakest first, by Health left and the oldest of equals, and that is
+a death, so Soul Reaping answers it. A minion leaves no corpse, outlives
+its master's death and follows the body, and leaves with its master.
+A minion or a pet walking back to its owner goes round walls and
+bodies, as a click-to-walk does; with no way there at all, it stands
+where it is until there is one.
+
+**Animate Bone Minions** (Necromancer, Death Magic, spell, 10 energy,
+1 s, 5 s recharge) raises two Bone Minions of 280 Health and armor 30,
+each a 6–11 blunt blow every 3.10 s. **Animate Bone Horror** (5
+energy, 1 s, 5 s recharge) raises one Bone Horror of 360 Health and
+armor 56, 12–24 blunt every 3.10 s. Numbers at Death Magic 12, from
+GWW's damage tables, criticals taken out. A minion's blows scale with
+its level, which its Necromancer's Death Magic sets as it rises: ×(level
+÷ its level at 12)^1.5, a fit to GWW's tables. A Bone Minion raised at
+Death Magic 0 is level 0 and deals nothing; at 6 it hits for 2–4.
+
+**Pets** (#1046). A Ranger with **Charm Animal** (Beast Mastery, 10
+energy, 10 s) on the bar brings a level-20 wolf from the moment it
+joins: 480 Health and armor 80 whatever its owner's attributes, a
+17–29 slashing bite every 2.15 s at Beast Mastery 12, weaker below on
+the minions' curve, read as it arrives. Charm Animal does nothing else:
+no match has an animal to charm, so pressing it is refused and costs
+nothing. The wolf goes for whatever its owner is attacking, with the
+weapon or an attack skill, not a spell, if that foe is within 700 of
+it, and switches when its owner does; it keeps biting after its owner
+stops, and otherwise heels within 109. Past 700 from its owner it walks
+back and picks no fight until at heel. A dead wolf lies where it fell
+and stays in the match: its corpse cannot be exploited, and an ordinary
+resurrection is refused ("That cannot be revived that way."). Its
+death disables its owner's whole bar for 10…4 s by Beast Mastery 0…12
+(unverified), unless it was resurrected less than 15 s before.
+**Comfort Animal** (Beast Mastery, 10 energy, 1 s, 1 s recharge, cast
+range) acts on your own wolf whatever you have selected: it heals a
+living one for 20…87 and raises a dead one with 10…48% Health; with no
+wolf it is refused ("You have no pet.") and costs nothing. The wolf
+also comes back beside its owner, at full Health, whenever its owner
+respawns or is reset; under resurrection-only only Comfort Animal
+brings it back. It outlives its owner's death and leaves with its
+owner. A build change that keeps Charm Animal keeps the wolf as it is;
+one that drops it sends it away; one that gains it brings a fresh one.
+
+## Wards and wells
+
+A **ward** (#1087) is a circle left on the ground where its caster
+stands as the ward spell lands. It is not a body: nothing can target,
+hit, kill or move it, and its owner dying does not end it. Interrupted,
+or dead before the cast ends, nothing is placed. For as long as it lasts,
+every living body of the caster's side whose centre is inside it (walls
+do not matter, spirits excepted) wears its effect as a status with no
+bar, its hover "while in its range": on the step after it lands or a
+body walks in, off the step a body walks out or the ward ends. A foe
+standing in your ward gets nothing. Two wards of one skill overlapping
+give their effect once; two different wards stack. Recasting leaves a
+new ward and the old one stays until its time is up. Everyone sees every
+ward: a faint disc in its side's colour, under the bodies, with its
+skill's icon at the centre. At most 32 are on the ground at once; one
+more ends the oldest.
+
+**Ward Against Melee** (Elementalist, Earth Magic, ward spell, 15
+energy, 1 s, 30 s recharge) leaves a ward of radius 109 for 5...17
+seconds: your side inside it has a 50% chance to block melee attacks,
+75% on top of a 50% stance. Arrows and spells are not blocked.
+
+A **well** (#1104) is a ward's kin left on a corpse, not on its caster:
+the well spell exploits the nearest fresh corpse as it lands, as Soul
+Feast does (see Corpses), and the well lies where that body did, for its
+whole time, whether the body later stands up, respawns or not. With no
+corpse in reach the cast is refused and nothing is paid. A well acts on
+foes: your side standing in it gets nothing. Otherwise it is a ward:
+drawn the same, one status from two of a skill, at most 32 on the
+ground counting wards and traps.
+
+**Well of Suffering** (Necromancer, Death Magic, well spell, 10 energy,
+1 s, 10 s recharge) leaves a well of radius 109 on the nearest corpse
+within cast range for 10...26 seconds: foes inside it suffer −5 Health
+degeneration.
+
+## Traps
+
+A **trap** (#1105) is a ground effect, as a ward is, set where its setter
+stands as the trap skill ends. A trap is not a spell, so Dazed does not
+slow it, but setting one is easily interrupted: any attack that lands on
+the setter during it interrupts it, a swing, an arrow or an attack skill;
+a miss, a block or a spell's damage does not. Interrupted or moved, there
+is no trap, the energy is spent and the skill recharges. Set, it waits for
+up to its duration, then ends with no effect. The first step a living foe
+that is not a spirit has its centre within 40 of it (adjacent, walls do
+not matter), it springs: its effects land on every foe its area takes
+around the trap, as an area skill's would, from its owner, alive or dead,
+and it is gone. Two traps under one foe both spring, oldest first. A trap
+whose owner left the match is gone. Only the setter's team sees it: an
+outline in the ally colour with its skill's icon at the centre. A foe
+sees nothing until it springs, and the host never sends it a foe's trap.
+
+**Barbed Trap** (Ranger, Wilderness Survival, trap, 10 energy, 2 s, 20 s
+recharge) lasts 90 seconds. Sprung, every foe nearby (81) takes 7...20
+piercing damage, becomes Crippled and begins Bleeding, both for 21 s.
 
 ## Death and scoring
 
@@ -1172,6 +1497,40 @@ adrenaline, and their respawn timer is gone. On a living ally it is
 refused ("That ally is alive."). If the corpse is back on its feet by
 the time the cast ends, a second resurrection landing first or the
 respawn timer running out, it does nothing, and the energy is spent.
+
+Four more resurrections reach a corpse from casting range (#474), each
+with the same no effects, no adrenaline and 5 s death-penalty grace.
+**Resurrection Signet** is Common: any character may take it, whatever
+their professions. It returns the ally at 100% health and 25% energy
+after 3 s, and then it is spent, not recharging, until a morale boost
+reaches its owner. An interrupted one is spent too, and a cancelled one
+is not. Nothing in today's modes gives a morale boost, so it is one
+resurrection per match. **Rebirth** (Monk) brings the ally to your side
+at 25% health and no energy, disables every skill on their bar for 4 s
+at Protection Prayers 12, and empties your own energy. **Signet of
+Return** (Paragon) gives 13% health and 3% energy at Leadership 12 for
+each party member in earshot of you, yourself included. Creatures do not
+count. **Flesh of My Flesh** (Ritualist) costs you half your health and
+returns the ally with what you have left, and 17% energy at Restoration
+Magic 12.
+
+**Corpses** (#466). Every dead player or training dummy is a corpse where
+it fell, of either team: a Necromancer can feed on a foe's body or an
+ally's, and denying a foe the bodies is part of the fight. A creature
+leaves none. A corpse is fresh until a skill exploits it, once; after
+that it is drawn darker, and a skill that wants a corpse ignores it. A
+corpse skill takes the fresh corpse nearest the caster within its
+radius, ties going to the smaller id, with no line of sight needed: a
+body lies on the ground. With none in reach the press is refused ("No
+corpse in range.") and nothing is paid; the corpse is picked again when
+the cast ends, so one used up meanwhile leaves the cast with no effect,
+paid for. An exploited corpse can still be resurrected, and its next
+death leaves a fresh one; a respawn takes it away.
+
+**Soul Feast** (Necromancer, Death Magic, 10 energy, 1 s, no recharge)
+exploits the nearest corpse within cast range and steals 50...234
+Health from it. That is life stealing, as Vampiric Gaze's, not a heal:
+Deep Wound does not cut it, and it stops at your maximum.
 
 ## Match end
 

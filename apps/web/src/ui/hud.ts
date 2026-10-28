@@ -78,9 +78,15 @@ function describeWeaponName(weaponId: string): string {
 }
 
 export interface HudElements {
+  /** Your block, bottom centre (#1042): hint, message, effects, bars, skill bar. */
   readonly root: HTMLElement;
-  /** Health, energy and statuses, then the skill bar: from its top down, the HUD hides the arena. */
+  /** Morale and gear, health and energy: from its top down, the HUD hides the arena. */
   readonly bars: HTMLElement;
+  /**
+   * Top centre (#1042): the scoreboard and the target frame under it; down
+   * to its bottom, the HUD hides the arena.
+   */
+  readonly top: HTMLElement;
   /** Your health bar, tinted by your worst degeneration (#807). */
   readonly healthRow: HTMLElement;
   readonly healthFill: HTMLElement;
@@ -97,6 +103,8 @@ export interface HudElements {
   readonly energyText: HTMLElement;
   readonly energyPips: HTMLElement;
   readonly gearText: HTMLElement;
+  /** The skill bar's row: the weapon-set slots go first in it (#489). */
+  readonly skillRow: HTMLElement;
   /** Your statuses as icons with draining bars (#834); `dispose` it with the HUD. */
   readonly effects: EffectsMonitor;
   /**
@@ -107,7 +115,7 @@ export interface HudElements {
   readonly skillBar: HTMLElement;
   /** The skill bar's hover tooltips (#485); `dispose` it with the HUD. */
   readonly slotTips: SlotTooltips;
-  /** One line above the skill bar, for why a key did nothing. */
+  /** One line above your bars, for why a key did nothing. */
   readonly message: HTMLElement;
   /** How to target, until the first target of the match (#55). */
   readonly hint: HTMLElement;
@@ -163,7 +171,7 @@ function element(tag: string, className: string, parent: HTMLElement): HTMLEleme
 }
 
 /**
- * Shown above the skill bar until the player first has a target (#55),
+ * Shown above your bars until the player first has a target (#55),
  * with the keymap's target and names keys (#253, #302). A clause whose
  * action has no key is left out.
  */
@@ -215,9 +223,11 @@ export function createHud(
 ): HudElements {
   const root = element("div", "hud", parent);
 
-  // Score and clock sit at the top, away from the skill bar, so a glance
-  // for "am I winning" never competes with a glance for "what can I cast".
-  const scoreboard = element("div", "hud-scoreboard", parent);
+  // Top centre, as GW1 (#1042): score and clock, away from the skill bar,
+  // so a glance for "am I winning" never competes with a glance for "what
+  // can I cast"; the target frame under them.
+  const top = element("div", "hud-top", parent);
+  const scoreboard = element("div", "hud-scoreboard", top);
   const scoreboardText = element("span", "hud-scoreboard-text", scoreboard);
   const enemies = element("span", "hud-enemies", scoreboard);
   const result = element("div", "hud-result", parent);
@@ -236,8 +246,9 @@ export function createHud(
   music.setAttribute("aria-haspopup", "dialog");
 
   // Three rows (#484): who, how hurt, and what they are casting. The cast
-  // row keeps its space when empty, so the HUD never jumps.
-  const targetPanel = element("div", "hud-target", root);
+  // row keeps its space when empty, so the HUD never jumps; the effects
+  // under it grow downward (#1042), so the health bar never moves.
+  const targetPanel = element("div", "hud-target", top);
   const targetHeader = element("div", "hud-target-header", targetPanel);
   const targetProfessions = element("span", "hud-target-professions", targetHeader);
   const targetText = element("span", "hud-target-text", targetHeader);
@@ -258,11 +269,6 @@ export function createHud(
   targetChain.alt = "";
   targetChain.hidden = true;
   targetHealth.hidden = true;
-  const targetEffects = createEffectsMonitor(
-    targetPanel,
-    TARGET_EFFECT_ICON_PX,
-    "your target's effects",
-  );
   const targetCast = element("div", "hud-target-cast", targetPanel);
   const targetCastIcon = targetCast.appendChild(document.createElement("img"));
   targetCastIcon.className = "skill-icon hud-target-cast-icon";
@@ -273,16 +279,39 @@ export function createHud(
   const targetCastName = element("span", "hud-target-cast-name", targetCast);
   const targetCastBar = element("span", "hud-target-cast-bar", targetCast);
   const targetCastFill = element("span", "hud-target-cast-fill", targetCastBar);
+  const targetEffects = createEffectsMonitor(
+    targetPanel,
+    TARGET_EFFECT_ICON_PX,
+    "your target's effects",
+    "below",
+  );
 
-  const bars = element("div", "hud-bars", root);
+  // Bottom centre, as GW1 (#1042), bottom up: the skill bar, energy,
+  // health, morale and gear, your effects growing upward, hint and message.
+  const hint = element("div", "hud-hint", root);
+  const message = element("div", "hud-message", root);
+  message.setAttribute("role", "status");
+  // As wide as the skill bar: everything else in it takes its width.
+  const column = element("div", "hud-column", root);
+  const effects = createEffectsMonitor(
+    column,
+    EFFECT_ICON_PX,
+    "your effects",
+    "above",
+    onEndUpkeep,
+  );
+  const bars = element("div", "hud-bars", column);
+
+  const status = element("div", "hud-status", bars);
+  const morale = element("span", "hud-morale", status);
+  morale.hidden = true;
+  const gearText = element("span", "hud-gear", status);
 
   const healthRow = element("div", "hud-bar hud-bar-health", bars);
   const healthFill = element("div", "hud-bar-fill", healthRow);
   const healthLost = element("div", "hud-bar-lost", healthRow);
   const healthText = element("span", "hud-bar-label", healthRow);
   const healthPips = healthRow.appendChild(pipsElement());
-  const morale = element("span", "hud-morale", bars);
-  morale.hidden = true;
 
   const energyRow = element("div", "hud-bar hud-bar-energy", bars);
   const energyFill = element("div", "hud-bar-fill", energyRow);
@@ -290,17 +319,13 @@ export function createHud(
   const energyText = element("span", "hud-bar-label", energyRow);
   const energyPips = energyRow.appendChild(pipsElement());
 
-  const gearText = element("div", "hud-gear", bars);
-  const effects = createEffectsMonitor(bars, EFFECT_ICON_PX, "your effects", onEndUpkeep);
-
-  const hint = element("div", "hud-hint", root);
-  const message = element("div", "hud-message", root);
-  message.setAttribute("role", "status");
-  const skillBar = element("div", "hud-skills", root);
+  const skillRow = element("div", "hud-skill-row", column);
+  const skillBar = element("div", "hud-skills", skillRow);
 
   return {
     root,
     bars,
+    top,
     healthRow,
     healthFill,
     healthLost,
@@ -312,6 +337,7 @@ export function createHud(
     energyText,
     energyPips,
     gearText,
+    skillRow,
     effects,
     clock: { matchSeconds: Number.NaN, arrivedMs: 0 },
     skillBar,
@@ -393,6 +419,7 @@ const REFUSALS: Readonly<Record<ActivationRejection, string>> = {
   "caster-knocked-down": "You are knocked down.",
   "skill-not-on-bar": "That skill is not on your bar.",
   "still-recharging": "That skill is recharging.",
+  "spent-until-morale-boost": "That skill recharges only on a morale boost.",
   "already-casting": "You are already using a skill.",
   "wrong-weapon": "You need another weapon for that.",
   "insufficient-energy": "Not enough energy.",
@@ -405,6 +432,10 @@ const REFUSALS: Readonly<Record<ActivationRejection, string>> = {
   "invalid-target-enemy": "That skill needs an ally target.",
   "out-of-range": "Target is out of range.",
   "no-line-of-sight": "Target is not in line of sight.",
+  "no-corpse": "No corpse in range.",
+  "no-companion": "You have no pet.",
+  "no-animal-to-charm": "There is no animal to charm here.",
+  "invalid-target-creature": "That cannot be revived that way.",
 };
 
 /** Where an attack's refusal differs from a cast's: it is about the weapon, not a skill. */
@@ -481,9 +512,10 @@ export function skillSlotHtml(slot: SkillSlot): string {
 export const SKILL_SLOT_ICON_PX = 48;
 
 /**
- * Render the skill bar once; slots are stable for the match's lifetime.
- * `bar` is read again on each hover, so the tooltip prices a slot as the
- * host last sent it, a glyph's discount included (#637).
+ * Render the skill bar once; its slots keep their places for the match's
+ * lifetime, and `refreshSkillBar` redraws one whose skill changed (#469).
+ * `bar` is read again on each hover, so the tooltip prices and names a
+ * slot as the host last sent it, a glyph's discount included (#637).
  */
 export function renderSkillBar(
   hud: HudElements,
@@ -505,9 +537,7 @@ export function renderSkillBar(
       hud.skillBar.appendChild(button);
       return;
     }
-    button.innerHTML = skillSlotHtml(slot);
-    button.classList.toggle("is-elite", isEliteSkill(slot.id));
-    button.setAttribute("aria-label", slot.name);
+    paintSkillSlot(button, slot);
     button.addEventListener("click", () => {
       onUse(index);
     });
@@ -519,6 +549,55 @@ export function renderSkillBar(
     );
     hud.skillBar.appendChild(button);
   });
+}
+
+/** Draw `slot` on `button`: its icon, gauge, badge and name. */
+function paintSkillSlot(button: HTMLButtonElement, slot: SkillSlot): void {
+  button.innerHTML = skillSlotHtml(slot);
+  button.dataset.skillId = slot.id;
+  button.classList.toggle("is-elite", isEliteSkill(slot.id));
+  button.setAttribute("aria-label", slot.name);
+}
+
+/**
+ * The slots of `bar` that hold another skill than `painted` drew there
+ * (#469): an echo's copy standing in its slot, or the echo back. A slot
+ * empty in either is never one: an empty slot stays empty.
+ */
+export function changedSlots(
+  painted: readonly (string | null)[],
+  bar: readonly (SkillSlot | null)[],
+): number[] {
+  return bar.flatMap((slot, index) => {
+    const before = painted[index] ?? null;
+    return slot !== null && before !== null && slot.id !== before ? [index] : [];
+  });
+}
+
+/**
+ * Redraw each slot whose skill changed since it was drawn (#469), from the
+ * render loop, keeping its key label. Its click and tooltip read the slot
+ * by index, so they follow on their own; an open tooltip is hidden, as it
+ * still names the skill that was there.
+ */
+export function refreshSkillBar(hud: HudElements, bar: readonly (SkillSlot | null)[]): void {
+  const buttons = [...hud.skillBar.querySelectorAll("button")];
+  const painted = buttons.map((button) => button.dataset.skillId ?? null);
+  const changed = changedSlots(painted, bar);
+  hud.slotTips.repainted(changed);
+  for (const index of changed) {
+    const button = buttons[index];
+    const slot = bar[index];
+    if (button === undefined || slot === undefined || slot === null) {
+      continue;
+    }
+    const key = button.querySelector(".hud-skill-key")?.textContent ?? "";
+    paintSkillSlot(button, slot);
+    const label = button.querySelector(".hud-skill-key");
+    if (label !== null) {
+      label.textContent = key;
+    }
+  }
 }
 
 /** Paint each slot's recharge wipe, from the render loop (#152). */
@@ -609,22 +688,25 @@ export interface EnemyPip {
 /**
  * The pips for `players` as `selfTeam` sees them: every player not on it,
  * in snapshot order. A spectator, with no team, gets every player, grouped
- * by team. Only players in the snapshot get one, so an empty seat has none.
+ * by team. Only players in the snapshot get one, so an empty seat has none,
+ * and a creature (#1052) never counts.
  */
 export function enemyPips(
   players: readonly PlayerSnapshot[],
   selfTeam: number | undefined,
 ): EnemyPip[] {
   const pips = players
-    .filter((player) => player.team !== selfTeam)
+    .filter((player) => player.team !== selfTeam && player.creature === undefined)
     .map(({ name, team, dead }) => ({ name, team, dead }));
   // Stable, so each team keeps its snapshot order.
   return selfTeam === undefined ? pips.sort((a, b) => a.team - b.team) : pips;
 }
 
-/** How many of `team` are alive. */
+/** How many of `team`'s players are alive: its creatures never count (#1052). */
 export function livingCount(players: readonly PlayerSnapshot[], team: number): number {
-  return players.filter((player) => player.team === team && !player.dead).length;
+  return players.filter(
+    (player) => player.team === team && !player.dead && player.creature === undefined,
+  ).length;
 }
 
 /**

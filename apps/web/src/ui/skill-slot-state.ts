@@ -211,13 +211,14 @@ export function wrongWeapon(
  * the press still goes to the host (brief §32).
  *
  * Nothing is out of range with no target, or for a skill that only targets
- * its caster. A corpse is out of range only for a resurrection, and a
+ * its caster or its pet (#1046), whatever is selected. A corpse is out of range only for a resurrection, and a
  * resurrection only against a corpse (#812), by game-core's
  * `targetLivenessAllows`. An ally skill with a foe selected is not either:
  * the host casts it on the caster then, as the simulation's `#castTarget` does.
  * Nor is a skill the target is wrong for, by game-core's `targetRuleAllows`
  * (#599): Blood Ritual on a foe is refused for who, not where, so walking
- * closer would not help.
+ * closer would not help. Nor is a resurrection on a creature (#1046), which
+ * it can never revive.
  */
 export function outOfRange(
   skillBar: readonly (SkillSlot | null)[],
@@ -234,7 +235,10 @@ export function outOfRange(
   let sight: boolean | undefined;
   return skillBar.map((slot) => {
     const skill = slot === null ? undefined : getSkill(slot.id);
-    if (skill === undefined || skill.target === "self") {
+    if (skill === undefined || skill.target === "self" || skill.target === "companion") {
+      return false;
+    }
+    if (skill.target === "single-dead-ally" && target.creature !== undefined) {
       return false;
     }
     if (targetLivenessAllows(skill.target, target) !== undefined) {

@@ -46,7 +46,7 @@ channels, as often as they like.
 | A peer claims an outcome (damage, position, HP)         | Peers send **intent only** (`ClientIntent`: move / stop / target / use-skill / attack / cancel / walk-to). Every outcome is computed by the host in `game-core`.                                                                                                                                                                                                                                                                    |
 | A malformed or malicious message crashes the host       | Every inbound payload is `unknown` until a `parse*` in `game-protocol` has checked it; non-finite numbers are rejected. `protocol-fuzz.test.ts`, `match-hostile.test.ts` and `lobby-hostile.test.ts` enforce "never crash on a peer's input".                                                                                                                                                                                       |
 | Casting a skill the player does not have                | A peer sends a **slot index**, never a skill id; the host reads its own copy of the bar.                                                                                                                                                                                                                                                                                                                                            |
-| An illegal build (over budget, wrong profession)        | `validatePlayerBuild` runs at join; anything illegal gets the house loadout.                                                                                                                                                                                                                                                                                                                                                        |
+| An illegal build (over budget, wrong profession)        | `validatePlayerBuild` runs at join; anything illegal gets a starter build.                                                                                                                                                                                                                                                                                                                                                          |
 | Moving faster than allowed                              | Direction is clamped to unit length; speed comes from the ruleset; walls and bodies are resolved by the host.                                                                                                                                                                                                                                                                                                                       |
 | Targeting a player who does not exist                   | `applyTarget` accepts only a player in the match. Range and line of sight are checked at cast time. A weapon attack is accepted only against a living enemy, and a ranged shot checks line of sight as it is released.                                                                                                                                                                                                              |
 | Display names used to attack other players' UIs         | `sanitizeName` strips controls, format characters (bidi overrides, zero-width) and blank fillers, except a ZWJ or ZWNJ between two visible characters and the tags of a complete subdivision flag. It keeps at most 2 combining marks per letter, and clamps to 16 whole graphemes and 48 code points; a grapheme over 12 code points or 4 joiners collapses to its first. The web client must render names as text, never as HTML. |
@@ -95,7 +95,7 @@ channels, as often as they like.
   brings, by name and professions, and the lobby shows that. Nothing ties it
   to the build the peer then sends in its match `hello`, so a peer can be
   listed as a Monk and play a Warrior. The build is checked, and an illegal
-  one gets the house loadout. Its label is not checked. Do not use the
+  one gets a starter build. Its label is not checked. Do not use the
   lobby's character for anything but display.
 - **What is said in chat** (#479). The host reads every line, its own
   team's and the other team's, and could drop or forge one. There is no
@@ -114,9 +114,10 @@ channels, as often as they like.
 - **Cheating that needs only what a peer is shown.** Every peer gets the
   full match state, including enemy positions, health and casts. An
   aimbot-style helper that reads that state is not prevented. There is no
-  fog of war, so there is nothing hidden to leak. If hidden information is
-  ever added, it must be left out of each peer's snapshot by the host,
-  never hidden in the renderer.
+  fog of war. Hidden information must be left out of each peer's snapshot
+  by the host, never hidden in the renderer. Traps are the first (#1105):
+  they are never in a snapshot, and the host sends each team its own on
+  the `"traps"` channel, so a peer never receives a foe's trap.
 - **Players' browser storage.** IndexedDB is the player's own data on the
   player's own machine. A record in the wrong shape is discarded (ADR-0016).
   We do not try to protect it from the player.
@@ -201,7 +202,7 @@ channels, as often as they like.
   the joiner one welcome; the host checks a seated ticket not at all.
 - `hello.build` is capped in values and depth by `parsePeerHello`, then
   goes through `resolveJoinLoadout` and `validatePlayerBuild`: an illegal
-  build gets the house loadout.
+  build gets a starter build, picked by the host's own random.
 - The Trystero transport (#392) passes `maxReceiveBytes`
   (`MAX_RECEIVE_BYTES` in `relays.ts`), so Trystero drops an oversized
   message before decoding it, and a peer cannot make another allocate an

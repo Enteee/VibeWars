@@ -3,6 +3,7 @@ import {
   adrenalineLossIn,
   applyIntent,
   drainAccumulator,
+  resolvedBar,
   swingProgress,
   type MatchSimulation,
   type NetPips,
@@ -10,6 +11,7 @@ import {
   type ProfessionId,
   type ResolvedLoadout,
   type SkillBar,
+  type SlotSkill,
   type StepResult,
 } from "@vibewars/game-core";
 import type {
@@ -20,10 +22,12 @@ import type {
 } from "@vibewars/game-protocol";
 import {
   createCallBoard,
+  groundEffectSnapshot,
   sameSkillBar,
   skillBarSlots,
   statusSnapshot,
   wireStatuses,
+  wireWeaponSets,
   type CallsSnapshot,
   type CombatMessage,
   type MatchConnection,
@@ -77,7 +81,8 @@ function toPlayerSnapshot(
   const swing = swingProgress(combatant);
   return {
     sessionId: participant.id,
-    name,
+    // A creature (#1052) is named for its kind and has no professions.
+    name: participant.creature?.name ?? name,
     x: participant.position.x,
     y: participant.position.y,
     facing: participant.facing,
@@ -86,17 +91,19 @@ function toPlayerSnapshot(
     walking: participant.walkGoal !== undefined || participant.pendingSkill !== undefined,
     health: Math.round(combatant.health),
     maxHealth: combatant.maxHealth,
-    energy: Math.round(combatant.energy),
+    // Clamped as the host clamps it: energy below 0 is hidden (#489).
+    energy: Math.max(0, Math.round(combatant.energy)),
     maxEnergy: combatant.maxEnergy,
     overcast: Math.round(combatant.overcast),
     morale: combatant.morale,
     armor: combatant.equipment.baseArmor,
     weaponId: combatant.equipment.mainHand.weapon.id,
     offhandId: combatant.equipment.offhandId,
-    primaryProfession: professions.primary,
-    secondaryProfession: professions.secondary,
+    primaryProfession: participant.creature === undefined ? professions.primary : undefined,
+    secondaryProfession: participant.creature === undefined ? professions.secondary : undefined,
     team: combatant.team,
     dead: combatant.dead,
+    corpseExploited: participant.corpseExploited,
     castingSkillId: activeCast?.skillId,
     castRemaining: activeCast?.remainingSeconds ?? 0,
     castTotal: activeCast?.totalSeconds ?? 0,
@@ -108,6 +115,10 @@ function toPlayerSnapshot(
     statuses: wireStatuses(combatant.statuses.active).map((status) =>
       statusSnapshot(status, elapsedSeconds, activeCast),
     ),
+    creature:
+      participant.creature === undefined
+        ? undefined
+        : { ownerId: participant.creature.ownerId, kind: participant.creature.kind },
   };
 }
 
@@ -121,11 +132,21 @@ export function createLocalConnection(options: {
   readonly professionsOf: (id: string) => Professions;
 }): LocalMatchConnection {
   const { simulation, selfId, map, nameOf, professionsOf } = options;
+  // What each slot holds now, a copy standing in one (#469) included.
+  const held = (): readonly (SlotSkill | null)[] => {
+    const self = simulation.get(selfId);
+    return self === undefined ? [] : resolvedBar(self.skillBar, self.combatant.cast);
+  };
   // The bar as the host would send it: costs follow the player, glyph and
   // all, and it changes only when a slot does (#637).
   const selfBar = (): (SkillSlot | null)[] => {
     const self = simulation.get(selfId);
-    return self === undefined ? [] : skillBarSlots(self.skillBar, self.combatant);
+    return self === undefined
+      ? []
+      : skillBarSlots(
+          held().map((slot) => slot?.skillId ?? null),
+          self.combatant,
+        );
   };
   let skillBar = selfBar();
   let accumulator = 0;
@@ -207,6 +228,11 @@ export function createLocalConnection(options: {
       // Straight from the simulation, so a rearm shows at once.
       return simulation.get(selfId)?.combatant.attributeRanks ?? new Map<string, number>();
     },
+    get weaponSets() {
+      // Straight from the simulation too: a swap or a rearm shows at once (#489).
+      const self = simulation.get(selfId);
+      return self === undefined ? undefined : wireWeaponSets(self);
+    },
     onConnectionChange() {
       // Nothing to lose: the simulation is in this tab.
     },
@@ -238,6 +264,15 @@ export function createLocalConnection(options: {
           launchedAt: simulation.elapsedSeconds - shot.elapsed,
           flightSeconds: shot.flightSeconds,
         })),
+        groundEffects: simulation.groundEffects
+          .filter((effect) => effect.act.kind !== "trap")
+          .map((effect) => groundEffectSnapshot(effect, simulation.elapsedSeconds)),
+        // As the host sends them (#1105): your own team's alone.
+        traps: simulation.groundEffects
+          .filter((effect) => effect.act.kind === "trap" && effect.team === selfTeam())
+          .map((effect) => groundEffectSnapshot(effect, simulation.elapsedSeconds)),
+        // No match with rules ends here, so there is never a summary (#1057).
+        summary: undefined,
       };
     },
     onCombat(handler) {
@@ -249,9 +284,7 @@ export function createLocalConnection(options: {
     getAdrenaline() {
       // Straight from the simulation, as the recharges are (#463).
       const combatant = simulation.get(selfId)?.combatant;
-      return skillBar.map((slot) =>
-        slot === null ? 0 : (combatant?.adrenaline.get(slot.id) ?? 0),
-      );
+      return held().map((slot) => (slot === null ? 0 : (combatant?.adrenaline.get(slot.key) ?? 0)));
     },
     getAdrenalineLossIn() {
       const combatant = simulation.get(selfId)?.combatant;
@@ -270,9 +303,10 @@ export function createLocalConnection(options: {
     getRecharges() {
       // Straight from the simulation: there is no wire to extrapolate over.
       const cast = simulation.get(selfId)?.combatant.cast;
-      return skillBar.map((slot) => ({
-        remaining: (slot === null ? undefined : cast?.rechargeRemaining.get(slot.id)) ?? 0,
-        total: (slot === null ? undefined : cast?.rechargeTotal.get(slot.id)) ?? 0,
+      return held().map((slot) => ({
+        remaining: (slot === null ? undefined : cast?.rechargeRemaining.get(slot.key)) ?? 0,
+        total: (slot === null ? undefined : cast?.rechargeTotal.get(slot.key)) ?? 0,
+        spent: slot !== null && cast?.spent.has(slot.key) === true,
       }));
     },
     onStep(handler) {

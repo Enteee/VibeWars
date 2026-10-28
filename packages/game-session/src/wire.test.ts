@@ -2,6 +2,7 @@ import {
   outsideMatch,
   getStatusDefinition,
   type ActiveStatus,
+  type GroundEffect,
   type StatusCategory,
   type StatusId,
 } from "@vibewars/game-core";
@@ -10,10 +11,13 @@ import { describe, expect, it } from "vitest";
 
 import {
   WIRE_STATUS_IDS,
+  groundEffectSnapshot,
   sameSkillBar,
   skillBarSlots,
   statusSnapshot,
   wireStatuses,
+  wireIdentity,
+  type SeatIdentity,
 } from "./wire.js";
 
 const ORDER: readonly StatusCategory[] = [
@@ -40,6 +44,7 @@ function status(id: StatusId, remainingSeconds: number): ActiveStatus {
     sourceId: "caster",
     outbreak: null,
     maintained: null,
+    projected: false,
   };
 }
 
@@ -49,6 +54,7 @@ function maintained(id: StatusId): ActiveStatus {
     ...status(id, Infinity),
     durationSeconds: Infinity,
     maintained: { seq: 0, outOfRangeSeconds: 0 },
+    projected: false,
   };
 }
 
@@ -150,6 +156,77 @@ describe("statusSnapshot (#803)", () => {
       casterId: "monk",
     });
   });
+
+  it("sends a spirit's aura with no times either, while its bearer casts (#1064)", () => {
+    const cast = { remainingSeconds: 1.5, totalSeconds: 2 };
+    const aura = {
+      ...status("winnowing", Infinity),
+      durationSeconds: Infinity,
+      sourceId: "ranger/c1",
+      projected: true,
+    };
+    expect(statusSnapshot(aura, 4, cast)).toEqual({
+      id: "winnowing",
+      endsAt: null,
+      durationSeconds: null,
+      casterId: "ranger/c1",
+    });
+  });
+});
+
+describe("groundEffectSnapshot (#1087)", () => {
+  const ward: GroundEffect = {
+    id: 3,
+    skillId: "elementalist.ward-against-melee",
+    ownerId: "ele",
+    team: 1,
+    position: { x: 120.5, y: 80 },
+    act: {
+      kind: "aura",
+      aura: { statusId: "ward-against-melee", affects: "allies", radius: 109 },
+    },
+    durationSeconds: 17.04,
+    remainingSeconds: 6.345,
+  };
+
+  it("sits where it was placed, at its aura's radius, ending on the match clock to 0.1 s", () => {
+    expect(groundEffectSnapshot(ward, 10.01)).toEqual({
+      id: 3,
+      skillId: "elementalist.ward-against-melee",
+      team: 1,
+      x: 120.5,
+      y: 80,
+      radius: 109,
+      endsAt: 16.4,
+      durationSeconds: 17,
+    });
+  });
+
+  it("never sends a duration of nothing", () => {
+    expect(groundEffectSnapshot({ ...ward, durationSeconds: 0.01 }, 0).durationSeconds).toBe(0.1);
+  });
+
+  it("draws a trap at the area its spring hits (#1105)", () => {
+    const trap: GroundEffect = {
+      ...ward,
+      skillId: "ranger.barbed-trap",
+      act: {
+        kind: "trap",
+        trap: {
+          triggerRadius: 40,
+          area: {
+            radius: 81,
+            origin: "caster",
+            affects: "enemies",
+            maxTargets: undefined,
+            includesCaster: false,
+          },
+          effects: [],
+        },
+      },
+    };
+    expect(groundEffectSnapshot(trap, 10.01).radius).toBe(81);
+  });
 });
 
 describe("skillBarSlots", () => {
@@ -190,5 +267,55 @@ describe("sameSkillBar (#637)", () => {
     expect(sameSkillBar(plain(), cheaper)).toBe(false);
     expect(sameSkillBar(plain(), [...plain()].reverse())).toBe(false);
     expect(sameSkillBar(plain(), plain().slice(0, 2))).toBe(false);
+  });
+});
+
+describe("wireIdentity (#1052)", () => {
+  const seats = new Map<string, SeatIdentity>([
+    [
+      "p1",
+      { name: "Ann", team: 1, primaryProfession: "necromancer", secondaryProfession: undefined },
+    ],
+  ]);
+  const minion = (ownerId: string) => ({
+    id: `${ownerId}/c1`,
+    creature: {
+      ownerId,
+      kind: "minion" as const,
+      name: "Bone Minion",
+      expiresInSeconds: Number.POSITIVE_INFINITY,
+      ageSeconds: 0,
+      summonedAtTick: 1,
+      skillId: "test.summon",
+      aura: undefined,
+      onDeath: "vanish" as const,
+      ownerDisableSeconds: 0,
+      companionSkillId: undefined,
+    },
+  });
+
+  it("sends a seated player as its seat says", () => {
+    expect(wireIdentity({ id: "p1", creature: undefined }, seats)).toEqual({
+      name: "Ann",
+      team: 1,
+      primaryProfession: "necromancer",
+      secondaryProfession: null,
+      creature: null,
+    });
+  });
+
+  it("sends a creature with no seat, on its owner's team, named for its kind", () => {
+    expect(wireIdentity(minion("p1"), seats)).toEqual({
+      name: "Bone Minion",
+      team: 1,
+      primaryProfession: null,
+      secondaryProfession: null,
+      creature: { ownerId: "p1", kind: "minion" },
+    });
+  });
+
+  it("sends neither a body with no seat nor a creature whose owner has none", () => {
+    expect(wireIdentity({ id: "dummy", creature: undefined }, seats)).toBeUndefined();
+    expect(wireIdentity(minion("gone"), seats)).toBeUndefined();
   });
 });

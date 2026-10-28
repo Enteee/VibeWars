@@ -4,8 +4,10 @@ import type { CombatRules } from "../ruleset.js";
 import type { ResolvedEquipment } from "../equipment/resolve.js";
 import type { SkillBar } from "../build.js";
 import type { DamageType } from "../equipment/types.js";
-import type { ProfessionId } from "../professions.js";
-import type { CastState } from "./cast-state.js";
+import type { Behaviour } from "../match/behaviour.js";
+import type { CreatureKind } from "../match/simulation.js";
+import type { ProfessionId, SkillProfession } from "../professions.js";
+import type { CastState, SlotSkill } from "./cast-state.js";
 import type { TargetCandidate } from "./targeting.js";
 import type { AttackState } from "./weapon-attack.js";
 import type { StatusCategory, StatusId, StatusSet } from "./status.js";
@@ -22,10 +24,14 @@ import type { StatusCategory, StatusId, StatusSet } from "./status.js";
 
 export type ResourceKind = "energy" | "adrenaline";
 
-export interface SkillCost {
-  readonly kind: ResourceKind;
-  readonly amount: number;
-}
+export type SkillCost =
+  | { readonly kind: "energy"; readonly amount: number }
+  | {
+      readonly kind: "adrenaline";
+      readonly amount: number;
+      /** GW1 "Lose all adrenaline" (#1097): using the skill empties every pool, and its blow earns none back. */
+      readonly losesAll?: true;
+    };
 
 /**
  * How a skill's magnitude scales with an attribute rank.
@@ -54,7 +60,9 @@ export type TargetRule =
   /** Any single target including self; the caster chooses. */
   | "single-any"
   /** A dead ally other than the caster: a resurrection's (#812). */
-  | "single-dead-ally";
+  | "single-dead-ally"
+  /** The caster's own companion, alive or dead, whatever is selected (#1046). */
+  | "companion";
 
 /* -------------------------------------------------------------------------- */
 /* Effects                                                                     */
@@ -165,6 +173,17 @@ export interface LifeStealEffect {
   readonly amount: Magnitude;
 }
 
+/**
+ * The caster gains up to `amount` Health from the corpse its skill
+ * exploited (#466), as Soul Feast's "steal 50...234...280 Health": life
+ * stealing's gain without a living target. Not a heal: no healing
+ * modifier, capped at effective maximum health.
+ */
+export interface StealFromCorpseEffect {
+  readonly kind: "steal-from-corpse";
+  readonly amount: Magnitude;
+}
+
 /** Health sacrificed by the *caster*, as a percentage of their maximum. */
 export interface SacrificeHealthEffect {
   readonly kind: "sacrifice-health";
@@ -239,6 +258,12 @@ export interface RemoveStatusEffect {
    * `heal`'s `recipient` (#845). Absent: the target.
    */
   readonly from?: "caster";
+  /**
+   * The count is per living spirit, any team's, within this radius of the
+   * target (#1064), as Mend Body and Soul's "loses one condition for each
+   * Spirit within earshot". Absent: `count` as it is.
+   */
+  readonly perSpiritNear?: number;
 }
 
 /**
@@ -278,15 +303,58 @@ export interface KnockdownEffect {
 }
 
 /**
- * Bring a dead target back to life where it lies (#812), with these
- * percentages of its maximum health and energy, as Restore Life's
+ * Shadow Step (#988): the caster moves to the effect's target, as Death's
+ * Charge's "Shadow Step to target foe". The effect layer only reports it
+ * (`shadow-stepped`); the simulation places the body.
+ */
+export interface ShadowStepEffect {
+  readonly kind: "shadow-step";
+}
+
+/**
+ * Bring a dead target back to life (#812, #474), as Restore Life's
  * "returned to life with 20...56...65% health and 42...80...90% energy".
- * A living target is left alone.
+ * A living target is left alone, and so is everything below: no health
+ * lost, no teleport.
  */
 export interface ResurrectEffect {
   readonly kind: "resurrect";
-  readonly healthPercent: Magnitude;
+  readonly health: ResurrectHealth;
+  /** A share of the target's maximum energy. */
   readonly energyPercent: Magnitude;
+  /**
+   * Both percentages are per party member within this radius of the
+   * caster: the caster and its living team-mates, creatures aside, each
+   * share capped at 100 (Signet of Return's "for each party member within
+   * earshot"). `undefined`: once.
+   */
+  readonly perPartyMemberWithin: number | undefined;
+  /**
+   * Where it stands up: where it lies, or beside the caster (Rebirth's
+   * "teleported to your current location").
+   */
+  readonly at: "corpse" | "caster";
+}
+
+/** How much health a resurrection returns (#474). */
+export type ResurrectHealth =
+  /** A share of the target's maximum: Restore Life's 56%. */
+  | { readonly kind: "percent"; readonly percent: Magnitude }
+  /**
+   * The caster first loses `casterLosesFractionOfCurrent` of its current
+   * health, floored, as Infuse Health's loss (never kills, not damage);
+   * the target gets the caster's health after it, at most its own
+   * maximum: Flesh of My Flesh's "lose half your Health ... with your
+   * current Health".
+   */
+  | { readonly kind: "caster-current"; readonly casterLosesFractionOfCurrent: number };
+
+/**
+ * The caster's energy drops to 0 (#474): Rebirth's "consumes all your
+ * remaining energy". Acts on the caster, once.
+ */
+export interface DrainOwnEnergyEffect {
+  readonly kind: "drain-own-energy";
 }
 
 /**
@@ -317,11 +385,13 @@ export interface RechargeOthersEffect {
  * Distracting Shot's "that skill is disabled for an additional 20
  * seconds". With `interrupted-and-attribute`, every skill on the
  * target's bar of the same attribute too, as Power Block's; a skill with
- * no attribute disables only itself. Nothing interrupted: nothing.
+ * no attribute disables only itself. Nothing interrupted: nothing. With
+ * `all`, every skill on the target's bar, nothing interrupted needed
+ * (#474): Rebirth's "all of target's skills are disabled".
  */
 export interface DisableSkillEffect {
   readonly kind: "disable-skill";
-  readonly which: "interrupted" | "interrupted-and-attribute";
+  readonly which: "interrupted" | "interrupted-and-attribute" | "all";
   readonly seconds: Magnitude;
 }
 
@@ -334,6 +404,128 @@ export interface DisableSkillEffect {
 export interface LengthenRechargeEffect {
   readonly kind: "lengthen-recharge";
   readonly seconds: Magnitude;
+}
+
+/**
+ * What a `summon` makes (#1052, ADR-0035): a body that is not a player,
+ * with health, armor and a team, and no skill bar, attributes or energy.
+ */
+export interface CreatureTemplate {
+  readonly kind: CreatureKind;
+  /** Shown in the target frame and the name label, as "Bone Minion". */
+  readonly name: string;
+  /** Scaled by the summoning skill's caster, as any other magnitude. */
+  readonly maxHealth: Magnitude;
+  /** Scaled by the summoner, as `maxHealth` (#467 child 3). */
+  readonly armor: Magnitude;
+  /** Its blows; `undefined`: it never swings (a spirit). */
+  readonly attack: CreatureAttack | undefined;
+  /** Seconds it lasts; omitted: until it is killed. */
+  readonly durationSeconds?: Magnitude;
+  /** What it does each tick. */
+  readonly behaviour: Behaviour;
+  /** `undefined`: it projects nothing (every minion). Only a spirit has one. */
+  readonly aura: Aura | undefined;
+  /**
+   * What its death leaves (#1046). `"vanish"`: it is gone at the end of
+   * the step, as a spirit or minion is. `"lie"`: it stays a dead
+   * participant where it fell, until something brings it back.
+   */
+  readonly onDeath: "vanish" | "lie";
+  /**
+   * Seconds its owner's whole bar is disabled when it dies, scaled by
+   * the owner (GW1's pet, #1046); `undefined`: nothing happens to the owner.
+   */
+  readonly ownerDisableOnDeath: Magnitude | undefined;
+}
+
+/**
+ * A creature's melee or ranged blow (#467 child 3), as a weapon's numbers.
+ * `damageMin`–`damageMax` is what it deals with its summoner at rank 12 in
+ * `attributeId`, against armor 60. The summoner's rank, read once at
+ * summoning, scales every blow: through the creature's `level`
+ * (`creatureDamageMultiplier`, #1131), ×1 at 12 and ×0 at a level of 0,
+ * or, with none, as weapon mastery scales a player's (a pet's).
+ */
+export interface CreatureAttack {
+  readonly attributeId: string;
+  readonly damageMin: number;
+  readonly damageMax: number;
+  /**
+   * Its GW1 level with its summoner at rank 0 and 12 in `attributeId`,
+   * linear in the rank between and past. `undefined`: its blows scale as
+   * weapon mastery does (`weaponAttributeMultiplier`), as a pet's.
+   */
+  readonly level: CreatureLevel | undefined;
+  readonly damageType: DamageType;
+  readonly attackIntervalSeconds: number;
+  readonly range: number;
+}
+
+/** A minion's level at its summoner's rank 0 and 12 (#1131). */
+export interface CreatureLevel {
+  readonly atZero: number;
+  readonly atTwelve: number;
+}
+
+/** What a spirit projects while it lives (#1064), or a ground effect while it lasts (#1087). */
+export interface Aura {
+  /** Worn by every body it affects, for as long as it is in range. */
+  readonly statusId: StatusId;
+  /**
+   * Relative to the source's team. `all`: a nature ritual's, both teams.
+   * `allies`: a binding ritual's or a ward's. `foes`: the other teams'.
+   */
+  readonly affects: "all" | "allies" | "foes";
+  /** Centre to centre, world units. Walls do not block it. */
+  readonly radius: number;
+}
+
+/**
+ * Summon `count` creatures at the caster, on the caster's team, owned by
+ * it (#1052). Acts on the caster, once. A match holds at most
+ * `MAX_CREATURES`: past it, as many as fit, possibly none.
+ */
+export interface SummonEffect {
+  readonly kind: "summon";
+  readonly creature: CreatureTemplate;
+  readonly count: number;
+}
+
+/**
+ * A trap's rule (#1105): the first step a living foe's centre is within
+ * `triggerRadius` of it, `effects` land on whoever `area` takes around
+ * the trap, from its owner, and the trap is gone.
+ */
+export interface TrapRule {
+  /** A foe's centre this close springs it. */
+  readonly triggerRadius: number;
+  /** Who the spring hits; `origin: "caster"` means the trap's position. */
+  readonly area: RadiusArea;
+  readonly effects: readonly SkillEffect[];
+}
+
+/**
+ * What a ground effect does while it lasts: a ward projects an aura
+ * (#1087), a trap waits for a foe to spring it (#1105).
+ */
+export type GroundAct =
+  | { readonly kind: "aura"; readonly aura: Aura }
+  | { readonly kind: "trap"; readonly trap: TrapRule };
+
+/**
+ * Leave a ground effect as the skill lands (#1087): a circle that is not
+ * a body, doing `act` for `durationSeconds`. `caster`: where the caster
+ * stands (a ward, a trap). `corpse`: where the corpse the skill exploited
+ * lies (a well, #1104), so only a skill with a `corpse` rule has one.
+ * Acts on the caster, once. A match holds at most
+ * `MAX_GROUND_EFFECTS`: past it, the oldest ends early.
+ */
+export interface CreateGroundEffect {
+  readonly kind: "create-ground-effect";
+  readonly anchor: "caster" | "corpse";
+  readonly durationSeconds: Magnitude;
+  readonly act: GroundAct;
 }
 
 /** How long "knocks down" lasts when a skill names no duration (GW1). */
@@ -353,7 +545,12 @@ export type EventCondition =
    * this category; with `from: "caster"`, from the caster (#845), which
    * holds for every target of that use.
    */
-  | { readonly kind: "removed"; readonly category: StatusCategory; readonly from?: "caster" };
+  | { readonly kind: "removed"; readonly category: StatusCategory; readonly from?: "caster" }
+  /**
+   * A `resurrect` earlier in the list brought this target back (#474), so
+   * Rebirth's disable stays off a living ally whom another res reached first.
+   */
+  | { readonly kind: "resurrected" };
 
 /**
  * How the target or the caster stands (#794), read once, before any
@@ -420,7 +617,24 @@ export type StateCondition =
    * share (#939): Victorious Sweep's "if target foe has less Health than
    * you". Equal is not less.
    */
-  | { readonly kind: "target-less-health" };
+  | { readonly kind: "target-less-health" }
+  /**
+   * The effect's target has more health than the caster, absolute (#988):
+   * Death's Charge's "if that foe has more Health than you". Equal is not
+   * more.
+   */
+  | { readonly kind: "target-more-health" }
+  /**
+   * The effect's target is alive and attacking (#988): an auto-attack
+   * swinging, not walking to its foe, or an attack skill being activated,
+   * as Shadow Refuge's "if you are attacking".
+   */
+  | { readonly kind: "target-attacking" }
+  /**
+   * No living spirit, any team's, stands within `radius` of the caster
+   * (#1064): Spirit Light's sacrifice, which it skips near one.
+   */
+  | { readonly kind: "caster-no-spirit-within"; readonly radius: number };
 
 export type EffectCondition = EventCondition | StateCondition;
 
@@ -446,6 +660,7 @@ export type UnconditionalEffect =
   | AdrenalineGainEffect
   | EnergyLossEffect
   | LifeStealEffect
+  | StealFromCorpseEffect
   | SacrificeHealthEffect
   | LoseHealthEffect
   | TransferConditionsEffect
@@ -455,12 +670,16 @@ export type UnconditionalEffect =
   | RemoveStatusEffect
   | InterruptEffect
   | KnockdownEffect
+  | ShadowStepEffect
   | ResurrectEffect
+  | DrainOwnEnergyEffect
   | RechargeFasterEffect
   | SplashEffect
   | RechargeOthersEffect
   | DisableSkillEffect
-  | LengthenRechargeEffect;
+  | LengthenRechargeEffect
+  | SummonEffect
+  | CreateGroundEffect;
 
 export type SkillEffect = UnconditionalEffect | ConditionalEffect;
 
@@ -485,16 +704,38 @@ export type SkillType =
   | "glyph"
   | "chant"
   | "weapon-spell"
+  | "nature-ritual"
+  | "binding-ritual"
+  | "ward"
+  | "well"
+  | "trap"
   | "skill";
 
 /**
  * Whether a skill of this type is a spell, as GW1's rules that "affect
- * spells" mean it: enchantments, hexes and weapon spells are spells,
+ * spells" mean it: enchantments, hexes, weapon spells, wards (#1087) and wells
+ * (#1104) are spells,
  * signets, shouts, chants, stances and glyphs are not (#524, #526, #527,
  * #758). Every such rule asks this, never the type directly.
  */
 export function isSpell(type: SkillType): boolean {
-  return type === "spell" || type === "enchantment" || type === "hex" || type === "weapon-spell";
+  return (
+    type === "spell" ||
+    type === "enchantment" ||
+    type === "hex" ||
+    type === "weapon-spell" ||
+    type === "ward" ||
+    type === "well"
+  );
+}
+
+/**
+ * Whether a skill of this type is interrupted by any attack that lands
+ * on its user while it is being used (#1105, GW1's "easily
+ * interrupted"): a trap is.
+ */
+export function isEasilyInterrupted(type: SkillType): boolean {
+  return type === "trap";
 }
 
 /**
@@ -574,6 +815,13 @@ export interface ChainStep {
    * "Must follow a lead attack"; `undefined`: it may open a chain.
    */
   readonly follows: ChainRole | undefined;
+  /**
+   * A state that must hold for it to hit, read per victim with
+   * `stateHolds` before its first blow (#1041): Falling Spider's "Must
+   * strike a knocked-down foe". Unmet, it misses out of sequence, as an
+   * unmet `follows` does. Absent: no requirement but `follows`.
+   */
+  readonly requires?: StateCondition;
 }
 
 /** A chain mark one attacker left on one target (#831). */
@@ -599,8 +847,9 @@ export interface Skill {
    * whose effects are not attribute-scaled (a pure interrupt, say) still
    * belongs to a profession, and inferring it would wrongly make such
    * skills equippable by everyone — a real bug this field replaced.
+   * `"common"` may be equipped by everyone (#474): Resurrection Signet.
    */
-  readonly profession: ProfessionId;
+  readonly profession: SkillProfession;
   /**
    * The attribute of `profession` it is linked to; `undefined` for GW1's
    * "No Attribute" skills, whose numbers are written for rank 0 (#445).
@@ -615,6 +864,12 @@ export interface Skill {
   /** Cast time in seconds. `0` is instant. */
   readonly activationSeconds: number;
   readonly rechargeSeconds: number;
+  /**
+   * GW1's "only recharges when you gain a morale boost" (#474): used, it is
+   * spent rather than recharging, until `CastState.refreshSpent`.
+   * `rechargeSeconds` is 0. Absent: it recharges by time, as every other skill.
+   */
+  readonly rechargesOnMoraleBoost?: true;
   /** Maximum distance to target, in world units. */
   readonly range: number;
   /** What must be selected, and whether the cast is legal. */
@@ -634,7 +889,21 @@ export interface Skill {
    * it is dodged. `undefined`: it lands at once.
    */
   readonly projectile: SkillProjectile | undefined;
+  /** `undefined`: it needs no corpse. */
+  readonly corpse: CorpseRule | undefined;
+  /**
+   * The creature this skill brings while it is on its owner's bar (#1046),
+   * as Charm Animal's "travels with you whenever you have Charm Animal
+   * equipped"; `undefined`: none. Such a skill is never cast in a match.
+   */
+  readonly companion: CreatureTemplate | undefined;
   readonly effects: readonly SkillEffect[];
+}
+
+/** A skill that exploits a corpse (#466): Soul Feast, later wells and minions. */
+export interface CorpseRule {
+  /** The nearest fresh corpse within this of the caster, world units. */
+  readonly radius: number;
 }
 
 /** How a flying spell flies (#535). */
@@ -703,9 +972,9 @@ export interface Combatant {
   /** Energy regeneration before statuses, in pips (`ENERGY_PER_PIP`). */
   readonly baseEnergyPips: number;
   /**
-   * Units per adrenaline skill on the bar (#463), keyed by skill id like
+   * Units per adrenaline skill on the bar (#463), keyed like
    * `cast.rechargeRemaining`. Exactly the bar's adrenaline skills are keys,
-   * set at 0 when the combatant is made.
+   * set at 0 when the combatant is made, and a copy's while it stands (#469).
    */
   readonly adrenaline: Map<string, number>;
   /**
@@ -761,14 +1030,15 @@ export interface Combatant {
    */
   moving: boolean;
   /**
-   * Weapon, armor and rune effects, already resolved (ADR-0012).
+   * Weapon, armor and rune effects of the weapon set in hand, already
+   * resolved (ADR-0012, ADR-0036).
    *
-   * Readonly, and resolved once before this combatant was built. Gear is
-   * fixed at join, so nothing in the simulation ever needs to change it —
-   * and making it immutable is what guarantees a rune cannot be applied
-   * twice.
+   * Every set was resolved once before this combatant was built, and a
+   * weapon swap only points this at another of them: the simulation's
+   * swap is its one writer, and nothing is ever resolved again, which is
+   * what guarantees a rune cannot be applied twice.
    */
-  readonly equipment: ResolvedEquipment;
+  equipment: ResolvedEquipment;
 }
 
 export interface SkillContext {
@@ -790,10 +1060,11 @@ export interface SkillContext {
    */
   readonly surroundings: Surroundings;
   /**
-   * The skill the target just used, when a status's trigger answers that
-   * use (#949): what `lengthen-recharge` lengthens. Absent elsewhere.
+   * The skill the target just used, and the key it waits under (#469),
+   * when a status's trigger answers that use (#949): what
+   * `lengthen-recharge` lengthens. Absent elsewhere.
    */
-  readonly usedSkillId?: string | undefined;
+  readonly usedSkill?: SlotSkill | undefined;
 }
 
 /** Everyone in the match by id, where they stand (#885). */

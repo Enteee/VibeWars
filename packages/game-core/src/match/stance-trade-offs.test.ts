@@ -30,7 +30,13 @@ function skill(id: string): Skill {
 function wielding(weapon: Weapon, attributeId: string): ResolvedEquipment {
   return {
     ...unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
-    mainHand: { weapon, attributeId, damageType: weapon.damageType, requirementMet: true },
+    mainHand: {
+      weapon,
+      attributeId,
+      damageType: weapon.damageType,
+      requirementMet: true,
+      creatureDamageScale: undefined,
+    },
   };
 }
 
@@ -51,7 +57,7 @@ const victim = (id = "t"): Combatant => makeCombatant({ id, team: 1, health: 1e6
 function swing(attacker: Combatant, target: Combatant, seed = 1): CombatEvent[] {
   return resolveSwing({
     attacker,
-    target: { combatant: target, position: vec2(40, 0) },
+    target: { combatant: target, position: vec2(40, 0), creature: undefined },
     surroundings: new Map(),
     rng: createRng(seed),
     rules: RULES.combat,
@@ -262,7 +268,7 @@ describe("Natural Stride (#919)", () => {
     for (let i = 0; i < 1000; i += 1) {
       const events = resolveSwing({
         attacker: sword,
-        target: { combatant: ranger, position: vec2(40, 0) },
+        target: { combatant: ranger, position: vec2(40, 0), creature: undefined },
         surroundings: new Map(),
         rng,
         rules: RULES.combat,

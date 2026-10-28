@@ -54,6 +54,7 @@ function wielding(weapon: Weapon): ResolvedEquipment {
       attributeId,
       damageType: weaponDamageType(weapon, attributeId),
       requirementMet: true,
+      creatureDamageScale: undefined,
     },
   };
 }
@@ -73,7 +74,12 @@ function foe(id: string, overrides: Partial<Combatant> = {}): Combatant {
 }
 
 function around(...placed: readonly [Combatant, Vec2][]): Surroundings {
-  return new Map(placed.map(([combatant, position]) => [combatant.id, { combatant, position }]));
+  return new Map(
+    placed.map(([combatant, position]) => [
+      combatant.id,
+      { combatant, position, creature: undefined },
+    ]),
+  );
 }
 
 /**

@@ -1,6 +1,8 @@
 import { sizeClass } from "@vibewars/game-maps/size-class";
 import type { LobbyCharacter, LobbyConnection, MatchStarting } from "@vibewars/game-session";
 
+import type { NostrQueue } from "./net/transport/nostr-queue.js";
+
 import { ARENA_MAPS } from "./net/maps.js";
 import {
   connectMatchFor,
@@ -10,7 +12,14 @@ import {
   joinLobbyByCode,
   lobbyClosedNotice,
   matchFailureNotice,
+  openPartyBoard,
+  PARTY_ANSWER_MS,
+  QUEUED_RESULT_SECONDS,
+  STAY_TOGETHER_GRACE_SECONDS,
+  STAY_TOGETHER_SECONDS,
+  TEAM_SPLIT_MESSAGE,
   type HostedLobby,
+  type PartyPlace,
   type RandomArenaQueue,
 } from "./net/session.js";
 import {
@@ -33,6 +42,7 @@ import {
   type KeyValueStore,
 } from "./storage/repository.js";
 import type { StoredCharacter } from "./storage/schema.js";
+import { rerollStarterCharacter, rollStarterCharacter } from "./storage/starter-character.js";
 import { importTeam, importedTeamSummary, type TeamImportResult } from "./storage/team-transfer.js";
 import { closeBeatEditor } from "./ui/beat-editor.js";
 import { mountBuildEditor, newCharacter, type BuildEditorView } from "./ui/build-editor.js";
@@ -46,10 +56,23 @@ import {
 import { mountChat, type ChatPanel } from "./ui/chat.js";
 import { openRelayPrompt } from "./ui/relay-prompt.js";
 import { describeOutcome } from "./ui/hud.js";
-import { mountQueueScreen, nextStreak, type QueueScreen } from "./ui/queue-screen.js";
+import type { SummaryTable } from "./ui/match-summary.js";
+import {
+  mountQueueScreen,
+  nextStreak,
+  type QueueScreen,
+  type StayOffer,
+} from "./ui/queue-screen.js";
 import { displayLobbyCode, renderLobbyScreen } from "./ui/lobby-screen.js";
 import { createNowPlayingToast, nowPlayingText } from "./ui/now-playing.js";
-import { loadActiveCharacterId, renderMenu, renderTeamList } from "./ui/menu.js";
+import {
+  loadActiveCharacterId,
+  loadStarterCharacterId,
+  renderMenu,
+  renderTeamList,
+  saveActiveCharacterId,
+  saveStarterCharacterId,
+} from "./ui/menu.js";
 import { dismissToast, toast } from "./ui/kit.js";
 import { mountTopbar, paintStatus, type StatusState } from "./ui/topbar.js";
 import { duplicateTeam, newTeam } from "./ui/team-builder.js";
@@ -61,7 +84,7 @@ import {
   type TeamEditorView,
 } from "./ui/team-editor.js";
 import { toPlayerBuild } from "./storage/build-validation.js";
-import type { QueueMode } from "@vibewars/game-protocol";
+import { teamSizeOf, type QueueMode } from "@vibewars/game-protocol";
 import {
   MINIMAL_GW_INSPIRED_PVP_V1,
   resolveJoinLoadout,
@@ -80,9 +103,6 @@ import {
 /** Shown on the lobby or the menu once a match is lost for good. */
 const LOST_MATCH_NOTICE = "Lost the connection to the match.";
 
-/** How long a queued match's result stays on the HUD before the queue's ended view (#881). */
-const QUEUED_RESULT_SECONDS = 4;
-
 function requireElement(selector: string): HTMLElement {
   const element = document.querySelector<HTMLElement>(selector);
   if (element === null) {
@@ -95,16 +115,17 @@ function setStatus(text: string, state: StatusState): void {
   paintStatus(requireElement("#status"), text, state);
 }
 
-async function openStore(): Promise<KeyValueStore> {
+/** The store builds are kept in; `persistent` unless it lives only in memory. */
+async function openStore(): Promise<{ store: KeyValueStore; persistent: boolean }> {
   try {
-    return await openIndexedDbStore();
+    return { store: await openIndexedDbStore(), persistent: true };
   } catch (error) {
     // Private browsing and some locked-down configurations deny
     // IndexedDB. Falling back to memory keeps the game playable for this
     // session rather than failing at the menu; the player just will not
     // keep their builds.
     console.warn("[web] IndexedDB unavailable; builds will not persist this session", error);
-    return createMemoryStore();
+    return { store: createMemoryStore(), persistent: false };
   }
 }
 
@@ -132,6 +153,14 @@ function takeRelayLink(): TurnFragment {
   return fragment;
 }
 
+/** What a player takes into a lobby, read once when they enter it (#1070). */
+interface Entrant {
+  /** Played every match of the lobby; `undefined` plays a starter build from the host. */
+  readonly build: PlayerBuild | undefined;
+  /** How the lobby lists it (#580). */
+  readonly character: LobbyCharacter | null;
+}
+
 async function main(): Promise<void> {
   // Before anything mounts or waits.
   const relayLink = takeRelayLink();
@@ -149,7 +178,7 @@ async function main(): Promise<void> {
     startStress(stress);
   }
 
-  const store = await openStore();
+  const { store, persistent } = await openStore();
   // Before any music: a stale edit is gone before it could play (#373).
   // Its notice goes on the first menu, once.
   let editNotices = await beatEdits.load(TRACKS);
@@ -169,6 +198,20 @@ async function main(): Promise<void> {
   }
   const characters = new CharacterRepository(store);
   const teams = new TeamRepository(store);
+  // The first start plays a rolled starter character (#853). Not into
+  // memory: it would be gone next start, with the key saying it was rolled.
+  if (persistent) {
+    const rolled = await rollStarterCharacter({
+      characters,
+      key: { load: loadStarterCharacterId, save: saveStarterCharacterId },
+      random: Math.random,
+      id: crypto.randomUUID(),
+      now: Date.now(),
+    });
+    if (rolled !== undefined) {
+      saveActiveCharacterId(rolled.id);
+    }
+  }
 
   // The arenas a host can pick, built into the client (#403).
   const availableMaps = ARENA_MAPS.map((map) => ({
@@ -214,8 +257,35 @@ async function main(): Promise<void> {
   let joiningQueue = false;
   /** Queued wins in a row this visit (#881): page memory only, never stored. */
   let queueStreak = 0;
-  /** The queued match's result line once it finished, and the timer to its ended view. */
-  let queuedEnd: { readonly outcome: string; readonly timer: number } | undefined;
+  /** The queued match's result line once it finished, whether this side won, and the timer to its ended view. */
+  let queuedEnd:
+    { readonly outcome: string; readonly won: boolean; readonly timer: number } | undefined;
+  /** The ended view's result line, while it is up. */
+  let endedOutcome: string | undefined;
+  /** The ended view's match summary (#1057), while it is up. */
+  let endedSummary: readonly SummaryTable[] | undefined;
+  /**
+   * *Stay together* after a queued win (#882), while it is offered: the
+   * lobby the vote goes through, the hosted lobby when this tab hosts it,
+   * and the member key once pressed, on the board it was made on.
+   */
+  let stay:
+    | {
+        readonly lobby: LobbyConnection;
+        readonly hosted: HostedLobby | undefined;
+        /** By `Date.now`. */
+        readonly endsAt: number;
+        /**
+         * Pressed, when to give up on the host's answer, by `Date.now`:
+         * the host's vote window, or later once this player signed a
+         * proposal (#1078).
+         */
+        answerBy: number;
+        readonly timer: number;
+        pressed: ReturnType<typeof openPartyBoard> | undefined;
+        hostLeft: boolean;
+      }
+    | undefined;
 
   const clearQueuedEnd = (): void => {
     if (queuedEnd !== undefined) {
@@ -224,9 +294,40 @@ async function main(): Promise<void> {
     }
   };
 
+  /**
+   * Stop offering *Stay together*. `keep` is the board a party formed on,
+   * which goes on to its queue; otherwise a pressed key's board closes.
+   * Not pressed, this player says no first. A remote lobby is left; this
+   * tab's own stays up until its vote is over, unless this player's yes
+   * is in it, which must not form a party without them.
+   */
+  const closeStay = (keep?: NostrQueue): void => {
+    const ending = stay;
+    if (ending === undefined) {
+      return;
+    }
+    stay = undefined;
+    clearInterval(ending.timer);
+    if (ending.pressed === undefined && !ending.hostLeft) {
+      ending.lobby.stayTogether(null);
+    }
+    if (ending.pressed !== undefined && ending.pressed.board !== keep) {
+      ending.pressed.board.close();
+    }
+    if (ending.hosted === undefined) {
+      void ending.lobby.disconnect();
+    } else if (ending.pressed !== undefined && keep === undefined) {
+      void ending.lobby.disconnect();
+      void ending.hosted.close();
+    }
+  };
+
   /** Out of the queue, if in it; the lobby and match, if any, are the caller's to leave. */
   const dropQueue = (): void => {
     clearQueuedEnd();
+    closeStay();
+    endedOutcome = undefined;
+    endedSummary = undefined;
     queue?.place.leave();
     queue?.screen.dispose();
     queue = undefined;
@@ -276,13 +377,14 @@ async function main(): Promise<void> {
   };
 
   /**
-   * The build to take into the next match, read fresh from storage.
+   * The selected character's build, read fresh from storage.
    *
-   * Read at join time rather than cached when the player picked it, so
-   * editing a character takes effect on the next match instead of the
-   * next time they happen to re-select it. An id pointing at a character
+   * Read once, when the player enters a lobby (`readEntrant`), and played
+   * every match of it: a character selected, edited or deleted elsewhere
+   * meanwhile (another tab) is taken by leaving and joining again, as in
+   * GW1 (#1070). An id pointing at a character
    * that no longer exists, or one that no longer validates, resolves to
-   * `undefined` and the host's house loadout.
+   * `undefined` and a starter build from the host.
    */
   const activeBuild = async (): Promise<PlayerBuild | undefined> => {
     const id = loadActiveCharacterId();
@@ -301,22 +403,27 @@ async function main(): Promise<void> {
   };
 
   /**
-   * The character the lobby lists this player with (#580): the selected
-   * one's name and professions, or `null` for the house loadout, read
-   * the way `activeBuild` reads the build it plays with. A build the host
-   * would refuse, an empty bar or an illegal one, plays the house loadout,
-   * so it is listed as that too.
+   * The selected character, read fresh: the one read per lobby (#1070).
+   * The lobby lists it (#580) by the selected one's name and professions,
+   * or `null` for a starter build. A build the host would refuse, an
+   * empty bar or an illegal one, plays a starter build, so it is listed
+   * as that too.
    */
-  const lobbyCharacter = async (): Promise<LobbyCharacter | null> => {
+  const readEntrant = async (): Promise<Entrant> => {
     const build = await activeBuild();
-    return build === undefined ||
-      resolveJoinLoadout(build, MINIMAL_GW_INSPIRED_PVP_V1.attributes).refused !== undefined
-      ? null
-      : {
-          name: build.name,
-          primary: build.primaryProfession,
-          secondary: build.secondaryProfession ?? null,
-        };
+    return {
+      build,
+      character:
+        build === undefined ||
+        resolveJoinLoadout(build, MINIMAL_GW_INSPIRED_PVP_V1.attributes, Math.random).refused !==
+          undefined
+          ? null
+          : {
+              name: build.name,
+              primary: build.primaryProfession,
+              secondary: build.secondaryProfession ?? null,
+            },
+    };
   };
 
   /** The open build editor; every way out of it passes through `showMenu`. */
@@ -364,13 +471,21 @@ async function main(): Promise<void> {
       screenRoot,
       {
         onCreateLobby: (name) => {
-          void enterLobby(name, async () => {
-            hosted = await hostLobby(name, await lobbyCharacter());
-            return hosted.lobby;
-          });
+          void (async () => {
+            const entrant = await readEntrant();
+            await enterLobby(name, entrant, async () => {
+              hosted = await hostLobby(name, entrant.character);
+              return hosted.lobby;
+            });
+          })();
         },
         onJoinLobby: (code, name) => {
-          void enterLobby(name, async () => joinLobbyByCode(code, name, await lobbyCharacter()));
+          void (async () => {
+            const entrant = await readEntrant();
+            await enterLobby(name, entrant, async () =>
+              joinLobbyByCode(code, name, entrant.character),
+            );
+          })();
         },
         onRandomArena: (mode, name) => {
           void enterRandomArena(mode, name);
@@ -392,6 +507,15 @@ async function main(): Promise<void> {
             if (character !== undefined) {
               showCharacterEditor(character);
             }
+          })();
+        },
+        onRerollCharacter: (id) => {
+          void (async () => {
+            const character = await characters.load(id);
+            if (character !== undefined) {
+              await rerollStarterCharacter(characters, character, Math.random, Date.now());
+            }
+            showMenu();
           })();
         },
         // The menu persists the choice itself; re-render so the
@@ -561,8 +685,13 @@ async function main(): Promise<void> {
    * counts down, then the match. Whether it queued: not without an
    * active character, or while already queueing.
    */
-  const enterRandomArena = async (mode: QueueMode, name: string): Promise<boolean> => {
+  const enterRandomArena = async (
+    mode: QueueMode,
+    name: string,
+    from: { readonly party?: PartyPlace; readonly note?: string } = {},
+  ): Promise<boolean> => {
     if (queue !== undefined || joiningQueue) {
+      from.party?.board.close();
       return false;
     }
     const id = loadActiveCharacterId();
@@ -571,14 +700,15 @@ async function main(): Promise<void> {
     }
     joiningQueue = true;
     let stored: StoredCharacter | undefined;
-    let character: LobbyCharacter | null;
+    let entrant: Entrant;
     try {
       stored = await characters.load(id);
-      character = await lobbyCharacter();
+      entrant = await readEntrant();
     } finally {
       joiningQueue = false;
     }
     if (stored === undefined) {
+      from.party?.board.close();
       return false;
     }
     leaveScreen();
@@ -599,32 +729,170 @@ async function main(): Promise<void> {
           void leaveLobby();
         },
         onQueueAgain: () => {
-          dropQueue();
-          void enterRandomArena(mode, name).then((queued) => {
-            // The character went meanwhile: the menu, where *Random Arena* is greyed.
-            if (!queued) {
-              showMenu();
-            }
-          });
+          requeue(mode, name);
+        },
+        onStayTogether: () => {
+          pressStay();
         },
       },
     );
-    const place = enterQueue(mode, name, character, {
-      // Never past `in-lobby` while a lobby is up, unless it fell through.
-      onState: (state) => {
-        screen.show({ kind: "queue", state });
+    const { note } = from;
+    const place = enterQueue(
+      mode,
+      name,
+      entrant.character,
+      {
+        // Never past `in-lobby` while a lobby is up, unless it fell through.
+        onState: (state) => {
+          // The split is news until a match is found.
+          screen.show({
+            kind: "queue",
+            state,
+            ...(note === undefined || state.kind !== "searching" ? {} : { note }),
+          });
+        },
+        onLobby: (joined, host) => {
+          hosted = host;
+          seatLobby(name, joined, entrant);
+        },
+        onRefused: (notice) => {
+          setStatus("could not join", "error");
+          screen.show({ kind: "refused", notice });
+        },
+        onPartyGone: () => {
+          requeue(mode, name, { note: TEAM_SPLIT_MESSAGE });
+        },
       },
-      onLobby: (joined, host) => {
-        hosted = host;
-        seatLobby(name, joined);
-      },
-      onRefused: (notice) => {
-        setStatus("could not join", "error");
-        screen.show({ kind: "refused", notice });
-      },
-    });
+      from.party,
+    );
     queue = { place, screen, mode, name };
     return true;
+  };
+
+  /** Out of this queue and into a fresh one of `mode`, alone or as `from.party`. */
+  const requeue = (
+    mode: QueueMode,
+    name: string,
+    from: { readonly party?: PartyPlace; readonly note?: string } = {},
+  ): void => {
+    dropQueue();
+    void enterRandomArena(mode, name, from).then((queued) => {
+      // The character went meanwhile: the menu, where *Random Arena* is greyed.
+      if (!queued) {
+        showMenu();
+      }
+    });
+  };
+
+  /** *Stay together*'s state for the ended view, if it is offered. */
+  const stayOffer = (): StayOffer | undefined => {
+    if (stay === undefined) {
+      return undefined;
+    }
+    if (stay.hostLeft) {
+      return { kind: "host-left" };
+    }
+    const secondsLeft = Math.max(0, Math.ceil((stay.endsAt - Date.now()) / 1000));
+    return stay.pressed === undefined
+      ? { kind: "offer", secondsLeft }
+      : { kind: "waiting", secondsLeft };
+  };
+
+  const showEnded = (): void => {
+    if (queue === undefined || endedOutcome === undefined) {
+      return;
+    }
+    const offer = stayOffer();
+    queue.screen.show({
+      kind: "ended",
+      outcome: endedOutcome,
+      streak: queueStreak,
+      summary: endedSummary,
+      ...(offer === undefined ? {} : { stay: offer }),
+    });
+  };
+
+  /** The team did not stay together: queue alone at once, and say so. */
+  const splitUp = (): void => {
+    if (queue === undefined) {
+      return;
+    }
+    const { mode, name } = queue;
+    requeue(mode, name, { note: TEAM_SPLIT_MESSAGE });
+  };
+
+  const pressStay = (): void => {
+    if (stay === undefined || stay.pressed !== undefined || stay.hostLeft) {
+      return;
+    }
+    stay.pressed = openPartyBoard();
+    stay.lobby.stayTogether(stay.pressed.key);
+    showEnded();
+  };
+
+  /**
+   * Offer *Stay together* through `through`, the finished match's lobby,
+   * to this winner of a whole team (#882); `hosted` when this tab hosts it.
+   */
+  const offerStay = (through: LobbyConnection, hosted: HostedLobby | undefined): void => {
+    const timer = window.setInterval(() => {
+      if (
+        stay === undefined ||
+        Date.now() < (stay.pressed === undefined ? stay.endsAt : stay.answerBy)
+      ) {
+        showEnded();
+        return;
+      }
+      if (stay.pressed !== undefined) {
+        // No answer in time: the host's vote window, and its consent window
+        // after a proposal, both end before this, so it is gone.
+        splitUp();
+        return;
+      }
+      closeStay();
+      showEnded();
+    }, 250);
+    stay = {
+      lobby: through,
+      hosted,
+      endsAt: Date.now() + STAY_TOGETHER_SECONDS * 1000,
+      answerBy: Date.now() + (STAY_TOGETHER_SECONDS + STAY_TOGETHER_GRACE_SECONDS) * 1000,
+      timer,
+      pressed: undefined,
+      hostLeft: false,
+    };
+    const offered = stay;
+    through.onPartyProposal(() => {
+      if (stay === offered) {
+        offered.answerBy = Math.max(offered.answerBy, Date.now() + PARTY_ANSWER_MS);
+      }
+    });
+    through.onParty((formed) => {
+      if (stay !== offered || offered.pressed === undefined || queue === undefined) {
+        return;
+      }
+      if (formed === null) {
+        splitUp();
+        return;
+      }
+      const { board, key } = offered.pressed;
+      const { mode, name } = queue;
+      closeStay(board);
+      const { groupId, members, consents } = formed;
+      requeue(mode, name, { party: { party: { members, key, groupId, consents }, board } });
+    });
+    through.onClosed(() => {
+      if (stay !== offered) {
+        return;
+      }
+      if (offered.pressed !== undefined) {
+        splitUp();
+        return;
+      }
+      offered.hostLeft = true;
+      clearInterval(offered.timer);
+      showEnded();
+    });
   };
 
   const renderLobby = (): void => {
@@ -696,6 +964,7 @@ async function main(): Promise<void> {
 
   const enterLobby = async (
     name: string,
+    entrant: Entrant,
     connect: () => Promise<LobbyConnection>,
   ): Promise<void> => {
     setStatus("connecting…", "offline");
@@ -711,11 +980,14 @@ async function main(): Promise<void> {
       setStatus("could not join", "error");
       return;
     }
-    seatLobby(name, lobby);
+    seatLobby(name, lobby, entrant);
   };
 
-  /** Show `joined`, coded or queued, and play its matches as `name`. */
-  const seatLobby = (name: string, joined: LobbyConnection): void => {
+  /**
+   * Show `joined`, coded or queued, and play its matches as `name` with
+   * `entrant`'s build, every one of them (#1070).
+   */
+  const seatLobby = (name: string, joined: LobbyConnection, entrant: Entrant): void => {
     lobby = joined;
     lobbyNotice = undefined;
     // Here and not in renderLobby, which every lobby change repaints:
@@ -746,7 +1018,7 @@ async function main(): Promise<void> {
     });
     joined.onMatchStarting((start) => {
       // Only players on a team are sent this; a spectator stays here.
-      void enterMatch(name, start);
+      void enterMatch(name, start, entrant);
     });
     joined.onClosed((reason) => {
       // From the lobby or from its match: either way, it is over.
@@ -775,13 +1047,15 @@ async function main(): Promise<void> {
    * and its lobby, onto the queue screen's ended view rather than the
    * menu. The queue's place already closed as the match started.
    */
-  const endQueuedMatch = async (outcome: string): Promise<void> => {
+  const endQueuedMatch = async (outcome: string, won: boolean): Promise<void> => {
     clearQueuedEnd();
     const leaving = match;
     if (leaving === undefined) {
       return;
     }
     match = undefined;
+    // Read before the view goes: the table moves with the player (#1057).
+    const summary = leaving.summary();
     await leaving.dispose();
     enteringMatch = false;
     const leavingLobby = lobby;
@@ -789,8 +1063,25 @@ async function main(): Promise<void> {
     lobby = undefined;
     hosted = undefined;
     closeChat();
-    await leavingLobby?.disconnect();
-    await ending?.close();
+    const teamSize = queue === undefined ? 1 : teamSizeOf(queue.mode);
+    const snapshot = leavingLobby?.getSnapshot();
+    const selfTeam = snapshot?.players.find((p) => p.sessionId === snapshot.selfSessionId)?.team;
+    // A whole winning side is still in the lobby: a member gone, and there is no party.
+    const offered =
+      won &&
+      teamSize > 1 &&
+      selfTeam !== undefined &&
+      selfTeam !== null &&
+      snapshot?.players.filter((p) => p.team === selfTeam).length === teamSize;
+    if (ending !== undefined) {
+      // The host holds its lobby for the winners' vote, whoever won (#882).
+      void ending.done.then(async () => {
+        await ending.lobby.disconnect();
+        await ending.close();
+      });
+    } else if (!offered) {
+      await leavingLobby?.disconnect();
+    }
     if (queue === undefined) {
       return;
     }
@@ -798,7 +1089,12 @@ async function main(): Promise<void> {
     setStatus("", "offline");
     showViewport(false);
     music().screen("menu");
-    queue.screen.show({ kind: "ended", outcome, streak: queueStreak });
+    endedOutcome = outcome;
+    endedSummary = summary;
+    if (offered && leavingLobby !== undefined) {
+      offerStay(leavingLobby, ending);
+    }
+    showEnded();
   };
 
   /**
@@ -812,7 +1108,7 @@ async function main(): Promise<void> {
     }
     if (queue !== undefined && queuedEnd !== undefined) {
       // Finished: leaving now, or the host going, only skips the wait.
-      await endQueuedMatch(queuedEnd.outcome);
+      await endQueuedMatch(queuedEnd.outcome, queuedEnd.won);
       return;
     }
     const leaving = match;
@@ -838,7 +1134,11 @@ async function main(): Promise<void> {
     }
   };
 
-  const enterMatch = async (name: string, start: MatchStarting): Promise<void> => {
+  const enterMatch = async (
+    name: string,
+    start: MatchStarting,
+    entrant: Entrant,
+  ): Promise<void> => {
     const from = lobby;
     if (from === undefined) {
       return;
@@ -850,7 +1150,6 @@ async function main(): Promise<void> {
     showViewport(true);
     setStatus("entering match…", "offline");
     try {
-      const build = await activeBuild();
       match = await startMatchView(
         viewport,
         {
@@ -876,14 +1175,15 @@ async function main(): Promise<void> {
                   const outcome = describeOutcome(winningTeam, endReason, selfTeam);
                   queuedEnd = {
                     outcome,
+                    won,
                     timer: window.setTimeout(() => {
-                      void endQueuedMatch(outcome);
+                      void endQueuedMatch(outcome, won);
                     }, QUEUED_RESULT_SECONDS * 1000),
                   };
                 },
               }),
         },
-        { connect: () => connectMatchFor(from, start, name, build) },
+        { connect: () => connectMatchFor(from, start, name, entrant.build) },
       );
     } catch (error) {
       console.error("[web] could not enter match", error);

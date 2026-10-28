@@ -57,7 +57,7 @@ function foe(id = "foe", overrides: Partial<Combatant> = {}): Combatant {
 }
 
 function at(combatant: Combatant, position: Vec2): TargetCandidate {
-  return { combatant, position };
+  return { combatant, position, creature: undefined };
 }
 
 /** `user` pays for `skillId` and it lands on `targets`. */
@@ -75,7 +75,7 @@ function use(user: Combatant, skillId: string, ...targets: Combatant[]): CombatE
 
 /** What `amount` of `type` damage at no armor penetration does to `victim`. */
 function elemental(amount: number, type: "cold" | "earth" | "fire", victim: Combatant): number {
-  return mitigate(skillDamage(amount, type, 0), victim, RULES);
+  return mitigate(skillDamage(amount, type, 0), victim, RULES, "chest");
 }
 
 function remaining(combatant: Combatant, statusId: StatusId): number | undefined {

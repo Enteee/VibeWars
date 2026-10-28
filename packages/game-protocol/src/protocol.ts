@@ -127,6 +127,16 @@ export interface EndUpkeepIntent {
 }
 
 /**
+ * Swap to weapon set `set` (#489), numbered 0-3 for F1-F4: at once, or
+ * queued behind a cast, an aftercast, a swing or a knockdown. An empty
+ * set is refused quietly, as GW1 says nothing for one.
+ */
+export interface WeaponSetIntent {
+  readonly kind: "weapon-set";
+  readonly set: 0 | 1 | 2 | 3;
+}
+
+/**
  * Sent as `"cast-refused"` to the caster alone when the server turns down a
  * `UseSkillIntent` or an `AttackIntent`, so a key that did nothing can say
  * why (issue #51). Advisory only: the refusal has already happened, and
@@ -164,6 +174,12 @@ export interface RechargeSlot {
  */
 export interface RechargeMessage {
   readonly slots: readonly RechargeSlot[];
+  /**
+   * The slots spent until a morale boost (#474): Resurrection Signet's,
+   * used and not recharging by time. A slot may be here and in `slots`,
+   * disabled too, and waits for both.
+   */
+  readonly spent: readonly number[];
 }
 
 /**
@@ -225,7 +241,8 @@ export type ClientIntent =
   | AttackIntent
   | CancelIntent
   | WalkToIntent
-  | EndUpkeepIntent;
+  | EndUpkeepIntent
+  | WeaponSetIntent;
 
 /**
  * Validate an arbitrary network payload as a `ClientIntent`, or reject it.
@@ -310,6 +327,14 @@ export function parseClientIntent(value: unknown): ClientIntent | undefined {
     return { kind: "end-upkeep", targetId: record.targetId, status: record.status };
   }
 
+  if (
+    record.kind === "weapon-set" &&
+    hasOnlyKeys(record, ["kind", "set"]) &&
+    isWeaponSetNumber(record.set)
+  ) {
+    return { kind: "weapon-set", set: record.set };
+  }
+
   return undefined;
 }
 
@@ -318,6 +343,10 @@ const MAX_INTENT_ID = 64;
 
 function isIntentId(value: unknown): value is string {
   return typeof value === "string" && value !== "" && value.length <= MAX_INTENT_ID;
+}
+
+function isWeaponSetNumber(value: unknown): value is 0 | 1 | 2 | 3 {
+  return value === 0 || value === 1 || value === 2 || value === 3;
 }
 
 function hasOnlyKeys(record: Record<string, unknown>, keys: readonly string[]): boolean {

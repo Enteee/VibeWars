@@ -87,19 +87,45 @@ describe("flowKpis", () => {
     expect(flow.qaWaitMedianMs).toBe(H);
   });
 
-  it("counts a move to an earlier column of the flow as a bounce, not a Blocked move", () => {
+  it("counts only work sent back from review or QA as a bounce, over 24 h and 7 d", () => {
     const flow = flowKpis({
       now: NOW,
       cards: [],
       moves: [
-        move(1, "QA", "In Progress", H),
-        move(1, "In Progress", "In Review", H / 2),
-        move(2, "In Progress", "Blocked", H),
-        move(2, "Blocked", "Backlog", H / 2),
-        move(3, "QA", "In Progress", 8 * D),
+        move(1, "QA", "In Progress", 2 * H),
+        move(2, "In Review", "In Progress", 30 * H),
+        move(3, "Ready", "Backlog", H),
+        move(4, "Blocked", "Backlog", H),
+        move(5, "QA", "In Review", H),
+        move(6, null, "In Progress", H),
+        move(7, "QA", "In Progress", 8 * D),
+        move(8, "QA", "In Progress", 7 * D),
       ],
     });
-    expect(flow.bounces7d).toBe(1);
+    expect(flow.bounces24h).toBe(1);
+    expect(flow.bounces7d).toBe(2);
+  });
+
+  it("names up to three most-bounced cards, ties by the lower issue", () => {
+    const flow = flowKpis({
+      now: NOW,
+      cards: [],
+      moves: [
+        move(9, "QA", "In Progress", 5 * H),
+        move(4, "In Review", "In Progress", 4 * H),
+        move(9, "In Review", "In Progress", 3 * H),
+        move(2, "QA", "In Progress", 3 * H),
+        move(7, "QA", "In Progress", 2 * H),
+        move(9, "QA", "In Progress", H),
+      ],
+    });
+    expect(flow.bounces7d).toBe(6);
+    expect(flow.topBounced).toEqual([
+      { issue: 9, bounces: 3 },
+      { issue: 2, bounces: 1 },
+      { issue: 4, bounces: 1 },
+    ]);
+    expect(flowKpis({ now: NOW, cards: [], moves: [] }).topBounced).toEqual([]);
   });
 
   it("counts cards per column and ages the oldest Blocked from its last arrival", () => {

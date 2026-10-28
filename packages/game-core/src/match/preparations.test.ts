@@ -24,7 +24,13 @@ const APPLY_POISON = "ranger.apply-poison";
 function wielding(weapon: Weapon, attributeId: string): ResolvedEquipment {
   return {
     ...unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
-    mainHand: { weapon, attributeId, damageType: weapon.damageType, requirementMet: true },
+    mainHand: {
+      weapon,
+      attributeId,
+      damageType: weapon.damageType,
+      requirementMet: true,
+      creatureDamageScale: undefined,
+    },
   };
 }
 
@@ -60,7 +66,7 @@ const NOWHERE = (): boolean => false;
 function swing(attacker: Combatant, target: Combatant, seed = 1): ReturnType<typeof resolveSwing> {
   return resolveSwing({
     attacker,
-    target: { combatant: target, position: vec2(40, 0) },
+    target: { combatant: target, position: vec2(40, 0), creature: undefined },
     surroundings: new Map(),
     rng: createRng(seed),
     rules: RULES.combat,

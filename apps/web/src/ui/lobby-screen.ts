@@ -81,16 +81,16 @@ export function waitingFor(snapshot: LobbySnapshot): string | undefined {
   return notReady.length === 0 ? undefined : `Waiting for ${notReady.join(", ")} to ready up`;
 }
 
-/** "Mhenlo · Monk / Elementalist", or "Default loadout" for the house build (#580). */
+/** "Mhenlo · Monk / Elementalist", or "Random starter build" without a usable one (#580, #853). */
 export function characterLine(character: LobbyCharacter | null): string {
   if (character === null) {
-    return DEFAULT_LOADOUT;
+    return RANDOM_STARTER;
   }
   const professions = professionLabel(character.primary, character.secondary ?? undefined);
   return `${character.name} · ${professions}`;
 }
 
-export const DEFAULT_LOADOUT = "Default loadout";
+export const RANDOM_STARTER = "Random starter build";
 export const COPIED = "Copied";
 export const COPY_BY_HAND = "Could not copy: the code is selected, copy it by hand";
 

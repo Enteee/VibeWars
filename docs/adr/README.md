@@ -38,3 +38,6 @@ rewriting history.
 | [0031](0031-company-credentials.md)           | The company authenticates as itself                             |
 | [0032](0032-random-arena-queue.md)            | Strangers meet in unranked play through a ticket queue on Nostr |
 | [0033](0033-company-commit-lock.md)           | A host-only lock pins the commit the company runs               |
+| [0035](0035-non-player-combatants.md)         | A creature is a participant with a creature record              |
+| [0036](0036-weapon-sets.md)                   | Weapon sets are resolved at join and swapped by index           |
+| [0037](0037-per-piece-armor.md)               | Insignia armor is per piece, and each hit rolls its piece       |

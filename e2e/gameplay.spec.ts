@@ -5,6 +5,8 @@ import { expect, test, type Page, type Locator } from "@playwright/test";
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
 import { projection } from "./camera.js";
 import { key, skillKey } from "./keys.js";
+import { startSoloMatch as startMatchFromMenu } from "./helpers/peers.js";
+import { bringStarter, starterKey } from "./helpers/starter.js";
 
 /**
  * Browser tests for playing (brief §31): start a match, basic movement,
@@ -44,7 +46,7 @@ async function arenaShot(page: Page, canvas: Locator): Promise<Buffer> {
   return canvas.screenshot({
     mask: [
       page.locator(".hud"),
-      page.locator(".hud-scoreboard"),
+      page.locator(".hud-top"),
       page.locator(".hud-result"),
       page.locator(".hud-controls"),
     ],
@@ -63,7 +65,14 @@ async function startSoloMatch(page: Page): Promise<Locator> {
  * A lobby match: `host` on team 1, every guest on team 2. The host's
  * arena canvas, once everyone is in.
  */
-async function startLobbyMatch(host: Page, guests: readonly Page[]): Promise<Locator> {
+async function startLobbyMatch(
+  host: Page,
+  guests: readonly Page[],
+  build = "Elementalist/Mesmer",
+): Promise<Locator> {
+  // A known bar (#852). The pages of a test share one storage, so the
+  // guests play it too.
+  await bringStarter(host, build);
   await host.goto("./");
   await host.getByRole("button", { name: "host a lobby" }).click();
   await expect(host.locator(".lobby-code")).toHaveText(/^[A-Z0-9]{3}-[A-Z0-9]{3}$/);
@@ -82,7 +91,7 @@ async function startLobbyMatch(host: Page, guests: readonly Page[]): Promise<Loc
   for (const page of [host, ...guests]) {
     await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp");
   }
-  return host.locator("#viewport canvas");
+  return host.locator("#viewport canvas:not(.compass)");
 }
 
 /** Leave by the button, which leaves for good: a closed page is held for its reconnection. */
@@ -102,6 +111,7 @@ async function readEnergy(page: Page): Promise<number> {
 }
 
 test("a match renders the arena and a populated HUD", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
   await startSoloMatch(page);
 
   await expect(page.locator(".hud-skills .hud-skill")).toHaveCount(8);
@@ -114,6 +124,39 @@ test("a match renders the arena and a populated HUD", async ({ page }) => {
   expect(bar !== null && last !== null && bar.x + bar.width - (last.x + last.width)).toBeLessThan(
     2,
   );
+
+  // Laid out as GW1 (#1042): the target frame top centre under the
+  // scoreboard, your bars and skill bar bottom centre, health over energy.
+  const box = async (
+    selector: string,
+  ): Promise<{ x: number; y: number; width: number; height: number }> => {
+    const found = await page.locator(selector).boundingBox();
+    if (found === null) {
+      throw new Error(`${selector} has no box`);
+    }
+    return found;
+  };
+  const centre = (of: { x: number; width: number }): number => of.x + of.width / 2;
+  const target = await box(".hud-target");
+  const scoreboard = await box(".hud-scoreboard");
+  expect(Math.abs(centre(target) - 640)).toBeLessThan(2);
+  expect(target.y).toBeGreaterThan(scoreboard.y + scoreboard.height);
+  expect(target.y).toBeLessThan(720 * 0.3);
+  const skills = await box(".hud-skills");
+  expect(Math.abs(centre(skills) - 640)).toBeLessThan(2);
+  expect(720 - (skills.y + skills.height)).toBeLessThan(1.5 * 16);
+  const health = await box(".hud-bar-health");
+  const energy = await box(".hud-bar-energy");
+  expect(health.y + health.height).toBeLessThanOrEqual(energy.y);
+  expect(energy.y + energy.height).toBeLessThanOrEqual(skills.y);
+  expect(Math.abs(health.width - skills.width)).toBeLessThan(2);
+  expect(Math.abs(energy.width - skills.width)).toBeLessThan(2);
+  // The compass (#1056): top right, under the match buttons.
+  await expect(page.locator(".compass")).toBeVisible();
+  const compass = await box(".compass");
+  const controls = await box(".hud-controls");
+  expect(compass.y).toBeGreaterThan(controls.y + controls.height);
+  expect(1280 - (compass.x + compass.width)).toBeLessThan(30);
 });
 
 test("hovering a slot shows its tooltip at the host's ranks, above the bar (#485)", async ({
@@ -131,9 +174,10 @@ test("hovering a slot shows its tooltip at the host's ranks, above the bar (#485
   await expect(tip).toContainText("Fireball");
   await expect(tip).toContainText("cost");
   await expect(tip).toContainText("Fire Magic");
-  // The house loadout's Fire Magic 12, as the host resolved it; a client
-  // describing the skill without its ranks would say 7.
-  await expect(tip).toContainText("Deals 91 damage");
+  // The Elementalist/Mesmer's Fire Magic 12 and its minor rune, 13, as the
+  // host resolved it; a client describing the skill without its ranks
+  // would say 7.
+  await expect(tip).toContainText("Deals 98 damage");
   const tipBox = await tip.boundingBox();
   const slotBox = await slot.boundingBox();
   expect((tipBox?.y ?? Infinity) + (tipBox?.height ?? 0)).toBeLessThanOrEqual(slotBox?.y ?? 0);
@@ -179,7 +223,7 @@ test("the arrows move; A, once move-left, casts slot 5 and moves nobody (#302)",
   await expect(page.locator(".hud-skill-key").first()).toHaveText("Q");
   expect(key("skill-5")).toBe("KeyA");
 
-  // Slot 5 of the house bar is a self-cast enchantment. Held, A casts it
+  // Slot 5 is Armor of Earth, a self-cast enchantment. Held, A casts it
   // once, and the player stays where they are while it is held.
   await page.keyboard.down("a");
   await expect(
@@ -256,7 +300,7 @@ test("a skill the player cannot afford is refused rather than cast", async ({ pa
   await page.waitForTimeout(500);
 
   expect(await readEnergy(page)).toBeGreaterThanOrEqual(0);
-  await expect(page.locator("#viewport canvas")).toBeVisible();
+  await expect(page.locator("#viewport canvas:not(.compass)")).toBeVisible();
 });
 
 test("a refused cast says why, briefly, above the skill bar", async ({ page }) => {
@@ -495,7 +539,7 @@ test("a recharging skill shows the clock-wipe and the seconds left, then clears 
 }) => {
   await startSoloMatch(page);
 
-  // Slot 5 of the house bar is Armor of Earth: self-cast, so it needs no
+  // Slot 5 is Armor of Earth: self-cast, so it needs no
   // target, and it recharges in 15 s.
   await page.keyboard.press(key("skill-5"));
   const slot = page.locator(".hud-skill").nth(4);
@@ -515,23 +559,27 @@ test("a match whose host goes returns to the menu and says why (#195)", async ({
   // match and the lobby with it (#403).
   const host = await page.context().newPage();
   await startLobbyMatch(host, [page]);
-  const canvas = page.locator("#viewport canvas");
+  const canvas = page.locator("#viewport canvas:not(.compass)");
 
-  await host.close();
+  // A navigation fires pagehide, as a closed tab does in a browser; Playwright's
+  // page.close() does not run unload handlers, so it skips it (#1085).
+  await host.goto("about:blank");
 
   const notice = page.getByText("The host closed the lobby.");
   await expect(notice).toBeVisible();
   await expect(page.getByRole("button", { name: "host a lobby" })).toBeVisible();
   await expect(canvas).toBeHidden();
 
-  // A new match works, and the notice is gone with the menu.
-  await startSoloMatch(page);
+  // A new match works, and the notice is gone with the menu. From the
+  // menu on show: the starter is already picked, and bringing it again
+  // would save a second one.
+  await startMatchFromMenu(page);
   await expect(notice).toHaveCount(0);
+  await host.close();
 });
 
 test("the target panel shows the target's professions before its name (#281)", async ({ page }) => {
-  // A fresh tab has no character, so the opponent plays the house
-  // loadout: a warrior with no secondary.
+  // The opponent plays the Elementalist/Mesmer starter build.
   const opponent = await page.context().newPage();
   await startLobbyMatch(page, [opponent]);
   const icons = page.locator(".hud-target-professions img");
@@ -539,11 +587,12 @@ test("the target panel shows the target's professions before its name (#281)", a
 
   await page.keyboard.press("Tab");
   await expect(page.locator(".hud-target-text")).not.toHaveText("no target");
-  // The profession, then the weapon it carries (#419).
-  await expect(icons).toHaveCount(2);
-  await expect(icons.first()).toHaveAttribute("alt", "Warrior");
-  await expect(icons.first()).toHaveAttribute("src", /icons\/profession\/warrior\.svg$/);
-  await expect(icons.nth(1)).toHaveAttribute("src", /icons\/weapon\/[a-z-]+\.svg$/);
+  // The professions, then the weapon it carries (#419).
+  await expect(icons).toHaveCount(3);
+  await expect(icons.first()).toHaveAttribute("alt", "Elementalist");
+  await expect(icons.first()).toHaveAttribute("src", /icons\/profession\/elementalist\.svg$/);
+  await expect(icons.nth(1)).toHaveAttribute("alt", "Mesmer");
+  await expect(icons.nth(2)).toHaveAttribute("src", /icons\/weapon\/[a-z-]+\.svg$/);
 
   // Gone with the target, when it leaves.
   await leaveMatch(opponent);
@@ -568,13 +617,13 @@ test("at the arena's bottom edge, an RMB drag down looks past it, and springs ba
   await page.getByRole("button", { name: "start match" }).click();
   await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp");
   const stage = page.locator("#viewport");
-  const canvas = page.locator("#viewport canvas");
+  const canvas = page.locator("#viewport canvas:not(.compass)");
   const box = await canvas.boundingBox();
   if (box === null) {
     throw new Error("the arena canvas has no box");
   }
 
-  // The pointer at the centre leans the camera nowhere.
+  // Over the canvas, for the wheel.
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   for (const _ of [1, 2]) {
     await page.waitForTimeout(200);
@@ -604,8 +653,6 @@ test("at the arena's bottom edge, an RMB drag down looks past it, and springs ba
   const atWall = await cameraY();
 
   // Not clamped to the map: the view centre goes below the arena, 200 px on.
-  // The drag ends at the centre, so once it is let go the look-ahead has
-  // nothing to lean toward: only the spring-back moves the view (#876).
   const centre = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
   await page.mouse.move(centre.x, centre.y - 200);
   await page.mouse.down({ button: "right" });
@@ -616,7 +663,7 @@ test("at the arena's bottom edge, an RMB drag down looks past it, and springs ba
   expect(await cameraY()).toBeLessThan(panned + 3);
   expect(panned).toBeGreaterThan(arena.height);
 
-  // Let go at the centre: the view is on you again. RETURN_RATE (7/s)
+  // Let go: the view is on you again. RETURN_RATE (7/s)
   // brings it within 3 px in about 0.65 s; a loaded runner needs more than
   // 1 s to see it, and a pan that never returns still fails at 2 s (#876).
   await page.mouse.up({ button: "right" });
@@ -628,7 +675,7 @@ test("the target frame shows the target's health and the skill it casts, filling
   page,
 }) => {
   const opponent = await page.context().newPage();
-  await startLobbyMatch(page, [opponent]);
+  await startLobbyMatch(page, [opponent], "Ranger/Mesmer");
   const health = page.locator(".hud-target-health");
   const cast = page.locator(".hud-target-cast");
   await expect(health).toBeHidden();
@@ -639,8 +686,8 @@ test("the target frame shows the target's health and the skill it casts, filling
   await expect(health).toHaveText("100%");
   await expect(cast).toBeHidden();
 
-  // Slot 8 is Troll Unguent: a 3 s self cast, so it needs no target.
-  await opponent.keyboard.press(key("skill-8"));
+  // Troll Unguent: a 3 s self cast, so it needs no target.
+  await opponent.keyboard.press(starterKey("Ranger/Mesmer", "ranger.troll-unguent"));
   await expect(cast).toBeVisible();
   await expect(cast.locator(".hud-target-cast-name")).toHaveText("Troll Unguent");
   await expect(cast.locator(".skill-type-badge")).toHaveCount(1);
@@ -656,7 +703,7 @@ test("the target frame shows the target's health and the skill it casts, filling
 
 test("the HUD's energy bar shows its regeneration as arrows (#504)", async ({ page }) => {
   await startSoloMatch(page);
-  // The house build is an Elementalist's 4 pips (join-loadout.ts).
+  // The Elementalist/Mesmer starter build: an Elementalist's 4 pips.
   await expect(page.locator(".hud-bar-energy .vital-pips")).toHaveText("››››");
   await expect(page.locator(".hud-bar-health .vital-pips")).toBeHidden();
 });
@@ -677,7 +724,7 @@ test("an RMB drag pans; a left click then walks to the panned point; letting go 
   const cameraX = async (): Promise<number> =>
     Number(((await stage.getAttribute("data-camera")) ?? "").split(",")[0]);
 
-  // The pointer at the centre leans the camera nowhere; then Close.
+  // Over the canvas, for the wheel; then Close.
   await page.mouse.move(centre.x, centre.y);
   for (const _ of [1, 2]) {
     await page.waitForTimeout(200);
