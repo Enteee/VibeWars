@@ -86,6 +86,7 @@ import {
   castFill,
   flashSlot,
   outOfRange,
+  ownCompanion,
   adrenalineFading,
   adrenalineFill,
   adrenalineGaugeHtml,
@@ -234,11 +235,24 @@ export function createTrainingPanel(): TrainingPanel {
   const stage = h("div", "training-stage");
   // Your team's health (#1055), as on the match HUD: shown when the
   // scenario gives you allies. A row's click targets its member.
-  const partyWindow = createPartyWindow(stage, (targetSessionId) => {
-    if (session !== undefined && !session.parked) {
-      session.connection.sendIntent({ kind: "target", targetSessionId });
-    }
-  });
+  const partyWindow = createPartyWindow(
+    stage,
+    (targetSessionId) => {
+      if (session !== undefined && !session.parked) {
+        session.connection.sendIntent({ kind: "target", targetSessionId });
+      }
+    },
+    // Your pet's Guard, Fight and Heel (#1110).
+    (creatureId, mode) => {
+      if (session !== undefined && !session.parked) {
+        session.connection.sendIntent({
+          kind: "command",
+          creatureId,
+          order: { kind: "mode", mode },
+        });
+      }
+    },
+  );
   stage.tabIndex = 0;
   stage.setAttribute("role", "application");
   stage.setAttribute("aria-label", "training arena");
@@ -557,7 +571,13 @@ export function createTrainingPanel(): TrainingPanel {
     const now = session?.connection.simulation.elapsedSeconds ?? 0;
     const fill = castFill(slots, self);
     const target = match.players.find((player) => player.sessionId === self.targetSessionId);
-    const far = outOfRange(slots, self, target, session?.wallSegments ?? []);
+    const far = outOfRange(
+      slots,
+      self,
+      target,
+      ownCompanion(match.players, self),
+      session?.wallSegments ?? [],
+    );
     const unwielded = wrongWeapon(slots, self);
     slotTips.casting(fill?.slot);
     // Greyed while you lie knocked down, as on the match HUD (#545).

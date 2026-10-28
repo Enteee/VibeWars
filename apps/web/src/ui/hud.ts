@@ -51,6 +51,7 @@ import {
   castFill,
   flashSlot,
   outOfRange,
+  ownCompanion,
   adrenalineFading,
   adrenalineFill,
   adrenalineGaugeHtml,
@@ -1207,7 +1208,8 @@ export function updateHud(
   const buttons = hud.skillBar.querySelectorAll("button");
   const reducedMotion = prefersReducedMotion();
   const fill = castFill(skillBar, self);
-  const far = outOfRange(skillBar, self, target, walls);
+  const companion = match === undefined ? undefined : ownCompanion(match.players, self);
+  const far = outOfRange(skillBar, self, target, companion, walls);
   const unwielded = wrongWeapon(skillBar, self);
   hud.slotTips.casting(fill?.slot);
   paintKnockdown(hud.skillBar, self.knockdownRemaining);

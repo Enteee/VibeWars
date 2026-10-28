@@ -288,7 +288,7 @@ describe("enemyPips (#881)", () => {
     const minion = player({
       sessionId: "f1/c1",
       team: 1,
-      creature: { ownerId: "f1", kind: "minion", look: "bone-minion" },
+      creature: { ownerId: "f1", kind: "minion", look: "bone-minion", mode: null },
     });
     expect(enemyPips([...players, minion], 0)).toEqual(enemyPips(players, 0));
   });
@@ -313,7 +313,11 @@ describe("scoreboardText (#881)", () => {
 
   it("counts no creature, alive or not (#1052)", () => {
     const minion = (sessionId: string, team: number) =>
-      player({ sessionId, team, creature: { ownerId: "a", kind: "minion", look: "bone-minion" } });
+      player({
+        sessionId,
+        team,
+        creature: { ownerId: "a", kind: "minion", look: "bone-minion", mode: null },
+      });
     expect(scoreboardText([...players, minion("a/c1", 0), minion("c/c1", 1)], 0, 42)).toBe(
       "2 v 1 · 0:42",
     );

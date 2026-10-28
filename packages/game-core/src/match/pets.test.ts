@@ -25,6 +25,9 @@ const ARCANE_ECHO = "mesmer.arcane-echo";
 const FIREBALL = "elementalist.fireball";
 /** Comfort Animal's 1 s activation, the aftercast, and a tick to spare. */
 const COMFORT_SECONDS = 1 + RULES.combat.aftercastSeconds + 2 * DT;
+const GUARD = { kind: "mode", mode: "guard" } as const;
+const FIGHT = { kind: "mode", mode: "fight" } as const;
+const HEEL = { kind: "mode", mode: "heel" } as const;
 
 const RESPAWN: MatchRules = {
   victory: "kill-count",
@@ -388,6 +391,17 @@ describe("the wolf and its owner (#1046)", () => {
       expect(second.id).not.toBe(first.id);
       expect(second.combatant.health).toBe(480);
     });
+
+    it("keeps a kept wolf's mode, and a fresh wolf is on Guard (#1110)", () => {
+      const sim = match([ranger()]);
+      const first = wolf(sim);
+      sim.commandCreature("r", first.id, HEEL);
+      sim.rearm("r", loadout, [COMFORT, CHARM]);
+      expect(first.creature?.mode).toBe("heel");
+      sim.rearm("r", loadout, [COMFORT]);
+      sim.rearm("r", loadout, [CHARM]);
+      expect(wolf(sim).creature?.mode).toBe("guard");
+    });
   });
 
   it("is the same in two runs with one seed", () => {
@@ -492,5 +506,120 @@ describe("the wolf's death penalty (#1133)", () => {
     kill(sim, pet);
     expect(pet.combatant.morale).toBe(0);
     expect(pet.combatant.maxHealth).toBe(480);
+  });
+});
+
+describe("Guard, Fight and Heel (#1110)", () => {
+  /** Ranger at the origin, foes `a` and `b` beside it, ally `k`. */
+  function arena(): MatchSimulation {
+    return match(
+      [ranger(), spec("a", 1, vec2(60, 0)), spec("b", 1, vec2(0, 60)), spec("k", 0, vec2(-60, 0))],
+      RESPAWN,
+    );
+  }
+
+  it("starts on Guard, which bites what its owner attacks, not what it selects", () => {
+    const sim = arena();
+    const pet = wolf(sim);
+    expect(pet.creature?.mode).toBe("guard");
+    sim.setTarget("r", "b");
+    stepFor(sim, 2);
+    expect(pet.combatant.attack).toBeUndefined();
+  });
+
+  it("on Fight, bites its owner's selected foe, attacking or not, and follows the selection", () => {
+    const sim = arena();
+    const pet = wolf(sim);
+    expect(sim.commandCreature("r", pet.id, FIGHT)).toBe(true);
+    sim.setTarget("r", "b");
+    expect(bites(stepFor(sim, 5), pet, "b").length).toBeGreaterThan(0);
+    expect(get(sim, "r").combatant.attack).toBeUndefined();
+    sim.setTarget("r", "a");
+    stepFor(sim, DT);
+    expect(pet.combatant.attack?.targetId).toBe("a");
+  });
+
+  it("on Fight, keeps its foe with yourself, an ally or nobody selected", () => {
+    const sim = arena();
+    const pet = wolf(sim);
+    sim.commandCreature("r", pet.id, FIGHT);
+    sim.setTarget("r", "a");
+    stepFor(sim, 1);
+    for (const selected of ["r", "k", undefined]) {
+      sim.setTarget("r", selected);
+      stepFor(sim, 1);
+      expect(pet.combatant.attack?.targetId).toBe("a");
+    }
+  });
+
+  it("on Heel, drops its attack at once, ignores its owner's and walks back to heel", () => {
+    const sim = arena();
+    const pet = wolf(sim);
+    sim.requestAttack("r", "a");
+    stepFor(sim, 1);
+    expect(pet.combatant.attack?.targetId).toBe("a");
+    sim.commandCreature("r", pet.id, HEEL);
+    expect(pet.combatant.attack).toBeUndefined();
+    pet.position = vec2(400, 0);
+    sim.requestAttack("r", "b");
+    expect(bites(stepFor(sim, 4), pet, "b")).toEqual([]);
+    expect(pet.combatant.attack).toBeUndefined();
+    // Back from 400 off, to heel give or take the bodies crowding its owner.
+    expect(distance(pet.position, get(sim, "r").position)).toBeLessThan(
+      109 + 2 * RULES.collision.playerRadius,
+    );
+  });
+
+  it("on Heel, does not turn on a foe that hits it", () => {
+    const sim = arena();
+    const pet = wolf(sim);
+    sim.commandCreature("r", pet.id, HEEL);
+    // On Guard it would go for `a` with its owner.
+    sim.requestAttack("r", "a");
+    expect(sim.requestAttack("a", pet.id)).toEqual({ ok: true });
+    stepFor(sim, 4);
+    expect(pet.combatant.health).toBeLessThan(480);
+    expect(pet.combatant.attack).toBeUndefined();
+  });
+
+  it("on Heel, takes a pet attack but does not go for the selected foe with it", () => {
+    const sim = match([
+      ranger([CHARM, COMFORT, "ranger.brutal-strike"]),
+      spec("a", 1, vec2(60, 0)),
+    ]);
+    const pet = wolf(sim);
+    sim.commandCreature("r", pet.id, HEEL);
+    sim.setTarget("r", "a");
+    expect(sim.requestSkill("r", 2)?.check).toEqual({ ok: true });
+    stepFor(sim, 2);
+    expect(pet.combatant.attack).toBeUndefined();
+  });
+
+  it("keeps its mode through its death and Comfort Animal, and its owner's respawn", () => {
+    const sim = arena();
+    const pet = wolf(sim);
+    sim.commandCreature("r", pet.id, HEEL);
+    kill(sim, pet);
+    stepFor(sim, 5);
+    expect(sim.requestSkill("r", 1)?.check).toEqual({ ok: true });
+    stepFor(sim, COMFORT_SECONDS);
+    expect(pet.combatant.dead).toBe(false);
+    expect(pet.creature?.mode).toBe("heel");
+    kill(sim, get(sim, "r"));
+    stepFor(sim, 1.5);
+    expect(get(sim, "r").combatant.dead).toBe(false);
+    expect(pet.creature?.mode).toBe("heel");
+  });
+
+  it("takes an order from its dead owner, and from nobody else", () => {
+    const sim = arena();
+    const pet = wolf(sim);
+    expect(sim.commandCreature("k", pet.id, HEEL)).toBe(false);
+    expect(sim.commandCreature("a", pet.id, HEEL)).toBe(false);
+    expect(pet.creature?.mode).toBe("guard");
+    kill(sim, get(sim, "r"));
+    expect(sim.commandCreature("r", pet.id, HEEL)).toBe(true);
+    expect(sim.commandCreature("r", pet.id, GUARD)).toBe(true);
+    expect(pet.creature?.mode).toBe("guard");
   });
 });
