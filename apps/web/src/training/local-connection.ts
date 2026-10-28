@@ -118,7 +118,11 @@ function toPlayerSnapshot(
     creature:
       participant.creature === undefined
         ? undefined
-        : { ownerId: participant.creature.ownerId, kind: participant.creature.kind },
+        : {
+            ownerId: participant.creature.ownerId,
+            kind: participant.creature.kind,
+            look: participant.creature.look,
+          },
   };
 }
 
@@ -144,8 +148,10 @@ export function createLocalConnection(options: {
     return self === undefined
       ? []
       : skillBarSlots(
-          held().map((slot) => slot?.skillId ?? null),
+          self.skillBar,
+          self.combatant.cast,
           self.combatant,
+          simulation.elapsedSeconds,
         );
   };
   let skillBar = selfBar();

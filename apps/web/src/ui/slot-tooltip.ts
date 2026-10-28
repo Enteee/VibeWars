@@ -7,6 +7,7 @@ import {
 } from "@vibewars/game-core";
 import type { SkillSlot } from "@vibewars/game-session";
 
+import { echoTooltipLine } from "./echo-strip.js";
 import { createSkillTooltip, type SkillTooltip } from "./skill-tooltip.js";
 
 /**
@@ -23,13 +24,15 @@ export interface SlotTooltips {
   /**
    * Show the tooltip of what `holding` gives after a hover or focus on
    * `button`, slot `slot`. Read at show time, so the cost is the one the
-   * host last sent for the slot.
+   * host last sent for the slot, and an echo's copy says how long it has
+   * left by the match clock `now` (#1154).
    */
   bind(
     button: HTMLElement,
     slot: number,
     holding: () => SkillSlot | null,
     ranks: () => ReadonlyMap<string, number>,
+    now: () => number,
   ): void;
   /** `slot` is casting, or none is: hide that slot's tooltip, shown or waiting. */
   casting(slot: number | undefined): void;
@@ -57,7 +60,7 @@ export function createSlotTooltips(): SlotTooltips {
   };
 
   return {
-    bind(button, slot, holding, ranks) {
+    bind(button, slot, holding, ranks, now) {
       const open = (): void => {
         hide();
         current = slot;
@@ -67,7 +70,7 @@ export function createSlotTooltips(): SlotTooltips {
           const skill = held === null ? undefined : getSkill(held.id);
           if (held !== null && skill !== undefined && button.isConnected) {
             tooltip ??= createSkillTooltip("above");
-            tooltip.show(button, slotDescription(skill, held, ranks()));
+            tooltip.show(button, slotDescription(skill, held, ranks(), now()));
           }
         }, SLOT_TOOLTIP_DELAY_MS);
       };
@@ -99,14 +102,21 @@ export function createSlotTooltips(): SlotTooltips {
 /**
  * `skill` at `ranks`, priced as the host priced `slot`: the bar shows no
  * cost (#719), so a glyph's discount (#637) is read here, with the base
- * in brackets as the editor writes a rank's discount.
+ * in brackets as the editor writes a rank's discount. An echo's copy
+ * ends with how long it has left at `now` (#1154).
  */
 export function slotDescription(
   skill: Skill,
   slot: SkillSlot,
   ranks: ReadonlyMap<string, number>,
+  now: number,
 ): SkillDescription {
-  const description = describeSkill(skill, ranks);
+  const described = describeSkill(skill, ranks);
+  const echoed = echoTooltipLine(slot, now);
+  const description =
+    echoed === undefined
+      ? described
+      : { ...described, effects: [...described.effects, { text: echoed, magnitude: undefined }] };
   if (skill.cost?.kind !== "energy") {
     return description;
   }

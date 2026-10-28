@@ -161,7 +161,7 @@ const minion: WirePlayer = {
   id: "peer-1/c1",
   name: "Bone Minion",
   primaryProfession: null,
-  creature: { ownerId: "peer-1", kind: "minion" },
+  creature: { ownerId: "peer-1", kind: "minion", look: "bone-minion" },
 };
 
 const snapshot: WireSnapshotPart = {
@@ -310,8 +310,18 @@ const skillBar: WireSkillBar = {
       adrenalineCost: 0,
       activationSeconds: 1,
       rechargeSeconds: 5,
+      copyEndsAt: null,
     },
     null,
+    {
+      id: "fireball",
+      name: "Fireball",
+      energyCost: 10,
+      adrenalineCost: 0,
+      activationSeconds: 1,
+      rechargeSeconds: 5,
+      copyEndsAt: 32.4,
+    },
   ],
   ranks: { "monk.healing-prayers": 12, "monk.divine-favor": 0 },
 };
@@ -439,7 +449,11 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
           ...player,
           statuses: [{ ...status, endsAt: null, durationSeconds: null, casterId: "peer-1/c1" }],
         },
-        { ...minion, name: "Winnowing", creature: { ownerId: "peer-1", kind: "spirit" } },
+        {
+          ...minion,
+          name: "Winnowing",
+          creature: { ownerId: "peer-1", kind: "spirit", look: "spirit" },
+        },
       ],
     },
   ],
@@ -698,6 +712,19 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     "snapshot with a creature of an unknown kind",
     parseWireSnapshotPart,
     { ...snapshot, players: [{ ...minion, creature: { ownerId: "peer-1", kind: "golem" } }] },
+  ],
+  [
+    "snapshot with a creature of an unknown look (#1162)",
+    parseWireSnapshotPart,
+    {
+      ...snapshot,
+      players: [{ ...minion, creature: { ownerId: "peer-1", kind: "minion", look: "golem" } }],
+    },
+  ],
+  [
+    "snapshot with a creature that does not say how it looks (#1162)",
+    parseWireSnapshotPart,
+    { ...snapshot, players: [{ ...minion, creature: { ownerId: "peer-1", kind: "minion" } }] },
   ],
   [
     "snapshot with a creature with no owner",
@@ -972,6 +999,16 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     "skill bar with a string cost",
     parseWireSkillBar,
     { slots: [{ ...skillBar.slots[0], energyCost: "5" }] },
+  ],
+  [
+    "skill bar slot with a copy ending at no number (#1154)",
+    parseWireSkillBar,
+    { slots: [{ ...skillBar.slots[0], copyEndsAt: "32.4" }], ranks: skillBar.ranks },
+  ],
+  [
+    "skill bar slot without copyEndsAt (#1154)",
+    parseWireSkillBar,
+    { slots: [{ ...skillBar.slots[0], copyEndsAt: undefined }], ranks: skillBar.ranks },
   ],
   ["skill bar without ranks", parseWireSkillBar, { slots: skillBar.slots }],
   [

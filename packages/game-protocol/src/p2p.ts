@@ -92,6 +92,9 @@ export const MAX_WIRE_ACTORS = MAX_LOBBY_PLAYERS + MAX_WIRE_CREATURES;
 /** What kind of creature a body is (#1052). */
 export const CREATURE_KINDS = ["spirit", "minion", "pet"] as const;
 
+/** How a creature is drawn (#1162); game-core's `CREATURE_LOOKS`, mirrored. */
+export const CREATURE_LOOKS = ["beast", "bone-minion", "bone-horror", "spirit"] as const;
+
 /**
  * The largest status index a snapshot may carry (#632): a bound of its
  * own, so this package needs no status catalogue.
@@ -291,8 +294,8 @@ export interface WirePlayer {
   /** Its statuses, in the order applied, oldest first (#803). */
   readonly statuses: readonly WireStatus[];
   /**
-   * A creature's owner and kind (#1052); `null` for a player or a dummy.
-   * A creature's `name` is its kind's, and its professions are `null`.
+   * A creature's owner, kind and look (#1052, #1162); `null` for a player
+   * or a dummy. A creature's `name` is its kind's, and its professions are `null`.
    */
   readonly creature: WireCreature | null;
 }
@@ -301,6 +304,7 @@ export interface WirePlayer {
 export interface WireCreature {
   readonly ownerId: string;
   readonly kind: (typeof CREATURE_KINDS)[number];
+  readonly look: (typeof CREATURE_LOOKS)[number];
 }
 
 /** One status on a player (#803): what the effects monitor draws. */
@@ -1212,8 +1216,11 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
 
 function parseCreature(value: unknown): WireCreature | undefined {
   const raw = fields(value);
-  return raw !== undefined && isString(raw.ownerId) && isOneOf(raw.kind, CREATURE_KINDS)
-    ? { ownerId: raw.ownerId, kind: raw.kind }
+  return raw !== undefined &&
+    isString(raw.ownerId) &&
+    isOneOf(raw.kind, CREATURE_KINDS) &&
+    isOneOf(raw.look, CREATURE_LOOKS)
+    ? { ownerId: raw.ownerId, kind: raw.kind, look: raw.look }
     : undefined;
 }
 
@@ -1409,7 +1416,8 @@ function parseSlot(value: unknown): SkillBarSlot | null | undefined {
     isNumber(raw.energyCost) &&
     isNumber(raw.adrenalineCost) &&
     isNumber(raw.activationSeconds) &&
-    isNumber(raw.rechargeSeconds)
+    isNumber(raw.rechargeSeconds) &&
+    (raw.copyEndsAt === null || isNumber(raw.copyEndsAt))
     ? {
         id: raw.id,
         name: raw.name,
@@ -1417,6 +1425,7 @@ function parseSlot(value: unknown): SkillBarSlot | null | undefined {
         adrenalineCost: raw.adrenalineCost,
         activationSeconds: raw.activationSeconds,
         rechargeSeconds: raw.rechargeSeconds,
+        copyEndsAt: raw.copyEndsAt,
       }
     : undefined;
 }

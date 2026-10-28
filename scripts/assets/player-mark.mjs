@@ -1,7 +1,7 @@
 // Draws the reference sheet for the arena player mark (#166): body, dark edge
-// (#186), self rim, enchantment and hex rings (#1117), target ring, the 14
-// weapon marks (#188, #418) and the off-hand mark (#275), at true size and
-// enlarged.
+// (#186), self rim, enchantment and hex rings (#1117), condition cues
+// (#1138, frozen, as under reduced motion), target ring, the 14 weapon marks
+// (#188, #418) and the off-hand mark (#275), at true size and enlarged.
 //
 //   node scripts/assets/player-mark.mjs
 //
@@ -14,6 +14,7 @@ import { writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { conditionMarks } from "../../apps/web/src/render/body-conditions.ts";
 import { WEAPON_MARK_GEOMETRY } from "../../apps/web/src/render/weapon-mark-geometry.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -178,11 +179,36 @@ function weaponLine(x, y, a, family) {
       out += `<polyline points="${pts(p)}" fill="none" stroke="${colour}" stroke-width="${String(w)}" stroke-linecap="butt" stroke-linejoin="miter"/>`;
   return out;
 }
+
+/** A `0xrrggbb` colour as CSS. @param {number} colour */
+const css = (colour) => `#${colour.toString(16).padStart(6, "0")}`;
+
+/**
+ * One condition cue (#1138), frozen, from the renderer's own geometry.
+ * @param {number} x
+ * @param {number} y
+ * @param {import("../../apps/web/src/render/body-conditions.ts").ConditionCue} cue
+ */
+function cueMarks(x, y, cue) {
+  let out = "";
+  for (const mark of conditionMarks(cue, R, 0, 0, true)) {
+    if (mark.kind === "flame") {
+      const points = mark.points.map((p) => `${f(x + p.x)},${f(y + p.y)}`).join(" ");
+      out += `<polygon points="${points}" fill="${css(mark.colour)}" stroke="${C.edge}" stroke-width="1"/>`;
+    } else if (mark.kind === "drop") {
+      out += `<circle cx="${f(x + mark.x)}" cy="${f(y + mark.y)}" r="${f(mark.radius)}" fill="${css(mark.colour)}" stroke="${C.edge}" stroke-width="1"/>`;
+    } else {
+      out += `<circle cx="${f(x + mark.x)}" cy="${f(y + mark.y)}" r="${f(mark.radius)}" fill="none" stroke="${C.edge}" stroke-width="2"/>`;
+      out += `<circle cx="${f(x + mark.x)}" cy="${f(y + mark.y)}" r="${f(mark.radius)}" fill="none" stroke="${css(mark.colour)}" stroke-width="1"/>`;
+    }
+  }
+  return out;
+}
 /**
  * One living player mark.
  * @param {number} x
  * @param {number} y
- * @param {{ team: string, self?: boolean, enchanted?: boolean, hexed?: boolean, target?: boolean, facing: number, family: Family, offhand?: Offhand, hud?: boolean }} p
+ * @param {{ team: string, self?: boolean, enchanted?: boolean, hexed?: boolean, cues?: readonly import("../../apps/web/src/render/body-conditions.ts").ConditionCue[], target?: boolean, facing: number, family: Family, offhand?: Offhand, hud?: boolean }} p
  */
 function actor(x, y, p) {
   const offhand = ONE_HANDED.has(p.family) ? (p.offhand ?? "none") : "none";
@@ -197,6 +223,7 @@ function actor(x, y, p) {
     const dash = (2 * Math.PI * (R + HEX_AT)) / (2 * HEX_DASHES);
     out += `<circle cx="${f(x)}" cy="${f(y)}" r="${f(R + HEX_AT)}" fill="none" stroke="${C.hex}" stroke-width="1.5" stroke-dasharray="${f(dash)} ${f(dash)}" stroke-dashoffset="${f(dash / 2)}"/>`;
   }
+  for (const cue of p.cues ?? []) out += cueMarks(x, y, cue);
   out += offhandMark(x, y, p.facing, offhand);
   out += weaponLine(x, y, p.facing, p.family);
   if (p.target)
@@ -253,7 +280,18 @@ const OFFHANDS = [
     hexed: true,
   },
 ];
-const BIG_ROWS = Math.ceil(FAMILIES.length / BIG_PER_ROW) + 1;
+/**
+ * The condition-cue row of the 4x band (#1138), frozen, at most two a body.
+ * @type {readonly { label: string, cues: readonly import("../../apps/web/src/render/body-conditions.ts").ConditionCue[] }[]}
+ */
+const CONDITIONS = [
+  { label: "burning", cues: ["burning"] },
+  { label: "bleeding", cues: ["bleeding"] },
+  { label: "poisoned", cues: ["poisoned"] },
+  { label: "burning + bleeding", cues: ["burning", "bleeding"] },
+  { label: "bleeding + poisoned", cues: ["bleeding", "poisoned"] },
+];
+const BIG_ROWS = Math.ceil(FAMILIES.length / BIG_PER_ROW) + 2;
 /** Where the true-size grid starts, below the 4x band. */
 const DY = 70 + BIG_ROW * BIG_ROWS;
 const H = 680 + DY - 60;
@@ -311,6 +349,15 @@ OFFHANDS.forEach(({ label, family, offhand, target, enchanted, hexed }, i) => {
   );
 });
 
+CONDITIONS.forEach(({ label, cues }, i) => {
+  const bx = LEFT + BIG_COL * i + BIG_COL / 2;
+  const by = 110 + BIG_ROW * (BIG_ROWS - 2);
+  parts.push(
+    text(bx, by - 90, label),
+    `<g transform="translate(${f(bx)},${f(by)}) scale(${f(BIG)}) translate(${f(-bx)},${f(-by)})">${actor(bx, by, { team: C.friend, facing: 0, family: "sword", offhand: "none", enchanted: cues.length > 1, hexed: cues.length > 1, cues })}</g>`,
+  );
+});
+
 parts.push(
   text(10, 94, "4×, foe →", "start"),
   text(10, DY + 94, "1×, foe →", "start"),
@@ -320,6 +367,7 @@ parts.push(
   text(10, DY + 324, "1×, at a wall ↑", "start"),
   text(10, DY + 374, "1×, + shield ↗", "start"),
   text(10, DY + 424, "1×, + focus →", "start"),
+  text(10, 114 + BIG_ROW * (BIG_ROWS - 2), "4×, conditions", "start"),
   text(10, 114 + BIG_ROW * (BIG_ROWS - 1), "4×, off-hand, rings", "start"),
 );
 

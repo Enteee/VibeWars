@@ -1363,6 +1363,50 @@ test("(42) Symbol of Wrath strikes the dummy it was cast at once a second, five 
   await expect(hits).toHaveCount(5);
 });
 
+test("(44) a burning dummy wears flames on its top edge until the burning ends (#1138)", async ({
+  page,
+}) => {
+  // A walk and a wait for a still camera (#721), then 6 s of burning.
+  test.setTimeout(90_000);
+  // Frozen flames, so a shot of them holds still.
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  const canvas = await openTraining(page);
+  await page
+    .locator(".skill-box", { hasText: "Searing Flames" })
+    .locator(".skill-box-equip")
+    .click();
+  await expectFilledSlots(page, ["Fireball", "Searing Flames"]);
+  await takeControl(page);
+  // The view follows you (#721): nearer the dummy, it is on the stage.
+  await wholeMap(page);
+  await walkTo(page, canvas, { x: 250, y: 210 });
+  await page.mouse.move(1, 1);
+  // Targeted first, so its target ring is in the before shot too.
+  await page.keyboard.press("Tab");
+  await expect.poll(() => shownNames(page)).toHaveLength(1);
+
+  // All three flames of the target dummy at (380, 210): from its top edge,
+  // r above the centre, to under its health bar, r + 8.
+  const flame = async (): Promise<Buffer> => {
+    const view = await trainingView(page, canvas);
+    const from = view.onPage({ x: 380 - 10, y: 210 - 22 });
+    const to = view.onPage({ x: 380 + 10, y: 210 - 14 });
+    return page.screenshot({
+      clip: { x: from.x, y: from.y, width: to.x - from.x, height: to.y - from.y },
+    });
+  };
+  const before = await flame();
+
+  // Searing Flames sets it burning for 6 s.
+  await page.keyboard.press(skillKey(1));
+  await expect.poll(async () => (await flame()).equals(before)).toBe(false);
+  // Still there once any floating text over it has gone.
+  await page.waitForTimeout(1_500);
+  expect((await flame()).equals(before), "the flames should still show").toBe(false);
+  // Game time runs slower than wall time under load (#327).
+  await expect.poll(async () => (await flame()).equals(before), { timeout: 20_000 }).toBe(true);
+});
+
 test("(43) Esc stops the attack and keeps the target, then a second Esc clears it (#1151)", async ({
   page,
 }) => {

@@ -5,7 +5,7 @@ import type { ResolvedEquipment } from "../equipment/resolve.js";
 import type { SkillBar } from "../build.js";
 import type { DamageType } from "../equipment/types.js";
 import type { Behaviour } from "../match/behaviour.js";
-import type { CreatureKind } from "../match/simulation.js";
+import type { CreatureKind, CreatureLook } from "../match/simulation.js";
 import type { ProfessionId, SkillProfession } from "../professions.js";
 import type { CastState, SlotSkill } from "./cast-state.js";
 import type { TargetCandidate } from "./targeting.js";
@@ -427,6 +427,8 @@ export interface LengthenRechargeEffect {
  */
 export interface CreatureTemplate {
   readonly kind: CreatureKind;
+  /** How it is drawn (#1162): the glyph on its plate. */
+  readonly look: CreatureLook;
   /** Shown in the target frame and the name label, as "Bone Minion". */
   readonly name: string;
   /** Scaled by the summoning skill's caster, as any other magnitude. */
