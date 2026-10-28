@@ -1375,7 +1375,8 @@ brackets.
   ground; a caster can be boxed in. Corpses are _not_ solid — a dead
   player should never trap the living. A spirit is no body to its own team
   (#1278), as in GW1: you and your allies walk through your spirits,
-  while foes are blocked by them. A minion or pet of yours that you stand
+  and a click or an attack walks straight on rather than round them
+  (#1295), while foes are blocked by them. A minion or pet of yours that you stand
   in lets you step off it in any direction without a shove; once apart,
   it blocks you again.
 - **Walls** resolve after players, so someone squeezed between a blocker

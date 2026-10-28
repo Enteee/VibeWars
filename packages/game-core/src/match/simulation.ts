@@ -3214,7 +3214,13 @@ export class MatchSimulation {
   ): PathStep {
     this.#bodies.length = 0;
     for (const [otherId, other] of this.#participants) {
-      if (otherId !== record.id && otherId !== passing && !other.combatant.dead) {
+      // An own-team spirit is walked through, so it is not steered round (#1295).
+      if (
+        otherId !== record.id &&
+        otherId !== passing &&
+        !other.combatant.dead &&
+        !this.#ownSpirit(record, other)
+      ) {
         this.#bodies.push(other.position);
       }
     }
