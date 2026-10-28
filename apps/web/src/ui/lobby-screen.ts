@@ -236,12 +236,18 @@ export function renderLobbyScreen(
     mapBlock.appendChild(h("div", "lobby-mode", modeLine(current)));
   }
 
-  const readyLabel = self?.ready === true ? "Not ready" : "Ready";
-  const readyButton = button(readyLabel, "", callbacks.onToggleReady);
+  // The next thing to press is the primary one, the one a phone keeps out
+  // of the ⋯ (#1272): Ready until you are, then the host's Start match.
+  const ready = self?.ready === true;
+  const readyButton = button(
+    ready ? "Not ready" : "Ready",
+    ready ? "" : "primary",
+    callbacks.onToggleReady,
+  );
   readyButton.disabled = controls.readyDisabled;
   const actions: HTMLElement[] = [readyButton];
   if (snapshot.isHost) {
-    const start = button("Start match", "primary", () => {
+    const start = button("Start match", ready ? "primary" : "", () => {
       // Starting answers the question: the host is staying.
       closingLobby?.dismiss();
       callbacks.onStart();
