@@ -154,6 +154,16 @@ function conditionHolds(
     }
     case "attribute-at-least":
       return rankOf(target, condition.attributeId) >= condition.rank;
+    case "has-condition":
+      return target.statuses.countByCategory("condition") > 0;
+    case "has-hex":
+      return target.statuses.countByCategory("hex") > 0;
+    case "no-enchantment":
+      return target.statuses.countByCategory("enchantment") === 0;
+    case "health-below":
+      return target.health < condition.fraction * target.maxHealth;
+    case "controls-at-least":
+      return target.controlled[condition.creature] >= condition.count;
   }
 }
 

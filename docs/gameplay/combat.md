@@ -1132,24 +1132,36 @@ and typeless damage, degeneration and life steal hit no piece. The gear
 editor lists an insignia under the armor with its pieces and what it
 adds on average: `+10 armor vs physical damage on chest (avg +3.8)`.
 
-Insignias (#1142), each only on hits to its own piece; five of one kind
+Insignias (#1142, #1188), each only on hits to its own piece; five of one kind
 give its bonus on every hit, never five times over:
 
-| Insignia       | Who              | On its piece                               |
-| -------------- | ---------------- | ------------------------------------------ |
-| Stalwart       | anyone           | +10 vs physical                            |
-| Blessed        | anyone           | +10 while enchanted                        |
-| Brawler's      | anyone           | +10 while attacking                        |
-| Knight's       | Warrior primary  | −3 physical damage taken, after armor      |
-| Sentinel's     | Warrior primary  | +20 vs elemental, with 13+ Strength        |
-| Nightstalker's | Assassin primary | +15 while attacking                        |
-| Prodigy's      | Mesmer primary   | +5 each with 1, 3 and 5+ skills recharging |
-| Windwalker     | Dervish primary  | +5 each with 1, 2, 3 and 4+ enchantments   |
+| Insignia        | Who                  | On its piece                                       |
+| --------------- | -------------------- | -------------------------------------------------- |
+| Stalwart        | anyone               | +10 vs physical                                    |
+| Blessed         | anyone               | +10 while enchanted                                |
+| Brawler's       | anyone               | +10 while attacking                                |
+| Knight's        | Warrior primary      | −3 physical damage taken, after armor              |
+| Sentinel's      | Warrior primary      | +20 vs elemental, with 13+ Strength                |
+| Nightstalker's  | Assassin primary     | +15 while attacking                                |
+| Prodigy's       | Mesmer primary       | +5 each with 1, 3 and 5+ skills recharging         |
+| Windwalker      | Dervish primary      | +5 each with 1, 2, 3 and 4+ enchantments           |
+| Anchorite's     | Monk primary         | +5 each with 1, 3 and 5+ skills recharging         |
+| Disciple's      | Monk primary         | +15 while you have a condition                     |
+| Wanderer's      | Monk primary         | +10 vs elemental                                   |
+| Dreadnought     | Warrior primary      | +10 vs elemental                                   |
+| Blighter's      | Necromancer primary  | +20 while hexed                                    |
+| Undertaker's    | Necromancer primary  | +5 each below 80, 60, 40 and 20% Health            |
+| Minion Master's | Necromancer primary  | +5 each with 1, 3 and 5+ living minions            |
+| Forsaken        | Dervish primary      | +10 while not enchanted                            |
+| Shaman's        | Ritualist primary    | +5 each with 1, 2 and 3+ living spirits            |
+| Prismatic       | Elementalist primary | +5 each for 9+ in Air, Earth, Fire and Water Magic |
 
 Attacking is swinging while standing or casting an attack skill: an
 auto-attack still walking to its foe is not. Strength counts runes, and
 weakness lowers it. Knight's sits beside a Rune of
-Absorption and adds to it, and never takes a hit below 0. A profession
+Absorption and adds to it, and never takes a hit below 0. Undertaker's
+reads your maximum now, so morale moves it; a pet is neither a minion
+nor a spirit. A profession
 insignia needs that primary: the gear library shows only the common
 ones and your primary's, and changing primary takes the others off.
 

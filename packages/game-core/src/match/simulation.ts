@@ -1406,6 +1406,24 @@ export class MatchSimulation {
     }
   }
 
+  /** Everyone's living minions and spirits (#1188), for this tick's armor. */
+  #countControlled(): void {
+    for (const record of this.#participants.values()) {
+      record.combatant.controlled.minion = 0;
+      record.combatant.controlled.spirit = 0;
+    }
+    for (const record of this.#participants.values()) {
+      const creature = record.creature;
+      if (creature === undefined || creature.kind === "pet" || record.combatant.dead) {
+        continue;
+      }
+      const owner = this.#participants.get(creature.ownerId);
+      if (owner !== undefined) {
+        owner.combatant.controlled[creature.kind] += 1;
+      }
+    }
+  }
+
   /** `owner`'s companion, alive or dead (#1046): of `skillId`, or the first. */
   #companionOf(owner: ParticipantRecord, skillId?: string): ParticipantRecord | undefined {
     for (const record of this.#participants.values()) {
@@ -1926,6 +1944,7 @@ export class MatchSimulation {
     for (const record of this.#participants.values()) {
       this.#stepStart.set(record.id, record.position);
     }
+    this.#countControlled();
     this.#advanceGroundEffects(dt);
     this.#projectAuras();
     // Every knockdown counts down before anyone acts, so one lasts its
@@ -4350,6 +4369,7 @@ export class MatchSimulation {
       nextMaintainSeq: 0,
       chainMarks: new Map(),
       moving: false,
+      controlled: { minion: 0, spirit: 0 },
       equipment: spec.equipment,
     };
   }
