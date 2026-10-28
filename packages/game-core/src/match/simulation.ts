@@ -522,6 +522,11 @@ export class MatchSimulation {
    * removed once, at its end, never mid-loop.
    */
   readonly #leaving = new Set<string>();
+  /**
+   * Whether the last aura pass found a spirit (#1064): with none now and
+   * none then, nobody wears an aura and the pass has nothing to do.
+   */
+  #auras = false;
 
   public constructor(options: MatchSimulationOptions) {
     this.#ruleset = options.ruleset ?? MINIMAL_GW_INSPIRED_PVP_V1;
@@ -738,6 +743,10 @@ export class MatchSimulation {
         spirits.push({ record, aura });
       }
     }
+    if (spirits.length === 0 && !this.#auras) {
+      return;
+    }
+    this.#auras = spirits.length > 0;
     for (const body of this.#participants.values()) {
       if (body.combatant.dead || body.creature?.kind === "spirit") {
         continue;
