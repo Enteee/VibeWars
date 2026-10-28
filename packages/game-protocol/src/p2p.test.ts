@@ -161,7 +161,7 @@ const minion: WirePlayer = {
   id: "peer-1/c1",
   name: "Bone Minion",
   primaryProfession: null,
-  creature: { ownerId: "peer-1", kind: "minion" },
+  creature: { ownerId: "peer-1", kind: "minion", look: "bone-minion" },
 };
 
 const snapshot: WireSnapshotPart = {
@@ -439,7 +439,11 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
           ...player,
           statuses: [{ ...status, endsAt: null, durationSeconds: null, casterId: "peer-1/c1" }],
         },
-        { ...minion, name: "Winnowing", creature: { ownerId: "peer-1", kind: "spirit" } },
+        {
+          ...minion,
+          name: "Winnowing",
+          creature: { ownerId: "peer-1", kind: "spirit", look: "spirit" },
+        },
       ],
     },
   ],
@@ -698,6 +702,19 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     "snapshot with a creature of an unknown kind",
     parseWireSnapshotPart,
     { ...snapshot, players: [{ ...minion, creature: { ownerId: "peer-1", kind: "golem" } }] },
+  ],
+  [
+    "snapshot with a creature of an unknown look (#1162)",
+    parseWireSnapshotPart,
+    {
+      ...snapshot,
+      players: [{ ...minion, creature: { ownerId: "peer-1", kind: "minion", look: "golem" } }],
+    },
+  ],
+  [
+    "snapshot with a creature that does not say how it looks (#1162)",
+    parseWireSnapshotPart,
+    { ...snapshot, players: [{ ...minion, creature: { ownerId: "peer-1", kind: "minion" } }] },
   ],
   [
     "snapshot with a creature with no owner",

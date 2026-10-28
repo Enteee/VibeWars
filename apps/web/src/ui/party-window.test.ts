@@ -105,7 +105,9 @@ describe("partyRows (#1055)", () => {
   });
 
   it("never lists a creature, even your own", () => {
-    const minion = player("minion", { creature: { ownerId: "me", kind: "minion" } });
+    const minion = player("minion", {
+      creature: { ownerId: "me", kind: "minion", look: "bone-minion" },
+    });
     expect(partyRows(match([ME, minion]))).toEqual([]);
     expect(partyRows(match([ME, minion, KAJA])).map((row) => row.id)).toEqual(["me", "kaja"]);
   });

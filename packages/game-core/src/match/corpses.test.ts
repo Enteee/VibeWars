@@ -17,6 +17,7 @@ function body(
         ? {
             ownerId: "n",
             kind: "minion",
+            look: "bone-minion",
             name: "Bone Minion",
             expiresInSeconds: Number.POSITIVE_INFINITY,
             ageSeconds: 0,

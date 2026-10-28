@@ -118,7 +118,11 @@ function toPlayerSnapshot(
     creature:
       participant.creature === undefined
         ? undefined
-        : { ownerId: participant.creature.ownerId, kind: participant.creature.kind },
+        : {
+            ownerId: participant.creature.ownerId,
+            kind: participant.creature.kind,
+            look: participant.creature.look,
+          },
   };
 }
 

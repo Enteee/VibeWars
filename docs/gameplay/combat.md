@@ -1243,11 +1243,12 @@ GW1 PvP (#473). Only a primary can hold its rank, and runes count.
   rank (−48% at 12: Mystic Regeneration 8 instead of 15), rounded once,
   never below 0. While any enchantment is on you, yours or an ally's,
   you have +1 armor a rank against every hit.
-- **Spawning Power** (Ritualist). A creature you summon, of any
-  profession, has 4% more Health a rank, rounded once: a spirit of 210
+- **Spawning Power** (Ritualist). A spirit or minion you summon, of
+  any profession, has 4% more Health a rank, rounded once: a spirit of 210
   has 311 at rank 12. A weapon spell you put on anyone, yourself
   included, lasts 4% longer a rank: Weapon of Quickening 31.08 s instead
-  of 21 s. A spirit's lifetime is unchanged. The tooltip shows both, the
+  of 21 s. A spirit's lifetime is unchanged, and a pet, charmed rather
+  than created, gets none of it (#1144). The tooltip shows both, the
   base in brackets: "311 Health (210)", "31.1s (21s)" (#1098).
 
 The build editor says under a primary's row what it does at its rank
@@ -1284,7 +1285,10 @@ A creature (#1052) is a body that is not a player: a spirit or a minion,
 summoned by a skill, or a pet, which comes with one on the bar. It has health, armor, statuses and its owner's team,
 so every attack, spell, area and condition hits it, and it can be
 targeted with Tab, C, a click or a call. It is drawn smaller (radius 10
-to a player's 14) and blocks bodies at that radius.
+to a player's 14) and blocks bodies at that radius. It is never a circle
+(#1162): a minion or spirit is a hexagon in its team's colour, a pet a
+teardrop pointing where it faces, each with its kind's glyph (paw,
+skull, horned skull, wisp).
 
 It never counts for its team: killing one scores nothing and gives no
 morale, it has no morale of its own, and a team with only creatures left

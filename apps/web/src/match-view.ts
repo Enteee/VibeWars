@@ -163,6 +163,7 @@ export function toArenaSnapshot(
         attackCast: attackCastOf(player.castingSkillId, player.castRemaining, player.castTotal),
         offhandId: player.offhandId,
         profession: player.primaryProfession,
+        creatureLook: player.creature?.look,
         radius: player.creature === undefined ? ACTOR_RADIUS : CREATURE_RADIUS,
         team:
           player.sessionId === match.selfSessionId

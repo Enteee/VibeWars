@@ -58,6 +58,7 @@ const MINION_BEHAVIOUR: Behaviour = {
  */
 const BONE_MINION: CreatureTemplate = {
   kind: "minion",
+  look: "bone-minion",
   name: "Bone Minion",
   maxHealth: { scaling: { attributeId: "necromancer.death-magic", atZero: 80, atTwelve: 280 } },
   armor: { scaling: { attributeId: "necromancer.death-magic", atZero: 0, atTwelve: 30 } },
@@ -84,6 +85,7 @@ const BONE_MINION: CreatureTemplate = {
  */
 const BONE_HORROR: CreatureTemplate = {
   kind: "minion",
+  look: "bone-horror",
   name: "Bone Horror",
   maxHealth: { scaling: { attributeId: "necromancer.death-magic", atZero: 100, atTwelve: 360 } },
   armor: { scaling: { attributeId: "necromancer.death-magic", atZero: 4, atTwelve: 56 } },
@@ -125,6 +127,7 @@ const PET_BEHAVIOUR: Behaviour = {
  */
 const WOLF: CreatureTemplate = {
   kind: "pet",
+  look: "beast",
   name: "Wolf",
   maxHealth: { flat: 480 },
   armor: { flat: 80 },
@@ -6140,6 +6143,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         count: 1,
         creature: {
           kind: "spirit",
+          look: "spirit",
           name: "Winnowing",
           maxHealth: {
             scaling: { attributeId: "ranger.wilderness-survival", atZero: 70, atTwelve: 210 },
@@ -6185,6 +6189,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         count: 1,
         creature: {
           kind: "spirit",
+          look: "spirit",
           name: "Recuperation",
           maxHealth: {
             scaling: { attributeId: "ritualist.restoration-magic", atZero: 70, atTwelve: 210 },

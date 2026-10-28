@@ -942,6 +942,49 @@ const offhandShapes = {
 };
 
 // ---------------------------------------------------------------------------
+// Creatures (#1162): the kind glyph on a creature's plate, from
+// scripts/assets/creature-study.mjs (#1158, direction C). The study draws
+// each in a 12-unit box; here it is a 14-unit box spread over the grid, so
+// the horns fit. The arena tints them flat, so the skull's eyes are holes
+// (fill-rule evenodd), never painted.
+// ---------------------------------------------------------------------------
+
+/** A circle as a closed sub-path, to cut a hole with evenodd. @param {number} cx @param {number} cy @param {number} r */
+const ring = (cx, cy, r) =>
+  `M${String(cx - r)} ${String(cy)}a${String(r)} ${String(r)} 0 1 0 ${String(2 * r)} 0a${String(r)} ${String(r)} 0 1 0 ${String(-2 * r)} 0Z`;
+
+const SKULL = `<path fill-rule="evenodd" d="M0-4.6A4.2 4.2 0 0 1 3 2.6V4.8H-3V2.6A4.2 4.2 0 0 1 0-4.6Z${ring(-1.6, -0.3, 1.1)}${ring(1.6, -0.3, 1.1)}" fill="${C.ink}"/>`;
+
+/** @param {string} body in the study's units, centred on the origin */
+const creatureGlyph = (body) =>
+  svg(`<g transform="translate(12 12) scale(${(24 / 14).toFixed(3)})">${body}</g>`);
+
+const creature = {
+  beast: () =>
+    creatureGlyph(
+      `<ellipse cx="0" cy="2.4" rx="3.2" ry="2.6" fill="${C.ink}"/>` +
+        [
+          [-4.2, -1],
+          [-1.5, -3.9],
+          [1.5, -3.9],
+          [4.2, -1],
+        ]
+          .map(([x, y]) => `<circle cx="${String(x)}" cy="${String(y)}" r="1.35" fill="${C.ink}"/>`)
+          .join(""),
+    ),
+  "bone-minion": () => creatureGlyph(SKULL),
+  "bone-horror": () =>
+    creatureGlyph(
+      SKULL +
+        `<path d="M-3.2-2.8C-5.4-3.4-5.8-5-5.4-6.4M3.2-2.8C5.4-3.4 5.8-5 5.4-6.4" fill="none" stroke="${C.ink}" stroke-width="1.5" stroke-linecap="round"/>`,
+    ),
+  spirit: () =>
+    creatureGlyph(
+      `<path d="M0-5.6C3-2.4 4.2 0 4.2 2.2A4.2 4.2 0 0 1-4.2 2.2C-4.2 0-2.2-1.2 0-5.6Z" fill="${C.ink}"/>`,
+    ),
+};
+
+// ---------------------------------------------------------------------------
 // Skill icons (#719): one per implemented skill. A profession plate with its
 // silhouette as a faint watermark, one glyph from the vocabulary below for the
 // skill's primary effect, and a modifier at the bottom right. The type badge
@@ -1346,6 +1389,7 @@ function skillIcon(id, row) {
 /** @type {Record<string, Record<string, string>>} */
 const families = {
   profession: Object.fromEntries(Object.entries(profession).map(([k, f]) => [k, svg(f())])),
+  creature: Object.fromEntries(Object.entries(creature).map(([k, f]) => [k, f()])),
   "skill-type": Object.fromEntries(Object.entries(skillType).map(([k, f]) => [k, svg(f())])),
   weapon: Object.fromEntries(Object.entries(weaponShapes).map(([k, s]) => [k, fitIcon(s)])),
   offhand: Object.fromEntries(

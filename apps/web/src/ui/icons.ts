@@ -3,6 +3,7 @@ import {
   getSkill,
   getWeapon,
   type ChainRole,
+  type CreatureLook,
   type OffhandId,
   type ProfessionId,
   type SkillType,
@@ -62,6 +63,18 @@ const PROFESSION_ICON: Readonly<Record<ProfessionId, string>> = {
 
 export function professionIcon(profession: ProfessionId): string {
   return PROFESSION_ICON[profession];
+}
+
+const CREATURE_ICON: Readonly<Record<CreatureLook, string>> = {
+  beast: iconUrl("creature", "beast"),
+  "bone-minion": iconUrl("creature", "bone-minion"),
+  "bone-horror": iconUrl("creature", "bone-horror"),
+  spirit: iconUrl("creature", "spirit"),
+};
+
+/** The kind glyph on a creature's plate in the arena (#1162), drawn in ink and tinted there. */
+export function creatureIcon(look: CreatureLook): string {
+  return CREATURE_ICON[look];
 }
 
 const WEAPON_ICON: Readonly<Record<WeaponId, string>> = {

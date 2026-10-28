@@ -1812,6 +1812,18 @@
             "union": [{ "literal": "minion" }, { "literal": "pet" }, { "literal": "spirit" }]
           }
         },
+        {
+          "name": "look",
+          "optional": false,
+          "type": {
+            "union": [
+              { "literal": "beast" },
+              { "literal": "bone-horror" },
+              { "literal": "bone-minion" },
+              { "literal": "spirit" }
+            ]
+          }
+        },
         { "name": "ownerId", "optional": false, "type": "string" }
       ]
     },
@@ -2077,6 +2089,18 @@
                       ]
                     }
                   },
+                  {
+                    "name": "look",
+                    "optional": false,
+                    "type": {
+                      "union": [
+                        { "literal": "beast" },
+                        { "literal": "bone-horror" },
+                        { "literal": "bone-minion" },
+                        { "literal": "spirit" }
+                      ]
+                    }
+                  },
                   { "name": "ownerId", "optional": false, "type": "string" }
                 ]
               }
@@ -2276,6 +2300,18 @@
                               ]
                             }
                           },
+                          {
+                            "name": "look",
+                            "optional": false,
+                            "type": {
+                              "union": [
+                                { "literal": "beast" },
+                                { "literal": "bone-horror" },
+                                { "literal": "bone-minion" },
+                                { "literal": "spirit" }
+                              ]
+                            }
+                          },
                           { "name": "ownerId", "optional": false, "type": "string" }
                         ]
                       }
@@ -2468,6 +2504,18 @@
                               "union": [
                                 { "literal": "minion" },
                                 { "literal": "pet" },
+                                { "literal": "spirit" }
+                              ]
+                            }
+                          },
+                          {
+                            "name": "look",
+                            "optional": false,
+                            "type": {
+                              "union": [
+                                { "literal": "beast" },
+                                { "literal": "bone-horror" },
+                                { "literal": "bone-minion" },
                                 { "literal": "spirit" }
                               ]
                             }

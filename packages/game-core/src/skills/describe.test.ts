@@ -153,6 +153,7 @@ describe("describeSkill", () => {
       count: 2,
       creature: {
         kind: "minion",
+        look: "bone-minion",
         name: "Bone Minion",
         maxHealth: {
           scaling: { attributeId: "necromancer.death-magic", atZero: 50, atTwelve: 290 },

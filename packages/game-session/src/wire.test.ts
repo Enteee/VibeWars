@@ -288,6 +288,7 @@ describe("wireIdentity (#1052)", () => {
     creature: {
       ownerId,
       kind: "minion" as const,
+      look: "bone-minion" as const,
       name: "Bone Minion",
       expiresInSeconds: Number.POSITIVE_INFINITY,
       ageSeconds: 0,
@@ -316,7 +317,7 @@ describe("wireIdentity (#1052)", () => {
       team: 1,
       primaryProfession: null,
       secondaryProfession: null,
-      creature: { ownerId: "p1", kind: "minion" },
+      creature: { ownerId: "p1", kind: "minion", look: "bone-minion" },
     });
   });
 

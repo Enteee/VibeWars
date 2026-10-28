@@ -1,16 +1,18 @@
 import Phaser from "phaser";
 
 import {
+  CREATURE_LOOKS,
   IMPLEMENTED_SKILLS,
   PROFESSIONS,
   isStatusId,
   isWeaponId,
+  type CreatureLook,
   type ProfessionId,
   type StatusId,
   type Vec2,
 } from "@vibewars/game-core";
 
-import { professionIcon, skillIcon } from "../ui/icons.js";
+import { creatureIcon, professionIcon, skillIcon } from "../ui/icons.js";
 import { prefersReducedMotion } from "../ui/recharge-overlay.js";
 import {
   BODY_EDGE,
@@ -56,6 +58,7 @@ import {
 } from "./walk-marker.js";
 import { AttackClock, REST_FRAME, shownFrame } from "./attack-clock.js";
 import { bodyRings } from "./body-rings.js";
+import { DEAD_DASH, DEAD_GAP, creatureOutline, dashes } from "./creature-shape.js";
 import {
   PING_HEAD_RADIUS,
   PING_PIN_HEIGHT,
@@ -66,6 +69,7 @@ import {
 import { lyingPose } from "./lying-pose.js";
 import { screenSized } from "./screen-text.js";
 import { weaponMarkLayout } from "./weapon-mark.js";
+import type { Point } from "./weapon-mark-geometry.js";
 import type {
   ArenaSnapshot,
   FloatingText,
@@ -288,6 +292,12 @@ export class ArenaScene extends Phaser.Scene {
         height: BODY_GLYPH_TEXTURE_SIZE,
       });
     }
+    for (const look of CREATURE_LOOKS) {
+      this.load.svg(bodyCreatureTexture(look), creatureIcon(look), {
+        width: BODY_GLYPH_TEXTURE_SIZE,
+        height: BODY_GLYPH_TEXTURE_SIZE,
+      });
+    }
     for (const sprite of PROJECTILE_SPRITES) {
       this.load.svg(projectileTexture(sprite), projectileSpriteUrl(sprite), {
         width: PROJECTILE_WIDTH,
@@ -485,25 +495,14 @@ export class ArenaScene extends Phaser.Scene {
   ): void {
     const { x, y } = actor.position;
     const pose = lyingPose(x, y, actor.radius, actor.facing);
-    const outline = (points: readonly { readonly x: number; readonly y: number }[]) => {
-      const [first, ...rest] = points;
-      g.beginPath();
-      if (first !== undefined) {
-        g.moveTo(first.x, first.y);
-        for (const point of rest) {
-          g.lineTo(point.x, point.y);
-        }
-      }
-      g.closePath();
-    };
     g.fillStyle(teamColour(actor.team), 1);
-    outline(pose.body);
+    tracePath(g, pose.body);
     g.fillPath();
     g.lineStyle(BODY_EDGE_WIDTH, BODY_EDGE, 1);
     g.strokePath();
     if (actor.team === "self") {
       g.lineStyle(2, SELF_RIM, 1);
-      outline(lyingPose(x, y, actor.radius - 2, actor.facing).body);
+      tracePath(g, lyingPose(x, y, actor.radius - 2, actor.facing).body);
       g.strokePath();
     }
     this.drawWeaponMark(marks, actor, pose.weapon);
@@ -752,12 +751,29 @@ export class ArenaScene extends Phaser.Scene {
     if (actor.dead) {
       // A corpse stays visible but obviously inert: hollow, grey, no bars;
       // darker once a skill has exploited it (#466).
-      g.lineStyle(2, actor.exploited ? EXPLOITED_CORPSE_COLOUR : DEAD_COLOUR, 1);
-      g.strokeCircle(x, y, actor.radius);
+      const colour = actor.exploited ? EXPLOITED_CORPSE_COLOUR : DEAD_COLOUR;
+      if (actor.creatureLook === undefined) {
+        g.lineStyle(2, colour, 1);
+        g.strokeCircle(x, y, actor.radius);
+        return;
+      }
+      // A lying pet keeps its shape, dashed (#1162): a creature's corpse at a glance.
+      g.lineStyle(BODY_EDGE_WIDTH, colour, 1);
+      const outline = creatureOutline(actor.creatureLook, x, y, actor.radius, actor.facing);
+      for (const [from, to] of dashes(outline, actor.radius * DEAD_DASH, actor.radius * DEAD_GAP)) {
+        g.lineBetween(from.x, from.y, to.x, to.y);
+      }
       return;
     }
 
-    if (actor.knockedDown) {
+    if (actor.creatureLook !== undefined) {
+      // Its shape, standing or knocked down, and no weapon or off-hand (#1162).
+      tracePath(g, creatureOutline(actor.creatureLook, x, y, actor.radius, actor.facing));
+      g.fillStyle(teamColour(actor.team), 1);
+      g.fillPath();
+      g.lineStyle(BODY_EDGE_WIDTH, BODY_EDGE, 1);
+      g.strokePath();
+    } else if (actor.knockedDown) {
       this.drawLyingBody(g, marks, actor);
     } else {
       g.fillStyle(teamColour(actor.team), 1);
@@ -1002,7 +1018,10 @@ export class ArenaScene extends Phaser.Scene {
         glyph?.setVisible(false);
         continue;
       }
-      const texture = bodyProfessionTexture(layout.profession);
+      const texture =
+        layout.glyph.kind === "creature"
+          ? bodyCreatureTexture(layout.glyph.look)
+          : bodyProfessionTexture(layout.glyph.profession);
       if (glyph === undefined) {
         glyph = this.add
           .image(0, 0, texture)
@@ -1162,6 +1181,24 @@ function professionTexture(profession: ProfessionId): string {
 /** The glyph inside the body (#1037), loaded larger than the name's: it is world sized. */
 function bodyProfessionTexture(profession: ProfessionId): string {
   return `body-profession:${profession}`;
+}
+
+/** Begins a closed path along `points` on `g`, to fill or stroke. */
+function tracePath(g: Phaser.GameObjects.Graphics, points: readonly Point[]): void {
+  const [first, ...rest] = points;
+  g.beginPath();
+  if (first !== undefined) {
+    g.moveTo(first.x, first.y);
+    for (const point of rest) {
+      g.lineTo(point.x, point.y);
+    }
+  }
+  g.closePath();
+}
+
+/** A creature's kind glyph on its plate (#1162), loaded as the body glyph is. */
+function bodyCreatureTexture(look: CreatureLook): string {
+  return `body-creature:${look}`;
 }
 
 function statusTexture(id: string): string {
