@@ -53,6 +53,7 @@ function match(players: readonly PlayerSnapshot[]): MatchSnapshot {
     winningTeam: undefined,
     endReason: undefined,
     projectiles: [],
+    groundEffects: [],
   };
 }
 

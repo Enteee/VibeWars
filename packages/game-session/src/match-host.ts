@@ -17,6 +17,7 @@ import {
 import {
   MAX_WIRE_COMBATS,
   MAX_WIRE_PROJECTILES,
+  MAX_WIRE_GROUND_EFFECTS,
   PROTOCOL_MISMATCH_MESSAGE,
   PROTOCOL_VERSION,
   helloProtocolVersion,
@@ -53,6 +54,7 @@ import { packSnapshot } from "./snapshot-parts.js";
 import { spawnPoint, type SpawnPoint } from "./spawn-points.js";
 import { MAX_MESSAGE_BYTES, type Transport } from "./transport.js";
 import {
+  groundEffectSnapshot,
   sameSkillBar,
   skillBarSlots,
   statusSnapshot,
@@ -675,6 +677,11 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       launchedAt: sim.elapsedSeconds - shot.elapsed,
       flightSeconds: shot.flightSeconds,
     })),
+    // The newest, as for projectiles; a team the wire has no colour for is not drawn.
+    groundEffects: sim.groundEffects.slice(-MAX_WIRE_GROUND_EFFECTS).flatMap((effect) => {
+      const team = wireTeam(effect.team);
+      return team === null ? [] : [{ ...groundEffectSnapshot(effect, sim.elapsedSeconds), team }];
+    }),
   });
 
   /** Drop the seats whose players did not come back in time. */

@@ -69,6 +69,7 @@ function snapshot(
     winningTeam: over.finished,
     endReason: over.finished === undefined ? undefined : "score",
     projectiles: [],
+    groundEffects: [],
   };
 }
 

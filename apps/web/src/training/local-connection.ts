@@ -20,6 +20,7 @@ import type {
 } from "@vibewars/game-protocol";
 import {
   createCallBoard,
+  groundEffectSnapshot,
   sameSkillBar,
   skillBarSlots,
   statusSnapshot,
@@ -244,6 +245,9 @@ export function createLocalConnection(options: {
           launchedAt: simulation.elapsedSeconds - shot.elapsed,
           flightSeconds: shot.flightSeconds,
         })),
+        groundEffects: simulation.groundEffects.map((effect) =>
+          groundEffectSnapshot(effect, simulation.elapsedSeconds),
+        ),
       };
     },
     onCombat(handler) {

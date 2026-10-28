@@ -76,6 +76,12 @@ export const MAX_WIRE_STATUSES = 32;
  */
 export const MAX_WIRE_CREATURES = 32;
 
+/**
+ * The most ground effects a snapshot carries (#1087): game-core's
+ * `MAX_GROUND_EFFECTS`, mirrored, with a test holding the two together.
+ */
+export const MAX_WIRE_GROUND_EFFECTS = 32;
+
 /** The most bodies a snapshot carries: every player and every creature. */
 export const MAX_WIRE_ACTORS = MAX_LOBBY_PLAYERS + MAX_WIRE_CREATURES;
 
@@ -332,6 +338,25 @@ export interface WireProjectile {
   readonly flightSeconds: number;
 }
 
+/**
+ * A circle on the ground (#1087): a ward, drawn where it was placed, in
+ * its team's colour, until `endsAt`.
+ */
+export interface WireGroundEffect {
+  readonly id: number;
+  /** The skill that placed it, for its icon. */
+  readonly skillId: string;
+  readonly team: 0 | 1;
+  readonly x: number;
+  readonly y: number;
+  /** In (0, `MAX_WIRE_RADIUS`]. */
+  readonly radius: number;
+  /** Match clock (`elapsedSeconds`) at which it ends, rounded to 0.1 s. */
+  readonly endsAt: number;
+  /** How long it was placed for, rounded to 0.1 s; > 0. */
+  readonly durationSeconds: number;
+}
+
 /** Why a match ended (#846): kill-count's score and time, annihilation's wipe and morale at time. */
 const END_REASONS = ["score", "time", "annihilation", "morale"] as const;
 
@@ -352,13 +377,15 @@ export interface WireSnapshot {
   readonly players: readonly WirePlayer[];
   /** Oldest first. */
   readonly projectiles: readonly WireProjectile[];
+  /** Oldest first (#1087). */
+  readonly groundEffects: readonly WireGroundEffect[];
 }
 
 /**
  * Host to every client, each tick: one of the `parts` a `WireSnapshot`
  * is split into so that each fits one Trystero frame (#662). Every part
- * repeats the header; `players` and `projectiles` are this part's run of
- * the whole lists, players first, in order.
+ * repeats the header; `players`, `projectiles` and `groundEffects` are
+ * this part's run of the whole lists, in that order.
  */
 export interface WireSnapshotPart extends WireSnapshot {
   /** Which part this is, from 0. */
@@ -1132,6 +1159,33 @@ function parseProjectile(value: unknown): WireProjectile | undefined {
       };
 }
 
+function parseGroundEffect(value: unknown): WireGroundEffect | undefined {
+  const raw = fields(value);
+  return raw !== undefined &&
+    isCount(raw.id) &&
+    isString(raw.skillId) &&
+    isTeam(raw.team) &&
+    isNumber(raw.x) &&
+    isNumber(raw.y) &&
+    isNumber(raw.radius) &&
+    raw.radius > 0 &&
+    raw.radius <= MAX_WIRE_RADIUS &&
+    isNumber(raw.endsAt) &&
+    isNumber(raw.durationSeconds) &&
+    raw.durationSeconds > 0
+    ? {
+        id: raw.id,
+        skillId: raw.skillId,
+        team: raw.team,
+        x: raw.x,
+        y: raw.y,
+        radius: raw.radius,
+        endsAt: raw.endsAt,
+        durationSeconds: raw.durationSeconds,
+      }
+    : undefined;
+}
+
 export function parseWireSnapshotPart(value: unknown): WireSnapshotPart | undefined {
   const raw = fields(value);
   const snapshot = raw === undefined ? undefined : parseSnapshot(raw);
@@ -1160,8 +1214,9 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
   }
   const players = parseArray(raw.players, MAX_WIRE_ACTORS, parsePlayer);
   const projectiles = parseArray(raw.projectiles, MAX_WIRE_PROJECTILES, parseProjectile);
+  const groundEffects = parseArray(raw.groundEffects, MAX_WIRE_GROUND_EFFECTS, parseGroundEffect);
   const [team0 = 0, team1 = 0] = score;
-  return players === undefined || projectiles === undefined
+  return players === undefined || projectiles === undefined || groundEffects === undefined
     ? undefined
     : {
         tick: raw.tick,
@@ -1172,6 +1227,7 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
         endReason: raw.endReason,
         players,
         projectiles,
+        groundEffects,
       };
 }
 

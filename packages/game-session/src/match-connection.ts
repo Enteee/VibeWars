@@ -125,6 +125,23 @@ export interface MatchSnapshot {
   readonly endReason: string | undefined;
   /** Weapon shots and flying spells in flight, oldest first (#160, #535). */
   readonly projectiles: readonly ProjectileSnapshot[];
+  /** Wards on the ground, oldest first (#1087). */
+  readonly groundEffects: readonly GroundEffectSnapshot[];
+}
+
+/** A ward on the ground (#1087): a circle at `x`, `y` in `team`'s colour, until `endsAt`. */
+export interface GroundEffectSnapshot {
+  readonly id: number;
+  /** The skill that placed it, for its icon. */
+  readonly skillId: string;
+  readonly team: number;
+  readonly x: number;
+  readonly y: number;
+  readonly radius: number;
+  /** Match clock (`elapsedSeconds`) at which it ends. */
+  readonly endsAt: number;
+  /** How long it was placed for. */
+  readonly durationSeconds: number;
 }
 
 /**

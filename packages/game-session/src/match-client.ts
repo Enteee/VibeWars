@@ -351,6 +351,7 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
                 winningTeam: undefined,
                 endReason: undefined,
                 projectiles: [],
+                groundEffects: [],
               }
             : matchSnapshot(latest.wire, latest.players, welcome.playerId);
         // An `ended` may land before the snapshot that says so.

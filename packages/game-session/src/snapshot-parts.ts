@@ -1,6 +1,8 @@
 import {
   MAX_WIRE_ACTORS,
+  MAX_WIRE_GROUND_EFFECTS,
   MAX_WIRE_PROJECTILES,
+  type WireGroundEffect,
   type WirePlayer,
   type WireProjectile,
   type WireSnapshot,
@@ -12,6 +14,15 @@ import { messageBytes } from "./transport.js";
 interface Run {
   readonly players: WirePlayer[];
   readonly projectiles: WireProjectile[];
+  readonly groundEffects: WireGroundEffect[];
+}
+
+function emptyRun(): Run {
+  return { players: [], projectiles: [], groundEffects: [] };
+}
+
+function runLength(run: Run): number {
+  return run.players.length + run.projectiles.length + run.groundEffects.length;
 }
 
 /**
@@ -19,7 +30,7 @@ interface Run {
  * the host sends as a tick's `"snapshot"` messages, so a message stays
  * one Trystero frame however many fields a player grows.
  *
- * Players first, then projectiles, in order, packed greedily the way
+ * Players first, then projectiles, then ground effects (#1087), in order, packed greedily the way
  * `packCombat` packs combat: each entry is measured once and the running
  * size is exact without serialising a part again. The header is measured
  * with `part` and `parts` as wide as they could print. An entry over
@@ -27,25 +38,23 @@ interface Run {
  * `sizeChecked` says so. A tick that fits is one part.
  */
 export function packSnapshot(snapshot: WireSnapshot, maxBytes: number): WireSnapshotPart[] {
-  const { players, projectiles, ...header } = snapshot;
-  const widest = Math.max(1, players.length + projectiles.length);
+  const { players, projectiles, groundEffects, ...header } = snapshot;
+  const widest = Math.max(1, players.length + projectiles.length + groundEffects.length);
   const empty = messageBytes({
     ...header,
     part: widest,
     parts: widest,
-    players: [],
-    projectiles: [],
+    ...emptyRun(),
   });
 
   const runs: Run[] = [];
-  let run: Run = { players: [], projectiles: [] };
+  let run = emptyRun();
   let bytes = empty;
   const place = <T>(entry: T, list: (run: Run) => T[]): void => {
     const size = messageBytes(entry);
-    const filled = run.players.length + run.projectiles.length > 0;
-    if (filled && bytes + (list(run).length === 0 ? 0 : 1) + size > maxBytes) {
+    if (runLength(run) > 0 && bytes + (list(run).length === 0 ? 0 : 1) + size > maxBytes) {
       runs.push(run);
-      run = { players: [], projectiles: [] };
+      run = emptyRun();
       bytes = empty;
     }
     bytes += (list(run).length === 0 ? 0 : 1) + size;
@@ -57,7 +66,10 @@ export function packSnapshot(snapshot: WireSnapshot, maxBytes: number): WireSnap
   for (const projectile of projectiles) {
     place(projectile, (into) => into.projectiles);
   }
-  if (runs.length === 0 || run.players.length + run.projectiles.length > 0) {
+  for (const effect of groundEffects) {
+    place(effect, (into) => into.groundEffects);
+  }
+  if (runs.length === 0 || runLength(run) > 0) {
     runs.push(run);
   }
 
@@ -67,6 +79,7 @@ export function packSnapshot(snapshot: WireSnapshot, maxBytes: number): WireSnap
     parts: runs.length,
     players: each.players,
     projectiles: each.projectiles,
+    groundEffects: each.groundEffects,
   }));
 }
 
@@ -144,7 +157,12 @@ export function snapshotAssembler(): (part: WireSnapshotPart) => WireSnapshot | 
     assembled = part.tick;
     const players = parts.flatMap((each) => each.players);
     const projectiles = parts.flatMap((each) => each.projectiles);
-    if (players.length > MAX_WIRE_ACTORS || projectiles.length > MAX_WIRE_PROJECTILES) {
+    const groundEffects = parts.flatMap((each) => each.groundEffects);
+    if (
+      players.length > MAX_WIRE_ACTORS ||
+      projectiles.length > MAX_WIRE_PROJECTILES ||
+      groundEffects.length > MAX_WIRE_GROUND_EFFECTS
+    ) {
       return undefined;
     }
     return {
@@ -156,6 +174,7 @@ export function snapshotAssembler(): (part: WireSnapshotPart) => WireSnapshot | 
       endReason: part.endReason,
       players,
       projectiles,
+      groundEffects,
     };
   };
 }

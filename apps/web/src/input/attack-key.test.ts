@@ -59,6 +59,7 @@ function snapshot(players: PlayerSnapshot[]): MatchSnapshot {
     winningTeam: undefined,
     endReason: undefined,
     projectiles: [],
+    groundEffects: [],
   };
 }
 
