@@ -5,6 +5,7 @@
   "width": 560,
   "height": 420,
   "walls": [],
+  "objectives": [],
   "spawnPoints": [
     { "team": 0, "position": { "x": 100, "y": 210 } },
     { "team": 1, "position": { "x": 380, "y": 130 } },

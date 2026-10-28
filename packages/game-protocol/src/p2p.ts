@@ -96,11 +96,11 @@ export const MAX_WIRE_GROUND_EFFECTS = 32;
 /** The most bodies a snapshot carries: every player and every creature. */
 export const MAX_WIRE_ACTORS = MAX_LOBBY_PLAYERS + MAX_WIRE_CREATURES;
 
-/** What kind of creature a body is (#1052). */
-export const CREATURE_KINDS = ["spirit", "minion", "pet"] as const;
+/** What kind of creature a body is (#1052); a priest is a map's (#1186). */
+export const CREATURE_KINDS = ["spirit", "minion", "pet", "priest"] as const;
 
 /** How a creature is drawn (#1162); game-core's `CREATURE_LOOKS`, mirrored. */
-export const CREATURE_LOOKS = ["beast", "bone-minion", "bone-horror", "spirit"] as const;
+export const CREATURE_LOOKS = ["beast", "bone-minion", "bone-horror", "spirit", "priest"] as const;
 
 /**
  * The largest status index a snapshot may carry (#632): a bound of its
@@ -311,7 +311,8 @@ export interface WirePlayer {
 
 /** What makes a body a creature (#1052). */
 export interface WireCreature {
-  readonly ownerId: string;
+  /** Whom it answers to; `null` for a map's NPC, as a priest (#1186). */
+  readonly ownerId: string | null;
   readonly kind: (typeof CREATURE_KINDS)[number];
   readonly look: (typeof CREATURE_LOOKS)[number];
   /** How a companion fights (#1110); `null` for a creature that is not one. */
@@ -1245,7 +1246,7 @@ function parseCreature(value: unknown): WireCreature | undefined {
   const raw = fields(value);
   if (
     raw === undefined ||
-    !isString(raw.ownerId) ||
+    !(raw.ownerId === null || isString(raw.ownerId)) ||
     !isOneOf(raw.kind, CREATURE_KINDS) ||
     !isOneOf(raw.look, CREATURE_LOOKS) ||
     !(raw.mode === null || isOneOf(raw.mode, COMPANION_MODES))

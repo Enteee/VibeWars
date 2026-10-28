@@ -901,6 +901,12 @@ export interface Skill {
   readonly name: string;
   readonly type: SkillType;
   /**
+   * GW1's own skill id, the PvE (base) record's, as template codes use it
+   * (#458): a PvP split takes the base id. `undefined` only for a skill
+   * this game made up (Vital Transfer).
+   */
+  readonly gwId: number | undefined;
+  /**
    * A GW1 elite skill (#459): drawn with a gold frame, and at most one
    * per bar (`validatePlayerBuild`).
    */

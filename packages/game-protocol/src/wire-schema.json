@@ -1923,7 +1923,12 @@
           "name": "kind",
           "optional": false,
           "type": {
-            "union": [{ "literal": "minion" }, { "literal": "pet" }, { "literal": "spirit" }]
+            "union": [
+              { "literal": "minion" },
+              { "literal": "pet" },
+              { "literal": "priest" },
+              { "literal": "spirit" }
+            ]
           }
         },
         {
@@ -1934,6 +1939,7 @@
               { "literal": "beast" },
               { "literal": "bone-horror" },
               { "literal": "bone-minion" },
+              { "literal": "priest" },
               { "literal": "spirit" }
             ]
           }
@@ -1945,7 +1951,7 @@
             "union": ["null", { "literal": "fight" }, { "literal": "guard" }, { "literal": "heel" }]
           }
         },
-        { "name": "ownerId", "optional": false, "type": "string" }
+        { "name": "ownerId", "optional": false, "type": { "union": ["null", "string"] } }
       ]
     },
     "WireEnded": {
@@ -2221,6 +2227,7 @@
                       "union": [
                         { "literal": "minion" },
                         { "literal": "pet" },
+                        { "literal": "priest" },
                         { "literal": "spirit" }
                       ]
                     }
@@ -2233,6 +2240,7 @@
                         { "literal": "beast" },
                         { "literal": "bone-horror" },
                         { "literal": "bone-minion" },
+                        { "literal": "priest" },
                         { "literal": "spirit" }
                       ]
                     }
@@ -2249,7 +2257,7 @@
                       ]
                     }
                   },
-                  { "name": "ownerId", "optional": false, "type": "string" }
+                  { "name": "ownerId", "optional": false, "type": { "union": ["null", "string"] } }
                 ]
               }
             ]
@@ -2464,6 +2472,7 @@
                               "union": [
                                 { "literal": "minion" },
                                 { "literal": "pet" },
+                                { "literal": "priest" },
                                 { "literal": "spirit" }
                               ]
                             }
@@ -2476,6 +2485,7 @@
                                 { "literal": "beast" },
                                 { "literal": "bone-horror" },
                                 { "literal": "bone-minion" },
+                                { "literal": "priest" },
                                 { "literal": "spirit" }
                               ]
                             }
@@ -2492,7 +2502,11 @@
                               ]
                             }
                           },
-                          { "name": "ownerId", "optional": false, "type": "string" }
+                          {
+                            "name": "ownerId",
+                            "optional": false,
+                            "type": { "union": ["null", "string"] }
+                          }
                         ]
                       }
                     ]
@@ -2699,6 +2713,7 @@
                               "union": [
                                 { "literal": "minion" },
                                 { "literal": "pet" },
+                                { "literal": "priest" },
                                 { "literal": "spirit" }
                               ]
                             }
@@ -2711,6 +2726,7 @@
                                 { "literal": "beast" },
                                 { "literal": "bone-horror" },
                                 { "literal": "bone-minion" },
+                                { "literal": "priest" },
                                 { "literal": "spirit" }
                               ]
                             }
@@ -2727,7 +2743,11 @@
                               ]
                             }
                           },
-                          { "name": "ownerId", "optional": false, "type": "string" }
+                          {
+                            "name": "ownerId",
+                            "optional": false,
+                            "type": { "union": ["null", "string"] }
+                          }
                         ]
                       }
                     ]

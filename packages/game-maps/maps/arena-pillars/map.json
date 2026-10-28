@@ -51,6 +51,7 @@
       ]
     }
   ],
+  "objectives": [],
   "spawnPoints": [
     { "team": 0, "position": { "x": 90, "y": 220 } },
     { "team": 0, "position": { "x": 90, "y": 320 } },

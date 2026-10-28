@@ -314,6 +314,7 @@ describe("wireIdentity (#1052)", () => {
   ]);
   const minion = (ownerId: string) => ({
     id: `${ownerId}/c1`,
+    combatant: { team: 1 },
     armedAttack: undefined,
     creature: {
       ownerId,
@@ -334,7 +335,11 @@ describe("wireIdentity (#1052)", () => {
 
   it("sends a seated player as its seat says", () => {
     expect(
-      wireIdentity({ id: "p1", creature: undefined, armedAttack: undefined }, seats, 0),
+      wireIdentity(
+        { id: "p1", combatant: { team: 1 }, creature: undefined, armedAttack: undefined },
+        seats,
+        0,
+      ),
     ).toEqual({
       name: "Ann",
       team: 1,
@@ -363,6 +368,7 @@ describe("wireIdentity (#1052)", () => {
   it("sends a companion's mode, and a minion's as null (#1110)", () => {
     const wolf = {
       id: "p1/c2",
+      combatant: { team: 1 },
       armedAttack: undefined,
       creature: {
         ...minion("p1").creature,
@@ -395,8 +401,35 @@ describe("wireIdentity (#1052)", () => {
 
   it("sends neither a body with no seat nor a creature whose owner has none", () => {
     expect(
-      wireIdentity({ id: "dummy", creature: undefined, armedAttack: undefined }, seats, 0),
+      wireIdentity(
+        { id: "dummy", combatant: { team: 0 }, creature: undefined, armedAttack: undefined },
+        seats,
+        0,
+      ),
     ).toBeUndefined();
     expect(wireIdentity(minion("gone"), seats, 0)).toBeUndefined();
+  });
+
+  it("sends a map's priest, owned by nobody, on its own team (#1186)", () => {
+    const priest = {
+      ...minion("p1"),
+      id: "priest/0",
+      combatant: { team: 0 },
+      creature: {
+        ...minion("p1").creature,
+        ownerId: undefined,
+        kind: "priest" as const,
+        look: "priest" as const,
+        name: "Priest",
+        skillId: undefined,
+      },
+    };
+    expect(wireIdentity(priest, seats, 0)).toEqual({
+      name: "Priest",
+      team: 0,
+      primaryProfession: null,
+      secondaryProfession: null,
+      creature: { ownerId: null, kind: "priest", look: "priest", mode: null, armedAttack: null },
+    });
   });
 });

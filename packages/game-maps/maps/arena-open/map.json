@@ -5,6 +5,7 @@
   "width": 900,
   "height": 600,
   "walls": [{ "kind": "rect", "x": 420, "y": 250, "width": 60, "height": 100 }],
+  "objectives": [],
   "spawnPoints": [
     { "team": 0, "position": { "x": 90, "y": 180 } },
     { "team": 0, "position": { "x": 90, "y": 300 } },

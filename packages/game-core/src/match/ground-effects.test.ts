@@ -46,6 +46,7 @@ function testWard(id: string, affects: Aura["affects"], seconds: number): string
     id,
     name: id,
     type: "ward",
+    gwId: undefined,
     elite: false,
     profession: "elementalist",
     attributeId: EARTH,

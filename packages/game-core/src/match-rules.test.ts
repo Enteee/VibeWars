@@ -5,6 +5,7 @@ import {
   KILL_COUNT_MATCH_RULES,
   MATCH_IN_PROGRESS,
   MATCH_MODES,
+  PRIEST_ANNIHILATION_MATCH_RULES,
   addKill,
   emptyScore,
   evaluateMatch,
@@ -21,9 +22,16 @@ const RULES: MatchRules = {
   deathPenalty: false,
 };
 
-/** `[team, living, total morale]` for each team with members. */
-function standing(...teams: [number, number, number][]): MatchStanding {
-  return { byTeam: new Map(teams.map(([team, living, morale]) => [team, { living, morale }])) };
+/** `[team, living, total morale, priest lives?]` for each team with members. */
+function standing(...teams: [number, number, number, boolean?][]): MatchStanding {
+  return {
+    byTeam: new Map(
+      teams.map(([team, living, morale, priestLives = false]) => [
+        team,
+        { living, morale, priestLives },
+      ]),
+    ),
+  };
 }
 
 const BOTH_ALIVE = standing([0, 4, 0], [1, 4, 0]);
@@ -130,6 +138,7 @@ describe("MATCH_MODES (#476)", () => {
 
   it("names each mode's rules", () => {
     expect(MATCH_MODES.annihilation).toBe(ANNIHILATION_MATCH_RULES);
+    expect(MATCH_MODES["priest-annihilation"]).toBe(PRIEST_ANNIHILATION_MATCH_RULES);
     expect(rules).toBe(KILL_COUNT_MATCH_RULES);
   });
 
@@ -231,5 +240,49 @@ describe("evaluateMatch: annihilation (#846)", () => {
       winningTeam: 0,
       reason: "annihilation",
     });
+  });
+});
+
+describe("evaluateMatch: priest annihilation (#1186)", () => {
+  const rules = PRIEST_ANNIHILATION_MATCH_RULES;
+
+  it("is annihilation's resurrection only and death penalty, over 12 minutes", () => {
+    expect(rules.victory).toBe("priest-annihilation");
+    expect(rules.deathRule).toBe("resurrection-only");
+    expect(rules.deathPenalty).toBe(true);
+    expect(rules.timeLimitSeconds).toBe(720);
+  });
+
+  it("does not beat a wiped team whose priest lives: it waits for the wave", () => {
+    expect(evaluateMatch(NO_KILLS, standing([0, 2, 0, true], [1, 0, -45, true]), 100, rules)).toBe(
+      MATCH_IN_PROGRESS,
+    );
+  });
+
+  it("beats a team once every player and its priest are dead", () => {
+    expect(
+      evaluateMatch(NO_KILLS, standing([0, 1, 0, false], [1, 0, -45, false]), 100, rules),
+    ).toEqual({ phase: "finished", winningTeam: 0, reason: "annihilation" });
+  });
+
+  it("is lost by both when both teams and both priests fall in the same tick", () => {
+    expect(
+      evaluateMatch(NO_KILLS, standing([0, 0, 0, false], [1, 0, 0, false]), 100, rules),
+    ).toEqual({ phase: "finished", winningTeam: undefined, reason: "annihilation" });
+  });
+
+  it("goes at 12 minutes to morale, then to the team whose priest lives, else all lose", () => {
+    expect(
+      evaluateMatch(NO_KILLS, standing([0, 2, -15, true], [1, 2, -15, true]), 719.9, rules),
+    ).toBe(MATCH_IN_PROGRESS);
+    expect(
+      evaluateMatch(NO_KILLS, standing([0, 2, -30, true], [1, 2, -15, false]), 720, rules),
+    ).toEqual({ phase: "finished", winningTeam: 1, reason: "morale" });
+    expect(
+      evaluateMatch(NO_KILLS, standing([0, 2, -15, false], [1, 2, -15, true]), 720, rules),
+    ).toEqual({ phase: "finished", winningTeam: 1, reason: "morale" });
+    expect(
+      evaluateMatch(NO_KILLS, standing([0, 2, -15, true], [1, 2, -15, true]), 720, rules),
+    ).toEqual({ phase: "finished", winningTeam: undefined, reason: "morale" });
   });
 });

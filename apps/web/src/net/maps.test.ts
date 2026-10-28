@@ -45,9 +45,12 @@ describe("hostMap (#476)", () => {
     );
   });
 
-  it("carries the mode its map names: Kill Count on Pillar Hall, Annihilation elsewhere", () => {
+  it("carries the mode its map names: Kill Count on Pillar Hall, Priest Annihilation on Split Paths, Annihilation elsewhere", () => {
     expect(hostMap("arena-pillars")?.mode).toBe("kill-count");
-    for (const map of ARENA_MAPS.filter((candidate) => candidate.id !== "arena-pillars")) {
+    expect(hostMap("arena-split")?.mode).toBe("priest-annihilation");
+    for (const map of ARENA_MAPS.filter(
+      (candidate) => candidate.id !== "arena-pillars" && candidate.id !== "arena-split",
+    )) {
       expect(hostMap(map.id)?.mode).toBe("annihilation");
     }
   });

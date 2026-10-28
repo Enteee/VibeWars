@@ -104,5 +104,6 @@ export function hostMap(mapId: string): HostMap | undefined {
     walls: allWallSegments(map.walls),
     bounds: { width: map.width, height: map.height },
     spawns: map.spawnPoints,
+    shrines: map.objectives.map(({ team, position }) => ({ team, position })),
   };
 }
