@@ -20,6 +20,9 @@
     "lobby-note",
     "lobby-hello",
     "lobby-welcome",
+    "stay-together",
+    "party-formed",
+    "party-split",
     "match-start",
     "rejoin-challenge",
     "rejoin-proof",
@@ -222,6 +225,8 @@
         { "literal": "lobby-state" },
         { "literal": "lobby-welcome" },
         { "literal": "match-start" },
+        { "literal": "party-formed" },
+        { "literal": "party-split" },
         { "literal": "recharge" },
         { "literal": "refuse" },
         { "literal": "refused" },
@@ -229,6 +234,7 @@
         { "literal": "rejoin-proof" },
         { "literal": "skill-bar" },
         { "literal": "snapshot" },
+        { "literal": "stay-together" },
         { "literal": "welcome" }
       ]
     },
@@ -1211,7 +1217,7 @@
               {
                 "properties": [
                   { "name": "admissionSig", "optional": false, "type": "string" },
-                  { "name": "ticketId", "optional": false, "type": "string" }
+                  { "name": "seatKey", "optional": false, "type": "string" }
                 ]
               }
             ]
@@ -1267,6 +1273,11 @@
       "properties": [
         { "name": "playerId", "optional": false, "type": "string" },
         { "name": "proof", "optional": false, "type": "string" }
+      ]
+    },
+    "PeerStayTogether": {
+      "properties": [
+        { "name": "memberKey", "optional": false, "type": { "union": ["null", "string"] } }
       ]
     },
     "PeerWelcome": {
@@ -1354,6 +1365,7 @@
       "properties": [
         { "name": "enteredAt", "optional": false, "type": "number" },
         { "name": "heartbeatAt", "optional": false, "type": "number" },
+        { "name": "members", "optional": false, "type": { "array": "string" } },
         {
           "name": "mode",
           "optional": false,
@@ -1365,7 +1377,6 @@
             ]
           }
         },
-        { "name": "partySize", "optional": false, "type": "number" },
         { "name": "protocol", "optional": false, "type": "string" },
         { "name": "ticketId", "optional": false, "type": "string" }
       ]
@@ -1469,7 +1480,7 @@
     "WireAdmission": {
       "properties": [
         { "name": "admissionSig", "optional": false, "type": "string" },
-        { "name": "ticketId", "optional": false, "type": "string" }
+        { "name": "seatKey", "optional": false, "type": "string" }
       ]
     },
     "WireCalls": {
@@ -1873,6 +1884,10 @@
         { "name": "matchId", "optional": false, "type": "string" }
       ]
     },
+    "WirePartyFormed": {
+      "properties": [{ "name": "members", "optional": false, "type": { "array": "string" } }]
+    },
+    "WirePartySplit": { "properties": [], "index": [{ "key": "string", "value": "never" }] },
     "WirePing": {
       "properties": [
         { "name": "byId", "optional": false, "type": "string" },

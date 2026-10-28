@@ -24,7 +24,7 @@ export type VerifyTicketSig = (ticketId: string, digest: Uint8Array, sig: string
 /** A queued lobby's seat, as its holder brings it to the lobby, host or joiner. */
 export interface QueuedSeat {
   readonly group: FormedGroup;
-  /** This player's own ticket key: one of `group`'s, the host's for the host. */
+  /** This player's own seat key: one of `group`'s teams', the host ticket's for the host. */
   readonly key: TicketKey;
   readonly verifyTicketSig: VerifyTicketSig;
 }
