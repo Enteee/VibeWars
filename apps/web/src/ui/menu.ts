@@ -1,4 +1,5 @@
 import type { QueueMode } from "@vibewars/game-protocol";
+import { sanitizeGuildTag } from "@vibewars/game-session";
 
 import { SOURCE_URL } from "../source.js";
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
@@ -70,6 +71,39 @@ export function loadPlayerName(): string {
     // remembered name is not worth failing the whole menu over.
     return "";
   }
+}
+
+const GUILD_TAG_STORAGE_KEY = `${STORAGE_NAMESPACE}.guildTag`;
+
+/** The guild tag as the player last typed it (#1406), valid or not; empty for none. */
+export function loadGuildTag(): string {
+  try {
+    return localStorage.getItem(GUILD_TAG_STORAGE_KEY) ?? "";
+  } catch {
+    // Same reasoning as the name.
+    return "";
+  }
+}
+
+export function saveGuildTag(tag: string): void {
+  try {
+    localStorage.setItem(GUILD_TAG_STORAGE_KEY, tag);
+  } catch {
+    // Same reasoning as the name.
+  }
+}
+
+/** The remembered guild tag if it is a valid one (#1406); `null` plays untagged. */
+export function playerGuildTag(): string | null {
+  return sanitizeGuildTag(loadGuildTag());
+}
+
+/** Shown under the guild tag field while what is typed is no tag (#1406). */
+export const GUILD_TAG_HINT = "2–4 letters or digits";
+
+/** Whether `typed` should show as invalid: something, but not a tag. */
+export function isInvalidGuildTag(typed: string): boolean {
+  return typed.trim() !== "" && sanitizeGuildTag(typed) === null;
 }
 
 const CHARACTER_STORAGE_KEY = `${STORAGE_NAMESPACE}.activeCharacterId`;
@@ -289,7 +323,31 @@ export function renderMenu(
     savePlayerName(nameInput.value);
   });
   nameField.appendChild(nameInput);
-  play.appendChild(nameField);
+  // The guild tag beside it (#1406): `Ente [VIBE]` to everyone else.
+  const tagField = h("label", "field menu-guild-tag");
+  tagField.appendChild(h("span", "field-label", "Guild tag"));
+  const tagInput = document.createElement("input");
+  tagInput.className = "field-input";
+  tagInput.placeholder = "TAG";
+  tagInput.maxLength = 4;
+  tagInput.value = loadGuildTag();
+  const tagHint = h("span", "field-hint", GUILD_TAG_HINT);
+  const showTagValidity = (): void => {
+    const invalid = isInvalidGuildTag(tagInput.value);
+    tagInput.setAttribute("aria-invalid", String(invalid));
+    tagHint.hidden = !invalid;
+  };
+  showTagValidity();
+  tagInput.addEventListener("input", () => {
+    saveGuildTag(tagInput.value);
+    showTagValidity();
+  });
+  tagField.appendChild(tagInput);
+  tagField.appendChild(tagHint);
+  const identityRow = h("div", "menu-identity");
+  identityRow.appendChild(nameField);
+  identityRow.appendChild(tagField);
+  play.appendChild(identityRow);
 
   // Random Arena first (#854 B1): it needs no code and no friends.
   const arenaRow = h("div", "menu-row menu-random-arena");

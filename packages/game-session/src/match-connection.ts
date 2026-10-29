@@ -40,6 +40,8 @@ export interface PlayerSnapshot {
   readonly sessionId: string;
   /** The display name the server settled on; never the session id. */
   readonly name: string;
+  /** The player's guild tag (#1406), drawn after the name; `undefined` for none. */
+  readonly guildTag: string | undefined;
   readonly x: number;
   readonly y: number;
   /** Where the player faces, radians, `atan2` convention, 0 = +x (#187). */
@@ -206,6 +208,8 @@ export interface GroundEffectSnapshot {
 export interface MatchSummaryRow {
   readonly id: string;
   readonly name: string;
+  /** The seat's guild tag (#1406); `null` for none. */
+  readonly guildTag: string | null;
   readonly team: number;
   readonly damage: number;
   readonly healing: number;

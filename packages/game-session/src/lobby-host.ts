@@ -28,7 +28,7 @@ import { lobbyCharacter } from "./lobby-character.js";
 import type { LobbyCharacter } from "./lobby-connection.js";
 import { createLocalPeer } from "./local-peer.js";
 import { RECONNECT_WINDOW_SECONDS, type MatchHost, type PlannedSeats } from "./match-host.js";
-import { sanitizeChatText, sanitizeName } from "./names.js";
+import { sanitizeChatText, sanitizeGuildTag, sanitizeName } from "./names.js";
 import { admissionDigest, type QueuedSeat } from "./queue-admission.js";
 import { ticketsOf } from "./queue-formation.js";
 import { scopeTransport } from "./scoped-transport.js";
@@ -140,6 +140,8 @@ export interface LobbyHost {
 interface Member {
   readonly id: string;
   name: string;
+  /** Sanitised (#1406); `null` for none, and for a bot. */
+  guildTag: string | null;
   team: 0 | 1 | null;
   ready: boolean;
   character: LobbyCharacter | null;
@@ -252,6 +254,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     players: [...members.values()].map((member) => ({
       id: member.id,
       name: member.name,
+      guildTag: member.guildTag,
       team: member.team,
       ready: isReady(member),
       isHost: member.id === local.selfId,
@@ -287,7 +290,17 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       [...members.values()].flatMap((member) =>
         member.team === null
           ? []
-          : [[member.id, { team: member.team, name: member.name, bot: member.bot }]],
+          : [
+              [
+                member.id,
+                {
+                  team: member.team,
+                  name: member.name,
+                  guildTag: member.guildTag,
+                  bot: member.bot,
+                },
+              ],
+            ],
       ),
     );
     const room = scopeTransport(transport);
@@ -420,6 +433,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     members.set(id, {
       id,
       name,
+      guildTag: null,
       team,
       ready: true,
       character: {
@@ -447,6 +461,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     members.set(from, {
       id: from,
       name: sanitizeName(join.name, `player-${String(joined)}`),
+      guildTag: sanitizeGuildTag(join.guildTag),
       team,
       ready: false,
       character: lobbyCharacter(join.character),
@@ -566,6 +581,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       // team, to confirm again like everyone else when the match is over.
       away.delete(from);
       returning.name = sanitizeName(join.name, returning.name);
+      returning.guildTag = sanitizeGuildTag(join.guildTag);
       returning.character = lobbyCharacter(join.character);
       returning.ready = false;
       broadcast();

@@ -85,6 +85,7 @@ import { createNowPlayingToast, nowPlayingText } from "./ui/now-playing.js";
 import {
   loadActiveCharacterId,
   loadStarterCharacterId,
+  playerGuildTag,
   renderMenu,
   renderTeamList,
   saveActiveCharacterId,
@@ -180,6 +181,8 @@ interface Entrant {
   readonly build: PlayerBuild | undefined;
   /** How the lobby lists it (#580). */
   readonly character: LobbyCharacter | null;
+  /** The menu's guild tag (#1406) if it is a valid one; `null` plays untagged. */
+  readonly guildTag: string | null;
 }
 
 async function main(): Promise<void> {
@@ -461,6 +464,7 @@ async function main(): Promise<void> {
     const build = await activeBuild();
     return {
       build,
+      guildTag: playerGuildTag(),
       character:
         build === undefined ||
         resolveJoinLoadout(build, MINIMAL_GW_INSPIRED_PVP_V1.attributes, Math.random).refused !==
@@ -523,7 +527,7 @@ async function main(): Promise<void> {
           void (async () => {
             const entrant = await readEntrant();
             await enterLobby(name, entrant, async () => {
-              hosted = await hostLobby(name, entrant.character);
+              hosted = await hostLobby(name, entrant.guildTag, entrant.character);
               return hosted.lobby;
             });
           })();
@@ -532,7 +536,7 @@ async function main(): Promise<void> {
           void (async () => {
             const entrant = await readEntrant();
             await enterLobby(name, entrant, async () =>
-              joinLobbyByCode(code, name, entrant.character),
+              joinLobbyByCode(code, name, entrant.guildTag, entrant.character),
             );
           })();
         },
@@ -804,6 +808,7 @@ async function main(): Promise<void> {
     const place = enterQueue(
       mode,
       name,
+      entrant.guildTag,
       entrant.character,
       {
         // Never past `in-lobby` while a lobby is up, unless it fell through.
@@ -1261,7 +1266,7 @@ async function main(): Promise<void> {
                 },
               }),
         },
-        { connect: () => connectMatchFor(from, start, name, entrant.build) },
+        { connect: () => connectMatchFor(from, start, name, entrant.guildTag, entrant.build) },
       );
       // In the match, the status has nothing to say until it is lost.
       setStatus("", "online");

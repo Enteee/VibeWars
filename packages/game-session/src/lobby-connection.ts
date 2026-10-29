@@ -24,6 +24,8 @@ export interface LobbyCharacter {
 export interface LobbyPlayerSnapshot {
   readonly sessionId: string;
   readonly name: string;
+  /** The member's guild tag (#1406), after its name; `null` for none. */
+  readonly guildTag: string | null;
   /** `null` spectates. */
   readonly team: 0 | 1 | null;
   readonly ready: boolean;

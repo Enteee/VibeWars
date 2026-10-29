@@ -6,6 +6,7 @@ import { createProfessionDot, cssColour } from "./character-preview.js";
 import { characterLine } from "./lobby-screen.js";
 import { PEER_IP_NOTICE, RANDOM_ARENA_MODES } from "./menu.js";
 import { button, h, screenBar } from "./kit.js";
+import { playerLabelElement } from "./player-label.js";
 import { renderSummary, type SummaryTable } from "./match-summary.js";
 import { relayLine } from "./relay-section.js";
 
@@ -233,7 +234,7 @@ function splashRow(player: LobbyPlayerSnapshot, ours: boolean, self: boolean): H
         ),
   );
   const text = h("span", "versus-player-text");
-  text.appendChild(h("span", "versus-player-name", player.name));
+  text.appendChild(playerLabelElement("versus-player-name", player.name, player.guildTag));
   text.appendChild(h("span", "versus-player-character", characterLine(character, player.bot)));
   row.appendChild(text);
   return row;

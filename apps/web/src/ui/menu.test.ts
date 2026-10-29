@@ -1,8 +1,16 @@
 import { defaultBuildEquipment } from "@vibewars/game-core";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "../storage/schema.js";
-import { isPlayable, rosterOrder, rosterSubtitle } from "./menu.js";
+import {
+  isInvalidGuildTag,
+  isPlayable,
+  loadGuildTag,
+  playerGuildTag,
+  rosterOrder,
+  rosterSubtitle,
+  saveGuildTag,
+} from "./menu.js";
 
 function character(overrides: Partial<StoredCharacter> = {}): StoredCharacter {
   return {
@@ -67,5 +75,48 @@ describe("rosterOrder (#1425)", () => {
 
   it("lists a starter alone as the only row", () => {
     expect(ids(rosterOrder([character({ id: "rolled" })], "rolled"))).toEqual(["rolled"]);
+  });
+});
+
+describe("the guild tag field (#1406)", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("shows as invalid only what is typed and is no tag", () => {
+    expect(isInvalidGuildTag("")).toBe(false);
+    expect(isInvalidGuildTag("  ")).toBe(false);
+    expect(isInvalidGuildTag("VIBE")).toBe(false);
+    expect(isInvalidGuildTag("V")).toBe(true);
+    expect(isInvalidGuildTag("V B")).toBe(true);
+    expect(isInvalidGuildTag("[V]")).toBe(true);
+  });
+
+  it("remembers what was typed, and plays it only when it is a tag", () => {
+    const stored = new Map<string, string>();
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => stored.get(key) ?? null,
+      setItem: (key: string, value: string) => stored.set(key, value),
+    });
+    expect(loadGuildTag()).toBe("");
+    expect(playerGuildTag()).toBeNull();
+    saveGuildTag("V!");
+    expect(loadGuildTag()).toBe("V!");
+    expect(playerGuildTag()).toBeNull();
+    saveGuildTag("Vb ");
+    expect(playerGuildTag()).toBe("Vb");
+  });
+
+  it("plays untagged when the browser keeps nothing", () => {
+    vi.stubGlobal("localStorage", {
+      getItem: () => {
+        throw new Error("private browsing");
+      },
+      setItem: () => {
+        throw new Error("private browsing");
+      },
+    });
+    saveGuildTag("VIBE");
+    expect(playerGuildTag()).toBeNull();
   });
 });
