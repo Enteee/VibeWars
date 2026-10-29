@@ -1003,6 +1003,36 @@ sheet.
   tallest (two rows, about 80 px), but the screen's buttons are never mixed with
   the global ones. Phone: the dock scrolls sideways, with a fade at its edge.
 
+### Teams on the main menu (#1439)
+
+![Teams on the main menu, three variants](teams-menu-study.svg)
+
+**Study, not decided.** The operator wants `[Music]` gone from the title bar
+(the top bar's ♪ popover already opens it, and stays) and `[Teams]` folded into
+the main screen. Every variant drops both buttons; `Record` stays beside the
+global icons. Each variant is drawn at 1280 px with no teams and with three
+(one chosen, one with a long name, one whose character was deleted, shown as
+the red problem line). `node scripts/assets/teams-menu-study.mjs` regenerates
+the sheet.
+
+- **A: a Teams column.** Roster, Teams and Play side by side. Team rows are
+  roster rows with their members' figures; click a row to edit, "New team"
+  under the list, an empty list says "No teams yet." with the button. Cost:
+  `renderMenu` gains a column and `menu-columns` goes to three; the Teams
+  screen goes (its list, problems and paste handler move into the column).
+  The long Play column narrows; below about 1100 px the columns must wrap.
+- **B: Teams under the roster.** One left column: characters, then Teams in
+  smaller rows with "New team" at the header's right. Cost: the same code move
+  as A with no new column, so Play keeps its width, but the left column is the
+  tallest (about 440 px with three of each) and scrolls at ten teams. The
+  Teams screen goes.
+- **C: a picker in Play.** No list on the menu. Play gets "Play solo / With
+  team ▾"; the open picker lists the teams with an "Edit teams…" link, and with
+  no teams it says so beside "New team". Cost: the smallest menu change, and
+  the Teams screen survives as it is (the picker's "Edit teams…" and "New
+  team" open it), but teams are hidden until the picker opens and picking a
+  team changes what Play does, which is a rule change beyond layout.
+
 ## Creatures
 
 Pets, minions and spirits must read as not-a-player at a glance and say what
