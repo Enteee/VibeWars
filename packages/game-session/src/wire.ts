@@ -718,6 +718,7 @@ export function matchSnapshot(
       snapshot.stand === null
         ? undefined
         : { holder: absent(snapshot.stand.holder), heldSeconds: snapshot.stand.heldSeconds },
+    aggression: snapshot.aggression,
     // Only the host's `"traps"` carries them (#1105).
     traps: [],
     // Only the host's `ended` carries it.

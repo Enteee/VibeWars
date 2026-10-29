@@ -12,7 +12,7 @@ import { prefersReducedMotion } from "./recharge-overlay.js";
  * The compass (#486, GW1's radar): a disc top right, centred on you, north
  * up, with every living body within its reach (`compassReach`), your
  * target, the called foe, your team's pings, the resurrection shrines
- * (#1199), the earshot and cast-range rings and the walls
+ * (#1199), a Guild Battle's lords, flags and stand (#1226), the earshot and cast-range rings and the walls
  * (docs/art/art-direction.md "Compass"). Bodies beyond it are not shown:
  * the edge markers (#440) give direction, the compass distance.
  */
@@ -40,8 +40,23 @@ export interface CompassView {
     readonly y: number;
     readonly side: "ally" | "enemy";
   }[];
+  /** Each living Guild Lord in reach (#1226), a `♛` over its dot. */
+  readonly lords: readonly CompassMark[];
+  /** Each flag in reach where it is (#1226), on its carrier while carried. */
+  readonly flags: readonly CompassMark[];
+  /** The flag stand in reach (#1226), its holder's side, `undefined` held by nobody. */
+  readonly stand:
+    | { readonly x: number; readonly y: number; readonly holder: "ally" | "enemy" | undefined }
+    | undefined;
   /** Wall outlines, already clipped to the disc. */
   readonly walls: readonly (readonly Vec2[])[];
+}
+
+/** A marker of one side on the compass (#1226). */
+export interface CompassMark {
+  readonly x: number;
+  readonly y: number;
+  readonly side: "ally" | "enemy";
 }
 
 /** A wall's closed outline, corner by corner. */
@@ -171,6 +186,21 @@ export function compassView(
     shrines: arena.shrines
       .filter((shrine) => within(shrine.position))
       .map((shrine) => ({ ...local(shrine.position), side: shrine.side })),
+    lords: arena.actors
+      .filter(
+        (actor) => actor.creatureLook === "guild-lord" && !actor.dead && within(actor.position),
+      )
+      .map((actor) => ({
+        ...local(actor.position),
+        side: actor.team === "enemy" ? "enemy" : "ally",
+      })),
+    flags: arena.flags
+      .filter((flag) => within(flag.position))
+      .map((flag) => ({ ...local(flag.position), side: flag.side })),
+    stand:
+      arena.stand === undefined || !within(arena.stand.position)
+        ? undefined
+        : { ...local(arena.stand.position), holder: arena.stand.holder },
     walls: arena.walls.flatMap((wall) => clipOutline(outline(wall).map(local), sizePx / 2)),
   };
 }
@@ -188,6 +218,11 @@ const DOT_RADIUS = 3;
 const SMALL_DOT_RADIUS = 2;
 /** Half a shrine's `✚`, px. */
 const SHRINE_ARM = 4;
+/** The stand's `◎`, px: its ring and its centre. */
+const STAND_RING = 5;
+const STAND_DOT = 1.5;
+/** A flag's `⚑` and a lord's `♛`, px. */
+const GLYPH_FONT = "11px sans-serif";
 
 export interface Compass {
   /** Draw this frame's compass for `selfId`; hides it without a self actor. */
@@ -246,6 +281,28 @@ export function createCompass(parent: HTMLElement, reach: number): Compass {
       context.lineTo(shrine.x, shrine.y + SHRINE_ARM);
       context.stroke();
     }
+    // A Guild Battle's (#1226): the stand under its flag, the flags, then
+    // each lord's crown, over the dot the lord is drawn as below.
+    if (view.stand !== undefined) {
+      const colour =
+        view.stand.holder === undefined ? INK_DIM : view.stand.holder === "ally" ? FRIEND : FOE;
+      context.lineWidth = 1.5;
+      context.strokeStyle = colour;
+      context.fillStyle = colour;
+      context.beginPath();
+      context.arc(view.stand.x, view.stand.y, STAND_RING, 0, Math.PI * 2);
+      context.stroke();
+      context.beginPath();
+      context.arc(view.stand.x, view.stand.y, STAND_DOT, 0, Math.PI * 2);
+      context.fill();
+    }
+    context.font = GLYPH_FONT;
+    context.textAlign = "center";
+    context.textBaseline = "bottom";
+    for (const flag of view.flags) {
+      context.fillStyle = flag.side === "ally" ? FRIEND : FOE;
+      context.fillText("⚑", flag.x + 3, flag.y);
+    }
     context.lineWidth = 1;
     const still = prefersReducedMotion();
     context.strokeStyle = FRIEND;
@@ -278,6 +335,11 @@ export function createCompass(parent: HTMLElement, reach: number): Compass {
         context.strokeStyle = CALL;
         context.stroke();
       }
+    }
+    context.textBaseline = "bottom";
+    for (const lord of view.lords) {
+      context.fillStyle = lord.side === "ally" ? FRIEND : FOE;
+      context.fillText("♛", lord.x, lord.y - SMALL_DOT_RADIUS - 1);
     }
     context.restore();
   };

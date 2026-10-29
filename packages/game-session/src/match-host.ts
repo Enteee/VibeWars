@@ -292,7 +292,10 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
    */
   const teams = new Map<string, number>();
   /** The match's totals per player, for the summary. */
-  const tally = new MatchTally((id) => everSeated.get(id)?.team ?? teams.get(id));
+  const tally = new MatchTally(
+    (id) => everSeated.get(id)?.team ?? teams.get(id),
+    (id) => everSeated.has(id),
+  );
   /** One whole-number line per seat the match ever had. */
   const summary = (): WireSummaryRow[] =>
     [...everSeated].map(([id, { name, team }]) => {
@@ -882,6 +885,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       sim.stand === undefined
         ? null
         : { holder: wireTeam(sim.stand.holder), heldSeconds: sim.stand.heldSeconds },
+    aggression: sim.aggressionByTeam.map((total) => Math.round(total)),
   });
 
   /** Drop the seats whose players did not come back in time. */

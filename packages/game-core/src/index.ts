@@ -183,6 +183,7 @@ export { PRIEST_SKILL_ID, priestId } from "./match/priest.js";
 export type { GuildLord } from "./match/guild-lord.js";
 export type { FlagField, FlagPlace, FlagSpawn, FlagState, StandState } from "./match/flags.js";
 export {
+  FLAG_MORALE_BOOST,
   FLAG_REACH_UNITS,
   FLAG_STAND_ID,
   STAND_HOLD_SECONDS,

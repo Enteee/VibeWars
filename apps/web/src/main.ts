@@ -1235,10 +1235,10 @@ async function main(): Promise<void> {
           ...(queue === undefined
             ? {}
             : {
-                onFinished: ({ winningTeam, endReason, selfTeam }) => {
+                onFinished: ({ winningTeam, endReason, selfTeam, aggression }) => {
                   const won = selfTeam !== undefined && winningTeam === selfTeam;
                   queueStreak = nextStreak(queueStreak, won ? "win" : "loss");
-                  const outcome = describeOutcome(winningTeam, endReason, selfTeam);
+                  const outcome = describeOutcome(winningTeam, endReason, selfTeam, aggression);
                   queuedEnd = {
                     outcome,
                     won,

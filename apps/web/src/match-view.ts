@@ -54,6 +54,7 @@ import {
   renderMute,
   refreshSkillBar,
   renderSkillBar,
+  standBoostToast,
   updateHud,
   updateRecharges,
 } from "./ui/hud.js";
@@ -74,6 +75,7 @@ import { createPartyWindow } from "./ui/party-window.js";
 import { attachReconnectCountdown, mountReconnectOverlay } from "./ui/reconnect-overlay.js";
 import { renderSummary, summaryTables, type SummaryTable } from "./ui/match-summary.js";
 import { flashSlot, slotFlashes } from "./ui/skill-slot-state.js";
+import { toast } from "./ui/kit.js";
 
 /**
  * The in-match view: a Phaser viewport for the arena plus the DOM HUD,
@@ -96,6 +98,8 @@ export interface MatchOutcome {
   readonly winningTeam: number | undefined;
   readonly endReason: string | undefined;
   readonly selfTeam: number | undefined;
+  /** Each team's, on a Guild Battle (#1226); `[]` on any other. */
+  readonly aggression: readonly number[];
 }
 
 export interface MatchViewOptions {
@@ -597,6 +601,8 @@ export async function startMatchView(
 
   let finished = false;
   /** The summary (#1057), drawn once under the result banner when the host's `ended` lands. */
+  /** The stand as the last frame saw it, so a boost toasts once (#1226). */
+  let lastStand = connection.getSnapshot().stand;
   let summary:
     { readonly tables: readonly SummaryTable[]; readonly panel: HTMLElement } | undefined;
   const onFrame = (deltaSeconds: number): void => {
@@ -605,12 +611,18 @@ export async function startMatchView(
     matchMusic.snapshot(latestMatch);
     guardUnload(latestMatch.phase !== "finished");
     const self = latestMatch.players.find((p) => p.sessionId === connection.selfSessionId);
+    const boost = standBoostToast(lastStand, latestMatch.stand, self?.team);
+    lastStand = latestMatch.stand;
+    if (boost !== undefined) {
+      toast(boost);
+    }
     if (latestMatch.phase === "finished" && !finished) {
       finished = true;
       callbacks.onFinished?.({
         winningTeam: latestMatch.winningTeam,
         endReason: latestMatch.endReason,
         selfTeam: self?.team,
+        aggression: latestMatch.aggression,
       });
     }
     // The snapshot that says "finished" may land a frame before the `ended` that carries it.

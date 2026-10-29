@@ -953,6 +953,13 @@ export class MatchSimulation {
     return carriedFlag(this.flags, id) !== undefined;
   }
 
+  /** Each team's `aggression` by team index on a Guild Battle (#1226); `[]` on any other match. */
+  public get aggressionByTeam(): readonly number[] {
+    return this.#matchRules?.victory === "guild-battle"
+      ? [this.aggression(0), this.aggression(1)]
+      : [];
+  }
+
   /** Damage `team` has dealt to a foe's Guild Lord so far (#1222), after armor. */
   public aggression(team: number): number {
     return this.#aggression.get(team) ?? 0;

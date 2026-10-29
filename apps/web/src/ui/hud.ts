@@ -1,4 +1,5 @@
 import {
+  FLAG_MORALE_BOOST,
   FLAG_STAND_ID,
   flagTeamOf,
   getProfession,
@@ -9,8 +10,10 @@ import {
   type ActivationRejection,
   type ChainRole,
   PRIEST_WAVE_SECONDS,
+  STAND_HOLD_SECONDS,
   type MatchMode,
   type Segment,
+  type StandState,
   type StatusId,
 } from "@vibewars/game-core";
 import type { CastRefusedMessage } from "@vibewars/game-protocol";
@@ -163,6 +166,8 @@ export interface HudElements {
   readonly scoreboard: HTMLElement;
   readonly scoreboardText: HTMLElement;
   readonly enemies: HTMLElement;
+  /** A Guild Battle's flag carriers under the scoreboard, a line a flag (#1226). */
+  readonly carriers: HTMLElement;
   readonly result: HTMLElement;
   /** The match's buttons, top right, as one cluster (#454): the five below. */
   readonly controls: HTMLElement;
@@ -248,6 +253,7 @@ export function createHud(
   const scoreboard = element("div", "hud-scoreboard", top);
   const scoreboardText = element("span", "hud-scoreboard-text", scoreboard);
   const enemies = element("span", "hud-enemies", scoreboard);
+  const carriers = element("div", "hud-carriers", top);
   const result = element("div", "hud-result", parent);
   result.style.display = "none";
   // One cluster, top right (#454): leave and mute on top, Help, Options,
@@ -397,6 +403,7 @@ export function createHud(
     scoreboard,
     scoreboardText,
     enemies,
+    carriers,
     result,
     controls,
     mute,
@@ -677,20 +684,106 @@ function setBar(
 
 /**
  * The target frame's name for a flag or the stand selected (#1225),
- * which are no body; `undefined` for any other id.
+ * which are no body, the stand with its holder (#1226); `undefined` for
+ * any other id.
  */
 export function objectTargetName(
   targetId: string | undefined,
   selfTeam: number,
+  stand: StandState | undefined,
 ): string | undefined {
   if (targetId === FLAG_STAND_ID) {
-    return "Flag Stand";
+    if (stand?.holder === undefined) {
+      return "Flag Stand";
+    }
+    return stand.holder === selfTeam
+      ? "Flag Stand: held by your team"
+      : "Flag Stand: held by the enemy";
   }
   const team = targetId === undefined ? undefined : flagTeamOf(targetId);
   if (team === undefined) {
     return undefined;
   }
   return team === selfTeam ? "Your flag" : "Enemy flag";
+}
+
+/** One line under the scoreboard (#1226): a flag's carrier, or that it lies dropped. */
+export interface CarrierLine {
+  /** The flag's team, whose colour the line is in. */
+  readonly team: number;
+  readonly text: string;
+}
+
+/**
+ * A line for every flag away from home (#1226), your team's first: "⚑
+ * Name" while carried, "⚑ dropped" on the ground; none at its spawn or on
+ * the stand. A spectator reads team 0's first.
+ */
+export function carrierLines(
+  match: Pick<MatchSnapshot, "flags" | "players">,
+  selfTeam: number | undefined,
+): CarrierLine[] {
+  const ours = selfTeam ?? 0;
+  return [...match.flags]
+    .sort((a, b) => Number(a.team !== ours) - Number(b.team !== ours))
+    .flatMap(({ team, place }): CarrierLine[] => {
+      switch (place.kind) {
+        case "carried": {
+          const carrier = match.players.find((player) => player.sessionId === place.carrierId);
+          return [{ team, text: `⚑ ${carrier?.name ?? "dropped"}` }];
+        }
+        case "ground":
+          return [{ team, text: "⚑ dropped" }];
+        case "spawn":
+        case "stand":
+          return [];
+      }
+    });
+}
+
+/** Paint `lines` into `row`, each in its flag's side's colour, rebuilt only when one changes. */
+function renderCarriers(
+  row: HTMLElement,
+  lines: readonly CarrierLine[],
+  selfTeam: number | undefined,
+): void {
+  const key = JSON.stringify(lines);
+  if (row.dataset.lines === key) {
+    return;
+  }
+  row.dataset.lines = key;
+  row.replaceChildren();
+  for (const line of lines) {
+    const node = element("div", "hud-carrier", row);
+    node.textContent = line.text;
+    const ally = line.team === (selfTeam ?? 0);
+    node.style.setProperty("--pip-colour", cssColour(teamColour(ally ? "ally" : "enemy")));
+  }
+}
+
+/**
+ * The toast for a stand boost landing (#1226), from two snapshots' stand:
+ * the same holder with less time held is its boost, as game-core starts
+ * the count again. "Morale boost! +10%" for your side, "Enemy morale
+ * boost" for the foe's; a spectator's side is team 0's. `undefined` for
+ * no boost.
+ */
+export function standBoostToast(
+  before: StandState | undefined,
+  after: StandState | undefined,
+  selfTeam: number | undefined,
+): string | undefined {
+  if (
+    before === undefined ||
+    after?.holder === undefined ||
+    after.holder !== before.holder ||
+    after.heldSeconds >= before.heldSeconds
+  ) {
+    return undefined;
+  }
+  return after.holder === (selfTeam ?? 0)
+    ? `Morale boost! +${String(FLAG_MORALE_BOOST)}%`
+    : "Enemy morale boost";
 }
 
 /** Whether `playerId` carries a flag (#1225): the Drop button shows. */
@@ -783,18 +876,52 @@ export const RAISE_SOON_SECONDS = 5;
 
 /**
  * One piece of the scoreboard (#1199): text, a side's priest `✚`, alive
- * or struck out, or the countdown to the next priest wave.
+ * or struck out, or the countdown to the next priest wave. A Guild Battle
+ * (#1226) adds text in a side's colour, struck out `dead`, or grey for
+ * no side: a lord's health, the stand's holder.
  */
 export type ScoreboardPart =
   | { readonly kind: "text"; readonly text: string }
   | { readonly kind: "priest"; readonly team: number; readonly alive: boolean }
-  | { readonly kind: "raise"; readonly text: string; readonly soon: boolean };
+  | { readonly kind: "raise"; readonly text: string; readonly soon: boolean }
+  | {
+      readonly kind: "side";
+      readonly team: number | undefined;
+      readonly text: string;
+      readonly dead: boolean;
+    };
+
+/** What the scoreboard reads of the match besides its bodies and clock. */
+export type ScoreboardMatch = Pick<
+  MatchSnapshot,
+  "scoreTeam0" | "scoreTeam1" | "stand" | "aggression"
+>;
+
+/** The clock left at which a Guild Battle shows its aggression (#1226): the last 3 minutes. */
+export const AGGRESSION_SHOWN_SECONDS = 180;
 
 /** Whether `team`'s priest stands (#1199): a living priest body of that team. */
 export function priestLives(players: readonly PlayerSnapshot[], team: number): boolean {
   return players.some(
     (player) => player.team === team && !player.dead && player.creature?.kind === "priest",
   );
+}
+
+/**
+ * `team`'s Guild Lord's health in whole percent (#1226), rounded down
+ * and 1 at least while it stands, as the target frame reads it; 0 dead,
+ * or with no lord in the snapshot.
+ */
+export function lordPercent(players: readonly PlayerSnapshot[], team: number): number {
+  const lord = players.find(
+    (player) => player.team === team && player.creature?.kind === "guild-lord",
+  );
+  return lord === undefined ? 0 : targetHealthPercent(lord);
+}
+
+/** 1240 as "1,240". */
+function thousands(value: number): string {
+  return Math.round(value).toLocaleString("en-US");
 }
 
 /**
@@ -808,8 +935,10 @@ export function priestLives(players: readonly PlayerSnapshot[], team: number): b
  * Priest Annihilation counts the living, then each side's priest and the
  * next wave, "4 v 3 · ✚ ✚ · raise 0:47 · 7:12" (#1199): `raise —` once
  * both priests are dead, and no countdown once time is out. A Guild
- * Battle counts the living, as Annihilation, until its own scoreboard
- * (#1226).
+ * Battle reads "Lord 82% · 64% · ⚑ 1:12 · raise 0:47 · 21:40" (#1226):
+ * each lord's health, the stand's holder and the time to its boost, or
+ * "⚑ —" held by nobody, and the shrines' wave; in the last 3 minutes
+ * each side's aggression too, "agg 1,240 v 980", before the clock.
  */
 export function scoreboardParts(
   players: readonly PlayerSnapshot[],
@@ -817,28 +946,58 @@ export function scoreboardParts(
   elapsedSeconds: number,
   timeLimitSeconds: number | null,
   mode: MatchMode,
-  score: readonly [number, number],
+  match: ScoreboardMatch,
 ): readonly ScoreboardPart[] {
   const ours = selfTeam ?? 0;
   const theirs = ours === 0 ? 1 : 0;
   // Rounded up, so the clock reads 0:00 only once time is out.
+  const left = timeLimitSeconds === null ? null : Math.ceil(timeLimitSeconds - elapsedSeconds);
   const clock: ScoreboardPart = {
     kind: "text",
-    text:
-      timeLimitSeconds === null
-        ? formatClock(elapsedSeconds)
-        : formatClock(Math.ceil(timeLimitSeconds - elapsedSeconds)),
+    text: left === null ? formatClock(elapsedSeconds) : formatClock(left),
   };
+  const score = [match.scoreTeam0, match.scoreTeam1];
   const living: ScoreboardPart = {
     kind: "text",
     text: `${String(livingCount(players, ours))} v ${String(livingCount(players, theirs))}`,
   };
   switch (mode) {
     case "annihilation":
-    case "guild-battle":
       return [living, clock];
     case "kill-count":
-      return [{ kind: "text", text: `${String(score[ours])} – ${String(score[theirs])}` }, clock];
+      return [
+        { kind: "text", text: `${String(score[ours] ?? 0)} – ${String(score[theirs] ?? 0)}` },
+        clock,
+      ];
+    case "guild-battle": {
+      const lords = [ours, theirs].map((team, index): ScoreboardPart => {
+        const percent = lordPercent(players, team);
+        const text = `${String(percent)}%`;
+        return {
+          kind: "side",
+          team,
+          text: index === 0 ? `Lord ${text}` : text,
+          dead: percent === 0,
+        };
+      });
+      const stand = standPart(match.stand);
+      const aggression: ScoreboardPart[] =
+        left !== null && left <= AGGRESSION_SHOWN_SECONDS
+          ? [
+              {
+                kind: "text",
+                text: `agg ${thousands(match.aggression[ours] ?? 0)} v ${thousands(match.aggression[theirs] ?? 0)}`,
+              },
+            ]
+          : [];
+      return [
+        ...lords,
+        ...(stand === undefined ? [] : [stand]),
+        waveCountdown(elapsedSeconds),
+        ...aggression,
+        clock,
+      ];
+    }
     case "priest-annihilation": {
       const priests = [ours, theirs].map((team): ScoreboardPart => ({
         kind: "priest",
@@ -859,8 +1018,29 @@ function raisePart(players: readonly PlayerSnapshot[], elapsedSeconds: number): 
   if (!priestLives(players, 0) && !priestLives(players, 1)) {
     return { kind: "raise", text: "raise —", soon: false };
   }
+  return waveCountdown(elapsedSeconds);
+}
+
+/** The countdown to the next wave, a priests' (#1199) or a Guild Battle's shrines' (#1226). */
+function waveCountdown(elapsedSeconds: number): ScoreboardPart {
   const left = Math.ceil(PRIEST_WAVE_SECONDS - (elapsedSeconds % PRIEST_WAVE_SECONDS));
   return { kind: "raise", text: `raise ${formatClock(left)}`, soon: left <= RAISE_SOON_SECONDS };
+}
+
+/**
+ * The stand on the scoreboard (#1226): its holder's `⚑` and the time to
+ * the boost, rounded up as the clock is; a grey `⚑ —` held by nobody;
+ * nothing on a map without a stand.
+ */
+function standPart(stand: StandState | undefined): ScoreboardPart | undefined {
+  if (stand === undefined) {
+    return undefined;
+  }
+  if (stand.holder === undefined) {
+    return { kind: "side", team: undefined, text: "⚑ —", dead: false };
+  }
+  const left = Math.max(0, Math.ceil(STAND_HOLD_SECONDS - stand.heldSeconds));
+  return { kind: "side", team: stand.holder, text: `⚑ ${formatClock(left)}`, dead: false };
 }
 
 /** What goes before `parts[index]`: nothing first, a space between two priests, else ` · `. */
@@ -916,6 +1096,15 @@ function renderScoreboard(
         node.textContent = part.text;
         return;
       }
+      case "side": {
+        const node = element("span", part.dead ? "hud-side is-dead" : "hud-side", row);
+        node.textContent = part.text;
+        if (part.team !== undefined) {
+          const ally = selfTeam === undefined ? part.team === 0 : part.team === selfTeam;
+          node.style.setProperty("--pip-colour", cssColour(teamColour(ally ? "ally" : "enemy")));
+        }
+        return;
+      }
     }
   });
 }
@@ -958,20 +1147,29 @@ const OUTCOME_REASONS: Readonly<Record<string, string>> = {
   time: " (time)",
   morale: " (morale)",
   "guild-lord": " (Guild Lord slain)",
-  aggression: " (most aggression at time)",
 };
 
 /**
  * The end-of-match line a player reads, from their own team's point of
  * view. An annihilation match nobody won is lost by every team (GW1,
- * #846), and so is a Guild Battle (#1222); only kill-count draws.
+ * #846), and so is a Guild Battle (#1222); only kill-count draws. A
+ * Guild Battle decided at time says both sides' `aggression`, yours first
+ * (#1226): short, as every one of these lines fits one line of the banner.
  */
 export function describeOutcome(
   winningTeam: number | undefined,
   reason: string | undefined,
   selfTeam: number | undefined,
+  aggression: readonly number[],
 ): string {
-  const why = reason === undefined ? "" : (OUTCOME_REASONS[reason] ?? "");
+  const ours = selfTeam ?? 0;
+  const theirs = ours === 0 ? 1 : 0;
+  const why =
+    reason === "aggression"
+      ? ` (aggression ${thousands(aggression[ours] ?? 0)} v ${thousands(aggression[theirs] ?? 0)})`
+      : reason === undefined
+        ? ""
+        : (OUTCOME_REASONS[reason] ?? "");
   if (winningTeam === undefined) {
     if (
       reason === "annihilation" ||
@@ -1282,10 +1480,11 @@ function renderTarget(
   hud: HudElements,
   self: PlayerSnapshot,
   target: PlayerSnapshot | undefined,
+  stand: StandState | undefined,
 ): void {
   renderTargetProfessions(hud.targetProfessions, target);
   hud.targetText.textContent =
-    target?.name ?? objectTargetName(self.targetSessionId, self.team) ?? "no target";
+    target?.name ?? objectTargetName(self.targetSessionId, self.team, stand) ?? "no target";
   hud.targetBot.hidden = target?.bot !== true;
   hud.attacking.hidden = !isAttackingTarget(self, target);
   const invulnerable = target === undefined || target.dead ? 0 : target.invulnerableSeconds;
@@ -1364,17 +1563,27 @@ export function updateHud(
   if (match !== undefined) {
     renderScoreboard(
       hud.scoreboardText,
-      scoreboardParts(match.players, self?.team, match.elapsedSeconds, timeLimitSeconds, mode, [
-        match.scoreTeam0,
-        match.scoreTeam1,
-      ]),
+      scoreboardParts(
+        match.players,
+        self?.team,
+        match.elapsedSeconds,
+        timeLimitSeconds,
+        mode,
+        match,
+      ),
       self?.team,
     );
     renderEnemyPips(hud.enemies, enemyPips(match.players, self?.team), self?.team);
+    renderCarriers(hud.carriers, carrierLines(match, self?.team), self?.team);
 
     if (match.phase === "finished") {
       hud.result.style.display = "";
-      hud.result.textContent = describeOutcome(match.winningTeam, match.endReason, self?.team);
+      hud.result.textContent = describeOutcome(
+        match.winningTeam,
+        match.endReason,
+        self?.team,
+        match.aggression,
+      );
     } else {
       hud.result.style.display = "none";
     }
@@ -1417,7 +1626,7 @@ export function updateHud(
         ],
   );
 
-  renderTarget(hud, self, target);
+  renderTarget(hud, self, target, match?.stand);
   renderTargetChain(hud.targetChain, targetChainIcon(target, chainMark));
   hud.targetEffects.update(targetEffectRows(self, target, names, now));
 

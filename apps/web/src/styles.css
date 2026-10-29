@@ -2144,6 +2144,36 @@ body {
   text-decoration: line-through;
 }
 
+/* A Guild Battle's lords and stand (#1226): a side's colour, grey for none. */
+.hud-side {
+  color: var(--pip-colour, var(--ink-dim));
+}
+
+.hud-side.is-dead {
+  opacity: 0.4;
+  text-decoration: line-through;
+}
+
+/* A line a flag away from home, under the scoreboard (#1226). */
+.hud-carriers {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+}
+
+.hud-carriers:empty {
+  display: none;
+}
+
+.hud-carrier {
+  padding: 0.1rem 0.6rem;
+  background: rgb(14 17 22 / 85%);
+  border: 1px solid var(--line);
+  color: var(--pip-colour);
+  white-space: nowrap;
+}
+
 /* The next priest wave close (#1199): the countdown pulses for its last
    5 s. A warning, so it pulses under reduced motion too, as a blink. */
 .hud-raise-soon {
@@ -2336,6 +2366,11 @@ body {
   letter-spacing: 0.15em;
   text-transform: uppercase;
   pointer-events: none;
+  /* As wide as its line, not half the view its left: 50% leaves it, so a
+     Guild Battle's line stays one at 1100 px (#1226); a phone wraps. */
+  width: max-content;
+  max-width: calc(100% - 2rem);
+  text-align: center;
 }
 
 /* The match summary (#1057): both teams side by side under the result

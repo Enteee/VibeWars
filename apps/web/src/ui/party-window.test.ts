@@ -63,6 +63,7 @@ function match(players: readonly PlayerSnapshot[], selfSessionId = "me"): MatchS
     traps: [],
     flags: [],
     stand: undefined,
+    aggression: [],
     summary: undefined,
   };
 }

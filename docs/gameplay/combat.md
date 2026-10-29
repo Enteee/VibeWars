@@ -1720,8 +1720,13 @@ In Priest Annihilation it counts the living, then each team's priest,
 yours first, and the next wave: `4 v 3 · ✚ ✚ · raise 0:47 · 7:12`
 (#1199). A priest's ✚ dims once it is dead, and the countdown reads
 `raise —` once both are.
-A Guild Battle counts the living, as Annihilation does, until its own
-scoreboard (#1226).
+A Guild Battle reads each Guild Lord's health, the stand and the next
+wave, yours first: `Lord 82% · 64% · ⚑ 1:12 · raise 0:47 · 21:40`
+(#1226). The `⚑` is in its holder's colour with the time left to its
+boost, or a grey `⚑ —` held by nobody; in the last 3 minutes each
+team's aggression joins it, `agg 1,240 v 980`. Under it, a line for
+each flag away from home: `⚑ Name` on its carrier, `⚑ dropped` on the
+ground.
 
 With the death penalty on, each player has a **morale** between −60%
 and +10%, starting at 0. A death takes 15%, down to −60%, unless it came
@@ -1806,7 +1811,8 @@ A Guild Battle (#1222) ends the moment a **Guild Lord dies**: its team
 loses, "(Guild Lord slain)". A team whose every member is dead at -60%
 loses next, "(morale)": no shrine can raise them. A wipe alone does not
 end it; the shrines raise every 2 minutes with no priest. After **28
-minutes** the most aggression wins, "(most aggression at time)". In that
+minutes** the most aggression wins, "(aggression 1,240 v 980)", yours
+first (#1226). In that
 order: the lord first, then morale, then time. Both lords in one tick,
 or equal aggression, and both teams lose.
 
