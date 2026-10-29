@@ -1,6 +1,7 @@
 import {
   ANNIHILATION_MATCH_RULES,
   defaultBuildEquipment,
+  type MatchRules,
   type PlayerBuild,
 } from "@vibewars/game-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -34,7 +35,7 @@ import { hello, playerIn, self, settle, toJson, until } from "./match-harness.te
 /** A lobby whose members, after the host, are named `names` and sit on `teams` (host first). */
 async function lobbyOf(
   teams: readonly (0 | 1 | null)[],
-  matchRules = ANNIHILATION_MATCH_RULES,
+  matchRules: MatchRules | ((n: number) => MatchRules) = ANNIHILATION_MATCH_RULES,
 ): Promise<{ lobby: TestLobby; members: Member[] }> {
   const lobby = await openLobby({ matchRules });
   const members = [lobby.host];
@@ -179,41 +180,54 @@ describe("a lobby's own match", () => {
   });
 
   it("lets the next match start while the last still drains to its spectator (#480)", async () => {
-    const { lobby, members } = await lobbyOf([0, 1, null], {
-      ...ANNIHILATION_MATCH_RULES,
-      timeLimitSeconds: 1,
-    });
+    // Only the first match is short: the second is still on when the first has drained.
+    const { lobby, members } = await lobbyOf([0, 1, null, null, null], (n) =>
+      n === 0 ? { ...ANNIHILATION_MATCH_RULES, timeLimitSeconds: 1 } : ANNIHILATION_MATCH_RULES,
+    );
     await start(lobby);
     await play(lobby.host);
     await play(at(members, 1));
-    const spectator = at(members, 2);
-    const { hostId } = spectator.connection.getSnapshot();
-    const watch = (matchId: string) =>
+    const matchId = (n: number): string => lobby.matches[n]?.plan.matchId ?? "";
+    const watch = (who: Member, n: number) =>
       connectObserver({
-        transport: scopeTransport(spectator.transport),
-        hostId,
-        matchId,
+        transport: scopeTransport(who.transport),
+        hostId: who.connection.getSnapshot().hostId,
+        matchId: matchId(n),
         timeoutMs: 1000,
       });
-    const first = await watch(lobby.matches[0]?.plan.matchId ?? "");
+    // One stays a viewer of the first match, one goes on to watch the
+    // second, and one to play in it.
+    const [stays, watcher, player] = [at(members, 2), at(members, 3), at(members, 4)];
+    const first = await watch(stays, 0);
+    await watch(watcher, 0);
+    await watch(player, 0);
     await lobby.step(1);
     expect(lobby.matches[0]?.host.draining).toBe(true);
 
     // Readied again and started at once: the first match has not drained.
-    await seat(members, [0, 1, null]);
+    await seat(members, [0, 1, null, null, 0]);
     await start(lobby);
     expect(lobby.matches).toHaveLength(2);
-    const second = [await play(lobby.host), await play(at(members, 1))];
-    expect(second.map((match) => match.getSnapshot().phase)).toEqual(["active", "active"]);
-    await watch(lobby.matches[1]?.plan.matchId ?? "");
+    const second = [await play(lobby.host), await play(at(members, 1)), await play(player)];
+    expect(second.map((match) => match.getSnapshot().phase)).toEqual([
+      "active",
+      "active",
+      "active",
+    ]);
+    const watched = await watch(watcher, 1);
     // A viewer late for the first match is not answered by it, only by the one played now.
-    await expect(watch(lobby.matches[0]?.plan.matchId ?? "")).rejects.toMatchObject({
-      reason: "wrong-match",
-    });
+    await expect(watch(watcher, 0)).rejects.toMatchObject({ reason: "wrong-match" });
 
     await lobby.step(OBSERVER_DELAY_SECONDS);
     expect(first.getSnapshot()?.phase).toBe("finished");
     expect(lobby.matches[0]?.host.draining).toBe(false);
+    // Neither who moved on was sent the first match's end in the second.
+    expect(second.map((match) => match.getSnapshot().phase)).toEqual([
+      "active",
+      "active",
+      "active",
+    ]);
+    expect(watched.getSnapshot()?.phase).not.toBe("finished");
   });
 
   it("is full before anyone arrives, so a stranger cannot take or hold a seat", async () => {

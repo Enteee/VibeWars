@@ -4,6 +4,7 @@ import {
   parseWireSnapshotPart,
   type Channel,
   type PeerObserve,
+  type WireEnded,
 } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
@@ -214,6 +215,26 @@ describe("a match's observers (#480)", () => {
     viewer.send("observe", stale, "host");
     await settle();
     expect(refusals).toMatchObject([{ reason: "protocol-mismatch" }]);
+  });
+
+  it("take nothing the host sent before `observing`: the end of a match watched before", async () => {
+    const { match } = await twoPlayers();
+    const transport = match.network.join("viewer");
+    await settle();
+    const viewing = connectObserver({
+      transport,
+      hostId: "host",
+      matchId: TEST_MATCH_ID,
+      timeoutMs: 1000,
+    });
+    // On its way before the observe was heard, as a draining match's end is.
+    const ended: WireEnded = { winningTeam: 0, endReason: "annihilation", summary: [] };
+    match.hostTransport.send("ended", ended, "viewer");
+    await settle();
+    const viewer = await viewing;
+
+    await match.step(OBSERVER_DELAY_SECONDS + TICK_SECONDS);
+    expect(viewer.getSnapshot()?.phase).toBe("active");
   });
 
   it("are sent the end the delay after the players, and then the match is over to them too", async () => {

@@ -88,7 +88,12 @@ export function connectObserver(options: ConnectObserverOptions): Promise<Observ
 
   // A tick's snapshot comes in parts (#662); what follows sees it whole.
   const assemble = snapshotAssembler();
+  // Nothing of the stream counts before `observing`: what comes earlier is
+  // a match this peer watched before, its host still draining it (#480).
   fromHost("snapshot", parseWireSnapshotPart, (part) => {
+    if (!settled) {
+      return;
+    }
     const snapshot = assemble(part);
     // Only ever forward: one late or replayed is dropped.
     if (snapshot === undefined || (latest !== undefined && snapshot.tick <= latest.wire.tick)) {
@@ -101,6 +106,9 @@ export function connectObserver(options: ConnectObserverOptions): Promise<Observ
     }
   });
   fromHost("combat", parseWireCombatBatch, (batch) => {
+    if (!settled) {
+      return;
+    }
     for (const entry of batch) {
       const message = combatMessage(entry);
       for (const handler of combatHandlers) {
@@ -111,7 +119,7 @@ export function connectObserver(options: ConnectObserverOptions): Promise<Observ
   fromHost("ended", parseWireEnded, (message) => {
     if (message.endReason === "host-left") {
       loseHost();
-    } else {
+    } else if (settled) {
       ended = message;
     }
   });

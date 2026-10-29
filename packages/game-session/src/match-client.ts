@@ -228,7 +228,12 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
 
   // A tick's snapshot comes in parts (#662); what follows sees it whole.
   const assemble = snapshotAssembler();
+  // Nothing of the stream counts before the welcome: what comes earlier is
+  // a match this peer watched before, its host still draining it (#480).
   fromHost("snapshot", parseWireSnapshotPart, (part) => {
+    if (welcomed === undefined) {
+      return;
+    }
     const snapshot = assemble(part);
     if (snapshot === undefined) {
       return;
@@ -244,6 +249,9 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
     }
   });
   fromHost("combat", parseWireCombatBatch, (batch) => {
+    if (welcomed === undefined) {
+      return;
+    }
     for (const entry of batch) {
       const message = combatMessage(entry);
       for (const handler of combatHandlers) {
@@ -272,6 +280,9 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
     traps = message.traps;
   });
   fromHost("ended", parseWireEnded, (message) => {
+    if (message.endReason !== "host-left" && welcomed === undefined) {
+      return;
+    }
     summary = message.summary;
     if (message.endReason === "host-left") {
       loseHost();

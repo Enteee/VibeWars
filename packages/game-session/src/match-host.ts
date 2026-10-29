@@ -204,7 +204,8 @@ export interface MatchHost {
    * The room is the next match's now (#480): a draining match answers
    * nobody again, so it never turns away a player or a viewer of the one
    * after it on the same channels. Only its observers' stream runs on,
-   * and a bye or a leave from one of them.
+   * and a bye or a leave from one of them. One who says hello to, or
+   * observes, the next match is in that one's stream instead.
    */
   retire(): void;
   /** Tell every peer the match is over because the host left, then leave. */
@@ -581,6 +582,18 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     }
   };
 
+  /**
+   * Retired, a hello or an observe is for the match after this one: whoever
+   * sent it watches that one now, so this one stops streaming to them. The
+   * next host answers after this, on the same channel, so its client has
+   * all this match sent before its welcome or `observing`, and nothing after.
+   */
+  const moveOn = (peerId: string): void => {
+    if (observers.has(peerId)) {
+      unobserve(peerId);
+    }
+  };
+
   /** Seat `peerId` in `seat`, as a new player or one coming back, and tell it so. */
   const welcome = (seat: Seat, peerId: string): void => {
     seat.peerId = peerId;
@@ -676,8 +689,12 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   };
 
   transport.on("hello", (data, from) => {
+    if (retired) {
+      moveOn(from);
+      return;
+    }
     // Charged like an intent: every hello may send a whole map back.
-    if (retired || !budget.take(from, nowMs()) || departed.has(from)) {
+    if (!budget.take(from, nowMs()) || departed.has(from)) {
       return;
     }
     // Checked first: a client of another version, or of none, is told so
@@ -709,8 +726,12 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   });
 
   transport.on("observe", (data, from) => {
+    if (retired) {
+      moveOn(from);
+      return;
+    }
     // Charged like a hello: every observing sends a whole map back.
-    if (retired || !budget.take(from, nowMs())) {
+    if (!budget.take(from, nowMs())) {
       return;
     }
     if (helloProtocolVersion(data) !== PROTOCOL_VERSION) {

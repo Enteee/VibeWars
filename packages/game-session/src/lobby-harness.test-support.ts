@@ -53,7 +53,11 @@ function member(connection: LobbyConnection, transport: Transport): Member {
 }
 
 export async function openLobby(
-  options: { matchRules?: MatchRules; startMatch?: (plan: MatchPlan) => MatchHost } = {},
+  options: {
+    /** One set of rules for every match, or the rules of the `n`th, from 0. */
+    matchRules?: MatchRules | ((n: number) => MatchRules);
+    startMatch?: (plan: MatchPlan) => MatchHost;
+  } = {},
 ): Promise<TestLobby> {
   const network = createMemoryNetwork();
   const matches: { plan: MatchPlan; host: MatchHost }[] = [];
@@ -70,7 +74,10 @@ export async function openLobby(
           transport: plan.transport,
           map: ARENA,
           seed: plan.matchId,
-          matchRules: options.matchRules ?? ANNIHILATION_MATCH_RULES,
+          matchRules:
+            typeof options.matchRules === "function"
+              ? options.matchRules(matches.length)
+              : (options.matchRules ?? ANNIHILATION_MATCH_RULES),
           random: () => ((draws += 1) * 0.6180339887) % 1,
           maxPlayers: 8,
           seats: plan.seats,
