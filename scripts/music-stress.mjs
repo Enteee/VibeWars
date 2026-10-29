@@ -221,6 +221,7 @@ const REACTIVITY_S = 69;
 /**
  * @typedef {{
  *   step: string,
+ *   abandoned: boolean,
  *   browser: import("@playwright/test").Browser | undefined,
  * }} Progress
  */
@@ -256,7 +257,11 @@ async function shut(browser) {
 function deadlineSeconds() {
   const override = process.env.MUSIC_MEASURE_DEADLINE_S;
   if (override !== undefined) {
-    return Number(override);
+    const seconds = Number(override);
+    if (!Number.isFinite(seconds) || seconds <= 0) {
+      throw new Error(`MUSIC_MEASURE_DEADLINE_S must be a positive number, not "${override}"`);
+    }
+    return seconds;
   }
   return Math.max(180, 3 * (SETUP_S + (options.reactivity ? REACTIVITY_S : SECONDS)));
 }
@@ -270,7 +275,7 @@ function deadlineSeconds() {
  */
 async function measureWithDeadline(url, load) {
   /** @type {Progress} */
-  const progress = { step: "launch", browser: undefined };
+  const progress = { step: "launch", abandoned: false, browser: undefined };
   const started = Date.now();
   const work = measure(url, load, progress).then((rows) => ({ rows }));
   // If the deadline wins, whatever the abandoned load throws later is not news.
@@ -291,6 +296,7 @@ async function measureWithDeadline(url, load) {
     console.log(
       `HUNG ${load.browser} "${load.name}" at ${progress.step} after ${String(seconds)} s`,
     );
+    progress.abandoned = true;
     await shut(progress.browser);
     return { hung: { step: progress.step, seconds } };
   } finally {
@@ -309,11 +315,18 @@ async function measureWithDeadline(url, load) {
 async function measure(url, load, progress) {
   /** @type {Map<string, number>} */
   const messages = new Map();
-  progress.step = "launch";
+  /** Move to the next step; a load the deadline gave up on stops here, and its browser closes. */
+  const at = (/** @type {string} */ step) => {
+    if (progress.abandoned) {
+      throw new Error(`abandoned before ${step}`);
+    }
+    progress.step = step;
+  };
+  at("launch");
   const browser = await launch(load.browser);
   progress.browser = browser;
   try {
-    progress.step = "context";
+    at("context");
     const device = devices["Pixel 7 landscape"];
     const context = await browser.newContext(
       load.browser === "chromium"
@@ -367,10 +380,10 @@ async function measure(url, load, progress) {
     const query =
       `?musicstats${load.stress > 0 ? `&stress=${String(load.stress)}` : ""}` +
       ((load.audioStress ?? 0) > 0 ? `&audiostress=${String(load.audioStress)}` : "");
-    progress.step = "goto";
+    at("goto");
     await page.goto(`${url}${query}`);
     await page.locator(".roster").waitFor();
-    progress.step = "setup";
+    at("setup");
     if (load.screen !== "menu") {
       // Every screen #screens shows and every press the page receives, in
       // order: a red run says whether the editor ever came, and whether the
@@ -438,7 +451,7 @@ async function measure(url, load, progress) {
     }
     await page.waitForFunction(() => "__musicStats" in window, undefined, { timeout: 30_000 });
 
-    progress.step = "throttle";
+    at("throttle");
     if (load.cpu > 1) {
       const cdp = await context.newCDPSession(page);
       await cdp.send("Emulation.setCPUThrottlingRate", { rate: load.cpu });
@@ -452,7 +465,7 @@ async function measure(url, load, progress) {
         /** @type {{ musicStatsSeen: unknown[] }} */ (/** @type {unknown} */ (window))
           .musicStatsSeen.length,
     );
-    progress.step = "measuring";
+    at("measuring");
     const playing = load.screen === "match" ? play(page) : undefined;
     if (options.reactivity) {
       await steps(page);
@@ -462,9 +475,9 @@ async function measure(url, load, progress) {
       await music(page, "crossfadeTo", CROSSFADE_TO);
       await sleep((SECONDS * 1000) / 2);
     }
-    progress.step = "stop-play";
+    at("stop-play");
     await playing?.stop();
-    progress.step = "read-stats";
+    at("read-stats");
     const { seen, heard } = await page.evaluate(() => {
       const w = /** @type {{ musicStatsSeen: unknown[], musicHeardSeen: unknown[] }} */ (
         /** @type {unknown} */ (window)
