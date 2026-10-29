@@ -288,7 +288,7 @@ export const SKILL_ICONS = {
   "necromancer.vampiric-touch": { glyph: "eye-drop", modifier: "plus" },
   "necromancer.vampiric-swarm": { glyph: "eye-drop", modifier: "area" },
   "necromancer.shadow-strike": { glyph: "eye-drop", modifier: "bolt" },
-  "necromancer.blood-of-the-aggressor": { glyph: "sword", modifier: "bleed" },
+  "necromancer.blood-of-the-aggressor": { glyph: "eye-drop", modifier: "down" },
   "necromancer.barbed-signet": { glyph: "hex-burst", modifier: "bleed" },
   "necromancer.offering-of-blood": { glyph: "energy", modifier: "bleed" },
 };
