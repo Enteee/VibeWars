@@ -1600,6 +1600,27 @@ const skillGlyph = {
   // Chevrons and a bar, as on the Escape stance (#981).
   retreat: () => inkLine("M3 6L9 12L3 18M10 6L16 12L10 18", 2.5) + inkLine("M20 5V19", 2.6),
   speed: () => inkLine("M4 4L10 12L4 20M11 4L17 12L11 20", 2.5),
+  // A fist-sized impact star behind a heavy stroke: any melee blow, the weapon unsaid (#1396).
+  blow: () =>
+    inkLine("M2.5 2.5L8 8", 3) +
+    inkFill("M13 3.5L14.6 8L19 7L15.8 10.5L18 14.5L13.6 12.8L10 16L10.6 11.4L6 9.5L10.4 8.4Z"),
+  // A wide arc with a second inside it: a sweep that clears the ground in front (#1396).
+  sweep: () =>
+    inkLine("M3.5 19C3.5 10 9 4.5 18 4.5", 2.8) + inkLine("M8 19C8 14 11 11 15.5 10.5", 2.2),
+  // Three chevrons: a stance that hurries the bearer (#1396).
+  rush: () => inkLine("M3 5L9 12L3 19M9.5 5L15.5 12L9.5 19M16 5L22 12L16 19", 2.2),
+  // A bull's head, front on, with wide horns and a broad muzzle: the dolyak (#1396).
+  dolyak: () =>
+    inkLine("M5 11C2.5 10.5 2 7 3.5 4.5M19 11C21.5 10.5 22 7 20.5 4.5", 2.4) +
+    inkFill("M6 9L18 9L16.5 15.5L14 20H10L7.5 15.5Z") +
+    `<circle cx="9.7" cy="12.5" r="1.1" fill="${C.bg}"/><circle cx="14.3" cy="12.5" r="1.1" fill="${C.bg}"/>`,
+  // A heart with a plus: more maximum Health (#1396).
+  "heart-plus": () =>
+    inkLine("M12 20L5 13a4 4 0 0 1 7-4.7 4 4 0 0 1 7 4.7z", 2) +
+    inkLine("M12 10.5V16M9.2 13.2H14.8", 2),
+  // A bolt under a ceiling: energy per hit, up to a cap (#1396).
+  "bolt-cap": () =>
+    inkFill("M13.5 7L8.5 14.5H12L11 21L16 13H12.5Z") + inkLine("M4.5 4.5H19.5", 2.2),
   slow: () => inkLine("M20 4L14 12L20 20M13 4L7 12L13 20", 2.5),
   dash: () => inkLine("M3 7H11M2 12H9M3 17H11", 2) + inkLine("M13 4L21 12L13 20", 2.6),
   // Two small skulls, one raised: a pack of minions (#1112).
