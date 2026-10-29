@@ -228,14 +228,18 @@ export function criticalChance(snapshot: WeaponSnapshot, rules: CombatRules): nu
 }
 
 /**
- * Critical Strikes' energy for a critical blow (#606), and its statuses'
- * (#988, Critical Eye's 1), up to the attacker's maximum. Statuses are
- * read as the blow lands. A dead attacker, as one whose arrow lands after
- * it fell, gains none.
+ * What a critical blow gives its attacker: Critical Strikes' energy
+ * (#606), and its statuses' (#988, Critical Eye's 1), up to the
+ * attacker's maximum, and its statuses that refresh on one back to full
+ * (#1315, Critical Defenses). Statuses are read as the blow lands. A dead
+ * attacker, as one whose arrow lands after it fell, gains none.
  */
-export function gainCriticalEnergy(attacker: Combatant, rank: number, events: CombatEvent[]): void {
+export function landedCritical(attacker: Combatant, rank: number, events: CombatEvent[]): void {
   const extra = aggregateModifiers(attacker.statuses.active).energyPerCritical;
   gainEnergy(attacker, criticalStrikesEnergy(rank) + extra, events);
+  if (!attacker.dead) {
+    attacker.statuses.refreshOnCritical();
+  }
 }
 
 /**
@@ -339,6 +343,12 @@ export interface BlowRule {
    */
   readonly conditionalBonus:
     { readonly condition: StateCondition; readonly amount: number } | undefined;
+  /**
+   * When the blow is a critical hit whatever the roll (#1315): read, as
+   * `conditionalBonus` is, by `settleBlow`, which leaves `"always"` or
+   * `undefined`.
+   */
+  readonly criticalWhen: StateCondition | "always" | undefined;
 }
 
 /** A swing of the weapon and nothing else. */
@@ -349,6 +359,7 @@ export const PLAIN_BLOW: BlowRule = {
   damageType: undefined,
   armorPenetration: 0,
   conditionalBonus: undefined,
+  criticalWhen: undefined,
 };
 
 /** The blow `skill` makes of `caster`'s weapon, its bonus at the caster's ranks. */
@@ -369,13 +380,16 @@ export function skillBlow(skill: Skill, caster: Combatant): BlowRule {
             condition: conditionalBonus.condition,
             amount: resolveMagnitude(conditionalBonus.amount, caster),
           },
+    criticalWhen: rule?.criticalWhen,
   };
 }
 
 /**
  * `blow` as it lands on `victim` (#794): its `conditionalBonus` added to its bonus
- * if the state holds now, for `attacker` and `victim`. An arrow whose
- * archer has left the match has nobody to read the state of: no more.
+ * if the state holds now, for `attacker` and `victim`, and its
+ * `criticalWhen` (#1315) `"always"` if it holds, else `undefined`. An
+ * arrow whose archer has left the match has nobody to read the state of:
+ * no more, and no forced critical.
  */
 export function settleBlow(
   blow: BlowRule,
@@ -383,17 +397,21 @@ export function settleBlow(
   victim: Combatant,
   surroundings: Surroundings,
 ): BlowRule {
-  const { conditionalBonus } = blow;
-  if (conditionalBonus === undefined) {
-    return blow;
-  }
-  const holds =
-    attacker !== undefined &&
-    stateHolds(conditionalBonus.condition, attacker, victim, surroundings);
+  const { conditionalBonus, criticalWhen } = blow;
+  const holds = (condition: StateCondition): boolean =>
+    attacker !== undefined && stateHolds(condition, attacker, victim, surroundings);
   return {
     ...blow,
-    bonus: blow.bonus + (holds ? conditionalBonus.amount : 0),
+    bonus:
+      blow.bonus +
+      (conditionalBonus !== undefined && holds(conditionalBonus.condition)
+        ? conditionalBonus.amount
+        : 0),
     conditionalBonus: undefined,
+    criticalWhen:
+      criticalWhen === "always" || (criticalWhen !== undefined && holds(criticalWhen))
+        ? "always"
+        : undefined,
   };
 }
 
@@ -407,7 +425,8 @@ export function settleBlow(
  * depend on who stands where, deterministically. A crit takes the weapon's maximum times its
  * `criticalMultiplier` instead of rolling; an attack skill's bonus is
  * added after, unmultiplied, and ignores armor (#760). A melee blow at an `exposed` victim always
- * crits; a projectile never does that way, however it lands. Returns
+ * crits; a projectile never does that way, however it lands. A settled
+ * blow whose `criticalWhen` is `"always"` crits too (#1315). Returns
  * whether the blow crit.
  *
  * A dazed victim casting a spell, or one setting a trap, is
@@ -428,7 +447,10 @@ export function landBlow(
   interruptOnHit(victim, events);
   const { weapon } = snapshot.mainHand;
   const rolledCritical = rng.nextFloat() < criticalChance(snapshot, rules);
-  const critical = rolledCritical || (exposed && weapon.projectileSpeed === undefined);
+  const critical =
+    rolledCritical ||
+    blow.criticalWhen === "always" ||
+    (exposed && weapon.projectileSpeed === undefined);
   const base = critical
     ? weapon.damageMax * weapon.criticalMultiplier
     : rng.nextInt(weapon.damageMin, weapon.damageMax + 1);
@@ -640,7 +662,7 @@ function strike(
   }
   const snapshot = weaponSnapshotOf(attacker);
   if (landBlow(snapshot, attacker, victim, PLAIN_BLOW, swing.exposed(victim), rng, rules, events)) {
-    gainCriticalEnergy(attacker, snapshot.criticalStrikes, events);
+    landedCritical(attacker, snapshot.criticalStrikes, events);
   }
   events.push(
     ...attackHitRiders(attacker, victim, snapshot.mainHand, rng, rules, swing.surroundings, fired),
@@ -816,7 +838,7 @@ export function resolveAttackSkill(
           events,
         )
       ) {
-        gainCriticalEnergy(caster, snapshot.criticalStrikes, events);
+        landedCritical(caster, snapshot.criticalStrikes, events);
       }
       events.push(
         ...attackHitRiders(caster, victim, snapshot.mainHand, rng, rules, surroundings, fired),

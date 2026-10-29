@@ -683,6 +683,8 @@ export type EventCondition =
 export type StateCondition =
   /** The effect's target is below this fraction of its maximum health (0.5 = 50%). */
   | { readonly kind: "target-health-below"; readonly fraction: number }
+  /** The effect's target is above this fraction of its maximum health (#1315); equal is not above. */
+  | { readonly kind: "target-health-above"; readonly fraction: number }
   /** The effect's target has at least one status of this category. */
   | { readonly kind: "target-has"; readonly category: StatusCategory }
   /**
@@ -941,6 +943,15 @@ export interface AttackSkillRule {
    * +10 damage". One damage number, not a second hit. `undefined`: none.
    */
   readonly conditionalBonus: ConditionalBonus | undefined;
+  /**
+   * When a blow of it is a critical hit whatever the roll (#1315):
+   * `"always"`, Critical Strike's "results in a critical hit"; a
+   * condition, read as each blow lands on its victim as
+   * `conditionalBonus` is, Malicious Strike's "hits a foe suffering from
+   * a condition". A blocked or missed blow is none. `undefined`: only the
+   * roll.
+   */
+  readonly criticalWhen: StateCondition | "always" | undefined;
   /**
    * How many blows it strikes each victim (#885): 2 for a dual attack,
    * each rolling its own blind, block, crit and damage, with the skill's

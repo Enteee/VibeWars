@@ -155,7 +155,7 @@ import {
   bearerHit,
   blindMisses,
   blocks,
-  gainCriticalEnergy,
+  landedCritical,
   landBlow,
   nextAttackSkillOf,
   nextAttackSkillRiders,
@@ -4024,7 +4024,7 @@ export class MatchSimulation {
         events,
       );
       if (critical && attacker !== undefined) {
-        gainCriticalEnergy(attacker.combatant, projectile.weaponSnapshot.criticalStrikes, events);
+        landedCritical(attacker.combatant, projectile.weaponSnapshot.criticalStrikes, events);
       }
       if (attacker !== undefined) {
         events.push(
