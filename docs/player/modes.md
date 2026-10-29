@@ -119,7 +119,7 @@ the altar is your team's.
 
 The team that holds the altar scores a point for every 30 seconds it
 keeps it, even while its own ghost is dead, until another team claims
-it. A dead ghost rises in its base 2 minutes later, staying put. It is
+it. Every point is announced, as a relic scored is. A dead ghost rises in its base 2 minutes later, staying put. It is
 no player: its death costs no morale and it does not count toward a
 wipe.
 

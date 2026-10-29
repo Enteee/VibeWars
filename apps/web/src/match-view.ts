@@ -53,7 +53,7 @@ import {
   renderKeyLabels,
   renderMute,
   refreshSkillBar,
-  relicScoreToast,
+  objectiveScoreToast,
   renderSkillBar,
   standBoostToast,
   updateHud,
@@ -626,7 +626,7 @@ export async function startMatchView(
     const self = latestMatch.players.find((p) => p.sessionId === connection.selfSessionId);
     const objective =
       standBoostToast(lastMatch, latestMatch, self?.team) ??
-      relicScoreToast(lastMatch, latestMatch, self?.team);
+      objectiveScoreToast(lastMatch, latestMatch, self?.team, mode);
     lastMatch = latestMatch;
     if (objective !== undefined) {
       toast(objective.text);
