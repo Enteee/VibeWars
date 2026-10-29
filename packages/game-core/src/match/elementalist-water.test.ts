@@ -255,6 +255,16 @@ describe("Maelstrom (#1367)", () => {
     expect(damage(stepFor(match, 10))).toEqual([]);
   });
 
+  it("finds nothing to interrupt on a foe who is not casting, and says nothing", () => {
+    const match = sim(vec2(300, 0));
+    const log = cast(match, MAELSTROM, "a");
+    log.push(...stepFor(match, 10));
+    expect(damage(log)).toHaveLength(10);
+    expect(log.flatMap((entry) => entry.events).map((event) => event.kind)).not.toContain(
+      "interrupt-missed",
+    );
+  });
+
   it("overcasts its caster by 10", () => {
     const match = sim(vec2(300, 0));
     cast(match, MAELSTROM, "a");
