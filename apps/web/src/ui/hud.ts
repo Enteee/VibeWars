@@ -1630,9 +1630,67 @@ export function ghostLeaderLabel(
   if (leaderId === null) {
     return "stays";
   }
-  return leaderId === self.sessionId
-    ? "follows you"
-    : `follows ${names.get(leaderId) ?? "an ally"}`;
+  return `follows ${leaderName(leaderId, self.sessionId, names)}`;
+}
+
+/** A Ghostly Hero's leader as a viewer names it (#1419): "you", or the leader's name. */
+function leaderName(
+  leaderId: string,
+  selfId: string | undefined,
+  names: ReadonlyMap<string, string>,
+): string {
+  return leaderId === selfId ? "you" : (names.get(leaderId) ?? "an ally");
+}
+
+/**
+ * The toast for your team's Ghostly Hero changing leader (#1419), from
+ * two snapshots: "Ghostly Hero follows you", "… follows <name>", or
+ * "Ghostly Hero stays" once it follows nobody. `undefined` for the first
+ * snapshot, a spectator (`selfTeam` undefined), a foe's ghost, no change,
+ * and a ghost dead in either snapshot: its death and its rise say nothing.
+ */
+export function ghostLeaderToast(
+  before: Pick<MatchSnapshot, "players"> | undefined,
+  after: Pick<MatchSnapshot, "players">,
+  selfId: string,
+  selfTeam: number | undefined,
+  names: ReadonlyMap<string, string>,
+): string | undefined {
+  if (before === undefined || selfTeam === undefined) {
+    return undefined;
+  }
+  const ghost = after.players.find(
+    (player) => player.creature?.kind === "ghostly-hero" && player.team === selfTeam,
+  );
+  const was = before.players.find((player) => player.sessionId === ghost?.sessionId);
+  if (ghost?.creature === undefined || was?.creature === undefined || ghost.dead || was.dead) {
+    return undefined;
+  }
+  const { leaderId } = ghost.creature;
+  if (leaderId === was.creature.leaderId) {
+    return undefined;
+  }
+  return leaderId === null
+    ? `${ghost.name} stays`
+    : `${ghost.name} follows ${leaderName(leaderId, selfId, names)}`;
+}
+
+/**
+ * The arena name of a Ghostly Hero that follows someone (#1419),
+ * "Ghostly Hero › you" or "Ghostly Hero › <name>"; any other body's, a
+ * staying ghost's and a foe's ghost's plain name. A spectator
+ * (`self` undefined) sees both sides' leaders.
+ */
+export function ghostNameplate(
+  player: PlayerSnapshot,
+  self: PlayerSnapshot | undefined,
+  names: ReadonlyMap<string, string>,
+): string {
+  const leaderId = player.creature?.kind === "ghostly-hero" ? player.creature.leaderId : null;
+  if (leaderId === null || (self !== undefined && self.team !== player.team)) {
+    return player.name;
+  }
+  return `${player.name} › ${leaderName(leaderId, self?.sessionId, names)}`;
 }
 
 /** The target frame (#484): header, health bar and cast row. */
