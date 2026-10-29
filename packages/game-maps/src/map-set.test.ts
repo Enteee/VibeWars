@@ -62,17 +62,14 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
     }
     for (const objective of map.objectives) {
       const image = turned(map, objective.position);
-      // A shared objective, the flag stand (#1225) or the altar (#1374), is its own image.
-      const mirrored =
-        objective.kind === "flag-stand" || objective.kind === "altar"
-          ? near(objective.position, image)
-          : map.objectives.some(
-              (other) =>
-                other.kind === objective.kind &&
-                "team" in other &&
-                other.team !== objective.team &&
-                near(other.position, image),
-            );
+      // A shared objective, the flag stand (#1225), the altar (#1374) or a
+      // capture point (#1378), has another of its kind at its image, or is it.
+      const mirrored = map.objectives.some(
+        (other) =>
+          other.kind === objective.kind &&
+          ("team" in other && "team" in objective ? other.team !== objective.team : true) &&
+          near(other.position, image),
+      );
       expect(mirrored, JSON.stringify(objective)).toBe(true);
     }
   });
@@ -177,7 +174,7 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
 });
 
 describe("the arena set (#444)", () => {
-  it("is the four small arenas, the four of #444, the guild hall (#1222) and the relic temples (#1374)", () => {
+  it("is the four small arenas, the four of #444, the guild hall (#1222), the relic temples (#1374) and the forgotten shrines (#1378)", () => {
     expect(MAPS.map((map) => map.id).sort()).toEqual(
       [
         "arena-alpha",
@@ -186,12 +183,13 @@ describe("the arena set (#444)", () => {
         "arena-split",
         "guild-hall-isle",
         "relic-temples",
+        "forgotten-shrines",
         ...NEW_ARENAS,
       ].sort(),
     );
   });
 
-  it("plays Kill Count on Pillar Hall, Priest Annihilation on Split Paths, Guild Battle on Guild Hall Isle, Relic Run on Relic Temples and Annihilation everywhere else (#476, #1186, #1222, #1374)", () => {
+  it("plays Kill Count on Pillar Hall, Priest Annihilation on Split Paths, Guild Battle on Guild Hall Isle, Relic Run on Relic Temples, Capture Points on Forgotten Shrines and Annihilation everywhere else (#476, #1186, #1222, #1374, #1378)", () => {
     expect(MAPS.filter((map) => map.mode === "kill-count").map((map) => map.id)).toEqual([
       "arena-pillars",
     ]);
@@ -204,7 +202,10 @@ describe("the arena set (#444)", () => {
     expect(MAPS.filter((map) => map.mode === "relic-run").map((map) => map.id)).toEqual([
       "relic-temples",
     ]);
-    expect(MAPS.filter((map) => map.mode === "annihilation")).toHaveLength(MAPS.length - 4);
+    expect(MAPS.filter((map) => map.mode === "capture-points").map((map) => map.id)).toEqual([
+      "forgotten-shrines",
+    ]);
+    expect(MAPS.filter((map) => map.mode === "annihilation")).toHaveLength(MAPS.length - 5);
   });
 
   it("puts each team's shrine on Split Paths behind its spawns (#1186)", () => {
@@ -392,6 +393,42 @@ describe("Relic Temples (#1374)", () => {
       const detour = blocked.find(spawn.position, altar.position);
       expect(detour, JSON.stringify(spawn)).toBeDefined();
       expect(detour?.some((point) => point.y < altar.position.y - 50)).toBe(!north);
+    }
+  });
+});
+
+describe("Forgotten Shrines (#1378)", () => {
+  const shrines = MAPS.find((map) => map.id === "forgotten-shrines");
+  if (shrines === undefined) throw new Error("no forgotten-shrines");
+  const walls = allWallSegments(shrines.walls);
+  const bounds = { width: shrines.width, height: shrines.height };
+  const points = shrines.objectives.map((objective) => objective.position);
+  const centre = { x: shrines.width / 2, y: shrines.height / 2 };
+
+  it("has five shrines: one by each base, and three between them, one at the centre", () => {
+    expect(points).toHaveLength(5);
+    for (const team of [0, 1]) {
+      const spawns = shrines.spawnPoints.filter((spawn) => spawn.team === team);
+      const nearest = Math.min(
+        ...points.map((point) =>
+          Math.min(...spawns.map((spawn) => Vec.distance(spawn.position, point))),
+        ),
+      );
+      expect(nearest).toBeLessThan(300);
+    }
+    expect(points).toContainEqual(centre);
+  });
+
+  it("leaves the centre shrine exposed: no wall within 200", () => {
+    expect(walls.every((wall) => distancePointToSegment(centre, wall) >= 200)).toBe(true);
+  });
+
+  it("lets every spawn walk to every shrine", () => {
+    const finder = createPathFinder(buildNavGraph(walls, bounds, RADIUS));
+    for (const spawn of shrines.spawnPoints) {
+      for (const point of points) {
+        expect(finder.find(spawn.position, point), JSON.stringify([spawn, point])).toBeDefined();
+      }
     }
   });
 });

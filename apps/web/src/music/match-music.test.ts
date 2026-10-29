@@ -78,6 +78,7 @@ function snapshot(
     aggression: [],
     relics: [],
     altar: undefined,
+    capturePoints: [],
     summary: undefined,
   };
 }

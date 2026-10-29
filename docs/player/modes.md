@@ -2,7 +2,7 @@
 
 Each map plays one mode, and the lobby says which under the map's name.
 Nobody picks it. A Random Arena picks a map for you, and with it the
-mode, but never a Guild Battle or a Relic Run.
+mode, but never a Guild Battle, a Relic Run or Capture Points.
 
 ## Annihilation
 
@@ -90,3 +90,25 @@ line for each relic says where it is: `✦ Name` on its carrier,
 `✦ dropped` on the ground or `✦ at base`.
 
 Relic Temples plays it.
+
+## Capture Points
+
+**Hold the shrines.** The map has five **shrines**: one by each base
+and three between, the centre one out in the open. Stand on a shrine to
+capture it. Alone it takes 20 seconds, and each more of your team on it
+makes it faster: four of you take it in 5. With a foe on it too, it is
+contested and nothing moves. A shrine the other team owns is first
+drained to neutral, then filled for you. Walk away and its progress
+stays where it was; a shrine you own stays yours until a foe takes it.
+
+Every 30 seconds, each shrine your team owns scores a point. The dead
+stay down until an ally resurrects them, and each death costs morale.
+Wipe the other team to win at once. After 8 minutes the team with more
+points wins; equal points is a draw. Kills score nothing.
+
+Each shrine is a ring on the ground in its owner's colour, grey while
+nobody owns it, with an arc round it showing how far it is toward
+whoever is taking it. The scoreboard shows the points, yours first, and
+the clock.
+
+Forgotten Shrines plays it.

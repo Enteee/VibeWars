@@ -12,10 +12,16 @@ export interface MatchRules {
    * `"annihilation"` by wiping the other team, `"priest-annihilation"` by
    * wiping it and killing its priest (#1186), or by morale at time;
    * `"guild-battle"` by killing the foe's Guild Lord (#1222); `"relic-run"`
-   * by relic points at time, or by wiping the other team (#1374).
+   * by relic points at time, or by wiping the other team (#1374);
+   * `"capture-points"` the same, by shrine points (#1378).
    */
   readonly victory:
-    "kill-count" | "annihilation" | "priest-annihilation" | "guild-battle" | "relic-run";
+    | "kill-count"
+    | "annihilation"
+    | "priest-annihilation"
+    | "guild-battle"
+    | "relic-run"
+    | "capture-points";
   /** Kills one team needs to win; only for `"kill-count"`. */
   readonly scoreToWin: number;
   /** Match length in seconds; at zero time the lead wins. */
@@ -93,6 +99,21 @@ export const RELIC_RUN_MATCH_RULES: MatchRules = Object.freeze({
   timeLimitSeconds: 480,
 });
 
+/**
+ * Heroes' Ascent's Capture Points (#1378): stand on a shrine to take it,
+ * and every `POINT_TICK_SECONDS` each one a team owns scores it a point.
+ * Otherwise a Relic Run's: a wipe loses at once, the most points at
+ * 8 minutes win.
+ */
+export const CAPTURE_POINTS_MATCH_RULES: MatchRules = Object.freeze({
+  ...ANNIHILATION_MATCH_RULES,
+  victory: "capture-points",
+  timeLimitSeconds: 480,
+});
+
+/** Heroes' Ascent scores held ground at every multiple of this, match clock (#1378, GW1). */
+export const POINT_TICK_SECONDS = 30;
+
 /** A living priest raises its team's dead at every multiple of this, match clock (#1186, GW1). */
 export const PRIEST_WAVE_SECONDS = 120;
 
@@ -101,7 +122,12 @@ export const SHRINE_INVULNERABLE_SECONDS = 5;
 
 /** The modes a map can name (#476): which one a match plays follows from its map alone. */
 export type MatchMode =
-  "annihilation" | "kill-count" | "priest-annihilation" | "guild-battle" | "relic-run";
+  | "annihilation"
+  | "kill-count"
+  | "priest-annihilation"
+  | "guild-battle"
+  | "relic-run"
+  | "capture-points";
 
 /** Each mode's rules, by the name a map gives it. */
 export const MATCH_MODES: Readonly<Record<MatchMode, MatchRules>> = Object.freeze({
@@ -110,6 +136,7 @@ export const MATCH_MODES: Readonly<Record<MatchMode, MatchRules>> = Object.freez
   "priest-annihilation": PRIEST_ANNIHILATION_MATCH_RULES,
   "guild-battle": GUILD_BATTLE_MATCH_RULES,
   "relic-run": RELIC_RUN_MATCH_RULES,
+  "capture-points": CAPTURE_POINTS_MATCH_RULES,
 });
 
 /** Morale a death costs, in percent, with `deathPenalty` (GW1). */
@@ -135,7 +162,7 @@ export function moraleMaximum(base: number, resolved: number, morale: number): n
 export type MatchPhase = "active" | "finished";
 
 export interface MatchScore {
-  /** Kills by team index; a Relic Run's relic points instead (#1374). */
+  /** Kills by team index; a Relic Run's relic points (#1374) or Capture Points' shrine points (#1378) instead. */
   readonly byTeam: ReadonlyMap<number, number>;
 }
 
@@ -230,6 +257,7 @@ export function evaluateMatch(
     case "guild-battle":
       return evaluateGuildBattle(standing, elapsedSeconds, rules);
     case "relic-run":
+    case "capture-points":
       return evaluateRelicRun(score, standing, elapsedSeconds, rules);
   }
 }
@@ -330,8 +358,9 @@ function evaluateGuildBattle(
 }
 
 /**
- * Relic Run (#1374, GW1): a wiped team loses at once, as in annihilation;
- * at time the most relic points win, and a tie is a draw, as kill-count's.
+ * Relic Run (#1374, GW1), and Capture Points (#1378) alike: a wiped team
+ * loses at once, as in annihilation; at time the most points win, and a
+ * tie is a draw, as kill-count's.
  * No number of points wins early: `scoreToWin` is kill-count's.
  */
 function evaluateRelicRun(

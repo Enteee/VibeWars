@@ -61,7 +61,12 @@ import {
 } from "./ui/hud.js";
 import { labelWeaponSets, renderWeaponSets, weaponSetSlots } from "./ui/weapon-set-slots.js";
 import { mapFlagField, mapMode, mapRelicField, mapShrines, type MapShrine } from "./net/maps.js";
-import { renderableFlags, renderableRelics, renderableStand } from "./render/flag-objects.js";
+import {
+  renderableCapturePoints,
+  renderableFlags,
+  renderableRelics,
+  renderableStand,
+} from "./render/flag-objects.js";
 import { compassReach, createCompass } from "./ui/compass.js";
 import { noWebGlNotice } from "./ui/arena-notice.js";
 import { attachFullscreenButton, fullscreenTarget } from "./ui/fullscreen.js";
@@ -141,6 +146,7 @@ export function toArenaSnapshot(
     ],
     stand: renderableStand(match.stand, flagField, self?.team),
     altar: match.altar,
+    capturePoints: renderableCapturePoints(match.capturePoints, self?.team),
     // Your own side's in the ally colour; a spectator's team 1 is, as the
     // scoreboard reads it first (#1199).
     shrines: shrines.map((shrine) => ({

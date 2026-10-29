@@ -2087,6 +2087,23 @@
         }
       ]
     },
+    "WireCapturePoint": {
+      "properties": [
+        {
+          "name": "capturer",
+          "optional": false,
+          "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+        },
+        {
+          "name": "owner",
+          "optional": false,
+          "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+        },
+        { "name": "progress", "optional": false, "type": "number" },
+        { "name": "x", "optional": false, "type": "number" },
+        { "name": "y", "optional": false, "type": "number" }
+      ]
+    },
     "WireCarried": {
       "properties": [
         { "name": "carrierId", "optional": false, "type": { "union": ["null", "string"] } },
@@ -2853,6 +2870,29 @@
             ]
           }
         },
+        {
+          "name": "capturePoints",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                {
+                  "name": "capturer",
+                  "optional": false,
+                  "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+                },
+                {
+                  "name": "owner",
+                  "optional": false,
+                  "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+                },
+                { "name": "progress", "optional": false, "type": "number" },
+                { "name": "x", "optional": false, "type": "number" },
+                { "name": "y", "optional": false, "type": "number" }
+              ]
+            }
+          }
+        },
         { "name": "elapsedSeconds", "optional": false, "type": "number" },
         {
           "name": "endReason",
@@ -3192,6 +3232,29 @@
                 ]
               }
             ]
+          }
+        },
+        {
+          "name": "capturePoints",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                {
+                  "name": "capturer",
+                  "optional": false,
+                  "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+                },
+                {
+                  "name": "owner",
+                  "optional": false,
+                  "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+                },
+                { "name": "progress", "optional": false, "type": "number" },
+                { "name": "x", "optional": false, "type": "number" },
+                { "name": "y", "optional": false, "type": "number" }
+              ]
+            }
           }
         },
         { "name": "elapsedSeconds", "optional": false, "type": "number" },

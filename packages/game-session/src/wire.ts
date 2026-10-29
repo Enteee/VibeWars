@@ -756,6 +756,12 @@ export function observedSnapshot(
     aggression: snapshot.aggression,
     relics: snapshot.relics.map(relicState),
     altar: absent(snapshot.altar),
+    capturePoints: snapshot.capturePoints.map(({ x, y, owner, capturer, progress }) => ({
+      position: { x, y },
+      owner,
+      capturer,
+      progress,
+    })),
     // Only the host's `ended` carries it.
     summary: undefined,
   };

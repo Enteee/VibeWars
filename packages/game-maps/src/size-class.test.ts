@@ -23,6 +23,7 @@ describe("sizeClass (#444)", () => {
       "arena-long-hall": "large",
       "guild-hall-isle": "large",
       "relic-temples": "medium",
+      "forgotten-shrines": "medium",
     });
   });
 });
