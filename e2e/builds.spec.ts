@@ -8,6 +8,7 @@ import { STORAGE_NAMESPACE } from "./helpers/base.js";
 import { chooseProfession, professionField } from "./helpers/professions.js";
 import { startSoloMatch } from "./helpers/peers.js";
 import { bringStarter } from "./helpers/starter.js";
+import { expectTopbarFits } from "./helpers/topbar.js";
 import { skillKey } from "./keys.js";
 
 /**
@@ -92,44 +93,11 @@ test("the editor's bar puts its status on a second row from 721 to 1200 px, noth
   await page.setViewportSize({ width: 1500, height: 700 });
   const oneLine = (await chip.boundingBox())?.height ?? 0;
   for (const width of [721, 800, 940, 1100, 1201]) {
-    await page.setViewportSize({ width, height: 700 });
-    const fits = await page.evaluate(
-      () => document.documentElement.scrollWidth <= window.innerWidth,
+    await expectTopbarFits(
+      page,
+      width,
+      "#topbar > :not(.topbar-status), #topbar .editor-profession-field, #topbar .editor-budget, #topbar .problems-chip, #topbar .editor-unsaved",
     );
-    expect(fits, `no sideways scroll at ${String(width)} px`).toBe(true);
-    for (const icon of [".topbar-help", ".topbar-fullscreen"]) {
-      const box = await page.locator(icon).boundingBox();
-      expect(box, `${icon} shows at ${String(width)} px`).not.toBeNull();
-      expect((box?.x ?? 0) + (box?.width ?? 0)).toBeLessThanOrEqual(width);
-    }
-    // The status's parts, not its box: it shrinks while they spill over.
-    const overlaps = await page.evaluate(() => {
-      const boxes = (nodes: Iterable<Element>): { name: string; box: DOMRect }[] =>
-        [...nodes]
-          .map((node) => ({ name: node.className, box: node.getBoundingClientRect() }))
-          .filter(({ box }) => box.width > 0 && box.height > 0);
-      const crossing = (parts: { name: string; box: DOMRect }[]): string[] =>
-        parts.flatMap((a, i) =>
-          parts
-            .slice(i + 1)
-            .filter(
-              ({ box: b }) =>
-                a.box.left < b.right &&
-                b.left < a.box.right &&
-                a.box.top < b.bottom &&
-                b.top < a.box.bottom,
-            )
-            .map((b) => `${a.name} / ${b.name}`),
-        );
-      return crossing(
-        boxes(
-          document.querySelectorAll(
-            "#topbar > :not(.topbar-status), #topbar .editor-profession-field, #topbar .editor-budget, #topbar .problems-chip, #topbar .editor-unsaved",
-          ),
-        ),
-      );
-    });
-    expect(overlaps, `nothing overlaps at ${String(width)} px`).toEqual([]);
     const chipBox = await chip.boundingBox();
     expect(chipBox?.height ?? 0, `the chip is one line at ${String(width)} px`).toBeLessThanOrEqual(
       oneLine,
