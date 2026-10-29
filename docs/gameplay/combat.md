@@ -1412,7 +1412,8 @@ standing has lost. A spirit or minion that dies or runs out its time disappears
 at the end of the tick, with no corpse and no respawn; running out is not
 a death. Its owner's death does not end it; its owner leaving the match
 does. Soul Reaping answers a minion's death but not a spirit's. At most
-32 creatures are on the field at once (ADR-0035).
+32 summoned creatures are on the field at once (ADR-0035); a map's own
+priests, Guild Lords and guards take none of those places (#1281).
 
 **Spirits** (#1064) are planted by a ritual, a cast that can be
 interrupted, where its caster stands. A spirit never moves: bodies are

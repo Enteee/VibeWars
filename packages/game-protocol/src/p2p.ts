@@ -83,9 +83,10 @@ export const MAX_WIRE_STATUSES = 32;
 
 /**
  * The most creatures a snapshot carries (#1052): game-core's
- * `MAX_CREATURES`, mirrored, with a test holding the two together.
+ * `MAX_CREATURES` summons plus its `MAX_MAP_CREATURES` map creatures
+ * (#1281), mirrored, with a test holding them together.
  */
-export const MAX_WIRE_CREATURES = 32;
+export const MAX_WIRE_CREATURES = 56;
 
 /**
  * The most ground effects a snapshot carries (#1087): game-core's
