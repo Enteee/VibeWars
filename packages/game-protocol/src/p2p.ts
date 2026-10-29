@@ -387,6 +387,8 @@ export interface WireCreature {
    * where the catalog is known, as `castingSkillId` is.
    */
   readonly armedAttack: WireArmedAttack | null;
+  /** Whom a Ghostly Hero follows (#1377); `null` while it stays, and for any other creature. */
+  readonly leaderId: string | null;
 }
 
 /** A companion's armed pet attack (#1167). */
@@ -1426,14 +1428,22 @@ function parseCreature(value: unknown): WireCreature | undefined {
     !(raw.ownerId === null || isString(raw.ownerId)) ||
     !isOneOf(raw.kind, CREATURE_KINDS) ||
     !isOneOf(raw.look, CREATURE_LOOKS) ||
-    !(raw.mode === null || isOneOf(raw.mode, COMPANION_MODES))
+    !(raw.mode === null || isOneOf(raw.mode, COMPANION_MODES)) ||
+    !(raw.leaderId === null || isString(raw.leaderId))
   ) {
     return undefined;
   }
   const armedAttack = raw.armedAttack === null ? null : parseArmedAttack(raw.armedAttack);
   return armedAttack === undefined
     ? undefined
-    : { ownerId: raw.ownerId, kind: raw.kind, look: raw.look, mode: raw.mode, armedAttack };
+    : {
+        ownerId: raw.ownerId,
+        kind: raw.kind,
+        look: raw.look,
+        mode: raw.mode,
+        armedAttack,
+        leaderId: raw.leaderId,
+      };
 }
 
 function parseArmedAttack(value: unknown): WireArmedAttack | undefined {

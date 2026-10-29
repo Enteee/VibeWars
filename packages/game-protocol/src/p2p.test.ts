@@ -183,6 +183,7 @@ const minion: WirePlayer = {
     look: "bone-minion",
     mode: null,
     armedAttack: null,
+    leaderId: null,
   },
 };
 
@@ -528,6 +529,7 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
             look: "beast",
             mode: "heel",
             armedAttack: null,
+            leaderId: null,
           },
         },
       ],
@@ -549,6 +551,7 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
             look: "beast",
             mode: "fight",
             armedAttack: { skillId: "ranger.brutal-strike", endsAt: 12.1 },
+            leaderId: null,
           },
         },
       ],
@@ -591,6 +594,7 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
             look: "spirit",
             mode: null,
             armedAttack: null,
+            leaderId: null,
           },
         },
       ],
@@ -611,6 +615,7 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
             look: "priest",
             mode: null,
             armedAttack: null,
+            leaderId: null,
           },
         },
       ],
@@ -1070,6 +1075,7 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
           creature: {
             ...minion.creature,
             armedAttack: { skillId: "ranger.brutal-strike", endsAt: Number.POSITIVE_INFINITY },
+            leaderId: null,
           },
         },
       ],

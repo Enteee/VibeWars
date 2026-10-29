@@ -154,6 +154,7 @@ describe("packSnapshot (#662)", () => {
         look: "bone-minion",
         mode: null,
         armedAttack: null,
+        leaderId: null,
       },
     });
     const players = [

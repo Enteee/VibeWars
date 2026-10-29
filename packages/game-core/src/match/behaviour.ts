@@ -90,23 +90,22 @@ export type Behaviour =
    * A minion's (#467 child 3) or a pet's (#1046): stay by the owner, attack
    * a foe as `engage` picks it, and break off to walk back once the
    * owner is farther than `leashUnits`, until within `heelUnits` again.
-   * The owner is `leaderId`, or with none `self.creature.ownerId`; anyone
+   * The owner is its creature's `leaderId` (#1377), else its `ownerId`; anyone
    * else holding it stands still.
    */
   | {
       readonly kind: "follow-and-attack";
       /**
-       * Whom it keeps to and assists in place of its owner: a Ghostly
-       * Hero's leader (#1377). `undefined`: its owner, as a minion's.
-       */
-      readonly leaderId: string | undefined;
-      /**
        * A point it walks onto in place of its leader's heel while the
-       * leader stands within `withinUnits` of it, ahead of any fight: a
-       * Ghostly Hero led to the altar steps onto it (#1377). `undefined`:
-       * none, as a minion's.
+       * leader stands within `withinUnits` of it: a Ghostly Hero led to
+       * the altar steps onto it (#1377). Within `holdUnits` of the point
+       * it holds its ground: it attacks its leader's foe, else the nearest
+       * foe, only while one is adjacent to it, and never steps off after
+       * one. `undefined`: none, as a minion's.
        */
-      readonly drawnTo: { readonly point: Vec2; readonly withinUnits: number } | undefined;
+      readonly drawnTo:
+        | { readonly point: Vec2; readonly withinUnits: number; readonly holdUnits: number }
+        | undefined;
       /**
        * Whom it goes for (#1046). `"owner-target"`: a companion's, the foe
        * its owner is attacking or, on Fight, has selected (#1110), if within
@@ -476,7 +475,7 @@ function followAndAttack(
   context: BehaviourContext,
 ): BehaviourIntent {
   const self = context.self;
-  const ownerId = behaviour.leaderId ?? self.creature?.ownerId;
+  const ownerId = self.creature?.leaderId ?? self.creature?.ownerId;
   const owner = context.participants.find((other) => other.id === ownerId);
   if (owner === undefined) {
     return STAND_STILL;
@@ -492,12 +491,6 @@ function followAndAttack(
   if (cursor.returning) {
     return toOwner;
   }
-  const drawnTo = behaviour.drawnTo;
-  if (drawnTo !== undefined && distance(owner.position, drawnTo.point) <= drawnTo.withinUnits) {
-    return distance(drawnTo.point, self.position) > context.stepUnits
-      ? { ...STAND_STILL, moveTo: drawnTo.point }
-      : STAND_STILL;
-  }
   const team = self.combatant.team;
   const inAggro = (other: Participant): boolean =>
     other.combatant.team !== team &&
@@ -511,6 +504,24 @@ function followAndAttack(
   // A spell at a foe is not attacking it: only a weapon attack or an
   // attack skill sets `attack` (#1079).
   const ownerFoe = livingFoe(owner.combatant.attack?.targetId);
+  const drawnTo = behaviour.drawnTo;
+  if (drawnTo !== undefined && distance(owner.position, drawnTo.point) <= drawnTo.withinUnits) {
+    const toPoint = distance(drawnTo.point, self.position);
+    if (toPoint <= drawnTo.holdUnits) {
+      // Adjacent, so the swing needs no step: a foe that backs off is let
+      // go, and the walk back to the point ends the attack.
+      const adjacent = (other: Participant): boolean =>
+        other.combatant.team !== team && distance(other.position, self.position) <= AREA_ADJACENT;
+      const foe =
+        ownerFoe !== undefined && adjacent(ownerFoe)
+          ? ownerFoe.id
+          : nearestLiving(self, context.participants, adjacent);
+      if (foe !== undefined) {
+        return { ...STAND_STILL, targetId: foe, attackTargetId: foe };
+      }
+    }
+    return toPoint > context.stepUnits ? { ...STAND_STILL, moveTo: drawnTo.point } : STAND_STILL;
+  }
   const mode = self.creature?.mode;
   if (behaviour.engage === "owner-target" && mode === "heel") {
     return d > behaviour.heelUnits && d - context.stepUnits > behaviour.heelUnits

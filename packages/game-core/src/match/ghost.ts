@@ -55,17 +55,21 @@ export function onHill(field: HillField, position: Vec2): boolean {
 }
 
 /**
- * Following `leaderId`, as a minion follows its master: at its heel,
+ * Following its creature's `leaderId`, as a minion follows its master: at its heel,
  * fighting what the leader attacks, else the nearest foe in earshot. A
  * leader on or beside the altar draws it onto the altar itself, so
  * leading it there is all a claim takes: its heel alone stops it short
- * of the altar's reach.
+ * of the altar's reach. On the altar it fights a foe adjacent to it,
+ * and never steps off after one.
  */
-export function followBehaviour(leaderId: string, altar: Vec2): Behaviour {
+export function followBehaviour(altar: Vec2): Behaviour {
   return {
     kind: "follow-and-attack",
-    leaderId,
-    drawnTo: { point: altar, withinUnits: ALTAR_REACH_UNITS + AREA_IN_THE_AREA },
+    drawnTo: {
+      point: altar,
+      withinUnits: ALTAR_REACH_UNITS + AREA_IN_THE_AREA,
+      holdUnits: ALTAR_REACH_UNITS,
+    },
     engage: "owner-target-then-nearest",
     aggroUnits: AREA_EARSHOT,
     leashUnits: RANGE_SPELL,
@@ -123,6 +127,7 @@ export function ghostSpec(spawn: GhostSpawn, facing: number): ParticipantSpec {
       onDeath: "rise",
       ownerDisableSeconds: 0,
       companionSkillId: undefined,
+      leaderId: undefined,
       mode: "guard",
     },
   };

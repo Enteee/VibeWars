@@ -632,6 +632,7 @@ export function wireIdentity(
           look: creature.look,
           mode: companionMode(creature),
           armedAttack: armedAttackSnapshot(participant.armedAttack, elapsedSeconds),
+          leaderId: creature.leaderId ?? null,
         },
         bot: false,
       };

@@ -83,7 +83,14 @@ const BLEEDER = player("bleeder", {
 });
 const WOLF = player("me/c1", {
   name: "Wolf",
-  creature: { ownerId: "me", kind: "pet", look: "beast", mode: "fight", armedAttack: null },
+  creature: {
+    ownerId: "me",
+    kind: "pet",
+    look: "beast",
+    mode: "fight",
+    armedAttack: null,
+    leaderId: null,
+  },
 });
 
 /** `WOLF`, its next blow armed with Brutal Strike until match clock `endsAt` (#1167). */
@@ -96,6 +103,7 @@ function armedWolf(endsAt: number): PlayerSnapshot {
       look: "beast",
       mode: "fight",
       armedAttack: { skillId: "ranger.brutal-strike", endsAt },
+      leaderId: null,
     },
   };
 }
@@ -146,6 +154,7 @@ describe("partyRows (#1055)", () => {
         look: "bone-minion",
         mode: null,
         armedAttack: null,
+        leaderId: null,
       },
     });
     expect(partyRows(match([ME, minion]))).toEqual([]);
@@ -154,7 +163,14 @@ describe("partyRows (#1055)", () => {
 
   it("lists your own pet under you, in its mode, but not a teammate's (#1110)", () => {
     const kajaWolf = player("kaja/c1", {
-      creature: { ownerId: "kaja", kind: "pet", look: "beast", mode: "guard", armedAttack: null },
+      creature: {
+        ownerId: "kaja",
+        kind: "pet",
+        look: "beast",
+        mode: "guard",
+        armedAttack: null,
+        leaderId: null,
+      },
     });
     const rows = partyRows(match([KAJA, kajaWolf, ME, WOLF]));
     expect(rows.map((row) => row.id)).toEqual(["me", "me/c1", "kaja"]);
@@ -374,7 +390,14 @@ describe("createPartyWindow (#1055)", () => {
         ME,
         {
           ...WOLF,
-          creature: { ownerId: "me", kind: "pet", look: "beast", mode: "heel", armedAttack: null },
+          creature: {
+            ownerId: "me",
+            kind: "pet",
+            look: "beast",
+            mode: "heel",
+            armedAttack: null,
+            leaderId: null,
+          },
         },
       ]),
     );

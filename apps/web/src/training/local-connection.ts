@@ -132,6 +132,7 @@ function toPlayerSnapshot(
             look: participant.creature.look,
             mode: companionMode(participant.creature),
             armedAttack: armedAttackSnapshot(participant.armedAttack, elapsedSeconds),
+            leaderId: participant.creature.leaderId ?? null,
           },
     // The Training Ground has dummies, not a lobby's bots.
     bot: false,

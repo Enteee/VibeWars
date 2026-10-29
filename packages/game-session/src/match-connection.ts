@@ -101,7 +101,8 @@ export interface PlayerSnapshot {
    * scoreboard, the enemy pips or the music. `mode` is a companion's
    * (#1110), `null` for any other creature. `armedAttack` is the pet
    * attack its next blow carries (#1167), `null` when none is armed.
-   * `ownerId` is `null` for a map's NPC, as a priest (#1186).
+   * `ownerId` is `null` for a map's NPC, as a priest (#1186). `leaderId`
+   * is whom a Ghostly Hero follows (#1377), `null` while it stays.
    */
   readonly creature:
     | {
@@ -110,6 +111,7 @@ export interface PlayerSnapshot {
         readonly look: CreatureLook;
         readonly mode: CompanionMode | null;
         readonly armedAttack: ArmedAttackSnapshot | null;
+        readonly leaderId: string | null;
       }
     | undefined;
   /** A lobby's bot plays it (#1193), not a peer. */

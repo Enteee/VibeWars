@@ -13,6 +13,7 @@ import { chargeAdrenaline } from "../skills/testing.js";
 import { distance, vec2, type Vec2 } from "../vec2.js";
 import { applyIntent } from "./apply-intent.js";
 import { CLAIM_SKILL_ID, GHOST_HEALTH, ghostId, type HillField } from "./ghost.js";
+import { ALTAR_REACH_UNITS } from "./relics.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 
 /**
@@ -155,6 +156,7 @@ describe("a Ghostly Hero (#1377)", () => {
     expect(applyIntent(sim, "a", { kind: "attack", targetId: GHOST_0 })).toBeNull();
     stepFor(sim, 1);
     applyIntent(sim, "a", { kind: "walk-to", x: 700, y: 700 });
+    expect(get(sim, GHOST_0).creature?.leaderId).toBe("a");
     stepFor(sim, 4);
     // At its leader's heel, far from its spawn.
     expect(distance(get(sim, GHOST_0).position, get(sim, "a").position)).toBeLessThan(150);
@@ -163,6 +165,7 @@ describe("a Ghostly Hero (#1377)", () => {
     expect(applyIntent(sim, "a", { kind: "attack", targetId: GHOST_0 })).toBeNull();
     stepFor(sim, 1);
     const stayed = get(sim, GHOST_0).position;
+    expect(get(sim, GHOST_0).creature?.leaderId).toBeUndefined();
     applyIntent(sim, "a", { kind: "walk-to", x: 290, y: 560 });
     stepFor(sim, 4);
     expect(get(sim, GHOST_0).position).toEqual(stayed);
@@ -186,6 +189,23 @@ describe("a Ghostly Hero (#1377)", () => {
     stepFor(sim, 1);
     applyIntent(sim, "a", { kind: "walk-to", x: FIELD.altar.x + 110, y: FIELD.altar.y });
     stepUntil(sim, () => claiming(sim, GHOST_0), 20);
+  });
+
+  it("led onto the altar, fights a foe's ghost adjacent to it, and stays on it", () => {
+    const sim = held();
+    get(sim, "a").position = vec2(FIELD.altar.x - 70, FIELD.altar.y);
+    get(sim, "x").position = vec2(FIELD.altar.x + 70, FIELD.altar.y);
+    onAltar(sim, 0, -15);
+    onAltar(sim, 1, 15);
+    expect(applyIntent(sim, "a", { kind: "attack", targetId: GHOST_0 })).toBeNull();
+    expect(applyIntent(sim, "x", { kind: "attack", targetId: GHOST_1 })).toBeNull();
+    stepFor(sim, 4);
+    for (const id of [GHOST_0, GHOST_1]) {
+      const ghost = get(sim, id);
+      expect(ghost.combatant.attack?.targetId).toBe(id === GHOST_0 ? GHOST_1 : GHOST_0);
+      expect(ghost.combatant.health).toBeLessThan(GHOST_HEALTH);
+      expect(distance(ghost.position, FIELD.altar)).toBeLessThanOrEqual(ALTAR_REACH_UNITS);
+    }
   });
 
   it("is attacked, never led, by a foe's Space", () => {

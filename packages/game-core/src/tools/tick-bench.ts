@@ -65,7 +65,6 @@ export type BenchCrowd = "fighters" | "followers";
 /** A minion's (catalog.ts `MINION_BEHAVIOUR`): heel by its owner, fight its target or foes in earshot. */
 const FOLLOWER_BEHAVIOUR: Behaviour = {
   kind: "follow-and-attack",
-  leaderId: undefined,
   drawnTo: undefined,
   engage: "owner-target-then-nearest",
   aggroUnits: AREA_EARSHOT,
@@ -139,6 +138,7 @@ function benchMatch(field: BenchField, crowd: BenchCrowd, seed: string): MatchSi
             onDeath: "vanish",
             ownerDisableSeconds: 0,
             companionSkillId: undefined,
+            leaderId: undefined,
             mode: "guard",
           },
         });

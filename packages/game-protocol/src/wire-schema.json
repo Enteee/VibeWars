@@ -2361,6 +2361,7 @@
             ]
           }
         },
+        { "name": "leaderId", "optional": false, "type": { "union": ["null", "string"] } },
         {
           "name": "look",
           "optional": false,
@@ -2715,6 +2716,11 @@
                     }
                   },
                   {
+                    "name": "leaderId",
+                    "optional": false,
+                    "type": { "union": ["null", "string"] }
+                  },
+                  {
                     "name": "look",
                     "optional": false,
                     "type": {
@@ -3062,6 +3068,11 @@
                                 { "literal": "spirit" }
                               ]
                             }
+                          },
+                          {
+                            "name": "leaderId",
+                            "optional": false,
+                            "type": { "union": ["null", "string"] }
                           },
                           {
                             "name": "look",
@@ -3436,6 +3447,11 @@
                                 { "literal": "spirit" }
                               ]
                             }
+                          },
+                          {
+                            "name": "leaderId",
+                            "optional": false,
+                            "type": { "union": ["null", "string"] }
                           },
                           {
                             "name": "look",

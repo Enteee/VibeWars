@@ -361,6 +361,11 @@ export interface Creature {
    */
   readonly companionSkillId: string | undefined;
   /**
+   * Whom a Ghostly Hero follows (#1377), in place of an owner;
+   * `undefined` while it stays, and for any other creature.
+   */
+  leaderId: string | undefined;
+  /**
    * Its owner's last order (#1110): kept through its death, Comfort Animal
    * and its owner's respawn. Only a companion takes orders.
    */
@@ -1333,6 +1338,7 @@ export class MatchSimulation {
               ? 0
               : resolveMagnitude(template.ownerDisableOnDeath, owner.combatant),
           companionSkillId: companion ? skillId : undefined,
+          leaderId: undefined,
           mode: "guard",
         },
       });
@@ -3890,12 +3896,24 @@ export class MatchSimulation {
     if (ghost === undefined || ghost.combatant.dead || field === undefined) {
       return;
     }
-    const following =
-      ghost.behaviour?.kind === "follow-and-attack" && ghost.behaviour.leaderId === record.id;
-    ghost.behaviour = following
-      ? stayBehaviour(ghost.position)
-      : followBehaviour(record.id, field.altar);
+    if (ghost.creature?.leaderId === record.id) {
+      this.#stay(ghost, ghost.position);
+    } else {
+      ghost.behaviour = followBehaviour(field.altar);
+      ghost.cursor = createCursor();
+      if (ghost.creature !== undefined) {
+        ghost.creature.leaderId = record.id;
+      }
+    }
+  }
+
+  /** A Ghostly Hero stays at `post`, following nobody (#1377). */
+  #stay(ghost: ParticipantRecord, post: Vec2): void {
+    ghost.behaviour = stayBehaviour(post);
     ghost.cursor = createCursor();
+    if (ghost.creature !== undefined) {
+      ghost.creature.leaderId = undefined;
+    }
   }
 
   /**
@@ -3905,15 +3923,13 @@ export class MatchSimulation {
   #steadyGhosts(): void {
     for (const spawn of this.#hillField?.spawns ?? []) {
       const ghost = this.#participants.get(ghostId(spawn.team));
-      const behaviour = ghost?.behaviour;
-      if (ghost === undefined || behaviour?.kind !== "follow-and-attack") {
+      const leaderId = ghost?.creature?.leaderId;
+      if (ghost === undefined || leaderId === undefined) {
         continue;
       }
-      const leader =
-        behaviour.leaderId === undefined ? undefined : this.#participants.get(behaviour.leaderId);
+      const leader = this.#participants.get(leaderId);
       if (leader === undefined || leader.combatant.dead || this.#leaving.has(leader.id)) {
-        ghost.behaviour = stayBehaviour(ghost.position);
-        ghost.cursor = createCursor();
+        this.#stay(ghost, ghost.position);
       }
     }
   }
@@ -5578,7 +5594,7 @@ export class MatchSimulation {
     }
     // A Ghostly Hero rises staying put at its spawn (#1377).
     if (record.creature?.kind === "ghostly-hero") {
-      record.behaviour = stayBehaviour(record.spawn);
+      this.#stay(record, record.spawn);
     }
     record.armedAttack = undefined;
     record.outOfCombatSeconds = 0;

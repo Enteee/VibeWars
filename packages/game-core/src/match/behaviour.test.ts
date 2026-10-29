@@ -332,7 +332,6 @@ describe("auto-attack", () => {
 describe("follow-and-attack (#467)", () => {
   const FOLLOW: Behaviour = {
     kind: "follow-and-attack",
-    leaderId: undefined,
     drawnTo: undefined,
     engage: "owner-target-then-nearest",
     aggroUnits: 350,
@@ -357,6 +356,7 @@ describe("follow-and-attack (#467)", () => {
         onDeath: "vanish",
         ownerDisableSeconds: 0,
         companionSkillId: undefined,
+        leaderId: undefined,
         mode: "guard",
       },
     };
@@ -601,7 +601,6 @@ describe("follow-and-attack (#467)", () => {
   describe("engaging its owner's target, as a pet (#1046)", () => {
     const PET: Behaviour = {
       kind: "follow-and-attack",
-      leaderId: undefined,
       drawnTo: undefined,
       engage: "owner-target",
       aggroUnits: 700,

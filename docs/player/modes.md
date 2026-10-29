@@ -97,13 +97,17 @@ Relic Temples plays it.
 **Lead your Ghostly Hero onto the altar, and hold it.** Each team has a
 **Ghostly Hero** in its base, a ghost that fights with a sword and that
 nobody plays. The **altar** is in the centre, the same walk from both
-bases, up a north or a south approach. Target your ghost and press
-**Space** to tell it to follow you: it walks with you and fights what
-you fight. Press Space on it again and it stays where it stands,
-fighting any foe who comes near. If you die or leave, it stays.
+bases, up a north or a south approach. Target your ghost with a
+**right-click** and press **Space** to tell it to follow you: it walks
+with you and fights what you fight. Press Space on it again and it
+stays where it stands, fighting any foe who comes near. If you die or
+leave, it stays. With your ghost targeted, its frame says whom it
+follows, or that it stays.
 
-A ghost on the altar claims it by itself: 5 seconds standing still, its
-cast bar filling. An interrupt or a knockdown cuts the claim short, and
+Lead it onto or past the altar and it steps onto the altar and keeps
+to it. There it fights any foe beside it, but never steps off after
+one. A ghost on the altar claims it by itself: 5 seconds standing
+still, its cast bar filling, fighting nobody. An interrupt or a knockdown cuts the claim short, and
 it starts again once it can. It may claim the altar only while nobody
 holds it, or while the holder's ghost is dead. When the claim finishes,
 the altar is your team's.
