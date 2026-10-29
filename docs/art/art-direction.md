@@ -422,6 +422,9 @@ the arena does not. A body beyond it is not on it: the edge markers
 - **A Relic Run's altar** (#1388): a filled `altar` `◆`, 10 px tip to
   tip, on a 1 px `edge` rim, under the bodies. Not pinned to the rim when
   out of reach.
+- **A Capture Points shrine** (#1407): a 12 px `□`, a 1.5 px stroke in
+  its owner's colour, `friend` or `foe`, `ink-dim` while nobody holds it.
+  Its capture progress is the arena's to show, not the compass's.
 - **Pings**: a 1 px `friend` ring growing from 3 to 10 px and fading over
   the ping's life. Reduced motion: it holds at 3 px, whole.
 
