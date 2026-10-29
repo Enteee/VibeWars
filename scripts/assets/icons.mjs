@@ -1550,6 +1550,25 @@ const skillGlyph = {
     spiritPost() +
     `<circle cx="17" cy="8.5" r="4.6" ${stroke(C.ink, 2)}/>` +
     inkLine("M12 14L22 3", 2.2),
+  // The spirit post under a shield: no blow takes more than a tenth (#1289).
+  "spirit-cap": () =>
+    spiritPost() +
+    `<path d="M17 2.5L22.5 4.5V8.5C22.5 11.5 20.2 13.3 17 14.5C13.8 13.3 11.5 11.5 11.5 8.5V4.5Z" ${stroke(C.ink, 1.9)}/>` +
+    inkLine("M14.2 7.2H19.8", 1.9),
+  // The spirit post beside two linked rings: the damage is shared (#1289).
+  "spirit-share": () =>
+    spiritPost() +
+    `<circle cx="14.6" cy="8.5" r="3.3" ${stroke(C.ink, 1.9)}/><circle cx="20" cy="8.5" r="3.3" ${stroke(C.ink, 1.9)}/>`,
+  // The spirit post and an arrow stopped by a bar: the attack is blocked (#1289).
+  "spirit-block": () =>
+    spiritPost() +
+    inkLine("M10.5 8.5H17M14.5 5.5L17.5 8.5L14.5 11.5", 2) +
+    inkLine("M21 3V14", 2.4),
+  // The spirit post and an arrow driven into the ground: no knockdown (#1289).
+  "spirit-ground": () =>
+    spiritPost() +
+    inkLine("M17 2.5V9.5M13.8 7L17 10.2L20.2 7", 2) +
+    inkLine("M11.5 13.8H22.5", 2.4),
   // The ward's ring and pole, with a blade struck from it: it turns melee (#1217).
   "ward-blade": () =>
     `<ellipse cx="12" cy="17" rx="8.5" ry="4" ${stroke(C.ink, 2.5)}/>` +

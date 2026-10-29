@@ -245,11 +245,10 @@ export const SKILL_ICONS = {
   "ritualist.shadowsong": { glyph: "spirit-blind" },
   "ritualist.dissonance": { glyph: "spirit-quiet" },
   "ritualist.disenchantment": { glyph: "spirit-strip" },
-  // Placeholders until the asset-designer's (#1265): the protective spirits.
-  "ritualist.shelter": { glyph: "totem", modifier: "self" },
-  "ritualist.union": { glyph: "totem", modifier: "half" },
-  "ritualist.displacement": { glyph: "totem", modifier: "stun" },
-  "ritualist.earthbind": { glyph: "totem", modifier: "down" },
+  "ritualist.shelter": { glyph: "spirit-cap" },
+  "ritualist.union": { glyph: "spirit-share" },
+  "ritualist.displacement": { glyph: "spirit-block" },
+  "ritualist.earthbind": { glyph: "spirit-ground" },
   // Placeholders until the asset-designer's (#1309): spirit sacrifice.
   "ritualist.rupture-soul": { glyph: "totem", modifier: "bolt" },
   "ritualist.spirit-to-flesh": { glyph: "totem", modifier: "less" },
