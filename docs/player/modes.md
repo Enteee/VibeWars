@@ -4,6 +4,11 @@ Each map plays one mode, and the lobby says which under the map's name.
 Nobody picks it. A Random Arena picks a map for you, and with it the
 mode, but never a Guild Battle, a Relic Run or Capture Points.
 
+In a Guild Battle, a Relic Run or Capture Points, an objective off screen
+or under the HUD gets an outlined arrow at the screen edge: the stand or
+a shrine in its owner's colour, grey for nobody's, the altar in gold.
+A player's filled arrow draws over it.
+
 ## Annihilation
 
 **Defeat every foe.** The dead stay down until an ally resurrects them,
