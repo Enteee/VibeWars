@@ -5,12 +5,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { ChainRole } from "@vibewars/game-core";
 import type { CastRefusedMessage } from "@vibewars/game-protocol";
-import type { PlayerSnapshot } from "@vibewars/game-session";
+import type { MatchSnapshot, PlayerSnapshot } from "@vibewars/game-session";
 
 import { DEFAULT_KEYMAP } from "../input/keymap.js";
 import { isEliteSkill } from "./icons.js";
 
 import {
+  carriesFlag,
+  objectTargetName,
   changedSlots,
   createHud,
   type HudElements,
@@ -146,6 +148,54 @@ describe("invulnerableLabel (#1233)", () => {
     expect(invulnerableLabel(4.2)).toBe("Invulnerable 0:05");
     expect(invulnerableLabel(4)).toBe("Invulnerable 0:04");
     expect(invulnerableLabel(0.01)).toBe("Invulnerable 0:01");
+  });
+});
+
+describe("objectTargetName (#1225)", () => {
+  it("names the stand and a flag by whose it is, and nothing else", () => {
+    expect(objectTargetName("flag-stand", 0)).toBe("Flag Stand");
+    expect(objectTargetName("flag/0", 0)).toBe("Your flag");
+    expect(objectTargetName("flag/1", 0)).toBe("Enemy flag");
+    expect(objectTargetName("peer-1", 0)).toBeUndefined();
+    expect(objectTargetName(undefined, 0)).toBeUndefined();
+  });
+});
+
+describe("carriesFlag (#1225)", () => {
+  const match = (flags: MatchSnapshot["flags"]): MatchSnapshot => ({
+    selfSessionId: "me",
+    players: [],
+    scoreTeam0: 0,
+    scoreTeam1: 0,
+    elapsedSeconds: 0,
+    phase: "active",
+    winningTeam: undefined,
+    endReason: undefined,
+    projectiles: [],
+    groundEffects: [],
+    traps: [],
+    flags,
+    stand: { holder: undefined, heldSeconds: 0 },
+    summary: undefined,
+  });
+
+  it("shows the Drop button only to the flag's carrier", () => {
+    const carried = match([{ team: 0, place: { kind: "carried", carrierId: "me" } }]);
+    expect(carriesFlag(carried, "me")).toBe(true);
+    expect(carriesFlag(carried, "ally")).toBe(false);
+    expect(carriesFlag(match([{ team: 0, place: { kind: "spawn" } }]), "me")).toBe(false);
+    expect(carriesFlag(match([]), "me")).toBe(false);
+  });
+
+  it("starts hidden", () => {
+    vi.stubGlobal("document", { createElement: () => new FakeNode() });
+    const hud = createHud(
+      new FakeNode() as unknown as HTMLElement,
+      () => undefined,
+      () => undefined,
+    );
+    vi.unstubAllGlobals();
+    expect(hud.dropFlag.hidden).toBe(true);
   });
 });
 
@@ -873,6 +923,7 @@ class FakeNode {
   readonly children: FakeNode[] = [];
   readonly style = { setProperty: (): void => undefined };
   readonly setAttribute = (): void => undefined;
+  readonly addEventListener = (): void => undefined;
 
   appendChild(child: FakeNode): FakeNode {
     this.children.push(child);
@@ -901,7 +952,11 @@ describe("createHud's layout (#1042)", () => {
   const build = (): { parent: FakeNode; hud: ReturnType<typeof createHud> } => {
     vi.stubGlobal("document", { createElement: () => new FakeNode() });
     const parent = new FakeNode();
-    const hud = createHud(parent as unknown as HTMLElement, () => undefined);
+    const hud = createHud(
+      parent as unknown as HTMLElement,
+      () => undefined,
+      () => undefined,
+    );
     return { parent, hud };
   };
   const named = (nodes: FakeNode[], names: readonly string[]): string[] =>
@@ -909,7 +964,7 @@ describe("createHud's layout (#1042)", () => {
       .map((node) => node.className.split(" "))
       .flatMap((classes) => names.filter((name) => classes.includes(name)));
 
-  it("stacks your block, top down: hint, message, effects, morale and gear, health, energy, skills", () => {
+  it("stacks your block, top down: hint, message, effects, morale, gear and Drop, health, energy, skills", () => {
     const { hud } = build();
     const order = [
       "hud-hint",
@@ -917,6 +972,7 @@ describe("createHud's layout (#1042)", () => {
       "effects-monitor",
       "hud-morale",
       "hud-gear",
+      "hud-drop",
       "hud-bar-health",
       "hud-bar-energy",
       "hud-skills",

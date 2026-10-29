@@ -652,7 +652,10 @@ editor, placing a second elite takes the first one's place on the bar
 and says so ("Broad Head Arrow replaced Barrage: only one elite skill per
 bar."); the library's Elite toggle lists only elites. A bar with two
 elites, from an import or storage, cannot be saved, and a match plays a
-starter build instead (#852).
+starter build instead (#852). On the main menu such a character is
+striped red and tagged Invalid, and cannot be chosen until it is fixed
+(#1290). An empty bar is a legal build: it plays as itself, auto-attack
+only.
 
 **Stances** are yours alone, and only one is up at a time. Using a
 stance ends the one you are in, the same one included, which restarts
@@ -1375,7 +1378,8 @@ brackets.
   ground; a caster can be boxed in. Corpses are _not_ solid — a dead
   player should never trap the living. A spirit is no body to its own team
   (#1278), as in GW1: you and your allies walk through your spirits,
-  while foes are blocked by them. A minion or pet of yours that you stand
+  and a click or an attack walks straight on rather than round them
+  (#1295), while foes are blocked by them. A minion or pet of yours that you stand
   in lets you step off it in any direction without a shove; once apart,
   it blocks you again.
 - **Walls** resolve after players, so someone squeezed between a blocker

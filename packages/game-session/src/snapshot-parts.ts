@@ -175,6 +175,8 @@ export function snapshotAssembler(): (part: WireSnapshotPart) => WireSnapshot | 
       players,
       projectiles,
       groundEffects,
+      flags: part.flags,
+      stand: part.stand,
     };
   };
 }

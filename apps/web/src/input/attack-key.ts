@@ -1,3 +1,4 @@
+import { isFlagObjectId } from "@vibewars/game-core";
 import type { ClientIntent } from "@vibewars/game-protocol";
 import type { MatchSnapshot } from "@vibewars/game-session";
 
@@ -51,14 +52,18 @@ export function isAttacking(snapshot: MatchSnapshot): boolean {
 
 /**
  * What a double-click on `hitId` sends (#298): the mouse twin of
- * `attackKeyIntents`. An attack, when it is a living enemy; nothing for
- * an ally, yourself, a corpse or empty ground, whose double-click is just
- * the target its single click already set.
+ * `attackKeyIntents`. An attack, when it is a living enemy, or a flag or
+ * the flag stand to walk to (#1225); nothing for an ally, yourself, a
+ * corpse or empty ground, whose double-click is just the target its
+ * single click already set.
  */
 export function attackClickIntents(
   snapshot: MatchSnapshot,
   hitId: string | undefined,
 ): ClientIntent[] {
+  if (hitId !== undefined && isFlagObjectId(hitId)) {
+    return [{ kind: "attack", targetId: hitId }];
+  }
   const self = snapshot.players.find((player) => player.sessionId === snapshot.selfSessionId);
   const hit = snapshot.players.find((player) => player.sessionId === hitId);
   if (self === undefined || hit === undefined || hit.dead || hit.team === self.team) {

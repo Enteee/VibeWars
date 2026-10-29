@@ -398,6 +398,76 @@ describe("bodies a spirit, minion or pet does not block (#1278)", () => {
   });
 });
 
+describe("a walk that does not steer round its own team's spirit (#1295)", () => {
+  const TOUCH = RULES.collision.playerRadius + RULES.collision.creatureRadius;
+
+  /**
+   * `r`'s Recuperation planted at the origin, `r` then gone 1 s left, and
+   * the same match with no spirit; `extra` joins both.
+   */
+  function plantedAndBare(...extra: ParticipantSpec[]): [MatchSimulation, MatchSimulation] {
+    const sim = match(...extra);
+    ritual(sim, RECUPERATION);
+    const bare = match(...extra);
+    stepFor(bare, skillOf(RECUPERATION).activationSeconds + 0.5);
+    for (const each of [sim, bare]) {
+      stepFor(each, 1);
+      each.setInputDirection("r", vec2(-1, 0));
+      stepFor(each, 1);
+      each.setInputDirection("r", vec2(0, 0));
+    }
+    expect(get(sim, "r").position.x).toBeLessThan(-2 * TOUCH);
+    return [sim, bare];
+  }
+
+  it("walks a teammate's click straight through it, in the time it takes with none", () => {
+    const [sim, bare] = plantedAndBare();
+    const goal = vec2(0, -200);
+    sim.walkTo("a", goal);
+    bare.walkTo("a", goal);
+    for (let i = 0; i < 3 * RULES.tickRateHz; i += 1) {
+      sim.step(DT);
+      bare.step(DT);
+      expect(Math.abs(get(sim, "a").position.x)).toBeLessThan(1);
+      expect(get(sim, "a").position).toEqual(get(bare, "a").position);
+    }
+    expect(get(sim, "a").position).toEqual(goal);
+    expect(spirits(sim)[0]?.position).toEqual(vec2(0, 0));
+  });
+
+  it("walks an attack on a foe behind it straight, in the time it takes with none", () => {
+    // `b` and `g` on the diagonal through the spirit, clear of everyone else.
+    const [sim, bare] = plantedAndBare(
+      spec("b", 0, vec2(200, 200), { equipment: AXE }),
+      spec("g", 1, vec2(-200, -200)),
+    );
+    expect(sim.requestAttack("b", "g")?.ok).toBe(true);
+    expect(bare.requestAttack("b", "g")?.ok).toBe(true);
+    let passed = false;
+    for (let i = 0; i < 2 * RULES.tickRateHz; i += 1) {
+      sim.step(DT);
+      bare.step(DT);
+      const at = get(sim, "b").position;
+      expect(Math.abs(at.x - at.y) / Math.SQRT2).toBeLessThan(1);
+      expect(at).toEqual(get(bare, "b").position);
+      passed ||= at.x < -TOUCH;
+    }
+    expect(passed).toBe(true);
+  });
+
+  it("still bends a foe's click round it", () => {
+    const [sim] = plantedAndBare();
+    sim.walkTo("f", vec2(-100, 0));
+    let widest = 0;
+    for (let i = 0; i < 3 * RULES.tickRateHz; i += 1) {
+      sim.step(DT);
+      widest = Math.max(widest, Math.abs(get(sim, "f").position.y));
+    }
+    expect(widest).toBeGreaterThan(RULES.collision.creatureRadius);
+    expect(get(sim, "f").position.x).toBeLessThan(-TOUCH);
+  });
+});
+
 describe("Recuperation (#1064)", () => {
   it("gives its own side +3 Health regeneration in range, never a foe on top of it", () => {
     const sim = match();

@@ -13,7 +13,9 @@ import {
 import { REST_FRAME } from "../render/attack-clock.js";
 import { fromPlayerBuild, toPlayerBuild } from "../storage/build-validation.js";
 import type { StoredCharacter } from "../storage/schema.js";
-import { characterAppearance, figureBody } from "./character-figure.js";
+import { newCharacter } from "./build-editor.js";
+import { characterAppearance, figureBody, paintFigure } from "./character-figure.js";
+import type { Painter, StandingBody } from "../render/body-painter.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 
@@ -88,7 +90,13 @@ describe("characterAppearance (#1250)", () => {
     expect(characterAppearance(longbow)).toEqual(hostHeld(longbow));
   });
 
-  it("gives a build the host would refuse no weapon and no off-hand: its starter is random", () => {
+  it("gives a fresh character, empty bar and all, the sword it plays with (#1290)", () => {
+    const fresh = newCharacter("c1");
+    expect(characterAppearance(fresh).weaponId).toBe("sword");
+    expect(characterAppearance(fresh)).toEqual(hostHeld(fresh));
+  });
+
+  it("gives an invalid build no weapon and no off-hand: its starter is random", () => {
     const illegal = stored({
       ...starter("ranger"),
       attributes: [{ attributeId: "ranger.marksmanship", rank: 99 }],
@@ -109,5 +117,50 @@ describe("figureBody (#1250)", () => {
       offhandId: "shield",
       frame: REST_FRAME,
     });
+  });
+});
+
+/** How far past `body`'s centre anything `paint` draws through a painter reaches. */
+function reach(body: StandingBody, paint: (painter: Painter) => void): number {
+  let farthest = 0;
+  const at = (x: number, y: number, radius = 0): void => {
+    farthest = Math.max(farthest, Math.hypot(x - body.x, y - body.y) + radius);
+  };
+  paint({
+    fillStyle: () => undefined,
+    lineStyle: () => undefined,
+    fillCircle: at,
+    strokeCircle: at,
+    beginPath: () => undefined,
+    moveTo: (x, y) => {
+      at(x, y);
+    },
+    lineTo: (x, y) => {
+      at(x, y);
+    },
+    arc: at,
+    strokePath: () => undefined,
+    fillPoints: (points) => {
+      for (const point of points) {
+        at(point.x, point.y);
+      }
+    },
+  });
+  return farthest;
+}
+
+describe("paintFigure (#1290)", () => {
+  it("draws a fresh character's weapon past its body's edge", () => {
+    const body = figureBody(characterAppearance(newCharacter("c1")));
+    expect(reach(body, (painter) => paintFigure(painter, body, () => undefined))).toBeGreaterThan(
+      body.r + 2,
+    );
+  });
+
+  it("draws an invalid build's bare body no further than its edge", () => {
+    const body = figureBody({ weaponId: undefined, offhandId: undefined });
+    expect(
+      reach(body, (painter) => paintFigure(painter, body, () => undefined)),
+    ).toBeLessThanOrEqual(body.r + 2);
   });
 });

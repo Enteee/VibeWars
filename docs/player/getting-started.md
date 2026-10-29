@@ -22,6 +22,11 @@ Your characters are listed on the left of the main menu, under
 
 The editor tells you when a build cannot be played, for example when two
 elite skills are on one bar. Click a character in the list to play as it.
+A character with no skills yet plays too, with auto-attack only.
+
+A character the game's rules changed under shows red stripes and
+**Invalid**. You cannot play as it until you **Edit** it into a legal
+build and save.
 
 Not sure what to take? **Reroll** on a starter character gives you a
 fresh random build to try.
