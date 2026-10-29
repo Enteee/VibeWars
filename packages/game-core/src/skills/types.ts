@@ -724,6 +724,11 @@ export type StateCondition =
       readonly profession?: ProfessionId;
     }
   /**
+   * The caster has no status of this category (#1354), the negation of
+   * `caster-has`: Pure Strike's "if you are not using a stance".
+   */
+  | { readonly kind: "caster-lacks"; readonly category: StatusCategory }
+  /**
    * No living ally of the effect's target, the target itself excluded,
    * stands within `radius` of it (#885): Horns of the Ox's "not adjacent
    * to any allies".
@@ -983,8 +988,13 @@ export interface AttackSkillRule {
    * effects on each that hits. A ranged attack skill flies once: 1.
    */
   readonly strikes: 1 | 2;
-  /** Whether no block stops it (Wild Throw's "This attack cannot be blocked"). */
-  readonly unblockable: boolean;
+  /**
+   * Whether no block stops it (Wild Throw's "This attack cannot be
+   * blocked"), or while which state holds (#1354), read per blow as its
+   * block is rolled, with the attacker as the caster: Pure Strike's "if
+   * you are not using a stance, Pure Strike cannot be blocked".
+   */
+  readonly unblockable: boolean | StateCondition;
   /**
    * What a blocked blow does to its target instead of the skill's
    * `effects` (#534): Swift Chop's damage and Deep Wound. Usually none.

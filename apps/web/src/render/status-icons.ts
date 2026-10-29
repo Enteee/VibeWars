@@ -79,6 +79,7 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "critical-defenses": icon("critical-defenses"),
   "feigned-neutrality": icon("feigned-neutrality"),
   "way-of-perfection": icon("way-of-perfection"),
+  "hundred-blades": icon("hundred-blades"),
   "fall-back": icon("fall-back"),
   "stand-your-ground": icon("stand-your-ground"),
   incoming: icon("incoming"),

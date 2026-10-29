@@ -779,6 +779,8 @@ function conditionText(condition: EffectCondition): string {
       return condition.profession === undefined
         ? `If you have ${aCategory(condition.category)}`
         : `If you have a ${getProfession(condition.profession).name} ${condition.category}`;
+    case "caster-lacks":
+      return `If you have no ${condition.category}`;
     case "target-casting":
       return "If target is casting a spell";
     case "target-alone":
@@ -1631,9 +1633,21 @@ export function describeSkill(
           },
         ]),
   ];
-  // An attack that rolls no block (#1038): Wild Throw, Crippling Shot.
+  // An attack that rolls no block (#1038): Wild Throw, Crippling Shot. Or
+  // none while a state holds (#1354): Pure Strike out of a stance.
+  const unblockable = rule?.unblockable ?? false;
   const unblockableLine =
-    rule?.unblockable === true ? [{ text: "Cannot be blocked", magnitude: undefined }] : [];
+    unblockable === false
+      ? []
+      : [
+          {
+            text:
+              unblockable === true
+                ? "Cannot be blocked"
+                : `${conditionText(unblockable)}: cannot be blocked`,
+            magnitude: undefined,
+          },
+        ];
   // A critical whatever the roll (#1315): Critical Strike's always,
   // Malicious Strike's on a conditioned foe.
   const criticalWhen = rule?.criticalWhen;
