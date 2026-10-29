@@ -762,6 +762,12 @@ export type StateCondition =
    */
   | { readonly kind: "caster-more-energy" }
   /**
+   * The caster is overcast, above 0, as the effect resolves (#1366):
+   * Flare's "if you are Overcast". A spell's own overcast is paid as its
+   * activation starts, so one with overcast counts its own.
+   */
+  | { readonly kind: "caster-overcast" }
+  /**
    * The caster's main hand is a weapon of this class (#939): Vow of
    * Strength's and Sand Shards' "with your scythe".
    */

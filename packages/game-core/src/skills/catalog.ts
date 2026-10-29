@@ -9909,6 +9909,340 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     effects: [{ kind: "adrenaline-gain", strikes: 4 }],
   },
   /* ---------------------------------------------------------------------- */
+  /* Elementalist Fire Magic staples (#1366)                                */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "elementalist.immolate",
+    name: "Immolate",
+    gwId: 191,
+    type: "spell",
+    elite: false,
+    profession: "elementalist",
+    attributeId: "elementalist.fire-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe is struck for 20...64...75 fire damage and is set on
+    // fire for 1...3 seconds."
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.fire-magic", atZero: 20, atTwelve: 64 },
+        },
+        type: "fire",
+        armorPenetration: 0,
+      },
+      { kind: "apply-status", statusId: "burning", durationSeconds: 3 },
+    ],
+  },
+  {
+    id: "elementalist.flare",
+    name: "Flare",
+    gwId: 194,
+    type: "spell",
+    elite: false,
+    profession: "elementalist",
+    attributeId: "elementalist.fire-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 0,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    // "Send out a flare": it flies as Fireball does, so a foe who steps
+    // out of where it is led to takes nothing, and neither do its neighbours.
+    projectile: { speed: RANGE_SPELL },
+    // "Strikes target foe for 20...56...65 fire damage if it hits. If you
+    // are Overcast, Flare hits adjacent foes as well."
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.fire-magic", atZero: 20, atTwelve: 56 },
+        },
+        type: "fire",
+        armorPenetration: 0,
+      },
+      {
+        kind: "if",
+        condition: { kind: "caster-overcast" },
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_ADJACENT,
+            maxTargets: undefined,
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "elementalist.fire-magic", atZero: 20, atTwelve: 56 },
+                },
+                type: "fire",
+                armorPenetration: 0,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "elementalist.inferno",
+    name: "Inferno",
+    gwId: 183,
+    type: "spell",
+    elite: false,
+    profession: "elementalist",
+    attributeId: "elementalist.fire-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    // "All adjacent foes are struck for 30...114...135 fire damage": around
+    // the caster, who needs no target to cast it.
+    area: {
+      radius: AREA_ADJACENT,
+      origin: "caster",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.fire-magic", atZero: 30, atTwelve: 114 },
+        },
+        type: "fire",
+        armorPenetration: 0,
+      },
+    ],
+  },
+  {
+    id: "elementalist.flame-burst",
+    name: "Flame Burst",
+    gwId: 188,
+    type: "spell",
+    elite: false,
+    profession: "elementalist",
+    attributeId: "elementalist.fire-magic",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "self",
+    // "All nearby foes are struck for 15...99...120 fire damage": around
+    // the caster, Inferno's wider, weaker twin.
+    area: {
+      radius: AREA_NEARBY,
+      origin: "caster",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.fire-magic", atZero: 15, atTwelve: 99 },
+        },
+        type: "fire",
+        armorPenetration: 0,
+      },
+    ],
+  },
+  {
+    id: "elementalist.rodgorts-invocation",
+    name: "Rodgort's Invocation",
+    gwId: 189,
+    type: "spell",
+    elite: false,
+    profession: "elementalist",
+    attributeId: "elementalist.fire-magic",
+    cost: { kind: "energy", amount: 25 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    // "Target foe and all nearby foes are struck for 15...99...120 fire
+    // damage and set on fire for 1...3 seconds."
+    area: {
+      radius: AREA_NEARBY,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.fire-magic", atZero: 15, atTwelve: 99 },
+        },
+        type: "fire",
+        armorPenetration: 0,
+      },
+      { kind: "apply-status", statusId: "burning", durationSeconds: 3 },
+    ],
+  },
+  {
+    id: "elementalist.fire-storm",
+    name: "Fire Storm",
+    gwId: 197,
+    type: "spell",
+    elite: false,
+    profession: "elementalist",
+    attributeId: "elementalist.fire-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Create a Fire Storm at target foe's location. For 10 seconds, foes
+    // adjacent to that location are struck for 5...29...35 fire damage
+    // each second": it stays where they stood as the cast ended, as
+    // Meteor Shower's, so a foe who walks out stops burning.
+    effects: [
+      {
+        kind: "create-ground-effect",
+        anchor: "target",
+        durationSeconds: { flat: 10 },
+        act: {
+          kind: "pulse",
+          pulse: {
+            count: 10,
+            everySeconds: 1,
+            delaySeconds: 0,
+            area: {
+              radius: AREA_ADJACENT,
+              origin: "caster",
+              affects: "enemies",
+              maxTargets: undefined,
+              includesCaster: false,
+            },
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "elementalist.fire-magic", atZero: 5, atTwelve: 29 },
+                },
+                type: "fire",
+                armorPenetration: 0,
+              },
+            ],
+          },
+        },
+      },
+    ],
+  },
+  {
+    id: "elementalist.mind-burn",
+    name: "Mind Burn",
+    gwId: 185,
+    type: "spell",
+    elite: true,
+    profession: "elementalist",
+    attributeId: "elementalist.fire-magic",
+    cost: { kind: "energy", amount: 5 },
+    // Exhaustion (#461), at the corpus's 5.
+    overcast: 5,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    // "Target foe and all adjacent foes take 15...51...60 fire damage. If
+    // you have more Energy than target foe, that foe and all adjacent foes
+    // take an additional 15...51...60 fire damage and are set on fire for
+    // 1...8...10 seconds": the energy is read against each foe it lands on,
+    // as Mind Shock's.
+    area: {
+      radius: AREA_ADJACENT,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.fire-magic", atZero: 15, atTwelve: 51 },
+        },
+        type: "fire",
+        armorPenetration: 0,
+      },
+      {
+        kind: "if",
+        condition: { kind: "caster-more-energy" },
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "elementalist.fire-magic", atZero: 15, atTwelve: 51 },
+            },
+            type: "fire",
+            armorPenetration: 0,
+          },
+          { kind: "apply-status", statusId: "burning", durationSeconds: 8 },
+        ],
+      },
+    ],
+  },
+  /* ---------------------------------------------------------------------- */
   /* Warrior Hammer Mastery staples (#1357)                                 */
   /* ---------------------------------------------------------------------- */
   {

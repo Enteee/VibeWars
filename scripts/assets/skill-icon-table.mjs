@@ -307,6 +307,14 @@ export const SKILL_ICONS = {
   "necromancer.blood-of-the-aggressor": { glyph: "drop-weak" },
   "necromancer.barbed-signet": { glyph: "drop-barbs", modifier: "bleed" },
   "necromancer.offering-of-blood": { glyph: "drop-energy" },
+  // Placeholders until the asset-designer's (#1366): Fire Magic.
+  "elementalist.immolate": { glyph: "flame" },
+  "elementalist.flare": { glyph: "fireball", modifier: "bolt" },
+  "elementalist.inferno": { glyph: "flame", modifier: "self" },
+  "elementalist.flame-burst": { glyph: "flame", modifier: "up" },
+  "elementalist.rodgorts-invocation": { glyph: "fireball", modifier: "bleed" },
+  "elementalist.fire-storm": { glyph: "meteor-trio", modifier: "hourglass" },
+  "elementalist.mind-burn": { glyph: "fireball", modifier: "down" },
   // Placeholders until the asset-designer's (#1357): Hammer Mastery.
   "warrior.mighty-blow": { glyph: "hammer", modifier: "plus" },
   "warrior.crushing-blow": { glyph: "hammer", modifier: "bleed" },
