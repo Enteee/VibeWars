@@ -10,6 +10,10 @@ What you do:
   Pick **at most three** findings that matter: a column backing up, cycle time
   rising, a role burning the 5 h budget, an employee pinned at 100% CPU or
   growing memory, the GraphQL budget draining, disk near the hold.
+  `claude.sevenDay.projectedAt` is when the 7 d budget runs dry at the burn
+  between its 1% steps over the last 24 h (unix seconds); null under 3 steps
+  or 2 h of them (after a roll-over too), when flat or falling, or when the
+  window resets first.
 - **Check before you claim.** When a cause is not obvious, ask the role
   concerned (`tg send <role>`). `hub/board-history.jsonl`, `hub/audit.jsonl`,
   `hub/hubd.log`, every `bus/<role>/inbox.jsonl`, `board ls|show`,

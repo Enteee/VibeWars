@@ -560,6 +560,13 @@ const status = {
       `<path d="M4 12.5c2-3.5 5-5.5 8-5.5s6 2 8 5.5c-2 3.5-5 5.5-8 5.5s-6-2-8-5.5z" ${stroke(c, 2)}/>` +
       `<circle cx="12" cy="12.5" r="2.5" fill="${c}"/>`,
   ],
+  // Skill: two crossed blades, every sword attack cuts all round (#1354).
+  "hundred-blades": [
+    "skill-effect",
+    (c) =>
+      `<path d="M6 6l12 12M18 6L6 18" ${stroke(c, 2)}/>` +
+      `<path d="M5 15l4 4M15 19l4-4" ${stroke(c, 2)}/>`,
+  ],
   // Enchantment: a shield with a spark, blocks renewed by critical hits (#1315).
   "critical-defenses": [
     "enchantment",
