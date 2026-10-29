@@ -11,7 +11,7 @@ import {
   setTopbarSlots,
   syncList,
   toast,
-  type OwnIcon,
+  type ShownBar,
   type TopbarSlots,
 } from "./kit.js";
 
@@ -369,7 +369,7 @@ describe("screenBar in the top bar (#578, #1272)", () => {
   let page: FakeNode;
   let topbar: FakeNode;
   let slots: { crumbs: FakeNode; back: FakeNode; status: FakeNode; actions: FakeNode };
-  let shown: { place: string; own: OwnIcon | undefined; overlay: boolean }[];
+  let shown: ShownBar[];
   let overflowOpen: boolean;
   beforeEach(() => {
     page = new FakeNode();
@@ -459,6 +459,15 @@ describe("screenBar in the top bar (#578, #1272)", () => {
     expect(slots.actions.children).toEqual([save]);
     // Where it is, as text, so a repaint in place can be told from a move.
     expect(shown.at(-1)?.place).toBe("VibeWars / Teams / ");
+  });
+
+  it("tells a repaint in place from a move by its place (#1305)", () => {
+    screen(undefined, "Lobby");
+    screen(undefined, "Lobby");
+    expect(shown.at(-2)?.place).toBe("VibeWars / Lobby");
+    expect(shown.at(-1)?.place).toBe("VibeWars / Lobby");
+    screen(undefined, "Teams");
+    expect(shown.at(-1)?.place).toBe("VibeWars / Teams");
   });
 
   it("replaces the last screen's bar, and the main menu has no Back", () => {
