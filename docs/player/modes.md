@@ -107,7 +107,8 @@ bases, up a north or a south approach. Target your ghost with a
 with you and fights what you fight. Press Space on it again and it
 stays where it stands, fighting any foe who comes near. If you die or
 leave, it stays. With your ghost targeted, its frame says whom it
-follows, or that it stays.
+follows, or that it stays. A toast says whom your Ghostly Hero follows
+whenever that changes, and its name over its head shows its leader.
 
 Lead it onto or past the altar and it steps onto the altar and keeps
 to it. There it fights any foe beside it, but never steps off after

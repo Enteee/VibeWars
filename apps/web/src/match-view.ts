@@ -54,6 +54,8 @@ import {
   renderMute,
   refreshSkillBar,
   relicScoreToast,
+  ghostLeaderToast,
+  ghostNameplate,
   renderSkillBar,
   standBoostToast,
   updateHud,
@@ -128,6 +130,11 @@ export function toRenderableWall(wall: WallDescriptor): RenderableWall {
     : { kind: "polygon", points: wall.points };
 }
 
+/** Every body's name by its id, for the names a Ghostly Hero's leader goes by (#1419). */
+function playerNames(match: MatchSnapshot): ReadonlyMap<string, string> {
+  return new Map(match.players.map((player) => [player.sessionId, player.name]));
+}
+
 /** Project the wire snapshot onto the renderer's own shape (ADR-0001). */
 export function toArenaSnapshot(
   match: MatchSnapshot,
@@ -137,6 +144,7 @@ export function toArenaSnapshot(
   relicField: RelicField | undefined,
 ): ArenaSnapshot {
   const self = match.players.find((player) => player.sessionId === match.selfSessionId);
+  const names = playerNames(match);
 
   return {
     walls,
@@ -188,7 +196,7 @@ export function toArenaSnapshot(
       const rings = bodyFlags(living);
       return {
         id: player.sessionId,
-        name: player.name,
+        name: ghostNameplate(player, self, names),
         bot: player.bot,
         position: { x: player.x, y: player.y },
         facing: player.facing,
@@ -627,7 +635,18 @@ export async function startMatchView(
     const objective =
       standBoostToast(lastMatch, latestMatch, self?.team) ??
       relicScoreToast(lastMatch, latestMatch, self?.team);
+    // Who your Ghostly Hero follows now (#1419): a toast, no sound.
+    const leader = ghostLeaderToast(
+      lastMatch,
+      latestMatch,
+      connection.selfSessionId,
+      self?.team,
+      playerNames(latestMatch),
+    );
     lastMatch = latestMatch;
+    if (leader !== undefined) {
+      toast(leader);
+    }
     if (objective !== undefined) {
       toast(objective.text);
       sounds.play(objective.side === "ours" ? "objective-ours" : "objective-theirs");
