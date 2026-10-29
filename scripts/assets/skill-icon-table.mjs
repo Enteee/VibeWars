@@ -278,4 +278,11 @@ export const SKILL_ICONS = {
   "assassin.malicious-strike": { glyph: "dagger", modifier: "half" },
   "assassin.unsuspecting-strike": { glyph: "dagger", modifier: "plus" },
   "assassin.critical-defenses": { glyph: "shield-bolt", modifier: "self" },
+  // Placeholders until the asset-designer's (#1326): Shadow Arts.
+  "assassin.heart-of-shadow": { glyph: "blink", modifier: "down" },
+  "assassin.vipers-defense": { glyph: "blink", modifier: "bleed" },
+  "assassin.deaths-retreat": { glyph: "blink", modifier: "up" },
+  "assassin.feigned-neutrality": { glyph: "crescent", modifier: "self" },
+  "assassin.way-of-perfection": { glyph: "crescent", modifier: "bolt" },
+  "assassin.caltrops": { glyph: "limp", modifier: "bleed" },
 };

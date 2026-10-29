@@ -78,6 +78,7 @@ describe("status definitions", () => {
         def.bindingRitualRechargeFaster !== 0 ||
         def.criticalChanceBonus !== 0 ||
         def.energyPerCritical !== 0 ||
+        def.healthPerCritical !== 0 ||
         def.damageReduction !== 0 ||
         def.redirectsPhysicalDamage !== 0 ||
         def.damageFromSpiritAttacks !== 0;
@@ -124,6 +125,7 @@ describe("status definitions", () => {
       "never-surrender": 4,
       "healing-breeze": 8,
       "shadow-refuge": 9,
+      "feigned-neutrality": 7,
       recuperation: 3,
       "well-of-suffering": -5,
       "symbiotic-bond": 3,

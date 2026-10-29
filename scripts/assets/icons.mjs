@@ -504,6 +504,20 @@ const status = {
       `<path d="M11 5a5 5 0 1 0 0 9a4 4 0 0 1 0-9z" fill="${c}"/>` +
       `<path d="M16.5 13v6M13.5 16h6" ${stroke(c, 2)}/>`,
   ],
+  // Enchantment: a crescent over a shield edge, armored while it holds back (#1326).
+  "feigned-neutrality": [
+    "enchantment",
+    (c) =>
+      `<path d="M10 4.5a4.5 4.5 0 1 0 0 8a3.6 3.6 0 0 1 0-8z" fill="${c}"/>` +
+      `<path d="M12 13h8v2.5c0 2-1.6 3.4-4 4.5-2.4-1.1-4-2.5-4-4.5z" ${stroke(c, 2)}/>`,
+  ],
+  // Enchantment: a crescent over a spark, health from each critical hit (#1326).
+  "way-of-perfection": [
+    "enchantment",
+    (c) =>
+      `<path d="M11 5a5 5 0 1 0 0 9a4 4 0 0 1 0-9z" fill="${c}"/>` +
+      `<path d="M16.5 12l1.2 3 3 1.2-3 1.2-1.2 3-1.2-3-3-1.2 3-1.2z" fill="${c}"/>`,
+  ],
   // Enchantment: a shield, half filled, blocks below half Health (#988).
   "shroud-of-distress": [
     "enchantment",
