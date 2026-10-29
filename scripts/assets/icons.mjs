@@ -567,6 +567,29 @@ const status = {
       `<path d="M6 6l12 12M18 6L6 18" ${stroke(c, 2)}/>` +
       `<path d="M5 15l4 4M15 19l4-4" ${stroke(c, 2)}/>`,
   ],
+  // Stance: three chevrons, a charge at 25% faster (#1359).
+  rush: ["stance", (c) => `<path d="M4 9l4 5-4 5M10 9l4 5-4 5M16 9l4 5-4 5" ${stroke(c, 2)}/>`],
+  // Skill effect: a heavy block on four short legs, armored and slow (#1359).
+  "dolyak-signet": [
+    "skill-effect",
+    (c) =>
+      `<rect x="5" y="7" width="14" height="7" rx="1.5" fill="${c}"/>` +
+      `<path d="M7 14v5M10.5 14v5M13.5 14v5M17 14v5" ${stroke(c, 2)}/>`,
+  ],
+  // Skill effect: a heart with a plus, more maximum Health (#1359).
+  "endure-pain": [
+    "skill-effect",
+    (c) =>
+      `<path d="M12 19.5l-6.5-6.5a3.8 3.8 0 0 1 6.5-4.5 3.8 3.8 0 0 1 6.5 4.5z" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 10.5v5.5M9.2 13.2h5.6" ${stroke(c, 1.8)}/>`,
+  ],
+  // Stance: a bolt under a ceiling, energy per hit up to a cap (#1359).
+  "warriors-endurance": [
+    "stance",
+    (c) =>
+      `<path d="M13.5 7l-5 7h3.5l-1 6 5-7.5h-3.5z" fill="${c}"/>` +
+      `<path d="M5 4.5h14" ${stroke(c, 2)}/>`,
+  ],
   // Enchantment: a shield with a spark, blocks renewed by critical hits (#1315).
   "critical-defenses": [
     "enchantment",

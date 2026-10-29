@@ -28,7 +28,7 @@
 
 import { AREA_ADJACENT, AREA_IN_THE_AREA, AREA_NEARBY } from "../distances.js";
 import type { DamageType } from "../equipment/types.js";
-import { wieldsFor, type WeaponId } from "../equipment/weapons.js";
+import { wieldsFor, type Weapon, type WeaponId } from "../equipment/weapons.js";
 import type { ProfessionId } from "../professions.js";
 import type {
   AttackWeaponClass,
@@ -134,6 +134,11 @@ export type StatusId =
   | "way-of-perfection"
   // Swordsmanship (#1354).
   | "hundred-blades"
+  // Strength (#1359).
+  | "rush"
+  | "dolyak-signet"
+  | "endure-pain"
+  | "warriors-endurance"
   // Paragon shouts (#921).
   | "fall-back"
   | "stand-your-ground"
@@ -299,6 +304,12 @@ export interface StatusDefinition {
    * `fraction` of it, at most `cap`. `undefined`: none.
    */
   readonly maxHealthLoss: MaxHealthLoss | undefined;
+  /**
+   * Maximum health added while it lasts (#1359): Endure Pain's "an
+   * additional 90...300 Health". Gaining it raises health by as much;
+   * losing it clamps health to the maximum left, so the extra is lost.
+   */
+  readonly maxHealthBonus: number;
   /**
    * Multiplier on the heals the bearer receives from skills (1 = unaffected).
    * Regeneration and life steal ignore it.
@@ -637,9 +648,12 @@ export interface StatusTrigger {
   readonly effects: readonly TriggerEffect[];
   readonly target: "bearer" | "source" | "offender" | "created";
   /**
-   * On `bearer-attacks` only (#1354): it fires only for an attack made
-   * with a weapon of this class in the bearer's main hand, as Hundred
-   * Blades' "whenever you attack with a sword". Absent: any attack.
+   * On `bearer-attacks` and `bearer-hits` only (#1354, #1359): it fires
+   * only for an attack made with a weapon of this class in the bearer's
+   * main hand, as Hundred Blades' "whenever you attack with a sword".
+   * `melee` is any weapon that strikes in melee, never a bow nor a thrown
+   * spear: Warrior's Endurance's "each time you hit with a melee attack".
+   * Absent: any attack.
    */
   readonly weapon?: AttackWeaponClass;
   /** The skill the log names it after: "mesmer.backfire". */
@@ -784,6 +798,7 @@ function define(
     moveSpeedMultiplier: 1,
     attackMissChance: 0,
     maxHealthLoss: undefined,
+    maxHealthBonus: 0,
     healingMultiplier: 1,
     weaponDamageMultiplier: 1,
     physicalDamageTakenBonus: 0,
@@ -1368,6 +1383,38 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
         ],
         target: "bearer",
         skillId: "warrior.hundred-blades",
+      },
+    ],
+  }),
+  // "For 8...20 seconds, you move 25% faster" (#1359).
+  rush: define("rush", "Rush", "stance", { profession: "warrior", moveSpeedMultiplier: 1.25 }),
+  // "For 8...20 seconds, you have +10...40 armor and cannot be knocked
+  // down, but your movement is slowed by 75%" (#1359): +34, its rank-12
+  // value.
+  "dolyak-signet": define("dolyak-signet", "Dolyak Signet", "skill-effect", {
+    profession: "warrior",
+    armorModifier: 34,
+    preventsKnockdown: true,
+    moveSpeedMultiplier: 0.25,
+  }),
+  // "For 7...18 seconds you have an additional 90...300 Health" (#1359):
+  // 258, its rank-12 value.
+  "endure-pain": define("endure-pain", "Endure Pain", "skill-effect", {
+    profession: "warrior",
+    maxHealthBonus: 258,
+  }),
+  // "For 5...35 seconds, you gain 3 Energy each time you hit with a melee
+  // attack. Warrior's Endurance cannot raise your Energy above 10...25"
+  // (PvP, #1359): 22, its rank-12 value. A bow or a thrown spear gains none.
+  "warriors-endurance": define("warriors-endurance", "Warrior's Endurance", "stance", {
+    profession: "warrior",
+    triggers: [
+      {
+        on: "bearer-hits",
+        weapon: "melee",
+        effects: [{ kind: "energy-gain", amount: { flat: 3 }, upTo: 22 }],
+        target: "bearer",
+        skillId: "warrior.warriors-endurance",
       },
     ],
   }),
@@ -2103,6 +2150,21 @@ export function getStatusDefinition(id: StatusId): StatusDefinition {
 }
 
 /**
+ * Whether `trigger` answers an attack with `weapon` (#1354): any, unless
+ * it is bound to a class. `melee` (#1359) asks a weapon that strikes in
+ * melee, so a spear, thrown, does not answer it.
+ */
+export function triggerAnswersWeapon(trigger: StatusTrigger, weapon: Weapon): boolean {
+  if (trigger.weapon === undefined) {
+    return true;
+  }
+  return (
+    wieldsFor(weapon.id, trigger.weapon) &&
+    (trigger.weapon !== "melee" || weapon.projectileSpeed === undefined)
+  );
+}
+
+/**
  * All active statuses on one combatant, plus the lifecycle rules that
  * govern them.
  */
@@ -2135,11 +2197,14 @@ export class StatusSet {
   }
 
   /**
-   * The bearer landed a hit (#935), recorded only if a status on it
-   * answers one, with the triggers that do (#953).
+   * The bearer landed a hit with `weapon` (#935), recorded only if a
+   * status on it answers one, with the triggers that do (#953): one bound
+   * to a weapon class only for that class (#1359).
    */
-  public recordHit(): void {
-    const fired = this.#answering("bearer-hits");
+  public recordHit(weapon: Weapon): void {
+    const fired = this.#answering("bearer-hits").filter(({ trigger }) =>
+      triggerAnswersWeapon(trigger, weapon),
+    );
     if (fired.length > 0) {
       this.#changes.push({ kind: "hit", fired });
     }
@@ -2760,6 +2825,8 @@ export interface StatusModifiers {
   readonly attackMissChance: number;
   /** The largest single status's: losses do not add up. */
   readonly maxHealthLoss: MaxHealthLoss | undefined;
+  /** Every status's, summed (#1359). */
+  readonly maxHealthBonus: number;
   /** Every status's, multiplied, and floored at `HEALING_MULTIPLIER_FLOOR`. */
   readonly healingMultiplier: number;
   readonly weaponDamageMultiplier: number;
@@ -2848,6 +2915,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let moveSpeedMultiplier = 1;
   let attackMissChance = 0;
   let maxHealthLoss: MaxHealthLoss | undefined;
+  let maxHealthBonus = 0;
   const healingMultipliers: number[] = [];
   let weaponDamageMultiplier = 1;
   let physicalDamageTakenBonus = 0;
@@ -2901,6 +2969,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     ) {
       maxHealthLoss = def.maxHealthLoss;
     }
+    maxHealthBonus += def.maxHealthBonus;
     healingMultipliers.push(def.healingMultiplier);
     weaponDamageMultiplier *= def.weaponDamageMultiplier;
     physicalDamageTakenBonus += def.physicalDamageTakenBonus;
@@ -2954,6 +3023,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     moveSpeedMultiplier,
     attackMissChance,
     maxHealthLoss,
+    maxHealthBonus,
     healingMultiplier: combinedHealingMultiplier(healingMultipliers),
     weaponDamageMultiplier,
     physicalDamageTakenBonus,

@@ -12,9 +12,9 @@ import {
   HEALTH_PER_PIP,
   StatusSet,
   isStatusId,
-  type ActiveStatus,
   type ArmorReduction,
   type BlockRule,
+  type MaxHealthLoss,
   type StatusId,
 } from "./status.js";
 import { isInvulnerable, isSpell, type Combatant, type Skill } from "./types.js";
@@ -179,32 +179,45 @@ export function naturalHealthPips(
 const PIP_EPSILON = 1e-6;
 
 /**
- * The bearer's effective maximum health, after a loss such as deep
- * wound's: `fraction` of the maximum, at most `cap`. The simulation
- * clamps heals to it.
+ * The bearer's effective maximum health: raised by its statuses' bonus
+ * (#1359, Endure Pain), then cut by a loss such as deep wound's:
+ * `fraction` of the raised maximum, at most `cap`. The bonus is added
+ * before the cut, so the 20% is of the larger maximum, the one the wire
+ * carries. The simulation clamps heals to it.
  */
 export function effectiveMaxHealth(combatant: Pick<Combatant, "maxHealth" | "statuses">): number {
-  return combatant.maxHealth - maxHealthLossOf(combatant);
+  const modifiers = aggregateModifiers(combatant.statuses.active);
+  const raised = combatant.maxHealth + modifiers.maxHealthBonus;
+  return raised - lossOf(raised, modifiers.maxHealthLoss);
+}
+
+/**
+ * The bearer's maximum health with its statuses' bonus (#1359), before any
+ * loss: what its health bar is drawn against.
+ */
+export function raisedMaxHealth(combatant: Pick<Combatant, "maxHealth" | "statuses">): number {
+  return combatant.maxHealth + aggregateModifiers(combatant.statuses.active).maxHealthBonus;
 }
 
 /** How much maximum health the bearer's statuses take: 0 for none. */
 export function maxHealthLossOf(combatant: Pick<Combatant, "maxHealth" | "statuses">): number {
-  return maxHealthLoss(combatant.maxHealth, combatant.statuses.active);
+  const modifiers = aggregateModifiers(combatant.statuses.active);
+  return lossOf(combatant.maxHealth + modifiers.maxHealthBonus, modifiers.maxHealthLoss);
 }
 
 /**
  * The same loss from a snapshot's status ids: the client greys the health
  * bar by it, so the wire need not carry it and both use one definition.
+ * `maxHealth` is the raised one, as the wire carries it.
  */
 export function maxHealthLossOfStatusIds(maxHealth: number, statusIds: readonly string[]): number {
-  return maxHealthLoss(
+  return lossOf(
     maxHealth,
-    statusIds.filter(isStatusId).map((id) => ({ id })),
+    aggregateModifiers(statusIds.filter(isStatusId).map((id) => ({ id }))).maxHealthLoss,
   );
 }
 
-function maxHealthLoss(maxHealth: number, statuses: readonly Pick<ActiveStatus, "id">[]): number {
-  const loss = aggregateModifiers(statuses).maxHealthLoss;
+function lossOf(maxHealth: number, loss: MaxHealthLoss | undefined): number {
   return loss === undefined ? 0 : Math.min(loss.cap, loss.fraction * maxHealth);
 }
 

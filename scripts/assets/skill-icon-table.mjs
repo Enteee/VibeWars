@@ -290,6 +290,15 @@ export const SKILL_ICONS = {
   "warrior.savage-slash": { glyph: "sword", modifier: "stun" },
   "warrior.hundred-blades": { glyph: "sword", modifier: "hourglass" },
   "warrior.dragon-slash": { glyph: "sword", modifier: "bolt" },
+  // Placeholders until the asset-designer's (#1359): Strength.
+  "warrior.power-attack": { glyph: "hammer", modifier: "plus" },
+  "warrior.bulls-strike": { glyph: "hammer", modifier: "up" },
+  "warrior.protectors-strike": { glyph: "hammer", modifier: "half" },
+  "warrior.griffons-sweep": { glyph: "hammer", modifier: "area" },
+  "warrior.rush": { glyph: "speed", modifier: "bolt" },
+  "warrior.dolyak-signet": { glyph: "mountain", modifier: "self" },
+  "warrior.endure-pain": { glyph: "heal", modifier: "plus" },
+  "warrior.warriors-endurance": { glyph: "energy", modifier: "plus" },
   // Placeholders until the asset-designer's (#1329): Tactics stances.
   "warrior.bonettis-defense": { glyph: "shield-bolt", modifier: "plus" },
   "warrior.deflect-arrows": { glyph: "shield-bolt", modifier: "bleed" },
