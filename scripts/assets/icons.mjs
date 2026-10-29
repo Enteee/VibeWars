@@ -518,6 +518,13 @@ const status = {
       `<path d="M4 12.5c2-3.5 5-5.5 8-5.5s6 2 8 5.5c-2 3.5-5 5.5-8 5.5s-6-2-8-5.5z" ${stroke(c, 2)}/>` +
       `<circle cx="12" cy="12.5" r="2.5" fill="${c}"/>`,
   ],
+  // Enchantment: a shield with a spark, blocks renewed by critical hits (#1315).
+  "critical-defenses": [
+    "enchantment",
+    (c) =>
+      `<path d="M7 6h10v5c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7z" ${stroke(c, 2)}/>` +
+      `<path d="M12 8.5l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1z" fill="${c}"/>`,
+  ],
   // Enchantment: an arrow turning back up, the next hit heals (#987).
   "reversal-of-fortune": [
     "enchantment",

@@ -292,6 +292,9 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.energyPerCritical !== 0) {
     parts.push(`gain ${String(definition.energyPerCritical)} Energy per critical hit`);
   }
+  if (definition.refreshesOnCritical) {
+    parts.push("refreshes every time you land a critical hit");
+  }
   if (definition.endsAfterAttacks !== undefined) {
     const plural = definition.endsAfterAttacks === 1 ? "" : "s";
     parts.push(`ends after ${String(definition.endsAfterAttacks)} incoming attack${plural}`);
@@ -629,6 +632,8 @@ function conditionText(condition: EffectCondition): string {
         : `If it removes ${aCategory(condition.category)}`;
     case "target-health-below":
       return `If target is below ${String(Math.round(condition.fraction * 100))}% Health`;
+    case "target-health-above":
+      return `If target is above ${String(Math.round(condition.fraction * 100))}% Health`;
     case "target-has":
       return `If target has ${aCategory(condition.category)}`;
     case "target-has-any":
@@ -1468,6 +1473,21 @@ export function describeSkill(
   // An attack that rolls no block (#1038): Wild Throw, Crippling Shot.
   const unblockableLine =
     rule?.unblockable === true ? [{ text: "Cannot be blocked", magnitude: undefined }] : [];
+  // A critical whatever the roll (#1315): Critical Strike's always,
+  // Malicious Strike's on a conditioned foe.
+  const criticalWhen = rule?.criticalWhen;
+  const criticalLine =
+    criticalWhen === undefined
+      ? []
+      : [
+          {
+            text:
+              criticalWhen === "always"
+                ? "Results in a critical hit"
+                : `${conditionText(criticalWhen)}: results in a critical hit`,
+            magnitude: undefined,
+          },
+        ];
   // A scythe's attack skill cleaves as its swing does (#977), unless it
   // has an area of its own.
   const cleaves = skill.attack?.weapon === "scythe" && skill.area === undefined;
@@ -1549,6 +1569,7 @@ export function describeSkill(
     ...chainLine,
     ...bonusLine,
     ...unblockableLine,
+    ...criticalLine,
     ...cleaveLine,
     ...cleaveAllLine,
     ...penetrationLine,

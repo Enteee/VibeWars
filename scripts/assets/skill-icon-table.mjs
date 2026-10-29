@@ -267,4 +267,9 @@ export const SKILL_ICONS = {
   "assassin.disrupting-dagger": { glyph: "dagger-stop" },
   "assassin.crippling-dagger": { glyph: "dagger-limp" },
   "assassin.iron-palm": { glyph: "palm", modifier: "down" },
+  // Placeholders until the asset-designer's (#1315): Critical Strikes.
+  "assassin.critical-strike": { glyph: "dagger", modifier: "bolt" },
+  "assassin.malicious-strike": { glyph: "dagger", modifier: "half" },
+  "assassin.unsuspecting-strike": { glyph: "dagger", modifier: "plus" },
+  "assassin.critical-defenses": { glyph: "shield-bolt", modifier: "self" },
 };
