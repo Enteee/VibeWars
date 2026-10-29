@@ -62,6 +62,8 @@ describe("connectMatch", () => {
       flags: [],
       stand: null,
       aggression: [],
+      relics: [],
+      altar: null,
     });
     await settle();
     expect(connection.getSnapshot().scoreTeam0).toBe(0);
@@ -92,6 +94,8 @@ describe("connectMatch", () => {
         flags: [],
         stand: null,
         aggression: [],
+        relics: [],
+        altar: null,
       },
       transport.selfId,
     );
@@ -145,6 +149,8 @@ describe("connectMatch", () => {
           flags: [],
           stand: null,
           aggression: [],
+          relics: [],
+          altar: null,
         },
         transport.selfId,
       );

@@ -9,8 +9,8 @@ without one, or with one the game does not know, is refused.
 **Annihilation** (GW1's arenas, #846): defeat every foe. The dead stay
 corpses until resurrected, and each death costs morale. Wipe the other
 team to win; after 8 minutes the highest total morale wins, and there is
-no draw. Every arena but Pillar Hall, Split Paths and Guild Hall Isle
-plays it.
+no draw. Every arena but Pillar Hall, Split Paths, Guild Hall Isle and
+Relic Temples plays it.
 
 **Kill Count** (GW1's The Crag): the most kills in 3 minutes. The dead
 respawn at their team's spawn after 8 seconds, and there is no death
@@ -93,5 +93,25 @@ flag's carrier, or says it was dropped. A boost toasts, "Morale boost!
 marks each Guild Lord `♛`, each flag `⚑` where it is, and the stand
 `◎` in its holder's colour. A Guild Lord's or any creature's death is
 no kill in the match summary.
+
+**Relic Run** (GW1's Heroes' Ascent, #1374): carry your relic onto the
+altar. Each team has a **relic** at a `"relic-spawn"` objective in its
+base, and the map has one **altar**, an `"altar"` objective in its
+centre; a Relic Run map without exactly one altar and one relic spawn
+per spawning team is refused. Target your relic and press Space to take
+it up within 60 units, as a flag; you carry it as a flag is carried,
+hands full and at 1/1.2 speed, and it drops the same ways, staying
+where it fell. A carrier who comes within 60 units of the altar scores
+at once, no Space press: a point for the team, and the relic goes home.
+A foe's relic on the ground goes home when you reach it with empty
+hands (a relic in hand refuses it, "hands full"); one at its spawn is
+refused. Scores are settled before the tick's deaths drop anything, so a
+carrier who reaches the altar and dies in the same tick still scores.
+The dead stay down and pay the death penalty; a wipe loses at once. At
+**8 minutes** the team with more points wins, equal points is a draw,
+and no number of points ends it early. Kills score nothing. The
+scoreboard reads the points as Kill Count reads kills, `2 – 1 · 6:40`,
+and the line under it names each relic's place: `✦ Name`, `✦ dropped`
+or `✦ at base`. Relic Temples plays it, and no Random Arena does.
 
 How each one ends, in full, is in [combat](combat.md#match-end).

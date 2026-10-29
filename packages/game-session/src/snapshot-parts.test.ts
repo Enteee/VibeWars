@@ -104,6 +104,8 @@ function snapshot(
     flags: [{ team: 0, place: "carried", carrierId: "peer-0", x: null, y: null }],
     stand: { holder: 1, heldSeconds: 12 },
     aggression: [],
+    relics: [],
+    altar: null,
   };
 }
 

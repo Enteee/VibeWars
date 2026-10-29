@@ -1991,6 +1991,19 @@
         }
       ]
     },
+    "WireCarried": {
+      "properties": [
+        { "name": "carrierId", "optional": false, "type": { "union": ["null", "string"] } },
+        { "name": "place", "optional": false, "type": { "typeParameter": "Place" } },
+        {
+          "name": "team",
+          "optional": false,
+          "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+        },
+        { "name": "x", "optional": false, "type": { "union": ["null", "number"] } },
+        { "name": "y", "optional": false, "type": { "union": ["null", "number"] } }
+      ]
+    },
     "WireChainMark": {
       "properties": [
         { "name": "remainingSeconds", "optional": false, "type": "number" },
@@ -2672,6 +2685,25 @@
         }
       ]
     },
+    "WireRelic": {
+      "properties": [
+        { "name": "carrierId", "optional": false, "type": { "union": ["null", "string"] } },
+        {
+          "name": "place",
+          "optional": false,
+          "type": {
+            "union": [{ "literal": "carried" }, { "literal": "ground" }, { "literal": "spawn" }]
+          }
+        },
+        {
+          "name": "team",
+          "optional": false,
+          "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+        },
+        { "name": "x", "optional": false, "type": { "union": ["null", "number"] } },
+        { "name": "y", "optional": false, "type": { "union": ["null", "number"] } }
+      ]
+    },
     "WireSkillBar": {
       "properties": [
         {
@@ -2710,6 +2742,21 @@
     "WireSnapshot": {
       "properties": [
         { "name": "aggression", "optional": false, "type": { "array": "number" } },
+        {
+          "name": "altar",
+          "optional": false,
+          "type": {
+            "union": [
+              "null",
+              {
+                "properties": [
+                  { "name": "x", "optional": false, "type": "number" },
+                  { "name": "y", "optional": false, "type": "number" }
+                ]
+              }
+            ]
+          }
+        },
         { "name": "elapsedSeconds", "optional": false, "type": "number" },
         {
           "name": "endReason",
@@ -2976,6 +3023,35 @@
             }
           }
         },
+        {
+          "name": "relics",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "carrierId", "optional": false, "type": { "union": ["null", "string"] } },
+                {
+                  "name": "place",
+                  "optional": false,
+                  "type": {
+                    "union": [
+                      { "literal": "carried" },
+                      { "literal": "ground" },
+                      { "literal": "spawn" }
+                    ]
+                  }
+                },
+                {
+                  "name": "team",
+                  "optional": false,
+                  "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+                },
+                { "name": "x", "optional": false, "type": { "union": ["null", "number"] } },
+                { "name": "y", "optional": false, "type": { "union": ["null", "number"] } }
+              ]
+            }
+          }
+        },
         { "name": "score", "optional": false, "type": { "tuple": ["number", "number"] } },
         {
           "name": "stand",
@@ -3007,6 +3083,21 @@
     "WireSnapshotPart": {
       "properties": [
         { "name": "aggression", "optional": false, "type": { "array": "number" } },
+        {
+          "name": "altar",
+          "optional": false,
+          "type": {
+            "union": [
+              "null",
+              {
+                "properties": [
+                  { "name": "x", "optional": false, "type": "number" },
+                  { "name": "y", "optional": false, "type": "number" }
+                ]
+              }
+            ]
+          }
+        },
         { "name": "elapsedSeconds", "optional": false, "type": "number" },
         {
           "name": "endReason",
@@ -3271,6 +3362,35 @@
                     ]
                   }
                 }
+              ]
+            }
+          }
+        },
+        {
+          "name": "relics",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "carrierId", "optional": false, "type": { "union": ["null", "string"] } },
+                {
+                  "name": "place",
+                  "optional": false,
+                  "type": {
+                    "union": [
+                      { "literal": "carried" },
+                      { "literal": "ground" },
+                      { "literal": "spawn" }
+                    ]
+                  }
+                },
+                {
+                  "name": "team",
+                  "optional": false,
+                  "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+                },
+                { "name": "x", "optional": false, "type": { "union": ["null", "number"] } },
+                { "name": "y", "optional": false, "type": { "union": ["null", "number"] } }
               ]
             }
           }

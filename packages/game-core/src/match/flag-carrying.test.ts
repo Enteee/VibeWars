@@ -5,10 +5,10 @@ import { WEAPONS } from "../equipment/weapons.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { distance, vec2, type Vec2 } from "../vec2.js";
 import { applyIntent } from "./apply-intent.js";
+import { FLAG_STAND_ID } from "./carried.js";
 import {
   FLAG_CARRIER_SPEED_MULTIPLIER,
   FLAG_REACH_UNITS,
-  FLAG_STAND_ID,
   STAND_HOLD_SECONDS,
   flagId,
   type FlagField,
@@ -98,10 +98,10 @@ function pickUp(sim: MatchSimulation, id: string): void {
   const team = get(sim, id).combatant.team;
   expect(applyIntent(sim, id, { kind: "target", targetSessionId: flagId(team) })).toBeNull();
   expect(applyIntent(sim, id, { kind: "attack", targetId: flagId(team) })).toBeNull();
-  for (let tick = 0; tick < 200 && !sim.carriesFlag(id); tick += 1) {
+  for (let tick = 0; tick < 200 && !sim.carriesBundle(id); tick += 1) {
     sim.step(DT);
   }
-  expect(sim.carriesFlag(id)).toBe(true);
+  expect(sim.carriesBundle(id)).toBe(true);
 }
 
 /** `a` carries its flag next to the stand. */
@@ -148,7 +148,7 @@ describe("Space on a flag", () => {
     applyIntent(sim, "a", { kind: "move", dirX: -1, dirY: 0 });
     stepFor(sim, 3);
     expect(get(sim, "a").interact).toBeUndefined();
-    expect(sim.carriesFlag("a")).toBe(false);
+    expect(sim.carriesBundle("a")).toBe(false);
   });
 
   it("dies with its walker: back on its feet, it walks nowhere", () => {
@@ -175,7 +175,7 @@ describe("Space on a flag", () => {
     const risen = a.position;
     stepFor(sim, 2);
     expect(a.position).toEqual(risen);
-    expect(sim.carriesFlag("a")).toBe(false);
+    expect(sim.carriesBundle("a")).toBe(false);
   });
 
   it("is ended by a reset", () => {
@@ -194,9 +194,9 @@ describe("Space on a flag", () => {
     get(sim, "a").combatant.knockdownRemaining = 1;
     applyIntent(sim, "a", { kind: "attack", targetId: FLAG_STAND_ID });
     stepFor(sim, 0.5);
-    expect(sim.carriesFlag("a")).toBe(true);
+    expect(sim.carriesBundle("a")).toBe(true);
     stepFor(sim, 2);
-    expect(sim.carriesFlag("a")).toBe(false);
+    expect(sim.carriesBundle("a")).toBe(false);
     expect(sim.stand).toEqual({ holder: 0, heldSeconds: expect.any(Number) as number });
   });
 
