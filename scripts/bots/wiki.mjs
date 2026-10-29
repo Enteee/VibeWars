@@ -339,6 +339,23 @@ function inline(html) {
 }
 
 /**
+ * Every match of `pattern` removed, again until none is left: one pass can
+ * join the two halves of a tag around a removed one (`<<b>p>`).
+ *
+ * @param {string} text
+ * @param {RegExp} pattern with the `g` flag
+ * @returns {string}
+ */
+function removeAll(text, pattern) {
+  let rest = text;
+  for (let last = ""; rest !== last;) {
+    last = rest;
+    rest = rest.replace(pattern, "");
+  }
+  return rest;
+}
+
+/**
  * The part of the page that is the article: no navigation, no footer, no
  * Wayback toolbar, no edit links, nothing hidden.
  *
@@ -361,10 +378,10 @@ function articleOf(html) {
     body,
   );
   body = end === null ? body : body.slice(0, end.index);
-  body = body
-    .replace(/<!--[\s\S]*?-->/g, "")
-    .replace(/<(script|style)\b[\s\S]*?<\/\1>/gi, "")
-    .replace(/<span class="mw-editsection-bracket">[^<]*<\/span>/g, "");
+  body = removeAll(
+    removeAll(body, /<!--[\s\S]*?-->/g),
+    /<(script|style)\b[\s\S]*?<\/\1>/gi,
+  ).replace(/<span class="mw-editsection-bracket">[^<]*<\/span>/g, "");
   for (const open of [
     /<(span)\b[^>]*\bclass="(?:mw-)?editsection"[^>]*>/i,
     /<(span)\b[^>]*\bclass="wikipopup hide"[^>]*>/i,
@@ -480,7 +497,7 @@ export function extractText(html) {
     .replace(/<li\b[^>]*>/gi, "\n- ")
     .replace(/<br\s*\/?>|<\/?(?:p|div|ul|ol|dl|dt|dd|li|table|tbody|h\d)\b[^>]*>/gi, "\n");
 
-  const lines = decodeEntities(text.replace(/<[^>]*>/g, ""))
+  const lines = decodeEntities(removeAll(text, /<[^>]*>/g))
     .split("\n")
     .map((line) => line.replace(/\s+/g, " ").trim())
     .filter((line) => line !== "" && line !== "-");
