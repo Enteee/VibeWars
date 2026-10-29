@@ -49,7 +49,7 @@ centre. Target your flag and press **Space** to take it up; carry it to
 the stand, target the stand and press **Space** to plant it. A carrier
 walks slower and cannot attack or use attack skills; it drops the flag
 when it dies, swaps weapons or presses **Drop flag** above its Health bar.
-Target a foe's flag on the stand and press **Space** to send it home.
+Planting yours on the stand sends a foe's flag there home.
 Every 2 minutes your flag holds the stand, your team gains 10% morale.
 
 The team whose Guild Lord dies loses at once, and so does a team whose
