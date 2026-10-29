@@ -55,6 +55,18 @@ describe("skill catalog integrity", () => {
     }
   });
 
+  it("makes every flash skill an instant enchantment on its caster (#1421)", () => {
+    const flash = IMPLEMENTED_SKILLS.filter((skill) => skill.flash);
+    expect(flash.length).toBeGreaterThan(0);
+    for (const skill of flash) {
+      expect([skill.type, skill.activationSeconds, skill.target], skill.id).toEqual([
+        "enchantment",
+        0,
+        "self",
+      ]);
+    }
+  });
+
   it("gives an aura only to a spirit, and a ritual is what summons one (#1064)", () => {
     const summons = IMPLEMENTED_SKILLS.flatMap((skill) =>
       skill.effects.flatMap((effect) => (effect.kind === "summon" ? [{ skill, effect }] : [])),

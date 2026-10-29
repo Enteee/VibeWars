@@ -22,6 +22,7 @@ const SPELL: Skill = {
   type: "spell",
   gwId: undefined,
   elite: false,
+  flash: false,
   profession: "elementalist",
   attributeId: "elementalist.fire-magic",
   cost: { kind: "energy", amount: 10 },

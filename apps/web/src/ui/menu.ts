@@ -280,6 +280,25 @@ export function isPlayable(character: StoredCharacter): boolean {
 }
 
 /**
+ * The tags after a roster row's name (#1426): "Random" on the rolled
+ * starter character, so it reads as not yours at a glance, then "Invalid"
+ * on a build the rules no longer allow (#1290).
+ */
+export function rosterTags(
+  character: StoredCharacter,
+  starter: string | undefined,
+): ("Random" | "Invalid")[] {
+  const tags: ("Random" | "Invalid")[] = [];
+  if (character.id === starter) {
+    tags.push("Random");
+  }
+  if (!isPlayable(character)) {
+    tags.push("Invalid");
+  }
+  return tags;
+}
+
+/**
  * Render the main menu (#579): your characters on the left, Play on the
  * right, and Teams, Record, Options and Music in the screen bar. Each
  * character's record (#1404) follows its subtitle.
@@ -392,12 +411,22 @@ export function renderMenu(
         }
       },
     });
+    if (character.id === starter) {
+      // Dashed, not only tagged: it differs by shape, not colour (#1426).
+      row.classList.add("is-random");
+    }
     if (!playable) {
       // Shown plainly, never chosen; Edit still fixes it (#1290).
       row.classList.add("is-invalid");
       row.querySelector(".selectable-row-choose")?.setAttribute("aria-disabled", "true");
-      row.querySelector(".selectable-row-name")?.after(h("span", "roster-invalid-tag", "Invalid"));
     }
+    row
+      .querySelector(".selectable-row-name")
+      ?.after(
+        ...rosterTags(character, starter).map((tag) =>
+          h("span", tag === "Random" ? "roster-random-tag" : "roster-invalid-tag", tag),
+        ),
+      );
     figured.push({ row, character });
     list.appendChild(row);
   }

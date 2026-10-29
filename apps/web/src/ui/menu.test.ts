@@ -14,6 +14,7 @@ import {
   playerGuildTag,
   rosterOrder,
   rosterSubtitle,
+  rosterTags,
   saveGuildCape,
   saveGuildTag,
   showsCapeDesigner,
@@ -70,6 +71,24 @@ describe("isPlayable (#1290)", () => {
         character({ skillBar: ["no.such-skill", null, null, null, null, null, null, null] }),
       ),
     ).toBe(false);
+  });
+});
+
+describe("rosterTags (#1426)", () => {
+  const illegal = { skillBar: ["no.such-skill", null, null, null, null, null, null, null] };
+
+  it("marks the starter character Random, and no other", () => {
+    expect(rosterTags(character({ id: "s" }), "s")).toEqual(["Random"]);
+    expect(rosterTags(character({ id: "a" }), "s")).toEqual([]);
+  });
+
+  it("marks nothing Random without a starter", () => {
+    expect(rosterTags(character({ id: "s" }), undefined)).toEqual([]);
+  });
+
+  it("puts Random before Invalid on an invalid starter", () => {
+    expect(rosterTags(character({ id: "s", ...illegal }), "s")).toEqual(["Random", "Invalid"]);
+    expect(rosterTags(character({ id: "a", ...illegal }), "s")).toEqual(["Invalid"]);
   });
 });
 

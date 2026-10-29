@@ -1,4 +1,4 @@
-import { PROFESSIONS } from "@vibewars/game-core";
+import { IMPLEMENTED_SKILLS, PROFESSIONS } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
 import { ATTRIBUTES_BY_GW_ID, corpusSkills, TYPES_BY_GW_ID } from "./corpus.js";
@@ -51,6 +51,22 @@ describe("corpusSkills (#1220)", () => {
     });
     // Echo is a GW1 type this game lacks.
     expect(corpus.find((skill) => skill.typeText === "Echo")?.skillType).toBeUndefined();
+    // A flash enchantment is an enchantment, GW1's name kept (#1421).
+    expect(TYPES_BY_GW_ID.get(33)).toEqual({
+      text: "Flash Enchantment Spell",
+      skillType: "enchantment",
+    });
+  });
+
+  it("has the catalog mark exactly its flash enchantments as flash (#1421)", () => {
+    const flash = new Set(
+      corpus.filter((skill) => skill.typeText === "Flash Enchantment Spell").map((s) => s.gwId),
+    );
+    for (const skill of IMPLEMENTED_SKILLS) {
+      if (skill.gwId !== undefined && byId.has(skill.gwId)) {
+        expect(skill.flash, skill.id).toBe(flash.has(skill.gwId));
+      }
+    }
   });
 
   it("gives every entry an attribute of ours, or none", () => {
