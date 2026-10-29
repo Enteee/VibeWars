@@ -560,6 +560,13 @@ const status = {
       `<path d="M4 12.5c2-3.5 5-5.5 8-5.5s6 2 8 5.5c-2 3.5-5 5.5-8 5.5s-6-2-8-5.5z" ${stroke(c, 2)}/>` +
       `<circle cx="12" cy="12.5" r="2.5" fill="${c}"/>`,
   ],
+  // Skill: two crossed blades, every sword attack cuts all round (#1354).
+  "hundred-blades": [
+    "skill-effect",
+    (c) =>
+      `<path d="M6 6l12 12M18 6L6 18" ${stroke(c, 2)}/>` +
+      `<path d="M5 15l4 4M15 19l4-4" ${stroke(c, 2)}/>`,
+  ],
   // Enchantment: a shield with a spark, blocks renewed by critical hits (#1315).
   "critical-defenses": [
     "enchantment",
@@ -1516,6 +1523,22 @@ const skillGlyph = {
     `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2.8)}/>` +
     inkLine("M7.5 17L17 7.5", 3.4) +
     inkLine("M8 10.5L13.5 16", 2.8),
+  // The spirit post in a halo, being born, with the payout beside it (#1316).
+  // Boon of Creation heals and gives energy: a plus.
+  "born-plus": () => bornPost() + inkLine("M17 3.5V13.5M12 8.5H22", 2.8),
+  // Explosive Growth strikes foes near it: a burst.
+  "born-burst": () =>
+    bornPost() +
+    `<g transform="translate(17,8.5) scale(0.95) translate(-12,-12)">${inkFill(burst(5))}</g>`,
+  // Spirit's Gift heals the allies near it: a plus in a ring.
+  "born-ring": () =>
+    bornPost() +
+    `<circle cx="17" cy="8.5" r="5.6" ${stroke(C.ink, 1.8)}/>` +
+    inkLine("M17 5.8V11.2M14.3 8.5H19.7", 2),
+  // Signet of Creation pays energy: the energy mark.
+  "born-energy": () =>
+    bornPost() +
+    `<g transform="translate(17,8.5) scale(0.95) translate(-12,-12)">${skillGlyph.energy()}</g>`,
   // A shield with a bolt in it: fast and hard to hit (#981).
   "shield-bolt": () =>
     `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2)}/>` +
@@ -1959,6 +1982,9 @@ const brokenPost = (/** @type {number} */ cx) =>
   `<circle cx="5.6" cy="7" r="3.2" fill="${C.ink}"/>` +
   inkLine("M7 11.2L8.4 12.4M9.6 9.6L11 8.4", 1.8) +
   "</g>";
+
+/** The spirit post wearing a halo: a creature at its birth (#1316). */
+const bornPost = () => spiritPost() + `<circle cx="7" cy="6.8" r="6" ${stroke(C.ink, 1.8)}/>`;
 
 /** Modifiers, drawn around the bottom right corner on a dark disc. */
 const skillModifier = {

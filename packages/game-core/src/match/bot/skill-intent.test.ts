@@ -53,6 +53,7 @@ const NO_BOT_USE = new Set([
   "necromancer.well-of-suffering",
   // What they do lands through a status trigger, not an effect a bot reads.
   "assassin.way-of-perfection",
+  "warrior.hundred-blades",
   "dervish.sand-shards",
   "ritualist.explosive-growth",
   "ritualist.splinter-weapon",

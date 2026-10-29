@@ -1,3 +1,4 @@
+import { wieldsFor } from "../equipment/weapons.js";
 import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
 import { addCopyPool } from "./adrenaline.js";
@@ -53,7 +54,8 @@ export interface TriggerContext {
  * nothing; a dead one still does, as a dead Mesmer's hex keeps working in
  * GW1. A status in `spared`, one the skill being used put on its own user,
  * does not answer that use (#999): Song of Restoration waits for the
- * chanter's next skill.
+ * chanter's next skill. An attack trigger bound to a weapon (#1354)
+ * answers only an attack with that weapon in the bearer's main hand.
  *
  * Nothing here fires a trigger: damage from one is never an event that
  * answers another, so triggers cannot recurse.
@@ -69,7 +71,13 @@ export function fireTriggers(
 ): FiredTrigger[] {
   return bearer.statuses
     .triggersOn(event)
-    .filter(({ statusId }) => !spared.has(statusId))
+    .filter(
+      ({ statusId, trigger }) =>
+        !spared.has(statusId) &&
+        (event !== "bearer-attacks" ||
+          trigger.weapon === undefined ||
+          wieldsFor(bearer.equipment.mainHand.weapon.id, trigger.weapon)),
+    )
     .flatMap(({ statusId, sourceId, trigger }) =>
       fire(trigger, statusId, sourceId, bearer, undefined, undefined, context),
     );
