@@ -502,6 +502,7 @@ const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-gains-condition": "gains a new condition",
   "bearer-chant-or-shout-ends": "has a chant or shout end on it",
   ends: "ends",
+  "ends-early": "ends prematurely",
   expires: "expires",
 };
 
@@ -543,7 +544,7 @@ function describeTriggers(
         ? CREATES
         : on.includes("bearer-chant-or-shout-ends")
           ? CHANT_OR_SHOUT_ENDS
-          : on.includes("ends") || on.includes("expires")
+          : on.includes("ends") || on.includes("ends-early") || on.includes("expires")
             ? `when it ${on.map((event) => whenOf(event, trigger.weapon)).join(" or ")}`
             : once && on.includes("bearer-uses-skill")
               ? NEXT_SKILL
@@ -1840,7 +1841,7 @@ export function describeSkill(
   return {
     id: skill.id,
     name: skill.name,
-    typeText: skill.elite ? `Elite ${TYPE_TEXT[skill.type]}` : TYPE_TEXT[skill.type],
+    typeText: `${skill.elite ? "Elite " : ""}${skill.flash ? "Flash " : ""}${TYPE_TEXT[skill.type]}`,
     elite: skill.elite,
     weaponText: skill.attack === undefined ? undefined : WEAPON_TEXT[skill.attack.weapon],
     attributeId: skill.attributeId,

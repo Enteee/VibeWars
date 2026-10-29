@@ -1837,6 +1837,23 @@ body {
   text-transform: uppercase;
 }
 
+/* The rolled starter character (#1426): ink, not red, because it is
+   only not yours; its row's outline is dashed, selected or not. */
+.roster-random-tag {
+  align-self: flex-start;
+  padding: 0 0.35rem;
+  border: 1px solid var(--ink-dim);
+  border-radius: 3px;
+  color: var(--ink);
+  font-size: 0.65rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.screen .selectable-row.is-random .selectable-row-choose {
+  border-style: dashed;
+}
+
 .empty-state {
   display: flex;
   flex-direction: column;

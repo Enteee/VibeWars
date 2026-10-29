@@ -349,7 +349,12 @@ export const SKILL_ICONS = {
   "paragon.burning-refrain": { glyph: "flame-target", modifier: "plus" },
   "paragon.enduring-harmony": { glyph: "banner-note", modifier: "clock" },
   "paragon.finale-of-restoration": { glyph: "heart-plus", modifier: "hourglass" },
-  "paragon.hasty-refrain": { glyph: "speed", modifier: "plus" },
+  "paragon.hasty-refrain": { glyph: "speed", modifier: "hourglass" },
   "paragon.mending-refrain": { glyph: "ring-heal", modifier: "self" },
   "paragon.purifying-finale": { glyph: "cleanse", modifier: "hourglass" },
+  // Placeholders until the asset-designer's (#1421): flash enchantments.
+  "dervish.enchanted-haste": { glyph: "speed", modifier: "plus" },
+  "dervish.heart-of-holy-flame": { glyph: "flame", modifier: "self" },
+  "dervish.balthazars-rage": { glyph: "flame", modifier: "up" },
+  "dervish.harriers-haste": { glyph: "dash", modifier: "area" },
 };

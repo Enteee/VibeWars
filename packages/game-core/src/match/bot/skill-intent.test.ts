@@ -21,7 +21,9 @@ const NO_BOT_USE = new Set([
   // Speed, energy, attack speed and other self-help no rule reaches for.
   "assassin.critical-eye",
   "assassin.dash",
+  "dervish.enchanted-haste",
   "dervish.fleeting-stability",
+  "dervish.harriers-haste",
   "dervish.heart-of-fury",
   "dervish.pious-haste",
   "dervish.vow-of-strength",

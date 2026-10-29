@@ -18,6 +18,10 @@ The bar has **eight slots**. Only one **elite** skill (gold frame) fits on
 a bar: equip a second and it replaces the first. Press **×** on a slot to
 empty it.
 
+**Flash enchantments** (Dervish) are instant: using one keeps your
+swing and your stride, so you can weave them between blows. Each one
+turns your other flash enchantments off for 1 second.
+
 ## Attributes
 
 You have **200 points** to spend. Each rank of an attribute costs more

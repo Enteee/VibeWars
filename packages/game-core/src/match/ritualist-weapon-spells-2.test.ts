@@ -107,6 +107,7 @@ describe("the four skills (#1022)", () => {
     expect(skill("ritualist.weapon-of-remedy")).toMatchObject({
       type: "weapon-spell",
       elite: true,
+      flash: false,
       attributeId: "ritualist.restoration-magic",
       cost: { kind: "energy", amount: 3 },
       activationSeconds: 0.25,
@@ -117,6 +118,7 @@ describe("the four skills (#1022)", () => {
     expect(skill("ritualist.vengeful-weapon")).toMatchObject({
       type: "weapon-spell",
       elite: false,
+      flash: false,
       cost: { kind: "energy", amount: 5 },
       activationSeconds: 0.25,
       rechargeSeconds: 3,
@@ -125,6 +127,7 @@ describe("the four skills (#1022)", () => {
     expect(skill("ritualist.splinter-weapon")).toMatchObject({
       type: "weapon-spell",
       elite: false,
+      flash: false,
       attributeId: "ritualist.channeling-magic",
       cost: { kind: "energy", amount: 5 },
       activationSeconds: 1,
@@ -134,6 +137,7 @@ describe("the four skills (#1022)", () => {
     expect(skill("ritualist.mending-grip")).toMatchObject({
       type: "spell",
       elite: false,
+      flash: false,
       cost: { kind: "energy", amount: 5 },
       activationSeconds: 1,
       rechargeSeconds: 4,

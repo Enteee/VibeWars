@@ -137,6 +137,7 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
           .filter(
             ({ on, target }) =>
               ((on === "ends" ||
+                on === "ends-early" ||
                 on === "expires" ||
                 on === "bearer-uses-skill" ||
                 on === "bearer-attacks" ||

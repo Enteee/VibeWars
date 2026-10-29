@@ -106,6 +106,7 @@ describe("Meteor Shower (#1205)", () => {
     expect(getSkill(SHOWER)).toMatchObject({
       type: "spell",
       elite: false,
+      flash: false,
       attributeId: FIRE,
       cost: { kind: "energy", amount: 25 },
       overcast: 10,
@@ -161,6 +162,7 @@ describe("Contemplation of Purity (#1205)", () => {
     expect(getSkill(PURITY)).toMatchObject({
       type: "skill",
       elite: false,
+      flash: false,
       attributeId: DIVINE_FAVOR,
       cost: { kind: "energy", amount: 5 },
       activationSeconds: 0.25,
