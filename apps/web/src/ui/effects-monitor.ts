@@ -7,6 +7,7 @@ import {
 import type { PlayerSnapshot } from "@vibewars/game-session";
 
 import { STATUS_ICON } from "../render/status-icons.js";
+import { setHidden } from "./dom-write.js";
 import { placeTip, type SkillTooltipPlacement } from "./skill-tooltip.js";
 import { SLOT_TOOLTIP_DELAY_MS } from "./slot-tooltip.js";
 
@@ -304,7 +305,7 @@ export function createEffectsMonitor(
           root.insertBefore(icon.item, root.children[index] ?? null);
         }
         icon.item.classList.toggle("is-yours", row.yours);
-        icon.bar.hidden = row.fraction === undefined;
+        setHidden(icon.bar, row.fraction === undefined);
         // Only a whole pixel's change touches the DOM.
         const px = Math.round((row.fraction ?? 0) * size);
         if (px !== icon.shownPx) {
@@ -312,7 +313,7 @@ export function createEffectsMonitor(
           icon.fill.style.width = `${String(px)}px`;
         }
       });
-      root.hidden = next.length === 0;
+      setHidden(root, next.length === 0);
       // An open hover counts down with its bar.
       const open = tipFor === undefined ? undefined : rows.get(tipFor);
       if (

@@ -409,6 +409,32 @@ describe("createPartyWindow (#1055)", () => {
     expect(commanded).toEqual([["me/c1", "guard"]]);
   });
 
+  it("writes nothing painting the same party again, and only what changed (#1352)", () => {
+    const writes: string[] = [];
+    vi.stubGlobal("document", {
+      createElement: () =>
+        new Proxy(new FakeElement(), {
+          set(target, property, value: unknown) {
+            writes.push(String(property));
+            return Reflect.set(target, property, value);
+          },
+        }),
+    });
+    parent = new FakeElement();
+    party = createPartyWindow(
+      parent as unknown as HTMLElement,
+      () => undefined,
+      () => undefined,
+    );
+    party.update(match([ME, KAJA]));
+    writes.length = 0;
+    party.update(match([ME, KAJA]));
+    expect(writes).toEqual([]);
+    party.update(match([ME, FOE]));
+    // Hidden, and both rows leave it.
+    expect(writes).toEqual(["hidden", "parent", "parent"]);
+  });
+
   it("is gone once disposed", () => {
     party.update(match([ME, KAJA]));
     party.dispose();
