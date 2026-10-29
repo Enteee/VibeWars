@@ -32,6 +32,9 @@ for the decisions behind this repository (start with
 
 ## Play it
 
+**Requirements:** a desktop browser, a keyboard and a mouse. VibeWars
+does not work on a phone or a touch-only tablet.
+
 Open the GitHub Pages build:
 [the latest release](https://enteee.github.io/VibeWars/) or
 [the latest `main`](https://enteee.github.io/VibeWars/next/). One person
