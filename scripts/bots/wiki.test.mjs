@@ -10,6 +10,7 @@ import {
   LIVE_ORIGIN,
   MAX_DIFF_CELLS,
   MAX_PAGE_BYTES,
+  READ_TIMEOUT_MS,
   USER_AGENT,
   cdxUrl,
   extractText,
@@ -373,6 +374,23 @@ describe("runWiki (#1380)", () => {
 
     expect(large.stderr).toBe("no copy of Fireball: wayback too large\n");
     expect(loop.stderr).toBe("no copy of Fireball: wayback too many redirects\n");
+  });
+
+  // perf-sec on PR 1384: unclosed openers make the parsing regexes
+  // quadratic, minutes at these sizes, on hubd's only thread.
+  it("gives up on a hostile page after READ_TIMEOUT_MS, off the caller's thread", async () => {
+    const started = Date.now();
+    const answers = await Promise.all(
+      ["<!--".repeat(524_288), "<div ".repeat(100_000)].map((hostile) =>
+        runWiki(["get", "Fireball"], fakeFetch({ [LIVE]: hostile })),
+      ),
+    );
+
+    expect(answers.map((a) => a.stderr)).toEqual([
+      "no text of Fireball: too slow to read\n",
+      "no text of Fireball: too slow to read\n",
+    ]);
+    expect(Date.now() - started).toBeLessThan(READ_TIMEOUT_MS + 2_000);
   });
 
   it("refuses bad words with the usage, exit 2", async () => {

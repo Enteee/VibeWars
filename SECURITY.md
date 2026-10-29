@@ -502,8 +502,9 @@ the page name percent-encoded into a fixed path (no `.` or `..` segment),
 no credential and a 15 s timeout per read. A redirect is followed only
 onto those two origins, three at most, so a page cannot point hubd at
 the host. A body over 4 MiB is refused unread, and a diff whose differing
-part exceeds 4 million line pairs is refused, so one page cannot stall
-hubd's thread. At most two run at once, beside the gh lane, so a
+part exceeds 4 million line pairs is refused. A page's text and a diff
+are worked out in a worker thread, killed after 2 s, so a hostile page
+cannot stall hubd's thread. At most two run at once, beside the gh lane, so a
 slow Wayback cannot stall a merge. Accepted risk: the wiki is editable by
 anyone, so a page is untrusted text, read as information like an issue
 body; the answer goes only to the asker.

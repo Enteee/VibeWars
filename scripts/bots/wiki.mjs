@@ -14,6 +14,8 @@
  * There is no cache yet (#1380 is 1/2): each request asks again.
  */
 
+import { Worker } from "node:worker_threads";
+
 export const LIVE_ORIGIN = "https://wiki.guildwars.com";
 export const ARCHIVE_ORIGIN = "https://web.archive.org";
 export const USER_AGENT = "VibeWars-research (+https://github.com/Enteee/VibeWars)";
@@ -28,6 +30,11 @@ const MAX_REDIRECTS = 3;
  * hubd's only thread, and the wiki is editable by anyone.
  */
 export const MAX_DIFF_CELLS = 4_000_000;
+/**
+ * The longest a page's text or a diff may take. Reading is regular
+ * expressions over untrusted bytes, so it runs in a worker killed after this.
+ */
+export const READ_TIMEOUT_MS = 2_000;
 
 /** The most snapshots one request reads before giving up on finding a page. */
 const MAX_SNAPSHOT_TRIES = 3;
@@ -743,6 +750,39 @@ function reader(page, deps) {
 }
 
 /**
+ * @typedef {{ verb: "text", html: string }
+ *   | { verb: "diff", from: string, to: string, fromLabel: string, toLabel: string }} ReadJob
+ * @typedef {{ ok: true, text: string } | { ok: false, reason: string }} ReadAnswer
+ */
+
+/**
+ * A page's text, or the diff of two pages' (`"no change"` if none), worked
+ * out in a worker (wiki-read.mjs): hubd has one thread, and a hostile page
+ * can make a regular expression take hours. Past `READ_TIMEOUT_MS` the
+ * worker is killed and the answer is "too slow to read".
+ *
+ * @param {ReadJob} job
+ * @returns {Promise<ReadAnswer>}
+ */
+export function readPage(job) {
+  return new Promise((resolve) => {
+    const worker = new Worker(new URL("./wiki-read.mjs", import.meta.url), { workerData: job });
+    const timer = setTimeout(() => {
+      void worker.terminate();
+      resolve({ ok: false, reason: "too slow to read" });
+    }, READ_TIMEOUT_MS);
+    worker.once("message", (/** @type {unknown} */ answer) => {
+      clearTimeout(timer);
+      resolve(/** @type {ReadAnswer} */ (answer));
+    });
+    worker.once("error", (/** @type {Error} */ error) => {
+      clearTimeout(timer);
+      resolve({ ok: false, reason: `unreadable (${error.message})` });
+    });
+  });
+}
+
+/**
  * Serve one `hub wiki` request: what `hub` prints, and its exit code.
  *
  * @param {string[]} argv the words after `hub wiki`
@@ -767,9 +807,13 @@ export async function runWiki(argv, deps) {
     if (!copy.ok) {
       return noCopy(copy.why);
     }
+    const text = await readPage({ verb: "text", html: copy.html });
+    if (!text.ok) {
+      return { code: 1, stdout: "", stderr: `no text of ${request.page}: ${text.reason}\n` };
+    }
     return {
       code: 0,
-      stdout: `source: ${copy.url} (${copy.label})\n\n${extractText(copy.html)}\n`,
+      stdout: `source: ${copy.url} (${copy.label})\n\n${text.text}\n`,
       stderr: "",
     };
   }
@@ -796,14 +840,15 @@ export async function runWiki(argv, deps) {
   if (!to.ok) {
     return noCopy(to.why);
   }
-  const diff = unifiedDiff(
-    extractText(from.html),
-    extractText(to.html),
-    `${from.url} (${from.label})`,
-    `${to.url} (${to.label})`,
-  );
+  const diff = await readPage({
+    verb: "diff",
+    from: from.html,
+    to: to.html,
+    fromLabel: `${from.url} (${from.label})`,
+    toLabel: `${to.url} (${to.label})`,
+  });
   if (!diff.ok) {
     return { code: 1, stdout: "", stderr: `no diff of ${request.page}: ${diff.reason}\n` };
   }
-  return { code: 0, stdout: `${diff.diff ?? "no change"}\n`, stderr: "" };
+  return { code: 0, stdout: `${diff.text}\n`, stderr: "" };
 }
