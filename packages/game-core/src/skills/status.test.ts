@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { WEAPONS } from "../equipment/weapons.js";
 import {
   MAX_PIPS,
   STATUS_DEFINITIONS,
@@ -57,6 +58,7 @@ describe("status definitions", () => {
         def.moveSpeedMultiplier !== 1 ||
         def.attackMissChance !== 0 ||
         def.maxHealthLoss !== undefined ||
+        def.maxHealthBonus !== 0 ||
         def.healingMultiplier !== 1 ||
         def.weaponDamageMultiplier !== 1 ||
         def.physicalDamageTakenBonus !== 0 ||
@@ -559,14 +561,14 @@ describe("StatusSet changes, for the triggers (#887)", () => {
     const set = new StatusSet();
     set.apply("backfire", 10, "a");
     set.drainChanges();
-    set.recordHit();
+    set.recordHit(WEAPONS.sword);
     set.recordPhysicalDamage();
     expect(set.drainChanges()).toEqual([]);
 
     set.apply("insidious-parasite", 13, "a");
-    set.recordHit();
+    set.recordHit(WEAPONS.sword);
     set.recordPhysicalDamage();
-    set.recordHit();
+    set.recordHit(WEAPONS.sword);
     expect(set.drainChanges()).toEqual([
       { kind: "hit", fired: [parasite] },
       { kind: "hit", fired: [parasite] },
@@ -575,11 +577,24 @@ describe("StatusSet changes, for the triggers (#887)", () => {
     set.apply("mark-of-pain", 30, "b");
     set.drainChanges();
     set.recordPhysicalDamage();
-    set.recordHit();
+    set.recordHit(WEAPONS.sword);
     expect(set.drainChanges()).toEqual([
       { kind: "took-physical-damage", fired: [mark] },
       { kind: "hit", fired: [parasite] },
     ]);
+  });
+
+  it("a melee-bound hit trigger answers a sword or a hammer, not a bow nor a thrown spear (#1359)", () => {
+    const set = new StatusSet();
+    set.apply("warriors-endurance", 29, "w");
+    set.drainChanges();
+    for (const weapon of [WEAPONS.longbow, WEAPONS.spear]) {
+      set.recordHit(weapon);
+    }
+    expect(set.drainChanges()).toEqual([]);
+    set.recordHit(WEAPONS.sword);
+    set.recordHit(WEAPONS.hammer);
+    expect(set.drainChanges()).toHaveLength(2);
   });
 
   it("a record keeps the triggers it was made with, though they end before the drain (#953)", () => {

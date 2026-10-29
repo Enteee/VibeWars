@@ -701,6 +701,16 @@ describe("attack skills (#417)", () => {
     );
   });
 
+  it("words Endure Pain's maximum, Warrior's Endurance's cap and a weapon-bound trigger (#1359)", () => {
+    expect(describeStatus("endure-pain")).toBe("+258 maximum health");
+    expect(describeStatus("warriors-endurance")).toBe(
+      "whenever it hits with a melee attack: gain 3 energy, never above 22",
+    );
+    expect(describeStatus("hundred-blades")).toBe(
+      "adjacent foes take 26 damage whenever it attacks with a sword",
+    );
+  });
+
   it("words Spear of Lightning's type and penetration, and Leader's Comfort's per ally (#923)", () => {
     const at12 = (id: string, attributeId: string) =>
       describeSkill(skill(id), new Map([[attributeId, 12]])).effects.map(({ text }) => text);
