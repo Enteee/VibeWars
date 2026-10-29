@@ -321,7 +321,7 @@ export const SKILL_ICONS = {
   "warrior.irresistible-blow": { glyph: "hammer-shield" },
   "warrior.counter-blow": { glyph: "hammer-counter" },
   "warrior.heavy-blow": { glyph: "hammer-weak" },
-  "warrior.staggering-blow": { glyph: "hammer-weak", modifier: "less" },
+  "warrior.staggering-blow": { glyph: "hammer-chevrons" },
   "warrior.earth-shaker": { glyph: "hammer-quake", modifier: "area" },
   "warrior.devastating-hammer": { glyph: "hammer-slam", modifier: "down" },
   // Placeholders until the asset-designer's (#1366): Fire Magic.

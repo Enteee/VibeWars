@@ -1792,6 +1792,11 @@ const skillGlyph = {
     inkLine("M3 19.5H21", 2.2) +
     inkLine("M14.5 6.5C18.5 3 21.5 6 20.5 10.5M18 9L20.5 11L22.5 8", 2),
   // A hammer slam with two weak chevrons on the ground: it hits what is weakened (#1383).
+  // A raised hammer over two weak chevrons, no slam: it weakens what it hits (#1383).
+  "hammer-chevrons": () =>
+    inkLine("M3.5 12.5L9.5 6.5", 2.4) +
+    `<rect x="8" y="1.5" width="9" height="6" rx="1" transform="rotate(45 12.5 4.5)" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
+    inkLine("M11 12.5L16 16.5L21 12.5M11 17.5L16 21.5L21 17.5", 2.2),
   "hammer-weak": () =>
     inkLine("M7 4.5L12 11", 2.4) +
     `<rect x="9.5" y="9" width="9" height="6" rx="1" transform="rotate(35 14 12)" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
