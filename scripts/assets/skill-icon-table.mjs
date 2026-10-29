@@ -274,13 +274,12 @@ export const SKILL_ICONS = {
   "assassin.malicious-strike": { glyph: "dagger-crit", modifier: "bleed" },
   "assassin.unsuspecting-strike": { glyph: "dagger-crit", modifier: "up" },
   "assassin.critical-defenses": { glyph: "shield-crit", modifier: "self" },
-  // Placeholders until the asset-designer's (#1326): Shadow Arts.
-  "assassin.heart-of-shadow": { glyph: "blink", modifier: "down" },
-  "assassin.vipers-defense": { glyph: "blink", modifier: "bleed" },
-  "assassin.deaths-retreat": { glyph: "blink", modifier: "up" },
-  "assassin.feigned-neutrality": { glyph: "crescent", modifier: "self" },
-  "assassin.way-of-perfection": { glyph: "crescent", modifier: "bolt" },
-  "assassin.caltrops": { glyph: "limp", modifier: "bleed" },
+  "assassin.heart-of-shadow": { glyph: "blink-heal" },
+  "assassin.vipers-defense": { glyph: "blink-fang" },
+  "assassin.deaths-retreat": { glyph: "blink-ally" },
+  "assassin.feigned-neutrality": { glyph: "shield-veil", modifier: "self" },
+  "assassin.way-of-perfection": { glyph: "crescent-spark", modifier: "clock" },
+  "assassin.caltrops": { glyph: "caltrops", modifier: "bleed" },
   // Placeholders until the asset-designer's (#1354): Swordsmanship.
   "warrior.hamstring": { glyph: "limp", modifier: "down" },
   "warrior.pure-strike": { glyph: "sword", modifier: "plus" },
@@ -319,4 +318,13 @@ export const SKILL_ICONS = {
   "necromancer.blood-of-the-aggressor": { glyph: "eye-drop", modifier: "down" },
   "necromancer.barbed-signet": { glyph: "hex-burst", modifier: "bleed" },
   "necromancer.offering-of-blood": { glyph: "energy", modifier: "bleed" },
+  // Placeholders until the asset-designer's (#1357): Hammer Mastery.
+  "warrior.mighty-blow": { glyph: "hammer", modifier: "plus" },
+  "warrior.crushing-blow": { glyph: "hammer", modifier: "bleed" },
+  "warrior.irresistible-blow": { glyph: "hammer", modifier: "bolt" },
+  "warrior.counter-blow": { glyph: "hammer-slam", modifier: "stun" },
+  "warrior.heavy-blow": { glyph: "hammer-slam", modifier: "down" },
+  "warrior.staggering-blow": { glyph: "hammer", modifier: "less" },
+  "warrior.earth-shaker": { glyph: "hammer-slam", modifier: "area" },
+  "warrior.devastating-hammer": { glyph: "hammer-slam", modifier: "less" },
 };
