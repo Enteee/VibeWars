@@ -1550,6 +1550,15 @@ const skillGlyph = {
     spiritPost() +
     `<circle cx="17" cy="8.5" r="4.6" ${stroke(C.ink, 2)}/>` +
     inkLine("M12 14L22 3", 2.2),
+  // The spirit post split by a crack: an allied spirit destroyed (#1309). With the
+  // jagged mark of the attacking spirits: the burst damages and blinds foes.
+  "spirit-rupture": () => brokenPost(7) + inkLine("M19.5 2.5L14 9.5H19L14.5 15.5", 2.4),
+  // Two small cracked posts: every spirit near you is spent (#1309).
+  "spirit-feast": () =>
+    `<g transform="translate(-2.5,0) scale(0.82) translate(2,3)">${brokenPost(7)}</g>` +
+    `<g transform="translate(9,0) scale(0.82) translate(2,3)">${brokenPost(7)}</g>`,
+  // One cracked post, centred: one spirit destroyed (#1309).
+  "spirit-break": () => brokenPost(12),
   // The ward's ring and pole, with a blade struck from it: it turns melee (#1217).
   "ward-blade": () =>
     `<ellipse cx="12" cy="17" rx="8.5" ry="4" ${stroke(C.ink, 2.5)}/>` +
@@ -1761,6 +1770,11 @@ const skillGlyph = {
 /** The shared spirit post of the attacking spirits, left of the mark it shoots (#1271). */
 const spiritPost = () =>
   inkFill("M4.8 11H9.2L9.4 20H4.6Z") + `<circle cx="7" cy="6.8" r="3.4" fill="${C.ink}"/>`;
+
+/** A spirit post centred on `cx` with a background-coloured crack through it (#1309). */
+const brokenPost = (/** @type {number} */ cx) =>
+  `<g transform="translate(${String(cx - 7)},0)">${spiritPost()}` +
+  `<path d="M2.5 9.6L6 10.6L8.2 8.8L11 10.2" fill="none" stroke="${C.bg}" stroke-width="1.5" stroke-linejoin="round"/></g>`;
 
 /** Modifiers, drawn around the bottom right corner on a dark disc. */
 const skillModifier = {

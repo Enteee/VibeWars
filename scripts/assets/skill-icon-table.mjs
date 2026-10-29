@@ -250,11 +250,10 @@ export const SKILL_ICONS = {
   "ritualist.union": { glyph: "totem", modifier: "half" },
   "ritualist.displacement": { glyph: "totem", modifier: "stun" },
   "ritualist.earthbind": { glyph: "totem", modifier: "down" },
-  // Placeholders until the asset-designer's (#1309): spirit sacrifice.
-  "ritualist.rupture-soul": { glyph: "totem", modifier: "bolt" },
-  "ritualist.spirit-to-flesh": { glyph: "totem", modifier: "less" },
-  "ritualist.feast-of-souls": { glyph: "party-heal", modifier: "area" },
-  "ritualist.consume-soul": { glyph: "ghost", modifier: "paw" },
+  "ritualist.rupture-soul": { glyph: "spirit-rupture" },
+  "ritualist.spirit-to-flesh": { glyph: "spirit-break", modifier: "plus" },
+  "ritualist.feast-of-souls": { glyph: "spirit-feast", modifier: "plus" },
+  "ritualist.consume-soul": { glyph: "ghost", modifier: "less" },
   // Placeholders until the asset-designer's (#1270): the Channeling staples.
   "ritualist.spirit-rift": { glyph: "lightning", modifier: "hourglass" },
   "ritualist.spirit-burn": { glyph: "lightning", modifier: "plus" },
