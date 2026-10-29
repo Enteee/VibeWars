@@ -14,8 +14,9 @@ import type { DoubleClick } from "./double-click.js";
  *
  * A body under `world` is targeted, and a second right click on the same
  * enemy within the double-click window attacks it, as Space would (#298).
- * With no body there, a flag or the flag stand is (#1225), and a double
- * click walks to it as Space does.
+ * With no body there, or only your own (#1299: you stand on the stand
+ * to plant), a flag or the flag stand is (#1225), and a double click
+ * walks to it as Space does.
  * The ground sends nothing: a missed right click costs nothing, and keeps
  * the target. `doubleClick` is pressed either way, so a click on the
  * ground breaks a double.
@@ -27,7 +28,10 @@ export function secondaryClickIntents(
   doubleClick: DoubleClick,
   nowMs: number,
 ): ClientIntent[] {
-  const hit = actorAtPoint(arena, world)?.id ?? flagObjectAtPoint(arena.flags, arena.stand, world);
+  const body = actorAtPoint(arena, world)?.id;
+  const flagObject = flagObjectAtPoint(arena.flags, arena.stand, world);
+  // #1299: your own body never hides the flag or stand you stand on.
+  const hit = body === undefined || body === snapshot.selfSessionId ? (flagObject ?? body) : body;
   const double = doubleClick.press(hit, nowMs);
   if (hit === undefined) {
     return [];
