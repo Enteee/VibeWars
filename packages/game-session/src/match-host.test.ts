@@ -355,7 +355,8 @@ describe("a lobby's bots (#1193)", () => {
   /** A bot's planned seat, keyed by its name as a lobby keys it by its id. */
   const bot = (team: 0 | 1, name: string, build: string) =>
     [name, { team, name, guildTag: null, bot: starterBuild(build) }] as const;
-  const human = (team: 0 | 1) => ["host/local", { team, name: "Me", guildTag: "VIBE", bot: null }] as const;
+  const human = (team: 0 | 1) =>
+    ["host/local", { team, name: "Me", guildTag: "VIBE", bot: null }] as const;
   const named = (snapshot: MatchSnapshot, name: string) =>
     snapshot.players.find((player) => player.name === name);
 
