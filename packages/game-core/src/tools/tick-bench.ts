@@ -56,8 +56,9 @@ const BENCH_LOADOUT = loadoutOf(pickStarterBuild(() => 0));
  * Who walks on the field. `fighters`: every spawn ordered to attack its
  * mirror across it. `followers` (#1157): every spawn stands still, and
  * two minions each start across the field from it, behind the pillars,
- * and walk back to heel: 32 walkers on paths, the most creatures a match
- * holds (`MAX_CREATURES`).
+ * and walk back to heel: 32 walkers on paths, the most summons a match
+ * holds (`MAX_CREATURES`). A map's own creatures come on top (#1281);
+ * the bench's map places none.
  */
 export type BenchCrowd = "fighters" | "followers";
 

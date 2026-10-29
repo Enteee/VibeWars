@@ -163,6 +163,7 @@ export {
   CREATURE_LOOKS,
   loadoutSpec,
   MAX_CREATURES,
+  MAX_MAP_CREATURES,
   companionMode,
   MAX_GROUND_EFFECTS,
   MatchSimulation,
