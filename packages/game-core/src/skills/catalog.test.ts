@@ -279,6 +279,7 @@ describe("headless combat simulation", () => {
       isCasting: caster.cast.isCasting,
       skillBar: caster.skillBar,
       losBlockers: [],
+      targetCreatureKind: undefined,
     });
     if (!check.ok) {
       return check.reason;

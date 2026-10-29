@@ -65,7 +65,9 @@ export type TargetRule =
   /** The caster's own companion, alive or dead, whatever is selected (#1046). */
   | "companion"
   /** As `"companion"`, but only a living one (#1108): a call on a dead pet is refused. */
-  | "living-companion";
+  | "living-companion"
+  /** A living spirit on the caster's team, whoever summoned it: GW1's "allies' spirits" (#1309). */
+  | "allied-spirit";
 
 /* -------------------------------------------------------------------------- */
 /* Effects                                                                     */
@@ -122,6 +124,12 @@ export interface HealEffect {
    * removed: no heal.
    */
   readonly perRemoved?: StatusCategory;
+  /**
+   * The amount is per spirit an earlier `destroy-allied-spirits` of this
+   * skill destroyed, as Feast of Souls' "50...100 Health for each spirit
+   * destroyed" (#1309). None destroyed: no heal.
+   */
+  readonly perDestroyedSpirit?: true;
 }
 
 /** Leader's Comfort's heal per ally in earshot (#923). */
@@ -393,7 +401,29 @@ export interface DrainOwnEnergyEffect {
 export interface SplashEffect {
   readonly kind: "splash";
   readonly radius: number;
+  /** `foe-creatures`: only what foes summoned, spirits, minions and pets, as Consume Soul's (#1309). */
+  readonly hits: "foes" | "foe-creatures";
   readonly effects: readonly UnconditionalEffect[];
+}
+
+/**
+ * The skill's target, an allied spirit, is destroyed (#1309), as Rupture
+ * Soul's "that spirit is destroyed": it leaves as an expired spirit does,
+ * no corpse and nobody scoring, after the skill's other effects. Acts on
+ * the primary target, once.
+ */
+export interface DestroyTargetSpiritEffect {
+  readonly kind: "destroy-target-spirit";
+}
+
+/**
+ * Every living allied spirit within `radius` of the caster is destroyed
+ * (#1309), as Feast of Souls': each as `destroy-target-spirit`'s, and a
+ * later `perDestroyedSpirit` heal counts them. Acts on the caster, once.
+ */
+export interface DestroyAlliedSpiritsEffect {
+  readonly kind: "destroy-allied-spirits";
+  readonly radius: number;
 }
 
 /**
@@ -773,7 +803,9 @@ export type UnconditionalEffect =
   | DisableOwnSkillsEffect
   | ChainMarkEffect
   | SummonEffect
-  | CreateGroundEffect;
+  | CreateGroundEffect
+  | DestroyTargetSpiritEffect
+  | DestroyAlliedSpiritsEffect;
 
 export type SkillEffect = UnconditionalEffect | ConditionalEffect;
 

@@ -729,6 +729,7 @@ const TARGET_REJECTIONS: ReadonlySet<ActivationRejection> = new Set([
   "no-target",
   "no-companion",
   "invalid-target-creature",
+  "invalid-target-not-allied-spirit",
   "invalid-target-dead",
   "invalid-target-alive",
   "invalid-target-self",
@@ -2664,6 +2665,7 @@ export class MatchSimulation {
       casterPosition: record.position,
       target: skill.target === "self" ? record.combatant : target?.combatant,
       targetPosition: skill.target === "self" ? record.position : target?.position,
+      targetCreatureKind: skill.target === "self" ? undefined : target?.creature?.kind,
       key,
       rechargeRemaining: record.combatant.cast.rechargeRemaining,
       spent: record.combatant.cast.spent,
@@ -2839,6 +2841,7 @@ export class MatchSimulation {
       rechargeFraction: 0,
       summons: [],
       grounds: [],
+      destroyed: [],
     });
     // What the caster's statuses add to its hits, each logged apart (#939).
     const riders: FiredTrigger[] = [];
@@ -2868,7 +2871,7 @@ export class MatchSimulation {
     // one used up during the cast leaves it with no effect, paid for.
     const corpse =
       skill.corpse === undefined ? undefined : this.#exploitCorpse(record, skill.corpse);
-    const { events, rechargeFraction, summons, grounds } =
+    const { events, rechargeFraction, summons, grounds, destroyed } =
       skill.corpse !== undefined && corpse === undefined
         ? only([])
         : resolve({
@@ -2960,6 +2963,14 @@ export class MatchSimulation {
       const position = this.#groundAnchor(record, ground, corpse, primary);
       if (position !== undefined) {
         this.#placeGroundEffect(record, skill.id, ground, position);
+      }
+    }
+    // A sacrificed spirit leaves as an expired one does (#1309): no corpse,
+    // nobody scores, and its aura is gone from the next step.
+    for (const id of destroyed) {
+      const spirit = this.#participants.get(id);
+      if (spirit?.creature?.kind === "spirit" && !spirit.combatant.dead) {
+        this.#leaving.add(id);
       }
     }
     // An attack skill is a swing, so it turns on its target with the

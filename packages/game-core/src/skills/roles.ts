@@ -62,6 +62,8 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     case "lengthen-recharge":
     case "disable-own-skills":
     case "chain-mark":
+    case "destroy-target-spirit":
+    case "destroy-allied-spirits":
       return [];
     // A spirit does what it projects (#1064): Recuperation heals.
     case "summon":

@@ -1098,10 +1098,11 @@ export function applyEffect(
         return events;
       }
       const reached = [...context.surroundings.values()].filter(
-        ({ combatant, position }) =>
+        ({ combatant, position, creature }) =>
           !combatant.dead &&
           combatant.id !== target.id &&
           combatant.team !== caster.team &&
+          (effect.hits === "foes" || creature?.ownerId !== undefined) &&
           distance(position, at) <= effect.radius,
       );
       for (const combatant of nearestFirst(reached, at)) {
@@ -1178,6 +1179,8 @@ export function applyEffect(
     case "recharge-others":
     case "summon":
     case "create-ground-effect":
+    case "destroy-target-spirit":
+    case "destroy-allied-spirits":
       // Nothing lands on anyone: the resolution reads it (`resolveSkillEffects`).
       return events;
   }
@@ -1512,6 +1515,8 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "drain-own-energy":
     case "resurrect-companions":
     case "disable-own-skills":
+    case "destroy-target-spirit":
+    case "destroy-allied-spirits":
       return true;
     case "heal":
       return effect.recipient === "caster";
@@ -1586,6 +1591,11 @@ export interface SkillOutcome {
    * simulation places them, which only it can add to the match.
    */
   readonly grounds: readonly CreateGroundEffect[];
+  /**
+   * The ids of the allied spirits it destroyed (#1309), in order: the
+   * simulation ends them after every effect, as it ends an expired one.
+   */
+  readonly destroyed: readonly string[];
 }
 
 /**
@@ -1606,6 +1616,7 @@ export function resolveSkillEffects(
   let rechargeFraction = 0;
   const summons: SummonEffect[] = [];
   const grounds: CreateGroundEffect[] = [];
+  const destroyed: string[] = [];
   for (const effect of skill.effects) {
     const on = effectActsOnCaster(effect) ? [targets[0]] : targets;
     for (const target of on) {
@@ -1625,7 +1636,15 @@ export function resolveSkillEffects(
         if (inner.kind === "create-ground-effect") {
           grounds.push(inner);
         }
-        events.push(...applyEffect(inner, context, before));
+        if (inner.kind === "destroy-target-spirit" && target !== undefined) {
+          destroyed.push(target.id);
+        }
+        if (inner.kind === "destroy-allied-spirits") {
+          destroyed.push(...alliedSpiritsWithin(caster, inner.radius, surroundings));
+        }
+        events.push(
+          ...applyEffect(perDestroyedSpirit(inner, caster, destroyed.length), context, before),
+        );
       }
     }
   }
@@ -1643,7 +1662,44 @@ export function resolveSkillEffects(
       events,
     );
   }
-  return { events, rechargeFraction, summons, grounds };
+  return { events, rechargeFraction, summons, grounds, destroyed };
+}
+
+/**
+ * The ids of every living spirit on `caster`'s team within `radius` of
+ * it, whoever summoned it (#1309), nearest first.
+ */
+function alliedSpiritsWithin(
+  caster: Combatant,
+  radius: number,
+  surroundings: Surroundings,
+): readonly string[] {
+  const at = surroundings.get(caster.id)?.position;
+  if (at === undefined) {
+    return [];
+  }
+  const spirits = [...surroundings.values()].filter(
+    ({ combatant, position, creature }) =>
+      creature?.kind === "spirit" &&
+      !combatant.dead &&
+      combatant.team === caster.team &&
+      distance(position, at) <= radius,
+  );
+  return nearestFirst(spirits, at).map((spirit) => spirit.id);
+}
+
+/**
+ * A `perDestroyedSpirit` heal as the flat amount it heals for the
+ * `destroyed` spirits so far (#1309); any other effect as it is.
+ */
+function perDestroyedSpirit(
+  effect: UnconditionalEffect,
+  caster: Combatant,
+  destroyed: number,
+): UnconditionalEffect {
+  return effect.kind === "heal" && effect.perDestroyedSpirit === true
+    ? { ...effect, amount: { flat: resolveMagnitude(effect.amount, caster) * destroyed } }
+    : effect;
 }
 
 /**

@@ -1281,6 +1281,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       {
         kind: "splash",
         radius: AREA_ADJACENT,
+        hits: "foes",
         effects: [
           {
             kind: "damage",
@@ -3216,6 +3217,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       {
         kind: "splash",
         radius: AREA_NEARBY,
+        hits: "foes",
         effects: [
           {
             kind: "damage",
@@ -4098,6 +4100,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       {
         kind: "splash",
         radius: AREA_NEARBY,
+        hits: "foes",
         effects: [
           {
             kind: "damage",
@@ -4138,6 +4141,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       {
         kind: "splash",
         radius: AREA_NEARBY,
+        hits: "foes",
         effects: [
           {
             kind: "damage",
@@ -4178,6 +4182,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       {
         kind: "splash",
         radius: AREA_NEARBY,
+        hits: "foes",
         effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: 13 }],
       },
     ],
@@ -5289,6 +5294,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
           {
             kind: "splash",
             radius: AREA_IN_THE_AREA,
+            hits: "foes",
             effects: [
               { kind: "interrupt" },
               {
@@ -5976,6 +5982,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
           {
             kind: "splash",
             radius: AREA_IN_THE_AREA,
+            hits: "foes",
             effects: [
               {
                 kind: "damage",
@@ -6104,6 +6111,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
           {
             kind: "splash",
             radius: AREA_IN_THE_AREA,
+            hits: "foes",
             effects: [
               {
                 kind: "damage",
@@ -6406,6 +6414,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
           {
             kind: "splash",
             radius: AREA_ADJACENT,
+            hits: "foes",
             effects: [
               {
                 kind: "damage",
@@ -7214,6 +7223,173 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
           "earthbind",
           "foes",
         ),
+      },
+    ],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Spirit sacrifice (#1309): cash a spirit in for a spike or a heal        */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "ritualist.rupture-soul",
+    name: "Rupture Soul",
+    gwId: 917,
+    type: "spell",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.spawning-power",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "allied-spirit",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    // "Target allied spirit is destroyed. All nearby enemies are struck for
+    // 50...140 lightning damage and become blinded for 3...12 seconds." At
+    // 12: 122 damage, 10 s. The splash is centred on the spirit, which goes
+    // after it.
+    effects: [
+      {
+        kind: "splash",
+        radius: AREA_NEARBY,
+        hits: "foes",
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "ritualist.spawning-power", atZero: 50, atTwelve: 122 },
+            },
+            type: "lightning",
+            armorPenetration: 0,
+          },
+          { kind: "apply-status", statusId: "blind", durationSeconds: 10 },
+        ],
+      },
+      { kind: "destroy-target-spirit" },
+    ],
+  },
+  {
+    id: "ritualist.spirit-to-flesh",
+    name: "Spirit to Flesh",
+    gwId: 918,
+    type: "spell",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.spawning-power",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 15,
+    range: RANGE_MELEE,
+    target: "allied-spirit",
+    area: {
+      radius: AREA_NEARBY,
+      origin: "caster",
+      affects: "allies",
+      maxTargets: undefined,
+      includesCaster: true,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    // "Target touched allied spirit is destroyed. All nearby allies are
+    // healed for 30...240." At 12: 198.
+    effects: [
+      {
+        kind: "heal",
+        perStatusOnTarget: [],
+        amount: { scaling: { attributeId: "ritualist.spawning-power", atZero: 30, atTwelve: 198 } },
+      },
+      { kind: "destroy-target-spirit" },
+    ],
+  },
+  {
+    id: "ritualist.feast-of-souls",
+    name: "Feast of Souls",
+    gwId: 980,
+    type: "spell",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.spawning-power",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: { origin: "party" },
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    // "Destroy all nearby allies' spirits. For each spirit destroyed in this
+    // way, all party members are healed for 50...100 Health." At 12: 90.
+    effects: [
+      { kind: "destroy-allied-spirits", radius: AREA_NEARBY },
+      {
+        kind: "heal",
+        perStatusOnTarget: [],
+        perDestroyedSpirit: true,
+        amount: { scaling: { attributeId: "ritualist.spawning-power", atZero: 50, atTwelve: 90 } },
+      },
+    ],
+  },
+  {
+    id: "ritualist.consume-soul",
+    name: "Consume Soul",
+    gwId: 914,
+    type: "spell",
+    elite: true,
+    profession: "ritualist",
+    attributeId: "ritualist.spawning-power",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    // "You steal 5...70 Health from target foe. All hostile summoned
+    // creatures in earshot of that foe take 25...125 damage." At 12: 57 and
+    // 105. Typeless, as worded.
+    effects: [
+      {
+        kind: "life-steal",
+        amount: { scaling: { attributeId: "ritualist.spawning-power", atZero: 5, atTwelve: 57 } },
+      },
+      {
+        kind: "splash",
+        radius: AREA_EARSHOT,
+        hits: "foe-creatures",
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "ritualist.spawning-power", atZero: 25, atTwelve: 105 },
+            },
+            type: "typeless",
+            armorPenetration: 0,
+          },
+        ],
       },
     ],
   },

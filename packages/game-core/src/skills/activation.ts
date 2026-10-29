@@ -8,6 +8,7 @@ import {
   mysticismEnergyCost,
 } from "../primary-attributes.js";
 import type { Vec2 } from "../vec2.js";
+import type { CreatureKind } from "../match/simulation.js";
 
 import { canAffordAdrenaline, spendAdrenaline } from "./adrenaline.js";
 import { addOvercast } from "./overcast.js";
@@ -66,7 +67,9 @@ export type ActivationRejection =
   // Space on a flag or the stand that does nothing (#1225).
   | "not-your-flag"
   | "flag-on-stand"
-  | "no-flag-carried";
+  | "no-flag-carried"
+  // A spirit sacrifice on anything but a living allied spirit (#1309).
+  | "invalid-target-not-allied-spirit";
 
 export type ActivationCheck =
   { readonly ok: true } | { readonly ok: false; readonly reason: ActivationRejection };
@@ -83,6 +86,8 @@ export interface ActivationRequest {
   readonly casterPosition: Vec2;
   readonly target: Combatant | undefined;
   readonly targetPosition: Vec2 | undefined;
+  /** The target's kind if it is a creature (#1309), `undefined` for a player or none. */
+  readonly targetCreatureKind: CreatureKind | undefined;
   /**
    * The key the slot used waits under (#469): a copy's, or the skill's
    * own id, which it is when left out.
@@ -111,7 +116,7 @@ export interface ActivationRequest {
 export function targetRuleAllows(
   rule: TargetRule,
   caster: Pick<Combatant, "id" | "team">,
-  target: Pick<Combatant, "id" | "team">,
+  target: Pick<Combatant, "id" | "team"> & { readonly creatureKind: CreatureKind | undefined },
 ): ActivationRejection | undefined {
   const isSelf = target.id === caster.id;
   const isAlly = !isSelf && target.team === caster.team;
@@ -131,6 +136,10 @@ export function targetRuleAllows(
     case "companion":
     case "living-companion":
       return isAlly ? undefined : isSelf ? "invalid-target-self" : "invalid-target-enemy";
+    case "allied-spirit":
+      return isAlly && target.creatureKind === "spirit"
+        ? undefined
+        : "invalid-target-not-allied-spirit";
   }
 }
 
@@ -172,7 +181,11 @@ function checkTarget(request: ActivationRequest): ActivationCheck {
   if (target === undefined) {
     return reject(isCompanionRule(skill.target) ? "no-companion" : "no-target");
   }
-  const byWho = targetRuleAllows(skill.target, caster, target);
+  const byWho = targetRuleAllows(skill.target, caster, {
+    id: target.id,
+    team: target.team,
+    creatureKind: request.targetCreatureKind,
+  });
   const byLife = targetLivenessAllows(skill.target, target);
   // A resurrection on yourself or a foe is refused for who, not for being
   // alive; any other skill on a corpse is refused for the corpse.

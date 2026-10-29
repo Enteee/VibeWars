@@ -32,6 +32,7 @@ import type {
   Skill,
   SkillEffect,
   SkillType,
+  SplashEffect,
   StateCondition,
   UnconditionalEffect,
 } from "./types.js";
@@ -555,7 +556,7 @@ function describeTrigger(
     if (effect.kind === "splash" && trigger.target === "bearer") {
       const area = AREA_TEXT.get(effect.radius);
       const allies = !bearerIsFoe
-        ? lowerFirst(foesWithin(effect.radius))
+        ? lowerFirst(foesWithin(effect.radius, effect.hits))
         : area === "adjacent"
           ? "its adjacent allies"
           : `its allies ${area ?? `within ${String(effect.radius)}`}`;
@@ -603,6 +604,11 @@ function suffered(effect: ApplyStatusEffect, ranks: ReadonlyMap<string, number>)
 /** "Deals 63 damage" as the second half of a line: "deals 63 damage". */
 function lowerFirst(text: string): string {
   return `${text.charAt(0).toLowerCase()}${text.slice(1)}`;
+}
+
+/** "foes nearby" as the start of a line: "Foes nearby". */
+function upperFirst(text: string): string {
+  return `${text.charAt(0).toUpperCase()}${text.slice(1)}`;
 }
 
 /** "a hex", "an enchantment". */
@@ -684,18 +690,21 @@ function perAllyText(effect: HealEffect, ranks: ReadonlyMap<string, number>): st
   return `, +${String(amount)} Health for each ally ${area} (max ${String(perAlly.max)})`;
 }
 
-/** Who a splash reaches, as GW1 words it (#885): "Adjacent foes". */
-function foesWithin(radius: number): string {
+/**
+ * Who a splash reaches, as GW1 words it (#885): "Adjacent foes", or
+ * "Foe creatures in earshot" for one that hits only creatures (#1309).
+ */
+function foesWithin(radius: number, hits: SplashEffect["hits"]): string {
   const area = AREA_TEXT.get(radius);
+  const foes = hits === "foes" ? "foes" : "foe creatures";
   switch (area) {
     case "adjacent":
-      return "Adjacent foes";
     case "nearby":
-      return "Nearby foes";
+      return `${upperFirst(area)} ${foes}`;
     case undefined:
-      return `Foes within ${String(radius)}`;
+      return `${upperFirst(foes)} within ${String(radius)}`;
     default:
-      return `Foes ${area}`;
+      return `${upperFirst(foes)} ${area}`;
   }
 }
 
@@ -817,9 +826,11 @@ function describeEffect(
           ? `+${amount} Health for each ${effect.perStatusOnTarget.join(" or ")} on target ally`
           : effect.perRemoved !== undefined
             ? `Heals ${amount} for each ${effect.perRemoved} removed`
-            : effect.recipient === "caster"
-              ? `You gain ${amount} health`
-              : `Heals for ${amount}`;
+            : effect.perDestroyedSpirit === true
+              ? `Heals ${amount} for each spirit destroyed`
+              : effect.recipient === "caster"
+                ? `You gain ${amount} health`
+                : `Heals for ${amount}`;
       return { text: `${text}${perAllyText(effect, ranks)}`, magnitude };
     }
     case "energy-gain": {
@@ -991,6 +1002,13 @@ function describeEffect(
         magnitude: health,
       };
     }
+    case "destroy-target-spirit":
+      return { text: "Destroys target allied spirit", magnitude: undefined };
+    case "destroy-allied-spirits": {
+      // "Destroys every allied spirit nearby" (#1309).
+      const where = AREA_TEXT.get(effect.radius) ?? `within ${String(effect.radius)}`;
+      return { text: `Destroys every allied spirit ${where}`, magnitude: undefined };
+    }
     case "drain-own-energy":
       return { text: "You lose all your remaining energy", magnitude: undefined };
     case "recharge-faster":
@@ -1084,7 +1102,7 @@ function describeEffect(
       const last = parts.pop();
       const what = parts.length === 0 ? (last ?? "") : `${parts.join(", ")} and ${String(last)}`;
       return {
-        text: `${foesWithin(effect.radius)} ${what}`,
+        text: `${foesWithin(effect.radius, effect.hits)} ${what}`,
         magnitude: inner.find(({ description }) => description.magnitude !== undefined)?.description
           .magnitude,
       };
@@ -1307,6 +1325,7 @@ const TARGET_TEXT: Record<Skill["target"], string> = {
   "single-dead-ally": "A dead ally",
   companion: "Your pet",
   "living-companion": "Your living pet",
+  "allied-spirit": "An allied spirit",
 };
 
 const AREA_WHO: Record<RadiusArea["affects"], string> = {

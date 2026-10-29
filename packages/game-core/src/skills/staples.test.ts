@@ -83,6 +83,7 @@ function check(caster: Combatant, id: string, target: Combatant) {
     isCasting: false,
     skillBar: [id, null, null, null, null, null, null, null],
     losBlockers: [],
+    targetCreatureKind: undefined,
   });
 }
 
@@ -253,6 +254,7 @@ describe("Throw Dirt (#522)", () => {
       isCasting: false,
       skillBar: ["ranger.throw-dirt", null, null, null, null, null, null, null],
       losBlockers: [],
+      targetCreatureKind: undefined,
     });
     expect(far).toEqual({ ok: false, reason: "out-of-range" });
   });

@@ -472,6 +472,7 @@ const REFUSALS: Readonly<Record<ActivationRejection, string>> = {
   "companion-too-far": "Your pet is too far away.",
   "no-animal-to-charm": "There is no animal to charm here.",
   "invalid-target-creature": "That cannot be revived that way.",
+  "invalid-target-not-allied-spirit": "Target an allied spirit.",
   "cannot-cast-spells": "You cannot cast spells.",
   "hands-full": "Your hands are full: drop the flag first.",
   "not-your-flag": "That is not your flag.",

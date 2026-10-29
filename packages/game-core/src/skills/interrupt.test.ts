@@ -248,6 +248,7 @@ describe("status-driven combat scenarios", () => {
       isCasting: false,
       skillBar: [skill.id],
       losBlockers: [],
+      targetCreatureKind: undefined,
     });
     expect(check.ok).toBe(true);
   });

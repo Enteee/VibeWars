@@ -74,6 +74,7 @@ function check(caster: Combatant, id: string, target: Combatant) {
     isCasting: false,
     skillBar: [id, null, null, null, null, null, null, null],
     losBlockers: [],
+    targetCreatureKind: undefined,
   });
 }
 

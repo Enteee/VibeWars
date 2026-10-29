@@ -52,6 +52,7 @@ function request(overrides: Partial<ActivationRequest> = {}): ActivationRequest 
     isCasting: false,
     skillBar: [SPELL.id],
     losBlockers: [],
+    targetCreatureKind: undefined,
     ...overrides,
   };
 }
@@ -267,9 +268,9 @@ describe("canActivate", () => {
 describe("targetRuleAllows (#599)", () => {
   const caster = { id: "me", team: 0 };
   const targets = [
-    { id: "me", team: 0 },
-    { id: "ally", team: 0 },
-    { id: "foe", team: 1 },
+    { id: "me", team: 0, creatureKind: undefined },
+    { id: "ally", team: 0, creatureKind: undefined },
+    { id: "foe", team: 1, creatureKind: undefined },
   ];
   const verdicts = (rule: Parameters<typeof targetRuleAllows>[0]) =>
     targets.map((target) => targetRuleAllows(rule, caster, target));
@@ -293,6 +294,17 @@ describe("targetRuleAllows (#599)", () => {
       undefined,
       "invalid-target-enemy",
     ]);
+  });
+
+  it("allows an allied spirit only, whoever summoned it (#1309)", () => {
+    const refused = "invalid-target-not-allied-spirit";
+    expect(verdicts("allied-spirit")).toEqual([refused, refused, refused]);
+    const spirit = (team: number, creatureKind: "spirit" | "minion" | "pet") =>
+      targetRuleAllows("allied-spirit", caster, { id: "c", team, creatureKind });
+    expect(spirit(0, "spirit")).toBeUndefined();
+    expect(spirit(1, "spirit")).toBe(refused);
+    expect(spirit(0, "minion")).toBe(refused);
+    expect(spirit(0, "pet")).toBe(refused);
   });
 });
 

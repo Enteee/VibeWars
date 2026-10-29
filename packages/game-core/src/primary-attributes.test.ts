@@ -104,6 +104,7 @@ describe("Expertise (#528)", () => {
         isCasting: false,
         skillBar: [broadHead.id, "elementalist.fireball", "warrior.backbreaker"],
         losBlockers: [],
+        targetCreatureKind: undefined,
       });
     return { caster, check };
   }
@@ -168,6 +169,7 @@ describe("Mysticism (#874)", () => {
       isCasting: false,
       skillBar: [mysticRegeneration.id],
       losBlockers: [],
+      targetCreatureKind: undefined,
     });
     return { caster, result };
   }
