@@ -1,5 +1,5 @@
 // Draws a study of a guild cape on the top-down body (#1410, #481). It is a
-// design reference for that decision, not a game asset.
+// design reference for that decision, not a game asset. Decided: variant B (#1410).
 //
 //   node scripts/assets/cape-study.mjs
 //

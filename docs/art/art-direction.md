@@ -756,7 +756,7 @@ a fixed 11 screen px, which crosses every weapon at Wide.
 
 ![Profession body study](profession-body-study.svg)
 
-### Guild cape (study, not decided)
+### Guild cape (decided: B, the trailing tab)
 
 GW1 guilds wear a cape (#481, #1410). A body is a team-coloured disc seen
 from above, so the cape goes **behind it, opposite its facing**: the weapon
@@ -791,7 +791,9 @@ The same three in a 4v4 mid-fight frame at 2x zoom, with the menu figure (made b
   after it: 3 calls, no extra silhouette, no room needed. But it eats the
   disc's team colour at the back and sits next to the off-hand arc, and at
   Default it is a 4 px green smear: team colour is hurt, no emblem fits.
-- **Recommendation: A.** It adds a clear guild signal on the one side no
+- **Decided: B** (the operator's pick, #1410; implementation is #1422). The
+  tab's clump noise is accepted for the clearest guild read. My own
+  recommendation was A: It adds a clear guild signal on the one side no
   mark uses, costs no more than the existing marks, never touches the
   disc, and keeps team colour the strongest read. Show the emblem only in the
   menu, the designer and the roster. B is the pick if the operator wants the
