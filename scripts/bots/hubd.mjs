@@ -130,11 +130,15 @@ import {
 import { historyText, movesBetween, parseHistory } from "./board-history.mjs";
 import { HOLD_BELOW, freeBytes } from "./disk.mjs";
 import {
+  addEdge,
   buildKpis,
   cpuShare,
   employeeOfUnit,
+  EDGES_SCHEMA_VERSION,
   flowKpis,
+  parseEdges,
   parseUnits,
+  projectSevenDay,
   staffKpis,
   tokensByRole,
 } from "./kpi.mjs";
@@ -238,6 +242,8 @@ const NUDGES = path.join(HUB, "nudges.json");
 const BOARD_HISTORY = path.join(HUB, "board-history.jsonl");
 /** The KPI snapshot (kpi.mjs), written every `KPI_EVERY_MS`; every jail reads it. */
 const KPIS = path.join(HUB, "kpis.json");
+/** The 7-day utilization's step edges (#1313), kept across restarts for its projection. */
+const KPI_EDGES = path.join(HUB, "kpi-edges.json");
 /** `blocked.json`: the column each Blocked card came from, by project item id (#639). */
 const BLOCKED = path.join(HUB, "blocked.json");
 /** The CI watches agents asked for (#736), hubd's alone. */
@@ -3352,6 +3358,23 @@ let cpuSamples = /** @type {{ at: number, nsec: Map<string, number> }} */ ({
   nsec: new Map(),
 });
 
+/** The 7-day utilization's step edges of the last 24 h (#1313), as `kpi-edges.json` holds them. */
+let sevenDayEdges = /** @type {import("./kpi.mjs").SevenDayEdge[]} */ ([]);
+
+/** Read the edges a previous hubd left. A file in another shape is discarded. */
+function loadKpiEdges() {
+  if (!fs.existsSync(KPI_EDGES)) {
+    return;
+  }
+  const edges = parseEdges(fs.readFileSync(KPI_EDGES, "utf8"));
+  if (edges === null) {
+    fs.rmSync(KPI_EDGES, { force: true });
+    console.error("hubd: kpi-edges.json is not a list of edges; discarded");
+    return;
+  }
+  sevenDayEdges = edges;
+}
+
 const SLICE = "vibewars-jails.slice";
 
 /** The user manager gets this long, in all, to answer; hubd's loop waits for it. */
@@ -3465,13 +3488,20 @@ async function writeKpis(cfg) {
       },
       claude: () => {
         const limit = readLimit(ROOT, staff, now);
+        const sevenDay = limit?.sevenDay ?? null;
+        sevenDayEdges = addEdge(sevenDayEdges, limit);
+        writeAtomic(
+          KPI_EDGES,
+          JSON.stringify({ schemaVersion: EDGES_SCHEMA_VERSION, edges: sevenDayEdges }),
+        );
         const read = readUsage(usage, now, limit);
         if (read === null) {
           throw new Error("no usage logs");
         }
         return {
           fiveHour: limit?.fiveHour ?? null,
-          sevenDay: limit?.sevenDay ?? null,
+          sevenDay:
+            sevenDay === null ? null : { ...sevenDay, projectedAt: projectSevenDay(sevenDayEdges) },
           tokens5hByRole: tokensByRole(read.summary.roles),
         };
       },
@@ -3777,6 +3807,7 @@ async function main() {
   // A restart costs no sweep the board's age does not call for.
   loadBoard(cfg);
   loadBlocked();
+  loadKpiEdges();
   loadNudges();
   loadOwnSchedules();
   loadWatches();
