@@ -1,6 +1,6 @@
 import type { Vec2 } from "@vibewars/game-core";
 
-import type { CameraView, Cover, Size } from "./camera-rig.js";
+import type { CameraView, Cover, ScreenRect, Size } from "./camera-rig.js";
 
 /**
  * Off-screen markers (#437 §4, #440): for each living body outside the
@@ -38,6 +38,12 @@ export interface EdgeMarker {
 /** How far inside the screen edge the markers sit, px. */
 export const EDGE_INSET_PX = 22;
 
+/** Half a marker, px: how far a keep-out panel is grown before a marker counts as under it. */
+export const EDGE_MARKER_HALF_PX = 6;
+
+/** The gap a slid marker keeps from the panel it slid off (#1424), px. */
+export const KEEP_OUT_GAP_PX = 8;
+
 /**
  * A marker for every living thing outside the part of the viewport the HUD
  * leaves uncovered, inset by `insetPx`, where the ray from that part's
@@ -66,19 +72,69 @@ export function edgeMarkers(
     if (Math.abs(dx) <= reachX && Math.abs(dy) <= reachY) {
       continue;
     }
-    const t = Math.min(
-      dx === 0 ? Infinity : reachX / Math.abs(dx),
-      dy === 0 ? Infinity : reachY / Math.abs(dy),
-    );
+    const tx = dx === 0 ? Infinity : reachX / Math.abs(dx);
+    const ty = dy === 0 ? Infinity : reachY / Math.abs(dy);
+    // On the top or bottom edge when that is where the ray crosses, a
+    // corner included, so a marker there slides along x.
+    const alongX = ty <= tx;
+    const t = Math.min(tx, ty);
+    const x = centreX + dx * t;
+    const y = centreY + dy * t;
+    const slid = alongX
+      ? { x: slide(x, y, cover.keepOut, "x", centreX - reachX, centreX + reachX), y }
+      : { x, y: slide(y, x, cover.keepOut, "y", centreY - reachY, centreY + reachY) };
     markers.push({
       id: thing.id,
       kind: thing.kind,
       colour: thing.colour,
       targeted: thing.targeted,
-      x: centreX + dx * t,
-      y: centreY + dy * t,
+      x: slid.x,
+      y: slid.y,
       angle: Math.atan2(dy, dx),
     });
   }
   return markers;
+}
+
+/** Whether a marker at (x, y) is under `rect`, grown by half a marker. */
+function under(x: number, y: number, rect: ScreenRect): boolean {
+  return (
+    x > rect.left - EDGE_MARKER_HALF_PX &&
+    x < rect.right + EDGE_MARKER_HALF_PX &&
+    y > rect.top - EDGE_MARKER_HALF_PX &&
+    y < rect.bottom + EDGE_MARKER_HALF_PX
+  );
+}
+
+/**
+ * Where along its edge a marker goes to be under no keep-out panel
+ * (#1424): unmoved if it is under none, else just past whichever end of a
+ * panel is nearest and in reach (`min` … `max`) and under none, the
+ * lower end on a tie. `along` is the coordinate that moves, `across` the
+ * one that stays; `axis` says which is x. With no such end, unmoved.
+ */
+function slide(
+  along: number,
+  across: number,
+  keepOut: readonly ScreenRect[],
+  axis: "x" | "y",
+  min: number,
+  max: number,
+): number {
+  const at = (value: number): readonly [number, number] =>
+    axis === "x" ? [value, across] : [across, value];
+  const covered = (value: number): boolean => keepOut.some((rect) => under(...at(value), rect));
+  if (!covered(along)) {
+    return along;
+  }
+  const clear = EDGE_MARKER_HALF_PX + KEEP_OUT_GAP_PX;
+  const ends = keepOut
+    .flatMap((rect) =>
+      axis === "x"
+        ? [rect.left - clear, rect.right + clear]
+        : [rect.top - clear, rect.bottom + clear],
+    )
+    .filter((end) => end >= min && end <= max && !covered(end))
+    .sort((a, b) => Math.abs(a - along) - Math.abs(b - along) || a - b);
+  return ends[0] ?? along;
 }
