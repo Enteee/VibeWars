@@ -851,7 +851,7 @@ it, not baked in, so one file serves every screen.
   totem, spirit-pain, spirit-blind, spirit-quiet, spirit-strip, spirit-cap, spirit-share,
   spirit-block, spirit-ground, rift-strike, spirit-burn, spirit-energy, bond-spike, tear-fall, spirit-trio, ward-blade, trap-flame, ring-rays, well-sink, echo-spell, echo-skill, hex-mute,
   armor-crack, drop-run, mark-skull, dagger-stop, dagger-limp, palm,
-  ghost, weight, ache-cross, armor-shrink, speed-break (a whole chevron and a
+  dagger-crit (a dagger and a four-point spark), shield-crit, ghost, weight, ache-cross, armor-shrink, speed-break (a whole chevron and a
   broken one), eye-slash, limp-drain. A
   new primary effect adds a glyph; a new skill adds a row.
 
