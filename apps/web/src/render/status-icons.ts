@@ -129,6 +129,9 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "defile-flesh": icon("defile-flesh"),
   "rigor-mortis": icon("rigor-mortis"),
   "lingering-curse": icon("lingering-curse"),
+  "boon-of-creation": icon("boon-of-creation"),
+  "explosive-growth": icon("explosive-growth"),
+  "spirits-gift": icon("spirits-gift"),
 };
 
 /** Drawn size of one icon, in world pixels. */

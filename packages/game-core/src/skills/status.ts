@@ -194,7 +194,11 @@ export type StatusId =
   | "suffering"
   | "defile-flesh"
   | "rigor-mortis"
-  | "lingering-curse";
+  | "lingering-curse"
+  // Ritualist Spawning Power creation staples (#1316).
+  | "boon-of-creation"
+  | "explosive-growth"
+  | "spirits-gift";
 
 /** Health one pip of regeneration or degeneration is worth, per second (GW1). */
 export const HEALTH_PER_PIP = 2;
@@ -570,6 +574,12 @@ export type StatusTriggerEvent =
    * neither. Recorded with the dealer, and fired at the drain, as hits are.
    */
   | "bearer-takes-damage-from-foe"
+  /**
+   * The bearer created a creature (#1316): a spirit or a minion, once for
+   * each, as it enters the world. A pet is charmed, not created. Fired by
+   * the simulation from the summon itself, with the creature.
+   */
+  | "bearer-creates-creature"
   | "bearer-gains-condition"
   | "ends"
   | "expires";
@@ -583,9 +593,11 @@ export interface StatusTrigger {
    * steal set it off. The bearer is the effects' caster and that foe their
    * target, so "that ally steals ... from that foe" heals the bearer, and a
    * `remove-status` with `from: "caster"` strips the bearer.
+   * Or `created` (#1316): the bearer is the effects' caster and the
+   * creature it just created their target, so a splash centres on it.
    */
   readonly effects: readonly TriggerEffect[];
-  readonly target: "bearer" | "source" | "offender";
+  readonly target: "bearer" | "source" | "offender" | "created";
   /** The skill the log names it after: "mesmer.backfire". */
   readonly skillId: string;
 }
@@ -907,6 +919,7 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
           kind: "splash",
           hits: "foes",
           radius: AREA_ADJACENT,
+          maxTargets: undefined,
           effects: [SPITEFUL_SPIRIT_DAMAGE],
         },
       ],
@@ -984,6 +997,7 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
             kind: "splash",
             hits: "foes",
             radius: AREA_ADJACENT,
+            maxTargets: undefined,
             effects: [
               { kind: "damage", amount: { flat: 34 }, type: "shadow", armorPenetration: 0 },
             ],
@@ -1433,6 +1447,7 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
           kind: "splash",
           hits: "foes",
           radius: AREA_ADJACENT,
+          maxTargets: undefined,
           effects: [
             { kind: "damage", amount: { flat: 25 }, type: "typeless", armorPenetration: 0 },
           ],
@@ -1481,6 +1496,7 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
                 kind: "splash",
                 hits: "foes",
                 radius: AREA_ADJACENT,
+                maxTargets: undefined,
                 effects: [
                   { kind: "damage", amount: { flat: 22 }, type: "slashing", armorPenetration: 0 },
                 ],
@@ -1508,6 +1524,7 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
               kind: "splash",
               hits: "foes",
               radius: AREA_ADJACENT,
+              maxTargets: undefined,
               effects: [
                 { kind: "damage", amount: { flat: 50 }, type: "earth", armorPenetration: 0 },
               ],
@@ -1545,6 +1562,7 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
             kind: "splash",
             hits: "foes",
             radius: AREA_NEARBY,
+            maxTargets: undefined,
             effects: [{ kind: "apply-status", statusId: "cracked-armor", durationSeconds: 8 }],
           },
         ],
@@ -1566,6 +1584,7 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
             kind: "splash",
             hits: "foes",
             radius: AREA_NEARBY,
+            maxTargets: undefined,
             effects: [{ kind: "apply-status", statusId: "blind", durationSeconds: 3 }],
           },
         ],
@@ -1587,6 +1606,7 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
             kind: "splash",
             hits: "foes",
             radius: AREA_NEARBY,
+            maxTargets: undefined,
             effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: 7 }],
           },
         ],
@@ -1767,6 +1787,93 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     profession: "necromancer",
     healthPips: -3,
     healingMultiplier: 0.75,
+  }),
+  // "Whenever you create a creature, you gain 5...50 Health and 1...6
+  // Energy" (#1316): scaled by the Ritualist's own Spawning Power.
+  "boon-of-creation": define("boon-of-creation", "Boon of Creation", "enchantment", {
+    profession: "ritualist",
+    triggers: [
+      {
+        on: "bearer-creates-creature",
+        target: "bearer",
+        effects: [
+          {
+            kind: "heal",
+            amount: {
+              scaling: { attributeId: "ritualist.spawning-power", atZero: 5, atTwelve: 41 },
+            },
+            perStatusOnTarget: [],
+          },
+          {
+            kind: "energy-gain",
+            amount: {
+              scaling: { attributeId: "ritualist.spawning-power", atZero: 1, atTwelve: 5 },
+            },
+          },
+        ],
+        skillId: "ritualist.boon-of-creation",
+      },
+    ],
+  }),
+  // "Whenever you create a creature, up to 5 foes near that creature are
+  // struck for 20...65 lightning damage" (#1316).
+  "explosive-growth": define("explosive-growth", "Explosive Growth", "enchantment", {
+    profession: "ritualist",
+    triggers: [
+      {
+        on: "bearer-creates-creature",
+        target: "created",
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_NEARBY,
+            maxTargets: 5,
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "ritualist.spawning-power", atZero: 20, atTwelve: 56 },
+                },
+                type: "lightning",
+                armorPenetration: 0,
+              },
+            ],
+          },
+        ],
+        skillId: "ritualist.explosive-growth",
+      },
+    ],
+  }),
+  // "Whenever you create a creature, all allies near that creature gain
+  // 5...50 Health and lose 1 condition" (#1316).
+  "spirits-gift": define("spirits-gift", "Spirit's Gift", "enchantment", {
+    profession: "ritualist",
+    triggers: [
+      {
+        on: "bearer-creates-creature",
+        target: "created",
+        effects: [
+          {
+            kind: "splash",
+            hits: "allies",
+            radius: AREA_NEARBY,
+            maxTargets: undefined,
+            effects: [
+              {
+                kind: "heal",
+                amount: {
+                  scaling: { attributeId: "ritualist.spawning-power", atZero: 5, atTwelve: 41 },
+                },
+                perStatusOnTarget: [],
+              },
+              { kind: "remove-status", category: "condition", count: 1 },
+            ],
+          },
+        ],
+        skillId: "ritualist.spirits-gift",
+      },
+    ],
   }),
 };
 

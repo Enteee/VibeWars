@@ -15,6 +15,12 @@
  *
  * The time a note is queried at is the time it plays at in the audio
  * context: nothing is delayed or sped up, only queried earlier.
+ *
+ * It never falls behind the audio clock itself (#1321): a main thread that
+ * stalls for longer than the lead would otherwise leave every later tick
+ * querying music that has already played, a note at a time, and the music
+ * never back to live. After such a stall it resumes at the audio clock, and
+ * the music it jumped is skipped.
  */
 export interface LeadClock {
   /** The time the scheduler works at now. */
@@ -28,8 +34,9 @@ export interface LeadClock {
 export function leadClock(audioTime: () => number, lead: number, maxStep: number): LeadClock {
   let last: number | undefined;
   const read = (): number => {
-    const target = audioTime() + lead;
-    last = last === undefined ? target : Math.max(last, Math.min(target, last + maxStep));
+    const now = audioTime();
+    const target = now + lead;
+    last = last === undefined ? target : Math.max(last, now, Math.min(target, last + maxStep));
     return last;
   };
   read.deficit = (): number => (last === undefined ? 0 : Math.max(0, audioTime() + lead - last));

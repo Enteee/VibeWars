@@ -37,6 +37,7 @@ const NO_BOT_USE = new Set([
   "paragon.incoming",
   "paragon.make-haste",
   "ranger.winnowing",
+  "ritualist.signet-of-creation",
   "ritualist.signet-of-spirits",
   "ritualist.weapon-of-aggression",
   "ritualist.weapon-of-quickening",
@@ -50,6 +51,7 @@ const NO_BOT_USE = new Set([
   "necromancer.well-of-suffering",
   // What they do lands through a status trigger, not an effect a bot reads.
   "dervish.sand-shards",
+  "ritualist.explosive-growth",
   "ritualist.splinter-weapon",
   "ritualist.vengeful-weapon",
   "ritualist.weapon-of-remedy",

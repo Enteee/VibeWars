@@ -171,6 +171,7 @@ import {
 } from "../skills/weapon-attack.js";
 import {
   fireChangeTriggers,
+  fireCreationTriggers,
   fireTriggers,
   isEchoSkill,
   isEchoStatus,
@@ -1115,6 +1116,9 @@ export class MatchSimulation {
    * the new one's aura radius (#1064): it leaves at the end of the step, as an
    * expiry, so nobody scores. A foe's lives on.
    *
+   * Each spirit or minion made fires its owner's `bearer-creates-creature`
+   * triggers as it arrives (#1316); one the cap leaves out fires nothing.
+   *
    * `companion`: it travels with `skillId` on the owner's bar (#1046),
    * rather than coming from a cast.
    */
@@ -1206,6 +1210,9 @@ export class MatchSimulation {
           mode: "guard",
         },
       });
+      if (template.kind !== "pet") {
+        this.#logFired(fireCreationTriggers(owner.combatant, id, this.#triggerContext()));
+      }
     }
   }
 
@@ -3049,7 +3056,10 @@ export class MatchSimulation {
    */
   #fireTriggers(
     record: ParticipantRecord,
-    event: Exclude<StatusTriggerEvent, "bearer-gains-condition" | "ends" | "expires">,
+    event: Exclude<
+      StatusTriggerEvent,
+      "bearer-gains-condition" | "bearer-creates-creature" | "ends" | "expires"
+    >,
     spared: ReadonlySet<StatusId>,
     usedSkill?: SlotSkill,
   ): void {
