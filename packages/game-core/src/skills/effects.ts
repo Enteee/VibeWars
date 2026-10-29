@@ -27,7 +27,13 @@ import {
   spiritsWithin,
   type TargetCandidate,
 } from "./targeting.js";
-import { effectiveMaxHealth, healingMultiplierOf, maxHealthLossOf, rankOf } from "./tick.js";
+import {
+  effectiveMaxHealth,
+  healingMultiplierOf,
+  maxHealthLossOf,
+  raisedMaxHealth,
+  rankOf,
+} from "./tick.js";
 import { wieldsFor } from "../equipment/weapons.js";
 import { distanceWithinRange } from "../geometry.js";
 import { isFreshCorpse } from "../match/corpses.js";
@@ -432,14 +438,24 @@ export function gainHealth(caster: Combatant, amount: number, events: CombatEven
 
 /**
  * Give energy, clamped so it can never exceed the maximum overcast
- * leaves (#461). The dead
+ * leaves (#461), nor `upTo` (#1359): a target already above it gains
+ * none and keeps what it has. The dead
  * gain none, and a gain that fills nothing is no event.
  */
-export function gainEnergy(target: Combatant, amount: number, events: CombatEvent[]): void {
+export function gainEnergy(
+  target: Combatant,
+  amount: number,
+  events: CombatEvent[],
+  upTo = Number.POSITIVE_INFINITY,
+): void {
   if (amount <= 0 || target.dead) {
     return;
   }
-  const applied = Math.min(amount, effectiveMaxEnergy(target) - target.energy);
+  const applied = Math.min(
+    amount,
+    effectiveMaxEnergy(target) - target.energy,
+    upTo - target.energy,
+  );
   if (applied <= 0) {
     return;
   }
@@ -699,7 +715,9 @@ export function interruptOnHit(victim: Combatant, events: CombatEvent[]): void {
  * newly applied maximum health loss (deep wound) comes off current health
  * too, never below 1, so it alone never kills (#764: GW1 defers the loss
  * to the next health change; flooring it is the accepted approximation).
- * A refresh takes nothing. Returns the health taken, for the caller to
+ * A refresh takes nothing. A newly raised maximum (#1359, Endure Pain)
+ * raises current health by as much, never past the effective maximum.
+ * Returns the health taken, for the caller to
  * report as damage; `undefined` when it is refused, a hex or a condition
  * on an invulnerable target (#1208), for the caller to report nothing.
  * An invulnerable target gains any other status, and loses no health to it.
@@ -715,7 +733,15 @@ export function applyStatus(
     return undefined;
   }
   const lossBefore = maxHealthLossOf(target);
+  const raisedBefore = raisedMaxHealth(target);
   if (!target.statuses.apply(statusId, durationSeconds, sourceId)) {
+    return 0;
+  }
+  const raised = raisedMaxHealth(target) - raisedBefore;
+  if (raised > 0) {
+    if (!target.dead) {
+      target.health = Math.min(target.health + raised, effectiveMaxHealth(target));
+    }
     return 0;
   }
   // A Guild Lord's cut spends its per-second cap (#1223), as damage does.
@@ -923,6 +949,7 @@ export function applyEffect(
           context.surroundings,
         ),
         events,
+        effect.upTo,
       );
       return events;
     }

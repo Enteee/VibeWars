@@ -83,6 +83,7 @@ export {
   naturalHealthPips,
   netPips,
   preCapEnergyPips,
+  raisedMaxHealth,
   upkeepPips,
   outsideMatch,
   rankOf,

@@ -43,8 +43,10 @@ const NO_BOT_USE = new Set([
   "ritualist.weapon-of-aggression",
   "ritualist.weapon-of-quickening",
   "warrior.balanced-stance",
+  "warrior.endure-pain",
   "warrior.for-great-justice",
   "warrior.frenzy",
+  "warrior.rush",
   "warrior.sprint",
   // Minions, wells and enchantment strips: no rule for them yet.
   "necromancer.animate-bone-horror",
@@ -54,6 +56,7 @@ const NO_BOT_USE = new Set([
   // What they do lands through a status trigger, not an effect a bot reads.
   "assassin.way-of-perfection",
   "warrior.hundred-blades",
+  "warrior.warriors-endurance",
   "dervish.sand-shards",
   "ritualist.explosive-growth",
   "ritualist.splinter-weapon",

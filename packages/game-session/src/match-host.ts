@@ -9,6 +9,7 @@ import {
   loadoutOf,
   resolveJoinLoadout,
   loadoutSpec,
+  raisedMaxHealth,
   resolveLoadout,
   spawnFacing,
   swingProgress,
@@ -826,7 +827,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
         participant.pendingSkill !== undefined ||
         participant.interact !== undefined,
       health: Math.round(combatant.health),
-      maxHealth: combatant.maxHealth,
+      // Raised by Endure Pain and its kind (#1359): the bar shows the larger maximum.
+      maxHealth: raisedMaxHealth(combatant),
       // Energy below 0 is GW1's hidden energy (#489): nobody sees it.
       energy: Math.max(0, Math.round(combatant.energy)),
       maxEnergy: combatant.maxEnergy,

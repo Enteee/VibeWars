@@ -235,6 +235,9 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
     const { fraction, cap } = definition.maxHealthLoss;
     parts.push(`−${String(Math.round(fraction * 100))}% maximum health (at most ${String(cap)})`);
   }
+  if (definition.maxHealthBonus !== 0) {
+    parts.push(`+${String(definition.maxHealthBonus)} maximum health`);
+  }
   if (definition.healingMultiplier !== 1) {
     const change = Math.round((definition.healingMultiplier - 1) * 100);
     parts.push(`${change > 0 ? "+" : "−"}${String(Math.abs(change))}% healing`);
@@ -503,7 +506,7 @@ function describeTriggers(
 ): TriggerLine[] {
   const groups = new Map<string, { trigger: StatusTrigger; on: StatusTriggerEvent[] }>();
   for (const trigger of triggers) {
-    const key = JSON.stringify([trigger.effects, trigger.target]);
+    const key = JSON.stringify([trigger.effects, trigger.target, trigger.weapon]);
     const group = groups.get(key);
     if (group === undefined) {
       groups.set(key, { trigger, on: [trigger.on] });
@@ -511,22 +514,35 @@ function describeTriggers(
       group.on.push(trigger.on);
     }
   }
+  const whenOf = (event: StatusTriggerEvent, weapon: AttackWeaponClass | undefined): string =>
+    weapon === undefined ? TRIGGER_WHEN[event] : weaponBoundWhen(event, weapon);
   return [...groups.values()].flatMap(({ trigger, on }) =>
     describeTrigger(
       trigger,
       on.includes("bearer-creates-creature")
         ? CREATES
         : on.includes("ends") || on.includes("expires")
-          ? `when it ${on.map((event) => TRIGGER_WHEN[event]).join(" or ")}`
+          ? `when it ${on.map((event) => whenOf(event, trigger.weapon)).join(" or ")}`
           : once && on.includes("bearer-uses-skill")
             ? NEXT_SKILL
             : nextOnly
-              ? `the next time it ${on.map((event) => TRIGGER_WHEN[event]).join(" or ")}`
-              : `whenever it ${on.map((event) => TRIGGER_WHEN[event]).join(" or ")}`,
+              ? `the next time it ${on.map((event) => whenOf(event, trigger.weapon)).join(" or ")}`
+              : `whenever it ${on.map((event) => whenOf(event, trigger.weapon)).join(" or ")}`,
       ranks,
       bearerIsFoe,
     ),
   );
+}
+
+/**
+ * What the bearer does with a weapon that a bound trigger answers
+ * (#1354, #1359): "attacks with a sword", "hits with a melee attack".
+ */
+function weaponBoundWhen(event: StatusTriggerEvent, weapon: AttackWeaponClass): string {
+  if (event === "bearer-hits") {
+    return weapon === "melee" ? "hits with a melee attack" : `hits with ${NEEDED_WEAPON[weapon]}`;
+  }
+  return `${TRIGGER_WHEN[event]} with ${NEEDED_WEAPON[weapon]}`;
 }
 
 /** The one use a status that ends on it answers (#949), as its tooltip says it. */
@@ -957,6 +973,11 @@ function perOwnCreatureText(effect: EnergyGainEffect, ranks: ReadonlyMap<string,
   return ` for every summoned creature you control ${where} (maximum ${String(max)} Energy)`;
 }
 
+/** Warrior's Endurance's cap (#1359): ", never above 22". */
+function upToText(effect: EnergyGainEffect): string {
+  return effect.upTo === undefined ? "" : `, never above ${String(effect.upTo)}`;
+}
+
 /** " per point lost", for an amount multiplied by the energy taken before it (#793). */
 function perPointLost(effect: { readonly perEnergyLost?: true }): string {
   return effect.perEnergyLost === undefined ? "" : " per point lost";
@@ -1002,7 +1023,7 @@ function describeEffect(
     case "energy-gain": {
       const magnitude = describeMagnitude(effect.amount, ranks);
       return {
-        text: `Gain ${String(magnitude.current)} energy${perPointLost(effect)}${perFoeHit(effect)}${perOwnCreatureText(effect, ranks)}`,
+        text: `Gain ${String(magnitude.current)} energy${perPointLost(effect)}${perFoeHit(effect)}${perOwnCreatureText(effect, ranks)}${upToText(effect)}`,
         magnitude,
       };
     }
