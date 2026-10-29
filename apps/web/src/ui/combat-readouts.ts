@@ -83,6 +83,8 @@ export function logToneOf(kind: CombatEvent["kind"]): Exclude<LogTone, "divider"
       return "control";
     case "death":
       return "death";
+    case "spirit-destroyed":
+      return "death";
   }
 }
 
@@ -176,6 +178,8 @@ export function describeCombatEvent(
       return `${by} steals ${formatAmount(event.amount)} health from ${target}`;
     case "death":
       return `${target} dies`;
+    case "spirit-destroyed":
+      return `${by} destroys ${target}`;
     case "resurrected":
       return `${by} resurrects ${target} (${percent(event.healthFraction)} health, ${percent(event.energyFraction)} energy)`;
     case "status-applied":
