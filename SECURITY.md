@@ -498,8 +498,12 @@ reading of the jobs.
 **Wiki reads (#1380).** Any employee may ask hubd for a GW1 wiki page,
 its Wayback snapshots, or a diff of two (`hub wiki`). hubd fetches from
 two fixed origins only, `wiki.guildwars.com` and `web.archive.org`, with
-the page name percent-encoded into a fixed path, no credential and a 15 s
-timeout per request. At most two run at once, beside the gh lane, so a
+the page name percent-encoded into a fixed path (no `.` or `..` segment),
+no credential and a 15 s timeout per read. A redirect is followed only
+onto those two origins, three at most, so a page cannot point hubd at
+the host. A body over 4 MiB is refused unread, and a diff whose differing
+part exceeds 4 million line pairs is refused, so one page cannot stall
+hubd's thread. At most two run at once, beside the gh lane, so a
 slow Wayback cannot stall a merge. Accepted risk: the wiki is editable by
 anyone, so a page is untrusted text, read as information like an issue
 body; the answer goes only to the asker.

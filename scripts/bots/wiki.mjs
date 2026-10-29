@@ -17,8 +17,17 @@
 export const LIVE_ORIGIN = "https://wiki.guildwars.com";
 export const ARCHIVE_ORIGIN = "https://web.archive.org";
 export const USER_AGENT = "VibeWars-research (+https://github.com/Enteee/VibeWars)";
-/** Per HTTP request. A wiki request makes a few, one at a time. */
+/** Per read, its redirects included. A wiki request makes a few, one at a time. */
 export const FETCH_TIMEOUT_MS = 15_000;
+/** A read whose body is longer is refused: a wiki page is a few hundred KiB. */
+export const MAX_PAGE_BYTES = 4 * 1024 * 1024;
+/** Redirects one read follows, each only to one of the two origins. */
+const MAX_REDIRECTS = 3;
+/**
+ * The most line pairs a diff compares. Its table is that many cells, built on
+ * hubd's only thread, and the wiki is editable by anyone.
+ */
+export const MAX_DIFF_CELLS = 4_000_000;
 
 /** The most snapshots one request reads before giving up on finding a page. */
 const MAX_SNAPSHOT_TRIES = 3;
@@ -41,8 +50,9 @@ const USAGE =
 
 /**
  * @typedef {object} WikiDeps
- * @property {(url: string, init: { headers: Record<string, string>, signal: AbortSignal }) =>
- *   Promise<{ ok: boolean, status: number, text: () => Promise<string> }>} fetch
+ * @property {(url: string, init: {
+ *   headers: Record<string, string>, redirect: "manual", signal: AbortSignal,
+ * }) => Promise<Response>} fetch
  * @property {{ live: string, archive: string }} [origins] the real hosts by default
  * @property {number} [timeoutMs] per HTTP request
  */
@@ -55,7 +65,7 @@ const USAGE =
  */
 export function parseWikiRequest(argv) {
   const [verb, page, ...rest] = argv;
-  if (page === undefined || page.trim() === "") {
+  if (page === undefined || page.trim() === "" || hasDotSegment(page)) {
     return { error: USAGE };
   }
   if (verb === "get") {
@@ -77,6 +87,18 @@ export function parseWikiRequest(argv) {
     }
   }
   return { error: USAGE };
+}
+
+/**
+ * A `.` or `..` path segment, which `fetch` would resolve out of `/wiki/`.
+ *
+ * @param {string} page
+ * @returns {boolean}
+ */
+function hasDotSegment(page) {
+  return pageSlug(page)
+    .split("/")
+    .some((segment) => segment === "." || segment === "..");
 }
 
 /**
@@ -276,18 +298,25 @@ function findElement(html, open) {
 }
 
 /**
- * Every element whose opening tag matches `open`, removed.
+ * Every element whose opening tag matches `open`, removed, in one pass: a
+ * page can hide tens of thousands of spans.
  *
  * @param {string} html
  * @param {RegExp} open as for `findElement`, without the `g` flag
  * @returns {string}
  */
 function dropElements(html, open) {
-  let rest = html;
-  for (let found = findElement(rest, open); found !== null; found = findElement(rest, open)) {
-    rest = rest.slice(0, found.start) + rest.slice(found.end);
+  const pattern = new RegExp(open.source, `${open.flags}g`);
+  /** @type {string[]} */
+  const kept = [];
+  let from = 0;
+  for (let match = pattern.exec(html); match !== null; match = pattern.exec(html)) {
+    kept.push(html.slice(from, match.index));
+    from = elementEnd(html, match.index, match[1] ?? "div");
+    pattern.lastIndex = from;
   }
-  return rest;
+  kept.push(html.slice(from));
+  return kept.join("");
 }
 
 /**
@@ -456,39 +485,59 @@ export function extractText(html) {
 /* -------------------------------------------------------------------------- */
 
 /**
- * A unified diff of two texts, line by line, or `null` if they are the same.
+ * A unified diff of two texts, line by line: `null` if they are the same,
+ * refused if what differs is too long to compare (`MAX_DIFF_CELLS`).
  *
  * @param {string} a
  * @param {string} b
  * @param {string} aLabel
  * @param {string} bLabel
- * @returns {string | null}
+ * @returns {{ ok: true, diff: string | null } | { ok: false, reason: string }}
  */
 export function unifiedDiff(a, b, aLabel, bLabel) {
   const left = a.split("\n");
   const right = b.split("\n");
-  // The longest common subsequence, from the end: pages are short.
   const n = left.length;
   const m = right.length;
-  const lcs = new Uint32Array((n + 1) * (m + 1));
+  // The lines both start and end with are not compared, only what is between.
+  let head = 0;
+  while (head < n && head < m && left[head] === right[head]) {
+    head += 1;
+  }
+  let tail = 0;
+  while (tail < n - head && tail < m - head && left[n - 1 - tail] === right[m - 1 - tail]) {
+    tail += 1;
+  }
+  const rows = n - head - tail;
+  const columns = m - head - tail;
+  if (rows * columns > MAX_DIFF_CELLS) {
+    return { ok: false, reason: "too long to diff" };
+  }
+  // The longest common subsequence of the middle, from its end.
+  const lcs = new Uint32Array((rows + 1) * (columns + 1));
   /** @type {(i: number, j: number) => number} */
-  const at = (i, j) => lcs[i * (m + 1) + j] ?? 0;
-  for (let i = n - 1; i >= 0; i -= 1) {
-    for (let j = m - 1; j >= 0; j -= 1) {
-      lcs[i * (m + 1) + j] =
+  const at = (i, j) => lcs[(i - head) * (columns + 1) + (j - head)] ?? 0;
+  for (let i = n - tail - 1; i >= head; i -= 1) {
+    for (let j = m - tail - 1; j >= head; j -= 1) {
+      lcs[(i - head) * (columns + 1) + (j - head)] =
         left[i] === right[j] ? at(i + 1, j + 1) + 1 : Math.max(at(i + 1, j), at(i, j + 1));
     }
   }
   /** @type {{ op: " " | "-" | "+", line: string, i: number, j: number }[]} */
   const ops = [];
-  let i = 0;
-  let j = 0;
-  while (i < n || j < m) {
-    if (i < n && j < m && left[i] === right[j]) {
+  for (let k = 0; k < head; k += 1) {
+    ops.push({ op: " ", line: left[k] ?? "", i: k, j: k });
+  }
+  const endI = n - tail;
+  const endJ = m - tail;
+  let i = head;
+  let j = head;
+  while (i < endI || j < endJ) {
+    if (i < endI && j < endJ && left[i] === right[j]) {
       ops.push({ op: " ", line: left[i] ?? "", i, j });
       i += 1;
       j += 1;
-    } else if (i < n && (j === m || at(i + 1, j) >= at(i, j + 1))) {
+    } else if (i < endI && (j === endJ || at(i + 1, j) >= at(i, j + 1))) {
       ops.push({ op: "-", line: left[i] ?? "", i, j });
       i += 1;
     } else {
@@ -496,9 +545,12 @@ export function unifiedDiff(a, b, aLabel, bLabel) {
       j += 1;
     }
   }
+  for (let k = 0; k < tail; k += 1) {
+    ops.push({ op: " ", line: left[endI + k] ?? "", i: endI + k, j: endJ + k });
+  }
   const changed = ops.flatMap((o, k) => (o.op === " " ? [] : [k]));
   if (changed.length === 0) {
-    return null;
+    return { ok: true, diff: null };
   }
 
   // Changes closer than twice the context share a hunk.
@@ -527,7 +579,7 @@ export function unifiedDiff(a, b, aLabel, bLabel) {
       ...slice.map((o) => `${o.op}${o.line}`),
     );
   }
-  return out.join("\n");
+  return { ok: true, diff: out.join("\n") };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -535,26 +587,75 @@ export function unifiedDiff(a, b, aLabel, bLabel) {
 /* -------------------------------------------------------------------------- */
 
 /**
+ * Read `url`, following a redirect only while it stays on one of
+ * `origins`: hubd runs on the host, and a redirect elsewhere would let a
+ * page answer with what the host can reach.
+ *
  * @param {string} url
+ * @param {{ live: string, archive: string }} origins
  * @param {WikiDeps} deps
  * @returns {Promise<{ ok: true, text: string } | { ok: false, reason: string }>}
  */
-async function fetchText(url, deps) {
+async function fetchText(url, origins, deps) {
+  const allowed = [new URL(origins.live).origin, new URL(origins.archive).origin];
+  const signal = AbortSignal.timeout(deps.timeoutMs ?? FETCH_TIMEOUT_MS);
   try {
-    const response = await deps.fetch(url, {
-      headers: { "User-Agent": USER_AGENT },
-      signal: AbortSignal.timeout(deps.timeoutMs ?? FETCH_TIMEOUT_MS),
-    });
-    if (!response.ok) {
-      return { ok: false, reason: `HTTP ${String(response.status)}` };
+    let at = url;
+    for (let hops = 0; ; hops += 1) {
+      const response = await deps.fetch(at, {
+        headers: { "User-Agent": USER_AGENT },
+        redirect: "manual",
+        signal,
+      });
+      if (response.status < 300 || response.status >= 400) {
+        if (!response.ok) {
+          await response.body?.cancel();
+          return { ok: false, reason: `HTTP ${String(response.status)}` };
+        }
+        const text = await bodyText(response);
+        return text === null ? { ok: false, reason: "too large" } : { ok: true, text };
+      }
+      await response.body?.cancel();
+      const location = response.headers.get("location");
+      const next = location === null ? null : URL.parse(location, at);
+      if (next === null || !allowed.includes(next.origin)) {
+        return { ok: false, reason: "redirected off-site" };
+      }
+      if (hops === MAX_REDIRECTS) {
+        return { ok: false, reason: "too many redirects" };
+      }
+      at = next.href;
     }
-    return { ok: true, text: await response.text() };
   } catch (error) {
     if (error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError")) {
       return { ok: false, reason: "timed out" };
     }
     return { ok: false, reason: `unreachable (${error instanceof Error ? error.message : "?"})` };
   }
+}
+
+/**
+ * The body as text, or `null` past `MAX_PAGE_BYTES`, read no further.
+ *
+ * @param {Response} response
+ * @returns {Promise<string | null>}
+ */
+async function bodyText(response) {
+  if (response.body === null) {
+    return "";
+  }
+  const decoder = new TextDecoder();
+  const parts = [];
+  let bytes = 0;
+  for await (const chunk of response.body) {
+    bytes += chunk.byteLength;
+    if (bytes > MAX_PAGE_BYTES) {
+      return null;
+    }
+    parts.push(decoder.decode(chunk, { stream: true }));
+  }
+  parts.push(decoder.decode());
+  return parts.join("");
 }
 
 /**
@@ -574,7 +675,7 @@ function reader(page, deps) {
   let listed = null;
 
   const snapshots = () => {
-    listed ??= fetchText(cdxUrl(page, origins), deps).then((answer) => {
+    listed ??= fetchText(cdxUrl(page, origins), origins, deps).then((answer) => {
       if (!answer.ok) {
         return answer;
       }
@@ -605,7 +706,7 @@ function reader(page, deps) {
     let last = "none";
     for (const candidate of candidates.slice(0, MAX_SNAPSHOT_TRIES)) {
       const url = snapshotUrl(page, candidate.timestamp, origins);
-      const answer = await fetchText(url, deps);
+      const answer = await fetchText(url, origins, deps);
       if (answer.ok && !isMaintenance(answer.text)) {
         return {
           ok: true,
@@ -629,7 +730,7 @@ function reader(page, deps) {
      */
     async live() {
       const url = liveUrl(page, origins);
-      const answer = await fetchText(url, deps);
+      const answer = await fetchText(url, origins, deps);
       if (answer.ok && !isMaintenance(answer.text)) {
         return { ok: true, url, label: "live", html: answer.text };
       }
@@ -701,5 +802,8 @@ export async function runWiki(argv, deps) {
     `${from.url} (${from.label})`,
     `${to.url} (${to.label})`,
   );
-  return { code: 0, stdout: `${diff ?? "no change"}\n`, stderr: "" };
+  if (!diff.ok) {
+    return { code: 1, stdout: "", stderr: `no diff of ${request.page}: ${diff.reason}\n` };
+  }
+  return { code: 0, stdout: `${diff.diff ?? "no change"}\n`, stderr: "" };
 }

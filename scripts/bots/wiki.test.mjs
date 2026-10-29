@@ -1,12 +1,15 @@
 import fs from "node:fs";
+import http from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import {
   ARCHIVE_ORIGIN,
   LIVE_ORIGIN,
+  MAX_DIFF_CELLS,
+  MAX_PAGE_BYTES,
   USER_AGENT,
   cdxUrl,
   extractText,
@@ -34,10 +37,11 @@ const LIVE = liveUrl("Fireball", ORIGINS);
 const snap = (timestamp) => snapshotUrl("Fireball", timestamp, ORIGINS);
 
 /**
- * A stand-in `fetch`: each URL answers a page, an HTTP status, or never
- * (until the request's own timeout aborts it). Anything unplanted is a 404.
+ * A stand-in `fetch`: each URL answers a page, an HTTP status, a redirect,
+ * or never (until the request's own timeout aborts it). Anything unplanted
+ * is a 404.
  *
- * @param {Record<string, string | number | "hang">} routes
+ * @param {Record<string, string | number | "hang" | { location: string }>} routes
  */
 function fakeFetch(routes) {
   /** @type {{ url: string, agent: string | undefined }[]} */
@@ -53,13 +57,12 @@ function fakeFetch(routes) {
         });
       });
     }
+    if (typeof route === "object") {
+      return Promise.resolve(new Response("", { status: 302, headers: route }));
+    }
     const status = typeof route === "number" ? route : 200;
     const body = typeof route === "string" ? route : "";
-    return Promise.resolve({
-      ok: status >= 200 && status < 300,
-      status,
-      text: () => Promise.resolve(body),
-    });
+    return Promise.resolve(new Response(body, { status }));
   };
   return { fetch, calls, timeoutMs: 50 };
 }
@@ -111,6 +114,8 @@ describe("parseWikiRequest (#1380)", () => {
       ["diff", "Fireball"],
       ["diff", "Fireball", "live"],
       ["diff", "Fireball", "2010-01-01", "2011-01-01", "live"],
+      ["get", "../../../x"],
+      ["get", "Fireball/./x"],
     ]) {
       const parsed = parseWikiRequest(argv);
       expect("error" in parsed && parsed.error, argv.join(" ")).toMatch(
@@ -174,8 +179,9 @@ describe("unifiedDiff (#1380)", () => {
     const before = ["a", "b", "c", "d", "e", "f", "g", "h", "i"].join("\n");
     const after = ["a", "b", "c", "d", "E", "f", "g", "h", "i"].join("\n");
 
-    expect(unifiedDiff(before, after, "old", "new")).toBe(
-      [
+    expect(unifiedDiff(before, after, "old", "new")).toEqual({
+      ok: true,
+      diff: [
         "--- old",
         "+++ new",
         "@@ -2,7 +2,7 @@",
@@ -188,8 +194,33 @@ describe("unifiedDiff (#1380)", () => {
         " g",
         " h",
       ].join("\n"),
-    );
-    expect(unifiedDiff(before, before, "old", "new")).toBeNull();
+    });
+    expect(unifiedDiff(before, before, "old", "new")).toEqual({ ok: true, diff: null });
+  });
+
+  it("compares only what differs, and refuses past MAX_DIFF_CELLS", () => {
+    /** @param {string} tag @param {number} count */
+    const lines = (tag, count) => Array.from({ length: count }, (_, k) => `${tag}${String(k)}`);
+    const side = Math.ceil(Math.sqrt(MAX_DIFF_CELLS)) + 1;
+    const long = lines("same", 50_000);
+    const edited = [...long.slice(0, 25_000), "changed", ...long.slice(25_001)];
+
+    const near = unifiedDiff(long.join("\n"), edited.join("\n"), "old", "new");
+
+    expect(near.ok && near.diff).toContain("@@ -24998,7 +24998,7 @@\n");
+    expect(
+      unifiedDiff(lines("a", side).join("\n"), lines("b", side).join("\n"), "old", "new"),
+    ).toEqual({ ok: false, reason: "too long to diff" });
+  });
+});
+
+describe("a large page (#1380)", () => {
+  it("reads tens of thousands of hidden spans in one pass", () => {
+    const hidden = '<span style="display:none">x</span>'.repeat(60_000);
+    const page = FIREBALL_NOW.replace("<!-- start content -->", `<!-- start content -->${hidden}`);
+
+    expect(page.length).toBeLessThan(MAX_PAGE_BYTES);
+    expect(extractText(page)).toBe(extractText(FIREBALL_NOW));
   });
 });
 
@@ -317,10 +348,87 @@ describe("runWiki (#1380)", () => {
     expect(limited.stderr).toBe("no copy of Fireball: wayback HTTP 429\n");
   });
 
+  it("follows a redirect that stays on the wiki or Wayback", async () => {
+    const moved = `${LIVE_ORIGIN}/wiki/Fire_Ball`;
+    const deps = fakeFetch({ [LIVE]: { location: "/wiki/Fire_Ball" }, [moved]: FIREBALL_NOW });
+
+    const answer = await runWiki(["get", "Fireball"], deps);
+
+    expect(answer.stdout).toMatch(/^source: .* \(live\)\n\nname: Fireball\n/);
+    expect(deps.calls.map((c) => c.url)).toEqual([LIVE, moved]);
+  });
+
+  it("refuses a page past MAX_PAGE_BYTES, and a redirect loop", async () => {
+    const huge = "x".repeat(MAX_PAGE_BYTES + 1);
+    const large = await runWiki(
+      ["history", "Fireball"],
+      fakeFetch({ [cdxUrl("Fireball", ORIGINS)]: huge }),
+    );
+    const loop = await runWiki(
+      ["get", "Fireball", "--at", "2007-05-18"],
+      fakeFetch({
+        [cdxUrl("Fireball", ORIGINS)]: { location: cdxUrl("Fireball", ORIGINS) },
+      }),
+    );
+
+    expect(large.stderr).toBe("no copy of Fireball: wayback too large\n");
+    expect(loop.stderr).toBe("no copy of Fireball: wayback too many redirects\n");
+  });
+
   it("refuses bad words with the usage, exit 2", async () => {
     const answer = await runWiki(["get", "Fireball", "--at", "2010-13-01"], fakeFetch({}));
 
     expect(answer.code).toBe(2);
     expect(answer.stderr).toContain("usage:");
+  });
+});
+
+describe("runWiki over HTTP (#1380)", () => {
+  /** @type {http.Server[]} */
+  const servers = [];
+  afterEach(async () => {
+    await Promise.all(
+      servers.splice(0).map((server) => new Promise((resolve) => server.close(resolve))),
+    );
+  });
+
+  /**
+   * @param {http.RequestListener} answer
+   * @returns {Promise<string>} its origin
+   */
+  const serve = async (answer) => {
+    const server = http.createServer(answer);
+    servers.push(server);
+    await new Promise((resolve) => {
+      server.listen(0, "127.0.0.1", () => {
+        resolve(undefined);
+      });
+    });
+    const address = server.address();
+    if (address === null || typeof address === "string") {
+      throw new Error("no port");
+    }
+    return `http://127.0.0.1:${String(address.port)}`;
+  };
+
+  it("never follows a redirect off the two origins: the host's own ports stay unread", async () => {
+    let inside = 0;
+    const host = await serve((_, response) => {
+      inside += 1;
+      response.end("secret");
+    });
+    const wiki = await serve((_, response) => {
+      response.writeHead(302, { location: `${host}/admin` }).end();
+    });
+
+    const answer = await runWiki(["get", "Fireball"], {
+      fetch,
+      origins: { live: wiki, archive: wiki },
+    });
+
+    expect(answer.stderr).toBe(
+      "no copy of Fireball: live redirected off-site, wayback redirected off-site\n",
+    );
+    expect(inside).toBe(0);
   });
 });
