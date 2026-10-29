@@ -52,7 +52,10 @@ To play with friends:
   press **Join**.
 
 Type a **Guild tag** of 2 to 4 letters or digits beside your name, and
-everyone sees it after your name, like `Ente [VIBE]`.
+everyone sees it after your name, like `Ente [VIBE]`. With a tag set,
+the **Guild cape** designer appears under it: pick the cape colour, the
+trim colour and an emblem, and your body wears the cape behind it in every
+match. Your characters in the menu show it too. **No cape** takes it off.
 
 ## In a match
 

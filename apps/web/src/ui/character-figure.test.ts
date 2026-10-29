@@ -14,8 +14,8 @@ import { REST_FRAME } from "../render/attack-clock.js";
 import { fromPlayerBuild, toPlayerBuild } from "../storage/build-validation.js";
 import type { StoredCharacter } from "../storage/schema.js";
 import { newCharacter } from "./build-editor.js";
-import { characterAppearance, figureBody, paintFigure } from "./character-figure.js";
-import type { Painter, StandingBody } from "../render/body-painter.js";
+import { FIGURE_SIZE, characterAppearance, figureBody, paintFigure } from "./character-figure.js";
+import { CAPE_EDGE_WIDTH, type Painter, type StandingBody } from "../render/body-painter.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 
@@ -106,9 +106,9 @@ describe("characterAppearance (#1250)", () => {
 });
 
 describe("figureBody (#1250)", () => {
-  it("is your own body at rest, facing right, centred with room for its marks", () => {
-    expect(figureBody({ weaponId: "sword", offhandId: "shield" })).toEqual({
-      x: 24,
+  it("is your own body at rest, facing right, with room for its marks and a cape behind", () => {
+    expect(figureBody({ weaponId: "sword", offhandId: "shield" }, undefined)).toEqual({
+      x: 32,
       y: 24,
       r: RULES.collision.playerRadius,
       facing: 0,
@@ -116,9 +116,54 @@ describe("figureBody (#1250)", () => {
       weaponId: "sword",
       offhandId: "shield",
       frame: REST_FRAME,
+      cape: undefined,
     });
   });
+
+  it("fits a cape's hem and the weapon's tip inside its box (#1422)", () => {
+    const cape = { main: 0xa078e0, trim: 0xf2f2f2, emblem: "diamond" } as const;
+    const body = figureBody({ weaponId: "sword", offhandId: "shield" }, cape);
+    const xs: number[] = [];
+    const ys: number[] = [];
+    const at = (x: number, y: number): void => {
+      xs.push(x);
+      ys.push(y);
+    };
+    paintFigure(
+      {
+        ...silent,
+        moveTo: at,
+        lineTo: at,
+        fillPoints: (points) => {
+          for (const point of points) {
+            at(point.x, point.y);
+          }
+        },
+      },
+      body,
+      () => undefined,
+    );
+    // The cape's outline is drawn half its width out.
+    expect(Math.min(...xs)).toBeGreaterThan(CAPE_EDGE_WIDTH / 2);
+    expect(Math.max(...xs)).toBeLessThanOrEqual(FIGURE_SIZE.width - 1);
+    expect(Math.min(...ys)).toBeGreaterThanOrEqual(1);
+    expect(Math.max(...ys)).toBeLessThanOrEqual(FIGURE_SIZE.height - 1);
+  });
 });
+
+/** A painter that draws nothing. */
+const silent: Painter = {
+  fillStyle: () => undefined,
+  lineStyle: () => undefined,
+  fillCircle: () => undefined,
+  strokeCircle: () => undefined,
+  beginPath: () => undefined,
+  moveTo: () => undefined,
+  lineTo: () => undefined,
+  arc: () => undefined,
+  strokePath: () => undefined,
+  fillPoints: () => undefined,
+};
 
 /** How far past `body`'s centre anything `paint` draws through a painter reaches. */
 function reach(body: StandingBody, paint: (painter: Painter) => void): number {
@@ -151,14 +196,14 @@ function reach(body: StandingBody, paint: (painter: Painter) => void): number {
 
 describe("paintFigure (#1290)", () => {
   it("draws a fresh character's weapon past its body's edge", () => {
-    const body = figureBody(characterAppearance(newCharacter("c1")));
+    const body = figureBody(characterAppearance(newCharacter("c1")), undefined);
     expect(reach(body, (painter) => paintFigure(painter, body, () => undefined))).toBeGreaterThan(
       body.r + 2,
     );
   });
 
   it("draws an invalid build's bare body no further than its edge", () => {
-    const body = figureBody({ weaponId: undefined, offhandId: undefined });
+    const body = figureBody({ weaponId: undefined, offhandId: undefined }, undefined);
     expect(
       reach(body, (painter) => paintFigure(painter, body, () => undefined)),
     ).toBeLessThanOrEqual(body.r + 2);
