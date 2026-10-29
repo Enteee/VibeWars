@@ -298,7 +298,7 @@ export interface ArenaSnapshot {
   readonly flags: readonly RenderableFlag[];
   /** A Guild Battle's flag stand (#1225); `undefined` on any other map. */
   readonly stand: RenderableStand | undefined;
-  /** A Relic Run's altar (#1374); `undefined` on any other map. */
+  /** A Relic Run or King of the Hill altar (#1374, #1377); `undefined` on any other map. */
   readonly altar: Vec2 | undefined;
   readonly targetId: string | undefined;
   /** Weapon shots in flight (#161). */

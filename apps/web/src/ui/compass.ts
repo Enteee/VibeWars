@@ -50,7 +50,7 @@ export interface CompassView {
   readonly stand:
     | { readonly x: number; readonly y: number; readonly holder: "ally" | "enemy" | undefined }
     | undefined;
-  /** A Relic Run's altar in reach (#1388), a `◆`. */
+  /** A Relic Run or King of the Hill altar in reach (#1388, #1377), a `◆`. */
   readonly altar: Vec2 | undefined;
   /** Wall outlines, already clipped to the disc. */
   readonly walls: readonly (readonly Vec2[])[];
@@ -305,7 +305,7 @@ export function createCompass(parent: HTMLElement, reach: number): Compass {
       context.arc(view.stand.x, view.stand.y, STAND_DOT, 0, Math.PI * 2);
       context.fill();
     }
-    // A Relic Run's altar (#1388), filled so the goal reads first.
+    // A Relic Run or King of the Hill altar (#1388, #1377), filled so the goal reads first.
     if (view.altar !== undefined) {
       const { x, y } = view.altar;
       context.lineWidth = 1;
