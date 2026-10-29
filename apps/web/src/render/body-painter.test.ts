@@ -40,6 +40,7 @@ const BODY: StandingBody = {
   weaponId: "sword",
   offhandId: "shield",
   frame: REST_FRAME,
+  cape: undefined,
 };
 
 function paint(body: StandingBody): string[] {
@@ -74,6 +75,13 @@ describe("paintStandingBody (#1250)", () => {
       "lineStyle(2, 14147304, 1)",
       "strokeCircle(100, 50, 12)",
     ]);
+  });
+
+  it("draws a cape first, under the disc, and the body as without one (#1422)", () => {
+    const calls = paint({ ...BODY, cape: { main: 0xa078e0, trim: 0xf2f2f2, emblem: "diamond" } });
+    expect(calls[0]).toBe(`fillStyle(${String(0xa078e0)}, 1)`);
+    expect(calls[1]).toMatch(/^fillPoints\(/);
+    expect(calls.slice(calls.indexOf("fillStyle(5882623, 1)"))).toEqual(paint(BODY));
   });
 
   it("puts the marks on their own layer when given one", () => {

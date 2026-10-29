@@ -22,6 +22,7 @@ import type {
   PeerCall,
   SkillBarSlot,
   WireCalls,
+  WireCape,
   WirePing,
   WireWeaponSets,
 } from "@vibewars/game-protocol";
@@ -42,6 +43,8 @@ export interface PlayerSnapshot {
   readonly name: string;
   /** The player's guild tag (#1406), drawn after the name; `undefined` for none. */
   readonly guildTag: string | undefined;
+  /** Worn behind the body (#1422); `undefined` for none. */
+  readonly guildCape: WireCape | undefined;
   readonly x: number;
   readonly y: number;
   /** Where the player faces, radians, `atan2` convention, 0 = +x (#187). */

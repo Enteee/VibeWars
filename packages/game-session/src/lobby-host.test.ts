@@ -132,6 +132,21 @@ describe("lobby host", () => {
     expect(seats?.get(lobby.host.transport.selfId)?.guildTag).toBeNull();
   });
 
+  it("plays a member's cape in the lobby's match, and none without a valid tag (#1422)", async () => {
+    const lobby = await openLobby();
+    const cape = { main: "gold", trim: "black", emblem: "ring" } as const;
+    const ann = await lobby.join("Ann", null, "Vb", cape);
+    const bob = await lobby.join("Bob", null, null, cape);
+    const cy = await lobby.join("Cy", null, "[x]", cape);
+    await seat([lobby.host, ann, bob, cy], [0, 1, 0, 1]);
+    await start(lobby);
+    const seats = lobby.matches[0]?.plan.seats;
+    expect(seats?.get(ann.transport.selfId)?.guildCape).toEqual(cape);
+    expect(seats?.get(bob.transport.selfId)?.guildCape).toBeNull();
+    expect(seats?.get(cy.transport.selfId)?.guildCape).toBeNull();
+    expect(seats?.get(lobby.host.transport.selfId)?.guildCape).toBeNull();
+  });
+
   it("lists the character a joiner brings to everyone, and a starter build as null (#580)", async () => {
     const lobby = await openLobby();
     const guest = await lobby.join("Guest", {
@@ -321,6 +336,7 @@ describe("lobby host", () => {
         code: CODE,
         name: "Late",
         guildTag: null,
+        guildCape: null,
         character: null,
         timeoutMs: 1000,
       }),
@@ -539,6 +555,7 @@ describe("joining by code", () => {
         code: "WXYKMN",
         name: "Lost",
         guildTag: null,
+        guildCape: null,
         character: null,
         timeoutMs: 50,
       }),
@@ -553,6 +570,7 @@ describe("joining by code", () => {
         code: "WXYKMN",
         name: peerId,
         guildTag: null,
+        guildCape: null,
         character: null,
         timeoutMs: 50,
       });
@@ -576,6 +594,7 @@ describe("joining by code", () => {
       code: " acd-efg ",
       name: "Typist",
       guildTag: null,
+      guildCape: null,
       character: null,
       timeoutMs: 1000,
     });
@@ -590,6 +609,7 @@ describe("joining by code", () => {
         code: CODE,
         name: "Alone",
         guildTag: null,
+        guildCape: null,
         character: null,
         timeoutMs: 50,
       }),

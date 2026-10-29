@@ -39,6 +39,7 @@ import {
 import { attackCastOf } from "./render/attack-clock.js";
 import { conditionCues } from "./render/body-conditions.js";
 import { bodyFlags } from "./render/body-rings.js";
+import { capeLook } from "./render/cape-shape.js";
 import { castBadgeType } from "./render/cast-badge.js";
 import { NoWebGlError, createArenaViewport, type ArenaViewport } from "./render/arena-viewport.js";
 import { attachFollowCamera } from "./render/follow-camera.js";
@@ -198,6 +199,7 @@ export function toArenaSnapshot(
         id: player.sessionId,
         name: ghostNameplate(player, self, names),
         guildTag: player.guildTag,
+        cape: player.guildCape === undefined ? undefined : capeLook(player.guildCape),
         bot: player.bot,
         position: { x: player.x, y: player.y },
         facing: player.facing,

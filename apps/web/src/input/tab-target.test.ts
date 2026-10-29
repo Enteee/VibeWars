@@ -8,6 +8,7 @@ function player(sessionId: string, overrides: Partial<PlayerSnapshot> = {}): Pla
     sessionId,
     name: sessionId,
     guildTag: undefined,
+    guildCape: undefined,
     x: 0,
     y: 0,
     facing: 0,

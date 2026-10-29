@@ -60,13 +60,14 @@ import {
   type WireSnapshot,
   type WireSnapshotPart,
   type WireTraps,
+  type WireCape,
   type WireSummaryRow,
 } from "@vibewars/game-protocol";
 
 import { createCallBoard, type Team } from "./calls.js";
 import { packCombat } from "./combat-batches.js";
 import { MESSAGE_BURST, MESSAGES_PER_SECOND, MessageBudget } from "./intent-budget.js";
-import { sanitizeGuildTag, sanitizeName } from "./names.js";
+import { NO_GUILD, sanitizeGuild, sanitizeName, type Guild } from "./names.js";
 import { adrenalineSlots, sameAdrenaline } from "./adrenaline.js";
 import { chainMarks, chainMarksPredicted } from "./chain-marks.js";
 import { rechargePredicted, rechargeState } from "./recharge.js";
@@ -185,6 +186,7 @@ export type PlannedSeats = ReadonlyMap<
     readonly team: 0 | 1;
     readonly name: string;
     readonly guildTag: string | null;
+    readonly guildCape: WireCape | null;
     readonly bot: PlayerBuild | null;
   }
 >;
@@ -231,6 +233,8 @@ interface Seat {
   readonly name: string;
   /** Sanitised (#1406); `null` for none, and for a bot. */
   readonly guildTag: string | null;
+  /** Sanitised (#1422); `null` for none, and whenever `guildTag` is. */
+  readonly guildCape: WireCape | null;
   readonly primaryProfession: ProfessionId;
   readonly secondaryProfession: ProfessionId | undefined;
   /** A bot plays it (#1193): no peer ever, nothing sent to one. */
@@ -642,13 +646,13 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
 
   /**
    * A new seat on `team` playing `loadout`, named by `nameOf` its player
-   * id and tagged `guildTag`; a bot's if `bot`.
+   * id and of `guild`; a bot's if `bot`.
    */
   const seatNew = (
     loadout: JoinLoadout,
     team: 0 | 1,
     nameOf: (playerId: string) => string,
-    guildTag: string | null,
+    guild: Guild,
     bot: boolean,
   ): Seat => {
     seated += 1;
@@ -687,7 +691,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       playerId,
       team,
       name: nameOf(playerId),
-      guildTag,
+      guildTag: guild.guildTag,
+      guildCape: guild.guildCape,
       primaryProfession: loadout.primaryProfession,
       secondaryProfession: loadout.secondaryProfession,
       bot,
@@ -825,14 +830,14 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     // Without a plan, teams alternate as players arrive, so a 1v1 is
     // adversarial by default.
     const team: 0 | 1 = plan?.team ?? (seats.size % 2 === 0 ? 0 : 1);
-    // The lobby's name and tag, whatever the hello says (#53, #1406).
-    // Without a lobby they are the peer's to choose, so they are sanitised
-    // before anyone sees them.
+    // The lobby's name, tag and cape, whatever the hello says (#53,
+    // #1406, #1422). Without a lobby they are the peer's to choose, so
+    // they are sanitised before anyone sees them.
     const seat = seatNew(
       loadout,
       team,
       (playerId) => plan?.name ?? sanitizeName(hello.name, playerId),
-      plan === undefined ? sanitizeGuildTag(hello.guildTag) : plan.guildTag,
+      plan ?? sanitizeGuild(hello),
       false,
     );
     welcome(seat, from);
@@ -1162,7 +1167,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   // A lobby's bots (#1193) take their seats at once: none of them says hello.
   for (const plan of planned?.values() ?? []) {
     if (plan.bot !== null) {
-      seatNew(loadoutOf(plan.bot), plan.team, () => plan.name, null, true);
+      seatNew(loadoutOf(plan.bot), plan.team, () => plan.name, NO_GUILD, true);
     }
   }
 
