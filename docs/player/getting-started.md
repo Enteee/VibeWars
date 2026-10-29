@@ -30,8 +30,9 @@ A character the game's rules changed under shows red stripes and
 **Invalid**. You cannot play as it until you **Edit** it into a legal
 build and save.
 
-Not sure what to take? **Reroll** on a starter character gives you a
-fresh random build to try.
+Not sure what to take? The random starter character is marked
+**Random**, with a dashed outline. **Reroll** on it gives you a fresh
+random build to try.
 
 ## Play a Random Arena
 
@@ -53,7 +54,10 @@ To play with friends:
   press **Join**.
 
 Type a **Guild tag** of 2 to 4 letters or digits beside your name, and
-everyone sees it after your name, like `Ente [VIBE]`.
+everyone sees it after your name, like `Ente [VIBE]`. With a tag set,
+the **Guild cape** designer appears under it: pick the cape colour, the
+trim colour and an emblem, and your body wears the cape behind it in every
+match. Your characters in the menu show it too. **No cape** takes it off.
 
 ## Playing online
 

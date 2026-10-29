@@ -1055,6 +1055,69 @@ body {
   border-color: var(--damage);
 }
 
+/*
+ * The cape designer (#1422), under the guild tag: a row of swatches for
+ * the cape, one for its trim, one of emblems, and No cape. What is picked
+ * is ringed in ink.
+ */
+.menu-cape {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-top: 0.5rem;
+}
+
+.menu-cape[hidden] {
+  display: none;
+}
+
+.menu-cape-row {
+  display: flex;
+  gap: 0.3rem;
+  align-items: center;
+}
+
+.menu-cape-row-label {
+  width: 4rem;
+  color: var(--ink-dim);
+  font-size: 0.8rem;
+}
+
+.screen .menu-cape-swatch,
+.screen .menu-cape-emblem {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+}
+
+.screen .menu-cape-swatch {
+  background: var(--swatch);
+}
+
+.screen .menu-cape-emblem {
+  background: var(--bg);
+}
+
+.screen .menu-cape-swatch[aria-pressed="true"],
+.screen .menu-cape-emblem[aria-pressed="true"] {
+  border: 2px solid var(--ink);
+}
+
+.screen .menu-cape-none {
+  align-self: flex-start;
+  padding: 0.15rem 0.6rem;
+  color: var(--ink-dim);
+}
+
+.screen .menu-cape-none[aria-pressed="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 /* A player's guild tag after their name (#1406): theirs, but quieter. */
 .guild-tag {
   color: var(--ink-dim);
@@ -1830,6 +1893,23 @@ body {
   font-size: 0.65rem;
   letter-spacing: 0.05em;
   text-transform: uppercase;
+}
+
+/* The rolled starter character (#1426): ink, not red, because it is
+   only not yours; its row's outline is dashed, selected or not. */
+.roster-random-tag {
+  align-self: flex-start;
+  padding: 0 0.35rem;
+  border: 1px solid var(--ink-dim);
+  border-radius: 3px;
+  color: var(--ink);
+  font-size: 0.65rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.screen .selectable-row.is-random .selectable-row-choose {
+  border-style: dashed;
 }
 
 .empty-state {

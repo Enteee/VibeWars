@@ -146,7 +146,8 @@ drained to neutral, then filled for you. Walk away and its progress
 stays where it was; a shrine you own stays yours until a foe takes it.
 The shrines show on the compass as □ in the owner's colour.
 
-Every 30 seconds, each shrine your team owns scores a point. The dead
+Every 30 seconds, each shrine your team owns scores a point, and a toast
+and a sound announce what each side scored. The dead
 stay down until an ally resurrects them, and each death costs morale.
 Wipe the other team to win at once. After 8 minutes the team with more
 points wins; equal points is a draw. Kills score nothing.

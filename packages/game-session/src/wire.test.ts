@@ -7,7 +7,7 @@ import {
   type StatusCategory,
   type StatusId,
 } from "@vibewars/game-core";
-import { MAX_WIRE_STATUSES } from "@vibewars/game-protocol";
+import { MAX_WIRE_STATUSES, type WireCape } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -20,6 +20,9 @@ import {
   wireIdentity,
   type SeatIdentity,
 } from "./wire.js";
+
+/** A guild cape (#1422). */
+const CAPE: WireCape = { main: "gold", trim: "black", emblem: "chevron" };
 
 const ORDER: readonly StatusCategory[] = [
   "condition",
@@ -313,6 +316,7 @@ describe("wireIdentity (#1052)", () => {
       {
         name: "Ann",
         guildTag: "VIBE",
+        guildCape: CAPE,
         team: 1,
         primaryProfession: "necromancer",
         secondaryProfession: undefined,
@@ -352,6 +356,7 @@ describe("wireIdentity (#1052)", () => {
     ).toEqual({
       name: "Ann",
       guildTag: "VIBE",
+      guildCape: CAPE,
       team: 1,
       primaryProfession: "necromancer",
       secondaryProfession: null,
@@ -364,6 +369,7 @@ describe("wireIdentity (#1052)", () => {
     expect(wireIdentity(minion("p1"), seats, 0)).toEqual({
       name: "Bone Minion",
       guildTag: null,
+      guildCape: null,
       team: 1,
       primaryProfession: null,
       secondaryProfession: null,
@@ -442,6 +448,7 @@ describe("wireIdentity (#1052)", () => {
     expect(wireIdentity(priest, seats, 0)).toEqual({
       name: "Priest",
       guildTag: null,
+      guildCape: null,
       team: 0,
       primaryProfession: null,
       secondaryProfession: null,

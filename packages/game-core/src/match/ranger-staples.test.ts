@@ -91,6 +91,7 @@ describe("the four skills (#976)", () => {
     expect(skill("ranger.lightning-reflexes")).toMatchObject({
       type: "stance",
       elite: false,
+      flash: false,
       attributeId: "ranger.expertise",
       cost: { kind: "energy", amount: 10 },
       activationSeconds: 0,
@@ -101,6 +102,7 @@ describe("the four skills (#976)", () => {
     expect(skill("ranger.escape")).toMatchObject({
       type: "stance",
       elite: true,
+      flash: false,
       attributeId: "ranger.expertise",
       cost: { kind: "energy", amount: 5 },
       activationSeconds: 0,

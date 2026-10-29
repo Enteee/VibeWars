@@ -48,6 +48,7 @@ function testWard(id: string, affects: Aura["affects"], seconds: number): string
     type: "ward",
     gwId: undefined,
     elite: false,
+    flash: false,
     profession: "elementalist",
     attributeId: EARTH,
     cost: undefined,
@@ -151,6 +152,7 @@ describe("Ward Against Melee (#1087)", () => {
     expect(getSkill(WARD)).toMatchObject({
       type: "ward",
       elite: false,
+      flash: false,
       attributeId: EARTH,
       cost: { kind: "energy", amount: 15 },
       activationSeconds: 1,

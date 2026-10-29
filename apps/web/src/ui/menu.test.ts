@@ -1,15 +1,23 @@
 import { defaultBuildEquipment } from "@vibewars/game-core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "../storage/schema.js";
 import {
+  FIRST_CAPE,
   isInvalidGuildTag,
   isPlayable,
+  loadGuildCape,
   loadGuildTag,
+  pickCape,
+  playerGuild,
   playerGuildTag,
   rosterOrder,
   rosterSubtitle,
+  rosterTags,
+  saveGuildCape,
   saveGuildTag,
+  showsCapeDesigner,
 } from "./menu.js";
 
 function character(overrides: Partial<StoredCharacter> = {}): StoredCharacter {
@@ -63,6 +71,24 @@ describe("isPlayable (#1290)", () => {
         character({ skillBar: ["no.such-skill", null, null, null, null, null, null, null] }),
       ),
     ).toBe(false);
+  });
+});
+
+describe("rosterTags (#1426)", () => {
+  const illegal = { skillBar: ["no.such-skill", null, null, null, null, null, null, null] };
+
+  it("marks the starter character Random, and no other", () => {
+    expect(rosterTags(character({ id: "s" }), "s")).toEqual(["Random"]);
+    expect(rosterTags(character({ id: "a" }), "s")).toEqual([]);
+  });
+
+  it("marks nothing Random without a starter", () => {
+    expect(rosterTags(character({ id: "s" }), undefined)).toEqual([]);
+  });
+
+  it("puts Random before Invalid on an invalid starter", () => {
+    expect(rosterTags(character({ id: "s", ...illegal }), "s")).toEqual(["Random", "Invalid"]);
+    expect(rosterTags(character({ id: "a", ...illegal }), "s")).toEqual(["Invalid"]);
   });
 });
 
@@ -129,5 +155,74 @@ describe("the guild tag field (#1406)", () => {
     });
     saveGuildTag("VIBE");
     expect(playerGuildTag()).toBeNull();
+  });
+});
+
+describe("the cape designer (#1422)", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  /** A localStorage on a map, as the browser keeps one. */
+  function storage(): Map<string, string> {
+    const stored = new Map<string, string>();
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => stored.get(key) ?? null,
+      setItem: (key: string, value: string) => stored.set(key, value),
+      removeItem: (key: string) => stored.delete(key),
+    });
+    return stored;
+  }
+
+  it("shows only while the tag is a valid one", () => {
+    expect(showsCapeDesigner("")).toBe(false);
+    expect(showsCapeDesigner("V")).toBe(false);
+    expect(showsCapeDesigner("[VB]")).toBe(false);
+    expect(showsCapeDesigner(" Vb ")).toBe(true);
+  });
+
+  it("starts a first pick from the sample, changes one part a pick, and No cape clears it", () => {
+    const gold = pickCape(null, { part: "main", colour: "gold" });
+    expect(gold).toEqual({ ...FIRST_CAPE, main: "gold" });
+    expect(pickCape(gold, { part: "trim", colour: "gold" })).toEqual({
+      ...FIRST_CAPE,
+      main: "gold",
+      trim: "gold",
+    });
+    expect(pickCape(gold, { part: "emblem", emblem: "ring" })).toEqual({
+      ...FIRST_CAPE,
+      main: "gold",
+      emblem: "ring",
+    });
+    expect(pickCape(gold, { part: "none" })).toBeNull();
+  });
+
+  it("remembers the cape, and wears it only with a valid tag", () => {
+    storage();
+    expect(loadGuildCape()).toBeNull();
+    saveGuildCape(FIRST_CAPE);
+    expect(loadGuildCape()).toEqual(FIRST_CAPE);
+    expect(playerGuild()).toEqual({ guildTag: null, guildCape: null });
+    saveGuildTag("VIBE");
+    expect(playerGuild()).toEqual({ guildTag: "VIBE", guildCape: FIRST_CAPE });
+    // Cleared, the tag takes the cape off but keeps it for when it is back.
+    saveGuildTag("");
+    expect(playerGuild().guildCape).toBeNull();
+    expect(loadGuildCape()).toEqual(FIRST_CAPE);
+    saveGuildCape(null);
+    expect(loadGuildCape()).toBeNull();
+  });
+
+  it("reads anything stored that is no cape as none", () => {
+    const stored = storage();
+    for (const corrupt of [
+      "{",
+      "null",
+      '"violet"',
+      JSON.stringify({ ...FIRST_CAPE, main: "red" }),
+    ]) {
+      stored.set(`${STORAGE_NAMESPACE}.guildCape`, corrupt);
+      expect(loadGuildCape()).toBeNull();
+    }
   });
 });
