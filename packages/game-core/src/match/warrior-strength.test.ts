@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import { AREA_ADJACENT } from "../distances.js";
-import { unarmedResolvedEquipment, type ResolvedEquipment } from "../equipment/resolve.js";
+import {
+  unarmedResolvedEquipment,
+  type ResolvedEquipment,
+  type ResolvedLoadout,
+} from "../equipment/resolve.js";
 import { WEAPONS } from "../equipment/weapons.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { chargeAdrenaline } from "../skills/testing.js";
@@ -235,6 +239,19 @@ describe("Endure Pain (#1359)", () => {
     expect(w.dead).toBe(false);
     expect(w.health).toBeGreaterThanOrEqual(600);
     expect(w.health).toBeLessThanOrEqual(1000);
+  });
+
+  it("rearmed at full raised health, comes back at the new maximum, not above it", () => {
+    const sim = arena("endure-rearm");
+    use(sim, ENDURE_PAIN);
+    const loadout: ResolvedLoadout = {
+      attributeRanks: new Map([["warrior.strength", 12]]),
+      weaponSets: [{ equipment: wielding("sword"), maxEnergy: 30 }, null, null, null],
+      maxHealth: 600,
+      baseEnergyPips: 4,
+    };
+    sim.rearm("w", loadout, []);
+    expect(combatant(sim, "w").health).toBe(600);
   });
 });
 

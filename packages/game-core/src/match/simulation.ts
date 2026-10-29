@@ -129,6 +129,7 @@ import {
   naturalHealthPips,
   netPips,
   preCapEnergyPips,
+  raisedMaxHealth,
   rankOf,
   upkeepPips,
   type NetPips,
@@ -1594,7 +1595,10 @@ export class MatchSimulation {
       return;
     }
     const before = record.combatant;
-    const fraction = before.maxHealth > 0 ? before.health / before.maxHealth : 0;
+    // Against the raised maximum: Endure Pain must not carry over as health
+    // above the fresh, unbuffed maximum.
+    const raised = raisedMaxHealth(before);
+    const fraction = raised > 0 ? before.health / raised : 0;
     const spec: ParticipantSpec = { ...record.spec, skillBar, ...loadoutSpec(loadout) };
     record.combatant = this.#combatant(spec);
     record.resolvedMaxHealth = loadout.maxHealth;
@@ -4773,7 +4777,7 @@ export class MatchSimulation {
       case "on-interval":
         return record.sinceReset >= policy.everySeconds;
       case "below-health":
-        return record.combatant.health < record.combatant.maxHealth * policy.fraction;
+        return record.combatant.health < raisedMaxHealth(record.combatant) * policy.fraction;
       case "on-death":
       case "never":
       case undefined:
