@@ -770,6 +770,10 @@ bodies, facing right and up, in a clump, as the menu figure, and in the designer
 
 ![Cape study](cape-study.svg)
 
+The same three in a 4v4 mid-fight frame at 2x zoom, with the menu figure (made by the same script):
+
+![Cape mockup](cape-mockup.png)
+
 - **A, a crescent behind.** One `fill` path (two arcs) plus one trim stroke,
   drawn before the disc: 3 Painter calls, and `paintStandingBody` gets a
   `cape` drawn first. It hugs the disc 7 units out, so it widens the body's

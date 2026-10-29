@@ -13,11 +13,16 @@
 // study draws the very shapes the arena draws. Body, edge, rim and off-hand
 // mirror scripts/assets/profession-body-study.mjs.
 //
+// Also writes docs/art/cape-mockup.png (needs inkscape): per variant one 4v4
+// arena frame at 2x Default zoom, with the menu figure inset, to read on a phone.
+//
 //   A: a crescent behind the body, opposite its facing, outside the rim.
 //   B: a short pennant trailing behind, with a swallowtail hem.
 //   C: a ring segment laid on the rim at the back, inside the disc.
 
-import { writeFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -410,3 +415,97 @@ ORDER.forEach((v, i) => {
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${String(W)} ${String(H)}" width="${String(W)}" height="${String(H)}" font-family="monospace">${parts.join("")}</svg>\n`;
 writeFileSync(outFile, svg);
 console.log(`cape study: ${outFile} (${String(svg.length)} bytes)`);
+
+// ---------------------------------------------------------------------------
+// The mockup: one arena-like 4v4 frame per variant, stacked, to read on a phone.
+
+const FRAME_W = 1000;
+const FRAME_H = 560;
+const SCALE = 2 * ZOOM;
+const CAPES = /** @type {Cape[]} */ ([
+  { main: hue("gold"), trim: hue("black"), emblem: "chevron" },
+  { main: hue("violet"), trim: hue("white"), emblem: "diamond" },
+  { main: hue("lime"), trim: hue("black"), emblem: "ring" },
+  { main: hue("white"), trim: hue("teal"), emblem: "cross" },
+  { main: hue("orange"), trim: hue("black"), emblem: "split" },
+]);
+/** Body positions in world units from the frame centre, and which cape (or none) each wears. @type {[number, number, number, number, number][]} */
+const FIGHT = [
+  // x, y, facing (deg), team (0 ally, 1 enemy), cape index (-1 none)
+  [-70, -40, 20, 0, 0],
+  [-110, 30, -15, 0, 0],
+  [-30, 70, 40, 0, 1],
+  [-160, -90, 0, 0, -1],
+  [40, -30, 195, 1, 2],
+  [75, 40, 160, 1, 3],
+  [10, 90, 215, 1, 2],
+  [130, -70, 180, 1, -1],
+];
+/** @type {string[]} */
+const sheet = [
+  `<rect width="${String(FRAME_W + 40)}" height="${String(3 * (FRAME_H + 70) + 20)}" fill="${C.bg}"/>`,
+];
+ORDER.forEach((v, i) => {
+  const y0 = 20 + i * (FRAME_H + 70);
+  sheet.push(
+    text(20, y0 + 22, VARIANTS[v].name + " (4v4 mid-fight, 2x Default zoom)", {
+      size: 22,
+      bold: true,
+    }),
+  );
+  sheet.push(
+    `<svg x="20" y="${String(y0 + 36)}" width="${String(FRAME_W)}" height="${String(FRAME_H)}" viewBox="0 0 ${String(FRAME_W)} ${String(FRAME_H)}">`,
+  );
+  sheet.push(
+    `<rect width="${String(FRAME_W)}" height="${String(FRAME_H)}" fill="#12171e" stroke="${C.line}"/>`,
+  );
+  for (let g = 0; g < FRAME_W; g += 64)
+    sheet.push(
+      `<line x1="${String(g)}" y1="0" x2="${String(g)}" y2="${String(FRAME_H)}" stroke="#1a212c"/>`,
+    );
+  for (let g = 0; g < FRAME_H; g += 64)
+    sheet.push(
+      `<line x1="0" y1="${String(g)}" x2="${String(FRAME_W)}" y2="${String(g)}" stroke="#1a212c"/>`,
+    );
+  FIGHT.forEach(([x, y, face, team, ci], k) => {
+    const cape = ci < 0 ? undefined : CAPES[(ci + i) % CAPES.length];
+    sheet.push(
+      body(
+        FRAME_W / 2 + x * SCALE,
+        FRAME_H / 2 + y * SCALE,
+        SCALE,
+        cape === undefined ? undefined : v,
+        cape,
+        deg(face),
+        team === 0 ? C.friend : C.foe,
+        k === 0,
+        VARIANTS[v].emblemArena,
+      ),
+    );
+  });
+  // The menu figure, inset bottom right, at 3x.
+  sheet.push(
+    `<rect x="${String(FRAME_W - 150)}" y="${String(FRAME_H - 150)}" width="140" height="140" fill="${C.bg}" stroke="${C.line}"/>`,
+  );
+  sheet.push(
+    body(
+      FRAME_W - 80,
+      FRAME_H - 80,
+      3,
+      v,
+      VARIANTS[v].sample,
+      0,
+      C.friend,
+      true,
+      VARIANTS[v].emblemMenu,
+    ),
+  );
+  sheet.push(text(FRAME_W - 144, FRAME_H - 158, "menu figure, 3x", { size: 14, fill: C.inkDim }));
+  sheet.push("</svg>");
+});
+const mockSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${String(FRAME_W + 40)}" height="${String(3 * (FRAME_H + 70) + 20)}" font-family="monospace">${sheet.join("")}</svg>\n`;
+const tmp = join(mkdtempSync(join(tmpdir(), "cape-")), "cape-mockup.svg");
+writeFileSync(tmp, mockSvg);
+const png = join(root, "docs", "art", "cape-mockup.png");
+spawnSync("inkscape", [tmp, "-o", png], { stdio: "ignore" });
+console.log(`cape mockup: ${png}`);
