@@ -21,7 +21,12 @@ import {
   type StatusCategory,
   type StatusId,
 } from "./status.js";
-import { nearestFirst, spiritsWithin, type TargetCandidate } from "./targeting.js";
+import {
+  nearestFirst,
+  ownCreaturesWithin,
+  spiritsWithin,
+  type TargetCandidate,
+} from "./targeting.js";
 import { effectiveMaxHealth, healingMultiplierOf, maxHealthLossOf, rankOf } from "./tick.js";
 import { wieldsFor } from "../equipment/weapons.js";
 import { distanceWithinRange } from "../geometry.js";
@@ -37,6 +42,7 @@ import {
   isSpell,
   type Combatant,
   type DisableSkillEffect,
+  type EnergyGainEffect,
   type Skill,
   type SkillContext,
   type EffectCondition,
@@ -532,6 +538,27 @@ function perEnergyLost(
 }
 
 /**
+ * Signet of Creation's gain (#1316): `amount` for each of the caster's
+ * spirits and minions in reach, at most the cap. Without
+ * `perOwnCreatureWithin`, `amount` as it is.
+ */
+function perOwnCreature(
+  effect: EnergyGainEffect,
+  amount: number,
+  caster: Combatant,
+  surroundings: Surroundings,
+): number {
+  const per = effect.perOwnCreatureWithin;
+  if (per === undefined) {
+    return amount;
+  }
+  const at = surroundings.get(caster.id)?.position;
+  const creatures =
+    at === undefined ? 0 : ownCreaturesWithin(surroundings.values(), caster, at, per.radius);
+  return Math.min(amount * creatures, resolveMagnitude(per.max, caster));
+}
+
+/**
  * How many times a heal with `perStatusOnTarget` lands (#920): once with
  * no categories, else once per status of those categories on `target`,
  * as it stands now; 0 with no target.
@@ -879,7 +906,12 @@ export function applyEffect(
     case "energy-gain": {
       gainEnergy(
         caster,
-        perEnergyLost(effect, resolveMagnitude(effect.amount, caster), lostBy, earlier),
+        perOwnCreature(
+          effect,
+          perEnergyLost(effect, resolveMagnitude(effect.amount, caster), lostBy, earlier),
+          caster,
+          context.surroundings,
+        ),
         events,
       );
       return events;
@@ -1135,11 +1167,12 @@ export function applyEffect(
         ({ combatant, position, creature }) =>
           !combatant.dead &&
           combatant.id !== target.id &&
-          combatant.team !== caster.team &&
-          (effect.hits === "foes" || isSummoned(creature)) &&
+          (effect.hits === "allies"
+            ? combatant.team === caster.team
+            : combatant.team !== caster.team && (effect.hits === "foes" || isSummoned(creature))) &&
           distance(position, at) <= effect.radius,
       );
-      for (const combatant of nearestFirst(reached, at)) {
+      for (const combatant of nearestFirst(reached, at).slice(0, effect.maxTargets)) {
         for (const inner of effect.effects) {
           events.push(...applyEffect(inner, { ...context, target: combatant }, earlier, target));
         }

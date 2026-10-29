@@ -15,6 +15,7 @@ import {
   type StatusCategory,
   type StatusTrigger,
   type StatusTriggerEvent,
+  type TriggerEffect,
 } from "./status.js";
 import { effectiveActivationSeconds, outsideMatch, rankOf } from "./tick.js";
 import { blowRuleOf, isEasilyInterrupted } from "./types.js";
@@ -27,6 +28,7 @@ import type {
   ChainStep,
   CreateGroundEffect,
   EffectCondition,
+  EnergyGainEffect,
   HealEffect,
   Magnitude,
   Skill,
@@ -441,6 +443,7 @@ const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-hits": "hits with an attack",
   "bearer-takes-physical-damage": "takes physical damage",
   "bearer-takes-damage-from-foe": "takes damage or life steal from a foe",
+  "bearer-creates-creature": "creates a creature",
   "bearer-gains-condition": "gains a new condition",
   ends: "ends",
   expires: "expires",
@@ -478,13 +481,15 @@ function describeTriggers(
   return [...groups.values()].flatMap(({ trigger, on }) =>
     describeTrigger(
       trigger,
-      on.includes("ends") || on.includes("expires")
-        ? `when it ${on.map((event) => TRIGGER_WHEN[event]).join(" or ")}`
-        : once && on.includes("bearer-uses-skill")
-          ? NEXT_SKILL
-          : nextOnly
-            ? `the next time it ${on.map((event) => TRIGGER_WHEN[event]).join(" or ")}`
-            : `whenever it ${on.map((event) => TRIGGER_WHEN[event]).join(" or ")}`,
+      on.includes("bearer-creates-creature")
+        ? CREATES
+        : on.includes("ends") || on.includes("expires")
+          ? `when it ${on.map((event) => TRIGGER_WHEN[event]).join(" or ")}`
+          : once && on.includes("bearer-uses-skill")
+            ? NEXT_SKILL
+            : nextOnly
+              ? `the next time it ${on.map((event) => TRIGGER_WHEN[event]).join(" or ")}`
+              : `whenever it ${on.map((event) => TRIGGER_WHEN[event]).join(" or ")}`,
       ranks,
       bearerIsFoe,
     ),
@@ -493,6 +498,71 @@ function describeTriggers(
 
 /** The one use a status that ends on it answers (#949), as its tooltip says it. */
 const NEXT_SKILL = "the next time it uses a skill";
+
+/**
+ * A creation trigger's (#1316), in the corpus's words: the Ritualist
+ * wears it, so "you", not "it".
+ */
+const CREATES = "whenever you create a creature";
+
+/** Where round the new creature a splash reaches: "near that creature" (#1316). */
+const AREA_AROUND_CREATED: ReadonlyMap<number, string> = new Map([
+  [AREA_ADJACENT, "adjacent to that creature"],
+  [AREA_NEARBY, "near that creature"],
+  [AREA_EARSHOT, "in earshot of that creature"],
+]);
+
+/**
+ * What a creation trigger does, one sentence (#1316): "whenever you
+ * create a creature: you gain 41 Health and 5 Energy", "up to 5 foes near
+ * that creature take 56 lightning damage", "all allies near that creature
+ * gain 41 Health and lose 1 condition".
+ */
+function describeCreation(
+  trigger: StatusTrigger,
+  when: string,
+  ranks: ReadonlyMap<string, number>,
+): string {
+  const amount = (magnitude: Magnitude): string =>
+    String(describeMagnitude(magnitude, ranks).current);
+  const answer = (effect: TriggerEffect): string => {
+    switch (effect.kind) {
+      case "heal":
+        return `${amount(effect.amount)} Health`;
+      case "energy-gain":
+        return `${amount(effect.amount)} Energy`;
+      case "damage":
+        return `take ${amount(effect.amount)} ${effect.type} damage`;
+      case "remove-status":
+        return `lose ${String(effect.count)} ${effect.category}${effect.count === 1 ? "" : "s"}`;
+      case "splash": {
+        const side = effect.hits === "allies" ? "allies" : "foes";
+        const who =
+          effect.maxTargets === undefined
+            ? `all ${side}`
+            : `up to ${String(effect.maxTargets)} ${side}`;
+        const where =
+          AREA_AROUND_CREATED.get(effect.radius) ??
+          `within ${String(effect.radius)} of that creature`;
+        const what = effect.effects.map((inner) =>
+          inner.kind === "heal" ? `gain ${answer(inner)}` : answer(inner),
+        );
+        return `${who} ${where} ${what.join(" and ")}`;
+      }
+      // Neither answers a creation.
+      case "spread-gained-condition":
+      case "echo":
+        return "";
+      default:
+        return describeEffects(effect, ranks)
+          .map(({ text }) => lowerFirst(text))
+          .join(", ");
+    }
+  };
+  const gains = trigger.effects.every(({ kind }) => kind === "heal" || kind === "energy-gain");
+  const answers = trigger.effects.map(answer).join(" and ");
+  return `${when}: ${gains ? `you gain ${answers}` : answers}`;
+}
 
 /**
  * A status's answer to its bearer (#469): "takes 119 damage whenever it
@@ -511,6 +581,9 @@ function describeTrigger(
     String(describeMagnitude(magnitude, ranks).current);
   const clause = (text: string): TriggerLine => ({ text, clause: true });
   const sentence = (text: string): TriggerLine => ({ text, clause: false });
+  if (trigger.on === "bearer-creates-creature") {
+    return [sentence(describeCreation(trigger, when, ranks))];
+  }
   // The bearer on the foe that set it off (#1022), all said at once:
   // "...: steals 68 Health from that foe, loses 2 conditions".
   if (trigger.target === "offender") {
@@ -695,9 +768,10 @@ function perAllyText(effect: HealEffect, ranks: ReadonlyMap<string, number>): st
 /** Who a splash reaches, as GW1 words it (#885): "Adjacent foes". */
 function foesWithin(radius: number, hits: SplashEffect["hits"]): string {
   const area = AREA_TEXT.get(radius);
-  // Consume Soul's splash reaches only summoned creatures (#1309).
-  const who = hits === "foes" ? "foes" : "foe creatures";
-  const Who = hits === "foes" ? "Foes" : "Foe creatures";
+  // Consume Soul's splash reaches only summoned creatures (#1309);
+  // Spirit's Gift's, allies (#1316).
+  const who = hits === "foes" ? "foes" : hits === "allies" ? "allies" : "foe creatures";
+  const Who = hits === "foes" ? "Foes" : hits === "allies" ? "Allies" : "Foe creatures";
   switch (area) {
     case "adjacent":
       return `Adjacent ${who}`;
@@ -795,6 +869,21 @@ function perFoeHit(effect: { readonly perTarget?: true }): string {
   return effect.perTarget === undefined ? "" : " per foe hit";
 }
 
+/**
+ * Signet of Creation's count and cap (#1316), in the corpus's words: " for
+ * every summoned creature you control within earshot (maximum 10 Energy)".
+ */
+function perOwnCreatureText(effect: EnergyGainEffect, ranks: ReadonlyMap<string, number>): string {
+  const per = effect.perOwnCreatureWithin;
+  if (per === undefined) {
+    return "";
+  }
+  const area = AREA_TEXT.get(per.radius) ?? `within ${String(per.radius)}`;
+  const where = area === "in earshot" ? "within earshot" : area;
+  const max = describeMagnitude(per.max, ranks).current;
+  return ` for every summoned creature you control ${where} (maximum ${String(max)} Energy)`;
+}
+
 /** " per point lost", for an amount multiplied by the energy taken before it (#793). */
 function perPointLost(effect: { readonly perEnergyLost?: true }): string {
   return effect.perEnergyLost === undefined ? "" : " per point lost";
@@ -840,7 +929,7 @@ function describeEffect(
     case "energy-gain": {
       const magnitude = describeMagnitude(effect.amount, ranks);
       return {
-        text: `Gain ${String(magnitude.current)} energy${perPointLost(effect)}${perFoeHit(effect)}`,
+        text: `Gain ${String(magnitude.current)} energy${perPointLost(effect)}${perFoeHit(effect)}${perOwnCreatureText(effect, ranks)}`,
         magnitude,
       };
     }
