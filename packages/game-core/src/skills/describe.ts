@@ -267,6 +267,9 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.unblockableBySource) {
     parts.push("cannot block its caster's attacks");
   }
+  if (definition.preventsBlocking) {
+    parts.push("cannot block");
+  }
   if (definition.renewsWhileMoving !== undefined) {
     parts.push(
       `renewed for ${String(definition.renewsWhileMoving)} seconds if moving as it would end`,
@@ -444,6 +447,7 @@ const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-attacks": "attacks",
   "bearer-uses-skill": "uses a skill",
   "bearer-hits": "hits with an attack",
+  "bearer-fails-to-hit": "fails to hit",
   "bearer-takes-physical-damage": "takes physical damage",
   "bearer-takes-damage-from-foe": "takes damage or life steal from a foe",
   "bearer-creates-creature": "creates a creature",

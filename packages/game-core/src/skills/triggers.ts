@@ -97,7 +97,8 @@ export function fireCreationTriggers(
  * gained fires every status on it that answers one, in `active` order; a
  * status ended fires its own `ends` triggers, though it is no longer on
  * the bearer, and its `expires` ones too if its duration ran out (#944).
- * A hit the bearer landed, or physical damage it took (#935), fires what
+ * A hit the bearer landed or failed to land (#1332), or physical damage
+ * it took (#935), fires what
  * answered it when it happened (#953), so a killing blow still sets off
  * the hexes its death ended. Damage or life steal from a foe (#1022)
  * fires what answered it at that foe. The simulation discards whatever
@@ -133,6 +134,7 @@ export function fireChangeTriggers(
           fire(trigger, change.id, change.sourceId, bearer, undefined, undefined, context),
         );
     case "hit":
+    case "failed-to-hit":
     case "took-physical-damage":
       return change.fired.flatMap(({ statusId, sourceId, trigger }) =>
         fire(trigger, statusId, sourceId, bearer, undefined, undefined, context),

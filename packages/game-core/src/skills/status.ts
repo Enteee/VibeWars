@@ -188,6 +188,13 @@ export type StatusId =
   // Ritualist Channeling (#1270).
   | "painful-bond"
   | "lamentation"
+  // Necromancer Curses hexes (#1332).
+  | "barbs"
+  | "price-of-failure"
+  | "suffering"
+  | "defile-flesh"
+  | "rigor-mortis"
+  | "lingering-curse"
   // Ritualist Spawning Power creation staples (#1316).
   | "boon-of-creation"
   | "explosive-growth"
@@ -340,6 +347,11 @@ export interface StatusDefinition {
    * rolls block.
    */
   readonly unblockableBySource: boolean;
+  /**
+   * The bearer cannot block at all (#1332): Rigor Mortis's "cannot block".
+   * Every attack, melee or projectile, from anyone, rolls no block.
+   */
+  readonly preventsBlocking: boolean;
   /**
    * Seconds it starts again for when it runs out while the bearer is
    * moving (#1234): Enduring Toxin's "if that foe is moving when it would
@@ -539,13 +551,21 @@ export interface StatusDefinition {
  * Or (#935) it completes any skill, lands a hit, or loses health to
  * physical damage. `expires` is only the end of its duration (#944):
  * Patient Spirit's "unless it ends prematurely". Or (#1022) it loses
- * health to damage or life steal from a foe.
+ * health to damage or life steal from a foe. Or (#1332) one of its blows
+ * fails to hit.
  */
 export type StatusTriggerEvent =
   | "bearer-casts-spell"
   | "bearer-attacks"
   | "bearer-uses-skill"
   | "bearer-hits"
+  /**
+   * One of the bearer's blows did not land (#1332): it missed on a roll
+   * (blind, Price of Failure) or the victim blocked it. A blow that never
+   * reached, its victim dead, gone or dodging, is not a fail. Recorded,
+   * and fired at the drain, as hits are.
+   */
+  | "bearer-fails-to-hit"
   | "bearer-takes-physical-damage"
   /**
    * The bearer lost health to damage or life steal from a foe (#1022):
@@ -644,6 +664,7 @@ export type StatusChange =
       readonly expired: boolean;
     }
   | { readonly kind: "hit"; readonly fired: readonly AnsweringTrigger[] }
+  | { readonly kind: "failed-to-hit"; readonly fired: readonly AnsweringTrigger[] }
   | { readonly kind: "took-physical-damage"; readonly fired: readonly AnsweringTrigger[] }
   | {
       readonly kind: "took-damage-from-foe";
@@ -723,6 +744,7 @@ function define(
     attackDurationMultiplier: 1,
     preventsSpells: false,
     unblockableBySource: false,
+    preventsBlocking: false,
     renewsWhileMoving: undefined,
     preventsKnockdown: false,
     endsOnKnockdownPrevented: false,
@@ -1723,6 +1745,49 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     profession: "ritualist",
     healthPips: -2,
   }),
+  // "...takes 4...16 more damage when hit by physical damage" (#1332): 14,
+  // its rank-12 value.
+  barbs: define("barbs", "Barbs", "hex", {
+    profession: "necromancer",
+    physicalDamageTakenBonus: 14,
+  }),
+  // "...has a 25% chance to miss with attacks and takes 1...46 damage
+  // whenever that foe fails to hit in combat" (#1332): 37, its rank-12
+  // value.
+  "price-of-failure": define("price-of-failure", "Price of Failure", "hex", {
+    profession: "necromancer",
+    attackMissChance: 0.25,
+    triggers: [
+      {
+        on: "bearer-fails-to-hit",
+        effects: [{ kind: "damage", amount: { flat: 37 }, type: "typeless", armorPenetration: 0 }],
+        target: "bearer",
+        skillId: "necromancer.price-of-failure",
+      },
+    ],
+  }),
+  // "...suffer -0...3 Health degeneration" (#1332): 2, its rank-12 value.
+  suffering: define("suffering", "Suffering", "hex", {
+    profession: "necromancer",
+    healthPips: -2,
+  }),
+  // "...gains only two-thirds Health from healing" (#1332).
+  "defile-flesh": define("defile-flesh", "Defile Flesh", "hex", {
+    profession: "necromancer",
+    healingMultiplier: 2 / 3,
+  }),
+  // "...cannot block" (#1332).
+  "rigor-mortis": define("rigor-mortis", "Rigor Mortis", "hex", {
+    profession: "necromancer",
+    preventsBlocking: true,
+  }),
+  // "...suffer -1...4 Health degeneration, and receive 25% less benefit
+  // from healing" (#1332): 3, its rank-12 value.
+  "lingering-curse": define("lingering-curse", "Lingering Curse", "hex", {
+    profession: "necromancer",
+    healthPips: -3,
+    healingMultiplier: 0.75,
+  }),
   // "Whenever you create a creature, you gain 5...50 Health and 1...6
   // Energy" (#1316): scaled by the Ritualist's own Spawning Power.
   "boon-of-creation": define("boon-of-creation", "Boon of Creation", "enchantment", {
@@ -1911,6 +1976,17 @@ export class StatusSet {
     const fired = this.#answering("bearer-hits");
     if (fired.length > 0) {
       this.#changes.push({ kind: "hit", fired });
+    }
+  }
+
+  /**
+   * One of the bearer's blows missed or was blocked (#1332), recorded only
+   * if a status on it answers that, with the triggers that do.
+   */
+  public recordFailedHit(): void {
+    const fired = this.#answering("bearer-fails-to-hit");
+    if (fired.length > 0) {
+      this.#changes.push({ kind: "failed-to-hit", fired });
     }
   }
 

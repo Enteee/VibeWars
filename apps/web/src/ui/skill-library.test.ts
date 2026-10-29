@@ -214,9 +214,11 @@ describe("the GW1 skills not in the game yet (#1220)", () => {
   });
 
   it("leaves out every one the catalog has, by GW1 id", () => {
-    const missing = missingFromCatalog(corpusSkills(), IMPLEMENTED_SKILLS);
+    const corpus = corpusSkills();
+    const missing = missingFromCatalog(corpus, IMPLEMENTED_SKILLS);
     const have = new Set(IMPLEMENTED_SKILLS.map((skill) => skill.gwId));
-    expect(missing.length).toBeGreaterThan(1000);
+    expect(corpus.length).toBeGreaterThan(1000);
+    expect(missing.length).toBe(corpus.filter((skill) => !have.has(skill.gwId)).length);
     expect(missing.some((skill) => have.has(skill.gwId))).toBe(false);
     expect(missing.find((skill) => skill.name === "Fireball")).toBeUndefined();
   });

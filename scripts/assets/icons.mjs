@@ -853,6 +853,47 @@ const status = {
       `<path d="M12 5c-2 2.8-3.5 4.6-3.5 6.4a3.5 3.5 0 0 0 7 0C15.5 9.6 14 7.8 12 5z" fill="${c}"/>` +
       `<path d="M7 18.5l5-1.5l5 1.5" ${stroke(c, 2)}/>`,
   ],
+  // Hex: a barbed line, physical hits hurt more (#1332).
+  barbs: [
+    "hex",
+    (c) =>
+      `<path d="M4 12h16" ${stroke(c, 2)}/>` +
+      `<path d="M7 12l2-4M11 12l2-4M15 12l2-4M9 12l-2 4M13 12l-2 4M17 12l-2 4" ${stroke(c, 1.6)}/>`,
+  ],
+  // Hex: a cross over a falling line, a miss that hurts (#1332).
+  "price-of-failure": [
+    "hex",
+    (c) =>
+      `<path d="M8 5l8 8M16 5l-8 8" ${stroke(c, 2.2)}/>` + `<path d="M12 15v4.5" ${stroke(c, 2)}/>`,
+  ],
+  // Hex: three falling drops, degeneration on a crowd (#1332).
+  suffering: [
+    "hex",
+    (c) =>
+      `<path d="M7 6c-1.2 1.8-2 2.9-2 4a2 2 0 0 0 4 0c0-1.1-.8-2.2-2-4z" fill="${c}"/>` +
+      `<path d="M17 6c-1.2 1.8-2 2.9-2 4a2 2 0 0 0 4 0c0-1.1-.8-2.2-2-4z" fill="${c}"/>` +
+      `<path d="M12 11c-1.2 1.8-2 2.9-2 4a2 2 0 0 0 4 0c0-1.1-.8-2.2-2-4z" fill="${c}"/>`,
+  ],
+  // Hex: a plus with a third cut away, less healing (#1332).
+  "defile-flesh": [
+    "hex",
+    (c) =>
+      `<path d="M12 5v14M5 12h9" ${stroke(c, 2.6)}/>` + `<path d="M16 12h3" ${stroke(c, 1.4)}/>`,
+  ],
+  // Hex: a shield struck through, cannot block (#1332).
+  "rigor-mortis": [
+    "hex",
+    (c) =>
+      `<path d="M7 6h10v5c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7z" ${stroke(c, 2)}/>` +
+      `<path d="M5 19L19 5" ${stroke(c, 2.2)}/>`,
+  ],
+  // Hex: a drop beside a small plus, degeneration and less healing (#1332).
+  "lingering-curse": [
+    "hex",
+    (c) =>
+      `<path d="M9 5c-2 2.8-3.5 4.6-3.5 6.4a3.5 3.5 0 0 0 7 0C12.5 9.6 11 7.8 9 5z" fill="${c}"/>` +
+      `<path d="M17 13v6M14 16h6" ${stroke(c, 1.8)}/>`,
+  ],
   // Enchantment: a sprout and a plus, each creature made heals you (#1316).
   "boon-of-creation": [
     "enchantment",
