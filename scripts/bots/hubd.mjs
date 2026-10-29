@@ -134,7 +134,9 @@ import {
   cpuShare,
   employeeOfUnit,
   flowKpis,
+  PROJECTION_WINDOW_MS,
   parseUnits,
+  projectSevenDay,
   staffKpis,
   tokensByRole,
 } from "./kpi.mjs";
@@ -3352,6 +3354,9 @@ let cpuSamples = /** @type {{ at: number, nsec: Map<string, number> }} */ ({
   nsec: new Map(),
 });
 
+/** The 7-day window's readings of the last `PROJECTION_WINDOW_MS` (#1313), not persisted. */
+let sevenDaySamples = /** @type {import("./kpi.mjs").SevenDaySample[]} */ ([]);
+
 const SLICE = "vibewars-jails.slice";
 
 /** The user manager gets this long, in all, to answer; hubd's loop waits for it. */
@@ -3465,13 +3470,23 @@ async function writeKpis(cfg) {
       },
       claude: () => {
         const limit = readLimit(ROOT, staff, now);
+        const sevenDay = limit?.sevenDay ?? null;
+        if (sevenDay !== null) {
+          sevenDaySamples = [
+            ...sevenDaySamples.filter((sample) => now - sample.at <= PROJECTION_WINDOW_MS),
+            { at: now, ...sevenDay },
+          ];
+        }
         const read = readUsage(usage, now, limit);
         if (read === null) {
           throw new Error("no usage logs");
         }
         return {
           fiveHour: limit?.fiveHour ?? null,
-          sevenDay: limit?.sevenDay ?? null,
+          sevenDay:
+            sevenDay === null
+              ? null
+              : { ...sevenDay, projectedAt: projectSevenDay(sevenDaySamples, now) },
           tokens5hByRole: tokensByRole(read.summary.roles),
         };
       },

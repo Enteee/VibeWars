@@ -9,6 +9,7 @@ import {
   median,
   p90,
   parseUnits,
+  projectSevenDay,
   staffKpis,
   tokensByRole,
 } from "./kpi.mjs";
@@ -208,6 +209,68 @@ describe("claude and staff", () => {
       byRole: { dev: { employed: 2, live: 1 } },
       maxAgents: 9,
     });
+  });
+});
+
+describe("projectSevenDay (#1313)", () => {
+  const M = 60_000;
+  const S = NOW / 1000;
+  const RESETS = S + 2 * 24 * 3600;
+  /**
+   * @param {number} agoMs
+   * @param {number} utilization
+   * @param {number} [resetsAt]
+   */
+  function sample(agoMs, utilization, resetsAt = RESETS) {
+    return { at: NOW - agoMs, utilization, resetsAt };
+  }
+
+  it("runs the last 2 h's burn on to 100%", () => {
+    // 0.10 an hour from 0.50: 100% in another 5 h.
+    expect(projectSevenDay([sample(H, 0.4), sample(30 * M, 0.45), sample(0, 0.5)], NOW)).toBe(
+      S + 5 * 3600,
+    );
+  });
+
+  it("is null for a flat or falling burn", () => {
+    expect(projectSevenDay([sample(H, 0.5), sample(0, 0.5)], NOW)).toBeNull();
+    expect(projectSevenDay([sample(H, 0.6), sample(0, 0.5)], NOW)).toBeNull();
+  });
+
+  it("is null for fewer than 2 samples or a span under 30 min", () => {
+    expect(projectSevenDay([], NOW)).toBeNull();
+    expect(projectSevenDay([sample(0, 0.5)], NOW)).toBeNull();
+    expect(projectSevenDay([sample(29 * M, 0.4), sample(0, 0.5)], NOW)).toBeNull();
+  });
+
+  it("is null when the window resets first", () => {
+    expect(projectSevenDay([sample(H, 0.4), sample(0, 0.5)], NOW)).not.toBeNull();
+    expect(projectSevenDay([sample(H, 0.4), sample(0, 0.5, S + 3600)], NOW)).toBeNull();
+    expect(
+      projectSevenDay([sample(H, 0.4, S + 5 * 3600), sample(0, 0.5, S + 5 * 3600)], NOW),
+    ).toBeNull();
+  });
+
+  it("reads only the current window's samples after a roll-over", () => {
+    const old = RESETS - 7 * 24 * 3600;
+    expect(
+      projectSevenDay([sample(H, 0.9, old), sample(10 * M, 0.01), sample(0, 0.02)], NOW),
+    ).toBeNull();
+    expect(projectSevenDay([sample(2 * H, 0.9, old), sample(H, 0.0), sample(0, 0.1)], NOW)).toBe(
+      S + 9 * 3600,
+    );
+  });
+
+  it("is the newest sample's time at or over 100%", () => {
+    expect(projectSevenDay([sample(10 * M, 1)], NOW)).toBe(S - 600);
+    expect(projectSevenDay([sample(H, 0.9), sample(0, 1.02)], NOW)).toBe(S);
+  });
+
+  it("ignores samples older than 2 h", () => {
+    expect(projectSevenDay([sample(3 * H, 0), sample(H, 0.4), sample(0, 0.5)], NOW)).toBe(
+      S + 5 * 3600,
+    );
+    expect(projectSevenDay([sample(3 * H, 0.4), sample(10 * M, 0.5)], NOW)).toBeNull();
   });
 });
 

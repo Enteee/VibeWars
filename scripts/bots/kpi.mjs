@@ -6,7 +6,7 @@
  */
 
 /** A reader of `kpis.json` that finds another value treats the file as absent. */
-export const KPI_SCHEMA_VERSION = 2;
+export const KPI_SCHEMA_VERSION = 3;
 
 const HOUR_MS = 3_600_000;
 const DAY_MS = 24 * HOUR_MS;
@@ -223,6 +223,50 @@ export function staffKpis(staff, live, maxAgents) {
   return { byRole, maxAgents };
 }
 
+/** How far back the 7-day projection reads its burn rate (#1313). */
+export const PROJECTION_WINDOW_MS = 2 * HOUR_MS;
+
+/** Under this span of samples the burn rate is noise: just after a hubd restart. */
+const PROJECTION_MIN_SPAN_MS = 30 * 60_000;
+
+/**
+ * One reading of the 7-day window, taken on each KPI write.
+ *
+ * @typedef {{ at: number, utilization: number, resetsAt: number }} SevenDaySample
+ *   `at` in ms, `resetsAt` in unix seconds
+ */
+
+/**
+ * When the 7-day budget reaches 100% if the burn of the last
+ * `PROJECTION_WINDOW_MS` goes on (#1313), in unix seconds. Only samples of
+ * the newest one's window count: a rolled-over window starts afresh.
+ *
+ * @param {readonly SevenDaySample[]} samples oldest first
+ * @param {number} now ms
+ * @returns {number | null} null for too few samples, a flat or falling
+ *   burn, or a window that resets first
+ */
+export function projectSevenDay(samples, now) {
+  const recent = samples.filter((sample) => now - sample.at <= PROJECTION_WINDOW_MS);
+  const newest = recent.at(-1);
+  if (newest === undefined) {
+    return null;
+  }
+  if (newest.utilization >= 1) {
+    return Math.floor(newest.at / 1000);
+  }
+  const oldest = recent.find((sample) => sample.resetsAt === newest.resetsAt);
+  if (oldest === undefined || newest.at - oldest.at < PROJECTION_MIN_SPAN_MS) {
+    return null;
+  }
+  const perMs = (newest.utilization - oldest.utilization) / (newest.at - oldest.at);
+  if (perMs <= 0) {
+    return null;
+  }
+  const projectedAt = Math.floor((newest.at + (1 - newest.utilization) / perMs) / 1000);
+  return projectedAt >= newest.resetsAt ? null : projectedAt;
+}
+
 /**
  * @typedef {object} Kpis
  * @property {number} schemaVersion
@@ -233,7 +277,7 @@ export function staffKpis(staff, live, maxAgents) {
  *   bounces7d: number, topBounced: { issue: number, bounces: number }[],
  *   blocked: number, oldestBlockedMs: number | null } | null} flow
  * @property {{ fiveHour: import("./stream-format.mjs").LimitWindow | null,
- *   sevenDay: import("./stream-format.mjs").LimitWindow | null,
+ *   sevenDay: (import("./stream-format.mjs").LimitWindow & { projectedAt: number | null }) | null,
  *   tokens5hByRole: Record<string, number> } | null} claude
  * @property {{ remaining: number, limit: number, resetAt: number,
  *   topSpend: { command: string, points: number }[] } | null} github
