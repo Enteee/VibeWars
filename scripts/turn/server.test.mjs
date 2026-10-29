@@ -78,7 +78,9 @@ beforeAll(async () => {
     listeningIps: ["127.0.0.1"],
     listeningPort: await freeUdp(),
     tlsPort: await freeTcp(),
-    relayPorts: { min: relay, max: relay + 10 },
+    // As wide as the deployed 49160-49200: each permission probe is an
+    // allocation of its own (#1379), and a released one holds its port a moment.
+    relayPorts: { min: relay, max: relay + 40 },
     cert: null,
     key: null,
     stateDir: path.join(dir, "state"),
@@ -154,10 +156,10 @@ describe("a real turnserver", () => {
       password,
       peers: ["198.51.100.20", "203.0.113.7", "10.0.0.1", "192.168.1.1", "127.0.0.1"],
     });
-    // A 403's reason phrase is coturn's to word. Any other code keeps its
-    // reason, so an unexpected one (#1379: 437) says why in the diff.
+    // A 403's reason phrase is coturn's to word (4.x leaves it empty). Any
+    // other code keeps its reason, so an unexpected one says why in the diff.
     const answers = res.ok
-      ? res.answers.map((a) => (a.code === 403 && a.reason !== "" ? { ...a, reason: "-" } : a))
+      ? res.answers.map((a) => (a.code === 403 ? { ...a, reason: "-" } : a))
       : res;
     expect(answers).toEqual([
       { peer: "198.51.100.20", code: null, reason: null },
