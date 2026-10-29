@@ -237,6 +237,26 @@ const PROJECTION_MIN_SPAN_MS = 30 * 60_000;
  */
 
 /**
+ * `samples` with `reading` added at its own time, `at` (#1313), not the
+ * write's: an idle company's stale reading gets no fresh timestamps. A
+ * reading whose time is the newest sample's is the same reading, and is
+ * not added twice. Samples older than `PROJECTION_WINDOW_MS` are dropped.
+ *
+ * @param {readonly SevenDaySample[]} samples oldest first
+ * @param {{ at: number, sevenDay: { utilization: number, resetsAt: number } | null } | null} reading
+ * @param {number} now ms
+ * @returns {SevenDaySample[]}
+ */
+export function addSevenDaySample(samples, reading, now) {
+  const kept = samples.filter((sample) => now - sample.at <= PROJECTION_WINDOW_MS);
+  if (reading?.sevenDay == null || kept.at(-1)?.at === reading.at) {
+    return kept;
+  }
+  const { utilization, resetsAt } = reading.sevenDay;
+  return [...kept, { at: reading.at, utilization, resetsAt }];
+}
+
+/**
  * When the 7-day budget reaches 100% if the burn of the last
  * `PROJECTION_WINDOW_MS` goes on (#1313), in unix seconds. Only samples of
  * the newest one's window count: a rolled-over window starts afresh.

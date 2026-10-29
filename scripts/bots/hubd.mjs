@@ -130,11 +130,11 @@ import {
 import { historyText, movesBetween, parseHistory } from "./board-history.mjs";
 import { HOLD_BELOW, freeBytes } from "./disk.mjs";
 import {
+  addSevenDaySample,
   buildKpis,
   cpuShare,
   employeeOfUnit,
   flowKpis,
-  PROJECTION_WINDOW_MS,
   parseUnits,
   projectSevenDay,
   staffKpis,
@@ -3471,12 +3471,7 @@ async function writeKpis(cfg) {
       claude: () => {
         const limit = readLimit(ROOT, staff, now);
         const sevenDay = limit?.sevenDay ?? null;
-        if (sevenDay !== null) {
-          sevenDaySamples = [
-            ...sevenDaySamples.filter((sample) => now - sample.at <= PROJECTION_WINDOW_MS),
-            { at: now, ...sevenDay },
-          ];
-        }
+        sevenDaySamples = addSevenDaySample(sevenDaySamples, limit, now);
         const read = readUsage(usage, now, limit);
         if (read === null) {
           throw new Error("no usage logs");

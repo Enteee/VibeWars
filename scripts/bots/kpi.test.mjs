@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   KPI_SCHEMA_VERSION,
+  addSevenDaySample,
   buildKpis,
   cpuShare,
   employeeOfUnit,
@@ -271,6 +272,27 @@ describe("projectSevenDay (#1313)", () => {
       S + 5 * 3600,
     );
     expect(projectSevenDay([sample(3 * H, 0.4), sample(10 * M, 0.5)], NOW)).toBeNull();
+  });
+});
+
+describe("addSevenDaySample (#1313)", () => {
+  const seven = { utilization: 0.01, resetsAt: NOW / 1000 + 24 * 3600 };
+
+  it("stamps a sample with its reading's time, not the write's", () => {
+    expect(addSevenDaySample([], { at: NOW - H, sevenDay: seven }, NOW)).toEqual([
+      { at: NOW - H, ...seven },
+    ]);
+  });
+
+  it("adds a reading it already holds only once", () => {
+    const once = addSevenDaySample([], { at: NOW - H, sevenDay: seven }, NOW - H);
+    expect(addSevenDaySample(once, { at: NOW - H, sevenDay: seven }, NOW)).toEqual(once);
+  });
+
+  it("drops samples older than 2 h, and adds nothing without a 7-day reading", () => {
+    const old = [{ at: NOW - 3 * H, ...seven }];
+    expect(addSevenDaySample(old, null, NOW)).toEqual([]);
+    expect(addSevenDaySample(old, { at: NOW, sevenDay: null }, NOW)).toEqual([]);
   });
 });
 
