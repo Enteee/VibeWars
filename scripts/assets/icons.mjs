@@ -1531,6 +1531,23 @@ const skillGlyph = {
   "shield-crit": () =>
     `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2)}/>` +
     inkFill("M12 6.5L13.7 10.3L17.5 12L13.7 13.7L12 17.5L10.3 13.7L6.5 12L10.3 10.3Z"),
+  // A solid shield: the block stance that pays energy (#1329).
+  "shield-stance": () =>
+    inkFill("M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z"),
+  // A shield outline with one bold bar: the short, plain block (#1329).
+  "shield-bar": () =>
+    `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2.8)}/>` +
+    inkLine("M8 11.5H16", 3.4),
+  // A shield with an arrow glancing off it: projectiles deflected (#1329).
+  "shield-arrow": () =>
+    `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2.8)}/>` +
+    inkLine("M2.5 3L11 9.5", 3) +
+    inkFill("M16 13.5L8.5 13L11.5 7Z"),
+  // A shield with a blade across it: the blocked attacker is cut (#1329).
+  "shield-blade": () =>
+    `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2.8)}/>` +
+    inkLine("M7.5 17L17 7.5", 3.4) +
+    inkLine("M8 10.5L13.5 16", 2.8),
   // The spirit post in a halo, being born, with the payout beside it (#1316).
   // Boon of Creation heals and gives energy: a plus.
   "born-plus": () => bornPost() + inkLine("M17 3.5V13.5M12 8.5H22", 2.8),
