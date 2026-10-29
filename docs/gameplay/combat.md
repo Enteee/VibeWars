@@ -1053,6 +1053,15 @@ recharge, #988) adds 13% to the chance for 30 s, all of it capped at
 100%, and gives 1 more energy on each crit, beside Critical Strikes'.
 It is a skill effect, so no strip removes it. An arrow keeps the crit
 chance it was loosed with, but the extra energy is read as it lands.
+Some attack skills crit whatever the roll (#1315): every blow of
+**Critical Strike** (a dual, +10…26…30 damage, and 1…3 Energy for each
+blow that hits), and **Malicious Strike** (not a chain attack) on a foe
+suffering from a condition as its blow lands, where it also deals
++10…26…30. Such a crit is a crit in every way: the maximum times √2,
+Critical Strikes' energy, Critical Eye's. A blocked or missed blow is
+no crit. **Unsuspecting Strike**, a lead attack, deals +19…29…31, and
+15…63…75 more on a foe above 90% Health as it lands; at exactly 90%,
+none. All three are Critical Strikes skills.
 
 **Block** (#534). Guardian gives its ally a 50% chance to block attacks;
 several block sources combine as 1 − ∏(1 − p), so two 50% sources make
@@ -1070,6 +1079,9 @@ recharge, #988) gives a 75% chance to block attacks for 54 s, but only
 while you are below half your maximum Health (after a deep wound), read
 at each block roll: a heal back over half turns it off. It combines
 with other blocks as above.
+**Critical Defenses** (Assassin, Critical Strikes, 10 energy, 1 s, 30 s
+recharge, #1315) is an enchantment: a 75% chance to block attacks for
+9 s, put back to the full 9 s every time you land a critical hit.
 
 Not modelled: evade.
 
