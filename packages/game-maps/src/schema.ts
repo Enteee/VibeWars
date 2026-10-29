@@ -47,8 +47,9 @@ const spawnPointSchema = z.object({
  * come back and Priest Annihilation's priest stands, where a Guild
  * Battle's Guild Lord stands (#1222), one of its base guards' posts
  * (#1223), or its flag stand and where each team's flag starts (#1225);
- * a Relic Run's altar and where each team's relic starts (#1374); or one
- * of Capture Points' shrines (#1378).
+ * a Relic Run's altar and where each team's relic starts (#1374);
+ * King of the Hill's altar and where each team's Ghostly Hero starts
+ * (#1377); or one of Capture Points' shrines (#1378).
  */
 const objectiveSchema = z.discriminatedUnion("kind", [
   z.object({
@@ -82,6 +83,11 @@ const objectiveSchema = z.discriminatedUnion("kind", [
     position: vec2Schema,
   }),
   z.object({
+    kind: z.literal("ghost-spawn"),
+    team: z.number().int().nonnegative(),
+    position: vec2Schema,
+  }),
+  z.object({
     kind: z.literal("altar"),
     position: vec2Schema,
   }),
@@ -100,12 +106,14 @@ const OBJECTIVES_BY_MODE: Readonly<Partial<Record<MatchMode, readonly TeamKind[]
   "priest-annihilation": ["resurrection-shrine"],
   "guild-battle": ["resurrection-shrine", "guild-lord", "guard", "flag-spawn"],
   "relic-run": ["relic-spawn"],
+  "king-of-the-hill": ["ghost-spawn"],
 };
 
 /** Which shared objectives each mode has; none for a mode not here. */
 const SHARED_OBJECTIVES_BY_MODE: Readonly<Partial<Record<MatchMode, readonly SharedKind[]>>> = {
   "guild-battle": ["flag-stand"],
   "relic-run": ["altar"],
+  "king-of-the-hill": ["altar"],
   "capture-points": ["capture-point"],
 };
 
@@ -123,6 +131,7 @@ const ONE_PER_TEAM: readonly TeamKind[] = [
   "guild-lord",
   "flag-spawn",
   "relic-spawn",
+  "ghost-spawn",
 ];
 
 /** What a map calls each objective kind, in its validation messages. */
@@ -133,6 +142,7 @@ const OBJECTIVE_NAMES: Readonly<Record<Objective["kind"], string>> = {
   "flag-spawn": "flag spawn",
   "flag-stand": "flag stand",
   "relic-spawn": "relic spawn",
+  "ghost-spawn": "ghost spawn",
   altar: "altar",
   "capture-point": "capture point",
 };
@@ -154,6 +164,7 @@ export const mapDataSchema = z
       "priest-annihilation",
       "guild-battle",
       "relic-run",
+      "king-of-the-hill",
       "capture-points",
     ]),
     width: z.number().positive(),

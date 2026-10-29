@@ -636,6 +636,7 @@ export function wireIdentity(
           look: creature.look,
           mode: companionMode(creature),
           armedAttack: armedAttackSnapshot(participant.armedAttack, elapsedSeconds),
+          leaderId: creature.leaderId ?? null,
         },
         bot: false,
       };
@@ -761,6 +762,8 @@ export function observedSnapshot(
     aggression: snapshot.aggression,
     relics: snapshot.relics.map(relicState),
     altar: absent(snapshot.altar),
+    altarHolder: absent(snapshot.altarHolder),
+    altarHeldSeconds: snapshot.altarHeldSeconds,
     capturePoints: snapshot.capturePoints.map(({ x, y, owner, capturer, progress }) => ({
       position: { x, y },
       owner,

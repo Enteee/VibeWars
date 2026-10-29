@@ -103,7 +103,8 @@ export interface PlayerSnapshot {
    * scoreboard, the enemy pips or the music. `mode` is a companion's
    * (#1110), `null` for any other creature. `armedAttack` is the pet
    * attack its next blow carries (#1167), `null` when none is armed.
-   * `ownerId` is `null` for a map's NPC, as a priest (#1186).
+   * `ownerId` is `null` for a map's NPC, as a priest (#1186). `leaderId`
+   * is whom a Ghostly Hero follows (#1377), `null` while it stays.
    */
   readonly creature:
     | {
@@ -112,6 +113,7 @@ export interface PlayerSnapshot {
         readonly look: CreatureLook;
         readonly mode: CompanionMode | null;
         readonly armedAttack: ArmedAttackSnapshot | null;
+        readonly leaderId: string | null;
       }
     | undefined;
   /** A lobby's bot plays it (#1193), not a peer. */
@@ -169,8 +171,12 @@ export interface MatchSnapshot {
   readonly aggression: readonly number[];
   /** A Relic Run's relics and where each is (#1374); `[]` on a map without an altar. */
   readonly relics: readonly RelicState[];
-  /** The altar a relic is run to (#1374); `undefined` on a map without one. */
+  /** The altar a relic is run to (#1374), or a ghost claims (#1377); `undefined` on a map without one. */
   readonly altar: Vec2 | undefined;
+  /** The team that holds King of the Hill's altar (#1377); `undefined` for nobody, and off such a map. */
+  readonly altarHolder: number | undefined;
+  /** Seconds its holder has kept it since the claim or the last point (#1377); 0 off such a map. */
+  readonly altarHeldSeconds: number;
   /** Every Capture Points shrine and who holds it (#1378); `[]` on a map without them. */
   readonly capturePoints: readonly CapturePoint[];
   /** What each player did, from the host's `ended` (#1057); `undefined` until then. */

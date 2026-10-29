@@ -20,6 +20,7 @@ import {
   describeRefusal,
   enemyPips,
   formatClock,
+  ghostLeaderLabel,
   invulnerableLabel,
   isAttackingTarget,
   lostHealthPercent,
@@ -347,6 +348,8 @@ describe("carriedBundle (#1225, #1374)", () => {
     aggression: [],
     relics,
     altar: undefined,
+    altarHolder: undefined,
+    altarHeldSeconds: 0,
     capturePoints: [],
     summary: undefined,
   });
@@ -534,6 +537,7 @@ describe("enemyPips (#881)", () => {
         look: "bone-minion",
         mode: null,
         armedAttack: null,
+        leaderId: null,
       },
     });
     expect(enemyPips([...players, minion], 0)).toEqual(enemyPips(players, 0));
@@ -546,7 +550,14 @@ describe("enemyPips (#881)", () => {
 
 /** The scoreboard's match with these kills, no stand and no aggression. */
 function board(team0: number, team1: number): ScoreboardMatch {
-  return { scoreTeam0: team0, scoreTeam1: team1, stand: undefined, aggression: [] };
+  return {
+    scoreTeam0: team0,
+    scoreTeam1: team1,
+    stand: undefined,
+    aggression: [],
+    altarHolder: undefined,
+    altarHeldSeconds: 0,
+  };
 }
 
 describe("scoreboardText (#881)", () => {
@@ -573,6 +584,7 @@ describe("scoreboardText (#881)", () => {
           look: "bone-minion",
           mode: null,
           armedAttack: null,
+          leaderId: null,
         },
       });
     expect(
@@ -612,7 +624,14 @@ describe("scoreboardText (#881)", () => {
         sessionId: `priest-${String(team)}`,
         team,
         dead,
-        creature: { ownerId: null, kind: "priest", look: "priest", mode: null, armedAttack: null },
+        creature: {
+          ownerId: null,
+          kind: "priest",
+          look: "priest",
+          mode: null,
+          armedAttack: null,
+          leaderId: null,
+        },
       });
     const priests = (dead0: boolean, dead1: boolean) => [
       ...players,
@@ -714,6 +733,7 @@ describe("the Guild Battle scoreboard (#1226)", () => {
         look: "guild-lord",
         mode: null,
         armedAttack: null,
+        leaderId: null,
       },
     });
   const players = [
@@ -805,6 +825,29 @@ describe("the Guild Battle scoreboard (#1226)", () => {
   });
 });
 
+describe("King of the Hill's scoreboard (#1377)", () => {
+  const players = [player({ sessionId: "a", team: 0 }), player({ sessionId: "c", team: 1 })];
+
+  it("reads the points, then the altar's holder and the time to its next point in the stand's slot", () => {
+    const held = { ...board(2, 1), altarHolder: 1, altarHeldSeconds: 12.5 };
+    expect(scoreboardText(players, 0, 80, 480, "king-of-the-hill", held)).toBe(
+      "2 – 1 · ▲ 0:18 · 6:40",
+    );
+    expect(scoreboardParts(players, 1, 80, 480, "king-of-the-hill", held)).toContainEqual({
+      kind: "side",
+      team: 1,
+      text: "▲ 0:18",
+      dead: false,
+    });
+    expect(scoreboardParts(players, 0, 80, 480, "king-of-the-hill", board(0, 0))).toContainEqual({
+      kind: "side",
+      team: undefined,
+      text: "▲ —",
+      dead: false,
+    });
+  });
+});
+
 describe("describeOutcome", () => {
   it("reads as victory for the winning team's own players", () => {
     expect(describeOutcome(0, "score", 0, [])).toBe("Victory");
@@ -871,16 +914,60 @@ describe("describeOutcome", () => {
 
 describe("targetHint (#253, #302)", () => {
   it("tells a new player how to target and how to see every name, by their keys", () => {
-    expect(targetHint(DEFAULT_KEYMAP)).toBe(
+    expect(targetHint(DEFAULT_KEYMAP, "annihilation")).toBe(
       "Click an enemy or press Tab to target · hold Shift for names",
     );
-    expect(targetHint(DEFAULT_KEYMAP)).not.toContain("Ctrl");
+    expect(targetHint(DEFAULT_KEYMAP, "annihilation")).not.toContain("Ctrl");
   });
 
   it("leaves out a clause whose action has no key", () => {
-    expect(targetHint({ ...DEFAULT_KEYMAP, "target-next": [], "show-names": [] })).toBe(
-      "Click an enemy to target",
+    expect(
+      targetHint({ ...DEFAULT_KEYMAP, "target-next": [], "show-names": [] }, "annihilation"),
+    ).toBe("Click an enemy to target");
+  });
+
+  it("in King of the Hill, tells you to lead your own ghost first, by the attack key (#1377)", () => {
+    expect(targetHint(DEFAULT_KEYMAP, "king-of-the-hill")).toBe(
+      "Right-click your Ghostly Hero, then Space: it follows you to the altar",
     );
+    expect(targetHint({ ...DEFAULT_KEYMAP, attack: [] }, "king-of-the-hill")).toBe(
+      "Click an enemy or press Tab to target · hold Shift for names",
+    );
+  });
+});
+
+describe("ghostLeaderLabel (#1377)", () => {
+  const me = player({ sessionId: "me", name: "me", team: 0 });
+  const names = new Map([
+    ["me", "me"],
+    ["ally", "Devona"],
+  ]);
+  const ghost = (team: number, leaderId: string | null): PlayerSnapshot =>
+    player({
+      sessionId: `ghost/${String(team)}`,
+      name: "Ghostly Hero",
+      team,
+      creature: {
+        ownerId: null,
+        kind: "ghostly-hero",
+        look: "ghostly-hero",
+        mode: null,
+        armedAttack: null,
+        leaderId,
+      },
+    });
+
+  it("says whom your team's ghost follows, or that it stays", () => {
+    expect(ghostLeaderLabel(me, ghost(0, "me"), names)).toBe("follows you");
+    expect(ghostLeaderLabel(me, ghost(0, "ally"), names)).toBe("follows Devona");
+    expect(ghostLeaderLabel(me, ghost(0, null), names)).toBe("stays");
+  });
+
+  it("says nothing of the foe's ghost, a dead one, or any other target", () => {
+    expect(ghostLeaderLabel(me, ghost(1, "foe"), names)).toBeUndefined();
+    expect(ghostLeaderLabel(me, { ...ghost(0, "me"), dead: true }, names)).toBeUndefined();
+    expect(ghostLeaderLabel(me, player({ team: 0 }), names)).toBeUndefined();
+    expect(ghostLeaderLabel(me, undefined, names)).toBeUndefined();
   });
 });
 

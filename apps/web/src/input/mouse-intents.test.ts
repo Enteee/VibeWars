@@ -73,6 +73,8 @@ const MATCH: MatchSnapshot = {
   aggression: [],
   relics: [],
   altar: undefined,
+  altarHolder: undefined,
+  altarHeldSeconds: 0,
   capturePoints: [],
   summary: undefined,
 };

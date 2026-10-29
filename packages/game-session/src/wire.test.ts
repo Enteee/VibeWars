@@ -337,6 +337,7 @@ describe("wireIdentity (#1052)", () => {
       onDeath: "vanish" as const,
       ownerDisableSeconds: 0,
       companionSkillId: undefined,
+      leaderId: undefined,
       mode: "guard" as const,
     },
   });
@@ -372,6 +373,7 @@ describe("wireIdentity (#1052)", () => {
         look: "bone-minion",
         mode: null,
         armedAttack: null,
+        leaderId: null,
       },
       bot: false,
     });
@@ -397,6 +399,7 @@ describe("wireIdentity (#1052)", () => {
       look: "beast",
       mode: "heel",
       armedAttack: null,
+      leaderId: null,
     });
   });
 
@@ -442,7 +445,14 @@ describe("wireIdentity (#1052)", () => {
       team: 0,
       primaryProfession: null,
       secondaryProfession: null,
-      creature: { ownerId: null, kind: "priest", look: "priest", mode: null, armedAttack: null },
+      creature: {
+        ownerId: null,
+        kind: "priest",
+        look: "priest",
+        mode: null,
+        armedAttack: null,
+        leaderId: null,
+      },
       bot: false,
     });
   });

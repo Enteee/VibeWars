@@ -354,12 +354,12 @@ export async function startMatchView(
   hud.skillRow.prepend(weaponSets);
   // Read once per match: a keymap changed elsewhere applies from the next.
   const keymap = loadKeymap();
-  renderKeyLabels(hud, keymap);
+  renderKeyLabels(hud, keymap, mode);
   labelWeaponSets(weaponSets, keymap);
   let disposed = false;
   void loadLayoutLabeller().then((label) => {
     if (label !== undefined && !disposed) {
-      renderKeyLabels(hud, keymap, label);
+      renderKeyLabels(hud, keymap, mode, label);
       labelWeaponSets(weaponSets, keymap, label);
     }
   });

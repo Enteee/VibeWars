@@ -226,6 +226,29 @@ describe("compassView (#1056)", () => {
     expect(compassView(arena({}), "me", SIZE, RANGE_COMPASS)?.altar).toBeUndefined();
   });
 
+  it("marks Capture Points' shrines in reach by owner, none out of reach or on another map (#1407)", () => {
+    const view = compassView(
+      arena({
+        capturePoints: [
+          { position: vec2(1000, 1850), owner: "ally", ring: undefined },
+          { position: vec2(1850, 1000), owner: "enemy", ring: undefined },
+          { position: vec2(1000, 150), owner: undefined, ring: { side: "ally", fraction: 0.5 } },
+          // Out of reach: not pinned to the rim.
+          { position: vec2(3000, 1000), owner: "enemy", ring: undefined },
+        ],
+      }),
+      "me",
+      SIZE,
+      RANGE_COMPASS,
+    );
+    expect(view?.capturePoints).toEqual([
+      { x: 0, y: 40, owner: "ally" },
+      { x: 40, y: 0, owner: "enemy" },
+      { x: 0, y: -40, owner: undefined },
+    ]);
+    expect(compassView(arena({}), "me", SIZE, RANGE_COMPASS)?.capturePoints).toEqual([]);
+  });
+
   it("clips a wall crossing the disc's edge, keeps one inside whole, skips one outside", () => {
     const view = compassView(
       arena({

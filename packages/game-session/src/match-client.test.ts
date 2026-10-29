@@ -64,6 +64,8 @@ describe("connectMatch", () => {
       aggression: [],
       relics: [],
       altar: null,
+      altarHolder: null,
+      altarHeldSeconds: 0,
       capturePoints: [],
     });
     await settle();
@@ -97,6 +99,8 @@ describe("connectMatch", () => {
         aggression: [],
         relics: [],
         altar: null,
+        altarHolder: null,
+        altarHeldSeconds: 0,
         capturePoints: [],
       },
       transport.selfId,
@@ -153,6 +157,8 @@ describe("connectMatch", () => {
           aggression: [],
           relics: [],
           altar: null,
+          altarHolder: null,
+          altarHeldSeconds: 0,
           capturePoints: [],
         },
         transport.selfId,
@@ -397,6 +403,7 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
       look: "bone-minion",
       mode: null,
       armedAttack: null,
+      leaderId: null,
     } as const;
     expect(playerSnapshot({ ...WIRE_PLAYER, creature })?.creature).toEqual(creature);
   });
@@ -410,6 +417,7 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
         look: "beast",
         mode: "fight",
         armedAttack: { skillId, endsAt: 12.1 },
+        leaderId: null,
       },
     });
     expect(playerSnapshot(pet("ranger.brutal-strike"))?.creature?.armedAttack).toEqual({

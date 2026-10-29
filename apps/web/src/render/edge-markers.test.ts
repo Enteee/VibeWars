@@ -1,14 +1,15 @@
 import { describe, expect, it } from "vitest";
 
 import { NO_COVER } from "./camera-rig.js";
-import { EDGE_INSET_PX, edgeMarkers, type EdgeBody } from "./edge-markers.js";
+import { EDGE_INSET_PX, edgeMarkers, type EdgeThing } from "./edge-markers.js";
 
 const VIEW = { x: 500, y: 500, zoom: 0.5 };
 const SCREEN = { width: 800, height: 600 };
 
-const body = (overrides: Partial<EdgeBody>): EdgeBody => ({
+const body = (overrides: Partial<EdgeThing>): EdgeThing => ({
   id: "b",
   kind: "foe",
+  colour: undefined,
   position: { x: 500, y: 500 },
   dead: false,
   targeted: false,
@@ -66,5 +67,29 @@ describe("edgeMarkers", () => {
     expect(south?.angle).toBeCloseTo(Math.PI / 2);
     const [north] = edgeMarkers([body({ position: { x: 500, y: -2_000 } })], VIEW, SCREEN, cover);
     expect(north?.y).toBeCloseTo(cover.top + EDGE_INSET_PX);
+  });
+
+  it("marks an objective under the top cover, in its kind and colour, and none in view (#1413)", () => {
+    const cover = { top: 120, bottom: 160 };
+    const shrine = body({ id: "capture-point/0", kind: "objective", colour: 0x8b949e });
+    // Inside the viewport at y 50, but under the target panel.
+    const [marker, ...rest] = edgeMarkers(
+      [
+        { ...shrine, position: { x: 500, y: 0 } },
+        { ...shrine, id: "capture-point/1", position: { x: 500, y: 500 } },
+      ],
+      VIEW,
+      SCREEN,
+      cover,
+    );
+    expect(rest).toEqual([]);
+    expect(marker).toMatchObject({
+      id: "capture-point/0",
+      kind: "objective",
+      colour: 0x8b949e,
+      targeted: false,
+    });
+    expect(marker?.y).toBeCloseTo(cover.top + EDGE_INSET_PX);
+    expect(marker?.angle).toBeCloseTo(-Math.PI / 2);
   });
 });

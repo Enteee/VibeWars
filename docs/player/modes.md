@@ -2,7 +2,13 @@
 
 Each map plays one mode, and the lobby says which under the map's name.
 Nobody picks it. A Random Arena picks a map for you, and with it the
-mode, but never a Guild Battle, a Relic Run or Capture Points.
+mode, but never a Guild Battle, a Relic Run, King of the Hill or Capture
+Points.
+
+In a Guild Battle, a Relic Run, King of the Hill or Capture Points, an
+objective off screen or under the HUD gets an outlined arrow at the
+screen edge: the stand or a shrine in its owner's colour, grey for
+nobody's, the altar in gold. A player's filled arrow draws over it.
 
 ## Annihilation
 
@@ -91,6 +97,42 @@ line for each relic says where it is: `✦ Name` on its carrier,
 
 Relic Temples plays it.
 
+## King of the Hill
+
+**Lead your Ghostly Hero onto the altar, and hold it.** Each team has a
+**Ghostly Hero** in its base, a ghost that fights with a sword and that
+nobody plays. The **altar** is in the centre, the same walk from both
+bases, up a north or a south approach. Target your ghost with a
+**right-click** and press **Space** to tell it to follow you: it walks
+with you and fights what you fight. Press Space on it again and it
+stays where it stands, fighting any foe who comes near. If you die or
+leave, it stays. With your ghost targeted, its frame says whom it
+follows, or that it stays.
+
+Lead it onto or past the altar and it steps onto the altar and keeps
+to it. There it fights any foe beside it, but never steps off after
+one. A ghost on the altar claims it by itself: 5 seconds standing
+still, its cast bar filling, fighting nobody. An interrupt or a knockdown cuts the claim short, and
+it starts again once it can. It may claim the altar only while nobody
+holds it, or while the holder's ghost is dead. When the claim finishes,
+the altar is your team's.
+
+The team that holds the altar scores a point for every 30 seconds it
+keeps it, even while its own ghost is dead, until another team claims
+it. A dead ghost rises in its base 2 minutes later, staying put. It is
+no player: its death costs no morale and it does not count toward a
+wipe.
+
+The dead stay down until an ally resurrects them, and each death costs
+morale. Wipe the other team to win at once. After 8 minutes the team
+with more points wins; equal points is a draw. Kills score nothing.
+
+The scoreboard shows the points, yours first, then the altar: `▲` and
+the time to the holder's next point, in the holder's colour, or a grey
+`▲ —` while nobody holds it.
+
+Hill Courtyard plays it.
+
 ## Capture Points
 
 **Hold the shrines.** The map has five **shrines**: one by each base
@@ -100,6 +142,7 @@ makes it faster: four of you take it in 5. With a foe on it too, it is
 contested and nothing moves. A shrine the other team owns is first
 drained to neutral, then filled for you. Walk away and its progress
 stays where it was; a shrine you own stays yours until a foe takes it.
+The shrines show on the compass as □ in the owner's colour.
 
 Every 30 seconds, each shrine your team owns scores a point. The dead
 stay down until an ally resurrects them, and each death costs morale.

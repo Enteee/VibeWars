@@ -54,7 +54,7 @@ the code and `scripts/assets/icons.mjs` copy them.
 | `glyph`        | `#c3e88d` | Glyph markers                            |
 | `weapon-spell` | `#8b9cff` | Weapon spell markers                     |
 | `invulnerable` | `#f5e6b8` | A shrine-raised body's shimmer (#1233)   |
-| `altar`        | `#c8a45a` | A Relic Run's altar on the compass       |
+| `altar`        | `#c8a45a` | A Relic Run or King of the Hill altar    |
 
 ### HUD bars
 
@@ -419,9 +419,12 @@ the arena does not. A body beyond it is not on it: the edge markers
   shown.
 - **Your target**: a 1 px `target` ring 2 px outside its dot.
 - **The called foe**: a small `condition` chevron over its dot.
-- **A Relic Run's altar** (#1388): a filled `altar` `◆`, 10 px tip to
-  tip, on a 1 px `edge` rim, under the bodies. Not pinned to the rim when
-  out of reach.
+- **A Relic Run or King of the Hill altar** (#1388, #1377): a filled `altar`
+  `◆`, 10 px tip to tip, on a 1 px `edge` rim, under the bodies. Not
+  pinned to the rim when out of reach.
+- **A Capture Points shrine** (#1407): a 12 px `□`, a 1.5 px stroke in
+  its owner's colour, `friend` or `foe`, `ink-dim` while nobody holds it.
+  Its capture progress is the arena's to show, not the compass's.
 - **Pings**: a 1 px `friend` ring growing from 3 to 10 px and fading over
   the ping's life. Reduced motion: it holds at 3 px, whole.
 
@@ -756,6 +759,49 @@ a fixed 11 screen px, which crosses every weapon at Wide.
 
 ![Profession body study](profession-body-study.svg)
 
+### Guild cape (decided: B, the trailing tab)
+
+GW1 guilds wear a cape (#481, #1410). A body is a team-coloured disc seen
+from above, so the cape goes **behind it, opposite its facing**: the weapon
+and the off-hand are in front and to the left, and the team colour is the
+disc, which no variant covers more than a sliver of. The cape is two colours
+from a fixed palette of eight (gold, violet, white, black, lime, orange, teal,
+pink: none near cyan-blue or coral) and one emblem of eight geometric shapes
+(disc, bar, chevron, diamond, triangle, cross, ring, half-disc).
+`node scripts/assets/cape-study.mjs` draws all three on ally and enemy
+bodies, facing right and up, in a clump, as the menu figure, and in the designer:
+
+![Cape study](cape-study.svg)
+
+The same three in a 4v4 mid-fight frame at 2x zoom, with the menu figure (made by the same script):
+
+![Cape mockup](cape-mockup.png)
+
+- **A, a crescent behind.** One `fill` path (two arcs) plus one trim stroke,
+  drawn before the disc: 3 Painter calls, and `paintStandingBody` gets a
+  `cape` drawn first. It hugs the disc 7 units out, so it widens the body's
+  silhouette by half its radius at the back and reads as "someone has a cape"
+  at Default zoom; the trim reads, the emblem (5 units, 5 px) does not, so it
+  is shown only on the menu figure. In a clump it hides behind neighbours
+  cleanly. The figure box needs 8 px more room.
+- **B, a trailing tab.** One polygon, one trim polyline, an emblem: 4 calls.
+  The strongest read of facing as well (the tab points opposite the sword),
+  and the emblem is a diamond-sized 5 px at Default, legible. But it is 17
+  units long, longer than any other mark: in a clump tabs cross neighbours'
+  bodies and can be taken for a projectile or a skill cue. Needs the most
+  figure room (17 px).
+- **C, a ring segment on the rim.** Three arc strokes inside the disc, drawn
+  after it: 3 calls, no extra silhouette, no room needed. But it eats the
+  disc's team colour at the back and sits next to the off-hand arc, and at
+  Default it is a 4 px green smear: team colour is hurt, no emblem fits.
+- **Decided: B** (the operator's pick, #1410; implementation is #1422). The
+  tab's clump noise is accepted for the clearest guild read. My own
+  recommendation was A: It adds a clear guild signal on the one side no
+  mark uses, costs no more than the existing marks, never touches the
+  disc, and keeps team colour the strongest read. Show the emblem only in the
+  menu, the designer and the roster. B is the pick if the operator wants the
+  cape to read at a glance and accepts the clump noise.
+
 ### Name labels (study, not decided)
 
 Every body carries its name, 11 px and centred, so two bodies a name's
@@ -857,7 +903,7 @@ it, not baked in, so one file serves every screen.
   armor-crack, drop-run, mark-skull, dagger-stop, dagger-limp, palm,
   shield-stance (solid), shield-bar, shield-arrow, shield-blade, born-plus, born-burst, born-ring, born-energy (the spirit post in a halo, and its payout),
   blade-limp, blade-pierce, blade-drop, blade-half, blade-burst, blade-adrenal (a blade with its payoff in the corner above), blades-fan,
-  dagger-crit (a dagger and a four-point spark), shield-crit, blink-heal, blink-fang, blink-ally (the step with a plus, two fangs, a figure), shield-veil, crescent-spark, caltrops, hex-barbs, hex-miss, hex-drain, hex-heal-cut, hex-nobloc, hex-drain-cut (the hex ring with spikes, a cross, falling triangles, a cut plus, a cracked shield, both), drop-touch, drop-trio, drop-half, drop-weak, drop-barbs, drop-energy (the blood drop with a plus, three drops, a half-full drop, a down arrow, barbs, a bolt), ghost, weight, ache-cross, armor-shrink, speed-break (a whole chevron and a
+  dagger-crit (a dagger and a four-point spark), shield-crit, blink-heal, blink-fang, blink-ally (the step with a plus, two fangs, a figure), shield-veil, crescent-spark, caltrops, spark (a four-point star with a tail), flame-foe, flame-mind (a flame over a figure, over a bare head), flame-ring, flame-burst (short and long rays round a dot), flame-target, flame-field, hammer-prone, hammer-shield, hammer-counter, hammer-weak, hammer-chevrons, hammer-quake (the hammer over a downed foe, a shield, a turning arrow, weak chevrons, wide cracks), hex-barbs, hex-miss, hex-drain, hex-heal-cut, hex-nobloc, hex-drain-cut (the hex ring with spikes, a cross, falling triangles, a cut plus, a cracked shield, both), drop-touch, drop-trio, drop-half, drop-weak, drop-barbs, drop-energy (the blood drop with a plus, three drops, a half-full drop, a down arrow, barbs, a bolt), ghost, weight, ache-cross, armor-shrink, speed-break (a whole chevron and a
   broken one), eye-slash, limp-drain, blow, sweep, rush, dolyak, heart-plus, bolt-cap (a melee blow, a wide sweep, three chevrons, a bull's head with horns, a heart with a plus, a bolt under a ceiling). A
   new primary effect adds a glyph; a new skill adds a row.
 

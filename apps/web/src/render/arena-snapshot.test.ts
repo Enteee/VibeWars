@@ -23,6 +23,7 @@ import {
   BODY_GLYPH_ALPHA,
   BODY_GLYPH_SIZE,
   CREATURE_GLYPH_SIZE,
+  GHOST_GLYPH_TINT,
   DEAD_COLOUR,
   EXPLOITED_CORPSE_COLOUR,
   PROFESSION_GLYPH_SIZE,
@@ -685,7 +686,8 @@ describe("bodyGlyphLayout (#1037)", () => {
         x: 200,
         y: 100,
         size: CREATURE_GLYPH_SIZE,
-        tint: BODY_EDGE,
+        // A Ghostly Hero's stand-in glyph is pale (#1377).
+        tint: look === "ghostly-hero" ? GHOST_GLYPH_TINT : BODY_EDGE,
         alpha: 1,
       });
       expect(

@@ -1099,6 +1099,12 @@ export interface Skill {
    * `rechargeSeconds` is 0. Absent: it recharges by time, as every other skill.
    */
   readonly rechargesOnMoraleBoost?: true;
+  /**
+   * A map NPC's own action, as King of the Hill's Claim Resource
+   * (#1377): never listed for a player, and refused on a player's bar.
+   * Absent: a player's skill.
+   */
+  readonly npcOnly?: true;
   /** Maximum distance to target, in world units. */
   readonly range: number;
   /** What must be selected, and whether the cast is legal. */

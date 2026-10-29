@@ -242,7 +242,14 @@ describe("outOfRange", () => {
       self({
         sessionId: "me/c1",
         x,
-        creature: { ownerId: "me", kind: "pet", look: "beast", mode: "guard", armedAttack: null },
+        creature: {
+          ownerId: "me",
+          kind: "pet",
+          look: "beast",
+          mode: "guard",
+          armedAttack: null,
+          leaderId: null,
+        },
       });
     expect(outOfRange([slot(COMFORT)], self({}), foe(5000), pet(500), [])).toEqual([true]);
     expect(outOfRange([slot(COMFORT)], self({}), foe(5000), pet(300), [])).toEqual([false]);
@@ -264,7 +271,14 @@ describe("outOfRange", () => {
       x: 1000,
       team: 0,
       dead: true,
-      creature: { ownerId: "r", kind: "pet", look: "beast", mode: "guard", armedAttack: null },
+      creature: {
+        ownerId: "r",
+        kind: "pet",
+        look: "beast",
+        mode: "guard",
+        armedAttack: null,
+        leaderId: null,
+      },
     });
     expect(outOfRange([slot(COMFORT), slot(RESTORE_LIFE)], self({}), pet, undefined, [])).toEqual([
       false,

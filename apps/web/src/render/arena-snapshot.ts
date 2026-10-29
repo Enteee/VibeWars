@@ -300,7 +300,7 @@ export interface ArenaSnapshot {
   readonly flags: readonly RenderableFlag[];
   /** A Guild Battle's flag stand (#1225); `undefined` on any other map. */
   readonly stand: RenderableStand | undefined;
-  /** A Relic Run's altar (#1374); `undefined` on any other map. */
+  /** A Relic Run or King of the Hill altar (#1374, #1377); `undefined` on any other map. */
   readonly altar: Vec2 | undefined;
   /** Capture Points' shrines (#1378); `[]` on any other map. */
   readonly capturePoints: readonly RenderableCapturePoint[];
@@ -601,6 +601,8 @@ export const BODY_GLYPH_ALPHA = 0.6;
  * icon's 14-unit box, at `CREATURE_RADIUS`. Opaque, as the study draws it.
  */
 export const CREATURE_GLYPH_SIZE = 13.3;
+/** A Ghostly Hero's glyph (#1377): the priest's, pale, until its own is drawn. */
+export const GHOST_GLYPH_TINT = 0xdfe8f2;
 
 /** What a body glyph shows: its primary profession, or a creature's kind (#1162). */
 export type BodyGlyph =
@@ -623,8 +625,8 @@ export interface BodyGlyphLayout {
  * on the team colour, under the weapon mark. World sized, so it scales
  * with the body at every zoom. A player's is its primary profession's, at
  * 60 %, shrunk to fit its flattened disc when knocked down; a creature's
- * is its kind's (#1162), opaque, and its shape never lies down. A corpse
- * greys it.
+ * is its kind's (#1162), opaque, and its shape never lies down; a
+ * Ghostly Hero's pale (#1377). A corpse greys it.
  *
  * `undefined`: neither a profession nor a creature, so no glyph.
  */
@@ -656,7 +658,7 @@ export function bodyGlyphLayout(actor: RenderableActor): BodyGlyphLayout | undef
     x,
     y,
     size: actor.knockedDown && !creature ? size * LYING_WIDTH : size,
-    tint: BODY_EDGE,
+    tint: actor.creatureLook === "ghostly-hero" ? GHOST_GLYPH_TINT : BODY_EDGE,
     alpha: creature ? 1 : BODY_GLYPH_ALPHA,
   };
 }

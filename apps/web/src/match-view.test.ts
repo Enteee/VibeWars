@@ -63,6 +63,8 @@ function match(players: readonly PlayerSnapshot[]): MatchSnapshot {
     aggression: [],
     relics: [],
     altar: undefined,
+    altarHolder: undefined,
+    altarHeldSeconds: 0,
     capturePoints: [],
     summary: undefined,
   };
@@ -92,6 +94,7 @@ describe("toArenaSnapshot", () => {
         look: "bone-minion",
         mode: null,
         armedAttack: null,
+        leaderId: null,
       },
     };
     const arena = toArenaSnapshot(match([player("me", 0), minion]), [], [], undefined, undefined);
@@ -114,6 +117,7 @@ describe("toArenaSnapshot", () => {
         look,
         mode: null,
         armedAttack: null,
+        leaderId: null,
       },
     }));
     const arena = toArenaSnapshot(
