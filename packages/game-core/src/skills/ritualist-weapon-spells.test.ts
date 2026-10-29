@@ -70,6 +70,7 @@ describe("Spirit Light Weapon (#975)", () => {
     expect(skill("ritualist.spirit-light-weapon")).toMatchObject({
       type: "weapon-spell",
       elite: true,
+      flash: false,
       target: "single-ally",
     });
   });
@@ -142,6 +143,7 @@ describe("Weapon of Aggression (#975)", () => {
     expect(skill("ritualist.weapon-of-aggression")).toMatchObject({
       type: "weapon-spell",
       elite: false,
+      flash: false,
       target: "self",
     });
   });
@@ -205,6 +207,7 @@ describe("Weapon of Quickening (#975)", () => {
     expect(skill("ritualist.weapon-of-quickening")).toMatchObject({
       type: "weapon-spell",
       elite: true,
+      flash: false,
       attributeId: "ritualist.communing",
     });
   });

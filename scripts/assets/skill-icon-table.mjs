@@ -334,4 +334,9 @@ export const SKILL_ICONS = {
   "necromancer.defile-defenses": { glyph: "hex-nobloc", modifier: "bolt" },
   "monk.scourge-enchantment": { glyph: "hex-burst", modifier: "plus" },
   "mesmer.hex-breaker": { glyph: "hex-cut", modifier: "self" },
+  // Placeholders until the asset-designer's (#1421): flash enchantments.
+  "dervish.enchanted-haste": { glyph: "speed", modifier: "plus" },
+  "dervish.heart-of-holy-flame": { glyph: "flame", modifier: "self" },
+  "dervish.balthazars-rage": { glyph: "flame", modifier: "up" },
+  "dervish.harriers-haste": { glyph: "dash", modifier: "area" },
 };

@@ -114,3 +114,53 @@ describe("an offender trigger (#1022)", () => {
     expect(fire(self, sources)).toEqual([]);
   });
 });
+
+describe("an ends-early trigger (#1421)", () => {
+  const noSpread: SpreadGainedCondition = () => [];
+
+  /** A Dervish under its own Enchanted Haste, poisoned by a foe. */
+  function hasted(): Combatant {
+    const self = makeCombatant({ id: "d", team: 0 });
+    self.statuses.apply("poison", 20, "foe");
+    self.statuses.apply("enchanted-haste", 7, "d");
+    self.statuses.drainChanges();
+    return self;
+  }
+
+  function fire(self: Combatant): string[] {
+    return self.statuses
+      .drainChanges()
+      .flatMap((change) =>
+        fireChangeTriggers(self, change, noSpread, {
+          sourceOf: (id) => (id === "d" ? self : undefined),
+          rng: createRng(1),
+          rules: MINIMAL_GW_INSPIRED_PVP_V1.combat,
+          surroundings: new Map(),
+          usedSkill: undefined,
+        }),
+      )
+      .map(({ skillId }) => skillId);
+  }
+
+  it("fires when the enchantment is removed: the bearer loses a condition", () => {
+    const self = hasted();
+    self.statuses.remove("enchanted-haste");
+    expect(fire(self)).toEqual(["dervish.enchanted-haste"]);
+    expect(self.statuses.has("poison")).toBe(false);
+  });
+
+  it("fires nothing when it runs out", () => {
+    const self = hasted();
+    self.statuses.advance(7.05, false);
+    expect(self.statuses.has("enchanted-haste")).toBe(false);
+    expect(fire(self)).toEqual([]);
+    expect(self.statuses.has("poison")).toBe(true);
+  });
+
+  it("fires nothing when it is renewed", () => {
+    const self = hasted();
+    self.statuses.apply("enchanted-haste", 7, "d");
+    expect(fire(self)).toEqual([]);
+    expect(self.statuses.has("poison")).toBe(true);
+  });
+});

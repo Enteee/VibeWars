@@ -47,7 +47,11 @@ export type {
   ResourceRules,
   Ruleset,
 } from "./ruleset.js";
-export { ADRENALINE_PER_STRIKE, MINIMAL_GW_INSPIRED_PVP_V1 } from "./ruleset.js";
+export {
+  ADRENALINE_PER_STRIKE,
+  FLASH_LOCKOUT_SECONDS,
+  MINIMAL_GW_INSPIRED_PVP_V1,
+} from "./ruleset.js";
 export { adrenalineLossIn } from "./skills/adrenaline.js";
 
 export type {

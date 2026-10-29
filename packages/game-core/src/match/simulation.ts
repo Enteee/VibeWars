@@ -64,7 +64,7 @@ import {
   spawningPowerHealth,
 } from "../primary-attributes.js";
 import { createRng, seedFromString, type SimulationRng } from "../rng.js";
-import { MINIMAL_GW_INSPIRED_PVP_V1, type Ruleset } from "../ruleset.js";
+import { FLASH_LOCKOUT_SECONDS, MINIMAL_GW_INSPIRED_PVP_V1, type Ruleset } from "../ruleset.js";
 import {
   canActivate,
   hasAftercast,
@@ -2228,9 +2228,12 @@ export class MatchSimulation {
     payCost(skill, record.combatant, key);
     this.#useGlyph(record, skill);
     // The swing in progress is lost, as in GW1; the attack itself resumes
-    // once the skill is done.
-    if (record.combatant.attack !== undefined) {
+    // once the skill is done. A flash enchantment keeps it (#1421).
+    if (record.combatant.attack !== undefined && !skill.flash) {
       record.combatant.attack.swingElapsed = 0;
+    }
+    if (skill.flash) {
+      this.#lockOutFlash(record, skill.id, key);
     }
     const activationSeconds =
       skill.attack === undefined
@@ -2259,6 +2262,44 @@ export class MatchSimulation {
       record.walkGoal = undefined;
     }
     return { skillId: skill.id, check };
+  }
+
+  /**
+   * A flash enchantment used disables its caster's other flash skills for
+   * `FLASH_LOCKOUT_SECONDS` (#1421), as GW1's rule of the type rather than
+   * an effect each skill lists. A longer recharge is kept, and logs no
+   * disable.
+   */
+  #lockOutFlash(record: ParticipantRecord, usedId: string, usedKey: string): void {
+    const { combatant } = record;
+    const events: CombatEvent[] = [];
+    for (const slot of resolvedBar(record.skillBar, combatant.cast)) {
+      if (slot === null || slot.key === usedKey || getSkill(slot.skillId)?.flash !== true) {
+        continue;
+      }
+      if (combatant.cast.disable(slot.key, FLASH_LOCKOUT_SECONDS)) {
+        events.push({
+          kind: "skill-disabled",
+          targetId: record.id,
+          skillId: slot.skillId,
+          seconds: FLASH_LOCKOUT_SECONDS,
+        });
+      }
+    }
+    if (events.length > 0) {
+      this.#log.push({
+        tick: this.#tick,
+        atSeconds: this.#elapsedSeconds,
+        cause: "skill",
+        sourceId: record.id,
+        skillId: usedId,
+        weaponId: undefined,
+        attributeId: undefined,
+        area: undefined,
+        doubleStrike: false,
+        events,
+      });
+    }
   }
 
   /**

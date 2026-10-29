@@ -1069,6 +1069,12 @@ export interface Skill {
    */
   readonly elite: boolean;
   /**
+   * A GW1 flash enchantment (#1421): instant, it keeps the caster's swing
+   * and stride, and disables the caster's other flash skills for
+   * `FLASH_LOCKOUT_SECONDS`. Always a 0 s enchantment on the caster.
+   */
+  readonly flash: boolean;
+  /**
    * The profession this skill belongs to, and therefore who may equip it:
    * a character whose primary or secondary it is (brief §6's skill shape).
    *
