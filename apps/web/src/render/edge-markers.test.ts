@@ -136,6 +136,17 @@ describe("edgeMarkers' keep-out panels (#1424)", () => {
     expect(marker?.y).toBeCloseTo(250 - CLEAR);
   });
 
+  it("steps inward past both panels when together they cover the whole edge in reach", () => {
+    // A short window: the compass, then a wider party window right under it.
+    const marker = markerWith(DUE_RIGHT, [
+      { left: 680, top: 0, right: 800, bottom: 300 },
+      { left: 640, top: 302, right: 800, bottom: 600 },
+    ]);
+    expect(marker?.x).toBeCloseTo(640 - CLEAR);
+    expect(marker?.y).toBeCloseTo(300);
+    expect(marker?.angle).toBeCloseTo(0);
+  });
+
   it("leaves a marker no panel covers where it was", () => {
     const keepOut = [{ left: 650, top: 0, right: 800, bottom: 200 }];
     expect(markerWith(DUE_RIGHT, keepOut)).toEqual(markerWith(DUE_RIGHT, []));

@@ -81,8 +81,8 @@ export function edgeMarkers(
     const x = centreX + dx * t;
     const y = centreY + dy * t;
     const slid = alongX
-      ? { x: slide(x, y, cover.keepOut, "x", centreX - reachX, centreX + reachX), y }
-      : { x, y: slide(y, x, cover.keepOut, "y", centreY - reachY, centreY + reachY) };
+      ? slide(x, y, Math.sign(centreY - y), cover.keepOut, "x", centreX - reachX, centreX + reachX)
+      : slide(y, x, Math.sign(centreX - x), cover.keepOut, "y", centreY - reachY, centreY + reachY);
     markers.push({
       id: thing.id,
       kind: thing.kind,
@@ -107,34 +107,50 @@ function under(x: number, y: number, rect: ScreenRect): boolean {
 }
 
 /**
- * Where along its edge a marker goes to be under no keep-out panel
- * (#1424): unmoved if it is under none, else just past whichever end of a
- * panel is nearest and in reach (`min` … `max`) and under none, the
- * lower end on a tie. `along` is the coordinate that moves, `across` the
- * one that stays; `axis` says which is x. With no such end, unmoved.
+ * Where a marker goes to be under no keep-out panel (#1424): unmoved if it
+ * is under none, else along its edge just past whichever end of a panel is
+ * nearest and in reach (`min` … `max`) and under none, the lower end on a
+ * tie. With no such end, as when a short window's edge is all compass and
+ * party window, it steps inward instead, past the inner side of every panel
+ * it lands under. `along` is the coordinate that moves along the edge,
+ * `across` the one that stays, `inward` the sign of the way to the centre
+ * across; `axis` says which is x.
  */
 function slide(
   along: number,
   across: number,
+  inward: number,
   keepOut: readonly ScreenRect[],
   axis: "x" | "y",
   min: number,
   max: number,
-): number {
-  const at = (value: number): readonly [number, number] =>
-    axis === "x" ? [value, across] : [across, value];
-  const covered = (value: number): boolean => keepOut.some((rect) => under(...at(value), rect));
-  if (!covered(along)) {
-    return along;
+): Vec2 {
+  const point = (alongAt: number, acrossAt: number): Vec2 =>
+    axis === "x" ? { x: alongAt, y: acrossAt } : { x: acrossAt, y: alongAt };
+  const coverOf = (alongAt: number, acrossAt: number): ScreenRect | undefined => {
+    const { x, y } = point(alongAt, acrossAt);
+    return keepOut.find((rect) => under(x, y, rect));
+  };
+  if (coverOf(along, across) === undefined) {
+    return point(along, across);
   }
   const clear = EDGE_MARKER_HALF_PX + KEEP_OUT_GAP_PX;
-  const ends = keepOut
+  const [end] = keepOut
     .flatMap((rect) =>
       axis === "x"
         ? [rect.left - clear, rect.right + clear]
         : [rect.top - clear, rect.bottom + clear],
     )
-    .filter((end) => end >= min && end <= max && !covered(end))
+    .filter((value) => value >= min && value <= max && coverOf(value, across) === undefined)
     .sort((a, b) => Math.abs(a - along) - Math.abs(b - along) || a - b);
-  return ends[0] ?? along;
+  if (end !== undefined) {
+    return point(end, across);
+  }
+  // Each step clears one panel for good, so this ends within keepOut.length.
+  let inside = across;
+  for (let rect = coverOf(along, inside); rect !== undefined; rect = coverOf(along, inside)) {
+    const [low, high] = axis === "x" ? [rect.top, rect.bottom] : [rect.left, rect.right];
+    inside = inward < 0 ? low - clear : high + clear;
+  }
+  return point(along, inside);
 }
