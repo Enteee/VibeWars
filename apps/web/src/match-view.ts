@@ -330,7 +330,9 @@ export async function startMatchView(
     // The chat panel (#479) sits just above the HUD, wherever its top is.
     parent.style.setProperty("--hud-height", `${String(hud.root.offsetHeight)}px`);
     // The compass and the party window, from the parent the canvas fills
-    // (#1424). A hidden party window has no size and keeps nothing out.
+    // (#1424). A hidden party window has no size and keeps nothing out; a
+    // hidden compass keeps its box, so it keeps markers out either way and
+    // nothing goes stale when it shows.
     const origin = parent.getBoundingClientRect();
     const keepOut = [compass.element, partyWindow.element]
       .map((element) => element.getBoundingClientRect())
@@ -351,6 +353,9 @@ export async function startMatchView(
   coverObserver.observe(hud.root);
   coverObserver.observe(hud.bars);
   coverObserver.observe(hud.top);
+  // The parent is the viewport: a height-only resize re-centres the party
+  // window without resizing it.
+  coverObserver.observe(parent);
   // The party window grows with its members; the compass with the window.
   coverObserver.observe(compass.element);
   coverObserver.observe(partyWindow.element);
