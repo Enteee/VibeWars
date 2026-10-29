@@ -1,7 +1,8 @@
 import { defaultBuildEquipment } from "@vibewars/game-core";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
+  BLOCKED_NOTICE,
   CharacterRepository,
   MATCH_RECORD_CAP,
   MatchRecordRepository,
@@ -10,6 +11,7 @@ import {
   discardedCharactersNotice,
   discardedMatchRecordsNotice,
   discardedTeamsNotice,
+  openIndexedDbStore,
 } from "./repository.js";
 import {
   CHARACTER_SCHEMA_VERSION,
@@ -282,5 +284,50 @@ describe("MatchRecordRepository (#1404)", () => {
     await repo.deleteFor("a");
     const { records } = await repo.list();
     expect(records.map((r) => r.id)).toEqual(["b1"]);
+  });
+});
+
+describe("openIndexedDbStore and other tabs (#1404)", () => {
+  /** The handlers the store sets on an open request and its database. */
+  interface FakeOpen {
+    onblocked: (() => void) | null;
+    onsuccess: (() => void) | null;
+    onupgradeneeded: (() => void) | null;
+    onerror: (() => void) | null;
+    result: { onversionchange: (() => void) | null; close: () => void };
+  }
+
+  function stubOpen(): FakeOpen {
+    const request: FakeOpen = {
+      onblocked: null,
+      onsuccess: null,
+      onupgradeneeded: null,
+      onerror: null,
+      result: { onversionchange: null, close: vi.fn() },
+    };
+    vi.stubGlobal("indexedDB", { open: () => request });
+    return request;
+  }
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("says so when another tab's older build holds the store open", () => {
+    const request = stubOpen();
+    const onBlocked = vi.fn();
+    void openIndexedDbStore(onBlocked);
+    request.onblocked?.();
+    expect(onBlocked).toHaveBeenCalledOnce();
+    expect(BLOCKED_NOTICE).toBe("Close your other VibeWars tabs to continue.");
+  });
+
+  it("closes when a newer build's tab opens it, so that tab never waits", async () => {
+    const request = stubOpen();
+    const opened = openIndexedDbStore(() => undefined);
+    request.onsuccess?.();
+    await opened;
+    request.result.onversionchange?.();
+    expect(request.result.close).toHaveBeenCalledOnce();
   });
 });

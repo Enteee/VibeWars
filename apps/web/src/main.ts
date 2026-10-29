@@ -44,6 +44,7 @@ import { music } from "./music/play-music.js";
 import { TRACKS } from "./music/tracks/index.js";
 import { STRESS_BUILD, startStress, stressMs } from "./music/stress.js";
 import {
+  BLOCKED_NOTICE,
   CharacterRepository,
   MatchRecordRepository,
   TeamRepository,
@@ -139,7 +140,12 @@ function setStatus(text: string, state: StatusState): void {
 /** The store builds are kept in; `persistent` unless it lives only in memory. */
 async function openStore(): Promise<{ store: KeyValueStore; persistent: boolean }> {
   try {
-    return { store: await openIndexedDbStore(), persistent: true };
+    return {
+      store: await openIndexedDbStore(() => {
+        setStatus(BLOCKED_NOTICE, "error");
+      }),
+      persistent: true,
+    };
   } catch (error) {
     // Private browsing and some locked-down configurations deny
     // IndexedDB. Falling back to memory keeps the game playable for this

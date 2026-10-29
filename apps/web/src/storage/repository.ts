@@ -94,9 +94,19 @@ function committed(tx: IDBTransaction): Promise<void> {
   });
 }
 
-export function openIndexedDbStore(): Promise<KeyValueStore> {
+/** What the bar says while another tab's older build holds the store open (#1404). */
+export const BLOCKED_NOTICE = "Close your other VibeWars tabs to continue.";
+
+/**
+ * Open the store. `onBlocked` runs if another tab holds an older version
+ * open: the open waits for that tab to close, and the player has to be
+ * told, or the page just sits blank.
+ */
+export function openIndexedDbStore(onBlocked: () => void): Promise<KeyValueStore> {
   return new Promise<KeyValueStore>((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+    request.onblocked = onBlocked;
 
     request.onupgradeneeded = () => {
       const db = request.result;
@@ -117,6 +127,11 @@ export function openIndexedDbStore(): Promise<KeyValueStore> {
 
     request.onsuccess = () => {
       const db = request.result;
+      // A newer build's tab never waits on this one. Its store calls fail
+      // after, and are caught like any other failed write.
+      db.onversionchange = () => {
+        db.close();
+      };
       resolve({
         async get<T>(store: string, key: string): Promise<T | undefined> {
           const tx = db.transaction(store, "readonly");
