@@ -132,6 +132,8 @@ export type StatusId =
   // Shadow Arts (#1326).
   | "feigned-neutrality"
   | "way-of-perfection"
+  // Swordsmanship (#1354).
+  | "hundred-blades"
   // Paragon shouts (#921).
   | "fall-back"
   | "stand-your-ground"
@@ -634,6 +636,12 @@ export interface StatusTrigger {
    */
   readonly effects: readonly TriggerEffect[];
   readonly target: "bearer" | "source" | "offender" | "created";
+  /**
+   * On `bearer-attacks` only (#1354): it fires only for an attack made
+   * with a weapon of this class in the bearer's main hand, as Hundred
+   * Blades' "whenever you attack with a sword". Absent: any attack.
+   */
+  readonly weapon?: AttackWeaponClass;
   /** The skill the log names it after: "mesmer.backfire". */
   readonly skillId: string;
 }
@@ -1336,6 +1344,32 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   "way-of-perfection": define("way-of-perfection", "Way of Perfection", "enchantment", {
     profession: "assassin",
     healthPerCritical: 34,
+  }),
+  // "For 15 seconds, whenever you attack with a sword, all adjacent foes
+  // take 10...30 slashing damage" (PvP, #1354): 26, its rank-12 value. Any
+  // attack, an auto-attack or a skill, hit or not. The splash is centred
+  // on the bearer and leaves it out.
+  "hundred-blades": define("hundred-blades", "Hundred Blades", "skill-effect", {
+    profession: "warrior",
+    triggers: [
+      {
+        on: "bearer-attacks",
+        weapon: "sword",
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_ADJACENT,
+            maxTargets: undefined,
+            effects: [
+              { kind: "damage", amount: { flat: 26 }, type: "slashing", armorPenetration: 0 },
+            ],
+          },
+        ],
+        target: "bearer",
+        skillId: "warrior.hundred-blades",
+      },
+    ],
   }),
   // "For 4...10 seconds, you have a 75% chance to block. Critical Defenses
   // refreshes every time you land a critical hit" (#1315).

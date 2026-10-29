@@ -282,6 +282,15 @@ export const SKILL_ICONS = {
   "assassin.feigned-neutrality": { glyph: "crescent", modifier: "self" },
   "assassin.way-of-perfection": { glyph: "crescent", modifier: "bolt" },
   "assassin.caltrops": { glyph: "limp", modifier: "bleed" },
+  // Placeholders until the asset-designer's (#1354): Swordsmanship.
+  "warrior.hamstring": { glyph: "limp", modifier: "down" },
+  "warrior.pure-strike": { glyph: "sword", modifier: "plus" },
+  "warrior.gash": { glyph: "sword", modifier: "half" },
+  "warrior.final-thrust": { glyph: "sword", modifier: "less" },
+  "warrior.galrath-slash": { glyph: "sword" },
+  "warrior.savage-slash": { glyph: "sword", modifier: "stun" },
+  "warrior.hundred-blades": { glyph: "sword", modifier: "hourglass" },
+  "warrior.dragon-slash": { glyph: "sword", modifier: "bolt" },
   // Placeholders until the asset-designer's (#1329): Tactics stances.
   "warrior.bonettis-defense": { glyph: "shield-bolt", modifier: "plus" },
   "warrior.deflect-arrows": { glyph: "shield-bolt", modifier: "bleed" },
