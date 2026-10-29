@@ -758,7 +758,9 @@ export function applyStatus(
  * `statusId` on `target` for `durationSeconds`, from `sourceId`, as every
  * skill puts one on: what it ends (#919), the health it takes as it lands
  * (#800) and Dazed's interrupt, each reported. A refused one (#1208)
- * does none of it, and the target says it is invulnerable (#1233).
+ * does none of it, and the target says it is invulnerable (#1233). A hex
+ * a status breaks (#1403) does none of it either: that status is reported
+ * ended.
  */
 function landStatus(
   target: Combatant,
@@ -768,9 +770,16 @@ function landStatus(
   events: CombatEvent[],
 ): void {
   const ending = endedByGaining(target, statusId);
+  const breaker =
+    getStatusDefinition(statusId).category === "hex" ? target.statuses.hexBreaker() : undefined;
   const loss = applyStatus(target, statusId, durationSeconds, sourceId);
   if (loss === undefined) {
     events.push({ kind: "invulnerable", targetId: target.id });
+    return;
+  }
+  // Hex Breaker (#1403): the hex fails, and the stance is spent.
+  if (breaker !== undefined && !target.statuses.has(breaker)) {
+    reportEnded(target, [breaker], events);
     return;
   }
   events.push({ kind: "status-applied", targetId: target.id, statusId, durationSeconds });

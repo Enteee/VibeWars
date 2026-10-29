@@ -988,6 +988,35 @@ const status = {
       `<path d="M5 14c2 0 3 1 4 2h5c1 0 1.5-1.5 0-1.5h-3M5 18h9l5-4" ${stroke(c, 1.8)}/>` +
       `<path d="M13 5v6M10 8h6" ${stroke(c, 2.2)}/>`,
   ],
+  // Hex: a barbed line under a spark, any hex or enchantment hurts (#1403).
+  "soul-barbs": [
+    "hex",
+    (c) =>
+      `<path d="M4 15h16" ${stroke(c, 2)}/>` +
+      `<path d="M7 15l2-3M11 15l2-3M15 15l2-3" ${stroke(c, 1.6)}/>` +
+      `<path d="M12 4v5M9.5 6.5h5" ${stroke(c, 1.8)}/>`,
+  ],
+  // Hex: a shield with a bolt, the next block hurts (#1403).
+  "defile-defenses": [
+    "hex",
+    (c) =>
+      `<path d="M7 6h10v5c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7z" ${stroke(c, 2)}/>` +
+      `<path d="M13 7l-3 4h4l-3 4" ${stroke(c, 1.6)}/>`,
+  ],
+  // Hex: a plus with rays thrown back, the enchanter is smitten (#1403).
+  "scourge-enchantment": [
+    "hex",
+    (c) =>
+      `<path d="M12 8v8M8 12h8" ${stroke(c, 2.4)}/>` +
+      `<path d="M5 5l2.5 2.5M19 5l-2.5 2.5M5 19l2.5-2.5M19 19l-2.5-2.5" ${stroke(c, 1.6)}/>`,
+  ],
+  // Stance: a broken ring, the next hex fails (#1403).
+  "hex-breaker": [
+    "stance",
+    (c) =>
+      `<path d="M10 5.3A7 7 0 1 0 18.7 10M14 5.3A7 7 0 0 1 18.7 10" ${stroke(c, 2.2)}/>` +
+      `<path d="M11 4l2 3-2 1 2 3" ${stroke(c, 1.6)}/>`,
+  ],
 };
 
 // ---------------------------------------------------------------------------

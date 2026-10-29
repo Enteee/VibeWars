@@ -116,6 +116,7 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
     status.attackDamageCapFraction !== undefined ||
     status.lifeStealReduction > 0 ||
     status.reversesNextDamage !== undefined ||
+    status.breaksNextHex !== undefined ||
     status.incomingHexCastTimeMultiplier > 1
   ) {
     roles.push("defence");

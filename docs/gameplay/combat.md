@@ -386,6 +386,21 @@ heal; with Lingering Curse too, the healing floor of 60% holds.
 **Rigor Mortis** (18 s): the target cannot block at all, from any
 attacker, whatever stance it is in.
 
+Four skills punish hex and enchantment spam and block stances (#1403).
+**Soul Barbs** (hex, 30 s): each hex or enchantment that lands on the
+target, from friend or foe, deals it 27 typeless damage from the
+Necromancer. A renewal counts; a recast the running one outlasts does
+not, and Soul Barbs' own landing does nothing. **Scourge Enchantment**
+(Smiting hex, 30 s): each enchantment that lands on the target costs
+whoever cast it 63 holy damage, the target itself if it enchanted
+itself. **Defile Defenses** (hex, 17 s): the next time the target blocks
+any attack, by any stance or enchantment, it takes 102 typeless damage,
+and the hex ends. **Hex Breaker** (Domination stance, 65 s): the next
+hex cast on you fails, its caster takes 39 typeless damage, and the
+stance ends. Only the hex fails: the spell's damage still lands, and an
+area hex still hexes everyone else. A hex that fails sets off no Soul
+Barbs.
+
 **Life steal** (Vampiric Gaze steals 52 at Blood Magic 12, Insidious
 Parasite 39) is not damage. The target loses up to that much, never more
 than it has, and the caster gains exactly what was taken, up to its

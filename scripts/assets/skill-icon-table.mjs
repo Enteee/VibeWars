@@ -332,4 +332,9 @@ export const SKILL_ICONS = {
   "warrior.staggering-blow": { glyph: "hammer", modifier: "less" },
   "warrior.earth-shaker": { glyph: "hammer-slam", modifier: "area" },
   "warrior.devastating-hammer": { glyph: "hammer-slam", modifier: "less" },
+  // Placeholders until the asset-designer's (#1403): hex and enchantment gain triggers.
+  "necromancer.soul-barbs": { glyph: "hex-barbs", modifier: "plus" },
+  "necromancer.defile-defenses": { glyph: "hex-nobloc", modifier: "bolt" },
+  "monk.scourge-enchantment": { glyph: "hex-burst", modifier: "plus" },
+  "mesmer.hex-breaker": { glyph: "hex-cut", modifier: "self" },
 };

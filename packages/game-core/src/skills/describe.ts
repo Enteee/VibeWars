@@ -377,6 +377,11 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.sourceLosesHealth !== undefined) {
     parts.push(`its spirit loses ${String(definition.sourceLosesHealth)} health each time`);
   }
+  if (definition.breaksNextHex !== undefined) {
+    parts.push(
+      `the next hex fails, and its caster takes ${String(definition.breaksNextHex.damage)} damage`,
+    );
+  }
   if (definition.reversesNextDamage !== undefined) {
     parts.push(
       `the next damage or life steal heals for that much instead, up to ${String(definition.reversesNextDamage)}`,
@@ -479,6 +484,9 @@ const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-takes-damage-from-foe": "takes damage or life steal from a foe",
   "bearer-blocks-melee": "blocks a melee attack",
   "bearer-blocks-projectile": "blocks a projectile attack",
+  "bearer-blocks": "blocks",
+  "bearer-gains-hex-or-enchantment": "gains a hex or an enchantment",
+  "bearer-gains-enchantment": "gains an enchantment",
   "bearer-creates-creature": "creates a creature",
   "bearer-gains-condition": "gains a new condition",
   ends: "ends",
@@ -698,6 +706,17 @@ function describeTrigger(
     }
     if (effect.kind === "damage" && trigger.target === "bearer") {
       return [clause(`takes ${amount(effect.amount)} damage ${when}`)];
+    }
+    // Scourge Enchantment's (#1403): "whenever it gains an enchantment,
+    // its caster takes 63 holy damage".
+    if (effect.kind === "damage" && trigger.target === "gained-source") {
+      const gained =
+        trigger.on === "bearer-gains-enchantment" ? "enchantment" : "hex or enchantment";
+      return [
+        clause(
+          `${when}, the caster of that ${gained} takes ${amount(effect.amount)} ${effect.type} damage`,
+        ),
+      ];
     }
     if (effect.kind === "heal" && trigger.target === "source") {
       return [clause(`heals its caster for ${amount(effect.amount)} ${when}`)];
