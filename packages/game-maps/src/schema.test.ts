@@ -639,3 +639,53 @@ describe("capture points maps (#1378)", () => {
     );
   });
 });
+
+describe("king of the hill maps (#1377)", () => {
+  const hillMap = {
+    ...validMap,
+    mode: "king-of-the-hill",
+    walls: [],
+    spawnPoints: [
+      { team: 0, position: { x: 20, y: 50 } },
+      { team: 1, position: { x: 80, y: 50 } },
+    ],
+    objectives: [
+      { kind: "ghost-spawn", team: 0, position: { x: 20, y: 30 } },
+      { kind: "ghost-spawn", team: 1, position: { x: 80, y: 70 } },
+      { kind: "altar", position: { x: 50, y: 50 } },
+    ],
+  };
+
+  it("accepts one ghost spawn per spawning team and one altar", () => {
+    expect(validateMapData(hillMap).objectives).toHaveLength(3);
+  });
+
+  it("refuses a team with no ghost spawn", () => {
+    expect(() =>
+      validateMapData({
+        ...hillMap,
+        objectives: hillMap.objectives.filter(
+          (candidate) => !(candidate.kind === "ghost-spawn" && candidate.team === 1),
+        ),
+      }),
+    ).toThrow(/team 1 has 0 ghost spawns, not one/);
+  });
+
+  it("refuses a king of the hill map with no altar", () => {
+    expect(() =>
+      validateMapData({
+        ...hillMap,
+        objectives: hillMap.objectives.filter((candidate) => candidate.kind !== "altar"),
+      }),
+    ).toThrow(/king-of-the-hill map has 0 altars, not one/);
+  });
+
+  it("refuses a ghost spawn on a map of any other mode", () => {
+    expect(() =>
+      validateMapData({
+        ...validMap,
+        objectives: [{ kind: "ghost-spawn", team: 0, position: { x: 50, y: 50 } }],
+      }),
+    ).toThrow(/annihilation map has no ghost spawn/);
+  });
+});

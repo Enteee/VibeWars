@@ -54,7 +54,7 @@ the code and `scripts/assets/icons.mjs` copy them.
 | `glyph`        | `#c3e88d` | Glyph markers                            |
 | `weapon-spell` | `#8b9cff` | Weapon spell markers                     |
 | `invulnerable` | `#f5e6b8` | A shrine-raised body's shimmer (#1233)   |
-| `altar`        | `#c8a45a` | A Relic Run's altar on the compass       |
+| `altar`        | `#c8a45a` | A Relic Run or King of the Hill altar    |
 
 ### HUD bars
 
@@ -420,9 +420,9 @@ the arena does not. A body beyond it is not on it: the edge markers
   shown.
 - **Your target**: a 1 px `target` ring 2 px outside its dot.
 - **The called foe**: a small `condition` chevron over its dot.
-- **A Relic Run's altar** (#1388): a filled `altar` `◆`, 10 px tip to
-  tip, on a 1 px `edge` rim, under the bodies. Not pinned to the rim when
-  out of reach.
+- **A Relic Run or King of the Hill altar** (#1388, #1377): a filled `altar`
+  `◆`, 10 px tip to tip, on a 1 px `edge` rim, under the bodies. Not
+  pinned to the rim when out of reach.
 - **A Capture Points shrine** (#1407): a 12 px `□`, a 1.5 px stroke in
   its owner's colour, `friend` or `foe`, `ink-dim` while nobody holds it.
   Its capture progress is the arena's to show, not the compass's.

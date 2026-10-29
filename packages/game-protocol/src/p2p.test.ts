@@ -183,6 +183,7 @@ const minion: WirePlayer = {
     look: "bone-minion",
     mode: null,
     armedAttack: null,
+    leaderId: null,
   },
 };
 
@@ -233,6 +234,8 @@ const snapshot: WireSnapshotPart = {
   aggression: [],
   relics: [],
   altar: null,
+  altarHolder: null,
+  altarHeldSeconds: 0,
   capturePoints: [],
 };
 
@@ -255,6 +258,14 @@ const relicked: WireSnapshotPart = {
     { team: 1, place: "ground", carrierId: null, x: 1300, y: 500 },
   ],
   altar: { x: 1100, y: 700 },
+};
+
+/** King of the Hill's altar (#1377), held by team 1 for 12.5 s. */
+const hill: WireSnapshotPart = {
+  ...snapshot,
+  altar: { x: 1000, y: 700 },
+  altarHolder: 1,
+  altarHeldSeconds: 12.5,
 };
 
 /** Capture Points' shrines (#1378): one ours, one being drained by the foe, one neutral. */
@@ -518,6 +529,7 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
             look: "beast",
             mode: "heel",
             armedAttack: null,
+            leaderId: null,
           },
         },
       ],
@@ -539,6 +551,7 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
             look: "beast",
             mode: "fight",
             armedAttack: { skillId: "ranger.brutal-strike", endsAt: 12.1 },
+            leaderId: null,
           },
         },
       ],
@@ -581,6 +594,7 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
             look: "spirit",
             mode: null,
             armedAttack: null,
+            leaderId: null,
           },
         },
       ],
@@ -601,6 +615,7 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
             look: "priest",
             mode: null,
             armedAttack: null,
+            leaderId: null,
           },
         },
       ],
@@ -622,6 +637,7 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
     },
   ],
   ["snapshot with relics and an altar (#1374)", parseWireSnapshotPart, relicked],
+  ["snapshot with a held altar (#1377)", parseWireSnapshotPart, hill],
   ["snapshot with capture points (#1378)", parseWireSnapshotPart, shrined],
   ["combat batch", parseWireCombatBatch, combatBatch],
   ["skill-bar", parseWireSkillBar, skillBar],
@@ -962,6 +978,21 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     parseWireSnapshotPart,
     { ...relicked, altar: { x: 1100 } },
   ],
+  [
+    "snapshot without an altar holder (#1377)",
+    parseWireSnapshotPart,
+    { ...hill, altarHolder: undefined },
+  ],
+  [
+    "snapshot with an altar held by team 2 (#1377)",
+    parseWireSnapshotPart,
+    { ...hill, altarHolder: 2 },
+  ],
+  [
+    "snapshot with an altar held for negative seconds (#1377)",
+    parseWireSnapshotPart,
+    { ...hill, altarHeldSeconds: -1 },
+  ],
   ["snapshot in zero parts", parseWireSnapshotPart, { ...snapshot, parts: 0 }],
   [
     "snapshot in too many parts",
@@ -1044,6 +1075,7 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
           creature: {
             ...minion.creature,
             armedAttack: { skillId: "ranger.brutal-strike", endsAt: Number.POSITIVE_INFINITY },
+            leaderId: null,
           },
         },
       ],

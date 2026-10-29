@@ -52,6 +52,7 @@ const RANGE_LONG = 520;
  */
 const MINION_BEHAVIOUR: Behaviour = {
   kind: "follow-and-attack",
+  drawnTo: undefined,
   engage: "owner-target-then-nearest",
   aggroUnits: AREA_EARSHOT,
   leashUnits: RANGE_SPELL,
@@ -122,6 +123,7 @@ const BONE_HORROR: CreatureTemplate = {
  */
 const PET_BEHAVIOUR: Behaviour = {
   kind: "follow-and-attack",
+  drawnTo: undefined,
   engage: "owner-target",
   aggroUnits: PET_REACH,
   leashUnits: PET_REACH,
@@ -11180,8 +11182,43 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   },
 ];
 
+/**
+ * The skills only a map's NPC uses (#1377), each `npcOnly`: found by
+ * `getSkill`, so the simulation casts them as any other, but in no list
+ * a player picks from, and refused on a player's bar.
+ */
+export const NPC_SKILLS: readonly Skill[] = [
+  {
+    // King of the Hill's Ghostly Hero claims the altar with it (#1377,
+    // GW1): 5 s standing still, cut short by an interrupt or a knockdown
+    // as a spell is. What a finished one does is the simulation's.
+    id: "npc.claim-resource",
+    name: "Claim Resource",
+    gwId: undefined,
+    type: "spell",
+    elite: false,
+    profession: "common",
+    attributeId: undefined,
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 5,
+    rechargeSeconds: 0,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    npcOnly: true,
+    effects: [],
+  },
+];
+
 export const SKILLS_BY_ID: ReadonlyMap<string, Skill> = new Map(
-  IMPLEMENTED_SKILLS.map((skill) => [skill.id, skill]),
+  [...IMPLEMENTED_SKILLS, ...NPC_SKILLS].map((skill) => [skill.id, skill]),
 );
 
 export function getSkill(id: string): Skill | undefined {

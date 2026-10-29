@@ -66,6 +66,7 @@ function creature(
       onDeath: kind === "pet" ? "lie" : "vanish",
       ownerDisableSeconds: 0,
       companionSkillId: undefined,
+      leaderId: undefined,
       mode: "guard",
     },
   };

@@ -2567,6 +2567,15 @@ body {
   display: none;
 }
 
+.hud-target-leader {
+  margin-left: 0.6rem;
+  color: var(--ink-dim);
+}
+
+.hud-target-leader[hidden] {
+  display: none;
+}
+
 .hud-result {
   position: absolute;
   top: 38%;
