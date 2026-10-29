@@ -686,6 +686,12 @@ function authorizeAs(role, request, acting, employee) {
     // employee lists and removes only its own watches.
     return { allow: true };
   }
+  if (request.kind === "wiki") {
+    // Every role researches GW1 on the wiki (#1380). hubd checks the words
+    // and fetches only from the wiki and Wayback; it holds no credential
+    // there to misuse.
+    return { allow: true };
+  }
   if (request.kind === "rank") {
     // The Backlog's order is the manager's to keep (#351). hubd checks the
     // words and the cards; roles never get GraphQL of their own.

@@ -63,6 +63,8 @@ export const CHANNELS = [
   "match-start",
   "rejoin-challenge",
   "rejoin-proof",
+  "observe",
+  "observing",
   "call",
   "calls",
   "traps",
@@ -251,9 +253,45 @@ export interface PeerWelcome {
   readonly map: MapDescriptor;
 }
 
+/**
+ * A lobby spectator to the match host (#480): let me watch `matchId`. The
+ * host answers `observing`, or `refuse`. A viewer is never a player: it
+ * says this, not `hello`, and has no seat to come back to.
+ */
+export interface PeerObserve {
+  /** `PROTOCOL_VERSION`; the host refuses any other, so it is not checked here. */
+  readonly protocolVersion: string;
+  readonly matchId: string;
+}
+
+/**
+ * Host to one viewer: it may watch. What it needs before its first
+ * snapshot, which comes `delaySeconds` late, as everything after it does.
+ */
+export interface PeerObserving {
+  readonly protocolVersion: string;
+  readonly tickIntervalMs: number;
+  /** How long the match runs, by its map's mode (#476): the clock counts down from it. */
+  readonly timeLimitSeconds: number;
+  /** How far behind the match every snapshot, combat and `ended` it is sent is. */
+  readonly delaySeconds: number;
+  readonly map: MapDescriptor;
+}
+
+/** The reasons a match host turns a peer away. */
+export const PEER_REFUSALS = [
+  "protocol-mismatch",
+  "match-full",
+  "match-over",
+  // An `observe` (#480) from a peer the lobby has on a team, or not at all;
+  // one for a match that is not the one being played.
+  "not-a-spectator",
+  "wrong-match",
+] as const;
+
 /** Host to one client: it is not in, and why. */
 export interface PeerRefuse {
-  readonly reason: "protocol-mismatch" | "match-full" | "match-over";
+  readonly reason: (typeof PEER_REFUSALS)[number];
   /** What the player is shown. */
   readonly message: string;
 }
@@ -1064,6 +1102,13 @@ export function parsePeerHello(value: unknown): PeerHello | undefined {
       };
 }
 
+export function parsePeerObserve(value: unknown): PeerObserve | undefined {
+  const raw = fields(value);
+  return raw !== undefined && isString(raw.protocolVersion) && isString(raw.matchId)
+    ? { protocolVersion: raw.protocolVersion, matchId: raw.matchId }
+    : undefined;
+}
+
 export function parsePeerRejoinChallenge(value: unknown): PeerRejoinChallenge | undefined {
   const raw = fields(value);
   return raw !== undefined && isString(raw.playerId) && isRejoinToken(raw.nonce)
@@ -1228,10 +1273,36 @@ export function parsePeerWelcome(value: unknown): PeerWelcome | undefined {
       };
 }
 
+export function parsePeerObserving(value: unknown): PeerObserving | undefined {
+  const raw = fields(value);
+  if (
+    raw === undefined ||
+    !isString(raw.protocolVersion) ||
+    !isNumber(raw.tickIntervalMs) ||
+    raw.tickIntervalMs <= 0 ||
+    !isNumber(raw.timeLimitSeconds) ||
+    raw.timeLimitSeconds <= 0 ||
+    !isNumber(raw.delaySeconds) ||
+    raw.delaySeconds < 0
+  ) {
+    return undefined;
+  }
+  const map = parseMap(raw.map);
+  return map === undefined
+    ? undefined
+    : {
+        protocolVersion: raw.protocolVersion,
+        tickIntervalMs: raw.tickIntervalMs,
+        timeLimitSeconds: raw.timeLimitSeconds,
+        delaySeconds: raw.delaySeconds,
+        map,
+      };
+}
+
 export function parsePeerRefuse(value: unknown): PeerRefuse | undefined {
   const raw = fields(value);
   return raw !== undefined &&
-    isOneOf(raw.reason, ["protocol-mismatch", "match-full", "match-over"] as const) &&
+    isOneOf(raw.reason, PEER_REFUSALS) &&
     isString(raw.message, MAX_WIRE_TEXT)
     ? { reason: raw.reason, message: raw.message }
     : undefined;

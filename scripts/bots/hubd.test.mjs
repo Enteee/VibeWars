@@ -10,6 +10,7 @@
  */
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import http from "node:http";
 import os from "node:os";
 import path from "node:path";
 import process from "node:process";
@@ -2932,5 +2933,103 @@ describe("hubd and the In Review gate (#736)", () => {
     expect(printed(await hubd.request("developer", "board", ["show", "8"])).card).toMatchObject({
       status: "In Review",
     });
+  }, 30_000);
+});
+
+describe("hubd serving hub wiki (#1380)", () => {
+  /**
+   * A stand-in for the wiki and Wayback both: each path answers a page, or
+   * never answers at all.
+   *
+   * @param {Record<string, string | "hang">} routes by path and query
+   */
+  async function fakeWeb(routes) {
+    /** @type {string[]} */
+    const asked = [];
+    const server = http.createServer((request, response) => {
+      const url = request.url ?? "";
+      asked.push(url);
+      const route = routes[url];
+      if (route === "hang") {
+        return;
+      }
+      response.writeHead(route === undefined ? 404 : 200, { "content-type": "text/html" });
+      response.end(route ?? "");
+    });
+    await new Promise((resolve) => {
+      server.listen(0, "127.0.0.1", () => {
+        resolve(undefined);
+      });
+    });
+    const address = server.address();
+    const origin = `http://127.0.0.1:${String(typeof address === "object" && address !== null ? address.port : 0)}`;
+    return {
+      origin,
+      asked,
+      close() {
+        server.closeAllConnections();
+        server.close();
+      },
+    };
+  }
+
+  it("fetches the page and prints it, falling back from the maintenance page", async () => {
+    const page =
+      '<html><head><title>Fireball</title></head><body><div id="mw-content-text">' +
+      "<p>Send out a ball of fire.</p></div></body></html>";
+    const web = await fakeWeb({
+      "/wiki/Fireball":
+        "<html><head><title>The Guild Wars Wikis are undergoing maintenance.</title></head></html>",
+      "/cdx/search/cdx?url=wiki.guildwars.com%2Fwiki%2FFireball&output=json&fl=timestamp,statuscode,digest&filter=statuscode:200&collapse=digest":
+        '[["timestamp","statuscode","digest"],["20260908144536","200","D1"]]',
+      "/web/20260908144536id_/https://wiki.guildwars.com/wiki/Fireball": page,
+    });
+    try {
+      const hubd = await startHubd(5000, undefined, () => ({
+        HUBD_WIKI_LIVE_ORIGIN: web.origin,
+        HUBD_WIKI_ARCHIVE_ORIGIN: web.origin,
+      }));
+
+      const answer = await hubd.request("developer", "wiki", ["get", "Fireball"]);
+
+      expect(answer).toMatchObject({ allow: true, code: 0 });
+      expect(String(answer.stdout)).toBe(
+        `source: ${web.origin}/web/20260908144536id_/https://wiki.guildwars.com/wiki/Fireball (snapshot 2026-09-08)\n\nSend out a ball of fire.\n`,
+      );
+    } finally {
+      web.close();
+    }
+  }, 30_000);
+
+  it("refuses bad words with the usage", async () => {
+    const hubd = await startHubd(5000);
+
+    const answer = await hubd.request("developer", "wiki", ["get", "Fireball", "--at", "soon"]);
+
+    expect(answer).toMatchObject({ allow: true, code: 2 });
+    expect(String(answer.stderr)).toContain("usage: hub wiki get <Page>");
+  }, 30_000);
+
+  it("answers a gh request queued behind a slow wiki request at once", async () => {
+    const web = await fakeWeb({ "/wiki/Fireball": "hang" });
+    try {
+      const hubd = await startHubd(5000, undefined, () => ({
+        HUBD_WIKI_LIVE_ORIGIN: web.origin,
+        HUBD_WIKI_ARCHIVE_ORIGIN: web.origin,
+      }));
+      let wikiAnswered = false;
+      void hubd.request("developer", "wiki", ["get", "Fireball"]).finally(() => {
+        wikiAnswered = true;
+      });
+      await until(() => web.asked.length > 0, "the wiki fetch to start");
+
+      const next = await hubd.request("developer", "gh", ["run", "list", "--limit", "1"]);
+
+      expect(next.code).toBe(0);
+      expect(wikiAnswered).toBe(false);
+      expect(hubd.alive()?.inflight).toBeGreaterThanOrEqual(1);
+    } finally {
+      web.close();
+    }
   }, 30_000);
 });
