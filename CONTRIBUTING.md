@@ -84,6 +84,25 @@ Concretely:
   new contributor need this explained to understand why the code looks the
   way it does? If yes, write it down once instead of explaining it in every
   future code review.
+- A change to what a player sees or does updates the matching page in
+  `docs/player/`, or the PR says why none applies. See
+  [Documentation](#documentation).
+
+## Documentation
+
+The docs have two audiences, and a page belongs to exactly one.
+
+- **Players: `docs/player/`.** The in-game Help screen shows these pages,
+  in the order `docs/player/index.md` lists them. Write them for someone
+  playing, in plain words: what to press, what happens, what a word
+  means. No internals: no file names, ticks, packages or issue numbers.
+  Images go in `docs/player/img/`.
+- **Developers: everything else.** `docs/gameplay/`, `docs/adr/`,
+  `docs/development/`, `docs/art/` and `docs/product/` are for whoever
+  builds the game, and are never shown in Help.
+
+A rule a player needs goes in `docs/player/` in player words, even when
+`docs/gameplay/` already holds the exact numbers.
 
 ## Commit style
 
