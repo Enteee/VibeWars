@@ -2207,6 +2207,7 @@ body {
 }
 
 .hud-mute,
+.hud-help,
 .hud-music,
 .hud-options,
 .hud-fullscreen {
@@ -2222,6 +2223,8 @@ body {
 
 .hud-mute:hover,
 .hud-mute:focus-visible,
+.hud-help:hover,
+.hud-help:focus-visible,
 .hud-music:hover,
 .hud-music:focus-visible,
 .hud-music[aria-expanded="true"],
@@ -4405,8 +4408,15 @@ body:has(#app > .chat) .now-playing {
  * " match (F10)", which stays in its name; the scoreboard and target go
  * under the first row of buttons, left, clear of the second and the
  * compass; and the toast takes the top left corner they leave, on one line.
+ * Clear of the second row too (#1306): four 2.2rem buttons and three gaps
+ * are 10rem, wider than the compass on a phone. The target frame's bar and
+ * effects shrink to that room, less its padding, border and chain mark.
  */
 @media (width <= 30rem) {
+  :root {
+    --hud-top-width: calc(100vw - max(var(--compass-size), 10rem) - 2rem);
+  }
+
   .hud-leave-extra {
     position: absolute;
     width: 1px;
@@ -4421,15 +4431,28 @@ body:has(#app > .chat) .now-playing {
     left: 0.6rem;
     transform: none;
     align-items: flex-start;
-    max-width: calc(100vw - var(--compass-size) - 2.5rem);
+    max-width: var(--hud-top-width);
+  }
+
+  .hud-target {
+    box-sizing: border-box;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .hud-target-header {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .hud-target-health {
-    width: 170px;
+    width: min(170px, calc(var(--hud-top-width) - 2.6rem - 2px));
   }
 
   .hud-target .effects-monitor {
-    max-width: 170px;
+    max-width: min(170px, calc(var(--hud-top-width) - 1.2rem - 2px));
   }
 
   .now-playing {
@@ -4439,6 +4462,15 @@ body:has(#app > .chat) .now-playing {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+}
+
+/* A 360 px phone (#1306): the scoreboard tightens to fit beside the buttons. */
+@media (width <= 24rem) {
+  .hud-scoreboard {
+    gap: 0.4rem;
+    padding: 0.3rem 0.5rem;
+    letter-spacing: 0.06em;
   }
 }
 
