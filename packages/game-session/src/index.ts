@@ -18,6 +18,7 @@ export type {
   CombatMessage,
   MatchConnection,
   MatchSnapshot,
+  ObservedSnapshot,
   MatchSummaryRow,
   PlayerSnapshot,
   ProjectileSnapshot,
@@ -39,7 +40,10 @@ export { createLocalPeer } from "./local-peer.js";
 export {
   MATCH_FULL_MESSAGE,
   MATCH_OVER_MESSAGE,
+  NOT_A_SPECTATOR_MESSAGE,
+  OBSERVER_DELAY_SECONDS,
   RECONNECT_WINDOW_SECONDS,
+  WRONG_MATCH_MESSAGE,
   createMatchHost,
 } from "./match-host.js";
 export type { HostMap, MatchHost, MatchHostOptions, PlannedSeats } from "./match-host.js";
@@ -50,6 +54,8 @@ export {
   connectMatch,
 } from "./match-client.js";
 export type { ConnectMatchOptions, PeerMatchConnection } from "./match-client.js";
+export { connectObserver } from "./match-observer.js";
+export type { ConnectObserverOptions, ObserverConnection } from "./match-observer.js";
 export { generateLobbyCode } from "./lobby-codes.js";
 export type {
   ChatLine,

@@ -107,6 +107,28 @@ export interface ConnectMatchOptions {
   readonly timeoutMs: number;
 }
 
+/**
+ * `handle` each message on `channel` from `hostId`, through `parse`;
+ * anything else, from anyone, is dropped. Returns what removes it.
+ */
+export function onFromHost<T>(
+  transport: Transport,
+  hostId: string,
+  channel: Channel,
+  parse: (value: unknown) => T | undefined,
+  handle: (message: T) => void,
+): () => void {
+  return transport.on(channel, (data, from) => {
+    if (from !== hostId) {
+      return;
+    }
+    const message = parse(data);
+    if (message !== undefined) {
+      handle(message);
+    }
+  });
+}
+
 /** The latest recharges, and the match time they were told at, to count down from. */
 interface Recharges {
   readonly message: RechargeMessage;
@@ -159,17 +181,7 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
     parse: (value: unknown) => T | undefined,
     handle: (message: T) => void,
   ): void => {
-    unsubscribe.push(
-      transport.on(channel, (data, from) => {
-        if (from !== hostId) {
-          return;
-        }
-        const message = parse(data);
-        if (message !== undefined) {
-          handle(message);
-        }
-      }),
-    );
+    unsubscribe.push(onFromHost(transport, hostId, channel, parse, handle));
   };
 
   const tell = (state: "online" | "reconnecting" | "lost"): void => {

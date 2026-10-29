@@ -183,6 +183,15 @@ channels, as often as they like.
   player: it changes its sender. A lobby's match seats only the peers the
   lobby put on a team, with the lobby's team and name; any other `hello`
   is refused `match-full`.
+- A match host (#480) sends each tick's snapshot, combat and `ended` to
+  each seated peer, never to the room, so a spectator in the lobby's room
+  does not see the match live. A member the lobby has on no team may
+  `observe` it and is sent the same, `OBSERVER_DELAY_SECONDS` (10 s)
+  late, but never a seat's or a team's own channels (skill bar, recharges,
+  calls, traps). The delay keeps a spectator on voice with one team from
+  calling the other's moves in time to matter. Anyone else's `observe` is
+  refused `not-a-spectator`, and a viewer's intents and calls are dropped:
+  it has no seat.
 - `joinLobby` takes as host the peer that sends the first `lobby-state`
   for its code that names that peer as host and lists the player, then
   drops every lobby and match message from anyone else. Before that first

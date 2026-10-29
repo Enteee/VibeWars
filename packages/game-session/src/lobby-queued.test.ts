@@ -117,6 +117,7 @@ function fakeMatch(): FakeMatch {
     },
     abandoned: false,
     droppedWeaponSwaps: 0,
+    draining: false,
     close: () => Promise.resolve(),
     finish(winningTeam) {
       phase = "finished";
@@ -214,6 +215,8 @@ async function openQueued(options: OpenQueuedOptions = {}): Promise<QueuedLobby>
         random: () => 0.5,
         maxPlayers: 8,
         seats: plan.seats,
+        matchId: plan.matchId,
+        isSpectator: plan.isSpectator,
       });
     },
     queued: {

@@ -96,6 +96,8 @@ async function runScenario(scenario: Scenario): Promise<Result> {
     random: () => hostRng.nextFloat(),
     maxPlayers: players,
     seats,
+    matchId: "bench",
+    isSpectator: () => false,
   });
   const connections: PeerMatchConnection[] = [];
   for (const peerId of seats.keys()) {

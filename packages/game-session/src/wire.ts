@@ -38,6 +38,7 @@ import type {
   CombatMessage,
   GroundEffectSnapshot,
   MatchSnapshot,
+  ObservedSnapshot,
   ArmedAttackSnapshot,
   PlayerSnapshot,
   ProjectileSnapshot,
@@ -708,6 +709,18 @@ export function matchSnapshot(
 ): MatchSnapshot {
   return {
     selfSessionId: selfId,
+    ...observedSnapshot(snapshot, players),
+    // Only the host's `"traps"` carries them (#1105).
+    traps: [],
+  };
+}
+
+/** A validated wire snapshot as a viewer sees it (#480): `matchSnapshot` without a self. */
+export function observedSnapshot(
+  snapshot: WireSnapshot,
+  players: readonly PlayerSnapshot[],
+): ObservedSnapshot {
+  return {
     players,
     scoreTeam0: snapshot.score[0],
     scoreTeam1: snapshot.score[1],
@@ -723,8 +736,6 @@ export function matchSnapshot(
         ? undefined
         : { holder: absent(snapshot.stand.holder), heldSeconds: snapshot.stand.heldSeconds },
     aggression: snapshot.aggression,
-    // Only the host's `"traps"` carries them (#1105).
-    traps: [],
     // Only the host's `ended` carries it.
     summary: undefined,
   };

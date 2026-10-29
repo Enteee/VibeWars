@@ -74,6 +74,8 @@ export async function openLobby(
           random: () => ((draws += 1) * 0.6180339887) % 1,
           maxPlayers: 8,
           seats: plan.seats,
+          matchId: plan.matchId,
+          isSpectator: plan.isSpectator,
         });
       matches.push({ plan, host });
       return host;

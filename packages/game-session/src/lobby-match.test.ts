@@ -15,7 +15,13 @@ import {
   type TestLobby,
 } from "./lobby-harness.test-support.js";
 import { MatchRefusedError, connectMatch } from "./match-client.js";
-import { MATCH_FULL_MESSAGE, RECONNECT_WINDOW_SECONDS } from "./match-host.js";
+import {
+  MATCH_FULL_MESSAGE,
+  OBSERVER_DELAY_SECONDS,
+  RECONNECT_WINDOW_SECONDS,
+} from "./match-host.js";
+import { connectObserver } from "./match-observer.js";
+import { scopeTransport } from "./scoped-transport.js";
 import { hello, playerIn, self, settle, toJson, until } from "./match-harness.test-support.js";
 
 /**
@@ -133,6 +139,43 @@ describe("a lobby's own match", () => {
     expect(spectator.connection.getSnapshot().phase).toBe("in-match");
     expect(spectator.starts).toEqual([]);
     expect(lobby.host.starts).toHaveLength(1);
+  });
+
+  it("lets a spectator watch, late, and keeps the match's room until it has seen the end (#480)", async () => {
+    const { lobby, members } = await lobbyOf([0, 1, null], {
+      ...ANNIHILATION_MATCH_RULES,
+      timeLimitSeconds: 1,
+    });
+    await start(lobby);
+    const players = [await play(lobby.host), await play(at(members, 1))];
+    const spectator = at(members, 2);
+    const { hostId } = spectator.connection.getSnapshot();
+    const matchId = lobby.matches[0]?.plan.matchId ?? "";
+    const watching = connectObserver({
+      transport: scopeTransport(spectator.transport),
+      hostId,
+      matchId,
+      timeoutMs: 1000,
+    });
+    await settle();
+    const viewer = await watching;
+    // A player on a team is no spectator.
+    await expect(
+      connectObserver({
+        transport: scopeTransport(at(members, 1).transport),
+        hostId,
+        matchId,
+        timeoutMs: 1000,
+      }),
+    ).rejects.toMatchObject({ reason: "not-a-spectator" });
+
+    await lobby.step(1);
+    expect(players.map((match) => match.getSnapshot().phase)).toEqual(["finished", "finished"]);
+    expect(spectator.connection.getSnapshot().phase).toBe("waiting");
+    expect(viewer.getSnapshot()).toBeUndefined();
+    await lobby.step(OBSERVER_DELAY_SECONDS);
+    expect(viewer.getSnapshot()?.phase).toBe("finished");
+    expect(lobby.matches[0]?.host.draining).toBe(false);
   });
 
   it("is full before anyone arrives, so a stranger cannot take or hold a seat", async () => {
