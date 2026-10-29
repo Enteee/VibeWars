@@ -785,6 +785,20 @@ describe("describeStatus", () => {
     }
   });
 
+  it("says an item spell's drop once, all it does after it (#1434)", () => {
+    expect(describeStatus("protective-was-kaolai")).toBe(
+      "+20 armor. Drop effect: heals for 80, all party members: heals for 80",
+    );
+    expect(describeStatus("grasping-was-kuurong")).toBe(
+      "drop effect: foes in the area: deals 63 damage, knocks down for 2s",
+    );
+    expect(describeStatus("blind-was-mingson")).toContain(
+      "drop effect: nearby foes suffer Blind for 7s",
+    );
+    const kaolai = getSkill("ritualist.protective-was-kaolai");
+    expect(kaolai === undefined ? undefined : describeSkill(kaolai).typeText).toBe("Item Spell.");
+  });
+
   it("explains dazed: slower spells, interrupted by attacks (#546)", () => {
     expect(describeStatus("dazed")).toContain("spells take 2× as long to cast");
     expect(describeStatus("dazed")).toContain("spells are interrupted by attacks");

@@ -444,6 +444,8 @@ function categoryPhrase(category: StatusCategory, index: number): string {
       return "under a weapon spell";
     case "skill-effect":
       return "under a skill effect";
+    case "item":
+      return "holding ashes";
     case "shout":
     case "chant":
       return index === 0 ? `under a ${category}` : category;

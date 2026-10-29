@@ -155,6 +155,12 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "armor-of-mist": icon("armor-of-mist"),
   shatterstone: icon("shatterstone"),
   "mind-freeze": icon("mind-freeze"),
+  "protective-was-kaolai": icon("protective-was-kaolai"),
+  "generous-was-tsungrai": icon("generous-was-tsungrai"),
+  "defiant-was-xinrae": icon("defiant-was-xinrae"),
+  "blind-was-mingson": icon("blind-was-mingson"),
+  "grasping-was-kuurong": icon("grasping-was-kuurong"),
+  "energetic-was-lee-sa": icon("energetic-was-lee-sa"),
 };
 
 /** Drawn size of one icon, in world pixels. */

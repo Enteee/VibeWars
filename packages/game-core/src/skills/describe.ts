@@ -440,6 +440,7 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
     definition.endsWhenBearerUsesSkill,
     definition.endsWhenTriggered,
     definition.category === "hex" || definition.category === "condition",
+    definition.category === "item",
   )) {
     (clause ? parts : sentences).push(text);
   }
@@ -511,6 +512,7 @@ function describeTriggers(
   once: boolean,
   nextOnly: boolean,
   bearerIsFoe: boolean,
+  dropped: boolean,
 ): TriggerLine[] {
   const groups = new Map<string, { trigger: StatusTrigger; on: StatusTriggerEvent[] }>();
   for (const trigger of triggers) {
@@ -524,22 +526,30 @@ function describeTriggers(
   }
   const whenOf = (event: StatusTriggerEvent, weapon: AttackWeaponClass | undefined): string =>
     weapon === undefined ? TRIGGER_WHEN[event] : weaponBoundWhen(event, weapon);
-  return [...groups.values()].flatMap(({ trigger, on }) =>
-    describeTrigger(
+  return [...groups.values()].flatMap(({ trigger, on }) => {
+    const lines = describeTrigger(
       trigger,
       on.includes("bearer-creates-creature")
         ? CREATES
-        : on.includes("ends") || on.includes("expires")
-          ? `when it ${on.map((event) => whenOf(event, trigger.weapon)).join(" or ")}`
-          : once && on.includes("bearer-uses-skill")
-            ? NEXT_SKILL
-            : nextOnly
-              ? `the next time it ${on.map((event) => whenOf(event, trigger.weapon)).join(" or ")}`
-              : `whenever it ${on.map((event) => whenOf(event, trigger.weapon)).join(" or ")}`,
+        : dropped && on.includes("ends")
+          ? DROPPED
+          : on.includes("ends") || on.includes("expires")
+            ? `when it ${on.map((event) => whenOf(event, trigger.weapon)).join(" or ")}`
+            : once && on.includes("bearer-uses-skill")
+              ? NEXT_SKILL
+              : nextOnly
+                ? `the next time it ${on.map((event) => whenOf(event, trigger.weapon)).join(" or ")}`
+                : `whenever it ${on.map((event) => whenOf(event, trigger.weapon)).join(" or ")}`,
       ranks,
       bearerIsFoe,
-    ),
-  );
+    );
+    // A drop is said once, all it does after it (#1434).
+    if (!dropped || lines.length < 2) {
+      return lines;
+    }
+    const what = lines.map(({ text }) => text.replace(`${DROPPED}: `, ""));
+    return [{ text: `${DROPPED}: ${what.join(", ")}`, clause: false }];
+  });
 }
 
 /**
@@ -552,6 +562,9 @@ function weaponBoundWhen(event: StatusTriggerEvent, weapon: AttackWeaponClass): 
   }
   return `${TRIGGER_WHEN[event]} with ${NEEDED_WEAPON[weapon]}`;
 }
+
+/** An item status's end (#1434), every one a drop: "Drop effect: …". */
+const DROPPED = "drop effect";
 
 /** The one use a status that ends on it answers (#949), as its tooltip says it. */
 const NEXT_SKILL = "the next time it uses a skill";
@@ -593,7 +606,8 @@ function describeCreation(
       case "remove-status":
         return `lose ${String(effect.count)} ${effect.category}${effect.count === 1 ? "" : "s"}`;
       case "splash": {
-        const side = effect.hits === "allies" ? "allies" : "foes";
+        const side =
+          effect.hits === "allies" ? "allies" : effect.hits === "party" ? "party members" : "foes";
         const who =
           effect.maxTargets === undefined
             ? `all ${side}`
@@ -738,8 +752,19 @@ function describeTrigger(
         : area === "adjacent"
           ? "its adjacent allies"
           : `its allies ${area ?? `within ${String(effect.radius)}`}`;
+      // A drop's splash is one clause (#1434): "foes in the area: deals 63
+      // damage, knocks down for 2s".
+      if (when === DROPPED) {
+        const what = effect.effects.map((inner) =>
+          inner.kind === "apply-status"
+            ? suffered(inner, ranks)
+            : lowerFirst(describeEffect(inner, ranks).text),
+        );
+        const joint = effect.effects[0]?.kind === "apply-status" ? " " : ": ";
+        return [sentence(`${when}: ${allies}${joint}${what.join(", ")}`)];
+      }
       return effect.effects.map((inner) =>
-        inner.kind === "damage"
+        inner.kind === "damage" && when !== DROPPED
           ? clause(`${allies} take ${amount(inner.amount)} damage ${when}`)
           : inner.kind === "apply-status"
             ? sentence(`${when}: ${allies} ${suffered(inner, ranks)}`)
@@ -875,6 +900,10 @@ function perAllyText(effect: HealEffect, ranks: ReadonlyMap<string, number>): st
 
 /** Who a splash reaches, as GW1 words it (#885): "Adjacent foes". */
 function foesWithin(radius: number, hits: SplashEffect["hits"]): string {
+  // Protective Was Kaolai's reaches the whole party, at any distance (#1434).
+  if (hits === "party") {
+    return "All party members";
+  }
   const area = AREA_TEXT.get(radius);
   // Consume Soul's splash reaches only summoned creatures (#1309);
   // Spirit's Gift's, allies (#1316).
@@ -1515,6 +1544,7 @@ const TYPE_TEXT: Record<SkillType, string> = {
   "binding-ritual": "Binding Ritual.",
   ward: "Ward Spell.",
   well: "Well Spell.",
+  "item-spell": "Item Spell.",
   trap: "Trap.",
   "pet-attack": "Pet Attack.",
   skill: "Skill.",

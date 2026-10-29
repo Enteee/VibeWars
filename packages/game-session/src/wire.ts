@@ -97,6 +97,7 @@ const WIRE_STATUS_RANK: Readonly<Record<StatusCategory, number>> = {
   shout: 7,
   chant: 8,
   "skill-effect": 9,
+  item: 10,
 };
 
 function wireStatusRank(id: StatusId): number {

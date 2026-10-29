@@ -40,6 +40,16 @@ have yet, greyed out. You can read them, not equip them.
 Beside the editor, the **Training Ground** lets you try your bar on
 practice targets before a match.
 
+## Item spells
+
+A Ritualist's **item spells** put a spirit's **ashes** in your hands: a
+bonus while you hold them, and a **drop effect** when they fall. They
+drop when they run out, when you die, when you press **Drop ashes** above
+your Health bar, cast another item spell, shadow step, swap weapons or
+take up a flag or relic. Your hands are full while you hold them: no
+attacks and no attack skills, but you walk at full speed and still cast
+spells. Nothing removes ashes; every end is a drop.
+
 ## Sharing builds
 
 In the editor's **⋯** menu, **Share** gives your build as a line of

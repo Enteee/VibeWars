@@ -51,6 +51,8 @@ describe("corpusSkills (#1220)", () => {
     });
     // Echo is a GW1 type this game lacks.
     expect(corpus.find((skill) => skill.typeText === "Echo")?.skillType).toBeUndefined();
+    // An item spell is ours (#1434).
+    expect(byId.get(788)).toMatchObject({ typeText: "Item Spell", skillType: "item-spell" });
   });
 
   it("gives every entry an attribute of ours, or none", () => {

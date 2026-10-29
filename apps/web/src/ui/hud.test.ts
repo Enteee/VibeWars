@@ -3,9 +3,9 @@ import { fileURLToPath } from "node:url";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { ChainRole } from "@vibewars/game-core";
+import type { ChainRole, StatusId } from "@vibewars/game-core";
 import type { CastRefusedMessage } from "@vibewars/game-protocol";
-import type { MatchSnapshot, PlayerSnapshot } from "@vibewars/game-session";
+import type { MatchSnapshot, PlayerSnapshot, StatusSnapshot } from "@vibewars/game-session";
 
 import { DEFAULT_KEYMAP } from "../input/keymap.js";
 import { isEliteSkill } from "./icons.js";
@@ -415,6 +415,24 @@ describe("carriedBundle (#1225, #1374)", () => {
     const carried = match([], [{ team: 1, place: { kind: "carried", carrierId: "me" } }]);
     expect(carriedBundle(carried, "me")).toBe("relic");
     expect(carriedBundle(carried, "ally")).toBeUndefined();
+  });
+
+  it("shows the Drop button to a Ritualist holding ashes, named for them (#1434)", () => {
+    const status = (id: StatusId): StatusSnapshot => ({
+      id,
+      endsAt: 10,
+      durationSeconds: 51,
+      casterId: "me",
+    });
+    const holding = {
+      ...match([]),
+      players: [
+        player({ sessionId: "me", statuses: [status("blind-was-mingson")] }),
+        player({ sessionId: "ally", statuses: [status("regeneration")] }),
+      ],
+    };
+    expect(carriedBundle(holding, "me")).toBe("ashes");
+    expect(carriedBundle(holding, "ally")).toBeUndefined();
   });
 
   it("starts hidden", () => {

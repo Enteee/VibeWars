@@ -343,4 +343,11 @@ export const SKILL_ICONS = {
   "necromancer.defile-defenses": { glyph: "hex-nobloc", modifier: "bolt" },
   "monk.scourge-enchantment": { glyph: "hex-burst", modifier: "plus" },
   "mesmer.hex-breaker": { glyph: "hex-cut", modifier: "self" },
+  // Placeholders until the asset-designer's (#1434): Ritualist item spells.
+  "ritualist.protective-was-kaolai": { glyph: "party-heal", modifier: "hourglass" },
+  "ritualist.generous-was-tsungrai": { glyph: "heart-plus", modifier: "up" },
+  "ritualist.defiant-was-xinrae": { glyph: "shield-veil", modifier: "less" },
+  "ritualist.blind-was-mingson": { glyph: "eye-slash", modifier: "hourglass" },
+  "ritualist.grasping-was-kuurong": { glyph: "quake", modifier: "stun" },
+  "ritualist.energetic-was-lee-sa": { glyph: "energy", modifier: "hourglass" },
 };

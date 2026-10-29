@@ -163,6 +163,8 @@ const skillType = {
   well: () =>
     `<ellipse cx="12" cy="16" rx="8.5" ry="4" ${stroke(C.ink, 2.5)}/>` +
     `<path d="M12 3v10M8.5 9.5L12 13l3.5-3.5" ${stroke(C.ink, 2.5)}/>`,
+  // An urn: ashes held in the hands (#1434).
+  "item-spell": () => `<path d="M8 4h8M9 4v3l-3 4v6l2 3h8l2-3v-6l-3-4V4" ${stroke(C.ink, 2.5)}/>`,
   // Jaws on the ground, teeth up: a trap waits where it was set (#1105).
   trap: () =>
     `<path d="M3 19h18" ${stroke(C.ink, 2.5)}/>` +
@@ -186,7 +188,7 @@ const skillType = {
 // ---------------------------------------------------------------------------
 
 /** @typedef {(colour: string) => string} Glyph */
-/** @typedef {"condition" | "hex" | "enchantment" | "stance" | "preparation" | "glyph" | "shout" | "chant" | "weapon-spell" | "skill-effect"} Category */
+/** @typedef {"condition" | "hex" | "enchantment" | "stance" | "preparation" | "glyph" | "shout" | "chant" | "weapon-spell" | "item" | "skill-effect"} Category */
 
 /** @type {Record<Category, (glyph: Glyph) => string>} */
 const plates = {
@@ -209,6 +211,9 @@ const plates = {
   "weapon-spell": (glyph) =>
     `<path d="M1.5 1h21v10c0 6.5-5 10-10.5 12.5C6.5 21 1.5 17.5 1.5 11z" fill="${C.weaponSpell}"/>` +
     glyph(C.plate),
+  // An urn: a Ritualist's ashes, held (#1434).
+  item: (glyph) =>
+    `<path d="M7 1h10v3l3 4v11l-3 4H7l-3-4V8l3-4z" fill="${C.ink}"/>` + glyph(C.plate),
   "skill-effect": (glyph) =>
     `<rect x="0.5" y="4" width="23" height="16" rx="8" fill="${C.inkDim}"/>` + glyph(C.plate),
 };
@@ -1068,6 +1073,36 @@ const status = {
       `<path d="M7 18v-4a5 5 0 0 1 10 0v4" ${stroke(c, 1.8)}/>` +
       `<path d="M12 4v7M9 5.7l6 3.6M9 9.3l6-3.6" ${stroke(c, 1.6)}/>`,
   ],
+  // Ritualist item spells (#1434), stand-ins until the asset-designer's.
+  // Ashes: a shield, more armor.
+  "protective-was-kaolai": [
+    "item",
+    (c) => `<path d="M8 7h8v4c0 2.5-2 4-4 5-2-1-4-2.5-4-5z" ${stroke(c, 1.8)}/>`,
+  ],
+  // Ashes: a heart, more maximum Health.
+  "generous-was-tsungrai": [
+    "item",
+    (c) => `<path d="M12 16l-4-4a2.3 2.3 0 0 1 4-3 2.3 2.3 0 0 1 4 3z" fill="${c}"/>`,
+  ],
+  // Ashes: a bar capping a hit.
+  "defiant-was-xinrae": [
+    "item",
+    (c) => `<path d="M7 8h10M12 9v7M9.5 13.5L12 16l2.5-2.5" ${stroke(c, 1.8)}/>`,
+  ],
+  // Ashes: an eye struck out, foes blinded on the drop.
+  "blind-was-mingson": [
+    "item",
+    (c) =>
+      `<path d="M6 12c3-4 9-4 12 0-3 4-9 4-12 0z" ${stroke(c, 1.6)}/>` +
+      `<path d="M7 16L17 8" ${stroke(c, 1.8)}/>`,
+  ],
+  // Ashes: a hand closing, foes knocked down on the drop.
+  "grasping-was-kuurong": [
+    "item",
+    (c) => `<path d="M8 15V9M11 15V8M14 15V9M17 15v-4M7 15h11" ${stroke(c, 1.8)}/>`,
+  ],
+  // Ashes: a bolt, energy back.
+  "energetic-was-lee-sa": ["item", (c) => `<path d="M13 6l-4 6h4l-2 5 5-7h-4z" fill="${c}"/>`],
 };
 
 // ---------------------------------------------------------------------------
