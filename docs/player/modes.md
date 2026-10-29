@@ -100,6 +100,7 @@ makes it faster: four of you take it in 5. With a foe on it too, it is
 contested and nothing moves. A shrine the other team owns is first
 drained to neutral, then filled for you. Walk away and its progress
 stays where it was; a shrine you own stays yours until a foe takes it.
+The shrines show on the compass as □ in the owner's colour.
 
 Every 30 seconds, each shrine your team owns scores a point. The dead
 stay down until an ally resurrects them, and each death costs morale.
