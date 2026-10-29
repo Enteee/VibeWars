@@ -262,6 +262,24 @@ export function blowKind(weapon: Weapon): "melee" | "projectile" {
 }
 
 /**
+ * Whether a blow of an attack skill with this `unblockable` rolls no block
+ * (#1354): always, never, or while its state holds for `attacker` against
+ * `victim`, read as the block would be rolled. No attacker left in the
+ * world reads no state: the blow can be blocked.
+ */
+export function unblockableNow(
+  unblockable: boolean | StateCondition,
+  attacker: Combatant | undefined,
+  victim: Combatant,
+  surroundings: Surroundings,
+): boolean {
+  if (typeof unblockable === "boolean") {
+    return unblockable;
+  }
+  return attacker !== undefined && stateHolds(unblockable, attacker, victim, surroundings);
+}
+
+/**
  * Whether `victim` blocks a blow of this kind from `attackerId` (#534),
  * rolled after blind and before the damage roll. Rolled only when there
  * is a chance to block, as blind is, so a fight without blocking keeps
@@ -745,7 +763,8 @@ export function resolveSwing(swing: Swing): {
  * the skill's riders from it; one it hits gets them all. A rider on the
  * attacker, as Wounding Strike's lost enchantment (#845), needs a hit
  * too. A victim that blocks gets the skill's `onBlocked` effects instead
- * (#534); an `unblockable` one rolls no block at all (Wild Throw, #523).
+ * (#534); an `unblockable` one rolls no block at all (Wild Throw, #523),
+ * and a conditionally unblockable one none while its state holds (#1354).
  * A chain attack on a victim without the mark it follows, or for which
  * its `requires` does not hold (#1041), misses it outright, before
  * blind, read once before the first blow; a chain attack that hits
@@ -844,7 +863,10 @@ export function resolveAttackSkill(
         bearerFailedToHit(caster);
         continue;
       }
-      if (rule?.unblockable !== true && blocks(victim, caster.id, kind, rng)) {
+      if (
+        (rule === undefined || !unblockableNow(rule.unblockable, caster, victim, surroundings)) &&
+        blocks(victim, caster.id, kind, rng)
+      ) {
         events.push({ kind: "attack-blocked", targetId: victim.id });
         bearerFailedToHit(caster);
         attackReached(victim, events);

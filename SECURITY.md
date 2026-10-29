@@ -524,7 +524,9 @@ the host bot root, which no jail sees.
 change: issue, from, to, who, when) and `kpis.json` (flow, usage, budget,
 host and staff numbers, every five minutes). Nothing secret is in either:
 employee names and numbers. `kpis.json` carries a `schemaVersion`; a reader
-that finds another value treats the file as absent.
+that finds another value treats the file as absent. `kpi-edges.json` (#1313)
+holds the 7-day utilization's 1% steps of the last 24 h, times and
+fractions only; hubd discards one of another `schemaVersion` on start.
 
 **A manager is always running (#384).** The supervisor starts a missing
 manager pane within one sample, backing off to once every five minutes
