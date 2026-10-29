@@ -1043,19 +1043,19 @@ const status = {
       `<path d="M10 5.3A7 7 0 1 0 18.7 10M14 5.3A7 7 0 0 1 18.7 10" ${stroke(c, 2.2)}/>` +
       `<path d="M11 4l2 3-2 1 2 3" ${stroke(c, 1.6)}/>`,
   ],
-  // Hex: bars of ice round a pair of legs, 66% slower (#1367).
+  // Hex: icicles under a bar, the cage that slows 66% (#1367, #1440).
   "ice-prison": [
     "hex",
     (c) =>
-      `<path d="M10 7v11M14 7v11" ${stroke(c, 2)}/>` +
-      `<path d="M6 11h12M6 15h12" ${stroke(c, 1.6)}/>`,
+      `<path d="M4 5h16" ${stroke(c, 2)}/>` +
+      `<path d="M5.5 6.5h4L7.5 18zM10 6.5h4L12 19zM14.5 6.5h4L16.5 18z" fill="${c}"/>`,
   ],
-  // Hex: a snowflake in a ring, the burst around the caster (#1367).
+  // Hex: a snowflake with ice thrown out round it, the burst round the caster (#1367, #1440).
   "frozen-burst": [
     "hex",
     (c) =>
       `<path d="M12 8v8M8.5 10l7 4M8.5 14l7-4" ${stroke(c, 1.8)}/>` +
-      `<circle cx="12" cy="12" r="7" ${stroke(c, 1.4)}/>`,
+      `<path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4" ${stroke(c, 1.6)}/>`,
   ],
   // Skill effect: a spear point over a plus, regeneration while Overcast (#1367).
   "ice-spear": [
@@ -1064,35 +1064,35 @@ const status = {
       `<path d="M12 4l2.5 5h-5z" fill="${c}"/>` +
       `<path d="M12 9v5M12 15v5M9.5 17.5h5" ${stroke(c, 1.8)}/>`,
   ],
-  // Hex: an eye doubled, half the attacks miss (#1367).
+  // Hex: an eye and its ghost, half the attacks miss (#1367, #1440).
   "blurred-vision": [
     "hex",
     (c) =>
-      `<path d="M4 11c2.5-3.5 5-5 8-5s5.5 1.5 8 5" ${stroke(c, 1.8)}/>` +
-      `<path d="M4 14c2.5 3.5 5 5 8 5s5.5-1.5 8-5" ${stroke(c, 1.8)}/>` +
-      `<circle cx="10.5" cy="12.5" r="2" fill="${c}"/>` +
-      `<circle cx="13.5" cy="12.5" r="2" ${stroke(c, 1.2)}/>`,
+      `<path d="M3 12c2-3.5 4.5-5 7.5-5s5.5 1.5 7.5 5c-2 3.5-4.5 5-7.5 5S5 15.5 3 12z" ${stroke(c, 1.8)}/>` +
+      `<circle cx="10.5" cy="12" r="2" fill="${c}"/>` +
+      `<path d="M21 12c-1.4-2.4-2.8-3.8-4.4-4.6" ${stroke(c, 1.4)} stroke-dasharray="1.6 1.8"/>`,
   ],
-  // Enchantment: a shield over drifting mist, armor and speed (#1367).
+  // Enchantment: a shield with mist lines across it, armor and speed (#1367, #1440).
   "armor-of-mist": [
     "enchantment",
     (c) =>
-      `<path d="M8 5h8v5c0 2.5-2 4-4 5-2-1-4-2.5-4-5z" ${stroke(c, 1.8)}/>` +
-      `<path d="M5 17.5h6M13 17.5h6M7 20h10" ${stroke(c, 1.6)}/>`,
+      `<path d="M12 3.5l6.5 2.5v5.5c0 3.8-2.8 6.2-6.5 8-3.7-1.8-6.5-4.2-6.5-8V6z" ${stroke(c, 1.8)}/>` +
+      `<path d="M8.5 10c1.2-1.4 2.3-1.4 3.5 0s2.3 1.4 3.5 0M8.5 14c1.2-1.4 2.3-1.4 3.5 0s2.3 1.4 3.5 0" ${stroke(c, 1.5)}/>`,
   ],
-  // Hex: a stone cracked in three, it bursts when it ends (#1367).
+  // Hex: a stone split in two, it bursts when it ends (#1367, #1440).
   shatterstone: [
     "hex",
     (c) =>
-      `<path d="M7 9l5-4 5 4-1.5 7h-7z" ${stroke(c, 1.8)}/>` +
-      `<path d="M12 5v6l-3 5M12 11l3.5 5" ${stroke(c, 1.4)}/>`,
+      `<path d="M3.5 10L9 5l2.5 3.5L10 12l1.5 3L5.5 19 3 14z" fill="${c}"/>` +
+      `<path d="M14.5 7l6 3.5-1 4.5-5 .5V12l-1-2.5z" fill="${c}"/>`,
   ],
-  // Hex: a snowflake over a head's outline, 90% slower (#1367).
+  // Hex: a snowflake in a head with shoulders, 90% slower (#1367, #1440).
   "mind-freeze": [
     "hex",
     (c) =>
-      `<path d="M7 18v-4a5 5 0 0 1 10 0v4" ${stroke(c, 1.8)}/>` +
-      `<path d="M12 4v7M9 5.7l6 3.6M9 9.3l6-3.6" ${stroke(c, 1.6)}/>`,
+      `<circle cx="12" cy="9" r="6" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 5.8v6.4M9.2 7.4l5.6 3.2M9.2 10.6l5.6-3.2" ${stroke(c, 1.4)}/>` +
+      `<path d="M4.5 21c0-3.5 3-5 7.5-5s7.5 1.5 7.5 5" ${stroke(c, 1.8)}/>`,
   ],
 };
 
@@ -2343,10 +2343,13 @@ const skillGlyph = {
   // A top bar with three icicles hanging from it: the cage of ice (#1440).
   "ice-cage": () =>
     inkLine("M4 4.5H20", 2.6) + inkFill("M5 6H9.5L7.2 20ZM9.8 6H14.2L12 21ZM14.5 6H19L16.8 13Z"),
-  // A snowflake inside a dashed ring (a hex): the cold bursts round the caster (#1440).
-  "hex-frost": () =>
-    `<circle cx="12" cy="12" r="9" ${stroke(C.ink, 2.2)} stroke-dasharray="4.4 3.4"/>` +
-    inkLine("M12 6.5V17.5M7.2 9.25L16.8 14.75M7.2 14.75L16.8 9.25", 2.2),
+  // A snowflake with ice thrown out round it: the cold bursts round the caster (#1440).
+  "frost-nova": () =>
+    inkLine("M12 7.5V16.5M8.1 9.75L15.9 14.25M8.1 14.25L15.9 9.75", 2.4) +
+    inkLine(
+      "M12 1.5V4M12 20V22.5M1.5 12H4M20 12H22.5M4.6 4.6L6.4 6.4M17.6 17.6L19.4 19.4M4.6 19.4L6.4 17.6M17.6 6.4L19.4 4.6",
+      2.2,
+    ),
   // A long spear: a barbed head, a shaft, a fletch (#1440).
   "spear-ice": () =>
     inkLine("M3.5 20.5L14 10", 2.4) +
@@ -2368,10 +2371,11 @@ const skillGlyph = {
     inkFill("M3 9L9 4L11.5 8L10 12L11.5 15L5 19L2.5 14Z") +
     inkFill("M15 5.5L21 8.5L20 13L14.5 13.5L14.5 10.5L13 8.5Z") +
     inkLine("M15 2L16.5 3.5M22 4L21 5.5", 1.8),
-  // A head's outline with a snowflake in it: the mind freezes (#1440).
+  // A head and shoulders with a snowflake in the head: the mind freezes (#1440).
   "head-frost": () =>
-    `<circle cx="12" cy="12" r="9.5" ${stroke(C.ink, 2.2)}/>` +
-    inkLine("M12 6.5V17.5M7.2 9.25L16.8 14.75M7.2 14.75L16.8 9.25", 2.2),
+    `<circle cx="12" cy="9" r="6.5" ${stroke(C.ink, 2.2)}/>` +
+    inkLine("M12 5.5V12.5M8.9 7.2L15.1 10.8M8.9 10.8L15.1 7.2", 1.8) +
+    inkLine("M4 22C4 18 7.5 16.5 12 16.5S20 18 20 22", 2.2),
   // The gain trigger: a plus in the top left corner is what the foe gains; the payoff sits below and right (#1440).
   "gain-barbs": () =>
     inkLine("M5.5 2.5V9.5M2 6H9", 2.2) +

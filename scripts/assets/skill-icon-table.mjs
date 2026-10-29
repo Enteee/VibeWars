@@ -331,7 +331,7 @@ export const SKILL_ICONS = {
   "warrior.devastating-hammer": { glyph: "hammer-slam", modifier: "down" },
   // Water Magic (#1367, #1440).
   "elementalist.ice-prison": { glyph: "ice-cage", modifier: "clock" },
-  "elementalist.frozen-burst": { glyph: "hex-frost" },
+  "elementalist.frozen-burst": { glyph: "frost-nova" },
   "elementalist.ice-spear": { glyph: "spear-ice", modifier: "plus" },
   "elementalist.maelstrom": { glyph: "whirl" },
   "elementalist.blurred-vision": { glyph: "eye-blur", modifier: "half" },
