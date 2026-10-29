@@ -297,7 +297,7 @@ export const SKILL_ICONS = {
   "necromancer.lingering-curse": { glyph: "hex-burst", modifier: "hourglass" },
   "necromancer.vampiric-touch": { glyph: "drop-touch" },
   "necromancer.vampiric-swarm": { glyph: "drop-trio" },
-  "necromancer.shadow-strike": { glyph: "drop-half", modifier: "bolt" },
+  "necromancer.shadow-strike": { glyph: "drop-half" },
   "necromancer.blood-of-the-aggressor": { glyph: "drop-weak" },
   "necromancer.barbed-signet": { glyph: "drop-barbs", modifier: "bleed" },
   "necromancer.offering-of-blood": { glyph: "drop-energy" },
