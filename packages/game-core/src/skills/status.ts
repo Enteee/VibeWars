@@ -122,6 +122,7 @@ export type StatusId =
   | "healing-signet-armor"
   | "for-great-justice"
   | "critical-eye"
+  | "critical-defenses"
   // Paragon shouts (#921).
   | "fall-back"
   | "stand-your-ground"
@@ -361,6 +362,11 @@ export interface StatusDefinition {
   readonly criticalChanceBonus: number;
   /** Energy the bearer gains on each critical hit it lands, beyond Critical Strikes' (#988). */
   readonly energyPerCritical: number;
+  /**
+   * Each critical hit the bearer lands puts its remaining time back to
+   * the duration it was applied with (#1315): Critical Defenses'.
+   */
+  readonly refreshesOnCritical: boolean;
   /**
    * It ends after this many incoming attacks, each a hit or a block
    * (#524); `undefined`: only its duration ends it. Counted on each
@@ -724,6 +730,7 @@ function define(
     blockBelowHealth: undefined,
     criticalChanceBonus: 0,
     energyPerCritical: 0,
+    refreshesOnCritical: false,
     endsAfterAttacks: undefined,
     onAttackHit: undefined,
     endsAfterHits: undefined,
@@ -1175,6 +1182,13 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     profession: "assassin",
     criticalChanceBonus: 0.13,
     energyPerCritical: 1,
+  }),
+  // "For 4...10 seconds, you have a 75% chance to block. Critical Defenses
+  // refreshes every time you land a critical hit" (#1315).
+  "critical-defenses": define("critical-defenses", "Critical Defenses", "enchantment", {
+    profession: "assassin",
+    block: { chance: 0.75, against: "all" },
+    refreshesOnCritical: true,
   }),
   "healing-signet-armor": define("healing-signet-armor", "Healing Signet", "skill-effect", {
     profession: "warrior",
@@ -2353,6 +2367,19 @@ export class StatusSet {
       .map(({ id }) => id);
     this.#end(ended);
     return ended;
+  }
+
+  /**
+   * The bearer landed a critical hit (#1315): every status that refreshes
+   * on one has its remaining time put back to the duration it was
+   * applied with.
+   */
+  public refreshOnCritical(): void {
+    for (const status of this.#statuses.values()) {
+      if (getStatusDefinition(status.id).refreshesOnCritical) {
+        status.remainingSeconds = status.durationSeconds;
+      }
+    }
   }
 
   /**

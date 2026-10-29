@@ -71,6 +71,7 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "healing-signet-armor": icon("healing-signet-armor"),
   "for-great-justice": icon("for-great-justice"),
   "critical-eye": icon("critical-eye"),
+  "critical-defenses": icon("critical-defenses"),
   "fall-back": icon("fall-back"),
   "stand-your-ground": icon("stand-your-ground"),
   incoming: icon("incoming"),

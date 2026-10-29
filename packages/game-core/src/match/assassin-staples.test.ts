@@ -10,7 +10,7 @@ import type { Skill } from "../skills/types.js";
 import { applyEffect, stateHolds, type CombatEvent } from "../skills/effects.js";
 import { makeCombatant } from "../skills/testing.js";
 import { blockChanceOf } from "../skills/tick.js";
-import { criticalChance, gainCriticalEnergy, weaponSnapshotOf } from "../skills/weapon-attack.js";
+import { criticalChance, landedCritical, weaponSnapshotOf } from "../skills/weapon-attack.js";
 import type { Segment } from "../geometry.js";
 import { distance, vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
@@ -396,7 +396,7 @@ describe("Critical Eye (#988)", () => {
     ).toBe(1);
 
     const events: CombatEvent[] = [];
-    gainCriticalEnergy(attacker, 12, events);
+    landedCritical(attacker, 12, events);
     expect(events).toEqual([
       { kind: "energy-gain", targetId: "a", amount: criticalStrikesEnergy(12) + 1 },
     ]);
