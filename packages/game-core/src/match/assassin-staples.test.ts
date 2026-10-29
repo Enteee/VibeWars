@@ -237,7 +237,7 @@ describe("Death's Charge (#988)", () => {
       rng: createRng(1),
       rules: RULES.combat,
     };
-    expect(applyEffect({ kind: "shadow-step" }, context, [])).toEqual([]);
+    expect(applyEffect({ kind: "shadow-step", to: "target" }, context, [])).toEqual([]);
   });
 });
 

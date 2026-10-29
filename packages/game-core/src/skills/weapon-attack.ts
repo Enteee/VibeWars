@@ -19,6 +19,7 @@ import {
   applyEffects,
   applySkillEffects,
   gainEnergy,
+  gainHealth,
   interruptOnHit,
   stateHolds,
   type CombatEvent,
@@ -230,13 +231,15 @@ export function criticalChance(snapshot: WeaponSnapshot, rules: CombatRules): nu
 /**
  * What a critical blow gives its attacker: Critical Strikes' energy
  * (#606), and its statuses' (#988, Critical Eye's 1), up to the
- * attacker's maximum, and its statuses that refresh on one back to full
- * (#1315, Critical Defenses). Statuses are read as the blow lands. A dead
- * attacker, as one whose arrow lands after it fell, gains none.
+ * attacker's maximum, its statuses' health (#1326, Way of Perfection's),
+ * and its statuses that refresh on one back to full (#1315, Critical
+ * Defenses). Statuses are read as the blow lands. A dead attacker, as one
+ * whose arrow lands after it fell, gains none.
  */
 export function landedCritical(attacker: Combatant, rank: number, events: CombatEvent[]): void {
-  const extra = aggregateModifiers(attacker.statuses.active).energyPerCritical;
-  gainEnergy(attacker, criticalStrikesEnergy(rank) + extra, events);
+  const modifiers = aggregateModifiers(attacker.statuses.active);
+  gainEnergy(attacker, criticalStrikesEnergy(rank) + modifiers.energyPerCritical, events);
+  gainHealth(attacker, modifiers.healthPerCritical, events);
   if (!attacker.dead) {
     attacker.statuses.refreshOnCritical();
   }

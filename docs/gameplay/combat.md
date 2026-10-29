@@ -1454,7 +1454,13 @@ brackets.
   walk: snares do not slow it, nothing reads it as running, and an
   arrow already flying at you misses. A long step snaps the camera, as
   a respawn does. If that foe has more Health than you, read before the
-  step, you are healed for 173.
+  step, you are healed for 173. **Death's Retreat** (#1326, 20 s) steps
+  to an ally the same way, and heals 112 if you have less Health than it.
+  **Heart of Shadow** (heals 126, 15 s) and **Viper's Defense** (poisons
+  adjacent foes for 17 s, 10 s) step 175 directly away from whatever you
+  have selected, foe or ally, alive or dead, where it stands now. You
+  keep your facing. A wall on the way stops you short of it. With nothing
+  selected you stay put, and the heal or the poison still lands.
 
 ## Creatures
 

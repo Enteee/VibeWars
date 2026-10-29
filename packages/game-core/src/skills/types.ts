@@ -334,11 +334,15 @@ export interface KnockdownEffect {
 
 /**
  * Shadow Step (#988): the caster moves to the effect's target, as Death's
- * Charge's "Shadow Step to target foe". The effect layer only reports it
- * (`shadow-stepped`); the simulation places the body.
+ * Charge's "Shadow Step to target foe" (`"target"`), or away from what it
+ * has selected (#1326), as Heart of Shadow's "Shadow Step to a nearby
+ * location directly away from your target" (`"away-from-selection"`). The
+ * effect layer only reports it (`shadow-stepped`, `shadow-stepped-away`);
+ * the simulation places the body.
  */
 export interface ShadowStepEffect {
   readonly kind: "shadow-step";
+  readonly to: "target" | "away-from-selection";
 }
 
 /**

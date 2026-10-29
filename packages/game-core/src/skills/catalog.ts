@@ -6563,7 +6563,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     // "Shadow Step to target foe. If that foe has more Health than you, you
     // are healed for 65...173...200": who has more is read before the step.
     effects: [
-      { kind: "shadow-step" },
+      { kind: "shadow-step", to: "target" },
       {
         kind: "if",
         condition: { kind: "target-more-health" },
@@ -9066,6 +9066,202 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     // Defenses refreshes every time you land a critical hit": 9 s, its
     // rank-12 value.
     effects: [{ kind: "apply-status", statusId: "critical-defenses", durationSeconds: 9 }],
+  },
+  /* ---------------------------------------------------------------------- */
+  /* Assassin Shadow Arts staples (#1326)                                   */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "assassin.heart-of-shadow",
+    name: "Heart of Shadow",
+    gwId: 1032,
+    type: "spell",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.shadow-arts",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "You are healed for 30...150. Shadow Step to a nearby location
+    // directly away from your target": 126, its rank-12 value.
+    effects: [
+      {
+        kind: "heal",
+        recipient: "caster",
+        amount: { scaling: { attributeId: "assassin.shadow-arts", atZero: 30, atTwelve: 126 } },
+        perStatusOnTarget: [],
+      },
+      { kind: "shadow-step", to: "away-from-selection" },
+    ],
+  },
+  {
+    id: "assassin.vipers-defense",
+    name: "Viper's Defense",
+    gwId: 769,
+    type: "spell",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.shadow-arts",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "All adjacent foes are Poisoned for 5...20 seconds. Shadow Step to a
+    // nearby location directly away from your target": 17 s at rank 12.
+    // The splash is centred on the caster, and leaves it out.
+    effects: [
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_ADJACENT,
+        maxTargets: undefined,
+        effects: [{ kind: "apply-status", statusId: "poison", durationSeconds: 17 }],
+      },
+      { kind: "shadow-step", to: "away-from-selection" },
+    ],
+  },
+  {
+    id: "assassin.deaths-retreat",
+    name: "Death's Retreat",
+    gwId: 1651,
+    type: "spell",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.shadow-arts",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-other-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Shadow Step to target ally. If you have less Health than that ally,
+    // you gain 40...130 Health": 112 at rank 12. Who has more is read
+    // before the step, as Death's Charge reads it.
+    effects: [
+      { kind: "shadow-step", to: "target" },
+      {
+        kind: "if",
+        condition: { kind: "target-more-health" },
+        effects: [
+          {
+            kind: "heal",
+            recipient: "caster",
+            amount: { scaling: { attributeId: "assassin.shadow-arts", atZero: 40, atTwelve: 112 } },
+            perStatusOnTarget: [],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "assassin.feigned-neutrality",
+    name: "Feigned Neutrality",
+    gwId: 1641,
+    type: "enchantment",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.shadow-arts",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 25,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 4...10 seconds, you have +7 Health regeneration and +80 armor":
+    // 9 s, its rank-12 value.
+    effects: [{ kind: "apply-status", statusId: "feigned-neutrality", durationSeconds: 9 }],
+  },
+  {
+    id: "assassin.way-of-perfection",
+    name: "Way of Perfection",
+    gwId: 1028,
+    type: "enchantment",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.shadow-arts",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 60 seconds, whenever you successfully land a critical hit, you
+    // gain 10...40 Health".
+    effects: [{ kind: "apply-status", statusId: "way-of-perfection", durationSeconds: 60 }],
+  },
+  {
+    id: "assassin.caltrops",
+    name: "Caltrops",
+    gwId: 985,
+    type: "spell",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.shadow-arts",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 10,
+    // "Caltrops has half the normal range."
+    range: RANGE_SPELL / 2,
+    target: "single-enemy",
+    area: {
+      radius: AREA_ADJACENT,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe and all foes adjacent to your target are Crippled and
+    // Bleeding for 5...15 seconds": 13 s at rank 12.
+    effects: [
+      { kind: "apply-status", statusId: "crippled", durationSeconds: 13 },
+      { kind: "apply-status", statusId: "bleeding", durationSeconds: 13 },
+    ],
   },
   {
     id: "ritualist.boon-of-creation",

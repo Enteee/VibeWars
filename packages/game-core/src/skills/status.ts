@@ -129,6 +129,9 @@ export type StatusId =
   | "for-great-justice"
   | "critical-eye"
   | "critical-defenses"
+  // Shadow Arts (#1326).
+  | "feigned-neutrality"
+  | "way-of-perfection"
   // Paragon shouts (#921).
   | "fall-back"
   | "stand-your-ground"
@@ -387,6 +390,11 @@ export interface StatusDefinition {
   readonly criticalChanceBonus: number;
   /** Energy the bearer gains on each critical hit it lands, beyond Critical Strikes' (#988). */
   readonly energyPerCritical: number;
+  /**
+   * Health the bearer gains on each critical hit it lands (#1326): Way of
+   * Perfection's. A gain, not a heal: no healing modifier touches it.
+   */
+  readonly healthPerCritical: number;
   /**
    * Each critical hit the bearer lands puts its remaining time back to
    * the duration it was applied with (#1315): Critical Defenses'.
@@ -787,6 +795,7 @@ function define(
     blockBelowHealth: undefined,
     criticalChanceBonus: 0,
     energyPerCritical: 0,
+    healthPerCritical: 0,
     refreshesOnCritical: false,
     endsAfterAttacks: undefined,
     onAttackHit: undefined,
@@ -1310,6 +1319,23 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     profession: "assassin",
     criticalChanceBonus: 0.13,
     energyPerCritical: 1,
+  }),
+  // "For 4...10 seconds, you have +7 Health regeneration and +80 armor.
+  // This enchantment ends if you successfully hit with an attack or use a
+  // skill" (#1326): 9 s at rank 12. Its own cast is no use of a skill,
+  // since it is applied after the use.
+  "feigned-neutrality": define("feigned-neutrality", "Feigned Neutrality", "enchantment", {
+    profession: "assassin",
+    healthPips: 7,
+    armorModifier: 80,
+    endsWhenBearerHits: true,
+    endsWhenBearerUsesSkill: true,
+  }),
+  // "For 60 seconds, whenever you successfully land a critical hit, you
+  // gain 10...40 Health" (#1326): 34 at rank 12.
+  "way-of-perfection": define("way-of-perfection", "Way of Perfection", "enchantment", {
+    profession: "assassin",
+    healthPerCritical: 34,
   }),
   // "For 4...10 seconds, you have a 75% chance to block. Critical Defenses
   // refreshes every time you land a critical hit" (#1315).
@@ -2735,6 +2761,8 @@ export interface StatusModifiers {
   readonly criticalChanceBonus: number;
   /** Every status's, summed (#988). */
   readonly energyPerCritical: number;
+  /** Every status's, summed (#1326). */
+  readonly healthPerCritical: number;
   /** Every status's, summed (#1270). */
   readonly damageFromSpiritAttacks: number;
   /** Any status's (#1329). */
@@ -2806,6 +2834,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let damageFromSpiritAttacks = 0;
   let criticalChanceBonus = 0;
   let energyPerCritical = 0;
+  let healthPerCritical = 0;
   let ignoresCriticalDamage = false;
   const enchantments = statuses.filter(
     (status) => getStatusDefinition(status.id).category === "enchantment",
@@ -2875,6 +2904,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     damageFromSpiritAttacks += def.damageFromSpiritAttacks;
     criticalChanceBonus += def.criticalChanceBonus;
     energyPerCritical += def.energyPerCritical;
+    healthPerCritical += def.healthPerCritical;
     ignoresCriticalDamage ||= def.ignoresCriticalDamage;
   }
 
@@ -2908,6 +2938,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     incomingHexCastTimeMultiplier,
     criticalChanceBonus,
     energyPerCritical,
+    healthPerCritical,
     damageFromSpiritAttacks,
     ignoresCriticalDamage,
   };

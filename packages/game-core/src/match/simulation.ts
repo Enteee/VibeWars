@@ -16,7 +16,13 @@ import {
   resolveCircleSegmentCollision,
 } from "../geometry.js";
 import type { Segment } from "../geometry.js";
-import { AREA_ADJACENT, AREA_EARSHOT, RANGE_COMPASS, RANGE_SPIRIT } from "../distances.js";
+import {
+  AREA_ADJACENT,
+  AREA_EARSHOT,
+  RANGE_COMPASS,
+  RANGE_SPIRIT,
+  SHADOW_STEP_AWAY_DISTANCE,
+} from "../distances.js";
 import {
   addKill,
   DEATH_PENALTY_PERCENT,
@@ -4459,10 +4465,17 @@ export class MatchSimulation {
    * clear as they do a walk; the doorway rule does not hold, since a step
    * is not a walk. It faces the target, and nothing reads the step as a
    * run: its track starts over, and it did not walk this step. An attack
-   * and a skill walking in stay.
+   * and a skill walking in stay. A step away (#1326) is `#stepAway`'s.
    */
   #recordSteps(events: readonly CombatEvent[]): void {
     for (const event of events) {
+      if (event.kind === "shadow-stepped-away") {
+        const record = this.#participants.get(event.targetId);
+        if (record !== undefined) {
+          this.#stepAway(record);
+        }
+        continue;
+      }
       if (event.kind !== "shadow-stepped" && event.kind !== "teleported") {
         continue;
       }
@@ -4495,6 +4508,51 @@ export class MatchSimulation {
       record.history.clear();
       this.#stepStart.set(record.id, position);
     }
+  }
+
+  /**
+   * A shadow step directly away from what `record` has selected (#1326),
+   * as Heart of Shadow's: `SHADOW_STEP_AWAY_DISTANCE` along the line from
+   * the selection, alive or dead, ally or foe, where it stands now. A wall
+   * on the way stops it a unit short, on the near side, and the push-outs
+   * settle it as they do any step. It keeps its facing, and its track
+   * starts over. Nothing selected, itself selected, or the two on one spot:
+   * no step.
+   */
+  #stepAway(record: ParticipantRecord): void {
+    const selection =
+      record.targetId === undefined ? undefined : this.#participants.get(record.targetId);
+    if (
+      selection === undefined ||
+      selection.id === record.id ||
+      distance(record.position, selection.position) === 0
+    ) {
+      return;
+    }
+    const from = record.position;
+    const away = normalize(sub(from, selection.position));
+    const goal = add(from, scale(away, SHADOW_STEP_AWAY_DISTANCE));
+    const impact = firstHit(from, goal, this.#walls);
+    let position =
+      impact === undefined
+        ? goal
+        : distance(from, impact) <= 1
+          ? from
+          : add(impact, scale(normalize(sub(from, impact)), 1));
+    const radius = this.#ruleset.collision.playerRadius;
+    for (let pass = 0; pass < MOVEMENT_RELAX_PASSES; pass += 1) {
+      const relaxed = this.#pushOut(record, position, radius, NOBODY);
+      const settled = relaxed.x === position.x && relaxed.y === position.y;
+      position = relaxed;
+      if (settled) {
+        break;
+      }
+    }
+    record.position = position;
+    record.walkGoal = undefined;
+    record.route = undefined;
+    record.history.clear();
+    this.#stepStart.set(record.id, position);
   }
 
   /**

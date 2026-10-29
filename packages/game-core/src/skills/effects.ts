@@ -222,6 +222,12 @@ export type CombatEvent =
    */
   | { readonly kind: "shadow-stepped"; readonly targetId: string; readonly toId: string }
   /**
+   * Shadow Stepped away (#1326): `targetId`, the caster, moves directly
+   * away from what it has selected. The simulation reads the selection and
+   * places the body.
+   */
+  | { readonly kind: "shadow-stepped-away"; readonly targetId: string }
+  /**
    * Teleported (#474): `targetId` is put beside `toId`, as Rebirth brings
    * its ally to the caster. The simulation places the body.
    */
@@ -400,7 +406,7 @@ function stealLife(
   target.health -= taken;
   events.push({ kind: "life-stolen", targetId: target.id, amount: taken });
   recordFromFoe(target, caster);
-  gainStolenHealth(caster, taken, events);
+  gainHealth(caster, taken, events);
   if (target.health <= 0) {
     target.dead = true;
     events.push({ kind: "death", targetId: target.id });
@@ -408,11 +414,15 @@ function stealLife(
 }
 
 /**
- * The caster's half of life stealing: up to `amount`, capped at its
+ * A health gain that is not a heal: life stealing's caster half, and Way
+ * of Perfection's per critical hit (#1326). Up to `amount`, capped at the
  * effective maximum. No healing modifier touches it, but it is logged as a
- * `heal` on the caster.
+ * `heal`. The dead gain none.
  */
-function gainStolenHealth(caster: Combatant, amount: number, events: CombatEvent[]): void {
+export function gainHealth(caster: Combatant, amount: number, events: CombatEvent[]): void {
+  if (caster.dead) {
+    return;
+  }
   const gained = Math.min(amount, effectiveMaxHealth(caster) - caster.health);
   if (gained > 0) {
     caster.health += gained;
@@ -941,9 +951,7 @@ export function applyEffect(
     // The corpse was exploited before the skill resolved (#466): the
     // simulation skips every effect of a cast that found none.
     case "steal-from-corpse": {
-      if (!caster.dead) {
-        gainStolenHealth(caster, resolveMagnitude(effect.amount, caster), events);
-      }
+      gainHealth(caster, resolveMagnitude(effect.amount, caster), events);
       return events;
     }
 
@@ -1096,6 +1104,12 @@ export function applyEffect(
     }
 
     case "shadow-step": {
+      if (effect.to === "away-from-selection") {
+        if (!caster.dead) {
+          events.push({ kind: "shadow-stepped-away", targetId: caster.id });
+        }
+        return events;
+      }
       // To a living target only: there is nowhere to step to otherwise.
       if (target === undefined || target.dead || caster.dead) {
         return events;
