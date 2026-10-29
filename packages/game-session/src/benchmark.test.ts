@@ -63,7 +63,8 @@ function metered(transport: Transport, peers: () => number): Transport & { bytes
     bytes: 0,
     send(...args: Parameters<Transport["send"]>) {
       const [, data, to] = args;
-      wrapped.bytes += messageBytes(data) * (to === undefined ? peers() : 1);
+      const receivers = to === undefined ? peers() : typeof to === "string" ? 1 : to.length;
+      wrapped.bytes += messageBytes(data) * receivers;
       transport.send(...args);
     },
   };
@@ -96,6 +97,8 @@ async function runScenario(scenario: Scenario): Promise<Result> {
     random: () => hostRng.nextFloat(),
     maxPlayers: players,
     seats,
+    matchId: "bench",
+    isSpectator: () => false,
   });
   const connections: PeerMatchConnection[] = [];
   for (const peerId of seats.keys()) {

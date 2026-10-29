@@ -858,6 +858,12 @@ describe("board reads", () => {
     }
   });
 
+  it("lets every role read the GW1 wiki (#1380)", () => {
+    for (const role of ROLES) {
+      expect(authorize(role, { kind: "wiki", argv: ["get", "Fireball"] }).allow, role).toBe(true);
+    }
+  });
+
   it("names its alert readers: a role added to ROLES later reads none (#184)", () => {
     expect(mayReadAlerts("support")).toBe(false);
     // The first role added since: it advises on flow and needs no open vulnerabilities.

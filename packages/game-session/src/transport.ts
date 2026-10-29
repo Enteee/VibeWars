@@ -24,7 +24,8 @@ export type Json<T> = T extends string | number | boolean | null
  * - Reliable and ordered for each sender and receiver pair; nothing is
  *   promised about the order between two senders.
  * - `send` without `to` goes to every *other* peer, never back to the
- *   sender. It never throws: a message to a peer that is gone is dropped,
+ *   sender; with a list, to each peer on it, serialized once for all of
+ *   them (#480), and with an empty one to nobody. It never throws: a message to a peer that is gone is dropped,
  *   and an adapter catches and logs its own asynchronous failures.
  * - Handlers receive `unknown`: every message goes through a
  *   `game-protocol` validator before anything reads it.
@@ -50,7 +51,7 @@ export type TransportTrouble = "no-relay" | "peer-unreachable";
 
 export interface Transport {
   readonly selfId: string;
-  send<T>(channel: Channel, data: Json<T>, to?: string): void;
+  send<T>(channel: Channel, data: Json<T>, to?: string | readonly string[]): void;
   on(channel: Channel, handler: (data: unknown, from: string) => void): () => void;
   onPeerJoin(handler: (peerId: string) => void): () => void;
   onPeerLeave(handler: (peerId: string) => void): () => void;

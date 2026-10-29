@@ -143,7 +143,9 @@ export function joinBroadcastRoom(code: string): Transport {
   const transport: Transport = {
     selfId,
     send(on, data, to) {
-      post({ kind: "msg", from: selfId, to: to ?? null, channel: on, data });
+      for (const target of typeof to === "object" ? to : [to ?? null]) {
+        post({ kind: "msg", from: selfId, to: target, channel: on, data });
+      }
     },
     on: (on, handler) => handlers.on(on, handler),
     onPeerJoin: (handler) => handlers.onPeerJoin(handler),

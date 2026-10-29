@@ -129,10 +129,14 @@ export function joinTrysteroRoom(code: string, deps: TrysteroDeps = TRYSTERO): T
       const warn = (error: unknown) => {
         console.warn("trystero transport: could not send", channel, "to", to ?? "all", error);
       };
+      // An empty list reaches nobody: Trystero would serialize it anyway.
+      if (typeof to === "object" && to.length === 0) {
+        return;
+      }
       try {
         actions
           .get(channel)
-          ?.send(payload, { target: to ?? null })
+          ?.send(payload, { target: typeof to === "object" ? [...to] : (to ?? null) })
           .catch(warn);
       } catch (error) {
         warn(error);

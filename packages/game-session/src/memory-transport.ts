@@ -138,7 +138,7 @@ export function createMemoryNetwork(): MemoryNetwork {
         if (self.left) {
           return;
         }
-        const targets = to === undefined ? [...peers.keys()] : [to];
+        const targets = to === undefined ? [...peers.keys()] : typeof to === "string" ? [to] : to;
         for (const target of targets) {
           if (!linked(peerId, target)) {
             continue;

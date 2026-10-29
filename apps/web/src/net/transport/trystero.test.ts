@@ -176,6 +176,14 @@ describe("the Trystero transport (#392)", () => {
     ]);
   });
 
+  it("sends a list in one send, and an empty list not at all", () => {
+    const fake = fakeRoom();
+    const transport = joinTrysteroRoom("A7KQ", fake.deps);
+    transport.send("snapshot", { tick: 1 }, ["a", "b"]);
+    transport.send("snapshot", { tick: 2 }, []);
+    expect(fake.sent).toEqual([{ channel: "snapshot", data: { tick: 1 }, target: ["a", "b"] }]);
+  });
+
   it("swallows a send that fails, with a warning naming the channel and target", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const fake = fakeRoom({ sendFails: true });
