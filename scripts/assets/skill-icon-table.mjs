@@ -273,4 +273,10 @@ export const SKILL_ICONS = {
   "assassin.malicious-strike": { glyph: "dagger", modifier: "half" },
   "assassin.unsuspecting-strike": { glyph: "dagger", modifier: "plus" },
   "assassin.critical-defenses": { glyph: "shield-bolt", modifier: "self" },
+  // Placeholders until the asset-designer's (#1329): Tactics stances.
+  "warrior.bonettis-defense": { glyph: "shield-bolt", modifier: "plus" },
+  "warrior.deflect-arrows": { glyph: "shield-bolt", modifier: "bleed" },
+  "warrior.gladiators-defense": { glyph: "shield-bolt", modifier: "bolt" },
+  "warrior.disciplined-stance": { glyph: "shield-bolt", modifier: "up" },
+  "warrior.balanced-stance": { glyph: "mountain", modifier: "stun" },
 };

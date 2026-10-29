@@ -688,6 +688,21 @@ cannot be blocked and cripples for 10 s. Debilitating Shot (10 energy,
 10 s) drains 8 energy. Burning Arrow (elite, 10 energy, 5 s) hits 26
 harder and burns for 6 s. Each lands its rider only when the arrow hits.
 
+Five Warrior Tactics stances (#1329). Three answer their own blocks: only
+the stance whose share of the block roll it fell in answers, never a
+second blocking status beside it. Bonetti's Defense (8 adrenaline, 10 s)
+blocks 75% of attacks and gives you 5 energy for each melee attack it
+blocks; it ends when you use another skill. Deflect Arrows (5
+adrenaline, 12 s recharge, 5 s) blocks 75%, and each projectile it
+blocks Bleeds the foes adjacent to you for 13 s. Gladiator's Defense
+(elite, 5 energy, 20 s recharge, 10 s) blocks 75%, and each melee attack
+it blocks deals its attacker 29 damage. Disciplined Stance (5 energy,
+15 s recharge, 3 s) is +10 armor and a 75% block, until you use an adrenal
+skill; a signet or a spell keeps it. Balanced Stance (5 energy, 30 s
+recharge, 18 s): you cannot be knocked down, and stopping one does not
+end it; a critical hit on you deals a normal roll, though it still
+counts as a critical for the attacker.
+
 **Mantra of Recovery** (Mesmer elite stance, Fast Casting, 5 energy, 15 s
 recharge, #938) makes every spell you finish in the next 17 s recharge
 33% faster. It is read as the recharge starts: a spell finished after the

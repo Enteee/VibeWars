@@ -291,7 +291,8 @@ export function blocks(
   }
   // One roll, as before; the status that blocked is the one whose share
   // of it the roll fell in, in roll order, so only Displacement's own
-  // block charges its spirit (#1265).
+  // block charges its spirit (#1265), and only that status's triggers
+  // answer it (#1329).
   let covered = 0;
   let unblocked = 1;
   for (const { statusId, block } of blocking) {
@@ -302,6 +303,7 @@ export function blocks(
     unblocked *= 1 - block.chance;
     if (roll < covered) {
       victim.statuses.chargeSources((definition) => definition.id === statusId);
+      victim.statuses.recordBlock(statusId, attackerId, kind);
       break;
     }
   }
@@ -451,9 +453,12 @@ export function landBlow(
     rolledCritical ||
     blow.criticalWhen === "always" ||
     (exposed && weapon.projectileSpeed === undefined);
-  const base = critical
-    ? weapon.damageMax * weapon.criticalMultiplier
-    : rng.nextInt(weapon.damageMin, weapon.damageMax + 1);
+  // A victim that suffers no extra damage from crits takes a normal roll,
+  // and the blow is still a critical (#1329).
+  const base =
+    critical && !aggregateModifiers(victim.statuses.active).ignoresCriticalDamage
+      ? weapon.damageMax * weapon.criticalMultiplier
+      : rng.nextInt(weapon.damageMin, weapon.damageMax + 1);
   const packet: DamagePacket = {
     armored:
       base *

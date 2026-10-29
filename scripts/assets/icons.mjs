@@ -358,6 +358,34 @@ const status = {
       `<path d="M6 8.5l4 3.5-4 3.5M11 8.5l4 3.5-4 3.5" ${stroke(c, 2.2)}/>` +
       `<path d="M18 7.5v9" ${stroke(c, 2.2)}/>`,
   ],
+  // Stance: a shield with a plus, Energy for each melee block (#1329).
+  "bonettis-defense": [
+    "stance",
+    (c) =>
+      `<path d="M7 6h10v5c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7z" ${stroke(c, 2)}/>` +
+      `<path d="M12 9v6M9 12h6" ${stroke(c, 2)}/>`,
+  ],
+  // Stance: an arrow glancing off a shield (#1329).
+  "deflect-arrows": [
+    "stance",
+    (c) =>
+      `<path d="M9 6h10v5c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7z" ${stroke(c, 2)}/>` +
+      `<path d="M3 15l5-4-3-5" ${stroke(c, 2)}/>`,
+  ],
+  // Stance: a shield with a blade through it, blocks that cut back (#1329).
+  "gladiators-defense": [
+    "stance",
+    (c) =>
+      `<path d="M7 6h10v5c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7z" ${stroke(c, 2)}/>` +
+      `<path d="M5 19L19 5" ${stroke(c, 2)}/>`,
+  ],
+  // Stance: a shield, filled, armor and blocks (#1329).
+  "disciplined-stance": [
+    "stance",
+    (c) => `<path d="M7 6h10v5c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7z" fill="${c}"/>`,
+  ],
+  // Stance: a figure standing firm on a wide base, never knocked down (#1329).
+  "balanced-stance": ["stance", (c) => `<path d="M12 5v9M6 19l6-5 6 5" ${stroke(c, 2.6)}/>`],
   // Stance: an arrow come round, spells back sooner (#938).
   "mantra-of-recovery": [
     "stance",

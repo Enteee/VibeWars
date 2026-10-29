@@ -3057,11 +3057,15 @@ export class MatchSimulation {
 
   /**
    * After its triggers answered the use (#949): every status on the
-   * bearer that ends when it uses a skill, as Diversion, is gone, and
-   * logged against that skill, but those in `spared` (#999).
+   * bearer that ends when it uses a skill, as Diversion, or an adrenal
+   * one (#1329), is gone, and logged against that skill, but those in
+   * `spared` (#999).
    */
   #endOnUseSkill(record: ParticipantRecord, skill: Skill, spared: ReadonlySet<StatusId>): void {
-    const ended = record.combatant.statuses.endOnBearerUseSkill(spared);
+    const ended = record.combatant.statuses.endOnBearerUseSkill(
+      spared,
+      skill.cost?.kind === "adrenaline",
+    );
     if (ended.length > 0) {
       this.#log.push({
         tick: this.#tick,

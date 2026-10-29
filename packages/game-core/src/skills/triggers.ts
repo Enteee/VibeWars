@@ -80,7 +80,8 @@ export function fireTriggers(
  * A hit the bearer landed, or physical damage it took (#935), fires what
  * answered it when it happened (#953), so a killing blow still sets off
  * the hexes its death ended. Damage or life steal from a foe (#1022)
- * fires what answered it at that foe. The simulation discards whatever
+ * fires what answered it at that foe, and a block (#1329) what answered
+ * it at the attacker. The simulation discards whatever
  * the firing itself changes, so this never recurses either.
  */
 export function fireChangeTriggers(
@@ -118,6 +119,7 @@ export function fireChangeTriggers(
         fire(trigger, statusId, sourceId, bearer, undefined, undefined, context),
       );
     case "took-damage-from-foe":
+    case "blocked":
       return change.fired.flatMap(({ statusId, sourceId, trigger }) =>
         fire(trigger, statusId, sourceId, bearer, change.offenderId, undefined, context),
       );
