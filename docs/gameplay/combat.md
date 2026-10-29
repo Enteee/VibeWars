@@ -871,6 +871,25 @@ Mend Body and Soul also removes one condition from the ally for each
 spirit, any team's, in earshot of the ally, and Spirit Light sacrifices
 nothing while a spirit, any team's, is in earshot of you (#1064).
 
+The Ritualist's Channeling Magic strikes with spirits about (#1270). A
+spirit, any team's, alive within earshot (350) of the caster is what
+"if any spirits are within earshot" asks, at the moment the skill lands.
+At Channeling Magic 12: **Spirit Burn** (5 energy, 1 s, 6 s recharge)
+deals 41 lightning damage, and Burning for 4 s with a spirit in earshot.
+**Essence Strike** (5 energy, 1 s, 8 s) deals 51 lightning damage, and
+you gain 7 Energy with a spirit in earshot. **Signet of Spirits** (elite
+signet, 1 s, 20 s, its PvP version) gives 10 Energy with a spirit in
+earshot and nothing without, though it is still used and recharges.
+**Spirit Rift** (10 energy, 2 s, 5 s) leaves a rift where its target
+stood (see Pulses): 3 s later, every foe adjacent to it takes 105
+lightning damage and Cracked Armor for 16 s. **Painful Bond** (hex, 15
+energy, 1 s, 12 s) hexes the target and every foe nearby it for 18 s:
+each spirit's shot that hits a hexed foe deals 18 more, past armor; a
+missed or blocked one, nothing. **Lamentation** (hex, 10 energy, 1 s,
+15 s) hexes the target and every foe nearby it for 17 s with −2 Health
+degeneration; as it lands, each takes 42 typeless damage if a spirit or
+a fresh corpse is in earshot of you. The corpse is not exploited.
+
 ## Weapon attacks
 
 Select a foe and attack it (Space; with nothing selected, the nearest foe): your character walks into weapon reach and sight, round walls if it has to, then
@@ -1681,7 +1700,8 @@ takes 5...17 fire damage and is set on fire for 3 s.
 
 A **pulse** (#1113) is a ground effect that lands its effects again and
 again: a number of pulses, a fixed interval apart, the first the step it
-is placed, and it is gone one interval after the last. Each pulse lands
+is placed, or once it is as old as its delay (#1270), and it is gone one
+interval after the last. Each pulse lands
 from the owner, alive or dead, on every body its area takes around the
 effect, as an area skill's would, in line of sight of the effect, and is
 logged as a cast, even when it hits nobody. A body that walks in is hit
@@ -1697,6 +1717,8 @@ seen by its foes too.
 recharge) leaves a symbol where its target stands as the cast lands; it
 does not follow them. It pulses five times, a second apart: every foe
 adjacent (40) takes 10...34 holy damage.
+Spirit Rift's rift pulses once, 3 s after it opens, on whoever is
+adjacent then.
 
 ## Death and scoring
 

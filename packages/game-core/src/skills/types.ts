@@ -601,6 +601,11 @@ export interface PulseRule {
   readonly count: number;
   /** More than 0. */
   readonly everySeconds: number;
+  /**
+   * The age at which its first pulse lands (#1270): Spirit Rift's "after 3
+   * seconds". 0: the step it is placed.
+   */
+  readonly delaySeconds: number;
   /** Who a pulse hits; `origin: "caster"` means the effect's position. */
   readonly area: RadiusArea;
   readonly effects: readonly SkillEffect[];
@@ -757,7 +762,19 @@ export type StateCondition =
    * No living spirit, any team's, stands within `radius` of the caster
    * (#1064): Spirit Light's sacrifice, which it skips near one.
    */
-  | { readonly kind: "caster-no-spirit-within"; readonly radius: number };
+  | { readonly kind: "caster-no-spirit-within"; readonly radius: number }
+  /**
+   * A living spirit, any team's, stands within `radius` of the caster
+   * (#1270): Spirit Burn's and Essence Strike's "if any spirits are within
+   * earshot". The twin of `caster-no-spirit-within`.
+   */
+  | { readonly kind: "caster-spirit-within"; readonly radius: number }
+  /**
+   * A living spirit, any team's, or a fresh corpse lies within `radius` of
+   * the caster (#1270): Lamentation's "within earshot of a spirit or
+   * corpse". The corpse is not exploited.
+   */
+  | { readonly kind: "caster-spirit-or-corpse-within"; readonly radius: number };
 
 export type EffectCondition = EventCondition | StateCondition;
 
@@ -1247,5 +1264,13 @@ export interface SkillContext {
   readonly usedSkill?: SlotSkill | undefined;
 }
 
+/**
+ * One body in `Surroundings`: a target candidate, and whether its corpse
+ * was exploited (#1270), so a condition can ask for a fresh corpse.
+ */
+export interface SurroundingBody extends TargetCandidate {
+  readonly corpseExploited: boolean;
+}
+
 /** Everyone in the match by id, where they stand (#885). */
-export type Surroundings = ReadonlyMap<string, TargetCandidate>;
+export type Surroundings = ReadonlyMap<string, SurroundingBody>;

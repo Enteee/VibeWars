@@ -220,6 +220,7 @@ describe("groundEffectSnapshot (#1087)", () => {
           spring: {
             count: 1,
             everySeconds: 1,
+            delaySeconds: 0,
             area: {
               radius: 81,
               origin: "caster",

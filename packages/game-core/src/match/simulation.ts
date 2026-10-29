@@ -1394,8 +1394,8 @@ export class MatchSimulation {
   /**
    * Every pulse effect whose next pulse is due lands it (#1113), after
    * traps spring, in id order: at most one each a step, the first the step
-   * it was placed, then one every interval of its age. One whose owner
-   * has left the match is gone with no effect.
+   * its age reaches its delay (#1270), then one every interval after.
+   * One whose owner has left the match is gone with no effect.
    */
   #pulseGroundEffects(): void {
     if (!this.#groundEffects.some((effect) => effect.act.kind === "pulse")) {
@@ -1415,7 +1415,7 @@ export class MatchSimulation {
       const age = effect.durationSeconds - effect.remainingSeconds;
       if (
         effect.pulsed >= pulse.count ||
-        age < effect.pulsed * pulse.everySeconds - SWING_EPSILON
+        age < pulse.delaySeconds + effect.pulsed * pulse.everySeconds - SWING_EPSILON
       ) {
         continue;
       }
@@ -3992,16 +3992,24 @@ export class MatchSimulation {
       attackReached(target.combatant, events);
       events.push(...riders(skillHit?.skill.attack?.onBlocked ?? []));
     } else {
+      const blow = settleBlow(
+        skillHit?.blow ?? PLAIN_BLOW,
+        attacker?.combatant,
+        target.combatant,
+        this.#participants,
+      );
+      // Painful Bond's +18 on a spirit's shot that hits (#1270), armor-
+      // ignoring on the same blow. A spirit gone before its shot lands
+      // is no longer anyone's, so it adds nothing.
+      const fromSpirit =
+        attacker?.creature?.kind === "spirit"
+          ? aggregateModifiers(target.combatant.statuses.active).damageFromSpiritAttacks
+          : 0;
       const critical = landBlow(
         projectile.weaponSnapshot,
         attacker?.combatant,
         target.combatant,
-        settleBlow(
-          skillHit?.blow ?? PLAIN_BLOW,
-          attacker?.combatant,
-          target.combatant,
-          this.#participants,
-        ),
+        fromSpirit === 0 ? blow : { ...blow, bonus: blow.bonus + fromSpirit },
         // A shot crits only on its roll, never for where it came from.
         false,
         this.#rng,

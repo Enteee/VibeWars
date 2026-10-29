@@ -24,6 +24,8 @@ import {
 import { nearestFirst, spiritsWithin, type TargetCandidate } from "./targeting.js";
 import { effectiveMaxHealth, healingMultiplierOf, maxHealthLossOf, rankOf } from "./tick.js";
 import { wieldsFor } from "../equipment/weapons.js";
+import { distanceWithinRange } from "../geometry.js";
+import { isFreshCorpse } from "../match/corpses.js";
 import { distance } from "../vec2.js";
 import type { Creature } from "../match/simulation.js";
 import type { ProfessionId } from "../professions.js";
@@ -1263,6 +1265,8 @@ function isStateCondition(condition: EffectCondition): condition is StateConditi
     case "target-more-health":
     case "target-attacking":
     case "caster-no-spirit-within":
+    case "caster-spirit-within":
+    case "caster-spirit-or-corpse-within":
       return true;
   }
 }
@@ -1329,6 +1333,21 @@ export function stateHolds(
     case "caster-no-spirit-within": {
       const at = surroundings.get(caster.id)?.position;
       return at === undefined || spiritsWithin(surroundings.values(), at, condition.radius) === 0;
+    }
+    case "caster-spirit-within": {
+      const at = surroundings.get(caster.id)?.position;
+      return at !== undefined && spiritsWithin(surroundings.values(), at, condition.radius) > 0;
+    }
+    case "caster-spirit-or-corpse-within": {
+      const at = surroundings.get(caster.id)?.position;
+      return (
+        at !== undefined &&
+        (spiritsWithin(surroundings.values(), at, condition.radius) > 0 ||
+          [...surroundings.values()].some(
+            (body) =>
+              isFreshCorpse(body) && distanceWithinRange(at, body.position, condition.radius),
+          ))
+      );
     }
   }
 }
@@ -1493,6 +1512,8 @@ function conditionHolds(
     case "target-more-health":
     case "target-attacking":
     case "caster-no-spirit-within":
+    case "caster-spirit-within":
+    case "caster-spirit-or-corpse-within":
       return held.has(condition);
   }
 }

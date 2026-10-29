@@ -72,7 +72,7 @@ function around(...placed: readonly [Combatant, Vec2][]): Surroundings {
   return new Map(
     placed.map(([combatant, position]) => [
       combatant.id,
-      { combatant, position, creature: undefined },
+      { combatant, position, creature: undefined, corpseExploited: false },
     ]),
   );
 }
