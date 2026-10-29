@@ -143,8 +143,12 @@ export interface TopbarSlots {
   readonly back: HTMLElement;
   readonly status: HTMLElement;
   readonly actions: HTMLElement;
-  /** Told which bar shows after every change: the bar's own icon, and whether it is an overlay's. */
+  /**
+   * Told which bar shows after every change: where it is (its crumbs, as
+   * text), the bar's own icon, and whether it is an overlay's.
+   */
   readonly onShow: (shown: {
+    readonly place: string;
     readonly own: OwnIcon | undefined;
     readonly overlay: boolean;
   }) => void;
@@ -185,7 +189,13 @@ function showBar(): void {
   slots.back.replaceChildren(...(bar.back === undefined ? [] : [bar.back]));
   slots.status.replaceChildren(...(bar.options.status ?? []));
   slots.actions.replaceChildren(...bar.options.actions);
-  slots.onShow({ own: bar.options.own, overlay: bar.options.overlay === true });
+  slots.onShow({
+    place: bar.options.crumbs
+      .map((crumb) => (typeof crumb === "string" ? crumb : crumb.textContent))
+      .join(" / "),
+    own: bar.options.own,
+    overlay: bar.options.overlay === true,
+  });
 }
 
 /** Whether `element` is in the page and nothing above it hides it. */

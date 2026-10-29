@@ -369,7 +369,7 @@ describe("screenBar in the top bar (#578, #1272)", () => {
   let page: FakeNode;
   let topbar: FakeNode;
   let slots: { crumbs: FakeNode; back: FakeNode; status: FakeNode; actions: FakeNode };
-  let shown: { own: OwnIcon | undefined; overlay: boolean }[];
+  let shown: { place: string; own: OwnIcon | undefined; overlay: boolean }[];
   let overflowOpen: boolean;
   beforeEach(() => {
     page = new FakeNode();
@@ -457,6 +457,8 @@ describe("screenBar in the top bar (#578, #1272)", () => {
     expect(slots.back.text).toBe("‹Close");
     expect(slots.status.children).toEqual([status]);
     expect(slots.actions.children).toEqual([save]);
+    // Where it is, as text, so a repaint in place can be told from a move.
+    expect(shown.at(-1)?.place).toBe("VibeWars / Teams / ");
   });
 
   it("replaces the last screen's bar, and the main menu has no Back", () => {
@@ -487,7 +489,7 @@ describe("screenBar in the top bar (#578, #1272)", () => {
       own: "options",
     });
     expect(slots.crumbs.text).toBe("VibeWars > Options");
-    expect(shown.at(-1)).toEqual({ own: "options", overlay: true });
+    expect(shown.at(-1)).toEqual({ place: "VibeWars / Options", own: "options", overlay: true });
     // A lobby repaints under it: the overlay's bar stays.
     const repainted = screen(undefined, "Lobby");
     expect(slots.crumbs.text).toBe("VibeWars > Options");
@@ -500,7 +502,7 @@ describe("screenBar in the top bar (#578, #1272)", () => {
     overlay.release();
     expect(slots.crumbs.text).toBe("VibeWars > Lobby");
     expect(slots.back.children).toEqual([repainted.back]);
-    expect(shown.at(-1)).toEqual({ own: undefined, overlay: false });
+    expect(shown.at(-1)).toEqual({ place: "VibeWars / Lobby", own: undefined, overlay: false });
     pressEscape();
     expect(onClose).toHaveBeenCalledOnce();
     expect(repainted.onBack).toHaveBeenCalledOnce();

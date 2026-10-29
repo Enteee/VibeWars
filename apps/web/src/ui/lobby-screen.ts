@@ -229,13 +229,6 @@ export function renderLobbyScreen(
     );
   }
 
-  // The mode follows from the map (#476), so it reads under it.
-  const mapBlock = h("div", "lobby-map-block");
-  mapBlock.appendChild(mapPart);
-  if (current !== undefined) {
-    mapBlock.appendChild(h("div", "lobby-mode", modeLine(current)));
-  }
-
   // The next thing to press is the primary one, the one a phone keeps out
   // of the ⋯ (#1272): Ready until you are, then the host's Start match.
   const ready = self?.ready === true;
@@ -279,9 +272,16 @@ export function renderLobbyScreen(
         }
       },
     },
-    status: [header, mapBlock],
+    status: [header, mapPart],
     actions,
   });
+
+  // The mode follows from the map (#476). It is the only place a player
+  // learns it before Start, so it gets a row of its own under the bar
+  // rather than being shortened in it (#1272).
+  if (current !== undefined) {
+    panel.appendChild(h("div", "lobby-mode", modeLine(current)));
+  }
 
   if (notice !== undefined) {
     panel.appendChild(h("div", "screen-problem", notice));

@@ -75,7 +75,7 @@ import {
   type QueueScreen,
   type StayOffer,
 } from "./ui/queue-screen.js";
-import { displayLobbyCode, renderLobbyScreen } from "./ui/lobby-screen.js";
+import { renderLobbyScreen } from "./ui/lobby-screen.js";
 import { createNowPlayingToast, nowPlayingText } from "./ui/now-playing.js";
 import {
   loadActiveCharacterId,
@@ -967,7 +967,8 @@ async function main(): Promise<void> {
       queue.screen.show({ kind: "splash", snapshot });
       return;
     }
-    setStatus(`lobby ${displayLobbyCode(snapshot.code)}`, "online");
+    // The lobby screen shows its code, so the status has nothing to add.
+    setStatus("", "online");
     showViewport(false);
     music().screen("lobby");
     renderLobbyScreen(
@@ -1247,6 +1248,8 @@ async function main(): Promise<void> {
         },
         { connect: () => connectMatchFor(from, start, name, entrant.build) },
       );
+      // In the match, the status has nothing to say until it is lost.
+      setStatus("", "online");
     } catch (error) {
       console.error("[web] could not enter match", error);
       enteringMatch = false;

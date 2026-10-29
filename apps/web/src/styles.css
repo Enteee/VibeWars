@@ -2108,24 +2108,14 @@ body {
   gap: 0.8rem;
 }
 
-/* In the top bar (#1272): one row, the mode line shortened first. */
+/* In the top bar (#1272): the code and the map on one row, neither squeezed. */
 #topbar .lobby-header,
-#topbar .lobby-map-block {
+#topbar .lobby-map {
   display: flex;
-  flex-direction: row;
+  flex: 0 0 auto;
   align-items: center;
   gap: 0.6rem;
   white-space: nowrap;
-}
-
-#topbar .lobby-map-block {
-  min-width: 0;
-}
-
-#topbar .lobby-mode {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 #topbar .lobby-code {
@@ -2152,13 +2142,6 @@ body {
 .lobby-map,
 .lobby-spectators {
   color: var(--ink-dim);
-}
-
-/* The map, and under it the mode it plays (#476). */
-.lobby-map-block {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
 }
 
 .lobby-mode {

@@ -21,6 +21,9 @@ test("[?] opens Help on Getting started; Esc returns to the menu as it was (#125
     "VibeWars > Help > Getting started",
   );
   await expect(help.locator(".help-page h1")).toHaveText("Getting started");
+  // The bar over the match has no status: it once still said "entering
+  // match…" (#1272).
+  await expect(page.locator("#status")).toBeHidden();
   await expect(help.locator('.options-entry[data-page="getting-started"]')).toHaveAttribute(
     "aria-current",
     "page",

@@ -120,6 +120,7 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
     }
   });
 
+  let shownPlace: string | undefined;
   let inMatch = false;
   let overlayShown = false;
   const paintHidden = (): void => {
@@ -132,11 +133,16 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
     back: part(bar, ".topbar-back"),
     status: part(bar, ".topbar-status"),
     actions: screenActions,
-    onShow: ({ own, overlay }) => {
+    onShow: ({ place, own, overlay }) => {
       help.hidden = own === "help";
       options.hidden = own === "options";
       music.hidden = own === "music";
-      setMore(false);
+      // A screen that repaints in place, like a lobby on every join, keeps
+      // the ⋯ open; going somewhere else puts it away.
+      if (place !== shownPlace) {
+        shownPlace = place;
+        setMore(false);
+      }
       // Only a screen with buttons beyond its primary one has a ⋯.
       bar.classList.toggle(
         "has-more",
