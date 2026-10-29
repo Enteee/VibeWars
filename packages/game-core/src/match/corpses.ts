@@ -18,7 +18,9 @@ export interface CorpseCandidate {
 }
 
 /** Dead, not a creature (it leaves none, ADR-0035), not yet exploited. */
-export function isFreshCorpse(body: CorpseCandidate): boolean {
+export function isFreshCorpse(
+  body: Pick<CorpseCandidate, "combatant" | "creature" | "corpseExploited">,
+): boolean {
   return body.combatant.dead && body.creature === undefined && !body.corpseExploited;
 }
 

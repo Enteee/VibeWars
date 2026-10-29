@@ -88,6 +88,7 @@
     "incoming",
     "ineptitude",
     "insidious-parasite",
+    "lamentation",
     "lightning-reflexes",
     "make-haste",
     "malaise",
@@ -98,6 +99,7 @@
     "mystic-regeneration",
     "natural-stride",
     "never-surrender",
+    "painful-bond",
     "parasitic-bond",
     "patient-spirit",
     "phantom-pain",
@@ -505,6 +507,7 @@
                   { "literal": "incoming" },
                   { "literal": "ineptitude" },
                   { "literal": "insidious-parasite" },
+                  { "literal": "lamentation" },
                   { "literal": "lightning-reflexes" },
                   { "literal": "make-haste" },
                   { "literal": "malaise" },
@@ -515,6 +518,7 @@
                   { "literal": "mystic-regeneration" },
                   { "literal": "natural-stride" },
                   { "literal": "never-surrender" },
+                  { "literal": "painful-bond" },
                   { "literal": "parasitic-bond" },
                   { "literal": "patient-spirit" },
                   { "literal": "phantom-pain" },
@@ -635,6 +639,7 @@
                   { "literal": "incoming" },
                   { "literal": "ineptitude" },
                   { "literal": "insidious-parasite" },
+                  { "literal": "lamentation" },
                   { "literal": "lightning-reflexes" },
                   { "literal": "make-haste" },
                   { "literal": "malaise" },
@@ -645,6 +650,7 @@
                   { "literal": "mystic-regeneration" },
                   { "literal": "natural-stride" },
                   { "literal": "never-surrender" },
+                  { "literal": "painful-bond" },
                   { "literal": "parasitic-bond" },
                   { "literal": "patient-spirit" },
                   { "literal": "phantom-pain" },
@@ -762,6 +768,7 @@
                   { "literal": "incoming" },
                   { "literal": "ineptitude" },
                   { "literal": "insidious-parasite" },
+                  { "literal": "lamentation" },
                   { "literal": "lightning-reflexes" },
                   { "literal": "make-haste" },
                   { "literal": "malaise" },
@@ -772,6 +779,7 @@
                   { "literal": "mystic-regeneration" },
                   { "literal": "natural-stride" },
                   { "literal": "never-surrender" },
+                  { "literal": "painful-bond" },
                   { "literal": "parasitic-bond" },
                   { "literal": "patient-spirit" },
                   { "literal": "phantom-pain" },
@@ -886,6 +894,7 @@
                   { "literal": "incoming" },
                   { "literal": "ineptitude" },
                   { "literal": "insidious-parasite" },
+                  { "literal": "lamentation" },
                   { "literal": "lightning-reflexes" },
                   { "literal": "make-haste" },
                   { "literal": "malaise" },
@@ -896,6 +905,7 @@
                   { "literal": "mystic-regeneration" },
                   { "literal": "natural-stride" },
                   { "literal": "never-surrender" },
+                  { "literal": "painful-bond" },
                   { "literal": "parasitic-bond" },
                   { "literal": "patient-spirit" },
                   { "literal": "phantom-pain" },
@@ -1034,6 +1044,12 @@
         },
         {
           "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "spirit-destroyed" } },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "status-expired" } },
             {
               "name": "statusId",
@@ -1092,6 +1108,7 @@
                   { "literal": "incoming" },
                   { "literal": "ineptitude" },
                   { "literal": "insidious-parasite" },
+                  { "literal": "lamentation" },
                   { "literal": "lightning-reflexes" },
                   { "literal": "make-haste" },
                   { "literal": "malaise" },
@@ -1102,6 +1119,7 @@
                   { "literal": "mystic-regeneration" },
                   { "literal": "natural-stride" },
                   { "literal": "never-surrender" },
+                  { "literal": "painful-bond" },
                   { "literal": "parasitic-bond" },
                   { "literal": "patient-spirit" },
                   { "literal": "phantom-pain" },
@@ -1207,6 +1225,7 @@
                   { "literal": "incoming" },
                   { "literal": "ineptitude" },
                   { "literal": "insidious-parasite" },
+                  { "literal": "lamentation" },
                   { "literal": "lightning-reflexes" },
                   { "literal": "make-haste" },
                   { "literal": "malaise" },
@@ -1217,6 +1236,7 @@
                   { "literal": "mystic-regeneration" },
                   { "literal": "natural-stride" },
                   { "literal": "never-surrender" },
+                  { "literal": "painful-bond" },
                   { "literal": "parasitic-bond" },
                   { "literal": "patient-spirit" },
                   { "literal": "phantom-pain" },
@@ -2564,6 +2584,7 @@
     },
     "WireSnapshot": {
       "properties": [
+        { "name": "aggression", "optional": false, "type": { "array": "number" } },
         { "name": "elapsedSeconds", "optional": false, "type": "number" },
         {
           "name": "endReason",
@@ -2860,6 +2881,7 @@
     },
     "WireSnapshotPart": {
       "properties": [
+        { "name": "aggression", "optional": false, "type": { "array": "number" } },
         { "name": "elapsedSeconds", "optional": false, "type": "number" },
         {
           "name": "endReason",

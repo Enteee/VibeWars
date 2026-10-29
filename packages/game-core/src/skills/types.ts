@@ -62,6 +62,8 @@ export type TargetRule =
   | "single-any"
   /** A dead ally other than the caster: a resurrection's (#812). */
   | "single-dead-ally"
+  /** A living spirit on the caster's team, whoever made it (#1309): GW1's "allied spirit". */
+  | "allied-spirit"
   /** The caster's own companion, alive or dead, whatever is selected (#1046). */
   | "companion"
   /** As `"companion"`, but only a living one (#1108): a call on a dead pet is refused. */
@@ -122,6 +124,12 @@ export interface HealEffect {
    * removed: no heal.
    */
   readonly perRemoved?: StatusCategory;
+  /**
+   * The amount is per spirit an earlier `destroy-allied-spirits` of this
+   * skill destroyed (#1309), as Feast of Souls' "for each spirit destroyed
+   * in this way". None destroyed: no heal.
+   */
+  readonly perDestroyedSpirit?: true;
 }
 
 /** Leader's Comfort's heal per ally in earshot (#923). */
@@ -388,12 +396,36 @@ export interface DrainOwnEnergyEffect {
  * Apply `effects` to every foe of the caster within `radius` of the
  * effect's target, the target itself excluded (#885), as Death Blossom's
  * "all adjacent foes take 20...40 damage". Not a blow: no block, no crit
- * and no chain mark on a foe it reaches.
+ * and no chain mark on a foe it reaches. `foe-creatures` reaches only the
+ * foes' summoned creatures, never a player (#1309): Consume Soul's "all
+ * hostile summoned creatures in earshot of that foe".
  */
 export interface SplashEffect {
   readonly kind: "splash";
+  readonly hits: "foes" | "foe-creatures";
   readonly radius: number;
   readonly effects: readonly UnconditionalEffect[];
+}
+
+/**
+ * The skill's target, a living allied spirit, is destroyed (#1309):
+ * Rupture Soul's "target allied spirit is destroyed". It leaves as an
+ * expired spirit does: no corpse, no killer and no morale. Acts once, on
+ * the primary target, after the effects listed before it.
+ */
+export interface DestroyTargetSpiritEffect {
+  readonly kind: "destroy-target-spirit";
+}
+
+/**
+ * Every living allied spirit within `radius` of the caster is destroyed,
+ * as `destroy-target-spirit` (#1309): Feast of Souls' "destroy all nearby
+ * allies' spirits". A heal after it with `perDestroyedSpirit` counts them.
+ * Acts on the caster, once.
+ */
+export interface DestroyAlliedSpiritsEffect {
+  readonly kind: "destroy-allied-spirits";
+  readonly radius: number;
 }
 
 /**
@@ -569,6 +601,11 @@ export interface PulseRule {
   readonly count: number;
   /** More than 0. */
   readonly everySeconds: number;
+  /**
+   * The age at which its first pulse lands (#1270): Spirit Rift's "after 3
+   * seconds". 0: the step it is placed.
+   */
+  readonly delaySeconds: number;
   /** Who a pulse hits; `origin: "caster"` means the effect's position. */
   readonly area: RadiusArea;
   readonly effects: readonly SkillEffect[];
@@ -727,7 +764,19 @@ export type StateCondition =
    * No living spirit, any team's, stands within `radius` of the caster
    * (#1064): Spirit Light's sacrifice, which it skips near one.
    */
-  | { readonly kind: "caster-no-spirit-within"; readonly radius: number };
+  | { readonly kind: "caster-no-spirit-within"; readonly radius: number }
+  /**
+   * A living spirit, any team's, stands within `radius` of the caster
+   * (#1270): Spirit Burn's and Essence Strike's "if any spirits are within
+   * earshot". The twin of `caster-no-spirit-within`.
+   */
+  | { readonly kind: "caster-spirit-within"; readonly radius: number }
+  /**
+   * A living spirit, any team's, or a fresh corpse lies within `radius` of
+   * the caster (#1270): Lamentation's "within earshot of a spirit or
+   * corpse". The corpse is not exploited.
+   */
+  | { readonly kind: "caster-spirit-or-corpse-within"; readonly radius: number };
 
 export type EffectCondition = EventCondition | StateCondition;
 
@@ -769,6 +818,8 @@ export type UnconditionalEffect =
   | DrainOwnEnergyEffect
   | RechargeFasterEffect
   | SplashEffect
+  | DestroyTargetSpiritEffect
+  | DestroyAlliedSpiritsEffect
   | RechargeOthersEffect
   | DisableSkillEffect
   | LengthenRechargeEffect
@@ -1224,5 +1275,13 @@ export interface SkillContext {
   readonly usedSkill?: SlotSkill | undefined;
 }
 
+/**
+ * One body in `Surroundings`: a target candidate, and whether its corpse
+ * was exploited (#1270), so a condition can ask for a fresh corpse.
+ */
+export interface SurroundingBody extends TargetCandidate {
+  readonly corpseExploited: boolean;
+}
+
 /** Everyone in the match by id, where they stand (#885). */
-export type Surroundings = ReadonlyMap<string, TargetCandidate>;
+export type Surroundings = ReadonlyMap<string, SurroundingBody>;

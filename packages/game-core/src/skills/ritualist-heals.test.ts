@@ -8,9 +8,8 @@ import { payCost } from "./activation.js";
 import { getSkill } from "./catalog.js";
 import { describeSkill } from "./describe.js";
 import { applySkillEffects, type CombatEvent } from "./effects.js";
-import type { TargetCandidate } from "./targeting.js";
 import { makeCombatant } from "./testing.js";
-import type { Combatant, Skill, Surroundings } from "./types.js";
+import type { Combatant, Skill, SurroundingBody, Surroundings } from "./types.js";
 
 /**
  * The Ritualist's heals (#955): Mend Body and Soul, Spirit Light and
@@ -54,13 +53,19 @@ function around(
   allyAt: Vec2,
   spirits: readonly Vec2[],
 ): Surroundings {
-  return new Map<string, TargetCandidate>([
-    [caster.id, { combatant: caster, position: vec2(0, 0), creature: undefined }],
-    [target.id, { combatant: target, position: allyAt, creature: undefined }],
+  return new Map<string, SurroundingBody>([
+    [
+      caster.id,
+      { combatant: caster, position: vec2(0, 0), creature: undefined, corpseExploited: false },
+    ],
+    [
+      target.id,
+      { combatant: target, position: allyAt, creature: undefined, corpseExploited: false },
+    ],
     ...spirits.map((position, index) => {
       const id = `spirit${String(index)}`;
       const spirit = makeCombatant({ id, team: 1 });
-      const candidate: TargetCandidate = {
+      const candidate: SurroundingBody = {
         combatant: spirit,
         position,
         creature: {
@@ -78,6 +83,7 @@ function around(
           companionSkillId: undefined,
           mode: "guard",
         },
+        corpseExploited: false,
       };
       return [id, candidate] as const;
     }),

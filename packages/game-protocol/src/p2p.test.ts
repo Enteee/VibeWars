@@ -216,9 +216,10 @@ const snapshot: WireSnapshotPart = {
   ],
   flags: [],
   stand: null,
+  aggression: [],
 };
 
-/** A Guild Battle's flags (#1225): one carried, one on the ground. */
+/** A Guild Battle's flags (#1225): one carried, one on the ground; and its aggression (#1226). */
 const flagged: WireSnapshotPart = {
   ...snapshot,
   flags: [
@@ -226,6 +227,7 @@ const flagged: WireSnapshotPart = {
     { team: 1, place: "ground", carrierId: null, x: 1400, y: 980 },
   ],
   stand: { holder: 0, heldSeconds: 37.5 },
+  aggression: [1240, 980],
 };
 
 const combat: WireCombat = {
@@ -575,6 +577,7 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
         { team: 1, place: "stand", carrierId: null, x: null, y: null },
       ],
       stand: { holder: null, heldSeconds: 0 },
+      aggression: [],
     },
   ],
   ["combat batch", parseWireCombatBatch, combatBatch],
@@ -817,6 +820,21 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["snapshot without parts (#662)", parseWireSnapshotPart, { ...snapshot, parts: undefined }],
   ["snapshot without flags (#1225)", parseWireSnapshotPart, { ...snapshot, flags: undefined }],
   ["snapshot without a stand (#1225)", parseWireSnapshotPart, { ...snapshot, stand: undefined }],
+  [
+    "snapshot without aggression (#1226)",
+    parseWireSnapshotPart,
+    { ...snapshot, aggression: undefined },
+  ],
+  [
+    "snapshot with three teams' aggression (#1226)",
+    parseWireSnapshotPart,
+    { ...flagged, aggression: [1, 2, 3] },
+  ],
+  [
+    "snapshot with negative aggression (#1226)",
+    parseWireSnapshotPart,
+    { ...flagged, aggression: [-1, 0] },
+  ],
   [
     "snapshot with three flags (#1225)",
     parseWireSnapshotPart,

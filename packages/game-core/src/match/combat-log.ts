@@ -116,20 +116,30 @@ export interface MatchTallyRow {
  * (#1057). Damage, healing and taken follow `tallyCombat`'s rules, except
  * that only damage to a foe is dealt: hurting an ally is not an
  * achievement. A kill is credited to the source of the entry that carries
- * the death, when that source is on the other team; a death with no
- * source, or by a teammate's hand, credits nobody. An interrupt is a
+ * the death, when that source is on the other team and the dead is a
+ * member, a player or a bot: a creature's death, a Guild Lord's too, is no
+ * kill (#1226). A death with no source, or by a teammate's hand, credits
+ * nobody. An interrupt is a
  * successful one: `interrupted`, never `interrupt-missed`.
  */
 export class MatchTally {
   readonly #teamOf: (id: string) => number | undefined;
+  readonly #isMember: (id: string) => boolean;
   readonly #combat: TallyBuilder;
   readonly #kills = new Map<string, number>();
   readonly #deaths = new Map<string, number>();
   readonly #interrupts = new Map<string, number>();
 
-  /** `teamOf` says which team an id is on; kills and damage dealt need it. */
-  public constructor(teamOf: (id: string) => number | undefined) {
+  /**
+   * `teamOf` says which team an id is on; kills and damage dealt need it.
+   * `isMember` says whether an id is a player or a bot, whose death a kill is.
+   */
+  public constructor(
+    teamOf: (id: string) => number | undefined,
+    isMember: (id: string) => boolean,
+  ) {
     this.#teamOf = teamOf;
+    this.#isMember = isMember;
     this.#combat = new TallyBuilder((sourceId, targetId) => this.#foes(sourceId, targetId));
   }
 
@@ -139,7 +149,11 @@ export class MatchTally {
       for (const event of entry.events) {
         if (event.kind === "death") {
           bump(this.#deaths, event.targetId, 1);
-          if (entry.sourceId !== undefined && this.#foes(entry.sourceId, event.targetId)) {
+          if (
+            entry.sourceId !== undefined &&
+            this.#isMember(event.targetId) &&
+            this.#foes(entry.sourceId, event.targetId)
+          ) {
             bump(this.#kills, entry.sourceId, 1);
           }
         } else if (event.kind === "interrupted" && entry.sourceId !== undefined) {

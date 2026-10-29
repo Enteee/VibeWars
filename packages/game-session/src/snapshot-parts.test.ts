@@ -103,6 +103,7 @@ function snapshot(
     groundEffects: Array.from({ length: groundEffects }, (_, i) => groundEffect(i)),
     flags: [{ team: 0, place: "carried", carrierId: "peer-0", x: null, y: null }],
     stand: { holder: 1, heldSeconds: 12 },
+    aggression: [],
   };
 }
 

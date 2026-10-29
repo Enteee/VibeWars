@@ -84,4 +84,14 @@ and every **2 minutes** held without a break gives the whole team a
 **+10% morale boost**, which readies spent skills too. A foe planting
 over it starts the count again from 0 for them.
 
+Its HUD (#1226) puts the match on the scoreboard: each lord's health,
+the stand's holder and the time to its boost, the next wave, and in the
+last 3 minutes each team's aggression; on a narrow window the line
+wraps between its parts. A line under it names each
+flag's carrier, or says it was dropped. A boost toasts, "Morale boost!
++10%" for your team and "Enemy morale boost" for theirs. The compass
+marks each Guild Lord `♛`, each flag `⚑` where it is, and the stand
+`◎` in its holder's colour. A Guild Lord's or any creature's death is
+no kill in the match summary.
+
 How each one ends, in full, is in [combat](combat.md#match-end).

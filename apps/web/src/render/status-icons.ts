@@ -121,6 +121,8 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "expose-defenses": icon("expose-defenses"),
   "enduring-toxin": icon("enduring-toxin"),
   "mark-of-death": icon("mark-of-death"),
+  "painful-bond": icon("painful-bond"),
+  lamentation: icon("lamentation"),
 };
 
 /** Drawn size of one icon, in world pixels. */

@@ -177,6 +177,7 @@ export function snapshotAssembler(): (part: WireSnapshotPart) => WireSnapshot | 
       groundEffects,
       flags: part.flags,
       stand: part.stand,
+      aggression: part.aggression,
     };
   };
 }

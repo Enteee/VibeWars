@@ -12,7 +12,8 @@ What you do:
 - **Triage every new issue.** Read it, then rewrite it until it contains: the
   player-visible behaviour, which packages and files it touches, the data
   shape, the edge cases that matter, and how it should be tested. Say what is
-  explicitly out of scope.
+  explicitly out of scope. Add a line `Player docs:` naming the
+  `docs/player/` page the change updates, or "none" and why.
 - **Take Backlog cards top first.** The manager keeps the Backlog ranked,
   most valuable on top, and `board ls Backlog` lists it in that order.
 - **Sign off, in writing and in the column.** Comment `ARCHITECTURE OK` on an

@@ -11,10 +11,10 @@ import { getSkill } from "./catalog.js";
 import { mitigate, skillDamage } from "./damage.js";
 import { applySkillEffects, type CombatEvent } from "./effects.js";
 import { aggregateModifiers, MAX_RECHARGE_REDUCTION } from "./status.js";
-import { resolveTargets, type TargetCandidate } from "./targeting.js";
+import { resolveTargets } from "./targeting.js";
 import { makeCombatant } from "./testing.js";
 import { moveSpeedMultiplier } from "./tick.js";
-import type { Combatant, Skill, Surroundings } from "./types.js";
+import type { Combatant, Skill, SurroundingBody, Surroundings } from "./types.js";
 
 /**
  * The Mesmer and Elementalist staples (#938): Cry of Frustration, Mantra
@@ -68,8 +68,8 @@ function use(
   });
 }
 
-function at(combatant: Combatant, position: Vec2): TargetCandidate {
-  return { combatant, position, creature: undefined };
+function at(combatant: Combatant, position: Vec2): SurroundingBody {
+  return { combatant, position, creature: undefined, corpseExploited: false };
 }
 
 describe("Cry of Frustration (#938)", () => {

@@ -63,6 +63,7 @@ function snapshot(castingSkillId: string | undefined): MatchSnapshot {
     traps: [],
     flags: [],
     stand: undefined,
+    aggression: [],
     summary: undefined,
   };
 }

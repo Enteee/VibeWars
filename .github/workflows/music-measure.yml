@@ -64,7 +64,7 @@ jobs:
             echo
             echo "| load | underruns | underrun ms | max reduction dB | late ticks | skipped ms |"
             echo "| --- | --- | --- | --- | --- | --- |"
-            jq -r ".browsers.$BROWSER.loads[] | \"| \(.name) (\(.screen)) | \(.underruns // \"n/a\") | \(.underrunMs // \"n/a\") | \(.maxReductionDb) | \(.lateTicks) | \(.skippedMs) |\"" "$file"
+            jq -r ".browsers.$BROWSER.loads[] | if .hung then \"| \(.name) (\(.screen)) | hung at \(.hung.step) | | | | |\" else \"| \(.name) (\(.screen)) | \(.underruns // \"n/a\") | \(.underrunMs // \"n/a\") | \(.maxReductionDb) | \(.lateTicks) | \(.skippedMs) |\" end" "$file"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

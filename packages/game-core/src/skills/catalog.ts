@@ -1294,6 +1294,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "splash",
+        hits: "foes",
         radius: AREA_ADJACENT,
         effects: [
           {
@@ -3245,6 +3246,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       },
       {
         kind: "splash",
+        hits: "foes",
         radius: AREA_NEARBY,
         effects: [
           {
@@ -4132,6 +4134,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       { kind: "apply-status", statusId: "staggering-force", durationSeconds: 30 },
       {
         kind: "splash",
+        hits: "foes",
         radius: AREA_NEARBY,
         effects: [
           {
@@ -4172,6 +4175,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       { kind: "apply-status", statusId: "dust-cloak", durationSeconds: 30 },
       {
         kind: "splash",
+        hits: "foes",
         radius: AREA_NEARBY,
         effects: [
           {
@@ -4212,6 +4216,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       { kind: "apply-status", statusId: "aura-of-thorns", durationSeconds: 30 },
       {
         kind: "splash",
+        hits: "foes",
         radius: AREA_NEARBY,
         effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: 13 }],
       },
@@ -5329,6 +5334,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
           },
           {
             kind: "splash",
+            hits: "foes",
             radius: AREA_IN_THE_AREA,
             effects: [
               { kind: "interrupt" },
@@ -6016,6 +6022,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         effects: [
           {
             kind: "splash",
+            hits: "foes",
             radius: AREA_IN_THE_AREA,
             effects: [
               {
@@ -6144,6 +6151,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         effects: [
           {
             kind: "splash",
+            hits: "foes",
             radius: AREA_IN_THE_AREA,
             effects: [
               {
@@ -6448,6 +6456,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
           },
           {
             kind: "splash",
+            hits: "foes",
             radius: AREA_ADJACENT,
             effects: [
               {
@@ -7265,6 +7274,177 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  // Spawning Power's spirit sacrifice (#1309): spend a spirit of your
+  // side, whoever summoned it, for a burst; Consume Soul answers foes'.
+  {
+    id: "ritualist.rupture-soul",
+    name: "Rupture Soul",
+    gwId: 917,
+    type: "spell",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.spawning-power",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "allied-spirit",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target allied spirit is destroyed. All nearby enemies are struck
+    // for 50...140 lightning damage and become blinded for 3...12
+    // seconds": nearby the spirit, 10 s blind, its rank-12 value. The
+    // blow lands first, centred where the spirit stood.
+    effects: [
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_NEARBY,
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "ritualist.spawning-power", atZero: 50, atTwelve: 122 },
+            },
+            type: "lightning",
+            armorPenetration: 0,
+          },
+          { kind: "apply-status", statusId: "blind", durationSeconds: 10 },
+        ],
+      },
+      { kind: "destroy-target-spirit" },
+    ],
+  },
+  {
+    id: "ritualist.spirit-to-flesh",
+    name: "Spirit to Flesh",
+    gwId: 918,
+    type: "spell",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.spawning-power",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 15,
+    // "Target touched allied spirit".
+    range: RANGE_MELEE,
+    target: "allied-spirit",
+    area: {
+      radius: AREA_NEARBY,
+      origin: "caster",
+      affects: "allies",
+      maxTargets: undefined,
+      includesCaster: true,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "...is destroyed. All nearby allies are healed for 30...240":
+    // nearby you, you included.
+    effects: [
+      {
+        kind: "heal",
+        perStatusOnTarget: [],
+        amount: {
+          scaling: { attributeId: "ritualist.spawning-power", atZero: 30, atTwelve: 198 },
+        },
+      },
+      { kind: "destroy-target-spirit" },
+    ],
+  },
+  {
+    id: "ritualist.feast-of-souls",
+    name: "Feast of Souls",
+    gwId: 980,
+    type: "spell",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.spawning-power",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: { origin: "party" },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Destroy all nearby allies' spirits. For each spirit destroyed in
+    // this way, all party members are healed for 50...100 Health". None
+    // nearby: used, and nobody healed.
+    effects: [
+      { kind: "destroy-allied-spirits", radius: AREA_NEARBY },
+      {
+        kind: "heal",
+        perStatusOnTarget: [],
+        perDestroyedSpirit: true,
+        amount: {
+          scaling: { attributeId: "ritualist.spawning-power", atZero: 50, atTwelve: 90 },
+        },
+      },
+    ],
+  },
+  {
+    id: "ritualist.consume-soul",
+    name: "Consume Soul",
+    gwId: 914,
+    type: "spell",
+    elite: true,
+    profession: "ritualist",
+    attributeId: "ritualist.spawning-power",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "You steal 5...70 Health from target foe. All hostile summoned
+    // creatures in earshot of that foe take 25...125 damage".
+    effects: [
+      {
+        kind: "life-steal",
+        amount: {
+          scaling: { attributeId: "ritualist.spawning-power", atZero: 5, atTwelve: 57 },
+        },
+      },
+      {
+        kind: "splash",
+        hits: "foe-creatures",
+        radius: AREA_EARSHOT,
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "ritualist.spawning-power", atZero: 25, atTwelve: 105 },
+            },
+            type: "typeless",
+            armorPenetration: 0,
+          },
+        ],
+      },
+    ],
+  },
   {
     id: "elementalist.ward-against-melee",
     name: "Ward Against Melee",
@@ -7341,6 +7521,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
             spring: {
               count: 1,
               everySeconds: 1,
+              delaySeconds: 0,
               area: {
                 radius: AREA_NEARBY,
                 origin: "caster",
@@ -7404,6 +7585,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
             spring: {
               count: 3,
               everySeconds: 1,
+              delaySeconds: 0,
               area: {
                 radius: AREA_NEARBY,
                 origin: "caster",
@@ -7462,6 +7644,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
           pulse: {
             count: 5,
             everySeconds: 1,
+            delaySeconds: 0,
             area: {
               radius: AREA_ADJACENT,
               origin: "caster",
@@ -7654,6 +7837,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
           pulse: {
             count: 3,
             everySeconds: 3,
+            delaySeconds: 0,
             area: {
               radius: AREA_ADJACENT,
               origin: "caster",
@@ -8135,6 +8319,279 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         effects: [{ kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS }],
       },
       { kind: "chain-mark", role: "lead" },
+    ],
+  },
+  // Ritualist Channeling staples (#1270).
+  {
+    id: "ritualist.spirit-rift",
+    name: "Spirit Rift",
+    gwId: 910,
+    type: "spell",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.channeling-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Open a Spirit Rift at target foe's location. After 3 seconds, all
+    // adjacent foes are struck for 25...105...125 lightning damage and
+    // suffer from Cracked Armor for 1...16...20 seconds": 16 s, its
+    // rank-12 value. It strikes whoever is adjacent then, and is gone a
+    // moment after.
+    effects: [
+      {
+        kind: "create-ground-effect",
+        anchor: "target",
+        durationSeconds: { flat: 3.1 },
+        act: {
+          kind: "pulse",
+          pulse: {
+            count: 1,
+            everySeconds: 0.1,
+            delaySeconds: 3,
+            area: {
+              radius: AREA_ADJACENT,
+              origin: "caster",
+              affects: "enemies",
+              maxTargets: undefined,
+              includesCaster: false,
+            },
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "ritualist.channeling-magic", atZero: 25, atTwelve: 105 },
+                },
+                type: "lightning",
+                armorPenetration: 0,
+              },
+              { kind: "apply-status", statusId: "cracked-armor", durationSeconds: 16 },
+            ],
+          },
+        },
+      },
+    ],
+  },
+  {
+    id: "ritualist.spirit-burn",
+    name: "Spirit Burn",
+    gwId: 919,
+    type: "spell",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.channeling-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 6,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe is struck for 5...41...50 lightning damage. If any
+    // spirits are within earshot, Spirit Burn causes Burning for
+    // 1...4...5 seconds": 4 s, its rank-12 value; earshot of you, any
+    // team's spirit.
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "ritualist.channeling-magic", atZero: 5, atTwelve: 41 },
+        },
+        type: "lightning",
+        armorPenetration: 0,
+      },
+      {
+        kind: "if",
+        condition: { kind: "caster-spirit-within", radius: AREA_EARSHOT },
+        effects: [{ kind: "apply-status", statusId: "burning", durationSeconds: 4 }],
+      },
+    ],
+  },
+  {
+    id: "ritualist.essence-strike",
+    name: "Essence Strike",
+    gwId: 1227,
+    type: "spell",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.channeling-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe is struck for 15...51...60 lightning damage. If any
+    // spirits are within earshot, you gain 1...7...9 Energy": 7.4 at rank
+    // 12 keeps rank 15's 9.
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "ritualist.channeling-magic", atZero: 15, atTwelve: 51 },
+        },
+        type: "lightning",
+        armorPenetration: 0,
+      },
+      {
+        kind: "if",
+        condition: { kind: "caster-spirit-within", radius: AREA_EARSHOT },
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: {
+              scaling: { attributeId: "ritualist.channeling-magic", atZero: 1, atTwelve: 7.4 },
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "ritualist.painful-bond",
+    name: "Painful Bond",
+    gwId: 1237,
+    type: "hex",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.channeling-magic",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    // "Target foe and all nearby foes": the target, then every foe nearby.
+    area: {
+      radius: AREA_NEARBY,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 10...18...20 seconds, ... take 8...18...20 damage whenever hit
+    // by a spirit's attack": 18 s, its rank-12 value; the damage is the
+    // status's.
+    effects: [{ kind: "apply-status", statusId: "painful-bond", durationSeconds: 18 }],
+  },
+  {
+    id: "ritualist.lamentation",
+    name: "Lamentation",
+    gwId: 916,
+    type: "hex",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.channeling-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    // "Target foe and all nearby foes": the target, then every foe nearby.
+    area: {
+      radius: AREA_NEARBY,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...17...20 seconds, ... suffer -0...2...3 Health degeneration.
+    // When this hex is applied, these foes take 10...42...50 damage if you
+    // are within earshot of a spirit or corpse": 17 s, its rank-12 value;
+    // the degeneration is the status's. GW1 names no type: typeless.
+    effects: [
+      { kind: "apply-status", statusId: "lamentation", durationSeconds: 17 },
+      {
+        kind: "if",
+        condition: { kind: "caster-spirit-or-corpse-within", radius: AREA_EARSHOT },
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "ritualist.channeling-magic", atZero: 10, atTwelve: 42 },
+            },
+            type: "typeless",
+            armorPenetration: 0,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "ritualist.signet-of-spirits",
+    name: "Signet of Spirits",
+    gwId: 1239,
+    type: "signet",
+    elite: true,
+    profession: "ritualist",
+    attributeId: "ritualist.channeling-magic",
+    // A signet costs nothing: usable at 0 energy.
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 1,
+    // Its PvP record's (gw 2965).
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // PvP: "You gain 3...10...12 Energy if you are within earshot of a
+    // spirit": 10.2 at rank 12 keeps rank 15's 12. No spirit, no effect,
+    // but it is used and recharges.
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "caster-spirit-within", radius: AREA_EARSHOT },
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: {
+              scaling: { attributeId: "ritualist.channeling-magic", atZero: 3, atTwelve: 10.2 },
+            },
+          },
+        ],
+      },
     ],
   },
   /* ---------------------------------------------------------------------- */

@@ -371,6 +371,7 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
                 groundEffects: [],
                 flags: [],
                 stand: undefined,
+                aggression: [],
                 traps,
                 summary,
               }

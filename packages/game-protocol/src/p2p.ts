@@ -462,6 +462,8 @@ export interface WireSnapshot {
   readonly flags: readonly WireFlag[];
   /** The flag stand (#1225); `null` on a map without one. */
   readonly stand: WireStand | null;
+  /** Each team's aggression by team index, rounded (#1226); `[]` but on a Guild Battle. */
+  readonly aggression: readonly number[];
 }
 
 /**
@@ -1415,12 +1417,14 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
   const groundEffects = parseArray(raw.groundEffects, MAX_WIRE_GROUND_EFFECTS, parseGroundEffect);
   const flags = parseArray(raw.flags, 2, parseFlag);
   const stand = raw.stand === null ? null : parseStand(raw.stand);
+  const aggression = parseArray(raw.aggression, 2, parseScore);
   const [team0 = 0, team1 = 0] = score;
   return players === undefined ||
     projectiles === undefined ||
     groundEffects === undefined ||
     flags === undefined ||
-    stand === undefined
+    stand === undefined ||
+    aggression === undefined
     ? undefined
     : {
         tick: raw.tick,
@@ -1434,6 +1438,7 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
         groundEffects,
         flags,
         stand,
+        aggression,
       };
 }
 

@@ -69,6 +69,7 @@ function check(caster: Combatant, id: string, target: Combatant) {
     casterPosition: vec2(0, 0),
     target,
     targetPosition: vec2(target === caster ? 0 : RANGE_MELEE, 0),
+    targetCreatureKind: undefined,
     rechargeRemaining: new Map(),
     spent: new Set(),
     isCasting: false,

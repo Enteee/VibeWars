@@ -665,6 +665,21 @@ describe("attack skills (#417)", () => {
     expect(describeStatus("weapon-of-aggression")).toBe("attacks 25% faster");
   });
 
+  it("words the Ritualist's Channeling staples (#1270)", () => {
+    const lines = (id: string) =>
+      describeSkill(skill(id), new Map([["ritualist.channeling-magic", 12]])).effects.map(
+        ({ text }) => text,
+      );
+    expect(lines("ritualist.spirit-burn")).toContain(
+      "If a spirit is in earshot of you: applies Burning for 4s (−7 Health degeneration)",
+    );
+    expect(lines("ritualist.lamentation")).toContain(
+      "If a spirit or a corpse is in earshot of you: deals 42 damage",
+    );
+    expect(lines("ritualist.spirit-rift")).toContain("After 3s, foes adjacent: deals 105 damage");
+    expect(describeStatus("painful-bond")).toBe("take +18 from spirits' attacks");
+  });
+
   it("words the Assassin's staples (#988)", () => {
     const lines = (id: string) =>
       describeSkill(skill(id), new Map([["assassin.shadow-arts", 12]])).effects.map(

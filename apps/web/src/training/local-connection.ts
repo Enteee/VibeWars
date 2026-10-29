@@ -290,6 +290,7 @@ export function createLocalConnection(options: {
           .map((effect) => groundEffectSnapshot(effect, simulation.elapsedSeconds)),
         flags: simulation.flags,
         stand: simulation.stand,
+        aggression: simulation.aggressionByTeam,
         // No match with rules ends here, so there is never a summary (#1057).
         summary: undefined,
       };

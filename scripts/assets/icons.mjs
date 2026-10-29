@@ -839,6 +839,20 @@ const status = {
       `<path d="M12 5.5c-3 0-5 2-5 4.7c0 1.8 1 2.9 2.5 3.6V17h5v-3.2c1.5-.7 2.5-1.8 2.5-3.6c0-2.7-2-4.7-5-4.7z" fill="${c}"/>` +
       `<circle cx="10" cy="10.2" r="1.3" fill="${C.hex}"/><circle cx="14" cy="10.2" r="1.3" fill="${C.hex}"/>`,
   ],
+  // Hex: two links and a spike, spirits' attacks hurt more (#1270).
+  "painful-bond": [
+    "hex",
+    (c) =>
+      `<circle cx="9.5" cy="13" r="3" ${stroke(c, 2)}/><circle cx="14.5" cy="13" r="3" ${stroke(c, 2)}/>` +
+      `<path d="M12 4.5v4" ${stroke(c, 2.2)}/>`,
+  ],
+  // Hex: a falling tear over a low line, degeneration (#1270).
+  lamentation: [
+    "hex",
+    (c) =>
+      `<path d="M12 5c-2 2.8-3.5 4.6-3.5 6.4a3.5 3.5 0 0 0 7 0C15.5 9.6 14 7.8 12 5z" fill="${c}"/>` +
+      `<path d="M7 18.5l5-1.5l5 1.5" ${stroke(c, 2)}/>`,
+  ],
 };
 
 // ---------------------------------------------------------------------------

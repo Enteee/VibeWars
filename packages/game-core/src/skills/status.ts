@@ -184,7 +184,10 @@ export type StatusId =
   | "shroud-of-silence"
   | "expose-defenses"
   | "enduring-toxin"
-  | "mark-of-death";
+  | "mark-of-death"
+  // Ritualist Channeling (#1270).
+  | "painful-bond"
+  | "lamentation";
 
 /** Health one pip of regeneration or degeneration is worth, per second (GW1). */
 export const HEALTH_PER_PIP = 2;
@@ -513,6 +516,12 @@ export interface StatusDefinition {
    */
   readonly incomingHexCastTimeMultiplier: number;
   /**
+   * Damage added to each spirit's attack that hits the bearer (#1270):
+   * Painful Bond's 18. Armor-ignoring, on the same blow; a missed or
+   * blocked one adds nothing.
+   */
+  readonly damageFromSpiritAttacks: number;
+  /**
    * What it does when its bearer does something (#469): Backfire's damage
    * on each spell the bearer finishes. Applied by whoever put it on.
    */
@@ -736,6 +745,7 @@ function define(
     spellRechargeFaster: 0,
     bindingRitualRechargeFaster: 0,
     incomingHexCastTimeMultiplier: 1,
+    damageFromSpiritAttacks: 0,
     triggers: [],
     ...overrides,
   };
@@ -871,7 +881,12 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
       on,
       effects: [
         SPITEFUL_SPIRIT_DAMAGE,
-        { kind: "splash", radius: AREA_ADJACENT, effects: [SPITEFUL_SPIRIT_DAMAGE] },
+        {
+          kind: "splash",
+          hits: "foes",
+          radius: AREA_ADJACENT,
+          effects: [SPITEFUL_SPIRIT_DAMAGE],
+        },
       ],
       target: "bearer",
       skillId: "necromancer.spiteful-spirit",
@@ -945,6 +960,7 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
         effects: [
           {
             kind: "splash",
+            hits: "foes",
             radius: AREA_ADJACENT,
             effects: [
               { kind: "damage", amount: { flat: 34 }, type: "shadow", armorPenetration: 0 },
@@ -1393,6 +1409,7 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
       effects: [
         {
           kind: "splash",
+          hits: "foes",
           radius: AREA_ADJACENT,
           effects: [
             { kind: "damage", amount: { flat: 25 }, type: "typeless", armorPenetration: 0 },
@@ -1440,6 +1457,7 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
             effects: [
               {
                 kind: "splash",
+                hits: "foes",
                 radius: AREA_ADJACENT,
                 effects: [
                   { kind: "damage", amount: { flat: 22 }, type: "slashing", armorPenetration: 0 },
@@ -1466,6 +1484,7 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
           effects: [
             {
               kind: "splash",
+              hits: "foes",
               radius: AREA_ADJACENT,
               effects: [
                 { kind: "damage", amount: { flat: 50 }, type: "earth", armorPenetration: 0 },
@@ -1502,6 +1521,7 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
         effects: [
           {
             kind: "splash",
+            hits: "foes",
             radius: AREA_NEARBY,
             effects: [{ kind: "apply-status", statusId: "cracked-armor", durationSeconds: 8 }],
           },
@@ -1522,6 +1542,7 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
         effects: [
           {
             kind: "splash",
+            hits: "foes",
             radius: AREA_NEARBY,
             effects: [{ kind: "apply-status", statusId: "blind", durationSeconds: 3 }],
           },
@@ -1542,6 +1563,7 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
         effects: [
           {
             kind: "splash",
+            hits: "foes",
             radius: AREA_NEARBY,
             effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: 7 }],
           },
@@ -1669,6 +1691,17 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   "mark-of-death": define("mark-of-death", "Mark of Death", "hex", {
     profession: "assassin",
     healingMultiplier: 0.5,
+  }),
+  // "...take 8...18...20 damage whenever hit by a spirit's attack" (#1270):
+  // 18, its rank-12 value.
+  "painful-bond": define("painful-bond", "Painful Bond", "hex", {
+    profession: "ritualist",
+    damageFromSpiritAttacks: 18,
+  }),
+  // "...suffer -0...2...3 Health degeneration" (#1270): 2, its rank-12 value.
+  lamentation: define("lamentation", "Lamentation", "hex", {
+    profession: "ritualist",
+    healthPips: -2,
   }),
 };
 
@@ -2391,6 +2424,8 @@ export interface StatusModifiers {
   readonly criticalChanceBonus: number;
   /** Every status's, summed (#988). */
   readonly energyPerCritical: number;
+  /** Every status's, summed (#1270). */
+  readonly damageFromSpiritAttacks: number;
 }
 
 /**
@@ -2455,6 +2490,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let spellRechargeKept = 1;
   let bindingRitualRechargeKept = 1;
   let incomingHexCastTimeMultiplier = 1;
+  let damageFromSpiritAttacks = 0;
   let criticalChanceBonus = 0;
   let energyPerCritical = 0;
   const enchantments = statuses.filter(
@@ -2522,6 +2558,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     spellRechargeKept *= 1 - def.spellRechargeFaster;
     bindingRitualRechargeKept *= 1 - def.bindingRitualRechargeFaster;
     incomingHexCastTimeMultiplier *= def.incomingHexCastTimeMultiplier;
+    damageFromSpiritAttacks += def.damageFromSpiritAttacks;
     criticalChanceBonus += def.criticalChanceBonus;
     energyPerCritical += def.energyPerCritical;
   }
@@ -2556,6 +2593,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     incomingHexCastTimeMultiplier,
     criticalChanceBonus,
     energyPerCritical,
+    damageFromSpiritAttacks,
   };
 }
 

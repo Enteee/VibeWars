@@ -968,6 +968,13 @@ export class MatchSimulation {
     return carriedFlag(this.flags, id) !== undefined;
   }
 
+  /** Each team's `aggression` by team index on a Guild Battle (#1226); `[]` on any other match. */
+  public get aggressionByTeam(): readonly number[] {
+    return this.#matchRules?.victory === "guild-battle"
+      ? [this.aggression(0), this.aggression(1)]
+      : [];
+  }
+
   /** Damage `team` has dealt to a foe's Guild Lord so far (#1222), after armor. */
   public aggression(team: number): number {
     return this.#aggression.get(team) ?? 0;
@@ -1394,8 +1401,8 @@ export class MatchSimulation {
   /**
    * Every pulse effect whose next pulse is due lands it (#1113), after
    * traps spring, in id order: at most one each a step, the first the step
-   * it was placed, then one every interval of its age. One whose owner
-   * has left the match is gone with no effect.
+   * its age reaches its delay (#1270), then one every interval after.
+   * One whose owner has left the match is gone with no effect.
    */
   #pulseGroundEffects(): void {
     if (!this.#groundEffects.some((effect) => effect.act.kind === "pulse")) {
@@ -1415,7 +1422,7 @@ export class MatchSimulation {
       const age = effect.durationSeconds - effect.remainingSeconds;
       if (
         effect.pulsed >= pulse.count ||
-        age < effect.pulsed * pulse.everySeconds - SWING_EPSILON
+        age < pulse.delaySeconds + effect.pulsed * pulse.everySeconds - SWING_EPSILON
       ) {
         continue;
       }
@@ -2664,6 +2671,7 @@ export class MatchSimulation {
       casterPosition: record.position,
       target: skill.target === "self" ? record.combatant : target?.combatant,
       targetPosition: skill.target === "self" ? record.position : target?.position,
+      targetCreatureKind: skill.target === "self" ? record.creature?.kind : target?.creature?.kind,
       key,
       rechargeRemaining: record.combatant.cast.rechargeRemaining,
       spent: record.combatant.cast.spent,
@@ -3991,16 +3999,24 @@ export class MatchSimulation {
       attackReached(target.combatant, events);
       events.push(...riders(skillHit?.skill.attack?.onBlocked ?? []));
     } else {
+      const blow = settleBlow(
+        skillHit?.blow ?? PLAIN_BLOW,
+        attacker?.combatant,
+        target.combatant,
+        this.#participants,
+      );
+      // Painful Bond's +18 on a spirit's shot that hits (#1270), armor-
+      // ignoring on the same blow. A spirit gone before its shot lands
+      // is no longer anyone's, so it adds nothing.
+      const fromSpirit =
+        attacker?.creature?.kind === "spirit"
+          ? aggregateModifiers(target.combatant.statuses.active).damageFromSpiritAttacks
+          : 0;
       const critical = landBlow(
         projectile.weaponSnapshot,
         attacker?.combatant,
         target.combatant,
-        settleBlow(
-          skillHit?.blow ?? PLAIN_BLOW,
-          attacker?.combatant,
-          target.combatant,
-          this.#participants,
-        ),
+        fromSpirit === 0 ? blow : { ...blow, bonus: blow.bonus + fromSpirit },
         // A shot crits only on its roll, never for where it came from.
         false,
         this.#rng,
@@ -4236,6 +4252,16 @@ export class MatchSimulation {
    */
   #recordDeaths(events: readonly CombatEvent[]): void {
     for (const event of events) {
+      // A destroyed spirit (#1309) is no death: it leaves as an expired
+      // one does, at the end of the step, and nothing answers it.
+      if (event.kind === "spirit-destroyed") {
+        const spirit = this.#participants.get(event.targetId);
+        if (spirit !== undefined) {
+          spirit.respawnInSeconds = Number.POSITIVE_INFINITY;
+          this.#leaving.add(spirit.id);
+        }
+        continue;
+      }
       if (event.kind !== "death") {
         continue;
       }

@@ -28,6 +28,9 @@ import {
   refreshSkillBar,
   scoreboardParts,
   scoreboardText,
+  standBoostToast,
+  carrierLines,
+  type ScoreboardMatch,
   skillSlotHtml,
   castRowSkill,
   targetCast,
@@ -152,12 +155,99 @@ describe("invulnerableLabel (#1233)", () => {
 });
 
 describe("objectTargetName (#1225)", () => {
+  const NOBODY = { holder: undefined, heldSeconds: 0 };
+
   it("names the stand and a flag by whose it is, and nothing else", () => {
-    expect(objectTargetName("flag-stand", 0)).toBe("Flag Stand");
-    expect(objectTargetName("flag/0", 0)).toBe("Your flag");
-    expect(objectTargetName("flag/1", 0)).toBe("Enemy flag");
-    expect(objectTargetName("peer-1", 0)).toBeUndefined();
-    expect(objectTargetName(undefined, 0)).toBeUndefined();
+    expect(objectTargetName("flag-stand", 0, NOBODY)).toBe("Flag Stand");
+    expect(objectTargetName("flag/0", 0, NOBODY)).toBe("Your flag");
+    expect(objectTargetName("flag/1", 0, NOBODY)).toBe("Enemy flag");
+    expect(objectTargetName("peer-1", 0, NOBODY)).toBeUndefined();
+    expect(objectTargetName(undefined, 0, NOBODY)).toBeUndefined();
+  });
+
+  it("names the stand's holder (#1226)", () => {
+    const red = { holder: 1, heldSeconds: 30 };
+    expect(objectTargetName("flag-stand", 0, red)).toBe("Flag Stand: held by the enemy");
+    expect(objectTargetName("flag-stand", 1, red)).toBe("Flag Stand: held by your team");
+  });
+});
+
+describe("carrierLines (#1226)", () => {
+  const players = [
+    player({ sessionId: "me", name: "Mhenlo", team: 0 }),
+    player({ sessionId: "foe", name: "Cynn", team: 1 }),
+  ];
+
+  it("names each flag's carrier, yours first, and a dropped one; none at home", () => {
+    const carried = (team: number, carrierId: string) => ({
+      team,
+      place: { kind: "carried" as const, carrierId },
+    });
+    const flags = [carried(1, "me"), carried(0, "foe")];
+    expect(carrierLines({ flags, players }, 0)).toEqual([
+      { team: 0, text: "⚑ Cynn" },
+      { team: 1, text: "⚑ Mhenlo" },
+    ]);
+    expect(carrierLines({ flags, players }, 1)).toEqual([
+      { team: 1, text: "⚑ Mhenlo" },
+      { team: 0, text: "⚑ Cynn" },
+    ]);
+    expect(
+      carrierLines(
+        {
+          flags: [
+            { team: 0, place: { kind: "ground", position: { x: 1, y: 2 } } },
+            { team: 1, place: { kind: "spawn" } },
+          ],
+          players,
+        },
+        0,
+      ),
+    ).toEqual([{ team: 0, text: "⚑ dropped" }]);
+    expect(carrierLines({ flags: [{ team: 1, place: { kind: "stand" } }], players }, 0)).toEqual(
+      [],
+    );
+  });
+
+  it("reads a carrier no longer in the snapshot as dropped", () => {
+    const flags = [{ team: 0, place: { kind: "carried" as const, carrierId: "gone" } }];
+    expect(carrierLines({ flags, players }, 0)).toEqual([{ team: 0, text: "⚑ dropped" }]);
+  });
+});
+
+describe("standBoostToast (#1226)", () => {
+  /** A snapshot's stand at a match time. */
+  const at = (elapsedSeconds: number, holder: number | undefined, heldSeconds: number) => ({
+    elapsedSeconds,
+    stand: { holder, heldSeconds },
+  });
+
+  it("toasts the boost to its side and the foe's, once, as the count starts again", () => {
+    expect(standBoostToast(at(200, 0, 119.95), at(200.05, 0, 0), 0)).toBe("Morale boost! +10%");
+    expect(standBoostToast(at(200, 0, 119.95), at(200.05, 0, 0), 1)).toBe("Enemy morale boost");
+    expect(standBoostToast(at(200, 1, 119.9), at(200.2, 1, 0.1), undefined)).toBe(
+      "Enemy morale boost",
+    );
+    // Frames missed across it: still the boost.
+    expect(standBoostToast(at(200, 0, 110), at(215, 0, 5), 0)).toBe("Morale boost! +10%");
+    expect(standBoostToast(at(200.05, 0, 0), at(200.1, 0, 0.05), 0)).toBeUndefined();
+  });
+
+  it("says nothing for a lose and retake between two snapshots", () => {
+    // Lost at 50 s held, retaken: the count restarts short of a boost.
+    expect(standBoostToast(at(200, 0, 50), at(210, 0, 3), 0)).toBeUndefined();
+    // A reconnect after 30 s away, the stand retaken meanwhile.
+    expect(standBoostToast(at(200, 0, 100), at(230, 0, 25), 0)).toBeUndefined();
+  });
+
+  it("says nothing for a taking, a loss or no stand", () => {
+    expect(standBoostToast(at(0, undefined, 0), at(1, 0, 0), 0)).toBeUndefined();
+    expect(standBoostToast(at(0, 1, 50), at(1, 0, 0), 0)).toBeUndefined();
+    expect(standBoostToast(at(0, 0, 50), at(1, undefined, 0), 0)).toBeUndefined();
+    expect(standBoostToast(undefined, at(1, 0, 0), 0)).toBeUndefined();
+    expect(
+      standBoostToast({ elapsedSeconds: 0, stand: undefined }, at(1, 0, 0), 0),
+    ).toBeUndefined();
   });
 });
 
@@ -176,6 +266,7 @@ describe("carriesFlag (#1225)", () => {
     traps: [],
     flags,
     stand: { holder: undefined, heldSeconds: 0 },
+    aggression: [],
     summary: undefined,
   });
 
@@ -366,6 +457,11 @@ describe("enemyPips (#881)", () => {
   });
 });
 
+/** The scoreboard's match with these kills, no stand and no aggression. */
+function board(team0: number, team1: number): ScoreboardMatch {
+  return { scoreTeam0: team0, scoreTeam1: team1, stand: undefined, aggression: [] };
+}
+
 describe("scoreboardText (#881)", () => {
   const players = [
     player({ sessionId: "a", team: 0 }),
@@ -375,8 +471,8 @@ describe("scoreboardText (#881)", () => {
   ];
 
   it("counts the living per side, your own first, beside the clock", () => {
-    expect(scoreboardText(players, 0, 42, null, "annihilation", [0, 0])).toBe("2 v 1 · 0:42");
-    expect(scoreboardText(players, 1, 42, null, "annihilation", [0, 0])).toBe("1 v 2 · 0:42");
+    expect(scoreboardText(players, 0, 42, null, "annihilation", board(0, 0))).toBe("2 v 1 · 0:42");
+    expect(scoreboardText(players, 1, 42, null, "annihilation", board(0, 0))).toBe("1 v 2 · 0:42");
   });
 
   it("counts no creature, alive or not (#1052)", () => {
@@ -399,26 +495,28 @@ describe("scoreboardText (#881)", () => {
         42,
         null,
         "annihilation",
-        [0, 0],
+        board(0, 0),
       ),
     ).toBe("2 v 1 · 0:42");
   });
 
   it("reads team 1 first for a spectator", () => {
-    expect(scoreboardText(players, undefined, 432, null, "annihilation", [0, 0])).toBe(
+    expect(scoreboardText(players, undefined, 432, null, "annihilation", board(0, 0))).toBe(
       "2 v 1 · 7:12",
     );
   });
 
   it("counts down from the match's limit, reading 0:00 only once time is out (#476)", () => {
-    expect(scoreboardText(players, 0, 0, 180, "annihilation", [0, 0])).toBe("2 v 1 · 3:00");
-    expect(scoreboardText(players, 0, 42.5, 180, "annihilation", [0, 0])).toBe("2 v 1 · 2:18");
-    expect(scoreboardText(players, 0, 179.5, 180, "annihilation", [0, 0])).toBe("2 v 1 · 0:01");
-    expect(scoreboardText(players, 0, 181, 180, "annihilation", [0, 0])).toBe("2 v 1 · 0:00");
+    expect(scoreboardText(players, 0, 0, 180, "annihilation", board(0, 0))).toBe("2 v 1 · 3:00");
+    expect(scoreboardText(players, 0, 42.5, 180, "annihilation", board(0, 0))).toBe("2 v 1 · 2:18");
+    expect(scoreboardText(players, 0, 179.5, 180, "annihilation", board(0, 0))).toBe(
+      "2 v 1 · 0:01",
+    );
+    expect(scoreboardText(players, 0, 181, 180, "annihilation", board(0, 0))).toBe("2 v 1 · 0:00");
   });
 
   it("counts the living, not the score, in Annihilation", () => {
-    expect(scoreboardText(players, 0, 42, null, "annihilation", [4, 0])).toBe("2 v 1 · 0:42");
+    expect(scoreboardText(players, 0, 42, null, "annihilation", board(4, 0))).toBe("2 v 1 · 0:42");
   });
 
   describe("on a Priest Annihilation map (#1199)", () => {
@@ -436,19 +534,24 @@ describe("scoreboardText (#881)", () => {
     ];
 
     it("counts the living, not the priests, then each priest and the next raise", () => {
-      expect(scoreboardText(priests(false, false), 0, 73, 720, "priest-annihilation", [0, 0])).toBe(
-        "2 v 1 · ✚ ✚ · raise 0:47 · 10:47",
-      );
+      expect(
+        scoreboardText(priests(false, false), 0, 73, 720, "priest-annihilation", board(0, 0)),
+      ).toBe("2 v 1 · ✚ ✚ · raise 0:47 · 10:47");
     });
 
     it("strikes out a dead priest, your own side's first", () => {
       expect(
-        scoreboardParts(priests(false, true), 0, 73, 720, "priest-annihilation", [0, 0]),
+        scoreboardParts(priests(false, true), 0, 73, 720, "priest-annihilation", board(0, 0)),
       ).toContainEqual({ kind: "priest", team: 1, alive: false });
       expect(
-        scoreboardParts(priests(false, true), 1, 73, 720, "priest-annihilation", [0, 0]).filter(
-          (part) => part.kind === "priest",
-        ),
+        scoreboardParts(
+          priests(false, true),
+          1,
+          73,
+          720,
+          "priest-annihilation",
+          board(0, 0),
+        ).filter((part) => part.kind === "priest"),
       ).toEqual([
         { kind: "priest", team: 1, alive: false },
         { kind: "priest", team: 0, alive: true },
@@ -456,16 +559,21 @@ describe("scoreboardText (#881)", () => {
     });
 
     it("reads raise — once both priests are dead", () => {
-      expect(scoreboardText(priests(true, true), 0, 73, 720, "priest-annihilation", [0, 0])).toBe(
-        "2 v 1 · ✚ ✚ · raise — · 10:47",
-      );
+      expect(
+        scoreboardText(priests(true, true), 0, 73, 720, "priest-annihilation", board(0, 0)),
+      ).toBe("2 v 1 · ✚ ✚ · raise — · 10:47");
     });
 
     it("counts down to the next wave, every 2 minutes of match clock", () => {
       const raise = (elapsed: number) =>
-        scoreboardParts(priests(false, false), 0, elapsed, 720, "priest-annihilation", [0, 0]).find(
-          (part) => part.kind === "raise",
-        );
+        scoreboardParts(
+          priests(false, false),
+          0,
+          elapsed,
+          720,
+          "priest-annihilation",
+          board(0, 0),
+        ).find((part) => part.kind === "raise");
       expect(raise(0)).toEqual({ kind: "raise", text: "raise 2:00", soon: false });
       expect(raise(119)).toEqual({ kind: "raise", text: "raise 0:01", soon: true });
       expect(raise(120)).toEqual({ kind: "raise", text: "raise 2:00", soon: false });
@@ -476,72 +584,196 @@ describe("scoreboardText (#881)", () => {
 
     it("drops the raise once time is out", () => {
       expect(
-        scoreboardText(priests(false, false), 0, 720, 720, "priest-annihilation", [0, 0]),
+        scoreboardText(priests(false, false), 0, 720, 720, "priest-annihilation", board(0, 0)),
       ).toBe("2 v 1 · ✚ ✚ · 0:00");
     });
 
     it("leaves the other modes' scoreboards without priests", () => {
-      expect(scoreboardText(priests(false, false), 0, 42, null, "annihilation", [0, 0])).toBe(
+      expect(scoreboardText(priests(false, false), 0, 42, null, "annihilation", board(0, 0))).toBe(
         "2 v 1 · 0:42",
       );
     });
   });
 
   it("counts each team's kills in Kill Count, your own first (#1200)", () => {
-    expect(scoreboardText(players, 0, 35, 180, "kill-count", [4, 0])).toBe("4 – 0 · 2:25");
-    expect(scoreboardText(players, 1, 35, 180, "kill-count", [4, 0])).toBe("0 – 4 · 2:25");
+    expect(scoreboardText(players, 0, 35, 180, "kill-count", board(4, 0))).toBe("4 – 0 · 2:25");
+    expect(scoreboardText(players, 1, 35, 180, "kill-count", board(4, 0))).toBe("0 – 4 · 2:25");
   });
 
   it("reads team 1's kills first for a spectator, and 0 – 0 before any (#1200)", () => {
-    expect(scoreboardText(players, undefined, 35, 180, "kill-count", [4, 1])).toBe("4 – 1 · 2:25");
-    expect(scoreboardText(players, 0, 0, 180, "kill-count", [0, 0])).toBe("0 – 0 · 3:00");
+    expect(scoreboardText(players, undefined, 35, 180, "kill-count", board(4, 1))).toBe(
+      "4 – 1 · 2:25",
+    );
+    expect(scoreboardText(players, 0, 0, 180, "kill-count", board(0, 0))).toBe("0 – 0 · 3:00");
+  });
+});
+
+describe("the Guild Battle scoreboard (#1226)", () => {
+  const lord = (team: number, health: number, dead = false) =>
+    player({
+      sessionId: `guild-lord/${String(team)}`,
+      team,
+      health,
+      maxHealth: 1000,
+      dead,
+      creature: {
+        ownerId: null,
+        kind: "guild-lord",
+        look: "guild-lord",
+        mode: null,
+        armedAttack: null,
+      },
+    });
+  const players = [
+    player({ sessionId: "a", team: 0 }),
+    player({ sessionId: "c", team: 1 }),
+    lord(0, 829),
+    lord(1, 640),
+  ];
+  const held = (
+    holder: number | undefined,
+    heldSeconds: number,
+    aggression: number[] = [],
+  ): ScoreboardMatch => ({
+    ...board(0, 0),
+    stand: { holder, heldSeconds },
+    aggression,
+  });
+  const LIMIT = 28 * 60;
+
+  it("reads both lords, the stand held to its boost, the wave and the clock, yours first", () => {
+    expect(scoreboardText(players, 0, 73, LIMIT, "guild-battle", held(0, 48))).toBe(
+      "Lord 82% · 64% · ⚑ 1:12 · raise 0:47 · 26:47",
+    );
+    expect(scoreboardText(players, 1, 73, LIMIT, "guild-battle", held(0, 48))).toBe(
+      "Lord 64% · 82% · ⚑ 1:12 · raise 0:47 · 26:47",
+    );
+    // A spectator reads team 0 first.
+    expect(scoreboardText(players, undefined, 73, LIMIT, "guild-battle", held(0, 48))).toBe(
+      "Lord 82% · 64% · ⚑ 1:12 · raise 0:47 · 26:47",
+    );
+  });
+
+  it("reads a stand held by nobody as a grey ⚑ —, and the holder's in its side's colour", () => {
+    const parts = scoreboardParts(players, 0, 73, LIMIT, "guild-battle", held(undefined, 0));
+    expect(parts).toContainEqual({ kind: "side", team: undefined, text: "⚑ —", dead: false });
+    expect(scoreboardParts(players, 0, 73, LIMIT, "guild-battle", held(1, 0))).toContainEqual({
+      kind: "side",
+      team: 1,
+      text: "⚑ 2:00",
+      dead: false,
+    });
+  });
+
+  it("reads a lord at 0.4% as 1%, and a dead one as 0%, struck out", () => {
+    const parts = scoreboardParts(
+      [...players.slice(0, 2), lord(0, 4), lord(1, 0, true)],
+      0,
+      73,
+      LIMIT,
+      "guild-battle",
+      held(undefined, 0),
+    );
+    expect(parts.slice(0, 2)).toEqual([
+      { kind: "side", team: 0, text: "Lord 1%", dead: false },
+      { kind: "side", team: 1, text: "0%", dead: true },
+    ]);
+  });
+
+  it("ticks the shrines' wave with no priest, pulsing its last seconds", () => {
+    const parts = scoreboardParts(players, 0, 117, LIMIT, "guild-battle", held(undefined, 0));
+    expect(parts).toContainEqual({ kind: "raise", text: "raise 0:03", soon: true });
+  });
+
+  it("adds each side's aggression, yours first, only in the last 3 minutes", () => {
+    const aggression = [1240, 980];
+    expect(
+      scoreboardText(
+        players,
+        0,
+        LIMIT - 181,
+        LIMIT,
+        "guild-battle",
+        held(undefined, 0, aggression),
+      ),
+    ).not.toContain("agg");
+    expect(
+      scoreboardText(
+        players,
+        0,
+        LIMIT - 180,
+        LIMIT,
+        "guild-battle",
+        held(undefined, 0, aggression),
+      ),
+    ).toBe("Lord 82% · 64% · ⚑ — · raise 1:00 · agg 1,240 v 980 · 3:00");
+    expect(
+      scoreboardText(players, 1, LIMIT + 1, LIMIT, "guild-battle", held(undefined, 0, aggression)),
+    ).toContain("agg 980 v 1,240 · 0:00");
   });
 });
 
 describe("describeOutcome", () => {
   it("reads as victory for the winning team's own players", () => {
-    expect(describeOutcome(0, "score", 0)).toBe("Victory");
+    expect(describeOutcome(0, "score", 0, [])).toBe("Victory");
   });
 
   it("reads as defeat for the losing team's players", () => {
-    expect(describeOutcome(0, "score", 1)).toBe("Defeat");
+    expect(describeOutcome(0, "score", 1, [])).toBe("Defeat");
   });
 
   it("calls out a draw", () => {
-    expect(describeOutcome(undefined, "time", 0)).toBe("Draw (time)");
+    expect(describeOutcome(undefined, "time", 0, [])).toBe("Draw (time)");
   });
 
   it("notes when a match ended on the clock rather than on score", () => {
-    expect(describeOutcome(1, "time", 1)).toBe("Victory (time)");
-    expect(describeOutcome(1, "score", 1)).toBe("Victory");
+    expect(describeOutcome(1, "time", 1, [])).toBe("Victory (time)");
+    expect(describeOutcome(1, "score", 1, [])).toBe("Victory");
   });
 
   it("falls back to naming the team for a spectator with no team of their own", () => {
-    expect(describeOutcome(1, "score", undefined)).toBe("Team 2 wins");
+    expect(describeOutcome(1, "score", undefined, [])).toBe("Team 2 wins");
   });
 
   it("reads an annihilation win plainly and a win at time as by morale (#846)", () => {
-    expect(describeOutcome(0, "annihilation", 0)).toBe("Victory");
-    expect(describeOutcome(0, "annihilation", 1)).toBe("Defeat");
-    expect(describeOutcome(1, "morale", 1)).toBe("Victory (morale)");
-    expect(describeOutcome(1, "morale", 0)).toBe("Defeat (morale)");
-    expect(describeOutcome(1, "morale", undefined)).toBe("Team 2 wins (morale)");
+    expect(describeOutcome(0, "annihilation", 0, [])).toBe("Victory");
+    expect(describeOutcome(0, "annihilation", 1, [])).toBe("Defeat");
+    expect(describeOutcome(1, "morale", 1, [])).toBe("Victory (morale)");
+    expect(describeOutcome(1, "morale", 0, [])).toBe("Defeat (morale)");
+    expect(describeOutcome(1, "morale", undefined, [])).toBe("Team 2 wins (morale)");
   });
 
-  it("says why a Guild Battle ended: a lord slain, or aggression at time (#1222)", () => {
-    expect(describeOutcome(0, "guild-lord", 0)).toBe("Victory (Guild Lord slain)");
-    expect(describeOutcome(0, "guild-lord", 1)).toBe("Defeat (Guild Lord slain)");
-    expect(describeOutcome(1, "aggression", 1)).toBe("Victory (most aggression at time)");
-    expect(describeOutcome(undefined, "guild-lord", 0)).toBe("Defeat (Guild Lord slain)");
-    expect(describeOutcome(undefined, "aggression", 1)).toBe("Defeat (most aggression at time)");
+  it("says why a Guild Battle ended: a lord slain, or aggression at time, both sides' (#1222, #1226)", () => {
+    expect(describeOutcome(0, "guild-lord", 0, [])).toBe("Victory (Guild Lord slain)");
+    expect(describeOutcome(0, "guild-lord", 1, [])).toBe("Defeat (Guild Lord slain)");
+    expect(describeOutcome(1, "aggression", 1, [980, 1240])).toBe(
+      "Victory (aggression 1,240 v 980)",
+    );
+    expect(describeOutcome(undefined, "guild-lord", 0, [])).toBe("Defeat (Guild Lord slain)");
+    expect(describeOutcome(undefined, "aggression", 1, [500, 500])).toBe(
+      "Defeat (aggression 500 v 500)",
+    );
+  });
+
+  it("keeps a Guild Battle's line short enough for one line of the banner at 1100 px (#1226)", () => {
+    // 1.8rem capitals spaced 0.15em are about 23 px each: 40 of them, 920 px.
+    const lines = [0, 1, undefined].flatMap((winner) =>
+      [0, 1, undefined].flatMap((self) => [
+        describeOutcome(winner, "guild-lord", self, []),
+        describeOutcome(winner, "aggression", self, [99_999, 99_999]),
+      ]),
+    );
+    for (const line of lines) {
+      expect(line.length, line).toBeLessThanOrEqual(40);
+    }
   });
 
   it("calls an annihilation match nobody won a defeat for both teams, never a draw (#846)", () => {
-    expect(describeOutcome(undefined, "annihilation", 0)).toBe("Defeat");
-    expect(describeOutcome(undefined, "annihilation", 1)).toBe("Defeat");
-    expect(describeOutcome(undefined, "morale", 0)).toBe("Defeat (morale)");
-    expect(describeOutcome(undefined, "annihilation", undefined)).toBe("No winner");
-    expect(describeOutcome(undefined, "morale", undefined)).toBe("No winner (morale)");
+    expect(describeOutcome(undefined, "annihilation", 0, [])).toBe("Defeat");
+    expect(describeOutcome(undefined, "annihilation", 1, [])).toBe("Defeat");
+    expect(describeOutcome(undefined, "morale", 0, [])).toBe("Defeat (morale)");
+    expect(describeOutcome(undefined, "annihilation", undefined, [])).toBe("No winner");
+    expect(describeOutcome(undefined, "morale", undefined, [])).toBe("No winner (morale)");
   });
 });
 
@@ -980,11 +1212,15 @@ describe("createHud's layout (#1042)", () => {
     expect(named(descendants(hud.root as unknown as FakeNode), order)).toEqual(order);
   });
 
-  it("puts the target frame under the scoreboard, outside your block", () => {
+  it("puts the target frame under the scoreboard and its flag carriers (#1226), outside your block", () => {
     const { parent, hud } = build();
     const top = hud.top as unknown as FakeNode;
     expect(parent.children).toContain(top);
-    expect(top.children.map((node) => node.className)).toEqual(["hud-scoreboard", "hud-target"]);
+    expect(top.children.map((node) => node.className)).toEqual([
+      "hud-scoreboard",
+      "hud-carriers",
+      "hud-target",
+    ]);
     expect(descendants(hud.root as unknown as FakeNode)).not.toContain(hud.targetPanel);
   });
 

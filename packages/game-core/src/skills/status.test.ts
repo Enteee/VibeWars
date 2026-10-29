@@ -79,7 +79,8 @@ describe("status definitions", () => {
         def.criticalChanceBonus !== 0 ||
         def.energyPerCritical !== 0 ||
         def.damageReduction !== 0 ||
-        def.redirectsPhysicalDamage !== 0;
+        def.redirectsPhysicalDamage !== 0 ||
+        def.damageFromSpiritAttacks !== 0;
       expect(hasEffect, `${id} has no mechanical effect`).toBe(true);
     }
   });
@@ -131,6 +132,7 @@ describe("status definitions", () => {
       "shrinking-armor": -3,
       "crippling-anguish": -5,
       "enduring-toxin": -4,
+      lamentation: -2,
     });
   });
 

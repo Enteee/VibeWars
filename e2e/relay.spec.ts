@@ -26,7 +26,7 @@ async function savedRelay(page: Page): Promise<string | null> {
 }
 
 async function openRelayOptions(page: Page): Promise<void> {
-  await page.locator("#screens").getByRole("button", { name: "options" }).click();
+  await page.locator(".topbar-options").click();
   await page.locator('.options-entry[data-section="relay"]').click();
   await expect(page.locator(".relay-section")).toBeVisible();
 }
