@@ -51,6 +51,9 @@ To play with friends:
 - **Join:** paste the code you were sent into the lobby code field and
   press **Join**.
 
+Type a **Guild tag** of 2 to 4 letters or digits beside your name, and
+everyone sees it after your name, like `Ente [VIBE]`.
+
 ## In a match
 
 - Click the ground to walk there, or move with the arrow keys.
