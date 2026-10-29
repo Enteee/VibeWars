@@ -42,6 +42,7 @@ import {
   packCombat,
   packSnapshot,
   sanitizeChatText,
+  sanitizeGuildTag,
   sanitizeName,
 } from "@vibewars/game-session";
 import { describe, expect, it } from "vitest";
@@ -76,6 +77,8 @@ function rounded(places: number): number {
 const PEER_ID = "abcdefghijklmnopqrst/local";
 /** A name as long in bytes as `sanitizeName` lets through: 16 three-code-point graphemes. */
 const NAME = sanitizeName("👩‍🚀".repeat(40), "player");
+/** A guild tag as long as `sanitizeGuildTag` lets through (#1406). */
+const GUILD_TAG = sanitizeGuildTag("WWWW");
 
 const SKILL_IDS = IMPLEMENTED_SKILLS.map((skill) => skill.id);
 const STATUS_IDS = Object.keys(STATUS_DEFINITIONS);
@@ -107,7 +110,7 @@ function player(index: number): WirePlayer {
   return {
     id: `${PEER_ID}${String(index)}`,
     name: NAME,
-    guildTag: null,
+    guildTag: GUILD_TAG,
     team: index % 2 === 0 ? 0 : 1,
     x: FLOAT + index,
     y: FLOAT + index,
@@ -392,7 +395,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
     const hello: PeerHello = {
       protocolVersion: PROTOCOL_VERSION,
       name: NAME,
-      guildTag: null,
+      guildTag: GUILD_TAG,
       build: JSON.parse(JSON.stringify(build)) as JsonValue,
       rejoin: { playerId: `${PEER_ID}0` },
     };
@@ -418,7 +421,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       players: Array.from({ length: MAX_LOBBY_PLAYERS }, (_, i) => ({
         id: `${PEER_ID}${String(i)}`,
         name: NAME,
-        guildTag: null,
+        guildTag: GUILD_TAG,
         team: i % 3 === 0 ? null : i % 3 === 1 ? 0 : 1,
         ready: true,
         isHost: i === 0,
