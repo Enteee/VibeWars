@@ -46,7 +46,8 @@ const spawnPointSchema = z.object({
  * A map objective: a team's Resurrection Shrine (#1186), where its dead
  * come back and Priest Annihilation's priest stands, where a Guild
  * Battle's Guild Lord stands (#1222), one of its base guards' posts
- * (#1223), or its flag stand and where each team's flag starts (#1225).
+ * (#1223), or its flag stand and where each team's flag starts (#1225);
+ * a Relic Run's altar and where each team's relic starts (#1374).
  */
 const objectiveSchema = z.discriminatedUnion("kind", [
   z.object({
@@ -74,25 +75,41 @@ const objectiveSchema = z.discriminatedUnion("kind", [
     kind: z.literal("flag-stand"),
     position: vec2Schema,
   }),
+  z.object({
+    kind: z.literal("relic-spawn"),
+    team: z.number().int().nonnegative(),
+    position: vec2Schema,
+  }),
+  z.object({
+    kind: z.literal("altar"),
+    position: vec2Schema,
+  }),
 ]);
 
 /** An objective that belongs to no team: the map has one, or none. */
-type SharedKind = Extract<Objective, { kind: "flag-stand" }>["kind"];
+type SharedKind = Extract<Objective, { kind: "flag-stand" | "altar" }>["kind"];
 type TeamKind = Exclude<Objective["kind"], SharedKind>;
 
 /** Which team objectives each mode may have; none for a mode not here. */
 const OBJECTIVES_BY_MODE: Readonly<Partial<Record<MatchMode, readonly TeamKind[]>>> = {
   "priest-annihilation": ["resurrection-shrine"],
   "guild-battle": ["resurrection-shrine", "guild-lord", "guard", "flag-spawn"],
+  "relic-run": ["relic-spawn"],
 };
 
 /** Which modes have exactly one of each shared objective; none for a mode not here. */
 const SHARED_OBJECTIVES_BY_MODE: Readonly<Partial<Record<MatchMode, readonly SharedKind[]>>> = {
   "guild-battle": ["flag-stand"],
+  "relic-run": ["altar"],
 };
 
 /** The kinds a map of a mode that has them has exactly one of per spawning team. */
-const ONE_PER_TEAM: readonly TeamKind[] = ["resurrection-shrine", "guild-lord", "flag-spawn"];
+const ONE_PER_TEAM: readonly TeamKind[] = [
+  "resurrection-shrine",
+  "guild-lord",
+  "flag-spawn",
+  "relic-spawn",
+];
 
 /** What a map calls each objective kind, in its validation messages. */
 const OBJECTIVE_NAMES: Readonly<Record<Objective["kind"], string>> = {
@@ -101,6 +118,8 @@ const OBJECTIVE_NAMES: Readonly<Record<Objective["kind"], string>> = {
   guard: "guard",
   "flag-spawn": "flag spawn",
   "flag-stand": "flag stand",
+  "relic-spawn": "relic spawn",
+  altar: "altar",
 };
 
 /** A body's radius: an objective stands clear of every wall and edge by one. */
@@ -114,7 +133,13 @@ export const mapDataSchema = z
       .regex(/^[a-z0-9-]+$/, "map id must be lowercase-kebab-case"),
     name: z.string().min(1),
     /** The mode its matches play (#476), one of game-core's `MatchMode`s; there is no default. */
-    mode: z.enum(["annihilation", "kill-count", "priest-annihilation", "guild-battle"]),
+    mode: z.enum([
+      "annihilation",
+      "kill-count",
+      "priest-annihilation",
+      "guild-battle",
+      "relic-run",
+    ]),
     width: z.number().positive(),
     height: z.number().positive(),
     walls: z.array(wallSchema),
@@ -184,7 +209,8 @@ export const mapDataSchema = z
       const clear = walls.every(
         (wall) => distancePointToSegment(objective.position, wall) >= BODY_RADIUS,
       );
-      const teamed = objective.kind === "flag-stand" || teams.has(objective.team);
+      const teamed =
+        objective.kind === "flag-stand" || objective.kind === "altar" || teams.has(objective.team);
       if (!teamed || !inBounds || !clear) {
         context.addIssue({
           code: "custom",

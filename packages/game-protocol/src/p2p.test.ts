@@ -217,6 +217,8 @@ const snapshot: WireSnapshotPart = {
   flags: [],
   stand: null,
   aggression: [],
+  relics: [],
+  altar: null,
 };
 
 /** A Guild Battle's flags (#1225): one carried, one on the ground; and its aggression (#1226). */
@@ -228,6 +230,16 @@ const flagged: WireSnapshotPart = {
   ],
   stand: { holder: 0, heldSeconds: 37.5 },
   aggression: [1240, 980],
+};
+
+/** A Relic Run's relics (#1374): one carried, one lying; and its altar. */
+const relicked: WireSnapshotPart = {
+  ...snapshot,
+  relics: [
+    { team: 0, place: "carried", carrierId: "peer-1", x: null, y: null },
+    { team: 1, place: "ground", carrierId: null, x: 1300, y: 500 },
+  ],
+  altar: { x: 1100, y: 700 },
 };
 
 const combat: WireCombat = {
@@ -580,6 +592,7 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
       aggression: [],
     },
   ],
+  ["snapshot with relics and an altar (#1374)", parseWireSnapshotPart, relicked],
   ["combat batch", parseWireCombatBatch, combatBatch],
   ["skill-bar", parseWireSkillBar, skillBar],
   [
@@ -864,6 +877,23 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     "snapshot with a stand held for negative time (#1225)",
     parseWireSnapshotPart,
     { ...flagged, stand: { holder: 0, heldSeconds: -1 } },
+  ],
+  ["snapshot without relics (#1374)", parseWireSnapshotPart, { ...snapshot, relics: undefined }],
+  ["snapshot without an altar (#1374)", parseWireSnapshotPart, { ...snapshot, altar: undefined }],
+  [
+    "snapshot with a relic on the stand (#1374)",
+    parseWireSnapshotPart,
+    { ...relicked, relics: [{ team: 0, place: "stand", carrierId: null, x: null, y: null }] },
+  ],
+  [
+    "snapshot with a relic on the ground nowhere (#1374)",
+    parseWireSnapshotPart,
+    { ...relicked, relics: [{ team: 1, place: "ground", carrierId: null, x: 1, y: null }] },
+  ],
+  [
+    "snapshot with an altar nowhere (#1374)",
+    parseWireSnapshotPart,
+    { ...relicked, altar: { x: 1100 } },
   ],
   ["snapshot in zero parts", parseWireSnapshotPart, { ...snapshot, parts: 0 }],
   [

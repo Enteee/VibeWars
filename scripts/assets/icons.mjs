@@ -569,6 +569,29 @@ const status = {
       `<path d="M6 6l12 12M18 6L6 18" ${stroke(c, 2)}/>` +
       `<path d="M5 15l4 4M15 19l4-4" ${stroke(c, 2)}/>`,
   ],
+  // Stance: three chevrons, a charge at 25% faster (#1359).
+  rush: ["stance", (c) => `<path d="M4 9l4 5-4 5M10 9l4 5-4 5M16 9l4 5-4 5" ${stroke(c, 2)}/>`],
+  // Skill effect: a heavy block on four short legs, armored and slow (#1359).
+  "dolyak-signet": [
+    "skill-effect",
+    (c) =>
+      `<rect x="5" y="7" width="14" height="7" rx="1.5" fill="${c}"/>` +
+      `<path d="M7 14v5M10.5 14v5M13.5 14v5M17 14v5" ${stroke(c, 2)}/>`,
+  ],
+  // Skill effect: a heart with a plus, more maximum Health (#1359).
+  "endure-pain": [
+    "skill-effect",
+    (c) =>
+      `<path d="M12 19.5l-6.5-6.5a3.8 3.8 0 0 1 6.5-4.5 3.8 3.8 0 0 1 6.5 4.5z" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 10.5v5.5M9.2 13.2h5.6" ${stroke(c, 1.8)}/>`,
+  ],
+  // Stance: a bolt under a ceiling, energy per hit up to a cap (#1359).
+  "warriors-endurance": [
+    "stance",
+    (c) =>
+      `<path d="M13.5 7l-5 7h3.5l-1 6 5-7.5h-3.5z" fill="${c}"/>` +
+      `<path d="M5 4.5h14" ${stroke(c, 2)}/>`,
+  ],
   // Enchantment: a shield with a spark, blocks renewed by critical hits (#1315).
   "critical-defenses": [
     "enchantment",
@@ -1713,6 +1736,38 @@ const skillGlyph = {
     `<path d="M3.5 5L8.5 10L3.5 15Z" ${stroke(C.ink, 1.6)}/>` +
     `<path d="M9 5L14 10L9 15Z" ${stroke(C.ink, 1.6)}/>` +
     inkFill("M15 4.5L21 10L15 15.5Z"),
+  // A big drop with a plus cut out of it: health taken by a touch (#1348).
+  "drop-touch": () =>
+    inkFill("M12 3C12 3 5.5 11 5.5 15A6.5 6.5 0 0 0 18.5 15C18.5 11 12 3 12 3Z") +
+    `<path d="M12 12.5V19M8.8 15.8H15.2" ${stroke(C.bg, 2.2)}/>`,
+  // Three small drops: life drawn from up to three foes (#1348).
+  "drop-trio": () =>
+    [
+      [4.2, 0.2],
+      [-0.2, 10.2],
+      [8.8, 10.2],
+    ]
+      .map(
+        ([x, y]) =>
+          `<g transform="translate(${String(x)},${String(y)}) scale(0.58)">${inkFill("M12 3C12 3 5.5 11 5.5 15A6.5 6.5 0 0 0 18.5 15C18.5 11 12 3 12 3Z")}</g>`,
+      )
+      .join(""),
+  // A drop half full: a strike that drinks above half health (#1348).
+  "drop-half": () =>
+    `<path d="M12 3C12 3 5.5 11 5.5 15A6.5 6.5 0 0 0 18.5 15C18.5 11 12 3 12 3Z" ${stroke(C.ink, 2.6)}/>` +
+    inkFill("M5.5 12.5H18.5V15A6.5 6.5 0 0 1 5.5 15Z"),
+  // A drop with a heavy arrow pointing down: a foe weakened as it is drained (#1348).
+  "drop-weak": () =>
+    inkFill("M8.5 4C8.5 4 3 10.5 3 14.2A5.5 5.5 0 0 0 14 14.2C14 10.5 8.5 4 8.5 4Z") +
+    inkLine("M19 4V14M15 11L19 15.5L23 11", 2.6),
+  // A small drop ringed by four barbs: health paid, the foe bleeds (#1348).
+  "drop-barbs": () =>
+    `<g transform="translate(12,12.5) scale(0.7) translate(-12,-11.5)">${inkFill("M12 3C12 3 5.5 11 5.5 15A6.5 6.5 0 0 0 18.5 15C18.5 11 12 3 12 3Z")}</g>` +
+    inkFill("M12 0.5L15.5 6H8.5ZM12 24L15.5 18.5H8.5ZM0.5 12L6 8.5V15.5ZM23.5 12L18 8.5V15.5Z"),
+  // A drop feeding a bolt: health sacrificed for energy (#1348).
+  "drop-energy": () =>
+    `<g transform="translate(-1.2,2) scale(0.7)">${inkFill("M12 3C12 3 5.5 11 5.5 15A6.5 6.5 0 0 0 18.5 15C18.5 11 12 3 12 3Z")}</g>` +
+    inkFill("M18 2.5L11.5 13H16L14.5 21.5L22.5 9.5H17.5Z"),
   // The step with a plus under it: it heals as it goes (#1349).
   "blink-heal": () =>
     `<path d="M2.5 3L7.5 8L2.5 13Z" ${stroke(C.ink, 1.6)}/>` +

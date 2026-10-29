@@ -4,6 +4,7 @@ import {
   applyIntent,
   companionMode,
   drainAccumulator,
+  raisedMaxHealth,
   resolvedBar,
   swingProgress,
   type MatchSimulation,
@@ -95,7 +96,8 @@ function toPlayerSnapshot(
       participant.pendingSkill !== undefined ||
       participant.interact !== undefined,
     health: Math.round(combatant.health),
-    maxHealth: combatant.maxHealth,
+    // Raised by Endure Pain and its kind (#1359), as the host sends it.
+    maxHealth: raisedMaxHealth(combatant),
     // Clamped as the host clamps it: energy below 0 is hidden (#489).
     energy: Math.max(0, Math.round(combatant.energy)),
     maxEnergy: combatant.maxEnergy,
@@ -291,6 +293,8 @@ export function createLocalConnection(options: {
         flags: simulation.flags,
         stand: simulation.stand,
         aggression: simulation.aggressionByTeam,
+        relics: simulation.relics,
+        altar: simulation.altar,
         // No match with rules ends here, so there is never a summary (#1057).
         summary: undefined,
       };

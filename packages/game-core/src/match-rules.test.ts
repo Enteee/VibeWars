@@ -7,7 +7,8 @@ import {
   MATCH_IN_PROGRESS,
   MATCH_MODES,
   PRIEST_ANNIHILATION_MATCH_RULES,
-  addKill,
+  RELIC_RUN_MATCH_RULES,
+  addPoint,
   emptyScore,
   evaluateMatch,
   type MatchRules,
@@ -39,7 +40,7 @@ function standing(...teams: [number, number, number, boolean?][]): MatchStanding
 const BOTH_ALIVE = standing([0, 4, 0], [1, 4, 0]);
 const NO_KILLS = emptyScore([0, 1]);
 
-describe("emptyScore / addKill", () => {
+describe("emptyScore / addPoint", () => {
   it("starts every team at zero", () => {
     const score = emptyScore([0, 1]);
     expect(score.byTeam.get(0)).toBe(0);
@@ -48,15 +49,15 @@ describe("emptyScore / addKill", () => {
 
   it("adds a kill without mutating the previous score", () => {
     const first = emptyScore([0, 1]);
-    const second = addKill(first, 0);
+    const second = addPoint(first, 0);
     expect(second.byTeam.get(0)).toBe(1);
     expect(first.byTeam.get(0)).toBe(0);
   });
 
   it("accumulates kills", () => {
     let score = emptyScore([0, 1]);
-    score = addKill(score, 1);
-    score = addKill(score, 1);
+    score = addPoint(score, 1);
+    score = addPoint(score, 1);
     expect(score.byTeam.get(1)).toBe(2);
   });
 });
@@ -69,7 +70,7 @@ describe("evaluateMatch", () => {
   it("ends when a team reaches the score target", () => {
     let score = emptyScore([0, 1]);
     for (let i = 0; i < 3; i += 1) {
-      score = addKill(score, 1);
+      score = addPoint(score, 1);
     }
     const outcome = evaluateMatch(score, BOTH_ALIVE, 10, RULES);
     expect(outcome.phase).toBe("finished");
@@ -79,14 +80,14 @@ describe("evaluateMatch", () => {
 
   it("does not end one kill short of the target", () => {
     let score = emptyScore([0, 1]);
-    score = addKill(score, 1);
-    score = addKill(score, 1);
+    score = addPoint(score, 1);
+    score = addPoint(score, 1);
     expect(evaluateMatch(score, BOTH_ALIVE, 10, RULES).phase).toBe("active");
   });
 
   it("ends on the time limit with the leader winning", () => {
     let score = emptyScore([0, 1]);
-    score = addKill(score, 0);
+    score = addPoint(score, 0);
     const outcome = evaluateMatch(score, BOTH_ALIVE, 60, RULES);
     expect(outcome.phase).toBe("finished");
     expect(outcome.winningTeam).toBe(0);
@@ -95,8 +96,8 @@ describe("evaluateMatch", () => {
 
   it("calls a tie at time a draw rather than picking an arbitrary winner", () => {
     let score = emptyScore([0, 1]);
-    score = addKill(score, 0);
-    score = addKill(score, 1);
+    score = addPoint(score, 0);
+    score = addPoint(score, 1);
     const outcome = evaluateMatch(score, BOTH_ALIVE, 60, RULES);
     expect(outcome.phase).toBe("finished");
     expect(outcome.winningTeam).toBeUndefined();
@@ -113,7 +114,7 @@ describe("evaluateMatch", () => {
     // score win to the player who just made it.
     let score = emptyScore([0, 1]);
     for (let i = 0; i < 3; i += 1) {
-      score = addKill(score, 0);
+      score = addPoint(score, 0);
     }
     expect(evaluateMatch(score, BOTH_ALIVE, 60, RULES).reason).toBe("score");
   });
@@ -186,7 +187,7 @@ describe("evaluateMatch: annihilation (#846)", () => {
   it("plays on while every team has someone alive, whatever the kills", () => {
     let score = NO_KILLS;
     for (let i = 0; i < 20; i += 1) {
-      score = addKill(score, 0);
+      score = addPoint(score, 0);
     }
     expect(evaluateMatch(score, standing([0, 1, 0], [1, 1, -60]), 100, rules).phase).toBe("active");
   });
@@ -368,6 +369,48 @@ describe("evaluateMatch: guild battle (#1222)", () => {
       phase: "finished",
       winningTeam: 0,
       reason: "morale",
+    });
+  });
+});
+
+describe("evaluateMatch: relic run (#1374)", () => {
+  const rules = RELIC_RUN_MATCH_RULES;
+  const points = (team0: number, team1: number) => ({
+    byTeam: new Map([
+      [0, team0],
+      [1, team1],
+    ]),
+  });
+
+  it("is annihilation's dead and death penalty, 8 minutes", () => {
+    expect(MATCH_MODES["relic-run"]).toBe(rules);
+    expect(rules.deathRule).toBe("resurrection-only");
+    expect(rules.deathPenalty).toBe(true);
+    expect(rules.timeLimitSeconds).toBe(480);
+  });
+
+  it("goes at time to the most relic points, and no number of them ends it early", () => {
+    expect(evaluateMatch(points(20, 1), BOTH_ALIVE, 479.9, rules)).toBe(MATCH_IN_PROGRESS);
+    expect(evaluateMatch(points(1, 2), BOTH_ALIVE, 480, rules)).toEqual({
+      phase: "finished",
+      winningTeam: 1,
+      reason: "time",
+    });
+  });
+
+  it("is a draw at time on equal points, whatever the morale", () => {
+    expect(evaluateMatch(points(2, 2), standing([0, 4, 0], [1, 4, -60]), 480, rules)).toEqual({
+      phase: "finished",
+      winningTeam: undefined,
+      reason: "time",
+    });
+  });
+
+  it("is lost at once by a wiped team, whatever the points", () => {
+    expect(evaluateMatch(points(3, 0), standing([0, 0, -15], [1, 1, 0]), 100, rules)).toEqual({
+      phase: "finished",
+      winningTeam: 1,
+      reason: "annihilation",
     });
   });
 });

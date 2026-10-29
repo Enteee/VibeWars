@@ -1,5 +1,6 @@
 import { RANGE_SPELL } from "../../distances.js";
 import { getSkill } from "../../skills/catalog.js";
+import { raisedMaxHealth } from "../../skills/tick.js";
 import type { Skill } from "../../skills/types.js";
 import { distance, ZERO } from "../../vec2.js";
 import type {
@@ -364,8 +365,8 @@ function nearestLiving(self: Participant, foes: readonly Participant[]): Partici
 }
 
 function healthFraction(participant: Participant): number {
-  const { health, maxHealth } = participant.combatant;
-  return maxHealth > 0 ? health / maxHealth : 0;
+  const maxHealth = raisedMaxHealth(participant.combatant);
+  return maxHealth > 0 ? participant.combatant.health / maxHealth : 0;
 }
 
 /**

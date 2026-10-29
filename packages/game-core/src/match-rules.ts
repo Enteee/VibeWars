@@ -11,9 +11,11 @@ export interface MatchRules {
    * How a match is won (GW1 modes, #474/#476): `"kill-count"` by kills,
    * `"annihilation"` by wiping the other team, `"priest-annihilation"` by
    * wiping it and killing its priest (#1186), or by morale at time;
-   * `"guild-battle"` by killing the foe's Guild Lord (#1222).
+   * `"guild-battle"` by killing the foe's Guild Lord (#1222); `"relic-run"`
+   * by relic points at time, or by wiping the other team (#1374).
    */
-  readonly victory: "kill-count" | "annihilation" | "priest-annihilation" | "guild-battle";
+  readonly victory:
+    "kill-count" | "annihilation" | "priest-annihilation" | "guild-battle" | "relic-run";
   /** Kills one team needs to win; only for `"kill-count"`. */
   readonly scoreToWin: number;
   /** Match length in seconds; at zero time the lead wins. */
@@ -80,6 +82,17 @@ export const GUILD_BATTLE_MATCH_RULES: MatchRules = Object.freeze({
   timeLimitSeconds: 1680,
 });
 
+/**
+ * Heroes' Ascent's Relic Run (#1374): carry your relic onto the altar for
+ * a point. The dead stay down and pay the death penalty, a wipe loses at
+ * once, as in annihilation; at 8 minutes the most points win.
+ */
+export const RELIC_RUN_MATCH_RULES: MatchRules = Object.freeze({
+  ...ANNIHILATION_MATCH_RULES,
+  victory: "relic-run",
+  timeLimitSeconds: 480,
+});
+
 /** A living priest raises its team's dead at every multiple of this, match clock (#1186, GW1). */
 export const PRIEST_WAVE_SECONDS = 120;
 
@@ -87,7 +100,8 @@ export const PRIEST_WAVE_SECONDS = 120;
 export const SHRINE_INVULNERABLE_SECONDS = 5;
 
 /** The modes a map can name (#476): which one a match plays follows from its map alone. */
-export type MatchMode = "annihilation" | "kill-count" | "priest-annihilation" | "guild-battle";
+export type MatchMode =
+  "annihilation" | "kill-count" | "priest-annihilation" | "guild-battle" | "relic-run";
 
 /** Each mode's rules, by the name a map gives it. */
 export const MATCH_MODES: Readonly<Record<MatchMode, MatchRules>> = Object.freeze({
@@ -95,6 +109,7 @@ export const MATCH_MODES: Readonly<Record<MatchMode, MatchRules>> = Object.freez
   "kill-count": KILL_COUNT_MATCH_RULES,
   "priest-annihilation": PRIEST_ANNIHILATION_MATCH_RULES,
   "guild-battle": GUILD_BATTLE_MATCH_RULES,
+  "relic-run": RELIC_RUN_MATCH_RULES,
 });
 
 /** Morale a death costs, in percent, with `deathPenalty` (GW1). */
@@ -120,7 +135,7 @@ export function moraleMaximum(base: number, resolved: number, morale: number): n
 export type MatchPhase = "active" | "finished";
 
 export interface MatchScore {
-  /** Kills by team index. */
+  /** Kills by team index; a Relic Run's relic points instead (#1374). */
   readonly byTeam: ReadonlyMap<number, number>;
 }
 
@@ -214,6 +229,8 @@ export function evaluateMatch(
       return evaluateAnnihilation(standing, elapsedSeconds, rules);
     case "guild-battle":
       return evaluateGuildBattle(standing, elapsedSeconds, rules);
+    case "relic-run":
+      return evaluateRelicRun(score, standing, elapsedSeconds, rules);
   }
 }
 
@@ -228,6 +245,15 @@ function evaluateKillCount(
     }
   }
 
+  return evaluateScoreAtTime(score, elapsedSeconds, rules);
+}
+
+/** At time, the most points win, kill-count's and a Relic Run's (#1374). */
+function evaluateScoreAtTime(
+  score: MatchScore,
+  elapsedSeconds: number,
+  rules: MatchRules,
+): MatchOutcome {
   if (elapsedSeconds >= rules.timeLimitSeconds) {
     const { team, tied } = leader(score);
     return {
@@ -303,13 +329,31 @@ function evaluateGuildBattle(
   return MATCH_IN_PROGRESS;
 }
 
+/**
+ * Relic Run (#1374, GW1): a wiped team loses at once, as in annihilation;
+ * at time the most relic points win, and a tie is a draw, as kill-count's.
+ * No number of points wins early: `scoreToWin` is kill-count's.
+ */
+function evaluateRelicRun(
+  score: MatchScore,
+  standing: MatchStanding,
+  elapsedSeconds: number,
+  rules: MatchRules,
+): MatchOutcome {
+  const living = [...standing.byTeam].filter(([, team]) => team.living > 0);
+  if (living.length < standing.byTeam.size && living.length <= 1) {
+    return { phase: "finished", winningTeam: living[0]?.[0], reason: "annihilation" };
+  }
+  return evaluateScoreAtTime(score, elapsedSeconds, rules);
+}
+
 /** The team of the one entry, or `undefined` for none or several. */
 function lone(teams: readonly (readonly [number, TeamStanding])[]): number | undefined {
   return teams.length === 1 ? teams[0]?.[0] : undefined;
 }
 
-/** Add a kill for `team`, returning a new score (the input is untouched). */
-export function addKill(score: MatchScore, team: number): MatchScore {
+/** Add a point for `team`, a kill or a relic home (#1374): a new score, the input untouched. */
+export function addPoint(score: MatchScore, team: number): MatchScore {
   const byTeam = new Map(score.byTeam);
   byTeam.set(team, (byTeam.get(team) ?? 0) + 1);
   return { byTeam };

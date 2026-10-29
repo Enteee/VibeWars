@@ -549,3 +549,56 @@ describe("guild battle guards (#1223)", () => {
     ).toThrow(/annihilation map has no guard/);
   });
 });
+
+describe("relic run maps (#1374)", () => {
+  const relicMap = {
+    ...validMap,
+    mode: "relic-run",
+    walls: [],
+    spawnPoints: [
+      { team: 0, position: { x: 20, y: 50 } },
+      { team: 1, position: { x: 80, y: 50 } },
+    ],
+    objectives: [
+      { kind: "relic-spawn", team: 0, position: { x: 20, y: 30 } },
+      { kind: "relic-spawn", team: 1, position: { x: 80, y: 70 } },
+      { kind: "altar", position: { x: 50, y: 50 } },
+    ],
+  };
+
+  it("accepts one relic spawn per spawning team and one altar", () => {
+    expect(validateMapData(relicMap).objectives).toHaveLength(3);
+  });
+
+  it("refuses a relic run map with no altar, or two", () => {
+    expect(() =>
+      validateMapData({
+        ...relicMap,
+        objectives: relicMap.objectives.filter((candidate) => candidate.kind !== "altar"),
+      }),
+    ).toThrow(/relic-run map has 0 altars, not one/);
+    expect(() =>
+      validateMapData({
+        ...relicMap,
+        objectives: [...relicMap.objectives, { kind: "altar", position: { x: 50, y: 70 } }],
+      }),
+    ).toThrow(/relic-run map has 2 altars, not one/);
+  });
+
+  it("refuses a team with no relic spawn", () => {
+    expect(() =>
+      validateMapData({
+        ...relicMap,
+        objectives: relicMap.objectives.filter(
+          (candidate) => !(candidate.kind === "relic-spawn" && candidate.team === 1),
+        ),
+      }),
+    ).toThrow(/team 1 has 0 relic spawns, not one/);
+  });
+
+  it("refuses relics on a map of any other mode", () => {
+    expect(() =>
+      validateMapData({ ...validMap, objectives: [{ kind: "altar", position: { x: 50, y: 50 } }] }),
+    ).toThrow(/annihilation map has no altar/);
+  });
+});

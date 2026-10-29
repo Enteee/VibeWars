@@ -13,6 +13,7 @@ import {
   effectiveMaxHealth,
   healingMultiplierOf,
   moveSpeedMultiplier,
+  raisedMaxHealth,
   rankOf,
 } from "./tick.js";
 import { makeCombatant } from "./testing.js";
@@ -137,6 +138,17 @@ describe("effectiveMaxHealth", () => {
     const large = makeCombatant({ id: "c", maxHealth: 600 });
     large.statuses.apply("deep-wound", 10, "a");
     expect(effectiveMaxHealth(large)).toBe(500);
+  });
+
+  it("adds a raised maximum before deep wound's cut (#1359)", () => {
+    const c = makeCombatant({ id: "c", maxHealth: 200 });
+    c.statuses.apply("endure-pain", 16, "c");
+    expect(effectiveMaxHealth(c)).toBe(458);
+    expect(raisedMaxHealth(c)).toBe(458);
+    c.statuses.apply("deep-wound", 10, "a");
+    // 20% of 458, not of 200, and under the cap of 100.
+    expect(effectiveMaxHealth(c)).toBeCloseTo(366.4);
+    expect(raisedMaxHealth(c)).toBe(458);
   });
 
   it("comes back whole when deep wound ends", () => {

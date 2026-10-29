@@ -385,6 +385,39 @@ describe("energy-gain effect", () => {
     expect(caster.energy).toBe(50);
     expect(events).toContainEqual({ kind: "energy-gain", targetId: "caster", amount: 5 });
   });
+
+  it("never takes energy above upTo, and from above it neither gains nor loses (#1359)", () => {
+    const gain: SkillEffect = { kind: "energy-gain", amount: { flat: 3 }, upTo: 22 };
+    const below = makeCombatant({ id: "caster", energy: 20 });
+    expect(applyEffect(gain, context(below))).toEqual([
+      { kind: "energy-gain", targetId: "caster", amount: 2 },
+    ]);
+    expect(below.energy).toBe(22);
+    const above = makeCombatant({ id: "caster", energy: 30 });
+    expect(applyEffect(gain, context(above))).toEqual([]);
+    expect(above.energy).toBe(30);
+  });
+});
+
+describe("a raised maximum (#1359)", () => {
+  it("raises health with the maximum as it lands, and a refresh raises nothing", () => {
+    const c = makeCombatant({ id: "c", health: 480, maxHealth: 480 });
+    applyStatus(c, "endure-pain", 16, "c");
+    expect(effectiveMaxHealth(c)).toBe(738);
+    expect(c.health).toBe(738);
+    applyStatus(c, "endure-pain", 16, "c");
+    expect(c.health).toBe(738);
+  });
+
+  it("with a Deep Wound, raises health no higher than the cut maximum", () => {
+    const c = makeCombatant({ id: "c", health: 480, maxHealth: 480 });
+    applyStatus(c, "deep-wound", 10, "a");
+    expect(c.health).toBe(384);
+    applyStatus(c, "endure-pain", 16, "c");
+    // 20% of 738 is past the cap: 638, not 384 + 258.
+    expect(effectiveMaxHealth(c)).toBe(638);
+    expect(c.health).toBe(638);
+  });
 });
 
 describe("energy-loss effect (#793)", () => {

@@ -2,6 +2,7 @@ import {
   FLAG_MORALE_BOOST,
   FLAG_STAND_ID,
   flagTeamOf,
+  relicTeamOf,
   getProfession,
   getSkill,
   getWeapon,
@@ -110,7 +111,7 @@ export interface HudElements {
   readonly healthPips: HTMLElement;
   /** Your morale next to the health bar (#843): "−15%", "+10%"; hidden at 0. */
   readonly morale: HTMLElement;
-  /** GW1's Drop button above the health bar (#1225): shown while you carry a flag. */
+  /** GW1's Drop button above the health bar (#1225): shown while you carry a flag or relic (#1374). */
   readonly dropFlag: HTMLButtonElement;
   readonly energyFill: HTMLElement;
   /** Overcast's grey band at the energy bar's right end (#461). */
@@ -167,7 +168,7 @@ export interface HudElements {
   readonly scoreboard: HTMLElement;
   readonly scoreboardText: HTMLElement;
   readonly enemies: HTMLElement;
-  /** A Guild Battle's flag carriers under the scoreboard, a line a flag (#1226). */
+  /** A Guild Battle's flag carriers under the scoreboard, a line a flag (#1226), or a Relic Run's relics (#1374). */
   readonly carriers: HTMLElement;
   readonly result: HTMLElement;
   /** The match's buttons, top right, as one cluster (#454): the five below. */
@@ -482,10 +483,11 @@ const REFUSALS: Readonly<Record<ActivationRejection, string>> = {
   "no-animal-to-charm": "There is no animal to charm here.",
   "invalid-target-creature": "That cannot be revived that way.",
   "cannot-cast-spells": "You cannot cast spells.",
-  "hands-full": "Your hands are full: drop the flag first.",
+  "hands-full": "Your hands are full: drop what you carry first.",
   "not-your-flag": "That is not your flag.",
   "flag-on-stand": "Your flag is already on the stand.",
   "no-flag-carried": "You are not carrying your flag.",
+  "not-your-relic": "That relic is not yours to take.",
 };
 
 /** Where an attack's refusal differs from a cast's: it is about the weapon, not a skill. */
@@ -686,8 +688,8 @@ function setBar(
 
 /**
  * The target frame's name for a flag or the stand selected (#1225),
- * which are no body, the stand with its holder (#1226); `undefined` for
- * any other id.
+ * which are no body, the stand with its holder (#1226), or a relic
+ * (#1374); `undefined` for any other id.
  */
 export function objectTargetName(
   targetId: string | undefined,
@@ -702,6 +704,10 @@ export function objectTargetName(
       ? "Flag Stand: held by your team"
       : "Flag Stand: held by the enemy";
   }
+  const relic = targetId === undefined ? undefined : relicTeamOf(targetId);
+  if (relic !== undefined) {
+    return relic === selfTeam ? "Your relic" : "Enemy relic";
+  }
   const team = targetId === undefined ? undefined : flagTeamOf(targetId);
   if (team === undefined) {
     return undefined;
@@ -709,9 +715,9 @@ export function objectTargetName(
   return team === selfTeam ? "Your flag" : "Enemy flag";
 }
 
-/** One line under the scoreboard (#1226): a flag's carrier, or that it lies dropped. */
+/** One line under the scoreboard (#1226): a flag's or relic's carrier, or where it lies. */
 export interface CarrierLine {
-  /** The flag's team, whose colour the line is in. */
+  /** The flag's or relic's team, whose colour the line is in. */
   readonly team: number;
   readonly text: string;
 }
@@ -719,28 +725,41 @@ export interface CarrierLine {
 /**
  * A line for every flag away from home (#1226), your team's first: "⚑
  * Name" while carried, "⚑ dropped" on the ground; none at its spawn or on
- * the stand. A spectator reads team 0's first.
+ * the stand. A Relic Run's relics (#1374) in the same slot, every one,
+ * home too: "✦ Name", "✦ dropped" or "✦ at base". A spectator reads team
+ * 0's first.
  */
 export function carrierLines(
-  match: Pick<MatchSnapshot, "flags" | "players">,
+  match: Pick<MatchSnapshot, "flags" | "relics" | "players">,
   selfTeam: number | undefined,
 ): CarrierLine[] {
   const ours = selfTeam ?? 0;
-  return [...match.flags]
-    .sort((a, b) => Number(a.team !== ours) - Number(b.team !== ours))
-    .flatMap(({ team, place }): CarrierLine[] => {
-      switch (place.kind) {
-        case "carried": {
-          const carrier = match.players.find((player) => player.sessionId === place.carrierId);
-          return [{ team, text: `⚑ ${carrier?.name ?? "dropped"}` }];
-        }
-        case "ground":
-          return [{ team, text: "⚑ dropped" }];
-        case "spawn":
-        case "stand":
-          return [];
-      }
-    });
+  const yoursFirst = <T extends { readonly team: number }>(objects: readonly T[]): T[] =>
+    [...objects].sort((a, b) => Number(a.team !== ours) - Number(b.team !== ours));
+  const carrierName = (carrierId: string): string =>
+    match.players.find((player) => player.sessionId === carrierId)?.name ?? "dropped";
+  const flags = yoursFirst(match.flags).flatMap(({ team, place }): CarrierLine[] => {
+    switch (place.kind) {
+      case "carried":
+        return [{ team, text: `⚑ ${carrierName(place.carrierId)}` }];
+      case "ground":
+        return [{ team, text: "⚑ dropped" }];
+      case "spawn":
+      case "stand":
+        return [];
+    }
+  });
+  const relics = yoursFirst(match.relics).map(({ team, place }): CarrierLine => {
+    switch (place.kind) {
+      case "carried":
+        return { team, text: `✦ ${carrierName(place.carrierId)}` };
+      case "ground":
+        return { team, text: "✦ dropped" };
+      case "spawn":
+        return { team, text: "✦ at base" };
+    }
+  });
+  return [...flags, ...relics];
 }
 
 /** Paint `lines` into `row`, each in its flag's side's colour, rebuilt only when one changes. */
@@ -800,9 +819,20 @@ export function standBoostToast(
     : "Enemy morale boost";
 }
 
-/** Whether `playerId` carries a flag (#1225): the Drop button shows. */
-export function carriesFlag(match: MatchSnapshot, playerId: string): boolean {
-  return match.flags.some(({ place }) => place.kind === "carried" && place.carrierId === playerId);
+/**
+ * What `playerId` carries, a flag (#1225) or a relic (#1374), or
+ * `undefined`: the Drop button shows, named for it.
+ */
+export function carriedBundle(
+  match: Pick<MatchSnapshot, "flags" | "relics">,
+  playerId: string,
+): "flag" | "relic" | undefined {
+  const carries = ({ place }: { readonly place: { readonly kind: string } }): boolean =>
+    "carrierId" in place && place.carrierId === playerId;
+  if (match.flags.some(carries)) {
+    return "flag";
+  }
+  return match.relics.some(carries) ? "relic" : undefined;
 }
 
 /**
@@ -945,7 +975,8 @@ function thousands(value: number): string {
  *
  * What a side is depends on the map's `mode`: Annihilation counts the
  * living, "4 v 3 · 7:12"; Kill Count the team's kills, "4 – 0 · 2:25"
- * (#1200), as the snapshot's `score` carries them, team 1's first.
+ * (#1200), as the snapshot's `score` carries them, team 1's first, and
+ * a Relic Run its relic points the same way, "2 – 1 · 6:40" (#1374).
  * Priest Annihilation counts the living, then each side's priest and the
  * next wave, "4 v 3 · ✚ ✚ · raise 0:47 · 7:12" (#1199): `raise —` once
  * both priests are dead, and no countdown once time is out. A Guild
@@ -979,6 +1010,7 @@ export function scoreboardParts(
     case "annihilation":
       return [living, clock];
     case "kill-count":
+    case "relic-run":
       return [
         { kind: "text", text: `${String(score[ours] ?? 0)} – ${String(score[theirs] ?? 0)}` },
         clock,
@@ -1624,7 +1656,11 @@ export function updateHud(
   setStyle(hud.healthLost.style, "width", percent(lostHealthPercent(self) / 100));
   paintHealthTint(hud.healthRow, self);
   renderMorale(hud.morale, self.morale);
-  setHidden(hud.dropFlag, match === undefined || !carriesFlag(match, self.sessionId));
+  const bundle = match === undefined ? undefined : carriedBundle(match, self.sessionId);
+  setHidden(hud.dropFlag, bundle === undefined);
+  if (bundle !== undefined) {
+    setText(hud.dropFlag, `Drop ${bundle}`);
+  }
   // Counted to the ceiling overcast leaves, the rest of the bar greyed (#461).
   const energyText = `${energyLabel(self.energy, self.maxEnergy, self.overcast)} en`;
   setBar(hud.energyFill, hud.energyText, self.energy, self.maxEnergy, energyText);

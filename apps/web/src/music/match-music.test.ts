@@ -76,6 +76,8 @@ function snapshot(
     flags: [],
     stand: undefined,
     aggression: [],
+    relics: [],
+    altar: undefined,
     summary: undefined,
   };
 }

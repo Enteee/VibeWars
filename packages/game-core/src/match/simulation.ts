@@ -24,7 +24,7 @@ import {
   SHADOW_STEP_AWAY_DISTANCE,
 } from "../distances.js";
 import {
-  addKill,
+  addPoint,
   DEATH_PENALTY_PERCENT,
   DP_GRACE_AFTER_RES_SECONDS,
   emptyScore,
@@ -114,6 +114,7 @@ import {
   StatusSet,
   type ActiveStatus,
   type Outbreak,
+  type StatusChange,
   type StatusId,
   type StatusTriggerEvent,
 } from "../skills/status.js";
@@ -128,6 +129,7 @@ import {
   naturalHealthPips,
   netPips,
   preCapEnergyPips,
+  raisedMaxHealth,
   rankOf,
   upkeepPips,
   type NetPips,
@@ -208,25 +210,40 @@ import {
   type GuildLord,
 } from "./guild-lord.js";
 import {
+  FLAG_STAND_ID,
+  fallenDrops,
+  isCarriedObjectId,
+  type CarriedArrival,
+  type CarriedDrop,
+} from "./carried.js";
+import {
   FLAG_CARRIER_SPEED_MULTIPLIER,
   FLAG_MORALE_BOOST,
   FLAG_REACH_UNITS,
-  FLAG_STAND_ID,
   carriedFlag,
   dropFlag,
   flagRefusal,
   flagTargetPosition,
   flagTeamOf,
   initialFlags,
-  isFlagObjectId,
   stepFlags,
-  type FlagAction,
-  type FlagArrival,
   type FlagField,
   type FlagState,
   type FlagsState,
   type StandState,
 } from "./flags.js";
+import {
+  carriedRelic,
+  initialRelics,
+  onAltar,
+  relicRefusal,
+  relicTargetPosition,
+  relicTeamOf,
+  stepRelics,
+  type RelicField,
+  type RelicState,
+  type RelicsState,
+} from "./relics.js";
 import { guardSpec, type BaseGuard } from "./guards.js";
 import { priestId, priestSpec, type Shrine } from "./priest.js";
 import { steerAround } from "./steering.js";
@@ -504,8 +521,9 @@ export interface Participant {
    */
   pendingSkill: PendingSkill | undefined;
   /**
-   * The flag or the stand Space walks it to (#1225), to take or plant a
-   * flag on reaching it; `undefined` for none. Any other order ends it.
+   * The flag, the stand (#1225) or the relic (#1374) Space walks it to,
+   * to take, plant or return one on reaching it; `undefined` for none.
+   * Any other order ends it.
    */
   interact: { readonly targetId: string; unreachableSeconds: number } | undefined;
   targetId: string | undefined;
@@ -580,6 +598,11 @@ export interface MatchSimulationOptions {
    * flag stands at its spawn from the start. Omitted: no flags.
    */
   readonly flagField?: FlagField | undefined;
+  /**
+   * A Relic Run's altar and relic spawns (#1374): each team's relic lies
+   * at its spawn from the start. Omitted: no relics.
+   */
+  readonly relicField?: RelicField | undefined;
   /**
    * The Guild Battle's base guards (#1223), each at its post from the
    * start; a team's Bodyguard cuts the damage to its Guild Lord while it
@@ -845,7 +868,13 @@ export class MatchSimulation {
   /** Where every flag is and who holds the stand (#1225); `undefined` without a field. */
   #flagsState: FlagsState | undefined;
   /** Who reached a flag or the stand this step (#1225), in simulation order. */
-  #flagArrivals: FlagArrival[] = [];
+  #flagArrivals: CarriedArrival[] = [];
+  /** The altar and relic spawns (#1374); `undefined` on a map without them. */
+  readonly #relicField: RelicField | undefined;
+  /** Where every relic is (#1374); `undefined` without a field. */
+  #relicsState: RelicsState | undefined;
+  /** Who reached a relic this step (#1374), in simulation order. */
+  #relicArrivals: CarriedArrival[] = [];
   /** The whole second of match clock the Guild Lords' loss caps are for (#1223). */
   #lossSecond = 0;
   /** Every ground effect in the match (#1087), in id order. */
@@ -871,6 +900,9 @@ export class MatchSimulation {
     );
     this.#flagField = options.flagField;
     this.#flagsState = this.#flagField === undefined ? undefined : initialFlags(this.#flagField);
+    this.#relicField = options.relicField;
+    this.#relicsState =
+      this.#relicField === undefined ? undefined : initialRelics(this.#relicField);
     for (const spec of options.participants ?? []) {
       this.add(spec);
     }
@@ -972,9 +1004,22 @@ export class MatchSimulation {
     return this.#flagsState?.stand;
   }
 
-  /** Whether `id` carries a flag (#1225): hands full, and slower. */
-  public carriesFlag(id: string): boolean {
-    return carriedFlag(this.flags, id) !== undefined;
+  /** Every relic and where it is (#1374); `[]` on a map without them. */
+  public get relics(): readonly RelicState[] {
+    return this.#relicsState?.relics ?? [];
+  }
+
+  /** The altar a relic is run to (#1374); `undefined` on a map without one. */
+  public get altar(): Vec2 | undefined {
+    return this.#relicField?.altar;
+  }
+
+  /**
+   * Whether `id` carries a bundle, a flag (#1225) or a relic (#1374):
+   * hands full, and slower.
+   */
+  public carriesBundle(id: string): boolean {
+    return carriedFlag(this.flags, id) !== undefined || carriedRelic(this.relics, id) !== undefined;
   }
 
   /** Each team's `aggression` by team index on a Guild Battle (#1226); `[]` on any other match. */
@@ -1085,10 +1130,10 @@ export class MatchSimulation {
    * that pointed at any of them.
    */
   public remove(id: string): void {
-    // A carrier who leaves drops the flag where they stood (#1225).
+    // A carrier who leaves drops the bundle where they stood (#1225).
     const carrier = this.#participants.get(id);
     if (carrier !== undefined) {
-      this.#dropFlag(carrier);
+      this.#dropBundle(carrier);
     }
     const leaving = new Set([id]);
     for (const record of this.#participants.values()) {
@@ -1593,7 +1638,10 @@ export class MatchSimulation {
       return;
     }
     const before = record.combatant;
-    const fraction = before.maxHealth > 0 ? before.health / before.maxHealth : 0;
+    // Against the raised maximum: Endure Pain must not carry over as health
+    // above the fresh, unbuffed maximum.
+    const raised = raisedMaxHealth(before);
+    const fraction = raised > 0 ? before.health / raised : 0;
     const spec: ParticipantSpec = { ...record.spec, skillBar, ...loadoutSpec(loadout) };
     record.combatant = this.#combatant(spec);
     record.resolvedMaxHealth = loadout.maxHealth;
@@ -1703,8 +1751,8 @@ export class MatchSimulation {
       record.pendingWeaponSet = undefined;
       return { kind: "kept" };
     }
-    // Reaching for another set drops the flag (#1225, GW1).
-    this.#dropFlag(record);
+    // Reaching for another set drops the bundle (#1225, GW1).
+    this.#dropBundle(record);
     if (this.#swapBlocked(record)) {
       record.pendingWeaponSet = set;
       return { kind: "queued" };
@@ -1714,20 +1762,25 @@ export class MatchSimulation {
   }
 
   /**
-   * Drop the flag `id` carries where they stand (#1225): GW1's Drop
-   * button. Nothing for a player with none.
+   * Drop the flag (#1225) or relic (#1374) `id` carries where they
+   * stand: GW1's Drop button. Nothing for a player with none.
    */
   public dropBundle(id: string): void {
     const record = this.#participants.get(id);
     if (record !== undefined) {
-      this.#dropFlag(record);
+      this.#dropBundle(record);
     }
   }
 
-  /** `record`'s flag, if it carries one, lies where it is (#1225). */
-  #dropFlag(record: ParticipantRecord): void {
+  /** `record`'s flag or relic, if it carries one, lies where it is (#1225, #1374). */
+  #dropBundle(record: ParticipantRecord): void {
     if (this.#flagsState !== undefined) {
       this.#flagsState = dropFlag(this.#flagsState, record.id, record.position);
+    }
+    if (this.#relicsState !== undefined && this.#relicField !== undefined) {
+      this.#relicsState = stepRelics(this.#relicField, this.#relicsState, [
+        { kind: "drop", carrierId: record.id, position: record.position },
+      ]).state;
     }
   }
 
@@ -1907,15 +1960,15 @@ export class MatchSimulation {
    * (#310); one refused leaves the walk going. One at anyone but the
    * target of a skill walking in drops that skill (#499).
    *
-   * At a flag or the stand (#1225), it is GW1's Interact instead: see
-   * `#requestInteract`.
+   * At a flag, the stand (#1225) or a relic (#1374), it is GW1's
+   * Interact instead: see `#requestInteract`.
    */
   public requestAttack(id: string, targetId: string): ActivationCheck | undefined {
     const record = this.#participants.get(id);
     if (record === undefined) {
       return undefined;
     }
-    if (this.#flagField !== undefined && isFlagObjectId(targetId)) {
+    if (isCarriedObjectId(targetId)) {
       return this.#requestInteract(record, targetId);
     }
     const check = this.#attackCheck(record, targetId);
@@ -1935,21 +1988,17 @@ export class MatchSimulation {
 
   /**
    * Walk to a flag or the stand and, on reaching it, take up the flag or
-   * plant the one carried (#1225, GW1's Interact). Refused at once for a
-   * foe's flag, a flag not lying anywhere, or the stand with no flag in
-   * hand; and when dead. Knocked down or casting, the walk waits. It ends
-   * the attack, a skill walking in and a click-to-walk, as an attack does.
+   * plant the one carried (#1225, GW1's Interact); or to a relic, to take
+   * up your own or return a foe's (#1374). Refused at once for a foe's
+   * flag, a bundle not lying anywhere, or the stand with no flag in hand;
+   * and when dead. Knocked down or casting, the walk waits. It ends the
+   * attack, a skill walking in and a click-to-walk, as an attack does.
    */
   #requestInteract(record: ParticipantRecord, targetId: string): ActivationCheck {
     if (record.combatant.dead) {
       return { ok: false, reason: "caster-dead" };
     }
-    const state = this.#flagsState;
-    const field = this.#flagField;
-    const refusal =
-      state === undefined || field === undefined
-        ? "no-target"
-        : flagRefusal(field, state, record.id, record.combatant.team, targetId);
+    const refusal = this.#interactRefusal(record, targetId);
     if (refusal !== undefined) {
       return { ok: false, reason: refusal };
     }
@@ -1981,11 +2030,13 @@ export class MatchSimulation {
       record.targetId = undefined;
       return true;
     }
-    // A flag is targeted as a body is, and the stand (#1225).
-    const flagObject =
-      this.#flagField !== undefined &&
-      (targetId === FLAG_STAND_ID || this.flags.some(({ team }) => team === flagTeamOf(targetId)));
-    if (!flagObject && !this.#participants.has(targetId)) {
+    // A flag is targeted as a body is, and the stand (#1225), and a relic (#1374).
+    const bundle =
+      (this.#flagField !== undefined &&
+        (targetId === FLAG_STAND_ID ||
+          this.flags.some(({ team }) => team === flagTeamOf(targetId)))) ||
+      this.relics.some(({ team }) => team === relicTeamOf(targetId));
+    if (!bundle && !this.#participants.has(targetId)) {
       return false;
     }
     record.targetId = targetId;
@@ -2436,6 +2487,8 @@ export class MatchSimulation {
     this.#tallyAggression();
     this.#removeLeaving();
     this.#priestWave();
+    // After every death, before the match end: a point on the last tick counts.
+    this.#advanceRelics();
     // After every death this step, so two teams wiped in it both lose.
     this.checkMatchEnd();
     // After the match end: a lord slain as a boost falls due ends it first.
@@ -2697,9 +2750,9 @@ export class MatchSimulation {
       losBlockers: this.#walls,
     });
     // A carrier's hands are full (#1225, GW1): no attack skill, before
-    // anything walks in. Read from the flags, not a status a cleanse
+    // anything walks in. Read from the bundles, not a status a cleanse
     // could take off.
-    if (skill.type === "attack" && this.carriesFlag(record.id)) {
+    if (skill.type === "attack" && this.carriesBundle(record.id)) {
       return { ok: false, reason: "hands-full" };
     }
     // Any other refusal first; then a corpse skill needs a fresh corpse in
@@ -3136,6 +3189,7 @@ export class MatchSimulation {
         if (change.kind === "charged-source") {
           this.#landCharge(change.toId, change.statusId, change.amount);
         }
+        this.#loseRaisedHealth(record, change);
       }
     }
     const context = this.#triggerContext();
@@ -3151,8 +3205,22 @@ export class MatchSimulation {
         if (change.kind === "charged-source") {
           this.#landCharge(change.toId, change.statusId, change.amount);
         }
+        this.#loseRaisedHealth(record, change);
       }
     }
+  }
+
+  /**
+   * A status that raised its bearer's maximum ended (#1359): Endure Pain's.
+   * Health above the maximum left is lost, as in GW1; a bearer below it
+   * loses nothing, so the end never kills.
+   */
+  #loseRaisedHealth(record: ParticipantRecord, change: StatusChange): void {
+    if (change.kind !== "ended" || STATUS_DEFINITIONS[change.id].maxHealthBonus === 0) {
+      return;
+    }
+    const { combatant } = record;
+    combatant.health = Math.min(combatant.health, effectiveMaxHealth(combatant));
   }
 
   /**
@@ -3421,12 +3489,13 @@ export class MatchSimulation {
   }
 
   /**
-   * `record`'s speed multiplier: its statuses', and a flag carrier's
-   * burden (#1225) with them, clamped together as statuses are.
+   * `record`'s speed multiplier: its statuses', and a flag or relic
+   * carrier's burden (#1225, #1374) with them, clamped together as
+   * statuses are.
    */
   #speedOf(record: ParticipantRecord): number {
     const statuses = aggregateModifiers(record.combatant.statuses.active).moveSpeedMultiplier;
-    const burden = this.carriesFlag(record.id) ? FLAG_CARRIER_SPEED_MULTIPLIER : 1;
+    const burden = this.carriesBundle(record.id) ? FLAG_CARRIER_SPEED_MULTIPLIER : 1;
     return clampMoveSpeed(statuses / burden);
   }
 
@@ -3579,19 +3648,18 @@ export class MatchSimulation {
   }
 
   /**
-   * The walk to a flag or the stand (#1225): paused while casting,
-   * through the aftercast and while a skill walks in, as an attack is.
-   * On reaching it, the step's flags take it up (`#advanceFlags`). A
-   * flag picked up or planted by someone else meanwhile, or no way
-   * there, ends it.
+   * The walk to a flag, the stand (#1225) or a relic (#1374): paused
+   * while casting, through the aftercast and while a skill walks in, as
+   * an attack is. On reaching it, the step's flags or relics take it up
+   * (`#advanceFlags`, `#advanceRelics`). One picked up or planted by
+   * someone else meanwhile, or no way there, ends it.
    */
   #advanceInteract(record: ParticipantRecord, dt: number): void {
     const interact = record.interact;
-    const field = this.#flagField;
-    if (interact === undefined || field === undefined) {
+    if (interact === undefined) {
       return;
     }
-    const position = flagTargetPosition(field, this.flags, interact.targetId);
+    const position = this.#interactPosition(interact.targetId);
     if (position === undefined) {
       record.interact = undefined;
       return;
@@ -3615,12 +3683,91 @@ export class MatchSimulation {
     }
     record.interact = undefined;
     if (approach === "arrived") {
-      this.#flagArrivals.push({
+      const arrivals =
+        relicTeamOf(interact.targetId) === undefined ? this.#flagArrivals : this.#relicArrivals;
+      arrivals.push({
         kind: "interact",
         playerId: record.id,
         team: record.combatant.team,
         targetId: interact.targetId,
       });
+    }
+  }
+
+  /**
+   * Why `record` may not walk to `targetId`, a flag, the stand or a
+   * relic, now; `"no-target"` on a map without them.
+   */
+  #interactRefusal(record: ParticipantRecord, targetId: string): ActivationRejection | undefined {
+    const { id, combatant } = record;
+    if (relicTeamOf(targetId) !== undefined) {
+      return this.#relicField === undefined || this.#relicsState === undefined
+        ? "no-target"
+        : relicRefusal(this.#relicField, this.#relicsState, id, combatant.team, targetId);
+    }
+    return this.#flagField === undefined || this.#flagsState === undefined
+      ? "no-target"
+      : flagRefusal(this.#flagField, this.#flagsState, id, combatant.team, targetId);
+  }
+
+  /** Where the walk to `targetId`, a flag, the stand or a relic, ends; `undefined` for nowhere. */
+  #interactPosition(targetId: string): Vec2 | undefined {
+    if (relicTeamOf(targetId) !== undefined) {
+      return this.#relicField === undefined
+        ? undefined
+        : relicTargetPosition(this.#relicField, this.relics, targetId);
+    }
+    return this.#flagField === undefined
+      ? undefined
+      : flagTargetPosition(this.#flagField, this.flags, targetId);
+  }
+
+  /** The drops of every bundle carrier `objects` has who died this step, where they lie. */
+  #deathDrops(objects: readonly (FlagState | RelicState)[]): CarriedDrop[] {
+    return fallenDrops(objects, (carrierId) => {
+      const carrier = this.#participants.get(carrierId);
+      return carrier?.combatant.dead === true ? carrier.position : undefined;
+    });
+  }
+
+  /** The arrivals of those still alive: one who arrived and was killed later in the step takes nothing. */
+  #livingArrivals(arrivals: readonly CarriedArrival[]): CarriedArrival[] {
+    return arrivals.filter(
+      (arrival) => this.#participants.get(arrival.playerId)?.combatant.dead === false,
+    );
+  }
+
+  /**
+   * The step's relics (#1374), once every death is in and before the
+   * match end is checked, so a point on the last tick counts: first every
+   * carrier on the altar scores, then a dead carrier's relic falls where
+   * they lie, then whoever arrived takes up or returns one, in order.
+   * Scores come before the drops, so a carrier who reaches the altar and
+   * dies in the same tick still scores.
+   */
+  #advanceRelics(): void {
+    const arrivals = this.#relicArrivals;
+    this.#relicArrivals = [];
+    const field = this.#relicField;
+    const state = this.#relicsState;
+    if (field === undefined || state === undefined || this.phase !== "active") {
+      return;
+    }
+    const scores = state.relics.flatMap(({ place }) => {
+      const carrier =
+        place.kind === "carried" ? this.#participants.get(place.carrierId) : undefined;
+      return carrier !== undefined && onAltar(field, carrier.position)
+        ? [{ kind: "score" as const, carrierId: carrier.id }]
+        : [];
+    });
+    const { state: next, scored } = stepRelics(field, state, [
+      ...scores,
+      ...this.#deathDrops(state.relics),
+      ...this.#livingArrivals(arrivals),
+    ]);
+    this.#relicsState = next;
+    for (const team of scored) {
+      this.#score = addPoint(this.#score, team);
     }
   }
 
@@ -3638,18 +3785,12 @@ export class MatchSimulation {
     if (field === undefined || state === undefined || this.phase !== "active") {
       return;
     }
-    const drops: FlagAction[] = state.flags.flatMap(({ place }) => {
-      const carrier =
-        place.kind === "carried" ? this.#participants.get(place.carrierId) : undefined;
-      return carrier?.combatant.dead === true
-        ? [{ kind: "drop", carrierId: carrier.id, position: carrier.position }]
-        : [];
-    });
-    // One who arrived and was killed later in the step takes nothing.
-    const living = arrivals.filter(
-      (arrival) => this.#participants.get(arrival.playerId)?.combatant.dead === false,
+    const { boostTeam, ...next } = stepFlags(
+      field,
+      state,
+      [...this.#deathDrops(state.flags), ...this.#livingArrivals(arrivals)],
+      dt,
     );
-    const { boostTeam, ...next } = stepFlags(field, state, [...drops, ...living], dt);
     this.#flagsState = next;
     if (boostTeam !== undefined) {
       this.moraleBoost(boostTeam, FLAG_MORALE_BOOST);
@@ -4069,7 +4210,12 @@ export class MatchSimulation {
             fired,
           ),
         );
-        bearerHit(attacker.combatant, events, skillHit !== undefined);
+        bearerHit(
+          attacker.combatant,
+          events,
+          skillHit !== undefined,
+          projectile.weaponSnapshot.mainHand.weapon,
+        );
       }
       if (skillHit !== undefined && attacker !== undefined) {
         events.push(
@@ -4202,8 +4348,8 @@ export class MatchSimulation {
     if (record.combatant.knockdownRemaining > 0) {
       return { ok: false, reason: "caster-knocked-down" };
     }
-    // Hands full of flag (#1225, GW1): no weapon to swing.
-    if (this.carriesFlag(record.id)) {
+    // Hands full of flag or relic (#1225, #1374, GW1): no weapon to swing.
+    if (this.carriesBundle(record.id)) {
       return { ok: false, reason: "hands-full" };
     }
     if (target === undefined) {
@@ -4304,7 +4450,7 @@ export class MatchSimulation {
         victim.combatant.cast.endAftercast();
         victim.walkGoal = undefined;
         victim.route = undefined;
-        // A walk to a flag dies with its walker (#1225).
+        // A walk to a flag or relic dies with its walker (#1225).
         victim.interact = undefined;
         victim.combatant.knockdownRemaining = 0;
         victim.combatant.invulnerableRemaining = 0;
@@ -4752,7 +4898,7 @@ export class MatchSimulation {
       case "on-interval":
         return record.sinceReset >= policy.everySeconds;
       case "below-health":
-        return record.combatant.health < record.combatant.maxHealth * policy.fraction;
+        return record.combatant.health < raisedMaxHealth(record.combatant) * policy.fraction;
       case "on-death":
       case "never":
       case undefined:
@@ -4773,8 +4919,12 @@ export class MatchSimulation {
     if (this.phase !== "active") {
       return;
     }
+    // A Relic Run's score is its relic points (#1374): a kill is none.
+    if (this.#matchRules?.victory === "relic-run") {
+      return;
+    }
     const scoringTeam = victimTeam === 0 ? 1 : 0;
-    this.#score = addKill(this.#score, scoringTeam);
+    this.#score = addPoint(this.#score, scoringTeam);
   }
 
   /**
