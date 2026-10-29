@@ -214,9 +214,13 @@ describe("the GW1 skills not in the game yet (#1220)", () => {
   });
 
   it("leaves out every one the catalog has, by GW1 id", () => {
-    const missing = missingFromCatalog(corpusSkills(), IMPLEMENTED_SKILLS);
-    const have = new Set(IMPLEMENTED_SKILLS.map((skill) => skill.gwId));
-    expect(missing.length).toBeGreaterThan(1000);
+    const corpus = corpusSkills();
+    const missing = missingFromCatalog(corpus, IMPLEMENTED_SKILLS);
+    const have = new Set(
+      IMPLEMENTED_SKILLS.flatMap((skill) => (skill.gwId === undefined ? [] : [skill.gwId])),
+    );
+    // Exactly the corpus less the catalog: every catalog GW1 id is in it, once.
+    expect(missing.length).toBe(corpus.length - have.size);
     expect(missing.some((skill) => have.has(skill.gwId))).toBe(false);
     expect(missing.find((skill) => skill.name === "Fireball")).toBeUndefined();
   });
