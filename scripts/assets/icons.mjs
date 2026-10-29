@@ -358,6 +358,34 @@ const status = {
       `<path d="M6 8.5l4 3.5-4 3.5M11 8.5l4 3.5-4 3.5" ${stroke(c, 2.2)}/>` +
       `<path d="M18 7.5v9" ${stroke(c, 2.2)}/>`,
   ],
+  // Stance: a shield with a plus, Energy for each melee block (#1329).
+  "bonettis-defense": [
+    "stance",
+    (c) =>
+      `<path d="M7 6h10v5c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7z" ${stroke(c, 2)}/>` +
+      `<path d="M12 9v6M9 12h6" ${stroke(c, 2)}/>`,
+  ],
+  // Stance: an arrow glancing off a shield (#1329).
+  "deflect-arrows": [
+    "stance",
+    (c) =>
+      `<path d="M9 6h10v5c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7z" ${stroke(c, 2)}/>` +
+      `<path d="M3 15l5-4-3-5" ${stroke(c, 2)}/>`,
+  ],
+  // Stance: a shield with a blade through it, blocks that cut back (#1329).
+  "gladiators-defense": [
+    "stance",
+    (c) =>
+      `<path d="M7 6h10v5c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7z" ${stroke(c, 2)}/>` +
+      `<path d="M5 19L19 5" ${stroke(c, 2)}/>`,
+  ],
+  // Stance: a shield, filled, armor and blocks (#1329).
+  "disciplined-stance": [
+    "stance",
+    (c) => `<path d="M7 6h10v5c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7z" fill="${c}"/>`,
+  ],
+  // Stance: a figure standing firm on a wide base, never knocked down (#1329).
+  "balanced-stance": ["stance", (c) => `<path d="M12 5v9M6 19l6-5 6 5" ${stroke(c, 2.6)}/>`],
   // Stance: an arrow come round, spells back sooner (#938).
   "mantra-of-recovery": [
     "stance",
@@ -1621,6 +1649,15 @@ const skillGlyph = {
     spiritPost() +
     `<circle cx="17" cy="8.5" r="4.6" ${stroke(C.ink, 2)}/>` +
     inkLine("M12 14L22 3", 2.2),
+  // The spirit post split by a crack: an allied spirit destroyed (#1309). With the
+  // jagged mark of the attacking spirits: the burst damages and blinds foes.
+  "spirit-rupture": () => brokenPost(7) + inkFill("M20.5 1.5L13.5 10H18L14 17L23 7.5H18.5Z"),
+  // Two small cracked posts: every spirit near you is spent (#1309).
+  "spirit-feast": () =>
+    `<g transform="translate(-2.5,0) scale(0.82) translate(2,3)">${brokenPost(7)}</g>` +
+    `<g transform="translate(9,0) scale(0.82) translate(2,3)">${brokenPost(7)}</g>`,
+  // One cracked post, centred: one spirit destroyed (#1309).
+  "spirit-break": () => brokenPost(12),
   // The spirit post under a shield: no blow takes more than a tenth (#1289).
   "spirit-cap": () =>
     spiritPost() +
@@ -1883,6 +1920,14 @@ const skillGlyph = {
 /** The shared spirit post of the attacking spirits, left of the mark it shoots (#1271). */
 const spiritPost = () =>
   inkFill("M4.8 11H9.2L9.4 20H4.6Z") + `<circle cx="7" cy="6.8" r="3.4" fill="${C.ink}"/>`;
+
+/** A spirit post centred on `cx` broken: the head thrown off the stump (#1309). */
+const brokenPost = (/** @type {number} */ cx) =>
+  `<g transform="translate(${String(cx - 7)},0)">` +
+  inkFill("M4.8 14.5H9.2L9.4 20H4.6Z") +
+  `<circle cx="5.6" cy="7" r="3.2" fill="${C.ink}"/>` +
+  inkLine("M7 11.2L8.4 12.4M9.6 9.6L11 8.4", 1.8) +
+  "</g>";
 
 /** Modifiers, drawn around the bottom right corner on a dark disc. */
 const skillModifier = {

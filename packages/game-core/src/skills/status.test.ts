@@ -495,11 +495,11 @@ describe("StatusSet changes, for the triggers (#887)", () => {
     const set = new StatusSet();
     set.apply("song-of-restoration", 10, "p");
     set.apply("diversion", 6, "foe");
-    expect(set.endOnBearerUseSkill(new Set(["song-of-restoration"]))).toEqual(["diversion"]);
+    expect(set.endOnBearerUseSkill(new Set(["song-of-restoration"]), false)).toEqual(["diversion"]);
     expect(set.has("song-of-restoration")).toBe(true);
 
     set.apply("diversion", 6, "foe");
-    expect(set.endOnBearerUseSkill(new Set())).toEqual(["song-of-restoration", "diversion"]);
+    expect(set.endOnBearerUseSkill(new Set(), false)).toEqual(["song-of-restoration", "diversion"]);
     expect(set.active).toEqual([]);
   });
 

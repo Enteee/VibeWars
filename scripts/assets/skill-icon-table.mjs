@@ -249,11 +249,10 @@ export const SKILL_ICONS = {
   "ritualist.union": { glyph: "spirit-share" },
   "ritualist.displacement": { glyph: "spirit-block" },
   "ritualist.earthbind": { glyph: "spirit-ground" },
-  // Placeholders until the asset-designer's (#1309): spirit sacrifice.
-  "ritualist.rupture-soul": { glyph: "totem", modifier: "bolt" },
-  "ritualist.spirit-to-flesh": { glyph: "totem", modifier: "less" },
-  "ritualist.feast-of-souls": { glyph: "party-heal", modifier: "area" },
-  "ritualist.consume-soul": { glyph: "ghost", modifier: "paw" },
+  "ritualist.rupture-soul": { glyph: "spirit-rupture" },
+  "ritualist.spirit-to-flesh": { glyph: "spirit-break", modifier: "plus" },
+  "ritualist.feast-of-souls": { glyph: "spirit-feast", modifier: "plus" },
+  "ritualist.consume-soul": { glyph: "ghost", modifier: "less" },
   "ritualist.spirit-rift": { glyph: "rift-strike" },
   "ritualist.spirit-burn": { glyph: "spirit-burn" },
   "ritualist.essence-strike": { glyph: "spirit-energy" },
@@ -276,6 +275,12 @@ export const SKILL_ICONS = {
   "assassin.malicious-strike": { glyph: "dagger-crit", modifier: "bleed" },
   "assassin.unsuspecting-strike": { glyph: "dagger-crit", modifier: "up" },
   "assassin.critical-defenses": { glyph: "shield-crit", modifier: "self" },
+  // Placeholders until the asset-designer's (#1329): Tactics stances.
+  "warrior.bonettis-defense": { glyph: "shield-bolt", modifier: "plus" },
+  "warrior.deflect-arrows": { glyph: "shield-bolt", modifier: "bleed" },
+  "warrior.gladiators-defense": { glyph: "shield-bolt", modifier: "bolt" },
+  "warrior.disciplined-stance": { glyph: "shield-bolt", modifier: "up" },
+  "warrior.balanced-stance": { glyph: "mountain", modifier: "stun" },
   // Placeholders until the asset-designer's (#1332): the Curses hexes.
   "necromancer.barbs": { glyph: "hex-burst", modifier: "plus" },
   "necromancer.price-of-failure": { glyph: "hex-burst", modifier: "bolt" },

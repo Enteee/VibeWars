@@ -281,6 +281,9 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.endsOnKnockdownPrevented) {
     parts.push("ends if it prevents a knockdown");
   }
+  if (definition.ignoresCriticalDamage) {
+    parts.push("you do not suffer extra damage from a critical attack");
+  }
   if (definition.block !== undefined) {
     const what = BLOCKED_ATTACKS[definition.block.against];
     const below =
@@ -393,6 +396,16 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.endsWhenBearerHitsWithAttackSkill) {
     parts.push("ends if the bearer hits with an attack skill");
   }
+  // One that answers the use says so in its trigger's line (#949).
+  if (
+    definition.endsWhenBearerUsesSkill &&
+    !definition.triggers.some(({ on }) => on === "bearer-uses-skill")
+  ) {
+    parts.push("ends if you use a skill");
+  }
+  if (definition.endsWhenBearerUsesAdrenalSkill) {
+    parts.push("ends if you use an adrenal skill");
+  }
   if (definition.endsWhenBearerGains.length > 0) {
     const gained = definition.endsWhenBearerGains.map((category) =>
       category === "hex" ? "hexed" : "enchanted",
@@ -450,6 +463,8 @@ const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-fails-to-hit": "fails to hit",
   "bearer-takes-physical-damage": "takes physical damage",
   "bearer-takes-damage-from-foe": "takes damage or life steal from a foe",
+  "bearer-blocks-melee": "blocks a melee attack",
+  "bearer-blocks-projectile": "blocks a projectile attack",
   "bearer-creates-creature": "creates a creature",
   "bearer-gains-condition": "gains a new condition",
   ends: "ends",
@@ -588,6 +603,40 @@ function describeTrigger(
     String(describeMagnitude(magnitude, ranks).current);
   const clause = (text: string): TriggerLine => ({ text, clause: true });
   const sentence = (text: string): TriggerLine => ({ text, clause: false });
+  // A stance's answer to its own block (#1329), in GW1's words.
+  if (trigger.on === "bearer-blocks-melee" || trigger.on === "bearer-blocks-projectile") {
+    const kind = trigger.on === "bearer-blocks-melee" ? "melee" : "projectile";
+    const answers = trigger.effects.flatMap((effect): TriggerLine[] => {
+      if (effect.kind === "energy-gain" && trigger.target === "bearer") {
+        return [
+          sentence(
+            `you gain ${amount(effect.amount)} Energy for each successful ${kind} attack blocked`,
+          ),
+        ];
+      }
+      if (effect.kind === "damage" && trigger.target === "offender") {
+        return [
+          sentence(
+            `whenever you block a ${kind} attack this way, the attacker suffers ${amount(effect.amount)} damage`,
+          ),
+        ];
+      }
+      if (effect.kind === "splash" && trigger.target === "bearer") {
+        const foes = `${AREA_TEXT.get(effect.radius) ?? `within ${String(effect.radius)} of you`} foes`;
+        return effect.effects.map((inner) =>
+          sentence(
+            inner.kind === "apply-status"
+              ? `if you block a ${kind} attack, ${foes} suffer from ${statusName(inner.statusId)} for ${String(inner.durationSeconds)} seconds`
+              : `if you block a ${kind} attack, ${foes}: ${lowerFirst(describeEffect(inner, ranks).text)}`,
+          ),
+        );
+      }
+      return [];
+    });
+    if (answers.length > 0) {
+      return answers;
+    }
+  }
   if (trigger.on === "bearer-creates-creature") {
     return [sentence(describeCreation(trigger, when, ranks))];
   }
