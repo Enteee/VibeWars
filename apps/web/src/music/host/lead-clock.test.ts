@@ -137,13 +137,26 @@ describe("lead clock", () => {
     let audio = 4;
     const clock = leadClock(() => audio, LEAD, LOOKAHEAD);
     clock();
-    audio = 5;
+    audio = 4.9;
     expect(clock()).toBeCloseTo(4.95, 9);
     for (let k = 0; k < 10; k += 1) {
       audio += TICK;
       clock();
     }
     expect(clock()).toBeCloseTo(audio + LEAD, 9);
+  });
+
+  it("resumes at the audio clock after a stall longer than the lead (#1321)", () => {
+    let audio = 4;
+    const clock = leadClock(() => audio, LEAD, LOOKAHEAD);
+    clock();
+    audio = 30;
+    expect(clock()).toBeCloseTo(30, 9);
+  });
+
+  it("hands nothing over late once a 5 s stall is over (#1321)", async () => {
+    const outcome = await run((audio) => leadClock(audio, LEAD, LOOKAHEAD), { from: 3, to: 8 }, 16);
+    expect(outcome.late).toBe(0);
   });
 
   it("starts from the audio clock again after a reset", () => {
