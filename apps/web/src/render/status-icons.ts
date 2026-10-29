@@ -152,6 +152,13 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "defile-defenses": icon("defile-defenses"),
   "scourge-enchantment": icon("scourge-enchantment"),
   "hex-breaker": icon("hex-breaker"),
+  "ice-prison": icon("ice-prison"),
+  "frozen-burst": icon("frozen-burst"),
+  "ice-spear": icon("ice-spear"),
+  "blurred-vision": icon("blurred-vision"),
+  "armor-of-mist": icon("armor-of-mist"),
+  shatterstone: icon("shatterstone"),
+  "mind-freeze": icon("mind-freeze"),
 };
 
 /** Drawn size of one icon, in world pixels. */

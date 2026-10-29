@@ -6,6 +6,7 @@ import {
   getWeapon,
   type CombatEvent,
   type CombatLogEntry,
+  type SkillEffect,
 } from "@vibewars/game-core";
 
 /**
@@ -109,15 +110,32 @@ function outOfSequence(skillId: string | undefined): string {
   return needed === undefined ? "" : ` (${needed})`;
 }
 
-/** "not a spell": why a picky interrupt let a cast through, by its filter (#796, #1008). */
+/**
+ * "not a spell": why a picky interrupt let a cast through, by its filter
+ * (#796, #1008), found among the skill's effects or what its ground
+ * effect lands (#1367).
+ */
 function interruptRefusal(skillId: string | undefined): string {
-  const interrupt =
-    skillId === undefined
-      ? undefined
-      : getSkill(skillId)?.effects.find((effect) => effect.kind === "interrupt");
+  const effects = skillId === undefined ? [] : (getSkill(skillId)?.effects ?? []);
+  const interrupt = effects.flatMap(withLanded).find((effect) => effect.kind === "interrupt");
   return interrupt?.kind === "interrupt" && interrupt.only === "spell"
     ? "not a spell"
     : "not a spell or chant";
+}
+
+/** An effect, then what its trap's spring or its pulse lands, if it is a ground effect. */
+function withLanded(effect: SkillEffect): readonly SkillEffect[] {
+  if (effect.kind !== "create-ground-effect") {
+    return [effect];
+  }
+  switch (effect.act.kind) {
+    case "aura":
+      return [effect];
+    case "trap":
+      return [effect, ...effect.act.trap.spring.effects];
+    case "pulse":
+      return [effect, ...effect.act.pulse.effects];
+  }
 }
 
 export function describeCombatEvent(

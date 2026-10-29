@@ -9,6 +9,7 @@ function player(sessionId: string, knockdownRemaining: number): PlayerSnapshot {
   return {
     sessionId,
     name: sessionId,
+    guildTag: undefined,
     x: 100,
     y: 100,
     facing: 0,

@@ -88,6 +88,8 @@ export interface JoinLobbyOptions {
   readonly transport: Transport;
   readonly code: string;
   readonly name: string;
+  /** The guild tag the player set (#1406); `null` for none. */
+  readonly guildTag: string | null;
   /** The selected character's name and professions; `null` brings a starter build. */
   readonly character: LobbyCharacter | null;
   /** How long to wait for a state that lists this player. */
@@ -107,6 +109,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
   const base = {
     protocolVersion: PROTOCOL_VERSION,
     name: options.name,
+    guildTag: options.guildTag,
     character: options.character,
   };
   /** A coded lobby's join; a queued one's is made with its proof. */
@@ -248,6 +251,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     players: state.players.map((player) => ({
       sessionId: player.id,
       name: player.name,
+      guildTag: player.guildTag,
       team: player.team,
       ready: player.ready,
       isHost: player.isHost,

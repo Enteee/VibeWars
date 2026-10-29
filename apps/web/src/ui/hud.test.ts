@@ -21,6 +21,8 @@ import {
   enemyPips,
   formatClock,
   ghostLeaderLabel,
+  ghostLeaderToast,
+  ghostNameplate,
   invulnerableLabel,
   isAttackingTarget,
   lostHealthPercent,
@@ -29,7 +31,7 @@ import {
   refreshSkillBar,
   scoreboardParts,
   scoreboardText,
-  relicScoreToast,
+  objectiveScoreToast,
   standBoostToast,
   carrierLines,
   type ScoreboardMatch,
@@ -51,6 +53,7 @@ function player(fields: Partial<PlayerSnapshot>): PlayerSnapshot {
   return {
     sessionId: "foe",
     name: "Mhenlo",
+    guildTag: undefined,
     x: 0,
     y: 0,
     facing: 0,
@@ -237,46 +240,95 @@ describe("carrierLines (#1226)", () => {
   });
 });
 
-describe("relicScoreToast (#1387)", () => {
+describe("objectiveScoreToast in a Relic Run (#1387)", () => {
   const relics = [{ team: 0, place: { kind: "spawn" as const } }];
-  const score = (scoreTeam0: number, scoreTeam1: number) => ({ scoreTeam0, scoreTeam1, relics });
+  const score = (scoreTeam0: number, scoreTeam1: number) => ({
+    scoreTeam0,
+    scoreTeam1,
+    relics,
+    altar: undefined,
+  });
   const ours = { text: "Relic scored!", side: "ours" };
   const theirs = { text: "Enemy relic scored", side: "theirs" };
+  const toast = (
+    before: Parameters<typeof objectiveScoreToast>[0],
+    after: Parameters<typeof objectiveScoreToast>[1],
+    selfTeam: number | undefined,
+  ) => objectiveScoreToast(before, after, selfTeam, "relic-run");
 
   it("toasts your side's point as ours and the foe's as theirs", () => {
-    expect(relicScoreToast(score(0, 0), score(1, 0), 0)).toEqual(ours);
-    expect(relicScoreToast(score(0, 0), score(1, 0), 1)).toEqual(theirs);
-    expect(relicScoreToast(score(2, 3), score(2, 4), 1)).toEqual(ours);
-    expect(relicScoreToast(score(2, 3), score(2, 4), 0)).toEqual(theirs);
+    expect(toast(score(0, 0), score(1, 0), 0)).toEqual(ours);
+    expect(toast(score(0, 0), score(1, 0), 1)).toEqual(theirs);
+    expect(toast(score(2, 3), score(2, 4), 1)).toEqual(ours);
+    expect(toast(score(2, 3), score(2, 4), 0)).toEqual(theirs);
   });
 
   it("reads a spectator's side as team 0's", () => {
-    expect(relicScoreToast(score(0, 0), score(1, 0), undefined)).toEqual(ours);
-    expect(relicScoreToast(score(0, 0), score(0, 1), undefined)).toEqual(theirs);
+    expect(toast(score(0, 0), score(1, 0), undefined)).toEqual(ours);
+    expect(toast(score(0, 0), score(0, 1), undefined)).toEqual(theirs);
   });
 
   it("toasts two points missed between frames once", () => {
-    expect(relicScoreToast(score(1, 0), score(3, 0), 0)).toEqual(ours);
+    expect(toast(score(1, 0), score(3, 0), 0)).toEqual(ours);
     // Both sides scored meanwhile: yours is the one toast.
-    expect(relicScoreToast(score(1, 1), score(2, 2), 1)).toEqual(ours);
+    expect(toast(score(1, 1), score(2, 2), 1)).toEqual(ours);
   });
 
   it("says nothing without a score, on the first snapshot, or outside a Relic Run", () => {
-    expect(relicScoreToast(score(1, 1), score(1, 1), 0)).toBeUndefined();
-    expect(relicScoreToast(undefined, score(1, 0), 0)).toBeUndefined();
-    // A kill-count match raises the score too, but has no relics.
-    expect(
-      relicScoreToast(
-        { scoreTeam0: 4, scoreTeam1: 0, relics: [] },
-        { scoreTeam0: 5, scoreTeam1: 0, relics: [] },
-        0,
-      ),
-    ).toBeUndefined();
+    expect(toast(score(1, 1), score(1, 1), 0)).toBeUndefined();
+    expect(toast(undefined, score(1, 0), 0)).toBeUndefined();
+    // A kill-count match raises the score too, silently.
+    expect(objectiveScoreToast(score(4, 0), score(5, 0), 0, "kill-count")).toBeUndefined();
   });
 
   it("says nothing on a mid-match rejoin, whose first frame follows the 0-0 placeholder", () => {
-    const placeholder = { scoreTeam0: 0, scoreTeam1: 0, relics: [] };
-    expect(relicScoreToast(placeholder, score(2, 1), 0)).toBeUndefined();
+    const placeholder = { scoreTeam0: 0, scoreTeam1: 0, relics: [], altar: undefined };
+    expect(toast(placeholder, score(2, 1), 0)).toBeUndefined();
+  });
+});
+
+describe("objectiveScoreToast in King of the Hill (#1399)", () => {
+  const altar = { x: 0, y: 0 };
+  const score = (scoreTeam0: number, scoreTeam1: number) => ({
+    scoreTeam0,
+    scoreTeam1,
+    relics: [],
+    altar,
+  });
+  const ours = { text: "Altar point!", side: "ours" };
+  const theirs = { text: "Enemy altar point", side: "theirs" };
+  const toast = (
+    before: Parameters<typeof objectiveScoreToast>[0],
+    after: Parameters<typeof objectiveScoreToast>[1],
+    selfTeam: number | undefined,
+  ) => objectiveScoreToast(before, after, selfTeam, "king-of-the-hill");
+
+  it("toasts your side's point as ours and the foe's as theirs", () => {
+    expect(toast(score(0, 0), score(1, 0), 0)).toEqual(ours);
+    expect(toast(score(0, 0), score(1, 0), 1)).toEqual(theirs);
+    expect(toast(score(2, 3), score(2, 4), 1)).toEqual(ours);
+    expect(toast(score(2, 3), score(2, 4), 0)).toEqual(theirs);
+  });
+
+  it("reads a spectator's side as team 0's", () => {
+    expect(toast(score(0, 0), score(1, 0), undefined)).toEqual(ours);
+    expect(toast(score(0, 0), score(0, 1), undefined)).toEqual(theirs);
+  });
+
+  it("toasts two points between frames once", () => {
+    expect(toast(score(1, 0), score(3, 0), 0)).toEqual(ours);
+  });
+
+  it("says nothing without a point, on the first snapshot, or after the placeholder", () => {
+    expect(toast(score(1, 1), score(1, 1), 0)).toBeUndefined();
+    expect(toast(undefined, score(1, 0), 0)).toBeUndefined();
+    const placeholder = { scoreTeam0: 0, scoreTeam1: 0, relics: [], altar: undefined };
+    expect(toast(placeholder, score(2, 1), 0)).toBeUndefined();
+  });
+
+  it("stays silent in Kill Count and Annihilation", () => {
+    expect(objectiveScoreToast(score(4, 0), score(5, 0), 0, "kill-count")).toBeUndefined();
+    expect(objectiveScoreToast(score(4, 0), score(5, 0), 0, "annihilation")).toBeUndefined();
   });
 });
 
@@ -935,7 +987,7 @@ describe("targetHint (#253, #302)", () => {
   });
 });
 
-describe("ghostLeaderLabel (#1377)", () => {
+describe("a Ghostly Hero's leader (#1377, #1419)", () => {
   const me = player({ sessionId: "me", name: "me", team: 0 });
   const names = new Map([
     ["me", "me"],
@@ -955,18 +1007,68 @@ describe("ghostLeaderLabel (#1377)", () => {
         leaderId,
       },
     });
+  /** A snapshot of both teams' ghosts, team 0's following `ours` and team 1's `theirs`. */
+  const ghosts = (ours: string | null, theirs: string | null = null) => ({
+    players: [me, ghost(0, ours), ghost(1, theirs)],
+  });
+  const toast = (
+    before: ReturnType<typeof ghosts> | undefined,
+    after: ReturnType<typeof ghosts>,
+    selfTeam: number | undefined = 0,
+  ) => ghostLeaderToast(before, after, "me", selfTeam, names);
 
-  it("says whom your team's ghost follows, or that it stays", () => {
-    expect(ghostLeaderLabel(me, ghost(0, "me"), names)).toBe("follows you");
-    expect(ghostLeaderLabel(me, ghost(0, "ally"), names)).toBe("follows Devona");
-    expect(ghostLeaderLabel(me, ghost(0, null), names)).toBe("stays");
+  describe("ghostLeaderLabel", () => {
+    it("says whom your team's ghost follows, or that it stays", () => {
+      expect(ghostLeaderLabel(me, ghost(0, "me"), names)).toBe("follows you");
+      expect(ghostLeaderLabel(me, ghost(0, "ally"), names)).toBe("follows Devona");
+      expect(ghostLeaderLabel(me, ghost(0, null), names)).toBe("stays");
+    });
+
+    it("says nothing of the foe's ghost, a dead one, or any other target", () => {
+      expect(ghostLeaderLabel(me, ghost(1, "foe"), names)).toBeUndefined();
+      expect(ghostLeaderLabel(me, { ...ghost(0, "me"), dead: true }, names)).toBeUndefined();
+      expect(ghostLeaderLabel(me, player({ team: 0 }), names)).toBeUndefined();
+      expect(ghostLeaderLabel(me, undefined, names)).toBeUndefined();
+    });
   });
 
-  it("says nothing of the foe's ghost, a dead one, or any other target", () => {
-    expect(ghostLeaderLabel(me, ghost(1, "foe"), names)).toBeUndefined();
-    expect(ghostLeaderLabel(me, { ...ghost(0, "me"), dead: true }, names)).toBeUndefined();
-    expect(ghostLeaderLabel(me, player({ team: 0 }), names)).toBeUndefined();
-    expect(ghostLeaderLabel(me, undefined, names)).toBeUndefined();
+  describe("ghostLeaderToast", () => {
+    it("toasts whom your team's ghost now follows, or that it stays", () => {
+      expect(toast(ghosts(null), ghosts("me"))).toBe("Ghostly Hero follows you");
+      expect(toast(ghosts(null), ghosts("ally"))).toBe("Ghostly Hero follows Devona");
+      expect(toast(ghosts("me"), ghosts(null))).toBe("Ghostly Hero stays");
+    });
+
+    it("toasts a leader handed from one ally to another once, as the new one", () => {
+      expect(toast(ghosts("ally"), ghosts("me"))).toBe("Ghostly Hero follows you");
+      expect(toast(ghosts("me"), ghosts("me"))).toBeUndefined();
+    });
+
+    it("says nothing of the foe's ghost, to a spectator, or on the first snapshot", () => {
+      expect(toast(ghosts(null, null), ghosts(null, "foe"))).toBeUndefined();
+      expect(ghostLeaderToast(ghosts(null), ghosts("me"), "me", undefined, names)).toBeUndefined();
+      expect(toast(undefined, ghosts("me"))).toBeUndefined();
+    });
+
+    it("says nothing as the ghost dies or rises", () => {
+      const dead = { players: [me, { ...ghost(0, "me"), dead: true }] };
+      expect(toast(ghosts("me"), dead)).toBeUndefined();
+      expect(toast(dead, ghosts(null))).toBeUndefined();
+    });
+  });
+
+  describe("ghostNameplate", () => {
+    it("names the leader of your team's ghost, and of both to a spectator", () => {
+      expect(ghostNameplate(ghost(0, "me"), me, names)).toBe("Ghostly Hero › you");
+      expect(ghostNameplate(ghost(0, "ally"), me, names)).toBe("Ghostly Hero › Devona");
+      expect(ghostNameplate(ghost(1, "ally"), undefined, names)).toBe("Ghostly Hero › Devona");
+    });
+
+    it("keeps a staying ghost's, a foe's ghost's and anyone else's plain name", () => {
+      expect(ghostNameplate(ghost(0, null), me, names)).toBe("Ghostly Hero");
+      expect(ghostNameplate(ghost(1, "foe"), me, names)).toBe("Ghostly Hero");
+      expect(ghostNameplate(me, me, names)).toBe("me");
+    });
   });
 });
 
@@ -974,6 +1076,7 @@ describe("targetHintDismissed", () => {
   const self = (targetSessionId: string | undefined): PlayerSnapshot => ({
     sessionId: "me",
     name: "me",
+    guildTag: undefined,
     x: 0,
     y: 0,
     facing: 0,
@@ -1070,6 +1173,7 @@ describe("isAttackingTarget", () => {
   const player = (sessionId: string, attackTargetSessionId?: string): PlayerSnapshot => ({
     sessionId,
     name: sessionId,
+    guildTag: undefined,
     x: 0,
     y: 0,
     facing: 0,
@@ -1179,6 +1283,7 @@ describe("targetProfessionIcons (#281)", () => {
   ): PlayerSnapshot => ({
     sessionId: "foe",
     name: "foe",
+    guildTag: undefined,
     x: 0,
     y: 0,
     facing: 0,

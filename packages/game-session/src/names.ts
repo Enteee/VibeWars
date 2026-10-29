@@ -205,6 +205,22 @@ export function sanitizeName(raw: unknown, fallback: string): string {
   return name === "" ? fallback : name;
 }
 
+/** A guild tag (#1406): 2 to 4 ASCII letters or digits, case kept, as GW1's. */
+const GUILD_TAG = /^[A-Za-z0-9]{2,4}$/;
+
+/**
+ * A client-supplied guild tag (#1406), trimmed, if it is a valid one;
+ * `null` for none and for anything else. Never a refusal: a bad tag only
+ * means the player plays untagged.
+ */
+export function sanitizeGuildTag(raw: unknown): string | null {
+  if (typeof raw !== "string") {
+    return null;
+  }
+  const tag = raw.trim();
+  return GUILD_TAG.test(tag) ? tag : null;
+}
+
 /**
  * Sanitise a chat line (#479) as names are, up to `MAX_CHAT_GRAPHEMES`.
  * Empty when nothing drawable is left: the host drops that line.

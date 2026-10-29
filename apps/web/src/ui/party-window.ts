@@ -2,6 +2,7 @@ import { PET_ATTACK_SECONDS, getSkill, type CompanionMode } from "@vibewars/game
 import type { ArmedAttackSnapshot, MatchSnapshot, PlayerSnapshot } from "@vibewars/game-session";
 
 import { botTagElement } from "./bot-tag.js";
+import { guildTagElement, setGuildTag } from "./player-label.js";
 import { setHidden } from "./dom-write.js";
 import { healthTint, paintHealthTint, type HealthTint } from "./health-tint.js";
 import {
@@ -28,6 +29,8 @@ export const FULL_ROWS = 8;
 export interface PartyRow {
   readonly id: string;
   readonly name: string;
+  /** After the name, kept whole when the name is cut short (#1406). */
+  readonly guildTag: string | undefined;
   readonly professions: readonly ProfessionIcon[];
   /** A lobby's bot (#1194): its name wears the BOT tag. */
   readonly bot: boolean;
@@ -50,6 +53,7 @@ function partyRow(player: PlayerSnapshot, self: PlayerSnapshot): PartyRow {
   return {
     id: player.sessionId,
     name: player.name,
+    guildTag: player.guildTag,
     professions: targetProfessionIcons(player),
     bot: player.bot,
     self: player.sessionId === self.sessionId,
@@ -112,6 +116,7 @@ interface RowElements {
   readonly row: HTMLButtonElement;
   readonly professions: HTMLElement;
   readonly name: HTMLElement;
+  readonly guildTag: HTMLElement;
   readonly botTag: HTMLElement;
   readonly bar: HTMLElement;
   readonly fill: HTMLElement;
@@ -168,6 +173,7 @@ function createRow(
   const header = span("party-row-header", row);
   const professions = span("party-row-professions", header);
   const name = span("party-row-name", header);
+  const guildTag = header.appendChild(guildTagElement());
   const botTag = header.appendChild(botTagElement("party-row-bot"));
   const bar = span("hud-bar party-health", row);
   const fill = span("hud-bar-fill", bar);
@@ -216,6 +222,7 @@ function createRow(
     row,
     professions,
     name,
+    guildTag,
     botTag,
     bar,
     fill,
@@ -259,6 +266,7 @@ function paintRow(elements: RowElements, row: PartyRow, player: PlayerSnapshot, 
     );
   }
   elements.name.textContent = row.name;
+  setGuildTag(elements.guildTag, row.guildTag);
   elements.botTag.hidden = !row.bot;
   elements.row.title = `Target ${row.self ? "yourself" : row.name}`;
   elements.row.classList.toggle("is-self", row.self);

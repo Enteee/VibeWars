@@ -1040,6 +1040,39 @@ body {
   font-size: 1.1rem;
 }
 
+/* Name and guild tag side by side (#1406); the tag fits four wide letters. */
+.menu-identity {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.menu-identity > .field:first-child {
+  flex: 1;
+}
+
+.menu-guild-tag .field-input {
+  width: 7ch;
+}
+
+.field-input[aria-invalid="true"] {
+  border-color: var(--damage);
+}
+
+/* A player's guild tag after their name (#1406): theirs, but quieter. */
+.guild-tag {
+  color: var(--ink-dim);
+}
+
+.guild-tag[hidden] {
+  display: none;
+}
+
+.field-hint {
+  color: var(--damage);
+  font-size: 0.72rem;
+}
+
 .menu-row {
   display: flex;
   gap: 0.5rem;
@@ -1100,6 +1133,35 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
+}
+
+/* The Record screen (#1404): the last matches, one row each. */
+.record-local-only {
+  margin: 0 0 0.75rem;
+  color: var(--ink-dim);
+  font-size: 0.8rem;
+}
+
+.record-table {
+  border-collapse: collapse;
+}
+
+.record-table th,
+.record-table td {
+  padding: 0.2rem 0.75rem 0.2rem 0;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.record-table th {
+  color: var(--ink-dim);
+  font-weight: normal;
+  border-bottom: 1px solid var(--line);
+}
+
+.record-table td {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
 }
 
 /* A team row's members (#581), right of its name and count. */
@@ -4902,6 +4964,12 @@ body:has(#app > .chat) .now-playing {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+/* A long name is cut, never its guild tag (#1406). */
+.party-row-header .guild-tag {
+  flex-shrink: 0;
+  margin-left: 0.3em;
 }
 
 .party-row.is-dead .party-row-name,

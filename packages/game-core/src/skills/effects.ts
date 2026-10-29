@@ -1208,6 +1208,15 @@ export function applyEffect(
       return events;
     }
 
+    case "caster-gains-status": {
+      if (caster.dead) {
+        return events;
+      }
+      const durationSeconds = scaledStatusDuration(caster, effect.statusId, effect.durationSeconds);
+      landStatus(caster, effect.statusId, durationSeconds, caster.id, events);
+      return events;
+    }
+
     case "splash": {
       const at = target === undefined ? undefined : context.surroundings.get(target.id)?.position;
       if (target === undefined || at === undefined) {
@@ -1681,6 +1690,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "summon":
     case "create-ground-effect":
     case "drain-own-energy":
+    case "caster-gains-status":
     case "destroy-allied-spirits":
     case "resurrect-companions":
     case "disable-own-skills":
