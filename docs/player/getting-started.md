@@ -9,7 +9,8 @@ on a phone or a touch-only tablet: open it on a computer.
 ## Make a character
 
 Your characters are listed on the left of the main menu, under
-**Play as**.
+**Play as**, newest first, with the random character your first start
+rolled always at the bottom.
 
 1. Press **New character**.
 2. Pick a **primary profession**, what your character mainly is, and a
@@ -56,6 +57,19 @@ everyone sees it after your name, like `Ente [VIBE]`. With a tag set,
 the **Guild cape** designer appears under it: pick the cape colour, the
 trim colour and an emblem, and your body wears the cape behind it in every
 match. Your characters in the menu show it too. **No cape** takes it off.
+
+## Your record
+
+Every match you finish with one of your characters, hosted, joined or
+from Random Arena, goes on that character's record. The menu shows it
+after the character's professions, such as **12W 7L**, with draws only
+once there are some. Press **Record** at the top of the menu for your
+last 50 matches: when, who, which map and mode, and how it went.
+
+The record is kept in this browser only. Nobody else sees or checks it.
+A match you leave before it ends, a Training Ground session and a match
+played with a starter build are not recorded. Deleting a character
+deletes its record.
 
 ## In a match
 

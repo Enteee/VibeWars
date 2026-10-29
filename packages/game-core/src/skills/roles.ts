@@ -38,6 +38,7 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
       return ["knockdown"];
     case "maintain-status":
     case "apply-status":
+    case "caster-gains-status":
       return statusRoles(getStatusDefinition(effect.statusId));
     case "if":
     case "splash":

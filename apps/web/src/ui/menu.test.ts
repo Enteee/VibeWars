@@ -12,6 +12,7 @@ import {
   pickCape,
   playerGuild,
   playerGuildTag,
+  rosterOrder,
   rosterSubtitle,
   saveGuildCape,
   saveGuildTag,
@@ -44,6 +45,17 @@ describe("rosterSubtitle (#579)", () => {
     });
     expect(rosterSubtitle(illegal)).toBe("Elementalist / Monk · 1/8 skills");
   });
+
+  it("follows it with the character's record, draws only when there are some (#1404)", () => {
+    expect(rosterSubtitle(character(), { wins: 12, losses: 7, draws: 0 })).toBe(
+      "Elementalist / Monk · 1/8 skills · 12W 7L",
+    );
+    expect(rosterSubtitle(character(), { wins: 12, losses: 7, draws: 1 })).toBe(
+      "Elementalist / Monk · 1/8 skills · 12W 7L 1D",
+    );
+    // A character that has not played shows nothing extra.
+    expect(rosterSubtitle(character(), undefined)).toBe("Elementalist / Monk · 1/8 skills");
+  });
 });
 
 describe("isPlayable (#1290)", () => {
@@ -58,6 +70,29 @@ describe("isPlayable (#1290)", () => {
         character({ skillBar: ["no.such-skill", null, null, null, null, null, null, null] }),
       ),
     ).toBe(false);
+  });
+});
+
+describe("rosterOrder (#1425)", () => {
+  const ids = (list: readonly StoredCharacter[]) => list.map((c) => c.id);
+  // Newest saved first, as the repository lists them.
+  const saved = [character({ id: "rolled" }), character({ id: "b" }), character({ id: "c" })];
+
+  it("puts the random starter last, even when it is the newest", () => {
+    expect(ids(rosterOrder(saved, "rolled"))).toEqual(["b", "c", "rolled"]);
+  });
+
+  it("keeps everyone else newest first", () => {
+    expect(ids(rosterOrder(saved, "b"))).toEqual(["rolled", "c", "b"]);
+  });
+
+  it("changes nothing with no starter, or one deleted", () => {
+    expect(ids(rosterOrder(saved, undefined))).toEqual(["rolled", "b", "c"]);
+    expect(ids(rosterOrder(saved, "gone"))).toEqual(["rolled", "b", "c"]);
+  });
+
+  it("lists a starter alone as the only row", () => {
+    expect(ids(rosterOrder([character({ id: "rolled" })], "rolled"))).toEqual(["rolled"]);
   });
 });
 

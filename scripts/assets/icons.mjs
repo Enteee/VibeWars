@@ -1017,6 +1017,57 @@ const status = {
       `<path d="M10 5.3A7 7 0 1 0 18.7 10M14 5.3A7 7 0 0 1 18.7 10" ${stroke(c, 2.2)}/>` +
       `<path d="M11 4l2 3-2 1 2 3" ${stroke(c, 1.6)}/>`,
   ],
+  // Hex: bars of ice round a pair of legs, 66% slower (#1367).
+  "ice-prison": [
+    "hex",
+    (c) =>
+      `<path d="M10 7v11M14 7v11" ${stroke(c, 2)}/>` +
+      `<path d="M6 11h12M6 15h12" ${stroke(c, 1.6)}/>`,
+  ],
+  // Hex: a snowflake in a ring, the burst around the caster (#1367).
+  "frozen-burst": [
+    "hex",
+    (c) =>
+      `<path d="M12 8v8M8.5 10l7 4M8.5 14l7-4" ${stroke(c, 1.8)}/>` +
+      `<circle cx="12" cy="12" r="7" ${stroke(c, 1.4)}/>`,
+  ],
+  // Skill effect: a spear point over a plus, regeneration while Overcast (#1367).
+  "ice-spear": [
+    "skill-effect",
+    (c) =>
+      `<path d="M12 4l2.5 5h-5z" fill="${c}"/>` +
+      `<path d="M12 9v5M12 15v5M9.5 17.5h5" ${stroke(c, 1.8)}/>`,
+  ],
+  // Hex: an eye doubled, half the attacks miss (#1367).
+  "blurred-vision": [
+    "hex",
+    (c) =>
+      `<path d="M4 11c2.5-3.5 5-5 8-5s5.5 1.5 8 5" ${stroke(c, 1.8)}/>` +
+      `<path d="M4 14c2.5 3.5 5 5 8 5s5.5-1.5 8-5" ${stroke(c, 1.8)}/>` +
+      `<circle cx="10.5" cy="12.5" r="2" fill="${c}"/>` +
+      `<circle cx="13.5" cy="12.5" r="2" ${stroke(c, 1.2)}/>`,
+  ],
+  // Enchantment: a shield over drifting mist, armor and speed (#1367).
+  "armor-of-mist": [
+    "enchantment",
+    (c) =>
+      `<path d="M8 5h8v5c0 2.5-2 4-4 5-2-1-4-2.5-4-5z" ${stroke(c, 1.8)}/>` +
+      `<path d="M5 17.5h6M13 17.5h6M7 20h10" ${stroke(c, 1.6)}/>`,
+  ],
+  // Hex: a stone cracked in three, it bursts when it ends (#1367).
+  shatterstone: [
+    "hex",
+    (c) =>
+      `<path d="M7 9l5-4 5 4-1.5 7h-7z" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 5v6l-3 5M12 11l3.5 5" ${stroke(c, 1.4)}/>`,
+  ],
+  // Hex: a snowflake over a head's outline, 90% slower (#1367).
+  "mind-freeze": [
+    "hex",
+    (c) =>
+      `<path d="M7 18v-4a5 5 0 0 1 10 0v4" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 4v7M9 5.7l6 3.6M9 9.3l6-3.6" ${stroke(c, 1.6)}/>`,
+  ],
 };
 
 // ---------------------------------------------------------------------------

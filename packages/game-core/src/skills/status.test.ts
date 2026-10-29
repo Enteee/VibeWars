@@ -141,6 +141,7 @@ describe("status definitions", () => {
       lamentation: -2,
       suffering: -2,
       "lingering-curse": -3,
+      "ice-spear": 3,
     });
   });
 
