@@ -6,6 +6,7 @@ import {
   type ArenaSnapshot,
   type RenderableWall,
 } from "../render/arena-snapshot.js";
+import { setHidden } from "./dom-write.js";
 import { prefersReducedMotion } from "./recharge-overlay.js";
 
 /**
@@ -350,7 +351,7 @@ export function createCompass(parent: HTMLElement, reach: number): Compass {
       const sizePx = canvas.clientWidth;
       const view = compassView(arena, selfId, sizePx, reach);
       // A spectator has no compass.
-      canvas.hidden = view === undefined;
+      setHidden(canvas, view === undefined);
       if (view === undefined || sizePx === 0) {
         return;
       }

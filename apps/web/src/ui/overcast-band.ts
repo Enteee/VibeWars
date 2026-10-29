@@ -4,6 +4,7 @@
  * that is left. One place, so the match HUD and the Training panel agree.
  */
 
+import { percent, setHidden, setStyle, type StyleWrites } from "./dom-write.js";
 import { h } from "./kit.js";
 
 /** The band, to put in an energy bar after its fill. */
@@ -21,13 +22,13 @@ export function overcastShare(overcast: number, maxEnergy: number): number {
 /** What the band needs of its element, so a test can hand it a plain object. */
 export interface OvercastBand {
   hidden: HTMLElement["hidden"];
-  readonly style: { width: string };
+  readonly style: StyleWrites;
 }
 
 export function renderOvercastBand(band: OvercastBand, overcast: number, maxEnergy: number): void {
   const share = overcastShare(overcast, maxEnergy);
-  band.hidden = share === 0;
-  band.style.width = `${String(share * 100)}%`;
+  setHidden(band, share === 0);
+  setStyle(band.style, "width", percent(share));
 }
 
 /** "20 / 25": energy over the ceiling overcast leaves, which can be below 0. */

@@ -77,6 +77,7 @@ import {
   type MeterTotals,
 } from "./combat-readouts.js";
 import { changedSlots, describeRefusal, MESSAGE_SECONDS, SKILL_SLOT_ICON_PX } from "./hud.js";
+import { percent, setHidden, setStyle, setText } from "./dom-write.js";
 import { isEliteSkill, skillBadgeHtml, skillIconHtml } from "./icons.js";
 import { energyLabel, overcastBandElement, renderOvercastBand } from "./overcast-band.js";
 import { paintHealthTint } from "./health-tint.js";
@@ -540,8 +541,8 @@ export function createTrainingPanel(): TrainingPanel {
 
   const paintOverlay = (problem: string | undefined): void => {
     const text = overlayMessage(problem);
-    overlay.hidden = text === undefined;
-    overlay.textContent = text ?? "";
+    setHidden(overlay, text === undefined);
+    setText(overlay, text ?? "");
   };
 
   const paintVitals = (match: MatchSnapshot): void => {
@@ -550,16 +551,16 @@ export function createTrainingPanel(): TrainingPanel {
       return;
     }
     const fraction = (value: number, max: number): string =>
-      `${String(max > 0 ? Math.max(0, Math.min(100, (value / max) * 100)) : 0)}%`;
-    health.fill.style.width = fraction(self.health, self.maxHealth);
-    health.label.textContent = `${String(self.health)} / ${String(self.maxHealth)}`;
+      percent(max > 0 ? Math.max(0, Math.min(1, value / max)) : 0);
+    setStyle(health.fill.style, "width", fraction(self.health, self.maxHealth));
+    setText(health.label, `${String(self.health)} / ${String(self.maxHealth)}`);
     paintHealthTint(health.root, self);
-    energy.fill.style.width = fraction(self.energy, self.maxEnergy);
-    energy.label.textContent = energyLabel(self.energy, self.maxEnergy, self.overcast);
+    setStyle(energy.fill.style, "width", fraction(self.energy, self.maxEnergy));
+    setText(energy.label, energyLabel(self.energy, self.maxEnergy, self.overcast));
     renderOvercastBand(energyOvercast, self.overcast, self.maxEnergy);
     renderPips(health.pips, self.healthPips);
     renderPips(energy.pips, self.energyPips);
-    attacking.textContent = self.attackTargetSessionId === undefined ? "" : "attacking";
+    setText(attacking, self.attackTargetSessionId === undefined ? "" : "attacking");
     renderWeaponSets(weaponSets, session?.connection.weaponSets);
     const slots = session?.connection.skillBar ?? [];
     if (changedSlots(paintedSkills, slots).length > 0) {

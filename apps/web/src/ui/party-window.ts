@@ -2,6 +2,7 @@ import { PET_ATTACK_SECONDS, getSkill, type CompanionMode } from "@vibewars/game
 import type { ArmedAttackSnapshot, MatchSnapshot, PlayerSnapshot } from "@vibewars/game-session";
 
 import { botTagElement } from "./bot-tag.js";
+import { setHidden } from "./dom-write.js";
 import { healthTint, paintHealthTint, type HealthTint } from "./health-tint.js";
 import {
   lostHealthPercent,
@@ -310,7 +311,7 @@ export function createPartyWindow(
   return {
     update(snapshot) {
       const party = partyRows(snapshot);
-      panel.hidden = party.length === 0;
+      setHidden(panel, party.length === 0);
       panel.classList.toggle("is-compact", party.length > FULL_ROWS);
       const ids = new Set(party.map((row) => row.id));
       for (const [id, elements] of rows) {
