@@ -275,6 +275,13 @@ export const SKILL_ICONS = {
   "assassin.malicious-strike": { glyph: "dagger-crit", modifier: "bleed" },
   "assassin.unsuspecting-strike": { glyph: "dagger-crit", modifier: "up" },
   "assassin.critical-defenses": { glyph: "shield-crit", modifier: "self" },
+  // Placeholders until the asset-designer's (#1326): Shadow Arts.
+  "assassin.heart-of-shadow": { glyph: "blink", modifier: "down" },
+  "assassin.vipers-defense": { glyph: "blink", modifier: "bleed" },
+  "assassin.deaths-retreat": { glyph: "blink", modifier: "up" },
+  "assassin.feigned-neutrality": { glyph: "crescent", modifier: "self" },
+  "assassin.way-of-perfection": { glyph: "crescent", modifier: "bolt" },
+  "assassin.caltrops": { glyph: "limp", modifier: "bleed" },
   // Placeholders until the asset-designer's (#1329): Tactics stances.
   "warrior.bonettis-defense": { glyph: "shield-bolt", modifier: "plus" },
   "warrior.deflect-arrows": { glyph: "shield-bolt", modifier: "bleed" },
@@ -288,4 +295,11 @@ export const SKILL_ICONS = {
   "necromancer.defile-flesh": { glyph: "hex-burst", modifier: "less" },
   "necromancer.rigor-mortis": { glyph: "hex-burst", modifier: "half" },
   "necromancer.lingering-curse": { glyph: "hex-burst", modifier: "hourglass" },
+  // Placeholders until the asset-designer's (#1338): Blood Magic.
+  "necromancer.vampiric-touch": { glyph: "eye-drop", modifier: "plus" },
+  "necromancer.vampiric-swarm": { glyph: "eye-drop", modifier: "area" },
+  "necromancer.shadow-strike": { glyph: "eye-drop", modifier: "bolt" },
+  "necromancer.blood-of-the-aggressor": { glyph: "eye-drop", modifier: "down" },
+  "necromancer.barbed-signet": { glyph: "hex-burst", modifier: "bleed" },
+  "necromancer.offering-of-blood": { glyph: "energy", modifier: "bleed" },
 };

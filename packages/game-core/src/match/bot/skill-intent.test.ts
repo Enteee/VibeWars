@@ -33,6 +33,7 @@ const NO_BOT_USE = new Set([
   "mesmer.mantra-of-recovery",
   "necromancer.blood-ritual",
   "necromancer.contagion",
+  "necromancer.offering-of-blood",
   "paragon.fall-back",
   "paragon.incoming",
   "paragon.make-haste",
@@ -51,6 +52,7 @@ const NO_BOT_USE = new Set([
   "necromancer.rend-enchantments",
   "necromancer.well-of-suffering",
   // What they do lands through a status trigger, not an effect a bot reads.
+  "assassin.way-of-perfection",
   "dervish.sand-shards",
   "ritualist.explosive-growth",
   "ritualist.splinter-weapon",
