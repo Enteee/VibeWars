@@ -1852,8 +1852,10 @@ test("Tab reaches the bar's slots and the library's cards (#567)", async ({ page
 
   const firstCard = page.locator(".skill-box-card").first();
   await page.locator(".skill-search").focus();
-  // Past the elite toggle and the type chips, on to the first card.
-  for (let press = 0; press < 20; press++) {
+  // Past the elite toggle and the type chips, on to the first card: one
+  // chip per type the catalogue has, so their count grows with it.
+  const chips = await page.locator(".skill-type-chip").count();
+  for (let press = 0; press < chips + 5; press++) {
     if (await firstCard.evaluate((node) => node === document.activeElement)) {
       break;
     }
