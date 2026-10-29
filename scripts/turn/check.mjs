@@ -188,11 +188,11 @@ async function permissionCheck(s, host) {
       const code = res.code === null ? "no code" : String(res.code);
       return { name, status: "fail", detail: `no allocation (${code})` };
     }
-    const codes = probes.map((_p, i) => res.answers[i]?.code ?? null);
-    const ok = probes.every((p, i) => (codes[i] === null) === p.granted);
+    const ok = probes.every((p, i) => (res.answers[i]?.code === null) === p.granted);
     const detail = probes.map((p, i) => {
-      const code = codes[i] ?? null;
-      const answer = code === null ? "granted" : `refused (${String(code)})`;
+      const code = res.answers[i]?.code ?? null;
+      const reason = res.answers[i]?.reason ?? "";
+      const answer = code === null ? "granted" : `refused (${String(code)} ${reason})`;
       return `${p.label} ${p.peer} ${answer}`;
     });
     return { name, status: ok ? "ok" : "fail", detail: detail.join(", ") };

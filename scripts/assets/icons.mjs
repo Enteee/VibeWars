@@ -1580,10 +1580,11 @@ const skillGlyph = {
     inkLine("M3.5 19C3.5 10 9 4.5 18 4.5", 2.8) + inkLine("M8 19C8 14 11 11 15.5 10.5", 2.2),
   // Three chevrons: a stance that hurries the bearer (#1396).
   rush: () => inkLine("M3 5L9 12L3 19M9.5 5L15.5 12L9.5 19M16 5L22 12L16 19", 2.2),
-  // A heavy block on four short legs: armoured and slow (#1396).
+  // A bull's head, front on, with wide horns and a broad muzzle: the dolyak (#1396).
   dolyak: () =>
-    `<rect x="4" y="6" width="16" height="8" rx="1.5" fill="${C.ink}"/>` +
-    inkLine("M6.5 14V19.5M10 14V19.5M14 14V19.5M17.5 14V19.5", 2.2),
+    inkLine("M5 11C2.5 10.5 2 7 3.5 4.5M19 11C21.5 10.5 22 7 20.5 4.5", 2.4) +
+    inkFill("M6 9L18 9L16.5 15.5L14 20H10L7.5 15.5Z") +
+    `<circle cx="9.7" cy="12.5" r="1.1" fill="${C.bg}"/><circle cx="14.3" cy="12.5" r="1.1" fill="${C.bg}"/>`,
   // A heart with a plus: more maximum Health (#1396).
   "heart-plus": () =>
     inkLine("M12 20L5 13a4 4 0 0 1 7-4.7 4 4 0 0 1 7 4.7z", 2) +
@@ -1706,6 +1707,34 @@ const skillGlyph = {
     inkLine("M7 4.5L12 11", 2.4) +
     `<rect x="9.5" y="9" width="9" height="6" rx="1" transform="rotate(35 14 12)" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
     inkLine("M3 19.5H21M5 15.5L3.5 13.5M21 15.5L22 13.5", 2.2),
+  // A dashed ring (a hex) with three spikes in it: blows from a weapon cut deeper (#1342).
+  "hex-barbs": () =>
+    `<circle cx="12" cy="12" r="9" ${stroke(C.ink, 2.2)} stroke-dasharray="4.4 3.4"/>` +
+    inkFill("M6 17.5L9.2 7L12.4 17.5ZM11.6 17.5L14.8 9.5L18 17.5Z"),
+  // A dashed ring (a hex) with a cross in it: every attack misses (#1342).
+  "hex-miss": () =>
+    `<circle cx="12" cy="12" r="9" ${stroke(C.ink, 2.2)} stroke-dasharray="4.4 3.4"/>` +
+    inkLine("M8.2 8.2L15.8 15.8M15.8 8.2L8.2 15.8", 3),
+  // A dashed ring (a hex) with a pyramid of down triangles: health drains from a group (#1342).
+  "hex-drain": () =>
+    `<circle cx="12" cy="12" r="9" ${stroke(C.ink, 2.2)} stroke-dasharray="4.4 3.4"/>` +
+    inkFill("M5.5 6.5H11.5L8.5 12ZM12.5 6.5H18.5L15.5 12ZM9 12.5H15L12 18Z"),
+  // A dashed ring (a hex) with a plus and a down arrow: healing is cut (#1342).
+  "hex-heal-cut": () =>
+    `<circle cx="12" cy="12" r="9" ${stroke(C.ink, 2.2)} stroke-dasharray="4.4 3.4"/>` +
+    inkLine("M8.6 6.5V13M5.6 9.75H11.6", 2.6) +
+    inkLine("M16.3 7V16M13.5 13L16.3 16.2L19.1 13", 2.6),
+  // A dashed ring (a hex) with a cracked shield: the foe cannot block (#1342).
+  "hex-nobloc": () =>
+    `<circle cx="12" cy="12" r="9" ${stroke(C.ink, 2.2)} stroke-dasharray="4.4 3.4"/>` +
+    `<path d="M12 6L17 8V12.2C17 15 14.8 16.6 12 18C9.2 16.6 7 15 7 12.2V8Z" ${stroke(C.ink, 2)}/>` +
+    inkLine("M12 8L10.5 12L13.5 13.5L12 17", 1.8),
+  // A dashed ring (a hex) with a down triangle and a cut plus: it drains and cuts healing (#1342).
+  "hex-drain-cut": () =>
+    `<circle cx="12" cy="12" r="9" ${stroke(C.ink, 2.2)} stroke-dasharray="4.4 3.4"/>` +
+    inkFill("M5.8 6.8H11L8.4 11.8Z") +
+    inkLine("M15.5 6.5V12.5M12.5 9.5H18.5", 2.4) +
+    inkLine("M7 16H17", 2.6),
   // A dashed ring (a hex) with a burst in it: the hex bursts on those near (#1217).
   "hex-burst": () =>
     `<circle cx="12" cy="12" r="9" ${stroke(C.ink, 2.2)} stroke-dasharray="4.4 3.4"/>` +

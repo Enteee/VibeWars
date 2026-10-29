@@ -183,6 +183,15 @@ channels, as often as they like.
   player: it changes its sender. A lobby's match seats only the peers the
   lobby put on a team, with the lobby's team and name; any other `hello`
   is refused `match-full`.
+- A match host (#480) sends each tick's snapshot, combat and `ended` to
+  each seated peer, never to the room, so a spectator in the lobby's room
+  does not see the match live. A member the lobby has on no team may
+  `observe` it and is sent the same, `OBSERVER_DELAY_SECONDS` (10 s)
+  late, but never a seat's or a team's own channels (skill bar, recharges,
+  calls, traps). The delay keeps a spectator on voice with one team from
+  calling the other's moves in time to matter. Anyone else's `observe` is
+  refused `not-a-spectator`, and a viewer's intents and calls are dropped:
+  it has no seat.
 - `joinLobby` takes as host the peer that sends the first `lobby-state`
   for its code that names that peer as host and lists the player, then
   drops every lobby and match message from anyone else. Before that first
@@ -494,6 +503,20 @@ schedules do. Each poll spends about one pull read and up to four run
 lists per watched pull request a minute, from the shared REST budget. Moving a card to In Review is refused
 until every open PR that closes it is green, by the merge gate's own
 reading of the jobs.
+
+**Wiki reads (#1380).** Any employee may ask hubd for a GW1 wiki page,
+its Wayback snapshots, or a diff of two (`hub wiki`). hubd fetches from
+two fixed origins only, `wiki.guildwars.com` and `web.archive.org`, with
+the page name percent-encoded into a fixed path (no `.` or `..` segment),
+no credential and a 15 s timeout per read. A redirect is followed only
+onto those two origins, three at most, so a page cannot point hubd at
+the host. A body over 4 MiB is refused unread, and a diff whose differing
+part exceeds 4 million line pairs is refused. A page's text and a diff
+are worked out in a worker thread, killed after 2 s, so a hostile page
+cannot stall hubd's thread. At most two run at once, beside the gh lane, so a
+slow Wayback cannot stall a merge. Accepted risk: the wiki is editable by
+anyone, so a page is untrusted text, read as information like an issue
+body; the answer goes only to the asker.
 
 **Peek (#19).** `agent-turn.mjs` on the host records each employee's
 recent output under `$VIBEWARS_BOT_ROOT/peek` (mode 700, files 600),
