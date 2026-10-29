@@ -503,7 +503,7 @@ function describeTriggers(
 ): TriggerLine[] {
   const groups = new Map<string, { trigger: StatusTrigger; on: StatusTriggerEvent[] }>();
   for (const trigger of triggers) {
-    const key = JSON.stringify([trigger.effects, trigger.target]);
+    const key = JSON.stringify([trigger.effects, trigger.target, trigger.weapon]);
     const group = groups.get(key);
     if (group === undefined) {
       groups.set(key, { trigger, on: [trigger.on] });
@@ -517,16 +517,28 @@ function describeTriggers(
       on.includes("bearer-creates-creature")
         ? CREATES
         : on.includes("ends") || on.includes("expires")
-          ? `when it ${on.map((event) => TRIGGER_WHEN[event]).join(" or ")}`
+          ? `when it ${triggerEvents(on, trigger.weapon)}`
           : once && on.includes("bearer-uses-skill")
             ? NEXT_SKILL
             : nextOnly
-              ? `the next time it ${on.map((event) => TRIGGER_WHEN[event]).join(" or ")}`
-              : `whenever it ${on.map((event) => TRIGGER_WHEN[event]).join(" or ")}`,
+              ? `the next time it ${triggerEvents(on, trigger.weapon)}`
+              : `whenever it ${triggerEvents(on, trigger.weapon)}`,
       ranks,
       bearerIsFoe,
     ),
   );
+}
+
+/**
+ * A trigger group's events, and the weapon it needs (#1370): "attacks
+ * with a sword". Only `bearer-attacks` takes a weapon.
+ */
+function triggerEvents(
+  on: readonly StatusTriggerEvent[],
+  weapon: AttackWeaponClass | undefined,
+): string {
+  const events = on.map((event) => TRIGGER_WHEN[event]).join(" or ");
+  return weapon === undefined ? events : `${events} with ${NEEDED_WEAPON[weapon]}`;
 }
 
 /** The one use a status that ends on it answers (#949), as its tooltip says it. */

@@ -9,7 +9,7 @@ import {
   describeStatus,
   formatScalingRange,
 } from "./describe.js";
-import { makeCombatant, withAttackDuration } from "./testing.js";
+import { makeCombatant, withAttackDuration, withStatusDefinitions } from "./testing.js";
 import { resolveMagnitude } from "./scaling.js";
 import { STATUS_DEFINITIONS } from "./status.js";
 import { blowRuleOf, isEasilyInterrupted, type SkillEffect } from "./types.js";
@@ -785,6 +785,33 @@ describe("describeStatus", () => {
     withAttackDuration({ bleeding: 0.67 }, () => {
       expect(describeStatus("bleeding")).toContain("attacks 33% faster");
     });
+  });
+
+  it("names the weapon an attack trigger needs (#1370)", () => {
+    expect(describeStatus("hundred-blades")).toBe(
+      "adjacent foes take 26 damage whenever it attacks with a sword",
+    );
+  });
+
+  it("says alike triggers that need different weapons as two lines (#1370)", () => {
+    const effects = [
+      { kind: "damage", amount: { flat: 10 }, type: "slashing", armorPenetration: 0 },
+    ] as const;
+    const skillId = "warrior.hundred-blades";
+    const text = withStatusDefinitions(
+      {
+        "hundred-blades": {
+          triggers: [
+            { on: "bearer-attacks", weapon: "axe", effects, target: "bearer", skillId },
+            { on: "bearer-attacks", effects, target: "bearer", skillId },
+          ],
+        },
+      },
+      () => describeStatus("hundred-blades"),
+    );
+    expect(text).toBe(
+      "takes 10 damage whenever it attacks with an axe, takes 10 damage whenever it attacks",
+    );
   });
 
   it("says the curses' triggers from the bearer's side, two alike once (#935)", () => {
