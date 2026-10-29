@@ -46,5 +46,4 @@ These keys are fixed:
 
 Outside a match, the top bar holds **[?]** (this Help), **⚙** (Options),
 **♪** (music), the sound mute and fullscreen. In a match the same buttons
-sit at the top right of the screen. On a phone, the less used ones fold
-into **⋯**.
+sit at the top right of the screen.

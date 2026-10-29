@@ -9,11 +9,12 @@ Only the host can add bots.
 
 1. Host a lobby.
 2. Under the team that needs one, pick a profession: **Warrior**,
-   **Ranger** or **Monk**.
+   **Ranger**, **Monk**, **Necromancer** or **Elementalist**.
 3. Press **Add bot**.
 
 The bot plays a ready-made build for its profession: Warrior/Monk,
-Ranger/Mesmer or Monk/Elementalist. It is named after it, such as
+Ranger/Mesmer, Monk/Elementalist, Necromancer/Elementalist or
+Elementalist/Mesmer. It is named after it, such as
 "Warrior Bot", and shows **BOT** where players show whether they are
 ready. Press **×** beside it to take it out again.
 

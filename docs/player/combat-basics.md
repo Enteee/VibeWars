@@ -25,9 +25,9 @@ one empties it and takes a strike from the others. Out of the fight for
 
 A skill can take a moment to **cast**, and then needs time to
 **recharge** before you can use it again. If your target is out of range,
-you walk to it first. Moving, or Esc, cancels a cast: the Energy is gone
-and the skill recharges anyway. After a spell there is a short pause in
-which you cannot act.
+you walk to it first. Moving, or Esc, cancels a cast: the Energy is gone,
+but the skill does not recharge. After any skill with a cast time, except
+an attack skill, there is a short pause in which you cannot act.
 
 ## Interrupts and knockdown
 
@@ -53,7 +53,7 @@ cast in progress fails.
 | Weakness      | your weapon hits much weaker                     |
 | Cracked Armor | less armor                                       |
 | Deep Wound    | less maximum Health, and healing works less      |
-| Dazed         | spells cast slowly, and any hit interrupts them  |
+| Dazed         | spells cast slowly; any attack interrupts them   |
 
 **Hexes** are cast on you by foes; **enchantments** by yourself or your
 allies. Each is removed by its own kind of skill. Some enchantments are
@@ -63,8 +63,8 @@ they run. Double-click its icon to end one.
 ## Armor and damage
 
 Warriors and Paragons wear the most armor; Rangers, Assassins and
-Dervishes less; casters the least. Armor makes weapon and elemental
-damage smaller. Holy, shadow and typeless damage, Health drains and life
+Dervishes less; casters the least. Armor makes weapon, elemental, chaos
+and dark damage smaller. Holy, shadow and typeless damage, Health drains and life
 stealing ignore it. Only weapon hits can be critical.
 
 ## Death, resurrection and morale

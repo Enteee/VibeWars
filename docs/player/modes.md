@@ -40,11 +40,13 @@ Split Paths plays it.
 with two gates; the Guild Lord stands at the back of its lord room and
 shoots any foe it sees with a bow. Guards hold each base: Knights and a
 Bodyguard by the lord, an Archer at the back of the lord room, a Footman
-and an Archer at each gate. They fight foes near their post and walk back to it. While
-the Bodyguard lives, its lord takes 20% less damage, so kill it first.
-Every 2 minutes, each team's shrine brings its dead back.
+and an Archer at each gate. They fight foes near their post and walk back
+to it. While the Bodyguard lives, its lord takes 20% less damage, so kill
+it first. Every 2 minutes, each team's shrine brings its dead back.
 
-The team whose Guild Lord dies loses at once. After 28 minutes, the team
-that did the most damage to the enemy Guild Lord wins.
+The team whose Guild Lord dies loses at once, and so does a team whose
+players are all dead at the lowest morale. After 28 minutes, the team
+that did the most damage to the enemy Guild Lord wins; a tie there is a
+loss for both, as there are no draws.
 
 Guild Hall Isle plays it.
