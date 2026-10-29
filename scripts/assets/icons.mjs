@@ -1499,20 +1499,23 @@ const skillGlyph = {
   "shield-crit": () =>
     `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2)}/>` +
     inkFill("M12 6.5L13.7 10.3L17.5 12L13.7 13.7L12 17.5L10.3 13.7L6.5 12L10.3 10.3Z"),
-  // A plain shield with a solid core: a block stance (#1329).
+  // A solid shield: the block stance that pays energy (#1329).
   "shield-stance": () =>
-    `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2)}/>` +
-    inkFill("M12 7L16 8.6V12.4C16 14.6 14.4 16 12 17.2C9.6 16 8 14.6 8 12.4V8.6Z"),
+    inkFill("M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z"),
+  // A shield outline with one bold bar: the short, plain block (#1329).
+  "shield-bar": () =>
+    `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2.8)}/>` +
+    inkLine("M8 11.5H16", 3.4),
   // A shield with an arrow glancing off it: projectiles deflected (#1329).
   "shield-arrow": () =>
-    `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2)}/>` +
-    inkLine("M3 3.5L12 10", 2) +
-    inkFill("M15.5 12.5L9.5 12.2L11.8 7.8Z"),
+    `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2.8)}/>` +
+    inkLine("M2.5 3L11 9.5", 3) +
+    inkFill("M16 13.5L8.5 13L11.5 7Z"),
   // A shield with a blade across it: the blocked attacker is cut (#1329).
   "shield-blade": () =>
-    `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2)}/>` +
-    inkLine("M8 16.5L16.5 8", 2.6) +
-    inkLine("M8.5 10.5L13.5 15.5", 2.2),
+    `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2.8)}/>` +
+    inkLine("M7.5 17L17 7.5", 3.4) +
+    inkLine("M8 10.5L13.5 16", 2.8),
   // A shield with a bolt in it: fast and hard to hit (#981).
   "shield-bolt": () =>
     `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2)}/>` +

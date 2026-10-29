@@ -285,7 +285,7 @@ export const SKILL_ICONS = {
   "warrior.bonettis-defense": { glyph: "shield-stance", modifier: "bolt" },
   "warrior.deflect-arrows": { glyph: "shield-arrow" },
   "warrior.gladiators-defense": { glyph: "shield-blade" },
-  "warrior.disciplined-stance": { glyph: "shield-stance", modifier: "clock" },
+  "warrior.disciplined-stance": { glyph: "shield-bar", modifier: "clock" },
   "warrior.balanced-stance": { glyph: "mountain", modifier: "self" },
   // Placeholders until the asset-designer's (#1332): the Curses hexes.
   "necromancer.barbs": { glyph: "hex-burst", modifier: "plus" },
