@@ -321,6 +321,9 @@ export const SKILL_ICONS = {
   "warrior.irresistible-blow": { glyph: "hammer-shield" },
   "warrior.counter-blow": { glyph: "hammer-counter" },
   "warrior.heavy-blow": { glyph: "hammer-weak" },
+  "warrior.staggering-blow": { glyph: "hammer-weak", modifier: "less" },
+  "warrior.earth-shaker": { glyph: "hammer-quake", modifier: "area" },
+  "warrior.devastating-hammer": { glyph: "hammer-slam", modifier: "down" },
   // Placeholders until the asset-designer's (#1366): Fire Magic.
   "elementalist.immolate": { glyph: "flame" },
   "elementalist.flare": { glyph: "fireball", modifier: "bolt" },
@@ -329,7 +332,4 @@ export const SKILL_ICONS = {
   "elementalist.rodgorts-invocation": { glyph: "fireball", modifier: "bleed" },
   "elementalist.fire-storm": { glyph: "meteor-trio", modifier: "hourglass" },
   "elementalist.mind-burn": { glyph: "fireball", modifier: "down" },
-  "warrior.staggering-blow": { glyph: "hammer", modifier: "less" },
-  "warrior.earth-shaker": { glyph: "hammer-quake", modifier: "area" },
-  "warrior.devastating-hammer": { glyph: "hammer-slam", modifier: "down" },
 };
