@@ -1,0 +1,174 @@
+{
+  "id": "forgotten-shrines",
+  "name": "Forgotten Shrines",
+  "mode": "capture-points",
+  "width": 2200,
+  "height": 1400,
+  "walls": [
+    {
+      "kind": "rect",
+      "x": 640,
+      "y": 300,
+      "width": 80,
+      "height": 240
+    },
+    {
+      "kind": "rect",
+      "x": 640,
+      "y": 860,
+      "width": 80,
+      "height": 240
+    },
+    {
+      "kind": "rect",
+      "x": 760,
+      "y": 620,
+      "width": 100,
+      "height": 160
+    },
+    {
+      "kind": "rect",
+      "x": 940,
+      "y": 160,
+      "width": 60,
+      "height": 200
+    },
+    {
+      "kind": "rect",
+      "x": 1200,
+      "y": 160,
+      "width": 60,
+      "height": 200
+    },
+    {
+      "kind": "rect",
+      "x": 1480,
+      "y": 860,
+      "width": 80,
+      "height": 240
+    },
+    {
+      "kind": "rect",
+      "x": 1480,
+      "y": 300,
+      "width": 80,
+      "height": 240
+    },
+    {
+      "kind": "rect",
+      "x": 1340,
+      "y": 620,
+      "width": 100,
+      "height": 160
+    },
+    {
+      "kind": "rect",
+      "x": 1200,
+      "y": 1040,
+      "width": 60,
+      "height": 200
+    },
+    {
+      "kind": "rect",
+      "x": 940,
+      "y": 1040,
+      "width": 60,
+      "height": 200
+    }
+  ],
+  "objectives": [
+    {
+      "kind": "capture-point",
+      "position": {
+        "x": 480,
+        "y": 700
+      }
+    },
+    {
+      "kind": "capture-point",
+      "position": {
+        "x": 1100,
+        "y": 260
+      }
+    },
+    {
+      "kind": "capture-point",
+      "position": {
+        "x": 1100,
+        "y": 700
+      }
+    },
+    {
+      "kind": "capture-point",
+      "position": {
+        "x": 1100,
+        "y": 1140
+      }
+    },
+    {
+      "kind": "capture-point",
+      "position": {
+        "x": 1720,
+        "y": 700
+      }
+    }
+  ],
+  "spawnPoints": [
+    {
+      "team": 0,
+      "position": {
+        "x": 220,
+        "y": 560
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 220,
+        "y": 700
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 220,
+        "y": 840
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 340,
+        "y": 700
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 1980,
+        "y": 840
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 1980,
+        "y": 700
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 1980,
+        "y": 560
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 1860,
+        "y": 700
+      }
+    }
+  ]
+}

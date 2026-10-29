@@ -242,6 +242,7 @@ function snapshot(players: PlayerSnapshot[]): MatchSnapshot {
     aggression: [],
     relics: [],
     altar: undefined,
+    capturePoints: [],
     summary: undefined,
   };
 }

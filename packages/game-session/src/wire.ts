@@ -743,6 +743,12 @@ export function matchSnapshot(
     aggression: snapshot.aggression,
     relics: snapshot.relics.map(relicState),
     altar: absent(snapshot.altar),
+    capturePoints: snapshot.capturePoints.map(({ x, y, owner, capturer, progress }) => ({
+      position: { x, y },
+      owner,
+      capturer,
+      progress,
+    })),
     // Only the host's `"traps"` carries them (#1105).
     traps: [],
     // Only the host's `ended` carries it.

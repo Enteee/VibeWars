@@ -1,4 +1,5 @@
 import type {
+  CapturePoint,
   ChainRole,
   CombatEvent,
   CompanionMode,
@@ -168,6 +169,8 @@ export interface MatchSnapshot {
   readonly relics: readonly RelicState[];
   /** The altar a relic is run to (#1374); `undefined` on a map without one. */
   readonly altar: Vec2 | undefined;
+  /** Every Capture Points shrine and who holds it (#1378); `[]` on a map without them. */
+  readonly capturePoints: readonly CapturePoint[];
   /** What each player did, from the host's `ended` (#1057); `undefined` until then. */
   readonly summary: readonly MatchSummaryRow[] | undefined;
 }

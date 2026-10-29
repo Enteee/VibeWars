@@ -64,6 +64,7 @@ describe("connectMatch", () => {
       aggression: [],
       relics: [],
       altar: null,
+      capturePoints: [],
     });
     await settle();
     expect(connection.getSnapshot().scoreTeam0).toBe(0);
@@ -96,6 +97,7 @@ describe("connectMatch", () => {
         aggression: [],
         relics: [],
         altar: null,
+        capturePoints: [],
       },
       transport.selfId,
     );
@@ -151,6 +153,7 @@ describe("connectMatch", () => {
           aggression: [],
           relics: [],
           altar: null,
+          capturePoints: [],
         },
         transport.selfId,
       );

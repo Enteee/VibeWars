@@ -3,6 +3,7 @@ import {
   Vec,
   flagId,
   relicId,
+  type CapturePoint,
   type CarriedSpawn,
   type FlagField,
   type FlagPlace,
@@ -171,4 +172,36 @@ export function flagObjectAtPoint(
   return stand !== undefined && Vec.distance(stand.position, point) <= STAND_RADIUS
     ? stand.id
     : undefined;
+}
+
+/**
+ * A Capture Points shrine (#1378) as the arena draws it: the stand's
+ * marker in its owner's colour, neutral grey with none, and round it how
+ * far toward its capturer it is, while that is not the whole of it.
+ */
+export interface RenderableCapturePoint {
+  readonly position: Vec2;
+  /** Whose it is; `undefined`, neutral grey, for nobody's. */
+  readonly owner: FlagSide | undefined;
+  /** The progress ring: whose colour, and how much of the circle; `undefined` for none. */
+  readonly ring: { readonly side: FlagSide; readonly fraction: number } | undefined;
+}
+
+/** Every shrine, from your side's view; `[]` on a map without them. */
+export function renderableCapturePoints(
+  points: readonly CapturePoint[],
+  selfTeam: number | undefined,
+): RenderableCapturePoint[] {
+  return points.map((point) => {
+    // Owned and full, the marker says it all; nobody's progress, nothing to show.
+    const settled = point.progress >= 1 && point.owner === point.capturer;
+    return {
+      position: point.position,
+      owner: point.owner === null ? undefined : sideOf(point.owner, selfTeam),
+      ring:
+        point.capturer === null || point.progress <= 0 || settled
+          ? undefined
+          : { side: sideOf(point.capturer, selfTeam), fraction: point.progress },
+    };
+  });
 }

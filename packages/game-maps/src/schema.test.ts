@@ -602,3 +602,40 @@ describe("relic run maps (#1374)", () => {
     ).toThrow(/annihilation map has no altar/);
   });
 });
+
+describe("capture points maps (#1378)", () => {
+  const point = (x: number, y: number) => ({ kind: "capture-point", position: { x, y } });
+  const captureMap = {
+    ...validMap,
+    mode: "capture-points",
+    walls: [],
+    spawnPoints: [
+      { team: 0, position: { x: 20, y: 50 } },
+      { team: 1, position: { x: 80, y: 50 } },
+    ],
+    objectives: [point(30, 30), point(50, 50), point(70, 70)],
+  };
+
+  it("accepts one to five capture points", () => {
+    expect(validateMapData(captureMap).objectives).toHaveLength(3);
+    expect(validateMapData({ ...captureMap, objectives: [point(50, 50)] }).objectives).toHaveLength(
+      1,
+    );
+  });
+
+  it("refuses a capture points map with none, or six", () => {
+    expect(() => validateMapData({ ...captureMap, objectives: [] })).toThrow(
+      /capture-points map has 0 capture points, not 1 to 5/,
+    );
+    const six = [20, 30, 40, 50, 60, 70].map((x) => point(x, 30));
+    expect(() => validateMapData({ ...captureMap, objectives: six })).toThrow(
+      /capture-points map has 6 capture points, not 1 to 5/,
+    );
+  });
+
+  it("refuses capture points on a map of any other mode", () => {
+    expect(() => validateMapData({ ...validMap, objectives: [point(50, 50)] })).toThrow(
+      /annihilation map has no capture point/,
+    );
+  });
+});

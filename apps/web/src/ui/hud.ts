@@ -1011,6 +1011,7 @@ export function scoreboardParts(
       return [living, clock];
     case "kill-count":
     case "relic-run":
+    case "capture-points":
       return [
         { kind: "text", text: `${String(score[ours] ?? 0)} – ${String(score[theirs] ?? 0)}` },
         clock,

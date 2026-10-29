@@ -149,6 +149,7 @@ export type {
   WireGroundEffect,
   WireCarried,
   WireFlag,
+  WireCapturePoint,
   WireRelic,
   WireStand,
   JsonValue,
