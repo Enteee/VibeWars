@@ -4,6 +4,7 @@ import {
   applyIntent,
   companionMode,
   drainAccumulator,
+  raisedMaxHealth,
   resolvedBar,
   swingProgress,
   type MatchSimulation,
@@ -95,7 +96,8 @@ function toPlayerSnapshot(
       participant.pendingSkill !== undefined ||
       participant.interact !== undefined,
     health: Math.round(combatant.health),
-    maxHealth: combatant.maxHealth,
+    // Raised by Endure Pain and its kind (#1359), as the host sends it.
+    maxHealth: raisedMaxHealth(combatant),
     // Clamped as the host clamps it: energy below 0 is hidden (#489).
     energy: Math.max(0, Math.round(combatant.energy)),
     maxEnergy: combatant.maxEnergy,

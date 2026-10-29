@@ -176,6 +176,12 @@ export interface MatchSnapshot {
   readonly summary: readonly MatchSummaryRow[] | undefined;
 }
 
+/**
+ * The match as a viewer sees it (#480): everyone's, no one's own. No
+ * self, and no traps, which only their own team is ever sent.
+ */
+export type ObservedSnapshot = Omit<MatchSnapshot, "selfSessionId" | "traps">;
+
 /** A ward or a trap on the ground (#1087, #1105): a circle at `x`, `y` in `team`'s colour, until `endsAt`. */
 export interface GroundEffectSnapshot {
   readonly id: number;

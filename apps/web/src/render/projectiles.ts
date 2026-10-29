@@ -25,6 +25,7 @@ export type ProjectileSprite =
 /** A flying spell's own sprite (#1176). A new flying spell needs a row, or the test fails. */
 export const SKILL_SPRITE: Readonly<Record<string, ProjectileSprite>> = {
   "elementalist.fireball": "fireball",
+  "elementalist.flare": "fireball",
   "elementalist.lightning-orb": "lightning-orb",
   "elementalist.shard-storm": "ice-shard",
   "elementalist.water-trident": "water-trident",

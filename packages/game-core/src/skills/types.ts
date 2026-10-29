@@ -162,6 +162,12 @@ export interface EnergyGainEffect {
    * not count. None: no gain.
    */
   readonly perOwnCreatureWithin?: { readonly radius: number; readonly max: Magnitude };
+  /**
+   * The energy the gain never takes its recipient above (#1359): Warrior's
+   * Endurance's "cannot raise your Energy above 10...25". A recipient
+   * already above gains nothing and loses nothing. Absent: its maximum.
+   */
+  readonly upTo?: number;
 }
 
 /**
@@ -761,6 +767,12 @@ export type StateCondition =
    * Shock's "if you have more energy than target foe". Equal is not more.
    */
   | { readonly kind: "caster-more-energy" }
+  /**
+   * The caster is overcast, above 0, as the effect resolves (#1366):
+   * Flare's "if you are Overcast". A spell's own overcast is paid as its
+   * activation starts, so one with overcast counts its own.
+   */
+  | { readonly kind: "caster-overcast" }
   /**
    * The caster's main hand is a weapon of this class (#939): Vow of
    * Strength's and Sand Shards' "with your scythe".

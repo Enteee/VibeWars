@@ -564,6 +564,9 @@ describe("profession and attacking insignias, per piece (#1142)", () => {
     necromancer.maxHealth = 500;
     necromancer.health = 350;
     expect(effectiveArmor(necromancer, physical(10), "chest")).toBe(65);
+    // Endure Pain raises it: 350 of 758 is below 60%, as the HUD shows (#1359).
+    necromancer.statuses.apply("endure-pain", 16, "self");
+    expect(effectiveArmor(necromancer, physical(10), "chest")).toBe(70);
   });
 
   it("gives Minion Master's and Shaman's +5 a tier of what you control (#1188)", () => {

@@ -120,6 +120,7 @@ import {
   WORKDAY,
 } from "./reboot.mjs";
 import { SKILLS_PREFIX, installSkills, skillFiles } from "./skills-sync.mjs";
+import { ARCHIVE_ORIGIN, LIVE_ORIGIN, runWiki } from "./wiki.mjs";
 import {
   readLimit,
   readPresence,
@@ -3203,7 +3204,7 @@ function heartbeat() {
   const alive = {
     ...health,
     heartbeatAt: Date.now(),
-    inflight: (current === null ? 0 : 1) + queued,
+    inflight: (current === null ? 0 : 1) + wikiInFlight + queued,
     current,
   };
   writeAtomic(ALIVE, JSON.stringify(alive));
@@ -3608,6 +3609,78 @@ function operatorRequest(kind, argv) {
   return staff(OPERATOR_ROLE, argv, company());
 }
 
+/** The most wiki requests served at once, beside the gh lane (#1380). */
+const WIKI_LANE = 2;
+/** Wiki requests taken from their spool and not yet answered. */
+let wikiInFlight = 0;
+/**
+ * Where hubd reads the wiki and Wayback. HUBD_WIKI_LIVE_ORIGIN and
+ * HUBD_WIKI_ARCHIVE_ORIGIN are for a test to point them at itself.
+ */
+const WIKI_ORIGINS = {
+  live: process.env.HUBD_WIKI_LIVE_ORIGIN ?? LIVE_ORIGIN,
+  archive: process.env.HUBD_WIKI_ARCHIVE_ORIGIN ?? ARCHIVE_ORIGIN,
+};
+
+/**
+ * Serve a `hub wiki` request on the side (#1380). A Wayback fetch can take
+ * 30 s, and nothing in it touches GitHub, so it never holds up a merge or a
+ * board move queued behind it in the one-at-a-time gh lane. The answer is
+ * written whenever it is ready; the reboot's `inflight` counts it until then.
+ *
+ * @param {string} employee
+ * @param {string} role
+ * @param {string} id the request's, which names its answer
+ * @param {string[]} argv the words after `hub wiki`
+ * @returns {void}
+ */
+function startWiki(employee, role, id, argv) {
+  wikiInFlight += 1;
+  heartbeat();
+  void serveWiki(employee, role, argv)
+    .catch((/** @type {unknown} */ error) => {
+      const message = error instanceof Error ? error.message : "failed";
+      health.lastError = { at: Date.now(), message };
+      return { allow: true, code: 1, stderr: `hubd: ${message}\n` };
+    })
+    .then((response) => {
+      if (response.allow === false) {
+        health.refused += 1;
+      } else {
+        health.served += 1;
+      }
+      try {
+        withJailDir(path.join(HUB, employee), "res", { create: true }, (res) => {
+          res.writeAtomic(`${id}.json`, JSON.stringify(response));
+        });
+      } catch (error) {
+        refused(employee, `response ${id}.json`, error);
+      }
+    })
+    .finally(() => {
+      wikiInFlight -= 1;
+      heartbeat();
+    });
+}
+
+/**
+ * @param {string} employee
+ * @param {string} role
+ * @param {string[]} argv
+ * @returns {Promise<Record<string, unknown>>}
+ */
+async function serveWiki(employee, role, argv) {
+  const kind = "wiki";
+  const verdict = authorize(role, { kind, argv }, { acting: actingFor(role), employee });
+  if (!verdict.allow) {
+    audit({ employee, role, kind, argv, decision: "refused", reason: verdict.reason });
+    return { allow: false, reason: verdict.reason, code: 77 };
+  }
+  const answer = await runWiki(argv, { fetch, origins: WIKI_ORIGINS });
+  audit({ employee, role, kind, argv, decision: "allowed", code: answer.code });
+  return { allow: true, ...answer };
+}
+
 /** A request's id, as hub.mjs makes them: it names the response file. */
 const REQUEST_ID = /^[A-Za-z0-9-]{1,64}$/;
 
@@ -3727,6 +3800,14 @@ async function serveSpool(employee, role, req, res) {
     const raw = /** @type {Record<string, unknown>} */ (parsed);
     const kind = typeof raw.kind === "string" ? raw.kind : "";
     const argv = Array.isArray(raw.argv) ? raw.argv.map(String) : [];
+    if (kind === "wiki" && role !== null && employee !== OPERATOR_SPOOL) {
+      // Left in the spool while the lane is full: the next pass takes it.
+      if (wikiInFlight < WIKI_LANE) {
+        req.remove(name);
+        startWiki(employee, role, id, argv);
+      }
+      continue;
+    }
     current = { employee, command: commandWords(kind, argv), startedAt: Date.now() };
     heartbeat();
     req.remove(name);

@@ -67,6 +67,11 @@ import {
 } from "./ui/options-screen.js";
 import { mountChat, type ChatPanel } from "./ui/chat.js";
 import { openRelayPrompt } from "./ui/relay-prompt.js";
+import { needsTouchNotice, showTouchNotice } from "./ui/touch-notice.js";
+import {
+  loadTouchNoticeDismissed,
+  saveTouchNoticeDismissed,
+} from "./ui/touch-notice-preference.js";
 import { describeOutcome } from "./ui/hud.js";
 import type { SummaryTable } from "./ui/match-summary.js";
 import {
@@ -180,6 +185,16 @@ interface Entrant {
 async function main(): Promise<void> {
   // Before anything mounts or waits.
   const relayLink = takeRelayLink();
+  // A touch-only device is told it needs a keyboard and mouse (#1392)
+  // before the menu, which waits until it goes past.
+  if (needsTouchNotice((query) => matchMedia(query).matches, loadTouchNoticeDismissed)) {
+    await new Promise<void>((resolve) => {
+      showTouchNotice(document.body, () => {
+        saveTouchNoticeDismissed();
+        resolve();
+      });
+    });
+  }
   const screenRoot = requireElement("#screens");
   const showNowPlaying = createNowPlayingToast(document.body);
   musicPlayer().onNowPlaying((trackId) => {

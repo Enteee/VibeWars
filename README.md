@@ -32,6 +32,9 @@ for the decisions behind this repository (start with
 
 ## Play it
 
+**Requirements:** a desktop browser, a keyboard and a mouse. VibeWars
+does not work on a phone or a touch-only tablet.
+
 Open the GitHub Pages build:
 [the latest release](https://enteee.github.io/VibeWars/) or
 [the latest `main`](https://enteee.github.io/VibeWars/next/). One person
@@ -90,7 +93,7 @@ own development was verified that way; see
   bar on dummies. The host validates every build and hands an illegal one
   a starter build instead.
 - **Team builder** for planning a roster (see the limits below).
-- **Music and sound**, and a **phone layout**.
+- **Music and sound**, and a **narrow-window layout**.
 - **Robustness**: a dropped player's character stays in the match for 30
   seconds and the player can rejoin it; hostile input cannot crash the
   host (fuzz-tested).

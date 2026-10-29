@@ -114,6 +114,7 @@ import {
   StatusSet,
   type ActiveStatus,
   type Outbreak,
+  type StatusChange,
   type StatusId,
   type StatusTriggerEvent,
 } from "../skills/status.js";
@@ -128,6 +129,7 @@ import {
   naturalHealthPips,
   netPips,
   preCapEnergyPips,
+  raisedMaxHealth,
   rankOf,
   upkeepPips,
   type NetPips,
@@ -1687,7 +1689,10 @@ export class MatchSimulation {
       return;
     }
     const before = record.combatant;
-    const fraction = before.maxHealth > 0 ? before.health / before.maxHealth : 0;
+    // Against the raised maximum: Endure Pain must not carry over as health
+    // above the fresh, unbuffed maximum.
+    const raised = raisedMaxHealth(before);
+    const fraction = raised > 0 ? before.health / raised : 0;
     const spec: ParticipantSpec = { ...record.spec, skillBar, ...loadoutSpec(loadout) };
     record.combatant = this.#combatant(spec);
     record.resolvedMaxHealth = loadout.maxHealth;
@@ -3247,6 +3252,7 @@ export class MatchSimulation {
         if (change.kind === "charged-source") {
           this.#landCharge(change.toId, change.statusId, change.amount);
         }
+        this.#loseRaisedHealth(record, change);
       }
     }
     const context = this.#triggerContext();
@@ -3262,8 +3268,22 @@ export class MatchSimulation {
         if (change.kind === "charged-source") {
           this.#landCharge(change.toId, change.statusId, change.amount);
         }
+        this.#loseRaisedHealth(record, change);
       }
     }
+  }
+
+  /**
+   * A status that raised its bearer's maximum ended (#1359): Endure Pain's.
+   * Health above the maximum left is lost, as in GW1; a bearer below it
+   * loses nothing, so the end never kills.
+   */
+  #loseRaisedHealth(record: ParticipantRecord, change: StatusChange): void {
+    if (change.kind !== "ended" || STATUS_DEFINITIONS[change.id].maxHealthBonus === 0) {
+      return;
+    }
+    const { combatant } = record;
+    combatant.health = Math.min(combatant.health, effectiveMaxHealth(combatant));
   }
 
   /**
@@ -4381,7 +4401,12 @@ export class MatchSimulation {
             fired,
           ),
         );
-        bearerHit(attacker.combatant, events, skillHit !== undefined);
+        bearerHit(
+          attacker.combatant,
+          events,
+          skillHit !== undefined,
+          projectile.weaponSnapshot.mainHand.weapon,
+        );
       }
       if (skillHit !== undefined && attacker !== undefined) {
         events.push(
@@ -5068,7 +5093,7 @@ export class MatchSimulation {
       case "on-interval":
         return record.sinceReset >= policy.everySeconds;
       case "below-health":
-        return record.combatant.health < record.combatant.maxHealth * policy.fraction;
+        return record.combatant.health < raisedMaxHealth(record.combatant) * policy.fraction;
       case "on-death":
       case "never":
       case undefined:

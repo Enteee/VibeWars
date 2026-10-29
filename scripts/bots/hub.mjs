@@ -15,6 +15,8 @@
  *   hub request-changes <pr> --sha <commit> <note>  reviewers only
  *     <commit> is the head you reviewed; a verdict on a moved head is refused
  *   hub whoami                       who you are, your role, and what it may do
+ *   hub wiki get|history|diff <Page> ...  a GW1 wiki page as text, live or
+ *                                    from Wayback, and its history (#1380)
  *   hub watch ci <pr> [--note <text>]  told in your inbox when CI on the PR's
  *                                    head ends (#736); hub watch ls, hub watch rm <id>
  *   hub board ls|show|changes ...    hubd's copy of the board, as JSON (what
@@ -119,6 +121,8 @@ if (argv[0] === "whoami") {
   console.log(
     `  ${watches.allow ? "yes" : "no "}  be told when CI on a PR ends (hub watch ci <pr>)`,
   );
+  const wiki = authorize(ROLE, { kind: "wiki", argv: ["get", "x"] }, { acting: ACTING });
+  console.log(`  ${wiki.allow ? "yes" : "no "}  read GW1 wiki pages and their history (hub wiki)`);
   const ranks = authorize(ROLE, { kind: "rank", argv: ["1", "top"] }, { acting: ACTING });
   console.log(`  ${ranks.allow ? "yes" : "no "}  order the board (board rank)`);
 
@@ -152,6 +156,10 @@ if (argv[0] === "push") {
 } else if (argv[0] === "watch") {
   // Told in your inbox when CI on a pull request ends (#736): ci, ls, rm.
   request = { kind: "watch", argv: argv.slice(1) };
+} else if (argv[0] === "wiki") {
+  // A GW1 wiki page, its snapshots, a diff (#1380). hubd checks the words
+  // and does the fetching, outside its one-at-a-time GitHub lane.
+  request = { kind: "wiki", argv: argv.slice(1) };
 } else if (argv[0] === "schedule") {
   // Your own recurring reminders (#678): add, ls, rm. hubd checks the words.
   request = { kind: "schedule", argv: argv.slice(1) };
@@ -271,7 +279,12 @@ if (!daemonAlive) {
 // A fresh heartbeat with a slow request in flight is a busy daemon, not a dead
 // one: say so, once, and wait as usual (#496).
 const BUSY_AFTER_MS = 10_000;
-if (beat?.current != null && Date.now() - beat.current.startedAt > BUSY_AFTER_MS) {
+// A wiki request is not queued behind it (#1380).
+if (
+  request.kind !== "wiki" &&
+  beat?.current != null &&
+  Date.now() - beat.current.startedAt > BUSY_AFTER_MS
+) {
   const seconds = String(Math.round((Date.now() - beat.current.startedAt) / 1000));
   console.error(
     visible(
