@@ -330,6 +330,15 @@ export const SKILL_ICONS = {
   "elementalist.rodgorts-invocation": { glyph: "fireball", modifier: "bleed" },
   "elementalist.fire-storm": { glyph: "meteor-trio", modifier: "hourglass" },
   "elementalist.mind-burn": { glyph: "fireball", modifier: "down" },
+  // Placeholders until the asset-designer's (#1367): Water Magic.
+  "elementalist.ice-prison": { glyph: "snowflake", modifier: "clock" },
+  "elementalist.frozen-burst": { glyph: "snowflake", modifier: "self" },
+  "elementalist.ice-spear": { glyph: "shard", modifier: "bolt" },
+  "elementalist.maelstrom": { glyph: "twister", modifier: "stun" },
+  "elementalist.blurred-vision": { glyph: "eye-slash", modifier: "half" },
+  "elementalist.armor-of-mist": { glyph: "armor", modifier: "plus" },
+  "elementalist.shatterstone": { glyph: "shard", modifier: "hourglass" },
+  "elementalist.mind-freeze": { glyph: "snowflake", modifier: "down" },
   // Placeholders until the asset-designer's (#1403): hex and enchantment gain triggers.
   "necromancer.soul-barbs": { glyph: "hex-barbs", modifier: "plus" },
   "necromancer.defile-defenses": { glyph: "hex-nobloc", modifier: "bolt" },
