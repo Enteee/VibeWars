@@ -2340,6 +2340,53 @@ const skillGlyph = {
   "limp-drain": () =>
     inkLine("M9 3L5 9.5L9 13.5L4 20", 2.8) +
     inkLine("M13 4.5L16.5 8L20 4.5M13 10L16.5 13.5L20 10", 2.2),
+  // A top bar with three icicles hanging from it: the cage of ice (#1440).
+  "ice-cage": () =>
+    inkLine("M4 4.5H20", 2.6) + inkFill("M5 6H9.5L7.2 20ZM9.8 6H14.2L12 21ZM14.5 6H19L16.8 13Z"),
+  // A snowflake inside a dashed ring (a hex): the cold bursts round the caster (#1440).
+  "hex-frost": () =>
+    `<circle cx="12" cy="12" r="9" ${stroke(C.ink, 2.2)} stroke-dasharray="4.4 3.4"/>` +
+    inkLine("M12 6.5V17.5M7.2 9.25L16.8 14.75M7.2 14.75L16.8 9.25", 2.2),
+  // A long spear: a barbed head, a shaft, a fletch (#1440).
+  "spear-ice": () =>
+    inkLine("M3.5 20.5L14 10", 2.4) +
+    inkFill("M21 3L19.5 11.5L12.5 4.5Z") +
+    inkLine("M3.5 14.5L9.5 20.5", 2),
+  // A spiral from the middle out: the whirlpool that tears a spell away (#1440).
+  whirl: () => inkLine("M12 12a2 2 0 0 1 4 0a4 4 0 0 1-8 0a6 6 0 0 1 12 0a8 8 0 0 1-16 0", 2.2),
+  // An eye with a ghost of itself beside it: the foe sees double and misses (#1440).
+  "eye-blur": () =>
+    `<path d="M2 12C4.5 8 7.5 6 11 6S17.5 8 20 12C17.5 16 14.5 18 11 18S4.5 16 2 12Z" ${stroke(C.ink, 2.4)}/>` +
+    `<circle cx="11" cy="12" r="2.8" fill="${C.ink}"/>` +
+    `<path d="M22 12C19.5 8 17 6 15 5.4" ${stroke(C.ink, 1.8)} stroke-dasharray="2 2.4"/>`,
+  // A shield with mist lines drifting across it: armor and speed (#1440).
+  "mist-shield": () =>
+    `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2.2)}/>` +
+    inkLine("M7.5 10c1.5-1.8 3-1.8 4.5 0s3 1.8 4.5 0M7.5 15c1.5-1.8 3-1.8 4.5 0s3 1.8 4.5 0", 2),
+  // A stone split in two, chips flying from the crack: it bursts when it ends (#1440).
+  "stone-split": () =>
+    inkFill("M3 9L9 4L11.5 8L10 12L11.5 15L5 19L2.5 14Z") +
+    inkFill("M15 5.5L21 8.5L20 13L14.5 13.5L14.5 10.5L13 8.5Z") +
+    inkLine("M15 2L16.5 3.5M22 4L21 5.5", 1.8),
+  // A head's outline with a snowflake in it: the mind freezes (#1440).
+  "head-frost": () =>
+    `<circle cx="12" cy="12" r="9.5" ${stroke(C.ink, 2.2)}/>` +
+    inkLine("M12 6.5V17.5M7.2 9.25L16.8 14.75M7.2 14.75L16.8 9.25", 2.2),
+  // The gain trigger: a plus in the top left corner is what the foe gains; the payoff sits below and right (#1440).
+  "gain-barbs": () =>
+    inkLine("M5.5 2.5V9.5M2 6H9", 2.2) +
+    inkFill("M6.5 21.5L10.5 11L14 21.5ZM12.5 21.5L16.5 9.5L21 21.5Z"),
+  "gain-shield": () =>
+    inkLine("M5.5 2.5V9.5M2 6H9", 2.2) +
+    inkFill("M15 9L21.5 11.5V16C21.5 19 18.5 21 15 22.5C11.5 21 8.5 19 8.5 16V11.5Z") +
+    `<path d="M16 12L13 16.5H16.5L14 21" ${stroke(C.bg, 1.8)}/>`,
+  "gain-burst": () =>
+    inkLine("M5.5 2.5V9.5M2 6H9", 2.2) +
+    `<g transform="translate(14.5,15) scale(0.6) translate(-12,-12)">${inkFill(burst(6))}</g>`,
+  // The hex trigger is the dashed ring in the corner; the arrow goes back at its caster (#1440).
+  "hex-return": () =>
+    `<circle cx="6" cy="6" r="3.8" ${stroke(C.ink, 1.8)} stroke-dasharray="2.6 2"/>` +
+    inkLine("M21 21L10.5 10.5M10.5 17V10.5H17", 2.4),
 };
 
 /** The shared spirit post of the attacking spirits, left of the mark it shoots (#1271). */
