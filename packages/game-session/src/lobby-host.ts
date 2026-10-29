@@ -12,6 +12,7 @@ import {
   type LobbyPhase,
   type PeerLobbyJoin,
   type LobbyRefusal,
+  type WireCape,
   type WireChatLine,
   type WireLobbyCommand,
   type WireLobbyNote,
@@ -28,7 +29,7 @@ import { lobbyCharacter } from "./lobby-character.js";
 import type { LobbyCharacter } from "./lobby-connection.js";
 import { createLocalPeer } from "./local-peer.js";
 import { RECONNECT_WINDOW_SECONDS, type MatchHost, type PlannedSeats } from "./match-host.js";
-import { sanitizeChatText, sanitizeGuildTag, sanitizeName } from "./names.js";
+import { sanitizeChatText, sanitizeGuild, sanitizeName } from "./names.js";
 import { admissionDigest, type QueuedSeat } from "./queue-admission.js";
 import { ticketsOf } from "./queue-formation.js";
 import { scopeTransport } from "./scoped-transport.js";
@@ -142,6 +143,8 @@ interface Member {
   name: string;
   /** Sanitised (#1406); `null` for none, and for a bot. */
   guildTag: string | null;
+  /** Sanitised (#1422); `null` for none, and whenever `guildTag` is. */
+  guildCape: WireCape | null;
   team: 0 | 1 | null;
   ready: boolean;
   character: LobbyCharacter | null;
@@ -255,6 +258,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       id: member.id,
       name: member.name,
       guildTag: member.guildTag,
+      guildCape: member.guildCape,
       team: member.team,
       ready: isReady(member),
       isHost: member.id === local.selfId,
@@ -297,6 +301,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
                   team: member.team,
                   name: member.name,
                   guildTag: member.guildTag,
+                  guildCape: member.guildCape,
                   bot: member.bot,
                 },
               ],
@@ -434,6 +439,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       id,
       name,
       guildTag: null,
+      guildCape: null,
       team,
       ready: true,
       character: {
@@ -461,7 +467,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     members.set(from, {
       id: from,
       name: sanitizeName(join.name, `player-${String(joined)}`),
-      guildTag: sanitizeGuildTag(join.guildTag),
+      ...sanitizeGuild(join),
       team,
       ready: false,
       character: lobbyCharacter(join.character),
@@ -581,7 +587,9 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       // team, to confirm again like everyone else when the match is over.
       away.delete(from);
       returning.name = sanitizeName(join.name, returning.name);
-      returning.guildTag = sanitizeGuildTag(join.guildTag);
+      const guild = sanitizeGuild(join);
+      returning.guildTag = guild.guildTag;
+      returning.guildCape = guild.guildCape;
       returning.character = lobbyCharacter(join.character);
       returning.ready = false;
       broadcast();

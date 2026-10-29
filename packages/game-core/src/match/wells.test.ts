@@ -103,6 +103,7 @@ describe("Well of Suffering (#1104)", () => {
     expect(getSkill(WELL)).toMatchObject({
       type: "well",
       elite: false,
+      flash: false,
       attributeId: DEATH,
       cost: { kind: "energy", amount: 10 },
       activationSeconds: 1,

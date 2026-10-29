@@ -11,6 +11,7 @@ import type { CallsSnapshot, GroundEffectSnapshot } from "@vibewars/game-session
 
 import type { AttackCast } from "./attack-clock.js";
 import type { ConditionCue } from "./body-conditions.js";
+import type { CapeLook } from "./cape-shape.js";
 import type { RenderablePing } from "./call-marks.js";
 import type { RenderableCapturePoint, RenderableFlag, RenderableStand } from "./flag-objects.js";
 import { LYING_WIDTH } from "./lying-pose.js";
@@ -34,6 +35,8 @@ export interface RenderableActor {
   readonly name: string;
   /** The player's guild tag (#1406), after the name on its plate; `undefined` for none. */
   readonly guildTag: string | undefined;
+  /** The player's guild cape (#1422), drawn behind a standing body; `undefined` for none. */
+  readonly cape: CapeLook | undefined;
   /** A lobby's bot (#1194): its name plate wears the BOT tag. */
   readonly bot: boolean;
   readonly position: Vec2;

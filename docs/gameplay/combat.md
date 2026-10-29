@@ -732,6 +732,22 @@ recharge, 18 s): you cannot be knocked down, and stopping one does not
 end it; a critical hit on you deals a normal roll, though it still
 counts as a critical for the attacker.
 
+**Flash enchantments** (Dervish, #1421) are instant enchantments on
+yourself, and their tooltip says "Flash Enchantment Spell.". Using one
+keeps your swing: a blow under way lands when it would have, where any
+other skill starts the swing over. A walk keeps walking. It disables your
+other flash enchantments for 1 s (a skill already recharging for longer
+keeps its time); every other skill is free. Nine so far: Aura of Thorns,
+Dust Cloak, Staggering Force, Sand Shards and Fleeting Stability (Earth
+Prayers); Heart of Holy Flame (25 holy damage to nearby foes, holy
+attacks for 30 s, nearby foes burn 4 s when it ends) and Balthazar's
+Rage (nearby foes burn 3 s; when it ends after 20 s, 2 strikes of
+adrenaline if a foe is in earshot), both Mysticism; Harrier's Haste
+(Wind Prayers, 7 s: 25% faster, and 10 more damage on each hit against
+a moving foe); and Enchanted Haste (no attribute, 7 s: 25% faster; if it
+ends before its time, stripped for one, you lose a condition). Attacker's
+Insight waits for a block that holds only while you attack.
+
 **Mantra of Recovery** (Mesmer elite stance, Fast Casting, 5 energy, 15 s
 recharge, #938) makes every spell you finish in the next 17 s recharge
 33% faster. It is read as the recharge starts: a spell finished after the

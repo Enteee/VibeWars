@@ -144,7 +144,7 @@ export const TYPES_BY_GW_ID: ReadonlyMap<
   [30, { text: "Trap", skillType: "trap" }],
   [31, { text: "Ranged Attack", skillType: "attack" }],
   [32, { text: "Ebon Vanguard Ritual", skillType: undefined }],
-  [33, { text: "Flash Enchantment Spell", skillType: undefined }],
+  [33, { text: "Flash Enchantment Spell", skillType: "enchantment" }],
   [38, { text: "Skill", skillType: "skill" }],
   [39, { text: "Spell", skillType: "spell" }],
   [40, { text: "Enchantment Spell", skillType: "enchantment" }],

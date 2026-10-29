@@ -83,7 +83,13 @@ async function runScenario(scenario: Scenario): Promise<Result> {
   const seats: PlannedSeats = new Map(
     Array.from({ length: players }, (_, i) => [
       `bench-${String(i)}`,
-      { team: i % 2 === 0 ? 0 : 1, name: `bench-${String(i)}`, guildTag: null, bot: null } as const,
+      {
+        team: i % 2 === 0 ? 0 : 1,
+        name: `bench-${String(i)}`,
+        guildTag: null,
+        guildCape: null,
+        bot: null,
+      } as const,
     ]),
   );
   const hostRng = createRng(seedFromString(`bench-${scenario.label}`));

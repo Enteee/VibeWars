@@ -6,7 +6,7 @@ import {
   type TrainingScenario,
 } from "@vibewars/game-core";
 import { allWallSegments } from "@vibewars/game-maps/geometry";
-import type { MatchSnapshot, SkillSlot } from "@vibewars/game-session";
+import { NO_GUILD, type MatchSnapshot, type SkillSlot } from "@vibewars/game-session";
 
 import { attachMatchSounds, type MatchSounds } from "../audio/match-sounds.js";
 import { setGlobalMute } from "../audio/global-mute.js";
@@ -114,7 +114,7 @@ import {
   shouldRestoreFocus,
 } from "./training-state.js";
 import { h } from "./kit.js";
-import { playerGuildTag } from "./menu.js";
+import { playerGuild } from "./menu.js";
 import { labelWeaponSets, renderWeaponSets, weaponSetSlots } from "./weapon-set-slots.js";
 
 /**
@@ -639,8 +639,8 @@ export function createTrainingPanel(): TrainingPanel {
       selfId: SELF_ID,
       map: setup.map,
       nameOf,
-      // Your own body wears your tag (#1406): it is your name.
-      guildTagOf: (id) => (id === SELF_ID ? (playerGuildTag() ?? undefined) : undefined),
+      // Your own body wears your tag (#1406), it is your name, and your cape (#1422).
+      guildOf: (id) => (id === SELF_ID ? playerGuild() : NO_GUILD),
       professionsOf,
     });
     session = {

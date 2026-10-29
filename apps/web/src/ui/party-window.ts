@@ -104,6 +104,8 @@ export function partyRows(snapshot: MatchSnapshot): readonly PartyRow[] {
 }
 
 export interface PartyWindow {
+  /** The panel, for what it covers of the arena (#1424); no size while hidden. */
+  readonly element: HTMLElement;
   /** Paint from this frame's snapshot; the DOM is touched only where a row changed. */
   update(snapshot: MatchSnapshot): void;
   dispose(): void;
@@ -317,6 +319,7 @@ export function createPartyWindow(
   let order = "";
 
   return {
+    element: panel,
     update(snapshot) {
       const party = partyRows(snapshot);
       setHidden(panel, party.length === 0);

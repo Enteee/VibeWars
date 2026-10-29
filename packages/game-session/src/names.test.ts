@@ -1,7 +1,13 @@
 import { MAX_CHAT_GRAPHEMES } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
-import { sanitizeChatText, sanitizeGuildTag, sanitizeName } from "./names.js";
+import {
+  sanitizeChatText,
+  sanitizeGuild,
+  sanitizeGuildCape,
+  sanitizeGuildTag,
+  sanitizeName,
+} from "./names.js";
 
 describe("sanitizeName", () => {
   it("keeps a reasonable name as-is", () => {
@@ -221,5 +227,40 @@ describe("sanitizeGuildTag (#1406)", () => {
     for (const raw of [42, null, undefined, ["VIBE"], { tag: "VIBE" }]) {
       expect(sanitizeGuildTag(raw)).toBeNull();
     }
+  });
+});
+
+describe("sanitizeGuildCape (#1422)", () => {
+  const cape = { main: "teal", trim: "teal", emblem: "half-disc" } as const;
+
+  it("keeps a cape of the palette's colours and an emblem, the same colour twice too", () => {
+    expect(sanitizeGuildCape(cape)).toEqual(cape);
+  });
+
+  it("is none for anything else", () => {
+    for (const raw of [
+      null,
+      undefined,
+      "teal",
+      [],
+      { ...cape, main: "red" },
+      { ...cape, emblem: "skull" },
+      { main: "teal", trim: "teal" },
+      { ...cape, extra: 1 },
+    ]) {
+      expect(sanitizeGuildCape(raw)).toBeNull();
+    }
+  });
+
+  it("is none without a valid tag: the cape is the guild's", () => {
+    expect(sanitizeGuild({ guildTag: " Vb ", guildCape: cape })).toEqual({
+      guildTag: "Vb",
+      guildCape: cape,
+    });
+    expect(sanitizeGuild({ guildTag: null, guildCape: cape })).toEqual({
+      guildTag: null,
+      guildCape: null,
+    });
+    expect(sanitizeGuild({ guildTag: "[x]", guildCape: cape }).guildCape).toBeNull();
   });
 });

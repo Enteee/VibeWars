@@ -248,6 +248,8 @@ const ALTAR = "#c8a45a";
 const GLYPH_FONT = "11px sans-serif";
 
 export interface Compass {
+  /** The disc, for what it covers of the arena (#1424). */
+  readonly element: HTMLElement;
   /** Draw this frame's compass for `selfId`; hides it without a self actor. */
   update(arena: ArenaSnapshot, selfId: string): void;
   dispose(): void;
@@ -395,6 +397,7 @@ export function createCompass(parent: HTMLElement, reach: number): Compass {
   };
 
   return {
+    element: canvas,
     update(arena, selfId) {
       // Hidden keeps its box (styles.css), so its size is there to read.
       const sizePx = canvas.clientWidth;
