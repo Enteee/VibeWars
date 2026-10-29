@@ -44,7 +44,7 @@ describe("randomArenaMapPool", () => {
     );
     expect([...pooled].sort()).toEqual(
       ARENA_MAPS.map((map) => map.id)
-        .filter((id) => id !== "guild-hall-isle" && id !== "relic-temples")
+        .filter((id) => !["guild-hall-isle", "relic-temples", "forgotten-shrines"].includes(id))
         .sort(),
     );
   });
@@ -57,17 +57,24 @@ describe("hostMap (#476)", () => {
     );
   });
 
-  it("carries the mode its map names: Kill Count on Pillar Hall, Priest Annihilation on Split Paths, Guild Battle on Guild Hall Isle, Relic Run on Relic Temples, Annihilation elsewhere", () => {
+  it("carries the mode its map names: Kill Count on Pillar Hall, Priest Annihilation on Split Paths, Guild Battle on Guild Hall Isle, Relic Run on Relic Temples, Capture Points on Forgotten Shrines, Annihilation elsewhere", () => {
     expect(hostMap("arena-pillars")?.mode).toBe("kill-count");
     expect(hostMap("arena-split")?.mode).toBe("priest-annihilation");
     expect(hostMap("guild-hall-isle")?.mode).toBe("guild-battle");
     expect(hostMap("relic-temples")?.mode).toBe("relic-run");
+    expect(hostMap("forgotten-shrines")?.mode).toBe("capture-points");
+    expect(hostMap("forgotten-shrines")?.capturePoints).toHaveLength(5);
     for (const map of ARENA_MAPS.filter(
       (candidate) =>
-        !["arena-pillars", "arena-split", "guild-hall-isle", "relic-temples"].includes(
-          candidate.id,
-        ),
+        ![
+          "arena-pillars",
+          "arena-split",
+          "guild-hall-isle",
+          "relic-temples",
+          "forgotten-shrines",
+        ].includes(candidate.id),
     )) {
+      expect(hostMap(map.id)?.capturePoints).toEqual([]);
       expect(hostMap(map.id)?.mode).toBe("annihilation");
     }
   });

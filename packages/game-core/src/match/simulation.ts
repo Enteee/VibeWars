@@ -34,6 +34,7 @@ import {
   MORALE_CEILING,
   MORALE_FLOOR,
   moraleMaximum,
+  POINT_TICK_SECONDS,
   PRIEST_WAVE_SECONDS,
   SHRINE_INVULNERABLE_SECONDS,
   type MatchOutcome,
@@ -116,7 +117,6 @@ import {
   type Outbreak,
   type StatusChange,
   type StatusId,
-  type StatusTriggerEvent,
 } from "../skills/status.js";
 import { effectiveMaxEnergy, energyFloor, recoverOvercast } from "../skills/overcast.js";
 import { resolveMagnitude } from "../skills/scaling.js";
@@ -179,11 +179,13 @@ import {
   weaponSnapshotOf,
 } from "../skills/weapon-attack.js";
 import {
+  breakHex,
   fireChangeTriggers,
   fireCreationTriggers,
   fireTriggers,
   isEchoSkill,
   isEchoStatus,
+  type DirectTriggerEvent,
   type FiredTrigger,
   type SpreadGainedCondition,
   type TriggerContext,
@@ -232,6 +234,12 @@ import {
   type FlagsState,
   type StandState,
 } from "./flags.js";
+import {
+  initialCapturePoints,
+  onCapturePoint,
+  stepCapturePoints,
+  type CapturePoint,
+} from "./capture-points.js";
 import {
   carriedRelic,
   initialRelics,
@@ -604,6 +612,11 @@ export interface MatchSimulationOptions {
    */
   readonly relicField?: RelicField | undefined;
   /**
+   * Capture Points' shrines (#1378), each neutral at the start. Omitted
+   * or `[]`: none.
+   */
+  readonly capturePoints?: readonly Vec2[];
+  /**
    * The Guild Battle's base guards (#1223), each at its post from the
    * start; a team's Bodyguard cuts the damage to its Guild Lord while it
    * lives. Omitted or `[]`: none.
@@ -875,6 +888,10 @@ export class MatchSimulation {
   #relicsState: RelicsState | undefined;
   /** Who reached a relic this step (#1374), in simulation order. */
   #relicArrivals: CarriedArrival[] = [];
+  /** Capture Points' shrines (#1378), who owns each and how far toward whom; `[]` without them. */
+  #capturePoints: readonly CapturePoint[];
+  /** Shrine scorings gone by (#1378): the next is at `POINT_TICK_SECONDS` times one more. */
+  #pointTicks = 0;
   /** The whole second of match clock the Guild Lords' loss caps are for (#1223). */
   #lossSecond = 0;
   /** Every ground effect in the match (#1087), in id order. */
@@ -903,6 +920,7 @@ export class MatchSimulation {
     this.#relicField = options.relicField;
     this.#relicsState =
       this.#relicField === undefined ? undefined : initialRelics(this.#relicField);
+    this.#capturePoints = initialCapturePoints(options.capturePoints ?? []);
     for (const spec of options.participants ?? []) {
       this.add(spec);
     }
@@ -1012,6 +1030,11 @@ export class MatchSimulation {
   /** The altar a relic is run to (#1374); `undefined` on a map without one. */
   public get altar(): Vec2 | undefined {
     return this.#relicField?.altar;
+  }
+
+  /** Every Capture Points shrine (#1378), where it is and who holds it; `[]` on a map without them. */
+  public get capturePoints(): readonly CapturePoint[] {
+    return this.#capturePoints;
   }
 
   /**
@@ -2489,6 +2512,7 @@ export class MatchSimulation {
     this.#priestWave();
     // After every death, before the match end: a point on the last tick counts.
     this.#advanceRelics();
+    this.#advanceCapturePoints(dt);
     // After every death this step, so two teams wiped in it both lose.
     this.checkMatchEnd();
     // After the match end: a lord slain as a boost falls due ends it first.
@@ -3116,10 +3140,7 @@ export class MatchSimulation {
    */
   #fireTriggers(
     record: ParticipantRecord,
-    event: Exclude<
-      StatusTriggerEvent,
-      "bearer-gains-condition" | "bearer-creates-creature" | "ends" | "expires"
-    >,
+    event: DirectTriggerEvent,
     spared: ReadonlySet<StatusId>,
     usedSkill?: SlotSkill,
   ): void {
@@ -3199,11 +3220,15 @@ export class MatchSimulation {
       }
     }
     // A protective spirit still pays for what it did against a triggered
-    // effect (#1265): a payment is not a trigger, so it cannot echo.
+    // effect (#1265): a payment is not a trigger, so it cannot echo. Nor
+    // is a broken hex's damage (#1403), owed for a hex a trigger cast.
     for (const record of this.#participants.values()) {
       for (const change of record.combatant.statuses.drainChanges()) {
         if (change.kind === "charged-source") {
           this.#landCharge(change.toId, change.statusId, change.amount);
+        }
+        if (change.kind === "broke-hex") {
+          this.#logFired(breakHex(record.combatant, change, context));
         }
         this.#loseRaisedHealth(record, change);
       }
@@ -3768,6 +3793,38 @@ export class MatchSimulation {
     this.#relicsState = next;
     for (const team of scored) {
       this.#score = addPoint(this.#score, team);
+    }
+  }
+
+  /**
+   * The step's shrines (#1378), once every death is in, so a player killed
+   * this tick is on none: each moves toward the one team on it, then, at
+   * every `POINT_TICK_SECONDS` of match clock, each scores its owner a
+   * point. The capture comes first, so one taken on the scoring tick scores.
+   */
+  #advanceCapturePoints(dt: number): void {
+    if (this.#capturePoints.length === 0 || this.phase !== "active") {
+      return;
+    }
+    const presence = this.#capturePoints.map((point) =>
+      [...this.#participants.values()].flatMap((record) =>
+        countsForTeam(record) &&
+        !record.combatant.dead &&
+        onCapturePoint(point.position, record.position)
+          ? [record.combatant.team]
+          : [],
+      ),
+    );
+    this.#capturePoints = stepCapturePoints(this.#capturePoints, dt, presence).state;
+    const due = (this.#pointTicks + 1) * POINT_TICK_SECONDS;
+    if (this.#elapsedSeconds + SWING_EPSILON < due) {
+      return;
+    }
+    this.#pointTicks += 1;
+    for (const { owner } of this.#capturePoints) {
+      if (owner !== null) {
+        this.#score = addPoint(this.#score, owner);
+      }
     }
   }
 
@@ -4919,8 +4976,12 @@ export class MatchSimulation {
     if (this.phase !== "active") {
       return;
     }
-    // A Relic Run's score is its relic points (#1374): a kill is none.
-    if (this.#matchRules?.victory === "relic-run") {
+    // A Relic Run's score is its relic points (#1374), Capture Points' its
+    // shrine points (#1378): a kill is none.
+    if (
+      this.#matchRules?.victory === "relic-run" ||
+      this.#matchRules?.victory === "capture-points"
+    ) {
       return;
     }
     const scoringTeam = victimTeam === 0 ? 1 : 0;

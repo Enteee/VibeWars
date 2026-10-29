@@ -346,6 +346,7 @@ describe("carriedBundle (#1225, #1374)", () => {
     aggression: [],
     relics,
     altar: undefined,
+    capturePoints: [],
     summary: undefined,
   });
 

@@ -9,8 +9,8 @@ without one, or with one the game does not know, is refused.
 **Annihilation** (GW1's arenas, #846): defeat every foe. The dead stay
 corpses until resurrected, and each death costs morale. Wipe the other
 team to win; after 8 minutes the highest total morale wins, and there is
-no draw. Every arena but Pillar Hall, Split Paths, Guild Hall Isle and
-Relic Temples plays it.
+no draw. Every arena but Pillar Hall, Split Paths, Guild Hall Isle,
+Relic Temples and Forgotten Shrines plays it.
 
 **Kill Count** (GW1's The Crag): the most kills in 3 minutes. The dead
 respawn at their team's spawn after 8 seconds, and there is no death
@@ -113,5 +113,25 @@ and no number of points ends it early. Kills score nothing. The
 scoreboard reads the points as Kill Count reads kills, `2 – 1 · 6:40`,
 and the line under it names each relic's place: `✦ Name`, `✦ dropped`
 or `✦ at base`. Relic Temples plays it, and no Random Arena does.
+
+**Capture Points** (GW1's Heroes' Ascent, Forgotten Shrines, #1378):
+hold the shrines. A Capture Points map has one to five
+`"capture-point"` objectives, shared by no team; one with none, or more
+than five, is refused. A living player within 60 units of a shrine is
+on it; a creature is not. With one team alone on it, its progress moves
+toward that team at one pip per player, 1/20 of a whole fill a second
+each (20 s alone, 5 s for four, no cap). A shrine the foe owns, or the
+foe's progress on it, is drained to 0 first, where it turns neutral,
+and then fills; at a whole fill the team owns it. Two teams on it
+contest it: nothing moves, and contested at 0 it stays neutral. Nobody
+on it, its progress stays, and an owner never loses it but to a foe.
+Every 30 s of match clock each team scores 1 per shrine it owns; a
+shrine taken in that tick counts, since the captures come first. The
+dead stay down and pay the death penalty; a wipe loses at once. At
+**8 minutes** the team with more points wins, equal points is a draw.
+Kills score nothing. The scoreboard reads the points as Kill Count
+reads kills. Each shrine draws as the flag stand's ring in its owner's
+colour, grey while neutral, with an arc of its progress in the
+capturer's colour. Forgotten Shrines plays it, and no Random Arena does.
 
 How each one ends, in full, is in [combat](combat.md#match-end).

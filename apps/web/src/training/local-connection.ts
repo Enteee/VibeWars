@@ -295,6 +295,7 @@ export function createLocalConnection(options: {
         aggression: simulation.aggressionByTeam,
         relics: simulation.relics,
         altar: simulation.altar,
+        capturePoints: simulation.capturePoints,
         // No match with rules ends here, so there is never a summary (#1057).
         summary: undefined,
       };
