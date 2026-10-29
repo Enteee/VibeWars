@@ -2701,7 +2701,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "paragon.blazing-finale",
     name: "Blazing Finale",
-    gwId: 3028,
+    gwId: 1575,
     type: "echo",
     elite: false,
     profession: "paragon",
@@ -2779,7 +2779,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "paragon.finale-of-restoration",
     name: "Finale of Restoration",
-    gwId: 3062,
+    gwId: 1577,
     type: "echo",
     elite: false,
     profession: "paragon",
@@ -2831,7 +2831,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "paragon.mending-refrain",
     name: "Mending Refrain",
-    gwId: 3149,
+    gwId: 1578,
     type: "echo",
     elite: false,
     profession: "paragon",
