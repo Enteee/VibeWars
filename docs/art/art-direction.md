@@ -852,7 +852,7 @@ it, not baked in, so one file serves every screen.
   spirit-block, spirit-ground, rift-strike, spirit-burn, spirit-energy, bond-spike, tear-fall, spirit-trio, ward-blade, trap-flame, ring-rays, well-sink, echo-spell, echo-skill, hex-mute,
   armor-crack, drop-run, mark-skull, dagger-stop, dagger-limp, palm,
   shield-stance (solid), shield-bar, shield-arrow, shield-blade, born-plus, born-burst, born-ring, born-energy (the spirit post in a halo, and its payout),
-  dagger-crit (a dagger and a four-point spark), shield-crit, blink-heal, blink-fang, blink-ally (the step with a plus, two fangs, a figure), shield-veil, crescent-spark, caltrops, drop-touch, drop-trio, drop-half, drop-weak, drop-barbs, drop-energy (the blood drop with a plus, three drops, a half-full drop, a down arrow, barbs, a bolt), ghost, weight, ache-cross, armor-shrink, speed-break (a whole chevron and a
+  dagger-crit (a dagger and a four-point spark), shield-crit, blink-heal, blink-fang, blink-ally (the step with a plus, two fangs, a figure), shield-veil, crescent-spark, caltrops, spark (a four-point star with a tail), flame-foe, flame-mind (a flame over a figure, over a bare head), flame-ring, flame-burst (short and long rays round a dot), flame-target, flame-field, drop-touch, drop-trio, drop-half, drop-weak, drop-barbs, drop-energy (the blood drop with a plus, three drops, a half-full drop, a down arrow, barbs, a bolt), ghost, weight, ache-cross, armor-shrink, speed-break (a whole chevron and a
   broken one), eye-slash, limp-drain. A
   new primary effect adds a glyph; a new skill adds a row.
 
