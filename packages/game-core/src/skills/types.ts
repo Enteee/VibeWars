@@ -413,6 +413,17 @@ export interface DrainOwnEnergyEffect {
 }
 
 /**
+ * The caster gains a status, with itself as source (#1367): Ice Spear's
+ * "you gain +1...4 Health regeneration for 5 seconds". Acts on the caster,
+ * once however many targets the skill reached, as GW1's "you gain" does.
+ */
+export interface CasterGainsStatusEffect {
+  readonly kind: "caster-gains-status";
+  readonly statusId: StatusId;
+  readonly durationSeconds: number;
+}
+
+/**
  * Apply `effects` to every foe of the caster within `radius` of the
  * effect's target, the target itself excluded (#885), as Death Blossom's
  * "all adjacent foes take 20...40 damage". Not a blow: no block, no crit
@@ -854,6 +865,7 @@ export type UnconditionalEffect =
   | ResurrectEffect
   | ResurrectCompanionsEffect
   | DrainOwnEnergyEffect
+  | CasterGainsStatusEffect
   | RechargeFasterEffect
   | SplashEffect
   | DestroyTargetSpiritEffect

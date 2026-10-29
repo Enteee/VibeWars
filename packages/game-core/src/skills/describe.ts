@@ -1233,6 +1233,14 @@ function describeEffect(
     }
     case "drain-own-energy":
       return { text: "You lose all your remaining energy", magnitude: undefined };
+    case "caster-gains-status":
+      // Ice Spear's "you gain +1...4 Health regeneration for 5 seconds" (#1367).
+      return {
+        text:
+          `You gain ${statusName(effect.statusId)} for ${seconds(effect.durationSeconds)} ` +
+          `(${describeStatus(effect.statusId, ranks)})`,
+        magnitude: undefined,
+      };
     case "destroy-target-spirit":
       return { text: "Destroys target allied spirit", magnitude: undefined };
     case "destroy-allied-spirits":

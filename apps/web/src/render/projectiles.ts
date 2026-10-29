@@ -28,6 +28,7 @@ export const SKILL_SPRITE: Readonly<Record<string, ProjectileSprite>> = {
   "elementalist.flare": "fireball",
   "elementalist.lightning-orb": "lightning-orb",
   "elementalist.shard-storm": "ice-shard",
+  "elementalist.ice-spear": "ice-shard",
   "elementalist.water-trident": "water-trident",
   "elementalist.ebon-hawk": "ebon-hawk",
   "elementalist.stoning": "stone",

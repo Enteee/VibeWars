@@ -10452,6 +10452,326 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     ],
   },
   /* ---------------------------------------------------------------------- */
+  /* Elementalist Water Magic staples (#1367)                               */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "elementalist.ice-prison",
+    name: "Ice Prison",
+    gwId: 210,
+    type: "hex",
+    elite: false,
+    profession: "elementalist",
+    attributeId: "elementalist.water-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 8...18...20 seconds, target foe's legs are encased in ice,
+    // causing the foe to move 66% slower."
+    effects: [{ kind: "apply-status", statusId: "ice-prison", durationSeconds: 18 }],
+  },
+  {
+    id: "elementalist.frozen-burst",
+    name: "Frozen Burst",
+    gwId: 212,
+    type: "hex",
+    elite: false,
+    profession: "elementalist",
+    attributeId: "elementalist.water-magic",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "self",
+    // "All nearby foes are struck for 10...70...85 cold damage and move 66%
+    // slower for 3...7...8 seconds": around the caster, as Flame Burst's.
+    area: {
+      radius: AREA_NEARBY,
+      origin: "caster",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.water-magic", atZero: 10, atTwelve: 70 },
+        },
+        type: "cold",
+        armorPenetration: 0,
+      },
+      { kind: "apply-status", statusId: "frozen-burst", durationSeconds: 7 },
+    ],
+  },
+  {
+    id: "elementalist.ice-spear",
+    name: "Ice Spear",
+    gwId: 214,
+    // An "Enchantment Spell" in GW1 by label only: nothing is placed on
+    // anyone, so a spell.
+    type: "spell",
+    elite: false,
+    profession: "elementalist",
+    attributeId: "elementalist.water-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 0,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    // "Send out an Ice Spear": it flies as Fireball does, so a foe who
+    // steps out of where it is led to takes nothing, and its caster gains
+    // nothing.
+    projectile: { speed: RANGE_SPELL },
+    // "...striking target foe for 10...50...60 cold damage if it hits. If
+    // you are Overcast, you gain +1...3...4 Health regeneration for 5
+    // seconds."
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.water-magic", atZero: 10, atTwelve: 50 },
+        },
+        type: "cold",
+        armorPenetration: 0,
+      },
+      {
+        kind: "if",
+        condition: { kind: "caster-overcast" },
+        effects: [{ kind: "caster-gains-status", statusId: "ice-spear", durationSeconds: 5 }],
+      },
+    ],
+  },
+  {
+    id: "elementalist.maelstrom",
+    name: "Maelstrom",
+    gwId: 215,
+    type: "spell",
+    elite: false,
+    profession: "elementalist",
+    attributeId: "elementalist.water-magic",
+    cost: { kind: "energy", amount: 15 },
+    // Exhaustion (#461), at the corpus's 10.
+    overcast: 10,
+    activationSeconds: 1.5,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Create a Maelstrom at target foe's location. For 10 seconds, foes
+    // adjacent to that area are struck for 10...22...25 cold damage each
+    // second. Maelstrom interrupts spell-casting when it hits": it stays
+    // where they stood as the cast ended, as Meteor Shower's, and each
+    // pulse interrupts a spell, never an attack nor a chant.
+    effects: [
+      {
+        kind: "create-ground-effect",
+        anchor: "target",
+        durationSeconds: { flat: 10 },
+        act: {
+          kind: "pulse",
+          pulse: {
+            count: 10,
+            everySeconds: 1,
+            delaySeconds: 0,
+            area: {
+              radius: AREA_ADJACENT,
+              origin: "caster",
+              affects: "enemies",
+              maxTargets: undefined,
+              includesCaster: false,
+            },
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "elementalist.water-magic", atZero: 10, atTwelve: 22 },
+                },
+                type: "cold",
+                armorPenetration: 0,
+              },
+              { kind: "interrupt", only: "spell" },
+            ],
+          },
+        },
+      },
+    ],
+  },
+  {
+    id: "elementalist.blurred-vision",
+    name: "Blurred Vision",
+    gwId: 235,
+    type: "hex",
+    elite: false,
+    profession: "elementalist",
+    attributeId: "elementalist.water-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    // "For 4...9...10 seconds, target foe and adjacent foes are hexed with
+    // Blurred Vision. While hexed, those foes have a 50% chance to miss
+    // with attacks."
+    area: {
+      radius: AREA_ADJACENT,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    effects: [{ kind: "apply-status", statusId: "blurred-vision", durationSeconds: 9 }],
+  },
+  {
+    id: "elementalist.armor-of-mist",
+    name: "Armor of Mist",
+    gwId: 238,
+    type: "enchantment",
+    elite: false,
+    profession: "elementalist",
+    attributeId: "elementalist.water-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 8...18...20 seconds, you gain +10...34...40 armor and move 33%
+    // faster."
+    effects: [{ kind: "apply-status", statusId: "armor-of-mist", durationSeconds: 18 }],
+  },
+  {
+    id: "elementalist.shatterstone",
+    name: "Shatterstone",
+    gwId: 809,
+    type: "hex",
+    elite: true,
+    profession: "elementalist",
+    attributeId: "elementalist.water-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe is struck for 25...85...100 cold damage, moves 66% slower,
+    // and is hexed with Shatterstone for 3 seconds." Its end's burst is the
+    // hex's own trigger.
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.water-magic", atZero: 25, atTwelve: 85 },
+        },
+        type: "cold",
+        armorPenetration: 0,
+      },
+      { kind: "apply-status", statusId: "shatterstone", durationSeconds: 3 },
+    ],
+  },
+  {
+    id: "elementalist.mind-freeze",
+    name: "Mind Freeze",
+    // The base record; its numbers are the PvP split's (2803), 10 energy.
+    gwId: 209,
+    type: "hex",
+    elite: true,
+    profession: "elementalist",
+    attributeId: "elementalist.water-magic",
+    cost: { kind: "energy", amount: 10 },
+    // Exhaustion (#461), at the corpus's 5.
+    overcast: 5,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe takes 10...50...60 cold damage. If you have more Energy
+    // than target foe, that foe suffers an additional 10...50...60 cold
+    // damage and moves 90% slower for 1...4...5 seconds." Equal is not more.
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.water-magic", atZero: 10, atTwelve: 50 },
+        },
+        type: "cold",
+        armorPenetration: 0,
+      },
+      {
+        kind: "if",
+        condition: { kind: "caster-more-energy" },
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "elementalist.water-magic", atZero: 10, atTwelve: 50 },
+            },
+            type: "cold",
+            armorPenetration: 0,
+          },
+          { kind: "apply-status", statusId: "mind-freeze", durationSeconds: 4 },
+        ],
+      },
+    ],
+  },
+  /* ---------------------------------------------------------------------- */
   /* Warrior Hammer Mastery staples (#1357)                                 */
   /* ---------------------------------------------------------------------- */
   {

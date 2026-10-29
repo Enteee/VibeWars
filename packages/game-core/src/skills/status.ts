@@ -231,7 +231,15 @@ export type StatusId =
   | "finale-of-restoration"
   | "hasty-refrain"
   | "mending-refrain"
-  | "purifying-finale";
+  | "purifying-finale"
+  // Elementalist Water Magic staples (#1367).
+  | "ice-prison"
+  | "frozen-burst"
+  | "ice-spear"
+  | "blurred-vision"
+  | "armor-of-mist"
+  | "shatterstone"
+  | "mind-freeze";
 
 /** Health one pip of regeneration or degeneration is worth, per second (GW1). */
 export const HEALTH_PER_PIP = 2;
@@ -2308,6 +2316,67 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
         skillId: "paragon.purifying-finale",
       },
     ],
+  }),
+  // "For 8...20 seconds, target foe's legs are encased in ice, causing the
+  // foe to move 66% slower" (#1367).
+  "ice-prison": define("ice-prison", "Ice Prison", "hex", {
+    profession: "elementalist",
+    moveSpeedMultiplier: 0.34,
+  }),
+  // "...and move 66% slower for 3...8 seconds" (#1367).
+  "frozen-burst": define("frozen-burst", "Frozen Burst", "hex", {
+    profession: "elementalist",
+    moveSpeedMultiplier: 0.34,
+  }),
+  // "If you are Overcast, you gain +1...4 Health regeneration for 5
+  // seconds" (#1367): 3, its rank-12 value. Nothing GW1 removes: Ice Spear
+  // is an enchantment by label only.
+  "ice-spear": define("ice-spear", "Ice Spear", "skill-effect", {
+    profession: "elementalist",
+    healthPips: 3,
+  }),
+  // "While hexed, those foes have a 50% chance to miss with attacks" (#1367).
+  "blurred-vision": define("blurred-vision", "Blurred Vision", "hex", {
+    profession: "elementalist",
+    attackMissChance: 0.5,
+  }),
+  // "...you gain +10...40 armor and move 33% faster" (#1367): +34, its
+  // rank-12 value.
+  "armor-of-mist": define("armor-of-mist", "Armor of Mist", "enchantment", {
+    profession: "elementalist",
+    armorModifier: 34,
+    moveSpeedMultiplier: 1.33,
+  }),
+  // "...moves 66% slower, and is hexed with Shatterstone for 3 seconds.
+  // When Shatterstone ends, that foe and all nearby foes are struck for
+  // 25...100 cold damage" (#1367): 85, its rank-12 value, by its caster.
+  // Any end, a removal included: GW1 says "ends". The splash leaves the
+  // bearer out, so it is struck once.
+  shatterstone: define("shatterstone", "Shatterstone", "hex", {
+    profession: "elementalist",
+    moveSpeedMultiplier: 0.34,
+    triggers: [
+      {
+        on: "ends",
+        effects: [
+          { kind: "damage", amount: { flat: 85 }, type: "cold", armorPenetration: 0 },
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_NEARBY,
+            maxTargets: undefined,
+            effects: [{ kind: "damage", amount: { flat: 85 }, type: "cold", armorPenetration: 0 }],
+          },
+        ],
+        target: "bearer",
+        skillId: "elementalist.shatterstone",
+      },
+    ],
+  }),
+  // "...and moves 90% slower for 1...5 seconds" (#1367).
+  "mind-freeze": define("mind-freeze", "Mind Freeze", "hex", {
+    profession: "elementalist",
+    moveSpeedMultiplier: 0.1,
   }),
 };
 
