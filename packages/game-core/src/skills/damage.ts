@@ -11,7 +11,7 @@ import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
 import { isAttacking, signetsOnBar } from "./attacking.js";
 import { aggregateModifiers } from "./status.js";
-import { armorReductionOf, effectiveMaxHealth, rankOf } from "./tick.js";
+import { armorReductionOf, effectiveMaxHealth, raisedMaxHealth, rankOf } from "./tick.js";
 import type { Combatant, CreatureLevel } from "./types.js";
 
 /**
@@ -161,7 +161,7 @@ function conditionHolds(
     case "no-enchantment":
       return target.statuses.countByCategory("enchantment") === 0;
     case "health-below":
-      return target.health < condition.fraction * target.maxHealth;
+      return target.health < condition.fraction * raisedMaxHealth(target);
     case "controls-at-least":
       return target.controlled[condition.creature] >= condition.count;
     case "activating":
