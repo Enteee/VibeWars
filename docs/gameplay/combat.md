@@ -372,6 +372,20 @@ block, a blow armor takes to 0, fire or lightning, and degeneration do
 nothing, and two marked targets side by side never set each other off.
 The blow that kills the target still splashes, from where it fell.
 
+Six more Curses hexes, at their rank-12 numbers (#1332). **Barbs** (30 s):
+each physical hit on the target deals 14 more; a spell's damage gets
+nothing. **Price of Failure** (30 s): the target misses 25% of its
+attacks, and each blow of its that fails to hit, missed or blocked,
+costs it 37 typeless damage from the caster. A blow whose target died or
+dodged is not a fail. On a Blinded foe the miss chance stays blind's,
+and only the damage is new. **Suffering** (25 s) puts −2 health
+degeneration on the target and every foe of yours near it, each its own
+hex. **Lingering Curse** (elite, 25 s) does the same with −3 and 25%
+less healing. **Defile Flesh** (29 s): the target gets two thirds of every
+heal; with Lingering Curse too, the healing floor of 60% holds.
+**Rigor Mortis** (18 s): the target cannot block at all, from any
+attacker, whatever stance it is in.
+
 **Life steal** (Vampiric Gaze steals 52 at Blood Magic 12, Insidious
 Parasite 39) is not damage. The target loses up to that much, never more
 than it has, and the caster gains exactly what was taken, up to its

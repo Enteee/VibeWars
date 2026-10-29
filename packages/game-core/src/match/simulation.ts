@@ -152,6 +152,7 @@ import {
   attackHitRiders,
   attackReached,
   bearerAttacked,
+  bearerFailedToHit,
   bearerHit,
   blindMisses,
   blocks,
@@ -3897,6 +3898,7 @@ export class MatchSimulation {
       // Only a flying attack is released here.
       bearerAttacked(record.combatant, events, "projectile");
       if (blindMisses(record.combatant, this.#rng)) {
+        bearerFailedToHit(record.combatant);
         return [...events, { kind: "attack-missed", targetId: target.id }];
       }
     }
@@ -4010,6 +4012,9 @@ export class MatchSimulation {
     ) {
       blocked = true;
       events.push({ kind: "attack-blocked", targetId: target.id });
+      if (attacker !== undefined) {
+        bearerFailedToHit(attacker.combatant);
+      }
       attackReached(target.combatant, events);
       events.push(...riders(skillHit?.skill.attack?.onBlocked ?? []));
     } else {
