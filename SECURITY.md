@@ -495,6 +495,15 @@ lists per watched pull request a minute, from the shared REST budget. Moving a c
 until every open PR that closes it is green, by the merge gate's own
 reading of the jobs.
 
+**Wiki reads (#1380).** Any employee may ask hubd for a GW1 wiki page,
+its Wayback snapshots, or a diff of two (`hub wiki`). hubd fetches from
+two fixed origins only, `wiki.guildwars.com` and `web.archive.org`, with
+the page name percent-encoded into a fixed path, no credential and a 15 s
+timeout per request. At most two run at once, beside the gh lane, so a
+slow Wayback cannot stall a merge. Accepted risk: the wiki is editable by
+anyone, so a page is untrusted text, read as information like an issue
+body; the answer goes only to the asker.
+
 **Peek (#19).** `agent-turn.mjs` on the host records each employee's
 recent output under `$VIBEWARS_BOT_ROOT/peek` (mode 700, files 600),
 bound read-only into the manager's jail and no other. No jail holds a
