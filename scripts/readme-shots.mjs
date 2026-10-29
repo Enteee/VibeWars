@@ -227,11 +227,15 @@ const served = options.url === undefined ? await serve() : undefined;
 const url = options.url ?? served?.url ?? "";
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), "readme-shots-png-"));
 const executablePath = process.env.VIBEWARS_CHROMIUM;
-const browser = await chromium.launch({
-  ...(executablePath === undefined ? {} : { executablePath }),
-  args: ["--no-sandbox"],
-});
+// Launched inside the try, so a browser that fails to start still stops the server.
+/** @type {import("@playwright/test").Browser | undefined} */
+let browser;
 try {
+  step = "launch chromium";
+  browser = await chromium.launch({
+    ...(executablePath === undefined ? {} : { executablePath }),
+    args: ["--no-sandbox"],
+  });
   const page = await browser.newPage({
     viewport: { width: 1280, height: 720 },
     deviceScaleFactor: 1,
@@ -254,7 +258,7 @@ try {
   console.error(error);
   process.exitCode = 1;
 } finally {
-  await browser.close();
+  await browser?.close();
   fs.rmSync(dir, { recursive: true, force: true });
   served?.stop();
 }
