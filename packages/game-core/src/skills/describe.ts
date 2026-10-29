@@ -1,5 +1,11 @@
 import { MAX_ATTRIBUTE_RANK } from "../attributes.js";
-import { AREA_ADJACENT, AREA_EARSHOT, AREA_IN_THE_AREA, AREA_NEARBY } from "../distances.js";
+import {
+  AREA_ADJACENT,
+  AREA_EARSHOT,
+  AREA_IN_THE_AREA,
+  AREA_NEARBY,
+  RANGE_SPELL,
+} from "../distances.js";
 import { WEAPONS } from "../equipment/weapons.js";
 import {
   SPAWNING_POWER_ATTRIBUTE,
@@ -299,6 +305,11 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   }
   if (definition.energyPerCritical !== 0) {
     parts.push(`gain ${String(definition.energyPerCritical)} Energy per critical hit`);
+  }
+  if (definition.healthPerCritical !== 0) {
+    parts.push(
+      `whenever you successfully land a critical hit, you gain ${String(definition.healthPerCritical)} Health`,
+    );
   }
   if (definition.refreshesOnCritical) {
     parts.push("refreshes every time you land a critical hit");
@@ -1120,7 +1131,13 @@ function describeEffect(
         magnitude: undefined,
       };
     case "shadow-step":
-      return { text: "Shadow steps to the target", magnitude: undefined };
+      return {
+        text:
+          effect.to === "target"
+            ? "Shadow steps to the target"
+            : "Shadow Step to a nearby location directly away from your target",
+        magnitude: undefined,
+      };
     case "resurrect": {
       // "13% health and 3% energy per party member in earshot",
       // "your health after losing half and 17% energy" (#474).
@@ -1689,6 +1706,11 @@ export function describeSkill(
     skill.projectile === undefined
       ? []
       : [{ text: "Projectile: can be dodged", magnitude: undefined }];
+  // "This spell has half the normal range" (#1326): Caltrops, the daggers.
+  const halfRange =
+    skill.target !== "self" && skill.range === RANGE_SPELL / 2
+      ? [{ text: "Half the normal range", magnitude: undefined }]
+      : [];
   // A skill that exploits a corpse (#466) says so before what it does.
   const corpseLine =
     skill.corpse === undefined
@@ -1721,6 +1743,7 @@ export function describeSkill(
     ...whileActivating,
     ...easilyInterrupted,
     ...projectile,
+    ...halfRange,
     ...companionLine,
   ];
   const { target, range } = targetAndRange(skill);

@@ -28,6 +28,12 @@ export const AREA_IN_THE_AREA = 109;
  */
 export const AREA_EARSHOT = 350;
 /**
+ * How far Heart of Shadow's "Shadow Step to a nearby location directly
+ * away from your target" goes (#1326). The corpus gives no number: this is
+ * ours, half of earshot, to tune in play.
+ */
+export const SHADOW_STEP_AWAY_DISTANCE = AREA_EARSHOT / 2;
+/**
  * Spirit range, where Soul Reaping hears a death (#530). GW1's is about
  * 2,500 units, rescaled by the same ~0.34 as `AREA_EARSHOT` and
  * `RANGE_SPELL`.
