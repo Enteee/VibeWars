@@ -1,5 +1,6 @@
 import {
   distancePointToSegment,
+  GUARD_ROLE_IDS,
   MINIMAL_GW_INSPIRED_PVP_V1,
   type MatchMode,
 } from "@vibewars/game-core";
@@ -43,8 +44,9 @@ const spawnPointSchema = z.object({
 
 /**
  * A map objective: a team's Resurrection Shrine (#1186), where its dead
- * come back and Priest Annihilation's priest stands, or where a Guild
- * Battle's Guild Lord stands (#1222).
+ * come back and Priest Annihilation's priest stands, where a Guild
+ * Battle's Guild Lord stands (#1222), one of its base guards' posts
+ * (#1223), or its flag stand and where each team's flag starts (#1225).
  */
 const objectiveSchema = z.discriminatedUnion("kind", [
   z.object({
@@ -57,18 +59,48 @@ const objectiveSchema = z.discriminatedUnion("kind", [
     team: z.number().int().nonnegative(),
     position: vec2Schema,
   }),
+  z.object({
+    kind: z.literal("guard"),
+    team: z.number().int().nonnegative(),
+    role: z.enum(GUARD_ROLE_IDS),
+    position: vec2Schema,
+  }),
+  z.object({
+    kind: z.literal("flag-spawn"),
+    team: z.number().int().nonnegative(),
+    position: vec2Schema,
+  }),
+  z.object({
+    kind: z.literal("flag-stand"),
+    position: vec2Schema,
+  }),
 ]);
 
-/** Which objectives each mode has, one a spawning team; none for a mode not here. */
-const OBJECTIVES_BY_MODE: Readonly<Partial<Record<MatchMode, readonly Objective["kind"][]>>> = {
+/** An objective that belongs to no team: the map has one, or none. */
+type SharedKind = Extract<Objective, { kind: "flag-stand" }>["kind"];
+type TeamKind = Exclude<Objective["kind"], SharedKind>;
+
+/** Which team objectives each mode may have; none for a mode not here. */
+const OBJECTIVES_BY_MODE: Readonly<Partial<Record<MatchMode, readonly TeamKind[]>>> = {
   "priest-annihilation": ["resurrection-shrine"],
-  "guild-battle": ["resurrection-shrine", "guild-lord"],
+  "guild-battle": ["resurrection-shrine", "guild-lord", "guard", "flag-spawn"],
 };
+
+/** Which modes have exactly one of each shared objective; none for a mode not here. */
+const SHARED_OBJECTIVES_BY_MODE: Readonly<Partial<Record<MatchMode, readonly SharedKind[]>>> = {
+  "guild-battle": ["flag-stand"],
+};
+
+/** The kinds a map of a mode that has them has exactly one of per spawning team. */
+const ONE_PER_TEAM: readonly TeamKind[] = ["resurrection-shrine", "guild-lord", "flag-spawn"];
 
 /** What a map calls each objective kind, in its validation messages. */
 const OBJECTIVE_NAMES: Readonly<Record<Objective["kind"], string>> = {
   "resurrection-shrine": "resurrection shrine",
   "guild-lord": "Guild Lord",
+  guard: "guard",
+  "flag-spawn": "flag spawn",
+  "flag-stand": "flag stand",
 };
 
 /** A body's radius: an objective stands clear of every wall and edge by one. */
@@ -92,8 +124,10 @@ export const mapDataSchema = z
   })
   .superRefine((map, context) => {
     const kinds = OBJECTIVES_BY_MODE[map.mode] ?? [];
+    const shared = SHARED_OBJECTIVES_BY_MODE[map.mode] ?? [];
+    const allowed: readonly Objective["kind"][] = [...kinds, ...shared];
     for (const kind of new Set(map.objectives.map((objective) => objective.kind))) {
-      if (!kinds.includes(kind)) {
+      if (!allowed.includes(kind)) {
         context.addIssue({
           code: "custom",
           path: ["objectives"],
@@ -101,8 +135,18 @@ export const mapDataSchema = z
         });
       }
     }
+    for (const kind of shared) {
+      const count = map.objectives.filter((objective) => objective.kind === kind).length;
+      if (count !== 1) {
+        context.addIssue({
+          code: "custom",
+          path: ["objectives"],
+          message: `a ${map.mode} map has ${String(count)} ${OBJECTIVE_NAMES[kind]}s, not one`,
+        });
+      }
+    }
     const teams = new Set(map.spawnPoints.map((spawn) => spawn.team));
-    for (const kind of kinds) {
+    for (const kind of kinds.filter((each) => ONE_PER_TEAM.includes(each))) {
       for (const team of teams) {
         const count = map.objectives.filter(
           (objective) => objective.kind === kind && objective.team === team,
@@ -116,6 +160,19 @@ export const mapDataSchema = z
         }
       }
     }
+    for (const team of teams) {
+      const bodyguards = map.objectives.filter(
+        (objective) =>
+          objective.kind === "guard" && objective.team === team && objective.role === "bodyguard",
+      ).length;
+      if (bodyguards > 1) {
+        context.addIssue({
+          code: "custom",
+          path: ["objectives"],
+          message: `team ${String(team)} has ${String(bodyguards)} bodyguards, at most one`,
+        });
+      }
+    }
     const walls = allWallSegments(map.walls);
     map.objectives.forEach((objective, index) => {
       const { x, y } = objective.position;
@@ -127,11 +184,12 @@ export const mapDataSchema = z
       const clear = walls.every(
         (wall) => distancePointToSegment(objective.position, wall) >= BODY_RADIUS,
       );
-      if (!teams.has(objective.team) || !inBounds || !clear) {
+      const teamed = objective.kind === "flag-stand" || teams.has(objective.team);
+      if (!teamed || !inBounds || !clear) {
         context.addIssue({
           code: "custom",
           path: ["objectives", index],
-          message: `objective ${String(index)} must be a spawning team's, on the map and a body clear of every wall`,
+          message: `objective ${String(index)} must be a spawning team's or shared, on the map and a body clear of every wall`,
         });
       }
     });

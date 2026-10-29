@@ -7,6 +7,7 @@
  * and one state directory.
  */
 import fs from "node:fs";
+import net from "node:net";
 import path from "node:path";
 
 /**
@@ -31,9 +32,10 @@ import path from "node:path";
  */
 
 /**
- * Peers a relay must never reach: this host, its LAN, the carrier's NAT and
+ * Peers a relay must never reach: loopback, the LAN, the carrier's NAT and
  * the cloud metadata service. Without them a TURN server is an open proxy
- * into the network it stands in. coturn takes ranges, not CIDRs.
+ * into the network it stands in. coturn takes ranges, not CIDRs. The
+ * unspecified address `::` is not here: coturn reads it as every address.
  */
 export const DENIED_PEERS = [
   { cidr: "0.0.0.0/8", range: "0.0.0.0-0.255.255.255" },
@@ -46,7 +48,6 @@ export const DENIED_PEERS = [
   { cidr: "192.168.0.0/16", range: "192.168.0.0-192.168.255.255" },
   { cidr: "198.18.0.0/15", range: "198.18.0.0-198.19.255.255" },
   { cidr: "240.0.0.0/4", range: "240.0.0.0-255.255.255.255" },
-  { cidr: "::/128", range: "::" },
   { cidr: "::1/128", range: "::1" },
   // IPv4 in IPv6: a mapped or NAT64 peer reaches what the ranges above deny.
   { cidr: "::ffff:0:0/96", range: "::ffff:0.0.0.0-::ffff:255.255.255.255" },
@@ -56,10 +57,13 @@ export const DENIED_PEERS = [
 ];
 
 /**
- * The host's own addresses, also refused as peers: a relay to the host's
- * public address sends from that address, past any firewall rule that
- * trusts it. Both halves of a `public/private` externalIp, externalIp6
- * and every listening IP, each once.
+ * The host's own addresses: both halves of a `public/private` externalIp,
+ * externalIp6 and every listening IP, each once. The wildcards `0.0.0.0`
+ * and `::` are no address of the host's and are left out.
+ *
+ * They are allowed as peers, so two players on one relay reach each
+ * other's relayed address. turnNft keeps a relay from reaching anything
+ * else on them.
  *
  * @param {TurnSettings} s
  * @returns {string[]}
@@ -70,7 +74,16 @@ export function ownAddresses(s) {
     ...(s.externalIp6 === null ? [] : [s.externalIp6]),
     ...s.listeningIps,
   ];
-  return [...new Set(all)];
+  return [...new Set(all)].filter((ip) => ip !== "0.0.0.0" && ip !== "::");
+}
+
+/**
+ * Loopback is never allowed as a peer, not even when it is an own address.
+ *
+ * @param {string} ip
+ */
+function loopback(ip) {
+  return ip === "::1" || (net.isIPv4(ip) && ip.startsWith("127."));
 }
 
 /** @param {TurnSettings} s */
@@ -81,6 +94,7 @@ export function files(s) {
     log: path.join(s.stateDir, "turn.log"),
     pid: path.join(s.stateDir, "turnserver.pid"),
     healthSecret: path.join(s.stateDir, "health.secret"),
+    nft: path.join(s.stateDir, "turn.nft"),
   };
 }
 
@@ -152,6 +166,12 @@ export function parseSettings(value) {
   if ((settings.cert === null) !== (settings.key === null)) {
     throw new Error("turn settings: cert and key go together");
   }
+  // Each own address lands in allowed-peer-ip and in one nft family; a
+  // name would be allowed by coturn and dropped by neither family.
+  const notIp = ownAddresses(settings).find((ip) => net.isIP(ip) === 0);
+  if (notIp !== undefined) {
+    throw new Error(`turn settings: ${notIp} is not an IP address`);
+  }
   return settings;
 }
 
@@ -162,8 +182,8 @@ export function tls(s) {
 
 /**
  * turnserver.conf for these settings: long-term credentials from the
- * SQLite userdb, no CLI, UDP relays only, every DENIED_PEERS range and the
- * host's own addresses refused, and metrics on localhost only.
+ * SQLite userdb, no CLI, UDP relays only, every DENIED_PEERS range
+ * refused but the host's own addresses, and metrics on localhost only.
  *
  * @param {TurnSettings} s
  * @returns {string}
@@ -187,7 +207,11 @@ export function turnserverConf(s) {
     "no-multicast-peers",
     "no-tcp-relay",
     ...DENIED_PEERS.map((d) => `denied-peer-ip=${d.range}`),
-    ...ownAddresses(s).map((ip) => `denied-peer-ip=${ip}`),
+    // coturn maps a peer at the public externalIp to its private half, which
+    // a range above denies: allow both, so relay to relay works (#1266).
+    ...ownAddresses(s)
+      .filter((ip) => !loopback(ip))
+      .map((ip) => `allowed-peer-ip=${ip}`),
     `user-quota=${String(s.userQuota)}`,
     `total-quota=${String(s.totalQuota)}`,
     `max-bps=${String(s.maxBps)}`,
@@ -207,6 +231,45 @@ export function turnserverConf(s) {
     // Session starts, ends and auth failures are only logged in verbose mode.
     "verbose",
     `pidfile=${f.pid}`,
+  ];
+  return `${lines.join("\n")}\n`;
+}
+
+/**
+ * turn.nft for these settings (#1266): the host's own addresses are allowed
+ * as peers, so this drops what a relay socket sends to one of them outside
+ * the relay range. Relay to relay still works; the host's other UDP
+ * services stay out of reach. It matches coturn's relay sockets by their
+ * source port. The operator loads it as root (docs/development/turn.md).
+ *
+ * @param {TurnSettings} s
+ * @returns {string}
+ */
+export function turnNft(s) {
+  const relay = `${String(s.relayPorts.min)}-${String(s.relayPorts.max)}`;
+  const own = ownAddresses(s);
+  /** @param {string} family @param {string[]} ips */
+  const rule = (family, ips) =>
+    ips.length === 0
+      ? []
+      : [`    ${family} daddr { ${ips.join(", ")} } udp sport ${relay} udp dport != ${relay} drop`];
+  const lines = [
+    "# Generated by scripts/turn/settings.mjs (#1266). Read it, install a root-owned copy, load that (docs/development/turn.md)",
+    "table inet vibewars_turn",
+    "delete table inet vibewars_turn",
+    "table inet vibewars_turn {",
+    "  chain output {",
+    "    type filter hook output priority 0; policy accept;",
+    ...rule(
+      "ip",
+      own.filter((ip) => net.isIPv4(ip)),
+    ),
+    ...rule(
+      "ip6",
+      own.filter((ip) => net.isIPv6(ip)),
+    ),
+    "  }",
+    "}",
   ];
   return `${lines.join("\n")}\n`;
 }

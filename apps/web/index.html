@@ -11,10 +11,18 @@
   </head>
   <body>
     <div id="app">
+      <!-- The shown screen's place and controls, then the global icons (#1272). -->
       <header id="topbar">
-        <span class="brand">VibeWars</span>
+        <nav class="topbar-crumbs" aria-label="Where you are">
+          <span class="topbar-crumb is-place">VibeWars</span>
+        </nav>
+        <span class="topbar-back"></span>
+        <span class="topbar-status"></span>
         <span id="status" class="status" hidden></span>
-        <div id="topbar-actions" class="topbar-actions"></div>
+        <div class="topbar-tools">
+          <div class="topbar-screen-actions"></div>
+          <div id="topbar-actions" class="topbar-actions"></div>
+        </div>
       </header>
       <!-- Menu / character / team / lobby screens. -->
       <div id="screens"></div>

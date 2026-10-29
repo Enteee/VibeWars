@@ -652,7 +652,10 @@ editor, placing a second elite takes the first one's place on the bar
 and says so ("Broad Head Arrow replaced Barrage: only one elite skill per
 bar."); the library's Elite toggle lists only elites. A bar with two
 elites, from an import or storage, cannot be saved, and a match plays a
-starter build instead (#852).
+starter build instead (#852). On the main menu such a character is
+striped red and tagged Invalid, and cannot be chosen until it is fixed
+(#1290). An empty bar is a legal build: it plays as itself, auto-attack
+only.
 
 **Stances** are yours alone, and only one is up at a time. Using a
 stance ends the one you are in, the same one included, which restarts
@@ -867,6 +870,25 @@ Ritualist's first condition removal (#1022).
 Mend Body and Soul also removes one condition from the ally for each
 spirit, any team's, in earshot of the ally, and Spirit Light sacrifices
 nothing while a spirit, any team's, is in earshot of you (#1064).
+
+The Ritualist's Channeling Magic strikes with spirits about (#1270). A
+spirit, any team's, alive within earshot (350) of the caster is what
+"if any spirits are within earshot" asks, at the moment the skill lands.
+At Channeling Magic 12: **Spirit Burn** (5 energy, 1 s, 6 s recharge)
+deals 41 lightning damage, and Burning for 4 s with a spirit in earshot.
+**Essence Strike** (5 energy, 1 s, 8 s) deals 51 lightning damage, and
+you gain 7 Energy with a spirit in earshot. **Signet of Spirits** (elite
+signet, 1 s, 20 s, its PvP version) gives 10 Energy with a spirit in
+earshot and nothing without, though it is still used and recharges.
+**Spirit Rift** (10 energy, 2 s, 5 s) leaves a rift where its target
+stood (see Pulses): 3 s later, every foe adjacent to it takes 105
+lightning damage and Cracked Armor for 16 s. **Painful Bond** (hex, 15
+energy, 1 s, 12 s) hexes the target and every foe nearby it for 18 s:
+each spirit's shot that hits a hexed foe deals 18 more, past armor; a
+missed or blocked one, nothing. **Lamentation** (hex, 10 energy, 1 s,
+15 s) hexes the target and every foe nearby it for 17 s with −2 Health
+degeneration; as it lands, each takes 42 typeless damage if a spirit or
+a fresh corpse is in earshot of you. The corpse is not exploited.
 
 ## Weapon attacks
 
@@ -1373,7 +1395,12 @@ brackets.
 
 - **Body blocking**: living players are solid. A front line can deny
   ground; a caster can be boxed in. Corpses are _not_ solid — a dead
-  player should never trap the living.
+  player should never trap the living. A spirit is no body to its own team
+  (#1278), as in GW1: you and your allies walk through your spirits,
+  and a click or an attack walks straight on rather than round them
+  (#1295), while foes are blocked by them. A minion or pet of yours that you stand
+  in lets you step off it in any direction without a shove; once apart,
+  it blocks you again.
 - **Walls** resolve after players, so someone squeezed between a blocker
   and a wall ends up outside the wall rather than inside it.
 - **Line of sight** is a geometric query against wall segments, shared
@@ -1404,7 +1431,8 @@ standing has lost. A spirit or minion that dies or runs out its time disappears
 at the end of the tick, with no corpse and no respawn; running out is not
 a death. Its owner's death does not end it; its owner leaving the match
 does. Soul Reaping answers a minion's death but not a spirit's. At most
-32 creatures are on the field at once (ADR-0035).
+32 summoned creatures are on the field at once (ADR-0035); a map's own
+priests, Guild Lords and guards take none of those places (#1281).
 
 **Spirits** (#1064) are planted by a ritual, a cast that can be
 interrupted, where its caster stands. A spirit never moves: bodies are
@@ -1464,6 +1492,21 @@ block, combined with the ally's other blocks as any are; 60 for each
 block that was its own. **Earthbind** (15 energy, 3 s) 214 Health,
 39 s: a foe in range knocked down stays down at least 3 s; 30 per
 knockdown, one already as long included, none for one prevented.
+
+**Spirit sacrifice** (#1309, Ritualist, Spawning Power, spells) spends
+an allied spirit, a living one of your team whoever planted it; a foe's
+spirit, a pet, a minion, a player or yourself is refused. A destroyed
+spirit goes as an expired one does: no corpse, no killer, no morale, not
+damage, so Shelter and Union do not soften it. At Spawning Power 12:
+**Rupture Soul** (10 energy, ¾ s, 5 s) strikes every foe nearby the
+spirit for 122 lightning damage and blinds them 10 s, then destroys it.
+**Spirit to Flesh** (10 energy, ¾ s, 15 s) touches the spirit, heals you
+and every ally nearby you 198, then destroys it. **Feast of Souls**
+(5 energy, ¼ s, 10 s) destroys every allied spirit nearby you and heals
+your whole party 90 for each; with none, it heals nobody but is still
+used. **Consume Soul** (elite, 5 energy, 1 s, 5 s) steals 57 Health
+from a foe, and deals 105 typeless damage to every foe minion, spirit
+and pet in earshot of it, never a player, the foe itself excluded.
 
 **Minions** (#467) are raised from a fresh corpse, of either team, the
 nearest within cast range, and rise where it lay. Their Health, armor
@@ -1657,7 +1700,8 @@ takes 5...17 fire damage and is set on fire for 3 s.
 
 A **pulse** (#1113) is a ground effect that lands its effects again and
 again: a number of pulses, a fixed interval apart, the first the step it
-is placed, and it is gone one interval after the last. Each pulse lands
+is placed, or once it is as old as its delay (#1270), and it is gone one
+interval after the last. Each pulse lands
 from the owner, alive or dead, on every body its area takes around the
 effect, as an area skill's would, in line of sight of the effect, and is
 logged as a cast, even when it hits nobody. A body that walks in is hit
@@ -1673,6 +1717,8 @@ seen by its foes too.
 recharge) leaves a symbol where its target stands as the cast lands; it
 does not follow them. It pulses five times, a second apart: every foe
 adjacent (40) takes 10...34 holy damage.
+Spirit Rift's rift pulses once, 3 s after it opens, on whoever is
+adjacent then.
 
 ## Death and scoring
 
@@ -1712,8 +1758,13 @@ In Priest Annihilation it counts the living, then each team's priest,
 yours first, and the next wave: `4 v 3 · ✚ ✚ · raise 0:47 · 7:12`
 (#1199). A priest's ✚ dims once it is dead, and the countdown reads
 `raise —` once both are.
-A Guild Battle counts the living, as Annihilation does, until its own
-scoreboard (#1226).
+A Guild Battle reads each Guild Lord's health, the stand and the next
+wave, yours first: `Lord 82% · 64% · ⚑ 1:12 · raise 0:47 · 21:40`
+(#1226). The `⚑` is in its holder's colour with the time left to its
+boost, or a grey `⚑ —` held by nobody; in the last 3 minutes each
+team's aggression joins it, `agg 1,240 v 980`. Under it, a line for
+each flag away from home: `⚑ Name` on its carrier, `⚑ dropped` on the
+ground.
 
 With the death penalty on, each player has a **morale** between −60%
 and +10%, starting at 0. A death takes 15%, down to −60%, unless it came
@@ -1798,7 +1849,8 @@ A Guild Battle (#1222) ends the moment a **Guild Lord dies**: its team
 loses, "(Guild Lord slain)". A team whose every member is dead at -60%
 loses next, "(morale)": no shrine can raise them. A wipe alone does not
 end it; the shrines raise every 2 minutes with no priest. After **28
-minutes** the most aggression wins, "(most aggression at time)". In that
+minutes** the most aggression wins, "(aggression 1,240 v 980)", yours
+first (#1226). In that
 order: the lord first, then morale, then time. Both lords in one tick,
 or equal aggression, and both teams lose.
 

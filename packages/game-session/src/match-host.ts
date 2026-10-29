@@ -19,7 +19,9 @@ import {
   type PlayerBuild,
   type ProfessionId,
   type Segment,
+  type FlagField,
   type GuildLord,
+  type BaseGuard,
   type Shrine,
 } from "@vibewars/game-core";
 import {
@@ -66,6 +68,7 @@ import { spawnPoint, type SpawnPoint } from "./spawn-points.js";
 import { MAX_MESSAGE_BYTES, type Transport } from "./transport.js";
 import {
   groundEffectSnapshot,
+  wireFlag,
   sameSkillBar,
   skillBarSlots,
   statusSnapshot,
@@ -114,6 +117,10 @@ export interface HostMap {
   readonly shrines: readonly Shrine[];
   /** Its Guild Lords (#1222), `[]` but on a Guild Battle map. */
   readonly guildLords: readonly GuildLord[];
+  /** Its flag stand and flag spawns (#1225), `undefined` but on a Guild Battle map. */
+  readonly flagField: FlagField | undefined;
+  /** Its base guards (#1223), in the map's order, `[]` but on a Guild Battle map. */
+  readonly guards: readonly BaseGuard[];
 }
 
 export interface MatchHostOptions {
@@ -225,6 +232,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     bounds: map.bounds,
     shrines: map.shrines,
     guildLords: map.guildLords,
+    flagField: map.flagField,
+    guards: map.guards,
   });
   const seats = new Map<string, Seat>();
   const seatOfPeer = new Map<string, Seat>();
@@ -283,7 +292,10 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
    */
   const teams = new Map<string, number>();
   /** The match's totals per player, for the summary. */
-  const tally = new MatchTally((id) => everSeated.get(id)?.team ?? teams.get(id));
+  const tally = new MatchTally(
+    (id) => everSeated.get(id)?.team ?? teams.get(id),
+    (id) => everSeated.has(id),
+  );
   /** One whole-number line per seat the match ever had. */
   const summary = (): WireSummaryRow[] =>
     [...everSeated].map(([id, { name, team }]) => {
@@ -805,7 +817,10 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       facing: round(participant.facing, 2),
       targetId: participant.targetId ?? null,
       attackTargetId: combatant.attack?.targetId ?? null,
-      walking: participant.walkGoal !== undefined || participant.pendingSkill !== undefined,
+      walking:
+        participant.walkGoal !== undefined ||
+        participant.pendingSkill !== undefined ||
+        participant.interact !== undefined,
       health: Math.round(combatant.health),
       maxHealth: combatant.maxHealth,
       // Energy below 0 is GW1's hidden energy (#489): nobody sees it.
@@ -865,6 +880,12 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
         const team = wireTeam(effect.team);
         return team === null ? [] : [{ ...groundEffectSnapshot(effect, sim.elapsedSeconds), team }];
       }),
+    flags: sim.flags.flatMap((flag) => wireFlag(flag) ?? []),
+    stand:
+      sim.stand === undefined
+        ? null
+        : { holder: wireTeam(sim.stand.holder), heldSeconds: sim.stand.heldSeconds },
+    aggression: sim.aggressionByTeam.map((total) => Math.round(total)),
   });
 
   /** Drop the seats whose players did not come back in time. */

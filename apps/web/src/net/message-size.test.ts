@@ -226,6 +226,16 @@ describe("every message fits in one Trystero chunk (#403)", () => {
         endsAt: FLOAT,
         durationSeconds: FLOAT,
       })),
+      // Both carried, the longest a flag gets on the wire (#1225).
+      flags: [0, 1].map((team) => ({
+        team: team === 0 ? 0 : 1,
+        place: "carried",
+        carrierId: `${PEER_ID}${String(team)}`,
+        x: null,
+        y: null,
+      })),
+      stand: { holder: 1, heldSeconds: FLOAT },
+      aggression: [],
     };
   }
 

@@ -51,4 +51,47 @@ armor, degeneration and life stealing not counted. Equal aggression,
 or both lords dying together, and both lose. Guild Hall Isle plays it,
 and no Random Arena does.
 
+Each base is **guarded** (#1223), by `"guard"` objectives naming a
+role: a Bodyguard and two Knights by the Guild Lord, an Archer at the
+back of the lord room, and a Footman and an Archer outside each gate.
+All have 480 Health. Each holds its post: it fights foes near it, and
+walks home past its leash, Knights far (900), Archers hardly (300). A
+Knight (armor 80, +20 vs physical) and a Footman fight with a sword and
+Sever Artery, a Knight with Healing Signet and "Watch Yourself!" too, a
+Footman with Distracting Blow; an Archer (armor 70, +30 vs elemental)
+with a longbow, Pin Down and Troll Unguent. The Bodyguard (armor 60)
+heals with Heal Other, its Guild Lord first, and while it lives its
+lord takes **20% less damage**. Guards are never raised and count for
+nobody. A Guild Lord's **Amulet of Protection** caps the Health it
+loses in each second of the match: 25 at the start, rising evenly to
+300 at 12 minutes. A blow past the cap deals only what is left of it,
+so aggression grows no faster; a Deep Wound's cut and degeneration
+take no more than what is left either, so degeneration never kills a
+lord whose cap is spent.
+
+Each team also has a **flag** (#1225), at a `"flag-spawn"` objective
+near its shrine, and the map has one **flag stand**, a `"flag-stand"`
+objective in its centre. Target your own flag (right click) and press
+Space: you walk to it and take it up within 60 units. A foe's flag does
+nothing. While you carry it your hands are full, no weapon attacks and
+no attack skills, though spells work, and you walk at 1/1.2 of your
+speed. Target the stand and press Space to plant it. The flag drops
+where you are when you die, leave, press **Drop flag** above your
+health bar (or the Drop key, unbound by default), or swap weapon sets;
+your team takes it up from there. Planting over a foe's flag sends that
+one home to its spawn. The team whose flag is on the stand holds it,
+and every **2 minutes** held without a break gives the whole team a
+**+10% morale boost**, which readies spent skills too. A foe planting
+over it starts the count again from 0 for them.
+
+Its HUD (#1226) puts the match on the scoreboard: each lord's health,
+the stand's holder and the time to its boost, the next wave, and in the
+last 3 minutes each team's aggression; on a narrow window the line
+wraps between its parts. A line under it names each
+flag's carrier, or says it was dropped. A boost toasts, "Morale boost!
++10%" for your team and "Enemy morale boost" for theirs. The compass
+marks each Guild Lord `♛`, each flag `⚑` where it is, and the stand
+`◎` in its holder's colour. A Guild Lord's or any creature's death is
+no kill in the match summary.
+
 How each one ends, in full, is in [combat](combat.md#match-end).

@@ -73,6 +73,9 @@ function snapshot(
     projectiles: [],
     groundEffects: [],
     traps: [],
+    flags: [],
+    stand: undefined,
+    aggression: [],
     summary: undefined,
   };
 }

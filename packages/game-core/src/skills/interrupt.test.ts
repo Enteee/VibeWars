@@ -243,6 +243,7 @@ describe("status-driven combat scenarios", () => {
       casterPosition: vec2(0, 0),
       target: undefined,
       targetPosition: undefined,
+      targetCreatureKind: undefined,
       rechargeRemaining: new Map(),
       spent: new Set(),
       isCasting: false,

@@ -154,9 +154,19 @@ describe("CombatMeter", () => {
 });
 
 describe("MatchTally (#1057)", () => {
-  /** Ann and Bob on team 0, Cat and Dan on team 1. */
-  const TEAMS: Readonly<Record<string, number>> = { ann: 0, bob: 0, cat: 1, dan: 1 };
-  const tally = (): MatchTally => new MatchTally((id) => TEAMS[id]);
+  /** Ann and Bob on team 0, Cat and Dan on team 1; team 1's Guild Lord, no member. */
+  const TEAMS: Readonly<Record<string, number>> = {
+    ann: 0,
+    bob: 0,
+    cat: 1,
+    dan: 1,
+    "guild-lord/1": 1,
+  };
+  const tally = (): MatchTally =>
+    new MatchTally(
+      (id) => TEAMS[id],
+      (id) => id !== "guild-lord/1",
+    );
   const entry = (sourceId: string | undefined, events: readonly CombatEvent[]): CombatLogEntry => ({
     tick: 0,
     atSeconds: 0,
@@ -220,6 +230,14 @@ describe("MatchTally (#1057)", () => {
     expect(t.row("bob").kills + t.row("cat").kills + t.row("dan").kills).toBe(0);
   });
 
+  it("credits no kill for a foe creature's death, a Guild Lord's (#1226)", () => {
+    const t = tally();
+    t.add([entry("ann", [{ kind: "death", targetId: "guild-lord/1" }])]);
+    expect(t.row("ann").kills).toBe(0);
+    t.add([entry("ann", [{ kind: "death", targetId: "cat" }])]);
+    expect(t.row("ann").kills).toBe(1);
+  });
+
   it("counts an interrupt that landed, never one that missed", () => {
     const t = tally();
     t.add([
@@ -250,7 +268,10 @@ describe("MatchTally (#1057)", () => {
     cat.health = 25;
     const events: CombatEvent[] = [];
     applyDamage(cat, 300, "fire", false, events, sim.get("ann")?.combatant);
-    const t = new MatchTally((id) => (id === "ann" ? 0 : 1));
+    const t = new MatchTally(
+      (id) => (id === "ann" ? 0 : 1),
+      () => true,
+    );
     t.add([entry("ann", events)]);
     expect(t.row("ann")).toMatchObject({ damage: 25, kills: 1 });
   });

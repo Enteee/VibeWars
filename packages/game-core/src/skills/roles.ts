@@ -58,6 +58,8 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     case "drain-own-energy":
     case "recharge-faster":
     case "recharge-others":
+    case "destroy-target-spirit":
+    case "destroy-allied-spirits":
     case "disable-skill":
     case "lengthen-recharge":
     case "disable-own-skills":

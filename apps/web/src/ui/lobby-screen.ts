@@ -229,19 +229,18 @@ export function renderLobbyScreen(
     );
   }
 
-  // The mode follows from the map (#476), so it reads under it.
-  const mapBlock = h("div", "lobby-map-block");
-  mapBlock.appendChild(mapPart);
-  if (current !== undefined) {
-    mapBlock.appendChild(h("div", "lobby-mode", modeLine(current)));
-  }
-
-  const readyLabel = self?.ready === true ? "Not ready" : "Ready";
-  const readyButton = button(readyLabel, "", callbacks.onToggleReady);
+  // The next thing to press is the primary one, the one a phone keeps out
+  // of the ⋯ (#1272): Ready until you are, then the host's Start match.
+  const ready = self?.ready === true;
+  const readyButton = button(
+    ready ? "Not ready" : "Ready",
+    ready ? "" : "primary",
+    callbacks.onToggleReady,
+  );
   readyButton.disabled = controls.readyDisabled;
   const actions: HTMLElement[] = [readyButton];
   if (snapshot.isHost) {
-    const start = button("Start match", "primary", () => {
+    const start = button("Start match", ready ? "primary" : "", () => {
       // Starting answers the question: the host is staying.
       closingLobby?.dismiss();
       callbacks.onStart();
@@ -261,7 +260,8 @@ export function renderLobbyScreen(
       "Stay",
     );
   };
-  const { element: bar, back } = screenBar({
+  const { back } = screenBar({
+    crumbs: ["VibeWars", "Lobby"],
     back: {
       label: "Leave",
       onBack: () => {
@@ -272,11 +272,16 @@ export function renderLobbyScreen(
         }
       },
     },
-    title: [header],
-    status: [mapBlock],
+    status: [header, mapPart],
     actions,
   });
-  panel.appendChild(bar);
+
+  // The mode follows from the map (#476). It is the only place a player
+  // learns it before Start, so it gets a row of its own under the bar
+  // rather than being shortened in it (#1272).
+  if (current !== undefined) {
+    panel.appendChild(h("div", "lobby-mode", modeLine(current)));
+  }
 
   if (notice !== undefined) {
     panel.appendChild(h("div", "screen-problem", notice));

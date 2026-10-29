@@ -61,6 +61,9 @@ function snapshot(castingSkillId: string | undefined): MatchSnapshot {
     projectiles: [],
     groundEffects: [],
     traps: [],
+    flags: [],
+    stand: undefined,
+    aggression: [],
     summary: undefined,
   };
 }

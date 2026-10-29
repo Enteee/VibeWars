@@ -116,10 +116,10 @@ import { resolveMagnitude } from "../skills/scaling.js";
 import { resolveTargets, spiritsWithin } from "../skills/targeting.js";
 import {
   advanceStatuses,
+  clampMoveSpeed,
   effectiveActivationSeconds,
   effectiveMaxHealth,
   naturalHealthPips,
-  moveSpeedMultiplier,
   netPips,
   preCapEnergyPips,
   rankOf,
@@ -194,9 +194,31 @@ import { directionAngle, showsBackTo, spawnFacing } from "./facing.js";
 import {
   GUILD_LORD_HEALTH_PIPS,
   guildLordId,
+  guildLordLossCap,
   guildLordSpec,
   type GuildLord,
 } from "./guild-lord.js";
+import {
+  FLAG_CARRIER_SPEED_MULTIPLIER,
+  FLAG_MORALE_BOOST,
+  FLAG_REACH_UNITS,
+  FLAG_STAND_ID,
+  carriedFlag,
+  dropFlag,
+  flagRefusal,
+  flagTargetPosition,
+  flagTeamOf,
+  initialFlags,
+  isFlagObjectId,
+  stepFlags,
+  type FlagAction,
+  type FlagArrival,
+  type FlagField,
+  type FlagState,
+  type FlagsState,
+  type StandState,
+} from "./flags.js";
+import { guardSpec, type BaseGuard } from "./guards.js";
 import { priestId, priestSpec, type Shrine } from "./priest.js";
 import { steerAround } from "./steering.js";
 
@@ -219,8 +241,11 @@ import { steerAround } from "./steering.js";
  * `walkTo`, `setTarget`, `requestSkill`, `requestAttack` and `cancelAction`.
  */
 
-/** What kind of non-player body this is (#467); a priest (#1186) and a Guild Lord (#1222) are a map's. */
-export type CreatureKind = "spirit" | "minion" | "pet" | "priest" | "guild-lord";
+/**
+ * What kind of non-player body this is (#467); a priest (#1186), a Guild
+ * Lord (#1222) and a base guard (#1223) are a map's.
+ */
+export type CreatureKind = "spirit" | "minion" | "pet" | "priest" | "guild-lord" | "guard";
 
 /**
  * How a companion fights (#1110, GW1 pet control): game-protocol's
@@ -245,6 +270,7 @@ export const CREATURE_LOOKS = [
   "spirit",
   "priest",
   "guild-lord",
+  "guard",
 ] as const;
 export type CreatureLook = (typeof CREATURE_LOOKS)[number];
 
@@ -310,8 +336,18 @@ function creaturePips(participant: Participant): number {
   }
 }
 
-/** At most this many creatures in a match at once (#1052): a summon past it makes as many as fit. */
+/** Below this past a whole second, the clock is read as on it: dt sums drift (#1223). */
+const WHOLE_SECOND_EPSILON = 1e-6;
+
+/**
+ * At most this many summoned creatures in a match at once (#1052): a
+ * summon past it makes as many as fit. A map's own creatures, its priests,
+ * Guild Lords and guards, never take a summon's place (#1281).
+ */
 export const MAX_CREATURES = 32;
+
+/** The most creatures a map places itself (#1281): a map with more is refused at setup. */
+export const MAX_MAP_CREATURES = 24;
 
 /**
  * A circle on the ground (#1087, ADR-0035): not a body, so nothing can
@@ -458,6 +494,11 @@ export interface Participant {
    * arrival, and nothing is paid until then.
    */
   pendingSkill: PendingSkill | undefined;
+  /**
+   * The flag or the stand Space walks it to (#1225), to take or plant a
+   * flag on reaching it; `undefined` for none. Any other order ends it.
+   */
+  interact: { readonly targetId: string; unreachableSeconds: number } | undefined;
   targetId: string | undefined;
   respawnInSeconds: number;
   /**
@@ -525,6 +566,17 @@ export interface MatchSimulationOptions {
    * Omitted or `[]`: none.
    */
   readonly guildLords?: readonly GuildLord[];
+  /**
+   * The Guild Battle's flag stand and flag spawns (#1225): each team's
+   * flag stands at its spawn from the start. Omitted: no flags.
+   */
+  readonly flagField?: FlagField | undefined;
+  /**
+   * The Guild Battle's base guards (#1223), each at its post from the
+   * start; a team's Bodyguard cuts the damage to its Guild Lord while it
+   * lives. Omitted or `[]`: none.
+   */
+  readonly guards?: readonly BaseGuard[];
 }
 
 export interface StepResult {
@@ -645,6 +697,9 @@ const MOVEMENT_RELAX_PASSES = 4;
  * period"; this is our tuning.
  */
 const UPKEEP_RANGE_GRACE_SECONDS = 5;
+
+/** No body to pass through: a push-out that every body blocks. */
+const NOBODY: ReadonlySet<string> = new Set();
 
 /** How deep a body at `position` is inside a living body at `other`, their radii summing to `reach`. */
 function penetration(position: Vec2, other: Vec2, reach: number): number {
@@ -776,6 +831,14 @@ export class MatchSimulation {
   readonly #guildLordTeams: ReadonlySet<number>;
   /** Damage each team dealt to a foe's Guild Lord (#1222), after armor. */
   readonly #aggression = new Map<number, number>();
+  /** The flag stand and spawns (#1225); `undefined` on a map without them. */
+  readonly #flagField: FlagField | undefined;
+  /** Where every flag is and who holds the stand (#1225); `undefined` without a field. */
+  #flagsState: FlagsState | undefined;
+  /** Who reached a flag or the stand this step (#1225), in simulation order. */
+  #flagArrivals: FlagArrival[] = [];
+  /** The whole second of match clock the Guild Lords' loss caps are for (#1223). */
+  #lossSecond = 0;
   /** Every ground effect in the match (#1087), in id order. */
   #groundEffects: GroundEffect[] = [];
   /** The id of the next ground effect placed (#1087). */
@@ -797,6 +860,8 @@ export class MatchSimulation {
     this.#rng = createRng(
       typeof options.seed === "string" ? seedFromString(options.seed) : options.seed,
     );
+    this.#flagField = options.flagField;
+    this.#flagsState = this.#flagField === undefined ? undefined : initialFlags(this.#flagField);
     for (const spec of options.participants ?? []) {
       this.add(spec);
     }
@@ -819,17 +884,40 @@ export class MatchSimulation {
     const lords = options.guildLords ?? [];
     this.#guildLordTeams = new Set(lords.map((lord) => lord.team));
     const lordPositions = lords.map((lord) => lord.position);
+    const facingFoes = (team: number, position: Vec2): number =>
+      spawnFacing(
+        position,
+        lords.filter((other) => other.team !== team).map((other) => other.position),
+        lordPositions,
+      );
     for (const lord of lords) {
-      const foes = lords.filter((other) => other.team !== lord.team);
-      this.add(
-        guildLordSpec(
-          lord,
-          spawnFacing(
-            lord.position,
-            foes.map((other) => other.position),
-            lordPositions,
-          ),
-        ),
+      this.add(guildLordSpec(lord, facingFoes(lord.team, lord.position)));
+    }
+    const placed = new Map<number, number>();
+    const bodyguards = new Map<number, Combatant>();
+    for (const guard of options.guards ?? []) {
+      const index = placed.get(guard.team) ?? 0;
+      placed.set(guard.team, index + 1);
+      const added = this.add(guardSpec(guard, index, facingFoes(guard.team, guard.position)));
+      if (guard.role === "bodyguard") {
+        bodyguards.set(guard.team, added.combatant);
+      }
+    }
+    for (const lord of lords) {
+      const record = this.#participants.get(guildLordId(lord.team));
+      if (record !== undefined) {
+        record.combatant.lossGuard = {
+          bodyguard: bodyguards.get(lord.team),
+          remaining: guildLordLossCap(0),
+        };
+      }
+    }
+    const mapCreatures = [...this.#participants.values()].filter(
+      (record) => record.creature !== undefined && record.creature.ownerId === undefined,
+    ).length;
+    if (mapCreatures > MAX_MAP_CREATURES) {
+      throw new Error(
+        `the map places ${String(mapCreatures)} creatures, at most ${String(MAX_MAP_CREATURES)}`,
       );
     }
   }
@@ -863,6 +951,28 @@ export class MatchSimulation {
   /** Every ground effect in the match (#1087), in id order. */
   public get groundEffects(): readonly Readonly<GroundEffect>[] {
     return this.#groundEffects;
+  }
+
+  /** Every flag and where it is (#1225); `[]` on a map without them. */
+  public get flags(): readonly FlagState[] {
+    return this.#flagsState?.flags ?? [];
+  }
+
+  /** Who holds the flag stand (#1225); `undefined` on a map without one. */
+  public get stand(): StandState | undefined {
+    return this.#flagsState?.stand;
+  }
+
+  /** Whether `id` carries a flag (#1225): hands full, and slower. */
+  public carriesFlag(id: string): boolean {
+    return carriedFlag(this.flags, id) !== undefined;
+  }
+
+  /** Each team's `aggression` by team index on a Guild Battle (#1226); `[]` on any other match. */
+  public get aggressionByTeam(): readonly number[] {
+    return this.#matchRules?.victory === "guild-battle"
+      ? [this.aggression(0), this.aggression(1)]
+      : [];
   }
 
   /** Damage `team` has dealt to a foe's Guild Lord so far (#1222), after armor. */
@@ -945,6 +1055,7 @@ export class MatchSimulation {
       pendingWeaponSet: undefined,
       corpseExploited: false,
       armedAttack: undefined,
+      interact: undefined,
     };
     this.#participants.set(spec.id, record);
     if (countsForTeam(record)) {
@@ -965,6 +1076,11 @@ export class MatchSimulation {
    * that pointed at any of them.
    */
   public remove(id: string): void {
+    // A carrier who leaves drops the flag where they stood (#1225).
+    const carrier = this.#participants.get(id);
+    if (carrier !== undefined) {
+      this.#dropFlag(carrier);
+    }
     const leaving = new Set([id]);
     for (const record of this.#participants.values()) {
       if (record.creature?.ownerId === id) {
@@ -985,7 +1101,8 @@ export class MatchSimulation {
 
   /**
    * `count` creatures of `template` at `at`, facing as `owner` does, on its
-   * team (#1052): as many as `MAX_CREATURES` leaves room for. Added to the
+   * team (#1052): as many as `MAX_CREATURES` leaves room for among the
+   * summoned, a map's own creatures aside (#1281). Added to the
    * end of the match, so they act from this very tick, after everyone
    * already there.
    *
@@ -1013,7 +1130,7 @@ export class MatchSimulation {
     }
     let creatures = 0;
     for (const record of this.#participants.values()) {
-      if (record.creature !== undefined && !this.#leaving.has(record.id)) {
+      if (record.creature?.ownerId !== undefined && !this.#leaving.has(record.id)) {
         creatures += 1;
       }
     }
@@ -1284,8 +1401,8 @@ export class MatchSimulation {
   /**
    * Every pulse effect whose next pulse is due lands it (#1113), after
    * traps spring, in id order: at most one each a step, the first the step
-   * it was placed, then one every interval of its age. One whose owner
-   * has left the match is gone with no effect.
+   * its age reaches its delay (#1270), then one every interval after.
+   * One whose owner has left the match is gone with no effect.
    */
   #pulseGroundEffects(): void {
     if (!this.#groundEffects.some((effect) => effect.act.kind === "pulse")) {
@@ -1305,7 +1422,7 @@ export class MatchSimulation {
       const age = effect.durationSeconds - effect.remainingSeconds;
       if (
         effect.pulsed >= pulse.count ||
-        age < effect.pulsed * pulse.everySeconds - SWING_EPSILON
+        age < pulse.delaySeconds + effect.pulsed * pulse.everySeconds - SWING_EPSILON
       ) {
         continue;
       }
@@ -1519,6 +1636,7 @@ export class MatchSimulation {
         creature === undefined ||
         creature.kind === "priest" ||
         creature.kind === "guild-lord" ||
+        creature.kind === "guard" ||
         record.combatant.dead
       ) {
         continue;
@@ -1570,12 +1688,32 @@ export class MatchSimulation {
       record.pendingWeaponSet = undefined;
       return { kind: "kept" };
     }
+    // Reaching for another set drops the flag (#1225, GW1).
+    this.#dropFlag(record);
     if (this.#swapBlocked(record)) {
       record.pendingWeaponSet = set;
       return { kind: "queued" };
     }
     this.#swapWeapons(record, set);
     return { kind: "swapped" };
+  }
+
+  /**
+   * Drop the flag `id` carries where they stand (#1225): GW1's Drop
+   * button. Nothing for a player with none.
+   */
+  public dropBundle(id: string): void {
+    const record = this.#participants.get(id);
+    if (record !== undefined) {
+      this.#dropFlag(record);
+    }
+  }
+
+  /** `record`'s flag, if it carries one, lies where it is (#1225). */
+  #dropFlag(record: ParticipantRecord): void {
+    if (this.#flagsState !== undefined) {
+      this.#flagsState = dropFlag(this.#flagsState, record.id, record.position);
+    }
   }
 
   /** Put a participant back as they started, exactly as a respawn does. */
@@ -1649,6 +1787,7 @@ export class MatchSimulation {
    */
   #moveInterrupts(record: ParticipantRecord): void {
     record.combatant.attack = undefined;
+    record.interact = undefined;
     record.pendingSkill = undefined;
     this.#cancelCast(record);
     record.combatant.cast.clearQueue();
@@ -1669,6 +1808,7 @@ export class MatchSimulation {
       record.pendingSkill = undefined;
       record.combatant.cast.clearQueue();
       record.walkGoal = undefined;
+      record.interact = undefined;
     }
   }
 
@@ -1751,14 +1891,21 @@ export class MatchSimulation {
    * An attack allowed ends a click-to-walk, and its approach takes over
    * (#310); one refused leaves the walk going. One at anyone but the
    * target of a skill walking in drops that skill (#499).
+   *
+   * At a flag or the stand (#1225), it is GW1's Interact instead: see
+   * `#requestInteract`.
    */
   public requestAttack(id: string, targetId: string): ActivationCheck | undefined {
     const record = this.#participants.get(id);
     if (record === undefined) {
       return undefined;
     }
+    if (this.#flagField !== undefined && isFlagObjectId(targetId)) {
+      return this.#requestInteract(record, targetId);
+    }
     const check = this.#attackCheck(record, targetId);
     if (check.ok) {
+      record.interact = undefined;
       record.walkGoal = undefined;
       if (record.pendingSkill?.targetId !== targetId) {
         record.pendingSkill = undefined;
@@ -1769,6 +1916,36 @@ export class MatchSimulation {
       }
     }
     return check;
+  }
+
+  /**
+   * Walk to a flag or the stand and, on reaching it, take up the flag or
+   * plant the one carried (#1225, GW1's Interact). Refused at once for a
+   * foe's flag, a flag not lying anywhere, or the stand with no flag in
+   * hand; and when dead. Knocked down or casting, the walk waits. It ends
+   * the attack, a skill walking in and a click-to-walk, as an attack does.
+   */
+  #requestInteract(record: ParticipantRecord, targetId: string): ActivationCheck {
+    if (record.combatant.dead) {
+      return { ok: false, reason: "caster-dead" };
+    }
+    const state = this.#flagsState;
+    const field = this.#flagField;
+    const refusal =
+      state === undefined || field === undefined
+        ? "no-target"
+        : flagRefusal(field, state, record.id, record.combatant.team, targetId);
+    if (refusal !== undefined) {
+      return { ok: false, reason: refusal };
+    }
+    record.walkGoal = undefined;
+    record.pendingSkill = undefined;
+    record.combatant.attack = undefined;
+    record.route = undefined;
+    if (record.interact?.targetId !== targetId) {
+      record.interact = { targetId, unreachableSeconds: 0 };
+    }
+    return { ok: true };
   }
 
   /**
@@ -1789,7 +1966,11 @@ export class MatchSimulation {
       record.targetId = undefined;
       return true;
     }
-    if (!this.#participants.has(targetId)) {
+    // A flag is targeted as a body is, and the stand (#1225).
+    const flagObject =
+      this.#flagField !== undefined &&
+      (targetId === FLAG_STAND_ID || this.flags.some(({ team }) => team === flagTeamOf(targetId)));
+    if (!flagObject && !this.#participants.has(targetId)) {
       return false;
     }
     record.targetId = targetId;
@@ -2062,6 +2243,7 @@ export class MatchSimulation {
 
     this.#tick += 1;
     this.#elapsedSeconds += dt;
+    this.#refillLossCaps();
     this.checkMatchEnd();
     for (const record of this.#participants.values()) {
       this.#stepStart.set(record.id, record.position);
@@ -2214,6 +2396,7 @@ export class MatchSimulation {
         // one in progress (#489).
         this.#settleWeaponSwap(record);
         this.#advancePendingSkill(record, dt);
+        this.#advanceInteract(record, dt);
         this.#advanceAttack(record, dt);
         this.#settleWeaponSwap(record);
         this.#faceCastTarget(record);
@@ -2240,6 +2423,8 @@ export class MatchSimulation {
     this.#priestWave();
     // After every death this step, so two teams wiped in it both lose.
     this.checkMatchEnd();
+    // After the match end: a lord slain as a boost falls due ends it first.
+    this.#advanceFlags(dt);
 
     const log = this.#log.concat(this.#reaped);
     this.#log = [];
@@ -2486,6 +2671,7 @@ export class MatchSimulation {
       casterPosition: record.position,
       target: skill.target === "self" ? record.combatant : target?.combatant,
       targetPosition: skill.target === "self" ? record.position : target?.position,
+      targetCreatureKind: skill.target === "self" ? record.creature?.kind : target?.creature?.kind,
       key,
       rechargeRemaining: record.combatant.cast.rechargeRemaining,
       spent: record.combatant.cast.spent,
@@ -2495,6 +2681,12 @@ export class MatchSimulation {
       ),
       losBlockers: this.#walls,
     });
+    // A carrier's hands are full (#1225, GW1): no attack skill, before
+    // anything walks in. Read from the flags, not a status a cleanse
+    // could take off.
+    if (skill.type === "attack" && this.carriesFlag(record.id)) {
+      return { ok: false, reason: "hands-full" };
+    }
     // Any other refusal first; then a corpse skill needs a fresh corpse in
     // reach (#466), or nothing is paid.
     if (
@@ -3105,7 +3297,7 @@ export class MatchSimulation {
    */
   #approach(
     record: ParticipantRecord,
-    target: ParticipantRecord,
+    target: { readonly id: string | undefined; readonly position: Vec2 },
     reach: number,
     progress: { unreachableSeconds: number },
     dt: number,
@@ -3177,7 +3369,13 @@ export class MatchSimulation {
   ): PathStep {
     this.#bodies.length = 0;
     for (const [otherId, other] of this.#participants) {
-      if (otherId !== record.id && otherId !== passing && !other.combatant.dead) {
+      // An own-team spirit is walked through, so it is not steered round (#1295).
+      if (
+        otherId !== record.id &&
+        otherId !== passing &&
+        !other.combatant.dead &&
+        !this.#ownSpirit(record, other)
+      ) {
         this.#bodies.push(other.position);
       }
     }
@@ -3197,9 +3395,17 @@ export class MatchSimulation {
 
   /** How far `record` walks in `dt` at its speed now, slowed or not. */
   #stepUnits(record: ParticipantRecord, dt: number): number {
-    return (
-      this.#ruleset.movement.maxSpeedUnitsPerSecond * moveSpeedMultiplier(record.combatant) * dt
-    );
+    return this.#ruleset.movement.maxSpeedUnitsPerSecond * this.#speedOf(record) * dt;
+  }
+
+  /**
+   * `record`'s speed multiplier: its statuses', and a flag carrier's
+   * burden (#1225) with them, clamped together as statuses are.
+   */
+  #speedOf(record: ParticipantRecord): number {
+    const statuses = aggregateModifiers(record.combatant.statuses.active).moveSpeedMultiplier;
+    const burden = this.carriesFlag(record.id) ? FLAG_CARRIER_SPEED_MULTIPLIER : 1;
+    return clampMoveSpeed(statuses / burden);
   }
 
   /**
@@ -3347,6 +3553,84 @@ export class MatchSimulation {
       record.pendingSkill = undefined;
       const arrived = this.#check(record, skill, target.id, used.key);
       this.#useSkill(record, pending.slot, skill, used.key, target.id, arrived);
+    }
+  }
+
+  /**
+   * The walk to a flag or the stand (#1225): paused while casting,
+   * through the aftercast and while a skill walks in, as an attack is.
+   * On reaching it, the step's flags take it up (`#advanceFlags`). A
+   * flag picked up or planted by someone else meanwhile, or no way
+   * there, ends it.
+   */
+  #advanceInteract(record: ParticipantRecord, dt: number): void {
+    const interact = record.interact;
+    const field = this.#flagField;
+    if (interact === undefined || field === undefined) {
+      return;
+    }
+    const position = flagTargetPosition(field, this.flags, interact.targetId);
+    if (position === undefined) {
+      record.interact = undefined;
+      return;
+    }
+    if (
+      record.combatant.cast.isCasting ||
+      record.combatant.cast.inAftercast ||
+      record.pendingSkill !== undefined
+    ) {
+      return;
+    }
+    const approach = this.#approach(
+      record,
+      { id: undefined, position },
+      FLAG_REACH_UNITS,
+      interact,
+      dt,
+    );
+    if (approach === "walking") {
+      return;
+    }
+    record.interact = undefined;
+    if (approach === "arrived") {
+      this.#flagArrivals.push({
+        kind: "interact",
+        playerId: record.id,
+        team: record.combatant.team,
+        targetId: interact.targetId,
+      });
+    }
+  }
+
+  /**
+   * The step's flags (#1225), once every death is in: a dead carrier's
+   * flag falls where they lie, before anyone who arrived this step takes
+   * up or plants one, in the order they arrived; then the stand's
+   * countdown, which boosts its holder's morale when it runs out.
+   */
+  #advanceFlags(dt: number): void {
+    const arrivals = this.#flagArrivals;
+    this.#flagArrivals = [];
+    const field = this.#flagField;
+    const state = this.#flagsState;
+    if (field === undefined || state === undefined || this.phase !== "active") {
+      return;
+    }
+    const drops: FlagAction[] = state.flags.flatMap(({ place }) => {
+      const carrier =
+        place.kind === "carried" ? this.#participants.get(place.carrierId) : undefined;
+      return carrier?.combatant.dead === true
+        ? [{ kind: "drop", carrierId: carrier.id, position: carrier.position }]
+        : [];
+    });
+    // One who arrived and was killed later in the step takes nothing.
+    const living = arrivals.filter(
+      (arrival) => this.#participants.get(arrival.playerId)?.combatant.dead === false,
+    );
+    const { boostTeam, ...next } = stepFlags(field, state, [...drops, ...living], dt);
+    this.#flagsState = next;
+    if (boostTeam !== undefined) {
+      this.moraleBoost(boostTeam, FLAG_MORALE_BOOST);
     }
   }
 
@@ -3715,16 +3999,24 @@ export class MatchSimulation {
       attackReached(target.combatant, events);
       events.push(...riders(skillHit?.skill.attack?.onBlocked ?? []));
     } else {
+      const blow = settleBlow(
+        skillHit?.blow ?? PLAIN_BLOW,
+        attacker?.combatant,
+        target.combatant,
+        this.#participants,
+      );
+      // Painful Bond's +18 on a spirit's shot that hits (#1270), armor-
+      // ignoring on the same blow. A spirit gone before its shot lands
+      // is no longer anyone's, so it adds nothing.
+      const fromSpirit =
+        attacker?.creature?.kind === "spirit"
+          ? aggregateModifiers(target.combatant.statuses.active).damageFromSpiritAttacks
+          : 0;
       const critical = landBlow(
         projectile.weaponSnapshot,
         attacker?.combatant,
         target.combatant,
-        settleBlow(
-          skillHit?.blow ?? PLAIN_BLOW,
-          attacker?.combatant,
-          target.combatant,
-          this.#participants,
-        ),
+        fromSpirit === 0 ? blow : { ...blow, bonus: blow.bonus + fromSpirit },
         // A shot crits only on its roll, never for where it came from.
         false,
         this.#rng,
@@ -3879,6 +4171,10 @@ export class MatchSimulation {
     if (record.combatant.knockdownRemaining > 0) {
       return { ok: false, reason: "caster-knocked-down" };
     }
+    // Hands full of flag (#1225, GW1): no weapon to swing.
+    if (this.carriesFlag(record.id)) {
+      return { ok: false, reason: "hands-full" };
+    }
     if (target === undefined) {
       return { ok: false, reason: "no-target" };
     }
@@ -3956,6 +4252,16 @@ export class MatchSimulation {
    */
   #recordDeaths(events: readonly CombatEvent[]): void {
     for (const event of events) {
+      // A destroyed spirit (#1309) is no death: it leaves as an expired
+      // one does, at the end of the step, and nothing answers it.
+      if (event.kind === "spirit-destroyed") {
+        const spirit = this.#participants.get(event.targetId);
+        if (spirit !== undefined) {
+          spirit.respawnInSeconds = Number.POSITIVE_INFINITY;
+          this.#leaving.add(spirit.id);
+        }
+        continue;
+      }
       if (event.kind !== "death") {
         continue;
       }
@@ -3967,6 +4273,8 @@ export class MatchSimulation {
         victim.combatant.cast.endAftercast();
         victim.walkGoal = undefined;
         victim.route = undefined;
+        // A walk to a flag dies with its walker (#1225).
+        victim.interact = undefined;
         victim.combatant.knockdownRemaining = 0;
         victim.combatant.invulnerableRemaining = 0;
         victim.pendingWeaponSet = undefined;
@@ -4154,7 +4462,7 @@ export class MatchSimulation {
         ? beside
         : target.position;
       for (let pass = 0; pass < MOVEMENT_RELAX_PASSES; pass += 1) {
-        const relaxed = this.#pushOut(record.id, position, radius);
+        const relaxed = this.#pushOut(record, position, radius, NOBODY);
         const settled = relaxed.x === position.x && relaxed.y === position.y;
         position = relaxed;
         if (settled) {
@@ -4421,6 +4729,25 @@ export class MatchSimulation {
     return { byTeam };
   }
 
+  /**
+   * As each whole second of match clock starts, every Guild Lord's cap
+   * on its Health loss refills to that second's (#1223).
+   */
+  #refillLossCaps(): void {
+    const second = Math.floor(this.#elapsedSeconds + WHOLE_SECOND_EPSILON);
+    if (second === this.#lossSecond) {
+      return;
+    }
+    this.#lossSecond = second;
+    for (const record of this.#participants.values()) {
+      const guard = record.combatant.lossGuard;
+      if (guard === undefined) {
+        continue;
+      }
+      guard.remaining = guildLordLossCap(second);
+    }
+  }
+
   /** Whether `team`'s Guild Lord is in the match and alive (#1222). */
   #guildLordLives(team: number): boolean {
     const lord = this.#participants.get(guildLordId(team));
@@ -4541,7 +4868,7 @@ export class MatchSimulation {
     emptyAdrenaline(combatant);
     let position = nearestStandable(this.#graph, at);
     for (let pass = 0; pass < MOVEMENT_RELAX_PASSES; pass += 1) {
-      position = this.#pushOut(record.id, position, this.#radiusOf(record));
+      position = this.#pushOut(record, position, this.#radiusOf(record), NOBODY);
     }
     record.position = position;
     record.inputDirection = ZERO;
@@ -4585,15 +4912,30 @@ export class MatchSimulation {
     let position = integrateMovement(
       start,
       direction,
-      this.#ruleset.movement.maxSpeedUnitsPerSecond * moveSpeedMultiplier(record.combatant),
+      this.#ruleset.movement.maxSpeedUnitsPerSecond * this.#speedOf(record),
       dt,
     );
+
+    // A minion or pet of its own the body already stands in, as one
+    // raised at its feet, lets it step off in any direction unshoved
+    // (#1278); once apart, it blocks again. The doorway rule below still
+    // holds, so the step can only lead out of it.
+    const ownedOverlaps = new Set<string>();
+    for (const [otherId, other] of this.#participants) {
+      if (
+        other.creature?.ownerId === record.id &&
+        !other.combatant.dead &&
+        penetration(start, other.position, radius + this.#radiusOf(other)) > 0
+      ) {
+        ownedOverlaps.add(otherId);
+      }
+    }
 
     // One push-out pass at a time, until a pass changes nothing. Squeezed
     // between a body and a wall, each push undoes the other, so one pass
     // alone can leave a body anywhere; a few settle it.
     for (let pass = 0; pass < MOVEMENT_RELAX_PASSES; pass += 1) {
-      const relaxed = this.#pushOut(record.id, position, radius);
+      const relaxed = this.#pushOut(record, position, radius, ownedOverlaps);
       const settled = relaxed.x === position.x && relaxed.y === position.y;
       position = relaxed;
       if (settled) {
@@ -4606,7 +4948,7 @@ export class MatchSimulation {
     // the wall never squeezes past. Per body and against the start, so two
     // bodies that already overlap (a shared spawn) can still move apart.
     for (const [otherId, other] of this.#participants) {
-      if (otherId === record.id || other.combatant.dead) {
+      if (otherId === record.id || other.combatant.dead || this.#ownSpirit(record, other)) {
         continue;
       }
       const reach = radius + this.#radiusOf(other);
@@ -4621,14 +4963,36 @@ export class MatchSimulation {
     record.position = position;
   }
 
-  /** One pass of push-outs for a body of `radius` at `position`: bodies, then walls, then the edge. */
-  #pushOut(id: string, position: Vec2, radius: number): Vec2 {
+  /**
+   * A spirit is no body to its own team (#1278), as in GW1: allies, their
+   * pets and minions walk through it; foes are blocked by it.
+   */
+  #ownSpirit(mover: ParticipantRecord, other: ParticipantRecord): boolean {
+    return other.creature?.kind === "spirit" && other.combatant.team === mover.combatant.team;
+  }
+
+  /**
+   * One pass of push-outs for `mover`, a body of `radius` at `position`:
+   * bodies, bar its own team's spirits and those in `passing`, then
+   * walls, then the edge.
+   */
+  #pushOut(
+    mover: ParticipantRecord,
+    position: Vec2,
+    radius: number,
+    passing: ReadonlySet<string>,
+  ): Vec2 {
     // Body blocking (brief §21): living players are solid, so a front
     // line can physically deny ground and a caster can be boxed in.
     // Corpses are not solid — standing on a dead player should never
     // trap the living.
     for (const [otherId, other] of this.#participants) {
-      if (otherId === id || other.combatant.dead) {
+      if (
+        otherId === mover.id ||
+        other.combatant.dead ||
+        passing.has(otherId) ||
+        this.#ownSpirit(mover, other)
+      ) {
         continue;
       }
       position = resolveCircleCircleCollision(
@@ -4704,6 +5068,7 @@ export class MatchSimulation {
     record.inputDirection = ZERO;
     record.walkGoal = undefined;
     record.route = undefined;
+    record.interact = undefined;
     record.respawnInSeconds = 0;
     record.combatant.cast.cancelCast();
     record.combatant.cast.endAftercast();
@@ -4797,6 +5162,7 @@ export class MatchSimulation {
       moving: false,
       controlled: { minion: 0, spirit: 0, pet: 0 },
       equipment: spec.equipment,
+      lossGuard: undefined,
     };
   }
 }

@@ -14,7 +14,7 @@ const cell = (page: Page, action: string, index = 0): Locator =>
   page.locator(`.key-cell[data-action="${action}"][data-index="${String(index)}"]`);
 
 async function openKeys(page: Page): Promise<void> {
-  await page.locator("#screens").getByRole("button", { name: "options" }).click();
+  await page.locator(".topbar-options").click();
   await expect(page.locator(".options-screen")).toBeVisible();
   // Options opens on its first section, Sound (#424).
   await page.locator('.options-entry[data-section="controls"]').click();
@@ -105,6 +105,8 @@ test("(4) Back leaves Options for the menu; on a narrow screen the sections sit 
 }) => {
   await page.setViewportSize({ width: 400, height: 800 });
   await page.goto("./");
+  // On a phone the top bar's icons fold into ⋯ (#1272).
+  await page.locator("#topbar .topbar-more").click();
   await openKeys(page);
   const entry = await page.locator('.options-entry[data-section="controls"]').boundingBox();
   const pane = await page.locator(".options-pane").boundingBox();
@@ -114,16 +116,19 @@ test("(4) Back leaves Options for the menu; on a narrow screen the sections sit 
     expect(entry.y + entry.height).toBeLessThanOrEqual(pane.y);
   }
 
-  await page.getByRole("button", { name: "Back", exact: true }).click();
+  await page.getByRole("button", { name: "Close", exact: true }).click();
   await expect(page.locator(".options-screen")).toHaveCount(0);
-  await expect(page.locator("#screens").getByRole("button", { name: "options" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "VibeWars" })).toBeVisible();
 });
 
 test("the top bar's ⚙ opens Options over the screen; Esc closes it and leaves the screen as it was (#454)", async ({
   page,
 }) => {
   await page.goto("./");
-  await page.locator("#screens").getByRole("button", { name: "Music", exact: true }).click();
+  await page
+    .locator(".topbar-screen-actions")
+    .getByRole("button", { name: "Music", exact: true })
+    .click();
   await expect(page.getByRole("heading", { name: "Music" })).toBeVisible();
 
   await page.locator("#topbar").getByRole("button", { name: "Options" }).click();
@@ -136,19 +141,18 @@ test("the top bar's ⚙ opens Options over the screen; Esc closes it and leaves 
 
   // Close does the same; then Esc is the screen's again.
   await page.locator("#topbar").getByRole("button", { name: "Options" }).click();
-  await options.getByRole("button", { name: "Close" }).click();
+  // The overlay's Close is in the top bar, beside its place (#1272).
+  await page.locator("#topbar").getByRole("button", { name: "Close", exact: true }).click();
   await expect(options).toHaveCount(0);
   await page.keyboard.press("Escape");
-  await expect(
-    page.locator("#screens").getByRole("button", { name: "Options", exact: true }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "VibeWars" })).toBeVisible();
 });
 
 test("Options lists the third-party licences, each with its full text (#1235)", async ({
   page,
 }) => {
   await page.goto("./");
-  await page.locator("#screens").getByRole("button", { name: "options" }).click();
+  await page.locator(".topbar-options").click();
   await page.locator('.options-entry[data-section="licences"]').click();
   const corpus = page.locator('.licence-entry[data-licence="gw-skilldata"]');
   await expect(corpus.locator(".licence-name")).toHaveText("gw-skilldata (MIT)");
@@ -163,7 +167,7 @@ test("Options lists every bundled npm package and the VCSL samples, each with it
   page,
 }) => {
   await page.goto("./");
-  await page.locator("#screens").getByRole("button", { name: "options" }).click();
+  await page.locator(".topbar-options").click();
   await page.locator('.options-entry[data-section="licences"]').click();
   const vcsl = page.locator('.licence-entry[data-licence="VCSL"]');
   await expect(vcsl.locator(".licence-name")).toHaveText("VCSL (CC0-1.0)");

@@ -163,6 +163,7 @@ export {
   CREATURE_LOOKS,
   loadoutSpec,
   MAX_CREATURES,
+  MAX_MAP_CREATURES,
   companionMode,
   MAX_GROUND_EFFECTS,
   MatchSimulation,
@@ -181,7 +182,19 @@ export { facingToward, spawnFacing } from "./match/facing.js";
 export type { Shrine } from "./match/priest.js";
 export { PRIEST_SKILL_ID, priestId } from "./match/priest.js";
 export type { GuildLord } from "./match/guild-lord.js";
-export { GUILD_LORD_HEALTH, guildLordId } from "./match/guild-lord.js";
+export type { FlagField, FlagPlace, FlagSpawn, FlagState, StandState } from "./match/flags.js";
+export {
+  FLAG_MORALE_BOOST,
+  FLAG_REACH_UNITS,
+  FLAG_STAND_ID,
+  STAND_HOLD_SECONDS,
+  flagId,
+  flagTeamOf,
+  isFlagObjectId,
+} from "./match/flags.js";
+export { GUILD_LORD_HEALTH, guildLordId, guildLordLossCap } from "./match/guild-lord.js";
+export type { BaseGuard, GuardRole } from "./match/guards.js";
+export { GUARD_ROLE_IDS, GUARD_ROLES, guardId } from "./match/guards.js";
 export type { IntentRefusal, MatchIntent } from "./match/apply-intent.js";
 export { applyIntent } from "./match/apply-intent.js";
 export { MAX_CATCHUP_SECONDS, drainAccumulator } from "./match/accumulator.js";

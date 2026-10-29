@@ -100,19 +100,27 @@ export function syncList<T>(
 
 /* --- screen bar, confirmations, problems, toasts (#566) ------------------- */
 
-/** A screen's way back, on the left of its bar. */
+/** A screen's way back, right after its place in the top bar. */
 export interface ScreenBarBack {
   readonly label: string;
   readonly onBack: () => void;
 }
 
-/** What a screen's bar holds, left to right. */
+/** The global icon that is a screen itself, hidden while that screen shows (#1272). */
+export type OwnIcon = "help" | "options" | "music";
+
+/** What a screen puts in the top bar (#1272), left to right. */
 export interface ScreenBarOptions {
+  /**
+   * Where the screen is: the titles of the screens it was reached through,
+   * then its own. An element stands for a crumb the player edits, such as
+   * the build editor's name field.
+   */
+  readonly crumbs: readonly (string | HTMLElement)[];
   /** The way back, which Esc takes too. The main menu has none. */
   readonly back?: ScreenBarBack;
-  readonly title?: readonly HTMLElement[];
   readonly status?: readonly HTMLElement[];
-  /** The screen's main actions, on the right. */
+  /** The screen's own buttons, after a divider. */
   readonly actions: readonly HTMLElement[];
   /**
    * Esc puts away what the screen has open before it goes back: a menu,
@@ -122,21 +130,73 @@ export interface ScreenBarOptions {
   readonly putAway?: () => boolean;
   /**
    * The bar of an overlay above the screen, such as Options opened from
-   * the top bar (#454): while it is on the page, Esc is its, even when the
-   * screen under it draws a new bar.
+   * the top bar (#454): it shows, and Esc is its, until `release`, even
+   * when the screen under it draws a new bar.
    */
   readonly overlay?: boolean;
+  readonly own?: OwnIcon;
+}
+
+/** The parts of the top bar a screen's bar fills (index.html, topbar.ts). */
+export interface TopbarSlots {
+  readonly crumbs: HTMLElement;
+  readonly back: HTMLElement;
+  readonly status: HTMLElement;
+  readonly actions: HTMLElement;
+  /**
+   * Told which bar shows after every change: where it is (its crumbs, as
+   * text), the bar's own icon, and whether it is an overlay's.
+   */
+  readonly onShow: (shown: {
+    readonly place: string;
+    readonly own: OwnIcon | undefined;
+    readonly overlay: boolean;
+  }) => void;
+  /** Puts away the bar's ⋯ overflow when it is open; true when it was. */
+  readonly putAway: () => boolean;
 }
 
 interface LiveBar {
-  readonly element: HTMLElement;
+  readonly options: ScreenBarOptions;
+  readonly crumbs: readonly HTMLElement[];
+  readonly back: HTMLButtonElement | undefined;
   readonly escape: () => void;
 }
 
-/** The newest screen bar: Esc serves it while it is on screen. */
-let liveBar: LiveBar | undefined;
-/** The newest overlay's bar, which Esc serves before the screen's while it is on screen. */
-let overlayBar: LiveBar | undefined;
+let slots: TopbarSlots | undefined;
+/** The newest screen's bar, which shows when no overlay's does. */
+let screenLive: LiveBar | undefined;
+/** The open overlays' bars, newest last: the newest shows, and Esc is its. */
+const overlayBars: LiveBar[] = [];
+
+/** Where screen bars go from now on; the top bar calls it once. */
+export function setTopbarSlots(next: TopbarSlots): void {
+  slots = next;
+  showBar();
+}
+
+function shownBar(): LiveBar | undefined {
+  return overlayBars.at(-1) ?? screenLive;
+}
+
+/** Put the shown bar's parts in the top bar, replacing the last one's. */
+function showBar(): void {
+  const bar = shownBar();
+  if (slots === undefined || bar === undefined) {
+    return;
+  }
+  slots.crumbs.replaceChildren(...bar.crumbs);
+  slots.back.replaceChildren(...(bar.back === undefined ? [] : [bar.back]));
+  slots.status.replaceChildren(...(bar.options.status ?? []));
+  slots.actions.replaceChildren(...bar.options.actions);
+  slots.onShow({
+    place: bar.options.crumbs
+      .map((crumb) => (typeof crumb === "string" ? crumb : crumb.textContent))
+      .join(" / "),
+    own: bar.options.own,
+    overlay: bar.options.overlay === true,
+  });
+}
 
 /** Whether `element` is in the page and nothing above it hides it. */
 function onScreen(element: HTMLElement): boolean {
@@ -154,14 +214,14 @@ function onScreen(element: HTMLElement): boolean {
  * back. On `window`, so it runs after anything on the page that wanted Esc
  * first and said so: the Training Ground cancels with it, a key being
  * rebound gives up with it. A search field and a text area keep their own.
- * In a match the screens are hidden, so Esc keeps its in-match meaning.
+ * In a match the top bar is hidden, so Esc keeps its in-match meaning.
  */
 function onEscape(event: KeyboardEvent): void {
   if (event.key !== "Escape" || event.defaultPrevented || event.repeat) {
     return;
   }
-  const bar = overlayBar !== undefined && onScreen(overlayBar.element) ? overlayBar : liveBar;
-  if (bar === undefined || !onScreen(bar.element)) {
+  const bar = shownBar();
+  if (bar === undefined || slots === undefined || !onScreen(slots.crumbs)) {
     return;
   }
   const target = event.target;
@@ -172,7 +232,7 @@ function onEscape(event: KeyboardEvent): void {
     return;
   }
   event.preventDefault();
-  if (cancelConfirm()) {
+  if (cancelConfirm() || slots.putAway()) {
     return;
   }
   bar.escape();
@@ -180,46 +240,60 @@ function onEscape(event: KeyboardEvent): void {
 
 let listening = false;
 
+/** A crumb: a parent's title, or the place itself, last. */
+function crumbNodes(crumbs: readonly (string | HTMLElement)[]): HTMLElement[] {
+  return crumbs.flatMap((crumb, index) => {
+    const place = index === crumbs.length - 1;
+    const node = typeof crumb === "string" ? h("span", "", crumb) : crumb;
+    node.classList.add("topbar-crumb");
+    node.classList.toggle("is-place", place);
+    // The place is the screen's heading, as its title was.
+    if (place && typeof crumb === "string") {
+      node.setAttribute("role", "heading");
+      node.setAttribute("aria-level", "1");
+    }
+    if (index === 0) {
+      return [node];
+    }
+    const separator = h("span", "topbar-crumb-separator", " > ");
+    separator.setAttribute("aria-hidden", "true");
+    return [separator, node];
+  });
+}
+
 /**
- * A screen's bar (#566, #555): back on the left, then the title, a status
- * in the middle and the main actions on the right, wrapping on a narrow
- * window. `back` is returned so a screen can ask before leaving.
+ * A screen's place and controls in the top bar (#566, #1272): its
+ * breadcrumb, Back, its status, then its own buttons. It shows at once,
+ * replacing the last screen's; an overlay's shows above every screen's
+ * until `release`. `back` is returned so a screen can ask before leaving.
  *
- * Esc on the screen is the bar's (#578), until another bar replaces it.
+ * Esc on the screen is the shown bar's (#578).
  */
 export function screenBar(options: ScreenBarOptions & { readonly back: ScreenBarBack }): {
-  readonly element: HTMLElement;
   readonly back: HTMLButtonElement;
+  readonly release: () => void;
 };
 export function screenBar(options: ScreenBarOptions): {
-  readonly element: HTMLElement;
   readonly back: HTMLButtonElement | undefined;
+  readonly release: () => void;
 };
 export function screenBar(options: ScreenBarOptions): {
-  readonly element: HTMLElement;
   readonly back: HTMLButtonElement | undefined;
+  readonly release: () => void;
 } {
-  const element = h("div", "screen-bar");
-  const back =
-    options.back === undefined
-      ? undefined
-      : button(options.back.label, "screen-bar-back", options.back.onBack);
-  const part = (className: string, children: readonly HTMLElement[]): HTMLElement => {
-    const node = h("div", className);
-    node.append(...children);
-    return node;
-  };
-  if (back !== undefined) {
-    element.appendChild(back);
+  let back: HTMLButtonElement | undefined;
+  if (options.back !== undefined) {
+    back = button("", "topbar-back-button", options.back.onBack);
+    // A chevron on a phone, the word on a wider screen (styles.css).
+    const chevron = h("span", "topbar-back-chevron", "‹");
+    chevron.setAttribute("aria-hidden", "true");
+    back.append(chevron, h("span", "topbar-back-label", options.back.label));
+    back.setAttribute("aria-label", options.back.label);
   }
-  element.append(
-    part("screen-bar-title", options.title ?? []),
-    part("screen-bar-status", options.status ?? []),
-    part("screen-bar-actions", options.actions),
-  );
-
   const live: LiveBar = {
-    element,
+    options,
+    crumbs: crumbNodes(options.crumbs),
+    back,
     escape: () => {
       if (options.putAway?.() === true) {
         return;
@@ -228,15 +302,23 @@ export function screenBar(options: ScreenBarOptions): {
     },
   };
   if (options.overlay === true) {
-    overlayBar = live;
+    overlayBars.push(live);
   } else {
-    liveBar = live;
+    screenLive = live;
   }
+  showBar();
   if (!listening) {
     listening = true;
     window.addEventListener("keydown", onEscape);
   }
-  return { element, back };
+  const release = (): void => {
+    const at = overlayBars.indexOf(live);
+    if (at !== -1) {
+      overlayBars.splice(at, 1);
+      showBar();
+    }
+  };
+  return { back, release };
 }
 
 /** An open inline confirmation, which a screen can put away (Esc). */

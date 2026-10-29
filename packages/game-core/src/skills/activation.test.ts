@@ -47,6 +47,7 @@ function request(overrides: Partial<ActivationRequest> = {}): ActivationRequest 
     casterPosition: vec2(0, 0),
     target: makeCombatant({ id: "target", team: 1 }),
     targetPosition: vec2(100, 0),
+    targetCreatureKind: undefined,
     rechargeRemaining: new Map(),
     spent: new Set(),
     isCasting: false,
@@ -267,9 +268,9 @@ describe("canActivate", () => {
 describe("targetRuleAllows (#599)", () => {
   const caster = { id: "me", team: 0 };
   const targets = [
-    { id: "me", team: 0 },
-    { id: "ally", team: 0 },
-    { id: "foe", team: 1 },
+    { id: "me", team: 0, creatureKind: undefined },
+    { id: "ally", team: 0, creatureKind: undefined },
+    { id: "foe", team: 1, creatureKind: undefined },
   ];
   const verdicts = (rule: Parameters<typeof targetRuleAllows>[0]) =>
     targets.map((target) => targetRuleAllows(rule, caster, target));
@@ -293,6 +294,17 @@ describe("targetRuleAllows (#599)", () => {
       undefined,
       "invalid-target-enemy",
     ]);
+  });
+
+  it("allows an allied spirit only, whoever summoned it (#1309)", () => {
+    const refused = "invalid-target-not-allied-spirit";
+    expect(verdicts("allied-spirit")).toEqual([refused, refused, refused]);
+    const spirit = (team: number) => ({ id: "spirit", team, creatureKind: "spirit" as const });
+    expect(targetRuleAllows("allied-spirit", caster, spirit(0))).toBeUndefined();
+    expect(targetRuleAllows("allied-spirit", caster, spirit(1))).toBe(refused);
+    expect(
+      targetRuleAllows("allied-spirit", caster, { id: "pet", team: 0, creatureKind: "pet" }),
+    ).toBe(refused);
   });
 });
 

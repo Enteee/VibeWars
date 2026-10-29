@@ -136,6 +136,11 @@ export interface WeaponSetIntent {
   readonly set: 0 | 1 | 2 | 3;
 }
 
+/** Drop the flag carried where you stand (#1225): GW1's Drop button. */
+export interface DropBundleIntent {
+  readonly kind: "drop-bundle";
+}
+
 /** How a companion fights (#1110, GW1 pet control): Guard is the default. */
 export type CompanionMode = "guard" | "fight" | "heel";
 export const COMPANION_MODES: readonly CompanionMode[] = ["guard", "fight", "heel"];
@@ -263,6 +268,7 @@ export type ClientIntent =
   | WalkToIntent
   | EndUpkeepIntent
   | WeaponSetIntent
+  | DropBundleIntent
   | CommandIntent;
 
 /**
@@ -326,6 +332,10 @@ export function parseClientIntent(value: unknown): ClientIntent | undefined {
 
   if (record.kind === "cancel" && hasOnlyKeys(record, ["kind"])) {
     return { kind: "cancel" };
+  }
+
+  if (record.kind === "drop-bundle" && hasOnlyKeys(record, ["kind"])) {
+    return { kind: "drop-bundle" };
   }
 
   if (

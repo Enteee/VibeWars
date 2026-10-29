@@ -113,7 +113,7 @@ describe("skill catalog integrity", () => {
     }
   });
 
-  it("lasts a pulse its pulses, and nests no ground effect in one (#1113)", () => {
+  it("lasts a pulse its delay and its pulses, and nests no ground effect in one (#1113)", () => {
     const pulses = IMPLEMENTED_SKILLS.flatMap((skill) =>
       skill.effects.flatMap((effect) => {
         if (effect.kind !== "create-ground-effect" || effect.act.kind === "aura") {
@@ -133,7 +133,13 @@ describe("skill catalog integrity", () => {
         id,
       ).toBe(false);
       if (effect.act.kind === "pulse") {
-        expect(effect.durationSeconds, id).toEqual({ flat: pulse.count * pulse.everySeconds });
+        expect(pulse.delaySeconds, id).toBeGreaterThanOrEqual(0);
+        expect(effect.durationSeconds, id).toEqual({
+          flat: pulse.delaySeconds + pulse.count * pulse.everySeconds,
+        });
+      } else {
+        // A trap's first pulse lands as it springs (#1270).
+        expect(pulse.delaySeconds, id).toBe(0);
       }
     }
   });
@@ -274,6 +280,7 @@ describe("headless combat simulation", () => {
       casterPosition: caster.position,
       target: target?.combatant,
       targetPosition: target?.position,
+      targetCreatureKind: undefined,
       rechargeRemaining: caster.cast.rechargeRemaining,
       spent: caster.cast.spent,
       isCasting: caster.cast.isCasting,

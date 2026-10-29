@@ -27,8 +27,6 @@ export interface MenuCallbacks {
   readonly onCreateLobby: (name: string) => void;
   readonly onJoinLobby: (code: string, name: string) => void;
   readonly onManageTeams: () => void;
-  /** Open the Options screen (#423). */
-  readonly onOptions: () => void;
   /** Open the jukebox (#372). */
   readonly onMusic: () => void;
   /** Open the build editor on a new character. */
@@ -129,12 +127,20 @@ export function savePlayerName(name: string): void {
   }
 }
 
-/** "Elementalist / Monk · 5/8 skills", and says so when the build is illegal. */
+/** "Elementalist / Monk · 5/8 skills". */
 export function rosterSubtitle(character: StoredCharacter): string {
   const professions = professionLabel(character.primaryProfession, character.secondaryProfession);
   const skills = `${String(equippedCount(character))}/${String(character.skillBar.length)} skills`;
-  const invalid = validateBuild(character).length > 0 ? " · invalid build" : "";
-  return `${professions} · ${skills}${invalid}`;
+  return `${professions} · ${skills}`;
+}
+
+/**
+ * Whether `character` can be chosen to play (#1290): an empty bar can, an
+ * invalid build cannot. The editor saves nothing invalid, so only a rule
+ * changed since the save makes one; it stays, to be edited.
+ */
+export function isPlayable(character: StoredCharacter): boolean {
+  return validateBuild(character).length === 0;
 }
 
 /**
@@ -152,16 +158,11 @@ export function renderMenu(
   const panel = h("div", "screen screen-menu");
 
   // No way back from here, so Esc has nothing to do but cancel (#578).
-  panel.appendChild(
-    screenBar({
-      title: [h("h1", "screen-title", "VibeWars")],
-      actions: [
-        button("Teams", "", callbacks.onManageTeams),
-        button("Options", "", callbacks.onOptions),
-        button("Music", "", callbacks.onMusic),
-      ],
-    }).element,
-  );
+  // Options is the top bar's ⚙ (#1272).
+  screenBar({
+    crumbs: ["VibeWars"],
+    actions: [button("Teams", "", callbacks.onManageTeams), button("Music", "", callbacks.onMusic)],
+  });
   const subtitle = h(
     "p",
     "screen-subtitle",
@@ -191,7 +192,8 @@ export function renderMenu(
   }
 
   const active = loadActiveCharacterId();
-  const activeExists = characters.some((c) => c.id === active);
+  // An invalid active character is no choice at all (#1290).
+  const activeExists = characters.some((c) => c.id === active && isPlayable(c));
   const starter = loadStarterCharacterId();
 
   const list = h("div", "roster-list");
@@ -223,20 +225,28 @@ export function renderMenu(
               callbacks.onEditCharacter(character.id);
             }),
           ];
-    list.appendChild(
-      selectableRow({
-        dot: createCharacterFigure(character),
-        name: character.name,
-        subtitle: rosterSubtitle(character),
-        miniBar: miniSkillBar(character),
-        selected: character.id === active,
-        // Beside the row, not in it: editing never also chooses.
-        actions,
-        onSelect: () => {
+    const playable = isPlayable(character);
+    const row = selectableRow({
+      dot: createCharacterFigure(character),
+      name: character.name,
+      subtitle: rosterSubtitle(character),
+      miniBar: miniSkillBar(character),
+      selected: character.id === active && playable,
+      // Beside the row, not in it: editing never also chooses.
+      actions,
+      onSelect: () => {
+        if (playable) {
           choose(character.id);
-        },
-      }),
-    );
+        }
+      },
+    });
+    if (!playable) {
+      // Shown plainly, never chosen; Edit still fixes it (#1290).
+      row.classList.add("is-invalid");
+      row.querySelector(".selectable-row-choose")?.setAttribute("aria-disabled", "true");
+      row.querySelector(".selectable-row-name")?.after(h("span", "roster-invalid-tag", "Invalid"));
+    }
+    list.appendChild(row);
   }
   roster.appendChild(list);
   roster.appendChild(
@@ -373,14 +383,12 @@ export function renderTeamList(
 ): void {
   root.replaceChildren();
   const panel = h("div", "screen team-list");
-  panel.appendChild(
-    screenBar({
-      back: { label: "Back", onBack: callbacks.onBack },
-      title: [h("h2", "screen-title", "Teams")],
-      // An empty list holds the one "New team" itself.
-      actions: teams.length === 0 ? [] : [button("New team", "primary", callbacks.onNew)],
-    }).element,
-  );
+  screenBar({
+    crumbs: ["VibeWars", "Teams"],
+    back: { label: "Back", onBack: callbacks.onBack },
+    // An empty list holds the one "New team" itself.
+    actions: teams.length === 0 ? [] : [button("New team", "primary", callbacks.onNew)],
+  });
 
   for (const problem of problems) {
     panel.appendChild(h("div", "screen-problem", problem));

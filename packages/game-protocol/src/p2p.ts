@@ -83,9 +83,10 @@ export const MAX_WIRE_STATUSES = 32;
 
 /**
  * The most creatures a snapshot carries (#1052): game-core's
- * `MAX_CREATURES`, mirrored, with a test holding the two together.
+ * `MAX_CREATURES` summons plus its `MAX_MAP_CREATURES` map creatures
+ * (#1281), mirrored, with a test holding them together.
  */
-export const MAX_WIRE_CREATURES = 32;
+export const MAX_WIRE_CREATURES = 56;
 
 /**
  * The most ground effects a snapshot carries (#1087): game-core's
@@ -96,8 +97,11 @@ export const MAX_WIRE_GROUND_EFFECTS = 32;
 /** The most bodies a snapshot carries: every player and every creature. */
 export const MAX_WIRE_ACTORS = MAX_LOBBY_PLAYERS + MAX_WIRE_CREATURES;
 
-/** What kind of creature a body is (#1052); a priest (#1186) and a Guild Lord (#1222) are a map's. */
-export const CREATURE_KINDS = ["spirit", "minion", "pet", "priest", "guild-lord"] as const;
+/**
+ * What kind of creature a body is (#1052); a priest (#1186), a Guild Lord
+ * (#1222) and a base guard (#1223) are a map's.
+ */
+export const CREATURE_KINDS = ["spirit", "minion", "pet", "priest", "guild-lord", "guard"] as const;
 
 /** How a creature is drawn (#1162); game-core's `CREATURE_LOOKS`, mirrored. */
 export const CREATURE_LOOKS = [
@@ -107,6 +111,7 @@ export const CREATURE_LOOKS = [
   "spirit",
   "priest",
   "guild-lord",
+  "guard",
 ] as const;
 
 /**
@@ -401,6 +406,26 @@ export interface WireGroundEffect {
   readonly durationSeconds: number;
 }
 
+/** Where a Guild Battle's flag is (#1225): game-core's `FlagPlace` kinds. */
+export const FLAG_PLACES = ["spawn", "carried", "ground", "stand"] as const;
+
+/** A Guild Battle's flag (#1225): one a team, or none on a map without a stand. */
+export interface WireFlag {
+  readonly team: 0 | 1;
+  readonly place: (typeof FLAG_PLACES)[number];
+  /** Who carries it, while `carried`; `null` otherwise. */
+  readonly carrierId: string | null;
+  /** Where it lies, while `ground`; `null` otherwise. */
+  readonly x: number | null;
+  readonly y: number | null;
+}
+
+/** Who holds the flag stand (#1225), and for how long since the taking or the last boost. */
+export interface WireStand {
+  readonly holder: 0 | 1 | null;
+  readonly heldSeconds: number;
+}
+
 /**
  * Why a match ended (#846): kill-count's score and time, annihilation's
  * wipe and morale at time, a Guild Battle's slain lord and aggression (#1222).
@@ -433,6 +458,12 @@ export interface WireSnapshot {
   readonly projectiles: readonly WireProjectile[];
   /** Oldest first (#1087). */
   readonly groundEffects: readonly WireGroundEffect[];
+  /** Every flag (#1225); `[]` on a map without a stand. */
+  readonly flags: readonly WireFlag[];
+  /** The flag stand (#1225); `null` on a map without one. */
+  readonly stand: WireStand | null;
+  /** Each team's aggression by team index, rounded (#1226); `[]` but on a Guild Battle. */
+  readonly aggression: readonly number[];
 }
 
 /**
@@ -1384,8 +1415,16 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
   const players = parseArray(raw.players, MAX_WIRE_ACTORS, parsePlayer);
   const projectiles = parseArray(raw.projectiles, MAX_WIRE_PROJECTILES, parseProjectile);
   const groundEffects = parseArray(raw.groundEffects, MAX_WIRE_GROUND_EFFECTS, parseGroundEffect);
+  const flags = parseArray(raw.flags, 2, parseFlag);
+  const stand = raw.stand === null ? null : parseStand(raw.stand);
+  const aggression = parseArray(raw.aggression, 2, parseScore);
   const [team0 = 0, team1 = 0] = score;
-  return players === undefined || projectiles === undefined || groundEffects === undefined
+  return players === undefined ||
+    projectiles === undefined ||
+    groundEffects === undefined ||
+    flags === undefined ||
+    stand === undefined ||
+    aggression === undefined
     ? undefined
     : {
         tick: raw.tick,
@@ -1397,7 +1436,41 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
         players,
         projectiles,
         groundEffects,
+        flags,
+        stand,
+        aggression,
       };
+}
+
+/** A flag whose fields say what its place has, and nothing else (#1225). */
+function parseFlag(value: unknown): WireFlag | undefined {
+  const raw = fields(value);
+  if (raw === undefined || !isTeam(raw.team) || !isOneOf(raw.place, FLAG_PLACES)) {
+    return undefined;
+  }
+  const { team, place, carrierId, x, y } = raw;
+  const carrier = place === "carried" ? (isString(carrierId) ? carrierId : undefined) : null;
+  const spot =
+    place === "ground"
+      ? isNumber(x) && isNumber(y)
+        ? { x, y }
+        : undefined
+      : x === null && y === null
+        ? { x: null, y: null }
+        : undefined;
+  return carrier === undefined || (carrier === null && carrierId !== null) || spot === undefined
+    ? undefined
+    : { team, place, carrierId: carrier, ...spot };
+}
+
+function parseStand(value: unknown): WireStand | undefined {
+  const raw = fields(value);
+  return raw !== undefined &&
+    (raw.holder === null || isTeam(raw.holder)) &&
+    isNumber(raw.heldSeconds) &&
+    raw.heldSeconds >= 0
+    ? { holder: raw.holder, heldSeconds: raw.heldSeconds }
+    : undefined;
 }
 
 function parseScore(value: unknown): number | undefined {

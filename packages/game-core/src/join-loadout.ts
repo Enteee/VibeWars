@@ -38,8 +38,7 @@ export function loadoutOf(build: PlayerBuild): JoinLoadout {
 /** Why a claimed build was turned down for a starter build, for the host's log. */
 export type JoinRefusal =
   | { readonly kind: "malformed" }
-  | { readonly kind: "illegal"; readonly build: PlayerBuild; readonly problems: BuildProblem[] }
-  | { readonly kind: "empty-bar"; readonly build: PlayerBuild };
+  | { readonly kind: "illegal"; readonly build: PlayerBuild; readonly problems: BuildProblem[] };
 
 /**
  * Decide what a joining player actually gets to play (brief §32), from
@@ -71,9 +70,6 @@ export function resolveJoinLoadout(
   const problems = validatePlayerBuild(build, rules);
   if (problems.length > 0) {
     return { loadout: starter(), refused: { kind: "illegal", build, problems } };
-  }
-  if (build.skillBar.every((id) => id === null)) {
-    return { loadout: starter(), refused: { kind: "empty-bar", build } };
   }
   return { loadout: loadoutOf(build), refused: undefined };
 }

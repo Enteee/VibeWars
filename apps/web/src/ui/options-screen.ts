@@ -58,6 +58,8 @@ export class SectionSwitcher<C> {
 
 export interface OptionsScreenCallbacks {
   readonly onBack: () => void;
+  /** The screen it was reached from, which its breadcrumb goes through (#1272): "Music". */
+  readonly from: string;
 }
 
 /** Torn down by `disposeOptionsScreen`, which every way back to the menu calls. */
@@ -76,7 +78,12 @@ export function renderOptionsScreen(
   disposeOptionsScreen();
 
   root.replaceChildren();
-  const options = optionsPanel({ label: "Back", onBack: callbacks.onBack }, false, sectionId);
+  const options = optionsPanel(
+    ["VibeWars", callbacks.from, "Options"],
+    { label: "Back", onBack: callbacks.onBack },
+    false,
+    sectionId,
+  );
   options.panel.classList.add("screen", "options-screen");
   root.appendChild(options.panel);
   disposeCurrent = options.dispose;
@@ -94,7 +101,11 @@ let overlay: { readonly element: HTMLElement; readonly dispose: () => void } | u
 export function openOptionsOverlay(parent: HTMLElement, onClose?: () => void): void {
   closeOptionsOverlay();
   const backdrop = h("div", "options-overlay");
-  const options = optionsPanel({ label: "Close", onBack: closeOptionsOverlay }, true);
+  const options = optionsPanel(
+    ["VibeWars", "Options"],
+    { label: "Close", onBack: closeOptionsOverlay },
+    true,
+  );
   options.panel.classList.add("screen", "options-screen");
   options.panel.setAttribute("role", "dialog");
   options.panel.setAttribute("aria-modal", "true");
@@ -128,20 +139,20 @@ export function closeOptionsOverlay(): void {
 
 /** The Options frame and its sections; the screen and the overlay differ only around it. */
 function optionsPanel(
+  crumbs: readonly string[],
   back: ScreenBarBack,
   asOverlay: boolean,
   sectionId = OPTIONS_SECTIONS[0]?.id,
 ): { readonly panel: HTMLElement; readonly dispose: () => void } {
   const panel = document.createElement("div");
 
-  panel.appendChild(
-    screenBar({
-      back,
-      title: [h("h2", "screen-title", "Options")],
-      actions: [],
-      overlay: asOverlay,
-    }).element,
-  );
+  const { release } = screenBar({
+    crumbs,
+    back,
+    actions: [],
+    overlay: asOverlay,
+    own: "options",
+  });
 
   const body = document.createElement("div");
   body.className = "options-body";
@@ -193,6 +204,7 @@ function optionsPanel(
     panel,
     dispose: () => {
       switcher.close();
+      release();
     },
   };
 }

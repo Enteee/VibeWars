@@ -63,7 +63,7 @@ describe("resolveJoinLoadout", () => {
     expect(resolveJoinLoadout(undefined, RULES, always(0)).loadout).toEqual(loadoutOf(starter(0)));
   });
 
-  it("gives the starter build random picks for a malformed, an illegal or an empty build, and says why (#852)", () => {
+  it("gives the starter build random picks for a malformed or an illegal build, and says why (#852)", () => {
     // 0.5 picks the third of five.
     const middle = loadoutOf(starter(2));
     expect(resolveJoinLoadout({ name: 3 }, RULES, always(0.5))).toEqual({
@@ -77,15 +77,15 @@ describe("resolveJoinLoadout", () => {
     );
     expect(illegal.loadout).toEqual(middle);
     expect(illegal.refused?.kind).toBe("illegal");
-    const empty = resolveJoinLoadout(
-      { ...LEGAL, skillBar: Array(8).fill(null) },
-      RULES,
-      always(0.5),
-    );
-    expect(empty).toEqual({
-      loadout: middle,
-      refused: { kind: "empty-bar", build: expect.objectContaining({ name: "Flame Caller" }) },
+  });
+
+  it("plays an empty bar as claimed, equipment and all, without rolling (#1290)", () => {
+    const empty: PlayerBuild = { ...LEGAL, skillBar: Array(8).fill(null) };
+    expect(resolveJoinLoadout(empty, RULES, never)).toEqual({
+      loadout: loadoutOf(empty),
+      refused: undefined,
     });
+    expect(loadoutOf(empty).equipment).toEqual(LEGAL.equipment);
   });
 
   it("gives a starter build for a bar with two elites (#459)", () => {

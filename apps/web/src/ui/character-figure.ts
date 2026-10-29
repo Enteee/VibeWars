@@ -36,20 +36,21 @@ const FIGURE_FACING = 0;
 
 /** What a character holds in a match: `weaponId` and `offhandId` as the host sends them. */
 export interface CharacterAppearance {
-  /** `undefined` for a build the host would refuse: what it plays is not known here. */
+  /** `undefined` for an invalid build, which the host refuses: what it plays is not known here. */
   readonly weaponId: string | undefined;
   readonly offhandId: OffhandId | undefined;
 }
 
-/** A refused build's: the bare body, no marks. */
+/** An invalid build's: the bare body, no marks. */
 const UNKNOWN: CharacterAppearance = { weaponId: undefined, offhandId: undefined };
 
 /**
  * The weapon and off-hand `character` enters a match with: its claimed
- * build through the host's own checks, set 1 in hand. A build the host
- * would refuse, by the test the lobby uses too (`main.ts`), plays a
- * starter build the host picks at random (#852): unknowable here, so the
- * figure is the bare body. Not an error.
+ * build through the host's own checks, set 1 in hand. An empty bar is a
+ * build like any other (#1290). An invalid build, which the host refuses
+ * by the test the lobby uses too (`main.ts`), plays a starter build the
+ * host picks at random (#852): unknowable here, so the figure is the bare
+ * body. Not an error.
  */
 export function characterAppearance(character: StoredCharacter): CharacterAppearance {
   const { loadout, refused } = resolveJoinLoadout(
@@ -86,6 +87,13 @@ export function figureBody(appearance: CharacterAppearance): StandingBody {
     offhandId: appearance.offhandId,
     frame: REST_FRAME,
   };
+}
+
+/** The figure's body through `painter`: its disc, `paintGlyph` over it, then its marks. */
+export function paintFigure(painter: Painter, body: StandingBody, paintGlyph: () => void): void {
+  paintBodyDisc(painter, body);
+  paintGlyph();
+  paintBodyMarks(painter, body);
 }
 
 /** A canvas 2D context as the painter a body is drawn through. */
@@ -180,9 +188,10 @@ function paintBodyGlyph(
 /**
  * The figure for `character`, as a canvas sharp at the device's pixel
  * ratio: drawn at once without its glyph, then again with it once the
- * profession icon has loaded, with `data-glyph` naming it. A refused
- * build keeps its glyph: its profession is known. A browser that gives no
- * 2D context leaves the box empty.
+ * profession icon has loaded, with `data-glyph` naming it, and
+ * `data-weapon-id` naming what it holds. An invalid build keeps its
+ * glyph: its profession is known. A browser that gives no 2D context
+ * leaves the box empty.
  */
 export function createCharacterFigure(character: StoredCharacter): HTMLCanvasElement {
   const size = (BODY_RADIUS + MARK_ROOM) * 2;
@@ -205,15 +214,19 @@ export function createCharacterFigure(character: StoredCharacter): HTMLCanvasEle
   // Phaser joins its strokes round; a canvas's default miter would
   // spike the weapon casing's points past the mark.
   context.lineJoin = "round";
-  const body = figureBody(characterAppearance(character));
+  const appearance = characterAppearance(character);
+  if (appearance.weaponId !== undefined) {
+    canvas.dataset.weaponId = appearance.weaponId;
+  }
+  const body = figureBody(appearance);
   const painter = canvasPainter(context);
   const paint = (glyph: HTMLImageElement | undefined): void => {
     context.clearRect(0, 0, size, size);
-    paintBodyDisc(painter, body);
-    if (glyph !== undefined) {
-      paintBodyGlyph(context, body, glyph, ratio);
-    }
-    paintBodyMarks(painter, body);
+    paintFigure(painter, body, () => {
+      if (glyph !== undefined) {
+        paintBodyGlyph(context, body, glyph, ratio);
+      }
+    });
   };
   paint(undefined);
   void loadGlyph(character.primaryProfession).then((glyph) => {

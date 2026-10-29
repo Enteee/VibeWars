@@ -61,6 +61,9 @@ function match(players: readonly PlayerSnapshot[], selfSessionId = "me"): MatchS
     projectiles: [],
     groundEffects: [],
     traps: [],
+    flags: [],
+    stand: undefined,
+    aggression: [],
     summary: undefined,
   };
 }

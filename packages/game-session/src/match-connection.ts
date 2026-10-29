@@ -4,8 +4,10 @@ import type {
   CompanionMode,
   CreatureKind,
   CreatureLook,
+  FlagState,
   OffhandId,
   ProfessionId,
+  StandState,
   StatusId,
 } from "@vibewars/game-core";
 import type {
@@ -154,6 +156,12 @@ export interface MatchSnapshot {
   readonly groundEffects: readonly GroundEffectSnapshot[];
   /** Your team's traps, oldest first (#1105); a foe's never reach you. */
   readonly traps: readonly GroundEffectSnapshot[];
+  /** A Guild Battle's flags and where each is (#1225); `[]` on a map without a stand. */
+  readonly flags: readonly FlagState[];
+  /** Who holds the flag stand (#1225); `undefined` on a map without one. */
+  readonly stand: StandState | undefined;
+  /** Each team's aggression by team index on a Guild Battle (#1222, #1226); `[]` on any other. */
+  readonly aggression: readonly number[];
   /** What each player did, from the host's `ended` (#1057); `undefined` until then. */
   readonly summary: readonly MatchSummaryRow[] | undefined;
 }

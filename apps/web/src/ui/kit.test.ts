@@ -8,8 +8,11 @@ import {
   inlineConfirm,
   screenBar,
   selectableRow,
+  setTopbarSlots,
   syncList,
   toast,
+  type OwnIcon,
+  type TopbarSlots,
 } from "./kit.js";
 
 /**
@@ -124,7 +127,19 @@ class FakeNode {
   /** The page itself: what is below it is connected (#578). */
   isPage = false;
   readonly style = { display: "" };
-  readonly classList = { toggle: (): void => undefined };
+  readonly classes = new Set<string>();
+  readonly classList = {
+    add: (name: string): void => {
+      this.classes.add(name);
+    },
+    toggle: (name: string, on: boolean): void => {
+      if (on) {
+        this.classes.add(name);
+      } else {
+        this.classes.delete(name);
+      }
+    },
+  };
   parent: FakeNode | undefined;
   readonly children: FakeNode[] = [];
   readonly #clicks: (() => void)[] = [];
@@ -158,6 +173,18 @@ class FakeNode {
     node.parent = this;
     this.children.push(node);
     return node;
+  }
+
+  replaceChildren(...nodes: FakeNode[]): void {
+    for (const child of [...this.children]) {
+      child.remove();
+    }
+    this.append(...nodes);
+  }
+
+  /** The text of everything below, as the page would read it. */
+  get text(): string {
+    return this.textContent + this.children.map((child) => child.text).join("");
   }
 
   after(node: FakeNode): void {
@@ -338,11 +365,26 @@ class FakeInput {
   type = "text";
 }
 
-describe("screenBar's Esc (#578)", () => {
+describe("screenBar in the top bar (#578, #1272)", () => {
   let page: FakeNode;
+  let topbar: FakeNode;
+  let slots: { crumbs: FakeNode; back: FakeNode; status: FakeNode; actions: FakeNode };
+  let shown: { place: string; own: OwnIcon | undefined; overlay: boolean }[];
+  let overflowOpen: boolean;
   beforeEach(() => {
     page = new FakeNode();
     page.isPage = true;
+    topbar = new FakeNode();
+    page.appendChild(topbar);
+    slots = {
+      crumbs: new FakeNode(),
+      back: new FakeNode(),
+      status: new FakeNode(),
+      actions: new FakeNode(),
+    };
+    topbar.append(slots.crumbs, slots.back, slots.status, slots.actions);
+    shown = [];
+    overflowOpen = false;
     vi.stubGlobal("document", { createElement, body: new FakeNode() });
     vi.stubGlobal("window", {
       addEventListener: (_type: string, listener: (event: KeyboardEvent) => void) => {
@@ -351,6 +393,17 @@ describe("screenBar's Esc (#578)", () => {
     });
     vi.stubGlobal("HTMLTextAreaElement", FakeTextArea);
     vi.stubGlobal("HTMLInputElement", FakeInput);
+    setTopbarSlots({
+      ...(slots as unknown as Pick<TopbarSlots, "crumbs" | "back" | "status" | "actions">),
+      onShow: (next) => {
+        shown.push(next);
+      },
+      putAway: () => {
+        const was = overflowOpen;
+        overflowOpen = false;
+        return was;
+      },
+    });
   });
   afterEach(() => {
     vi.unstubAllGlobals();
@@ -374,51 +427,102 @@ describe("screenBar's Esc (#578)", () => {
     return prevented;
   }
 
-  /** A screen with a bar on the page, and its back. */
-  function screen(putAway: () => boolean = () => false) {
+  /** A screen's bar, shown, and its back. */
+  function screen(putAway: () => boolean = () => false, title = "Teams") {
     const onBack = vi.fn();
-    const bar = screenBar({ back: { label: "Back", onBack }, actions: [], putAway });
-    page.appendChild(bar.element as unknown as FakeNode);
+    const bar = screenBar({
+      crumbs: ["VibeWars", title],
+      back: { label: "Back", onBack },
+      actions: [],
+      putAway,
+    });
     return { onBack, back: bar.back as unknown as FakeNode };
   }
 
-  it("goes back from the newest bar on the page, as its back button does", () => {
+  it("fills the top bar: the crumbs, Back, the status and the screen's buttons", () => {
+    const name = new FakeNode("input");
+    const status = new FakeNode();
+    const save = new FakeNode("button");
+    const { back } = screenBar({
+      crumbs: ["VibeWars", "Teams", name as unknown as HTMLElement],
+      back: { label: "Close", onBack: vi.fn() },
+      status: [status as unknown as HTMLElement],
+      actions: [save as unknown as HTMLElement],
+    });
+    expect(slots.crumbs.text).toBe("VibeWars > Teams > ");
+    expect(slots.crumbs.children.at(-1)).toBe(name);
+    expect(name.classes.has("is-place")).toBe(true);
+    expect(slots.crumbs.children[0]?.classes.has("is-place")).toBe(false);
+    expect(slots.back.children).toEqual([back]);
+    expect(slots.back.text).toBe("‹Close");
+    expect(slots.status.children).toEqual([status]);
+    expect(slots.actions.children).toEqual([save]);
+    // Where it is, as text, so a repaint in place can be told from a move.
+    expect(shown.at(-1)?.place).toBe("VibeWars / Teams / ");
+  });
+
+  it("replaces the last screen's bar, and the main menu has no Back", () => {
+    screen();
+    const menu = screenBar({ crumbs: ["VibeWars"], actions: [] });
+    expect(menu.back).toBeUndefined();
+    expect(slots.crumbs.text).toBe("VibeWars");
+    expect(slots.back.children).toEqual([]);
+    expect(() => pressEscape()).not.toThrow();
+  });
+
+  it("goes back from the newest bar, as its back button does", () => {
     const old = screen();
-    page.children.length = 0;
     const current = screen();
     expect(pressEscape()).toBe(true);
     expect(current.onBack).toHaveBeenCalledOnce();
     expect(old.onBack).not.toHaveBeenCalled();
   });
 
-  it("closes an overlay above the screen first, even when the screen draws a new bar (#454)", () => {
+  it("shows an overlay's bar above the screen's, and the screen's again once it is released (#454)", () => {
     const below = screen();
     const onClose = vi.fn();
     const overlay = screenBar({
+      crumbs: ["VibeWars", "Options"],
       back: { label: "Close", onBack: onClose },
       actions: [],
       overlay: true,
+      own: "options",
     });
-    page.appendChild(overlay.element as unknown as FakeNode);
-    // A lobby repaints under it.
-    page.children[0]?.remove();
-    const repainted = screen();
+    expect(slots.crumbs.text).toBe("VibeWars > Options");
+    expect(shown.at(-1)).toEqual({ place: "VibeWars / Options", own: "options", overlay: true });
+    // A lobby repaints under it: the overlay's bar stays.
+    const repainted = screen(undefined, "Lobby");
+    expect(slots.crumbs.text).toBe("VibeWars > Options");
+    expect(slots.back.children).toEqual([overlay.back]);
     expect(pressEscape()).toBe(true);
     expect(onClose).toHaveBeenCalledOnce();
     expect(repainted.onBack).not.toHaveBeenCalled();
     expect(below.onBack).not.toHaveBeenCalled();
-    // Closed, it is off the page: Esc is the screen's again.
-    (overlay.element as unknown as FakeNode).remove();
+    // Closed, the screen's bar is back exactly, and so is its Esc.
+    overlay.release();
+    expect(slots.crumbs.text).toBe("VibeWars > Lobby");
+    expect(slots.back.children).toEqual([repainted.back]);
+    expect(shown.at(-1)).toEqual({ place: "VibeWars / Lobby", own: undefined, overlay: false });
     pressEscape();
     expect(onClose).toHaveBeenCalledOnce();
     expect(repainted.onBack).toHaveBeenCalledOnce();
   });
 
-  it("does nothing while the screens are hidden, as in a match", () => {
+  it("does nothing while the top bar is hidden, as in a match", () => {
     const { onBack } = screen();
-    page.style.display = "none";
+    topbar.hidden = true;
     expect(pressEscape()).toBe(false);
     expect(onBack).not.toHaveBeenCalled();
+  });
+
+  it("puts away the bar's open ⋯ before going back", () => {
+    const { onBack } = screen();
+    overflowOpen = true;
+    expect(pressEscape()).toBe(true);
+    expect(overflowOpen).toBe(false);
+    expect(onBack).not.toHaveBeenCalled();
+    pressEscape();
+    expect(onBack).toHaveBeenCalledOnce();
   });
 
   it("cancels an open inline confirmation instead of going back", () => {
@@ -464,13 +568,6 @@ describe("screenBar's Esc (#578)", () => {
     expect(onBack).not.toHaveBeenCalled();
     pressEscape(new FakeInput());
     expect(onBack).toHaveBeenCalledOnce();
-  });
-
-  it("has nothing to go back to on a screen without a back, such as the main menu", () => {
-    const bar = screenBar({ actions: [] });
-    page.appendChild(bar.element as unknown as FakeNode);
-    expect(bar.back).toBeUndefined();
-    expect(() => pressEscape()).not.toThrow();
   });
 });
 

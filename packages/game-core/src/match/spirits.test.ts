@@ -12,7 +12,7 @@ import { makeCombatant } from "../skills/testing.js";
 import type { StatusId } from "../skills/status.js";
 import type { Combatant } from "../skills/types.js";
 import { landBlow, PLAIN_BLOW, skillBlow, weaponSnapshotOf } from "../skills/weapon-attack.js";
-import { distance, vec2, type Vec2 } from "../vec2.js";
+import { distance, normalize, sub, vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
 
@@ -263,6 +263,208 @@ describe("one spirit of a skill in range (#1064)", () => {
     );
     expect(spirits(sim)).toEqual([]);
     expect(get(sim, "r").combatant.energy).toBeLessThan(100);
+  });
+});
+
+describe("bodies a spirit, minion or pet does not block (#1278)", () => {
+  const TOUCH = RULES.collision.playerRadius + RULES.collision.creatureRadius;
+
+  /** `sim` past the aftercast, `id` walking `direction` for `seconds`. */
+  function walk(sim: MatchSimulation, direction: Vec2, seconds = 0.5, id = "r"): Vec2 {
+    stepFor(sim, 1);
+    sim.setInputDirection(id, direction);
+    stepFor(sim, seconds);
+    sim.setInputDirection(id, vec2(0, 0));
+    return get(sim, id).position;
+  }
+
+  /** `r` with Recuperation planted at the origin, and the same match with none. */
+  function plantedAndBare(): [MatchSimulation, MatchSimulation] {
+    const sim = match();
+    ritual(sim, RECUPERATION);
+    const bare = match();
+    stepFor(bare, skillOf(RECUPERATION).activationSeconds + 0.5);
+    return [sim, bare];
+  }
+
+  it("lets a Ritualist walk off the spirit at their feet in any direction, straight", () => {
+    for (const direction of [vec2(1, 0), vec2(-1, 0), vec2(0, 1), vec2(0, -1)]) {
+      const [sim, bare] = plantedAndBare();
+      expect(walk(sim, direction)).toEqual(walk(bare, direction));
+      expect(spirits(sim)[0]?.position).toEqual(vec2(0, 0));
+    }
+  });
+
+  it("lets a teammate, and then its owner, walk straight through it", () => {
+    const [sim, bare] = plantedAndBare();
+    for (const each of [sim, bare]) {
+      walk(each, vec2(-1, 0));
+      each.setInputDirection("a", vec2(0, -1));
+    }
+    // `a` from 200 above it to 200 below, every step where it is with none.
+    for (let i = 0; i < 2.2 * RULES.tickRateHz; i += 1) {
+      sim.step(DT);
+      bare.step(DT);
+      expect(get(sim, "a").position).toEqual(get(bare, "a").position);
+    }
+    expect(get(sim, "a").position.y).toBeLessThan(-TOUCH);
+    for (const each of [sim, bare]) {
+      each.setInputDirection("a", vec2(0, 0));
+    }
+    expect(walk(sim, vec2(1, 0), 1)).toEqual(walk(bare, vec2(1, 0), 1));
+    expect(get(sim, "r").position.x).toBeGreaterThan(TOUCH);
+    expect(spirits(sim)[0]?.position).toEqual(vec2(0, 0));
+  });
+
+  it("stops a foe walking straight at the spirit at the touch", () => {
+    const sim = match();
+    ritual(sim, RECUPERATION);
+    walk(sim, vec2(0, -1));
+    sim.setInputDirection("f", vec2(-1, 0));
+    stepFor(sim, 3);
+    expect(get(sim, "f").position).toEqual(vec2(TOUCH, 0));
+  });
+
+  /** `r`'s Bone Minion, spawned on it at the origin, walked by nothing. */
+  const MINION: ParticipantSpec = {
+    ...spec("r/m", 0, vec2(0, 0)),
+    creature: {
+      ownerId: "r",
+      kind: "minion",
+      look: "bone-minion",
+      name: "Bone Minion",
+      expiresInSeconds: Number.POSITIVE_INFINITY,
+      ageSeconds: 0,
+      summonedAtTick: 0,
+      skillId: "necromancer.animate-bone-minions",
+      aura: undefined,
+      onDeath: "vanish",
+      ownerDisableSeconds: 0,
+      companionSkillId: undefined,
+      mode: "guard",
+    },
+  };
+
+  /** `from` walks straight at `r/m` for 3 s, and stops touching it. */
+  function walkInto(sim: MatchSimulation, from: string): void {
+    const minion = get(sim, "r/m");
+    const at = minion.position;
+    const body = get(sim, from);
+    sim.setInputDirection(from, normalize(sub(at, body.position)));
+    stepFor(sim, 3);
+    expect(minion.position).toEqual(at);
+    expect(distance(body.position, at)).toBeCloseTo(TOUCH, 6);
+  }
+
+  it("lets an owner step off the minion spawned on them unpushed, then blocks them", () => {
+    const sim = match(MINION);
+    const bare = match();
+    expect(walk(sim, vec2(0, -1))).toEqual(walk(bare, vec2(0, -1)));
+    walkInto(sim, "r");
+  });
+
+  it("blocks a teammate, and a foe, at the touch of the owner's minion", () => {
+    for (const from of ["a", "f"]) {
+      const sim = match(MINION);
+      walk(sim, vec2(-1, 0));
+      walkInto(sim, from);
+    }
+  });
+
+  it("lets an owner walk off their own pet standing on them, unpushed", () => {
+    const sim = new MatchSimulation({
+      seed: "pass",
+      participants: [spec("r", 0, vec2(0, 0), { skillBar: ["ranger.charm-animal"] })],
+    });
+    const pet = [...sim.participants()].find((p) => p.creature?.kind === "pet");
+    if (pet === undefined) {
+      throw new Error("no pet");
+    }
+    pet.position = vec2(0, 0);
+    const bare = match();
+    for (const each of [sim, bare]) {
+      each.setInputDirection("r", vec2(0, -1));
+      stepFor(each, 0.5);
+    }
+    expect(get(sim, "r").position).toEqual(get(bare, "r").position);
+  });
+
+  it("still pushes two players of one team apart", () => {
+    const sim = match(spec("b", 0, vec2(5, 0)));
+    stepFor(sim, 0.5);
+    expect(distance(get(sim, "r").position, get(sim, "b").position)).toBeGreaterThanOrEqual(
+      2 * RULES.collision.playerRadius - 1e-6,
+    );
+  });
+});
+
+describe("a walk that does not steer round its own team's spirit (#1295)", () => {
+  const TOUCH = RULES.collision.playerRadius + RULES.collision.creatureRadius;
+
+  /**
+   * `r`'s Recuperation planted at the origin, `r` then gone 1 s left, and
+   * the same match with no spirit; `extra` joins both.
+   */
+  function plantedAndBare(...extra: ParticipantSpec[]): [MatchSimulation, MatchSimulation] {
+    const sim = match(...extra);
+    ritual(sim, RECUPERATION);
+    const bare = match(...extra);
+    stepFor(bare, skillOf(RECUPERATION).activationSeconds + 0.5);
+    for (const each of [sim, bare]) {
+      stepFor(each, 1);
+      each.setInputDirection("r", vec2(-1, 0));
+      stepFor(each, 1);
+      each.setInputDirection("r", vec2(0, 0));
+    }
+    expect(get(sim, "r").position.x).toBeLessThan(-2 * TOUCH);
+    return [sim, bare];
+  }
+
+  it("walks a teammate's click straight through it, in the time it takes with none", () => {
+    const [sim, bare] = plantedAndBare();
+    const goal = vec2(0, -200);
+    sim.walkTo("a", goal);
+    bare.walkTo("a", goal);
+    for (let i = 0; i < 3 * RULES.tickRateHz; i += 1) {
+      sim.step(DT);
+      bare.step(DT);
+      expect(Math.abs(get(sim, "a").position.x)).toBeLessThan(1);
+      expect(get(sim, "a").position).toEqual(get(bare, "a").position);
+    }
+    expect(get(sim, "a").position).toEqual(goal);
+    expect(spirits(sim)[0]?.position).toEqual(vec2(0, 0));
+  });
+
+  it("walks an attack on a foe behind it straight, in the time it takes with none", () => {
+    // `b` and `g` on the diagonal through the spirit, clear of everyone else.
+    const [sim, bare] = plantedAndBare(
+      spec("b", 0, vec2(200, 200), { equipment: AXE }),
+      spec("g", 1, vec2(-200, -200)),
+    );
+    expect(sim.requestAttack("b", "g")?.ok).toBe(true);
+    expect(bare.requestAttack("b", "g")?.ok).toBe(true);
+    let passed = false;
+    for (let i = 0; i < 2 * RULES.tickRateHz; i += 1) {
+      sim.step(DT);
+      bare.step(DT);
+      const at = get(sim, "b").position;
+      expect(Math.abs(at.x - at.y) / Math.SQRT2).toBeLessThan(1);
+      expect(at).toEqual(get(bare, "b").position);
+      passed ||= at.x < -TOUCH;
+    }
+    expect(passed).toBe(true);
+  });
+
+  it("still bends a foe's click round it", () => {
+    const [sim] = plantedAndBare();
+    sim.walkTo("f", vec2(-100, 0));
+    let widest = 0;
+    for (let i = 0; i < 3 * RULES.tickRateHz; i += 1) {
+      sim.step(DT);
+      widest = Math.max(widest, Math.abs(get(sim, "f").position.y));
+    }
+    expect(widest).toBeGreaterThan(RULES.collision.creatureRadius);
+    expect(get(sim, "f").position.x).toBeLessThan(-TOUCH);
   });
 });
 

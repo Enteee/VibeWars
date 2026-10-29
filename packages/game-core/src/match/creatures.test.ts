@@ -8,11 +8,13 @@ import type * as Catalog from "../skills/catalog.js";
 import type { CombatEvent } from "../skills/effects.js";
 import type { CreatureTemplate, Skill } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
+import type { BaseGuard } from "./guards.js";
 import {
   countsForTeam,
   MatchSimulation,
   type CreatureKind,
   MAX_CREATURES,
+  MAX_MAP_CREATURES,
   type Participant,
   type ParticipantSpec,
 } from "./simulation.js";
@@ -228,7 +230,51 @@ describe("summon (#1052)", () => {
     summon(sim, TWO, "x");
     expect(creatures(sim)).toHaveLength(MAX_CREATURES);
   });
+
+  it("counts no map creature against MAX_CREATURES (#1281)", () => {
+    const sim = guarded(16);
+    expect(creatures(sim)).toHaveLength(18);
+    summon(sim, MANY);
+    summon(sim, TWO);
+    expect(summoned(sim)).toHaveLength(MAX_CREATURES);
+    summon(sim, TWO, "x");
+    expect(summoned(sim)).toHaveLength(MAX_CREATURES);
+    expect(creatures(sim)).toHaveLength(MAX_CREATURES + 18);
+  });
+
+  it("refuses a map that places more than MAX_MAP_CREATURES (#1281)", () => {
+    expect(() => guarded(MAX_MAP_CREATURES - 2)).not.toThrow();
+    expect(() => guarded(MAX_MAP_CREATURES - 1)).toThrow(/at most 24/);
+  });
 });
+
+/** `match()` with both Guild Lords and `guards` Footmen, far from everyone (#1281). */
+function guarded(guards: number): MatchSimulation {
+  const post = (i: number): BaseGuard => ({
+    team: i % 2,
+    role: "footman",
+    position: vec2(3000 + 40 * i, 3000),
+  });
+  return new MatchSimulation({
+    seed: "creatures",
+    participants: [
+      spec("n", 0, vec2(0, 0)),
+      spec("a", 0, vec2(0, 300)),
+      spec("x", 1, vec2(600, 0)),
+      spec("y", 1, vec2(600, 300)),
+    ],
+    guildLords: [
+      { team: 0, position: vec2(3000, 3200) },
+      { team: 1, position: vec2(4000, 3200) },
+    ],
+    guards: Array.from({ length: guards }, (_, i) => post(i)),
+  });
+}
+
+/** The creatures a participant summoned, a map's own aside. */
+function summoned(sim: MatchSimulation): Participant[] {
+  return creatures(sim).filter((p) => p.creature?.ownerId !== undefined);
+}
 
 describe("a creature's end (#1052)", () => {
   it("dies scoring nothing, costing no morale, and leaves at the end of the step", () => {

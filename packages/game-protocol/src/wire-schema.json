@@ -87,6 +87,7 @@
     "incoming",
     "ineptitude",
     "insidious-parasite",
+    "lamentation",
     "lightning-reflexes",
     "make-haste",
     "malaise",
@@ -97,6 +98,7 @@
     "mystic-regeneration",
     "natural-stride",
     "never-surrender",
+    "painful-bond",
     "parasitic-bond",
     "patient-spirit",
     "phantom-pain",
@@ -147,7 +149,7 @@
     "MAX_SNAPSHOT_PARTS": { "literal": 12 },
     "MAX_WIRE_CHAT_TEXT": { "literal": 2048 },
     "MAX_WIRE_COMBATS": { "literal": 64 },
-    "MAX_WIRE_CREATURES": { "literal": 32 },
+    "MAX_WIRE_CREATURES": { "literal": 56 },
     "MAX_WIRE_EVENTS": { "literal": 64 },
     "MAX_WIRE_GROUND_EFFECTS": { "literal": 32 },
     "MAX_WIRE_JSON_DEPTH": { "literal": 16 },
@@ -315,6 +317,11 @@
           ]
         },
         { "properties": [{ "name": "kind", "optional": false, "type": { "literal": "cancel" } }] },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "drop-bundle" } }
+          ]
+        },
         {
           "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "end-upkeep" } },
@@ -498,6 +505,7 @@
                   { "literal": "incoming" },
                   { "literal": "ineptitude" },
                   { "literal": "insidious-parasite" },
+                  { "literal": "lamentation" },
                   { "literal": "lightning-reflexes" },
                   { "literal": "make-haste" },
                   { "literal": "malaise" },
@@ -508,6 +516,7 @@
                   { "literal": "mystic-regeneration" },
                   { "literal": "natural-stride" },
                   { "literal": "never-surrender" },
+                  { "literal": "painful-bond" },
                   { "literal": "parasitic-bond" },
                   { "literal": "patient-spirit" },
                   { "literal": "phantom-pain" },
@@ -627,6 +636,7 @@
                   { "literal": "incoming" },
                   { "literal": "ineptitude" },
                   { "literal": "insidious-parasite" },
+                  { "literal": "lamentation" },
                   { "literal": "lightning-reflexes" },
                   { "literal": "make-haste" },
                   { "literal": "malaise" },
@@ -637,6 +647,7 @@
                   { "literal": "mystic-regeneration" },
                   { "literal": "natural-stride" },
                   { "literal": "never-surrender" },
+                  { "literal": "painful-bond" },
                   { "literal": "parasitic-bond" },
                   { "literal": "patient-spirit" },
                   { "literal": "phantom-pain" },
@@ -753,6 +764,7 @@
                   { "literal": "incoming" },
                   { "literal": "ineptitude" },
                   { "literal": "insidious-parasite" },
+                  { "literal": "lamentation" },
                   { "literal": "lightning-reflexes" },
                   { "literal": "make-haste" },
                   { "literal": "malaise" },
@@ -763,6 +775,7 @@
                   { "literal": "mystic-regeneration" },
                   { "literal": "natural-stride" },
                   { "literal": "never-surrender" },
+                  { "literal": "painful-bond" },
                   { "literal": "parasitic-bond" },
                   { "literal": "patient-spirit" },
                   { "literal": "phantom-pain" },
@@ -876,6 +889,7 @@
                   { "literal": "incoming" },
                   { "literal": "ineptitude" },
                   { "literal": "insidious-parasite" },
+                  { "literal": "lamentation" },
                   { "literal": "lightning-reflexes" },
                   { "literal": "make-haste" },
                   { "literal": "malaise" },
@@ -886,6 +900,7 @@
                   { "literal": "mystic-regeneration" },
                   { "literal": "natural-stride" },
                   { "literal": "never-surrender" },
+                  { "literal": "painful-bond" },
                   { "literal": "parasitic-bond" },
                   { "literal": "patient-spirit" },
                   { "literal": "phantom-pain" },
@@ -1024,6 +1039,12 @@
         },
         {
           "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "spirit-destroyed" } },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "status-expired" } },
             {
               "name": "statusId",
@@ -1081,6 +1102,7 @@
                   { "literal": "incoming" },
                   { "literal": "ineptitude" },
                   { "literal": "insidious-parasite" },
+                  { "literal": "lamentation" },
                   { "literal": "lightning-reflexes" },
                   { "literal": "make-haste" },
                   { "literal": "malaise" },
@@ -1091,6 +1113,7 @@
                   { "literal": "mystic-regeneration" },
                   { "literal": "natural-stride" },
                   { "literal": "never-surrender" },
+                  { "literal": "painful-bond" },
                   { "literal": "parasitic-bond" },
                   { "literal": "patient-spirit" },
                   { "literal": "phantom-pain" },
@@ -1195,6 +1218,7 @@
                   { "literal": "incoming" },
                   { "literal": "ineptitude" },
                   { "literal": "insidious-parasite" },
+                  { "literal": "lamentation" },
                   { "literal": "lightning-reflexes" },
                   { "literal": "make-haste" },
                   { "literal": "malaise" },
@@ -1205,6 +1229,7 @@
                   { "literal": "mystic-regeneration" },
                   { "literal": "natural-stride" },
                   { "literal": "never-surrender" },
+                  { "literal": "painful-bond" },
                   { "literal": "parasitic-bond" },
                   { "literal": "patient-spirit" },
                   { "literal": "phantom-pain" },
@@ -1328,6 +1353,9 @@
           }
         }
       ]
+    },
+    "DropBundleIntent": {
+      "properties": [{ "name": "kind", "optional": false, "type": { "literal": "drop-bundle" } }]
     },
     "EndUpkeepIntent": {
       "properties": [
@@ -2037,6 +2065,7 @@
           "optional": false,
           "type": {
             "union": [
+              { "literal": "guard" },
               { "literal": "guild-lord" },
               { "literal": "minion" },
               { "literal": "pet" },
@@ -2053,6 +2082,7 @@
               { "literal": "beast" },
               { "literal": "bone-horror" },
               { "literal": "bone-minion" },
+              { "literal": "guard" },
               { "literal": "guild-lord" },
               { "literal": "priest" },
               { "literal": "spirit" }
@@ -2114,6 +2144,30 @@
           "optional": false,
           "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
         }
+      ]
+    },
+    "WireFlag": {
+      "properties": [
+        { "name": "carrierId", "optional": false, "type": { "union": ["null", "string"] } },
+        {
+          "name": "place",
+          "optional": false,
+          "type": {
+            "union": [
+              { "literal": "carried" },
+              { "literal": "ground" },
+              { "literal": "spawn" },
+              { "literal": "stand" }
+            ]
+          }
+        },
+        {
+          "name": "team",
+          "optional": false,
+          "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+        },
+        { "name": "x", "optional": false, "type": { "union": ["null", "number"] } },
+        { "name": "y", "optional": false, "type": { "union": ["null", "number"] } }
       ]
     },
     "WireGroundEffect": {
@@ -2362,6 +2416,7 @@
                     "optional": false,
                     "type": {
                       "union": [
+                        { "literal": "guard" },
                         { "literal": "guild-lord" },
                         { "literal": "minion" },
                         { "literal": "pet" },
@@ -2378,6 +2433,7 @@
                         { "literal": "beast" },
                         { "literal": "bone-horror" },
                         { "literal": "bone-minion" },
+                        { "literal": "guard" },
                         { "literal": "guild-lord" },
                         { "literal": "priest" },
                         { "literal": "spirit" }
@@ -2521,6 +2577,7 @@
     },
     "WireSnapshot": {
       "properties": [
+        { "name": "aggression", "optional": false, "type": { "array": "number" } },
         { "name": "elapsedSeconds", "optional": false, "type": "number" },
         {
           "name": "endReason",
@@ -2535,6 +2592,36 @@
               { "literal": "score" },
               { "literal": "time" }
             ]
+          }
+        },
+        {
+          "name": "flags",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "carrierId", "optional": false, "type": { "union": ["null", "string"] } },
+                {
+                  "name": "place",
+                  "optional": false,
+                  "type": {
+                    "union": [
+                      { "literal": "carried" },
+                      { "literal": "ground" },
+                      { "literal": "spawn" },
+                      { "literal": "stand" }
+                    ]
+                  }
+                },
+                {
+                  "name": "team",
+                  "optional": false,
+                  "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+                },
+                { "name": "x", "optional": false, "type": { "union": ["null", "number"] } },
+                { "name": "y", "optional": false, "type": { "union": ["null", "number"] } }
+              ]
+            }
           }
         },
         {
@@ -2613,6 +2700,7 @@
                             "optional": false,
                             "type": {
                               "union": [
+                                { "literal": "guard" },
                                 { "literal": "guild-lord" },
                                 { "literal": "minion" },
                                 { "literal": "pet" },
@@ -2629,6 +2717,7 @@
                                 { "literal": "beast" },
                                 { "literal": "bone-horror" },
                                 { "literal": "bone-minion" },
+                                { "literal": "guard" },
                                 { "literal": "guild-lord" },
                                 { "literal": "priest" },
                                 { "literal": "spirit" }
@@ -2756,6 +2845,25 @@
           }
         },
         { "name": "score", "optional": false, "type": { "tuple": ["number", "number"] } },
+        {
+          "name": "stand",
+          "optional": false,
+          "type": {
+            "union": [
+              "null",
+              {
+                "properties": [
+                  { "name": "heldSeconds", "optional": false, "type": "number" },
+                  {
+                    "name": "holder",
+                    "optional": false,
+                    "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+                  }
+                ]
+              }
+            ]
+          }
+        },
         { "name": "tick", "optional": false, "type": "number" },
         {
           "name": "winningTeam",
@@ -2766,6 +2874,7 @@
     },
     "WireSnapshotPart": {
       "properties": [
+        { "name": "aggression", "optional": false, "type": { "array": "number" } },
         { "name": "elapsedSeconds", "optional": false, "type": "number" },
         {
           "name": "endReason",
@@ -2780,6 +2889,36 @@
               { "literal": "score" },
               { "literal": "time" }
             ]
+          }
+        },
+        {
+          "name": "flags",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "carrierId", "optional": false, "type": { "union": ["null", "string"] } },
+                {
+                  "name": "place",
+                  "optional": false,
+                  "type": {
+                    "union": [
+                      { "literal": "carried" },
+                      { "literal": "ground" },
+                      { "literal": "spawn" },
+                      { "literal": "stand" }
+                    ]
+                  }
+                },
+                {
+                  "name": "team",
+                  "optional": false,
+                  "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+                },
+                { "name": "x", "optional": false, "type": { "union": ["null", "number"] } },
+                { "name": "y", "optional": false, "type": { "union": ["null", "number"] } }
+              ]
+            }
           }
         },
         {
@@ -2860,6 +2999,7 @@
                             "optional": false,
                             "type": {
                               "union": [
+                                { "literal": "guard" },
                                 { "literal": "guild-lord" },
                                 { "literal": "minion" },
                                 { "literal": "pet" },
@@ -2876,6 +3016,7 @@
                                 { "literal": "beast" },
                                 { "literal": "bone-horror" },
                                 { "literal": "bone-minion" },
+                                { "literal": "guard" },
                                 { "literal": "guild-lord" },
                                 { "literal": "priest" },
                                 { "literal": "spirit" }
@@ -3003,9 +3144,38 @@
           }
         },
         { "name": "score", "optional": false, "type": { "tuple": ["number", "number"] } },
+        {
+          "name": "stand",
+          "optional": false,
+          "type": {
+            "union": [
+              "null",
+              {
+                "properties": [
+                  { "name": "heldSeconds", "optional": false, "type": "number" },
+                  {
+                    "name": "holder",
+                    "optional": false,
+                    "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+                  }
+                ]
+              }
+            ]
+          }
+        },
         { "name": "tick", "optional": false, "type": "number" },
         {
           "name": "winningTeam",
+          "optional": false,
+          "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+        }
+      ]
+    },
+    "WireStand": {
+      "properties": [
+        { "name": "heldSeconds", "optional": false, "type": "number" },
+        {
+          "name": "holder",
           "optional": false,
           "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
         }

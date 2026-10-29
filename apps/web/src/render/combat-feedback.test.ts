@@ -62,6 +62,9 @@ const SNAPSHOT: MatchSnapshot = {
   projectiles: [],
   groundEffects: [],
   traps: [],
+  flags: [],
+  stand: undefined,
+  aggression: [],
   summary: undefined,
 };
 
