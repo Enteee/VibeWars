@@ -58,6 +58,30 @@ test("Close leaves at once without edits, and asks before it discards them (#566
   await expect(page.locator(".selectable-row", { hasText: "Draft" })).toHaveCount(0);
 });
 
+test("the top bar's question stands in for the crumbs and fits the window at any width (#1320)", async ({
+  page,
+}) => {
+  await newCharacter(page);
+  await page.locator("input.editor-name").fill("Draft");
+  await page.locator(".topbar-back").click();
+  await expect(page.getByText("Discard changes?")).toBeVisible();
+  await expect(page.locator(".topbar-crumbs")).toBeHidden();
+  for (const width of [360, 700, 721, 800, 940]) {
+    await page.setViewportSize({ width, height: 700 });
+    const fits = await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    );
+    expect(fits, `no sideways scroll at ${String(width)} px`).toBe(true);
+    // At 720 px and under, Help folds into the ⋯, which takes its place.
+    const icon = page.locator(width <= 720 ? ".topbar-more" : ".topbar-help");
+    const box = await icon.boundingBox();
+    expect(box, `the bar's icon shows at ${String(width)} px`).not.toBeNull();
+    expect((box?.x ?? 0) + (box?.width ?? 0)).toBeLessThanOrEqual(width);
+  }
+  await page.getByRole("button", { name: "keep editing" }).click();
+  await expect(page.locator(".topbar-crumbs")).toBeVisible();
+});
+
 test("Delete in the ⋯ menu always asks, and cancel keeps the character (#566)", async ({
   page,
 }) => {

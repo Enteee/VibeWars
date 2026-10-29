@@ -1606,7 +1606,9 @@ body {
 
 /* A question in the top bar (#1272), as the editor's "Discard changes?",
    takes the status's room while it is open, so the bar never grows a
-   second row or runs under its icons. */
+   second row or runs under its icons. It stands in for the place too, so
+   the crumbs step aside and the bar fits the window at any width (#1320).
+   They keep their height, so the bar does not jump when it opens. */
 #topbar .inline-confirm {
   flex-wrap: nowrap;
   white-space: nowrap;
@@ -1614,6 +1616,12 @@ body {
 
 #topbar:has(.inline-confirm) .topbar-status {
   display: none;
+}
+
+#topbar:has(.inline-confirm) .topbar-crumbs {
+  flex: 0 0 0;
+  width: 0;
+  visibility: hidden;
 }
 
 /* Harm, not accent: the button that throws something away. */

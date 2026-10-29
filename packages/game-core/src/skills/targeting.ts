@@ -50,6 +50,31 @@ export function spiritsWithin(
   return spirits;
 }
 
+/**
+ * How many living spirits and minions `owner` created stand within
+ * `radius` of `at` (#1316): what Signet of Creation counts. A pet is
+ * charmed, not created. Walls do not matter.
+ */
+export function ownCreaturesWithin(
+  candidates: Iterable<TargetCandidate>,
+  owner: Combatant,
+  at: Vec2,
+  radius: number,
+): number {
+  let creatures = 0;
+  for (const { combatant, position, creature } of candidates) {
+    if (
+      (creature?.kind === "spirit" || creature?.kind === "minion") &&
+      creature.ownerId === owner.id &&
+      !combatant.dead &&
+      distance(position, at) <= radius
+    ) {
+      creatures += 1;
+    }
+  }
+  return creatures;
+}
+
 export interface TargetSelection {
   readonly skill: Skill;
   readonly caster: Combatant;

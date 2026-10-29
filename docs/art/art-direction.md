@@ -848,8 +848,8 @@ it, not baked in, so one file serves every screen.
   paw-heart, claw, bond, paw-speed, paw-shield, hex-cut, drop-bolt, drop-ward,
   drop-pair, plus-sparks, plus-gusts, party-heal, plus-ripple, meteor-trio,
   ring-heal, hammer-slam, hex-burst, drop-arrow, pain-cross, eye-drop, blink,
-  totem, spirit-pain, spirit-blind, spirit-quiet, spirit-strip, spirit-rupture (a cracked post and the jagged mark), spirit-break, spirit-feast (two cracked posts), ward-blade,
-  trap-flame, ring-rays, well-sink, echo-spell, echo-skill, hex-mute,
+  totem, spirit-pain, spirit-blind, spirit-quiet, spirit-strip, spirit-cap, spirit-share, spirit-rupture (a cracked post and the jagged mark), spirit-break, spirit-feast (two cracked posts),
+  spirit-block, spirit-ground, ward-blade, trap-flame, ring-rays, well-sink, echo-spell, echo-skill, hex-mute,
   armor-crack, drop-run, mark-skull, dagger-stop, dagger-limp, palm,
   ghost, weight, ache-cross, armor-shrink, speed-break (a whole chevron and a
   broken one), eye-slash, limp-drain. A

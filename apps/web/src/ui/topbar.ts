@@ -3,7 +3,7 @@ import { attachFullscreenButton, fullscreenTarget } from "./fullscreen.js";
 import { paintMuteButton } from "./hud.js";
 import { helpIcon, settingsIcon } from "./icons.js";
 import { attachJukeboxPopover } from "./jukebox.js";
-import { button, iconButton, setTopbarSlots } from "./kit.js";
+import { button, iconButton, setTopbarSlots, type ShownBar } from "./kit.js";
 
 /**
  * The top bar on the menu screens (#454, #1272): the shown screen's
@@ -37,6 +37,22 @@ export interface TopbarCallbacks {
   readonly onHelp: () => void;
   /** ⚙: Options, over whatever screen shows. */
   readonly onOptions: () => void;
+}
+
+/**
+ * Whether showing `next` puts the ⋯ away (#1305): going to another place,
+ * or an overlay opening or closing over it, does, and so does a bar with
+ * nothing left in it. A screen that repaints in place, like a lobby on every
+ * join, keeps it open.
+ */
+export function putsMoreAway(
+  last: ShownBar | undefined,
+  next: ShownBar,
+  hasMore: boolean,
+): boolean {
+  return (
+    !hasMore || last?.place !== next.place || last.own !== next.own || last.overlay !== next.overlay
+  );
 }
 
 /** What `mountTopbar` hands back: the bar's say in whether it shows. */
@@ -120,7 +136,7 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
     }
   });
 
-  let shownPlace: string | undefined;
+  let lastShown: ShownBar | undefined;
   let inMatch = false;
   let overlayShown = false;
   const paintHidden = (): void => {
@@ -133,22 +149,20 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
     back: part(bar, ".topbar-back"),
     status: part(bar, ".topbar-status"),
     actions: screenActions,
-    onShow: ({ place, own, overlay }) => {
-      help.hidden = own === "help";
-      options.hidden = own === "options";
-      music.hidden = own === "music";
-      // A screen that repaints in place, like a lobby on every join, keeps
-      // the ⋯ open; going somewhere else puts it away.
-      if (place !== shownPlace) {
-        shownPlace = place;
+    onShow: (shown) => {
+      help.hidden = shown.own === "help";
+      options.hidden = shown.own === "options";
+      music.hidden = shown.own === "music";
+      // Only a screen with buttons beyond its primary one has a ⋯.
+      const hasMore = Array.from(screenActions.children).some(
+        (node) => !node.classList.contains("primary"),
+      );
+      bar.classList.toggle("has-more", hasMore);
+      if (putsMoreAway(lastShown, shown, hasMore)) {
         setMore(false);
       }
-      // Only a screen with buttons beyond its primary one has a ⋯.
-      bar.classList.toggle(
-        "has-more",
-        Array.from(screenActions.children).some((node) => !node.classList.contains("primary")),
-      );
-      overlayShown = overlay;
+      lastShown = shown;
+      overlayShown = shown.overlay;
       paintHidden();
     },
     putAway: () => {

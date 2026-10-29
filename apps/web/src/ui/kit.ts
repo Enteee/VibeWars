@@ -137,21 +137,24 @@ export interface ScreenBarOptions {
   readonly own?: OwnIcon;
 }
 
+/**
+ * Which bar shows: where it is (its crumbs, as text), the bar's own icon,
+ * and whether it is an overlay's.
+ */
+export interface ShownBar {
+  readonly place: string;
+  readonly own: OwnIcon | undefined;
+  readonly overlay: boolean;
+}
+
 /** The parts of the top bar a screen's bar fills (index.html, topbar.ts). */
 export interface TopbarSlots {
   readonly crumbs: HTMLElement;
   readonly back: HTMLElement;
   readonly status: HTMLElement;
   readonly actions: HTMLElement;
-  /**
-   * Told which bar shows after every change: where it is (its crumbs, as
-   * text), the bar's own icon, and whether it is an overlay's.
-   */
-  readonly onShow: (shown: {
-    readonly place: string;
-    readonly own: OwnIcon | undefined;
-    readonly overlay: boolean;
-  }) => void;
+  /** Told which bar shows after every change. */
+  readonly onShow: (shown: ShownBar) => void;
   /** Puts away the bar's ⋯ overflow when it is open; true when it was. */
   readonly putAway: () => boolean;
 }
