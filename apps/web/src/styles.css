@@ -1238,10 +1238,6 @@ body {
   user-select: none;
 }
 
-.team-row.is-missing .team-row-handle {
-  visibility: hidden;
-}
-
 .team-row-character {
   display: grid;
   grid-template-columns: auto 1fr;
@@ -1271,20 +1267,6 @@ body {
 
 .team-row-skills {
   display: contents;
-}
-
-/* A missing character has no bar: its name spans to the × alone. */
-.team-row.is-missing .team-row-character {
-  grid-column: 2 / -2;
-}
-
-.team-row.is-missing .team-row-skills {
-  display: none;
-}
-
-.team-row.is-missing .team-row-name {
-  color: var(--ink-dim);
-  font-style: italic;
 }
 
 .team-row-controls {
@@ -1436,10 +1418,16 @@ body {
   gap: 0.35rem;
 }
 
-.team-picker-header {
+.team-picker-header,
+.team-picker-copy {
   margin: 0;
   font-size: 0.85rem;
   color: var(--ink-dim);
+}
+
+.team-picker-copy {
+  margin-top: 0.4rem;
+  font-weight: normal;
 }
 
 .team-picker-list {

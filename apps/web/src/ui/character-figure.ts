@@ -16,7 +16,7 @@ import {
   type StandingBody,
 } from "../render/body-painter.js";
 import { toPlayerBuild } from "../storage/build-validation.js";
-import type { StoredCharacter } from "../storage/schema.js";
+import type { TeamCharacter } from "../storage/schema.js";
 import { cssColour, professionLabel } from "./character-preview.js";
 import { professionIcon } from "./icons.js";
 
@@ -52,7 +52,7 @@ const UNKNOWN: CharacterAppearance = { weaponId: undefined, offhandId: undefined
  * host picks at random (#852): unknowable here, so the figure is the bare
  * body. Not an error.
  */
-export function characterAppearance(character: StoredCharacter): CharacterAppearance {
+export function characterAppearance(character: TeamCharacter): CharacterAppearance {
   const { loadout, refused } = resolveJoinLoadout(
     toPlayerBuild(character),
     RULES.attributes,
@@ -193,7 +193,7 @@ function paintBodyGlyph(
  * glyph: its profession is known. A browser that gives no 2D context
  * leaves the box empty.
  */
-export function createCharacterFigure(character: StoredCharacter): HTMLCanvasElement {
+export function createCharacterFigure(character: TeamCharacter): HTMLCanvasElement {
   const size = (BODY_RADIUS + MARK_ROOM) * 2;
   const ratio = window.devicePixelRatio;
   const canvas = document.createElement("canvas");

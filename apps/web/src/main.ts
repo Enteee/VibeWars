@@ -54,9 +54,14 @@ import {
 } from "./storage/repository.js";
 import { cloneCharacter } from "./storage/clone-character.js";
 import { matchRecordFrom, tally, type Tally } from "./storage/match-record.js";
-import type { StoredCharacter } from "./storage/schema.js";
+import {
+  CHARACTER_SCHEMA_VERSION,
+  type StoredCharacter,
+  type StoredTeam,
+  type TeamCharacter,
+} from "./storage/schema.js";
 import { rerollStarterCharacter, rollStarterCharacter } from "./storage/starter-character.js";
-import { importTeam, importedTeamSummary, type TeamImportResult } from "./storage/team-transfer.js";
+import { importTeam, importedTeamSummary } from "./storage/team-transfer.js";
 import { closeBeatEditor } from "./ui/beat-editor.js";
 import { mountBuildBanner } from "./ui/build-banner.js";
 import { mountBuildEditor, newCharacter, type BuildEditorView } from "./ui/build-editor.js";
@@ -97,7 +102,14 @@ import {
 } from "./ui/menu.js";
 import { dismissToast, toast } from "./ui/kit.js";
 import { mountTopbar, paintStatus, type StatusState } from "./ui/topbar.js";
-import { duplicateTeam, newTeam } from "./ui/team-builder.js";
+import {
+  addMember,
+  duplicateTeam,
+  newTeam,
+  removeMember,
+  replaceMember,
+  teamCharacter,
+} from "./ui/team-builder.js";
 import {
   mountTeamEditor,
   openedTeam,
@@ -676,7 +688,7 @@ async function main(): Promise<void> {
     teamEditor?.dispose();
     teamEditor = undefined;
     const [teamList, characterList] = await Promise.all([teams.list(), characters.list()]);
-    renderTeamList(screenRoot, teamList.teams, characterList.characters, teamList.problems, {
+    renderTeamList(screenRoot, teamList.teams, teamList.problems, {
       // A new team is stored only once it is saved (#573).
       onNew: () => {
         showTeamEditor(openedTeam(newTeam(crypto.randomUUID()), false), characterList.characters);
@@ -691,45 +703,68 @@ async function main(): Promise<void> {
       },
       onBack: showMenu,
       onPasteTeam: (text) => {
-        if (importingTeam) {
-          return;
-        }
-        const result = importTeam(
-          text,
-          characterList.characters,
-          () => crypto.randomUUID(),
-          Date.now(),
-        );
+        const result = importTeam(text, () => crypto.randomUUID(), Date.now());
         if (!result.ok) {
           toast("Could not import", { problems: result.problems });
           return;
         }
-        void openPastedTeam(result);
+        openPastedTeam(result.team, characterList.characters);
       },
     });
   };
 
+  /** A pasted team (#577) opens unsaved; its members are its own (#1452). */
+  const openPastedTeam = (team: StoredTeam, available: readonly StoredCharacter[]): void => {
+    showTeamEditor(pastedTeam(team), available);
+    toast(importedTeamSummary(team));
+  };
+
   /**
-   * A pasted team (#577): its new characters are stored, since a team
-   * only references characters, and the team opens unsaved. A second
-   * paste while that is under way is ignored: it would be matched against
-   * the characters as they were, and store its members twice.
+   * `member` of the team `left` in the build editor (#576, #1452): its
+   * Save puts it in the team, which comes back as it was left and still
+   * unsaved; nothing is stored. Delete takes it off the team, Duplicate
+   * adds a copy, and Close comes back without either.
    */
-  let importingTeam = false;
-  const openPastedTeam = async (
-    imported: Extract<TeamImportResult, { ok: true }>,
-  ): Promise<void> => {
-    importingTeam = true;
-    try {
-      for (const character of imported.created) {
-        await characters.save(character);
-      }
-      const { characters: now } = await characters.list();
-      showTeamEditor(pastedTeam(imported.team), now);
-      toast(importedTeamSummary(imported));
-    } finally {
-      importingTeam = false;
-    }
+  const showMemberEditor = (
+    member: TeamCharacter,
+    left: TeamEditorState,
+    available: readonly StoredCharacter[],
+  ): void => {
+    const back = (team: StoredTeam): void => {
+      showTeamEditor({ ...left, team }, available);
+    };
+    const present = left.team.members.some((m) => m.character.id === member.id);
+    leaveScreen();
+    teamEditor?.dispose();
+    teamEditor = undefined;
+    editor?.dispose();
+    editor = mountBuildEditor(
+      screenRoot,
+      { ...member, schemaVersion: CHARACTER_SCHEMA_VERSION, updatedAt: Date.now() },
+      {
+        onSave: (saved) => {
+          const character = teamCharacter(saved, member.id);
+          back(present ? replaceMember(left.team, character) : addMember(left.team, character));
+        },
+        onDelete: () => {
+          back(
+            present
+              ? removeMember(
+                  left.team,
+                  left.team.members.findIndex((m) => m.character.id === member.id),
+                )
+              : left.team,
+          );
+        },
+        onDuplicate: (source) => {
+          const copy = teamCharacter(source, crypto.randomUUID());
+          back(addMember(left.team, { ...copy, name: `${source.name} (copy)` }));
+        },
+        onClose: () => {
+          back(left.team);
+        },
+      },
+    );
   };
 
   /** The open team editor; every way out of it passes through `showTeams`. */
@@ -757,28 +792,19 @@ async function main(): Promise<void> {
       onClose: () => {
         void showTeams();
       },
-      onImportTeam: (imported) => {
-        if (importingTeam) {
-          return;
-        }
-        void openPastedTeam(imported);
+      onImportTeam: (team) => {
+        openPastedTeam(team, available);
       },
-      // The build editor comes back to this team as it was left (#576),
-      // with the characters as they are now: an edited bar shows, a
-      // deleted member is missing.
-      onOpenMember: (characterId, left) => {
-        void (async () => {
-          const member = await characters.load(characterId);
-          if (member === undefined) {
-            return;
-          }
-          showCharacterEditor(member, () => {
-            void (async () => {
-              const { characters: now } = await characters.list();
-              showTeamEditor(left, now);
-            })();
-          });
-        })();
+      onOpenMember: (memberId, left) => {
+        const member = left.team.members.find((m) => m.character.id === memberId);
+        if (member !== undefined) {
+          showMemberEditor(member.character, left, available);
+        }
+      },
+      // A new member joins only on the build editor's Save.
+      onNewMember: (left) => {
+        const blank = newCharacter(crypto.randomUUID());
+        showMemberEditor(teamCharacter(blank, blank.id), left, available);
       },
     });
   };

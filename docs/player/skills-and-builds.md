@@ -54,4 +54,14 @@ To take one in, paste it anywhere in the editor that is not a text
 field. Both kinds work. A GW1 skill VibeWars does not have yet arrives as
 an empty slot. The build is yours once you press **Save**.
 
-A team code is pasted on the **Teams** screen instead.
+A team code is pasted on the **Team Builds** screen instead.
+
+## Team Builds
+
+A **team build** is a team of its own characters, made on the **Team
+Builds** screen and kept apart from your Solo characters. Add a member
+with **New character**, or **Add** one of your characters to copy its
+build in. A copy is the team's own: changing it, or the character it came
+from, leaves the other as it was. Press a member's name to edit it in the
+build editor; its **Save** puts it back in the team, and the team's own
+**Save** keeps it all.

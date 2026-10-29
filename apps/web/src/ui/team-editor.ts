@@ -7,13 +7,8 @@ import {
 } from "@vibewars/game-core";
 
 import { SKILL_BAR_SLOTS } from "../storage/build-validation.js";
-import type { StoredCharacter, StoredTeam } from "../storage/schema.js";
-import {
-  exportTeam,
-  importTeam,
-  looksLikeTeam,
-  type TeamImportResult,
-} from "../storage/team-transfer.js";
+import type { StoredCharacter, StoredTeam, TeamCharacter } from "../storage/schema.js";
+import { exportTeam, importTeam, looksLikeTeam } from "../storage/team-transfer.js";
 import {
   createCharacterDot,
   equippedCount,
@@ -39,6 +34,7 @@ import {
   moveMember,
   professionMix,
   removeMember,
+  teamCharacter,
   teamCounters,
   validateTeam,
   type TeamCounter,
@@ -54,7 +50,8 @@ import {
  * opens them in the build editor, and the way back hands the editor its
  * own state again (#576), so nothing unsaved is lost on the trip. Share
  * copies the team as a code; a team code pasted here opens that team
- * instead, unsaved (#577).
+ * instead, unsaved (#577). Every member is the team's own character
+ * (#1452): new, or a copy of one of the player's Solo characters.
  */
 
 /** Everything the editor holds that is not stored, to leave and come back to. */
@@ -88,9 +85,11 @@ export interface TeamEditorCallbacks {
   /** Leave the editor, without storing anything. */
   readonly onClose: () => void;
   /** Open a member in the build editor; `state` is what to come back to. */
-  readonly onOpenMember: (characterId: string, state: TeamEditorState) => void;
-  /** Store a pasted team's new characters and open it, unsaved (#577). */
-  readonly onImportTeam: (imported: Extract<TeamImportResult, { ok: true }>) => void;
+  readonly onOpenMember: (memberId: string, state: TeamEditorState) => void;
+  /** Make a new member in the build editor; `state` is what to come back to. */
+  readonly onNewMember: (state: TeamEditorState) => void;
+  /** Open a pasted team, unsaved (#577). */
+  readonly onImportTeam: (team: StoredTeam) => void;
 }
 
 export interface TeamEditorView {
@@ -99,15 +98,29 @@ export interface TeamEditorView {
   dispose(): void;
 }
 
-/** Whether `current` differs from the team as it was opened or last saved. */
+/** `value` as JSON with every object's keys sorted, to compare two builds. */
+function canonical(value: unknown): string {
+  if (Array.isArray(value)) {
+    return `[${(value as readonly unknown[]).map(canonical).join(",")}]`;
+  }
+  if (typeof value === "object" && value !== null) {
+    const record = value as Record<string, unknown>;
+    // An undefined field is left out, as JSON.stringify leaves it out.
+    return `{${Object.keys(record)
+      .filter((key) => record[key] !== undefined)
+      .sort()
+      .map((key) => `${JSON.stringify(key)}:${canonical(record[key])}`)
+      .join(",")}}`;
+  }
+  return JSON.stringify(value);
+}
+
+/**
+ * Whether `current` differs from the team as it was opened or last saved:
+ * its name, its order, or any member's build (#1452).
+ */
 export function isTeamUnsaved(opened: StoredTeam, current: StoredTeam): boolean {
-  return (
-    opened.name !== current.name ||
-    opened.members.length !== current.members.length ||
-    opened.members.some(
-      (member, index) => member.characterId !== current.members[index]?.characterId,
-    )
-  );
+  return opened.name !== current.name || canonical(opened.members) !== canonical(current.members);
 }
 
 /** One line of the problems chip, as a plain sentence. */
@@ -125,11 +138,8 @@ function sentence(message: string): string {
  * What stops this team saving, in plain sentences (#573): `validateTeam`'s
  * problems, then a full team as a hint that never blocks.
  */
-export function teamEditorProblems(
-  team: StoredTeam,
-  characters: readonly StoredCharacter[],
-): TeamEditorProblem[] {
-  const blocking = validateTeam(team, characters).map((problem): TeamEditorProblem => ({
+export function teamEditorProblems(team: StoredTeam): TeamEditorProblem[] {
+  const blocking = validateTeam(team).map((problem): TeamEditorProblem => ({
     text:
       problem.message === "team name must not be empty"
         ? "Give the team a name."
@@ -143,13 +153,13 @@ export function teamEditorProblems(
   return [...blocking, ...hints];
 }
 
-/** The characters the add list offers: everyone not on the team yet. */
-export function addableCharacters(
-  team: StoredTeam,
-  characters: readonly StoredCharacter[],
-): StoredCharacter[] {
-  const members = new Set(team.members.map((member) => member.characterId));
-  return characters.filter((character) => !members.has(character.id));
+/**
+ * `team` with a copy of the Solo `character` as a new member under `id`
+ * (#1452): the two are apart from here on, edits to either unseen by the
+ * other.
+ */
+export function copyIntoTeam(team: StoredTeam, character: StoredCharacter, id: string): StoredTeam {
+  return addMember(team, teamCharacter(character, id));
 }
 
 /** How many more members the team can take. */
@@ -172,7 +182,7 @@ export interface TeamSkillCell {
  * A member's eight bar slots as stored, `null` for an empty one (#574).
  * An illegal build still shows what it holds; `validateTeam` decides.
  */
-export function memberSkillCells(character: StoredCharacter): (TeamSkillCell | null)[] {
+export function memberSkillCells(character: TeamCharacter): (TeamSkillCell | null)[] {
   const ranks = new Map(character.attributes.map((a) => [a.attributeId, a.rank]));
   return Array.from({ length: SKILL_BAR_SLOTS }, (_, slot) => {
     const skillId = character.skillBar[slot] ?? null;
@@ -194,7 +204,7 @@ export function memberSkillCells(character: StoredCharacter): (TeamSkillCell | n
 }
 
 /** A member's three highest attribute ranks, highest first: "Strength 12". */
-export function topAttributes(character: StoredCharacter): string[] {
+export function topAttributes(character: TeamCharacter): string[] {
   return character.attributes
     .filter((attribute) => attribute.rank > 0)
     .map((attribute, order) => ({ attribute, order }))
@@ -231,7 +241,7 @@ export type TeamHighlight =
   | { readonly kind: "counter"; readonly id: TeamCounterId }
   | { readonly kind: "skill"; readonly skillId: string };
 
-/** A cell's key in `markedCells`: "characterId:slot". */
+/** A cell's key in `markedCells`: "<member id>:slot". */
 export function cellKey(characterId: string, slot: number): string {
   return `${characterId}:${String(slot)}`;
 }
@@ -241,16 +251,14 @@ export function markedCells(
   highlight: TeamHighlight,
   counters: readonly TeamCounter[],
   team: StoredTeam,
-  characters: readonly StoredCharacter[],
 ): Set<string> {
   if (highlight.kind === "counter") {
     const counter = counters.find((c) => c.id === highlight.id);
     return new Set(counter?.cells.map((cell) => cellKey(cell.characterId, cell.slot)));
   }
   const marked = new Set<string>();
-  for (const member of team.members) {
-    const character = characters.find((c) => c.id === member.characterId);
-    character?.skillBar.forEach((skillId, slot) => {
+  for (const { character } of team.members) {
+    character.skillBar.forEach((skillId, slot) => {
       if (skillId === highlight.skillId) {
         marked.add(cellKey(character.id, slot));
       }
@@ -259,6 +267,10 @@ export function markedCells(
   return marked;
 }
 
+/**
+ * The team editor for `initial`; `characters` are the player's Solo
+ * characters, offered to copy in.
+ */
 export function mountTeamEditor(
   root: HTMLElement,
   initial: TeamEditorState,
@@ -353,11 +365,9 @@ export function mountTeamEditor(
   // Share (#577): the team, every build inline, as one line with Copy.
   const share = shareLine("team to share");
   const shareButton = button("Share", "", () => {
-    const text = exportTeam(team, characters);
-    if (text !== undefined) {
-      share.show(text);
-    }
+    share.show(exportTeam(team));
   });
+  shareButton.title = "share this team as one line";
   const shareWrap = h("span", "editor-more-wrap");
   shareWrap.append(shareButton, share.element);
   const remove = button("Delete", "", () => {
@@ -373,7 +383,7 @@ export function mountTeamEditor(
   });
 
   const { back } = screenBar({
-    crumbs: ["VibeWars", "Teams", "Edit team"],
+    crumbs: ["VibeWars", "Team Builds", "Edit team build"],
     back: { label: "Back", onBack: close },
     status: [chip.element, unsaved],
     actions: [save, shareWrap, duplicate, remove],
@@ -401,7 +411,7 @@ export function mountTeamEditor(
   // What the bars hold; a counter marks its cells in the grid (#575).
   const counterBar = h("div", "team-counters");
   const counterButtons = new Map<TeamCounterId, HTMLButtonElement>();
-  for (const counter of teamCounters([], characters)) {
+  for (const counter of teamCounters([])) {
     const counterButton = button("", "team-counter", () => {
       toggleHighlight({ kind: "counter", id: counter.id });
     });
@@ -427,16 +437,22 @@ export function mountTeamEditor(
   gridScroll.appendChild(list);
   const picker = h("aside", "team-picker");
   const pickerHeader = h("h3", "team-picker-header");
+  // A new member is made in the build editor, and joins on its Save.
+  const newMember = button("New character", "team-picker-new", () => {
+    asking?.dismiss();
+    callbacks.onNewMember({ opened, team, stored: isStored });
+  });
+  const pickerCopy = h("h4", "team-picker-copy", "Copy from my characters");
   const pickerList = h("div", "team-picker-list");
-  const pickerEmpty = h("p", "team-picker-empty", "Every character is on the team.");
-  picker.append(pickerHeader, pickerList, pickerEmpty);
+  const pickerEmpty = h("p", "team-picker-empty", "You have no characters to copy.");
+  picker.append(pickerHeader, newMember, pickerCopy, pickerList, pickerEmpty);
   body.append(gridScroll, picker);
   panel.appendChild(body);
 
-  // The row being dragged, by character; a drop moves it there.
+  // The row being dragged, by member id; a drop moves it there.
   let dragging: string | undefined;
   const indexOfMember = (characterId: string): number =>
-    team.members.findIndex((m) => m.characterId === characterId);
+    team.members.findIndex((m) => m.character.id === characterId);
 
   const createRow = (characterId: string): HTMLElement => {
     const row = h("div", "team-row");
@@ -533,8 +549,8 @@ export function mountTeamEditor(
     return row;
   };
 
-  /** Fill a row's eight cells from what the character stores. */
-  const fillSkills = (skills: Element, character: StoredCharacter): void => {
+  /** Fill a row's eight cells from what the member's bar holds. */
+  const fillSkills = (skills: Element, character: TeamCharacter): void => {
     memberSkillCells(character).forEach((cell, slot) => {
       const node = skills.children[slot];
       if (!(node instanceof HTMLElement)) {
@@ -575,14 +591,17 @@ export function mountTeamEditor(
     pick.dataset.characterId = characterId;
     pick.append(h("span", "team-row-dot"), h("span", "team-pick-text"));
     const add = button("Add", "team-pick-add", () => {
-      commit(addMember(team, characterId));
+      const character = characters.find((c) => c.id === characterId);
+      if (character !== undefined) {
+        commit(copyIntoTeam(team, character, crypto.randomUUID()));
+      }
     });
     pick.appendChild(add);
     return pick;
   };
 
   /** Put `character`'s dot in `holder`, unless it already shows these professions. */
-  const fillDot = (holder: Element | null, character: StoredCharacter): void => {
+  const fillDot = (holder: Element | null, character: TeamCharacter): void => {
     if (!(holder instanceof HTMLElement)) {
       return;
     }
@@ -600,7 +619,7 @@ export function mountTeamEditor(
     if (nameInput.value !== team.name) {
       nameInput.value = team.name;
     }
-    const problems = teamEditorProblems(team, characters);
+    const problems = teamEditorProblems(team);
     chip.update(problems);
     unsaved.hidden = !isTeamUnsaved(opened, team);
     // A team that does not validate cannot be saved; the button says why.
@@ -609,27 +628,21 @@ export function mountTeamEditor(
     save.title = firstBlocking?.text ?? "save this team";
     duplicate.disabled = !isStored || isTeamUnsaved(opened, team);
     duplicate.title = duplicate.disabled ? "Save first to duplicate" : "duplicate this team";
-    // A team that cannot be saved cannot be shared: a member is missing.
-    const missing = team.members.some((m) => !characters.some((c) => c.id === m.characterId));
-    shareButton.disabled = missing;
-    shareButton.title = missing
-      ? "A member's character is missing: remove it to share"
-      : "share this team as one line";
-    if (missing) {
-      share.hide();
-    }
     // A new team has nothing to delete: Back leaves it.
     remove.disabled = !isStored;
 
     const last = team.members.length - 1;
     syncList(
       list,
-      team.members.map((member) => member.characterId),
+      team.members.map((member) => member.character.id),
       (characterId) => characterId,
       createRow,
       (row, characterId) => {
-        const index = team.members.findIndex((m) => m.characterId === characterId);
-        const character = characters.find((c) => c.id === characterId);
+        const index = indexOfMember(characterId);
+        const character = team.members[index]?.character;
+        if (character === undefined) {
+          return;
+        }
         const setText = (selector: string, text: string): void => {
           const node = row.querySelector(selector);
           if (node !== null && node.textContent !== text) {
@@ -637,40 +650,34 @@ export function mountTeamEditor(
           }
         };
         setText(".team-row-index", String(index + 1));
-        setText(".team-row-name", character?.name ?? "(missing character)");
-        row.classList.toggle("is-missing", character === undefined);
+        setText(".team-row-name", character.name);
         const name = row.querySelector<HTMLButtonElement>(".team-row-name");
         if (name !== null) {
-          name.disabled = character === undefined;
-          name.title = character === undefined ? "" : `edit ${character.name} in the build editor`;
+          name.title = `edit ${character.name} in the build editor`;
         }
-        // A missing character can only be removed: no bar, no moving it.
-        row.draggable = character !== undefined;
-        if (character !== undefined) {
-          fillDot(row.querySelector(".team-row-dot"), character);
-          setText(
-            ".team-row-professions",
-            professionLabel(character.primaryProfession, character.secondaryProfession),
-          );
-          const skills = row.querySelector(".team-row-skills");
-          if (skills !== null) {
-            fillSkills(skills, character);
-          }
-          const ranks = topAttributes(character).join(" · ");
-          setText(".team-row-attributes", ranks);
-          row.querySelector<HTMLElement>(".team-row-attributes")?.setAttribute("title", ranks);
+        row.draggable = true;
+        fillDot(row.querySelector(".team-row-dot"), character);
+        setText(
+          ".team-row-professions",
+          professionLabel(character.primaryProfession, character.secondaryProfession),
+        );
+        const skills = row.querySelector(".team-row-skills");
+        if (skills !== null) {
+          fillSkills(skills, character);
         }
+        const ranks = topAttributes(character).join(" · ");
+        setText(".team-row-attributes", ranks);
+        row.querySelector<HTMLElement>(".team-row-attributes")?.setAttribute("title", ranks);
         for (const selector of [".member-up", ".member-down"]) {
           const control = row.querySelector<HTMLButtonElement>(selector);
           if (control !== null) {
-            control.hidden = character === undefined;
             control.disabled = selector === ".member-up" ? index === 0 : index === last;
           }
         }
       },
     );
 
-    const counters = teamCounters(team.members, characters);
+    const counters = teamCounters(team.members);
     for (const counter of counters) {
       const counterButton = counterButtons.get(counter.id);
       if (counterButton === undefined) {
@@ -686,9 +693,8 @@ export function mountTeamEditor(
         String(highlight?.kind === "counter" && highlight.id === counter.id),
       );
     }
-    mix.textContent = professionMix(team.members, characters);
-    const marked =
-      highlight === undefined ? undefined : markedCells(highlight, counters, team, characters);
+    mix.textContent = professionMix(team.members);
+    const marked = highlight === undefined ? undefined : markedCells(highlight, counters, team);
     list.classList.toggle("is-highlighting", marked !== undefined);
     for (const row of Array.from(list.children)) {
       if (!(row instanceof HTMLElement)) {
@@ -712,13 +718,14 @@ export function mountTeamEditor(
       });
     }
 
-    const offered = addableCharacters(team, characters);
     const left = placesLeft(team);
     pickerHeader.textContent = `${String(left)} ${left === 1 ? "place" : "places"} left`;
-    pickerEmpty.hidden = offered.length > 0;
+    newMember.disabled = left === 0;
+    newMember.title = left === 0 ? "The team is full" : "make a new character for this team";
+    pickerEmpty.hidden = characters.length > 0;
     syncList(
       pickerList,
-      offered.map((character) => character.id),
+      characters.map((character) => character.id),
       (characterId) => characterId,
       createPick,
       (pick, characterId) => {
@@ -742,7 +749,8 @@ export function mountTeamEditor(
         if (add !== null) {
           add.disabled = left === 0;
           add.setAttribute("aria-label", `add ${character.name}`);
-          add.title = left === 0 ? "The team is full" : `add ${character.name} to the team`;
+          add.title =
+            left === 0 ? "The team is full" : `add a copy of ${character.name} to the team`;
         }
       },
     );
@@ -776,13 +784,13 @@ export function mountTeamEditor(
     if (!looksLikeTeam(text)) {
       return false;
     }
-    const result = importTeam(text, characters, () => crypto.randomUUID(), Date.now());
+    const result = importTeam(text, () => crypto.randomUUID(), Date.now());
     if (!result.ok) {
       toast("Could not import", { problems: result.problems });
       return true;
     }
     if (!isTeamUnsaved(opened, team)) {
-      callbacks.onImportTeam(result);
+      callbacks.onImportTeam(result.team);
       return true;
     }
     ask(
@@ -790,7 +798,7 @@ export function mountTeamEditor(
       "Discard your edits and open the pasted team?",
       "Discard",
       () => {
-        callbacks.onImportTeam(result);
+        callbacks.onImportTeam(result.team);
       },
       "Keep editing",
     );

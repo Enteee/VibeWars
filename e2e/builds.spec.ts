@@ -351,7 +351,7 @@ async function teamList(page: Page): Promise<string[]> {
 
 test("a new team is stored only on Save, which stays on the editor (#573)", async ({ page }) => {
   await saveCharacters(page, ["Alpha"]);
-  await page.getByRole("button", { name: "teams" }).click();
+  await page.getByRole("button", { name: "team builds" }).click();
   await page.getByRole("button", { name: "new team" }).click();
 
   // Nothing stored yet: Back leaves at once and the list is still empty.
@@ -362,7 +362,7 @@ test("a new team is stored only on Save, which stays on the editor (#573)", asyn
   await expect(page.getByRole("button", { name: "duplicate" })).toBeDisabled();
   await expect(page.getByRole("button", { name: "delete" })).toBeDisabled();
   await page.getByRole("button", { name: "back" }).click();
-  await expect(page.getByText("No teams yet.")).toBeVisible();
+  await expect(page.getByText("No team builds yet.")).toBeVisible();
 
   await page.getByRole("button", { name: "new team" }).click();
   await page.getByLabel("team name").fill("");
@@ -377,13 +377,13 @@ test("a new team is stored only on Save, which stays on the editor (#573)", asyn
   await expect(page.getByRole("button", { name: "duplicate" })).toBeEnabled();
 
   await page.reload();
-  await page.getByRole("button", { name: "teams" }).click();
+  await page.getByRole("button", { name: "team builds" }).click();
   await expect.poll(() => teamList(page)).toEqual(["Duo · 1 member"]);
 });
 
 test("a toast goes with its screen; one the next screen raises stays (#710)", async ({ page }) => {
   await saveCharacters(page, ["Alpha"]);
-  await page.getByRole("button", { name: "teams" }).click();
+  await page.getByRole("button", { name: "team builds" }).click();
   await page.getByRole("button", { name: "new team" }).click();
   await page.getByLabel("team name").fill("Duo");
   await page.getByRole("button", { name: "add Alpha" }).click();
@@ -405,16 +405,16 @@ test("a toast goes with its screen; one the next screen raises stays (#710)", as
   // A pasted team's note is raised once the team editor is up, so it stays.
   await paste(page.locator(".screen"), code);
   await expect(page.locator(".editor-unsaved")).toBeVisible();
-  await expect(page.locator(".toast")).toHaveText("Reused 1. Save to keep the team.");
+  await expect(page.locator(".toast")).toHaveText("Pasted Duo, 1 member. Save to keep it.");
 });
 
 test("the team list: an empty one offers New team; a row shows its members and opens on Enter (#581)", async ({
   page,
 }) => {
   await saveCharacters(page, ["Alpha", "Bravo"]);
-  await page.getByRole("button", { name: "teams" }).click();
+  await page.getByRole("button", { name: "team builds" }).click();
   // Empty: the one New team is where the rows would be.
-  await expect(page.locator(".empty-state")).toContainText("No teams yet.");
+  await expect(page.locator(".empty-state")).toContainText("No team builds yet.");
   await expect(page.getByRole("button", { name: "new team" })).toHaveCount(1);
   await page.locator(".empty-state").getByRole("button", { name: "new team" }).click();
   await page.getByLabel("team name").fill("Duo");
@@ -433,19 +433,18 @@ test("the team list: an empty one offers New team; a row shows its members and o
 
 test("team edits stay on screen until Save; Back and Delete ask first (#573)", async ({ page }) => {
   await saveCharacters(page, ["Alpha", "Bravo"]);
-  await page.getByRole("button", { name: "teams" }).click();
+  await page.getByRole("button", { name: "team builds" }).click();
   await page.getByRole("button", { name: "new team" }).click();
   await page.getByLabel("team name").fill("GvG Practice");
 
-  // Add both; an added character leaves the picker, which keeps the
-  // first start's rolled starter, oldest and last (#853).
+  // Add both: each is a copy (#1452), so the picker still offers them,
+  // and the first start's rolled starter, oldest and last (#853).
   const picks = page.locator(".team-picker .team-pick-name");
   await expect(picks).toHaveText(["Bravo", "Alpha", ROLLED_STARTER]);
   await page.getByRole("button", { name: "add Alpha" }).click();
-  await expect(picks).toHaveText(["Bravo", ROLLED_STARTER]);
   await page.getByRole("button", { name: "add Bravo" }).click();
   await expect(memberNames(page)).toHaveText(["Alpha", "Bravo"]);
-  await expect(picks).toHaveText([ROLLED_STARTER]);
+  await expect(picks).toHaveText(["Bravo", "Alpha", ROLLED_STARTER]);
 
   // Reorder, still on the editor.
   const up = memberRows(page).nth(1).getByRole("button", { name: "move up" });
@@ -488,7 +487,7 @@ test("the team grid: eight cells a member, drag or ↑ ↓ to reorder, places le
   page,
 }) => {
   await saveCharacters(page, ["Alpha", "Bravo", "Charlie"]);
-  await page.getByRole("button", { name: "teams" }).click();
+  await page.getByRole("button", { name: "team builds" }).click();
   await page.getByRole("button", { name: "new team" }).click();
 
   const header = page.locator(".team-picker-header");
@@ -498,8 +497,8 @@ test("the team grid: eight cells a member, drag or ↑ ↓ to reorder, places le
     await page.getByRole("button", { name: `add ${name}` }).click();
   }
   await expect(header).toHaveText("13 places left");
-  // Only the first start's rolled starter is left to add (#853).
-  await expect(page.locator(".team-pick")).toHaveCount(1);
+  // An added character is copied (#1452): all four stay on offer.
+  await expect(page.locator(".team-pick")).toHaveCount(4);
 
   await expect(memberRows(page)).toHaveCount(3);
   for (const row of await memberRows(page).all()) {
@@ -535,7 +534,7 @@ test("team counters mark their cells; a cell finds its skill on the team (#575)"
     await page.getByRole("button", { name: "Save", exact: true }).click();
     await expect(page.locator(".roster")).toContainText(name);
   }
-  await page.getByRole("button", { name: "teams" }).click();
+  await page.getByRole("button", { name: "team builds" }).click();
   await page.getByRole("button", { name: "new team" }).click();
   await page.getByRole("button", { name: "add Alpha" }).click();
   await page.getByRole("button", { name: "add Bravo" }).click();
@@ -571,7 +570,7 @@ test("a member opens in the build editor and comes back to the unsaved team (#57
   page,
 }) => {
   await saveCharacters(page, ["Alpha", "Bravo"]);
-  await page.getByRole("button", { name: "teams" }).click();
+  await page.getByRole("button", { name: "team builds" }).click();
   await page.getByRole("button", { name: "new team" }).click();
   await page.getByLabel("team name").fill("Trip");
   await page.getByRole("button", { name: "add Alpha" }).click();
@@ -593,13 +592,54 @@ test("a member opens in the build editor and comes back to the unsaved team (#57
   await expect(page.locator(".editor-unsaved")).toBeVisible();
   await expect(alphaCells).toHaveCount(before + 1);
 
-  // Deleted from the build editor: the row is a missing character.
+  // Deleted from the build editor: off the team, which is still unsaved.
   await page.getByRole("button", { name: "Bravo", exact: true }).click();
   await page.getByRole("button", { name: "more actions" }).click();
   await page.getByRole("button", { name: "Delete", exact: true }).click();
   await page.locator(".inline-confirm").getByRole("button", { name: "delete" }).click();
-  await expect(memberNames(page)).toHaveText(["(missing character)", "Alpha"]);
+  await expect(memberNames(page)).toHaveText(["Alpha"]);
   await expect(page.getByLabel("team name")).toHaveValue("Trip");
+});
+
+test("a team member is the team's own: an edit leaves the Solo character alone; New character joins on Save (#1452)", async ({
+  page,
+}) => {
+  await saveCharacters(page, ["Alpha"]);
+  await page.getByRole("button", { name: "team builds" }).click();
+  await page.getByRole("button", { name: "new team build" }).click();
+  await page.getByLabel("team name").fill("Own");
+  await page.getByRole("button", { name: "add Alpha" }).click();
+
+  // Rename the copy and give it a skill, then store the team.
+  await page.getByRole("button", { name: "Alpha", exact: true }).click();
+  await page.locator("input.editor-name").fill("Alpha Prime");
+  await page.locator(".skill-box").first().locator(".skill-box-equip").click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(memberNames(page)).toHaveText(["Alpha Prime"]);
+  await expect(memberRows(page).locator(".team-skill:not(.is-empty)")).toHaveCount(1);
+
+  // A new character closed unsaved joins nothing; saved, it joins.
+  await page.getByRole("button", { name: "New character", exact: true }).click();
+  await page.locator("input.editor-name").fill("Fresh");
+  await page.getByRole("button", { name: "close" }).click();
+  await page.getByRole("button", { name: "discard" }).click();
+  await expect(memberNames(page)).toHaveText(["Alpha Prime"]);
+  await page.getByRole("button", { name: "New character", exact: true }).click();
+  await page.locator("input.editor-name").fill("Fresh");
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(memberNames(page)).toHaveText(["Alpha Prime", "Fresh"]);
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.locator(".toast")).toHaveText("Saved");
+
+  // The Solo roster is as it was: Alpha, unchanged, and no Fresh.
+  await page.getByRole("button", { name: "back" }).click();
+  await page.getByRole("button", { name: "back" }).click();
+  await expect(page.locator(".roster")).toContainText("Alpha");
+  await expect(page.locator(".roster")).not.toContainText("Alpha Prime");
+  await expect(page.locator(".roster")).not.toContainText("Fresh");
+  await page.reload();
+  await page.getByRole("button", { name: "team builds" }).click();
+  await expect.poll(() => teamList(page)).toEqual(["Own · 2 members"]);
 });
 
 /** Paste `text` onto `target`, as Ctrl+V with it on the clipboard does. */
@@ -734,11 +774,11 @@ test("Share keeps the line selected when the clipboard is refused (#572)", async
   await expect(page.locator(".toast")).toBeHidden();
 });
 
-test("Share copies a team as one line; pasted on Teams it opens unsaved, missing builds created (#577)", async ({
+test("Share copies a team as one line; pasted on Team Builds it opens unsaved (#577)", async ({
   page,
 }) => {
   await saveCharacters(page, ["Alpha", "Bravo"]);
-  await page.getByRole("button", { name: "teams" }).click();
+  await page.getByRole("button", { name: "team builds" }).click();
   await page.getByRole("button", { name: "new team" }).click();
   await page.getByLabel("team name").fill("Duo");
   await page.getByRole("button", { name: "add Alpha" }).click();
@@ -755,28 +795,17 @@ test("Share copies a team as one line; pasted on Teams it opens unsaved, missing
   await page.keyboard.press("Escape");
   await expect(line).toBeHidden();
 
-  // Bravo is deleted: the team cannot be shared, as it cannot be saved.
-  await page.getByRole("button", { name: "Bravo", exact: true }).click();
-  await page.getByRole("button", { name: "more actions" }).click();
-  await page.getByRole("button", { name: "Delete", exact: true }).click();
-  await page.locator(".inline-confirm").getByRole("button", { name: "delete" }).click();
-  await expect(memberNames(page)).toHaveText(["Alpha", "(missing character)"]);
-  const share = page.getByRole("button", { name: "Share", exact: true });
-  await expect(share).toBeDisabled();
-  await expect(share).toHaveAttribute("title", /missing/);
   await page.getByRole("button", { name: "back" }).click();
   // The list mounts once the teams load; a paste before that finds no listener.
   await expect(page.getByRole("button", { name: "new team" })).toBeVisible();
 
   // On the list, a build code is not a team and is ignored; the team code
-  // opens the team unsaved, Bravo created again and Alpha reused.
+  // opens the team unsaved, its members its own (#1452).
   const build = JSON.stringify((JSON.parse(code) as { members: unknown[] }).members[0]);
   await paste(page.locator(".screen"), build);
   await expect(page.locator(".toast")).toBeHidden();
   await paste(page.locator(".screen"), code);
-  await expect(page.locator(".toast")).toHaveText(
-    "Created 1 character: Bravo. Reused 1. Save to keep the team.",
-  );
+  await expect(page.locator(".toast")).toHaveText("Pasted Duo, 2 members. Save to keep it.");
   await expect(page.getByLabel("team name")).toHaveValue("Duo");
   await expect(memberNames(page)).toHaveText(["Alpha", "Bravo"]);
   await expect(page.locator(".editor-unsaved")).toBeVisible();
@@ -800,7 +829,7 @@ test("Share copies a team as one line; pasted on Teams it opens unsaved, missing
   await page.locator("input.editor-name").fill("Scratch");
   await paste(page.locator(".editor"), code);
   await expect(page.locator(".toast")).toHaveText(
-    "That is a team code. Paste it on the Teams screen.",
+    "That is a team code. Paste it on the Team Builds screen.",
   );
   await expect(page.locator("input.editor-name")).toHaveValue("Scratch");
 });
