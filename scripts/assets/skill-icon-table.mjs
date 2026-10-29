@@ -309,4 +309,13 @@ export const SKILL_ICONS = {
   "necromancer.blood-of-the-aggressor": { glyph: "eye-drop", modifier: "down" },
   "necromancer.barbed-signet": { glyph: "hex-burst", modifier: "bleed" },
   "necromancer.offering-of-blood": { glyph: "energy", modifier: "bleed" },
+  // Placeholders until the asset-designer's (#1357): Hammer Mastery.
+  "warrior.mighty-blow": { glyph: "hammer", modifier: "plus" },
+  "warrior.crushing-blow": { glyph: "hammer", modifier: "bleed" },
+  "warrior.irresistible-blow": { glyph: "hammer", modifier: "bolt" },
+  "warrior.counter-blow": { glyph: "hammer-slam", modifier: "stun" },
+  "warrior.heavy-blow": { glyph: "hammer-slam", modifier: "down" },
+  "warrior.staggering-blow": { glyph: "hammer", modifier: "less" },
+  "warrior.earth-shaker": { glyph: "hammer-slam", modifier: "area" },
+  "warrior.devastating-hammer": { glyph: "hammer-slam", modifier: "less" },
 };
