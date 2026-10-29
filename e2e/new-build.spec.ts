@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator } from "@playwright/test";
 
 import { NEW_VERSION_NOTICE, NEW_VERSION_WAITING } from "../apps/web/src/build-check.js";
 import { startSoloMatch } from "./helpers/peers.js";
@@ -39,4 +39,53 @@ test("a match chunk the deploy removed says a new version is out, not a lost con
   // Back on the lobby, which says why.
   await expect(page.locator(".screen-problem")).toHaveText(NEW_VERSION_NOTICE);
   await expect(page.getByText("Lost the connection to the match.")).toHaveCount(0);
+});
+
+test("on a phone the banner makes room: nothing at the top hides under it, its buttons wrap (#1283)", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.route("**/build.json", (route) => route.fulfill({ json: { build: "newer" } }));
+  await page.goto("./");
+
+  const banner = page.locator(".build-banner");
+  await expect(banner).toBeVisible();
+  /** `selector` starts at or below the bottom edge of `over`, the banner unless said. */
+  const below = async (selector: string, over: Locator = banner): Promise<void> => {
+    await expect(async () => {
+      const top = await over.boundingBox();
+      const under = await page.locator(selector).boundingBox();
+      expect(top).not.toBeNull();
+      expect(under).not.toBeNull();
+      if (top !== null && under !== null) {
+        expect(under.y).toBeGreaterThanOrEqual(top.y + top.height - 1);
+      }
+    }).toPass();
+  };
+  await below("#topbar");
+  // The text on its own row, both buttons on the next.
+  const text = await banner.locator(".build-banner-text").boundingBox();
+  const reload = await banner.getByRole("button", { name: "Reload now" }).boundingBox();
+  const notNow = await banner.getByRole("button", { name: "Not now" }).boundingBox();
+  expect(reload?.y).toBe(notNow?.y);
+  expect(reload?.y ?? 0).toBeGreaterThanOrEqual((text?.y ?? 0) + (text?.height ?? 0));
+
+  await startSoloMatch(page);
+  await below(".hud-top");
+  await below(".hud-controls");
+  // The compass sits under the match buttons, so it moves down with them.
+  await below(".compass", page.locator(".hud-controls"));
+  // So does the ♪ jukebox, which opens under them.
+  await page.locator(".hud-music").click();
+  await below(".hud-jukebox", page.locator(".hud-controls"));
+  await page.locator(".hud-music").click();
+  await expect(page.locator(".hud-jukebox")).toHaveCount(0);
+
+  await banner.getByRole("button", { name: "Not now" }).click();
+  await expect(banner).toBeHidden();
+  await expect
+    .poll(() =>
+      page.evaluate(() => document.documentElement.style.getPropertyValue("--build-banner-space")),
+    )
+    .toBe("0px");
 });

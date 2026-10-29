@@ -46,6 +46,8 @@ body {
 #topbar {
   position: relative;
   z-index: 10;
+  /* Under the newer-build banner, not behind it (#1283); the screen follows. */
+  margin-top: var(--build-banner-space, 0px);
   display: flex;
   align-items: center;
   gap: 0.8rem;
@@ -211,7 +213,7 @@ body {
 /* Top centre (#1042): the scoreboard, and the target frame under it. */
 .hud-top {
   position: absolute;
-  top: 0.6rem;
+  top: calc(0.6rem + var(--build-banner-space, 0px));
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -1715,6 +1717,7 @@ body {
   top: 0.6rem;
   transform: translateX(-50%);
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.8rem;
   width: max-content;
@@ -1747,6 +1750,17 @@ body {
 
 .build-banner button:hover {
   border-color: var(--accent);
+}
+
+/* A phone (#1283): the text on its own row, the two buttons halving the next. */
+@media (width <= 30rem) {
+  .build-banner-text {
+    flex: 1 0 100%;
+  }
+
+  .build-banner button {
+    flex: 1;
+  }
 }
 
 /* --- options (#423) ----------------------------------------------------- */
@@ -2164,7 +2178,7 @@ body {
  */
 .hud-controls {
   position: absolute;
-  top: 0.6rem;
+  top: calc(0.6rem + var(--build-banner-space, 0px));
   right: 0.9rem;
   display: flex;
   flex-direction: column;
@@ -2215,7 +2229,7 @@ body {
 
 .hud-jukebox {
   position: absolute;
-  top: 5.8rem;
+  top: calc(5.8rem + var(--build-banner-space, 0px));
   right: 0.9rem;
   z-index: 20;
   width: min(420px, calc(100% - 1.8rem));
@@ -4341,7 +4355,7 @@ body.has-expanded-training #screens {
 .now-playing {
   position: fixed;
   left: 1rem;
-  top: 2.9rem;
+  top: calc(2.9rem + var(--build-banner-space, 0px));
   z-index: 10;
   padding: 0.4rem 0.8rem;
   background: rgb(14 17 22 / 90%);
@@ -4377,7 +4391,8 @@ body:has(#app > .chat) .now-playing {
  * of the scoreboard.
  */
 :root {
-  --compass-top: 5.8rem;
+  /* Under the match buttons, so down with them under the banner (#1283). */
+  --compass-top: calc(5.8rem + var(--build-banner-space, 0px));
   --compass-size: 160px;
 }
 
