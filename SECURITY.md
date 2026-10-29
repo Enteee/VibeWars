@@ -130,8 +130,8 @@ channels, as often as they like.
 - **IP addresses.** WebRTC exchanges ICE candidates, so every peer in a
   room learns the public IP address of every peer it connects to, and on
   some browsers a LAN address too. Browsers hide LAN addresses behind mDNS
-  names by default, but the public address is always visible. The main
-  menu says so, under the host and join buttons.
+  names by default, but the public address is always visible. The Help
+  screen says so (Getting started).
 - **The relays see who meets whom.** Each public Nostr relay sees the IP
   address of every browser in a room, the room's name, which is derived
   from the lobby code, and the WebRTC offers and answers (SDP) that pass

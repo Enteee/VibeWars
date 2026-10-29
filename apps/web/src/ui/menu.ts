@@ -1,7 +1,6 @@
 import type { QueueMode } from "@vibewars/game-protocol";
 import { sanitizeGuildTag } from "@vibewars/game-session";
 
-import { SOURCE_URL } from "../source.js";
 import type { Tally } from "../storage/match-record.js";
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 import type { StoredCharacter, StoredTeam } from "../storage/schema.js";
@@ -10,10 +9,6 @@ import { looksLikeTeam } from "../storage/team-transfer.js";
 import { createCharacterFigure } from "./character-figure.js";
 import { equippedCount, miniSkillBar, professionLabel } from "./character-preview.js";
 import { button, emptyState, h, listenForPaste, screenBar, selectableRow } from "./kit.js";
-
-/** What every peer in a lobby learns about you (#541): WebRTC connects you directly. */
-export const PEER_IP_NOTICE =
-  "Online play connects you straight to the other players, so they can see your IP address.";
 
 /**
  * The main menu and lobby screens (brief §21).
@@ -232,20 +227,6 @@ export function renderMenu(
       button("Music", "", callbacks.onMusic),
     ],
   });
-  const subtitle = h(
-    "p",
-    "screen-subtitle",
-    "A minimalist tactical PvP arena. Built for LAN parties. ",
-  );
-  // The AGPL's network clause: whoever plays it is offered the source.
-  const source = h("a", "screen-source", "source");
-  source.setAttribute("href", SOURCE_URL);
-  // A new tab, so reading the source never leaves the game.
-  source.setAttribute("target", "_blank");
-  source.setAttribute("rel", "noopener");
-  subtitle.appendChild(source);
-  panel.appendChild(subtitle);
-
   const columns = h("div", "menu-columns");
   panel.appendChild(columns);
 
@@ -438,8 +419,6 @@ export function renderMenu(
   joinRow.appendChild(button("Join", "primary", join));
   play.appendChild(joinRow);
   play.appendChild(connecting);
-  // Under host and join, so it is read before either (#541, SECURITY.md).
-  play.appendChild(h("p", "menu-peer-notice", PEER_IP_NOTICE));
   columns.appendChild(play);
 
   root.appendChild(panel);

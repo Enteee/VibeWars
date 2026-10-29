@@ -57,3 +57,19 @@ test("the HUD's [?] opens Help over a match; Esc closes it and gives focus back 
   await expect(help).toHaveCount(0);
   await expect(page.locator(".hud-help")).toBeFocused();
 });
+
+test("Help, not the menu, says peers see your IP address, and offers the source (#541, #1442)", async ({
+  page,
+}) => {
+  await page.goto("./");
+  await expect(page.getByRole("button", { name: "host a lobby" })).toBeVisible();
+  await expect(page.getByText("IP address")).toHaveCount(0);
+
+  await page.locator(".topbar-help").click();
+  const help = page.getByRole("dialog", { name: "Help" });
+  await expect(help.locator(".help-page")).toContainText("see your IP address");
+  // The AGPL's network clause, in a new tab.
+  const source = help.getByRole("link", { name: "Source code" });
+  await expect(source).toHaveAttribute("href", "https://github.com/Enteee/VibeWars");
+  await expect(source).toHaveAttribute("target", "_blank");
+});

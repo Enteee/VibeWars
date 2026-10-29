@@ -55,6 +55,11 @@ To play with friends:
 Type a **Guild tag** of 2 to 4 letters or digits beside your name, and
 everyone sees it after your name, like `Ente [VIBE]`.
 
+## Playing online
+
+Online play is peer to peer: the other players in your match see your
+IP address.
+
 ## Your record
 
 Every match you finish with one of your characters, hosted, joined or
