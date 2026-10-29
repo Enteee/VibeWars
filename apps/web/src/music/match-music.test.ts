@@ -15,6 +15,7 @@ function player(sessionId: string, extra: Partial<PlayerSnapshot> = {}): PlayerS
   return {
     sessionId,
     name: sessionId,
+    guildTag: undefined,
     x: 0,
     y: 0,
     facing: 0,

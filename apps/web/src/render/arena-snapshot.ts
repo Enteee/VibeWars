@@ -32,6 +32,8 @@ export interface RenderableActor {
   readonly id: string;
   /** Drawn above the actor, so a player can tell who is who. */
   readonly name: string;
+  /** The player's guild tag (#1406), after the name on its plate; `undefined` for none. */
+  readonly guildTag: string | undefined;
   /** A lobby's bot (#1194): its name plate wears the BOT tag. */
   readonly bot: boolean;
   readonly position: Vec2;

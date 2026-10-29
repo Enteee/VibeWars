@@ -124,6 +124,27 @@ describe("a P2P match (#375)", () => {
   });
 });
 
+describe("guild tags (#1406)", () => {
+  it("seats a hello's tag, sanitised, in every snapshot and the summary; a bad one as none", async () => {
+    const match = startMatch();
+    const { connection: ann } = await match.join(hello({ name: "Ann", guildTag: " Vb1 " }));
+    const { connection: bob } = await match.join(hello({ name: "Bob", guildTag: "[x]" }));
+    await match.step(1 / RULESET.tickRateHz);
+
+    for (const who of [ann, bob]) {
+      expect(playerIn(who.getSnapshot(), ann.selfSessionId)?.guildTag).toBe("Vb1");
+      expect(playerIn(who.getSnapshot(), bob.selfSessionId)?.guildTag).toBeUndefined();
+    }
+
+    await match.host.close("host-left");
+    await settle();
+    expect(bob.getSnapshot().summary?.map(({ name, guildTag }) => [name, guildTag])).toEqual([
+      ["Ann", "Vb1"],
+      ["Bob", null],
+    ]);
+  });
+});
+
 describe("the match summary's size (#1057)", () => {
   it("fits a full lobby's lines in one `ended`", () => {
     // Sixteen names of sixteen four-byte characters, the most a name keeps,
@@ -134,6 +155,7 @@ describe("the match summary's size (#1057)", () => {
       summary: Array.from({ length: MAX_LOBBY_PLAYERS }, (_, i) => ({
         id: `player-${String(1000 + i)}`,
         name: "\u{1D54E}".repeat(16),
+        guildTag: "WWWW",
         team: i % 2 === 0 ? 0 : 1,
         damage: 9_999_999,
         healing: 9_999_999,
@@ -332,8 +354,8 @@ describe("a lobby's bots (#1193)", () => {
   const TICK = 1 / RULESET.tickRateHz;
   /** A bot's planned seat, keyed by its name as a lobby keys it by its id. */
   const bot = (team: 0 | 1, name: string, build: string) =>
-    [name, { team, name, bot: starterBuild(build) }] as const;
-  const human = (team: 0 | 1) => ["host/local", { team, name: "Me", bot: null }] as const;
+    [name, { team, name, guildTag: null, bot: starterBuild(build) }] as const;
+  const human = (team: 0 | 1) => ["host/local", { team, name: "Me", guildTag: "VIBE", bot: null }] as const;
   const named = (snapshot: MatchSnapshot, name: string) =>
     snapshot.players.find((player) => player.name === name);
 
@@ -348,6 +370,9 @@ describe("a lobby's bots (#1193)", () => {
     await match.step(TICK);
     expect(named(local.getSnapshot(), "Elementalist Bot")).toMatchObject({ team: 1, bot: true });
     expect(self(local)?.bot).toBe(false);
+    // The lobby's tag, whatever the hello says; a bot wears none (#1406).
+    expect(self(local)?.guildTag).toBe("VIBE");
+    expect(named(local.getSnapshot(), "Elementalist Bot")?.guildTag).toBeUndefined();
     let cast: string | undefined;
     for (let t = 0; t < 10 && cast === undefined; t += 0.1) {
       await match.step(0.1);

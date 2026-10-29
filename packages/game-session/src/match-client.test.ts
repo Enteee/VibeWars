@@ -324,6 +324,7 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
   const FIELDS = {
     id: "sessionId",
     name: "name",
+    guildTag: "guildTag",
     team: "team",
     x: "x",
     y: "y",
@@ -451,6 +452,7 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
 const WIRE_PLAYER: WirePlayer = {
   id: "p1",
   name: "Mhenlo",
+  guildTag: "VIBE",
   team: 1,
   x: 1,
   y: 2,

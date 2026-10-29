@@ -16,6 +16,7 @@ function snapshot(castingSkillId: string | undefined): MatchSnapshot {
   const me: PlayerSnapshot = {
     sessionId: ME,
     name: ME,
+    guildTag: undefined,
     x: 0,
     y: 0,
     facing: 0,

@@ -107,6 +107,7 @@ function player(index: number): WirePlayer {
   return {
     id: `${PEER_ID}${String(index)}`,
     name: NAME,
+    guildTag: null,
     team: index % 2 === 0 ? 0 : 1,
     x: FLOAT + index,
     y: FLOAT + index,
@@ -391,6 +392,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
     const hello: PeerHello = {
       protocolVersion: PROTOCOL_VERSION,
       name: NAME,
+      guildTag: null,
       build: JSON.parse(JSON.stringify(build)) as JsonValue,
       rejoin: { playerId: `${PEER_ID}0` },
     };
@@ -416,6 +418,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       players: Array.from({ length: MAX_LOBBY_PLAYERS }, (_, i) => ({
         id: `${PEER_ID}${String(i)}`,
         name: NAME,
+        guildTag: null,
         team: i % 3 === 0 ? null : i % 3 === 1 ? 0 : 1,
         ready: true,
         isHost: i === 0,

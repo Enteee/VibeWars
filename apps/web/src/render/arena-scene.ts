@@ -23,6 +23,7 @@ import {
   skillTypeIcon,
 } from "../ui/icons.js";
 import { taggedName } from "../ui/bot-tag.js";
+import { playerLabelText } from "../ui/player-label.js";
 import { prefersReducedMotion } from "../ui/recharge-overlay.js";
 import {
   BODY_EDGE,
@@ -1059,7 +1060,9 @@ export class ArenaScene extends Phaser.Scene {
         label.setColor(color);
       }
       const shown = nameShown(this.snapshot, actor);
-      label.setText(taggedName(actor));
+      label.setText(
+        taggedName({ name: playerLabelText(actor.name, actor.guildTag), bot: actor.bot }),
+      );
       screenSized(label, zoom);
       // `width` is unscaled: the label's screen px.
       const layout = nameplateLayout(actor, label.width, zoom);

@@ -12,6 +12,7 @@ import { createProfessionDot, professionLabel } from "./character-preview.js";
 import { button, h, inlineConfirm, screenBar, toast, type InlineConfirm } from "./kit.js";
 import { relayLine } from "./relay-section.js";
 import { botTagElement } from "./bot-tag.js";
+import { playerLabelElement } from "./player-label.js";
 
 /**
  * The lobby screen (brief §21's lobby layout, #580): the bar holds Leave,
@@ -387,7 +388,10 @@ function playerRow(
         ),
   );
   const text = h("span", "lobby-slot-text");
-  text.appendChild(h("span", "lobby-player", `${member.name}${member.isHost ? " (host)" : ""}`));
+  const player = text.appendChild(playerLabelElement("lobby-player", member.name, member.guildTag));
+  if (member.isHost) {
+    player.appendChild(document.createTextNode(" (host)"));
+  }
   text.appendChild(h("span", "lobby-character", characterLine(character, member.bot)));
   row.appendChild(text);
   // A bot is always ready, so its pill says what it is instead (#1194).

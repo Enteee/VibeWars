@@ -21,6 +21,7 @@ function actor(
   return {
     id,
     name: id,
+    guildTag: undefined,
     bot: false,
     position: vec2(x, y),
     facing: 0,

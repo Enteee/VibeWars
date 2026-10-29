@@ -20,6 +20,7 @@ function player(index: number): WirePlayer {
   return {
     id: `peer-${"x".repeat(40)}-${String(index)}`,
     name: "x".repeat(64),
+    guildTag: null,
     team: index % 2 === 0 ? 0 : 1,
     x: 1000 / 3,
     y: 1000 / 3,

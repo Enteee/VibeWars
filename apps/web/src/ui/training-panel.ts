@@ -114,6 +114,7 @@ import {
   shouldRestoreFocus,
 } from "./training-state.js";
 import { h } from "./kit.js";
+import { playerGuildTag } from "./menu.js";
 import { labelWeaponSets, renderWeaponSets, weaponSetSlots } from "./weapon-set-slots.js";
 
 /**
@@ -638,6 +639,8 @@ export function createTrainingPanel(): TrainingPanel {
       selfId: SELF_ID,
       map: setup.map,
       nameOf,
+      // Your own body wears your tag (#1406): it is your name.
+      guildTagOf: (id) => (id === SELF_ID ? (playerGuildTag() ?? undefined) : undefined),
       professionsOf,
     });
     session = {

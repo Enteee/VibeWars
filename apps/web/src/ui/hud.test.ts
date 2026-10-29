@@ -50,6 +50,7 @@ function player(fields: Partial<PlayerSnapshot>): PlayerSnapshot {
   return {
     sessionId: "foe",
     name: "Mhenlo",
+    guildTag: undefined,
     x: 0,
     y: 0,
     facing: 0,
@@ -887,6 +888,7 @@ describe("targetHintDismissed", () => {
   const self = (targetSessionId: string | undefined): PlayerSnapshot => ({
     sessionId: "me",
     name: "me",
+    guildTag: undefined,
     x: 0,
     y: 0,
     facing: 0,
@@ -983,6 +985,7 @@ describe("isAttackingTarget", () => {
   const player = (sessionId: string, attackTargetSessionId?: string): PlayerSnapshot => ({
     sessionId,
     name: sessionId,
+    guildTag: undefined,
     x: 0,
     y: 0,
     facing: 0,
@@ -1092,6 +1095,7 @@ describe("targetProfessionIcons (#281)", () => {
   ): PlayerSnapshot => ({
     sessionId: "foe",
     name: "foe",
+    guildTag: undefined,
     x: 0,
     y: 0,
     facing: 0,

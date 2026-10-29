@@ -20,6 +20,7 @@ function player(sessionId: string, team: number, x: number): PlayerSnapshot {
   return {
     sessionId,
     name: sessionId,
+    guildTag: undefined,
     x,
     y: 0,
     facing: 0,
@@ -80,6 +81,7 @@ function body(id: string, x: number, team: RenderableActor["team"]): RenderableA
   return {
     id,
     name: id,
+    guildTag: undefined,
     bot: false,
     position: vec2(x, 0),
     facing: 0,

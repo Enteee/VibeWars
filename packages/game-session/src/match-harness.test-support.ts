@@ -121,11 +121,17 @@ export function answerChallenges(transport: Transport, token: string, hostId = "
 }
 
 export function hello(
-  overrides: Partial<{ name: string; build: JsonValue; rejoin: PeerHello["rejoin"] }> = {},
+  overrides: Partial<{
+    name: string;
+    guildTag: string | null;
+    build: JsonValue;
+    rejoin: PeerHello["rejoin"];
+  }> = {},
 ): PeerHello {
   return {
     protocolVersion: PROTOCOL_VERSION,
     name: overrides.name ?? "Tester",
+    guildTag: overrides.guildTag ?? null,
     build: overrides.build ?? null,
     rejoin: overrides.rejoin ?? null,
   };

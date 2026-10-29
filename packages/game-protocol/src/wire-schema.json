@@ -1650,6 +1650,7 @@
             ]
           }
         },
+        { "name": "guildTag", "optional": false, "type": { "union": ["null", "string"] } },
         { "name": "name", "optional": false, "type": "string" },
         { "name": "protocolVersion", "optional": false, "type": "string" },
         {
@@ -1702,6 +1703,7 @@
             ]
           }
         },
+        { "name": "guildTag", "optional": false, "type": { "union": ["null", "string"] } },
         { "name": "name", "optional": false, "type": "string" },
         { "name": "protocolVersion", "optional": false, "type": "string" }
       ]
@@ -2382,6 +2384,7 @@
               "properties": [
                 { "name": "damage", "optional": false, "type": "number" },
                 { "name": "deaths", "optional": false, "type": "number" },
+                { "name": "guildTag", "optional": false, "type": { "union": ["null", "string"] } },
                 { "name": "healing", "optional": false, "type": "number" },
                 { "name": "id", "optional": false, "type": "string" },
                 { "name": "interrupts", "optional": false, "type": "number" },
@@ -2534,6 +2537,7 @@
             ]
           }
         },
+        { "name": "guildTag", "optional": false, "type": { "union": ["null", "string"] } },
         { "name": "id", "optional": false, "type": "string" },
         { "name": "isHost", "optional": false, "type": "boolean" },
         { "name": "name", "optional": false, "type": "string" },
@@ -2590,6 +2594,7 @@
                     ]
                   }
                 },
+                { "name": "guildTag", "optional": false, "type": { "union": ["null", "string"] } },
                 { "name": "id", "optional": false, "type": "string" },
                 { "name": "isHost", "optional": false, "type": "boolean" },
                 { "name": "name", "optional": false, "type": "string" },
@@ -2720,6 +2725,7 @@
         { "name": "energy", "optional": false, "type": "number" },
         { "name": "energyPips", "optional": false, "type": "number" },
         { "name": "facing", "optional": false, "type": "number" },
+        { "name": "guildTag", "optional": false, "type": { "union": ["null", "string"] } },
         { "name": "health", "optional": false, "type": "number" },
         { "name": "healthPips", "optional": false, "type": "number" },
         { "name": "id", "optional": false, "type": "string" },
@@ -3065,6 +3071,7 @@
                 { "name": "energy", "optional": false, "type": "number" },
                 { "name": "energyPips", "optional": false, "type": "number" },
                 { "name": "facing", "optional": false, "type": "number" },
+                { "name": "guildTag", "optional": false, "type": { "union": ["null", "string"] } },
                 { "name": "health", "optional": false, "type": "number" },
                 { "name": "healthPips", "optional": false, "type": "number" },
                 { "name": "id", "optional": false, "type": "string" },
@@ -3431,6 +3438,7 @@
                 { "name": "energy", "optional": false, "type": "number" },
                 { "name": "energyPips", "optional": false, "type": "number" },
                 { "name": "facing", "optional": false, "type": "number" },
+                { "name": "guildTag", "optional": false, "type": { "union": ["null", "string"] } },
                 { "name": "health", "optional": false, "type": "number" },
                 { "name": "healthPips", "optional": false, "type": "number" },
                 { "name": "id", "optional": false, "type": "string" },
@@ -3596,6 +3604,7 @@
       "properties": [
         { "name": "damage", "optional": false, "type": "number" },
         { "name": "deaths", "optional": false, "type": "number" },
+        { "name": "guildTag", "optional": false, "type": { "union": ["null", "string"] } },
         { "name": "healing", "optional": false, "type": "number" },
         { "name": "id", "optional": false, "type": "string" },
         { "name": "interrupts", "optional": false, "type": "number" },

@@ -188,6 +188,7 @@ function joinQueued(transport: Transport, ticketId: string, timeoutMs = 1000, gr
     transport,
     code: GROUP_ID,
     name: `ticket-${ticketId.slice(0, 1)}`,
+    guildTag: null,
     character: null,
     timeoutMs,
     queued: { group, key: keyOf(ticketId), verifyTicketSig },
@@ -299,6 +300,7 @@ async function forgedJoin(
   return {
     protocolVersion: PROTOCOL_VERSION,
     name: "Forger",
+    guildTag: null,
     character: null,
     admission: { seatKey: ticketId, admissionSig: keyOf(signer).sign(bytes) },
   };
@@ -471,6 +473,7 @@ describe("a queued lobby", () => {
               team: 1,
               ready: false,
               isHost: false,
+              guildTag: null,
               character: null,
               bot: false,
             },
