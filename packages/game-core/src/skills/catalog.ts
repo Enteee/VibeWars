@@ -1296,6 +1296,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         kind: "splash",
         hits: "foes",
         radius: AREA_ADJACENT,
+        maxTargets: undefined,
         effects: [
           {
             kind: "damage",
@@ -3377,6 +3378,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         kind: "splash",
         hits: "foes",
         radius: AREA_NEARBY,
+        maxTargets: undefined,
         effects: [
           {
             kind: "damage",
@@ -4265,6 +4267,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         kind: "splash",
         hits: "foes",
         radius: AREA_NEARBY,
+        maxTargets: undefined,
         effects: [
           {
             kind: "damage",
@@ -4306,6 +4309,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         kind: "splash",
         hits: "foes",
         radius: AREA_NEARBY,
+        maxTargets: undefined,
         effects: [
           {
             kind: "damage",
@@ -4347,6 +4351,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         kind: "splash",
         hits: "foes",
         radius: AREA_NEARBY,
+        maxTargets: undefined,
         effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: 13 }],
       },
     ],
@@ -5465,6 +5470,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
             kind: "splash",
             hits: "foes",
             radius: AREA_IN_THE_AREA,
+            maxTargets: undefined,
             effects: [
               { kind: "interrupt" },
               {
@@ -6153,6 +6159,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
             kind: "splash",
             hits: "foes",
             radius: AREA_IN_THE_AREA,
+            maxTargets: undefined,
             effects: [
               {
                 kind: "damage",
@@ -6282,6 +6289,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
             kind: "splash",
             hits: "foes",
             radius: AREA_IN_THE_AREA,
+            maxTargets: undefined,
             effects: [
               {
                 kind: "damage",
@@ -6587,6 +6595,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
             kind: "splash",
             hits: "foes",
             radius: AREA_ADJACENT,
+            maxTargets: undefined,
             effects: [
               {
                 kind: "damage",
@@ -7435,6 +7444,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         kind: "splash",
         hits: "foes",
         radius: AREA_NEARBY,
+        maxTargets: undefined,
         effects: [
           {
             kind: "damage",
@@ -7561,6 +7571,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         kind: "splash",
         hits: "foe-creatures",
         radius: AREA_EARSHOT,
+        maxTargets: undefined,
         effects: [
           {
             kind: "damage",
@@ -8886,6 +8897,119 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     // Defenses refreshes every time you land a critical hit": 9 s, its
     // rank-12 value.
     effects: [{ kind: "apply-status", statusId: "critical-defenses", durationSeconds: 9 }],
+  },
+  {
+    id: "ritualist.boon-of-creation",
+    name: "Boon of Creation",
+    gwId: 1230,
+    type: "enchantment",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.spawning-power",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 45,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 15...51...60 seconds": 51, its rank-12 value. The health and
+    // energy for each creature are the status's.
+    effects: [{ kind: "apply-status", statusId: "boon-of-creation", durationSeconds: 51 }],
+  },
+  {
+    id: "ritualist.explosive-growth",
+    name: "Explosive Growth",
+    gwId: 1229,
+    type: "enchantment",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.spawning-power",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 45,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 15...51...60 seconds": 51, its rank-12 value. The lightning
+    // round each new creature is the status's.
+    effects: [{ kind: "apply-status", statusId: "explosive-growth", durationSeconds: 51 }],
+  },
+  {
+    id: "ritualist.spirits-gift",
+    name: "Spirit's Gift",
+    gwId: 1480,
+    type: "enchantment",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.spawning-power",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 45,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 60 seconds": the heal and cleanse round each new creature are
+    // the status's.
+    effects: [{ kind: "apply-status", statusId: "spirits-gift", durationSeconds: 60 }],
+  },
+  {
+    id: "ritualist.signet-of-creation",
+    name: "Signet of Creation",
+    gwId: 1238,
+    type: "signet",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.spawning-power",
+    // A signet costs nothing: usable at 0 energy.
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "You gain 4 Energy for every summoned creature you control within
+    // earshot (maximum 3...12 Energy)": 10.2 at rank 12 keeps rank 15's
+    // 12. No creature, no energy, but it is used and recharges.
+    effects: [
+      {
+        kind: "energy-gain",
+        amount: { flat: 4 },
+        perOwnCreatureWithin: {
+          radius: AREA_EARSHOT,
+          max: {
+            scaling: { attributeId: "ritualist.spawning-power", atZero: 3, atTwelve: 10.2 },
+          },
+        },
+      },
+    ],
   },
 ];
 

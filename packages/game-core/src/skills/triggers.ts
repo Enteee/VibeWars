@@ -60,7 +60,10 @@ export interface TriggerContext {
  */
 export function fireTriggers(
   bearer: Combatant,
-  event: Exclude<StatusTriggerEvent, "bearer-gains-condition" | "ends" | "expires">,
+  event: Exclude<
+    StatusTriggerEvent,
+    "bearer-gains-condition" | "bearer-creates-creature" | "ends" | "expires"
+  >,
   context: TriggerContext,
   spared: ReadonlySet<StatusId>,
 ): FiredTrigger[] {
@@ -69,6 +72,23 @@ export function fireTriggers(
     .filter(({ statusId }) => !spared.has(statusId))
     .flatMap(({ statusId, sourceId, trigger }) =>
       fire(trigger, statusId, sourceId, bearer, undefined, undefined, context),
+    );
+}
+
+/**
+ * The bearer created `createdId` (#1316): every status on it that answers
+ * that fires, once each, in `active` order, the creature already in the
+ * world. A trigger with target `created` lands on the creature.
+ */
+export function fireCreationTriggers(
+  bearer: Combatant,
+  createdId: string,
+  context: TriggerContext,
+): FiredTrigger[] {
+  return bearer.statuses
+    .triggersOn("bearer-creates-creature")
+    .flatMap(({ statusId, sourceId, trigger }) =>
+      fire(trigger, statusId, sourceId, bearer, createdId, undefined, context),
     );
 }
 
@@ -132,28 +152,27 @@ export function fireChangeTriggers(
 
 /**
  * Who a trigger's effects come from and land on: the source on the bearer
- * or on itself, or (#1022) the bearer on `offenderId`, the foe that set it
- * off. `undefined` when one of them is gone, or an offender's bearer is
- * dead: then it fires nothing.
+ * or on itself, or (#1022) the bearer on `otherId`, the foe that set it
+ * off, or (#1316) the creature it created. `undefined` when one of them is
+ * gone, or an offender's bearer is dead: then it fires nothing.
  */
 function parties(
   trigger: StatusTrigger,
   source: Combatant,
   bearer: Combatant,
-  offenderId: string | undefined,
+  otherId: string | undefined,
   sourceOf: (id: string) => Combatant | undefined,
 ): { caster: Combatant; target: Combatant } | undefined {
+  const other = otherId === undefined ? undefined : sourceOf(otherId);
   switch (trigger.target) {
     case "bearer":
       return { caster: source, target: bearer };
     case "source":
       return { caster: source, target: source };
-    case "offender": {
-      const offender = offenderId === undefined ? undefined : sourceOf(offenderId);
-      return offender === undefined || bearer.dead
-        ? undefined
-        : { caster: bearer, target: offender };
-    }
+    case "offender":
+      return other === undefined || bearer.dead ? undefined : { caster: bearer, target: other };
+    case "created":
+      return other === undefined ? undefined : { caster: bearer, target: other };
   }
 }
 
@@ -168,7 +187,7 @@ function fire(
   statusId: StatusId,
   sourceId: string,
   bearer: Combatant,
-  offenderId: string | undefined,
+  otherId: string | undefined,
   spread: ((effect: SpreadGainedConditionEffect) => CombatEvent[]) | undefined,
   { sourceOf, rng, rules, surroundings, usedSkill }: TriggerContext,
 ): FiredTrigger[] {
@@ -176,7 +195,7 @@ function fire(
   if (source === undefined) {
     return [];
   }
-  const resolved = parties(trigger, source, bearer, offenderId, sourceOf);
+  const resolved = parties(trigger, source, bearer, otherId, sourceOf);
   if (resolved === undefined) {
     return [];
   }

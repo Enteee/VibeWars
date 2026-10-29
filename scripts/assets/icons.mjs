@@ -881,6 +881,26 @@ const status = {
       `<path d="M12 5c-2 2.8-3.5 4.6-3.5 6.4a3.5 3.5 0 0 0 7 0C15.5 9.6 14 7.8 12 5z" fill="${c}"/>` +
       `<path d="M7 18.5l5-1.5l5 1.5" ${stroke(c, 2)}/>`,
   ],
+  // Enchantment: a sprout and a plus, each creature made heals you (#1316).
+  "boon-of-creation": [
+    "enchantment",
+    (c) =>
+      `<path d="M12 19v-7M12 12c-3 0-5-2-5-5c3 0 5 2 5 5zM12 12c3 0 5-2 5-5c-3 0-5 2-5 5z" ${stroke(c, 2)}/>`,
+  ],
+  // Enchantment: a sprout bursting into rays, lightning round each new creature (#1316).
+  "explosive-growth": [
+    "enchantment",
+    (c) =>
+      `<path d="M12 19v-6" ${stroke(c, 2.2)}/><circle cx="12" cy="10" r="2.5" fill="${c}"/>` +
+      `<path d="M12 4v2M6.5 6.5l1.5 1.5M17.5 6.5L16 8M5 11h2M17 11h2" ${stroke(c, 1.8)}/>`,
+  ],
+  // Enchantment: an open hand holding a plus, allies near each new creature healed (#1316).
+  "spirits-gift": [
+    "enchantment",
+    (c) =>
+      `<path d="M5 14c2 0 3 1 4 2h5c1 0 1.5-1.5 0-1.5h-3M5 18h9l5-4" ${stroke(c, 1.8)}/>` +
+      `<path d="M13 5v6M10 8h6" ${stroke(c, 2.2)}/>`,
+  ],
 };
 
 // ---------------------------------------------------------------------------
