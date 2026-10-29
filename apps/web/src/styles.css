@@ -657,6 +657,21 @@ body {
   color: var(--ink-dim);
 }
 
+/* GW1's Drop button (#1225), while a flag is in hand. */
+.hud-drop {
+  padding: 0 0.5rem;
+  background: rgb(14 17 22 / 85%);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.hud-drop:hover,
+.hud-drop:focus-visible {
+  border-color: var(--accent);
+}
+
 /* The effects monitor (#834): your statuses in the order applied, each
    with a bar under it that drains to empty. Wraps; never "+N". */
 .effects-monitor {
@@ -4537,6 +4552,49 @@ body:has(#app > .chat) .now-playing {
 
 .now-playing[hidden] {
   display: none;
+}
+
+/*
+ * A phone in a match (#1297): the centred scoreboard and target frame are
+ * wider than the room left of the match buttons. So "leave" loses
+ * " match (F10)", which stays in its name; the scoreboard and target go
+ * under the first row of buttons, left, clear of the second and the
+ * compass; and the toast takes the top left corner they leave, on one line.
+ */
+@media (width <= 30rem) {
+  .hud-leave-extra {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .hud-top {
+    top: calc(3.2rem + var(--build-banner-space, 0px));
+    left: 0.6rem;
+    transform: none;
+    align-items: flex-start;
+    max-width: calc(100vw - var(--compass-size) - 2.5rem);
+  }
+
+  .hud-target-health {
+    width: 170px;
+  }
+
+  .hud-target .effects-monitor {
+    max-width: 170px;
+  }
+
+  .now-playing {
+    top: calc(0.6rem + var(--build-banner-space, 0px));
+    left: 0.6rem;
+    max-width: calc(100vw - 10rem);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
 /*

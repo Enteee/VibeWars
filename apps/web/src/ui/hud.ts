@@ -1,4 +1,6 @@
 import {
+  FLAG_STAND_ID,
+  flagTeamOf,
   getProfession,
   getSkill,
   getWeapon,
@@ -104,6 +106,8 @@ export interface HudElements {
   readonly healthPips: HTMLElement;
   /** Your morale next to the health bar (#843): "−15%", "+10%"; hidden at 0. */
   readonly morale: HTMLElement;
+  /** GW1's Drop button above the health bar (#1225): shown while you carry a flag. */
+  readonly dropFlag: HTMLButtonElement;
   readonly energyFill: HTMLElement;
   /** Overcast's grey band at the energy bar's right end (#461). */
   readonly energyOvercast: HTMLElement;
@@ -233,6 +237,7 @@ export function targetHintDismissed(
 export function createHud(
   parent: HTMLElement,
   onEndUpkeep: (targetId: string, statusId: StatusId) => void,
+  onDropFlag: () => void,
 ): HudElements {
   const root = element("div", "hud", parent);
 
@@ -324,6 +329,13 @@ export function createHud(
   const morale = element("span", "hud-morale", status);
   morale.hidden = true;
   const gearText = element("span", "hud-gear", status);
+  const dropFlag = document.createElement("button");
+  dropFlag.type = "button";
+  dropFlag.className = "hud-drop";
+  dropFlag.textContent = "Drop flag";
+  dropFlag.hidden = true;
+  dropFlag.addEventListener("click", onDropFlag);
+  status.append(dropFlag);
 
   const healthRow = element("div", "hud-bar hud-bar-health", bars);
   const healthFill = element("div", "hud-bar-fill", healthRow);
@@ -350,6 +362,7 @@ export function createHud(
     healthText,
     healthPips,
     morale,
+    dropFlag,
     energyFill,
     energyOvercast,
     energyText,
@@ -460,6 +473,10 @@ const REFUSALS: Readonly<Record<ActivationRejection, string>> = {
   "no-animal-to-charm": "There is no animal to charm here.",
   "invalid-target-creature": "That cannot be revived that way.",
   "cannot-cast-spells": "You cannot cast spells.",
+  "hands-full": "Your hands are full: drop the flag first.",
+  "not-your-flag": "That is not your flag.",
+  "flag-on-stand": "Your flag is already on the stand.",
+  "no-flag-carried": "You are not carrying your flag.",
 };
 
 /** Where an attack's refusal differs from a cast's: it is about the weapon, not a skill. */
@@ -656,6 +673,29 @@ function setBar(
   const fraction = max > 0 ? Math.max(0, Math.min(1, value / max)) : 0;
   fill.style.width = `${String(fraction * 100)}%`;
   label.textContent = text;
+}
+
+/**
+ * The target frame's name for a flag or the stand selected (#1225),
+ * which are no body; `undefined` for any other id.
+ */
+export function objectTargetName(
+  targetId: string | undefined,
+  selfTeam: number,
+): string | undefined {
+  if (targetId === FLAG_STAND_ID) {
+    return "Flag Stand";
+  }
+  const team = targetId === undefined ? undefined : flagTeamOf(targetId);
+  if (team === undefined) {
+    return undefined;
+  }
+  return team === selfTeam ? "Your flag" : "Enemy flag";
+}
+
+/** Whether `playerId` carries a flag (#1225): the Drop button shows. */
+export function carriesFlag(match: MatchSnapshot, playerId: string): boolean {
+  return match.flags.some(({ place }) => place.kind === "carried" && place.carrierId === playerId);
 }
 
 /**
@@ -1058,7 +1098,13 @@ export function renderLeave(hud: HudElements, onLeave: () => void): LeaveControl
       if (focused instanceof HTMLElement && hud.leave.contains(focused)) {
         focused.blur();
       }
-      hud.leave.replaceChildren(button("leave match (F10)", control.open));
+      // A phone shows only "leave" (#1297); the rest stays in its name.
+      const leave = button("leave", control.open);
+      const extra = document.createElement("span");
+      extra.className = "hud-leave-extra";
+      extra.textContent = " match (F10)";
+      leave.append(extra);
+      hud.leave.replaceChildren(leave);
     },
     isOpen: () => {
       return answers.length > 0;
@@ -1244,7 +1290,8 @@ function renderTarget(
   target: PlayerSnapshot | undefined,
 ): void {
   renderTargetProfessions(hud.targetProfessions, target);
-  hud.targetText.textContent = target === undefined ? "no target" : target.name;
+  hud.targetText.textContent =
+    target?.name ?? objectTargetName(self.targetSessionId, self.team) ?? "no target";
   hud.targetBot.hidden = target?.bot !== true;
   hud.attacking.hidden = !isAttackingTarget(self, target);
   const invulnerable = target === undefined || target.dead ? 0 : target.invulnerableSeconds;
@@ -1351,6 +1398,7 @@ export function updateHud(
   hud.healthLost.style.width = `${String(lostHealthPercent(self))}%`;
   paintHealthTint(hud.healthRow, self);
   renderMorale(hud.morale, self.morale);
+  hud.dropFlag.hidden = match === undefined || !carriesFlag(match, self.sessionId);
   // Counted to the ceiling overcast leaves, the rest of the bar greyed (#461).
   const energyText = `${energyLabel(self.energy, self.maxEnergy, self.overcast)} en`;
   setBar(hud.energyFill, hud.energyText, self.energy, self.maxEnergy, energyText);

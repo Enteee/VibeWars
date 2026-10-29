@@ -37,7 +37,8 @@ export type KeyAction =
   | "weapon-set-1"
   | "weapon-set-2"
   | "weapon-set-3"
-  | "weapon-set-4";
+  | "weapon-set-4"
+  | "drop-bundle";
 
 /** Every action, in bar and reading order. */
 export const KEY_ACTIONS: readonly KeyAction[] = [
@@ -66,6 +67,7 @@ export const KEY_ACTIONS: readonly KeyAction[] = [
   "weapon-set-2",
   "weapon-set-3",
   "weapon-set-4",
+  "drop-bundle",
 ];
 
 /** The skill actions, slot 0 first. */
@@ -97,6 +99,9 @@ const SHARED = {
   ping: [],
   "show-names": ["ShiftLeft", "ShiftRight"],
   mute: ["KeyM"],
+  // The Drop button above the health bar does it (#1225); a key is for
+  // whoever wants one.
+  "drop-bundle": [],
 } as const satisfies Partial<Keymap>;
 
 export const KEYMAP_PRESETS: Readonly<Record<"vibewars" | "classic", Keymap>> = {

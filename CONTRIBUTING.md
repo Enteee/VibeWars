@@ -85,6 +85,19 @@ Concretely:
   way it does? If yes, write it down once instead of explaining it in every
   future code review.
 
+## Documentation
+
+Two audiences, kept apart:
+
+- `docs/player/` is for players. The in-game Help screen renders these
+  pages, listed in `docs/player/index.md`. Write them in plain words,
+  about what a player sees and does. No internals: no file names, issue
+  numbers, constants or code. A PR that changes what a player sees or does
+  updates the matching page, or says in its description why none applies.
+- `docs/gameplay/`, `docs/adr/`, `docs/development/`, `docs/art/` and
+  `docs/product/`, like everything else outside `docs/player/`, are for
+  developers. They are never shown in Help.
+
 ## Commit style
 
 Small, focused commits. A commit message explains _why_, not just _what_ —

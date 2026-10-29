@@ -12,6 +12,7 @@ import type { CallsSnapshot, GroundEffectSnapshot } from "@vibewars/game-session
 import type { AttackCast } from "./attack-clock.js";
 import type { ConditionCue } from "./body-conditions.js";
 import type { RenderablePing } from "./call-marks.js";
+import type { RenderableFlag, RenderableStand } from "./flag-objects.js";
 import { LYING_WIDTH } from "./lying-pose.js";
 import type { RenderableProjectile } from "./projectiles.js";
 import { screenPx } from "./screen-text.js";
@@ -290,6 +291,10 @@ export interface ArenaSnapshot {
   readonly walls: readonly RenderableWall[];
   /** The map's resurrection shrines (#1199), their priests alive or not. */
   readonly shrines: readonly RenderableShrine[];
+  /** A Guild Battle's flags (#1225), wherever each is; `[]` on any other map. */
+  readonly flags: readonly RenderableFlag[];
+  /** A Guild Battle's flag stand (#1225); `undefined` on any other map. */
+  readonly stand: RenderableStand | undefined;
   readonly targetId: string | undefined;
   /** Weapon shots in flight (#161). */
   readonly projectiles: readonly RenderableProjectile[];
@@ -311,6 +316,8 @@ export const EMPTY_SNAPSHOT: ArenaSnapshot = {
   actors: [],
   walls: [],
   shrines: [],
+  flags: [],
+  stand: undefined,
   targetId: undefined,
   projectiles: [],
   groundEffects: [],

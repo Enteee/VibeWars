@@ -2,6 +2,7 @@ import {
   CREATURE_LOOKS,
   ANNIHILATION_MATCH_RULES,
   MAX_CREATURES,
+  MAX_MAP_CREATURES,
   MAX_GROUND_EFFECTS,
   PRIEST_ANNIHILATION_MATCH_RULES,
 } from "@vibewars/game-core";
@@ -58,6 +59,8 @@ describe("connectMatch", () => {
       players: [],
       projectiles: [],
       groundEffects: [],
+      flags: [],
+      stand: null,
     });
     await settle();
     expect(connection.getSnapshot().scoreTeam0).toBe(0);
@@ -85,6 +88,8 @@ describe("connectMatch", () => {
         players: [],
         projectiles: [],
         groundEffects: [],
+        flags: [],
+        stand: null,
       },
       transport.selfId,
     );
@@ -135,6 +140,8 @@ describe("connectMatch", () => {
           ],
           projectiles: [],
           groundEffects: [],
+          flags: [],
+          stand: null,
         },
         transport.selfId,
       );
@@ -400,8 +407,8 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
     expect(playerSnapshot(pet("warrior.swift-chop"))).toBeUndefined();
   });
 
-  it("hold the wire's creature cap to game-core's (#1052)", () => {
-    expect(MAX_WIRE_CREATURES).toBe(MAX_CREATURES);
+  it("hold the wire's creature cap to game-core's summons and map creatures (#1052, #1281)", () => {
+    expect(MAX_WIRE_CREATURES).toBe(MAX_CREATURES + MAX_MAP_CREATURES);
   });
 
   it("hold the wire's creature looks to game-core's (#1162)", () => {

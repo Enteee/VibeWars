@@ -53,7 +53,7 @@ saved characters.
 | `C`             | Target the closest foe                                     |
 | `T`             | Target the foe your team called                            |
 | `G`             | Target yourself                                            |
-| `Space`         | Attack your target with your weapon                        |
+| `Space`         | Attack your target; on a flag or the stand: take or plant  |
 | `Esc`           | Cancel your cast and your attack; again: clear your target |
 | `M`             | Mute or unmute the sound                                   |
 | `F1`–`F4`       | Swap to weapon set 1–4                                     |

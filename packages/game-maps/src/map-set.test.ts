@@ -60,12 +60,20 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
         JSON.stringify(spawn),
       ).toBe(true);
     }
-    for (const shrine of map.objectives) {
-      const image = turned(map, shrine.position);
-      expect(
-        map.objectives.some((other) => other.team !== shrine.team && near(other.position, image)),
-        JSON.stringify(shrine),
-      ).toBe(true);
+    for (const objective of map.objectives) {
+      const image = turned(map, objective.position);
+      // A shared objective, the flag stand (#1225), is its own image.
+      const mirrored =
+        objective.kind === "flag-stand"
+          ? near(objective.position, image)
+          : map.objectives.some(
+              (other) =>
+                other.kind === objective.kind &&
+                "team" in other &&
+                other.team !== objective.team &&
+                near(other.position, image),
+            );
+      expect(mirrored, JSON.stringify(objective)).toBe(true);
     }
   });
 
@@ -198,7 +206,8 @@ describe("the arena set (#444)", () => {
   it("puts each team's shrine on Split Paths behind its spawns (#1186)", () => {
     const split = MAPS.find((map) => map.id === "arena-split");
     for (const shrine of split?.objectives ?? []) {
-      const spawns = split?.spawnPoints.filter((spawn) => spawn.team === shrine.team) ?? [];
+      const spawns =
+        split?.spawnPoints.filter((spawn) => "team" in shrine && spawn.team === shrine.team) ?? [];
       const farthest = Math.max(...spawns.map((spawn) => Math.abs(spawn.position.x - 500)));
       expect(Math.abs(shrine.position.x - 500)).toBeGreaterThan(farthest);
     }
@@ -277,10 +286,45 @@ describe("Guild Hall Isle (#1222)", () => {
     }
   });
 
+  it("leaves every spawn a clear walk out of its base (#1294)", () => {
+    const { creatureRadius, playerRadius } = MINIMAL_GW_INSPIRED_PVP_V1.collision;
+    for (const spawn of isle.spawnPoints) {
+      const out: Segment = {
+        a: spawn.position,
+        b: { x: isle.width / 2, y: spawn.position.y },
+      };
+      for (const guard of isle.objectives) {
+        if (guard.kind !== "guard" || guard.team !== spawn.team) continue;
+        expect(
+          distancePointToSegment(guard.position, out),
+          JSON.stringify({ spawn, guard }),
+        ).toBeGreaterThanOrEqual(playerRadius + creatureRadius);
+      }
+    }
+  });
+
   it("keeps a 200-unit circle at its centre clear, for the flag stand", () => {
     const centre = { x: isle.width / 2, y: isle.height / 2 };
     for (const wall of walls) {
       expect(distancePointToSegment(centre, wall)).toBeGreaterThan(200);
+    }
+  });
+
+  it("puts the flag stand at the centre, and lets each flag walk to it (#1225)", () => {
+    const stand = isle.objectives.find((objective) => objective.kind === "flag-stand");
+    expect(stand?.position).toEqual({ x: isle.width / 2, y: isle.height / 2 });
+    const finder = createPathFinder(
+      buildNavGraph(walls, { width: isle.width, height: isle.height }, RADIUS),
+    );
+    const spawns = isle.objectives.filter((objective) => objective.kind === "flag-spawn");
+    expect(spawns.map((spawn) => spawn.team).sort()).toEqual([0, 1]);
+    for (const spawn of spawns) {
+      const shrine = isle.objectives.find(
+        (objective) => objective.kind === "resurrection-shrine" && objective.team === spawn.team,
+      );
+      if (shrine === undefined || stand === undefined) throw new Error("no shrine or stand");
+      expect(Vec.distance(spawn.position, shrine.position)).toBeLessThan(200);
+      expect(finder.find(spawn.position, stand.position), JSON.stringify(spawn)).toBeDefined();
     }
   });
 });

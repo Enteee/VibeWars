@@ -57,13 +57,15 @@ function match(players: readonly PlayerSnapshot[]): MatchSnapshot {
     projectiles: [],
     groundEffects: [],
     traps: [],
+    flags: [],
+    stand: undefined,
     summary: undefined,
   };
 }
 
 describe("toArenaSnapshot", () => {
   it("lays a body down while its knockdown lasts, and stands it up at 0 (#545)", () => {
-    const arena = toArenaSnapshot(match([player("me", 0), player("down", 2.5)]), [], []);
+    const arena = toArenaSnapshot(match([player("me", 0), player("down", 2.5)]), [], [], undefined);
     expect(arena.actors.map((actor) => [actor.id, actor.knockedDown])).toEqual([
       ["me", false],
       ["down", true],
@@ -81,7 +83,7 @@ describe("toArenaSnapshot", () => {
         armedAttack: null,
       },
     };
-    const arena = toArenaSnapshot(match([player("me", 0), minion]), [], []);
+    const arena = toArenaSnapshot(match([player("me", 0), minion]), [], [], undefined);
     expect(arena.actors.map((actor) => actor.radius)).toEqual([
       MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius,
       MINIMAL_GW_INSPIRED_PVP_V1.collision.creatureRadius,
@@ -103,7 +105,7 @@ describe("toArenaSnapshot", () => {
         armedAttack: null,
       },
     }));
-    const arena = toArenaSnapshot(match([player("me", 0), ...creatures]), [], []);
+    const arena = toArenaSnapshot(match([player("me", 0), ...creatures]), [], [], undefined);
     expect(arena.actors.map((actor) => actor.creatureLook)).toEqual([undefined, ...CREATURE_LOOKS]);
   });
 
@@ -121,7 +123,7 @@ describe("toArenaSnapshot", () => {
       dead: true,
       statuses: [status("armor-boost"), status("backfire")],
     };
-    const arena = toArenaSnapshot(match([enchanted, hexed, dead]), [], []);
+    const arena = toArenaSnapshot(match([enchanted, hexed, dead]), [], [], undefined);
     expect(arena.actors.map((actor) => [actor.id, actor.enchanted, actor.hexed])).toEqual([
       ["enchanted", true, false],
       ["hexed", false, true],
@@ -132,7 +134,7 @@ describe("toArenaSnapshot", () => {
   it("shimmers a body while it is invulnerable, and not at 0 or as a corpse (#1233)", () => {
     const raised = { ...player("raised", 0), invulnerableSeconds: 4.2 };
     const dead = { ...player("dead", 0), invulnerableSeconds: 4.2, dead: true };
-    const arena = toArenaSnapshot(match([player("me", 0), raised, dead]), [], []);
+    const arena = toArenaSnapshot(match([player("me", 0), raised, dead]), [], [], undefined);
     expect(arena.actors.map((actor) => [actor.id, actor.invulnerable])).toEqual([
       ["me", false],
       ["raised", true],
@@ -149,7 +151,7 @@ describe("toArenaSnapshot", () => {
     };
     const alive = { ...player("alive", 0), statuses: [burning] };
     const dead = { ...player("dead", 0), dead: true, statuses: [burning] };
-    const arena = toArenaSnapshot(match([alive, dead]), [], []);
+    const arena = toArenaSnapshot(match([alive, dead]), [], [], undefined);
     expect(arena.actors.map((actor) => [actor.id, actor.conditionCues])).toEqual([
       ["alive", ["burning"]],
       ["dead", []],
@@ -172,6 +174,7 @@ describe("toArenaSnapshot", () => {
       ]),
       [],
       [],
+      undefined,
     );
     expect(arena.actors.map((actor) => [actor.id, actor.castType])).toEqual([
       ["hex", "hex"],

@@ -369,6 +369,8 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
                 endReason: undefined,
                 projectiles: [],
                 groundEffects: [],
+                flags: [],
+                stand: undefined,
                 traps,
                 summary,
               }
