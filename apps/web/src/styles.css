@@ -4400,6 +4400,49 @@ body:has(#app > .chat) .now-playing {
 }
 
 /*
+ * A phone in a match (#1297): the centred scoreboard and target frame are
+ * wider than the room left of the match buttons. So "leave" loses
+ * " match (F10)", which stays in its name; the scoreboard and target go
+ * under the first row of buttons, left, clear of the second and the
+ * compass; and the toast takes the top left corner they leave, on one line.
+ */
+@media (width <= 30rem) {
+  .hud-leave-extra {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .hud-top {
+    top: calc(3.2rem + var(--build-banner-space, 0px));
+    left: 0.6rem;
+    transform: none;
+    align-items: flex-start;
+    max-width: calc(100vw - var(--compass-size) - 2.5rem);
+  }
+
+  .hud-target-health {
+    width: 170px;
+  }
+
+  .hud-target .effects-monitor {
+    max-width: 170px;
+  }
+
+  .now-playing {
+    top: calc(0.6rem + var(--build-banner-space, 0px));
+    left: 0.6rem;
+    max-width: calc(100vw - 10rem);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/*
  * The compass (#486): GW1's radar, top right under the match buttons,
  * centred on you, north up. A canvas `ui/compass.ts` draws; hidden keeps
  * its box, so its size is there to read. Smaller on a narrow window, clear
