@@ -1499,6 +1499,22 @@ const skillGlyph = {
   "shield-crit": () =>
     `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2)}/>` +
     inkFill("M12 6.5L13.7 10.3L17.5 12L13.7 13.7L12 17.5L10.3 13.7L6.5 12L10.3 10.3Z"),
+  // The spirit post in a halo, being born, with the payout beside it (#1316).
+  // Boon of Creation heals and gives energy: a plus.
+  "born-plus": () => bornPost() + inkLine("M17 3.5V13.5M12 8.5H22", 2.8),
+  // Explosive Growth strikes foes near it: a burst.
+  "born-burst": () =>
+    bornPost() +
+    `<g transform="translate(17,8.5) scale(0.95) translate(-12,-12)">${inkFill(burst(5))}</g>`,
+  // Spirit's Gift heals the allies near it: a plus in a ring.
+  "born-ring": () =>
+    bornPost() +
+    `<circle cx="17" cy="8.5" r="5.6" ${stroke(C.ink, 1.8)}/>` +
+    inkLine("M17 5.8V11.2M14.3 8.5H19.7", 2),
+  // Signet of Creation pays energy: the energy mark.
+  "born-energy": () =>
+    bornPost() +
+    `<g transform="translate(17,8.5) scale(0.95) translate(-12,-12)">${skillGlyph.energy()}</g>`,
   // A shield with a bolt in it: fast and hard to hit (#981).
   "shield-bolt": () =>
     `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2)}/>` +
@@ -1942,6 +1958,9 @@ const brokenPost = (/** @type {number} */ cx) =>
   `<circle cx="5.6" cy="7" r="3.2" fill="${C.ink}"/>` +
   inkLine("M7 11.2L8.4 12.4M9.6 9.6L11 8.4", 1.8) +
   "</g>";
+
+/** The spirit post wearing a halo: a creature at its birth (#1316). */
+const bornPost = () => spiritPost() + `<circle cx="7" cy="6.8" r="6" ${stroke(C.ink, 1.8)}/>`;
 
 /** Modifiers, drawn around the bottom right corner on a dark disc. */
 const skillModifier = {
