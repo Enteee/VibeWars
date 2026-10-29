@@ -40,27 +40,18 @@ and pick **join**. The host's tab runs the match, so it has to stay open: if
 it closes, the lobby ends for everyone. The two builds keep separate
 saved characters.
 
-| Key             | Action                                                     |
-| --------------- | ---------------------------------------------------------- |
-| `W` `A` `S` `D` | Move                                                       |
-| Left click      | Walk there                                                 |
-| Right click     | Target (double: attack)                                    |
-| Right drag      | Look around; let go to come back                           |
-| Wheel click     | Call a foe, or ping                                        |
-| `1`–`9`, `0`    | Use the matching skill-bar slot                            |
-| `Tab`           | Target the next nearest enemy                              |
-| `Shift` `Tab`   | Target the previous one                                    |
-| `C`             | Target the closest foe                                     |
-| `T`             | Target the foe your team called                            |
-| `G`             | Target yourself                                            |
-| `Space`         | Attack your target; on a flag or the stand: take or plant  |
-| `Esc`           | Cancel your cast and your attack; again: clear your target |
-| `M`             | Mute or unmute the sound                                   |
-| `F1`–`F4`       | Swap to weapon set 1–4                                     |
-| `F10`           | Leave the match (asks first)                               |
-| `Enter`         | Chat: `!` all, `#` team (lobby and match)                  |
+In a match, the default keys are:
 
-To leave a match, press `F10` or use **leave match** at the top right; it asks first.
+- **Q W E R** and **A S D F**: the eight skills on your bar.
+- **Arrow keys** or a left click on the ground: move.
+- **Right click** a foe, or **Tab**: target it. **Space**: attack.
+- **Esc**: cancel what you are doing. **F10**: leave the match.
+
+The **Classic** preset puts skills on 1 to 8 and moves with W A S D.
+Every key can be changed in Options. [Controls](docs/player/controls.md)
+lists them all. [Getting started](docs/player/getting-started.md) walks
+through a first match, and the **[?]** button in the game opens the same
+Help.
 
 To play your own build, run `pnpm run dev` (see
 [Development](#development)), or `pnpm run build` and serve
@@ -73,47 +64,43 @@ own development was verified that way; see
 
 ## What works today
 
-- **Real-time authoritative combat** on a fixed 20 Hz tick, run by the host:
-  movement, collision, body blocking, line of sight, targeting, casting
-  with cast and recharge times, energy and adrenaline economies.
-- **Mechanics**: 8 conditions, hexes, enchantments, interrupts, health
-  degeneration and regeneration, death, morale and resurrection.
-- **12 implemented skills**: 9 of the 16 in a reference corpus imported
-  from public GW1 data, plus 3 of our own design. The other 7 need
-  mechanics that do not exist yet and are reported as a machine-readable
-  gap, with a reason each (`node packages/game-data/dist/run-cli.js coverage`).
-- **Four original arenas**: a chokepoint, an open field, split paths and
-  a pillar hall, selectable by the lobby host.
-- **Lobby** with shareable codes, team assignment, ready state and
-  repeatable matches.
-- **Character builder** with profession/attribute rules and versioned
-  browser-local persistence. The first start rolls you a random starter
-  character under a random name, with Clone and Reroll on its row: Clone
-  gives you a copy to edit. Pick a character on the menu and you take
-  that build into the match — the host validates it and hands a random
-  starter build if it is illegal, so a build is a request, never a claim.
-- **Team builder** for planning a roster: create, rename, add, remove,
-  reorder, duplicate and delete, at any team size. A team is a local
-  planning tool — see the limits below.
-- **Match rules**: score, clock, victory conditions.
-- **Robustness**: a dropped player's character stays in the match for
-  30 seconds, and the player rejoins it if their connection is back in
-  time; hostile input cannot crash the host (fuzz-tested).
+- **Real-time authoritative combat** on a fixed 20 Hz tick, run by the
+  host: movement, body blocking, line of sight, casting with activation
+  and recharge, energy and adrenaline.
+- **Over 200 skills** across all ten professions: Warrior, Ranger, Monk,
+  Necromancer, Mesmer, Elementalist, Assassin, Ritualist, Paragon and
+  Dervish ([Skills and builds](docs/player/skills-and-builds.md)).
+- **Mechanics**: conditions, hexes and enchantments, maintained
+  enchantments, interrupts, area effects, projectiles, weapon
+  auto-attacks and critical hits, knockdowns, spirits, wells, wards and
+  traps, minions and pets, weapon sets, morale and resurrection
+  ([Combat basics](docs/player/combat-basics.md),
+  [Equipment](docs/player/equipment.md)).
+- **Nine original maps**, picked by the lobby host, in four
+  [modes](docs/player/modes.md): Annihilation, Kill Count, Priest
+  Annihilation and Guild Battle.
+- **Random Arena**: queue for a team size and get matched with other
+  players on a random map
+  ([Getting started](docs/player/getting-started.md)).
+- **Bots** fill empty places in a lobby you host
+  ([Bots](docs/player/bots.md)).
+- **Character builder** with profession, attribute and equipment rules,
+  saved in the browser, and the **Training Ground** beside it to try a
+  bar on dummies. The host validates every build and hands an illegal one
+  a starter build instead.
+- **Team builder** for planning a roster (see the limits below).
+- **Music and sound**, and a **phone layout**.
+- **Robustness**: a dropped player's character stays in the match for 30
+  seconds and the player can rejoin it; hostile input cannot crash the
+  host (fuzz-tested).
 
 Honest limits:
 
-- Area-of-effect, projectile travel time, weapon auto-attacks, knockdowns
-  and spirits/wards/traps are **not** implemented. Skills needing them
-  are deliberately absent from the catalog rather than present with
-  watered-down effects (brief §9).
-- A **saved team is not yet taken into a match**. You can build and
-  organise a roster, and each player picks their own character from it,
-  but the lobby does not assign a team's slots to the players in it.
-  Teams are first-class objects in storage (brief §4) and a planning tool
-  in practice.
-- Kills score for a **team**, not a player. Per-player credit needs
-  damage-source tracking that does not exist, and inventing an
-  attribution would put a plausible lie on the scoreboard.
+- A **saved team is not taken into a match**. Each player picks their
+  own character; the lobby does not assign a team's slots to anyone. A
+  team is a planning tool.
+- The **host's tab runs the match**: if it closes, the match ends for
+  everyone.
 
 ## Repository layout
 
@@ -129,6 +116,8 @@ packages/
 docs/
   product/master-brief.md   Product brief and sprint roadmap
   adr/                      Architectural Decision Records
+  player/                   The player's guide, also the in-game Help
+  art/                      Art direction and asset studies
 ```
 
 `game-core` depends on nothing else in the workspace and never touches a
@@ -150,10 +139,10 @@ so their peers are tabs of one browser and need no relay (see
 [environment variables](docs/development/environment-variables.md)).
 
 ```sh
-pnpm run ci       # format + lint + typecheck + test + build
-pnpm run test     # unit, integration, fuzz, benchmark, headless simulation
-pnpm run test:e2e # 19 browser tests in a real Chromium (needs one installed)
-pnpm run ci:full  # both of the above
+pnpm run ci       # format check, typecheck, lint, test, build
+pnpm run test     # unit, integration, fuzz and headless simulation tests
+pnpm run test:e2e # the browser tests, in a real Chromium (needs one installed)
+pnpm run ci:full  # ci, then the browser tests
 ```
 
 `devenv test` runs the same sequence. See
@@ -175,19 +164,20 @@ from a seed — useful for balance questions and for reproducing bugs.
 ### Agent swarm
 
 ```sh
-claude-bot architect   # a sandboxed Claude agent, in a role, on Telegram
+claude-llc auth     # sign in the company's own credentials, once
+claude-llc-init     # check them, set up the board
+claude-llc doctor   # what is signed in, and as whom
+claude-llc          # start the company, and attach to it
 ```
 
-Each role runs in its own bubblewrap jail on its own `git worktree`, and
-coordinates with the others through a Telegram supergroup — one topic per
-role — which doubles as a log and a remote control you can read on a
-phone. Inside the jail, `tg send`/`tg inbox`/`tg wait`/`tg roster` are the
-agent's only way out; the bot token stays outside it.
-
-Needs one manager-bot token in `devenv.local.nix`. Setup, the two taps
-each new role costs, and why it is built this way:
-[ADR-0014](docs/adr/0014-agent-coordination.md). What the host needs
-(cgroup delegation, user namespaces, the token file, tmux):
+VibeWars is built by a company of sandboxed Claude agents, one per role.
+Each runs in its own bubblewrap jail on its own `git worktree`, takes its
+work from a GitHub board, and coordinates with the others through a
+Telegram supergroup, one topic per role. The group doubles as a log and a
+remote control you can read on a phone. Why it is built this way:
+[ADR-0014](docs/adr/0014-agent-coordination.md) and
+[ADR-0015](docs/adr/0015-agent-company.md). What the host needs (cgroup
+delegation, user namespaces, credentials, tmux):
 [Host prerequisites](docs/development/agent-company-host.md).
 
 ## License
