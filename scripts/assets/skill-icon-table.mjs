@@ -136,7 +136,7 @@ export const SKILL_ICONS = {
   "mesmer.backfire": { glyph: "fireball", modifier: "self" },
   "mesmer.empathy": { glyph: "sword", modifier: "self" },
   "mesmer.diversion": { glyph: "slow", modifier: "clock" },
-  "monk.mending": { glyph: "heal", modifier: "clock" },
+  "monk.mending": { glyph: "heal", modifier: "upkeep" },
   "elementalist.lightning-strike": { glyph: "lightning" },
   "elementalist.mind-shock": { glyph: "lightning", modifier: "down" },
   "elementalist.shard-storm": { glyph: "shard" },
@@ -154,7 +154,7 @@ export const SKILL_ICONS = {
   "mesmer.mantra-of-recovery": { glyph: "speed", modifier: "clock" },
   "necromancer.shadow-of-fear": { glyph: "slow", modifier: "area" },
   "monk.patient-spirit": { glyph: "heal", modifier: "hourglass" },
-  "monk.holy-veil": { glyph: "armor", modifier: "clock" },
+  "monk.holy-veil": { glyph: "armor", modifier: "upkeep" },
   "necromancer.rend-enchantments": { glyph: "cleanse", modifier: "bleed" },
   "necromancer.plague-touch": { glyph: "germ", modifier: "self" },
   "mesmer.energy-surge": { glyph: "energy", modifier: "area" },
@@ -162,7 +162,7 @@ export const SKILL_ICONS = {
   // A placeholder: no modifier yet says "per enchantment or hex" (#920).
   "monk.dwaynas-kiss": { glyph: "heal", modifier: "stun" },
   // A placeholder: the loop reads as the spin; axe/area is Vow of Strength's (#936).
-  "warrior.cyclone-axe": { glyph: "axe", modifier: "clock" },
+  "warrior.cyclone-axe": { glyph: "axe", modifier: "upkeep" },
   // A shout for yourself: the banner with the self mark (#936).
   "warrior.for-great-justice": { glyph: "banner", modifier: "clock" },
   // A hit taken is capped: armor with the "less" mark (#936).
@@ -260,7 +260,7 @@ export const SKILL_ICONS = {
   "ritualist.lamentation": { glyph: "tear-fall" },
   "ritualist.signet-of-spirits": { glyph: "spirit-trio" },
   // Placeholders until the asset-designer's (#1316): the creation staples.
-  "ritualist.boon-of-creation": { glyph: "totem", modifier: "clock" },
+  "ritualist.boon-of-creation": { glyph: "born-plus", modifier: "bolt" },
   "ritualist.explosive-growth": { glyph: "lightning", modifier: "area" },
   "ritualist.spirits-gift": { glyph: "party-heal", modifier: "plus" },
   "ritualist.signet-of-creation": { glyph: "energy", modifier: "paw" },
