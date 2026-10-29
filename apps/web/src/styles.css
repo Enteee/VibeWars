@@ -1584,6 +1584,18 @@ body {
   gap: 0.4rem;
 }
 
+/* A question in the top bar (#1272), as the editor's "Discard changes?",
+   takes the status's room while it is open, so the bar never grows a
+   second row or runs under its icons. */
+#topbar .inline-confirm {
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+#topbar:has(.inline-confirm) .topbar-status {
+  display: none;
+}
+
 /* Harm, not accent: the button that throws something away. */
 .inline-confirm button.danger {
   border-color: var(--damage);

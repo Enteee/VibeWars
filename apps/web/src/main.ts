@@ -492,7 +492,7 @@ async function main(): Promise<void> {
       onSoundSettings: () => {
         leaveScreen();
         disposeJukeboxScreen();
-        renderOptionsScreen(screenRoot, { onBack: showJukebox }, "sound");
+        renderOptionsScreen(screenRoot, { onBack: showJukebox, from: "Music" }, "sound");
       },
     });
   };
