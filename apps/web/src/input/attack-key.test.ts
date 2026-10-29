@@ -67,6 +67,8 @@ function snapshot(players: PlayerSnapshot[]): MatchSnapshot {
     flags: [],
     stand: undefined,
     aggression: [],
+    relics: [],
+    altar: undefined,
     summary: undefined,
   };
 }

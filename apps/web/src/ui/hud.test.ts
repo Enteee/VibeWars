@@ -11,7 +11,7 @@ import { DEFAULT_KEYMAP } from "../input/keymap.js";
 import { isEliteSkill } from "./icons.js";
 
 import {
-  carriesFlag,
+  carriedBundle,
   objectTargetName,
   changedSlots,
   createHud,
@@ -161,6 +161,8 @@ describe("objectTargetName (#1225)", () => {
     expect(objectTargetName("flag-stand", 0, NOBODY)).toBe("Flag Stand");
     expect(objectTargetName("flag/0", 0, NOBODY)).toBe("Your flag");
     expect(objectTargetName("flag/1", 0, NOBODY)).toBe("Enemy flag");
+    expect(objectTargetName("relic/0", 0, undefined)).toBe("Your relic");
+    expect(objectTargetName("relic/0", 1, undefined)).toBe("Enemy relic");
     expect(objectTargetName("peer-1", 0, NOBODY)).toBeUndefined();
     expect(objectTargetName(undefined, 0, NOBODY)).toBeUndefined();
   });
@@ -184,11 +186,11 @@ describe("carrierLines (#1226)", () => {
       place: { kind: "carried" as const, carrierId },
     });
     const flags = [carried(1, "me"), carried(0, "foe")];
-    expect(carrierLines({ flags, players }, 0)).toEqual([
+    expect(carrierLines({ flags, relics: [], players }, 0)).toEqual([
       { team: 0, text: "⚑ Cynn" },
       { team: 1, text: "⚑ Mhenlo" },
     ]);
-    expect(carrierLines({ flags, players }, 1)).toEqual([
+    expect(carrierLines({ flags, relics: [], players }, 1)).toEqual([
       { team: 1, text: "⚑ Mhenlo" },
       { team: 0, text: "⚑ Cynn" },
     ]);
@@ -199,19 +201,37 @@ describe("carrierLines (#1226)", () => {
             { team: 0, place: { kind: "ground", position: { x: 1, y: 2 } } },
             { team: 1, place: { kind: "spawn" } },
           ],
+          relics: [],
           players,
         },
         0,
       ),
     ).toEqual([{ team: 0, text: "⚑ dropped" }]);
-    expect(carrierLines({ flags: [{ team: 1, place: { kind: "stand" } }], players }, 0)).toEqual(
-      [],
-    );
+    expect(
+      carrierLines({ flags: [{ team: 1, place: { kind: "stand" } }], relics: [], players }, 0),
+    ).toEqual([]);
+  });
+
+  it("shows where each relic is in the flags' slot, at base too, yours first (#1374)", () => {
+    const relics = [
+      { team: 0, place: { kind: "spawn" as const } },
+      { team: 1, place: { kind: "carried" as const, carrierId: "foe" } },
+    ];
+    expect(carrierLines({ flags: [], relics, players }, 1)).toEqual([
+      { team: 1, text: "✦ Cynn" },
+      { team: 0, text: "✦ at base" },
+    ]);
+    const lying = [{ team: 0, place: { kind: "ground" as const, position: { x: 1, y: 2 } } }];
+    expect(carrierLines({ flags: [], relics: lying, players }, 0)).toEqual([
+      { team: 0, text: "✦ dropped" },
+    ]);
   });
 
   it("reads a carrier no longer in the snapshot as dropped", () => {
     const flags = [{ team: 0, place: { kind: "carried" as const, carrierId: "gone" } }];
-    expect(carrierLines({ flags, players }, 0)).toEqual([{ team: 0, text: "⚑ dropped" }]);
+    expect(carrierLines({ flags, relics: [], players }, 0)).toEqual([
+      { team: 0, text: "⚑ dropped" },
+    ]);
   });
 });
 
@@ -251,8 +271,11 @@ describe("standBoostToast (#1226)", () => {
   });
 });
 
-describe("carriesFlag (#1225)", () => {
-  const match = (flags: MatchSnapshot["flags"]): MatchSnapshot => ({
+describe("carriedBundle (#1225, #1374)", () => {
+  const match = (
+    flags: MatchSnapshot["flags"],
+    relics: MatchSnapshot["relics"] = [],
+  ): MatchSnapshot => ({
     selfSessionId: "me",
     players: [],
     scoreTeam0: 0,
@@ -267,15 +290,23 @@ describe("carriesFlag (#1225)", () => {
     flags,
     stand: { holder: undefined, heldSeconds: 0 },
     aggression: [],
+    relics,
+    altar: undefined,
     summary: undefined,
   });
 
   it("shows the Drop button only to the flag's carrier", () => {
     const carried = match([{ team: 0, place: { kind: "carried", carrierId: "me" } }]);
-    expect(carriesFlag(carried, "me")).toBe(true);
-    expect(carriesFlag(carried, "ally")).toBe(false);
-    expect(carriesFlag(match([{ team: 0, place: { kind: "spawn" } }]), "me")).toBe(false);
-    expect(carriesFlag(match([]), "me")).toBe(false);
+    expect(carriedBundle(carried, "me")).toBe("flag");
+    expect(carriedBundle(carried, "ally")).toBeUndefined();
+    expect(carriedBundle(match([{ team: 0, place: { kind: "spawn" } }]), "me")).toBeUndefined();
+    expect(carriedBundle(match([]), "me")).toBeUndefined();
+  });
+
+  it("names a relic for its carrier's Drop button (#1374)", () => {
+    const carried = match([], [{ team: 1, place: { kind: "carried", carrierId: "me" } }]);
+    expect(carriedBundle(carried, "me")).toBe("relic");
+    expect(carriedBundle(carried, "ally")).toBeUndefined();
   });
 
   it("starts hidden", () => {
@@ -598,6 +629,11 @@ describe("scoreboardText (#881)", () => {
   it("counts each team's kills in Kill Count, your own first (#1200)", () => {
     expect(scoreboardText(players, 0, 35, 180, "kill-count", board(4, 0))).toBe("4 – 0 · 2:25");
     expect(scoreboardText(players, 1, 35, 180, "kill-count", board(4, 0))).toBe("0 – 4 · 2:25");
+  });
+
+  it("counts each team's relic points in a Relic Run, your own first (#1374)", () => {
+    expect(scoreboardText(players, 0, 80, 480, "relic-run", board(2, 1))).toBe("2 – 1 · 6:40");
+    expect(scoreboardText(players, 1, 80, 480, "relic-run", board(2, 1))).toBe("1 – 2 · 6:40");
   });
 
   it("reads team 1's kills first for a spectator, and 0 – 0 before any (#1200)", () => {

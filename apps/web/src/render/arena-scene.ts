@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 
 import {
+  ALTAR_REACH_UNITS,
   CREATURE_LOOKS,
   IMPLEMENTED_SKILLS,
   PROFESSIONS,
@@ -410,6 +411,7 @@ export class ArenaScene extends Phaser.Scene {
       this.drawPing(g, ping);
     }
     this.drawStand(g, marks);
+    this.drawAltar(g);
     for (const actor of this.snapshot.actors) {
       this.drawActor(g, marks, actor);
     }
@@ -433,6 +435,23 @@ export class ArenaScene extends Phaser.Scene {
     this.updateNameLabels();
     this.updateFloatingTexts(deltaMs / 1000);
     this.updateEdgeMarkers();
+  }
+
+  /**
+   * A Relic Run's altar (#1374): a neutral ring on the ground as wide as
+   * a carrier must come to score, and a stone at its centre.
+   */
+  private drawAltar(g: Phaser.GameObjects.Graphics): void {
+    const altar = this.snapshot.altar;
+    if (altar === undefined) {
+      return;
+    }
+    g.fillStyle(STAND_NEUTRAL, 0.14);
+    g.fillCircle(altar.x, altar.y, ALTAR_REACH_UNITS);
+    g.lineStyle(3, STAND_NEUTRAL, 0.9);
+    g.strokeCircle(altar.x, altar.y, ALTAR_REACH_UNITS);
+    g.fillStyle(FLAG_POLE_COLOUR, 1);
+    g.fillRect(altar.x - 9, altar.y - 9, 18, 18);
   }
 
   /**

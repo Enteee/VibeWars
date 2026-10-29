@@ -6,6 +6,7 @@ import {
   hostMap,
   mapFlagField,
   mapMode,
+  mapRelicField,
   mapShrines,
   randomArenaMapPool,
 } from "./maps.js";
@@ -35,7 +36,7 @@ describe("randomArenaMapPool", () => {
     expect(sizesOf(pool)).not.toContain("small");
   });
 
-  it("leaves no arena out of every pool but the Guild Battle's (#1222)", () => {
+  it("leaves no arena out of every pool but the Guild Battle's (#1222) and the Relic Run's (#1374)", () => {
     const pooled = new Set(
       (["random-arena-1v1", "random-arena-2v2", "random-arena-4v4"] as const).flatMap((mode) =>
         randomArenaMapPool(mode),
@@ -43,7 +44,7 @@ describe("randomArenaMapPool", () => {
     );
     expect([...pooled].sort()).toEqual(
       ARENA_MAPS.map((map) => map.id)
-        .filter((id) => id !== "guild-hall-isle")
+        .filter((id) => id !== "guild-hall-isle" && id !== "relic-temples")
         .sort(),
     );
   });
@@ -56,12 +57,16 @@ describe("hostMap (#476)", () => {
     );
   });
 
-  it("carries the mode its map names: Kill Count on Pillar Hall, Priest Annihilation on Split Paths, Guild Battle on Guild Hall Isle, Annihilation elsewhere", () => {
+  it("carries the mode its map names: Kill Count on Pillar Hall, Priest Annihilation on Split Paths, Guild Battle on Guild Hall Isle, Relic Run on Relic Temples, Annihilation elsewhere", () => {
     expect(hostMap("arena-pillars")?.mode).toBe("kill-count");
     expect(hostMap("arena-split")?.mode).toBe("priest-annihilation");
     expect(hostMap("guild-hall-isle")?.mode).toBe("guild-battle");
+    expect(hostMap("relic-temples")?.mode).toBe("relic-run");
     for (const map of ARENA_MAPS.filter(
-      (candidate) => !["arena-pillars", "arena-split", "guild-hall-isle"].includes(candidate.id),
+      (candidate) =>
+        !["arena-pillars", "arena-split", "guild-hall-isle", "relic-temples"].includes(
+          candidate.id,
+        ),
     )) {
       expect(hostMap(map.id)?.mode).toBe("annihilation");
     }
@@ -90,6 +95,19 @@ describe("hostMap (#476)", () => {
     expect(mapFlagField("guild-hall-isle")).toEqual(hostMap("guild-hall-isle")?.flagField);
     expect(hostMap("arena-split")?.flagField).toBeUndefined();
     expect(mapFlagField("training-hall")).toBeUndefined();
+  });
+
+  it("carries a Relic Run map's altar and relic spawns, and none elsewhere (#1374)", () => {
+    expect(hostMap("relic-temples")?.relicField).toEqual({
+      altar: { x: 1100, y: 700 },
+      spawns: [
+        { team: 0, position: { x: 110, y: 700 } },
+        { team: 1, position: { x: 2090, y: 700 } },
+      ],
+    });
+    expect(mapRelicField("relic-temples")).toEqual(hostMap("relic-temples")?.relicField);
+    expect(hostMap("guild-hall-isle")?.relicField).toBeUndefined();
+    expect(mapRelicField("training-hall")).toBeUndefined();
   });
 
   it("carries a Guild Battle map's guards in its order, and none elsewhere (#1223)", () => {

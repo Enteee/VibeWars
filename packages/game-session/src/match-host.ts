@@ -20,6 +20,7 @@ import {
   type ProfessionId,
   type Segment,
   type FlagField,
+  type RelicField,
   type GuildLord,
   type BaseGuard,
   type Shrine,
@@ -68,7 +69,7 @@ import { spawnPoint, type SpawnPoint } from "./spawn-points.js";
 import { MAX_MESSAGE_BYTES, type Transport } from "./transport.js";
 import {
   groundEffectSnapshot,
-  wireFlag,
+  wireCarried,
   sameSkillBar,
   skillBarSlots,
   statusSnapshot,
@@ -119,6 +120,8 @@ export interface HostMap {
   readonly guildLords: readonly GuildLord[];
   /** Its flag stand and flag spawns (#1225), `undefined` but on a Guild Battle map. */
   readonly flagField: FlagField | undefined;
+  /** Its altar and relic spawns (#1374), `undefined` but on a Relic Run map. */
+  readonly relicField: RelicField | undefined;
   /** Its base guards (#1223), in the map's order, `[]` but on a Guild Battle map. */
   readonly guards: readonly BaseGuard[];
 }
@@ -233,6 +236,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     shrines: map.shrines,
     guildLords: map.guildLords,
     flagField: map.flagField,
+    relicField: map.relicField,
     guards: map.guards,
   });
   const seats = new Map<string, Seat>();
@@ -880,12 +884,14 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
         const team = wireTeam(effect.team);
         return team === null ? [] : [{ ...groundEffectSnapshot(effect, sim.elapsedSeconds), team }];
       }),
-    flags: sim.flags.flatMap((flag) => wireFlag(flag) ?? []),
+    flags: sim.flags.flatMap((flag) => wireCarried(flag) ?? []),
     stand:
       sim.stand === undefined
         ? null
         : { holder: wireTeam(sim.stand.holder), heldSeconds: sim.stand.heldSeconds },
     aggression: sim.aggressionByTeam.map((total) => Math.round(total)),
+    relics: sim.relics.flatMap((relic) => wireCarried(relic) ?? []),
+    altar: sim.altar ?? null,
   });
 
   /** Drop the seats whose players did not come back in time. */

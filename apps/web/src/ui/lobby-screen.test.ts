@@ -130,6 +130,9 @@ describe("modeLine (#476)", () => {
     const map = { id: "arena-pillars", name: "Pillar Hall", size: "small" } as const;
     expect(modeLine({ ...map, mode: "kill-count" })).toBe("Kill Count: most kills in 3 minutes");
     expect(modeLine({ ...map, mode: "annihilation" })).toBe("Annihilation: defeat every foe");
+    expect(modeLine({ ...map, mode: "relic-run" })).toBe(
+      "Relic Run: carry your relic to the altar. Most points in 8 minutes wins.",
+    );
   });
 });
 

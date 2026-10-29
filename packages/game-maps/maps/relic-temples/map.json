@@ -1,0 +1,162 @@
+{
+  "id": "relic-temples",
+  "name": "Relic Temples",
+  "mode": "relic-run",
+  "width": 2200,
+  "height": 1400,
+  "walls": [
+    {
+      "kind": "rect",
+      "x": 480,
+      "y": 620,
+      "width": 420,
+      "height": 160
+    },
+    {
+      "kind": "rect",
+      "x": 560,
+      "y": 0,
+      "width": 240,
+      "height": 260
+    },
+    {
+      "kind": "rect",
+      "x": 560,
+      "y": 1140,
+      "width": 240,
+      "height": 260
+    },
+    {
+      "kind": "rect",
+      "x": 980,
+      "y": 520,
+      "width": 60,
+      "height": 60
+    },
+    {
+      "kind": "rect",
+      "x": 980,
+      "y": 820,
+      "width": 60,
+      "height": 60
+    },
+    {
+      "kind": "rect",
+      "x": 1160,
+      "y": 520,
+      "width": 60,
+      "height": 60
+    },
+    {
+      "kind": "rect",
+      "x": 1160,
+      "y": 820,
+      "width": 60,
+      "height": 60
+    },
+    {
+      "kind": "rect",
+      "x": 1300,
+      "y": 620,
+      "width": 420,
+      "height": 160
+    },
+    {
+      "kind": "rect",
+      "x": 1400,
+      "y": 0,
+      "width": 240,
+      "height": 260
+    },
+    {
+      "kind": "rect",
+      "x": 1400,
+      "y": 1140,
+      "width": 240,
+      "height": 260
+    }
+  ],
+  "objectives": [
+    {
+      "kind": "relic-spawn",
+      "team": 0,
+      "position": {
+        "x": 110,
+        "y": 700
+      }
+    },
+    {
+      "kind": "relic-spawn",
+      "team": 1,
+      "position": {
+        "x": 2090,
+        "y": 700
+      }
+    },
+    {
+      "kind": "altar",
+      "position": {
+        "x": 1100,
+        "y": 700
+      }
+    }
+  ],
+  "spawnPoints": [
+    {
+      "team": 0,
+      "position": {
+        "x": 220,
+        "y": 560
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 220,
+        "y": 700
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 220,
+        "y": 840
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 340,
+        "y": 700
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 1980,
+        "y": 840
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 1980,
+        "y": 700
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 1980,
+        "y": 560
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 1860,
+        "y": 700
+      }
+    }
+  ]
+}

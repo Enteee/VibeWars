@@ -1005,8 +1005,8 @@ export function createTrainingPanel(): TrainingPanel {
       partyWindow.update(latestMatch);
       latestArena = withCalls(
         withNames(
-          // The Training Ground has no flags (#1225).
-          toArenaSnapshot(latestMatch, session.walls, session.shrines, undefined),
+          // The Training Ground has no flags (#1225) or relics (#1374).
+          toArenaSnapshot(latestMatch, session.walls, session.shrines, undefined, undefined),
           created.pointerWorld(),
           nameReveal.held(),
         ),

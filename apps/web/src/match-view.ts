@@ -1,4 +1,4 @@
-import type { FlagField } from "@vibewars/game-core";
+import type { FlagField, RelicField } from "@vibewars/game-core";
 import { allWallSegments } from "@vibewars/game-maps/geometry";
 import type { WallDescriptor } from "@vibewars/game-protocol";
 import type { MatchConnection, MatchSnapshot } from "@vibewars/game-session";
@@ -59,8 +59,8 @@ import {
   updateRecharges,
 } from "./ui/hud.js";
 import { labelWeaponSets, renderWeaponSets, weaponSetSlots } from "./ui/weapon-set-slots.js";
-import { mapFlagField, mapMode, mapShrines, type MapShrine } from "./net/maps.js";
-import { renderableFlags, renderableStand } from "./render/flag-objects.js";
+import { mapFlagField, mapMode, mapRelicField, mapShrines, type MapShrine } from "./net/maps.js";
+import { renderableFlags, renderableRelics, renderableStand } from "./render/flag-objects.js";
 import { compassReach, createCompass } from "./ui/compass.js";
 import { noWebGlNotice } from "./ui/arena-notice.js";
 import { attachFullscreenButton, fullscreenTarget } from "./ui/fullscreen.js";
@@ -128,13 +128,18 @@ export function toArenaSnapshot(
   walls: readonly RenderableWall[],
   shrines: readonly MapShrine[],
   flagField: FlagField | undefined,
+  relicField: RelicField | undefined,
 ): ArenaSnapshot {
   const self = match.players.find((player) => player.sessionId === match.selfSessionId);
 
   return {
     walls,
-    flags: renderableFlags(match.flags, flagField, match.players, self?.team),
+    flags: [
+      ...renderableFlags(match.flags, flagField, match.players, self?.team),
+      ...renderableRelics(match.relics, relicField, match.players, self?.team),
+    ],
     stand: renderableStand(match.stand, flagField, self?.team),
+    altar: match.altar,
     // Your own side's in the ally colour; a spectator's team 1 is, as the
     // scoreboard reads it first (#1199).
     shrines: shrines.map((shrine) => ({
@@ -283,6 +288,7 @@ export async function startMatchView(
   const mode = mapMode(connection.map.id);
   const shrines = mapShrines(connection.map.id);
   const flagField = mapFlagField(connection.map.id);
+  const relicField = mapRelicField(connection.map.id);
   const camera =
     viewport === undefined
       ? undefined
@@ -545,7 +551,7 @@ export async function startMatchView(
   window.addEventListener("keydown", handleKeyDown);
 
   let latestMatch = connection.getSnapshot();
-  let latestArena = toArenaSnapshot(latestMatch, walls, shrines, flagField);
+  let latestArena = toArenaSnapshot(latestMatch, walls, shrines, flagField, relicField);
   // The names key shows every name; the cursor shows one (#253).
   const nameReveal = attachNameReveal(window, keymap);
   // While the match runs, closing or reloading the tab asks first: an
@@ -646,7 +652,7 @@ export async function startMatchView(
     partyWindow.update(latestMatch);
     latestArena = withCalls(
       withNames(
-        toArenaSnapshot(latestMatch, walls, shrines, flagField),
+        toArenaSnapshot(latestMatch, walls, shrines, flagField, relicField),
         viewport?.pointerWorld(),
         nameReveal.held(),
       ),

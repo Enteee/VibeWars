@@ -1,4 +1,17 @@
 import type { Vec2 } from "../vec2.js";
+import {
+  AT_SPAWN,
+  FLAG_STAND_ID,
+  carriedBy,
+  carriedObjectId,
+  carriedObjectTeam,
+  dropCarried,
+  lyingPosition,
+  type CarriedArrival,
+  type CarriedDrop,
+  type CarriedPlace,
+  type CarriedSpawn,
+} from "./carried.js";
 
 /**
  * The Guild Battle's flags and flag stand (#1225, GW1): each team has
@@ -19,27 +32,14 @@ export const FLAG_MORALE_BOOST = 10;
 /** A carrier's speed is divided by this (GW1 estimate): hands full of flag. */
 export const FLAG_CARRIER_SPEED_MULTIPLIER = 1.2;
 
-/** The stand's target id: no seat or creature id is this. */
-export const FLAG_STAND_ID = "flag-stand";
-
-/** Where a team's flag stands at the start, from its map's `flag-spawn` objective. */
-export interface FlagSpawn {
-  readonly team: number;
-  readonly position: Vec2;
-}
-
-/** A Guild Battle map's flag objectives: one stand, one spawn per team. */
+/** A Guild Battle map's flag objectives: one stand, one `flag-spawn` per team. */
 export interface FlagField {
   readonly stand: Vec2;
-  readonly spawns: readonly FlagSpawn[];
+  readonly spawns: readonly CarriedSpawn[];
 }
 
-/** Where a flag is: always exactly one of these. */
-export type FlagPlace =
-  | { readonly kind: "spawn" }
-  | { readonly kind: "carried"; readonly carrierId: string }
-  | { readonly kind: "ground"; readonly position: Vec2 }
-  | { readonly kind: "stand" };
+/** Where a flag is: always exactly one of these, a bundle's three and the stand. */
+export type FlagPlace = CarriedPlace | { readonly kind: "stand" };
 
 export interface FlagState {
   readonly team: number;
@@ -60,20 +60,11 @@ export interface FlagsState {
 /** Why Space on a flag or the stand does nothing. */
 export type FlagRefusal = "no-target" | "not-your-flag" | "flag-on-stand" | "no-flag-carried";
 
-/** A player who reached a flag or the stand this tick, to take or plant one. */
-export interface FlagArrival {
-  readonly kind: "interact";
-  readonly playerId: string;
-  readonly team: number;
-  readonly targetId: string;
-}
-
 /**
  * One thing that moves a flag this tick, in simulation order: a carrier
- * dropping it where they are, or a player arriving.
+ * dropping it where they are, or a player arriving to take or plant one.
  */
-export type FlagAction =
-  { readonly kind: "drop"; readonly carrierId: string; readonly position: Vec2 } | FlagArrival;
+export type FlagAction = CarriedDrop | CarriedArrival;
 
 export interface FlagStep extends FlagsState {
   /** The team a held stand boosts this tick, or `undefined`. */
@@ -83,22 +74,14 @@ export interface FlagStep extends FlagsState {
 /** Within a hair, as a swing's interval is: twenty-odd 0.05 s ticks fall just short. */
 const HOLD_EPSILON = 1e-6;
 
-const AT_SPAWN: FlagPlace = { kind: "spawn" };
-
 /** The target id of `team`'s flag: no seat's id has a `/` in it. */
 export function flagId(team: number): string {
-  return `flag/${String(team)}`;
+  return carriedObjectId("flag", team);
 }
 
 /** The team whose flag `id` names, or `undefined` if it names none. */
 export function flagTeamOf(id: string): number | undefined {
-  const match = /^flag\/(\d+)$/.exec(id);
-  return match === null ? undefined : Number(match[1]);
-}
-
-/** Whether `id` names a flag or the stand rather than a body. */
-export function isFlagObjectId(id: string): boolean {
-  return id === FLAG_STAND_ID || flagTeamOf(id) !== undefined;
+  return carriedObjectTeam("flag", id);
 }
 
 /** Every flag at its spawn; nobody holds the stand. */
@@ -111,7 +94,7 @@ export function initialFlags(field: FlagField): FlagsState {
 
 /** The flag `carrierId` carries, or `undefined`. */
 export function carriedFlag(flags: readonly FlagState[], carrierId: string): FlagState | undefined {
-  return flags.find(({ place }) => place.kind === "carried" && place.carrierId === carrierId);
+  return carriedBy(flags, carrierId);
 }
 
 /**
@@ -128,14 +111,7 @@ export function flagTargetPosition(
     return field.stand;
   }
   const flag = flags.find(({ team }) => flagId(team) === targetId);
-  switch (flag?.place.kind) {
-    case "spawn":
-      return field.spawns.find(({ team }) => team === flag.team)?.position;
-    case "ground":
-      return flag.place.position;
-    default:
-      return undefined;
-  }
+  return flag === undefined ? undefined : lyingPosition(field.spawns, flag);
 }
 
 /**
@@ -164,18 +140,11 @@ export function flagRefusal(
 
 /** `state` with the flag `carrierId` carries lying at `position`; unchanged if none. */
 export function dropFlag(state: FlagsState, carrierId: string, position: Vec2): FlagsState {
-  return {
-    ...state,
-    flags: state.flags.map((flag) =>
-      flag.place.kind === "carried" && flag.place.carrierId === carrierId
-        ? { team: flag.team, place: { kind: "ground", position } }
-        : flag,
-    ),
-  };
+  return { ...state, flags: dropCarried(state.flags, carrierId, position) };
 }
 
 /** One interaction, as `stepFlags` takes it: refused ones change nothing. */
-function interact(field: FlagField, state: FlagsState, action: FlagArrival): FlagsState {
+function interact(field: FlagField, state: FlagsState, action: CarriedArrival): FlagsState {
   const { playerId, team, targetId } = action;
   if (flagRefusal(field, state, playerId, team, targetId) !== undefined) {
     return state;
