@@ -759,6 +759,49 @@ a fixed 11 screen px, which crosses every weapon at Wide.
 
 ![Profession body study](profession-body-study.svg)
 
+### Guild cape (decided: B, the trailing tab)
+
+GW1 guilds wear a cape (#481, #1410). A body is a team-coloured disc seen
+from above, so the cape goes **behind it, opposite its facing**: the weapon
+and the off-hand are in front and to the left, and the team colour is the
+disc, which no variant covers more than a sliver of. The cape is two colours
+from a fixed palette of eight (gold, violet, white, black, lime, orange, teal,
+pink: none near cyan-blue or coral) and one emblem of eight geometric shapes
+(disc, bar, chevron, diamond, triangle, cross, ring, half-disc).
+`node scripts/assets/cape-study.mjs` draws all three on ally and enemy
+bodies, facing right and up, in a clump, as the menu figure, and in the designer:
+
+![Cape study](cape-study.svg)
+
+The same three in a 4v4 mid-fight frame at 2x zoom, with the menu figure (made by the same script):
+
+![Cape mockup](cape-mockup.png)
+
+- **A, a crescent behind.** One `fill` path (two arcs) plus one trim stroke,
+  drawn before the disc: 3 Painter calls, and `paintStandingBody` gets a
+  `cape` drawn first. It hugs the disc 7 units out, so it widens the body's
+  silhouette by half its radius at the back and reads as "someone has a cape"
+  at Default zoom; the trim reads, the emblem (5 units, 5 px) does not, so it
+  is shown only on the menu figure. In a clump it hides behind neighbours
+  cleanly. The figure box needs 8 px more room.
+- **B, a trailing tab.** One polygon, one trim polyline, an emblem: 4 calls.
+  The strongest read of facing as well (the tab points opposite the sword),
+  and the emblem is a diamond-sized 5 px at Default, legible. But it is 17
+  units long, longer than any other mark: in a clump tabs cross neighbours'
+  bodies and can be taken for a projectile or a skill cue. Needs the most
+  figure room (17 px).
+- **C, a ring segment on the rim.** Three arc strokes inside the disc, drawn
+  after it: 3 calls, no extra silhouette, no room needed. But it eats the
+  disc's team colour at the back and sits next to the off-hand arc, and at
+  Default it is a 4 px green smear: team colour is hurt, no emblem fits.
+- **Decided: B** (the operator's pick, #1410; implementation is #1422). The
+  tab's clump noise is accepted for the clearest guild read. My own
+  recommendation was A: It adds a clear guild signal on the one side no
+  mark uses, costs no more than the existing marks, never touches the
+  disc, and keeps team colour the strongest read. Show the emblem only in the
+  menu, the designer and the roster. B is the pick if the operator wants the
+  cape to read at a glance and accepts the clump noise.
+
 ### Name labels (study, not decided)
 
 Every body carries its name, 11 px and centred, so two bodies a name's
