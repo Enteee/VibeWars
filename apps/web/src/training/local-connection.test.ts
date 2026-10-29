@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import { getTrainingScenario } from "@vibewars/game-core";
-import type { CastRefusedMessage } from "@vibewars/game-protocol";
-import type { CombatMessage } from "@vibewars/game-session";
+import type { CastRefusedMessage, WireCape } from "@vibewars/game-protocol";
+import { NO_GUILD, type CombatMessage } from "@vibewars/game-session";
 
 import { AttackClock } from "../render/attack-clock.js";
 import { setProfessions, setRank, setSkill, newCharacter } from "../ui/build-editor.js";
@@ -17,6 +17,8 @@ function pyro() {
   return setSkill(character, 0, "elementalist.fireball");
 }
 
+const CAPE: WireCape = { main: "violet", trim: "white", emblem: "diamond" };
+
 function targetDummy(character = pyro()) {
   const scenario = getTrainingScenario("target-dummy");
   if (scenario === undefined) {
@@ -30,7 +32,7 @@ function targetDummy(character = pyro()) {
       selfId: SELF_ID,
       map: setup.map,
       nameOf: (id) => (id === SELF_ID ? "Tester" : (setup.names.get(id) ?? id)),
-      guildTagOf: (id) => (id === SELF_ID ? "VIBE" : undefined),
+      guildOf: (id) => (id === SELF_ID ? { guildTag: "VIBE", guildCape: CAPE } : NO_GUILD),
       professionsOf: (id) =>
         id === SELF_ID ? { primary: "elementalist", secondary: undefined } : NO_PROFESSIONS,
     }),
@@ -38,13 +40,16 @@ function targetDummy(character = pyro()) {
 }
 
 describe("createLocalConnection", () => {
-  it("tags your own body with your guild tag, and no dummy (#1406)", () => {
+  it("tags your own body with your guild tag and cape, and no dummy (#1406, #1422)", () => {
     const { connection } = targetDummy();
     const players = connection.getSnapshot().players;
-    expect(players.find((player) => player.sessionId === SELF_ID)?.guildTag).toBe("VIBE");
+    const self = players.find((player) => player.sessionId === SELF_ID);
+    expect(self?.guildTag).toBe("VIBE");
+    expect(self?.guildCape).toEqual(CAPE);
     const others = players.filter((player) => player.sessionId !== SELF_ID);
     expect(others.length).toBeGreaterThan(0);
     expect(others.every((player) => player.guildTag === undefined)).toBe(true);
+    expect(others.every((player) => player.guildCape === undefined)).toBe(true);
   });
 
   it("gives each status its end on the match clock, its length and its caster (#803)", () => {
@@ -327,7 +332,7 @@ describe("the bar a Ranger with Expertise sees (#528)", () => {
       selfId: SELF_ID,
       map: setup.map,
       nameOf: (id) => id,
-      guildTagOf: () => undefined,
+      guildOf: () => NO_GUILD,
       professionsOf: () => NO_PROFESSIONS,
     });
     const slot = connection.skillBar[0];
@@ -413,7 +418,7 @@ describe("a pet's armed attack (#1167)", () => {
       selfId: SELF_ID,
       map: setup.map,
       nameOf: (id) => id,
-      guildTagOf: () => undefined,
+      guildOf: () => NO_GUILD,
       professionsOf: () => NO_PROFESSIONS,
     });
     const armed = () =>

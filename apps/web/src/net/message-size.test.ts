@@ -30,6 +30,7 @@ import {
   type WireCombat,
   type WireCombatBatch,
   type WireLobbyState,
+  type WireCape,
   type WirePlayer,
   type WireProjectile,
   type WireSkillBar,
@@ -79,6 +80,8 @@ const PEER_ID = "abcdefghijklmnopqrst/local";
 const NAME = sanitizeName("👩‍🚀".repeat(40), "player");
 /** A guild tag as long as `sanitizeGuildTag` lets through (#1406). */
 const GUILD_TAG = sanitizeGuildTag("WWWW");
+/** A cape of the longest colour and emblem names (#1422). */
+const CAPE: WireCape = { main: "violet", trim: "orange", emblem: "half-disc" };
 
 const SKILL_IDS = IMPLEMENTED_SKILLS.map((skill) => skill.id);
 const STATUS_IDS = Object.keys(STATUS_DEFINITIONS);
@@ -111,6 +114,7 @@ function player(index: number): WirePlayer {
     id: `${PEER_ID}${String(index)}`,
     name: NAME,
     guildTag: GUILD_TAG,
+    guildCape: CAPE,
     team: index % 2 === 0 ? 0 : 1,
     x: FLOAT + index,
     y: FLOAT + index,
@@ -398,6 +402,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       protocolVersion: PROTOCOL_VERSION,
       name: NAME,
       guildTag: GUILD_TAG,
+      guildCape: CAPE,
       build: JSON.parse(JSON.stringify(build)) as JsonValue,
       rejoin: { playerId: `${PEER_ID}0` },
     };
@@ -424,6 +429,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
         id: `${PEER_ID}${String(i)}`,
         name: NAME,
         guildTag: GUILD_TAG,
+        guildCape: CAPE,
         team: i % 3 === 0 ? null : i % 3 === 1 ? 0 : 1,
         ready: true,
         isHost: i === 0,

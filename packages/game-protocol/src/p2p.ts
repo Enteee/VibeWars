@@ -126,6 +126,40 @@ export const CREATURE_LOOKS = [
 ] as const;
 
 /**
+ * A guild cape's colours (#1422): the palette of the cape study (#1410,
+ * `docs/art/art-direction.md`), apart from both team colours.
+ */
+export const CAPE_COLOURS = [
+  "gold",
+  "violet",
+  "white",
+  "black",
+  "lime",
+  "orange",
+  "teal",
+  "pink",
+] as const;
+
+/** A guild cape's emblems (#1422): eight plain shapes. */
+export const CAPE_EMBLEMS = [
+  "disc",
+  "bar",
+  "chevron",
+  "diamond",
+  "triangle",
+  "cross",
+  "ring",
+  "half-disc",
+] as const;
+
+/** A guild cape (#1422): its cloth, its trim and the emblem on it, in the trim colour. */
+export interface WireCape {
+  readonly main: (typeof CAPE_COLOURS)[number];
+  readonly trim: (typeof CAPE_COLOURS)[number];
+  readonly emblem: (typeof CAPE_EMBLEMS)[number];
+}
+
+/**
  * The largest status index a snapshot may carry (#632): a bound of its
  * own, so this package needs no status catalogue.
  */
@@ -220,6 +254,11 @@ export interface PeerHello {
    * `null` for none. The host sanitises it: an invalid one becomes `null`.
    */
   readonly guildTag: string | null;
+  /**
+   * The guild cape the player designed (#1422); `null` for none, and for
+   * anything that is not a cape. The host drops it without a valid tag.
+   */
+  readonly guildCape: WireCape | null;
   /** Opaque here: the host validates it by the build-join rules. */
   readonly build: JsonValue;
   /**
@@ -321,6 +360,8 @@ export interface WirePlayer {
   readonly name: string;
   /** 2–4 letters or digits (#1406), as the host sanitised it; `null` for none and for every bot. */
   readonly guildTag: string | null;
+  /** Worn behind the body (#1422); `null` for none, and whenever `guildTag` is. */
+  readonly guildCape: WireCape | null;
   readonly team: 0 | 1;
   readonly x: number;
   readonly y: number;
@@ -767,6 +808,8 @@ export interface PeerLobbyJoin {
   readonly name: string;
   /** As `PeerHello.guildTag` (#1406). */
   readonly guildTag: string | null;
+  /** As `PeerHello.guildCape` (#1422). */
+  readonly guildCape: WireCape | null;
   readonly character: WireLobbyCharacter | null;
   /**
    * The seat's proof in a queued lobby (#871, ADR-0032 §6); `null` in a
@@ -874,6 +917,8 @@ export interface WireLobbyPlayer {
   readonly name: string;
   /** As `WirePlayer.guildTag` (#1406). */
   readonly guildTag: string | null;
+  /** As `WirePlayer.guildCape` (#1422). */
+  readonly guildCape: WireCape | null;
   /** `null` spectates. */
   readonly team: 0 | 1 | null;
   readonly ready: boolean;
@@ -1064,6 +1109,23 @@ function parseRawGuildTag(value: unknown): string | null | undefined {
   return typeof value === "string" ? value.slice(0, MAX_WIRE_TEXT) : undefined;
 }
 
+/** `value` as a cape (#1422) if it is exactly one, else `undefined`. */
+export function parseWireCape(value: unknown): WireCape | undefined {
+  const raw = fields(value);
+  return raw !== undefined &&
+    Object.keys(raw).length === 3 &&
+    isOneOf(raw.main, CAPE_COLOURS) &&
+    isOneOf(raw.trim, CAPE_COLOURS) &&
+    isOneOf(raw.emblem, CAPE_EMBLEMS)
+    ? { main: raw.main, trim: raw.trim, emblem: raw.emblem }
+    : undefined;
+}
+
+/** A host's cape (#1422): `null` or a cape; anything else is malformed. */
+function parseNullableCape(value: unknown): WireCape | null | undefined {
+  return value === null ? null : parseWireCape(value);
+}
+
 function isRejoinToken(value: unknown): value is string {
   return typeof value === "string" && REJOIN_TOKEN.test(value);
 }
@@ -1150,6 +1212,8 @@ export function parsePeerHello(value: unknown): PeerHello | undefined {
         protocolVersion: raw.protocolVersion,
         name: raw.name.slice(0, MAX_WIRE_TEXT),
         guildTag,
+        // A client's: what is not a cape is no cape, never a refused join.
+        guildCape: parseWireCape(raw.guildCape) ?? null,
         build,
         rejoin,
       };
@@ -1405,12 +1469,14 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
   }
   const statuses = parseArray(raw.statuses, MAX_WIRE_STATUSES, parseStatus);
   const creature = raw.creature === null ? null : parseCreature(raw.creature);
-  return statuses === undefined || creature === undefined
+  const guildCape = parseNullableCape(raw.guildCape);
+  return statuses === undefined || creature === undefined || guildCape === undefined
     ? undefined
     : {
         id: raw.id,
         name: raw.name,
         guildTag: raw.guildTag,
+        guildCape,
         team: raw.team,
         x: raw.x,
         y: raw.y,
@@ -2002,6 +2068,8 @@ export function parsePeerLobbyJoin(value: unknown): PeerLobbyJoin | undefined {
     protocolVersion: raw.protocolVersion,
     name: raw.name.slice(0, MAX_WIRE_TEXT),
     guildTag,
+    // As the hello's.
+    guildCape: parseWireCape(raw.guildCape) ?? null,
     character,
     admission,
   };
@@ -2103,10 +2171,12 @@ function parseLobbyPlayer(value: unknown): WireLobbyPlayer | undefined {
   const raw = fields(value);
   const team = parseLobbyTeam(raw?.team);
   const character = parseLobbyCharacter(raw?.character);
+  const guildCape = parseNullableCape(raw?.guildCape);
   return raw !== undefined &&
     isString(raw.id) &&
     isString(raw.name) &&
     isNullableString(raw.guildTag) &&
+    guildCape !== undefined &&
     team !== undefined &&
     typeof raw.ready === "boolean" &&
     typeof raw.isHost === "boolean" &&
@@ -2116,6 +2186,7 @@ function parseLobbyPlayer(value: unknown): WireLobbyPlayer | undefined {
         id: raw.id,
         name: raw.name,
         guildTag: raw.guildTag,
+        guildCape,
         team,
         ready: raw.ready,
         isHost: raw.isHost,
