@@ -1301,6 +1301,7 @@ function isStateCondition(condition: EffectCondition): condition is StateConditi
     case "target-has-any":
     case "target-casting":
     case "caster-has":
+    case "caster-lacks":
     case "target-alone":
     case "target-not-moving":
     case "target-knocked-down":
@@ -1342,6 +1343,8 @@ export function stateHolds(
       return condition.categories.some((category) => target.statuses.countByCategory(category) > 0);
     case "caster-has":
       return caster.statuses.countByCategory(condition.category, condition.profession) > 0;
+    case "caster-lacks":
+      return caster.statuses.countByCategory(condition.category) === 0;
     case "target-casting": {
       const cast = target.cast.activeCast;
       const skill = cast === undefined ? undefined : getSkill(cast.skillId);
@@ -1551,6 +1554,7 @@ function conditionHolds(
     case "target-has-any":
     case "target-casting":
     case "caster-has":
+    case "caster-lacks":
     case "target-alone":
     case "target-not-moving":
     case "target-knocked-down":

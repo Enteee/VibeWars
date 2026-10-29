@@ -173,6 +173,7 @@ import {
   skillBlow,
   useNextAttackSkill,
   swingIntervalSeconds,
+  unblockableNow,
   weaponSnapshotOf,
 } from "../skills/weapon-attack.js";
 import {
@@ -4013,7 +4014,12 @@ export class MatchSimulation {
     if (!this.#reaches(projectile, target)) {
       events.push({ kind: "attack-dodged", targetId: target.id });
     } else if (
-      skillHit?.skill.attack?.unblockable !== true &&
+      !unblockableNow(
+        skillHit?.skill.attack?.unblockable ?? false,
+        attacker?.combatant,
+        target.combatant,
+        this.#participants,
+      ) &&
       blocks(target.combatant, projectile.attackerId, "projectile", this.#rng)
     ) {
       blocked = true;

@@ -483,7 +483,7 @@ describe("describeSkill", () => {
           (entry.cost?.kind === "adrenaline" && entry.cost.losesAll === true ? 1 : 0) +
           (rule?.chain === undefined ? 0 : 1) +
           (rule?.bonusDamage === undefined && rule?.weaponDamage !== 0 ? 0 : 1) +
-          (rule?.unblockable === true ? 1 : 0) +
+          (rule === undefined || rule.unblockable === false ? 0 : 1) +
           (entry.attack?.weapon === "scythe" && entry.area === undefined ? 1 : 0) +
           (entry.attack?.cleavesAllWhen === undefined ? 0 : 1) +
           (rule?.conditionalBonus === undefined ? 0 : 1) +
