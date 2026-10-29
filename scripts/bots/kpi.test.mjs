@@ -1,14 +1,16 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  EDGES_SCHEMA_VERSION,
   KPI_SCHEMA_VERSION,
-  addSevenDaySample,
+  addEdge,
   buildKpis,
   cpuShare,
   employeeOfUnit,
   flowKpis,
   median,
   p90,
+  parseEdges,
   parseUnits,
   projectSevenDay,
   staffKpis,
@@ -213,86 +215,129 @@ describe("claude and staff", () => {
   });
 });
 
-describe("projectSevenDay (#1313)", () => {
-  const M = 60_000;
+describe("addEdge and projectSevenDay (#1313)", () => {
   const S = NOW / 1000;
   const RESETS = S + 2 * 24 * 3600;
   /**
-   * @param {number} agoMs
+   * A reading `agoS` seconds before now.
+   *
+   * @param {number} agoS
    * @param {number} utilization
    * @param {number} [resetsAt]
    */
-  function sample(agoMs, utilization, resetsAt = RESETS) {
-    return { at: NOW - agoMs, utilization, resetsAt };
+  function reading(agoS, utilization, resetsAt = RESETS) {
+    return { at: (S - agoS) * 1000, sevenDay: { utilization, resetsAt } };
+  }
+  /** @param {ReturnType<typeof reading>[]} readings oldest first */
+  function edgesOf(readings) {
+    return readings.reduce(
+      (edges, next) => addEdge(edges, next),
+      /** @type {import("./kpi.mjs").SevenDayEdge[]} */ ([]),
+    );
+  }
+  /**
+   * A steady 1% each 100 min, from `from`, a reading every 5 min.
+   *
+   * @param {number} hours
+   * @param {number} from
+   */
+  function steady(hours, from) {
+    const readings = [];
+    for (let ago = hours * 3600; ago >= 0; ago -= 300) {
+      const steps = Math.floor((hours * 3600 - ago) / 6000);
+      readings.push(reading(ago, Math.round((from + steps / 100) * 100) / 100, S + 7 * 24 * 3600));
+    }
+    return readings;
   }
 
-  it("runs the last 2 h's burn on to 100%", () => {
-    // 0.10 an hour from 0.50: 100% in another 5 h.
-    expect(projectSevenDay([sample(H, 0.4), sample(30 * M, 0.45), sample(0, 0.5)], NOW)).toBe(
-      S + 5 * 3600,
-    );
+  it("runs a steady 1%-per-100-min burn over 10 h on to 100%, from the last edge", () => {
+    const edges = edgesOf(steady(10, 0.5));
+    // Edges at 0.50 ... 0.56, the last 600 min after the first.
+    expect(edges.map(({ utilization }) => utilization)).toEqual([
+      0.5, 0.51, 0.52, 0.53, 0.54, 0.55, 0.56,
+    ]);
+    const last = edges.at(-1);
+    expect(last?.at).toBe(S);
+    // 44 steps to go at one each 6000 s.
+    expect(projectSevenDay(edges)).toBeCloseTo(S + 44 * 6000, -1);
   });
 
-  it("is null for a flat or falling burn", () => {
-    expect(projectSevenDay([sample(H, 0.5), sample(0, 0.5)], NOW)).toBeNull();
-    expect(projectSevenDay([sample(H, 0.6), sample(0, 0.5)], NOW)).toBeNull();
+  it("stamps an edge with the reading's own time, and records an equal reading never", () => {
+    const edges = edgesOf([reading(3600, 0.1), reading(1800, 0.1), reading(0, 0.1)]);
+    expect(edges).toEqual([{ at: S - 3600, utilization: 0.1, resetsAt: RESETS }]);
   });
 
-  it("is null for fewer than 2 samples or a span under 30 min", () => {
-    expect(projectSevenDay([], NOW)).toBeNull();
-    expect(projectSevenDay([sample(0, 0.5)], NOW)).toBeNull();
-    expect(projectSevenDay([sample(29 * M, 0.4), sample(0, 0.5)], NOW)).toBeNull();
+  it("is null for 2 edges, or 3 spanning under 2 h", () => {
+    expect(projectSevenDay(edgesOf([reading(5 * 3600, 0.1), reading(0, 0.2)]))).toBeNull();
+    expect(
+      projectSevenDay(edgesOf([reading(7000, 0.1), reading(3600, 0.15), reading(0, 0.2)])),
+    ).toBeNull();
+    expect(projectSevenDay([])).toBeNull();
   });
 
   it("is null when the window resets first", () => {
-    expect(projectSevenDay([sample(H, 0.4), sample(0, 0.5)], NOW)).not.toBeNull();
-    expect(projectSevenDay([sample(H, 0.4), sample(0, 0.5, S + 3600)], NOW)).toBeNull();
+    const soon = S + 3600;
     expect(
-      projectSevenDay([sample(H, 0.4, S + 5 * 3600), sample(0, 0.5, S + 5 * 3600)], NOW),
+      projectSevenDay(
+        edgesOf([
+          reading(4 * 3600, 0.1, soon),
+          reading(2 * 3600, 0.11, soon),
+          reading(0, 0.12, soon),
+        ]),
+      ),
     ).toBeNull();
   });
 
-  it("reads only the current window's samples after a roll-over", () => {
+  it("drops the edges of an older window when resetsAt changes", () => {
     const old = RESETS - 7 * 24 * 3600;
+    const edges = edgesOf([
+      reading(5 * 3600, 0.9, old),
+      reading(4 * 3600, 0.95, old),
+      reading(0, 0.01),
+    ]);
+    expect(edges).toEqual([{ at: S, utilization: 0.01, resetsAt: RESETS }]);
+    expect(projectSevenDay(edges)).toBeNull();
+  });
+
+  it("drops edges older than 24 h before the reading", () => {
+    const edges = edgesOf([reading(25 * 3600, 0.1), reading(3 * 3600, 0.2), reading(0, 0.3)]);
+    expect(edges.map(({ utilization }) => utilization)).toEqual([0.2, 0.3]);
+  });
+
+  it("is the edge's time at or over 100%", () => {
+    expect(projectSevenDay(edgesOf([reading(600, 1)]))).toBe(S - 600);
+  });
+
+  it("is null when utilization falls, the rolling window shedding old use", () => {
     expect(
-      projectSevenDay([sample(H, 0.9, old), sample(10 * M, 0.01), sample(0, 0.02)], NOW),
+      projectSevenDay(edgesOf([reading(4 * 3600, 0.3), reading(2 * 3600, 0.31), reading(0, 0.28)])),
     ).toBeNull();
-    expect(projectSevenDay([sample(2 * H, 0.9, old), sample(H, 0.0), sample(0, 0.1)], NOW)).toBe(
-      S + 9 * 3600,
-    );
   });
 
-  it("is the newest sample's time at or over 100%", () => {
-    expect(projectSevenDay([sample(10 * M, 1)], NOW)).toBe(S - 600);
-    expect(projectSevenDay([sample(H, 0.9), sample(0, 1.02)], NOW)).toBe(S);
-  });
-
-  it("ignores samples older than 2 h", () => {
-    expect(projectSevenDay([sample(3 * H, 0), sample(H, 0.4), sample(0, 0.5)], NOW)).toBe(
-      S + 5 * 3600,
-    );
-    expect(projectSevenDay([sample(3 * H, 0.4), sample(10 * M, 0.5)], NOW)).toBeNull();
+  it("records nothing and drops nothing without a 7-day reading", () => {
+    const edges = edgesOf([reading(0, 0.1)]);
+    expect(addEdge(edges, null)).toEqual(edges);
+    expect(addEdge(edges, { at: NOW, sevenDay: null })).toEqual(edges);
   });
 });
 
-describe("addSevenDaySample (#1313)", () => {
-  const seven = { utilization: 0.01, resetsAt: NOW / 1000 + 24 * 3600 };
+describe("parseEdges (#1313)", () => {
+  const edge = { at: 1, utilization: 0.1, resetsAt: 2 };
 
-  it("stamps a sample with its reading's time, not the write's", () => {
-    expect(addSevenDaySample([], { at: NOW - H, sevenDay: seven }, NOW)).toEqual([
-      { at: NOW - H, ...seven },
-    ]);
+  it("reads the edges of a file of this schema version", () => {
+    expect(
+      parseEdges(JSON.stringify({ schemaVersion: EDGES_SCHEMA_VERSION, edges: [edge] })),
+    ).toEqual([edge]);
   });
 
-  it("adds a reading it already holds only once", () => {
-    const once = addSevenDaySample([], { at: NOW - H, sevenDay: seven }, NOW - H);
-    expect(addSevenDaySample(once, { at: NOW - H, sevenDay: seven }, NOW)).toEqual(once);
-  });
-
-  it("drops samples older than 2 h, and adds nothing without a 7-day reading", () => {
-    const old = [{ at: NOW - 3 * H, ...seven }];
-    expect(addSevenDaySample(old, null, NOW)).toEqual([]);
-    expect(addSevenDaySample(old, { at: NOW, sevenDay: null }, NOW)).toEqual([]);
+  it("discards one that does not parse, has another version or a malformed edge", () => {
+    expect(parseEdges("{")).toBeNull();
+    expect(
+      parseEdges(JSON.stringify({ schemaVersion: EDGES_SCHEMA_VERSION + 1, edges: [] })),
+    ).toBeNull();
+    expect(
+      parseEdges(JSON.stringify({ schemaVersion: EDGES_SCHEMA_VERSION, edges: [{ at: 1 }] })),
+    ).toBeNull();
   });
 });
 
