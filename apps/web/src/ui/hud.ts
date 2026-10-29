@@ -761,27 +761,39 @@ function renderCarriers(
   }
 }
 
+/** How far a stand's count may miss the boost's and still be it: a few ticks. */
+const BOOST_SLACK_SECONDS = 0.5;
+
 /**
- * The toast for a stand boost landing (#1226), from two snapshots' stand:
- * the same holder with less time held is its boost, as game-core starts
- * the count again. "Morale boost! +10%" for your side, "Enemy morale
- * boost" for the foe's; a spectator's side is team 0's. `undefined` for
- * no boost.
+ * The toast for a stand boost landing (#1226), from two snapshots: game-core
+ * starts the count again at the boost, so the same holder whose time held
+ * plus the time between is the boost's period plus the time held now. A
+ * lose and retake between the two (missed frames, a reconnect) restarts it
+ * too, but at no such time. "Morale boost! +10%" for your side, "Enemy
+ * morale boost" for the foe's; a spectator's side is team 0's. `undefined`
+ * for no boost.
  */
 export function standBoostToast(
-  before: StandState | undefined,
-  after: StandState | undefined,
+  before: Pick<MatchSnapshot, "stand" | "elapsedSeconds"> | undefined,
+  after: Pick<MatchSnapshot, "stand" | "elapsedSeconds">,
   selfTeam: number | undefined,
 ): string | undefined {
+  const held = before?.stand;
+  const now = after.stand;
   if (
     before === undefined ||
-    after?.holder === undefined ||
-    after.holder !== before.holder ||
-    after.heldSeconds >= before.heldSeconds
+    held === undefined ||
+    now?.holder === undefined ||
+    now.holder !== held.holder
   ) {
     return undefined;
   }
-  return after.holder === (selfTeam ?? 0)
+  const between = after.elapsedSeconds - before.elapsedSeconds;
+  const miss = held.heldSeconds + between - STAND_HOLD_SECONDS - now.heldSeconds;
+  if (Math.abs(miss) > BOOST_SLACK_SECONDS) {
+    return undefined;
+  }
+  return now.holder === (selfTeam ?? 0)
     ? `Morale boost! +${String(FLAG_MORALE_BOOST)}%`
     : "Enemy morale boost";
 }
@@ -1081,7 +1093,7 @@ function renderScoreboard(
     row.append(separatorBefore(parts, index));
     switch (part.kind) {
       case "text":
-        row.append(part.text);
+        element("span", "hud-score-part", row).textContent = part.text;
         return;
       case "priest": {
         const node = element("span", part.alive ? "hud-priest" : "hud-priest is-dead", row);

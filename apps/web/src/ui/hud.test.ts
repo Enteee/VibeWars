@@ -216,20 +216,38 @@ describe("carrierLines (#1226)", () => {
 });
 
 describe("standBoostToast (#1226)", () => {
-  const stand = (holder: number | undefined, heldSeconds: number) => ({ holder, heldSeconds });
+  /** A snapshot's stand at a match time. */
+  const at = (elapsedSeconds: number, holder: number | undefined, heldSeconds: number) => ({
+    elapsedSeconds,
+    stand: { holder, heldSeconds },
+  });
 
   it("toasts the boost to its side and the foe's, once, as the count starts again", () => {
-    expect(standBoostToast(stand(0, 119.9), stand(0, 0), 0)).toBe("Morale boost! +10%");
-    expect(standBoostToast(stand(0, 119.9), stand(0, 0), 1)).toBe("Enemy morale boost");
-    expect(standBoostToast(stand(1, 119.9), stand(1, 0.1), undefined)).toBe("Enemy morale boost");
-    expect(standBoostToast(stand(0, 0), stand(0, 0.1), 0)).toBeUndefined();
+    expect(standBoostToast(at(200, 0, 119.95), at(200.05, 0, 0), 0)).toBe("Morale boost! +10%");
+    expect(standBoostToast(at(200, 0, 119.95), at(200.05, 0, 0), 1)).toBe("Enemy morale boost");
+    expect(standBoostToast(at(200, 1, 119.9), at(200.2, 1, 0.1), undefined)).toBe(
+      "Enemy morale boost",
+    );
+    // Frames missed across it: still the boost.
+    expect(standBoostToast(at(200, 0, 110), at(215, 0, 5), 0)).toBe("Morale boost! +10%");
+    expect(standBoostToast(at(200.05, 0, 0), at(200.1, 0, 0.05), 0)).toBeUndefined();
+  });
+
+  it("says nothing for a lose and retake between two snapshots", () => {
+    // Lost at 50 s held, retaken: the count restarts short of a boost.
+    expect(standBoostToast(at(200, 0, 50), at(210, 0, 3), 0)).toBeUndefined();
+    // A reconnect after 30 s away, the stand retaken meanwhile.
+    expect(standBoostToast(at(200, 0, 100), at(230, 0, 25), 0)).toBeUndefined();
   });
 
   it("says nothing for a taking, a loss or no stand", () => {
-    expect(standBoostToast(stand(undefined, 0), stand(0, 0), 0)).toBeUndefined();
-    expect(standBoostToast(stand(1, 50), stand(0, 0), 0)).toBeUndefined();
-    expect(standBoostToast(stand(0, 50), stand(undefined, 0), 0)).toBeUndefined();
-    expect(standBoostToast(undefined, stand(0, 0), 0)).toBeUndefined();
+    expect(standBoostToast(at(0, undefined, 0), at(1, 0, 0), 0)).toBeUndefined();
+    expect(standBoostToast(at(0, 1, 50), at(1, 0, 0), 0)).toBeUndefined();
+    expect(standBoostToast(at(0, 0, 50), at(1, undefined, 0), 0)).toBeUndefined();
+    expect(standBoostToast(undefined, at(1, 0, 0), 0)).toBeUndefined();
+    expect(
+      standBoostToast({ elapsedSeconds: 0, stand: undefined }, at(1, 0, 0), 0),
+    ).toBeUndefined();
   });
 });
 

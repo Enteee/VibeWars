@@ -28,8 +28,11 @@ function overlaps(a: Box, b: Box): boolean {
   return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
 }
 
-/** A match against a bot from the menu on show, the bot targeted, the toast noted. */
-async function phoneMatch(page: Page): Promise<void> {
+/**
+ * A match against a bot from the menu on show, the bot targeted, the toast
+ * noted; on `map` when given, else the lobby's default.
+ */
+async function phoneMatch(page: Page, map?: string): Promise<void> {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("./");
   // The toast hides after a few seconds: note where it is, every frame it
@@ -49,6 +52,9 @@ async function phoneMatch(page: Page): Promise<void> {
     note();
   });
   await page.getByRole("button", { name: "host a lobby" }).click();
+  if (map !== undefined) {
+    await page.locator(".lobby-map select").selectOption(map);
+  }
   await page.getByRole("button", { name: "join team 1" }).click();
   await page.getByRole("button", { name: "add a bot to team 2" }).click();
   await page.getByRole("button", { name: "Ready", exact: true }).click();
@@ -95,5 +101,13 @@ test("on a 390x844 phone with the new-version banner up, they still do not (#129
   await page.route("**/build.json", (route) => route.fulfill({ json: { build: "newer" } }));
   await phoneMatch(page);
   await expect(page.locator(".build-banner")).toBeVisible();
+  await expectApart(page);
+});
+
+test("on a 390x844 phone a Guild Battle's long scoreboard wraps clear of them too (#1226)", async ({
+  page,
+}) => {
+  await phoneMatch(page, "guild-hall-isle");
+  await expect(page.locator(".hud-scoreboard")).toContainText("Lord");
   await expectApart(page);
 });

@@ -210,12 +210,17 @@ body {
   pointer-events: auto;
 }
 
-/* Top centre (#1042): the scoreboard, and the target frame under it. */
+/* Top centre (#1042): the scoreboard, and the target frame under it. As
+   wide as its line, not half the view its left: 50% leaves it, and clear
+   of the match buttons both sides, so a Guild Battle's long line wraps
+   rather than run under them (#1226). */
 .hud-top {
   position: absolute;
   top: calc(0.6rem + var(--build-banner-space, 0px));
   left: 50%;
   transform: translateX(-50%);
+  width: max-content;
+  max-width: max(calc(100% - 30rem), 18rem);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2129,8 +2134,12 @@ body {
   border: 1px solid var(--line);
   letter-spacing: 0.12em;
   font-size: 0.95rem;
-  white-space: nowrap;
   pointer-events: none;
+}
+
+/* A line too long for its room breaks between parts, never in one (#1226). */
+.hud-scoreboard-text > span {
+  white-space: nowrap;
 }
 
 /* A side's priest on a Priest Annihilation map (#1199): its side's
@@ -4457,6 +4466,11 @@ body:has(#app > .chat) .now-playing {
     transform: none;
     align-items: flex-start;
     max-width: calc(100vw - var(--compass-size) - 2.5rem);
+  }
+
+  .hud-scoreboard {
+    box-sizing: border-box;
+    max-width: 100%;
   }
 
   .hud-target-health {

@@ -601,8 +601,8 @@ export async function startMatchView(
 
   let finished = false;
   /** The summary (#1057), drawn once under the result banner when the host's `ended` lands. */
-  /** The stand as the last frame saw it, so a boost toasts once (#1226). */
-  let lastStand = connection.getSnapshot().stand;
+  /** The match as the last frame saw it, so a stand boost toasts once (#1226). */
+  let lastMatch = connection.getSnapshot();
   let summary:
     { readonly tables: readonly SummaryTable[]; readonly panel: HTMLElement } | undefined;
   const onFrame = (deltaSeconds: number): void => {
@@ -611,8 +611,8 @@ export async function startMatchView(
     matchMusic.snapshot(latestMatch);
     guardUnload(latestMatch.phase !== "finished");
     const self = latestMatch.players.find((p) => p.sessionId === connection.selfSessionId);
-    const boost = standBoostToast(lastStand, latestMatch.stand, self?.team);
-    lastStand = latestMatch.stand;
+    const boost = standBoostToast(lastMatch, latestMatch, self?.team);
+    lastMatch = latestMatch;
     if (boost !== undefined) {
       toast(boost);
     }
