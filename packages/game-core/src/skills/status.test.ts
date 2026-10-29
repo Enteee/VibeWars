@@ -45,6 +45,7 @@ describe("status definitions", () => {
         def.healthPipsPerEnchantment !== undefined ||
         def.preventsKnockdown ||
         def.preventsSpells ||
+        def.preventsBlocking ||
         def.unblockableBySource ||
         def.energyPips !== 0 ||
         def.armorModifier !== 0 ||
@@ -135,6 +136,8 @@ describe("status definitions", () => {
       "crippling-anguish": -5,
       "enduring-toxin": -4,
       lamentation: -2,
+      suffering: -2,
+      "lingering-curse": -3,
     });
   });
 

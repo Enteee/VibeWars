@@ -266,7 +266,8 @@ export function blowKind(weapon: Weapon): "melee" | "projectile" {
  * rolled after blind and before the damage roll. Rolled only when there
  * is a chance to block, as blind is, so a fight without blocking keeps
  * its random stream. A hex of the attacker's that bars blocking it
- * (#1234, `unblockableBySource`) leaves no chance.
+ * (#1234, `unblockableBySource`) leaves no chance, and so does a hex that
+ * bars blocking at all (#1332, `preventsBlocking`).
  */
 export function blocks(
   victim: Combatant,
@@ -277,7 +278,10 @@ export function blocks(
   const exposed = victim.statuses.active.some(
     ({ id, sourceId }) => sourceId === attackerId && getStatusDefinition(id).unblockableBySource,
   );
-  if (exposed) {
+  if (
+    exposed ||
+    victim.statuses.active.some(({ id }) => getStatusDefinition(id).preventsBlocking)
+  ) {
     return false;
   }
   const blocking = blockingStatusesOf(victim);
@@ -594,6 +598,15 @@ export function bearerHit(
 }
 
 /**
+ * One of the attacker's blows failed to hit (#1332): swing, attack skill
+ * or arrow alike, it missed on a roll or was blocked. Recorded for what
+ * answers one, as Price of Failure.
+ */
+export function bearerFailedToHit(attacker: Combatant): void {
+  attacker.statuses.recordFailedHit();
+}
+
+/**
  * What the attacker's next attack skill carries (#758): the statuses that
  * hold it, as Anthem of Flame, and their riders on whoever it hits. Taken
  * when the skill is used, so a ranged one carries them in flight.
@@ -656,10 +669,12 @@ function strike(
   }
   if (blindMisses(attacker, rng)) {
     events.push({ kind: "attack-missed", targetId: victim.id });
+    bearerFailedToHit(attacker);
     return;
   }
   if (blocks(victim, attacker.id, "melee", rng)) {
     events.push({ kind: "attack-blocked", targetId: victim.id });
+    bearerFailedToHit(attacker);
     attackReached(victim, events);
     return;
   }
@@ -821,10 +836,12 @@ export function resolveAttackSkill(
       }
       if (blindMisses(caster, rng)) {
         events.push({ kind: "attack-missed", targetId: victim.id });
+        bearerFailedToHit(caster);
         continue;
       }
       if (rule?.unblockable !== true && blocks(victim, caster.id, kind, rng)) {
         events.push({ kind: "attack-blocked", targetId: victim.id });
+        bearerFailedToHit(caster);
         attackReached(victim, events);
         blocked.push(victim);
         continue;

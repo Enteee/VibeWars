@@ -254,13 +254,12 @@ export const SKILL_ICONS = {
   "ritualist.spirit-to-flesh": { glyph: "totem", modifier: "less" },
   "ritualist.feast-of-souls": { glyph: "party-heal", modifier: "area" },
   "ritualist.consume-soul": { glyph: "ghost", modifier: "paw" },
-  // Placeholders until the asset-designer's (#1270): the Channeling staples.
-  "ritualist.spirit-rift": { glyph: "lightning", modifier: "hourglass" },
-  "ritualist.spirit-burn": { glyph: "lightning", modifier: "plus" },
-  "ritualist.essence-strike": { glyph: "lightning", modifier: "up" },
-  "ritualist.painful-bond": { glyph: "chain", modifier: "plus" },
-  "ritualist.lamentation": { glyph: "hex-burst", modifier: "corpse" },
-  "ritualist.signet-of-spirits": { glyph: "energy", modifier: "plus" },
+  "ritualist.spirit-rift": { glyph: "rift-strike" },
+  "ritualist.spirit-burn": { glyph: "spirit-burn" },
+  "ritualist.essence-strike": { glyph: "spirit-energy" },
+  "ritualist.painful-bond": { glyph: "bond-spike" },
+  "ritualist.lamentation": { glyph: "tear-fall" },
+  "ritualist.signet-of-spirits": { glyph: "spirit-trio" },
   // Placeholders until the asset-designer's (#1316): the creation staples.
   "ritualist.boon-of-creation": { glyph: "totem", modifier: "clock" },
   "ritualist.explosive-growth": { glyph: "lightning", modifier: "area" },
@@ -285,4 +284,11 @@ export const SKILL_ICONS = {
   "assassin.feigned-neutrality": { glyph: "crescent", modifier: "self" },
   "assassin.way-of-perfection": { glyph: "crescent", modifier: "bolt" },
   "assassin.caltrops": { glyph: "limp", modifier: "bleed" },
+  // Placeholders until the asset-designer's (#1332): the Curses hexes.
+  "necromancer.barbs": { glyph: "hex-burst", modifier: "plus" },
+  "necromancer.price-of-failure": { glyph: "hex-burst", modifier: "bolt" },
+  "necromancer.suffering": { glyph: "hex-burst", modifier: "area" },
+  "necromancer.defile-flesh": { glyph: "hex-burst", modifier: "less" },
+  "necromancer.rigor-mortis": { glyph: "hex-burst", modifier: "half" },
+  "necromancer.lingering-curse": { glyph: "hex-burst", modifier: "hourglass" },
 };
