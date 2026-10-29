@@ -20,6 +20,8 @@ packages/game-data/generated/
 # must actually handle.
 packages/game-data/src/__fixtures__/
 packages/game-data/raw/
+# hub wiki's captures of wiki.guildwars.com and Wayback (#1380), kept as served.
+scripts/bots/fixtures/wiki/
 # Strudel gives quotes meaning (double quotes are mini-notation, single quotes
 # are plain strings), so Prettier's quote normalisation would change what a
 # track plays.

@@ -29,6 +29,8 @@
     "match-start",
     "rejoin-challenge",
     "rejoin-proof",
+    "observe",
+    "observing",
     "call",
     "calls",
     "traps",
@@ -279,6 +281,8 @@
         { "literal": "lobby-state" },
         { "literal": "lobby-welcome" },
         { "literal": "match-start" },
+        { "literal": "observe" },
+        { "literal": "observing" },
         { "literal": "party-consent" },
         { "literal": "party-formed" },
         { "literal": "party-proposal" },
@@ -1702,6 +1706,68 @@
         { "name": "protocolVersion", "optional": false, "type": "string" }
       ]
     },
+    "PeerObserve": {
+      "properties": [
+        { "name": "matchId", "optional": false, "type": "string" },
+        { "name": "protocolVersion", "optional": false, "type": "string" }
+      ]
+    },
+    "PeerObserving": {
+      "properties": [
+        { "name": "delaySeconds", "optional": false, "type": "number" },
+        {
+          "name": "map",
+          "optional": false,
+          "type": {
+            "properties": [
+              { "name": "height", "optional": false, "type": "number" },
+              { "name": "id", "optional": false, "type": "string" },
+              { "name": "name", "optional": false, "type": "string" },
+              {
+                "name": "walls",
+                "optional": false,
+                "type": {
+                  "array": {
+                    "union": [
+                      {
+                        "properties": [
+                          { "name": "height", "optional": false, "type": "number" },
+                          { "name": "kind", "optional": false, "type": { "literal": "rect" } },
+                          { "name": "width", "optional": false, "type": "number" },
+                          { "name": "x", "optional": false, "type": "number" },
+                          { "name": "y", "optional": false, "type": "number" }
+                        ]
+                      },
+                      {
+                        "properties": [
+                          { "name": "kind", "optional": false, "type": { "literal": "polygon" } },
+                          {
+                            "name": "points",
+                            "optional": false,
+                            "type": {
+                              "array": {
+                                "properties": [
+                                  { "name": "x", "optional": false, "type": "number" },
+                                  { "name": "y", "optional": false, "type": "number" }
+                                ]
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              },
+              { "name": "width", "optional": false, "type": "number" }
+            ]
+          }
+        },
+        { "name": "protocolVersion", "optional": false, "type": "string" },
+        { "name": "tickIntervalMs", "optional": false, "type": "number" },
+        { "name": "timeLimitSeconds", "optional": false, "type": "number" }
+      ]
+    },
     "PeerPartyConsent": {
       "properties": [
         { "name": "consent", "optional": false, "type": "string" },
@@ -1718,7 +1784,9 @@
             "union": [
               { "literal": "match-full" },
               { "literal": "match-over" },
-              { "literal": "protocol-mismatch" }
+              { "literal": "not-a-spectator" },
+              { "literal": "protocol-mismatch" },
+              { "literal": "wrong-match" }
             ]
           }
         }

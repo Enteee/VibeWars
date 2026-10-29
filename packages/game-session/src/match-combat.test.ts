@@ -191,10 +191,10 @@ async function closeDistance(
 /** A remote pair, on opposite teams, in their first snapshot. */
 /** Two players on opposing teams, both `NUKER` unless named otherwise. */
 async function joinPair(match: TestMatch = startMatch(), as: { a?: string; b?: string } = {}) {
-  const { connection: a } = await match.join(helloAs(as.a ?? NUKER));
+  const { connection: a, transport: aRoom } = await match.join(helloAs(as.a ?? NUKER));
   const { connection: b } = await match.join(helloAs(as.b ?? NUKER));
   await match.step(TICK);
-  return { match, a, b };
+  return { match, a, b, aRoom };
 }
 
 /** Every refusal `connection` hears. */
@@ -705,10 +705,10 @@ describe("networked combat (P2P)", () => {
   });
 
   it("sends at most one combat message a tick, as a batch of entries (#288)", async () => {
-    const { match, a, b } = await joinPair();
-    // A bystander that hears what the host broadcasts, raw, and which tick
-    // it came after: the snapshot goes out before the tick's combat.
-    const spy = match.network.join();
+    const { match, a, b, aRoom } = await joinPair();
+    // What the host sends a player, raw, and which tick it came after: the
+    // snapshot goes out before the tick's combat.
+    const spy = aRoom;
     let tick = -1;
     const sent: { tick: number; message: unknown }[] = [];
     spy.on("snapshot", (data) => {

@@ -107,6 +107,28 @@ export interface ConnectMatchOptions {
   readonly timeoutMs: number;
 }
 
+/**
+ * `handle` each message on `channel` from `hostId`, through `parse`;
+ * anything else, from anyone, is dropped. Returns what removes it.
+ */
+export function onFromHost<T>(
+  transport: Transport,
+  hostId: string,
+  channel: Channel,
+  parse: (value: unknown) => T | undefined,
+  handle: (message: T) => void,
+): () => void {
+  return transport.on(channel, (data, from) => {
+    if (from !== hostId) {
+      return;
+    }
+    const message = parse(data);
+    if (message !== undefined) {
+      handle(message);
+    }
+  });
+}
+
 /** The latest recharges, and the match time they were told at, to count down from. */
 interface Recharges {
   readonly message: RechargeMessage;
@@ -159,17 +181,7 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
     parse: (value: unknown) => T | undefined,
     handle: (message: T) => void,
   ): void => {
-    unsubscribe.push(
-      transport.on(channel, (data, from) => {
-        if (from !== hostId) {
-          return;
-        }
-        const message = parse(data);
-        if (message !== undefined) {
-          handle(message);
-        }
-      }),
-    );
+    unsubscribe.push(onFromHost(transport, hostId, channel, parse, handle));
   };
 
   const tell = (state: "online" | "reconnecting" | "lost"): void => {
@@ -216,7 +228,12 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
 
   // A tick's snapshot comes in parts (#662); what follows sees it whole.
   const assemble = snapshotAssembler();
+  // Nothing of the stream counts before the welcome: what comes earlier is
+  // a match this peer watched before, its host still draining it (#480).
   fromHost("snapshot", parseWireSnapshotPart, (part) => {
+    if (welcomed === undefined) {
+      return;
+    }
     const snapshot = assemble(part);
     if (snapshot === undefined) {
       return;
@@ -232,6 +249,9 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
     }
   });
   fromHost("combat", parseWireCombatBatch, (batch) => {
+    if (welcomed === undefined) {
+      return;
+    }
     for (const entry of batch) {
       const message = combatMessage(entry);
       for (const handler of combatHandlers) {
@@ -260,6 +280,9 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
     traps = message.traps;
   });
   fromHost("ended", parseWireEnded, (message) => {
+    if (message.endReason !== "host-left" && welcomed === undefined) {
+      return;
+    }
     summary = message.summary;
     if (message.endReason === "host-left") {
       loseHost();
