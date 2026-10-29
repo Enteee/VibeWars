@@ -842,31 +842,46 @@ export function standBoostToast(
     : { text: "Enemy morale boost", side: "theirs" };
 }
 
+/** What a point says in each mode that toasts one, yours then the foe's. */
+const SCORE_TOAST_TEXT: Partial<Record<MatchMode, readonly [string, string]>> = {
+  "relic-run": ["Relic scored!", "Enemy relic scored"],
+  "king-of-the-hill": ["Altar point!", "Enemy altar point"],
+};
+
 /**
- * The toast for a relic scored in a Relic Run (#1387), from two snapshots:
- * "Relic scored!" when your side's score went up, "Enemy relic scored" when
- * the foe's did; a spectator's side is team 0's. Points missed between two
- * frames toast once, and yours win if both sides scored. `undefined` for the
- * first snapshot, no score, and any match that is not a Relic Run (a
- * kill-count score is silent). A `before` without relics is no before: the
- * client's placeholder before its first frame is 0-0 with none, so a
- * mid-match rejoin would otherwise toast the score it walked in on.
+ * The toast for a point scored (#1387, #1399), from two snapshots: in a
+ * Relic Run "Relic scored!" when your side's score went up, "Enemy relic
+ * scored" when the foe's did, and in King of the Hill "Altar point!" and
+ * "Enemy altar point"; a spectator's side is team 0's. Points missed
+ * between two frames toast once, and yours win if both sides scored.
+ * `undefined` for the first snapshot, no score, and any other mode (a
+ * kill-count score is silent). A `before` without the mode's relics or
+ * altar is no before: the client's placeholder before its first frame is
+ * 0-0 with neither, so a mid-match rejoin would otherwise toast the score
+ * it walked in on.
  */
-export function relicScoreToast(
-  before: Pick<MatchSnapshot, "scoreTeam0" | "scoreTeam1" | "relics"> | undefined,
-  after: Pick<MatchSnapshot, "scoreTeam0" | "scoreTeam1" | "relics">,
+export function objectiveScoreToast(
+  before: Pick<MatchSnapshot, "scoreTeam0" | "scoreTeam1" | "relics" | "altar"> | undefined,
+  after: Pick<MatchSnapshot, "scoreTeam0" | "scoreTeam1">,
   selfTeam: number | undefined,
+  mode: MatchMode,
 ): ObjectiveToast | undefined {
-  if (before === undefined || before.relics.length === 0 || after.relics.length === 0) {
+  const text = SCORE_TOAST_TEXT[mode];
+  if (text === undefined || before === undefined) {
+    return undefined;
+  }
+  const placeholder =
+    mode === "relic-run" ? before.relics.length === 0 : before.altar === undefined;
+  if (placeholder) {
     return undefined;
   }
   const rose0 = after.scoreTeam0 > before.scoreTeam0;
   const rose1 = after.scoreTeam1 > before.scoreTeam1;
   const [ours, theirs] = (selfTeam ?? 0) === 1 ? [rose1, rose0] : [rose0, rose1];
   if (ours) {
-    return { text: "Relic scored!", side: "ours" };
+    return { text: text[0], side: "ours" };
   }
-  return theirs ? { text: "Enemy relic scored", side: "theirs" } : undefined;
+  return theirs ? { text: text[1], side: "theirs" } : undefined;
 }
 
 /**
@@ -1615,9 +1630,67 @@ export function ghostLeaderLabel(
   if (leaderId === null) {
     return "stays";
   }
-  return leaderId === self.sessionId
-    ? "follows you"
-    : `follows ${names.get(leaderId) ?? "an ally"}`;
+  return `follows ${leaderName(leaderId, self.sessionId, names)}`;
+}
+
+/** A Ghostly Hero's leader as a viewer names it (#1419): "you", or the leader's name. */
+function leaderName(
+  leaderId: string,
+  selfId: string | undefined,
+  names: ReadonlyMap<string, string>,
+): string {
+  return leaderId === selfId ? "you" : (names.get(leaderId) ?? "an ally");
+}
+
+/**
+ * The toast for your team's Ghostly Hero changing leader (#1419), from
+ * two snapshots: "Ghostly Hero follows you", "… follows <name>", or
+ * "Ghostly Hero stays" once it follows nobody. `undefined` for the first
+ * snapshot, a spectator (`selfTeam` undefined), a foe's ghost, no change,
+ * and a ghost dead in either snapshot: its death and its rise say nothing.
+ */
+export function ghostLeaderToast(
+  before: Pick<MatchSnapshot, "players"> | undefined,
+  after: Pick<MatchSnapshot, "players">,
+  selfId: string,
+  selfTeam: number | undefined,
+  names: ReadonlyMap<string, string>,
+): string | undefined {
+  if (before === undefined || selfTeam === undefined) {
+    return undefined;
+  }
+  const ghost = after.players.find(
+    (player) => player.creature?.kind === "ghostly-hero" && player.team === selfTeam,
+  );
+  const was = before.players.find((player) => player.sessionId === ghost?.sessionId);
+  if (ghost?.creature === undefined || was?.creature === undefined || ghost.dead || was.dead) {
+    return undefined;
+  }
+  const { leaderId } = ghost.creature;
+  if (leaderId === was.creature.leaderId) {
+    return undefined;
+  }
+  return leaderId === null
+    ? `${ghost.name} stays`
+    : `${ghost.name} follows ${leaderName(leaderId, selfId, names)}`;
+}
+
+/**
+ * The arena name of a Ghostly Hero that follows someone (#1419),
+ * "Ghostly Hero › you" or "Ghostly Hero › <name>"; any other body's, a
+ * staying ghost's and a foe's ghost's plain name. A spectator
+ * (`self` undefined) sees both sides' leaders.
+ */
+export function ghostNameplate(
+  player: PlayerSnapshot,
+  self: PlayerSnapshot | undefined,
+  names: ReadonlyMap<string, string>,
+): string {
+  const leaderId = player.creature?.kind === "ghostly-hero" ? player.creature.leaderId : null;
+  if (leaderId === null || (self !== undefined && self.team !== player.team)) {
+    return player.name;
+  }
+  return `${player.name} › ${leaderName(leaderId, self?.sessionId, names)}`;
 }
 
 /** The target frame (#484): header, health bar and cast row. */

@@ -1117,11 +1117,13 @@ const STALE_CHARACTER = {
  * where `indexedDB` lives, and the e2e tsconfig deliberately has no DOM
  * lib — typing it here would mean either a lie or a pile of casts. Once
  * per call, not an init script, so a reload does not quietly re-seed it.
+ * Opened without a version: the page has already created the store at
+ * whatever version the app is on.
  */
 async function inCharacterStore(page: Page, body: string): Promise<unknown> {
   return page.evaluate(`
     new Promise((resolve, reject) => {
-      const open = indexedDB.open(${JSON.stringify(STORAGE_NAMESPACE)}, 1);
+      const open = indexedDB.open(${JSON.stringify(STORAGE_NAMESPACE)});
       open.onerror = () => reject(open.error);
       open.onsuccess = () => {
         // Resolve on the commit, not the request: the caller reloads

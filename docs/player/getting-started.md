@@ -9,7 +9,8 @@ on a phone or a touch-only tablet: open it on a computer.
 ## Make a character
 
 Your characters are listed on the left of the main menu, under
-**Play as**.
+**Play as**, newest first, with the random character your first start
+rolled always at the bottom.
 
 1. Press **New character**.
 2. Pick a **primary profession**, what your character mainly is, and a
@@ -51,6 +52,22 @@ To play with friends:
   empty place. When everyone is in, press **Start match**.
 - **Join:** paste the code you were sent into the lobby code field and
   press **Join**.
+
+Type a **Guild tag** of 2 to 4 letters or digits beside your name, and
+everyone sees it after your name, like `Ente [VIBE]`.
+
+## Your record
+
+Every match you finish with one of your characters, hosted, joined or
+from Random Arena, goes on that character's record. The menu shows it
+after the character's professions, such as **12W 7L**, with draws only
+once there are some. Press **Record** at the top of the menu for your
+last 50 matches: when, who, which map and mode, and how it went.
+
+The record is kept in this browser only. Nobody else sees or checks it.
+A match you leave before it ends, a Training Ground session and a match
+played with a starter build are not recorded. Deleting a character
+deletes its record.
 
 ## In a match
 

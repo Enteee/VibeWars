@@ -7,6 +7,7 @@ function player(sessionId: string, overrides: Partial<PlayerSnapshot> = {}): Pla
   return {
     sessionId,
     name: sessionId,
+    guildTag: undefined,
     x: 0,
     y: 0,
     facing: 0,

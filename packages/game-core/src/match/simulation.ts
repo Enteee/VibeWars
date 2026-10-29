@@ -1577,7 +1577,9 @@ export class MatchSimulation {
   /**
    * One pulse of `rule` at `position` (#1113): its effects land from
    * `owner` on whoever its area takes there, in line of sight of it, and
-   * it is logged as a cast is, even when it hits nobody.
+   * it is logged as a cast is, even when it hits nobody. A pulse's
+   * interrupt comes free with what it lands, untimed, as Maelstrom's
+   * (#1367): finding nothing to interrupt is no miss, so it says nothing.
    */
   #landPulse(owner: ParticipantRecord, skillId: string, position: Vec2, rule: PulseRule): void {
     const skill = getSkill(skillId);
@@ -1585,7 +1587,7 @@ export class MatchSimulation {
       return;
     }
     const pulsing = { ...skill, area: rule.area, effects: rule.effects };
-    const { events } = resolveSkillEffects({
+    const resolved = resolveSkillEffects({
       skill: pulsing,
       caster: owner.combatant,
       targets: resolveTargets({
@@ -1600,6 +1602,7 @@ export class MatchSimulation {
       rules: this.#ruleset.combat,
       surroundings: this.#participants,
     });
+    const events = resolved.events.filter((event) => event.kind !== "interrupt-missed");
     this.#log.push({
       tick: this.#tick,
       atSeconds: this.#elapsedSeconds,

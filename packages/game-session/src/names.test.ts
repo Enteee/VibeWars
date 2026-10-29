@@ -1,7 +1,7 @@
 import { MAX_CHAT_GRAPHEMES } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
-import { sanitizeChatText, sanitizeName } from "./names.js";
+import { sanitizeChatText, sanitizeGuildTag, sanitizeName } from "./names.js";
 
 describe("sanitizeName", () => {
   it("keeps a reasonable name as-is", () => {
@@ -191,5 +191,35 @@ describe("sanitizeChatText (#479)", () => {
     const line = sanitizeChatText(family.repeat(500));
     expect(line.length % family.length).toBe(0);
     expect(line.length).toBeGreaterThan(0);
+  });
+});
+
+describe("sanitizeGuildTag (#1406)", () => {
+  it("keeps a tag of 2, 3 or 4 letters or digits, case as typed", () => {
+    expect(sanitizeGuildTag("Vb")).toBe("Vb");
+    expect(sanitizeGuildTag("x9Z")).toBe("x9Z");
+    expect(sanitizeGuildTag("VIBE")).toBe("VIBE");
+  });
+
+  it("trims the blanks around one", () => {
+    expect(sanitizeGuildTag("  VIBE ")).toBe("VIBE");
+  });
+
+  it("is none for one too short, too long, or empty", () => {
+    expect(sanitizeGuildTag("V")).toBeNull();
+    expect(sanitizeGuildTag("VIBES")).toBeNull();
+    expect(sanitizeGuildTag("")).toBeNull();
+  });
+
+  it("is none for anything but ASCII letters and digits", () => {
+    for (const raw of ["VÏBE", "VI\u{1f600}", "[VB]", "V B", "VB\u0000", "V-B", "‮VB"]) {
+      expect(sanitizeGuildTag(raw), raw).toBeNull();
+    }
+  });
+
+  it("is none for a non-string", () => {
+    for (const raw of [42, null, undefined, ["VIBE"], { tag: "VIBE" }]) {
+      expect(sanitizeGuildTag(raw)).toBeNull();
+    }
   });
 });
