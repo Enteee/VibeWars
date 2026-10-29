@@ -3,11 +3,14 @@ import { describe, expect, it } from "vitest";
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { WEAPONS } from "../equipment/weapons.js";
 import { segment, type Segment } from "../geometry.js";
-import { KING_OF_THE_HILL_MATCH_RULES, PRIEST_WAVE_SECONDS } from "../match-rules.js";
+import {
+  KING_OF_THE_HILL_MATCH_RULES,
+  POINT_TICK_SECONDS,
+  PRIEST_WAVE_SECONDS,
+} from "../match-rules.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { chargeAdrenaline } from "../skills/testing.js";
 import { distance, vec2, type Vec2 } from "../vec2.js";
-import { KOTH_POINT_SECONDS } from "./altar.js";
 import { applyIntent } from "./apply-intent.js";
 import { CLAIM_SKILL_ID, GHOST_HEALTH, ghostId, type HillField } from "./ghost.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
@@ -327,10 +330,10 @@ describe("claiming the altar (#1377)", () => {
 describe("a King of the Hill match (#1377)", () => {
   it("scores the holder a point for every 30 s held, its ghost dead or alive", () => {
     const sim = held();
-    stepFor(sim, KOTH_POINT_SECONDS);
+    stepFor(sim, POINT_TICK_SECONDS);
     expect(points(sim)).toEqual([1, 0]);
     kill(sim, GHOST_0);
-    stepFor(sim, KOTH_POINT_SECONDS);
+    stepFor(sim, POINT_TICK_SECONDS);
     expect(get(sim, GHOST_0).combatant.dead).toBe(true);
     expect(points(sim)).toEqual([2, 0]);
   });
@@ -349,7 +352,7 @@ describe("a King of the Hill match (#1377)", () => {
     expect(sim.elapsedSeconds).toBeCloseTo(KING_OF_THE_HILL_MATCH_RULES.timeLimitSeconds, 3);
     expect(points(sim)[0]).toBe(
       Math.floor(
-        (KING_OF_THE_HILL_MATCH_RULES.timeLimitSeconds - CLAIM_SECONDS) / KOTH_POINT_SECONDS,
+        (KING_OF_THE_HILL_MATCH_RULES.timeLimitSeconds - CLAIM_SECONDS) / POINT_TICK_SECONDS,
       ),
     );
     expect(sim.outcome).toEqual({ phase: "finished", winningTeam: 0, reason: "time" });

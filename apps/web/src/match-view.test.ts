@@ -64,6 +64,7 @@ function match(players: readonly PlayerSnapshot[]): MatchSnapshot {
     altar: undefined,
     altarHolder: undefined,
     altarHeldSeconds: 0,
+    capturePoints: [],
     summary: undefined,
   };
 }

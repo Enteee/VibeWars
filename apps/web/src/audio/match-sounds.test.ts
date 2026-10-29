@@ -68,6 +68,7 @@ function snapshot(castingSkillId: string | undefined): MatchSnapshot {
     altar: undefined,
     altarHolder: undefined,
     altarHeldSeconds: 0,
+    capturePoints: [],
     summary: undefined,
   };
 }

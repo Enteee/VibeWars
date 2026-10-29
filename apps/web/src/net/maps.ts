@@ -12,6 +12,7 @@ import arenaSplit from "@vibewars/game-maps/maps/arena-split/map.json" with { ty
 import guildHallIsle from "@vibewars/game-maps/maps/guild-hall-isle/map.json" with { type: "json" };
 import relicTemples from "@vibewars/game-maps/maps/relic-temples/map.json" with { type: "json" };
 import hillCourtyard from "@vibewars/game-maps/maps/hill-courtyard/map.json" with { type: "json" };
+import forgottenShrines from "@vibewars/game-maps/maps/forgotten-shrines/map.json" with { type: "json" };
 import type {
   BaseGuard,
   FlagField,
@@ -49,6 +50,8 @@ export const ARENA_MAPS: readonly MapData[] = [
   relicTemples,
   // King of the Hill's (#1377).
   hillCourtyard,
+  // Capture Points' (#1378).
+  forgottenShrines,
 ].map((raw) => validateMapData(raw));
 
 /** The arena a new lobby starts on, the server's default before (#403). */
@@ -90,7 +93,12 @@ export function randomArenaMapPool(mode: QueueMode): string[] {
 }
 
 /** The modes a Random Arena never plays. */
-const NOT_RANDOM: readonly MatchMode[] = ["guild-battle", "relic-run", "king-of-the-hill"];
+const NOT_RANDOM: readonly MatchMode[] = [
+  "guild-battle",
+  "relic-run",
+  "king-of-the-hill",
+  "capture-points",
+];
 
 /**
  * The mode a match on `mapId` plays (#476), from the same map file the
@@ -228,6 +236,9 @@ export function hostMap(mapId: string): HostMap | undefined {
     flagField: flagFieldOf(map.objectives),
     relicField: relicFieldOf(map.objectives),
     hillField: hillFieldOf(map.objectives),
+    capturePoints: map.objectives.flatMap((objective) =>
+      objective.kind === "capture-point" ? [objective.position] : [],
+    ),
     guards: guardsOf(map.objectives),
   };
 }

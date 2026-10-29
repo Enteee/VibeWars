@@ -68,6 +68,7 @@ function match(players: readonly PlayerSnapshot[], selfSessionId = "me"): MatchS
     altar: undefined,
     altarHolder: undefined,
     altarHeldSeconds: 0,
+    capturePoints: [],
     summary: undefined,
   };
 }

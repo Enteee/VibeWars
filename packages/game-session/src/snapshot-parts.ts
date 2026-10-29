@@ -182,6 +182,7 @@ export function snapshotAssembler(): (part: WireSnapshotPart) => WireSnapshot | 
       altar: part.altar,
       altarHolder: part.altarHolder,
       altarHeldSeconds: part.altarHeldSeconds,
+      capturePoints: part.capturePoints,
     };
   };
 }

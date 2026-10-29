@@ -24,6 +24,7 @@ describe("sizeClass (#444)", () => {
       "guild-hall-isle": "large",
       "relic-temples": "medium",
       "hill-courtyard": "medium",
+      "forgotten-shrines": "medium",
     });
   });
 });

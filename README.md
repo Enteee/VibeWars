@@ -82,7 +82,8 @@ own development was verified that way; see
   [Equipment](docs/player/equipment.md)).
 - **Eleven original maps**, picked by the lobby host, in six
   [modes](docs/player/modes.md): Annihilation, Kill Count, Priest
-  Annihilation, Guild Battle, Relic Run and King of the Hill.
+  Annihilation, Guild Battle, Relic Run, King of the Hill and Capture
+  Points.
 - **Random Arena**: queue for a team size and get matched with other
   players on a random map
   ([Getting started](docs/player/getting-started.md)).

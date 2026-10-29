@@ -157,6 +157,8 @@ const MODE_LINES: Readonly<Record<MatchMode, string>> = {
   "relic-run": "Relic Run: carry your relic to the altar. Most points in 8 minutes wins.",
   "king-of-the-hill":
     "King of the Hill: lead your Ghostly Hero onto the altar. Hold it to score; most points in 8 minutes wins.",
+  "capture-points":
+    "Capture Points: stand on shrines to take them. Each shrine you own scores every 30 s.",
 };
 
 /** The mode `map` plays, in a line: "Kill Count: most kills in 3 minutes". */

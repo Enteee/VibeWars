@@ -1,4 +1,5 @@
 import type {
+  CapturePoint,
   ChainRole,
   CombatEvent,
   CompanionMode,
@@ -172,6 +173,8 @@ export interface MatchSnapshot {
   readonly altarHolder: number | undefined;
   /** Seconds its holder has kept it since the claim or the last point (#1377); 0 off such a map. */
   readonly altarHeldSeconds: number;
+  /** Every Capture Points shrine and who holds it (#1378); `[]` on a map without them. */
+  readonly capturePoints: readonly CapturePoint[];
   /** What each player did, from the host's `ended` (#1057); `undefined` until then. */
   readonly summary: readonly MatchSummaryRow[] | undefined;
 }

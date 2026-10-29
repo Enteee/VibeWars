@@ -235,6 +235,7 @@ const snapshot: WireSnapshotPart = {
   altar: null,
   altarHolder: null,
   altarHeldSeconds: 0,
+  capturePoints: [],
 };
 
 /** A Guild Battle's flags (#1225): one carried, one on the ground; and its aggression (#1226). */
@@ -264,6 +265,16 @@ const hill: WireSnapshotPart = {
   altar: { x: 1000, y: 700 },
   altarHolder: 1,
   altarHeldSeconds: 12.5,
+};
+
+/** Capture Points' shrines (#1378): one ours, one being drained by the foe, one neutral. */
+const shrined: WireSnapshotPart = {
+  ...snapshot,
+  capturePoints: [
+    { x: 480, y: 700, owner: 0, capturer: 0, progress: 1 },
+    { x: 1100, y: 700, owner: 0, capturer: 0, progress: 0.4 },
+    { x: 1720, y: 700, owner: null, capturer: null, progress: 0 },
+  ],
 };
 
 const combat: WireCombat = {
@@ -622,6 +633,7 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ],
   ["snapshot with relics and an altar (#1374)", parseWireSnapshotPart, relicked],
   ["snapshot with a held altar (#1377)", parseWireSnapshotPart, hill],
+  ["snapshot with capture points (#1378)", parseWireSnapshotPart, shrined],
   ["combat batch", parseWireCombatBatch, combatBatch],
   ["skill-bar", parseWireSkillBar, skillBar],
   [
@@ -917,6 +929,35 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ],
   ["snapshot without relics (#1374)", parseWireSnapshotPart, { ...snapshot, relics: undefined }],
   ["snapshot without an altar (#1374)", parseWireSnapshotPart, { ...snapshot, altar: undefined }],
+  [
+    "snapshot without capture points (#1378)",
+    parseWireSnapshotPart,
+    { ...snapshot, capturePoints: undefined },
+  ],
+  [
+    "snapshot with a capture point past full (#1378)",
+    parseWireSnapshotPart,
+    { ...shrined, capturePoints: [{ x: 1, y: 1, owner: 0, capturer: 0, progress: 1.5 }] },
+  ],
+  [
+    "snapshot with a capture point of a third team (#1378)",
+    parseWireSnapshotPart,
+    { ...shrined, capturePoints: [{ x: 1, y: 1, owner: 2, capturer: 2, progress: 1 }] },
+  ],
+  [
+    "snapshot with six capture points (#1378)",
+    parseWireSnapshotPart,
+    {
+      ...shrined,
+      capturePoints: Array.from({ length: 6 }, () => ({
+        x: 1,
+        y: 1,
+        owner: null,
+        capturer: null,
+        progress: 0,
+      })),
+    },
+  ],
   [
     "snapshot with a relic on the stand (#1374)",
     parseWireSnapshotPart,

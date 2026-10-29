@@ -10,6 +10,7 @@ import arenaOpen from "../maps/arena-open/map.json" with { type: "json" };
 import arenaPillars from "../maps/arena-pillars/map.json" with { type: "json" };
 import arenaRing from "../maps/arena-ring/map.json" with { type: "json" };
 import arenaSplit from "../maps/arena-split/map.json" with { type: "json" };
+import forgottenShrines from "../maps/forgotten-shrines/map.json" with { type: "json" };
 import guildHallIsle from "../maps/guild-hall-isle/map.json" with { type: "json" };
 import hillCourtyard from "../maps/hill-courtyard/map.json" with { type: "json" };
 import relicTemples from "../maps/relic-temples/map.json" with { type: "json" };
@@ -42,6 +43,7 @@ describe("the maps the browser imports", () => {
       arenaPillars,
       arenaRing,
       arenaSplit,
+      forgottenShrines,
       guildHallIsle,
       hillCourtyard,
       relicTemples,

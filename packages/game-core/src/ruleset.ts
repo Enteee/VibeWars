@@ -191,3 +191,21 @@ export const MINIMAL_GW_INSPIRED_PVP_V1: Ruleset = Object.freeze({
  * units. A rule, not a tunable.
  */
 export const ADRENALINE_PER_STRIKE = 25;
+
+/**
+ * GW1's energy pool before armor and weapons (#1395): "All professions …
+ * have an innate capacity of 20 energy" (GW1 wiki, "Energy").
+ */
+export const GW1_BASE_ENERGY = 20;
+
+/**
+ * A GW1 energy *threshold* scaled to this ruleset's larger pool (#1395):
+ * a cap such as Warrior's Endurance's "cannot raise your Energy above 22"
+ * sits where it sat against GW1's 20. Costs and gains stay GW1's, because
+ * they are amounts spent or given, not caps on the pool: the next cap uses
+ * this, the next cost does not. Reads the default ruleset on purpose, since
+ * the skill catalog is static data.
+ */
+export function gw1EnergyScaled(gw1: number): number {
+  return Math.round((gw1 * MINIMAL_GW_INSPIRED_PVP_V1.combat.baseEnergy) / GW1_BASE_ENERGY);
+}

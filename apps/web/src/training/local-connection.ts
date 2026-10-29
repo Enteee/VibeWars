@@ -297,6 +297,7 @@ export function createLocalConnection(options: {
         altar: simulation.altar,
         altarHolder: simulation.altarState.holder ?? undefined,
         altarHeldSeconds: simulation.altarState.heldSeconds,
+        capturePoints: simulation.capturePoints,
         // No match with rules ends here, so there is never a summary (#1057).
         summary: undefined,
       };

@@ -47,8 +47,9 @@ const spawnPointSchema = z.object({
  * come back and Priest Annihilation's priest stands, where a Guild
  * Battle's Guild Lord stands (#1222), one of its base guards' posts
  * (#1223), or its flag stand and where each team's flag starts (#1225);
- * a Relic Run's altar and where each team's relic starts (#1374), or
- * King of the Hill's altar and where each team's Ghostly Hero starts (#1377).
+ * a Relic Run's altar and where each team's relic starts (#1374);
+ * King of the Hill's altar and where each team's Ghostly Hero starts
+ * (#1377); or one of Capture Points' shrines (#1378).
  */
 const objectiveSchema = z.discriminatedUnion("kind", [
   z.object({
@@ -90,10 +91,14 @@ const objectiveSchema = z.discriminatedUnion("kind", [
     kind: z.literal("altar"),
     position: vec2Schema,
   }),
+  z.object({
+    kind: z.literal("capture-point"),
+    position: vec2Schema,
+  }),
 ]);
 
-/** An objective that belongs to no team: the map has one, or none. */
-type SharedKind = Extract<Objective, { kind: "flag-stand" | "altar" }>["kind"];
+/** An objective that belongs to no team. */
+type SharedKind = Extract<Objective, { kind: "flag-stand" | "altar" | "capture-point" }>["kind"];
 type TeamKind = Exclude<Objective["kind"], SharedKind>;
 
 /** Which team objectives each mode may have; none for a mode not here. */
@@ -104,12 +109,21 @@ const OBJECTIVES_BY_MODE: Readonly<Partial<Record<MatchMode, readonly TeamKind[]
   "king-of-the-hill": ["ghost-spawn"],
 };
 
-/** Which modes have exactly one of each shared objective; none for a mode not here. */
+/** Which shared objectives each mode has; none for a mode not here. */
 const SHARED_OBJECTIVES_BY_MODE: Readonly<Partial<Record<MatchMode, readonly SharedKind[]>>> = {
   "guild-battle": ["flag-stand"],
   "relic-run": ["altar"],
   "king-of-the-hill": ["altar"],
+  "capture-points": ["capture-point"],
 };
+
+/** How many of each shared objective a map of a mode that has it has, at least and at most. */
+const SHARED_COUNTS: Readonly<Record<SharedKind, { readonly min: number; readonly max: number }>> =
+  {
+    "flag-stand": { min: 1, max: 1 },
+    altar: { min: 1, max: 1 },
+    "capture-point": { min: 1, max: 5 },
+  };
 
 /** The kinds a map of a mode that has them has exactly one of per spawning team. */
 const ONE_PER_TEAM: readonly TeamKind[] = [
@@ -130,6 +144,7 @@ const OBJECTIVE_NAMES: Readonly<Record<Objective["kind"], string>> = {
   "relic-spawn": "relic spawn",
   "ghost-spawn": "ghost spawn",
   altar: "altar",
+  "capture-point": "capture point",
 };
 
 /** A body's radius: an objective stands clear of every wall and edge by one. */
@@ -150,6 +165,7 @@ export const mapDataSchema = z
       "guild-battle",
       "relic-run",
       "king-of-the-hill",
+      "capture-points",
     ]),
     width: z.number().positive(),
     height: z.number().positive(),
@@ -173,11 +189,13 @@ export const mapDataSchema = z
     }
     for (const kind of shared) {
       const count = map.objectives.filter((objective) => objective.kind === kind).length;
-      if (count !== 1) {
+      const { min, max } = SHARED_COUNTS[kind];
+      if (count < min || count > max) {
+        const wanted = min === max ? "one" : `${String(min)} to ${String(max)}`;
         context.addIssue({
           code: "custom",
           path: ["objectives"],
-          message: `a ${map.mode} map has ${String(count)} ${OBJECTIVE_NAMES[kind]}s, not one`,
+          message: `a ${map.mode} map has ${String(count)} ${OBJECTIVE_NAMES[kind]}s, not ${wanted}`,
         });
       }
     }
@@ -220,8 +238,7 @@ export const mapDataSchema = z
       const clear = walls.every(
         (wall) => distancePointToSegment(objective.position, wall) >= BODY_RADIUS,
       );
-      const teamed =
-        objective.kind === "flag-stand" || objective.kind === "altar" || teams.has(objective.team);
+      const teamed = !("team" in objective) || teams.has(objective.team);
       if (!teamed || !inBounds || !clear) {
         context.addIssue({
           code: "custom",

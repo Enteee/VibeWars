@@ -758,6 +758,12 @@ export function observedSnapshot(
     altar: absent(snapshot.altar),
     altarHolder: absent(snapshot.altarHolder),
     altarHeldSeconds: snapshot.altarHeldSeconds,
+    capturePoints: snapshot.capturePoints.map(({ x, y, owner, capturer, progress }) => ({
+      position: { x, y },
+      owner,
+      capturer,
+      progress,
+    })),
     // Only the host's `ended` carries it.
     summary: undefined,
   };

@@ -2,6 +2,7 @@ import Phaser from "phaser";
 
 import {
   ALTAR_REACH_UNITS,
+  CAPTURE_REACH_UNITS,
   CREATURE_LOOKS,
   IMPLEMENTED_SKILLS,
   PROFESSIONS,
@@ -78,7 +79,12 @@ import {
   pingRing,
   type RenderablePing,
 } from "./call-marks.js";
-import { FLAG_PICK_RADIUS, STAND_RADIUS, type RenderableFlag } from "./flag-objects.js";
+import {
+  FLAG_PICK_RADIUS,
+  STAND_RADIUS,
+  type RenderableCapturePoint,
+  type RenderableFlag,
+} from "./flag-objects.js";
 import { lyingPose } from "./lying-pose.js";
 import { mapLayerChanged, type MapLayer } from "./map-layer.js";
 import { screenSized } from "./screen-text.js";
@@ -412,6 +418,9 @@ export class ArenaScene extends Phaser.Scene {
     }
     this.drawStand(g, marks);
     this.drawAltar(g);
+    for (const point of this.snapshot.capturePoints) {
+      this.drawCapturePoint(g, point);
+    }
     for (const actor of this.snapshot.actors) {
       this.drawActor(g, marks, actor);
     }
@@ -453,6 +462,29 @@ export class ArenaScene extends Phaser.Scene {
     g.strokeCircle(altar.x, altar.y, ALTAR_REACH_UNITS);
     g.fillStyle(FLAG_POLE_COLOUR, 1);
     g.fillRect(altar.x - 9, altar.y - 9, 18, 18);
+  }
+
+  /**
+   * A Capture Points shrine (#1378): the stand's marker as wide as a
+   * player must come to count on it, in its owner's colour, neutral grey
+   * with none; round it, clockwise from the top, its capturer's progress.
+   */
+  private drawCapturePoint(g: Phaser.GameObjects.Graphics, point: RenderableCapturePoint): void {
+    const { x, y } = point.position;
+    const colour = point.owner === undefined ? STAND_NEUTRAL : teamColour(point.owner);
+    g.fillStyle(colour, 0.18);
+    g.fillCircle(x, y, CAPTURE_REACH_UNITS);
+    g.lineStyle(3, colour, 0.9);
+    g.strokeCircle(x, y, CAPTURE_REACH_UNITS);
+    g.fillStyle(BODY_EDGE, 1);
+    g.fillCircle(x, y, 5);
+    if (point.ring !== undefined) {
+      const top = -Math.PI / 2;
+      g.lineStyle(5, teamColour(point.ring.side), 1);
+      g.beginPath();
+      g.arc(x, y, CAPTURE_REACH_UNITS + 6, top, top + point.ring.fraction * 2 * Math.PI);
+      g.strokePath();
+    }
   }
 
   /**

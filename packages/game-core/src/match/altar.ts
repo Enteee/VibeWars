@@ -1,7 +1,7 @@
 /**
  * King of the Hill's altar (#1377, GW1): a team's Ghostly Hero claims it,
  * and the team that holds it scores a point for every
- * `KOTH_POINT_SECONDS` it keeps it without a break. The holder keeps it
+ * `POINT_TICK_SECONDS` it keeps it without a break. The holder keeps it
  * while its own ghost is dead, until another team claims it.
  *
  * Pure, as `flags.ts` is: the simulation runs the ghosts' claims through
@@ -9,8 +9,7 @@
  * holds the altar and who scored.
  */
 
-/** Held this long without a break, the holder scores a point (spec: GW1 publishes none). */
-export const KOTH_POINT_SECONDS = 30;
+import { POINT_TICK_SECONDS } from "../match-rules.js";
 
 /** Who holds the altar, and for how long since the claim or the last point. */
 export interface AltarState {
@@ -53,7 +52,7 @@ export function claimant(finished: readonly number[]): number | null {
 /**
  * One tick of the altar: a claim by `claimedBy` takes it, and its clock
  * starts at 0. Otherwise a holder counts `dt` more, and at
- * `KOTH_POINT_SECONDS` scores and starts again.
+ * `POINT_TICK_SECONDS` scores and starts again.
  */
 export function stepAltar(state: AltarState, dt: number, claimedBy: number | null): AltarStep {
   if (claimedBy !== null) {
@@ -64,7 +63,7 @@ export function stepAltar(state: AltarState, dt: number, claimedBy: number | nul
     return { state, scored: null };
   }
   const heldSeconds = state.heldSeconds + dt;
-  if (heldSeconds < KOTH_POINT_SECONDS - HOLD_EPSILON) {
+  if (heldSeconds < POINT_TICK_SECONDS - HOLD_EPSILON) {
     return { state: { holder, heldSeconds }, scored: null };
   }
   return { state: { holder, heldSeconds: 0 }, scored: holder };

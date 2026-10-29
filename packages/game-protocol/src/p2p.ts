@@ -476,6 +476,19 @@ export type WireFlag = WireCarried<(typeof FLAG_PLACES)[number]>;
 /** A Relic Run's relic (#1374): one a team, or none on a map without an altar. */
 export type WireRelic = WireCarried<(typeof RELIC_PLACES)[number]>;
 
+/** A Capture Points shrine (#1378): where it is, who owns it, and how far toward whom. */
+export interface WireCapturePoint {
+  readonly x: number;
+  readonly y: number;
+  readonly owner: 0 | 1 | null;
+  readonly capturer: 0 | 1 | null;
+  /** From 0 to 1, toward `capturer`. */
+  readonly progress: number;
+}
+
+/** The most shrines a map has (#1378). */
+const MAX_WIRE_CAPTURE_POINTS = 5;
+
 /** Who holds the flag stand (#1225), and for how long since the taking or the last boost. */
 export interface WireStand {
   readonly holder: 0 | 1 | null;
@@ -528,6 +541,8 @@ export interface WireSnapshot {
   readonly altarHolder: 0 | 1 | null;
   /** Seconds its holder has kept it since the claim or the last point (#1377); `0` off such a map. */
   readonly altarHeldSeconds: number;
+  /** Every Capture Points shrine (#1378); `[]` on a map without them. */
+  readonly capturePoints: readonly WireCapturePoint[];
 }
 
 /**
@@ -1517,6 +1532,7 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
   const aggression = parseArray(raw.aggression, 2, parseScore);
   const relics = parseArray(raw.relics, 2, parseCarried(RELIC_PLACES));
   const altar = raw.altar === null ? null : parsePoint(raw.altar);
+  const capturePoints = parseArray(raw.capturePoints, MAX_WIRE_CAPTURE_POINTS, parseCapturePoint);
   const [team0 = 0, team1 = 0] = score;
   const { altarHolder, altarHeldSeconds } = raw;
   return !(altarHolder === null || isTeam(altarHolder)) ||
@@ -1529,7 +1545,8 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
     stand === undefined ||
     aggression === undefined ||
     relics === undefined ||
-    altar === undefined
+    altar === undefined ||
+    capturePoints === undefined
     ? undefined
     : {
         tick: raw.tick,
@@ -1548,7 +1565,28 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
         altar,
         altarHolder,
         altarHeldSeconds,
+        capturePoints,
       };
+}
+
+function parseCapturePoint(value: unknown): WireCapturePoint | undefined {
+  const raw = fields(value);
+  return raw !== undefined &&
+    isNumber(raw.x) &&
+    isNumber(raw.y) &&
+    (raw.owner === null || isTeam(raw.owner)) &&
+    (raw.capturer === null || isTeam(raw.capturer)) &&
+    isNumber(raw.progress) &&
+    raw.progress >= 0 &&
+    raw.progress <= 1
+    ? {
+        x: raw.x,
+        y: raw.y,
+        owner: raw.owner,
+        capturer: raw.capturer,
+        progress: raw.progress,
+      }
+    : undefined;
 }
 
 /**

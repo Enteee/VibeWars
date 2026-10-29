@@ -12,7 +12,7 @@ import type { CallsSnapshot, GroundEffectSnapshot } from "@vibewars/game-session
 import type { AttackCast } from "./attack-clock.js";
 import type { ConditionCue } from "./body-conditions.js";
 import type { RenderablePing } from "./call-marks.js";
-import type { RenderableFlag, RenderableStand } from "./flag-objects.js";
+import type { RenderableCapturePoint, RenderableFlag, RenderableStand } from "./flag-objects.js";
 import { LYING_WIDTH } from "./lying-pose.js";
 import type { RenderableProjectile } from "./projectiles.js";
 import { screenPx } from "./screen-text.js";
@@ -300,6 +300,8 @@ export interface ArenaSnapshot {
   readonly stand: RenderableStand | undefined;
   /** A Relic Run or King of the Hill altar (#1374, #1377); `undefined` on any other map. */
   readonly altar: Vec2 | undefined;
+  /** Capture Points' shrines (#1378); `[]` on any other map. */
+  readonly capturePoints: readonly RenderableCapturePoint[];
   readonly targetId: string | undefined;
   /** Weapon shots in flight (#161). */
   readonly projectiles: readonly RenderableProjectile[];
@@ -324,6 +326,7 @@ export const EMPTY_SNAPSHOT: ArenaSnapshot = {
   flags: [],
   stand: undefined,
   altar: undefined,
+  capturePoints: [],
   targetId: undefined,
   projectiles: [],
   groundEffects: [],

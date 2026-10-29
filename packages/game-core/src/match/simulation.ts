@@ -34,6 +34,7 @@ import {
   MORALE_CEILING,
   MORALE_FLOOR,
   moraleMaximum,
+  POINT_TICK_SECONDS,
   PRIEST_WAVE_SECONDS,
   SHRINE_INVULNERABLE_SECONDS,
   type MatchOutcome,
@@ -232,6 +233,12 @@ import {
   type FlagsState,
   type StandState,
 } from "./flags.js";
+import {
+  initialCapturePoints,
+  onCapturePoint,
+  stepCapturePoints,
+  type CapturePoint,
+} from "./capture-points.js";
 import {
   carriedRelic,
   initialRelics,
@@ -626,6 +633,11 @@ export interface MatchSimulationOptions {
    */
   readonly hillField?: HillField | undefined;
   /**
+   * Capture Points' shrines (#1378), each neutral at the start. Omitted
+   * or `[]`: none.
+   */
+  readonly capturePoints?: readonly Vec2[];
+  /**
    * The Guild Battle's base guards (#1223), each at its post from the
    * start; a team's Bodyguard cuts the damage to its Guild Lord while it
    * lives. Omitted or `[]`: none.
@@ -904,6 +916,10 @@ export class MatchSimulation {
   #altarState: AltarState = UNCLAIMED_ALTAR;
   /** The teams whose ghost finished a claim this step (#1377), in simulation order. */
   #claims: number[] = [];
+  /** Capture Points' shrines (#1378), who owns each and how far toward whom; `[]` without them. */
+  #capturePoints: readonly CapturePoint[];
+  /** Shrine scorings gone by (#1378): the next is at `POINT_TICK_SECONDS` times one more. */
+  #pointTicks = 0;
   /** The whole second of match clock the Guild Lords' loss caps are for (#1223). */
   #lossSecond = 0;
   /** Every ground effect in the match (#1087), in id order. */
@@ -933,6 +949,7 @@ export class MatchSimulation {
     this.#relicsState =
       this.#relicField === undefined ? undefined : initialRelics(this.#relicField);
     this.#hillField = options.hillField;
+    this.#capturePoints = initialCapturePoints(options.capturePoints ?? []);
     for (const spec of options.participants ?? []) {
       this.add(spec);
     }
@@ -1063,6 +1080,11 @@ export class MatchSimulation {
   /** Who holds King of the Hill's altar, and how long since the claim or the last point (#1377). */
   public get altarState(): AltarState {
     return this.#altarState;
+  }
+
+  /** Every Capture Points shrine (#1378), where it is and who holds it; `[]` on a map without them. */
+  public get capturePoints(): readonly CapturePoint[] {
+    return this.#capturePoints;
   }
 
   /**
@@ -2552,6 +2574,7 @@ export class MatchSimulation {
     // After every death, before the match end: a point on the last tick counts.
     this.#advanceRelics();
     this.#advanceAltar(dt);
+    this.#advanceCapturePoints(dt);
     // After every death this step, so two teams wiped in it both lose.
     this.checkMatchEnd();
     // After the match end: a lord slain as a boost falls due ends it first.
@@ -3947,7 +3970,7 @@ export class MatchSimulation {
    * The step's altar (#1377), once every death is in and before the match
    * end is checked, so a point on the last tick counts: a claim finished
    * by one team alone takes it, and its clock starts at 0; otherwise its
-   * holder counts the step, and scores at every `KOTH_POINT_SECONDS`.
+   * holder counts the step, and scores at every `POINT_TICK_SECONDS`.
    */
   #advanceAltar(dt: number): void {
     const claims = this.#claims;
@@ -3959,6 +3982,38 @@ export class MatchSimulation {
     this.#altarState = state;
     if (scored !== null) {
       this.#score = addPoint(this.#score, scored);
+    }
+  }
+
+  /**
+   * The step's shrines (#1378), once every death is in, so a player killed
+   * this tick is on none: each moves toward the one team on it, then, at
+   * every `POINT_TICK_SECONDS` of match clock, each scores its owner a
+   * point. The capture comes first, so one taken on the scoring tick scores.
+   */
+  #advanceCapturePoints(dt: number): void {
+    if (this.#capturePoints.length === 0 || this.phase !== "active") {
+      return;
+    }
+    const presence = this.#capturePoints.map((point) =>
+      [...this.#participants.values()].flatMap((record) =>
+        countsForTeam(record) &&
+        !record.combatant.dead &&
+        onCapturePoint(point.position, record.position)
+          ? [record.combatant.team]
+          : [],
+      ),
+    );
+    this.#capturePoints = stepCapturePoints(this.#capturePoints, dt, presence).state;
+    const due = (this.#pointTicks + 1) * POINT_TICK_SECONDS;
+    if (this.#elapsedSeconds + SWING_EPSILON < due) {
+      return;
+    }
+    this.#pointTicks += 1;
+    for (const { owner } of this.#capturePoints) {
+      if (owner !== null) {
+        this.#score = addPoint(this.#score, owner);
+      }
     }
   }
 
@@ -5115,10 +5170,12 @@ export class MatchSimulation {
       return;
     }
     // A Relic Run's score is its relic points (#1374), King of the Hill's
-    // its points for the altar (#1377): a kill is none.
+    // its points for the altar (#1377), Capture Points' its shrine points
+    // (#1378): a kill is none.
     if (
       this.#matchRules?.victory === "relic-run" ||
-      this.#matchRules?.victory === "king-of-the-hill"
+      this.#matchRules?.victory === "king-of-the-hill" ||
+      this.#matchRules?.victory === "capture-points"
     ) {
       return;
     }

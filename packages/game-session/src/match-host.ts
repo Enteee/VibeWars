@@ -23,6 +23,7 @@ import {
   type FlagField,
   type RelicField,
   type HillField,
+  type Vec2,
   type GuildLord,
   type BaseGuard,
   type Shrine,
@@ -139,6 +140,8 @@ export interface HostMap {
   readonly relicField: RelicField | undefined;
   /** Its altar and ghost spawns (#1377), `undefined` but on a King of the Hill map. */
   readonly hillField: HillField | undefined;
+  /** Its shrines (#1378), `[]` but on a Capture Points map. */
+  readonly capturePoints: readonly Vec2[];
   /** Its base guards (#1223), in the map's order, `[]` but on a Guild Battle map. */
   readonly guards: readonly BaseGuard[];
 }
@@ -285,6 +288,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     flagField: map.flagField,
     relicField: map.relicField,
     hillField: map.hillField,
+    capturePoints: map.capturePoints,
     guards: map.guards,
   });
   const seats = new Map<string, Seat>();
@@ -1060,6 +1064,14 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     altar: sim.altar ?? null,
     altarHolder: wireTeam(sim.altarState.holder),
     altarHeldSeconds: sim.altarState.heldSeconds,
+    capturePoints: sim.capturePoints.map((point) => ({
+      x: point.position.x,
+      y: point.position.y,
+      owner: wireTeam(point.owner),
+      capturer: wireTeam(point.capturer),
+      // Within [0, 1] by construction; rounded as the other floats are.
+      progress: round(point.progress, 3),
+    })),
   });
 
   /** Drop the seats whose players did not come back in time. */

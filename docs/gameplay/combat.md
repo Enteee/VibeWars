@@ -1833,6 +1833,7 @@ dropped` or `✦ at base`.
 King of the Hill counts its points the same way, then the altar in the
 stand's slot, `2 – 1 · ▲ 0:18 · 6:40` (#1377): the holder's `▲` and
 the time to its next point, or a grey `▲ —` held by nobody.
+Capture Points counts shrine points as Kill Count counts kills (#1378).
 
 With the death penalty on, each player has a **morale** between −60%
 and +10%, starting at 0. A death takes 15%, down to −60%, unless it came
@@ -1926,7 +1927,8 @@ A Relic Run (#1374) ends the moment a team is **wiped**, as
 Annihilation does, "(annihilation)". After **8 minutes** the team with
 more relic points wins; equal points is a **draw**, as in Kill Count.
 No number of points ends it early, and a kill is no point. King of the
-Hill (#1377) ends the same ways, its points for holding the altar.
+Hill (#1377) ends the same ways, its points for holding the altar. Capture
+Points (#1378) ends the same ways, on shrine points.
 
 A Kill Count match ends when a team reaches 15 kills, or after 3
 minutes, when the team with more kills wins. Score is checked

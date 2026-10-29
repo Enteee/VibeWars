@@ -118,6 +118,7 @@ export type {
 } from "./match-rules.js";
 export {
   ANNIHILATION_MATCH_RULES,
+  CAPTURE_POINTS_MATCH_RULES,
   DEATH_PENALTY_PERCENT,
   DP_GRACE_AFTER_RES_SECONDS,
   GUILD_BATTLE_MATCH_RULES,
@@ -129,6 +130,7 @@ export {
   MORALE_CEILING,
   MORALE_FLOOR,
   PRIEST_ANNIHILATION_MATCH_RULES,
+  POINT_TICK_SECONDS,
   PRIEST_WAVE_SECONDS,
   RELIC_RUN_MATCH_RULES,
   addPoint,
@@ -195,9 +197,10 @@ export {
   flagTeamOf,
 } from "./match/flags.js";
 export type { RelicField, RelicState } from "./match/relics.js";
+export type { CapturePoint } from "./match/capture-points.js";
+export { CAPTURE_REACH_UNITS, CAPTURE_SECONDS } from "./match/capture-points.js";
 export { ALTAR_REACH_UNITS, relicId, relicTeamOf } from "./match/relics.js";
 export type { AltarState } from "./match/altar.js";
-export { KOTH_POINT_SECONDS } from "./match/altar.js";
 export type { GhostSpawn, HillField } from "./match/ghost.js";
 export { CLAIM_SKILL_ID, ghostId, isGhostId } from "./match/ghost.js";
 export { GUILD_LORD_HEALTH, guildLordId, guildLordLossCap } from "./match/guild-lord.js";

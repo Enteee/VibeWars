@@ -108,6 +108,7 @@ function snapshot(
     altar: null,
     altarHolder: null,
     altarHeldSeconds: 0,
+    capturePoints: [],
   };
 }
 
