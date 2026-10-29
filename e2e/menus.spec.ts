@@ -138,7 +138,7 @@ test("#578: a host with others in the lobby is asked before Leave or Esc closes 
 /** A rolled character's random name (#1149): "Kaelen Ashvale". */
 const ROLLED_NAME = /^[A-Z][a-z]+ [A-Z][a-z]+$/;
 
-test("#853: the first start rolls a starter character, chosen; Reroll replaces it in place, Clone copies it", async ({
+test("#853: the first start rolls a starter character, chosen; Reroll replaces it in place, Clone rolls a new one", async ({
   page,
 }) => {
   await openMenu(page);
@@ -171,12 +171,13 @@ test("#853: the first start rolls a starter character, chosen; Reroll replaces i
   await expect(row).toHaveCount(1);
   await expect(row).toHaveClass(/is-selected/);
 
-  // It has Clone, not Edit (#1147): Clone opens the editor on a copy,
-  // one copy even for a double-click.
+  // It has Clone, not Edit (#1147): Clone opens the editor on a fresh
+  // roll under another random name (#1457), one even for a double-click.
   const rolled = await name.innerText();
   await expect(actions.getByRole("button", { name: "Edit", exact: true })).toHaveCount(0);
   await actions.getByRole("button", { name: "Clone", exact: true }).dblclick();
-  await expect(page.locator("input.editor-name")).toHaveValue(`${rolled} (copy)`);
+  await expect(page.locator("input.editor-name")).toHaveValue(ROLLED_NAME);
+  await expect(page.locator("input.editor-name")).not.toHaveValue(rolled);
   await page.locator("input.editor-name").fill("Pyro");
   await page.getByRole("button", { name: "Save", exact: true }).click();
 
