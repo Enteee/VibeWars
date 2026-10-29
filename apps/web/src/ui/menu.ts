@@ -135,6 +135,22 @@ export function rosterSubtitle(character: StoredCharacter): string {
 }
 
 /**
+ * The roster's rows (#1425): `characters` in the repository's order,
+ * newest saved first, with the random starter, `starterId`, after them
+ * all, so a Reroll never moves it to the top. No starter, or one deleted,
+ * leaves the order as it is.
+ */
+export function rosterOrder(
+  characters: readonly StoredCharacter[],
+  starterId: string | undefined,
+): StoredCharacter[] {
+  return [
+    ...characters.filter((c) => c.id !== starterId),
+    ...characters.filter((c) => c.id === starterId),
+  ];
+}
+
+/**
  * Whether `character` can be chosen to play (#1290): an empty bar can, an
  * invalid build cannot. The editor saves nothing invalid, so only a rule
  * changed since the save makes one; it stays, to be edited.
@@ -154,6 +170,9 @@ export function renderMenu(
   characterProblems: readonly string[] = [],
   connectionNotice?: string,
 ): void {
+  // A Reroll redraws the menu under its own button (#1425): the new
+  // row's Reroll takes the focus back.
+  const rerolled = document.activeElement?.classList.contains("roster-reroll") === true;
   root.replaceChildren();
   const panel = h("div", "screen screen-menu");
 
@@ -204,7 +223,7 @@ export function renderMenu(
     root.querySelector<HTMLElement>(".roster .selectable-row.is-selected button")?.focus();
   };
 
-  for (const character of characters) {
+  for (const character of rosterOrder(characters, starter)) {
     // The rolled character is never edited (#1147): Clone gives an
     // ordinary copy to edit, and Reroll replaces it at once, unasked (#1146).
     const clone = button("Clone", "roster-clone", () => {
@@ -350,6 +369,9 @@ export function renderMenu(
   columns.appendChild(play);
 
   root.appendChild(panel);
+  if (rerolled) {
+    root.querySelector<HTMLElement>(".roster-reroll")?.focus();
+  }
 }
 
 /* -------------------------------------------------------------------------- */

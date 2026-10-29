@@ -2,7 +2,7 @@ import { defaultBuildEquipment } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
 import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "../storage/schema.js";
-import { isPlayable, rosterSubtitle } from "./menu.js";
+import { isPlayable, rosterOrder, rosterSubtitle } from "./menu.js";
 
 function character(overrides: Partial<StoredCharacter> = {}): StoredCharacter {
   return {
@@ -44,5 +44,28 @@ describe("isPlayable (#1290)", () => {
         character({ skillBar: ["no.such-skill", null, null, null, null, null, null, null] }),
       ),
     ).toBe(false);
+  });
+});
+
+describe("rosterOrder (#1425)", () => {
+  const ids = (list: readonly StoredCharacter[]) => list.map((c) => c.id);
+  // Newest saved first, as the repository lists them.
+  const saved = [character({ id: "rolled" }), character({ id: "b" }), character({ id: "c" })];
+
+  it("puts the random starter last, even when it is the newest", () => {
+    expect(ids(rosterOrder(saved, "rolled"))).toEqual(["b", "c", "rolled"]);
+  });
+
+  it("keeps everyone else newest first", () => {
+    expect(ids(rosterOrder(saved, "b"))).toEqual(["rolled", "c", "b"]);
+  });
+
+  it("changes nothing with no starter, or one deleted", () => {
+    expect(ids(rosterOrder(saved, undefined))).toEqual(["rolled", "b", "c"]);
+    expect(ids(rosterOrder(saved, "gone"))).toEqual(["rolled", "b", "c"]);
+  });
+
+  it("lists a starter alone as the only row", () => {
+    expect(ids(rosterOrder([character({ id: "rolled" })], "rolled"))).toEqual(["rolled"]);
   });
 });
