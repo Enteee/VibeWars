@@ -189,6 +189,7 @@ export function toArenaSnapshot(
       return {
         id: player.sessionId,
         name: player.name,
+        guildTag: player.guildTag,
         bot: player.bot,
         position: { x: player.x, y: player.y },
         facing: player.facing,

@@ -26,6 +26,7 @@ function snapshot(phase: LobbySnapshot["phase"]): LobbySnapshot {
       {
         sessionId: "host",
         name: "Host",
+        guildTag: null,
         team: 0,
         ready: true,
         isHost: true,
@@ -35,6 +36,7 @@ function snapshot(phase: LobbySnapshot["phase"]): LobbySnapshot {
       {
         sessionId: "guest",
         name: "Guest",
+        guildTag: null,
         team: 1,
         ready: true,
         isHost: false,
@@ -89,6 +91,7 @@ describe("lobbyControls", () => {
         {
           sessionId: "host",
           name: "Host",
+          guildTag: null,
           team: null,
           ready: false,
           isHost: true,
@@ -98,6 +101,7 @@ describe("lobbyControls", () => {
         {
           sessionId: "guest",
           name: "Guest",
+          guildTag: null,
           team: 1,
           ready: false,
           isHost: false,
@@ -143,6 +147,7 @@ describe("waitingFor (#580)", () => {
   const player = (name: string, team: 0 | 1 | null, ready: boolean) => ({
     sessionId: name,
     name,
+    guildTag: null,
     team,
     ready,
     isHost: false,
@@ -228,6 +233,7 @@ describe("lobbyControls: Add bot (#1194)", () => {
     const bot: LobbyPlayerSnapshot = {
       sessionId: "bot-1",
       name: "Monk Bot",
+      guildTag: null,
       team: 1,
       ready: true,
       isHost: false,
@@ -305,6 +311,7 @@ describe("teamColumn: bots (#1194)", () => {
   const bot: LobbyPlayerSnapshot = {
     sessionId: "bot-1",
     name: "Monk Bot",
+    guildTag: null,
     team: 1,
     ready: true,
     isHost: false,
