@@ -1489,6 +1489,16 @@ const skillGlyph = {
   interrupt: () => inkFill(burst(6)),
   // An arrow driven down into a ground bar: pinned in place (#981).
   pin: () => inkLine("M12 3V14", 2.4) + inkFill("M12 20.5L7 13H17Z") + inkLine("M4 21.5H20", 2.4),
+  // A dagger with a four-point spark at its point: the blow is a critical hit (#1315).
+  "dagger-crit": () =>
+    inkLine("M8 16L14 10", 2.8) +
+    inkLine("M5.5 13.5L10.5 18.5", 2.2) +
+    inkLine("M4 20l2.5-2.5", 2.4) +
+    inkFill("M17 2.5L18.6 7.4L23.5 9L18.6 10.6L17 15.5L15.4 10.6L10.5 9L15.4 7.4Z"),
+  // A shield with the critical spark in it: blocks, renewed by critical hits (#1315).
+  "shield-crit": () =>
+    `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2)}/>` +
+    inkFill("M12 6.5L13.7 10.3L17.5 12L13.7 13.7L12 17.5L10.3 13.7L6.5 12L10.3 10.3Z"),
   // A shield with a bolt in it: fast and hard to hit (#981).
   "shield-bolt": () =>
     `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2)}/>` +

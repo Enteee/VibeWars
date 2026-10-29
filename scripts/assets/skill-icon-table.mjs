@@ -271,11 +271,10 @@ export const SKILL_ICONS = {
   "assassin.disrupting-dagger": { glyph: "dagger-stop" },
   "assassin.crippling-dagger": { glyph: "dagger-limp" },
   "assassin.iron-palm": { glyph: "palm", modifier: "down" },
-  // Placeholders until the asset-designer's (#1315): Critical Strikes.
-  "assassin.critical-strike": { glyph: "dagger", modifier: "bolt" },
-  "assassin.malicious-strike": { glyph: "dagger", modifier: "half" },
-  "assassin.unsuspecting-strike": { glyph: "dagger", modifier: "plus" },
-  "assassin.critical-defenses": { glyph: "shield-bolt", modifier: "self" },
+  "assassin.critical-strike": { glyph: "dagger-crit" },
+  "assassin.malicious-strike": { glyph: "dagger-crit", modifier: "bleed" },
+  "assassin.unsuspecting-strike": { glyph: "dagger-crit", modifier: "up" },
+  "assassin.critical-defenses": { glyph: "shield-crit", modifier: "self" },
   // Placeholders until the asset-designer's (#1326): Shadow Arts.
   "assassin.heart-of-shadow": { glyph: "blink", modifier: "down" },
   "assassin.vipers-defense": { glyph: "blink", modifier: "bleed" },
