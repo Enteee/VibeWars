@@ -1880,6 +1880,40 @@ const skillGlyph = {
   caltrops: () =>
     inkFill("M2.5 20H21.5V22.5H2.5Z") +
     inkFill("M2.5 20L5.5 4L8.5 20ZM9 20L12 2L15 20ZM15.5 20L18.5 4L21.5 20Z"),
+  // A hammer over a foe lying flat: it hits the downed hardest (#1383).
+  "hammer-prone": () =>
+    inkLine("M6 3.5L11 9.5", 2.4) +
+    `<rect x="8.5" y="7.5" width="9" height="6" rx="1" transform="rotate(35 13 10.5)" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
+    `<circle cx="5.5" cy="18" r="2.4" fill="${C.ink}"/>` +
+    inkLine("M9 18H20.5", 3),
+  // A hammer slam with a shield beside the impact: it knocks down what blocks it (#1383).
+  "hammer-shield": () =>
+    inkLine("M7 4.5L12 11", 2.4) +
+    `<rect x="9.5" y="9" width="9" height="6" rx="1" transform="rotate(35 14 12)" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
+    inkLine("M3 21H21", 2.2) +
+    `<path d="M16 12.5L21.5 14.5V17.5C21.5 19 19 20 16 21C13 20 10.5 19 10.5 17.5V14.5Z" ${stroke(C.ink, 1.8)}/>`,
+  // A hammer slam with a turning arrow over it: it answers an attacker (#1383).
+  "hammer-counter": () =>
+    inkLine("M7 4.5L12 11", 2.4) +
+    `<rect x="9.5" y="9" width="9" height="6" rx="1" transform="rotate(35 14 12)" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
+    inkLine("M3 19.5H21", 2.2) +
+    inkLine("M14.5 6.5C18.5 3 21.5 6 20.5 10.5M18 9L20.5 11L22.5 8", 2),
+  // A hammer slam with two weak chevrons on the ground: it hits what is weakened (#1383).
+  // A raised hammer over two weak chevrons, no slam: it weakens what it hits (#1383).
+  "hammer-chevrons": () =>
+    inkLine("M3.5 12.5L9.5 6.5", 2.4) +
+    `<rect x="8" y="1.5" width="9" height="6" rx="1" transform="rotate(45 12.5 4.5)" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
+    inkLine("M11 12.5L16 16.5L21 12.5M11 17.5L16 21.5L21 17.5", 2.2),
+  "hammer-weak": () =>
+    inkLine("M7 4.5L12 11", 2.4) +
+    `<rect x="9.5" y="9" width="9" height="6" rx="1" transform="rotate(35 14 12)" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
+    inkLine("M3 21H21", 2.2) +
+    inkLine("M12.5 15.5L16 19L19.5 15.5", 2.6),
+  // A hammer slam splitting the ground wide, cracks both ways: it shakes everything near (#1383).
+  "hammer-quake": () =>
+    inkLine("M7 4.5L12 11", 2.4) +
+    `<rect x="9.5" y="9" width="9" height="6" rx="1" transform="rotate(35 14 12)" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
+    inkLine("M2 19L6 21.5L9.5 18.5L13 21.5L16.5 18.5L19.5 21L22 19", 2.6),
   // A post with a bright head: a spirit planted where it was called (#1217).
   totem: () =>
     inkFill("M9 11H14L14.2 20H8.8Z") + `<circle cx="12" cy="6.5" r="3.8" fill="${C.ink}"/>`,

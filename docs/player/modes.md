@@ -5,6 +5,11 @@ Nobody picks it. A Random Arena picks a map for you, and with it the
 mode, but never a Guild Battle, a Relic Run, King of the Hill or Capture
 Points.
 
+In a Guild Battle, a Relic Run, King of the Hill or Capture Points, an
+objective off screen or under the HUD gets an outlined arrow at the
+screen edge: the stand or a shrine in its owner's colour, grey for
+nobody's, the altar in gold. A player's filled arrow draws over it.
+
 ## Annihilation
 
 **Defeat every foe.** The dead stay down until an ally resurrects them,
@@ -137,6 +142,7 @@ makes it faster: four of you take it in 5. With a foe on it too, it is
 contested and nothing moves. A shrine the other team owns is first
 drained to neutral, then filled for you. Walk away and its progress
 stays where it was; a shrine you own stays yours until a foe takes it.
+The shrines show on the compass as □ in the owner's colour.
 
 Every 30 seconds, each shrine your team owns scores a point. The dead
 stay down until an ally resurrects them, and each death costs morale.

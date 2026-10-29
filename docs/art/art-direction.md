@@ -422,6 +422,9 @@ the arena does not. A body beyond it is not on it: the edge markers
 - **A Relic Run or King of the Hill altar** (#1388, #1377): a filled `altar`
   `◆`, 10 px tip to tip, on a 1 px `edge` rim, under the bodies. Not
   pinned to the rim when out of reach.
+- **A Capture Points shrine** (#1407): a 12 px `□`, a 1.5 px stroke in
+  its owner's colour, `friend` or `foe`, `ink-dim` while nobody holds it.
+  Its capture progress is the arena's to show, not the compass's.
 - **Pings**: a 1 px `friend` ring growing from 3 to 10 px and fading over
   the ping's life. Reduced motion: it holds at 3 px, whole.
 
@@ -857,7 +860,7 @@ it, not baked in, so one file serves every screen.
   armor-crack, drop-run, mark-skull, dagger-stop, dagger-limp, palm,
   shield-stance (solid), shield-bar, shield-arrow, shield-blade, born-plus, born-burst, born-ring, born-energy (the spirit post in a halo, and its payout),
   blade-limp, blade-pierce, blade-drop, blade-half, blade-burst, blade-adrenal (a blade with its payoff in the corner above), blades-fan,
-  dagger-crit (a dagger and a four-point spark), shield-crit, blink-heal, blink-fang, blink-ally (the step with a plus, two fangs, a figure), shield-veil, crescent-spark, caltrops, hex-barbs, hex-miss, hex-drain, hex-heal-cut, hex-nobloc, hex-drain-cut (the hex ring with spikes, a cross, falling triangles, a cut plus, a cracked shield, both), drop-touch, drop-trio, drop-half, drop-weak, drop-barbs, drop-energy (the blood drop with a plus, three drops, a half-full drop, a down arrow, barbs, a bolt), ghost, weight, ache-cross, armor-shrink, speed-break (a whole chevron and a
+  dagger-crit (a dagger and a four-point spark), shield-crit, blink-heal, blink-fang, blink-ally (the step with a plus, two fangs, a figure), shield-veil, crescent-spark, caltrops, hammer-prone, hammer-shield, hammer-counter, hammer-weak, hammer-chevrons, hammer-quake (the hammer over a downed foe, a shield, a turning arrow, weak chevrons, wide cracks), hex-barbs, hex-miss, hex-drain, hex-heal-cut, hex-nobloc, hex-drain-cut (the hex ring with spikes, a cross, falling triangles, a cut plus, a cracked shield, both), drop-touch, drop-trio, drop-half, drop-weak, drop-barbs, drop-energy (the blood drop with a plus, three drops, a half-full drop, a down arrow, barbs, a bolt), ghost, weight, ache-cross, armor-shrink, speed-break (a whole chevron and a
   broken one), eye-slash, limp-drain, blow, sweep, rush, dolyak, heart-plus, bolt-cap (a melee blow, a wide sweep, three chevrons, a bull's head with horns, a heart with a plus, a bolt under a ceiling). A
   new primary effect adds a glyph; a new skill adds a row.
 

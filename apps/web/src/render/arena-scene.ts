@@ -57,7 +57,7 @@ import {
   shotFadeAlpha,
 } from "./projectiles.js";
 import { NO_COVER, type CameraView, type Cover } from "./camera-rig.js";
-import { edgeMarkers, type EdgeBody, type EdgeMarker } from "./edge-markers.js";
+import { edgeMarkers, type EdgeMarker, type EdgeThing } from "./edge-markers.js";
 import { STATUS_ICON, STATUS_ICON_SIZE, statusRowLayout } from "./status-icons.js";
 import {
   decayWalkMarker,
@@ -132,6 +132,8 @@ const FLAG_PENNANT_LENGTH = 16;
 const FLAG_CARRIED_LIFT = 22;
 /** The flag stand nobody holds, neutral grey (#1225). */
 const STAND_NEUTRAL = 0x8b949e;
+/** The altar on an edge marker (#1413): the palette's `altar` gold, as the compass draws it (#1388). */
+const ALTAR_GOLD = 0xc8a45a;
 const FLAG_POLE_COLOUR = 0xd8dee9;
 const GRID = 0x1a212c;
 const HEALTH_BAR_BG = 0x11161d;
@@ -577,9 +579,10 @@ export class ArenaScene extends Phaser.Scene {
   /**
    * A triangle on the screen edge toward every living body out of view:
    * `foe` or `friend`, a `target` outline round your target's, `ink` for
-   * your own, which the follow camera should never need. Drawn in world
-   * space through the inverse of the camera, so it sits still on screen at
-   * any zoom.
+   * your own, which the follow camera should never need; an outlined one
+   * toward each objective out of view (#1413), under the bodies'. Drawn in
+   * world space through the inverse of the camera, so it sits still on
+   * screen at any zoom.
    */
   private updateEdgeMarkers(): void {
     const g = this.markerGraphics;
@@ -592,16 +595,41 @@ export class ArenaScene extends Phaser.Scene {
       return;
     }
     const screen = { width: this.scale.width, height: this.scale.height };
-    const bodies: EdgeBody[] = this.snapshot.actors.map((actor) => ({
+    const bodies: EdgeThing[] = this.snapshot.actors.map((actor) => ({
       id: actor.id,
       kind: actor.team === "self" ? "self" : actor.team === "ally" ? "friend" : "foe",
+      colour: undefined,
       position: actor.position,
       dead: actor.dead,
       targeted: actor.id === this.snapshot.targetId,
     }));
-    for (const marker of edgeMarkers(bodies, view, screen, this.cover)) {
+    // Objectives first, so a body's marker draws over one it overlaps.
+    const things = [...this.objectiveEdgeThings(), ...bodies];
+    for (const marker of edgeMarkers(things, view, screen, this.cover)) {
       this.drawEdgeMarker(g, marker, view, screen);
     }
+  }
+
+  /** The objectives a mode is played around (#1413), each in the colour the arena draws it. */
+  private objectiveEdgeThings(): EdgeThing[] {
+    const { stand, altar, capturePoints } = this.snapshot;
+    const objective = (id: string, position: Vec2, colour: number): EdgeThing => ({
+      id,
+      kind: "objective",
+      colour,
+      position,
+      dead: false,
+      targeted: false,
+    });
+    const owned = (side: "ally" | "enemy" | undefined): number =>
+      side === undefined ? STAND_NEUTRAL : teamColour(side);
+    return [
+      ...capturePoints.map((point, index) =>
+        objective(`capture-point/${String(index)}`, point.position, owned(point.owner)),
+      ),
+      ...(altar === undefined ? [] : [objective("altar", altar, ALTAR_GOLD)]),
+      ...(stand === undefined ? [] : [objective(stand.id, stand.position, owned(stand.holder))]),
+    ];
   }
 
   private drawEdgeMarker(
@@ -627,6 +655,12 @@ export class ArenaScene extends Phaser.Scene {
       at(-EDGE_MARKER_LENGTH, EDGE_MARKER_WIDTH / 2),
       at(-EDGE_MARKER_LENGTH, -EDGE_MARKER_WIDTH / 2),
     ];
+    if (marker.kind === "objective") {
+      // Stroked, not filled, so it never reads as a body (#1413).
+      g.lineStyle(2 / view.zoom, marker.colour ?? STAND_NEUTRAL, 1);
+      g.strokePoints(points, true);
+      return;
+    }
     const fill =
       marker.kind === "self" ? SELF_RIM : teamColour(marker.kind === "friend" ? "ally" : "enemy");
     g.fillStyle(fill, 1);

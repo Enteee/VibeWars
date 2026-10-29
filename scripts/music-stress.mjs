@@ -382,6 +382,13 @@ async function measure(url, load, progress) {
       ((load.audioStress ?? 0) > 0 ? `&audiostress=${String(load.audioStress)}` : "");
     at("goto");
     await page.goto(`${url}${query}`);
+    // The Pixel 7 profile is touch-only, so the page holds the menu behind
+    // its keyboard-and-mouse notice (#1392) until Continue anyway.
+    await page.locator(".roster, .touch-notice-continue").first().waitFor();
+    const touchNotice = page.locator(".touch-notice-continue");
+    if (await touchNotice.isVisible()) {
+      await touchNotice.click();
+    }
     await page.locator(".roster").waitFor();
     at("setup");
     if (load.screen !== "menu") {
