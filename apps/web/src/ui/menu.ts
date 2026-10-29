@@ -672,14 +672,15 @@ function capeDesigner(onPick: (pick: CapePick) => void): {
   };
 }
 
-/** `emblem` in `ink`, upright, as a canvas sharp at the device's pixel ratio. */
-function emblemIcon(emblem: CapeEmblem): HTMLCanvasElement {
+/**
+ * `emblem` in `ink`, upright, sharp at the device's pixel ratio. An image of a
+ * canvas, not the canvas: the menu keeps no canvases of its own (#1422).
+ */
+function emblemIcon(emblem: CapeEmblem): HTMLImageElement {
   const ratio = window.devicePixelRatio;
   const canvas = document.createElement("canvas");
   canvas.width = Math.round(EMBLEM_BUTTON_PX * ratio);
   canvas.height = Math.round(EMBLEM_BUTTON_PX * ratio);
-  canvas.style.width = `${String(EMBLEM_BUTTON_PX)}px`;
-  canvas.style.height = `${String(EMBLEM_BUTTON_PX)}px`;
   const context = canvas.getContext("2d");
   if (context !== null) {
     context.scale(ratio, ratio);
@@ -690,5 +691,10 @@ function emblemIcon(emblem: CapeEmblem): HTMLCanvasElement {
       SELF_RIM,
     );
   }
-  return canvas;
+  const image = document.createElement("img");
+  image.src = canvas.toDataURL();
+  image.alt = "";
+  image.width = EMBLEM_BUTTON_PX;
+  image.height = EMBLEM_BUTTON_PX;
+  return image;
 }
