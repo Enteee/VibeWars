@@ -1018,7 +1018,7 @@ test("the library filters by name", async ({ page }) => {
   const total = await boxes.count();
   expect(total).toBeGreaterThan(1);
 
-  await page.locator("input.skill-search").fill("fire");
+  await page.locator("input.skill-search").fill("fireb");
   await expect(boxes).toHaveCount(1);
   await expect(boxes.first()).toContainText("Fireball");
 
@@ -1668,7 +1668,7 @@ test("the editor still works beside a live arena, which none of it recreates", a
   await pip(fireRow, 1).click();
   await expect(fireRow.locator(".editor-attribute-rank")).toHaveText("1");
 
-  await page.locator("input.skill-search").fill("fire");
+  await page.locator("input.skill-search").fill("fireb");
   await expect(page.locator(".skill-library .skill-box")).toHaveCount(1);
 
   await page
@@ -2006,28 +2006,27 @@ test("the library lists GW1 skills not in the game yet only when asked, greyed a
 
   await toggle.check();
   const fire = page.locator(".skill-group", { hasText: "FIRE MAGIC" });
-  // Rodgort's Invocation is GW1 Fire Magic VibeWars does not have yet.
-  const rodgort = fire.locator(".skill-corpus-box", { hasText: "Rodgort's Invocation" });
-  await expect(rodgort).toContainText("not in the game yet");
+  // Mark of Rodgort is GW1 Fire Magic VibeWars does not have yet.
+  const mark = fire.locator(".skill-corpus-box", { hasText: "Mark of Rodgort" });
+  await expect(mark).toContainText("not in the game yet");
   // After the group's playable skills.
   await expect(fire.locator(".skill-box, .skill-corpus-box").last()).toHaveClass(
     /skill-corpus-box/,
   );
   // It neither drags nor equips.
-  expect(await rodgort.getAttribute("draggable")).toBeNull();
-  await expect(rodgort.locator("button")).toHaveCount(0);
-  await rodgort.click();
-  await expect(page.locator(".skill-slot", { hasText: "Rodgort" })).toHaveCount(0);
+  expect(await mark.getAttribute("draggable")).toBeNull();
+  await expect(mark.locator("button")).toHaveCount(0);
+  await mark.click();
+  await expect(page.locator(".skill-slot", { hasText: "Mark of Rodgort" })).toHaveCount(0);
   // Its hover shows GW1's own text.
-  await rodgort.hover();
+  await mark.hover();
   await expect(page.locator(".skill-tip")).toContainText("Not in the game yet");
 
   // The search finds it; remembered across a reload.
-  // Mark of Rodgort is not in the game yet either, so it is found too.
+  // Rodgort's Invocation is in the game, so it is found too, playable.
   await page.locator("input.skill-search").fill("rodgort");
-  await expect(page.locator(".skill-corpus-box", { hasText: "Rodgort's Invocation" })).toHaveCount(
-    1,
-  );
+  await expect(page.locator(".skill-corpus-box", { hasText: "Mark of Rodgort" })).toHaveCount(1);
+  await expect(page.locator(".skill-box", { hasText: "Rodgort's Invocation" })).toHaveCount(1);
   await expect(page.locator(".skill-box, .skill-corpus-box")).toHaveCount(2);
   await page.reload();
   await page.getByRole("button", { name: "new character" }).click();
