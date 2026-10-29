@@ -27,7 +27,7 @@ export function scopeTransport(transport: Transport): Transport {
 
   return {
     selfId: transport.selfId,
-    send<T>(channel: Channel, data: Json<T>, to?: string) {
+    send<T>(channel: Channel, data: Json<T>, to?: string | readonly string[]) {
       if (!left) {
         transport.send(channel, data, to);
       }

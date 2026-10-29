@@ -117,6 +117,8 @@ function fakeMatch(): FakeMatch {
     },
     abandoned: false,
     droppedWeaponSwaps: 0,
+    draining: false,
+    retire: () => undefined,
     close: () => Promise.resolve(),
     finish(winningTeam) {
       phase = "finished";
@@ -143,7 +145,10 @@ interface QueuedLobby {
   /** How many times `onDone` was called. */
   readonly done: () => number;
   /** What the host's peer sent, and to whom. */
-  readonly sent: { readonly channel: Channel; readonly to: string | undefined }[];
+  readonly sent: {
+    readonly channel: Channel;
+    readonly to: string | readonly string[] | undefined;
+  }[];
   /** How the host's peer rewrites a party proposal it sends over the room. */
   readonly proposals: ProposalRewrite;
   /** A joiner holding `ticketId`, on a fresh peer unless one is given. */
@@ -160,7 +165,7 @@ interface ProposalRewrite {
 /** `transport`, recording what it sends, and rewriting a proposal as `proposals` says. */
 function spied(
   transport: Transport,
-  sent: { channel: Channel; to: string | undefined }[],
+  sent: { channel: Channel; to: string | readonly string[] | undefined }[],
   proposals: ProposalRewrite = { rewrite: undefined },
 ): Transport {
   return {
@@ -195,7 +200,7 @@ async function openQueued(options: OpenQueuedOptions = {}): Promise<QueuedLobby>
   const plans: MatchPlan[] = [];
   const fellThrough: (readonly string[])[] = [];
   let done = 0;
-  const sent: { channel: Channel; to: string | undefined }[] = [];
+  const sent: { channel: Channel; to: string | readonly string[] | undefined }[] = [];
   const proposals: ProposalRewrite = { rewrite: undefined };
   const lobby = createLobbyHost({
     transport: spied(network.join("host"), sent, proposals),
@@ -214,6 +219,8 @@ async function openQueued(options: OpenQueuedOptions = {}): Promise<QueuedLobby>
         random: () => 0.5,
         maxPlayers: 8,
         seats: plan.seats,
+        matchId: plan.matchId,
+        isSpectator: plan.isSpectator,
       });
     },
     queued: {
@@ -420,7 +427,7 @@ describe("a queued lobby", () => {
     const bystander = queued.network.join();
     const overheard: unknown[] = [];
     bystander.on("lobby-join", (data) => overheard.push(data));
-    const sent: { channel: Channel; to: string | undefined }[] = [];
+    const sent: { channel: Channel; to: string | readonly string[] | undefined }[] = [];
     const ally = queued.network.join();
     await queued.join(ALLY, spied(ally, sent));
     const joins = sent.filter((message) => message.channel === "lobby-join");
@@ -604,7 +611,7 @@ describe("Stay together, on a queued lobby's host (#882, #1078)", () => {
     const queued = await openQueued({ match });
     const allyRoom = queued.network.join();
     /** What the ally's connection sent. */
-    const allySent: { channel: Channel; to: string | undefined }[] = [];
+    const allySent: { channel: Channel; to: string | readonly string[] | undefined }[] = [];
     const ally = await queued.join(ALLY, spied(allyRoom, allySent));
     const foe = await queued.join(FOE);
     await queued.join(FOE_2);
