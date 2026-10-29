@@ -804,32 +804,33 @@ const status = {
       `<path d="M6 17.5h5l2-4" ${stroke(c, 2.2)}/>` +
       `<path d="M14 7l2.5 3L19 7" ${stroke(c, 2)}/>`,
   ],
-  // Hex: a spark struck through, the foe cannot cast spells (#1234).
+  // Hex: a dashed ring with a gag bar, the foe cannot cast spells (#1234, #1262).
   "shroud-of-silence": [
     "hex",
     (c) =>
-      `<path d="M12 6l1.5 4.5L18 12l-4.5 1.5L12 18l-1.5-4.5L6 12l4.5-1.5z" fill="${c}"/>` +
-      `<path d="M5.5 18.5l13-13" ${stroke(c, 2)}/>`,
+      `<circle cx="12" cy="12" r="6.5" ${stroke(c, 1.8)} stroke-dasharray="3.4 2.6"/>` +
+      `<path d="M7.5 12h9" ${stroke(c, 2.6)}/>`,
   ],
-  // Hex: a shield split open, blows of its caster cannot be blocked (#1234).
+  // Hex: a shield cracked open, blows of its caster cannot be blocked (#1234, #1262).
   "expose-defenses": [
     "hex",
     (c) =>
-      `<path d="M11 6H7v5.5c0 2.6 1.8 4.4 4 5.5z" fill="${c}"/>` +
-      `<path d="M13.5 6H17v5.5c0 2.6-1.8 4.4-3.5 5.5z" ${stroke(c, 1.6)}/>`,
+      `<path d="M12 5.5L18 7.8V12c0 3-2.5 5-6 6.5C8.5 17 6 15 6 12V7.8Z" ${stroke(c, 1.6)}/>` +
+      `<path d="M12 7.5L10.5 11.5L13.5 13L11.5 16.5" ${stroke(c, 1.8)}/>`,
   ],
-  // Hex: a drop in a loop, a poison that renews while its foe moves (#1234).
+  // Hex: a drop and a chevron, a poison that renews while its foe moves (#1234, #1262).
   "enduring-toxin": [
     "hex",
     (c) =>
-      `<path d="M12 8c-1.8 2.4-2.5 3.6-2.5 4.6a2.5 2.5 0 0 0 5 0c0-1-.7-2.2-2.5-4.6z" fill="${c}"/>` +
-      `<path d="M18 12a6 6 0 1 1-2-4.5M16 5v3h3" ${stroke(c, 1.6)}/>`,
+      `<path d="M10 6c-2 2.6-3.5 4.4-3.5 6.2a3.5 3.5 0 0 0 7 0C13.5 10.4 12 8.6 10 6z" fill="${c}"/>` +
+      `<path d="M15.5 8.5l3 3.5l-3 3.5" ${stroke(c, 2)}/>`,
   ],
-  // Hex: a cross over a halved plus, heals worth half (#1234).
+  // Hex: a skull, healing on the foe is cut (#1234, #1262).
   "mark-of-death": [
     "hex",
     (c) =>
-      `<path d="M12 6v12M8 10h8" ${stroke(c, 2.2)}/>` + `<path d="M6 18l12-12" ${stroke(c, 1.6)}/>`,
+      `<path d="M12 5.5c-3 0-5 2-5 4.7c0 1.8 1 2.9 2.5 3.6V17h5v-3.2c1.5-.7 2.5-1.8 2.5-3.6c0-2.7-2-4.7-5-4.7z" fill="${c}"/>` +
+      `<circle cx="10" cy="10.2" r="1.3" fill="${C.hex}"/><circle cx="14" cy="10.2" r="1.3" fill="${C.hex}"/>`,
   ],
 };
 
@@ -1511,6 +1512,23 @@ const skillGlyph = {
   // A post with a bright head: a spirit planted where it was called (#1217).
   totem: () =>
     inkFill("M9 11H14L14.2 20H8.8Z") + `<circle cx="12" cy="6.5" r="3.8" fill="${C.ink}"/>`,
+  // The spirit post, low on the left, shooting a mark up and right: what the
+  // mark is says what the spirit does (#1271). Pain only hurts.
+  "spirit-pain": () => spiritPost() + inkLine("M19.5 2.5L14 9.5H19L14.5 15.5", 2.4),
+  // Shadowsong blinds: an eye.
+  "spirit-blind": () =>
+    spiritPost() +
+    `<path d="M10.5 8.5C12 5.5 14.5 4.5 17 4.5S22 5.5 23.5 8.5C22 11.5 19.5 12.5 17 12.5S12 11.5 10.5 8.5Z" ${stroke(C.ink, 1.8)}/>` +
+    `<circle cx="17" cy="8.5" r="2" fill="${C.ink}"/>`,
+  // Dissonance interrupts: a burst.
+  "spirit-quiet": () =>
+    spiritPost() +
+    `<g transform="translate(17,8.5) scale(0.55) translate(-12,-12)">${inkFill(burst(6))}</g>`,
+  // Disenchantment strips an enchantment: a ring struck through.
+  "spirit-strip": () =>
+    spiritPost() +
+    `<circle cx="17" cy="8.5" r="4.6" ${stroke(C.ink, 2)}/>` +
+    inkLine("M12 14L22 3", 2.2),
   // The ward's ring and pole, with a blade struck from it: it turns melee (#1217).
   "ward-blade": () =>
     `<ellipse cx="12" cy="17" rx="8.5" ry="4" ${stroke(C.ink, 2.5)}/>` +
@@ -1657,6 +1675,39 @@ const skillGlyph = {
   eye: () =>
     `<path d="M2.5 12C5 7.5 8.5 5.5 12 5.5S19 7.5 21.5 12C19 16.5 15.5 18.5 12 18.5S5 16.5 2.5 12Z" ${stroke(C.ink, 2.2)}/>` +
     `<circle cx="12" cy="12" r="3.4" fill="${C.ink}"/>`,
+  // A dashed ring (a hex) with a gag bar across it: spells are silenced (#1262).
+  "hex-mute": () =>
+    `<circle cx="12" cy="12" r="8.5" ${stroke(C.ink, 2.2)} stroke-dasharray="4.2 3.2"/>` +
+    inkLine("M6.5 12H17.5", 3.2),
+  // A shield outline with a crack down its face: the block is gone (#1262).
+  "armor-crack": () =>
+    `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2)}/>` +
+    inkLine("M12 5.5L9.5 10.5L14 13L11 18.5", 2.4),
+  // A drop with chevrons beside it: the poison bites for as long as the foe runs (#1262).
+  "drop-run": () =>
+    inkFill("M9 3C9 3 3.5 9.5 3.5 13A5.5 5.5 0 0 0 14.5 13C14.5 9.5 9 3 9 3Z") +
+    inkLine("M15.5 3.5L19.5 7.5L15.5 11.5", 2.4),
+  // A skull: the mark of death (#1262).
+  "mark-skull": () =>
+    inkFill(
+      "M11 3C6.8 3 4 5.8 4 9.5C4 12 5.3 13.5 7.5 14.5V19H14.5V14.5C16.7 13.5 18 12 18 9.5C18 5.8 15.2 3 11 3Z",
+    ) +
+    `<circle cx="8" cy="9.5" r="2" fill="${C.bg}"/><circle cx="14" cy="9.5" r="2" fill="${C.bg}"/>`,
+  // A thrown dagger and a star where it lands: the cast is broken (#1262).
+  "dagger-stop": () =>
+    inkLine("M3 20L12 11", 2.6) +
+    inkFill("M12 11L15.5 7.5L13.8 13.2Z") +
+    `<g transform="translate(17.5,6.5) scale(0.5) translate(-12,-12)">${inkFill(burst(6))}</g>`,
+  // A thrown dagger and a limping line beyond it: the foe is slowed (#1262).
+  "dagger-limp": () =>
+    inkLine("M3 20L12 11", 2.6) +
+    inkFill("M12 11L15.5 7.5L13.8 13.2Z") +
+    inkLine("M19 3L16.5 7L20 10L17.5 13", 2.2),
+  // An open palm, fingers up: the strike that knocks down (#1262).
+  palm: () =>
+    inkLine("M5 3.5V10M8.2 2.5V10M11.4 2.5V10M14.6 3.5V10", 2.4) +
+    inkFill("M3.5 10H16V15C16 18 14 20.5 11 20.5H8.5C5.5 20.5 3.5 18 3.5 15Z"),
+
   // A ghost with dark eyes, wavy hem: the phantasm that gnaws (#1243).
   ghost: () =>
     inkFill("M3.5 17.5V9A5.5 5.5 0 0 1 14.5 9V17.5L12.2 15.3L9 17.5L5.8 15.3Z") +
@@ -1685,6 +1736,10 @@ const skillGlyph = {
     inkLine("M9 3L5 9.5L9 13.5L4 20", 2.8) +
     inkLine("M13 4.5L16.5 8L20 4.5M13 10L16.5 13.5L20 10", 2.2),
 };
+
+/** The shared spirit post of the attacking spirits, left of the mark it shoots (#1271). */
+const spiritPost = () =>
+  inkFill("M4.8 11H9.2L9.4 20H4.6Z") + `<circle cx="7" cy="6.8" r="3.4" fill="${C.ink}"/>`;
 
 /** Modifiers, drawn around the bottom right corner on a dark disc. */
 const skillModifier = {

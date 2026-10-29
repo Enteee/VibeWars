@@ -113,3 +113,6 @@ built for players and is the larger, safe value.
   its life separately (`TeamStanding.priestLives`).
 - A Guild Battle's Guild Lord (#1222) is one too, rooted at its post by
   the `guard` behaviour; `TeamStanding.guildLordLives` reads its life.
+  Its base guards (#1223) are too, the same behaviour unrooted; the
+  lord's `Combatant.lossGuard` holds its Bodyguard's cut and its
+  per-second cap on Health lost.

@@ -2,7 +2,7 @@ import { defaultBuildEquipment } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
 import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "../storage/schema.js";
-import { rosterSubtitle } from "./menu.js";
+import { isPlayable, rosterSubtitle } from "./menu.js";
 
 function character(overrides: Partial<StoredCharacter> = {}): StoredCharacter {
   return {
@@ -24,10 +24,25 @@ describe("rosterSubtitle (#579)", () => {
     expect(rosterSubtitle(character())).toBe("Elementalist / Monk · 1/8 skills");
   });
 
-  it("says when the build is illegal, and still lists it", () => {
+  it("leaves an illegal build's invalidity to its row's tag (#1290)", () => {
     const illegal = character({
       skillBar: ["no.such-skill", null, null, null, null, null, null, null],
     });
-    expect(rosterSubtitle(illegal)).toBe("Elementalist / Monk · 1/8 skills · invalid build");
+    expect(rosterSubtitle(illegal)).toBe("Elementalist / Monk · 1/8 skills");
+  });
+});
+
+describe("isPlayable (#1290)", () => {
+  it("lets a legal build and an empty bar be chosen", () => {
+    expect(isPlayable(character())).toBe(true);
+    expect(isPlayable(character({ skillBar: Array(8).fill(null) }))).toBe(true);
+  });
+
+  it("never an invalid one", () => {
+    expect(
+      isPlayable(
+        character({ skillBar: ["no.such-skill", null, null, null, null, null, null, null] }),
+      ),
+    ).toBe(false);
   });
 });

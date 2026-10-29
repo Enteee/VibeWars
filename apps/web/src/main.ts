@@ -440,8 +440,7 @@ async function main(): Promise<void> {
    * The selected character, read fresh: the one read per lobby (#1070).
    * The lobby lists it (#580) by the selected one's name and professions,
    * or `null` for a starter build. A build the host would refuse, an
-   * empty bar or an illegal one, plays a starter build, so it is listed
-   * as that too.
+   * illegal one, plays a starter build, so it is listed as that too.
    */
   const readEntrant = async (): Promise<Entrant> => {
     const build = await activeBuild();

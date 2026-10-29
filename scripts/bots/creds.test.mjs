@@ -17,6 +17,7 @@ import {
   paths,
   projectAccess,
   pushIdentity,
+  telegramGroupIdentity,
   telegramIdentity,
 } from "./creds.mjs";
 
@@ -33,6 +34,7 @@ describe("paths", () => {
     expect(p.ghHosts).toBe("/c/gh/hosts.yml");
     expect(p.sshKey).toBe("/c/ssh/id_ed25519");
     expect(p.telegram).toBe("/c/telegram-manager-token");
+    expect(p.telegramChat).toBe("/c/telegram-chat-id");
   });
 });
 
@@ -214,6 +216,65 @@ describe("telegramIdentity", () => {
   });
 });
 
+describe("telegramGroupIdentity", () => {
+  /** @param {{ is_forum: boolean, can_manage_topics: boolean }} g */
+  const reply = (g) => (/** @type {string} */ url) => {
+    const result = url.includes("getMe")
+      ? { id: 7, username: "vw" }
+      : url.includes("getChatMember")
+        ? { status: "administrator", can_manage_topics: g.can_manage_topics }
+        : { type: "supergroup", title: "VW", is_forum: g.is_forum };
+    return Promise.resolve({ ok: true, json: () => Promise.resolve({ ok: true, result }) });
+  };
+  const files = () => {
+    const dir = home();
+    const token = path.join(dir, "token");
+    const chat = path.join(dir, "chat");
+    fs.writeFileSync(token, SECRET);
+    return { token, chat };
+  };
+
+  it("is not set up without the file", async () => {
+    const f = files();
+    expect((await telegramGroupIdentity(f.token, f.chat)).state).toBe("not set up");
+  });
+
+  it("is ok for a forum the bot manages", async () => {
+    const f = files();
+    fs.writeFileSync(f.chat, "-100\n");
+    const id = await telegramGroupIdentity(
+      f.token,
+      f.chat,
+      reply({ is_forum: true, can_manage_topics: true }),
+    );
+    expect(id).toMatchObject({ state: "ok", who: "VW (-100)" });
+  });
+
+  it("is an error for a group without topics or without the right", async () => {
+    const f = files();
+    fs.writeFileSync(f.chat, "-100");
+    const noTopics = await telegramGroupIdentity(
+      f.token,
+      f.chat,
+      reply({ is_forum: false, can_manage_topics: true }),
+    );
+    expect(noTopics.note).toContain("Topics enabled");
+    const noRight = await telegramGroupIdentity(
+      f.token,
+      f.chat,
+      reply({ is_forum: true, can_manage_topics: false }),
+    );
+    expect(noRight.note).toContain("Manage Topics");
+    expect(JSON.stringify([noTopics, noRight])).not.toContain(SECRET);
+  });
+
+  it("is an error for a file that is not a chat id", async () => {
+    const f = files();
+    fs.writeFileSync(f.chat, "abc");
+    expect((await telegramGroupIdentity(f.token, f.chat)).state).toBe("error");
+  });
+});
+
 describe("ensureHome", () => {
   it("creates the directory at 0700 and reports a missing telegram token", () => {
     const root = path.join(home(), "creds");
@@ -221,7 +282,7 @@ describe("ensureHome", () => {
     expect(result.ok).toBe(true);
     expect(fs.statSync(root).mode & 0o777).toBe(0o700);
     expect(result.lines.map((l) => l.outcome).join("\n")).toContain(
-      "missing (run claude-bot-setup)",
+      "missing (run claude-llc auth telegram)",
     );
   });
 
