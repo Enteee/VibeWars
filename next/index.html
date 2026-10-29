@@ -7,17 +7,25 @@
     <title>VibeWars</title>
     <!-- Vite copies `public/` to the dist root, which the server then serves. -->
     <link rel="icon" type="image/svg+xml" href="/VibeWars/next/icon.svg" />
-    <script type="module" crossorigin src="/VibeWars/next/assets/main-BAcIH9wA.js"></script>
+    <script type="module" crossorigin src="/VibeWars/next/assets/main-BOgp5182.js"></script>
     <link rel="modulepreload" crossorigin href="/VibeWars/next/assets/preload-helper-C0TE3cvU.js">
     <link rel="modulepreload" crossorigin href="/VibeWars/next/assets/music-urls-Cd5vT8Cy.js">
-    <link rel="stylesheet" crossorigin href="/VibeWars/next/assets/main-DopWfQDz.css">
+    <link rel="stylesheet" crossorigin href="/VibeWars/next/assets/main-y1HxaWYu.css">
   </head>
   <body>
     <div id="app">
+      <!-- The shown screen's place and controls, then the global icons (#1272). -->
       <header id="topbar">
-        <span class="brand">VibeWars</span>
+        <nav class="topbar-crumbs" aria-label="Where you are">
+          <span class="topbar-crumb is-place">VibeWars</span>
+        </nav>
+        <span class="topbar-back"></span>
+        <span class="topbar-status"></span>
         <span id="status" class="status" hidden></span>
-        <div id="topbar-actions" class="topbar-actions"></div>
+        <div class="topbar-tools">
+          <div class="topbar-screen-actions"></div>
+          <div id="topbar-actions" class="topbar-actions"></div>
+        </div>
       </header>
       <!-- Menu / character / team / lobby screens. -->
       <div id="screens"></div>
