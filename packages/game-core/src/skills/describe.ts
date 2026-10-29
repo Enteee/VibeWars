@@ -377,6 +377,17 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.sourceLosesHealth !== undefined) {
     parts.push(`its spirit loses ${String(definition.sourceLosesHealth)} health each time`);
   }
+  if (definition.renewsOnChantOrShoutEnd) {
+    parts.push("renewed whenever a chant or shout ends on it");
+  }
+  if (definition.chantShoutDurationMultiplier !== 1) {
+    const longer = Math.round((definition.chantShoutDurationMultiplier - 1) * 100);
+    parts.push(`chants and shouts last ${String(longer)}% longer on it`);
+  }
+  if (definition.endsAfterTriggers !== undefined) {
+    const plural = definition.endsAfterTriggers === 1 ? "" : "s";
+    parts.push(`ends after it takes effect ${String(definition.endsAfterTriggers)} time${plural}`);
+  }
   if (definition.breaksNextHex !== undefined) {
     parts.push(
       `the next hex fails, and its caster takes ${String(definition.breaksNextHex.damage)} damage`,
@@ -489,6 +500,7 @@ const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-gains-enchantment": "gains an enchantment",
   "bearer-creates-creature": "creates a creature",
   "bearer-gains-condition": "gains a new condition",
+  "bearer-chant-or-shout-ends": "has a chant or shout end on it",
   ends: "ends",
   expires: "expires",
 };
@@ -529,13 +541,15 @@ function describeTriggers(
       trigger,
       on.includes("bearer-creates-creature")
         ? CREATES
-        : on.includes("ends") || on.includes("expires")
-          ? `when it ${on.map((event) => whenOf(event, trigger.weapon)).join(" or ")}`
-          : once && on.includes("bearer-uses-skill")
-            ? NEXT_SKILL
-            : nextOnly
-              ? `the next time it ${on.map((event) => whenOf(event, trigger.weapon)).join(" or ")}`
-              : `whenever it ${on.map((event) => whenOf(event, trigger.weapon)).join(" or ")}`,
+        : on.includes("bearer-chant-or-shout-ends")
+          ? CHANT_OR_SHOUT_ENDS
+          : on.includes("ends") || on.includes("expires")
+            ? `when it ${on.map((event) => whenOf(event, trigger.weapon)).join(" or ")}`
+            : once && on.includes("bearer-uses-skill")
+              ? NEXT_SKILL
+              : nextOnly
+                ? `the next time it ${on.map((event) => whenOf(event, trigger.weapon)).join(" or ")}`
+                : `whenever it ${on.map((event) => whenOf(event, trigger.weapon)).join(" or ")}`,
       ranks,
       bearerIsFoe,
     ),
@@ -552,6 +566,9 @@ function weaponBoundWhen(event: StatusTriggerEvent, weapon: AttackWeaponClass): 
   }
   return `${TRIGGER_WHEN[event]} with ${NEEDED_WEAPON[weapon]}`;
 }
+
+/** An echo's (#1423), in the corpus's words. */
+const CHANT_OR_SHOUT_ENDS = "whenever a chant or shout ends on it";
 
 /** The one use a status that ends on it answers (#949), as its tooltip says it. */
 const NEXT_SKILL = "the next time it uses a skill";
@@ -1502,6 +1519,7 @@ const TYPE_TEXT: Record<SkillType, string> = {
   preparation: "Preparation.",
   glyph: "Glyph.",
   chant: "Chant.",
+  echo: "Echo.",
   "weapon-spell": "Weapon Spell.",
   "nature-ritual": "Nature Ritual.",
   "binding-ritual": "Binding Ritual.",
@@ -1536,6 +1554,7 @@ const TARGET_TEXT: Record<Skill["target"], string> = {
   "single-any": "Any one target",
   "single-dead-ally": "A dead ally",
   "allied-spirit": "An allied spirit",
+  "single-ally-not-spirit": "One ally, not a spirit",
   companion: "Your pet",
   "living-companion": "Your living pet",
 };

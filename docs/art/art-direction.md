@@ -220,6 +220,7 @@ so the silhouette identifies the profession and the colour only supports it.
 | Glyph        | Triangle plate, point down, glyph inside                |
 | Shout        | `ink` hexagon plate, glyph inside                       |
 | Chant        | `ink` banner plate, notched at the foot, glyph inside   |
+| Echo         | The chant's banner plate, a stand-in (#1423)            |
 | Weapon spell | Shield plate, glyph inside                              |
 | Skill effect | `ink-dim` wide capsule plate, glyph inside              |
 | Area flash   | Caster's team colour ring at the area's true radius     |

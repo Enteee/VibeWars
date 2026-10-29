@@ -27,6 +27,14 @@ to four more ranks on top; see [Equipment](equipment.md). Raising the
 attribute a skill uses makes it stronger, and the numbers in its
 description change as you spend.
 
+## Echoes
+
+A Paragon's **echoes** are long buffs on one ally. A **refrain** renews
+to its full length, and a **finale** takes effect, whenever a chant or a
+shout ends on that ally. A chant or shout reapplied before it ends has not
+ended. Nothing removes an echo: it ends when it runs out or its bearer
+dies. Most cannot target a spirit.
+
 ## The library
 
 The skill library lists every skill your two professions can use,

@@ -141,6 +141,10 @@ const skillType = {
   chant: () =>
     `<circle cx="8" cy="17.5" r="3.5" fill="${C.ink}"/>` +
     `<path d="M10.5 17.5V3.5c2.5.5 6.5 2.5 6.5 7" ${stroke(C.ink, 2.5)}/>`,
+  // A stand-in until its own (#1423): an echo answers a chant, so the chant's note.
+  echo: () =>
+    `<circle cx="8" cy="17.5" r="3.5" fill="${C.ink}"/>` +
+    `<path d="M10.5 17.5V3.5c2.5.5 6.5 2.5 6.5 7" ${stroke(C.ink, 2.5)}/>`,
   // Shield ring: a spell held on an ally's weapon, one at a time (#758).
   "weapon-spell": () =>
     `<path d="M4.5 3.5h15v7c0 4.5-3.5 7.5-7.5 9.5-4-2-7.5-5-7.5-9.5z" ${stroke(C.weaponSpell, 3)}/>`,
@@ -186,7 +190,7 @@ const skillType = {
 // ---------------------------------------------------------------------------
 
 /** @typedef {(colour: string) => string} Glyph */
-/** @typedef {"condition" | "hex" | "enchantment" | "stance" | "preparation" | "glyph" | "shout" | "chant" | "weapon-spell" | "skill-effect"} Category */
+/** @typedef {"condition" | "hex" | "enchantment" | "stance" | "preparation" | "glyph" | "shout" | "chant" | "echo" | "weapon-spell" | "skill-effect"} Category */
 
 /** @type {Record<Category, (glyph: Glyph) => string>} */
 const plates = {
@@ -206,6 +210,8 @@ const plates = {
   shout: (glyph) =>
     `<path d="M6.5 2h11l5.5 10-5.5 10h-11L1 12z" fill="${C.ink}"/>` + glyph(C.plate),
   chant: (glyph) => `<path d="M3 1h18v22l-9-5-9 5z" fill="${C.ink}"/>` + glyph(C.plate),
+  // A stand-in until its own (#1423): the chant's banner.
+  echo: (glyph) => `<path d="M3 1h18v22l-9-5-9 5z" fill="${C.ink}"/>` + glyph(C.plate),
   "weapon-spell": (glyph) =>
     `<path d="M1.5 1h21v10c0 6.5-5 10-10.5 12.5C6.5 21 1.5 17.5 1.5 11z" fill="${C.weaponSpell}"/>` +
     glyph(C.plate),
@@ -1016,6 +1022,42 @@ const status = {
     (c) =>
       `<path d="M10 5.3A7 7 0 1 0 18.7 10M14 5.3A7 7 0 0 1 18.7 10" ${stroke(c, 2.2)}/>` +
       `<path d="M11 4l2 3-2 1 2 3" ${stroke(c, 1.6)}/>`,
+  ],
+  // Paragon echoes (#1423), stand-ins until the asset-designer's.
+  // Echo: two chevrons, attacks faster.
+  "aggressive-refrain": ["echo", (c) => `<path d="M7 5l5 5 5-5M7 11l5 5 5-5" ${stroke(c, 2.2)}/>`],
+  // Echo: a flame, foes beside the bearer burn.
+  "blazing-finale": [
+    "echo",
+    (c) =>
+      `<path d="M12 4c1 3 4 4.5 4 8a4 4 0 0 1-8 0c0-2 1-3 2-4 0 2 1 2.5 2 2.5 0-2.5-1-4.5 0-6.5z" fill="${c}"/>`,
+  ],
+  // Echo: a small flame over a bar, the bigger foe burns.
+  "burning-refrain": [
+    "echo",
+    (c) =>
+      `<path d="M12 4c1 2 3 3 3 5.5a3 3 0 0 1-6 0c0-1.5 1-2.5 3-5.5z" fill="${c}"/>` +
+      `<path d="M6 16h12" ${stroke(c, 2)}/>`,
+  ],
+  // Echo: a note held long, chants and shouts last longer.
+  "enduring-harmony": ["echo", (c) => `<path d="M5 8h14M5 12h14" ${stroke(c, 2)}/>`],
+  // Echo: a plus, a heal at each end.
+  "finale-of-restoration": ["echo", (c) => `<path d="M12 5v10M7 10h10" ${stroke(c, 2.6)}/>`],
+  // Echo: one chevron forward, faster.
+  "hasty-refrain": ["echo", (c) => `<path d="M8 4l6 6-6 6" ${stroke(c, 2.4)}/>`],
+  // Echo: a ring with a plus, health coming back.
+  "mending-refrain": [
+    "echo",
+    (c) =>
+      `<circle cx="12" cy="10" r="5" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 7.5v5M9.5 10h5" ${stroke(c, 1.8)}/>`,
+  ],
+  // Echo: a drop crossed out, a condition lost.
+  "purifying-finale": [
+    "echo",
+    (c) =>
+      `<path d="M12 4c2 3 4 5 4 7.5a4 4 0 0 1-8 0C8 9 10 7 12 4z" ${stroke(c, 1.8)}/>` +
+      `<path d="M6 16L18 4" ${stroke(c, 1.8)}/>`,
   ],
 };
 

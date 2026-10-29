@@ -334,4 +334,13 @@ export const SKILL_ICONS = {
   "necromancer.defile-defenses": { glyph: "hex-nobloc", modifier: "bolt" },
   "monk.scourge-enchantment": { glyph: "hex-burst", modifier: "plus" },
   "mesmer.hex-breaker": { glyph: "hex-cut", modifier: "self" },
+  // Placeholders until the asset-designer's (#1423): Paragon echoes.
+  "paragon.aggressive-refrain": { glyph: "blade-fast", modifier: "self" },
+  "paragon.blazing-finale": { glyph: "flame-ring", modifier: "area" },
+  "paragon.burning-refrain": { glyph: "flame-target", modifier: "plus" },
+  "paragon.enduring-harmony": { glyph: "banner-note", modifier: "clock" },
+  "paragon.finale-of-restoration": { glyph: "heart-plus", modifier: "hourglass" },
+  "paragon.hasty-refrain": { glyph: "speed", modifier: "plus" },
+  "paragon.mending-refrain": { glyph: "ring-heal", modifier: "self" },
+  "paragon.purifying-finale": { glyph: "cleanse", modifier: "hourglass" },
 };

@@ -1346,6 +1346,7 @@ body {
 
 .team-skill[data-skill-type="attack"],
 .team-skill[data-skill-type="chant"],
+.team-skill[data-skill-type="echo"],
 .team-skill[data-skill-type="shout"],
 .team-skill[data-skill-type="signet"],
 .team-skill[data-skill-type="skill"],

@@ -45,6 +45,8 @@ export type ActivationRejection =
   | "invalid-target-enemy"
   // A spirit skill on anything but a living spirit of your team (#1309).
   | "invalid-target-not-allied-spirit"
+  // An echo on a spirit (#1423): GW1's "Cannot target spirits".
+  | "invalid-target-spirit"
   | "out-of-range"
   | "no-line-of-sight"
   // A corpse skill with no fresh corpse in reach (#466): checked by the
@@ -134,6 +136,13 @@ export function targetRuleAllows(
     case "single-ally":
       // "Ally" includes yourself: self-healing is a normal, intended play.
       return isAlly || isSelf ? undefined : "invalid-target-enemy";
+    case "single-ally-not-spirit":
+      // A pet or a minion is allowed, as in GW1.
+      return !isAlly && !isSelf
+        ? "invalid-target-enemy"
+        : target.creatureKind === "spirit"
+          ? "invalid-target-spirit"
+          : undefined;
     case "single-other-ally":
     case "single-dead-ally":
     case "companion":

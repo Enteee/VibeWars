@@ -125,7 +125,7 @@ export const TYPES_BY_GW_ID: ReadonlyMap<
   [11, { text: "Pet Attack", skillType: "pet-attack" }],
   [12, { text: "Spear Attack", skillType: "attack" }],
   [13, { text: "Chant", skillType: "chant" }],
-  [14, { text: "Echo", skillType: undefined }],
+  [14, { text: "Echo", skillType: "echo" }],
   [15, { text: "Form", skillType: undefined }],
   [16, { text: "Glyph", skillType: "glyph" }],
   [17, { text: "Preparation", skillType: "preparation" }],

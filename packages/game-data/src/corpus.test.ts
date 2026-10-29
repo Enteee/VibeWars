@@ -49,8 +49,8 @@ describe("corpusSkills (#1220)", () => {
       profession: "common",
       attributeId: undefined,
     });
-    // Echo is a GW1 type this game lacks.
-    expect(corpus.find((skill) => skill.typeText === "Echo")?.skillType).toBeUndefined();
+    // A Paragon echo is ours (#1423).
+    expect(byId.get(1774)).toMatchObject({ typeText: "Echo", skillType: "echo" });
   });
 
   it("gives every entry an attribute of ours, or none", () => {
