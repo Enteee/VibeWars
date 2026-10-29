@@ -893,6 +893,8 @@ export type SkillType =
   | "well"
   | "trap"
   | "pet-attack"
+  /** A GW1 form (#1437): a status of its own on the caster, never an enchantment. */
+  | "form"
   | "skill";
 
 /**
@@ -1074,6 +1076,12 @@ export interface Skill {
    * `FLASH_LOCKOUT_SECONDS`. Always a 0 s enchantment on the caster.
    */
   readonly flash: boolean;
+  /**
+   * GW1's "This skill is disabled for N seconds" (#1437): used, it is
+   * disabled this long, beyond the recharge it shows. A longer recharge
+   * left is kept. `undefined`: only its recharge.
+   */
+  readonly disabledAfterUseSeconds: number | undefined;
   /**
    * The profession this skill belongs to, and therefore who may equip it:
    * a character whose primary or secondary it is (brief §6's skill shape).

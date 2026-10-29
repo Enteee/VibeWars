@@ -90,13 +90,14 @@ const WIRE_STATUS_RANK: Readonly<Record<StatusCategory, number>> = {
   condition: 0,
   hex: 1,
   enchantment: 2,
-  stance: 3,
-  preparation: 4,
-  glyph: 5,
-  "weapon-spell": 6,
-  shout: 7,
-  chant: 8,
-  "skill-effect": 9,
+  form: 3,
+  stance: 4,
+  preparation: 5,
+  glyph: 6,
+  "weapon-spell": 7,
+  shout: 8,
+  chant: 9,
+  "skill-effect": 10,
 };
 
 function wireStatusRank(id: StatusId): number {

@@ -71,6 +71,7 @@ describe("Spirit Light Weapon (#975)", () => {
       type: "weapon-spell",
       elite: true,
       flash: false,
+      disabledAfterUseSeconds: undefined,
       target: "single-ally",
     });
   });
@@ -144,6 +145,7 @@ describe("Weapon of Aggression (#975)", () => {
       type: "weapon-spell",
       elite: false,
       flash: false,
+      disabledAfterUseSeconds: undefined,
       target: "self",
     });
   });
@@ -208,6 +210,7 @@ describe("Weapon of Quickening (#975)", () => {
       type: "weapon-spell",
       elite: true,
       flash: false,
+      disabledAfterUseSeconds: undefined,
       attributeId: "ritualist.communing",
     });
   });

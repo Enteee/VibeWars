@@ -3213,6 +3213,10 @@ export class MatchSimulation {
         reducedRecharge(skill.rechargeSeconds * (1 - rechargeFraction), faster),
         cast.key,
       );
+      // A form's "disabled for 45 seconds" (#1437), beside its recharge.
+      if (skill.disabledAfterUseSeconds !== undefined) {
+        record.combatant.cast.disable(cast.key, skill.disabledAfterUseSeconds);
+      }
     }
     this.#log.push({
       tick: this.#tick,
@@ -3321,6 +3325,7 @@ export class MatchSimulation {
           this.#landCharge(change.toId, change.statusId, change.amount);
         }
         this.#loseRaisedHealth(record, change);
+        this.#endForm(record, change);
       }
     }
     const context = this.#triggerContext();
@@ -3341,8 +3346,29 @@ export class MatchSimulation {
           this.#logFired(breakHex(record.combatant, change, context));
         }
         this.#loseRaisedHealth(record, change);
+        this.#endForm(record, change);
       }
     }
+  }
+
+  /**
+   * A form ended (#1437), and no form is up after it: GW1's "auto attack
+   * and movement will cease and skills will stop activating". The cast is
+   * lost as a walk loses it, paid for and not recharging; held movement
+   * keys walk again only when the input next changes. A form recast ends
+   * itself and is up again: nothing stops.
+   */
+  #endForm(record: ParticipantRecord, change: StatusChange): void {
+    const { statuses } = record.combatant;
+    if (
+      change.kind !== "ended" ||
+      STATUS_DEFINITIONS[change.id].category !== "form" ||
+      statuses.countByCategory("form") > 0
+    ) {
+      return;
+    }
+    record.inputDirection = ZERO;
+    this.cancelAction(record.id);
   }
 
   /**

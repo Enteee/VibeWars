@@ -6,6 +6,7 @@ import {
   AREA_NEARBY,
   RANGE_SPELL,
 } from "../distances.js";
+import type { ConditionalArmor } from "../equipment/armor.js";
 import { WEAPONS } from "../equipment/weapons.js";
 import {
   SPAWNING_POWER_ATTRIBUTE,
@@ -206,6 +207,9 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.armorModifier !== 0) {
     const sign = definition.armorModifier > 0 ? "+" : "";
     parts.push(`${sign}${String(definition.armorModifier)} armor`);
+  }
+  for (const bonus of definition.conditionalArmor) {
+    parts.push(statusArmorText(bonus));
   }
   if (definition.armorWhileStill !== 0) {
     parts.push(`${signed(definition.armorWhileStill)} armor while not moving`);
@@ -473,6 +477,27 @@ function describeAttackHit(effect: SkillEffect): string[] {
   return describeEffects(effect, new Map()).map(({ text }) => `your physical attacks: ${text}`);
 }
 
+/**
+ * A status's typed armor (#1437), as GW1 words it: "+30 elemental armor".
+ * Only the damage-type conditions are a status's; any other is a catalog
+ * bug, not data.
+ */
+function statusArmorText(bonus: ConditionalArmor): string {
+  const against = bonus.conditions.map((condition) => {
+    switch (condition.kind) {
+      case "vs-physical":
+        return "physical";
+      case "vs-elemental":
+        return "elemental";
+      case "vs-type":
+        return condition.type;
+      default:
+        throw new Error(`a status's armor holds only against a damage type, not ${condition.kind}`);
+    }
+  });
+  return `${signed(bonus.amount)} ${[...against, "armor"].join(" ")}`;
+}
+
 /** What the bearer does that a trigger answers, as its tooltip says it. */
 const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-casts-spell": "casts a spell",
@@ -487,6 +512,7 @@ const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-blocks": "blocks",
   "bearer-gains-hex-or-enchantment": "gains a hex or an enchantment",
   "bearer-gains-enchantment": "gains an enchantment",
+  "bearer-loses-enchantment": "loses an enchantment",
   "bearer-creates-creature": "creates a creature",
   "bearer-gains-condition": "gains a new condition",
   ends: "ends",
@@ -515,7 +541,13 @@ function describeTriggers(
 ): TriggerLine[] {
   const groups = new Map<string, { trigger: StatusTrigger; on: StatusTriggerEvent[] }>();
   for (const trigger of triggers) {
-    const key = JSON.stringify([trigger.effects, trigger.target, trigger.weapon]);
+    const key = JSON.stringify([
+      trigger.effects,
+      trigger.target,
+      trigger.weapon,
+      trigger.profession,
+      trigger.usedSkill,
+    ]);
     const group = groups.get(key);
     if (group === undefined) {
       groups.set(key, { trigger, on: [trigger.on] });
@@ -523,20 +555,22 @@ function describeTriggers(
       group.on.push(trigger.on);
     }
   }
-  const whenOf = (event: StatusTriggerEvent, weapon: AttackWeaponClass | undefined): string =>
-    weapon === undefined ? TRIGGER_WHEN[event] : weaponBoundWhen(event, weapon);
+  const whenOf = (event: StatusTriggerEvent, trigger: StatusTrigger): string =>
+    trigger.weapon !== undefined
+      ? weaponBoundWhen(event, trigger.weapon)
+      : (kindBoundWhen(event, trigger) ?? TRIGGER_WHEN[event]);
   return [...groups.values()].flatMap(({ trigger, on }) =>
     describeTrigger(
       trigger,
       on.includes("bearer-creates-creature")
         ? CREATES
         : on.includes("ends") || on.includes("ends-early") || on.includes("expires")
-          ? `when it ${on.map((event) => whenOf(event, trigger.weapon)).join(" or ")}`
+          ? `when it ${on.map((event) => whenOf(event, trigger)).join(" or ")}`
           : once && on.includes("bearer-uses-skill")
             ? NEXT_SKILL
             : nextOnly
-              ? `the next time it ${on.map((event) => whenOf(event, trigger.weapon)).join(" or ")}`
-              : `whenever it ${on.map((event) => whenOf(event, trigger.weapon)).join(" or ")}`,
+              ? `the next time it ${on.map((event) => whenOf(event, trigger)).join(" or ")}`
+              : `whenever it ${on.map((event) => whenOf(event, trigger)).join(" or ")}`,
       ranks,
       bearerIsFoe,
     ),
@@ -552,6 +586,27 @@ function weaponBoundWhen(event: StatusTriggerEvent, weapon: AttackWeaponClass): 
     return weapon === "melee" ? "hits with a melee attack" : `hits with ${NEEDED_WEAPON[weapon]}`;
   }
   return `${TRIGGER_WHEN[event]} with ${NEEDED_WEAPON[weapon]}`;
+}
+
+/**
+ * What the bearer does that a trigger bound to a kind of skill or
+ * enchantment answers (#1437): "uses a Dervish attack skill", "loses a
+ * Dervish enchantment". `undefined`: bound to none.
+ */
+function kindBoundWhen(event: StatusTriggerEvent, trigger: StatusTrigger): string | undefined {
+  if (event === "bearer-loses-enchantment" && trigger.profession !== undefined) {
+    return `loses a ${getProfession(trigger.profession).name} enchantment`;
+  }
+  if (event === "bearer-uses-skill" && trigger.usedSkill !== undefined) {
+    const { type, profession } = trigger.usedSkill;
+    const words = [
+      ...(profession === undefined ? [] : [getProfession(profession).name]),
+      ...(type === undefined ? [] : [TYPE_TEXT[type].replace(/\.$/, "").toLowerCase()]),
+      "skill",
+    ];
+    return `uses ${/^[aeiou]/i.test(words[0] ?? "") ? "an" : "a"} ${words.join(" ")}`;
+  }
+  return undefined;
 }
 
 /** The one use a status that ends on it answers (#949), as its tooltip says it. */
@@ -1510,6 +1565,7 @@ const TYPE_TEXT: Record<SkillType, string> = {
   well: "Well Spell.",
   trap: "Trap.",
   "pet-attack": "Pet Attack.",
+  form: "Form.",
   skill: "Skill.",
 };
 
@@ -1785,6 +1841,16 @@ export function describeSkill(
             magnitude: companionHealth,
           },
         ];
+  // A form's lockout (#1437), beside the recharge the card shows.
+  const disabledLine =
+    skill.disabledAfterUseSeconds === undefined
+      ? []
+      : [
+          {
+            text: `Disabled for ${seconds(skill.disabledAfterUseSeconds)} after use`,
+            magnitude: undefined,
+          },
+        ];
   const effects = [
     ...lossLine,
     ...chainLine,
@@ -1802,6 +1868,7 @@ export function describeSkill(
     ...projectile,
     ...halfRange,
     ...companionLine,
+    ...disabledLine,
   ];
   const { target, range } = targetAndRange(skill);
   const numbers = [

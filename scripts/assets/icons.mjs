@@ -172,6 +172,10 @@ const skillType = {
     `<ellipse cx="12" cy="16" rx="4.5" ry="3.8" fill="${C.ink}"/>` +
     `<circle cx="5.5" cy="10.5" r="2" fill="${C.ink}"/><circle cx="9.5" cy="6.5" r="2" fill="${C.ink}"/>` +
     `<circle cx="14.5" cy="6.5" r="2" fill="${C.ink}"/><circle cx="18.5" cy="10.5" r="2" fill="${C.ink}"/>`,
+  // A figure, head over shoulders: a form, you take a god's shape (#1437).
+  form: () =>
+    `<circle cx="12" cy="7" r="3.5" fill="${C.ink}"/>` +
+    `<path d="M5 21c0-5 3-8.5 7-8.5s7 3.5 7 8.5" ${stroke(C.ink, 2.5)}/>`,
   // Plain square: a skill with no other type.
   skill: () => `<rect x="6" y="6" width="12" height="12" rx="1" fill="${C.ink}"/>`,
 };
@@ -181,12 +185,12 @@ const skillType = {
 // category by colour *and* outline (condition = circle, hex = diamond,
 // enchantment = rounded square, stance = pentagon, preparation = triangle
 // point up, glyph = triangle point down, shout = hexagon, chant = banner,
-// weapon spell = shield, skill effect = wide capsule), and the glyph gives
+// weapon spell = shield, form = octagon, skill effect = wide capsule), and the glyph gives
 // the status.
 // ---------------------------------------------------------------------------
 
 /** @typedef {(colour: string) => string} Glyph */
-/** @typedef {"condition" | "hex" | "enchantment" | "stance" | "preparation" | "glyph" | "shout" | "chant" | "weapon-spell" | "skill-effect"} Category */
+/** @typedef {"condition" | "hex" | "enchantment" | "stance" | "preparation" | "glyph" | "shout" | "chant" | "weapon-spell" | "form" | "skill-effect"} Category */
 
 /** @type {Record<Category, (glyph: Glyph) => string>} */
 const plates = {
@@ -209,6 +213,8 @@ const plates = {
   "weapon-spell": (glyph) =>
     `<path d="M1.5 1h21v10c0 6.5-5 10-10.5 12.5C6.5 21 1.5 17.5 1.5 11z" fill="${C.weaponSpell}"/>` +
     glyph(C.plate),
+  form: (glyph) =>
+    `<path d="M7.5 1h9L23 7.5v9L16.5 23h-9L1 16.5v-9z" fill="${C.dervish}"/>` + glyph(C.plate),
   "skill-effect": (glyph) =>
     `<rect x="0.5" y="4" width="23" height="16" rx="8" fill="${C.inkDim}"/>` + glyph(C.plate),
 };
@@ -791,6 +797,20 @@ const status = {
     (c) =>
       `<path d="M12 4c3 3 3.5 5.5 3.5 7.5a3.5 3.5 0 0 1-7 0c0-2 1-3 2-4 .3 1.5 1 2 1.5 2.5 0-2 0-4 0-6z" ${stroke(c, 1.8)}/>` +
       `<path d="M6 18.5h12" ${stroke(c, 2.2)}/>`,
+  ],
+  // Form: a leaf, Melandru's earth (#1437).
+  "avatar-of-melandru": [
+    "form",
+    (c) =>
+      `<path d="M6 18C6 10 10 6 18 6c0 8-4 12-12 12z" fill="${c}"/>` +
+      `<path d="M6 18l6-6" ${stroke(C.dervish, 1.5)}/>`,
+  ],
+  // Form: wings spread, Dwayna's (#1437).
+  "avatar-of-dwayna": [
+    "form",
+    (c) =>
+      `<path d="M12 15C9 9 6 7 3 7c0 5 3 8 9 8zM12 15c3-6 6-8 9-8 0 5-3 8-9 8z" fill="${c}"/>` +
+      `<circle cx="12" cy="18" r="1.8" fill="${c}"/>`,
   ],
   // Enchantment: a chevron chasing a dot, faster and harder on runners (#1421).
   "harriers-haste": [
