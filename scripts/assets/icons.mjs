@@ -1387,8 +1387,9 @@ const pawPrint = (fill) =>
  * @param {number} inner where the spikes start
  * @param {number} outer where they end
  * @param {number} width spike stroke width
+ * @param {boolean} [dot] the centre dot
  */
-const flameRing = (inner, outer, width) => {
+const flameRing = (inner, outer, width, dot = true) => {
   let d = "";
   for (let i = 0; i < 8; i++) {
     const a = (i * Math.PI) / 4;
@@ -1398,7 +1399,7 @@ const flameRing = (inner, outer, width) => {
     const y = (r) => (12 + Math.sin(a) * r).toFixed(1);
     d += `M${x(inner)} ${y(inner)}L${x(outer)} ${y(outer)}`;
   }
-  return inkLine(d, width) + `<circle cx="12" cy="12" r="2.2" fill="${C.ink}"/>`;
+  return inkLine(d, width) + (dot ? `<circle cx="12" cy="12" r="2.2" fill="${C.ink}"/>` : "");
 };
 
 const skillGlyph = {
@@ -1838,7 +1839,11 @@ const skillGlyph = {
       "M12.5 1.5c.4 2.6 3.4 3.8 3.4 6.8a3.9 3.9 0 0 1-7.8 0c0-1.8.7-3 1.8-3.8 0 1.4.4 2.1 1.1 2.4-.3-2.1.3-3.9 1.5-5.4z",
     ),
   // A tight ring of flame points round a dot: fire on all beside you (#1397).
-  "flame-ring": () => flameRing(5, 8.5, 2.2),
+  "flame-ring": () =>
+    flameRing(6.5, 10, 2, false) +
+    inkFill(
+      "M12.5 6.5c.4 2.2 2.8 3.2 2.8 5.6a3.3 3.3 0 0 1-6.6 0c0-1.5.6-2.5 1.5-3.2 0 1.2.3 1.8.9 2-.2-1.8.2-3.2 1.4-4.4z",
+    ),
   // Long rays from a dot out to the edge: a big burst round you (#1397).
   "flame-burst": () => flameRing(4, 11.5, 2.4),
   // A target ring with a small flame inside: a burst on the foe (#1397).
