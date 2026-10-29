@@ -63,6 +63,7 @@ function foe(id: string, position: Vec2 = vec2(40, 0)) {
     combatant: makeCombatant({ id, team: 1, health: 1e6, maxHealth: 1e6 }),
     position,
     creature: undefined,
+    corpseExploited: false,
   };
 }
 
@@ -224,8 +225,9 @@ describe("resolveSwing", () => {
         combatant: makeCombatant({ id: "ally", team: 0 }),
         position: vec2(41, 0),
         creature: undefined,
+        corpseExploited: false,
       },
-      { combatant: scythe, position: vec2(0, 0), creature: undefined },
+      { combatant: scythe, position: vec2(0, 0), creature: undefined, corpseExploited: false },
     ];
     const events = resolveSwing({
       attacker: scythe,
@@ -1445,7 +1447,7 @@ describe("dual attacks (#885)", () => {
     new Map(
       placed.map(([combatant, position]) => [
         combatant.id,
-        { combatant, position, creature: undefined },
+        { combatant, position, creature: undefined, corpseExploited: false },
       ]),
     );
 

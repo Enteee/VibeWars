@@ -250,6 +250,13 @@ export const SKILL_ICONS = {
   "ritualist.union": { glyph: "totem", modifier: "half" },
   "ritualist.displacement": { glyph: "totem", modifier: "stun" },
   "ritualist.earthbind": { glyph: "totem", modifier: "down" },
+  // Placeholders until the asset-designer's (#1270): the Channeling staples.
+  "ritualist.spirit-rift": { glyph: "lightning", modifier: "hourglass" },
+  "ritualist.spirit-burn": { glyph: "lightning", modifier: "plus" },
+  "ritualist.essence-strike": { glyph: "lightning", modifier: "up" },
+  "ritualist.painful-bond": { glyph: "chain", modifier: "plus" },
+  "ritualist.lamentation": { glyph: "hex-burst", modifier: "corpse" },
+  "ritualist.signet-of-spirits": { glyph: "energy", modifier: "plus" },
   "assassin.shroud-of-silence": { glyph: "hex-mute" },
   "assassin.expose-defenses": { glyph: "armor-crack" },
   "assassin.enduring-toxin": { glyph: "drop-run" },

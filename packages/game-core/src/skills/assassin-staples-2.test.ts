@@ -66,7 +66,7 @@ const standing = (...placed: [Combatant, Vec2][]): Surroundings =>
   new Map(
     placed.map(([combatant, position]) => [
       combatant.id,
-      { combatant, position, creature: undefined },
+      { combatant, position, creature: undefined, corpseExploited: false },
     ]),
   );
 

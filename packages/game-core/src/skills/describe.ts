@@ -237,6 +237,9 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.physicalDamageTakenBonus !== 0) {
     parts.push(`take ${signed(definition.physicalDamageTakenBonus)} from physical damage`);
   }
+  if (definition.damageFromSpiritAttacks !== 0) {
+    parts.push(`take ${signed(definition.damageFromSpiritAttacks)} from spirits' attacks`);
+  }
   if (definition.attackDamageType !== undefined) {
     parts.push(`attacks deal ${definition.attackDamageType} damage`);
   }
@@ -661,6 +664,10 @@ function conditionText(condition: EffectCondition): string {
       return "If target is attacking";
     case "caster-no-spirit-within":
       return `If no spirit is ${AREA_TEXT.get(condition.radius) ?? `within ${String(condition.radius)}`} of you`;
+    case "caster-spirit-within":
+      return `If a spirit is ${AREA_TEXT.get(condition.radius) ?? `within ${String(condition.radius)}`} of you`;
+    case "caster-spirit-or-corpse-within":
+      return `If a spirit or a corpse is ${AREA_TEXT.get(condition.radius) ?? `within ${String(condition.radius)}`} of you`;
   }
 }
 
@@ -726,6 +733,8 @@ function describeEffects(
     const { radius } = pulse.area;
     const who = [
       ...(act.kind === "trap" ? ["when sprung"] : []),
+      // Spirit Rift's (#1270): "after 3s, foes adjacent: ...".
+      ...(pulse.delaySeconds > 0 ? [`after ${seconds(pulse.delaySeconds)}`] : []),
       ...(pulse.count > 1
         ? [`every ${seconds(pulse.everySeconds)} for ${seconds(pulse.count * pulse.everySeconds)}`]
         : []),
