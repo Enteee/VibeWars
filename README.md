@@ -48,7 +48,8 @@ In a match, the default keys are:
 - **Esc**: cancel what you are doing. **F10**: leave the match.
 
 The **Classic** preset puts skills on 1 to 8 and moves with W A S D.
-Every key can be changed in Options. [Controls](docs/player/controls.md)
+Every key but Esc, Enter, F10 and the mouse can be changed in Options.
+[Controls](docs/player/controls.md)
 lists them all. [Getting started](docs/player/getting-started.md) walks
 through a first match, and the **[?]** button in the game opens the same
 Help.
