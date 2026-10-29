@@ -71,8 +71,10 @@ Guild Hall Isle plays it.
 **Carry your relic to the altar.** Each team has a **relic** in its
 base, and the **altar** is in the centre, the same run from both bases,
 by a north or a south route; the altar shows on the compass as ◆.
-Target your relic and press **Space** to take it up. Carry it onto the altar and you score a point at once, and
-the relic goes back to your base. A carrier walks slower and cannot
+Target your relic and press **Space** to take it up. Carry it onto the
+altar and you score a point at once, and the relic goes back to your base.
+Every point is announced, with a fanfare that rises for yours and falls
+for theirs. A carrier walks slower and cannot
 attack or use attack skills. It drops the relic when it dies or presses
 **Drop relic** above its Health bar, and the relic stays where it fell
 until someone reaches it. Your team takes it up from there. A foe who

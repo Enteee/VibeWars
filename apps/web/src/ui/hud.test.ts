@@ -28,6 +28,7 @@ import {
   refreshSkillBar,
   scoreboardParts,
   scoreboardText,
+  relicScoreToast,
   standBoostToast,
   carrierLines,
   type ScoreboardMatch,
@@ -235,6 +236,49 @@ describe("carrierLines (#1226)", () => {
   });
 });
 
+describe("relicScoreToast (#1387)", () => {
+  const relics = [{ team: 0, place: { kind: "spawn" as const } }];
+  const score = (scoreTeam0: number, scoreTeam1: number) => ({ scoreTeam0, scoreTeam1, relics });
+  const ours = { text: "Relic scored!", side: "ours" };
+  const theirs = { text: "Enemy relic scored", side: "theirs" };
+
+  it("toasts your side's point as ours and the foe's as theirs", () => {
+    expect(relicScoreToast(score(0, 0), score(1, 0), 0)).toEqual(ours);
+    expect(relicScoreToast(score(0, 0), score(1, 0), 1)).toEqual(theirs);
+    expect(relicScoreToast(score(2, 3), score(2, 4), 1)).toEqual(ours);
+    expect(relicScoreToast(score(2, 3), score(2, 4), 0)).toEqual(theirs);
+  });
+
+  it("reads a spectator's side as team 0's", () => {
+    expect(relicScoreToast(score(0, 0), score(1, 0), undefined)).toEqual(ours);
+    expect(relicScoreToast(score(0, 0), score(0, 1), undefined)).toEqual(theirs);
+  });
+
+  it("toasts two points missed between frames once", () => {
+    expect(relicScoreToast(score(1, 0), score(3, 0), 0)).toEqual(ours);
+    // Both sides scored meanwhile: yours is the one toast.
+    expect(relicScoreToast(score(1, 1), score(2, 2), 1)).toEqual(ours);
+  });
+
+  it("says nothing without a score, on the first snapshot, or outside a Relic Run", () => {
+    expect(relicScoreToast(score(1, 1), score(1, 1), 0)).toBeUndefined();
+    expect(relicScoreToast(undefined, score(1, 0), 0)).toBeUndefined();
+    // A kill-count match raises the score too, but has no relics.
+    expect(
+      relicScoreToast(
+        { scoreTeam0: 4, scoreTeam1: 0, relics: [] },
+        { scoreTeam0: 5, scoreTeam1: 0, relics: [] },
+        0,
+      ),
+    ).toBeUndefined();
+  });
+
+  it("says nothing on a mid-match rejoin, whose first frame follows the 0-0 placeholder", () => {
+    const placeholder = { scoreTeam0: 0, scoreTeam1: 0, relics: [] };
+    expect(relicScoreToast(placeholder, score(2, 1), 0)).toBeUndefined();
+  });
+});
+
 describe("standBoostToast (#1226)", () => {
   /** A snapshot's stand at a match time. */
   const at = (elapsedSeconds: number, holder: number | undefined, heldSeconds: number) => ({
@@ -243,13 +287,23 @@ describe("standBoostToast (#1226)", () => {
   });
 
   it("toasts the boost to its side and the foe's, once, as the count starts again", () => {
-    expect(standBoostToast(at(200, 0, 119.95), at(200.05, 0, 0), 0)).toBe("Morale boost! +10%");
-    expect(standBoostToast(at(200, 0, 119.95), at(200.05, 0, 0), 1)).toBe("Enemy morale boost");
-    expect(standBoostToast(at(200, 1, 119.9), at(200.2, 1, 0.1), undefined)).toBe(
-      "Enemy morale boost",
-    );
+    expect(standBoostToast(at(200, 0, 119.95), at(200.05, 0, 0), 0)).toEqual({
+      text: "Morale boost! +10%",
+      side: "ours",
+    });
+    expect(standBoostToast(at(200, 0, 119.95), at(200.05, 0, 0), 1)).toEqual({
+      text: "Enemy morale boost",
+      side: "theirs",
+    });
+    expect(standBoostToast(at(200, 1, 119.9), at(200.2, 1, 0.1), undefined)).toEqual({
+      text: "Enemy morale boost",
+      side: "theirs",
+    });
     // Frames missed across it: still the boost.
-    expect(standBoostToast(at(200, 0, 110), at(215, 0, 5), 0)).toBe("Morale boost! +10%");
+    expect(standBoostToast(at(200, 0, 110), at(215, 0, 5), 0)).toEqual({
+      text: "Morale boost! +10%",
+      side: "ours",
+    });
     expect(standBoostToast(at(200.05, 0, 0), at(200.1, 0, 0.05), 0)).toBeUndefined();
   });
 

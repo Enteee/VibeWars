@@ -117,6 +117,20 @@ synth br-a.wav synth 0.18 pluck 147 fade q 0.001 0.18 0.14
 synth br-b.wav synth 0.012 whitenoise gain -6 highpass 2500 fade q 0.0005 0.012 0.01 gain -8 pad 0 0.168
 finish bow-release -13 br-a.wav br-b.wav
 
+# objective-ours: your team scored an objective (#1387). A short, bright
+# rising fifth, C5 then G5, a soft brass over a sine: the one fanfare.
+synth oo-a.wav synth 0.18 sawtooth 523.25 gain -6 lowpass 2600 fade q 0.01 0.18 0.06
+synth oo-b.wav synth 0.32 sawtooth 783.99 gain -6 lowpass 3200 fade q 0.01 0.32 0.22 pad 0.16 0
+synth oo-c.wav synth 0.48 sine 1567.98 fade q 0.02 0.48 0.30 gain -14
+finish objective-ours -8 oo-a.wav oo-b.wav oo-c.wav
+
+# objective-theirs: the foe scored (#1387). The same fifth falling, an
+# octave down and duller, so it reads as the other side of the same news.
+synth ot-a.wav synth 0.18 sawtooth 392.00 gain -6 lowpass 1200 fade q 0.01 0.18 0.06
+synth ot-b.wav synth 0.32 sawtooth 261.63 gain -6 lowpass 900 fade q 0.01 0.32 0.22 pad 0.16 0
+synth ot-c.wav synth 0.48 sine 130.81 fade q 0.02 0.48 0.30 gain -8
+finish objective-theirs -9 ot-a.wav ot-b.wav ot-c.wav
+
 total=0
 for f in "$out"/*.mp3; do
   bytes="$(wc -c <"$f")"
