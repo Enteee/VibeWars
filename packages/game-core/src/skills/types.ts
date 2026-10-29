@@ -154,6 +154,14 @@ export interface EnergyGainEffect {
    * Zealous Sweep's "for each foe you hit, you gain 3 Energy" (#977).
    */
   readonly perTarget?: true;
+  /**
+   * Once for each of the caster's living spirits and minions within
+   * `radius` of it, at most `max` in all (#1316): Signet of Creation's
+   * "4 Energy for every summoned creature you control within earshot
+   * (maximum 3...12 Energy)". A pet is charmed, not summoned, and does
+   * not count. None: no gain.
+   */
+  readonly perOwnCreatureWithin?: { readonly radius: number; readonly max: Magnitude };
 }
 
 /**
@@ -398,12 +406,19 @@ export interface DrainOwnEnergyEffect {
  * "all adjacent foes take 20...40 damage". Not a blow: no block, no crit
  * and no chain mark on a foe it reaches. `foe-creatures` reaches only the
  * foes' summoned creatures, never a player (#1309): Consume Soul's "all
- * hostile summoned creatures in earshot of that foe".
+ * hostile summoned creatures in earshot of that foe". `allies` reaches the
+ * caster's side instead, the caster included (#1316): Spirit's Gift's "all
+ * allies near that creature".
  */
 export interface SplashEffect {
   readonly kind: "splash";
-  readonly hits: "foes" | "foe-creatures";
+  readonly hits: "foes" | "foe-creatures" | "allies";
   readonly radius: number;
+  /**
+   * At most this many, the nearest to the centre first, a tie by id
+   * (#1316): Explosive Growth's "up to 5 foes". `undefined`: all of them.
+   */
+  readonly maxTargets: number | undefined;
   readonly effects: readonly UnconditionalEffect[];
 }
 
