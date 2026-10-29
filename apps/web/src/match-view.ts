@@ -338,15 +338,36 @@ export async function startMatchView(
   const measureCover = (): void => {
     // The chat panel (#479) sits just above the HUD, wherever its top is.
     parent.style.setProperty("--hud-height", `${String(hud.root.offsetHeight)}px`);
+    // The compass and the party window, from the parent the canvas fills
+    // (#1424). A hidden party window has no size and keeps nothing out; a
+    // hidden compass keeps its box, so it keeps markers out either way and
+    // nothing goes stale when it shows.
+    const origin = parent.getBoundingClientRect();
+    const keepOut = [compass.element, partyWindow.element]
+      .map((element) => element.getBoundingClientRect())
+      .filter((rect) => rect.width > 0 && rect.height > 0)
+      .map((rect) => ({
+        left: rect.left - origin.left,
+        top: rect.top - origin.top,
+        right: rect.right - origin.left,
+        bottom: rect.bottom - origin.top,
+      }));
     camera?.setCover({
       top: hud.top.offsetTop + hud.top.offsetHeight,
       bottom: hud.root.offsetHeight - hud.bars.offsetTop,
+      keepOut,
     });
   };
   const coverObserver = new ResizeObserver(measureCover);
   coverObserver.observe(hud.root);
   coverObserver.observe(hud.bars);
   coverObserver.observe(hud.top);
+  // The parent is the viewport: a height-only resize re-centres the party
+  // window without resizing it.
+  coverObserver.observe(parent);
+  // The party window grows with its members; the compass with the window.
+  coverObserver.observe(compass.element);
+  coverObserver.observe(partyWindow.element);
   const useSkill = (slot: number): void => {
     connection.sendIntent({ kind: "use-skill", slot });
   };

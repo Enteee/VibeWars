@@ -42,6 +42,14 @@ export interface Size {
   readonly height: number;
 }
 
+/** A rectangle on the canvas, CSS px from its top left. */
+export interface ScreenRect {
+  readonly left: number;
+  readonly top: number;
+  readonly right: number;
+  readonly bottom: number;
+}
+
 /**
  * Canvas px the HUD covers at the top and bottom edges, CSS px: the
  * off-screen edge markers keep clear of it.
@@ -49,9 +57,11 @@ export interface Size {
 export interface Cover {
   readonly top: number;
   readonly bottom: number;
+  /** Panels on the edges, the compass and the party window (#1424): no marker lands under one. */
+  readonly keepOut: readonly ScreenRect[];
 }
 
-export const NO_COVER: Cover = { top: 0, bottom: 0 };
+export const NO_COVER: Cover = { top: 0, bottom: 0, keepOut: [] };
 
 export interface CameraRig {
   /** Index into `VIEW_STEPS`. */
