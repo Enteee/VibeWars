@@ -7,8 +7,10 @@ import type {
   FlagState,
   OffhandId,
   ProfessionId,
+  RelicState,
   StandState,
   StatusId,
+  Vec2,
 } from "@vibewars/game-core";
 import type {
   CastRefusedMessage,
@@ -162,6 +164,10 @@ export interface MatchSnapshot {
   readonly stand: StandState | undefined;
   /** Each team's aggression by team index on a Guild Battle (#1222, #1226); `[]` on any other. */
   readonly aggression: readonly number[];
+  /** A Relic Run's relics and where each is (#1374); `[]` on a map without an altar. */
+  readonly relics: readonly RelicState[];
+  /** The altar a relic is run to (#1374); `undefined` on a map without one. */
+  readonly altar: Vec2 | undefined;
   /** What each player did, from the host's `ended` (#1057); `undefined` until then. */
   readonly summary: readonly MatchSummaryRow[] | undefined;
 }

@@ -1827,6 +1827,9 @@ boost, or a grey `⚑ —` held by nobody; in the last 3 minutes each
 team's aggression joins it, `agg 1,240 v 980`. Under it, a line for
 each flag away from home: `⚑ Name` on its carrier, `⚑ dropped` on the
 ground.
+A Relic Run counts relic points as Kill Count counts kills, `2 – 1 ·
+6:40` (#1374), and a line under it for each relic: `✦ Name`, `✦
+dropped` or `✦ at base`.
 
 With the death penalty on, each player has a **morale** between −60%
 and +10%, starting at 0. A death takes 15%, down to −60%, unless it came
@@ -1915,6 +1918,11 @@ minutes** the most aggression wins, "(aggression 1,240 v 980)", yours
 first (#1226). In that
 order: the lord first, then morale, then time. Both lords in one tick,
 or equal aggression, and both teams lose.
+
+A Relic Run (#1374) ends the moment a team is **wiped**, as
+Annihilation does, "(annihilation)". After **8 minutes** the team with
+more relic points wins; equal points is a **draw**, as in Kill Count.
+No number of points ends it early, and a kill is no point.
 
 A Kill Count match ends when a team reaches 15 kills, or after 3
 minutes, when the team with more kills wins. Score is checked

@@ -12,7 +12,10 @@ import {
   type CastState,
   type CombatEvent,
   type CombatLogEntry,
+  type CarriedObject,
+  type FlagPlace,
   type FlagState,
+  type RelicState,
   type GroundAct,
   type GroundEffect,
   type Participant,
@@ -27,7 +30,9 @@ import {
   type SkillBarSlot,
   type WireCombat,
   type WireCombatEvent,
+  type WireCarried,
   type WireFlag,
+  type WireRelic,
   type WirePlayer,
   type WireProjectile,
   type WireSnapshot,
@@ -527,30 +532,43 @@ function absent<T>(value: T | null): T | undefined {
   return value ?? undefined;
 }
 
-/** A flag as the wire carries it (#1225): a team it has no colour for is not sent. */
-export function wireFlag({ team, place }: FlagState): WireFlag | undefined {
+/**
+ * A flag (#1225) or a relic (#1374) as the wire carries it: a team it
+ * has no colour for is not sent.
+ */
+export function wireCarried<Place extends FlagPlace>({
+  team,
+  place,
+}: CarriedObject<Place>): WireCarried<Place["kind"]> | undefined {
   if (team !== 0 && team !== 1) {
     return undefined;
   }
+  const where: FlagPlace = place;
   return {
     team,
     place: place.kind,
-    carrierId: place.kind === "carried" ? place.carrierId : null,
-    x: place.kind === "ground" ? place.position.x : null,
-    y: place.kind === "ground" ? place.position.y : null,
+    carrierId: where.kind === "carried" ? where.carrierId : null,
+    x: where.kind === "ground" ? where.position.x : null,
+    y: where.kind === "ground" ? where.position.y : null,
   };
 }
 
-/** A validated wire flag as game-core's (#1225). */
-function flagState({ team, place, carrierId, x, y }: WireFlag): FlagState {
+/** A validated wire relic as game-core's (#1374): a bundle's three places. */
+function relicState({ team, place, carrierId, x, y }: WireRelic): RelicState {
   switch (place) {
     case "carried":
       return { team, place: { kind: "carried", carrierId: carrierId ?? "" } };
     case "ground":
       return { team, place: { kind: "ground", position: { x: x ?? 0, y: y ?? 0 } } };
-    default:
-      return { team, place: { kind: place } };
+    case "spawn":
+      return { team, place: { kind: "spawn" } };
   }
+}
+
+/** A validated wire flag as game-core's (#1225): a relic's places, and the stand. */
+function flagState(flag: WireFlag): FlagState {
+  const { team, place } = flag;
+  return place === "stand" ? { team, place: { kind: "stand" } } : relicState({ ...flag, place });
 }
 
 /** The fields of a body's `WirePlayer` that say who it is, not how it stands. */
@@ -736,6 +754,8 @@ export function observedSnapshot(
         ? undefined
         : { holder: absent(snapshot.stand.holder), heldSeconds: snapshot.stand.heldSeconds },
     aggression: snapshot.aggression,
+    relics: snapshot.relics.map(relicState),
+    altar: absent(snapshot.altar),
     // Only the host's `ended` carries it.
     summary: undefined,
   };

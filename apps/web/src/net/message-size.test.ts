@@ -236,6 +236,8 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       })),
       stand: { holder: 1, heldSeconds: FLOAT },
       aggression: [],
+      relics: [],
+      altar: null,
     };
   }
 
