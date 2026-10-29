@@ -14,13 +14,14 @@ The default preset is **VibeWars**. **Classic** is for GW1 hands.
 | Skills 1 to 8              | Q W E R, A S D F | 1 to 8                 |
 | Move                       | arrow keys       | W A S D, or arrow keys |
 | Weapon sets 1 to 4         | 1 to 4           | F1 to F4               |
-| Attack your target         | Space            | Space                  |
+| Attack, or use a flag      | Space            | Space                  |
 | Next foe (Shift: previous) | Tab              | Tab                    |
 | Closest foe                | C                | C                      |
 | Your team's called foe     | T                | T                      |
 | Yourself                   | G                | G                      |
 | Show names (hold)          | Shift            | Shift                  |
 | Mute                       | M                | M                      |
+| Drop the flag              | none             | none                   |
 
 These keys are fixed:
 
@@ -35,6 +36,8 @@ These keys are fixed:
 - **Left click** the ground to walk there. The left button only walks.
 - **Right click** a foe or an ally to target it. Right click the same foe
   again, quickly, to attack it.
+- **Right click** a flag or the flag stand, in a Guild Battle, to target
+  it; **Space** walks there and takes the flag up or plants it.
 - **Wheel click** a foe to call it for your team: their **T** targets it.
   On the ground or an ally, it pings that spot.
 - **Wheel** zooms. **Right drag** looks around; let go and the view

@@ -75,4 +75,5 @@ bring the dead back in waves, or on their own; see [Modes](modes.md).
 
 Every death costs you 15% **morale**, down to -60%: your maximum Health
 and Energy shrink with it. Each foe your team kills wins 2% of it back,
-up to 0.
+up to 0. In a Guild Battle, holding the flag stand lifts it above that,
+up to +10%.

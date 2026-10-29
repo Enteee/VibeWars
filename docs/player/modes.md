@@ -44,6 +44,14 @@ and an Archer at each gate. They fight foes near their post and walk back
 to it. While the Bodyguard lives, its lord takes 20% less damage, so kill
 it first. Every 2 minutes, each team's shrine brings its dead back.
 
+Each team has a **flag** in its base, and the **flag stand** is in the
+centre. Target your flag and press **Space** to take it up; carry it to
+the stand, target the stand and press **Space** to plant it. A carrier
+walks slower and cannot attack or use attack skills; it drops the flag
+when it dies, swaps weapons or presses **Drop flag** above its Health bar.
+Target a foe's flag on the stand and press **Space** to send it home.
+Every 2 minutes your flag holds the stand, your team gains 10% morale.
+
 The team whose Guild Lord dies loses at once, and so does a team whose
 players are all dead at the lowest morale. After 28 minutes, the team
 that did the most damage to the enemy Guild Lord wins; a tie there is a
