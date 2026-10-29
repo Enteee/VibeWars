@@ -153,6 +153,46 @@ describe("secondaryClickIntents", () => {
     ]);
   });
 
+  it("targets the stand or a flag under your own body, not yourself (#1299)", () => {
+    const arena: ArenaSnapshot = {
+      ...ARENA,
+      flags: [{ id: "flag/0", side: "ally", position: vec2(0, 0), carried: false, onStand: false }],
+      stand: { id: "flag-stand", position: vec2(200, 0), holder: undefined },
+    };
+    expect(secondaryClickIntents(MATCH, arena, vec2(0, 0), createDoubleClick(), 0)).toEqual([
+      { kind: "target", targetSessionId: "flag/0" },
+    ]);
+    const onStand: ArenaSnapshot = {
+      ...arena,
+      flags: [],
+      stand: { id: "flag-stand", position: vec2(0, 0), holder: undefined },
+    };
+    const double = createDoubleClick();
+    expect(secondaryClickIntents(MATCH, onStand, vec2(0, 0), double, 0)).toEqual([
+      { kind: "target", targetSessionId: "flag-stand" },
+    ]);
+    expect(secondaryClickIntents(MATCH, onStand, vec2(0, 0), double, 200)).toEqual([
+      { kind: "target", targetSessionId: "flag-stand" },
+      { kind: "attack", targetId: "flag-stand" },
+    ]);
+  });
+
+  it("targets a foe standing on the stand, not the stand (#1299)", () => {
+    const arena: ArenaSnapshot = {
+      ...ARENA,
+      stand: { id: "flag-stand", position: vec2(200, 0), holder: undefined },
+    };
+    expect(secondaryClickIntents(MATCH, arena, vec2(200, 0), createDoubleClick(), 0)).toEqual([
+      { kind: "target", targetSessionId: "foe" },
+    ]);
+  });
+
+  it("targets yourself with no flag object under you", () => {
+    expect(secondaryClickIntents(MATCH, ARENA, vec2(0, 0), createDoubleClick(), 0)).toEqual([
+      { kind: "target", targetSessionId: "me" },
+    ]);
+  });
+
   it("sends nothing for the ground, and a click there breaks a double", () => {
     const double = createDoubleClick();
     secondaryClickIntents(MATCH, ARENA, vec2(200, 0), double, 0);
