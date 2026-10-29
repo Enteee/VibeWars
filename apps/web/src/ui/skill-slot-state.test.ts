@@ -40,6 +40,7 @@ function self(cast: Partial<PlayerSnapshot>): PlayerSnapshot {
   return {
     sessionId: "me",
     name: "me",
+    guildTag: undefined,
     x: 0,
     y: 0,
     facing: 0,

@@ -1040,6 +1040,39 @@ body {
   font-size: 1.1rem;
 }
 
+/* Name and guild tag side by side (#1406); the tag fits four wide letters. */
+.menu-identity {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.menu-identity > .field:first-child {
+  flex: 1;
+}
+
+.menu-guild-tag .field-input {
+  width: 7ch;
+}
+
+.field-input[aria-invalid="true"] {
+  border-color: var(--damage);
+}
+
+/* A player's guild tag after their name (#1406): theirs, but quieter. */
+.guild-tag {
+  color: var(--ink-dim);
+}
+
+.guild-tag[hidden] {
+  display: none;
+}
+
+.field-hint {
+  color: var(--damage);
+  font-size: 0.72rem;
+}
+
 .menu-row {
   display: flex;
   gap: 0.5rem;
@@ -4931,6 +4964,12 @@ body:has(#app > .chat) .now-playing {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+/* A long name is cut, never its guild tag (#1406). */
+.party-row-header .guild-tag {
+  flex-shrink: 0;
+  margin-left: 0.3em;
 }
 
 .party-row.is-dead .party-row-name,

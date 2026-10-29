@@ -109,6 +109,29 @@ describe("lobby host", () => {
     expect(playersOf(guest)[1]?.name).toBe("evilname that go");
   });
 
+  it("lists a joiner's guild tag to everyone, a bad one as none (#1406)", async () => {
+    const lobby = await openLobby();
+    const tagged = await lobby.join("Ann", null, " VIBE ");
+    const bad = await lobby.join("Bob", null, "[VB]");
+    for (const member of [lobby.host, tagged, bad]) {
+      expect(member.connection.getSnapshot().players.map(({ guildTag }) => guildTag)).toEqual([
+        null,
+        "VIBE",
+        null,
+      ]);
+    }
+  });
+
+  it("plays a member's guild tag in the lobby's match (#1406)", async () => {
+    const lobby = await openLobby();
+    const guest = await lobby.join("Ann", null, "Vb");
+    await seat([lobby.host, guest], [0, 1]);
+    await start(lobby);
+    const seats = lobby.matches[0]?.plan.seats;
+    expect(seats?.get(guest.transport.selfId)?.guildTag).toBe("Vb");
+    expect(seats?.get(lobby.host.transport.selfId)?.guildTag).toBeNull();
+  });
+
   it("lists the character a joiner brings to everyone, and a starter build as null (#580)", async () => {
     const lobby = await openLobby();
     const guest = await lobby.join("Guest", {
@@ -136,6 +159,7 @@ describe("lobby host", () => {
       peer.transport.send("lobby-join", {
         protocolVersion: PROTOCOL_VERSION,
         name: primary,
+        guildTag: null,
         character: { name: "  \u202eCynn\u0000  ", primary, secondary },
         admission: null,
       });
@@ -296,6 +320,7 @@ describe("lobby host", () => {
         transport: lobby.network.join(),
         code: CODE,
         name: "Late",
+        guildTag: null,
         character: null,
         timeoutMs: 1000,
       }),
@@ -509,7 +534,14 @@ describe("joining by code", () => {
     const lobby = await openLobby();
     const transport = lobby.network.join();
     await expect(
-      joinLobby({ transport, code: "WXYKMN", name: "Lost", character: null, timeoutMs: 50 }),
+      joinLobby({
+        transport,
+        code: "WXYKMN",
+        name: "Lost",
+        guildTag: null,
+        character: null,
+        timeoutMs: 50,
+      }),
     ).rejects.toEqual(new LobbyNoAnswerError(50, null));
   });
 
@@ -520,6 +552,7 @@ describe("joining by code", () => {
         transport: lobby.network.join(peerId),
         code: "WXYKMN",
         name: peerId,
+        guildTag: null,
         character: null,
         timeoutMs: 50,
       });
@@ -542,6 +575,7 @@ describe("joining by code", () => {
       transport: lobby.network.join(),
       code: " acd-efg ",
       name: "Typist",
+      guildTag: null,
       character: null,
       timeoutMs: 1000,
     });
@@ -551,7 +585,14 @@ describe("joining by code", () => {
   it("gives up with no-answer when nobody in the room hosts", async () => {
     const lonely = createMemoryNetwork().join();
     await expect(
-      joinLobby({ transport: lonely, code: CODE, name: "Alone", character: null, timeoutMs: 50 }),
+      joinLobby({
+        transport: lonely,
+        code: CODE,
+        name: "Alone",
+        guildTag: null,
+        character: null,
+        timeoutMs: 50,
+      }),
     ).rejects.toBeInstanceOf(LobbyNoAnswerError);
   });
 
@@ -586,6 +627,13 @@ describe("bots in a lobby (#1193)", () => {
       { name: "Monk Bot 2", team: 0, ready: true, isHost: false },
       { name: "Necromancer Bot", team: 0, ready: true, isHost: false },
     ]);
+    // A bot is nobody's guild (#1406).
+    expect(
+      guest.connection
+        .getSnapshot()
+        .players.filter((player) => player.bot)
+        .map(({ guildTag }) => guildTag),
+    ).toEqual([null, null, null]);
     const [first] = guest.connection.getSnapshot().players.filter((player) => player.bot);
     await ask(lobby, lobby.host, { kind: "remove-bot", botId: first?.sessionId ?? "" });
     expect(botsOf(guest).map(({ name }) => name)).toEqual(["Monk Bot 2", "Necromancer Bot"]);

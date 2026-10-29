@@ -40,6 +40,7 @@ function snapshot(selfTeam: 0 | 1, countdownSeconds: number | null): LobbySnapsh
       {
         sessionId: "me",
         name: "Me",
+        guildTag: null,
         team: selfTeam,
         ready: false,
         isHost: false,
@@ -49,6 +50,7 @@ function snapshot(selfTeam: 0 | 1, countdownSeconds: number | null): LobbySnapsh
       {
         sessionId: "mate",
         name: "Mate",
+        guildTag: null,
         team: selfTeam,
         ready: false,
         isHost: false,
@@ -58,6 +60,7 @@ function snapshot(selfTeam: 0 | 1, countdownSeconds: number | null): LobbySnapsh
       {
         sessionId: "foe",
         name: "Foe",
+        guildTag: null,
         team: selfTeam === 0 ? 1 : 0,
         ready: false,
         isHost: true,
