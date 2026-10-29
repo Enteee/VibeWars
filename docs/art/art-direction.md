@@ -852,7 +852,7 @@ it, not baked in, so one file serves every screen.
   spirit-block, spirit-ground, rift-strike, spirit-burn, spirit-energy, bond-spike, tear-fall, spirit-trio, ward-blade, trap-flame, ring-rays, well-sink, echo-spell, echo-skill, hex-mute,
   armor-crack, drop-run, mark-skull, dagger-stop, dagger-limp, palm,
   shield-stance (solid), shield-bar, shield-arrow, shield-blade, born-plus, born-burst, born-ring, born-energy (the spirit post in a halo, and its payout),
-  blade-limp, blade-pierce, blade-drop, blade-half, blade-burst, blade-flame (a blade with its payoff in the corner above), blades-fan,
+  blade-limp, blade-pierce, blade-drop, blade-half, blade-burst, blade-adrenal, blade-flame (a blade with its payoff in the corner above), blades-fan,
   dagger-crit (a dagger and a four-point spark), shield-crit, blink-heal, blink-fang, blink-ally (the step with a plus, two fangs, a figure), shield-veil, crescent-spark, caltrops, ghost, weight, ache-cross, armor-shrink, speed-break (a whole chevron and a
   broken one), eye-slash, limp-drain. A
   new primary effect adds a glyph; a new skill adds a row.

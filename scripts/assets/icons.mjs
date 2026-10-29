@@ -1415,6 +1415,8 @@ const skillGlyph = {
     bladeMark(
       `<circle cx="8" cy="8" r="5" ${stroke(C.ink, 1.8)}/><path d="M8 3A5 5 0 0 0 8 13Z" fill="${C.ink}"/>`,
     ),
+  // Galrath Slash, the plain adrenal hit: three rising bars.
+  "blade-adrenal": () => bladeMark(inkLine("M3.5 13V9M8 13V6M12.5 13V3", 2.6)),
   // Savage Slash interrupts: a burst.
   "blade-burst": () =>
     bladeMark(

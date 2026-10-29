@@ -284,7 +284,7 @@ export const SKILL_ICONS = {
   "warrior.pure-strike": { glyph: "blade-pierce" },
   "warrior.gash": { glyph: "blade-drop" },
   "warrior.final-thrust": { glyph: "blade-half" },
-  "warrior.galrath-slash": { glyph: "sword", modifier: "up" },
+  "warrior.galrath-slash": { glyph: "blade-adrenal" },
   "warrior.savage-slash": { glyph: "blade-burst" },
   "warrior.hundred-blades": { glyph: "blades-fan" },
   "warrior.dragon-slash": { glyph: "blade-flame" },
