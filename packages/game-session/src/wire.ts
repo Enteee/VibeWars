@@ -575,12 +575,14 @@ function flagState(flag: WireFlag): FlagState {
 /** The fields of a body's `WirePlayer` that say who it is, not how it stands. */
 export type WireIdentity = Pick<
   WirePlayer,
-  "name" | "team" | "primaryProfession" | "secondaryProfession" | "creature" | "bot"
+  "name" | "guildTag" | "team" | "primaryProfession" | "secondaryProfession" | "creature" | "bot"
 >;
 
 /** What a seat says about who sits in it. */
 export interface SeatIdentity {
   readonly name: string;
+  /** `null` for none (#1406). */
+  readonly guildTag: string | null;
   readonly team: 0 | 1;
   readonly primaryProfession: ProfessionId;
   readonly secondaryProfession: ProfessionId | undefined;
@@ -606,6 +608,7 @@ export function wireIdentity(
   if (seat !== undefined) {
     return {
       name: seat.name,
+      guildTag: seat.guildTag,
       team: seat.team,
       primaryProfession: seat.primaryProfession,
       secondaryProfession: seat.secondaryProfession ?? null,
@@ -624,6 +627,7 @@ export function wireIdentity(
     ? undefined
     : {
         name: creature.name,
+        guildTag: null,
         team: sentTeam,
         primaryProfession: null,
         secondaryProfession: null,
@@ -661,6 +665,7 @@ export function playerSnapshot(player: WirePlayer): PlayerSnapshot | undefined {
   return {
     sessionId: player.id,
     name: player.name,
+    guildTag: absent(player.guildTag),
     x: player.x,
     y: player.y,
     facing: player.facing,

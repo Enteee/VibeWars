@@ -215,6 +215,11 @@ export interface PeerHello {
    * it, so a long one is shortened rather than refused.
    */
   readonly name: string;
+  /**
+   * The guild tag the player typed (#1406), cut to `MAX_WIRE_TEXT`;
+   * `null` for none. The host sanitises it: an invalid one becomes `null`.
+   */
+  readonly guildTag: string | null;
   /** Opaque here: the host validates it by the build-join rules. */
   readonly build: JsonValue;
   /**
@@ -314,6 +319,8 @@ export interface PeerRefuse {
 export interface WirePlayer {
   readonly id: string;
   readonly name: string;
+  /** 2–4 letters or digits (#1406), as the host sanitised it; `null` for none and for every bot. */
+  readonly guildTag: string | null;
   readonly team: 0 | 1;
   readonly x: number;
   readonly y: number;
@@ -731,6 +738,8 @@ export interface WireChatLine {
 export interface WireSummaryRow {
   readonly id: string;
   readonly name: string;
+  /** The seat's guild tag (#1406); `null` for none. */
+  readonly guildTag: string | null;
   readonly team: 0 | 1;
   readonly damage: number;
   readonly healing: number;
@@ -756,6 +765,8 @@ export interface PeerLobbyJoin {
   readonly protocolVersion: string;
   /** As the player typed it, cut to `MAX_WIRE_TEXT`; the host sanitises it. */
   readonly name: string;
+  /** As `PeerHello.guildTag` (#1406). */
+  readonly guildTag: string | null;
   readonly character: WireLobbyCharacter | null;
   /**
    * The seat's proof in a queued lobby (#871, ADR-0032 §6); `null` in a
@@ -861,6 +872,8 @@ export interface WireLobbyPlayer {
   /** The member's peer id. */
   readonly id: string;
   readonly name: string;
+  /** As `WirePlayer.guildTag` (#1406). */
+  readonly guildTag: string | null;
   /** `null` spectates. */
   readonly team: 0 | 1 | null;
   readonly ready: boolean;
@@ -1043,6 +1056,14 @@ function parseString(value: unknown): string | undefined {
   return isString(value) ? value : undefined;
 }
 
+/** A client's guild tag as typed (#1406), cut to `MAX_WIRE_TEXT`: the host sanitises it. */
+function parseRawGuildTag(value: unknown): string | null | undefined {
+  if (value === null) {
+    return null;
+  }
+  return typeof value === "string" ? value.slice(0, MAX_WIRE_TEXT) : undefined;
+}
+
 function isRejoinToken(value: unknown): value is string {
   return typeof value === "string" && REJOIN_TOKEN.test(value);
 }
@@ -1120,13 +1141,15 @@ export function parsePeerHello(value: unknown): PeerHello | undefined {
   if (raw === undefined || !isString(raw.protocolVersion) || typeof raw.name !== "string") {
     return undefined;
   }
+  const guildTag = parseRawGuildTag(raw.guildTag);
   const build = parseJson(raw.build);
   const rejoin = parseRejoin(raw.rejoin);
-  return build === undefined || rejoin === undefined
+  return guildTag === undefined || build === undefined || rejoin === undefined
     ? undefined
     : {
         protocolVersion: raw.protocolVersion,
         name: raw.name.slice(0, MAX_WIRE_TEXT),
+        guildTag,
         build,
         rejoin,
       };
@@ -1344,6 +1367,7 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
     raw === undefined ||
     !isString(raw.id) ||
     !isString(raw.name) ||
+    !isNullableString(raw.guildTag) ||
     !isTeam(raw.team) ||
     !isNumber(raw.x) ||
     !isNumber(raw.y) ||
@@ -1386,6 +1410,7 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
     : {
         id: raw.id,
         name: raw.name,
+        guildTag: raw.guildTag,
         team: raw.team,
         x: raw.x,
         y: raw.y,
@@ -1819,6 +1844,7 @@ function parseSummaryRow(value: unknown): WireSummaryRow | undefined {
   return raw !== undefined &&
     isString(raw.id) &&
     typeof raw.name === "string" &&
+    isNullableString(raw.guildTag) &&
     isTeam(raw.team) &&
     isCount(raw.damage) &&
     isCount(raw.healing) &&
@@ -1829,6 +1855,7 @@ function parseSummaryRow(value: unknown): WireSummaryRow | undefined {
     ? {
         id: raw.id,
         name: raw.name.slice(0, MAX_WIRE_TEXT),
+        guildTag: raw.guildTag,
         team: raw.team,
         damage: raw.damage,
         healing: raw.healing,
@@ -1958,12 +1985,14 @@ function parseAdmission(value: unknown): WireAdmission | null | undefined {
 /** The `"lobby-join"` channel. */
 export function parsePeerLobbyJoin(value: unknown): PeerLobbyJoin | undefined {
   const raw = fields(value);
+  const guildTag = parseRawGuildTag(raw?.guildTag);
   const character = parseLobbyCharacter(raw?.character);
   const admission = parseAdmission(raw?.admission);
   if (
     raw === undefined ||
     !isString(raw.protocolVersion) ||
     typeof raw.name !== "string" ||
+    guildTag === undefined ||
     character === undefined ||
     admission === undefined
   ) {
@@ -1972,6 +2001,7 @@ export function parsePeerLobbyJoin(value: unknown): PeerLobbyJoin | undefined {
   return {
     protocolVersion: raw.protocolVersion,
     name: raw.name.slice(0, MAX_WIRE_TEXT),
+    guildTag,
     character,
     admission,
   };
@@ -2076,6 +2106,7 @@ function parseLobbyPlayer(value: unknown): WireLobbyPlayer | undefined {
   return raw !== undefined &&
     isString(raw.id) &&
     isString(raw.name) &&
+    isNullableString(raw.guildTag) &&
     team !== undefined &&
     typeof raw.ready === "boolean" &&
     typeof raw.isHost === "boolean" &&
@@ -2084,6 +2115,7 @@ function parseLobbyPlayer(value: unknown): WireLobbyPlayer | undefined {
     ? {
         id: raw.id,
         name: raw.name,
+        guildTag: raw.guildTag,
         team,
         ready: raw.ready,
         isHost: raw.isHost,

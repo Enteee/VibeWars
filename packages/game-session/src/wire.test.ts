@@ -313,6 +313,7 @@ describe("wireIdentity (#1052)", () => {
       "p1",
       {
         name: "Ann",
+        guildTag: "VIBE",
         team: 1,
         primaryProfession: "necromancer",
         secondaryProfession: undefined,
@@ -351,6 +352,7 @@ describe("wireIdentity (#1052)", () => {
       ),
     ).toEqual({
       name: "Ann",
+      guildTag: "VIBE",
       team: 1,
       primaryProfession: "necromancer",
       secondaryProfession: null,
@@ -362,6 +364,7 @@ describe("wireIdentity (#1052)", () => {
   it("sends a creature with no seat, on its owner's team, named for its kind", () => {
     expect(wireIdentity(minion("p1"), seats, 0)).toEqual({
       name: "Bone Minion",
+      guildTag: null,
       team: 1,
       primaryProfession: null,
       secondaryProfession: null,
@@ -439,6 +442,7 @@ describe("wireIdentity (#1052)", () => {
     };
     expect(wireIdentity(priest, seats, 0)).toEqual({
       name: "Priest",
+      guildTag: null,
       team: 0,
       primaryProfession: null,
       secondaryProfession: null,

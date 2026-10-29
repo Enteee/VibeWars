@@ -1,6 +1,7 @@
 import type { MatchSummaryRow } from "@vibewars/game-session";
 
 import { botTagElement } from "./bot-tag.js";
+import { playerLabelElement } from "./player-label.js";
 import { h } from "./kit.js";
 
 /**
@@ -97,7 +98,8 @@ export function renderSummary(parent: HTMLElement, tables: readonly SummaryTable
     for (const { row, self, top, bot } of lines) {
       const tr = body.insertRow();
       tr.classList.toggle("is-self", self);
-      const name = h("th", "match-summary-name", row.name);
+      const name = h("th", "match-summary-name");
+      name.appendChild(playerLabelElement("player-label", row.name, row.guildTag));
       if (bot) {
         name.appendChild(botTagElement("match-summary-bot"));
       }

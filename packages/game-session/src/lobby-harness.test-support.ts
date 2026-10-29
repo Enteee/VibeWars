@@ -41,7 +41,7 @@ export interface TestLobby {
   /** Each match the lobby started, with the plan it was started on. */
   readonly matches: { readonly plan: MatchPlan; readonly host: MatchHost }[];
   /** A remote member joining as `name` with `character`; resolves once it is in. */
-  join(name?: string, character?: LobbyCharacter | null): Promise<Member>;
+  join(name?: string, character?: LobbyCharacter | null, guildTag?: string | null): Promise<Member>;
   /** Run `seconds` of the lobby's match, a tick at a time, letting messages land between. */
   step(seconds: number): Promise<void>;
 }
@@ -92,16 +92,21 @@ export async function openLobby(
     transport: Transport,
     name: string,
     character: LobbyCharacter | null,
+    guildTag: string | null,
   ): Promise<Member> =>
-    member(await joinLobby({ transport, code: CODE, name, character, timeoutMs: 1000 }), transport);
-  const host = await join(lobby.local, "Host", null);
+    member(
+      await joinLobby({ transport, code: CODE, name, guildTag, character, timeoutMs: 1000 }),
+      transport,
+    );
+  const host = await join(lobby.local, "Host", null, null);
   return {
     network,
     lobby,
     room,
     host,
     matches,
-    join: (name = "Guest", character = null) => join(network.join(), name, character),
+    join: (name = "Guest", character = null, guildTag = null) =>
+      join(network.join(), name, character, guildTag),
     async step(seconds) {
       const ticks = Math.round(seconds / TICK_SECONDS);
       for (let i = 0; i < ticks; i += 1) {

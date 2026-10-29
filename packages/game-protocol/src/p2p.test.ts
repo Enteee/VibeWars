@@ -82,6 +82,7 @@ import { PROTOCOL_VERSION } from "./protocol-version.js";
 const hello: PeerHello = {
   protocolVersion: PROTOCOL_VERSION,
   name: "Mhenlo",
+  guildTag: "VIBE",
   build: { profession: "monk", skills: ["healing-breeze", null] },
   rejoin: null,
 };
@@ -137,6 +138,7 @@ const status: WireStatus = { status: 3, endsAt: 12.5, durationSeconds: 8, caster
 const player: WirePlayer = {
   id: "peer-1",
   name: "Mhenlo",
+  guildTag: "VIBE",
   team: 0,
   x: 120.5,
   y: -3,
@@ -399,6 +401,7 @@ const skillBar: WireSkillBar = {
 const summaryRow = {
   id: "player-1",
   name: "Ann",
+  guildTag: "Ab1",
   team: 0,
   damage: 1200,
   healing: 340,
@@ -426,6 +429,7 @@ const recharge: RechargeMessage = {
 const lobbyJoin: PeerLobbyJoin = {
   protocolVersion: PROTOCOL_VERSION,
   name: "Mhenlo",
+  guildTag: "vb",
   character: { name: "Mhenlo Healer", primary: "monk", secondary: "elementalist" },
   admission: null,
 };
@@ -456,6 +460,7 @@ const lobbyState: WireLobbyState = {
     {
       id: "peer-1/local",
       name: "Host",
+      guildTag: "VIBE",
       team: 0,
       ready: true,
       isHost: true,
@@ -465,6 +470,7 @@ const lobbyState: WireLobbyState = {
     {
       id: "peer-3",
       name: "Watcher",
+      guildTag: null,
       team: null,
       ready: false,
       isHost: false,
@@ -474,6 +480,7 @@ const lobbyState: WireLobbyState = {
     {
       id: "bot-1",
       name: "Monk Bot",
+      guildTag: null,
       team: 1,
       ready: true,
       isHost: false,
@@ -503,6 +510,9 @@ const chatLine = { channel: "all", fromId: "peer-2", name: "Ann", team: 0, text:
 const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["hello", parsePeerHello, hello],
   ["rejoining hello", parsePeerHello, { ...hello, rejoin: { playerId: "peer-2" } }],
+  ["untagged hello (#1406)", parsePeerHello, { ...hello, guildTag: null }],
+  // The host sanitises it: a bad tag on the wire is still a hello.
+  ["hello with a bad tag (#1406)", parsePeerHello, { ...hello, guildTag: "[x] " }],
   ["rejoin-challenge", parsePeerRejoinChallenge, challenge],
   ["rejoin-proof", parsePeerRejoinProof, proof],
   ["welcome", parsePeerWelcome, welcome],
@@ -728,6 +738,7 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["lobby-join", parsePeerLobbyJoin, lobbyJoin],
   ["lobby-join on a starter build", parsePeerLobbyJoin, { ...lobbyJoin, character: null }],
   ["queued lobby-join (#871)", parsePeerLobbyJoin, { ...lobbyJoin, admission }],
+  ["untagged lobby-join (#1406)", parsePeerLobbyJoin, { ...lobbyJoin, guildTag: null }],
   ["lobby-hello (#871)", parsePeerLobbyHello, {}],
   ["lobby-welcome (#871)", parseWireLobbyWelcome, { hostSig: "ef".repeat(64) }],
   ["stay-together yes (#882)", parsePeerStayTogether, { memberKey: "ab".repeat(32) }],
@@ -828,6 +839,23 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["an array", parsePeerHello, [hello]],
   ["null", parseWireSnapshotPart, null],
   ["hello without a name", parsePeerHello, { ...hello, name: undefined }],
+  ["hello without a guild tag (#1406)", parsePeerHello, { ...hello, guildTag: undefined }],
+  ["hello with a numeric guild tag (#1406)", parsePeerHello, { ...hello, guildTag: 7 }],
+  [
+    "lobby-join without a guild tag (#1406)",
+    parsePeerLobbyJoin,
+    { ...lobbyJoin, guildTag: undefined },
+  ],
+  [
+    "snapshot of a player without a guild tag (#1406)",
+    parseWireSnapshotPart,
+    { ...snapshot, players: [{ ...player, guildTag: undefined }] },
+  ],
+  [
+    "summary row without a guild tag (#1406)",
+    parseWireEnded,
+    { ...ended, summary: [{ ...summaryRow, guildTag: undefined }] },
+  ],
   ["hello with a numeric version", parsePeerHello, { ...hello, protocolVersion: 2 }],
   ["bye with a field", parsePeerBye, { reason: "x" }],
   ["bye that is not an object", parsePeerBye, null],
@@ -1707,6 +1735,14 @@ describe("the P2P validators (#82)", () => {
 
   it.each(MALFORMED)("reject %s", (_, parse, value) => {
     expect(parse(value)).toBeUndefined();
+  });
+
+  it("cut a hello's and a lobby-join's guild tag to MAX_WIRE_TEXT (#1406)", () => {
+    const long = "x".repeat(MAX_WIRE_TEXT + 5);
+    expect(parsePeerHello({ ...hello, guildTag: long })?.guildTag).toHaveLength(MAX_WIRE_TEXT);
+    expect(parsePeerLobbyJoin({ ...lobbyJoin, guildTag: long })?.guildTag).toHaveLength(
+      MAX_WIRE_TEXT,
+    );
   });
 
   it("cut a summary name to MAX_WIRE_TEXT (#1057)", () => {
