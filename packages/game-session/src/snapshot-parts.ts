@@ -178,6 +178,8 @@ export function snapshotAssembler(): (part: WireSnapshotPart) => WireSnapshot | 
       flags: part.flags,
       stand: part.stand,
       aggression: part.aggression,
+      relics: part.relics,
+      altar: part.altar,
     };
   };
 }

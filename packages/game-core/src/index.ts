@@ -129,7 +129,8 @@ export {
   MORALE_FLOOR,
   PRIEST_ANNIHILATION_MATCH_RULES,
   PRIEST_WAVE_SECONDS,
-  addKill,
+  RELIC_RUN_MATCH_RULES,
+  addPoint,
   emptyScore,
   evaluateMatch,
   moraleMaximum,
@@ -182,16 +183,18 @@ export { facingToward, spawnFacing } from "./match/facing.js";
 export type { Shrine } from "./match/priest.js";
 export { PRIEST_SKILL_ID, priestId } from "./match/priest.js";
 export type { GuildLord } from "./match/guild-lord.js";
-export type { FlagField, FlagPlace, FlagSpawn, FlagState, StandState } from "./match/flags.js";
+export type { CarriedObject, CarriedPlace, CarriedSpawn } from "./match/carried.js";
+export { FLAG_STAND_ID, isCarriedObjectId } from "./match/carried.js";
+export type { FlagField, FlagPlace, FlagState, StandState } from "./match/flags.js";
 export {
   FLAG_MORALE_BOOST,
   FLAG_REACH_UNITS,
-  FLAG_STAND_ID,
   STAND_HOLD_SECONDS,
   flagId,
   flagTeamOf,
-  isFlagObjectId,
 } from "./match/flags.js";
+export type { RelicField, RelicState } from "./match/relics.js";
+export { ALTAR_REACH_UNITS, relicId, relicTeamOf } from "./match/relics.js";
 export { GUILD_LORD_HEALTH, guildLordId, guildLordLossCap } from "./match/guild-lord.js";
 export type { BaseGuard, GuardRole } from "./match/guards.js";
 export { GUARD_ROLE_IDS, GUARD_ROLES, guardId } from "./match/guards.js";

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import { vec2 } from "../vec2.js";
+import { FLAG_STAND_ID, isCarriedObjectId } from "./carried.js";
 import {
-  FLAG_STAND_ID,
   STAND_HOLD_SECONDS,
   carriedFlag,
   dropFlag,
@@ -11,7 +11,6 @@ import {
   flagTargetPosition,
   flagTeamOf,
   initialFlags,
-  isFlagObjectId,
   stepFlags,
   type FlagAction,
   type FlagField,
@@ -52,9 +51,9 @@ describe("flag ids", () => {
     expect(flagTeamOf("flag/1")).toBe(1);
     expect(flagTeamOf("flag/")).toBeUndefined();
     expect(flagTeamOf("guild-lord/1")).toBeUndefined();
-    expect(isFlagObjectId(FLAG_STAND_ID)).toBe(true);
-    expect(isFlagObjectId("flag/0")).toBe(true);
-    expect(isFlagObjectId("peer-1")).toBe(false);
+    expect(isCarriedObjectId(FLAG_STAND_ID)).toBe(true);
+    expect(isCarriedObjectId("flag/0")).toBe(true);
+    expect(isCarriedObjectId("peer-1")).toBe(false);
   });
 });
 

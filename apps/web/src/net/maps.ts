@@ -10,7 +10,15 @@ import arenaPillars from "@vibewars/game-maps/maps/arena-pillars/map.json" with 
 import arenaRing from "@vibewars/game-maps/maps/arena-ring/map.json" with { type: "json" };
 import arenaSplit from "@vibewars/game-maps/maps/arena-split/map.json" with { type: "json" };
 import guildHallIsle from "@vibewars/game-maps/maps/guild-hall-isle/map.json" with { type: "json" };
-import type { BaseGuard, FlagField, GuildLord, MatchMode, Vec2 } from "@vibewars/game-core";
+import relicTemples from "@vibewars/game-maps/maps/relic-temples/map.json" with { type: "json" };
+import type {
+  BaseGuard,
+  FlagField,
+  GuildLord,
+  MatchMode,
+  RelicField,
+  Vec2,
+} from "@vibewars/game-core";
 import { teamSizeOf, type QueueMode } from "@vibewars/game-protocol";
 import type { HostMap } from "@vibewars/game-session";
 import { TRAINING_MAPS } from "../training/maps.js";
@@ -35,6 +43,8 @@ export const ARENA_MAPS: readonly MapData[] = [
   arenaLongHall,
   // The Guild Battle's (#1222).
   guildHallIsle,
+  // The Relic Run's (#1374).
+  relicTemples,
 ].map((raw) => validateMapData(raw));
 
 /** The arena a new lobby starts on, the server's default before (#403). */
@@ -63,16 +73,20 @@ const PLAYERS_BY_SIZE: Readonly<Record<SizeClass, { readonly min: number; readon
  * The arenas a Random Arena of `mode` is drawn from (#854 A2): every one
  * whose size class seats both teams, so a map added later joins by its
  * size and not by a list. Never a Guild Battle's (#1222): a 28-minute
- * siege is not a Random Arena. In `ARENA_MAPS`' order, as `formGroups`
- * wants the same pool on every client.
+ * siege is not a Random Arena; nor a Relic Run's (#1374), a Heroes'
+ * Ascent mode. In `ARENA_MAPS`' order, as `formGroups` wants the same
+ * pool on every client.
  */
 export function randomArenaMapPool(mode: QueueMode): string[] {
   const players = 2 * teamSizeOf(mode);
   return ARENA_MAPS.filter((map) => {
     const { min, max } = PLAYERS_BY_SIZE[sizeClass(map)];
-    return map.mode !== "guild-battle" && players >= min && players <= max;
+    return !NOT_RANDOM.includes(map.mode) && players >= min && players <= max;
   }).map((map) => map.id);
 }
+
+/** The modes a Random Arena never plays. */
+const NOT_RANDOM: readonly MatchMode[] = ["guild-battle", "relic-run"];
 
 /**
  * The mode a match on `mapId` plays (#476), from the same map file the
@@ -136,6 +150,30 @@ export function mapFlagField(mapId: string): FlagField | undefined {
   return flagFieldOf(map?.objectives ?? []);
 }
 
+/**
+ * The altar and relic spawns among a map's objectives (#1374), or
+ * `undefined` on a map without an altar.
+ */
+function relicFieldOf(objectives: readonly Objective[]): RelicField | undefined {
+  const altar = objectives.find((objective) => objective.kind === "altar");
+  return altar === undefined
+    ? undefined
+    : {
+        altar: altar.position,
+        spawns: objectives.flatMap((objective) =>
+          objective.kind === "relic-spawn"
+            ? [{ team: objective.team, position: objective.position }]
+            : [],
+        ),
+      };
+}
+
+/** The altar and relic spawns on `mapId` (#1374), for the renderer: as `mapFlagField`. */
+export function mapRelicField(mapId: string): RelicField | undefined {
+  const map = ARENA_MAPS.find((candidate) => candidate.id === mapId) ?? TRAINING_MAPS.get(mapId);
+  return relicFieldOf(map?.objectives ?? []);
+}
+
 /** The base guards among a map's objectives (#1223), in its order. */
 function guardsOf(objectives: readonly Objective[]): readonly BaseGuard[] {
   return objectives.flatMap((objective) =>
@@ -176,6 +214,7 @@ export function hostMap(mapId: string): HostMap | undefined {
     shrines: shrinesOf(map.objectives),
     guildLords: guildLordsOf(map.objectives),
     flagField: flagFieldOf(map.objectives),
+    relicField: relicFieldOf(map.objectives),
     guards: guardsOf(map.objectives),
   };
 }

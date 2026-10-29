@@ -64,6 +64,8 @@ function match(players: readonly PlayerSnapshot[], selfSessionId = "me"): MatchS
     flags: [],
     stand: undefined,
     aggression: [],
+    relics: [],
+    altar: undefined,
     summary: undefined,
   };
 }

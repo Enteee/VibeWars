@@ -406,19 +406,28 @@ export interface WireGroundEffect {
   readonly durationSeconds: number;
 }
 
-/** Where a Guild Battle's flag is (#1225): game-core's `FlagPlace` kinds. */
-export const FLAG_PLACES = ["spawn", "carried", "ground", "stand"] as const;
+/** Where a Relic Run's relic is (#1374): game-core's `CarriedPlace` kinds, a bundle's three. */
+export const RELIC_PLACES = ["spawn", "carried", "ground"] as const;
 
-/** A Guild Battle's flag (#1225): one a team, or none on a map without a stand. */
-export interface WireFlag {
+/** Where a Guild Battle's flag is (#1225): game-core's `FlagPlace` kinds, a bundle's and the stand. */
+export const FLAG_PLACES = [...RELIC_PLACES, "stand"] as const;
+
+/** A team's bundle (#1225, #1374), in one of `Place`. */
+export interface WireCarried<Place extends string> {
   readonly team: 0 | 1;
-  readonly place: (typeof FLAG_PLACES)[number];
+  readonly place: Place;
   /** Who carries it, while `carried`; `null` otherwise. */
   readonly carrierId: string | null;
   /** Where it lies, while `ground`; `null` otherwise. */
   readonly x: number | null;
   readonly y: number | null;
 }
+
+/** A Guild Battle's flag (#1225): one a team, or none on a map without a stand. */
+export type WireFlag = WireCarried<(typeof FLAG_PLACES)[number]>;
+
+/** A Relic Run's relic (#1374): one a team, or none on a map without an altar. */
+export type WireRelic = WireCarried<(typeof RELIC_PLACES)[number]>;
 
 /** Who holds the flag stand (#1225), and for how long since the taking or the last boost. */
 export interface WireStand {
@@ -464,6 +473,10 @@ export interface WireSnapshot {
   readonly stand: WireStand | null;
   /** Each team's aggression by team index, rounded (#1226); `[]` but on a Guild Battle. */
   readonly aggression: readonly number[];
+  /** Every relic (#1374); `[]` on a map without an altar. */
+  readonly relics: readonly WireRelic[];
+  /** The altar a relic is run to (#1374); `null` on a map without one. */
+  readonly altar: { readonly x: number; readonly y: number } | null;
 }
 
 /**
@@ -1415,16 +1428,20 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
   const players = parseArray(raw.players, MAX_WIRE_ACTORS, parsePlayer);
   const projectiles = parseArray(raw.projectiles, MAX_WIRE_PROJECTILES, parseProjectile);
   const groundEffects = parseArray(raw.groundEffects, MAX_WIRE_GROUND_EFFECTS, parseGroundEffect);
-  const flags = parseArray(raw.flags, 2, parseFlag);
+  const flags = parseArray(raw.flags, 2, parseCarried(FLAG_PLACES));
   const stand = raw.stand === null ? null : parseStand(raw.stand);
   const aggression = parseArray(raw.aggression, 2, parseScore);
+  const relics = parseArray(raw.relics, 2, parseCarried(RELIC_PLACES));
+  const altar = raw.altar === null ? null : parsePoint(raw.altar);
   const [team0 = 0, team1 = 0] = score;
   return players === undefined ||
     projectiles === undefined ||
     groundEffects === undefined ||
     flags === undefined ||
     stand === undefined ||
-    aggression === undefined
+    aggression === undefined ||
+    relics === undefined ||
+    altar === undefined
     ? undefined
     : {
         tick: raw.tick,
@@ -1439,19 +1456,37 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
         flags,
         stand,
         aggression,
+        relics,
+        altar,
       };
 }
 
-/** A flag whose fields say what its place has, and nothing else (#1225). */
-function parseFlag(value: unknown): WireFlag | undefined {
-  const raw = fields(value);
-  if (raw === undefined || !isTeam(raw.team) || !isOneOf(raw.place, FLAG_PLACES)) {
-    return undefined;
-  }
-  const { team, place, carrierId, x, y } = raw;
-  const carrier = place === "carried" ? (isString(carrierId) ? carrierId : undefined) : null;
+/**
+ * A parser of bundles in one of `places`, a flag's or a relic's: whose
+ * fields say what its place has, and nothing else (#1225, #1374).
+ */
+function parseCarried<Place extends string>(
+  places: readonly Place[],
+): (value: unknown) => WireCarried<Place> | undefined {
+  return (value) => {
+    const raw = fields(value);
+    return raw === undefined || !isTeam(raw.team) || !isOneOf(raw.place, places)
+      ? undefined
+      : carriedFields(raw.team, raw.place, raw);
+  };
+}
+
+/** A bundle's carrier and spot, as its `place` has them. */
+function carriedFields<Place extends string>(
+  team: 0 | 1,
+  place: Place,
+  raw: Fields,
+): WireCarried<Place> | undefined {
+  const { carrierId, x, y } = raw;
+  const kind: string = place;
+  const carrier = kind === "carried" ? (isString(carrierId) ? carrierId : undefined) : null;
   const spot =
-    place === "ground"
+    kind === "ground"
       ? isNumber(x) && isNumber(y)
         ? { x, y }
         : undefined

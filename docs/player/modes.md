@@ -2,7 +2,7 @@
 
 Each map plays one mode, and the lobby says which under the map's name.
 Nobody picks it. A Random Arena picks a map for you, and with it the
-mode, but never a Guild Battle.
+mode, but never a Guild Battle or a Relic Run.
 
 ## Annihilation
 
@@ -65,3 +65,26 @@ lord. Under it, a line names whoever carries a flag. A boost pops up as
 each Guild Lord, ⚑ each flag and ◎ the stand.
 
 Guild Hall Isle plays it.
+
+## Relic Run
+
+**Carry your relic to the altar.** Each team has a **relic** in its
+base, and the **altar** is in the centre, the same run from both bases,
+by a north or a south route. Target your relic and press **Space** to
+take it up. Carry it onto the altar and you score a point at once, and
+the relic goes back to your base. A carrier walks slower and cannot
+attack or use attack skills. It drops the relic when it dies or presses
+**Drop relic** above its Health bar, and the relic stays where it fell
+until someone reaches it. Your team takes it up from there. A foe who
+reaches it, with empty hands, sends it home. A foe's relic in its base
+is not yours to touch.
+
+The dead stay down until an ally resurrects them, and each death costs
+morale. Wipe the other team to win at once. After 8 minutes the team
+with more points wins; equal points is a draw. Kills score nothing.
+
+The scoreboard shows the points, yours first, and the clock. Under it, a
+line for each relic says where it is: `✦ Name` on its carrier,
+`✦ dropped` on the ground or `✦ at base`.
+
+Relic Temples plays it.
