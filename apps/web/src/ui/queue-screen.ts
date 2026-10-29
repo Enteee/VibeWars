@@ -301,12 +301,10 @@ export function mountQueueScreen(
   const now = options.now ?? (() => Date.now());
   root.replaceChildren();
   const panel = h("div", "screen screen-queue");
-  panel.appendChild(
-    screenBar({
-      title: [h("h2", "screen-title", queueTitle(options.mode, options.characterName))],
-      actions: [],
-    }).element,
-  );
+  screenBar({
+    crumbs: ["VibeWars", queueTitle(options.mode, options.characterName)],
+    actions: [],
+  });
   const status = h("div", "queue-status");
   status.setAttribute("role", "status");
   const waited = h("div", "queue-waited");

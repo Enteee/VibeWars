@@ -51,7 +51,7 @@ async function queue1v1(page: Page, name: string): Promise<void> {
   await page.locator(".screen-menu input.field-input").first().fill(name);
   await page.getByRole("button", { name: "1v1", exact: true }).click();
   await page.getByRole("button", { name: "Random Arena", exact: true }).click();
-  await expect(page.locator(".screen-queue .screen-title")).toHaveText(
+  await expect(page.locator("#topbar .topbar-crumb.is-place")).toHaveText(
     `Random Arena 1v1 · ${BUILD}`,
   );
 }
@@ -166,7 +166,7 @@ test("two players queue for a 1v1, are matched, see the versus splash, play it o
 
     await alice.getByRole("button", { name: "Queue again", exact: true }).click();
     await expect(alice.locator(".queue-status")).toHaveText("Searching");
-    await expect(alice.locator(".screen-queue .screen-title")).toHaveText(
+    await expect(alice.locator("#topbar .topbar-crumb.is-place")).toHaveText(
       `Random Arena 1v1 · ${BUILD}`,
     );
   } finally {

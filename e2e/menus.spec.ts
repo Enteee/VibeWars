@@ -3,8 +3,9 @@ import { expect, test, type Page } from "@playwright/test";
 import { openPeers } from "./helpers/peers.js";
 
 /**
- * The screen bar every menu screen shares (#578): Esc is its Back, and
- * with an inline confirmation open, Esc cancels that instead.
+ * The screen bar every menu screen shares (#578), in the top bar (#1272):
+ * Esc is its Back, and with an inline confirmation open, Esc cancels that
+ * instead.
  */
 
 const menuHeading = (page: Page) => page.getByRole("heading", { name: "VibeWars" });
@@ -28,18 +29,21 @@ test("#578: Esc goes back on the teams, team editor, options, music and lobby sc
   await page.keyboard.press("Escape");
   await expect(menuHeading(page)).toBeVisible();
 
-  await page.locator("#screens").getByRole("button", { name: "Options", exact: true }).click();
+  await page.locator(".topbar-options").click();
   await expect(page.getByRole("heading", { name: "Options" })).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(menuHeading(page)).toBeVisible();
 
-  await page.locator("#screens").getByRole("button", { name: "Music", exact: true }).click();
+  await page
+    .locator(".topbar-screen-actions")
+    .getByRole("button", { name: "Music", exact: true })
+    .click();
   await expect(page.getByRole("heading", { name: "Music" })).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(menuHeading(page)).toBeVisible();
 
   await page.getByRole("button", { name: "Host a lobby" }).click();
-  await expect(page.locator(".screen-lobby .screen-bar .lobby-code")).toBeVisible();
+  await expect(page.locator("#topbar .lobby-code")).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(menuHeading(page)).toBeVisible();
   await expect(page.locator("#status")).toBeHidden();
@@ -72,6 +76,28 @@ test("#578: Esc with a confirmation open cancels it, and only then goes back", a
   await expect(discard).toBeVisible();
   await discard.click();
   await expect(page.getByRole("heading", { name: "Teams" })).toBeVisible();
+});
+
+test("#1272: the editor's Discard question takes the status's room: the bar stays one row, Save in it", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto("./");
+  await page.getByRole("button", { name: "new character" }).click();
+  await page.locator("input.editor-name").fill("Rurik");
+  const bar = page.locator("#topbar");
+  const status = bar.locator(".topbar-status");
+  await expect(status).toBeVisible();
+  const height = (await bar.boundingBox())?.height;
+
+  await page.keyboard.press("Escape");
+  await expect(bar.getByRole("button", { name: "Discard", exact: true })).toBeVisible();
+  await expect(status).toBeHidden();
+  await expect(bar.getByRole("button", { name: "Save", exact: true })).toBeInViewport();
+  expect((await bar.boundingBox())?.height).toBe(height);
+
+  await bar.getByRole("button", { name: "Keep editing", exact: true }).click();
+  await expect(status).toBeVisible();
 });
 
 test("#578: a host with others in the lobby is asked before Leave or Esc closes it", async ({
@@ -212,10 +238,47 @@ test("#579: the roster's rows are buttons: Enter or Space chooses, Edit sits bes
   await page.keyboard.press("Escape");
   await expect(starter).toHaveClass(/is-selected/);
 
-  // Teams, Options and Music are in the screen bar.
-  for (const name of ["Teams", "Options", "Music"]) {
+  // Teams and Music are the menu's own buttons in the top bar; Options is its ⚙ (#1272).
+  for (const name of ["Teams", "Music"]) {
     await expect(
-      page.locator(".screen-menu .screen-bar").getByRole("button", { name, exact: true }),
+      page.locator("#topbar .topbar-screen-actions").getByRole("button", { name, exact: true }),
     ).toBeVisible();
   }
+  await expect(page.locator("#topbar .topbar-options")).toBeVisible();
+});
+
+test("#1272: on a phone, Music's ⋯ holds its other buttons and the chevron is Back", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 800 });
+  await openMenu(page);
+  const more = page.locator("#topbar .topbar-more");
+  const screenButton = (name: string) =>
+    page.locator("#topbar .topbar-screen-actions").getByRole("button", { name, exact: true });
+
+  // Folded away until ⋯ opens; the global icons with them.
+  await expect(screenButton("Music")).toBeHidden();
+  await expect(page.locator("#topbar .topbar-options")).toBeHidden();
+  await more.click();
+  await expect(more).toHaveAttribute("aria-expanded", "true");
+  await expect(page.locator("#topbar .topbar-options")).toBeVisible();
+  await screenButton("Music").click();
+  await expect(page.getByRole("heading", { name: "Music" })).toBeVisible();
+  await expect(more).toHaveAttribute("aria-expanded", "false");
+
+  // Only the place shows, not the crumbs before it.
+  await expect(page.locator("#topbar .topbar-crumb", { hasText: "VibeWars" })).toBeHidden();
+  await expect(screenButton("Sound settings")).toBeHidden();
+  await more.click();
+  await screenButton("Sound settings").click();
+  await expect(page.getByRole("heading", { name: "Options" })).toBeVisible();
+  // Reached from Music, its breadcrumb says so.
+  await expect(page.locator("#topbar .topbar-crumbs")).toHaveText("VibeWars > Music > Options");
+
+  const back = page.locator("#topbar").getByRole("button", { name: "Back", exact: true });
+  await expect(back).toHaveText("‹", { useInnerText: true });
+  await back.click();
+  await expect(page.getByRole("heading", { name: "Music" })).toBeVisible();
+  await back.click();
+  await expect(menuHeading(page)).toBeVisible();
 });

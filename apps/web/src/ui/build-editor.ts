@@ -769,7 +769,7 @@ function causeKey(cause: ProblemCause): string {
 const FLAG_MS = 1600;
 
 /** Scroll to the element `cause` is about, highlight it a moment, and focus it if it takes focus. */
-function showCause(scope: HTMLElement, cause: ProblemCause): void {
+function showCause(scope: ParentNode, cause: ProblemCause): void {
   const key = causeKey(cause);
   // Another weapon set's problem: its tab is picked first, so its slot shows (#489).
   const set = SET_FIELD.exec(key);
@@ -984,7 +984,7 @@ export function mountBuildEditor(
   };
 
   // Spans every column, the Training Ground's included (#566).
-  const bar = mountCommandBar(layout, context, initial, callbacks, (name) => {
+  const bar = mountCommandBar(context, initial, callbacks, (name) => {
     // Typing changes nothing another region shows but the bar's own
     // marker: the arena hears about the new name directly.
     dropUndo();
@@ -1107,7 +1107,6 @@ interface CommandBar extends Region {
  * in the bar first.
  */
 function mountCommandBar(
-  layout: HTMLElement,
   context: EditorContext,
   opened: StoredCharacter,
   callbacks: BuildEditorCallbacks,
@@ -1251,15 +1250,14 @@ function mountCommandBar(
     }
     return false;
   };
-  const { element, back } = screenBar({
+  // The name is the last crumb: the place is the character (#1272).
+  const { back } = screenBar({
+    crumbs: ["VibeWars", nameInput],
     back: { label: "Close", onBack: close },
-    title: [nameInput, professions],
-    status: [budget, chip.element, unsaved],
+    status: [professions, budget, chip.element, unsaved],
     actions: [save, moreWrap],
     putAway,
   });
-  element.classList.add("editor-bar");
-  layout.appendChild(element);
 
   // A press anywhere else puts the ⋯ menu and the problem list away.
   const onPointerDown = (event: PointerEvent): void => {
@@ -1294,7 +1292,8 @@ function mountCommandBar(
           text: problem.text,
           blocking: problem.blocking,
           jump: () => {
-            showCause(layout, problem.cause);
+            // The name and professions sit in the top bar (#1272), outside the layout.
+            showCause(document, problem.cause);
           },
         })),
       );

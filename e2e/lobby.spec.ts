@@ -143,10 +143,14 @@ test("a wrong code says Connecting…, finds no lobby after the 20 s wait, and s
   }
 });
 
-test("leaving a lobby puts the status bar back to idle: nothing (#454)", async ({ page }) => {
-  // The status used to keep saying "lobby CODE" on the menu (#206).
+test("the status bar says nothing in a lobby, which shows its code, nor after leaving (#454)", async ({
+  page,
+}) => {
+  // The status used to keep saying "lobby CODE" on the menu (#206), and
+  // then repeated the code beside the lobby's own (#1272).
   const code = await hostLobby(page, "Host");
-  await expect(page.locator("#status")).toHaveText(`lobby ${code}`);
+  await expect(page.locator(".lobby-code")).toHaveText(code);
+  await expect(page.locator("#status")).toBeHidden();
 
   await page.getByRole("button", { name: "leave" }).click();
   await expect(page.getByRole("heading", { name: "VibeWars" })).toBeVisible();
@@ -251,7 +255,7 @@ test("a player who quits early is told the match still runs, until it ends", asy
   const [host, guest] = pages as [Page, Page];
 
   try {
-    const code = await startTwoPlayerMatch(host, guest, 1);
+    await startTwoPlayerMatch(host, guest, 1);
     await expect(host.locator("#viewport canvas:not(.compass)")).toBeVisible();
     await expect(guest.locator("#viewport canvas:not(.compass)")).toBeVisible();
 
@@ -267,7 +271,7 @@ test("a player who quits early is told the match still runs, until it ends", asy
     await expect(running).toHaveText(
       "A match is still running. The lobby opens again when it ends.",
     );
-    await expect(host.locator("#status")).toHaveText(`lobby ${code}`);
+    await expect(host.locator(".screen-lobby")).toBeVisible();
     // Readiness is only cleared once the match is over, so it still reads "not ready".
     await expect(host.getByRole("button", { name: "not ready" })).toBeDisabled();
     await expect(host.getByRole("button", { name: "start match" })).toBeDisabled();
@@ -279,7 +283,7 @@ test("a player who quits early is told the match still runs, until it ends", asy
     // The last player leaves, the match is over, and the lobby opens.
     await leaveMatch(guest);
     await expect(running).toHaveCount(0);
-    await expect(guest.locator("#status")).toHaveText(`lobby ${code}`);
+    await expect(guest.locator(".screen-lobby")).toBeVisible();
     const ready = host.getByRole("button", { name: "Ready", exact: true });
     await expect(ready).toBeEnabled();
     await expect(host.locator(".lobby-map select")).toBeEnabled();
@@ -299,13 +303,13 @@ test("a player who quits a 1v1 forfeits it, and is back in an open lobby (#846)"
   const [host, guest] = pages as [Page, Page];
 
   try {
-    const code = await startTwoPlayerMatch(host, guest);
+    await startTwoPlayerMatch(host, guest);
     await expect(host.locator(".hud-leave")).toBeVisible();
     await expect(guest.locator(".hud-leave")).toBeVisible();
 
     await leaveMatch(host);
     await expect(host.locator(".screen-lobby")).toBeVisible();
-    await expect(host.locator("#status")).toHaveText(`lobby ${code}`);
+    await expect(host.locator(".screen-lobby")).toBeVisible();
     await expect(host.locator(".lobby-running")).toHaveCount(0);
     await expect(host.getByRole("button", { name: "Ready", exact: true })).toBeEnabled();
   } finally {

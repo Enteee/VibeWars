@@ -17,8 +17,13 @@ test("[?] opens Help on Getting started; Esc returns to the menu as it was (#125
   await page.locator(".topbar-help").click();
   const help = page.getByRole("dialog", { name: "Help" });
   await expect(help).toBeVisible();
-  await expect(help.locator(".help-breadcrumb")).toHaveText("VibeWars > Help > Getting started");
+  await expect(page.locator("#topbar .topbar-crumbs")).toHaveText(
+    "VibeWars > Help > Getting started",
+  );
   await expect(help.locator(".help-page h1")).toHaveText("Getting started");
+  // The bar over the match has no status: it once still said "entering
+  // match…" (#1272).
+  await expect(page.locator("#status")).toBeHidden();
   await expect(help.locator('.options-entry[data-page="getting-started"]')).toHaveAttribute(
     "aria-current",
     "page",

@@ -75,7 +75,7 @@ import {
   type QueueScreen,
   type StayOffer,
 } from "./ui/queue-screen.js";
-import { displayLobbyCode, renderLobbyScreen } from "./ui/lobby-screen.js";
+import { renderLobbyScreen } from "./ui/lobby-screen.js";
 import { createNowPlayingToast, nowPlayingText } from "./ui/now-playing.js";
 import {
   loadActiveCharacterId,
@@ -376,7 +376,7 @@ async function main(): Promise<void> {
   // The bar's [?] and ⚙ open Help and Options over the screen, which
   // stays as it was underneath: an editor keeps its edits, a lobby keeps
   // updating (#454, #1257).
-  mountTopbar(topbar, requireElement("#topbar-actions"), {
+  const topbarView = mountTopbar(topbar, {
     onHelp: () => {
       openHelpOverlay(app);
     },
@@ -395,7 +395,7 @@ async function main(): Promise<void> {
     }
     // In a match the viewport has the whole height; the HUD has the bar's
     // buttons (#454).
-    topbar.hidden = visible;
+    topbarView.setInMatch(visible);
     viewport.style.display = visible ? "block" : "none";
     screenRoot.style.display = visible ? "none" : "flex";
     if (chat !== undefined) {
@@ -492,7 +492,7 @@ async function main(): Promise<void> {
       onSoundSettings: () => {
         leaveScreen();
         disposeJukeboxScreen();
-        renderOptionsScreen(screenRoot, { onBack: showJukebox }, "sound");
+        renderOptionsScreen(screenRoot, { onBack: showJukebox, from: "Music" }, "sound");
       },
     });
   };
@@ -526,10 +526,6 @@ async function main(): Promise<void> {
         },
         onManageTeams: () => {
           void showTeams();
-        },
-        onOptions: () => {
-          leaveScreen();
-          renderOptionsScreen(screenRoot, { onBack: showMenu });
         },
         onMusic: showJukebox,
         onNewCharacter: () => {
@@ -971,7 +967,8 @@ async function main(): Promise<void> {
       queue.screen.show({ kind: "splash", snapshot });
       return;
     }
-    setStatus(`lobby ${displayLobbyCode(snapshot.code)}`, "online");
+    // The lobby screen shows its code, so the status has nothing to add.
+    setStatus("", "online");
     showViewport(false);
     music().screen("lobby");
     renderLobbyScreen(
@@ -1251,6 +1248,8 @@ async function main(): Promise<void> {
         },
         { connect: () => connectMatchFor(from, start, name, entrant.build) },
       );
+      // In the match, the status has nothing to say until it is lost.
+      setStatus("", "online");
     } catch (error) {
       console.error("[web] could not enter match", error);
       enteringMatch = false;

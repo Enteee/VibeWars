@@ -89,8 +89,9 @@ test("a disabled primary button looks as disabled as any other (#137)", async ({
   const ready = page.getByRole("button", { name: "Ready", exact: true });
   await expect(start).toBeDisabled();
   await expect(ready).toBeDisabled();
-  await expect(start).toHaveClass(/\bprimary\b/);
-  await expect(ready).not.toHaveClass(/\bprimary\b/);
+  // Ready is the primary until you are (#1272); Start match waits its turn.
+  await expect(ready).toHaveClass(/\bprimary\b/);
+  await expect(start).not.toHaveClass(/\bprimary\b/);
 
   const look = (el: Element) => {
     const style = getComputedStyle(el);
