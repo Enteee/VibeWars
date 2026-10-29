@@ -350,4 +350,9 @@ export const SKILL_ICONS = {
   "ritualist.blind-was-mingson": { glyph: "eye-slash", modifier: "hourglass" },
   "ritualist.grasping-was-kuurong": { glyph: "quake", modifier: "stun" },
   "ritualist.energetic-was-lee-sa": { glyph: "energy", modifier: "hourglass" },
+  // Placeholders until the asset-designer's (#1421): flash enchantments.
+  "dervish.enchanted-haste": { glyph: "speed", modifier: "plus" },
+  "dervish.heart-of-holy-flame": { glyph: "flame", modifier: "self" },
+  "dervish.balthazars-rage": { glyph: "flame", modifier: "up" },
+  "dervish.harriers-haste": { glyph: "dash", modifier: "area" },
 };

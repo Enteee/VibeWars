@@ -26,7 +26,7 @@
  * category (`EXCLUSIVE_CATEGORIES`) is the exception: one at a time.
  */
 
-import { AREA_ADJACENT, AREA_IN_THE_AREA, AREA_NEARBY } from "../distances.js";
+import { AREA_ADJACENT, AREA_EARSHOT, AREA_IN_THE_AREA, AREA_NEARBY } from "../distances.js";
 import type { DamageType } from "../equipment/types.js";
 import { wieldsFor, type Weapon, type WeaponId } from "../equipment/weapons.js";
 import type { ProfessionId } from "../professions.js";
@@ -180,6 +180,10 @@ export type StatusId =
   | "staggering-force"
   | "dust-cloak"
   | "aura-of-thorns"
+  | "enchanted-haste"
+  | "heart-of-holy-flame"
+  | "balthazars-rage"
+  | "harriers-haste"
   // Spirits' auras (#1064), worn while in a spirit's range.
   | "winnowing"
   | "recuperation"
@@ -681,6 +685,12 @@ export type StatusTriggerEvent =
   | "bearer-creates-creature"
   | "bearer-gains-condition"
   | "ends"
+  /**
+   * It ended before its time ran out (#1421): stripped, cut short by its
+   * own rule, or its bearer died. GW1's "if this enchantment ends
+   * prematurely". A refresh is no end.
+   */
+  | "ends-early"
   | "expires";
 
 export interface StatusTrigger {
@@ -1897,6 +1907,86 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
         skillId: "dervish.aura-of-thorns",
       },
     ],
+  }),
+  // "For 7 seconds, you move 25% faster. If this enchantment ends
+  // prematurely, you lose 1 conditions" (#1421): stripped, or cut short
+  // any other way, but not run out.
+  "enchanted-haste": define("enchanted-haste", "Enchanted Haste", "enchantment", {
+    profession: "dervish",
+    moveSpeedMultiplier: 1.25,
+    triggers: [
+      {
+        on: "ends-early",
+        target: "bearer",
+        effects: [{ kind: "remove-status", category: "condition", count: 1 }],
+        skillId: "dervish.enchanted-haste",
+      },
+    ],
+  }),
+  // "For 30 seconds afterward, your attacks deal holy damage. When this
+  // enchantment ends, all nearby foes are set on fire for 2...5 seconds"
+  // (#1421): 4 s, its rank-12 value. Dust Cloak's pattern.
+  "heart-of-holy-flame": define("heart-of-holy-flame", "Heart of Holy Flame", "enchantment", {
+    profession: "dervish",
+    attackDamageType: "holy",
+    triggers: [
+      {
+        on: "ends",
+        target: "bearer",
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_NEARBY,
+            maxTargets: undefined,
+            effects: [{ kind: "apply-status", statusId: "burning", durationSeconds: 4 }],
+          },
+        ],
+        skillId: "dervish.heart-of-holy-flame",
+      },
+    ],
+  }),
+  // "For 20 seconds afterward, this enchantment does nothing. When this
+  // enchantment ends, you gain 1...2 strikes of adrenaline if any foes are
+  // within earshot" (#1421): 2, its rank-12 value. A splash that reaches
+  // one foe is the "if any": the gain is the caster's, once.
+  "balthazars-rage": define("balthazars-rage", "Balthazar's Rage", "enchantment", {
+    profession: "dervish",
+    triggers: [
+      {
+        on: "ends",
+        target: "bearer",
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_EARSHOT,
+            maxTargets: 1,
+            effects: [{ kind: "adrenaline-gain", strikes: 2 }],
+          },
+        ],
+        skillId: "dervish.balthazars-rage",
+      },
+    ],
+  }),
+  // "You move 25% faster and deal +3...12 more damage against moving foes"
+  // (#1421): 10, its rank-12 value, on each hit that lands on a foe moving,
+  // as a second packet beside the blow's, slashing as a scythe's.
+  "harriers-haste": define("harriers-haste", "Harrier's Haste", "enchantment", {
+    profession: "dervish",
+    moveSpeedMultiplier: 1.25,
+    onAttackHit: {
+      effects: [
+        {
+          kind: "if",
+          condition: { kind: "target-moving" },
+          effects: [
+            { kind: "damage", amount: { flat: 10 }, type: "slashing", armorPenetration: 0 },
+          ],
+        },
+      ],
+      skillId: "dervish.harriers-haste",
+    },
   }),
   // PvP "Never Surrender!" at rank 12: +4 Health regeneration (#923).
   "never-surrender": define("never-surrender", "Never Surrender!", "shout", {

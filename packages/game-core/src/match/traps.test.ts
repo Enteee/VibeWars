@@ -102,6 +102,7 @@ describe("Barbed Trap (#1105)", () => {
     expect(getSkill(BARBED)).toMatchObject({
       type: "trap",
       elite: false,
+      flash: false,
       attributeId: WILDERNESS,
       cost: { kind: "energy", amount: 10 },
       activationSeconds: 2,
@@ -301,6 +302,7 @@ describe("Flame Trap (#1113)", () => {
     expect(getSkill(FLAME)).toMatchObject({
       type: "trap",
       elite: false,
+      flash: false,
       attributeId: WILDERNESS,
       cost: { kind: "energy", amount: 10 },
       activationSeconds: 2,

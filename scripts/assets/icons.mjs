@@ -778,6 +778,32 @@ const status = {
       `<path d="M4.5 19.5C8 17 14 12 19.5 5" ${stroke(c, 2)}/>` +
       `<path d="M7.5 16L6 11.5M11 13.5L9.5 9M15 10L14.5 5.5M9 17.5L11.5 20M13 14.5L16 17" ${stroke(c, 1.8)}/>`,
   ],
+  // Enchantment: two speed chevrons over a dot, faster until it ends (#1421).
+  "enchanted-haste": [
+    "enchantment",
+    (c) => `<path d="M6 7l5 5-5 5M12 7l5 5-5 5" ${stroke(c, 2.2)}/>`,
+  ],
+  // Enchantment: a flame in a ring, holy attacks, burning when it ends (#1421).
+  "heart-of-holy-flame": [
+    "enchantment",
+    (c) =>
+      `<circle cx="12" cy="12" r="7.5" ${stroke(c, 1.6)}/>` +
+      `<path d="M12 6.5c2.5 2.5 3 4.5 3 6.5a3 3 0 0 1-6 0c0-1.5.8-2.5 1.5-3.2.2 1.2.8 1.8 1.5 2.2 0-2 0-3.5 0-5.5z" ${stroke(c, 1.8)}/>`,
+  ],
+  // Enchantment: a flame over a bar, adrenaline when it ends (#1421).
+  "balthazars-rage": [
+    "enchantment",
+    (c) =>
+      `<path d="M12 4c3 3 3.5 5.5 3.5 7.5a3.5 3.5 0 0 1-7 0c0-2 1-3 2-4 .3 1.5 1 2 1.5 2.5 0-2 0-4 0-6z" ${stroke(c, 1.8)}/>` +
+      `<path d="M6 18.5h12" ${stroke(c, 2.2)}/>`,
+  ],
+  // Enchantment: a chevron chasing a dot, faster and harder on runners (#1421).
+  "harriers-haste": [
+    "enchantment",
+    (c) =>
+      `<path d="M5 7l5 5-5 5" ${stroke(c, 2.2)}/>` +
+      `<circle cx="16" cy="12" r="2.5" fill="${c}"/>`,
+  ],
   // Skill effect: a shield struck through, armor lost while the signet is
   // activated (#524).
   "healing-signet-armor": [
