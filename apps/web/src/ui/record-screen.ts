@@ -21,6 +21,7 @@ const MODE_NAMES: Readonly<Record<MatchMode, string>> = {
   "guild-battle": "Guild Battle",
   "relic-run": "Relic Run",
   "capture-points": "Capture Points",
+  "king-of-the-hill": "King of the Hill",
 };
 
 const RESULT_NAMES: Readonly<Record<MatchResult, string>> = {
