@@ -283,6 +283,7 @@ describe("aggression (#1222)", () => {
         onDeath: "vanish",
         ownerDisableSeconds: 0,
         companionSkillId: undefined,
+        leaderId: undefined,
         mode: "guard",
       },
     };

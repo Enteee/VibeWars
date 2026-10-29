@@ -14,7 +14,7 @@ import { prefersReducedMotion } from "./recharge-overlay.js";
  * up, with every living body within its reach (`compassReach`), your
  * target, the called foe, your team's pings, the resurrection shrines
  * (#1199), a Guild Battle's lords, flags and stand (#1226), a Relic Run's
- * altar (#1388), the earshot and cast-range rings and the walls
+ * altar (#1388), Capture Points' shrines (#1407), the earshot and cast-range rings and the walls
  * (docs/art/art-direction.md "Compass"). Bodies beyond it are not shown:
  * the edge markers (#440) give direction, the compass distance.
  */
@@ -42,6 +42,15 @@ export interface CompassView {
     readonly y: number;
     readonly side: "ally" | "enemy";
   }[];
+  /**
+   * Each Capture Points shrine in reach (#1407), a `□` in its owner's
+   * colour, `undefined` owned by nobody. Its progress is the arena's to show.
+   */
+  readonly capturePoints: readonly {
+    readonly x: number;
+    readonly y: number;
+    readonly owner: "ally" | "enemy" | undefined;
+  }[];
   /** Each living Guild Lord in reach (#1226), a `♛` over its dot. */
   readonly lords: readonly CompassMark[];
   /** Each flag in reach where it is (#1226), on its carrier while carried. */
@@ -50,7 +59,7 @@ export interface CompassView {
   readonly stand:
     | { readonly x: number; readonly y: number; readonly holder: "ally" | "enemy" | undefined }
     | undefined;
-  /** A Relic Run's altar in reach (#1388), a `◆`. */
+  /** A Relic Run or King of the Hill altar in reach (#1388, #1377), a `◆`. */
   readonly altar: Vec2 | undefined;
   /** Wall outlines, already clipped to the disc. */
   readonly walls: readonly (readonly Vec2[])[];
@@ -190,6 +199,9 @@ export function compassView(
     shrines: arena.shrines
       .filter((shrine) => within(shrine.position))
       .map((shrine) => ({ ...local(shrine.position), side: shrine.side })),
+    capturePoints: arena.capturePoints
+      .filter((point) => within(point.position))
+      .map((point) => ({ ...local(point.position), owner: point.owner })),
     lords: arena.actors
       .filter(
         (actor) => actor.creatureLook === "guild-lord" && !actor.dead && within(actor.position),
@@ -223,6 +235,8 @@ const DOT_RADIUS = 3;
 const SMALL_DOT_RADIUS = 2;
 /** Half a shrine's `✚`, px. */
 const SHRINE_ARM = 4;
+/** Half a capture shrine's `□`, px (#1407): wider than a `✚` on the same spot. */
+const CAPTURE_HALF_PX = 6;
 /** The stand's `◎`, px: its ring and its centre. */
 const STAND_RING = 5;
 const STAND_DOT = 1.5;
@@ -290,6 +304,18 @@ export function createCompass(parent: HTMLElement, reach: number): Compass {
       context.lineTo(shrine.x, shrine.y + SHRINE_ARM);
       context.stroke();
     }
+    // Capture Points' shrines (#1407), neutral as the stand held by nobody.
+    context.lineWidth = 1.5;
+    for (const point of view.capturePoints) {
+      context.strokeStyle =
+        point.owner === undefined ? INK_DIM : point.owner === "ally" ? FRIEND : FOE;
+      context.strokeRect(
+        point.x - CAPTURE_HALF_PX,
+        point.y - CAPTURE_HALF_PX,
+        2 * CAPTURE_HALF_PX,
+        2 * CAPTURE_HALF_PX,
+      );
+    }
     // A Guild Battle's (#1226): the stand under its flag, the flags, then
     // each lord's crown, over the dot the lord is drawn as below.
     if (view.stand !== undefined) {
@@ -305,7 +331,7 @@ export function createCompass(parent: HTMLElement, reach: number): Compass {
       context.arc(view.stand.x, view.stand.y, STAND_DOT, 0, Math.PI * 2);
       context.fill();
     }
-    // A Relic Run's altar (#1388), filled so the goal reads first.
+    // A Relic Run or King of the Hill altar (#1388, #1377), filled so the goal reads first.
     if (view.altar !== undefined) {
       const { x, y } = view.altar;
       context.lineWidth = 1;

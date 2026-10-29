@@ -133,6 +133,9 @@ describe("modeLine (#476)", () => {
     expect(modeLine({ ...map, mode: "relic-run" })).toBe(
       "Relic Run: carry your relic to the altar. Most points in 8 minutes wins.",
     );
+    expect(modeLine({ ...map, mode: "king-of-the-hill" })).toBe(
+      "King of the Hill: lead your Ghostly Hero onto the altar. Hold it to score; most points in 8 minutes wins.",
+    );
   });
 });
 

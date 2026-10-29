@@ -7,6 +7,7 @@ import {
   MATCH_IN_PROGRESS,
   MATCH_MODES,
   PRIEST_ANNIHILATION_MATCH_RULES,
+  KING_OF_THE_HILL_MATCH_RULES,
   RELIC_RUN_MATCH_RULES,
   addPoint,
   emptyScore,
@@ -407,6 +408,38 @@ describe("evaluateMatch: relic run (#1374)", () => {
   });
 
   it("is lost at once by a wiped team, whatever the points", () => {
+    expect(evaluateMatch(points(3, 0), standing([0, 0, -15], [1, 1, 0]), 100, rules)).toEqual({
+      phase: "finished",
+      winningTeam: 1,
+      reason: "annihilation",
+    });
+  });
+});
+
+describe("evaluateMatch: king of the hill (#1377)", () => {
+  const rules = KING_OF_THE_HILL_MATCH_RULES;
+  const points = (team0: number, team1: number) => ({
+    byTeam: new Map([
+      [0, team0],
+      [1, team1],
+    ]),
+  });
+
+  it("is annihilation's dead and death penalty, 8 minutes", () => {
+    expect(MATCH_MODES["king-of-the-hill"]).toBe(rules);
+    expect(rules.deathRule).toBe("resurrection-only");
+    expect(rules.deathPenalty).toBe(true);
+    expect(rules.timeLimitSeconds).toBe(480);
+  });
+
+  it("goes at time to the most points, a tie to a draw, and a wipe ends it at once", () => {
+    expect(evaluateMatch(points(20, 1), BOTH_ALIVE, 479.9, rules)).toBe(MATCH_IN_PROGRESS);
+    expect(evaluateMatch(points(1, 2), BOTH_ALIVE, 480, rules)).toEqual({
+      phase: "finished",
+      winningTeam: 1,
+      reason: "time",
+    });
+    expect(evaluateMatch(points(2, 2), BOTH_ALIVE, 480, rules).winningTeam).toBeUndefined();
     expect(evaluateMatch(points(3, 0), standing([0, 0, -15], [1, 1, 0]), 100, rules)).toEqual({
       phase: "finished",
       winningTeam: 1,

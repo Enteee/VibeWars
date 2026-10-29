@@ -24,6 +24,8 @@ const MOODS: ReadonlyMap<string, readonly Mood[]> = new Map<string, readonly Moo
   ["guild-hall-isle", ["epic", "dark"]],
   // Heroes' Ascent's Relic Run (#1374): a race.
   ["relic-temples", ["action", "adventurous"]],
+  // King of the Hill's (#1377): a hill held against all comers.
+  ["hill-courtyard", ["epic", "action"]],
   // Capture Points (#1378): old ground, held.
   ["forgotten-shrines", ["mysterious", "epic"]],
 ]);

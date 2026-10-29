@@ -1411,6 +1411,26 @@ const pawPrint = (fill) =>
   `<circle cx="14.5" cy="6.5" r="2" fill="${fill}"/><circle cx="18.5" cy="10.5" r="2" fill="${fill}"/>`;
 
 /** Glyphs, drawn in the box 3..21; the plate scales them to leave the corner free. */
+/**
+ * Spikes round a dot, as a flame burst.
+ * @param {number} inner where the spikes start
+ * @param {number} outer where they end
+ * @param {number} width spike stroke width
+ * @param {boolean} [dot] the centre dot
+ */
+const flameRing = (inner, outer, width, dot = true) => {
+  let d = "";
+  for (let i = 0; i < 8; i++) {
+    const a = (i * Math.PI) / 4;
+    /** @param {number} r */
+    const x = (r) => (12 + Math.cos(a) * r).toFixed(1);
+    /** @param {number} r */
+    const y = (r) => (12 + Math.sin(a) * r).toFixed(1);
+    d += `M${x(inner)} ${y(inner)}L${x(outer)} ${y(outer)}`;
+  }
+  return inkLine(d, width) + (dot ? `<circle cx="12" cy="12" r="2.2" fill="${C.ink}"/>` : "");
+};
+
 const skillGlyph = {
   heal: () => inkFill("M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"),
   fireball: () =>
@@ -1880,6 +1900,83 @@ const skillGlyph = {
   caltrops: () =>
     inkFill("M2.5 20H21.5V22.5H2.5Z") +
     inkFill("M2.5 20L5.5 4L8.5 20ZM9 20L12 2L15 20ZM15.5 20L18.5 4L21.5 20Z"),
+  // A four-point spark with a short tail: the cheap single bolt of fire (#1397).
+  spark: () =>
+    inkFill("M15 2L17.2 9.8L24 12L17.2 14.2L15 22L12.8 14.2L6 12L12.8 9.8Z") +
+    inkLine("M10 14L3.5 20.5M8.5 9L3 7", 2),
+  // A flame over a head and shoulders: a foe set alight (#1397).
+  "flame-foe": () =>
+    `<circle cx="12" cy="14" r="3" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
+    `<path d="M4.5 22C4.5 18 7.5 17 12 17S19.5 18 19.5 22Z" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
+    inkFill(
+      "M12.5 1.5c.4 2.6 3.4 3.8 3.4 6.8a3.9 3.9 0 0 1-7.8 0c0-1.8.7-3 1.8-3.8 0 1.4.4 2.1 1.1 2.4-.3-2.1.3-3.9 1.5-5.4z",
+    ),
+  // A flame over a bare head: the mind burns (#1397).
+  "flame-mind": () =>
+    `<path d="M12 10C7 10 4.5 13 4.5 16.5C4.5 19 6.5 20.5 9 20.5V22H15V20.5C17.5 20.5 19.5 19 19.5 16.5C19.5 13 17 10 12 10Z" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
+    inkFill(
+      "M12.5 1.5c.4 2.6 3.4 3.8 3.4 6.8a3.9 3.9 0 0 1-7.8 0c0-1.8.7-3 1.8-3.8 0 1.4.4 2.1 1.1 2.4-.3-2.1.3-3.9 1.5-5.4z",
+    ),
+  // A tight ring of flame points round a dot: fire on all beside you (#1397).
+  "flame-ring": () =>
+    flameRing(6.5, 10, 2, false) +
+    inkFill(
+      "M12.5 6.5c.4 2.2 2.8 3.2 2.8 5.6a3.3 3.3 0 0 1-6.6 0c0-1.5.6-2.5 1.5-3.2 0 1.2.3 1.8.9 2-.2-1.8.2-3.2 1.4-4.4z",
+    ),
+  // Long rays from a dot out to the edge: a big burst round you (#1397).
+  "flame-burst": () => flameRing(4, 11.5, 2.4),
+  // A target ring with a small flame inside: a burst on the foe (#1397).
+  "flame-target": () =>
+    `<circle cx="12" cy="12" r="9" ${stroke(C.ink, 2)}/>` +
+    inkFill(
+      "M12.5 4.5c.4 2.4 3.2 3.6 3.2 6.4a3.7 3.7 0 0 1-7.4 0c0-1.7.7-2.8 1.7-3.6 0 1.3.4 2 1.1 2.3-.3-2 .3-3.7 1.4-5.1z",
+    ),
+  // Three flames on the ground: a storm that stays where it fell (#1397).
+  "flame-field": () =>
+    inkLine("M2 21.5H22", 2.2) +
+    inkFill(
+      "M6 8c.3 2.4 2.8 3.4 2.8 6a3.1 3.1 0 0 1-6.2 0c0-1.5.6-2.5 1.5-3.2 0 1.2.3 1.8.9 2-.2-1.8.2-3.2 1-4.8z",
+    ) +
+    inkFill(
+      "M12 2c.4 3.4 4 5 4 9a4.5 4.5 0 0 1-9 0c0-2.2.9-3.6 2.2-4.6 0 1.7.5 2.6 1.4 3-.4-2.6.4-4.9 1.4-7.4z",
+    ) +
+    inkFill(
+      "M18 8c.3 2.4 2.8 3.4 2.8 6a3.1 3.1 0 0 1-6.2 0c0-1.5.6-2.5 1.5-3.2 0 1.2.3 1.8.9 2-.2-1.8.2-3.2 1-4.8z",
+    ),
+  // A hammer over a foe lying flat: it hits the downed hardest (#1383).
+  "hammer-prone": () =>
+    inkLine("M6 3.5L11 9.5", 2.4) +
+    `<rect x="8.5" y="7.5" width="9" height="6" rx="1" transform="rotate(35 13 10.5)" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
+    `<circle cx="5.5" cy="18" r="2.4" fill="${C.ink}"/>` +
+    inkLine("M9 18H20.5", 3),
+  // A hammer slam with a shield beside the impact: it knocks down what blocks it (#1383).
+  "hammer-shield": () =>
+    inkLine("M7 4.5L12 11", 2.4) +
+    `<rect x="9.5" y="9" width="9" height="6" rx="1" transform="rotate(35 14 12)" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
+    inkLine("M3 21H21", 2.2) +
+    `<path d="M16 12.5L21.5 14.5V17.5C21.5 19 19 20 16 21C13 20 10.5 19 10.5 17.5V14.5Z" ${stroke(C.ink, 1.8)}/>`,
+  // A hammer slam with a turning arrow over it: it answers an attacker (#1383).
+  "hammer-counter": () =>
+    inkLine("M7 4.5L12 11", 2.4) +
+    `<rect x="9.5" y="9" width="9" height="6" rx="1" transform="rotate(35 14 12)" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
+    inkLine("M3 19.5H21", 2.2) +
+    inkLine("M14.5 6.5C18.5 3 21.5 6 20.5 10.5M18 9L20.5 11L22.5 8", 2),
+  // A hammer slam with two weak chevrons on the ground: it hits what is weakened (#1383).
+  // A raised hammer over two weak chevrons, no slam: it weakens what it hits (#1383).
+  "hammer-chevrons": () =>
+    inkLine("M3.5 12.5L9.5 6.5", 2.4) +
+    `<rect x="8" y="1.5" width="9" height="6" rx="1" transform="rotate(45 12.5 4.5)" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
+    inkLine("M11 12.5L16 16.5L21 12.5M11 17.5L16 21.5L21 17.5", 2.2),
+  "hammer-weak": () =>
+    inkLine("M7 4.5L12 11", 2.4) +
+    `<rect x="9.5" y="9" width="9" height="6" rx="1" transform="rotate(35 14 12)" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
+    inkLine("M3 21H21", 2.2) +
+    inkLine("M12.5 15.5L16 19L19.5 15.5", 2.6),
+  // A hammer slam splitting the ground wide, cracks both ways: it shakes everything near (#1383).
+  "hammer-quake": () =>
+    inkLine("M7 4.5L12 11", 2.4) +
+    `<rect x="9.5" y="9" width="9" height="6" rx="1" transform="rotate(35 14 12)" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
+    inkLine("M2 19L6 21.5L9.5 18.5L13 21.5L16.5 18.5L19.5 21L22 19", 2.6),
   // A post with a bright head: a spirit planted where it was called (#1217).
   totem: () =>
     inkFill("M9 11H14L14.2 20H8.8Z") + `<circle cx="12" cy="6.5" r="3.8" fill="${C.ink}"/>`,

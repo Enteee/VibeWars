@@ -2351,6 +2351,7 @@
           "optional": false,
           "type": {
             "union": [
+              { "literal": "ghostly-hero" },
               { "literal": "guard" },
               { "literal": "guild-lord" },
               { "literal": "minion" },
@@ -2360,6 +2361,7 @@
             ]
           }
         },
+        { "name": "leaderId", "optional": false, "type": { "union": ["null", "string"] } },
         {
           "name": "look",
           "optional": false,
@@ -2368,6 +2370,7 @@
               { "literal": "beast" },
               { "literal": "bone-horror" },
               { "literal": "bone-minion" },
+              { "literal": "ghostly-hero" },
               { "literal": "guard" },
               { "literal": "guild-lord" },
               { "literal": "priest" },
@@ -2702,6 +2705,7 @@
                     "optional": false,
                     "type": {
                       "union": [
+                        { "literal": "ghostly-hero" },
                         { "literal": "guard" },
                         { "literal": "guild-lord" },
                         { "literal": "minion" },
@@ -2712,6 +2716,11 @@
                     }
                   },
                   {
+                    "name": "leaderId",
+                    "optional": false,
+                    "type": { "union": ["null", "string"] }
+                  },
+                  {
                     "name": "look",
                     "optional": false,
                     "type": {
@@ -2719,6 +2728,7 @@
                         { "literal": "beast" },
                         { "literal": "bone-horror" },
                         { "literal": "bone-minion" },
+                        { "literal": "ghostly-hero" },
                         { "literal": "guard" },
                         { "literal": "guild-lord" },
                         { "literal": "priest" },
@@ -2898,6 +2908,12 @@
             ]
           }
         },
+        { "name": "altarHeldSeconds", "optional": false, "type": "number" },
+        {
+          "name": "altarHolder",
+          "optional": false,
+          "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+        },
         {
           "name": "capturePoints",
           "optional": false,
@@ -3043,6 +3059,7 @@
                             "optional": false,
                             "type": {
                               "union": [
+                                { "literal": "ghostly-hero" },
                                 { "literal": "guard" },
                                 { "literal": "guild-lord" },
                                 { "literal": "minion" },
@@ -3053,6 +3070,11 @@
                             }
                           },
                           {
+                            "name": "leaderId",
+                            "optional": false,
+                            "type": { "union": ["null", "string"] }
+                          },
+                          {
                             "name": "look",
                             "optional": false,
                             "type": {
@@ -3060,6 +3082,7 @@
                                 { "literal": "beast" },
                                 { "literal": "bone-horror" },
                                 { "literal": "bone-minion" },
+                                { "literal": "ghostly-hero" },
                                 { "literal": "guard" },
                                 { "literal": "guild-lord" },
                                 { "literal": "priest" },
@@ -3262,6 +3285,12 @@
             ]
           }
         },
+        { "name": "altarHeldSeconds", "optional": false, "type": "number" },
+        {
+          "name": "altarHolder",
+          "optional": false,
+          "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+        },
         {
           "name": "capturePoints",
           "optional": false,
@@ -3409,6 +3438,7 @@
                             "optional": false,
                             "type": {
                               "union": [
+                                { "literal": "ghostly-hero" },
                                 { "literal": "guard" },
                                 { "literal": "guild-lord" },
                                 { "literal": "minion" },
@@ -3419,6 +3449,11 @@
                             }
                           },
                           {
+                            "name": "leaderId",
+                            "optional": false,
+                            "type": { "union": ["null", "string"] }
+                          },
+                          {
                             "name": "look",
                             "optional": false,
                             "type": {
@@ -3426,6 +3461,7 @@
                                 { "literal": "beast" },
                                 { "literal": "bone-horror" },
                                 { "literal": "bone-minion" },
+                                { "literal": "ghostly-hero" },
                                 { "literal": "guard" },
                                 { "literal": "guild-lord" },
                                 { "literal": "priest" },

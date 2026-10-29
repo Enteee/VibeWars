@@ -82,6 +82,7 @@ describe("nextTabTarget", () => {
           look: "bone-minion",
           mode: null,
           armedAttack: null,
+          leaderId: null,
         },
       }),
       player("foe/c1", {
@@ -92,6 +93,7 @@ describe("nextTabTarget", () => {
           look: "bone-minion",
           mode: null,
           armedAttack: null,
+          leaderId: null,
         },
       }),
       NEAR,

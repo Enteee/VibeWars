@@ -11,11 +11,13 @@ import arenaRing from "@vibewars/game-maps/maps/arena-ring/map.json" with { type
 import arenaSplit from "@vibewars/game-maps/maps/arena-split/map.json" with { type: "json" };
 import guildHallIsle from "@vibewars/game-maps/maps/guild-hall-isle/map.json" with { type: "json" };
 import relicTemples from "@vibewars/game-maps/maps/relic-temples/map.json" with { type: "json" };
+import hillCourtyard from "@vibewars/game-maps/maps/hill-courtyard/map.json" with { type: "json" };
 import forgottenShrines from "@vibewars/game-maps/maps/forgotten-shrines/map.json" with { type: "json" };
 import type {
   BaseGuard,
   FlagField,
   GuildLord,
+  HillField,
   MatchMode,
   RelicField,
   Vec2,
@@ -46,6 +48,8 @@ export const ARENA_MAPS: readonly MapData[] = [
   guildHallIsle,
   // The Relic Run's (#1374).
   relicTemples,
+  // King of the Hill's (#1377).
+  hillCourtyard,
   // Capture Points' (#1378).
   forgottenShrines,
 ].map((raw) => validateMapData(raw));
@@ -76,8 +80,8 @@ const PLAYERS_BY_SIZE: Readonly<Record<SizeClass, { readonly min: number; readon
  * The arenas a Random Arena of `mode` is drawn from (#854 A2): every one
  * whose size class seats both teams, so a map added later joins by its
  * size and not by a list. Never a Guild Battle's (#1222): a 28-minute
- * siege is not a Random Arena; nor a Relic Run's (#1374), a Heroes'
- * Ascent mode. In `ARENA_MAPS`' order, as `formGroups` wants the same
+ * siege is not a Random Arena; nor a Relic Run's (#1374) or King of the
+ * Hill's (#1377), Heroes' Ascent modes. In `ARENA_MAPS`' order, as `formGroups` wants the same
  * pool on every client.
  */
 export function randomArenaMapPool(mode: QueueMode): string[] {
@@ -89,7 +93,12 @@ export function randomArenaMapPool(mode: QueueMode): string[] {
 }
 
 /** The modes a Random Arena never plays. */
-const NOT_RANDOM: readonly MatchMode[] = ["guild-battle", "relic-run", "capture-points"];
+const NOT_RANDOM: readonly MatchMode[] = [
+  "guild-battle",
+  "relic-run",
+  "king-of-the-hill",
+  "capture-points",
+];
 
 /**
  * The mode a match on `mapId` plays (#476), from the same map file the
@@ -154,21 +163,29 @@ export function mapFlagField(mapId: string): FlagField | undefined {
 }
 
 /**
- * The altar and relic spawns among a map's objectives (#1374), or
- * `undefined` on a map without an altar.
+ * The altar and the `kind` spawns among a map's objectives: a Relic
+ * Run's relics (#1374) or King of the Hill's ghosts (#1377); `undefined`
+ * on a map without an altar or without such spawns, the other mode's.
  */
-function relicFieldOf(objectives: readonly Objective[]): RelicField | undefined {
+function altarFieldOf(
+  objectives: readonly Objective[],
+  kind: "relic-spawn" | "ghost-spawn",
+): RelicField | undefined {
   const altar = objectives.find((objective) => objective.kind === "altar");
-  return altar === undefined
-    ? undefined
-    : {
-        altar: altar.position,
-        spawns: objectives.flatMap((objective) =>
-          objective.kind === "relic-spawn"
-            ? [{ team: objective.team, position: objective.position }]
-            : [],
-        ),
-      };
+  const spawns = objectives.flatMap((objective) =>
+    objective.kind === kind ? [{ team: objective.team, position: objective.position }] : [],
+  );
+  return altar === undefined || spawns.length === 0 ? undefined : { altar: altar.position, spawns };
+}
+
+/** The altar and relic spawns among a map's objectives (#1374), or `undefined`. */
+function relicFieldOf(objectives: readonly Objective[]): RelicField | undefined {
+  return altarFieldOf(objectives, "relic-spawn");
+}
+
+/** The altar and ghost spawns among a map's objectives (#1377), or `undefined`. */
+function hillFieldOf(objectives: readonly Objective[]): HillField | undefined {
+  return altarFieldOf(objectives, "ghost-spawn");
 }
 
 /** The altar and relic spawns on `mapId` (#1374), for the renderer: as `mapFlagField`. */
@@ -218,6 +235,7 @@ export function hostMap(mapId: string): HostMap | undefined {
     guildLords: guildLordsOf(map.objectives),
     flagField: flagFieldOf(map.objectives),
     relicField: relicFieldOf(map.objectives),
+    hillField: hillFieldOf(map.objectives),
     capturePoints: map.objectives.flatMap((objective) =>
       objective.kind === "capture-point" ? [objective.position] : [],
     ),
