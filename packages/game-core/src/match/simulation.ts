@@ -117,7 +117,6 @@ import {
   type Outbreak,
   type StatusChange,
   type StatusId,
-  type StatusTriggerEvent,
 } from "../skills/status.js";
 import { effectiveMaxEnergy, energyFloor, recoverOvercast } from "../skills/overcast.js";
 import { resolveMagnitude } from "../skills/scaling.js";
@@ -180,11 +179,13 @@ import {
   weaponSnapshotOf,
 } from "../skills/weapon-attack.js";
 import {
+  breakHex,
   fireChangeTriggers,
   fireCreationTriggers,
   fireTriggers,
   isEchoSkill,
   isEchoStatus,
+  type DirectTriggerEvent,
   type FiredTrigger,
   type SpreadGainedCondition,
   type TriggerContext,
@@ -3202,10 +3203,7 @@ export class MatchSimulation {
    */
   #fireTriggers(
     record: ParticipantRecord,
-    event: Exclude<
-      StatusTriggerEvent,
-      "bearer-gains-condition" | "bearer-creates-creature" | "ends" | "expires"
-    >,
+    event: DirectTriggerEvent,
     spared: ReadonlySet<StatusId>,
     usedSkill?: SlotSkill,
   ): void {
@@ -3285,11 +3283,15 @@ export class MatchSimulation {
       }
     }
     // A protective spirit still pays for what it did against a triggered
-    // effect (#1265): a payment is not a trigger, so it cannot echo.
+    // effect (#1265): a payment is not a trigger, so it cannot echo. Nor
+    // is a broken hex's damage (#1403), owed for a hex a trigger cast.
     for (const record of this.#participants.values()) {
       for (const change of record.combatant.statuses.drainChanges()) {
         if (change.kind === "charged-source") {
           this.#landCharge(change.toId, change.statusId, change.amount);
+        }
+        if (change.kind === "broke-hex") {
+          this.#logFired(breakHex(record.combatant, change, context));
         }
         this.#loseRaisedHealth(record, change);
       }
