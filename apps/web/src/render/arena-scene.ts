@@ -79,6 +79,7 @@ import {
 } from "./call-marks.js";
 import { FLAG_PICK_RADIUS, STAND_RADIUS, type RenderableFlag } from "./flag-objects.js";
 import { lyingPose } from "./lying-pose.js";
+import { mapLayerChanged, type MapLayer } from "./map-layer.js";
 import { screenSized } from "./screen-text.js";
 import {
   BODY_EDGE_WIDTH,
@@ -162,7 +163,8 @@ const EDGE_MARKER_WIDTH = 10;
 const IMPACT_LINE_WIDTH = 1.5;
 /**
  * The world's layers, bottom up (#1037). Wards on the floor and their
- * icons (#1087), under everything that stands on them; the floor and the
+ * icons (#1087), under everything that stands on them; the grid and the
+ * walls, drawn only when they change (#1353); what moves on the floor and the
  * bodies, with their enchantment and hex rings (#1117) and condition cues
  * (#1138); the profession glyph inside each body; every mark on a body
  * (off-hand, weapon, target ring, call chevron, bars, swing flashes, skill
@@ -172,6 +174,7 @@ const IMPACT_LINE_WIDTH = 1.5;
  * cover a badge's top edge.
  */
 const GROUND_DEPTH = -1;
+const MAP_DEPTH = -0.5;
 const BODY_DEPTH = 0;
 const BODY_GLYPH_DEPTH = 1;
 const MARK_DEPTH = 2;
@@ -202,7 +205,11 @@ export class ArenaScene extends Phaser.Scene {
   private groundGraphics: Phaser.GameObjects.Graphics | undefined;
   /** Each ward's icon, by ground effect id (#1087). */
   private groundIcons = new Map<number, Phaser.GameObjects.Image>();
-  /** The floor and the bodies, under the body glyphs. */
+  /** The grid, the arena's edge and the walls (#1353), over the wards; drawn when they change. */
+  private mapGraphics: Phaser.GameObjects.Graphics | undefined;
+  /** What `mapGraphics` shows; `undefined` until it is first drawn. */
+  private drawnMap: MapLayer | undefined;
+  /** What moves on the floor, and the bodies, under the body glyphs. */
   private graphics: Phaser.GameObjects.Graphics | undefined;
   /** Every mark on a body, over the body glyphs (#1037). */
   private markGraphics: Phaser.GameObjects.Graphics | undefined;
@@ -365,6 +372,7 @@ export class ArenaScene extends Phaser.Scene {
 
   public create(): void {
     this.groundGraphics = this.add.graphics().setDepth(GROUND_DEPTH);
+    this.mapGraphics = this.add.graphics().setDepth(MAP_DEPTH);
     this.graphics = this.add.graphics().setDepth(BODY_DEPTH);
     this.markGraphics = this.add.graphics().setDepth(MARK_DEPTH);
     this.markerGraphics = this.add.graphics().setDepth(EDGE_MARKER_DEPTH);
@@ -383,10 +391,7 @@ export class ArenaScene extends Phaser.Scene {
     this.clock.observe(this.snapshot.clock, this.now);
     this.observeAttacks();
     this.updateGroundEffects();
-    this.drawGrid(g);
-    for (const wall of this.snapshot.walls) {
-      this.drawWall(g, wall);
-    }
+    this.drawMap();
     // Over the grid and walls, under the actors: a flash never hides a
     // health bar, a status or the target ring.
     this.areaFlashes = decayAreaFlashes(this.areaFlashes, deltaMs / 1000);
@@ -1266,6 +1271,21 @@ export class ArenaScene extends Phaser.Scene {
       survivors.push(floating);
     }
     this.floatingTexts = survivors;
+  }
+
+  /** The grid and the walls, drawn again only when the bounds or the wall list change (#1353). */
+  private drawMap(): void {
+    const g = this.mapGraphics;
+    const next: MapLayer = { ...this.arena, walls: this.snapshot.walls };
+    if (g === undefined || !mapLayerChanged(this.drawnMap, next)) {
+      return;
+    }
+    g.clear();
+    this.drawGrid(g);
+    for (const wall of next.walls) {
+      this.drawWall(g, wall);
+    }
+    this.drawnMap = next;
   }
 
   private drawWall(g: Phaser.GameObjects.Graphics, wall: RenderableWall): void {
