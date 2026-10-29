@@ -216,6 +216,15 @@ describe("compassView (#1056)", () => {
     expect([bare?.stand, bare?.flags, bare?.lords]).toEqual([undefined, [], []]);
   });
 
+  it("marks a Relic Run's altar in reach, none out of reach or on another map (#1388)", () => {
+    const near = compassView(arena({ altar: vec2(1850, 1000) }), "me", SIZE, RANGE_COMPASS);
+    expect(near?.altar).toEqual({ x: 40, y: 0 });
+    // Out of reach: not pinned to the rim.
+    const far = compassView(arena({ altar: vec2(3000, 1000) }), "me", SIZE, RANGE_COMPASS);
+    expect(far?.altar).toBeUndefined();
+    expect(compassView(arena({}), "me", SIZE, RANGE_COMPASS)?.altar).toBeUndefined();
+  });
+
   it("clips a wall crossing the disc's edge, keeps one inside whole, skips one outside", () => {
     const view = compassView(
       arena({
