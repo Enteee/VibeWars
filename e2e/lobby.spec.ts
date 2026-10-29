@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { openPeers } from "./helpers/peers.js";
+import { expectTopbarFits } from "./helpers/topbar.js";
 import { key } from "./keys.js";
 
 /**
@@ -155,6 +156,21 @@ test("the status bar says nothing in a lobby, which shows its code, nor after le
   await page.getByRole("button", { name: "leave" }).click();
   await expect(page.getByRole("heading", { name: "VibeWars" })).toBeVisible();
   await expect(page.locator("#status")).toBeHidden();
+});
+
+test("the lobby's bar puts its status on a second row from 721 to 1200 px, nothing overlapping (#1368)", async ({
+  page,
+}) => {
+  await hostLobby(page, "Host");
+  // More than one map, so the host's bar carries the select, its widest part.
+  await expect(page.locator(".lobby-map select")).toBeVisible();
+  for (const width of [700, 721, 800, 940, 1100, 1201]) {
+    await expectTopbarFits(
+      page,
+      width,
+      "#topbar > :not(.topbar-status), #topbar .lobby-header, #topbar .lobby-map",
+    );
+  }
 });
 
 test("the host closing its page takes the guest to the menu, and says why", async ({ browser }) => {
