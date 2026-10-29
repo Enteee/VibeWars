@@ -78,6 +78,7 @@ describe("Cure Hex (#1039)", () => {
     expect(skill("monk.cure-hex")).toMatchObject({
       type: "spell",
       elite: false,
+      flash: false,
       attributeId: "monk.healing-prayers",
       cost: { kind: "energy", amount: 5 },
       activationSeconds: 1,
@@ -162,6 +163,7 @@ describe("Smite Condition (#1039)", () => {
     expect(skill("monk.smite-condition")).toMatchObject({
       type: "spell",
       elite: false,
+      flash: false,
       attributeId: "monk.smiting-prayers",
       cost: { kind: "energy", amount: 5 },
       activationSeconds: 1,
@@ -200,6 +202,7 @@ describe("Mending Touch (#1039)", () => {
     expect(skill("monk.mending-touch")).toMatchObject({
       type: "spell",
       elite: false,
+      flash: false,
       attributeId: "monk.protection-prayers",
       cost: { kind: "energy", amount: 5 },
       activationSeconds: 0.75,
@@ -256,6 +259,7 @@ describe("Vigorous Spirit (#1039)", () => {
     expect(skill("monk.vigorous-spirit")).toMatchObject({
       type: "enchantment",
       elite: false,
+      flash: false,
       attributeId: "monk.healing-prayers",
       cost: { kind: "energy", amount: 5 },
       activationSeconds: 0.25,

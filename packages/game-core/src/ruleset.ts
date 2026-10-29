@@ -199,6 +199,12 @@ export const ADRENALINE_PER_STRIKE = 25;
 export const GW1_BASE_ENERGY = 20;
 
 /**
+ * A flash enchantment used disables the caster's other flash skills for
+ * this long (#1421, GWW "Flash enchantment"). A rule, not a tunable.
+ */
+export const FLASH_LOCKOUT_SECONDS = 1;
+
+/**
  * A GW1 energy *threshold* scaled to this ruleset's larger pool (#1395):
  * a cap such as Warrior's Endurance's "cannot raise your Energy above 22"
  * sits where it sat against GW1's 20. Costs and gains stay GW1's, because

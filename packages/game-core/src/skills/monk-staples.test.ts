@@ -75,6 +75,7 @@ describe("Heal Other (#987)", () => {
     expect(skill("monk.heal-other")).toMatchObject({
       type: "spell",
       elite: false,
+      flash: false,
       attributeId: "monk.healing-prayers",
       cost: { kind: "energy", amount: 10 },
       activationSeconds: 0.75,
@@ -307,6 +308,7 @@ describe("Restore Condition (#987)", () => {
     expect(skill("monk.restore-condition")).toMatchObject({
       type: "spell",
       elite: true,
+      flash: false,
       attributeId: "monk.protection-prayers",
       cost: { kind: "energy", amount: 5 },
       activationSeconds: 0.75,

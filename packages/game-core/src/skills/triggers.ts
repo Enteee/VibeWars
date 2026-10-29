@@ -46,6 +46,7 @@ export type DirectTriggerEvent = Exclude<
   | "bearer-blocks"
   | "bearer-creates-creature"
   | "ends"
+  | "ends-early"
   | "expires"
 >;
 
@@ -150,7 +151,10 @@ export function fireChangeTriggers(
     case "ended":
       return getStatusDefinition(change.id)
         .triggers.filter(
-          (trigger) => trigger.on === "ends" || (trigger.on === "expires" && change.expired),
+          (trigger) =>
+            trigger.on === "ends" ||
+            (trigger.on === "expires" && change.expired) ||
+            (trigger.on === "ends-early" && !change.expired),
         )
         .flatMap((trigger) =>
           fire(trigger, change.id, change.sourceId, bearer, undefined, undefined, context),

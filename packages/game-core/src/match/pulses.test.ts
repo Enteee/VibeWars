@@ -97,6 +97,7 @@ describe("Symbol of Wrath (#1113)", () => {
     expect(getSkill(SYMBOL)).toMatchObject({
       type: "spell",
       elite: false,
+      flash: false,
       attributeId: SMITING,
       cost: { kind: "energy", amount: 5 },
       activationSeconds: 1,
