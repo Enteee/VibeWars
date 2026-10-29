@@ -47,6 +47,12 @@
  * does not stay near 0 at 0 and rise with the stress is *unvalidated*: its
  * numbers are printed and marked, and nobody tunes from them.
  *
+ * Every load has a deadline (#1311): a page whose main thread stops would
+ * otherwise hold the run to the job's timeout. `max(180 s, 3 x the load's
+ * planned seconds)`, or `MUSIC_MEASURE_DEADLINE_S` seconds when set. A load
+ * past it is logged as `HUNG ... at <step>`, its browser killed, and recorded
+ * in the JSON as `hung: { step, seconds }` without totals; the run goes on.
+ *
  * Browsers: VIBEWARS_CHROMIUM (as for e2e), VIBEWARS_FIREFOX (a Playwright
  * Firefox build; the default is Playwright's own, which must match the
  * pinned @playwright/test). Firefox runs with its content sandbox off
@@ -203,16 +209,111 @@ function launch(browser) {
   });
 }
 
+/** Seconds a browser gets to close before it is killed. */
+const CLOSE_CAP_S = 20;
+/** Lines of each distinct page message forwarded per load; the rest are counted. */
+const FORWARDED_LINES = 5;
+/** Seconds a load takes besides the music playing: start-up and the page's setup. */
+const SETUP_S = 30;
+/** What `steps` takes, in seconds: its settles, the quick changes and the crossfade wait. */
+const REACTIVITY_S = 69;
+
+/**
+ * @typedef {{
+ *   step: string,
+ *   browser: import("@playwright/test").Browser | undefined,
+ * }} Progress
+ */
+
+/**
+ * Close a browser, and kill its process if it will not close in time.
+ *
+ * @param {import("@playwright/test").Browser | undefined} browser
+ */
+async function shut(browser) {
+  if (browser === undefined) {
+    return;
+  }
+  const closed = await Promise.race([
+    browser.close().then(
+      () => true,
+      () => true,
+    ),
+    sleep(CLOSE_CAP_S * 1000).then(() => false),
+  ]);
+  if (!closed) {
+    console.log(`(the browser did not close in ${String(CLOSE_CAP_S)} s: killed)`);
+    // Playwright launches the browser as a process of its own; the types do not say so.
+    /** @type {{ process?: () => { kill: (signal: string) => void } | undefined }} */ (
+      /** @type {unknown} */ (browser)
+    )
+      .process?.()
+      ?.kill("SIGKILL");
+  }
+}
+
+/** The seconds a load may take before it counts as hung. */
+function deadlineSeconds() {
+  const override = process.env.MUSIC_MEASURE_DEADLINE_S;
+  if (override !== undefined) {
+    return Number(override);
+  }
+  return Math.max(180, 3 * (SETUP_S + (options.reactivity ? REACTIVITY_S : SECONDS)));
+}
+
+/**
+ * Measure one load within its deadline.
+ *
+ * @param {string} url
+ * @param {Load} load
+ * @returns {Promise<{ rows: Stats[] } | { hung: { step: string, seconds: number } }>}
+ */
+async function measureWithDeadline(url, load) {
+  /** @type {Progress} */
+  const progress = { step: "launch", browser: undefined };
+  const started = Date.now();
+  const work = measure(url, load, progress).then((rows) => ({ rows }));
+  // If the deadline wins, whatever the abandoned load throws later is not news.
+  work.catch(() => undefined);
+  /** @type {NodeJS.Timeout | undefined} */
+  let timer;
+  const expired = /** @type {Promise<"expired">} */ (
+    new Promise((resolve) => {
+      timer = setTimeout(resolve, deadlineSeconds() * 1000, "expired");
+    })
+  );
+  try {
+    const outcome = await Promise.race([work, expired]);
+    if (outcome !== "expired") {
+      return /** @type {{ rows: Stats[] }} */ (outcome);
+    }
+    const seconds = Math.round((Date.now() - started) / 1000);
+    console.log(
+      `HUNG ${load.browser} "${load.name}" at ${progress.step} after ${String(seconds)} s`,
+    );
+    await shut(progress.browser);
+    return { hung: { step: progress.step, seconds } };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /**
  * Play one load and collect what the music host reported, a row a second.
  *
  * @param {string} url
  * @param {Load} load
+ * @param {Progress} progress  `step` is where this is, for the deadline to name
  * @returns {Promise<Stats[]>}
  */
-async function measure(url, load) {
+async function measure(url, load, progress) {
+  /** @type {Map<string, number>} */
+  const messages = new Map();
+  progress.step = "launch";
   const browser = await launch(load.browser);
+  progress.browser = browser;
   try {
+    progress.step = "context";
     const device = devices["Pixel 7 landscape"];
     const context = await browser.newContext(
       load.browser === "chromium"
@@ -223,7 +324,12 @@ async function measure(url, load) {
     // What the page says: an audio context that will not start says so here.
     page.on("console", (message) => {
       if (message.type() === "error" || message.type() === "warning") {
-        console.log(`[${load.browser} ${message.type()}] ${message.text()}`);
+        const line = `[${load.browser} ${message.type()}] ${message.text()}`;
+        const count = (messages.get(line) ?? 0) + 1;
+        messages.set(line, count);
+        if (count <= FORWARDED_LINES) {
+          console.log(line);
+        }
       }
     });
     page.on("pageerror", (error) => {
@@ -261,8 +367,10 @@ async function measure(url, load) {
     const query =
       `?musicstats${load.stress > 0 ? `&stress=${String(load.stress)}` : ""}` +
       ((load.audioStress ?? 0) > 0 ? `&audiostress=${String(load.audioStress)}` : "");
+    progress.step = "goto";
     await page.goto(`${url}${query}`);
     await page.locator(".roster").waitFor();
+    progress.step = "setup";
     if (load.screen !== "menu") {
       // Every screen #screens shows and every press the page receives, in
       // order: a red run says whether the editor ever came, and whether the
@@ -330,6 +438,7 @@ async function measure(url, load) {
     }
     await page.waitForFunction(() => "__musicStats" in window, undefined, { timeout: 30_000 });
 
+    progress.step = "throttle";
     if (load.cpu > 1) {
       const cdp = await context.newCDPSession(page);
       await cdp.send("Emulation.setCPUThrottlingRate", { rate: load.cpu });
@@ -343,6 +452,7 @@ async function measure(url, load) {
         /** @type {{ musicStatsSeen: unknown[] }} */ (/** @type {unknown} */ (window))
           .musicStatsSeen.length,
     );
+    progress.step = "measuring";
     const playing = load.screen === "match" ? play(page) : undefined;
     if (options.reactivity) {
       await steps(page);
@@ -352,7 +462,9 @@ async function measure(url, load) {
       await music(page, "crossfadeTo", CROSSFADE_TO);
       await sleep((SECONDS * 1000) / 2);
     }
+    progress.step = "stop-play";
     await playing?.stop();
+    progress.step = "read-stats";
     const { seen, heard } = await page.evaluate(() => {
       const w = /** @type {{ musicStatsSeen: unknown[], musicHeardSeen: unknown[] }} */ (
         /** @type {unknown} */ (window)
@@ -364,7 +476,13 @@ async function measure(url, load) {
     }
     return /** @type {Stats[]} */ (seen.slice(start));
   } finally {
-    await browser.close();
+    progress.step = "close";
+    for (const [line, count] of messages) {
+      if (count > FORWARDED_LINES) {
+        console.log(`… ${line} ×${String(count - FORWARDED_LINES)} more`);
+      }
+    }
+    await shut(browser);
   }
 }
 
@@ -454,6 +572,8 @@ function play(page) {
       await page.keyboard.up(walk);
     }
   })();
+  // An abandoned load (past its deadline) leaves this failing against a dead page.
+  done.catch(() => undefined);
   return {
     stop: async () => {
       state.going = false;
@@ -601,17 +721,21 @@ try {
       (options.browser === undefined || l.browser === options.browser) &&
       (options.only === undefined || l.name.includes(options.only)),
   )) {
-    const rows = await measure(served.url, load);
-    report(load, rows);
+    const outcome = await measureWithDeadline(served.url, load);
     const entry = (result[load.browser] ??= { validated: false, loads: [] });
-    entry.loads.push({
+    const description = {
       name: load.name,
       screen: load.screen,
       cpu: load.cpu,
       stress: load.stress,
       audioStress: load.audioStress ?? 0,
-      ...totals(rows),
-    });
+    };
+    if ("hung" in outcome) {
+      entry.loads.push({ ...description, hung: outcome.hung });
+      continue;
+    }
+    report(load, outcome.rows);
+    entry.loads.push({ ...description, ...totals(outcome.rows) });
   }
   for (const [browser, entry] of Object.entries(result)) {
     // Only the audiostress loads: the other loads also have none.
@@ -631,3 +755,5 @@ try {
   served.stop();
   stopPulse?.();
 }
+// An abandoned hung load may leave a handle open; the run is over.
+process.exit(process.exitCode ?? 0);
