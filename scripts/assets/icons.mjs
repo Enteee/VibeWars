@@ -1419,6 +1419,35 @@ const skillGlyph = {
     bladeMark(inkLine("M11.5 4.5H8a2.5 2.5 0 0 0 0 5H10.5M6.5 3L5 4.5L6.5 6", 1.8)),
   // A blade with shards flying off above it: a weapon spell that splinters (#1048).
   "blade-shards": () => bladeMark(inkFill("M3 4L6 3L5.5 6ZM8 6L11 5L10 8.5ZM4 9L7 8.5L6 11.5Z")),
+  // Swordsmanship (#1354): a blade with the payoff in the corner above it.
+  // Hamstring cripples: a broken leg.
+  "blade-limp": () => bladeMark(inkLine("M10 2.5L6 6.5L9.5 9.5L5 13.5", 2.4)),
+  // Pure Strike goes through blocks: a shield struck through.
+  "blade-pierce": () =>
+    bladeMark(
+      `<path d="M8 2.5L12.5 4.2V8C12.5 10.6 10.5 11.9 8 13C5.5 11.9 3.5 10.6 3.5 8V4.2Z" ${stroke(C.ink, 1.8)}/>` +
+        inkLine("M2.5 2.5L13 13", 2.2),
+    ),
+  // Gash deepens a bleed: a drop.
+  "blade-drop": () =>
+    bladeMark(
+      `<path d="M8 2.5C8 2.5 3.8 7 3.8 9.6A4.2 4.2 0 0 0 12.2 9.6C12.2 7 8 2.5 8 2.5Z" fill="${C.ink}"/>`,
+    ),
+  // Final Thrust finishes a foe below half health: a half-filled disc.
+  "blade-half": () =>
+    bladeMark(
+      `<circle cx="8" cy="8" r="5" ${stroke(C.ink, 1.8)}/><path d="M8 3A5 5 0 0 0 8 13Z" fill="${C.ink}"/>`,
+    ),
+  // Dragon Slash gives adrenaline back: three rising bars.
+  "blade-adrenal": () => bladeMark(inkLine("M3.5 13V9M8 13V6M12.5 13V3", 2.6)),
+  // Savage Slash interrupts: a burst.
+  "blade-burst": () =>
+    bladeMark(
+      `<g transform="translate(8,8) scale(0.85) translate(-12,-12)">${inkFill(burst(6))}</g>`,
+    ),
+  // Hundred Blades: three blades fanned from one hilt, swept through the crowd.
+  "blades-fan": () =>
+    inkLine("M4.5 20L17 4.5M4.5 20L21 11M4.5 20L11 2.5", 2.6) + inkLine("M3 21.5l3-3", 2.8),
   // A sword hilt with a plus on its grip: a weapon spell that mends (#1048).
   hilt: () =>
     inkLine("M5 9.5H19", 2.8) +

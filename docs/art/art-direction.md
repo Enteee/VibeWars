@@ -54,6 +54,7 @@ the code and `scripts/assets/icons.mjs` copy them.
 | `glyph`        | `#c3e88d` | Glyph markers                            |
 | `weapon-spell` | `#8b9cff` | Weapon spell markers                     |
 | `invulnerable` | `#f5e6b8` | A shrine-raised body's shimmer (#1233)   |
+| `altar`        | `#c8a45a` | A Relic Run's altar on the compass       |
 
 ### HUD bars
 
@@ -418,6 +419,9 @@ the arena does not. A body beyond it is not on it: the edge markers
   shown.
 - **Your target**: a 1 px `target` ring 2 px outside its dot.
 - **The called foe**: a small `condition` chevron over its dot.
+- **A Relic Run's altar** (#1388): a filled `altar` `◆`, 10 px tip to
+  tip, on a 1 px `edge` rim, under the bodies. Not pinned to the rim when
+  out of reach.
 - **Pings**: a 1 px `friend` ring growing from 3 to 10 px and fading over
   the ping's life. Reduced motion: it holds at 3 px, whole.
 
@@ -852,6 +856,7 @@ it, not baked in, so one file serves every screen.
   spirit-block, spirit-ground, rift-strike, spirit-burn, spirit-energy, bond-spike, tear-fall, spirit-trio, ward-blade, trap-flame, ring-rays, well-sink, echo-spell, echo-skill, hex-mute,
   armor-crack, drop-run, mark-skull, dagger-stop, dagger-limp, palm,
   shield-stance (solid), shield-bar, shield-arrow, shield-blade, born-plus, born-burst, born-ring, born-energy (the spirit post in a halo, and its payout),
+  blade-limp, blade-pierce, blade-drop, blade-half, blade-burst, blade-adrenal (a blade with its payoff in the corner above), blades-fan,
   dagger-crit (a dagger and a four-point spark), shield-crit, blink-heal, blink-fang, blink-ally (the step with a plus, two fangs, a figure), shield-veil, crescent-spark, caltrops, hammer-prone, hammer-shield, hammer-counter, hammer-weak, hammer-chevrons, hammer-quake (the hammer over a downed foe, a shield, a turning arrow, weak chevrons, wide cracks), hex-barbs, hex-miss, hex-drain, hex-heal-cut, hex-nobloc, hex-drain-cut (the hex ring with spikes, a cross, falling triangles, a cut plus, a cracked shield, both), drop-touch, drop-trio, drop-half, drop-weak, drop-barbs, drop-energy (the blood drop with a plus, three drops, a half-full drop, a down arrow, barbs, a bolt), ghost, weight, ache-cross, armor-shrink, speed-break (a whole chevron and a
   broken one), eye-slash, limp-drain. A
   new primary effect adds a glyph; a new skill adds a row.
