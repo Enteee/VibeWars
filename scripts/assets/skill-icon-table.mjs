@@ -329,6 +329,15 @@ export const SKILL_ICONS = {
   "warrior.staggering-blow": { glyph: "hammer-chevrons" },
   "warrior.earth-shaker": { glyph: "hammer-quake", modifier: "area" },
   "warrior.devastating-hammer": { glyph: "hammer-slam", modifier: "down" },
+  // Placeholders until the asset-designer's (#1367): Water Magic.
+  "elementalist.ice-prison": { glyph: "snowflake", modifier: "clock" },
+  "elementalist.frozen-burst": { glyph: "snowflake", modifier: "self" },
+  "elementalist.ice-spear": { glyph: "shard", modifier: "bolt" },
+  "elementalist.maelstrom": { glyph: "twister", modifier: "stun" },
+  "elementalist.blurred-vision": { glyph: "eye-slash", modifier: "half" },
+  "elementalist.armor-of-mist": { glyph: "armor", modifier: "plus" },
+  "elementalist.shatterstone": { glyph: "shard", modifier: "hourglass" },
+  "elementalist.mind-freeze": { glyph: "snowflake", modifier: "down" },
   // Placeholders until the asset-designer's (#1403): hex and enchantment gain triggers.
   "necromancer.soul-barbs": { glyph: "hex-barbs", modifier: "plus" },
   "necromancer.defile-defenses": { glyph: "hex-nobloc", modifier: "bolt" },
@@ -340,6 +349,6 @@ export const SKILL_ICONS = {
   "dervish.balthazars-rage": { glyph: "flame", modifier: "up" },
   "dervish.harriers-haste": { glyph: "dash", modifier: "area" },
   // Placeholders until the asset-designer's (#1437): forms.
-  "dervish.avatar-of-melandru": { glyph: "armor", modifier: "plus" },
+  "dervish.avatar-of-melandru": { glyph: "armor", modifier: "hourglass" },
   "dervish.avatar-of-dwayna": { glyph: "heal", modifier: "plus" },
 };

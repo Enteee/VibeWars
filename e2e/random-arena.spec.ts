@@ -68,7 +68,7 @@ test("Random Arena is greyed out without a character to queue with, and 4v4 is t
   await expect(row.getByRole("button", { name: "Random Arena", exact: true })).toBeEnabled();
   await page.evaluate(`
     new Promise((resolve, reject) => {
-      const open = indexedDB.open(${JSON.stringify(STORAGE_NAMESPACE)}, 1);
+      const open = indexedDB.open(${JSON.stringify(STORAGE_NAMESPACE)});
       open.onerror = () => reject(open.error);
       open.onsuccess = () => {
         const tx = open.result.transaction("characters", "readwrite");
