@@ -11410,6 +11410,7 @@ export const NPC_SKILLS: readonly Skill[] = [
     gwId: undefined,
     type: "spell",
     elite: false,
+    flash: false,
     profession: "common",
     attributeId: undefined,
     cost: undefined,
