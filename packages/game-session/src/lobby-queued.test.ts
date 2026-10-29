@@ -351,7 +351,13 @@ describe("a queued lobby", () => {
     await settle();
     bare.transport.send(
       "lobby-join",
-      { protocolVersion: PROTOCOL_VERSION, name: "Bare", character: null, admission: null },
+      {
+        protocolVersion: PROTOCOL_VERSION,
+        name: "Bare",
+        guildTag: null,
+        character: null,
+        admission: null,
+      },
       "host",
     );
     await until(() => bare.notes.length > 0);
