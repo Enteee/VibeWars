@@ -228,10 +228,37 @@ describe("Smite Hex (#987)", () => {
     const foes = [left, right];
     const friend = makeCombatant({ id: "friend", health: 500 });
     const surroundings: Surroundings = new Map([
-      ["ally", { combatant: target, position: vec2(0, 0), creature: undefined }],
-      ["foe-1", { combatant: left, position: vec2(AREA_ADJACENT, 0), creature: undefined }],
-      ["foe-2", { combatant: right, position: vec2(-AREA_ADJACENT, 0), creature: undefined }],
-      ["friend", { combatant: friend, position: vec2(0, AREA_ADJACENT), creature: undefined }],
+      [
+        "ally",
+        { combatant: target, position: vec2(0, 0), creature: undefined, corpseExploited: false },
+      ],
+      [
+        "foe-1",
+        {
+          combatant: left,
+          position: vec2(AREA_ADJACENT, 0),
+          creature: undefined,
+          corpseExploited: false,
+        },
+      ],
+      [
+        "foe-2",
+        {
+          combatant: right,
+          position: vec2(-AREA_ADJACENT, 0),
+          creature: undefined,
+          corpseExploited: false,
+        },
+      ],
+      [
+        "friend",
+        {
+          combatant: friend,
+          position: vec2(0, AREA_ADJACENT),
+          creature: undefined,
+          corpseExploited: false,
+        },
+      ],
     ]);
     return { target, foes, friend, surroundings };
   }
