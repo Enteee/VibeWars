@@ -94,6 +94,19 @@ export function transportContract(
       t.expect(atC).toEqual([[a.selfId, "psst"]]);
     });
 
+    room("sends to each peer on a list, and to nobody with an empty one", async (n) => {
+      const [a, b, c, d] = [n.join(), n.join(), n.join(), n.join()];
+      const [atA, atB, atC, atD] = [inbox(a), inbox(b), inbox(c), inbox(d)];
+      await n.settle();
+      a.send("intent", "us", [b.selfId, d.selfId]);
+      a.send("intent", "nobody", []);
+      await n.settle();
+      t.expect(atA).toEqual([]);
+      t.expect(atB).toEqual([[a.selfId, "us"]]);
+      t.expect(atC).toEqual([]);
+      t.expect(atD).toEqual([[a.selfId, "us"]]);
+    });
+
     room("delivers only on the channel sent to", async (n) => {
       const [a, b] = [n.join(), n.join()];
       const got = inbox(b);

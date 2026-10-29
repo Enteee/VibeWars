@@ -542,16 +542,16 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     while (delayed[0] !== undefined && delayed[0].at <= streamTick - delayTicks) {
       const entry = delayed[0];
       delayed.shift();
-      for (const peerId of observers) {
-        for (const part of entry.snapshot) {
-          transport.send("snapshot", part, peerId);
-        }
-        for (const batch of entry.combat) {
-          transport.send("combat", batch, peerId);
-        }
-        if (entry.ended !== undefined) {
-          transport.send("ended", entry.ended, peerId);
-        }
+      // One send to them all: a transport serializes once per send.
+      const watching = [...observers];
+      for (const part of entry.snapshot) {
+        transport.send("snapshot", part, watching);
+      }
+      for (const batch of entry.combat) {
+        transport.send("combat", batch, watching);
+      }
+      if (entry.ended !== undefined) {
+        transport.send("ended", entry.ended, watching);
       }
       if (entry.ended !== undefined) {
         observers.clear();
@@ -1046,21 +1046,18 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     callsDirty.clear();
     sendTraps(0);
     sendTraps(1);
-    // To each player, never the room (#480): a spectator in it watches
-    // through `delayed` alone.
+    // To the players, never the room (#480): a spectator in it watches
+    // through `delayed` alone. One send to them all, so each part is
+    // serialized once, not once per player.
     const live = players();
     const parts = packSnapshot(snapshot(), MAX_MESSAGE_BYTES);
-    for (const peerId of live) {
-      for (const part of parts) {
-        transport.send("snapshot", part, peerId);
-      }
+    for (const part of parts) {
+      transport.send("snapshot", part, live);
     }
     tally.add(result.log);
     const batches = packCombat(wireCombat(result.log), MAX_MESSAGE_BYTES, MAX_WIRE_COMBATS);
-    for (const peerId of live) {
-      for (const batch of batches) {
-        transport.send("combat", batch, peerId);
-      }
+    for (const batch of batches) {
+      transport.send("combat", batch, live);
     }
     for (const seat of seats.values()) {
       sendSkillBar(seat, false);
@@ -1077,9 +1074,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
         endReason: sim.outcome.reason ?? "time",
         summary: summary(),
       };
-      for (const peerId of live) {
-        transport.send("ended", ended, peerId);
-      }
+      transport.send("ended", ended, live);
     }
     // A match nobody watches holds nothing.
     if (observers.size > 0) {
