@@ -99,6 +99,8 @@ Honest limits:
 - A **saved team is not taken into a match**. Each player picks their
   own character; the lobby does not assign a team's slots to anyone. A
   team is a planning tool.
+- A player in a lobby **without a team** stays in the lobby while the
+  match runs; watching a match is not built yet.
 - The **host's tab runs the match**: if it closes, the match ends for
   everyone.
 
