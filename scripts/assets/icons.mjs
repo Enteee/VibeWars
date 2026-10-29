@@ -988,6 +988,35 @@ const status = {
       `<path d="M5 14c2 0 3 1 4 2h5c1 0 1.5-1.5 0-1.5h-3M5 18h9l5-4" ${stroke(c, 1.8)}/>` +
       `<path d="M13 5v6M10 8h6" ${stroke(c, 2.2)}/>`,
   ],
+  // Hex: a barbed line under a spark, any hex or enchantment hurts (#1403).
+  "soul-barbs": [
+    "hex",
+    (c) =>
+      `<path d="M4 15h16" ${stroke(c, 2)}/>` +
+      `<path d="M7 15l2-3M11 15l2-3M15 15l2-3" ${stroke(c, 1.6)}/>` +
+      `<path d="M12 4v5M9.5 6.5h5" ${stroke(c, 1.8)}/>`,
+  ],
+  // Hex: a shield with a bolt, the next block hurts (#1403).
+  "defile-defenses": [
+    "hex",
+    (c) =>
+      `<path d="M7 6h10v5c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7z" ${stroke(c, 2)}/>` +
+      `<path d="M13 7l-3 4h4l-3 4" ${stroke(c, 1.6)}/>`,
+  ],
+  // Hex: a plus with rays thrown back, the enchanter is smitten (#1403).
+  "scourge-enchantment": [
+    "hex",
+    (c) =>
+      `<path d="M12 8v8M8 12h8" ${stroke(c, 2.4)}/>` +
+      `<path d="M5 5l2.5 2.5M19 5l-2.5 2.5M5 19l2.5-2.5M19 19l-2.5-2.5" ${stroke(c, 1.6)}/>`,
+  ],
+  // Stance: a broken ring, the next hex fails (#1403).
+  "hex-breaker": [
+    "stance",
+    (c) =>
+      `<path d="M10 5.3A7 7 0 1 0 18.7 10M14 5.3A7 7 0 0 1 18.7 10" ${stroke(c, 2.2)}/>` +
+      `<path d="M11 4l2 3-2 1 2 3" ${stroke(c, 1.6)}/>`,
+  ],
 };
 
 // ---------------------------------------------------------------------------
@@ -1914,6 +1943,40 @@ const skillGlyph = {
     inkFill(
       "M18 8c.3 2.4 2.8 3.4 2.8 6a3.1 3.1 0 0 1-6.2 0c0-1.5.6-2.5 1.5-3.2 0 1.2.3 1.8.9 2-.2-1.8.2-3.2 1-4.8z",
     ),
+  // A hammer over a foe lying flat: it hits the downed hardest (#1383).
+  "hammer-prone": () =>
+    inkLine("M6 3.5L11 9.5", 2.4) +
+    `<rect x="8.5" y="7.5" width="9" height="6" rx="1" transform="rotate(35 13 10.5)" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
+    `<circle cx="5.5" cy="18" r="2.4" fill="${C.ink}"/>` +
+    inkLine("M9 18H20.5", 3),
+  // A hammer slam with a shield beside the impact: it knocks down what blocks it (#1383).
+  "hammer-shield": () =>
+    inkLine("M7 4.5L12 11", 2.4) +
+    `<rect x="9.5" y="9" width="9" height="6" rx="1" transform="rotate(35 14 12)" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
+    inkLine("M3 21H21", 2.2) +
+    `<path d="M16 12.5L21.5 14.5V17.5C21.5 19 19 20 16 21C13 20 10.5 19 10.5 17.5V14.5Z" ${stroke(C.ink, 1.8)}/>`,
+  // A hammer slam with a turning arrow over it: it answers an attacker (#1383).
+  "hammer-counter": () =>
+    inkLine("M7 4.5L12 11", 2.4) +
+    `<rect x="9.5" y="9" width="9" height="6" rx="1" transform="rotate(35 14 12)" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
+    inkLine("M3 19.5H21", 2.2) +
+    inkLine("M14.5 6.5C18.5 3 21.5 6 20.5 10.5M18 9L20.5 11L22.5 8", 2),
+  // A hammer slam with two weak chevrons on the ground: it hits what is weakened (#1383).
+  // A raised hammer over two weak chevrons, no slam: it weakens what it hits (#1383).
+  "hammer-chevrons": () =>
+    inkLine("M3.5 12.5L9.5 6.5", 2.4) +
+    `<rect x="8" y="1.5" width="9" height="6" rx="1" transform="rotate(45 12.5 4.5)" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
+    inkLine("M11 12.5L16 16.5L21 12.5M11 17.5L16 21.5L21 17.5", 2.2),
+  "hammer-weak": () =>
+    inkLine("M7 4.5L12 11", 2.4) +
+    `<rect x="9.5" y="9" width="9" height="6" rx="1" transform="rotate(35 14 12)" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
+    inkLine("M3 21H21", 2.2) +
+    inkLine("M12.5 15.5L16 19L19.5 15.5", 2.6),
+  // A hammer slam splitting the ground wide, cracks both ways: it shakes everything near (#1383).
+  "hammer-quake": () =>
+    inkLine("M7 4.5L12 11", 2.4) +
+    `<rect x="9.5" y="9" width="9" height="6" rx="1" transform="rotate(35 14 12)" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
+    inkLine("M2 19L6 21.5L9.5 18.5L13 21.5L16.5 18.5L19.5 21L22 19", 2.6),
   // A post with a bright head: a spirit planted where it was called (#1217).
   totem: () =>
     inkFill("M9 11H14L14.2 20H8.8Z") + `<circle cx="12" cy="6.5" r="3.8" fill="${C.ink}"/>`,

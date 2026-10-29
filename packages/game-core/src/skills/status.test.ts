@@ -72,6 +72,7 @@ describe("status definitions", () => {
         def.lifeStealReduction !== 0 ||
         def.knockdownMinSeconds !== undefined ||
         def.reversesNextDamage !== undefined ||
+        def.breaksNextHex !== undefined ||
         def.extraStrikesPerHit !== 0 ||
         def.onAttackHit !== undefined ||
         def.triggers.length > 0 ||
