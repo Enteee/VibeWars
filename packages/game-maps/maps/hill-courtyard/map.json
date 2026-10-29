@@ -1,0 +1,148 @@
+{
+  "id": "hill-courtyard",
+  "name": "Hill Courtyard",
+  "mode": "king-of-the-hill",
+  "width": 2000,
+  "height": 1400,
+  "walls": [
+    {
+      "kind": "rect",
+      "x": 840,
+      "y": 560,
+      "width": 40,
+      "height": 280
+    },
+    {
+      "kind": "rect",
+      "x": 1120,
+      "y": 560,
+      "width": 40,
+      "height": 280
+    },
+    {
+      "kind": "rect",
+      "x": 440,
+      "y": 300,
+      "width": 120,
+      "height": 120
+    },
+    {
+      "kind": "rect",
+      "x": 1440,
+      "y": 980,
+      "width": 120,
+      "height": 120
+    },
+    {
+      "kind": "rect",
+      "x": 440,
+      "y": 980,
+      "width": 120,
+      "height": 120
+    },
+    {
+      "kind": "rect",
+      "x": 1440,
+      "y": 300,
+      "width": 120,
+      "height": 120
+    },
+    {
+      "kind": "rect",
+      "x": 960,
+      "y": 200,
+      "width": 80,
+      "height": 80
+    },
+    {
+      "kind": "rect",
+      "x": 960,
+      "y": 1120,
+      "width": 80,
+      "height": 80
+    }
+  ],
+  "objectives": [
+    {
+      "kind": "ghost-spawn",
+      "team": 0,
+      "position": {
+        "x": 200,
+        "y": 700
+      }
+    },
+    {
+      "kind": "ghost-spawn",
+      "team": 1,
+      "position": {
+        "x": 1800,
+        "y": 700
+      }
+    },
+    {
+      "kind": "altar",
+      "position": {
+        "x": 1000,
+        "y": 700
+      }
+    }
+  ],
+  "spawnPoints": [
+    {
+      "team": 0,
+      "position": {
+        "x": 110,
+        "y": 560
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 110,
+        "y": 840
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 290,
+        "y": 560
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 290,
+        "y": 840
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 1890,
+        "y": 840
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 1890,
+        "y": 560
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 1710,
+        "y": 840
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 1710,
+        "y": 560
+      }
+    }
+  ]
+}

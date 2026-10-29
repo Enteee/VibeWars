@@ -125,6 +125,7 @@ describe("applyIntent — command (#1110)", () => {
             onDeath: "vanish",
             ownerDisableSeconds: 0,
             companionSkillId: undefined,
+            leaderId: undefined,
             mode: "guard",
           },
         },

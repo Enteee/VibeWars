@@ -128,6 +128,7 @@ export {
   GUILD_BATTLE_MATCH_RULES,
   KILL_COUNT_MATCH_RULES,
   KILL_MORALE_PERCENT,
+  KING_OF_THE_HILL_MATCH_RULES,
   MATCH_IN_PROGRESS,
   MATCH_MODES,
   MORALE_CEILING,
@@ -203,6 +204,9 @@ export type { RelicField, RelicState } from "./match/relics.js";
 export type { CapturePoint } from "./match/capture-points.js";
 export { CAPTURE_REACH_UNITS, CAPTURE_SECONDS } from "./match/capture-points.js";
 export { ALTAR_REACH_UNITS, relicId, relicTeamOf } from "./match/relics.js";
+export type { AltarState } from "./match/altar.js";
+export type { GhostSpawn, HillField } from "./match/ghost.js";
+export { CLAIM_SKILL_ID, ghostId, isGhostId } from "./match/ghost.js";
 export { GUILD_LORD_HEALTH, guildLordId, guildLordLossCap } from "./match/guild-lord.js";
 export type { BaseGuard, GuardRole } from "./match/guards.js";
 export { GUARD_ROLE_IDS, GUARD_ROLES, guardId } from "./match/guards.js";

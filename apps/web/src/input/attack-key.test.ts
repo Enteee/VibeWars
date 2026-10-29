@@ -69,6 +69,8 @@ function snapshot(players: PlayerSnapshot[]): MatchSnapshot {
     aggression: [],
     relics: [],
     altar: undefined,
+    altarHolder: undefined,
+    altarHeldSeconds: 0,
     capturePoints: [],
     summary: undefined,
   };
@@ -123,6 +125,15 @@ describe("attackClickIntents", () => {
     for (const hitId of ["ally", "me", "corpse", undefined, "gone"]) {
       expect(attackClickIntents(match, hitId)).toEqual([]);
     }
+  });
+  it("walks to your own Ghostly Hero to tell it to follow or stay, not a dead one (#1377)", () => {
+    const hill = snapshot([
+      player("me"),
+      player("ghost/0", { x: 30 }),
+      player("ghost/1", { x: 60, team: 1, dead: true }),
+    ]);
+    expect(attackClickIntents(hill, "ghost/0")).toEqual([{ kind: "attack", targetId: "ghost/0" }]);
+    expect(attackClickIntents(hill, "ghost/1")).toEqual([]);
   });
 });
 

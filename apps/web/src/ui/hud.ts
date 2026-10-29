@@ -6,6 +6,7 @@ import {
   getProfession,
   getSkill,
   getWeapon,
+  POINT_TICK_SECONDS,
   maxHealthLossOfStatusIds,
   neededWeaponText,
   type ActivationRejection,
@@ -144,6 +145,8 @@ export interface HudElements {
   readonly targetProfessions: HTMLElement;
   /** The target's name, or "no target", in the panel's header. */
   readonly targetText: HTMLElement;
+  /** Whom your team's Ghostly Hero follows, or that it stays (#1377). */
+  readonly targetLeader: HTMLElement;
   /** The BOT tag after a lobby bot's name (#1194); hidden for anyone else. */
   readonly targetBot: HTMLElement;
   /** The target's health bar (#484), labelled with its percentage. */
@@ -199,7 +202,17 @@ function element(tag: string, className: string, parent: HTMLElement): HTMLEleme
  * with the keymap's target and names keys (#253, #302). A clause whose
  * action has no key is left out.
  */
-export function targetHint(keymap: Keymap, label: KeyLabeller = codeLabel): string {
+export function targetHint(
+  keymap: Keymap,
+  mode: MatchMode,
+  label: KeyLabeller = codeLabel,
+): string {
+  // King of the Hill's first move is your own ghost, which a left click
+  // would walk to rather than target (#1377).
+  const attack = actionLabel(keymap, "attack", label);
+  if (mode === "king-of-the-hill" && attack !== "") {
+    return `Right-click your Ghostly Hero, then ${attack}: it follows you to the altar`;
+  }
   const next = actionLabel(keymap, "target-next", label);
   const names = actionLabel(keymap, "show-names", label);
   return (
@@ -216,9 +229,10 @@ export function targetHint(keymap: Keymap, label: KeyLabeller = codeLabel): stri
 export function renderKeyLabels(
   hud: HudElements,
   keymap: Keymap,
+  mode: MatchMode,
   label: KeyLabeller = codeLabel,
 ): void {
-  hud.hint.textContent = targetHint(keymap, label);
+  hud.hint.textContent = targetHint(keymap, mode, label);
   hud.skillBar.querySelectorAll(".hud-skill-key").forEach((node, index) => {
     const action = SKILL_ACTIONS[index];
     node.textContent = action === undefined ? "" : actionLabel(keymap, action, label);
@@ -289,6 +303,8 @@ export function createHud(
   attacking.hidden = true;
   const targetInvulnerable = element("span", "hud-target-invulnerable", targetHeader);
   targetInvulnerable.hidden = true;
+  const targetLeader = element("span", "hud-target-leader", targetHeader);
+  targetLeader.hidden = true;
   const targetHealthRow = element("div", "hud-target-health-row", targetPanel);
   const targetHealth = element("div", "hud-bar hud-target-health", targetHealthRow);
   const targetHealthFill = element("div", "hud-bar-fill", targetHealth);
@@ -388,6 +404,7 @@ export function createHud(
     targetEffects,
     targetProfessions,
     targetText,
+    targetLeader,
     targetBot,
     targetHealth,
     targetHealthFill,
@@ -971,7 +988,7 @@ export type ScoreboardPart =
 /** What the scoreboard reads of the match besides its bodies and clock. */
 export type ScoreboardMatch = Pick<
   MatchSnapshot,
-  "scoreTeam0" | "scoreTeam1" | "stand" | "aggression"
+  "scoreTeam0" | "scoreTeam1" | "stand" | "aggression" | "altarHolder" | "altarHeldSeconds"
 >;
 
 /** The clock left at which a Guild Battle shows its aggression (#1226): the last 3 minutes. */
@@ -1010,6 +1027,9 @@ function thousands(value: number): string {
  * living, "4 v 3 · 7:12"; Kill Count the team's kills, "4 – 0 · 2:25"
  * (#1200), as the snapshot's `score` carries them, team 1's first, and
  * a Relic Run its relic points the same way, "2 – 1 · 6:40" (#1374).
+ * King of the Hill (#1377) reads its points so too, then the altar in
+ * the stand's slot: its holder's `▲` and the time to the next point, or
+ * "▲ —" held by nobody, "2 – 1 · ▲ 0:18 · 6:40".
  * Priest Annihilation counts the living, then each side's priest and the
  * next wave, "4 v 3 · ✚ ✚ · raise 0:47 · 7:12" (#1199): `raise —` once
  * both priests are dead, and no countdown once time is out. A Guild
@@ -1039,16 +1059,19 @@ export function scoreboardParts(
     kind: "text",
     text: `${String(livingCount(players, ours))} v ${String(livingCount(players, theirs))}`,
   };
+  const points: ScoreboardPart = {
+    kind: "text",
+    text: `${String(score[ours] ?? 0)} – ${String(score[theirs] ?? 0)}`,
+  };
   switch (mode) {
     case "annihilation":
       return [living, clock];
     case "kill-count":
     case "relic-run":
     case "capture-points":
-      return [
-        { kind: "text", text: `${String(score[ours] ?? 0)} – ${String(score[theirs] ?? 0)}` },
-        clock,
-      ];
+      return [points, clock];
+    case "king-of-the-hill":
+      return [points, altarPart(match.altarHolder, match.altarHeldSeconds), clock];
     case "guild-battle": {
       const lords = [ours, theirs].map((team, index): ScoreboardPart => {
         const percent = lordPercent(players, team);
@@ -1121,6 +1144,19 @@ function standPart(stand: StandState | undefined): ScoreboardPart | undefined {
   }
   const left = Math.max(0, Math.ceil(STAND_HOLD_SECONDS - stand.heldSeconds));
   return { kind: "side", team: stand.holder, text: `⚑ ${formatClock(left)}`, dead: false };
+}
+
+/**
+ * King of the Hill's altar on the scoreboard (#1377), in the stand's
+ * slot: its holder's `▲` and the time to its next point, rounded up as
+ * the clock is; a grey `▲ —` held by nobody.
+ */
+function altarPart(holder: number | undefined, heldSeconds: number): ScoreboardPart {
+  if (holder === undefined) {
+    return { kind: "side", team: undefined, text: "▲ —", dead: false };
+  }
+  const left = Math.max(0, Math.ceil(POINT_TICK_SECONDS - heldSeconds));
+  return { kind: "side", team: holder, text: `▲ ${formatClock(left)}`, dead: false };
 }
 
 /** What goes before `parts[index]`: nothing first, a space between two priests, else ` · `. */
@@ -1561,12 +1597,36 @@ export function invulnerableLabel(seconds: number): string {
   return `Invulnerable ${String(minutes)}:${String(whole % 60).padStart(2, "0")}`;
 }
 
+/**
+ * Your team's Ghostly Hero's state (#1377), so Space on it is seen to
+ * work: "follows you", "follows <name>" or "stays". `undefined` for any
+ * other target.
+ */
+export function ghostLeaderLabel(
+  self: PlayerSnapshot,
+  target: PlayerSnapshot | undefined,
+  names: ReadonlyMap<string, string>,
+): string | undefined {
+  const creature = target?.creature;
+  if (creature?.kind !== "ghostly-hero" || target?.team !== self.team || target.dead) {
+    return undefined;
+  }
+  const { leaderId } = creature;
+  if (leaderId === null) {
+    return "stays";
+  }
+  return leaderId === self.sessionId
+    ? "follows you"
+    : `follows ${names.get(leaderId) ?? "an ally"}`;
+}
+
 /** The target frame (#484): header, health bar and cast row. */
 function renderTarget(
   hud: HudElements,
   self: PlayerSnapshot,
   target: PlayerSnapshot | undefined,
   stand: StandState | undefined,
+  names: ReadonlyMap<string, string>,
 ): void {
   renderTargetProfessions(hud.targetProfessions, target);
   setText(
@@ -1578,6 +1638,9 @@ function renderTarget(
   const invulnerable = target === undefined || target.dead ? 0 : target.invulnerableSeconds;
   setHidden(hud.targetInvulnerable, invulnerable <= 0);
   setText(hud.targetInvulnerable, invulnerable > 0 ? invulnerableLabel(invulnerable) : "");
+  const leader = ghostLeaderLabel(self, target, names);
+  setHidden(hud.targetLeader, leader === undefined);
+  setText(hud.targetLeader, leader ?? "");
   // Armor on hover: a number to look up, not to read at a glance.
   const armor = target === undefined ? "" : `armor ${String(target.armor)}`;
   if (hud.targetPanel.title !== armor) {
@@ -1721,7 +1784,7 @@ export function updateHud(
         ],
   );
 
-  renderTarget(hud, self, target, match?.stand);
+  renderTarget(hud, self, target, match?.stand, names);
   renderTargetChain(hud.targetChain, targetChainIcon(target, chainMark));
   hud.targetEffects.update(targetEffectRows(self, target, names, now));
 
