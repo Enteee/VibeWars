@@ -9051,6 +9051,231 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Necromancer Blood Magic staples (#1338)                                */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "necromancer.vampiric-touch",
+    name: "Vampiric Touch",
+    gwId: 156,
+    type: "skill",
+    elite: false,
+    profession: "necromancer",
+    attributeId: "necromancer.blood-magic",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 2,
+    // "Touch target foe", as Plague Touch's.
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "...to steal up to 29...65...74 Health."
+    effects: [
+      {
+        kind: "life-steal",
+        amount: {
+          scaling: { attributeId: "necromancer.blood-magic", atZero: 29, atTwelve: 65 },
+        },
+      },
+    ],
+  },
+  {
+    id: "necromancer.vampiric-swarm",
+    name: "Vampiric Swarm",
+    gwId: 1075,
+    type: "spell",
+    elite: false,
+    profession: "necromancer",
+    attributeId: "necromancer.blood-magic",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    // "...from up to three foes in the area": the target first, then the
+    // nearest two, as Chain Lightning's.
+    area: {
+      radius: AREA_IN_THE_AREA,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: 3,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Vampiric Swarm steals up to 15...51...60 Health..."
+    effects: [
+      {
+        kind: "life-steal",
+        amount: {
+          scaling: { attributeId: "necromancer.blood-magic", atZero: 15, atTwelve: 51 },
+        },
+      },
+    ],
+  },
+  {
+    id: "necromancer.shadow-strike",
+    name: "Shadow Strike",
+    gwId: 102,
+    type: "spell",
+    elite: false,
+    profession: "necromancer",
+    attributeId: "necromancer.blood-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe takes 12...41...48 shadow damage. If that foe's Health is
+    // above 50%, you steal up to 12...41...48 Health." The `if` reads the
+    // foe before this spell's own damage lands.
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-health-above", fraction: 0.5 },
+        effects: [
+          {
+            kind: "life-steal",
+            amount: {
+              scaling: { attributeId: "necromancer.blood-magic", atZero: 12, atTwelve: 41 },
+            },
+          },
+        ],
+      },
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "necromancer.blood-magic", atZero: 12, atTwelve: 41 },
+        },
+        type: "shadow",
+        armorPenetration: 0,
+      },
+    ],
+  },
+  {
+    id: "necromancer.blood-of-the-aggressor",
+    name: "Blood of the Aggressor",
+    gwId: 902,
+    type: "spell",
+    elite: false,
+    profession: "necromancer",
+    attributeId: "necromancer.blood-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Steal up to 5...37...45 Health from target foe. If that foe was
+    // attacking, that foe suffers Weakness for 3...10...12 seconds."
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-attacking" },
+        effects: [{ kind: "apply-status", statusId: "weakness", durationSeconds: 10 }],
+      },
+      {
+        kind: "life-steal",
+        amount: {
+          scaling: { attributeId: "necromancer.blood-magic", atZero: 5, atTwelve: 37 },
+        },
+      },
+    ],
+  },
+  {
+    id: "necromancer.barbed-signet",
+    name: "Barbed Signet",
+    gwId: 131,
+    type: "signet",
+    elite: false,
+    profession: "necromancer",
+    attributeId: "necromancer.blood-magic",
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    // "...on target foe and all adjacent foes", as Shadow of Fear's.
+    area: {
+      radius: AREA_ADJACENT,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // The 8% sacrifice is paid once a use. "You inflict Bleeding for
+    // 3...13...15 seconds."
+    effects: [
+      { kind: "sacrifice-health", percentOfMax: 8 },
+      { kind: "apply-status", statusId: "bleeding", durationSeconds: 13 },
+    ],
+  },
+  {
+    id: "necromancer.offering-of-blood",
+    name: "Offering of Blood",
+    gwId: 146,
+    type: "spell",
+    elite: true,
+    profession: "necromancer",
+    attributeId: "necromancer.blood-magic",
+    cost: { kind: "energy", amount: 1 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "You gain 8...18...20 Energy", for a 20% sacrifice.
+    effects: [
+      { kind: "sacrifice-health", percentOfMax: 20 },
+      {
+        kind: "energy-gain",
+        amount: {
+          scaling: { attributeId: "necromancer.blood-magic", atZero: 8, atTwelve: 18 },
+        },
+      },
+    ],
+  },
 ];
 
 export const SKILLS_BY_ID: ReadonlyMap<string, Skill> = new Map(
