@@ -34,6 +34,21 @@ export type SpreadGainedCondition = (
   gained: Extract<StatusChange, { kind: "gained-condition" }>,
 ) => CombatEvent[];
 
+/**
+ * An event `fireTriggers` fires at once, as the bearer does it: every one
+ * but those recorded as status changes, or fired from a summon.
+ */
+export type DirectTriggerEvent = Exclude<
+  StatusTriggerEvent,
+  | "bearer-gains-condition"
+  | "bearer-gains-hex-or-enchantment"
+  | "bearer-gains-enchantment"
+  | "bearer-blocks"
+  | "bearer-creates-creature"
+  | "ends"
+  | "expires"
+>;
+
 export interface TriggerContext {
   readonly sourceOf: (id: string) => Combatant | undefined;
   readonly rng: SimulationRng;
@@ -62,10 +77,7 @@ export interface TriggerContext {
  */
 export function fireTriggers(
   bearer: Combatant,
-  event: Exclude<
-    StatusTriggerEvent,
-    "bearer-gains-condition" | "bearer-creates-creature" | "ends" | "expires"
-  >,
+  event: DirectTriggerEvent,
   context: TriggerContext,
   spared: ReadonlySet<StatusId>,
 ): FiredTrigger[] {
@@ -109,7 +121,9 @@ export function fireCreationTriggers(
  * answered it when it happened (#953), so a killing blow still sets off
  * the hexes its death ended. Damage or life steal from a foe (#1022)
  * fires what answered it at that foe, and a block (#1329) what answered
- * it at the attacker. The simulation discards whatever
+ * it at the attacker. A hex or an enchantment gained (#1403) fires what
+ * answered it, toward whoever put it on, and a hex a status broke costs
+ * its caster that status's damage. The simulation discards whatever
  * the firing itself changes, so this never recurses either.
  */
 export function fireChangeTriggers(
@@ -152,6 +166,12 @@ export function fireChangeTriggers(
       return change.fired.flatMap(({ statusId, sourceId, trigger }) =>
         fire(trigger, statusId, sourceId, bearer, change.offenderId, undefined, context),
       );
+    case "gained-hex-or-enchantment":
+      return change.fired.flatMap(({ statusId, sourceId, trigger }) =>
+        fire(trigger, statusId, sourceId, bearer, change.sourceId, undefined, context),
+      );
+    case "broke-hex":
+      return breakHex(bearer, change, context);
     // Not a trigger: the simulation lands it on its own (#1108, #1265).
     case "redirected-damage":
     case "charged-source":
@@ -162,7 +182,8 @@ export function fireChangeTriggers(
 /**
  * Who a trigger's effects come from and land on: the source on the bearer
  * or on itself, or (#1022) the bearer on `otherId`, the foe that set it
- * off, or (#1316) the creature it created. `undefined` when one of them is
+ * off, or (#1316) the creature it created, or (#1403) the source on
+ * `otherId`, who put the gained hex or enchantment on the bearer. `undefined` when one of them is
  * gone, or an offender's bearer is dead: then it fires nothing.
  */
 function parties(
@@ -182,7 +203,29 @@ function parties(
       return other === undefined || bearer.dead ? undefined : { caster: bearer, target: other };
     case "created":
       return other === undefined ? undefined : { caster: bearer, target: other };
+    case "gained-source":
+      return other === undefined || other.dead ? undefined : { caster: source, target: other };
   }
+}
+
+/**
+ * A hex the bearer's status broke (#1403): its caster takes that status's
+ * damage, typeless, from the bearer. A caster gone or dead takes nothing.
+ */
+export function breakHex(
+  bearer: Combatant,
+  change: Extract<StatusChange, { kind: "broke-hex" }>,
+  { sourceOf, rng, rules, surroundings }: TriggerContext,
+): FiredTrigger[] {
+  const caster = sourceOf(change.toId);
+  if (caster === undefined || caster.dead) {
+    return [];
+  }
+  const events = applyEffects(
+    [{ kind: "damage", amount: { flat: change.damage }, type: "typeless", armorPenetration: 0 }],
+    { caster: bearer, target: caster, rng, rules, surroundings, usedSkill: undefined },
+  );
+  return [{ sourceId: bearer.id, skillId: change.skillId, events }];
 }
 
 /**
