@@ -168,7 +168,8 @@ body {
   }
 
   /* The status (the editor's professions, a lobby's code) keeps a row of
-     its own rather than folding away. */
+     its own rather than folding away. The editor's holds it up to 75rem
+     too (#1334), below. */
   #topbar {
     flex-wrap: wrap;
   }
@@ -1559,6 +1560,21 @@ body {
   min-width: 1.5ch;
 }
 
+/* The editor's bar (#1334): the name, Close, Save, ⋯ and the icons fill
+   a row up to 75rem, so its status takes the second row the phone's does
+   and its pickers never run under the icons. */
+@media (45rem < width <= 75rem) {
+  #topbar:has(.editor-professions) {
+    flex-wrap: wrap;
+  }
+
+  #topbar:has(.editor-professions) .topbar-status {
+    flex: 1 0 100%;
+    order: 10;
+    flex-wrap: wrap;
+  }
+}
+
 .editor-skill-slot select {
   flex: 1 1 auto;
 }
@@ -1636,6 +1652,7 @@ body {
 
 #topbar .problems-chip-toggle {
   padding: 0.2rem 0.7rem;
+  white-space: nowrap;
   border-radius: 1rem;
   color: var(--ink-dim);
   font-size: 0.85rem;
