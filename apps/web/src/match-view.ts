@@ -53,7 +53,7 @@ import {
   renderKeyLabels,
   renderMute,
   refreshSkillBar,
-  relicScoreToast,
+  objectiveScoreToast,
   ghostLeaderToast,
   ghostNameplate,
   renderSkillBar,
@@ -197,6 +197,7 @@ export function toArenaSnapshot(
       return {
         id: player.sessionId,
         name: ghostNameplate(player, self, names),
+        guildTag: player.guildTag,
         bot: player.bot,
         position: { x: player.x, y: player.y },
         facing: player.facing,
@@ -634,7 +635,7 @@ export async function startMatchView(
     const self = latestMatch.players.find((p) => p.sessionId === connection.selfSessionId);
     const objective =
       standBoostToast(lastMatch, latestMatch, self?.team) ??
-      relicScoreToast(lastMatch, latestMatch, self?.team);
+      objectiveScoreToast(lastMatch, latestMatch, self?.team, mode);
     // Who your Ghostly Hero follows now (#1419): a toast, no sound.
     const leader = ghostLeaderToast(
       lastMatch,

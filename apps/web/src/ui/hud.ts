@@ -842,31 +842,46 @@ export function standBoostToast(
     : { text: "Enemy morale boost", side: "theirs" };
 }
 
+/** What a point says in each mode that toasts one, yours then the foe's. */
+const SCORE_TOAST_TEXT: Partial<Record<MatchMode, readonly [string, string]>> = {
+  "relic-run": ["Relic scored!", "Enemy relic scored"],
+  "king-of-the-hill": ["Altar point!", "Enemy altar point"],
+};
+
 /**
- * The toast for a relic scored in a Relic Run (#1387), from two snapshots:
- * "Relic scored!" when your side's score went up, "Enemy relic scored" when
- * the foe's did; a spectator's side is team 0's. Points missed between two
- * frames toast once, and yours win if both sides scored. `undefined` for the
- * first snapshot, no score, and any match that is not a Relic Run (a
- * kill-count score is silent). A `before` without relics is no before: the
- * client's placeholder before its first frame is 0-0 with none, so a
- * mid-match rejoin would otherwise toast the score it walked in on.
+ * The toast for a point scored (#1387, #1399), from two snapshots: in a
+ * Relic Run "Relic scored!" when your side's score went up, "Enemy relic
+ * scored" when the foe's did, and in King of the Hill "Altar point!" and
+ * "Enemy altar point"; a spectator's side is team 0's. Points missed
+ * between two frames toast once, and yours win if both sides scored.
+ * `undefined` for the first snapshot, no score, and any other mode (a
+ * kill-count score is silent). A `before` without the mode's relics or
+ * altar is no before: the client's placeholder before its first frame is
+ * 0-0 with neither, so a mid-match rejoin would otherwise toast the score
+ * it walked in on.
  */
-export function relicScoreToast(
-  before: Pick<MatchSnapshot, "scoreTeam0" | "scoreTeam1" | "relics"> | undefined,
-  after: Pick<MatchSnapshot, "scoreTeam0" | "scoreTeam1" | "relics">,
+export function objectiveScoreToast(
+  before: Pick<MatchSnapshot, "scoreTeam0" | "scoreTeam1" | "relics" | "altar"> | undefined,
+  after: Pick<MatchSnapshot, "scoreTeam0" | "scoreTeam1">,
   selfTeam: number | undefined,
+  mode: MatchMode,
 ): ObjectiveToast | undefined {
-  if (before === undefined || before.relics.length === 0 || after.relics.length === 0) {
+  const text = SCORE_TOAST_TEXT[mode];
+  if (text === undefined || before === undefined) {
+    return undefined;
+  }
+  const placeholder =
+    mode === "relic-run" ? before.relics.length === 0 : before.altar === undefined;
+  if (placeholder) {
     return undefined;
   }
   const rose0 = after.scoreTeam0 > before.scoreTeam0;
   const rose1 = after.scoreTeam1 > before.scoreTeam1;
   const [ours, theirs] = (selfTeam ?? 0) === 1 ? [rose1, rose0] : [rose0, rose1];
   if (ours) {
-    return { text: "Relic scored!", side: "ours" };
+    return { text: text[0], side: "ours" };
   }
-  return theirs ? { text: "Enemy relic scored", side: "theirs" } : undefined;
+  return theirs ? { text: text[1], side: "theirs" } : undefined;
 }
 
 /**

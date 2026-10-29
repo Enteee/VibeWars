@@ -8,6 +8,7 @@ function row(id: string, team: number, values: Partial<MatchSummaryRow> = {}): M
   return {
     id,
     name: id,
+    guildTag: null,
     team,
     damage: 0,
     healing: 0,
