@@ -11,9 +11,9 @@
  *   readme-training.png  the Training Ground, a Fireball just landed on
  *                        a dummy of the Armor ladder
  *   readme-match.png     a hosted 4v4 lobby filled with bots, about ten
- *                        seconds into the fight, with the HUD
- *   readme-map.png       the same match a few seconds later, zoomed out
- *                        to the widest step
+ *                        seconds into the fight, a step in, with the HUD
+ *   readme-map.png       the same match a few seconds later, out at Wide,
+ *                        on a frame with no refusal text over the arena
  *
  * The shots are taken into a temporary directory and only moved into
  * docs/media/ once all four exist: a failed run leaves the old set. A step
@@ -131,6 +131,15 @@ async function editorAndTraining(page, dir) {
   // The toast covers the bar; let it go.
   await page.locator(".toast").waitFor({ state: "detached", timeout: 15_000 });
 
+  step = "wand on Fire Magic";
+  // The template leaves the wand on Energy Storage, which the build has
+  // at 7 of the 9 it needs; Fire Magic is at 12.
+  await page.locator("button", { hasText: /^gear$/i }).click();
+  await page
+    .getByRole("combobox", { name: "wand attribute" })
+    .selectOption({ label: "Fire Magic" });
+  await page.locator("button", { hasText: /^skills$/i }).click();
+
   step = "editor tooltip";
   await page.locator(".skill-box", { hasText: "Fireball" }).first().hover();
   await page.locator(".skill-tip").first().waitFor();
@@ -166,6 +175,74 @@ async function editorAndTraining(page, dir) {
 }
 
 /**
+ * Wheel a notch at a time until the stage names `name`, then wait until
+ * the camera, which eases there, holds still.
+ *
+ * @param {import("@playwright/test").Page} page
+ * @param {string} name a `data-zoom-step`: Close, Near, Default or Wide
+ * @param {number} deltaY per notch: negative in, positive out
+ */
+async function zoomTo(page, name, deltaY) {
+  const stage = page.locator("#viewport");
+  await page.locator("#viewport canvas:not(.compass)").hover();
+  for (let notch = 0; notch < 4; notch += 1) {
+    if ((await stage.getAttribute("data-zoom-step")) === name) {
+      break;
+    }
+    await page.mouse.wheel(0, deltaY);
+    await sleep(400);
+  }
+  if ((await stage.getAttribute("data-zoom-step")) !== name) {
+    throw new Error(`the camera did not step to ${name}`);
+  }
+  let last = "";
+  for (let poll = 0; poll < 40; poll += 1) {
+    const now = `${String(await stage.getAttribute("data-zoom"))} ${String(await stage.getAttribute("data-camera"))}`;
+    if (now === last) {
+      return;
+    }
+    last = now;
+    await sleep(250);
+  }
+}
+
+/**
+ * How many pixels of the arena, the HUD's corners left out, are in the
+ * neutral floating-text yellow, #ffd866 at any fade over the dark floor:
+ * "can't reach", "interrupted!" and the like. The target ring shares it,
+ * so shoot this with no target. Status icons are an orange yellow, less
+ * blue for their green, and stay out.
+ *
+ * @param {import("@playwright/test").Page} page
+ * @param {Buffer} png
+ * @returns {Promise<number>}
+ */
+async function yellowPixels(page, png) {
+  return page.evaluate(async (base64) => {
+    const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+    const bitmap = await globalThis.createImageBitmap(new Blob([bytes], { type: "image/png" }));
+    const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+    const context = canvas.getContext("2d");
+    if (context === null) {
+      return 0;
+    }
+    context.drawImage(bitmap, 0, 0);
+    // Below the target panel, left of the compass and the party, above the bar.
+    const { data } = context.getImageData(0, 150, 1060, 400);
+    let count = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      const [red = 0, green = 0, blue = 0] = data.subarray(i, i + 3);
+      const hue =
+        green > 0.8 * red && green < 0.92 * red && blue > 0.43 * green && blue < 0.65 * green;
+      if (red > 60 && red - blue > 30 && hue) {
+        count += 1;
+      }
+    }
+    return count;
+  }, png.toString("base64"));
+}
+
+/**
  * Host a lobby, fill it with bots, play the match and shoot it twice.
  *
  * @param {import("@playwright/test").Page} page
@@ -194,6 +271,10 @@ async function match(page, dir) {
   await page.getByRole("button", { name: "start match" }).click();
   await page.locator(".hud-bar-health").waitFor();
 
+  step = "zoom in";
+  // A step in, so the hero shows the fight rather than the floor round it.
+  await zoomTo(page, "Near", -120);
+
   step = "fight";
   // Into the fight with the bots: a foe targeted, the wand and the bar on it.
   const target = page.locator(".hud-target-text");
@@ -201,7 +282,6 @@ async function match(page, dir) {
   for (let second = 0; second < 12; second += 1) {
     if ((await target.textContent()) === "no target") {
       await page.keyboard.press("Tab");
-      await page.keyboard.press("Space");
     }
     // None in the last seconds, so no "That skill is recharging." in the shot.
     if (second < 9) {
@@ -212,15 +292,20 @@ async function match(page, dir) {
   await page.screenshot({ path: path.join(dir, "readme-match.png") });
 
   step = "zoom out";
-  const canvas = page.locator("#viewport canvas:not(.compass)");
-  await canvas.hover();
-  // A notch per step, out to Wide; the zoom eases there.
-  for (let notch = 0; notch < 3; notch += 1) {
-    await page.mouse.wheel(0, 120);
-    await sleep(300);
+  await zoomTo(page, "Wide", 120);
+  // The bots refuse now and then ("can't reach"); wait for a frame with
+  // none over the arena. No target, so its ring is not counted as one.
+  // Esc cancels a cast first, then drops the target.
+  for (let press = 0; press < 3 && (await target.textContent()) !== "no target"; press += 1) {
+    await page.keyboard.press("Escape");
+    await sleep(200);
   }
-  await sleep(3000);
-  await page.screenshot({ path: path.join(dir, "readme-map.png") });
+  let shot = await page.screenshot();
+  for (let retry = 0; retry < 20 && (await yellowPixels(page, shot)) > 10; retry += 1) {
+    await sleep(500);
+    shot = await page.screenshot();
+  }
+  fs.writeFileSync(path.join(dir, "readme-map.png"), shot);
 }
 
 const served = options.url === undefined ? await serve() : undefined;
