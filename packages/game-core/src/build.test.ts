@@ -116,3 +116,17 @@ describe("a Common skill (#474)", () => {
     }
   });
 });
+
+describe("a map NPC's skill (#1377)", () => {
+  it("is refused on a player's bar and listed for no build", () => {
+    expect(validatePlayerBuild(withBar("npc.claim-resource"), RULES)).toEqual([
+      {
+        field: "skillBar[0]",
+        message: "unknown or not-yet-implemented skill npc.claim-resource",
+      },
+    ]);
+    expect(equippableSkills(withBar()).map((skill) => skill.id)).not.toContain(
+      "npc.claim-resource",
+    );
+  });
+});

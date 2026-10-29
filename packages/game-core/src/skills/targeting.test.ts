@@ -147,6 +147,7 @@ describe("resolveTargets", () => {
         onDeath: "vanish",
         ownerDisableSeconds: 0,
         companionSkillId: undefined,
+        leaderId: undefined,
         mode: "guard",
       },
     });

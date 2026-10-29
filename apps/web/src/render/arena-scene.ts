@@ -449,8 +449,9 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /**
-   * A Relic Run's altar (#1374): a neutral ring on the ground as wide as
-   * a carrier must come to score, and a stone at its centre.
+   * A Relic Run or King of the Hill altar (#1374, #1377): a neutral ring
+   * on the ground as wide as a relic or ghost must come to score, and a
+   * stone at its centre.
    */
   private drawAltar(g: Phaser.GameObjects.Graphics): void {
     const altar = this.snapshot.altar;

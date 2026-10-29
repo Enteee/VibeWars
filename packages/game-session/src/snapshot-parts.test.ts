@@ -106,6 +106,8 @@ function snapshot(
     aggression: [],
     relics: [],
     altar: null,
+    altarHolder: null,
+    altarHeldSeconds: 0,
     capturePoints: [],
   };
 }
@@ -152,6 +154,7 @@ describe("packSnapshot (#662)", () => {
         look: "bone-minion",
         mode: null,
         armedAttack: null,
+        leaderId: null,
       },
     });
     const players = [
