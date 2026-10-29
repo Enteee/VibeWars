@@ -2577,6 +2577,7 @@
     },
     "WireSnapshot": {
       "properties": [
+        { "name": "aggression", "optional": false, "type": { "array": "number" } },
         { "name": "elapsedSeconds", "optional": false, "type": "number" },
         {
           "name": "endReason",
@@ -2873,6 +2874,7 @@
     },
     "WireSnapshotPart": {
       "properties": [
+        { "name": "aggression", "optional": false, "type": { "array": "number" } },
         { "name": "elapsedSeconds", "optional": false, "type": "number" },
         {
           "name": "endReason",

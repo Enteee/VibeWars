@@ -69,6 +69,7 @@ const MATCH: MatchSnapshot = {
   traps: [],
   flags: [],
   stand: undefined,
+  aggression: [],
   summary: undefined,
 };
 

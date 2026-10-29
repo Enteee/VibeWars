@@ -57,4 +57,11 @@ players are all dead at the lowest morale. After 28 minutes, the team
 that did the most damage to the enemy Guild Lord wins; a tie there is a
 loss for both, as there are no draws.
 
+The scoreboard shows each Guild Lord's health, yours first, who holds the
+stand and how long until their boost, when the shrines next bring the
+dead back, and, in the last 3 minutes, each team's damage to the enemy
+lord. Under it, a line names whoever carries a flag. A boost pops up as
+"Morale boost! +10%", or "Enemy morale boost". On the compass, ♛ marks
+each Guild Lord, ⚑ each flag and ◎ the stand.
+
 Guild Hall Isle plays it.

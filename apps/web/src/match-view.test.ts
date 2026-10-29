@@ -59,6 +59,7 @@ function match(players: readonly PlayerSnapshot[]): MatchSnapshot {
     traps: [],
     flags: [],
     stand: undefined,
+    aggression: [],
     summary: undefined,
   };
 }

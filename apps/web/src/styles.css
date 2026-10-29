@@ -379,12 +379,17 @@ body {
   pointer-events: auto;
 }
 
-/* Top centre (#1042): the scoreboard, and the target frame under it. */
+/* Top centre (#1042): the scoreboard, and the target frame under it. As
+   wide as its line, not half the view its left: 50% leaves it, and clear
+   of the match buttons both sides, so a Guild Battle's long line wraps
+   rather than run under them (#1226). */
 .hud-top {
   position: absolute;
   top: calc(0.6rem + var(--build-banner-space, 0px));
   left: 50%;
   transform: translateX(-50%);
+  width: max-content;
+  max-width: max(calc(100% - 30rem), 18rem);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2297,8 +2302,12 @@ body {
   border: 1px solid var(--line);
   letter-spacing: 0.12em;
   font-size: 0.95rem;
-  white-space: nowrap;
   pointer-events: none;
+}
+
+/* A line too long for its room breaks between parts, never in one (#1226). */
+.hud-scoreboard-text > span {
+  white-space: nowrap;
 }
 
 /* A side's priest on a Priest Annihilation map (#1199): its side's
@@ -2310,6 +2319,36 @@ body {
 .hud-priest.is-dead {
   opacity: 0.4;
   text-decoration: line-through;
+}
+
+/* A Guild Battle's lords and stand (#1226): a side's colour, grey for none. */
+.hud-side {
+  color: var(--pip-colour, var(--ink-dim));
+}
+
+.hud-side.is-dead {
+  opacity: 0.4;
+  text-decoration: line-through;
+}
+
+/* A line a flag away from home, under the scoreboard (#1226). */
+.hud-carriers {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+}
+
+.hud-carriers:empty {
+  display: none;
+}
+
+.hud-carrier {
+  padding: 0.1rem 0.6rem;
+  background: rgb(14 17 22 / 85%);
+  border: 1px solid var(--line);
+  color: var(--pip-colour);
+  white-space: nowrap;
 }
 
 /* The next priest wave close (#1199): the countdown pulses for its last
@@ -2507,6 +2546,11 @@ body {
   letter-spacing: 0.15em;
   text-transform: uppercase;
   pointer-events: none;
+  /* As wide as its line, not half the view its left: 50% leaves it, so a
+     Guild Battle's line stays one at 1100 px (#1226); a phone wraps. */
+  width: max-content;
+  max-width: calc(100% - 2rem);
+  text-align: center;
 }
 
 /* The match summary (#1057): both teams side by side under the result
@@ -4600,6 +4644,24 @@ body:has(#app > .chat) .now-playing {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .hud-scoreboard {
+    box-sizing: border-box;
+    max-width: 100%;
+  }
+
+  /* A carrier's long name ends in an ellipsis, not under the compass. */
+  .hud-carriers {
+    align-items: flex-start;
+    max-width: 100%;
+  }
+
+  .hud-carrier {
+    box-sizing: border-box;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .hud-target-health {

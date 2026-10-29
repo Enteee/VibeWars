@@ -75,6 +75,7 @@ function snapshot(
     traps: [],
     flags: [],
     stand: undefined,
+    aggression: [],
     summary: undefined,
   };
 }

@@ -160,6 +160,8 @@ export interface MatchSnapshot {
   readonly flags: readonly FlagState[];
   /** Who holds the flag stand (#1225); `undefined` on a map without one. */
   readonly stand: StandState | undefined;
+  /** Each team's aggression by team index on a Guild Battle (#1222, #1226); `[]` on any other. */
+  readonly aggression: readonly number[];
   /** What each player did, from the host's `ended` (#1057); `undefined` until then. */
   readonly summary: readonly MatchSummaryRow[] | undefined;
 }
