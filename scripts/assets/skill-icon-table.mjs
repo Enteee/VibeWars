@@ -273,4 +273,11 @@ export const SKILL_ICONS = {
   "assassin.malicious-strike": { glyph: "dagger", modifier: "half" },
   "assassin.unsuspecting-strike": { glyph: "dagger", modifier: "plus" },
   "assassin.critical-defenses": { glyph: "shield-bolt", modifier: "self" },
+  // Placeholders until the asset-designer's (#1332): the Curses hexes.
+  "necromancer.barbs": { glyph: "hex-burst", modifier: "plus" },
+  "necromancer.price-of-failure": { glyph: "hex-burst", modifier: "bolt" },
+  "necromancer.suffering": { glyph: "hex-burst", modifier: "area" },
+  "necromancer.defile-flesh": { glyph: "hex-burst", modifier: "less" },
+  "necromancer.rigor-mortis": { glyph: "hex-burst", modifier: "half" },
+  "necromancer.lingering-curse": { glyph: "hex-burst", modifier: "hourglass" },
 };
