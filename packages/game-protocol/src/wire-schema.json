@@ -147,7 +147,7 @@
     "MAX_SNAPSHOT_PARTS": { "literal": 12 },
     "MAX_WIRE_CHAT_TEXT": { "literal": 2048 },
     "MAX_WIRE_COMBATS": { "literal": 64 },
-    "MAX_WIRE_CREATURES": { "literal": 32 },
+    "MAX_WIRE_CREATURES": { "literal": 56 },
     "MAX_WIRE_EVENTS": { "literal": 64 },
     "MAX_WIRE_GROUND_EFFECTS": { "literal": 32 },
     "MAX_WIRE_JSON_DEPTH": { "literal": 16 },

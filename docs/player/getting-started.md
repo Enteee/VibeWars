@@ -35,8 +35,7 @@ fresh random build to try.
 
 The quickest way into a fight. Choose the team size, press **Random
 Arena** and wait: you are put in a team with other players, against
-another team, on a random map. Bots fill a team when there are not
-enough players.
+another team, on a random map.
 
 When the match ends you can **Queue again**, or **Stay together** with
 the team you just played with.
@@ -54,12 +53,12 @@ To play with friends:
 ## In a match
 
 - Click the ground to walk there, or move with the arrow keys.
-- Click a foe to target it, or press **Tab** for the next one. Press
-  **Space**, or double-click the foe, to attack it.
+- Right click a foe to target it, or press **Tab** for the next one.
+  Press **Space**, or right click the foe again, to attack it.
 - Your eight skills are on **Q W E R** and **A S D F**, slot 1 first.
   Click a skill on the bar to use it too.
 - **Esc** cancels what you are doing. Every key can be changed in
   **Options**, under Controls; the Classic preset puts skills on 1 to 8
-  and moves with WASD.
+  and moves with WASD. All of them are in [Controls](controls.md).
 
 The [?] button, top right, opens this Help again, in a match too.

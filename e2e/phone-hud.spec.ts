@@ -3,9 +3,10 @@ import { expect, test, type Page } from "@playwright/test";
 import { key } from "./keys.js";
 
 /**
- * A 390x844 phone in a match (#1297): the HUD's top band is narrower than
+ * A phone in a match (#1297, #1306): the HUD's top band is narrower than
  * the scoreboard and target frame beside the match buttons, so on a phone
- * they lay out apart. Every box here must miss every other.
+ * they lay out apart. Every box here must miss every other, at 390x844 and
+ * at 360x740.
  */
 
 interface Box {
@@ -20,9 +21,20 @@ const PARTS = [
   ".hud-target",
   ".hud-leave",
   ".hud-mute",
+  ".hud-help",
   ".hud-options",
+  ".hud-fullscreen",
+  ".hud-music",
   ".compass",
 ] as const;
+
+/** The phones the HUD must fit. */
+const PHONES = [
+  { width: 390, height: 844 },
+  { width: 360, height: 740 },
+] as const;
+
+type Phone = (typeof PHONES)[number];
 
 function overlaps(a: Box, b: Box): boolean {
   return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
@@ -32,8 +44,8 @@ function overlaps(a: Box, b: Box): boolean {
  * A match against a bot from the menu on show, the bot targeted, the toast
  * noted; on `map` when given, else the lobby's default.
  */
-async function phoneMatch(page: Page, map?: string): Promise<void> {
-  await page.setViewportSize({ width: 390, height: 844 });
+async function phoneMatch(page: Page, phone: Phone, map?: string): Promise<void> {
+  await page.setViewportSize(phone);
   await page.goto("./");
   // The toast hides after a few seconds: note where it is, every frame it
   // shows in the match, as music.spec.ts does (#372).
@@ -67,6 +79,11 @@ async function phoneMatch(page: Page, map?: string): Promise<void> {
 async function expectApart(page: Page): Promise<void> {
   const boxes = new Map<string, Box>();
   for (const part of PARTS) {
+    // Fullscreen shows only where the browser offers it.
+    if (!(await page.locator(part).isVisible())) {
+      expect(part, "only fullscreen may be missing").toBe(".hud-fullscreen");
+      continue;
+    }
     const found = await page.locator(part).boundingBox();
     expect(found, part).not.toBeNull();
     if (found !== null) {
@@ -88,26 +105,32 @@ async function expectApart(page: Page): Promise<void> {
   }
 }
 
-test("on a 390x844 phone the match HUD's top boxes do not overlap (#1297)", async ({ page }) => {
-  await phoneMatch(page);
-  await expectApart(page);
-  // "leave" alone on a phone, but still named in full.
-  await expect(page.getByRole("button", { name: "leave match (F10)" })).toBeVisible();
-});
+for (const phone of PHONES) {
+  const size = `${String(phone.width)}x${String(phone.height)}`;
 
-test("on a 390x844 phone with the new-version banner up, they still do not (#1297)", async ({
-  page,
-}) => {
-  await page.route("**/build.json", (route) => route.fulfill({ json: { build: "newer" } }));
-  await phoneMatch(page);
-  await expect(page.locator(".build-banner")).toBeVisible();
-  await expectApart(page);
-});
+  test(`on a ${size} phone the match HUD's top boxes do not overlap (#1297, #1306)`, async ({
+    page,
+  }) => {
+    await phoneMatch(page, phone);
+    await expectApart(page);
+    // "leave" alone on a phone, but still named in full.
+    await expect(page.getByRole("button", { name: "leave match (F10)" })).toBeVisible();
+  });
 
-test("on a 390x844 phone a Guild Battle's long scoreboard wraps clear of them too (#1226)", async ({
-  page,
-}) => {
-  await phoneMatch(page, "guild-hall-isle");
-  await expect(page.locator(".hud-scoreboard")).toContainText("Lord");
-  await expectApart(page);
-});
+  test(`on a ${size} phone with the new-version banner up, they still do not (#1297, #1306)`, async ({
+    page,
+  }) => {
+    await page.route("**/build.json", (route) => route.fulfill({ json: { build: "newer" } }));
+    await phoneMatch(page, phone);
+    await expect(page.locator(".build-banner")).toBeVisible();
+    await expectApart(page);
+  });
+
+  test(`on a ${size} phone a Guild Battle's long scoreboard wraps clear of them too (#1226)`, async ({
+    page,
+  }) => {
+    await phoneMatch(page, phone, "guild-hall-isle");
+    await expect(page.locator(".hud-scoreboard")).toContainText("Lord");
+    await expectApart(page);
+  });
+}

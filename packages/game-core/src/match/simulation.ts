@@ -339,8 +339,15 @@ function creaturePips(participant: Participant): number {
 /** Below this past a whole second, the clock is read as on it: dt sums drift (#1223). */
 const WHOLE_SECOND_EPSILON = 1e-6;
 
-/** At most this many creatures in a match at once (#1052): a summon past it makes as many as fit. */
+/**
+ * At most this many summoned creatures in a match at once (#1052): a
+ * summon past it makes as many as fit. A map's own creatures, its priests,
+ * Guild Lords and guards, never take a summon's place (#1281).
+ */
 export const MAX_CREATURES = 32;
+
+/** The most creatures a map places itself (#1281): a map with more is refused at setup. */
+export const MAX_MAP_CREATURES = 24;
 
 /**
  * A circle on the ground (#1087, ADR-0035): not a body, so nothing can
@@ -905,6 +912,14 @@ export class MatchSimulation {
         };
       }
     }
+    const mapCreatures = [...this.#participants.values()].filter(
+      (record) => record.creature !== undefined && record.creature.ownerId === undefined,
+    ).length;
+    if (mapCreatures > MAX_MAP_CREATURES) {
+      throw new Error(
+        `the map places ${String(mapCreatures)} creatures, at most ${String(MAX_MAP_CREATURES)}`,
+      );
+    }
   }
 
   public get tick(): number {
@@ -1086,7 +1101,8 @@ export class MatchSimulation {
 
   /**
    * `count` creatures of `template` at `at`, facing as `owner` does, on its
-   * team (#1052): as many as `MAX_CREATURES` leaves room for. Added to the
+   * team (#1052): as many as `MAX_CREATURES` leaves room for among the
+   * summoned, a map's own creatures aside (#1281). Added to the
    * end of the match, so they act from this very tick, after everyone
    * already there.
    *
@@ -1114,7 +1130,7 @@ export class MatchSimulation {
     }
     let creatures = 0;
     for (const record of this.#participants.values()) {
-      if (record.creature !== undefined && !this.#leaving.has(record.id)) {
+      if (record.creature?.ownerId !== undefined && !this.#leaving.has(record.id)) {
         creatures += 1;
       }
     }
