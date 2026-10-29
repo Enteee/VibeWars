@@ -390,7 +390,7 @@ function playerRow(
   const text = h("span", "lobby-slot-text");
   const player = text.appendChild(playerLabelElement("lobby-player", member.name, member.guildTag));
   if (member.isHost) {
-    player.appendChild(document.createTextNode(" (host)"));
+    player.appendChild(h("span", "lobby-host", " (host)"));
   }
   text.appendChild(h("span", "lobby-character", characterLine(character, member.bot)));
   row.appendChild(text);

@@ -333,7 +333,7 @@ describe("createPartyWindow (#1055)", () => {
   it("shows the BOT tag after a bot's name, and on no one else's (#1194)", () => {
     party.update(match([ME, player("bot-1", { name: "Monk Bot", bot: true })]));
     const tags = panel().children.map((row) => {
-      const [, , tag] = row.children[0]?.children ?? [];
+      const [, , , tag] = row.children[0]?.children ?? [];
       return tag === undefined ? undefined : { text: tag.textContent, hidden: tag.hidden };
     });
     expect(tags).toEqual([
