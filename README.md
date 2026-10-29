@@ -14,7 +14,7 @@ character, test it on dummies in the Training Ground, then host a lobby
 and send its code to your friends. Nothing to install; see
 [Play it](#play-it).
 
-![The character editor, with the Training Ground on the left: a Fireball has just hit a caster dummy](docs/media/readme-arena.png)
+![A 4v4 match on Canyon: an Elementalist and three bots fight four bots, with the skill bar, the target frame, the party window and the compass on screen](docs/media/readme-match.png)
 
 A browser-based, minimalist, multiplayer PvP arena game mechanically
 inspired by Guild Wars 1 PvP — original implementation, original
@@ -48,7 +48,8 @@ In a match, the default keys are:
 - **Esc**: cancel what you are doing. **F10**: leave the match.
 
 The **Classic** preset puts skills on 1 to 8 and moves with W A S D.
-Every key can be changed in Options. [Controls](docs/player/controls.md)
+Every key but Esc, Enter, F10 and the mouse can be changed in Options.
+[Controls](docs/player/controls.md)
 lists them all. [Getting started](docs/player/getting-started.md) walks
 through a first match, and the **[?]** button in the game opens the same
 Help.
@@ -103,6 +104,14 @@ Honest limits:
   match runs; watching a match is not built yet.
 - The **host's tab runs the match**: if it closes, the match ends for
   everyone.
+
+## Screenshots
+
+![The build editor: an Elementalist/Mesmer with all eight skills on the bar, its attribute points spent, and the tooltip of Fireball open](docs/media/readme-editor.png)
+
+![The Training Ground, expanded: a Fireball has just hit one of the Armor ladder's six dummies, its damage floating above it](docs/media/readme-training.png)
+
+![The same match on Canyon a few seconds later, zoomed out to the widest view: the arena's walls and both teams in one frame](docs/media/readme-map.png)
 
 ## Repository layout
 
