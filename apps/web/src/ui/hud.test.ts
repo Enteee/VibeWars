@@ -21,6 +21,8 @@ import {
   enemyPips,
   formatClock,
   ghostLeaderLabel,
+  ghostLeaderToast,
+  ghostNameplate,
   invulnerableLabel,
   isAttackingTarget,
   lostHealthPercent,
@@ -1003,7 +1005,7 @@ describe("targetHint (#253, #302)", () => {
   });
 });
 
-describe("ghostLeaderLabel (#1377)", () => {
+describe("a Ghostly Hero's leader (#1377, #1419)", () => {
   const me = player({ sessionId: "me", name: "me", team: 0 });
   const names = new Map([
     ["me", "me"],
@@ -1023,18 +1025,68 @@ describe("ghostLeaderLabel (#1377)", () => {
         leaderId,
       },
     });
+  /** A snapshot of both teams' ghosts, team 0's following `ours` and team 1's `theirs`. */
+  const ghosts = (ours: string | null, theirs: string | null = null) => ({
+    players: [me, ghost(0, ours), ghost(1, theirs)],
+  });
+  const toast = (
+    before: ReturnType<typeof ghosts> | undefined,
+    after: ReturnType<typeof ghosts>,
+    selfTeam: number | undefined = 0,
+  ) => ghostLeaderToast(before, after, "me", selfTeam, names);
 
-  it("says whom your team's ghost follows, or that it stays", () => {
-    expect(ghostLeaderLabel(me, ghost(0, "me"), names)).toBe("follows you");
-    expect(ghostLeaderLabel(me, ghost(0, "ally"), names)).toBe("follows Devona");
-    expect(ghostLeaderLabel(me, ghost(0, null), names)).toBe("stays");
+  describe("ghostLeaderLabel", () => {
+    it("says whom your team's ghost follows, or that it stays", () => {
+      expect(ghostLeaderLabel(me, ghost(0, "me"), names)).toBe("follows you");
+      expect(ghostLeaderLabel(me, ghost(0, "ally"), names)).toBe("follows Devona");
+      expect(ghostLeaderLabel(me, ghost(0, null), names)).toBe("stays");
+    });
+
+    it("says nothing of the foe's ghost, a dead one, or any other target", () => {
+      expect(ghostLeaderLabel(me, ghost(1, "foe"), names)).toBeUndefined();
+      expect(ghostLeaderLabel(me, { ...ghost(0, "me"), dead: true }, names)).toBeUndefined();
+      expect(ghostLeaderLabel(me, player({ team: 0 }), names)).toBeUndefined();
+      expect(ghostLeaderLabel(me, undefined, names)).toBeUndefined();
+    });
   });
 
-  it("says nothing of the foe's ghost, a dead one, or any other target", () => {
-    expect(ghostLeaderLabel(me, ghost(1, "foe"), names)).toBeUndefined();
-    expect(ghostLeaderLabel(me, { ...ghost(0, "me"), dead: true }, names)).toBeUndefined();
-    expect(ghostLeaderLabel(me, player({ team: 0 }), names)).toBeUndefined();
-    expect(ghostLeaderLabel(me, undefined, names)).toBeUndefined();
+  describe("ghostLeaderToast", () => {
+    it("toasts whom your team's ghost now follows, or that it stays", () => {
+      expect(toast(ghosts(null), ghosts("me"))).toBe("Ghostly Hero follows you");
+      expect(toast(ghosts(null), ghosts("ally"))).toBe("Ghostly Hero follows Devona");
+      expect(toast(ghosts("me"), ghosts(null))).toBe("Ghostly Hero stays");
+    });
+
+    it("toasts a leader handed from one ally to another once, as the new one", () => {
+      expect(toast(ghosts("ally"), ghosts("me"))).toBe("Ghostly Hero follows you");
+      expect(toast(ghosts("me"), ghosts("me"))).toBeUndefined();
+    });
+
+    it("says nothing of the foe's ghost, to a spectator, or on the first snapshot", () => {
+      expect(toast(ghosts(null, null), ghosts(null, "foe"))).toBeUndefined();
+      expect(ghostLeaderToast(ghosts(null), ghosts("me"), "me", undefined, names)).toBeUndefined();
+      expect(toast(undefined, ghosts("me"))).toBeUndefined();
+    });
+
+    it("says nothing as the ghost dies or rises", () => {
+      const dead = { players: [me, { ...ghost(0, "me"), dead: true }] };
+      expect(toast(ghosts("me"), dead)).toBeUndefined();
+      expect(toast(dead, ghosts(null))).toBeUndefined();
+    });
+  });
+
+  describe("ghostNameplate", () => {
+    it("names the leader of your team's ghost, and of both to a spectator", () => {
+      expect(ghostNameplate(ghost(0, "me"), me, names)).toBe("Ghostly Hero › you");
+      expect(ghostNameplate(ghost(0, "ally"), me, names)).toBe("Ghostly Hero › Devona");
+      expect(ghostNameplate(ghost(1, "ally"), undefined, names)).toBe("Ghostly Hero › Devona");
+    });
+
+    it("keeps a staying ghost's, a foe's ghost's and anyone else's plain name", () => {
+      expect(ghostNameplate(ghost(0, null), me, names)).toBe("Ghostly Hero");
+      expect(ghostNameplate(ghost(1, "foe"), me, names)).toBe("Ghostly Hero");
+      expect(ghostNameplate(me, me, names)).toBe("me");
+    });
   });
 });
 
