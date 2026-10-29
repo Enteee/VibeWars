@@ -363,6 +363,22 @@ describe("describeCombatEvent", () => {
     ).toBe("Concussion Shot (Pyro) can't interrupt Caster dummy's Anthem of Flame: not a spell");
   });
 
+  it("finds a spell-only interrupt in what a ground effect lands: not a spell (#1367)", () => {
+    const unguent: CombatEvent = {
+      kind: "interrupt-missed",
+      targetId: "dummy",
+      refusedSkillId: "ranger.troll-unguent",
+    };
+    expect(
+      describeCombatEvent(
+        entry([unguent], { skillId: "elementalist.maelstrom" }),
+        unguent,
+        nameOf,
+        isCreature,
+      ),
+    ).toBe("Maelstrom (Pyro) can't interrupt Caster dummy's Troll Unguent: not a spell");
+  });
+
   it("says whose skill a disable held back, and for how long (#914)", () => {
     const disabled: CombatEvent = {
       kind: "skill-disabled",

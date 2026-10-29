@@ -682,6 +682,35 @@ describe("applySkillEffects", () => {
     expect(events.map((event) => event.kind)).toEqual(["sacrifice", "energy-gain"]);
   });
 
+  it("gives the caster its status once however many are hit, with itself as source (#1367)", () => {
+    const caster = makeCombatant({ id: "caster" });
+    const targets = ["a", "b", "c"].map((id) => makeCombatant({ id, team: 1 }));
+    const events = applySkillEffects({
+      surroundings: new Map(),
+      skill: {
+        ...skill,
+        effects: [
+          { kind: "damage", amount: { flat: 30 }, type: "cold", armorPenetration: 0 },
+          { kind: "caster-gains-status", statusId: "ice-spear", durationSeconds: 5 },
+        ],
+      },
+      caster,
+      targets,
+      rng: createRng(1),
+      rules,
+    });
+    expect(
+      events.filter((event) => event.kind === "status-applied").map((event) => event.targetId),
+    ).toEqual(["caster"]);
+    expect(caster.statuses.get("ice-spear")).toMatchObject({
+      sourceId: "caster",
+      remainingSeconds: 5,
+    });
+    for (const target of targets) {
+      expect(target.statuses.has("ice-spear")).toBe(false);
+    }
+  });
+
   it("is applyEffects exactly, for one target", () => {
     const run = (apply: (caster: Combatant, target: Combatant) => CombatEvent[]) => {
       const caster = makeCombatant({ id: "caster", energy: 10 });
