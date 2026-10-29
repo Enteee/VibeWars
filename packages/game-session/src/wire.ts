@@ -396,6 +396,7 @@ function wireEvent(event: CombatEvent): WireCombatEvent {
         kind: event.reason === "out-of-sequence" ? "attack-out-of-sequence" : event.kind,
         targetId: event.targetId,
       };
+    case "spirit-destroyed":
     case "death":
     case "attack-blocked":
     case "invulnerable":
@@ -490,6 +491,7 @@ function combatEvent(event: WireCombatEvent): CombatEvent | undefined {
     case "attack-out-of-sequence":
       return { kind: "attack-missed", targetId, reason: "out-of-sequence" };
     case "attack-missed":
+    case "spirit-destroyed":
     case "death":
     case "attack-blocked":
     case "invulnerable":

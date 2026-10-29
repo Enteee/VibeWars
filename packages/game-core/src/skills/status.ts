@@ -864,7 +864,12 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
       on,
       effects: [
         SPITEFUL_SPIRIT_DAMAGE,
-        { kind: "splash", radius: AREA_ADJACENT, effects: [SPITEFUL_SPIRIT_DAMAGE] },
+        {
+          kind: "splash",
+          hits: "foes",
+          radius: AREA_ADJACENT,
+          effects: [SPITEFUL_SPIRIT_DAMAGE],
+        },
       ],
       target: "bearer",
       skillId: "necromancer.spiteful-spirit",
@@ -938,6 +943,7 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
         effects: [
           {
             kind: "splash",
+            hits: "foes",
             radius: AREA_ADJACENT,
             effects: [
               { kind: "damage", amount: { flat: 34 }, type: "shadow", armorPenetration: 0 },
@@ -1379,6 +1385,7 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
       effects: [
         {
           kind: "splash",
+          hits: "foes",
           radius: AREA_ADJACENT,
           effects: [
             { kind: "damage", amount: { flat: 25 }, type: "typeless", armorPenetration: 0 },
@@ -1426,6 +1433,7 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
             effects: [
               {
                 kind: "splash",
+                hits: "foes",
                 radius: AREA_ADJACENT,
                 effects: [
                   { kind: "damage", amount: { flat: 22 }, type: "slashing", armorPenetration: 0 },
@@ -1452,6 +1460,7 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
           effects: [
             {
               kind: "splash",
+              hits: "foes",
               radius: AREA_ADJACENT,
               effects: [
                 { kind: "damage", amount: { flat: 50 }, type: "earth", armorPenetration: 0 },
@@ -1488,6 +1497,7 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
         effects: [
           {
             kind: "splash",
+            hits: "foes",
             radius: AREA_NEARBY,
             effects: [{ kind: "apply-status", statusId: "cracked-armor", durationSeconds: 8 }],
           },
@@ -1508,6 +1518,7 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
         effects: [
           {
             kind: "splash",
+            hits: "foes",
             radius: AREA_NEARBY,
             effects: [{ kind: "apply-status", statusId: "blind", durationSeconds: 3 }],
           },
@@ -1528,6 +1539,7 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
         effects: [
           {
             kind: "splash",
+            hits: "foes",
             radius: AREA_NEARBY,
             effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: 7 }],
           },

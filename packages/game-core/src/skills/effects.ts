@@ -21,10 +21,11 @@ import {
   type StatusCategory,
   type StatusId,
 } from "./status.js";
-import { nearestFirst, spiritsWithin } from "./targeting.js";
+import { nearestFirst, spiritsWithin, type TargetCandidate } from "./targeting.js";
 import { effectiveMaxHealth, healingMultiplierOf, maxHealthLossOf, rankOf } from "./tick.js";
 import { wieldsFor } from "../equipment/weapons.js";
 import { distance } from "../vec2.js";
+import type { Creature } from "../match/simulation.js";
 import type { ProfessionId } from "../professions.js";
 import type { SimulationRng } from "../rng.js";
 import { ADRENALINE_PER_STRIKE, type CombatRules } from "../ruleset.js";
@@ -82,6 +83,11 @@ export type CombatEvent =
    */
   | { readonly kind: "life-stolen"; readonly targetId: string; readonly amount: number }
   | { readonly kind: "death"; readonly targetId: string }
+  /**
+   * A spirit destroyed by a skill (#1309): gone at once, as an expired one
+   * goes, with no corpse, no killer and no morale. Not a death.
+   */
+  | { readonly kind: "spirit-destroyed"; readonly targetId: string }
   /** Back from the dead (#812), with these shares of maximum health and energy, 0..1. */
   | {
       readonly kind: "resurrected";
@@ -293,7 +299,8 @@ function reverse(target: Combatant, amount: number, events: CombatEvent[]): bool
  * `perAlly`, more for each living ally of the caster within the radius,
  * the caster included, and the whole capped at `max` (#923); with
  * `perRemoved`, per status of that category `earlier` took off the
- * target (#987).
+ * target (#987); with `perDestroyedSpirit`, per spirit `earlier` destroyed
+ * (#1309).
  */
 function healAmount(
   effect: HealEffect,
@@ -305,7 +312,10 @@ function healAmount(
   const base =
     resolveMagnitude(effect.amount, caster) *
     perStatus(effect.perStatusOnTarget, target) *
-    perRemoved(effect.perRemoved, target, earlier);
+    perRemoved(effect.perRemoved, target, earlier) *
+    (effect.perDestroyedSpirit === true
+      ? earlier.filter((event) => event.kind === "spirit-destroyed").length
+      : 1);
   const { perAlly } = effect;
   if (perAlly === undefined) {
     return base;
@@ -716,6 +726,28 @@ function landStatus(
  * Nothing that reacts to damage sees it. An invulnerable caster (#1208)
  * gives up none: the skill works, free.
  */
+/** Whether `creature` is one a player brought (#1309): a minion, a spirit or a pet, never a map NPC. */
+function isSummoned(creature: Creature | undefined): boolean {
+  return creature?.kind === "minion" || creature?.kind === "spirit" || creature?.kind === "pet";
+}
+
+/**
+ * Destroy `candidate` when it is a living spirit on `caster`'s side
+ * (#1309): dead at once, so nothing later in the step acts on it or
+ * through it, and `spirit-destroyed` tells the simulation to take it off
+ * the field as an expired spirit leaves. Not damage, so Shelter and Union
+ * do not soften it, and not a death: no killer and no morale.
+ */
+function destroySpirit(candidate: TargetCandidate, caster: Combatant, events: CombatEvent[]): void {
+  const { combatant, creature } = candidate;
+  if (creature?.kind !== "spirit" || combatant.dead || combatant.team !== caster.team) {
+    return;
+  }
+  combatant.health = 0;
+  combatant.dead = true;
+  events.push({ kind: "spirit-destroyed", targetId: combatant.id });
+}
+
 function sacrifice(caster: Combatant, amount: number, events: CombatEvent[]): void {
   if (amount <= 0 || isInvulnerable(caster)) {
     return;
@@ -1098,16 +1130,39 @@ export function applyEffect(
         return events;
       }
       const reached = [...context.surroundings.values()].filter(
-        ({ combatant, position }) =>
+        ({ combatant, position, creature }) =>
           !combatant.dead &&
           combatant.id !== target.id &&
           combatant.team !== caster.team &&
+          (effect.hits === "foes" || isSummoned(creature)) &&
           distance(position, at) <= effect.radius,
       );
       for (const combatant of nearestFirst(reached, at)) {
         for (const inner of effect.effects) {
           events.push(...applyEffect(inner, { ...context, target: combatant }, earlier, target));
         }
+      }
+      return events;
+    }
+
+    case "destroy-target-spirit": {
+      const spirit = target === undefined ? undefined : context.surroundings.get(target.id);
+      if (spirit !== undefined) {
+        destroySpirit(spirit, caster, events);
+      }
+      return events;
+    }
+
+    case "destroy-allied-spirits": {
+      const at = context.surroundings.get(caster.id)?.position;
+      if (at === undefined) {
+        return events;
+      }
+      const near = [...context.surroundings.values()].filter(
+        ({ position }) => distance(position, at) <= effect.radius,
+      );
+      for (const spirit of near) {
+        destroySpirit(spirit, caster, events);
       }
       return events;
     }
@@ -1510,8 +1565,13 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "summon":
     case "create-ground-effect":
     case "drain-own-energy":
+    case "destroy-allied-spirits":
     case "resurrect-companions":
     case "disable-own-skills":
+      return true;
+    // Once, on the primary target, the spirit cast on (#1309), however
+    // many allies the skill's area also caught.
+    case "destroy-target-spirit":
       return true;
     case "heal":
       return effect.recipient === "caster";

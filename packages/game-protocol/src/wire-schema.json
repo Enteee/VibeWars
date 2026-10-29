@@ -1029,6 +1029,12 @@
         },
         {
           "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "spirit-destroyed" } },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "status-expired" } },
             {
               "name": "statusId",

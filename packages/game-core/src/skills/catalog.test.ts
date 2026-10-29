@@ -274,6 +274,7 @@ describe("headless combat simulation", () => {
       casterPosition: caster.position,
       target: target?.combatant,
       targetPosition: target?.position,
+      targetCreatureKind: undefined,
       rechargeRemaining: caster.cast.rechargeRemaining,
       spent: caster.cast.spent,
       isCasting: caster.cast.isCasting,

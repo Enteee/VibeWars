@@ -250,6 +250,11 @@ export const SKILL_ICONS = {
   "ritualist.union": { glyph: "totem", modifier: "half" },
   "ritualist.displacement": { glyph: "totem", modifier: "stun" },
   "ritualist.earthbind": { glyph: "totem", modifier: "down" },
+  // Placeholders until the asset-designer's (#1309): spirit sacrifice.
+  "ritualist.rupture-soul": { glyph: "totem", modifier: "bolt" },
+  "ritualist.spirit-to-flesh": { glyph: "totem", modifier: "less" },
+  "ritualist.feast-of-souls": { glyph: "party-heal", modifier: "area" },
+  "ritualist.consume-soul": { glyph: "ghost", modifier: "paw" },
   "assassin.shroud-of-silence": { glyph: "hex-mute" },
   "assassin.expose-defenses": { glyph: "armor-crack" },
   "assassin.enduring-toxin": { glyph: "drop-run" },

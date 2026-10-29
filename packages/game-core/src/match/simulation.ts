@@ -2664,6 +2664,7 @@ export class MatchSimulation {
       casterPosition: record.position,
       target: skill.target === "self" ? record.combatant : target?.combatant,
       targetPosition: skill.target === "self" ? record.position : target?.position,
+      targetCreatureKind: skill.target === "self" ? record.creature?.kind : target?.creature?.kind,
       key,
       rechargeRemaining: record.combatant.cast.rechargeRemaining,
       spent: record.combatant.cast.spent,
@@ -4236,6 +4237,16 @@ export class MatchSimulation {
    */
   #recordDeaths(events: readonly CombatEvent[]): void {
     for (const event of events) {
+      // A destroyed spirit (#1309) is no death: it leaves as an expired
+      // one does, at the end of the step, and nothing answers it.
+      if (event.kind === "spirit-destroyed") {
+        const spirit = this.#participants.get(event.targetId);
+        if (spirit !== undefined) {
+          spirit.respawnInSeconds = Number.POSITIVE_INFINITY;
+          this.#leaving.add(spirit.id);
+        }
+        continue;
+      }
       if (event.kind !== "death") {
         continue;
       }

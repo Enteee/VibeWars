@@ -34,6 +34,7 @@ import type {
   SkillType,
   StateCondition,
   UnconditionalEffect,
+  SplashEffect,
 } from "./types.js";
 
 /**
@@ -555,7 +556,7 @@ function describeTrigger(
     if (effect.kind === "splash" && trigger.target === "bearer") {
       const area = AREA_TEXT.get(effect.radius);
       const allies = !bearerIsFoe
-        ? lowerFirst(foesWithin(effect.radius))
+        ? lowerFirst(foesWithin(effect.radius, effect.hits))
         : area === "adjacent"
           ? "its adjacent allies"
           : `its allies ${area ?? `within ${String(effect.radius)}`}`;
@@ -685,17 +686,20 @@ function perAllyText(effect: HealEffect, ranks: ReadonlyMap<string, number>): st
 }
 
 /** Who a splash reaches, as GW1 words it (#885): "Adjacent foes". */
-function foesWithin(radius: number): string {
+function foesWithin(radius: number, hits: SplashEffect["hits"]): string {
   const area = AREA_TEXT.get(radius);
+  // Consume Soul's splash reaches only summoned creatures (#1309).
+  const who = hits === "foes" ? "foes" : "foe creatures";
+  const Who = hits === "foes" ? "Foes" : "Foe creatures";
   switch (area) {
     case "adjacent":
-      return "Adjacent foes";
+      return `Adjacent ${who}`;
     case "nearby":
-      return "Nearby foes";
+      return `Nearby ${who}`;
     case undefined:
-      return `Foes within ${String(radius)}`;
+      return `${Who} within ${String(radius)}`;
     default:
-      return `Foes ${area}`;
+      return `${Who} ${area}`;
   }
 }
 
@@ -817,9 +821,11 @@ function describeEffect(
           ? `+${amount} Health for each ${effect.perStatusOnTarget.join(" or ")} on target ally`
           : effect.perRemoved !== undefined
             ? `Heals ${amount} for each ${effect.perRemoved} removed`
-            : effect.recipient === "caster"
-              ? `You gain ${amount} health`
-              : `Heals for ${amount}`;
+            : effect.perDestroyedSpirit === true
+              ? `Heals ${amount} for each spirit destroyed`
+              : effect.recipient === "caster"
+                ? `You gain ${amount} health`
+                : `Heals for ${amount}`;
       return { text: `${text}${perAllyText(effect, ranks)}`, magnitude };
     }
     case "energy-gain": {
@@ -993,6 +999,13 @@ function describeEffect(
     }
     case "drain-own-energy":
       return { text: "You lose all your remaining energy", magnitude: undefined };
+    case "destroy-target-spirit":
+      return { text: "Destroys target allied spirit", magnitude: undefined };
+    case "destroy-allied-spirits":
+      return {
+        text: `Destroys every allied spirit ${AREA_TEXT.get(effect.radius) ?? `within ${String(effect.radius)}`}`,
+        magnitude: undefined,
+      };
     case "recharge-faster":
       return {
         text: `This skill recharges ${String(Math.round(effect.fraction * 100))}% faster`,
@@ -1084,7 +1097,7 @@ function describeEffect(
       const last = parts.pop();
       const what = parts.length === 0 ? (last ?? "") : `${parts.join(", ")} and ${String(last)}`;
       return {
-        text: `${foesWithin(effect.radius)} ${what}`,
+        text: `${foesWithin(effect.radius, effect.hits)} ${what}`,
         magnitude: inner.find(({ description }) => description.magnitude !== undefined)?.description
           .magnitude,
       };
@@ -1305,6 +1318,7 @@ const TARGET_TEXT: Record<Skill["target"], string> = {
   "single-other-ally": "Another ally",
   "single-any": "Any one target",
   "single-dead-ally": "A dead ally",
+  "allied-spirit": "An allied spirit",
   companion: "Your pet",
   "living-companion": "Your living pet",
 };

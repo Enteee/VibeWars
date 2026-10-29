@@ -1474,6 +1474,21 @@ block that was its own. **Earthbind** (15 energy, 3 s) 214 Health,
 39 s: a foe in range knocked down stays down at least 3 s; 30 per
 knockdown, one already as long included, none for one prevented.
 
+**Spirit sacrifice** (#1309, Ritualist, Spawning Power, spells) spends
+an allied spirit, a living one of your team whoever planted it; a foe's
+spirit, a pet, a minion, a player or yourself is refused. A destroyed
+spirit goes as an expired one does: no corpse, no killer, no morale, not
+damage, so Shelter and Union do not soften it. At Spawning Power 12:
+**Rupture Soul** (10 energy, ¾ s, 5 s) strikes every foe nearby the
+spirit for 122 lightning damage and blinds them 10 s, then destroys it.
+**Spirit to Flesh** (10 energy, ¾ s, 15 s) touches the spirit, heals you
+and every ally nearby you 198, then destroys it. **Feast of Souls**
+(5 energy, ¼ s, 10 s) destroys every allied spirit nearby you and heals
+your whole party 90 for each; with none, it heals nobody but is still
+used. **Consume Soul** (elite, 5 energy, 1 s, 5 s) steals 57 Health
+from a foe, and deals 105 typeless damage to every foe minion, spirit
+and pet in earshot of it, never a player, the foe itself excluded.
+
 **Minions** (#467) are raised from a fresh corpse, of either team, the
 nearest within cast range, and rise where it lay. Their Health, armor
 and blows are set by their Necromancer's Death Magic as they rise and
