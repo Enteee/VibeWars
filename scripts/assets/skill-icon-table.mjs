@@ -282,12 +282,11 @@ export const SKILL_ICONS = {
   "assassin.feigned-neutrality": { glyph: "crescent", modifier: "self" },
   "assassin.way-of-perfection": { glyph: "crescent", modifier: "bolt" },
   "assassin.caltrops": { glyph: "limp", modifier: "bleed" },
-  // Placeholders until the asset-designer's (#1329): Tactics stances.
-  "warrior.bonettis-defense": { glyph: "shield-bolt", modifier: "plus" },
-  "warrior.deflect-arrows": { glyph: "shield-bolt", modifier: "bleed" },
-  "warrior.gladiators-defense": { glyph: "shield-bolt", modifier: "bolt" },
-  "warrior.disciplined-stance": { glyph: "shield-bolt", modifier: "up" },
-  "warrior.balanced-stance": { glyph: "mountain", modifier: "stun" },
+  "warrior.bonettis-defense": { glyph: "shield-stance", modifier: "bolt" },
+  "warrior.deflect-arrows": { glyph: "shield-arrow" },
+  "warrior.gladiators-defense": { glyph: "shield-blade" },
+  "warrior.disciplined-stance": { glyph: "shield-stance", modifier: "clock" },
+  "warrior.balanced-stance": { glyph: "mountain", modifier: "self" },
   // Placeholders until the asset-designer's (#1332): the Curses hexes.
   "necromancer.barbs": { glyph: "hex-burst", modifier: "plus" },
   "necromancer.price-of-failure": { glyph: "hex-burst", modifier: "bolt" },
