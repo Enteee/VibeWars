@@ -10,6 +10,7 @@ import {
   type ProfessionIcon,
 } from "./hud.js";
 import { skillIcon } from "./icons.js";
+import { setIfChanged } from "./kit.js";
 import { pipsElement, renderPips } from "./pips.js";
 
 /**
@@ -310,7 +311,7 @@ export function createPartyWindow(
   return {
     update(snapshot) {
       const party = partyRows(snapshot);
-      panel.hidden = party.length === 0;
+      setIfChanged(panel, "hidden", party.length === 0);
       panel.classList.toggle("is-compact", party.length > FULL_ROWS);
       const ids = new Set(party.map((row) => row.id));
       for (const [id, elements] of rows) {

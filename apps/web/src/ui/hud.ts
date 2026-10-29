@@ -51,7 +51,7 @@ import {
   type EffectRow,
   type EffectsMonitor,
 } from "./effects-monitor.js";
-import { iconButton } from "./kit.js";
+import { iconButton, setIfChanged } from "./kit.js";
 import { energyLabel, overcastBandElement, renderOvercastBand } from "./overcast-band.js";
 import { pipsElement, renderPips } from "./pips.js";
 import { paintRecharge, prefersReducedMotion } from "./recharge-overlay.js";
@@ -679,8 +679,8 @@ function setBar(
   text: string,
 ): void {
   const fraction = max > 0 ? Math.max(0, Math.min(1, value / max)) : 0;
-  fill.style.width = `${String(fraction * 100)}%`;
-  label.textContent = text;
+  setIfChanged(fill.style, "width", `${String(fraction * 100)}%`);
+  setIfChanged(label, "textContent", text);
 }
 
 /**
@@ -1380,7 +1380,7 @@ export function targetChainIcon(
 
 /** Touch the chain icon only when its mark changes, never every frame. */
 function renderTargetChain(img: HTMLImageElement, icon: ProfessionIcon | undefined): void {
-  img.hidden = icon === undefined;
+  setIfChanged(img, "hidden", icon === undefined);
   if (icon !== undefined && img.title !== icon.name) {
     img.src = icon.src;
     img.alt = icon.name;
@@ -1463,7 +1463,7 @@ function renderTargetCast(hud: HudElements, target: PlayerSnapshot | undefined):
   }
   row.dataset.target = target.sessionId;
   setTargetCastSkill(hud, cast.skillId);
-  hud.targetCastFill.style.width = `${String(cast.progress * 100)}%`;
+  setIfChanged(hud.targetCastFill.style, "width", `${String(cast.progress * 100)}%`);
 }
 
 /**
@@ -1502,22 +1502,33 @@ function renderTarget(
   stand: StandState | undefined,
 ): void {
   renderTargetProfessions(hud.targetProfessions, target);
-  hud.targetText.textContent =
-    target?.name ?? objectTargetName(self.targetSessionId, self.team, stand) ?? "no target";
-  hud.targetBot.hidden = target?.bot !== true;
-  hud.attacking.hidden = !isAttackingTarget(self, target);
+  setIfChanged(
+    hud.targetText,
+    "textContent",
+    target?.name ?? objectTargetName(self.targetSessionId, self.team, stand) ?? "no target",
+  );
+  setIfChanged(hud.targetBot, "hidden", target?.bot !== true);
+  setIfChanged(hud.attacking, "hidden", !isAttackingTarget(self, target));
   const invulnerable = target === undefined || target.dead ? 0 : target.invulnerableSeconds;
-  hud.targetInvulnerable.hidden = invulnerable <= 0;
-  hud.targetInvulnerable.textContent = invulnerable > 0 ? invulnerableLabel(invulnerable) : "";
+  setIfChanged(hud.targetInvulnerable, "hidden", invulnerable <= 0);
+  setIfChanged(
+    hud.targetInvulnerable,
+    "textContent",
+    invulnerable > 0 ? invulnerableLabel(invulnerable) : "",
+  );
   // Armor on hover: a number to look up, not to read at a glance.
-  hud.targetPanel.title = target === undefined ? "" : `armor ${String(target.armor)}`;
-  hud.targetHealth.hidden = target === undefined;
+  setIfChanged(
+    hud.targetPanel,
+    "title",
+    target === undefined ? "" : `armor ${String(target.armor)}`,
+  );
+  setIfChanged(hud.targetHealth, "hidden", target === undefined);
   if (target !== undefined) {
     hud.targetHealth.classList.toggle("is-dead", target.dead);
     paintHealthTint(hud.targetHealth, target);
-    hud.targetHealthFill.style.width = `${String(targetHealthPercent(target))}%`;
-    hud.targetHealthLost.style.width = `${String(lostHealthPercent(target))}%`;
-    hud.targetHealthText.textContent = targetHealthLabel(target, self.team);
+    setIfChanged(hud.targetHealthFill.style, "width", `${String(targetHealthPercent(target))}%`);
+    setIfChanged(hud.targetHealthLost.style, "width", `${String(lostHealthPercent(target))}%`);
+    setIfChanged(hud.targetHealthText, "textContent", targetHealthLabel(target, self.team));
     renderPips(hud.targetHealthPips, target.healthPips);
   }
   renderTargetCast(hud, target);
@@ -1596,15 +1607,14 @@ export function updateHud(
     renderCarriers(hud.carriers, carrierLines(match, self?.team), self?.team);
 
     if (match.phase === "finished") {
-      hud.result.style.display = "";
-      hud.result.textContent = describeOutcome(
-        match.winningTeam,
-        match.endReason,
-        self?.team,
-        match.aggression,
+      setIfChanged(hud.result.style, "display", "");
+      setIfChanged(
+        hud.result,
+        "textContent",
+        describeOutcome(match.winningTeam, match.endReason, self?.team, match.aggression),
       );
     } else {
-      hud.result.style.display = "none";
+      setIfChanged(hud.result.style, "display", "none");
     }
   }
 
@@ -1613,14 +1623,14 @@ export function updateHud(
   }
 
   hud.hintDismissed = targetHintDismissed(hud.hintDismissed, self);
-  hud.hint.hidden = hud.hintDismissed;
+  setIfChanged(hud.hint, "hidden", hud.hintDismissed);
 
   const healthText = `${String(Math.round(self.health))} / ${String(Math.round(self.maxHealth))} hp`;
   setBar(hud.healthFill, hud.healthText, self.health, self.maxHealth, healthText);
-  hud.healthLost.style.width = `${String(lostHealthPercent(self))}%`;
+  setIfChanged(hud.healthLost.style, "width", `${String(lostHealthPercent(self))}%`);
   paintHealthTint(hud.healthRow, self);
   renderMorale(hud.morale, self.morale);
-  hud.dropFlag.hidden = match === undefined || !carriesFlag(match, self.sessionId);
+  setIfChanged(hud.dropFlag, "hidden", match === undefined || !carriesFlag(match, self.sessionId));
   // Counted to the ceiling overcast leaves, the rest of the bar greyed (#461).
   const energyText = `${energyLabel(self.energy, self.maxEnergy, self.overcast)} en`;
   setBar(hud.energyFill, hud.energyText, self.energy, self.maxEnergy, energyText);
@@ -1630,9 +1640,12 @@ export function updateHud(
   // Armor and weapon: both are numbers that change what a fight does, so
   // hiding them would be the HUD lying by omission. Adrenaline is each
   // slot's own (#463).
-  hud.gearText.textContent =
+  setIfChanged(
+    hud.gearText,
+    "textContent",
     `armor ${String(self.armor)}` +
-    (self.weaponId === undefined ? "" : ` · ${describeWeaponName(self.weaponId)}`);
+      (self.weaponId === undefined ? "" : ` · ${describeWeaponName(self.weaponId)}`),
+  );
 
   const names = new Map(match?.players.map((player) => [player.sessionId, player.name]));
   const now = match === undefined ? undefined : matchNow(hud, match.elapsedSeconds);

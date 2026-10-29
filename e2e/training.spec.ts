@@ -1513,3 +1513,60 @@ test("(45) your wolf's row in the party window takes Heel, and lights it (#1110)
   }).toPass();
   await expect(guard).toHaveAttribute("aria-pressed", "false");
 });
+
+/**
+ * What `root`'s subtree is written, as `<tag>.<class> <kind>`, over
+ * `ms`, leaving out anything under `ignore`: what has its own reason to
+ * change on an idle screen.
+ */
+async function domWrites(page: Page, root: string, ignore: string, ms: number): Promise<string[]> {
+  return page.evaluate(
+    async ({ root, ignore, ms }) => {
+      const writes = new Set<string>();
+      const observer = new MutationObserver((records) => {
+        for (const record of records) {
+          const node = record.target;
+          const element = node instanceof Element ? node : node.parentElement;
+          if (element?.closest(ignore) !== null) {
+            continue;
+          }
+          const kind = record.attributeName === null ? record.type : `@${record.attributeName}`;
+          writes.add(`${element.tagName.toLowerCase()}.${element.classList[0] ?? ""} ${kind}`);
+        }
+      });
+      const target = document.querySelector(root);
+      if (target === null) {
+        throw new Error(`no ${root}`);
+      }
+      observer.observe(target, {
+        subtree: true,
+        attributes: true,
+        childList: true,
+        characterData: true,
+      });
+      await new Promise((resolve) => setTimeout(resolve, ms));
+      observer.disconnect();
+      return [...writes].sort();
+    },
+    { root, ignore, ms },
+  );
+}
+
+test("(46) an idle Training Ground writes nothing to its HUD, frame after frame (#1352)", async ({
+  page,
+}) => {
+  await openTraining(page);
+  // The meter repaints on its own clock; the rest must hold still once
+  // the arena has settled.
+  await expect
+    .poll(() => domWrites(page, ".training", ".training-meter", 500), { timeout: 10_000 })
+    .toEqual([]);
+});
+
+test("(47) an idle match writes nothing to its HUD but the clock (#1352)", async ({ page }) => {
+  await page.goto("./");
+  await startSoloMatch(page);
+  await expect
+    .poll(() => domWrites(page, "body", ".hud-scoreboard", 500), { timeout: 10_000 })
+    .toEqual([]);
+});

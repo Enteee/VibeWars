@@ -3,6 +3,7 @@ import type { WireWeaponSets } from "@vibewars/game-protocol";
 import type { KeyLabeller } from "../input/key-labels.js";
 import { WEAPON_SET_ACTIONS, actionLabel, codeLabel, type Keymap } from "../input/keymap.js";
 import { offhandIcon, weaponIcon, type GearIcon } from "./icons.js";
+import { setIfChanged } from "./kit.js";
 
 /**
  * The four weapon-set slots at the skill bar's left end (#489), on the
@@ -57,7 +58,7 @@ export function renderWeaponSets(root: HTMLElement, sets: WireWeaponSets | undef
     slot.classList.toggle("is-empty", held === null);
     slot.classList.toggle("is-active", held !== null && sets?.active === index);
     slot.classList.toggle("is-queued", held !== null && sets?.pending === index);
-    slot.disabled = held === null;
+    setIfChanged(slot, "disabled", held === null);
     const signature = held === null ? "" : `${held.weaponId}|${held.offhandId ?? ""}`;
     if (slot.dataset.shown === signature) {
       return;

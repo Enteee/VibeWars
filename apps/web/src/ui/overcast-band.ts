@@ -4,7 +4,7 @@
  * that is left. One place, so the match HUD and the Training panel agree.
  */
 
-import { h } from "./kit.js";
+import { h, setIfChanged } from "./kit.js";
 
 /** The band, to put in an energy bar after its fill. */
 export function overcastBandElement(): HTMLElement {
@@ -26,8 +26,8 @@ export interface OvercastBand {
 
 export function renderOvercastBand(band: OvercastBand, overcast: number, maxEnergy: number): void {
   const share = overcastShare(overcast, maxEnergy);
-  band.hidden = share === 0;
-  band.style.width = `${String(share * 100)}%`;
+  setIfChanged(band, "hidden", share === 0);
+  setIfChanged(band.style, "width", `${String(share * 100)}%`);
 }
 
 /** "20 / 25": energy over the ceiling overcast leaves, which can be below 0. */

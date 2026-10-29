@@ -112,7 +112,7 @@ import {
   saveScenarioChoice,
   shouldRestoreFocus,
 } from "./training-state.js";
-import { h } from "./kit.js";
+import { h, setIfChanged } from "./kit.js";
 import { labelWeaponSets, renderWeaponSets, weaponSetSlots } from "./weapon-set-slots.js";
 
 /**
@@ -540,8 +540,8 @@ export function createTrainingPanel(): TrainingPanel {
 
   const paintOverlay = (problem: string | undefined): void => {
     const text = overlayMessage(problem);
-    overlay.hidden = text === undefined;
-    overlay.textContent = text ?? "";
+    setIfChanged(overlay, "hidden", text === undefined);
+    setIfChanged(overlay, "textContent", text ?? "");
   };
 
   const paintVitals = (match: MatchSnapshot): void => {
@@ -551,15 +551,23 @@ export function createTrainingPanel(): TrainingPanel {
     }
     const fraction = (value: number, max: number): string =>
       `${String(max > 0 ? Math.max(0, Math.min(100, (value / max) * 100)) : 0)}%`;
-    health.fill.style.width = fraction(self.health, self.maxHealth);
-    health.label.textContent = `${String(self.health)} / ${String(self.maxHealth)}`;
+    setIfChanged(health.fill.style, "width", fraction(self.health, self.maxHealth));
+    setIfChanged(health.label, "textContent", `${String(self.health)} / ${String(self.maxHealth)}`);
     paintHealthTint(health.root, self);
-    energy.fill.style.width = fraction(self.energy, self.maxEnergy);
-    energy.label.textContent = energyLabel(self.energy, self.maxEnergy, self.overcast);
+    setIfChanged(energy.fill.style, "width", fraction(self.energy, self.maxEnergy));
+    setIfChanged(
+      energy.label,
+      "textContent",
+      energyLabel(self.energy, self.maxEnergy, self.overcast),
+    );
     renderOvercastBand(energyOvercast, self.overcast, self.maxEnergy);
     renderPips(health.pips, self.healthPips);
     renderPips(energy.pips, self.energyPips);
-    attacking.textContent = self.attackTargetSessionId === undefined ? "" : "attacking";
+    setIfChanged(
+      attacking,
+      "textContent",
+      self.attackTargetSessionId === undefined ? "" : "attacking",
+    );
     renderWeaponSets(weaponSets, session?.connection.weaponSets);
     const slots = session?.connection.skillBar ?? [];
     if (changedSlots(paintedSkills, slots).length > 0) {

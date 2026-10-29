@@ -18,6 +18,21 @@ export function h(tag: string, className?: string, text?: string): HTMLElement {
   return node;
 }
 
+/**
+ * Set `target[key]` only when it differs from `value` (#1352). A painter
+ * that runs every frame writes through this: the browser restyles for a
+ * write even when it changes nothing.
+ */
+export function setIfChanged<T extends object, K extends keyof T>(
+  target: T,
+  key: K,
+  value: T[K],
+): void {
+  if (target[key] !== value) {
+    target[key] = value;
+  }
+}
+
 export function button(label: string, className: string, onClick: () => void): HTMLButtonElement {
   const node = document.createElement("button");
   node.type = "button";

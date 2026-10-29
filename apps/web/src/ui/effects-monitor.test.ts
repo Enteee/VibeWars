@@ -124,7 +124,9 @@ describe("effectRows (#834)", () => {
 class FakeElement {
   className = "";
   textContent = "";
-  hidden = false;
+  /** Writes to `hidden`, changed or not (#1352). */
+  hiddenWrites = 0;
+  #hidden = false;
   tabIndex = -1;
   src = "";
   alt = "";
@@ -153,6 +155,15 @@ class FakeElement {
     },
   }))(this.widths);
   moves = 0;
+
+  get hidden(): boolean {
+    return this.#hidden;
+  }
+
+  set hidden(value: boolean) {
+    this.hiddenWrites += 1;
+    this.#hidden = value;
+  }
 
   readonly setAttribute = (): void => undefined;
 
@@ -262,6 +273,17 @@ describe("createEffectsMonitor (#834)", () => {
     monitor.update([]);
     expect(root.hidden).toBe(true);
     expect(root.children).toEqual([]);
+  });
+
+  it("writes no `hidden` on an update that changes nothing, one on one that does (#1352)", () => {
+    const { monitor, root, bar } = mount();
+    monitor.update([row("bleeding", 0.5), row("armor-boost", undefined)]);
+    const writes = () => [root, bar(0), bar(1)].map((node) => node?.hiddenWrites);
+    const before = writes();
+    monitor.update([row("bleeding", 0.4), row("armor-boost", undefined)]);
+    expect(writes()).toEqual(before);
+    monitor.update([]);
+    expect(root.hiddenWrites).toBe((before[0] ?? 0) + 1);
   });
 
   it("moves a refreshed status to the end, reusing its very icon", () => {

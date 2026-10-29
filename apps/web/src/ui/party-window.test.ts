@@ -189,7 +189,9 @@ class FakeElement {
   title = "";
   type = "";
   tabIndex = 0;
-  hidden = false;
+  /** Writes to `hidden`, changed or not (#1352). */
+  hiddenWrites = 0;
+  #hidden = false;
   src = "";
   alt = "";
   parent: FakeElement | undefined;
@@ -216,6 +218,20 @@ class FakeElement {
   readonly listeners = new Map<string, (event: FakeEvent) => void>();
 
   readonly attributes = new Map<string, string>();
+
+  get hidden(): boolean {
+    return this.#hidden;
+  }
+
+  set hidden(value: boolean) {
+    this.hiddenWrites += 1;
+    this.#hidden = value;
+  }
+
+  /** This one's `hiddenWrites` and every descendant's. */
+  allHiddenWrites(): number {
+    return this.children.reduce((sum, child) => sum + child.allHiddenWrites(), this.hiddenWrites);
+  }
 
   readonly setAttribute = (name: string, value: string): void => {
     this.attributes.set(name, value);
@@ -286,6 +302,17 @@ describe("createPartyWindow (#1055)", () => {
     party.update(match([ME, FOE, KAJA]));
     expect(panel().hidden).toBe(false);
     expect(memberIds()).toEqual(["me", "kaja"]);
+  });
+
+  it("writes no `hidden` on an update that changes nothing, one on one that does (#1352)", () => {
+    party.update(match([ME, KAJA]));
+    const before = parent.allHiddenWrites();
+    party.update(match([ME, KAJA]));
+    expect(parent.allHiddenWrites()).toBe(before);
+    const panelWrites = panel().hiddenWrites;
+    party.update(match([ME]));
+    expect(panel().hidden).toBe(true);
+    expect(panel().hiddenWrites).toBe(panelWrites + 1);
   });
 
   it("targets a member when their row is clicked, yourself too", () => {

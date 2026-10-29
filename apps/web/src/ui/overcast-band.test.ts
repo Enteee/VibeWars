@@ -11,6 +11,24 @@ describe("the overcast band (#461)", () => {
     expect(band.hidden).toBe(true);
   });
 
+  it("writes nothing when nothing changed, and only what did (#1352)", () => {
+    const writes: string[] = [];
+    const log = <T extends object>(target: T, name: string): T =>
+      new Proxy(target, {
+        set(object, key, value) {
+          writes.push(`${name}.${String(key)}`);
+          return Reflect.set(object, key, value);
+        },
+      });
+    const band = log({ hidden: true, style: log({ width: "" }, "style") }, "band");
+    renderOvercastBand(band, 10, 40);
+    writes.length = 0;
+    renderOvercastBand(band, 10, 40);
+    expect(writes).toEqual([]);
+    renderOvercastBand(band, 20, 40);
+    expect(writes).toEqual(["style.width"]);
+  });
+
   it("covers the whole bar at most, past a ceiling below 0", () => {
     expect(overcastShare(60, 40)).toBe(1);
     expect(overcastShare(5, 0)).toBe(0);
