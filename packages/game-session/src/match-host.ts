@@ -1063,7 +1063,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       y: point.position.y,
       owner: wireTeam(point.owner),
       capturer: wireTeam(point.capturer),
-      progress: point.progress,
+      // Within [0, 1] by construction; rounded as the other floats are.
+      progress: round(point.progress, 3),
     })),
   });
 

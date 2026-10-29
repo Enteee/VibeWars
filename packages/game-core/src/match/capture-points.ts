@@ -74,8 +74,10 @@ function capture<T extends CapturePointState>(point: T, team: number, amount: nu
     if (left > PROGRESS_EPSILON) {
       return { ...point, progress: left };
     }
-    // Drained: the shrine is no one's, and what is left of the step fills it.
-    return capture({ ...point, owner: null, capturer: null, progress: 0 }, team, -left);
+    // Drained: the shrine is no one's, and what is left of the step fills
+    // it. A drain that lands within the epsilon leaves nothing to fill.
+    const neutral = { ...point, owner: null, capturer: null, progress: 0 };
+    return -left > PROGRESS_EPSILON ? capture(neutral, team, -left) : neutral;
   }
   const progress = point.progress + amount;
   return progress < 1 - PROGRESS_EPSILON

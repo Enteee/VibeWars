@@ -63,6 +63,18 @@ describe("a capture point (#1378)", () => {
     expect(hold(hold(OURS, [1], 10), [0], 10)).toEqual(OURS);
   });
 
+  it("is neutral, never below 0, when a drain lands just short of the progress", () => {
+    // 0.1 is two seconds of one foe; the float residue a tick-summed fill leaves.
+    const drained = stepCapturePoints(
+      [{ owner: null, capturer: 1, progress: 0.1 + 1e-12 }],
+      0.1 * CAPTURE_SECONDS,
+      [[0]],
+    ).state[0];
+    expect(drained).toEqual(NEUTRAL);
+    const filledAndDrained = hold(hold(NEUTRAL, [1], 3), [0], 3);
+    expect(filledAndDrained.progress).toBeGreaterThanOrEqual(0);
+  });
+
   it("keeps its progress while nobody is on it, and its owner for good", () => {
     const partial = hold(NEUTRAL, [1, 1], 4);
     expect(hold(partial, [], 60)).toEqual(partial);
