@@ -973,7 +973,7 @@ function perOwnCreatureText(effect: EnergyGainEffect, ranks: ReadonlyMap<string,
   return ` for every summoned creature you control ${where} (maximum ${String(max)} Energy)`;
 }
 
-/** Warrior's Endurance's cap (#1359): ", never above 22". */
+/** Warrior's Endurance's cap (#1359): ", never above 55". */
 function upToText(effect: EnergyGainEffect): string {
   return effect.upTo === undefined ? "" : `, never above ${String(effect.upTo)}`;
 }

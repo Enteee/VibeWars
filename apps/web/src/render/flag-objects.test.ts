@@ -6,6 +6,7 @@ import {
   FLAG_PICK_RADIUS,
   STAND_RADIUS,
   flagObjectAtPoint,
+  renderableCapturePoints,
   renderableFlags,
   renderableRelics,
   renderableStand,
@@ -129,5 +130,41 @@ describe("flagObjectAtPoint", () => {
     );
     expect(flagObjectAtPoint(flags, stand, vec2(1200, 900))).toBeUndefined();
     expect(flagObjectAtPoint(flags, stand, FIELD.stand)).toBe("flag-stand");
+  });
+});
+
+describe("Capture Points' shrines as the arena draws them (#1378)", () => {
+  const at = vec2(1100, 700);
+
+  it("tints each by its owner from your team, grey for nobody's", () => {
+    const points = renderableCapturePoints(
+      [
+        { position: at, owner: 1, capturer: 1, progress: 1 },
+        { position: at, owner: null, capturer: null, progress: 0 },
+      ],
+      1,
+    );
+    expect(points.map((point) => point.owner)).toEqual(["ally", undefined]);
+    // A spectator reads team 0 as theirs, as the scoreboard does.
+    expect(
+      renderableCapturePoints([{ position: at, owner: 1, capturer: 1, progress: 1 }], undefined)[0]
+        ?.owner,
+    ).toBe("enemy");
+  });
+
+  it("rings the capturer's progress, and none on a shrine owned in full or untouched", () => {
+    const [draining, filling, held, untouched] = renderableCapturePoints(
+      [
+        { position: at, owner: 0, capturer: 0, progress: 0.25 },
+        { position: at, owner: null, capturer: 1, progress: 0.6 },
+        { position: at, owner: 0, capturer: 0, progress: 1 },
+        { position: at, owner: null, capturer: null, progress: 0 },
+      ],
+      0,
+    );
+    expect(draining).toMatchObject({ owner: "ally", ring: { side: "ally", fraction: 0.25 } });
+    expect(filling).toMatchObject({ owner: undefined, ring: { side: "enemy", fraction: 0.6 } });
+    expect(held?.ring).toBeUndefined();
+    expect(untouched?.ring).toBeUndefined();
   });
 });

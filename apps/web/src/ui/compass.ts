@@ -13,7 +13,8 @@ import { prefersReducedMotion } from "./recharge-overlay.js";
  * The compass (#486, GW1's radar): a disc top right, centred on you, north
  * up, with every living body within its reach (`compassReach`), your
  * target, the called foe, your team's pings, the resurrection shrines
- * (#1199), a Guild Battle's lords, flags and stand (#1226), the earshot and cast-range rings and the walls
+ * (#1199), a Guild Battle's lords, flags and stand (#1226), a Relic Run's
+ * altar (#1388), the earshot and cast-range rings and the walls
  * (docs/art/art-direction.md "Compass"). Bodies beyond it are not shown:
  * the edge markers (#440) give direction, the compass distance.
  */
@@ -49,6 +50,8 @@ export interface CompassView {
   readonly stand:
     | { readonly x: number; readonly y: number; readonly holder: "ally" | "enemy" | undefined }
     | undefined;
+  /** A Relic Run's altar in reach (#1388), a `◆`. */
+  readonly altar: Vec2 | undefined;
   /** Wall outlines, already clipped to the disc. */
   readonly walls: readonly (readonly Vec2[])[];
 }
@@ -202,6 +205,7 @@ export function compassView(
       arena.stand === undefined || !within(arena.stand.position)
         ? undefined
         : { ...local(arena.stand.position), holder: arena.stand.holder },
+    altar: arena.altar === undefined || !within(arena.altar) ? undefined : local(arena.altar),
     walls: arena.walls.flatMap((wall) => clipOutline(outline(wall).map(local), sizePx / 2)),
   };
 }
@@ -222,6 +226,10 @@ const SHRINE_ARM = 4;
 /** The stand's `◎`, px: its ring and its centre. */
 const STAND_RING = 5;
 const STAND_DOT = 1.5;
+/** Half the altar's `◆`, px (#1388), tip to centre. */
+const ALTAR_HALF_PX = 5;
+/** The altar's gold: the run's goal, held by nobody (#1388). */
+const ALTAR = "#c8a45a";
 /** A flag's `⚑` and a lord's `♛`, px. */
 const GLYPH_FONT = "11px sans-serif";
 
@@ -296,6 +304,21 @@ export function createCompass(parent: HTMLElement, reach: number): Compass {
       context.beginPath();
       context.arc(view.stand.x, view.stand.y, STAND_DOT, 0, Math.PI * 2);
       context.fill();
+    }
+    // A Relic Run's altar (#1388), filled so the goal reads first.
+    if (view.altar !== undefined) {
+      const { x, y } = view.altar;
+      context.lineWidth = 1;
+      context.strokeStyle = EDGE;
+      context.fillStyle = ALTAR;
+      context.beginPath();
+      context.moveTo(x, y - ALTAR_HALF_PX);
+      context.lineTo(x + ALTAR_HALF_PX, y);
+      context.lineTo(x, y + ALTAR_HALF_PX);
+      context.lineTo(x - ALTAR_HALF_PX, y);
+      context.closePath();
+      context.fill();
+      context.stroke();
     }
     context.font = GLYPH_FONT;
     context.textAlign = "center";

@@ -106,6 +106,7 @@ function snapshot(
     aggression: [],
     relics: [],
     altar: null,
+    capturePoints: [],
   };
 }
 

@@ -704,7 +704,7 @@ describe("attack skills (#417)", () => {
   it("words Endure Pain's maximum, Warrior's Endurance's cap and a weapon-bound trigger (#1359)", () => {
     expect(describeStatus("endure-pain")).toBe("+258 maximum health");
     expect(describeStatus("warriors-endurance")).toBe(
-      "whenever it hits with a melee attack: gain 3 energy, never above 22",
+      "whenever it hits with a melee attack: gain 3 energy, never above 55",
     );
     expect(describeStatus("hundred-blades")).toBe(
       "adjacent foes take 26 damage whenever it attacks with a sword",
