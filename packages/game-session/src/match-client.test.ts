@@ -60,6 +60,7 @@ describe("connectMatch", () => {
       groundEffects: [],
       flags: [],
       stand: null,
+      aggression: [],
     });
     await settle();
     expect(connection.getSnapshot().scoreTeam0).toBe(0);
@@ -89,6 +90,7 @@ describe("connectMatch", () => {
         groundEffects: [],
         flags: [],
         stand: null,
+        aggression: [],
       },
       transport.selfId,
     );
@@ -141,6 +143,7 @@ describe("connectMatch", () => {
           groundEffects: [],
           flags: [],
           stand: null,
+          aggression: [],
         },
         transport.selfId,
       );
