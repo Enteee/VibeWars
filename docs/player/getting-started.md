@@ -9,7 +9,8 @@ on a phone or a touch-only tablet: open it on a computer.
 ## Make a character
 
 Your characters are listed on the left of the main menu, under
-**Play as**.
+**Play as**, newest first, with the random character your first start
+rolled always at the bottom.
 
 1. Press **New character**.
 2. Pick a **primary profession**, what your character mainly is, and a
