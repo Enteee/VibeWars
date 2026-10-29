@@ -797,6 +797,8 @@ function conditionText(condition: EffectCondition): string {
       return `If target does not have ${statusName(condition.statusId)}`;
     case "caster-more-energy":
       return "If you have more Energy than target";
+    case "caster-overcast":
+      return "If you are Overcast";
     case "caster-wields":
       return `If you wield ${NEEDED_WEAPON[condition.weapon]}`;
     case "target-less-health":

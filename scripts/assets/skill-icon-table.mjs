@@ -302,4 +302,12 @@ export const SKILL_ICONS = {
   "necromancer.blood-of-the-aggressor": { glyph: "eye-drop", modifier: "down" },
   "necromancer.barbed-signet": { glyph: "hex-burst", modifier: "bleed" },
   "necromancer.offering-of-blood": { glyph: "energy", modifier: "bleed" },
+  // Placeholders until the asset-designer's (#1366): Fire Magic.
+  "elementalist.immolate": { glyph: "flame" },
+  "elementalist.flare": { glyph: "fireball", modifier: "bolt" },
+  "elementalist.inferno": { glyph: "flame", modifier: "self" },
+  "elementalist.flame-burst": { glyph: "flame", modifier: "up" },
+  "elementalist.rodgorts-invocation": { glyph: "fireball", modifier: "bleed" },
+  "elementalist.fire-storm": { glyph: "meteor-trio", modifier: "hourglass" },
+  "elementalist.mind-burn": { glyph: "fireball", modifier: "down" },
 };
