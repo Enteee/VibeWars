@@ -155,6 +155,8 @@ const MODE_LINES: Readonly<Record<MatchMode, string>> = {
   "priest-annihilation": "Priest Annihilation: defeat every foe and their priest",
   "guild-battle": "Guild Battle: kill the enemy Guild Lord",
   "relic-run": "Relic Run: carry your relic to the altar. Most points in 8 minutes wins.",
+  "king-of-the-hill":
+    "King of the Hill: lead your Ghostly Hero onto the altar. Hold it to score; most points in 8 minutes wins.",
 };
 
 /** The mode `map` plays, in a line: "Kill Count: most kills in 3 minutes". */

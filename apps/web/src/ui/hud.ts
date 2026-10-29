@@ -6,6 +6,7 @@ import {
   getProfession,
   getSkill,
   getWeapon,
+  KOTH_POINT_SECONDS,
   maxHealthLossOfStatusIds,
   neededWeaponText,
   type ActivationRejection,
@@ -938,7 +939,7 @@ export type ScoreboardPart =
 /** What the scoreboard reads of the match besides its bodies and clock. */
 export type ScoreboardMatch = Pick<
   MatchSnapshot,
-  "scoreTeam0" | "scoreTeam1" | "stand" | "aggression"
+  "scoreTeam0" | "scoreTeam1" | "stand" | "aggression" | "altarHolder" | "altarHeldSeconds"
 >;
 
 /** The clock left at which a Guild Battle shows its aggression (#1226): the last 3 minutes. */
@@ -977,6 +978,9 @@ function thousands(value: number): string {
  * living, "4 v 3 · 7:12"; Kill Count the team's kills, "4 – 0 · 2:25"
  * (#1200), as the snapshot's `score` carries them, team 1's first, and
  * a Relic Run its relic points the same way, "2 – 1 · 6:40" (#1374).
+ * King of the Hill (#1377) reads its points so too, then the altar in
+ * the stand's slot: its holder's `▲` and the time to the next point, or
+ * "▲ —" held by nobody, "2 – 1 · ▲ 0:18 · 6:40".
  * Priest Annihilation counts the living, then each side's priest and the
  * next wave, "4 v 3 · ✚ ✚ · raise 0:47 · 7:12" (#1199): `raise —` once
  * both priests are dead, and no countdown once time is out. A Guild
@@ -1006,15 +1010,18 @@ export function scoreboardParts(
     kind: "text",
     text: `${String(livingCount(players, ours))} v ${String(livingCount(players, theirs))}`,
   };
+  const points: ScoreboardPart = {
+    kind: "text",
+    text: `${String(score[ours] ?? 0)} – ${String(score[theirs] ?? 0)}`,
+  };
   switch (mode) {
     case "annihilation":
       return [living, clock];
     case "kill-count":
     case "relic-run":
-      return [
-        { kind: "text", text: `${String(score[ours] ?? 0)} – ${String(score[theirs] ?? 0)}` },
-        clock,
-      ];
+      return [points, clock];
+    case "king-of-the-hill":
+      return [points, altarPart(match.altarHolder, match.altarHeldSeconds), clock];
     case "guild-battle": {
       const lords = [ours, theirs].map((team, index): ScoreboardPart => {
         const percent = lordPercent(players, team);
@@ -1087,6 +1094,19 @@ function standPart(stand: StandState | undefined): ScoreboardPart | undefined {
   }
   const left = Math.max(0, Math.ceil(STAND_HOLD_SECONDS - stand.heldSeconds));
   return { kind: "side", team: stand.holder, text: `⚑ ${formatClock(left)}`, dead: false };
+}
+
+/**
+ * King of the Hill's altar on the scoreboard (#1377), in the stand's
+ * slot: its holder's `▲` and the time to its next point, rounded up as
+ * the clock is; a grey `▲ —` held by nobody.
+ */
+function altarPart(holder: number | undefined, heldSeconds: number): ScoreboardPart {
+  if (holder === undefined) {
+    return { kind: "side", team: undefined, text: "▲ —", dead: false };
+  }
+  const left = Math.max(0, Math.ceil(KOTH_POINT_SECONDS - heldSeconds));
+  return { kind: "side", team: holder, text: `▲ ${formatClock(left)}`, dead: false };
 }
 
 /** What goes before `parts[index]`: nothing first, a space between two priests, else ` · `. */

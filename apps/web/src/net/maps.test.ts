@@ -36,7 +36,7 @@ describe("randomArenaMapPool", () => {
     expect(sizesOf(pool)).not.toContain("small");
   });
 
-  it("leaves no arena out of every pool but the Guild Battle's (#1222) and the Relic Run's (#1374)", () => {
+  it("leaves no arena out of every pool but the Guild Battle's (#1222), the Relic Run's (#1374) and King of the Hill's (#1377)", () => {
     const pooled = new Set(
       (["random-arena-1v1", "random-arena-2v2", "random-arena-4v4"] as const).flatMap((mode) =>
         randomArenaMapPool(mode),
@@ -44,7 +44,7 @@ describe("randomArenaMapPool", () => {
     );
     expect([...pooled].sort()).toEqual(
       ARENA_MAPS.map((map) => map.id)
-        .filter((id) => id !== "guild-hall-isle" && id !== "relic-temples")
+        .filter((id) => !["guild-hall-isle", "relic-temples", "hill-courtyard"].includes(id))
         .sort(),
     );
   });
@@ -57,16 +57,21 @@ describe("hostMap (#476)", () => {
     );
   });
 
-  it("carries the mode its map names: Kill Count on Pillar Hall, Priest Annihilation on Split Paths, Guild Battle on Guild Hall Isle, Relic Run on Relic Temples, Annihilation elsewhere", () => {
+  it("carries the mode its map names: Kill Count on Pillar Hall, Priest Annihilation on Split Paths, Guild Battle on Guild Hall Isle, Relic Run on Relic Temples, King of the Hill on Hill Courtyard, Annihilation elsewhere", () => {
     expect(hostMap("arena-pillars")?.mode).toBe("kill-count");
     expect(hostMap("arena-split")?.mode).toBe("priest-annihilation");
     expect(hostMap("guild-hall-isle")?.mode).toBe("guild-battle");
     expect(hostMap("relic-temples")?.mode).toBe("relic-run");
+    expect(hostMap("hill-courtyard")?.mode).toBe("king-of-the-hill");
     for (const map of ARENA_MAPS.filter(
       (candidate) =>
-        !["arena-pillars", "arena-split", "guild-hall-isle", "relic-temples"].includes(
-          candidate.id,
-        ),
+        ![
+          "arena-pillars",
+          "arena-split",
+          "guild-hall-isle",
+          "relic-temples",
+          "hill-courtyard",
+        ].includes(candidate.id),
     )) {
       expect(hostMap(map.id)?.mode).toBe("annihilation");
     }
@@ -107,7 +112,20 @@ describe("hostMap (#476)", () => {
     });
     expect(mapRelicField("relic-temples")).toEqual(hostMap("relic-temples")?.relicField);
     expect(hostMap("guild-hall-isle")?.relicField).toBeUndefined();
+    expect(hostMap("hill-courtyard")?.relicField).toBeUndefined();
     expect(mapRelicField("training-hall")).toBeUndefined();
+  });
+
+  it("carries a King of the Hill map's altar and ghost spawns, and none elsewhere (#1377)", () => {
+    expect(hostMap("hill-courtyard")?.hillField).toEqual({
+      altar: { x: 1000, y: 700 },
+      spawns: [
+        { team: 0, position: { x: 200, y: 700 } },
+        { team: 1, position: { x: 1800, y: 700 } },
+      ],
+    });
+    expect(hostMap("relic-temples")?.hillField).toBeUndefined();
+    expect(hostMap("arena-alpha")?.hillField).toBeUndefined();
   });
 
   it("carries a Guild Battle map's guards in its order, and none elsewhere (#1223)", () => {

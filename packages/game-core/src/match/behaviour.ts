@@ -90,10 +90,16 @@ export type Behaviour =
    * A minion's (#467 child 3) or a pet's (#1046): stay by the owner, attack
    * a foe as `engage` picks it, and break off to walk back once the
    * owner is farther than `leashUnits`, until within `heelUnits` again.
-   * The owner is `self.creature.ownerId`; anyone else holding it stands still.
+   * The owner is `leaderId`, or with none `self.creature.ownerId`; anyone
+   * else holding it stands still.
    */
   | {
       readonly kind: "follow-and-attack";
+      /**
+       * Whom it keeps to and assists in place of its owner: a Ghostly
+       * Hero's leader (#1377). `undefined`: its owner, as a minion's.
+       */
+      readonly leaderId: string | undefined;
       /**
        * Whom it goes for (#1046). `"owner-target"`: a companion's, the foe
        * its owner is attacking or, on Fight, has selected (#1110), if within
@@ -463,7 +469,7 @@ function followAndAttack(
   context: BehaviourContext,
 ): BehaviourIntent {
   const self = context.self;
-  const ownerId = self.creature?.ownerId;
+  const ownerId = behaviour.leaderId ?? self.creature?.ownerId;
   const owner = context.participants.find((other) => other.id === ownerId);
   if (owner === undefined) {
     return STAND_STILL;

@@ -2,7 +2,7 @@
 
 Each map plays one mode, and the lobby says which under the map's name.
 Nobody picks it. A Random Arena picks a map for you, and with it the
-mode, but never a Guild Battle or a Relic Run.
+mode, but never a Guild Battle, a Relic Run or King of the Hill.
 
 ## Annihilation
 
@@ -88,3 +88,35 @@ line for each relic says where it is: `✦ Name` on its carrier,
 `✦ dropped` on the ground or `✦ at base`.
 
 Relic Temples plays it.
+
+## King of the Hill
+
+**Lead your Ghostly Hero onto the altar, and hold it.** Each team has a
+**Ghostly Hero** in its base, a ghost that fights with a sword and that
+nobody plays. The **altar** is in the centre, the same walk from both
+bases, up a north or a south approach. Target your ghost and press
+**Space** to tell it to follow you: it walks with you and fights what
+you fight. Press Space on it again and it stays where it stands,
+fighting any foe who comes near. If you die or leave, it stays.
+
+A ghost on the altar claims it by itself: 5 seconds standing still, its
+cast bar filling. An interrupt or a knockdown cuts the claim short, and
+it starts again once it can. It may claim the altar only while nobody
+holds it, or while the holder's ghost is dead. When the claim finishes,
+the altar is your team's.
+
+The team that holds the altar scores a point for every 30 seconds it
+keeps it, even while its own ghost is dead, until another team claims
+it. A dead ghost rises in its base 2 minutes later, staying put. It is
+no player: its death costs no morale and it does not count toward a
+wipe.
+
+The dead stay down until an ally resurrects them, and each death costs
+morale. Wipe the other team to win at once. After 8 minutes the team
+with more points wins; equal points is a draw. Kills score nothing.
+
+The scoreboard shows the points, yours first, then the altar: `▲` and
+the time to the holder's next point, in the holder's colour, or a grey
+`▲ —` while nobody holds it.
+
+Hill Courtyard plays it.

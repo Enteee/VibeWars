@@ -65,6 +65,7 @@ export type BenchCrowd = "fighters" | "followers";
 /** A minion's (catalog.ts `MINION_BEHAVIOUR`): heel by its owner, fight its target or foes in earshot. */
 const FOLLOWER_BEHAVIOUR: Behaviour = {
   kind: "follow-and-attack",
+  leaderId: undefined,
   engage: "owner-target-then-nearest",
   aggroUnits: AREA_EARSHOT,
   leashUnits: RANGE_SPELL,

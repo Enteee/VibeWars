@@ -293,6 +293,8 @@ export function createLocalConnection(options: {
         aggression: simulation.aggressionByTeam,
         relics: simulation.relics,
         altar: simulation.altar,
+        altarHolder: simulation.altarState.holder ?? undefined,
+        altarHeldSeconds: simulation.altarState.heldSeconds,
         // No match with rules ends here, so there is never a summary (#1057).
         summary: undefined,
       };

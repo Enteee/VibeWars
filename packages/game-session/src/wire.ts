@@ -743,6 +743,8 @@ export function matchSnapshot(
     aggression: snapshot.aggression,
     relics: snapshot.relics.map(relicState),
     altar: absent(snapshot.altar),
+    altarHolder: absent(snapshot.altarHolder),
+    altarHeldSeconds: snapshot.altarHeldSeconds,
     // Only the host's `"traps"` carries them (#1105).
     traps: [],
     // Only the host's `ended` carries it.

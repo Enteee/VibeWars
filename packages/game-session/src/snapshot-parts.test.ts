@@ -106,6 +106,8 @@ function snapshot(
     aggression: [],
     relics: [],
     altar: null,
+    altarHolder: null,
+    altarHeldSeconds: 0,
   };
 }
 

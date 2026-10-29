@@ -99,9 +99,17 @@ export const MAX_WIRE_ACTORS = MAX_LOBBY_PLAYERS + MAX_WIRE_CREATURES;
 
 /**
  * What kind of creature a body is (#1052); a priest (#1186), a Guild Lord
- * (#1222) and a base guard (#1223) are a map's.
+ * (#1222), a base guard (#1223) and a Ghostly Hero (#1377) are a map's.
  */
-export const CREATURE_KINDS = ["spirit", "minion", "pet", "priest", "guild-lord", "guard"] as const;
+export const CREATURE_KINDS = [
+  "spirit",
+  "minion",
+  "pet",
+  "priest",
+  "guild-lord",
+  "guard",
+  "ghostly-hero",
+] as const;
 
 /** How a creature is drawn (#1162); game-core's `CREATURE_LOOKS`, mirrored. */
 export const CREATURE_LOOKS = [
@@ -112,6 +120,7 @@ export const CREATURE_LOOKS = [
   "priest",
   "guild-lord",
   "guard",
+  "ghostly-hero",
 ] as const;
 
 /**
@@ -475,8 +484,12 @@ export interface WireSnapshot {
   readonly aggression: readonly number[];
   /** Every relic (#1374); `[]` on a map without an altar. */
   readonly relics: readonly WireRelic[];
-  /** The altar a relic is run to (#1374); `null` on a map without one. */
+  /** The altar a relic is run to (#1374), or a ghost claims (#1377); `null` on a map without one. */
   readonly altar: { readonly x: number; readonly y: number } | null;
+  /** The team that holds King of the Hill's altar (#1377); `null` for nobody, and off such a map. */
+  readonly altarHolder: 0 | 1 | null;
+  /** Seconds its holder has kept it since the claim or the last point (#1377); `0` off such a map. */
+  readonly altarHeldSeconds: number;
 }
 
 /**
@@ -1434,7 +1447,11 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
   const relics = parseArray(raw.relics, 2, parseCarried(RELIC_PLACES));
   const altar = raw.altar === null ? null : parsePoint(raw.altar);
   const [team0 = 0, team1 = 0] = score;
-  return players === undefined ||
+  const { altarHolder, altarHeldSeconds } = raw;
+  return !(altarHolder === null || isTeam(altarHolder)) ||
+    !isNumber(altarHeldSeconds) ||
+    altarHeldSeconds < 0 ||
+    players === undefined ||
     projectiles === undefined ||
     groundEffects === undefined ||
     flags === undefined ||
@@ -1458,6 +1475,8 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
         aggression,
         relics,
         altar,
+        altarHolder,
+        altarHeldSeconds,
       };
 }
 

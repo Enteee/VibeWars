@@ -180,6 +180,8 @@ export function snapshotAssembler(): (part: WireSnapshotPart) => WireSnapshot | 
       aggression: part.aggression,
       relics: part.relics,
       altar: part.altar,
+      altarHolder: part.altarHolder,
+      altarHeldSeconds: part.altarHeldSeconds,
     };
   };
 }

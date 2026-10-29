@@ -21,6 +21,7 @@ import {
   type Segment,
   type FlagField,
   type RelicField,
+  type HillField,
   type GuildLord,
   type BaseGuard,
   type Shrine,
@@ -122,6 +123,8 @@ export interface HostMap {
   readonly flagField: FlagField | undefined;
   /** Its altar and relic spawns (#1374), `undefined` but on a Relic Run map. */
   readonly relicField: RelicField | undefined;
+  /** Its altar and ghost spawns (#1377), `undefined` but on a King of the Hill map. */
+  readonly hillField: HillField | undefined;
   /** Its base guards (#1223), in the map's order, `[]` but on a Guild Battle map. */
   readonly guards: readonly BaseGuard[];
 }
@@ -221,7 +224,7 @@ function round(value: number, places: number): number {
   return Math.round(value * scale) / scale;
 }
 
-function wireTeam(team: number | undefined): 0 | 1 | null {
+function wireTeam(team: number | null | undefined): 0 | 1 | null {
   return team === 0 || team === 1 ? team : null;
 }
 
@@ -237,6 +240,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     guildLords: map.guildLords,
     flagField: map.flagField,
     relicField: map.relicField,
+    hillField: map.hillField,
     guards: map.guards,
   });
   const seats = new Map<string, Seat>();
@@ -892,6 +896,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     aggression: sim.aggressionByTeam.map((total) => Math.round(total)),
     relics: sim.relics.flatMap((relic) => wireCarried(relic) ?? []),
     altar: sim.altar ?? null,
+    altarHolder: wireTeam(sim.altarState.holder),
+    altarHeldSeconds: sim.altarState.heldSeconds,
   });
 
   /** Drop the seats whose players did not come back in time. */

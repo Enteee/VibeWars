@@ -292,6 +292,8 @@ describe("carriedBundle (#1225, #1374)", () => {
     aggression: [],
     relics,
     altar: undefined,
+    altarHolder: undefined,
+    altarHeldSeconds: 0,
     summary: undefined,
   });
 
@@ -490,7 +492,14 @@ describe("enemyPips (#881)", () => {
 
 /** The scoreboard's match with these kills, no stand and no aggression. */
 function board(team0: number, team1: number): ScoreboardMatch {
-  return { scoreTeam0: team0, scoreTeam1: team1, stand: undefined, aggression: [] };
+  return {
+    scoreTeam0: team0,
+    scoreTeam1: team1,
+    stand: undefined,
+    aggression: [],
+    altarHolder: undefined,
+    altarHeldSeconds: 0,
+  };
 }
 
 describe("scoreboardText (#881)", () => {
@@ -746,6 +755,29 @@ describe("the Guild Battle scoreboard (#1226)", () => {
     expect(
       scoreboardText(players, 1, LIMIT + 1, LIMIT, "guild-battle", held(undefined, 0, aggression)),
     ).toContain("agg 980 v 1,240 · 0:00");
+  });
+});
+
+describe("King of the Hill's scoreboard (#1377)", () => {
+  const players = [player({ sessionId: "a", team: 0 }), player({ sessionId: "c", team: 1 })];
+
+  it("reads the points, then the altar's holder and the time to its next point in the stand's slot", () => {
+    const held = { ...board(2, 1), altarHolder: 1, altarHeldSeconds: 12.5 };
+    expect(scoreboardText(players, 0, 80, 480, "king-of-the-hill", held)).toBe(
+      "2 – 1 · ▲ 0:18 · 6:40",
+    );
+    expect(scoreboardParts(players, 1, 80, 480, "king-of-the-hill", held)).toContainEqual({
+      kind: "side",
+      team: 1,
+      text: "▲ 0:18",
+      dead: false,
+    });
+    expect(scoreboardParts(players, 0, 80, 480, "king-of-the-hill", board(0, 0))).toContainEqual({
+      kind: "side",
+      team: undefined,
+      text: "▲ —",
+      dead: false,
+    });
   });
 });
 

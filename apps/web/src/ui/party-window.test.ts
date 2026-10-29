@@ -66,6 +66,8 @@ function match(players: readonly PlayerSnapshot[], selfSessionId = "me"): MatchS
     aggression: [],
     relics: [],
     altar: undefined,
+    altarHolder: undefined,
+    altarHeldSeconds: 0,
     summary: undefined,
   };
 }

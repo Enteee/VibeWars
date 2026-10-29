@@ -238,6 +238,8 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       aggression: [],
       relics: [],
       altar: null,
+      altarHolder: null,
+      altarHeldSeconds: 0,
     };
   }
 

@@ -177,7 +177,7 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
 });
 
 describe("the arena set (#444)", () => {
-  it("is the four small arenas, the four of #444, the guild hall (#1222) and the relic temples (#1374)", () => {
+  it("is the four small arenas, the four of #444, the guild hall (#1222), the relic temples (#1374) and the hill courtyard (#1377)", () => {
     expect(MAPS.map((map) => map.id).sort()).toEqual(
       [
         "arena-alpha",
@@ -186,12 +186,13 @@ describe("the arena set (#444)", () => {
         "arena-split",
         "guild-hall-isle",
         "relic-temples",
+        "hill-courtyard",
         ...NEW_ARENAS,
       ].sort(),
     );
   });
 
-  it("plays Kill Count on Pillar Hall, Priest Annihilation on Split Paths, Guild Battle on Guild Hall Isle, Relic Run on Relic Temples and Annihilation everywhere else (#476, #1186, #1222, #1374)", () => {
+  it("plays Kill Count on Pillar Hall, Priest Annihilation on Split Paths, Guild Battle on Guild Hall Isle, Relic Run on Relic Temples, King of the Hill on Hill Courtyard and Annihilation everywhere else (#476, #1186, #1222, #1374, #1377)", () => {
     expect(MAPS.filter((map) => map.mode === "kill-count").map((map) => map.id)).toEqual([
       "arena-pillars",
     ]);
@@ -204,7 +205,10 @@ describe("the arena set (#444)", () => {
     expect(MAPS.filter((map) => map.mode === "relic-run").map((map) => map.id)).toEqual([
       "relic-temples",
     ]);
-    expect(MAPS.filter((map) => map.mode === "annihilation")).toHaveLength(MAPS.length - 4);
+    expect(MAPS.filter((map) => map.mode === "king-of-the-hill").map((map) => map.id)).toEqual([
+      "hill-courtyard",
+    ]);
+    expect(MAPS.filter((map) => map.mode === "annihilation")).toHaveLength(MAPS.length - 5);
   });
 
   it("puts each team's shrine on Split Paths behind its spawns (#1186)", () => {
@@ -392,6 +396,57 @@ describe("Relic Temples (#1374)", () => {
       const detour = blocked.find(spawn.position, altar.position);
       expect(detour, JSON.stringify(spawn)).toBeDefined();
       expect(detour?.some((point) => point.y < altar.position.y - 50)).toBe(!north);
+    }
+  });
+});
+
+describe("Hill Courtyard (#1377)", () => {
+  const courtyard = MAPS.find((map) => map.id === "hill-courtyard");
+  if (courtyard === undefined) throw new Error("no hill-courtyard");
+  const walls = allWallSegments(courtyard.walls);
+  const bounds = { width: courtyard.width, height: courtyard.height };
+  const altar = courtyard.objectives.find((objective) => objective.kind === "altar");
+  const spawns = courtyard.objectives.filter((objective) => objective.kind === "ghost-spawn");
+  if (altar === undefined) throw new Error("no altar");
+
+  /** The walked length of `path`, from `from`. */
+  const walked = (from: Vec2, path: readonly Vec2[]): number =>
+    path.reduce(
+      (sum, point, index) =>
+        sum + Vec.distance(index === 0 ? from : (path[index - 1] ?? from), point),
+      0,
+    );
+
+  it("puts the altar at the centre, and a ghost in each base", () => {
+    expect(altar.position).toEqual({ x: courtyard.width / 2, y: courtyard.height / 2 });
+    expect(spawns.map((spawn) => spawn.team).sort()).toEqual([0, 1]);
+  });
+
+  it("leads each ghost to the altar the same length", () => {
+    const finder = createPathFinder(buildNavGraph(walls, bounds, RADIUS));
+    const lengths = spawns.map((spawn) => {
+      const path = finder.find(spawn.position, altar.position);
+      if (path === undefined) throw new Error(`no way for team ${String(spawn.team)}`);
+      return walked(spawn.position, path);
+    });
+    expect(lengths[0]).toBeCloseTo(lengths[1] ?? 0, 3);
+  });
+
+  it("raises the altar between two walls, with an approach from the north and one from the south", () => {
+    const finder = createPathFinder(buildNavGraph(walls, bounds, RADIUS));
+    for (const [from, side] of [
+      [{ x: altar.position.x, y: 120 }, -1],
+      [{ x: altar.position.x, y: courtyard.height - 120 }, 1],
+    ] as const) {
+      const path = finder.find(from, altar.position);
+      expect(path, JSON.stringify(from)).toBeDefined();
+      // Straight in: nothing between the approach and the altar.
+      expect(path?.every((point) => Math.sign(point.y - altar.position.y) !== -side)).toBe(true);
+    }
+    // From either base the way in goes round the plinth's west or east wall.
+    for (const spawn of spawns) {
+      const path = finder.find(spawn.position, altar.position) ?? [];
+      expect(path.some((point) => Math.abs(point.y - altar.position.y) > 140)).toBe(true);
     }
   });
 });

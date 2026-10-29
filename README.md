@@ -77,9 +77,9 @@ own development was verified that way; see
   traps, minions and pets, weapon sets, morale and resurrection
   ([Combat basics](docs/player/combat-basics.md),
   [Equipment](docs/player/equipment.md)).
-- **Ten original maps**, picked by the lobby host, in five
+- **Eleven original maps**, picked by the lobby host, in six
   [modes](docs/player/modes.md): Annihilation, Kill Count, Priest
-  Annihilation, Guild Battle and Relic Run.
+  Annihilation, Guild Battle, Relic Run and King of the Hill.
 - **Random Arena**: queue for a team size and get matched with other
   players on a random map
   ([Getting started](docs/player/getting-started.md)).

@@ -166,8 +166,12 @@ export interface MatchSnapshot {
   readonly aggression: readonly number[];
   /** A Relic Run's relics and where each is (#1374); `[]` on a map without an altar. */
   readonly relics: readonly RelicState[];
-  /** The altar a relic is run to (#1374); `undefined` on a map without one. */
+  /** The altar a relic is run to (#1374), or a ghost claims (#1377); `undefined` on a map without one. */
   readonly altar: Vec2 | undefined;
+  /** The team that holds King of the Hill's altar (#1377); `undefined` for nobody, and off such a map. */
+  readonly altarHolder: number | undefined;
+  /** Seconds its holder has kept it since the claim or the last point (#1377); 0 off such a map. */
+  readonly altarHeldSeconds: number;
   /** What each player did, from the host's `ended` (#1057); `undefined` until then. */
   readonly summary: readonly MatchSummaryRow[] | undefined;
 }

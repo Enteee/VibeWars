@@ -77,6 +77,8 @@ const CREATURE_ICON: Readonly<Record<CreatureLook, string>> = {
   "guild-lord": iconUrl("profession", "ranger"),
   // Until the guards' own glyph is drawn (#1223): a Warrior's, for their plate.
   guard: iconUrl("profession", "warrior"),
+  // Until the Ghostly Hero's own glyph is drawn (#1377): the priest's, tinted pale in the arena.
+  "ghostly-hero": iconUrl("creature", "spirit"),
 };
 
 /** The kind glyph on a creature's plate in the arena (#1162), drawn in ink and tinted there. */
@@ -141,7 +143,9 @@ export function skillTypeBadgeHtml(type: SkillType): string {
  * effect, a modifier. An id this client does not know gets the bare plate.
  */
 export function skillIcon(skillId: string): string {
-  return iconUrl("skill", getSkill(skillId) === undefined ? "unknown" : skillId);
+  // A map NPC's own skill (#1377), as Claim Resource, has no icon of its own.
+  const skill = getSkill(skillId);
+  return iconUrl("skill", skill === undefined || skill.npcOnly === true ? "unknown" : skillId);
 }
 
 /** A skill's icon as markup, `size` px square. Decorative: the name sits beside it. */
