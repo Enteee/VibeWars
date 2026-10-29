@@ -12,6 +12,7 @@ import arenaRing from "../maps/arena-ring/map.json" with { type: "json" };
 import arenaSplit from "../maps/arena-split/map.json" with { type: "json" };
 import forgottenShrines from "../maps/forgotten-shrines/map.json" with { type: "json" };
 import guildHallIsle from "../maps/guild-hall-isle/map.json" with { type: "json" };
+import hillCourtyard from "../maps/hill-courtyard/map.json" with { type: "json" };
 import relicTemples from "../maps/relic-temples/map.json" with { type: "json" };
 import { allWallSegments } from "./geometry.js";
 import { MapNotFoundError, listMapIds, loadAllMaps, loadMap } from "./loader.js";
@@ -44,6 +45,7 @@ describe("the maps the browser imports", () => {
       arenaSplit,
       forgottenShrines,
       guildHallIsle,
+      hillCourtyard,
       relicTemples,
     ].map((raw) => validateMapData(raw));
     expect(imported.map((map) => map.id)).toEqual(listMapIds());

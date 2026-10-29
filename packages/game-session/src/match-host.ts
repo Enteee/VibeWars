@@ -22,6 +22,7 @@ import {
   type Segment,
   type FlagField,
   type RelicField,
+  type HillField,
   type Vec2,
   type GuildLord,
   type BaseGuard,
@@ -137,6 +138,8 @@ export interface HostMap {
   readonly flagField: FlagField | undefined;
   /** Its altar and relic spawns (#1374), `undefined` but on a Relic Run map. */
   readonly relicField: RelicField | undefined;
+  /** Its altar and ghost spawns (#1377), `undefined` but on a King of the Hill map. */
+  readonly hillField: HillField | undefined;
   /** Its shrines (#1378), `[]` but on a Capture Points map. */
   readonly capturePoints: readonly Vec2[];
   /** Its base guards (#1223), in the map's order, `[]` but on a Guild Battle map. */
@@ -284,6 +287,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     guildLords: map.guildLords,
     flagField: map.flagField,
     relicField: map.relicField,
+    hillField: map.hillField,
     capturePoints: map.capturePoints,
     guards: map.guards,
   });
@@ -1058,6 +1062,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     aggression: sim.aggressionByTeam.map((total) => Math.round(total)),
     relics: sim.relics.flatMap((relic) => wireCarried(relic) ?? []),
     altar: sim.altar ?? null,
+    altarHolder: wireTeam(sim.altarState.holder),
+    altarHeldSeconds: sim.altarState.heldSeconds,
     capturePoints: sim.capturePoints.map((point) => ({
       x: point.position.x,
       y: point.position.y,

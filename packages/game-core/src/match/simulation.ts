@@ -253,6 +253,17 @@ import {
   type RelicsState,
 } from "./relics.js";
 import { guardSpec, type BaseGuard } from "./guards.js";
+import { UNCLAIMED_ALTAR, claimant, mayClaim, stepAltar, type AltarState } from "./altar.js";
+import {
+  CLAIM_SKILL_ID,
+  followBehaviour,
+  ghostId,
+  ghostSpec,
+  isGhostId,
+  onHill,
+  stayBehaviour,
+  type HillField,
+} from "./ghost.js";
 import { priestId, priestSpec, type Shrine } from "./priest.js";
 import { steerAround } from "./steering.js";
 
@@ -277,9 +288,10 @@ import { steerAround } from "./steering.js";
 
 /**
  * What kind of non-player body this is (#467); a priest (#1186), a Guild
- * Lord (#1222) and a base guard (#1223) are a map's.
+ * Lord (#1222), a base guard (#1223) and a Ghostly Hero (#1377) are a map's.
  */
-export type CreatureKind = "spirit" | "minion" | "pet" | "priest" | "guild-lord" | "guard";
+export type CreatureKind =
+  "spirit" | "minion" | "pet" | "priest" | "guild-lord" | "guard" | "ghostly-hero";
 
 /**
  * How a companion fights (#1110, GW1 pet control): game-protocol's
@@ -305,6 +317,7 @@ export const CREATURE_LOOKS = [
   "priest",
   "guild-lord",
   "guard",
+  "ghostly-hero",
 ] as const;
 export type CreatureLook = (typeof CREATURE_LOOKS)[number];
 
@@ -334,8 +347,12 @@ export interface Creature {
   readonly skillId: string | undefined;
   /** What a spirit projects on whoever is in range (#1064); `undefined`: nothing. */
   readonly aura: Aura | undefined;
-  /** From the template (#1046): lies as a body when dead, or vanishes. */
-  readonly onDeath: "vanish" | "lie";
+  /**
+   * From the template (#1046): lies as a body when dead, or vanishes; or
+   * lies until its `on-death` reset raises it, a Ghostly Hero's (#1377),
+   * with no morale to lose.
+   */
+  readonly onDeath: "vanish" | "lie" | "rise";
   /** Its owner's bar is disabled this long on its death, read at arrival; 0: never. */
   readonly ownerDisableSeconds: number;
   /**
@@ -343,6 +360,11 @@ export interface Creature {
    * `undefined`: summoned by a cast.
    */
   readonly companionSkillId: string | undefined;
+  /**
+   * Whom a Ghostly Hero follows (#1377), in place of an owner;
+   * `undefined` while it stays, and for any other creature.
+   */
+  leaderId: string | undefined;
   /**
    * Its owner's last order (#1110): kept through its death, Comfort Animal
    * and its owner's respawn. Only a companion takes orders.
@@ -612,6 +634,11 @@ export interface MatchSimulationOptions {
    */
   readonly relicField?: RelicField | undefined;
   /**
+   * King of the Hill's altar and ghost spawns (#1377): each team's Ghostly
+   * Hero stands at its spawn from the start. Omitted: no ghosts.
+   */
+  readonly hillField?: HillField | undefined;
+  /**
    * Capture Points' shrines (#1378), each neutral at the start. Omitted
    * or `[]`: none.
    */
@@ -649,7 +676,8 @@ interface ParticipantRecord extends Participant {
   combatant: Combatant;
   skillBar: SkillBar;
   readonly spec: ParticipantSpec;
-  readonly behaviour: Behaviour | undefined;
+  /** A Ghostly Hero's changes as it is told to follow or stay (#1377); every other's is its spec's. */
+  behaviour: Behaviour | undefined;
   /** Fresh on a respawn: a bot back from the dead starts its thinking over (#1189). */
   cursor: BehaviourCursor;
   /** `on-interval`: seconds since the last reset. */
@@ -888,6 +916,12 @@ export class MatchSimulation {
   #relicsState: RelicsState | undefined;
   /** Who reached a relic this step (#1374), in simulation order. */
   #relicArrivals: CarriedArrival[] = [];
+  /** King of the Hill's altar and ghost spawns (#1377); `undefined` on a map without them. */
+  readonly #hillField: HillField | undefined;
+  /** Who holds the altar (#1377); nobody on a map without a hill. */
+  #altarState: AltarState = UNCLAIMED_ALTAR;
+  /** The teams whose ghost finished a claim this step (#1377), in simulation order. */
+  #claims: number[] = [];
   /** Capture Points' shrines (#1378), who owns each and how far toward whom; `[]` without them. */
   #capturePoints: readonly CapturePoint[];
   /** Shrine scorings gone by (#1378): the next is at `POINT_TICK_SECONDS` times one more. */
@@ -920,6 +954,7 @@ export class MatchSimulation {
     this.#relicField = options.relicField;
     this.#relicsState =
       this.#relicField === undefined ? undefined : initialRelics(this.#relicField);
+    this.#hillField = options.hillField;
     this.#capturePoints = initialCapturePoints(options.capturePoints ?? []);
     for (const spec of options.participants ?? []) {
       this.add(spec);
@@ -951,6 +986,19 @@ export class MatchSimulation {
       );
     for (const lord of lords) {
       this.add(guildLordSpec(lord, facingFoes(lord.team, lord.position)));
+    }
+    const ghostSpawns = this.#hillField?.spawns ?? [];
+    for (const spawn of ghostSpawns) {
+      this.add(
+        ghostSpec(
+          spawn,
+          spawnFacing(
+            spawn.position,
+            ghostSpawns.filter((other) => other.team !== spawn.team).map((other) => other.position),
+            ghostSpawns.map((other) => other.position),
+          ),
+        ),
+      );
     }
     const placed = new Map<number, number>();
     const bodyguards = new Map<number, Combatant>();
@@ -1027,9 +1075,17 @@ export class MatchSimulation {
     return this.#relicsState?.relics ?? [];
   }
 
-  /** The altar a relic is run to (#1374); `undefined` on a map without one. */
+  /**
+   * The altar a relic is run to (#1374), or a Ghostly Hero claims (#1377);
+   * `undefined` on a map without one.
+   */
   public get altar(): Vec2 | undefined {
-    return this.#relicField?.altar;
+    return this.#relicField?.altar ?? this.#hillField?.altar;
+  }
+
+  /** Who holds King of the Hill's altar, and how long since the claim or the last point (#1377). */
+  public get altarState(): AltarState {
+    return this.#altarState;
   }
 
   /** Every Capture Points shrine (#1378), where it is and who holds it; `[]` on a map without them. */
@@ -1282,6 +1338,7 @@ export class MatchSimulation {
               ? 0
               : resolveMagnitude(template.ownerDisableOnDeath, owner.combatant),
           companionSkillId: companion ? skillId : undefined,
+          leaderId: undefined,
           mode: "guard",
         },
       });
@@ -1723,6 +1780,7 @@ export class MatchSimulation {
         creature.kind === "priest" ||
         creature.kind === "guild-lord" ||
         creature.kind === "guard" ||
+        creature.kind === "ghostly-hero" ||
         record.combatant.dead
       ) {
         continue;
@@ -1983,15 +2041,16 @@ export class MatchSimulation {
    * (#310); one refused leaves the walk going. One at anyone but the
    * target of a skill walking in drops that skill (#499).
    *
-   * At a flag, the stand (#1225) or a relic (#1374), it is GW1's
-   * Interact instead: see `#requestInteract`.
+   * At a flag, the stand (#1225), a relic (#1374) or your own team's
+   * Ghostly Hero (#1377), it is GW1's Interact instead: see
+   * `#requestInteract`. A foe's ghost is attacked as any foe is.
    */
   public requestAttack(id: string, targetId: string): ActivationCheck | undefined {
     const record = this.#participants.get(id);
     if (record === undefined) {
       return undefined;
     }
-    if (isCarriedObjectId(targetId)) {
+    if (isCarriedObjectId(targetId) || this.#isAllyGhost(record, targetId)) {
       return this.#requestInteract(record, targetId);
     }
     const check = this.#attackCheck(record, targetId);
@@ -2016,6 +2075,8 @@ export class MatchSimulation {
    * flag, a bundle not lying anywhere, or the stand with no flag in hand;
    * and when dead. Knocked down or casting, the walk waits. It ends the
    * attack, a skill walking in and a click-to-walk, as an attack does.
+   * Or to your team's living Ghostly Hero, to tell it to follow you or
+   * stay (#1377).
    */
   #requestInteract(record: ParticipantRecord, targetId: string): ActivationCheck {
     if (record.combatant.dead) {
@@ -2349,6 +2410,7 @@ export class MatchSimulation {
       tickChainMarks(record.combatant, dt);
     }
     this.#advanceProjectiles(dt);
+    this.#steadyGhosts();
 
     for (const record of this.#participants.values()) {
       if (this.#resetDue(record, dt)) {
@@ -2469,6 +2531,11 @@ export class MatchSimulation {
       dropEndedCopyPools(record.combatant);
       if (completed !== undefined) {
         this.resolveCast(record, completed, dt);
+        // A claim finished that the rule still allows (#1377): the altar
+        // is settled once every death is in.
+        if (completed.skillId === CLAIM_SKILL_ID && this.#mayClaim(record)) {
+          this.#claims.push(record.combatant.team);
+        }
       }
       // A skill pressed during the aftercast goes off the tick it ends. A
       // refusal now is dropped: nobody is pressing a key at this moment.
@@ -2495,7 +2562,8 @@ export class MatchSimulation {
 
       // Behaviours act after their own cast resolves, so a dummy can
       // finish one cast and begin the next within the same tick.
-      if (record.behaviour !== undefined && !down) {
+      // A Ghostly Hero on the altar claims it by itself instead (#1377).
+      if (record.behaviour !== undefined && !down && !this.#claim(record)) {
         this.#act(record, record.behaviour, dt);
       }
     }
@@ -2512,6 +2580,7 @@ export class MatchSimulation {
     this.#priestWave();
     // After every death, before the match end: a point on the last tick counts.
     this.#advanceRelics();
+    this.#advanceAltar(dt);
     this.#advanceCapturePoints(dt);
     // After every death this step, so two teams wiped in it both lose.
     this.checkMatchEnd();
@@ -3696,9 +3765,11 @@ export class MatchSimulation {
     ) {
       return;
     }
+    // A ghost is a body: walked past, as an attack's target is.
+    const ghost = isGhostId(interact.targetId) ? interact.targetId : undefined;
     const approach = this.#approach(
       record,
-      { id: undefined, position },
+      { id: ghost, position },
       FLAG_REACH_UNITS,
       interact,
       dt,
@@ -3707,7 +3778,9 @@ export class MatchSimulation {
       return;
     }
     record.interact = undefined;
-    if (approach === "arrived") {
+    if (approach === "arrived" && ghost !== undefined) {
+      this.#toggleGhost(record, ghost);
+    } else if (approach === "arrived") {
       const arrivals =
         relicTeamOf(interact.targetId) === undefined ? this.#flagArrivals : this.#relicArrivals;
       arrivals.push({
@@ -3725,6 +3798,11 @@ export class MatchSimulation {
    */
   #interactRefusal(record: ParticipantRecord, targetId: string): ActivationRejection | undefined {
     const { id, combatant } = record;
+    if (isGhostId(targetId)) {
+      return this.#participants.get(targetId)?.combatant.dead === false
+        ? undefined
+        : "invalid-target-dead";
+    }
     if (relicTeamOf(targetId) !== undefined) {
       return this.#relicField === undefined || this.#relicsState === undefined
         ? "no-target"
@@ -3737,6 +3815,10 @@ export class MatchSimulation {
 
   /** Where the walk to `targetId`, a flag, the stand or a relic, ends; `undefined` for nowhere. */
   #interactPosition(targetId: string): Vec2 | undefined {
+    if (isGhostId(targetId)) {
+      const ghost = this.#participants.get(targetId);
+      return ghost === undefined || ghost.combatant.dead ? undefined : ghost.position;
+    }
     if (relicTeamOf(targetId) !== undefined) {
       return this.#relicField === undefined
         ? undefined
@@ -3793,6 +3875,131 @@ export class MatchSimulation {
     this.#relicsState = next;
     for (const team of scored) {
       this.#score = addPoint(this.#score, team);
+    }
+  }
+
+  /** Whether `targetId` is `record`'s own team's Ghostly Hero (#1377): Space on it is no attack. */
+  #isAllyGhost(record: ParticipantRecord, targetId: string): boolean {
+    return (
+      isGhostId(targetId) &&
+      this.#participants.get(targetId)?.combatant.team === record.combatant.team
+    );
+  }
+
+  /**
+   * Space on your Ghostly Hero, reached (#1377): one following you stays
+   * where it stands; any other follows you, its last leader's or staying.
+   */
+  #toggleGhost(record: ParticipantRecord, ghostId: string): void {
+    const ghost = this.#participants.get(ghostId);
+    const field = this.#hillField;
+    if (ghost === undefined || ghost.combatant.dead || field === undefined) {
+      return;
+    }
+    if (ghost.creature?.leaderId === record.id) {
+      this.#stay(ghost, ghost.position);
+    } else {
+      ghost.behaviour = followBehaviour(field.altar);
+      ghost.cursor = createCursor();
+      if (ghost.creature !== undefined) {
+        ghost.creature.leaderId = record.id;
+      }
+    }
+  }
+
+  /** A Ghostly Hero stays at `post`, following nobody (#1377). */
+  #stay(ghost: ParticipantRecord, post: Vec2): void {
+    ghost.behaviour = stayBehaviour(post);
+    ghost.cursor = createCursor();
+    if (ghost.creature !== undefined) {
+      ghost.creature.leaderId = undefined;
+    }
+  }
+
+  /**
+   * A Ghostly Hero whose leader died or left stays where it stands
+   * (#1377), before anyone acts this step.
+   */
+  #steadyGhosts(): void {
+    for (const spawn of this.#hillField?.spawns ?? []) {
+      const ghost = this.#participants.get(ghostId(spawn.team));
+      const leaderId = ghost?.creature?.leaderId;
+      if (ghost === undefined || leaderId === undefined) {
+        continue;
+      }
+      const leader = this.#participants.get(leaderId);
+      if (leader === undefined || leader.combatant.dead || this.#leaving.has(leader.id)) {
+        this.#stay(ghost, ghost.position);
+      }
+    }
+  }
+
+  /**
+   * Whether `record`, a Ghostly Hero, may claim the altar now (#1377):
+   * alive, within reach of it, and its team not the holder, with nobody
+   * holding it or the holder's ghost dead.
+   */
+  #mayClaim(record: ParticipantRecord): boolean {
+    const field = this.#hillField;
+    if (field === undefined || record.combatant.dead || !onHill(field, record.position)) {
+      return false;
+    }
+    const { holder } = this.#altarState;
+    const holderGhost = holder === null ? undefined : this.#participants.get(ghostId(holder));
+    return mayClaim(
+      this.#altarState,
+      record.combatant.team,
+      holderGhost !== undefined && !holderGhost.combatant.dead,
+    );
+  }
+
+  /**
+   * A Ghostly Hero's claim (#1377): one under way that the rule no longer
+   * allows, off the altar's reach or with the holder's ghost risen, stops;
+   * one it allows begins, through the cast path as any skill, so an
+   * interrupt or a knockdown cuts it short as it would a spell. While it
+   * lasts the ghost stands still and fights nobody. Whether it is
+   * claiming, so its behaviour waits.
+   */
+  #claim(record: ParticipantRecord): boolean {
+    if (record.creature?.kind !== "ghostly-hero") {
+      return false;
+    }
+    const cast = record.combatant.cast;
+    const allowed = this.#mayClaim(record);
+    if (cast.activeCast?.skillId === CLAIM_SKILL_ID) {
+      if (!allowed) {
+        this.#cancelCast(record);
+      }
+      return allowed;
+    }
+    if (!allowed || cast.isCasting || cast.inAftercast) {
+      return false;
+    }
+    this.setInputDirection(record.id, ZERO);
+    record.followGoal = undefined;
+    record.route = undefined;
+    record.combatant.attack = undefined;
+    const request = this.requestSkill(record.id, record.skillBar.indexOf(CLAIM_SKILL_ID));
+    return request?.check.ok === true;
+  }
+
+  /**
+   * The step's altar (#1377), once every death is in and before the match
+   * end is checked, so a point on the last tick counts: a claim finished
+   * by one team alone takes it, and its clock starts at 0; otherwise its
+   * holder counts the step, and scores at every `POINT_TICK_SECONDS`.
+   */
+  #advanceAltar(dt: number): void {
+    const claims = this.#claims;
+    this.#claims = [];
+    if (this.#hillField === undefined || this.phase !== "active") {
+      return;
+    }
+    const { state, scored } = stepAltar(this.#altarState, dt, claimant(claims));
+    this.#altarState = state;
+    if (scored !== null) {
+      this.#score = addPoint(this.#score, scored);
     }
   }
 
@@ -4523,10 +4730,14 @@ export class MatchSimulation {
         // it fell (#1046) and pays the death penalty (#1133). Only a
         // spirit's death is no soul to reap (GW1: "a non-Spirit creature").
         if (victim.creature !== undefined) {
-          victim.respawnInSeconds = Number.POSITIVE_INFINITY;
+          // A Ghostly Hero rises by its own reset, and has no morale (#1377).
+          victim.respawnInSeconds =
+            victim.creature.onDeath === "rise"
+              ? this.#respawnSeconds(victim)
+              : Number.POSITIVE_INFINITY;
           if (victim.creature.onDeath === "vanish") {
             this.#leaving.add(victim.id);
-          } else {
+          } else if (victim.creature.onDeath === "lie") {
             this.#deathPenalty(victim);
           }
           if (victim.creature.kind !== "spirit") {
@@ -4976,10 +5187,12 @@ export class MatchSimulation {
     if (this.phase !== "active") {
       return;
     }
-    // A Relic Run's score is its relic points (#1374), Capture Points' its
-    // shrine points (#1378): a kill is none.
+    // A Relic Run's score is its relic points (#1374), King of the Hill's
+    // its points for the altar (#1377), Capture Points' its shrine points
+    // (#1378): a kill is none.
     if (
       this.#matchRules?.victory === "relic-run" ||
+      this.#matchRules?.victory === "king-of-the-hill" ||
       this.#matchRules?.victory === "capture-points"
     ) {
       return;
@@ -5378,6 +5591,10 @@ export class MatchSimulation {
     record.sinceReset = 0;
     if (why === "respawn") {
       record.cursor = createCursor();
+    }
+    // A Ghostly Hero rises staying put at its spawn (#1377).
+    if (record.creature?.kind === "ghostly-hero") {
+      this.#stay(record, record.spawn);
     }
     record.armedAttack = undefined;
     record.outOfCombatSeconds = 0;

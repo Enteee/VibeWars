@@ -10,7 +10,7 @@ without one, or with one the game does not know, is refused.
 corpses until resurrected, and each death costs morale. Wipe the other
 team to win; after 8 minutes the highest total morale wins, and there is
 no draw. Every arena but Pillar Hall, Split Paths, Guild Hall Isle,
-Relic Temples and Forgotten Shrines plays it.
+Relic Temples, Hill Courtyard and Forgotten Shrines plays it.
 
 **Kill Count** (GW1's The Crag): the most kills in 3 minutes. The dead
 respawn at their team's spawn after 8 seconds, and there is no death
@@ -113,6 +113,38 @@ and no number of points ends it early. Kills score nothing. The
 scoreboard reads the points as Kill Count reads kills, `2 – 1 · 6:40`,
 and the line under it names each relic's place: `✦ Name`, `✦ dropped`
 or `✦ at base`. Relic Temples plays it, and no Random Arena does.
+
+**King of the Hill** (GW1's Heroes' Ascent, #1377): lead your Ghostly
+Hero onto the altar and hold it. Each team has a **Ghostly Hero** at a
+`"ghost-spawn"` objective in its base, and the map has one `"altar"`;
+a King of the Hill map without exactly one altar and one ghost spawn per
+spawning team is refused. The ghost is a creature (`ghost/<team>`, 600
+Health, armor 60, a sword) that nobody plays and no player's skill bar
+shows. Space on your own living ghost, within 60 units, toggles it
+between **following** you (a minion's follow-and-attack, you its leader)
+and **staying** where it stands (a guard's hold, unrooted, on a short
+leash); it starts staying at its spawn, and stays when its leader dies
+or leaves. A foe's Space on it is an attack, as on any foe. A living
+ghost within 60 units of the altar uses **Claim Resource** by itself
+while its team does not hold the altar and nobody does or the holder's
+ghost is dead: 5 s through the cast path, standing still and fighting
+nobody, so an interrupt, a knockdown or a spell-only interrupt cuts it
+short, and it begins again on its next tick while the rule allows it. A
+claim under way stops the moment the rule no longer allows it: off the
+altar's reach, or the holder's ghost risen. Two claims finished in the
+same tick take nothing, and both begin again. A finished claim gives
+the team the altar, its clock at 0; every **30 s** held without a break
+is a point, the holder's ghost dead or alive, until another team claims
+it. A dead ghost rises at its spawn after 120 s (its own `on-death`
+reset), staying put; it costs no morale and counts toward no wipe.
+Claim Resource (`npc.claim-resource`) is an `npcOnly` skill: no
+build lists it and a bar holding it is refused. As in a Relic Run the
+dead stay down and pay the death penalty, a wipe loses at once, and at
+**8 minutes** the most points win, equal points a draw; kills score
+nothing. The scoreboard reads `2 – 1 · ▲ 0:18 · 6:40`: the points,
+then the altar in the stand's slot, the holder's `▲` and the time to
+its next point, or a grey `▲ —`. Hill Courtyard plays it, and no
+Random Arena does.
 
 **Capture Points** (GW1's Heroes' Ascent, Forgotten Shrines, #1378):
 hold the shrines. A Capture Points map has one to five

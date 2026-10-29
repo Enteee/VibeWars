@@ -132,6 +132,7 @@ function toPlayerSnapshot(
             look: participant.creature.look,
             mode: companionMode(participant.creature),
             armedAttack: armedAttackSnapshot(participant.armedAttack, elapsedSeconds),
+            leaderId: participant.creature.leaderId ?? null,
           },
     // The Training Ground has dummies, not a lobby's bots.
     bot: false,
@@ -295,6 +296,8 @@ export function createLocalConnection(options: {
         aggression: simulation.aggressionByTeam,
         relics: simulation.relics,
         altar: simulation.altar,
+        altarHolder: simulation.altarState.holder ?? undefined,
+        altarHeldSeconds: simulation.altarState.heldSeconds,
         capturePoints: simulation.capturePoints,
         // No match with rules ends here, so there is never a summary (#1057).
         summary: undefined,

@@ -145,7 +145,8 @@ export function validatePlayerBuild(build: PlayerBuild, rules: AttributeRules): 
       return;
     }
     const skill = getSkill(skillId);
-    if (skill === undefined) {
+    // A map NPC's own skill (#1377) is no player's, whatever the bar says.
+    if (skill === undefined || skill.npcOnly === true) {
       problems.push({
         field: `skillBar[${String(index)}]`,
         message: `unknown or not-yet-implemented skill ${skillId}`,
