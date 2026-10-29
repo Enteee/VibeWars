@@ -53,6 +53,7 @@ import {
   renderKeyLabels,
   renderMute,
   refreshSkillBar,
+  relicScoreToast,
   renderSkillBar,
   standBoostToast,
   updateHud,
@@ -607,7 +608,7 @@ export async function startMatchView(
 
   let finished = false;
   /** The summary (#1057), drawn once under the result banner when the host's `ended` lands. */
-  /** The match as the last frame saw it, so a stand boost toasts once (#1226). */
+  /** The match as the last frame saw it, so an objective toasts once (#1226, #1387). */
   let lastMatch = connection.getSnapshot();
   let summary:
     { readonly tables: readonly SummaryTable[]; readonly panel: HTMLElement } | undefined;
@@ -617,10 +618,13 @@ export async function startMatchView(
     matchMusic.snapshot(latestMatch);
     guardUnload(latestMatch.phase !== "finished");
     const self = latestMatch.players.find((p) => p.sessionId === connection.selfSessionId);
-    const boost = standBoostToast(lastMatch, latestMatch, self?.team);
+    const objective =
+      standBoostToast(lastMatch, latestMatch, self?.team) ??
+      relicScoreToast(lastMatch, latestMatch, self?.team);
     lastMatch = latestMatch;
-    if (boost !== undefined) {
-      toast(boost);
+    if (objective !== undefined) {
+      toast(objective.text);
+      sounds.play(objective.side === "ours" ? "objective-ours" : "objective-theirs");
     }
     if (latestMatch.phase === "finished" && !finished) {
       finished = true;

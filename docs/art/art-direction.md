@@ -1068,6 +1068,8 @@ concerns you, never the whole arena (#104).
 | `refused`          | the server refuses your cast        | 0.16 s | −12 dBFS | Tiny falling two-note blip           |
 | `weapon-swing`     | your weapon attack misses           | 0.16 s | −14 dBFS | Dry, pitchless airy whoosh           |
 | `bow-release`      | you fire a ranged weapon            | 0.18 s | −13 dBFS | Soft low string pluck, a tiny snap   |
+| `objective-ours`   | your team scores an objective       | 0.48 s | −8 dBFS  | Bright rising fifth, brass on a sine |
+| `objective-theirs` | the foe scores an objective         | 0.48 s | −9 dBFS  | The same fifth falling, darker       |
 
 Rules:
 
