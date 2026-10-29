@@ -29,8 +29,9 @@ A character the game's rules changed under shows red stripes and
 **Invalid**. You cannot play as it until you **Edit** it into a legal
 build and save.
 
-Not sure what to take? **Reroll** on a starter character gives you a
-fresh random build to try.
+Not sure what to take? The random starter character is marked
+**Random**, with a dashed outline. **Reroll** on it gives you a fresh
+random build to try.
 
 ## Play a Random Arena
 

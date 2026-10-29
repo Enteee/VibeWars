@@ -971,6 +971,10 @@ differ by shape, so the icon shows the current state at a glance.
 `attacking` has two blades, so at 16 px it never reads as the one-sword
 `attack` skill type badge.
 
+In the menu's character list the random starter character carries a
+RANDOM tag in ink, the shape of the red INVALID tag, and a dashed row
+outline, so it differs from your own characters by shape, not only colour.
+
 UI text is sentence case: "Edit team", "New character", "Save". A small
 uppercase field label is styled so by CSS; the words themselves stay sentence case.
 
