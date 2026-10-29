@@ -112,6 +112,12 @@ export type StatusId =
   | "natural-stride"
   | "lightning-reflexes"
   | "escape"
+  // Warrior Tactics stances (#1329).
+  | "bonettis-defense"
+  | "deflect-arrows"
+  | "gladiators-defense"
+  | "disciplined-stance"
+  | "balanced-stance"
   | "mantra-of-recovery"
   // Preparations.
   | "apply-poison"
@@ -365,6 +371,13 @@ export interface StatusDefinition {
   readonly preventsKnockdown: boolean;
   /** It ends when it stops a knockdown (#845): Fleeting Stability. */
   readonly endsOnKnockdownPrevented: boolean;
+  /**
+   * A critical hit on the bearer deals a normal roll, not the weapon's
+   * critical damage (#1329): Balanced Stance's "you do not suffer extra
+   * damage from a critical attack". It is still a critical for the
+   * attacker.
+   */
+  readonly ignoresCriticalDamage: boolean;
   /** The bearer's chance to block attacks; `undefined`: none. */
   readonly block: BlockRule | undefined;
   /**
@@ -448,6 +461,12 @@ export interface StatusDefinition {
    * foe uses a skill". An interrupted or cancelled skill is not used.
    */
   readonly endsWhenBearerUsesSkill: boolean;
+  /**
+   * It ends the moment the bearer uses an adrenal skill (#1329), as
+   * `endsWhenBearerUsesSkill` does for any: Disciplined Stance's "ends if
+   * you use an adrenal skill".
+   */
+  readonly endsWhenBearerUsesAdrenalSkill: boolean;
   /**
    * It ends once one of its triggers has fired (#1022): Vengeful Weapon's
    * and Weapon of Remedy's "the next time". Ended where the trigger fires,
@@ -559,8 +578,9 @@ export interface StatusDefinition {
  * Or (#935) it completes any skill, lands a hit, or loses health to
  * physical damage. `expires` is only the end of its duration (#944):
  * Patient Spirit's "unless it ends prematurely". Or (#1022) it loses
- * health to damage or life steal from a foe. Or (#1332) one of its blows
- * fails to hit.
+ * health to damage or life steal from a foe. Or (#1329) it blocks a melee
+ * or a projectile attack: only the status that blocked answers. Or
+ * (#1332) one of its blows fails to hit.
  */
 export type StatusTriggerEvent =
   | "bearer-casts-spell"
@@ -582,6 +602,14 @@ export type StatusTriggerEvent =
    * neither. Recorded with the dealer, and fired at the drain, as hits are.
    */
   | "bearer-takes-damage-from-foe"
+  /**
+   * The bearer blocked a melee or a projectile attack (#1329), and the
+   * status holding the trigger is the one whose share the block roll fell
+   * in. Recorded with the attacker, who is the offender, and fired at the
+   * drain, as damage from a foe is.
+   */
+  | "bearer-blocks-melee"
+  | "bearer-blocks-projectile"
   /**
    * The bearer created a creature (#1316): a spirit or a minion, once for
    * each, as it enters the world. A pet is charmed, not created. Fired by
@@ -662,6 +690,7 @@ export type TriggerEffect = SkillEffect | SpreadGainedConditionEffect | EchoEffe
  * killing blow ends them before the drain, and they still fire for it.
  * Or (#1022) damage or life steal it took from a foe, with that foe.
  * Or (#1108) the share of a physical hit a bond sent to `toId`, its source.
+ * Or (#1329) an attack from `offenderId` a status blocked, with its triggers.
  */
 export type StatusChange =
   | { readonly kind: "gained-condition"; readonly id: StatusId; readonly durationSeconds: number }
@@ -676,6 +705,11 @@ export type StatusChange =
   | { readonly kind: "took-physical-damage"; readonly fired: readonly AnsweringTrigger[] }
   | {
       readonly kind: "took-damage-from-foe";
+      readonly offenderId: string;
+      readonly fired: readonly AnsweringTrigger[];
+    }
+  | {
+      readonly kind: "blocked";
       readonly offenderId: string;
       readonly fired: readonly AnsweringTrigger[];
     }
@@ -756,6 +790,7 @@ function define(
     renewsWhileMoving: undefined,
     preventsKnockdown: false,
     endsOnKnockdownPrevented: false,
+    ignoresCriticalDamage: false,
     block: undefined,
     blockBelowHealth: undefined,
     criticalChanceBonus: 0,
@@ -772,6 +807,7 @@ function define(
     endsWhenBearerAttacksInMelee: false,
     endsWhenBearerHits: false,
     endsWhenBearerUsesSkill: false,
+    endsWhenBearerUsesAdrenalSkill: false,
     endsWhenTriggered: false,
     endsWhenBearerHitsWithAttackSkill: false,
     endsWhenBearerGains: [],
@@ -1187,6 +1223,76 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     moveSpeedMultiplier: 1.33,
     block: { chance: 0.75, against: "all" },
     endsWhenBearerAttacksInMelee: true,
+  }),
+  // "For 5...11 seconds, you have a 75% chance to block melee and
+  // projectile attacks. You gain 5 Energy for each successful melee attack
+  // blocked. Bonetti's Defense ends if you use a skill." (#1329)
+  "bonettis-defense": define("bonettis-defense", "Bonetti's Defense", "stance", {
+    profession: "warrior",
+    block: { chance: 0.75, against: "all" },
+    endsWhenBearerUsesSkill: true,
+    triggers: [
+      {
+        on: "bearer-blocks-melee",
+        target: "bearer",
+        effects: [{ kind: "energy-gain", amount: { flat: 5 } }],
+        skillId: "warrior.bonettis-defense",
+      },
+    ],
+  }),
+  // "For 1...6 seconds, you have a 75% chance to block attacks. If you
+  // block a projectile attack, adjacent foes suffer from Bleeding for
+  // 5...15 seconds" (#1329): 13 s, its rank-12 value.
+  "deflect-arrows": define("deflect-arrows", "Deflect Arrows", "stance", {
+    profession: "warrior",
+    block: { chance: 0.75, against: "all" },
+    triggers: [
+      {
+        on: "bearer-blocks-projectile",
+        target: "bearer",
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_ADJACENT,
+            maxTargets: undefined,
+            effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: 13 }],
+          },
+        ],
+        skillId: "warrior.deflect-arrows",
+      },
+    ],
+  }),
+  // "For 5...11 seconds, you have a 75% chance to block incoming attacks.
+  // Whenever you block a melee attack this way, the attacker suffers
+  // 5...35 damage" (#1329): 29, its rank-12 value.
+  "gladiators-defense": define("gladiators-defense", "Gladiator's Defense", "stance", {
+    profession: "warrior",
+    block: { chance: 0.75, against: "all" },
+    triggers: [
+      {
+        on: "bearer-blocks-melee",
+        target: "offender",
+        effects: [{ kind: "damage", amount: { flat: 29 }, type: "typeless", armorPenetration: 0 }],
+        skillId: "warrior.gladiators-defense",
+      },
+    ],
+  }),
+  // "For 1...4 seconds, you gain +10 armor and have a 75% chance to block
+  // attacks. Disciplined Stance ends if you use an adrenal skill." (#1329)
+  "disciplined-stance": define("disciplined-stance", "Disciplined Stance", "stance", {
+    profession: "warrior",
+    armorModifier: 10,
+    block: { chance: 0.75, against: "all" },
+    endsWhenBearerUsesAdrenalSkill: true,
+  }),
+  // "For 8...20 seconds, you cannot be knocked down and you do not suffer
+  // extra damage from a critical attack." (#1329) Unlike Fleeting
+  // Stability, stopping a knockdown does not end it.
+  "balanced-stance": define("balanced-stance", "Balanced Stance", "stance", {
+    profession: "warrior",
+    preventsKnockdown: true,
+    ignoresCriticalDamage: true,
   }),
   // "For 5...17...20 seconds, spells you cast recharge 33% faster" (#938).
   "mantra-of-recovery": define("mantra-of-recovery", "Mantra of Recovery", "stance", {
@@ -2028,6 +2134,20 @@ export class StatusSet {
   }
 
   /**
+   * Status `statusId` blocked an attack of this kind from `offenderId`
+   * (#1329), recorded only if that status answers it, with its triggers:
+   * another blocking status on the bearer does not.
+   */
+  public recordBlock(statusId: StatusId, offenderId: string, kind: "melee" | "projectile"): void {
+    const fired = this.#answering(
+      kind === "melee" ? "bearer-blocks-melee" : "bearer-blocks-projectile",
+    ).filter((answering) => answering.statusId === statusId);
+    if (fired.length > 0) {
+      this.#changes.push({ kind: "blocked", offenderId, fired });
+    }
+  }
+
+  /**
    * The bearer lost health to damage or life steal from `offenderId`, a
    * foe (#1022), recorded only if a status on it answers that, with the
    * triggers that do. A status already waiting to answer one, undrained,
@@ -2441,12 +2561,20 @@ export class StatusSet {
 
   /**
    * The bearer used a skill (#949): every status that ends when it does
-   * is gone, but those in `spared`, which that skill put on its own user
+   * is gone, and every one that ends on an adrenal skill if it was one
+   * (#1329), but those in `spared`, which that skill put on its own user
    * (#999). Returns the ids that ended on it.
    */
-  public endOnBearerUseSkill(spared: ReadonlySet<StatusId>): StatusId[] {
+  public endOnBearerUseSkill(spared: ReadonlySet<StatusId>, adrenal: boolean): StatusId[] {
     const ended = this.active
-      .filter(({ id }) => getStatusDefinition(id).endsWhenBearerUsesSkill && !spared.has(id))
+      .filter(({ id }) => {
+        const definition = getStatusDefinition(id);
+        return (
+          (definition.endsWhenBearerUsesSkill ||
+            (adrenal && definition.endsWhenBearerUsesAdrenalSkill)) &&
+          !spared.has(id)
+        );
+      })
       .map(({ id }) => id);
     this.#end(ended);
     return ended;
@@ -2637,6 +2765,8 @@ export interface StatusModifiers {
   readonly healthPerCritical: number;
   /** Every status's, summed (#1270). */
   readonly damageFromSpiritAttacks: number;
+  /** Any status's (#1329). */
+  readonly ignoresCriticalDamage: boolean;
 }
 
 /**
@@ -2705,6 +2835,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let criticalChanceBonus = 0;
   let energyPerCritical = 0;
   let healthPerCritical = 0;
+  let ignoresCriticalDamage = false;
   const enchantments = statuses.filter(
     (status) => getStatusDefinition(status.id).category === "enchantment",
   ).length;
@@ -2774,6 +2905,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     criticalChanceBonus += def.criticalChanceBonus;
     energyPerCritical += def.energyPerCritical;
     healthPerCritical += def.healthPerCritical;
+    ignoresCriticalDamage ||= def.ignoresCriticalDamage;
   }
 
   return {
@@ -2808,6 +2940,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     energyPerCritical,
     healthPerCritical,
     damageFromSpiritAttacks,
+    ignoresCriticalDamage,
   };
 }
 

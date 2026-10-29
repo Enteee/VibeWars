@@ -41,6 +41,7 @@ const NO_BOT_USE = new Set([
   "ritualist.signet-of-spirits",
   "ritualist.weapon-of-aggression",
   "ritualist.weapon-of-quickening",
+  "warrior.balanced-stance",
   "warrior.for-great-justice",
   "warrior.frenzy",
   "warrior.sprint",
