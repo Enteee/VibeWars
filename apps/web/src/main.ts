@@ -3,7 +3,7 @@ import type { LobbyCharacter, LobbyConnection, MatchStarting } from "@vibewars/g
 
 import type { NostrQueue } from "./net/transport/nostr-queue.js";
 
-import { ARENA_MAPS } from "./net/maps.js";
+import { ARENA_MAPS, mapMode } from "./net/maps.js";
 import {
   connectMatchFor,
   enterQueue,
@@ -37,7 +37,7 @@ import {
   isStaleChunkError,
   type BuildWatch,
 } from "./build-check.js";
-import { startMatchView, type MatchView } from "./match-view.js";
+import { startMatchView, type MatchOutcome, type MatchView } from "./match-view.js";
 import { beatEdits } from "./music/beat-edits.js";
 import { musicPlayer } from "./music/music-player.js";
 import { music } from "./music/play-music.js";
@@ -45,12 +45,14 @@ import { TRACKS } from "./music/tracks/index.js";
 import { STRESS_BUILD, startStress, stressMs } from "./music/stress.js";
 import {
   CharacterRepository,
+  MatchRecordRepository,
   TeamRepository,
   createMemoryStore,
   openIndexedDbStore,
   type KeyValueStore,
 } from "./storage/repository.js";
 import { cloneCharacter } from "./storage/clone-character.js";
+import { matchRecordFrom, tally, type Tally } from "./storage/match-record.js";
 import type { StoredCharacter } from "./storage/schema.js";
 import { rerollStarterCharacter, rollStarterCharacter } from "./storage/starter-character.js";
 import { importTeam, importedTeamSummary, type TeamImportResult } from "./storage/team-transfer.js";
@@ -81,6 +83,7 @@ import {
   type StayOffer,
 } from "./ui/queue-screen.js";
 import { renderLobbyScreen } from "./ui/lobby-screen.js";
+import { renderRecordScreen } from "./ui/record-screen.js";
 import { createNowPlayingToast, nowPlayingText } from "./ui/now-playing.js";
 import {
   loadActiveCharacterId,
@@ -180,6 +183,8 @@ interface Entrant {
   readonly build: PlayerBuild | undefined;
   /** How the lobby lists it (#580). */
   readonly character: LobbyCharacter | null;
+  /** Whose record its matches go on (#1404); `undefined` for a starter build. */
+  readonly characterId: string | undefined;
 }
 
 async function main(): Promise<void> {
@@ -229,6 +234,7 @@ async function main(): Promise<void> {
   }
   const characters = new CharacterRepository(store);
   const teams = new TeamRepository(store);
+  const records = new MatchRecordRepository(store);
   // The first start plays a rolled starter character (#853). Not into
   // memory: it would be gone next start, with the key saying it was rolled.
   if (persistent) {
@@ -435,8 +441,7 @@ async function main(): Promise<void> {
    * that no longer exists, or one that no longer validates, resolves to
    * `undefined` and a starter build from the host.
    */
-  const activeBuild = async (): Promise<PlayerBuild | undefined> => {
-    const id = loadActiveCharacterId();
+  const activeBuild = async (id: string | undefined): Promise<PlayerBuild | undefined> => {
     if (id === undefined) {
       return undefined;
     }
@@ -458,20 +463,19 @@ async function main(): Promise<void> {
    * illegal one, plays a starter build, so it is listed as that too.
    */
   const readEntrant = async (): Promise<Entrant> => {
-    const build = await activeBuild();
-    return {
-      build,
-      character:
-        build === undefined ||
-        resolveJoinLoadout(build, MINIMAL_GW_INSPIRED_PVP_V1.attributes, Math.random).refused !==
-          undefined
-          ? null
-          : {
-              name: build.name,
-              primary: build.primaryProfession,
-              secondary: build.secondaryProfession ?? null,
-            },
-    };
+    const id = loadActiveCharacterId();
+    const build = await activeBuild(id);
+    const character =
+      build === undefined ||
+      resolveJoinLoadout(build, MINIMAL_GW_INSPIRED_PVP_V1.attributes, Math.random).refused !==
+        undefined
+        ? null
+        : {
+            name: build.name,
+            primary: build.primaryProfession,
+            secondary: build.secondaryProfession ?? null,
+          };
+    return { build, character, characterId: character === null ? undefined : id };
   };
 
   /** The open build editor; every way out of it passes through `showMenu`. */
@@ -493,8 +497,15 @@ async function main(): Promise<void> {
     music().screen("menu");
     idleScreen = true;
     void (async () => {
-      const { characters: list, problems } = await characters.list();
-      renderMenuWith(list, [...problems, ...editNotices]);
+      const [{ characters: list, problems }, played] = await Promise.all([
+        characters.list(),
+        records.list(),
+      ]);
+      renderMenuWith(
+        list,
+        [...problems, ...played.problems, ...editNotices],
+        tally(played.records),
+      );
       editNotices = [];
     })();
   };
@@ -512,9 +523,16 @@ async function main(): Promise<void> {
     });
   };
 
+  const showRecord = async (): Promise<void> => {
+    leaveScreen();
+    const { records: played, problems } = await records.list();
+    renderRecordScreen(screenRoot, played, problems, { onBack: showMenu });
+  };
+
   const renderMenuWith = (
     list: readonly StoredCharacter[],
     problems: readonly string[] = [],
+    tallies: ReadonlyMap<string, Tally> = new Map(),
   ): void => {
     renderMenu(
       screenRoot,
@@ -541,6 +559,9 @@ async function main(): Promise<void> {
         },
         onManageTeams: () => {
           void showTeams();
+        },
+        onShowRecord: () => {
+          void showRecord();
         },
         onMusic: showJukebox,
         onNewCharacter: () => {
@@ -591,12 +612,13 @@ async function main(): Promise<void> {
         // highlighted row matches what was just picked, without a round
         // trip to storage for a list we already hold.
         onSelectCharacter: () => {
-          renderMenuWith(list, problems);
+          renderMenuWith(list, problems, tallies);
         },
       },
       list,
       problems,
       menuNotice,
+      tallies,
     );
   };
 
@@ -613,6 +635,10 @@ async function main(): Promise<void> {
       onDelete: (id: string) => {
         void (async () => {
           await characters.delete(id);
+          // Its record goes with it (#1404); a failure leaves orphans, which no roster tallies.
+          await records.deleteFor(id).catch((error: unknown) => {
+            console.warn("[web] could not delete the character's record", error);
+          });
           back();
         })();
       },
@@ -1212,6 +1238,29 @@ async function main(): Promise<void> {
     }
   };
 
+  /**
+   * Keeps a finished match on `entrant`'s character's record (#1404). A
+   * starter build has none. Saving is a convenience: a failure is only logged.
+   */
+  const recordMatch = (outcome: MatchOutcome, mapId: string, entrant: Entrant): void => {
+    if (entrant.characterId === undefined || entrant.character === null) {
+      return;
+    }
+    const record = matchRecordFrom(outcome, {
+      id: crypto.randomUUID(),
+      characterId: entrant.characterId,
+      characterName: entrant.character.name,
+      mapId,
+      mode: mapMode(mapId),
+      finishedAt: Date.now(),
+    });
+    if (record !== undefined) {
+      records.save(record).catch((error: unknown) => {
+        console.warn("[web] could not record the match", error);
+      });
+    }
+  };
+
   const enterMatch = async (
     name: string,
     start: MatchStarting,
@@ -1244,22 +1293,24 @@ async function main(): Promise<void> {
           onLeave: () => {
             void exitMatch();
           },
-          ...(queue === undefined
-            ? {}
-            : {
-                onFinished: ({ winningTeam, endReason, selfTeam, aggression }) => {
-                  const won = selfTeam !== undefined && winningTeam === selfTeam;
-                  queueStreak = nextStreak(queueStreak, won ? "win" : "loss");
-                  const outcome = describeOutcome(winningTeam, endReason, selfTeam, aggression);
-                  queuedEnd = {
-                    outcome,
-                    won,
-                    timer: window.setTimeout(() => {
-                      void endQueuedMatch(outcome, won);
-                    }, QUEUED_RESULT_SECONDS * 1000),
-                  };
-                },
-              }),
+          // Every lobby match, coded or queued, goes on the record (#1404).
+          onFinished: (finished) => {
+            recordMatch(finished, start.mapId, entrant);
+            if (queue === undefined) {
+              return;
+            }
+            const { winningTeam, endReason, selfTeam, aggression } = finished;
+            const won = selfTeam !== undefined && winningTeam === selfTeam;
+            queueStreak = nextStreak(queueStreak, won ? "win" : "loss");
+            const outcome = describeOutcome(winningTeam, endReason, selfTeam, aggression);
+            queuedEnd = {
+              outcome,
+              won,
+              timer: window.setTimeout(() => {
+                void endQueuedMatch(outcome, won);
+              }, QUEUED_RESULT_SECONDS * 1000),
+            };
+          },
         },
         { connect: () => connectMatchFor(from, start, name, entrant.build) },
       );

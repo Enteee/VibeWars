@@ -1,6 +1,7 @@
 import type { QueueMode } from "@vibewars/game-protocol";
 
 import { SOURCE_URL } from "../source.js";
+import type { Tally } from "../storage/match-record.js";
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 import type { StoredCharacter, StoredTeam } from "../storage/schema.js";
 import { validateBuild } from "../storage/build-validation.js";
@@ -27,6 +28,8 @@ export interface MenuCallbacks {
   readonly onCreateLobby: (name: string) => void;
   readonly onJoinLobby: (code: string, name: string) => void;
   readonly onManageTeams: () => void;
+  /** Open the Record screen (#1404). */
+  readonly onShowRecord: () => void;
   /** Open the jukebox (#372). */
   readonly onMusic: () => void;
   /** Open the build editor on a new character. */
@@ -127,11 +130,18 @@ export function savePlayerName(name: string): void {
   }
 }
 
-/** "Elementalist / Monk · 5/8 skills". */
-export function rosterSubtitle(character: StoredCharacter): string {
+/**
+ * "Elementalist / Monk · 5/8 skills", then its record (#1404) once it has
+ * played: "· 12W 7L", with "1D" only when it has drawn.
+ */
+export function rosterSubtitle(character: StoredCharacter, tally?: Tally): string {
   const professions = professionLabel(character.primaryProfession, character.secondaryProfession);
   const skills = `${String(equippedCount(character))}/${String(character.skillBar.length)} skills`;
-  return `${professions} · ${skills}`;
+  if (tally === undefined) {
+    return `${professions} · ${skills}`;
+  }
+  const draws = tally.draws > 0 ? ` ${String(tally.draws)}D` : "";
+  return `${professions} · ${skills} · ${String(tally.wins)}W ${String(tally.losses)}L${draws}`;
 }
 
 /**
@@ -145,7 +155,8 @@ export function isPlayable(character: StoredCharacter): boolean {
 
 /**
  * Render the main menu (#579): your characters on the left, Play on the
- * right, and Teams, Options and Music in the screen bar.
+ * right, and Teams, Record, Options and Music in the screen bar. Each
+ * character's record (#1404) follows its subtitle.
  */
 export function renderMenu(
   root: HTMLElement,
@@ -153,6 +164,7 @@ export function renderMenu(
   characters: readonly StoredCharacter[] = [],
   characterProblems: readonly string[] = [],
   connectionNotice?: string,
+  tallies: ReadonlyMap<string, Tally> = new Map(),
 ): void {
   root.replaceChildren();
   const panel = h("div", "screen screen-menu");
@@ -161,7 +173,11 @@ export function renderMenu(
   // Options is the top bar's ⚙ (#1272).
   screenBar({
     crumbs: ["VibeWars"],
-    actions: [button("Teams", "", callbacks.onManageTeams), button("Music", "", callbacks.onMusic)],
+    actions: [
+      button("Teams", "", callbacks.onManageTeams),
+      button("Record", "", callbacks.onShowRecord),
+      button("Music", "", callbacks.onMusic),
+    ],
   });
   const subtitle = h(
     "p",
@@ -229,7 +245,7 @@ export function renderMenu(
     const row = selectableRow({
       dot: createCharacterFigure(character),
       name: character.name,
-      subtitle: rosterSubtitle(character),
+      subtitle: rosterSubtitle(character, tallies.get(character.id)),
       miniBar: miniSkillBar(character),
       selected: character.id === active && playable,
       // Beside the row, not in it: editing never also chooses.
