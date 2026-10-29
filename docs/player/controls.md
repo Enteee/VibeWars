@@ -1,6 +1,7 @@
 # Controls
 
-Every key below can be changed in **Options**, under **Controls**. Pick a
+Every key in the table below can be changed in **Options**, under
+**Controls**; Esc, Enter, F10 and the mouse buttons are fixed. Pick a
 **Preset** there, or click a key cell and press the key you want; a key
 already in use moves to the new action, and the screen says which one
 lost it. Changes save at once.
