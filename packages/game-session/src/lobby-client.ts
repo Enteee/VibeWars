@@ -295,11 +295,8 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       startMatch() {
         send({ kind: "start" });
       },
-      addBot(team, profession) {
-        send({ kind: "add-bot", team, profession });
-      },
-      removeBot(botId) {
-        send({ kind: "remove-bot", botId });
+      setBots(team, count) {
+        send({ kind: "set-bots", team, count });
       },
       sendChat(channel, text) {
         if (hostId !== undefined && !closed) {

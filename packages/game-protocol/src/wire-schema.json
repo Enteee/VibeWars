@@ -2566,14 +2566,8 @@
       "union": [
         {
           "properties": [
-            { "name": "botId", "optional": false, "type": "string" },
-            { "name": "kind", "optional": false, "type": { "literal": "remove-bot" } }
-          ]
-        },
-        {
-          "properties": [
-            { "name": "kind", "optional": false, "type": { "literal": "add-bot" } },
-            { "name": "profession", "optional": false, "type": "string" },
+            { "name": "count", "optional": false, "type": "number" },
+            { "name": "kind", "optional": false, "type": { "literal": "set-bots" } },
             {
               "name": "team",
               "optional": false,

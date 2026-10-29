@@ -48,8 +48,8 @@ the team you just played with.
 To play with friends:
 
 - **Host:** press **Host a lobby**. The lobby shows a code; press
-  **Copy** and send it to your friends. You can **Add bot** to fill an
-  empty place. When everyone is in, press **Start match**.
+  **Copy** and send it to your friends. Press **+** under a team's
+  **Bots:** to fill an empty place. When everyone is in, press **Start match**.
 - **Join:** paste the code you were sent into the lobby code field and
   press **Join**.
 

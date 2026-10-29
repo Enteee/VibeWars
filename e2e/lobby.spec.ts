@@ -437,20 +437,20 @@ test("a match plays the character the lobby lists, not one selected after joinin
   }
 });
 
-test("the host adds a Monk bot to the other team; it plays, named and tagged BOT (#1194)", async ({
+test("the host gives the other team a bot; it plays, named and tagged BOT (#1194, #1454)", async ({
   page,
 }) => {
   await hostLobby(page, "Host");
   await page.getByRole("button", { name: "join team 1" }).click();
-  await page.getByRole("combobox", { name: "bot profession for team 2" }).selectOption("monk");
-  await page.getByRole("button", { name: "add a bot to team 2" }).click();
+  await page.getByRole("button", { name: "one bot more on team 2" }).click();
 
   const team = page.locator(".lobby-team").nth(1);
-  const row = team.locator(".lobby-slot", { hasText: "Monk Bot" });
+  await expect(team.locator(".lobby-bot-count")).toHaveText("1");
+  // Nobody on its side plays one, so the first starter build: Warrior.
+  const row = team.locator(".lobby-slot", { hasText: "Warrior Bot" });
   await expect(row.locator(".bot-tag")).toHaveText("BOT");
-  await expect(row.getByRole("button", { name: "remove Monk Bot" })).toBeVisible();
   // Its subtitle is the professions alone, not its name again (#1241).
-  await expect(row.locator(".lobby-character")).toHaveText(/^Monk\b/);
+  await expect(row.locator(".lobby-character")).toHaveText(/^Warrior\b/);
   await expect(row.locator(".lobby-character")).not.toContainText("Bot");
 
   await page.getByRole("button", { name: "Ready", exact: true }).click();
@@ -459,7 +459,7 @@ test("the host adds a Monk bot to the other team; it plays, named and tagged BOT
 
   // The only foe in the arena is the bot.
   await page.keyboard.press(key("target-closest"));
-  await expect(page.locator(".hud-target-text")).toHaveText("Monk Bot");
+  await expect(page.locator(".hud-target-text")).toHaveText("Warrior Bot");
   await expect(page.locator(".hud-target-bot")).toBeVisible();
   await expect(page.locator(".hud-target-bot")).toHaveText("BOT");
 });

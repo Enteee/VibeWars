@@ -617,15 +617,22 @@ describe("bots in a lobby (#1193)", () => {
       .players.filter((player) => player.bot)
       .map(({ name, team, ready, isHost }) => ({ name, team, ready, isHost }));
 
-  it("lets the host add bots, named for their profession and numbered, always ready, and remove them", async () => {
+  /** Each bot's name, by team. */
+  const botNames = (who: Member) =>
+    [0, 1].map((team) =>
+      botsOf(who)
+        .filter((bot) => bot.team === team)
+        .map(({ name }) => name),
+    );
+
+  it("lets the host set a side's bots, named for their profession and numbered, always ready", async () => {
     const { lobby, guest } = await hostAndGuest();
-    await ask(lobby, lobby.host, { kind: "add-bot", team: 1, profession: "monk" });
-    await ask(lobby, lobby.host, { kind: "add-bot", team: 0, profession: "monk" });
-    await ask(lobby, lobby.host, { kind: "add-bot", team: 0, profession: "necromancer" });
+    await ask(lobby, lobby.host, { kind: "set-bots", team: 1, count: 1 });
+    await ask(lobby, lobby.host, { kind: "set-bots", team: 0, count: 2 });
     expect(botsOf(guest)).toEqual([
-      { name: "Monk Bot", team: 1, ready: true, isHost: false },
-      { name: "Monk Bot 2", team: 0, ready: true, isHost: false },
-      { name: "Necromancer Bot", team: 0, ready: true, isHost: false },
+      { name: "Warrior Bot", team: 1, ready: true, isHost: false },
+      { name: "Warrior Bot 2", team: 0, ready: true, isHost: false },
+      { name: "Ranger Bot", team: 0, ready: true, isHost: false },
     ]);
     // A bot is nobody's guild (#1406).
     expect(
@@ -634,12 +641,68 @@ describe("bots in a lobby (#1193)", () => {
         .players.filter((player) => player.bot)
         .map(({ guildTag }) => guildTag),
     ).toEqual([null, null, null]);
-    const [first] = guest.connection.getSnapshot().players.filter((player) => player.bot);
-    await ask(lobby, lobby.host, { kind: "remove-bot", botId: first?.sessionId ?? "" });
-    expect(botsOf(guest).map(({ name }) => name)).toEqual(["Monk Bot 2", "Necromancer Bot"]);
   });
 
-  it("refuses a guest's bot commands, an unknown profession and an unknown bot", async () => {
+  it("takes out a side's last-added bots first when the count goes down", async () => {
+    const { lobby, guest } = await hostAndGuest();
+    await ask(lobby, lobby.host, { kind: "set-bots", team: 0, count: 3 });
+    const ids = guest.connection
+      .getSnapshot()
+      .players.filter((player) => player.bot)
+      .map(({ sessionId }) => sessionId);
+    await ask(lobby, lobby.host, { kind: "set-bots", team: 0, count: 1 });
+    expect(
+      guest.connection
+        .getSnapshot()
+        .players.filter((player) => player.bot)
+        .map(({ sessionId }) => sessionId),
+    ).toEqual(ids.slice(0, 1));
+    await ask(lobby, lobby.host, { kind: "set-bots", team: 0, count: 0 });
+    expect(botsOf(guest)).toEqual([]);
+  });
+
+  it("skips the professions the side's players play, then goes round them all", async () => {
+    const lobby = await openLobby();
+    const monk = await lobby.join("Mo", { name: "Mo", primary: "monk", secondary: null });
+    const ranger = await lobby.join("Ra", { name: "Ra", primary: "ranger", secondary: "monk" });
+    await ask(lobby, monk, { kind: "choose-team", team: 0 });
+    await ask(lobby, ranger, { kind: "choose-team", team: 0 });
+    await ask(lobby, lobby.host, { kind: "set-bots", team: 0, count: 5 });
+    expect(botNames(monk)).toEqual([
+      ["Warrior Bot", "Necromancer Bot", "Elementalist Bot", "Warrior Bot 2", "Ranger Bot"],
+      [],
+    ]);
+    // A player switching sides refigures both sides' bots.
+    await ask(lobby, ranger, { kind: "choose-team", team: 1 });
+    await ask(lobby, lobby.host, { kind: "set-bots", team: 1, count: 2 });
+    expect(botNames(monk)).toEqual([
+      ["Warrior Bot", "Ranger Bot", "Necromancer Bot", "Elementalist Bot", "Warrior Bot 2"],
+      ["Warrior Bot 3", "Monk Bot"],
+    ]);
+    // So does one leaving.
+    await monk.connection.disconnect();
+    await settle();
+    expect(botNames(ranger)[0]?.slice(0, 3)).toEqual(["Warrior Bot", "Ranger Bot", "Monk Bot"]);
+  });
+
+  it("plans each bot with the build its name says", async () => {
+    const lobby = await openLobby();
+    const monk = await lobby.join("Mo", { name: "Mo", primary: "monk", secondary: null });
+    await ask(lobby, monk, { kind: "choose-team", team: 1 });
+    await ask(lobby, monk, { kind: "ready", ready: true });
+    await ask(lobby, lobby.host, { kind: "set-bots", team: 1, count: 3 });
+    await start(lobby);
+    const seats = [...(lobby.matches[0]?.plan.seats.values() ?? [])].filter(
+      (seat) => seat.bot !== null,
+    );
+    expect(seats.map(({ name, bot }) => [name, bot?.primaryProfession])).toEqual([
+      ["Warrior Bot", "warrior"],
+      ["Ranger Bot", "ranger"],
+      ["Necromancer Bot", "necromancer"],
+    ]);
+  });
+
+  it("refuses a guest's bot count, and a count that is no integer from 0", async () => {
     const { lobby, guest } = await hostAndGuest();
     const onlooker = await rawPeer(lobby);
     const notes = { host: [] as string[], guest: [] as string[] };
@@ -649,45 +712,55 @@ describe("bots in a lobby (#1193)", () => {
     guest.transport.on("lobby-note", (data) => {
       notes.guest.push(parseWireLobbyNote(data)?.reason ?? "");
     });
-    await ask(lobby, lobby.host, { kind: "add-bot", team: 0, profession: "warrior" });
-    const [bot] = guest.connection.getSnapshot().players.filter((player) => player.bot);
-    await ask(lobby, guest, { kind: "add-bot", team: 0, profession: "monk" });
-    await ask(lobby, guest, { kind: "remove-bot", botId: bot?.sessionId ?? "" });
-    await ask(lobby, lobby.host, { kind: "add-bot", team: 0, profession: "dervish" });
-    await ask(lobby, lobby.host, { kind: "remove-bot", botId: guest.transport.selfId });
+    await ask(lobby, lobby.host, { kind: "set-bots", team: 0, count: 1 });
+    await ask(lobby, guest, { kind: "set-bots", team: 0, count: 3 });
+    await ask(lobby, lobby.host, { kind: "set-bots", team: 0, count: -1 });
+    await ask(lobby, lobby.host, { kind: "set-bots", team: 0, count: 1.5 });
     expect(notes).toEqual({
       host: ["invalid-bot", "invalid-bot"],
-      guest: ["not-host", "not-host"],
+      guest: ["not-host"],
     });
-    expect(botsOf(guest).map(({ name }) => name)).toEqual(["Warrior Bot"]);
+    expect(botNames(guest)).toEqual([["Warrior Bot"], []]);
     expect(onlooker.notes).toEqual([]);
   });
 
-  it("counts bots against MAX_LOBBY_PLAYERS", async () => {
+  it("counts bots against MAX_LOBBY_PLAYERS, and changes nothing past it", async () => {
     const lobby = await openLobby();
     const notes: string[] = [];
     lobby.host.transport.on("lobby-note", (data) => {
       notes.push(parseWireLobbyNote(data)?.reason ?? "");
     });
-    for (let i = 1; i < MAX_LOBBY_PLAYERS; i += 1) {
-      await ask(lobby, lobby.host, { kind: "add-bot", team: 1, profession: "ranger" });
-    }
+    await ask(lobby, lobby.host, { kind: "set-bots", team: 0, count: 2 });
+    await ask(lobby, lobby.host, { kind: "set-bots", team: 1, count: MAX_LOBBY_PLAYERS - 3 });
     expect(notes).toEqual([]);
-    await ask(lobby, lobby.host, { kind: "add-bot", team: 1, profession: "ranger" });
+    expect(playersOf(lobby.host)).toHaveLength(MAX_LOBBY_PLAYERS);
+    await ask(lobby, lobby.host, { kind: "set-bots", team: 1, count: MAX_LOBBY_PLAYERS - 2 });
     expect(notes).toEqual(["lobby-full"]);
     expect(playersOf(lobby.host)).toHaveLength(MAX_LOBBY_PLAYERS);
+    // Taking one from the other side frees the seat.
+    await ask(lobby, lobby.host, { kind: "set-bots", team: 0, count: 1 });
+    await ask(lobby, lobby.host, { kind: "set-bots", team: 1, count: MAX_LOBBY_PLAYERS - 2 });
+    expect(notes).toEqual(["lobby-full"]);
+  });
+
+  it("ignores a bot count once the match is on", async () => {
+    const lobby = await openLobby();
+    await ask(lobby, lobby.host, { kind: "set-bots", team: 0, count: 1 });
+    await start(lobby);
+    await ask(lobby, lobby.host, { kind: "set-bots", team: 0, count: 3 });
+    expect(botNames(lobby.host)).toEqual([["Warrior Bot"], []]);
   });
 
   it("starts a match of bots alone, the host spectating, and plans each with its build", async () => {
     const lobby = await openLobby();
-    await ask(lobby, lobby.host, { kind: "add-bot", team: 0, profession: "elementalist" });
-    await ask(lobby, lobby.host, { kind: "add-bot", team: 1, profession: "warrior" });
+    await ask(lobby, lobby.host, { kind: "set-bots", team: 0, count: 1 });
+    await ask(lobby, lobby.host, { kind: "set-bots", team: 1, count: 1 });
     await start(lobby);
     expect(lobby.matches).toHaveLength(1);
     const seats = [...(lobby.matches[0]?.plan.seats.values() ?? [])];
     expect(seats.map(({ team, name, bot }) => [team, name, bot?.primaryProfession])).toEqual([
-      [0, "Elementalist Bot", "elementalist"],
-      [1, "Warrior Bot", "warrior"],
+      [0, "Warrior Bot", "warrior"],
+      [1, "Warrior Bot 2", "warrior"],
     ]);
     await lobby.step(1);
     expect(lobby.host.connection.getSnapshot().phase).toBe("in-match");
@@ -695,8 +768,8 @@ describe("bots in a lobby (#1193)", () => {
 
   it("keeps its bots, ready, on their teams when the match ends", async () => {
     const lobby = await openLobby();
-    await ask(lobby, lobby.host, { kind: "add-bot", team: 0, profession: "warrior" });
-    await ask(lobby, lobby.host, { kind: "add-bot", team: 1, profession: "warrior" });
+    await ask(lobby, lobby.host, { kind: "set-bots", team: 0, count: 1 });
+    await ask(lobby, lobby.host, { kind: "set-bots", team: 1, count: 1 });
     await start(lobby);
     await lobby.matches[0]?.host.close("host-left");
     await lobby.step(0.1);

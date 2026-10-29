@@ -907,9 +907,11 @@ export type WireLobbyCommand =
   | { readonly kind: "ready"; readonly ready: boolean }
   | { readonly kind: "select-map"; readonly mapId: string }
   | { readonly kind: "start" }
-  /** Host only (#1193): a bot playing `profession`'s starter build, a `ProfessionId`. */
-  | { readonly kind: "add-bot"; readonly team: 0 | 1; readonly profession: string }
-  | { readonly kind: "remove-bot"; readonly botId: string };
+  /**
+   * Host only (#1454): `team` has `count` bots, an integer from 0; the
+   * host picks what they play.
+   */
+  | { readonly kind: "set-bots"; readonly team: 0 | 1; readonly count: number };
 
 /** Lobby host to one peer: a start it turned down, or a member it turned away. */
 export interface WireLobbyNote {
@@ -932,8 +934,8 @@ export const LOBBY_REFUSALS = [
   "not-admitted",
   "ticket-used",
   "fell-through",
-  // A bot command (#1193) from anyone but the host; one naming no bot or
-  // no starter profession, or sent in a queued lobby.
+  // A bot command (#1193) from anyone but the host; one whose count is no
+  // integer from 0 (#1454), or sent in a queued lobby.
   "not-host",
   "invalid-bot",
 ] as const;
@@ -2167,12 +2169,10 @@ export function parseWireLobbyCommand(value: unknown): WireLobbyCommand | undefi
       return isString(raw.mapId) ? { kind: "select-map", mapId: raw.mapId } : undefined;
     case "start":
       return { kind: "start" };
-    case "add-bot":
-      return isTeam(raw.team) && isString(raw.profession)
-        ? { kind: "add-bot", team: raw.team, profession: raw.profession }
+    case "set-bots":
+      return isTeam(raw.team) && isNumber(raw.count)
+        ? { kind: "set-bots", team: raw.team, count: raw.count }
         : undefined;
-    case "remove-bot":
-      return isString(raw.botId) ? { kind: "remove-bot", botId: raw.botId } : undefined;
     default:
       return undefined;
   }
