@@ -1,7 +1,14 @@
 import { sizeClass } from "@vibewars/game-maps/size-class";
 import { describe, expect, it } from "vitest";
 
-import { ARENA_MAPS, hostMap, mapMode, mapShrines, randomArenaMapPool } from "./maps.js";
+import {
+  ARENA_MAPS,
+  hostMap,
+  mapFlagField,
+  mapMode,
+  mapShrines,
+  randomArenaMapPool,
+} from "./maps.js";
 
 function sizesOf(ids: readonly string[]): string[] {
   return ids.map((id) => {
@@ -70,6 +77,19 @@ describe("hostMap (#476)", () => {
       { team: 1, position: { x: 2550, y: 1000 } },
     ]);
     expect(hostMap("arena-split")?.guildLords).toEqual([]);
+  });
+
+  it("carries a Guild Battle map's flag stand and flag spawns, and none elsewhere (#1225)", () => {
+    expect(hostMap("guild-hall-isle")?.flagField).toEqual({
+      stand: { x: 1500, y: 1000 },
+      spawns: [
+        { team: 0, position: { x: 560, y: 1000 } },
+        { team: 1, position: { x: 2440, y: 1000 } },
+      ],
+    });
+    expect(mapFlagField("guild-hall-isle")).toEqual(hostMap("guild-hall-isle")?.flagField);
+    expect(hostMap("arena-split")?.flagField).toBeUndefined();
+    expect(mapFlagField("training-hall")).toBeUndefined();
   });
 
   it("carries a Guild Battle map's guards in its order, and none elsewhere (#1223)", () => {

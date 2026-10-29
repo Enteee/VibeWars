@@ -3,6 +3,7 @@ import type { ClientIntent, PeerCall } from "@vibewars/game-protocol";
 import type { CallsSnapshot, MatchSnapshot } from "@vibewars/game-session";
 
 import { actorAtPoint, type ArenaSnapshot } from "../render/arena-snapshot.js";
+import { flagObjectAtPoint } from "../render/flag-objects.js";
 import { attackClickIntents } from "./attack-key.js";
 import type { DoubleClick } from "./double-click.js";
 
@@ -13,6 +14,8 @@ import type { DoubleClick } from "./double-click.js";
  *
  * A body under `world` is targeted, and a second right click on the same
  * enemy within the double-click window attacks it, as Space would (#298).
+ * With no body there, a flag or the flag stand is (#1225), and a double
+ * click walks to it as Space does.
  * The ground sends nothing: a missed right click costs nothing, and keeps
  * the target. `doubleClick` is pressed either way, so a click on the
  * ground breaks a double.
@@ -24,14 +27,14 @@ export function secondaryClickIntents(
   doubleClick: DoubleClick,
   nowMs: number,
 ): ClientIntent[] {
-  const hit = actorAtPoint(arena, world);
-  const double = doubleClick.press(hit?.id, nowMs);
+  const hit = actorAtPoint(arena, world)?.id ?? flagObjectAtPoint(arena.flags, arena.stand, world);
+  const double = doubleClick.press(hit, nowMs);
   if (hit === undefined) {
     return [];
   }
   return [
-    { kind: "target", targetSessionId: hit.id },
-    ...(double ? attackClickIntents(snapshot, hit.id) : []),
+    { kind: "target", targetSessionId: hit },
+    ...(double ? attackClickIntents(snapshot, hit) : []),
   ];
 }
 

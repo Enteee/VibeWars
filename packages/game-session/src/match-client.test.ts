@@ -58,6 +58,8 @@ describe("connectMatch", () => {
       players: [],
       projectiles: [],
       groundEffects: [],
+      flags: [],
+      stand: null,
     });
     await settle();
     expect(connection.getSnapshot().scoreTeam0).toBe(0);
@@ -85,6 +87,8 @@ describe("connectMatch", () => {
         players: [],
         projectiles: [],
         groundEffects: [],
+        flags: [],
+        stand: null,
       },
       transport.selfId,
     );
@@ -135,6 +139,8 @@ describe("connectMatch", () => {
           ],
           projectiles: [],
           groundEffects: [],
+          flags: [],
+          stand: null,
         },
         transport.selfId,
       );

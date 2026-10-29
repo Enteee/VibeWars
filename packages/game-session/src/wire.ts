@@ -12,6 +12,7 @@ import {
   type CastState,
   type CombatEvent,
   type CombatLogEntry,
+  type FlagState,
   type GroundAct,
   type GroundEffect,
   type Participant,
@@ -26,6 +27,7 @@ import {
   type SkillBarSlot,
   type WireCombat,
   type WireCombatEvent,
+  type WireFlag,
   type WirePlayer,
   type WireProjectile,
   type WireSnapshot,
@@ -520,6 +522,32 @@ function absent<T>(value: T | null): T | undefined {
   return value ?? undefined;
 }
 
+/** A flag as the wire carries it (#1225): a team it has no colour for is not sent. */
+export function wireFlag({ team, place }: FlagState): WireFlag | undefined {
+  if (team !== 0 && team !== 1) {
+    return undefined;
+  }
+  return {
+    team,
+    place: place.kind,
+    carrierId: place.kind === "carried" ? place.carrierId : null,
+    x: place.kind === "ground" ? place.position.x : null,
+    y: place.kind === "ground" ? place.position.y : null,
+  };
+}
+
+/** A validated wire flag as game-core's (#1225). */
+function flagState({ team, place, carrierId, x, y }: WireFlag): FlagState {
+  switch (place) {
+    case "carried":
+      return { team, place: { kind: "carried", carrierId: carrierId ?? "" } };
+    case "ground":
+      return { team, place: { kind: "ground", position: { x: x ?? 0, y: y ?? 0 } } };
+    default:
+      return { team, place: { kind: place } };
+  }
+}
+
 /** The fields of a body's `WirePlayer` that say who it is, not how it stands. */
 export type WireIdentity = Pick<
   WirePlayer,
@@ -685,6 +713,11 @@ export function matchSnapshot(
     endReason: absent(snapshot.endReason),
     projectiles: snapshot.projectiles.map(projectileSnapshot),
     groundEffects: snapshot.groundEffects,
+    flags: snapshot.flags.map(flagState),
+    stand:
+      snapshot.stand === null
+        ? undefined
+        : { holder: absent(snapshot.stand.holder), heldSeconds: snapshot.stand.heldSeconds },
     // Only the host's `"traps"` carries them (#1105).
     traps: [],
     // Only the host's `ended` carries it.

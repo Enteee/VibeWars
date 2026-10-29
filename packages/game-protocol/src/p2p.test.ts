@@ -214,6 +214,18 @@ const snapshot: WireSnapshotPart = {
       durationSeconds: 17,
     },
   ],
+  flags: [],
+  stand: null,
+};
+
+/** A Guild Battle's flags (#1225): one carried, one on the ground. */
+const flagged: WireSnapshotPart = {
+  ...snapshot,
+  flags: [
+    { team: 0, place: "carried", carrierId: "peer-1", x: null, y: null },
+    { team: 1, place: "ground", carrierId: null, x: 1400, y: 980 },
+  ],
+  stand: { holder: 0, heldSeconds: 37.5 },
 };
 
 const combat: WireCombat = {
@@ -552,6 +564,19 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
     },
   ],
   ["last of three snapshot parts", parseWireSnapshotPart, { ...snapshot, part: 2, parts: 3 }],
+  ["snapshot with flags and a held stand (#1225)", parseWireSnapshotPart, flagged],
+  [
+    "snapshot with flags at spawn and on the stand, nobody holding it (#1225)",
+    parseWireSnapshotPart,
+    {
+      ...flagged,
+      flags: [
+        { team: 0, place: "spawn", carrierId: null, x: null, y: null },
+        { team: 1, place: "stand", carrierId: null, x: null, y: null },
+      ],
+      stand: { holder: null, heldSeconds: 0 },
+    },
+  ],
   ["combat batch", parseWireCombatBatch, combatBatch],
   ["skill-bar", parseWireSkillBar, skillBar],
   [
@@ -790,6 +815,38 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     { ...refuse, message: "x".repeat(MAX_WIRE_TEXT + 1) },
   ],
   ["snapshot without parts (#662)", parseWireSnapshotPart, { ...snapshot, parts: undefined }],
+  ["snapshot without flags (#1225)", parseWireSnapshotPart, { ...snapshot, flags: undefined }],
+  ["snapshot without a stand (#1225)", parseWireSnapshotPart, { ...snapshot, stand: undefined }],
+  [
+    "snapshot with three flags (#1225)",
+    parseWireSnapshotPart,
+    { ...flagged, flags: [...flagged.flags, ...flagged.flags.slice(1)] },
+  ],
+  [
+    "snapshot with a carried flag and no carrier (#1225)",
+    parseWireSnapshotPart,
+    { ...flagged, flags: [{ team: 0, place: "carried", carrierId: null, x: null, y: null }] },
+  ],
+  [
+    "snapshot with a flag on the ground nowhere (#1225)",
+    parseWireSnapshotPart,
+    { ...flagged, flags: [{ team: 1, place: "ground", carrierId: null, x: null, y: 2 }] },
+  ],
+  [
+    "snapshot with a flag at its spawn and a carrier (#1225)",
+    parseWireSnapshotPart,
+    { ...flagged, flags: [{ team: 1, place: "spawn", carrierId: "peer-1", x: null, y: null }] },
+  ],
+  [
+    "snapshot with a flag of team 2 (#1225)",
+    parseWireSnapshotPart,
+    { ...flagged, flags: [{ team: 2, place: "spawn", carrierId: null, x: null, y: null }] },
+  ],
+  [
+    "snapshot with a stand held for negative time (#1225)",
+    parseWireSnapshotPart,
+    { ...flagged, stand: { holder: 0, heldSeconds: -1 } },
+  ],
   ["snapshot in zero parts", parseWireSnapshotPart, { ...snapshot, parts: 0 }],
   [
     "snapshot in too many parts",

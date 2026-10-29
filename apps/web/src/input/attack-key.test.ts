@@ -64,6 +64,8 @@ function snapshot(players: PlayerSnapshot[]): MatchSnapshot {
     projectiles: [],
     groundEffects: [],
     traps: [],
+    flags: [],
+    stand: undefined,
     summary: undefined,
   };
 }

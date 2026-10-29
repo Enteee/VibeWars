@@ -1,3 +1,4 @@
+import type { FlagField } from "@vibewars/game-core";
 import { allWallSegments } from "@vibewars/game-maps/geometry";
 import type { WallDescriptor } from "@vibewars/game-protocol";
 import type { MatchConnection, MatchSnapshot } from "@vibewars/game-session";
@@ -57,7 +58,8 @@ import {
   updateRecharges,
 } from "./ui/hud.js";
 import { labelWeaponSets, renderWeaponSets, weaponSetSlots } from "./ui/weapon-set-slots.js";
-import { mapMode, mapShrines, type MapShrine } from "./net/maps.js";
+import { mapFlagField, mapMode, mapShrines, type MapShrine } from "./net/maps.js";
+import { renderableFlags, renderableStand } from "./render/flag-objects.js";
 import { compassReach, createCompass } from "./ui/compass.js";
 import { noWebGlNotice } from "./ui/arena-notice.js";
 import { attachFullscreenButton, fullscreenTarget } from "./ui/fullscreen.js";
@@ -121,11 +123,14 @@ export function toArenaSnapshot(
   match: MatchSnapshot,
   walls: readonly RenderableWall[],
   shrines: readonly MapShrine[],
+  flagField: FlagField | undefined,
 ): ArenaSnapshot {
   const self = match.players.find((player) => player.sessionId === match.selfSessionId);
 
   return {
     walls,
+    flags: renderableFlags(match.flags, flagField, match.players, self?.team),
+    stand: renderableStand(match.stand, flagField, self?.team),
     // Your own side's in the ally colour; a spectator's team 1 is, as the
     // scoreboard reads it first (#1199).
     shrines: shrines.map((shrine) => ({
@@ -273,14 +278,21 @@ export async function startMatchView(
   const wallSegments = allWallSegments(connection.map.walls);
   const mode = mapMode(connection.map.id);
   const shrines = mapShrines(connection.map.id);
+  const flagField = mapFlagField(connection.map.id);
   const camera =
     viewport === undefined
       ? undefined
       : attachFollowCamera(viewport, parent, connection.map, () => viewport.size());
 
-  const hud = createHud(parent, (targetId, status) => {
-    connection.sendIntent({ kind: "end-upkeep", targetId, status });
-  });
+  const hud = createHud(
+    parent,
+    (targetId, status) => {
+      connection.sendIntent({ kind: "end-upkeep", targetId, status });
+    },
+    () => {
+      connection.sendIntent({ kind: "drop-bundle" });
+    },
+  );
   // Your team's health, right middle (#1055); a row's click targets its member.
   const partyWindow = createPartyWindow(
     parent,
@@ -502,6 +514,8 @@ export async function startMatchView(
       }
     } else if (action === "mute") {
       toggleMute();
+    } else if (action === "drop-bundle") {
+      connection.sendIntent({ kind: "drop-bundle" });
     } else if (WEAPON_SET_ACTIONS.includes(action)) {
       const intent = weaponSetIntent(action, connection.weaponSets);
       if (intent !== undefined) {
@@ -527,7 +541,7 @@ export async function startMatchView(
   window.addEventListener("keydown", handleKeyDown);
 
   let latestMatch = connection.getSnapshot();
-  let latestArena = toArenaSnapshot(latestMatch, walls, shrines);
+  let latestArena = toArenaSnapshot(latestMatch, walls, shrines, flagField);
   // The names key shows every name; the cursor shows one (#253).
   const nameReveal = attachNameReveal(window, keymap);
   // While the match runs, closing or reloading the tab asks first: an
@@ -620,7 +634,7 @@ export async function startMatchView(
     partyWindow.update(latestMatch);
     latestArena = withCalls(
       withNames(
-        toArenaSnapshot(latestMatch, walls, shrines),
+        toArenaSnapshot(latestMatch, walls, shrines, flagField),
         viewport?.pointerWorld(),
         nameReveal.held(),
       ),

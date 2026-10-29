@@ -10,7 +10,7 @@ import arenaPillars from "@vibewars/game-maps/maps/arena-pillars/map.json" with 
 import arenaRing from "@vibewars/game-maps/maps/arena-ring/map.json" with { type: "json" };
 import arenaSplit from "@vibewars/game-maps/maps/arena-split/map.json" with { type: "json" };
 import guildHallIsle from "@vibewars/game-maps/maps/guild-hall-isle/map.json" with { type: "json" };
-import type { BaseGuard, GuildLord, MatchMode, Vec2 } from "@vibewars/game-core";
+import type { BaseGuard, FlagField, GuildLord, MatchMode, Vec2 } from "@vibewars/game-core";
 import { teamSizeOf, type QueueMode } from "@vibewars/game-protocol";
 import type { HostMap } from "@vibewars/game-session";
 import { TRAINING_MAPS } from "../training/maps.js";
@@ -98,16 +98,42 @@ export function mapShrines(mapId: string): readonly MapShrine[] {
 
 /** The resurrection shrines among a map's objectives. */
 function shrinesOf(objectives: readonly Objective[]): readonly MapShrine[] {
-  return objectives.flatMap(({ kind, team, position }) =>
-    kind === "resurrection-shrine" ? [{ team, position }] : [],
+  return objectives.flatMap((objective) =>
+    objective.kind === "resurrection-shrine"
+      ? [{ team: objective.team, position: objective.position }]
+      : [],
   );
 }
 
 /** The Guild Lords among a map's objectives (#1222). */
 function guildLordsOf(objectives: readonly Objective[]): readonly GuildLord[] {
-  return objectives.flatMap(({ kind, team, position }) =>
-    kind === "guild-lord" ? [{ team, position }] : [],
+  return objectives.flatMap((objective) =>
+    objective.kind === "guild-lord" ? [{ team: objective.team, position: objective.position }] : [],
   );
+}
+
+/**
+ * The flag stand and flag spawns among a map's objectives (#1225), or
+ * `undefined` on a map without a stand.
+ */
+function flagFieldOf(objectives: readonly Objective[]): FlagField | undefined {
+  const stand = objectives.find((objective) => objective.kind === "flag-stand");
+  return stand === undefined
+    ? undefined
+    : {
+        stand: stand.position,
+        spawns: objectives.flatMap((objective) =>
+          objective.kind === "flag-spawn"
+            ? [{ team: objective.team, position: objective.position }]
+            : [],
+        ),
+      };
+}
+
+/** The flag stand and spawns on `mapId` (#1225), for the renderer: as `mapShrines`. */
+export function mapFlagField(mapId: string): FlagField | undefined {
+  const map = ARENA_MAPS.find((candidate) => candidate.id === mapId) ?? TRAINING_MAPS.get(mapId);
+  return flagFieldOf(map?.objectives ?? []);
 }
 
 /** The base guards among a map's objectives (#1223), in its order. */
@@ -149,6 +175,7 @@ export function hostMap(mapId: string): HostMap | undefined {
     spawns: map.spawnPoints,
     shrines: shrinesOf(map.objectives),
     guildLords: guildLordsOf(map.objectives),
+    flagField: flagFieldOf(map.objectives),
     guards: guardsOf(map.objectives),
   };
 }
