@@ -1007,6 +1007,52 @@ sheet.
   tallest (two rows, about 80 px), but the screen's buttons are never mixed with
   the global ones. Phone: the dock scrolls sideways, with a fade at its edge.
 
+### Solo and Team Play (#1449)
+
+![Solo and Team Play, three variants](team-play-study.svg)
+
+**Study, not decided.** Supersedes the Teams study (#1439). The title bar reads
+`VibeWars | [Solo Play] [Team Play]` in all three, the active one filled and
+underlined; `[Teams]` and `[Music]` are gone and the ♪ icon stays. Solo Play is
+today's main screen. Team Play replaces the character roster with a **Team
+Build** pick: optional, "None, the team decides" is the default row. A Team
+Build has its own characters (name, profession) and is made in the team builder;
+it has nothing to do with the Solo roster. The lobby (frame 3) is the same in
+all three because the design fixes it: players pick a side, the host sets a bot
+count per side, everyone Ready opens the Team Lobby. Every variant shows seven
+frames: Team Play with and without Team Builds, the lobby, the vote, a
+three-way tie broken by the captain, the slot claim, and a side of one player.
+`node scripts/assets/team-play-study.mjs` regenerates the sheet.
+
+- **A: one long page per phase.** Team Play is the Team Build list on the left
+  (None first, Edit on each row, "New team build") and the four modes as big
+  buttons on the right. The Team Lobby is a table: one row per player with
+  proposal, characters, votes, a Vote button; the rules sit in a legend under
+  it. Phase 2 swaps the table for a one-line summary of the winner and a row
+  of slot cards. Cost: the least new UI (rows, buttons, existing list
+  components), but each phase is a different page and the tally is easy to
+  read yet gives no sense of a table.
+- **B: a card table.** Team Play is four mode tiles across the top and Team
+  Build cards below, with "None" as the first, dashed card. In the Team Lobby
+  each proposal is a card with its characters and the voters' initials as
+  tokens; you click a card to vote, the tie winner is lifted and the rest fade.
+  Phase 2 turns the winner into four seats to sit in. Cost: a card component
+  and a seat component, the most new styling; the clearest "who is for what".
+- **C: two panes.** Team Play lists the modes on the left; the pane on the right
+  holds the Team Build picker (a dropdown, "Edit team builds…" and "New team
+  build" in it) and Host or Join. The Team Lobby keeps proposals left and the
+  slots right on one screen: the slots are a locked preview of the leading
+  proposal during the vote, then unlock when it ends. Cost: one screen for
+  both phases, so no page change for the wire state, but the two panes narrow
+  every row to 600 px, so long Team Build names are cut early.
+
+Edge cases drawn: no Team Builds saved, a long Team Build name (cut with an
+ellipsis), a player who proposes nothing (Dax), fewer players than slots (the
+last slot is a Bot), and a side of one player, who needs no vote. Open rules the
+study had to assume, for the architect: a side with no proposals at all gets a
+random Team Build of a member's (frame 7 says so); the slot a player leaves
+unclaimed when the clock ends becomes a bot.
+
 ## Creatures
 
 Pets, minions and spirits must read as not-a-player at a glance and say what
