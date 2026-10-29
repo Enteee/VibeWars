@@ -1562,6 +1562,38 @@ const skillGlyph = {
     spiritPost() +
     inkLine("M17 2.5V9.5M13.8 7L17 10.2L20.2 7", 2) +
     inkLine("M11.5 13.8H22.5", 2.4),
+  // A bolt falling on a cracked ground line: a rift opens and strikes (#1319).
+  "rift-strike": () =>
+    inkFill("M14.5 2L8 11.5H12.5L10 15.5L17 8H12.5Z") +
+    inkLine("M3 20L8 17L11.5 20.5L15.5 16.5L21 19.5", 2.4),
+  // The spirit post beside a flame: it sets the foe alight (#1319).
+  "spirit-burn": () =>
+    spiritPost() +
+    `<g transform="translate(17,8.5) scale(0.62) translate(-12,-12)">${skillGlyph.flame()}</g>`,
+  // The spirit post and a ringed bolt: energy paid by a spirit's strike (#1319).
+  "spirit-energy": () =>
+    spiritPost() +
+    `<circle cx="17" cy="8.5" r="5.6" ${stroke(C.ink, 1.8)}/>` +
+    `<g transform="translate(17,8.5) scale(0.4) translate(-12,-12)">${skillGlyph.energy()}</g>`,
+  // Two linked rings under a spike: the hex that makes spirits hit harder (#1319).
+  "bond-spike": () =>
+    `<circle cx="8.5" cy="16" r="4.6" ${stroke(C.ink, 2.2)}/><circle cx="15.5" cy="16" r="4.6" ${stroke(C.ink, 2.2)}/>` +
+    inkLine("M12 2.5V9.5", 2.8),
+  // A tear over a falling line, a dashed ring around: the hex that drains (#1319).
+  "tear-fall": () =>
+    `<circle cx="12" cy="12" r="9.5" ${stroke(C.ink, 1.8)} stroke-dasharray="4.4 3.4"/>` +
+    `<path d="M12 5.5c-2.4 3-4 5-4 7a4 4 0 0 0 8 0c0-2-1.6-4-4-7z" fill="${C.ink}"/>` +
+    inkLine("M7.5 19L12 17.5L16.5 19", 1.8),
+  // Three small spirit posts in a row: a signet that calls three (#1319).
+  "spirit-trio": () =>
+    [4.5, 12, 19.5]
+      .map(
+        (x) =>
+          inkFill(
+            `M${String(x - 2)} 12H${String(x + 2)}L${String(x + 2.2)} 21H${String(x - 2.2)}Z`,
+          ) + `<circle cx="${String(x)}" cy="7" r="3" fill="${C.ink}"/>`,
+      )
+      .join(""),
   // The ward's ring and pole, with a blade struck from it: it turns melee (#1217).
   "ward-blade": () =>
     `<ellipse cx="12" cy="17" rx="8.5" ry="4" ${stroke(C.ink, 2.5)}/>` +
