@@ -33,6 +33,7 @@ const NO_BOT_USE = new Set([
   "mesmer.mantra-of-recovery",
   "necromancer.blood-ritual",
   "necromancer.contagion",
+  "necromancer.offering-of-blood",
   "paragon.fall-back",
   "paragon.incoming",
   "paragon.make-haste",

@@ -289,4 +289,11 @@ export const SKILL_ICONS = {
   "necromancer.defile-flesh": { glyph: "hex-burst", modifier: "less" },
   "necromancer.rigor-mortis": { glyph: "hex-burst", modifier: "half" },
   "necromancer.lingering-curse": { glyph: "hex-burst", modifier: "hourglass" },
+  // Placeholders until the asset-designer's (#1338): Blood Magic.
+  "necromancer.vampiric-touch": { glyph: "eye-drop", modifier: "plus" },
+  "necromancer.vampiric-swarm": { glyph: "eye-drop", modifier: "area" },
+  "necromancer.shadow-strike": { glyph: "eye-drop", modifier: "bolt" },
+  "necromancer.blood-of-the-aggressor": { glyph: "eye-drop", modifier: "down" },
+  "necromancer.barbed-signet": { glyph: "hex-burst", modifier: "bleed" },
+  "necromancer.offering-of-blood": { glyph: "energy", modifier: "bleed" },
 };
