@@ -286,6 +286,23 @@ describe("Guild Hall Isle (#1222)", () => {
     }
   });
 
+  it("leaves every spawn a clear walk out of its base (#1294)", () => {
+    const { creatureRadius, playerRadius } = MINIMAL_GW_INSPIRED_PVP_V1.collision;
+    for (const spawn of isle.spawnPoints) {
+      const out: Segment = {
+        a: spawn.position,
+        b: { x: isle.width / 2, y: spawn.position.y },
+      };
+      for (const guard of isle.objectives) {
+        if (guard.kind !== "guard" || guard.team !== spawn.team) continue;
+        expect(
+          distancePointToSegment(guard.position, out),
+          JSON.stringify({ spawn, guard }),
+        ).toBeGreaterThanOrEqual(playerRadius + creatureRadius);
+      }
+    }
+  });
+
   it("keeps a 200-unit circle at its centre clear, for the flag stand", () => {
     const centre = { x: isle.width / 2, y: isle.height / 2 };
     for (const wall of walls) {

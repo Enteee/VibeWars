@@ -1296,7 +1296,13 @@ export function renderLeave(hud: HudElements, onLeave: () => void): LeaveControl
       if (focused instanceof HTMLElement && hud.leave.contains(focused)) {
         focused.blur();
       }
-      hud.leave.replaceChildren(button("leave match (F10)", control.open));
+      // A phone shows only "leave" (#1297); the rest stays in its name.
+      const leave = button("leave", control.open);
+      const extra = document.createElement("span");
+      extra.className = "hud-leave-extra";
+      extra.textContent = " match (F10)";
+      leave.append(extra);
+      hud.leave.replaceChildren(leave);
     },
     isOpen: () => {
       return answers.length > 0;
