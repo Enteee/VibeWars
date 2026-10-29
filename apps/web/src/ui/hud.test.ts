@@ -29,7 +29,7 @@ import {
   refreshSkillBar,
   scoreboardParts,
   scoreboardText,
-  relicScoreToast,
+  objectiveScoreToast,
   standBoostToast,
   carrierLines,
   type ScoreboardMatch,
@@ -238,46 +238,95 @@ describe("carrierLines (#1226)", () => {
   });
 });
 
-describe("relicScoreToast (#1387)", () => {
+describe("objectiveScoreToast in a Relic Run (#1387)", () => {
   const relics = [{ team: 0, place: { kind: "spawn" as const } }];
-  const score = (scoreTeam0: number, scoreTeam1: number) => ({ scoreTeam0, scoreTeam1, relics });
+  const score = (scoreTeam0: number, scoreTeam1: number) => ({
+    scoreTeam0,
+    scoreTeam1,
+    relics,
+    altar: undefined,
+  });
   const ours = { text: "Relic scored!", side: "ours" };
   const theirs = { text: "Enemy relic scored", side: "theirs" };
+  const toast = (
+    before: Parameters<typeof objectiveScoreToast>[0],
+    after: Parameters<typeof objectiveScoreToast>[1],
+    selfTeam: number | undefined,
+  ) => objectiveScoreToast(before, after, selfTeam, "relic-run");
 
   it("toasts your side's point as ours and the foe's as theirs", () => {
-    expect(relicScoreToast(score(0, 0), score(1, 0), 0)).toEqual(ours);
-    expect(relicScoreToast(score(0, 0), score(1, 0), 1)).toEqual(theirs);
-    expect(relicScoreToast(score(2, 3), score(2, 4), 1)).toEqual(ours);
-    expect(relicScoreToast(score(2, 3), score(2, 4), 0)).toEqual(theirs);
+    expect(toast(score(0, 0), score(1, 0), 0)).toEqual(ours);
+    expect(toast(score(0, 0), score(1, 0), 1)).toEqual(theirs);
+    expect(toast(score(2, 3), score(2, 4), 1)).toEqual(ours);
+    expect(toast(score(2, 3), score(2, 4), 0)).toEqual(theirs);
   });
 
   it("reads a spectator's side as team 0's", () => {
-    expect(relicScoreToast(score(0, 0), score(1, 0), undefined)).toEqual(ours);
-    expect(relicScoreToast(score(0, 0), score(0, 1), undefined)).toEqual(theirs);
+    expect(toast(score(0, 0), score(1, 0), undefined)).toEqual(ours);
+    expect(toast(score(0, 0), score(0, 1), undefined)).toEqual(theirs);
   });
 
   it("toasts two points missed between frames once", () => {
-    expect(relicScoreToast(score(1, 0), score(3, 0), 0)).toEqual(ours);
+    expect(toast(score(1, 0), score(3, 0), 0)).toEqual(ours);
     // Both sides scored meanwhile: yours is the one toast.
-    expect(relicScoreToast(score(1, 1), score(2, 2), 1)).toEqual(ours);
+    expect(toast(score(1, 1), score(2, 2), 1)).toEqual(ours);
   });
 
   it("says nothing without a score, on the first snapshot, or outside a Relic Run", () => {
-    expect(relicScoreToast(score(1, 1), score(1, 1), 0)).toBeUndefined();
-    expect(relicScoreToast(undefined, score(1, 0), 0)).toBeUndefined();
-    // A kill-count match raises the score too, but has no relics.
-    expect(
-      relicScoreToast(
-        { scoreTeam0: 4, scoreTeam1: 0, relics: [] },
-        { scoreTeam0: 5, scoreTeam1: 0, relics: [] },
-        0,
-      ),
-    ).toBeUndefined();
+    expect(toast(score(1, 1), score(1, 1), 0)).toBeUndefined();
+    expect(toast(undefined, score(1, 0), 0)).toBeUndefined();
+    // A kill-count match raises the score too, silently.
+    expect(objectiveScoreToast(score(4, 0), score(5, 0), 0, "kill-count")).toBeUndefined();
   });
 
   it("says nothing on a mid-match rejoin, whose first frame follows the 0-0 placeholder", () => {
-    const placeholder = { scoreTeam0: 0, scoreTeam1: 0, relics: [] };
-    expect(relicScoreToast(placeholder, score(2, 1), 0)).toBeUndefined();
+    const placeholder = { scoreTeam0: 0, scoreTeam1: 0, relics: [], altar: undefined };
+    expect(toast(placeholder, score(2, 1), 0)).toBeUndefined();
+  });
+});
+
+describe("objectiveScoreToast in King of the Hill (#1399)", () => {
+  const altar = { x: 0, y: 0 };
+  const score = (scoreTeam0: number, scoreTeam1: number) => ({
+    scoreTeam0,
+    scoreTeam1,
+    relics: [],
+    altar,
+  });
+  const ours = { text: "Altar point!", side: "ours" };
+  const theirs = { text: "Enemy altar point", side: "theirs" };
+  const toast = (
+    before: Parameters<typeof objectiveScoreToast>[0],
+    after: Parameters<typeof objectiveScoreToast>[1],
+    selfTeam: number | undefined,
+  ) => objectiveScoreToast(before, after, selfTeam, "king-of-the-hill");
+
+  it("toasts your side's point as ours and the foe's as theirs", () => {
+    expect(toast(score(0, 0), score(1, 0), 0)).toEqual(ours);
+    expect(toast(score(0, 0), score(1, 0), 1)).toEqual(theirs);
+    expect(toast(score(2, 3), score(2, 4), 1)).toEqual(ours);
+    expect(toast(score(2, 3), score(2, 4), 0)).toEqual(theirs);
+  });
+
+  it("reads a spectator's side as team 0's", () => {
+    expect(toast(score(0, 0), score(1, 0), undefined)).toEqual(ours);
+    expect(toast(score(0, 0), score(0, 1), undefined)).toEqual(theirs);
+  });
+
+  it("toasts two points between frames once", () => {
+    expect(toast(score(1, 0), score(3, 0), 0)).toEqual(ours);
+  });
+
+  it("says nothing without a point, on the first snapshot, or after the placeholder", () => {
+    expect(toast(score(1, 1), score(1, 1), 0)).toBeUndefined();
+    expect(toast(undefined, score(1, 0), 0)).toBeUndefined();
+    const placeholder = { scoreTeam0: 0, scoreTeam1: 0, relics: [], altar: undefined };
+    expect(toast(placeholder, score(2, 1), 0)).toBeUndefined();
+  });
+
+  it("stays silent in Kill Count and Annihilation", () => {
+    expect(objectiveScoreToast(score(4, 0), score(5, 0), 0, "kill-count")).toBeUndefined();
+    expect(objectiveScoreToast(score(4, 0), score(5, 0), 0, "annihilation")).toBeUndefined();
   });
 });
 
