@@ -1296,8 +1296,17 @@ export class ArenaScene extends Phaser.Scene {
       g.strokeRect(wall.x, wall.y, wall.width, wall.height);
       return;
     }
+    // Triangulated here, once per map, and filled as triangles: Phaser
+    // earcuts a `fillPoints` path again on every frame it renders (#1353).
+    const flat = wall.points.flatMap((p) => [p.x, p.y]);
+    const corners = Phaser.Geom.Polygon.Earcut(flat).map((index) => wall.points[index]);
+    for (let i = 0; i + 2 < corners.length; i += 3) {
+      const [a, b, c] = [corners[i], corners[i + 1], corners[i + 2]];
+      if (a !== undefined && b !== undefined && c !== undefined) {
+        g.fillTriangle(a.x, a.y, b.x, b.y, c.x, c.y);
+      }
+    }
     const points = wall.points.map((p) => new Phaser.Math.Vector2(p.x, p.y));
-    g.fillPoints(points, true);
     g.strokePoints(points, true);
   }
 
