@@ -178,6 +178,44 @@ describe("a lobby's own match", () => {
     expect(lobby.matches[0]?.host.draining).toBe(false);
   });
 
+  it("lets the next match start while the last still drains to its spectator (#480)", async () => {
+    const { lobby, members } = await lobbyOf([0, 1, null], {
+      ...ANNIHILATION_MATCH_RULES,
+      timeLimitSeconds: 1,
+    });
+    await start(lobby);
+    await play(lobby.host);
+    await play(at(members, 1));
+    const spectator = at(members, 2);
+    const { hostId } = spectator.connection.getSnapshot();
+    const watch = (matchId: string) =>
+      connectObserver({
+        transport: scopeTransport(spectator.transport),
+        hostId,
+        matchId,
+        timeoutMs: 1000,
+      });
+    const first = await watch(lobby.matches[0]?.plan.matchId ?? "");
+    await lobby.step(1);
+    expect(lobby.matches[0]?.host.draining).toBe(true);
+
+    // Readied again and started at once: the first match has not drained.
+    await seat(members, [0, 1, null]);
+    await start(lobby);
+    expect(lobby.matches).toHaveLength(2);
+    const second = [await play(lobby.host), await play(at(members, 1))];
+    expect(second.map((match) => match.getSnapshot().phase)).toEqual(["active", "active"]);
+    await watch(lobby.matches[1]?.plan.matchId ?? "");
+    // A viewer late for the first match is not answered by it, only by the one played now.
+    await expect(watch(lobby.matches[0]?.plan.matchId ?? "")).rejects.toMatchObject({
+      reason: "wrong-match",
+    });
+
+    await lobby.step(OBSERVER_DELAY_SECONDS);
+    expect(first.getSnapshot()?.phase).toBe("finished");
+    expect(lobby.matches[0]?.host.draining).toBe(false);
+  });
+
   it("is full before anyone arrives, so a stranger cannot take or hold a seat", async () => {
     const { lobby, members } = await lobbyOf([0, 1, null]);
     await start(lobby);

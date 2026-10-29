@@ -896,6 +896,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         // they did not confirm.
         const { winningTeam } = match.host;
         if (match.host.draining) {
+          match.host.retire();
           draining.push(match);
         } else {
           void match.room.leave();

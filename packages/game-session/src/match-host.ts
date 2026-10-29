@@ -197,6 +197,13 @@ export interface MatchHost {
    * `OBSERVER_DELAY_SECONDS` late (#480): keep advancing it until then.
    */
   readonly draining: boolean;
+  /**
+   * The room is the next match's now (#480): a draining match answers
+   * nobody again, so it never turns away a player or a viewer of the one
+   * after it on the same channels. Only its observers' stream runs on,
+   * and a bye or a leave from one of them.
+   */
+  retire(): void;
   /** Tell every peer the match is over because the host left, then leave. */
   close(reason: "host-left"): Promise<void>;
 }
@@ -349,6 +356,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     });
   let accumulator = 0;
   let finished = false;
+  /** Handed its room on: see `MatchHost.retire`. */
+  let retired = false;
   /** The peers watching (#480): no seat, and nothing sent but `delayed`. */
   const observers = new Set<string>();
   /**
@@ -664,7 +673,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
 
   transport.on("hello", (data, from) => {
     // Charged like an intent: every hello may send a whole map back.
-    if (!budget.take(from, nowMs()) || departed.has(from)) {
+    if (retired || !budget.take(from, nowMs()) || departed.has(from)) {
       return;
     }
     // Checked first: a client of another version, or of none, is told so
@@ -697,7 +706,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
 
   transport.on("observe", (data, from) => {
     // Charged like a hello: every observing sends a whole map back.
-    if (!budget.take(from, nowMs())) {
+    if (retired || !budget.take(from, nowMs())) {
       return;
     }
     if (helloProtocolVersion(data) !== PROTOCOL_VERSION) {
@@ -778,7 +787,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   };
 
   transport.on("rejoin-proof", (data, from) => {
-    if (!budget.take(from, nowMs()) || departed.has(from)) {
+    if (retired || !budget.take(from, nowMs()) || departed.has(from)) {
       return;
     }
     const proof = parsePeerRejoinProof(data);
@@ -814,7 +823,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
         : await rejoinProof(token, challenge.nonce, challenge.playerId, from);
     // The match went on while the proof was checked: look again. A peer
     // that left or said bye meanwhile is not seated, nor told anything.
-    if (proving.get(from) !== attempt || departed.has(from)) {
+    if (proving.get(from) !== attempt || departed.has(from) || retired) {
       return;
     }
     if (finished) {
@@ -899,7 +908,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       unobserve(from);
       return;
     }
-    if (seat === undefined) {
+    // A player's bye, once retired, is meant for the match after this one.
+    if (seat === undefined || retired) {
       return;
     }
     // The player meant to go: there is nothing to hold the seat for.
@@ -1125,6 +1135,9 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     },
     get draining() {
       return finished && delayed.length > 0;
+    },
+    retire() {
+      retired = true;
     },
     async close(reason) {
       // Nothing more is ticked onto a transport that has left.

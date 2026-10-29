@@ -118,6 +118,7 @@ function fakeMatch(): FakeMatch {
     abandoned: false,
     droppedWeaponSwaps: 0,
     draining: false,
+    retire: () => undefined,
     close: () => Promise.resolve(),
     finish(winningTeam) {
       phase = "finished";
