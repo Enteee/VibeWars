@@ -831,14 +831,16 @@ export function standBoostToast(
  * the foe's did; a spectator's side is team 0's. Points missed between two
  * frames toast once, and yours win if both sides scored. `undefined` for the
  * first snapshot, no score, and any match that is not a Relic Run (a
- * kill-count score is silent).
+ * kill-count score is silent). A `before` without relics is no before: the
+ * client's placeholder before its first frame is 0-0 with none, so a
+ * mid-match rejoin would otherwise toast the score it walked in on.
  */
 export function relicScoreToast(
-  before: Pick<MatchSnapshot, "scoreTeam0" | "scoreTeam1"> | undefined,
+  before: Pick<MatchSnapshot, "scoreTeam0" | "scoreTeam1" | "relics"> | undefined,
   after: Pick<MatchSnapshot, "scoreTeam0" | "scoreTeam1" | "relics">,
   selfTeam: number | undefined,
 ): ObjectiveToast | undefined {
-  if (before === undefined || after.relics.length === 0) {
+  if (before === undefined || before.relics.length === 0 || after.relics.length === 0) {
     return undefined;
   }
   const rose0 = after.scoreTeam0 > before.scoreTeam0;

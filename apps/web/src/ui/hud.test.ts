@@ -266,11 +266,16 @@ describe("relicScoreToast (#1387)", () => {
     // A kill-count match raises the score too, but has no relics.
     expect(
       relicScoreToast(
-        { scoreTeam0: 4, scoreTeam1: 0 },
+        { scoreTeam0: 4, scoreTeam1: 0, relics: [] },
         { scoreTeam0: 5, scoreTeam1: 0, relics: [] },
         0,
       ),
     ).toBeUndefined();
+  });
+
+  it("says nothing on a mid-match rejoin, whose first frame follows the 0-0 placeholder", () => {
+    const placeholder = { scoreTeam0: 0, scoreTeam1: 0, relics: [] };
+    expect(relicScoreToast(placeholder, score(2, 1), 0)).toBeUndefined();
   });
 });
 
