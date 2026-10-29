@@ -80,7 +80,7 @@ own development was verified that way; see
   traps, minions and pets, weapon sets, morale and resurrection
   ([Combat basics](docs/player/combat-basics.md),
   [Equipment](docs/player/equipment.md)).
-- **Eleven original maps**, picked by the lobby host, in six
+- **Twelve original maps**, picked by the lobby host, in seven
   [modes](docs/player/modes.md): Annihilation, Kill Count, Priest
   Annihilation, Guild Battle, Relic Run, King of the Hill and Capture
   Points.
