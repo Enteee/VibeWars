@@ -105,6 +105,17 @@ export function errorCode(msg) {
 }
 
 /**
+ * The reason phrase of an error response, e.g. "Forbidden IP".
+ *
+ * @param {Message} msg
+ * @returns {string}
+ */
+export function errorReason(msg) {
+  const v = msg.attrs.get(ATTR.errorCode);
+  return v === undefined ? "" : v.subarray(4).toString("utf8");
+}
+
+/**
  * An XOR-MAPPED-ADDRESS or XOR-RELAYED-ADDRESS, as `address:port`.
  *
  * @param {Message} msg
@@ -273,28 +284,32 @@ export async function allocate(opts) {
   return res.ok ? { ok: true, relayed: res.relayed } : res;
 }
 
-/** @typedef {{ peer: string, code: number | null }} Answer */
+/** @typedef {{ peer: string, code: number | null, reason: string | null }} Answer */
 
 /**
- * Allocates, asks for a permission toward each IPv4 peer, and releases.
- * A peer's answer is null when it was granted, else the error code: 403 is
- * a peer coturn refuses.
+ * Asks for a permission toward each IPv4 peer, each on its own allocation,
+ * released before the next (#1379): an answer about one peer never depends
+ * on what coturn did with the last. A peer's code and reason are null when
+ * it was granted, else the error's: 403 is a peer coturn refuses.
  *
  * @param {AllocateOptions & { peers: readonly string[] }} opts
  * @returns {Promise<{ ok: true, answers: Answer[] } | { ok: false, code: number | null }>}
  */
 export async function permissions(opts) {
-  /** @type {(relayed: string, ask: (type: number, attrs: [number, Buffer][]) => Promise<Message>) => Promise<Answer[]>} */
-  const body = async (_relayed, ask) => {
-    /** @type {Answer[]} */
-    const answers = [];
-    for (const peer of opts.peers) {
+  /** @type {Answer[]} */
+  const answers = [];
+  for (const peer of opts.peers) {
+    /** @type {(relayed: string, ask: (type: number, attrs: [number, Buffer][]) => Promise<Message>) => Promise<Answer>} */
+    const body = async (_relayed, ask) => {
       const reply = await ask(TYPE.createPermission, [[ATTR.peer, xorPeerV4(peer)]]);
       const granted = reply.type === (TYPE.createPermission | SUCCESS);
-      answers.push({ peer, code: granted ? null : (errorCode(reply) ?? 0) });
-    }
-    return answers;
-  };
-  const res = await withAllocation(opts, body);
-  return res.ok ? { ok: true, answers: res.result } : res;
+      return granted
+        ? { peer, code: null, reason: null }
+        : { peer, code: errorCode(reply) ?? 0, reason: errorReason(reply) };
+    };
+    const res = await withAllocation(opts, body);
+    if (!res.ok) return res;
+    answers.push(res.result);
+  }
+  return { ok: true, answers };
 }
