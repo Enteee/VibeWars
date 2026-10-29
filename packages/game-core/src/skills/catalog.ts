@@ -9848,7 +9848,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "warrior.hundred-blades",
     name: "Hundred Blades",
-    gwId: 3444,
+    gwId: 381,
     type: "skill",
     elite: true,
     profession: "warrior",
