@@ -532,19 +532,21 @@ const status = {
       `<path d="M11 5a5 5 0 1 0 0 9a4 4 0 0 1 0-9z" fill="${c}"/>` +
       `<path d="M16.5 13v6M13.5 16h6" ${stroke(c, 2)}/>`,
   ],
-  // Enchantment: a crescent over a shield edge, armored while it holds back (#1326).
+  // Enchantment: a crescent inside a broken shield outline, armored while it holds back (#1349).
   "feigned-neutrality": [
     "enchantment",
     (c) =>
-      `<path d="M10 4.5a4.5 4.5 0 1 0 0 8a3.6 3.6 0 0 1 0-8z" fill="${c}"/>` +
-      `<path d="M12 13h8v2.5c0 2-1.6 3.4-4 4.5-2.4-1.1-4-2.5-4-4.5z" ${stroke(c, 2)}/>`,
+      `<path d="M12 3L19 5.8V11.5C19 15.8 16 18.8 12 20.8" ${stroke(c, 2)}/>` +
+      `<path d="M12 3L5 5.8V11.5C5 15.8 8 18.8 12 20.8" ${stroke(c, 2)} stroke-dasharray="3 3"/>` +
+      `<path d="M13 8a4 4 0 1 0 0 7a3.2 3.2 0 0 1 0-7z" fill="${c}"/>`,
   ],
-  // Enchantment: a crescent over a spark, health from each critical hit (#1326).
+  // Enchantment: a crescent beside a four-point spark and a plus, health from each critical hit (#1349).
   "way-of-perfection": [
     "enchantment",
     (c) =>
-      `<path d="M11 5a5 5 0 1 0 0 9a4 4 0 0 1 0-9z" fill="${c}"/>` +
-      `<path d="M16.5 12l1.2 3 3 1.2-3 1.2-1.2 3-1.2-3-3-1.2 3-1.2z" fill="${c}"/>`,
+      `<path d="M9.5 3.5a5 5 0 1 0 0 9a4 4 0 0 1 0-9z" fill="${c}"/>` +
+      `<path d="M16.5 8l1.2 3 3 1.2-3 1.2-1.2 3-1.2-3-3-1.2 3-1.2z" fill="${c}"/>` +
+      `<path d="M7 17v5M4.5 19.5h5" ${stroke(c, 2)}/>`,
   ],
   // Enchantment: a shield, half filled, blocks below half Health (#988).
   "shroud-of-distress": [
@@ -1698,6 +1700,39 @@ const skillGlyph = {
   "drop-energy": () =>
     `<g transform="translate(-1.2,2) scale(0.7)">${inkFill("M12 3C12 3 5.5 11 5.5 15A6.5 6.5 0 0 0 18.5 15C18.5 11 12 3 12 3Z")}</g>` +
     inkFill("M18 2.5L11.5 13H16L14.5 21.5L22.5 9.5H17.5Z"),
+  // The step with a plus under it: it heals as it goes (#1349).
+  "blink-heal": () =>
+    `<path d="M2.5 3L7.5 8L2.5 13Z" ${stroke(C.ink, 1.6)}/>` +
+    `<path d="M8 3L13 8L8 13Z" ${stroke(C.ink, 1.6)}/>` +
+    inkFill("M14 2.5L20 8L14 13.5Z") +
+    inkLine("M5 20.5H13M9 16.5V24.5", 2.4),
+  // The step with two fangs under it: it poisons what it leaves behind (#1349).
+  "blink-fang": () =>
+    `<path d="M2.5 3L7.5 8L2.5 13Z" ${stroke(C.ink, 1.6)}/>` +
+    `<path d="M8 3L13 8L8 13Z" ${stroke(C.ink, 1.6)}/>` +
+    inkFill("M14 2.5L20 8L14 13.5Z") +
+    inkFill("M3 16H8.5L5.75 23ZM9.5 16H15L12.25 23Z"),
+  // The step ending at a figure: it goes to an ally (#1349).
+  "blink-ally": () =>
+    `<path d="M2.5 3L7.5 8L2.5 13Z" ${stroke(C.ink, 1.6)}/>` +
+    `<path d="M8 3L13 8L8 13Z" ${stroke(C.ink, 1.6)}/>` +
+    `<circle cx="18.5" cy="5.5" r="3" fill="${C.ink}"/>` +
+    inkFill("M12.5 15C12.5 10.5 24.5 10.5 24.5 15Z") +
+    inkLine("M4 20.5H20", 2.4),
+  // A crescent inside a broken shield outline: a calm that ends when the blow lands (#1349).
+  "shield-veil": () =>
+    `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5" ${stroke(C.ink, 2)}/>` +
+    `<path d="M12 2.5L4 5.5V12C4 16.5 7.5 19.5 12 21.5" ${stroke(C.ink, 2)} stroke-dasharray="3 3"/>` +
+    inkFill("M13 7a5 5 0 1 0 0 9a4 4 0 0 1 0-9z"),
+  // A crescent, a critical spark and a plus: health from each critical hit (#1349).
+  "crescent-spark": () =>
+    inkFill("M9 2.5a6 6 0 1 0 0 11a4.8 4.8 0 0 1 0-11z") +
+    inkFill("M17.5 7L19 11L23 12.5L19 14L17.5 18L16 14L12 12.5L16 11Z") +
+    inkLine("M6 17.5V23.5M3 20.5H9", 2.4),
+  // Three spikes on the ground: they cripple and bleed what steps on them (#1349).
+  caltrops: () =>
+    inkFill("M2.5 20H21.5V22.5H2.5Z") +
+    inkFill("M2.5 20L5.5 4L8.5 20ZM9 20L12 2L15 20ZM15.5 20L18.5 4L21.5 20Z"),
   // A post with a bright head: a spirit planted where it was called (#1217).
   totem: () =>
     inkFill("M9 11H14L14.2 20H8.8Z") + `<circle cx="12" cy="6.5" r="3.8" fill="${C.ink}"/>`,

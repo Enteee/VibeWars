@@ -168,8 +168,8 @@ body {
   }
 
   /* The status (the editor's professions, a lobby's code) keeps a row of
-     its own rather than folding away. The editor's holds it up to 75rem
-     too (#1334), below. */
+     its own rather than folding away. The editor's and the lobby's hold
+     it up to 75rem too (#1334, #1368), below. */
   #topbar {
     flex-wrap: wrap;
   }
@@ -1560,18 +1560,26 @@ body {
   min-width: 1.5ch;
 }
 
-/* The editor's bar (#1334): the name, Close, Save, ⋯ and the icons fill
-   a row up to 75rem, so its status takes the second row the phone's does
-   and its pickers never run under the icons. */
+/* The editor's bar (#1334) and the lobby's (#1368): the crumbs, the
+   screen's buttons and the icons fill a row up to 75rem, so the status
+   (the editor's pickers, the lobby's code and map) takes the second row
+   the phone's does and never runs under the buttons or the icons. */
 @media (45rem < width <= 75rem) {
-  #topbar:has(.editor-professions) {
+  #topbar:has(.editor-professions),
+  #topbar:has(.lobby-header) {
     flex-wrap: wrap;
   }
 
-  #topbar:has(.editor-professions) .topbar-status {
+  #topbar:has(.editor-professions) .topbar-status,
+  #topbar:has(.lobby-header) .topbar-status {
     flex: 1 0 100%;
     order: 10;
     flex-wrap: wrap;
+  }
+
+  /* A long map label stays inside the row rather than widening it. */
+  #topbar .lobby-map select {
+    max-width: 100%;
   }
 }
 

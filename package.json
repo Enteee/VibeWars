@@ -21,6 +21,7 @@
     "clean": "git clean -xdf node_modules dist .tsbuildinfo && pnpm -r exec rm -rf dist node_modules",
     "dev": "node scripts/dev.mjs",
     "music:check": "pnpm --filter @vibewars/web run music:check",
+    "readme:shots": "node scripts/readme-shots.mjs",
     "test:e2e": "playwright test",
     "bench:ticks": "BENCH_TICKS=400 vitest run packages/game-core/src/tools/tick-bench.test.ts packages/game-maps/src/map-bench.test.ts",
     "wire:snapshot": "tsc --build tsconfig.build.json && WIRE_SNAPSHOT=write vitest run packages/game-session/src/tools/wire-snapshot.test.ts",
