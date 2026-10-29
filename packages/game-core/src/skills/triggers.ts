@@ -1,4 +1,3 @@
-import { wieldsFor } from "../equipment/weapons.js";
 import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
 import { addCopyPool } from "./adrenaline.js";
@@ -7,6 +6,7 @@ import { getSkill } from "./catalog.js";
 import { applyEffects, type CombatEvent } from "./effects.js";
 import {
   getStatusDefinition,
+  triggerAnswersWeapon,
   type EchoEffect,
   type SpreadGainedConditionEffect,
   type StatusChange,
@@ -75,8 +75,7 @@ export function fireTriggers(
       ({ statusId, trigger }) =>
         !spared.has(statusId) &&
         (event !== "bearer-attacks" ||
-          trigger.weapon === undefined ||
-          wieldsFor(bearer.equipment.mainHand.weapon.id, trigger.weapon)),
+          triggerAnswersWeapon(trigger, bearer.equipment.mainHand.weapon)),
     )
     .flatMap(({ statusId, sourceId, trigger }) =>
       fire(trigger, statusId, sourceId, bearer, undefined, undefined, context),
