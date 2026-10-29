@@ -117,6 +117,8 @@ function startMatch(plan: MatchPlan) {
     random: secureRandom,
     maxPlayers: MAX_LOBBY_PLAYERS,
     seats: plan.seats,
+    matchId: plan.matchId,
+    isSpectator: plan.isSpectator,
   });
 }
 

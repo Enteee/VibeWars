@@ -83,6 +83,8 @@ export interface MatchPlan {
   readonly mapId: string;
   /** Every member on a team, by peer id; spectators are not in it. */
   readonly seats: PlannedSeats;
+  /** Whether `peerId` is a member on no team, now (#480): who may watch the match. */
+  readonly isSpectator: (peerId: string) => boolean;
   /** The room, for this match alone: build the `MatchHost` on it. */
   readonly transport: Transport;
 }
@@ -210,6 +212,11 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   let elapsed = 0;
   let match:
     { readonly id: string; readonly host: MatchHost; readonly room: Transport } | undefined;
+  /**
+   * Matches over, still sending their observers the end, which reaches
+   * them late (#480). Each room is left once its match has.
+   */
+  const draining: { readonly host: MatchHost; readonly room: Transport }[] = [];
   let closed = false;
   /** A queued lobby's countdown: when it ends, in whole ms on the lobby's clock, while it runs. */
   let countdownEndsAt: number | undefined;
@@ -287,7 +294,13 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     try {
       match = {
         id,
-        host: startMatch({ matchId: id, mapId, seats, transport: room }),
+        host: startMatch({
+          matchId: id,
+          mapId,
+          seats,
+          isSpectator: (peerId) => peerMember(peerId)?.team === null,
+          transport: room,
+        }),
         room,
       };
     } catch {
@@ -865,6 +878,13 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       if (dropAway((leftAt) => nowMs() - leftAt >= RECONNECT_WINDOW_SECONDS * 1000)) {
         broadcast();
       }
+      for (const ending of [...draining]) {
+        ending.host.advance(seconds);
+        if (!ending.host.draining) {
+          draining.splice(draining.indexOf(ending), 1);
+          void ending.room.leave();
+        }
+      }
       if (match === undefined) {
         return;
       }
@@ -875,7 +895,12 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         // round, and ready cleared, so nobody is dragged into a match
         // they did not confirm.
         const { winningTeam } = match.host;
-        void match.room.leave();
+        if (match.host.draining) {
+          match.host.retire();
+          draining.push(match);
+        } else {
+          void match.room.leave();
+        }
         match = undefined;
         phase = "waiting";
         if (queued !== undefined) {
@@ -894,11 +919,9 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         return;
       }
       closed = true;
-      const ending = match;
+      const ending = [...(match === undefined ? [] : [match]), ...draining.splice(0)];
       match = undefined;
-      if (ending !== undefined) {
-        await ending.host.close("host-left");
-      }
+      await Promise.all(ending.map(({ host: over }) => over.close("host-left")));
       note("refused", "host-left" satisfies LobbyRefusal);
       await transport.leave();
     },

@@ -63,6 +63,24 @@ describe("createLocalPeer", () => {
     expect(got.sort()).toEqual(["local", "other"]);
   });
 
+  it("sends to a list that names the local player, a remote one, or both", async () => {
+    const network = createMemoryNetwork();
+    const remote = network.join("host");
+    const other = network.join("other");
+    const third = network.join("third");
+    const { host, local } = createLocalPeer(remote);
+    const got: string[] = [];
+    local.on("refused", (data) => got.push(`local ${String(data)}`));
+    other.on("refused", (data) => got.push(`other ${String(data)}`));
+    third.on("refused", (data) => got.push(`third ${String(data)}`));
+    host.send("refused", 1, [local.selfId, "other"]);
+    host.send("refused", 2, [local.selfId]);
+    host.send("refused", 3, ["third"]);
+    host.send("refused", 4, []);
+    await settle();
+    expect(got.sort()).toEqual(["local 1", "local 2", "other 1", "third 3"]);
+  });
+
   it("hands the host what the local player sends, from the local player", async () => {
     const { host, local, other } = setup();
     const got: [string, unknown][] = [];
