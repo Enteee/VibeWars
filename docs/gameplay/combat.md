@@ -1520,6 +1520,21 @@ used. **Consume Soul** (elite, 5 energy, 1 s, 5 s) steals 57 Health
 from a foe, and deals 105 typeless damage to every foe minion, spirit
 and pet in earshot of it, never a player, the foe itself excluded.
 
+**Creation** (#1316, Ritualist, Spawning Power) pays for each creature
+you create: a spirit or a minion, once each as it appears, so Animate
+Bone Minions pays twice; a charmed pet is not created, and a summon the
+creature cap refuses creates nothing. At Spawning Power 12: **Boon of
+Creation** (enchantment, 10 energy, 2 s, 45 s) for 51 s gives you 41
+Health and 5 Energy for each. **Explosive Growth** (enchantment, 5
+energy, 2 s, 45 s) for 51 s strikes the up to 5 foes nearest the new
+creature, within nearby (81) of it, for 56 lightning damage. **Spirit's
+Gift** (enchantment, 10 energy, 1 s, 45 s) for 60 s heals every ally
+nearby the new creature, you included, 41 and removes one condition
+from each. All three up at once all answer, in the order they are on
+you. **Signet of Creation** (signet, 1 s, 20 s) gives 4 Energy for each
+of your living spirits and minions within earshot of you, at most 10;
+with none it gives nothing but is still used and recharges.
+
 **Minions** (#467) are raised from a fresh corpse, of either team, the
 nearest within cast range, and rise where it lay. Their Health, armor
 and blows are set by their Necromancer's Death Magic as they rise and

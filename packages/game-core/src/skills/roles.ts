@@ -98,9 +98,10 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
  * Patient Spirit heals, Holy Veil removes a hex, or when it uses a skill
  * (#999): Song of Restoration heals, or when it attacks or casts a spell
  * (#1039): Vigorous Spirit heals, or what its bearer does to the foe that
- * hurt it (#1022): Weapon of Remedy removes conditions. One that heals every
- * second (Spirit Light Weapon, #975) is healing, and so is one that
- * regenerates (Healing Breeze, Mending, #1013).
+ * hurt it (#1022): Weapon of Remedy removes conditions, or what it does each
+ * time its bearer creates a creature (#1316): Spirit's Gift heals. One
+ * that heals every second (Spirit Light Weapon, #975) is healing, and so
+ * is one that regenerates (Healing Breeze, Mending, #1013).
  */
 function statusRoles(status: StatusDefinition): readonly SkillRole[] {
   const roles: SkillRole[] = [];
@@ -137,9 +138,11 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
                 on === "expires" ||
                 on === "bearer-uses-skill" ||
                 on === "bearer-attacks" ||
-                on === "bearer-casts-spell") &&
+                on === "bearer-casts-spell" ||
+                on === "bearer-creates-creature") &&
                 target === "bearer") ||
-              target === "offender",
+              target === "offender" ||
+              target === "created",
           )
           .flatMap(({ effects, target }) =>
             effects.flatMap((effect) =>

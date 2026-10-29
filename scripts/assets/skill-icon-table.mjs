@@ -260,6 +260,11 @@ export const SKILL_ICONS = {
   "ritualist.painful-bond": { glyph: "bond-spike" },
   "ritualist.lamentation": { glyph: "tear-fall" },
   "ritualist.signet-of-spirits": { glyph: "spirit-trio" },
+  // Placeholders until the asset-designer's (#1316): the creation staples.
+  "ritualist.boon-of-creation": { glyph: "totem", modifier: "clock" },
+  "ritualist.explosive-growth": { glyph: "lightning", modifier: "area" },
+  "ritualist.spirits-gift": { glyph: "party-heal", modifier: "plus" },
+  "ritualist.signet-of-creation": { glyph: "energy", modifier: "paw" },
   "assassin.shroud-of-silence": { glyph: "hex-mute" },
   "assassin.expose-defenses": { glyph: "armor-crack" },
   "assassin.enduring-toxin": { glyph: "drop-run" },
