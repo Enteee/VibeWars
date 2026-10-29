@@ -67,6 +67,7 @@
     "deep-freeze",
     "deep-wound",
     "defensive-anthem",
+    "defile-defenses",
     "defile-flesh",
     "deflect-arrows",
     "disciplined-stance",
@@ -95,6 +96,7 @@
     "healing-breeze",
     "healing-signet-armor",
     "heart-of-fury",
+    "hex-breaker",
     "holy-veil",
     "hundred-blades",
     "ice-spikes",
@@ -130,6 +132,7 @@
     "rigor-mortis",
     "rush",
     "sand-shards",
+    "scourge-enchantment",
     "shadow-of-fear",
     "shadow-refuge",
     "shard-storm",
@@ -138,6 +141,7 @@
     "shroud-of-distress",
     "shroud-of-silence",
     "song-of-restoration",
+    "soul-barbs",
     "spirit-light-weapon",
     "spirits-gift",
     "spiteful-spirit",
@@ -509,6 +513,7 @@
                   { "literal": "deep-freeze" },
                   { "literal": "deep-wound" },
                   { "literal": "defensive-anthem" },
+                  { "literal": "defile-defenses" },
                   { "literal": "defile-flesh" },
                   { "literal": "deflect-arrows" },
                   { "literal": "disciplined-stance" },
@@ -537,6 +542,7 @@
                   { "literal": "healing-breeze" },
                   { "literal": "healing-signet-armor" },
                   { "literal": "heart-of-fury" },
+                  { "literal": "hex-breaker" },
                   { "literal": "holy-veil" },
                   { "literal": "hundred-blades" },
                   { "literal": "ice-spikes" },
@@ -572,6 +578,7 @@
                   { "literal": "rigor-mortis" },
                   { "literal": "rush" },
                   { "literal": "sand-shards" },
+                  { "literal": "scourge-enchantment" },
                   { "literal": "shadow-of-fear" },
                   { "literal": "shadow-refuge" },
                   { "literal": "shard-storm" },
@@ -580,6 +587,7 @@
                   { "literal": "shroud-of-distress" },
                   { "literal": "shroud-of-silence" },
                   { "literal": "song-of-restoration" },
+                  { "literal": "soul-barbs" },
                   { "literal": "spirit-light-weapon" },
                   { "literal": "spirits-gift" },
                   { "literal": "spiteful-spirit" },
@@ -662,6 +670,7 @@
                   { "literal": "deep-freeze" },
                   { "literal": "deep-wound" },
                   { "literal": "defensive-anthem" },
+                  { "literal": "defile-defenses" },
                   { "literal": "defile-flesh" },
                   { "literal": "deflect-arrows" },
                   { "literal": "disciplined-stance" },
@@ -690,6 +699,7 @@
                   { "literal": "healing-breeze" },
                   { "literal": "healing-signet-armor" },
                   { "literal": "heart-of-fury" },
+                  { "literal": "hex-breaker" },
                   { "literal": "holy-veil" },
                   { "literal": "hundred-blades" },
                   { "literal": "ice-spikes" },
@@ -725,6 +735,7 @@
                   { "literal": "rigor-mortis" },
                   { "literal": "rush" },
                   { "literal": "sand-shards" },
+                  { "literal": "scourge-enchantment" },
                   { "literal": "shadow-of-fear" },
                   { "literal": "shadow-refuge" },
                   { "literal": "shard-storm" },
@@ -733,6 +744,7 @@
                   { "literal": "shroud-of-distress" },
                   { "literal": "shroud-of-silence" },
                   { "literal": "song-of-restoration" },
+                  { "literal": "soul-barbs" },
                   { "literal": "spirit-light-weapon" },
                   { "literal": "spirits-gift" },
                   { "literal": "spiteful-spirit" },
@@ -812,6 +824,7 @@
                   { "literal": "deep-freeze" },
                   { "literal": "deep-wound" },
                   { "literal": "defensive-anthem" },
+                  { "literal": "defile-defenses" },
                   { "literal": "defile-flesh" },
                   { "literal": "deflect-arrows" },
                   { "literal": "disciplined-stance" },
@@ -840,6 +853,7 @@
                   { "literal": "healing-breeze" },
                   { "literal": "healing-signet-armor" },
                   { "literal": "heart-of-fury" },
+                  { "literal": "hex-breaker" },
                   { "literal": "holy-veil" },
                   { "literal": "hundred-blades" },
                   { "literal": "ice-spikes" },
@@ -875,6 +889,7 @@
                   { "literal": "rigor-mortis" },
                   { "literal": "rush" },
                   { "literal": "sand-shards" },
+                  { "literal": "scourge-enchantment" },
                   { "literal": "shadow-of-fear" },
                   { "literal": "shadow-refuge" },
                   { "literal": "shard-storm" },
@@ -883,6 +898,7 @@
                   { "literal": "shroud-of-distress" },
                   { "literal": "shroud-of-silence" },
                   { "literal": "song-of-restoration" },
+                  { "literal": "soul-barbs" },
                   { "literal": "spirit-light-weapon" },
                   { "literal": "spirits-gift" },
                   { "literal": "spiteful-spirit" },
@@ -959,6 +975,7 @@
                   { "literal": "deep-freeze" },
                   { "literal": "deep-wound" },
                   { "literal": "defensive-anthem" },
+                  { "literal": "defile-defenses" },
                   { "literal": "defile-flesh" },
                   { "literal": "deflect-arrows" },
                   { "literal": "disciplined-stance" },
@@ -987,6 +1004,7 @@
                   { "literal": "healing-breeze" },
                   { "literal": "healing-signet-armor" },
                   { "literal": "heart-of-fury" },
+                  { "literal": "hex-breaker" },
                   { "literal": "holy-veil" },
                   { "literal": "hundred-blades" },
                   { "literal": "ice-spikes" },
@@ -1022,6 +1040,7 @@
                   { "literal": "rigor-mortis" },
                   { "literal": "rush" },
                   { "literal": "sand-shards" },
+                  { "literal": "scourge-enchantment" },
                   { "literal": "shadow-of-fear" },
                   { "literal": "shadow-refuge" },
                   { "literal": "shard-storm" },
@@ -1030,6 +1049,7 @@
                   { "literal": "shroud-of-distress" },
                   { "literal": "shroud-of-silence" },
                   { "literal": "song-of-restoration" },
+                  { "literal": "soul-barbs" },
                   { "literal": "spirit-light-weapon" },
                   { "literal": "spirits-gift" },
                   { "literal": "spiteful-spirit" },
@@ -1200,6 +1220,7 @@
                   { "literal": "deep-freeze" },
                   { "literal": "deep-wound" },
                   { "literal": "defensive-anthem" },
+                  { "literal": "defile-defenses" },
                   { "literal": "defile-flesh" },
                   { "literal": "deflect-arrows" },
                   { "literal": "disciplined-stance" },
@@ -1228,6 +1249,7 @@
                   { "literal": "healing-breeze" },
                   { "literal": "healing-signet-armor" },
                   { "literal": "heart-of-fury" },
+                  { "literal": "hex-breaker" },
                   { "literal": "holy-veil" },
                   { "literal": "hundred-blades" },
                   { "literal": "ice-spikes" },
@@ -1263,6 +1285,7 @@
                   { "literal": "rigor-mortis" },
                   { "literal": "rush" },
                   { "literal": "sand-shards" },
+                  { "literal": "scourge-enchantment" },
                   { "literal": "shadow-of-fear" },
                   { "literal": "shadow-refuge" },
                   { "literal": "shard-storm" },
@@ -1271,6 +1294,7 @@
                   { "literal": "shroud-of-distress" },
                   { "literal": "shroud-of-silence" },
                   { "literal": "song-of-restoration" },
+                  { "literal": "soul-barbs" },
                   { "literal": "spirit-light-weapon" },
                   { "literal": "spirits-gift" },
                   { "literal": "spiteful-spirit" },
@@ -1338,6 +1362,7 @@
                   { "literal": "deep-freeze" },
                   { "literal": "deep-wound" },
                   { "literal": "defensive-anthem" },
+                  { "literal": "defile-defenses" },
                   { "literal": "defile-flesh" },
                   { "literal": "deflect-arrows" },
                   { "literal": "disciplined-stance" },
@@ -1366,6 +1391,7 @@
                   { "literal": "healing-breeze" },
                   { "literal": "healing-signet-armor" },
                   { "literal": "heart-of-fury" },
+                  { "literal": "hex-breaker" },
                   { "literal": "holy-veil" },
                   { "literal": "hundred-blades" },
                   { "literal": "ice-spikes" },
@@ -1401,6 +1427,7 @@
                   { "literal": "rigor-mortis" },
                   { "literal": "rush" },
                   { "literal": "sand-shards" },
+                  { "literal": "scourge-enchantment" },
                   { "literal": "shadow-of-fear" },
                   { "literal": "shadow-refuge" },
                   { "literal": "shard-storm" },
@@ -1409,6 +1436,7 @@
                   { "literal": "shroud-of-distress" },
                   { "literal": "shroud-of-silence" },
                   { "literal": "song-of-restoration" },
+                  { "literal": "soul-barbs" },
                   { "literal": "spirit-light-weapon" },
                   { "literal": "spirits-gift" },
                   { "literal": "spiteful-spirit" },
@@ -2085,6 +2113,23 @@
             ]
           }
         }
+      ]
+    },
+    "WireCapturePoint": {
+      "properties": [
+        {
+          "name": "capturer",
+          "optional": false,
+          "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+        },
+        {
+          "name": "owner",
+          "optional": false,
+          "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+        },
+        { "name": "progress", "optional": false, "type": "number" },
+        { "name": "x", "optional": false, "type": "number" },
+        { "name": "y", "optional": false, "type": "number" }
       ]
     },
     "WireCarried": {
@@ -2853,6 +2898,29 @@
             ]
           }
         },
+        {
+          "name": "capturePoints",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                {
+                  "name": "capturer",
+                  "optional": false,
+                  "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+                },
+                {
+                  "name": "owner",
+                  "optional": false,
+                  "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+                },
+                { "name": "progress", "optional": false, "type": "number" },
+                { "name": "x", "optional": false, "type": "number" },
+                { "name": "y", "optional": false, "type": "number" }
+              ]
+            }
+          }
+        },
         { "name": "elapsedSeconds", "optional": false, "type": "number" },
         {
           "name": "endReason",
@@ -3192,6 +3260,29 @@
                 ]
               }
             ]
+          }
+        },
+        {
+          "name": "capturePoints",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                {
+                  "name": "capturer",
+                  "optional": false,
+                  "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+                },
+                {
+                  "name": "owner",
+                  "optional": false,
+                  "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+                },
+                { "name": "progress", "optional": false, "type": "number" },
+                { "name": "x", "optional": false, "type": "number" },
+                { "name": "y", "optional": false, "type": "number" }
+              ]
+            }
           }
         },
         { "name": "elapsedSeconds", "optional": false, "type": "number" },

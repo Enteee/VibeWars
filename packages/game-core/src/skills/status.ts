@@ -30,6 +30,7 @@ import { AREA_ADJACENT, AREA_IN_THE_AREA, AREA_NEARBY } from "../distances.js";
 import type { DamageType } from "../equipment/types.js";
 import { wieldsFor, type Weapon, type WeaponId } from "../equipment/weapons.js";
 import type { ProfessionId } from "../professions.js";
+import { gw1EnergyScaled } from "../ruleset.js";
 import type {
   AttackWeaponClass,
   Combatant,
@@ -214,7 +215,12 @@ export type StatusId =
   // Ritualist Spawning Power creation staples (#1316).
   | "boon-of-creation"
   | "explosive-growth"
-  | "spirits-gift";
+  | "spirits-gift"
+  // Hex and enchantment gain triggers (#1403).
+  | "soul-barbs"
+  | "defile-defenses"
+  | "scourge-enchantment"
+  | "hex-breaker";
 
 /** Health one pip of regeneration or degeneration is worth, per second (GW1). */
 export const HEALTH_PER_PIP = 2;
@@ -578,6 +584,13 @@ export interface StatusDefinition {
    */
   readonly damageFromSpiritAttacks: number;
   /**
+   * The next hex about to land on the bearer fails, and the status ends
+   * (#1403): Hex Breaker's. Its caster takes `damage`, typeless, from the
+   * bearer, logged as `skillId`. Only the hex is stopped: the rest of the
+   * spell lands. `undefined`: hexes land.
+   */
+  readonly breaksNextHex: { readonly damage: number; readonly skillId: string } | undefined;
+  /**
    * What it does when its bearer does something (#469): Backfire's damage
    * on each spell the bearer finishes. Applied by whoever put it on.
    */
@@ -624,6 +637,21 @@ export type StatusTriggerEvent =
   | "bearer-blocks-melee"
   | "bearer-blocks-projectile"
   /**
+   * The bearer blocked any attack, melee or projectile, by any status
+   * (#1403): every status on it that answers fires, not only the one that
+   * blocked. Defile Defenses'. Recorded with the block.
+   */
+  | "bearer-blocks"
+  /**
+   * A hex or an enchantment landed on the bearer, new or renewed (#1403):
+   * Soul Barbs'. A refresh that changes nothing is no gain, and the status
+   * gained never answers its own landing. Recorded with the triggers that
+   * answered and the gained status's source, and fired at the drain.
+   */
+  | "bearer-gains-hex-or-enchantment"
+  /** As `bearer-gains-hex-or-enchantment`, for an enchantment only: Scourge Enchantment's. */
+  | "bearer-gains-enchantment"
+  /**
    * The bearer created a creature (#1316): a spirit or a minion, once for
    * each, as it enters the world. A pet is charmed, not created. Fired by
    * the simulation from the summon itself, with the creature.
@@ -644,9 +672,12 @@ export interface StatusTrigger {
    * `remove-status` with `from: "caster"` strips the bearer.
    * Or `created` (#1316): the bearer is the effects' caster and the
    * creature it just created their target, so a splash centres on it.
+   * Or `gained-source` (#1403): the status's source turns on whoever put
+   * the gained hex or enchantment on the bearer, as Scourge Enchantment
+   * hurts the enchanter.
    */
   readonly effects: readonly TriggerEffect[];
-  readonly target: "bearer" | "source" | "offender" | "created";
+  readonly target: "bearer" | "source" | "offender" | "created" | "gained-source";
   /**
    * On `bearer-attacks` and `bearer-hits` only (#1354, #1359): it fires
    * only for an attack made with a weapon of this class in the bearer's
@@ -713,9 +744,25 @@ export type TriggerEffect = SkillEffect | SpreadGainedConditionEffect | EchoEffe
  * Or (#1022) damage or life steal it took from a foe, with that foe.
  * Or (#1108) the share of a physical hit a bond sent to `toId`, its source.
  * Or (#1329) an attack from `offenderId` a status blocked, with its triggers.
+ * Or (#1403) a hex or an enchantment `id` from `sourceId` newly on it or
+ * renewed, with the triggers that answered; or a hex from `toId` that
+ * `statusId` stopped, and the damage `toId` takes for it.
  */
 export type StatusChange =
   | { readonly kind: "gained-condition"; readonly id: StatusId; readonly durationSeconds: number }
+  | {
+      readonly kind: "gained-hex-or-enchantment";
+      readonly id: StatusId;
+      readonly sourceId: string;
+      readonly fired: readonly AnsweringTrigger[];
+    }
+  | {
+      readonly kind: "broke-hex";
+      readonly statusId: StatusId;
+      readonly toId: string;
+      readonly damage: number;
+      readonly skillId: string;
+    }
   | {
       readonly kind: "ended";
       readonly id: StatusId;
@@ -848,6 +895,7 @@ function define(
     bindingRitualRechargeFaster: 0,
     incomingHexCastTimeMultiplier: 1,
     damageFromSpiritAttacks: 0,
+    breaksNextHex: undefined,
     triggers: [],
     ...overrides,
   };
@@ -1405,14 +1453,15 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   }),
   // "For 5...35 seconds, you gain 3 Energy each time you hit with a melee
   // attack. Warrior's Endurance cannot raise your Energy above 10...25"
-  // (PvP, #1359): 22, its rank-12 value. A bow or a thrown spear gains none.
+  // (PvP, #1359): 22, its rank-12 value, scaled to the pool (#1395): 55 of
+  // 50, as 22 sat against GW1's 20. A bow or a thrown spear gains none.
   "warriors-endurance": define("warriors-endurance", "Warrior's Endurance", "stance", {
     profession: "warrior",
     triggers: [
       {
         on: "bearer-hits",
         weapon: "melee",
-        effects: [{ kind: "energy-gain", amount: { flat: 3 }, upTo: 22 }],
+        effects: [{ kind: "energy-gain", amount: { flat: 3 }, upTo: gw1EnergyScaled(22) }],
         target: "bearer",
         skillId: "warrior.warriors-endurance",
       },
@@ -2088,6 +2137,52 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
       },
     ],
   }),
+  // "...takes 15...30 damage when an enchantment or hex is cast on that
+  // target" (#1403): 27, its rank-12 value. A renewal counts (GW1 wiki).
+  "soul-barbs": define("soul-barbs", "Soul Barbs", "hex", {
+    profession: "necromancer",
+    triggers: [
+      {
+        on: "bearer-gains-hex-or-enchantment",
+        effects: [{ kind: "damage", amount: { flat: 27 }, type: "typeless", armorPenetration: 0 }],
+        target: "bearer",
+        skillId: "necromancer.soul-barbs",
+      },
+    ],
+  }),
+  // "...the next time target foe blocks, that foe takes 30...120 damage"
+  // (#1403): 102, its rank-12 value. Any block, by any status.
+  "defile-defenses": define("defile-defenses", "Defile Defenses", "hex", {
+    profession: "necromancer",
+    triggers: [
+      {
+        on: "bearer-blocks",
+        effects: [{ kind: "damage", amount: { flat: 102 }, type: "typeless", armorPenetration: 0 }],
+        target: "bearer",
+        skillId: "necromancer.defile-defenses",
+      },
+    ],
+    endsWhenTriggered: true,
+  }),
+  // "...each time target foe is the target of an enchantment, the caster of
+  // that enchantment takes 15...75 damage" (#1403): 63, its rank-12 value.
+  "scourge-enchantment": define("scourge-enchantment", "Scourge Enchantment", "hex", {
+    profession: "monk",
+    triggers: [
+      {
+        on: "bearer-gains-enchantment",
+        effects: [{ kind: "damage", amount: { flat: 63 }, type: "holy", armorPenetration: 0 }],
+        target: "gained-source",
+        skillId: "monk.scourge-enchantment",
+      },
+    ],
+  }),
+  // "...the next time you are the target of a hex, that hex fails and the
+  // caster takes 10...46 damage" (#1403): 39, its rank-12 value.
+  "hex-breaker": define("hex-breaker", "Hex Breaker", "stance", {
+    profession: "mesmer",
+    breaksNextHex: { damage: 39, skillId: "mesmer.hex-breaker" },
+  }),
 };
 
 /**
@@ -2235,12 +2330,16 @@ export class StatusSet {
   /**
    * Status `statusId` blocked an attack of this kind from `offenderId`
    * (#1329), recorded only if that status answers it, with its triggers:
-   * another blocking status on the bearer does not.
+   * another blocking status on the bearer does not. Every status that
+   * answers any block (#1403) does, after it.
    */
   public recordBlock(statusId: StatusId, offenderId: string, kind: "melee" | "projectile"): void {
-    const fired = this.#answering(
-      kind === "melee" ? "bearer-blocks-melee" : "bearer-blocks-projectile",
-    ).filter((answering) => answering.statusId === statusId);
+    const fired = [
+      ...this.#answering(
+        kind === "melee" ? "bearer-blocks-melee" : "bearer-blocks-projectile",
+      ).filter((answering) => answering.statusId === statusId),
+      ...this.#answering("bearer-blocks"),
+    ];
     if (fired.length > 0) {
       this.#changes.push({ kind: "blocked", offenderId, fired });
     }
@@ -2277,6 +2376,50 @@ export class StatusSet {
     }
   }
 
+  /**
+   * Record a hex or an enchantment `id` from `sourceId` landing on the
+   * bearer, new or renewed (#1403), only if a status on it answers that,
+   * with the triggers that do: `id` itself never answers its own landing.
+   */
+  #gainedHexOrEnchantment(id: StatusId, sourceId: string): void {
+    const { category } = getStatusDefinition(id);
+    if (category !== "hex" && category !== "enchantment") {
+      return;
+    }
+    const fired = this.triggersOn(
+      "bearer-gains-hex-or-enchantment",
+      ...(category === "enchantment" ? (["bearer-gains-enchantment"] as const) : []),
+    ).filter(({ statusId }) => statusId !== id);
+    if (fired.length > 0) {
+      this.#changes.push({ kind: "gained-hex-or-enchantment", id, sourceId, fired });
+    }
+  }
+
+  /**
+   * Whether hex `id` from `sourceId` fails to land (#1403): with a status
+   * on the bearer that breaks the next hex, that status ends and the hex's
+   * source is owed its damage. Anything not a hex lands.
+   */
+  #breaksHex(id: StatusId, sourceId: string): boolean {
+    if (getStatusDefinition(id).category !== "hex") {
+      return false;
+    }
+    for (const { id: breaker } of this.active) {
+      const breaks = getStatusDefinition(breaker).breaksNextHex;
+      if (breaks !== undefined) {
+        this.#end([breaker]);
+        this.#changes.push({ kind: "broke-hex", statusId: breaker, toId: sourceId, ...breaks });
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** The status that would stop the next hex on the bearer (#1403), oldest first, if any. */
+  public hexBreaker(): StatusId | undefined {
+    return this.active.find(({ id }) => getStatusDefinition(id).breaksNextHex !== undefined)?.id;
+  }
+
   public get active(): readonly ActiveStatus[] {
     return [...this.#statuses.values()];
   }
@@ -2306,10 +2449,11 @@ export class StatusSet {
    * Returns whether it is newly on the bearer: `false` for a refresh, or
    * for a duration of nothing. What a status does once, as it lands
    * (deep wound's health), hangs on this. A status newly on it ends every
-   * one that ends when its bearer gains that category (#919).
+   * one that ends when its bearer gains that category (#919). A hex a
+   * status breaks never lands (#1403): `false`, and nothing else changes.
    */
   public apply(id: StatusId, durationSeconds: number, sourceId: string): boolean {
-    if (durationSeconds <= 0) {
+    if (durationSeconds <= 0 || this.#breaksHex(id, sourceId)) {
       return false;
     }
     const wasActive = this.#statuses.has(id);
@@ -2341,6 +2485,7 @@ export class StatusSet {
       maintained: null,
       projected: false,
     });
+    this.#gainedHexOrEnchantment(id, sourceId);
     if (!wasActive) {
       this.#gained(id, durationSeconds);
       this.#endOnGaining(definition.category);
@@ -2354,11 +2499,14 @@ export class StatusSet {
    * carrying it keeps the outbreak it has.
    */
   public catch(id: StatusId, durationSeconds: number, sourceId: string, outbreak: Outbreak): void {
-    if (durationSeconds <= 0) {
+    if (durationSeconds <= 0 || this.#breaksHex(id, sourceId)) {
       return;
     }
     const existing = this.#statuses.get(id);
     if (existing !== undefined) {
+      if (durationSeconds > existing.remainingSeconds) {
+        this.#gainedHexOrEnchantment(id, sourceId);
+      }
       existing.remainingSeconds = Math.max(existing.remainingSeconds, durationSeconds);
       // A bar is never over full.
       existing.durationSeconds = Math.max(existing.durationSeconds, existing.remainingSeconds);
@@ -2377,6 +2525,7 @@ export class StatusSet {
       projected: false,
     });
     this.#gained(id, durationSeconds);
+    this.#gainedHexOrEnchantment(id, sourceId);
   }
 
   /**
@@ -2404,6 +2553,7 @@ export class StatusSet {
       maintained: { seq, outOfRangeSeconds: 0 },
       projected: false,
     });
+    this.#gainedHexOrEnchantment(id, sourceId);
     if (!wasActive) {
       this.#endOnGaining("enchantment");
     }
@@ -2724,15 +2874,15 @@ export class StatusSet {
   }
 
   /**
-   * Every trigger on the bearer that answers `event` (#469), in `active`
-   * order, with who applied the status that holds it.
+   * Every trigger on the bearer that answers one of `events` (#469,
+   * #1403), in `active` order, with who applied the status that holds it.
    */
   public triggersOn(
-    event: StatusTriggerEvent,
+    ...events: readonly StatusTriggerEvent[]
   ): { statusId: StatusId; sourceId: string; trigger: StatusTrigger }[] {
     return this.active.flatMap(({ id, sourceId }) =>
       getStatusDefinition(id)
-        .triggers.filter((trigger) => trigger.on === event)
+        .triggers.filter((trigger) => events.includes(trigger.on))
         .map((trigger) => ({ statusId: id, sourceId, trigger })),
     );
   }

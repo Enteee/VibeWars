@@ -782,6 +782,12 @@ function renderCarriers(
   }
 }
 
+/** An objective toast (#1387): what it says, and whose cue it plays. */
+export interface ObjectiveToast {
+  readonly text: string;
+  readonly side: "ours" | "theirs";
+}
+
 /** How far a stand's count may miss the boost's and still be it: a few ticks. */
 const BOOST_SLACK_SECONDS = 0.5;
 
@@ -798,7 +804,7 @@ export function standBoostToast(
   before: Pick<MatchSnapshot, "stand" | "elapsedSeconds"> | undefined,
   after: Pick<MatchSnapshot, "stand" | "elapsedSeconds">,
   selfTeam: number | undefined,
-): string | undefined {
+): ObjectiveToast | undefined {
   const held = before?.stand;
   const now = after.stand;
   if (
@@ -815,8 +821,35 @@ export function standBoostToast(
     return undefined;
   }
   return now.holder === (selfTeam ?? 0)
-    ? `Morale boost! +${String(FLAG_MORALE_BOOST)}%`
-    : "Enemy morale boost";
+    ? { text: `Morale boost! +${String(FLAG_MORALE_BOOST)}%`, side: "ours" }
+    : { text: "Enemy morale boost", side: "theirs" };
+}
+
+/**
+ * The toast for a relic scored in a Relic Run (#1387), from two snapshots:
+ * "Relic scored!" when your side's score went up, "Enemy relic scored" when
+ * the foe's did; a spectator's side is team 0's. Points missed between two
+ * frames toast once, and yours win if both sides scored. `undefined` for the
+ * first snapshot, no score, and any match that is not a Relic Run (a
+ * kill-count score is silent). A `before` without relics is no before: the
+ * client's placeholder before its first frame is 0-0 with none, so a
+ * mid-match rejoin would otherwise toast the score it walked in on.
+ */
+export function relicScoreToast(
+  before: Pick<MatchSnapshot, "scoreTeam0" | "scoreTeam1" | "relics"> | undefined,
+  after: Pick<MatchSnapshot, "scoreTeam0" | "scoreTeam1" | "relics">,
+  selfTeam: number | undefined,
+): ObjectiveToast | undefined {
+  if (before === undefined || before.relics.length === 0 || after.relics.length === 0) {
+    return undefined;
+  }
+  const rose0 = after.scoreTeam0 > before.scoreTeam0;
+  const rose1 = after.scoreTeam1 > before.scoreTeam1;
+  const [ours, theirs] = (selfTeam ?? 0) === 1 ? [rose1, rose0] : [rose0, rose1];
+  if (ours) {
+    return { text: "Relic scored!", side: "ours" };
+  }
+  return theirs ? { text: "Enemy relic scored", side: "theirs" } : undefined;
 }
 
 /**
@@ -1011,6 +1044,7 @@ export function scoreboardParts(
       return [living, clock];
     case "kill-count":
     case "relic-run":
+    case "capture-points":
       return [
         { kind: "text", text: `${String(score[ours] ?? 0)} – ${String(score[theirs] ?? 0)}` },
         clock,

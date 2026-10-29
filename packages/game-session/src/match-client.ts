@@ -397,6 +397,7 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
                 aggression: [],
                 relics: [],
                 altar: undefined,
+                capturePoints: [],
                 traps,
                 summary,
               }
