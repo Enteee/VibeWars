@@ -3841,12 +3841,15 @@ export class MatchSimulation {
    */
   #toggleGhost(record: ParticipantRecord, ghostId: string): void {
     const ghost = this.#participants.get(ghostId);
-    if (ghost === undefined || ghost.combatant.dead) {
+    const field = this.#hillField;
+    if (ghost === undefined || ghost.combatant.dead || field === undefined) {
       return;
     }
     const following =
       ghost.behaviour?.kind === "follow-and-attack" && ghost.behaviour.leaderId === record.id;
-    ghost.behaviour = following ? stayBehaviour(ghost.position) : followBehaviour(record.id);
+    ghost.behaviour = following
+      ? stayBehaviour(ghost.position)
+      : followBehaviour(record.id, field.altar);
     ghost.cursor = createCursor();
   }
 

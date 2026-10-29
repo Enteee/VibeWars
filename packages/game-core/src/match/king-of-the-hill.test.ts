@@ -166,6 +166,25 @@ describe("a Ghostly Hero (#1377)", () => {
     expect(distance(get(sim, "a").position, stayed)).toBeGreaterThan(300);
   });
 
+  it("led to the altar by walking alone, steps onto it and claims it", () => {
+    const sim = kingOfTheHill();
+    applyIntent(sim, "a", { kind: "target", targetSessionId: GHOST_0 });
+    applyIntent(sim, "a", { kind: "attack", targetId: GHOST_0 });
+    stepFor(sim, 1);
+    applyIntent(sim, "a", { kind: "walk-to", x: FIELD.altar.x, y: FIELD.altar.y });
+    stepUntil(sim, () => claiming(sim, GHOST_0), 20);
+    stepUntil(sim, () => sim.altarState.holder === 0, CLAIM_SECONDS + 1);
+  });
+
+  it("led past the altar, still steps onto it rather than heel", () => {
+    const sim = kingOfTheHill();
+    applyIntent(sim, "a", { kind: "target", targetSessionId: GHOST_0 });
+    applyIntent(sim, "a", { kind: "attack", targetId: GHOST_0 });
+    stepFor(sim, 1);
+    applyIntent(sim, "a", { kind: "walk-to", x: FIELD.altar.x + 110, y: FIELD.altar.y });
+    stepUntil(sim, () => claiming(sim, GHOST_0), 20);
+  });
+
   it("is attacked, never led, by a foe's Space", () => {
     const sim = kingOfTheHill();
     get(sim, "x").position = vec2(260, 700);

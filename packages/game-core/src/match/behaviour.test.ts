@@ -333,6 +333,7 @@ describe("follow-and-attack (#467)", () => {
   const FOLLOW: Behaviour = {
     kind: "follow-and-attack",
     leaderId: undefined,
+    drawnTo: undefined,
     engage: "owner-target-then-nearest",
     aggroUnits: 350,
     leashUnits: 420,
@@ -601,6 +602,7 @@ describe("follow-and-attack (#467)", () => {
     const PET: Behaviour = {
       kind: "follow-and-attack",
       leaderId: undefined,
+      drawnTo: undefined,
       engage: "owner-target",
       aggroUnits: 700,
       leashUnits: 700,

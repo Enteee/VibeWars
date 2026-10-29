@@ -53,6 +53,7 @@ const RANGE_LONG = 520;
 const MINION_BEHAVIOUR: Behaviour = {
   kind: "follow-and-attack",
   leaderId: undefined,
+  drawnTo: undefined,
   engage: "owner-target-then-nearest",
   aggroUnits: AREA_EARSHOT,
   leashUnits: RANGE_SPELL,
@@ -124,6 +125,7 @@ const BONE_HORROR: CreatureTemplate = {
 const PET_BEHAVIOUR: Behaviour = {
   kind: "follow-and-attack",
   leaderId: undefined,
+  drawnTo: undefined,
   engage: "owner-target",
   aggroUnits: PET_REACH,
   leashUnits: PET_REACH,

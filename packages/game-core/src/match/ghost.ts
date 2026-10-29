@@ -56,12 +56,16 @@ export function onHill(field: HillField, position: Vec2): boolean {
 
 /**
  * Following `leaderId`, as a minion follows its master: at its heel,
- * fighting what the leader attacks, else the nearest foe in earshot.
+ * fighting what the leader attacks, else the nearest foe in earshot. A
+ * leader on or beside the altar draws it onto the altar itself, so
+ * leading it there is all a claim takes: its heel alone stops it short
+ * of the altar's reach.
  */
-export function followBehaviour(leaderId: string): Behaviour {
+export function followBehaviour(leaderId: string, altar: Vec2): Behaviour {
   return {
     kind: "follow-and-attack",
     leaderId,
+    drawnTo: { point: altar, withinUnits: ALTAR_REACH_UNITS + AREA_IN_THE_AREA },
     engage: "owner-target-then-nearest",
     aggroUnits: AREA_EARSHOT,
     leashUnits: RANGE_SPELL,

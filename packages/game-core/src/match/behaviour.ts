@@ -101,6 +101,13 @@ export type Behaviour =
        */
       readonly leaderId: string | undefined;
       /**
+       * A point it walks onto in place of its leader's heel while the
+       * leader stands within `withinUnits` of it, ahead of any fight: a
+       * Ghostly Hero led to the altar steps onto it (#1377). `undefined`:
+       * none, as a minion's.
+       */
+      readonly drawnTo: { readonly point: Vec2; readonly withinUnits: number } | undefined;
+      /**
        * Whom it goes for (#1046). `"owner-target"`: a companion's, the foe
        * its owner is attacking or, on Fight, has selected (#1110), if within
        * `aggroUnits` of itself; on Heel, none.
@@ -484,6 +491,12 @@ function followAndAttack(
   const toOwner = { ...STAND_STILL, moveTo: owner.position };
   if (cursor.returning) {
     return toOwner;
+  }
+  const drawnTo = behaviour.drawnTo;
+  if (drawnTo !== undefined && distance(owner.position, drawnTo.point) <= drawnTo.withinUnits) {
+    return distance(drawnTo.point, self.position) > context.stepUnits
+      ? { ...STAND_STILL, moveTo: drawnTo.point }
+      : STAND_STILL;
   }
   const team = self.combatant.team;
   const inAggro = (other: Participant): boolean =>

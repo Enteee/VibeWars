@@ -66,6 +66,7 @@ export type BenchCrowd = "fighters" | "followers";
 const FOLLOWER_BEHAVIOUR: Behaviour = {
   kind: "follow-and-attack",
   leaderId: undefined,
+  drawnTo: undefined,
   engage: "owner-target-then-nearest",
   aggroUnits: AREA_EARSHOT,
   leashUnits: RANGE_SPELL,
