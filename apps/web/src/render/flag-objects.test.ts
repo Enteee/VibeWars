@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { vec2, type FlagField } from "@vibewars/game-core";
+import { vec2, type FlagField, type RelicField } from "@vibewars/game-core";
 import type { PlayerSnapshot } from "@vibewars/game-session";
 
 import {
@@ -7,6 +7,7 @@ import {
   STAND_RADIUS,
   flagObjectAtPoint,
   renderableFlags,
+  renderableRelics,
   renderableStand,
 } from "./flag-objects.js";
 
@@ -70,6 +71,34 @@ describe("renderableStand", () => {
     expect(renderableStand({ holder: 1, heldSeconds: 4 }, FIELD, 0)?.holder).toBe("enemy");
     expect(renderableStand({ holder: 1, heldSeconds: 4 }, FIELD, 1)?.holder).toBe("ally");
     expect(renderableStand(undefined, undefined, 0)).toBeUndefined();
+  });
+});
+
+describe("renderableRelics (#1374)", () => {
+  const RELICS: RelicField = {
+    altar: vec2(1100, 700),
+    spawns: [
+      { team: 0, position: vec2(110, 700) },
+      { team: 1, position: vec2(2090, 700) },
+    ],
+  };
+
+  it("draws each relic as a flag where it is, and a right click picks a lying one", () => {
+    const relics = renderableRelics(
+      [
+        { team: 0, place: { kind: "ground", position: vec2(600, 400) } },
+        { team: 1, place: { kind: "carried", carrierId: "x" } },
+      ],
+      RELICS,
+      [carrier],
+      0,
+    );
+    expect(relics).toEqual([
+      { id: "relic/0", side: "ally", position: vec2(600, 400), carried: false, onStand: false },
+      { id: "relic/1", side: "enemy", position: vec2(1200, 900), carried: true, onStand: false },
+    ]);
+    expect(flagObjectAtPoint(relics, undefined, vec2(605, 400))).toBe("relic/0");
+    expect(renderableRelics([{ team: 0, place: { kind: "spawn" } }], undefined, [], 0)).toEqual([]);
   });
 });
 

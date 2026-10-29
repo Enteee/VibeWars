@@ -291,10 +291,15 @@ export interface ArenaSnapshot {
   readonly walls: readonly RenderableWall[];
   /** The map's resurrection shrines (#1199), their priests alive or not. */
   readonly shrines: readonly RenderableShrine[];
-  /** A Guild Battle's flags (#1225), wherever each is; `[]` on any other map. */
+  /**
+   * A Guild Battle's flags (#1225), or a Relic Run's relics (#1374), as
+   * flags, wherever each is; `[]` on any other map.
+   */
   readonly flags: readonly RenderableFlag[];
   /** A Guild Battle's flag stand (#1225); `undefined` on any other map. */
   readonly stand: RenderableStand | undefined;
+  /** A Relic Run's altar (#1374); `undefined` on any other map. */
+  readonly altar: Vec2 | undefined;
   readonly targetId: string | undefined;
   /** Weapon shots in flight (#161). */
   readonly projectiles: readonly RenderableProjectile[];
@@ -318,6 +323,7 @@ export const EMPTY_SNAPSHOT: ArenaSnapshot = {
   shrines: [],
   flags: [],
   stand: undefined,
+  altar: undefined,
   targetId: undefined,
   projectiles: [],
   groundEffects: [],

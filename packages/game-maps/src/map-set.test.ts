@@ -62,9 +62,9 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
     }
     for (const objective of map.objectives) {
       const image = turned(map, objective.position);
-      // A shared objective, the flag stand (#1225), is its own image.
+      // A shared objective, the flag stand (#1225) or the altar (#1374), is its own image.
       const mirrored =
-        objective.kind === "flag-stand"
+        objective.kind === "flag-stand" || objective.kind === "altar"
           ? near(objective.position, image)
           : map.objectives.some(
               (other) =>
@@ -177,7 +177,7 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
 });
 
 describe("the arena set (#444)", () => {
-  it("is the four small arenas, the four of #444 and the guild hall (#1222)", () => {
+  it("is the four small arenas, the four of #444, the guild hall (#1222) and the relic temples (#1374)", () => {
     expect(MAPS.map((map) => map.id).sort()).toEqual(
       [
         "arena-alpha",
@@ -185,12 +185,13 @@ describe("the arena set (#444)", () => {
         "arena-pillars",
         "arena-split",
         "guild-hall-isle",
+        "relic-temples",
         ...NEW_ARENAS,
       ].sort(),
     );
   });
 
-  it("plays Kill Count on Pillar Hall, Priest Annihilation on Split Paths, Guild Battle on Guild Hall Isle and Annihilation everywhere else (#476, #1186, #1222)", () => {
+  it("plays Kill Count on Pillar Hall, Priest Annihilation on Split Paths, Guild Battle on Guild Hall Isle, Relic Run on Relic Temples and Annihilation everywhere else (#476, #1186, #1222, #1374)", () => {
     expect(MAPS.filter((map) => map.mode === "kill-count").map((map) => map.id)).toEqual([
       "arena-pillars",
     ]);
@@ -200,7 +201,10 @@ describe("the arena set (#444)", () => {
     expect(MAPS.filter((map) => map.mode === "guild-battle").map((map) => map.id)).toEqual([
       "guild-hall-isle",
     ]);
-    expect(MAPS.filter((map) => map.mode === "annihilation")).toHaveLength(MAPS.length - 3);
+    expect(MAPS.filter((map) => map.mode === "relic-run").map((map) => map.id)).toEqual([
+      "relic-temples",
+    ]);
+    expect(MAPS.filter((map) => map.mode === "annihilation")).toHaveLength(MAPS.length - 4);
   });
 
   it("puts each team's shrine on Split Paths behind its spawns (#1186)", () => {
@@ -325,6 +329,69 @@ describe("Guild Hall Isle (#1222)", () => {
       if (shrine === undefined || stand === undefined) throw new Error("no shrine or stand");
       expect(Vec.distance(spawn.position, shrine.position)).toBeLessThan(200);
       expect(finder.find(spawn.position, stand.position), JSON.stringify(spawn)).toBeDefined();
+    }
+  });
+});
+
+describe("Relic Temples (#1374)", () => {
+  const temples = MAPS.find((map) => map.id === "relic-temples");
+  if (temples === undefined) throw new Error("no relic-temples");
+  const walls = allWallSegments(temples.walls);
+  const bounds = { width: temples.width, height: temples.height };
+  const altar = temples.objectives.find((objective) => objective.kind === "altar");
+  const spawns = temples.objectives.filter((objective) => objective.kind === "relic-spawn");
+  if (altar === undefined) throw new Error("no altar");
+
+  /** The walked length of `path`, from `from`. */
+  const walked = (from: Vec2, path: readonly Vec2[]): number =>
+    path.reduce(
+      (sum, point, index) =>
+        sum + Vec.distance(index === 0 ? from : (path[index - 1] ?? from), point),
+      0,
+    );
+
+  it("puts the altar at the centre, and a relic in each base", () => {
+    expect(altar.position).toEqual({ x: temples.width / 2, y: temples.height / 2 });
+    expect(spawns.map((spawn) => spawn.team).sort()).toEqual([0, 1]);
+  });
+
+  it("runs each relic to the altar the same length", () => {
+    const finder = createPathFinder(buildNavGraph(walls, bounds, RADIUS));
+    const lengths = spawns.map((spawn) => {
+      const path = finder.find(spawn.position, altar.position);
+      if (path === undefined) throw new Error(`no run for team ${String(spawn.team)}`);
+      return walked(spawn.position, path);
+    });
+    expect(lengths[0]).toBeCloseTo(lengths[1] ?? 0, 3);
+  });
+
+  it("has two routes from each base: walled off the one, the run goes round the other way", () => {
+    for (const spawn of spawns) {
+      const finder = createPathFinder(buildNavGraph(walls, bounds, RADIUS));
+      const path = finder.find(spawn.position, altar.position) ?? [];
+      const north = path.some((point) => point.y < altar.position.y - 50);
+      // A wall across the lane the run took, from the divider to the edge.
+      const cut = north
+        ? {
+            kind: "rect" as const,
+            x: spawn.position.x < altar.position.x ? 680 : 1440,
+            y: 0,
+            width: 80,
+            height: 700,
+          }
+        : {
+            kind: "rect" as const,
+            x: spawn.position.x < altar.position.x ? 680 : 1440,
+            y: 700,
+            width: 80,
+            height: 700,
+          };
+      const blocked = createPathFinder(
+        buildNavGraph(allWallSegments([...temples.walls, cut]), bounds, RADIUS),
+      );
+      const detour = blocked.find(spawn.position, altar.position);
+      expect(detour, JSON.stringify(spawn)).toBeDefined();
+      expect(detour?.some((point) => point.y < altar.position.y - 50)).toBe(!north);
     }
   });
 });

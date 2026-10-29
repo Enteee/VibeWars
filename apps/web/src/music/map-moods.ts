@@ -22,6 +22,8 @@ const MOODS: ReadonlyMap<string, readonly Mood[]> = new Map<string, readonly Moo
   ["arena-canyon", ["adventurous", "epic"]],
   // The Guild Battle's (#1222): a siege.
   ["guild-hall-isle", ["epic", "dark"]],
+  // Heroes' Ascent's Relic Run (#1374): a race.
+  ["relic-temples", ["action", "adventurous"]],
 ]);
 
 /** Played where the table has nothing: a map this client does not know. */

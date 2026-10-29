@@ -2,17 +2,23 @@ import {
   FLAG_STAND_ID,
   Vec,
   flagId,
+  relicId,
+  type CarriedSpawn,
   type FlagField,
+  type FlagPlace,
   type FlagState,
+  type RelicField,
+  type RelicState,
   type StandState,
   type Vec2,
 } from "@vibewars/game-core";
 import type { PlayerSnapshot } from "@vibewars/game-session";
 
 /**
- * A Guild Battle's flags and flag stand as the arena draws them (#1225):
- * stand-in shapes until their asset card. Pure, so where each is drawn
- * and what a right click picks are testable without Phaser.
+ * A Guild Battle's flags and flag stand as the arena draws them (#1225),
+ * and a Relic Run's relics as flags (#1374): stand-in shapes until their
+ * asset card. Pure, so where each is drawn and what a right click picks
+ * are testable without Phaser.
  */
 
 /** How far from a flag's foot a right click picks it, world units. */
@@ -22,9 +28,9 @@ export const STAND_RADIUS = 36;
 
 export type FlagSide = "ally" | "enemy";
 
-/** A flag where it is: at its spawn, on the ground, on the stand or over its carrier's head. */
+/** A flag or a relic where it is: at its spawn, on the ground, on the stand or over its carrier's head. */
 export interface RenderableFlag {
-  /** Its target id, `flag/<team>`. */
+  /** Its target id, `flag/<team>` or `relic/<team>`. */
   readonly id: string;
   readonly side: FlagSide;
   /** Its foot: the carrier's position while carried. */
@@ -62,7 +68,7 @@ export function renderableFlags(
     return [];
   }
   return flags.flatMap(({ team, place }) => {
-    const position = flagFoot(field, team, place, players);
+    const position = flagFoot(field.spawns, field.stand, team, place, players);
     return position === undefined
       ? []
       : [
@@ -77,19 +83,50 @@ export function renderableFlags(
   });
 }
 
+/**
+ * Every relic that can be drawn (#1374), as a flag: one whose carrier is
+ * not in the snapshot is not drawn, nor any on a map without an altar.
+ */
+export function renderableRelics(
+  relics: readonly RelicState[],
+  field: RelicField | undefined,
+  players: readonly PlayerSnapshot[],
+  selfTeam: number | undefined,
+): RenderableFlag[] {
+  if (field === undefined) {
+    return [];
+  }
+  return relics.flatMap(({ team, place }) => {
+    const position = flagFoot(field.spawns, undefined, team, place, players);
+    return position === undefined
+      ? []
+      : [
+          {
+            id: relicId(team),
+            side: sideOf(team, selfTeam),
+            position,
+            carried: place.kind === "carried",
+            onStand: false,
+          },
+        ];
+  });
+}
+
+/** Where a flag or relic stands, or its carrier, from the map's spawns and stand. */
 function flagFoot(
-  field: FlagField,
+  spawns: readonly CarriedSpawn[],
+  stand: Vec2 | undefined,
   team: number,
-  place: FlagState["place"],
+  place: FlagPlace,
   players: readonly PlayerSnapshot[],
 ): Vec2 | undefined {
   switch (place.kind) {
     case "spawn":
-      return field.spawns.find((spawn) => spawn.team === team)?.position;
+      return spawns.find((spawn) => spawn.team === team)?.position;
     case "ground":
       return place.position;
     case "stand":
-      return field.stand;
+      return stand;
     case "carried": {
       const carrier = players.find((player) => player.sessionId === place.carrierId);
       return carrier === undefined ? undefined : { x: carrier.x, y: carrier.y };

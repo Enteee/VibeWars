@@ -69,7 +69,10 @@ export type ActivationRejection =
   // Space on a flag or the stand that does nothing (#1225).
   | "not-your-flag"
   | "flag-on-stand"
-  | "no-flag-carried";
+  | "no-flag-carried"
+  // Space on a foe's relic at its spawn (#1374); a return with a relic
+  // in hand is `"hands-full"`.
+  | "not-your-relic";
 
 export type ActivationCheck =
   { readonly ok: true } | { readonly ok: false; readonly reason: ActivationRejection };
