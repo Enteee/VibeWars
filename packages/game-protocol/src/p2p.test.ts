@@ -31,6 +31,8 @@ import {
   parseWireTraps,
   parseWireChatLine,
   parsePeerHello,
+  parsePeerObserve,
+  parsePeerObserving,
   parsePeerRefuse,
   parsePeerRejoinChallenge,
   parsePeerRejoinProof,
@@ -58,6 +60,8 @@ import {
 } from "./p2p.js";
 import type {
   PeerHello,
+  PeerObserve,
+  PeerObserving,
   PeerRefuse,
   PeerWelcome,
   WireCombat,
@@ -117,6 +121,16 @@ const welcome: PeerWelcome = {
 };
 
 const refuse: PeerRefuse = { reason: "protocol-mismatch", message: PROTOCOL_MISMATCH_MESSAGE };
+
+const observe: PeerObserve = { protocolVersion: PROTOCOL_VERSION, matchId: "match-2" };
+
+const observing: PeerObserving = {
+  protocolVersion: PROTOCOL_VERSION,
+  tickIntervalMs: 50,
+  timeLimitSeconds: 180,
+  delaySeconds: 10,
+  map: welcome.map,
+};
 
 const status: WireStatus = { status: 3, endsAt: 12.5, durationSeconds: 8, casterId: "peer-2" };
 
@@ -471,6 +485,10 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["rejoin-proof", parsePeerRejoinProof, proof],
   ["welcome", parsePeerWelcome, welcome],
   ["refuse", parsePeerRefuse, refuse],
+  ["observe (#480)", parsePeerObserve, observe],
+  ["observing (#480)", parsePeerObserving, observing],
+  ["refuse a player watching (#480)", parsePeerRefuse, { ...refuse, reason: "not-a-spectator" }],
+  ["refuse a past match (#480)", parsePeerRefuse, { ...refuse, reason: "wrong-match" }],
   ["snapshot", parseWireSnapshotPart, snapshot],
   ["snapshot with a creature", parseWireSnapshotPart, { ...snapshot, players: [player, minion] }],
   [
@@ -825,6 +843,14 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     { ...welcome, map: { ...welcome.map, walls: [{ kind: "circle", x: 0, y: 0 }] } },
   ],
   ["refuse with an unknown reason", parsePeerRefuse, { ...refuse, reason: "banned" }],
+  ["observe without a match", parsePeerObserve, { protocolVersion: PROTOCOL_VERSION }],
+  ["observe with a long match id", parsePeerObserve, { ...observe, matchId: long }],
+  ["observe with a numeric version", parsePeerObserve, { ...observe, protocolVersion: 2 }],
+  ["observing without a map", parsePeerObserving, { ...observing, map: null }],
+  ["observing with a zero tick", parsePeerObserving, { ...observing, tickIntervalMs: 0 }],
+  ["observing with a negative delay", parsePeerObserving, { ...observing, delaySeconds: -1 }],
+  ["observing without a delay", parsePeerObserving, { ...observing, delaySeconds: undefined }],
+  ["observing with a zero time limit", parsePeerObserving, { ...observing, timeLimitSeconds: 0 }],
   [
     "refuse with a long message",
     parsePeerRefuse,

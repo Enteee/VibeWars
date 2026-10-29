@@ -38,21 +38,25 @@ import {
   parsePeerBye,
   parsePeerCall,
   parsePeerHello,
+  parsePeerObserve,
   parsePeerRejoinProof,
   type AdrenalineMessage,
   type ChainMarksMessage,
   type WireChainMark,
   type MapDescriptor,
   type PeerHello,
+  type PeerObserving,
   type PeerRefuse,
   type PeerRejoinChallenge,
   type PeerWelcome,
   type RechargeMessage,
   type SkillBarSlot,
+  type WireCombatBatch,
   type WireEnded,
   type WirePlayer,
   type WireSkillBar,
   type WireSnapshot,
+  type WireSnapshotPart,
   type WireTraps,
   type WireSummaryRow,
 } from "@vibewars/game-protocol";
@@ -103,9 +107,18 @@ const TICK_SECONDS = 1 / RULESET.tickRateHz;
  */
 export const RECONNECT_WINDOW_SECONDS = 30;
 
+/**
+ * How far behind the match a lobby spectator watches it (#480): long
+ * enough that a spectator on voice with a team tells it nothing it could
+ * still act on.
+ */
+export const OBSERVER_DELAY_SECONDS = 10;
+
 /** What the players are shown when the host turns them away. */
 export const MATCH_FULL_MESSAGE = "This match is full.";
 export const MATCH_OVER_MESSAGE = "This match is over.";
+export const NOT_A_SPECTATOR_MESSAGE = "Only a spectator may watch this match.";
+export const WRONG_MATCH_MESSAGE = "That match is not being played any more.";
 
 /** The arena, already built from game-maps by the caller: game-session does not depend on it. */
 export interface HostMap {
@@ -147,6 +160,13 @@ export interface MatchHostOptions {
    * seats whoever says hello, on alternating teams.
    */
   readonly seats: PlannedSeats | null;
+  /** The lobby's id for it (#480): an `observe` naming another is refused. */
+  readonly matchId: string;
+  /**
+   * Whether `peerId` is a lobby member on no team (#480), who may watch
+   * the match, `OBSERVER_DELAY_SECONDS` late. Asked on every `observe`.
+   */
+  readonly isSpectator: (peerId: string) => boolean;
 }
 
 /**
@@ -176,6 +196,19 @@ export interface MatchHost {
   readonly abandoned: boolean;
   /** Weapon-set intents dropped over `WEAPON_SWAPS_PER_SECOND` (#489), every seat together. */
   readonly droppedWeaponSwaps: number;
+  /**
+   * Finished, and its observers not yet sent the end, which reaches them
+   * `OBSERVER_DELAY_SECONDS` late (#480): keep advancing it until then.
+   */
+  readonly draining: boolean;
+  /**
+   * The room is the next match's now (#480): a draining match answers
+   * nobody again, so it never turns away a player or a viewer of the one
+   * after it on the same channels. Only its observers' stream runs on,
+   * and a bye or a leave from one of them. One who says hello to, or
+   * observes, the next match is in that one's stream instead.
+   */
+  retire(): void;
   /** Tell every peer the match is over because the host left, then leave. */
   close(reason: "host-left"): Promise<void>;
 }
@@ -215,6 +248,16 @@ interface Challenge {
   readonly playerId: string;
   readonly nonce: string;
   readonly hello: PeerHello;
+}
+
+/** One tick as the players were sent it, held for the observers (#480). */
+interface Delayed {
+  /** `streamTick` when it was played. */
+  readonly at: number;
+  readonly snapshot: readonly WireSnapshotPart[];
+  readonly combat: readonly WireCombatBatch[];
+  /** The match ended on this tick. */
+  readonly ended: WireEnded | undefined;
 }
 
 function round(value: number, places: number): number {
@@ -319,6 +362,18 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     });
   let accumulator = 0;
   let finished = false;
+  /** Handed its room on: see `MatchHost.retire`. */
+  let retired = false;
+  /** The peers watching (#480): no seat, and nothing sent but `delayed`. */
+  const observers = new Set<string>();
+  /**
+   * The last `OBSERVER_DELAY_SECONDS` of ticks, oldest first, for every
+   * observer at once (#480). Kept only while one is watching.
+   */
+  let delayed: Delayed[] = [];
+  const delayTicks = Math.ceil(OBSERVER_DELAY_SECONDS * RULESET.tickRateHz);
+  /** The tick being played, or after the end, the observers' stream running on. */
+  let streamTick = 0;
 
   const nowMs = (): number => sim.elapsedSeconds * 1000;
 
@@ -490,6 +545,56 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   /** Alive and in the match. */
   const isAlive = (id: string): boolean => sim.get(id)?.combatant.dead === false;
 
+  /** The seated peers, every one connected: who is sent the match as it is played. */
+  const players = (): string[] =>
+    [...seats.values()].flatMap((seat) => (seat.peerId === undefined ? [] : [seat.peerId]));
+
+  /**
+   * Send the observers every held tick at least `delayTicks` old (#480).
+   * The end closes their stream: nothing more is held or sent.
+   */
+  const release = (): void => {
+    while (delayed[0] !== undefined && delayed[0].at <= streamTick - delayTicks) {
+      const entry = delayed[0];
+      delayed.shift();
+      // One send to them all: a transport serializes once per send.
+      const watching = [...observers];
+      for (const part of entry.snapshot) {
+        transport.send("snapshot", part, watching);
+      }
+      for (const batch of entry.combat) {
+        transport.send("combat", batch, watching);
+      }
+      if (entry.ended !== undefined) {
+        transport.send("ended", entry.ended, watching);
+      }
+      if (entry.ended !== undefined) {
+        observers.clear();
+        delayed = [];
+      }
+    }
+  };
+
+  /** `peerId` watches no more; the last to go takes the buffer with it. */
+  const unobserve = (peerId: string): void => {
+    observers.delete(peerId);
+    if (observers.size === 0) {
+      delayed = [];
+    }
+  };
+
+  /**
+   * Retired, a hello or an observe is for the match after this one: whoever
+   * sent it watches that one now, so this one stops streaming to them. The
+   * next host answers after this, on the same channel, so its client has
+   * all this match sent before its welcome or `observing`, and nothing after.
+   */
+  const moveOn = (peerId: string): void => {
+    if (observers.has(peerId)) {
+      unobserve(peerId);
+    }
+  };
+
   /** Seat `peerId` in `seat`, as a new player or one coming back, and tell it so. */
   const welcome = (seat: Seat, peerId: string): void => {
     seat.peerId = peerId;
@@ -585,6 +690,10 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   };
 
   transport.on("hello", (data, from) => {
+    if (retired) {
+      moveOn(from);
+      return;
+    }
     // Charged like an intent: every hello may send a whole map back.
     if (!budget.take(from, nowMs()) || departed.has(from)) {
       return;
@@ -615,6 +724,48 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       return;
     }
     join(hello, from);
+  });
+
+  transport.on("observe", (data, from) => {
+    if (retired) {
+      moveOn(from);
+      return;
+    }
+    // Charged like a hello: every observing sends a whole map back.
+    if (!budget.take(from, nowMs())) {
+      return;
+    }
+    if (helloProtocolVersion(data) !== PROTOCOL_VERSION) {
+      refuse(from, "protocol-mismatch", PROTOCOL_MISMATCH_MESSAGE);
+      return;
+    }
+    const observe = parsePeerObserve(data);
+    if (observe === undefined) {
+      return;
+    }
+    // A player has a seat and a viewer none: one peer is never both.
+    if (seatOfPeer.has(from) || !options.isSpectator(from)) {
+      refuse(from, "not-a-spectator", NOT_A_SPECTATOR_MESSAGE);
+      return;
+    }
+    if (observe.matchId !== options.matchId) {
+      refuse(from, "wrong-match", WRONG_MATCH_MESSAGE);
+      return;
+    }
+    // Over, and its end already sent on to whoever watched.
+    if (finished && delayed.length === 0) {
+      refuse(from, "match-over", MATCH_OVER_MESSAGE);
+      return;
+    }
+    observers.add(from);
+    const message: PeerObserving = {
+      protocolVersion: PROTOCOL_VERSION,
+      tickIntervalMs: 1000 / RULESET.tickRateHz,
+      timeLimitSeconds: options.matchRules.timeLimitSeconds,
+      delaySeconds: OBSERVER_DELAY_SECONDS,
+      map: map.descriptor,
+    };
+    transport.send("observing", message, from);
   });
 
   /** Whether `peerId` may take `seat`: no bot plays it, and it plays no other seat. */
@@ -662,7 +813,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   };
 
   transport.on("rejoin-proof", (data, from) => {
-    if (!budget.take(from, nowMs()) || departed.has(from)) {
+    if (retired || !budget.take(from, nowMs()) || departed.has(from)) {
       return;
     }
     const proof = parsePeerRejoinProof(data);
@@ -698,7 +849,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
         : await rejoinProof(token, challenge.nonce, challenge.playerId, from);
     // The match went on while the proof was checked: look again. A peer
     // that left or said bye meanwhile is not seated, nor told anything.
-    if (proving.get(from) !== attempt || departed.has(from)) {
+    if (proving.get(from) !== attempt || departed.has(from) || retired) {
       return;
     }
     if (finished) {
@@ -776,7 +927,15 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
 
   transport.on("bye", (data, from) => {
     const seat = seatOfPeer.get(from);
-    if (!budget.take(from, nowMs()) || seat === undefined || parsePeerBye(data) === undefined) {
+    if (!budget.take(from, nowMs()) || parsePeerBye(data) === undefined) {
+      return;
+    }
+    if (observers.has(from)) {
+      unobserve(from);
+      return;
+    }
+    // A player's bye, once retired, is meant for the match after this one.
+    if (seat === undefined || retired) {
       return;
     }
     // The player meant to go: there is nothing to hold the seat for.
@@ -792,6 +951,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     awaited.delete(peerId);
     challenges.delete(peerId);
     proving.delete(peerId);
+    unobserve(peerId);
     const seat = seatOfPeer.get(peerId);
     if (seat === undefined) {
       return;
@@ -925,12 +1085,18 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     callsDirty.clear();
     sendTraps(0);
     sendTraps(1);
-    for (const part of packSnapshot(snapshot(), MAX_MESSAGE_BYTES)) {
-      transport.send("snapshot", part);
+    // To the players, never the room (#480): a spectator in it watches
+    // through `delayed` alone. One send to them all, so each part is
+    // serialized once, not once per player.
+    const live = players();
+    const parts = packSnapshot(snapshot(), MAX_MESSAGE_BYTES);
+    for (const part of parts) {
+      transport.send("snapshot", part, live);
     }
     tally.add(result.log);
-    for (const batch of packCombat(wireCombat(result.log), MAX_MESSAGE_BYTES, MAX_WIRE_COMBATS)) {
-      transport.send("combat", batch);
+    const batches = packCombat(wireCombat(result.log), MAX_MESSAGE_BYTES, MAX_WIRE_COMBATS);
+    for (const batch of batches) {
+      transport.send("combat", batch, live);
     }
     for (const seat of seats.values()) {
       sendSkillBar(seat, false);
@@ -939,15 +1105,22 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       sendAdrenaline(seat, false);
       sendChainMarks(seat, false);
     }
+    let ended: WireEnded | undefined;
     if (result.phase === "finished") {
       finished = true;
-      const ended: WireEnded = {
+      ended = {
         winningTeam: wireTeam(sim.outcome.winningTeam),
         endReason: sim.outcome.reason ?? "time",
         summary: summary(),
       };
-      transport.send("ended", ended);
+      transport.send("ended", ended, live);
     }
+    // A match nobody watches holds nothing.
+    if (observers.size > 0) {
+      delayed.push({ at: streamTick, snapshot: parts, combat: batches, ended });
+    }
+    release();
+    streamTick += 1;
   };
 
   // A lobby's bots (#1193) take their seats at once: none of them says hello.
@@ -959,15 +1132,21 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
 
   return {
     advance(seconds) {
-      if (finished) {
+      if (finished && delayed.length === 0) {
         return;
       }
       const drained = drainAccumulator(accumulator, seconds, TICK_SECONDS);
       accumulator = drained.remainder;
       for (let i = 0; i < drained.ticks; i += 1) {
-        tick();
-        if (sim.phase === "finished") {
-          return;
+        if (finished) {
+          // Over: only the observers' stream runs on, to the end.
+          release();
+          streamTick += 1;
+          if (delayed.length === 0) {
+            return;
+          }
+        } else {
+          tick();
         }
       }
     },
@@ -983,9 +1162,17 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     get droppedWeaponSwaps() {
       return droppedWeaponSwaps;
     },
+    get draining() {
+      return finished && delayed.length > 0;
+    },
+    retire() {
+      retired = true;
+    },
     async close(reason) {
       // Nothing more is ticked onto a transport that has left.
       finished = true;
+      observers.clear();
+      delayed = [];
       const ended: WireEnded = { winningTeam: null, endReason: reason, summary: summary() };
       transport.send("ended", ended);
       await transport.leave();

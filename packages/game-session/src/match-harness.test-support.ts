@@ -130,6 +130,9 @@ export function hello(
   };
 }
 
+/** The match id every test match has. */
+export const TEST_MATCH_ID = "match-1";
+
 export interface TestMatch {
   readonly network: MemoryNetwork;
   readonly host: MatchHost;
@@ -159,6 +162,8 @@ export function startMatch(
     maxPlayers?: number;
     random?: () => number;
     seats?: PlannedSeats;
+    /** The peers the lobby has on no team, who may watch (#480). */
+    spectators?: readonly string[];
   } = {},
 ): TestMatch {
   const network = createMemoryNetwork();
@@ -174,6 +179,8 @@ export function startMatch(
     random: options.random ?? (() => ((draws += 1) * 0.6180339887) % 1),
     maxPlayers: options.maxPlayers ?? 8,
     seats: options.seats ?? null,
+    matchId: TEST_MATCH_ID,
+    isSpectator: (peerId) => options.spectators?.includes(peerId) ?? false,
   });
   return {
     network,

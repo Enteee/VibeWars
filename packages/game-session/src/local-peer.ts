@@ -70,14 +70,19 @@ export function createLocalPeer(remote: Transport): { host: Transport; local: Tr
 
   const host: Transport = {
     selfId: remote.selfId,
-    send<T>(channel: Channel, data: Json<T>, to?: string) {
+    send<T>(channel: Channel, data: Json<T>, to?: string | readonly string[]) {
       if (hostLeft) {
         return;
       }
-      if (to === undefined || to === localId) {
+      if (to === undefined || to === localId || (typeof to === "object" && to.includes(localId))) {
         deliver("local", channel, data, remote.selfId);
       }
-      if (to !== localId) {
+      if (typeof to === "object") {
+        const others = to.filter((peerId) => peerId !== localId);
+        if (others.length > 0) {
+          remote.send(channel, data, others);
+        }
+      } else if (to !== localId) {
         remote.send(channel, data, to);
       }
     },
@@ -122,8 +127,12 @@ export function createLocalPeer(remote: Transport): { host: Transport; local: Tr
 
   const local: Transport = {
     selfId: localId,
-    send<T>(channel: Channel, data: Json<T>, to?: string) {
-      if (!localLeft && (to === undefined || to === remote.selfId)) {
+    send<T>(channel: Channel, data: Json<T>, to?: string | readonly string[]) {
+      const forHost =
+        to === undefined ||
+        to === remote.selfId ||
+        (typeof to === "object" && to.includes(remote.selfId));
+      if (!localLeft && forHost) {
         deliver("host", channel, data, localId);
       }
     },
