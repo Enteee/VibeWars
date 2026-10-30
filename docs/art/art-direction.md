@@ -1117,8 +1117,24 @@ implementation card. The cost of "every player always hosts a lobby" (`main.ts`,
 The operator picked **C** (2026-10-30), with Character Builder and Team
 Builder at the rail's bottom, below a divider. Card 1 of the split (#1525)
 builds the rail, a screen per entry and the title bar's Lobby Code and Join;
-the rail's icons are the study's placeholders, ported to
-`apps/web/public/icons/mode/`, until an asset card draws the final set.
+the rail's icons live in `apps/web/public/icons/mode/`, drawn by the
+`mode` family of `scripts/assets/icons.mjs` (#1554).
+
+### Mode icons (#1554)
+
+Solid ink shapes, one drawing each, even-odd holes (the rail masks them, so
+only the shape counts, never a colour). Each differs in silhouette: a player
+tells Team Arena from GvG without the label.
+
+| File            | Entry          | Drawing                                           |
+| --------------- | -------------- | ------------------------------------------------- |
+| `random-arena`  | Random Arena   | A tilted die with five pips: the luck of the draw |
+| `team-arena`    | Team Arena     | Two shields side by side, the near one solid      |
+| `heroes-ascent` | Heroes' Ascent | A stepped altar with a flame on top               |
+| `gvg`           | GvG            | A keep with a pennant on a tall pole              |
+| `hosted-game`   | Hosted Game    | An arched door with a keyhole                     |
+| `characters`    | Character      | One helmet, crest up, an eye slit                 |
+| `teams`         | Team Builder   | Three helmets in a row, the middle one taller     |
 
 ## Creatures
 

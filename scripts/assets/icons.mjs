@@ -3383,6 +3383,77 @@ function skillIcon(id, row) {
   );
 }
 
+/**
+ * A hole in an even-odd fill: a circle of radius `r` at (`x`, `y`).
+ * @param {number} x @param {number} y @param {number} r
+ */
+const hole = (x, y, r) =>
+  `M${String(x - r)} ${String(y)}a${String(r)} ${String(r)} 0 1 0 ${String(2 * r)} 0a${String(r)} ${String(r)} 0 1 0 ${String(-2 * r)} 0Z`;
+
+/** Solid shapes with even-odd holes, in the ink: the rail masks them, so only the shape counts (#1554). @param {string} d */
+const solid = (d) => `<path fill-rule="evenodd" d="${d}" fill="${C.ink}"/>`;
+/** @param {string} d @param {number} [w] */
+const rule = (d, w = 1.6) => `<path d="${d}" ${stroke(C.ink, w)}/>`;
+
+/** A helmet of width `w` standing on y = 20, a slit for the eyes (#1554). @param {number} cx @param {number} w @param {number} top */
+const helm = (cx, w, top) => {
+  const l = cx - w / 2;
+  const r = cx + w / 2;
+  const f = (/** @type {number} */ n) => String(Math.round(n * 100) / 100);
+  const arc = w / 2;
+  const yEye = top + arc + 0.5;
+  return (
+    `M${f(l)} 20V${f(top + arc)}A${f(arc)} ${f(arc)} 0 0 1 ${f(r)} ${f(top + arc)}V20Z` +
+    `M${f(l + 1.4)} ${f(yEye)}H${f(r - 1.4)}V${f(yEye + 1.5)}H${f(l + 1.4)}Z`
+  );
+};
+
+/** The five pips of the die (#1554). @type {readonly (readonly [number, number])[]} */
+const PIPS = [
+  [8.3, 8.3],
+  [15.7, 8.3],
+  [12, 12],
+  [8.3, 15.7],
+  [15.7, 15.7],
+];
+
+/** @type {Record<string, () => string>} */
+const mode = {
+  // A tilted die with five pips: the luck of the draw.
+  "random-arena": () =>
+    `<g transform="rotate(-12 12 12)">` +
+    solid(
+      "M7 3.5H17A3.5 3.5 0 0 1 20.5 7V17A3.5 3.5 0 0 1 17 20.5H7A3.5 3.5 0 0 1 3.5 17V7A3.5 3.5 0 0 1 7 3.5Z" +
+        PIPS.map(([x, y]) => hole(x, y, 1.5)).join(""),
+    ) +
+    "</g>",
+  // Two shields side by side, the near one solid: a team against a team.
+  "team-arena": () =>
+    solid("M2.5 8L8.5 6L14.5 8V13C14.5 17 11.5 19.5 8.5 21C5.5 19.5 2.5 17 2.5 13Z") +
+    rule("M10.5 4.6L15.5 3L21.5 4.6V9.6C21.5 13.4 19 15.8 16.4 17.2", 1.8),
+  // A stepped altar with a flame on top: the relic run's goal.
+  "heroes-ascent": () =>
+    solid("M2.5 21.5V17.5H5.5V13.5H8.5V10H15.5V13.5H18.5V17.5H21.5V21.5Z") +
+    solid("M12 2C13.9 4.3 14.9 5.4 14.9 6.8A2.9 2.9 0 0 1 9.1 6.8C9.1 5.5 10.2 4.8 12 2Z"),
+  // A keep with a pennant on a tall pole: guild against guild.
+  gvg: () =>
+    solid(
+      "M3.5 21.5V11H6.5V13H8.5V11H15.5V13H17.5V11H20.5V21.5Z" +
+        "M10.5 21.5V17.5A1.5 1.5 0 0 1 13.5 17.5V21.5Z",
+    ) +
+    rule("M12 11V2.5", 1.6) +
+    solid("M12 2.5H19L16.6 5L19 7.5H12Z"),
+  // A door with a keyhole: you open the room, your friends come in.
+  "hosted-game": () =>
+    solid(
+      "M5.5 21V9.5A6.5 6.5 0 0 1 18.5 9.5V21Z" + hole(12, 11, 1.8) + "M11 12.5H13L13.6 17H10.4Z",
+    ) + rule("M3 21.5H21", 1.6),
+  // One helmet, crest up: your character.
+  characters: () => solid(helm(12, 16, 4)) + solid("M10.5 4.5V2H13.5V4.5Z"),
+  // Three helmets in a row, the middle one taller: the team.
+  teams: () => solid(helm(5, 7, 7.5)) + solid(helm(12, 8.4, 3)) + solid(helm(19, 7, 7.5)),
+};
+
 /** @type {Record<string, Record<string, string>>} */
 const families = {
   profession: Object.fromEntries(Object.entries(profession).map(([k, f]) => [k, svg(f())])),
@@ -3402,6 +3473,7 @@ const families = {
     ),
     ...Object.fromEntries(Object.entries(SKILL_ICONS).map(([id, row]) => [id, skillIcon(id, row)])),
   },
+  mode: Object.fromEntries(Object.entries(mode).map(([k, f]) => [k, svg(f())])),
   ui: Object.fromEntries(Object.entries(ui).map(([k, f]) => [k, svg(f())])),
   projectile: Object.fromEntries(
     Object.entries(projectile).map(([k, parts]) => [k, projectileSprite(parts)]),
