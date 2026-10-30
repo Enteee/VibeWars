@@ -47,6 +47,7 @@ import {
   isInvulnerable,
   isSpell,
   type Combatant,
+  type DisableOwnSkillsEffect,
   type DisableSkillEffect,
   type EnergyGainEffect,
   type Skill,
@@ -1078,18 +1079,14 @@ export function applyEffect(
       if (target === undefined || target.dead) {
         return events;
       }
-      for (const { id, remainingSeconds } of caster.statuses.takeNewest(
-        "condition",
-        effect.count,
-      )) {
-        events.push({ kind: "status-removed", targetId: caster.id, statusId: id });
-        landStatus(
-          target,
-          id,
-          scaledStatusDuration(target, id, remainingSeconds),
-          caster.id,
-          events,
-        );
+      const [giver, taker] = effect.from === "caster" ? [caster, target] : [target, caster];
+      const moved = giver.statuses.takeNewest("condition", effect.count);
+      for (const { id, remainingSeconds } of moved) {
+        events.push({ kind: "status-removed", targetId: giver.id, statusId: id });
+        landStatus(taker, id, scaledStatusDuration(taker, id, remainingSeconds), caster.id, events);
+      }
+      if (effect.healPerCondition !== undefined && moved.length > 0) {
+        applyHeal(caster, resolveMagnitude(effect.healPerCondition, caster) * moved.length, events);
       }
       return events;
     }
@@ -1317,7 +1314,8 @@ export function applyEffect(
 
     case "disable-own-skills": {
       const bar = resolvedBar(caster.skillBar, caster.cast).filter((slot) => slot !== null);
-      for (const { key, skillId } of bar.filter((slot) => isSpellId(slot.skillId))) {
+      const disabled = bar.filter((slot) => disabledOwn(effect, slot.skillId, context.skillId));
+      for (const { key, skillId } of disabled) {
         emptyPool(caster, key);
         if (caster.cast.disable(key, effect.seconds)) {
           events.push({
@@ -1392,6 +1390,7 @@ function isStateCondition(condition: EffectCondition): condition is StateConditi
     case "target-less-health":
     case "target-more-health":
     case "target-attacking":
+    case "target-casting-or-attacking":
     case "caster-no-spirit-within":
     case "caster-spirit-within":
     case "caster-spirit-or-corpse-within":
@@ -1464,6 +1463,11 @@ export function stateHolds(
       return target.health > caster.health;
     case "target-attacking":
       return isAttacking(target);
+    case "target-casting-or-attacking": {
+      const cast = target.cast.activeCast;
+      const skill = cast === undefined ? undefined : getSkill(cast.skillId);
+      return (skill !== undefined && isSpell(skill.type)) || isAttacking(target);
+    }
     case "caster-no-spirit-within": {
       const at = surroundings.get(caster.id)?.position;
       return at === undefined || spiritsWithin(surroundings.values(), at, condition.radius) === 0;
@@ -1592,6 +1596,21 @@ function disabledBy(
   return [key, ...linked.map((slot) => slot.key)];
 }
 
+/**
+ * Whether `effect` disables the caster's bar skill `skillId` (#1511):
+ * never `usedId`, the skill that disables them.
+ */
+function disabledOwn(
+  effect: DisableOwnSkillsEffect,
+  skillId: string,
+  usedId: string | undefined,
+): boolean {
+  if (effect.which === "spells") {
+    return isSpellId(skillId);
+  }
+  return skillId !== usedId && getSkill(skillId)?.attributeId === effect.attributeId;
+}
+
 /** Whether the skill `skillId` names is a spell (`isSpell`; a chant is not one). */
 function isSpellId(skillId: string): boolean {
   const skill = getSkill(skillId);
@@ -1648,6 +1667,7 @@ function conditionHolds(
     case "target-less-health":
     case "target-more-health":
     case "target-attacking":
+    case "target-casting-or-attacking":
     case "caster-no-spirit-within":
     case "caster-spirit-within":
     case "caster-spirit-or-corpse-within":
@@ -1830,7 +1850,7 @@ export function resolveSkillEffects(
     const on = effectActsOnCaster(effect) ? [targets[0]] : targets;
     for (const target of on) {
       const states = (target === undefined ? undefined : held.get(target)) ?? NONE_HELD;
-      const context = { caster, target, rng, rules, surroundings };
+      const context = { caster, target, rng, rules, surroundings, skillId: skill.id };
       const before = [...earlier, ...events];
       for (const inner of landing(effect, context, before, states)) {
         if (inner.kind === "recharge-faster") {

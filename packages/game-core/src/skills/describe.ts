@@ -36,6 +36,7 @@ import type {
   ChainRole,
   ChainStep,
   CreateGroundEffect,
+  DisableOwnSkillsEffect,
   EffectCondition,
   EnergyGainEffect,
   HealEffect,
@@ -46,6 +47,7 @@ import type {
   StateCondition,
   UnconditionalEffect,
   SplashEffect,
+  TransferConditionsEffect,
 } from "./types.js";
 
 /**
@@ -290,6 +292,9 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   }
   if (definition.preventsSpells) {
     parts.push("cannot cast spells");
+  }
+  if (definition.untargetableByFoeSpells) {
+    parts.push("cannot be the target of enemy spells");
   }
   if (definition.unblockableBySource) {
     parts.push("cannot block its caster's attacks");
@@ -1028,6 +1033,8 @@ function conditionText(condition: EffectCondition): string {
       return "If target has more Health than you";
     case "target-attacking":
       return "If target is attacking";
+    case "target-casting-or-attacking":
+      return "If target is casting a spell or attacking";
     case "caster-no-spirit-within":
       return `If no spirit is ${AREA_TEXT.get(condition.radius) ?? `within ${String(condition.radius)}`} of you`;
     case "caster-spirit-within":
@@ -1272,10 +1279,7 @@ function describeEffect(
       };
     }
     case "transfer-conditions":
-      return {
-        text: `Moves up to ${String(effect.count)} of your conditions to the target`,
-        magnitude: undefined,
-      };
+      return transferText(effect, ranks);
     case "give-health": {
       const magnitude = describeMagnitude(effect.healPercent, ranks);
       return {
@@ -1482,10 +1486,7 @@ function describeEffect(
       };
     }
     case "disable-own-skills":
-      return {
-        text: `All of your spells are disabled for ${String(effect.seconds)} seconds`,
-        magnitude: undefined,
-      };
+      return { text: disableOwnText(effect), magnitude: undefined };
     case "chain-mark":
       return { text: "Counts as a lead attack", magnitude: undefined };
     case "lengthen-recharge": {
@@ -1696,6 +1697,42 @@ const NEEDED_WEAPON: Record<AttackWeaponClass, string> = {
  */
 export function neededWeaponText(weapon: AttackWeaponClass): string {
   return NEEDED_WEAPON[weapon];
+}
+
+/**
+ * A `transfer-conditions` line (#1511): "Moves up to 3 of your conditions
+ * to the target", or "Moves all of target's conditions to you; you are
+ * healed for 22 for each".
+ */
+function transferText(
+  effect: TransferConditionsEffect,
+  ranks: ReadonlyMap<string, number>,
+): EffectDescription {
+  const count = effect.count === Infinity ? "all" : `up to ${String(effect.count)}`;
+  const moves =
+    effect.from === "caster"
+      ? `Moves ${count} of your conditions to the target`
+      : `Moves ${count} of target's conditions to you`;
+  if (effect.healPerCondition === undefined) {
+    return { text: moves, magnitude: undefined };
+  }
+  const magnitude = describeMagnitude(effect.healPerCondition, ranks);
+  return {
+    text: `${moves}; you are healed for ${String(magnitude.current)} for each`,
+    magnitude,
+  };
+}
+
+/**
+ * A `disable-own-skills` line (#1511): "All of your spells", or "All of
+ * your Smiting Prayers", "are disabled for 20 seconds".
+ */
+function disableOwnText(effect: DisableOwnSkillsEffect): string {
+  const which =
+    effect.which === "spells"
+      ? "spells"
+      : (getAttribute(effect.attributeId)?.name ?? effect.attributeId);
+  return `All of your ${which} are disabled for ${String(effect.seconds)} seconds`;
 }
 
 const TYPE_TEXT: Record<SkillType, string> = {
