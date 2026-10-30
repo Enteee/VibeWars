@@ -1095,11 +1095,27 @@ export class MatchSimulation {
   }
 
   /**
-   * Whether `id` carries a bundle, a flag (#1225) or a relic (#1374):
-   * hands full, and slower.
+   * Whether `id` carries a bundle, a flag (#1225), a relic (#1374) or a
+   * Ritualist's ashes (#1434): hands full. Only a flag or a relic slows.
    */
   public carriesBundle(id: string): boolean {
+    return this.#carriesFlagOrRelic(id) || this.#holdsAshes(id);
+  }
+
+  /** Whether `id` carries a flag (#1225) or a relic (#1374): slower. */
+  #carriesFlagOrRelic(id: string): boolean {
     return carriedFlag(this.flags, id) !== undefined || carriedRelic(this.relics, id) !== undefined;
+  }
+
+  /** Whether `id` holds a Ritualist's ashes (#1434), an item spell's status. */
+  #holdsAshes(id: string): boolean {
+    return (
+      this.#participants
+        .get(id)
+        ?.combatant.statuses.active.some(
+          (status) => STATUS_DEFINITIONS[status.id].category === "item",
+        ) === true
+    );
   }
 
   /** Each team's `aggression` by team index on a Guild Battle (#1226); `[]` on any other match. */
@@ -1836,8 +1852,9 @@ export class MatchSimulation {
       record.pendingWeaponSet = undefined;
       return { kind: "kept" };
     }
-    // Reaching for another set drops the bundle (#1225, GW1).
+    // Reaching for another set drops the bundle (#1225, GW1), ashes too (#1434).
     this.#dropBundle(record);
+    this.#dropAshes(record);
     if (this.#swapBlocked(record)) {
       record.pendingWeaponSet = set;
       return { kind: "queued" };
@@ -1847,14 +1864,33 @@ export class MatchSimulation {
   }
 
   /**
-   * Drop the flag (#1225) or relic (#1374) `id` carries where they
-   * stand: GW1's Drop button. Nothing for a player with none.
+   * Drop the flag (#1225), relic (#1374) or ashes (#1434) `id` carries
+   * where they stand: GW1's Drop button. Nothing for a player with none.
    */
   public dropBundle(id: string): void {
     const record = this.#participants.get(id);
     if (record !== undefined) {
       this.#dropBundle(record);
+      this.#dropAshes(record);
     }
+  }
+
+  /**
+   * `record`'s ashes (#1434), if it holds any, fall now, where it stands:
+   * their drop effect, the item status's `ends` trigger, fires at once, not
+   * at the tick's drain, so a shadow step drops them before it moves. The
+   * maximum Health they raised goes first.
+   */
+  #dropAshes(record: ParticipantRecord): void {
+    const dropped = record.combatant.statuses.dropItem();
+    if (dropped === undefined) {
+      return;
+    }
+    const change: StatusChange = { kind: "ended", ...dropped, expired: false };
+    this.#loseRaisedHealth(record, change);
+    this.#logFired(
+      fireChangeTriggers(record.combatant, change, this.#spread, this.#triggerContext()),
+    );
   }
 
   /** `record`'s flag or relic, if it carries one, lies where it is (#1225, #1374). */
@@ -3043,6 +3079,9 @@ export class MatchSimulation {
     }
 
     const targetRecord = targetId === undefined ? undefined : this.#participants.get(targetId);
+    if (this.#failsSpell(record, skill, targetRecord, cast.key)) {
+      return;
+    }
     const primary = skill.target === "self" ? record : targetRecord;
     const exposed = this.#exposedTo(record);
     const speed = record.combatant.equipment.mainHand.weapon.projectileSpeed;
@@ -3080,6 +3119,12 @@ export class MatchSimulation {
         skill.area === undefined || flight !== undefined ? [] : [...this.#participants.values()],
       losBlockers: this.#walls,
     });
+    // An item spell's ashes take the hands (#1434): a flag, a relic or the
+    // ashes held fall first, the ashes' drop effect before the new ones.
+    if (skill.type === "item-spell") {
+      this.#dropBundle(record);
+      this.#dropAshes(record);
+    }
     // A corpse skill takes its corpse as it lands, not as it began (#466):
     // one used up during the cast leaves it with no effect, paid for.
     const corpse =
@@ -3249,6 +3294,7 @@ export class MatchSimulation {
       skillId: skill.id,
       key: cast.key,
     });
+    this.#useNextSkill(record, skill, spared);
     this.#endOnUseSkill(record, skill, spared);
     if (isSpell(skill.type)) {
       this.#fireTriggers(record, "bearer-casts-spell", spared);
@@ -3256,6 +3302,52 @@ export class MatchSimulation {
     if (skill.attack !== undefined) {
       this.#fireTriggers(record, "bearer-attacks", spared);
     }
+  }
+
+  /**
+   * Whether a status on `record` fails the spell it just finished on
+   * `target` (#1475): Guilt's, on a spell at a foe. The spell is paid for
+   * and recharges, as an interrupted one, and does nothing else; the
+   * status ends, and its effects land on the bearer from its source,
+   * logged as its skill. A spell with no chosen target never fails so.
+   */
+  #failsSpell(
+    record: ParticipantRecord,
+    skill: Skill,
+    target: ParticipantRecord | undefined,
+    key: string,
+  ): boolean {
+    if (!isSpell(skill.type) || skill.target === "self" || target === undefined) {
+      return false;
+    }
+    const bearer = record.combatant;
+    const failer = bearer.statuses.spellFailer(
+      target.combatant.team === bearer.team ? "ally-targeted" : "foe-targeted",
+    );
+    const fails = failer === undefined ? undefined : STATUS_DEFINITIONS[failer.id].failsNextSpell;
+    if (failer === undefined || fails === undefined) {
+      return false;
+    }
+    beginRecharge(bearer.cast, skill, skill.rechargeSeconds, key);
+    bearer.statuses.end(failer.id);
+    const events: CombatEvent[] = [
+      { kind: "spell-failed", targetId: bearer.id, skillId: skill.id },
+    ];
+    const source = this.#participants.get(failer.sourceId);
+    if (source !== undefined) {
+      events.push(
+        ...applyEffects(fails.effects, {
+          caster: source.combatant,
+          target: bearer,
+          rng: this.#rng,
+          rules: this.#ruleset.combat,
+          surroundings: this.#participants,
+          usedSkill: undefined,
+        }),
+      );
+    }
+    this.#logFired([{ sourceId: failer.sourceId, skillId: fails.skillId, events }]);
+    return true;
   }
 
   /**
@@ -3270,6 +3362,35 @@ export class MatchSimulation {
     usedSkill?: SlotSkill,
   ): void {
     this.#logFired(fireTriggers(record.combatant, event, this.#triggerContext(usedSkill), spared));
+  }
+
+  /**
+   * After its triggers answered the use (#1483): each status on the
+   * bearer that holds its next skill of this kind resolves on the bearer,
+   * as its own entry, and one that counted its last ends there, but those
+   * in `spared` (#999): Chorus of Restoration never answers its own cast.
+   */
+  #useNextSkill(record: ParticipantRecord, skill: Skill, spared: ReadonlySet<StatusId>): void {
+    const bearer = record.combatant;
+    const { answered, ended } = bearer.statuses.useNextSkill(skill, spared);
+    this.#logFired(
+      answered.map(({ statusId, next }) => ({
+        sourceId: record.id,
+        skillId: next.skillId,
+        events: [
+          ...applyEffects(next.effects, {
+            caster: bearer,
+            target: bearer,
+            rng: this.#rng,
+            rules: this.#ruleset.combat,
+            surroundings: this.#participants,
+          }),
+          ...(ended.includes(statusId)
+            ? [{ kind: "status-expired" as const, targetId: record.id, statusId }]
+            : []),
+        ],
+      })),
+    );
   }
 
   /**
@@ -3667,7 +3788,7 @@ export class MatchSimulation {
    */
   #speedOf(record: ParticipantRecord): number {
     const statuses = aggregateModifiers(record.combatant.statuses.active).moveSpeedMultiplier;
-    const burden = this.carriesBundle(record.id) ? FLAG_CARRIER_SPEED_MULTIPLIER : 1;
+    const burden = this.#carriesFlagOrRelic(record.id) ? FLAG_CARRIER_SPEED_MULTIPLIER : 1;
     return clampMoveSpeed(statuses / burden);
   }
 
@@ -3859,6 +3980,8 @@ export class MatchSimulation {
     if (approach === "arrived" && ghost !== undefined) {
       this.#toggleGhost(record, ghost);
     } else if (approach === "arrived") {
+      // One bundle at a time: the ashes fall before a flag or relic is taken (#1434).
+      this.#dropAshes(record);
       const arrivals =
         relicTeamOf(interact.targetId) === undefined ? this.#flagArrivals : this.#relicArrivals;
       arrivals.push({
@@ -4963,13 +5086,15 @@ export class MatchSimulation {
    * clear as they do a walk; the doorway rule does not hold, since a step
    * is not a walk. It faces the target, and nothing reads the step as a
    * run: its track starts over, and it did not walk this step. An attack
-   * and a skill walking in stay. A step away (#1326) is `#stepAway`'s.
+   * and a skill walking in stay. A step away (#1326) is `#stepAway`'s. A shadow
+   * step drops its caster's ashes first, where it stood (#1434).
    */
   #recordSteps(events: readonly CombatEvent[]): void {
     for (const event of events) {
       if (event.kind === "shadow-stepped-away") {
         const record = this.#participants.get(event.targetId);
         if (record !== undefined) {
+          this.#dropAshes(record);
           this.#stepAway(record);
         }
         continue;
@@ -4981,6 +5106,10 @@ export class MatchSimulation {
       const target = this.#participants.get(event.toId);
       if (record === undefined || target === undefined) {
         continue;
+      }
+      // A shadow step drops the ashes where it began (#1434); a teleport is no step.
+      if (event.kind === "shadow-stepped") {
+        this.#dropAshes(record);
       }
       const radius = this.#ruleset.collision.playerRadius;
       const away =

@@ -100,6 +100,7 @@ const WIRE_STATUS_RANK: Readonly<Record<StatusCategory, number>> = {
   chant: 9,
   echo: 10,
   "skill-effect": 11,
+  item: 12,
 };
 
 function wireStatusRank(id: StatusId): number {
@@ -386,6 +387,7 @@ function wireEvent(event: CombatEvent): WireCombatEvent {
       return { ...none, kind: event.kind, targetId: event.targetId, fromId: event.toId };
     case "interrupted":
     case "cancelled":
+    case "spell-failed":
       return { ...none, kind: event.kind, targetId: event.targetId, skillId: event.skillId };
     case "interrupt-missed":
       return { ...none, kind: event.kind, targetId: event.targetId, skillId: event.refusedSkillId };
@@ -491,6 +493,7 @@ function combatEvent(event: WireCombatEvent): CombatEvent | undefined {
       return fromId === null ? undefined : { kind: event.kind, targetId, toId: fromId };
     case "interrupted":
     case "cancelled":
+    case "spell-failed":
       return skillId === null ? undefined : { kind: event.kind, targetId, skillId };
     case "interrupt-missed":
       return { kind: event.kind, targetId, refusedSkillId: skillId };

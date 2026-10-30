@@ -73,12 +73,14 @@ describe("status definitions", () => {
         def.knockdownMinSeconds !== undefined ||
         def.reversesNextDamage !== undefined ||
         def.breaksNextHex !== undefined ||
+        def.failsNextSpell !== undefined ||
         def.chantShoutDurationMultiplier !== 1 ||
         def.extraStrikesPerHit !== 0 ||
         def.onAttackHit !== undefined ||
         def.triggers.length > 0 ||
         def.nextSpells !== undefined ||
         def.nextAttackSkill !== undefined ||
+        def.nextSkill !== undefined ||
         def.spellRechargeFaster !== 0 ||
         def.bindingRitualRechargeFaster !== 0 ||
         def.criticalChanceBonus !== 0 ||
@@ -155,7 +157,7 @@ describe("status definitions", () => {
           getStatusDefinition(id).energyPips,
         ]),
       ),
-    ).toEqual({ malaise: -1, "blood-ritual": 3 });
+    ).toEqual({ malaise: -1, "blood-ritual": 3, "energetic-was-lee-sa": 2 });
   });
 
   it("makes enchantments beneficial and hexes/conditions detrimental", () => {

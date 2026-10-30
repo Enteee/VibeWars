@@ -266,3 +266,58 @@ describe("a bearer-uses-skill trigger bound to a kind of skill (#1437)", () => {
     expect(used("warrior.power-attack")).toEqual([]);
   });
 });
+
+describe("a bearer-loses-condition trigger (#1475)", () => {
+  const noSpread: SpreadGainedCondition = () => [];
+
+  /** A bearer under Fragility from `m`, poisoned and bleeding. */
+  function fragile(): Combatant {
+    const self = makeCombatant({ id: "b", team: 0 });
+    self.statuses.apply("fragility", 18, "m");
+    self.statuses.apply("poison", 5, "foe");
+    self.statuses.apply("bleeding", 20, "foe");
+    self.statuses.drainChanges();
+    return self;
+  }
+
+  function fire(self: Combatant): string[] {
+    const source = makeCombatant({ id: "m", team: 1 });
+    return self.statuses
+      .drainChanges()
+      .flatMap((change) =>
+        fireChangeTriggers(self, change, noSpread, {
+          sourceOf: (id) => (id === "m" ? source : undefined),
+          rng: createRng(1),
+          rules: MINIMAL_GW_INSPIRED_PVP_V1.combat,
+          surroundings: new Map(),
+          usedSkill: undefined,
+        }),
+      )
+      .map(({ skillId }) => skillId);
+  }
+
+  it("fires when a condition runs out", () => {
+    const self = fragile();
+    self.statuses.advance(5.05, false);
+    expect(self.statuses.has("poison")).toBe(false);
+    expect(fire(self)).toEqual(["mesmer.fragility"]);
+  });
+
+  it("fires once for each condition removed", () => {
+    const self = fragile();
+    self.statuses.removeByCategory("condition");
+    expect(fire(self)).toEqual(["mesmer.fragility", "mesmer.fragility"]);
+  });
+
+  it("does not fire on a refresh", () => {
+    const self = fragile();
+    self.statuses.apply("poison", 20, "foe");
+    expect(fire(self)).toEqual([]);
+  });
+
+  it("does not fire on death", () => {
+    const self = fragile();
+    self.statuses.endAll();
+    expect(fire(self)).toEqual([]);
+  });
+});

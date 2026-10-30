@@ -52,7 +52,7 @@ export const ACTION_NAMES: Readonly<Record<KeyAction, string>> = {
   "weapon-set-2": "Weapon set 2",
   "weapon-set-3": "Weapon set 3",
   "weapon-set-4": "Weapon set 4",
-  "drop-bundle": "Drop the flag",
+  "drop-bundle": "Drop flag, relic or ashes",
 };
 
 export const PRESET_NAMES: Readonly<Record<keyof typeof KEYMAP_PRESETS, string>> = {

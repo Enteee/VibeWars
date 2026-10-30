@@ -45,6 +45,7 @@ const NO_BOT_USE = new Set([
   "paragon.incoming",
   "paragon.make-haste",
   "ranger.winnowing",
+  "ritualist.energetic-was-lee-sa",
   "ritualist.signet-of-creation",
   "ritualist.signet-of-spirits",
   "ritualist.weapon-of-aggression",
@@ -76,6 +77,15 @@ const NO_BOT_USE = new Set([
   "paragon.finale-of-restoration",
   "paragon.hasty-refrain",
   "paragon.purifying-finale",
+  // Chants (#1483) whose energy, adrenaline or cleanse waits for the
+  // bearer's next skill of a kind.
+  "paragon.zealous-anthem",
+  "paragon.aria-of-zeal",
+  "paragon.lyric-of-zeal",
+  "paragon.lyric-of-purification",
+  "paragon.song-of-purification",
+  "paragon.hexbreaker-aria",
+  "paragon.anthem-of-fury",
 ]);
 
 function skill(id: string) {

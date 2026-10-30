@@ -69,6 +69,7 @@ export function logToneOf(kind: CombatEvent["kind"]): Exclude<LogTone, "divider"
       return "status";
     case "interrupted":
     case "cancelled":
+    case "spell-failed":
     case "interrupt-missed":
     case "attack-missed":
     case "attack-blocked":
@@ -216,6 +217,8 @@ export function describeCombatEvent(
       return `${by} interrupts ${target}'s ${skillName(event.skillId) ?? event.skillId}`;
     case "cancelled":
       return `${target} cancels ${skillName(event.skillId) ?? event.skillId}`;
+    case "spell-failed":
+      return `${target}'s ${skillName(event.skillId) ?? event.skillId} fails`;
     case "interrupt-missed":
       // A picky interrupt says why it let a cast through (#796).
       return event.refusedSkillId === null
@@ -623,6 +626,9 @@ export function floatingCueFor(
     case "cancelled":
       // The caster moved and gave the cast up (#279).
       return { text: "cancelled", tone: "neutral", critical: false };
+    case "spell-failed":
+      // Guilt and the like (#1475): over the caster, whose spell it was.
+      return { text: "failed", tone: "neutral", critical: false };
     case "attack-missed":
       // A blinded swing paid for and wasted: over the target, so the
       // attacker sees where it went (#6).

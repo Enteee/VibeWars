@@ -13,6 +13,7 @@ import {
   type ChainRole,
   PRIEST_WAVE_SECONDS,
   STAND_HOLD_SECONDS,
+  STATUS_DEFINITIONS,
   type MatchMode,
   type Segment,
   type StandState,
@@ -862,19 +863,26 @@ function shrineScoreToast(ours: number, theirs: number): ObjectiveToast | undefi
 }
 
 /**
- * What `playerId` carries, a flag (#1225) or a relic (#1374), or
- * `undefined`: the Drop button shows, named for it.
+ * What `playerId` carries, a flag (#1225), a relic (#1374) or a
+ * Ritualist's ashes (#1434), or `undefined`: the Drop button shows, named
+ * for it.
  */
 export function carriedBundle(
-  match: Pick<MatchSnapshot, "flags" | "relics">,
+  match: Pick<MatchSnapshot, "flags" | "relics" | "players">,
   playerId: string,
-): "flag" | "relic" | undefined {
+): "flag" | "relic" | "ashes" | undefined {
   const carries = ({ place }: { readonly place: { readonly kind: string } }): boolean =>
     "carrierId" in place && place.carrierId === playerId;
   if (match.flags.some(carries)) {
     return "flag";
   }
-  return match.relics.some(carries) ? "relic" : undefined;
+  if (match.relics.some(carries)) {
+    return "relic";
+  }
+  const holder = match.players.find((player) => player.sessionId === playerId);
+  return holder?.statuses.some(({ id }) => STATUS_DEFINITIONS[id].category === "item") === true
+    ? "ashes"
+    : undefined;
 }
 
 /**

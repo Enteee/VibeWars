@@ -94,6 +94,19 @@ export const SKILL_ICONS = {
   "necromancer.enfeeble": { glyph: "sword", modifier: "down" },
   "necromancer.enfeebling-blood": { glyph: "sword", modifier: "area" },
   "paragon.anthem-of-flame": { glyph: "flame", modifier: "area" },
+  // Placeholders until the asset-designer's (#1483): Paragon chants 2.
+  "paragon.zealous-anthem": { glyph: "energy", modifier: "bolt" },
+  "paragon.aria-of-zeal": { glyph: "banner-note", modifier: "up" },
+  "paragon.lyric-of-zeal": { glyph: "banner-note", modifier: "bolt" },
+  "paragon.aria-of-restoration": { glyph: "heart-plus", modifier: "area" },
+  "paragon.chorus-of-restoration": { glyph: "heart-plus", modifier: "self" },
+  "paragon.lyric-of-purification": { glyph: "cleanse", modifier: "area" },
+  "paragon.song-of-purification": { glyph: "cleanse", modifier: "clock" },
+  "paragon.hexbreaker-aria": { glyph: "hex-cut", modifier: "area" },
+  "paragon.anthem-of-fury": { glyph: "blade-adrenal", modifier: "area" },
+  "paragon.anthem-of-weariness": { glyph: "drop-weak", modifier: "area" },
+  "paragon.crippling-anthem": { glyph: "limp", modifier: "area" },
+  "paragon.anthem-of-disruption": { glyph: "interrupt", modifier: "bolt" },
   "ritualist.weapon-of-warding": { glyph: "armor", modifier: "up" },
   "ritualist.mend-body-and-soul": { glyph: "plaster", modifier: "area" },
   "ritualist.spirit-light": { glyph: "plaster", modifier: "bleed" },
@@ -343,6 +356,13 @@ export const SKILL_ICONS = {
   "necromancer.defile-defenses": { glyph: "gain-shield" },
   "monk.scourge-enchantment": { glyph: "gain-burst" },
   "mesmer.hex-breaker": { glyph: "hex-return" },
+  // Placeholders until the asset-designer's (#1434): Ritualist item spells.
+  "ritualist.protective-was-kaolai": { glyph: "party-heal", modifier: "hourglass" },
+  "ritualist.generous-was-tsungrai": { glyph: "heart-plus", modifier: "up" },
+  "ritualist.defiant-was-xinrae": { glyph: "shield-veil", modifier: "less" },
+  "ritualist.blind-was-mingson": { glyph: "eye-slash", modifier: "hourglass" },
+  "ritualist.grasping-was-kuurong": { glyph: "quake", modifier: "stun" },
+  "ritualist.energetic-was-lee-sa": { glyph: "energy", modifier: "plus" },
   // Flash enchantments (#1421, #1447).
   "dervish.enchanted-haste": { glyph: "haste-clean" },
   "dervish.heart-of-holy-flame": { glyph: "flame-halo" },
@@ -363,4 +383,9 @@ export const SKILL_ICONS = {
   "dervish.avatar-of-balthazar": { glyph: "avatar-flame" },
   "dervish.avatar-of-grenth": { glyph: "avatar-scythe" },
   "dervish.avatar-of-lyssa": { glyph: "avatar-chaos" },
+  // Placeholders until the asset-designer's (#1475): the next spell fails.
+  "mesmer.guilt": { glyph: "hex-mute", modifier: "down" },
+  "mesmer.shame": { glyph: "hex-mute", modifier: "up" },
+  "mesmer.mistrust": { glyph: "hex-burst", modifier: "bolt" },
+  "mesmer.fragility": { glyph: "hex-drain", modifier: "area" },
 };
