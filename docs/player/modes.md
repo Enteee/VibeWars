@@ -175,8 +175,8 @@ is ready.
 side's size, one proposal each, with **Propose**, and vote for one of
 their side's proposals, their own included. Each proposal is a card
 with the initials of who voted for it: click a card to vote, and click
-it again to take your vote back. The Team Build you picked on Team Play
-is proposed for you if it is the right size. A new proposal replaces your old one,
+it again to take your vote back. Nothing is proposed for you: Team Play
+only makes and edits Team Builds. A new proposal replaces your old one,
 and the votes for it go back to none. The most votes wins. On a tie the
 captain's vote decides: the host on the host's side, the earliest to
 join on the other. With proposals and no votes, one is picked at random.

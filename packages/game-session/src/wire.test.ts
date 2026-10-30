@@ -28,13 +28,16 @@ const ORDER: readonly StatusCategory[] = [
   "condition",
   "hex",
   "enchantment",
+  "form",
   "stance",
   "preparation",
   "glyph",
   "weapon-spell",
   "shout",
   "chant",
+  "echo",
   "skill-effect",
+  "item",
 ];
 
 function status(id: StatusId, remainingSeconds: number): ActiveStatus {

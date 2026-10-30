@@ -79,6 +79,11 @@ const NO_BOT_USE = new Set([
   "paragon.finale-of-restoration",
   "paragon.hasty-refrain",
   "paragon.purifying-finale",
+  // Echoes 2 (#1485): an armor bonus against one damage type is not one
+  // the bot weighs, and the rest waits for a chant or a shout.
+  "paragon.bladeturn-refrain",
+  "paragon.energizing-finale",
+  "paragon.soldiers-fury",
   // Chants (#1483) whose energy, adrenaline or cleanse waits for the
   // bearer's next skill of a kind.
   "paragon.zealous-anthem",

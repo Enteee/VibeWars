@@ -986,6 +986,12 @@ export function applyEffect(
     }
 
     case "energy-gain": {
+      if (effect.toTarget === true) {
+        if (target !== undefined) {
+          gainEnergy(target, resolveMagnitude(effect.amount, caster), events, effect.upTo);
+        }
+        return events;
+      }
       gainEnergy(
         caster,
         perOwnCreature(
@@ -1769,6 +1775,7 @@ export function applyEffects(
 function effectActsOnCaster(effect: SkillEffect): boolean {
   switch (effect.kind) {
     case "energy-gain":
+      return effect.perTarget !== true && effect.toTarget !== true;
     case "adrenaline-gain":
       return effect.perTarget !== true;
     case "sacrifice-health":

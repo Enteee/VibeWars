@@ -141,7 +141,14 @@ export interface PerAllyHeal {
   readonly max: number;
 }
 
-export interface EnergyGainEffect {
+/**
+ * Energy gained by the effect's caster or, with `toTarget`, by its target.
+ * A count of what the caster did or controls only reads as its own gain:
+ * the two do not mix.
+ */
+export type EnergyGainEffect = EnergyGainToCaster | EnergyGainToTarget;
+
+export interface EnergyGainToCaster {
   readonly kind: "energy-gain";
   readonly amount: Magnitude;
   /**
@@ -170,6 +177,21 @@ export interface EnergyGainEffect {
    * already above gains nothing and loses nothing. Absent: its maximum.
    */
   readonly upTo?: number;
+  readonly toTarget?: never;
+}
+
+export interface EnergyGainToTarget extends Omit<
+  EnergyGainToCaster,
+  "perEnergyLost" | "perOwnCreatureWithin" | "toTarget"
+> {
+  /**
+   * The effect's target gains it, not its caster (#1485): in a status
+   * trigger aimed at the bearer, the bearer. Energizing Finale's "that
+   * ally gains 1...2 Energy".
+   */
+  readonly toTarget: true;
+  readonly perEnergyLost?: never;
+  readonly perOwnCreatureWithin?: never;
 }
 
 /**
