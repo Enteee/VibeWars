@@ -1248,7 +1248,9 @@ function tellCompany(name, text, { to = "all", nudge = null, direct = false } = 
 /**
  * Tell the sidecar about a reboot proposal (#960), through the same
  * host-only system outbox: `{ proposal }` posts it to the operator,
- * `{ proposalClosed, outcome, note }` edits its message.
+ * `{ proposalClosed, outcome, note }` edits its message. Its file is
+ * named apart from `tellCompany`'s, so a notice and the company message
+ * about the same thing, in the same millisecond, are two files, not one.
  *
  * @param {string} name what the file is about
  * @param {{ proposal: string } | { proposalClosed: string, outcome: string, note: string }} notice
@@ -1257,7 +1259,10 @@ function tellCompany(name, text, { to = "all", nudge = null, direct = false } = 
 function tellSidecar(name, notice) {
   const outbox = path.join(ROOT, "bus", SYSTEM, "outbox");
   fs.mkdirSync(outbox, { recursive: true });
-  writeAtomic(path.join(outbox, `${String(Date.now())}-${name}.json`), JSON.stringify(notice));
+  writeAtomic(
+    path.join(outbox, `${String(Date.now())}-sidecar-${name}.json`),
+    JSON.stringify(notice),
+  );
 }
 
 /**
