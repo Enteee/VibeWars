@@ -254,12 +254,13 @@ export interface SacrificeHealthEffect {
  * an earlier `remove-status` of this use took off the target (#944), as
  * Rend Enchantments' "for each Monk enchantment removed, you lose
  * 55...31...25 Health". Not damage: never mitigated, and it can kill, as
- * a sacrifice.
+ * a sacrifice. `perRemovedOfProfession` `undefined`: `amount` once,
+ * flat (#1550), as Wanderlust's spirit's "loses 70...50 Health".
  */
 export interface LoseHealthEffect {
   readonly kind: "lose-health";
   readonly amount: Magnitude;
-  readonly perRemovedOfProfession: ProfessionId;
+  readonly perRemovedOfProfession: ProfessionId | undefined;
 }
 
 /**
@@ -661,6 +662,25 @@ export interface CreatureTemplate {
    * the owner (GW1's pet, #1046); `undefined`: nothing happens to the owner.
    */
   readonly ownerDisableOnDeath: Magnitude | undefined;
+  /** What its death does round it (#1550); `undefined`: nothing. */
+  readonly deathBurst: DeathBurst | undefined;
+}
+
+/**
+ * A spirit's last act (#1550), as Destruction's "when this spirit dies,
+ * foes in the area take 1...10 damage for each second this spirit was
+ * alive" or Life's heal: killed, destroyed or at the end of its lifespan,
+ * every living non-spirit of `affects` within `radius` of it takes, or
+ * is healed, `perSecondAlive` × its whole seconds alive, at most `max`.
+ * Damage is typeless, from its owner.
+ */
+export interface DeathBurst {
+  readonly effect: "damage" | "heal";
+  readonly perSecondAlive: number;
+  /** `undefined`: no cap. */
+  readonly max: number | undefined;
+  readonly affects: "allies" | "foes";
+  readonly radius: number;
 }
 
 /**
@@ -696,8 +716,30 @@ export type CreatureDamageScaling =
   | { readonly kind: "weapon-mastery" }
   | { readonly kind: "rank"; readonly atZero: number };
 
-/** What a blow lands on whoever it hits (#1239): Shadowsong's blindness, Dissonance's interrupt. */
-export type OnHitEffect = ApplyStatusEffect | InterruptEffect | RemoveStatusEffect;
+/**
+ * What a blow lands on whoever it hits (#1239): Shadowsong's blindness,
+ * Dissonance's interrupt; Bloodsong's life steal, Anguish's damage on a
+ * hexed foe and Wanderlust's knockdown, paid in the spirit's own Health
+ * (#1550). The attacker is the caster: it steals, and it pays.
+ */
+export type OnHitEffect = UnconditionalOnHitEffect | ConditionalOnHitEffect;
+
+/** Every on-hit effect but `if`: what an on-hit `if` may hold. */
+export type UnconditionalOnHitEffect =
+  | ApplyStatusEffect
+  | InterruptEffect
+  | RemoveStatusEffect
+  | DamageEffect
+  | LifeStealEffect
+  | KnockdownEffect
+  | LoseHealthEffect;
+
+/** An `if` (#1550) holding only on-hit effects. */
+export interface ConditionalOnHitEffect {
+  readonly kind: "if";
+  readonly condition: EffectCondition;
+  readonly effects: readonly UnconditionalOnHitEffect[];
+}
 
 /**
  * A minion's GW1 level with its summoner at rank 0 and 12 in the
@@ -912,6 +954,11 @@ export type StateCondition =
    * Strength's and Sand Shards' "with your scythe".
    */
   | { readonly kind: "caster-wields"; readonly weapon: AttackWeaponClass }
+  /**
+   * The caster holds a shield in the set in hand (#1592): Shield Bash's
+   * "while wielding a shield". A focus is no shield.
+   */
+  | { readonly kind: "caster-holds-shield" }
   /**
    * The effect's target has less health than the caster, absolute, not a
    * share (#939): Victorious Sweep's "if target foe has less Health than

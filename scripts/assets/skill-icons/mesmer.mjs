@@ -51,5 +51,6 @@ export const MESMER_ICONS = {
   "mesmer.wastrels-demise": { glyph: "hex-rising" },
   "mesmer.epidemic": { glyph: "drop-spread" },
   // Anti-summon (#1528, #1568): the skill's mark, a struck ghost below it.
-  "mesmer.spiritual-pain": { glyph: "anti-summon-pain" },
+  // Clumsiness (#1593), a stand-in until its art card.
+  "mesmer.clumsiness": { glyph: "sword", modifier: "hourglass" },
 };

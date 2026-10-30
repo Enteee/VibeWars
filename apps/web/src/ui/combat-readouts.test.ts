@@ -284,6 +284,11 @@ describe("describeCombatEvent", () => {
     expect(describeCombatEvent(entry([interrupted]), interrupted, nameOf, isCreature)).toBe(
       "Fireball (Pyro) interrupts Caster dummy's Fireball",
     );
+    // A plain swing Clumsiness cancelled (#1593).
+    const swing: CombatEvent = { kind: "attack-interrupted", targetId: "dummy" };
+    expect(describeCombatEvent(entry([swing]), swing, nameOf, isCreature)).toBe(
+      "Fireball (Pyro) interrupts Caster dummy's attack",
+    );
     const missed: CombatEvent = { kind: "attack-missed", targetId: "dummy" };
     expect(describeCombatEvent(entry([missed]), missed, nameOf, isCreature)).toBe(
       "Fireball (Pyro) misses Caster dummy",
@@ -765,6 +770,11 @@ describe("floatingCueFor", () => {
 
   it("calls out interrupts and deaths, and floats nothing for statuses", () => {
     expect(floatingCueFor("interrupted", undefined, false)).toEqual({
+      text: "interrupted!",
+      tone: "neutral",
+      critical: false,
+    });
+    expect(floatingCueFor("attack-interrupted", undefined, false)).toEqual({
       text: "interrupted!",
       tone: "neutral",
       critical: false,

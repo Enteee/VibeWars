@@ -80,6 +80,7 @@ function around(
           aura: { statusId: "winnowing", affects: "all", radius: RANGE_NATURE_RITUAL },
           onDeath: "vanish",
           ownerDisableSeconds: 0,
+          deathBurst: undefined,
           companionSkillId: undefined,
           leaderId: undefined,
           mode: "guard",

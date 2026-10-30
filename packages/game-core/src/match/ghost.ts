@@ -126,6 +126,7 @@ export function ghostSpec(spawn: GhostSpawn, facing: number): ParticipantSpec {
       aura: undefined,
       onDeath: "rise",
       ownerDisableSeconds: 0,
+      deathBurst: undefined,
       companionSkillId: undefined,
       leaderId: undefined,
       mode: "guard",

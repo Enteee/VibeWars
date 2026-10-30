@@ -214,6 +214,21 @@ export function armorMultiplier(armor: number, rules: CombatRules): number {
 }
 
 /**
+ * What `target`'s statuses take off each packet by its own ranks
+ * (#1592): Shield Stance's 2 a Strength rank, at most 15.
+ */
+export function rankedDamageReduction(target: Combatant): number {
+  let reduction = 0;
+  for (const { id } of target.statuses.active) {
+    const perRank = getStatusDefinition(id).damageReductionPerRank;
+    if (perRank !== undefined) {
+      reduction += Math.min(perRank.max, perRank.perRank * rankOf(target, perRank.attributeId));
+    }
+  }
+  return reduction;
+}
+
+/**
  * How much damage a packet actually does to this target.
  *
  * Rounded once, at the end. Rounding earlier would make a long fight
@@ -245,11 +260,12 @@ export function mitigate(
 
   // Call of Protection (#1108): a flat cut off every packet, after
   // armor and the multiplier, before Rune of Absorption. Union's spirit
-  // pays for every cut that took something (#1265).
+  // pays for every cut that took something (#1265). Shield Stance's
+  // (#1592) is by the bearer's rank, beside it.
   if (modifiers.damageReduction > 0 && dealt > 0) {
     target.statuses.chargeSources((definition) => definition.damageReduction > 0);
   }
-  dealt -= modifiers.damageReduction;
+  dealt -= modifiers.damageReduction + rankedDamageReduction(target);
 
   // Rune of Absorption, last and only against physical hits. After
   // mitigation on purpose: it is a flat shield against each blow, so it
@@ -304,13 +320,17 @@ export function creatureDamageMultiplier(rank: number, levels: CreatureLevel): n
 /**
  * What a spirit's summoner's `rank` does to its blows (#1239): GW1 states
  * the damage, "5...30", linear in the rank, so `atZero` at 0 and
- * `atTwelve` at 12, as a share of `atTwelve`.
+ * `atTwelve` at 12, as a share of `atTwelve`. A blow of none at 12,
+ * Bloodsong's or Wanderlust's (#1550), is none at every rank.
  */
 export function creatureRankDamageMultiplier(
   rank: number,
   atZero: number,
   atTwelve: number,
 ): number {
+  if (atTwelve === 0) {
+    return 0;
+  }
   return (atZero + ((atTwelve - atZero) * Math.max(0, rank)) / 12) / atTwelve;
 }
 

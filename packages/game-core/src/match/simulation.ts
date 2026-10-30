@@ -147,6 +147,7 @@ import {
   type Aura,
   type CreateGroundEffect,
   type CreatureTemplate,
+  type DeathBurst,
   type GroundAct,
   type PulseRule,
   type Skill,
@@ -361,6 +362,8 @@ export interface Creature {
   readonly onDeath: "vanish" | "lie" | "rise";
   /** Its owner's bar is disabled this long on its death, read at arrival; 0: never. */
   readonly ownerDisableSeconds: number;
+  /** From the template (#1550): what its leaving does round it. */
+  readonly deathBurst: DeathBurst | undefined;
   /**
    * The skill on its owner's bar it travels with (#1046): a companion.
    * `undefined`: summoned by a cast.
@@ -1360,6 +1363,7 @@ export class MatchSimulation {
             template.ownerDisableOnDeath === undefined
               ? 0
               : resolveMagnitude(template.ownerDisableOnDeath, owner.combatant),
+          deathBurst: template.deathBurst,
           companionSkillId: companion ? skillId : undefined,
           leaderId: undefined,
           mode: "guard",
@@ -1766,6 +1770,65 @@ export class MatchSimulation {
     return participant.creature === undefined
       ? this.#ruleset.collision.playerRadius
       : this.#ruleset.collision.creatureRadius;
+  }
+
+  /**
+   * Every creature leaving this step with a death burst (#1550) bursts as
+   * it goes, killed, destroyed or expired alike: each living non-spirit
+   * of its `affects` within its radius takes, or is healed, its rate
+   * times the whole seconds it lived, capped, from its owner, logged as
+   * its skill. A creature a burst kills leaves too, and bursts nothing:
+   * only a spirit has one, and a burst passes spirits by.
+   */
+  #burstLeaving(): void {
+    for (const id of [...this.#leaving]) {
+      const spirit = this.#participants.get(id);
+      const creature = spirit?.creature;
+      const burst = creature?.deathBurst;
+      const owner =
+        creature?.ownerId === undefined ? undefined : this.#participants.get(creature.ownerId);
+      if (
+        spirit === undefined ||
+        creature?.skillId === undefined ||
+        burst === undefined ||
+        owner === undefined
+      ) {
+        continue;
+      }
+      const amount = Math.min(
+        Math.round(burst.perSecondAlive * Math.floor(creature.ageSeconds + SWING_EPSILON)),
+        burst.max ?? Number.POSITIVE_INFINITY,
+      );
+      if (amount <= 0) {
+        continue;
+      }
+      const effect: SkillEffect =
+        burst.effect === "damage"
+          ? { kind: "damage", amount: { flat: amount }, type: "typeless", armorPenetration: 0 }
+          : { kind: "heal", amount: { flat: amount }, perStatusOnTarget: [] };
+      const events: CombatEvent[] = [];
+      for (const other of this.#participants.values()) {
+        const ally = other.combatant.team === spirit.combatant.team;
+        if (
+          other.combatant.dead ||
+          other.creature?.kind === "spirit" ||
+          ally !== (burst.affects === "allies") ||
+          distance(other.position, spirit.position) > burst.radius
+        ) {
+          continue;
+        }
+        events.push(
+          ...applyEffects([effect], {
+            caster: owner.combatant,
+            target: other.combatant,
+            rng: this.#rng,
+            rules: this.#ruleset.combat,
+            surroundings: this.#participants,
+          }),
+        );
+      }
+      this.#logFired([{ sourceId: owner.id, skillId: creature.skillId, events }]);
+    }
   }
 
   /** Every creature that died or expired this step leaves, in that order (#1052). */
@@ -2545,6 +2608,7 @@ export class MatchSimulation {
     // as a blow does; a spell at a foe does not.
     if (skill.type === "attack") {
       this.#blowStarted(record, target);
+      this.#attackBegins(record);
     }
     if (atFoe) {
       target.outOfCombatSeconds = 0;
@@ -2743,6 +2807,7 @@ export class MatchSimulation {
     this.#awardKillMorale();
     this.#settleMoving();
     this.#tallyAggression();
+    this.#burstLeaving();
     this.#removeLeaving();
     this.#priestWave();
     // After every death, before the match end: a point on the last tick counts.
@@ -3457,15 +3522,30 @@ export class MatchSimulation {
     event: DirectTriggerEvent,
     spared: ReadonlySet<StatusId>,
     usedSkill?: SlotSkill,
-  ): void {
+  ): readonly FiredTrigger[] {
     // Panic's interrupt (#1501) is untimed, as a pulse's: finding nothing
     // to interrupt is no miss, so it says nothing.
-    const fired = fireTriggers(record.combatant, event, this.#triggerContext(usedSkill), spared);
-    this.#logFired(
-      fired.map((each) => ({
-        ...each,
-        events: each.events.filter((event) => event.kind !== "interrupt-missed"),
-      })),
+    const fired = fireTriggers(
+      record.combatant,
+      event,
+      this.#triggerContext(usedSkill),
+      spared,
+    ).map((each) => ({
+      ...each,
+      events: each.events.filter((event) => event.kind !== "interrupt-missed"),
+    }));
+    this.#logFired(fired);
+    return fired;
+  }
+
+  /**
+   * The bearer begins an attack (#1593): what answers fires, and whether
+   * it cancelled a plain swing, as Clumsiness does. An attack skill it
+   * cancels is interrupted there and then.
+   */
+  #attackBegins(record: ParticipantRecord): boolean {
+    return this.#fireTriggers(record, "bearer-attack-begins", NONE_SPARED).some(({ events }) =>
+      events.some((event) => event.kind === "attack-interrupted" && event.targetId === record.id),
     );
   }
 
@@ -4456,6 +4536,12 @@ export class MatchSimulation {
     }
     record.outOfCombatSeconds = 0;
     this.#blowStarted(record, target);
+    // Cancelled as it began (#1593): no arrow, no blow, and no `attacks`.
+    // A pet's armed attack is spent, as if it missed.
+    if (this.#attackBegins(record)) {
+      record.armedAttack = undefined;
+      return;
+    }
 
     if (weapon.projectileSpeed !== undefined) {
       const released = this.#release(record, target, weapon.projectileSpeed, dt, undefined);

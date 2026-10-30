@@ -154,6 +154,11 @@ export type CombatEvent =
       readonly skillId: string;
     }
   /**
+   * A plain swing of `targetId`'s cancelled as it began (#1593):
+   * Clumsiness's. It never landed, and its swing timer starts over.
+   */
+  | { readonly kind: "attack-interrupted"; readonly targetId: string }
+  /**
    * A skill on `targetId`'s bar that a disable (#914) made wait longer:
    * it is usable again in `seconds`.
    */
@@ -731,6 +736,20 @@ export function interruptIfCastingSpell(
 }
 
 /**
+ * Clumsiness's cancel (#1593) of an attack skill `target` is beginning:
+ * interrupted, as by an `interrupt`, and recharging. Whether it was.
+ */
+export function interruptAttackSkill(
+  target: Combatant,
+  byId: string,
+  events: CombatEvent[],
+): boolean {
+  const cast = target.cast.activeCast;
+  const skill = cast === undefined ? undefined : getSkill(cast.skillId);
+  return skill?.type === "attack" && interruptCast(target, byId, events);
+}
+
+/**
  * What a landed attack interrupts (#1105): a spell its dazed victim is
  * casting (#546), or a cast its victim is easily interrupted in, such as
  * setting a trap. Anything else is left alone, and nothing is said.
@@ -1077,7 +1096,10 @@ export function applyEffect(
       if (target === undefined) {
         return events;
       }
-      const removed = removedOfProfession(target.id, effect.perRemovedOfProfession, earlier);
+      const removed =
+        effect.perRemovedOfProfession === undefined
+          ? 1
+          : removedOfProfession(target.id, effect.perRemovedOfProfession, earlier);
       sacrifice(caster, resolveMagnitude(effect.amount, caster) * removed, events);
       return events;
     }
@@ -1476,6 +1498,7 @@ function isStateCondition(condition: EffectCondition): condition is StateConditi
     case "caster-more-energy":
     case "caster-overcast":
     case "caster-wields":
+    case "caster-holds-shield":
     case "target-less-health":
     case "target-more-health":
     case "target-attacking":
@@ -1557,6 +1580,8 @@ export function stateHolds(
       return caster.overcast > 0;
     case "caster-wields":
       return wieldsFor(caster.equipment.mainHand.weapon.id, condition.weapon);
+    case "caster-holds-shield":
+      return caster.equipment.offhandId === "shield";
     case "target-less-health":
       return target.health < caster.health;
     case "target-more-health":
@@ -1788,6 +1813,7 @@ function conditionHolds(
     case "caster-more-energy":
     case "caster-overcast":
     case "caster-wields":
+    case "caster-holds-shield":
     case "target-less-health":
     case "target-more-health":
     case "target-attacking":

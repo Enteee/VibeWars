@@ -345,6 +345,7 @@ describe("wireIdentity (#1052)", () => {
       aura: undefined,
       onDeath: "vanish" as const,
       ownerDisableSeconds: 0,
+      deathBurst: undefined,
       companionSkillId: undefined,
       leaderId: undefined,
       mode: "guard" as const,
