@@ -28,7 +28,6 @@ import {
 import { canStart } from "./lobby-host.js";
 import { settle } from "./match-harness.test-support.js";
 import { RECONNECT_WINDOW_SECONDS } from "./match-host.js";
-import { sanitizeName } from "./names.js";
 import { createMemoryNetwork } from "./memory-transport.js";
 import type { Transport, TransportTrouble } from "./transport.js";
 
@@ -1095,9 +1094,18 @@ describe("a Team Lobby (#1458)", () => {
     expect(sideOf(lobby.host)?.chosen).toEqual({
       proposerId: null,
       reason: "house",
-      // Named as a player is, at most 16 long.
-      members: [WARRIOR, RANGER, MONK, NECRO, ELE, WARRIOR].map((build) => ({
-        name: sanitizeName(build.name, ""),
+      // At most 16 long, as a player's name, but cut at a word (#1460).
+      members: (
+        [
+          [WARRIOR, "Warrior/Monk"],
+          [RANGER, "Ranger/Mesmer"],
+          [MONK, "Monk…"],
+          [NECRO, "Necromancer…"],
+          [ELE, "Elementalist…"],
+          [WARRIOR, "Warrior/Monk"],
+        ] as const
+      ).map(([build, name]) => ({
+        name,
         primary: build.primaryProfession,
         secondary: build.secondaryProfession ?? null,
       })),

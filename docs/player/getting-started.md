@@ -66,8 +66,9 @@ that tile's maps only: **Hosted Lobby** every map, **Team Arena** the
 Annihilation, Kill Count and Priest Annihilation maps, **Heroes' Ascent**
 the Relic Run, King of the Hill and Capture Points maps, and **GvG** the
 Guild Battle's. Below the tiles, pick a Team Build, or **None** to let the
-team decide. For now a Team Play lobby plays like any hosted lobby, with
-the character you picked on Solo Play.
+team decide. When the host starts, a Team Play lobby opens the
+[Team Lobby](modes.md#team-lobby): click a card to vote for a Team Build,
+then click a seat to take one of its characters.
 
 Type a **Guild tag** of 2 to 4 letters or digits beside your name, and
 everyone sees it after your name, like `Ente [VIBE]`. With a tag set,

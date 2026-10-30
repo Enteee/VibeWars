@@ -2,6 +2,7 @@ import { MAX_CHAT_GRAPHEMES } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
 import {
+  sanitizeCharacterName,
   sanitizeChatText,
   sanitizeGuild,
   sanitizeGuildCape,
@@ -175,6 +176,28 @@ describe("sanitizeName", () => {
       const swatches = `a${String.fromCodePoint(0x1f3fb).repeat(10)}`;
       expect(sanitizeName(swatches.repeat(11), "fallback")).toBe(swatches.repeat(4));
     });
+  });
+});
+
+describe("sanitizeCharacterName (#1460)", () => {
+  it("keeps a name that fits", () => {
+    expect(sanitizeCharacterName("Warrior/Monk", "Warrior")).toBe("Warrior/Monk");
+    expect(sanitizeCharacterName("Sixteen letters!", "Monk")).toBe("Sixteen letters!");
+  });
+
+  it("cuts a long one at its last space or slash, never mid-word", () => {
+    expect(sanitizeCharacterName("Necromancer/Elementalist", "Necromancer")).toBe("Necromancer…");
+    expect(sanitizeCharacterName("Monk/Elementalist", "Monk")).toBe("Monk…");
+    expect(sanitizeCharacterName("Fire Nuker of the North", "Elementalist")).toBe("Fire Nuker of…");
+  });
+
+  it("cuts one with no boundary at 15 graphemes and the ellipsis", () => {
+    expect(sanitizeCharacterName("Supercalifragilistic", "Mesmer")).toBe("Supercalifragil…");
+  });
+
+  it("falls back, as a name does, for nothing drawable", () => {
+    expect(sanitizeCharacterName("   ", "Ranger")).toBe("Ranger");
+    expect(sanitizeCharacterName(3, "Ranger")).toBe("Ranger");
   });
 });
 
