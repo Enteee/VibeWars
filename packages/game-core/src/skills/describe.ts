@@ -21,6 +21,7 @@ import {
   findStatusDefinition,
   getStatusDefinition,
   type NextSkill,
+  type NextSkillRule,
   type StatusCategory,
   type StatusTrigger,
   type StatusTriggerEvent,
@@ -372,8 +373,16 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   for (const effect of definition.nextAttackSkill ?? []) {
     parts.push(...describeNextAttackSkill(effect));
   }
+  if (definition.nextAttackSkillBonus !== undefined) {
+    const { condition, amount } = definition.nextAttackSkillBonus;
+    const more = describeMagnitude(amount, new Map());
+    parts.push(`next attack skill: ${conditionText(condition)}: +${String(more.current)} damage`);
+  }
   if (definition.nextSkill !== undefined) {
     parts.push(...describeNextSkill(definition.nextSkill));
+  }
+  if (definition.nextSkillRule !== undefined) {
+    parts.push(...describeNextSkillRule(definition.nextSkillRule));
   }
   if (definition.endsWhenBearerAttacks) {
     parts.push("ends if the bearer attacks");
@@ -450,6 +459,16 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
       .map(({ text }) => lowerFirst(text));
     parts.push(
       `the next spell it casts at ${on === "foe-targeted" ? "a foe" : "an ally"} fails: ${what.join(", ")}`,
+    );
+  }
+  // Wastrel's Demise's (#1501): "each second, it and adjacent foes take 8
+  // damage, 8 more each second".
+  if (definition.damagePulse !== undefined) {
+    const { damage, growth, radius } = definition.damagePulse;
+    const area = AREA_TEXT.get(radius);
+    const foes = area === undefined ? `foes within ${String(radius)}` : `${area} foes`;
+    parts.push(
+      `each second, it and ${foes} take ${String(damage)} damage, ${String(growth)} more each second`,
     );
   }
   if (definition.reversesNextDamage !== undefined) {
@@ -1003,6 +1022,21 @@ function describeNextSkill({ which, count, effects }: NextSkill): string[] {
   );
 }
 
+/** How a chant's next skill of a kind goes (#1505): "your next skill cannot be interrupted". */
+function describeNextSkillRule({
+  which,
+  uninterruptible,
+  unblockable,
+  energyDiscount,
+}: NextSkillRule): string[] {
+  const next = `your next ${NEXT_SKILL_KIND[which][0]}`;
+  return [
+    ...(uninterruptible ? [`${next} cannot be interrupted`] : []),
+    ...(unblockable ? [`${next} cannot be blocked`] : []),
+    ...(energyDiscount > 0 ? [`${next} costs ${String(energyDiscount)} less energy`] : []),
+  ];
+}
+
 /**
  * A status a splash puts on those it reaches, as the second half of a
  * line (#1021): "nearby foes suffer Bleeding for 13s (…)", not "applies".
@@ -1334,6 +1368,12 @@ function describeEffect(
     }
     case "transfer-conditions":
       return transferText(effect, ranks);
+    // Epidemic's (#1501): "Adjacent foes get the target's conditions...".
+    case "spread-conditions":
+      return {
+        text: `${foesWithin(effect.radius, "foes")} get the target's conditions, with the time each has left`,
+        magnitude: undefined,
+      };
     case "give-health": {
       const magnitude = describeMagnitude(effect.healPercent, ranks);
       return {

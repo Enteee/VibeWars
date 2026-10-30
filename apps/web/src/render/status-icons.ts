@@ -112,6 +112,10 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "anthem-of-weariness": icon("anthem-of-weariness"),
   "crippling-anthem": icon("crippling-anthem"),
   "anthem-of-disruption": icon("anthem-of-disruption"),
+  "song-of-concentration": icon("song-of-concentration"),
+  "anthem-of-guidance": icon("anthem-of-guidance"),
+  "energizing-chorus": icon("energizing-chorus"),
+  "anthem-of-envy": icon("anthem-of-envy"),
   "weapon-of-warding": icon("weapon-of-warding"),
   "spirit-light-weapon": icon("spirit-light-weapon"),
   "weapon-of-quickening": icon("weapon-of-quickening"),
@@ -216,6 +220,8 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   shame: icon("shame"),
   mistrust: icon("mistrust"),
   fragility: icon("fragility"),
+  panic: icon("panic"),
+  "wastrels-demise": icon("wastrels-demise"),
 };
 
 /** Drawn size of one icon, in world pixels. */

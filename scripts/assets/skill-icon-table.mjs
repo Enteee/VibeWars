@@ -107,6 +107,11 @@ export const SKILL_ICONS = {
   "paragon.anthem-of-weariness": { glyph: "next-attack-drop-weak" },
   "paragon.crippling-anthem": { glyph: "next-attack-limp" },
   "paragon.anthem-of-disruption": { glyph: "next-attack-interrupt" },
+  // Placeholders until the asset-designer's (#1505): Paragon chants 3.
+  "paragon.song-of-concentration": { glyph: "note-hold", modifier: "area" },
+  "paragon.anthem-of-guidance": { glyph: "hex-nobloc", modifier: "area" },
+  "paragon.energizing-chorus": { glyph: "banner-note", modifier: "less" },
+  "paragon.anthem-of-envy": { glyph: "blade-plus", modifier: "half" },
   "ritualist.weapon-of-warding": { glyph: "armor", modifier: "up" },
   "ritualist.mend-body-and-soul": { glyph: "plaster", modifier: "area" },
   "ritualist.spirit-light": { glyph: "plaster", modifier: "bleed" },
@@ -428,6 +433,10 @@ export const SKILL_ICONS = {
   "mesmer.shame": { glyph: "hex-fail-ally", modifier: "bolt" },
   "mesmer.mistrust": { glyph: "hex-fail-foe", modifier: "area" },
   "mesmer.fragility": { glyph: "hex-churn", modifier: "area" },
+  // Placeholders until the asset-designer's (#1501): crowd punishers.
+  "mesmer.panic": { glyph: "hex-burst", modifier: "stun" },
+  "mesmer.wastrels-demise": { glyph: "hex-drain", modifier: "up" },
+  "mesmer.epidemic": { glyph: "germ", modifier: "plus" },
   // Paragon spears (#1486, #1508): a spear and its rider; the drop badge is Deep Wound.
   "paragon.blazing-spear": { glyph: "spear-flame" },
   "paragon.mighty-throw": { glyph: "spear-fast" },
