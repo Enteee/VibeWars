@@ -1752,6 +1752,15 @@ const status = {
       `<path d="M8 5.5A6 6 0 1 0 16 5.5" ${stroke(c, 1.8)}/>` +
       `<path d="M12 3v8M9.5 8.5L12 11l2.5-2.5" ${stroke(c, 1.8)}/>`,
   ],
+  // Mesmer staples 3 (#1627), a stand-in until its art card.
+  // Hex: an eye glancing aside over a burst, the next attack goes astray.
+  "wandering-eye": [
+    "hex",
+    (c) =>
+      `<path d="M4 10c4-5 12-5 16 0c-4 5-12 5-16 0z" ${stroke(c, 1.8)}/>` +
+      `<circle cx="15" cy="10" r="2" fill="${c}"/>` +
+      `<path d="M12 15v5M8.5 16.5l2 2M15.5 16.5l-2 2" ${stroke(c, 1.6)}/>`,
+  ],
   // Dervish staples 2 (#1604), stand-ins until their art card.
   // Stance: three fast slashes, it attacks 25% faster.
   "pious-fury": ["stance", (c) => `<path d="M5 18L13 6M9 19L17 7M13 20L20 9" ${stroke(c, 2)}/>`],
