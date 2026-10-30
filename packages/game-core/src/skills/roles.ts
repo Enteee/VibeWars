@@ -49,9 +49,10 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     case "if":
     case "splash":
       return effect.effects.flatMap(effectRoles);
-    // Plague Touch (#944): conditions on a foe, and off yourself.
+    // Plague Touch (#944): conditions on a foe, and off yourself. Draw
+    // Conditions (#1511): off an ally; what it heals is the caster.
     case "transfer-conditions":
-      return ["condition", "removal"];
+      return effect.from === "caster" ? ["condition", "removal"] : ["removal"];
     case "damage":
     case "energy-gain":
     case "adrenaline-gain":

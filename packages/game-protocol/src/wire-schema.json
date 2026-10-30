@@ -38,6 +38,7 @@
     "chat-line"
   ],
   "statusIds": [
+    "aegis",
     "aggressive-refrain",
     "anthem-of-disruption",
     "anthem-of-flame",
@@ -191,6 +192,8 @@
     "shard-storm",
     "shatterstone",
     "shelter",
+    "shield-of-deflection",
+    "shielding-hands",
     "shrinking-armor",
     "shroud-of-distress",
     "shroud-of-silence",
@@ -198,6 +201,7 @@
     "song-of-purification",
     "song-of-restoration",
     "soul-barbs",
+    "spell-breaker",
     "spirit-light-weapon",
     "spirits-gift",
     "spiteful-spirit",
@@ -547,6 +551,7 @@
               "optional": false,
               "type": {
                 "union": [
+                  { "literal": "aegis" },
                   { "literal": "aggressive-refrain" },
                   { "literal": "anthem-of-disruption" },
                   { "literal": "anthem-of-flame" },
@@ -700,6 +705,8 @@
                   { "literal": "shard-storm" },
                   { "literal": "shatterstone" },
                   { "literal": "shelter" },
+                  { "literal": "shield-of-deflection" },
+                  { "literal": "shielding-hands" },
                   { "literal": "shrinking-armor" },
                   { "literal": "shroud-of-distress" },
                   { "literal": "shroud-of-silence" },
@@ -707,6 +714,7 @@
                   { "literal": "song-of-purification" },
                   { "literal": "song-of-restoration" },
                   { "literal": "soul-barbs" },
+                  { "literal": "spell-breaker" },
                   { "literal": "spirit-light-weapon" },
                   { "literal": "spirits-gift" },
                   { "literal": "spiteful-spirit" },
@@ -765,6 +773,7 @@
               "optional": false,
               "type": {
                 "union": [
+                  { "literal": "aegis" },
                   { "literal": "aggressive-refrain" },
                   { "literal": "anthem-of-disruption" },
                   { "literal": "anthem-of-flame" },
@@ -918,6 +927,8 @@
                   { "literal": "shard-storm" },
                   { "literal": "shatterstone" },
                   { "literal": "shelter" },
+                  { "literal": "shield-of-deflection" },
+                  { "literal": "shielding-hands" },
                   { "literal": "shrinking-armor" },
                   { "literal": "shroud-of-distress" },
                   { "literal": "shroud-of-silence" },
@@ -925,6 +936,7 @@
                   { "literal": "song-of-purification" },
                   { "literal": "song-of-restoration" },
                   { "literal": "soul-barbs" },
+                  { "literal": "spell-breaker" },
                   { "literal": "spirit-light-weapon" },
                   { "literal": "spirits-gift" },
                   { "literal": "spiteful-spirit" },
@@ -980,6 +992,7 @@
               "optional": false,
               "type": {
                 "union": [
+                  { "literal": "aegis" },
                   { "literal": "aggressive-refrain" },
                   { "literal": "anthem-of-disruption" },
                   { "literal": "anthem-of-flame" },
@@ -1133,6 +1146,8 @@
                   { "literal": "shard-storm" },
                   { "literal": "shatterstone" },
                   { "literal": "shelter" },
+                  { "literal": "shield-of-deflection" },
+                  { "literal": "shielding-hands" },
                   { "literal": "shrinking-armor" },
                   { "literal": "shroud-of-distress" },
                   { "literal": "shroud-of-silence" },
@@ -1140,6 +1155,7 @@
                   { "literal": "song-of-purification" },
                   { "literal": "song-of-restoration" },
                   { "literal": "soul-barbs" },
+                  { "literal": "spell-breaker" },
                   { "literal": "spirit-light-weapon" },
                   { "literal": "spirits-gift" },
                   { "literal": "spiteful-spirit" },
@@ -1192,6 +1208,7 @@
               "optional": false,
               "type": {
                 "union": [
+                  { "literal": "aegis" },
                   { "literal": "aggressive-refrain" },
                   { "literal": "anthem-of-disruption" },
                   { "literal": "anthem-of-flame" },
@@ -1345,6 +1362,8 @@
                   { "literal": "shard-storm" },
                   { "literal": "shatterstone" },
                   { "literal": "shelter" },
+                  { "literal": "shield-of-deflection" },
+                  { "literal": "shielding-hands" },
                   { "literal": "shrinking-armor" },
                   { "literal": "shroud-of-distress" },
                   { "literal": "shroud-of-silence" },
@@ -1352,6 +1371,7 @@
                   { "literal": "song-of-purification" },
                   { "literal": "song-of-restoration" },
                   { "literal": "soul-barbs" },
+                  { "literal": "spell-breaker" },
                   { "literal": "spirit-light-weapon" },
                   { "literal": "spirits-gift" },
                   { "literal": "spiteful-spirit" },
@@ -1505,6 +1525,7 @@
               "optional": false,
               "type": {
                 "union": [
+                  { "literal": "aegis" },
                   { "literal": "aggressive-refrain" },
                   { "literal": "anthem-of-disruption" },
                   { "literal": "anthem-of-flame" },
@@ -1658,6 +1679,8 @@
                   { "literal": "shard-storm" },
                   { "literal": "shatterstone" },
                   { "literal": "shelter" },
+                  { "literal": "shield-of-deflection" },
+                  { "literal": "shielding-hands" },
                   { "literal": "shrinking-armor" },
                   { "literal": "shroud-of-distress" },
                   { "literal": "shroud-of-silence" },
@@ -1665,6 +1688,7 @@
                   { "literal": "song-of-purification" },
                   { "literal": "song-of-restoration" },
                   { "literal": "soul-barbs" },
+                  { "literal": "spell-breaker" },
                   { "literal": "spirit-light-weapon" },
                   { "literal": "spirits-gift" },
                   { "literal": "spiteful-spirit" },
@@ -1708,6 +1732,7 @@
               "optional": false,
               "type": {
                 "union": [
+                  { "literal": "aegis" },
                   { "literal": "aggressive-refrain" },
                   { "literal": "anthem-of-disruption" },
                   { "literal": "anthem-of-flame" },
@@ -1861,6 +1886,8 @@
                   { "literal": "shard-storm" },
                   { "literal": "shatterstone" },
                   { "literal": "shelter" },
+                  { "literal": "shield-of-deflection" },
+                  { "literal": "shielding-hands" },
                   { "literal": "shrinking-armor" },
                   { "literal": "shroud-of-distress" },
                   { "literal": "shroud-of-silence" },
@@ -1868,6 +1895,7 @@
                   { "literal": "song-of-purification" },
                   { "literal": "song-of-restoration" },
                   { "literal": "soul-barbs" },
+                  { "literal": "spell-breaker" },
                   { "literal": "spirit-light-weapon" },
                   { "literal": "spirits-gift" },
                   { "literal": "spiteful-spirit" },
