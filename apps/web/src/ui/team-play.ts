@@ -5,7 +5,8 @@ import type { StoredTeam } from "../storage/schema.js";
 import { looksLikeTeam } from "../storage/team-transfer.js";
 import { createCharacterDot } from "./character-preview.js";
 import { button, h, listenForPaste, screenBar } from "./kit.js";
-import { joinControls, loadPlayerName, playTabs, type PlayTab } from "./menu.js";
+import { joinControls, playTabs, type PlayTab } from "./menu.js";
+import { loadPlayerName } from "./player-section.js";
 
 /**
  * Team Play (#1453, #1449 variant B, the card table): four mode tiles

@@ -1,26 +1,14 @@
-import { CAPE_COLOURS, CAPE_EMBLEMS, type QueueMode, type WireCape } from "@vibewars/game-protocol";
-import {
-  sanitizeGuild,
-  sanitizeGuildCape,
-  sanitizeGuildTag,
-  type Guild,
-} from "@vibewars/game-session";
+import type { QueueMode } from "@vibewars/game-protocol";
 
-import { SELF_RIM, paintEmblem } from "../render/body-painter.js";
-import {
-  CAPE_PALETTE,
-  capeLook,
-  emblemShape,
-  type CapeColour,
-  type CapeEmblem,
-} from "../render/cape-shape.js";
+import { capeLook } from "../render/cape-shape.js";
 import type { Tally } from "../storage/match-record.js";
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 import type { StoredCharacter } from "../storage/schema.js";
 import { validateBuild } from "../storage/build-validation.js";
-import { canvasPainter, createCharacterFigure } from "./character-figure.js";
-import { cssColour, equippedCount, miniSkillBar, professionLabel } from "./character-preview.js";
+import { createCharacterFigure } from "./character-figure.js";
+import { equippedCount, miniSkillBar, professionLabel } from "./character-preview.js";
 import { button, emptyState, h, screenBar, selectableRow } from "./kit.js";
+import { loadPlayerName, playerGuild } from "./player-section.js";
 
 /**
  * The main menu and lobby screens (brief §21).
@@ -68,115 +56,6 @@ export const NO_CHARACTER_FOR_QUEUE = "Make a character first.";
 
 /** The Random Arena mode picked this visit (#880): kept in memory, never stored. */
 let randomArenaMode: QueueMode = "random-arena-4v4";
-
-const NAME_STORAGE_KEY = `${STORAGE_NAMESPACE}.playerName`;
-
-/** Remember the player's chosen name so they do not retype it every session. */
-export function loadPlayerName(): string {
-  try {
-    return localStorage.getItem(NAME_STORAGE_KEY) ?? "";
-  } catch {
-    // Private browsing can throw on localStorage access; a missing
-    // remembered name is not worth failing the whole menu over.
-    return "";
-  }
-}
-
-const GUILD_TAG_STORAGE_KEY = `${STORAGE_NAMESPACE}.guildTag`;
-
-/** The guild tag as the player last typed it (#1406), valid or not; empty for none. */
-export function loadGuildTag(): string {
-  try {
-    return localStorage.getItem(GUILD_TAG_STORAGE_KEY) ?? "";
-  } catch {
-    // Same reasoning as the name.
-    return "";
-  }
-}
-
-export function saveGuildTag(tag: string): void {
-  try {
-    localStorage.setItem(GUILD_TAG_STORAGE_KEY, tag);
-  } catch {
-    // Same reasoning as the name.
-  }
-}
-
-/** The remembered guild tag if it is a valid one (#1406); `null` plays untagged. */
-export function playerGuildTag(): string | null {
-  return sanitizeGuildTag(loadGuildTag());
-}
-
-const GUILD_CAPE_STORAGE_KEY = `${STORAGE_NAMESPACE}.guildCape`;
-
-/**
- * The cape last designed (#1422), kept even while there is no valid tag
- * to wear it with; `null` for none, and for anything stored that is not
- * a cape.
- */
-export function loadGuildCape(): WireCape | null {
-  try {
-    const stored = localStorage.getItem(GUILD_CAPE_STORAGE_KEY);
-    return stored === null ? null : sanitizeGuildCape(JSON.parse(stored));
-  } catch {
-    // Unparseable, or the name's reasoning: no cape.
-    return null;
-  }
-}
-
-export function saveGuildCape(cape: WireCape | null): void {
-  try {
-    if (cape === null) {
-      localStorage.removeItem(GUILD_CAPE_STORAGE_KEY);
-    } else {
-      localStorage.setItem(GUILD_CAPE_STORAGE_KEY, JSON.stringify(cape));
-    }
-  } catch {
-    // Same reasoning as the name.
-  }
-}
-
-/** The remembered tag if it is a valid one, and the cape with it (#1406, #1422). */
-export function playerGuild(): Guild {
-  return sanitizeGuild({ guildTag: loadGuildTag(), guildCape: loadGuildCape() });
-}
-
-/** Whether the cape designer shows for the tag `typed` (#1422): only a valid tag wears a cape. */
-export function showsCapeDesigner(typed: string): boolean {
-  return sanitizeGuildTag(typed) !== null;
-}
-
-/** One press in the cape designer (#1422). */
-export type CapePick =
-  | { readonly part: "main" | "trim"; readonly colour: CapeColour }
-  | { readonly part: "emblem"; readonly emblem: CapeEmblem }
-  | { readonly part: "none" };
-
-/** What a first pick starts from: the study's sample of variant B (#1410). */
-export const FIRST_CAPE: WireCape = { main: "violet", trim: "white", emblem: "diamond" };
-
-/** The cape after `pick`; a pick on no cape starts from `FIRST_CAPE`. */
-export function pickCape(cape: WireCape | null, pick: CapePick): WireCape | null {
-  const from = cape ?? FIRST_CAPE;
-  switch (pick.part) {
-    case "none":
-      return null;
-    case "main":
-      return { ...from, main: pick.colour };
-    case "trim":
-      return { ...from, trim: pick.colour };
-    case "emblem":
-      return { ...from, emblem: pick.emblem };
-  }
-}
-
-/** Shown under the guild tag field while what is typed is no tag (#1406). */
-export const GUILD_TAG_HINT = "2–4 letters or digits";
-
-/** Whether `typed` should show as invalid: something, but not a tag. */
-export function isInvalidGuildTag(typed: string): boolean {
-  return typed.trim() !== "" && sanitizeGuildTag(typed) === null;
-}
 
 const CHARACTER_STORAGE_KEY = `${STORAGE_NAMESPACE}.activeCharacterId`;
 
@@ -329,14 +208,6 @@ export function saveStarterCharacterId(id: string): void {
   }
 }
 
-export function savePlayerName(name: string): void {
-  try {
-    localStorage.setItem(NAME_STORAGE_KEY, name);
-  } catch {
-    // Same reasoning as above: this is a convenience, not a requirement.
-  }
-}
-
 /**
  * "Elementalist / Monk · 5/8 skills", then its record (#1404) once it has
  * played: "· 12W 7L", with "1D" only when it has drawn.
@@ -441,13 +312,10 @@ export function renderMenu(
   const starter = loadStarterCharacterId();
 
   const list = h("div", "roster-list");
-  /** The cape your characters wear (#1422): only with a valid tag. */
-  const worn = (): ReturnType<typeof capeLook> | undefined => {
-    const { guildCape } = playerGuild();
-    return guildCape === null ? undefined : capeLook(guildCape);
-  };
-  /** Every roster row and whose figure it shows, to redraw as the cape changes. */
-  const figured: { readonly row: HTMLElement; readonly character: StoredCharacter }[] = [];
+  // The cape your characters wear (#1422): only with a valid tag. Set in
+  // Options, which re-renders the menu as it closes (#1513).
+  const { guildCape } = playerGuild();
+  const worn = guildCape === null ? undefined : capeLook(guildCape);
   /** Choose who to play, and keep the focus on the row a key chose. */
   const choose = (id: string): void => {
     saveActiveCharacterId(id);
@@ -478,7 +346,7 @@ export function renderMenu(
           ];
     const playable = isPlayable(character);
     const row = selectableRow({
-      dot: createCharacterFigure(character, worn()),
+      dot: createCharacterFigure(character, worn),
       name: character.name,
       subtitle: rosterSubtitle(character, tallies.get(character.id)),
       miniBar: miniSkillBar(character),
@@ -507,7 +375,6 @@ export function renderMenu(
           h("span", tag === "Random" ? "roster-random-tag" : "roster-invalid-tag", tag),
         ),
       );
-    figured.push({ row, character });
     list.appendChild(row);
   }
   roster.appendChild(list);
@@ -522,67 +389,10 @@ export function renderMenu(
   const play = h("section", "menu-play");
   play.appendChild(h("h2", "menu-column-title", "Play"));
 
-  const nameField = h("label", "field");
-  const nameInput = document.createElement("input");
-  nameInput.className = "field-input";
-  nameInput.setAttribute("aria-label", "Name");
-  nameInput.placeholder = "Player";
-  nameInput.value = loadPlayerName();
-  nameInput.addEventListener("input", () => {
-    savePlayerName(nameInput.value);
-  });
-  nameField.appendChild(nameInput);
-  // The guild tag beside it (#1406): `Ente [VIBE]` to everyone else.
-  const tagField = h("label", "field menu-guild-tag");
-  tagField.appendChild(h("span", "field-label", "Guild tag"));
-  const tagInput = document.createElement("input");
-  tagInput.className = "field-input";
-  tagInput.placeholder = "TAG";
-  tagInput.maxLength = 4;
-  tagInput.value = loadGuildTag();
-  const tagHint = h("span", "field-hint", GUILD_TAG_HINT);
-  const showTagValidity = (): void => {
-    const invalid = isInvalidGuildTag(tagInput.value);
-    tagInput.setAttribute("aria-invalid", String(invalid));
-    tagHint.hidden = !invalid;
-  };
-  showTagValidity();
-  tagInput.addEventListener("input", () => {
-    saveGuildTag(tagInput.value);
-    showTagValidity();
-    showCape();
-  });
-  tagField.appendChild(tagInput);
-  tagField.appendChild(tagHint);
-  const identityRow = h("div", "menu-identity");
-  identityRow.appendChild(nameField);
-  identityRow.appendChild(tagField);
-  play.appendChild(identityRow);
-
-  // The cape designer under it (#1422), only while the tag is valid: the
-  // cape is the guild's. The roster's figures wear what it makes.
-  let cape = loadGuildCape();
-  const designer = capeDesigner((pick) => {
-    cape = pickCape(cape, pick);
-    saveGuildCape(cape);
-    showCape();
-  });
-  const showCape = (): void => {
-    designer.root.hidden = !showsCapeDesigner(tagInput.value);
-    designer.show(cape);
-    const look = worn();
-    for (const { row, character } of figured) {
-      row.querySelector(".character-figure")?.replaceWith(createCharacterFigure(character, look));
-    }
-  };
-  designer.root.hidden = !showsCapeDesigner(tagInput.value);
-  designer.show(cape);
-  play.appendChild(designer.root);
-
   // Random Arena first (#854 B1): it needs no code and no friends.
   const arenaRow = h("div", "menu-row menu-random-arena");
   const queue = button("Random Arena", "primary", () => {
-    callbacks.onRandomArena(randomArenaMode, nameInput.value);
+    callbacks.onRandomArena(randomArenaMode, loadPlayerName());
   });
   queue.disabled = !activeExists;
   arenaRow.appendChild(queue);
@@ -614,112 +424,16 @@ export function renderMenu(
   const hostRow = h("div", "menu-row");
   hostRow.appendChild(
     button("Host a lobby", "primary", () => {
-      callbacks.onCreateLobby(nameInput.value);
+      callbacks.onCreateLobby(loadPlayerName());
     }),
   );
   play.appendChild(hostRow);
 
-  play.append(...joinControls(panel, () => nameInput.value, callbacks.onJoinLobby));
+  play.append(...joinControls(panel, loadPlayerName, callbacks.onJoinLobby));
   columns.appendChild(play);
 
   root.appendChild(panel);
   if (rerolled) {
     root.querySelector<HTMLElement>(".roster-reroll")?.focus();
   }
-}
-
-/** The emblem buttons' size, CSS px. */
-const EMBLEM_BUTTON_PX = 20;
-
-/**
- * The cape designer (#1422): a row of eight swatches each for the cape's
- * colour and its trim's, eight emblems, and *No cape*. `show` marks what
- * `cape` has picked; with none, only *No cape* is pressed.
- */
-function capeDesigner(onPick: (pick: CapePick) => void): {
-  readonly root: HTMLElement;
-  readonly show: (cape: WireCape | null) => void;
-} {
-  const root = h("div", "menu-cape");
-  root.appendChild(h("span", "field-label", "Guild cape"));
-  const pressed: {
-    readonly button: HTMLButtonElement;
-    readonly on: (cape: WireCape) => boolean;
-  }[] = [];
-  const swatchRow = (part: "main" | "trim", label: string): void => {
-    const row = h("div", "menu-cape-row");
-    row.setAttribute("role", "group");
-    row.setAttribute("aria-label", label);
-    row.appendChild(h("span", "menu-cape-row-label", label));
-    for (const colour of CAPE_COLOURS) {
-      const swatch = button("", "menu-cape-swatch", () => {
-        onPick({ part, colour });
-      });
-      swatch.style.setProperty("--swatch", cssColour(CAPE_PALETTE[colour]));
-      swatch.setAttribute("aria-label", colour);
-      swatch.title = colour;
-      swatch.dataset.colour = colour;
-      row.appendChild(swatch);
-      pressed.push({ button: swatch, on: (cape) => cape[part] === colour });
-    }
-    root.appendChild(row);
-  };
-  swatchRow("main", "Cape");
-  swatchRow("trim", "Trim");
-  const emblems = h("div", "menu-cape-row");
-  emblems.setAttribute("role", "group");
-  emblems.setAttribute("aria-label", "Emblem");
-  emblems.appendChild(h("span", "menu-cape-row-label", "Emblem"));
-  for (const emblem of CAPE_EMBLEMS) {
-    const choice = button("", "menu-cape-emblem", () => {
-      onPick({ part: "emblem", emblem });
-    });
-    choice.setAttribute("aria-label", emblem);
-    choice.title = emblem;
-    choice.dataset.emblem = emblem;
-    choice.appendChild(emblemIcon(emblem));
-    emblems.appendChild(choice);
-    pressed.push({ button: choice, on: (cape) => cape.emblem === emblem });
-  }
-  root.appendChild(emblems);
-  const none = button("No cape", "menu-cape-none", () => {
-    onPick({ part: "none" });
-  });
-  root.appendChild(none);
-  return {
-    root,
-    show: (cape) => {
-      for (const { button: each, on } of pressed) {
-        each.setAttribute("aria-pressed", String(cape !== null && on(cape)));
-      }
-      none.setAttribute("aria-pressed", String(cape === null));
-    },
-  };
-}
-
-/**
- * `emblem` in `ink`, upright, sharp at the device's pixel ratio. An image of a
- * canvas, not the canvas: the menu keeps no canvases of its own (#1422).
- */
-function emblemIcon(emblem: CapeEmblem): HTMLImageElement {
-  const ratio = window.devicePixelRatio;
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.round(EMBLEM_BUTTON_PX * ratio);
-  canvas.height = Math.round(EMBLEM_BUTTON_PX * ratio);
-  const context = canvas.getContext("2d");
-  if (context !== null) {
-    context.scale(ratio, ratio);
-    const half = EMBLEM_BUTTON_PX / 2;
-    paintEmblem(
-      canvasPainter(context),
-      emblemShape(emblem, { x: half, y: half }, 0, EMBLEM_BUTTON_PX - 4),
-      SELF_RIM,
-    );
-  }
-  const image = document.createElement("img");
-  image.src = canvas.toDataURL();
-  image.alt = "";
-  image.width = EMBLEM_BUTTON_PX;
-  image.height = EMBLEM_BUTTON_PX;
-  return image;
 }

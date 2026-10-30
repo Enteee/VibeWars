@@ -579,6 +579,7 @@ test("Options → Sound names the menu's track, and a fixed intensity reaches th
   const [menuTrack] = await playedTracks(page);
 
   await page.locator(".topbar-options").click();
+  await page.locator('.options-entry[data-section="sound"]').click();
   await expect(page.locator('.options-entry[data-section="sound"]')).toHaveClass(/is-selected/);
   await expect(page.locator(".music-now-playing-title")).toContainText(
     titles.get(menuTrack ?? "") ?? "no such track",

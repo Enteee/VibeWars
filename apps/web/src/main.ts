@@ -101,12 +101,12 @@ import {
   loadActiveCharacterId,
   loadPlayTab,
   loadStarterCharacterId,
-  playerGuild,
   renderMenu,
   saveActiveCharacterId,
   saveStarterCharacterId,
 } from "./ui/menu.js";
 import { dismissToast, toast } from "./ui/kit.js";
+import { playerGuild } from "./ui/player-section.js";
 import { loadActiveTeamBuildId, renderTeamPlay, type TeamPlayTile } from "./ui/team-play.js";
 import { mountTopbar, paintStatus, type StatusState } from "./ui/topbar.js";
 import {
@@ -440,7 +440,14 @@ async function main(): Promise<void> {
       openHelpOverlay(app);
     },
     onOptions: () => {
-      openOptionsOverlay(app);
+      // Closed over Solo Play, its roster wears the cape just picked in
+      // Options (#1513). Not when a match starting closed it, which leaves
+      // the screen first; any other screen keeps what it joined with.
+      openOptionsOverlay(app, () => {
+        if (idleScreen && screenRoot.querySelector(".screen-menu") !== null) {
+          showMenu();
+        }
+      });
     },
   });
 
