@@ -49,12 +49,12 @@ export const RITUALIST_ICONS = {
   "ritualist.tranquil-was-tanasen": { glyph: "was-calm" },
   "ritualist.vengeful-was-khanhei": { glyph: "was-steal" },
   "ritualist.pure-was-li-ming": { glyph: "was-clear" },
-  // Placeholders until the asset-designer's (#1550): Ritualist spirits.
-  "ritualist.bloodsong": { glyph: "spirit-pain", modifier: "bleed" },
-  "ritualist.anguish": { glyph: "spirit-pain", modifier: "plus" },
-  "ritualist.wanderlust": { glyph: "spirit-ground", modifier: "stun" },
-  "ritualist.soothing": { glyph: "spirit-quiet", modifier: "down" },
-  "ritualist.destruction": { glyph: "spirit-burn", modifier: "area" },
-  "ritualist.life": { glyph: "spirit-share", modifier: "plus" },
-  "ritualist.xinraes-weapon": { glyph: "blade-hook", modifier: "half" },
+  // Ritualist binding spirits 2 (#1622): the post, and a mark for what its blows or its death bring.
+  "ritualist.bloodsong": { glyph: "spirit-blood" },
+  "ritualist.anguish": { glyph: "spirit-hexed" },
+  "ritualist.wanderlust": { glyph: "spirit-run" },
+  "ritualist.soothing": { glyph: "spirit-calm" },
+  "ritualist.destruction": { glyph: "spirit-last-burn" },
+  "ritualist.life": { glyph: "spirit-last-heal" },
+  "ritualist.xinraes-weapon": { glyph: "blade-cap-drop" },
 };
