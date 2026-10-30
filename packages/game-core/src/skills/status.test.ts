@@ -148,6 +148,8 @@ describe("status definitions", () => {
       "lingering-curse": -3,
       "mending-refrain": 3,
       "ice-spear": 3,
+      overload: -3,
+      migraine: -7,
     });
   });
 

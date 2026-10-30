@@ -301,6 +301,28 @@ for 10 s, and that foe's hex ends. A spell does not set it off.
 **Crippling Anguish** (elite, PvP): 50% slower and −5 degeneration for
 17 s.
 
+Eight Mesmer skills punish a foe for using skills (#1473), at rank-12
+durations; damage is the Mesmer's rank and ignores armor. **Wastrel's
+Worry** (PvP): after 3 s the foe takes 84 and adjacent foes 63, but only
+if it runs out: a skill the foe uses first, or a strip, ends it for
+nothing. **Overload**: −3 degeneration for 5 s, and 63 to the foe and 47
+to adjacent foes if it is using any skill as the hex lands, an attack
+skill too, a plain swing not. **Frustration** (PvP): spells cast 50%
+slower for 17 s, and 41 damage each time the foe is interrupted, by an
+interrupt skill, Dazed or a hit alike. **Price of Pride**: for 5 s, the
+foe's next elite skill costs it 13 more energy, then the hex ends.
+**Signet of Humility**: the foe's elite skill is disabled for 13 s,
+nothing if it has none, and your own non-Mesmer skills for 4 s either
+way. **Migraine** (elite, PvP): −7 degeneration for 14 s, and every skill
+but an attack skill takes twice as long to activate, multiplied with
+Dazed, so a 2 s spell takes 8 s. **Visions of Regret** (elite, PvP)
+hexes the foe and those adjacent for 10 s: each skill one of them uses
+costs it 26, and 33 more if it has no other Mesmer hex. **Unnatural
+Signet** (PvP): 50 to the foe, 50 to adjacent foes if it is hexed or
+enchanted, and your non-Mesmer skills but signets are disabled for 10 s.
+The Elementalist's **Mind Blast** (elite, Fire Magic) deals 51 fire
+damage and gives 7 energy back if you have more energy than the foe.
+
 Two Necromancer skills answer a status changing (#887). **Contagion**
 (elite enchantment on yourself, 60 s): each time you gain a condition
 you did not already have, every living foe within the area of you gets
