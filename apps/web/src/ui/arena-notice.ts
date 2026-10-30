@@ -13,3 +13,12 @@ export function noWebGlNotice(): HTMLElement {
   notice.textContent = NO_WEBGL_NOTICE;
   return notice;
 }
+
+/** Where the arena will be while a watcher's delay fills (#480). */
+export function watchingNotice(delaySeconds: number): HTMLElement {
+  const notice = document.createElement("p");
+  notice.className = "arena-notice";
+  notice.setAttribute("role", "status");
+  notice.textContent = `Watching, ${String(delaySeconds)} s behind…`;
+  return notice;
+}

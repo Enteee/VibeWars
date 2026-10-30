@@ -205,6 +205,7 @@
     "MAX_CHAT_GRAPHEMES": { "literal": 200 },
     "MAX_LOBBY_PLAYERS": { "literal": 16 },
     "MAX_SNAPSHOT_PARTS": { "literal": 12 },
+    "MAX_TEAM_LOBBY_SIDE": { "literal": 8 },
     "MAX_WIRE_CHAT_TEXT": { "literal": 2048 },
     "MAX_WIRE_COMBATS": { "literal": 64 },
     "MAX_WIRE_CREATURES": { "literal": 56 },
@@ -231,6 +232,7 @@
     "PROTOCOL_MISMATCH_MESSAGE": {
       "literal": "This tab is running an outdated version of VibeWars. Reload the page."
     },
+    "TEAM_LOBBY_STAGE_SECONDS": { "literal": 60 },
     "TICKET_HEARTBEAT_MS": { "literal": 5000 },
     "TICKET_TTL_MS": { "literal": 15000 }
   },
@@ -1778,17 +1780,26 @@
       ]
     },
     "LobbyPhase": {
-      "union": [{ "literal": "in-match" }, { "literal": "starting" }, { "literal": "waiting" }]
+      "union": [
+        { "literal": "in-match" },
+        { "literal": "starting" },
+        { "literal": "team-lobby" },
+        { "literal": "waiting" }
+      ]
     },
     "LobbyRefusal": {
       "union": [
         { "literal": "fell-through" },
         { "literal": "host-left" },
         { "literal": "invalid-bot" },
+        { "literal": "invalid-proposal" },
+        { "literal": "invalid-slot" },
+        { "literal": "invalid-vote" },
         { "literal": "lobby-full" },
         { "literal": "not-admitted" },
         { "literal": "not-host" },
         { "literal": "protocol-mismatch" },
+        { "literal": "slot-taken" },
         { "literal": "ticket-used" }
       ]
     },
@@ -2873,6 +2884,31 @@
       "union": [
         {
           "properties": [
+            {
+              "name": "build",
+              "optional": false,
+              "type": {
+                "union": [
+                  "null",
+                  "number",
+                  "string",
+                  { "array": { "ref": "JsonValue" } },
+                  { "literal": false },
+                  { "literal": true },
+                  {
+                    "properties": [],
+                    "index": [{ "key": "string", "value": { "ref": "JsonValue" } }]
+                  }
+                ]
+              }
+            },
+            { "name": "kind", "optional": false, "type": { "literal": "propose" } },
+            { "name": "size", "optional": false, "type": "number" },
+            { "name": "slot", "optional": false, "type": "number" }
+          ]
+        },
+        {
+          "properties": [
             { "name": "count", "optional": false, "type": "number" },
             { "name": "kind", "optional": false, "type": { "literal": "set-bots" } },
             {
@@ -2894,6 +2930,18 @@
         },
         {
           "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "claim" } },
+            { "name": "slot", "optional": false, "type": { "union": ["null", "number"] } }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "propose" } },
+            { "name": "slot", "optional": false, "type": "null" }
+          ]
+        },
+        {
+          "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "ready" } },
             { "name": "ready", "optional": false, "type": "boolean" }
           ]
@@ -2904,7 +2952,13 @@
             { "name": "mapId", "optional": false, "type": "string" }
           ]
         },
-        { "properties": [{ "name": "kind", "optional": false, "type": { "literal": "start" } }] }
+        { "properties": [{ "name": "kind", "optional": false, "type": { "literal": "start" } }] },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "vote" } },
+            { "name": "proposerId", "optional": false, "type": { "union": ["null", "string"] } }
+          ]
+        }
       ]
     },
     "WireLobbyNote": {
@@ -3033,6 +3087,7 @@
             "union": [
               { "literal": "in-match" },
               { "literal": "starting" },
+              { "literal": "team-lobby" },
               { "literal": "waiting" }
             ]
           }
@@ -3137,6 +3192,263 @@
                 }
               ]
             }
+          }
+        },
+        {
+          "name": "teamLobby",
+          "optional": false,
+          "type": {
+            "union": [
+              "null",
+              {
+                "properties": [
+                  { "name": "secondsLeft", "optional": false, "type": "number" },
+                  {
+                    "name": "sides",
+                    "optional": false,
+                    "type": {
+                      "tuple": [
+                        {
+                          "union": [
+                            "null",
+                            {
+                              "properties": [
+                                {
+                                  "name": "captainId",
+                                  "optional": false,
+                                  "type": { "union": ["null", "string"] }
+                                },
+                                {
+                                  "name": "chosen",
+                                  "optional": false,
+                                  "type": {
+                                    "union": [
+                                      "null",
+                                      {
+                                        "properties": [
+                                          {
+                                            "name": "members",
+                                            "optional": false,
+                                            "type": {
+                                              "array": {
+                                                "properties": [
+                                                  {
+                                                    "name": "name",
+                                                    "optional": false,
+                                                    "type": "string"
+                                                  },
+                                                  {
+                                                    "name": "primary",
+                                                    "optional": false,
+                                                    "type": "string"
+                                                  },
+                                                  {
+                                                    "name": "secondary",
+                                                    "optional": false,
+                                                    "type": { "union": ["null", "string"] }
+                                                  }
+                                                ]
+                                              }
+                                            }
+                                          },
+                                          {
+                                            "name": "proposerId",
+                                            "optional": false,
+                                            "type": { "union": ["null", "string"] }
+                                          },
+                                          {
+                                            "name": "reason",
+                                            "optional": false,
+                                            "type": {
+                                              "union": [
+                                                { "literal": "captain" },
+                                                { "literal": "house" },
+                                                { "literal": "random" },
+                                                { "literal": "votes" }
+                                              ]
+                                            }
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "name": "claims",
+                                  "optional": false,
+                                  "type": { "array": { "union": ["null", "string"] } }
+                                },
+                                {
+                                  "name": "proposals",
+                                  "optional": false,
+                                  "type": {
+                                    "array": {
+                                      "properties": [
+                                        {
+                                          "name": "members",
+                                          "optional": false,
+                                          "type": {
+                                            "array": {
+                                              "properties": [
+                                                {
+                                                  "name": "primary",
+                                                  "optional": false,
+                                                  "type": "string"
+                                                },
+                                                {
+                                                  "name": "secondary",
+                                                  "optional": false,
+                                                  "type": { "union": ["null", "string"] }
+                                                }
+                                              ]
+                                            }
+                                          }
+                                        },
+                                        {
+                                          "name": "proposerId",
+                                          "optional": false,
+                                          "type": "string"
+                                        },
+                                        {
+                                          "name": "voterIds",
+                                          "optional": false,
+                                          "type": { "array": "string" }
+                                        }
+                                      ]
+                                    }
+                                  }
+                                },
+                                { "name": "size", "optional": false, "type": "number" }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "union": [
+                            "null",
+                            {
+                              "properties": [
+                                {
+                                  "name": "captainId",
+                                  "optional": false,
+                                  "type": { "union": ["null", "string"] }
+                                },
+                                {
+                                  "name": "chosen",
+                                  "optional": false,
+                                  "type": {
+                                    "union": [
+                                      "null",
+                                      {
+                                        "properties": [
+                                          {
+                                            "name": "members",
+                                            "optional": false,
+                                            "type": {
+                                              "array": {
+                                                "properties": [
+                                                  {
+                                                    "name": "name",
+                                                    "optional": false,
+                                                    "type": "string"
+                                                  },
+                                                  {
+                                                    "name": "primary",
+                                                    "optional": false,
+                                                    "type": "string"
+                                                  },
+                                                  {
+                                                    "name": "secondary",
+                                                    "optional": false,
+                                                    "type": { "union": ["null", "string"] }
+                                                  }
+                                                ]
+                                              }
+                                            }
+                                          },
+                                          {
+                                            "name": "proposerId",
+                                            "optional": false,
+                                            "type": { "union": ["null", "string"] }
+                                          },
+                                          {
+                                            "name": "reason",
+                                            "optional": false,
+                                            "type": {
+                                              "union": [
+                                                { "literal": "captain" },
+                                                { "literal": "house" },
+                                                { "literal": "random" },
+                                                { "literal": "votes" }
+                                              ]
+                                            }
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "name": "claims",
+                                  "optional": false,
+                                  "type": { "array": { "union": ["null", "string"] } }
+                                },
+                                {
+                                  "name": "proposals",
+                                  "optional": false,
+                                  "type": {
+                                    "array": {
+                                      "properties": [
+                                        {
+                                          "name": "members",
+                                          "optional": false,
+                                          "type": {
+                                            "array": {
+                                              "properties": [
+                                                {
+                                                  "name": "primary",
+                                                  "optional": false,
+                                                  "type": "string"
+                                                },
+                                                {
+                                                  "name": "secondary",
+                                                  "optional": false,
+                                                  "type": { "union": ["null", "string"] }
+                                                }
+                                              ]
+                                            }
+                                          }
+                                        },
+                                        {
+                                          "name": "proposerId",
+                                          "optional": false,
+                                          "type": "string"
+                                        },
+                                        {
+                                          "name": "voterIds",
+                                          "optional": false,
+                                          "type": { "array": "string" }
+                                        }
+                                      ]
+                                    }
+                                  }
+                                },
+                                { "name": "size", "optional": false, "type": "number" }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "stage",
+                    "optional": false,
+                    "type": { "union": [{ "literal": "claim" }, { "literal": "vote" }] }
+                  }
+                ]
+              }
+            ]
           }
         }
       ]
@@ -4363,6 +4675,356 @@
           "optional": false,
           "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
         }
+      ]
+    },
+    "WireTeamChoice": {
+      "properties": [
+        {
+          "name": "members",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "name", "optional": false, "type": "string" },
+                { "name": "primary", "optional": false, "type": "string" },
+                { "name": "secondary", "optional": false, "type": { "union": ["null", "string"] } }
+              ]
+            }
+          }
+        },
+        { "name": "proposerId", "optional": false, "type": { "union": ["null", "string"] } },
+        {
+          "name": "reason",
+          "optional": false,
+          "type": {
+            "union": [
+              { "literal": "captain" },
+              { "literal": "house" },
+              { "literal": "random" },
+              { "literal": "votes" }
+            ]
+          }
+        }
+      ]
+    },
+    "WireTeamLobby": {
+      "properties": [
+        { "name": "secondsLeft", "optional": false, "type": "number" },
+        {
+          "name": "sides",
+          "optional": false,
+          "type": {
+            "tuple": [
+              {
+                "union": [
+                  "null",
+                  {
+                    "properties": [
+                      {
+                        "name": "captainId",
+                        "optional": false,
+                        "type": { "union": ["null", "string"] }
+                      },
+                      {
+                        "name": "chosen",
+                        "optional": false,
+                        "type": {
+                          "union": [
+                            "null",
+                            {
+                              "properties": [
+                                {
+                                  "name": "members",
+                                  "optional": false,
+                                  "type": {
+                                    "array": {
+                                      "properties": [
+                                        { "name": "name", "optional": false, "type": "string" },
+                                        { "name": "primary", "optional": false, "type": "string" },
+                                        {
+                                          "name": "secondary",
+                                          "optional": false,
+                                          "type": { "union": ["null", "string"] }
+                                        }
+                                      ]
+                                    }
+                                  }
+                                },
+                                {
+                                  "name": "proposerId",
+                                  "optional": false,
+                                  "type": { "union": ["null", "string"] }
+                                },
+                                {
+                                  "name": "reason",
+                                  "optional": false,
+                                  "type": {
+                                    "union": [
+                                      { "literal": "captain" },
+                                      { "literal": "house" },
+                                      { "literal": "random" },
+                                      { "literal": "votes" }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "name": "claims",
+                        "optional": false,
+                        "type": { "array": { "union": ["null", "string"] } }
+                      },
+                      {
+                        "name": "proposals",
+                        "optional": false,
+                        "type": {
+                          "array": {
+                            "properties": [
+                              {
+                                "name": "members",
+                                "optional": false,
+                                "type": {
+                                  "array": {
+                                    "properties": [
+                                      { "name": "primary", "optional": false, "type": "string" },
+                                      {
+                                        "name": "secondary",
+                                        "optional": false,
+                                        "type": { "union": ["null", "string"] }
+                                      }
+                                    ]
+                                  }
+                                }
+                              },
+                              { "name": "proposerId", "optional": false, "type": "string" },
+                              {
+                                "name": "voterIds",
+                                "optional": false,
+                                "type": { "array": "string" }
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      { "name": "size", "optional": false, "type": "number" }
+                    ]
+                  }
+                ]
+              },
+              {
+                "union": [
+                  "null",
+                  {
+                    "properties": [
+                      {
+                        "name": "captainId",
+                        "optional": false,
+                        "type": { "union": ["null", "string"] }
+                      },
+                      {
+                        "name": "chosen",
+                        "optional": false,
+                        "type": {
+                          "union": [
+                            "null",
+                            {
+                              "properties": [
+                                {
+                                  "name": "members",
+                                  "optional": false,
+                                  "type": {
+                                    "array": {
+                                      "properties": [
+                                        { "name": "name", "optional": false, "type": "string" },
+                                        { "name": "primary", "optional": false, "type": "string" },
+                                        {
+                                          "name": "secondary",
+                                          "optional": false,
+                                          "type": { "union": ["null", "string"] }
+                                        }
+                                      ]
+                                    }
+                                  }
+                                },
+                                {
+                                  "name": "proposerId",
+                                  "optional": false,
+                                  "type": { "union": ["null", "string"] }
+                                },
+                                {
+                                  "name": "reason",
+                                  "optional": false,
+                                  "type": {
+                                    "union": [
+                                      { "literal": "captain" },
+                                      { "literal": "house" },
+                                      { "literal": "random" },
+                                      { "literal": "votes" }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "name": "claims",
+                        "optional": false,
+                        "type": { "array": { "union": ["null", "string"] } }
+                      },
+                      {
+                        "name": "proposals",
+                        "optional": false,
+                        "type": {
+                          "array": {
+                            "properties": [
+                              {
+                                "name": "members",
+                                "optional": false,
+                                "type": {
+                                  "array": {
+                                    "properties": [
+                                      { "name": "primary", "optional": false, "type": "string" },
+                                      {
+                                        "name": "secondary",
+                                        "optional": false,
+                                        "type": { "union": ["null", "string"] }
+                                      }
+                                    ]
+                                  }
+                                }
+                              },
+                              { "name": "proposerId", "optional": false, "type": "string" },
+                              {
+                                "name": "voterIds",
+                                "optional": false,
+                                "type": { "array": "string" }
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      { "name": "size", "optional": false, "type": "number" }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "stage",
+          "optional": false,
+          "type": { "union": [{ "literal": "claim" }, { "literal": "vote" }] }
+        }
+      ]
+    },
+    "WireTeamProposal": {
+      "properties": [
+        {
+          "name": "members",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "primary", "optional": false, "type": "string" },
+                { "name": "secondary", "optional": false, "type": { "union": ["null", "string"] } }
+              ]
+            }
+          }
+        },
+        { "name": "proposerId", "optional": false, "type": "string" },
+        { "name": "voterIds", "optional": false, "type": { "array": "string" } }
+      ]
+    },
+    "WireTeamSide": {
+      "properties": [
+        { "name": "captainId", "optional": false, "type": { "union": ["null", "string"] } },
+        {
+          "name": "chosen",
+          "optional": false,
+          "type": {
+            "union": [
+              "null",
+              {
+                "properties": [
+                  {
+                    "name": "members",
+                    "optional": false,
+                    "type": {
+                      "array": {
+                        "properties": [
+                          { "name": "name", "optional": false, "type": "string" },
+                          { "name": "primary", "optional": false, "type": "string" },
+                          {
+                            "name": "secondary",
+                            "optional": false,
+                            "type": { "union": ["null", "string"] }
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "name": "proposerId",
+                    "optional": false,
+                    "type": { "union": ["null", "string"] }
+                  },
+                  {
+                    "name": "reason",
+                    "optional": false,
+                    "type": {
+                      "union": [
+                        { "literal": "captain" },
+                        { "literal": "house" },
+                        { "literal": "random" },
+                        { "literal": "votes" }
+                      ]
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "claims",
+          "optional": false,
+          "type": { "array": { "union": ["null", "string"] } }
+        },
+        {
+          "name": "proposals",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                {
+                  "name": "members",
+                  "optional": false,
+                  "type": {
+                    "array": {
+                      "properties": [
+                        { "name": "primary", "optional": false, "type": "string" },
+                        {
+                          "name": "secondary",
+                          "optional": false,
+                          "type": { "union": ["null", "string"] }
+                        }
+                      ]
+                    }
+                  }
+                },
+                { "name": "proposerId", "optional": false, "type": "string" },
+                { "name": "voterIds", "optional": false, "type": { "array": "string" } }
+              ]
+            }
+          }
+        },
+        { "name": "size", "optional": false, "type": "number" }
       ]
     },
     "WireTraps": {

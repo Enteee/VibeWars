@@ -208,6 +208,8 @@ async function openQueued(options: OpenQueuedOptions = {}): Promise<QueuedLobby>
     transport: spied(network.join("host"), sent, proposals),
     code: GROUP_ID,
     mapIds: ["test-arena", "other-arena"],
+    teamLobby: false,
+    random: () => 0.5,
     startMatch(plan) {
       plans.push(plan);
       if (match !== undefined) {
@@ -474,6 +476,7 @@ describe("a queued lobby", () => {
           mapId: "other-arena",
           hostId: "impostor",
           matchId: null,
+          teamLobby: null,
           players: [
             {
               id: from,

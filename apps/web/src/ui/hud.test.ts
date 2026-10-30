@@ -1422,7 +1422,7 @@ describe("targetEffectRows (#835)", () => {
   });
 
   it("shows the target's statuses in the order the host sent them", () => {
-    const rows = targetEffectRows(self, foe, names, 10);
+    const rows = targetEffectRows(self.sessionId, foe, names, 10);
     expect(rows.map((row) => [row.id, row.casterName, row.fraction])).toEqual([
       ["bleeding", "you", 1],
       ["crippled", "Cynn", 0.5],
@@ -1430,23 +1430,25 @@ describe("targetEffectRows (#835)", () => {
   });
 
   it("replaces them with the new target's when the target changes", () => {
-    expect(targetEffectRows(self, ally, names, 10).map((row) => row.id)).toEqual(["armor-boost"]);
+    expect(targetEffectRows(self.sessionId, ally, names, 10).map((row) => row.id)).toEqual([
+      "armor-boost",
+    ]);
   });
 
   it("ticks an enchantment you put on an ally, never a condition you put on a foe", () => {
-    expect(targetEffectRows(self, ally, names, 10)[0]?.yours).toBe(true);
-    expect(targetEffectRows(self, foe, names, 10)[0]?.yours).toBe(false);
+    expect(targetEffectRows(self.sessionId, ally, names, 10)[0]?.yours).toBe(true);
+    expect(targetEffectRows(self.sessionId, foe, names, 10)[0]?.yours).toBe(false);
   });
 
   it("shows nothing with no target, a dead one, or no match clock", () => {
-    expect(targetEffectRows(self, undefined, names, 10)).toEqual([]);
-    expect(targetEffectRows(self, { ...foe, dead: true }, names, 10)).toEqual([]);
-    expect(targetEffectRows(self, foe, names, undefined)).toEqual([]);
+    expect(targetEffectRows(self.sessionId, undefined, names, 10)).toEqual([]);
+    expect(targetEffectRows(self.sessionId, { ...foe, dead: true }, names, 10)).toEqual([]);
+    expect(targetEffectRows(self.sessionId, foe, names, undefined)).toEqual([]);
   });
 
   it("shows what your own monitor does when you target yourself", () => {
     const me = { ...ally, sessionId: "me" };
-    expect(targetEffectRows(me, me, names, 10)).toEqual([
+    expect(targetEffectRows(me.sessionId, me, names, 10)).toEqual([
       expect.objectContaining({ id: "armor-boost", yours: true, casterName: "you" }),
     ]);
   });

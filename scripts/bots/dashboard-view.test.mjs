@@ -1073,6 +1073,16 @@ describe("companyLines", () => {
         diskHoldBelow: 20 * GIB,
       },
       staff: null,
+      webCache: {
+        entries: 812,
+        bytes: 1.2 * GIB,
+        limitBytes: 10 * GIB,
+        hits: 83,
+        misses: 17,
+        evictions: 0,
+        bytesSaved: 0.4 * GIB,
+        hitRate: 0.83,
+      },
       errors: {},
     };
     /**
@@ -1101,7 +1111,7 @@ describe("companyLines", () => {
       return lines.slice(from, to);
     };
 
-    it("follows the staff with flow, blocked, host and the top three", () => {
+    it("follows the staff with flow, blocked, host, the top three and the web cache", () => {
       const lines = pane(full);
       expect(lines.map(plain)).toEqual([
         "KPI (since 27 Oct, 7 d window)  updated 2 min ago",
@@ -1109,6 +1119,7 @@ describe("companyLines", () => {
         "blocked 2, oldest 1d3h",
         "host    jails 9.8 GiB · cpu 340% · disk free 41 GiB",
         "top     developer@2 2.1 GiB 95% · qa-tester 1.6 GiB 80% · developer 1.4 GiB 60%",
+        "web cache 1.2 GiB / 10 GiB, 83% hits",
       ]);
       expect(lines[0]).toContain("\x1b[1m");
     });
@@ -1157,8 +1168,18 @@ describe("companyLines", () => {
         { ...full, host: null, errors: { host: "systemctl: unit vibewars.slice not found" } },
         { width: 30 },
       ).map(plain);
-      expect(lines.at(-1)).toBe("host    systemctl: unit vibew…");
+      expect(lines.at(-2)).toBe("host    systemctl: unit vibew…");
       expect(lines.some((line) => line.startsWith("top"))).toBe(false);
+    });
+
+    it("says why the web cache is unread, and – hits before the first request", () => {
+      const failed = pane({ ...full, webCache: null, errors: { webCache: "EACCES" } }).map(plain);
+      expect(failed.at(-1)).toBe("web cache EACCES");
+      const empty = pane({
+        ...full,
+        webCache: { ...full.webCache, bytes: 0, hits: 0, misses: 0, hitRate: null },
+      }).map(plain);
+      expect(empty.at(-1)).toBe("web cache 0.0 GiB / 10 GiB, – hits");
     });
 
     it("never wraps a narrow pane", () => {

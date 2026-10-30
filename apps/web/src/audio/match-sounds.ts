@@ -23,7 +23,11 @@ export interface MatchSounds {
   dispose(): void;
 }
 
-export function attachMatchSounds(connection: MatchConnection, player: SoundPlayer): MatchSounds {
+/** What the sounds listen to: a seat, or a watcher (#480), which has no cast to be refused. */
+export type MatchSoundSource = Pick<MatchConnection, "selfSessionId" | "onCombat"> &
+  Partial<Pick<MatchConnection, "onCastRefused">>;
+
+export function attachMatchSounds(connection: MatchSoundSource, player: SoundPlayer): MatchSounds {
   let prev: MatchSnapshot | undefined;
   let online = true;
   let disposed = false;
@@ -40,7 +44,7 @@ export function attachMatchSounds(connection: MatchConnection, player: SoundPlay
   connection.onCombat((message) => {
     playAll(soundsForCombat(message, connection.selfSessionId));
   });
-  connection.onCastRefused(() => {
+  connection.onCastRefused?.(() => {
     playAll(["refused"]);
   });
 

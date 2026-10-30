@@ -54,7 +54,13 @@ export {
   WRONG_MATCH_MESSAGE,
   createMatchHost,
 } from "./match-host.js";
-export type { HostMap, MatchHost, MatchHostOptions, PlannedSeats } from "./match-host.js";
+export type {
+  HostMap,
+  MatchHost,
+  MatchHostOptions,
+  PlannedSeat,
+  PlannedSeats,
+} from "./match-host.js";
 export {
   HostLeftError,
   MatchRefusedError,
@@ -73,6 +79,7 @@ export type {
   LobbyPlayerSnapshot,
   LobbySnapshot,
   MatchStarting,
+  MatchToWatch,
 } from "./lobby-connection.js";
 export { UNNAMED_CHARACTER, lobbyCharacter } from "./lobby-character.js";
 export { PARTY_CONSENT_MS, canStart, createLobbyHost } from "./lobby-host.js";

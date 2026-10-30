@@ -44,3 +44,4 @@ rewriting history.
 | [0037](0037-per-piece-armor.md)               | Insignia armor is per piece, and each hit rolls its piece       |
 | [0038](0038-skill-corpus.md)                  | gw-skilldata is the skill corpus, vendored at a pinned commit   |
 | [0039](0039-third-party-licences-page.md)     | Third-party credits and licences live on one Options page       |
+| [0040](0040-team-lobby.md)                    | Team Lobby: the host runs a vote and claims before the match    |

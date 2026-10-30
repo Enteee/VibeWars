@@ -24,6 +24,7 @@ import {
   ARENA,
   answerChallenges,
   hello,
+  helloAs,
   playerIn,
   self,
   settle,
@@ -378,13 +379,39 @@ describe("pet orders (#1110)", () => {
   });
 });
 
+describe("a Team Lobby's seats (#1458)", () => {
+  const TICK = 1 / RULESET.tickRateHz;
+
+  it("plays the build the lobby assigned a seat, not the one its hello brings", async () => {
+    const assigned = starterBuild("Monk/Elementalist");
+    const match = startMatch({
+      seats: new Map<string, PlannedSeat>([
+        [
+          "host/local",
+          { team: 0, name: "Me", guildTag: null, guildCape: null, bot: false, build: assigned },
+        ],
+      ]),
+    });
+    const local = await match.joinLocal(helloAs("Warrior/Monk"));
+    await match.step(TICK);
+    expect(local.skillBar.map((slot) => slot?.id ?? null)).toEqual(assigned.skillBar);
+    expect(self(local)?.name).toBe("Me");
+  });
+});
+
 describe("a lobby's bots (#1193)", () => {
   const TICK = 1 / RULESET.tickRateHz;
   /** A bot's planned seat, keyed by its name as a lobby keys it by its id. */
   const bot = (team: 0 | 1, name: string, build: string) =>
-    [name, { team, name, guildTag: null, guildCape: null, bot: starterBuild(build) }] as const;
+    [
+      name,
+      { team, name, guildTag: null, guildCape: null, bot: true, build: starterBuild(build) },
+    ] as const;
   const human = (team: 0 | 1) =>
-    ["host/local", { team, name: "Me", guildTag: "VIBE", guildCape: CAPE, bot: null }] as const;
+    [
+      "host/local",
+      { team, name: "Me", guildTag: "VIBE", guildCape: CAPE, bot: false, build: null },
+    ] as const;
   const named = (snapshot: MatchSnapshot, name: string) =>
     snapshot.players.find((player) => player.name === name);
 
