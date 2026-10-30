@@ -36,13 +36,13 @@ export const ASSASSIN_ICONS = {
   "assassin.feigned-neutrality": { glyph: "shield-veil", modifier: "self" },
   "assassin.way-of-perfection": { glyph: "crescent-spark", modifier: "clock" },
   "assassin.caltrops": { glyph: "caltrops", modifier: "bleed" },
-  // Placeholders until the asset-designer's (#1580).
-  "assassin.golden-lotus-strike": { glyph: "dagger", modifier: "plus" },
-  "assassin.golden-phoenix-strike": { glyph: "dagger-burst", modifier: "area" },
-  "assassin.exhausting-assault": { glyph: "dagger-stop", modifier: "less" },
-  "assassin.mantis-touch": { glyph: "limp", modifier: "half" },
-  "assassin.palm-strike": { glyph: "palm", modifier: "up" },
-  "assassin.signet-of-toxic-shock": { glyph: "drop-run", modifier: "bolt" },
-  "assassin.beguiling-haze": { glyph: "blink", modifier: "stun" },
+  // Assassin staples (#1580, #1617).
+  "assassin.golden-lotus-strike": { glyph: "dagger-lotus" },
+  "assassin.golden-phoenix-strike": { glyph: "flame-wings" },
+  "assassin.exhausting-assault": { glyph: "dagger-drain" },
+  "assassin.mantis-touch": { glyph: "hand-limp" },
+  "assassin.palm-strike": { glyph: "hand-burst" },
+  "assassin.signet-of-toxic-shock": { glyph: "drop-shock" },
+  "assassin.beguiling-haze": { glyph: "blink-daze" },
   "assassin.shadow-prison": { glyph: "blink-bars" },
 };

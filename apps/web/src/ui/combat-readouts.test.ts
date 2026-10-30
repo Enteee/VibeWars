@@ -10,6 +10,7 @@ import {
   describeCombatEvent,
   dividerRow,
   floatingCueFor,
+  foldedText,
   formatAmount,
   formatRate,
   formatSimClock,
@@ -631,6 +632,15 @@ describe("appendRows", () => {
         ["0:12.0", "regeneration heals Pyro for 60 over 19 s"],
       ]);
       expect(replacedLast).toBe(false);
+    });
+
+    it("says no span for a fold of rows closed at the same time (#1618)", () => {
+      expect(appendRows([], [regen(12, 3), regen(12, 3)], 100).rows.map((r) => r.text)).toEqual([
+        "regeneration heals Pyro for 6",
+      ]);
+      const fold = { key: "k", amount: 3, startedAt: 12, endedAt: 12, label: "heals" };
+      expect(foldedText(fold)).toBe("heals for 3");
+      expect(foldedText({ ...fold, amount: 57, endedAt: 31 })).toBe("heals for 57 over 19 s");
     });
 
     it("lets a hit or a divider end the run", () => {

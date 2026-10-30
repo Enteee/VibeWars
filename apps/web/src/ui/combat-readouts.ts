@@ -437,10 +437,14 @@ export function dividerRow(label: string, atSeconds: number): LogRow {
   return { time: formatSimClock(atSeconds), text: `── ${label} ──`, tone: "divider" };
 }
 
-/** A folded run's text: "regeneration heals You for 57 over 19 s". */
+/**
+ * A folded run's text: "regeneration heals You for 57 over 19 s". A run
+ * of one tick has no span, so no tail (#1618).
+ */
 export function foldedText(fold: LogFold): string {
-  const seconds = formatAmount(fold.endedAt - fold.startedAt);
-  return `${fold.label} for ${formatAmount(fold.amount)} over ${seconds} s`;
+  const span = fold.endedAt - fold.startedAt;
+  const total = `${fold.label} for ${formatAmount(fold.amount)}`;
+  return span === 0 ? total : `${total} over ${formatAmount(span)} s`;
 }
 
 /**

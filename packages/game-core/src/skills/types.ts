@@ -676,7 +676,8 @@ export interface CreatureTemplate {
  */
 export interface DeathBurst {
   readonly effect: "damage" | "heal";
-  readonly perSecondAlive: number;
+  /** Scaled by its owner, read once at summoning (#1603). */
+  readonly perSecondAlive: Magnitude;
   /** `undefined`: no cap. */
   readonly max: number | undefined;
   readonly affects: "allies" | "foes";
@@ -1395,6 +1396,12 @@ export interface Skill {
 export interface CorpseRule {
   /** The nearest fresh corpse within this of the caster, world units. */
   readonly radius: number;
+  /**
+   * `target`: nearest the cast's target instead, within `radius` of it
+   * (#1583): Putrid Explosion's "the corpse nearest your target". Absent:
+   * nearest the caster.
+   */
+  readonly near?: "target";
 }
 
 /** How a flying spell flies (#535). */
