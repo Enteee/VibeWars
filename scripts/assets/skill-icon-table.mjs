@@ -369,7 +369,7 @@ export const SKILL_ICONS = {
   "ritualist.destructive-was-glaive": { glyph: "lightning", modifier: "area" },
   "ritualist.tranquil-was-tanasen": { glyph: "shield-stance", modifier: "less" },
   "ritualist.vengeful-was-khanhei": { glyph: "thorns", modifier: "hourglass" },
-  "ritualist.pure-was-li-ming": { glyph: "cleanse", modifier: "area" },
+  "ritualist.pure-was-li-ming": { glyph: "cleanse", modifier: "half" },
   // Flash enchantments (#1421, #1447).
   "dervish.enchanted-haste": { glyph: "haste-clean" },
   "dervish.heart-of-holy-flame": { glyph: "flame-halo" },
