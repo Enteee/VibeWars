@@ -809,6 +809,7 @@ const TARGET_REJECTIONS: ReadonlySet<ActivationRejection> = new Set([
   "invalid-target-self",
   "invalid-target-ally",
   "invalid-target-enemy",
+  "invalid-target-untargetable",
 ]);
 
 /** How a step toward a waypoint went; see `#stepToward`. */

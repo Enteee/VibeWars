@@ -453,6 +453,7 @@ const REFUSALS: Readonly<Record<ActivationRejection, string>> = {
   "no-animal-to-charm": "There is no animal to charm here.",
   "invalid-target-creature": "That cannot be revived that way.",
   "cannot-cast-spells": "You cannot cast spells.",
+  "invalid-target-untargetable": "Your spells cannot target that foe.",
   "hands-full": "Your hands are full: drop what you carry first.",
   "not-your-flag": "That is not your flag.",
   "flag-on-stand": "Your flag is already on the stand.",

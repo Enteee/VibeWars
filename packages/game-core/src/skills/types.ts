@@ -263,14 +263,17 @@ export interface LoseHealthEffect {
 }
 
 /**
- * Move up to `count` of the caster's conditions, newest first, onto the
- * target, each with the time it had left on the caster (#944), as Plague
- * Touch's. Each lands as any condition the caster put on: the longer
- * duration wins.
+ * Move up to `count` conditions, newest first, each with the time it had
+ * left, `from` the caster onto the target (#944), as Plague Touch's, or
+ * from the target onto the caster (#1511), as Draw Conditions'. Each
+ * lands as any condition the giver put on: the longer duration wins.
+ * `healPerCondition`: the caster is healed that much per condition moved.
  */
 export interface TransferConditionsEffect {
   readonly kind: "transfer-conditions";
+  readonly from: "caster" | "target";
   readonly count: number;
+  readonly healPerCondition?: Magnitude;
 }
 
 /**
@@ -544,15 +547,23 @@ export interface LengthenRechargeEffect {
  * Disable the caster's own bar skills of one kind for `seconds` (#1234),
  * running alongside their recharges as `disable-skill`'s do, as Shroud of
  * Silence's "all of your spells are disabled for 15 seconds". `spells`:
- * every spell (`isSpell`) on the bar. `other-professions` (#1473):
- * every skill on the bar not of `profession`, the using skill's own, a
- * common skill included, but those of `exceptTypes`: Unnatural Signet's
- * "all your non-Mesmer skills except signets". None on it: nothing.
+ * every spell (`isSpell`) on the bar. `attribute` (#1511): every skill
+ * of `attributeId` on the bar but the one used, as Light of Deliverance
+ * (PvP)'s "all your Smiting Prayers are disabled". `other-professions`
+ * (#1473): every skill on the bar not of `profession`, the using skill's
+ * own, a common skill included, but those of `exceptTypes`: Unnatural
+ * Signet's "all your non-Mesmer skills except signets". None on it: nothing.
  */
 export type DisableOwnSkillsEffect =
   | {
       readonly kind: "disable-own-skills";
       readonly which: "spells";
+      readonly seconds: number;
+    }
+  | {
+      readonly kind: "disable-own-skills";
+      readonly which: "attribute";
+      readonly attributeId: string;
       readonly seconds: number;
     }
   | {
@@ -875,6 +886,12 @@ export type StateCondition =
    * damage if target foe is a summoned creature".
    */
   | { readonly kind: "target-is-summoned" }
+  /**
+   * The effect's target is activating a spell (`isSpell`) or is attacking
+   * (#1511), either once: Signet of Rejuvenation's "casting a spell or
+   * attacking". An attack held while a spell is cast counts once.
+   */
+  | { readonly kind: "target-casting-or-attacking" }
   /**
    * No living spirit, any team's, stands within `radius` of the caster
    * (#1064): Spirit Light's sacrifice, which it skips near one.
@@ -1452,6 +1469,11 @@ export interface SkillContext {
    * `lengthen-recharge` lengthens. Absent elsewhere.
    */
   readonly usedSkill?: SlotSkill | undefined;
+  /**
+   * The skill landing (#1511), when one does rather than a status's
+   * trigger: what `disable-own-skills` `attribute` spares. Absent elsewhere.
+   */
+  readonly skillId?: string | undefined;
   /**
    * The status whose trigger these effects are (#1473): what
    * `target-lacks-other-hex` does not count. Absent outside a trigger.
