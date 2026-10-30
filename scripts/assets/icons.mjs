@@ -2768,7 +2768,7 @@ const skillGlyph = {
     ),
   // A plus beside a struck drop and a struck dashed ring: a condition and a hex taken off.
   "heal-clear": () =>
-    inkFill("M6 6h3.6v3.6h3.6v3.6H9.6v3.6H6v-3.6H2.4V9.6H6z").replace("M6 6", "M6.6 8") +
+    inkFill("M6.6 8h3.6v3.6h3.6v3.6H9.6v3.6H6v-3.6H2.4V9.6H6z") +
     `<circle cx="17.5" cy="6.5" r="3.6" ${stroke(C.ink, 1.6)} stroke-dasharray="2.6 2"/>` +
     inkFill("M17.5 12.5C16 14.5 15 15.6 15 16.8A2.5 2.5 0 0 0 20 16.8C20 15.6 19 14.5 17.5 12.5Z") +
     `<path d="M13.5 21L21.5 11" ${stroke(C.bg, 3)}/>` +
@@ -2778,7 +2778,7 @@ const skillGlyph = {
     inkFill("M9 3h5v5h5v5h-5v5H9v-5H4V8h5z") +
     inkFill(
       "M17.5 14.5C15.5 17 14.5 18.4 14.5 19.8A3 3 0 0 0 20.5 19.8C20.5 18.4 19.5 17 17.5 14.5Z",
-    ).replace("M17.5 14.5", "M17.5 14.5"),
+    ),
   // Three pluses in a triangle: the whole party is healed.
   "plus-trio": () =>
     [
