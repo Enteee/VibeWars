@@ -116,6 +116,10 @@ export type StatusId =
   | "mending"
   | "patient-spirit"
   | "holy-veil"
+  | "aegis"
+  | "shield-of-deflection"
+  | "shielding-hands"
+  | "spell-breaker"
   | "healing-breeze"
   | "protective-spirit"
   | "shadow-refuge"
@@ -490,6 +494,13 @@ export interface StatusDefinition {
    * not a spell is left alone.
    */
   readonly preventsSpells: boolean;
+  /**
+   * A foe of the bearer cannot start a spell with the bearer as its target
+   * (#1511): Spell Breaker's "cannot be the target of enemy spells". A cast
+   * already started goes off; an area or a splash still reaches the
+   * bearer, and an ally's spell or a foe's non-spell is left alone.
+   */
+  readonly untargetableByFoeSpells: boolean;
   /**
    * The bearer cannot block an attack of the status's source (#1234):
    * Expose Defenses' "cannot block your attacks". Anyone else's still
@@ -1232,6 +1243,7 @@ function define(
     interruptsSpells: false,
     attackDurationMultiplier: 1,
     preventsSpells: false,
+    untargetableByFoeSpells: false,
     unblockableBySource: false,
     preventsBlocking: false,
     renewsWhileMoving: undefined,
@@ -1581,6 +1593,41 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
         skillId: "monk.holy-veil",
       },
     ],
+  }),
+  // "For 6...15 seconds, all party members within earshot have a 50%
+  // chance to block attacks" (#1511).
+  aegis: define("aegis", "Aegis", "enchantment", {
+    profession: "monk",
+    block: { chance: 0.5, against: "all" },
+  }),
+  // "For 3...10 seconds, target ally has a 75% chance to block attacks and
+  // gains 15...30 armor": +27, its rank-12 value (#1511).
+  "shield-of-deflection": define("shield-of-deflection", "Shield of Deflection", "enchantment", {
+    profession: "monk",
+    block: { chance: 0.75, against: "all" },
+    armorModifier: 27,
+  }),
+  // "For 8 seconds, damage and life steal received by target ally is
+  // reduced by 3...18. When Shielding Hands ends, that ally is healed for
+  // 5...50 Health": 15 and 41, its rank-12 values (#1511).
+  "shielding-hands": define("shielding-hands", "Shielding Hands", "enchantment", {
+    profession: "monk",
+    damageReduction: 15,
+    lifeStealReduction: 15,
+    triggers: [
+      {
+        on: "ends",
+        effects: [{ kind: "heal", amount: { flat: 41 }, perStatusOnTarget: [] }],
+        target: "bearer",
+        skillId: "monk.shielding-hands",
+      },
+    ],
+  }),
+  // "For 5...17 seconds, target ally cannot be the target of enemy
+  // spells" (#1511).
+  "spell-breaker": define("spell-breaker", "Spell Breaker", "enchantment", {
+    profession: "monk",
+    untargetableByFoeSpells: true,
   }),
   // "For 15 seconds, target ally gains health regeneration of 4...8...9":
   // +8, its rank-12 value.
@@ -4507,6 +4554,14 @@ export class StatusSet {
       });
     }
   }
+}
+
+/**
+ * Whether a foe cannot start a spell at a bearer of `statuses` (#1511,
+ * `untargetableByFoeSpells`).
+ */
+export function untargetableByFoeSpells(statuses: readonly Pick<ActiveStatus, "id">[]): boolean {
+  return statuses.some(({ id }) => getStatusDefinition(id).untargetableByFoeSpells);
 }
 
 /**

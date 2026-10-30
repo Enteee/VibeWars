@@ -69,13 +69,14 @@ export function removedCategories(skill: Skill): readonly StatusCategory[] {
 /**
  * Whether the removal comes off the caster rather than the target:
  * Plague Touch's, cast on a foe, or a `remove-status` `from` the caster.
+ * Draw Conditions' comes off the ally it is cast on (#1511).
  */
 export function removesFromCaster(skill: Skill): boolean {
   return skill.effects
     .flatMap(flatten)
     .some(
       (effect) =>
-        effect.kind === "transfer-conditions" ||
+        (effect.kind === "transfer-conditions" && effect.from === "caster") ||
         (effect.kind === "remove-status" && effect.from === "caster"),
     );
 }

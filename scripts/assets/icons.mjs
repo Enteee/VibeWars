@@ -533,6 +533,35 @@ const status = {
     (c) =>
       `<path d="M7.5 7l1.5 10 1.5-10zM10.5 7l1.5 11 1.5-11zM13.5 7l1.5 10 1.5-10z" fill="${c}"/>`,
   ],
+  // Monk staples (#1511), stand-ins until their art card.
+  // Enchantment: three small shields, a block for everyone in earshot.
+  aegis: [
+    "enchantment",
+    (c) =>
+      `<path d="M4 6h5v3c0 2-1.2 3-2.5 4C5.2 12 4 11 4 9zM15 6h5v3c0 2-1.2 3-2.5 4-1.3-1-2.5-2-2.5-4z" ${stroke(c, 1.6)}/>` +
+      `<path d="M9.5 12h5v3c0 2-1.2 3-2.5 4-1.3-1-2.5-2-2.5-4z" ${stroke(c, 1.6)}/>`,
+  ],
+  // Enchantment: a filled shield, a blow glancing off it.
+  "shield-of-deflection": [
+    "enchantment",
+    (c) =>
+      `<path d="M7 5.5h10v5.5c0 3-2.5 5-5 6.5C9.5 16 7 14 7 11z" fill="${c}"/>` +
+      `<path d="M4 20L9 15" ${stroke(c, 2.2)}/>`,
+  ],
+  // Enchantment: two cupped hands under a drop, damage taken softened.
+  "shielding-hands": [
+    "enchantment",
+    (c) =>
+      `<path d="M4 12c0 4 3.5 7 8 7s8-3 8-7" ${stroke(c, 2)}/>` +
+      `<path d="M12 4c-2 3-3 4.5-3 6a3 3 0 0 0 6 0c0-1.5-1-3-3-6z" fill="${c}"/>`,
+  ],
+  // Enchantment: a ring with a broken spell bolt, foes' spells turned away.
+  "spell-breaker": [
+    "enchantment",
+    (c) =>
+      `<circle cx="12" cy="12" r="7.5" ${stroke(c, 1.8)}/>` +
+      `<path d="M13 5l-3 6h4l-3 6" ${stroke(c, 1.8)}/><path d="M6 18L18 6" ${stroke(c, 2.2)}/>`,
+  ],
   // Hex: a snowflake, the ground frozen under you (#938).
   "deep-freeze": ["hex", (c) => `<path d="M12 6v12M6.8 9l10.4 6M6.8 15l10.4-6" ${stroke(c, 2)}/>`],
   // Enchantment: a shield in outline with a blow glancing off it, block (#534).
@@ -1833,6 +1862,37 @@ const flameRing = (inner, outer, width, dot = true) => {
   return inkLine(d, width) + (dot ? `<circle cx="12" cy="12" r="2.2" fill="${C.ink}"/>` : "");
 };
 
+/** What a "with their next skill" chant waits for: a mark in the top left corner (#1497). */
+const nextTrigger = {
+  // A small blade: an attack skill.
+  attack: () => inkLine("M2.5 10L9.5 3", 2) + inkLine("M3.4 5.6L7 9.2", 1.8),
+  // A four-point star: a spell.
+  spell: () => inkFill("M6 1.2L7.5 4.5L10.8 6L7.5 7.5L6 10.8L4.5 7.5L1.2 6L4.5 4.5Z"),
+  // A ring round a dot: a signet.
+  signet: () =>
+    `<circle cx="6" cy="6" r="3.6" ${stroke(C.ink, 1.8)}/><circle cx="6" cy="6" r="1" fill="${C.ink}"/>`,
+  // Sound arcs: a shout or a chant.
+  chant: () => inkLine("M3 3.2C5.2 5 5.2 7 3 8.8M7 1.8C10.4 4.6 10.4 7.4 7 10.2", 1.7),
+  // Three dots: any of its next several skills.
+  any: () =>
+    [2.4, 6, 9.6].map((x) => `<circle cx="${String(x)}" cy="6" r="1.2" fill="${C.ink}"/>`).join(""),
+};
+
+/** The trigger mark top left, the payoff glyph shrunk beside and below it (#1497). */
+const nextSkill = (
+  /** @type {keyof typeof nextTrigger} */ trigger,
+  /** @type {string} */ payoff,
+) => {
+  /** @type {Record<string, (() => string) | undefined>} */
+  const glyphs = skillGlyph;
+  const draw = glyphs[payoff];
+  if (draw === undefined) throw new Error(`no payoff glyph "${payoff}"`);
+  return (
+    `<g transform="translate(15.5,15) scale(0.62) translate(-12,-12)">${draw()}</g>` +
+    `<g>${nextTrigger[trigger]()}</g>`
+  );
+};
+
 /** A hex ring round a small struck spell orb and `target`, the mark that says whom (#1498). @param {string} target */
 const hexFail = (target) =>
   `<circle cx="12" cy="12" r="8.5" ${stroke(C.ink, 2.2)} stroke-dasharray="4.2 3.2"/>` +
@@ -2857,6 +2917,20 @@ const skillGlyph = {
   "hex-return": () =>
     `<circle cx="6" cy="6" r="3.8" ${stroke(C.ink, 1.8)} stroke-dasharray="2.6 2"/>` +
     inkLine("M21 21L10.5 10.5M10.5 17V10.5H17", 2.4),
+  // "With their next skill" chants (#1497): the corner mark is what the ally casts next, the picture is the payoff.
+  "next-adrenaline": () => inkLine("M5 20V14M12 20V9M19 20V4", 2.6),
+  "next-attack-energy": () => nextSkill("attack", "energy"),
+  "next-spell-energy": () => nextSkill("spell", "energy"),
+  "next-signet-energy": () => nextSkill("signet", "energy"),
+  "next-spell-heart-plus": () => nextSkill("spell", "heart-plus"),
+  "next-chant-heart-plus": () => nextSkill("chant", "heart-plus"),
+  "next-signet-cleanse": () => nextSkill("signet", "cleanse"),
+  "next-any-cleanse": () => nextSkill("any", "cleanse"),
+  "next-spell-hex-cut": () => nextSkill("spell", "hex-cut"),
+  "next-attack-drop-weak": () => nextSkill("attack", "drop-weak"),
+  "next-attack-limp": () => nextSkill("attack", "limp"),
+  "next-attack-interrupt": () => nextSkill("attack", "interrupt"),
+  "next-attack-adrenaline": () => nextSkill("attack", "next-adrenaline"),
 };
 
 /** The shared spirit post of the attacking spirits, left of the mark it shoots (#1271). */
