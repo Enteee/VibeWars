@@ -39,4 +39,8 @@ export const NECROMANCER_ICONS = {
   // Hex and enchantment gain triggers (#1403, #1440): a corner cue, a payoff.
   "necromancer.soul-barbs": { glyph: "gain-barbs" },
   "necromancer.defile-defenses": { glyph: "gain-shield" },
+  // Placeholders until the asset-designer's (#1540).
+  "necromancer.blood-is-power": { glyph: "energy", modifier: "plus" },
+  "necromancer.order-of-pain": { glyph: "blade-plus", modifier: "area" },
+  "necromancer.plague-signet": { glyph: "drop-pair", modifier: "plus" },
 };

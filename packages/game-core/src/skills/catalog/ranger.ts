@@ -1452,4 +1452,56 @@ export const RANGER_SKILLS: readonly Skill[] = [
     // to block incoming projectiles": 10 s, its rank-12 value.
     effects: [{ kind: "apply-status", statusId: "dodge", durationSeconds: 10 }],
   },
+  // Infuriating Heat, with the Necromancer and Elementalist staples (#1540).
+  {
+    id: "ranger.infuriating-heat",
+    name: "Infuriating Heat",
+    gwId: 1730,
+    type: "nature-ritual",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ranger",
+    attributeId: "ranger.expertise",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    // Infuriating Heat (PvP), 3466: "Create a level 1...10 spirit.
+    // Non-spirit creatures within its range gain adrenaline 33...66% as
+    // fast. This spirit dies after 30...120 seconds." A level-8 spirit, as
+    // Winnowing's: 50 + 20 per level, armor 51.
+    effects: [
+      {
+        kind: "summon",
+        count: 1,
+        creature: {
+          kind: "spirit",
+          look: "spirit",
+          name: "Infuriating Heat",
+          maxHealth: {
+            scaling: { attributeId: "ranger.expertise", atZero: 70, atTwelve: 210 },
+          },
+          armor: { flat: 51 },
+          attack: undefined,
+          durationSeconds: {
+            scaling: { attributeId: "ranger.expertise", atZero: 30, atTwelve: 102 },
+          },
+          behaviour: { kind: "idle" },
+          aura: { statusId: "infuriating-heat", affects: "all", radius: RANGE_NATURE_RITUAL },
+          onDeath: "vanish",
+          ownerDisableOnDeath: undefined,
+        },
+      },
+    ],
+  },
 ];

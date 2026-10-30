@@ -40,4 +40,6 @@ export const RANGER_ICONS = {
   "ranger.whirling-defense": { glyph: "shield-stance", modifier: "area" },
   "ranger.serpents-quickness": { glyph: "speed", modifier: "less" },
   "ranger.dodge": { glyph: "speed", modifier: "half" },
+  // Placeholders until the asset-designer's (#1540).
+  "ranger.infuriating-heat": { glyph: "totem", modifier: "hourglass" },
 };

@@ -18,7 +18,9 @@ export type RangerStatusId =
   // Ranger calls and bonds on a pet (#1108).
   | "call-of-haste"
   | "call-of-protection"
-  | "symbiotic-bond";
+  | "symbiotic-bond"
+  // Infuriating Heat (#1540).
+  | "infuriating-heat";
 
 export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>> = {
   // Troll Unguent's (a ranger skill), though it is an enchantment here.
@@ -140,8 +142,16 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
   "apply-poison": define("apply-poison", "Apply Poison", "preparation", {
     profession: "ranger",
     onAttackHit: {
+      attackSkillsOnly: false,
       effects: [{ kind: "apply-status", statusId: "poison", durationSeconds: 13 }],
       skillId: "ranger.apply-poison",
     },
+  }),
+  // Infuriating Heat (#1540), at its rank-12 value.
+  // The spirit's aura, PvP: "Non-spirit creatures within its range gain
+  // adrenaline 33...66% as fast": 59% faster.
+  "infuriating-heat": define("infuriating-heat", "Infuriating Heat", "skill-effect", {
+    profession: "ranger",
+    adrenalineGainFaster: 0.59,
   }),
 };
