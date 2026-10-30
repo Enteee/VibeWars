@@ -243,6 +243,9 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.maxHealthBonus !== 0) {
     parts.push(`+${String(definition.maxHealthBonus)} maximum health`);
   }
+  if (definition.maxEnergyBonus !== 0) {
+    parts.push(`+${String(definition.maxEnergyBonus)} maximum energy`);
+  }
   if (definition.healingMultiplier !== 1) {
     const change = Math.round((definition.healingMultiplier - 1) * 100);
     parts.push(`${change > 0 ? "+" : "−"}${String(Math.abs(change))}% healing`);
@@ -438,6 +441,18 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
     const faster = String(Math.round(share * 100));
     parts.push(`${getProfession(profession).name} enchantments recharge ${faster}% faster`);
   }
+  if (definition.skillArmorPenetration !== undefined) {
+    const { share, profession } = definition.skillArmorPenetration;
+    const pierce = String(Math.round(share * 100));
+    parts.push(`${getProfession(profession).name} skills have ${pierce}% armor penetration`);
+  }
+  if (definition.uninterruptible) {
+    parts.push("the bearer's skills cannot be interrupted");
+  }
+  if (definition.conditionsExpireFaster !== 0) {
+    const faster = String(Math.round(definition.conditionsExpireFaster * 100));
+    parts.push(`conditions on the bearer expire ${faster}% faster`);
+  }
   if (definition.incomingHexCastTimeMultiplier !== 1) {
     const times = String(definition.incomingHexCastTimeMultiplier);
     parts.push(`hexes cast on the bearer take ${times}× as long to cast`);
@@ -537,6 +552,7 @@ const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-fails-to-hit": "fails to hit",
   "bearer-takes-physical-damage": "takes physical damage",
   "bearer-takes-damage-from-foe": "takes damage or life steal from a foe",
+  "bearer-hit-by-attack": "is hit by a foe's attack",
   "bearer-blocks-melee": "blocks a melee attack",
   "bearer-blocks-projectile": "blocks a projectile attack",
   "bearer-blocks": "blocks",

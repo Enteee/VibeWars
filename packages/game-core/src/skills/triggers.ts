@@ -204,6 +204,7 @@ export function fireChangeTriggers(
         fire(trigger, statusId, sourceId, bearer, undefined, undefined, context),
       );
     case "took-damage-from-foe":
+    case "hit-by-attack":
     case "blocked":
       return change.fired.flatMap(({ statusId, sourceId, trigger }) =>
         fire(trigger, statusId, sourceId, bearer, change.offenderId, undefined, context),
@@ -298,7 +299,17 @@ function fire(
   const events: CombatEvent[] = [];
   let pending: SkillEffect[] = [];
   const flush = (): void => {
-    events.push(...applyEffects(pending, { caster, target, rng, rules, surroundings, usedSkill }));
+    events.push(
+      ...applyEffects(pending, {
+        caster,
+        target,
+        rng,
+        rules,
+        surroundings,
+        usedSkill,
+        profession: getStatusDefinition(statusId).profession,
+      }),
+    );
     pending = [];
   };
   for (const effect of trigger.effects) {

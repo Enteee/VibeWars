@@ -1529,3 +1529,61 @@ describe("removing by what an earlier removal took (#1205)", () => {
     ]);
   });
 });
+
+describe("uninterruptible and skill armor penetration (#1464)", () => {
+  const rules = MINIMAL_GW_INSPIRED_PVP_V1.combat;
+
+  /** A foe 1 s into casting Troll Unguent, which takes 3 s. */
+  function casting(): Combatant {
+    const foe = makeCombatant({ id: "target", team: 1 });
+    foe.cast.beginCast("ranger.troll-unguent", foe.id, 3, undefined);
+    return foe;
+  }
+
+  it("refuses an interrupt, and the rest of the skill still lands", () => {
+    const foe = casting();
+    foe.statuses.apply("tranquil-was-tanasen", 17, "target");
+    const events = applyEffects(
+      [
+        { kind: "interrupt" },
+        { kind: "damage", amount: { flat: 30 }, type: "typeless", armorPenetration: 0 },
+      ],
+      { ...context(undefined, foe), rules },
+    );
+    expect(foe.cast.activeCast?.skillId).toBe("ranger.troll-unguent");
+    expect(events.some((event) => event.kind === "interrupted")).toBe(false);
+    expect(foe.health).toBe(470);
+  });
+
+  /** What `amount` lightning damage takes off a fresh foe, from a caster holding Cruel's ashes. */
+  function lightning(armorPenetration: number, profession: SkillContext["profession"]): number {
+    const caster = makeCombatant({ id: "caster" });
+    caster.statuses.apply("cruel-was-daoshen", 51, "caster");
+    const foe = makeCombatant({ id: "target", team: 1 });
+    applyEffect(
+      { kind: "damage", amount: { flat: 100 }, type: "lightning", armorPenetration },
+      { ...context(caster, foe), profession },
+    );
+    return 500 - foe.health;
+  }
+
+  /** The same, from a caster holding nothing. */
+  function plain(armorPenetration: number): number {
+    const foe = makeCombatant({ id: "target", team: 1 });
+    applyEffect(
+      { kind: "damage", amount: { flat: 100 }, type: "lightning", armorPenetration },
+      context(undefined, foe),
+    );
+    return 500 - foe.health;
+  }
+
+  it("adds Cruel's 10% to a Ritualist skill's damage, on top of its own", () => {
+    expect(lightning(0, "ritualist")).toBe(plain(0.1));
+    expect(lightning(0.25, "ritualist")).toBe(plain(0.35));
+  });
+
+  it("adds nothing to another profession's skill, or to what is no skill's", () => {
+    expect(lightning(0.25, "elementalist")).toBe(plain(0.25));
+    expect(lightning(0, undefined)).toBe(plain(0));
+  });
+});

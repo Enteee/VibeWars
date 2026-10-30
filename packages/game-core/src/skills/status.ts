@@ -264,6 +264,13 @@ export type StatusId =
   | "blind-was-mingson"
   | "grasping-was-kuurong"
   | "energetic-was-lee-sa"
+  // Ritualist item spells 2 (#1464).
+  | "mighty-was-vorizun"
+  | "cruel-was-daoshen"
+  | "destructive-was-glaive"
+  | "tranquil-was-tanasen"
+  | "vengeful-was-khanhei"
+  | "pure-was-li-ming"
   // Dervish forms (#1437).
   | "avatar-of-melandru"
   | "avatar-of-dwayna"
@@ -370,6 +377,12 @@ export interface StatusDefinition {
    * losing it clamps health to the maximum left, so the extra is lost.
    */
   readonly maxHealthBonus: number;
+  /**
+   * Maximum energy added while it lasts (#1464): Mighty Was Vorizun's 30.
+   * Gaining it raises only the ceiling; losing it clamps energy to the
+   * ceiling left, as `maxHealthBonus` does health.
+   */
+  readonly maxEnergyBonus: number;
   /**
    * Multiplier on the heals the bearer receives from skills (1 = unaffected).
    * Regeneration and life steal ignore it.
@@ -651,6 +664,25 @@ export interface StatusDefinition {
    */
   readonly enchantmentRechargeFaster: EnchantmentRechargeFaster | undefined;
   /**
+   * Armor penetration added to the damage of each of the bearer's skills
+   * of `profession` (#1464): Cruel Was Daoshen's 0.1 for Ritualist skills.
+   * A weapon blow, a creature's attack and degeneration are not skills.
+   * Added to the skill's own, at most 1 in all. `undefined`: none.
+   */
+  readonly skillArmorPenetration: SkillArmorPenetration | undefined;
+  /**
+   * Nothing interrupts the bearer's casts while it lasts (#1464): Tranquil
+   * Was Tanasen's. The interrupting skill's other effects still land; a
+   * knockdown still cancels the cast.
+   */
+  readonly uninterruptible: boolean;
+  /**
+   * The bearer's conditions run out this much faster (#1464): Pure Was Li
+   * Ming's 0.5 takes `dt × 1.5` off each a tick. Hexes and enchantments
+   * keep their rate.
+   */
+  readonly conditionsExpireFaster: number;
+  /**
    * Multiplier on how long a hex takes to cast on the bearer (#944): Holy
    * Veil's 2. Read once, as the cast begins; an instant hex stays instant.
    */
@@ -725,6 +757,13 @@ export type StatusTriggerEvent =
    */
   | "bearer-takes-damage-from-foe"
   /**
+   * An attack by a foe hit the bearer (#1464): a swing, an attack skill or
+   * an arrow that landed, never a miss or a block. Recorded with the
+   * attacker, who is the offender, and fired at the drain, as damage from a
+   * foe is. Vengeful Was Khanhei's.
+   */
+  | "bearer-hit-by-attack"
+  /**
    * The bearer blocked a melee or a projectile attack (#1329), and the
    * status holding the trigger is the one whose share the block roll fell
    * in. Recorded with the attacker, who is the offender, and fired at the
@@ -777,6 +816,12 @@ export type StatusTriggerEvent =
    */
   | "ends-early"
   | "expires";
+
+/** `StatusDefinition.skillArmorPenetration` (#1464). */
+export interface SkillArmorPenetration {
+  readonly share: number;
+  readonly profession: ProfessionId;
+}
 
 /** `StatusDefinition.enchantmentRechargeFaster` (#1455). */
 export interface EnchantmentRechargeFaster {
@@ -919,6 +964,11 @@ export type StatusChange =
       readonly fired: readonly AnsweringTrigger[];
     }
   | {
+      readonly kind: "hit-by-attack";
+      readonly offenderId: string;
+      readonly fired: readonly AnsweringTrigger[];
+    }
+  | {
       readonly kind: "blocked";
       readonly offenderId: string;
       readonly fired: readonly AnsweringTrigger[];
@@ -988,6 +1038,7 @@ function define(
     attackMissChance: 0,
     maxHealthLoss: undefined,
     maxHealthBonus: 0,
+    maxEnergyBonus: 0,
     healingMultiplier: 1,
     weaponDamageMultiplier: 1,
     physicalDamageTakenBonus: 0,
@@ -1039,6 +1090,9 @@ function define(
     spellRechargeFaster: 0,
     bindingRitualRechargeFaster: 0,
     enchantmentRechargeFaster: undefined,
+    skillArmorPenetration: undefined,
+    uninterruptible: false,
+    conditionsExpireFaster: 0,
     incomingHexCastTimeMultiplier: 1,
     damageFromSpiritAttacks: 0,
     breaksNextHex: undefined,
@@ -2684,6 +2738,103 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
       },
     ],
   }),
+  // Ritualist item spells 2 (#1464), rank-12 values as #1434's.
+  // "...you gain +15 armor and +30 maximum Energy." Nothing on the drop.
+  "mighty-was-vorizun": define("mighty-was-vorizun", "Mighty Was Vorizun", "item", {
+    profession: "ritualist",
+    armorModifier: 15,
+    maxEnergyBonus: 30,
+  }),
+  // "...all Ritualist skills have 10% armor penetration. When you drop his
+  // ashes, all nearby foes are struck for 15...85 lightning damage": 71,
+  // without the spell's 25%, as the text names none.
+  "cruel-was-daoshen": define("cruel-was-daoshen", "Cruel Was Daoshen", "item", {
+    profession: "ritualist",
+    skillArmorPenetration: { share: 0.1, profession: "ritualist" },
+    triggers: [
+      {
+        on: "ends",
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_NEARBY,
+            maxTargets: undefined,
+            effects: [
+              { kind: "damage", amount: { flat: 71 }, type: "lightning", armorPenetration: 0 },
+            ],
+          },
+        ],
+        target: "bearer",
+        skillId: "ritualist.cruel-was-daoshen",
+      },
+    ],
+  }),
+  // As Cruel Was Daoshen (PvP), but all foes in the area: 71.
+  "destructive-was-glaive": define("destructive-was-glaive", "Destructive Was Glaive", "item", {
+    profession: "ritualist",
+    skillArmorPenetration: { share: 0.1, profession: "ritualist" },
+    triggers: [
+      {
+        on: "ends",
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_IN_THE_AREA,
+            maxTargets: undefined,
+            effects: [
+              { kind: "damage", amount: { flat: 71 }, type: "lightning", armorPenetration: 0 },
+            ],
+          },
+        ],
+        target: "bearer",
+        skillId: "ritualist.destructive-was-glaive",
+      },
+    ],
+  }),
+  // "...you have +10...25 armor and cannot be interrupted": 22.
+  "tranquil-was-tanasen": define("tranquil-was-tanasen", "Tranquil Was Tanasen", "item", {
+    profession: "ritualist",
+    armorModifier: 22,
+    uninterruptible: true,
+  }),
+  // "Whenever a foe strikes you in combat... you steal 10...45 Health from
+  // that foe": 38.
+  "vengeful-was-khanhei": define("vengeful-was-khanhei", "Vengeful Was Khanhei", "item", {
+    profession: "ritualist",
+    triggers: [
+      {
+        on: "bearer-hit-by-attack",
+        target: "offender",
+        effects: [{ kind: "life-steal", amount: { flat: 38 } }],
+        skillId: "ritualist.vengeful-was-khanhei",
+      },
+    ],
+  }),
+  // "...conditions on you expire 10...50% faster. When you drop her ashes,
+  // all allies within earshot lose 1...4 conditions": 42% and 3.
+  "pure-was-li-ming": define("pure-was-li-ming", "Pure Was Li Ming", "item", {
+    profession: "ritualist",
+    conditionsExpireFaster: 0.42,
+    triggers: [
+      {
+        on: "ends",
+        effects: [
+          { kind: "remove-status", category: "condition", count: 3 },
+          {
+            kind: "splash",
+            hits: "allies",
+            radius: AREA_EARSHOT,
+            maxTargets: undefined,
+            effects: [{ kind: "remove-status", category: "condition", count: 3 }],
+          },
+        ],
+        target: "bearer",
+        skillId: "ritualist.pure-was-li-ming",
+      },
+    ],
+  }),
   // "You have +100 Health, +30 elemental armor, and your attacks deal earth
   // damage. Whenever you lose a Dervish enchantment you lose 2 conditions"
   // (#1437, PvP).
@@ -3027,6 +3178,18 @@ export class StatusSet {
     );
     if (fired.length > 0) {
       this.#changes.push({ kind: "took-damage-from-foe", offenderId, fired });
+    }
+  }
+
+  /**
+   * An attack by `offenderId`, a foe, hit the bearer (#1464), recorded only
+   * if a status on it answers that, with the triggers that do. Every hit
+   * counts: two foes in one tick are two.
+   */
+  public recordHitByAttack(offenderId: string): void {
+    const fired = this.#answering("bearer-hit-by-attack");
+    if (fired.length > 0) {
+      this.#changes.push({ kind: "hit-by-attack", offenderId, fired });
     }
   }
 
@@ -3641,12 +3804,15 @@ export class StatusSet {
   /**
    * Advance all durations by `dt` seconds, dropping any that expire.
    * Returns the ids that expired on this tick so the caller can emit
-   * end-of-status effects.
+   * end-of-status effects. Conditions run `conditionsExpireFaster`
+   * faster (#1464), read as the tick begins.
    */
   public advance(dt: number, moving: boolean): StatusId[] {
     const expired: StatusId[] = [];
+    const conditionDt = dt * (1 + aggregateModifiers(this.active).conditionsExpireFaster);
     for (const status of this.#statuses.values()) {
-      status.remainingSeconds -= dt;
+      status.remainingSeconds -=
+        getStatusDefinition(status.id).category === "condition" ? conditionDt : dt;
       if (status.remainingSeconds > 0) {
         continue;
       }
@@ -3713,6 +3879,8 @@ export interface StatusModifiers {
   readonly maxHealthLoss: MaxHealthLoss | undefined;
   /** Every status's, summed (#1359). */
   readonly maxHealthBonus: number;
+  /** Every status's, summed (#1464). */
+  readonly maxEnergyBonus: number;
   /** Every status's, multiplied, and floored at `HEALING_MULTIPLIER_FLOOR`. */
   readonly healingMultiplier: number;
   readonly weaponDamageMultiplier: number;
@@ -3746,6 +3914,12 @@ export interface StatusModifiers {
   readonly adrenalineGainFaster: number;
   /** Every status's (#1455): the recharge takes the largest that applies. */
   readonly enchantmentRechargeFaster: readonly EnchantmentRechargeFaster[];
+  /** Every status's (#1464): a skill takes every share that names its profession. */
+  readonly skillArmorPenetration: readonly SkillArmorPenetration[];
+  /** Any status's (#1464). */
+  readonly uninterruptible: boolean;
+  /** Every status's, summed (#1464). */
+  readonly conditionsExpireFaster: number;
   /** Every status's, multiplied (#944). */
   readonly incomingHexCastTimeMultiplier: number;
   /** Every status's, summed (#988). */
@@ -3806,6 +3980,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let attackMissChance = 0;
   let maxHealthLoss: MaxHealthLoss | undefined;
   let maxHealthBonus = 0;
+  let maxEnergyBonus = 0;
   const healingMultipliers: number[] = [];
   let weaponDamageMultiplier = 1;
   let physicalDamageTakenBonus = 0;
@@ -3822,6 +3997,9 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let extraStrikesPerHit = 0;
   let adrenalineGainFaster = 0;
   const enchantmentRechargeFaster: EnchantmentRechargeFaster[] = [];
+  const skillArmorPenetration: SkillArmorPenetration[] = [];
+  let uninterruptible = false;
+  let conditionsExpireFaster = 0;
   let spellRechargeKept = 1;
   let bindingRitualRechargeKept = 1;
   let incomingHexCastTimeMultiplier = 1;
@@ -3862,6 +4040,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
       maxHealthLoss = def.maxHealthLoss;
     }
     maxHealthBonus += def.maxHealthBonus;
+    maxEnergyBonus += def.maxEnergyBonus;
     healingMultipliers.push(def.healingMultiplier);
     weaponDamageMultiplier *= def.weaponDamageMultiplier;
     physicalDamageTakenBonus += def.physicalDamageTakenBonus;
@@ -3897,6 +4076,11 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     if (def.enchantmentRechargeFaster !== undefined) {
       enchantmentRechargeFaster.push(def.enchantmentRechargeFaster);
     }
+    if (def.skillArmorPenetration !== undefined) {
+      skillArmorPenetration.push(def.skillArmorPenetration);
+    }
+    uninterruptible ||= def.uninterruptible;
+    conditionsExpireFaster += def.conditionsExpireFaster;
     spellRechargeKept *= 1 - def.spellRechargeFaster;
     bindingRitualRechargeKept *= 1 - def.bindingRitualRechargeFaster;
     incomingHexCastTimeMultiplier *= def.incomingHexCastTimeMultiplier;
@@ -3920,6 +4104,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     attackMissChance,
     maxHealthLoss,
     maxHealthBonus,
+    maxEnergyBonus,
     healingMultiplier: combinedHealingMultiplier(healingMultipliers),
     weaponDamageMultiplier,
     physicalDamageTakenBonus,
@@ -3937,6 +4122,9 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     bindingRitualRechargeFaster: Math.min(MAX_RECHARGE_REDUCTION, 1 - bindingRitualRechargeKept),
     adrenalineGainFaster,
     enchantmentRechargeFaster,
+    skillArmorPenetration,
+    uninterruptible,
+    conditionsExpireFaster,
     incomingHexCastTimeMultiplier,
     criticalChanceBonus,
     energyPerCritical,

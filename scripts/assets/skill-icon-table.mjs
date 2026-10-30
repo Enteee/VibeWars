@@ -350,6 +350,13 @@ export const SKILL_ICONS = {
   "ritualist.blind-was-mingson": { glyph: "eye-slash", modifier: "hourglass" },
   "ritualist.grasping-was-kuurong": { glyph: "quake", modifier: "stun" },
   "ritualist.energetic-was-lee-sa": { glyph: "energy", modifier: "plus" },
+  // Placeholders until the asset-designer's (#1464): Ritualist item spells 2.
+  "ritualist.mighty-was-vorizun": { glyph: "born-energy", modifier: "up" },
+  "ritualist.cruel-was-daoshen": { glyph: "lightning", modifier: "hourglass" },
+  "ritualist.destructive-was-glaive": { glyph: "lightning", modifier: "area" },
+  "ritualist.tranquil-was-tanasen": { glyph: "shield-stance", modifier: "less" },
+  "ritualist.vengeful-was-khanhei": { glyph: "thorns", modifier: "hourglass" },
+  "ritualist.pure-was-li-ming": { glyph: "cleanse", modifier: "area" },
   // Flash enchantments (#1421, #1447).
   "dervish.enchanted-haste": { glyph: "haste-clean" },
   "dervish.heart-of-holy-flame": { glyph: "flame-halo" },

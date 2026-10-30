@@ -608,15 +608,20 @@ export function bearerAttacked(
  * its bearer hits ends now, as Dark Escape, and, `withAttackSkill`, every
  * one that ends when an attack skill hits, as Defensive Anthem (#956). The
  * hit is recorded for what answers one, as Insidious Parasite (#935), with
- * the `weapon` it struck with (#1359).
+ * the `weapon` it struck with (#1359), and, on a foe's `victim`, for what
+ * answers being hit there (#1464), as Vengeful Was Khanhei.
  */
 export function bearerHit(
   attacker: Combatant,
+  victim: Combatant,
   events: CombatEvent[],
   withAttackSkill: boolean,
   weapon: Weapon,
 ): void {
   attacker.statuses.recordHit(weapon);
+  if (victim.team !== attacker.team) {
+    victim.statuses.recordHitByAttack(attacker.id);
+  }
   for (const statusId of attacker.statuses.endOnBearerHit(withAttackSkill)) {
     events.push({ kind: "status-expired", targetId: attacker.id, statusId });
   }
@@ -710,7 +715,7 @@ function strike(
   events.push(
     ...attackHitRiders(attacker, victim, snapshot.mainHand, rng, rules, swing.surroundings, fired),
   );
-  bearerHit(attacker, events, false, snapshot.mainHand.weapon);
+  bearerHit(attacker, victim, events, false, snapshot.mainHand.weapon);
   attackReached(victim, events);
 }
 
@@ -893,7 +898,7 @@ export function resolveAttackSkill(
         ...attackHitRiders(caster, victim, snapshot.mainHand, rng, rules, surroundings, fired),
         ...nextAttackSkillRiders(next, caster, victim, rng, rules, surroundings),
       );
-      bearerHit(caster, events, true, weapon);
+      bearerHit(caster, victim, events, true, weapon);
       attackReached(victim, events);
       markChain(caster, skill, victim.id);
       hit.push(victim);
