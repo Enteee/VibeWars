@@ -342,8 +342,8 @@ const memberNames = (page: Page) => page.locator(".team-grid .team-row-name");
 async function openTeamPlay(page: Page): Promise<void> {
   await page.locator("#topbar .play-tabs").getByRole("button", { name: "Team Play" }).click();
 }
-/** Team Play's Team Build cards (#1453), and what each holds: "Duo · 2 members". */
-const teamRows = (page: Page) => page.locator(".team-play-card:not(.is-none)");
+/** Team Play's Team Build cards (#1453), without None and New team build: "Duo · 2 members". */
+const teamRows = (page: Page) => page.locator(".team-play-card:not(.is-none, .team-play-new)");
 async function teamList(page: Page): Promise<string[]> {
   return teamRows(page).evaluateAll((cards) =>
     cards.map((card) => {
