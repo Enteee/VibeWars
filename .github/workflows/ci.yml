@@ -140,7 +140,10 @@ jobs:
         run: |
           needed=true
           if [ "$EVENT" = pull_request ] && git fetch --no-tags --depth=1 origin "$BASE_REF"; then
-            needed=$(node scripts/ci/e2e-needed.mjs FETCH_HEAD HEAD 2>/dev/null || echo true)
+            # The base's copy of the matcher, not the pull request's own: a PR
+            # must not be able to edit its way out of its e2e.
+            git show FETCH_HEAD:scripts/ci/e2e-needed.mjs > "$RUNNER_TEMP/e2e-needed.mjs" 2>/dev/null &&
+              needed=$(node "$RUNNER_TEMP/e2e-needed.mjs" FETCH_HEAD HEAD 2>/dev/null) || needed=true
           fi
           echo "needed=$needed" >> "$GITHUB_OUTPUT"
 
