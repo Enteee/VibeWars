@@ -7,13 +7,13 @@ import {
 } from "../primary-attributes.js";
 import { emptyAdrenaline, emptyPool, fillPools } from "./adrenaline.js";
 import { isAttacking } from "./attacking.js";
-import { beginRecharge, resolvedBar, skillIdOfKey } from "./cast-state.js";
+import { beginRecharge, resolvedBar, skillIdOfKey, type SlotSkill } from "./cast-state.js";
 import { getSkill } from "./catalog.js";
 import { CHAIN_MARK_SECONDS } from "./chain.js";
 import { hitLocationOf, mitigate, skillDamage, withSkillArmorPenetration } from "./damage.js";
 import { guardedDamage, guardedLoss } from "./loss-guard.js";
 import { addOvercast, effectiveMaxEnergy } from "./overcast.js";
-import { resolveMagnitude } from "./scaling.js";
+import { resolveMagnitude, resolveMagnitudeTimes } from "./scaling.js";
 import {
   aggregateModifiers,
   getStatusDefinition,
@@ -55,6 +55,7 @@ import {
   type EffectCondition,
   type HealEffect,
   type InterruptEffect,
+  type Magnitude,
   type RemoveStatusEffect,
   type ResurrectEffect,
   type SkillEffect,
@@ -352,9 +353,10 @@ function healAmount(
   target: Combatant | undefined,
   surroundings: Surroundings,
   earlier: readonly CombatEvent[],
+  usedSkill: SlotSkill | undefined,
 ): number {
   const base =
-    resolveMagnitude(effect.amount, caster) *
+    perUsedSkillEnergy(effect, caster, usedSkill) *
     perStatus(effect.perStatusOnTarget, target) *
     perRemoved(effect.perRemoved, target, earlier) *
     (effect.perDestroyedSpirit === true
@@ -586,6 +588,24 @@ function perEnergyLost(
     return amount;
   }
   return lostBy === undefined ? 0 : amount * energyLostBy(lostBy.id, earlier);
+}
+
+/**
+ * `amount` at the caster's ranks, or with `perUsedSkillEnergy`, per point
+ * of the base energy cost of the skill the trigger answers, rounded half
+ * up (#1614): Fire Attunement's 30% of a 15-energy spell is 5. No energy
+ * cost, or no skill: 0.
+ */
+function perUsedSkillEnergy(
+  effect: { readonly amount: Magnitude; readonly perUsedSkillEnergy?: true },
+  caster: Combatant,
+  used: SlotSkill | undefined,
+): number {
+  if (effect.perUsedSkillEnergy === undefined) {
+    return resolveMagnitude(effect.amount, caster);
+  }
+  const cost = used === undefined ? undefined : getSkill(used.skillId)?.cost;
+  return cost?.kind === "energy" ? resolveMagnitudeTimes(effect.amount, caster, cost.amount) : 0;
 }
 
 /**
@@ -1022,7 +1042,11 @@ export function applyEffect(
       if (healed === undefined) {
         return events;
       }
-      applyHeal(healed, healAmount(effect, caster, target, context.surroundings, earlier), events);
+      applyHeal(
+        healed,
+        healAmount(effect, caster, target, context.surroundings, earlier, context.usedSkill),
+        events,
+      );
       return events;
     }
 
@@ -1037,7 +1061,12 @@ export function applyEffect(
         caster,
         perOwnCreature(
           effect,
-          perEnergyLost(effect, resolveMagnitude(effect.amount, caster), lostBy, earlier),
+          perEnergyLost(
+            effect,
+            perUsedSkillEnergy(effect, caster, context.usedSkill),
+            lostBy,
+            earlier,
+          ),
           caster,
           context.surroundings,
         ),

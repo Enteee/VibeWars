@@ -71,6 +71,7 @@ const NO_BOT_USE = new Set([
   // Minions, wells and enchantment strips: no rule for them yet.
   "necromancer.animate-bone-horror",
   "necromancer.animate-bone-minions",
+  "necromancer.gaze-of-contempt",
   "necromancer.rend-enchantments",
   "necromancer.well-of-suffering",
   // A disable of a foe's elite and nothing else: no rule for it (#1473).
@@ -90,6 +91,11 @@ const NO_BOT_USE = new Set([
   "ritualist.weapon-of-remedy",
   "ranger.kindle-arrows",
   "ranger.ignite-arrows",
+  // Energy engine (#1614): energy back for spells still to be cast.
+  "elementalist.fire-attunement",
+  "elementalist.water-attunement",
+  "elementalist.air-attunement",
+  "elementalist.earth-attunement",
   // Echoes (#1423): what they do waits for a chant or a shout to end.
   "paragon.aggressive-refrain",
   "paragon.blazing-finale",
