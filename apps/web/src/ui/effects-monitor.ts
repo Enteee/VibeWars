@@ -31,6 +31,7 @@ export const STATUS_CATEGORY_NAME: Readonly<Record<StatusCategory, string>> = {
   shout: "Shout",
   chant: "Chant",
   "weapon-spell": "Weapon Spell",
+  form: "Form",
   "skill-effect": "Effect",
 };
 
