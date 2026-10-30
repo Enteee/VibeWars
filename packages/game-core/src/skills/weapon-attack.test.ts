@@ -388,6 +388,24 @@ describe("resolveAttackSkill (ADR-0029)", () => {
       const events = resolve(barrage, strong(WEAPONS.hornbow, "ranger.marksmanship", 12), [target]);
       expect(damages(events)).toEqual([blowOf(WEAPONS.hornbow, 12, 0.1, target)]);
     });
+
+    it("yields to Judge's Insight's 20% (#1519): holy, and the highest counts, nothing adds", () => {
+      const insightful = (strength: number): Combatant => {
+        const attacker = strong(WEAPONS.axe, "warrior.axe-mastery", strength);
+        attacker.statuses.apply("judges-insight", 18, "monk");
+        return attacker;
+      };
+      const holy = { ...WEAPONS.axe, damageType: "holy" } as const;
+      const target = victim();
+      // 20% beats none, and Strength's 12%: they do not add to 32%.
+      expect(damages(resolve(swiftChop, insightful(0), [target]))).toEqual([
+        blowOf(holy, 16, 0.2, target),
+      ]);
+      expect(damages(resolve(swiftChop, insightful(12), [target]))).toEqual([
+        blowOf(holy, 16, 0.2, target),
+      ]);
+      expect(blowOf(holy, 16, 0.2, target)).toBeGreaterThan(blowOf(holy, 16, 0, target));
+    });
   });
 
   describe("Spear of Lightning: a typed, penetrating attack skill (#923)", () => {
@@ -464,6 +482,19 @@ describe("resolveAttackSkill (ADR-0029)", () => {
       // Strength's 12% beats a 5% of the skill's own.
       expect(damages(resolve(penetrating(0.05), thrower(12), [target]))).toEqual([
         blowOf("lightning", 0.12, target),
+      ]);
+    });
+
+    it("keeps its own 25% and lightning under Judge's Insight's holy 20% (#1519)", () => {
+      const target = victim();
+      const insightful = thrower();
+      insightful.statuses.apply("judges-insight", 18, "monk");
+      expect(damages(resolve(spearOfLightning, insightful, [target]))).toEqual([
+        blowOf("lightning", 0.25, target),
+      ]);
+      // A 5% of its own: Judge's Insight's 20% wins.
+      expect(damages(resolve(penetrating(0.05), insightful, [target]))).toEqual([
+        blowOf("lightning", 0.2, target),
       ]);
     });
   });

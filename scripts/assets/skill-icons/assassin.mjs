@@ -46,4 +46,5 @@ export const ASSASSIN_ICONS = {
   "assassin.palm-strike": { glyph: "palm", modifier: "up" },
   "assassin.signet-of-toxic-shock": { glyph: "drop-run", modifier: "bolt" },
   "assassin.beguiling-haze": { glyph: "blink", modifier: "stun" },
+  "assassin.shadow-prison": { glyph: "blink-bars" },
 };
