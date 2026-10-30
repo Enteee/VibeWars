@@ -55,7 +55,11 @@ import {
 import { cloneCharacter } from "./storage/clone-character.js";
 import { matchRecordFrom, tally, type Tally } from "./storage/match-record.js";
 import type { StoredCharacter } from "./storage/schema.js";
-import { rerollStarterCharacter, rollStarterCharacter } from "./storage/starter-character.js";
+import {
+  rerollStarterCharacter,
+  rollClone,
+  rollStarterCharacter,
+} from "./storage/starter-character.js";
 import { importTeam, importedTeamSummary, type TeamImportResult } from "./storage/team-transfer.js";
 import { closeBeatEditor } from "./ui/beat-editor.js";
 import { mountBuildBanner } from "./ui/build-banner.js";
@@ -589,14 +593,21 @@ async function main(): Promise<void> {
             }
           })();
         },
-        onCloneCharacter: (id) => {
+        onCloneStarter: (id) => {
           void (async () => {
             const character = await characters.load(id);
             if (character === undefined) {
               showMenu();
               return;
             }
-            const copy = cloneCharacter(character, crypto.randomUUID(), Date.now());
+            // Only the random starter has Clone: a fresh roll, not a copy (#1457).
+            const copy = rollClone(
+              character,
+              Math.random,
+              crypto.randomUUID(),
+              Date.now(),
+              list.map((c) => c.name),
+            );
             try {
               await characters.save(copy);
             } catch (error) {

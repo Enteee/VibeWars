@@ -241,7 +241,10 @@ export type StatusId =
   | "mind-freeze"
   // Dervish forms (#1437).
   | "avatar-of-melandru"
-  | "avatar-of-dwayna";
+  | "avatar-of-dwayna"
+  | "avatar-of-balthazar"
+  | "avatar-of-grenth"
+  | "avatar-of-lyssa";
 
 /** Health one pip of regeneration or degeneration is worth, per second (GW1). */
 export const HEALTH_PER_PIP = 2;
@@ -366,6 +369,12 @@ export interface StatusDefinition {
    * Lightning) still wins. `undefined`: the weapon's.
    */
   readonly attackDamageType: DamageType | undefined;
+  /**
+   * `attackDamageType` holds only while the bearer wields this weapon
+   * (#1455): Avatar of Grenth's "your scythe attacks deal dark damage".
+   * `undefined`: whatever it wields.
+   */
+  readonly attackDamageTypeWeapon: AttackWeaponClass | undefined;
   /**
    * Added to every attribute of the bearer above rank 0 (#762): weakness's
    * −1. Read through `rankOf` alone (ADR-0019).
@@ -531,6 +540,12 @@ export interface StatusDefinition {
    */
   readonly endsWhenBearerGains: readonly ("hex" | "enchantment")[];
   /**
+   * Statuses that never land on the bearer (#1455): Avatar of Grenth's
+   * "you are immune to Disease". An apply or a spread does nothing, and
+   * one already on the bearer ends as this one begins.
+   */
+  readonly immuneTo: readonly StatusId[];
+  /**
    * Multiplier on the damage the bearer takes (#919): Frenzy's 2, Dark
    * Escape's 0.5. Applied to every damage packet after armor; health
    * loss and degeneration never pass through it.
@@ -587,6 +602,11 @@ export interface StatusDefinition {
    */
   readonly extraStrikesPerHit: number;
   /**
+   * The bearer gains adrenaline this much faster (#1455), from hits,
+   * damage taken and skills alike: Avatar of Balthazar's 0.25.
+   */
+  readonly adrenalineGainFaster: number;
+  /**
    * The share taken off the recharge of each spell the bearer finishes
    * (#938): Mantra of Recovery's 0.33. Read as the recharge starts, so
    * a recharge already running keeps its length when the status ends.
@@ -598,6 +618,13 @@ export interface StatusDefinition {
    * `spellRechargeFaster` is.
    */
   readonly bindingRitualRechargeFaster: number;
+  /**
+   * The share taken off the recharge of each enchantment of `profession`
+   * the bearer finishes (#1455), flash ones included: Avatar of Lyssa's
+   * 0.5 for Dervish enchantments. Read as `spellRechargeFaster` is; with
+   * it, the larger share counts. `undefined`: none.
+   */
+  readonly enchantmentRechargeFaster: EnchantmentRechargeFaster | undefined;
   /**
    * Multiplier on how long a hex takes to cast on the bearer (#944): Holy
    * Veil's 2. Read once, as the cast begins; an instant hex stays instant.
@@ -700,6 +727,12 @@ export type StatusTriggerEvent =
    */
   | "ends-early"
   | "expires";
+
+/** `StatusDefinition.enchantmentRechargeFaster` (#1455). */
+export interface EnchantmentRechargeFaster {
+  readonly share: number;
+  readonly profession: ProfessionId;
+}
 
 export interface StatusTrigger {
   readonly on: StatusTriggerEvent;
@@ -909,6 +942,7 @@ function define(
     weaponDamageMultiplier: 1,
     physicalDamageTakenBonus: 0,
     attackDamageType: undefined,
+    attackDamageTypeWeapon: undefined,
     attributeDelta: 0,
     castTimeMultiplier: 1,
     interruptsSpells: false,
@@ -940,6 +974,7 @@ function define(
     endsWhenTriggered: false,
     endsWhenBearerHitsWithAttackSkill: false,
     endsWhenBearerGains: [],
+    immuneTo: [],
     damageTakenMultiplier: 1,
     damageReduction: 0,
     redirectsPhysicalDamage: 0,
@@ -950,8 +985,10 @@ function define(
     sourceLosesHealth: undefined,
     reversesNextDamage: undefined,
     extraStrikesPerHit: 0,
+    adrenalineGainFaster: 0,
     spellRechargeFaster: 0,
     bindingRitualRechargeFaster: 0,
+    enchantmentRechargeFaster: undefined,
     incomingHexCastTimeMultiplier: 1,
     damageFromSpiritAttacks: 0,
     breaksNextHex: undefined,
@@ -2430,6 +2467,100 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
       },
     ],
   }),
+  // "You gain +20 armor against physical damage, you gain adrenaline 25%
+  // faster, your attacks deal holy damage, and whenever you lose a Dervish
+  // enchantment, nearby foes are set on fire for 1...3...3 second[s]"
+  // (#1455): 3 s, its rank-12 value.
+  "avatar-of-balthazar": define("avatar-of-balthazar", "Avatar of Balthazar", "form", {
+    profession: "dervish",
+    conditionalArmor: [{ amount: 20, conditions: [{ kind: "vs-physical" }] }],
+    adrenalineGainFaster: 0.25,
+    attackDamageType: "holy",
+    triggers: [
+      {
+        on: "bearer-loses-enchantment",
+        profession: "dervish",
+        target: "bearer",
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_NEARBY,
+            maxTargets: undefined,
+            effects: [{ kind: "apply-status", statusId: "burning", durationSeconds: 3 }],
+          },
+        ],
+        skillId: "dervish.avatar-of-balthazar",
+      },
+    ],
+  }),
+  // "Your scythe attacks deal dark damage, and steal 0...10...12 Health.
+  // You are immune to Disease, and inflict Disease on all adjacent foes
+  // for 3 seconds whenever you lose a Dervish enchantment" (#1455): 10,
+  // its rank-12 value.
+  "avatar-of-grenth": define("avatar-of-grenth", "Avatar of Grenth", "form", {
+    profession: "dervish",
+    immuneTo: ["disease"],
+    attackDamageType: "dark",
+    attackDamageTypeWeapon: "scythe",
+    onAttackHit: {
+      effects: [
+        {
+          kind: "if",
+          condition: { kind: "caster-wields", weapon: "scythe" },
+          effects: [
+            {
+              kind: "life-steal",
+              amount: { scaling: { attributeId: "dervish.mysticism", atZero: 0, atTwelve: 10 } },
+            },
+          ],
+        },
+      ],
+      skillId: "dervish.avatar-of-grenth",
+    },
+    triggers: [
+      {
+        on: "bearer-loses-enchantment",
+        profession: "dervish",
+        target: "bearer",
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_ADJACENT,
+            maxTargets: undefined,
+            effects: [{ kind: "apply-status", statusId: "disease", durationSeconds: 3 }],
+          },
+        ],
+        skillId: "dervish.avatar-of-grenth",
+      },
+    ],
+  }),
+  // "Your Dervish enchantments recharge 50% faster and your attacks deal
+  // chaos damage. Whenever you lose a Dervish enchantment, steal 1 Energy
+  // from all nearby foes" (#1455).
+  "avatar-of-lyssa": define("avatar-of-lyssa", "Avatar of Lyssa", "form", {
+    profession: "dervish",
+    enchantmentRechargeFaster: { share: 0.5, profession: "dervish" },
+    attackDamageType: "chaos",
+    triggers: [
+      {
+        on: "bearer-loses-enchantment",
+        profession: "dervish",
+        target: "bearer",
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_NEARBY,
+            maxTargets: undefined,
+            effects: [{ kind: "energy-steal", amount: { flat: 1 } }],
+          },
+        ],
+        skillId: "dervish.avatar-of-lyssa",
+      },
+    ],
+  }),
 };
 
 /**
@@ -2721,7 +2852,7 @@ export class StatusSet {
    * status breaks never lands (#1403): `false`, and nothing else changes.
    */
   public apply(id: StatusId, durationSeconds: number, sourceId: string): boolean {
-    if (durationSeconds <= 0 || this.#breaksHex(id, sourceId)) {
+    if (durationSeconds <= 0 || this.isImmuneTo(id) || this.#breaksHex(id, sourceId)) {
       return false;
     }
     const wasActive = this.#statuses.has(id);
@@ -2757,8 +2888,14 @@ export class StatusSet {
     if (!wasActive) {
       this.#gained(id, durationSeconds);
       this.#endOnGaining(definition.category);
+      this.#end(definition.immuneTo.filter((immune) => this.#statuses.has(immune)));
     }
     return !wasActive;
+  }
+
+  /** Whether a status on the bearer keeps `id` off it (#1455): Avatar of Grenth's Disease. */
+  public isImmuneTo(id: StatusId): boolean {
+    return this.active.some((status) => getStatusDefinition(status.id).immuneTo.includes(id));
   }
 
   /**
@@ -2767,7 +2904,7 @@ export class StatusSet {
    * carrying it keeps the outbreak it has.
    */
   public catch(id: StatusId, durationSeconds: number, sourceId: string, outbreak: Outbreak): void {
-    if (durationSeconds <= 0 || this.#breaksHex(id, sourceId)) {
+    if (durationSeconds <= 0 || this.isImmuneTo(id) || this.#breaksHex(id, sourceId)) {
       return;
     }
     const existing = this.#statuses.get(id);
@@ -3276,6 +3413,10 @@ export interface StatusModifiers {
   readonly spellRechargeFaster: number;
   /** As `spellRechargeFaster`, for a binding ritual (#1064). */
   readonly bindingRitualRechargeFaster: number;
+  /** Every status's, summed (#1455). */
+  readonly adrenalineGainFaster: number;
+  /** Every status's (#1455): the recharge takes the largest that applies. */
+  readonly enchantmentRechargeFaster: readonly EnchantmentRechargeFaster[];
   /** Every status's, multiplied (#944). */
   readonly incomingHexCastTimeMultiplier: number;
   /** Every status's, summed (#988). */
@@ -3350,6 +3491,8 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let lifeStealReduction = 0;
   let knockdownMinSeconds: number | undefined;
   let extraStrikesPerHit = 0;
+  let adrenalineGainFaster = 0;
+  const enchantmentRechargeFaster: EnchantmentRechargeFaster[] = [];
   let spellRechargeKept = 1;
   let bindingRitualRechargeKept = 1;
   let incomingHexCastTimeMultiplier = 1;
@@ -3421,6 +3564,10 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
       knockdownMinSeconds = def.knockdownMinSeconds;
     }
     extraStrikesPerHit += def.extraStrikesPerHit;
+    adrenalineGainFaster += def.adrenalineGainFaster;
+    if (def.enchantmentRechargeFaster !== undefined) {
+      enchantmentRechargeFaster.push(def.enchantmentRechargeFaster);
+    }
     spellRechargeKept *= 1 - def.spellRechargeFaster;
     bindingRitualRechargeKept *= 1 - def.bindingRitualRechargeFaster;
     incomingHexCastTimeMultiplier *= def.incomingHexCastTimeMultiplier;
@@ -3459,6 +3606,8 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     extraStrikesPerHit,
     spellRechargeFaster: Math.min(MAX_RECHARGE_REDUCTION, 1 - spellRechargeKept),
     bindingRitualRechargeFaster: Math.min(MAX_RECHARGE_REDUCTION, 1 - bindingRitualRechargeKept),
+    adrenalineGainFaster,
+    enchantmentRechargeFaster,
     incomingHexCastTimeMultiplier,
     criticalChanceBonus,
     energyPerCritical,
