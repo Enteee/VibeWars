@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
+exports[`skillRoles > tags every assassin skill the same way every time 1`] = `
 {
   "assassin.black-lotus-strike": "",
   "assassin.caltrops": "condition",
@@ -28,6 +28,7 @@ exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
   "assassin.malicious-strike": "",
   "assassin.mark-of-death": "hex",
   "assassin.moebius-strike": "",
+  "assassin.shadow-prison": "hex",
   "assassin.shadow-refuge": "healing",
   "assassin.shroud-of-distress": "defence",
   "assassin.shroud-of-silence": "hex",
@@ -37,7 +38,17 @@ exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
   "assassin.vipers-defense": "condition",
   "assassin.way-of-perfection": "",
   "assassin.wild-strike": "",
+}
+`;
+
+exports[`skillRoles > tags every common skill the same way every time 1`] = `
+{
   "common.resurrection-signet": "",
+}
+`;
+
+exports[`skillRoles > tags every dervish skill the same way every time 1`] = `
+{
   "dervish.aura-of-thorns": "condition",
   "dervish.avatar-of-balthazar": "",
   "dervish.avatar-of-dwayna": "removal",
@@ -45,25 +56,38 @@ exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
   "dervish.avatar-of-lyssa": "",
   "dervish.avatar-of-melandru": "",
   "dervish.balthazars-rage": "condition",
+  "dervish.banishing-strike": "",
+  "dervish.chilling-victory": "",
   "dervish.dust-cloak": "condition",
   "dervish.enchanted-haste": "removal",
   "dervish.eremites-attack": "",
   "dervish.fleeting-stability": "",
+  "dervish.grenths-grasp": "removal condition",
   "dervish.harriers-haste": "",
   "dervish.heart-of-fury": "",
   "dervish.heart-of-holy-flame": "condition",
   "dervish.mystic-regeneration": "healing",
+  "dervish.mystic-sandstorm": "",
   "dervish.mystic-sweep": "",
   "dervish.mystic-twister": "",
+  "dervish.pious-assault": "",
   "dervish.pious-haste": "",
   "dervish.pious-restoration": "healing removal",
+  "dervish.reapers-sweep": "knockdown condition",
+  "dervish.rending-aura": "condition",
   "dervish.sand-shards": "",
   "dervish.signet-of-pious-light": "healing",
   "dervish.staggering-force": "condition",
   "dervish.victorious-sweep": "healing",
   "dervish.vow-of-strength": "",
+  "dervish.wearying-strike": "condition",
   "dervish.wounding-strike": "condition",
   "dervish.zealous-sweep": "",
+}
+`;
+
+exports[`skillRoles > tags every elementalist skill the same way every time 1`] = `
+{
   "elementalist.aftershock": "",
   "elementalist.armor-of-earth": "defence",
   "elementalist.armor-of-mist": "defence",
@@ -83,9 +107,11 @@ exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
   "elementalist.ice-spikes": "hex",
   "elementalist.immolate": "condition",
   "elementalist.inferno": "",
+  "elementalist.lava-font": "",
   "elementalist.lightning-orb": "",
   "elementalist.lightning-strike": "",
   "elementalist.maelstrom": "interrupt",
+  "elementalist.mark-of-rodgort": "hex",
   "elementalist.meteor": "knockdown",
   "elementalist.meteor-shower": "knockdown",
   "elementalist.mind-blast": "",
@@ -97,11 +123,20 @@ exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
   "elementalist.shard-storm": "hex",
   "elementalist.shatterstone": "hex",
   "elementalist.shock": "knockdown",
+  "elementalist.shock-arrow": "",
   "elementalist.stoning": "knockdown",
+  "elementalist.ward-against-elements": "",
   "elementalist.ward-against-melee": "defence",
   "elementalist.water-trident": "knockdown",
+}
+`;
+
+exports[`skillRoles > tags every mesmer skill the same way every time 1`] = `
+{
+  "mesmer.arcane-conundrum": "hex",
   "mesmer.arcane-echo": "",
   "mesmer.backfire": "hex",
+  "mesmer.blackout": "",
   "mesmer.conjure-phantasm": "hex",
   "mesmer.crippling-anguish": "hex",
   "mesmer.cry-of-frustration": "interrupt",
@@ -129,18 +164,30 @@ exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
   "mesmer.phantom-pain": "hex",
   "mesmer.power-block": "interrupt",
   "mesmer.power-drain": "interrupt",
+  "mesmer.power-leak": "interrupt",
   "mesmer.power-spike": "interrupt",
   "mesmer.price-of-pride": "hex",
+  "mesmer.psychic-instability": "interrupt knockdown",
   "mesmer.shame": "hex",
   "mesmer.shatter-enchantment": "",
+  "mesmer.shatter-hex": "removal",
   "mesmer.shrinking-armor": "hex",
   "mesmer.signet-of-humility": "",
+  "mesmer.spiritual-pain": "",
   "mesmer.unnatural-signet": "",
   "mesmer.visions-of-regret": "hex",
   "mesmer.wastrels-demise": "hex",
   "mesmer.wastrels-worry": "hex",
+}
+`;
+
+exports[`skillRoles > tags every monk skill the same way every time 1`] = `
+{
   "monk.aegis": "defence",
+  "monk.bane-signet": "knockdown",
+  "monk.banish": "",
   "monk.blessed-light": "healing removal",
+  "monk.castigation-signet": "",
   "monk.contemplation-of-purity": "healing removal",
   "monk.cure-hex": "healing removal",
   "monk.dismiss-condition": "healing removal",
@@ -151,8 +198,10 @@ exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
   "monk.heal-other": "healing",
   "monk.heal-party": "healing",
   "monk.healing-breeze": "healing",
+  "monk.holy-strike": "",
   "monk.holy-veil": "removal defence",
   "monk.infuse-health": "healing",
+  "monk.judges-insight": "",
   "monk.light-of-deliverance": "healing",
   "monk.mend-condition": "healing removal",
   "monk.mending": "healing",
@@ -160,6 +209,7 @@ exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
   "monk.orison-of-healing": "healing",
   "monk.patient-spirit": "healing",
   "monk.protective-spirit": "defence",
+  "monk.ray-of-judgment": "condition",
   "monk.rebirth": "",
   "monk.remove-hex": "removal",
   "monk.restore-condition": "healing removal",
@@ -168,19 +218,29 @@ exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
   "monk.scourge-enchantment": "hex",
   "monk.shield-of-deflection": "defence",
   "monk.shielding-hands": "healing defence",
+  "monk.signet-of-judgment": "knockdown",
   "monk.signet-of-rejuvenation": "healing",
+  "monk.smite": "",
   "monk.smite-condition": "removal",
   "monk.smite-hex": "removal",
+  "monk.spear-of-light": "",
   "monk.spell-breaker": "",
   "monk.symbol-of-wrath": "",
   "monk.vigorous-spirit": "healing",
+  "monk.word-of-censure": "",
   "monk.word-of-healing": "healing",
   "monk.words-of-comfort": "healing",
   "monk.zealous-benediction": "healing",
+}
+`;
+
+exports[`skillRoles > tags every necromancer skill the same way every time 1`] = `
+{
   "necromancer.animate-bone-horror": "",
   "necromancer.animate-bone-minions": "",
   "necromancer.barbed-signet": "condition",
   "necromancer.barbs": "hex",
+  "necromancer.blood-is-power": "",
   "necromancer.blood-of-the-aggressor": "condition",
   "necromancer.blood-renewal-lite": "healing",
   "necromancer.blood-ritual": "",
@@ -195,7 +255,9 @@ exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
   "necromancer.malaise": "hex",
   "necromancer.mark-of-pain": "hex",
   "necromancer.offering-of-blood": "",
+  "necromancer.order-of-pain": "",
   "necromancer.parasitic-bond": "hex",
+  "necromancer.plague-signet": "removal condition",
   "necromancer.plague-touch": "removal condition",
   "necromancer.price-of-failure": "hex",
   "necromancer.rend-enchantments": "",
@@ -212,10 +274,17 @@ exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
   "necromancer.vampiric-touch": "",
   "necromancer.weaken-armor": "condition",
   "necromancer.well-of-suffering": "",
+}
+`;
+
+exports[`skillRoles > tags every paragon skill the same way every time 1`] = `
+{
   "paragon.aggressive-refrain": "",
   "paragon.anthem-of-disruption": "interrupt",
+  "paragon.anthem-of-envy": "",
   "paragon.anthem-of-flame": "condition",
   "paragon.anthem-of-fury": "",
+  "paragon.anthem-of-guidance": "",
   "paragon.anthem-of-weariness": "condition",
   "paragon.aria-of-restoration": "healing",
   "paragon.aria-of-zeal": "",
@@ -231,12 +300,14 @@ exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
   "paragon.defensive-anthem": "defence",
   "paragon.disrupting-throw": "interrupt",
   "paragon.enduring-harmony": "",
+  "paragon.energizing-chorus": "",
   "paragon.energizing-finale": "",
   "paragon.fall-back": "",
   "paragon.finale-of-restoration": "",
   "paragon.harriers-toss": "",
   "paragon.hasty-refrain": "",
   "paragon.hexbreaker-aria": "removal",
+  "paragon.holy-spear": "condition",
   "paragon.incoming": "",
   "paragon.leaders-comfort": "healing",
   "paragon.lyric-of-purification": "removal",
@@ -251,6 +322,7 @@ exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
   "paragon.signet-of-return": "",
   "paragon.slayers-spear": "condition",
   "paragon.soldiers-fury": "",
+  "paragon.song-of-concentration": "",
   "paragon.song-of-purification": "removal",
   "paragon.song-of-restoration": "healing",
   "paragon.spear-of-lightning": "",
@@ -264,6 +336,11 @@ exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
   "paragon.wearying-spear": "",
   "paragon.wild-throw": "",
   "paragon.zealous-anthem": "",
+}
+`;
+
+exports[`skillRoles > tags every ranger skill the same way every time 1`] = `
+{
   "ranger.apply-poison": "condition",
   "ranger.barbed-trap": "condition",
   "ranger.barrage": "",
@@ -279,20 +356,33 @@ exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
   "ranger.debilitating-shot": "",
   "ranger.disrupting-lunge": "interrupt",
   "ranger.distracting-shot": "interrupt",
+  "ranger.dodge": "defence",
+  "ranger.dual-shot": "",
   "ranger.escape": "defence",
   "ranger.flame-trap": "condition",
   "ranger.hunters-shot": "condition",
+  "ranger.infuriating-heat": "",
   "ranger.lightning-reflexes": "defence",
   "ranger.maiming-strike": "condition",
+  "ranger.melandrus-shot": "condition",
   "ranger.natural-stride": "defence",
   "ranger.pin-down": "condition",
+  "ranger.point-blank-shot": "",
   "ranger.punishing-shot": "interrupt",
   "ranger.revive-animal": "",
   "ranger.savage-shot": "interrupt",
+  "ranger.serpents-quickness": "",
   "ranger.symbiotic-bond": "",
   "ranger.throw-dirt": "condition",
   "ranger.troll-unguent": "healing",
+  "ranger.whirling-defense": "defence",
   "ranger.winnowing": "",
+  "ranger.zojuns-shot": "",
+}
+`;
+
+exports[`skillRoles > tags every ritualist skill the same way every time 1`] = `
+{
   "ritualist.blind-was-mingson": "condition",
   "ritualist.boon-of-creation": "healing",
   "ritualist.consume-soul": "",
@@ -340,25 +430,36 @@ exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
   "ritualist.weapon-of-remedy": "removal",
   "ritualist.weapon-of-warding": "healing defence",
   "ritualist.wielders-boon": "healing",
+}
+`;
+
+exports[`skillRoles > tags every warrior skill the same way every time 1`] = `
+{
   "warrior.backbreaker": "knockdown",
   "warrior.balanced-stance": "",
   "warrior.bonettis-defense": "defence",
   "warrior.bulls-strike": "knockdown",
+  "warrior.charge": "removal",
   "warrior.counter-blow": "knockdown",
   "warrior.crushing-blow": "condition",
   "warrior.cyclone-axe": "",
+  "warrior.deadly-riposte": "condition defence",
   "warrior.deflect-arrows": "defence",
+  "warrior.defy-pain": "defence",
   "warrior.devastating-hammer": "knockdown condition",
   "warrior.disciplined-stance": "defence",
+  "warrior.dismember": "condition",
   "warrior.disrupting-chop": "interrupt",
   "warrior.distracting-blow": "interrupt",
   "warrior.dolyak-signet": "defence",
   "warrior.dragon-slash": "",
   "warrior.earth-shaker": "knockdown",
   "warrior.endure-pain": "",
+  "warrior.enraging-charge": "",
   "warrior.eviscerate": "condition",
   "warrior.executioners-strike": "",
   "warrior.final-thrust": "",
+  "warrior.flail": "",
   "warrior.for-great-justice": "",
   "warrior.frenzy": "",
   "warrior.galrath-slash": "",
@@ -371,10 +472,12 @@ exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
   "warrior.heavy-blow": "knockdown",
   "warrior.hundred-blades": "",
   "warrior.irresistible-blow": "knockdown",
+  "warrior.jaizhenju-strike": "",
   "warrior.mighty-blow": "",
   "warrior.power-attack": "",
   "warrior.protectors-strike": "",
   "warrior.pure-strike": "",
+  "warrior.riposte": "defence",
   "warrior.rush": "",
   "warrior.savage-slash": "interrupt",
   "warrior.sever-artery": "condition",

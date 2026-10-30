@@ -266,13 +266,16 @@ export interface LoseHealthEffect {
  * Move up to `count` conditions, newest first, each with the time it had
  * left, `from` the caster onto the target (#944), as Plague Touch's, or
  * from the target onto the caster (#1511), as Draw Conditions'. Each
- * lands as any condition the giver put on: the longer duration wins.
+ * lands as any condition the giver put on: the longer duration wins,
+ * with `durationMultiplier` times the time it had left (#1540): Plague
+ * Signet's "with 100...200% of their remaining durations", Plague Touch's 1.
  * `healPerCondition`: the caster is healed that much per condition moved.
  */
 export interface TransferConditionsEffect {
   readonly kind: "transfer-conditions";
   readonly from: "caster" | "target";
   readonly count: number;
+  readonly durationMultiplier: number;
   readonly healPerCondition?: Magnitude;
 }
 
@@ -330,6 +333,11 @@ export interface RemoveStatusEffect {
    * "lose 1 Dervish enchantment" (#845). Absent: any.
    */
   readonly profession?: ProfessionId;
+  /**
+   * Only this status, which must be of `category` (#1549): "Charge!"'s
+   * "lose the Crippled condition". Absent: any of the category.
+   */
+  readonly statusId?: StatusId;
   /**
    * `caster`: from the caster, once per use however many targets, as
    * `heal`'s `recipient` (#845). Absent: the target.
@@ -474,8 +482,9 @@ export interface CasterGainsStatusEffect {
  * effect's target, the target itself excluded (#885), as Death Blossom's
  * "all adjacent foes take 20...40 damage". Not a blow: no block, no crit
  * and no chain mark on a foe it reaches. `foe-creatures` reaches only the
- * foes' summoned creatures, never a player (#1309): Consume Soul's "all
- * hostile summoned creatures in earshot of that foe". `allies` reaches the
+ * foes' summoned creatures, never a player nor a pet (#1309, #1528):
+ * Consume Soul's "all hostile summoned creatures in earshot of that foe".
+ * `allies` reaches the
  * caster's side instead, the caster included (#1316): Spirit's Gift's "all
  * allies near that creature". `party` reaches the caster's side's players,
  * never a creature (#1434): Protective Was Kaolai's "all party members",
@@ -543,13 +552,20 @@ export interface DisableSkillEffect {
 }
 
 /**
- * The skill its target just used takes `seconds` longer to recharge
- * (#949), as Diversion's "the next time target foe uses a skill, that
- * skill takes an additional 47 seconds to recharge". Recharge, not a
- * disable: what ends a recharge ends it. No skill just used: nothing.
+ * A skill takes `seconds` longer to recharge. Recharge, not a disable:
+ * what ends a recharge ends it.
+ *
+ * `target-last-skill`: the skill its target just used (#949), as
+ * Diversion's "the next time target foe uses a skill, that skill takes an
+ * additional 47 seconds to recharge". No skill just used: nothing.
+ *
+ * `this-skill`: the skill resolving, this use only (#1519), as Word of
+ * Censure's "takes 20 additional seconds to recharge". Acts on the caster,
+ * once; whoever starts that recharge adds it (`resolveSkillEffects`).
  */
 export interface LengthenRechargeEffect {
   readonly kind: "lengthen-recharge";
+  readonly of: "target-last-skill" | "this-skill";
   readonly seconds: Magnitude;
 }
 
@@ -562,12 +578,19 @@ export interface LengthenRechargeEffect {
  * (PvP)'s "all your Smiting Prayers are disabled". `other-professions`
  * (#1473): every skill on the bar not of `profession`, the using skill's
  * own, a common skill included, but those of `exceptTypes`: Unnatural
- * Signet's "all your non-Mesmer skills except signets". None on it: nothing.
+ * Signet's "all your non-Mesmer skills except signets". `all` (#1570):
+ * every skill on the bar, the one used included, as Blackout's "all of
+ * your skills are disabled for 5 seconds". None on it: nothing.
  */
 export type DisableOwnSkillsEffect =
   | {
       readonly kind: "disable-own-skills";
       readonly which: "spells";
+      readonly seconds: number;
+    }
+  | {
+      readonly kind: "disable-own-skills";
+      readonly which: "all";
       readonly seconds: number;
     }
   | {
@@ -825,9 +848,15 @@ export type StateCondition =
     }
   /**
    * The caster has no status of this category (#1354), the negation of
-   * `caster-has`: Pure Strike's "if you are not using a stance".
+   * `caster-has`: Pure Strike's "if you are not using a stance". With
+   * `profession`, none of that profession's (#1551): Wearying Strike's
+   * "if a Dervish enchantment is not removed".
    */
-  | { readonly kind: "caster-lacks"; readonly category: StatusCategory }
+  | {
+      readonly kind: "caster-lacks";
+      readonly category: StatusCategory;
+      readonly profession?: ProfessionId;
+    }
   /**
    * No living ally of the effect's target, the target itself excluded,
    * stands within `radius` of it (#885): Horns of the Ox's "not adjacent
@@ -890,6 +919,18 @@ export type StateCondition =
    * as Shadow Refuge's "if you are attacking".
    */
   | { readonly kind: "target-attacking" }
+  /**
+   * One of `conditions` holds, each read as it would be alone (#1539):
+   * Melandru's Shot's "if target foe is moving or knocked down". An
+   * empty list never holds.
+   */
+  | { readonly kind: "any-of"; readonly conditions: readonly StateCondition[] }
+  /**
+   * The effect's target is a summoned creature (#1528): a minion or a
+   * spirit, never a pet or a map NPC (`isSummoned`). Banish's "double
+   * damage if target foe is a summoned creature".
+   */
+  | { readonly kind: "target-is-summoned" }
   /**
    * The effect's target is activating a spell (`isSpell`) or is attacking
    * (#1511), either once: Signet of Rejuvenation's "casting a spell or

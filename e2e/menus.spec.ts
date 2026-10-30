@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { openPeers } from "./helpers/peers.js";
+import { joinByCode, openRail } from "./helpers/menu.js";
+import { hostLobby, openPeers } from "./helpers/peers.js";
 
 /**
  * The screen bar every menu screen shares (#578), in the top bar (#1272):
@@ -15,31 +16,26 @@ async function openMenu(page: Page): Promise<void> {
   await expect(menuHeading(page)).toBeVisible();
 }
 
-/** The title bar's Solo Play / Team Play switch (#1453). */
-const playTab = (page: Page, name: "Solo Play" | "Team Play") =>
-  page.locator("#topbar .play-tabs").getByRole("button", { name, exact: true });
-
 test("#578: Esc goes back on the team editor, options and lobby screens", async ({ page }) => {
   await openMenu(page);
 
-  await playTab(page, "Team Play").click();
-  await expect(playTab(page, "Team Play")).toHaveAttribute("aria-pressed", "true");
+  await openRail(page, "Team Builder");
   await page.getByRole("button", { name: "New team build", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Edit", exact: true })).toBeVisible();
   await page.keyboard.press("Escape");
-  await expect(page.locator(".screen-team-play")).toBeVisible();
-  // Team Play has no way back either.
+  await expect(page.locator(".screen-teams")).toBeVisible();
+  // Team Builder has no way back either.
   await page.keyboard.press("Escape");
-  await expect(page.locator(".screen-team-play")).toBeVisible();
-  await playTab(page, "Solo Play").click();
-  await expect(page.locator(".roster")).toBeVisible();
+  await expect(page.locator(".screen-teams")).toBeVisible();
+  await openRail(page, "Random Arena");
+  await expect(page.locator(".character-card")).toBeVisible();
 
   await page.locator(".topbar-options").click();
   await expect(page.getByRole("heading", { name: "Options" })).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(menuHeading(page)).toBeVisible();
 
-  await page.getByRole("button", { name: "Host a lobby" }).click();
+  await hostLobby(page);
   await expect(page.locator("#topbar .lobby-code")).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(menuHeading(page)).toBeVisible();
@@ -52,7 +48,7 @@ test("#578: Esc goes back on the team editor, options and lobby screens", async 
 
 test("#578: Esc with a confirmation open cancels it, and only then goes back", async ({ page }) => {
   await openMenu(page);
-  await playTab(page, "Team Play").click();
+  await openRail(page, "Team Builder");
   await page.getByRole("button", { name: "New team build", exact: true }).click();
 
   // Esc from the name field is Back too, which asks first: the name changed.
@@ -72,7 +68,7 @@ test("#578: Esc with a confirmation open cancels it, and only then goes back", a
   await page.keyboard.press("Escape");
   await expect(discard).toBeVisible();
   await discard.click();
-  await expect(page.locator(".screen-team-play")).toBeVisible();
+  await expect(page.locator(".screen-teams")).toBeVisible();
 });
 
 test("#1272: the editor's Discard question takes the status's room: the bar stays one row, Save in it", async ({
@@ -80,7 +76,8 @@ test("#1272: the editor's Discard question takes the status's room: the bar stay
 }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.goto("./");
-  await page.getByRole("button", { name: "new character" }).click();
+  await openRail(page, "Character Builder");
+  await page.getByRole("button", { name: "New character", exact: true }).click();
   await page.locator("input.editor-name").fill("Rurik");
   const bar = page.locator("#topbar");
   const status = bar.locator(".topbar-status");
@@ -104,11 +101,9 @@ test("#578: a host with others in the lobby is asked before Leave or Esc closes 
   const [host, guest] = pages as [Page, Page];
   try {
     await openMenu(host);
-    await host.getByRole("button", { name: "Host a lobby" }).click();
-    const code = (await host.locator(".lobby-code").textContent())?.trim() ?? "";
+    const code = await hostLobby(host);
     await openMenu(guest);
-    await guest.locator("input.code-input").fill(code);
-    await guest.getByRole("button", { name: "Join", exact: true }).click();
+    await joinByCode(guest, code);
     await expect(host.locator(".lobby-spectators")).toContainText("player");
 
     const question = host.getByText("Close the lobby for everyone?");
@@ -139,34 +134,38 @@ test("#853: the first start rolls a starter character, chosen; Reroll replaces i
   page,
 }) => {
   await openMenu(page);
-  const roster = page.locator(".roster");
-  const row = roster.locator(".selectable-row");
-  await expect(row).toHaveCount(1);
-  await expect(row).toHaveClass(/is-selected/);
-  await expect(page.getByRole("button", { name: "Random Arena", exact: true })).toBeEnabled();
-  const name = row.locator(".selectable-row-name");
+  // Chosen on Random Arena, where the menu opens on a first start (#1525).
+  await expect(page.locator(".mode-rail-entry[aria-pressed=true]")).toHaveAttribute(
+    "aria-label",
+    "Random Arena",
+  );
+  const card = page.locator(".character-card");
+  await expect(card).toHaveCount(1);
+  await expect(card).toHaveClass(/is-selected/);
+  await expect(page.locator(".random-arena-tile").first()).toBeEnabled();
+  const name = card.locator(".play-card-name");
   await expect(name).toHaveText(ROLLED_NAME);
   const first = await name.innerText();
   // Drawn as a match draws it (#1250): the figure, not a lettered dot.
-  const figure = row.locator("canvas.character-figure");
+  const figure = card.locator("canvas.character-figure");
   await expect(figure).toBeVisible();
-  await expect(row.locator(".character-dot")).toHaveCount(0);
+  await expect(card.locator(".character-dot")).toHaveCount(0);
   // With its primary profession's glyph inside the disc, as in a match (#1037).
   await expect(figure).toHaveAttribute("data-glyph", /^[a-z]+$/);
 
   // Rolled once: a reload keeps it, and rolls nothing new.
   await page.reload();
-  await expect(row).toHaveCount(1);
+  await expect(card).toHaveCount(1);
   await expect(name).toHaveText(first);
 
-  // Rerolled at once, unasked (#1146): another starter build under
-  // another random name (#1149), the same row, still chosen.
-  const actions = roster.locator(".selectable-row-actions");
+  // Rerolled at once, unasked (#1146), on Character Builder: another
+  // starter build under another random name (#1149), the same card.
+  await openRail(page, "Character Builder");
+  const actions = card.locator(".play-card-actions");
   await actions.getByRole("button", { name: "Reroll", exact: true }).click();
   await expect(name).not.toHaveText(first);
   await expect(name).toHaveText(ROLLED_NAME);
-  await expect(row).toHaveCount(1);
-  await expect(row).toHaveClass(/is-selected/);
+  await expect(card).toHaveCount(1);
 
   // It has Clone, not Edit (#1147): Clone opens the editor on a fresh
   // roll under another random name (#1457), one even for a double-click.
@@ -178,14 +177,15 @@ test("#853: the first start rolls a starter character, chosen; Reroll replaces i
   await page.locator("input.editor-name").fill("Pyro");
   await page.getByRole("button", { name: "Save", exact: true }).click();
 
-  // The copy is an ordinary character: Edit, no Clone or Reroll. The
-  // rolled one is still chosen.
-  await expect(row).toHaveCount(2);
-  const pyro = roster.locator(".selectable-row", { hasText: "Pyro" });
-  const original = roster.locator(".selectable-row", { hasText: rolled });
+  // The copy is an ordinary character: Edit, no Clone or Reroll.
+  await expect(card).toHaveCount(2);
+  const pyro = page.locator(".character-card", { hasText: "Pyro" });
+  const original = page.locator(".character-card", { hasText: rolled });
   await expect(pyro.getByRole("button", { name: "Edit", exact: true })).toBeVisible();
   await expect(pyro.locator(".roster-clone, .roster-reroll")).toHaveCount(0);
   await expect(original.locator(".roster-reroll")).toHaveCount(1);
+  // The rerolled one is still chosen.
+  await openRail(page, "Random Arena");
   await expect(original).toHaveClass(/is-selected/);
 });
 
@@ -193,54 +193,60 @@ test("#1290: a fresh character, empty bar and all, holds its weapon on the menu"
   page,
 }) => {
   await openMenu(page);
-  const roster = page.locator(".roster");
-  await roster.getByRole("button", { name: "New character" }).click();
+  await openRail(page, "Character Builder");
+  await page.getByRole("button", { name: "New character", exact: true }).click();
   await page.locator("input.editor-name").fill("Blank");
   await page.getByRole("button", { name: "Save", exact: true }).click();
 
-  const blank = roster.locator(".selectable-row", { hasText: "Blank" });
+  const blank = page.locator(".character-card", { hasText: "Blank" });
   await expect(blank).not.toHaveClass(/is-invalid/);
   await expect(blank.locator("canvas.character-figure")).toHaveAttribute("data-weapon-id", "sword");
 });
 
-test("#579: the roster's rows are buttons: Enter or Space chooses, Edit sits beside", async ({
+test("#579: Random Arena's cards are buttons: Enter or Space chooses; Edit is on Character Builder", async ({
   page,
 }) => {
   await openMenu(page);
   // The first start's rolled character (#853), chosen.
-  const roster = page.locator(".roster");
-  await expect(roster.locator(".selectable-row")).toHaveCount(1);
-  const rolled = roster.locator(".selectable-row").first();
+  const cards = page.locator(".character-card");
+  await expect(cards).toHaveCount(1);
+  const rolled = cards.first();
   await expect(rolled).toHaveClass(/is-selected/);
-  await roster.getByRole("button", { name: "New character" }).click();
+  await openRail(page, "Character Builder");
+  await page.getByRole("button", { name: "New character", exact: true }).click();
   await page.locator("input.editor-name").fill("Pyro");
   await page.getByRole("button", { name: "Save", exact: true }).click();
 
-  const pyro = roster.locator(".selectable-row", { hasText: "Pyro" });
+  await openRail(page, "Random Arena");
+  const pyro = page.locator(".character-card", { hasText: "Pyro" });
   await expect(pyro.locator(".mini-skill")).toHaveCount(8);
-  const choosePyro = pyro.locator(".selectable-row-choose");
+  const choosePyro = pyro.locator(".play-card-open");
   await choosePyro.focus();
   await page.keyboard.press("Enter");
   await expect(pyro).toHaveClass(/is-selected/);
   await expect(choosePyro).toBeFocused();
 
-  const starter = roster.locator(".selectable-row").filter({ hasNotText: "Pyro" });
-  await starter.locator(".selectable-row-choose").focus();
+  const starter = cards.filter({ hasNotText: "Pyro" });
+  await starter.locator(".play-card-open").focus();
   await page.keyboard.press(" ");
   await expect(starter).toHaveClass(/is-selected/);
   await expect(pyro).not.toHaveClass(/is-selected/);
+  // Random Arena only chooses: nothing to edit there.
+  await expect(pyro.getByRole("button", { name: "Edit", exact: true })).toHaveCount(0);
 
-  // Edit opens the editor and chooses nobody.
-  await pyro.getByRole("button", { name: "Edit", exact: true }).click();
-  await expect(page.locator("input.editor-name")).toHaveValue("Pyro");
-  await page.keyboard.press("Escape");
-  await expect(starter).toHaveClass(/is-selected/);
-
-  // Record is Solo Play's own button in the top bar; Options is its ⚙ (#1272), Music its ♪ (#1453).
+  // Record is Random Arena's own button in the top bar; Options is its ⚙ (#1272), Music its ♪ (#1453).
   const own = page.locator("#topbar .topbar-screen-actions").getByRole("button");
   await expect(own).toHaveText(["Record"]);
   await expect(page.locator("#topbar .topbar-options")).toBeVisible();
   await expect(page.locator("#topbar .topbar-music")).toBeVisible();
+
+  // Edit opens the editor and chooses nobody.
+  await openRail(page, "Character Builder");
+  await pyro.getByRole("button", { name: "Edit", exact: true }).click();
+  await expect(page.locator("input.editor-name")).toHaveValue("Pyro");
+  await page.keyboard.press("Escape");
+  await openRail(page, "Random Arena");
+  await expect(starter).toHaveClass(/is-selected/);
 });
 
 test("#1272: on a phone, the menu's ⋯ holds Record and the chevron is Back", async ({ page }) => {
@@ -270,31 +276,66 @@ test("#1272: on a phone, the menu's ⋯ holds Record and the chevron is Back", a
   await expect(menuHeading(page)).toBeVisible();
 });
 
-test("#1453: the title bar switches Solo Play and Team Play, and keeps the tab; each tile hosts on its own maps", async ({
+test("#1525: on a phone, a screen with no ⋯ keeps Lobby Code, Join and the global icons on screen", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 640 });
+  await openMenu(page);
+  await openRail(page, "Team Arena");
+  const bar = page.locator("#topbar");
+  await expect(bar.locator(".topbar-more")).toBeHidden();
+  await expect(bar.getByRole("textbox", { name: "Lobby code", exact: true })).toBeVisible();
+  await expect(bar.getByRole("button", { name: "Join", exact: true })).toBeVisible();
+  // The rightmost icon still inside the bar, and nothing scrolls sideways.
+  const right = await bar.locator(".topbar-fullscreen").evaluate((node) => {
+    return node.getBoundingClientRect().right;
+  });
+  expect(right).toBeLessThanOrEqual(320);
+  const overflow = await bar.evaluate((node) => node.scrollWidth - node.clientWidth);
+  expect(overflow).toBe(0);
+});
+
+test("#1525: the rail switches screens and keeps the last; each mode hosts on its own maps", async ({
   page,
 }) => {
   await openMenu(page);
-  await expect(playTab(page, "Solo Play")).toHaveAttribute("aria-pressed", "true");
-  await playTab(page, "Team Play").click();
-  await expect(page.locator(".team-play-tile")).toHaveText([
-    "Hosted Lobby",
+  const rail = page.locator(".mode-rail .mode-rail-entry");
+  await expect(rail).toHaveCount(7);
+  for (const label of [
+    "Random Arena",
     "Team Arena",
     "Heroes' Ascent",
     "GvG",
-  ]);
-  // No Teams or Music in the bar; Team Play has no own buttons.
+    "Hosted Game",
+    "Character Builder",
+    "Team Builder",
+  ]) {
+    await expect(
+      page.locator(".mode-rail").getByRole("button", { name: label, exact: true }),
+    ).toBeVisible();
+  }
+  await expect(page.locator(".mode-rail-entry[aria-label='Random Arena']")).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await openRail(page, "GvG");
+  // No Record or Music in the bar; GvG has no own buttons.
   await expect(page.locator("#topbar .topbar-screen-actions").getByRole("button")).toHaveCount(0);
   await page.reload();
-  await expect(playTab(page, "Team Play")).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".mode-rail-entry[aria-label='GvG']")).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
 
   // GvG plays one map, so its host sees it named, not picked.
-  await page.getByRole("button", { name: "GvG", exact: true }).click();
+  await page.getByRole("button", { name: "Host a Team Lobby", exact: true }).click();
   await expect(page.locator("#topbar .lobby-map")).toHaveText("Map: Guild Hall Isle (large)");
   await page.keyboard.press("Escape");
-  await expect(page.locator(".screen-team-play")).toBeVisible();
+  await expect(page.locator(".screen-gvg")).toBeVisible();
 
   // Heroes' Ascent picks among its three.
-  await page.getByRole("button", { name: "Heroes' Ascent", exact: true }).click();
+  await openRail(page, "Heroes' Ascent");
+  await page.getByRole("button", { name: "Host a Team Lobby", exact: true }).click();
   const options = page.locator("#topbar .lobby-map select option");
   await expect(options).toHaveCount(3);
   await expect(page.locator("#topbar .lobby-map select")).toHaveValue("relic-temples");

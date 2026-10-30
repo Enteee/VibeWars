@@ -17,12 +17,13 @@ import { hitLocationOf, mitigate, weaponAttributeMultiplier, type DamagePacket }
 import {
   applyDamage,
   applyEffects,
-  applySkillEffects,
   gainEnergy,
   gainHealth,
   interruptOnHit,
+  resolveSkillEffects,
   stateHolds,
   type CombatEvent,
+  type SkillOutcome,
   type SkillResolution,
 } from "./effects.js";
 import { resolveMagnitude } from "./scaling.js";
@@ -193,19 +194,23 @@ export interface WeaponSnapshot {
    * weapon's: an earth scythe blow is still a physical attack.
    */
   readonly damageType: DamageType;
+  /** The least armor penetration the attacker's statuses give (#1519): Judge's Insight's 0.2. */
+  readonly armorPenetration: number;
 }
 
 export function weaponSnapshotOf(attacker: Combatant): WeaponSnapshot {
   const { mainHand } = attacker.equipment;
   const rank = rankIn(attacker, mainHand.attributeId);
+  const modifiers = aggregateModifiers(attacker.statuses.active);
   return {
     mainHand,
     rank,
     criticalStrikes: rankIn(attacker, CRITICAL_STRIKES_ATTRIBUTE),
     requirementMet: mainHand.attributeId === undefined || rank >= mainHand.weapon.requirement.rank,
     damageMultiplier: weaponDamageMultiplierOf(attacker),
-    criticalChanceBonus: aggregateModifiers(attacker.statuses.active).criticalChanceBonus,
+    criticalChanceBonus: modifiers.criticalChanceBonus,
     damageType: attackDamageTypeOf(attacker) ?? mainHand.damageType,
+    armorPenetration: modifiers.attackArmorPenetration,
   };
 }
 
@@ -366,13 +371,16 @@ export interface BlowRule {
   readonly armorPenetration: number;
   /**
    * More `bonus` while a state holds (#794), at the caster's ranks: read
-   * by `settleBlow` as the blow lands on each victim.
+   * by `settleBlow` as the blow lands on each victim. The skill's own,
+   * then its chants' (#1505), as Anthem of Envy's.
    */
-  readonly conditionalBonus:
-    { readonly condition: StateCondition; readonly amount: number } | undefined;
+  readonly conditionalBonuses: readonly {
+    readonly condition: StateCondition;
+    readonly amount: number;
+  }[];
   /**
    * When the blow is a critical hit whatever the roll (#1315): read, as
-   * `conditionalBonus` is, by `settleBlow`, which leaves `"always"` or
+   * `conditionalBonuses` are, by `settleBlow`, which leaves `"always"` or
    * `undefined`.
    */
   readonly criticalWhen: StateCondition | "always" | undefined;
@@ -385,7 +393,7 @@ export const PLAIN_BLOW: BlowRule = {
   strengthRank: 0,
   damageType: undefined,
   armorPenetration: 0,
-  conditionalBonus: undefined,
+  conditionalBonuses: [],
   criticalWhen: undefined,
 };
 
@@ -394,26 +402,29 @@ export function skillBlow(skill: Skill, caster: Combatant): BlowRule {
   const rule = blowRuleOf(skill);
   const bonusDamage = rule?.bonusDamage;
   const conditionalBonus = rule?.conditionalBonus;
+  // A chant's bonus on the next attack skill (#1505), taken as the skill
+  // is released, as its riders are.
+  const chants = caster.statuses.active.flatMap(({ id }) => {
+    const bonus = getStatusDefinition(id).nextAttackSkillBonus;
+    return bonus === undefined ? [] : [bonus];
+  });
   return {
     weaponDamage: rule?.weaponDamage ?? PLAIN_BLOW.weaponDamage,
     bonus: bonusDamage === undefined ? 0 : resolveMagnitude(bonusDamage, caster),
     strengthRank: rankIn(caster, STRENGTH_ATTRIBUTE),
     damageType: rule?.damageType,
     armorPenetration: rule?.armorPenetration ?? PLAIN_BLOW.armorPenetration,
-    conditionalBonus:
-      conditionalBonus === undefined
-        ? undefined
-        : {
-            condition: conditionalBonus.condition,
-            amount: resolveMagnitude(conditionalBonus.amount, caster),
-          },
+    conditionalBonuses: [
+      ...(conditionalBonus === undefined ? [] : [conditionalBonus]),
+      ...chants,
+    ].map(({ condition, amount }) => ({ condition, amount: resolveMagnitude(amount, caster) })),
     criticalWhen: rule?.criticalWhen,
   };
 }
 
 /**
- * `blow` as it lands on `victim` (#794): its `conditionalBonus` added to its bonus
- * if the state holds now, for `attacker` and `victim`, and its
+ * `blow` as it lands on `victim` (#794): each of its `conditionalBonuses` added to
+ * its bonus if its state holds now, for `attacker` and `victim`, and its
  * `criticalWhen` (#1315) `"always"` if it holds, else `undefined`. An
  * arrow whose archer has left the match has nobody to read the state of:
  * no more, and no forced critical.
@@ -424,17 +435,18 @@ export function settleBlow(
   victim: Combatant,
   surroundings: Surroundings,
 ): BlowRule {
-  const { conditionalBonus, criticalWhen } = blow;
+  const { conditionalBonuses, criticalWhen } = blow;
   const holds = (condition: StateCondition): boolean =>
     attacker !== undefined && stateHolds(condition, attacker, victim, surroundings);
   return {
     ...blow,
     bonus:
       blow.bonus +
-      (conditionalBonus !== undefined && holds(conditionalBonus.condition)
-        ? conditionalBonus.amount
-        : 0),
-    conditionalBonus: undefined,
+      conditionalBonuses.reduce(
+        (sum, { condition, amount }) => sum + (holds(condition) ? amount : 0),
+        0,
+      ),
+    conditionalBonuses: [],
     criticalWhen:
       criticalWhen === "always" || (criticalWhen !== undefined && holds(criticalWhen))
         ? "always"
@@ -497,6 +509,7 @@ export function landBlow(
     armorPenetration: Math.max(
       blow.armorPenetration,
       strengthArmorPenetration(blow.strengthRank, weapon.armorPenetration),
+      snapshot.armorPenetration,
     ),
   };
   // After the crit and damage rolls: the piece it lands on (#1135).
@@ -521,12 +534,14 @@ export function landBlow(
  * says: a wand's or a staff's bolt carries none. Then every status that
  * ends after so many hits with this weapon spends one (#939): Sand
  * Shards' fourth hit splashes, then ends it. Returns those endings,
- * after what the weapon itself does to whoever it hits (#1239).
+ * after what the weapon itself does to whoever it hits (#1239). A rider
+ * for attack skills only rides a blow `withAttackSkill` (#1551).
  */
 export function attackHitRiders(
   attacker: Combatant,
   victim: Combatant,
   mainHand: ResolvedWeapon,
+  withAttackSkill: boolean,
   rng: SimulationRng,
   rules: CombatRules,
   surroundings: Surroundings,
@@ -538,7 +553,7 @@ export function attackHitRiders(
   }
   for (const { id } of attacker.statuses.active) {
     const rider = getStatusDefinition(id).onAttackHit;
-    if (rider === undefined) {
+    if (rider === undefined || (rider.attackSkillsOnly && !withAttackSkill)) {
       continue;
     }
     const events = applyEffects(rider.effects, {
@@ -647,9 +662,12 @@ export interface NextAttackSkill {
 }
 
 export function nextAttackSkillOf(attacker: Combatant): NextAttackSkill {
+  // One with only a bonus (#1505) is spent too: `skillBlow` took it.
   const holding = attacker.statuses.active.flatMap(({ id }) => {
-    const effects = getStatusDefinition(id).nextAttackSkill;
-    return effects === undefined ? [] : [{ id, effects }];
+    const { nextAttackSkill, nextAttackSkillBonus } = getStatusDefinition(id);
+    return nextAttackSkill === undefined && nextAttackSkillBonus === undefined
+      ? []
+      : [{ id, effects: nextAttackSkill ?? [] }];
   });
   return {
     statusIds: holding.map(({ id }) => id),
@@ -713,7 +731,16 @@ function strike(
     landedCritical(attacker, snapshot.criticalStrikes, events);
   }
   events.push(
-    ...attackHitRiders(attacker, victim, snapshot.mainHand, rng, rules, swing.surroundings, fired),
+    ...attackHitRiders(
+      attacker,
+      victim,
+      snapshot.mainHand,
+      false,
+      rng,
+      rules,
+      swing.surroundings,
+      fired,
+    ),
   );
   bearerHit(attacker, victim, events, false, snapshot.mainHand.weapon);
   attackReached(victim, events);
@@ -810,6 +837,28 @@ export function resolveAttackSkill(
   exposed: (victim: Combatant) => boolean,
   fired: FiredTrigger[],
 ): CombatEvent[] {
+  return resolveAttackSkillOutcome(resolution, exposed, fired).events;
+}
+
+/**
+ * `resolveAttackSkill`, with the `recharge-faster` its effects landed
+ * (#1551): a melee attack skill lands as it is used, so it can shorten
+ * its own recharge, hit or miss, as Pious Assault's. It summons nothing
+ * and leaves no ground.
+ */
+export function resolveAttackSkillOutcome(
+  resolution: SkillResolution,
+  exposed: (victim: Combatant) => boolean,
+  fired: FiredTrigger[],
+): SkillOutcome {
+  let rechargeFraction = 0;
+  let rechargeLongerSeconds = 0;
+  const land = (landing: SkillResolution, earlier: readonly CombatEvent[]): CombatEvent[] => {
+    const outcome = resolveSkillEffects(landing, earlier);
+    rechargeFraction = Math.max(rechargeFraction, outcome.rechargeFraction);
+    rechargeLongerSeconds += outcome.rechargeLongerSeconds;
+    return outcome.events;
+  };
   const { skill, caster, rng, rules, surroundings } = resolution;
   const blow = skillBlow(skill, caster);
   const rule = blowRuleOf(skill);
@@ -901,7 +950,16 @@ export function resolveAttackSkill(
         critical.push(victim);
       }
       events.push(
-        ...attackHitRiders(caster, victim, snapshot.mainHand, rng, rules, surroundings, fired),
+        ...attackHitRiders(
+          caster,
+          victim,
+          snapshot.mainHand,
+          true,
+          rng,
+          rules,
+          surroundings,
+          fired,
+        ),
         ...nextAttackSkillRiders(next, caster, victim, rng, rules, surroundings),
       );
       bearerHit(caster, victim, events, true, weapon);
@@ -915,13 +973,13 @@ export function resolveAttackSkill(
     const riders = (effects: readonly SkillEffect[], targets: Combatant[]): CombatEvent[] =>
       targets.length === 0 || effects.length === 0
         ? []
-        : applySkillEffects({ ...resolution, skill: { ...skill, effects }, targets }, events);
+        : land({ ...resolution, skill: { ...skill, effects }, targets }, events);
     events.push(
-      ...(hit.length === 0 ? [] : applySkillEffects({ ...resolution, targets: hit }, events)),
+      ...(hit.length === 0 ? [] : land({ ...resolution, targets: hit }, events)),
       ...riders(rule?.onCritical ?? [], critical),
       ...riders(rule?.onBlocked ?? [], blocked),
       ...riders(rule?.onFailedToHit ?? [], failed),
     );
   }
-  return events;
+  return { events, rechargeFraction, rechargeLongerSeconds, summons: [], grounds: [] };
 }

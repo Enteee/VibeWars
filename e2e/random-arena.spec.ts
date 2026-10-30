@@ -1,13 +1,14 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
+import { openRail } from "./helpers/menu.js";
 import { openPeers } from "./helpers/peers.js";
 import { namePlayer } from "./helpers/player.js";
 import { bringStarter, starterKey } from "./helpers/starter.js";
 import { key } from "./keys.js";
 
 /**
- * Random Arena (#880, #854): one button, a stranger, a random map. Two
+ * Random Arena (#880, #854): one tile, a stranger, a random map. Two
  * pages of one context queue on the BroadcastChannel board, as e2e plays
  * on BroadcastChannel rather than Trystero (#403), and meet in a 1v1, a
  * mode the menu ships.
@@ -47,26 +48,31 @@ async function makeCharacter(page: Page): Promise<void> {
   await bringStarter(page, BUILD);
 }
 
-/** From the menu, queue for a 1v1 as `name`. */
+/** From Random Arena, queue for a 1v1 as `name`: its tile queues at once (#1525). */
 async function queue1v1(page: Page, name: string): Promise<void> {
   await namePlayer(page, name);
-  await page.getByRole("button", { name: "1v1", exact: true }).click();
-  await page.getByRole("button", { name: "Random Arena", exact: true }).click();
+  await openRail(page, "Random Arena");
+  await page.locator(".random-arena-tile", { hasText: "1v1" }).click();
   await expect(page.locator("#topbar .topbar-crumb.is-place")).toHaveText(
     `Random Arena 1v1 · ${BUILD}`,
   );
 }
 
-test("Random Arena is greyed out without a character to queue with, and 4v4 is the default", async ({
+test("Random Arena's tiles are greyed out without a character to queue with (#1525)", async ({
   page,
 }) => {
   await page.goto("./");
-  const row = page.locator(".menu-random-arena");
+  const screen = page.locator(".screen-random-arena");
+  const tiles = screen.locator(".random-arena-tile");
   // The first start's rolled character (#853) queues; gone, it does not
   // come back, and nothing is left to queue with. The menu cannot delete
   // it (#1147), so the store is emptied under the page. Source text, as
   // the e2e tsconfig has no DOM lib (see builds.spec.ts).
-  await expect(row.getByRole("button", { name: "Random Arena", exact: true })).toBeEnabled();
+  await expect(tiles).toHaveText(["1v1", "2v2", "4v4"]);
+  for (const tile of await tiles.all()) {
+    await expect(tile).toBeEnabled();
+  }
+  await expect(screen.locator(".random-arena-hint")).toHaveCount(0);
   await page.evaluate(`
     new Promise((resolve, reject) => {
       const open = indexedDB.open(${JSON.stringify(STORAGE_NAMESPACE)});
@@ -80,13 +86,11 @@ test("Random Arena is greyed out without a character to queue with, and 4v4 is t
     })
   `);
   await page.reload();
-  await expect(page.locator(".roster .empty-state")).toContainText("No characters yet.");
-  await expect(row.getByRole("button", { name: "Random Arena", exact: true })).toBeDisabled();
-  await expect(row).toContainText("Make a character first.");
-  await expect(row.getByRole("button", { name: "4v4", exact: true })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
+  await expect(screen.locator(".empty-state")).toContainText("No characters yet.");
+  for (const tile of await tiles.all()) {
+    await expect(tile).toBeDisabled();
+  }
+  await expect(screen.locator(".random-arena-hint")).toHaveText("Make a character first.");
 });
 
 test("two players queue for a 1v1, are matched, see the versus splash, play it out and queue again", async ({

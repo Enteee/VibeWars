@@ -149,7 +149,7 @@ export interface LobbyMap {
 
 /**
  * The maps a host may pick from (#1453): those playing one of `modes`, a
- * Team Play tile's, in `maps`' order; every map for `undefined`.
+ * mode screen's (#1525), in `maps`' order; every map for `undefined`.
  */
 export function hostMaps(
   maps: readonly LobbyMap[],

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { PROFESSIONS } from "../professions.js";
 import { IMPLEMENTED_SKILLS, getSkill } from "./catalog.js";
 import { skillRoles } from "./roles.js";
 
@@ -10,12 +11,19 @@ function rolesOf(id: string): readonly string[] {
 }
 
 describe("skillRoles", () => {
-  it("tags the whole catalogue the same way every time", () => {
-    const tagged = Object.fromEntries(
-      IMPLEMENTED_SKILLS.map((s) => [s.id, skillRoles(s).join(" ")]),
-    );
-    expect(tagged).toMatchSnapshot();
-  });
+  // One snapshot per profession, so two cards for two professions touch
+  // two entries.
+  for (const profession of [...Object.keys(PROFESSIONS), "common"]) {
+    it(`tags every ${profession} skill the same way every time`, () => {
+      const tagged = Object.fromEntries(
+        IMPLEMENTED_SKILLS.filter((s) => s.profession === profession).map((s) => [
+          s.id,
+          skillRoles(s).join(" "),
+        ]),
+      );
+      expect(tagged).toMatchSnapshot();
+    });
+  }
 
   it("reads each role from the skill's effects", () => {
     expect(rolesOf("warrior.distracting-blow")).toEqual(["interrupt"]);

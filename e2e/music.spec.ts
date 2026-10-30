@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 
 import { expect, test, type Page } from "@playwright/test";
 
+import { openRail } from "./helpers/menu.js";
 import { startSoloMatch } from "./helpers/peers.js";
 import { key } from "./keys.js";
 
@@ -59,7 +60,7 @@ test("music starts on the first click, in a sandboxed frame, with no console err
   await recordMessages(page);
 
   await page.goto("./");
-  await expect(page.locator(".roster")).toBeVisible();
+  await expect(page.locator(".screen-random-arena")).toBeVisible();
   await expect(page.locator("iframe")).toHaveCount(0);
 
   await page.locator("body").click({ position: { x: 5, y: 5 } });
@@ -182,7 +183,7 @@ test("a pinned track is what plays after a reload (#372)", async ({ page }) => {
   await expect(page.locator(".jukebox-mode")).toHaveValue("pinned");
 
   await page.reload();
-  await expect(page.locator(".roster")).toBeVisible();
+  await expect(page.locator(".screen-random-arena")).toBeVisible();
   await page.locator("body").click({ position: { x: 5, y: 5 } });
   await expect.poll(() => playedTracks(page), { timeout: 5_000 }).toEqual(["ember-deep"]);
 });
@@ -323,8 +324,8 @@ test("a pasted beat that floods the game is switched off, and its edit is not re
   await expect(page.locator("iframe.music-host")).toHaveCount(0);
 
   await page.keyboard.press("Escape");
-  // The menu says so the next time it draws: here, on Team Play.
-  await page.locator("#topbar .play-tabs").getByRole("button", { name: "Team Play" }).click();
+  // The menu says so the next time it draws: here, on Team Builder.
+  await openRail(page, "Team Builder");
   await expect(
     page.getByText("Your edit of Ember Deep stopped the music and was removed."),
   ).toBeVisible();
@@ -395,7 +396,7 @@ test("Off plays nothing after a click, and the music mute survives a reload (#37
   await page.getByLabel("Mute music").check();
 
   await page.reload();
-  await expect(page.locator(".roster")).toBeVisible();
+  await expect(page.locator(".screen-random-arena")).toBeVisible();
   await page.locator("body").click({ position: { x: 5, y: 5 } });
   await expect(page.locator("iframe.music-host")).toHaveCount(1);
   // Long enough for a track to have started, had one been asked for.
@@ -417,7 +418,7 @@ interface Box {
 test("the now-playing toast at a match start covers none of the HUD (#372)", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto("./");
-  await expect(page.getByRole("button", { name: "host a lobby" })).toBeVisible();
+  await expect(page.locator(".mode-rail")).toBeVisible();
   // The toast hides after a few seconds, which a busy page can spend before
   // a locator gets to it: note where it is, every frame it shows in the
   // match. It first shows on the lobby screen, bottom left (#556), and moves
@@ -436,7 +437,7 @@ test("the now-playing toast at a match start covers none of the HUD (#372)", asy
     };
     note();
   });
-  // The click that hosts the lobby is the one that starts the music.
+  // The first click on the rail, on the way to hosting, starts the music.
   await startSoloMatch(page);
   await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp");
 
@@ -463,7 +464,7 @@ test("the now-playing toast in the build editor stays off the Training panel (#5
 }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.goto("./");
-  await expect(page.getByRole("button", { name: "new character" })).toBeVisible();
+  await expect(page.locator(".mode-rail")).toBeVisible();
   // The toast hides after a few seconds: note its box every frame it shows
   // while the Training Ground is up.
   await page.evaluate(() => {
@@ -479,7 +480,9 @@ test("the now-playing toast in the build editor stays off the Training panel (#5
     };
     note();
   });
-  // The click that opens the editor is the one that starts the music.
+  // The click on the rail starts the music; the editor opens at once
+  // after, well inside the toast's few seconds.
+  await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
   await expect(page.locator(".training-log")).toBeVisible();
 
@@ -573,7 +576,7 @@ test("Options → Sound names the menu's track, and a fixed intensity reaches th
   await recordMessages(page);
   await recordHostInbox(page);
   await page.goto("./");
-  await expect(page.locator(".roster")).toBeVisible();
+  await expect(page.locator(".screen-random-arena")).toBeVisible();
   await page.locator("body").click({ position: { x: 5, y: 5 } });
   await expect.poll(() => playedTracks(page), { timeout: 5_000 }).toHaveLength(1);
   const [menuTrack] = await playedTracks(page);

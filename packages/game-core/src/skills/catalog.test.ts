@@ -116,8 +116,10 @@ describe("skill catalog integrity", () => {
         if (effect.kind === "create-ground-effect") {
           expect(effect.anchor === "corpse", skill.id).toBe(skill.corpse !== undefined);
           expect(effect.anchor === "corpse", skill.id).toBe(skill.type === "well");
-          expect(effect.anchor === "target", skill.id).toBe(effect.act.kind === "pulse");
+          // A symbol pulses at its target (#1113); a pulse may also stay
+          // where the caster stood, as Lava Font's (#1540).
           if (effect.anchor === "target") {
+            expect(effect.act.kind, skill.id).toBe("pulse");
             expect(skill.target, skill.id).toBe("single-enemy");
           }
         }

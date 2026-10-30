@@ -27,6 +27,7 @@ export const SKILL_SPRITE: Readonly<Record<string, ProjectileSprite>> = {
   "elementalist.fireball": "fireball",
   "elementalist.flare": "fireball",
   "elementalist.lightning-orb": "lightning-orb",
+  "elementalist.shock-arrow": "lightning-orb",
   "elementalist.shard-storm": "ice-shard",
   "elementalist.ice-spear": "ice-shard",
   "elementalist.water-trident": "water-trident",
@@ -34,6 +35,7 @@ export const SKILL_SPRITE: Readonly<Record<string, ProjectileSprite>> = {
   "elementalist.stoning": "stone",
   "assassin.disrupting-dagger": "thrown-dagger",
   "assassin.crippling-dagger": "thrown-dagger",
+  "monk.spear-of-light": "spear",
 };
 
 /** Every weapon's sprite. A melee weapon never shoots; it gets `bolt` rather than a throw in the render loop. */

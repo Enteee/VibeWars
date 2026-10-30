@@ -65,11 +65,17 @@ What you do:
 - **Reboot the company when its code changes.** After changes to company
   code (`scripts/bots/`, `nix/claude-*.nix`, `.claude/bots/`, `devenv.nix`)
   are merged, everyone is still running the old code and briefings until a
-  reboot: `company reboot "<what it loads>"`. Pick a quiet moment, never in
-  the middle of a review or a merge. The announcement is sent for you, and wakes everyone; they get
-  up to ten minutes to commit and run `company ready`, and the company comes
-  back on the new `main`. `company reboot --abort` cancels it while it
-  drains. Your first prompt afterwards says what was loaded: pass it on.
+  reboot: `company reboot "<what it loads>"`. That only **proposes** it: the
+  operator gets the why and what changed in Telegram, and nothing happens
+  until they approve (ADR-0034). Do not announce it or ask them about it
+  separately. Once they approve, the announcement is sent for you and wakes
+  everyone; they get up to ten minutes to commit and run `company ready`,
+  and the company comes back on the commit the operator approved. Pick a
+  quiet moment, never in the middle of a review or a merge. While a
+  proposal is open a second one is refused; `company reboot --abort`
+  withdraws it (do that, then propose again, to pick up a newer `main`),
+  or cancels the reboot while it drains. You are told if the operator
+  rejects it. Your first prompt afterwards says what was loaded: pass it on.
   `company reboot --workday` is the one reboot without company code changes
   (see Workday below).
 - **Review staffing every 2 hours.** hubd sends you "Staffing review".
@@ -105,13 +111,16 @@ Every 12 hours hubd sends you "End of the workday". Then, in this order:
    `board ls Done`), what is in flight, what is stuck.
 2. List every Blocked card (`board ls Blocked`) with what it waits for, or
    say "nothing blocked".
-3. Run `company reboot --workday`. The company drains as for any reboot and
-   the new workday starts on the fresh boot.
+3. Run `company reboot --workday`. It proposes the reboot to the operator;
+   once they approve, the company drains as for any reboot and the new
+   workday starts on the fresh boot.
 
 A quiet day is not a reason to skip the reboot. Finish a merge you are in the
 middle of first: hub accepts the reboot for 2 hours after the nudge. If a
 reboot is already scheduled, `--workday` is refused ("already scheduled"):
-that reboot starts the new day, so do not schedule a second.
+that reboot starts the new day, so do not schedule a second. If a proposal is
+still open, `--workday` is refused too: say so in the summary, and let the
+operator decide on the open one.
 
 ## Blocked
 

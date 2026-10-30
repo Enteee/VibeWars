@@ -89,6 +89,7 @@ import {
   resolvedBar,
   slotSkill,
   type ActiveCast,
+  type CastRule,
   type SlotSkill,
 } from "../skills/cast-state.js";
 import { getSkill } from "../skills/catalog.js";
@@ -173,6 +174,7 @@ import {
   nextAttackSkillRiders,
   PLAIN_BLOW,
   resolveAttackSkill,
+  resolveAttackSkillOutcome,
   resolveSwing,
   settleBlow,
   skillBlow,
@@ -2319,7 +2321,15 @@ export class MatchSimulation {
       return;
     }
     payCost(skill, record.combatant, key);
-    beginRecharge(record.combatant.cast, skill, skill.rechargeSeconds, key);
+    this.#useNextSkillRules(record, skill);
+    // Serpent's Quickness (#1539) is any skill's, a pet attack's too.
+    const faster = aggregateModifiers(record.combatant.statuses.active).skillRechargeFaster;
+    beginRecharge(
+      record.combatant.cast,
+      skill,
+      reducedRecharge(skill.rechargeSeconds, faster),
+      key,
+    );
     pet.armedAttack = { skillId: skill.id, remainingSeconds: PET_ATTACK_SECONDS };
     const foe = record.targetId === undefined ? undefined : this.#participants.get(record.targetId);
     if (
@@ -2379,6 +2389,7 @@ export class MatchSimulation {
 
     payCost(skill, record.combatant, key);
     this.#useGlyph(record, skill);
+    const rule = this.#useNextSkillRules(record, skill);
     // The swing in progress is lost, as in GW1; the attack itself resumes
     // once the skill is done. A flash enchantment keeps it (#1421).
     if (record.combatant.attack !== undefined && !skill.flash) {
@@ -2403,6 +2414,7 @@ export class MatchSimulation {
       activationSeconds,
       skill.whileActivating,
       key,
+      rule,
     );
     this.#castBegun(record, skill, castTargetId);
     // Casting stops you (operator Q33): a key held as the cast begins
@@ -2482,6 +2494,27 @@ export class MatchSimulation {
         })),
       });
     }
+  }
+
+  /**
+   * A skill starting, paid for, uses up every chant that holds how the
+   * next skill of its kind goes (#1505), as a glyph is: an interrupt or a
+   * cancel after this does not give it back. Returns what they give the
+   * cast; each spent logs its end under its chant.
+   */
+  #useNextSkillRules(record: ParticipantRecord, skill: Skill): CastRule {
+    const used = record.combatant.statuses.useNextSkillRules(skill);
+    this.#logFired(
+      used.map(({ statusId, rule }) => ({
+        sourceId: record.id,
+        skillId: rule.skillId,
+        events: [{ kind: "status-expired" as const, targetId: record.id, statusId }],
+      })),
+    );
+    return {
+      uninterruptible: used.some(({ rule }) => rule.uninterruptible),
+      unblockable: used.some(({ rule }) => rule.unblockable),
+    };
   }
 
   /**
@@ -3125,10 +3158,16 @@ export class MatchSimulation {
   /** Resolve a cast that has finished its activation time. */
   private resolveCast(record: ParticipantRecord, cast: ActiveCast, dt: number): void {
     const { skillId, targetId } = cast;
-    const skill = getSkill(skillId);
-    if (skill === undefined) {
+    const used = getSkill(skillId);
+    if (used === undefined) {
       return;
     }
+    // Anthem of Guidance's (#1505): this attack skill's blows, melee or
+    // flying, cannot be blocked.
+    const skill =
+      cast.rule.unblockable && used.attack !== undefined
+        ? { ...used, attack: { ...used.attack, unblockable: true } }
+        : used;
 
     const targetRecord = targetId === undefined ? undefined : this.#participants.get(targetId);
     if (this.#failsSpell(record, skill, targetRecord, cast.key)) {
@@ -3144,6 +3183,7 @@ export class MatchSimulation {
     const only = (events: CombatEvent[]): SkillOutcome => ({
       events,
       rechargeFraction: 0,
+      rechargeLongerSeconds: 0,
       summons: [],
       grounds: [],
     });
@@ -3156,7 +3196,8 @@ export class MatchSimulation {
         : skill.attack === undefined
           ? (resolution: SkillResolution) => resolveSkillEffects(resolution)
           : speed === undefined
-            ? (resolution: SkillResolution) => only(resolveAttackSkill(resolution, exposed, riders))
+            ? (resolution: SkillResolution) =>
+                resolveAttackSkillOutcome(resolution, exposed, riders)
             : (resolution: SkillResolution) =>
                 only(this.#releaseSkill(record, resolution, speed, dt));
     const targets = resolveTargets({
@@ -3181,7 +3222,7 @@ export class MatchSimulation {
     // one used up during the cast leaves it with no effect, paid for.
     const corpse =
       skill.corpse === undefined ? undefined : this.#exploitCorpse(record, skill.corpse);
-    const { events, rechargeFraction, summons, grounds } =
+    const { events, rechargeFraction, rechargeLongerSeconds, summons, grounds } =
       skill.corpse !== undefined && corpse === undefined
         ? only([])
         : resolve({
@@ -3305,20 +3346,23 @@ export class MatchSimulation {
       // recharge as it started. Read after the spell resolved, so Weapon of
       // Quickening cast on yourself already shortens its own. An
       // enchantment of Avatar of Lyssa's profession (#1455) takes the
-      // larger of its share and the spells'.
+      // larger of its share and the spells'. Serpent's Quickness's share
+      // (#1539) is any skill's: the larger of it and the type's counts.
       const modifiers = aggregateModifiers(record.combatant.statuses.active);
       const enchantmentShares = modifiers.enchantmentRechargeFaster
         .filter(({ profession }) => skill.type === "enchantment" && skill.profession === profession)
         .map(({ share }) => share);
-      const faster = isSpell(skill.type)
+      const typeFaster = isSpell(skill.type)
         ? Math.max(modifiers.spellRechargeFaster, ...enchantmentShares)
         : skill.type === "binding-ritual"
           ? modifiers.bindingRitualRechargeFaster
           : 0;
+      const faster = Math.max(modifiers.skillRechargeFaster, typeFaster);
       beginRecharge(
         record.combatant.cast,
         skill,
-        reducedRecharge(skill.rechargeSeconds * (1 - rechargeFraction), faster),
+        reducedRecharge(skill.rechargeSeconds * (1 - rechargeFraction), faster) +
+          rechargeLongerSeconds,
         cast.key,
       );
       // A form's "disabled for 45 seconds" (#1437), beside its recharge.
@@ -4739,88 +4783,8 @@ export class MatchSimulation {
     if (!this.#reaches(projectile, target)) {
       events.push({ kind: "attack-dodged", targetId: target.id });
       events.push(...riders(skillHit?.skill.attack?.onFailedToHit ?? []));
-    } else if (
-      !unblockableNow(
-        skillHit?.skill.attack?.unblockable ?? false,
-        attacker?.combatant,
-        target.combatant,
-        this.#participants,
-      ) &&
-      blocks(target.combatant, projectile.attackerId, "projectile", this.#rng)
-    ) {
-      blocked = true;
-      events.push({ kind: "attack-blocked", targetId: target.id });
-      if (attacker !== undefined) {
-        bearerFailedToHit(attacker.combatant);
-      }
-      attackReached(target.combatant, events);
-      events.push(...riders(skillHit?.skill.attack?.onBlocked ?? []));
-      events.push(...riders(skillHit?.skill.attack?.onFailedToHit ?? []));
     } else {
-      const blow = settleBlow(
-        skillHit?.blow ?? PLAIN_BLOW,
-        attacker?.combatant,
-        target.combatant,
-        this.#participants,
-      );
-      // Painful Bond's +18 on a spirit's shot that hits (#1270), armor-
-      // ignoring on the same blow. A spirit gone before its shot lands
-      // is no longer anyone's, so it adds nothing.
-      const fromSpirit =
-        attacker?.creature?.kind === "spirit"
-          ? aggregateModifiers(target.combatant.statuses.active).damageFromSpiritAttacks
-          : 0;
-      const critical = landBlow(
-        projectile.weaponSnapshot,
-        attacker?.combatant,
-        target.combatant,
-        fromSpirit === 0 ? blow : { ...blow, bonus: blow.bonus + fromSpirit },
-        // A shot crits only on its roll, never for where it came from.
-        false,
-        this.#rng,
-        this.#ruleset.combat,
-        events,
-      );
-      if (critical && attacker !== undefined) {
-        landedCritical(attacker.combatant, projectile.weaponSnapshot.criticalStrikes, events);
-      }
-      if (attacker !== undefined) {
-        events.push(
-          ...attackHitRiders(
-            attacker.combatant,
-            target.combatant,
-            projectile.weaponSnapshot.mainHand,
-            this.#rng,
-            this.#ruleset.combat,
-            this.#participants,
-            fired,
-          ),
-        );
-        bearerHit(
-          attacker.combatant,
-          target.combatant,
-          events,
-          skillHit !== undefined,
-          projectile.weaponSnapshot.mainHand.weapon,
-        );
-      }
-      if (skillHit !== undefined && attacker !== undefined) {
-        events.push(
-          ...nextAttackSkillRiders(
-            skillHit.next,
-            attacker.combatant,
-            target.combatant,
-            this.#rng,
-            this.#ruleset.combat,
-            this.#participants,
-          ),
-        );
-      }
-      attackReached(target.combatant, events);
-      events.push(...riders(skillHit?.skill.effects ?? []));
-      if (critical) {
-        events.push(...riders(skillHit?.skill.attack?.onCritical ?? []));
-      }
+      blocked = this.#landBlows(projectile, skillHit, target, attacker, events, fired, riders);
     }
     if (
       attacker !== undefined &&
@@ -4835,6 +4799,142 @@ export class MatchSimulation {
     this.#recordKnockdowns(events);
     this.#logShot(projectile, events);
     this.#logFired(fired);
+  }
+
+  /**
+   * The blows of a shot that reached `target`: one, or its attack skill's
+   * `strikes` (#1539), Dual Shot's two arrows in one flight. Each rolls
+   * its own block and crit and lands the skill's riders if it hits; the
+   * first's blind was rolled at the release, each later one rolls its
+   * own now. A target the first blow killed takes no second. Returns
+   * whether no blow hit and one was blocked: a blocked shot earns no
+   * adrenaline.
+   */
+  #landBlows(
+    projectile: Projectile,
+    skillHit: SkillHit | undefined,
+    target: ParticipantRecord,
+    attacker: ParticipantRecord | undefined,
+    events: CombatEvent[],
+    fired: FiredTrigger[],
+    riders: (effects: Skill["effects"]) => CombatEvent[],
+  ): boolean {
+    const strikes = skillHit?.skill.attack?.strikes ?? 1;
+    let hits = 0;
+    let blocked = 0;
+    for (let strike = 0; strike < strikes && !target.combatant.dead; strike += 1) {
+      if (strike > 0 && attacker !== undefined && blindMisses(attacker.combatant, this.#rng)) {
+        events.push({ kind: "attack-missed", targetId: target.id });
+        bearerFailedToHit(attacker.combatant);
+        continue;
+      }
+      if (this.#landBlow(projectile, skillHit, target, attacker, events, fired, riders)) {
+        hits += 1;
+      } else {
+        blocked += 1;
+      }
+    }
+    return hits === 0 && blocked > 0;
+  }
+
+  /**
+   * One blow of a shot that reached `target`: blocked, it lands the
+   * skill's `onBlocked` and `onFailedToHit`; else the blow, its riders and
+   * on a critical its `onCritical`. Returns whether it hit.
+   */
+  #landBlow(
+    projectile: Projectile,
+    skillHit: SkillHit | undefined,
+    target: ParticipantRecord,
+    attacker: ParticipantRecord | undefined,
+    events: CombatEvent[],
+    fired: FiredTrigger[],
+    riders: (effects: Skill["effects"]) => CombatEvent[],
+  ): boolean {
+    if (
+      !unblockableNow(
+        skillHit?.skill.attack?.unblockable ?? false,
+        attacker?.combatant,
+        target.combatant,
+        this.#participants,
+      ) &&
+      blocks(target.combatant, projectile.attackerId, "projectile", this.#rng)
+    ) {
+      events.push({ kind: "attack-blocked", targetId: target.id });
+      if (attacker !== undefined) {
+        bearerFailedToHit(attacker.combatant);
+      }
+      attackReached(target.combatant, events);
+      events.push(...riders(skillHit?.skill.attack?.onBlocked ?? []));
+      events.push(...riders(skillHit?.skill.attack?.onFailedToHit ?? []));
+      return false;
+    }
+    const blow = settleBlow(
+      skillHit?.blow ?? PLAIN_BLOW,
+      attacker?.combatant,
+      target.combatant,
+      this.#participants,
+    );
+    // Painful Bond's +18 on a spirit's shot that hits (#1270), armor-
+    // ignoring on the same blow. A spirit gone before its shot lands
+    // is no longer anyone's, so it adds nothing.
+    const fromSpirit =
+      attacker?.creature?.kind === "spirit"
+        ? aggregateModifiers(target.combatant.statuses.active).damageFromSpiritAttacks
+        : 0;
+    const critical = landBlow(
+      projectile.weaponSnapshot,
+      attacker?.combatant,
+      target.combatant,
+      fromSpirit === 0 ? blow : { ...blow, bonus: blow.bonus + fromSpirit },
+      // A shot crits only on its roll, never for where it came from.
+      false,
+      this.#rng,
+      this.#ruleset.combat,
+      events,
+    );
+    if (critical && attacker !== undefined) {
+      landedCritical(attacker.combatant, projectile.weaponSnapshot.criticalStrikes, events);
+    }
+    if (attacker !== undefined) {
+      events.push(
+        ...attackHitRiders(
+          attacker.combatant,
+          target.combatant,
+          projectile.weaponSnapshot.mainHand,
+          skillHit !== undefined,
+          this.#rng,
+          this.#ruleset.combat,
+          this.#participants,
+          fired,
+        ),
+      );
+      bearerHit(
+        attacker.combatant,
+        target.combatant,
+        events,
+        skillHit !== undefined,
+        projectile.weaponSnapshot.mainHand.weapon,
+      );
+    }
+    if (skillHit !== undefined && attacker !== undefined) {
+      events.push(
+        ...nextAttackSkillRiders(
+          skillHit.next,
+          attacker.combatant,
+          target.combatant,
+          this.#rng,
+          this.#ruleset.combat,
+          this.#participants,
+        ),
+      );
+    }
+    attackReached(target.combatant, events);
+    events.push(...riders(skillHit?.skill.effects ?? []));
+    if (critical) {
+      events.push(...riders(skillHit?.skill.attack?.onCritical ?? []));
+    }
+    return true;
   }
 
   /**

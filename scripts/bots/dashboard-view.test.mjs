@@ -1241,6 +1241,8 @@ describe("companyLines", () => {
       by: "manager",
       deadline,
       bootSha: "abc",
+      targetSha: "a".repeat(40),
+      proposalId: "0123456789abcdef0123456789abcdef",
       ready: ["manager", "lead-dev"],
     };
     const live = new Set(["manager", "architect", "developer", "developer@2", "lead-dev"]);
@@ -1266,6 +1268,29 @@ describe("companyLines", () => {
         },
         { rows, width },
       ).map(plain);
+
+    it("says a proposal awaits the operator, onto which commit, since when (#960)", () => {
+      const lines = pane(
+        {
+          proposed: {
+            id: "fedcba9876543210fedcba9876543210",
+            proposedAt: deadline,
+            by: "manager",
+            kind: "request",
+            reason: "load #960",
+            bootSha: "b".repeat(40),
+            targetSha: "a".repeat(40),
+            commits: [],
+            allCommits: 0,
+            stat: { files: 0, insertions: 0, deletions: 0, top: [] },
+          },
+        },
+        { width: 120 },
+      );
+      expect(lines[0]).toBe(
+        "REBOOT PROPOSED Rfedcba onto aaaaaaaa, awaiting the operator since 12:41: load #960",
+      );
+    });
 
     it("is first: the deadline, then ready, waiting and idle in org-chart order", () => {
       const lines = pane({

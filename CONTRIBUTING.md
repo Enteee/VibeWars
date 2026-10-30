@@ -67,9 +67,12 @@ Concretely:
   screens and connections are sequenced — gets a browser test in `e2e/`.
   Both bugs ADR-0011 describes lived there, were invisible to every
   headless test, and made the game unplayable through its main flow.
-- A skill added to `IMPLEMENTED_SKILLS` adds its icon row in
-  `scripts/assets/skill-icon-table.mjs` and re-runs `node scripts/assets/icons.mjs`;
-  `apps/web/src/ui/icons.test.ts` fails until it does.
+- A new skill goes in `packages/game-core/src/skills/catalog/<profession>.ts`,
+  its status in `skills/statuses/<profession>.ts` and its icon row in
+  `scripts/assets/skill-icons/<profession>.mjs`, so two cards for two
+  professions do not touch the same file. It then re-runs
+  `node scripts/assets/icons.mjs`; `apps/web/src/ui/icons.test.ts` fails
+  until it does.
 - Vendoring or bundling a third-party work whose licence asks for a notice
   adds its entry to `THIRD_PARTY_LICENCES` (Options → Third-party licences)
   in the same PR. That page is the only place the UI credits one: see ADR-0039.
@@ -85,6 +88,25 @@ Concretely:
   new contributor need this explained to understand why the code looks the
   way it does? If yes, write it down once instead of explaining it in every
   future code review.
+
+### Generated files
+
+Generated files: `packages/game-protocol/src/wire-schema.json`, the roles
+snapshot (`packages/game-core/src/skills/__snapshots__/roles.test.ts.snap`),
+the skill icon rows (`scripts/assets/skill-icon-table.mjs`,
+`scripts/assets/skill-icons/*.mjs`) and the SVGs in
+`apps/web/public/icons/skill/`. Never hand-merge them.
+
+`.gitattributes` makes git keep both sides of the icon rows and the roles
+snapshot (`merge=union`). For any conflict left in a generated file:
+
+```sh
+git checkout --theirs <file>   # your side in a rebase; --ours in a merge
+pnpm run regen
+git add <file>
+```
+
+The icon, snapshot and wire tests fail in CI on a stale result.
 
 ## Documentation
 

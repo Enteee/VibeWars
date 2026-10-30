@@ -21,6 +21,7 @@ import {
   findStatusDefinition,
   getStatusDefinition,
   type NextSkill,
+  type NextSkillRule,
   type StatusCategory,
   type StatusTrigger,
   type StatusTriggerEvent,
@@ -269,6 +270,11 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
       `${weapon === undefined ? "attacks" : `${weapon} attacks`} deal ${definition.attackDamageType} damage`,
     );
   }
+  if (definition.attackArmorPenetration !== 0) {
+    parts.push(
+      `attacks have ${String(Math.round(definition.attackArmorPenetration * 100))}% armor penetration`,
+    );
+  }
   if (definition.immuneTo.length > 0) {
     const names = definition.immuneTo.map((id) => getStatusDefinition(id).name);
     parts.push(`immune to ${names.join(" and ")}`);
@@ -353,7 +359,7 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
     parts.push(`ends after ${String(definition.endsAfterAttacks)} incoming attack${plural}`);
   }
   for (const effect of definition.onAttackHit?.effects ?? []) {
-    parts.push(...describeAttackHit(effect));
+    parts.push(...describeAttackHit(effect, definition.onAttackHit?.attackSkillsOnly === true));
   }
   if (definition.endsAfterHits !== undefined) {
     const { count, weapon } = definition.endsAfterHits;
@@ -372,8 +378,16 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   for (const effect of definition.nextAttackSkill ?? []) {
     parts.push(...describeNextAttackSkill(effect));
   }
+  if (definition.nextAttackSkillBonus !== undefined) {
+    const { condition, amount } = definition.nextAttackSkillBonus;
+    const more = describeMagnitude(amount, new Map());
+    parts.push(`next attack skill: ${conditionText(condition)}: +${String(more.current)} damage`);
+  }
   if (definition.nextSkill !== undefined) {
     parts.push(...describeNextSkill(definition.nextSkill));
+  }
+  if (definition.nextSkillRule !== undefined) {
+    parts.push(...describeNextSkillRule(definition.nextSkillRule));
   }
   if (definition.endsWhenBearerAttacks) {
     parts.push("ends if the bearer attacks");
@@ -472,6 +486,11 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
       `gain ${String(definition.extraStrikesPerHit)} more ${definition.extraStrikesPerHit === 1 ? "strike" : "strikes"} of adrenaline per hit`,
     );
   }
+  if (definition.skillRechargeFaster !== 0) {
+    parts.push(
+      `skills recharge ${String(Math.round(definition.skillRechargeFaster * 100))}% faster`,
+    );
+  }
   const { spellRechargeFaster, bindingRitualRechargeFaster } = definition;
   if (spellRechargeFaster !== 0 && spellRechargeFaster === bindingRitualRechargeFaster) {
     const faster = String(Math.round(spellRechargeFaster * 100));
@@ -561,14 +580,15 @@ function damageTaken(multiplier: number): string {
 }
 
 /** A preparation's rider (#525), as its tooltip says it: "your attacks …". */
-function describeAttackHit(effect: SkillEffect): string[] {
+function describeAttackHit(effect: SkillEffect, attackSkillsOnly: boolean): string[] {
+  const attacks = attackSkillsOnly ? "attack skills" : "physical attacks";
   if (effect.kind === "apply-status") {
     return [
-      `foes your physical attacks hit get ${statusName(effect.statusId)} ` +
+      `foes your ${attacks} hit get ${statusName(effect.statusId)} ` +
         `for ${seconds(effect.durationSeconds)}`,
     ];
   }
-  return describeEffects(effect, new Map()).map(({ text }) => `your physical attacks: ${text}`);
+  return describeEffects(effect, new Map()).map(({ text }) => `your ${attacks}: ${text}`);
 }
 
 /**
@@ -644,8 +664,10 @@ function describeTriggers(
       trigger.effects,
       trigger.target,
       trigger.weapon,
+      trigger.blocked,
       trigger.profession,
       trigger.usedSkill,
+      trigger.damageType,
     ]);
     const group = groups.get(key);
     if (group === undefined) {
@@ -739,9 +761,17 @@ const DROPPED = "drop effect";
 /**
  * What the bearer does that a trigger bound to a kind of skill or
  * enchantment answers (#1437): "uses a Dervish attack skill", "loses a
- * Dervish enchantment". `undefined`: bound to none.
+ * Dervish enchantment", to a type of damage (#1540): "takes fire damage
+ * from a foe", or to a kind of block (#1549): "blocks a melee attack".
+ * `undefined`: bound to none.
  */
 function kindBoundWhen(event: StatusTriggerEvent, trigger: StatusTrigger): string | undefined {
+  if (event === "bearer-takes-damage-from-foe" && trigger.damageType !== undefined) {
+    return `takes ${trigger.damageType} damage from a foe`;
+  }
+  if (event === "bearer-blocks" && trigger.blocked !== undefined) {
+    return `blocks a ${trigger.blocked} attack`;
+  }
   if (event === "bearer-loses-enchantment" && trigger.profession !== undefined) {
     return `loses a ${getProfession(trigger.profession).name} enchantment`;
   }
@@ -927,6 +957,10 @@ function describeTrigger(
     if (effect.kind === "heal" && trigger.target === "source") {
       return [clause(`heals its caster for ${amount(effect.amount)} ${when}`)];
     }
+    // Arcane Conundrum's (#1570): "its caster gains 6 energy when it ends".
+    if (effect.kind === "energy-gain" && trigger.target === "source") {
+      return [clause(`its caster gains ${amount(effect.amount)} energy ${when}`)];
+    }
     if (effect.kind === "lengthen-recharge" && when === NEXT_SKILL) {
       return [
         clause(`the next skill it uses takes ${amount(effect.seconds)} seconds longer to recharge`),
@@ -1008,6 +1042,21 @@ function describeNextSkill({ which, count, effects }: NextSkill): string[] {
   );
 }
 
+/** How a chant's next skill of a kind goes (#1505): "your next skill cannot be interrupted". */
+function describeNextSkillRule({
+  which,
+  uninterruptible,
+  unblockable,
+  energyDiscount,
+}: NextSkillRule): string[] {
+  const next = `your next ${NEXT_SKILL_KIND[which][0]}`;
+  return [
+    ...(uninterruptible ? [`${next} cannot be interrupted`] : []),
+    ...(unblockable ? [`${next} cannot be blocked`] : []),
+    ...(energyDiscount > 0 ? [`${next} costs ${String(energyDiscount)} less energy`] : []),
+  ];
+}
+
 /**
  * A status a splash puts on those it reaches, as the second half of a
  * line (#1021): "nearby foes suffer Bleeding for 13s (…)", not "applies".
@@ -1055,7 +1104,9 @@ function conditionText(condition: EffectCondition): string {
         ? `If you have ${aCategory(condition.category)}`
         : `If you have a ${getProfession(condition.profession).name} ${condition.category}`;
     case "caster-lacks":
-      return `If you have no ${condition.category}`;
+      return condition.profession === undefined
+        ? `If you have no ${condition.category}`
+        : `If you have no ${getProfession(condition.profession).name} ${condition.category}`;
     case "target-casting":
       return "If target is casting a spell";
     case "target-using-skill":
@@ -1072,6 +1123,10 @@ function conditionText(condition: EffectCondition): string {
       return "If target is knocked down";
     case "target-moving":
       return "If target is moving";
+    case "any-of": {
+      const [first, ...rest] = condition.conditions.map(conditionText);
+      return [first ?? "Never", ...rest.map((text) => text.replace(/^If /, ""))].join(" or ");
+    }
     case "target-has-status":
       return `If target has ${statusName(condition.statusId)}`;
     case "target-lacks-status":
@@ -1090,6 +1145,8 @@ function conditionText(condition: EffectCondition): string {
       return "If target is attacking";
     case "target-casting-or-attacking":
       return "If target is casting a spell or attacking";
+    case "target-is-summoned":
+      return "If target is a summoned creature";
     case "caster-no-spirit-within":
       return `If no spirit is ${AREA_TEXT.get(condition.radius) ?? `within ${String(condition.radius)}`} of you`;
     case "caster-spirit-within":
@@ -1391,6 +1448,11 @@ function describeEffect(
           magnitude: undefined,
         };
       }
+      if (effect.statusId !== undefined) {
+        // "Charge!"'s "lose the Crippled condition" (#1549).
+        const verb = effect.from === "caster" ? "Lose" : "Removes";
+        return { text: `${verb} ${statusName(effect.statusId)}`, magnitude: undefined };
+      }
       if (effect.from === "caster") {
         // "Lose 1 Dervish enchantment" (#845), or all of them (#1205).
         const whose =
@@ -1516,14 +1578,16 @@ function describeEffect(
     case "create-ground-effect": {
       // "Creates a ward at your location for 17 seconds" (#1087), "Sets a
       // trap at your location for 90 seconds" (#1105), a well "at its
-      // location", the corpse's (#1104), or a symbol at your target's
-      // (#1113).
+      // location", the corpse's (#1104), a symbol at your target's
+      // (#1113), or Lava Font's burning ground where you stood (#1540).
       const magnitude = describeMagnitude(effect.durationSeconds, ranks);
       const what =
         effect.act.kind === "trap"
           ? "Sets a trap"
           : effect.act.kind === "pulse"
-            ? "Creates a symbol"
+            ? effect.anchor === "target"
+              ? "Creates a symbol"
+              : "Marks the ground"
             : effect.anchor === "corpse"
               ? "Creates a well"
               : "Creates a ward";
@@ -1554,8 +1618,9 @@ function describeEffect(
       return { text: "Counts as a lead attack", magnitude: undefined };
     case "lengthen-recharge": {
       const magnitude = describeMagnitude(effect.seconds, ranks);
+      const which = effect.of === "this-skill" ? "This skill" : "That skill";
       return {
-        text: `That skill takes ${String(magnitude.current)} seconds longer to recharge`,
+        text: `${which} takes ${String(magnitude.current)} seconds longer to recharge`,
         magnitude,
       };
     }
@@ -1571,9 +1636,11 @@ function describeEffect(
             (each.perEnergyLost === undefined ? "" : " for each point of energy lost")
           : each.kind === "interrupt"
             ? "are interrupted if casting"
-            : each.kind === "apply-status"
-              ? suffered(each, ranks)
-              : lowerFirst(description.text),
+            : each.kind === "knockdown"
+              ? `are knocked down for ${String(each.durationSeconds)}s`
+              : each.kind === "apply-status"
+                ? suffered(each, ranks)
+                : lowerFirst(description.text),
       );
       const last = parts.pop();
       const what = parts.length === 0 ? (last ?? "") : `${parts.join(", ")} and ${String(last)}`;
@@ -1765,17 +1832,22 @@ export function neededWeaponText(weapon: AttackWeaponClass): string {
 /**
  * A `transfer-conditions` line (#1511): "Moves up to 3 of your conditions
  * to the target", or "Moves all of target's conditions to you; you are
- * healed for 22 for each".
+ * healed for 22 for each", or "Moves all of your conditions with 180% of
+ * their remaining durations to the target" (#1540).
  */
 function transferText(
   effect: TransferConditionsEffect,
   ranks: ReadonlyMap<string, number>,
 ): EffectDescription {
   const count = effect.count === Infinity ? "all" : `up to ${String(effect.count)}`;
+  const lasting =
+    effect.durationMultiplier === 1
+      ? ""
+      : ` with ${String(Math.round(effect.durationMultiplier * 100))}% of their remaining durations`;
   const moves =
     effect.from === "caster"
-      ? `Moves ${count} of your conditions to the target`
-      : `Moves ${count} of target's conditions to you`;
+      ? `Moves ${count} of your conditions${lasting} to the target`
+      : `Moves ${count} of target's conditions${lasting} to you`;
   if (effect.healPerCondition === undefined) {
     return { text: moves, magnitude: undefined };
   }
@@ -1811,12 +1883,15 @@ const TYPE_TEXT: Record<SkillType, string> = {
 };
 
 /**
- * A `disable-own-skills` line (#1473): "All of your spells", "All of
- * your Smiting Prayers" (#1511), or "All of your non-Mesmer skills except
- * signets", "are disabled for 10 seconds".
+ * A `disable-own-skills` line (#1473): "All of your skills" (#1570), "All
+ * of your spells", "All of your Smiting Prayers" (#1511), or "All of your
+ * non-Mesmer skills except signets", "are disabled for 10 seconds".
  */
 function disableOwnText(effect: DisableOwnSkillsEffect): string {
   const time = `are disabled for ${String(effect.seconds)} seconds`;
+  if (effect.which === "all") {
+    return `All of your skills ${time}`;
+  }
   if (effect.which === "spells") {
     return `All of your spells ${time}`;
   }
@@ -2089,6 +2164,18 @@ export function describeSkill(
             magnitude: undefined,
           },
         ];
+  // Dual Shot's arrows (#1539): "Shoot two arrows simultaneously at target
+  // foe. These arrows deal 25% less damage".
+  const strikes = rule?.strikes ?? 1;
+  const weaponDamage = rule?.weaponDamage ?? 1;
+  const weaker =
+    weaponDamage > 0 && weaponDamage < 1
+      ? `, each dealing ${String(Math.round((1 - weaponDamage) * 100))}% less damage`
+      : "";
+  const arrowsLine =
+    strikes > 1 && skill.attack?.weapon === "bow"
+      ? [{ text: `Shoots ${String(strikes)} arrows at once${weaker}`, magnitude: undefined }]
+      : [];
   // A status borne while activating (#524): Healing Signet's armor loss.
   const whileActivating =
     skill.whileActivating === undefined
@@ -2150,6 +2237,7 @@ export function describeSkill(
     ...cleaveAllLine,
     ...penetrationLine,
     ...flightLine,
+    ...arrowsLine,
     ...corpseLine,
     ...skill.effects.flatMap((effect) => describeEffects(effect, ranks)),
     ...onCritical,

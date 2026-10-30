@@ -144,6 +144,14 @@ describe("a pet attack arms the wolf's next blow (#1046)", () => {
     expect(owner.combatant.cast.inAftercast).toBe(false);
   });
 
+  it("recharges 33% faster under its owner's Serpent's Quickness (#1539)", () => {
+    const sim = match();
+    const owner = get(sim, "r");
+    owner.combatant.statuses.apply("serpents-quickness", 1000, "r");
+    expect(press(sim, BRUTAL)?.check).toEqual({ ok: true });
+    expect(owner.combatant.cast.rechargeTotal.get(BRUTAL)).toBeCloseTo(5 * 0.67, 9);
+  });
+
   it("Maiming Strike cripples for 13 s", () => {
     const sim = match();
     sim.setTarget("r", "a");

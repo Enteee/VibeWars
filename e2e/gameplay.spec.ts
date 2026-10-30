@@ -5,7 +5,14 @@ import { expect, test, type Page, type Locator } from "@playwright/test";
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
 import { projection } from "./camera.js";
 import { key, skillKey } from "./keys.js";
-import { startSoloMatch as startMatchFromMenu } from "./helpers/peers.js";
+import { joinByCode } from "./helpers/menu.js";
+import {
+  hostLobby,
+  playHouseTeams,
+  playOwnTeams,
+  saveSoloTeam,
+  startSoloMatch as startMatchFromMenu,
+} from "./helpers/peers.js";
 import { bringStarter, starterKey } from "./helpers/starter.js";
 
 /**
@@ -91,27 +98,22 @@ async function startLobbyMatch(
   guests: readonly Page[],
   build = "Elementalist/Mesmer",
 ): Promise<Locator> {
-  // A known bar (#852). The pages of a test share one storage, so the
-  // guests play it too.
+  // A known bar (#852), played through a Team Build of one (#1525). The
+  // pages of a test share one storage, so the guests propose and play it
+  // too: a side of one each, as a build of one needs.
   await bringStarter(host, build);
-  await host.goto("./");
-  await host.getByRole("button", { name: "host a lobby" }).click();
-  await expect(host.locator(".lobby-code")).toHaveText(/^[A-Z0-9]{3}-[A-Z0-9]{3}$/);
-  const code = (await host.locator(".lobby-code").textContent())?.trim() ?? "";
+  const team = await saveSoloTeam(host);
+  const code = await hostLobby(host);
   for (const guest of guests) {
     await guest.goto("./");
-    await guest.locator("input.code-input").fill(code);
-    await guest.getByRole("button", { name: "Join", exact: true }).click();
+    await joinByCode(guest, code);
     await guest.getByRole("button", { name: "join team 2" }).click();
     await guest.getByRole("button", { name: "Ready", exact: true }).click();
   }
   await host.getByRole("button", { name: "join team 1" }).click();
   await host.getByRole("button", { name: "Ready", exact: true }).click();
   await host.getByRole("button", { name: "start match" }).click();
-
-  for (const page of [host, ...guests]) {
-    await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp");
-  }
+  await playOwnTeams([host, ...guests].map((page) => ({ page, team })));
   return host.locator("#viewport canvas:not(.compass)");
 }
 
@@ -586,12 +588,13 @@ test("a match whose host goes returns to the menu and says why (#195)", async ({
 
   const notice = page.getByText("The host closed the lobby.");
   await expect(notice).toBeVisible();
-  await expect(page.getByRole("button", { name: "host a lobby" })).toBeVisible();
+  await expect(page.locator(".mode-rail")).toBeVisible();
   await expect(canvas).toBeHidden();
 
   // A new match works, and the notice is gone with the menu. From the
   // menu on show: the starter is already picked, and bringing it again
-  // would save a second one.
+  // would save a second one. Its Team Build of one is saved again, under
+  // the same name, which proposes the same.
   await startMatchFromMenu(page);
   await expect(notice).toHaveCount(0);
   await host.close();
@@ -629,12 +632,13 @@ test("at the arena's bottom edge, an RMB drag down looks past it, and springs ba
     ),
   ) as { readonly height: number };
   await page.goto("./");
-  await page.getByRole("button", { name: "host a lobby" }).click();
+  await hostLobby(page);
   await expect(page.locator(".lobby-map select")).toHaveValue("arena-alpha");
   await page.getByRole("button", { name: "join team 1" }).click();
   await page.getByRole("button", { name: "Ready", exact: true }).click();
   await page.getByRole("button", { name: "start match" }).click();
-  await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp");
+  // Any character will do: the house team's one seat (#1525).
+  await playHouseTeams([page]);
   const stage = page.locator("#viewport");
   const canvas = page.locator("#viewport canvas:not(.compass)");
   const box = await canvas.boundingBox();

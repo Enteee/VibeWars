@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+import { openRail } from "./helpers/menu.js";
 import { startSoloMatch } from "./helpers/peers.js";
 
 /**
@@ -60,7 +61,9 @@ test("the HUD's [?] opens Help over a match; Esc closes it and gives focus back 
 
 test("Help, not the menu, says peers see your IP address (#541, #1442)", async ({ page }) => {
   await page.goto("./");
-  await expect(page.getByRole("button", { name: "host a lobby" })).toBeVisible();
+  // Hosted Game is where a lobby is hosted, so where the warning was.
+  await openRail(page, "Hosted Game");
+  await expect(page.getByRole("button", { name: "Host a game", exact: true })).toBeVisible();
   await expect(page.getByText("IP address")).toHaveCount(0);
 
   await page.locator(".topbar-help").click();

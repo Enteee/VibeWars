@@ -293,7 +293,7 @@ export function applyDamage(
   if (isPhysicalDamage(type)) {
     target.statuses.recordPhysicalDamage();
   }
-  recordFromFoe(target, dealer);
+  recordFromFoe(target, dealer, type);
   // The guard above already returned for an already-dead target, so
   // reaching 0 here is always a *new* death — exactly one death event.
   if (target.health <= 0) {
@@ -302,10 +302,17 @@ export function applyDamage(
   }
 }
 
-/** `target` lost health to `dealer`; recorded if that was a foe (#1022). */
-function recordFromFoe(target: Combatant, dealer: Combatant | undefined): void {
+/**
+ * `target` lost health to `dealer`, by damage of `type` or, `undefined`,
+ * a life steal; recorded if that was a foe (#1022).
+ */
+function recordFromFoe(
+  target: Combatant,
+  dealer: Combatant | undefined,
+  type: DamageType | undefined,
+): void {
   if (dealer !== undefined && dealer.team !== target.team) {
-    target.statuses.recordDamageFromFoe(dealer.id);
+    target.statuses.recordDamageFromFoe(dealer.id, type);
   }
 }
 
@@ -423,7 +430,7 @@ function stealLife(
   }
   target.health -= taken;
   events.push({ kind: "life-stolen", targetId: target.id, amount: taken });
-  recordFromFoe(target, caster);
+  recordFromFoe(target, caster, undefined);
   gainHealth(caster, taken, events);
   if (target.health <= 0) {
     target.dead = true;
@@ -677,14 +684,18 @@ function knockDown(target: Combatant, durationSeconds: number): void {
  * spent and its recharge starts (ADR-0029). `byId` did it, and a status
  * on the target that answers an interrupt hears of it (#1473). Returns
  * whether there was a cast to interrupt. An uninterruptible bearer's
- * (#1464) never is.
+ * (#1464) never is, nor is a cast that consumed Song of Concentration
+ * (#1505).
  */
 function interruptCast(
   target: Combatant,
   byId: string | undefined,
   events: CombatEvent[],
 ): boolean {
-  if (aggregateModifiers(target.statuses.active).uninterruptible) {
+  if (
+    aggregateModifiers(target.statuses.active).uninterruptible ||
+    target.cast.activeCast?.rule.uninterruptible === true
+  ) {
     return false;
   }
   const cancelled = target.cast.cancelCast();
@@ -836,9 +847,12 @@ function landStatus(
  * Nothing that reacts to damage sees it. An invulnerable caster (#1208)
  * gives up none: the skill works, free.
  */
-/** Whether `creature` is one a player brought (#1309): a minion, a spirit or a pet, never a map NPC. */
+/**
+ * Whether `creature` is a summoned one (#1309): a minion or a spirit. Not
+ * a pet, which GW1 does not count as summoned (#1528), nor a map NPC.
+ */
 function isSummoned(creature: Creature | undefined): boolean {
-  return creature?.kind === "minion" || creature?.kind === "spirit" || creature?.kind === "pet";
+  return creature?.kind === "minion" || creature?.kind === "spirit";
 }
 
 /**
@@ -1114,7 +1128,8 @@ export function applyEffect(
       // Conditions takes from an ally counts as the Monk's own from then on.
       for (const { id, remainingSeconds } of moved) {
         events.push({ kind: "status-removed", targetId: giver.id, statusId: id });
-        landStatus(taker, id, scaledStatusDuration(taker, id, remainingSeconds), caster.id, events);
+        const durationSeconds = remainingSeconds * effect.durationMultiplier;
+        landStatus(taker, id, scaledStatusDuration(taker, id, durationSeconds), caster.id, events);
       }
       if (effect.healPerCondition !== undefined && moved.length > 0) {
         applyHeal(caster, resolveMagnitude(effect.healPerCondition, caster) * moved.length, events);
@@ -1179,6 +1194,7 @@ export function applyEffect(
         effect.category,
         removeCount(effect, caster, bearer, context.surroundings, earlier),
         effect.profession,
+        effect.statusId,
       );
       for (const statusId of removed) {
         events.push({ kind: "status-removed", targetId: bearer.id, statusId });
@@ -1404,7 +1420,8 @@ export function applyEffect(
 
     case "lengthen-recharge": {
       const used = context.usedSkill;
-      if (target === undefined || used === undefined) {
+      // This skill's own is the resolution's to add (`resolveSkillEffects`).
+      if (effect.of === "this-skill" || target === undefined || used === undefined) {
         return events;
       }
       const seconds = resolveMagnitude(effect.seconds, caster);
@@ -1457,6 +1474,8 @@ function isStateCondition(condition: EffectCondition): condition is StateConditi
     case "target-more-health":
     case "target-attacking":
     case "target-casting-or-attacking":
+    case "any-of":
+    case "target-is-summoned":
     case "caster-no-spirit-within":
     case "caster-spirit-within":
     case "caster-spirit-or-corpse-within":
@@ -1490,7 +1509,7 @@ export function stateHolds(
     case "caster-has":
       return caster.statuses.countByCategory(condition.category, condition.profession) > 0;
     case "caster-lacks":
-      return caster.statuses.countByCategory(condition.category) === 0;
+      return caster.statuses.countByCategory(condition.category, condition.profession) === 0;
     case "target-casting": {
       const cast = target.cast.activeCast;
       const skill = cast === undefined ? undefined : getSkill(cast.skillId);
@@ -1538,11 +1557,17 @@ export function stateHolds(
       return target.health > caster.health;
     case "target-attacking":
       return isAttacking(target);
+    case "any-of":
+      return condition.conditions.some((each) =>
+        stateHolds(each, caster, target, surroundings, firing),
+      );
     case "target-casting-or-attacking": {
       const cast = target.cast.activeCast;
       const skill = cast === undefined ? undefined : getSkill(cast.skillId);
       return (skill !== undefined && isSpell(skill.type)) || isAttacking(target);
     }
+    case "target-is-summoned":
+      return isSummoned(surroundings.get(target.id)?.creature);
     case "caster-no-spirit-within": {
       const at = surroundings.get(caster.id)?.position;
       return at === undefined || spiritsWithin(surroundings.values(), at, condition.radius) === 0;
@@ -1677,13 +1702,17 @@ function disabledBy(
 
 /**
  * Whether `effect` disables the caster's bar skill `skillId` (#1473):
- * for `attribute` (#1511), never `usedId`, the skill that disables them.
+ * for `attribute` (#1511), never `usedId`, the skill that disables them;
+ * for `all` (#1570), every one.
  */
 function disabledOwn(
   effect: DisableOwnSkillsEffect,
   skillId: string,
   usedId: string | undefined,
 ): boolean {
+  if (effect.which === "all") {
+    return true;
+  }
   if (effect.which === "spells") {
     return isSpellId(skillId);
   }
@@ -1757,6 +1786,8 @@ function conditionHolds(
     case "target-more-health":
     case "target-attacking":
     case "target-casting-or-attacking":
+    case "any-of":
+    case "target-is-summoned":
     case "caster-no-spirit-within":
     case "caster-spirit-within":
     case "caster-spirit-or-corpse-within":
@@ -1844,6 +1875,8 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "resurrect-companions":
     case "disable-own-skills":
       return true;
+    case "lengthen-recharge":
+      return effect.of === "this-skill";
     // Once, on the primary target, the spirit cast on (#1309), however
     // many allies the skill's area also caught.
     case "destroy-target-spirit":
@@ -1868,7 +1901,6 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "resurrect":
     case "splash":
     case "disable-skill":
-    case "lengthen-recharge":
     case "chain-mark":
     case "if":
       return false;
@@ -1914,6 +1946,12 @@ export interface SkillOutcome {
    */
   readonly rechargeFraction: number;
   /**
+   * How many seconds longer this use's recharge is (#1519): every
+   * `lengthen-recharge` of `this-skill` that landed, summed; else 0.
+   * Added after `rechargeFraction` and any faster recharge.
+   */
+  readonly rechargeLongerSeconds: number;
+  /**
    * The `summon`s that landed (#1052), in order: the simulation makes the
    * creatures, which only it can add to the match.
    */
@@ -1942,6 +1980,7 @@ export function resolveSkillEffects(
   );
   const events: CombatEvent[] = [];
   let rechargeFraction = 0;
+  let rechargeLongerSeconds = 0;
   const summons: SummonEffect[] = [];
   const grounds: CreateGroundEffect[] = [];
   for (const effect of skill.effects) {
@@ -1964,6 +2003,16 @@ export function resolveSkillEffects(
         }
         if (inner.kind === "recharge-others") {
           rechargeOthers(caster, skill.id, inner.which);
+        }
+        if (inner.kind === "lengthen-recharge" && inner.of === "this-skill") {
+          const seconds = resolveMagnitude(inner.seconds, caster);
+          rechargeLongerSeconds += seconds;
+          events.push({
+            kind: "recharge-lengthened",
+            targetId: caster.id,
+            skillId: skill.id,
+            seconds,
+          });
         }
         if (inner.kind === "summon") {
           summons.push(inner);
@@ -1989,7 +2038,7 @@ export function resolveSkillEffects(
       events,
     );
   }
-  return { events, rechargeFraction, summons, grounds };
+  return { events, rechargeFraction, rechargeLongerSeconds, summons, grounds };
 }
 
 /**

@@ -1,6 +1,6 @@
 /**
  * Whose turn the screen is (#1513). Every screen change takes one; a
- * screen that awaits before it draws, as Solo Play awaits its roster,
+ * screen that awaits before it draws, as Random Arena awaits its roster,
  * asks whether its turn is still the latest, and draws nothing if another
  * screen took the screen in the meantime. Otherwise a late draw paints
  * the menu over the lobby the player just hosted.

@@ -80,19 +80,25 @@ describe("status definitions", () => {
         def.conditionalArmor.length > 0 ||
         def.whileUnder !== undefined ||
         def.extraStrikesPerHit !== 0 ||
+        def.attackDamageType !== undefined ||
+        def.attackArmorPenetration !== 0 ||
         def.onAttackHit !== undefined ||
         def.triggers.length > 0 ||
         def.nextSpells !== undefined ||
         def.nextAttackSkill !== undefined ||
         def.nextSkill !== undefined ||
+        def.nextSkillRule !== undefined ||
+        def.nextAttackSkillBonus !== undefined ||
         def.spellRechargeFaster !== 0 ||
+        def.skillRechargeFaster !== 0 ||
         def.bindingRitualRechargeFaster !== 0 ||
         def.criticalChanceBonus !== 0 ||
         def.energyPerCritical !== 0 ||
         def.healthPerCritical !== 0 ||
         def.damageReduction !== 0 ||
         def.redirectsPhysicalDamage !== 0 ||
-        def.damageFromSpiritAttacks !== 0;
+        def.damageFromSpiritAttacks !== 0 ||
+        def.adrenalineGainFaster !== 0;
       expect(hasEffect, `${id} has no mechanical effect`).toBe(true);
     }
   });
@@ -163,7 +169,12 @@ describe("status definitions", () => {
           getStatusDefinition(id).energyPips,
         ]),
       ),
-    ).toEqual({ malaise: -1, "blood-ritual": 3, "energetic-was-lee-sa": 2 });
+    ).toEqual({
+      malaise: -1,
+      "blood-ritual": 3,
+      "energetic-was-lee-sa": 2,
+      "blood-is-power": 5,
+    });
   });
 
   it("makes enchantments beneficial and hexes/conditions detrimental", () => {
@@ -638,20 +649,39 @@ describe("StatusSet changes, for the triggers (#887)", () => {
       trigger: getStatusDefinition("vengeful-weapon").triggers[0],
     };
     const set = new StatusSet();
-    set.recordDamageFromFoe("war");
+    set.recordDamageFromFoe("war", "slashing");
     expect(set.drainChanges()).toEqual([]);
 
     set.apply("vengeful-weapon", 8, "rit");
     set.drainChanges();
-    set.recordDamageFromFoe("war");
-    set.recordDamageFromFoe("ele");
+    set.recordDamageFromFoe("war", "slashing");
+    set.recordDamageFromFoe("ele", "fire");
     expect(set.drainChanges()).toEqual([
       { kind: "took-damage-from-foe", offenderId: "war", fired: [vengeful] },
     ]);
 
-    set.recordDamageFromFoe("ele");
+    set.recordDamageFromFoe("ele", "fire");
     expect(set.drainChanges()).toEqual([
       { kind: "took-damage-from-foe", offenderId: "ele", fired: [vengeful] },
+    ]);
+  });
+
+  it("answers a trigger bound to fire only for fire, never lightning or a life steal (#1540)", () => {
+    const rodgort = {
+      statusId: "mark-of-rodgort",
+      sourceId: "ele",
+      trigger: getStatusDefinition("mark-of-rodgort").triggers[0],
+    };
+    const set = new StatusSet();
+    set.apply("mark-of-rodgort", 30, "ele");
+    set.drainChanges();
+    set.recordDamageFromFoe("ele", "lightning");
+    set.recordDamageFromFoe("ele", undefined);
+    expect(set.drainChanges()).toEqual([]);
+
+    set.recordDamageFromFoe("ele", "fire");
+    expect(set.drainChanges()).toEqual([
+      { kind: "took-damage-from-foe", offenderId: "ele", fired: [rodgort] },
     ]);
   });
 });
@@ -774,7 +804,7 @@ describe("attack duration (ADR-0029)", () => {
     });
   }
 
-  it("is 1 with nothing on; Faintheartedness (#493) and Shadow of Fear (#918) are 50% slower, Heart of Fury and Weapon of Aggression (#975) 25% faster (#845), Frenzy (#919) and Lightning Reflexes (#976) 33%, Call of Haste (#1108) 25% faster, Aggressive Refrain (#1423, #1516) 25%", () => {
+  it("is 1 with nothing on; Faintheartedness (#493) and Shadow of Fear (#918) are 50% slower, Heart of Fury and Weapon of Aggression (#975) 25% faster (#845), Frenzy (#919) and Lightning Reflexes (#976) 33%, Call of Haste (#1108) 25% faster, Aggressive Refrain (#1423, #1516) 25%, Flail (#1549) 33%", () => {
     expect(aggregateModifiers([]).attackDurationMultiplier).toBe(1);
     const multipliers: Partial<Record<StatusId, number>> = {
       faintheartedness: 1.5,
@@ -785,6 +815,7 @@ describe("attack duration (ADR-0029)", () => {
       "weapon-of-aggression": 0.75,
       "call-of-haste": 0.75,
       "aggressive-refrain": 0.75,
+      flail: 0.67,
     };
     for (const id of ALL_STATUS_IDS) {
       const expected = multipliers[id] ?? 1;

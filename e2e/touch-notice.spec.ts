@@ -16,7 +16,7 @@ test.describe("on a touch-only phone", () => {
     const notice = page.locator(".touch-notice");
     await expect(notice).toContainText("VibeWars needs a keyboard and mouse.");
     await expect(notice).toContainText("Open it on a computer:");
-    await expect(page.locator(".roster")).toHaveCount(0);
+    await expect(page.locator(".mode-rail")).toHaveCount(0);
 
     // Neither Esc nor a tap beside it lets the player past.
     await page.keyboard.press("Escape");
@@ -25,11 +25,11 @@ test.describe("on a touch-only phone", () => {
 
     await page.locator(".touch-notice-continue").click();
     await expect(notice).toHaveCount(0);
-    await expect(page.locator(".roster")).toBeVisible();
+    await expect(page.locator(".mode-rail")).toBeVisible();
     expect(await page.evaluate(() => location.hash)).toBe("#team=kept");
 
     await page.reload();
-    await expect(page.locator(".roster")).toBeVisible();
+    await expect(page.locator(".mode-rail")).toBeVisible();
     await expect(page.locator(".touch-notice")).toHaveCount(0);
   });
 });
@@ -37,6 +37,6 @@ test.describe("on a touch-only phone", () => {
 test("never shows on a narrow desktop window", async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 740 });
   await page.goto("./");
-  await expect(page.locator(".roster")).toBeVisible();
+  await expect(page.locator(".mode-rail")).toBeVisible();
   await expect(page.locator(".touch-notice")).toHaveCount(0);
 });

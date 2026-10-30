@@ -878,7 +878,7 @@ it, not baked in, so one file serves every screen.
 
 - **Shape first.** Glyph and modifier are `ink` only; the plate's hue is
   decoration, so every icon reads with the colour taken out.
-- **Every skill is its own picture.** A row in `scripts/assets/skill-icon-table.mjs`
+- **Every skill is its own picture.** A row in `scripts/assets/skill-icons/<profession>.mjs`
   names a skill's glyph and modifier, and a test fails if two rows match. Start
   from the glyph for the skill's primary effect; the modifier tells apart the
   ones that share it (heal, energy and armor repeat).
@@ -905,8 +905,32 @@ it, not baked in, so one file serves every screen.
   armor-crack, drop-run, mark-skull, dagger-stop, dagger-limp, palm,
   shield-stance (solid), shield-bar, shield-arrow, shield-blade, born-plus, born-burst, born-ring, born-energy (the spirit post in a halo, and its payout),
   blade-limp, blade-pierce, blade-drop, blade-half, blade-burst, blade-adrenal (a blade with its payoff in the corner above), blades-fan,
-  dagger-crit (a dagger and a four-point spark), shield-crit, blink-heal, blink-fang, blink-ally (the step with a plus, two fangs, a figure), shield-veil, crescent-spark, caltrops, spark (a four-point star with a tail), flame-foe, flame-mind (a flame over a figure, over a bare head), flame-ring, flame-burst (short and long rays round a dot), flame-target, flame-field, hammer-prone, hammer-shield, hammer-counter, hammer-weak, hammer-chevrons, hammer-quake (the hammer over a downed foe, a shield, a turning arrow, weak chevrons, wide cracks), hex-barbs, hex-miss, hex-drain, hex-heal-cut, hex-nobloc, hex-drain-cut (the hex ring with spikes, a cross, falling triangles, a cut plus, a cracked shield, both), drop-touch, drop-trio, drop-half, drop-weak, drop-barbs, drop-energy (the blood drop with a plus, three drops, a half-full drop, a down arrow, barbs, a bolt), ghost, weight, ache-cross, armor-shrink, speed-break (a whole chevron and a
-  broken one), eye-slash, limp-drain, blow, sweep, rush, dolyak, heart-plus, bolt-cap (a melee blow, a wide sweep, three chevrons, a bull's head with horns, a heart with a plus, a bolt under a ceiling), ice-cage, frost-nova, spear-ice, whirl, eye-blur, mist-shield, stone-split, head-frost (icicles under a bar, a snowflake with ice thrown out round it, a long spear, a spiral, an eye and its ghost, mist over a shield, a stone split in two, a snowflake in a head and shoulders), avatar-earth, avatar-wings (a figure in a god's shape: Melandru grows a two-leaf branch from the head, Dwayna spreads wings behind it; Balthazar's flame rises from its head, Grenth's scythe slants behind it, Lyssa's zigzags flank it: avatar-flame, avatar-scythe, avatar-chaos), was-shield, was-heart, was-cap, was-blind, was-quake, was-bolt (the Ritualist's Was spells: one urn of held ashes with no base line, a mark in its body for what they do; armor, Health, a ceiling on hits, blindness, a crack, energy; #1530 added six: an orb under a chevron is more maximum Energy, a bolt through a plate is armor pierced, with two ticks beside it for the elite's area, a ring round a dot is a cast nothing breaks, a hook back over a heart is Health stolen, a struck drop is conditions cleared: was-orb, was-pierce, was-pierce-area, was-calm, was-steal, was-clear), gain-barbs, gain-shield, gain-burst, hex-return (the gain-trigger skills: a plus in the top left corner is what the foe gains, spikes, a bolted shield or a burst below it is the payoff; Hex Breaker's corner is a dashed ring and an arrow goes back at it), haste-clean, flame-halo, flame-bars, chase (the flash enchantments: chevrons and a struck-through drop, a flame under a halo, a flame beside rising bars, a chevron after a dot), hex-fail-foe, hex-fail-ally, hex-churn (the Mesmer hexes on the bearer's next spell: a dashed ring round a small struck orb, then a heavy X for a spell at a foe or a solid disc with a plus cut out for one at an ally; no chevron, so the mark stays large at 16 px; a drop between a plus and a minus for a condition gained or lost), next-attack-energy and its eleven siblings (the "with their next skill" chants, #1497: a small mark in the top left corner is what the ally casts next, the payoff shrunk below and right of it. Corner marks: a blade is an attack skill, a four-point star a spell, a ring round a dot a signet, sound arcs a shout or chant, three dots any of the next several skills. Payoffs: a bolt energy, a heart and plus health, a struck-through drop a condition lost, a cut ring a hex lost, rising bars adrenaline, a weak drop, a limp and a burst what the attack then inflicts. No modifier: the corner is the trigger), spear-flame, spear-fast, spear-weak, spear-crit, spear-heart, spear-crack, spear-burst, spear-cleanse, spear-swipe, spear-pierce (the Paragon thrown spears: a spear on the left and its rider on the right: a flame, three chevrons, a down arrow, a four-point spark, a hollow heart, a cracked shield, a burst, a struck drop; a swiped arc; a shield with the spear through it for unblockable; a drop badge below is Deep Wound), note-hold (a note under a fermata: Enduring Harmony), hex-hourglass, hex-overload, orb-split, hex-crown, crown-struck, hex-ache, eye-tear, hex-splash, hex-panic, hex-rising, drop-spread (Panic: a dot with rays ending in dots, an interrupt sent to all near; Wastrel's Demise: bars rising, the pulse that grows; both in the punisher ring; Epidemic is no hex: a drop with four drops spread from it, #1555), fireball-mind (the Mesmer skill-use punishers share one mark, the dashed hex ring round a small picture of the punishment; Mind Blast stays outside it: an hourglass, a bolt through a bar, an orb split by a crack, a crown, a struck crown, a jagged ache, an eye with a tear, a burst, a fireball with an eye). Echoes (#1482): the corner says the family, a turning arrow (`renew`) for a refrain that renews and lasts, a four-point spark (`finale`) for a finale that fires once; the type mark is the chant's note with ripples after it. A
+  dagger-crit (a dagger and a four-point spark),
+  shield-crit, blink-heal, blink-fang, blink-ally (the step with a plus, two fangs, a figure),
+  shield-veil, crescent-spark, caltrops, spark (a four-point star with a tail),
+  flame-foe, flame-mind (a flame over a figure, over a bare head),
+  flame-ring, flame-burst (short and long rays round a dot),
+  flame-target, flame-field, hammer-prone, hammer-shield, hammer-counter, hammer-weak, hammer-chevrons, hammer-quake (the hammer over a downed foe, a shield, a turning arrow, weak chevrons, wide cracks),
+  hex-barbs, hex-miss, hex-drain, hex-heal-cut, hex-nobloc, hex-drain-cut (the hex ring with spikes, a cross, falling triangles, a cut plus, a cracked shield, both),
+  drop-touch, drop-trio, drop-half, drop-weak, drop-barbs, drop-energy (the blood drop with a plus, three drops, a half-full drop, a down arrow, barbs, a bolt),
+  ghost, weight, ache-cross, armor-shrink, speed-break (a whole chevron and a broken one),
+  eye-slash, limp-drain, blow, sweep, rush, dolyak, heart-plus, bolt-cap (a melee blow, a wide sweep, three chevrons, a bull's head with horns, a heart with a plus, a bolt under a ceiling),
+  ice-cage, frost-nova, spear-ice, whirl, eye-blur, mist-shield, stone-split, head-frost (icicles under a bar, a snowflake with ice thrown out round it, a long spear, a spiral, an eye and its ghost, mist over a shield, a stone split in two, a snowflake in a head and shoulders),
+  avatar-earth, avatar-wings (a figure in a god's shape: Melandru grows a two-leaf branch from the head, Dwayna spreads wings behind it; Balthazar's flame rises from its head, Grenth's scythe slants behind it, Lyssa's zigzags flank it: avatar-flame, avatar-scythe, avatar-chaos),
+  was-shield, was-heart, was-cap, was-blind, was-quake, was-bolt (the Ritualist's Was spells: one urn of held ashes with no base line, a mark in its body for what they do; armor, Health, a ceiling on hits, blindness, a crack, energy; #1530 added six: an orb under a chevron is more maximum Energy, a bolt through a plate is armor pierced, with two ticks beside it for the elite's area, a ring round a dot is a cast nothing breaks, a hook back over a heart is Health stolen, a struck drop is conditions cleared: was-orb, was-pierce, was-pierce-area, was-calm, was-steal, was-clear),
+  gain-barbs, gain-shield, gain-burst, hex-return (the gain-trigger skills: a plus in the top left corner is what the foe gains, spikes, a bolted shield or a burst below it is the payoff; Hex Breaker's corner is a dashed ring and an arrow goes back at it),
+  scythe-spend, scythe-frost, sand-pulse, grasp, ring-rend, blink-bars (Dervish and Assassin staples, #1573: a scythe with a broken ring beside its blade spends an enchantment, the same scythe with a snowflake is cold; rings of earth pulse, a hand over a broken line grips and cripples, a ring broken open round a burst rends, step arrowheads behind bars imprison),
+  haste-clean, flame-halo, flame-bars, chase (the flash enchantments: chevrons and a struck-through drop, a flame under a halo, a flame beside rising bars, a chevron after a dot),
+  hex-fail-foe, hex-fail-ally, hex-churn (the Mesmer hexes on the bearer's next spell: a dashed ring round a small struck orb, then a heavy X for a spell at a foe or a solid disc with a plus cut out for one at an ally; no chevron, so the mark stays large at 16 px; a drop between a plus and a minus for a condition gained or lost),
+  next-attack-energy and its eleven siblings (the "with their next skill" chants, #1497: a small mark in the top left corner is what the ally casts next, the payoff shrunk below and right of it. Corner marks: a blade is an attack skill, a four-point star a spell, a ring round a dot a signet, sound arcs a shout or chant, three dots any of the next several skills. Payoffs: a bolt energy, a heart and plus health, a struck-through drop a condition lost, a cut ring a hex lost, rising bars adrenaline, a weak drop, a limp and a burst what the attack then inflicts; #1558 adds a struck burst for cannot be interrupted, a cracked shield for cannot be blocked, a bolt with a minus for costs less, a ring filled above its middle with a chevron up for more damage to foes above half Health. No modifier: the corner is the trigger),
+  spear-flame, spear-fast, spear-weak, spear-crit, spear-heart, spear-crack, spear-burst, spear-cleanse, spear-swipe, spear-pierce (the Paragon thrown spears: a spear on the left and its rider on the right: a flame, three chevrons, a down arrow, a four-point spark, a hollow heart, a cracked shield, a burst, a struck drop; a swiped arc; a shield with the spear through it for unblockable; a drop badge below is Deep Wound),
+  note-hold (a note under a fermata: Enduring Harmony),
+  sac-energy, sac-blade, drop-to-signet, hex-flame, lava-spouts, ward-elements, arrow-bolt, flame-rise (#1572: a drop given up at the bottom left with its payoff at the top right, a bolt or a blade; a drop leaving for a signet ring; the hex ring round a flame; a wavy ground with three tongues of fire; the ward post with a flame and a bolt above; an arrow with a bolt across its shaft; rising bars under a flame),
+  hex-hourglass, hex-overload, orb-split, hex-crown, crown-struck, hex-ache, eye-tear, hex-splash, fireball-mind (the Mesmer skill-use punishers share one mark, the dashed hex ring round a small picture of the punishment; Mind Blast stays outside it: an hourglass, a bolt through a bar, an orb split by a crack, a crown, a struck crown, a jagged ache, an eye with a tear, a burst, a fireball with an eye),
+  hex-panic, hex-rising, drop-spread (Panic: a dot with rays ending in dots, an interrupt sent to all near; Wastrel's Demise: bars rising, the pulse that grows; both in the punisher ring; Epidemic is no hex: a drop with four drops spread from it, #1555),
+  block-half, block-most, shield-cut-heal, target-struck, heal-bolt, draw-drops, heal-clear, heal-drop, plus-trio, plus-cycle (the Monk staples, #1541: a shield filled to the share it blocks, half for the party's Aegis and three quarters for the one ally Shield of Deflection guards; a shield with a minus over a plus; a target ring struck through, the mark for any untargetable skill; a big plus with a bolt; a figure with drops flowing into it; a plus with a struck drop and ring; a plus with a drop; three pluses for the party; a plus in a circling arrow),
+  shield-glance (a slash glancing off a shield: Bladeturn Refrain), energy-ring (a bolt in a ring: Energizing Finale), blade-fury (a blade with rising bars ending in a spike: Soldier's Fury).
+  Echoes (#1482): the corner says the family, a turning arrow (`renew`) for a refrain that renews and lasts, a four-point spark (`finale`) for a finale that fires once; the type mark is the chant's note with ripples after it. A
   new primary effect adds a glyph; a new skill adds a row.
 
 ### Skill slot states
@@ -1060,7 +1084,7 @@ builds); and a human who has not
 claimed a slot when the clock ends gets the lowest free one, so only slots no
 human is left to take become bots.
 
-### Game modes (#1522; study, not decided)
+### Game modes (#1522; C picked)
 
 `scripts/assets/game-modes-study.mjs` draws `docs/art/game-modes-study.svg`:
 three variants at 1280 px, desktop only. It supersedes the Solo and Team Play
@@ -1092,7 +1116,11 @@ implementation card. The cost of "every player always hosts a lobby" (`main.ts`,
   Code: a new rail layout that narrows every screen by 76 px, and a party
   that moves as one, which is a new message on the wire.
 
-The operator picks one and says why; the pick is recorded here.
+The operator picked **C** (2026-10-30), with Character Builder and Team
+Builder at the rail's bottom, below a divider. Card 1 of the split (#1525)
+builds the rail, a screen per entry and the title bar's Lobby Code and Join;
+the rail's icons are the study's placeholders, ported to
+`apps/web/public/icons/mode/`, until an asset card draws the final set.
 
 ## Creatures
 
@@ -1186,7 +1214,7 @@ for the scene to tint. Load it in Phaser with
 `this.load.svg(key, url, { width, height })` at the size you draw it (24×24
 for icons, 32×12 for projectiles), and in HTML with a plain `<img>`.
 
-Adding a skill: add its row to `scripts/assets/skill-icon-table.mjs` and re-run.
+Adding a skill: add its row to `scripts/assets/skill-icons/<profession>.mjs` and re-run.
 Adding a status, profession, skill type or UI control: add one entry to the
 matching table in the generator, re-run it, and add a row to this page.
 
