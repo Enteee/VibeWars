@@ -10,13 +10,12 @@ import { TRACKS, type Track } from "../music/tracks/index.js";
 import { openBeatEditor } from "./beat-editor.js";
 import { musicIcon } from "./icons.js";
 import { mountSoundControls, soundControlsDeps } from "./sound-controls.js";
-import { button, h, screenBar, selectableRow, syncList } from "./kit.js";
+import { button, h, selectableRow, syncList } from "./kit.js";
 
 /**
- * The jukebox (#372, #366 §3.6): what plays. A menu screen, and the same
- * panel as a popover from the HUD's ♪ button in a match. How loud is the
- * sound controls' business (#424): the screen links to Options → Sound,
- * and the popover, the one place for them in a match, shows them itself.
+ * The jukebox (#372, #366 §3.6): what plays, a popover from the ♪ button
+ * of the top bar and of a match's HUD (#1453). How loud is the sound
+ * controls' business (#424): the popover shows them above the tracks.
  *
  * Click a row to hear it; the preview lasts until another row is picked
  * or the jukebox closes. Edit opens a track in the beat editor (#373), and
@@ -212,36 +211,6 @@ export function jukeboxPanel(
       }
     },
   };
-}
-
-let disposeScreen: (() => void) | undefined;
-
-export function disposeJukeboxScreen(): void {
-  disposeScreen?.();
-  disposeScreen = undefined;
-}
-
-/** The jukebox as a menu screen. */
-export function renderJukeboxScreen(
-  root: HTMLElement,
-  callbacks: { onBack: () => void; onSoundSettings: () => void },
-): void {
-  disposeJukeboxScreen();
-  root.replaceChildren();
-  const screen = h("div", "screen jukebox-screen");
-  screenBar({
-    crumbs: ["VibeWars", "Music"],
-    back: { label: "Back", onBack: callbacks.onBack },
-    actions: [button("Sound settings", "jukebox-sound-settings", callbacks.onSoundSettings)],
-  });
-  screen.appendChild(h("p", "screen-subtitle", "Click a track to hear it. Changes save at once."));
-  const panel = jukeboxPanel(callbacks.onBack);
-  screen.appendChild(panel.element);
-  root.appendChild(screen);
-  disposeScreen = () => {
-    panel.dispose();
-  };
-  panel.element.querySelector<HTMLElement>(".jukebox-play")?.focus();
 }
 
 /**

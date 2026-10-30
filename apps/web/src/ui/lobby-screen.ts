@@ -142,6 +142,17 @@ export interface LobbyMap {
   readonly mode: MatchMode;
 }
 
+/**
+ * The maps a host may pick from (#1453): those playing one of `modes`, a
+ * Team Play tile's, in `maps`' order; every map for `undefined`.
+ */
+export function hostMaps(
+  maps: readonly LobbyMap[],
+  modes: readonly MatchMode[] | undefined,
+): LobbyMap[] {
+  return maps.filter((map) => modes === undefined || modes.includes(map.mode));
+}
+
 /** What each mode is, in a line, as the lobby shows it under the map (#476). */
 const MODE_LINES: Readonly<Record<MatchMode, string>> = {
   annihilation: "Annihilation: defeat every foe",

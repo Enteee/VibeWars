@@ -127,17 +127,17 @@ test("the top bar's ⚙ opens Options over the screen; Esc closes it and leaves 
   await page.goto("./");
   await page
     .locator(".topbar-screen-actions")
-    .getByRole("button", { name: "Music", exact: true })
+    .getByRole("button", { name: "Record", exact: true })
     .click();
-  await expect(page.getByRole("heading", { name: "Music" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Record" })).toBeVisible();
 
   await page.locator("#topbar").getByRole("button", { name: "Options" }).click();
   const options = page.getByRole("dialog", { name: "Options" });
   await expect(options).toBeVisible();
-  // Esc is the overlay's: it closes, and the Music screen does not also go back.
+  // Esc is the overlay's: it closes, and the Record screen does not also go back.
   await page.keyboard.press("Escape");
   await expect(options).toHaveCount(0);
-  await expect(page.getByRole("heading", { name: "Music" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Record" })).toBeVisible();
 
   // Close does the same; then Esc is the screen's again.
   await page.locator("#topbar").getByRole("button", { name: "Options" }).click();

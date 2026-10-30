@@ -1,7 +1,10 @@
 # Modes
 
 Each map plays one mode, and the lobby says which under the map's name.
-Nobody picks it. A Random Arena picks a map for you, and with it the
+Nobody picks it, but a Team Play tile picks the modes its lobby's maps
+play: **Team Arena** Annihilation, Kill Count and Priest Annihilation,
+**Heroes' Ascent** Relic Run, King of the Hill and Capture Points, and
+**GvG** the Guild Battle. **Hosted Lobby** offers every map. A Random Arena picks a map for you, and with it the
 mode, but never a Guild Battle, a Relic Run, King of the Hill or Capture
 Points.
 

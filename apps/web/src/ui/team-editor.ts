@@ -383,7 +383,7 @@ export function mountTeamEditor(
   });
 
   const { back } = screenBar({
-    crumbs: ["VibeWars", "Team Builds", "Edit"],
+    crumbs: ["VibeWars", "Team Play", "Edit"],
     back: { label: "Back", onBack: close },
     status: [chip.element, unsaved],
     actions: [save, shareWrap, duplicate, remove],

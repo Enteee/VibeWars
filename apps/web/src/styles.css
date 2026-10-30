@@ -1223,12 +1223,133 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* A team row's members (#581), right of its name and count. */
-.team-list-dots {
+/* Solo Play / Team Play after "VibeWars" in the title bar (#1453): the
+   shown one filled and underlined, as the study draws it. */
+.play-tabs {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 0.25rem;
+  gap: 0.4rem;
+}
+
+#topbar .play-tabs .play-tab {
+  padding: 0.25rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+#topbar .play-tabs .play-tab[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: rgb(89 194 255 / 10%);
+  color: var(--accent);
+  box-shadow: 0 3px 0 -1px var(--accent);
+}
+
+/* Team Play (#1453, #1449 variant B): mode tiles, then Team Build cards. */
+.screen.screen-team-play {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  width: min(1280px, 100%);
+}
+
+.team-play-tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.screen .team-play-tile {
+  padding: 1.4rem 1rem;
+  font-weight: 700;
+  text-align: left;
+}
+
+.team-play-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: 0.7rem;
+}
+
+.team-play-card {
+  position: relative;
+  display: flex;
+  min-height: 8.5rem;
+}
+
+.screen .team-play-card-choose {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-width: 0;
+  padding: 0.8rem 0.9rem 2.6rem;
+  text-align: left;
+}
+
+.team-play-card.is-picked .team-play-card-choose {
+  border-color: var(--accent);
+  background: rgb(89 194 255 / 10%);
+}
+
+/* None and New are no Team Build: dashed, centred. */
+.screen .team-play-card.is-none .team-play-card-choose,
+.screen .team-play-new {
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 0.8rem;
+  border-style: dashed;
+  text-align: center;
+}
+
+.screen .team-play-new {
+  min-height: 8.5rem;
+  color: var(--accent);
+}
+
+.team-play-card-name {
+  overflow: hidden;
+  max-width: 100%;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.team-play-card-detail {
+  color: var(--ink-dim);
+}
+
+.team-play-card-members {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem 0.6rem;
+}
+
+.team-play-card-member {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.team-play-card-member-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.screen .team-play-card-edit {
+  position: absolute;
+  right: 0.6rem;
+  bottom: 0.6rem;
+  padding: 0.2rem 0.8rem;
+}
+
+.team-play-hint {
+  margin: 0;
+  color: var(--ink-dim);
 }
 
 /* The team editor (#574): the grid of members, and the picker beside it in
