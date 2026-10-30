@@ -1879,6 +1879,11 @@ const inkFill = (d) =>
 /** @param {string} d @param {number} [w] */
 const inkLine = (d, w = 2.2) => `<path d="${d}" ${stroke(C.ink, w)}/>`;
 
+/** A shield outline with `fillPath` filled in: the share of damage it blocks (#1541). @param {string} fillPath */
+const blockShield = (fillPath) =>
+  `<path d="${fillPath}" fill="${C.ink}"/>` +
+  `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2.4)}/>`;
+
 /** A burst of `n` points around the centre, alternating two radii. @param {number} n */
 const burst = (n) =>
   Array.from({ length: n * 2 }, (_, i) => {
@@ -2849,6 +2854,66 @@ const skillGlyph = {
     `<circle cx="12" cy="12" r="8.5" ${stroke(C.ink, 2.2)} stroke-dasharray="4.2 3.2"/>` +
     inkFill("M12 6.8C13.8 9.4 15.6 11 15.6 13.2A3.6 3.6 0 0 1 8.4 13.2C8.4 11 10.2 9.4 12 6.8Z") +
     inkLine("M4 9.5H7M5.5 8V11M17 15H20", 1.6),
+  // The Monk staples (#1541). A shield filled to the share it blocks: half for the party's Aegis, three
+  // quarters for the one ally Shield of Deflection guards; dots above are the party.
+  "block-half": () =>
+    inkLine("M7 3H8M12 3h0M16 3h1", 2.4) +
+    `<g transform="translate(2.4,3.4) scale(0.8)">${blockShield("M12 2.5L4 5.5V12C4 16.5 7.5 19.5 12 21.5Z")}</g>`,
+  "block-most": () =>
+    `<g transform="translate(2.4,2.4) scale(0.8)">${blockShield("M12 2.5L20 5.5V12.5H12V21.5C7.5 19.5 4 16.5 4 12V5.5Z")}</g>`,
+  // A shield with a minus over a plus: each hit cut, and a heal at the end.
+  "shield-cut-heal": () =>
+    `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2.2)}/>` +
+    inkLine("M8.6 9H15.4", 2.2) +
+    inkLine("M12 12V17M9.5 14.5H14.5", 2.2),
+  // A target ring struck through: nothing foreign can aim at them. Reusable for any untargetable skill.
+  "target-struck": () =>
+    `<circle cx="12" cy="12" r="6" ${stroke(C.ink, 2.2)}/>` +
+    inkLine("M12 2.5V6.5M12 17.5V21.5M2.5 12H6.5M17.5 12H21.5", 2.2) +
+    `<circle cx="12" cy="12" r="1.4" fill="${C.ink}"/>` +
+    `<path d="M4.5 19.5L19.5 4.5" ${stroke(C.bg, 4.6)}/>` +
+    inkLine("M4.5 19.5L19.5 4.5", 2.2),
+  // A big plus with a small bolt: a great heal, and energy back.
+  "heal-bolt": () =>
+    inkFill("M8 7h4v4h4v4h-4v4H8v-4H4v-4h4z") + inkFill("M19.5 2.5L15.5 8H18.5L17 13L22 6.5H19Z"),
+  // A figure at the left with two drops flowing into it: conditions taken on, and healed.
+  "draw-drops": () =>
+    `<circle cx="6" cy="8" r="3" fill="${C.ink}"/>` +
+    inkLine("M1.5 20C1.5 15.5 3.5 13 6 13S10.5 15.5 10.5 20", 2.6) +
+    inkLine("M12.5 12.5H17M12.5 17.5H17", 1.8) +
+    inkFill("M19.5 9.5C18 11.5 17 12.6 17 13.8A2.5 2.5 0 0 0 22 13.8C22 12.6 21 11.5 19.5 9.5Z") +
+    inkFill(
+      "M19.5 15C18.3 16.6 17.6 17.4 17.6 18.3A1.9 1.9 0 0 0 21.4 18.3C21.4 17.4 20.7 16.6 19.5 15Z",
+    ),
+  // A plus beside a struck drop and a struck dashed ring: a condition and a hex taken off.
+  "heal-clear": () =>
+    inkFill("M6.6 8h3.6v3.6h3.6v3.6H9.6v3.6H6v-3.6H2.4V9.6H6z") +
+    `<circle cx="17.5" cy="6.5" r="3.6" ${stroke(C.ink, 1.6)} stroke-dasharray="2.6 2"/>` +
+    inkFill("M17.5 12.5C16 14.5 15 15.6 15 16.8A2.5 2.5 0 0 0 20 16.8C20 15.6 19 14.5 17.5 12.5Z") +
+    `<path d="M13.5 21L21.5 11" ${stroke(C.bg, 3)}/>` +
+    inkLine("M14 20.5L21 11.5", 1.5),
+  // A plus with a drop at its foot: it heals more when there is something to mend.
+  "heal-drop": () =>
+    inkFill("M9 3h5v5h5v5h-5v5H9v-5H4V8h5z") +
+    inkFill(
+      "M17.5 14.5C15.5 17 14.5 18.4 14.5 19.8A3 3 0 0 0 20.5 19.8C20.5 18.4 19.5 17 17.5 14.5Z",
+    ),
+  // Three pluses in a triangle: the whole party is healed.
+  "plus-trio": () =>
+    [
+      [12, 5.5],
+      [5.5, 17],
+      [18.5, 17],
+    ]
+      .map(([x, y]) =>
+        inkFill(
+          `M${String(x - 1.7)} ${String(y - 4.5)}h3.4v2.8h2.8v3.4h-2.8v2.8h-3.4v-2.8h-2.8v-3.4h2.8z`,
+        ),
+      )
+      .join(""),
+  // A plus in a circling arrow: it heals again and again, more when they are busy.
+  "plus-cycle": () =>
+    inkLine("M12 8V16M8 12H16", 2.6) + inkLine("M20 12A8 8 0 1 1 15.5 4.8M15.5 1.5V5H19", 2.2),
   // A shield outline with a crack down its face: the block is gone (#1262).
   "armor-crack": () =>
     `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2)}/>` +
