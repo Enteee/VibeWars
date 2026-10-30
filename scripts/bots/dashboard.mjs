@@ -25,7 +25,7 @@ import { buildLine, head, manifest, readManifest } from "./fingerprint.mjs";
 import { readBoardState } from "./hub-board.mjs";
 import { ROLES } from "./hub-policy.mjs";
 import { readSpend } from "./hub-spend.mjs";
-import { betweenTurns, parseReboot } from "./reboot.mjs";
+import { betweenTurns, parseProposal, parseReboot } from "./reboot.mjs";
 import { ownNudges, parseOwnSchedules, parseSchedule } from "./schedule.mjs";
 import { readSidecar, sidecarDown } from "./sidecar.mjs";
 import { unreadOf } from "./unread.mjs";
@@ -77,29 +77,34 @@ function obj(value) {
 }
 
 /**
- * What the company is doing about a reboot: one handed to the restarter, or
- * one waiting to drain. A file `parseReboot` rejects is no reboot.
+ * What the company is doing about a reboot: one handed to the restarter,
+ * one waiting to drain, or one proposed and awaiting the operator (#960).
+ * A file `parseReboot` or `parseProposal` rejects is no reboot.
  *
  * @param {ReadonlySet<string>} live
  * @returns {import("./dashboard-view.mjs").CompanyFacts["reboot"]}
  */
 function reboot(live) {
   /** @param {string} name */
-  const record = (name) => {
+  const read = (name) => {
     try {
-      return parseReboot(JSON.parse(fs.readFileSync(path.join(ROOT, name), "utf8")));
+      return /** @type {unknown} */ (JSON.parse(fs.readFileSync(path.join(ROOT, name), "utf8")));
     } catch {
       return null;
     }
   };
+  /** @param {string} name */
+  const record = (name) => parseReboot(read(name));
   const rebooting = record("rebooting.json");
   if (rebooting !== null) {
     return { rebooting: rebooting.reason };
   }
   const pending = record("reboot.json");
-  return pending === null
-    ? null
-    : { record: pending, between: betweenTurns(ROOT, [...live]), now: Date.now() };
+  if (pending !== null) {
+    return { record: pending, between: betweenTurns(ROOT, [...live]), now: Date.now() };
+  }
+  const proposed = parseProposal(read("reboot-proposal.json"));
+  return proposed === null ? null : { proposed };
 }
 
 /**

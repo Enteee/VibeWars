@@ -46,4 +46,6 @@ export const MONK_ICONS = {
   "monk.words-of-comfort": { glyph: "heal-drop" },
   "monk.light-of-deliverance": { glyph: "plus-trio" },
   "monk.signet-of-rejuvenation": { glyph: "plus-cycle" },
+  // A placeholder until the asset-designer's (#1528).
+  "monk.banish": { glyph: "ghost", modifier: "plus" },
 };
