@@ -432,4 +432,13 @@ export const SKILL_ICONS = {
   "paragon.chest-thumper": { glyph: "spear-crack", modifier: "bleed" },
   "paragon.spear-of-redemption": { glyph: "spear-cleanse" },
   "paragon.spear-swipe": { glyph: "spear-swipe", modifier: "stun" },
+  // Placeholders until the asset-designer's (#1540): Necromancer and Elementalist staples.
+  "necromancer.blood-is-power": { glyph: "energy", modifier: "plus" },
+  "necromancer.order-of-pain": { glyph: "blade-plus", modifier: "area" },
+  "necromancer.plague-signet": { glyph: "drop-pair", modifier: "plus" },
+  "elementalist.mark-of-rodgort": { glyph: "flame-target", modifier: "area" },
+  "elementalist.lava-font": { glyph: "flame-field", modifier: "clock" },
+  "elementalist.ward-against-elements": { glyph: "ward-blade", modifier: "bolt" },
+  "elementalist.shock-arrow": { glyph: "lightning-orb", modifier: "plus" },
+  "ranger.infuriating-heat": { glyph: "totem", modifier: "hourglass" },
 };

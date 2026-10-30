@@ -266,13 +266,16 @@ export interface LoseHealthEffect {
  * Move up to `count` conditions, newest first, each with the time it had
  * left, `from` the caster onto the target (#944), as Plague Touch's, or
  * from the target onto the caster (#1511), as Draw Conditions'. Each
- * lands as any condition the giver put on: the longer duration wins.
+ * lands as any condition the giver put on: the longer duration wins,
+ * with `durationMultiplier` times the time it had left (#1540): Plague
+ * Signet's "with 100...200% of their remaining durations", Plague Touch's 1.
  * `healPerCondition`: the caster is healed that much per condition moved.
  */
 export interface TransferConditionsEffect {
   readonly kind: "transfer-conditions";
   readonly from: "caster" | "target";
   readonly count: number;
+  readonly durationMultiplier: number;
   readonly healPerCondition?: Magnitude;
 }
 

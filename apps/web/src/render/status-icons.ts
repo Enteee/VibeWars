@@ -213,6 +213,11 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   shame: icon("shame"),
   mistrust: icon("mistrust"),
   fragility: icon("fragility"),
+  "blood-is-power": icon("blood-is-power"),
+  "order-of-pain": icon("order-of-pain"),
+  "mark-of-rodgort": icon("mark-of-rodgort"),
+  "ward-against-elements": icon("ward-against-elements"),
+  "infuriating-heat": icon("infuriating-heat"),
 };
 
 /** Drawn size of one icon, in world pixels. */

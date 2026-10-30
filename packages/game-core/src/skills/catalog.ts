@@ -7325,7 +7325,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "Transfer 1...3...3 negative conditions and their remaining
     // durations from yourself to target touched foe."
-    effects: [{ kind: "transfer-conditions", from: "caster", count: 3 }],
+    effects: [{ kind: "transfer-conditions", from: "caster", count: 3, durationMultiplier: 1 }],
   },
 
   /* ---------------------------------------------------------------------- */
@@ -13595,6 +13595,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         kind: "transfer-conditions",
         from: "target",
         count: Infinity,
+        durationMultiplier: 1,
         healPerCondition: {
           scaling: { attributeId: "monk.protection-prayers", atZero: 6, atTwelve: 22 },
         },
@@ -14764,6 +14765,340 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "...target foe is Dazed for 4...10 seconds": 9 s.
     effects: [{ kind: "apply-status", statusId: "dazed", durationSeconds: 9 }],
+  } /* ---------------------------------------------------------------------- */,
+  /* Necromancer and Elementalist staples (#1540)                           */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "necromancer.blood-is-power",
+    name: "Blood is Power",
+    gwId: 119,
+    type: "enchantment",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.blood-magic",
+    cost: { kind: "energy", amount: 1 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 0,
+    range: RANGE_SPELL,
+    target: "single-other-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 10 seconds, target other ally gains +3...6 Energy
+    // regeneration", for 33% of the caster's health.
+    effects: [
+      { kind: "sacrifice-health", percentOfMax: 33 },
+      { kind: "apply-status", statusId: "blood-is-power", durationSeconds: 10 },
+    ],
+  },
+  {
+    id: "necromancer.order-of-pain",
+    name: "Order of Pain",
+    gwId: 134,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.blood-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 0,
+    range: RANGE_SPELL,
+    target: "self",
+    area: { origin: "party" },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5 seconds, whenever a party member hits a foe with physical
+    // damage, that party member does +3...16 damage": the bonus is the
+    // enchantment's. The 17% sacrifice is the caster's, once a use.
+    effects: [
+      { kind: "sacrifice-health", percentOfMax: 17 },
+      { kind: "apply-status", statusId: "order-of-pain", durationSeconds: 5 },
+    ],
+  },
+  {
+    id: "necromancer.plague-signet",
+    name: "Plague Signet",
+    gwId: 132,
+    type: "signet",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 4,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Transfer all negative conditions with 100...200% of their remaining
+    // durations from yourself to target foe": 180%, its rank-12 value.
+    // The failure chance at Curses 4 or less is not modelled.
+    effects: [
+      { kind: "transfer-conditions", from: "caster", count: Infinity, durationMultiplier: 1.8 },
+    ],
+  },
+  {
+    id: "elementalist.mark-of-rodgort",
+    name: "Mark of Rodgort",
+    gwId: 190,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.fire-magic",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    // "Target foe and all nearby foes are hexed": the target, then every
+    // foe near it.
+    area: {
+      radius: AREA_NEARBY,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 10...35 seconds, whenever each foe is struck for fire damage,
+    // that foe is set on fire for 1...4 seconds": 30 s. The Burning is the
+    // hex's.
+    effects: [{ kind: "apply-status", statusId: "mark-of-rodgort", durationSeconds: 30 }],
+  },
+  {
+    id: "elementalist.lava-font",
+    name: "Lava Font",
+    gwId: 195,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.fire-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1.5,
+    rechargeSeconds: 4,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5 seconds, foes adjacent to the location where this spell was
+    // cast are struck for 5...50 fire damage each second": it stays where
+    // the caster stood. The Overcast "nearby instead" is not modelled.
+    effects: [
+      {
+        kind: "create-ground-effect",
+        anchor: "caster",
+        durationSeconds: { flat: 5 },
+        act: {
+          kind: "pulse",
+          pulse: {
+            count: 5,
+            everySeconds: 1,
+            delaySeconds: 0,
+            area: {
+              radius: AREA_ADJACENT,
+              origin: "caster",
+              affects: "enemies",
+              maxTargets: undefined,
+              includesCaster: false,
+            },
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "elementalist.fire-magic", atZero: 5, atTwelve: 41 },
+                },
+                type: "fire",
+                armorPenetration: 0,
+              },
+            ],
+          },
+        },
+      },
+    ],
+  },
+  {
+    id: "elementalist.ward-against-elements",
+    name: "Ward Against Elements",
+    gwId: 175,
+    type: "ward",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.earth-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    // "You create a Ward Against Elements at your current location. For
+    // 8...20 seconds, non-spirit allies in this area gain +24 armor
+    // against elemental damage."
+    effects: [
+      {
+        kind: "create-ground-effect",
+        anchor: "caster",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.earth-magic", atZero: 8, atTwelve: 18 },
+        },
+        act: {
+          kind: "aura",
+          aura: {
+            statusId: "ward-against-elements",
+            affects: "allies",
+            radius: AREA_IN_THE_AREA,
+          },
+        },
+      },
+    ],
+  },
+  {
+    id: "elementalist.shock-arrow",
+    name: "Shock Arrow",
+    gwId: 1082,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.air-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    // "...flies swiftly toward target foe": as fast as Lightning Orb.
+    projectile: { speed: 1.5 * RANGE_SPELL },
+    // "...striking for 5...50 lightning damage. If Shock Arrow strikes a
+    // foe suffering from Cracked Armor, you gain 5 Energy plus 1 Energy
+    // for every 2 ranks of Energy Storage. Shock Arrow has 25% armor
+    // penetration."
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.air-magic", atZero: 5, atTwelve: 41 },
+        },
+        type: "lightning",
+        armorPenetration: 0.25,
+      },
+      {
+        kind: "if",
+        condition: { kind: "target-has-status", statusId: "cracked-armor" },
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: {
+              scaling: { attributeId: "elementalist.energy-storage", atZero: 5, atTwelve: 11 },
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "ranger.infuriating-heat",
+    name: "Infuriating Heat",
+    gwId: 1730,
+    type: "nature-ritual",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ranger",
+    attributeId: "ranger.expertise",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    // Infuriating Heat (PvP), 3466: "Create a level 1...10 spirit.
+    // Non-spirit creatures within its range gain adrenaline 33...66% as
+    // fast. This spirit dies after 30...120 seconds." A level-8 spirit, as
+    // Winnowing's: 50 + 20 per level, armor 51.
+    effects: [
+      {
+        kind: "summon",
+        count: 1,
+        creature: {
+          kind: "spirit",
+          look: "spirit",
+          name: "Infuriating Heat",
+          maxHealth: {
+            scaling: { attributeId: "ranger.expertise", atZero: 70, atTwelve: 210 },
+          },
+          armor: { flat: 51 },
+          attack: undefined,
+          durationSeconds: {
+            scaling: { attributeId: "ranger.expertise", atZero: 30, atTwelve: 102 },
+          },
+          behaviour: { kind: "idle" },
+          aura: { statusId: "infuriating-heat", affects: "all", radius: RANGE_NATURE_RITUAL },
+          onDeath: "vanish",
+          ownerDisableOnDeath: undefined,
+        },
+      },
+    ],
   },
 ];
 

@@ -100,6 +100,13 @@ const NO_BOT_USE = new Set([
   "paragon.song-of-purification",
   "paragon.hexbreaker-aria",
   "paragon.anthem-of-fury",
+  // Necromancer and Elementalist staples (#1540): an ally's energy, a
+  // party's blows through an enchantment's rider, armor against one kind
+  // of damage, and a spirit's adrenaline aura are none the bot weighs.
+  "necromancer.blood-is-power",
+  "necromancer.order-of-pain",
+  "elementalist.ward-against-elements",
+  "ranger.infuriating-heat",
 ]);
 
 function skill(id: string) {

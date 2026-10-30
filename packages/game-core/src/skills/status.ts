@@ -310,7 +310,13 @@ export type StatusId =
   | "guilt"
   | "shame"
   | "mistrust"
-  | "fragility";
+  | "fragility"
+  // Necromancer and Elementalist staples (#1540).
+  | "blood-is-power"
+  | "order-of-pain"
+  | "mark-of-rodgort"
+  | "ward-against-elements"
+  | "infuriating-heat";
 
 /** A status's modifiers that hold only while its bearer is under another (#1485). */
 export interface WhileUnder {
@@ -967,6 +973,13 @@ export interface StatusTrigger {
    * Absent: any enchantment.
    */
   readonly profession?: ProfessionId;
+  /**
+   * On `bearer-takes-damage-from-foe` only (#1540): it fires only for
+   * damage of this type, never for a life steal, as Mark of Rodgort's
+   * "whenever each foe is struck for fire damage". Absent: any damage or
+   * steal.
+   */
+  readonly damageType?: DamageType;
   /**
    * On `bearer-uses-skill` only (#1437): it fires only for a skill of this
    * type and profession, as Avatar of Dwayna's "whenever you use a Dervish
@@ -3521,6 +3534,53 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
       },
     ],
   }),
+  // Necromancer and Elementalist staples (#1540), at their rank-12 values.
+  // "For 10 seconds, target other ally gains +3...6 Energy regeneration": 5.
+  "blood-is-power": define("blood-is-power", "Blood is Power", "enchantment", {
+    profession: "necromancer",
+    energyPips: 5,
+  }),
+  // "For 5 seconds, whenever a party member hits a foe with physical
+  // damage, that party member does +3...16 damage": 13, on each hit.
+  "order-of-pain": define("order-of-pain", "Order of Pain", "enchantment", {
+    profession: "necromancer",
+    onAttackHit: {
+      effects: [{ kind: "damage", amount: { flat: 13 }, type: "typeless", armorPenetration: 1 }],
+      skillId: "necromancer.order-of-pain",
+    },
+  }),
+  // "...whenever each foe is struck for fire damage, that foe is set on
+  // fire for 1...4 seconds": 3. A life steal is no strike.
+  "mark-of-rodgort": define("mark-of-rodgort", "Mark of Rodgort", "hex", {
+    profession: "elementalist",
+    triggers: [
+      {
+        on: "bearer-takes-damage-from-foe",
+        damageType: "fire",
+        effects: [{ kind: "apply-status", statusId: "burning", durationSeconds: 3 }],
+        target: "bearer",
+        skillId: "elementalist.mark-of-rodgort",
+      },
+    ],
+  }),
+  // What the ward projects on the allies inside it, as Ward Against
+  // Melee's: "non-spirit allies in this area gain +24 armor against
+  // elemental damage".
+  "ward-against-elements": define(
+    "ward-against-elements",
+    "Ward Against Elements",
+    "skill-effect",
+    {
+      profession: "elementalist",
+      conditionalArmor: [{ amount: 24, conditions: [{ kind: "vs-elemental" }] }],
+    },
+  ),
+  // The spirit's aura, PvP: "Non-spirit creatures within its range gain
+  // adrenaline 33...66% as fast": 59% faster.
+  "infuriating-heat": define("infuriating-heat", "Infuriating Heat", "skill-effect", {
+    profession: "ranger",
+    adrenalineGainFaster: 0.59,
+  }),
 };
 
 /**
@@ -3724,19 +3784,22 @@ export class StatusSet {
   }
 
   /**
-   * The bearer lost health to damage or life steal from `offenderId`, a
-   * foe (#1022), recorded only if a status on it answers that, with the
-   * triggers that do. A status already waiting to answer one, undrained,
-   * does not answer another: it fires once, at the first foe.
+   * The bearer lost health to damage of `type` or, `undefined`, life
+   * steal from `offenderId`, a foe (#1022), recorded only if a status on
+   * it answers that, with the triggers that do: one with a `damageType`
+   * answers only that type (#1540). A status already waiting to answer
+   * one, undrained, does not answer another: it fires once, at the first
+   * foe.
    */
-  public recordDamageFromFoe(offenderId: string): void {
+  public recordDamageFromFoe(offenderId: string, type: DamageType | undefined): void {
     const pending = new Set(
       this.#changes.flatMap((change) =>
         change.kind === "took-damage-from-foe" ? change.fired.map(({ statusId }) => statusId) : [],
       ),
     );
     const fired = this.#answering("bearer-takes-damage-from-foe").filter(
-      ({ statusId }) => !pending.has(statusId),
+      ({ statusId, trigger }) =>
+        !pending.has(statusId) && (trigger.damageType === undefined || trigger.damageType === type),
     );
     if (fired.length > 0) {
       this.#changes.push({ kind: "took-damage-from-foe", offenderId, fired });

@@ -636,6 +636,7 @@ function describeTriggers(
       trigger.weapon,
       trigger.profession,
       trigger.usedSkill,
+      trigger.damageType,
     ]);
     const group = groups.get(key);
     if (group === undefined) {
@@ -729,9 +730,13 @@ const DROPPED = "drop effect";
 /**
  * What the bearer does that a trigger bound to a kind of skill or
  * enchantment answers (#1437): "uses a Dervish attack skill", "loses a
- * Dervish enchantment". `undefined`: bound to none.
+ * Dervish enchantment", or to a type of damage (#1540): "takes fire damage
+ * from a foe". `undefined`: bound to none.
  */
 function kindBoundWhen(event: StatusTriggerEvent, trigger: StatusTrigger): string | undefined {
+  if (event === "bearer-takes-damage-from-foe" && trigger.damageType !== undefined) {
+    return `takes ${trigger.damageType} damage from a foe`;
+  }
   if (event === "bearer-loses-enchantment" && trigger.profession !== undefined) {
     return `loses a ${getProfession(trigger.profession).name} enchantment`;
   }
@@ -1749,17 +1754,22 @@ export function neededWeaponText(weapon: AttackWeaponClass): string {
 /**
  * A `transfer-conditions` line (#1511): "Moves up to 3 of your conditions
  * to the target", or "Moves all of target's conditions to you; you are
- * healed for 22 for each".
+ * healed for 22 for each", or "Moves all of your conditions with 180% of
+ * their remaining durations to the target" (#1540).
  */
 function transferText(
   effect: TransferConditionsEffect,
   ranks: ReadonlyMap<string, number>,
 ): EffectDescription {
   const count = effect.count === Infinity ? "all" : `up to ${String(effect.count)}`;
+  const lasting =
+    effect.durationMultiplier === 1
+      ? ""
+      : ` with ${String(Math.round(effect.durationMultiplier * 100))}% of their remaining durations`;
   const moves =
     effect.from === "caster"
-      ? `Moves ${count} of your conditions to the target`
-      : `Moves ${count} of target's conditions to you`;
+      ? `Moves ${count} of your conditions${lasting} to the target`
+      : `Moves ${count} of target's conditions${lasting} to you`;
   if (effect.healPerCondition === undefined) {
     return { text: moves, magnitude: undefined };
   }
