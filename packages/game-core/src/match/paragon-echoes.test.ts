@@ -8,6 +8,7 @@ import { getSkill } from "../skills/catalog.js";
 import { effectiveArmor, skillDamage } from "../skills/damage.js";
 import { aggregateModifiers, getStatusDefinition, type StatusId } from "../skills/status.js";
 import { isSpell } from "../skills/types.js";
+import { attackDurationSeconds } from "../skills/weapon-attack.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 
@@ -255,7 +256,9 @@ describe("the eight echoes (#1423)", () => {
     const statuses = get(sim, "p").combatant.statuses;
     expect(statuses.get("aggressive-refrain")?.durationSeconds).toBe(21);
     const modifiers = aggregateModifiers(statuses.active);
-    expect(modifiers.attackDurationMultiplier).toBeCloseTo(0.8);
+    expect(modifiers.attackDurationMultiplier).toBe(0.75);
+    // A 1.33 s axe swing becomes 1 s (#1516).
+    expect(attackDurationSeconds(get(sim, "p").combatant, 1.33)).toBeCloseTo(1, 2);
     expect(modifiers.armorModifier).toBe(-20);
     expect(getStatusDefinition("aggressive-refrain").renewsOnChantOrShoutEnd).toBe(true);
   });

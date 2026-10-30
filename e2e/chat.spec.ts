@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { openPeers, startSoloMatch } from "./helpers/peers.js";
+import { namePlayer } from "./helpers/player.js";
 import { bringStarter } from "./helpers/starter.js";
 
 /**
@@ -11,7 +12,7 @@ import { bringStarter } from "./helpers/starter.js";
 async function openMenu(page: Page, playerName: string): Promise<void> {
   await page.goto("./");
   await expect(page.getByRole("heading", { name: "VibeWars" })).toBeVisible();
-  await page.locator(".screen-menu input.field-input").first().fill(playerName);
+  await namePlayer(page, playerName);
 }
 
 /** Press Enter where nothing has a use for it, type `text`, and send it. */

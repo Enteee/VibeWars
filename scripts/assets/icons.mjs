@@ -963,6 +963,38 @@ const status = {
       `<circle cx="12" cy="10" r="2.2" fill="${c}"/>` +
       `<path d="M8.5 21c0-3 1.5-5 3.5-5s3.5 2 3.5 5" ${stroke(c, 2)}/>`,
   ],
+  // Hex: an hourglass about to burst, damage when it runs out (#1473).
+  "wastrels-worry": [
+    "hex",
+    (c) =>
+      `<path d="M7 4h10M7 20h10M8 4c0 5 8 5 8 8s-8 3-8 8M16 4c0 5-8 5-8 8s8 3 8 8" ${stroke(c, 1.8)}/>`,
+  ],
+  // Hex: a bolt through a bar, damage on a foe mid-skill (#1473).
+  overload: ["hex", (c) => `<path d="M13 3l-6 10h5l-1 8 6-10h-5z" fill="${c}"/>`],
+  // Hex: a broken circle, hurt whenever interrupted (#1473).
+  frustration: [
+    "hex",
+    (c) =>
+      `<path d="M15 5.5A7 7 0 1 0 18.5 12" ${stroke(c, 2.2)}/>` +
+      `<path d="M17 4l3 3M20 4l-3 3" ${stroke(c, 1.8)}/>`,
+  ],
+  // Hex: a crown tipped over, an elite skill's price (#1473).
+  "price-of-pride": ["hex", (c) => `<path d="M4 16l2-9 4 4 2-6 2 6 4-4 2 9z" fill="${c}"/>`],
+  // Hex: a head with a jagged ache, every skill slower (#1473).
+  migraine: [
+    "hex",
+    (c) =>
+      `<circle cx="12" cy="12" r="7" ${stroke(c, 1.8)}/>` +
+      `<path d="M8 11l2-2 2 3 2-3 2 2" ${stroke(c, 1.8)}/>`,
+  ],
+  // Hex: an eye with a tear, hurt for every skill used (#1473).
+  "visions-of-regret": [
+    "hex",
+    (c) =>
+      `<path d="M3 11c4-5 14-5 18 0-4 5-14 5-18 0z" ${stroke(c, 1.8)}/>` +
+      `<circle cx="12" cy="11" r="2" fill="${c}"/>` +
+      `<path d="M12 15.5c-1 1.5-1.5 2.3-1.5 3a1.5 1.5 0 0 0 3 0c0-.7-.5-1.5-1.5-3z" fill="${c}"/>`,
+  ],
   // Enchantment: a chevron chasing a dot with a spark, faster and harder on runners (#1421).
   "harriers-haste": [
     "enchantment",
