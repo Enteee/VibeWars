@@ -20,6 +20,7 @@ import { resolveMagnitudeAtRanks } from "./scaling.js";
 import {
   findStatusDefinition,
   getStatusDefinition,
+  type NextSkill,
   type StatusCategory,
   type StatusTrigger,
   type StatusTriggerEvent,
@@ -357,6 +358,9 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   }
   for (const effect of definition.nextAttackSkill ?? []) {
     parts.push(...describeNextAttackSkill(effect));
+  }
+  if (definition.nextSkill !== undefined) {
+    parts.push(...describeNextSkill(definition.nextSkill));
   }
   if (definition.endsWhenBearerAttacks) {
     parts.push("ends if the bearer attacks");
@@ -857,6 +861,25 @@ function describeNextAttackSkill(effect: SkillEffect): string[] {
     return [`next attack skill: ${statusName(effect.statusId)} ${seconds(effect.durationSeconds)}`];
   }
   return describeEffects(effect, new Map()).map(({ text }) => `next attack skill: ${text}`);
+}
+
+/** What each of a chant's next skills of a kind does (#1483): "with your next spell: gain 5 Energy". */
+const NEXT_SKILL_KIND: Readonly<Record<NextSkill["which"], readonly [string, string]>> = {
+  "attack-skill": ["attack skill", "attack skills"],
+  spell: ["spell", "spells"],
+  signet: ["signet", "signets"],
+  "shout-or-chant": ["shout or chant", "shouts or chants"],
+  any: ["skill", "skills"],
+};
+
+function describeNextSkill({ which, count, effects }: NextSkill): string[] {
+  const [one, many] = NEXT_SKILL_KIND[which];
+  const next = count === 1 ? one : `${String(count)} ${many}`;
+  return effects.flatMap((effect) =>
+    describeEffects(effect, new Map()).map(
+      ({ text }) => `with your next ${next}: ${lowerFirst(text)}`,
+    ),
+  );
 }
 
 /**
