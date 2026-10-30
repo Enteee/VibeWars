@@ -1185,6 +1185,35 @@ const status = {
       `<path d="M12 5.8v6.4M9.2 7.4l5.6 3.2M9.2 10.6l5.6-3.2" ${stroke(c, 1.4)}/>` +
       `<path d="M4.5 21c0-3.5 3-5 7.5-5s7.5 1.5 7.5 5" ${stroke(c, 1.8)}/>`,
   ],
+  // "The next spell fails" hexes (#1475), stand-ins until the asset-designer's.
+  // Hex: a struck-through spark with an arrow down, a spell at a foe fails.
+  guilt: [
+    "hex",
+    (c) =>
+      `<path d="M12 4v8M8 8h8" ${stroke(c, 2)}/><path d="M5 5l14 14" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 15v5M9.5 17.5L12 20l2.5-2.5" ${stroke(c, 1.6)}/>`,
+  ],
+  // Hex: a struck-through spark with an arrow up, a spell at an ally fails.
+  shame: [
+    "hex",
+    (c) =>
+      `<path d="M12 4v8M8 8h8" ${stroke(c, 2)}/><path d="M5 5l14 14" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 20v-5M9.5 17.5L12 15l2.5 2.5" ${stroke(c, 1.6)}/>`,
+  ],
+  // Hex: a struck-through spark bursting, the failed spell hurts around.
+  mistrust: [
+    "hex",
+    (c) =>
+      `<path d="M12 8v8M8 12h8" ${stroke(c, 2)}/><path d="M6 6l12 12" ${stroke(c, 1.8)}/>` +
+      `<path d="M3 12h2M19 12h2M12 3v2M12 19v2" ${stroke(c, 1.6)}/>`,
+  ],
+  // Hex: a cracked drop, conditions coming and going hurt.
+  fragility: [
+    "hex",
+    (c) =>
+      `<path d="M12 3c3 4.5 5.5 7.5 5.5 11a5.5 5.5 0 0 1-11 0C6.5 10.5 9 7.5 12 3z" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 9l-1.5 3 2.5 1.5-1.5 3" ${stroke(c, 1.5)}/>`,
+  ],
 };
 
 // ---------------------------------------------------------------------------

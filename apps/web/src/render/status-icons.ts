@@ -172,6 +172,10 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "armor-of-mist": icon("armor-of-mist"),
   shatterstone: icon("shatterstone"),
   "mind-freeze": icon("mind-freeze"),
+  guilt: icon("guilt"),
+  shame: icon("shame"),
+  mistrust: icon("mistrust"),
+  fragility: icon("fragility"),
 };
 
 /** Drawn size of one icon, in world pixels. */

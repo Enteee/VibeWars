@@ -364,4 +364,9 @@ export const SKILL_ICONS = {
   "dervish.avatar-of-balthazar": { glyph: "flame", modifier: "hourglass" },
   "dervish.avatar-of-grenth": { glyph: "scythe", modifier: "hourglass" },
   "dervish.avatar-of-lyssa": { glyph: "energy", modifier: "hourglass" },
+  // Placeholders until the asset-designer's (#1475): the next spell fails.
+  "mesmer.guilt": { glyph: "hex-mute", modifier: "down" },
+  "mesmer.shame": { glyph: "hex-mute", modifier: "up" },
+  "mesmer.mistrust": { glyph: "hex-burst", modifier: "bolt" },
+  "mesmer.fragility": { glyph: "hex-drain", modifier: "area" },
 };
