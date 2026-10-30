@@ -107,9 +107,11 @@ effects.ts       the effect interpreter: damage, heal, status, interrupt,
 scaling.ts       attribute rank -> magnitude (linear interpolation)
 activation.ts    can this skill be cast right now, and if not, *why not*
 cast-state.ts    activation/recharge timers for one combatant
-status.ts        condition/hex/enchantment definitions and stacking rules
+status.ts        condition/hex/enchantment stacking rules
+statuses/        the status definitions, one file per profession
 tick.ts          per-tick status advancement (degen, regen, expiry)
-catalog.ts       the implemented skills, as data
+catalog.ts       the implemented skills, gathered from catalog/
+catalog/         the skills as data, one file per profession
 coverage.ts      imported corpus vs implemented — the honest gap report
 damage.ts        the damage pipeline: armor, penetration, every point of damage
 targeting.ts     who a landed skill hits: the target, or everyone in its area
@@ -118,7 +120,8 @@ projectile.ts    a ranged shot in flight, led at where the target is going
 describe.ts      skill descriptions, generated from the effect data
 ```
 
-Adding a skill means adding an entry to `catalog.ts`. If it needs a
+Adding a skill means adding an entry to `catalog/<profession>.ts`, and
+its status, if it has one, to `statuses/<profession>.ts`. If it needs a
 mechanic that does not exist yet, the correct move is to **not add it** —
 see "Honest coverage" below.
 
