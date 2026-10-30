@@ -27,7 +27,13 @@ export type DervishStatusId =
   | "avatar-of-lyssa"
   // Dervish staples (#1551).
   | "grenths-grasp"
-  | "rending-aura";
+  | "rending-aura"
+  // Dervish staples 2 (#1604).
+  | "pious-fury"
+  | "zealous-renewal"
+  | "mirage-cloak"
+  | "vital-boon"
+  | "guiding-hands";
 
 export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition>> = {
   // "For 5...17...20 seconds, you have 1...3...4 Health regeneration for
@@ -463,5 +469,59 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
         skillId: "dervish.rending-aura",
       },
     ],
+  }),
+  // "For 1...5 seconds, you attack 25% faster" (#1604), as Heart of Fury;
+  // the skill doubles its time.
+  "pious-fury": define("pious-fury", "Pious Fury", "stance", {
+    profession: "dervish",
+    attackDurationMultiplier: 0.75,
+  }),
+  // "You have -1 Energy regeneration and gain 1 Energy whenever you hit a
+  // foe. If this enchantment ends prematurely, you gain 1...5 Energy"
+  // (#1604): 4, its rank-12 value. Each victim a cleave hits is a hit.
+  "zealous-renewal": define("zealous-renewal", "Zealous Renewal", "enchantment", {
+    profession: "dervish",
+    energyPips: -1,
+    triggers: [
+      {
+        on: "bearer-hits",
+        effects: [{ kind: "energy-gain", amount: { flat: 1 } }],
+        target: "bearer",
+        skillId: "dervish.zealous-renewal",
+      },
+      {
+        on: "ends-early",
+        effects: [{ kind: "energy-gain", amount: { flat: 4 } }],
+        target: "bearer",
+        skillId: "dervish.zealous-renewal",
+      },
+    ],
+  }),
+  // "You have a 30...60% chance to block incoming attacks" (#1604): 54%,
+  // its rank-12 value.
+  "mirage-cloak": define("mirage-cloak", "Mirage Cloak", "enchantment", {
+    profession: "dervish",
+    block: { chance: 0.54, against: "all" },
+  }),
+  // "You have +40...100 maximum Health. When this enchantment ends, you are
+  // healed for 75...200 Health" (#1604): 88 and 175, the rank-12 values,
+  // as Generous Was Tsungrai's.
+  "vital-boon": define("vital-boon", "Vital Boon", "enchantment", {
+    profession: "dervish",
+    maxHealthBonus: 88,
+    triggers: [
+      {
+        on: "ends",
+        effects: [{ kind: "heal", amount: { flat: 175 }, perStatusOnTarget: [] }],
+        target: "bearer",
+        skillId: "dervish.vital-boon",
+      },
+    ],
+  }),
+  // "Your next 0...3 attacks cannot be blocked" (#1604): 2, its rank-12
+  // value.
+  "guiding-hands": define("guiding-hands", "Guiding Hands", "enchantment", {
+    profession: "dervish",
+    unblockableAttacks: 2,
   }),
 };

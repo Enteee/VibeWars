@@ -4780,9 +4780,10 @@ export class MatchSimulation {
     skillHit: SkillHit | SpellHit | undefined,
   ): CombatEvent[] {
     const events: CombatEvent[] = [];
+    let unblockable = false;
     if (skillHit?.kind !== "spell") {
       // Only a flying attack is released here.
-      bearerAttacked(record.combatant, events, "projectile");
+      unblockable = bearerAttacked(record.combatant, events, "projectile");
       if (blindMisses(record.combatant, this.#rng)) {
         bearerFailedToHit(record.combatant);
         events.push({ kind: "attack-missed", targetId: target.id });
@@ -4820,6 +4821,7 @@ export class MatchSimulation {
       elapsed: 0,
       weaponSnapshot: weaponSnapshotOf(record.combatant),
       skillHit,
+      unblockable,
     });
     this.#nextProjectileId += 1;
     return events;
@@ -4973,6 +4975,7 @@ export class MatchSimulation {
     riders: (effects: Skill["effects"]) => CombatEvent[],
   ): boolean {
     if (
+      !projectile.unblockable &&
       !unblockableNow(
         skillHit?.skill.attack?.unblockable ?? false,
         attacker?.combatant,

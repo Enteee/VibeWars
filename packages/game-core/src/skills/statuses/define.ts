@@ -53,6 +53,7 @@ export function define(
     healthPerCritical: 0,
     refreshesOnCritical: false,
     endsAfterAttacks: undefined,
+    unblockableAttacks: undefined,
     onAttackHit: undefined,
     endsAfterHits: undefined,
     nextSpells: undefined,
