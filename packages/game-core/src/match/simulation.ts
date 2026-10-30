@@ -3490,7 +3490,13 @@ export class MatchSimulation {
     this.#useNextSkill(record, skill, spared);
     this.#endOnUseSkill(record, skill, spared);
     if (isSpell(skill.type)) {
-      this.#fireTriggers(record, "bearer-casts-spell", spared);
+      // Kinetic Armor's renewal (#1614); Aura of Restoration's gain reads
+      // the spell's cost.
+      record.combatant.statuses.castSpell();
+      this.#fireTriggers(record, "bearer-casts-spell", spared, {
+        skillId: skill.id,
+        key: cast.key,
+      });
     }
     if (skill.attack !== undefined) {
       this.#fireTriggers(record, "bearer-attacks", spared);
@@ -3545,7 +3551,8 @@ export class MatchSimulation {
 
   /**
    * The bearer did `event` (#469): each status on it that answers fires.
-   * `usedSkill` is the skill it used, on `bearer-uses-skill` (#949).
+   * `usedSkill` is the skill it used, on `bearer-uses-skill` (#949) and
+   * `bearer-casts-spell` (#1614).
    * A status in `spared` does not answer (#999), as `fireTriggers`.
    */
   #fireTriggers(
@@ -4777,9 +4784,10 @@ export class MatchSimulation {
     skillHit: SkillHit | SpellHit | undefined,
   ): CombatEvent[] {
     const events: CombatEvent[] = [];
+    let unblockable = false;
     if (skillHit?.kind !== "spell") {
       // Only a flying attack is released here.
-      bearerAttacked(record.combatant, events, "projectile");
+      unblockable = bearerAttacked(record.combatant, events, "projectile");
       if (blindMisses(record.combatant, this.#rng)) {
         bearerFailedToHit(record.combatant);
         events.push({ kind: "attack-missed", targetId: target.id });
@@ -4817,6 +4825,7 @@ export class MatchSimulation {
       elapsed: 0,
       weaponSnapshot: weaponSnapshotOf(record.combatant),
       skillHit,
+      unblockable,
     });
     this.#nextProjectileId += 1;
     return events;
@@ -4970,6 +4979,7 @@ export class MatchSimulation {
     riders: (effects: Skill["effects"]) => CombatEvent[],
   ): boolean {
     if (
+      !projectile.unblockable &&
       !unblockableNow(
         skillHit?.skill.attack?.unblockable ?? false,
         attacker?.combatant,

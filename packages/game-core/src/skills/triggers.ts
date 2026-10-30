@@ -62,7 +62,8 @@ export interface TriggerContext {
   /**
    * The skill the bearer just used, and its key (#469), on
    * `bearer-uses-skill` (#949): what Diversion lengthens and an echo
-   * copies. `undefined` on every other event.
+   * copies; and the spell, on `bearer-casts-spell` (#1614), whose cost
+   * Aura of Restoration reads. `undefined` on every other event.
    */
   readonly usedSkill: SlotSkill | undefined;
 }
@@ -103,8 +104,8 @@ export function fireTriggers(
 
 /**
  * Whether a `bearer-uses-skill` trigger answers `used` (#1437): any skill,
- * unless it names a type or a profession the skill must have, or that it
- * be elite (#1473) or adrenal (#1592).
+ * unless it names a type, a profession or an attribute (#1614) the skill
+ * must have, or that it be elite (#1473) or adrenal (#1592).
  */
 function answersUsedSkill(trigger: StatusTrigger, used: SlotSkill | undefined): boolean {
   if (trigger.usedSkill === undefined) {
@@ -114,6 +115,8 @@ function answersUsedSkill(trigger: StatusTrigger, used: SlotSkill | undefined): 
   return (
     skill !== undefined &&
     (trigger.usedSkill.type === undefined || skill.type === trigger.usedSkill.type) &&
+    (trigger.usedSkill.attribute === undefined ||
+      skill.attributeId === trigger.usedSkill.attribute) &&
     (trigger.usedSkill.profession === undefined ||
       skill.profession === trigger.usedSkill.profession) &&
     (trigger.usedSkill.elite === undefined || skill.elite) &&

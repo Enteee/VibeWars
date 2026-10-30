@@ -356,6 +356,13 @@ export interface StatusDefinition {
    */
   readonly endsAfterAttacks: number | undefined;
   /**
+   * The bearer's next this many attacks cannot be blocked, and then it
+   * ends (#1604): Guiding Hands'. One swing or one attack skill spends 1,
+   * hit or miss, a cleave's and a double strike's blows included; a shot
+   * keeps what it was released with. `undefined`: blocks as ever.
+   */
+  readonly unblockableAttacks: number | undefined;
+  /**
    * Effects on whoever the bearer's physical attacks hit while it lasts
    * (#525): a preparation's rider, as Apply Poison's poison. Applied
    * where a blow lands, swing, attack skill or arrow alike, never on a
@@ -612,6 +619,12 @@ export interface StatusDefinition {
    */
   readonly renewsOnChantOrShoutEnd: boolean;
   /**
+   * Whenever the bearer casts a spell, its remaining time is back to the
+   * duration it was applied with (#1614): Kinetic Armor's "whenever you
+   * cast a spell, Kinetic Armor is renewed for 12 seconds".
+   */
+  readonly renewsOnBearerSpell: boolean;
+  /**
    * It ends once its triggers have fired this many times (#1423): Finale
    * of Restoration's "the next 5 times". `undefined`: no such limit.
    */
@@ -860,10 +873,13 @@ export interface StatusTrigger {
    * type and profession, as Avatar of Dwayna's "whenever you use a Dervish
    * attack skill". With `elite`, only an elite skill (#1473): Price of
    * Pride's. With `adrenal`, only one paid for in adrenaline (#1592): Rage of
-   * the Ntouka's "whenever you use an adrenal skill". Absent: any skill.
+   * the Ntouka's "whenever you use an adrenal skill". With `attribute`, only
+   * a skill of that attribute (#1614): Fire Attunement's "each time you use
+   * Fire Magic". Absent: any skill.
    */
   readonly usedSkill?: {
     readonly type?: SkillType;
+    readonly attribute?: string;
     readonly profession?: ProfessionId;
     readonly elite?: true;
     readonly adrenal?: true;
@@ -1140,6 +1156,8 @@ export interface ActiveStatus {
   attacksLeft: number | undefined;
   /** The bearer's hits before it ends (`endsAfterHits`); `undefined`: no such limit. */
   hitsLeft: number | undefined;
+  /** The bearer's unblockable attacks before it ends (`unblockableAttacks`); `undefined`: none. */
+  unblockableLeft: number | undefined;
   /** Spells still to start before it ends (`nextSpells`); `undefined`: no such limit. */
   spellsLeft: number | undefined;
   /** Skills still to answer before it ends (`nextSkill`); `undefined`: no such limit. */
@@ -1503,6 +1521,7 @@ export class StatusSet {
       durationSeconds,
       attacksLeft: definition.endsAfterAttacks,
       hitsLeft: definition.endsAfterHits?.count,
+      unblockableLeft: definition.unblockableAttacks,
       spellsLeft: definition.nextSpells?.count,
       skillsLeft: definition.nextSkill?.count,
       triggersLeft: definition.endsAfterTriggers,
@@ -1550,6 +1569,7 @@ export class StatusSet {
       durationSeconds,
       attacksLeft: undefined,
       hitsLeft: undefined,
+      unblockableLeft: undefined,
       spellsLeft: undefined,
       skillsLeft: undefined,
       triggersLeft: undefined,
@@ -1581,6 +1601,7 @@ export class StatusSet {
       durationSeconds: Number.POSITIVE_INFINITY,
       attacksLeft: undefined,
       hitsLeft: undefined,
+      unblockableLeft: undefined,
       spellsLeft: undefined,
       skillsLeft: undefined,
       triggersLeft: undefined,
@@ -1612,6 +1633,7 @@ export class StatusSet {
       durationSeconds: Number.POSITIVE_INFINITY,
       attacksLeft: undefined,
       hitsLeft: undefined,
+      unblockableLeft: undefined,
       spellsLeft: undefined,
       skillsLeft: undefined,
       triggersLeft: undefined,
@@ -1631,6 +1653,15 @@ export class StatusSet {
       multiplier *= getStatusDefinition(id).chantShoutDurationMultiplier;
     }
     return multiplier;
+  }
+
+  /** The bearer cast a spell (#1614): every status that renews on that is renewed. */
+  public castSpell(): void {
+    for (const status of this.#statuses.values()) {
+      if (getStatusDefinition(status.id).renewsOnBearerSpell) {
+        status.remainingSeconds = status.durationSeconds;
+      }
+    }
   }
 
   /**
@@ -1842,6 +1873,27 @@ export class StatusSet {
     }
     this.#end(ended);
     return ended;
+  }
+
+  /**
+   * The bearer attacked (#1604): whether a status of its own makes this
+   * attack unblockable, each such status one attack fewer, and the ids
+   * that ended on it.
+   */
+  public spendUnblockableAttack(): { readonly unblockable: boolean; readonly ended: StatusId[] } {
+    let unblockable = false;
+    const ended: StatusId[] = [];
+    for (const status of this.#statuses.values()) {
+      if (status.unblockableLeft !== undefined && status.unblockableLeft > 0) {
+        unblockable = true;
+        status.unblockableLeft -= 1;
+        if (status.unblockableLeft <= 0) {
+          ended.push(status.id);
+        }
+      }
+    }
+    this.#end(ended);
+    return { unblockable, ended };
   }
 
   /**

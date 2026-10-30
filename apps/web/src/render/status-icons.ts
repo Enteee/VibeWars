@@ -239,6 +239,12 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "obsidian-flesh": icon("obsidian-flesh"),
   "ward-against-foes": icon("ward-against-foes"),
   "ward-of-stability": icon("ward-of-stability"),
+  "fire-attunement": icon("fire-attunement"),
+  "water-attunement": icon("water-attunement"),
+  "air-attunement": icon("air-attunement"),
+  "earth-attunement": icon("earth-attunement"),
+  "aura-of-restoration": icon("aura-of-restoration"),
+  "kinetic-armor": icon("kinetic-armor"),
   "infuriating-heat": icon("infuriating-heat"),
   panic: icon("panic"),
   "wastrels-demise": icon("wastrels-demise"),
@@ -252,6 +258,11 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "life-siphon-regen": icon("life-siphon-regen"),
   "reckless-haste": icon("reckless-haste"),
   "corrupt-enchantment": icon("corrupt-enchantment"),
+  "pious-fury": icon("pious-fury"),
+  "zealous-renewal": icon("zealous-renewal"),
+  "mirage-cloak": icon("mirage-cloak"),
+  "vital-boon": icon("vital-boon"),
+  "guiding-hands": icon("guiding-hands"),
 };
 
 /** Drawn size of one icon, in world pixels. */

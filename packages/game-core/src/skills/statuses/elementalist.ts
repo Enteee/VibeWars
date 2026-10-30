@@ -25,7 +25,14 @@ export type ElementalistStatusId =
   // Elementalist staples 2 (#1575).
   | "obsidian-flesh"
   | "ward-against-foes"
-  | "ward-of-stability";
+  | "ward-of-stability"
+  // Elementalist energy engine (#1614).
+  | "fire-attunement"
+  | "water-attunement"
+  | "air-attunement"
+  | "earth-attunement"
+  | "aura-of-restoration"
+  | "kinetic-armor";
 
 export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, StatusDefinition>> = {
   // "...move 66% slower for 2...5...6 seconds" (#918).
@@ -172,4 +179,59 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
     profession: "elementalist",
     preventsKnockdown: true,
   }),
+  // Elementalist energy engine (#1614), at their rank-12 values.
+  "fire-attunement": attunement("fire-attunement", "Fire Attunement", "fire-magic"),
+  "water-attunement": attunement("water-attunement", "Water Attunement", "water-magic"),
+  "air-attunement": attunement("air-attunement", "Air Attunement", "air-magic"),
+  "earth-attunement": attunement("earth-attunement", "Earth Attunement", "earth-magic"),
+  // PvP: "you gain 0...1 Energy and are healed for 200...400% of the Energy
+  // cost each time you cast a spell": 1, and 360%.
+  "aura-of-restoration": define("aura-of-restoration", "Aura of Restoration", "enchantment", {
+    profession: "elementalist",
+    triggers: [
+      {
+        on: "bearer-casts-spell",
+        target: "bearer",
+        effects: [
+          { kind: "energy-gain", amount: { flat: 1 } },
+          { kind: "heal", amount: { flat: 3.6 }, perStatusOnTarget: [], perUsedSkillEnergy: true },
+        ],
+        skillId: "elementalist.aura-of-restoration",
+      },
+    ],
+  }),
+  // "For 12 seconds, you gain +20...80 armor. Whenever you cast a spell,
+  // Kinetic Armor is renewed for 12 seconds": +68.
+  "kinetic-armor": define("kinetic-armor", "Kinetic Armor", "enchantment", {
+    profession: "elementalist",
+    armorModifier: 68,
+    renewsOnBearerSpell: true,
+  }),
 };
+
+/**
+ * An attunement (#1614): "you gain 1 Energy plus 30% of the base Energy
+ * cost of the skill each time you use Fire Magic", the share rounded half
+ * up, as GW1 does.
+ */
+function attunement(
+  id: ElementalistStatusId,
+  name: string,
+  attribute: "fire-magic" | "water-magic" | "air-magic" | "earth-magic",
+): StatusDefinition {
+  return define(id, name, "enchantment", {
+    profession: "elementalist",
+    triggers: [
+      {
+        on: "bearer-uses-skill",
+        usedSkill: { attribute: `elementalist.${attribute}` },
+        target: "bearer",
+        effects: [
+          { kind: "energy-gain", amount: { flat: 1 } },
+          { kind: "energy-gain", amount: { flat: 0.3 }, perUsedSkillEnergy: true },
+        ],
+        skillId: `elementalist.${id}`,
+      },
+    ],
+  });
+}
