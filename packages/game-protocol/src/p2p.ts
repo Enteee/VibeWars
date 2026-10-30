@@ -24,9 +24,11 @@ import type {
 import {
   CHAIN_ROLES,
   COMPANION_MODES,
+  LOBBY_MODES,
   MAX_LOBBY_PLAYERS,
   MAX_TEAM_LOBBY_SIDE,
   type CompanionMode,
+  type LobbyMode,
   type LobbyPhase,
   type WireChainMark,
 } from "./protocol.js";
@@ -934,6 +936,8 @@ export interface WireLobbyPlayer {
 export interface WireLobbyState {
   readonly code: string;
   readonly phase: LobbyPhase;
+  /** The host's pick (#1526): every member's rail shows it. */
+  readonly mode: LobbyMode;
   readonly mapId: string;
   /** The peer every lobby and match message comes from. */
   readonly hostId: string;
@@ -998,6 +1002,8 @@ export type WireLobbyCommand =
   | { readonly kind: "choose-team"; readonly team: 0 | 1 | null }
   | { readonly kind: "ready"; readonly ready: boolean }
   | { readonly kind: "select-map"; readonly mapId: string }
+  /** Host only (#1526): the lobby's mode; a map outside it moves to the mode's first. */
+  | { readonly kind: "select-mode"; readonly mode: LobbyMode }
   | { readonly kind: "start" }
   /**
    * Host only (#1454): `team` has `count` bots, an integer from 0; the
@@ -2355,6 +2361,7 @@ export function parseWireLobbyState(value: unknown): WireLobbyState | undefined 
     teamLobby === undefined ||
     !isString(raw.code) ||
     !isOneOf(raw.phase, ["waiting", "team-lobby", "starting", "in-match"] as const) ||
+    !isOneOf(raw.mode, LOBBY_MODES) ||
     !isString(raw.mapId) ||
     !isString(raw.hostId) ||
     !isNullableString(raw.matchId) ||
@@ -2368,6 +2375,7 @@ export function parseWireLobbyState(value: unknown): WireLobbyState | undefined 
     : {
         code: raw.code,
         phase: raw.phase,
+        mode: raw.mode,
         mapId: raw.mapId,
         hostId: raw.hostId,
         matchId: raw.matchId,
@@ -2389,6 +2397,8 @@ export function parseWireLobbyCommand(value: unknown): WireLobbyCommand | undefi
       return typeof raw.ready === "boolean" ? { kind: "ready", ready: raw.ready } : undefined;
     case "select-map":
       return isString(raw.mapId) ? { kind: "select-map", mapId: raw.mapId } : undefined;
+    case "select-mode":
+      return isOneOf(raw.mode, LOBBY_MODES) ? { kind: "select-mode", mode: raw.mode } : undefined;
     case "start":
       return { kind: "start" };
     case "set-bots":

@@ -39,7 +39,7 @@ import {
 } from "@vibewars/game-session";
 
 import { NEW_VERSION_NOTICE, isStaleChunkError } from "../build-check.js";
-import { arenaIds, hostMap, randomArenaMapPool } from "./maps.js";
+import { arenaIds, hostMap, modeMapIds, randomArenaMapPool } from "./maps.js";
 import { startHostClock } from "./transport/host-clock.js";
 import { joinQueueBoard, joinRoom } from "./transport/index.js";
 import type { NostrQueue } from "./transport/nostr-queue.js";
@@ -169,6 +169,7 @@ export async function hostLobby(
     transport: room,
     code,
     mapIds: arenaIds(),
+    modeMaps: modeMapIds(),
     startMatch,
     teamLobby,
     random: secureRandom,

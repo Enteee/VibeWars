@@ -18,6 +18,7 @@ import {
   parsePeerPartyConsent,
   parsePeerStayTogether,
   parseWireLobbyCommand,
+  type LobbyMode,
   type LobbyPhase,
   type PeerLobbyJoin,
   type LobbyRefusal,
@@ -170,6 +171,11 @@ export interface LobbyHostOptions {
   readonly code: string;
   /** The playable maps, from game-maps by the caller. The first is the default. */
   readonly mapIds: readonly string[];
+  /**
+   * Each mode's maps (#1526), some of `mapIds`, the first its default: a
+   * mode the host picks moves a map outside it to that one.
+   */
+  readonly modeMaps: Readonly<Record<LobbyMode, readonly string[]>>;
   /** Build the match for `plan`. Injected, so a test can play a fake one. */
   readonly startMatch: (plan: MatchPlan) => MatchHost;
   /** The queue's lobby, not a coded one; its map must be one of `mapIds`. */
@@ -241,6 +247,11 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   if (queued !== undefined && queued.key.ticketId !== queued.group.hostTicketId) {
     throw new Error("a queued lobby is hosted by its group's host ticket");
   }
+  for (const [mode, ids] of Object.entries(options.modeMaps)) {
+    if (ids.length === 0 || !ids.every((id) => mapIds.includes(id))) {
+      throw new Error(`mode ${mode}'s maps are not some of the lobby's`);
+    }
+  }
   if (queued !== undefined && options.teamLobby) {
     throw new Error("a queued lobby has no Team Lobby");
   }
@@ -270,6 +281,8 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   const judged = new Set<string>();
   let phase: LobbyPhase = "waiting";
   let mapId = queued?.group.mapId ?? defaultMap;
+  /** The host's pick on the rail (#1526). */
+  let mode: LobbyMode = "random-arena";
   let joined = 0;
   /** Bots ever added (#1193), for their ids. */
   let bots = 0;
@@ -370,6 +383,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   const state = (to: Member | undefined): WireLobbyState => ({
     code,
     phase,
+    mode,
     mapId,
     hostId: transport.selfId,
     matchId: match?.id ?? null,
@@ -771,6 +785,26 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
           other.ready = false;
         }
         return true;
+      case "select-mode": {
+        if (member.id !== local.selfId) {
+          refuse(member.id, "not-host");
+          return false;
+        }
+        if (mode === command.mode) {
+          return false;
+        }
+        mode = command.mode;
+        const [first = defaultMap, ...rest] = options.modeMaps[mode];
+        // In the same broadcast as the mode: no member ever sees a mode
+        // with a map outside it.
+        if (mapId !== first && !rest.includes(mapId)) {
+          mapId = first;
+          for (const other of members.values()) {
+            other.ready = false;
+          }
+        }
+        return true;
+      }
       case "start": {
         if (member.id !== local.selfId) {
           return false;

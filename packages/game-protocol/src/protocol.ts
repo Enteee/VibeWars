@@ -10,6 +10,20 @@ export const PROTOCOL_MISMATCH_MESSAGE =
 export type LobbyPhase = "waiting" | "team-lobby" | "starting" | "in-match";
 
 /**
+ * What a lobby is for (#1526, ADR-0041): the mode its host picked on the
+ * rail, which every member's rail follows. The rail's order.
+ */
+export const LOBBY_MODES = [
+  "random-arena",
+  "team-arena",
+  "heroes-ascent",
+  "gvg",
+  "hosted-game",
+] as const;
+
+export type LobbyMode = (typeof LOBBY_MODES)[number];
+
+/**
  * Lobby codes are read aloud across a room at a LAN party, so the alphabet
  * excludes characters that are easy to mishear or misread:
  * `0`/`O`, `1`/`I`/`L`, `2`/`Z`, `5`/`S`, `8`/`B`, `U`/`V`.

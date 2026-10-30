@@ -320,6 +320,49 @@ describe("lobby host", () => {
     expect(guest.connection.getSnapshot().mapId).toBe(MAP_IDS[1]);
   });
 
+  it("turns a join away while it closes, as for a queue (#1526)", async () => {
+    const lobby = await openLobby();
+    const joining = lobby.join();
+    const closing = lobby.lobby.close();
+    await expect(joining).rejects.toMatchObject({ reason: "host-left" });
+    await closing;
+  });
+
+  it("starts on Random Arena, and lets only the host pick the mode (#1526)", async () => {
+    const { lobby, guest } = await hostAndGuest();
+    const notes: string[] = [];
+    guest.transport.on("lobby-note", (data) => {
+      notes.push(parseWireLobbyNote(data)?.reason ?? "");
+    });
+    expect(guest.connection.getSnapshot().mode).toBe("random-arena");
+    guest.connection.selectMode("hosted-game");
+    await settle();
+    expect(notes).toEqual(["not-host"]);
+    expect(guest.connection.getSnapshot().mode).toBe("random-arena");
+    lobby.host.connection.selectMode("team-arena");
+    await settle();
+    expect(guest.connection.getSnapshot().mode).toBe("team-arena");
+    expect(lobby.host.connection.getSnapshot().mode).toBe("team-arena");
+  });
+
+  it("moves the map into the mode in the mode's own broadcast (#1526)", async () => {
+    const { lobby, guest } = await hostAndGuest();
+    await seat([lobby.host, guest], [0, 1]);
+    const seen: [string, string][] = [];
+    guest.connection.onChange(() => {
+      const { mode, mapId } = guest.connection.getSnapshot();
+      seen.push([mode, mapId]);
+    });
+    lobby.host.connection.selectMode("gvg");
+    await settle();
+    expect(seen).toEqual([["gvg", MAP_IDS[1]]]);
+    expect(playersOf(guest).map(({ ready }) => ready)).toEqual([false, false]);
+    // A map the next mode plays stays.
+    lobby.host.connection.selectMode("hosted-game");
+    await settle();
+    expect(seen.at(-1)).toEqual(["hosted-game", MAP_IDS[1]]);
+  });
+
   it("clears everyone's readiness when the host picks another map", async () => {
     const { lobby, guest } = await hostAndGuest();
     await seat([lobby.host, guest], [0, 1]);

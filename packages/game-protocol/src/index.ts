@@ -22,6 +22,7 @@ export {
   normalizeLobbyCode,
   parseClientIntent,
   COMPANION_MODES,
+  LOBBY_MODES,
   LOBBY_CODE_LENGTH,
   LOBBY_CODE_ALPHABET,
 } from "./protocol.js";
@@ -53,6 +54,7 @@ export type {
   RectWallDescriptor,
   PolygonWallDescriptor,
   LobbyPhase,
+  LobbyMode,
   SkillBarSlot,
   CombatMessage,
   CombatBatchMessage,

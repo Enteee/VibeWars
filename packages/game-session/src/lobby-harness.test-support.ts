@@ -9,7 +9,7 @@
  * the build.
  */
 import { ANNIHILATION_MATCH_RULES, type MatchRules } from "@vibewars/game-core";
-import type { WireCape } from "@vibewars/game-protocol";
+import type { LobbyMode, WireCape } from "@vibewars/game-protocol";
 
 import { joinLobby } from "./lobby-client.js";
 import type { LobbyCharacter, LobbyConnection, MatchStarting } from "./lobby-connection.js";
@@ -24,6 +24,15 @@ export const CODE = "ACDEFG";
 
 /** The maps the test lobby offers; the first is its default. */
 export const MAP_IDS = ["test-arena", "other-arena"] as const;
+
+/** Each mode's maps (#1526): GvG plays only the other arena, the rest both. */
+export const MODE_MAPS: Readonly<Record<LobbyMode, readonly string[]>> = {
+  "random-arena": MAP_IDS,
+  "team-arena": MAP_IDS,
+  "heroes-ascent": MAP_IDS,
+  gvg: ["other-arena"],
+  "hosted-game": MAP_IDS,
+};
 
 /** One member: its lobby connection, the room it is in, and every match start it was handed. */
 export interface Member {
@@ -77,6 +86,7 @@ export async function openLobby(
     transport: room,
     code: CODE,
     mapIds: MAP_IDS,
+    modeMaps: MODE_MAPS,
     teamLobby: options.teamLobby ?? false,
     random: options.random ?? (() => 0.5),
     startMatch(plan) {

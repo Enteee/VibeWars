@@ -1,6 +1,7 @@
 import type { PlayerBuild, ProfessionId } from "@vibewars/game-core";
 import type {
   ChatChannel,
+  LobbyMode,
   LobbyPhase,
   LobbyRefusal,
   WirePartyFormed,
@@ -41,6 +42,8 @@ export interface LobbySnapshot {
   readonly selfSessionId: string;
   readonly code: string;
   readonly phase: LobbyPhase;
+  /** The host's mode (#1526): every member's rail follows it. */
+  readonly mode: LobbyMode;
   readonly mapId: string;
   /** The peer the lobby and its match are hosted on. */
   readonly hostId: string;
@@ -97,6 +100,8 @@ export interface LobbyConnection {
   chooseTeam(team: 0 | 1 | null): void;
   setReady(ready: boolean): void;
   selectMap(mapId: string): void;
+  /** Host only (#1526): the lobby's mode, and a map of it. */
+  selectMode(mode: LobbyMode): void;
   startMatch(): void;
   /** Host only (#1454): `team` has `count` bots, playing what the host picks. */
   setBots(team: 0 | 1, count: number): void;
