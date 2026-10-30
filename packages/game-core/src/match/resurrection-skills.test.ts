@@ -275,6 +275,7 @@ describe("Signet of Return (#474)", () => {
           aura: undefined,
           onDeath: "vanish",
           ownerDisableSeconds: 0,
+          deathBurst: undefined,
           companionSkillId: undefined,
           leaderId: undefined,
           mode: "guard",

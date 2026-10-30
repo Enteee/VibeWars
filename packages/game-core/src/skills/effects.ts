@@ -1077,7 +1077,10 @@ export function applyEffect(
       if (target === undefined) {
         return events;
       }
-      const removed = removedOfProfession(target.id, effect.perRemovedOfProfession, earlier);
+      const removed =
+        effect.perRemovedOfProfession === undefined
+          ? 1
+          : removedOfProfession(target.id, effect.perRemovedOfProfession, earlier);
       sacrifice(caster, resolveMagnitude(effect.amount, caster) * removed, events);
       return events;
     }

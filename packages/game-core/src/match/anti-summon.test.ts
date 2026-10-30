@@ -75,6 +75,7 @@ function creature(id: string, kind: CreatureKind, spawn: Vec2): ParticipantSpec 
       aura: undefined,
       onDeath: kind === "pet" ? "lie" : "vanish",
       ownerDisableSeconds: 0,
+      deathBurst: undefined,
       companionSkillId: undefined,
       leaderId: undefined,
       mode: "guard",

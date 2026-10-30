@@ -34,6 +34,7 @@ import type {
   RadiusArea,
   AttackWeaponClass,
   Aura,
+  DeathBurst,
   ChainRole,
   ChainStep,
   CreateGroundEffect,
@@ -1184,10 +1185,23 @@ function describeEffects(
   effect: SkillEffect,
   ranks: ReadonlyMap<string, number>,
 ): EffectDescription[] {
-  if (effect.kind === "summon" && effect.creature.aura !== undefined) {
-    // What the spirit projects (#1064): "Non-spirit allies in its range:
-    // +3 Health regeneration".
-    return [describeEffect(effect, ranks), describeAura(effect.creature.aura, "in its range")];
+  if (effect.kind === "summon") {
+    const { aura, attack, deathBurst } = effect.creature;
+    return [
+      describeEffect(effect, ranks),
+      // What the spirit projects (#1064): "Non-spirit allies in its range:
+      // +3 Health regeneration".
+      ...(aura === undefined ? [] : [describeAura(aura, "in its range")]),
+      // What its blows land (#1550): "Its attacks: if target is not
+      // moving: knocks down for 2s".
+      ...(attack?.onHit ?? []).flatMap((onHit) =>
+        describeEffects(onHit, ranks).map(({ text, magnitude }) => ({
+          text: `Its attacks: ${lowerFirst(text)}`,
+          magnitude,
+        })),
+      ),
+      ...(deathBurst === undefined ? [] : [describeDeathBurst(deathBurst)]),
+    ];
   }
   if (effect.kind === "create-ground-effect") {
     const { act } = effect;
@@ -1231,6 +1245,22 @@ function describeEffects(
     const { text, magnitude } = describeEffect(inner, ranks);
     return { text: `${condition}: ${lowerFirst(text)}`, magnitude };
   });
+}
+
+/**
+ * A spirit's death burst (#1550): "When it dies, non-spirit foes in the
+ * area take 8 damage per second it lived (max 150)".
+ */
+function describeDeathBurst(burst: DeathBurst): EffectDescription {
+  const who = `non-spirit ${burst.affects} ${AREA_TEXT.get(burst.radius) ?? "in its range"}`;
+  const amount = String(burst.perSecondAlive);
+  const what =
+    burst.effect === "damage" ? `take ${amount} damage` : `are healed for ${amount} Health`;
+  const max = burst.max === undefined ? "" : ` (max ${String(burst.max)})`;
+  return {
+    text: `When it dies, ${who} ${what} per second it lived${max}`,
+    magnitude: undefined,
+  };
 }
 
 /** Who an aura reaches and what they wear: "Non-spirit allies in its range: …". */
@@ -1359,13 +1389,15 @@ function describeEffect(
         magnitude: undefined,
       };
     case "lose-health": {
-      // "For each Monk enchantment removed, you lose 31 Health" (#944).
+      // "For each Monk enchantment removed, you lose 31 Health" (#944), or
+      // once, flat (#1550): "You lose 54 health".
       const magnitude = describeMagnitude(effect.amount, ranks);
+      const lose = `You lose ${String(magnitude.current)} health`;
+      if (effect.perRemovedOfProfession === undefined) {
+        return { text: lose, magnitude };
+      }
       const whose = getProfession(effect.perRemovedOfProfession).name;
-      return {
-        text: `You lose ${String(magnitude.current)} health for each ${whose} enchantment removed`,
-        magnitude,
-      };
+      return { text: `${lose} for each ${whose} enchantment removed`, magnitude };
     }
     case "transfer-conditions":
       return transferText(effect, ranks);

@@ -460,6 +460,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
           aura: { statusId: "recuperation", affects: "allies", radius: RANGE_SPIRIT },
           onDeath: "vanish",
           ownerDisableOnDeath: undefined,
+          deathBurst: undefined,
         },
       },
     ],
@@ -496,6 +497,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
         count: 1,
         creature: attackingSpirit(
           "Pain",
+          "ritualist.communing",
           182,
           { scaling: { attributeId: "ritualist.communing", atZero: 30, atTwelve: 126 } },
           { atZero: 5, atTwelve: 25 },
@@ -534,9 +536,14 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
       {
         kind: "summon",
         count: 1,
-        creature: attackingSpirit("Shadowsong", 150, { flat: 30 }, { atZero: 5, atTwelve: 17 }, [
-          { kind: "apply-status", statusId: "blind", durationSeconds: 5 },
-        ]),
+        creature: attackingSpirit(
+          "Shadowsong",
+          "ritualist.communing",
+          150,
+          { flat: 30 },
+          { atZero: 5, atTwelve: 17 },
+          [{ kind: "apply-status", statusId: "blind", durationSeconds: 5 }],
+        ),
       },
     ],
   },
@@ -572,6 +579,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
         count: 1,
         creature: attackingSpirit(
           "Dissonance",
+          "ritualist.communing",
           182,
           { scaling: { attributeId: "ritualist.communing", atZero: 10, atTwelve: 22 } },
           { atZero: 5, atTwelve: 17 },
@@ -612,6 +620,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
         count: 1,
         creature: attackingSpirit(
           "Disenchantment",
+          "ritualist.communing",
           182,
           { scaling: { attributeId: "ritualist.communing", atZero: 15, atTwelve: 35 } },
           { atZero: 5, atTwelve: 17 },
@@ -653,6 +662,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
         count: 1,
         creature: protectiveSpirit(
           "Shelter",
+          "ritualist.communing",
           182,
           { atZero: 30, atTwelve: 54 },
           "shelter",
@@ -692,7 +702,14 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
       {
         kind: "summon",
         count: 1,
-        creature: protectiveSpirit("Union", 182, { atZero: 30, atTwelve: 54 }, "union", "allies"),
+        creature: protectiveSpirit(
+          "Union",
+          "ritualist.communing",
+          182,
+          { atZero: 30, atTwelve: 54 },
+          "union",
+          "allies",
+        ),
       },
     ],
   },
@@ -729,6 +746,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
         count: 1,
         creature: protectiveSpirit(
           "Displacement",
+          "ritualist.communing",
           214,
           { atZero: 30, atTwelve: 54 },
           "displacement",
@@ -770,6 +788,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
         count: 1,
         creature: protectiveSpirit(
           "Earthbind",
+          "ritualist.communing",
           214,
           { atZero: 15, atTwelve: 39 },
           "earthbind",

@@ -192,6 +192,7 @@ describe("describeSkill", () => {
         aura: undefined,
         onDeath: "vanish",
         ownerDisableOnDeath: undefined,
+        deathBurst: undefined,
       },
     });
     const lines = (effect: SkillEffect) =>
