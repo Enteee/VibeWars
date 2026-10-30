@@ -1281,7 +1281,7 @@ body {
   min-height: 8.5rem;
 }
 
-.screen .team-play-card-choose {
+.screen .team-play-card-open {
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
@@ -1291,13 +1291,7 @@ body {
   text-align: left;
 }
 
-.team-play-card.is-picked .team-play-card-choose {
-  border-color: var(--accent);
-  background: rgb(89 194 255 / 10%);
-}
-
-/* None and New are no Team Build: dashed, centred. */
-.screen .team-play-card.is-none .team-play-card-choose,
+/* New is no Team Build: dashed, centred. */
 .screen .team-play-new {
   align-items: center;
   justify-content: center;
@@ -1317,10 +1311,6 @@ body {
   font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.team-play-card-detail {
-  color: var(--ink-dim);
 }
 
 .team-play-card-members {

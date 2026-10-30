@@ -363,6 +363,13 @@ export const SKILL_ICONS = {
   "ritualist.blind-was-mingson": { glyph: "was-blind" },
   "ritualist.grasping-was-kuurong": { glyph: "was-quake" },
   "ritualist.energetic-was-lee-sa": { glyph: "was-bolt" },
+  // Placeholders until the asset-designer's (#1464): Ritualist item spells 2.
+  "ritualist.mighty-was-vorizun": { glyph: "born-energy", modifier: "up" },
+  "ritualist.cruel-was-daoshen": { glyph: "lightning", modifier: "hourglass" },
+  "ritualist.destructive-was-glaive": { glyph: "lightning", modifier: "area" },
+  "ritualist.tranquil-was-tanasen": { glyph: "shield-stance", modifier: "less" },
+  "ritualist.vengeful-was-khanhei": { glyph: "thorns", modifier: "hourglass" },
+  "ritualist.pure-was-li-ming": { glyph: "cleanse", modifier: "half" },
   // Flash enchantments (#1421, #1447).
   "dervish.enchanted-haste": { glyph: "haste-clean" },
   "dervish.heart-of-holy-flame": { glyph: "flame-halo" },
@@ -377,6 +384,10 @@ export const SKILL_ICONS = {
   "paragon.hasty-refrain": { glyph: "speed", modifier: "renew" },
   "paragon.mending-refrain": { glyph: "ring-heal", modifier: "renew" },
   "paragon.purifying-finale": { glyph: "cleanse", modifier: "finale" },
+  // Placeholders until the asset-designer's (#1485): Paragon echoes 2.
+  "paragon.bladeturn-refrain": { glyph: "blade-turn", modifier: "renew" },
+  "paragon.energizing-finale": { glyph: "energy", modifier: "finale" },
+  "paragon.soldiers-fury": { glyph: "blade-adrenal", modifier: "up" },
   // Forms (#1437, #1468): a figure in the god's shape, the god's mark on it.
   "dervish.avatar-of-melandru": { glyph: "avatar-earth" },
   "dervish.avatar-of-dwayna": { glyph: "avatar-wings" },
@@ -388,16 +399,16 @@ export const SKILL_ICONS = {
   "mesmer.shame": { glyph: "hex-fail-ally", modifier: "bolt" },
   "mesmer.mistrust": { glyph: "hex-fail-foe", modifier: "area" },
   "mesmer.fragility": { glyph: "hex-churn", modifier: "area" },
-  // Placeholders until the asset-designer's (#1486): Paragon spears.
-  "paragon.blazing-spear": { glyph: "spear", modifier: "plus" },
-  "paragon.mighty-throw": { glyph: "spear-dash", modifier: "up" },
-  "paragon.unblockable-throw": { glyph: "spear-dash", modifier: "plus" },
-  "paragon.wearying-spear": { glyph: "spear", modifier: "less" },
-  "paragon.vicious-attack": { glyph: "spear-barb", modifier: "stun" },
-  "paragon.disrupting-throw": { glyph: "spear-bolt", modifier: "stun" },
-  "paragon.slayers-spear": { glyph: "spear-barb", modifier: "half" },
-  "paragon.swift-javelin": { glyph: "spear-dash", modifier: "bolt" },
-  "paragon.chest-thumper": { glyph: "spear-barb", modifier: "down" },
-  "paragon.spear-of-redemption": { glyph: "spear", modifier: "self" },
-  "paragon.spear-swipe": { glyph: "spear", modifier: "area" },
+  // Paragon spears (#1486, #1508): a spear and its rider; the drop badge is Deep Wound.
+  "paragon.blazing-spear": { glyph: "spear-flame" },
+  "paragon.mighty-throw": { glyph: "spear-fast" },
+  "paragon.unblockable-throw": { glyph: "spear-pierce" },
+  "paragon.wearying-spear": { glyph: "spear-weak" },
+  "paragon.vicious-attack": { glyph: "spear-crit", modifier: "bleed" },
+  "paragon.disrupting-throw": { glyph: "spear-burst" },
+  "paragon.slayers-spear": { glyph: "spear-heart", modifier: "bleed" },
+  "paragon.swift-javelin": { glyph: "spear-pierce", modifier: "bolt" },
+  "paragon.chest-thumper": { glyph: "spear-crack", modifier: "bleed" },
+  "paragon.spear-of-redemption": { glyph: "spear-cleanse" },
+  "paragon.spear-swipe": { glyph: "spear-swipe", modifier: "stun" },
 };

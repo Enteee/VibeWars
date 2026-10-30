@@ -60,7 +60,7 @@ test("#1460: two players and a bot propose, vote, take seats and play the claime
   const [host, guest] = pages as [Page, Page];
 
   try {
-    // Save the Trio and pick it on Team Play: it is proposed on entry.
+    // Save the Trio on Team Play; it is proposed in the Team Lobby (#1515).
     await nameOnSolo(host, "Host");
     await host.locator("#topbar .play-tabs").getByRole("button", { name: "Team Play" }).click();
     await expect(host.getByRole("button", { name: "new team" })).toBeVisible();
@@ -68,10 +68,6 @@ test("#1460: two players and a bot propose, vote, take seats and play the claime
     await host.getByRole("button", { name: "Save", exact: true }).click();
     await expect(host.locator(".toast")).toHaveText("Saved");
     await host.getByRole("button", { name: "back" }).click();
-    await host
-      .locator(".team-play-card", { hasText: "Trio" })
-      .locator(".team-play-card-choose")
-      .click();
 
     await host.getByRole("button", { name: "Hosted Lobby", exact: true }).click();
     const code = (await host.locator(".lobby-code").textContent())?.trim() ?? "";
@@ -91,13 +87,20 @@ test("#1460: two players and a bot propose, vote, take seats and play the claime
     await guest.getByRole("button", { name: "Ready", exact: true }).click();
     await host.getByRole("button", { name: "start match" }).click();
 
-    // Vote: both proposed the Trio on entry; the guest votes for the host's.
+    // Vote: entering proposes nothing; both propose the Trio there, and
+    // the guest votes for the host's.
     for (const page of [host, guest]) {
       await expect(page.locator(".screen-team-lobby")).toBeVisible();
       await expect(page.locator(".team-lobby-stage")).toHaveText("Choose a team build");
+    }
+    await expect(host.locator(".team-lobby-card.is-empty")).toBeVisible();
+    await expect(host.locator(".team-lobby-propose select option:checked")).toHaveText("None");
+    for (const page of [host, guest]) {
+      await page.locator(".team-lobby-propose select").selectOption({ label: "Trio" });
+    }
+    for (const page of [host, guest]) {
       await expect(page.locator(".team-lobby-card")).toHaveCount(2);
     }
-    await expect(host.locator(".team-lobby-propose select option:checked")).toHaveText("Trio");
     const hostsCard = guest.getByRole("button", { name: "Host's team build" });
     await hostsCard.click();
     await expect(hostsCard).toHaveAttribute("aria-pressed", "true");

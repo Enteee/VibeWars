@@ -4,6 +4,7 @@ import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { getSkill } from "../skills/catalog.js";
 import { getStatusDefinition, type StatusId } from "../skills/status.js";
+import { raisedMaxEnergy } from "../skills/overcast.js";
 import { effectiveMaxHealth } from "../skills/tick.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { applyIntent } from "./apply-intent.js";
@@ -46,6 +47,7 @@ function match(skillId: string): MatchSimulation {
           ["ritualist.restoration-magic", 12],
           ["ritualist.channeling-magic", 12],
           ["ritualist.spawning-power", 12],
+          ["ritualist.communing", 12],
         ]),
         maxEnergy: 100,
       },
@@ -174,5 +176,99 @@ describe("Ritualist item spells (#1434)", () => {
     r.energy = 0;
     drop(sim);
     expect(r.energy).toBe(8);
+  });
+});
+
+describe("Ritualist item spells 2 (#1464)", () => {
+  it("are item spells, Ritualist, from the corpus record", () => {
+    const ids = [
+      ["ritualist.mighty-was-vorizun", "ritualist.communing", false],
+      ["ritualist.cruel-was-daoshen", "ritualist.channeling-magic", false],
+      ["ritualist.destructive-was-glaive", "ritualist.channeling-magic", true],
+      ["ritualist.tranquil-was-tanasen", "ritualist.restoration-magic", true],
+      ["ritualist.vengeful-was-khanhei", "ritualist.restoration-magic", true],
+      ["ritualist.pure-was-li-ming", "ritualist.restoration-magic", false],
+    ] as const;
+    for (const [id, attributeId, elite] of ids) {
+      expect(getSkill(id), id).toMatchObject({
+        type: "item-spell",
+        profession: "ritualist",
+        target: "self",
+        attributeId,
+        elite,
+      });
+    }
+  });
+
+  it("Mighty Was Vorizun: +15 armor and +30 maximum Energy held; the drop clamps Energy", () => {
+    const sim = cast("ritualist.mighty-was-vorizun");
+    expect(getStatusDefinition("mighty-was-vorizun").armorModifier).toBe(15);
+    const r = get(sim, "r").combatant;
+    expect(raisedMaxEnergy(r)).toBe(130);
+    // Above the unraised 100, and kept there.
+    r.energy = 125;
+    stepFor(sim, 1);
+    expect(r.energy).toBe(125);
+    drop(sim);
+    expect(raisedMaxEnergy(r)).toBe(100);
+    expect(r.energy).toBe(100);
+  });
+
+  it("Cruel Was Daoshen: Ritualist skills pierce 10% held; the drop strikes nearby foes", () => {
+    const sim = cast("ritualist.cruel-was-daoshen");
+    expect(getStatusDefinition("cruel-was-daoshen").skillArmorPenetration).toEqual({
+      share: 0.1,
+      profession: "ritualist",
+    });
+    drop(sim);
+    const x = get(sim, "x").combatant;
+    expect(x.health).toBeLessThan(500);
+    expect(x.health).toBeGreaterThanOrEqual(500 - 71);
+    expect(get(sim, "z").combatant.health).toBe(500);
+  });
+
+  it("Destructive Was Glaive: held 54 s; the drop strikes foes in the area", () => {
+    const sim = cast("ritualist.destructive-was-glaive");
+    expect(held(sim, "destructive-was-glaive")).toBeGreaterThan(51);
+    expect(held(sim, "destructive-was-glaive")).toBeLessThanOrEqual(54);
+    drop(sim);
+    expect(get(sim, "x").combatant.health).toBeLessThan(500);
+    expect(get(sim, "z").combatant.health).toBe(500);
+  });
+
+  it("Tranquil Was Tanasen: +22 armor and uninterruptible held, for 17 s", () => {
+    const sim = cast("ritualist.tranquil-was-tanasen");
+    expect(held(sim, "tranquil-was-tanasen")).toBeGreaterThan(14);
+    expect(held(sim, "tranquil-was-tanasen")).toBeLessThanOrEqual(17);
+    expect(getStatusDefinition("tranquil-was-tanasen")).toMatchObject({
+      armorModifier: 22,
+      uninterruptible: true,
+    });
+  });
+
+  it("Vengeful Was Khanhei: each foe's hit on the holder steals 38 from that foe", () => {
+    const sim = cast("ritualist.vengeful-was-khanhei");
+    const r = get(sim, "r").combatant;
+    const x = get(sim, "x").combatant;
+    r.health = 100;
+    expect(applyIntent(sim, "x", { kind: "attack", targetId: "r" })).toBeNull();
+    stepFor(sim, 3);
+    const struck = x.health < 500;
+    expect(struck).toBe(true);
+    expect((500 - x.health) % 38).toBe(0);
+    expect(get(sim, "z").combatant.health).toBe(500);
+  });
+
+  it("Pure Was Li Ming: conditions run 42% faster held; the drop cleanses 3 from allies in earshot", () => {
+    const sim = cast("ritualist.pure-was-li-ming");
+    const r = get(sim, "r").combatant;
+    r.statuses.apply("bleeding", 10, "x");
+    stepFor(sim, 1);
+    expect(r.statuses.get("bleeding")?.remainingSeconds).toBeCloseTo(8.58, 1);
+    r.statuses.apply("poison", 10, "x");
+    r.statuses.apply("weakness", 10, "x");
+    r.statuses.apply("crippled", 10, "x");
+    drop(sim);
+    expect(r.statuses.countByCategory("condition")).toBe(1);
   });
 });
