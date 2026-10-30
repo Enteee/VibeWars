@@ -52,6 +52,8 @@ export type StatusCategory =
   | "glyph"
   | "shout"
   | "chant"
+  /** A Paragon's echo (#1423): no removal touches one; only its end or a death does. */
+  | "echo"
   | "weapon-spell"
   | "form"
   | "skill-effect";
@@ -231,6 +233,15 @@ export type StatusId =
   | "defile-defenses"
   | "scourge-enchantment"
   | "hex-breaker"
+  // Paragon echoes (#1423).
+  | "aggressive-refrain"
+  | "blazing-finale"
+  | "burning-refrain"
+  | "enduring-harmony"
+  | "finale-of-restoration"
+  | "hasty-refrain"
+  | "mending-refrain"
+  | "purifying-finale"
   // Elementalist Water Magic staples (#1367).
   | "ice-prison"
   | "frozen-burst"
@@ -658,6 +669,24 @@ export interface StatusDefinition {
    */
   readonly breaksNextHex: { readonly damage: number; readonly skillId: string } | undefined;
   /**
+   * Whenever a chant or a shout ends on the bearer, its remaining time is
+   * back to the duration it was applied with (#1423): a refrain's "this
+   * echo is reapplied every time a chant or shout ends on you".
+   */
+  readonly renewsOnChantOrShoutEnd: boolean;
+  /**
+   * It ends once its triggers have fired this many times (#1423): Finale
+   * of Restoration's "the next 5 times". `undefined`: no such limit.
+   */
+  readonly endsAfterTriggers: number | undefined;
+  /**
+   * Multiplier on the duration of a chant or a shout applied to the bearer
+   * while it lasts (#1423): Enduring Harmony's 1.5. One already up keeps
+   * the time it has, and one applied keeps its longer time after this
+   * ends.
+   */
+  readonly chantShoutDurationMultiplier: number;
+  /**
    * What it does when its bearer does something (#469): Backfire's damage
    * on each spell the bearer finishes. Applied by whoever put it on.
    */
@@ -741,6 +770,13 @@ export type StatusTriggerEvent =
    */
   | "bearer-creates-creature"
   | "bearer-gains-condition"
+  /**
+   * A chant or a shout ended on the bearer (#1423), for any reason but a
+   * refresh: its duration, an "ends when" rule or a removal. Every status
+   * still on the bearer that answers it fires, in `active` order; a dead
+   * bearer's have ended with it. An echo's.
+   */
+  | "bearer-chant-or-shout-ends"
   | "ends"
   /**
    * It ended before its time ran out (#1421): stripped, cut short by its
@@ -1029,6 +1065,9 @@ function define(
     incomingHexCastTimeMultiplier: 1,
     damageFromSpiritAttacks: 0,
     breaksNextHex: undefined,
+    renewsOnChantOrShoutEnd: false,
+    endsAfterTriggers: undefined,
+    chantShoutDurationMultiplier: 1,
     triggers: [],
     ...overrides,
   };
@@ -2396,6 +2435,93 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     profession: "mesmer",
     breaksNextHex: { damage: 39, skillId: "mesmer.hex-breaker" },
   }),
+
+  // Paragon echoes (#1423): each renews, or fires, whenever a chant or a
+  // shout ends on its bearer; no removal touches one. Rank-12 values, and
+  // a finale's effects scale with its Paragon's attribute.
+  "aggressive-refrain": define("aggressive-refrain", "Aggressive Refrain", "echo", {
+    profession: "paragon",
+    attackDurationMultiplier: 0.8,
+    armorModifier: -20,
+    renewsOnChantOrShoutEnd: true,
+  }),
+  "blazing-finale": define("blazing-finale", "Blazing Finale", "echo", {
+    profession: "paragon",
+    triggers: [
+      {
+        on: "bearer-chant-or-shout-ends",
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_ADJACENT,
+            maxTargets: undefined,
+            effects: [{ kind: "apply-status", statusId: "burning", durationSeconds: 4 }],
+          },
+        ],
+        target: "bearer",
+        skillId: "paragon.blazing-finale",
+      },
+    ],
+  }),
+  "burning-refrain": define("burning-refrain", "Burning Refrain", "echo", {
+    profession: "paragon",
+    onAttackHit: {
+      effects: [
+        {
+          kind: "if",
+          condition: { kind: "target-more-health" },
+          effects: [{ kind: "apply-status", statusId: "burning", durationSeconds: 3 }],
+        },
+      ],
+      skillId: "paragon.burning-refrain",
+    },
+    renewsOnChantOrShoutEnd: true,
+  }),
+  "enduring-harmony": define("enduring-harmony", "Enduring Harmony", "echo", {
+    profession: "paragon",
+    chantShoutDurationMultiplier: 1.5,
+  }),
+  // A heal, not a gain, as GWW has it: Deep Wound cuts it.
+  "finale-of-restoration": define("finale-of-restoration", "Finale of Restoration", "echo", {
+    profession: "paragon",
+    endsAfterTriggers: 5,
+    triggers: [
+      {
+        on: "bearer-chant-or-shout-ends",
+        effects: [
+          {
+            kind: "heal",
+            amount: { scaling: { attributeId: "paragon.motivation", atZero: 15, atTwelve: 63 } },
+            perStatusOnTarget: [],
+          },
+        ],
+        target: "bearer",
+        skillId: "paragon.finale-of-restoration",
+      },
+    ],
+  }),
+  "hasty-refrain": define("hasty-refrain", "Hasty Refrain", "echo", {
+    profession: "paragon",
+    moveSpeedMultiplier: 1.25,
+    renewsOnChantOrShoutEnd: true,
+  }),
+  "mending-refrain": define("mending-refrain", "Mending Refrain", "echo", {
+    profession: "paragon",
+    healthPips: 3,
+    renewsOnChantOrShoutEnd: true,
+  }),
+  "purifying-finale": define("purifying-finale", "Purifying Finale", "echo", {
+    profession: "paragon",
+    triggers: [
+      {
+        on: "bearer-chant-or-shout-ends",
+        effects: [{ kind: "remove-status", category: "condition", count: 1 }],
+        target: "bearer",
+        skillId: "paragon.purifying-finale",
+      },
+    ],
+  }),
   // "For 8...20 seconds, target foe's legs are encased in ice, causing the
   // foe to move 66% slower" (#1367).
   "ice-prison": define("ice-prison", "Ice Prison", "hex", {
@@ -2768,6 +2894,8 @@ export interface ActiveStatus {
   hitsLeft: number | undefined;
   /** Spells still to start before it ends (`nextSpells`); `undefined`: no such limit. */
   spellsLeft: number | undefined;
+  /** Times its triggers may still fire before it ends (`endsAfterTriggers`); `undefined`: no such limit. */
+  triggersLeft: number | undefined;
   /** Who applied it — needed so a future "when this ends, heal the caster"
    *  effect knows whom to credit. */
   readonly sourceId: string;
@@ -3042,12 +3170,16 @@ export class StatusSet {
    * one that ends when its bearer gains that category (#919). A hex a
    * status breaks never lands (#1403): `false`, and nothing else changes.
    */
-  public apply(id: StatusId, durationSeconds: number, sourceId: string): boolean {
-    if (durationSeconds <= 0 || this.isImmuneTo(id) || this.#breaksHex(id, sourceId)) {
+  public apply(id: StatusId, appliedSeconds: number, sourceId: string): boolean {
+    if (appliedSeconds <= 0 || this.isImmuneTo(id) || this.#breaksHex(id, sourceId)) {
       return false;
     }
     const wasActive = this.#statuses.has(id);
     const definition = getStatusDefinition(id);
+    const durationSeconds =
+      definition.category === "chant" || definition.category === "shout"
+        ? appliedSeconds * this.#chantShoutDurationMultiplier()
+        : appliedSeconds;
     if (EXCLUSIVE_CATEGORIES.has(definition.category)) {
       this.removeByCategory(definition.category);
     }
@@ -3070,6 +3202,7 @@ export class StatusSet {
       attacksLeft: definition.endsAfterAttacks,
       hitsLeft: definition.endsAfterHits?.count,
       spellsLeft: definition.nextSpells?.count,
+      triggersLeft: definition.endsAfterTriggers,
       sourceId,
       outbreak,
       maintained: null,
@@ -3115,6 +3248,7 @@ export class StatusSet {
       attacksLeft: undefined,
       hitsLeft: undefined,
       spellsLeft: undefined,
+      triggersLeft: undefined,
       sourceId,
       outbreak,
       maintained: null,
@@ -3144,6 +3278,7 @@ export class StatusSet {
       attacksLeft: undefined,
       hitsLeft: undefined,
       spellsLeft: undefined,
+      triggersLeft: undefined,
       sourceId,
       outbreak: null,
       maintained: { seq, outOfRangeSeconds: 0 },
@@ -3173,12 +3308,53 @@ export class StatusSet {
       attacksLeft: undefined,
       hitsLeft: undefined,
       spellsLeft: undefined,
+      triggersLeft: undefined,
       sourceId,
       outbreak: null,
       maintained: null,
       projected: true,
     });
     this.#endOnGaining(getStatusDefinition(id).category);
+    return true;
+  }
+
+  /** What a chant or a shout put on the bearer now lasts, times its applied duration (#1423). */
+  #chantShoutDurationMultiplier(): number {
+    let multiplier = 1;
+    for (const { id } of this.#statuses.values()) {
+      multiplier *= getStatusDefinition(id).chantShoutDurationMultiplier;
+    }
+    return multiplier;
+  }
+
+  /**
+   * A chant or a shout ended on the bearer (#1423): every status that
+   * renews on that is back to the duration it was applied with, and the
+   * triggers that answer it, in `active` order, are returned to fire.
+   */
+  public chantOrShoutEnded(): AnsweringTrigger[] {
+    for (const status of this.#statuses.values()) {
+      if (getStatusDefinition(status.id).renewsOnChantOrShoutEnd) {
+        status.remainingSeconds = status.durationSeconds;
+      }
+    }
+    return this.triggersOn("bearer-chant-or-shout-ends");
+  }
+
+  /**
+   * One of `id`'s triggers fired (#1423): one fewer before it ends.
+   * Returns whether that ended it, recorded as ended.
+   */
+  public spendTrigger(id: StatusId): boolean {
+    const status = this.#statuses.get(id);
+    if (status?.triggersLeft === undefined) {
+      return false;
+    }
+    status.triggersLeft -= 1;
+    if (status.triggersLeft > 0) {
+      return false;
+    }
+    this.#end([id]);
     return true;
   }
 

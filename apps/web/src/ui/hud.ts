@@ -491,6 +491,7 @@ const REFUSALS: Readonly<Record<ActivationRejection, string>> = {
   "invalid-target-ally": "That skill needs an enemy target.",
   "invalid-target-enemy": "That skill needs an ally target.",
   "invalid-target-not-allied-spirit": "Target an allied spirit.",
+  "invalid-target-spirit": "Cannot target a spirit.",
   "out-of-range": "Target is out of range.",
   "no-line-of-sight": "Target is not in line of sight.",
   "no-corpse": "No corpse in range.",
