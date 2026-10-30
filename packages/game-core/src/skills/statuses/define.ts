@@ -38,6 +38,7 @@ export function define(
     interruptsSpells: false,
     attackDurationMultiplier: 1,
     preventsSpells: false,
+    preventsAttacks: false,
     untargetableByFoeSpells: false,
     unblockableBySource: false,
     preventsBlocking: false,

@@ -15,6 +15,7 @@ import { addOvercast } from "./overcast.js";
 import {
   getStatusDefinition,
   nextSkillAnswers,
+  preventsAttacks,
   preventsSpells,
   untargetableByFoeSpells,
 } from "./status.js";
@@ -70,6 +71,9 @@ export type ActivationRejection =
   | "invalid-target-creature"
   // A spell while a hex bars them, as Shroud of Silence's (#1234).
   | "cannot-cast-spells"
+  // An attack or an attack skill while a status bars them, as Obsidian
+  // Flesh's (#1575).
+  | "cannot-attack"
   | "invalid-target-untargetable"
   // An attack or attack skill while carrying a flag (#1225): checked by
   // the simulation, which knows who carries one.
@@ -251,6 +255,9 @@ export function canActivate(request: ActivationRequest): ActivationCheck {
   }
   if (isSpell(skill.type) && preventsSpells(caster.statuses.active)) {
     return reject("cannot-cast-spells");
+  }
+  if (skill.type === "attack" && preventsAttacks(caster.statuses.active)) {
+    return reject("cannot-attack");
   }
   // An attack skill is a blow of its weapon (ADR-0029): checked before the
   // cost, so the player is told what is wrong rather than what it costs.

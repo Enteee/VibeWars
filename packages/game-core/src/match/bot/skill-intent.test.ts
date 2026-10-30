@@ -119,6 +119,10 @@ const NO_BOT_USE = new Set([
   "paragon.anthem-of-guidance",
   "paragon.energizing-chorus",
   "paragon.anthem-of-envy",
+  // Elementalist staples 2 (#1575): a ward that slows foes or keeps allies
+  // standing is no rule the bot weighs.
+  "elementalist.ward-against-foes",
+  "elementalist.ward-of-stability",
 ]);
 
 function skill(id: string) {

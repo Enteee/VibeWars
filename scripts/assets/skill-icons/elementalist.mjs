@@ -43,4 +43,14 @@ export const ELEMENTALIST_ICONS = {
   "elementalist.ward-against-elements": { glyph: "ward-elements" },
   "elementalist.shock-arrow": { glyph: "arrow-bolt" },
   "elementalist.mind-blast": { glyph: "fireball-mind", modifier: "up" },
+  // Placeholders until the asset-designer's (#1575).
+  "elementalist.obsidian-flesh": { glyph: "mountain", modifier: "plus" },
+  "elementalist.gale": { glyph: "lightning", modifier: "half" },
+  "elementalist.earthquake": { glyph: "quake", modifier: "area" },
+  "elementalist.unsteady-ground": { glyph: "quake", modifier: "clock" },
+  "elementalist.ward-against-foes": { glyph: "ward-blade", modifier: "down" },
+  "elementalist.ward-of-stability": { glyph: "ward-blade", modifier: "stun" },
+  "elementalist.lightning-touch": { glyph: "lightning", modifier: "self" },
+  "elementalist.liquid-flame": { glyph: "flame-field", modifier: "area" },
+  "elementalist.glowing-gaze": { glyph: "eye", modifier: "plus" },
 };
