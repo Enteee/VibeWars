@@ -1049,8 +1049,9 @@ three-way tie broken by the captain, the slot claim, and a side of one player.
   every row to 600 px, so long Team Build names are cut early.
 
 Edge cases drawn: no Team Builds saved, a long Team Build name (cut with an
-ellipsis), a player who proposes nothing (Dax), fewer players than slots (the
-last slot is a Bot), and a side of one player, who needs no vote. Two rules
+ellipsis), a player who proposes nothing (Dax), a side of one player (Red: Eli
+and three bots), who needs no vote. Every proposal is exactly the side's size
+(four), so Blue's four players fill four seats and draw no bot. Two rules
 the study had to guess were settled in #1458 (ADR-0040), and the frames
 follow it: a side with no proposals plays the house team (starter
 builds); and a human who has not

@@ -150,6 +150,7 @@ const BUILDS = [
       { name: "Lund", prof: "Ran" },
       { name: "Ysa", prof: "Ele" },
       { name: "Ketil", prof: "Mon" },
+      { name: "Rask", prof: "War" },
     ],
   },
 ];
@@ -303,8 +304,9 @@ const proposals = (tie) => [
 ];
 
 /**
- * The slots of a build, claimed as in frame 6: Brann and Aria took theirs, one is
- * free, the last has nobody left to take it and becomes a bot.
+ * The slots of a build, claimed as in frame 6: Brann and Aria took theirs, the
+ * other two are left for Cass and Dax, who are seated automatically in the
+ * lowest free seats; a seat no human is left to take would become a bot.
  * @param {Build} b @param {boolean} claimed
  * @returns {readonly { c: Char, by: string | null, bot?: boolean }[]}
  */
@@ -312,7 +314,7 @@ const slotsOf = (b, claimed) =>
   b.chars.map((c, i) => ({
     c,
     by: claimed ? (["Brann", "Aria", null, null][i] ?? null) : null,
-    bot: claimed && i === 3 ? true : undefined,
+    bot: undefined,
   }));
 
 /** The rules, as a legend: one lit. @param {number} x @param {number} y @param {number} lit */
@@ -371,7 +373,7 @@ function lobbyBody() {
         { n: "Cass", ready: false },
         { n: "Dax", ready: true },
       ],
-      bots: 1,
+      bots: 0,
     },
     { side: "Red", players: [{ n: "Eli", ready: true }], bots: 3 },
   ];
@@ -524,7 +526,7 @@ function slotsA(y, active, slots) {
     24,
     y + 18,
     active
-      ? "Claim a character. First come, first served. The rest are bots."
+      ? "Claim a character. Players who do not claim are seated automatically; only a seat nobody takes gets a bot."
       : "Opens when the vote ends.",
   );
   slots.forEach((s, i) => {
@@ -850,7 +852,7 @@ function slotsC(x, y, w, state, b = SUN) {
     x + 16,
     y + 46,
     on
-      ? "Claim a character. First come, first served. The rest are bots."
+      ? "Claim a character. Players who do not claim are seated automatically; only a seat nobody takes gets a bot."
       : state === "locked"
         ? "A preview. Locked until the vote ends."
         : "Opens the moment the vote is decided.",
