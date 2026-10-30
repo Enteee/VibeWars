@@ -1,6 +1,5 @@
 import type { MatchMode } from "@vibewars/game-core";
 
-import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 import type { StoredTeam } from "../storage/schema.js";
 import { looksLikeTeam } from "../storage/team-transfer.js";
 import { createCharacterDot } from "./character-preview.js";
@@ -10,8 +9,9 @@ import { joinControls, loadPlayerName, playTabs, type PlayTab } from "./menu.js"
 /**
  * Team Play (#1453, #1449 variant B, the card table): four mode tiles
  * across the top, each hosting a lobby on its own maps, and the Team
- * Build cards below, "None" first. A tile's lobby opens the Team Lobby
- * (#1460) once everyone is ready, and proposes the pick there.
+ * Build cards below, to make and edit them. A tile's lobby opens the
+ * Team Lobby (#1460) once everyone is ready: Team Builds are proposed and
+ * voted on there, never picked here (#1515).
  */
 
 /** A mode tile: what it reads, and the modes its lobby's maps play. */
@@ -32,36 +32,6 @@ export const TEAM_PLAY_TILES: readonly TeamPlayTile[] = [
 /** Under the cards while there are no Team Builds. */
 export const NO_TEAM_BUILDS = "Make a team build to propose it in the Team Lobby.";
 
-const TEAM_BUILD_STORAGE_KEY = `${STORAGE_NAMESPACE}.activeTeamBuildId`;
-
-/**
- * The Team Build picked, if it is one of `teams`; `undefined` is None,
- * "the team decides", and so is a pick of one since deleted.
- */
-export function loadActiveTeamBuildId(teams: readonly StoredTeam[]): string | undefined {
-  let stored: string | null;
-  try {
-    stored = localStorage.getItem(TEAM_BUILD_STORAGE_KEY);
-  } catch {
-    // Private browsing can throw on localStorage access: None.
-    return undefined;
-  }
-  return teams.some((team) => team.id === stored) ? (stored ?? undefined) : undefined;
-}
-
-/** Pick `id`, or None for `undefined`. */
-export function saveActiveTeamBuildId(id: string | undefined): void {
-  try {
-    if (id === undefined) {
-      localStorage.removeItem(TEAM_BUILD_STORAGE_KEY);
-    } else {
-      localStorage.setItem(TEAM_BUILD_STORAGE_KEY, id);
-    }
-  } catch {
-    // A convenience, not a requirement.
-  }
-}
-
 export interface TeamPlayCallbacks {
   /** Host a lobby as `name` whose host picks among `tile`'s maps. */
   readonly onHostTile: (tile: TeamPlayTile, name: string) => void;
@@ -73,25 +43,14 @@ export interface TeamPlayCallbacks {
   readonly onPasteTeam: (text: string) => void;
 }
 
-/** One Team Build card, or None's: a button that picks it, and its Edit beside. */
-function teamCard(
-  name: string,
-  detail: HTMLElement,
-  picked: boolean,
-  onPick: () => void,
-  edit: HTMLButtonElement | undefined,
-): HTMLElement {
+/** One Team Build card: a button that opens it in the editor, and its Edit beside. */
+function teamCard(team: StoredTeam, onEdit: () => void): HTMLElement {
   const card = h("div", "team-play-card");
-  card.classList.toggle("is-picked", picked);
-  const choose = button("", "team-play-card-choose", onPick);
-  choose.setAttribute("aria-pressed", String(picked));
-  const title = h("span", "team-play-card-name", name);
-  title.title = name;
-  choose.append(title, detail);
-  card.appendChild(choose);
-  if (edit !== undefined) {
-    card.appendChild(edit);
-  }
+  const open = button("", "team-play-card-open", onEdit);
+  const title = h("span", "team-play-card-name", team.name);
+  title.title = team.name;
+  open.append(title, members(team));
+  card.append(open, button("Edit", "team-play-card-edit", onEdit));
   return card;
 }
 
@@ -144,42 +103,16 @@ export function renderTeamPlay(
   }
   panel.append(...joinControls(panel, loadPlayerName, callbacks.onJoinLobby));
 
-  panel.appendChild(h("h2", "menu-column-title", "Team Build"));
+  panel.appendChild(h("h2", "menu-column-title", "Team Builds"));
   const cards = h("div", "team-play-cards");
-  // Picking repaints the cards in place: nothing else on the screen changes.
-  const paint = (picked: string | undefined): void => {
-    const pick = (id: string | undefined): void => {
-      saveActiveTeamBuildId(id);
-      paint(id);
-      cards.querySelector<HTMLElement>(".is-picked .team-play-card-choose")?.focus();
-    };
-    const none = teamCard(
-      "None",
-      h("span", "team-play-card-detail", "the team decides"),
-      picked === undefined,
-      () => {
-        pick(undefined);
-      },
-      undefined,
+  for (const team of teams) {
+    cards.appendChild(
+      teamCard(team, () => {
+        callbacks.onEditTeam(team.id);
+      }),
     );
-    none.classList.add("is-none");
-    const built = teams.map((team) =>
-      teamCard(
-        team.name,
-        members(team),
-        team.id === picked,
-        () => {
-          pick(team.id);
-        },
-        button("Edit", "team-play-card-edit", () => {
-          callbacks.onEditTeam(team.id);
-        }),
-      ),
-    );
-    const add = button("New team build", "team-play-card team-play-new", callbacks.onNewTeam);
-    cards.replaceChildren(none, ...built, add);
-  };
-  paint(loadActiveTeamBuildId(teams));
+  }
+  cards.appendChild(button("New team build", "team-play-card team-play-new", callbacks.onNewTeam));
   panel.appendChild(cards);
   if (teams.length === 0) {
     panel.appendChild(h("p", "team-play-hint", NO_TEAM_BUILDS));
