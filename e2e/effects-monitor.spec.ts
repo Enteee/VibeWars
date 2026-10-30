@@ -1,7 +1,8 @@
 import { expect, test } from "@playwright/test";
 
 import { key } from "./keys.js";
-import { startSoloMatch } from "./helpers/peers.js";
+import { joinByCode, openRail, pickCharacter } from "./helpers/menu.js";
+import { hostLobby, playOwnTeams, saveSoloTeam, startSoloMatch } from "./helpers/peers.js";
 import { chooseProfession } from "./helpers/professions.js";
 import { bringStarter, starterKey } from "./helpers/starter.js";
 
@@ -48,6 +49,7 @@ test("a maintained enchantment has no bar, its hover says maintained, costs you 
   page,
 }) => {
   await page.goto("./");
+  await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
   await chooseProfession(page, "primary", "monk");
   await page.locator("input.editor-name").fill("Mender");
@@ -57,7 +59,7 @@ test("a maintained enchantment has no bar, its hover says maintained, costs you 
     .locator(".skill-box-equip")
     .click();
   await page.getByRole("button", { name: "Save", exact: true }).click();
-  await page.locator(".roster").getByText("Mender", { exact: true }).click();
+  await pickCharacter(page, "Mender");
   await startSoloMatch(page);
   const energyPips = page.locator(".hud-bar-energy .vital-pips");
   await expect(energyPips).toHaveAttribute("data-pips", "4");
@@ -86,12 +88,13 @@ test("a spirit's aura shows with no bar, from the spirit, while you stand in its
   page,
 }) => {
   await page.goto("./");
+  await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
   await chooseProfession(page, "primary", "ranger");
   await page.locator("input.editor-name").fill("Winnower");
   await page.locator(".skill-box", { hasText: "Winnowing" }).locator(".skill-box-equip").click();
   await page.getByRole("button", { name: "Save", exact: true }).click();
-  await page.locator(".roster").getByText("Winnower", { exact: true }).click();
+  await pickCharacter(page, "Winnower");
   await startSoloMatch(page);
 
   // A 2 s ritual: the spirit stands where you do, so you are in its range.
@@ -111,6 +114,7 @@ test("a spirit's aura shows with no bar, from the spirit, while you stand in its
 
 test("a ward's aura shows with no bar while you stand in it (#1087)", async ({ page }) => {
   await page.goto("./");
+  await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
   await chooseProfession(page, "primary", "elementalist");
   await page.locator("input.editor-name").fill("Warder");
@@ -119,7 +123,7 @@ test("a ward's aura shows with no bar while you stand in it (#1087)", async ({ p
     .locator(".skill-box-equip")
     .click();
   await page.getByRole("button", { name: "Save", exact: true }).click();
-  await page.locator(".roster").getByText("Warder", { exact: true }).click();
+  await pickCharacter(page, "Warder");
   await startSoloMatch(page);
 
   // A 1 s ward spell: the ward lands where you stand, so you are in it.
@@ -144,21 +148,21 @@ test("the target frame shows a foe's enchantment, at 16 px and not marked yours 
   const foe = await page.context().newPage();
   // The pages share one storage, so the foe plays this starter too.
   await bringStarter(page, ARMORED);
-  await page.goto("./");
-  await page.getByRole("button", { name: "host a lobby" }).click();
-  const code = page.locator(".lobby-code");
-  await expect(code).toHaveText(/^[A-Z0-9]{3}-[A-Z0-9]{3}$/);
+  // Each side of one plays it through a Team Build of one (#1525), saved
+  // once for both.
+  const team = await saveSoloTeam(page);
+  const code = await hostLobby(page);
   await foe.goto("./");
-  await foe.locator("input.code-input").fill((await code.textContent())?.trim() ?? "");
-  await foe.getByRole("button", { name: "Join", exact: true }).click();
+  await joinByCode(foe, code);
   await foe.getByRole("button", { name: "join team 2" }).click();
   await foe.getByRole("button", { name: "Ready", exact: true }).click();
   await page.getByRole("button", { name: "join team 1" }).click();
   await page.getByRole("button", { name: "Ready", exact: true }).click();
   await page.getByRole("button", { name: "start match" }).click();
-  for (const each of [page, foe]) {
-    await expect(each.locator(".hud-bar-health .hud-bar-label")).toContainText("hp");
-  }
+  await playOwnTeams([
+    { page, team },
+    { page: foe, team },
+  ]);
 
   const effects = page.getByRole("list", { name: "your target's effects" });
   await expect(effects).toBeHidden();

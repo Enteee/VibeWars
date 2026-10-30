@@ -2,6 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 import { projection } from "./camera.js";
 import { key } from "./keys.js";
+import { openRail, pickCharacter } from "./helpers/menu.js";
 import { startSoloMatch } from "./helpers/peers.js";
 import { chooseProfession } from "./helpers/professions.js";
 
@@ -25,12 +26,13 @@ async function besideYou(page: Page, dx: number, half = 6): Promise<Buffer> {
 
 test("a trap you set is drawn round where you stood (#1105)", async ({ page }) => {
   await page.goto("./");
+  await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
   await chooseProfession(page, "primary", "ranger");
   await page.locator("input.editor-name").fill("Trapper");
   await page.locator(".skill-box", { hasText: "Barbed Trap" }).locator(".skill-box-equip").click();
   await page.getByRole("button", { name: "Save", exact: true }).click();
-  await page.locator(".roster").getByText("Trapper", { exact: true }).click();
+  await pickCharacter(page, "Trapper");
   await startSoloMatch(page);
 
   // Its rim, 81 out from you: open ground until the trap is set.

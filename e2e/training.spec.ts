@@ -5,6 +5,7 @@ import { DEFAULT_STEP, zoomFor } from "../apps/web/src/render/camera-rig.js";
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
 import { chooseProfession, professionField } from "./helpers/professions.js";
 import { startSoloMatch } from "./helpers/peers.js";
+import { openRail } from "./helpers/menu.js";
 import { projection, type Projection } from "./camera.js";
 import { key, skillKey } from "./keys.js";
 
@@ -41,6 +42,7 @@ async function openTraining(
 ): Promise<Locator> {
   await page.setViewportSize(WIDE);
   await page.goto("./");
+  await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
   await chooseProfession(page, "primary", "elementalist");
   await page.locator(".skill-box", { hasText: "Fireball" }).locator(".skill-box-equip").click();
@@ -205,6 +207,7 @@ test("(5) the chosen scenario survives a reload", async ({ page }) => {
   await expect(page.locator(".training-log")).toContainText("── Armor ladder ──");
 
   await page.reload();
+  await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
   await expect(page.locator("select.training-scenario")).toHaveValue("armor-ladder");
 });
@@ -250,12 +253,13 @@ test("(8) leaving the editor leaves no arena behind", async ({ page }) => {
   await page.setViewportSize(WIDE);
   await page.goto("./");
   for (let i = 0; i < 3; i += 1) {
+    await openRail(page, "Character Builder");
     await page.getByRole("button", { name: "new character" }).click();
     await expect(page.locator(".training canvas")).toBeVisible();
     await page.getByRole("button", { name: "close" }).click();
-    await expect(page.locator(".roster")).toBeVisible();
+    await expect(page.locator(".screen-characters")).toBeVisible();
   }
-  // The roster's character figures are canvases too (#1250); no arena is.
+  // The cards' character figures are canvases too (#1250); no arena is.
   await expect(page.locator("canvas:not(.character-figure)")).toHaveCount(0);
 
   const canvas = await openTraining(page);
@@ -588,6 +592,7 @@ test("(20) a double right click on a far enemy attacks it: you walk there and sw
   // elementalist's Wand (#614) reaches this dummy from the spawn point.
   await page.setViewportSize(WIDE);
   await page.goto("./");
+  await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
   await expect(professionField(page, "primary")).toHaveAttribute("data-value", "warrior");
   const canvas = page.locator(".training canvas");
@@ -617,6 +622,7 @@ test("(21) the casting slot is lit, and Esc cancels the cast and flashes it (#30
   // window to see the ring and press Esc inside it.
   await page.setViewportSize(WIDE);
   await page.goto("./");
+  await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
   await chooseProfession(page, "primary", "ranger");
   await page
@@ -894,6 +900,7 @@ test("(28) a left click while the right button is held still walks (#438)", asyn
 test("(29) an attack skill pressed out of reach walks in, then lands (#415)", async ({ page }) => {
   await page.setViewportSize(WIDE);
   await page.goto("./");
+  await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
   // A new character is a warrior; Swift Chop needs an axe.
   await page.getByRole("button", { name: "gear", exact: true }).click();
@@ -955,6 +962,7 @@ test("(31) a slot out of reach of the target is marked, and the mark goes once i
 }) => {
   await page.setViewportSize(WIDE);
   await page.goto("/");
+  await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
   // A new character is a warrior; Swift Chop needs an axe.
   await page.getByRole("button", { name: "gear", exact: true }).click();
@@ -994,6 +1002,7 @@ test("(32) the casting slot fills as the cast goes, hovering it shows its toolti
   // Troll Unguent: a 3 s self-cast, long enough to see the fill rise.
   await page.setViewportSize(WIDE);
   await page.goto("/");
+  await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
   await chooseProfession(page, "primary", "ranger");
   await page
@@ -1025,6 +1034,7 @@ test("(32) the casting slot fills as the cast goes, hovering it shows its toolti
 test("(34) Backbreaker lays the melee dummy flat until it rises (#545)", async ({ page }) => {
   await page.setViewportSize(WIDE);
   await page.goto("./");
+  await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
   // A new character is a warrior; Backbreaker needs a hammer.
   await page.getByRole("button", { name: "gear", exact: true }).click();
@@ -1083,6 +1093,7 @@ test("(36) the arena draws at a match's scale: the stage shows less of the world
   const size = { width: 1280, height: 720 };
   await page.setViewportSize(size);
   await page.goto("./");
+  await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
   const stage = page.locator(".training-stage");
   await expect(page.locator(".training canvas")).toBeVisible();
@@ -1266,6 +1277,7 @@ test("(40) an adrenaline skill's slot fills from dark to lit as it charges (#826
 }) => {
   await page.setViewportSize(WIDE);
   await page.goto("./");
+  await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
   // A new character is a warrior; Sever Artery needs a sword, and 4 strikes.
   await page.getByRole("button", { name: "gear", exact: true }).click();
@@ -1308,6 +1320,7 @@ test("(40) an adrenaline skill's slot fills from dark to lit as it charges (#826
 test("(41) a well needs a corpse, then lands on one (#1104)", async ({ page }) => {
   await page.setViewportSize(WIDE);
   await page.goto("./");
+  await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
   await chooseProfession(page, "primary", "necromancer");
   await page
@@ -1344,6 +1357,7 @@ test("(42) Symbol of Wrath strikes the dummy it was cast at once a second, five 
 }) => {
   await page.setViewportSize(WIDE);
   await page.goto("./");
+  await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
   await chooseProfession(page, "primary", "monk");
   await page
@@ -1443,6 +1457,7 @@ test("2 swaps to weapon set 2, the empty 3 does nothing, and a slot's click swap
   await page.setViewportSize(WIDE);
   await page.goto("./");
   // A new character is a warrior with a sword and shield in set 1.
+  await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
   await page.getByRole("button", { name: "gear", exact: true }).click();
   await page.getByRole("tab", { name: /^2/ }).click();
@@ -1472,6 +1487,7 @@ test("2 swaps to weapon set 2, the empty 3 does nothing, and a slot's click swap
 test("a pet attack arms the wolf's next bite, and the log says so (#1107)", async ({ page }) => {
   await page.setViewportSize(WIDE);
   await page.goto("./");
+  await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
   await chooseProfession(page, "primary", "ranger");
   for (const name of ["Charm Animal", "Brutal Strike"]) {
@@ -1497,6 +1513,7 @@ test("(45) your wolf's row in the party window takes Heel, and lights it (#1110)
 }) => {
   await page.setViewportSize(WIDE);
   await page.goto("./");
+  await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
   await chooseProfession(page, "primary", "ranger");
   await page.locator(".skill-box", { hasText: "Charm Animal" }).locator(".skill-box-equip").click();

@@ -79,6 +79,29 @@ export async function playOwnTeams(
 }
 
 /**
+ * The Team Lobby (#1460) for a spec that needs a match and not a
+ * particular character: nobody proposes, so each side plays the house
+ * team. Everyone is ready, then each takes its side's first seat and is
+ * ready again. Resolves once each page's HUD shows the player.
+ */
+export async function playHouseTeams(pages: readonly Page[]): Promise<void> {
+  for (const page of pages) {
+    await expect(page.locator(".team-lobby-stage")).toHaveText("Choose a team build");
+  }
+  for (const page of pages) {
+    await page.getByRole("button", { name: "Ready", exact: true }).click();
+  }
+  for (const page of pages) {
+    await expect(page.locator(".team-lobby-stage")).toHaveText("Take a character");
+    await page.locator(".team-lobby-seat").first().click();
+    await page.getByRole("button", { name: "Ready", exact: true }).click();
+  }
+  for (const page of pages) {
+    await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp");
+  }
+}
+
+/**
  * A match in a lobby of one, which `canStart` allows: what Quick Match
  * was for the tests that need nobody else. The player plays the active
  * character, through a Team Build of one (#1525). Resolves once the HUD
