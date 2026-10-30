@@ -741,6 +741,13 @@ export type StatusTriggerEvent =
    * bearer's have ended with it. An echo's.
    */
   | "bearer-chant-or-shout-ends"
+  /**
+   * The bearer has no energy left (#1583): checked each step, after
+   * upkeep, so it fires every step it stays at 0 until the status ends.
+   * Wither's "if target foe's Energy reaches 0", which ends when triggered.
+   * A dead bearer never answers.
+   */
+  | "bearer-energy-empty"
   | "ends"
   /**
    * It ended before its time ran out (#1421): stripped, cut short by its

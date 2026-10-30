@@ -529,7 +529,7 @@ describe("describeSkill", () => {
           lines(rule?.onCritical ?? []) +
           lines(rule?.onFailedToHit ?? []) +
           (rule?.flightSpeed === undefined ? 0 : 1) +
-          (rule !== undefined && rule.strikes > 1 && entry.attack?.weapon === "bow" ? 1 : 0) +
+          (rule !== undefined && rule.strikes > 1 ? 1 : 0) +
           (entry.whileActivating === undefined ? 0 : 1) +
           (entry.projectile === undefined ? 0 : 1) +
           (isEasilyInterrupted(entry.type) ? 1 : 0) +
@@ -628,6 +628,17 @@ describe("attack skills (#417)", () => {
       "If target is below 50% Health: recharges all your other attack skills",
     );
     expect(texts("assassin.moebius-strike")[0]).toBe("Off-hand attack. Must follow a dual attack.");
+  });
+
+  it("says how often a melee attack strikes and how many a capped splash hits (#1618)", () => {
+    const texts = (id: string) => describeSkill(skill(id)).effects.map(({ text }) => text);
+    expect(texts("warrior.sun-and-moon-slash")).toContain("Strikes twice");
+    expect(texts("ranger.dual-shot").join("\n")).toContain("Shoots 2 arrows at once");
+    expect(texts("ranger.dual-shot").join("\n")).not.toContain("Strikes");
+    expect(texts("warrior.cleave").some((text) => text.startsWith("Up to 2 adjacent foes"))).toBe(
+      true,
+    );
+    expect(texts("assassin.death-blossom")).toContain("Adjacent foes take 20 damage");
   });
 
   it("words the crippling knockdown chain, and a state its attack requires (#1041)", () => {

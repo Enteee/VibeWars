@@ -1671,6 +1671,42 @@ const status = {
       `<path d="M3 8L6 12L3 16Z" ${stroke(c, 1.4)}/>` +
       `<path d="M10 4V20M14 4V20M18 4V20M8 4.5H20M8 19.5H20" ${stroke(c, 1.8)}/>`,
   ],
+  // Necromancer staples 2 (#1583), stand-ins until their art card.
+  // Hex: a hollow drop over two falling arrows, health and energy wither away.
+  wither: [
+    "hex",
+    (c) =>
+      `<path d="M12 3c2.5 3.5 4 5.5 4 8a4 4 0 0 1-8 0c0-2.5 1.5-4.5 4-8z" ${stroke(c, 1.8)}/>` +
+      `<path d="M7 16v4M5 18l2 2 2-2M17 16v4M15 18l2 2 2-2" ${stroke(c, 1.6)}/>`,
+  ],
+  // Hex: a drop drawn off sideways, health siphoned to the caster.
+  "life-siphon": [
+    "hex",
+    (c) =>
+      `<path d="M9 4c2.5 3.5 4 5.5 4 8a4 4 0 0 1-8 0c0-2.5 1.5-4.5 4-8z" fill="${c}"/>` +
+      `<path d="M14 15h6M17.5 12.5L20 15l-2.5 2.5" ${stroke(c, 1.8)}/>`,
+  ],
+  // Skill effect: a drop over three rising arrows, the siphoned health returning.
+  "life-siphon-regen": [
+    "skill-effect",
+    (c) =>
+      `<path d="M12 3c2 3 3.5 4.5 3.5 6.5a3.5 3.5 0 0 1-7 0C8.5 7.5 10 6 12 3z" fill="${c}"/>` +
+      `<path d="M6 19.5l2.5-2.5 2.5 2.5M10 19.5l2.5-2.5 2.5 2.5M14 19.5l2.5-2.5 2.5 2.5" ${stroke(c, 1.6)}/>`,
+  ],
+  // Hex: a struck-through blade trailing speed lines, fast swings that miss.
+  "reckless-haste": [
+    "hex",
+    (c) =>
+      `<path d="M8 17L18 7" ${stroke(c, 2.2)}/><path d="M7 7l10 10" ${stroke(c, 1.6)}/>` +
+      `<path d="M3 12h3M4 15.5h3M5 19h3" ${stroke(c, 1.6)}/>`,
+  ],
+  // Hex: a broken ring over a falling arrow, the enchantment turned to rot.
+  "corrupt-enchantment": [
+    "hex",
+    (c) =>
+      `<path d="M8 5.5A6 6 0 1 0 16 5.5" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 3v8M9.5 8.5L12 11l2.5-2.5" ${stroke(c, 1.8)}/>`,
+  ],
 };
 
 // ---------------------------------------------------------------------------
@@ -3554,6 +3590,40 @@ const skillGlyph = {
     `<g transform="translate(12,15.5) scale(0.8) translate(-12,-12)">${skillGlyph.speed()}</g>` +
     inkLine("M3 5H16", 2.2) +
     inkFill("M22 5L16 2V8Z"),
+  // Golden Lotus Strike: a blade over an open lotus (#1617).
+  "dagger-lotus": () =>
+    `<g transform="translate(6,-2.5) scale(0.62)">${skillGlyph.dagger()}</g>` +
+    inkFill("M12 21.5C9.5 18 9.5 13.5 12 10C14.5 13.5 14.5 18 12 21.5Z") +
+    inkFill("M10.5 21.5C6 21.5 2.5 19 2 14C6.5 14 9.6 16.5 10.5 21.5Z") +
+    inkFill("M13.5 21.5C18 21.5 21.5 19 22 14C17.5 14 14.4 16.5 13.5 21.5Z"),
+  // Golden Phoenix Strike: a flame with swept wings, a blade point under it (#1617).
+  "flame-wings": () =>
+    `<g transform="translate(12,8) scale(0.8) translate(-12,-12)">${skillGlyph.flame()}</g>` +
+    inkLine("M2.5 5C3.5 11 7 13.5 10.5 13.5M21.5 5C20.5 11 17 13.5 13.5 13.5", 2.4) +
+    inkLine("M12 14.5V18", 2.4) +
+    inkFill("M9.5 18H14.5L12 22.5Z"),
+  // Exhausting Assault: a blade striking a spell star with a down arrow in it (#1617).
+  "dagger-drain": () =>
+    inkLine("M3 21L11 13", 2.6) +
+    inkFill("M11 13L14.5 9.5L12.8 15Z") +
+    `<path d="M16.5 2L18.2 6L22 7.5L18.2 9L16.5 13L14.8 9L11 7.5L14.8 6Z" ${stroke(C.ink, 1.8)}/>` +
+    inkLine("M16.5 15.5V21M14 19L16.5 21.5L19 19", 2),
+  // Mantis Touch: a hand held low, a broken line beside it that cripples (#1617).
+  "hand-limp": () =>
+    `<g transform="translate(0,9) scale(0.66)">${skillGlyph.palm()}</g>` +
+    inkLine("M19 2L14.5 8.5L18.5 12L14 19", 2.6),
+  // Palm Strike: a hand held low, a burst at its fingertips (#1617).
+  "hand-burst": () =>
+    `<g transform="translate(0,9) scale(0.66)">${skillGlyph.palm()}</g>` +
+    `<g transform="translate(16.5,7.5) scale(0.85) translate(-12,-12)">${inkFill(burst(7))}</g>`,
+  // Signet of Toxic Shock: a drop with a bolt cut out of it (#1617).
+  "drop-shock": () =>
+    inkFill("M12 2.5C12 2.5 4.5 11 4.5 15.5A7.5 7.5 0 0 0 19.5 15.5C19.5 11 12 2.5 12 2.5Z") +
+    `<path d="M13.5 9.5L9.5 15H14L10.5 20.5" ${stroke(C.bg, 2.2)}/>`,
+  // Beguiling Haze: the step through the shadows, three dazed dots circling above (#1617).
+  "blink-daze": () =>
+    `<g transform="translate(0,6)">${skillGlyph.blink()}</g>` +
+    `<circle cx="5.5" cy="4.5" r="1.8" fill="${C.ink}"/><circle cx="12" cy="2.8" r="1.8" fill="${C.ink}"/><circle cx="18.5" cy="4.5" r="1.8" fill="${C.ink}"/>`,
   "next-attack-adrenaline": () => nextSkill("attack", "next-adrenaline"),
 };
 

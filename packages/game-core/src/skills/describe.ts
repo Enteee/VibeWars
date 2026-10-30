@@ -651,6 +651,7 @@ const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-creates-creature": "creates a creature",
   "bearer-gains-condition": "gains a new condition",
   "bearer-chant-or-shout-ends": "has a chant or shout end on it",
+  "bearer-energy-empty": "has no energy left",
   ends: "ends",
   "ends-early": "ends prematurely",
   expires: "expires",
@@ -707,13 +708,15 @@ function describeTriggers(
           ? DROPPED
           : on.includes("bearer-chant-or-shout-ends")
             ? CHANT_OR_SHOUT_ENDS
-            : on.includes("ends") || on.includes("ends-early") || on.includes("expires")
-              ? `when it ${on.map((event) => whenOf(event, trigger)).join(" or ")}`
-              : once && on.includes("bearer-uses-skill")
-                ? NEXT_SKILL
-                : nextOnly
-                  ? `the next time it ${on.map((event) => whenOf(event, trigger)).join(" or ")}`
-                  : `whenever it ${on.map((event) => whenOf(event, trigger)).join(" or ")}`,
+            : on.includes("bearer-energy-empty")
+              ? ENERGY_EMPTY
+              : on.includes("ends") || on.includes("ends-early") || on.includes("expires")
+                ? `when it ${on.map((event) => whenOf(event, trigger)).join(" or ")}`
+                : once && on.includes("bearer-uses-skill")
+                  ? NEXT_SKILL
+                  : nextOnly
+                    ? `the next time it ${on.map((event) => whenOf(event, trigger)).join(" or ")}`
+                    : `whenever it ${on.map((event) => whenOf(event, trigger)).join(" or ")}`,
       ranks,
       bearerIsFoe,
     );
@@ -745,6 +748,9 @@ function weaponBoundWhen(event: StatusTriggerEvent, weapon: AttackWeaponClass): 
 
 /** An echo's (#1423), in the corpus's words. */
 const CHANT_OR_SHOUT_ENDS = "whenever a chant or shout ends on it";
+
+/** An energy-empty trigger's (#1583), in the corpus's words: Wither's. */
+const ENERGY_EMPTY = "if its energy reaches 0";
 
 /**
  * The heal of a drop that heals its bearer and then, the same, the rest
@@ -1241,6 +1247,14 @@ function foesWithin(radius: number, hits: SplashEffect["hits"]): string {
   }
 }
 
+/** A splash's reach with its cap (#1618): Cleave's "Up to 2 adjacent foes". */
+function upTo(splash: SplashEffect): string {
+  const who = foesWithin(splash.radius, splash.hits);
+  return splash.maxTargets === undefined || splash.hits === "party"
+    ? who
+    : `Up to ${String(splash.maxTargets)} ${lowerFirst(who)}`;
+}
+
 /**
  * An effect's lines: one, or for an `if`, one per effect inside it, each
  * led by its condition: "If it interrupts: deals 102 damage".
@@ -1257,7 +1271,7 @@ function describeEffects(
       // +3 Health regeneration".
       ...(aura === undefined ? [] : [describeAura(aura, "in its range")]),
       ...(attack?.onHit ?? []).map((onHit) => describeSpiritBlow(onHit, ranks)),
-      ...(deathBurst === undefined ? [] : [describeDeathBurst(deathBurst)]),
+      ...(deathBurst === undefined ? [] : [describeDeathBurst(deathBurst, ranks)]),
     ];
   }
   if (effect.kind === "create-ground-effect") {
@@ -1333,15 +1347,19 @@ function describeSpiritBlow(
  * A spirit's death burst (#1550): "When it dies, non-spirit foes in the
  * area take 8 damage per second it lived (max 150)".
  */
-function describeDeathBurst(burst: DeathBurst): EffectDescription {
+function describeDeathBurst(
+  burst: DeathBurst,
+  ranks: ReadonlyMap<string, number>,
+): EffectDescription {
   const who = `non-spirit ${burst.affects} ${AREA_TEXT.get(burst.radius) ?? "in its range"}`;
-  const amount = String(burst.perSecondAlive);
+  const rate = describeMagnitude(burst.perSecondAlive, ranks);
+  const amount = String(rate.current);
   const what =
     burst.effect === "damage" ? `take ${amount} damage` : `are healed for ${amount} Health`;
   const max = burst.max === undefined ? "" : ` (max ${String(burst.max)})`;
   return {
     text: `When it dies, ${who} ${what} per second it lived${max}`,
-    magnitude: undefined,
+    magnitude: rate,
   };
 }
 
@@ -1743,7 +1761,7 @@ function describeEffect(
       const last = parts.pop();
       const what = parts.length === 0 ? (last ?? "") : `${parts.join(", ")} and ${String(last)}`;
       return {
-        text: `${foesWithin(effect.radius, effect.hits)} ${what}`,
+        text: `${upTo(effect)} ${what}`,
         magnitude: inner.find(({ description }) => description.magnitude !== undefined)?.description
           .magnitude,
       };
@@ -2270,10 +2288,14 @@ export function describeSkill(
     weaponDamage > 0 && weaponDamage < 1
       ? `, each dealing ${String(Math.round((1 - weaponDamage) * 100))}% less damage`
       : "";
+  // Sun and Moon Slash's, a dual attack's (#1618): "Strikes twice".
+  const strikesText = strikes === 2 ? "Strikes twice" : `Strikes ${String(strikes)} times`;
   const arrowsLine =
-    strikes > 1 && skill.attack?.weapon === "bow"
-      ? [{ text: `Shoots ${String(strikes)} arrows at once${weaker}`, magnitude: undefined }]
-      : [];
+    strikes <= 1
+      ? []
+      : skill.attack?.weapon === "bow"
+        ? [{ text: `Shoots ${String(strikes)} arrows at once${weaker}`, magnitude: undefined }]
+        : [{ text: `${strikesText}${weaker}`, magnitude: undefined }];
   // A status borne while activating (#524): Healing Signet's armor loss.
   const whileActivating =
     skill.whileActivating === undefined
@@ -2298,11 +2320,20 @@ export function describeSkill(
     skill.target !== "self" && skill.range === RANGE_SPELL / 2
       ? [{ text: "Half the normal range", magnitude: undefined }]
       : [];
-  // A skill that exploits a corpse (#466) says so before what it does.
+  // A skill that exploits a corpse (#466) says so before what it does,
+  // and which: its own, or its target's (#1583).
   const corpseLine =
     skill.corpse === undefined
       ? []
-      : [{ text: "Exploits the nearest corpse", magnitude: undefined }];
+      : [
+          {
+            text:
+              skill.corpse.near === "target"
+                ? "Exploits the corpse nearest your target"
+                : "Exploits the nearest corpse",
+            magnitude: undefined,
+          },
+        ];
   // A pet that comes with the skill on the bar (#1046): Charm Animal's.
   const companionHealth =
     skill.companion === undefined ? undefined : describeMagnitude(skill.companion.maxHealth, ranks);
