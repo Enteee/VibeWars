@@ -100,6 +100,7 @@ import {
   applyStatus,
   gainEnergy,
   resolveSkillEffects,
+  stateHolds,
   type CombatEvent,
   type SkillOutcome,
   type SkillResolution,
@@ -4445,6 +4446,10 @@ export class MatchSimulation {
    * them, so a second attack skill loosed before the first shot lands
    * carries none, and a chant that would have run out in flight still
    * lands its rider.
+   *
+   * A skill's `flightSpeed` (#1486) speeds each shot whose `when` holds
+   * now, its victim the target: Swift Javelin keeps its speed if its
+   * enchantment ends in flight.
    */
   #releaseSkill(
     record: ParticipantRecord,
@@ -4458,14 +4463,48 @@ export class MatchSimulation {
       blow: skillBlow(resolution.skill, record.combatant),
       next: nextAttackSkillOf(record.combatant),
     };
+    const flight = resolution.skill.attack?.flightSpeed;
     const events = resolution.targets.flatMap((victim) => {
       const target = this.#participants.get(victim.id);
+      const multiplier =
+        flight !== undefined &&
+        (flight.when === undefined ||
+          stateHolds(flight.when, record.combatant, victim, this.#participants))
+          ? flight.multiplier
+          : 1;
       return target === undefined || victim.dead
         ? []
-        : this.#release(record, target, speed, dt, skillHit);
+        : this.#release(record, target, speed * multiplier, dt, skillHit);
     });
     useNextAttackSkill(record.combatant, skillHit.next, events);
     return events;
+  }
+
+  /**
+   * What an attack skill's shot that failed to hit `target` does
+   * (#1486): its `onFailedToHit`, `target` the target. Nothing for a
+   * plain shot, or with its attacker gone from the match.
+   */
+  #failedToHit(
+    attacker: Combatant | undefined,
+    target: ParticipantRecord,
+    skillHit: SkillHit | undefined,
+    earlier: readonly CombatEvent[],
+  ): CombatEvent[] {
+    const effects = skillHit?.skill.attack?.onFailedToHit ?? [];
+    return skillHit === undefined || attacker === undefined || effects.length === 0
+      ? []
+      : applySkillEffects(
+          {
+            skill: { ...skillHit.skill, effects },
+            caster: attacker,
+            targets: [target.combatant],
+            rng: this.#rng,
+            rules: this.#ruleset.combat,
+            surroundings: this.#participants,
+          },
+          earlier,
+        );
   }
 
   /**
@@ -4497,7 +4536,7 @@ export class MatchSimulation {
    * again. Melee is never checked; its reach is shorter than any gap.
    * Releasing an attack, flying or not, ends the attacker's weapon spell
    * (#758). Returns that, and the miss or the obstruction, for the caller
-   * to log.
+   * to log, with what an attack skill's `onFailedToHit` did (#1486).
    */
   #release(
     record: ParticipantRecord,
@@ -4512,11 +4551,15 @@ export class MatchSimulation {
       bearerAttacked(record.combatant, events, "projectile");
       if (blindMisses(record.combatant, this.#rng)) {
         bearerFailedToHit(record.combatant);
-        return [...events, { kind: "attack-missed", targetId: target.id }];
+        events.push({ kind: "attack-missed", targetId: target.id });
+        return [...events, ...this.#failedToHit(record.combatant, target, skillHit, events)];
       }
     }
     if (!hasLineOfSight(record.position, target.position, this.#walls)) {
-      return [...events, { kind: "attack-obstructed", targetId: target.id }];
+      events.push({ kind: "attack-obstructed", targetId: target.id });
+      return skillHit?.kind === "spell"
+        ? events
+        : [...events, ...this.#failedToHit(record.combatant, target, skillHit, events)];
     }
     const from = record.position;
     const tracked = trackTarget(target.history.samples(), dt, target.position);
@@ -4578,28 +4621,35 @@ export class MatchSimulation {
    * it arrived is not interrupted. Blocked, it lands the skill's
    * `onBlocked` instead, which earns no adrenaline; an `unblockable`
    * skill (Wild Throw) rolls no block. With its attacker gone from the
-   * match, the blow lands and the riders do not.
+   * match, the blow lands and the riders do not. A critical hit lands its
+   * `onCritical` after the riders; a dodge, a block (after `onBlocked`)
+   * or a wall lands its `onFailedToHit` (#1486).
    *
    * A hit lands the riders of the chants its release spent (#782) after
    * the skill's own.
    */
   #land(projectile: Projectile): void {
+    const target = this.#participants.get(projectile.targetId);
+    const { skillHit } = projectile;
+    const attacker = this.#participants.get(projectile.attackerId);
     if (projectile.obstructed) {
       // It hit the wall; where the target is now has nothing to do with it.
-      this.#logShot(projectile, [{ kind: "attack-obstructed", targetId: projectile.targetId }]);
+      const events: CombatEvent[] = [{ kind: "attack-obstructed", targetId: projectile.targetId }];
+      if (skillHit?.kind !== "spell" && target !== undefined && !target.combatant.dead) {
+        events.push(...this.#failedToHit(attacker?.combatant, target, skillHit, events));
+        this.#recordDeaths(events);
+      }
+      this.#logShot(projectile, events);
       return;
     }
-    const target = this.#participants.get(projectile.targetId);
     if (target === undefined || target.combatant.dead) {
       return;
     }
-    const { skillHit } = projectile;
     if (skillHit?.kind === "spell") {
       this.#landSpell(projectile, skillHit, target);
       return;
     }
     const events: CombatEvent[] = [];
-    const attacker = this.#participants.get(projectile.attackerId);
     // What the attacker's statuses add to the hit, each logged apart (#939).
     const fired: FiredTrigger[] = [];
     const riders = (effects: Skill["effects"]): CombatEvent[] =>
@@ -4619,6 +4669,7 @@ export class MatchSimulation {
     let blocked = false;
     if (!this.#reaches(projectile, target)) {
       events.push({ kind: "attack-dodged", targetId: target.id });
+      events.push(...riders(skillHit?.skill.attack?.onFailedToHit ?? []));
     } else if (
       !unblockableNow(
         skillHit?.skill.attack?.unblockable ?? false,
@@ -4635,6 +4686,7 @@ export class MatchSimulation {
       }
       attackReached(target.combatant, events);
       events.push(...riders(skillHit?.skill.attack?.onBlocked ?? []));
+      events.push(...riders(skillHit?.skill.attack?.onFailedToHit ?? []));
     } else {
       const blow = settleBlow(
         skillHit?.blow ?? PLAIN_BLOW,
@@ -4696,6 +4748,9 @@ export class MatchSimulation {
       }
       attackReached(target.combatant, events);
       events.push(...riders(skillHit?.skill.effects ?? []));
+      if (critical) {
+        events.push(...riders(skillHit?.skill.attack?.onCritical ?? []));
+      }
     }
     if (
       attacker !== undefined &&
