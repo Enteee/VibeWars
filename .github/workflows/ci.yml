@@ -109,14 +109,20 @@ jobs:
           git show "origin/$BASE_REF:pnpm-lock.yaml" > "$RUNNER_TEMP/base-lock.yaml"
           devenv shell -- node scripts/ci/lockfile-age.mjs "$RUNNER_TEMP/base-lock.yaml" pnpm-lock.yaml
 
-  # Its own required check (EXPECTED_CHECKS, #132), so an e2e failure is
-  # reported under its own name and e2e runs alongside `ci` rather than after
-  # it. No `needs:` and no path filter, for the reason given on `ci`: a
-  # required check that is skipped, or never reports, must not count as green.
-  e2e:
-    name: e2e
+  # The `e2e` check (EXPECTED_CHECKS, #132) is the aggregate below; the work
+  # is spread over four shards (#1610) so a pull request waits one quarter of
+  # the suite. Each shard builds for itself: the build is a small part of the
+  # run, and sharing it would add an artifact round trip and a `needs:`.
+  # No path filter, for the reason given on `ci`: a required check that is
+  # skipped, or never reports, must not count as green.
+  e2e-shard:
+    name: e2e-shard (${{ matrix.shard }}/4)
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
@@ -148,14 +154,29 @@ jobs:
       # no `playwright install`.
       - name: End-to-end tests
         if: steps.needed.outputs.needed == 'true'
-        run: devenv shell -- pnpm run test:e2e
+        run: devenv shell -- pnpm run test:e2e --shard=${{ matrix.shard }}/4
 
       - name: Upload Playwright output
         if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: playwright-output
+          name: playwright-output-${{ matrix.shard }}
           path: |
             playwright-report/
             test-results/
           if-no-files-found: ignore
+
+  # Green only if every shard succeeded. A cancelled or skipped shard is a
+  # failure here (an asset-only skip still runs the shards, which succeed).
+  e2e:
+    name: e2e
+    needs: e2e-shard
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Every shard succeeded
+        env:
+          RESULT: ${{ needs.e2e-shard.result }}
+        run: |
+          echo "e2e-shard: $RESULT"
+          [ "$RESULT" = success ]
