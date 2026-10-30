@@ -65,6 +65,6 @@ export const PARAGON_ICONS = {
   "paragon.chest-thumper": { glyph: "spear-crack", modifier: "bleed" },
   "paragon.spear-of-redemption": { glyph: "spear-cleanse" },
   "paragon.spear-swipe": { glyph: "spear-swipe", modifier: "stun" },
-  // A placeholder until the asset-designer's (#1528).
-  "paragon.holy-spear": { glyph: "spear", modifier: "plus" },
+  // Anti-summon (#1528, #1568): the skill's mark, a struck ghost below it.
+  "paragon.holy-spear": { glyph: "anti-summon-spear" },
 };
