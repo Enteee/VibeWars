@@ -52,4 +52,16 @@ export const MESMER_ICONS = {
   "mesmer.shatter-hex": { glyph: "hex-shatter" },
   "mesmer.psychic-instability": { glyph: "interrupt-knockdown" },
   "mesmer.arcane-conundrum": { glyph: "hex-slow-star" },
+  // Crowd punishers (#1501, #1555): the shared hex ring; Epidemic is a condition spell with none.
+  "mesmer.panic": { glyph: "hex-panic" },
+  "mesmer.wastrels-demise": { glyph: "hex-rising" },
+  "mesmer.epidemic": { glyph: "drop-spread" },
+  // Anti-summon (#1528, #1568): the skill's mark, a struck ghost below it.
+  "mesmer.spiritual-pain": { glyph: "anti-summon-pain" },
+  // Placeholders until the asset-designer's (#1570): Mesmer staples.
+  "mesmer.power-leak": { glyph: "interrupt", modifier: "half" },
+  "mesmer.blackout": { glyph: "eye-slash", modifier: "stun" },
+  "mesmer.shatter-hex": { glyph: "cleanse", modifier: "area" },
+  "mesmer.psychic-instability": { glyph: "interrupt", modifier: "upkeep" },
+  "mesmer.arcane-conundrum": { glyph: "slow", modifier: "hourglass" },
 };

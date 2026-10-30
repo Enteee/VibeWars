@@ -439,6 +439,17 @@ describe("silenced (#1234)", () => {
   it("marks nothing without one", () => {
     expect(silenced(bar, self({}))).toEqual([false, false, false, false, false]);
   });
+
+  it("marks the attack skill alone under Obsidian Flesh, which bars attacks (#1575)", () => {
+    const obsidian = { ...shrouded, id: "obsidian-flesh", casterId: "me" } as const;
+    expect(silenced(bar, self({ statuses: [obsidian] }))).toEqual([
+      false,
+      false,
+      false,
+      true,
+      false,
+    ]);
+  });
 });
 
 describe("wrongWeapon (#417)", () => {

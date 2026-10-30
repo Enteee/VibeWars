@@ -467,6 +467,16 @@ export interface DrainOwnEnergyEffect {
 }
 
 /**
+ * The target suffers `amount` overcast (#1580), through `addOvercast`:
+ * Exhausting Assault's "target foe suffers 10 Overcast". Its energy
+ * ceiling drops; any energy above the new ceiling is lost.
+ */
+export interface OvercastEffect {
+  readonly kind: "overcast";
+  readonly amount: Magnitude;
+}
+
+/**
  * The caster gains a status, with itself as source (#1367): Ice Spear's
  * "you gain +1...4 Health regeneration for 5 seconds". Acts on the caster,
  * once however many targets the skill reached, as GW1's "you gain" does.
@@ -610,11 +620,12 @@ export type DisableOwnSkillsEffect =
 /**
  * Leave the caster's chain mark of `role` on the target (#1234), as a
  * chain attack's hit does (`chain.ts`), from a skill that is no attack:
- * Iron Palm's "counts as a lead attack".
+ * Iron Palm's "counts as a lead attack", Mantis Touch's "counts as an
+ * off-hand attack" (#1580).
  */
 export interface ChainMarkEffect {
   readonly kind: "chain-mark";
-  readonly role: "lead";
+  readonly role: "lead" | "off-hand";
 }
 
 /**
@@ -995,6 +1006,7 @@ export type UnconditionalEffect =
   | ResurrectEffect
   | ResurrectCompanionsEffect
   | DrainOwnEnergyEffect
+  | OvercastEffect
   | CasterGainsStatusEffect
   | RechargeFasterEffect
   | SplashEffect

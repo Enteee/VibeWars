@@ -174,6 +174,7 @@ describe("status definitions", () => {
       "blood-ritual": 3,
       "energetic-was-lee-sa": 2,
       "blood-is-power": 5,
+      "obsidian-flesh": -2,
     });
   });
 

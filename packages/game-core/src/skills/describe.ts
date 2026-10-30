@@ -307,6 +307,9 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.preventsSpells) {
     parts.push("cannot cast spells");
   }
+  if (definition.preventsAttacks) {
+    parts.push("cannot attack");
+  }
   if (definition.untargetableByFoeSpells) {
     parts.push("cannot be the target of enemy spells");
   }
@@ -1615,7 +1618,14 @@ function describeEffect(
     case "disable-own-skills":
       return { text: disableOwnText(effect), magnitude: undefined };
     case "chain-mark":
-      return { text: "Counts as a lead attack", magnitude: undefined };
+      return {
+        text: effect.role === "lead" ? "Counts as a lead attack" : "Counts as an off-hand attack",
+        magnitude: undefined,
+      };
+    case "overcast": {
+      const magnitude = describeMagnitude(effect.amount, ranks);
+      return { text: `Target suffers ${String(magnitude.current)} overcast`, magnitude };
+    }
     case "lengthen-recharge": {
       const magnitude = describeMagnitude(effect.seconds, ranks);
       const which = effect.of === "this-skill" ? "This skill" : "That skill";

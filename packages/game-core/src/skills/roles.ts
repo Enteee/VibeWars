@@ -76,6 +76,7 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     case "lengthen-recharge":
     case "disable-own-skills":
     case "chain-mark":
+    case "overcast":
       return [];
     // A spirit does what it projects (#1064): Recuperation heals.
     case "summon":
