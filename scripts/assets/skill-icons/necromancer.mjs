@@ -43,15 +43,6 @@ export const NECROMANCER_ICONS = {
   "necromancer.blood-is-power": { glyph: "sac-energy" },
   "necromancer.order-of-pain": { glyph: "sac-blade" },
   "necromancer.plague-signet": { glyph: "drop-to-signet" },
-  // Necromancer staples 2 (#1583), stand-ins until their art card.
-  "necromancer.wither": { glyph: "hex-drain", modifier: "down" },
-  "necromancer.life-siphon": { glyph: "drop-arrow", modifier: "self" },
-  "necromancer.reckless-haste": { glyph: "hex-miss", modifier: "area" },
-  "necromancer.corrupt-enchantment": { glyph: "ring-rend", modifier: "down" },
-  "necromancer.strip-enchantment": { glyph: "ring-rend", modifier: "bleed" },
-  "necromancer.deathly-chill": { glyph: "snowflake", modifier: "down" },
-  "necromancer.putrid-explosion": { glyph: "mark-skull", modifier: "corpse" },
-  "necromancer.signet-of-agony": { glyph: "drop-barbs", modifier: "area" },
   // Touch skills (#1643), stand-ins until their art card.
   "necromancer.vile-touch": { glyph: "mark-skull", modifier: "down" },
   "necromancer.touch-of-agony": { glyph: "drop-touch", modifier: "bleed" },
