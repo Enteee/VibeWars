@@ -1620,4 +1620,195 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  // Necromancer and Elementalist staples (#1540).
+  {
+    id: "elementalist.mark-of-rodgort",
+    name: "Mark of Rodgort",
+    gwId: 190,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.fire-magic",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    // "Target foe and all nearby foes are hexed": the target, then every
+    // foe near it.
+    area: {
+      radius: AREA_NEARBY,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 10...35 seconds, whenever each foe is struck for fire damage,
+    // that foe is set on fire for 1...4 seconds": 30 s. The Burning is the
+    // hex's.
+    effects: [{ kind: "apply-status", statusId: "mark-of-rodgort", durationSeconds: 30 }],
+  },
+  {
+    id: "elementalist.lava-font",
+    name: "Lava Font",
+    gwId: 195,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.fire-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1.5,
+    rechargeSeconds: 4,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5 seconds, foes adjacent to the location where this spell was
+    // cast are struck for 5...50 fire damage each second": it stays where
+    // the caster stood. The Overcast "nearby instead" is not modelled.
+    effects: [
+      {
+        kind: "create-ground-effect",
+        anchor: "caster",
+        durationSeconds: { flat: 5 },
+        act: {
+          kind: "pulse",
+          pulse: {
+            count: 5,
+            everySeconds: 1,
+            delaySeconds: 0,
+            area: {
+              radius: AREA_ADJACENT,
+              origin: "caster",
+              affects: "enemies",
+              maxTargets: undefined,
+              includesCaster: false,
+            },
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "elementalist.fire-magic", atZero: 5, atTwelve: 41 },
+                },
+                type: "fire",
+                armorPenetration: 0,
+              },
+            ],
+          },
+        },
+      },
+    ],
+  },
+  {
+    id: "elementalist.ward-against-elements",
+    name: "Ward Against Elements",
+    gwId: 175,
+    type: "ward",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.earth-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    // "You create a Ward Against Elements at your current location. For
+    // 8...20 seconds, non-spirit allies in this area gain +24 armor
+    // against elemental damage."
+    effects: [
+      {
+        kind: "create-ground-effect",
+        anchor: "caster",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.earth-magic", atZero: 8, atTwelve: 18 },
+        },
+        act: {
+          kind: "aura",
+          aura: {
+            statusId: "ward-against-elements",
+            affects: "allies",
+            radius: AREA_IN_THE_AREA,
+          },
+        },
+      },
+    ],
+  },
+  {
+    id: "elementalist.shock-arrow",
+    name: "Shock Arrow",
+    gwId: 1082,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.air-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    // "...flies swiftly toward target foe": as fast as Lightning Orb.
+    projectile: { speed: 1.5 * RANGE_SPELL },
+    // "...striking for 5...50 lightning damage. If Shock Arrow strikes a
+    // foe suffering from Cracked Armor, you gain 5 Energy plus 1 Energy
+    // for every 2 ranks of Energy Storage. Shock Arrow has 25% armor
+    // penetration."
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.air-magic", atZero: 5, atTwelve: 41 },
+        },
+        type: "lightning",
+        armorPenetration: 0.25,
+      },
+      {
+        kind: "if",
+        condition: { kind: "target-has-status", statusId: "cracked-armor" },
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: {
+              scaling: { attributeId: "elementalist.energy-storage", atZero: 5, atTwelve: 11 },
+            },
+          },
+        ],
+      },
+    ],
+  },
 ];

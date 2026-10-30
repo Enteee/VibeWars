@@ -24,7 +24,10 @@ export type DervishStatusId =
   | "avatar-of-dwayna"
   | "avatar-of-balthazar"
   | "avatar-of-grenth"
-  | "avatar-of-lyssa";
+  | "avatar-of-lyssa"
+  // Dervish staples (#1551).
+  | "grenths-grasp"
+  | "rending-aura";
 
 export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition>> = {
   // "For 5...17...20 seconds, you have 1...3...4 Health regeneration for
@@ -84,6 +87,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
   "sand-shards": define("sand-shards", "Sand Shards", "enchantment", {
     profession: "dervish",
     onAttackHit: {
+      attackSkillsOnly: false,
       effects: [
         {
           kind: "if",
@@ -251,6 +255,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
     profession: "dervish",
     moveSpeedMultiplier: 1.25,
     onAttackHit: {
+      attackSkillsOnly: false,
       effects: [
         {
           kind: "if",
@@ -347,6 +352,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
     attackDamageType: "dark",
     attackDamageTypeWeapon: "scythe",
     onAttackHit: {
+      attackSkillsOnly: false,
       effects: [
         {
           kind: "if",
@@ -401,6 +407,55 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
           },
         ],
         skillId: "dervish.avatar-of-lyssa",
+      },
+    ],
+  }),
+  // Dervish staples (#1551), at their rank-12 values.
+  // "For 20 seconds, your attack skills also Cripple that foe for 1...11
+  // seconds and you transfer 1...3 conditions from yourself to that
+  // foe": 9 s and 3, on each foe an attack skill hits.
+  "grenths-grasp": define("grenths-grasp", "Grenth's Grasp", "enchantment", {
+    profession: "dervish",
+    onAttackHit: {
+      attackSkillsOnly: true,
+      effects: [
+        { kind: "apply-status", statusId: "crippled", durationSeconds: 9 },
+        { kind: "transfer-conditions", from: "caster", count: 3 },
+      ],
+      skillId: "dervish.grenths-grasp",
+    },
+  }),
+  // "For 30 seconds, your attack skills remove enchantments from
+  // knocked-down foes. When this enchantment ends, nearby foes are
+  // affected by Cracked Armor for 1...10 seconds": one enchantment a
+  // blow, and 8 s however it ends.
+  "rending-aura": define("rending-aura", "Rending Aura", "enchantment", {
+    profession: "dervish",
+    onAttackHit: {
+      attackSkillsOnly: true,
+      effects: [
+        {
+          kind: "if",
+          condition: { kind: "target-knocked-down" },
+          effects: [{ kind: "remove-status", category: "enchantment", count: 1 }],
+        },
+      ],
+      skillId: "dervish.rending-aura",
+    },
+    triggers: [
+      {
+        on: "ends",
+        target: "bearer",
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_NEARBY,
+            maxTargets: undefined,
+            effects: [{ kind: "apply-status", statusId: "cracked-armor", durationSeconds: 8 }],
+          },
+        ],
+        skillId: "dervish.rending-aura",
       },
     ],
   }),

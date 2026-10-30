@@ -17,12 +17,13 @@ import { hitLocationOf, mitigate, weaponAttributeMultiplier, type DamagePacket }
 import {
   applyDamage,
   applyEffects,
-  applySkillEffects,
   gainEnergy,
   gainHealth,
   interruptOnHit,
+  resolveSkillEffects,
   stateHolds,
   type CombatEvent,
+  type SkillOutcome,
   type SkillResolution,
 } from "./effects.js";
 import { resolveMagnitude } from "./scaling.js";
@@ -533,12 +534,14 @@ export function landBlow(
  * says: a wand's or a staff's bolt carries none. Then every status that
  * ends after so many hits with this weapon spends one (#939): Sand
  * Shards' fourth hit splashes, then ends it. Returns those endings,
- * after what the weapon itself does to whoever it hits (#1239).
+ * after what the weapon itself does to whoever it hits (#1239). A rider
+ * for attack skills only rides a blow `withAttackSkill` (#1551).
  */
 export function attackHitRiders(
   attacker: Combatant,
   victim: Combatant,
   mainHand: ResolvedWeapon,
+  withAttackSkill: boolean,
   rng: SimulationRng,
   rules: CombatRules,
   surroundings: Surroundings,
@@ -550,7 +553,7 @@ export function attackHitRiders(
   }
   for (const { id } of attacker.statuses.active) {
     const rider = getStatusDefinition(id).onAttackHit;
-    if (rider === undefined) {
+    if (rider === undefined || (rider.attackSkillsOnly && !withAttackSkill)) {
       continue;
     }
     const events = applyEffects(rider.effects, {
@@ -728,7 +731,16 @@ function strike(
     landedCritical(attacker, snapshot.criticalStrikes, events);
   }
   events.push(
-    ...attackHitRiders(attacker, victim, snapshot.mainHand, rng, rules, swing.surroundings, fired),
+    ...attackHitRiders(
+      attacker,
+      victim,
+      snapshot.mainHand,
+      false,
+      rng,
+      rules,
+      swing.surroundings,
+      fired,
+    ),
   );
   bearerHit(attacker, victim, events, false, snapshot.mainHand.weapon);
   attackReached(victim, events);
@@ -825,6 +837,28 @@ export function resolveAttackSkill(
   exposed: (victim: Combatant) => boolean,
   fired: FiredTrigger[],
 ): CombatEvent[] {
+  return resolveAttackSkillOutcome(resolution, exposed, fired).events;
+}
+
+/**
+ * `resolveAttackSkill`, with the `recharge-faster` its effects landed
+ * (#1551): a melee attack skill lands as it is used, so it can shorten
+ * its own recharge, hit or miss, as Pious Assault's. It summons nothing
+ * and leaves no ground.
+ */
+export function resolveAttackSkillOutcome(
+  resolution: SkillResolution,
+  exposed: (victim: Combatant) => boolean,
+  fired: FiredTrigger[],
+): SkillOutcome {
+  let rechargeFraction = 0;
+  let rechargeLongerSeconds = 0;
+  const land = (landing: SkillResolution, earlier: readonly CombatEvent[]): CombatEvent[] => {
+    const outcome = resolveSkillEffects(landing, earlier);
+    rechargeFraction = Math.max(rechargeFraction, outcome.rechargeFraction);
+    rechargeLongerSeconds += outcome.rechargeLongerSeconds;
+    return outcome.events;
+  };
   const { skill, caster, rng, rules, surroundings } = resolution;
   const blow = skillBlow(skill, caster);
   const rule = blowRuleOf(skill);
@@ -916,7 +950,16 @@ export function resolveAttackSkill(
         critical.push(victim);
       }
       events.push(
-        ...attackHitRiders(caster, victim, snapshot.mainHand, rng, rules, surroundings, fired),
+        ...attackHitRiders(
+          caster,
+          victim,
+          snapshot.mainHand,
+          true,
+          rng,
+          rules,
+          surroundings,
+          fired,
+        ),
         ...nextAttackSkillRiders(next, caster, victim, rng, rules, surroundings),
       );
       bearerHit(caster, victim, events, true, weapon);
@@ -930,13 +973,13 @@ export function resolveAttackSkill(
     const riders = (effects: readonly SkillEffect[], targets: Combatant[]): CombatEvent[] =>
       targets.length === 0 || effects.length === 0
         ? []
-        : applySkillEffects({ ...resolution, skill: { ...skill, effects }, targets }, events);
+        : land({ ...resolution, skill: { ...skill, effects }, targets }, events);
     events.push(
-      ...(hit.length === 0 ? [] : applySkillEffects({ ...resolution, targets: hit }, events)),
+      ...(hit.length === 0 ? [] : land({ ...resolution, targets: hit }, events)),
       ...riders(rule?.onCritical ?? [], critical),
       ...riders(rule?.onBlocked ?? [], blocked),
       ...riders(rule?.onFailedToHit ?? [], failed),
     );
   }
-  return events;
+  return { events, rechargeFraction, rechargeLongerSeconds, summons: [], grounds: [] };
 }

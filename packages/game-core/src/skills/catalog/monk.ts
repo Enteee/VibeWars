@@ -1241,6 +1241,7 @@ export const MONK_SKILLS: readonly Skill[] = [
         kind: "transfer-conditions",
         from: "target",
         count: Infinity,
+        durationMultiplier: 1,
         healPerCondition: {
           scaling: { attributeId: "monk.protection-prayers", atZero: 6, atTwelve: 22 },
         },

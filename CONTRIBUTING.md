@@ -89,6 +89,25 @@ Concretely:
   way it does? If yes, write it down once instead of explaining it in every
   future code review.
 
+### Generated files
+
+Generated files: `packages/game-protocol/src/wire-schema.json`, the roles
+snapshot (`packages/game-core/src/skills/__snapshots__/roles.test.ts.snap`),
+the skill icon rows (`scripts/assets/skill-icon-table.mjs`,
+`scripts/assets/skill-icons/*.mjs`) and the SVGs in
+`apps/web/public/icons/skill/`. Never hand-merge them.
+
+`.gitattributes` makes git keep both sides of the icon rows and the roles
+snapshot (`merge=union`). For any conflict left in a generated file:
+
+```sh
+git checkout --theirs <file>   # your side in a rebase; --ours in a merge
+pnpm run regen
+git add <file>
+```
+
+The icon, snapshot and wire tests fail in CI on a stale result.
+
 ## Documentation
 
 Two audiences, kept apart:

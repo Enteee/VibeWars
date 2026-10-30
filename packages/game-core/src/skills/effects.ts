@@ -293,7 +293,7 @@ export function applyDamage(
   if (isPhysicalDamage(type)) {
     target.statuses.recordPhysicalDamage();
   }
-  recordFromFoe(target, dealer);
+  recordFromFoe(target, dealer, type);
   // The guard above already returned for an already-dead target, so
   // reaching 0 here is always a *new* death — exactly one death event.
   if (target.health <= 0) {
@@ -302,10 +302,17 @@ export function applyDamage(
   }
 }
 
-/** `target` lost health to `dealer`; recorded if that was a foe (#1022). */
-function recordFromFoe(target: Combatant, dealer: Combatant | undefined): void {
+/**
+ * `target` lost health to `dealer`, by damage of `type` or, `undefined`,
+ * a life steal; recorded if that was a foe (#1022).
+ */
+function recordFromFoe(
+  target: Combatant,
+  dealer: Combatant | undefined,
+  type: DamageType | undefined,
+): void {
   if (dealer !== undefined && dealer.team !== target.team) {
-    target.statuses.recordDamageFromFoe(dealer.id);
+    target.statuses.recordDamageFromFoe(dealer.id, type);
   }
 }
 
@@ -423,7 +430,7 @@ function stealLife(
   }
   target.health -= taken;
   events.push({ kind: "life-stolen", targetId: target.id, amount: taken });
-  recordFromFoe(target, caster);
+  recordFromFoe(target, caster, undefined);
   gainHealth(caster, taken, events);
   if (target.health <= 0) {
     target.dead = true;
@@ -1121,7 +1128,8 @@ export function applyEffect(
       // Conditions takes from an ally counts as the Monk's own from then on.
       for (const { id, remainingSeconds } of moved) {
         events.push({ kind: "status-removed", targetId: giver.id, statusId: id });
-        landStatus(taker, id, scaledStatusDuration(taker, id, remainingSeconds), caster.id, events);
+        const durationSeconds = remainingSeconds * effect.durationMultiplier;
+        landStatus(taker, id, scaledStatusDuration(taker, id, durationSeconds), caster.id, events);
       }
       if (effect.healPerCondition !== undefined && moved.length > 0) {
         applyHeal(caster, resolveMagnitude(effect.healPerCondition, caster) * moved.length, events);
@@ -1499,7 +1507,7 @@ export function stateHolds(
     case "caster-has":
       return caster.statuses.countByCategory(condition.category, condition.profession) > 0;
     case "caster-lacks":
-      return caster.statuses.countByCategory(condition.category) === 0;
+      return caster.statuses.countByCategory(condition.category, condition.profession) === 0;
     case "target-casting": {
       const cast = target.cast.activeCast;
       const skill = cast === undefined ? undefined : getSkill(cast.skillId);
