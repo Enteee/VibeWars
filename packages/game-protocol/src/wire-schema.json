@@ -227,6 +227,7 @@
     "song-of-concentration",
     "song-of-purification",
     "song-of-restoration",
+    "soothing",
     "soul-barbs",
     "spell-breaker",
     "spirit-light-weapon",
@@ -262,6 +263,7 @@
     "well-of-suffering",
     "whirling-defense",
     "winnowing",
+    "xinraes-weapon",
     "zealous-anthem"
   ],
   "constants": {
@@ -772,6 +774,7 @@
                   { "literal": "song-of-concentration" },
                   { "literal": "song-of-purification" },
                   { "literal": "song-of-restoration" },
+                  { "literal": "soothing" },
                   { "literal": "soul-barbs" },
                   { "literal": "spell-breaker" },
                   { "literal": "spirit-light-weapon" },
@@ -807,6 +810,7 @@
                   { "literal": "well-of-suffering" },
                   { "literal": "whirling-defense" },
                   { "literal": "winnowing" },
+                  { "literal": "xinraes-weapon" },
                   { "literal": "zealous-anthem" }
                 ]
               }
@@ -1026,6 +1030,7 @@
                   { "literal": "song-of-concentration" },
                   { "literal": "song-of-purification" },
                   { "literal": "song-of-restoration" },
+                  { "literal": "soothing" },
                   { "literal": "soul-barbs" },
                   { "literal": "spell-breaker" },
                   { "literal": "spirit-light-weapon" },
@@ -1061,6 +1066,7 @@
                   { "literal": "well-of-suffering" },
                   { "literal": "whirling-defense" },
                   { "literal": "winnowing" },
+                  { "literal": "xinraes-weapon" },
                   { "literal": "zealous-anthem" }
                 ]
               }
@@ -1277,6 +1283,7 @@
                   { "literal": "song-of-concentration" },
                   { "literal": "song-of-purification" },
                   { "literal": "song-of-restoration" },
+                  { "literal": "soothing" },
                   { "literal": "soul-barbs" },
                   { "literal": "spell-breaker" },
                   { "literal": "spirit-light-weapon" },
@@ -1312,6 +1319,7 @@
                   { "literal": "well-of-suffering" },
                   { "literal": "whirling-defense" },
                   { "literal": "winnowing" },
+                  { "literal": "xinraes-weapon" },
                   { "literal": "zealous-anthem" }
                 ]
               }
@@ -1525,6 +1533,7 @@
                   { "literal": "song-of-concentration" },
                   { "literal": "song-of-purification" },
                   { "literal": "song-of-restoration" },
+                  { "literal": "soothing" },
                   { "literal": "soul-barbs" },
                   { "literal": "spell-breaker" },
                   { "literal": "spirit-light-weapon" },
@@ -1560,6 +1569,7 @@
                   { "literal": "well-of-suffering" },
                   { "literal": "whirling-defense" },
                   { "literal": "winnowing" },
+                  { "literal": "xinraes-weapon" },
                   { "literal": "zealous-anthem" }
                 ]
               }
@@ -1880,6 +1890,7 @@
                   { "literal": "song-of-concentration" },
                   { "literal": "song-of-purification" },
                   { "literal": "song-of-restoration" },
+                  { "literal": "soothing" },
                   { "literal": "soul-barbs" },
                   { "literal": "spell-breaker" },
                   { "literal": "spirit-light-weapon" },
@@ -1915,6 +1926,7 @@
                   { "literal": "well-of-suffering" },
                   { "literal": "whirling-defense" },
                   { "literal": "winnowing" },
+                  { "literal": "xinraes-weapon" },
                   { "literal": "zealous-anthem" }
                 ]
               }
@@ -2119,6 +2131,7 @@
                   { "literal": "song-of-concentration" },
                   { "literal": "song-of-purification" },
                   { "literal": "song-of-restoration" },
+                  { "literal": "soothing" },
                   { "literal": "soul-barbs" },
                   { "literal": "spell-breaker" },
                   { "literal": "spirit-light-weapon" },
@@ -2154,6 +2167,7 @@
                   { "literal": "well-of-suffering" },
                   { "literal": "whirling-defense" },
                   { "literal": "winnowing" },
+                  { "literal": "xinraes-weapon" },
                   { "literal": "zealous-anthem" }
                 ]
               }

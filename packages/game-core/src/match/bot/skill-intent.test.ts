@@ -76,6 +76,8 @@ const NO_BOT_USE = new Set([
   "mesmer.signet-of-humility",
   // Nor of a foe's whole bar at the price of one's own (#1570).
   "mesmer.blackout",
+  // A heal that waits for its spirit's death (#1550): no rule for it.
+  "ritualist.life",
   // What they do lands through a status trigger, not an effect a bot reads.
   "assassin.way-of-perfection",
   "warrior.hundred-blades",

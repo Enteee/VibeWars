@@ -320,13 +320,17 @@ export function creatureDamageMultiplier(rank: number, levels: CreatureLevel): n
 /**
  * What a spirit's summoner's `rank` does to its blows (#1239): GW1 states
  * the damage, "5...30", linear in the rank, so `atZero` at 0 and
- * `atTwelve` at 12, as a share of `atTwelve`.
+ * `atTwelve` at 12, as a share of `atTwelve`. A blow of none at 12,
+ * Bloodsong's or Wanderlust's (#1550), is none at every rank.
  */
 export function creatureRankDamageMultiplier(
   rank: number,
   atZero: number,
   atTwelve: number,
 ): number {
+  if (atTwelve === 0) {
+    return 0;
+  }
   return (atZero + ((atTwelve - atZero) * Math.max(0, rank)) / 12) / atTwelve;
 }
 
