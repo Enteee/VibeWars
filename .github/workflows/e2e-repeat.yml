@@ -37,9 +37,10 @@ jobs:
       matrix:
         # Five jobs, each --repeat-each=2: ten repeats in all.
         shard: [1, 2, 3, 4, 5]
-    # Two runs of a few specs take minutes. Without a cap, a hang would sit
-    # pending for six hours, and hubd blocks the merge while it does.
-    timeout-minutes: 30
+    # A shard of a pull request that edits many specs takes up to 30 minutes
+    # on a slow runner (#1477). Without a cap, a hang would sit pending for
+    # six hours, and hubd blocks the merge while it does.
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
