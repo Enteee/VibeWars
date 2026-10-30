@@ -1716,7 +1716,11 @@ function describeEffect(
       };
     case "recharge-faster":
       return {
-        text: `This skill recharges ${String(Math.round(effect.fraction * 100))}% faster`,
+        // Bitter Chill's "recharges instantly" (#1640).
+        text:
+          effect.fraction === 1
+            ? "This skill recharges instantly"
+            : `This skill recharges ${String(Math.round(effect.fraction * 100))}% faster`,
         magnitude: undefined,
       };
     case "recharge-others":
