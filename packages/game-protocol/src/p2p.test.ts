@@ -75,7 +75,7 @@ import type {
   PeerLobbyJoin,
   WireLobbyState,
 } from "./p2p.js";
-import { MAX_LOBBY_PLAYERS, PROTOCOL_MISMATCH_MESSAGE } from "./protocol.js";
+import { MAX_LOBBY_PLAYERS, MAX_TEAM_LOBBY_SIDE, PROTOCOL_MISMATCH_MESSAGE } from "./protocol.js";
 import type { CastRefusedMessage, RechargeMessage } from "./protocol.js";
 import { PROTOCOL_VERSION } from "./protocol-version.js";
 
@@ -498,6 +498,40 @@ const lobbyState: WireLobbyState = {
     },
   ],
   countdownSeconds: null,
+  teamLobby: null,
+};
+
+/** One side of a Team Lobby in its claim (#1458), as its own members see it. */
+const teamSide = {
+  size: 2,
+  captainId: "peer-1/local",
+  proposals: [
+    {
+      proposerId: "peer-1/local",
+      members: [
+        { primary: "monk", secondary: null },
+        { primary: "warrior", secondary: "monk" },
+      ],
+      voterIds: ["peer-1/local", "peer-2"],
+    },
+  ],
+  chosen: {
+    proposerId: "peer-1/local",
+    reason: "votes",
+    members: [
+      { name: "Mhenlo", primary: "monk", secondary: null },
+      { name: "Devona", primary: "warrior", secondary: "monk" },
+    ],
+  },
+  claims: ["peer-2", null],
+} as const;
+
+/** A Team Lobby's state, as a member of team 0 gets it. */
+const teamLobbyState: WireLobbyState = {
+  ...lobbyState,
+  phase: "team-lobby",
+  matchId: null,
+  teamLobby: { stage: "claim", secondsLeft: 41, sides: [teamSide, null] },
 };
 
 const ping = { id: 3, x: 200, y: 150.5, byId: "peer-1", remaining: 2.6 };
@@ -784,6 +818,37 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["select-map", parseWireLobbyCommand, { kind: "select-map", mapId: "isle" }],
   ["start", parseWireLobbyCommand, { kind: "start" }],
   ["set-bots", parseWireLobbyCommand, { kind: "set-bots", team: 1, count: 3 }],
+  ["Team Lobby lobby-state (#1458)", parseWireLobbyState, teamLobbyState],
+  [
+    "Team Lobby lobby-state in its vote, with the house team chosen (#1458)",
+    parseWireLobbyState,
+    {
+      ...teamLobbyState,
+      teamLobby: {
+        stage: "vote",
+        secondsLeft: 0,
+        sides: [
+          { ...teamSide, proposals: [], chosen: null, claims: [] },
+          {
+            ...teamSide,
+            captainId: null,
+            chosen: { ...teamSide.chosen, proposerId: null, reason: "house" },
+          },
+        ],
+      },
+    },
+  ],
+  [
+    "propose a slot (#1458)",
+    parseWireLobbyCommand,
+    { kind: "propose", slot: 1, size: 2, build: { name: "Devona" } },
+  ],
+  ["withdraw a proposal (#1458)", parseWireLobbyCommand, { kind: "propose", slot: null }],
+  ["vote (#1458)", parseWireLobbyCommand, { kind: "vote", proposerId: "peer-2" }],
+  ["withdraw a vote (#1458)", parseWireLobbyCommand, { kind: "vote", proposerId: null }],
+  ["claim (#1458)", parseWireLobbyCommand, { kind: "claim", slot: 1 }],
+  ["let a claim go (#1458)", parseWireLobbyCommand, { kind: "claim", slot: null }],
+  ["Team Lobby refusal (#1458)", parseWireLobbyNote, { kind: "refused", reason: "slot-taken" }],
   ["start-rejected", parseWireLobbyNote, { kind: "start-rejected", reason: "nobody is ready" }],
   ["lobby refusal", parseWireLobbyNote, { kind: "refused", reason: "lobby-full" }],
   ["fell-through (#871)", parseWireLobbyNote, { kind: "refused", reason: "fell-through" }],
@@ -1711,6 +1776,100 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
       players: Array.from({ length: MAX_LOBBY_PLAYERS + 1 }, () => lobbyState.players[1]),
     },
   ],
+  [
+    "lobby-state without teamLobby (#1458)",
+    parseWireLobbyState,
+    { ...lobbyState, teamLobby: undefined },
+  ],
+  [
+    "Team Lobby of an unknown stage (#1458)",
+    parseWireLobbyState,
+    { ...teamLobbyState, teamLobby: { stage: "pick", secondsLeft: 1, sides: [null, null] } },
+  ],
+  [
+    "Team Lobby of one side (#1458)",
+    parseWireLobbyState,
+    { ...teamLobbyState, teamLobby: { stage: "vote", secondsLeft: 1, sides: [null] } },
+  ],
+  [
+    "Team Lobby side past MAX_TEAM_LOBBY_SIDE (#1458)",
+    parseWireLobbyState,
+    {
+      ...teamLobbyState,
+      teamLobby: {
+        stage: "vote",
+        secondsLeft: 1,
+        sides: [{ ...teamSide, size: MAX_TEAM_LOBBY_SIDE + 1 }, null],
+      },
+    },
+  ],
+  [
+    "Team Lobby claims past the side's size (#1458)",
+    parseWireLobbyState,
+    {
+      ...teamLobbyState,
+      teamLobby: {
+        stage: "claim",
+        secondsLeft: 1,
+        sides: [{ ...teamSide, claims: [null, null, null] }, null],
+      },
+    },
+  ],
+  [
+    "Team Lobby proposals past MAX_TEAM_LOBBY_SIDE (#1458)",
+    parseWireLobbyState,
+    {
+      ...teamLobbyState,
+      teamLobby: {
+        stage: "vote",
+        secondsLeft: 1,
+        sides: [
+          {
+            ...teamSide,
+            proposals: Array.from({ length: MAX_TEAM_LOBBY_SIDE + 1 }, () => teamSide.proposals[0]),
+          },
+          null,
+        ],
+      },
+    },
+  ],
+  [
+    "Team Lobby choice of an unknown reason (#1458)",
+    parseWireLobbyState,
+    {
+      ...teamLobbyState,
+      teamLobby: {
+        stage: "claim",
+        secondsLeft: 1,
+        sides: [{ ...teamSide, chosen: { ...teamSide.chosen, reason: "coin" } }, null],
+      },
+    },
+  ],
+  [
+    "propose past MAX_TEAM_LOBBY_SIDE (#1458)",
+    parseWireLobbyCommand,
+    { kind: "propose", slot: 0, size: MAX_TEAM_LOBBY_SIDE + 1, build: {} },
+  ],
+  [
+    "propose a slot past its size (#1458)",
+    parseWireLobbyCommand,
+    { kind: "propose", slot: 2, size: 2, build: {} },
+  ],
+  [
+    "propose a fractional slot (#1458)",
+    parseWireLobbyCommand,
+    { kind: "propose", slot: 0.5, size: 2, build: {} },
+  ],
+  [
+    "propose of a non-JSON build (#1458)",
+    parseWireLobbyCommand,
+    { kind: "propose", slot: 0, size: 1, build: Number.NaN },
+  ],
+  ["propose without a slot (#1458)", parseWireLobbyCommand, { kind: "propose" }],
+  ["propose without a build (#1458)", parseWireLobbyCommand, { kind: "propose", slot: 0, size: 1 }],
+  ["vote of a number (#1458)", parseWireLobbyCommand, { kind: "vote", proposerId: 2 }],
+  ["claim of a string (#1458)", parseWireLobbyCommand, { kind: "claim", slot: "1" }],
+  ["claim of NaN (#1458)", parseWireLobbyCommand, { kind: "claim", slot: Number.NaN }],
   ["choose-team without a team", parseWireLobbyCommand, { kind: "choose-team" }],
   ["choose-team of a string", parseWireLobbyCommand, { kind: "choose-team", team: "0" }],
   ["ready of a string", parseWireLobbyCommand, { kind: "ready", ready: "true" }],

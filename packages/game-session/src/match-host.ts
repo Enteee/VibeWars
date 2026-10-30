@@ -178,18 +178,22 @@ export interface MatchHostOptions {
 
 /**
  * A lobby's seating for its match: each seated peer's team, sanitised
- * name and guild tag (#1406), and for a bot (#1193), keyed by its lobby id, the build it plays.
+ * name and guild tag (#1406), keyed by its lobby id. `build` is the one
+ * the host assigned, which the seat plays whatever its hello says: a
+ * bot's (#1193), and every seat's in a Team Lobby (#1458). `null` plays
+ * the hello's.
  */
-export type PlannedSeats = ReadonlyMap<
-  string,
-  {
-    readonly team: 0 | 1;
-    readonly name: string;
-    readonly guildTag: string | null;
-    readonly guildCape: WireCape | null;
-    readonly bot: PlayerBuild | null;
-  }
->;
+export type PlannedSeats = ReadonlyMap<string, PlannedSeat>;
+
+export type PlannedSeat = {
+  readonly team: 0 | 1;
+  readonly name: string;
+  readonly guildTag: string | null;
+  readonly guildCape: WireCape | null;
+} & (
+  | { readonly bot: true; readonly build: PlayerBuild }
+  | { readonly bot: false; readonly build: PlayerBuild | null }
+);
 
 /** Weapon swaps one seat may have handled (#489): sustained, and at once. */
 export const WEAPON_SWAPS_PER_SECOND = 4;
@@ -323,7 +327,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
    * room. A bot never says one: it is seated at once.
    */
   const awaited = new Set(
-    [...(planned ?? [])].flatMap(([peerId, plan]) => (plan.bot === null ? [peerId] : [])),
+    [...(planned ?? [])].flatMap(([peerId, plan]) => (plan.bot ? [] : [peerId])),
   );
   /** At most one per peer: a new rejoin hello kills the old nonce. */
   const challenges = new Map<string, Challenge>();
@@ -820,13 +824,18 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     if (
       seats.size >= maxPlayers ||
       (planned !== null && plan === undefined) ||
-      (plan !== undefined && plan.bot !== null)
+      plan?.bot === true
     ) {
       refuse(from, "match-full", MATCH_FULL_MESSAGE);
       return;
     }
     awaited.delete(from);
-    const { loadout } = resolveJoinLoadout(hello.build, RULESET.attributes, random);
+    // The lobby's build if it assigned one, whatever the hello brings (#1458).
+    const assigned = plan?.build ?? null;
+    const loadout =
+      assigned === null
+        ? resolveJoinLoadout(hello.build, RULESET.attributes, random).loadout
+        : loadoutOf(assigned);
     // Without a plan, teams alternate as players arrive, so a 1v1 is
     // adversarial by default.
     const team: 0 | 1 = plan?.team ?? (seats.size % 2 === 0 ? 0 : 1);
@@ -1166,8 +1175,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
 
   // A lobby's bots (#1193) take their seats at once: none of them says hello.
   for (const plan of planned?.values() ?? []) {
-    if (plan.bot !== null) {
-      seatNew(loadoutOf(plan.bot), plan.team, () => plan.name, NO_GUILD, true);
+    if (plan.bot) {
+      seatNew(loadoutOf(plan.build), plan.team, () => plan.name, NO_GUILD, true);
     }
   }
 

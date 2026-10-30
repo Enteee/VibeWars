@@ -45,6 +45,7 @@ function snapshot(phase: LobbySnapshot["phase"]): LobbySnapshot {
     ],
     isHost: true,
     countdownSeconds: null,
+    teamLobby: null,
   };
 }
 

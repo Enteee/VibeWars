@@ -54,7 +54,13 @@ export {
   WRONG_MATCH_MESSAGE,
   createMatchHost,
 } from "./match-host.js";
-export type { HostMap, MatchHost, MatchHostOptions, PlannedSeats } from "./match-host.js";
+export type {
+  HostMap,
+  MatchHost,
+  MatchHostOptions,
+  PlannedSeat,
+  PlannedSeats,
+} from "./match-host.js";
 export {
   HostLeftError,
   MatchRefusedError,
