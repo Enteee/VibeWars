@@ -70,6 +70,8 @@ const NO_BOT_USE = new Set([
   "necromancer.well-of-suffering",
   // A disable of a foe's elite and nothing else: no rule for it (#1473).
   "mesmer.signet-of-humility",
+  // Nor of a foe's whole bar at the price of one's own (#1570).
+  "mesmer.blackout",
   // What they do lands through a status trigger, not an effect a bot reads.
   "assassin.way-of-perfection",
   "warrior.hundred-blades",

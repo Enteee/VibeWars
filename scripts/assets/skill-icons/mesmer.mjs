@@ -46,4 +46,10 @@ export const MESMER_ICONS = {
   "mesmer.epidemic": { glyph: "germ", modifier: "plus" },
   // A placeholder until the asset-designer's (#1528).
   "mesmer.spiritual-pain": { glyph: "ghost", modifier: "area" },
+  // Placeholders until the asset-designer's (#1570): Mesmer staples.
+  "mesmer.power-leak": { glyph: "interrupt", modifier: "half" },
+  "mesmer.blackout": { glyph: "eye-slash", modifier: "stun" },
+  "mesmer.shatter-hex": { glyph: "cleanse", modifier: "area" },
+  "mesmer.psychic-instability": { glyph: "interrupt", modifier: "upkeep" },
+  "mesmer.arcane-conundrum": { glyph: "slow", modifier: "hourglass" },
 };

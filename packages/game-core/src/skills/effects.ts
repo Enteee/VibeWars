@@ -1695,13 +1695,17 @@ function disabledBy(
 
 /**
  * Whether `effect` disables the caster's bar skill `skillId` (#1473):
- * for `attribute` (#1511), never `usedId`, the skill that disables them.
+ * for `attribute` (#1511), never `usedId`, the skill that disables them;
+ * for `all` (#1570), every one.
  */
 function disabledOwn(
   effect: DisableOwnSkillsEffect,
   skillId: string,
   usedId: string | undefined,
 ): boolean {
+  if (effect.which === "all") {
+    return true;
+  }
   if (effect.which === "spells") {
     return isSpellId(skillId);
   }

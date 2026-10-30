@@ -566,12 +566,19 @@ export interface LengthenRechargeEffect {
  * (PvP)'s "all your Smiting Prayers are disabled". `other-professions`
  * (#1473): every skill on the bar not of `profession`, the using skill's
  * own, a common skill included, but those of `exceptTypes`: Unnatural
- * Signet's "all your non-Mesmer skills except signets". None on it: nothing.
+ * Signet's "all your non-Mesmer skills except signets". `all` (#1570):
+ * every skill on the bar, the one used included, as Blackout's "all of
+ * your skills are disabled for 5 seconds". None on it: nothing.
  */
 export type DisableOwnSkillsEffect =
   | {
       readonly kind: "disable-own-skills";
       readonly which: "spells";
+      readonly seconds: number;
+    }
+  | {
+      readonly kind: "disable-own-skills";
+      readonly which: "all";
       readonly seconds: number;
     }
   | {
