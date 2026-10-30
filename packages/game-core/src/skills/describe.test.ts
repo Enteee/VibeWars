@@ -192,6 +192,7 @@ describe("describeSkill", () => {
         aura: undefined,
         onDeath: "vanish",
         ownerDisableOnDeath: undefined,
+        deathBurst: undefined,
       },
     });
     const lines = (effect: SkillEffect) =>
@@ -480,7 +481,8 @@ describe("describeSkill", () => {
     // line, then one per effect of its spring (#1105), and one more if it
     // springs by itself; a pulse one, then one per effect (#1113); a
     // faster flight one, and one per on-crit or failed-to-hit rider
-    // (#1486); a volley of arrows one (#1539).
+    // (#1486); a volley of arrows one (#1539). A spirit's on-hit effects
+    // are a line each, and its death burst one more (#1550).
     const linesOf = (effect: SkillEffect): number => {
       if (effect.kind === "if") {
         return effect.effects.length;
@@ -496,7 +498,16 @@ describe("describeSkill", () => {
             return 1 + act.pulse.effects.length;
         }
       }
-      return effect.kind === "summon" && effect.creature.aura !== undefined ? 2 : 1;
+      if (effect.kind === "summon") {
+        const { aura, attack, deathBurst } = effect.creature;
+        return (
+          1 +
+          (aura === undefined ? 0 : 1) +
+          (attack?.onHit ?? []).length +
+          (deathBurst === undefined ? 0 : 1)
+        );
+      }
+      return 1;
     };
     const lines = (effects: readonly SkillEffect[]): number =>
       effects.reduce((sum, effect) => sum + linesOf(effect), 0);

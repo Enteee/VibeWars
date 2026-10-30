@@ -408,11 +408,14 @@ exports[`skillRoles > tags every ranger skill the same way every time 1`] = `
 
 exports[`skillRoles > tags every ritualist skill the same way every time 1`] = `
 {
+  "ritualist.anguish": "",
   "ritualist.blind-was-mingson": "condition",
+  "ritualist.bloodsong": "",
   "ritualist.boon-of-creation": "healing",
   "ritualist.consume-soul": "",
   "ritualist.cruel-was-daoshen": "",
   "ritualist.defiant-was-xinrae": "defence",
+  "ritualist.destruction": "",
   "ritualist.destructive-was-glaive": "",
   "ritualist.disenchantment": "",
   "ritualist.displacement": "defence",
@@ -426,6 +429,7 @@ exports[`skillRoles > tags every ritualist skill the same way every time 1`] = `
   "ritualist.generous-was-tsungrai": "healing",
   "ritualist.grasping-was-kuurong": "knockdown",
   "ritualist.lamentation": "hex",
+  "ritualist.life": "",
   "ritualist.mend-body-and-soul": "healing removal",
   "ritualist.mending-grip": "healing removal",
   "ritualist.mighty-was-vorizun": "defence",
@@ -439,6 +443,7 @@ exports[`skillRoles > tags every ritualist skill the same way every time 1`] = `
   "ritualist.shelter": "defence",
   "ritualist.signet-of-creation": "",
   "ritualist.signet-of-spirits": "",
+  "ritualist.soothing": "",
   "ritualist.spirit-burn": "condition",
   "ritualist.spirit-light": "healing",
   "ritualist.spirit-light-weapon": "healing",
@@ -450,11 +455,13 @@ exports[`skillRoles > tags every ritualist skill the same way every time 1`] = `
   "ritualist.union": "defence",
   "ritualist.vengeful-was-khanhei": "",
   "ritualist.vengeful-weapon": "",
+  "ritualist.wanderlust": "",
   "ritualist.weapon-of-aggression": "",
   "ritualist.weapon-of-quickening": "",
   "ritualist.weapon-of-remedy": "removal",
   "ritualist.weapon-of-warding": "healing defence",
   "ritualist.wielders-boon": "healing",
+  "ritualist.xinraes-weapon": "defence",
 }
 `;
 

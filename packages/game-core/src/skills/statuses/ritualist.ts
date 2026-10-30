@@ -39,7 +39,10 @@ export type RitualistStatusId =
   | "destructive-was-glaive"
   | "tranquil-was-tanasen"
   | "vengeful-was-khanhei"
-  | "pure-was-li-ming";
+  | "pure-was-li-ming"
+  // Ritualist spirits (#1550).
+  | "soothing"
+  | "xinraes-weapon";
 
 export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefinition>> = {
   // "Non-Spirit allies within its range gain +1...3...3 Health
@@ -483,5 +486,27 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
         skillId: "ritualist.pure-was-li-ming",
       },
     ],
+  }),
+  // Soothing's aura (#1550): "All foes within its range take twice as
+  // long to build adrenaline".
+  soothing: define("soothing", "Soothing", "skill-effect", {
+    profession: "ritualist",
+    adrenalineGainFaster: -0.5,
+  }),
+  // "For 8 seconds, the next time target ally takes damage from a foe that
+  // damage is limited to 5% of that ally's max Health and that ally steals
+  // up to 20...80 Health from that foe" (#1550): 68, its rank-12 value.
+  "xinraes-weapon": define("xinraes-weapon", "Xinrae's Weapon", "weapon-spell", {
+    profession: "ritualist",
+    maxDamageFractionPerHit: 0.05,
+    triggers: [
+      {
+        on: "bearer-takes-damage-from-foe",
+        target: "offender",
+        effects: [{ kind: "life-steal", amount: { flat: 68 } }],
+        skillId: "ritualist.xinraes-weapon",
+      },
+    ],
+    endsWhenTriggered: true,
   }),
 };
