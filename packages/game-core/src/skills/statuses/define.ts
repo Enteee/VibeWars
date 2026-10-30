@@ -95,6 +95,7 @@ export function define(
     failsNextSpell: undefined,
     damagePulse: undefined,
     renewsOnChantOrShoutEnd: false,
+    renewsOnBearerSpell: false,
     endsAfterTriggers: undefined,
     chantShoutDurationMultiplier: 1,
     whileUnder: undefined,

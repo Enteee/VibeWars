@@ -1616,6 +1616,49 @@ const status = {
       `<path d="M12 7.5v5" ${stroke(c, 1.6)}/>` +
       `<path d="M5 18.5h14M8 21h8" ${stroke(c, 2)}/>`,
   ],
+  // Elementalist energy engine (#1614), stand-ins until the asset-designer's.
+  // Enchantment: a flame over a rising energy bar, attuned to Fire.
+  "fire-attunement": [
+    "enchantment",
+    (c) =>
+      `<path d="M12 3c3 3.5 4 6 2.5 9-1 2-4 2-5 0-1.5-3 0-5.5 2.5-9z" ${stroke(c, 1.8)}/>` +
+      `<path d="M7 20h10M12 15v5" ${stroke(c, 2)}/>`,
+  ],
+  // Enchantment: a drop over a rising energy bar, attuned to Water.
+  "water-attunement": [
+    "enchantment",
+    (c) =>
+      `<path d="M12 3l4 6a4 4 0 1 1-8 0z" ${stroke(c, 1.8)}/>` +
+      `<path d="M7 20h10M12 15v5" ${stroke(c, 2)}/>`,
+  ],
+  // Enchantment: a bolt over a rising energy bar, attuned to Air.
+  "air-attunement": [
+    "enchantment",
+    (c) =>
+      `<path d="M13 3l-4 7h4l-2 5" ${stroke(c, 1.8)}/>` +
+      `<path d="M7 20h10M12 15v5" ${stroke(c, 2)}/>`,
+  ],
+  // Enchantment: a rock over a rising energy bar, attuned to Earth.
+  "earth-attunement": [
+    "enchantment",
+    (c) =>
+      `<path d="M6 13l3-8h6l3 8z" ${stroke(c, 1.8)}/>` +
+      `<path d="M7 20h10M12 15v5" ${stroke(c, 2)}/>`,
+  ],
+  // Enchantment: a ring with a plus, healed and fed by each spell.
+  "aura-of-restoration": [
+    "enchantment",
+    (c) =>
+      `<circle cx="12" cy="12" r="8" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 8v8M8 12h8" ${stroke(c, 2.2)}/>`,
+  ],
+  // Enchantment: a shield with a circling arrow, renewed by each spell.
+  "kinetic-armor": [
+    "enchantment",
+    (c) =>
+      `<path d="M7 4h10v6c0 4-2.5 6-5 8-2.5-2-5-4-5-8z" ${stroke(c, 1.8)}/>` +
+      `<path d="M9.5 10.5a2.5 2.5 0 1 1 2.5 2.5" ${stroke(c, 1.6)}/>`,
+  ],
   // Skill effect: two rising flames, adrenaline comes faster near the spirit.
   "infuriating-heat": [
     "skill-effect",
