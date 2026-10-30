@@ -1823,6 +1823,37 @@ const flameRing = (inner, outer, width, dot = true) => {
   return inkLine(d, width) + (dot ? `<circle cx="12" cy="12" r="2.2" fill="${C.ink}"/>` : "");
 };
 
+/** What a "with their next skill" chant waits for: a mark in the top left corner (#1497). */
+const nextTrigger = {
+  // A small blade: an attack skill.
+  attack: () => inkLine("M2.5 10L9.5 3", 2) + inkLine("M3.4 5.6L7 9.2", 1.8),
+  // A four-point star: a spell.
+  spell: () => inkFill("M6 1.2L7.5 4.5L10.8 6L7.5 7.5L6 10.8L4.5 7.5L1.2 6L4.5 4.5Z"),
+  // A ring round a dot: a signet.
+  signet: () =>
+    `<circle cx="6" cy="6" r="3.6" ${stroke(C.ink, 1.8)}/><circle cx="6" cy="6" r="1" fill="${C.ink}"/>`,
+  // Sound arcs: a shout or a chant.
+  chant: () => inkLine("M3 3.2C5.2 5 5.2 7 3 8.8M7 1.8C10.4 4.6 10.4 7.4 7 10.2", 1.7),
+  // Three dots: any of its next several skills.
+  any: () =>
+    [2.4, 6, 9.6].map((x) => `<circle cx="${String(x)}" cy="6" r="1.2" fill="${C.ink}"/>`).join(""),
+};
+
+/** The trigger mark top left, the payoff glyph shrunk beside and below it (#1497). */
+const nextSkill = (
+  /** @type {keyof typeof nextTrigger} */ trigger,
+  /** @type {string} */ payoff,
+) => {
+  /** @type {Record<string, (() => string) | undefined>} */
+  const glyphs = skillGlyph;
+  const draw = glyphs[payoff];
+  if (draw === undefined) throw new Error(`no payoff glyph "${payoff}"`);
+  return (
+    `<g transform="translate(15.5,15) scale(0.62) translate(-12,-12)">${draw()}</g>` +
+    `<g>${nextTrigger[trigger]()}</g>`
+  );
+};
+
 /** A hex ring round a small struck spell orb and `target`, the mark that says whom (#1498). @param {string} target */
 const hexFail = (target) =>
   `<circle cx="12" cy="12" r="8.5" ${stroke(C.ink, 2.2)} stroke-dasharray="4.2 3.2"/>` +
@@ -2847,6 +2878,20 @@ const skillGlyph = {
   "hex-return": () =>
     `<circle cx="6" cy="6" r="3.8" ${stroke(C.ink, 1.8)} stroke-dasharray="2.6 2"/>` +
     inkLine("M21 21L10.5 10.5M10.5 17V10.5H17", 2.4),
+  // "With their next skill" chants (#1497): the corner mark is what the ally casts next, the picture is the payoff.
+  "next-adrenaline": () => inkLine("M5 20V14M12 20V9M19 20V4", 2.6),
+  "next-attack-energy": () => nextSkill("attack", "energy"),
+  "next-spell-energy": () => nextSkill("spell", "energy"),
+  "next-signet-energy": () => nextSkill("signet", "energy"),
+  "next-spell-heart-plus": () => nextSkill("spell", "heart-plus"),
+  "next-chant-heart-plus": () => nextSkill("chant", "heart-plus"),
+  "next-signet-cleanse": () => nextSkill("signet", "cleanse"),
+  "next-any-cleanse": () => nextSkill("any", "cleanse"),
+  "next-spell-hex-cut": () => nextSkill("spell", "hex-cut"),
+  "next-attack-drop-weak": () => nextSkill("attack", "drop-weak"),
+  "next-attack-limp": () => nextSkill("attack", "limp"),
+  "next-attack-interrupt": () => nextSkill("attack", "interrupt"),
+  "next-attack-adrenaline": () => nextSkill("attack", "next-adrenaline"),
 };
 
 /** The shared spirit post of the attacking spirits, left of the mark it shoots (#1271). */
