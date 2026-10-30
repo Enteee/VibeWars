@@ -1384,4 +1384,54 @@ export const MESMER_SKILLS: readonly Skill[] = [
     // target foe to all foes adjacent to your target" (#1501).
     effects: [{ kind: "spread-conditions", radius: AREA_ADJACENT }],
   },
+  {
+    id: "mesmer.spiritual-pain",
+    name: "Spiritual Pain",
+    gwId: 1336,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe takes 5...40 damage. All hostile summoned creatures in
+    // the area of that foe take 25...125 damage" (PvP): 33, and 105.
+    effects: [
+      {
+        kind: "damage",
+        type: "typeless",
+        armorPenetration: 0,
+        amount: { scaling: { attributeId: "mesmer.domination-magic", atZero: 5, atTwelve: 33 } },
+      },
+      {
+        kind: "splash",
+        hits: "foe-creatures",
+        radius: AREA_IN_THE_AREA,
+        maxTargets: undefined,
+        effects: [
+          {
+            kind: "damage",
+            type: "typeless",
+            armorPenetration: 0,
+            amount: {
+              scaling: { attributeId: "mesmer.domination-magic", atZero: 25, atTwelve: 105 },
+            },
+          },
+        ],
+      },
+    ],
+  },
 ];

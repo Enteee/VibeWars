@@ -1435,4 +1435,44 @@ export const MONK_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  // The anti-summon skills (#1528): double damage, or more, against a
+  // summoned creature.
+  {
+    id: "monk.banish",
+    name: "Banish",
+    gwId: 252,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.smiting-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe takes 20...65 holy damage. This spell does double damage
+    // to summoned creatures": 56, and 56 more on one, as one packet.
+    effects: [
+      {
+        kind: "damage",
+        type: "holy",
+        armorPenetration: 0,
+        amount: { scaling: { attributeId: "monk.smiting-prayers", atZero: 20, atTwelve: 56 } },
+        conditionalBonus: {
+          condition: { kind: "target-is-summoned" },
+          amount: { scaling: { attributeId: "monk.smiting-prayers", atZero: 20, atTwelve: 56 } },
+        },
+      },
+    ],
+  },
 ];

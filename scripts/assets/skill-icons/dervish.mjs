@@ -28,4 +28,6 @@ export const DERVISH_ICONS = {
   "dervish.avatar-of-balthazar": { glyph: "avatar-flame" },
   "dervish.avatar-of-grenth": { glyph: "avatar-scythe" },
   "dervish.avatar-of-lyssa": { glyph: "avatar-chaos" },
+  // A placeholder until the asset-designer's (#1528).
+  "dervish.banishing-strike": { glyph: "scythe", modifier: "plus" },
 };

@@ -474,8 +474,9 @@ export interface CasterGainsStatusEffect {
  * effect's target, the target itself excluded (#885), as Death Blossom's
  * "all adjacent foes take 20...40 damage". Not a blow: no block, no crit
  * and no chain mark on a foe it reaches. `foe-creatures` reaches only the
- * foes' summoned creatures, never a player (#1309): Consume Soul's "all
- * hostile summoned creatures in earshot of that foe". `allies` reaches the
+ * foes' summoned creatures, never a player nor a pet (#1309, #1528):
+ * Consume Soul's "all hostile summoned creatures in earshot of that foe".
+ * `allies` reaches the
  * caster's side instead, the caster included (#1316): Spirit's Gift's "all
  * allies near that creature". `party` reaches the caster's side's players,
  * never a creature (#1434): Protective Was Kaolai's "all party members",
@@ -890,6 +891,12 @@ export type StateCondition =
    * as Shadow Refuge's "if you are attacking".
    */
   | { readonly kind: "target-attacking" }
+  /**
+   * The effect's target is a summoned creature (#1528): a minion or a
+   * spirit, never a pet or a map NPC (`isSummoned`). Banish's "double
+   * damage if target foe is a summoned creature".
+   */
+  | { readonly kind: "target-is-summoned" }
   /**
    * The effect's target is activating a spell (`isSpell`) or is attacking
    * (#1511), either once: Signet of Rejuvenation's "casting a spell or
