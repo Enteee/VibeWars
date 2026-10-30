@@ -79,14 +79,15 @@ To take one in, paste it anywhere in the editor that is not a text
 field. Both kinds work. A GW1 skill VibeWars does not have yet arrives as
 an empty slot. The build is yours once you press **Save**.
 
-A team code is pasted on **Team Play** instead.
+A team code is pasted on **Team Builder** instead.
 
 ## Team Builds
 
-A **team build** is a team of its own characters, made on **Team Play**
-and kept apart from your Solo characters. Each one is a card there:
-**New team build** makes one, **Edit** opens it, and a click on a card
-picks it for your next Team Play lobby. Add a member
+A **team build** is a team of its own characters, made on **Team
+Builder** and kept apart from your own characters. Each one is a card
+there and on each team mode: **New team build** makes one, and a click
+on a card, or its **Edit**, opens it. You propose one in the
+[Team Lobby](modes.md#team-lobby). Add a member
 with **New character**, or **Add** one of your characters to copy its
 build in. A copy is the team's own: changing it, or the character it came
 from, leaves the other as it was. Press a member's name to edit it in the
