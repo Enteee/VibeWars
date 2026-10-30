@@ -308,6 +308,9 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.preventsSpells) {
     parts.push("cannot cast spells");
   }
+  if (definition.preventsAttacks) {
+    parts.push("cannot attack");
+  }
   if (definition.untargetableByFoeSpells) {
     parts.push("cannot be the target of enemy spells");
   }
