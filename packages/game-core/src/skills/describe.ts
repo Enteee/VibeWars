@@ -38,6 +38,7 @@ import type {
   ChainRole,
   ChainStep,
   CreateGroundEffect,
+  CreatureAttack,
   DisableOwnSkillsEffect,
   EffectCondition,
   EnergyGainEffect,
@@ -1306,12 +1307,15 @@ function describeEffects(
   ranks: ReadonlyMap<string, number>,
 ): EffectDescription[] {
   if (effect.kind === "summon") {
-    const { aura, attack, deathBurst } = effect.creature;
+    const { kind, aura, attack, deathBurst } = effect.creature;
     return [
       describeEffect(effect, ranks),
       // What the spirit projects (#1064): "Non-spirit allies in its range:
       // +3 Health regeneration".
       ...(aura === undefined ? [] : [describeAura(aura, "in its range")]),
+      ...(kind === "spirit" && attack !== undefined && attack.damageMax > 0
+        ? [describeSpiritDamage(attack, ranks)]
+        : []),
       ...(attack?.onHit ?? []).map((onHit) => describeSpiritBlow(onHit, ranks)),
       ...(deathBurst === undefined ? [] : [describeDeathBurst(deathBurst, ranks)]),
     ];
@@ -1358,6 +1362,28 @@ function describeEffects(
     const { text, magnitude } = describeEffect(inner, ranks);
     return { text: `${condition}: ${lowerFirst(text)}`, magnitude };
   });
+}
+
+/**
+ * What a spirit's blow deals (#1631): "Its attacks deal 17 damage",
+ * linear in the rank as GW1 states it when it scales by rank.
+ */
+function describeSpiritDamage(
+  attack: CreatureAttack,
+  ranks: ReadonlyMap<string, number>,
+): EffectDescription {
+  const amount: Magnitude =
+    attack.scaling.kind === "rank"
+      ? {
+          scaling: {
+            attributeId: attack.attributeId,
+            atZero: attack.scaling.atZero,
+            atTwelve: attack.damageMax,
+          },
+        }
+      : { flat: attack.damageMax };
+  const magnitude = describeMagnitude(amount, ranks);
+  return { text: `Its attacks deal ${String(magnitude.current)} damage`, magnitude };
 }
 
 /**
