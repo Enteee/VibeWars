@@ -992,7 +992,6 @@ test("the library filters by name", async ({ page }) => {
 
   await page.locator("input.skill-search").fill("zzzz");
   await expect(boxes).toHaveCount(0);
-  await expect(page.locator(".skill-library-empty")).toBeVisible();
 
   await page.locator("input.skill-search").fill("");
   await expect(boxes).toHaveCount(total);
@@ -1889,7 +1888,7 @@ test("type chips filter the library, several at once, and search reads the text 
   await page.locator(".skill-search").fill("heals");
   await expect(names).toContainText(["Orison of Healing"]);
   await page.locator(".skill-search").fill("zzzz");
-  await expect(page.locator(".skill-library-empty")).toBeVisible();
+  await expect(names).toHaveCount(0);
 });
 
 test("the profession grid says what each keeps, and a cell picks it (#568)", async ({ page }) => {

@@ -424,9 +424,9 @@ export function renderMenu(
   play.appendChild(h("h2", "menu-column-title", "Play"));
 
   const nameField = h("label", "field");
-  nameField.appendChild(h("span", "field-label", "Your name (other players see it)"));
   const nameInput = document.createElement("input");
   nameInput.className = "field-input";
+  nameInput.setAttribute("aria-label", "Name");
   nameInput.placeholder = "Player";
   nameInput.value = loadPlayerName();
   nameInput.addEventListener("input", () => {

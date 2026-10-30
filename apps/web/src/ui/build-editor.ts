@@ -1655,9 +1655,6 @@ function mountSkillBar(panel: HTMLElement, context: EditorContext): Region {
   // players think about it.
   const section = h("div", "editor-skills");
   section.appendChild(h("div", "editor-label", "Skill bar"));
-  section.appendChild(
-    h("div", "editor-hint", "Click a slot, then a skill's Equip to put it there. Or drag."),
-  );
   const grid = h("div", "skill-bar-grid");
   grid.dataset.cause = "bar";
   section.appendChild(grid);
@@ -1998,11 +1995,6 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
   /** The card whose details are open; one at a time (#567). */
   let open: string | undefined;
   const groupHost = h("div", "skill-groups");
-  const emptyNote = h(
-    "div",
-    "skill-library-empty",
-    "No skill matches. Note that only skills your professions can access are listed.",
-  );
 
   const ranksOf = (character: StoredCharacter): Map<string, number> =>
     new Map(character.attributes.map((a) => [a.attributeId, a.rank]));
@@ -2263,9 +2255,6 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
         }
       },
     );
-    if (groups.length === 0) {
-      groupHost.appendChild(emptyNote);
-    }
     const lockedAll = [...lockedMatches, ...corpusMatches.locked];
     lockedSummary.textContent = `Other professions (${String(lockedAll.length)})`;
     // Collapsed, the near thousand GW1 skills of other professions are
@@ -2492,9 +2481,6 @@ function mountGear(panel: HTMLElement, context: EditorContext): Region {
   const section = h("div", "editor-gear");
   section.dataset.cause = "equipment";
   section.appendChild(h("div", "editor-label", "Equipment"));
-  section.appendChild(
-    h("div", "editor-hint", "Drag gear from the right, or click a piece to equip it."),
-  );
 
   const drop = (target: GearDropTarget) => (source: GearDragSource) => {
     commit(applyGearDrop(current(), source, target));
