@@ -99,4 +99,3 @@ test("a skill that lands glows on the body it helped, then is gone (#1139)", asy
   await expect.poll(async () => (await strip(page)).includes(true)).toBe(true);
   await expect.poll(async () => (await strip(page)).at(-1)).toBe(false);
 });
-// throwaway touch for #1477: shows ten e2e-repeat jobs; reverted before merge
