@@ -52,6 +52,6 @@ export const MESMER_ICONS = {
   "mesmer.shatter-hex": { glyph: "cleanse", modifier: "area" },
   "mesmer.psychic-instability": { glyph: "interrupt", modifier: "upkeep" },
   "mesmer.arcane-conundrum": { glyph: "slow", modifier: "hourglass" },
-  // Clumsiness (#1593), a stand-in until its art card.
-  "mesmer.clumsiness": { glyph: "sword", modifier: "hourglass" },
+  // Clumsiness (#1593, #1619): the hex ring round a dropped blade.
+  "mesmer.clumsiness": { glyph: "hex-sword-drop" },
 };
