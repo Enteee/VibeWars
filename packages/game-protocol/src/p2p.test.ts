@@ -79,10 +79,14 @@ import { MAX_LOBBY_PLAYERS, PROTOCOL_MISMATCH_MESSAGE } from "./protocol.js";
 import type { CastRefusedMessage, RechargeMessage } from "./protocol.js";
 import { PROTOCOL_VERSION } from "./protocol-version.js";
 
+/** A guild cape (#1422), as the designer makes one. */
+const CAPE = { main: "violet", trim: "white", emblem: "diamond" } as const;
+
 const hello: PeerHello = {
   protocolVersion: PROTOCOL_VERSION,
   name: "Mhenlo",
   guildTag: "VIBE",
+  guildCape: CAPE,
   build: { profession: "monk", skills: ["healing-breeze", null] },
   rejoin: null,
 };
@@ -139,6 +143,7 @@ const player: WirePlayer = {
   id: "peer-1",
   name: "Mhenlo",
   guildTag: "VIBE",
+  guildCape: CAPE,
   team: 0,
   x: 120.5,
   y: -3,
@@ -430,6 +435,7 @@ const lobbyJoin: PeerLobbyJoin = {
   protocolVersion: PROTOCOL_VERSION,
   name: "Mhenlo",
   guildTag: "vb",
+  guildCape: null,
   character: { name: "Mhenlo Healer", primary: "monk", secondary: "elementalist" },
   admission: null,
 };
@@ -461,6 +467,7 @@ const lobbyState: WireLobbyState = {
       id: "peer-1/local",
       name: "Host",
       guildTag: "VIBE",
+      guildCape: CAPE,
       team: 0,
       ready: true,
       isHost: true,
@@ -471,6 +478,7 @@ const lobbyState: WireLobbyState = {
       id: "peer-3",
       name: "Watcher",
       guildTag: null,
+      guildCape: null,
       team: null,
       ready: false,
       isHost: false,
@@ -481,6 +489,7 @@ const lobbyState: WireLobbyState = {
       id: "bot-1",
       name: "Monk Bot",
       guildTag: null,
+      guildCape: null,
       team: 1,
       ready: true,
       isHost: false,
@@ -513,6 +522,8 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["untagged hello (#1406)", parsePeerHello, { ...hello, guildTag: null }],
   // The host sanitises it: a bad tag on the wire is still a hello.
   ["hello with a bad tag (#1406)", parsePeerHello, { ...hello, guildTag: "[x] " }],
+  ["uncaped hello (#1422)", parsePeerHello, { ...hello, guildCape: null }],
+  ["caped lobby-join (#1422)", parsePeerLobbyJoin, { ...lobbyJoin, guildCape: CAPE }],
   ["rejoin-challenge", parsePeerRejoinChallenge, challenge],
   ["rejoin-proof", parsePeerRejoinProof, proof],
   ["welcome", parsePeerWelcome, welcome],
@@ -849,6 +860,27 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     "snapshot of a player without a guild tag (#1406)",
     parseWireSnapshotPart,
     { ...snapshot, players: [{ ...player, guildTag: undefined }] },
+  ],
+  [
+    "snapshot of a player without a guild cape (#1422)",
+    parseWireSnapshotPart,
+    { ...snapshot, players: [{ ...player, guildCape: undefined }] },
+  ],
+  [
+    "snapshot of a player in a cape of no such colour (#1422)",
+    parseWireSnapshotPart,
+    { ...snapshot, players: [{ ...player, guildCape: { ...CAPE, main: "red" } }] },
+  ],
+  [
+    "lobby-state of a member in a cape of no such emblem (#1422)",
+    parseWireLobbyState,
+    {
+      ...lobbyState,
+      players: lobbyState.players.map((member) => ({
+        ...member,
+        guildCape: { ...CAPE, emblem: "skull" },
+      })),
+    },
   ],
   [
     "summary row without a guild tag (#1406)",
@@ -1746,6 +1778,13 @@ describe("the P2P validators (#82)", () => {
     expect(parsePeerLobbyJoin({ ...lobbyJoin, guildTag: long })?.guildTag).toHaveLength(
       MAX_WIRE_TEXT,
     );
+  });
+
+  it("read what a client sends that is no cape as none, never a refused join (#1422)", () => {
+    for (const guildCape of [undefined, "violet", { ...CAPE, trim: "red" }, { ...CAPE, x: 1 }]) {
+      expect(parsePeerHello({ ...hello, guildCape })?.guildCape).toBeNull();
+      expect(parsePeerLobbyJoin({ ...lobbyJoin, guildCape })?.guildCape).toBeNull();
+    }
   });
 
   it("cut a summary name to MAX_WIRE_TEXT (#1057)", () => {

@@ -9,6 +9,7 @@ import {
 
 import { BODY_EDGE, BODY_GLYPH_ALPHA, BODY_GLYPH_SIZE } from "../render/arena-snapshot.js";
 import { REST_FRAME } from "../render/attack-clock.js";
+import { CAPE_LENGTH, type CapeLook } from "../render/cape-shape.js";
 import {
   paintBodyDisc,
   paintBodyMarks,
@@ -31,6 +32,12 @@ const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const BODY_RADIUS = RULES.collision.playerRadius;
 /** Room round the body for its marks: the weapon reaches r + 7.5, its 4 px casing 2 px more. */
 const MARK_ROOM = 10;
+/**
+ * More room behind it, on the left, for a cape (#1422): its hem reaches
+ * r + `CAPE_LENGTH`, its outline 1 px more. Kept with no cape too, so
+ * putting one on moves nothing in the list.
+ */
+const CAPE_ROOM = CAPE_LENGTH + 1 - MARK_ROOM;
 /** Facing right, as the player-mark reference sheet draws a body. */
 const FIGURE_FACING = 0;
 
@@ -74,18 +81,27 @@ export function characterAppearance(character: StoredCharacter): CharacterAppear
   return { weaponId: equipment.mainHand.weapon.id, offhandId: equipment.offhandId };
 }
 
-/** The figure's body: your own, standing still, centred in a box `MARK_ROOM` wider each side. */
-export function figureBody(appearance: CharacterAppearance): StandingBody {
-  const centre = BODY_RADIUS + MARK_ROOM;
+/** The figure's box: `MARK_ROOM` round the body, and `CAPE_ROOM` more behind it. */
+export const FIGURE_SIZE = {
+  width: (BODY_RADIUS + MARK_ROOM) * 2 + CAPE_ROOM,
+  height: (BODY_RADIUS + MARK_ROOM) * 2,
+} as const;
+
+/** The figure's body: your own, standing still, wearing `cape`, its marks clear of the box's edges. */
+export function figureBody(
+  appearance: CharacterAppearance,
+  cape: CapeLook | undefined,
+): StandingBody {
   return {
-    x: centre,
-    y: centre,
+    x: CAPE_ROOM + BODY_RADIUS + MARK_ROOM,
+    y: BODY_RADIUS + MARK_ROOM,
     r: BODY_RADIUS,
     facing: FIGURE_FACING,
     team: "self",
     weaponId: appearance.weaponId,
     offhandId: appearance.offhandId,
     frame: REST_FRAME,
+    cape,
   };
 }
 
@@ -186,22 +202,25 @@ function paintBodyGlyph(
 }
 
 /**
- * The figure for `character`, as a canvas sharp at the device's pixel
+ * The figure for `character` wearing `cape`, as a canvas sharp at the device's pixel
  * ratio: drawn at once without its glyph, then again with it once the
  * profession icon has loaded, with `data-glyph` naming it, and
  * `data-weapon-id` naming what it holds. An invalid build keeps its
  * glyph: its profession is known. A browser that gives no 2D context
  * leaves the box empty.
  */
-export function createCharacterFigure(character: StoredCharacter): HTMLCanvasElement {
-  const size = (BODY_RADIUS + MARK_ROOM) * 2;
+export function createCharacterFigure(
+  character: StoredCharacter,
+  cape: CapeLook | undefined,
+): HTMLCanvasElement {
+  const { width, height } = FIGURE_SIZE;
   const ratio = window.devicePixelRatio;
   const canvas = document.createElement("canvas");
   canvas.className = "character-figure";
-  canvas.width = Math.round(size * ratio);
-  canvas.height = Math.round(size * ratio);
-  canvas.style.width = `${String(size)}px`;
-  canvas.style.height = `${String(size)}px`;
+  canvas.width = Math.round(width * ratio);
+  canvas.height = Math.round(height * ratio);
+  canvas.style.width = `${String(width)}px`;
+  canvas.style.height = `${String(height)}px`;
   const label = professionLabel(character.primaryProfession, character.secondaryProfession);
   canvas.title = label;
   canvas.setAttribute("role", "img");
@@ -218,10 +237,10 @@ export function createCharacterFigure(character: StoredCharacter): HTMLCanvasEle
   if (appearance.weaponId !== undefined) {
     canvas.dataset.weaponId = appearance.weaponId;
   }
-  const body = figureBody(appearance);
+  const body = figureBody(appearance, cape);
   const painter = canvasPainter(context);
   const paint = (glyph: HTMLImageElement | undefined): void => {
-    context.clearRect(0, 0, size, size);
+    context.clearRect(0, 0, width, height);
     paintFigure(painter, body, () => {
       if (glyph !== undefined) {
         paintBodyGlyph(context, body, glyph, ratio);

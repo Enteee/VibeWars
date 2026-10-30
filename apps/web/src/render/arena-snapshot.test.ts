@@ -55,6 +55,7 @@ function actor(
     id,
     name: id,
     guildTag: undefined,
+    cape: undefined,
     bot: false,
     position: vec2(x, y),
     facing: 0,

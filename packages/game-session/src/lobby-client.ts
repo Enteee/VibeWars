@@ -16,6 +16,7 @@ import {
   type PeerStayTogether,
   type PeerLobbyHello,
   type PeerLobbyJoin,
+  type WireCape,
   type WireLobbyCommand,
   type WireLobbyState,
   type WirePartyFormed,
@@ -90,6 +91,8 @@ export interface JoinLobbyOptions {
   readonly name: string;
   /** The guild tag the player set (#1406); `null` for none. */
   readonly guildTag: string | null;
+  /** The guild cape the player designed (#1422); `null` for none. */
+  readonly guildCape: WireCape | null;
   /** The selected character's name and professions; `null` brings a starter build. */
   readonly character: LobbyCharacter | null;
   /** How long to wait for a state that lists this player. */
@@ -110,6 +113,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     protocolVersion: PROTOCOL_VERSION,
     name: options.name,
     guildTag: options.guildTag,
+    guildCape: options.guildCape,
     character: options.character,
   };
   /** A coded lobby's join; a queued one's is made with its proof. */

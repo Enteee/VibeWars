@@ -30,7 +30,15 @@ export type {
 } from "./match-connection.js";
 export { MESSAGE_BURST, MESSAGES_PER_SECOND, MessageBudget } from "./intent-budget.js";
 export type { DropReport } from "./intent-budget.js";
-export { sanitizeChatText, sanitizeGuildTag, sanitizeName } from "./names.js";
+export {
+  NO_GUILD,
+  sanitizeChatText,
+  sanitizeGuild,
+  sanitizeGuildCape,
+  sanitizeGuildTag,
+  sanitizeName,
+} from "./names.js";
+export type { Guild } from "./names.js";
 export { RECHARGE_TOLERANCE_SECONDS, rechargePredicted, rechargeState } from "./recharge.js";
 export { adrenalineSlots, sameAdrenaline } from "./adrenaline.js";
 export { spawnPoint } from "./spawn-points.js";
