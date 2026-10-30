@@ -113,10 +113,11 @@ jobs:
   # is spread over four shards (#1610) so a pull request waits one quarter of
   # the suite. Each shard builds for itself: the build is a small part of the
   # run, and sharing it would add an artifact round trip and a `needs:`.
+  # The shard has no `name:` on purpose: hub-guards.test.mjs ties every named
+  # job to EXPECTED_CHECKS, and only the aggregate is a required check.
   # No path filter, for the reason given on `ci`: a required check that is
   # skipped, or never reports, must not count as green.
   e2e-shard:
-    name: e2e-shard (${{ matrix.shard }}/4)
     runs-on: ubuntu-latest
     timeout-minutes: 90
     strategy:
