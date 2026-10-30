@@ -1245,6 +1245,13 @@ export function applyEffect(
         if (wasInterrupted(target.id, earlier)) {
           return events;
         }
+        // Already missed by this resolution, as by Signet of Disruption's
+        // hexed-foe interrupt before its spell one (#1627): one miss is told.
+        if (
+          earlier.some((event) => event.kind === "interrupt-missed" && event.targetId === target.id)
+        ) {
+          return events;
+        }
         // Nothing it may interrupt was being cast: the interrupt is wasted. Emitted
         // explicitly so a combat log can show the miss, and why — landing an
         // interrupt is a timing skill, and silently swallowing failures

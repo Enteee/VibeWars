@@ -213,6 +213,19 @@ describe("Signet of Disruption (#1627)", () => {
     },
   );
 
+  it.each([
+    ["a hexed", true],
+    ["an unhexed", false],
+  ] as const)("%s foe using nothing: one interrupt-missed, no damage", (_, isHexed) => {
+    const target = foe("f");
+    if (isHexed) {
+      target.statuses.apply("backfire", 10, "m");
+    }
+    const events = use(mesmer(), "mesmer.signet-of-disruption", target);
+    expect(events.filter((event) => event.kind === "interrupt-missed")).toHaveLength(1);
+    expect(damages(events, "f")).toEqual([]);
+  });
+
   it("an unhexed foe using a signet: nothing", () => {
     const target = foe("f", "warrior.healing-signet");
     const events = use(mesmer(), "mesmer.signet-of-disruption", target);
