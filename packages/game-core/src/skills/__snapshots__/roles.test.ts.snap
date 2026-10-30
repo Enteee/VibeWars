@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
+exports[`skillRoles > tags every assassin skill the same way every time 1`] = `
 {
   "assassin.black-lotus-strike": "",
   "assassin.caltrops": "condition",
@@ -37,7 +37,17 @@ exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
   "assassin.vipers-defense": "condition",
   "assassin.way-of-perfection": "",
   "assassin.wild-strike": "",
+}
+`;
+
+exports[`skillRoles > tags every common skill the same way every time 1`] = `
+{
   "common.resurrection-signet": "",
+}
+`;
+
+exports[`skillRoles > tags every dervish skill the same way every time 1`] = `
+{
   "dervish.aura-of-thorns": "condition",
   "dervish.avatar-of-balthazar": "",
   "dervish.avatar-of-dwayna": "removal",
@@ -64,6 +74,11 @@ exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
   "dervish.vow-of-strength": "",
   "dervish.wounding-strike": "condition",
   "dervish.zealous-sweep": "",
+}
+`;
+
+exports[`skillRoles > tags every elementalist skill the same way every time 1`] = `
+{
   "elementalist.aftershock": "",
   "elementalist.armor-of-earth": "defence",
   "elementalist.armor-of-mist": "defence",
@@ -100,6 +115,11 @@ exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
   "elementalist.stoning": "knockdown",
   "elementalist.ward-against-melee": "defence",
   "elementalist.water-trident": "knockdown",
+}
+`;
+
+exports[`skillRoles > tags every mesmer skill the same way every time 1`] = `
+{
   "mesmer.arcane-echo": "",
   "mesmer.backfire": "hex",
   "mesmer.conjure-phantasm": "hex",
@@ -139,6 +159,11 @@ exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
   "mesmer.visions-of-regret": "hex",
   "mesmer.wastrels-demise": "hex",
   "mesmer.wastrels-worry": "hex",
+}
+`;
+
+exports[`skillRoles > tags every monk skill the same way every time 1`] = `
+{
   "monk.aegis": "defence",
   "monk.blessed-light": "healing removal",
   "monk.contemplation-of-purity": "healing removal",
@@ -177,6 +202,11 @@ exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
   "monk.word-of-healing": "healing",
   "monk.words-of-comfort": "healing",
   "monk.zealous-benediction": "healing",
+}
+`;
+
+exports[`skillRoles > tags every necromancer skill the same way every time 1`] = `
+{
   "necromancer.animate-bone-horror": "",
   "necromancer.animate-bone-minions": "",
   "necromancer.barbed-signet": "condition",
@@ -212,6 +242,11 @@ exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
   "necromancer.vampiric-touch": "",
   "necromancer.weaken-armor": "condition",
   "necromancer.well-of-suffering": "",
+}
+`;
+
+exports[`skillRoles > tags every paragon skill the same way every time 1`] = `
+{
   "paragon.aggressive-refrain": "",
   "paragon.anthem-of-disruption": "interrupt",
   "paragon.anthem-of-envy": "",
@@ -268,6 +303,11 @@ exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
   "paragon.wearying-spear": "",
   "paragon.wild-throw": "",
   "paragon.zealous-anthem": "",
+}
+`;
+
+exports[`skillRoles > tags every ranger skill the same way every time 1`] = `
+{
   "ranger.apply-poison": "condition",
   "ranger.barbed-trap": "condition",
   "ranger.barrage": "",
@@ -297,6 +337,11 @@ exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
   "ranger.throw-dirt": "condition",
   "ranger.troll-unguent": "healing",
   "ranger.winnowing": "",
+}
+`;
+
+exports[`skillRoles > tags every ritualist skill the same way every time 1`] = `
+{
   "ritualist.blind-was-mingson": "condition",
   "ritualist.boon-of-creation": "healing",
   "ritualist.consume-soul": "",
@@ -344,6 +389,11 @@ exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
   "ritualist.weapon-of-remedy": "removal",
   "ritualist.weapon-of-warding": "healing defence",
   "ritualist.wielders-boon": "healing",
+}
+`;
+
+exports[`skillRoles > tags every warrior skill the same way every time 1`] = `
+{
   "warrior.backbreaker": "knockdown",
   "warrior.balanced-stance": "",
   "warrior.bonettis-defense": "defence",
