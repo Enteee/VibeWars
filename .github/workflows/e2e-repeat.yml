@@ -1,8 +1,8 @@
 name: e2e repeat
 
 # Repeats the e2e specs a pull request adds or changes, ten times, and fails
-# on any failure (#216). The ten runs are split over five parallel jobs of
-# two repeats each: two whole specs at --workers=1 outgrew one 30-minute job
+# on any failure (#216). The ten runs are split over ten parallel jobs of
+# one repeat each: two whole specs at --workers=1 outgrew one 30-minute job
 # (444 of 480 runs on #451), and a shard keeps the budget per job, not in total. A 1-in-10 flake survives ten runs 35% of the time,
 # so qa-tester's flake-check skill stays: this is the floor, not a
 # replacement.
@@ -35,8 +35,9 @@ jobs:
       # One failing shard is the answer; the others add nothing but cost.
       fail-fast: true
       matrix:
-        # Five jobs, each --repeat-each=2: ten repeats in all.
-        shard: [1, 2, 3, 4, 5]
+        # Ten jobs, each --repeat-each=1: ten repeats in all (#1477). Every job runs the whole
+        # selection, so more repeats per job, not more jobs, is what grows a job.
+        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     # Two runs of a few specs take minutes. Without a cap, a hang would sit
     # pending for six hours, and hubd blocks the merge while it does.
     timeout-minutes: 30
@@ -73,14 +74,14 @@ jobs:
         run: devenv shell -- pnpm run build
 
       - if: steps.select.outputs.specs != ''
-        name: Repeat specs twice (shard ${{ matrix.shard }} of 5)
+        name: Repeat specs once (shard ${{ matrix.shard }} of 10)
         env:
           SPECS: ${{ steps.select.outputs.specs }}
         # SPECS is split on spaces on purpose: one argument per spec.
         run: |
           # shellcheck disable=SC2086
           PLAYWRIGHT_JSON_OUTPUT_NAME=e2e-repeat.json devenv shell -- pnpm exec playwright test $SPECS \
-            --reporter=list,json --repeat-each=2 --retries=0 --workers=1
+            --reporter=list,json --repeat-each=1 --retries=0 --workers=1
           # A pass that ran nothing (every test skipped) is not a pass.
           node scripts/ci/select-e2e-specs.mjs --assert-ran e2e-repeat.json
 

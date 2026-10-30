@@ -441,11 +441,13 @@ export interface CasterGainsStatusEffect {
  * foes' summoned creatures, never a player (#1309): Consume Soul's "all
  * hostile summoned creatures in earshot of that foe". `allies` reaches the
  * caster's side instead, the caster included (#1316): Spirit's Gift's "all
- * allies near that creature".
+ * allies near that creature". `party` reaches the caster's side's players,
+ * never a creature (#1434): Protective Was Kaolai's "all party members",
+ * at a radius of `Infinity`, as `PartyArea` reaches them.
  */
 export interface SplashEffect {
   readonly kind: "splash";
-  readonly hits: "foes" | "foe-creatures" | "allies";
+  readonly hits: "foes" | "foe-creatures" | "allies" | "party";
   readonly radius: number;
   /**
    * At most this many, the nearest to the centre first, a tie by id
@@ -946,6 +948,11 @@ export type SkillType =
   | "binding-ritual"
   | "ward"
   | "well"
+  /**
+   * A Ritualist's item spell (#1434): ashes held for a bonus, a drop
+   * effect when they fall. A spell, and a bundle in the hands.
+   */
+  | "item-spell"
   | "trap"
   | "pet-attack"
   /** A GW1 form (#1437): a status of its own on the caster, never an enchantment. */
@@ -954,8 +961,8 @@ export type SkillType =
 
 /**
  * Whether a skill of this type is a spell, as GW1's rules that "affect
- * spells" mean it: enchantments, hexes, weapon spells, wards (#1087) and wells
- * (#1104) are spells,
+ * spells" mean it: enchantments, hexes, weapon spells, wards (#1087), wells
+ * (#1104) and item spells (#1434) are spells,
  * signets, shouts, chants, stances and glyphs are not (#524, #526, #527,
  * #758). Every such rule asks this, never the type directly.
  */
@@ -966,7 +973,8 @@ export function isSpell(type: SkillType): boolean {
     type === "hex" ||
     type === "weapon-spell" ||
     type === "ward" ||
-    type === "well"
+    type === "well" ||
+    type === "item-spell"
   );
 }
 

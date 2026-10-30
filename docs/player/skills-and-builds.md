@@ -59,6 +59,16 @@ have yet, greyed out. You can read them, not equip them.
 Beside the editor, the **Training Ground** lets you try your bar on
 practice targets before a match.
 
+## Item spells
+
+A Ritualist's **item spells** put a spirit's **ashes** in your hands: a
+bonus while you hold them, and a **drop effect** when they fall. They
+drop when they run out, when you die, when you press **Drop ashes** above
+your Health bar, cast another item spell, shadow step, swap weapons or
+take up a flag or relic. Your hands are full while you hold them: no
+attacks and no attack skills, but you walk at full speed and still cast
+spells. Nothing removes ashes; every end is a drop.
+
 ## Sharing builds
 
 In the editor's **⋯** menu, **Share** gives your build as a line of
@@ -69,12 +79,14 @@ To take one in, paste it anywhere in the editor that is not a text
 field. Both kinds work. A GW1 skill VibeWars does not have yet arrives as
 an empty slot. The build is yours once you press **Save**.
 
-A team code is pasted on the **Team Builds** screen instead.
+A team code is pasted on **Team Play** instead.
 
 ## Team Builds
 
-A **team build** is a team of its own characters, made on the **Team
-Builds** screen and kept apart from your Solo characters. Add a member
+A **team build** is a team of its own characters, made on **Team Play**
+and kept apart from your Solo characters. Each one is a card there:
+**New team build** makes one, **Edit** opens it, and a click on a card
+picks it for your next Team Play lobby. Add a member
 with **New character**, or **Add** one of your characters to copy its
 build in. A copy is the team's own: changing it, or the character it came
 from, leaves the other as it was. Press a member's name to edit it in the

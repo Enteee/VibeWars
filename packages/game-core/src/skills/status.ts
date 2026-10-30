@@ -42,6 +42,7 @@ import type {
   SkillEffect,
   SkillType,
 } from "./types.js";
+import { KNOCKDOWN_SECONDS } from "./types.js";
 
 export type StatusCategory =
   | "condition"
@@ -55,6 +56,11 @@ export type StatusCategory =
   /** A Paragon's echo (#1423): no removal touches one; only its end or a death does. */
   | "echo"
   | "weapon-spell"
+  /**
+   * A Ritualist's ashes (#1434), held while an item spell lasts. Nothing
+   * removes them: every end is a drop, and fires its `ends` triggers.
+   */
+  | "item"
   | "form"
   | "skill-effect";
 
@@ -68,6 +74,7 @@ export const EXCLUSIVE_CATEGORIES: ReadonlySet<StatusCategory> = new Set([
   "preparation",
   "glyph",
   "weapon-spell",
+  "item",
   "form",
 ]);
 
@@ -250,6 +257,13 @@ export type StatusId =
   | "armor-of-mist"
   | "shatterstone"
   | "mind-freeze"
+  // Ritualist item spells (#1434).
+  | "protective-was-kaolai"
+  | "generous-was-tsungrai"
+  | "defiant-was-xinrae"
+  | "blind-was-mingson"
+  | "grasping-was-kuurong"
+  | "energetic-was-lee-sa"
   // Dervish forms (#1437).
   | "avatar-of-melandru"
   | "avatar-of-dwayna"
@@ -2583,6 +2597,130 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     profession: "elementalist",
     moveSpeedMultiplier: 0.1,
   }),
+
+  // Ritualist item spells (#1434): a bonus while the ashes are held, and a
+  // drop effect, their `ends` trigger, wherever the holder is when they
+  // fall. Rank-12 values, by their Ritualist.
+  // "...you gain 20 armor. When you drop his ashes, all party members are
+  // healed for 20...95 Health": 80.
+  "protective-was-kaolai": define("protective-was-kaolai", "Protective Was Kaolai", "item", {
+    profession: "ritualist",
+    armorModifier: 20,
+    triggers: [
+      {
+        on: "ends",
+        effects: [
+          { kind: "heal", amount: { flat: 80 }, perStatusOnTarget: [] },
+          {
+            kind: "splash",
+            hits: "party",
+            radius: Number.POSITIVE_INFINITY,
+            maxTargets: undefined,
+            effects: [{ kind: "heal", amount: { flat: 80 }, perStatusOnTarget: [] }],
+          },
+        ],
+        target: "bearer",
+        skillId: "ritualist.protective-was-kaolai",
+      },
+    ],
+  }),
+  // "...gain +50...140 maximum Health. When you drop his ashes, you gain
+  // 100...280 Health": 122 and 244. Health above the maximum left goes
+  // with the bonus, before the drop heals.
+  "generous-was-tsungrai": define("generous-was-tsungrai", "Generous Was Tsungrai", "item", {
+    profession: "ritualist",
+    maxHealthBonus: 122,
+    triggers: [
+      {
+        on: "ends",
+        effects: [{ kind: "heal", amount: { flat: 244 }, perStatusOnTarget: [] }],
+        target: "bearer",
+        skillId: "ritualist.generous-was-tsungrai",
+      },
+    ],
+  }),
+  // "...you cannot lose more than 20% of your max Health from a single
+  // hit. When you drop her ashes, you steal 5...50 Health from all nearby
+  // foes": 41.
+  "defiant-was-xinrae": define("defiant-was-xinrae", "Defiant Was Xinrae", "item", {
+    profession: "ritualist",
+    maxDamageFractionPerHit: 0.2,
+    triggers: [
+      {
+        on: "ends",
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_NEARBY,
+            maxTargets: undefined,
+            effects: [{ kind: "life-steal", amount: { flat: 41 } }],
+          },
+        ],
+        target: "bearer",
+        skillId: "ritualist.defiant-was-xinrae",
+      },
+    ],
+  }),
+  // "When you drop his ashes, all nearby foes are Blinded for 3...8
+  // seconds": 7. Nothing while held.
+  "blind-was-mingson": define("blind-was-mingson", "Blind Was Mingson", "item", {
+    profession: "ritualist",
+    triggers: [
+      {
+        on: "ends",
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_NEARBY,
+            maxTargets: undefined,
+            effects: [{ kind: "apply-status", statusId: "blind", durationSeconds: 7 }],
+          },
+        ],
+        target: "bearer",
+        skillId: "ritualist.blind-was-mingson",
+      },
+    ],
+  }),
+  // "When you drop his ashes, all foes in the area are struck for 15...75
+  // damage and knocked down": 63, typeless. Nothing while held.
+  "grasping-was-kuurong": define("grasping-was-kuurong", "Grasping Was Kuurong", "item", {
+    profession: "ritualist",
+    triggers: [
+      {
+        on: "ends",
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_IN_THE_AREA,
+            maxTargets: undefined,
+            effects: [
+              { kind: "damage", amount: { flat: 63 }, type: "typeless", armorPenetration: 0 },
+              { kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS },
+            ],
+          },
+        ],
+        target: "bearer",
+        skillId: "ritualist.grasping-was-kuurong",
+      },
+    ],
+  }),
+  // "...you gain +2 Energy regeneration. When you drop her ashes, you gain
+  // +1...10 Energy": 8.
+  "energetic-was-lee-sa": define("energetic-was-lee-sa", "Energetic Was Lee Sa", "item", {
+    profession: "ritualist",
+    energyPips: 2,
+    triggers: [
+      {
+        on: "ends",
+        effects: [{ kind: "energy-gain", amount: { flat: 8 } }],
+        target: "bearer",
+        skillId: "ritualist.energetic-was-lee-sa",
+      },
+    ],
+  }),
   // "You have +100 Health, +30 elemental armor, and your attacks deal earth
   // damage. Whenever you lose a Dervish enchantment you lose 2 conditions"
   // (#1437, PvP).
@@ -3390,6 +3528,21 @@ export class StatusSet {
   /** End one status by id, recorded as ended (#1022): a trigger that spends it. */
   public end(id: StatusId): void {
     this.#end([id]);
+  }
+
+  /**
+   * Take the bearer's ashes, its `"item"` status (#1434), off without
+   * recording the end: the simulation fires their drop itself, where the
+   * bearer stands now. `undefined` when it holds none.
+   */
+  public dropItem(): { readonly id: StatusId; readonly sourceId: string } | undefined {
+    for (const status of this.#statuses.values()) {
+      if (getStatusDefinition(status.id).category === "item") {
+        this.#statuses.delete(status.id);
+        return { id: status.id, sourceId: status.sourceId };
+      }
+    }
+    return undefined;
   }
 
   /** Remove one status by id. Returns whether anything was removed. */

@@ -446,6 +446,8 @@ function categoryPhrase(category: StatusCategory, index: number): string {
       return "in a form";
     case "skill-effect":
       return "under a skill effect";
+    case "item":
+      return "holding ashes";
     case "echo":
       return "under an echo";
     case "shout":
