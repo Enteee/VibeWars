@@ -52,12 +52,14 @@ import {
   deliverPeer,
   deliverSystem,
   formatMirror,
+  formatProposal,
   formatQuestion,
   inboxesOf,
   skipNudge,
   isReadyOutboxEntry,
   mirrorTopic,
   obj,
+  parseProposalNotice,
   parseQuestions,
   parseRegistry,
   planSends,
@@ -65,6 +67,7 @@ import {
   routeAnswer,
   routeInbound,
 } from "./protocol.mjs";
+import { parseProposal } from "./reboot.mjs";
 import { roleOf, staffReader } from "./staff.mjs";
 
 /**
@@ -111,7 +114,8 @@ function required(name) {
  *
  * @returns {{
  *   root: string, bus: string, link: string, registry: string, company: string,
- *   questions: string, staff: string,
+ *   questions: string, staff: string, proposal: string, proposalMessage: string,
+ *   decision: string, boot: string, reboot: string,
  * }}
  */
 function paths() {
@@ -124,6 +128,14 @@ function paths() {
     company: path.join(root, "company.json"),
     questions: path.join(root, "link", "questions.json"),
     staff: path.join(root, "staff.json"),
+    // A reboot proposal (#960): hubd's, which this only reads; the message
+    // posted for it and the operator's decision, which only this writes.
+    // All host-only: no jail mounts `.bots/` itself.
+    proposal: path.join(root, "reboot-proposal.json"),
+    proposalMessage: path.join(root, "link", "proposal-message.json"),
+    decision: path.join(root, "link", "reboot-decision.json"),
+    boot: path.join(root, "boot.json"),
+    reboot: path.join(root, "reboot.json"),
   };
 }
 
@@ -270,6 +282,43 @@ function readQuestions(file) {
     throw new Error(`${file}: ${parsed.error}`);
   }
   return parsed.store;
+}
+
+/**
+ * A file's JSON, or `undefined` if it is missing or not JSON.
+ *
+ * @param {string} file
+ * @returns {unknown}
+ */
+function readJson(file) {
+  try {
+    return JSON.parse(fs.readFileSync(file, "utf8"));
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * The reboot proposal posted in the Operator topic (#960), kept whole so its
+ * message can still be edited once hubd has closed it; `null` if none is.
+ *
+ * @typedef {{ proposal: import("./reboot.mjs").RebootProposal, messageId: number | null }} PostedProposal
+ */
+
+/**
+ * `link/proposal-message.json`. One not in the current shape is no posted
+ * proposal: its buttons then only get "no longer applies".
+ *
+ * @param {string} file
+ * @returns {PostedProposal | null}
+ */
+function readPostedProposal(file) {
+  const raw = obj(readJson(file));
+  const proposal = parseProposal(raw.proposal);
+  if (proposal === null || !(typeof raw.messageId === "number" || raw.messageId === null)) {
+    return null;
+  }
+  return { proposal, messageId: raw.messageId };
 }
 
 /**
@@ -444,6 +493,7 @@ class Company {
     this.registry = readRegistry(at.registry);
     this.repo = readRepo(at.company);
     this.questions = readQuestions(at.questions);
+    this.posted = readPostedProposal(at.proposalMessage);
     /** The operator's Telegram user id; set by `findOperator` before serving. */
     this.operatorId = 0;
     /** @type {Map<import("./protocol.mjs").TopicName, number>} when to ask for a topic again */
@@ -458,6 +508,43 @@ class Company {
 
   saveQuestions() {
     writeAtomically(this.at.questions, this.questions);
+  }
+
+  /**
+   * @param {PostedProposal | null} posted
+   * @returns {void}
+   */
+  setPosted(posted) {
+    this.posted = posted;
+    if (posted === null) {
+      fs.rmSync(this.at.proposalMessage, { force: true });
+    } else {
+      writeAtomically(this.at.proposalMessage, posted);
+    }
+  }
+
+  /**
+   * The posted proposal, if hubd still holds it open, and why an approval
+   * of it would no longer apply: the company booted since it was made, or
+   * a reboot is already pending. hubd decides; this is only for the toast.
+   *
+   * @returns {import("./protocol.mjs").OpenProposal | null}
+   */
+  openProposal() {
+    const open = parseProposal(readJson(this.at.proposal));
+    const posted = this.posted;
+    if (open === null || posted?.proposal.id !== open.id) {
+      return null;
+    }
+    const booted = obj(readJson(this.at.boot)).sha;
+    /** @type {string | null} */
+    let stale = null;
+    if (booted !== open.bootSha) {
+      stale = "the company booted since";
+    } else if (fs.existsSync(this.at.reboot)) {
+      stale = "a reboot is already pending";
+    }
+    return { proposal: open, messageId: posted.messageId, stale };
   }
 
   /**
@@ -571,6 +658,7 @@ async function pollInbound(company, mirror) {
           operatorId: company.operatorId,
           operatorTopicId,
           now: Date.now(),
+          proposal: company.openProposal(),
         });
         if (answer !== null) {
           await answerOperator(company, mirror, answer);
@@ -648,7 +736,9 @@ async function pollInbound(company, mirror) {
 
 /**
  * Carry out what `routeAnswer` decided. The answered state is saved before
- * anything is sent, so a crash cannot deliver one answer twice.
+ * anything is sent, so a crash cannot deliver one answer twice. So is a
+ * reboot decision (#960), for hubd to read: from this file only, never an
+ * inbox, which a jail can write.
  *
  * @param {Company} company
  * @param {Outgoing[]} mirror
@@ -656,6 +746,9 @@ async function pollInbound(company, mirror) {
  * @returns {Promise<void>}
  */
 async function answerOperator(company, mirror, answer) {
+  if (answer.decision !== null) {
+    writeAtomically(company.at.decision, { ...answer.decision, at: Date.now() });
+  }
   if (answer.answered !== null) {
     company.questions.questions[String(answer.answered.n)] = answer.answered.question;
     company.saveQuestions();
@@ -767,6 +860,11 @@ async function drainOutboxes(company, mirror) {
  */
 function drainSystem(company, mirror) {
   return takeOutbox(path.join(company.at.bus, SYSTEM), SYSTEM, (_name, payload) => {
+    const notice = parseProposalNotice(payload);
+    if (notice !== null) {
+      proposalNotice(company, mirror, notice);
+      return;
+    }
     const delivered = deliverSystem(payload, {
       employees: company.employees(),
       now: Date.now(),
@@ -782,6 +880,42 @@ function drainSystem(company, mirror) {
     if (delivered.mirror !== null && sent > 0) {
       mirror.push({ peer: delivered.mirror });
     }
+  });
+}
+
+/**
+ * hubd's word on a reboot proposal (#960): post it to the Operator topic,
+ * or edit its message to say how it closed. A proposal is read from hubd's
+ * file, and posted only if it is the one named.
+ *
+ * @param {Company} company
+ * @param {Outgoing[]} mirror
+ * @param {NonNullable<ReturnType<typeof parseProposalNotice>>} notice
+ * @returns {void}
+ */
+function proposalNotice(company, mirror, notice) {
+  if ("proposal" in notice) {
+    const proposal = parseProposal(readJson(company.at.proposal));
+    if (proposal?.id !== notice.proposal) {
+      console.error("[link] a reboot proposal was announced that hubd no longer holds");
+      return;
+    }
+    company.setPosted({ proposal, messageId: null });
+    mirror.push({ operator: { ...formatProposal(proposal), proposal: proposal.id } });
+    return;
+  }
+  const posted = company.posted;
+  if (posted?.proposal.id !== notice.proposalClosed) {
+    return;
+  }
+  company.setPosted(null);
+  if (posted.messageId === null) {
+    console.error("[link] a reboot proposal closed before its message was posted");
+    return;
+  }
+  const closed = { outcome: notice.outcome, note: notice.note, at: Date.now() };
+  mirror.push({
+    operator: { ...formatProposal(posted.proposal, closed), edit: posted.messageId },
   });
 }
 
@@ -939,6 +1073,14 @@ async function sendBatch(company, batch) {
     question.messageId = result.message_id;
     company.saveQuestions();
   }
+  const posted = company.posted;
+  if (
+    batch.proposal !== undefined &&
+    posted?.proposal.id === batch.proposal &&
+    typeof result.message_id === "number"
+  ) {
+    company.setPosted({ ...posted, messageId: result.message_id });
+  }
 }
 
 /** @returns {Promise<void>} */
@@ -995,6 +1137,17 @@ async function serve() {
   for (const [n, question] of Object.entries(company.questions.questions)) {
     if (question.messageId === null && !question.answered) {
       mirror.push({ operator: { ...formatQuestion(Number(n), question), question: Number(n) } });
+    }
+  }
+  // A proposal announced but never posted, if hubd still holds it open.
+  const unposted = company.posted;
+  if (unposted !== null && unposted.messageId === null) {
+    if (parseProposal(readJson(at.proposal))?.id === unposted.proposal.id) {
+      mirror.push({
+        operator: { ...formatProposal(unposted.proposal), proposal: unposted.proposal.id },
+      });
+    } else {
+      company.setPosted(null);
     }
   }
   await Promise.race([

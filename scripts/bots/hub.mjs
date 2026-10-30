@@ -21,8 +21,11 @@
  *                                    head ends (#736); hub watch ls, hub watch rm <id>
  *   hub board ls|show|changes ...    hubd's copy of the board, as JSON (what
  *                                    `board` reads; see hub-board.mjs)
- *   company reboot "<reason>"        manager only; also: company reboot --abort,
- *                                    company reboot --workday
+ *   company reboot "<reason>"        manager only: proposes a reboot to the
+ *                                    operator, who approves it in Telegram (#960);
+ *                                    also: company reboot --workday, and
+ *                                    company reboot --abort, which withdraws an
+ *                                    open proposal or aborts the drain
  *   company ready                    your work is saved; the reboot may go ahead
  *   company hire <role> "<reason>"   manager only; prints the new employee id
  *   company fire <employee> "<reason>"  manager only

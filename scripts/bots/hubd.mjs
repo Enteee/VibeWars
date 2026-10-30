@@ -113,9 +113,14 @@ import { SYSTEM, obj } from "./protocol.mjs";
 import {
   COMPANY_PATHSPECS,
   DRAIN_MS,
+  PROPOSAL_POLL_MS,
   announcement,
   clock,
+  decideProposal,
+  parseDecision,
+  parseProposal,
   parseReboot,
+  proposalName,
   rebootAllowed,
   WORKDAY,
 } from "./reboot.mjs";
@@ -229,8 +234,15 @@ for (const name of [...GITHUB_TOKEN_VARS, ...GIT_SSH_VARS]) {
 const GIT_PINS = remoteHardening(CREDENTIALS.sshKey);
 /** The commit and time the company last started from (claude-llc writes it). */
 const BOOT = path.join(ROOT, "boot.json");
-/** A reboot hubd has accepted and the supervisor has not yet carried out. */
+/** A reboot the operator approved and the supervisor has not yet carried out. */
 const REBOOT = path.join(ROOT, "reboot.json");
+/**
+ * A reboot the manager proposed and the operator has not decided (#960).
+ * Host-only, like every file in `.bots/` itself: no jail mounts it.
+ */
+const PROPOSAL = path.join(ROOT, "reboot-proposal.json");
+/** The operator's decision on it, written only by the sidecar, from a checked tap. */
+const DECISION = path.join(ROOT, "link", "reboot-decision.json");
 /** Who is employed (#62): hubd is its only writer. */
 const STAFF = path.join(ROOT, "staff.json");
 /** The heartbeat, `{ ts, inFlight }`: see `heartbeat`. */
@@ -1234,6 +1246,21 @@ function tellCompany(name, text, { to = "all", nudge = null, direct = false } = 
 }
 
 /**
+ * Tell the sidecar about a reboot proposal (#960), through the same
+ * host-only system outbox: `{ proposal }` posts it to the operator,
+ * `{ proposalClosed, outcome, note }` edits its message.
+ *
+ * @param {string} name what the file is about
+ * @param {{ proposal: string } | { proposalClosed: string, outcome: string, note: string }} notice
+ * @returns {void}
+ */
+function tellSidecar(name, notice) {
+  const outbox = path.join(ROOT, "bus", SYSTEM, "outbox");
+  fs.mkdirSync(outbox, { recursive: true });
+  writeAtomic(path.join(outbox, `${String(Date.now())}-${name}.json`), JSON.stringify(notice));
+}
+
+/**
  * Take `next` as the board, and write it down for the dashboard and the
  * next start.
  *
@@ -2199,13 +2226,33 @@ function readReboot() {
 }
 
 /**
- * What `main` on GitHub changed since `sha`, read in the mirror: the files,
- * and the subjects of the commits that touched company code.
+ * The proposal waiting for the operator, if any (#960).
+ *
+ * @returns {import("./reboot.mjs").RebootProposal | null}
+ */
+function readProposal() {
+  try {
+    return parseProposal(JSON.parse(fs.readFileSync(PROPOSAL, "utf8")));
+  } catch {
+    return null;
+  }
+}
+
+/** At most this many files are kept in a proposal's diffstat. */
+const PROPOSAL_TOP_FILES = 8;
+
+/**
+ * What `main` on GitHub changed since `sha`, read in the mirror: the
+ * commit it is at, which is what a proposal names (#960), the files, the
+ * subjects of the commits that touched company code, how many commits
+ * there are in all, and the company code's diffstat.
  *
  * @param {string} sha
  * @param {ReturnType<typeof company>} cfg
- * @returns {Promise<{ paths: string[], subjects: string[] } | null>} `null`
- *   when that could not be worked out
+ * @returns {Promise<{
+ *   targetSha: string, paths: string[], subjects: string[], allCommits: number,
+ *   stat: import("./reboot.mjs").RebootProposal["stat"],
+ * } | null>} `null` when that could not be worked out
  */
 async function changedSince(sha, cfg) {
   const main = await git([
@@ -2218,14 +2265,44 @@ async function changedSince(sha, cfg) {
   if (main.code !== 0) {
     return null;
   }
-  const paths = await git(["log", "--format=", "--name-only", `${sha}..main`]);
-  const subjects = await git(["log", "--format=%s", `${sha}..main`, "--", ...COMPANY_PATHSPECS]);
-  if (paths.code !== 0 || subjects.code !== 0) {
+  const target = await git(["rev-parse", "refs/heads/main"]);
+  const targetSha = target.stdout.trim();
+  if (target.code !== 0 || !/^[0-9a-f]{40}$/.test(targetSha)) {
+    return null;
+  }
+  const range = `${sha}..${targetSha}`;
+  const paths = await git(["log", "--format=", "--name-only", range]);
+  const subjects = await git(["log", "--format=%s", range, "--", ...COMPANY_PATHSPECS]);
+  const all = await git(["rev-list", "--count", range]);
+  const numstat = await git(["diff", "--numstat", range, "--", ...COMPANY_PATHSPECS]);
+  if (paths.code !== 0 || subjects.code !== 0 || all.code !== 0 || numstat.code !== 0) {
     return null;
   }
   /** @param {string} text */
   const lines = (text) => text.split("\n").filter((line) => line !== "");
-  return { paths: lines(paths.stdout), subjects: lines(subjects.stdout) };
+  // A binary file counts `-` lines: none either way.
+  const files = lines(numstat.stdout).map((line) => {
+    const [insertions = "", deletions = "", ...rest] = line.split("\t");
+    return {
+      path: rest.join("\t"),
+      insertions: Number(insertions) || 0,
+      deletions: Number(deletions) || 0,
+    };
+  });
+  return {
+    targetSha,
+    paths: lines(paths.stdout),
+    subjects: lines(subjects.stdout),
+    allCommits: Number(all.stdout.trim()),
+    stat: {
+      files: files.length,
+      insertions: files.reduce((sum, file) => sum + file.insertions, 0),
+      deletions: files.reduce((sum, file) => sum + file.deletions, 0),
+      top: [...files]
+        .sort((a, b) => b.insertions + b.deletions - (a.insertions + a.deletions))
+        .slice(0, PROPOSAL_TOP_FILES),
+    },
+  };
 }
 
 /**
@@ -2251,11 +2328,15 @@ function readyToStop(employee) {
 }
 
 /**
- * A company reboot (#21): schedule it, abort it, or mark an employee ready
- * for it. hubd only checks and records it, in `.bots/reboot.json`; the
- * supervisor, which watches the agents' restart loops, drains the company
- * and starts the restarter. A schedule or an abort is announced to everyone
- * through the system outbox, so it wakes every `tg wait` (#323).
+ * A company reboot (#21): propose it, withdraw or abort it, or mark an
+ * employee ready for it. The manager's request only proposes it to the
+ * operator (#960): hubd writes `.bots/reboot-proposal.json` and tells the
+ * sidecar, and nothing drains until the operator approves it in Telegram
+ * (`decideProposals`). Only then is it recorded in `.bots/reboot.json`,
+ * which the supervisor, watching the agents' restart loops, drains the
+ * company for before it starts the restarter. A schedule or an abort is
+ * announced to everyone through the system outbox, so it wakes every
+ * `tg wait` (#323).
  *
  * @param {string} employee who asks; `ready` is kept per employee (#62)
  * @param {string} role the employee's
@@ -2266,9 +2347,25 @@ function readyToStop(employee) {
 async function reboot(employee, role, argv, cfg) {
   const kind = "reboot";
   const pending = readReboot();
+  const proposal = readProposal();
   if (argv[0] === "ready" && readyToStop(employee) && pending === null) {
     audit({ role, kind, argv, decision: "allowed" });
     return { allow: true, code: 0, stdout: "Noted. You are being stopped now.\n", stderr: "" };
+  }
+  if (argv[0] === "abort" && proposal !== null) {
+    audit({ role, kind, argv, decision: "allowed" });
+    fs.rmSync(PROPOSAL, { force: true });
+    tellSidecar("proposal-withdrawn", {
+      proposalClosed: proposal.id,
+      outcome: "withdrawn",
+      note: "",
+    });
+    return {
+      allow: true,
+      code: 0,
+      stdout: `Withdrew ${proposalName(proposal.id)}; the operator's message says so.\n`,
+      stderr: "",
+    };
   }
   if (argv[0] === "ready" || argv[0] === "abort") {
     if (pending === null) {
@@ -2292,12 +2389,17 @@ async function reboot(employee, role, argv, cfg) {
     };
   }
 
+  if (proposal !== null) {
+    const reason =
+      `${proposalName(proposal.id)} awaits the operator since ${clock(proposal.proposedAt)}; ` +
+      "company reboot --abort withdraws it.";
+    audit({ role, kind, argv, decision: "refused", reason });
+    return { allow: false, reason, code: 77 };
+  }
   const boot = readBoot();
   const now = Date.now();
   const workday = argv[0] === "workday";
-  const found = boot === null ? null : await changedSince(boot.sha, cfg);
-  // A workday reboot loads whatever main has, which may be nothing.
-  const changed = found ?? (workday ? { paths: [], subjects: [] } : null);
+  const changed = boot === null ? null : await changedSince(boot.sha, cfg);
   const allowed = rebootAllowed({
     bootSha: boot?.sha ?? null,
     changedPaths: changed?.paths ?? null,
@@ -2306,26 +2408,118 @@ async function reboot(employee, role, argv, cfg) {
     pending,
     workday: workday ? { sentAt: nudgesSent.get(WORKDAY) ?? null } : null,
   });
+  // Even a workday reboot needs main read: the proposal names the commit
+  // that boots.
   if (!allowed.ok || boot === null || changed === null) {
-    const reason = allowed.ok ? "the company's boot was not recorded" : allowed.reason;
+    let reason = "the company's boot was not recorded";
+    if (!allowed.ok) {
+      reason = allowed.reason;
+    } else if (changed === null) {
+      reason = "could not read GitHub's main, which the proposal must name";
+    }
     audit({ role, kind, argv, decision: "refused", reason });
     return { allow: false, reason, code: 77 };
   }
 
+  /** @type {import("./reboot.mjs").RebootProposal} */
+  const proposed = {
+    id: randomBytes(16).toString("hex"),
+    proposedAt: now,
+    by: employee,
+    kind: workday ? "workday" : "request",
+    reason: workday ? WORKDAY : (argv[1] ?? ""),
+    bootSha: boot.sha,
+    targetSha: changed.targetSha,
+    commits: changed.subjects.map((subject) => ({ subject })),
+    allCommits: changed.allCommits,
+    stat: changed.stat,
+  };
+  writeAtomic(PROPOSAL, JSON.stringify(proposed));
+  tellSidecar("proposal", { proposal: proposed.id });
+  audit({ role, kind, argv, decision: "allowed" });
+  return {
+    allow: true,
+    code: 0,
+    stdout:
+      `Proposed to the operator as ${proposalName(proposed.id)}, onto ` +
+      `${proposed.targetSha.slice(0, 8)}. Nothing happens until they approve. It stays ` +
+      "open until they decide or `company reboot --abort` withdraws it.\n",
+    stderr: "",
+  };
+}
+
+/**
+ * The operator's decision on the open proposal (#960), if the sidecar has
+ * written one: schedule the reboot, or drop the proposal and tell the
+ * manager. Read only from the host-only decision file the sidecar writes
+ * after checking the tap, never from an inbox, which a jail can write. The
+ * file is consumed once, so a second tap schedules nothing twice.
+ *
+ * @returns {void}
+ */
+function decideProposals() {
+  /** @type {unknown} */
+  let raw;
+  try {
+    raw = JSON.parse(fs.readFileSync(DECISION, "utf8"));
+  } catch {
+    return;
+  }
+  fs.rmSync(DECISION, { force: true });
+  const decision = parseDecision(raw);
+  const proposal = readProposal();
+  if (decision === null || proposal === null) {
+    return;
+  }
+  const pending = readReboot();
+  const decided = decideProposal({
+    proposal,
+    decision,
+    bootSha: readBoot()?.sha ?? null,
+    pending,
+  });
+  if (decided.action === "ignore") {
+    return;
+  }
+  fs.rmSync(PROPOSAL, { force: true });
+  const name = proposalName(proposal.id);
+  if (decided.action === "drop") {
+    tellSidecar("proposal-closed", {
+      proposalClosed: proposal.id,
+      outcome: decided.outcome,
+      note: decided.note,
+    });
+    tellCompany(
+      "proposal-closed",
+      decided.outcome === "rejected"
+        ? `The operator rejected reboot ${name}.`
+        : `Reboot ${name} no longer applies: ${decided.note}. Propose again if it is still wanted.`,
+      { to: proposal.by, direct: true },
+    );
+    return;
+  }
+  const now = Date.now();
   /** @type {import("./reboot.mjs").Reboot} */
   const scheduled = {
     requestedAt: now,
-    reason: workday ? WORKDAY : (argv[1] ?? ""),
-    by: role,
+    reason: proposal.reason,
+    by: proposal.by,
     deadline: now + DRAIN_MS,
-    bootSha: boot.sha,
+    bootSha: proposal.bootSha,
+    targetSha: proposal.targetSha,
+    proposalId: proposal.id,
     ready: [],
   };
   writeAtomic(REBOOT, JSON.stringify(scheduled));
-  audit({ role, kind, argv, decision: "allowed" });
-  const announced = announcement(scheduled, changed.subjects);
-  tellCompany("reboot", announced);
-  return { allow: true, code: 0, stdout: `${announced}\n`, stderr: "" };
+  audit({ role: "operator", kind: "reboot", argv: ["approve", name], decision: "allowed" });
+  tellSidecar("proposal-approved", { proposalClosed: proposal.id, outcome: "approved", note: "" });
+  tellCompany(
+    "reboot",
+    announcement(
+      scheduled,
+      proposal.commits.map(({ subject }) => subject),
+    ),
+  );
 }
 
 /**
@@ -3938,6 +4132,7 @@ async function main() {
   await syncSkills(cfg);
   let lastBudgetCheck = Date.now();
   let lastNudgeCheck = 0;
+  let lastProposalCheck = 0;
   /** @param {string} why */
   const stop = (why) => {
     console.error(`hubd: stopping on ${why}`);
@@ -3987,6 +4182,10 @@ async function main() {
     }
     sendNewIssues();
     maybePollWatches();
+    if (Date.now() - lastProposalCheck > PROPOSAL_POLL_MS) {
+      lastProposalCheck = Date.now();
+      decideProposals();
+    }
     if (Date.now() - lastNudgeCheck > NUDGE_CHECK_MS) {
       lastNudgeCheck = Date.now();
       sendNudges();

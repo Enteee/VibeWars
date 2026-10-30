@@ -11,7 +11,7 @@ import { formatCount } from "./claude-usage.mjs";
 import { SPEND_WINDOW_MS, summarizeSpend } from "./hub-spend.mjs";
 import { KPI_SCHEMA_VERSION } from "./kpi.mjs";
 import { visible } from "./protocol.mjs";
-import { DRAIN_MS, clock } from "./reboot.mjs";
+import { DRAIN_MS, clock, proposalName } from "./reboot.mjs";
 
 /**
  * Which roles each column needs before work can leave it. Used to explain a
@@ -358,8 +358,8 @@ export function boardScreenLines(snapshot, boardColumns, live, nudgeFacts, { row
  * @property {ReturnType<typeof import("./hub-health.mjs").hubHealth>} hub hubd, as its heartbeat and restarts say (#23)
  * @property {ClaudeUsage | null} claude null before any agent has logged (#50)
  * @property {TelegramFacts} telegram whether the Telegram sidecar is up (#583)
- * @property {{ record: import("./reboot.mjs").Reboot, between: readonly string[], now: number } | { rebooting: string } | null} reboot
- *   the pending reboot with the roles between turns, or the reason of the one handed to the restarter (#345)
+ * @property {{ record: import("./reboot.mjs").Reboot, between: readonly string[], now: number } | { rebooting: string } | { proposed: import("./reboot.mjs").RebootProposal } | null} reboot
+ *   the pending reboot with the roles between turns, the reason of the one handed to the restarter (#345), or the one awaiting the operator (#960)
  * @property {{ line: string, stale: boolean } | null} build the build the company runs, against the checkout; null when the dashboard runs from the checkout (#557)
  * @property {{ file: Record<string, unknown> | null, now: number }} kpi `kpis.json` as read, null when missing or unreadable (#892)
  */
@@ -794,6 +794,20 @@ function rebootSection({ reboot, roles, live }, width) {
   }
   if ("rebooting" in reboot) {
     return [paint(cut(`REBOOTING now — ${visible(reboot.rebooting)}`, width), "1;31")];
+  }
+  if ("proposed" in reboot) {
+    const { proposed } = reboot;
+    const reason = proposed.kind === "workday" ? "end of the workday" : proposed.reason;
+    return [
+      paint(
+        cut(
+          `REBOOT PROPOSED ${proposalName(proposed.id)} onto ${proposed.targetSha.slice(0, 8)}, ` +
+            `awaiting the operator since ${clock(proposed.proposedAt)}: ${visible(reason)}`,
+          width,
+        ),
+        "1;33",
+      ),
+    ];
   }
   const { record, between, now } = reboot;
   const left = record.deadline - now;
