@@ -377,6 +377,10 @@ export const SKILL_ICONS = {
   "paragon.hasty-refrain": { glyph: "speed", modifier: "renew" },
   "paragon.mending-refrain": { glyph: "ring-heal", modifier: "renew" },
   "paragon.purifying-finale": { glyph: "cleanse", modifier: "finale" },
+  // Placeholders until the asset-designer's (#1485): Paragon echoes 2.
+  "paragon.bladeturn-refrain": { glyph: "blade-turn", modifier: "renew" },
+  "paragon.energizing-finale": { glyph: "energy", modifier: "finale" },
+  "paragon.soldiers-fury": { glyph: "blade-adrenal", modifier: "up" },
   // Forms (#1437, #1468): a figure in the god's shape, the god's mark on it.
   "dervish.avatar-of-melandru": { glyph: "avatar-earth" },
   "dervish.avatar-of-dwayna": { glyph: "avatar-wings" },

@@ -398,6 +398,23 @@ const status = {
       `<path d="M7 6h10v5c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7z" ${stroke(c, 2)}/>` +
       `<path d="M5 19L19 5" ${stroke(c, 2)}/>`,
   ],
+  // Paragon echoes 2 (#1485), stand-ins until their art card.
+  // Echo: a blade bent off a shield, slashing damage turned.
+  "bladeturn-refrain": [
+    "echo",
+    (c) =>
+      `<path d="M12 3.5l7 2.5v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z" ${stroke(c, 1.8)}/>` +
+      `<path d="M8 15l8-8" ${stroke(c, 2)}/>`,
+  ],
+  // Echo: a bolt, energy at the end of each chant.
+  "energizing-finale": ["echo", (c) => `<path d="M13 3L6 13h5l-1 8 7-10h-5z" fill="${c}"/>`],
+  // Echo: two chevrons over a sword, attacks faster under a chant.
+  "soldiers-fury": [
+    "echo",
+    (c) =>
+      `<path d="M7 4l5 4 5-4M7 9l5 4 5-4" ${stroke(c, 2.2)}/>` +
+      `<path d="M12 14v6M9.5 17h5" ${stroke(c, 2)}/>`,
+  ],
   // Stance: a shield, filled, armor and blocks (#1329).
   "disciplined-stance": [
     "stance",
