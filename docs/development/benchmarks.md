@@ -71,6 +71,41 @@ of upload for a full match. That is fine on a LAN and on most home fibre,
 and too much for many home connections and phones. It limits who can host
 a big match, as SECURITY.md says.
 
+## The tick bench
+
+`pnpm run bench:ticks` times `MatchSimulation.step` alone, with no host,
+peers or transport, on a 4000 × 4000 field of 63 pillars (#542). It
+prints p50, p95 and max for every tick after the first 50, which hold
+the JIT warm-up. `BENCH_CROWD` picks who is on the field:
+
+| Crowd       | Who                                                                                                                                                            | What it stresses              |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
+| `fighters`  | 16 bodies, each ordered to attack its mirror across the field                                                                                                  | pathing round pillars, swings |
+| `followers` | 16 still bodies, and 32 minions walking back to them from across the field (#1157)                                                                             | creature pathing              |
+| `casters`   | 16 bodies in two facing lines between two pillar columns, each a starter build that uses its next ready slot whenever it is not casting, the whole run (#1588) | the skill path                |
+
+The casters never run out of energy (1,000,000) or health, and whatever
+the simulation refuses (recharging, no adrenaline, no target) passes
+the turn to the next slot, so the mix of hexes, enchantments, AoE,
+conditions and summons on the starter bars all gets used. The
+`MAX_CREATURES` cap holds, as in a match. The run also prints how many
+skills began.
+
+### Measuring a skill PR
+
+`BENCH_SKILLS` fills every caster's bar with the skills given,
+round-robin and offset by body, so the sixteen bars differ. An unknown
+id stops the run and names the id:
+
+```sh
+BENCH_TICKS=600 BENCH_CROWD=casters BENCH_SKILLS=assassin.death-blossom,elementalist.fireball \
+  pnpm exec vitest run --silent=false packages/game-core/src/tools/tick-bench.test.ts
+```
+
+Run it on the PR's branch and on `main`, on the same machine, and
+compare the two. A number on its own means nothing: the starter builds
+change, and with them the `casters` baseline, and machines differ.
+
 ## What is not measured
 
 **Client FPS.** It needs a real browser compositing real frames, which

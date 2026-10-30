@@ -2067,6 +2067,18 @@ const hexFail = (target) =>
 const wasUrn = (mark) =>
   inkLine("M7 3H17M8.5 3V6.5L5 11V18L7.5 21.5H16.5L19 18V11L15.5 6.5V3", 2) + mark;
 
+/**
+ * The anti-summon family (#1568): the skill's own mark shrunk to the top left, a small ghost struck through
+ * at the bottom right, the summoned creature it hits harder. @param {string} main
+ */
+const antiSummon = (main) =>
+  `<g transform="translate(-0.5,-0.5) scale(0.74)">${main}</g>` +
+  `<g transform="translate(12.3,12.3) scale(0.62)" stroke="${C.bg}" stroke-width="3" paint-order="stroke">` +
+  `<path d="M3.5 22V9A5.5 5.5 0 0 1 14.5 9V22L12.2 19.8L9 22L5.8 19.8Z" fill="${C.ink}"/>` +
+  `<circle cx="6.8" cy="9.5" r="1.3" fill="${C.bg}" stroke="none"/><circle cx="11.2" cy="9.5" r="1.3" fill="${C.bg}" stroke="none"/></g>` +
+  `<path d="M12 23.5L23.5 12" ${stroke(C.bg, 3.4)}/>` +
+  `<path d="M12.5 23L23 12.5" ${stroke(C.ink, 1.4)}/>`;
+
 /** The blood drop, a sacrifice (#1572). */
 const DROP = inkFill("M12 2.5C16 8.5 19 12 19 15.5A7 7 0 0 1 5 15.5C5 12 8 8.5 12 2.5Z");
 
@@ -3319,6 +3331,11 @@ const skillGlyph = {
   "next-attack-unblockable": () => nextSkill("attack", "armor-crack"),
   "next-chant-cheaper": () => nextSkill("chant", "energy-cut"),
   "next-attack-vs-healthy": () => nextSkill("attack", "health-above"),
+  "anti-summon-spell": () => antiSummon(skillGlyph.spark()),
+  "anti-summon-scythe": () => antiSummon(skillGlyph.scythe()),
+  "anti-summon-spear": () => antiSummon(skillGlyph.spear()),
+  "anti-summon-pain": () => antiSummon(skillGlyph["ache-cross"]()),
+
   // The Necromancer's sacrifice skills (#1572): a drop given up at the bottom left, its payoff at the top right.
   "sac-energy": () => sacrifice(skillGlyph.energy()),
   "sac-blade": () => sacrifice(skillGlyph.sword()),
