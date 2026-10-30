@@ -99,7 +99,8 @@ channels, as often as they like.
   to the build the peer then sends in its match `hello`, so a peer can be
   listed as a Monk and play a Warrior. The build is checked, and an illegal
   one gets a starter build. Its label is not checked. Do not use the
-  lobby's character for anything but display.
+  lobby's character for anything but display. A Team Lobby's seat is the
+  exception: there, the host assigns the build (#1458).
 - **What is said in chat** (#479). The host reads every line, its own
   team's and the other team's, and could drop or forge one. There is no
   moderation and no report button, only a mute each player sets for the
@@ -186,6 +187,16 @@ channels, as often as they like.
   player: it changes its sender. A lobby's match seats only the peers the
   lobby put on a team, with the lobby's team and name; any other `hello`
   is refused `match-full`.
+- A Team Lobby (#1458, ADR-0040) hides each side's proposals, votes,
+  chosen build and claims from the other: while it runs, `lobby-state`
+  goes to each member alone, with the other side `null`, and a spectator
+  sees neither. Nobody changes team once it has begun, and a peer who
+  joins then is a spectator, so no one can hop sides to scout. A proposal
+  holds exactly the side's size in builds, each checked against the
+  ruleset; one per member, with votes only for a proposal on the voter's
+  side and one claimed slot per member. The match then plays the build
+  the lobby assigned to a seat, whatever the peer's `hello` brings. The
+  host's own player is the exception: its browser holds both sides.
 - A match host (#480) sends each tick's snapshot, combat and `ended` to
   each seated peer, never to the room, so a spectator in the lobby's room
   does not see the match live. A member the lobby has on no team may
