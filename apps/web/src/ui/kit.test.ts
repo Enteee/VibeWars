@@ -8,6 +8,7 @@ import {
   inlineConfirm,
   screenBar,
   selectableRow,
+  setToastHost,
   setTopbarSlots,
   syncList,
   toast,
@@ -247,6 +248,7 @@ describe("toast (#566)", () => {
     vi.useFakeTimers();
   });
   afterEach(() => {
+    setToastHost(null);
     dismissToast();
     vi.useRealTimers();
     vi.unstubAllGlobals();
@@ -284,6 +286,58 @@ describe("toast (#566)", () => {
     expect(body.children).toHaveLength(1);
     toast("Removed Barrage.", { undo: vi.fn() })();
     expect(body.children).toHaveLength(0);
+  });
+
+  describe("with a host (#1465)", () => {
+    const host = (): HTMLElement => {
+      const node = new FakeNode();
+      node.isPage = true;
+      return node as unknown as HTMLElement;
+    };
+
+    it("goes into the host while one is set, and onto the page again once it is cleared", () => {
+      const column = host();
+      setToastHost(column);
+      toast("Shrines: +2");
+      expect((column as unknown as FakeNode).children).toHaveLength(1);
+      expect(body.children).toHaveLength(0);
+      setToastHost(null);
+      toast("Saved.");
+      expect(body.children).toHaveLength(1);
+    });
+
+    it("shows one at a time across the page and the host", () => {
+      const column = host();
+      toast("Saved.");
+      setToastHost(column);
+      toast("Shrines: +2");
+      expect(body.children).toHaveLength(0);
+      expect((column as unknown as FakeNode).children).toHaveLength(1);
+    });
+
+    it("takes a toast in the host down with it, so none outlives the match", () => {
+      const column = host();
+      setToastHost(column);
+      toast("Shrines: +2");
+      setToastHost(null);
+      expect((column as unknown as FakeNode).children).toHaveLength(0);
+    });
+
+    it("leaves a toast on the page up when a host is set", () => {
+      toast("Copied.");
+      setToastHost(host());
+      expect(body.children).toHaveLength(1);
+    });
+
+    it("offers Undo there too", () => {
+      const column = host();
+      setToastHost(column);
+      const undo = vi.fn();
+      toast("Removed Barrage.", { undo });
+      (column as unknown as FakeNode).button("Undo").click();
+      expect(undo).toHaveBeenCalledOnce();
+      expect((column as unknown as FakeNode).children).toHaveLength(0);
+    });
   });
 });
 
