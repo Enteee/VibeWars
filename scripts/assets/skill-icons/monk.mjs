@@ -48,14 +48,14 @@ export const MONK_ICONS = {
   "monk.signet-of-rejuvenation": { glyph: "plus-cycle" },
   // A placeholder until the asset-designer's (#1528).
   "monk.banish": { glyph: "ghost", modifier: "plus" },
-  // Placeholders until the asset-designer's (#1519): Monk smiting staples.
-  "monk.smite": { glyph: "lightning", modifier: "plus" },
-  "monk.spear-of-light": { glyph: "spear-bolt", modifier: "plus" },
-  "monk.word-of-censure": { glyph: "lightning", modifier: "clock" },
-  "monk.ray-of-judgment": { glyph: "flame-target", modifier: "clock" },
-  "monk.judges-insight": { glyph: "sword", modifier: "bolt" },
-  "monk.bane-signet": { glyph: "blow", modifier: "stun" },
-  "monk.castigation-signet": { glyph: "energy", modifier: "bolt" },
-  "monk.signet-of-judgment": { glyph: "blow", modifier: "area" },
-  "monk.holy-strike": { glyph: "lightning", modifier: "up" },
+  // Smiting staples (#1519, #1584): the skill's picture and the holy sun; the signets wear a ring.
+  "monk.smite": { glyph: "holy-bolt" },
+  "monk.spear-of-light": { glyph: "holy-spear" },
+  "monk.word-of-censure": { glyph: "holy-low" },
+  "monk.ray-of-judgment": { glyph: "holy-flame" },
+  "monk.judges-insight": { glyph: "holy-sword" },
+  "monk.bane-signet": { glyph: "holy-signet-blow" },
+  "monk.castigation-signet": { glyph: "holy-signet-energy" },
+  "monk.signet-of-judgment": { glyph: "holy-signet-prone" },
+  "monk.holy-strike": { glyph: "holy-palm" },
 };

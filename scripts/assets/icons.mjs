@@ -3294,6 +3294,20 @@ const skillGlyph = {
   // The Necromancer's sacrifice skills (#1572): a drop given up at the bottom left, its payoff at the top right.
   "sac-energy": () => sacrifice(skillGlyph.energy()),
   "sac-blade": () => sacrifice(skillGlyph.sword()),
+  // The Monk's smiting skills (#1584): the skill's picture and the holy sun; the signets wear a ring.
+  "holy-bolt": () => holy(skillGlyph.lightning()),
+  "holy-spear": () => holy(skillGlyph.spear()),
+  // A ring filled below its middle: more damage to a foe under half Health.
+  "holy-low": () =>
+    holy(
+      `<circle cx="12" cy="12" r="9" ${stroke(C.ink, 2.4)}/>` + inkFill("M3 12A9 9 0 0 0 21 12Z"),
+    ),
+  "holy-flame": () => holy(skillGlyph.flame()),
+  "holy-sword": () => holy(skillGlyph.sword()),
+  "holy-palm": () => holy(skillGlyph.palm()),
+  "holy-signet-blow": () => holySignet(skillGlyph.blow()),
+  "holy-signet-energy": () => holySignet(skillGlyph.energy()),
+  "holy-signet-prone": () => holySignet(skillGlyph["hammer-prone"]()),
   // Plague Signet: a drop leaving for a signet ring and dot (#1572).
   "drop-to-signet": () =>
     `<g transform="translate(7,12) scale(0.62) translate(-12,-12)">${DROP}</g>` +
@@ -3438,6 +3452,27 @@ function skillIcon(id, row) {
         : `<circle cx="19" cy="18" r="4.6" fill="${C.bg}" fill-opacity="0.85"/>${modifier()}`),
   );
 }
+
+/** The holy mark of the Monk's smiting skills: a small sun with eight rays (#1584). @param {number} cx @param {number} cy */
+const holySun = (cx, cy) => {
+  const at = (/** @type {number} */ i, /** @type {number} */ r) => {
+    const a = (Math.PI * i) / 4;
+    return `${String(Math.round((cx + r * Math.cos(a)) * 10) / 10)} ${String(Math.round((cy + r * Math.sin(a)) * 10) / 10)}`;
+  };
+  const rays = Array.from({ length: 8 }, (_, i) => `M${at(i, 3)}L${at(i, 4.9)}`).join("");
+  return `<circle cx="${String(cx)}" cy="${String(cy)}" r="1.9" fill="${C.ink}"/><path d="${rays}" ${stroke(C.ink, 1.6)}/>`;
+};
+
+/** A smiting skill: its own picture shrunk to the bottom left, the holy sun at the top right (#1584). @param {string} main */
+const holy = (main) =>
+  `<g transform="translate(0,6.2) scale(0.74)">${main}</g>` + holySun(18.6, 5.4);
+
+/** A smiting signet: a ring with the sun for its seal, the effect inside (#1584). @param {string} inner */
+const holySignet = (inner) =>
+  `<circle cx="12" cy="14" r="8.6" ${stroke(C.ink, 1.8)}/>` +
+  `<circle cx="12" cy="5.2" r="5.6" fill="${C.bg}"/>` +
+  holySun(12, 5.2) +
+  `<g transform="translate(12,14) scale(0.66) translate(-12,-12)">${inner}</g>`;
 
 /** @type {Record<string, Record<string, string>>} */
 const families = {
