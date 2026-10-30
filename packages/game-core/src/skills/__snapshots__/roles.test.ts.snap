@@ -55,6 +55,7 @@ exports[`skillRoles > tags every dervish skill the same way every time 1`] = `
   "dervish.avatar-of-lyssa": "",
   "dervish.avatar-of-melandru": "",
   "dervish.balthazars-rage": "condition",
+  "dervish.banishing-strike": "",
   "dervish.dust-cloak": "condition",
   "dervish.enchanted-haste": "removal",
   "dervish.eremites-attack": "",
@@ -155,6 +156,7 @@ exports[`skillRoles > tags every mesmer skill the same way every time 1`] = `
   "mesmer.shatter-enchantment": "",
   "mesmer.shrinking-armor": "hex",
   "mesmer.signet-of-humility": "",
+  "mesmer.spiritual-pain": "",
   "mesmer.unnatural-signet": "",
   "mesmer.visions-of-regret": "hex",
   "mesmer.wastrels-demise": "hex",
@@ -165,6 +167,7 @@ exports[`skillRoles > tags every mesmer skill the same way every time 1`] = `
 exports[`skillRoles > tags every monk skill the same way every time 1`] = `
 {
   "monk.aegis": "defence",
+  "monk.banish": "",
   "monk.blessed-light": "healing removal",
   "monk.contemplation-of-purity": "healing removal",
   "monk.cure-hex": "healing removal",
@@ -275,6 +278,7 @@ exports[`skillRoles > tags every paragon skill the same way every time 1`] = `
   "paragon.harriers-toss": "",
   "paragon.hasty-refrain": "",
   "paragon.hexbreaker-aria": "removal",
+  "paragon.holy-spear": "condition",
   "paragon.incoming": "",
   "paragon.leaders-comfort": "healing",
   "paragon.lyric-of-purification": "removal",

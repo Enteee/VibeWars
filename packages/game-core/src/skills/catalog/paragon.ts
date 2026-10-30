@@ -1,4 +1,4 @@
-import { AREA_EARSHOT, RANGE_MELEE, RANGE_SPELL } from "../../distances.js";
+import { AREA_EARSHOT, AREA_NEARBY, RANGE_MELEE, RANGE_SPELL } from "../../distances.js";
 import { WEAPONS } from "../../equipment/weapons.js";
 import type { Skill } from "../types.js";
 
@@ -2118,5 +2118,74 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "...target foe is Dazed for 4...10 seconds": 9 s.
     effects: [{ kind: "apply-status", statusId: "dazed", durationSeconds: 9 }],
+  },
+  {
+    id: "paragon.holy-spear",
+    name: "Holy Spear",
+    gwId: 2209,
+    type: "attack",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "paragon",
+    attributeId: "paragon.spear-mastery",
+    cost: { kind: "adrenaline", amount: 4 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 0,
+    range: WEAPONS.spear.range,
+    target: "single-enemy",
+    area: undefined,
+    attack: {
+      weapon: "spear",
+      weaponDamage: 1,
+      bonusDamage: {
+        scaling: { attributeId: "paragon.spear-mastery", atZero: 5, atTwelve: 17 },
+      },
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      criticalWhen: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      flightSpeed: undefined,
+      onCritical: [],
+      onFailedToHit: [],
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "If this attack hits, you deal +5...20 damage. If it hits a summoned
+    // creature, all nearby foes take 15...90 holy damage, and are set on
+    // fire for 3 seconds": +17, and 75 holy.
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-is-summoned" },
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_NEARBY,
+            maxTargets: undefined,
+            effects: [
+              {
+                kind: "damage",
+                type: "holy",
+                armorPenetration: 0,
+                amount: {
+                  scaling: { attributeId: "paragon.spear-mastery", atZero: 15, atTwelve: 75 },
+                },
+              },
+              { kind: "apply-status", statusId: "burning", durationSeconds: 3 },
+            ],
+          },
+        ],
+      },
+    ],
   },
 ];

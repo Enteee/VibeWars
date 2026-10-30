@@ -1936,6 +1936,15 @@ const sideSpear = () => inkLine("M7 21V9", 2.4) + inkFill("M7 2.5L11.5 10H2.5Z")
 
 const skillGlyph = {
   heal: () => inkFill("M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"),
+  // Payoffs of the chants of #1558: a burst struck through (cannot be interrupted), a bolt with a minus
+  // (costs less), a ring filled above its middle with a chevron up (more damage to foes above half).
+  "interrupt-struck": () =>
+    inkFill(burst(6)) + `<path d="M3 21L21 3" ${stroke(C.bg, 4.4)}/>` + inkLine("M3 21L21 3", 2.2),
+  "energy-cut": () => inkFill("M9 3L2 13.5H7L6 21L13 10.5H8Z") + inkLine("M15.5 17H22", 2.6),
+  "health-above": () =>
+    `<circle cx="12" cy="12" r="9" ${stroke(C.ink, 2.2)}/>` +
+    inkFill("M3 12A9 9 0 0 1 21 12Z") +
+    inkLine("M8.5 18L12 14.5L15.5 18", 2),
   fireball: () =>
     `<circle cx="15" cy="9" r="5" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
     inkLine("M10.5 12.5L4 19M9 8.5L3.5 11M14 14L11 20"),
@@ -3003,6 +3012,10 @@ const skillGlyph = {
   "next-attack-drop-weak": () => nextSkill("attack", "drop-weak"),
   "next-attack-limp": () => nextSkill("attack", "limp"),
   "next-attack-interrupt": () => nextSkill("attack", "interrupt"),
+  "next-any-uninterruptible": () => nextSkill("any", "interrupt-struck"),
+  "next-attack-unblockable": () => nextSkill("attack", "armor-crack"),
+  "next-chant-cheaper": () => nextSkill("chant", "energy-cut"),
+  "next-attack-vs-healthy": () => nextSkill("attack", "health-above"),
   "next-attack-adrenaline": () => nextSkill("attack", "next-adrenaline"),
 };
 

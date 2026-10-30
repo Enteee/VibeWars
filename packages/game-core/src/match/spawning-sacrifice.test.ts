@@ -247,7 +247,7 @@ describe("Feast of Souls (#1309)", () => {
 });
 
 describe("Consume Soul (#1309)", () => {
-  it("steals from its foe, and strikes the foes' creatures in earshot of it, never a player or an ally's", () => {
+  it("steals from its foe, and strikes the foes' creatures in earshot of it, never a player, a pet or an ally's", () => {
     const sim = match([
       spec("f", 1, vec2(300, 0)),
       spec("g", 1, vec2(350, 0)),
@@ -261,10 +261,10 @@ describe("Consume Soul (#1309)", () => {
     const events = cast(sim, CONSUME, "f");
     expect(amountsTo(events, "life-stolen", "f")).toEqual([57]);
     expect(amountsTo(events, "heal", "r")).toEqual([57]);
-    for (const hit of ["minion", "spirit", "pet"]) {
+    for (const hit of ["minion", "spirit"]) {
       expect(amountsTo(events, "damage", hit), hit).toEqual([105]);
     }
-    for (const spared of ["f", "g", "beyond", "ours"]) {
+    for (const spared of ["f", "g", "pet", "beyond", "ours"]) {
       expect(amountsTo(events, "damage", spared), spared).toEqual([]);
     }
   });
