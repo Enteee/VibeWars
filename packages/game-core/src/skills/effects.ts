@@ -836,9 +836,12 @@ function landStatus(
  * Nothing that reacts to damage sees it. An invulnerable caster (#1208)
  * gives up none: the skill works, free.
  */
-/** Whether `creature` is one a player brought (#1309): a minion, a spirit or a pet, never a map NPC. */
+/**
+ * Whether `creature` is a summoned one (#1309): a minion or a spirit. Not
+ * a pet, which GW1 does not count as summoned (#1528), nor a map NPC.
+ */
 function isSummoned(creature: Creature | undefined): boolean {
-  return creature?.kind === "minion" || creature?.kind === "spirit" || creature?.kind === "pet";
+  return creature?.kind === "minion" || creature?.kind === "spirit";
 }
 
 /**
@@ -1427,6 +1430,7 @@ function isStateCondition(condition: EffectCondition): condition is StateConditi
     case "target-less-health":
     case "target-more-health":
     case "target-attacking":
+    case "target-is-summoned":
     case "caster-no-spirit-within":
     case "caster-spirit-within":
     case "caster-spirit-or-corpse-within":
@@ -1508,6 +1512,8 @@ export function stateHolds(
       return target.health > caster.health;
     case "target-attacking":
       return isAttacking(target);
+    case "target-is-summoned":
+      return isSummoned(surroundings.get(target.id)?.creature);
     case "caster-no-spirit-within": {
       const at = surroundings.get(caster.id)?.position;
       return at === undefined || spiritsWithin(surroundings.values(), at, condition.radius) === 0;
@@ -1711,6 +1717,7 @@ function conditionHolds(
     case "target-less-health":
     case "target-more-health":
     case "target-attacking":
+    case "target-is-summoned":
     case "caster-no-spirit-within":
     case "caster-spirit-within":
     case "caster-spirit-or-corpse-within":

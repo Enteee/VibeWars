@@ -1074,6 +1074,8 @@ function conditionText(condition: EffectCondition): string {
       return "If target has more Health than you";
     case "target-attacking":
       return "If target is attacking";
+    case "target-is-summoned":
+      return "If target is a summoned creature";
     case "caster-no-spirit-within":
       return `If no spirit is ${AREA_TEXT.get(condition.radius) ?? `within ${String(condition.radius)}`} of you`;
     case "caster-spirit-within":

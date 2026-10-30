@@ -421,4 +421,9 @@ export const SKILL_ICONS = {
   "paragon.chest-thumper": { glyph: "spear-crack", modifier: "bleed" },
   "paragon.spear-of-redemption": { glyph: "spear-cleanse" },
   "paragon.spear-swipe": { glyph: "spear-swipe", modifier: "stun" },
+  // Placeholders until the asset-designer's (#1528): the anti-summon skills.
+  "monk.banish": { glyph: "ghost", modifier: "plus" },
+  "dervish.banishing-strike": { glyph: "scythe", modifier: "plus" },
+  "paragon.holy-spear": { glyph: "spear", modifier: "plus" },
+  "mesmer.spiritual-pain": { glyph: "ghost", modifier: "area" },
 };
