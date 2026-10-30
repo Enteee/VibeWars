@@ -33,6 +33,7 @@ const NO_BOT_USE = new Set([
   "dervish.fleeting-stability",
   "dervish.harriers-haste",
   "dervish.heart-of-fury",
+  "dervish.pious-fury",
   "dervish.pious-haste",
   "dervish.vow-of-strength",
   "elementalist.glyph-of-lesser-energy",
@@ -87,6 +88,11 @@ const NO_BOT_USE = new Set([
   "ritualist.splinter-weapon",
   "ritualist.vengeful-weapon",
   "ritualist.weapon-of-remedy",
+  // Energy engine (#1614): energy back for spells still to be cast.
+  "elementalist.fire-attunement",
+  "elementalist.water-attunement",
+  "elementalist.air-attunement",
+  "elementalist.earth-attunement",
   // Echoes (#1423): what they do waits for a chant or a shout to end.
   "paragon.aggressive-refrain",
   "paragon.blazing-finale",

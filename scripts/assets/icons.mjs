@@ -1616,6 +1616,49 @@ const status = {
       `<path d="M12 7.5v5" ${stroke(c, 1.6)}/>` +
       `<path d="M5 18.5h14M8 21h8" ${stroke(c, 2)}/>`,
   ],
+  // Elementalist energy engine (#1614), stand-ins until the asset-designer's.
+  // Enchantment: a flame over a rising energy bar, attuned to Fire.
+  "fire-attunement": [
+    "enchantment",
+    (c) =>
+      `<path d="M12 3c3 3.5 4 6 2.5 9-1 2-4 2-5 0-1.5-3 0-5.5 2.5-9z" ${stroke(c, 1.8)}/>` +
+      `<path d="M7 20h10M12 15v5" ${stroke(c, 2)}/>`,
+  ],
+  // Enchantment: a drop over a rising energy bar, attuned to Water.
+  "water-attunement": [
+    "enchantment",
+    (c) =>
+      `<path d="M12 3l4 6a4 4 0 1 1-8 0z" ${stroke(c, 1.8)}/>` +
+      `<path d="M7 20h10M12 15v5" ${stroke(c, 2)}/>`,
+  ],
+  // Enchantment: a bolt over a rising energy bar, attuned to Air.
+  "air-attunement": [
+    "enchantment",
+    (c) =>
+      `<path d="M13 3l-4 7h4l-2 5" ${stroke(c, 1.8)}/>` +
+      `<path d="M7 20h10M12 15v5" ${stroke(c, 2)}/>`,
+  ],
+  // Enchantment: a rock over a rising energy bar, attuned to Earth.
+  "earth-attunement": [
+    "enchantment",
+    (c) =>
+      `<path d="M6 13l3-8h6l3 8z" ${stroke(c, 1.8)}/>` +
+      `<path d="M7 20h10M12 15v5" ${stroke(c, 2)}/>`,
+  ],
+  // Enchantment: a ring with a plus, healed and fed by each spell.
+  "aura-of-restoration": [
+    "enchantment",
+    (c) =>
+      `<circle cx="12" cy="12" r="8" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 8v8M8 12h8" ${stroke(c, 2.2)}/>`,
+  ],
+  // Enchantment: a shield with a circling arrow, renewed by each spell.
+  "kinetic-armor": [
+    "enchantment",
+    (c) =>
+      `<path d="M7 4h10v6c0 4-2.5 6-5 8-2.5-2-5-4-5-8z" ${stroke(c, 1.8)}/>` +
+      `<path d="M9.5 10.5a2.5 2.5 0 1 1 2.5 2.5" ${stroke(c, 1.6)}/>`,
+  ],
   // Skill effect: two rising flames, adrenaline comes faster near the spirit.
   "infuriating-heat": [
     "skill-effect",
@@ -1707,6 +1750,37 @@ const status = {
     (c) =>
       `<path d="M8 5.5A6 6 0 1 0 16 5.5" ${stroke(c, 1.8)}/>` +
       `<path d="M12 3v8M9.5 8.5L12 11l2.5-2.5" ${stroke(c, 1.8)}/>`,
+  ],
+  // Dervish staples 2 (#1604), stand-ins until their art card.
+  // Stance: three fast slashes, it attacks 25% faster.
+  "pious-fury": ["stance", (c) => `<path d="M5 18L13 6M9 19L17 7M13 20L20 9" ${stroke(c, 2)}/>`],
+  // Enchantment: a spark over a falling bar, energy for every hit.
+  "zealous-renewal": [
+    "enchantment",
+    (c) =>
+      `<path d="M12 3l2 5h-4l2 5" ${stroke(c, 1.8)}/>` +
+      `<path d="M6 17h12M9 21h6" ${stroke(c, 2)}/>`,
+  ],
+  // Enchantment: a shield seen through a heat haze, it blocks.
+  "mirage-cloak": [
+    "enchantment",
+    (c) =>
+      `<path d="M12 4l6 2v5c0 4-3 7-6 9-3-2-6-5-6-9V6z" ${stroke(c, 1.8)}/>` +
+      `<path d="M9 10q1.5-1.5 3 0t3 0M9 14q1.5-1.5 3 0t3 0" ${stroke(c, 1.4)}/>`,
+  ],
+  // Enchantment: a heart with a plus, more health and a heal when it ends.
+  "vital-boon": [
+    "enchantment",
+    (c) =>
+      `<path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.5-7 10-7 10z" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 9v6M9 12h6" ${stroke(c, 1.8)}/>`,
+  ],
+  // Enchantment: an open hand over an arrow, the next attacks cannot be blocked.
+  "guiding-hands": [
+    "enchantment",
+    (c) =>
+      `<path d="M7 12V6M10 12V4M13 12V4M16 12V6M7 12c0 4 2 6 5 6s4-2 4-6" ${stroke(c, 1.6)}/>` +
+      `<path d="M4 21h16M17 18l3 3-3 3" ${stroke(c, 1.6)}/>`,
   ],
 };
 

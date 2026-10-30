@@ -41,6 +41,24 @@ export function resolveMagnitudeAtRanks(
 }
 
 /**
+ * `magnitude` for the caster, times `factor`, rounded once, after (#1614):
+ * Aura of Restoration's 360% of a spell's cost is 18 for 5 energy, where
+ * rounding the 3.6 first would make it 20.
+ */
+export function resolveMagnitudeTimes(
+  magnitude: Magnitude,
+  caster: Combatant,
+  factor: number,
+): number {
+  if ("flat" in magnitude) {
+    return Math.round(magnitude.flat * factor);
+  }
+  return Math.round(
+    curveAt(magnitude.scaling, rankOf(caster, magnitude.scaling.attributeId)) * factor,
+  );
+}
+
+/**
  * The curve itself: `scaling` at `rank`, rounded. The tooltip's scale
  * hint prints its ends through this too, so "…8 at 12" is what rank 12
  * deals rather than the raw 8.2 the curve is written with.
@@ -49,6 +67,11 @@ export function magnitudeAtRank(
   scaling: Pick<AttributeScaling, "atZero" | "atTwelve">,
   rank: number,
 ): number {
+  return Math.round(curveAt(scaling, rank));
+}
+
+/** The curve, unrounded. */
+function curveAt(scaling: Pick<AttributeScaling, "atZero" | "atTwelve">, rank: number): number {
   const slope = (scaling.atTwelve - scaling.atZero) / MAX_ATTRIBUTE_RANK;
-  return Math.round(scaling.atZero + slope * rank);
+  return scaling.atZero + slope * rank;
 }
