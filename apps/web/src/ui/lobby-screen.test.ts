@@ -20,6 +20,7 @@ function snapshot(phase: LobbySnapshot["phase"]): LobbySnapshot {
     selfSessionId: "host",
     code: "ACDEFG",
     phase,
+    mode: "hosted-game",
     mapId: "arena",
     hostId: "host-peer",
     players: [

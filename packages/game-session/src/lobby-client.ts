@@ -299,6 +299,9 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       selectMap(mapId) {
         send({ kind: "select-map", mapId });
       },
+      setCharacter(character) {
+        send({ kind: "set-character", character });
+      },
       selectMode(mode) {
         send({ kind: "select-mode", mode });
       },

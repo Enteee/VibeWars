@@ -328,6 +328,20 @@ describe("lobby host", () => {
     await closing;
   });
 
+  it("lists the character a member picks after joining, checked as a join's (#1526)", async () => {
+    const { lobby, guest } = await hostAndGuest();
+    guest.connection.setCharacter({ name: "Mhenlo", primary: "monk", secondary: "elementalist" });
+    await settle();
+    expect(lobby.host.connection.getSnapshot().players[1]?.character).toEqual({
+      name: "Mhenlo",
+      primary: "monk",
+      secondary: "elementalist",
+    });
+    guest.connection.setCharacter({ name: "Twin", primary: "monk", secondary: "monk" });
+    await settle();
+    expect(lobby.host.connection.getSnapshot().players[1]?.character).toBeNull();
+  });
+
   it("starts on Random Arena, and lets only the host pick the mode (#1526)", async () => {
     const { lobby, guest } = await hostAndGuest();
     const notes: string[] = [];

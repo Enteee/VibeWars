@@ -1,15 +1,22 @@
+import type { LobbyMode } from "@vibewars/game-protocol";
+
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 import { button, h } from "./kit.js";
+import { partyStrip, type RailParty } from "./party-strip.js";
 
 /**
  * The mode rail on the left of the menu (#1525, #1522 variant C): the
  * five modes, top to bottom, then Character Builder and Team Builder at
  * its bottom. Each entry is a screen of its own; the one shown is marked.
+ * The modes are the lobby's (#1526): a guest's follow its host, and are
+ * locked; the builders are everyone's.
  */
 
-/** A screen the rail opens. */
-export type RailEntry =
-  "random-arena" | "team-arena" | "heroes-ascent" | "gvg" | "hosted-game" | "characters" | "teams";
+/** A screen the rail opens: a lobby's mode, or a builder. */
+export type RailEntry = LobbyMode | "characters" | "teams";
+
+/** A guest's mode entries say why they do not open (#1526). */
+export const HOST_PICKS_MODE = "The host picks the mode";
 
 export interface RailItem {
   readonly entry: RailEntry;
@@ -32,6 +39,24 @@ export const RAIL: readonly RailItem[] = [
 
 /** The first builder: the divider goes above it. */
 const FIRST_BUILDER: RailEntry = "characters";
+
+/** Whether `entry` is one of the lobby's modes, not a builder. */
+export function isModeEntry(entry: RailEntry): entry is LobbyMode {
+  return entry !== "characters" && entry !== "teams";
+}
+
+/** The lobby the rail screens show, while there is one (#1526). */
+let shownParty: RailParty | undefined;
+
+/** The lobby every rail screen drawn from now on shows; the shell sets it on every change. */
+export function setRailParty(party: RailParty | undefined): void {
+  shownParty = party;
+}
+
+/** The lobby the rail screens show, if there is one. */
+export function railParty(): RailParty | undefined {
+  return shownParty;
+}
 
 const RAIL_STORAGE_KEY = `${STORAGE_NAMESPACE}.rail`;
 
@@ -70,18 +95,24 @@ export function railIconUrl(entry: RailEntry): string {
 
 /**
  * The rail with `active` pressed; another entry stores itself and goes to
- * `onSwitch`.
+ * `onSwitch`. A guest's modes other than its lobby's are locked, and a
+ * guest stores no mode: its own rail is its own lobby's (#1526).
  */
 export function modeRail(active: RailEntry, onSwitch: (entry: RailEntry) => void): HTMLElement {
   const rail = h("nav", "mode-rail");
   rail.setAttribute("aria-label", "Modes");
+  const guest = shownParty !== undefined && !shownParty.isHost;
   for (const { entry, label, short } of RAIL) {
     if (entry === FIRST_BUILDER) {
       rail.appendChild(h("hr", "mode-rail-divider"));
     }
+    const mode = isModeEntry(entry);
+    const locked = guest && mode && entry !== shownParty?.mode;
     const choice = button("", "mode-rail-entry", () => {
-      if (entry !== active) {
-        saveRail(entry);
+      if (entry !== active && !locked) {
+        if (!(guest && mode)) {
+          saveRail(entry);
+        }
         onSwitch(entry);
       }
     });
@@ -91,7 +122,10 @@ export function modeRail(active: RailEntry, onSwitch: (entry: RailEntry) => void
     choice.append(icon, h("span", "mode-rail-label", short));
     choice.setAttribute("aria-label", label);
     choice.setAttribute("aria-pressed", String(entry === active));
-    choice.title = label;
+    choice.title = locked ? HOST_PICKS_MODE : label;
+    if (locked) {
+      choice.setAttribute("aria-disabled", "true");
+    }
     choice.setAttribute("data-entry", entry);
     rail.appendChild(choice);
   }
@@ -100,7 +134,8 @@ export function modeRail(active: RailEntry, onSwitch: (entry: RailEntry) => void
 
 /**
  * A rail screen (#1525): the rail on the left, and `body` beside it, the
- * screen's own, under its heading and one line saying what it is for.
+ * screen's own, under its heading and one line saying what it is for. A
+ * mode's has the party strip on top (#1526).
  */
 export function railScreen(
   root: HTMLElement,
@@ -110,6 +145,9 @@ export function railScreen(
 ): HTMLElement {
   const panel = h("div", `screen screen-rail screen-${active}`);
   const body = h("div", "rail-body");
+  if (isModeEntry(active) && shownParty !== undefined) {
+    body.appendChild(partyStrip(shownParty));
+  }
   body.append(h("h2", "rail-title", railLabel(active)), h("p", "rail-goal", goal));
   panel.append(modeRail(active, onSwitch), body);
   root.replaceChildren(panel);

@@ -1004,6 +1004,11 @@ export type WireLobbyCommand =
   | { readonly kind: "select-map"; readonly mapId: string }
   /** Host only (#1526): the lobby's mode; a map outside it moves to the mode's first. */
   | { readonly kind: "select-mode"; readonly mode: LobbyMode }
+  /**
+   * The character this member now brings (#1526): the lobby outlives a
+   * pick on the menu. `null` is a starter build.
+   */
+  | { readonly kind: "set-character"; readonly character: WireLobbyCharacter | null }
   | { readonly kind: "start" }
   /**
    * Host only (#1454): `team` has `count` bots, an integer from 0; the
@@ -2399,6 +2404,10 @@ export function parseWireLobbyCommand(value: unknown): WireLobbyCommand | undefi
       return isString(raw.mapId) ? { kind: "select-map", mapId: raw.mapId } : undefined;
     case "select-mode":
       return isOneOf(raw.mode, LOBBY_MODES) ? { kind: "select-mode", mode: raw.mode } : undefined;
+    case "set-character": {
+      const character = parseLobbyCharacter(raw.character);
+      return character === undefined ? undefined : { kind: "set-character", character };
+    }
     case "start":
       return { kind: "start" };
     case "set-bots":

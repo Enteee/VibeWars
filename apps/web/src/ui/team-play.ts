@@ -1,53 +1,38 @@
-import type { MatchMode } from "@vibewars/game-core";
+import type { LobbyMode } from "@vibewars/game-protocol";
 
 import type { StoredTeam } from "../storage/schema.js";
 import { looksLikeTeam } from "../storage/team-transfer.js";
 import { createCharacterDot } from "./character-preview.js";
 import { button, h, listenForPaste, playCard, screenBar } from "./kit.js";
-import { loadPlayerName } from "./player-section.js";
+import type { LobbyPanel } from "./lobby-screen.js";
 import { railScreen, type RailEntry } from "./rail.js";
 
 /**
  * The menu's team screens (#1525, #1522 variant C): a screen per team
- * mode, each hosting a Team Lobby on its own maps above the Team Build
- * cards, Hosted Game, which hosts on every map, and Team Builder, the
- * cards alone. Team Builds are proposed and voted on in the Team Lobby
- * (#1460), never picked here (#1515). There are no team queues yet.
+ * mode, each the lobby on its own maps (#1526) above the Team Build
+ * cards, Hosted Game, the lobby on every map, and Team Builder, the cards
+ * alone. Team Builds are proposed and voted on in the Team Lobby (#1460),
+ * never picked here (#1515). There are no team queues yet.
  */
 
-/** A rail entry that hosts a Team Lobby. */
-export type HostEntry = "team-arena" | "heroes-ascent" | "gvg" | "hosted-game";
+/** A rail entry that shows the lobby. */
+export type HostEntry = Exclude<LobbyMode, "random-arena">;
 
-/** What a hosting screen says it is for, and the modes its lobby's maps play. */
-export interface HostScreen {
-  readonly goal: string;
-  /** `undefined`: every map. */
-  readonly modes: readonly MatchMode[] | undefined;
-}
-
-export const HOST_SCREENS: Readonly<Record<HostEntry, HostScreen>> = {
-  "team-arena": {
-    goal: "Two teams, one arena: wipe the other side out, or outscore it.",
-    modes: ["annihilation", "kill-count", "priest-annihilation"],
-  },
-  "heroes-ascent": {
-    goal: "Carry the relic, hold the altar, take the points.",
-    modes: ["relic-run", "king-of-the-hill", "capture-points"],
-  },
-  gvg: {
-    goal: "Storm the other guild's hall and kill its Guild Lord.",
-    modes: ["guild-battle"],
-  },
-  "hosted-game": {
-    goal: "Any map, any rules: a lobby for friends with its code.",
-    modes: undefined,
-  },
+/** What each lobby screen says it is for. */
+export const HOST_GOALS: Readonly<Record<HostEntry, string>> = {
+  "team-arena": "Two teams, one arena: wipe the other side out, or outscore it.",
+  "heroes-ascent": "Carry the relic, hold the altar, take the points.",
+  gvg: "Storm the other guild's hall and kill its Guild Lord.",
+  "hosted-game": "Any map, any rules: a lobby for friends with its code.",
 };
 
-/** Whether `entry` is a screen that hosts. */
+/** Whether `entry` is a screen that shows the lobby. */
 export function isHostEntry(entry: RailEntry): entry is HostEntry {
-  return entry in HOST_SCREENS;
+  return entry in HOST_GOALS;
 }
+
+/** Where the lobby goes while this tab has none yet (#1526). */
+export const OPENING_LOBBY = "Opening your lobby…";
 
 /** Under the cards while there are no Team Builds. */
 export const NO_TEAM_BUILDS = "Make a team build to propose it in the Team Lobby.";
@@ -56,8 +41,6 @@ export const NO_TEAM_BUILDS = "Make a team build to propose it in the Team Lobby
 export const TEAM_BUILDER_GOAL = "Make and edit the Team Builds you propose in a Team Lobby.";
 
 export interface TeamPlayCallbacks {
-  /** Host a Team Lobby as `name` whose host picks among `modes`' maps. */
-  readonly onHost: (modes: HostScreen["modes"], name: string) => void;
   /** Show another rail entry (#1525); the rail has stored it. */
   readonly onSwitch: (entry: RailEntry) => void;
   readonly onNewTeam: () => void;
@@ -131,8 +114,14 @@ function teamScreen(
   problems: readonly string[],
   connectionNotice: string | undefined,
   callbacks: TeamPlayCallbacks,
+  panel?: LobbyPanel,
 ): HTMLElement {
-  screenBar({ crumbs: ["VibeWars"], actions: [], join: true });
+  screenBar({
+    crumbs: ["VibeWars"],
+    status: panel?.status ?? [],
+    actions: panel?.actions ?? [],
+    join: true,
+  });
   const body = railScreen(root, entry, goal, callbacks.onSwitch);
   // Why the last try failed, under the bar it was tried from.
   if (connectionNotice !== undefined) {
@@ -145,9 +134,9 @@ function teamScreen(
 }
 
 /**
- * Render a hosting screen (#1525): Team Arena, Heroes' Ascent and GvG
- * host a Team Lobby on their maps above the Team Build cards; Hosted
- * Game hosts one on every map (Q188).
+ * Render a lobby's screen (#1525, #1526): Team Arena, Heroes' Ascent and
+ * GvG show the lobby on their maps above the Team Build cards; Hosted
+ * Game on every map (Q188). `panel` is the lobby, once there is one.
  */
 export function renderHostScreen(
   root: HTMLElement,
@@ -156,16 +145,18 @@ export function renderHostScreen(
   problems: readonly string[],
   connectionNotice: string | undefined,
   callbacks: TeamPlayCallbacks,
+  panel: LobbyPanel | undefined,
 ): void {
-  const { goal, modes } = HOST_SCREENS[entry];
-  const body = teamScreen(root, entry, goal, problems, connectionNotice, callbacks);
-  const host = h("div", "menu-row");
-  host.appendChild(
-    button(entry === "hosted-game" ? "Host a game" : "Host a Team Lobby", "primary", () => {
-      callbacks.onHost(modes, loadPlayerName());
-    }),
+  const body = teamScreen(
+    root,
+    entry,
+    HOST_GOALS[entry],
+    problems,
+    connectionNotice,
+    callbacks,
+    panel,
   );
-  body.appendChild(host);
+  body.appendChild(panel?.body ?? h("p", "screen-info", OPENING_LOBBY));
   if (entry !== "hosted-game") {
     teamCards(body, teams, callbacks);
   }

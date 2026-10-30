@@ -4,16 +4,14 @@ import type { LobbyCharacter, LobbyPlayerSnapshot, LobbySnapshot } from "@vibewa
 
 import type { RenderableActor } from "../render/arena-snapshot.js";
 import { createProfessionDot, professionLabel } from "./character-preview.js";
-import { button, h, inlineConfirm, screenBar, toast, type InlineConfirm } from "./kit.js";
+import { button, h, toast } from "./kit.js";
 import { relayLine } from "./relay-section.js";
 import { botTagElement } from "./bot-tag.js";
 import { playerLabelElement } from "./player-label.js";
 
 /**
- * The lobby screen (brief §21's lobby layout, #580): the bar holds Leave,
- * the shareable code with Copy, the map and Start; below it, both team
- * rosters with each player's character and ready state, and who Start is
- * waiting for.
+ * The lobby (brief §21's lobby layout, #580) as a mode screen shows it
+ * (#1526): the map and Start in the bar, both team rosters below.
  */
 
 export interface LobbyScreenCallbacks {
@@ -25,7 +23,6 @@ export interface LobbyScreenCallbacks {
   readonly onWatch: () => void;
   /** Host only (#1454): `team` has `count` bots. */
   readonly onSetBots: (team: 0 | 1, count: number) => void;
-  readonly onLeave: () => void;
 }
 
 /** The teams a player can pick. Two for now; the map decides capacity. */
@@ -116,7 +113,7 @@ export const COPY_BY_HAND = "Could not copy: the code is selected, copy it by ha
  * clipboard, or not offer one off https: the code is then selected, so
  * the player's own copy takes it, and the toast says to.
  */
-async function copyCode(code: string, shown: HTMLElement): Promise<void> {
+export async function copyCode(code: string, shown: HTMLElement): Promise<void> {
   try {
     await navigator.clipboard.writeText(code);
     toast(COPIED);
@@ -181,40 +178,29 @@ export function mapLabel(map: LobbyMap): string {
   return `${map.name} (${map.size})`;
 }
 
-/**
- * A host's Leave, while it asks whether to close the lobby for everyone.
- * Kept across renders: the lobby redraws on every change, and a guest
- * pressing Ready must not answer the host's question for them.
- */
-let closingLobby: InlineConfirm | undefined;
+/** The lobby's part of a mode screen (#1526): the bar's map and buttons, and what goes under them. */
+export interface LobbyPanel {
+  readonly status: readonly HTMLElement[];
+  readonly actions: readonly HTMLElement[];
+  readonly body: HTMLElement;
+}
 
-export function renderLobbyScreen(
-  root: HTMLElement,
+/**
+ * The lobby on a mode screen (#1526, ADR-0041): the map and Ready and
+ * Start for the bar, and below, both team rosters with each player's
+ * character and ready state, and who Start is waiting for. The code is
+ * the title bar's.
+ */
+export function lobbyPanel(
   snapshot: LobbySnapshot,
   callbacks: LobbyScreenCallbacks,
   notice: string | undefined,
   availableMaps: readonly LobbyMap[] = [],
-): void {
-  const wasAsking = closingLobby?.isOpen() === true;
-  closingLobby?.dismiss();
-  closingLobby = undefined;
-  root.replaceChildren();
-  const panel = h("div", "screen screen-lobby");
+): LobbyPanel {
+  const panel = h("div", "lobby-panel");
   const controls = lobbyControls(snapshot);
 
   const self = snapshot.players.find((p) => p.sessionId === snapshot.selfSessionId);
-
-  const header = h("div", "lobby-header");
-  header.appendChild(h("span", "lobby-code-label", "Lobby code"));
-  // The code is the one thing a host reads aloud, so it gets the most
-  // visual weight on the screen.
-  const code = h("span", "lobby-code", displayLobbyCode(snapshot.code));
-  header.appendChild(code);
-  header.appendChild(
-    button("Copy", "lobby-copy", () => {
-      void copyCode(displayLobbyCode(snapshot.code), code);
-    }),
-  );
 
   // Only the host may change the map, so everyone else sees it as a
   // label rather than a control they would be refused on clicking.
@@ -259,41 +245,10 @@ export function renderLobbyScreen(
     ? [button("Watch", "primary lobby-watch", callbacks.onWatch)]
     : [readyButton];
   if (snapshot.isHost) {
-    const start = button("Start match", ready ? "primary" : "", () => {
-      // Starting answers the question: the host is staying.
-      closingLobby?.dismiss();
-      callbacks.onStart();
-    });
+    const start = button("Start match", ready ? "primary" : "", callbacks.onStart);
     start.disabled = controls.startDisabled;
     actions.push(start);
   }
-  // A host's lobby ends with it: with anyone else in it, Leave (or Esc)
-  // asks first, so one stray press does not send everyone to the menu.
-  const othersHere = snapshot.players.some((p) => p.sessionId !== snapshot.selfSessionId);
-  const askToClose = (): void => {
-    closingLobby = inlineConfirm(
-      back,
-      "Close the lobby for everyone?",
-      "Close lobby",
-      callbacks.onLeave,
-      "Stay",
-    );
-  };
-  const { back } = screenBar({
-    crumbs: ["VibeWars", "Lobby"],
-    back: {
-      label: "Leave",
-      onBack: () => {
-        if (snapshot.isHost && othersHere) {
-          askToClose();
-        } else {
-          callbacks.onLeave();
-        }
-      },
-    },
-    status: [header, mapPart],
-    actions,
-  });
 
   // The mode follows from the map (#476). It is the only place a player
   // learns it before Start, so it gets a row of its own under the bar
@@ -336,10 +291,7 @@ export function renderLobbyScreen(
     panel.appendChild(h("div", "screen-info lobby-running", controls.running));
   }
 
-  root.appendChild(panel);
-  if (wasAsking && snapshot.isHost && othersHere && snapshot.phase === "waiting") {
-    askToClose();
-  }
+  return { status: [mapPart], actions, body: panel };
 }
 
 /**

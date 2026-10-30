@@ -100,6 +100,8 @@ export interface LobbyConnection {
   chooseTeam(team: 0 | 1 | null): void;
   setReady(ready: boolean): void;
   selectMap(mapId: string): void;
+  /** The character this player now brings (#1526); `null` for a starter build. */
+  setCharacter(character: LobbyCharacter | null): void;
   /** Host only (#1526): the lobby's mode, and a map of it. */
   selectMode(mode: LobbyMode): void;
   startMatch(): void;

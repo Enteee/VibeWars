@@ -785,6 +785,14 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
           other.ready = false;
         }
         return true;
+      case "set-character": {
+        const character = lobbyCharacter(command.character);
+        if (JSON.stringify(member.character) === JSON.stringify(character)) {
+          return false;
+        }
+        member.character = character;
+        return true;
+      }
       case "select-mode": {
         if (member.id !== local.selfId) {
           refuse(member.id, "not-host");
