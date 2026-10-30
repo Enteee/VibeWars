@@ -420,10 +420,10 @@ export const SKILL_ICONS = {
   "mesmer.shame": { glyph: "hex-fail-ally", modifier: "bolt" },
   "mesmer.mistrust": { glyph: "hex-fail-foe", modifier: "area" },
   "mesmer.fragility": { glyph: "hex-churn", modifier: "area" },
-  // Placeholders until the asset-designer's (#1501): crowd punishers.
-  "mesmer.panic": { glyph: "hex-burst", modifier: "stun" },
-  "mesmer.wastrels-demise": { glyph: "hex-drain", modifier: "up" },
-  "mesmer.epidemic": { glyph: "germ", modifier: "plus" },
+  // Crowd punishers (#1501, #1555): the shared hex ring; Epidemic is a condition spell with none.
+  "mesmer.panic": { glyph: "hex-panic" },
+  "mesmer.wastrels-demise": { glyph: "hex-rising" },
+  "mesmer.epidemic": { glyph: "drop-spread" },
   // Paragon spears (#1486, #1508): a spear and its rider; the drop badge is Deep Wound.
   "paragon.blazing-spear": { glyph: "spear-flame" },
   "paragon.mighty-throw": { glyph: "spear-fast" },

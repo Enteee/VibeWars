@@ -2790,6 +2790,34 @@ const skillGlyph = {
     `<circle cx="12" cy="12" r="8.5" ${stroke(C.ink, 2.2)} stroke-dasharray="4.2 3.2"/>` +
     inkFill("M12 6.8C13.8 9.4 15.6 11 15.6 13.2A3.6 3.6 0 0 1 8.4 13.2C8.4 11 10.2 9.4 12 6.8Z") +
     inkLine("M4 9.5H7M5.5 8V11M17 15H20", 1.6),
+  // The crowd punishers (#1555). Panic: a skill used sends an interrupt out to everyone near, a
+  // dot with rays ending in dots. Wastrel's Demise: bars rising, the pulse that grows.
+  "hex-panic": () =>
+    punisher(
+      `<circle cx="12" cy="12" r="3.6" fill="${C.ink}"/>` +
+        inkLine("M12 8V4M12 16V20M8 12H4M16 12H20", 2.6) +
+        [
+          [12, 2.5],
+          [12, 21.5],
+          [2.5, 12],
+          [21.5, 12],
+        ]
+          .map(([x, y]) => `<circle cx="${String(x)}" cy="${String(y)}" r="2" fill="${C.ink}"/>`)
+          .join(""),
+    ),
+  "hex-rising": () => punisher(inkFill("M3 20V15H8V20ZM9.5 20V10H14.5V20ZM16 20V3.5H21V20Z")),
+  // Epidemic is no hex: a drop with four drops spread out from it, a condition copied to the foes near.
+  "drop-spread": () =>
+    inkFill("M12 7C10 10 8.8 11.4 8.8 13.4A3.2 3.2 0 0 0 15.2 13.4C15.2 11.4 14 10 12 7Z") +
+    inkFill("M4.5 2C2.9 4.2 2.1 5 2.1 5.8A2.4 2.4 0 0 0 6.9 5.8C6.9 5 6.1 4.2 4.5 2Z") +
+    inkFill("M19.5 2C17.9 4.2 17.1 5 17.1 5.8A2.4 2.4 0 0 0 21.9 5.8C21.9 5 21.1 4.2 19.5 2Z") +
+    inkFill(
+      "M4.5 16.5C2.9 18.7 2.1 19.5 2.1 20.3A2.4 2.4 0 0 0 6.9 20.3C6.9 19.5 6.1 18.7 4.5 16.5Z",
+    ) +
+    inkFill(
+      "M19.5 16.5C17.9 18.7 17.1 19.5 17.1 20.3A2.4 2.4 0 0 0 21.9 20.3C21.9 19.5 21.1 18.7 19.5 16.5Z",
+    ) +
+    inkLine("M9 11L6.5 8.5M15 11L17.5 8.5M9 15.5L6.5 17M15 15.5L17.5 17", 1.5),
   // A shield outline with a crack down its face: the block is gone (#1262).
   "armor-crack": () =>
     `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2)}/>` +
