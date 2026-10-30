@@ -94,7 +94,8 @@ function sameMusic(a: MusicState, b: MusicState): boolean {
 }
 
 export function attachMatchMusic(
-  connection: MatchConnection,
+  /** A seat, or a watcher's match (#480). */
+  connection: Pick<MatchConnection, "map" | "selfSessionId" | "onCombat">,
   { screen, mode, tracks, onChange, now = Date.now }: MatchMusicOptions,
 ): MatchMusic {
   const mapId = connection.map.id;

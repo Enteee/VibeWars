@@ -338,6 +338,11 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       onMatchStarting(handler) {
         startingHandlers.push(handler);
       },
+      watchMatch() {
+        return latest?.phase === "in-match" && latest.matchId !== null
+          ? { matchId: latest.matchId, transport: scopeTransport(transport) }
+          : undefined;
+      },
       onStartRejected(handler) {
         rejectedHandlers.push(handler);
       },

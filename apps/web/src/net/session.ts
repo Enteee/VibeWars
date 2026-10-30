@@ -15,6 +15,7 @@ import {
   MatchRefusedError,
   PARTY_CONSENT_MS,
   connectMatch,
+  connectObserver,
   createLobbyHost,
   createMatchHost,
   createQueueClient,
@@ -27,6 +28,8 @@ import {
   type LobbyConnection,
   type MatchPlan,
   type MatchStarting,
+  type MatchToWatch,
+  type ObserverConnection,
   type PeerMatchConnection,
   type QueueParty,
   type QueueState,
@@ -564,6 +567,19 @@ export function connectMatchFor(
     transport: start.transport,
     hostId: lobby.getSnapshot().hostId,
     hello,
+    timeoutMs: MATCH_TIMEOUT_MS,
+  });
+}
+
+/** Watch the lobby's match `watch` names (#480), from no team. */
+export function observeMatchFor(
+  lobby: LobbyConnection,
+  watch: MatchToWatch,
+): Promise<ObserverConnection> {
+  return connectObserver({
+    transport: watch.transport,
+    hostId: lobby.getSnapshot().hostId,
+    matchId: watch.matchId,
     timeoutMs: MATCH_TIMEOUT_MS,
   });
 }

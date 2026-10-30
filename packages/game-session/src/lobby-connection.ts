@@ -84,6 +84,13 @@ export interface MatchStarting {
   readonly transport: Transport;
 }
 
+/** The lobby's match, to watch from no team (#480): hand it to `connectObserver`. */
+export interface MatchToWatch {
+  readonly matchId: string;
+  /** The room, for this match alone: leaving it leaves the match, not the lobby. */
+  readonly transport: Transport;
+}
+
 export interface LobbyConnection {
   readonly selfSessionId: string;
   getSnapshot(): LobbySnapshot;
@@ -103,6 +110,8 @@ export interface LobbyConnection {
   sendChat(channel: ChatChannel, text: string): void;
   onChange(handler: () => void): void;
   onMatchStarting(handler: (start: MatchStarting) => void): void;
+  /** The match on now, to watch (#480); `undefined` while none is. */
+  watchMatch(): MatchToWatch | undefined;
   /** The host's own player alone: why the start it asked for did not happen. */
   onStartRejected(handler: (reason: string) => void): void;
   /** Once joined: the host refused something this player asked for, such as a bot (#1194). */
