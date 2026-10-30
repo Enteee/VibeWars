@@ -478,7 +478,9 @@ describe("describeSkill", () => {
     // a line per effect inside it (#521), a spirit's summon one more for
     // what it projects (#1064), and so does a ward (#1087); a trap is one
     // line, then one per effect of its spring (#1105), and one more if it
-    // springs by itself; a pulse one, then one per effect (#1113).
+    // springs by itself; a pulse one, then one per effect (#1113); a
+    // faster flight one, and one per on-crit or failed-to-hit rider
+    // (#1486).
     const linesOf = (effect: SkillEffect): number => {
       if (effect.kind === "if") {
         return effect.effects.length;
@@ -513,6 +515,9 @@ describe("describeSkill", () => {
           (rule?.criticalWhen === undefined ? 0 : 1) +
           ((rule?.armorPenetration ?? 0) > 0 ? 1 : 0) +
           lines(rule?.onBlocked ?? []) +
+          lines(rule?.onCritical ?? []) +
+          lines(rule?.onFailedToHit ?? []) +
+          (rule?.flightSpeed === undefined ? 0 : 1) +
           (entry.whileActivating === undefined ? 0 : 1) +
           (entry.projectile === undefined ? 0 : 1) +
           (isEasilyInterrupted(entry.type) ? 1 : 0) +

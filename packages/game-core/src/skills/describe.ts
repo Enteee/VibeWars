@@ -1972,6 +1972,33 @@ export function describeSkill(
       magnitude,
     })),
   );
+  // On a critical hit, after its effects; if it fails to hit (#1486).
+  const onCritical = (rule?.onCritical ?? []).flatMap((effect) =>
+    describeEffects(effect, ranks).map(({ text, magnitude }) => ({
+      text: `On a critical hit: ${lowerFirst(text)}`,
+      magnitude,
+    })),
+  );
+  const onFailedToHit = (rule?.onFailedToHit ?? []).flatMap((effect) =>
+    describeEffects(effect, ranks).map(({ text, magnitude }) => ({
+      text: `If it fails to hit: ${lowerFirst(text)}`,
+      magnitude,
+    })),
+  );
+  // A throw faster than the weapon's (#1486): Mighty Throw's ×3.
+  const flightSpeed = rule?.flightSpeed;
+  const flightLine =
+    flightSpeed === undefined
+      ? []
+      : [
+          {
+            text:
+              flightSpeed.when === undefined
+                ? `Flies ×${String(flightSpeed.multiplier)} as fast`
+                : `${conditionText(flightSpeed.when)}: flies ×${String(flightSpeed.multiplier)} as fast`,
+            magnitude: undefined,
+          },
+        ];
   // A status borne while activating (#524): Healing Signet's armor loss.
   const whileActivating =
     skill.whileActivating === undefined
@@ -2032,9 +2059,12 @@ export function describeSkill(
     ...cleaveLine,
     ...cleaveAllLine,
     ...penetrationLine,
+    ...flightLine,
     ...corpseLine,
     ...skill.effects.flatMap((effect) => describeEffects(effect, ranks)),
+    ...onCritical,
     ...onBlocked,
+    ...onFailedToHit,
     ...whileActivating,
     ...easilyInterrupted,
     ...projectile,
