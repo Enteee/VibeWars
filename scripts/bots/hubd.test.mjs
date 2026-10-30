@@ -2378,7 +2378,12 @@ describe("hubd scheduling a company reboot", () => {
     );
 
     decide(hubd, proposal.id, "approve");
-    await until(() => fs.existsSync(record), "the approved reboot");
+    // The announcement is hubd's last write of the decision: once it is
+    // there, so are the record and the sidecar's entry.
+    await until(
+      () => outboxEntries(hubd).some(({ message }) => obj(message).to === "all"),
+      "the approved reboot's announcement",
+    );
     expect(readJson(record)).toMatchObject({
       reason: "load #21",
       by: "manager",
@@ -2425,7 +2430,12 @@ describe("hubd scheduling a company reboot", () => {
     const { id } = proposalOf(hubd);
 
     decide(hubd, id, "reject");
-    await until(() => !fs.existsSync(path.join(hubd.root, proposals)), "the rejection");
+    // The manager's message is hubd's last write of the decision.
+    await until(
+      () => outboxEntries(hubd).some(({ message }) => obj(message).to === "manager"),
+      "the rejection to be told",
+    );
+    expect(fs.existsSync(path.join(hubd.root, proposals))).toBe(false);
     const sent = outboxEntries(hubd).map((entry) => entry.message);
     expect(sent).toContainEqual({
       proposalClosed: id,
@@ -2459,6 +2469,11 @@ describe("hubd scheduling a company reboot", () => {
     const decision = path.join(hubd.root, "link", "reboot-decision.json");
     decide(hubd, id, "approve");
     await until(() => !fs.existsSync(decision), "the decision to be read");
+    // hubd removes the decision first and decides in the same pass, so a
+    // request it answers afterwards is answered after that pass: by then a
+    // stale approval would have scheduled.
+    const ready = await hubd.request("developer", "reboot", ["ready"]);
+    expect(ready.code).toBe(1);
     expect(fs.existsSync(path.join(hubd.root, reboots))).toBe(false);
   }, 20_000);
 
