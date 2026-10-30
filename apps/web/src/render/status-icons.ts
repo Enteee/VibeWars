@@ -53,6 +53,10 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   mending: icon("mending"),
   "patient-spirit": icon("patient-spirit"),
   "holy-veil": icon("holy-veil"),
+  aegis: icon("aegis"),
+  "shield-of-deflection": icon("shield-of-deflection"),
+  "shielding-hands": icon("shielding-hands"),
+  "spell-breaker": icon("spell-breaker"),
   "healing-breeze": icon("healing-breeze"),
   "protective-spirit": icon("protective-spirit"),
   "shadow-refuge": icon("shadow-refuge"),
@@ -209,6 +213,8 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   shame: icon("shame"),
   mistrust: icon("mistrust"),
   fragility: icon("fragility"),
+  panic: icon("panic"),
+  "wastrels-demise": icon("wastrels-demise"),
 };
 
 /** Drawn size of one icon, in world pixels. */

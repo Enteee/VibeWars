@@ -47,6 +47,7 @@ import type {
   StateCondition,
   UnconditionalEffect,
   SplashEffect,
+  TransferConditionsEffect,
 } from "./types.js";
 
 /**
@@ -300,6 +301,9 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.preventsSpells) {
     parts.push("cannot cast spells");
   }
+  if (definition.untargetableByFoeSpells) {
+    parts.push("cannot be the target of enemy spells");
+  }
   if (definition.unblockableBySource) {
     parts.push("cannot block its caster's attacks");
   }
@@ -446,6 +450,16 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
       .map(({ text }) => lowerFirst(text));
     parts.push(
       `the next spell it casts at ${on === "foe-targeted" ? "a foe" : "an ally"} fails: ${what.join(", ")}`,
+    );
+  }
+  // Wastrel's Demise's (#1501): "each second, it and adjacent foes take 8
+  // damage, 8 more each second".
+  if (definition.damagePulse !== undefined) {
+    const { damage, growth, radius } = definition.damagePulse;
+    const area = AREA_TEXT.get(radius);
+    const foes = area === undefined ? `foes within ${String(radius)}` : `${area} foes`;
+    parts.push(
+      `each second, it and ${foes} take ${String(damage)} damage, ${String(growth)} more each second`,
     );
   }
   if (definition.reversesNextDamage !== undefined) {
@@ -1074,6 +1088,8 @@ function conditionText(condition: EffectCondition): string {
       return "If target has more Health than you";
     case "target-attacking":
       return "If target is attacking";
+    case "target-casting-or-attacking":
+      return "If target is casting a spell or attacking";
     case "caster-no-spirit-within":
       return `If no spirit is ${AREA_TEXT.get(condition.radius) ?? `within ${String(condition.radius)}`} of you`;
     case "caster-spirit-within":
@@ -1318,8 +1334,11 @@ function describeEffect(
       };
     }
     case "transfer-conditions":
+      return transferText(effect, ranks);
+    // Epidemic's (#1501): "Adjacent foes get the target's conditions...".
+    case "spread-conditions":
       return {
-        text: `Moves up to ${String(effect.count)} of your conditions to the target`,
+        text: `${foesWithin(effect.radius, "foes")} get the target's conditions, with the time each has left`,
         magnitude: undefined,
       };
     case "give-health": {
@@ -1743,6 +1762,30 @@ export function neededWeaponText(weapon: AttackWeaponClass): string {
   return NEEDED_WEAPON[weapon];
 }
 
+/**
+ * A `transfer-conditions` line (#1511): "Moves up to 3 of your conditions
+ * to the target", or "Moves all of target's conditions to you; you are
+ * healed for 22 for each".
+ */
+function transferText(
+  effect: TransferConditionsEffect,
+  ranks: ReadonlyMap<string, number>,
+): EffectDescription {
+  const count = effect.count === Infinity ? "all" : `up to ${String(effect.count)}`;
+  const moves =
+    effect.from === "caster"
+      ? `Moves ${count} of your conditions to the target`
+      : `Moves ${count} of target's conditions to you`;
+  if (effect.healPerCondition === undefined) {
+    return { text: moves, magnitude: undefined };
+  }
+  const magnitude = describeMagnitude(effect.healPerCondition, ranks);
+  return {
+    text: `${moves}; you are healed for ${String(magnitude.current)} for each`,
+    magnitude,
+  };
+}
+
 const TYPE_TEXT: Record<SkillType, string> = {
   attack: "Attack.",
   spell: "Spell.",
@@ -1768,13 +1811,17 @@ const TYPE_TEXT: Record<SkillType, string> = {
 };
 
 /**
- * A `disable-own-skills` line (#1473): "All of your spells", or "All of
- * your non-Mesmer skills except signets", "are disabled for 10 seconds".
+ * A `disable-own-skills` line (#1473): "All of your spells", "All of
+ * your Smiting Prayers" (#1511), or "All of your non-Mesmer skills except
+ * signets", "are disabled for 10 seconds".
  */
 function disableOwnText(effect: DisableOwnSkillsEffect): string {
   const time = `are disabled for ${String(effect.seconds)} seconds`;
   if (effect.which === "spells") {
     return `All of your spells ${time}`;
+  }
+  if (effect.which === "attribute") {
+    return `All of your ${getAttribute(effect.attributeId)?.name ?? effect.attributeId} ${time}`;
   }
   const except = effect.exceptTypes.map(
     (type) => `${TYPE_TEXT[type].replace(/\.$/, "").toLowerCase()}s`,

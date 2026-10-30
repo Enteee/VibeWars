@@ -65,6 +65,7 @@ describe("status definitions", () => {
         def.attributeDelta !== 0 ||
         def.castTimeMultiplier !== 1 ||
         def.interruptsSpells ||
+        def.untargetableByFoeSpells ||
         def.attackDurationMultiplier !== 1 ||
         def.block !== undefined ||
         def.maxDamageFractionPerHit !== undefined ||
@@ -74,6 +75,7 @@ describe("status definitions", () => {
         def.reversesNextDamage !== undefined ||
         def.breaksNextHex !== undefined ||
         def.failsNextSpell !== undefined ||
+        def.damagePulse !== undefined ||
         def.chantShoutDurationMultiplier !== 1 ||
         def.conditionalArmor.length > 0 ||
         def.whileUnder !== undefined ||

@@ -116,6 +116,10 @@ export type StatusId =
   | "mending"
   | "patient-spirit"
   | "holy-veil"
+  | "aegis"
+  | "shield-of-deflection"
+  | "shielding-hands"
+  | "spell-breaker"
   | "healing-breeze"
   | "protective-spirit"
   | "shadow-refuge"
@@ -306,7 +310,10 @@ export type StatusId =
   | "guilt"
   | "shame"
   | "mistrust"
-  | "fragility";
+  | "fragility"
+  // Mesmer crowd punishers (#1501).
+  | "panic"
+  | "wastrels-demise";
 
 /** A status's modifiers that hold only while its bearer is under another (#1485). */
 export interface WhileUnder {
@@ -487,6 +494,13 @@ export interface StatusDefinition {
    * not a spell is left alone.
    */
   readonly preventsSpells: boolean;
+  /**
+   * A foe of the bearer cannot start a spell with the bearer as its target
+   * (#1511): Spell Breaker's "cannot be the target of enemy spells". A cast
+   * already started goes off; an area or a splash still reaches the
+   * bearer, and an ally's spell or a foe's non-spell is left alone.
+   */
+  readonly untargetableByFoeSpells: boolean;
   /**
    * The bearer cannot block an attack of the status's source (#1234):
    * Expose Defenses' "cannot block your attacks". Anyone else's still
@@ -760,6 +774,12 @@ export interface StatusDefinition {
    */
   readonly failsNextSpell: FailsNextSpell | undefined;
   /**
+   * Every whole second it has been on the bearer, a pulse of growing
+   * typeless damage from its source hits the bearer and the source's
+   * foes near it (#1501): Wastrel's Demise's. `undefined`: none.
+   */
+  readonly damagePulse: DamagePulse | undefined;
+  /**
    * Whenever a chant or a shout ends on the bearer, its remaining time is
    * back to the duration it was applied with (#1423): a refrain's "this
    * echo is reapplied every time a chant or shout ends on you".
@@ -896,6 +916,32 @@ export type StatusTriggerEvent =
    */
   | "ends-early"
   | "expires";
+
+/**
+ * `StatusDefinition.damagePulse` (#1501). Pulse `k`, at `k` whole
+ * seconds since the status was applied, deals `damage + growth × (k − 1)`.
+ * A status that ends between pulses deals no partial one, and a renewal
+ * starts the count again at 1.
+ */
+export interface DamagePulse {
+  /** The first pulse's damage, typeless. */
+  readonly damage: number;
+  /** Added to each pulse after the first. */
+  readonly growth: number;
+  /** The bearer and the source's foes within this of the bearer are hit. */
+  readonly radius: number;
+  readonly skillId: string;
+}
+
+/** A `damagePulse` that came due on the bearer (#1501): what it deals, from whom. */
+export interface StatusPulse {
+  readonly id: StatusId;
+  readonly sourceId: string;
+  readonly damage: number;
+}
+
+/** Within a hair, as a swing is: twenty additions of 0.05 fall just short of 1. */
+const PULSE_EPSILON = 1e-6;
 
 /** `StatusDefinition.skillArmorPenetration` (#1464). */
 export interface SkillArmorPenetration {
@@ -1197,6 +1243,7 @@ function define(
     interruptsSpells: false,
     attackDurationMultiplier: 1,
     preventsSpells: false,
+    untargetableByFoeSpells: false,
     unblockableBySource: false,
     preventsBlocking: false,
     renewsWhileMoving: undefined,
@@ -1246,6 +1293,7 @@ function define(
     damageFromSpiritAttacks: 0,
     breaksNextHex: undefined,
     failsNextSpell: undefined,
+    damagePulse: undefined,
     renewsOnChantOrShoutEnd: false,
     endsAfterTriggers: undefined,
     chantShoutDurationMultiplier: 1,
@@ -1545,6 +1593,41 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
         skillId: "monk.holy-veil",
       },
     ],
+  }),
+  // "For 6...15 seconds, all party members within earshot have a 50%
+  // chance to block attacks" (#1511).
+  aegis: define("aegis", "Aegis", "enchantment", {
+    profession: "monk",
+    block: { chance: 0.5, against: "all" },
+  }),
+  // "For 3...10 seconds, target ally has a 75% chance to block attacks and
+  // gains 15...30 armor": +27, its rank-12 value (#1511).
+  "shield-of-deflection": define("shield-of-deflection", "Shield of Deflection", "enchantment", {
+    profession: "monk",
+    block: { chance: 0.75, against: "all" },
+    armorModifier: 27,
+  }),
+  // "For 8 seconds, damage and life steal received by target ally is
+  // reduced by 3...18. When Shielding Hands ends, that ally is healed for
+  // 5...50 Health": 15 and 41, its rank-12 values (#1511).
+  "shielding-hands": define("shielding-hands", "Shielding Hands", "enchantment", {
+    profession: "monk",
+    damageReduction: 15,
+    lifeStealReduction: 15,
+    triggers: [
+      {
+        on: "ends",
+        effects: [{ kind: "heal", amount: { flat: 41 }, perStatusOnTarget: [] }],
+        target: "bearer",
+        skillId: "monk.shielding-hands",
+      },
+    ],
+  }),
+  // "For 5...17 seconds, target ally cannot be the target of enemy
+  // spells" (#1511).
+  "spell-breaker": define("spell-breaker", "Spell Breaker", "enchantment", {
+    profession: "monk",
+    untargetableByFoeSpells: true,
   }),
   // "For 15 seconds, target ally gains health regeneration of 4...8...9":
   // +8, its rank-12 value.
@@ -3474,6 +3557,38 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
       },
     ],
   }),
+
+  // Mesmer crowd punishers (#1501), at their rank-12 values.
+  // "When a foe hexed with Panic successfully uses a skill, all other
+  // nearby foes are interrupted": the bearer's own allies, never itself.
+  panic: define("panic", "Panic", "hex", {
+    profession: "mesmer",
+    triggers: [
+      {
+        on: "bearer-uses-skill",
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_NEARBY,
+            maxTargets: undefined,
+            effects: [{ kind: "interrupt" }],
+          },
+        ],
+        target: "bearer",
+        skillId: "mesmer.panic",
+      },
+    ],
+  }),
+  // "Each second while hexed, target foe and all foes adjacent to that
+  // foe take 1...10 damage and an additional 1...10 damage for each second
+  // this spell is in effect. This hex ends prematurely if target foe uses
+  // a skill": 8 and 8, so 8, 16, 24, 32, 40.
+  "wastrels-demise": define("wastrels-demise", "Wastrel's Demise", "hex", {
+    profession: "mesmer",
+    damagePulse: { damage: 8, growth: 8, radius: AREA_ADJACENT, skillId: "mesmer.wastrels-demise" },
+    endsWhenBearerUsesSkill: true,
+  }),
 };
 
 /**
@@ -3561,6 +3676,7 @@ export function triggerAnswersWeapon(trigger: StatusTrigger, weapon: Weapon): bo
 export class StatusSet {
   readonly #statuses = new Map<StatusId, ActiveStatus>();
   #changes: StatusChange[] = [];
+  #pulses: StatusPulse[] = [];
 
   /**
    * What happened to this set since the last drain (#887), oldest first,
@@ -3570,6 +3686,16 @@ export class StatusSet {
     const changes = this.#changes;
     this.#changes = [];
     return changes;
+  }
+
+  /**
+   * The damage pulses that came due since the last drain (#1501), oldest
+   * first, and forget them: the simulation lands them once a tick.
+   */
+  public drainPulses(): StatusPulse[] {
+    const pulses = this.#pulses;
+    this.#pulses = [];
+    return pulses;
   }
 
   /**
@@ -4387,6 +4513,7 @@ export class StatusSet {
     const expired: StatusId[] = [];
     const conditionDt = dt * (1 + aggregateModifiers(this.active).conditionsExpireFaster);
     for (const status of this.#statuses.values()) {
+      this.#pulse(status, dt);
       status.remainingSeconds -=
         getStatusDefinition(status.id).category === "condition" ? conditionDt : dt;
       if (status.remainingSeconds > 0) {
@@ -4403,6 +4530,38 @@ export class StatusSet {
     this.#end(expired, true);
     return expired;
   }
+
+  /**
+   * Record the pulses of `status` that fall due in the next `dt` (#1501):
+   * one at each whole second since it was applied, none past its
+   * duration, so one ending between pulses deals no partial one.
+   */
+  #pulse(status: ActiveStatus, dt: number): void {
+    const pulse = getStatusDefinition(status.id).damagePulse;
+    if (pulse === undefined) {
+      return;
+    }
+    const before = status.durationSeconds - status.remainingSeconds;
+    const last = Math.min(
+      Math.floor(before + dt + PULSE_EPSILON),
+      Math.floor(status.durationSeconds + PULSE_EPSILON),
+    );
+    for (let k = Math.floor(before + PULSE_EPSILON) + 1; k <= last; k += 1) {
+      this.#pulses.push({
+        id: status.id,
+        sourceId: status.sourceId,
+        damage: pulse.damage + pulse.growth * (k - 1),
+      });
+    }
+  }
+}
+
+/**
+ * Whether a foe cannot start a spell at a bearer of `statuses` (#1511,
+ * `untargetableByFoeSpells`).
+ */
+export function untargetableByFoeSpells(statuses: readonly Pick<ActiveStatus, "id">[]): boolean {
+  return statuses.some(({ id }) => getStatusDefinition(id).untargetableByFoeSpells);
 }
 
 /**
