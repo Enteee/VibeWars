@@ -676,6 +676,41 @@ const status = {
       `<path d="M13.5 7l-5 7h3.5l-1 6 5-7.5h-3.5z" fill="${c}"/>` +
       `<path d="M5 4.5h14" ${stroke(c, 2)}/>`,
   ],
+  // Warrior staples (#1549), stand-ins until the asset-designer's.
+  // Stance: two quick slashes over a slow bar, faster attacks, slower feet.
+  flail: [
+    "stance",
+    (c) => `<path d="M6 5l5 7M12 5l5 7" ${stroke(c, 2.2)}/><path d="M5 17h14" ${stroke(c, 2.2)}/>`,
+  ],
+  // Stance: a heart behind a shield, more Health and armor.
+  "defy-pain": [
+    "stance",
+    (c) =>
+      `<path d="M7 6h10v5c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7z" ${stroke(c, 2)}/>` +
+      `<path d="M12 14.5l-2.5-2.5a1.5 1.5 0 0 1 2.5-1.7 1.5 1.5 0 0 1 2.5 1.7z" fill="${c}"/>`,
+  ],
+  // Skill effect: a blade turning back, the next melee attack blocked.
+  riposte: ["skill-effect", (c) => `<path d="M5 18L17 6M17 6h-5M17 6v5M8 9l7 7" ${stroke(c, 2)}/>`],
+  // Skill effect: as Riposte, with a drop, the attacker bleeds.
+  "deadly-riposte": [
+    "skill-effect",
+    (c) =>
+      `<path d="M5 18L17 6M17 6h-5M17 6v5" ${stroke(c, 2)}/>` +
+      `<path d="M16 14c1.5 2 2 3 2 4a2 2 0 0 1-4 0c0-1 .5-2 2-4z" fill="${c}"/>`,
+  ],
+  // Shout: two chevrons forward and a cross off, faster, uncrippled.
+  charge: [
+    "shout",
+    (c) =>
+      `<path d="M5 7l5 5-5 5M11 7l5 5-5 5" ${stroke(c, 2.2)}/><path d="M18 6v12" ${stroke(c, 2)}/>`,
+  ],
+  // Stance: a chevron into a bolt, faster until the hit that gives adrenaline.
+  "enraging-charge": [
+    "stance",
+    (c) =>
+      `<path d="M4 8l4 4-4 4" ${stroke(c, 2.2)}/>` +
+      `<path d="M15.5 5l-4 7h3l-1 7 4.5-8h-3z" fill="${c}"/>`,
+  ],
   // Enchantment: a shield with a spark, blocks renewed by critical hits (#1315).
   "critical-defenses": [
     "enchantment",

@@ -659,6 +659,7 @@ function describeTriggers(
       trigger.effects,
       trigger.target,
       trigger.weapon,
+      trigger.blocked,
       trigger.profession,
       trigger.usedSkill,
       trigger.damageType,
@@ -755,12 +756,16 @@ const DROPPED = "drop effect";
 /**
  * What the bearer does that a trigger bound to a kind of skill or
  * enchantment answers (#1437): "uses a Dervish attack skill", "loses a
- * Dervish enchantment", or to a type of damage (#1540): "takes fire damage
- * from a foe". `undefined`: bound to none.
+ * Dervish enchantment", to a type of damage (#1540): "takes fire damage
+ * from a foe", or to a kind of block (#1549): "blocks a melee attack".
+ * `undefined`: bound to none.
  */
 function kindBoundWhen(event: StatusTriggerEvent, trigger: StatusTrigger): string | undefined {
   if (event === "bearer-takes-damage-from-foe" && trigger.damageType !== undefined) {
     return `takes ${trigger.damageType} damage from a foe`;
+  }
+  if (event === "bearer-blocks" && trigger.blocked !== undefined) {
+    return `blocks a ${trigger.blocked} attack`;
   }
   if (event === "bearer-loses-enchantment" && trigger.profession !== undefined) {
     return `loses a ${getProfession(trigger.profession).name} enchantment`;
@@ -1433,6 +1438,11 @@ function describeEffect(
           text: `${verb} one ${effect.category} for each ${perRemoved.category} removed (max ${String(max)})`,
           magnitude: undefined,
         };
+      }
+      if (effect.statusId !== undefined) {
+        // "Charge!"'s "lose the Crippled condition" (#1549).
+        const verb = effect.from === "caster" ? "Lose" : "Removes";
+        return { text: `${verb} ${statusName(effect.statusId)}`, magnitude: undefined };
       }
       if (effect.from === "caster") {
         // "Lose 1 Dervish enchantment" (#845), or all of them (#1205).

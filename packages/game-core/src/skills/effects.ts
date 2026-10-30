@@ -1194,6 +1194,7 @@ export function applyEffect(
         effect.category,
         removeCount(effect, caster, bearer, context.surroundings, earlier),
         effect.profession,
+        effect.statusId,
       );
       for (const statusId of removed) {
         events.push({ kind: "status-removed", targetId: bearer.id, statusId });

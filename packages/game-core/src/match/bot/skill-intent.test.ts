@@ -60,6 +60,8 @@ const NO_BOT_USE = new Set([
   "ritualist.weapon-of-quickening",
   "warrior.balanced-stance",
   "warrior.endure-pain",
+  "warrior.enraging-charge",
+  "warrior.flail",
   "warrior.for-great-justice",
   "warrior.frenzy",
   "warrior.rush",
