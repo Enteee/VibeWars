@@ -36,6 +36,5 @@ export const ASSASSIN_ICONS = {
   "assassin.feigned-neutrality": { glyph: "shield-veil", modifier: "self" },
   "assassin.way-of-perfection": { glyph: "crescent-spark", modifier: "clock" },
   "assassin.caltrops": { glyph: "caltrops", modifier: "bleed" },
-  // Placeholder until the asset-designer's (#1551).
-  "assassin.shadow-prison": { glyph: "blink", modifier: "down" },
+  "assassin.shadow-prison": { glyph: "blink-bars" },
 };
