@@ -779,26 +779,32 @@ const status = {
       `<path d="M5 12l3-4 3 8 3-8 3 8 2-4" ${stroke(c, 2)}/>` +
       `<path d="M4 19L20 5" ${stroke(c, 1.6)}/>`,
   ],
-  // Paragon chants 3 (#1505), stand-ins until the asset-designer's.
-  // Chant: a bar held level, your next skill cannot be interrupted.
-  "song-of-concentration": ["chant", (c) => `<path d="M5 12h14M5 8v8M19 8v8" ${stroke(c, 2.2)}/>`],
-  // Chant: an arrow through a gap, your next attack skill cannot be blocked.
+  // Paragon chants 3 (#1505, #1558): each pairs with its skill icon.
+  // Chant: a burst struck through, your next skill cannot be interrupted.
+  "song-of-concentration": [
+    "chant",
+    (c) =>
+      `<path d="M12 3l2 5 5-1-3 4 3 4-5-1-2 5-2-5-5 1 3-4-3-4 5 1z" fill="${c}"/>` +
+      `<path d="M4 20L20 4" ${stroke(c, 2.2)}/>`,
+  ],
+  // Chant: a shield struck through, your next attack skill cannot be blocked.
   "anthem-of-guidance": [
     "chant",
     (c) =>
-      `<path d="M4 12h14M14 8l4 4-4 4" ${stroke(c, 2.2)}/><path d="M10 4v4M10 16v4" ${stroke(c, 1.6)}/>`,
+      `<path d="M12 3.5l7 2.5v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z" ${stroke(c, 1.8)}/>` +
+      `<path d="M4 20L20 4" ${stroke(c, 2.2)}/>`,
   ],
-  // Chant: a bolt over a minus, your next shout or chant costs less.
+  // Chant: a bolt over a bar, your next shout or chant costs less.
   "energizing-chorus": [
     "chant",
     (c) =>
       `<path d="M13 3L8 10h3.5l-1 5 5-7H12z" fill="${c}"/><path d="M7 19h10" ${stroke(c, 2.2)}/>`,
   ],
-  // Chant: a plus over a half bar, more damage to a foe above half Health.
+  // Chant: a disc filled in its upper half, more damage to a foe above half Health.
   "anthem-of-envy": [
     "chant",
     (c) =>
-      `<path d="M12 4v8M8 8h8" ${stroke(c, 2.2)}/><path d="M5 18h7" ${stroke(c, 2.6)}/><path d="M12 18h7" ${stroke(c, 1)}/>`,
+      `<circle cx="12" cy="12" r="7.5" ${stroke(c, 1.8)}/><path d="M4.5 12a7.5 7.5 0 0 1 15 0z" fill="${c}"/>`,
   ],
   // Weapon spell: a sword, held up, warded (#758).
   "weapon-of-warding": [
@@ -1929,6 +1935,20 @@ const wasUrn = (mark) =>
 const sideSpear = () => inkLine("M7 21V9", 2.4) + inkFill("M7 2.5L11.5 10H2.5Z");
 
 const skillGlyph = {
+  // A burst struck through: the next skill cannot be interrupted (#1558).
+  "burst-struck": () =>
+    inkFill(burst(6)) +
+    `<path d="M3 21L21 3" stroke="${C.bg}" stroke-width="6" stroke-linecap="round"/>` +
+    inkLine("M3 21L21 3", 3),
+  // A shield struck through: the next attack cannot be blocked (#1558).
+  "shield-struck": () =>
+    `<path d="M12 2.5L20 5.5V12C20 16.5 16 19.5 12 21.5C8 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2.6)}/>` +
+    inkLine("M2.5 21.5L21.5 2.5", 3),
+  // A bolt over a bar: energy, and less of it (#1558).
+  "bolt-less": () => inkFill("M14 2L6 12H11L10 18L18 8H13Z") + inkLine("M4 21.5H20", 3),
+  // A disc filled in its upper half: a foe above half Health (#1558).
+  "disc-top": () =>
+    `<circle cx="12" cy="12" r="9" ${stroke(C.ink, 2.4)}/><path d="M3 12A9 9 0 0 1 21 12Z" fill="${C.ink}"/>`,
   heal: () => inkFill("M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"),
   fireball: () =>
     `<circle cx="15" cy="9" r="5" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
@@ -2973,6 +2993,11 @@ const skillGlyph = {
     `<circle cx="6" cy="6" r="3.8" ${stroke(C.ink, 1.8)} stroke-dasharray="2.6 2"/>` +
     inkLine("M21 21L10.5 10.5M10.5 17V10.5H17", 2.4),
   // "With their next skill" chants (#1497): the corner mark is what the ally casts next, the picture is the payoff.
+  // Chants 3 (#1505, #1558): the payoff is what the next skill gains or loses.
+  "next-interrupt-no": () => nextSkill("any", "burst-struck"),
+  "next-attack-unblock": () => nextSkill("attack", "shield-struck"),
+  "next-chant-energy-less": () => nextSkill("chant", "bolt-less"),
+  "next-attack-healthy": () => nextSkill("attack", "disc-top"),
   "next-adrenaline": () => inkLine("M5 20V14M12 20V9M19 20V4", 2.6),
   "next-attack-energy": () => nextSkill("attack", "energy"),
   "next-spell-energy": () => nextSkill("spell", "energy"),
