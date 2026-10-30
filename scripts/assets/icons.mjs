@@ -1752,6 +1752,10 @@ const inkFill = (d) =>
 /** @param {string} d @param {number} [w] */
 const inkLine = (d, w = 2.2) => `<path d="${d}" ${stroke(C.ink, w)}/>`;
 
+/** The dashed ring of a hex, round the mark of a skill-use punisher (#1534). */
+const hexRing = () =>
+  `<circle cx="12" cy="12" r="9" ${stroke(C.ink, 2.2)} stroke-dasharray="4.4 3.4"/>`;
+
 /** A burst of `n` points around the centre, alternating two radii. @param {number} n */
 const burst = (n) =>
   Array.from({ length: n * 2 }, (_, i) => {
@@ -2701,6 +2705,51 @@ const skillGlyph = {
     `<circle cx="12" cy="12" r="8.5" ${stroke(C.ink, 2.2)} stroke-dasharray="4.2 3.2"/>` +
     inkFill("M12 6.8C13.8 9.4 15.6 11 15.6 13.2A3.6 3.6 0 0 1 8.4 13.2C8.4 11 10.2 9.4 12 6.8Z") +
     inkLine("M4 9.5H7M5.5 8V11M17 15H20", 1.6),
+  // The Mesmer skill-use punishers (#1534): a dashed ring (a hex) and a mark for the punishment.
+  // Wastrel's Worry: a burst, and the bolt of a skill used that ends it early.
+  "hex-worry": () =>
+    hexRing() +
+    `<g transform="translate(13,13.5) scale(0.5) translate(-12,-12)">${inkFill(burst(5))}</g>` +
+    inkLine("M7.5 5.5L6 8.8H8L6.8 12", 1.6),
+  // Overload: a bolt through a cast bar, specks of splash either side.
+  "hex-overload": () =>
+    hexRing() +
+    inkLine("M6 16.5H18", 2.6) +
+    inkFill("M13.5 5.5L9 12H13L10.5 16.5L16 10H12Z") +
+    `<circle cx="6" cy="9" r="1.1" fill="${C.ink}"/><circle cx="18" cy="9" r="1.1" fill="${C.ink}"/>`,
+  // Frustration: a cast bar broken off, a burst where it was interrupted.
+  "hex-frustration": () =>
+    hexRing() +
+    inkLine("M5.5 15.5H11", 2.8) +
+    `<g transform="translate(15.5,12.5) scale(0.45) translate(-12,-12)">${inkFill(burst(6))}</g>`,
+  // Migraine: a short cast bar over one twice as long, activation doubled.
+  "hex-double": () => hexRing() + inkLine("M6.5 9.5H10.5", 2.8) + inkLine("M6.5 15H17.5", 2.8),
+  // Visions of Regret: an eye with a tear, hurt for every skill used.
+  "hex-eye-tear": () =>
+    hexRing() +
+    inkLine("M5.5 10.5C8 7 16 7 18.5 10.5C16 14 8 14 5.5 10.5", 1.8) +
+    `<circle cx="12" cy="10.5" r="1.8" fill="${C.ink}"/>` +
+    inkFill("M12 14.8C11 16.3 10.6 17 10.6 17.8A1.4 1.4 0 0 0 13.4 17.8C13.4 17 13 16.3 12 14.8Z"),
+  // A crown: an elite skill. Price of Pride hangs a drained bar under it.
+  "elite-drain": () =>
+    hexRing() +
+    inkFill("M6.5 14.5L7.5 8L10.5 11L12 7L13.5 11L16.5 8L17.5 14.5Z") +
+    inkLine("M8 17.5H16", 2),
+  // Signet of Humility: a crown struck through, the elite is disabled.
+  "crown-struck": () =>
+    inkFill("M3.5 17L5 6.5L9.5 11L12 4.5L14.5 11L19 6.5L20.5 17Z") +
+    `<path d="M3.5 21L20.5 3" ${stroke(C.bg, 4.4)}/>` +
+    inkLine("M3.5 21L20.5 3", 2),
+  // Unnatural Signet: an orb thrown, a dashed ring beside it where the splash lands.
+  "orb-splash": () =>
+    `<circle cx="9" cy="9" r="5" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
+    inkLine("M5 13L2.5 15.5M3.5 9H2M9 13.5V15", 1.8) +
+    `<circle cx="16.5" cy="16.5" r="4.5" ${stroke(C.ink, 2)} stroke-dasharray="3.4 2.6"/>`,
+  // Mind Blast: a head with a blast flung from it.
+  "head-blast": () =>
+    `<circle cx="8.5" cy="14" r="5.5" ${stroke(C.ink, 2.2)}/>` +
+    inkLine("M5 21H12", 2.2) +
+    `<g transform="translate(16,8) scale(0.6) translate(-12,-12)">${inkFill(burst(6))}</g>`,
   // A shield outline with a crack down its face: the block is gone (#1262).
   "armor-crack": () =>
     `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2)}/>` +
