@@ -355,3 +355,55 @@ describe("rankOf (#762)", () => {
     expect(rankOf(w, "warrior.axe-mastery")).toBe(3);
   });
 });
+
+describe("a status damage pulse (#1501)", () => {
+  /** What `c`'s pulses deal over `seconds` of 20 Hz ticks. */
+  function pulses(c: Combatant, seconds: number): number[] {
+    const dealt: number[] = [];
+    for (let i = 0; i < Math.round(seconds * 20); i += 1) {
+      advanceStatuses(c, 1 / 20, 0);
+      dealt.push(...c.statuses.drainPulses().map(({ damage }) => damage));
+    }
+    return dealt;
+  }
+
+  it("grows by its growth each whole second, from its source, five in five seconds", () => {
+    const c = makeCombatant({ id: "c" });
+    c.statuses.apply("wastrels-demise", 5, "m");
+    advanceStatuses(c, 0.95, 0);
+    expect(c.statuses.drainPulses()).toEqual([]);
+    advanceStatuses(c, 0.05, 0);
+    expect(c.statuses.drainPulses()).toEqual([{ id: "wastrels-demise", sourceId: "m", damage: 8 }]);
+    expect(pulses(c, 5)).toEqual([16, 24, 32, 40]);
+    expect(c.statuses.has("wastrels-demise")).toBe(false);
+  });
+
+  it("deals no partial pulse when it ends between two", () => {
+    const c = makeCombatant({ id: "c" });
+    c.statuses.apply("wastrels-demise", 2.5, "m");
+    expect(pulses(c, 4)).toEqual([8, 16]);
+  });
+
+  it("deals no pulse after it ended early", () => {
+    const c = makeCombatant({ id: "c" });
+    c.statuses.apply("wastrels-demise", 5, "m");
+    expect(pulses(c, 2.5)).toEqual([8, 16]);
+    c.statuses.removeByCategory("hex");
+    expect(pulses(c, 3)).toEqual([]);
+  });
+
+  it("starts the count again when renewed", () => {
+    const c = makeCombatant({ id: "c" });
+    c.statuses.apply("wastrels-demise", 5, "m");
+    expect(pulses(c, 3)).toEqual([8, 16, 24]);
+    c.statuses.apply("wastrels-demise", 5, "m");
+    expect(pulses(c, 2)).toEqual([8, 16]);
+  });
+
+  it("a big step deals every pulse it passes", () => {
+    const c = makeCombatant({ id: "c" });
+    c.statuses.apply("wastrels-demise", 5, "m");
+    advanceStatuses(c, 3, 0);
+    expect(c.statuses.drainPulses().map(({ damage }) => damage)).toEqual([8, 16, 24]);
+  });
+});

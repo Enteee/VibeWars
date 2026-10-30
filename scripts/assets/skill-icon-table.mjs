@@ -388,6 +388,10 @@ export const SKILL_ICONS = {
   "mesmer.shame": { glyph: "hex-mute", modifier: "up" },
   "mesmer.mistrust": { glyph: "hex-burst", modifier: "bolt" },
   "mesmer.fragility": { glyph: "hex-drain", modifier: "area" },
+  // Placeholders until the asset-designer's (#1501): crowd punishers.
+  "mesmer.panic": { glyph: "hex-burst", modifier: "stun" },
+  "mesmer.wastrels-demise": { glyph: "hex-drain", modifier: "up" },
+  "mesmer.epidemic": { glyph: "germ", modifier: "plus" },
   // Placeholders until the asset-designer's (#1486): Paragon spears.
   "paragon.blazing-spear": { glyph: "spear", modifier: "plus" },
   "paragon.mighty-throw": { glyph: "spear-dash", modifier: "up" },

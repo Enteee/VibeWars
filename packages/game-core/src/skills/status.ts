@@ -289,7 +289,10 @@ export type StatusId =
   | "guilt"
   | "shame"
   | "mistrust"
-  | "fragility";
+  | "fragility"
+  // Mesmer crowd punishers (#1501).
+  | "panic"
+  | "wastrels-demise";
 
 /** Health one pip of regeneration or degeneration is worth, per second (GW1). */
 export const HEALTH_PER_PIP = 2;
@@ -703,6 +706,12 @@ export interface StatusDefinition {
    */
   readonly failsNextSpell: FailsNextSpell | undefined;
   /**
+   * Every whole second it has been on the bearer, a pulse of growing
+   * typeless damage from its source hits the bearer and the source's
+   * foes near it (#1501): Wastrel's Demise's. `undefined`: none.
+   */
+  readonly damagePulse: DamagePulse | undefined;
+  /**
    * Whenever a chant or a shout ends on the bearer, its remaining time is
    * back to the duration it was applied with (#1423): a refrain's "this
    * echo is reapplied every time a chant or shout ends on you".
@@ -818,6 +827,32 @@ export type StatusTriggerEvent =
    */
   | "ends-early"
   | "expires";
+
+/**
+ * `StatusDefinition.damagePulse` (#1501). Pulse `k`, at `k` whole
+ * seconds since the status was applied, deals `damage + growth × (k − 1)`.
+ * A status that ends between pulses deals no partial one, and a renewal
+ * starts the count again at 1.
+ */
+export interface DamagePulse {
+  /** The first pulse's damage, typeless. */
+  readonly damage: number;
+  /** Added to each pulse after the first. */
+  readonly growth: number;
+  /** The bearer and the source's foes within this of the bearer are hit. */
+  readonly radius: number;
+  readonly skillId: string;
+}
+
+/** A `damagePulse` that came due on the bearer (#1501): what it deals, from whom. */
+export interface StatusPulse {
+  readonly id: StatusId;
+  readonly sourceId: string;
+  readonly damage: number;
+}
+
+/** Within a hair, as a swing is: twenty additions of 0.05 fall just short of 1. */
+const PULSE_EPSILON = 1e-6;
 
 /** `StatusDefinition.failsNextSpell` (#1475). */
 export interface FailsNextSpell {
@@ -1138,6 +1173,7 @@ function define(
     damageFromSpiritAttacks: 0,
     breaksNextHex: undefined,
     failsNextSpell: undefined,
+    damagePulse: undefined,
     renewsOnChantOrShoutEnd: false,
     endsAfterTriggers: undefined,
     chantShoutDurationMultiplier: 1,
@@ -3094,6 +3130,38 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
       },
     ],
   }),
+
+  // Mesmer crowd punishers (#1501), at their rank-12 values.
+  // "When a foe hexed with Panic successfully uses a skill, all other
+  // nearby foes are interrupted": the bearer's own allies, never itself.
+  panic: define("panic", "Panic", "hex", {
+    profession: "mesmer",
+    triggers: [
+      {
+        on: "bearer-uses-skill",
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_NEARBY,
+            maxTargets: undefined,
+            effects: [{ kind: "interrupt" }],
+          },
+        ],
+        target: "bearer",
+        skillId: "mesmer.panic",
+      },
+    ],
+  }),
+  // "Each second while hexed, target foe and all foes adjacent to that
+  // foe take 1...10 damage and an additional 1...10 damage for each second
+  // this spell is in effect. This hex ends prematurely if target foe uses
+  // a skill": 8 and 8, so 8, 16, 24, 32, 40.
+  "wastrels-demise": define("wastrels-demise", "Wastrel's Demise", "hex", {
+    profession: "mesmer",
+    damagePulse: { damage: 8, growth: 8, radius: AREA_ADJACENT, skillId: "mesmer.wastrels-demise" },
+    endsWhenBearerUsesSkill: true,
+  }),
 };
 
 /**
@@ -3181,6 +3249,7 @@ export function triggerAnswersWeapon(trigger: StatusTrigger, weapon: Weapon): bo
 export class StatusSet {
   readonly #statuses = new Map<StatusId, ActiveStatus>();
   #changes: StatusChange[] = [];
+  #pulses: StatusPulse[] = [];
 
   /**
    * What happened to this set since the last drain (#887), oldest first,
@@ -3190,6 +3259,16 @@ export class StatusSet {
     const changes = this.#changes;
     this.#changes = [];
     return changes;
+  }
+
+  /**
+   * The damage pulses that came due since the last drain (#1501), oldest
+   * first, and forget them: the simulation lands them once a tick.
+   */
+  public drainPulses(): StatusPulse[] {
+    const pulses = this.#pulses;
+    this.#pulses = [];
+    return pulses;
   }
 
   /**
@@ -3981,6 +4060,7 @@ export class StatusSet {
   public advance(dt: number, moving: boolean): StatusId[] {
     const expired: StatusId[] = [];
     for (const status of this.#statuses.values()) {
+      this.#pulse(status, dt);
       status.remainingSeconds -= dt;
       if (status.remainingSeconds > 0) {
         continue;
@@ -3995,6 +4075,30 @@ export class StatusSet {
     }
     this.#end(expired, true);
     return expired;
+  }
+
+  /**
+   * Record the pulses of `status` that fall due in the next `dt` (#1501):
+   * one at each whole second since it was applied, none past its
+   * duration, so one ending between pulses deals no partial one.
+   */
+  #pulse(status: ActiveStatus, dt: number): void {
+    const pulse = getStatusDefinition(status.id).damagePulse;
+    if (pulse === undefined) {
+      return;
+    }
+    const before = status.durationSeconds - status.remainingSeconds;
+    const last = Math.min(
+      Math.floor(before + dt + PULSE_EPSILON),
+      Math.floor(status.durationSeconds + PULSE_EPSILON),
+    );
+    for (let k = Math.floor(before + PULSE_EPSILON) + 1; k <= last; k += 1) {
+      this.#pulses.push({
+        id: status.id,
+        sourceId: status.sourceId,
+        damage: pulse.damage + pulse.growth * (k - 1),
+      });
+    }
   }
 }
 

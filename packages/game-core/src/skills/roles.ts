@@ -52,6 +52,9 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     // Plague Touch (#944): conditions on a foe, and off yourself.
     case "transfer-conditions":
       return ["condition", "removal"];
+    // Epidemic (#1501): the target's conditions on the foes around it.
+    case "spread-conditions":
+      return ["condition"];
     case "damage":
     case "energy-gain":
     case "adrenaline-gain":
