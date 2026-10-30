@@ -452,6 +452,16 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
       `the next spell it casts at ${on === "foe-targeted" ? "a foe" : "an ally"} fails: ${what.join(", ")}`,
     );
   }
+  // Wastrel's Demise's (#1501): "each second, it and adjacent foes take 8
+  // damage, 8 more each second".
+  if (definition.damagePulse !== undefined) {
+    const { damage, growth, radius } = definition.damagePulse;
+    const area = AREA_TEXT.get(radius);
+    const foes = area === undefined ? `foes within ${String(radius)}` : `${area} foes`;
+    parts.push(
+      `each second, it and ${foes} take ${String(damage)} damage, ${String(growth)} more each second`,
+    );
+  }
   if (definition.reversesNextDamage !== undefined) {
     parts.push(
       `the next damage or life steal heals for that much instead, up to ${String(definition.reversesNextDamage)}`,
@@ -1325,6 +1335,12 @@ function describeEffect(
     }
     case "transfer-conditions":
       return transferText(effect, ranks);
+    // Epidemic's (#1501): "Adjacent foes get the target's conditions...".
+    case "spread-conditions":
+      return {
+        text: `${foesWithin(effect.radius, "foes")} get the target's conditions, with the time each has left`,
+        magnitude: undefined,
+      };
     case "give-health": {
       const magnitude = describeMagnitude(effect.healPercent, ranks);
       return {

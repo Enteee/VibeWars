@@ -1438,6 +1438,16 @@ const status = {
       `<path d="M12 3c3 4.5 5.5 7.5 5.5 11a5.5 5.5 0 0 1-11 0C6.5 10.5 9 7.5 12 3z" ${stroke(c, 1.8)}/>` +
       `<path d="M12 9l-1.5 3 2.5 1.5-1.5 3" ${stroke(c, 1.5)}/>`,
   ],
+  // Crowd punishers (#1501), stand-ins until the asset-designer's.
+  // Hex: a broken ring round a burst, a skill used interrupts those near.
+  panic: [
+    "hex",
+    (c) =>
+      `<circle cx="12" cy="12" r="7" ${stroke(c, 1.6)} stroke-dasharray="3 2.5"/>` +
+      `<path d="M12 8v8M8 12h8M9.2 9.2l5.6 5.6M14.8 9.2l-5.6 5.6" ${stroke(c, 1.6)}/>`,
+  ],
+  // Hex: three rising bars, each second's pulse harder than the last.
+  "wastrels-demise": ["hex", (c) => `<path d="M7 17v-3M12 17v-6M17 17v-9" ${stroke(c, 2.4)}/>`],
 };
 
 // ---------------------------------------------------------------------------
