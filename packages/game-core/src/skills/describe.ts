@@ -369,8 +369,11 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
     const plural = definition.endsAfterAttacks === 1 ? "" : "s";
     parts.push(`ends after ${String(definition.endsAfterAttacks)} incoming attack${plural}`);
   }
-  for (const effect of definition.onAttackHit?.effects ?? []) {
-    parts.push(...describeAttackHit(effect, definition.onAttackHit?.attackSkillsOnly === true));
+  if (definition.onAttackHit !== undefined) {
+    const { effects, attackSkillsOnly, weapon } = definition.onAttackHit;
+    for (const effect of effects) {
+      parts.push(...describeAttackHit(effect, attackSkillsOnly, weapon));
+    }
   }
   if (definition.endsAfterHits !== undefined) {
     const { count, weapon } = definition.endsAfterHits;
@@ -596,9 +599,18 @@ function damageTaken(multiplier: number): string {
   return `${String(multiplier)}×`;
 }
 
-/** A preparation's rider (#525), as its tooltip says it: "your attacks …". */
-function describeAttackHit(effect: SkillEffect, attackSkillsOnly: boolean): string[] {
-  const attacks = attackSkillsOnly ? "attack skills" : "physical attacks";
+/**
+ * A preparation's rider (#525), as its tooltip says it: "your attacks …",
+ * "… with a bow" for a rider of one weapon class (#1629).
+ */
+function describeAttackHit(
+  effect: SkillEffect,
+  attackSkillsOnly: boolean,
+  weapon: AttackWeaponClass | undefined,
+): string[] {
+  const attacks =
+    (attackSkillsOnly ? "attack skills" : "physical attacks") +
+    (weapon === undefined ? "" : ` with ${NEEDED_WEAPON[weapon]}`);
   if (effect.kind === "apply-status") {
     return [
       `foes your ${attacks} hit get ${statusName(effect.statusId)} ` +
@@ -2266,6 +2278,11 @@ export function describeSkill(
       magnitude,
     })),
   );
+  // Barrage's and Volley's (#1629), before anything else it does.
+  const preparationsLine =
+    rule?.removesPreparations === true
+      ? [{ text: "All your preparations are removed", magnitude: undefined }]
+      : [];
   // A throw faster than the weapon's (#1486): Mighty Throw's ×3.
   const flightSpeed = rule?.flightSpeed;
   const flightLine =
@@ -2306,8 +2323,9 @@ export function describeSkill(
             magnitude: undefined,
           },
         ];
-  // A trap (#1105): any attack that lands while it is being set interrupts it.
-  const easilyInterrupted = isEasilyInterrupted(skill.type)
+  // A trap (#1105), or a skill that says so (#1629): any attack that lands
+  // while it is being used interrupts it.
+  const easilyInterrupted = isEasilyInterrupted(skill)
     ? [{ text: "Easily interrupted", magnitude: undefined }]
     : [];
   // A spell that flies (#535) lands only if it reaches its target.
@@ -2358,6 +2376,7 @@ export function describeSkill(
         ];
   const effects = [
     ...lossLine,
+    ...preparationsLine,
     ...chainLine,
     ...bonusLine,
     ...unblockableLine,

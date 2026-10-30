@@ -767,7 +767,7 @@ export function interruptOnHit(
     return;
   }
   const dazed = victim.statuses.active.some(({ id }) => getStatusDefinition(id).interruptsSpells);
-  if (isEasilyInterrupted(skill.type) || (dazed && isSpell(skill.type))) {
+  if (isEasilyInterrupted(skill) || (dazed && isSpell(skill.type))) {
     interruptCast(victim, byId, events);
   }
 }

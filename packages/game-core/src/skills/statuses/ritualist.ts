@@ -153,6 +153,7 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
     profession: "ritualist",
     onAttackHit: {
       attackSkillsOnly: false,
+      weapon: undefined,
       effects: [
         {
           kind: "splash",

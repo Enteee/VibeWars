@@ -243,6 +243,7 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
     profession: "necromancer",
     onAttackHit: {
       attackSkillsOnly: false,
+      weapon: undefined,
       effects: [{ kind: "damage", amount: { flat: 13 }, type: "typeless", armorPenetration: 1 }],
       skillId: "necromancer.order-of-pain",
     },

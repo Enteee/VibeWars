@@ -120,16 +120,18 @@ describe("Apply Poison on a blow (#525)", () => {
     expect(target.health).toBeLessThan(target.maxHealth);
   });
 
-  it("an attack skill poisons each victim of Barrage", () => {
+  it("an attack skill poisons each victim of its area", () => {
     const barrage = getSkill("ranger.barrage");
-    if (barrage === undefined) {
+    if (barrage?.attack === undefined) {
       throw new Error("missing barrage");
     }
+    // Barrage without its "all your preparations are removed" (#1629).
+    const { removesPreparations: _removes, ...keeps } = barrage.attack;
     const fired: FiredTrigger[] = [];
     resolveAttackSkill(
       {
         surroundings: new Map(),
-        skill: barrage,
+        skill: { ...barrage, attack: keeps },
         caster: prepared(WEAPONS.longbow, "ranger.marksmanship"),
         targets: [victim("x"), victim("y"), victim("z")],
         rng: createRng(1),
@@ -139,6 +141,34 @@ describe("Apply Poison on a blow (#525)", () => {
       fired,
     );
     expect(poisoned(fired)).toEqual(["x", "y", "z"]);
+  });
+
+  it("Barrage removes the preparation before its arrows: nobody is poisoned (#1629)", () => {
+    const barrage = getSkill("ranger.barrage");
+    if (barrage === undefined) {
+      throw new Error("missing barrage");
+    }
+    const caster = prepared(WEAPONS.longbow, "ranger.marksmanship");
+    const fired: FiredTrigger[] = [];
+    const events = resolveAttackSkill(
+      {
+        surroundings: new Map(),
+        skill: barrage,
+        caster,
+        targets: [victim("x"), victim("y")],
+        rng: createRng(1),
+        rules: RULES.combat,
+      },
+      NOWHERE,
+      fired,
+    );
+    expect(poisoned(fired)).toEqual([]);
+    expect(caster.statuses.has("apply-poison")).toBe(false);
+    expect(events).toContainEqual({
+      kind: "status-removed",
+      targetId: caster.id,
+      statusId: "apply-poison",
+    });
   });
 });
 

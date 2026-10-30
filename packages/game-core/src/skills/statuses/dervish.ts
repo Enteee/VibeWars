@@ -88,6 +88,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
     profession: "dervish",
     onAttackHit: {
       attackSkillsOnly: false,
+      weapon: undefined,
       effects: [
         {
           kind: "if",
@@ -256,6 +257,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
     moveSpeedMultiplier: 1.25,
     onAttackHit: {
       attackSkillsOnly: false,
+      weapon: undefined,
       effects: [
         {
           kind: "if",
@@ -353,6 +355,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
     attackDamageTypeWeapon: "scythe",
     onAttackHit: {
       attackSkillsOnly: false,
+      weapon: undefined,
       effects: [
         {
           kind: "if",
@@ -418,6 +421,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
     profession: "dervish",
     onAttackHit: {
       attackSkillsOnly: true,
+      weapon: undefined,
       effects: [
         { kind: "apply-status", statusId: "crippled", durationSeconds: 9 },
         { kind: "transfer-conditions", from: "caster", count: 3, durationMultiplier: 1 },
@@ -433,6 +437,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
     profession: "dervish",
     onAttackHit: {
       attackSkillsOnly: true,
+      weapon: undefined,
       effects: [
         {
           kind: "if",

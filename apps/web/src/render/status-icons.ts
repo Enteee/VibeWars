@@ -248,6 +248,8 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "rending-aura": icon("rending-aura"),
   "shadow-prison": icon("shadow-prison"),
   wither: icon("wither"),
+  "kindle-arrows": icon("kindle-arrows"),
+  "ignite-arrows": icon("ignite-arrows"),
   "life-siphon": icon("life-siphon"),
   "life-siphon-regen": icon("life-siphon-regen"),
   "reckless-haste": icon("reckless-haste"),

@@ -529,10 +529,11 @@ describe("describeSkill", () => {
           lines(rule?.onCritical ?? []) +
           lines(rule?.onFailedToHit ?? []) +
           (rule?.flightSpeed === undefined ? 0 : 1) +
+          (rule?.removesPreparations === true ? 1 : 0) +
           (rule !== undefined && rule.strikes > 1 ? 1 : 0) +
           (entry.whileActivating === undefined ? 0 : 1) +
           (entry.projectile === undefined ? 0 : 1) +
-          (isEasilyInterrupted(entry.type) ? 1 : 0) +
+          (isEasilyInterrupted(entry) ? 1 : 0) +
           (entry.corpse === undefined ? 0 : 1) +
           (entry.target !== "self" && entry.range === RANGE_SPELL / 2 ? 1 : 0) +
           (entry.companion === undefined ? 0 : 1) +
