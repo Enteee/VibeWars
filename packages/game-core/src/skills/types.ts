@@ -277,6 +277,17 @@ export interface TransferConditionsEffect {
 }
 
 /**
+ * Copy every condition on the target, with the time it has left, onto
+ * each foe of the caster within `radius` of the target (#1501), as
+ * Epidemic's. The target keeps its own and gets no copy. Each copy lands
+ * as a condition the caster put on: the longer duration wins.
+ */
+export interface SpreadConditionsEffect {
+  readonly kind: "spread-conditions";
+  readonly radius: number;
+}
+
+/**
  * The caster gives the target some of its own health (#936), as Infuse
  * Health's "lose half your current health; target other ally is healed
  * for 100...129% of the amount you lost". The loss is
@@ -939,6 +950,7 @@ export type UnconditionalEffect =
   | SacrificeHealthEffect
   | LoseHealthEffect
   | TransferConditionsEffect
+  | SpreadConditionsEffect
   | GiveHealthEffect
   | ApplyStatusEffect
   | MaintainStatusEffect

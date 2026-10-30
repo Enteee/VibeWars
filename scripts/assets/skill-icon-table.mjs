@@ -374,13 +374,13 @@ export const SKILL_ICONS = {
   "ritualist.blind-was-mingson": { glyph: "was-blind" },
   "ritualist.grasping-was-kuurong": { glyph: "was-quake" },
   "ritualist.energetic-was-lee-sa": { glyph: "was-bolt" },
-  // Placeholders until the asset-designer's (#1464): Ritualist item spells 2.
-  "ritualist.mighty-was-vorizun": { glyph: "born-energy", modifier: "up" },
-  "ritualist.cruel-was-daoshen": { glyph: "lightning", modifier: "hourglass" },
-  "ritualist.destructive-was-glaive": { glyph: "lightning", modifier: "area" },
-  "ritualist.tranquil-was-tanasen": { glyph: "shield-stance", modifier: "less" },
-  "ritualist.vengeful-was-khanhei": { glyph: "thorns", modifier: "hourglass" },
-  "ritualist.pure-was-li-ming": { glyph: "cleanse", modifier: "half" },
+  // Ritualist item spells 2 (#1464, #1530): the same urn; an orb, a bolt through a plate, a ring, a hook, a struck drop.
+  "ritualist.mighty-was-vorizun": { glyph: "was-orb" },
+  "ritualist.cruel-was-daoshen": { glyph: "was-pierce" },
+  "ritualist.destructive-was-glaive": { glyph: "was-pierce-area" },
+  "ritualist.tranquil-was-tanasen": { glyph: "was-calm" },
+  "ritualist.vengeful-was-khanhei": { glyph: "was-steal" },
+  "ritualist.pure-was-li-ming": { glyph: "was-clear" },
   // Flash enchantments (#1421, #1447).
   "dervish.enchanted-haste": { glyph: "haste-clean" },
   "dervish.heart-of-holy-flame": { glyph: "flame-halo" },
@@ -420,6 +420,10 @@ export const SKILL_ICONS = {
   "mesmer.shame": { glyph: "hex-fail-ally", modifier: "bolt" },
   "mesmer.mistrust": { glyph: "hex-fail-foe", modifier: "area" },
   "mesmer.fragility": { glyph: "hex-churn", modifier: "area" },
+  // Placeholders until the asset-designer's (#1501): crowd punishers.
+  "mesmer.panic": { glyph: "hex-burst", modifier: "stun" },
+  "mesmer.wastrels-demise": { glyph: "hex-drain", modifier: "up" },
+  "mesmer.epidemic": { glyph: "germ", modifier: "plus" },
   // Paragon spears (#1486, #1508): a spear and its rider; the drop badge is Deep Wound.
   "paragon.blazing-spear": { glyph: "spear-flame" },
   "paragon.mighty-throw": { glyph: "spear-fast" },

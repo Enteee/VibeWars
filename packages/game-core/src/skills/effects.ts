@@ -1125,6 +1125,36 @@ export function applyEffect(
       return events;
     }
 
+    case "spread-conditions": {
+      const at = target === undefined ? undefined : context.surroundings.get(target.id)?.position;
+      if (target === undefined || target.dead || at === undefined) {
+        return events;
+      }
+      // Read before any copy lands, so what the first foe gets the rest do too.
+      const conditions = target.statuses.active.filter(
+        ({ id }) => getStatusDefinition(id).category === "condition",
+      );
+      const reached = [...context.surroundings.values()].filter(
+        ({ combatant, position }) =>
+          !combatant.dead &&
+          combatant.id !== target.id &&
+          combatant.team !== caster.team &&
+          distance(position, at) <= effect.radius,
+      );
+      for (const combatant of nearestFirst(reached, at)) {
+        for (const { id, remainingSeconds } of conditions) {
+          landStatus(
+            combatant,
+            id,
+            scaledStatusDuration(combatant, id, remainingSeconds),
+            caster.id,
+            events,
+          );
+        }
+      }
+      return events;
+    }
+
     case "maintain-status": {
       if (target === undefined || target.dead) {
         return events;
@@ -1835,6 +1865,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "damage":
     case "lose-health":
     case "transfer-conditions":
+    case "spread-conditions":
     case "give-health":
     case "apply-status":
     case "maintain-status":

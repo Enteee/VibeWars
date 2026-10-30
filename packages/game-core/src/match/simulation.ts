@@ -148,6 +148,7 @@ import {
   type GroundAct,
   type PulseRule,
   type Skill,
+  type SkillEffect,
 } from "../skills/types.js";
 import {
   leadAimPoint,
@@ -1594,6 +1595,54 @@ export class MatchSimulation {
   }
 
   /**
+   * Every status damage pulse that came due this step (#1501), in
+   * participant order: typeless damage from the status's source to the
+   * bearer and to the source's foes within its radius of the bearer,
+   * logged as the status's skill. A bearer that died since takes none,
+   * and a source that has left the match deals none.
+   */
+  #pulseStatuses(): void {
+    for (const record of this.#participants.values()) {
+      for (const { id, sourceId, damage } of record.combatant.statuses.drainPulses()) {
+        const source = this.#participants.get(sourceId);
+        const pulse = STATUS_DEFINITIONS[id].damagePulse;
+        if (record.combatant.dead || source === undefined || pulse === undefined) {
+          continue;
+        }
+        const hit: SkillEffect = {
+          kind: "damage",
+          amount: { flat: damage },
+          type: "typeless",
+          armorPenetration: 0,
+        };
+        const effects: readonly SkillEffect[] = [
+          hit,
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: pulse.radius,
+            maxTargets: undefined,
+            effects: [hit],
+          },
+        ];
+        this.#logFired([
+          {
+            sourceId,
+            skillId: pulse.skillId,
+            events: applyEffects(effects, {
+              caster: source.combatant,
+              target: record.combatant,
+              rng: this.#rng,
+              rules: this.#ruleset.combat,
+              surroundings: this.#participants,
+            }),
+          },
+        ]);
+      }
+    }
+  }
+
+  /**
    * One pulse of `rule` at `position` (#1113): its effects land from
    * `owner` on whoever its area takes there, in line of sight of it, and
    * it is logged as a cast is, even when it hits nobody. A pulse's
@@ -2653,6 +2702,7 @@ export class MatchSimulation {
 
     this.#springTraps();
     this.#pulseGroundEffects();
+    this.#pulseStatuses();
     this.#settleUpkeep(dt);
     this.#spreadStatuses();
     this.#fireStatusChanges();
@@ -3363,7 +3413,15 @@ export class MatchSimulation {
     spared: ReadonlySet<StatusId>,
     usedSkill?: SlotSkill,
   ): void {
-    this.#logFired(fireTriggers(record.combatant, event, this.#triggerContext(usedSkill), spared));
+    // Panic's interrupt (#1501) is untimed, as a pulse's: finding nothing
+    // to interrupt is no miss, so it says nothing.
+    const fired = fireTriggers(record.combatant, event, this.#triggerContext(usedSkill), spared);
+    this.#logFired(
+      fired.map((each) => ({
+        ...each,
+        events: each.events.filter((event) => event.kind !== "interrupt-missed"),
+      })),
+    );
   }
 
   /**
