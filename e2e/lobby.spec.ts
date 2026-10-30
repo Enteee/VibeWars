@@ -497,9 +497,10 @@ test("the host gives the other team a bot; it plays, named and tagged BOT (#1194
   await page.getByRole("button", { name: "start match" }).click();
   await playHouseTeams([page]);
 
-  // The only foe in the arena is the bot.
+  // The only foe in the arena is the bot, playing its house team's first
+  // slot under that character's name (#1458).
   await page.keyboard.press(key("target-closest"));
-  await expect(page.locator(".hud-target-text")).toHaveText("Warrior Bot");
+  await expect(page.locator(".hud-target-text")).toHaveText("Warrior/Monk");
   await expect(page.locator(".hud-target-bot")).toBeVisible();
   await expect(page.locator(".hud-target-bot")).toHaveText("BOT");
 });
