@@ -605,16 +605,19 @@ function weaponOnHit(
  * swing or attack skill alike, hit or miss. Every status of its own that
  * ends when its bearer attacks ends now, as Weapon of Warding, and, if
  * the attack was `melee`, every one that ends on a melee attack, as
- * Escape (#976).
+ * Escape (#976). Returns whether a status of its own makes the attack
+ * unblockable (#1604), as Guiding Hands, spending one of its attacks.
  */
 export function bearerAttacked(
   attacker: Combatant,
   events: CombatEvent[],
   kind: "melee" | "projectile",
-): void {
-  for (const statusId of attacker.statuses.endOnBearerAttack(kind)) {
+): boolean {
+  const spent = attacker.statuses.spendUnblockableAttack();
+  for (const statusId of [...spent.ended, ...attacker.statuses.endOnBearerAttack(kind)]) {
     events.push({ kind: "status-expired", targetId: attacker.id, statusId });
   }
+  return spent.unblockable;
 }
 
 /**
@@ -704,10 +707,14 @@ export function useNextAttackSkill(
   }
 }
 
-/** One blow on one victim: blind first, then block, then the crit and damage rolls. */
+/**
+ * One blow on one victim: blind first, then block, unless `unblockable`,
+ * then the crit and damage rolls.
+ */
 function strike(
   swing: Swing,
   victim: Combatant,
+  unblockable: boolean,
   events: CombatEvent[],
   fired: FiredTrigger[],
 ): void {
@@ -720,7 +727,7 @@ function strike(
     bearerFailedToHit(attacker);
     return;
   }
-  if (blocks(victim, attacker.id, "melee", rng)) {
+  if (!unblockable && blocks(victim, attacker.id, "melee", rng)) {
     events.push({ kind: "attack-blocked", targetId: victim.id });
     bearerFailedToHit(attacker);
     attackReached(victim, events);
@@ -772,12 +779,12 @@ export function resolveSwing(swing: Swing): {
 
   const events: CombatEvent[] = [];
   const fired: FiredTrigger[] = [];
-  bearerAttacked(swing.attacker, events, blowKind(weapon));
+  const unblockable = bearerAttacked(swing.attacker, events, blowKind(weapon));
   let landed = 0;
   for (let blow = 0; blow < strikes; blow += 1) {
     const from = events.length;
     for (const victim of victims) {
-      strike(swing, victim, events, fired);
+      strike(swing, victim, unblockable, events, fired);
     }
     if (
       events
@@ -867,7 +874,7 @@ export function resolveAttackSkillOutcome(
   const snapshot = weaponSnapshotOf(caster);
   const kind = blowKind(snapshot.mainHand.weapon);
   const events: CombatEvent[] = [];
-  bearerAttacked(caster, events, kind);
+  const unblockable = bearerAttacked(caster, events, kind);
   const next = nextAttackSkillOf(caster);
   const primary = resolution.targets[0];
   const around =
@@ -927,6 +934,7 @@ export function resolveAttackSkillOutcome(
         continue;
       }
       if (
+        !unblockable &&
         (rule === undefined || !unblockableNow(rule.unblockable, caster, victim, surroundings)) &&
         blocks(victim, caster.id, kind, rng)
       ) {

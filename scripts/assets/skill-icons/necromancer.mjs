@@ -52,4 +52,14 @@ export const NECROMANCER_ICONS = {
   "necromancer.deathly-chill": { glyph: "snowflake", modifier: "down" },
   "necromancer.putrid-explosion": { glyph: "mark-skull", modifier: "corpse" },
   "necromancer.signet-of-agony": { glyph: "drop-barbs", modifier: "area" },
+  // Necromancer staples 3 (#1640), stand-ins until their art card.
+  "necromancer.dark-pact": { glyph: "sac-blade", modifier: "bolt" },
+  "necromancer.lifebane-strike": { glyph: "drop-arrow", modifier: "half" },
+  "necromancer.taste-of-pain": { glyph: "heal-drop", modifier: "half" },
+  "necromancer.signet-of-lost-souls": { glyph: "drop-to-signet", modifier: "half" },
+  "necromancer.fetid-ground": { glyph: "snowflake", modifier: "stun" },
+  "necromancer.toxic-chill": { glyph: "snowflake", modifier: "bleed" },
+  "necromancer.bitter-chill": { glyph: "snowflake", modifier: "clock" },
+  "necromancer.rip-enchantment": { glyph: "ring-rend", modifier: "plus" },
+  "necromancer.gaze-of-contempt": { glyph: "eye", modifier: "down" },
 };

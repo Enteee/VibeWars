@@ -2209,4 +2209,153 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Energy engine (#1614): energy back for the spells you cast             */
+  /* ---------------------------------------------------------------------- */
+
+  attunement("fire", "Fire", 184),
+  attunement("water", "Water", 208),
+  attunement("air", "Air", 225),
+  attunement("earth", "Earth", 169),
+  {
+    id: "elementalist.aura-of-restoration",
+    name: "Aura of Restoration",
+    gwId: 180,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.energy-storage",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // PvP: "For 60 seconds, you gain 0...1 Energy and are healed for
+    // 200...400% of the Energy cost each time you cast a spell."
+    effects: [{ kind: "apply-status", statusId: "aura-of-restoration", durationSeconds: 60 }],
+  },
+  {
+    id: "elementalist.kinetic-armor",
+    name: "Kinetic Armor",
+    gwId: 166,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.earth-magic",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 3,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 12 seconds, you gain +20...80 armor. Whenever you cast a spell,
+    // Kinetic Armor is renewed for 12 seconds."
+    effects: [{ kind: "apply-status", statusId: "kinetic-armor", durationSeconds: 12 }],
+  },
+  {
+    id: "elementalist.steam",
+    name: "Steam",
+    gwId: 846,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.water-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe is struck for 20...60 cold damage. If target foe is on
+    // fire, Steam Blinds that foe for 5...10 seconds and they take an
+    // additional 20...60 fire damage": 52, 9 s and 52.
+    effects: [
+      {
+        kind: "damage",
+        amount: { scaling: { attributeId: "elementalist.water-magic", atZero: 20, atTwelve: 52 } },
+        type: "cold",
+        armorPenetration: 0,
+      },
+      {
+        kind: "if",
+        condition: { kind: "target-has-status", statusId: "burning" },
+        effects: [
+          { kind: "apply-status", statusId: "blind", durationSeconds: 9 },
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "elementalist.water-magic", atZero: 20, atTwelve: 52 },
+            },
+            type: "fire",
+            armorPenetration: 0,
+          },
+        ],
+      },
+    ],
+  },
 ];
+
+/**
+ * An attunement (#1614): "For 36...60 seconds, you are attuned to Fire. You
+ * gain 1 Energy plus 30% of the base Energy cost of the skill each time you
+ * use Fire Magic": 55 s.
+ */
+function attunement(
+  element: "fire" | "water" | "air" | "earth",
+  name: string,
+  gwId: number,
+): Skill {
+  return {
+    id: `elementalist.${element}-attunement`,
+    name: `${name} Attunement`,
+    gwId,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: `elementalist.${element}-magic`,
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    effects: [{ kind: "apply-status", statusId: `${element}-attunement`, durationSeconds: 55 }],
+  };
+}
