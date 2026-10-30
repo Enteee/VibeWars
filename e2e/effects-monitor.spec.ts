@@ -122,6 +122,12 @@ test("a ward's aura shows with no bar while you stand in it (#1087)", async ({ p
     .locator(".skill-box", { hasText: "Ward Against Melee" })
     .locator(".skill-box-equip")
     .click();
+  // Earth Magic 12: the ward lasts 17 s, not rank 0's 5 s, which a hover
+  // on a loaded CI runner could outlast before its tooltip opened (#1659).
+  await page
+    .locator(".editor-attribute", { hasText: "Earth Magic" })
+    .locator('.attribute-pip[data-pip="12"]')
+    .click();
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await pickCharacter(page, "Warder");
   await startSoloMatch(page);
