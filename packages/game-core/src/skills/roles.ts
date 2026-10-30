@@ -38,8 +38,14 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
       return ["knockdown"];
     case "maintain-status":
     case "apply-status":
-    case "caster-gains-status":
       return statusRoles(getStatusDefinition(effect.statusId));
+    // Wearying Spear's own Weakness (#1486) is its price, not a role.
+    case "caster-gains-status": {
+      const definition = getStatusDefinition(effect.statusId);
+      return definition.category === "hex" || definition.category === "condition"
+        ? []
+        : statusRoles(definition);
+    }
     case "if":
     case "splash":
       return effect.effects.flatMap(effectRoles);
@@ -181,7 +187,8 @@ function isPrice(effect: SkillEffect): boolean {
 /**
  * A skill's roles, derived from its effects only, never a hand-kept
  * list: adding a skill tags it. A blocked blow's effects count too,
- * since they are still what the skill does (Swift Chop's Deep Wound).
+ * since they are still what the skill does (Swift Chop's Deep Wound), and
+ * so do a critical hit's and a missed blow's (#1486, Vicious Attack's).
  * One on your own pet (#1046) does nothing for the team: no role,
  * unless it is a pet attack (#1107), whose effects land on the foe
  * its bite hits: Maiming Strike cripples, Disrupting Lunge interrupts.
@@ -190,7 +197,12 @@ export function skillRoles(skill: Skill): readonly SkillRole[] {
   if (isCompanionRule(skill.target) && skill.petAttack === undefined) {
     return [];
   }
-  const effects = [...skill.effects, ...(skill.attack?.onBlocked ?? [])];
+  const effects = [
+    ...skill.effects,
+    ...(skill.attack?.onBlocked ?? []),
+    ...(skill.attack?.onCritical ?? []),
+    ...(skill.attack?.onFailedToHit ?? []),
+  ];
   const roles = new Set(effects.flatMap(effectRoles));
   return SKILL_ROLES.filter((role) => roles.has(role));
 }

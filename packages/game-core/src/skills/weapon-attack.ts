@@ -765,7 +765,8 @@ export function resolveSwing(swing: Swing): {
  * the skill's riders from it; one it hits gets them all. A rider on the
  * attacker, as Wounding Strike's lost enchantment (#845), needs a hit
  * too. A victim that blocks gets the skill's `onBlocked` effects instead
- * (#534); an `unblockable` one rolls no block at all (Wild Throw, #523),
+ * (#534), and then its `onFailedToHit` (#1486), as one a blow misses
+ * does; one a blow crits gets its `onCritical` after its effects; an `unblockable` one rolls no block at all (Wild Throw, #523),
  * and a conditionally unblockable one none while its state holds (#1354).
  * A chain attack on a victim without the mark it follows, or for which
  * its `requires` does not hold (#1041), misses it outright, before
@@ -855,7 +856,9 @@ export function resolveAttackSkill(
   const strikes = rule?.strikes ?? 1;
   for (let strike = 0; strike < strikes; strike += 1) {
     const hit: Combatant[] = [];
+    const critical: Combatant[] = [];
     const blocked: Combatant[] = [];
+    const failed: Combatant[] = [];
     for (const victim of victims) {
       if (victim.dead) {
         continue;
@@ -863,6 +866,7 @@ export function resolveAttackSkill(
       if (blindMisses(caster, rng)) {
         events.push({ kind: "attack-missed", targetId: victim.id });
         bearerFailedToHit(caster);
+        failed.push(victim);
         continue;
       }
       if (
@@ -873,6 +877,7 @@ export function resolveAttackSkill(
         bearerFailedToHit(caster);
         attackReached(victim, events);
         blocked.push(victim);
+        failed.push(victim);
         continue;
       }
       if (
@@ -888,6 +893,7 @@ export function resolveAttackSkill(
         )
       ) {
         landedCritical(caster, snapshot.criticalStrikes, events);
+        critical.push(victim);
       }
       events.push(
         ...attackHitRiders(caster, victim, snapshot.mainHand, rng, rules, surroundings, fired),
@@ -901,18 +907,15 @@ export function resolveAttackSkill(
     if (strike === 0) {
       useNextAttackSkill(caster, next, events);
     }
+    const riders = (effects: readonly SkillEffect[], targets: Combatant[]): CombatEvent[] =>
+      targets.length === 0 || effects.length === 0
+        ? []
+        : applySkillEffects({ ...resolution, skill: { ...skill, effects }, targets }, events);
     events.push(
       ...(hit.length === 0 ? [] : applySkillEffects({ ...resolution, targets: hit }, events)),
-      ...(blocked.length === 0 || rule === undefined
-        ? []
-        : applySkillEffects(
-            {
-              ...resolution,
-              skill: { ...skill, effects: rule.onBlocked },
-              targets: blocked,
-            },
-            events,
-          )),
+      ...riders(rule?.onCritical ?? [], critical),
+      ...riders(rule?.onBlocked ?? [], blocked),
+      ...riders(rule?.onFailedToHit ?? [], failed),
     );
   }
   return events;
