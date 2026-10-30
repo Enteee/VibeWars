@@ -46,6 +46,6 @@ export const MONK_ICONS = {
   "monk.words-of-comfort": { glyph: "heal", modifier: "half" },
   "monk.light-of-deliverance": { glyph: "party-heal", modifier: "down" },
   "monk.signet-of-rejuvenation": { glyph: "heal", modifier: "bolt" },
-  // A placeholder until the asset-designer's (#1528).
-  "monk.banish": { glyph: "ghost", modifier: "plus" },
+  // Anti-summon (#1528, #1568): the skill's mark, a struck ghost below it.
+  "monk.banish": { glyph: "anti-summon-spell" },
 };

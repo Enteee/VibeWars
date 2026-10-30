@@ -44,6 +44,6 @@ export const MESMER_ICONS = {
   "mesmer.panic": { glyph: "hex-burst", modifier: "stun" },
   "mesmer.wastrels-demise": { glyph: "hex-drain", modifier: "up" },
   "mesmer.epidemic": { glyph: "germ", modifier: "plus" },
-  // A placeholder until the asset-designer's (#1528).
-  "mesmer.spiritual-pain": { glyph: "ghost", modifier: "area" },
+  // Anti-summon (#1528, #1568): the skill's mark, a struck ghost below it.
+  "mesmer.spiritual-pain": { glyph: "anti-summon-pain" },
 };
