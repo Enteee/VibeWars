@@ -101,12 +101,13 @@ import {
   loadActiveCharacterId,
   loadPlayTab,
   loadStarterCharacterId,
-  playerGuild,
   renderMenu,
   saveActiveCharacterId,
   saveStarterCharacterId,
 } from "./ui/menu.js";
 import { dismissToast, toast } from "./ui/kit.js";
+import { createScreenTurns, type ScreenTurn } from "./screen-turns.js";
+import { playerGuild } from "./ui/player-section.js";
 import { renderTeamPlay, type TeamPlayTile } from "./ui/team-play.js";
 import { mountTopbar, paintStatus, type StatusState } from "./ui/topbar.js";
 import {
@@ -420,16 +421,20 @@ async function main(): Promise<void> {
    */
   let idleScreen = false;
 
+  const screenTurns = createScreenTurns();
+
   /**
    * The first thing every screen change does (#710): a toast belongs to
    * the screen that raised it, so it goes when that screen does. One the
    * next screen raises while it mounts stays. A screen added later calls
-   * this first too, before anything mounts.
+   * this first too, before anything mounts. Its turn (#1513) says whether
+   * a screen that awaits before it draws still has the screen.
    */
-  const leaveScreen = (): void => {
+  const leaveScreen = (): ScreenTurn => {
     idleScreen = false;
     dismissToast();
     closeBeatEditor();
+    return screenTurns.take();
   };
 
   // The bar's [?] and ⚙ open Help and Options over the screen, which
@@ -440,7 +445,14 @@ async function main(): Promise<void> {
       openHelpOverlay(app);
     },
     onOptions: () => {
-      openOptionsOverlay(app);
+      // Closed over Solo Play, its roster wears the cape just picked in
+      // Options (#1513). Not when a match starting closed it, which leaves
+      // the screen first; any other screen keeps what it joined with.
+      openOptionsOverlay(app, () => {
+        if (idleScreen && screenRoot.querySelector(".screen-menu") !== null) {
+          showMenu();
+        }
+      });
     },
   });
 
@@ -525,7 +537,7 @@ async function main(): Promise<void> {
   let editor: BuildEditorView | undefined;
 
   const showMenu = (): void => {
-    leaveScreen();
+    const turn = leaveScreen();
     // Every way back to the menu passes through here, so the status bar
     // never keeps saying where the player was: idle, it says nothing (#454).
     // Error paths set theirs after.
@@ -548,6 +560,11 @@ async function main(): Promise<void> {
         characters.list(),
         records.list(),
       ]);
+      // Host, Join or Random Arena clicked on the old menu while this
+      // awaited (#1513): that screen has it now, so draw nothing over it.
+      if (!turn()) {
+        return;
+      }
       renderMenuWith(
         list,
         [...problems, ...played.problems, ...editNotices],
@@ -1210,8 +1227,10 @@ async function main(): Promise<void> {
   ): Promise<void> => {
     setStatus("connecting…", "offline");
     menuNotice = undefined;
-    // Still the menu, but on its way into a lobby.
+    // Still the menu, but on its way into a lobby: a menu draw still
+    // awaiting its roster is dropped (#1513).
     idleScreen = false;
+    screenTurns.take();
     try {
       lobby = await connect();
     } catch (error) {

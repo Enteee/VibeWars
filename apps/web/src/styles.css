@@ -1041,27 +1041,22 @@ body {
   font-size: 1.1rem;
 }
 
-/* Name and guild tag side by side (#1406); the tag fits four wide letters. */
-/* Name and guild tag share rows: label, input, hint. The name has no
-   label, so its input sits in the second row, level with the tag's. */
-.menu-identity {
+/* Options' Player section (#1513): name and guild tag side by side (#1406),
+   sharing rows: label, input, hint. The tag fits four wide letters. */
+.player-identity {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 0.25rem 0.5rem;
 }
 
-.menu-identity > .field {
+.player-identity > .field {
   display: grid;
   grid-row: span 3;
   grid-template-rows: subgrid;
   align-content: start;
 }
 
-.menu-identity > .field:first-child > .field-input {
-  grid-row: 2;
-}
-
-.menu-guild-tag .field-input {
+.player-guild-tag .field-input {
   width: 7ch;
 }
 
@@ -1069,36 +1064,42 @@ body {
   border-color: var(--damage);
 }
 
+.player-applies {
+  margin: 0.75rem 0 0;
+  color: var(--ink-dim);
+  font-size: 0.8rem;
+}
+
 /*
  * The cape designer (#1422), under the guild tag: a row of swatches for
  * the cape, one for its trim, one of emblems, and No cape. What is picked
  * is ringed in ink.
  */
-.menu-cape {
+.player-cape {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
   margin-top: 0.5rem;
 }
 
-.menu-cape[hidden] {
+.player-cape[hidden] {
   display: none;
 }
 
-.menu-cape-row {
+.player-cape-row {
   display: flex;
   gap: 0.3rem;
   align-items: center;
 }
 
-.menu-cape-row-label {
+.player-cape-row-label {
   width: 4rem;
   color: var(--ink-dim);
   font-size: 0.8rem;
 }
 
-.screen .menu-cape-swatch,
-.screen .menu-cape-emblem {
+.screen .player-cape-swatch,
+.screen .player-cape-emblem {
   display: grid;
   place-items: center;
   width: 24px;
@@ -1108,26 +1109,26 @@ body {
   border-radius: 3px;
 }
 
-.screen .menu-cape-swatch {
+.screen .player-cape-swatch {
   background: var(--swatch);
 }
 
-.screen .menu-cape-emblem {
+.screen .player-cape-emblem {
   background: var(--bg);
 }
 
-.screen .menu-cape-swatch[aria-pressed="true"],
-.screen .menu-cape-emblem[aria-pressed="true"] {
+.screen .player-cape-swatch[aria-pressed="true"],
+.screen .player-cape-emblem[aria-pressed="true"] {
   border: 2px solid var(--ink);
 }
 
-.screen .menu-cape-none {
+.screen .player-cape-none {
   align-self: flex-start;
   padding: 0.15rem 0.6rem;
   color: var(--ink-dim);
 }
 
-.screen .menu-cape-none[aria-pressed="true"] {
+.screen .player-cape-none[aria-pressed="true"] {
   border-color: var(--accent);
   color: var(--accent);
 }

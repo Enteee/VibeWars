@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 import { startSoloMatch } from "./helpers/peers.js";
 
@@ -8,18 +8,23 @@ import { startSoloMatch } from "./helpers/peers.js";
  * survives a reload, and that both places show the same one.
  */
 
+/** Options on its Sound section; it opens on Player (#1513). */
+async function openSound(page: Page): Promise<void> {
+  await page.locator(".topbar-options").click();
+  await page.locator('.options-entry[data-section="sound"]').click();
+  await expect(page.locator('.options-entry[data-section="sound"]')).toHaveClass(/is-selected/);
+}
+
 test("a sound effects volume of 0 set in Options is kept after a reload", async ({ page }) => {
   await page.goto("./");
-  await page.locator(".topbar-options").click();
-  // Sound is the first section, so Options opens on it.
-  await expect(page.locator('.options-entry[data-section="sound"]')).toHaveClass(/is-selected/);
+  await openSound(page);
   const sfx = page.locator(".sound-sfx-volume input");
   await expect(sfx).toHaveValue("1");
   await sfx.fill("0");
   await expect(page.locator(".sound-sfx-volume .sound-volume-readout")).toHaveText("0 %");
 
   await page.reload();
-  await page.locator(".topbar-options").click();
+  await openSound(page);
   await expect(page.locator(".sound-sfx-volume input")).toHaveValue("0");
 });
 
@@ -27,7 +32,7 @@ test("music muted in Options shows muted in the HUD popover, and mute all follow
   page,
 }) => {
   await page.goto("./");
-  await page.locator(".topbar-options").click();
+  await openSound(page);
   await page.getByLabel("Mute music").check();
   await page.getByRole("button", { name: "Close", exact: true }).click();
 
