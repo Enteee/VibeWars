@@ -1321,6 +1321,33 @@ const status = {
   ],
   // Ashes: a bolt, energy back.
   "energetic-was-lee-sa": ["item", (c) => `<path d="M13 6l-4 6h4l-2 5 5-7h-4z" fill="${c}"/>`],
+  // Ritualist item spells 2 (#1464), stand-ins until the asset-designer's.
+  // Ashes: a bar raised, more maximum Energy.
+  "mighty-was-vorizun": [
+    "item",
+    (c) => `<path d="M9 16V9M15 16V9M7 11l5-4 5 4" ${stroke(c, 1.8)}/>`,
+  ],
+  // Ashes: a spike through a plate, armor pierced.
+  "cruel-was-daoshen": [
+    "item",
+    (c) => `<path d="M7 13h10M12 6v11M10 8l2-2 2 2" ${stroke(c, 1.8)}/>`,
+  ],
+  // Ashes: a bolt in a ring, lightning on all in the area.
+  "destructive-was-glaive": [
+    "item",
+    (c) =>
+      `<circle cx="12" cy="12" r="5" ${stroke(c, 1.4)}/>` +
+      `<path d="M13 8l-3 4h3l-2 4" ${stroke(c, 1.6)}/>`,
+  ],
+  // Ashes: a level line, a cast nothing breaks.
+  "tranquil-was-tanasen": ["item", (c) => `<path d="M7 10h10M7 14h10" ${stroke(c, 1.8)}/>`],
+  // Ashes: a hook turned back on the striker.
+  "vengeful-was-khanhei": ["item", (c) => `<path d="M8 8l8 8M16 8v4h-4" ${stroke(c, 1.8)}/>`],
+  // Ashes: a drop running clear, conditions sooner gone.
+  "pure-was-li-ming": [
+    "item",
+    (c) => `<path d="M12 7c-2 3-3 4.5-3 6a3 3 0 0 0 6 0c0-1.5-1-3-3-6z" ${stroke(c, 1.6)}/>`,
+  ],
   // "The next spell fails" hexes (#1475), stand-ins until the asset-designer's.
   // Hex: a struck-through spark with an arrow down, a spell at a foe fails.
   guilt: [
@@ -1784,6 +1811,9 @@ const hexFail = (target) =>
 /** An urn of held ashes round `mark`, the Ritualist's Was spells (#1493). @param {string} mark */
 const wasUrn = (mark) =>
   inkLine("M7 3H17M8.5 3V6.5L5 11V18L7.5 21.5H16.5L19 18V11L15.5 6.5V3", 2) + mark;
+
+/** A spear standing on the left of the icon, the Paragon's thrown spears keep the right free (#1508). */
+const sideSpear = () => inkLine("M7 21V9", 2.4) + inkFill("M7 2.5L11.5 10H2.5Z");
 
 const skillGlyph = {
   heal: () => inkFill("M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"),
@@ -2525,6 +2555,43 @@ const skillGlyph = {
     inkLine("M12 21V9", 2.4) +
     inkFill("M12 2.5L16.5 10H7.5Z") +
     inkLine("M12 18L7.5 14.5M12 14L16.5 10.5", 2),
+  // The Paragon thrown spears (#1508): a spear on the left, the rider on the right; a drop badge
+  // below is Deep Wound.
+  "spear-flame": () =>
+    sideSpear() +
+    `<path d="M14 3.5c.5 3.5 4 5.5 4 10a6 6 0 0 1-12 0c0-2.5 1-4.5 2.5-5.5 0 2 .5 3 1.5 3.5-.5-3 1-6 4-8z" fill="${C.ink}" transform="translate(11.5 2.5) scale(0.6)"/>`,
+  "spear-fast": () =>
+    sideSpear() +
+    inkLine("M12.5 8L16 4.5L19.5 8M12.5 13L16 9.5L19.5 13M12.5 18L16 14.5L19.5 18", 2),
+  "spear-weak": () => sideSpear() + inkLine("M17 4V15M13.5 11.5L17 15L20.5 11.5", 2.4),
+  "spear-crit": () =>
+    sideSpear() + inkFill("M17.5 2.5L19 6.5L23 8L19 9.5L17.5 13.5L16 9.5L12 8L16 6.5Z"),
+  "spear-heart": () =>
+    sideSpear() +
+    inkLine(
+      "M17 14L12.8 9.7C11.5 8.2 12.6 5.5 14.7 5.5C15.8 5.5 16.6 6.1 17 7C17.4 6.1 18.2 5.5 19.3 5.5C21.4 5.5 22.5 8.2 21.2 9.7Z",
+      1.7,
+    ),
+  "spear-crack": () =>
+    sideSpear() +
+    `<path d="M17 3L22 5V9.5C22 12 19.8 13.3 17 14.5C14.2 13.3 12 12 12 9.5V5Z" ${stroke(C.ink, 1.7)}/>` +
+    inkLine("M17 4.5L15.5 8.5L18.5 9.5L17 13", 1.5),
+  "spear-burst": () =>
+    sideSpear() +
+    `<g transform="translate(17,8.5) scale(0.62) translate(-12,-12)">${inkFill(burst(6))}</g>`,
+  "spear-cleanse": () =>
+    sideSpear() +
+    inkFill("M17 3C18.8 5.8 21 7.5 21 10A4 4 0 0 1 13 10C13 7.5 15.2 5.8 17 3Z") +
+    `<path d="M13 13.5L21 5" ${stroke(C.bg, 2)}/>`,
+  "spear-swipe": () =>
+    inkLine("M3.5 21L14.5 10", 2.4) +
+    inkFill("M20 3.5L11.5 6.5L17 12Z") +
+    inkLine("M2.5 13A10.5 10.5 0 0 1 11.5 3", 2.2),
+  // A shield with a spear driven through it: nothing blocks the throw (#1508).
+  "spear-pierce": () =>
+    `<path d="M12 4L19.5 6.8V12C19.5 16 16.5 18.8 12 20.5C7.5 18.8 4.5 16 4.5 12V6.8Z" ${stroke(C.ink, 1.8)}/>` +
+    inkLine("M2.5 21.5L15 9", 2.8) +
+    inkFill("M22 2L16 3.8L12.8 6L18 11.2Z"),
   // A spear with speed lines trailing it: a toss at a runner (#1036).
   "spear-dash": () =>
     inkLine("M15 21V9", 2.4) + inkFill("M15 2.5L19.5 10H10.5Z") + inkLine("M4 11V17M8 13V20", 2),

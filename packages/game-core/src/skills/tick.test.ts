@@ -16,6 +16,7 @@ import {
   raisedMaxHealth,
   rankOf,
 } from "./tick.js";
+import { effectiveMaxEnergy, raisedMaxEnergy } from "./overcast.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill } from "./types.js";
 
@@ -405,5 +406,30 @@ describe("a status damage pulse (#1501)", () => {
     c.statuses.apply("wastrels-demise", 5, "m");
     advanceStatuses(c, 3, 0);
     expect(c.statuses.drainPulses().map(({ damage }) => damage)).toEqual([8, 16, 24]);
+  });
+});
+
+describe("raised maximum energy (#1464)", () => {
+  it("adds Mighty Was Vorizun's 30 to the ceiling, and overcast still lowers it", () => {
+    const c = makeCombatant({ id: "c", maxEnergy: 25 });
+    c.statuses.apply("mighty-was-vorizun", 51, "c");
+    expect(raisedMaxEnergy(c)).toBe(55);
+    expect(effectiveMaxEnergy(c)).toBe(55);
+    c.overcast = 10;
+    expect(raisedMaxEnergy(c)).toBe(55);
+    expect(effectiveMaxEnergy(c)).toBe(45);
+  });
+});
+
+describe("conditions that expire faster (#1464)", () => {
+  it("runs a condition 42% faster under Pure Was Li Ming, and a hex at its rate", () => {
+    const c = makeCombatant({ id: "c" });
+    c.statuses.apply("pure-was-li-ming", 17, "c");
+    c.statuses.apply("bleeding", 10, "a");
+    c.statuses.apply("faintheartedness", 10, "a");
+    c.statuses.advance(1, false);
+    expect(c.statuses.get("bleeding")?.remainingSeconds).toBeCloseTo(8.58);
+    expect(c.statuses.get("faintheartedness")?.remainingSeconds).toBeCloseTo(9);
+    expect(c.statuses.get("pure-was-li-ming")?.remainingSeconds).toBeCloseTo(16);
   });
 });

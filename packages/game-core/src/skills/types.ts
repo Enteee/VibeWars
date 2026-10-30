@@ -1432,6 +1432,12 @@ export interface SkillContext {
    * `lengthen-recharge` lengthens. Absent elsewhere.
    */
   readonly usedSkill?: SlotSkill | undefined;
+  /**
+   * The profession of the skill, or of the status whose trigger fires
+   * (#1464), whose effects these are: which `skillArmorPenetration` its
+   * damage takes. Absent for what is no skill's.
+   */
+  readonly profession?: SkillProfession | undefined;
 }
 
 /**

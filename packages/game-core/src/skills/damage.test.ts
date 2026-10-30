@@ -18,6 +18,7 @@ import {
   skillDamage,
   unmitigatedDamage,
   weaponAttributeMultiplier,
+  withSkillArmorPenetration,
   type DamagePacket,
 } from "./damage.js";
 import { applyEffects } from "./effects.js";
@@ -1148,5 +1149,21 @@ describe("the off-hand a resolved loadout holds (#276)", () => {
     // Validation refuses this pairing; a shield that slipped through grants nothing, so it shows nothing.
     expect(offhandOf("warrior", "hammer")).toBeUndefined();
     expect(unarmedResolvedEquipment(60).offhandId).toBeUndefined();
+  });
+});
+
+describe("skill armor penetration from statuses (#1464)", () => {
+  it("adds to a skill of its profession, at most 1 in all", () => {
+    const caster = makeCombatant({ id: "r" });
+    caster.statuses.apply("cruel-was-daoshen", 51, "r");
+    expect(withSkillArmorPenetration(0.25, caster, "ritualist")).toBeCloseTo(0.35);
+    expect(withSkillArmorPenetration(0.95, caster, "ritualist")).toBe(1);
+  });
+
+  it("adds nothing to another profession's skill, or to a weapon blow, which is no skill's", () => {
+    const caster = makeCombatant({ id: "r" });
+    caster.statuses.apply("cruel-was-daoshen", 51, "r");
+    expect(withSkillArmorPenetration(0.25, caster, "elementalist")).toBe(0.25);
+    expect(withSkillArmorPenetration(0, caster, undefined)).toBe(0);
   });
 });
