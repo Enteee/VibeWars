@@ -223,6 +223,7 @@ so the silhouette identifies the profession and the colour only supports it.
 | Echo         | The chant's banner plate, a stand-in (#1423)            |
 | Weapon spell | Shield plate, glyph inside                              |
 | Skill effect | `ink-dim` wide capsule plate, glyph inside              |
+| Item         | `ink` urn plate, glyph inside (#1434)                   |
 | Area flash   | Caster's team colour ring at the area's true radius     |
 | Ward         | Owner's team colour disc, faint, its skill's icon in it |
 | Trap         | `friend` rim alone, its skill's icon in it; yours only  |

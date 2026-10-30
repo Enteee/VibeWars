@@ -484,6 +484,7 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
     definition.endsWhenBearerUsesSkill,
     definition.endsWhenTriggered,
     definition.category === "hex" || definition.category === "condition",
+    definition.category === "item",
   )) {
     (clause ? parts : sentences).push(text);
   }
@@ -580,6 +581,7 @@ function describeTriggers(
   once: boolean,
   nextOnly: boolean,
   bearerIsFoe: boolean,
+  dropped: boolean,
 ): TriggerLine[] {
   const groups = new Map<string, { trigger: StatusTrigger; on: StatusTriggerEvent[] }>();
   for (const trigger of triggers) {
@@ -601,24 +603,38 @@ function describeTriggers(
     trigger.weapon !== undefined
       ? weaponBoundWhen(event, trigger.weapon)
       : (kindBoundWhen(event, trigger) ?? TRIGGER_WHEN[event]);
-  return [...groups.values()].flatMap(({ trigger, on }) =>
-    describeTrigger(
+  return [...groups.values()].flatMap(({ trigger, on }) => {
+    const lines = describeTrigger(
       trigger,
       on.includes("bearer-creates-creature")
         ? CREATES
-        : on.includes("bearer-chant-or-shout-ends")
-          ? CHANT_OR_SHOUT_ENDS
-          : on.includes("ends") || on.includes("ends-early") || on.includes("expires")
-            ? `when it ${on.map((event) => whenOf(event, trigger)).join(" or ")}`
-            : once && on.includes("bearer-uses-skill")
-              ? NEXT_SKILL
-              : nextOnly
-                ? `the next time it ${on.map((event) => whenOf(event, trigger)).join(" or ")}`
-                : `whenever it ${on.map((event) => whenOf(event, trigger)).join(" or ")}`,
+        : dropped && on.includes("ends")
+          ? DROPPED
+          : on.includes("bearer-chant-or-shout-ends")
+            ? CHANT_OR_SHOUT_ENDS
+            : on.includes("ends") || on.includes("ends-early") || on.includes("expires")
+              ? `when it ${on.map((event) => whenOf(event, trigger)).join(" or ")}`
+              : once && on.includes("bearer-uses-skill")
+                ? NEXT_SKILL
+                : nextOnly
+                  ? `the next time it ${on.map((event) => whenOf(event, trigger)).join(" or ")}`
+                  : `whenever it ${on.map((event) => whenOf(event, trigger)).join(" or ")}`,
       ranks,
       bearerIsFoe,
-    ),
-  );
+    );
+    // A drop is said once, all it does after it (#1434).
+    if (!dropped || lines.length < 2) {
+      return lines;
+    }
+    const healed = partyHealed(trigger.effects, ranks);
+    if (healed !== undefined) {
+      return [
+        { text: `${DROPPED}: you and all party members are healed for ${healed}`, clause: false },
+      ];
+    }
+    const what = lines.map(({ text }) => text.replace(`${DROPPED}: `, ""));
+    return [{ text: `${DROPPED}: ${what.join(", ")}`, clause: false }];
+  });
 }
 
 /**
@@ -634,6 +650,36 @@ function weaponBoundWhen(event: StatusTriggerEvent, weapon: AttackWeaponClass): 
 
 /** An echo's (#1423), in the corpus's words. */
 const CHANT_OR_SHOUT_ENDS = "whenever a chant or shout ends on it";
+
+/**
+ * The heal of a drop that heals its bearer and then, the same, the rest
+ * of the party (#1434): Protective Was Kaolai's "all party members are
+ * healed", said as one heal, not two. `undefined`: any other drop.
+ */
+function partyHealed(
+  effects: readonly TriggerEffect[],
+  ranks: ReadonlyMap<string, number>,
+): string | undefined {
+  const [self, splash, ...rest] = effects;
+  if (
+    rest.length > 0 ||
+    self?.kind !== "heal" ||
+    splash?.kind !== "splash" ||
+    splash.hits !== "party" ||
+    splash.effects.length !== 1
+  ) {
+    return undefined;
+  }
+  const [party] = splash.effects;
+  if (party?.kind !== "heal") {
+    return undefined;
+  }
+  const amount = String(describeMagnitude(self.amount, ranks).current);
+  return amount === String(describeMagnitude(party.amount, ranks).current) ? amount : undefined;
+}
+
+/** An item status's end (#1434), every one a drop: "Drop effect: …". */
+const DROPPED = "drop effect";
 
 /**
  * What the bearer does that a trigger bound to a kind of skill or
@@ -696,7 +742,8 @@ function describeCreation(
       case "remove-status":
         return `lose ${String(effect.count)} ${effect.category}${effect.count === 1 ? "" : "s"}`;
       case "splash": {
-        const side = effect.hits === "allies" ? "allies" : "foes";
+        const side =
+          effect.hits === "allies" ? "allies" : effect.hits === "party" ? "party members" : "foes";
         const who =
           effect.maxTargets === undefined
             ? `all ${side}`
@@ -841,8 +888,19 @@ function describeTrigger(
         : area === "adjacent"
           ? "its adjacent allies"
           : `its allies ${area ?? `within ${String(effect.radius)}`}`;
+      // A drop's splash is one clause (#1434): "foes in the area: deals 63
+      // damage, knocks down for 2s".
+      if (when === DROPPED) {
+        const what = effect.effects.map((inner) =>
+          inner.kind === "apply-status"
+            ? suffered(inner, ranks)
+            : lowerFirst(describeEffect(inner, ranks).text),
+        );
+        const joint = effect.effects[0]?.kind === "apply-status" ? " " : ": ";
+        return [sentence(`${when}: ${allies}${joint}${what.join(", ")}`)];
+      }
       return effect.effects.map((inner) =>
-        inner.kind === "damage"
+        inner.kind === "damage" && when !== DROPPED
           ? clause(`${allies} take ${amount(inner.amount)} damage ${when}`)
           : inner.kind === "apply-status"
             ? sentence(`${when}: ${allies} ${suffered(inner, ranks)}`)
@@ -978,6 +1036,10 @@ function perAllyText(effect: HealEffect, ranks: ReadonlyMap<string, number>): st
 
 /** Who a splash reaches, as GW1 words it (#885): "Adjacent foes". */
 function foesWithin(radius: number, hits: SplashEffect["hits"]): string {
+  // Protective Was Kaolai's reaches the whole party, at any distance (#1434).
+  if (hits === "party") {
+    return "All party members";
+  }
   const area = AREA_TEXT.get(radius);
   // Consume Soul's splash reaches only summoned creatures (#1309);
   // Spirit's Gift's, allies (#1316).
@@ -1630,6 +1692,7 @@ const TYPE_TEXT: Record<SkillType, string> = {
   "binding-ritual": "Binding Ritual.",
   ward: "Ward Spell.",
   well: "Well Spell.",
+  "item-spell": "Item Spell.",
   trap: "Trap.",
   "pet-attack": "Pet Attack.",
   form: "Form.",

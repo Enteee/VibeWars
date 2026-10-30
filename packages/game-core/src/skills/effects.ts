@@ -1259,8 +1259,8 @@ export function applyEffect(
         ({ combatant, position, creature }) =>
           !combatant.dead &&
           combatant.id !== target.id &&
-          (effect.hits === "allies"
-            ? combatant.team === caster.team
+          (effect.hits === "allies" || effect.hits === "party"
+            ? combatant.team === caster.team && (effect.hits === "allies" || creature === undefined)
             : combatant.team !== caster.team && (effect.hits === "foes" || isSummoned(creature))) &&
           distance(position, at) <= effect.radius,
       );

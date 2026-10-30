@@ -49,6 +49,8 @@ describe("corpusSkills (#1220)", () => {
       profession: "common",
       attributeId: undefined,
     });
+    // An item spell is ours (#1434).
+    expect(byId.get(788)).toMatchObject({ typeText: "Item Spell", skillType: "item-spell" });
     // A Paragon echo is ours (#1423).
     expect(byId.get(1774)).toMatchObject({ typeText: "Echo", skillType: "echo" });
     // A flash enchantment is an enchantment, GW1's name kept (#1421).
