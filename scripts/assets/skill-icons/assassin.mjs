@@ -38,4 +38,12 @@ export const ASSASSIN_ICONS = {
   "assassin.caltrops": { glyph: "caltrops", modifier: "bleed" },
   // Placeholder until the asset-designer's (#1551).
   "assassin.shadow-prison": { glyph: "blink", modifier: "down" },
+  // Placeholders until the asset-designer's (#1580).
+  "assassin.golden-lotus-strike": { glyph: "dagger", modifier: "plus" },
+  "assassin.golden-phoenix-strike": { glyph: "dagger-burst", modifier: "area" },
+  "assassin.exhausting-assault": { glyph: "dagger-stop", modifier: "less" },
+  "assassin.mantis-touch": { glyph: "limp", modifier: "half" },
+  "assassin.palm-strike": { glyph: "palm", modifier: "up" },
+  "assassin.signet-of-toxic-shock": { glyph: "drop-run", modifier: "bolt" },
+  "assassin.beguiling-haze": { glyph: "blink", modifier: "stun" },
 };

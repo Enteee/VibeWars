@@ -14,6 +14,9 @@ import {
   resolveSkillEffects,
   type CombatEvent,
 } from "./effects.js";
+import { getSkill } from "./catalog.js";
+import { chainAllows } from "./chain.js";
+import { effectiveMaxEnergy } from "./overcast.js";
 import { HEALTH_PER_PIP, getStatusDefinition, type StatusId } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import { advanceStatuses, effectiveMaxHealth } from "./tick.js";
@@ -1675,5 +1678,30 @@ describe("uninterruptible and skill armor penetration (#1464)", () => {
   it("adds nothing to another profession's skill, or to what is no skill's", () => {
     expect(lightning(0.25, "elementalist")).toBe(plain(0.25));
     expect(lightning(0, undefined)).toBe(plain(0));
+  });
+});
+
+describe("off-hand chain-mark and overcast (#1580)", () => {
+  it("an off-hand chain-mark lets a dual attack follow, and a lead does not", () => {
+    const dual = getSkill("assassin.death-blossom");
+    if (dual === undefined) {
+      throw new Error("missing assassin.death-blossom");
+    }
+    const ctx = context();
+    applyEffect({ kind: "chain-mark", role: "lead" }, ctx);
+    expect(chainAllows(ctx.caster, dual, "target")).toBe(false);
+    applyEffect({ kind: "chain-mark", role: "off-hand" }, ctx);
+    expect(ctx.caster.chainMarks.get("target")?.role).toBe("off-hand");
+    expect(chainAllows(ctx.caster, dual, "target")).toBe(true);
+  });
+
+  it("overcast lowers the target's ceiling and takes the energy above it", () => {
+    const target = makeCombatant({ id: "target", team: 1 });
+    const ctx = context(undefined, target);
+    applyEffect({ kind: "overcast", amount: { flat: 10 } }, ctx);
+    expect(target.overcast).toBe(10);
+    expect(effectiveMaxEnergy(target)).toBe(40);
+    expect(target.energy).toBe(40);
+    expect(ctx.caster.overcast).toBe(0);
   });
 });

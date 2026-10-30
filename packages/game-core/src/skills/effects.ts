@@ -12,7 +12,7 @@ import { getSkill } from "./catalog.js";
 import { CHAIN_MARK_SECONDS } from "./chain.js";
 import { hitLocationOf, mitigate, skillDamage, withSkillArmorPenetration } from "./damage.js";
 import { guardedDamage, guardedLoss } from "./loss-guard.js";
-import { effectiveMaxEnergy } from "./overcast.js";
+import { addOvercast, effectiveMaxEnergy } from "./overcast.js";
 import { resolveMagnitude } from "./scaling.js";
 import {
   aggregateModifiers,
@@ -1314,6 +1314,12 @@ export function applyEffect(
       return events;
     }
 
+    case "overcast":
+      if (target !== undefined && !target.dead) {
+        addOvercast(target, resolveMagnitude(effect.amount, caster));
+      }
+      return events;
+
     case "caster-gains-status": {
       if (caster.dead) {
         return events;
@@ -1889,6 +1895,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "disable-skill":
     case "lengthen-recharge":
     case "chain-mark":
+    case "overcast":
     case "if":
       return false;
   }
