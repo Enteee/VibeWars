@@ -176,6 +176,7 @@ describe("Sand Shards (#939)", () => {
         self,
         target,
         self.equipment.mainHand,
+        false,
         createRng(1),
         RULES,
         surroundings,
@@ -223,6 +224,7 @@ describe("Sand Shards (#939)", () => {
         self,
         target,
         self.equipment.mainHand,
+        false,
         createRng(1),
         RULES,
         surroundings,
@@ -260,7 +262,16 @@ describe("Sand Shards (#939)", () => {
     self.statuses.apply("sand-shards", 29, "dervish");
     const target = foe("target");
     const surroundings = around([self, vec2(0, 0)], [target, vec2(40, 0)]);
-    attackHitRiders(self, target, self.equipment.mainHand, createRng(1), RULES, surroundings, []);
+    attackHitRiders(
+      self,
+      target,
+      self.equipment.mainHand,
+      false,
+      createRng(1),
+      RULES,
+      surroundings,
+      [],
+    );
     expect(self.statuses.get("sand-shards")?.hitsLeft).toBe(3);
     use(self, "dervish.sand-shards", self);
     expect(self.statuses.get("sand-shards")?.hitsLeft).toBe(4);

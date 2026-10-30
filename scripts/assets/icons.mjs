@@ -1465,6 +1465,44 @@ const status = {
       `<path d="M12 3c3 4.5 5.5 7.5 5.5 11a5.5 5.5 0 0 1-11 0C6.5 10.5 9 7.5 12 3z" ${stroke(c, 1.8)}/>` +
       `<path d="M12 9l-1.5 3 2.5 1.5-1.5 3" ${stroke(c, 1.5)}/>`,
   ],
+  // Necromancer and Elementalist staples (#1540), stand-ins until their art card.
+  // Enchantment: a drop over three regeneration arrows, energy bought with blood.
+  "blood-is-power": [
+    "enchantment",
+    (c) =>
+      `<path d="M12 3c2 3 3.5 4.5 3.5 6.5a3.5 3.5 0 0 1-7 0C8.5 7.5 10 6 12 3z" fill="${c}"/>` +
+      `<path d="M6 19l2.5-2.5L11 19M10 19l2.5-2.5L15 19M14 19l2.5-2.5L19 19" ${stroke(c, 1.6)}/>`,
+  ],
+  // Enchantment: a blade over a drop, every party blow cuts deeper.
+  "order-of-pain": [
+    "enchantment",
+    (c) =>
+      `<path d="M5 13L14 4" ${stroke(c, 2.2)}/>` +
+      `<path d="M15 11c2 3 3.5 4.5 3.5 6.5a3.5 3.5 0 0 1-7 0c0-2 1.5-3.5 3.5-6.5z" fill="${c}"/>`,
+  ],
+  // Hex: a ringed flame, fire sets the marked foe alight.
+  "mark-of-rodgort": [
+    "hex",
+    (c) =>
+      `<circle cx="12" cy="12" r="8.5" ${stroke(c, 1.6)}/>` +
+      `<path d="M13 6.5c.4 2.2 2.5 3.5 2.5 6.2a3.5 3.5 0 0 1-7 0c0-1.5.6-2.7 1.5-3.3 0 1.2.3 1.8.9 2.1-.3-1.8.6-3.6 2.1-5z" fill="${c}"/>`,
+  ],
+  // Skill effect: a shield with a spark on a ground line, elemental damage
+  // turned aside inside a ward.
+  "ward-against-elements": [
+    "skill-effect",
+    (c) =>
+      `<path d="M8 5.5h8v4.5c0 2.5-2 4.2-4 5.5-2-1.3-4-3-4-5.5z" ${stroke(c, 2)}/>` +
+      `<path d="M12.8 7.5l-2 3h2.4l-2 3" ${stroke(c, 1.4)}/>` +
+      `<path d="M5 18.5h14" ${stroke(c, 2.2)}/>`,
+  ],
+  // Skill effect: two rising flames, adrenaline comes faster near the spirit.
+  "infuriating-heat": [
+    "skill-effect",
+    (c) =>
+      `<path d="M8 6c.4 2.5 3 4 3 7a3 3 0 0 1-6 0c0-1.6.7-2.8 1.6-3.4 0 1.2.3 1.8.9 2.1C7.2 9.8 6.8 7.6 8 6zM16 6c.4 2.5 3 4 3 7a3 3 0 0 1-6 0c0-1.6.7-2.8 1.6-3.4 0 1.2.3 1.8.9 2.1-.3-1.9-.7-4.1.5-5.7z" fill="${c}"/>` +
+      `<path d="M6 19.5h12" ${stroke(c, 1.8)}/>`,
+  ],
   // Crowd punishers (#1501), stand-ins until the asset-designer's.
   // Hex: a broken ring round a burst, a skill used interrupts those near.
   panic: [
@@ -1475,6 +1513,29 @@ const status = {
   ],
   // Hex: three rising bars, each second's pulse harder than the last.
   "wastrels-demise": ["hex", (c) => `<path d="M7 17v-3M12 17v-6M17 17v-9" ${stroke(c, 2.4)}/>`],
+  // Dervish staples and Shadow Prison (#1551), stand-ins until their art card.
+  // Enchantment: a hooked hand over a limp line, attack skills cripple.
+  "grenths-grasp": [
+    "enchantment",
+    (c) =>
+      `<path d="M7 4v7a5 5 0 0 0 10 0V4M10 4v6M14 4v6" ${stroke(c, 1.8)}/>` +
+      `<path d="M5 20l4-3 3 2 3-3 4 2" ${stroke(c, 1.8)}/>`,
+  ],
+  // Enchantment: a cracked plate inside a ring, knocked-down foes stripped.
+  "rending-aura": [
+    "enchantment",
+    (c) =>
+      `<circle cx="12" cy="12" r="9" ${stroke(c, 1.4)}/>` +
+      `<path d="M8 7h8v5c0 2.5-2 4-4 5-2-1-4-2.5-4-5z" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 7l-1 3 2 2-1 3" ${stroke(c, 1.4)}/>`,
+  ],
+  // Hex: bars round a figure, it moves 66% slower.
+  "shadow-prison": [
+    "hex",
+    (c) =>
+      `<path d="M6 4v16M10 4v16M14 4v16M18 4v16" ${stroke(c, 1.6)}/>` +
+      `<path d="M4 4h16M4 20h16" ${stroke(c, 2)}/>`,
+  ],
 };
 
 // ---------------------------------------------------------------------------
@@ -1931,7 +1992,6 @@ const hexFail = (target) =>
 const wasUrn = (mark) =>
   inkLine("M7 3H17M8.5 3V6.5L5 11V18L7.5 21.5H16.5L19 18V11L15.5 6.5V3", 2) + mark;
 
-/** A spear standing on the left of the icon, the Paragon's thrown spears keep the right free (#1508). */
 /**
  * The anti-summon family (#1568): the skill's own mark shrunk to the top left, a small ghost struck through
  * at the bottom right, the summoned creature it hits harder. @param {string} main
@@ -1944,6 +2004,7 @@ const antiSummon = (main) =>
   `<path d="M12 23.5L23.5 12" ${stroke(C.bg, 3.4)}/>` +
   `<path d="M12.5 23L23 12.5" ${stroke(C.ink, 1.4)}/>`;
 
+/** A spear standing on the left of the icon, the Paragon's thrown spears keep the right free (#1508). */
 const sideSpear = () => inkLine("M7 21V9", 2.4) + inkFill("M7 2.5L11.5 10H2.5Z");
 
 const skillGlyph = {
