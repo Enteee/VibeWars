@@ -61,4 +61,22 @@ export const ELEMENTALIST_ICONS = {
   "elementalist.aura-of-restoration": { glyph: "ring-spell-heal" },
   "elementalist.kinetic-armor": { glyph: "armor-spin" },
   "elementalist.steam": { glyph: "vapour-flame" },
+  // Elementalist staples 2 (#1575, #1605).
+  "elementalist.obsidian-flesh": { glyph: "stone-skin" },
+  "elementalist.gale": { glyph: "gust-curl" },
+  "elementalist.earthquake": { glyph: "chasm" },
+  "elementalist.unsteady-ground": { glyph: "ground-pulse" },
+  "elementalist.ward-against-foes": { glyph: "ward-slow" },
+  "elementalist.ward-of-stability": { glyph: "ward-block" },
+  "elementalist.lightning-touch": { glyph: "hand-bolt" },
+  "elementalist.liquid-flame": { glyph: "flame-splash" },
+  "elementalist.glowing-gaze": { glyph: "eye-flame" },
+  // Placeholders until the asset-designer's (#1614): the energy engine.
+  "elementalist.fire-attunement": { glyph: "flame", modifier: "renew" },
+  "elementalist.water-attunement": { glyph: "snowflake", modifier: "renew" },
+  "elementalist.air-attunement": { glyph: "lightning", modifier: "renew" },
+  "elementalist.earth-attunement": { glyph: "mountain", modifier: "renew" },
+  "elementalist.aura-of-restoration": { glyph: "spark", modifier: "renew" },
+  "elementalist.kinetic-armor": { glyph: "mist-shield", modifier: "renew" },
+  "elementalist.steam": { glyph: "snowflake", modifier: "bleed" },
 };

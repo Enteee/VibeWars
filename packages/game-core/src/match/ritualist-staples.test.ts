@@ -362,4 +362,30 @@ describe("the texts (#1550)", () => {
       "When it dies, non-spirit allies in its range are healed for 6 Health per second it lived",
     );
   });
+
+  it("says what an attacking spirit's blow deals, before its rider (#1631)", () => {
+    expect(lines(ANGUISH)).toContain("Its attacks deal 17 damage");
+    expect(lines("ritualist.pain")).toContain("Its attacks deal 25 damage");
+    const anguish = lines(ANGUISH);
+    expect(anguish.indexOf("Its attacks deal 17 damage")).toBeLessThan(
+      anguish.indexOf("Its attacks: if target has a hex: deals 17 damage"),
+    );
+  });
+
+  it("says it scaled, at rank 0 too (#1631)", () => {
+    const line = describeSkill(skillOf(ANGUISH), new Map()).effects.find(({ text }) =>
+      text.startsWith("Its attacks deal"),
+    );
+    expect(line?.text).toBe("Its attacks deal 5 damage");
+    expect(line?.magnitude?.atZero).toBe(5);
+  });
+
+  it("gives a blow that is only its rider no damage line (#1631)", () => {
+    for (const id of [BLOODSONG, WANDERLUST]) {
+      expect(
+        lines(id).some((line) => line.startsWith("Its attacks deal")),
+        id,
+      ).toBe(false);
+    }
+  });
 });
