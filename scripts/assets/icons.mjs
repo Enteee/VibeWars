@@ -1774,6 +1774,13 @@ const flameRing = (inner, outer, width, dot = true) => {
   return inkLine(d, width) + (dot ? `<circle cx="12" cy="12" r="2.2" fill="${C.ink}"/>` : "");
 };
 
+/** A hex ring round a small struck spell orb and `target`, the mark that says whom (#1498). @param {string} target */
+const hexFail = (target) =>
+  `<circle cx="12" cy="12" r="8.5" ${stroke(C.ink, 2.2)} stroke-dasharray="4.2 3.2"/>` +
+  `<circle cx="7.6" cy="10.5" r="2" fill="${C.ink}"/>` +
+  `<path d="M5.4 13L9.8 8" ${stroke(C.bg, 1.3)}/>` +
+  target;
+
 /** An urn of held ashes round `mark`, the Ritualist's Was spells (#1493). @param {string} mark */
 const wasUrn = (mark) =>
   inkLine("M7 3H17M8.5 3V6.5L5 11V18L7.5 21.5H16.5L19 18V11L15.5 6.5V3", 2) + mark;
@@ -2560,6 +2567,20 @@ const skillGlyph = {
   "hex-mute": () =>
     `<circle cx="12" cy="12" r="8.5" ${stroke(C.ink, 2.2)} stroke-dasharray="4.2 3.2"/>` +
     inkLine("M6.5 12H17.5", 3.2),
+  // A dashed ring (a hex), a small struck orb and a big mark: the bearer's next spell fails; an X
+  // is a foe it was aimed at, a disc with a plus an ally (#1498).
+  "hex-fail-foe": () => hexFail(inkLine("M11.8 6.3L19.8 14.3M19.8 6.3L11.8 14.3", 3)),
+  "hex-fail-ally": () =>
+    hexFail(
+      `<circle cx="15.8" cy="10.3" r="5" fill="${C.ink}"/>` +
+        `<path d="M15.8 7.6V13M13.1 10.3H18.5" ${stroke(C.bg, 1.8)}/>`,
+    ),
+  // A dashed ring (a hex) round a drop with a plus and a minus either side: damage whenever a
+  // condition is gained or lost (#1498).
+  "hex-churn": () =>
+    `<circle cx="12" cy="12" r="8.5" ${stroke(C.ink, 2.2)} stroke-dasharray="4.2 3.2"/>` +
+    inkFill("M12 6.8C13.8 9.4 15.6 11 15.6 13.2A3.6 3.6 0 0 1 8.4 13.2C8.4 11 10.2 9.4 12 6.8Z") +
+    inkLine("M4 9.5H7M5.5 8V11M17 15H20", 1.6),
   // A shield outline with a crack down its face: the block is gone (#1262).
   "armor-crack": () =>
     `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2)}/>` +

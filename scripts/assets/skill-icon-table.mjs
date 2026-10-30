@@ -390,9 +390,21 @@ export const SKILL_ICONS = {
   "dervish.avatar-of-balthazar": { glyph: "avatar-flame" },
   "dervish.avatar-of-grenth": { glyph: "avatar-scythe" },
   "dervish.avatar-of-lyssa": { glyph: "avatar-chaos" },
-  // Placeholders until the asset-designer's (#1475): the next spell fails.
-  "mesmer.guilt": { glyph: "hex-mute", modifier: "down" },
-  "mesmer.shame": { glyph: "hex-mute", modifier: "up" },
-  "mesmer.mistrust": { glyph: "hex-burst", modifier: "bolt" },
-  "mesmer.fragility": { glyph: "hex-drain", modifier: "area" },
+  // The next spell fails (#1475, #1498): a struck orb, a foe's X or an ally's plus after it.
+  "mesmer.guilt": { glyph: "hex-fail-foe", modifier: "bolt" },
+  "mesmer.shame": { glyph: "hex-fail-ally", modifier: "bolt" },
+  "mesmer.mistrust": { glyph: "hex-fail-foe", modifier: "area" },
+  "mesmer.fragility": { glyph: "hex-churn", modifier: "area" },
+  // Placeholders until the asset-designer's (#1486): Paragon spears.
+  "paragon.blazing-spear": { glyph: "spear", modifier: "plus" },
+  "paragon.mighty-throw": { glyph: "spear-dash", modifier: "up" },
+  "paragon.unblockable-throw": { glyph: "spear-dash", modifier: "plus" },
+  "paragon.wearying-spear": { glyph: "spear", modifier: "less" },
+  "paragon.vicious-attack": { glyph: "spear-barb", modifier: "stun" },
+  "paragon.disrupting-throw": { glyph: "spear-bolt", modifier: "stun" },
+  "paragon.slayers-spear": { glyph: "spear-barb", modifier: "half" },
+  "paragon.swift-javelin": { glyph: "spear-dash", modifier: "bolt" },
+  "paragon.chest-thumper": { glyph: "spear-barb", modifier: "down" },
+  "paragon.spear-of-redemption": { glyph: "spear", modifier: "self" },
+  "paragon.spear-swipe": { glyph: "spear", modifier: "area" },
 };
