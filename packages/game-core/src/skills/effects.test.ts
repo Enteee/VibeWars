@@ -15,7 +15,6 @@ import {
   resolveSkillEffects,
   type CombatEvent,
 } from "./effects.js";
-import { getSkill } from "./catalog.js";
 import { chainAllows } from "./chain.js";
 import { effectiveMaxEnergy } from "./overcast.js";
 import { HEALTH_PER_PIP, getStatusDefinition, type StatusId } from "./status.js";
