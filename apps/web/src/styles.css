@@ -288,6 +288,40 @@ body {
   white-space: nowrap;
 }
 
+/* The lobby this tab is in (#1526): its code, Copy, and a guest's Leave. */
+.topbar-lobby {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-right: 0.6rem;
+  white-space: nowrap;
+}
+
+.topbar-lobby[hidden],
+.topbar-lobby .topbar-leave[hidden] {
+  display: none;
+}
+
+#topbar .topbar-lobby-code {
+  font-size: 0.95rem;
+  letter-spacing: 0.15em;
+}
+
+#topbar .topbar-lobby button {
+  padding: 0.2rem 0.6rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+#topbar .topbar-lobby button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 #topbar .topbar-join .code-input {
   width: 11ch;
   padding: 0.15rem 0.4rem;
@@ -1332,6 +1366,16 @@ body {
   color: var(--ink);
 }
 
+/* A guest's: the host picks the mode (#1526). */
+.screen .mode-rail-entry[aria-disabled="true"] {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.screen .mode-rail-entry[aria-disabled="true"]:hover {
+  color: var(--ink-dim);
+}
+
 /* The shown one: filled, in accent, with the accent edge the study draws
    at the rail's right. */
 .screen .mode-rail-entry[aria-pressed="true"] {
@@ -1375,6 +1419,62 @@ body {
 .rail-title {
   margin: 0 0 -0.6rem;
   font-size: 1.05rem;
+}
+
+/* Who is in this lobby (#1526), on top of every mode screen. */
+.party-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 1rem;
+  padding: 0.45rem 0.7rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+
+.party-members {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.party-member {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.party-member.is-self .party-member-name {
+  color: var(--accent);
+}
+
+.party-host-mark {
+  padding: 0 0.3rem;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  color: var(--ink-dim);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+}
+
+.party-alone {
+  color: var(--ink-dim);
+}
+
+.party-code {
+  margin-left: auto;
+  color: var(--accent);
+  letter-spacing: 0.15em;
+  user-select: all;
+}
+
+.lobby-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
 }
 
 .rail-goal {

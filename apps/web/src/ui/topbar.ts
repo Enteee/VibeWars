@@ -90,7 +90,7 @@ export function joinControls(
   const lobbyLabel = h("span", "lobby-code-label", OWN_LOBBY_LABEL);
   const lobbyCode = h("span", "lobby-code topbar-lobby-code");
   const copy = button("Copy", "lobby-copy", () => {
-    void copyCode(lobbyCode.textContent ?? "", lobbyCode);
+    void copyCode(lobbyCode.textContent, lobbyCode);
   });
   const leave = button("Leave", "topbar-leave", onLeave);
   lobby.append(lobbyLabel, lobbyCode, copy, leave);

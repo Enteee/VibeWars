@@ -9,7 +9,7 @@ import type {
 
 import type { NostrQueue } from "./net/transport/nostr-queue.js";
 
-import { ARENA_MAPS, mapMode } from "./net/maps.js";
+import { ARENA_MAPS, LOBBY_MODE_MATCH_MODES, mapMode } from "./net/maps.js";
 import {
   connectMatchFor,
   observeMatchFor,
@@ -93,7 +93,7 @@ import {
   type QueueScreen,
   type StayOffer,
 } from "./ui/queue-screen.js";
-import { hostMaps, renderLobbyScreen } from "./ui/lobby-screen.js";
+import { hostMaps, lobbyPanel, type LobbyPanel } from "./ui/lobby-screen.js";
 import { renderTeamLobbyScreen } from "./ui/team-lobby-screen.js";
 import { renderRecordScreen } from "./ui/record-screen.js";
 import { createNowPlayingToast, nowPlayingText } from "./ui/now-playing.js";
@@ -107,13 +107,14 @@ import {
 } from "./ui/menu.js";
 import { dismissToast, toast } from "./ui/kit.js";
 import { createScreenTurns, type ScreenTurn } from "./screen-turns.js";
-import { playerGuild } from "./ui/player-section.js";
-import { loadRail, type RailEntry } from "./ui/rail.js";
+import { loadPlayerName, playerGuild } from "./ui/player-section.js";
+import { isAlone, partyOf } from "./ui/party-strip.js";
+import { isModeEntry, loadRail, railParty, setRailParty, type RailEntry } from "./ui/rail.js";
 import {
   isHostEntry,
   renderHostScreen,
   renderTeamBuilder,
-  type HostScreen,
+  type HostEntry,
   type TeamPlayCallbacks,
 } from "./ui/team-play.js";
 import { mountTopbar, paintStatus, type StatusState } from "./ui/topbar.js";
@@ -134,7 +135,7 @@ import {
 } from "./ui/team-editor.js";
 import { toPlayerBuild } from "./storage/build-validation.js";
 import { STORAGE_NAMESPACE } from "./storage/namespace.js";
-import { teamSizeOf, type QueueMode } from "@vibewars/game-protocol";
+import { normalizeLobbyCode, teamSizeOf, type QueueMode } from "@vibewars/game-protocol";
 import {
   MINIMAL_GW_INSPIRED_PVP_V1,
   resolveJoinLoadout,
@@ -152,6 +153,8 @@ import {
 
 /** Shown on the lobby or the menu once a match is lost for good. */
 const LOST_MATCH_NOTICE = "Lost the connection to the match.";
+/** A code typed into the title bar that is this tab's own lobby's (#1526). */
+const OWN_LOBBY_NOTICE = "That is your own lobby";
 
 function requireElement(selector: string): HTMLElement {
   const element = document.querySelector<HTMLElement>(selector);
@@ -305,11 +308,32 @@ async function main(): Promise<void> {
     mode: map.mode,
   }));
 
+  /**
+   * The lobby this tab is in (#1526, ADR-0041): from page load its own,
+   * one it joined, or a Random Arena group's. None only while a queue or
+   * a Stay together party has the player, or while the next one opens.
+   */
   let lobby: LobbyConnection | undefined;
   /** The lobby this tab hosts, while it hosts one: leaving it ends it for everyone. */
   let hosted: HostedLobby | undefined;
-  /** The modes the hosted lobby's maps play (#1453, #1525): its screen's; `undefined` for all. */
-  let lobbyModes: HostScreen["modes"];
+  /** What this player brought into `lobby`, and plays its matches with; a pick on the menu changes it. */
+  let lobbyEntrant: Entrant | undefined;
+  /** While this tab's own lobby is being opened. */
+  let opening = false;
+  /**
+   * The rail entry this player last chose (#1525): a host's mode is its
+   * lobby's; a guest's modes show its host's instead (#1526).
+   */
+  let shownEntry: RailEntry = loadRail();
+  /**
+   * Whether the screen shown follows the lobby: a rail screen, which
+   * redraws as it changes, or the Team Lobby. An editor never does.
+   */
+  let followsLobby = false;
+  /** Whether the Team Lobby screen is up (#1460). */
+  let teamLobbyShown = false;
+  /** The party the rail was last drawn for: a builder redraws only when its locks change. */
+  let drawnParty = "";
   let match: MatchView | undefined;
   /** The lobby's chat (#479), for as long as the lobby: on its screen, then over its match. */
   let chat: ChatPanel | undefined;
@@ -439,6 +463,8 @@ async function main(): Promise<void> {
    */
   const leaveScreen = (): ScreenTurn => {
     idleScreen = false;
+    followsLobby = false;
+    teamLobbyShown = false;
     dismissToast();
     closeBeatEditor();
     return screenTurns.take();
@@ -463,6 +489,9 @@ async function main(): Promise<void> {
     },
     onJoin: (code, name) => {
       joinWith(code, name);
+    },
+    onLeave: () => {
+      void leaveLobby();
     },
   });
 
@@ -561,8 +590,30 @@ async function main(): Promise<void> {
     showViewport(false);
     music().screen("menu");
     idleScreen = true;
-    // The rail entry last shown (#1525).
-    const entry = loadRail();
+    // Back from a queue, a lost lobby or a Leave: a fresh one of its own (#1526).
+    openOwnLobby();
+    if (lobby?.getSnapshot().phase === "team-lobby") {
+      lobbyChanged();
+      return;
+    }
+    followsLobby = true;
+    void refreshEntrant();
+    drawRail(turn);
+  };
+
+  /** The rail entry to show: a guest's modes are its host's (#1526). */
+  const railEntry = (): RailEntry => {
+    const party = railParty();
+    return party !== undefined && !party.isHost && isModeEntry(shownEntry)
+      ? party.mode
+      : shownEntry;
+  };
+
+  /** The rail screen for `railEntry`, if `turn` still has the screen once it has read what it shows. */
+  const drawRail = (turn: ScreenTurn): void => {
+    const party = railParty();
+    drawnParty = party === undefined ? "" : `${party.mode}:${String(party.isHost)}`;
+    const entry = railEntry();
     if (entry !== "random-arena" && entry !== "characters") {
       void showTeamScreen(entry, turn);
       return;
@@ -587,6 +638,20 @@ async function main(): Promise<void> {
     })();
   };
 
+  /**
+   * Another rail entry (#1525), as the rail stored it: a host's mode is
+   * its lobby's too (#1526), and every member's screen follows.
+   */
+  const switchTo = (entry: RailEntry): void => {
+    shownEntry = entry;
+    menuNotice = undefined;
+    const snapshot = queue === undefined ? lobby?.getSnapshot() : undefined;
+    if (isModeEntry(entry) && snapshot?.isHost === true && snapshot.mode !== entry) {
+      lobby?.selectMode(entry);
+    }
+    showMenu();
+  };
+
   const showRecord = async (): Promise<void> => {
     leaveScreen();
     const { records: played, problems } = await records.list();
@@ -606,7 +671,7 @@ async function main(): Promise<void> {
         onRandomArena: (mode, name) => {
           void enterRandomArena(mode, name);
         },
-        onSwitch: showMenu,
+        onSwitch: switchTo,
         onShowRecord: () => {
           void showRecord();
         },
@@ -666,6 +731,8 @@ async function main(): Promise<void> {
         // trip to storage for a list we already hold.
         onSelectCharacter: () => {
           renderMenuWith(entry, list, problems, tallies);
+          // The lobby lists, and plays, the one picked (#1526).
+          void refreshEntrant();
         },
       },
       list,
@@ -711,48 +778,144 @@ async function main(): Promise<void> {
   };
 
   /**
-   * Host a lobby as `name` on `modes`' maps; it starts in the Team Lobby
-   * (#1460, #1525). Only the Random Arena queue hosts any other kind.
+   * This tab's own lobby (#1526, ADR-0041), unless it is in one, opening
+   * one, or queued: a fresh code, on the mode this player last chose. It
+   * starts in the Team Lobby (#1460). Only the Random Arena queue hosts
+   * any other kind.
    */
-  const hostWith = (name: string, modes: HostScreen["modes"]): void => {
+  const openOwnLobby = (): void => {
+    /** In a lobby, or on the way to a queue: no own one now. */
+    const elsewhere = (): boolean => lobby !== undefined || queue !== undefined || joiningQueue;
+    if (elsewhere() || opening || stay !== undefined) {
+      return;
+    }
+    opening = true;
     void (async () => {
-      lobbyModes = modes;
+      const name = loadPlayerName();
       const entrant = await readEntrant();
-      await enterLobby(name, entrant, async () => {
-        hosted = await hostLobby(name, entrant.guild, entrant.character, true);
-        return hosted.lobby;
-      });
+      let own: HostedLobby;
+      try {
+        own = await hostLobby(name, entrant.guild, entrant.character, true);
+      } catch (error) {
+        opening = false;
+        console.warn("[web] could not open a lobby", error);
+        menuNotice = joinFailureNotice(error, location, loadTurnConfig() !== undefined);
+        redrawRail();
+        return;
+      }
+      opening = false;
+      // Joined another, or queued, meanwhile: that one is the lobby.
+      if (elsewhere()) {
+        await own.lobby.disconnect();
+        await own.close();
+        return;
+      }
+      hosted = own;
+      if (isModeEntry(shownEntry) && shownEntry !== own.lobby.getSnapshot().mode) {
+        own.lobby.selectMode(shownEntry);
+      }
+      seatLobby(name, own.lobby, entrant);
     })();
   };
 
+  /** Out of the lobby this tab is in, ending it for everyone if it is this tab's own. */
+  const closeLobby = async (): Promise<void> => {
+    const leaving = lobby;
+    const ending = hosted;
+    lobby = undefined;
+    hosted = undefined;
+    lobbyEntrant = undefined;
+    closeChat();
+    syncParty(undefined);
+    await leaving?.disconnect();
+    await ending?.close();
+  };
+
+  /**
+   * Join the lobby `code` from the title bar (#1526): this tab's own stays
+   * open until the join is in, so a failed one keeps its code and guests.
+   */
   const joinWith = (code: string, name: string): void => {
     void (async () => {
-      lobbyModes = undefined;
+      const current = lobby?.getSnapshot().code;
+      if (current !== undefined && normalizeLobbyCode(code) === current) {
+        if (hosted !== undefined) {
+          toast(OWN_LOBBY_NOTICE);
+        }
+        return;
+      }
       const entrant = await readEntrant();
-      await enterLobby(name, entrant, async () =>
-        joinLobbyByCode(code, name, entrant.guild, entrant.character),
-      );
+      setStatus("connecting…", "offline");
+      menuNotice = undefined;
+      let joined: LobbyConnection;
+      try {
+        joined = await joinLobbyByCode(code, name, entrant.guild, entrant.character);
+      } catch (error) {
+        console.warn("[web] could not join the lobby", error);
+        menuNotice = joinFailureNotice(error, location, loadTurnConfig() !== undefined);
+        redrawRail();
+        setStatus("could not join", "error");
+        return;
+      }
+      // In: only now does this tab's own lobby close, sending its guests
+      // to fresh lobbies of their own.
+      await closeLobby();
+      setStatus("", "online");
+      seatLobby(name, joined, entrant);
     })();
+  };
+
+  /** The lobby's part of `entry`'s screen (#1526), once there is a lobby. */
+  const panelFor = (entry: HostEntry): LobbyPanel | undefined => {
+    if (lobby === undefined || queue !== undefined) {
+      return undefined;
+    }
+    return lobbyPanel(
+      lobby.getSnapshot(),
+      {
+        onSelectMap: (mapId) => {
+          lobby?.selectMap(mapId);
+        },
+        onChooseTeam: (team) => {
+          lobby?.chooseTeam(team);
+        },
+        onToggleReady: () => {
+          const self = lobby
+            ?.getSnapshot()
+            .players.find((p) => p.sessionId === lobby?.selfSessionId);
+          lobby?.setReady(!(self?.ready ?? false));
+        },
+        onStart: () => {
+          lobby?.startMatch();
+        },
+        onWatch: () => {
+          void watchMatch();
+        },
+        onSetBots: (team, count) => {
+          lobby?.setBots(team, count);
+        },
+      },
+      lobbyNotice,
+      hostMaps(availableMaps, LOBBY_MODE_MATCH_MODES[entry]),
+    );
   };
 
   /**
    * A team mode, Hosted Game or Team Builder (#1525), as `showMenu` shows
-   * them. They host Team Lobbies (#1460), where a Team Build is proposed.
+   * them. The modes show the lobby (#1526), which starts Team Lobbies
+   * (#1460), where a Team Build is proposed.
    */
   const showTeamScreen = async (
     entry: Exclude<RailEntry, "random-arena" | "characters">,
     turn: ScreenTurn,
   ): Promise<void> => {
     const [teamList, characterList] = await Promise.all([teams.list(), characters.list()]);
-    // Host or Join pressed on the old screen while this awaited (#1513).
+    // Join or another entry pressed on the old screen while this awaited (#1513).
     if (!turn()) {
       return;
     }
     const callbacks: TeamPlayCallbacks = {
-      onHost: (modes, name) => {
-        hostWith(name, modes);
-      },
-      onSwitch: showMenu,
+      onSwitch: switchTo,
       // A new team is stored only once it is saved (#573).
       onNewTeam: () => {
         showTeamEditor(openedTeam(newTeam(crypto.randomUUID()), false), characterList.characters);
@@ -776,7 +939,15 @@ async function main(): Promise<void> {
     };
     const problems = [...teamList.problems, ...editNotices];
     if (isHostEntry(entry)) {
-      renderHostScreen(screenRoot, entry, teamList.teams, problems, menuNotice, callbacks);
+      renderHostScreen(
+        screenRoot,
+        entry,
+        teamList.teams,
+        problems,
+        menuNotice,
+        callbacks,
+        panelFor(entry),
+      );
     } else {
       renderTeamBuilder(screenRoot, teamList.teams, problems, menuNotice, callbacks);
     }
@@ -883,14 +1054,15 @@ async function main(): Promise<void> {
    * Queue for a Random Arena with the active character (#880): the queue
    * screen until a group's lobby seats this player, its splash while it
    * counts down, then the match. Whether it queued: not without an
-   * active character, or while already queueing.
+   * active character, while already queueing, or with a party (#1526).
+   * This tab's own lobby closes first; the menu opens a fresh one after.
    */
   const enterRandomArena = async (
     mode: QueueMode,
     name: string,
     from: { readonly party?: PartyPlace; readonly note?: string } = {},
   ): Promise<boolean> => {
-    if (queue !== undefined || joiningQueue) {
+    if (queue !== undefined || joiningQueue || (from.party === undefined && !isAlone(railParty()))) {
       from.party?.board.close();
       return false;
     }
@@ -904,6 +1076,10 @@ async function main(): Promise<void> {
     try {
       stored = await characters.load(id);
       entrant = await readEntrant();
+      if (stored !== undefined) {
+        // Closed before the ticket: a join landing meanwhile is refused, not seated.
+        await closeLobby();
+      }
     } finally {
       joiningQueue = false;
     }
@@ -1096,22 +1272,40 @@ async function main(): Promise<void> {
     });
   };
 
-  const renderLobby = (): void => {
-    if (lobby === undefined) {
-      return;
+  /** The rail screen shown again, as it is now: a notice to say, or a party gone. */
+  const redrawRail = (): void => {
+    if (followsLobby && !teamLobbyShown) {
+      drawRail(screenTurns.take());
     }
-    // The lobby connection stays open for the whole match, so every lobby
-    // state change still fires this. Without this guard, the lobby's own
-    // "phase -> in-match" broadcast lands just after `enterMatch` showed
-    // the viewport and puts the player straight back on the lobby screen,
-    // with the match running unseen underneath. Found by the browser
-    // tests; nothing headless could have caught it, because the bug lives
-    // entirely in how the two screens are sequenced.
+  };
+
+  /** The rail and the title bar name `snapshot`'s party, or none (#1526). */
+  const syncParty = (snapshot: LobbySnapshot | undefined): void => {
+    setRailParty(snapshot === undefined ? undefined : partyOf(snapshot));
+    topbarView.setLobby(
+      snapshot === undefined ? undefined : { code: snapshot.code, isHost: snapshot.isHost },
+    );
+  };
+
+  /**
+   * The lobby changed: the screen follows it. The lobby connection stays
+   * open for the whole match, so every lobby state change still fires
+   * this. Without the match guard, the lobby's own "phase -> in-match"
+   * broadcast lands just after `enterMatch` showed the viewport and puts
+   * the player straight back on the lobby screen, with the match running
+   * unseen underneath. Found by the browser tests; nothing headless could
+   * have caught it, because the bug lives entirely in how the two screens
+   * are sequenced.
+   */
+  const lobbyChanged = (): void => {
     if (match !== undefined || enteringMatch) {
       return;
     }
-    // Every way back here (leaving, a finished match, a lost connection)
-    // passes through this, so the status bar stops saying "in match".
+    if (lobby === undefined) {
+      syncParty(undefined);
+      redrawRail();
+      return;
+    }
     const snapshot = lobby.getSnapshot();
     if (queue !== undefined) {
       // A queued lobby has nothing to choose: it is the versus splash.
@@ -1119,58 +1313,52 @@ async function main(): Promise<void> {
       queue.screen.show({ kind: "splash", snapshot });
       return;
     }
-    // The lobby screen shows its code, so the status has nothing to add.
-    setStatus("", "online");
-    showViewport(false);
-    music().screen("lobby");
+    syncParty(snapshot);
     if (snapshot.phase === "team-lobby") {
+      // An open editor keeps its edits; its way out comes back here.
+      if (editor !== undefined || teamEditor !== undefined) {
+        return;
+      }
+      if (!teamLobbyShown) {
+        leaveScreen();
+        setStatus("", "online");
+        showViewport(false);
+        music().screen("lobby");
+      }
+      followsLobby = true;
+      teamLobbyShown = true;
       renderTeamLobby(lobby, snapshot);
       return;
     }
     teamPicks = undefined;
-    // A mode's lobby (#1453, #1525) starts on the first of its maps.
-    const maps = hostMaps(availableMaps, lobbyModes);
-    const [firstMap] = maps;
-    if (
-      snapshot.isHost &&
-      snapshot.phase === "waiting" &&
-      firstMap !== undefined &&
-      !maps.some((map) => map.id === snapshot.mapId)
-    ) {
-      lobby.selectMap(firstMap.id);
+    if (teamLobbyShown) {
+      // The Team Lobby is over without a match: back to the mode's screen.
+      showMenu();
+      return;
     }
-    renderLobbyScreen(
-      screenRoot,
-      snapshot,
-      {
-        onSelectMap: (mapId) => {
-          lobby?.selectMap(mapId);
-        },
-        onChooseTeam: (team) => {
-          lobby?.chooseTeam(team);
-        },
-        onToggleReady: () => {
-          const self = lobby
-            ?.getSnapshot()
-            .players.find((p) => p.sessionId === lobby?.selfSessionId);
-          lobby?.setReady(!(self?.ready ?? false));
-        },
-        onStart: () => {
-          lobby?.startMatch();
-        },
-        onWatch: () => {
-          void watchMatch();
-        },
-        onSetBots: (team, count) => {
-          lobby?.setBots(team, count);
-        },
-        onLeave: () => {
-          void leaveLobby();
-        },
-      },
-      lobbyNotice,
-      maps,
-    );
+    const party = `${snapshot.mode}:${String(snapshot.isHost)}`;
+    if (followsLobby && (isModeEntry(railEntry()) || party !== drawnParty)) {
+      drawRail(screenTurns.take());
+    }
+  };
+
+  /**
+   * The character this player picked now, for the lobby to list and its
+   * matches to play (#1526): the lobby outlives a pick on the menu.
+   */
+  const refreshEntrant = async (): Promise<void> => {
+    const current = lobby;
+    if (current === undefined || queue !== undefined) {
+      return;
+    }
+    const entrant = await readEntrant();
+    if (lobby !== current || lobbyEntrant === undefined) {
+      return;
+    }
+    if (JSON.stringify(entrant.character) !== JSON.stringify(lobbyEntrant.character)) {
+      current.setCharacter(entrant.character);
+    }
+    lobbyEntrant = entrant;
   };
 
   /** Propose the saved Team Build `teamId` in the Team Lobby, or withdraw with `undefined`. */
@@ -1183,7 +1371,7 @@ async function main(): Promise<void> {
       team === undefined ? null : team.members.map((member) => toPlayerBuild(member.character)),
     );
     teamPicks.proposed = team?.id;
-    renderLobby();
+    lobbyChanged();
   };
 
   /**
@@ -1200,7 +1388,7 @@ async function main(): Promise<void> {
           return;
         }
         picks.teams = saved;
-        renderLobby();
+        lobbyChanged();
       });
     }
     renderTeamLobbyScreen(
@@ -1230,42 +1418,14 @@ async function main(): Promise<void> {
     );
   };
 
-  /** Leave the lobby; a host's leaving ends it for everyone. */
+  /**
+   * Leave the lobby; a host's leaving ends it for everyone. The menu
+   * opens a fresh one of this tab's own (#1526).
+   */
   const leaveLobby = async (notice?: string): Promise<void> => {
-    const leaving = lobby;
-    const ending = hosted;
-    lobby = undefined;
-    hosted = undefined;
-    closeChat();
-    await leaving?.disconnect();
-    await ending?.close();
+    await closeLobby();
     menuNotice = notice;
     showMenu();
-  };
-
-  const enterLobby = async (
-    name: string,
-    entrant: Entrant,
-    connect: () => Promise<LobbyConnection>,
-  ): Promise<void> => {
-    setStatus("connecting…", "offline");
-    menuNotice = undefined;
-    // Still the menu, but on its way into a lobby: a menu draw still
-    // awaiting its roster is dropped (#1513).
-    idleScreen = false;
-    screenTurns.take();
-    try {
-      lobby = await connect();
-    } catch (error) {
-      console.warn("[web] could not join the lobby", error);
-      hosted = undefined;
-      menuNotice = joinFailureNotice(error, location, loadTurnConfig() !== undefined);
-      showMenu();
-      // After showMenu, which would clear the status.
-      setStatus("could not join", "error");
-      return;
-    }
-    seatLobby(name, lobby, entrant);
   };
 
   /**
@@ -1274,12 +1434,8 @@ async function main(): Promise<void> {
    */
   const seatLobby = (name: string, joined: LobbyConnection, entrant: Entrant): void => {
     lobby = joined;
+    lobbyEntrant = entrant;
     lobbyNotice = undefined;
-    // Here and not in renderLobby, which every lobby change repaints:
-    // a "Copied" toast outlives a player joining. The queue screen raises none.
-    if (queue === undefined) {
-      leaveScreen();
-    }
     chat = mountChat({
       selfId: joined.selfSessionId,
       selfTeam: () =>
@@ -1296,39 +1452,61 @@ async function main(): Promise<void> {
     joined.onChatThrottled(() => {
       chat?.notice("Slow down: your last lines were not sent.");
     });
-    joined.onChange(renderLobby);
+    // A lobby this tab has left says nothing more to it.
+    joined.onChange(() => {
+      if (lobby === joined) {
+        lobbyChanged();
+      }
+    });
     joined.onStartRejected((reason) => {
-      lobbyNotice = reason;
-      renderLobby();
+      if (lobby === joined) {
+        lobbyNotice = reason;
+        lobbyChanged();
+      }
     });
     joined.onRefused((reason) => {
-      lobbyNotice = lobbyRefusalNotice(reason);
-      renderLobby();
+      if (lobby === joined) {
+        lobbyNotice = lobbyRefusalNotice(reason);
+        lobbyChanged();
+      }
     });
     joined.onMatchStarting((start) => {
       // Only players on a team are sent this; a spectator stays here.
-      void enterMatch(name, start, entrant);
+      if (lobby === joined) {
+        void enterMatch(name, start, lobbyEntrant ?? entrant);
+      }
     });
     joined.onClosed((reason) => {
+      if (lobby !== joined) {
+        return;
+      }
       // From the lobby or from its match: either way, it is over.
       lobby = undefined;
       hosted = undefined;
+      lobbyEntrant = undefined;
       closeChat();
       if (queue !== undefined && match === undefined && !enteringMatch) {
         // Before its match, a queued lobby closing puts the player back
         // in the queue, which says so on its screen.
         return;
       }
+      syncParty(undefined);
       const notice = lobbyClosedNotice(reason);
       if (match !== undefined) {
         void exitMatch(notice);
-      } else {
-        enteringMatch = false;
-        menuNotice = notice;
+        return;
+      }
+      enteringMatch = false;
+      menuNotice = notice;
+      if (followsLobby) {
         showMenu();
+      } else {
+        // An editor keeps its edits: the fresh lobby opens under it.
+        toast(notice);
+        openOwnLobby();
       }
     });
-    renderLobby();
+    lobbyChanged();
   };
 
   /**
@@ -1414,14 +1592,14 @@ async function main(): Promise<void> {
       return;
     }
     // The lobby goes back to waiting by itself once the match is over
-    // (#44), so another can start straight away (brief §46).
+    // (#44), so another can start straight away (brief §46): the party,
+    // on its host's mode (#1526).
     if (lobby !== undefined) {
       lobbyNotice = notice ?? lobbyNotice;
-      renderLobby();
     } else {
       menuNotice = notice ?? menuNotice;
-      showMenu();
     }
+    showMenu();
   };
 
   /**
@@ -1487,8 +1665,8 @@ async function main(): Promise<void> {
       enteringMatch = false;
       if (lobby !== undefined) {
         lobbyNotice = matchFailureNotice(error) ?? LOST_MATCH_NOTICE;
-        renderLobby();
       }
+      showMenu();
     }
   };
 
@@ -1564,7 +1742,7 @@ async function main(): Promise<void> {
         await leaveLobby(notice);
       } else if (lobby !== undefined) {
         lobbyNotice = notice;
-        renderLobby();
+        showMenu();
       }
     }
   };
@@ -1598,9 +1776,10 @@ async function main(): Promise<void> {
     const watch = createBuildWatch({
       current: __VIBEWARS_BUILD__,
       fetchLatest: () => fetchServedBuild(import.meta.env.BASE_URL),
+      // Its own lobby, alone, is nobody's loss (#1526): a reload opens another.
       idle: () =>
         idleScreen &&
-        lobby === undefined &&
+        (lobby === undefined || (hosted !== undefined && isAlone(railParty()))) &&
         match === undefined &&
         !enteringMatch &&
         stay === undefined &&
