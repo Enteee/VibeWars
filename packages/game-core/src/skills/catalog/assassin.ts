@@ -1441,4 +1441,35 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
       { kind: "apply-status", statusId: "bleeding", durationSeconds: 13 },
     ],
   },
+  // Shadow Prison (#1551), at its rank-12 value.
+  {
+    id: "assassin.shadow-prison",
+    name: "Shadow Prison",
+    gwId: 1652,
+    type: "hex",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "assassin",
+    attributeId: "assassin.deadly-arts",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Shadow Step to target foe. For 1...7 seconds, that foe moves 66%
+    // slower": 6 s.
+    effects: [
+      { kind: "shadow-step", to: "target" },
+      { kind: "apply-status", statusId: "shadow-prison", durationSeconds: 6 },
+    ],
+  },
 ];

@@ -180,7 +180,16 @@ describe("Harrier's Haste (#1421)", () => {
     const victim = makeCombatant({ id: "f", team: 1, maxHealth: 1000, health: 1000 });
     victim.moving = moving;
     const fired: FiredTrigger[] = [];
-    attackHitRiders(self, victim, SCYTHE.mainHand, createRng(1), RULES.combat, new Map(), fired);
+    attackHitRiders(
+      self,
+      victim,
+      SCYTHE.mainHand,
+      false,
+      createRng(1),
+      RULES.combat,
+      new Map(),
+      fired,
+    );
     return fired;
   }
 

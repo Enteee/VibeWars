@@ -15,7 +15,9 @@ export type AssassinStatusId =
   | "shroud-of-silence"
   | "expose-defenses"
   | "enduring-toxin"
-  | "mark-of-death";
+  | "mark-of-death"
+  // Shadow Prison (#1551).
+  | "shadow-prison";
 
 export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefinition>> = {
   // "For 6 seconds, you gain 5...9...10 Health regeneration. When Shadow
@@ -111,5 +113,10 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
   "mark-of-death": define("mark-of-death", "Mark of Death", "hex", {
     profession: "assassin",
     healingMultiplier: 0.5,
+  }),
+  // "For 1...7 seconds, that foe moves 66% slower" (#1551): 6 s.
+  "shadow-prison": define("shadow-prison", "Shadow Prison", "hex", {
+    profession: "assassin",
+    moveSpeedMultiplier: 0.34,
   }),
 };
