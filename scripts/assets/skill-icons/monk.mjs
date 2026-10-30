@@ -48,4 +48,17 @@ export const MONK_ICONS = {
   "monk.signet-of-rejuvenation": { glyph: "heal", modifier: "bolt" },
   // Anti-summon (#1528, #1568): the skill's mark, a struck ghost below it.
   "monk.banish": { glyph: "anti-summon-spell" },
+  // Monk staples (#1511, #1541).
+  "monk.aegis": { glyph: "block-half" },
+  "monk.shield-of-deflection": { glyph: "block-most" },
+  "monk.shielding-hands": { glyph: "shield-cut-heal" },
+  "monk.zealous-benediction": { glyph: "heal-bolt" },
+  "monk.draw-conditions": { glyph: "draw-drops" },
+  "monk.spell-breaker": { glyph: "target-struck" },
+  "monk.blessed-light": { glyph: "heal-clear" },
+  "monk.words-of-comfort": { glyph: "heal-drop" },
+  "monk.light-of-deliverance": { glyph: "plus-trio" },
+  "monk.signet-of-rejuvenation": { glyph: "plus-cycle" },
+  // A placeholder until the asset-designer's (#1528).
+  "monk.banish": { glyph: "ghost", modifier: "plus" },
 };

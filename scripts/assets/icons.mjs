@@ -1879,6 +1879,17 @@ const inkFill = (d) =>
 /** @param {string} d @param {number} [w] */
 const inkLine = (d, w = 2.2) => `<path d="${d}" ${stroke(C.ink, w)}/>`;
 
+/** The dashed ring of a hex, as a skill icon's frame (#1534). */
+const HEX_RING = `<circle cx="12" cy="12" r="9" ${stroke(C.ink, 2.2)} stroke-dasharray="4.4 3.4"/>`;
+
+/** A punisher's picture, shrunk inside the hex ring that marks the family (#1534). @param {string} inner */
+const punisher = (inner) =>
+  HEX_RING + `<g transform="translate(12,12) scale(0.72) translate(-12,-12)">${inner}</g>`;
+/** A shield outline with `fillPath` filled in: the share of damage it blocks (#1541). @param {string} fillPath */
+const blockShield = (fillPath) =>
+  `<path d="${fillPath}" fill="${C.ink}"/>` +
+  `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2.4)}/>`;
+
 /** A burst of `n` points around the centre, alternating two radii. @param {number} n */
 const burst = (n) =>
   Array.from({ length: n * 2 }, (_, i) => {
@@ -2388,6 +2399,49 @@ const skillGlyph = {
     inkLine("M7 4.5L12 11", 2.4) +
     `<rect x="9.5" y="9" width="9" height="6" rx="1" transform="rotate(35 14 12)" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
     inkLine("M3 19.5H21M5 15.5L3.5 13.5M21 15.5L22 13.5", 2.2),
+  // The punishers (#1473, #1534): one family, the dashed ring of a hex round a small picture of the punishment.
+  // An hourglass that bursts when its sand runs out: Wastrel's Worry.
+  "hex-hourglass": () =>
+    punisher(
+      inkLine("M5 3H19M5 21H19", 3) +
+        inkFill(
+          "M6.5 3.5H17.5C17.5 9 12 10 12 12C12 14 17.5 15 17.5 20.5H6.5C6.5 15 12 14 12 12C12 10 6.5 9 6.5 3.5Z",
+        ),
+    ),
+  // A bolt through a bar: Overload hits a foe in mid-skill.
+  "hex-overload": () =>
+    punisher(inkLine("M2 12H22", 3) + inkFill("M14.5 2L6 13H11.5L9.5 22L18 10.5H12.5Z")),
+  // An orb split by a crack: Frustration hurts when a spell is broken off.
+  "orb-split": () =>
+    punisher(
+      `<path d="M11 3A9 9 0 0 0 11 21L9 17L12 12L9.5 8Z" fill="${C.ink}"/>` +
+        `<path d="M13.5 3.5A9 9 0 0 1 13 20.5L11 17L14 12L11.5 8Z" fill="${C.ink}" transform="translate(2.5,0)"/>`,
+    ),
+  // A crown: Price of Pride, the elite's toll.
+  "hex-crown": () => punisher(inkFill("M2.5 19L4 6L9 11.5L12 3L15 11.5L20 6L21.5 19Z")),
+  // A crown struck through: Signet of Humility shuts an elite off.
+  "crown-struck": () =>
+    punisher(
+      inkFill("M3 18L4.5 6.5L9 11.5L12 4L15 11.5L19.5 6.5L21 18Z") +
+        `<path d="M2 22L22 2" stroke="${C.bg}" stroke-width="6" stroke-linecap="round"/>` +
+        inkLine("M2 22L22 2", 3),
+    ),
+  // A jagged ache: Migraine slows every skill.
+  "hex-ache": () => punisher(inkLine("M2 15L7.5 5L12 17L16.5 5L22 15", 3.4)),
+  // An eye with a tear: Visions of Regret.
+  "eye-tear": () =>
+    punisher(
+      inkLine("M1.5 9C6 2.5 18 2.5 22.5 9C18 15.5 6 15.5 1.5 9Z", 2.6) +
+        inkFill("M12 6.3a2.7 2.7 0 1 0 .01 0Z") +
+        inkFill("M12 15.5C10 18 9.3 19.5 9.3 21A2.7 2.7 0 0 0 14.7 21C14.7 19.5 14 18 12 15.5Z"),
+    ),
+  // A burst: Unnatural Signet, the splash on a hexed foe.
+  "hex-splash": () => punisher(inkFill(burst(5))),
+  // A fireball with an eye in it: Mind Blast.
+  "fireball-mind": () =>
+    `<circle cx="14" cy="10" r="7" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
+    inkLine("M8.5 14.5L3 20M7 9L3 11.5M12.5 17L10 21.5") +
+    `<circle cx="14" cy="10" r="3" ${stroke(C.bg, 1.6)}/><circle cx="14" cy="10" r="1" fill="${C.bg}"/>`,
   // A dashed ring (a hex) with three spikes in it: blows from a weapon cut deeper (#1342).
   "hex-barbs": () =>
     `<circle cx="12" cy="12" r="9" ${stroke(C.ink, 2.2)} stroke-dasharray="4.4 3.4"/>` +
@@ -2861,6 +2915,66 @@ const skillGlyph = {
     `<circle cx="12" cy="12" r="8.5" ${stroke(C.ink, 2.2)} stroke-dasharray="4.2 3.2"/>` +
     inkFill("M12 6.8C13.8 9.4 15.6 11 15.6 13.2A3.6 3.6 0 0 1 8.4 13.2C8.4 11 10.2 9.4 12 6.8Z") +
     inkLine("M4 9.5H7M5.5 8V11M17 15H20", 1.6),
+  // The Monk staples (#1541). A shield filled to the share it blocks: half for the party's Aegis, three
+  // quarters for the one ally Shield of Deflection guards; dots above are the party.
+  "block-half": () =>
+    inkLine("M7 3H8M12 3h0M16 3h1", 2.4) +
+    `<g transform="translate(2.4,3.4) scale(0.8)">${blockShield("M12 2.5L4 5.5V12C4 16.5 7.5 19.5 12 21.5Z")}</g>`,
+  "block-most": () =>
+    `<g transform="translate(2.4,2.4) scale(0.8)">${blockShield("M12 2.5L20 5.5V12.5H12V21.5C7.5 19.5 4 16.5 4 12V5.5Z")}</g>`,
+  // A shield with a minus over a plus: each hit cut, and a heal at the end.
+  "shield-cut-heal": () =>
+    `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2.2)}/>` +
+    inkLine("M8.6 9H15.4", 2.2) +
+    inkLine("M12 12V17M9.5 14.5H14.5", 2.2),
+  // A target ring struck through: nothing foreign can aim at them. Reusable for any untargetable skill.
+  "target-struck": () =>
+    `<circle cx="12" cy="12" r="6" ${stroke(C.ink, 2.2)}/>` +
+    inkLine("M12 2.5V6.5M12 17.5V21.5M2.5 12H6.5M17.5 12H21.5", 2.2) +
+    `<circle cx="12" cy="12" r="1.4" fill="${C.ink}"/>` +
+    `<path d="M4.5 19.5L19.5 4.5" ${stroke(C.bg, 4.6)}/>` +
+    inkLine("M4.5 19.5L19.5 4.5", 2.2),
+  // A big plus with a small bolt: a great heal, and energy back.
+  "heal-bolt": () =>
+    inkFill("M8 7h4v4h4v4h-4v4H8v-4H4v-4h4z") + inkFill("M19.5 2.5L15.5 8H18.5L17 13L22 6.5H19Z"),
+  // A figure at the left with two drops flowing into it: conditions taken on, and healed.
+  "draw-drops": () =>
+    `<circle cx="6" cy="8" r="3" fill="${C.ink}"/>` +
+    inkLine("M1.5 20C1.5 15.5 3.5 13 6 13S10.5 15.5 10.5 20", 2.6) +
+    inkLine("M12.5 12.5H17M12.5 17.5H17", 1.8) +
+    inkFill("M19.5 9.5C18 11.5 17 12.6 17 13.8A2.5 2.5 0 0 0 22 13.8C22 12.6 21 11.5 19.5 9.5Z") +
+    inkFill(
+      "M19.5 15C18.3 16.6 17.6 17.4 17.6 18.3A1.9 1.9 0 0 0 21.4 18.3C21.4 17.4 20.7 16.6 19.5 15Z",
+    ),
+  // A plus beside a struck drop and a struck dashed ring: a condition and a hex taken off.
+  "heal-clear": () =>
+    inkFill("M6.6 8h3.6v3.6h3.6v3.6H9.6v3.6H6v-3.6H2.4V9.6H6z") +
+    `<circle cx="17.5" cy="6.5" r="3.6" ${stroke(C.ink, 1.6)} stroke-dasharray="2.6 2"/>` +
+    inkFill("M17.5 12.5C16 14.5 15 15.6 15 16.8A2.5 2.5 0 0 0 20 16.8C20 15.6 19 14.5 17.5 12.5Z") +
+    `<path d="M13.5 21L21.5 11" ${stroke(C.bg, 3)}/>` +
+    inkLine("M14 20.5L21 11.5", 1.5),
+  // A plus with a drop at its foot: it heals more when there is something to mend.
+  "heal-drop": () =>
+    inkFill("M9 3h5v5h5v5h-5v5H9v-5H4V8h5z") +
+    inkFill(
+      "M17.5 14.5C15.5 17 14.5 18.4 14.5 19.8A3 3 0 0 0 20.5 19.8C20.5 18.4 19.5 17 17.5 14.5Z",
+    ),
+  // Three pluses in a triangle: the whole party is healed.
+  "plus-trio": () =>
+    [
+      [12, 5.5],
+      [5.5, 17],
+      [18.5, 17],
+    ]
+      .map(([x, y]) =>
+        inkFill(
+          `M${String(x - 1.7)} ${String(y - 4.5)}h3.4v2.8h2.8v3.4h-2.8v2.8h-3.4v-2.8h-2.8v-3.4h2.8z`,
+        ),
+      )
+      .join(""),
+  // A plus in a circling arrow: it heals again and again, more when they are busy.
+  "plus-cycle": () =>
+    inkLine("M12 8V16M8 12H16", 2.6) + inkLine("M20 12A8 8 0 1 1 15.5 4.8M15.5 1.5V5H19", 2.2),
   // A shield outline with a crack down its face: the block is gone (#1262).
   "armor-crack": () =>
     `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2)}/>` +
