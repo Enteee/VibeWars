@@ -8,6 +8,9 @@ import { botUses, onlyInterrupts, removedCategories } from "./skill-intent.js";
  * its effects or listed here, on purpose.
  */
 const NO_BOT_USE = new Set([
+  // Spell Breaker (#1511): a foe's spells refused is not a defence the
+  // bot weighs.
+  "monk.spell-breaker",
   // Companion commands and pet attacks: out of scope for a bot.
   "ranger.brutal-strike",
   "ranger.call-of-haste",
