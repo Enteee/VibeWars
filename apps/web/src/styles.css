@@ -167,6 +167,20 @@ body {
     flex: 0 1 auto;
   }
 
+  /* Lobby Code's field says CODE: the label is the room the global
+     icons need on screens with no ⋯, and on the narrowest phones they
+     wrap under Join rather than off the screen (#1525). */
+  .topbar-join-label {
+    display: none;
+  }
+
+  .topbar-tools {
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    min-width: 0;
+  }
+
   /* The status (the editor's professions, a lobby's code) keeps a row of
      its own rather than folding away. The editor's and the lobby's hold
      it up to 75rem too (#1334, #1368), below. */

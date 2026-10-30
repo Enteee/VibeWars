@@ -276,6 +276,25 @@ test("#1272: on a phone, the menu's ⋯ holds Record and the chevron is Back", a
   await expect(menuHeading(page)).toBeVisible();
 });
 
+test("#1525: on a phone, a screen with no ⋯ keeps Lobby Code, Join and the global icons on screen", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 640 });
+  await openMenu(page);
+  await openRail(page, "Team Arena");
+  const bar = page.locator("#topbar");
+  await expect(bar.locator(".topbar-more")).toBeHidden();
+  await expect(bar.getByRole("textbox", { name: "Lobby code", exact: true })).toBeVisible();
+  await expect(bar.getByRole("button", { name: "Join", exact: true })).toBeVisible();
+  // The rightmost icon still inside the bar, and nothing scrolls sideways.
+  const right = await bar.locator(".topbar-fullscreen").evaluate((node) => {
+    return node.getBoundingClientRect().right;
+  });
+  expect(right).toBeLessThanOrEqual(320);
+  const overflow = await bar.evaluate((node) => node.scrollWidth - node.clientWidth);
+  expect(overflow).toBe(0);
+});
+
 test("#1525: the rail switches screens and keeps the last; each mode hosts on its own maps", async ({
   page,
 }) => {
