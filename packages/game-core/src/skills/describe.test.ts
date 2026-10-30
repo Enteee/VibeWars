@@ -440,7 +440,7 @@ describe("describeSkill", () => {
       "whenever a chant or shout ends on it: it gains 2 energy",
     );
     expect(describeStatus("soldiers-fury")).toBe(
-      "-20 armor, while under a shout or chant: attacks 25% faster, gain adrenaline 33% faster",
+      "-20 armor, while under a shout or chant: attacks 33% faster, gain adrenaline 33% faster",
     );
   });
 

@@ -405,7 +405,7 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
     const longer = Math.round((definition.chantShoutDurationMultiplier - 1) * 100);
     parts.push(`chants and shouts last ${String(longer)}% longer on it`);
   }
-  // Soldier's Fury's (#1485): "while under a shout or chant: attacks 25%
+  // Soldier's Fury's (#1485): "while under a shout or chant: attacks 33%
   // faster, gain adrenaline 33% faster".
   if (definition.whileUnder !== undefined) {
     const { categories, attackDurationMultiplier, adrenalineGainFaster } = definition.whileUnder;

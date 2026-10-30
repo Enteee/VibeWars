@@ -387,7 +387,7 @@ describe("Paragon echoes 2 (#1485)", () => {
     ]).toEqual([-20, 1, 0]);
     put(sim, CHANT, 0.2, "p");
     const chanted = aggregateModifiers(statuses.active);
-    expect(chanted.attackDurationMultiplier).toBe(0.75);
+    expect(chanted.attackDurationMultiplier).toBe(0.67);
     expect(chanted.adrenalineGainFaster).toBeCloseTo(0.33);
     stepFor(sim, 0.5);
     const after = aggregateModifiers(statuses.active);

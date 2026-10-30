@@ -2752,7 +2752,7 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     armorModifier: -20,
     whileUnder: {
       categories: ["shout", "chant"],
-      attackDurationMultiplier: 0.75,
+      attackDurationMultiplier: 0.67,
       adrenalineGainFaster: 0.33,
     },
   }),

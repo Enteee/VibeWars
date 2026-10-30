@@ -692,7 +692,7 @@ describe("aggregateModifiers, while under another status (#1485)", () => {
     expect(alone.armorModifier).toBe(-20);
     for (const under of ["defensive-anthem", "fall-back"] as const) {
       const both = aggregateModifiers([{ id: "soldiers-fury" }, { id: under }]);
-      expect(both.attackDurationMultiplier, under).toBe(0.75);
+      expect(both.attackDurationMultiplier, under).toBe(0.67);
       expect(both.adrenalineGainFaster, under).toBeCloseTo(0.33);
       expect(both.armorModifier, under).toBe(-20);
     }
